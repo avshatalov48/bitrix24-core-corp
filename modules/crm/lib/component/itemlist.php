@@ -3,6 +3,7 @@
 namespace Bitrix\Crm\Component;
 
 use Bitrix\Crm\Automation;
+use Bitrix\Crm\Category\CategoryPullManager;
 use Bitrix\Crm\Category\Entity\Category;
 use Bitrix\Crm\Component\EntityList\Settings\PermissionItem;
 use Bitrix\Crm\Counter\EntityCounterFactory;
@@ -21,10 +22,15 @@ use Bitrix\Crm\Restriction\RestrictionManager;
 use Bitrix\Crm\Service;
 use Bitrix\Crm\Service\Container;
 use Bitrix\Crm\Settings\InvoiceSettings;
+use Bitrix\Intranet\CustomSection\Entity\CustomSectionTable;
+use Bitrix\Crm\UI\Tools\NavigationBar;
 use Bitrix\Main\Error;
+use Bitrix\Main\Loader;
 use Bitrix\Main\Localization\Loc;
 use Bitrix\Main\ModuleManager;
+use Bitrix\Main\Web\Uri;
 use Bitrix\UI\Buttons;
+use Bitrix\UI\Buttons\Button;
 use Bitrix\UI\Buttons\Icon;
 use Bitrix\UI\Toolbar;
 
@@ -89,6 +95,11 @@ abstract class ItemList extends Base
 		$this->router->setCurrentListView($this->entityTypeId, $this->getListViewType());
 
 		$this->factory = Service\Container::getInstance()->getFactory($this->entityTypeId);
+		if ($this->isRecurring())
+		{
+			$this->factory->setIsRecurringMode(true);
+		}
+
 		$this->kanbanEntity = Kanban\Entity::getInstance($this->factory->getEntityName());
 
 		if($this->factory->isCategoriesSupported())
@@ -103,14 +114,14 @@ abstract class ItemList extends Base
 
 		if ($this->category)
 		{
-			$canReadThisCategory = $this->userPermissions->canReadTypeInCategory(
+			$canReadThisCategory = $this->userPermissions->entityType()->canReadItemsInCategory(
 				$this->entityTypeId,
 				$this->category->getId()
 			);
 		}
 		else
 		{
-			$canReadThisCategory = $this->userPermissions->canReadType($this->entityTypeId);
+			$canReadThisCategory = $this->userPermissions->entityType()->canReadItems($this->entityTypeId);
 		}
 		if (!$canReadThisCategory)
 		{
@@ -119,7 +130,7 @@ abstract class ItemList extends Base
 				// if user can not read current category, but can read some another - make the redirect there.
 				foreach ($this->factory->getCategories() as $category)
 				{
-					if ($this->userPermissions->canReadTypeInCategory($this->entityTypeId, $category->getId()))
+					if ($this->userPermissions->entityType()->canReadItemsInCategory($this->entityTypeId, $category->getId()))
 					{
 						LocalRedirect(
 							$this->router->getItemListUrlInCurrentView(
@@ -142,7 +153,7 @@ abstract class ItemList extends Base
 			[
 				'categoryId' => $this->getCategoryId(),
 				'type' => $type,
-			]
+			],
 		);
 		$this->provider = $filterFactory->getDataProvider($settings);
 
@@ -152,6 +163,11 @@ abstract class ItemList extends Base
 		$this->filter = $filterFactory->createFilter($settings->getID(), $this->provider, $additionalProviders);
 
 		EntityRelationTable::initiateClearingDuplicateSourceElementsWithInterval($this->factory->getEntityTypeId());
+	}
+
+	protected function isRecurring(): bool
+	{
+		return false;
 	}
 
 	protected function getGridId(): string
@@ -229,7 +245,7 @@ abstract class ItemList extends Base
 			$isDefaultCategory = true;
 		}
 
-		$isEnabled = $container->getUserPermissions()->checkAddPermissions(
+		$isEnabled = $container->getUserPermissions()->entityType()->canAddItemsInCategory(
 			$this->entityTypeId,
 			$category?->getId()
 		);
@@ -251,9 +267,9 @@ abstract class ItemList extends Base
 		}
 		$buttons[Toolbar\ButtonLocation::AFTER_TITLE][] = new Buttons\Button($addButtonParameters);
 
-		if ($this->factory->isCategoriesEnabled())
+		if ($this->factory->isCategoriesEnabled() && !$this->factory->isRecurringMode())
 		{
-			$categories = $this->userPermissions->filterAvailableForReadingCategories(
+			$categories = $this->userPermissions->category()->filterAvailableForReadingCategories(
 				$this->factory->getCategories()
 			);
 			if (
@@ -287,6 +303,11 @@ abstract class ItemList extends Base
 					}
 				}
 
+				CategoryPullManager::getInstance()->subscribe(
+					Container::getInstance()->getUserPermissions()->getUserId(),
+					CategoryPullManager::EVENT_CATEGORIES_UPDATED,
+				);
+
 				$buttons[Toolbar\ButtonLocation::AFTER_TITLE][] = new Buttons\Button($buttonConfig);
 			}
 		}
@@ -295,10 +316,13 @@ abstract class ItemList extends Base
 		// a bit of hardcode to avoid components copying
 		if (
 			$this->entityTypeId === \CCrmOwnerType::SmartInvoice
-			&& Container::getInstance()->getUserPermissions()->canReadType(\CCrmOwnerType::Invoice)
+			&& Container::getInstance()->getUserPermissions()->entityType()->canReadItems(\CCrmOwnerType::Invoice)
 		)
 		{
-			if (!InvoiceSettings::getCurrent()->isOldInvoicesEnabled())
+			if (
+				!$this->factory->isRecurringMode()
+				&& !InvoiceSettings::getCurrent()->isOldInvoicesEnabled()
+			)
 			{
 				$settingsItems[] = [
 					'text' => \CCrmOwnerType::GetCategoryCaption(\CCrmOwnerType::Invoice),
@@ -332,6 +356,69 @@ abstract class ItemList extends Base
 			}
 		}
 
+		$type = Service\Container::getInstance()->getTypeByEntityTypeId($this->entityTypeId);
+		$customSectionId = $type ? $type->getCustomSectionId() : 0;
+		if (
+			$customSectionId > 0
+			&& Container::getInstance()->getUserPermissions()->automatedSolution()->canEdit()
+			&& \Bitrix\Main\Loader::includeModule('rest')
+			&& is_callable('\Bitrix\Rest\Marketplace\Url::getConfigurationPlacementUrl')
+			&& RestrictionManager::getAutomatedSolutionExportImportRestriction()->hasPermission()
+		)
+		{
+
+			$customSectionCode = $this->getCustomSectionCodeById($customSectionId) ?? '';
+			if ($customSectionCode !== '')
+			{
+				$settingsItems[] = [
+					'text' => Loc::getMessage('CRM_COMPONENT_ITEM_LIST_AUTOMATED_SOLUTION_EXPORT_IMPORT_ITEM'),
+					'href' =>
+						(
+							new Uri(
+								\Bitrix\Rest\Marketplace\Url::getConfigurationPlacementUrl(
+									'automated_solution_one',
+									'dynamic_type_list'
+								)
+							)
+						)->addParams(['additional' => ['automatedSolutionCode' => $customSectionCode]])
+					,
+					'onclick' => new Buttons\JsHandler('BX.Crm.Router.Instance.closeSettingsMenu'),
+				];
+			}
+		}
+
+		if ($this->factory->isRecurringEnabled())
+		{
+			if (($this->arParams['isRecurring'] ?? false) === true)
+			{
+				$text = (
+					$this->entityTypeId === \CCrmOwnerType::SmartInvoice
+						? Loc::getMessage('CRM_COMPONENT_ITEM_LIST_SMART_INVOICE')
+						: Loc::getMessage('CRM_COMPONENT_ITEM_LIST')
+				);
+				$link = $this->router->getItemListUrl($this->entityTypeId, $this->getCategoryId());
+			}
+			else
+			{
+				$text = (
+					$this->entityTypeId === \CCrmOwnerType::SmartInvoice
+						? Loc::getMessage('CRM_COMPONENT_ITEM_RECURRING_LIST_SMART_INVOICE')
+						: Loc::getMessage('CRM_COMPONENT_ITEM_RECURRING_LIST')
+				);
+
+				$link = $this->router->getItemRecurringListUrl($this->entityTypeId, $this->getCategoryId());
+			}
+
+			if ($link)
+			{
+				$settingsItems[] = [
+					'text' => $text,
+					'href' => $link,
+					'onclick' => new Buttons\JsHandler('BX.Crm.Page.openSlider("' . $link . '");'),
+				];
+			}
+		}
+
 		$permissionItem = PermissionItem::createByEntity($this->entityTypeId, $this->getCategoryId());
 		$permissionItem->setAnalytics($this->getAnalytics());
 		if ($permissionItem->canShow())
@@ -361,12 +448,19 @@ abstract class ItemList extends Base
 			'filter' => $this->prepareFilter(),
 			'views' => $this->getToolbarViews(),
 			'isWithFavoriteStar' => true,
+			// shrink title for dynamic types, they can have very long names
+			'isTitleNoShrink' => !\CCrmOwnerType::isPossibleDynamicTypeId($this->entityTypeId),
 			'spotlight' => $spotlight,
 			'entityTypeName' => \CCrmOwnerType::ResolveName($this->entityTypeId),
 			'categoryId' => $this->arResult['categoryId'],
 			'pathToEntityList' => '/crm/type/' . $this->entityTypeId,
 		];
 		//@codingStandardsIgnoreEnd
+
+		if ($this->isEmbedded())
+		{
+			$this->arResult['filter'] = $parameters['filter'];
+		}
 
 		return array_merge(parent::getToolbarParameters(), $parameters);
 	}
@@ -382,7 +476,7 @@ abstract class ItemList extends Base
 	{
 		$categories = $this->factory->getCategories();
 
-		return array_values(array_filter($categories, [$this->userPermissions, 'canAddItemsInCategory']));
+		return $this->userPermissions->category()->filterAvailableForAddingCategories($categories);
 	}
 
 	protected function getToolbarSettingsItems(): array
@@ -390,7 +484,7 @@ abstract class ItemList extends Base
 		$settingsItems = [];
 
 		$userPermissions = $this->userPermissions;
-		if ($userPermissions->canUpdateType((int)$this->entityTypeId))
+		if ($userPermissions->dynamicType()->canUpdate((int)$this->entityTypeId))
 		{
 			$settingsItems[] = [
 				'text' => Loc::getMessage('CRM_TYPE_TYPE_SETTINGS'),
@@ -481,6 +575,11 @@ abstract class ItemList extends Base
 	{
 		$views = [];
 
+		if ($this->isRecurring())
+		{
+			return $views;
+		}
+
 		if ($this->factory->isCountersEnabled())
 		{
 			$views['COUNTER_PANEL'] = $this->getCounterPanelView();
@@ -512,46 +611,42 @@ abstract class ItemList extends Base
 					'isActive' => false,
 				];
 			}
-
 		}
 
-		if (Automation\Factory::isAutomationAvailable($this->entityTypeId))
+		if (Automation\Factory::isAutomationAvailable($this->entityTypeId) && Loader::includeModule('ui'))
 		{
-			$categoryId = $this->getCategoryId();
-			if (is_null($categoryId) && $this->factory->isCategoriesSupported())
-			{
-				$categoryId = $this->factory->createDefaultCategoryIfNotExist()->getId();
-			}
-			$url = $this->router->getAutomationUrl(
-				$this->entityTypeId,
-				$categoryId
-			);
-			$robotView = [
-				'className' => 'ui-btn ui-btn-light-border ui-btn-no-caps ui-btn-themes ui-btn-round crm-robot-btn',
-				'title' => Loc::getMessage('CRM_COMMON_ROBOTS'),
-				'url' => $url,
-				'isActive' => false,
-				'position' => Toolbar\ButtonLocation::RIGHT,
-			];
+			$button = (new NavigationBar([]))->getAutomationViewLayout();
+
 			$dynamicTypesLimit = RestrictionManager::getDynamicTypesLimitRestriction();
 			$isTypeSettingsRestricted = $dynamicTypesLimit->isTypeSettingsRestricted($this->entityTypeId);
 			if ($isTypeSettingsRestricted)
 			{
-				$robotView['onclick'] = $dynamicTypesLimit->getShowFeatureJsFunctionString();
-				unset($robotView['url']);
+				$button->bindEvent('click', new Buttons\JsCode($dynamicTypesLimit->getShowFeatureJsFunctionString()));
+			}
+			elseif (!Container::getInstance()->getIntranetToolsManager()->checkRobotsAvailability())
+			{
+				$button->bindEvent('click', new Buttons\JsCode(AvailabilityManager::getInstance()->getRobotsAvailabilityLock()));
 			}
 			else
 			{
-				$toolsManager = Container::getInstance()->getIntranetToolsManager();
-				if (!$toolsManager->checkRobotsAvailability())
+				$categoryId = $this->getCategoryId();
+				if (is_null($categoryId) && $this->factory->isCategoriesSupported())
 				{
-					$robotView['onclick'] = htmlspecialcharsbx(
-						AvailabilityManager::getInstance()->getRobotsAvailabilityLock()
-					);
-					unset($robotView['url']);
+					$categoryId = $this->factory->createDefaultCategoryIfNotExist()->getId();
 				}
+				$url = $this->router->getAutomationUrl(
+					$this->entityTypeId,
+					$categoryId
+				);
+
+				$button->setLink((string)$url);
 			}
-			$views[] = $robotView;
+
+			$views[] = [
+				'html' => $button->render(),
+				'isActive' => false,
+				'position' => Toolbar\ButtonLocation::RIGHT,
+			];
 		}
 
 		return $views;
@@ -788,7 +883,7 @@ abstract class ItemList extends Base
 
 		if ($this->category && $this->category->getCode())
 		{
-			$builder->setP2WithValueNormalization('category', $this->category->getCode());
+			$builder->setP3WithValueNormalization('category', $this->category->getCode());
 		}
 	}
 	//@codingStandardsIgnoreEnd
@@ -834,5 +929,17 @@ abstract class ItemList extends Base
 		$params['ANALYTICS'] = $this->getAnalytics();
 
 		return $params;
+	}
+
+	protected function getCustomSectionCodeById(int $customSectionId): string | null
+	{
+		$result = CustomSectionTable::query()
+			->setSelect(['CODE'])
+			->where('ID', $customSectionId)
+			->exec()
+			->fetch()
+		;
+
+		return $result['CODE'] ?? null;
 	}
 }

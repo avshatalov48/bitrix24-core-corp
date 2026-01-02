@@ -8,7 +8,6 @@ use Bitrix\Main\Access\Event\EventDictionary;
 use Bitrix\Main\Access\User\AccessibleUser;
 use Bitrix\Main\ArgumentException;
 use Bitrix\Main\Loader;
-use Bitrix\Sign\Access\Model\UserModel;
 use Bitrix\Sign\Access\Model\UserModelRepository;
 use Bitrix\Sign\Access\Permission\PermissionDictionary;
 use Bitrix\Sign\Access\Permission\SignPermissionDictionary;
@@ -70,7 +69,7 @@ class AccessController extends BaseAccessController
 			{
 				return $accessCache['general'];
 			}
-			elseif ($item !== null && isset($accessCache['toItems'][$item->getId()]))
+			if ($item !== null && isset($accessCache['toItems'][$item->getId()]))
 			{
 				return $accessCache['toItems'][$item->getId()];
 			}
@@ -139,7 +138,7 @@ class AccessController extends BaseAccessController
 	{
 		return IterationHelper::all(
 			$actions,
-			fn(int|string $action): bool => $this->check($action, $item, $params)
+			fn(int|string $action): bool => $this->check($action, $item, $params),
 		);
 	}
 

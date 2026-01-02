@@ -1,0 +1,22 @@
+<?php
+$MESS["DOCUMENT_IN_FINAL_STATUS"] = "Бұл құжатқа қол қою мерзімін өзгерту мүмкін емес";
+$MESS["PERIOD_TOO_LONG_PLURAL_0"] = "Құжатқа қол қою мерзімі #MAX_PERIOD# айдан аспауы керек";
+$MESS["PERIOD_TOO_LONG_PLURAL_1"] = "Құжатқа қол қою мерзімі #MAX_PERIOD# айдан аспауы керек";
+$MESS["PERIOD_TOO_LONG_PLURAL_2"] = "Құжатқа қол қою мерзімі #MAX_PERIOD# айдан аспауы керек";
+$MESS["PERIOD_TOO_SHORT_PLURAL_0"] = "Қол қою мерзімі #MIN_PERIOD# минуттан кем болмауы керек";
+$MESS["PERIOD_TOO_SHORT_PLURAL_1"] = "Қол қою мерзімі #MIN_PERIOD# минуттан кем болмауы керек";
+$MESS["PERIOD_TOO_SHORT_PLURAL_2"] = "Қол қою мерзімі #MIN_PERIOD# минуттан кем болмауы керек";
+$MESS["SIGN_B2E_DOCUMENT_FILLING_APPLY_FOR_ALL_HINT"] = "Баптау қосылған кезде деректер жоқ барлық процесс құжаттарына қолданылады";
+$MESS["SIGN_B2E_DOCUMENT_FILLING_APPLY_FOR_ALL_TITLE"] = "Барлық құжаттарға баптауларды қолданыңыз";
+$MESS["SIGN_B2E_DOCUMENT_FILLING_DATE_CREATE_HCMLINK"] = "1C-дан";
+$MESS["SIGN_B2E_DOCUMENT_FILLING_DATE_CREATE_HCMLINK_HINT"] = "Құрылған күні автоматты түрде 1С-дан қосылады";
+$MESS["SIGN_B2E_DOCUMENT_FILLING_DATE_CREATE_LABEL"] = "Құрылған күні";
+$MESS["SIGN_B2E_DOCUMENT_FILLING_DATE_EXPIRE_LABEL"] = "Дейін қол қою";
+$MESS["SIGN_B2E_DOCUMENT_FILLING_DOCUMENT_IN_PROCESS"] = "Процестегі құжаттар";
+$MESS["SIGN_B2E_DOCUMENT_FILLING_INPUT_REG_NUMBER_HCMLINK_HINT"] = "Тіркеу нөмірі автоматты түрде 1С-дан қосылады";
+$MESS["SIGN_B2E_DOCUMENT_FILLING_INPUT_REG_NUMBER_LABEL"] = "Тіркеу нөмірі";
+$MESS["SIGN_B2E_DOCUMENT_FILLING_INPUT_REG_NUMBER_PLACEHOLDER"] = "н/ж";
+$MESS["SIGN_B2E_DOCUMENT_FILLING_INPUT_REG_NUMBER_PLACEHOLDER_HCMLINK"] = "1С-дан қосылды";
+$MESS["SIGN_B2E_DOCUMENT_FILLING_REMOVE_TEMPLATE"] = " Жөнелту үшін жиынтықтан қалыпты алып тастау";
+$MESS["SIGN_B2E_DOCUMENT_FILLING_TITLE_HEAD_LABEL"] = "Деректерді толтырыңыз";
+$MESS["SIGN_DOCUMENT_SEND_DATETIME_LIMIT_SELECTOR_GOSKEY_ALERT"] = "Мемлекеттік кілтке жіберілген құжаттар өкіл қол қойғаннан кейін келесі 24 сағат ішінде автоматты түрде орнатылмайды, тіпті егер сіз көрсеткен мерзім аяқталған болса да ";

@@ -19,6 +19,7 @@ type Params = {
 	isAhaShownOnMyTasksColumn: boolean,
 	isAhaShownCopilotAdvice: boolean,
 	flowLimitCode: string,
+	isFeatureTrialable: boolean,
 };
 
 type PullItem = {
@@ -62,6 +63,7 @@ export class Grid
 			comment_read_all: this.#commentReadAll,
 			flow_add: this.#onFlowAdd,
 			flow_delete: this.#onFlowDelete,
+			flow_pinned_for_user: this.#onFlowPinned,
 		};
 
 		this.#delayedPullFlowHandlers = {
@@ -129,8 +131,6 @@ export class Grid
 					}],
 				});
 			}
-
-			this.#updateRow(flowId);
 		});
 	}
 
@@ -591,6 +591,16 @@ export class Grid
 		this.#updateRow(flowId, 'update');
 	}
 
+	#onFlowPinned(data, flowId: number): void
+	{
+		if (!this.#isRowExist(flowId))
+		{
+			return;
+		}
+
+		this.#updateRow(flowId);
+	}
+
 	#onFlowDelete(data, flowId: number): void
 	{
 		if (!this.#isRowExist(flowId))
@@ -857,7 +867,11 @@ export class Grid
 
 			window.history.replaceState(null, null, uri.toString());
 
-			EditForm.createInstance({ flowId: demoFlowId, demoFlow: 'Y' });
+			EditForm.createInstance({
+				flowId: demoFlowId,
+				demoFlow: 'Y',
+				isFeatureTrialable: this.#params.isFeatureTrialable,
+			});
 		}
 
 		const createFlow = uri.getQueryParam('create_flow');
@@ -867,7 +881,7 @@ export class Grid
 
 			window.history.replaceState(null, null, uri.toString());
 
-			EditForm.createInstance({ guideFlow: 'Y' });
+			EditForm.createInstance({ guideFlow: 'Y', isFeatureTrialable: this.#params.isFeatureTrialable });
 		}
 	}
 

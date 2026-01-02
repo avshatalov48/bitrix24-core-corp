@@ -50,13 +50,22 @@ class StructureService
 		if ($this->isCompanyStructureConverted())
 		{
 			$structure = Container::getStructureRepository()->getByXmlId(Structure::DEFAULT_STRUCTURE_XML_ID);
-			$rootNode = $this->nodeRepository->getRootNodeByStructureId($structure->id);
-			$rootDepartment = DepartmentBackwardAccessCode::extractIdFromCode($rootNode->accessCode);
+			if ($structure)
+			{
+				$rootNode = $this->nodeRepository->getRootNodeByStructureId($structure->id);
+				if ($rootNode)
+				{
+					$rootDepartment = (int)DepartmentBackwardAccessCode::extractIdFromCode($rootNode->accessCode);
+				}
+			}
 		}
 		elseif (\Bitrix\Main\Loader::includeModule('intranet'))
 		{
 			$departmentTree = \CIntranetUtils::GetDeparmentsTree();
-			$rootDepartment = (int)$departmentTree[0][0];
+			if (!empty($departmentTree[0][0]))
+			{
+				$rootDepartment = (int)$departmentTree[0][0];
+			}
 		}
 
 		return $rootDepartment;

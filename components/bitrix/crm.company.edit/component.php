@@ -89,13 +89,11 @@ $arResult['EXTERNAL_CONTEXT'] = isset($_REQUEST['external_context']) ? $_REQUEST
 
 if ($isMyCompanyMode || (isset($arResult['IS_MY_COMPANY']) && $arResult['IS_MY_COMPANY'] === 'Y'))
 {
-	$CrmPerms = new CCrmPerms($USER->GetID());
-	if (!$CrmPerms->HavePerm('CONFIG', BX_CRM_PERM_CONFIG, 'WRITE'))
+	if (!\Bitrix\Crm\Service\Container::getInstance()->getUserPermissions()->isCrmAdmin())
 	{
 		ShowError(GetMessage('CRM_PERMISSION_DENIED'));
 		return;
 	}
-	unset($CrmPerms);
 }
 
 if($isEditMode)

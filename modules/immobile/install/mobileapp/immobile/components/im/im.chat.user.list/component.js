@@ -64,15 +64,18 @@ ChatUserList.init = function()
 ChatUserList.openUserProfile = function(userId, userData = {})
 {
 	console.log('ChatUserList.openUserProfile', userId, userData);
-	const { ProfileView } = jn.require("user/profile");
-	ProfileView.open({
-		userId,
-		imageUrl: ChatUtils.getAvatar(userData.avatar),
-		title: userData.name,
-		workPosition: userData.work_position,
-		name: userData.name,
-		isBackdrop: this.isBackdrop,
-		url: currentDomain+'/mobile/users/?user_id='+userId+'&FROM_DIALOG=Y',
+	const { UserProfile } = jn.require('user-profile');
+
+	void UserProfile.open({
+		ownerId: userId,
+		widgetParams: {
+			imageUrl: ChatUtils.getAvatar(userData.avatar),
+			title: userData.name,
+			workPosition: userData.work_position,
+			name: userData.name,
+			isBackdrop: this.isBackdrop,
+			url: currentDomain+'/mobile/users/?user_id='+userId+'&FROM_DIALOG=Y',
+		},
 	});
 
 	return true;

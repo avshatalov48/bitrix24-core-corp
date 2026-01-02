@@ -6,6 +6,7 @@
 
 namespace Bitrix\Crm\Integration\Disk;
 
+use Bitrix\Disk\Uf\CrmConnector;
 use Bitrix\Main\Localization\Loc;
 use Bitrix\Crm\Security\EntityAuthorization;
 use Bitrix\Crm\Timeline\Entity\TimelineBindingTable;
@@ -22,6 +23,24 @@ class CommentConnector extends Uf\StubConnector
 
 	public function getDataToShowByUser(int $userId)
 	{
+		$data = array();
+
+		$connector = $this->getCrmConnector();
+
+		if ($connector)
+		{
+			$subData = $connector->getDataToShow();
+			$data = array_merge($data, $subData);
+		}
+
+		return $data;
+
+	}
+
+	public function getCrmConnector(): ?CrmConnector
+	{
+		$connector = null;
+
 		$timelineBinding = TimelineBindingTable::getList(
 			array(
 				"filter" => array('OWNER_ID' => $this->entityId),
@@ -34,9 +53,6 @@ class CommentConnector extends Uf\StubConnector
 			return null;
 		}
 
-		$data = array();
-
-		$connector = null;
 		if ($bind["ENTITY_TYPE_ID"] == \CCrmOwnerType::Deal
 			|| $bind["ENTITY_TYPE_ID"] == \CCrmOwnerType::DealRecurring)
 		{
@@ -55,14 +71,7 @@ class CommentConnector extends Uf\StubConnector
 			$connector = new Uf\CrmContactConnector($bind["ENTITY_ID"]);
 		}
 
-		if ($connector)
-		{
-			$subData = $connector->getDataToShow();
-			$data = array_merge($data, $subData);
-		}
-
-		return $data;
-
+		return $connector;
 	}
 
 	public function canRead($userId)

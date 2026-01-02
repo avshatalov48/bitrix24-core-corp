@@ -24,11 +24,6 @@ jn.define('disk/dialogs/create-folder', (require, exports, module) => {
 			};
 		}
 
-		get isLoading()
-		{
-			return this.state.pending;
-		}
-
 		getTestId(suffix)
 		{
 			return `create-folder-dialog-${suffix}`;

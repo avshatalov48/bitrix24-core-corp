@@ -1,0 +1,99 @@
+.menu-items-body {
+	--menu-scroll-width: 8px; /* for safari */
+	--menu-scroll-thumb-color: rgba(var(--ui-color-background-primary-rgb), 0.21);
+	--menu-scrollbar-color: var(--ui-color-background-transparent);
+}
+
+.menu-items-body {
+	box-sizing: border-box;
+	min-width: calc(var(--menu-width-expanded) - var(--menu-items-block-padding-x));
+	margin-bottom: 14px;
+	padding-right: var(--menu-scroll-width);
+	display: flex;
+	flex-direction: column;
+	overflow-y: scroll;
+	scrollbar-gutter: stable;
+	overscroll-behavior: contain;
+}
+
+.bitrix24-dark-theme .menu-items-body {
+	--menu-scroll-thumb-color: rgba(82, 92, 105, .13);
+}
+
+/* for firefox */
+@supports not selector(::-webkit-scrollbar) {
+	.menu-items-body {
+		--menu-scroll-width: 3px;
+
+		scrollbar-color: transparent var(--menu-scrollbar-color);
+		scrollbar-width: thin;
+		min-width: auto;
+	}
+
+	.bx-mac .menu-items-body {
+		--menu-scroll-width: 14px;
+	}
+
+	.bx-mac .app.menu-collapsed-mode .menu-items-body,
+	.bx-mac .app.menu-animation-closing-mode .menu-items-body {
+		scrollbar-width: none;
+	}
+
+	.menu-items-body:hover {
+		scrollbar-color: var(--menu-scroll-thumb-color) var(--menu-scrollbar-color);
+	}
+}
+
+.app.menu-collapsed-mode:not(.menu-sliding-mode) .menu-items-body,
+.app.menu-animation-closing-mode .menu-items-body {
+	min-width: 0;
+}
+
+.menu-items-body-inner {
+	box-sizing: border-box;
+	display: flex;
+	flex-direction: column;
+	padding-left: var(--menu-items-block-padding-x);
+}
+
+.menu-items {
+	display: flex;
+	flex-direction: column;
+}
+
+/* for chrome and safari */
+.menu-items-body::-webkit-scrollbar {
+	width: 6px;
+	background-color: rgba(0, 0, 0, 0);
+	appearance: none;
+}
+
+/* for and safari */
+.menu-items-body::-webkit-scrollbar-thumb {
+	background: var(--menu-scroll-thumb-color);
+	background: rgba(0, 0, 0, 0);
+	border-radius: 5px;
+}
+
+.menu-items-body:hover::-webkit-scrollbar-thumb {
+	background: var(--menu-scroll-thumb-color);
+}
+
+.menu-items {
+	list-style: none outside none;
+	margin: 0;
+	padding: 0;
+	position: relative;
+	z-index: 2;
+}
+
+.menu-items-empty-li,
+.menu-items-hidden-empty-li {
+	display: none;
+}
+
+.menu-items-edit-mode .menu-items-empty-li,
+.menu-items-edit-mode .menu-items-hidden-empty-li {
+	display: block;
+	height: 3px;
+}

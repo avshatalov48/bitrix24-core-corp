@@ -14,4 +14,12 @@ enum AvailableMethodList: string
 	case PROMOTION = 'promotion';
 	case DEPARTMENT_COLLEAGUES = 'departmentColleagues';
 	case TARIFF_RESTRICTION = 'tariffRestriction';
+	case ACTIVE_CALLS = 'activeCalls';
+	case ANCHORS = 'anchors';
+	case CHATS_LIST = 'chatsList';
+	case COPILOT_LIST = 'copilotList';
+	case CHANNEL_LIST = 'channelList';
+	case COLLAB_LIST = 'collabList';
+
+	case TASK_LIST = 'taskList';
 }

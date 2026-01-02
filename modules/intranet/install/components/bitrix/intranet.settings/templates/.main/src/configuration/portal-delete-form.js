@@ -1,9 +1,15 @@
 import { BaseEvent, EventEmitter } from 'main.core.events';
 import { Loc, Tag } from 'main.core';
+import { Button } from 'ui.buttons';
 
-export default class PortalDeleteFormTypes {
-	static WARNING = '--warning';
-	static DANGER = '--danger';
+export default class PortalDeleteFormType
+{
+	static NOT_ADMIN = 'not_admin';
+	static BOUND = 'bound';
+	static MAIL = 'mail';
+	static EMPLOYEE = 'employee';
+	static NETWORK = 'network';
+	static DEFAULT = 'default';
 }
 
 export class PortalDeleteForm extends EventEmitter
@@ -21,22 +27,25 @@ export class PortalDeleteForm extends EventEmitter
 
 	getDescription(): HTMLElement
 	{
-		const moreDetails = `
+		return Tag.render`
+			${Loc.getMessage('INTRANET_SETTINGS_SECTION_CONFIGURATION_DESCRIPTION_DELETE_PORTAL_MSGVER_1', {
+				'#MORE_DETAILS#': this.getMoreDetails(),
+			})}
+		`;
+	}
+
+	getMoreDetails(): string
+	{
+		return `
 			<a class="ui-section__link" onclick="top.BX.Helper.show('redirect=detail&code=19566456')">
 				${Loc.getMessage('INTRANET_SETTINGS_CANCEL_MORE')}
 			</a>
-		`;
-
-		return Tag.render`
-			${Loc.getMessage('INTRANET_SETTINGS_SECTION_CONFIGURATION_DESCRIPTION_DELETE_PORTAL_MSGVER_1', {
-				'#MORE_DETAILS#': moreDetails,
-			})}
 		`;
 	}
 
 	getBodyClass(): string
 	{
-		return PortalDeleteFormTypes.WARNING;
+		return '--warning';
 	}
 
 	getConfirmButtonText(): ?string
@@ -92,11 +101,11 @@ export class PortalDeleteForm extends EventEmitter
 		`;
 	}
 
-	getConfirmButton(): BX.UI.Button
+	getConfirmButton(): Button
 	{
 		if (!this.confirmButton)
 		{
-			this.confirmButton = new BX.UI.Button({
+			this.confirmButton = new Button({
 				text: this.getConfirmButtonText() ?? '',
 				noCaps: true,
 				round: true,
@@ -115,7 +124,7 @@ export class PortalDeleteForm extends EventEmitter
 		return this.confirmButton;
 	}
 
-	sendChangeFormEvent(type: ?string): void
+	sendChangeFormEvent(type: ?PortalDeleteFormType): void
 	{
 		this.emit(
 			'updateForm',

@@ -31,19 +31,19 @@ use Bitrix\AI\SharePrompt\Service\OwnerService;
 use Bitrix\AI\SharePrompt\Service\PromptService;
 use Bitrix\AI\SharePrompt\Service\ShareService;
 use Bitrix\Main\Engine\Controller;
-use Bitrix\Intranet\ActionFilter\IntranetUser;
 use Bitrix\Main\Loader;
 use Bitrix\Main\ArgumentException;
 use Bitrix\Main\SystemException;
+use Bitrix\AI\Controller\ActionFilter\CheckCopilotAccess;
 
 class Prompt extends Controller
 {
 	public function getDefaultPreFilters(): array
 	{
 		$filters = parent::getDefaultPreFilters();
-		if (Loader::includeModule('intranet'))
+		if (Loader::includeModule('intranet') && Loader::includeModule('extranet'))
 		{
-			$filters[] = new IntranetUser();
+			$filters[] = new CheckCopilotAccess();
 		}
 
 		return $filters;

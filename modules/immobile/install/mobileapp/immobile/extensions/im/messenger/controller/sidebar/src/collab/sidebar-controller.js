@@ -3,7 +3,7 @@
  */
 
 jn.define('im/messenger/controller/sidebar/collab/sidebar-controller', (require, exports, module) => {
-	const { Loc } = require('loc');
+	const { Loc } = require('im/messenger/loc');
 	const { Icon } = require('assets/icons');
 
 	const { CollabSidebarView } = require('im/messenger/controller/sidebar/collab/sidebar-view');
@@ -16,7 +16,7 @@ jn.define('im/messenger/controller/sidebar/collab/sidebar-controller', (require,
 	const { Notification, ToastType } = require('im/messenger/lib/ui/notification');
 	const { MessengerEmitter } = require('im/messenger/lib/emitter');
 	const { showDeleteCollabAlert, showLeaveCollabAlert } = require('im/messenger/lib/ui/alert');
-	const { AnalyticsService } = require('im/messenger/provider/service');
+	const { AnalyticsService } = require('im/messenger/provider/services/analytics');
 	const { SidebarHeaderContextMenuActionType } = require('im/messenger/const');
 	const { ParticipantsService } = require('im/messenger/controller/sidebar/chat/tabs/participants/participants-service');
 	const { ChatPermission, UserPermission } = require('im/messenger/lib/permission-manager');
@@ -97,19 +97,19 @@ jn.define('im/messenger/controller/sidebar/collab/sidebar-controller', (require,
 
 		canEdit()
 		{
-			return ChatPermission.iaCanUpdateDialogByRole(this.dialogId);
+			return ChatPermission.canUpdateDialogByRole(this.dialogId);
 		}
 
 		canLeave()
 		{
 			const userId = serviceLocator.get('core').getUserId();
 
-			return UserPermission.canLeaveFromCollab(userId) && ChatPermission.isCanLeaveFromChat(this.dialogId);
+			return UserPermission.canLeaveFromCollab(userId) && ChatPermission.canLeaveFromChat(this.dialogId);
 		}
 
 		canDelete()
 		{
-			return ChatPermission.isCanDeleteChat(this.dialogId);
+			return ChatPermission.canDeleteChat(this.dialogId);
 		}
 
 		async onHeaderMenuEditDialog()

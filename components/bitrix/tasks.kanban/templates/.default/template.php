@@ -35,6 +35,7 @@ use Bitrix\Tasks\Integration\Network\MemberSelector;
 use Bitrix\Tasks\Integration\Socialnetwork\Context\Context;
 use Bitrix\Tasks\Kanban\Sort\Item\MenuItem;
 use Bitrix\Tasks\Kanban\Sort\Menu;
+use Bitrix\Tasks\Onboarding\DI\OnboardingContainer;
 use Bitrix\Tasks\UI\Filter;
 use Bitrix\Tasks\Kanban\StagesTable;
 use Bitrix\Tasks\UI\ScopeDictionary;
@@ -44,11 +45,8 @@ use Bitrix\UI\Toolbar\Facade\Toolbar;
 /** @var array $arParams */
 /** @var Application $APPLICATION */
 /** @var CBitrixComponent $component */
-/** @var $isBitrix24Template */
 
 Loc::loadMessages(__FILE__);
-
-$isBitrix24Template = (SITE_TEMPLATE_ID === 'bitrix24');
 
 $isIFrame = isset($_REQUEST['IFRAME']) && $_REQUEST['IFRAME'] === 'Y';
 
@@ -83,6 +81,7 @@ $clientTime = date(Date::convertFormatToPhp(FORMAT_DATETIME), (time() + CTimeZon
 CJSCore::Init([
 	'task_kanban',
 	'intranet_notify_dialog',
+	'CJSTask',
 ]);
 Extension::load([
 	'tasks.kanban-sort',
@@ -95,20 +94,34 @@ Extension::load([
 	'ui.avatar',
 ]);
 
+\Bitrix\Main\Page\Asset::getInstance()->addJs('/bitrix/js/tasks/task-iframe-popup.js');
+
 $APPLICATION->SetAdditionalCSS("/bitrix/js/intranet/intranet-common.css");
 $collabClass = $arResult['IS_COLLAB'] ? 'sn-collab-tasks__wrapper' : '';
+
+$timeManagerData = [];
+if (Loader::includeModule('intranet'))
+{
+	$intranetData = CIntranetPlanner::getData(SITE_ID, true);
+	CIntranetPlanner::initScripts($intranetData);
+
+	$timeManagerData = $intranetData['DATA'];
+}
 
 if ($arResult['IS_COLLAB'])
 {
 	Toolbar::deleteFavoriteStar();
-	$this->SetViewTarget('in_pagetitle') ?>
 
-	<div class="sn-collab-icon__wrapper">
-		<div id="sn-collab-icon-<?=HtmlFilter::encode($arParams["GROUP_ID"])?>" class="sn-collab-icon__hexagon-bg"></div>
-	</div>
-	<div class="sn-collab__subtitle"><?=HtmlFilter::encode($arResult["COLLAB_NAME"])?></div>
+	$collabName = HtmlFilter::encode($arResult['COLLAB_NAME']);
 
-	<?php $this->EndViewTarget();
+	Toolbar::addBeforeTitleBoxHtml(
+		'<div class="sn-collab-icon__wrapper">' .
+		'<div id="sn-collab-icon-' . HtmlFilter::encode($arParams['GROUP_ID']) . '" class="sn-collab-icon__hexagon-bg"></div>' .
+		'</div>'
+	);
+	Toolbar::addUnderTitleHtml(
+		'<div class="sn-collab__subtitle" title="' . $collabName . '">' . $collabName . '</div>'
+	);
 }
 
 
@@ -147,11 +160,6 @@ if (isset($arParams['INCLUDE_INTERFACE_HEADER']) && $arParams['INCLUDE_INTERFACE
 	$filter = $filterInstance->getFilters();
 	$presets = $filterInstance->getAllPresets();
 	$gridID = $filterInstance->getId();
-
-	if ($isBitrix24Template)
-	{
-		$this->SetViewTarget('inside_pagetitle');
-	}
 
 	$showViewMode = (
 		(
@@ -223,8 +231,7 @@ if (isset($arParams['INCLUDE_INTERFACE_HEADER']) && $arParams['INCLUDE_INTERFACE
 
 	$popupSortItems = $menu->toArray();
 
-if ($arResult['CONTEXT'] !== Context::getSpaces())
-{
+
 	$APPLICATION->IncludeComponent(
 		'bitrix:tasks.interface.header',
 		'',
@@ -249,6 +256,7 @@ if ($arResult['CONTEXT'] !== Context::getSpaces())
 			'USE_AJAX_ROLE_FILTER' => $arParams['PERSONAL'] == 'Y' ? 'Y' : 'N',
 			'MARK_ACTIVE_ROLE' => $arParams['MARK_ACTIVE_ROLE'] ?? null,
 			'MARK_SECTION_ALL' => $arParams['MARK_SECTION_ALL'] ?? null,
+			'MARK_SECTION_TASKS_LIST' => $arParams['MARK_SECTION_TASKS_LIST'] ?? null,
 			'MARK_SECTION_PROJECTS' => $arParams['MARK_SECTION_PROJECTS'] ?? null,
 			'PROJECT_VIEW' => $arParams['PROJECT_VIEW'] ?? null,
 			'PATH_TO_USER_TASKS' => $arParams['~PATH_TO_USER_TASKS'] ?? null,
@@ -304,12 +312,6 @@ if ($arResult['CONTEXT'] !== Context::getSpaces())
 		$component,
 		['HIDE_ICONS' => true]
 	);
-}
-
-	if ($isBitrix24Template)
-	{
-		$this->EndViewTarget();
-	}
 }
 else
 {
@@ -400,7 +402,7 @@ else
 				: 'false'?>,
 			canAddItem: <?= $arResult['ACCESS_CREATE_PERMS'] ? 'true' : 'false'?>,
 			canSortItem: <?= $arResult['ACCESS_SORT_PERMS'] ? 'true' : 'false'?>,
-			bgColor: <?= (SITE_TEMPLATE_ID === 'bitrix24' ? '"transparent"' : 'null')?>,
+			bgColor: <?= (SITE_TEMPLATE_ID === 'bitrix24' || SITE_TEMPLATE_ID === 'air' ? '"transparent"' : 'null')?>,
 			addItemTitleText: "<?= Loc::getMessage('KANBAN_QUICK_TASK');?>",
 			addDraftItemInfo: "<?= Loc::getMessage('KANBAN_QUICK_TASK_ITEM_INFO');?>",
 			columns: <?= CUtil::PhpToJSObject($data['columns'], false, false, true)?>,
@@ -588,7 +590,7 @@ if ($show)
 		<?php endif;?>
 		<a href="https://helpdesk.bitrix24.<?= $popupDomain ?>/open/<?= $popupUrlId ?>/" target="_blank"
 		   data-helpId="<?= $popupUrlId ?>"<?php
-		if (SITE_TEMPLATE_ID === 'bitrix24')
+		if (SITE_TEMPLATE_ID === 'bitrix24' || SITE_TEMPLATE_ID === 'air')
 		{
 			?> id="kanban-readmore"<?php
 		} ?> class="tasks-kanban-popup-text-redmore">
@@ -607,6 +609,8 @@ CJSCore::Init("spotlight");
 			showPopup();
 		}
 		BX.Tasks.KanbanComponent.filterId = '<?=$gridID?>';
+		
+		BX.TasksTimerManager.onDataRecieved(<?=Json::encode($timeManagerData)?>);
 
 		<?php if ($arResult['IS_COLLAB']): ?>
 			const collabImagePath = "<?=$arResult["COLLAB_IMAGE"]?>" || null;
@@ -619,6 +623,22 @@ CJSCore::Init("spotlight");
 				userpicPath: collabImagePath,
 			});
 			avatar.renderTo(BX('sn-collab-icon-' + groupId));
+		<?php endif; ?>
+
+		<?php if ($arResult['needToShowInviteToMobile']) : ?>
+			BX.ready(function() {
+				BX.Runtime.loadExtension('tasks.promo.invite-to-mobile').then(() => {
+					const inviteToMobile = new BX.Tasks.Promo.InviteToMobile({
+						appLink: <?= Json::encode($arResult['inviteToMobileLink']) ?>,
+					});
+
+					inviteToMobile.show();
+					<?php
+						$inviteToMobileService = OnboardingContainer::getInstance()->getInviteToMobileService();
+						$inviteToMobileService->setShown($arParams['USER_ID']);
+					?>
+				});
+			});
 		<?php endif; ?>
 	});
 

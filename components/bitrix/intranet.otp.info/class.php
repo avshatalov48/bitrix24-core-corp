@@ -5,97 +5,109 @@ if (!defined('B_PROLOG_INCLUDED') || B_PROLOG_INCLUDED !== true)
 	die();
 }
 
-use Bitrix\Main\Loader;
+use Bitrix\Intranet\Entity\UserOtp;
+use Bitrix\Intranet\Internal\Integration\Security\Otp;
 
 class CIntranetOtpInfoComponent extends CBitrixComponent
 {
+	private \Bitrix\Intranet\CurrentUser $currentUser;
+
+	public function __construct($component = null)
+	{
+		parent::__construct($component);
+		$this->currentUser = Bitrix\Intranet\CurrentUser::get();
+	}
+
 	public function executeComponent(): void
 	{
-		global $USER;
-		
+		if (!$this->currentUser->isAuthorized())
+		{
+			return;
+		}
+
+		$otp = new Otp();
+
 		if (
-			!Loader::includeModule('security')
-			|| !$USER->IsAuthorized()
-			|| !\Bitrix\Security\Mfa\Otp::isOtpEnabled()
-			|| !\Bitrix\Security\Mfa\Otp::isMandatoryUsing()
+			!$otp->isMandatory()
+			|| $this->isSavedLocalStorageInfo()
+			|| !$this->checkPopupShowEvents()
 		)
 		{
 			return;
 		}
 
+		$user = new \Bitrix\Intranet\Entity\User(
+			id: $this->currentUser->getId(),
+		);
+
+		if (
+			$otp->isEnabledForUser($user)
+			|| !$otp->isRequiredForUser($user)
+		)
+		{
+			return;
+		}
+
+		$this->arResult['PATH_TO_PROFILE_SECURITY'] = $this->getPathToProfileSecurity();
+		$this->arResult['POPUP_NAME'] = 'otp_mandatory_info';
+		$this->arResult['USER']['OTP_DAYS_LEFT'] = $this->getFormattedOtpDaysLeft($otp->getUserOtp($user));
+		$this->saveLocalStorageInfo();
+
+		$this->includeComponentTemplate();
+	}
+
+	private function checkPopupShowEvents(): bool
+	{
 		foreach (GetModuleEvents('intranet', 'OnIntranetPopupShow', true) as $arEvent)
 		{
 			if (ExecuteModuleEventEx($arEvent) === false)
 			{
-				return;
+				return false;
 			}
 		}
 
-		if(defined('BX_COMP_MANAGED_CACHE'))
-		{
-			$ttl = 2592000;
-		}
-		else
-		{
-			$ttl = 600;
-		}
+		return true;
+	}
 
-		$cache_id = 'user_otp_' . $USER->GetID();
-		$cache_dir = '/otp/user_id/' . substr(md5($USER->GetID()), -2) . '/' . $USER->GetID() . '/';
+	private function isSavedLocalStorageInfo(): bool
+	{
+		$localStorageInfo = \Bitrix\Main\Application::getInstance()
+			->getLocalSession('otpMandatoryInfo')
+			->get('otpMandatoryInfo');
 
-		$obCache = new \CPHPCache;
+		return isset($localStorageInfo);
+	}
 
-		if($obCache->InitCache($ttl, $cache_id, $cache_dir))
+	private function saveLocalStorageInfo(): void
+	{
+		\Bitrix\Main\Application::getInstance()
+			->getLocalSession('otpMandatoryInfo')
+			->set('otpMandatoryInfo', 'Y');
+	}
+
+	private function getPathToProfileSecurity(): string
+	{
+		$this->arParams['PATH_TO_PROFILE_SECURITY'] = trim($this->arParams['PATH_TO_PROFILE_SECURITY'] ?? '');
+
+		if(empty($this->arParams['PATH_TO_PROFILE_SECURITY']))
 		{
-			$arUserOtp = $obCache->GetVars();
-		}
-		else
-		{
-			$arUserOtp = array(
-				'ACTIVE' => \CSecurityUser::IsUserOtpActive($USER->GetID())
+			$isExtranet = (
+				\Bitrix\Main\ModuleManager::isModuleInstalled('extranet')
+				&& \COption::getOptionString('extranet', 'extranet_site') === SITE_ID
 			);
 
-			if($obCache->StartDataCache())
-			{
-				$obCache->EndDataCache($arUserOtp);
-			}
+			$path = $isExtranet ? SITE_DIR . 'contacts/personal' : SITE_DIR . 'company/personal';
+			$this->arParams['PATH_TO_PROFILE_SECURITY'] = $path . '/user/#user_id#/security/';
 		}
 
-		$this->arParams['PATH_TO_PROFILE_SECURITY'] = trim($this->arParams['PATH_TO_PROFILE_SECURITY']);
-
-		if($this->arParams['PATH_TO_PROFILE_SECURITY'] == '')
-		{
-			$this->arParams['PATH_TO_PROFILE_SECURITY'] = SITE_DIR . 'company/personal/user/#user_id#/security/';
-		}
-
-		$this->arResult['PATH_TO_PROFILE_SECURITY'] = \CComponentEngine::MakePathFromTemplate(
+		return \CComponentEngine::MakePathFromTemplate(
 			$this->arParams['PATH_TO_PROFILE_SECURITY'],
-			['user_id' => $USER->GetID()]
+			['user_id' => $this->currentUser->getId()]
 		);
+	}
 
-		$localStorage = \Bitrix\Main\Application::getInstance()->getLocalSession('otpMandatoryInfo');
-
-		if (
-			!$arUserOtp['ACTIVE']
-			&& !isset($localStorage['otpMandatoryInfo'])
-		)
-		{
-			//for all mandatory
-			$isUserSkipMandatoryRights = \CSecurityUser::IsUserSkipMandatoryRights($USER->GetID());
-			$dateDeactivate = \CSecurityUser::GetDeactivateUntil($USER->GetID());
-
-			if (!$isUserSkipMandatoryRights && $dateDeactivate)
-			{
-				$this->arResult['POPUP_NAME'] = 'otp_mandatory_info';
-				$localStorage->set('otpMandatoryInfo', 'Y');
-				$this->arResult['USER']['OTP_DAYS_LEFT'] = (
-					$dateDeactivate
-					? FormatDate('ddiff', time() - 60*60*24,  MakeTimeStamp($dateDeactivate))
-					: ''
-				);
-
-				$this->includeComponentTemplate();
-			}
-		}
+	private function getFormattedOtpDaysLeft(UserOtp $userOtp): string
+	{
+		return FormatDate('ddiff', time() - 60 * 60 * 24,  MakeTimeStamp($userOtp->dateDeactivate));
 	}
 }

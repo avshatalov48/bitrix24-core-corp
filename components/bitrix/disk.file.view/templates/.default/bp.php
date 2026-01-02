@@ -1,6 +1,9 @@
 <?php
 use Bitrix\Main\Localization\Loc;
 use Bitrix\Main;
+use Bitrix\UI\Buttons\Button;
+use Bitrix\UI\Buttons\Color;
+use Bitrix\UI\Toolbar\Facade\Toolbar;
 
 if(!defined('B_PROLOG_INCLUDED') || B_PROLOG_INCLUDED!==true) die();
 /** @var array $arParams */
@@ -31,6 +34,16 @@ CJSCore::Init([
 Loc::loadMessages(__DIR__ . '/template.php');
 $APPLICATION->setTitle(Loc::getMessage('DISK_FILE_VIEW_FILE_TITLE_BP', ['#NAME#' => $arResult['FILE']['NAME'],]));
 $sortBpLog = false;
+
+Main\Loader::includeModule('ui');
+
+$runButton = new Button([
+	"color" => Color::PRIMARY,
+	"text" => Loc::getMessage('DISK_FILE_VIEW_FILE_BIZPROC_START'),
+	"dropdown" => true,
+]);
+$runButton->addAttribute('id', 'bx-disk-run-bp');
+Toolbar::addButton($runButton);
 ?>
 
 <div>
@@ -45,14 +58,6 @@ $sortBpLog = false;
 		}
 		if(!isset($_GET['log_workflow'])) { ?>
 			<ul class="bizproc-list bizproc-document-states">
-
-				<? $this->setViewTarget("inside_pagetitle", 10); ?>
-				<div class="pagetitle-container pagetitle-flexible-space" style="overflow: hidden;">
-					<div class="pagetitle-container pagetitle-align-right-container">
-						<span id="bx-disk-run-bp" class="ui-btn ui-btn-primary ui-btn-dropdown"><?= Loc::getMessage('DISK_FILE_VIEW_FILE_BIZPROC_START') ?></span>
-					</div>
-				</div>
-				<? $this->endViewTarget(); ?>
 			<?
 			if(!empty($arResult['BIZPROC_LIST']))
 			{

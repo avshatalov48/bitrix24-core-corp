@@ -1,0 +1,15 @@
+.menu-items-ai-assistant-stub {
+	width: 100%;
+	min-width: 66px;
+	height: 66px;
+}
+
+.menu-collapsed-mode .menu-items-ai-assistant-stub,
+.menu-animation-closing-mode .menu-items-ai-assistant-stub {
+	background-color: var(--leftmenu-bg);
+}
+
+.menu-items-ai-assistant-stub,
+.menu-collapsed-mode.menu-animation-opening-mode .menu-items-ai-assistant-stub {
+	background-color: var(--leftmenu-bg-expanded);
+}

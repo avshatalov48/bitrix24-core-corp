@@ -196,7 +196,7 @@ this.BX.OpenLines.v2.Provider = this.BX.OpenLines.v2.Provider || {};
 	  });
 	}
 	function _clearLastOpenedElement2() {
-	  im_v2_lib_layout.LayoutManager.getInstance().setLastOpenedElement(im_v2_const.Layout.openlinesV2.name, '');
+	  im_v2_lib_layout.LayoutManager.getInstance().setLastOpenedElement(im_v2_const.Layout.openlinesV2, '');
 	}
 
 	var _sendRequest = /*#__PURE__*/babelHelpers.classPrivateFieldLooseKey("sendRequest");
@@ -264,7 +264,7 @@ this.BX.OpenLines.v2.Provider = this.BX.OpenLines.v2.Provider || {};
 	    void im_v2_application_core.Core.getStore().dispatch('recentOpenLines/delete', {
 	      id: dialogId
 	    });
-	    im_v2_lib_layout.LayoutManager.getInstance().setLastOpenedElement(im_v2_const.Layout.openlinesV2.name, '');
+	    im_v2_lib_layout.LayoutManager.getInstance().setLastOpenedElement(im_v2_const.Layout.openlinesV2, '');
 	    const queryParams = {
 	      data: {
 	        dialogId
@@ -292,7 +292,7 @@ this.BX.OpenLines.v2.Provider = this.BX.OpenLines.v2.Provider || {};
 	class TransferService {
 	  chatTransfer(dialogId, transferId) {
 	    void im_public.Messenger.openLines();
-	    im_v2_lib_layout.LayoutManager.getInstance().setLastOpenedElement(im_v2_const.Layout.openlinesV2.name, '');
+	    im_v2_lib_layout.LayoutManager.getInstance().setLastOpenedElement(im_v2_const.Layout.openlinesV2, '');
 	    const queryParams = {
 	      data: {
 	        dialogId,

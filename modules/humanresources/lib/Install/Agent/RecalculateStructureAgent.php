@@ -4,6 +4,7 @@ namespace Bitrix\HumanResources\Install\Agent;
 
 use Bitrix\HumanResources\Item\Structure;
 use Bitrix\HumanResources\Service\Container;
+use CAccess;
 
 class RecalculateStructureAgent
 {
@@ -19,5 +20,10 @@ class RecalculateStructureAgent
 		}
 
 		return '';
+	}
+
+	public static function reInstallAccessProviderData()
+	{
+		CAccess::RecalculateForProvider('access');
 	}
 }

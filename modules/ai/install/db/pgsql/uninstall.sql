@@ -24,3 +24,8 @@ drop table if exists b_ai_role_share;
 drop table if exists b_ai_role_owner;
 drop table if exists b_ai_role_translate_name;
 drop table if exists b_ai_role_translate_description;
+
+drop table if exists b_ai_chatbot_chatbot;
+drop table if exists b_ai_chatbot_chat;
+drop table if exists b_ai_chatbot_message;
+drop table if exists b_ai_chatbot_message_unread;

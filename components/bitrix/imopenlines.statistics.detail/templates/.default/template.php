@@ -14,6 +14,8 @@ use \Bitrix\Main\UI;
  * @var \CBitrixComponent $component
  */
 
+\Bitrix\Main\Loader::includeModule("ui");
+
 \Bitrix\Main\UI\Extension::load([
 	'ui.design-tokens',
 ]);
@@ -33,45 +35,62 @@ if($isBitrix24Template)
 {
 	$bodyClass = $APPLICATION->GetPageProperty('BodyClass');
 	$APPLICATION->SetPageProperty('BodyClass', ($bodyClass ? $bodyClass.' ' : '').'pagetitle-toolbar-field-view');
-
-	$this->SetViewTarget('inside_pagetitle', 0);
-	?><div class="pagetitle-container pagetitle-flexible-space"><?
 }
 
-$APPLICATION->IncludeComponent(
-	'bitrix:main.ui.filter',
-	'',
-	[
-		'GRID_ID' => $arResult['GRID_ID'],
-		'FILTER_ID' => $arResult['FILTER_ID'],
-		'FILTER' => $arResult['FILTER'] ?? [],
-		'FILTER_PRESETS' => $arResult['FILTER_PRESETS'] ?? [],
-		'ENABLE_LIVE_SEARCH' => (bool)\Bitrix\Main\Config\Option::get('imopenlines', 'enable_live_search'),
-		'ENABLE_LABEL' => true
+\Bitrix\UI\Toolbar\Facade\Toolbar::addFilter([
+	'GRID_ID' => $arResult['GRID_ID'],
+	'FILTER_ID' => $arResult['FILTER_ID'],
+	'FILTER' => $arResult['FILTER'] ?? [],
+	'FILTER_PRESETS' => $arResult['FILTER_PRESETS'] ?? [],
+	'ENABLE_LIVE_SEARCH' => (bool)\Bitrix\Main\Config\Option::get('imopenlines', 'enable_live_search'),
+	'ENABLE_LABEL' => true,
+]);
+
+$menuButton = new \Bitrix\UI\Buttons\Button([
+	'icon' => \Bitrix\UI\Buttons\Icon::SETTINGS,
+	'color' => \Bitrix\UI\Buttons\Color::LIGHT_BORDER,
+	'dropdown' => false,
+	"menu" => [
+		"items" => [
+			[
+				"text" => Loc::getMessage('OL_COMPONENT_SESSION_CONFIGURATION_UF_TITLE'),
+				"onclick" => new \Bitrix\UI\Buttons\JsCode(
+					"
+					BX.SidePanel.Instance.open('".CUtil::JSEscape($arResult['UF_LIST_CONFIG_URL'])."', {
+						cacheable: false,
+						allowChangeHistory: false,
+						requestMethod: 'post',
+						requestParams: {
+							sessid: BX.bitrix_sessid()
+						},
+						width: 990
+					});
+				"
+				)
+			],
+		],
 	],
-	$component,
-	['HIDE_ICONS' => 'Y']
-);
+]);
 
-?>
-	<div class="pagetitle-container pagetitle-align-right-container">
-		<?if($arResult['ALLOW_MODIFY_SETTINGS'] === true):?>
-		<button id="ol-stat-configuration-button" type="button" class="ui-btn ui-btn-themes ui-btn-light-border ui-btn-icon-setting"></button>
-		<?endif;?>
+if($arResult['ALLOW_MODIFY_SETTINGS'] === true)
+{
+	\Bitrix\UI\Toolbar\Facade\Toolbar::addButton($menuButton);
+}
 
-		<span
-			onclick="<?=$arResult['BUTTON_EXPORT']?>"
-			class="ui-btn ui-btn-themes ui-btn-light-border <?if($arResult['LIMIT_EXPORT'] === true):?>ui-btn-icon-lock<?else:?>ui-btn-icon-download<?endif?>">
-			<?=Loc::getMessage('OL_STAT_EXCEL')?>
-		</span>
-	</div>
-<?
+
+\Bitrix\UI\Toolbar\Facade\Toolbar::addButton([
+	'text' => Loc::getMessage('OL_STAT_EXCEL'),
+	'icon' => ($arResult['LIMIT_EXPORT'] === true) ? \Bitrix\UI\Buttons\Icon::LOCK : \Bitrix\UI\Buttons\Icon::DOWNLOAD,
+	'color' => \Bitrix\UI\Buttons\Color::LIGHT_BORDER,
+	'click' => new \Bitrix\UI\Buttons\JsCode($arResult['BUTTON_EXPORT']),
+	'dataset' => [
+		'toolbar-collapsed-icon' => Bitrix\UI\Buttons\Icon::DOWNLOAD
+	]
+]);
+
 
 if ($isBitrix24Template)
 {
-	?></div><?
-	$this->EndViewTarget();
-
 	$isAdmin = \Bitrix\Main\Loader::includeModule('bitrix24') ? \CBitrix24::isPortalAdmin($USER->getId()) : $USER->IsAdmin();
 	if($isAdmin)
 	{
@@ -191,19 +210,19 @@ UI\Extension::load([
 				))?>
 			);
 
-			<?if($arResult['ALLOW_MODIFY_SETTINGS'] === true):?>
-			BX.OpenLines.Configuration.init({
-				configurationButton: BX('ol-stat-configuration-button'),
-				ufFieldListUrl: '<?= CUtil::JSEscape($arResult['UF_LIST_CONFIG_URL'])?>'
-			});
-			<?endif;?>
+			<?php if($arResult['ALLOW_MODIFY_SETTINGS'] === true):?>
+				BX.OpenLines.Configuration.init({
+					configurationButton: BX('ol-stat-configuration-button'),
+					ufFieldListUrl: '<?= CUtil::JSEscape($arResult['UF_LIST_CONFIG_URL'])?>'
+				});
+			<?php endif;?>
 
-			<?if($arResult['FDC_MODE'] === true):?>
-			BX.OpenLines.GridFilter.init({
-				filterId: '<?= $arResult['FILTER_ID'] ?>',
-				linkId: 'ol-stat-filter-list-url'
-			});
-			<?endif;?>
+			<?php if($arResult['FDC_MODE'] === true):?>
+				BX.OpenLines.GridFilter.init({
+					filterId: '<?= $arResult['FILTER_ID'] ?>',
+					linkId: 'ol-stat-filter-list-url'
+				});
+			<?php endif; ?>
 		}
 	);
 </script>

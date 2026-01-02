@@ -19,7 +19,8 @@ final class CallActivityWithAudioRecordingEvent extends AbstractBuilder
 	private ?int $activityId = null;
 	private ?int $activityDirection = null;
 	private ?int $callDuration = null;
-
+	private ?string $telephonyType = null;
+	
 	public function setTool(string $tool): self
 	{
 		$this->tool = $tool;
@@ -56,7 +57,14 @@ final class CallActivityWithAudioRecordingEvent extends AbstractBuilder
 				ErrorCode::getRequiredArgumentMissingError('activityId'),
 			);
 		}
-
+		
+		if ($this->telephonyType === null)
+		{
+			$result->addError(
+				ErrorCode::getRequiredArgumentMissingError('telephonyType'),
+			);
+		}
+		
 		if ($this->callDuration === null)
 		{
 			$result->addError(
@@ -78,7 +86,8 @@ final class CallActivityWithAudioRecordingEvent extends AbstractBuilder
 	{
 		$this->setSection(Dictionary::SECTION_CRM);
 		$this->setSubSection(Dictionary::getAnalyticsEntityType($this->activityOwnerTypeId));
-
+		
+		$this->setP3('telephonyType', $this->telephonyType);
 		$this->setP4('callDuration', (string)$this->callDuration);
 		$this->setP5('idCall', (string)$this->activityId);
 
@@ -117,6 +126,13 @@ final class CallActivityWithAudioRecordingEvent extends AbstractBuilder
 	{
 		$this->callDuration = $duration;
 
+		return $this;
+	}
+	
+	public function setTelephonyType(string $type): self
+	{
+		$this->telephonyType = $type;
+		
 		return $this;
 	}
 }

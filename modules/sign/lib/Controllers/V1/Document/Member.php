@@ -15,7 +15,10 @@ use Bitrix\Sign\Item\Hr\EntitySelector\Entity;
 use Bitrix\Sign\Item\Hr\EntitySelector\EntityCollection;
 use Bitrix\Sign\Item\Hr\NodeSync;
 use Bitrix\Sign\Item\MemberCollection;
+use Bitrix\Sign\Operation\Member\GetMembersFromUserPartyEntities;
 use Bitrix\Sign\Operation\Member\SyncDepartmentsPage;
+use Bitrix\Sign\Operation\Member\Validation\ValidateEntitySelectorMembers;
+use Bitrix\Sign\Result\Operation\Member\ValidateEntitySelectorMembersResult;
 use Bitrix\Sign\Service;
 use Bitrix\Sign\Type\Access\AccessibleItemType;
 use Bitrix\Sign\Type\Hr\EntitySelector;
@@ -74,6 +77,14 @@ class Member extends \Bitrix\Sign\Engine\Controller
 			->getMemberRepository()
 			->listByDocumentId($document->id)
 		;
+
+		if (!$document->isTemplated())
+		{
+			$members = $members->filter(
+				static fn(\Bitrix\Sign\Item\Member $member): bool => $member->entityType !== EntityType::ROLE,
+			);
+		}
+
 		$result = [];
 		$isCrmModuleIncluded = Loader::includeModule('crm');
 		foreach ($members as $member)
@@ -281,10 +292,18 @@ class Member extends \Bitrix\Sign\Engine\Controller
 	)]
 	public function getMembersForDocumentAction(
 		string $documentUid,
+		string $role = Role::SIGNER,
 		int $page = 1,
 		int $pageSize = 20,
 	): array
 	{
+		if (!Role::isValid($role))
+		{
+			$this->addError(new Error('Invalid role'));
+
+			return [];
+		}
+
 		$document = Service\Container::instance()->getDocumentService()->getByUid($documentUid);
 
 		if (!$document)
@@ -296,17 +315,30 @@ class Member extends \Bitrix\Sign\Engine\Controller
 
 		[$limit, $offset] = \Bitrix\Sign\Util\Query\Db\Paginator::getLimitAndOffset($pageSize, $page);
 
-		$memberCollection = Service\Container::instance()->getMemberRepository()->listByDocumentIdWithRole($document->id, Role::SIGNER, $limit, $offset)->toArray();
+		$memberCollection = Service\Container::instance()
+			->getMemberRepository()
+			->listByDocumentIdWithRole($document->id, $role, $limit, $offset)
+			->toArray()
+		;
 
 		$members = [];
 		foreach ($memberCollection as $member)
 		{
 			$avatar = Service\Container::instance()->getSignMemberUserService()->getAvatarByMemberUid($member->uid);
 			$userId = Service\Container::instance()->getMemberService()->getUserIdForMember($member, $document);
+			$name = $member->name;
+
+			if ($member->entityType === EntityType::ROLE)
+			{
+				$name = Service\Container::instance()
+					->getHumanResourcesStructureNodeService()
+					->getRoleTitleById($member->entityId)
+				;
+			}
 			$members[] = [
 				'memberId' => $member->id,
 				'userId' => $userId,
-				'name' => $member->name,
+				'name' => (string)$name,
 				'avatar' => $avatar?->getBase64Content(),
 				'profileUrl' => $userId ? '/company/personal/user/' . $userId . '/' : '',
 			];
@@ -323,6 +355,7 @@ class Member extends \Bitrix\Sign\Engine\Controller
 	)]
 	public function getUniqSignersCountAction(
 		array $members,
+		bool $excludeRejected = true,
 	): array
 	{
 		$entityCollection = new EntityCollection();
@@ -343,7 +376,7 @@ class Member extends \Bitrix\Sign\Engine\Controller
 			);
 		}
 
-		$result = $this->memberService->getUniqueSignersCount($entityCollection);
+		$result = $this->memberService->getUniqueSignersCount($entityCollection, $excludeRejected);
 
 		if (!$result->isSuccess())
 		{
@@ -365,6 +398,7 @@ class Member extends \Bitrix\Sign\Engine\Controller
 	)]
 	public function getUniqSignersCountForDocumentAction(
 		string $documentUid,
+		bool $excludeRejected = true,
 	): array
 	{
 		$document = Service\Container::instance()->getDocumentService()->getByUid($documentUid);
@@ -383,7 +417,7 @@ class Member extends \Bitrix\Sign\Engine\Controller
 
 		$entityCollection = EntityCollection::fromMemberCollection($memberCollection);
 
-		$result = $this->memberService->getUniqueSignersCount($entityCollection);
+		$result = $this->memberService->getUniqueSignersCount($entityCollection, $excludeRejected);
 
 		if (!$result->isSuccess())
 		{
@@ -405,6 +439,7 @@ class Member extends \Bitrix\Sign\Engine\Controller
 	public function syncB2eMembersWithDepartmentsAction(
 		string $documentUid,
 		int $currentParty,
+		bool $excludeRejected = true,
 	): array
 	{
 		if (!$this->getSyncMembersLock($documentUid))
@@ -429,7 +464,7 @@ class Member extends \Bitrix\Sign\Engine\Controller
 		}
 
 		$nodeMemberService = \Bitrix\HumanResources\Service\Container::instance()->getNodeMemberService();
-		$result = (new SyncDepartmentsPage($document, $currentParty, $nodeMemberService))->launch();
+		$result = (new SyncDepartmentsPage($document, $currentParty, $nodeMemberService, $excludeRejected))->launch();
 
 		if (!$result->isSuccess())
 		{
@@ -456,7 +491,7 @@ class Member extends \Bitrix\Sign\Engine\Controller
 	/**
 	 * @param string $documentUid
 	 * @param int $representativeId
-	 * @param array $members Members data [[entityId, entityType, party], ...]
+	 * @param array{entityId: string, entityType: string, party: int, role: string} $members Members data [[entityId, entityType, party], ...]
 	 * @return array
 	 */
 	#[Attribute\Access\LogicOr(
@@ -467,6 +502,7 @@ class Member extends \Bitrix\Sign\Engine\Controller
 		string $documentUid,
 		int $representativeId,
 		array $members,
+		bool $excludeRejected = true,
 	): array
 	{
 		if ($representativeId <= 0)
@@ -478,93 +514,36 @@ class Member extends \Bitrix\Sign\Engine\Controller
 			return [];
 		}
 
-		$requiredFields = ['entityType', 'entityId', 'party'];
-		foreach ($members as $member)
+		$document = $this->documentService->getByUid($documentUid);
+
+		if (!$document)
 		{
-			foreach ($requiredFields as $requiredField)
-			{
-				if (!array_key_exists($requiredField, $member))
-				{
-					$this->addError(
-						new Error("Not all members contains `{$requiredField}`"),
-					);
+			$this->addError(new Error(Loc::getMessage('SIGN_CONTROLLER_MEMBER_DOCUMENT_NOT_FOUND')));
 
-					return [];
-				}
-			}
-
-			// numeric or numeric:F (entity selector values)
-			if (!preg_match('/^\d+$|^\d+:F$/', $member['entityId']))
-			{
-				$this->addError(
-					new Error('Invalid `entityId` field value'),
-				);
-
-				return [];
-			}
-
-			if (!is_int($member['party']))
-			{
-				$this->addError(
-					new Error('Invalid `party` field value'),
-				);
-
-				return [];
-			}
-
-			if (isset($member['role']))
-			{
-				if (!is_string($member['role']) || !Role::isValid($member['role']))
-				{
-					$this->addError(
-						new Error('Invalid `role` field value'),
-					);
-
-					return [];
-				}
-			}
+			return [];
 		}
 
-		$memberCollection = new MemberCollection();
-		$departmentEntities = new EntityCollection();
-		foreach ($members as $member)
+		$result = (new ValidateEntitySelectorMembers($members))->launch();
+		if (!$result instanceof ValidateEntitySelectorMembersResult)
 		{
-			$entityType = EntitySelector\EntityType::fromEntityIdAndType(
-				$member['entityId'],
-				$member['entityType'],
-			);
+			$this->addErrorsFromResult($result);
 
-			if ($entityType->isDepartment())
-			{
-				$departmentEntities->add(Entity::createFromStrings(
-					entityId: $member['entityId'],
-					entityType: $member['entityType'],
-				));
-			}
+			return [];
+		}
 
-			$party = (int)$member['party'];
+		$result = (new GetMembersFromUserPartyEntities($result->entities, excludeRejectedSigners: $excludeRejected))->launch();
+		$memberCollection = $result->members;
+		$departmentEntities = $result->departments;
+		$assigneeEntityType = $result->assigneeEntityType;
 
-			$role = $member['role'] ?? null;
-			if ($role === null)
-			{
-				$role = \Bitrix\Sign\Compatibility\Role::createByParty($party);
-			}
-
-			$memberEntityType = $entityType === EntitySelector\EntityType::FlatDepartment
-				? EntityType::DEPARTMENT_FLAT
-				: $member['entityType'];
-
-			$memberCollection->add(
-				new \Bitrix\Sign\Item\Member(
-					party: $party,
-					entityType: $memberEntityType,
-					entityId: (int)$member['entityId'],
-					role: (string)$role,
-				),
+		if (!$document->isTemplated())
+		{
+			$memberCollection = $memberCollection->filter(
+				static fn(\Bitrix\Sign\Item\Member $member): bool => $member->entityType !== EntityType::ROLE,
 			);
 		}
 
-		$result = $this->memberService->setupB2eMembers($documentUid, $memberCollection, $representativeId);
+		$result = $this->memberService->setupB2eMembers($documentUid, $memberCollection, $representativeId, excludeRejected: $excludeRejected);
 		if (!$result->isSuccess())
 		{
 			$this->addErrors($result->getErrors());
@@ -583,7 +562,7 @@ class Member extends \Bitrix\Sign\Engine\Controller
 			}
 		}
 
-		$result = $this->documentService->modifyRepresentativeId($documentUid, $representativeId);
+		$result = $this->documentService->modifyRepresentativeId($documentUid, $representativeId, $assigneeEntityType);
 		if (!$result->isSuccess())
 		{
 			// Revert adding members

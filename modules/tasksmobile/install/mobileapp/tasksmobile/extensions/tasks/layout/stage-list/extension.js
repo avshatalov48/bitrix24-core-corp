@@ -3,12 +3,12 @@
  */
 
 jn.define('tasks/layout/stage-list', (require, exports, module) => {
-	const AppTheme = require('apptheme');
 	const { StageList } = require('layout/ui/stage-list');
 
 	const {
 		TasksStageListItem,
 	} = require('tasks/layout/stage-list/item');
+	const { Color } = require('tokens');
 
 	/**
 	 * @class TasksStageList
@@ -26,7 +26,7 @@ jn.define('tasks/layout/stage-list', (require, exports, module) => {
 				id: 'total', // this.kanbanSettingsId,
 				stage: {
 					id: 'total', // this.kanbanSettingsId,
-					color: AppTheme.colors.bgContentPrimary,
+					color: Color.base7.toHex(),
 					name: BX.message('STAGE_LIST_ALL_STAGES_TITLE'),
 					statusId: '',
 					listMode: true,

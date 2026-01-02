@@ -63,6 +63,11 @@ jn.define('ui-system/form/buttons/button/src/design-enum', (require, exports, mo
 			backgroundColor: Color.base7,
 		});
 
+		static COPILOT = new ButtonDesign('COPILOT', {
+			color: Color.baseWhiteFixed,
+			backgroundColor: Color.copilotAccentPrimary,
+		});
+
 		getStyle()
 		{
 			return this.getValue();

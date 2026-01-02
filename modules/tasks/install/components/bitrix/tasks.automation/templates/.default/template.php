@@ -35,7 +35,7 @@ global $APPLICATION;
 			'DOCUMENT_ID' => $arResult['TASK_ID'] ?: null,
 			'TITLE_VIEW' => $titleView,
 			'TITLE_EDIT' => $titleEdit,
-			'MARKETPLACE_ROBOT_CATEGORY' => 'tasks_bots',
+			'MARKETPLACE_ROBOT_CATEGORY' => 'automation_tasks',
 			'MARKETPLACE_TRIGGER_PLACEMENT' => 'TASKS_ROBOT_TRIGGERS',
 			'MESSAGES' => [
 				'BIZPROC_AUTOMATION_CMP_TRIGGER_HELP_2' => GetMessage('TASKS_AUTOMATION_CMP_TRIGGER_HELP_TIP_2'),

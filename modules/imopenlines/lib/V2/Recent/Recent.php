@@ -11,9 +11,9 @@ use Bitrix\ImOpenLines\Model\SessionTable;
 use Bitrix\ImOpenLines\V2\Session\SessionPopupItem;
 use Bitrix\ImOpenLines\V2\Status\StatusGroup;
 use Bitrix\Main\Engine\CurrentUser;
-use Bitrix\Main\Entity\Query\Join;
 use Bitrix\Main\Loader;
 use Bitrix\Main\ORM\Fields\Relations\Reference;
+use Bitrix\Main\ORM\Query\Join;
 use Bitrix\Main\ORM\Query\Query;
 use Bitrix\Main\Type\DateTime;
 

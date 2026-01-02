@@ -4,8 +4,39 @@ namespace Bitrix\BIConnector\Access\Install;
 
 use Bitrix\BIConnector\Access\Role\RoleDictionary;
 
-final class RoleMap
+class RoleMap
 {
+	/** @var Role\Base[] */
+	private array $roles = [];
+
+	public function __construct(bool $isNewPortal = false)
+	{
+		foreach (static::getDefaultMap() as $roleCode => $roleClass)
+		{
+			$this->add(
+				new $roleClass(
+					code: $roleCode,
+					isNewPortal: $isNewPortal,
+				),
+			);
+		}
+	}
+
+	public function add(Role\Base $role): self
+	{
+		$this->roles[] = $role;
+
+		return $this;
+	}
+
+	/**
+	 * @return Role\Base[]
+	 */
+	public function getRoles(): array
+	{
+		return $this->roles;
+	}
+
 	/**
 	 * @return array<string, string>
 	 */

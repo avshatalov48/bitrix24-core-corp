@@ -4,6 +4,7 @@ use Bitrix\BIConnector\Integration\UI\EntitySelector\ExternalConnectionProvider;
 use Bitrix\BIConnector\Integration\UI\EntitySelector\ExternalTableProvider;
 use Bitrix\BIConnector\Integration\UI\EntitySelector\SupersetDashboardProvider;
 use Bitrix\BIConnector\Integration\UI\EntitySelector\SupersetDashboardTagProvider;
+use Bitrix\BIConnector\Integration\UI\EntitySelector\SupersetGroupProvider;
 use Bitrix\BIConnector\Integration\UI\EntitySelector\SupersetScopeProvider;
 
 return [
@@ -58,6 +59,13 @@ return [
 					'provider' => [
 						'moduleId' => 'biconnector',
 						'className' => ExternalTableProvider::class,
+					],
+				],
+				[
+					'entityId' => 'biconnector-superset-group',
+					'provider' => [
+						'moduleId' => 'biconnector',
+						'className' => SupersetGroupProvider::class,
 					],
 				],
 			],

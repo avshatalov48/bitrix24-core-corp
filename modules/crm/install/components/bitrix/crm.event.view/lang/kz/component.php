@@ -1,0 +1,27 @@
+<?php
+$MESS["CRM_COLUMN_ASSIGNED_BY_ID"] = "Жауапты";
+$MESS["CRM_COLUMN_CREATED_BY"] = "Автор";
+$MESS["CRM_COLUMN_CREATED_BY_ID"] = "Автор";
+$MESS["CRM_COLUMN_DATE_CREATE"] = "Күні";
+$MESS["CRM_COLUMN_ENTITY"] = "CRM элементі";
+$MESS["CRM_COLUMN_ENTITY_TITLE"] = "Тақырыпаты";
+$MESS["CRM_COLUMN_ENTITY_TYPE"] = "Мән";
+$MESS["CRM_COLUMN_EVENT_DESC"] = "Сипаттама";
+$MESS["CRM_COLUMN_EVENT_NAME"] = "Оқиға түрі";
+$MESS["CRM_COLUMN_EVENT_TYPE"] = "Түрі";
+$MESS["CRM_ENTITY_TYPE_COMPANY"] = "Компания";
+$MESS["CRM_ENTITY_TYPE_CONTACT"] = "Байланыс";
+$MESS["CRM_ENTITY_TYPE_DEAL"] = "Мәміле";
+$MESS["CRM_ENTITY_TYPE_LEAD"] = "Лид";
+$MESS["CRM_ENTITY_TYPE_QUOTE_MSGVER_1"] = "Ұсыныс";
+$MESS["CRM_EVENT_DESC_AFTER"] = "Болды";
+$MESS["CRM_EVENT_DESC_BEFORE"] = "Болған";
+$MESS["CRM_EVENT_DESC_MORE"] = "толығырақ оқу";
+$MESS["CRM_EVENT_TYPE_CHANGE"] = "Өзгерістер";
+$MESS["CRM_EVENT_TYPE_RELATIONS"] = "Байланыстар";
+$MESS["CRM_EVENT_TYPE_SNS"] = "Поштадан хат";
+$MESS["CRM_EVENT_TYPE_USER"] = "Пайдаланушы";
+$MESS["CRM_PERMISSION_DENIED"] = "Қолжетімділікке тыйым салынған";
+$MESS["CRM_PRESET_CREATE_MY"] = "Менімен құрылған";
+$MESS["CRM_PRESET_CREATE_TODAY"] = "Бүгін жасалған";
+$MESS["CRM_PRESET_CREATE_YESTERDAY"] = "Кеше жасалған";

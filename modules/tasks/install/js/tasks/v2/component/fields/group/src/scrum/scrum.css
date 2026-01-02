@@ -1,0 +1,17 @@
+.tasks-field-group-scrum {
+	display: flex;
+	justify-content: space-between;
+	align-items: center;
+	margin-top: 10px;
+	font-size: var(--ui-font-size-xs);
+	font-weight: var(--ui-font-weight-medium);
+	color: var(--ui-color-base-4);
+}
+
+.tasks-field-group-scrum-loader {
+	margin-top: 10px;
+	position: relative;
+	display: flex;
+	align-items: center;
+	height: 26px;
+}

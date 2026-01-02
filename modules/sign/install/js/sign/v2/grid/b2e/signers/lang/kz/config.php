@@ -1,0 +1,24 @@
+<?php
+$MESS["SIGN_SIGNERS_DELETE_CONFIRMATION_MESSAGE"] = "Топты қалпына келтіру мүмін емес";
+$MESS["SIGN_SIGNERS_DELETE_CONFIRMATION_TITLE"] = "Топты жою керек пе?";
+$MESS["SIGN_SIGNERS_GRID_COPY_HINT_FAIL"] = "Топты көшіру мүмкін болмады, қайталап көріңіз";
+$MESS["SIGN_SIGNERS_GRID_COPY_HINT_SUCCESS"] = "Топ көшірілді";
+$MESS["SIGN_SIGNERS_GRID_CREATE_LIST_CANCEL_BUTTON_TEXT"] = "Болдырмау";
+$MESS["SIGN_SIGNERS_GRID_CREATE_LIST_CREATE_BUTTON_TEXT"] = "Жасау";
+$MESS["SIGN_SIGNERS_GRID_CREATE_LIST_DESCRIPTION"] = "Кадрлық электрондық құжаттарды жылдам жіберу үшін топ құрыңыз және оған қызметкерлерді қосыңыз";
+$MESS["SIGN_SIGNERS_GRID_CREATE_LIST_HINT_TITLE_NOT_EMPTY"] = "Топтың атын толтырыңыз";
+$MESS["SIGN_SIGNERS_GRID_CREATE_LIST_POPUP_INPUT_PLACEHOLDER"] = "Топтың атауы";
+$MESS["SIGN_SIGNERS_GRID_CREATE_LIST_POPUP_TITLE"] = "Жаңа топ";
+$MESS["SIGN_SIGNERS_GRID_CREATE_LIST_SAVE_BUTTON_TEXT"] = "Атын өзгерту";
+$MESS["SIGN_SIGNERS_GRID_DELETE_HINT_FAIL"] = "Топты жою мүмкін болмады, қайталап көріңіз";
+$MESS["SIGN_SIGNERS_GRID_DELETE_HINT_SUCCESS"] = "Топ жойылды";
+$MESS["SIGN_SIGNERS_GRID_DELETE_POPUP_NO"] = "Болдырмау";
+$MESS["SIGN_SIGNERS_GRID_DELETE_POPUP_YES"] = "Иә, жою";
+$MESS["SIGN_SIGNERS_GRID_LIST_CREATE_FAIL"] = "Топ құру қатесі";
+$MESS["SIGN_SIGNERS_GRID_LIST_CREATE_SUCCESS"] = "Топ сәтті құрылды";
+$MESS["SIGN_SIGNERS_SIGNERS_GRID_DELETE_HINT_FAIL"] = "Қызметкерлерді топтан шығару мүмкін болмады";
+$MESS["SIGN_SIGNERS_SIGNERS_GRID_DELETE_HINT_SUCCESS"] = "Қызметкерлер топтан шығарылды";
+$MESS["SIGN_SIGNERS_SIGNER_DELETE_CONFIRMATION_MESSAGE"] = "Әрекет қайтымсыз";
+$MESS["SIGN_SIGNERS_SIGNER_DELETE_CONFIRMATION_TITLE"] = "Қызметкерлерді топтан шығарасыз ба?";
+$MESS["SIGN_SIGNERS_SIGNER_GRID_DELETE_HINT_FAIL"] = "Қызметкерді топтан шығару мүмкін болмады";
+$MESS["SIGN_SIGNERS_SIGNER_GRID_DELETE_HINT_SUCCESS"] = "Қызметкер топтан шығарылды";

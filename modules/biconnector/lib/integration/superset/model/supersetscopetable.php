@@ -4,6 +4,7 @@ namespace Bitrix\BIConnector\Integration\Superset\Model;
 
 use Bitrix\Main\Entity\ReferenceField;
 use Bitrix\Main\ORM\Data\DataManager;
+use Bitrix\Main\ORM\Data\Internal\DeleteByFilterTrait;
 use Bitrix\Main\ORM\Fields;
 use Bitrix\Main\ORM\Query\Join;
 
@@ -18,13 +19,14 @@ use Bitrix\Main\ORM\Query\Join;
  * @method static EO_SupersetScope_Result getById($id)
  * @method static EO_SupersetScope_Result getList(array $parameters = [])
  * @method static EO_SupersetScope_Entity getEntity()
- * @method static \Bitrix\BIConnector\Integration\Superset\Model\EO_SupersetScope createObject($setDefaultValues = true)
+ * @method static \Bitrix\BIConnector\Integration\Superset\Model\SupersetDashboardScope createObject($setDefaultValues = true)
  * @method static \Bitrix\BIConnector\Integration\Superset\Model\EO_SupersetScope_Collection createCollection()
- * @method static \Bitrix\BIConnector\Integration\Superset\Model\EO_SupersetScope wakeUpObject($row)
+ * @method static \Bitrix\BIConnector\Integration\Superset\Model\SupersetDashboardScope wakeUpObject($row)
  * @method static \Bitrix\BIConnector\Integration\Superset\Model\EO_SupersetScope_Collection wakeUpCollection($rows)
  */
 class SupersetScopeTable extends DataManager
 {
+	use DeleteByFilterTrait;
 	/**
 	 * Returns DB table name for entity.
 	 *
@@ -64,5 +66,10 @@ class SupersetScopeTable extends DataManager
 				->configureJoinType(Join::TYPE_LEFT)
 			,
 		];
+	}
+
+	public static function getObjectClass(): string
+	{
+		return SupersetDashboardScope::class;
 	}
 }

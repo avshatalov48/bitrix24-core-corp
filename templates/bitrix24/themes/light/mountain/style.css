@@ -1,4 +1,9 @@
-body {
-	background: #8E6E9D url(mountain.jpg) fixed 0 0 no-repeat;
-	background-size: cover;
+:root {
+  --air-theme-bg-color: #8E6E9D;
+  --air-theme-bg-size: cover;
+  --air-theme-bg-repeat: no-repeat;
+  --air-theme-bg-position: 0 0;
+  --air-theme-bg-attachment: fixed;
+  --air-theme-bg-image: url(/bitrix/templates/bitrix24/themes/light/mountain/mountain.jpg);
+  --air-theme-bg-image-blurred: url(/bitrix/templates/bitrix24/themes/light/mountain/mountain-blurred.webp);
 }

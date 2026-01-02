@@ -17,9 +17,10 @@ export type AiSettingsGroup = {
 export type AiSettingsItem = {
 	code: string,
 	title: string,
-	type: 'boolean'|'list',
+ 	type: 'boolean' | 'list',
 	header: string,
 	value: any,
+	restriction?: AiSettingsItemRestriction,
 	options: ?{[string]: string},
 	recommended: ?[string],
 	onSave: ?{
@@ -27,6 +28,11 @@ export type AiSettingsItem = {
 		callback: string,
 	},
 };
+
+export type AiSettingsItemRestriction = {
+	bannerCode: string,
+	helpMessage: string,
+}
 
 export type AiSettingsItemField = {
 	code: string,

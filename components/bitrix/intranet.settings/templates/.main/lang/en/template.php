@@ -1,7 +1,7 @@
 <?php
 $MESS["BITRIX24_PARTNER_ORDER_MSGVER_1"] = "Implementation request";
 $MESS["BITRIX24_PARTNER_POPUP_BUTTON"] = "submit request";
-$MESS["BITRIX24_PARTNER_POPUP_TITLE"] = "Bitrix24 installation and deployment";
+$MESS["BITRIX24_PARTNER_POPUP_TITLE"] = "Bitrix24 implementation, integration and customization";
 $MESS["INTRANET_SETTINGS_ADDITIONAL_USER_ACCESS_IP"] = "Add more users and IP addresses";
 $MESS["INTRANET_SETTINGS_BLACK_LIST"] = "Blacklist";
 $MESS["INTRANET_SETTINGS_BUTTON_CREATE"] = "Create landing page";
@@ -27,6 +27,7 @@ $MESS["INTRANET_SETTINGS_CONFIRM_ACTION_CANCEL"] = "Cancel";
 $MESS["INTRANET_SETTINGS_CONFIRM_ACTION_DELETE_PORTAL"] = "Delete this Bitrix24 account";
 $MESS["INTRANET_SETTINGS_CONFIRM_ACTION_DELETE_PORTAL_FIRE_EMPLOYEE"] = "Dismiss employees";
 $MESS["INTRANET_SETTINGS_CONFIRM_ACTION_DELETE_PORTAL_MAIL"] = "Send a message to #MAIL#";
+$MESS["INTRANET_SETTINGS_CONFIRM_ACTION_DELETE_PORTAL_NETWORK_LINK"] = "Add email address";
 $MESS["INTRANET_SETTINGS_CONFIRM_ACTION_DESC"] = "The changes have not been saved. Are you sure you want to close the settings?";
 $MESS["INTRANET_SETTINGS_CONFIRM_ACTION_OK"] = "Close without saving";
 $MESS["INTRANET_SETTINGS_CONFIRM_ACTION_TITLE"] = "Confirm action";
@@ -128,6 +129,7 @@ $MESS["INTRANET_SETTINGS_FIELD_LABEL_NOTIFICATION_EMAIL"] = "Send notifications 
 $MESS["INTRANET_SETTINGS_FIELD_LABEL_OTP_SWITCHING_MESSAGE_CHAT"] = "Send authentication code to Notifications";
 $MESS["INTRANET_SETTINGS_FIELD_LABEL_OTP_SWITCHING_PERIOD"] = "Employees have to enable two-factor authentication within:";
 $MESS["INTRANET_SETTINGS_FIELD_LABEL_POST_FEED"] = "All employees can post to Feed";
+$MESS["INTRANET_SETTINGS_FIELD_LABEL_POST_FEED_MSGVER_1"] = 'Allow broadcast posts';
 $MESS["INTRANET_SETTINGS_FIELD_LABEL_PUBLISH_TO_ALL_DEFAULT"] = "Add all employees to recipients by default (broadcast)";
 $MESS["INTRANET_SETTINGS_FIELD_LABEL_SECURITY_OTP"] = "Mandatory for all employees";
 $MESS["INTRANET_SETTINGS_FIELD_LABEL_SELECT_ACCEPTED_IP"] = "Allowed IP addresses (multiple addresses and ranges are possible; example: 123.45.67.89, 176.98.34.122, 0.0.0.0-255.255.255.255):";
@@ -184,8 +186,11 @@ $MESS["INTRANET_SETTINGS_MAINPAGE_SHARE_POPUP_BTN_CONFIRM"] = "Yes";
 $MESS["INTRANET_SETTINGS_MAINPAGE_SHARE_POPUP_CONTENT"] = "Do you want to publish the start page? It will be visible to all users. Start page menu item will be added to the top of the left menu.";
 $MESS["INTRANET_SETTINGS_MAINPAGE_SHARE_POPUP_TITLE_MSGVER_1"] = "Publish start page";
 $MESS["INTRANET_SETTINGS_MAINPAGE_WITHDRAW_POPUP_BTN_CONFIRM"] = "Yes";
+$MESS["INTRANET_SETTINGS_MAINPAGE_WITHDRAW_POPUP_BTN_CONFIRM_FREE"] = "Yes";
 $MESS["INTRANET_SETTINGS_MAINPAGE_WITHDRAW_POPUP_CONTENT"] = "Do you want to unpublish the start page? It will not be physically deleted. However, Start page menu item will be removed from the left menu.";
+$MESS["INTRANET_SETTINGS_MAINPAGE_WITHDRAW_POPUP_CONTENT_FREE"] = "The start page will be removed from the menu and become unavailable. However, it will remain in the system. You can bring this page back only on Professional or Enterprise plans. Do you want to proceed and disable the start page?";
 $MESS["INTRANET_SETTINGS_MAINPAGE_WITHDRAW_POPUP_TITLE"] = "Unpublish start page";
+$MESS["INTRANET_SETTINGS_MAINPAGE_WITHDRAW_POPUP_TITLE_FREE"] = "Disable start page";
 $MESS["INTRANET_SETTINGS_OWN_DOMAIN_HELP1"] = "Add 4 records of \"IN NS\" type in the DNS editor of your domain. You can delete other records for this domain if they exist.";
 $MESS["INTRANET_SETTINGS_OWN_DOMAIN_HELP2"] = "Contact the Bitrix24 Helpdesk. Only the Bitrix24 administrators can contact the Helpdesk.";
 $MESS["INTRANET_SETTINGS_OWN_DOMAIN_HELP3"] = "Provide the full name of your domain, and the proof of change of the NS records you made on step 1. It can be a screenshot of the DNS editor.";
@@ -197,9 +202,11 @@ $MESS["INTRANET_SETTINGS_PORTAL_DELETE_MAIL_SUBJECT"] = "Request to delete #PORT
 $MESS["INTRANET_SETTINGS_SEARCH"] = "search";
 $MESS["INTRANET_SETTINGS_SEARCH_NOT_FOUND"] = "No entries have been found.";
 $MESS["INTRANET_SETTINGS_SEARCH_PLACEHOLDER"] = "Search";
+$MESS["INTRANET_SETTINGS_SECTION_CONFIGURATION_DESCRIPTION_DELETE_PORTAL_BOUND"] = "You have to disconnect your Bitrix24 from the branch network before deleting it. #MORE_DETAILS#";
 $MESS["INTRANET_SETTINGS_SECTION_CONFIGURATION_DESCRIPTION_DELETE_PORTAL_EMPLOYEE"] = "This Bitrix24 account must contain only the administrator before deleting. You have to dismiss all the employees to proceed. #MORE_DETAILS#";
 $MESS["INTRANET_SETTINGS_SECTION_CONFIGURATION_DESCRIPTION_DELETE_PORTAL_MAIL"] = "If you want to delete this Bitrix24 account, send us a message to <a class=\"ui-section__link --mail\" href=\"#MAIL_LINK#\">#MAIL#</a>.<br><br> All the data will be deleted permanently. #MORE_DETAILS#";
 $MESS["INTRANET_SETTINGS_SECTION_CONFIGURATION_DESCRIPTION_DELETE_PORTAL_MSGVER_1"] = "Only the administrator can delete Bitrix24. You have to dismiss all the employees to proceed. This action will delete all the data including files and user profiles.<br><br>After this Bitrix24 has been deleted, you can create another one with the same address. #MORE_DETAILS#";
+$MESS["INTRANET_SETTINGS_SECTION_CONFIGURATION_DESCRIPTION_DELETE_PORTAL_NETWORK"] = "You have to add an email address to your account before deleting your Bitrix24. We need this address to send you a confirmation code. #MORE_DETAILS#";
 $MESS["INTRANET_SETTINGS_SECTION_CONFIGURATION_DESCRIPTION_DELETE_PORTAL_NOT_ADMIN"] = "Only the administrator can delete Bitrix24 account.";
 $MESS["INTRANET_SETTINGS_SECTION_CRM_MAPS_DESCRIPTION"] = "Google API key is required to use Google Maps.  <a target=\"_blank\" class=\"ui-section__link\" href=\"#GOOGLE_API_URL#\">Get your key</a>";
 $MESS["INTRANET_SETTINGS_SECTION_CRM_MAPS_YANDEX_DESCRIPTION"] = "Yandex.Maps require Yandex API key. <a target=\"_blank\" class=\"ui-section__link\" href=\"#YANDEX_API_URL#\"  \">Get the key</a>";

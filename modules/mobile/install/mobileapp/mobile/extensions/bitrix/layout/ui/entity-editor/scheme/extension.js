@@ -6,6 +6,7 @@ jn.define('layout/ui/entity-editor/scheme', (require, exports, module) => {
 	const { Type } = require('type');
 	const { EntityEditorControlFactory } = require('layout/ui/entity-editor/control');
 	const { EntitySchemeElement } = require('layout/ui/entity-editor/scheme/element');
+	const { Random } = require('utils/random');
 
 	/**
 	 * @class EntityScheme

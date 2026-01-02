@@ -22,9 +22,8 @@ if (!CModule::IncludeModule('crm'))
 	return;
 }
 
-$userID =  CCrmPerms::GetCurrentUserID();
-$userPermissions = CCrmPerms::GetCurrentUserPermissions();
-if (!CCrmDeal::CheckReadPermission(0, $userPermissions))
+$userID = \Bitrix\Crm\Service\Container::getInstance()->getContext()->getUserId();
+if (!\Bitrix\Crm\Service\Container::getInstance()->getUserPermissions()->entityType()->canReadItems(CCrmOwnerType::Deal))
 {
 	ShowError(GetMessage('CRM_PERMISSION_DENIED'));
 
@@ -35,6 +34,7 @@ use Bitrix\Crm\Category\DealCategory;
 use Bitrix\Crm\Counter\EntityCounterFactory;
 use Bitrix\Crm\Counter\EntityCounterType;
 use Bitrix\Crm\Restriction\RestrictionManager;
+use Bitrix\Main\Localization\Loc;
 
 $curPage = $APPLICATION->GetCurPage();
 
@@ -88,7 +88,14 @@ $totalCounter = EntityCounterFactory::create(
 $arResult['CATEGORY_COUNTER_CODE'] = $totalCounter->getCode();
 $arResult['CATEGORY_COUNTER'] = $totalCounter->getValue();
 
-$map = array_fill_keys(CCrmDeal::GetPermittedToReadCategoryIDs($userPermissions), true);
+$map = array_fill_keys(
+	\Bitrix\Crm\Service\Container::getInstance()
+		->getUserPermissions()
+		->category()
+		->getAvailableForReadingCategoriesIds(CCrmOwnerType::Deal)
+	,
+	true
+);
 foreach (DealCategory::getAll(true) as $item)
 {
 	$ID = (int)$item['ID'];
@@ -151,16 +158,17 @@ if (!$arResult['IS_CUSTOMIZED'])
 }
 elseif($arParams['ENABLE_CATEGORY_ALL'] === 'Y')
 {
-	$arResult['ITEMS'] = array_merge(
-		array(
-			array(
-				'NAME' => GetMessage('CRM_DEAL_CATEGORY_PANEL_ALL'),
-				'IS_ACTIVE' => $arResult['CATEGORY_ID'] < 0,
-				'URL' => $arParams['PATH_TO_DEAL_LIST']
-			)
-		),
-		$arResult['ITEMS']
-	);
+	$categoryAllItem = [
+		'ID' => 'all',
+		'NAME' => Loc::getMessage('CRM_DEAL_CATEGORY_PANEL_ALL'),
+		'IS_ACTIVE' => $arResult['CATEGORY_ID'] < 0,
+		'URL' => $arParams['PATH_TO_DEAL_LIST'],
+	];
+
+	$arResult['ITEMS'] = [
+		$categoryAllItem,
+		...$arResult['ITEMS'],
+	];
 }
 
 if ($arResult['ACTIVE_INDEX'] < 0)
@@ -169,7 +177,7 @@ if ($arResult['ACTIVE_INDEX'] < 0)
 	$arResult['ITEMS'][0]['IS_ACTIVE'] = true;
 }
 
-$arResult['CAN_CREATE_CATEGORY'] = $userPermissions->HavePerm('CONFIG', BX_CRM_PERM_CONFIG, 'WRITE');
+$arResult['CAN_CREATE_CATEGORY'] = \Bitrix\Crm\Service\Container::getInstance()->getUserPermissions()->isAdminForEntity(CCrmOwnerType::Deal);
 if ($arResult['CAN_CREATE_CATEGORY'])
 {
 	$restriction = RestrictionManager::getDealCategoryLimitRestriction();

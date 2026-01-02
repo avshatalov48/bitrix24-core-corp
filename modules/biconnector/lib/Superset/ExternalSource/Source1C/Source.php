@@ -20,7 +20,7 @@ final class Source implements ExternalSource\Source
 
 	public function getOnClickConnectButtonScript(): string
 	{
-		$link = '/bitrix/components/bitrix/biconnector.externalconnection/slider.php';
+		$link = '/bitrix/components/bitrix/biconnector.externalconnection/slider.php?connectorType=' . $this->getCode();
 
 		return "BX.SidePanel.Instance.open('{$link}', {width: 564, cacheable: false})";
 	}
@@ -38,5 +38,10 @@ final class Source implements ExternalSource\Source
 	public function getDescription(): string
 	{
 		return Loc::getMessage('BICONNECTOR_EXTERNAL_SOURCE_1C_DESCRIPTION');
+	}
+
+	public function getLogo(): ?string
+	{
+		return null;
 	}
 }

@@ -65,4 +65,12 @@ http://#SERVER_NAME#/extranet/confirm/?checkword=#CHECKWORD#&user_id=#USER_ID#
 
 Сообщение сгенерировано автоматически.
 ";
+
+$MESS ['EXTRANET_COLLAB_JOIN_NAME'] = "Приглашение на сайт нового пользователя";
+$MESS ['EXTRANET_COLLAB_JOIN_DESC'] = "#USER_ID# - ID пользователя
+#EMAIL# - Email пользователя
+#SITE_NAME# - Название сайта
+#SERVER_NAME# - URL сайта (без http://)
+";
+$MESS ['EXTRANET_COLLAB_JOIN_SUBJECT'] = "Вы присоединились к коллабе";
 ?>

@@ -41,10 +41,19 @@ jn.define('bbcode/parser', (require, exports, module) => {
 	  }
 	}
 
-	const TAG_REGEX = /\[\/?(?:\w+|\*).*?]/;
+	const TAG_REGEX = /\[(\/)?(\w+|\*).*?]/;
 	const TAG_REGEX_GS = /\[(\/)?(\w+|\*)(.*?)]/gs;
+	const LF = '\n';
+	const CRLF = '\r\n';
+	const TAB = '\t';
+	const isLinebreak = symbol => {
+	  return [LF, CRLF].includes(symbol);
+	};
+	const isTab = symbol => {
+	  return symbol === TAB;
+	};
 	const isSpecialChar = symbol => {
-	  return ['\n', '\t'].includes(symbol);
+	  return isTab(symbol) || isLinebreak(symbol);
 	};
 	const isList = tagName => {
 	  return ['list', 'ul', 'ol'].includes(String(tagName).toLowerCase());
@@ -151,7 +160,13 @@ jn.define('bbcode/parser', (require, exports, module) => {
 	  }
 	  parseText(text) {
 	    if (Type.isStringFilled(text)) {
-	      return [...text].reduce((acc, symbol) => {
+	      const regex = /\\r\\n|\\n|\\t|\\.|.|\r\n|\n|\t/g;
+	      return [...text.matchAll(regex)].flatMap(([token]) => {
+	        if (isLinebreak(token)) {
+	          return token;
+	        }
+	        return [...token];
+	      }).reduce((acc, symbol) => {
 	        if (isSpecialChar(symbol)) {
 	          acc.push(symbol);
 	        } else {
@@ -164,10 +179,10 @@ jn.define('bbcode/parser', (require, exports, module) => {
 	        }
 	        return acc;
 	      }, []).map(fragment => {
-	        if (fragment === '\n') {
+	        if (isLinebreak(fragment)) {
 	          return parserScheme.createNewLine();
 	        }
-	        if (fragment === '\t') {
+	        if (isTab(fragment)) {
 	          return parserScheme.createTab();
 	        }
 	        return parserScheme.createText({
@@ -184,6 +199,18 @@ jn.define('bbcode/parser', (require, exports, module) => {
 	      return matchResult.index + startIndex;
 	    }
 	    return -1;
+	  }
+	  static findNextTag(bbcode, startIndex = 0) {
+	    const nextContent = bbcode.slice(startIndex);
+	    const matchResult = nextContent.match(new RegExp(TAG_REGEX));
+	    if (matchResult) {
+	      const [, slash, tagName] = matchResult;
+	      return {
+	        tagName,
+	        isClosedTag: slash === '\\'
+	      };
+	    }
+	    return null;
 	  }
 	  static trimQuotes(value) {
 	    const source = String(value);
@@ -290,7 +317,10 @@ jn.define('bbcode/parser', (require, exports, module) => {
 	          stack[level].appendChild(...this.parseText(content));
 	        }
 	        if (level > 0 && isListItem(stack[level].getName())) {
-	          level--;
+	          const nextTag = BBCodeParser.findNextTag(bbcode, startIndex);
+	          if (Type.isNull(nextTag) || isListItem(nextTag.tagName)) {
+	            level--;
+	          }
 	        }
 	      }
 	    });
@@ -338,6 +368,12 @@ jn.define('bbcode/parser', (require, exports, module) => {
 	          return parserScheme.createText(token.toString());
 	        });
 	        node.replace(...nodes);
+	      }
+	    });
+	    Model.BBCodeNode.flattenAst(result).forEach(node => {
+	      const tagScheme = this.getScheme().getTagScheme(node);
+	      if (tagScheme) {
+	        tagScheme.runOnParseHandler(node);
 	      }
 	    });
 	    result.setScheme(this.getScheme(), this.getOnUnknownHandler());

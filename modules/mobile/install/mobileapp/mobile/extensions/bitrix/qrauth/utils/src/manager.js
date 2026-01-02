@@ -3,6 +3,7 @@
  */
 jn.define('qrauth/utils/src/manager', (require, exports, module) => {
 	const { Loc } = require('loc');
+	const { getMediumHeight } = require('utils/page-manager');
 
 	// eslint-disable-next-line no-undef
 	const componentUrl = availableComponents.qrcodeauth?.publicUrl;
@@ -16,14 +17,19 @@ jn.define('qrauth/utils/src/manager', (require, exports, module) => {
 		const { title, layout, external, ...restParams } = params;
 		const parentLayout = layout && layout !== PageManager ? layout : null;
 
-		if (!external && parentLayout)
+		let pageManagerHeight = 600;
+
+		if (!external)
 		{
 			const { QRCodeAuthComponent } = await requireLazy('qrauth') || {};
 
-			return QRCodeAuthComponent?.open?.(parentLayout, { ...restParams, title });
-		}
+			pageManagerHeight = QRCodeAuthComponent.getContentHeight(restParams);
 
-		const pageManagerHeight = 600;
+			if (parentLayout)
+			{
+				return QRCodeAuthComponent?.open?.(parentLayout, { ...restParams, title });
+			}
+		}
 
 		PageManager.openComponent('JSStackComponent', {
 			scriptPath: componentUrl,
@@ -43,7 +49,7 @@ jn.define('qrauth/utils/src/manager', (require, exports, module) => {
 					},
 					backdrop: {
 						bounceEnable: true,
-						mediumPositionHeight: pageManagerHeight,
+						mediumPositionHeight: getMediumHeight({ height: pageManagerHeight }),
 					},
 				},
 			},

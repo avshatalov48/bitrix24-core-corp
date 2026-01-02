@@ -5,6 +5,7 @@ jn.define('im/messenger/db/table/file', (require, exports, module) => {
 	const {
 		Table,
 		FieldType,
+		FieldDefaultValue,
 	} = require('im/messenger/db/table/table');
 
 	class FileTable extends Table
@@ -38,6 +39,8 @@ jn.define('im/messenger/db/table/file', (require, exports, module) => {
 				{ name: 'urlPreview', type: FieldType.text },
 				{ name: 'urlShow', type: FieldType.text },
 				{ name: 'urlDownload', type: FieldType.text },
+				{ name: 'mediaUrl', type: FieldType.json, defaultValue: FieldDefaultValue.emptyObject },
+				{ name: 'isTranscribable', type: FieldType.boolean, defaultValue: FieldDefaultValue.falseBoolean },
 			];
 		}
 	}

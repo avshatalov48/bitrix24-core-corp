@@ -318,7 +318,7 @@ class InvoiceStatusHistoryEntry
 			return [];
 		}
 
-		$parameters['filter'] = $userPermissions->applyAvailableItemsFilter(
+		$parameters['filter'] = $userPermissions->itemsList()->applyAvailableItemsFilter(
 			$parameters['filter'] ?? [],
 			[\CCrmOwnerType::InvoiceName],
 			$operation,
@@ -341,7 +341,7 @@ class InvoiceStatusHistoryEntry
 			return 0;
 		}
 
-		$filter = $userPermissions->applyAvailableItemsFilter(
+		$filter = $userPermissions->itemsList()->applyAvailableItemsFilter(
 			$filter,
 			[\CCrmOwnerType::InvoiceName],
 			$operation,

@@ -1,5 +1,10 @@
-(() => {
-	const { ProfileView } = jn.require('user/profile');
+/**
+ * @module project/member
+ */
+jn.define('project/member', (require, exports, module) => {
+	const { UserProfile } = require('user-profile');
+	const { RequestExecutor } = require('rest');
+
 	class Action
 	{
 		static get types()
@@ -322,17 +327,9 @@
 		{
 			const widget = (parentWidget || PageManager);
 
-			widget.openWidget('list', {
-				groupStyle: true,
-				backdrop: {
-					bounceEnable: false,
-					swipeAllowed: true,
-					showOnTop: true,
-					hideNavigationBar: false,
-					horizontalSwipeAllowed: false,
-				},
-				onReady: (list) => ProfileView.open({ userId: this.id, isBackdrop: true }, list),
-				onError: (error) => console.log(error),
+			void UserProfile.open({
+				ownerId: this.id,
+				parentWidget: widget,
 			});
 		}
 
@@ -412,5 +409,5 @@
 		}
 	}
 
-	jnexport([ProjectMember, 'ProjectMember']);
-})();
+	module.exports = { ProjectMember };
+});

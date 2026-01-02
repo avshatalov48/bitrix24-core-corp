@@ -4,7 +4,8 @@ declare(strict_types=1);
 
 namespace Bitrix\Tasks\Flow\Integration\AI\Control\Command;
 
-use Bitrix\Tasks\AbstractCommand;
+use Bitrix\Tasks\Flow\AbstractCommand;
+use Bitrix\Tasks\Flow\Integration\AI\Provider\CollectedDataStatus;
 use Bitrix\Tasks\Internals\Attribute\NotEmpty;
 use Bitrix\Tasks\Internals\Attribute\PositiveNumber;
 use Bitrix\Tasks\Internals\Attribute\Primary;
@@ -13,6 +14,7 @@ use Bitrix\Tasks\Internals\Attribute\Required;
 /**
  * @method self setFlowId(int $flowId)
  * @method self setData(array $data)
+ * @method self setStatus(CollectedDataStatus $status):
  */
 class ReplaceCollectedDataCommand extends AbstractCommand
 {
@@ -21,7 +23,7 @@ class ReplaceCollectedDataCommand extends AbstractCommand
 	#[PositiveNumber]
 	public int $flowId;
 
-	#[Required]
-	#[NotEmpty]
-	public array $data;
+	public array $data = [];
+
+	public ?CollectedDataStatus $status = null;
 }

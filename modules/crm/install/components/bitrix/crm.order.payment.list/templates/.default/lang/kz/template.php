@@ -1,0 +1,28 @@
+<?php
+$MESS["CRM_ALL"] = "Барлығы";
+$MESS["CRM_ORDER_PAYMENT_ACTION_PAID"] = "Төлеу";
+$MESS["CRM_ORDER_PAYMENT_ACTION_PAID_N"] = "Төлемді болдырмау";
+$MESS["CRM_ORDER_PAYMENT_BUILD_TIMELINE_DLG_TITLE"] = "Төлемдер тарихын дайындау";
+$MESS["CRM_ORDER_PAYMENT_BUILD_TIMELINE_STATE"] = "#total# -дан #processed#";
+$MESS["CRM_ORDER_PAYMENT_DELETE"] = "Жою";
+$MESS["CRM_ORDER_PAYMENT_DELETE_CONFIRM"] = "Жойғыңыз келетініне сенімдісіз бе?";
+$MESS["CRM_ORDER_PAYMENT_DELETE_TITLE"] = "Төлемді жою";
+$MESS["CRM_ORDER_PAYMENT_EDIT"] = "Редакциялау";
+$MESS["CRM_ORDER_PAYMENT_EDIT_TITLE"] = "Төлемді редакциялау";
+$MESS["CRM_ORDER_PAYMENT_LIST_ADD"] = "Төлемді қосу";
+$MESS["CRM_ORDER_PAYMENT_LIST_ADD_SHORT"] = "Төлем";
+$MESS["CRM_ORDER_PAYMENT_LIST_CHOOSE_ACTION"] = "Әрекетті таңдаңыз";
+$MESS["CRM_ORDER_PAYMENT_LIST_FILTER_NAV_BUTTON_LIST"] = "Тізім";
+$MESS["CRM_ORDER_PAYMENT_LRP_DLG_BTN_CLOSE"] = "Жабу";
+$MESS["CRM_ORDER_PAYMENT_LRP_DLG_BTN_START"] = "Орындау";
+$MESS["CRM_ORDER_PAYMENT_LRP_DLG_BTN_STOP"] = "Тоқтату";
+$MESS["CRM_ORDER_PAYMENT_LRP_DLG_REQUEST_ERR"] = "Сұрауды орындау кезінде қате пайда болды.";
+$MESS["CRM_ORDER_PAYMENT_LRP_DLG_WAIT"] = "Күте тұруыңызды өтінеміз...";
+$MESS["CRM_ORDER_PAYMENT_PAID"] = "Төленген";
+$MESS["CRM_ORDER_PAYMENT_PAYMENT_SUMMARY"] = "#DATE_BILL# күнгі №#ACCOUNT_NUMBER# төлем";
+$MESS["CRM_ORDER_PAYMENT_REBUILD_ACCESS_ATTRS"] = "Жаңартылған қолжетімділік құқықтарының дұрыс жұмыс істеуі үшін <a id=\"#ID#\" target=\"_blank\" href=\"#URL#\">құқықтарды басқару бетінде</a> атрибуттарды жаңарту қажет.";
+$MESS["CRM_ORDER_PAYMENT_SEND_TO_CHAT"] = "Чатқа жіберу";
+$MESS["CRM_ORDER_PAYMENT_SHOW"] = "Қарау";
+$MESS["CRM_ORDER_PAYMENT_SHOW_TITLE"] = "Төлемді қарау";
+$MESS["CRM_ORDER_PAYMENT_UNPAID"] = "Төленбеген";
+$MESS["CRM_SHOW_ROW_COUNT"] = "Санын көрсету";

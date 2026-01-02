@@ -346,6 +346,10 @@ abstract class IndexSupportedProvider extends \Bitrix\Crm\Search\Result\Provider
 			{
 				$referenceFilter->whereIn( 'ref.' . $field, $filterValue);
 			}
+			else if ($operation === '!@')
+			{
+				$referenceFilter->whereNotIn( 'ref.' . $field, $filterValue);
+			}
 			else
 			{
 				$referenceFilter->where('ref.' . $field, $operation, new SqlExpression('?', $filterValue));

@@ -34,21 +34,17 @@ class TaskChangeDirectorRule extends \Bitrix\Main\Access\Rule\AbstractRule
 			return true;
 		}
 
+		/** @var TaskModel $newTask */
+		$newTask = $params;
+
+		if (!in_array($this->user->getUserId(), $newTask->getMembers(RoleDictionary::ROLE_RESPONSIBLE), true))
+		{
+			$this->controller->addError(static::class, 'Access to change director denied');
+			return false;
+		}
+
 		// user can update task
-		if (!$this->controller->check(ActionDictionary::ACTION_TASK_EDIT, $task, $params))
-		{
-			$this->controller->addError(static::class, 'Access to edit task denied');
-			return false;
-		}
-
-		$directors = $params->getMembers(RoleDictionary::ROLE_DIRECTOR);
-		if (empty($directors))
-		{
-			$this->controller->addError(static::class, 'Director is undefined');
-			return false;
-		}
-
-		if ($directors[0] === $this->user->getUserId())
+		if ($this->controller->check(ActionDictionary::ACTION_TASK_EDIT, $task, $params))
 		{
 			return true;
 		}

@@ -8,5 +8,7 @@ return [
 		'cache',
 		'utils',
 		'im:chat/performance',
+		'im:messenger/const',
+		'im:messenger/lib/rest',
 	],
 ];

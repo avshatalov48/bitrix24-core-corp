@@ -566,7 +566,7 @@ class SalesCenterPaymentPay extends \CBitrixComponent implements Main\Engine\Con
 	 */
 	private function prepareConsentSettings(Sale\Order $order)
 	{
-		$agreementId = 0;
+		$agreements = [];
 		$isConsentActive = Option::get('salescenter', '~SALESCENTER_USER_CONSENT_ACTIVE', 'Y');
 		if ($isConsentActive === 'Y')
 		{
@@ -588,25 +588,33 @@ class SalesCenterPaymentPay extends \CBitrixComponent implements Main\Engine\Con
 
 					if ((int)$sessionData['AGREEMENT_ID'] > 0)
 					{
-						$agreementId = (int)$sessionData['AGREEMENT_ID'];
+						$agreements[] = [
+							'ID' => (int)$sessionData['AGREEMENT_ID'],
+							'CHECKED' => 'Y',
+							'REQUIRED' => 'Y',
+						];
 						$this->arResult['USER_CONSENT'] = 'Y';
-						$this->arResult['USER_CONSENT_IS_CHECKED'] = 'Y';
 					}
 				}
 			}
 
-			if ($agreementId <= 0)
+			if (!$agreements)
 			{
-				$agreementId = (int)Option::get('salescenter', '~SALESCENTER_USER_CONSENT_ID');
-				if ($agreementId > 0)
+				CBitrixComponent::includeComponentClass('bitrix:salescenter.userconsent');
+				$agreements = (new \SalesCenterUserConsent)->getUserConsents();
+				if ($agreements)
 				{
 					$this->arResult['USER_CONSENT'] = 'Y';
-					$this->arResult['USER_CONSENT_IS_CHECKED'] = Option::get('salescenter', '~SALESCENTER_USER_CONSENT_CHECKED');
 				}
 			}
 		}
 
-		$this->arResult['USER_CONSENT_ID'] = $agreementId;
+		$this->arResult['USER_CONSENTS'] = $agreements;
+		if (Loader::includeModule('crm'))
+		{
+			$this->arResult['USER_CONSENT_AUTO_SAVE'] = 'Y';
+			$this->arResult['USER_CONSENT_ORIGINATOR_ID'] = \Bitrix\Crm\Integration\UserConsent::PROVIDER_CODE_PAYMENT;
+		}
 	}
 
 	/**

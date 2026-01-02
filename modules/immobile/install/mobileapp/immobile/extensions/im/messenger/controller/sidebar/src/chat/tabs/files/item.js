@@ -2,19 +2,16 @@
  * @module im/messenger/controller/sidebar/chat/tabs/files/item
  */
 jn.define('im/messenger/controller/sidebar/chat/tabs/files/item', (require, exports, module) => {
-	const { Loc } = require('loc');
-	const { Feature: MobileFeature } = require('feature');
+	const { Loc } = require('im/messenger/loc');
 	const { resolveFileIcon } = require('assets/icons');
 	const { Moment } = require('utils/date');
 	const { getExtension } = require('utils/file');
 	const { dayMonth, shortTime } = require('utils/date/formats');
 	const { Icon, IconView } = require('ui-system/blocks/icon');
-	const { EasyIcon } = require('layout/ui/file/icon');
 
 	const { Theme } = require('im/lib/theme');
-	const { ChatAvatar } = require('im/messenger/lib/element');
+	const { ChatAvatar } = require('im/messenger/lib/element/chat-avatar');
 	const { serviceLocator } = require('im/messenger/lib/di/service-locator');
-	const { Avatar: MessengerAvatarLegacy } = require('im/messenger/lib/ui/base/avatar');
 	const {
 		formatFileSize,
 		getFileIconTypeByExtension,
@@ -97,11 +94,6 @@ jn.define('im/messenger/controller/sidebar/chat/tabs/files/item', (require, expo
 		{
 			const { name } = this.file;
 			const extension = getExtension(name);
-
-			if (!MobileFeature.isAirStyleSupported())
-			{
-				return EasyIcon(extension, 24);
-			}
 
 			const fileIconType = getFileIconTypeByExtension(extension);
 			const fileIcon = resolveFileIcon(extension, fileIconType);
@@ -196,7 +188,7 @@ jn.define('im/messenger/controller/sidebar/chat/tabs/files/item', (require, expo
 		renderSubTitle()
 		{
 			const { dateCreate } = this.props;
-			const { id, avatar, name, color } = this.author;
+			const { id } = this.author;
 
 			const date = new Moment(dateCreate).format(dayMonth);
 			const time = new Moment(dateCreate).format(shortTime);
@@ -206,20 +198,7 @@ jn.define('im/messenger/controller/sidebar/chat/tabs/files/item', (require, expo
 				'#TIME#': time,
 			});
 
-			let avatarView = null;
-			if (MobileFeature.isNativeAvatarSupported())
-			{
-				avatarView = Avatar(ChatAvatar.createFromDialogId(id).getSidebarTabItemDescriptionAvatarProps());
-			}
-			else
-			{
-				avatarView = new MessengerAvatarLegacy({
-					text: name,
-					uri: avatar,
-					color,
-					size: 'S',
-				});
-			}
+			const avatarView = Avatar(ChatAvatar.createFromDialogId(id).getSidebarTabItemDescriptionAvatarProps());
 
 			return View(
 				{

@@ -6,6 +6,7 @@ use Bitrix\Main\ArgumentException;
 use Bitrix\Main\DI\ServiceLocator;
 use Bitrix\Main\Engine\Controller;
 use Bitrix\Main\Engine\CurrentUser;
+use Bitrix\Main\Error;
 use Bitrix\Main\Loader;
 use Bitrix\Main\ObjectPropertyException;
 use Bitrix\Main\Request;
@@ -37,8 +38,15 @@ class Sign extends Controller
 	 */
 	public function convertDealAction(int $documentId, bool $usePrevious = false): array
 	{
-		$result = $this->signService->convertDealDocumentToSmartDocument($documentId, $usePrevious);
-		
+		$createdById = (int)CurrentUser::get()->getId();
+		if($createdById < 1)
+		{
+			$this->addError(new Error('User not found'));
+
+			return [];
+		}
+
+		$result = $this->signService->convertDealDocumentToSmartDocument($documentId, $createdById, $usePrevious);
 		if (!$result->isSuccess())
 		{
 			$this->addErrors($result->getErrors());

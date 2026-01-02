@@ -1,11 +1,11 @@
-<?
-global $MESS;
-$PathInstall = str_replace("\\", "/", __FILE__);
-$PathInstall = mb_substr($PathInstall, 0, mb_strlen($PathInstall) - mb_strlen("/index.php"));
+<?php
 
-IncludeModuleLangFile($PathInstall."/install.php");
+if(class_exists("xdimport"))
+{
+	return;
+}
 
-if(class_exists("xdimport")) return;
+IncludeModuleLangFile(__FILE__);
 
 Class xdimport extends CModule
 {
@@ -15,6 +15,7 @@ Class xdimport extends CModule
 	var $MODULE_NAME;
 	var $MODULE_DESCRIPTION;
 	var $MODULE_GROUP_RIGHTS = "Y";
+	var $errors;
 
 	public function __construct()
 	{
@@ -42,6 +43,7 @@ Class xdimport extends CModule
 	function InstallDB()
 	{
 		global $DB, $APPLICATION;
+
 		$connection = \Bitrix\Main\Application::getConnection();
 	
 		$this->errors = false;
@@ -70,28 +72,21 @@ Class xdimport extends CModule
 	
 	function InstallFiles()
 	{
-		if($_ENV["COMPUTERNAME"]!='BX')
-		{
-			CopyDirFiles($_SERVER["DOCUMENT_ROOT"]."/bitrix/modules/xdimport/install/admin", $_SERVER["DOCUMENT_ROOT"]."/bitrix/admin", true);
-			CopyDirFiles($_SERVER["DOCUMENT_ROOT"]."/bitrix/modules/xdimport/install/tools", $_SERVER["DOCUMENT_ROOT"]."/bitrix/tools", true);
-			CopyDirFiles($_SERVER["DOCUMENT_ROOT"]."/bitrix/modules/xdimport/install/themes", $_SERVER["DOCUMENT_ROOT"]."/bitrix/themes", true, true);
-			CopyDirFiles($_SERVER["DOCUMENT_ROOT"]."/bitrix/modules/xdimport/install/components", $_SERVER["DOCUMENT_ROOT"]."/bitrix/components", true, true);
-		}
+		CopyDirFiles($_SERVER["DOCUMENT_ROOT"]."/bitrix/modules/xdimport/install/admin", $_SERVER["DOCUMENT_ROOT"]."/bitrix/admin");
+		CopyDirFiles($_SERVER["DOCUMENT_ROOT"]."/bitrix/modules/xdimport/install/tools", $_SERVER["DOCUMENT_ROOT"]."/bitrix/tools");
+		CopyDirFiles($_SERVER["DOCUMENT_ROOT"]."/bitrix/modules/xdimport/install/themes", $_SERVER["DOCUMENT_ROOT"]."/bitrix/themes", true, true);
+		CopyDirFiles($_SERVER["DOCUMENT_ROOT"]."/bitrix/modules/xdimport/install/components", $_SERVER["DOCUMENT_ROOT"]."/bitrix/components", true, true);
 		return true;
 	}
 
-	function InstallEvents()
-	{
-		return true;
-	}
-	
 	function DoUninstall()
 	{
-		global $DOCUMENT_ROOT, $APPLICATION, $step;
+		global $APPLICATION, $step;
+
 		$step = intval($step);
 		if($step<2)
 		{
-			$APPLICATION->IncludeAdminFile(GetMessage("XDI_UNINSTALL_TITLE"), $DOCUMENT_ROOT."/bitrix/modules/xdimport/install/unstep1.php");
+			$APPLICATION->IncludeAdminFile(GetMessage("XDI_UNINSTALL_TITLE"), $_SERVER["DOCUMENT_ROOT"]."/bitrix/modules/xdimport/install/unstep1.php");
 		}
 		elseif($step==2)
 		{
@@ -99,13 +94,14 @@ Class xdimport extends CModule
 				"savedata" => $_REQUEST["savedata"],
 			));
 			$this->UnInstallFiles();
-			$APPLICATION->IncludeAdminFile(GetMessage("XDI_UNINSTALL_TITLE"), $DOCUMENT_ROOT."/bitrix/modules/xdimport/install/unstep2.php");
+			$APPLICATION->IncludeAdminFile(GetMessage("XDI_UNINSTALL_TITLE"), $_SERVER["DOCUMENT_ROOT"]."/bitrix/modules/xdimport/install/unstep2.php");
 		}
 	}
 	
 	function UnInstallDB($arParams = Array())
 	{
-		global $APPLICATION, $DB, $errors;
+		global $APPLICATION, $DB;
+
 		$connection = \Bitrix\Main\Application::getConnection();
 		
 		$this->errors = false;
@@ -113,13 +109,9 @@ Class xdimport extends CModule
 		if (!$arParams['savedata'])
 			$this->errors = $DB->RunSQLBatch($_SERVER['DOCUMENT_ROOT']."/bitrix/modules/xdimport/install/db/".$connection->getType()."/uninstall.sql");
 
-		if(is_array($this->errors))
-			$arSQLErrors = array_merge($arSQLErrors, $this->errors);
-
-		if(!empty($arSQLErrors))
+		if(!empty($this->errors))
 		{
-			$this->errors = $arSQLErrors;
-			$APPLICATION->ThrowException(implode("", $arSQLErrors));
+			$APPLICATION->ThrowException(implode("", $this->errors));
 			return false;
 		} 
 
@@ -139,8 +131,6 @@ Class xdimport extends CModule
 	
 	function UnInstallFiles($arParams = array())
 	{
-		global $DB;
-		
 		// Delete files
 		DeleteDirFiles($_SERVER["DOCUMENT_ROOT"]."/bitrix/modules/xdimport/install/admin/", $_SERVER["DOCUMENT_ROOT"]."/bitrix/admin");
 		DeleteDirFiles($_SERVER["DOCUMENT_ROOT"]."/bitrix/modules/xdimport/install/tools/", $_SERVER["DOCUMENT_ROOT"]."/bitrix/tools");
@@ -148,17 +138,4 @@ Class xdimport extends CModule
 
 		return true;
 	}
-
-	function UnInstallEvents()
-	{
-		return true;
-	}
-	
-	function GetModuleRightList()
-	{
-		global $MESS;
-		$arr = array();
-		return $arr;
-	}
 }
-?>

@@ -11,6 +11,7 @@ jn.define('crm/receive-payment/mode-selection', (require, exports, module) => {
 	const { MultiFieldDrawer, MultiFieldType } = require('crm/multi-field-drawer');
 	const { EventEmitter } = require('event-emitter');
 	const { isEqual } = require('utils/object');
+	const { Random } = require('utils/random');
 	const { AnalyticsLabel } = require('analytics-label');
 	const { AnalyticsEvent } = require('analytics');
 	const { NotifyManager } = require('notify-manager');
@@ -18,6 +19,7 @@ jn.define('crm/receive-payment/mode-selection', (require, exports, module) => {
 	const { ImageAfterTypes } = require('layout/ui/context-menu/item');
 	const { WarningBlock } = require('layout/ui/warning-block');
 	const { PaymentCreate } = require('crm/terminal/entity/payment-create');
+	const { RunActionExecutor } = require('rest');
 
 	/**
 	 * @class ModeSelectionMenu

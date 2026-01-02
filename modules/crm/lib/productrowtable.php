@@ -194,36 +194,55 @@ class ProductRowTable extends DataManager
 
 	public static function deleteByItem(int $entityTypeId, int $entityId): void
 	{
+		$ownerType = \CCrmOwnerTypeAbbr::ResolveByTypeID($entityTypeId);
+		if ($ownerType === \CCrmOwnerTypeAbbr::Undefined || $entityId <= 0)
+		{
+			return;
+		}
+
 		$connection = Application::getConnection();
 		$helper = $connection->getSqlHelper();
 
-		$ownerType = \CCrmOwnerTypeAbbr::ResolveByTypeID($entityTypeId);
+		$row = static::getRow([
+			'select' => [
+				'ID',
+			],
+			'filter' => [
+				'=OWNER_TYPE' => $ownerType,
+				'=OWNER_ID' => $entityId,
+			],
+		]);
 
-		/** @noinspection SqlResolve */
-		$connection->query(sprintf(
-			'DELETE FROM %s WHERE ROW_ID IN (
+		$safeOwnerType = $helper->convertToDbString($ownerType);
+		$safeEntityId = $helper->convertToDbInteger($entityId);
+
+		if ($row)
+		{
+			$safeTableName = $helper->quote(static::getTableName());
+
+			$connection->queryExecute(sprintf(
+				'DELETE FROM %s WHERE ROW_ID IN (
 				SELECT ID FROM %s WHERE OWNER_TYPE = %s AND OWNER_ID = %d
 			)',
-			$helper->quote(Reservation\Internals\ProductRowReservationTable::getTableName()),
-			$helper->quote(static::getTableName()),
-			$helper->convertToDbString($ownerType),
-			$helper->convertToDbInteger($entityId)
-		));
+				$helper->quote(Reservation\Internals\ProductRowReservationTable::getTableName()),
+				$safeTableName,
+				$safeOwnerType,
+				$safeEntityId
+			));
 
-		/** @noinspection SqlResolve */
-		$connection->query(sprintf(
-			'DELETE FROM %s WHERE OWNER_TYPE = %s AND OWNER_ID = %d',
-			$helper->quote(static::getTableName()),
-			$helper->convertToDbString($ownerType),
-			$helper->convertToDbInteger($entityId)
-		));
+			$connection->queryExecute(sprintf(
+				'DELETE FROM %s WHERE OWNER_TYPE = %s AND OWNER_ID = %d',
+				$safeTableName,
+				$safeOwnerType,
+				$safeEntityId
+			));
+		}
 
-		/** @noinspection SqlResolve */
-		$connection->query(sprintf(
+		$connection->queryExecute(sprintf(
 			'DELETE FROM %s WHERE OWNER_TYPE = %s AND OWNER_ID = %d',
 			$helper->quote(\CCrmProductRow::CONFIG_TABLE_NAME),
-			$helper->convertToDbString($ownerType),
-			$helper->convertToDbInteger($entityId)
+			$safeOwnerType,
+			$safeEntityId
 		));
 	}
 

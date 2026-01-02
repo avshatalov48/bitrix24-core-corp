@@ -60,29 +60,10 @@ if (!Bitrix\Crm\Integration\Bitrix24Manager::isAccessEnabled(CCrmOwnerType::Deal
 }
 else
 {
-	$isBitrix24Template = SITE_TEMPLATE_ID === 'bitrix24';
 	$isRecurring = isset($arResult['IS_RECURRING']) && $arResult['IS_RECURRING'] === 'Y';
 
-	if (!$isRecurring)
-	{
-		$APPLICATION->IncludeComponent(
-			'bitrix:crm.entity.counter.panel',
-			'',
-			array(
-				'ENTITY_TYPE_NAME' => CCrmOwnerType::DealName,
-				'EXTRAS' => ['DEAL_CATEGORY_ID' => $categoryID],
-				'PATH_TO_ENTITY_LIST' => $categoryID < 0
-					? ($arResult['PATH_TO_DEAL_LIST'] ?? '')
-					: CComponentEngine::makePathFromTemplate($arResult['PATH_TO_DEAL_CATEGORY'], ['category_id' => $categoryID])
-			)
-		);
-	}
-
-	if ($isBitrix24Template)
-	{
-		$bodyClass = $APPLICATION->GetPageProperty('BodyClass');
-		$APPLICATION->SetPageProperty('BodyClass', ($bodyClass ? $bodyClass.' ' : '').'crm-toolbar-modifier');
-	}
+	$bodyClass = $APPLICATION->GetPageProperty('BodyClass');
+	$APPLICATION->SetPageProperty('BodyClass', ($bodyClass ? $bodyClass.' ' : '').'crm-toolbar-modifier');
 
 	$APPLICATION->ShowViewContent('crm-grid-filter');
 
@@ -142,7 +123,7 @@ else
 
 		$APPLICATION->IncludeComponent(
 			'bitrix:crm.deal_category.panel',
-			$isBitrix24Template ? 'tiny' : '',
+			'tiny',
 			[
 				'PATH_TO_DEAL_LIST' => $arResult['PATH_TO_DEAL_LIST'] ?? '',
 				'PATH_TO_DEAL_EDIT' => $arResult['PATH_TO_DEAL_EDIT'] ?? '',

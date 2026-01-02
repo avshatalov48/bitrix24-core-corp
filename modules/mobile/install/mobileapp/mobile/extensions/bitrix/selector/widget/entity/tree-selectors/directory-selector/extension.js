@@ -14,13 +14,6 @@ jn.define('selector/widget/entity/tree-selectors/directory-selector', (require, 
 	class DirectorySelector extends BaseTreeSelector
 	{
 		/**
-		 * @typedef {Object} WidgetParams
-		 * @property {Object} backdrop - Backdrop settings.
-		 * @property {number} backdrop.mediumPositionPercent - Medium position percentage for the backdrop.
-		 * @property {boolean} backdrop.horizontalSwipeAllowed - Whether horizontal swipe is allowed.
-		 * @property {string} [sendButtonName] - Name of the send button.
-		 * @property {string} [title] - Title of the widget.
-		 *
 		 * @typedef {Object} Events
 		 * @property {Function} onClose - Handler for the close event.
 		 *
@@ -48,9 +41,42 @@ jn.define('selector/widget/entity/tree-selectors/directory-selector', (require, 
 		 */
 		constructor(options = {})
 		{
-			const provider = Type.isPlainObject(options.provider) ? options.provider : {};
-			const providerOptions = Type.isPlainObject(options.provider?.options) ? options.provider?.options : {};
+			super(options);
 
+			this.rootTitle = options.widgetParams?.title;
+			this.isMultipleSelectionMode = options.allowMultipleSelection;
+
+			this.entity.addEvents({
+				onItemSelected: this.onItemSelected,
+				onClose: this.onClose,
+			});
+		}
+
+		get canSelectRoot()
+		{
+			return this.options.selectOptions?.canSelectRoot ?? true;
+		}
+
+		getEntity()
+		{
+			return DirectorySelectorEntity;
+		}
+
+		getNodeEntityId()
+		{
+			return 'folder';
+		}
+
+		prepareOptions(options)
+		{
+			return {
+				...options,
+				allowMultipleSelection: true,
+			};
+		}
+
+		prepareWidgetParams(options)
+		{
 			const isMultipleSelectionMode = options.allowMultipleSelection;
 			const isShowDirectoriesOnlyMode = Boolean(options.provider?.options?.showDirectoriesOnly);
 
@@ -61,75 +87,66 @@ jn.define('selector/widget/entity/tree-selectors/directory-selector', (require, 
 						: null
 				);
 
-			super(DirectorySelectorEntity, {
-				...options,
-				allowMultipleSelection: true,
-				widgetParams: {
-					...options.widgetParams,
-					sendButtonName,
-				},
-				events: {
-					...options.events,
-					onClose: (selectedItems) => {
-						const parentItem = this.navigator.getCurrentNode();
-
-						options.events?.onClose?.({
-							selectedItems,
-							parentItem,
-						});
-					},
-				},
-				searchOptions: {
-					...options.searchOptions,
-					onSearchCancelled: () => this.#onSearchCancelled(),
-				},
-				provider: {
-					...provider,
-					options: {
-						...providerOptions,
-						findInTree: Navigator.findInTree,
-						onItemsLoaded: (items) => this.#onItemsLoaded(items),
-						storageId: options.provider.storageId,
-						getCurrentNode: () => this.getNavigator().getCurrentNode(),
-						onStorageLoaded: (storage) => this.#onStorageLoaded(storage),
-					},
-				},
-			});
-
-			this.isMultipleSelectionMode = isMultipleSelectionMode;
-			this.widgetRootDirectoryTitle = options.widgetParams?.title;
-			this.canSelectRoot = options.selectOptions?.canSelectRoot ?? true;
-
-			this.entity.addEvents({
-				onItemSelected: this.onItemSelected,
-			});
-
-			this.recentTitle = options.widgetParams.title;
-			this.nodeEntityId = 'folder';
+			return {
+				...options.widgetParams,
+				sendButtonName,
+			};
 		}
 
-		#onStorageLoaded = (storage) => {
-			this.navigator = new Navigator({
-				onCurrentNodeChanged: this.#onDirectoryChanged,
-			});
+		prepareSearchOptions(options)
+		{
+			return {
+				...options.searchOptions,
+				onSearchCancelled: () => this.#onSearchCancelled(),
+			};
+		}
 
-			this.navigator.init({
-				entityId: this.nodeEntityId,
+		prepareProvider(options)
+		{
+			const provider = { ...options.provider };
+			const preparedProvider = Type.isPlainObject(provider) ? provider : {};
+			const providerOptions = Type.isPlainObject(preparedProvider?.options) ? preparedProvider?.options : {};
+
+			return {
+				...provider,
+				options: {
+					...providerOptions,
+					findInTree: Navigator.findInTree,
+					onItemsLoaded: (items) => this.#onItemsLoaded(items),
+					storageId: preparedProvider.storageId,
+					getCurrentNode: () => this.getNavigator().getCurrentNode(),
+					onStorageLoaded: (storage) => this.#onStorageLoaded(storage),
+				},
+			};
+		}
+
+		onClose = (selectedItems) => {
+			const parentItem = this.navigator.getCurrentNode();
+
+			this.options.events?.onClose?.({
+				selectedItems,
+				parentItem,
+			});
+		};
+
+		#onStorageLoaded = (storage) => {
+			this.getNavigator().init({
+				entityId: this.getNodeEntityId(),
 				...storage,
 			});
 
 			this.#setIsButtonActive(this.canSelectRoot);
 
-			if (this.widgetRootDirectoryTitle)
+			if (this.rootTitle)
 			{
 				return;
 			}
 
-			this.widgetRootDirectoryTitle = storage.type === 'user'
+			this.rootTitle = storage.type === 'user'
 				? Loc.getMessage('DIRECTORY_SELECTOR_USER_ROOT_DIRECTORY_TITLE')
 				: storage.name;
 
-			this.#setTitle(this.widgetRootDirectoryTitle);
+			this.setTitle(this.rootTitle);
 		};
 
 		#onItemsLoaded = (items) => {
@@ -140,7 +157,7 @@ jn.define('selector/widget/entity/tree-selectors/directory-selector', (require, 
 			);
 		};
 
-		#onDirectoryChanged = (node) => {
+		onNodeChanged = (node) => {
 			if (!node)
 			{
 				return;
@@ -150,7 +167,7 @@ jn.define('selector/widget/entity/tree-selectors/directory-selector', (require, 
 
 			if (this.getNavigator().isRoot(node))
 			{
-				title = this.widgetRootDirectoryTitle;
+				title = this.rootTitle;
 				this.#setIsButtonActive(this.canSelectRoot);
 			}
 			else
@@ -158,26 +175,11 @@ jn.define('selector/widget/entity/tree-selectors/directory-selector', (require, 
 				this.#setIsButtonActive(true);
 			}
 
-			this.#setTitle(title);
+			super.onNodeChanged({ title });
 		};
 
 		#setIsButtonActive = (state) => {
-			if (Application.getApiVersion() < 56)
-			{
-				this.getSelector().getWidget().setSendButtonEnabled(state);
-			}
-			else
-			{
-				this.getSelector().getWidget().setSendButtonVisible(state);
-			}
-		};
-
-		#setTitle = (title, useProgress = false) => {
-			this.getSelector().getWidget()?.setTitle({
-				text: title,
-				useProgress,
-				type: 'wizard',
-			});
+			this.getSelector().getWidget().setSendButtonVisible(state);
 		};
 
 		onItemSelected = ({ item, text, scope }) => {
@@ -204,7 +206,7 @@ jn.define('selector/widget/entity/tree-selectors/directory-selector', (require, 
 
 			if (this.getNavigator().isRoot(currentNode))
 			{
-				shortTitle = this.widgetRootDirectoryTitle;
+				shortTitle = this.rootTitle;
 				canSelectCurrentNode = this.canSelectRoot;
 			}
 

@@ -3,18 +3,14 @@
  */
 jn.define('im/messenger/controller/sidebar/chat/sidebar-profile-info', (require, exports, module) => {
 	const { Type } = require('type');
-	const { Feature: MobileFeature } = require('feature');
 
 	const { LoggerManager } = require('im/messenger/lib/logger');
 	const logger = LoggerManager.getInstance().getLogger('sidebar--sidebar-profile-info');
 	const {
-		Avatar: MessengerAvatarLegacy,
 		AvatarSafe,
 	} = require('im/messenger/lib/ui/base/avatar');
-	const {
-		ChatTitle,
-		ChatAvatar,
-	} = require('im/messenger/lib/element');
+	const { ChatTitle } = require('im/messenger/lib/element/chat-title');
+	const { ChatAvatar } = require('im/messenger/lib/element/chat-avatar');
 	const { EventType } = require('im/messenger/const');
 	const { Theme } = require('im/lib/theme');
 	const { serviceLocator } = require('im/messenger/lib/di/service-locator');
@@ -42,6 +38,7 @@ jn.define('im/messenger/controller/sidebar/chat/sidebar-profile-info', (require,
 				title: props.headData.title,
 				desc: props.headData.desc,
 				imageUrl: props.headData.imageUrl,
+				titleColor: this.getTitleColor(),
 			};
 
 			this.setRestService();
@@ -100,21 +97,10 @@ jn.define('im/messenger/controller/sidebar/chat/sidebar-profile-info', (require,
 					isSuperEllipse: this.props.isSuperEllipseAvatar,
 				});
 			}
-			else if (MobileFeature.isNativeAvatarSupported())
+			else
 			{
 				const avatarProps = ChatAvatar.createFromDialogId(this.props.dialogId).getSidebarTitleAvatarProps();
 				avatar = Avatar(avatarProps);
-			}
-			else
-			{
-				avatar = new MessengerAvatarLegacy({
-					text: this.state.title,
-					uri: this.state.imageUrl,
-					svg: this.props.headData.svg,
-					color: this.props.headData.imageColor,
-					size: 'XL',
-					isSuperEllipse: this.props.isSuperEllipseAvatar,
-				});
 			}
 
 			return View(
@@ -167,7 +153,7 @@ jn.define('im/messenger/controller/sidebar/chat/sidebar-profile-info', (require,
 				},
 				Text({
 					style: {
-						color: ChatTitle.createFromDialogId(this.props.dialogId).getTitleColor(),
+						color: this.state.titleColor,
 						fontSize: 17,
 						fontWeight: '500',
 						textStyle: 'normal',
@@ -185,10 +171,7 @@ jn.define('im/messenger/controller/sidebar/chat/sidebar-profile-info', (require,
 
 		renderDescription()
 		{
-			if (this.props.isNotes)
-			{
-				return null;
-			}
+			const color = this.props.isNotes ? Theme.colors.base4 : Theme.colors.base1;
 
 			return View(
 				{
@@ -199,7 +182,7 @@ jn.define('im/messenger/controller/sidebar/chat/sidebar-profile-info', (require,
 				},
 				Text({
 					style: {
-						color: Theme.colors.base1,
+						color,
 						fontSize: 14,
 						fontWeight: '400',
 						textStyle: 'normal',
@@ -346,6 +329,11 @@ jn.define('im/messenger/controller/sidebar/chat/sidebar-profile-info', (require,
 			return departmentName;
 		}
 
+		getTitleColor()
+		{
+			return ChatTitle.createFromDialogId(this.props.dialogId).getTitleColor({ useNotes: this.props.isNotes });
+		}
+
 		componentDidMount()
 		{
 			logger.log('SidebarProfileBtn.view.componentDidMount');
@@ -432,6 +420,7 @@ jn.define('im/messenger/controller/sidebar/chat/sidebar-profile-info', (require,
 
 			logger.info(`${this.constructor.name}.onUpdateDialogState---------->`, mutation);
 
+			/** @type {Partial<SidebarProfileInfoState>} */
 			const newState = Object.create(null);
 			if (Type.isString(fields?.name) && fields?.name !== this.state.title)
 			{
@@ -441,6 +430,12 @@ jn.define('im/messenger/controller/sidebar/chat/sidebar-profile-info', (require,
 			if (Type.isString(fields?.avatar) && fields?.avatar !== this.state.imageUrl)
 			{
 				newState.imageUrl = fields.avatar;
+			}
+
+			const titleColor = this.getTitleColor();
+			if (this.state.titleColor !== titleColor)
+			{
+				newState.titleColor = titleColor;
 			}
 
 			if (Object.keys(newState).length > 0)

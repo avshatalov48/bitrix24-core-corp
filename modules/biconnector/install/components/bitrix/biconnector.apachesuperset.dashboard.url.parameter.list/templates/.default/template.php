@@ -11,8 +11,10 @@ if (!defined('B_PROLOG_INCLUDED') || B_PROLOG_INCLUDED !== true)
  */
 
 use Bitrix\Main\Loader;
+use Bitrix\Main\Localization\Loc;
 use Bitrix\Main\UI\Extension;
 use Bitrix\UI\Toolbar\Facade\Toolbar;
+use Bitrix\UI\Buttons;
 
 if (!empty($arResult['ERROR_MESSAGES']))
 {
@@ -35,6 +37,22 @@ Extension::load([
 Toolbar::deleteFavoriteStar();
 $APPLICATION->setTitle($arResult['TITLE']);
 
+$articleCode = 22658454;
+Toolbar::addButton(
+	new Buttons\Button(
+		[
+			'color' => Buttons\Color::LIGHT_BORDER,
+			'size'  => Buttons\Size::MEDIUM,
+			'click' => new Buttons\JsCode(
+				"top.BX.Helper.show('redirect=detail&code={$articleCode}');"
+			),
+			'dataset' => [
+				'toolbar-collapsed-icon' => Buttons\Icon::INFO,
+			],
+			'text' => Loc::getMessage('BICONNECTOR_APACHE_SUPERSET_DASHBOARD_URL_PARAM_LIST_HELP'),
+		]
+	)
+);
 ?>
 
 <div class="dashboard-url-param-container">
@@ -88,4 +106,3 @@ $APPLICATION->setTitle($arResult['TITLE']);
 		?>
 	</div>
 </div>
-

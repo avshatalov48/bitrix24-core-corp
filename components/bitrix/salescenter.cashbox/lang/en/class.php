@@ -10,6 +10,7 @@ $MESS["SC_CASHBOX_FIELDS_OFD"] = "OFD";
 $MESS["SC_CASHBOX_FIELDS_OFD_YOOKASSA_HINT"] = "Select First OFD if you send receipts via YooMoney. Otherwise, select Second OFD as per your cash register settings.";
 $MESS["SC_CASHBOX_FIELDS_OFD_YOOKASSA_HINT_MORE"] = "Learn more";
 $MESS["SC_CASHBOX_FIELDS_USE_OFFLINE"] = "Offline mode";
+$MESS["SC_CASHBOX_FIELDS_VAT_22_WARNING"] = "As of Juanuary 1 2026, your new tax rate is 22%. Use the code #CODE#.";
 $MESS["SC_CASHBOX_FILE_LABEL"] = "Upload file";
 $MESS["SC_CASHBOX_KKM_ATOL"] = "ATOL";
 $MESS["SC_CASHBOX_KKM_EVOTOR"] = "Evotor";

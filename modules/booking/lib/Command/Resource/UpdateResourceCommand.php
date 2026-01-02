@@ -22,9 +22,17 @@ class UpdateResourceCommand extends AbstractCommand
 	public function toArray(): array
 	{
 		return [
-			'resource' => $this->resource->toArray(),
 			'updatedBy' => $this->updatedBy,
+			'resource' => $this->resource->toArray(),
 		];
+	}
+
+	public static function mapFromArray(array $props): self
+	{
+		return new self(
+			updatedBy: $props['updatedBy'],
+			resource: Entity\Resource\Resource::mapFromArray($props['resource']),
+		);
 	}
 
 	protected function execute(): Result

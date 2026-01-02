@@ -190,6 +190,7 @@ class CTimeManUser
 				CUser::setLastActivityDate($this->USER_ID);
 				$APPLICATION->resetException();
 				$this->deleteLastPauseInfo($this->USER_ID);
+				static::ClearCache();
 				static::clearFullReportCache();
 
 				$data = WorktimeRecordTable::convertFieldsCompatible($result->getWorktimeRecord()->collectValues());
@@ -269,6 +270,7 @@ class CTimeManUser
 					CTimeManNotify::SendMessage($recordFields['ID']);
 				}
 
+				static::ClearCache();
 				static::clearFullReportCache();
 
 				$e = GetModuleEvents('timeman', 'OnAfterTMDayEnd');
@@ -338,6 +340,7 @@ class CTimeManUser
 				);
 				$report->save();
 
+				static::ClearCache();
 				static::clearFullReportCache();
 
 				$data = WorktimeRecordTable::convertFieldsCompatible($result->getWorktimeRecord()->collectValues());
@@ -412,6 +415,7 @@ class CTimeManUser
 			{
 				CUser::SetLastActivityDate($this->USER_ID);
 
+				static::ClearCache();
 				static::clearFullReportCache();
 
 				$data = WorktimeRecordTable::convertFieldsCompatible($result->getWorktimeRecord()->collectValues());
@@ -430,7 +434,7 @@ class CTimeManUser
 			}
 			else
 			{
-				$APPLICATION->ThrowException('WD_NOT_OPEN');
+				$APPLICATION->ThrowException('WD_NOT_OPEN', 'SYSTEM_ERROR');
 			}
 		}
 
@@ -531,16 +535,32 @@ class CTimeManUser
 
 	public function State()
 	{
-		return ($this->isDayExpired()
-			? 'EXPIRED'
-			: ($this->isDayOpen()
-				? 'OPENED'
-				: ($this->isDayPaused()
-					? 'PAUSED'
-					: 'CLOSED'
-				)
-			)
-		);
+		if ($this->isDayPaused())
+		{
+			return 'PAUSED';
+		}
+
+		$lastData = $this->_GetLastData(true);
+		if (
+			$lastData
+			&& isset($lastData['CURRENT_STATUS'])
+			&& $lastData['CURRENT_STATUS'] === 'CLOSED'
+		)
+		{
+			return 'CLOSED';
+		}
+
+		if ($this->isDayExpired())
+		{
+			return 'EXPIRED';
+		}
+
+		if ($this->isDayOpen())
+		{
+			return 'OPENED';
+		}
+
+		return 'CLOSED';
 	}
 
 	public function GetExpiredRecommendedDate()
@@ -580,13 +600,13 @@ class CTimeManUser
 	// check if day is currently opened
 	public function isDayOpen()
 	{
-		return WorktimeRecord::isRecordOpened($this->_GetLastData());
+		return WorktimeRecord::isRecordOpened($this->_GetLastData(true));
 	}
 
 	// check if day is paused
 	public function isDayPaused()
 	{
-		return WorktimeRecord::isRecordPaused($this->_GetLastData());
+		return WorktimeRecord::isRecordPaused($this->_GetLastData(true));
 	}
 
 	public function getDayStartOffset($entry, $bTs = false)
@@ -614,7 +634,14 @@ class CTimeManUser
 		$time_start = $ts_start - $ts_start_day;
 
 		// server timezone diff with server that was at the day start
-		$timezone_diff = CTimeManUser::$LAST_ENTRY[$this->USER_ID]['TIME_START'] - $time_start;
+		if (!empty(CTimeManUser::$LAST_ENTRY[$this->USER_ID]))
+		{
+			$timezone_diff = CTimeManUser::$LAST_ENTRY[$this->USER_ID]['TIME_START'] - $time_start;
+		}
+		else
+		{
+			$timezone_diff = 0;
+		}
 
 		// current date with such timezone_diff;
 		$t = time();

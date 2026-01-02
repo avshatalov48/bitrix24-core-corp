@@ -79,7 +79,6 @@ $MESS["CRM_ORD_PROP_GROUP_FIZ1"] = "Personal information";
 $MESS["CRM_ORD_PROP_GROUP_FIZ2"] = "Delivery information";
 $MESS["CRM_ORD_PROP_GROUP_UR1"] = "Company information";
 $MESS["CRM_ORD_PROP_GROUP_UR2"] = "Contact information";
-$MESS["CRM_PAGE_FUNNEL"] = "Sales Funnel";
 $MESS["CRM_PERM_D"] = "Access denied";
 $MESS["CRM_PERM_R"] = "View pages";
 $MESS["CRM_PERM_W"] = "Create and edit pages";

@@ -145,7 +145,7 @@ this.BX.Crm = this.BX.Crm || {};
 
 	// fallback values
 	const HELP_CENTER_ID = 13003062;
-	const HELP_CENTER_URL = 'https://helpdesk.bitrix24.ru/open/' + HELP_CENTER_ID;
+	const HELP_CENTER_URL = `BX.Helper?.show('redirect=detail&code=${HELP_CENTER_ID}')`;
 	var _loader = /*#__PURE__*/babelHelpers.classPrivateFieldLooseKey("loader");
 	class Tab {
 	  constructor() {

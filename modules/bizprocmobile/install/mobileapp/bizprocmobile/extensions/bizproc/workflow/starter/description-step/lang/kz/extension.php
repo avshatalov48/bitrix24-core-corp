@@ -1,0 +1,12 @@
+<?php
+$MESS["M_BP_WORKFLOW_STARTER_DESCRIPTION_STEP_AVERAGE_EXECUTION_TIME_DESCRIPTION"] = "Процесті барлық қатысушының уақытын үнемдейтіндей және әр кезеңнің орындалуын тездететіндей етіп баптаңыз.";
+$MESS["M_BP_WORKFLOW_STARTER_DESCRIPTION_STEP_AVERAGE_EXECUTION_TIME_LINK_TITLE"] = "Процесті қалай оңтайландыру керек";
+$MESS["M_BP_WORKFLOW_STARTER_DESCRIPTION_STEP_AVERAGE_EXECUTION_TIME_NO_DATA"] = "деректер жоқ";
+$MESS["M_BP_WORKFLOW_STARTER_DESCRIPTION_STEP_AVERAGE_EXECUTION_TIME_NO_DATA_DESCRIPTION"] = "Процестің орташа орындалу уақытын есептеу үшін әлі деректер жеткіліксіз.";
+$MESS["M_BP_WORKFLOW_STARTER_DESCRIPTION_STEP_AVERAGE_EXECUTION_TIME_TITLE"] = "Орташа орындау уақыты";
+$MESS["M_BP_WORKFLOW_STARTER_DESCRIPTION_STEP_EMPTY_STATE_DESCRIPTION"] = "Сипаттама жоқ";
+$MESS["M_BP_WORKFLOW_STARTER_DESCRIPTION_STEP_ERROR_CONSTANTS_NOT_TUNED"] = "Процесті іске қосу мүмкін болмады, өйткені константалар бапталмаған. Өзіңіздің Битрикс24 әкімшісіне жүгініңіз";
+$MESS["M_BP_WORKFLOW_STARTER_DESCRIPTION_STEP_NEXT_STEP_BUTTON_FINISH_TEXT"] = "Бастау";
+$MESS["M_BP_WORKFLOW_STARTER_DESCRIPTION_STEP_NEXT_STEP_BUTTON_TEXT"] = "Жалғастыру";
+$MESS["M_BP_WORKFLOW_STARTER_DESCRIPTION_STEP_SUCCESS_MESSAGE"] = "Бизнес-процесс іске қосылды";
+$MESS["M_BP_WORKFLOW_STARTER_DESCRIPTION_STEP_TITLE"] = "Ұсыныстар";

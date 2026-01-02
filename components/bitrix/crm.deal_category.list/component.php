@@ -7,16 +7,15 @@ if (!CModule::IncludeModule('crm'))
 	return;
 }
 
-$userPermissions = CCrmPerms::GetCurrentUserPermissions();
-if (!$userPermissions->HavePerm('CONFIG', BX_CRM_PERM_CONFIG, 'WRITE'))
+if (!\Bitrix\Crm\Service\Container::getInstance()->getUserPermissions()->isAdminForEntity(CCrmOwnerType::Deal))
 {
 	ShowError(GetMessage('CRM_PERMISSION_DENIED'));
 	return;
 }
 
 use Bitrix\Crm\Category\DealCategory;
-use Bitrix\Crm\Entry\DeleteException;
 use Bitrix\Crm\Entry\UpdateException;
+use Bitrix\Crm\Service\Container;
 
 $arResult['CAN_EDIT'] = $arResult['CAN_DELETE'] = true;
 
@@ -48,46 +47,50 @@ $arResult['HEADERS'] = array(
 	//array('id' => 'LAST_UPDATED', 'name' => GetMessage('CRM_COLUMN_DEAL_CATEGORY_LAST_UPDATED'), 'sort' => 'LAST_UPDATED', 'default' => false, 'editable' => false)
 );
 
-if(check_bitrix_sessid())
+if (check_bitrix_sessid())
 {
+	$factory = Container::getInstance()->getFactory(\CCrmOwnerType::Deal);
+
 	if ($_SERVER['REQUEST_METHOD'] === 'POST' && isset($_POST['action_button_'.$arResult['GRID_ID']]))
 	{
-		$errors = array();
-		$action = $_POST['action_button_'.$arResult['GRID_ID']];
-		if($arResult['CAN_DELETE'] && $action === 'delete')
+		$errors = [];
+		$action = $_POST['action_button_'.$arResult['GRID_ID']] ?? null;
+
+		if ($arResult['CAN_DELETE'] && $action === 'delete')
 		{
-			if($_POST['action_all_rows_'.$arResult['GRID_ID']] == 'Y')
+			if ($_POST['action_all_rows_'.$arResult['GRID_ID']] == 'Y')
 			{
-				//Delete items
-				foreach(DealCategory::getAll(false) as $entry)
+				foreach (DealCategory::getAll(false) as $entry)
 				{
-					try
+					$category = $factory->getCategory($entry['ID']);
+					if ($category)
 					{
-						DealCategory::delete($entry['ID']);
-					}
-					catch(DeleteException $ex)
-					{
-						$errors[] = $ex->getLocalizedMessage();
+						$deleteResult = $category->delete();
+						if (!$deleteResult->isSuccess())
+						{
+							$errors = array_merge($errors, $deleteResult->getErrorMessages());
+						}
 					}
 				}
 			}
 			else
 			{
-				$IDs = isset($_POST['ID']) ? $_POST['ID'] : array();
-				foreach($IDs as $ID)
+				$ids = $_POST['ID'] ?? [];
+				foreach ($ids as $id)
 				{
-					if($ID <= 0)
+					if ($id <= 0)
 					{
 						continue;
 					}
 
-					try
+					$category = $factory->getCategory($id);
+					if ($category)
 					{
-						DealCategory::delete($ID);
-					}
-					catch(DeleteException $ex)
-					{
-						$errors[] = $ex->getLocalizedMessage();
+						$deleteResult = $category->delete();
+						if (!$deleteResult->isSuccess())
+						{
+							$errors = array_merge($errors, $deleteResult->getErrorMessages());
+						}
 					}
 				}
 			}
@@ -160,19 +163,20 @@ if(check_bitrix_sessid())
 	}
 	elseif ($_SERVER['REQUEST_METHOD'] == 'GET' && isset($_GET['action_'.$arResult['GRID_ID']]))
 	{
-		$errors = array();
+		$errors = [];
 		if ($arResult['CAN_DELETE'] && $_GET['action_'.$arResult['GRID_ID']] === 'delete')
 		{
-			$ID = isset($_GET['ID']) ? (int)$_GET['ID'] : 0;
-			if($ID > 0)
+			$id = (int)($_GET['ID'] ?? 0);
+			if ($id > 0)
 			{
-				try
+				$category = $factory->getCategory($id);
+				if ($category)
 				{
-					DealCategory::delete($ID);
-				}
-				catch(DeleteException $ex)
-				{
-					$errors[] = $ex->getLocalizedMessage();
+					$deleteResult = $category->delete();
+					if (!$deleteResult->isSuccess())
+					{
+						$errors = array_merge($errors, $deleteResult->getErrorMessages());
+					}
 				}
 			}
 			unset($_GET['ID'], $_REQUEST['ID']); // otherwise the filter will work

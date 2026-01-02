@@ -1,4 +1,3 @@
-import { Loc } from 'main.core';
 import { PopupOptions } from 'main.popup';
 import { Button, ButtonSize, ButtonColor } from 'booking.component.button';
 import { Popup } from 'booking.component.popup';

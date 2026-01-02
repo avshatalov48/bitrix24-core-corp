@@ -1,0 +1,23 @@
+<?php
+$MESS["CRM_BIC_DSH_FIELD_ASSIGNED_BY"] = "Жауапты";
+$MESS["CRM_BIC_DSH_FIELD_ASSIGNED_BY_DEPARTMENT"] = "Жауапты бөлім";
+$MESS["CRM_BIC_DSH_FIELD_ASSIGNED_BY_DEPARTMENT_FULL"] = "Компания бөлімдерінің иерархиясындағы жол";
+$MESS["CRM_BIC_DSH_FIELD_ASSIGNED_BY_FULL"] = "Мәмілеге жауапты болып тағайындалған пайдаланушының идентификаторы мен аты";
+$MESS["CRM_BIC_DSH_FIELD_ASSIGNED_BY_ID"] = "Жауаптының идентификаторы";
+$MESS["CRM_BIC_DSH_FIELD_ASSIGNED_BY_ID_FULL"] = "Мәмілеге жауапты болып тағайындалған пайдаланушының идентификаторы";
+$MESS["CRM_BIC_DSH_FIELD_ASSIGNED_BY_NAME"] = "Жауапты адамның аты";
+$MESS["CRM_BIC_DSH_FIELD_CATEGORY"] = "Мәміле бағыты";
+$MESS["CRM_BIC_DSH_FIELD_CATEGORY_ID"] = "Мәміле иірімінің идентификаторы";
+$MESS["CRM_BIC_DSH_FIELD_CATEGORY_NAME"] = "Мәміле иірімінің атауы";
+$MESS["CRM_BIC_DSH_FIELD_DATE_CREATE"] = "Жасау уақыты";
+$MESS["CRM_BIC_DSH_FIELD_DEAL_ID"] = "Мәміле идентификаторы";
+$MESS["CRM_BIC_DSH_FIELD_END_DATE"] = "Аяқталу күні";
+$MESS["CRM_BIC_DSH_FIELD_ID"] = "Бірегей кілт";
+$MESS["CRM_BIC_DSH_FIELD_STAGE"] = "Саты";
+$MESS["CRM_BIC_DSH_FIELD_STAGE_ID"] = "Саты идентификаторы";
+$MESS["CRM_BIC_DSH_FIELD_STAGE_NAME"] = "Саты атауы";
+$MESS["CRM_BIC_DSH_FIELD_STAGE_SEMANTIC"] = "Саты түрі";
+$MESS["CRM_BIC_DSH_FIELD_STAGE_SEMANTIC_ID"] = "Саты түрінің идентификаторы";
+$MESS["CRM_BIC_DSH_FIELD_START_DATE"] = "Басталу күні";
+$MESS["CRM_BIC_DSH_FIELD_TYPE_ID"] = "Жазба түрі";
+$MESS["CRM_BIC_DSH_TABLE"] = "Мәміле: саты тарихы";

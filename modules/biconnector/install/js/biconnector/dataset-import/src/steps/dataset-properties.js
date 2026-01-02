@@ -15,6 +15,11 @@ export const DatasetPropertiesStep = {
 			required: false,
 			default: [],
 		},
+		nameMaxLength: {
+			type: Number,
+			required: false,
+			default: 30,
+		},
 	},
 	emits: ['propertiesChanged'],
 	computed: {
@@ -102,11 +107,11 @@ export const DatasetPropertiesStep = {
 				};
 			}
 
-			if (name.length > 30)
+			if (name.length > this.nameMaxLength)
 			{
 				return {
 					result: false,
-					message: this.$Bitrix.Loc.getMessage('DATASET_IMPORT_FIELD_VALIDATION_DATASET_TOO_LONG'),
+					message: this.$Bitrix.Loc.getMessage('DATASET_IMPORT_FIELD_VALIDATION_DATASET_TOO_LONG_MSGVER_1', { '#MAX_LENGHT#': this.nameMaxLength }),
 				};
 			}
 

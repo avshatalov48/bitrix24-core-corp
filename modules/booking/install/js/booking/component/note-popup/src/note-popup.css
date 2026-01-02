@@ -1,0 +1,24 @@
+.booking-booking-note-popup-content {
+	flex: 1;
+	display: flex;
+	flex-direction: column;
+	font-size: 15px;
+}
+
+.booking-booking-note-popup-title {
+	margin-bottom: 5px;
+	color: var(--ui-color-link-primary-base);
+	cursor: default;
+}
+
+.booking-booking-note-popup-textarea {
+	all: unset;
+	flex: 1;
+	white-space: pre-wrap;
+}
+
+.booking-booking-note-popup-buttons {
+	display: flex;
+	gap: 12px;
+	margin-top: 5px;
+}

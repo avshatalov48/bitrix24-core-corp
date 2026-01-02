@@ -2,6 +2,7 @@
 
 return [
 	'extensions' => [
+		'entity-ready',
 		'statemanager/vuex',
 		'statemanager/vuex-manager',
 		'utils/object',

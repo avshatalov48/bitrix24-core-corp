@@ -8,11 +8,11 @@ use Bitrix\Mobile\Tab\Tabable;
 use Bitrix\Crm\Terminal\AvailabilityManager;
 use Bitrix\Mobile\Tab\Utils;
 use Bitrix\MobileApp\Janative\Manager;
-use Bitrix\MobileApp\Mobile;
+use Bitrix\Mobile\Config\Feature;
+use Bitrix\Mobile\Feature\MenuFeature;
 
-class Terminal implements Tabable {
-
-	const MINIMAL_API_VERSION = 49;
+class Terminal implements Tabable
+{
 
 	/**
 	 * @var \Bitrix\Mobile\Context $context
@@ -25,7 +25,6 @@ class Terminal implements Tabable {
 			&& Loader::includeModule('crm')
 			&& Container::getInstance()->getIntranetToolsManager()->checkTerminalAvailability()
 			&& AvailabilityManager::getInstance()->isAvailable()
-			&& Mobile::getApiVersion() >= self::MINIMAL_API_VERSION
 		);
 	}
 
@@ -40,17 +39,28 @@ class Terminal implements Tabable {
 		];
 	}
 
-	public function getMenuData() {
+	public function getMenuData()
+	{
 		return [
-			'title' => $this->getTitle(),
+			'id' => $this->getId(),
+			'title' => Feature::isEnabled(MenuFeature::class)
+				? Loc::getMessage('TAB_NAME_TERMINAL_MENU_TITLE')
+				: $this->getTitle(),
 			'useLetterImage' => true,
 			'sectionCode' => 'terminal',
-			'min_api_version' => self::MINIMAL_API_VERSION,
+			'section_code' => 'crm',
+			'sort' => 500,
 			'color' => '#0169B3',
 			'imageUrl' => 'terminal/terminal.png',
 			'imageName' => $this->getIconId(),
 			'params' => [
 				'onclick' => Utils::getComponentJSCode($this->getComponentParams()),
+				'analytics' => [
+					'tool' => 'sale',
+					'category' => 'terminal',
+					'event' => 'open_section',
+					'c_section' => 'ava_menu',
+				],
 			],
 		];
 	}
@@ -118,6 +128,6 @@ class Terminal implements Tabable {
 
 	public function getIconId(): string
 	{
-		return Mobile::getApiVersion() < 56 ?  $this->getId() : 'payment_terminal';
+		return 'payment_terminal';
 	}
 }

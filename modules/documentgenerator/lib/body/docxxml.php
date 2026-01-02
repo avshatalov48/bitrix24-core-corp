@@ -371,6 +371,14 @@ class DocxXml extends Xml
 				/** @var \DOMElement $node */
 				$content = $block['content'][$key];
 				$fieldNames = static::matchFieldNames($content);
+				if (
+					$value instanceof DataProvider
+					&& isset($value->getOptions()['SHOW_MODIFIER'])
+					&& !static::checkShowModifier($content, $value->getOptions()['SHOW_MODIFIER'], $fieldNames)
+				)
+				{
+					continue;
+				}
 				$multipleValues = $this->getValuesForMultiplyingBlock($placeholder, $dataProvider, $value, $fieldNames);
 				if($isPrintEmpty)
 				{
@@ -1255,6 +1263,44 @@ class DocxXml extends Xml
 			},
 			$content
 		);
+	}
+
+	protected static function checkShowModifier($content, $showModifier, $fieldNames): bool
+	{
+		$showModifierName = $showModifier['NAME'];
+		$showModifierDefault = $showModifier['DEFAULT'];
+		if(preg_match_all(static::$valuesPattern, $content, $fieldMatches, PREG_SET_ORDER))
+		{
+			foreach($fieldMatches as $fieldMatch)
+			{
+				if (
+					in_array($fieldMatch[2], $fieldNames, true)
+				)
+				{
+					if (empty($fieldMatch[3]))
+					{
+						continue;
+					}
+					$modifiers = explode(',', $fieldMatch[3]);
+					foreach ($modifiers as $modifier)
+					{
+						[$modifierName, $modifierValue] = explode('=', $modifier);
+						$modifierName = trim($modifierName);
+						$modifierValue = trim($modifierValue);
+						if (!$modifierName || !$modifierValue)
+						{
+							continue;
+						}
+						if ($modifierName === $showModifierName)
+						{
+							return $modifierValue === 'Y';
+						}
+					}
+				}
+			}
+		}
+
+		return $showModifierDefault;
 	}
 
 //	/**

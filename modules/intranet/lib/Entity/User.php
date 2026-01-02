@@ -4,30 +4,84 @@ namespace Bitrix\Intranet\Entity;
 
 use Bitrix\Intranet\Enum\InvitationStatus;
 use Bitrix\Intranet\Enum\UserRole;
+use Bitrix\Intranet\Infrastructure\UserNameFormatter;
+use Bitrix\Intranet\Integration\HumanResources\HrUserService;
+use Bitrix\Intranet\Internal\Repository\Mapper\UserMapper;
 use Bitrix\Intranet\Service\ServiceContainer;
 use Bitrix\Intranet\UserTable;
+use Bitrix\Main\ArgumentException;
 use Bitrix\Main\Loader;
 use Bitrix\Main\ModuleManager;
+use Bitrix\Main\ObjectPropertyException;
+use Bitrix\Main\SystemException;
+use Bitrix\Main\Type\Date;
 use Bitrix\Socialnetwork\Collab\CollabFeature;
 
 class User
 {
 	public function __construct(
 		private ?int $id = null,
-		private ?array  $departmetnsIds = null,
 		private ?string $login = null,
 		private ?string $email = null,
 		private ?string $name = null,
 		private ?string $lastName = null,
 		private ?string $confirmCode = null,
-		private ?array  $groupIds = null,
-		private ?string $phoneNumber = null,
+		private ?array $groupIds = null,
 		private ?string $xmlId = null,
-		private ?bool   $active = null,
+		private ?bool $active = null,
 		private ?string $externalAuthId = null,
 		private ?string $authPhoneNumber = null,
+		private ?string $secondName = null,
+		private ?int $personalPhoto = null,
+		private ?string $lid = null,
+		private ?string $languageId = null,
+		private ?string $personalMobile = null,
+		private ?string $password = null,
+		private mixed $ufCrmEntity = null, //UF_USER_CRM_ENTITY
+		private ?Date $lastLogin = null,
 	)
-	{}
+	{
+	}
+
+	public static function initByArray(array $userData): self
+	{
+		return (new UserMapper())->convertFromArray($userData);
+	}
+
+	public function toArray(): array
+	{
+		return (new UserMapper())->convertToArray($this);
+	}
+
+	public function getUfCrmEntity(): mixed
+	{
+		return $this->ufCrmEntity;
+	}
+
+	public function setUfCrmEntity(mixed $ufCrmEntity): void
+	{
+		$this->ufCrmEntity = $ufCrmEntity;
+	}
+
+	public function getLanguageId(): ?string
+	{
+		return $this->languageId;
+	}
+
+	public function setLanguageId(?string $languageId): void
+	{
+		$this->languageId = $languageId;
+	}
+
+	public function getLid(): ?string
+	{
+		return $this->lid;
+	}
+
+	public function setLid(?string $lid): void
+	{
+		$this->lid = $lid;
+	}
 
 	public function getAuthPhoneNumber(): ?string
 	{
@@ -39,40 +93,14 @@ class User
 		$this->authPhoneNumber = $authPhoneNumber;
 	}
 
-	public static function initByArray(array $userData): self
+	public function getPersonalMobile(): ?string
 	{
-		$departmetnsIds = null;
-		$departments = $userData['UF_DEPARTMENT'] ?? null;
-		if (is_array($departments))
-		{
-			$departmetnsIds = $departments;
-		}
-		elseif ((int)$departments > 0)
-		{
-			$departmetnsIds = [(int)$departments];
-		}
+		return $this->personalMobile;
+	}
 
-		$active = null;
-		if (!empty($userData['ACTIVE']))
-		{
-			$active = $userData['ACTIVE'] === 'Y' ? true : false;
-		}
-
-		return new \Bitrix\Intranet\Entity\User(
-			$userData['ID'] ?? null,
-				$departmetnsIds,
-			$userData['LOGIN'] ?? null,
-			$userData['EMAIL'] ?? null,
-			$userData['NAME'] ?? null,
-			$userData['LAST_NAME'] ?? null,
-			$userData["CONFIRM_CODE"] ?? null,
-			$userData['GROUP_ID'] ?? null,
-			$userData['PHONE_NUMBER'] ?? null,
-			$userData['XML_ID'] ?? null,
-				$active,
-			$userData['EXTERNAL_AUTH_ID'] ?? null,
-			$userData['AUTH_PHONE_NUMBER'] ?? null,
-		);
+	public function setPersonalMobile(?string $personalMobile): void
+	{
+		$this->personalMobile = $personalMobile;
 	}
 
 	public function getInviteStatus(): InvitationStatus
@@ -85,7 +113,7 @@ class User
 		{
 			return InvitationStatus::INVITED;
 		}
-		elseif (!empty($this->confirmCode) && !$this->active)
+		elseif (ModuleManager::isModuleInstalled('bitrix24') && !empty($this->confirmCode) && !$this->active)
 		{
 			return InvitationStatus::INVITE_AWAITING_APPROVE;
 		}
@@ -141,7 +169,8 @@ class User
 
 	public function isIntegrator(): bool
 	{
-		return in_array($this->id, ServiceContainer::getInstance()->getUserService()->getIntegratorUserIds());
+		return ModuleManager::isModuleInstalled('bitrix24')
+			&& in_array($this->id, ServiceContainer::getInstance()->getUserService()->getIntegratorUserIds());
 	}
 
 	public function isAdmin(): bool
@@ -155,6 +184,14 @@ class User
 			&& CollabFeature::isOn()
 			&& Loader::includeModule('extranet')
 			&& \Bitrix\Extranet\Service\ServiceContainer::getInstance()->getCollaberService()->isCollaberById($this->id);
+	}
+
+	public function getFormattedName(
+		bool $useLogin = false,
+		bool $useHtmlSpec = true,
+	): string
+	{
+		return (new UserNameFormatter($this, $useLogin, $useHtmlSpec))->formatByCulture();
 	}
 
 	public function isEmail(): bool
@@ -204,12 +241,12 @@ class User
 
 	public function getPhoneNumber(): ?string
 	{
-		return $this->phoneNumber;
+		return $this->getAuthPhoneNumber();
 	}
 
 	public function setPhoneNumber(?string $phoneNumber): void
 	{
-		$this->phoneNumber = $phoneNumber;
+		$this->setAuthPhoneNumber($phoneNumber);
 	}
 
 	public function getGroupIds(): ?array
@@ -240,16 +277,6 @@ class User
 	public function setId(?int $id): void
 	{
 		$this->id = $id;
-	}
-
-	public function getDepartmetnsIds(): ?array
-	{
-		return $this->departmetnsIds;
-	}
-
-	public function setDepartmetnsIds(?array $departmetnsIds): void
-	{
-		$this->departmetnsIds = $departmetnsIds;
 	}
 
 	public function getLogin(): ?string
@@ -292,33 +319,61 @@ class User
 		$this->lastName = $lastName;
 	}
 
+	public function getSecondName(): ?string
+	{
+		return $this->secondName;
+	}
+
 	public function isExtranet(): bool
 	{
 		return (
 			ModuleManager::isModuleInstalled('extranet')
-			&& (
-				empty($this->departmetnsIds)
-				|| (
-					is_array($this->departmetnsIds)
-					&& (int)$this->departmetnsIds[0] <= 0
-				)
-			)
+			&& !(new HrUserService())->isEmployee($this)
 		);
 	}
 
+	/**
+	 * @throws ObjectPropertyException
+	 * @throws SystemException
+	 * @throws ArgumentException
+	 */
 	public function isIntranet(): bool
 	{
-		return $this->getDepartmetnsIds()
-			&& (
-				(
-					!empty($this->getDepartmetnsIds())
-					&& (int)$this->getDepartmetnsIds()[0] > 0
-				)
-			);
+		return (new HrUserService())->isEmployee($this);
 	}
 
 	public function getAccessCode(): string
 	{
 		return 'U' . $this->getId();
+	}
+
+	public function setPassword(string $password): void
+	{
+		$this->password = $password;
+	}
+
+	public function getPassword(): ?string
+	{
+		return $this->password;
+	}
+
+	public function getPersonalPhoto(): ?int
+	{
+		return $this->personalPhoto;
+	}
+
+	public function setPersonalPhoto(?int $personalPhoto): void
+	{
+		$this->personalPhoto = $personalPhoto;
+	}
+
+	public function getLastLogin(): ?Date
+	{
+		return $this->lastLogin;
+	}
+
+	public function setLastLogin(?Date $lastLogin): void
+	{
+		$this->lastLogin = $lastLogin;
 	}
 }

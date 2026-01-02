@@ -15,10 +15,6 @@ if (isset($arParams['BY']))
 	{
 		$componentPage = 'rating';
 	}
-	elseif ($arParams['BY'] == 'tellabout')
-	{
-		$componentPage = 'tellabout';
-	}
 }
 
 $this->IncludeComponentTemplate($componentPage);

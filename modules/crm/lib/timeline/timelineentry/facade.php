@@ -46,6 +46,7 @@ class Facade
 
 	public const BIZPROC = Bizproc\Entry::class;
 	public const BOOKING = Booking\Entry::class;
+	public const WAIT_LIST_ITEM = Booking\WaitListItemEntry::class;
 
 	/** @var TimelineEntry */
 	protected $timelineEntryClass = TimelineEntry::class;

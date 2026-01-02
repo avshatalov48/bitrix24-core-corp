@@ -4,10 +4,16 @@ if (!defined('B_PROLOG_INCLUDED') || B_PROLOG_INCLUDED !== true) die();
 
 require_once($_SERVER["DOCUMENT_ROOT"]."/bitrix/modules/sale/lib/cashbox/inputs/file.php");
 
+use Bitrix\Crm\EntityPreset;
+use Bitrix\Crm\EntityRequisite;
+use Bitrix\Crm\ItemIdentifier;
+use Bitrix\Crm\Requisite\DefaultRequisite;
+use Bitrix\Crm\Requisite\EntityLink;
 use Bitrix\Main;
 use Bitrix\Main\Application;
 use Bitrix\Main\Loader;
 use Bitrix\Main\Localization\Loc;
+use Bitrix\Main\Web\Json;
 use Bitrix\Sale\PaySystem;
 use Bitrix\Sale\BusinessValue;
 use Bitrix\Sale\Cashbox;
@@ -177,14 +183,16 @@ class SalesCenterPaySystemComponent extends CBitrixComponent implements Main\Eng
 		$this->arResult['AUTH']['HAS_AUTH'] = false;
 		$this->arResult['AUTH']['CAN_AUTH'] = false;
 		$this->arResult['AUTH']['PROFILE'] = false;
+		$this->arResult['AUTH']['TYPE'] = false;
 
 		[$className] = PaySystem\Manager::includeHandler($this->arResult['PAYSYSTEM_HANDLER']);
 
 		$reflection = new \ReflectionClass($className);
 		$className = $reflection->getName();
+		$lowerClassName = mb_strtolower($className);
 
 		$this->arResult['PAYSYSTEM_HANDLER_CLASS_NAME'] = $className;
-		if (mb_strtolower($className) === mb_strtolower(\Sale\Handlers\PaySystem\YandexCheckoutHandler::class))
+		if ($lowerClassName === mb_strtolower(\Sale\Handlers\PaySystem\YandexCheckoutHandler::class))
 		{
 			if ($this->isYandexOauth())
 			{
@@ -207,15 +215,48 @@ class SalesCenterPaySystemComponent extends CBitrixComponent implements Main\Eng
 				}
 			}
 		}
+		elseif ($lowerClassName === mb_strtolower(\Sale\Handlers\PaySystem\TBankBusinessHandler::class))
+		{
+			$this->initTBankBusinessAuth();
+
+			if ($this->arResult['AUTH']['HAS_AUTH'] === true)
+			{
+				$this->initTBankBusinessProfile();
+
+				if (empty($this->arResult['AUTH']['PROFILE']['ID']))
+				{
+					$this->removeAuth(Seo\Checkout\Service::TYPE_TBANK_BUSINESS);
+					$this->arResult['AUTH']['HAS_AUTH'] = false;
+					$this->arResult['AUTH']['PROFILE'] = false;
+				}
+				else
+				{
+					$this->checkMyCompanyChanges();
+				}
+			}
+
+			if (!$this->arResult['AUTH']['HAS_AUTH'])
+			{
+				$this->arResult['IS_INIT_BUSINESS_CONNECT_COMPONENTS'] = true;
+				$this->arResult['COMPANY_LIST'] = $this->prepareMyCompanyList($this->getMyCompanyList());
+				$this->arResult['DEFAULT_COMPANY'] =
+					!empty((int)EntityLink::getDefaultMyCompanyId())
+						? (int)EntityLink::getDefaultMyCompanyId()
+						: 0
+				;
+				$this->arResult['AUTH']['CAN_AUTH'] = true;
+			}
+		}
 
 		$externalConnectionHandlers = [
 			mb_strtolower(\Sale\Handlers\PaySystem\YandexCheckoutHandler::class),
 			mb_strtolower(\Sale\Handlers\PaySystem\RoboxchangeHandler::class),
+			mb_strtolower(\Sale\Handlers\PaySystem\TBankBusinessHandler::class),
 		];
 
 		if (
 			($this->arResult['AUTH']['HAS_AUTH'] || $this->arResult['AUTH']['CAN_AUTH'])
-			|| in_array(mb_strtolower($className), $externalConnectionHandlers, true)
+			|| in_array($lowerClassName, $externalConnectionHandlers, true)
 		)
 		{
 			$this->arResult['IS_PS_INNER_SETUP'] = false;
@@ -243,6 +284,11 @@ class SalesCenterPaySystemComponent extends CBitrixComponent implements Main\Eng
 		$this->initBusinessValue($this->arResult['PAYSYSTEM_ID'], $this->arResult['PAYSYSTEM_HANDLER']);
 
 		$this->arResult['IS_CASHBOX_ENABLED'] = \Bitrix\SalesCenter\Driver::getInstance()->isCashboxEnabled();
+
+		if ($lowerClassName === mb_strtolower(\Sale\Handlers\PaySystem\TBankBusinessHandler::class))
+		{
+			$this->arResult['IS_CASHBOX_ENABLED'] = false;
+		}
 
 		$this->arResult['CASHBOX'] = [];
 		$this->arResult['IS_CAN_PRINT_CHECK_SELF'] = false;
@@ -295,6 +341,209 @@ class SalesCenterPaySystemComponent extends CBitrixComponent implements Main\Eng
 		$businessValueContent = ob_get_contents();
 		ob_end_clean();
 		$this->arResult["BUS_VAL"] = $businessValueContent;
+	}
+
+	private function initTBankBusinessAuth(): void
+	{
+		$authAdapter = Seo\Checkout\Service::getAuthAdapter(Seo\Checkout\Service::TYPE_TBANK_BUSINESS);
+		$this->arResult['AUTH']['TYPE'] = Seo\Checkout\Service::TYPE_TBANK_BUSINESS;
+		$this->arResult['AUTH']['URL'] = $authAdapter->getAuthUrl();
+		$this->arResult['AUTH']['HAS_AUTH'] = $authAdapter->hasAuth();
+	}
+
+	private function initTBankBusinessProfile(): void
+	{
+		$tbankBusiness = new Seo\Checkout\Services\AccountTBankBusiness();
+		$tbankBusiness->setService(Seo\Checkout\Service::getInstance());
+		$this->arResult['AUTH']['PROFILE'] = $tbankBusiness->getProfile();
+		$this->arResult['AUTH']['PROFILE']['LABEL']['DETAILS'] = $this->getDetailsForCompanySelector([
+			'INN' => $this->arResult['AUTH']['PROFILE']['INN'],
+			'KPP' => $this->arResult['AUTH']['PROFILE']['KPP'],
+		]);
+	}
+
+	private function removeAuth(string $type): void
+	{
+		$authAdapter = Seo\Checkout\Service::getAuthAdapter($type);
+		$authAdapter->removeAuth();
+	}
+
+	private function checkMyCompanyChanges(): void
+	{
+		$selectedMyCompany = $this->arResult['AUTH']['PROFILE'];
+
+		$companyId = new ItemIdentifier(CCrmOwnerType::Company, $selectedMyCompany['ID']);
+		$requisite = new DefaultRequisite($companyId);
+		$requisiteInfo = $requisite->get();
+		$inn = $requisiteInfo['RQ_INN'] ?? null;
+		$kpp = $requisiteInfo['RQ_KPP'] ?? null;
+
+		$result = false;
+
+		if (empty($requisiteInfo))
+		{
+			$this->removeAuth(Seo\Checkout\Service::TYPE_TBANK_BUSINESS);
+			$this->arResult['AUTH']['HAS_AUTH'] = false;
+			$this->arResult['AUTH']['PROFILE'] = false;
+		}
+
+		if (
+			$selectedMyCompany['INN'] !== $inn
+			|| (
+				$selectedMyCompany['KPP'] !== '0'
+				&& $selectedMyCompany['KPP'] !== $kpp
+			)
+		) {
+			$result = true;
+		}
+
+		$this->arResult['AUTH']['PROFILE']['HAS_CHANGES'] = $result;
+	}
+
+	private function getMyCompanyList(): array
+	{
+		$myCompanyListResult = CCrmCompany::getList(['ID' => 'ASC'], ['=IS_MY_COMPANY' => 'Y'], ['ID', 'TITLE']);
+
+		$myCompanyList = [];
+
+		while ($myCompany = $myCompanyListResult->fetch())
+		{
+			$myCompanyList[(int)$myCompany['ID']] = [
+				'ID' => (int)$myCompany['ID'],
+				'TITLE' => $myCompany['TITLE'],
+			];
+		}
+
+		if (empty($myCompanyList))
+		{
+			return [];
+		}
+
+		foreach ($myCompanyList as $myCompany)
+		{
+			$companyId = new ItemIdentifier(CCrmOwnerType::Company, $myCompany['ID']);
+			$requisite = new DefaultRequisite($companyId);
+			$requisiteInfo = $requisite->get();
+
+			$myCompanyList[$myCompany['ID']]['INN'] = $requisiteInfo['RQ_INN'] ?? null;
+			$myCompanyList[$myCompany['ID']]['KPP'] = !empty($requisiteInfo['RQ_KPP']) ? $requisiteInfo['RQ_KPP'] : '0';
+			$myCompanyList[$myCompany['ID']]['PRESET_ID'] =
+				isset($requisiteInfo['PRESET_ID'])
+					? (int)$requisiteInfo['PRESET_ID']
+					: null
+			;
+
+			$myCompanyList[$myCompany['ID']]['URL_PARAMETERS'] = [
+				'scope_parameters' => urlencode(
+					Json::encode([
+						'inn' => $myCompanyList[$myCompany['ID']]['INN'],
+						'kpp' => $myCompanyList[$myCompany['ID']]['KPP'],
+					])
+				),
+			];
+		}
+
+		return $myCompanyList;
+	}
+
+	private function prepareMyCompanyList(array $myCompanyList): array
+	{
+		foreach ($myCompanyList as $id => $myCompany)
+		{
+			$errorList = [];
+
+			if ($myCompany['PRESET_ID'] > 0)
+			{
+				$companyPreset = EntityPreset::getSingleInstance()->getById((int)$myCompany['PRESET_ID']);
+
+				if (empty($myCompany['INN']))
+				{
+					$errorList['INN'] = true;
+				}
+
+				if (
+					is_array($companyPreset)
+					&& isset($companyPreset['XML_ID'])
+					&& (string)$companyPreset['XML_ID'] === EntityRequisite::XML_ID_DEFAULT_PRESET_RU_COMPANY
+					&& $myCompany['KPP'] === '0'
+				)
+				{
+					$errorList['KPP'] = true;
+				}
+			}
+			else
+			{
+				$errorList['INN'] = true;
+				$errorList['KPP'] = true;
+			}
+
+			if (empty($errorList))
+			{
+				$myCompanyList[$id]['IS_DETAILS_COMPLETE'] = true;
+			}
+			else
+			{
+				$myCompanyList[$id]['IS_DETAILS_COMPLETE'] = false;
+				$myCompanyList[$id]['LABEL']['ALERT'] = $this->getAlertForCompanySelector($errorList);
+			}
+
+			$myCompanyList[$id]['LABEL']['DETAILS'] = $this->getDetailsForCompanySelector([
+				'INN' => $myCompanyList[$id]['INN'],
+				'KPP' => $myCompanyList[$id]['KPP'],
+			]);
+		}
+
+		return $myCompanyList;
+	}
+
+	private function getAlertForCompanySelector(array $errorList): string
+	{
+		if (
+			isset($errorList['INN'])
+			&& $errorList['INN']
+			&& isset($errorList['KPP'])
+			&& $errorList['KPP']
+		)
+		{
+			return Loc::getMessage('SALESCENTER_SP_CONNECT_COMPANY_EMPTY_INN_KPP_ALERT');
+		}
+		elseif (
+			isset($errorList['INN'])
+			&& $errorList['INN']
+		)
+		{
+			return Loc::getMessage('SALESCENTER_SP_CONNECT_COMPANY_EMPTY_INN_ALERT');
+		}
+		elseif (
+			isset($errorList['KPP'])
+			&& $errorList['KPP']
+		)
+		{
+			return Loc::getMessage('SALESCENTER_SP_CONNECT_COMPANY_EMPTY_KPP_ALERT');
+		}
+
+		return '';
+	}
+
+	private function getDetailsForCompanySelector(array $details): string
+	{
+		if (
+			!empty($details['INN'])
+			&& !empty($details['KPP'])
+		)
+		{
+			return Loc::getMessage('SALESCENTER_SP_CONNECT_COMPANY_DETAILS_INN_KPP', ['#INN#' => $details['INN'], '#KPP#' => $details['KPP']]);
+		}
+		elseif (!empty($details['INN']))
+		{
+			return Loc::getMessage('SALESCENTER_SP_CONNECT_COMPANY_DETAILS_INN', ['#INN#' => $details['INN']]);
+		}
+		elseif (!empty($details['KPP']))
+		{
+			return Loc::getMessage('SALESCENTER_SP_CONNECT_COMPANY_DETAILS_KPP', ['#KPP#' => $details['KPP']]);
+		}
+
+		return '';
 	}
 
 	/**
@@ -616,15 +865,8 @@ class SalesCenterPaySystemComponent extends CBitrixComponent implements Main\Eng
 			\Sale\Handlers\PaySystem\AlfaBankHandler::class => '12595422',
 			\Sale\Handlers\PaySystem\RoboxchangeHandler::class => '17168072',
 			\Sale\Handlers\PaySystem\PlatonHandler::class => '13920167',
+			\Sale\Handlers\PaySystem\TBankBusinessHandler::class => '24689844',
 		];
-
-		if (
-			$className === \Sale\Handlers\PaySystem\YandexCheckoutHandler::class
-			&& $psMode === \Sale\Handlers\PaySystem\YandexCheckoutHandler::MODE_INSTALLMENTS
-		)
-		{
-			$helpdeskHandlerCodeMap[$className] = '17229912';
-		}
 
 		return $helpdeskHandlerCodeMap[$className] ?? $defaultCode;
 	}
@@ -652,8 +894,9 @@ class SalesCenterPaySystemComponent extends CBitrixComponent implements Main\Eng
 
 		if (class_exists($handler))
 		{
+			$handlerCode = $handler::getCode();
 			$commonSettingsTitle = Loc::getMessage(
-				'SALESCENTER_SP_CASHBOX_COMMON_SETTINGS_'.mb_strtoupper($handler::getCode())
+				'SALESCENTER_SP_CASHBOX_COMMON_SETTINGS_'.mb_strtoupper($handlerCode)
 			);
 			if (!$commonSettingsTitle)
 			{
@@ -689,7 +932,21 @@ class SalesCenterPaySystemComponent extends CBitrixComponent implements Main\Eng
 					$hint = '';
 					if ($group === 'VAT')
 					{
-						$warning = Loc::getMessage('SALESCENTER_SP_CASHBOX_VAT_ATTENTION');
+						$warning = [Loc::getMessage('SALESCENTER_SP_CASHBOX_VAT_ATTENTION')];
+
+						$vat22CashboxCode = match (true)
+						{
+							$handlerCode === 'cashboxrobokassa' => 'vat22',
+							$handlerCode === 'cashboxyookassa' => '11',
+							default => null,
+						};
+						if ($vat22CashboxCode)
+						{
+							$warning[] = Loc::getMessage(
+								'SALESCENTER_SP_CASHBOX_VAT_22_ATTENTION',
+								['#CODE#' => $vat22CashboxCode],
+							);
+						}
 						$hint = Loc::getMessage('SALESCENTER_SP_CASHBOX_VAT_HINT');
 					}
 
@@ -748,6 +1005,22 @@ class SalesCenterPaySystemComponent extends CBitrixComponent implements Main\Eng
 		}
 
 		return $result;
+	}
+
+	public function getMyCompanyListAction(): ?array
+	{
+		if (!Loader::includeModule('crm'))
+		{
+			return [];
+		}
+
+		return [
+			'myCompanyList' => $this->prepareMyCompanyList($this->getMyCompanyList()),
+			'selectedCompanyId' => !empty((int)EntityLink::getDefaultMyCompanyId())
+				? (int)EntityLink::getDefaultMyCompanyId()
+				: 0
+			,
+		];
 	}
 
 	public function reloadCashboxSettingsAction(int $paySystemId, string $kkmId): ?array

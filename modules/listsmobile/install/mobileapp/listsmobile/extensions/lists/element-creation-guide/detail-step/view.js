@@ -6,6 +6,7 @@ jn.define('lists/element-creation-guide/detail-step/view', (require, exports, mo
 	const { EventEmitter } = require('event-emitter');
 	const { PureComponent } = require('layout/pure-component');
 	const { EntityManager } = require('layout/ui/entity-editor/manager');
+	const { Random } = require('utils/random');
 	const { DetailStepSkeleton } = require('lists/element-creation-guide/detail-step/skeleton');
 
 	class DetailStepView extends PureComponent
@@ -20,7 +21,6 @@ jn.define('lists/element-creation-guide/detail-step/view', (require, exports, mo
 		{
 			super(props);
 
-			// eslint-disable-next-line no-undef
 			this.uid = props.uid || Random.getString();
 			this.customEventEmitter = EventEmitter.createWithUid(this.uid);
 

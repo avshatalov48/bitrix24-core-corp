@@ -26,7 +26,6 @@ $MESS["TASKS_SIDEBAR_TASK_REPEATS"] = "Задача повторяется";
 $MESS["TASKS_SIDEBAR_TASK_OVERDUE"] = "Задача просрочена!";
 $MESS["TASKS_SIDEBAR_TASK_CREATED_BY_TEMPLATE"] = "Задача создана автоматически на основе шаблона";
 $MESS["TASKS_SIDEBAR_TEMPLATE_NOT_ACCESSIBLE"] = "Задача повторяется, шаблон не доступен для просмотра";
-$MESS["TASKS_TTDP_TEMPLATE_USER_VIEW_RESPONSIBLE"] = "Ответственный";
 $MESS['TASKS_TTDP_TEMPLATE_USER_VIEW_ASSIGNEE'] = 'Исполнитель';
 $MESS["TASKS_TTDP_TEMPLATE_USER_VIEW_ORIGINATOR"] = "Постановщик";
 $MESS["TASKS_TTDP_TEMPLATE_USER_VIEW_AUDITORS"] = "Наблюдатели";

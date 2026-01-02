@@ -50,7 +50,7 @@ class RoleTable extends ORM\Data\DataManager
 				->configureTitle('ID')
 			,
 			(new ORM\Fields\EnumField('ENTITY_TYPE'))
-				->configureValues(RoleEntityType::values())
+				->configureValues(RoleEntityType::names())
 				->configureTitle('Entity type')
 			,
 			(new ORM\Fields\StringField('NAME'))

@@ -62,7 +62,7 @@ function __MSLOnFeedInit(params)
 					BX.MobileLivefeed.PageMenuInstance.listPageMenuItems.push({
 						id: 'addPost',
 						name: BX.message('MOBILE_EXT_LIVEFEED_LIST_MENU_ADD_POST'),
-						image: "/bitrix/templates/mobile_app/images/lenta/menu/pencil.png",
+						image: "/bitrix/templates/mobile_app/images/lenta/menu/message.png",
 						action: function()
 						{
 							if (Application.getApiVersion() >= BX.MobileLivefeed.Instance.getApiVersion('layoutPostForm'))
@@ -94,7 +94,7 @@ function __MSLOnFeedInit(params)
 					BX.MobileLivefeed.PageMenuInstance.listPageMenuItems.push({
 						id: 'groupTasks',
 						name: BX.message('MOBILE_EXT_LIVEFEED_LIST_MENU_GROUP_TASKS'),
-						image: '/bitrix/templates/mobile_app/images/lenta/menu/n_check.png',
+						image: '/bitrix/templates/mobile_app/images/lenta/menu/task.png',
 						icon: 'checkbox',
 						arrowFlag: true,
 						action: function() {
@@ -169,7 +169,7 @@ function __MSLOnFeedInit(params)
 						BX.MobileLivefeed.PageMenuInstance.listPageMenuItems.push({
 							id: 'addPost',
 							name: BX.message('MOBILE_EXT_LIVEFEED_LIST_MENU_ADD_POST'),
-							image: "/bitrix/templates/mobile_app/images/lenta/menu/pencil.png",
+							image: "/bitrix/templates/mobile_app/images/lenta/menu/message.png",
 							action: function()
 							{
 								if (Application.getApiVersion() >= BX.MobileLivefeed.Instance.getApiVersion('layoutPostForm'))

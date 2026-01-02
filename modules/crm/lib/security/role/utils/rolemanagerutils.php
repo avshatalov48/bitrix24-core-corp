@@ -58,9 +58,4 @@ class RoleManagerUtils
 	{
 		CCrmSaleHelper::updateShopAccess();
 	}
-
-	public function isUsePermConfigV2(): bool
-	{
-		return Option::get('crm', 'use_v2_version_config_perms', 'N') === 'Y';
-	}
 }

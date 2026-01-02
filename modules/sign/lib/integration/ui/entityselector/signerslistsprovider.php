@@ -1,0 +1,143 @@
+<?php
+
+namespace Bitrix\Sign\Integration\Ui\EntitySelector;
+
+use Bitrix\Main\Engine\CurrentUser;
+use Bitrix\Main\Localization\Loc;
+use Bitrix\Main\ORM\Query\Filter\ConditionTree;
+use Bitrix\Sign\Access\AccessController;
+use Bitrix\Sign\Access\ActionDictionary;
+use Bitrix\Sign\Config\Storage;
+use Bitrix\Sign\Factory\Access\AccessibleItemFactory;
+use Bitrix\Sign\Item\SignersList;
+use Bitrix\Sign\Item\SignersListCollection;
+use Bitrix\Sign\Service\Container;
+use Bitrix\Sign\Service\SignersListService;
+use Bitrix\UI\EntitySelector;
+use Bitrix\UI\EntitySelector\Dialog;
+
+class SignersListsProvider extends EntitySelector\BaseProvider
+{
+	// other lists can be found via search
+	private const DEFAULT_LIMIT = 1000;
+
+	private AccessController $accessController;
+	private AccessibleItemFactory $accessibleItemFactory;
+	private SignersListService $signersListService;
+
+	public function __construct(array $options = [])
+	{
+		parent::__construct();
+
+		$currentUserId = (int)CurrentUser::get()->getId();
+
+		if ($currentUserId < 1)
+		{
+			throw new \Bitrix\Main\SystemException('Current user is not authorized');
+		}
+
+		$this->accessController = new AccessController($currentUserId);
+		$this->accessibleItemFactory = Container::instance()->getAccessibleItemFactory();
+		$this->signersListService = Container::instance()->getSignersListService();
+	}
+
+	public function isAvailable(): bool
+	{
+		return Storage::instance()->isB2eAvailable();
+	}
+
+	/**
+	 * @param array $ids
+	 *
+	 * @return EntitySelector\Item[]
+	 */
+	public function getItems(array $ids) : array
+	{
+		$lists = $this->signersListService->listByIds($ids);
+
+		return $this->prepareItems($lists);
+	}
+
+	public function fillDialog(Dialog $dialog): void
+	{
+		$dialog->addTab(
+			new EntitySelector\Tab(
+				[
+					'id' => 'signers-list',
+					'title' => Loc::getMessage('SIGN_INTEGRATION_UI_ENTITYSELECTOR_SIGNERSLISTS_TAB'),
+					'icon' => [
+						'default' => $this->getTabIconDefault(),
+					],
+				],
+			),
+		);
+
+		$lists = $this->signersListService->list(self::DEFAULT_LIMIT);
+
+		$dialog->addRecentItems($this->prepareItems($lists));
+	}
+
+	private function prepareItems(SignersListCollection $lists): array
+	{
+		$items = [];
+		foreach ($lists as $list)
+		{
+			$accessibleItem = $this->accessibleItemFactory->createFromItem($list);
+			if ($this->accessController->check(ActionDictionary::ACTION_B2E_SIGNERS_LIST_READ, $accessibleItem))
+			{
+				$items[] = $this->prepareItem($list);
+			}
+		}
+
+		return $items;
+	}
+
+	private function prepareItem(SignersList $list): EntitySelector\Item
+	{
+		$userCount = $this->signersListService->countSignersWithFilter(
+			$list->getId(),
+			(new ConditionTree())->where('LIST_ID', $list->getId()),
+		);
+
+		return new EntitySelector\Item([
+			'id' => $list->id,
+			'entityId' => 'signers-list',
+			'title' => $list->title,
+			'subtitle' => Loc::getMessage(
+				'SIGN_INTEGRATION_UI_ENTITYSELECTOR_SIGNERSLISTS_SIGNERS_COUNT',
+				['#COUNT#' => $userCount],
+			),
+			'searchable' => true,
+			'hidden' => false,
+			'tabs' => [
+				'signers-list',
+			],
+			'customData' => [],
+		]);
+	}
+
+	public function doSearch(EntitySelector\SearchQuery $searchQuery, EntitySelector\Dialog $dialog): void
+	{
+		$query = $searchQuery->getQuery();
+
+		if (!$query)
+		{
+			return;
+		}
+
+		$lists = $this->signersListService->search($query);
+		$items = $this->prepareItems($lists);
+		$dialog->addItems($items);
+	}
+
+	private function getTabIconDefault(): string
+	{
+		$svg = '
+			<svg width="24" height="24" viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg">
+				<path d="M19.87 18.1397C20.4104 18.1397 20.8485 18.5778 20.8485 19.1182C20.8485 19.6586 20.4104 20.0967 19.87 20.0967H13.8964C13.356 20.0966 12.9179 19.6585 12.9179 19.1182C12.9179 18.5778 13.3561 18.1397 13.8964 18.1397H19.87ZM9.25771 4.34473C8.6633 3.40299 13.6757 2.62042 14.0087 5.50391C14.1397 6.37308 14.1397 7.25681 14.0087 8.12598C14.0285 8.12395 14.7507 8.05964 14.2577 9.46387C14.2511 9.48837 13.9777 10.4841 13.5604 10.2578C13.5605 10.2589 13.5647 10.3747 13.5556 10.542H13.4823C11.5524 10.5421 11.0595 11.7804 11.0595 13.2813V19.5693H10.6991C8.51931 19.522 6.46361 19.1287 4.6415 18.4648C4.21449 18.3092 3.96506 17.8695 4.03798 17.4209C4.10535 17.0065 4.17985 16.6094 4.25575 16.3135C4.51891 15.2893 5.9965 14.5283 7.35634 13.9434C7.71228 13.7902 7.92825 13.6674 8.1454 13.5439C8.3574 13.4234 8.57204 13.3014 8.92177 13.1484C8.96145 12.96 8.97773 12.7674 8.96962 12.5752L9.57216 12.5029C9.57526 12.5083 9.64885 12.6296 9.52431 11.8008C9.52431 11.8008 8.8467 11.625 8.81532 10.2773C8.8081 10.2797 8.30577 10.4406 8.27529 9.62988C8.26887 9.46739 8.22763 9.31084 8.1874 9.16113C8.09078 8.80166 8.00382 8.47963 8.44423 8.19922L8.12685 7.35254C8.12685 7.35254 7.79259 4.07982 9.25771 4.34473ZM19.87 15.2041C20.4104 15.2041 20.8485 15.6422 20.8485 16.1826C20.8485 16.723 20.4104 17.1611 19.87 17.1611H13.8964C13.356 17.161 12.9179 16.723 12.9179 16.1826C12.9179 15.6423 13.3561 15.2042 13.8964 15.2041H19.87ZM19.87 12.2686C20.4104 12.2686 20.8485 12.7067 20.8485 13.2471C20.8485 13.7875 20.4104 14.2256 19.87 14.2256H13.8964C13.356 14.2255 12.9179 13.7874 12.9179 13.2471C12.9179 12.7067 13.3561 12.2686 13.8964 12.2686H19.87Z" fill="#ABB1B8"/>
+			</svg>
+		';
+
+		return 'data:image/svg+xml;base64,' . base64_encode($svg);
+	}
+}

@@ -186,6 +186,7 @@ $wrapperParameters = [
 	'POPUP_COMPONENT_TEMPLATE_NAME' => $arResult['templateName'],
 	'POPUP_COMPONENT_PARAMS' => $arResult['componentParameters'],
 	"USE_PADDING" => false,
+	'USE_UI_TOOLBAR' => 'Y',
 ];
 
 if ($arResult['componentName'] === 'bitrix:rpa.automation')

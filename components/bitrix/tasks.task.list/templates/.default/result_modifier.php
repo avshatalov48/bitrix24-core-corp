@@ -46,8 +46,20 @@ if (Main\ModuleManager::isModuleInstalled('rest') && !$isExtranetUser)
 
 CJSCore::Init(['tasks_util_query', 'task_popups']);
 
+if (!empty($arParams['relationToId']))
+{
+	Toolbar::deleteFavoriteStar();
+}
+
 //region TITLE
-if ($arParams['PROJECT_VIEW'] === 'Y')
+if (!empty($arParams['relationToId']))
+{
+	$title = $shortTitle = match ($arParams['relationType'] ?? null) {
+		default => Loc::getMessage('TASKS_TITLE_SUBTASKS'),
+		'relatedTasks' => Loc::getMessage('TASKS_TITLE_RELATED_TASKS'),
+	};
+}
+else if ($arParams['PROJECT_VIEW'] === 'Y')
 {
 	$title = $shortTitle = Loc::getMessage('TASKS_TITLE_PROJECT');
 }
@@ -82,13 +94,16 @@ if ($arResult["IS_COLLAB"])
 	Toolbar::deleteFavoriteStar();
 	$shortTitle = Loc::getMessage('TASKS_TITLE');
 
-	$this->SetViewTarget('in_pagetitle') ?>
+	$collabName = HtmlFilter::encode($arResult['COLLAB_NAME']);
 
-	<div class="sn-collab-icon__wrapper">
-		<div id="sn-collab-icon-<?=HtmlFilter::encode($arResult["OWNER_ID"])?>" class="sn-collab-icon__hexagon-bg"></div>
-	</div>
-	<div class="sn-collab__subtitle"><?=HtmlFilter::encode($arResult["COLLAB_NAME"])?></div>
-	<?php $this->EndViewTarget();
+	Toolbar::addBeforeTitleBoxHtml(
+		'<div class="sn-collab-icon__wrapper">' .
+		'<div id="sn-collab-icon-' . HtmlFilter::encode($arResult['OWNER_ID']) . '" class="sn-collab-icon__hexagon-bg"></div>' .
+		'</div>'
+	);
+	Toolbar::addUnderTitleHtml(
+		'<div class="sn-collab__subtitle" title="' . $collabName . '">' . $collabName . '</div>'
+	);
 }
 
 $APPLICATION->SetPageProperty('title', $title);

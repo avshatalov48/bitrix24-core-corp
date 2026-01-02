@@ -1,11 +1,11 @@
 .sign-lang-selector__label {
-	font: 12px/14.32px var(--ui-font-family-system);
+	font: 12px/14.32px var(--ui-font-family-primary, var(--ui-font-family-system));
 	color: var(--ui-color-palette-gray-60);
 	margin-right: 10px;
 }
 
 .sign-lang-selector__language-button {
-	font: 13px/17.2px var(--ui-font-family-system);
+	font: 13px/17.2px var(--ui-font-family-primary, var(--ui-font-family-system));
 	text-transform: none;
 	background: var(--ui-color-palette-gray-05);
 	border: none;

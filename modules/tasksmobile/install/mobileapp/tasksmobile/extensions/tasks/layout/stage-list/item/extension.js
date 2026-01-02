@@ -13,6 +13,7 @@ jn.define('tasks/layout/stage-list/item', (require, exports, module) => {
 	const {
 		selectByStageIdAndFilterParams,
 	} = require('tasks/statemanager/redux/slices/stage-counters');
+	const { DeadlinePeriod } = require('tasks/enum');
 
 	/**
 	 * @class TasksStageListItem
@@ -21,11 +22,16 @@ jn.define('tasks/layout/stage-list/item', (require, exports, module) => {
 	{
 		isUnsuitable()
 		{
+			const { active, stage } = this.props;
+
 			if (!this.showAllStagesItem)
 			{
 				return (
-					!this.props.active
-					&& (this.props.stage.statusId === 'PERIOD1')
+					!active
+					&& (
+						stage.statusId === DeadlinePeriod.PERIOD_OVERDUE
+						|| stage.statusId === DeadlinePeriod.PERIOD_DONE
+					)
 				);
 			}
 

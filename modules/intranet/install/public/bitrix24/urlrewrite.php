@@ -101,6 +101,11 @@ $arUrlRewrite = array(
 		"PATH" => "/desktop_app/router.php",
 	),
 	array(
+		"CONDITION" => "#^/extranet/video/([\\.\\-0-9a-zA-Z]+)(/?)([^/]*)#",
+		"RULE" => "alias=\$1&videoconf",
+		"PATH" => "/desktop_app/router.php",
+	),
+	array(
 		"CONDITION" => "#^/online/([\\.\\-0-9a-zA-Z]+)(/?)([^/]*)#",
 		"RULE" => "alias=\$1",
 		"PATH" => "/desktop_app/router.php",
@@ -690,6 +695,36 @@ $arUrlRewrite = array(
 		"PATH" => "/terminal/index.php",
 	),
 	array(
+		'CONDITION' => '#^/bi/dataset/#',
+		'RULE' => "",
+		'ID' => 'bitrix:biconnector.apachesuperset.workspace_analytic.controller',
+		'PATH' => '/bi/dataset/index.php',
+	),
+	array(
+		'CONDITION' => '#^/bi/source/#',
+		'RULE' => "",
+		'ID' => 'bitrix:biconnector.apachesuperset.workspace_analytic.controller',
+		'PATH' => '/bi/source/index.php',
+	),
+	array(
+		'CONDITION' => '#^/bi/statistics/#',
+		'RULE' => "",
+		'ID' => 'bitrix:biconnector.apachesuperset.workspace_analytic.controller',
+		'PATH' => '/bi/statistics/index.php',
+	),
+	array(
+		'CONDITION' => '#^/bi/unused_elements/#',
+		'RULE' => '',
+		'ID' => 'bitrix:biconnector.apachesuperset.workspace_analytic.controller',
+		'PATH' => '/bi/unused_elements/index.php',
+	),
+	array(
+		'CONDITION' => '#^/bi/dashboard/detail/([0-9]+)/#',
+		'RULE' => "dashboardId=\$1",
+		'ID' => 'bitrix:biconnector.apachesuperset.dashboard.detail',
+		'PATH' => '/bi/dashboard/detail/index.php',
+	),
+	array(
 		'CONDITION' => '#^/bi/dashboard/#',
 		'RULE' => '',
 		'ID' => 'bitrix:biconnector.apachesuperset.dashboard.controller',
@@ -953,8 +988,65 @@ $arUrlRewrite = array(
 		'PATH' => '/crm/index.php',
 	],
 	[
-		'CONDITION' => '#^/disk/boards/([0-9]+)/([0-9a-zA-Z]+)#',
-		'RULE' => 'action=disk.integration.flipchart.$2&fileId=$1',
+		'CONDITION' => '#^/call/detail/([0-9]+)#',
+		'RULE' => "callId=\$1",
+		'ID' => 'bitrix:call',
+		'PATH' => '/call/index.php',
+	],
+	[
+		'CONDITION' => '#^/extranet/call/detail/([0-9]+)#',
+		'RULE' => "callId=\$1",
+		'ID' => 'bitrix:call',
+		'PATH' => '/extranet/call/index.php',
+	],
+	[
+		'CONDITION' => '#^/disk/boards/([0-9]+)/openAttachedDocument#',
+		'RULE' => 'action=disk.integration.flipchart.openAttachedDocument&attachedObjectId=$1',
 		'PATH' => '/bitrix/services/main/ajax.php',
+	],
+	[
+		'CONDITION' => '#^/disk/boards/([0-9]+)/openDocument#',
+		'RULE' => 'action=disk.integration.flipchart.openDocument&fileId=$1',
+		'PATH' => '/bitrix/services/main/ajax.php',
+	],
+	[
+		'CONDITION' => '#^/disk/boards/([0-9]+)/openAttached#',
+		'RULE' => 'action=disk.integration.flipchart.openAttachedDocument&attachedObjectId=$1',
+		'PATH' => '/bitrix/services/main/ajax.php',
+	],
+	[
+		'CONDITION' => '#^/disk/boards/([0-9]+)/open#',
+		'RULE' => 'action=disk.integration.flipchart.openDocument&fileId=$1',
+		'PATH' => '/bitrix/services/main/ajax.php',
+	],
+	[
+		'CONDITION' => '#^/vote-result/([0-9a-z\.]+)#',
+		'RULE' => "signedAttachId=\$1",
+		'PATH' => '/vote-result/index.php',
+	],
+	[
+		'CONDITION' => '#^/extranet/vote-result/([0-9a-z\.]+)#',
+		'RULE' => "signedAttachId=\$1",
+		'PATH' => '/extranet/vote-result/index.php',
+	],
+	[
+		'CONDITION' => '#^/disk/file/(?<unique_code>[0-9a-zA-Z]{20})/edit(\/?)#',
+		'RULE' => 'action=disk.api.unifiedlinkcontroller.edit&uniqueCode=$1&',
+		'PATH' => '/bitrix/services/main/ajax.php',
+	],
+	[
+		'CONDITION' => '#^/disk/file/(?<unique_code>[0-9a-zA-Z]{20})(\/?)#',
+		'RULE' => 'action=disk.api.unifiedlinkcontroller.view&uniqueCode=$1&',
+		'PATH' => '/bitrix/services/main/ajax.php',
+	],
+	[
+		'CONDITION' => '#^/task/comments/([0-9]+)#',
+		'RULE' => 'taskId=$1',
+		'PATH' => '/tasks/comments.php',
+	],
+	[
+		'CONDITION' => '#^/extranet/task/comments/([0-9]+)#',
+		'RULE' => 'taskId=$1',
+		'PATH' => '/extranet/tasks/comments.php',
 	],
 );

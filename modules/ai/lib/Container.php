@@ -22,6 +22,7 @@ class Container
 		'Service',
 		'Validator',
 		'Guard',
+		'Helper',
 	];
 
 	private static ?self $instance;

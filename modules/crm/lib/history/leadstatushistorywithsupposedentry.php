@@ -15,6 +15,9 @@ use CCrmStatus;
 class LeadStatusHistoryWithSupposedEntry
 {
 
+	/**
+	 * @deprecated
+	 */
 	public static function register($leadId)
 	{
 		$historiesToAdd = self::getHistoriesToAdd($leadId);

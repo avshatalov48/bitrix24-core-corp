@@ -87,49 +87,6 @@ export class ExecuteSetStage extends BaseHandler
 			stageManager.setEntityIds(selectedIds);
 		}
 
-		this.registerAnalyticsCloseEvent(forAll, selectedIds, stageId);
-
 		stageManager.execute();
-	}
-
-	registerAnalyticsCloseEvent(forAll: boolean, selectedIds: number[], stageId: string): void
-	{
-		const stage = JSON.parse(this.#valueElement.dataset.items).find((obj) => {
-			return obj.VALUE === stageId;
-		});
-
-		if (!stage.SEMANTICS)
-		{
-			return;
-		}
-
-		let element = null;
-		if (stage.SEMANTICS === 'F')
-		{
-			element = BX.Crm.Integration.Analytics.Dictionary.ELEMENT_GRID_GROUP_ACTIONS_LOSE_STAGE;
-		}
-
-		if (stage.SEMANTICS === 'S')
-		{
-			element = BX.Crm.Integration.Analytics.Dictionary.ELEMENT_GRID_GROUP_ACTIONS_WON_STAGE;
-		}
-
-		const entityIds = forAll ? '' : selectedIds.toString();
-		const analyticsData = BX.Crm.Integration.Analytics.Builder.Entity.CloseEvent.createDefault(
-			this.#entityTypeId,
-			entityIds,
-		)
-			.setSubSection(BX.Crm.Integration.Analytics.Dictionary.SUB_SECTION_LIST)
-			.setElement(element)
-			.buildData();
-
-		if (forAll)
-		{
-			analyticsData.p3 = 'for_all';
-		}
-
-		analyticsData.status = BX.Crm.Integration.Analytics.Dictionary.STATUS_ATTEMPT;
-
-		BX.UI.Analytics.sendData(analyticsData);
 	}
 }

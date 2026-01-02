@@ -3,7 +3,12 @@ import { Model } from 'booking.const';
 import { Core } from 'booking.core';
 import type { BookingUIFilter, BookingListFilter } from './types';
 
-class BookingFilter
+const CounterDictionary = Object.freeze({
+	BookingDelayed: 'booking_delayed',
+	BookingUnconfirmed: 'booking_unconfirmed',
+});
+
+export class BookingFilter
 {
 	prepareFilter(fields: BookingUIFilter, withinMonth: boolean = false): BookingListFilter
 	{
@@ -41,12 +46,15 @@ class BookingFilter
 
 		if (fields.CONFIRMED)
 		{
-			filter.IS_CONFIRMED = { 'Y': 1, 'N': 0 }[fields.CONFIRMED];
+			filter.IS_CONFIRMED = { Y: 1, N: 0 }[fields.CONFIRMED];
 		}
 
-		if (fields.DELAYED)
+		if (fields.REQUIRE_ATTENTION)
 		{
-			filter.IS_DELAYED = { 'Y': 1, 'N': 0 }[fields.DELAYED];
+			filter.HAS_COUNTER_OF_TYPE = {
+				D: CounterDictionary.BookingDelayed,
+				AC: CounterDictionary.BookingUnconfirmed,
+			}[fields.REQUIRE_ATTENTION];
 		}
 
 		return filter;

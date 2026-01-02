@@ -1,11 +1,14 @@
-(() => {
+/**
+ * @module utils/random
+ */
+jn.define('utils/random', (require, exports, module) => {
 	/**
 	 * @class Random
 	 */
 	class Random
 	{
 		/**
-		 * Returns random string of {length}
+		 * Returns pseudo-random string of {length}
 		 * @param {number} length
 		 * @returns {string}
 		 */
@@ -15,7 +18,7 @@
 		}
 
 		/**
-		 * Returns random int between {min} and {max} values
+		 * Returns pseudo-random int between {min} and {max} values
 		 * @param {number} min
 		 * @param {number} max
 		 * @returns {number}
@@ -27,23 +30,15 @@
 
 			return Math.floor(Math.random() * (max - min + 1)) + min;
 		}
-
-		/**
-		 * Returns universally unique identifier
-		 * @returns {string}
-		 */
-		static getUuid()
-		{
-			throw new Error('Method not implemented yet');
-		}
 	}
+
+	module.exports = { Random };
+});
+
+// todo remove after all global usages in other modules will be cleaned
+(function() {
+	const require = (ext) => jn.require(ext);
+	const { Random } = require('utils/random');
 
 	jnexport(Random);
 })();
-
-/**
- * @module utils/random
- */
-jn.define('utils/random', (require, exports, module) => {
-	module.exports = { Random: this.Random };
-});

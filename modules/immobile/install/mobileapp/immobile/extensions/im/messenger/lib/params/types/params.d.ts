@@ -20,6 +20,10 @@ declare type ImFeatures = {
 	sidebarLinks: boolean,
 	zoomActive: boolean,
 	zoomAvailable: boolean,
+	intranetInviteAvailable: boolean,
+	messagesAutoDeleteEnabled: boolean,
+	voteCreationAvailable: boolean,
+	aiFileTranscriptionAvailable: boolean,
 }
 
 declare type UserInfo = {

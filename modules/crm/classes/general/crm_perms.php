@@ -4,28 +4,29 @@ IncludeModuleLangFile(__FILE__);
 
 use Bitrix\Crm\Category\DealCategory;
 use Bitrix\Crm\Security\QueryBuilder\OptionsBuilder;
+use Bitrix\Crm\Security\Role\PermissionsManager;
 use Bitrix\Crm\Service\Container;
+use Bitrix\Crm\Service\UserPermissions;
 
 class CCrmPerms
 {
-	const PERM_NONE = BX_CRM_PERM_NONE;
-	const PERM_SELF = BX_CRM_PERM_SELF;
-	const PERM_DEPARTMENT = BX_CRM_PERM_DEPARTMENT;
-	const PERM_SUBDEPARTMENT = BX_CRM_PERM_SUBDEPARTMENT;
-	const PERM_OPEN = BX_CRM_PERM_OPEN;
-	const PERM_ALL = BX_CRM_PERM_ALL;
-	const PERM_CONFIG = BX_CRM_PERM_CONFIG;
+	const PERM_NONE = UserPermissions::PERMISSION_NONE;
+	const PERM_SELF = UserPermissions::PERMISSION_SELF;
+	const PERM_DEPARTMENT = UserPermissions::PERMISSION_DEPARTMENT;
+	const PERM_SUBDEPARTMENT = UserPermissions::PERMISSION_SUBDEPARTMENT;
+	const PERM_OPEN = UserPermissions::PERMISSION_OPENED;
+	const PERM_ALL = UserPermissions::PERMISSION_ALL;
+	const PERM_CONFIG = UserPermissions::PERMISSION_CONFIG;
 
-	const ATTR_READ_ALL = 'RA';
+	const ATTR_READ_ALL = UserPermissions::ATTRIBUTES_READ_ALL;
 
 	private static $INSTANCES = array();
 	protected $userId = 0;
-	protected $arUserPerms = array();
+	protected ?array $arUserPerms = null;
 
 	function __construct($userId)
 	{
 		$this->userId = intval($userId);
-		$this->arUserPerms = CCrmRole::GetUserPerms($this->userId);
 	}
 
 	/**
@@ -121,8 +122,7 @@ class CCrmPerms
 	}
 
 	/**
-	 * @deprecated Use \Bitrix\Crm\Service\UserPermissions::getAttributesProvider()->getUserAttributes() instead
-	 * @see \Bitrix\Crm\Security\AttributesProvider::getUserAttributes
+	 * @deprecated Do not use permission attributes directly!
 	 */
 	static public function GetCurrentUserAttr()
 	{
@@ -138,30 +138,33 @@ class CCrmPerms
 		return $this->userId;
 	}
 
+	/**
+	 * @deprecated Do not use permission attributes directly!
+	 */
 	public function GetUserPerms()
 	{
+		if (is_null($this->arUserPerms))
+		{
+			$this->arUserPerms = CCrmRole::GetUserPerms($this->userId);
+		}
+
 		return $this->arUserPerms;
 	}
 
+	/**
+	 * @deprecated Do not use permission attributes directly!
+	 * @see \Bitrix\Crm\Service\Container::getInstance()->getUserPermissions()
+	 */
 	public function HavePerm($permEntity, $permAttr, $permType = 'READ'): bool
 	{
+		$permEntity = (string)$permEntity;
+		$permAttr = (string)$permAttr;
+		$permType = (string)$permType;
+
 		// HACK: only for product and currency support
 		$permType = mb_strtoupper($permType);
-		if ($permEntity == 'CONFIG' && $permAttr == self::PERM_CONFIG && $permType == 'READ')
-		{
-			return true;
-		}
 
-		// HACK: Compatibility with CONFIG rights
-		if ($permEntity == 'CONFIG')
-			$permType = 'WRITE';
-
-		if(self::IsAdmin($this->userId))
-		{
-			return $permAttr != self::PERM_NONE;
-		}
-
-		// Change config right also grant right to change robots.
+		// CRM admins can always edit robots.
 		if (
 			$permType === 'AUTOMATION'
 			&& $permAttr == BX_CRM_PERM_ALL
@@ -170,52 +173,31 @@ class CCrmPerms
 		{
 			return true;
 		}
-
-		if (!isset($this->arUserPerms[$permEntity][$permType]))
-		{
-			return $permAttr == self::PERM_NONE;
-		}
-		$entityTypePerm = $this->arUserPerms[$permEntity][$permType]['-'] ?? self::PERM_NONE;
-
-		if ($entityTypePerm == self::PERM_NONE)
-		{
-			foreach ($this->arUserPerms[$permEntity][$permType] as $sField => $arFieldValue)
-			{
-				if ($sField == '-')
-				{
-					continue ;
-				}
-
-				foreach ($arFieldValue as $sAttr)
-				{
-					if ($sAttr > $permAttr)
-					{
-						return $sAttr == self::PERM_NONE;
-					}
-				}
-
-				return $permAttr == self::PERM_NONE;
-			}
-		}
-
-		if ($permAttr == self::PERM_NONE)
-		{
-			return $entityTypePerm == self::PERM_NONE;
-		}
-
-		if ($entityTypePerm >= $permAttr)
+		// Config READ is always true
+		if ($permEntity == 'CONFIG' && $permAttr == self::PERM_CONFIG && $permType == 'READ')
 		{
 			return true;
 		}
+		// HACK: Compatibility with CONFIG rights
+		if ($permEntity == 'CONFIG')
+		{
+			$permType = 'WRITE';
+		}
 
-		return false;
+		$permissionsManager = PermissionsManager::getInstance($this->userId);
+		if ($permAttr === self::PERM_NONE)
+		{
+			return !$permissionsManager->hasPermission($permEntity, $permType);
+		}
+
+		return $permissionsManager->hasPermissionLevel($permEntity, $permType, $permAttr);
 	}
 
+	/**
+	 * @deprecated Do not use permission attributes directly!
+	 */
 	public function GetPermType($permEntity, $permType = 'READ', $arEntityAttr = array())
 	{
-		if (self::IsAdmin($this->userId))
-			return self::PERM_ALL;
-
 		// Change config right also grant right to change robots.
 		if (
 			$permType === 'AUTOMATION'
@@ -225,78 +207,15 @@ class CCrmPerms
 			return BX_CRM_PERM_ALL;
 		}
 
-		if (!isset($this->arUserPerms[$permEntity][$permType]))
-		{
-			return self::PERM_NONE;
-		}
-
-		if($permType === 'READ'
-			&& (in_array(self::ATTR_READ_ALL, $arEntityAttr, true)
-				|| in_array('CU'.$this->userId, $arEntityAttr, true)
-			)
-		)
-		{
-			return self::PERM_ALL;
-		}
-
-		if (empty($arEntityAttr))
-		{
-			return $this->arUserPerms[$permEntity][$permType]['-'] ?? self::PERM_NONE;
-		}
-
-		foreach ($this->arUserPerms[$permEntity][$permType] as $sField => $arFieldValue)
-		{
-			if ($sField == '-')
-			{
-				continue ;
-			}
-
-			foreach ($arFieldValue as $fieldValue => $sAttr)
-			{
-				if (in_array($sField.$fieldValue, $arEntityAttr))
-				{
-					return $sAttr;
-				}
-			}
-		}
-
-		return $this->arUserPerms[$permEntity][$permType]['-'] ?? self::PERM_NONE;
+		return PermissionsManager::getInstance($this->userId)
+			->getPermissionAttributeByEntityAttributes((string)$permEntity, (string)$permType, (array)$arEntityAttr)
+		;
 	}
 
-	public static function GetEntityGroup($permEntity, $permAttr = self::PERM_NONE, $permType = 'READ')
-	{
-		global $DB;
-
-		$arResult = array();
-		$arRole = CCrmRole::GetRoleByAttr($permEntity, $permAttr, $permType);
-
-		if (!empty($arRole))
-		{
-			$sSql = 'SELECT RELATION FROM b_crm_role_relation WHERE RELATION LIKE \'G%\' AND ROLE_ID IN ('.implode(',', $arRole).')';
-			$res = $DB->Query($sSql);
-			while($row = $res->Fetch())
-				$arResult[] = mb_substr($row['RELATION'], 1);
-		}
-		return $arResult;
-	}
-
-	public static function GetEntityRelations($permEntity, $permAttr = self::PERM_NONE, $permType = 'READ')
-	{
-		global $DB;
-
-		$arResult = array();
-		$arRole = CCrmRole::GetRoleByAttr($permEntity, $permAttr, $permType);
-
-		if (!empty($arRole))
-		{
-			$sSql = 'SELECT RELATION FROM b_crm_role_relation WHERE ROLE_ID IN ('.implode(',', $arRole).')';
-			$res = $DB->Query($sSql);
-			while($row = $res->Fetch())
-				$arResult[] = $row['RELATION'];
-		}
-		return $arResult;
-	}
-
+	/**
+	 * @deprecated
+	 * @see \Bitrix\Crm\Service\Container::getInstance()->getUserPermissions()->entityType()->canReadAnyItems();
+	 */
 	static public function IsAccessEnabled(CCrmPerms $userPermissions = null)
 	{
 		if($userPermissions === null)
@@ -304,123 +223,17 @@ class CCrmPerms
 			$userPermissions = self::GetCurrentUserPermissions();
 		}
 
-		$result = (
-			CCrmLead::IsAccessEnabled($userPermissions)
-			|| CCrmContact::IsAccessEnabled($userPermissions)
-			|| CCrmCompany::IsAccessEnabled($userPermissions)
-			|| CCrmDeal::IsAccessEnabled($userPermissions)
-			|| CCrmQuote::IsAccessEnabled($userPermissions)
-			|| CCrmInvoice::IsAccessEnabled($userPermissions)
-		);
-
-		if (!$result)
-		{
-			$permissions = Container::getInstance()->getUserPermissions($userPermissions->GetUserID());
-
-			if ($permissions->canReadType(\CCrmOwnerType::SmartInvoice))
-			{
-				return true;
-			}
-
-			$dynamicTypesMap = Container::getInstance()->getDynamicTypesMap();
-			// avoiding exceptions as this method has usages across the product.
-			try
-			{
-				$dynamicTypesMap->load([
-					'isLoadStages' => false,
-					'isLoadCategories' => false,
-				]);
-			}
-			catch (Exception $exception)
-			{
-			}
-			catch (Error $error)
-			{
-			}
-			foreach ($dynamicTypesMap->getTypes() as $type)
-			{
-				if ($permissions->canReadType($type->getEntityTypeId()))
-				{
-					$result = true;
-					break;
-				}
-			}
-		}
-
-		return $result;
-	}
-
-	public function CheckEnityAccess($permEntity, $permType, $arEntityAttr)
-	{
-		if (!is_array($arEntityAttr))
-			$arEntityAttr = array();
-
-		$enableCummulativeMode = COption::GetOptionString('crm', 'enable_permission_cumulative_mode', 'Y') === 'Y';
-
-		$permAttr = $this->GetPermType($permEntity, $permType, $arEntityAttr);
-		if ($permAttr == self::PERM_NONE)
-		{
-			return false;
-		}
-		if ($permAttr == self::PERM_ALL)
-		{
-			return true;
-		}
-		if ($permAttr == self::PERM_OPEN)
-		{
-			if((in_array('O', $arEntityAttr) || in_array('U'.$this->userId, $arEntityAttr)))
-			{
-				return true;
-			}
-
-			//For backward compatibility (is not comulative mode)
-			if(!$enableCummulativeMode)
-			{
-				return false;
-			}
-		}
-		if ($permAttr >= self::PERM_SELF && in_array('U'.$this->userId, $arEntityAttr))
-		{
-			return true;
-		}
-
-		$arAttr = self::GetUserAttr($this->userId);
-
-		if ($permAttr >= self::PERM_DEPARTMENT && is_array($arAttr['INTRANET']))
-		{
-			// PERM_OPEN: user may access to not opened entities in his department
-			foreach ($arAttr['INTRANET'] as $iDepartment)
-			{
-				if (in_array($iDepartment, $arEntityAttr))
-				{
-					return true;
-				}
-			}
-		}
-		if ($permAttr >= self::PERM_SUBDEPARTMENT && is_array($arAttr['SUBINTRANET']))
-		{
-			// PERM_OPEN: user may access to not opened entities in his intranet
-			foreach ($arAttr['SUBINTRANET'] as $iDepartment)
-			{
-				if (in_array($iDepartment, $arEntityAttr))
-				{
-					return true;
-				}
-			}
-		}
-		return false;
+		return Container::getInstance()->getUserPermissions($userPermissions->GetUserID())->entityType()->canReadSomeItemsInCrm();
 	}
 
 	/**
-	 * @deprecated Use \Bitrix\Crm\Service\UserPermissions::getAttributesProvider()->getEntityListAttributes($permEntity, $permType) instead
-	 * @see \Bitrix\Crm\Security\AttributesProvider::getEntityListAttributes
+	 * @deprecated
+	 * @see \Bitrix\Crm\Service\Container::getInstance()->getUserPermissions()->item()->canRead(); etc
 	 */
-	public function GetUserAttrForSelectEntity($permEntity, $permType, $bForcePermAll = false)
+	public function CheckEnityAccess($permEntity, $permType, $arEntityAttr)
 	{
-		return Bitrix\Crm\Service\Container::getInstance()
-			->getUserPermissions($this->userId)
-			->getAttributesProvider()
-			->getEntityListAttributes((string)$permEntity, (string)$permType)
+		return PermissionsManager::getInstance($this->userId)
+			->doUserAttributesMatchesToEntityAttributes($permEntity, $permType, $arEntityAttr)
 		;
 	}
 
@@ -444,7 +257,8 @@ class CCrmPerms
 
 		$queryBuilder = \Bitrix\Crm\Service\Container::getInstance()
 			->getUserPermissions($userId)
-			->createListQueryBuilder($entityTypes, $builderOptions)
+			->itemsList()
+			->createQueryBuilder($entityTypes, $builderOptions)
 		;
 
 		return $queryBuilder->buildCompatible();
@@ -470,7 +284,8 @@ class CCrmPerms
 
 		$queryBuilder = \Bitrix\Crm\Service\Container::getInstance()
 			->getUserPermissions($userId)
-			->createListQueryBuilder($permEntity, $builderOptions)
+			->itemsList()
+			->createQueryBuilder($permEntity, $builderOptions)
 		;
 
 		return $queryBuilder->buildCompatible();
@@ -552,7 +367,9 @@ class CCrmPerms
 			}
 		}
 
-		return \Bitrix\Crm\Service\UserPermissions::getPermissionEntityType($entityTypeId, $categoryID);
+		return (new \Bitrix\Crm\Category\PermissionEntityTypeHelper($entityTypeId))
+			->getPermissionEntityTypeForCategory($categoryID)
+		;
 	}
 
 	public static function HasPermissionEntityType($permissionEntityType)
@@ -564,16 +381,5 @@ class CCrmPerms
 
 		$entityTypeID = CCrmOwnerType::ResolveID($permissionEntityType);
 		return ($entityTypeID !== CCrmOwnerType::Undefined && $entityTypeID !== CCrmOwnerType::System);
-	}
-
-	/**
-	 * @deprecated
-	 * @see \Bitrix\Crm\Service\UserPermissions::getEntityNameByPermissionEntityType()
-	 */
-	public static function ResolveEntityTypeName($permissionEntityType)
-	{
-		return \Bitrix\Crm\Service\UserPermissions::getEntityNameByPermissionEntityType($permissionEntityType)
-			?? $permissionEntityType
-		;
 	}
 }

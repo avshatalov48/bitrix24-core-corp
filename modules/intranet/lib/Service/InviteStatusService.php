@@ -31,7 +31,7 @@ class InviteStatusService
 	public function getInviteStatusesByEmailCollection(EmailCollection $emailCollection): EmailToUserStatusDtoCollection
 	{
 		$userCollection = $this->userRepository->findUsersByEmails(
-			$emailCollection->map(fn(Email $email) => $email->toLogin())
+			$emailCollection->map(fn(Email $email) => $email->toLogin()),
 		);
 		$emailToUserMap = $this->getEmailToUserMapByCollections($emailCollection, $userCollection);
 
@@ -44,7 +44,7 @@ class InviteStatusService
 	public function getInviteStatusesByPhoneCollection(PhoneCollection $phoneCollection): PhoneToUserStatusDtoCollection
 	{
 		$userCollection = $this->userRepository->findUsersByPhoneNumbers(
-			$phoneCollection->map(fn(Phone $phone) => $phone->defaultFormat())
+			$phoneCollection->map(fn(Phone $phone) => $phone->defaultFormat()),
 		);
 		$phoneToUserMap = $this->getPhoneToUserMapByCollections($phoneCollection, $userCollection);
 
@@ -58,15 +58,14 @@ class InviteStatusService
 	 */
 	private function getEmailToUserMapByCollections(
 		EmailCollection $emailCollection,
-		UserCollection $userCollection
+		UserCollection $userCollection,
 	): array
 	{
 		return $emailCollection->map(fn(Email $email) => [
 			'email' => $email,
 			'user' => $userCollection
-				->filter(fn(User $user) =>
-					mb_strtolower($user->getEmail()) === mb_strtolower($email->toLogin())
-					|| mb_strtolower($user->getLogin()) === mb_strtolower($email->toLogin())
+				->filter(fn(User $user) => mb_strtolower($user->getEmail()) === mb_strtolower($email->toLogin())
+					|| mb_strtolower($user->getLogin()) === mb_strtolower($email->toLogin()),
 				)
 				->first(),
 		]);
@@ -79,7 +78,7 @@ class InviteStatusService
 	 */
 	private function getPhoneToUserMapByCollections(
 		PhoneCollection $phoneCollection,
-		UserCollection $userCollection
+		UserCollection $userCollection,
 	): array
 	{
 		return $phoneCollection->map(fn(Phone $phone) => [

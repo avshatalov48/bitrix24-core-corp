@@ -69,8 +69,7 @@ if($entityID <= 0)
 	return;
 }
 
-$userPerms = CCrmPerms::GetCurrentUserPermissions();
-if ($userPerms->HavePerm($entityTypeName, BX_CRM_PERM_NONE, 'READ'))
+if (!\Bitrix\Crm\Service\Container::getInstance()->getUserPermissions()->entityType()->canReadItems($entityTypeID))
 {
 	ShowError(GetMessage('CRM_PERMISSION_DENIED'));
 	return;

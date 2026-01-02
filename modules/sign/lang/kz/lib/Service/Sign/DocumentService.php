@@ -1,0 +1,7 @@
+<?php
+$MESS["SIGN_SERVICE_DOCUMENT_BLANK_NOT_FOUND"] = "Мұндай қалып жоқ";
+$MESS["SIGN_SERVICE_DOCUMENT_FILE_EMPTY"] = "Файл бос";
+$MESS["SIGN_SERVICE_DOCUMENT_NOT_FOUND"] = "Мұндай тауар жоқ";
+$MESS["SIGN_SERVICE_DOCUMENT_TITLE_FORMAT"] = "#TITLE# № #NUM#";
+$MESS["SIGN_SERVICE_DOCUMENT_TITLE_PLACEHOLDER"] = "#DATE# күнгі #DOC_NAME#";
+$MESS["SIGN_SERVICE_DOCUMENT_USER_NOT_FOUND"] = "Құжатқа жауапты қызметкер сіздің Битрикс24-тен табылмады";

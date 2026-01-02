@@ -11,6 +11,8 @@ return [
 		'layout/ui/fields/boolean',
 		'utils/date/moment',
 		'tokens',
+
+		'calendar:base-menu',
 	],
 	'bundle' => [
 		'./menu',

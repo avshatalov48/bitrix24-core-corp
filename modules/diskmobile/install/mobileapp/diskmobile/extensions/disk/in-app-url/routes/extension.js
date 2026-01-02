@@ -7,10 +7,12 @@ jn.define('disk/in-app-url/routes', (require, exports, module) => {
 	const { Loc } = require('loc');
 	const { openFolder } = require('disk/opener/folder');
 	const { fetchObjectWithRights } = require('disk/rights');
+	const store = require('statemanager/redux/store');
 	const { filesUpsertedFromServer } = require('disk/statemanager/redux/slices/files');
 	const { selectById } = require('disk/statemanager/redux/slices/files/selector');
-	const store = require('statemanager/redux/store');
 	const { dispatch } = store;
+	const { boardOpener } = require('disk/opener/board');
+	const { unifiedOpener } = require('disk/opener/unified-link/opener');
 
 	const {
 		openNativeViewer,
@@ -99,20 +101,26 @@ jn.define('disk/in-app-url/routes', (require, exports, module) => {
 	 * @param {InAppUrl} inAppUrl
 	 */
 	module.exports = (inAppUrl) => {
-		inAppUrl.register('/bitrix/tools/disk/focus.php', (params, { queryParams, url }) => {
-			const id = queryParams?.objectId || queryParams?.folderId;
-			if (id)
-			{
-				void openObject(id);
-			}
-		}).name('disk:entity');
+		inAppUrl.register(
+			'/bitrix/tools/disk/focus.php',
+			(params, { queryParams, url }) => {
+				const id = queryParams?.objectId || queryParams?.folderId;
+				if (id)
+				{
+					void openObject(id);
+				}
+			},
+		).name('disk:entity');
 
-		inAppUrl.register(`/company/personal/user/${env.userId}/disk/path/`, (params, { url }) => {
-			const path = getDecodedEntityPath(url);
-			void fetchTargetFolder(path, EntityType.USER, env.userId).then((targetFolder) => {
-				void openObject(targetFolder.id);
-			});
-		}).name('disk:personal');
+		inAppUrl
+			.addRoute(`/company/personal/user/${env.userId}/disk/path/`)
+			.handler((routeParams, { url }) => {
+				const path = getDecodedEntityPath(url);
+				void fetchTargetFolder(path, EntityType.USER, env.userId).then((targetFolder) => {
+					void openObject(targetFolder.id);
+				});
+			})
+			.name('disk:personal');
 
 		inAppUrl.register('/workgroups/group/:groupId/disk/path/', ({ groupId }, { url }) => {
 			const path = getDecodedEntityPath(url);
@@ -127,5 +135,23 @@ jn.define('disk/in-app-url/routes', (require, exports, module) => {
 				void openObject(targetFolder.id);
 			});
 		}).name('disk:common');
+
+		inAppUrl
+			.addRoute('/disk/boards/:boardId/open')
+			.handler(({ boardId }, { context = {}, url }) => {
+				void boardOpener({
+					id: boardId,
+					isAttached: url.includes('openAttached'),
+					...context,
+				}).catch(console.error);
+			})
+			.name('disk:boardOpen');
+
+		inAppUrl
+			.addRoute('/disk/file/:uniqueCode(?=\\?|$|/)')
+			.handler(({ uniqueCode }, { context = {}, url, queryParams }) => {
+				void unifiedOpener({ uniqueCode, url, queryParams, ...context }).catch(console.error);
+			})
+			.name('disk:universalFileOpen');
 	};
 });

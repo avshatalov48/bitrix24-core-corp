@@ -1,4 +1,5 @@
 /* eslint-disable */
+
 BX.namespace("BX.Crm");
 
 if(typeof BX.Crm.EntityEditorControl === "undefined")
@@ -66,7 +67,8 @@ if(typeof BX.Crm.EntityEditorSection === "undefined")
 					editor: child ? child._editor : null,
 					config: child ? BX.prop.getObject(data, "visibilityConfigs", null) : null,
 					field: child ? child : null,
-					restriction: this._editor.getRestriction('userFieldAccessRights')
+					restriction: this._editor.getRestriction('userFieldAccessRights'),
+					useHumanResourcesModule: this._editor.getOption('useHumanResourcesModule', 'Y') === 'Y',
 				}
 			);
 			params.visibilityConfigurator = this._visibilityConfigurator;
@@ -948,15 +950,18 @@ if(typeof BX.Crm.EntityEditorUser === "undefined")
 		this.registerLayout(options);
 		this._hasLayout = true;
 	};
+
 	BX.Crm.EntityEditorUser.prototype.doRegisterLayout = function()
 	{
-		if(this.isInEditMode()
+		if (
+			this.isInEditMode()
 			&& this.checkModeOption(BX.UI.EntityEditorModeOptions.individual)
 		)
 		{
 			window.setTimeout(BX.delegate(this.openSelector, this), 0);
 		}
 	};
+
 	BX.Crm.EntityEditorUser.prototype.doClearLayout = function(options)
 	{
 		this._input = null;
@@ -965,7 +970,8 @@ if(typeof BX.Crm.EntityEditorUser === "undefined")
 		this._nameElement = null;
 		this._positionElement = null;
 	};
-	BX.Crm.EntityEditorUser.prototype.onEditBtnClick = function(e)
+
+	BX.Crm.EntityEditorUser.prototype.onEditBtnClick = function(event)
 	{
 		//If any other control has changed try to switch to edit mode.
 		if(this._mode === BX.UI.EntityEditorMode.view && this.isEditInViewEnabled() && this.getEditor().isChanged())
@@ -977,50 +983,94 @@ if(typeof BX.Crm.EntityEditorUser === "undefined")
 			this.openSelector();
 		}
 	};
+
 	BX.Crm.EntityEditorUser.prototype.openSelector = function()
 	{
-		if(!this._userSelector)
+		if (this._userSelector && this._userSelector.isOpen())
 		{
-			this._userSelector = BX.UI.EntityEditorUserSelector.create(
-				this._id,
-				{ callback: BX.delegate(this.processItemSelect, this) }
-			);
+			this._userSelector.hide();
+
+			return;
 		}
 
-		this._userSelector.open(this._editButton);
+		const currentUserId = this._input.value
+			?? parseInt(this._model.getField(this._schemeElement.getName()), 10)
+		;
+
+		this._userSelector = new BX.UI.EntitySelector.Dialog({
+			id: 'crm-entity-editor-user-selector-dialog-' + this._id,
+			targetNode: this._editButton,
+			context: 'CRM_ENTITY_EDITOR_USER',
+			enableSearch: true,
+			multiple: false,
+			width: 450,
+			height: 300,
+			preselectedItems: [
+				['user', currentUserId]
+			],
+			undeselectedItems: [
+				['user', currentUserId],
+			],
+			entities: [
+				{
+					id: 'user',
+					options: {
+						inviteEmployeeLink: false,
+						emailUsers: false,
+						inviteGuestLink: false,
+						intranetUsersOnly: true,
+					},
+				},
+				{
+					id: 'structure-node',
+					options: {
+						selectMode: 'usersOnly',
+					},
+				}
+			],
+			events: {
+				'Item:onSelect': (event) => {
+					this.processItemSelect(event);
+				},
+			},
+		});
+
+		this._userSelector.show();
 	};
-	BX.Crm.EntityEditorUser.prototype.processItemSelect = function(selector, item)
+
+	BX.Crm.EntityEditorUser.prototype.processItemSelect = function(event)
 	{
-		var isViewMode = this._mode === BX.UI.EntityEditorMode.view;
-		var editInView = this.isEditInViewEnabled();
-		if(isViewMode && !editInView)
+		const isViewMode = this._mode === BX.UI.EntityEditorMode.view;
+		const editInView = this.isEditInViewEnabled();
+		if (isViewMode && !editInView)
 		{
 			return;
 		}
 
-		this._selectedData =
-			{
-				id: BX.prop.getInteger(item, "entityId", 0),
-				photoUrl: BX.prop.getString(item, "avatar", ""),
-				formattedNameHtml: BX.prop.getString(item, "name", ""),
-				positionHtml: BX.prop.getString(item, "desc", "")
-			};
+		const { item: selectedItem } = event.getData();
+		if (!selectedItem)
+		{
+			return;
+		}
 
-		this._input.value = this._selectedData["id"];
-		this._photoElement.style.backgroundImage = this._selectedData["photoUrl"] !== ""
-			? "url('" + encodeURI(this._selectedData["photoUrl"]) + "')" : "";
+		this._selectedData = {
+			id: selectedItem.getId(),
+			photoUrl: selectedItem.getAvatar(),
+			formattedNameHtml: selectedItem.getTitle(),
+			positionHtml: selectedItem.customData?.get('position') ?? ''
+		};
+
+		this._input.value = this._selectedData['id'];
+		this._photoElement.style.backgroundImage = this._selectedData['photoUrl'] === ''
+			? ''
+			: "url('" + encodeURI(this._selectedData['photoUrl']) + "')";
 		this._photoElement.style.backgroundSize = this._selectedData["photoUrl"] !== ""
-			? "30px" : "";
+			? '30px'
+			: '';
+		this._nameElement.innerHTML = BX.Text.encode(this._selectedData['formattedNameHtml']);
+		this._positionElement.innerHTML = BX.Text.encode(this._selectedData['positionHtml']);
 
-		this._nameElement.innerHTML = this._selectedData["formattedNameHtml"];
-		this._positionElement.innerHTML = this._selectedData["positionHtml"] !== '&nbsp;'
-			? this._selectedData["positionHtml"]
-			: ''
-		;
-
-		this._userSelector.close();
-
-		if(!isViewMode)
+		if (!isViewMode)
 		{
 			this.markAsChanged();
 		}
@@ -1029,6 +1079,7 @@ if(typeof BX.Crm.EntityEditorUser === "undefined")
 			this._editor.saveControl(this);
 		}
 	};
+
 	BX.Crm.EntityEditorUser.prototype.save = function()
 	{
 		var data = this._schemeElement.getData();
@@ -3405,7 +3456,6 @@ if(typeof BX.Crm.EntityEditorRecurring === "undefined")
 		if (
 			BX.type.isPlainObject(data.loaders)
 			&& BX.type.isNotEmptyString(data.loaders["url"])
-			&& BX.type.isNotEmptyString(data.loaders["action"])
 		)
 		{
 			BX.ajax(
@@ -3414,25 +3464,30 @@ if(typeof BX.Crm.EntityEditorRecurring === "undefined")
 					method: "POST",
 					dataType: "json",
 					data: {
-						ACTION: data.loaders["action"],
-						PARAMS: {ID:this._model.getField('ID')}
+						sessid : BX.bitrix_sessid(),
+						entityId: this._model.getField('ID'),
+						entityTypeId: this._model.getEntityTypeId(),
 					},
 					onsuccess: BX.delegate(this.onEntityHintLoad, this)
 				}
 			);
 		}
 	};
+
 	BX.Crm.EntityEditorRecurring.prototype.onEntityHintLoad = function(result)
 	{
-		var entityData = BX.prop.getObject(result, "DATA", null);
+		const entityData = result.data ?? null;
 
-		if(!entityData)
+		if (!entityData)
 		{
 			return;
 		}
-		if (BX.type.isNotEmptyString(entityData.HINT))
+
+		const { hint } = entityData;
+
+		if (BX.type.isNotEmptyString(hint))
 		{
-			this._schemeElement._data.view.text = entityData.HINT;
+			this._schemeElement._data.view.text = hint;
 		}
 
 		if (this._schemeElement._promise instanceof BX.Promise)
@@ -3441,11 +3496,12 @@ if(typeof BX.Crm.EntityEditorRecurring === "undefined")
 			this._schemeElement._promise = null;
 		}
 	};
+
 	BX.Crm.EntityEditorRecurring.prototype.showLicencePopup = function(e)
 	{
 		e.preventDefault();
 
-		if(!B24 || !B24['licenseInfoPopup'])
+		if(!top.BX || !top.BX.UI ||!top.BX.UI.InfoHelper)
 		{
 			return;
 		}

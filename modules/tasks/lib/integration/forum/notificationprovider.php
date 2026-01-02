@@ -17,7 +17,7 @@ use Bitrix\Tasks\Internals\Notification\ProviderInterface;
 class NotificationProvider implements ProviderInterface
 {
 	/** @var Message[]  */
-	private array $messages;
+	private array $messages = [];
 
 	public function addMessage(Message $message): void
 	{

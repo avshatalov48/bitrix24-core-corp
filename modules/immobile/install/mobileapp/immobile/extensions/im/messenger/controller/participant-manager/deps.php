@@ -2,11 +2,11 @@
 
 return [
 	'extensions' => [
-		'loc',
 		'layout/ui/menu',
 		'assets/icons',
-		'im/messenger/lib/logger',
-		'im/messenger/assets/common',
+		'im:messenger/loc',
+		'im:messenger/lib/logger',
+		'im:messenger/assets/common',
 	],
 	'bundle' => [],
 ];

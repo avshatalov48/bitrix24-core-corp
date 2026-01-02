@@ -44,7 +44,7 @@ final class Source implements ExternalSource\Source
 
 		$link = "/crm/tracking/source/edit/{$sourceCode}/";
 
-		return "BX.SidePanel.Instance.open('{$link}', {width: 735, cacheable: false});";
+		return "BX.SidePanel.Instance.open('{$link}', {width: 735, cacheable: false, events: {onClose: BX.BIConnector.TrackingAnalyticsHandler.handleSliderClose}});";
 	}
 
 	/**
@@ -61,5 +61,13 @@ final class Source implements ExternalSource\Source
 	public function getDescription(): string
 	{
 		return Loc::getMessage('BICONNECTOR_CRM_TRACKING_SOURCE_' . mb_strtoupper($this->code) . '_DESCRIPTION') ?? '';
+	}
+
+	/**
+	 * @return null | string
+	 */
+	public function getLogo(): ?string
+	{
+		return null;
 	}
 }

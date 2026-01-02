@@ -767,6 +767,14 @@ class RelationManager
 				;
 			}
 
+			$predefinedRelations[] =
+				(new Relation(
+					new RelationIdentifier($type->getEntityTypeId(), \CCrmOwnerType::SmartB2eDocument),
+					clone $bindingSettings,
+				))
+					->setStorageStrategy(new StorageStrategy\EntityRelationTable())
+			;
+
 			if (!$type->getIsClientEnabled())
 			{
 				continue;
@@ -981,14 +989,15 @@ class RelationManager
 									'PARENT_ENTITY_TYPE_ID' => $parentEntityTypeId,
 									'PARENT_ENTITY_ID' => $parentEntityId,
 									'ADD_EVENT_NAME' => $addEventName,
+									'EXTENDED_INTERNAL_MODE' => true,
 									'ANALYTICS' => [
 										// we dont know where from this component was opened from - it could be anywhere on portal
 										'c_section' => \Bitrix\Crm\Integration\Analytics\Dictionary::getAnalyticsEntityType($parentEntityTypeId) . '_section',
 										'c_sub_section' => Dictionary::SUB_SECTION_DETAILS,
 									],
-								]
-							)
-						]
+								],
+							),
+						],
 					],
 					'enabled' => !$isNew,
 				];

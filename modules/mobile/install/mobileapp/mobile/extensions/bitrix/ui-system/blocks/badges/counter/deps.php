@@ -10,6 +10,7 @@ return [
 		'ui-system/typography/text',
 	],
 	'bundle' => [
+		'./src/size-enum',
 		'./src/design-enum',
 	],
 ];

@@ -6,6 +6,7 @@ use Bitrix\Main\Type\DateTime;
 use Bitrix\Timeman\Helper\TimeHelper;
 use Bitrix\Timeman\Model\Schedule\Calendar\Calendar;
 use Bitrix\Timeman\Model\Schedule\Violation\ViolationRules;
+use Bitrix\Timeman\Model\Worktime\Report\WorktimeReportTable;
 use Bitrix\Timeman\Provider\Schedule\ScheduleProvider;
 use Bitrix\Timeman\Repository\AbsenceRepository;
 use Bitrix\Timeman\Repository\Schedule\CalendarRepository;
@@ -105,7 +106,11 @@ class WorktimeViolationBuilder
 		{
 			$violations = array_merge($violations, $this->buildEditStartViolations($checkAllowedDelta));
 		}
-		if (!$this->getSchedule()->isAutoClosing())
+		if (
+			!$this->getSchedule()->isAutoClosing(
+				\Bitrix\Timeman\Integration\Stafftrack\CheckIn::isCheckInStartEnabled()
+			)
+		)
 		{
 			$violations = array_merge($violations, $this->buildEditStopViolations($checkAllowedDelta));
 		}
@@ -168,12 +173,40 @@ class WorktimeViolationBuilder
 	{
 		$record = $this->getRecord();
 
-		if (!($this->issetProperty($record->getRecordedStopTimestamp()) &&
-			  $this->issetProperty($record->getActualStopTimestamp()))
+		if (
+			!(
+				$this->issetProperty($record->getRecordedStopTimestamp())
+				&& $this->issetProperty($record->getActualStopTimestamp())
+			)
 		)
 		{
 			return [];
 		}
+
+		if (\Bitrix\Timeman\Integration\Stafftrack\CheckIn::isCheckInStartEnabled())
+		{
+			$reports = $record->obtainReports();
+			if (!is_array($reports))
+			{
+				$reports = $reports->getAll();
+			}
+
+			$closeReports = array_filter($reports, function($report) {
+				return $report->getReportType() === WorktimeReportTable::REPORT_TYPE_REPORT_CLOSE;
+			});
+
+			if (!empty($closeReports))
+			{
+				return [
+					$this->createViolation(
+						WorktimeViolation::TYPE_EDITED_ENDING,
+						$record->getRecordedStopTimestamp(),
+						$record->getActualStopTimestamp() - $record->getRecordedStopTimestamp()
+					),
+				];
+			}
+		}
+
 		$allowedDiff = 0;
 		if ($checkAllowedDelta)
 		{

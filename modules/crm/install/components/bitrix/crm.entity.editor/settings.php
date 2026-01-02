@@ -41,7 +41,7 @@ if($USER->IsAuthorized() && check_bitrix_sessid())
 
 		if(isset($_POST['forAllUsers'])
 			&& $_POST['forAllUsers'] === 'Y'
-			&& CCrmAuthorizationHelper::CanEditOtherSettings()
+			&& \Bitrix\Crm\Service\Container::getInstance()->getUserPermissions()->entityEditor()->canEditCommonView()
 		)
 		{
 			if(isset($_POST['delete']) && $_POST['delete'] === 'Y')
@@ -56,7 +56,7 @@ if($USER->IsAuthorized() && check_bitrix_sessid())
 	{
 		if(isset($_POST['forAllUsers'])
 			&& $_POST['forAllUsers'] === 'Y'
-			&& CCrmAuthorizationHelper::CanEditOtherSettings()
+			&& \Bitrix\Crm\Service\Container::getInstance()->getUserPermissions()->entityEditor()->canEditCommonView()
 		)
 		{
 			CUserOptions::DeleteOptionsByName($optionCategory, $guid);
@@ -76,7 +76,7 @@ if($USER->IsAuthorized() && check_bitrix_sessid())
 		}
 
 		$config = isset($_POST['config']) && is_array($_POST['config']) ? $_POST['config'] : array();
-		$forAllUsers = \CCrmAuthorizationHelper::CanEditOtherSettings()
+		$forAllUsers = \Bitrix\Crm\Service\Container::getInstance()->getUserPermissions()->entityEditor()->canEditCommonView()
 			&& isset($_POST['forAllUsers'])
 			&& $_POST['forAllUsers'] === 'Y';
 
@@ -149,7 +149,7 @@ if($USER->IsAuthorized() && check_bitrix_sessid())
 			$scope = EntityEditorConfigScope::PERSONAL;
 		}
 
-		$forAllUsers = \CCrmAuthorizationHelper::CanEditOtherSettings()
+		$forAllUsers = \Bitrix\Crm\Service\Container::getInstance()->getUserPermissions()->entityEditor()->canEditCommonView()
 			&& isset($_POST['forAllUsers'])
 			&& $_POST['forAllUsers'] === 'Y';
 
@@ -182,10 +182,9 @@ if($USER->IsAuthorized() && check_bitrix_sessid())
 	}
 	elseif($action === 'forceCommonScopeForAll')
 	{
-		if(\CCrmAuthorizationHelper::CanEditOtherSettings())
+		if (Bitrix\Crm\Service\Container::getInstance()->getUserPermissions()->entityEditor()->canEditCommonView())
 		{
 			CUserOptions::DeleteOptionsByName($optionCategory, $guid);
-			//CUserOptions::DeleteOptionsByName($optionCategory, "{$guid}_opts");
 			CUserOptions::DeleteOptionsByName($optionCategory, "{$guid}_scope");
 		}
 	}

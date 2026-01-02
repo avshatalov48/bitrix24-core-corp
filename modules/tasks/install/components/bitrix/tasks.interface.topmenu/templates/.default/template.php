@@ -25,7 +25,7 @@ CJSCore::init("spotlight");
 
 Extension::load('ui.info-helper');
 
-if(SITE_TEMPLATE_ID === "bitrix24")
+if(SITE_TEMPLATE_ID === "bitrix24" || SITE_TEMPLATE_ID === 'air')
 {
 	$this->SetViewTarget($defaultMenuTarget, 200);
 }
@@ -64,6 +64,7 @@ if(
 			'ID' => $menuId,
 			'ITEMS' => $arResult['ITEMS'],
 			'DISABLE_SETTINGS' => $arParams["USER_ID"] !== User::getId(),
+			"THEME" => defined("AIR_SITE_TEMPLATE") ? "air" : null,
 		),
 		$component,
 		array('HIDE_ICONS' => true)
@@ -71,7 +72,7 @@ if(
 	?></div><?php
 }
 
-if(SITE_TEMPLATE_ID === "bitrix24")
+if(SITE_TEMPLATE_ID === "bitrix24" || SITE_TEMPLATE_ID === 'air')
 {
 	$this->EndViewTarget();
 }

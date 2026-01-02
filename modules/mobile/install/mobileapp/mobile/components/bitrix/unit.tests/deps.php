@@ -2,7 +2,8 @@
 
 return [
 	'extensions' => [
-		'apptheme',
+		'tokens',
+		'testing',
 		'testing/tests/*',
 		'crm:testing/tests/*',
 		'tasks:testing/tests/*',

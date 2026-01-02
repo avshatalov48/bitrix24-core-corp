@@ -1,0 +1,42 @@
+<?php
+
+namespace Bitrix\Mobile\Profile\Tab;
+
+use Bitrix\Main\Localization\Loc;
+use Bitrix\Mobile\Profile\Enum\TabContextType;
+use Bitrix\Mobile\Profile\Enum\TabType;
+
+class GroupsTab extends BaseProfileTab
+{
+	/**
+	 * @return TabType
+	 */
+	public function getType(): TabType
+	{
+		return TabType::GROUPS;
+	}
+
+	/**
+	 * @return TabContextType
+	 */
+	public function getContextType(): TabContextType
+	{
+		return TabContextType::COMPONENT;
+	}
+
+	/**
+	 * @return bool
+	 */
+	public function isAvailable(): bool
+	{
+		return false;
+	}
+
+	/**
+	 * @return string
+	 */
+	public function getTitle(): string
+	{
+		return Loc::getMessage('PROFILE_TAB_GROUPS_TITLE');
+	}
+}

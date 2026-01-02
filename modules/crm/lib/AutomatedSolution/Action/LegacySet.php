@@ -3,6 +3,7 @@
 namespace Bitrix\Crm\AutomatedSolution\Action;
 
 use Bitrix\Crm\AutomatedSolution\Entity\AutomatedSolutionTable;
+use Bitrix\Crm\AutomatedSolution\Support\IntranetQueries;
 use Bitrix\Crm\Integration\Intranet\CustomSection;
 use Bitrix\Crm\Model\Dynamic\Type;
 use Bitrix\Crm\Restriction\RestrictionManager;
@@ -17,7 +18,8 @@ final class LegacySet implements Action
 	 *     'CUSTOM_SECTIONS': Array<array{
 	 *         'ID': string | int,
 	 *         'TITLE': string,
-	 *     }>|null
+	 *     }>|null,
+	 *     'IS_TYPE_TITLE_CHANGED': bool | null,
 	 * } $fields
 	 * @param Array<int, array> $exisingAutomatedSolutionsMap
 	 * @param CustomSection[] $existingCustomSections
@@ -38,6 +40,7 @@ final class LegacySet implements Action
 		if (
 			!array_key_exists('CUSTOM_SECTIONS', $this->fields)
 			&& !array_key_exists('CUSTOM_SECTION_ID', $this->fields)
+			&& !array_key_exists('IS_TYPE_TITLE_CHANGED', $this->fields)
 		)
 		{
 			return new Result();
@@ -70,6 +73,15 @@ final class LegacySet implements Action
 			elseif (!$bindingResult->isSuccess())
 			{
 				$overallResult->addErrors($bindingResult->getErrors());
+			}
+		}
+
+		if ($this->shouldUpdatePageTitle($overallResult))
+		{
+			$updatePageResult = $this->updatePageTitle();
+			if (!$updatePageResult->isSuccess())
+			{
+				$overallResult->addErrors($updatePageResult->getErrors());
 			}
 		}
 
@@ -243,5 +255,39 @@ final class LegacySet implements Action
 		}
 
 		return (new UnbindTypeFromAutomatedSolution($this->type, $this->type->getCustomSectionId()))->execute();
+	}
+
+	private function shouldUpdatePageTitle(Result $overallResult): bool
+	{
+		$isTypeTitleChanged = $this->fields['IS_TYPE_TITLE_CHANGED'] ?? false;
+		if ($isTypeTitleChanged !== true)
+		{
+			return false;
+		}
+
+		$isCustomSectionChanged = $overallResult->getData()['isCustomSectionChanged'] ?? false;
+		if ($isCustomSectionChanged === true)
+		{
+			// title was already updated when type was rebound
+			return false;
+		}
+
+		return true;
+	}
+
+	private function updatePageTitle(): Result
+	{
+		$page = IntranetQueries::getPageByEntityTypeId($this->type->getEntityTypeId());
+		if (!$page)
+		{
+			return new Result();
+		}
+
+		$page
+			->setTitle($this->type->getTitle())
+			->setCode('') // empty string to provoke CODE regeneration
+		;
+
+		return $page->save();
 	}
 }

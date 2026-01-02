@@ -19,10 +19,12 @@ trait PrimaryAutoWiredEntity
 		return new ExactParameter(
 			Item::class,
 			'entity',
-			function ($className, Factory $factory, ?int $entityId = null, ?int $categoryId = null) {
+			function ($className, Factory $factory, ?int $entityId = null, ?int $categoryId = null)
+			{
 				if ($entityId)
 				{
-					$entity = $factory->getItem($entityId);
+					$entity = EntityCacheManager::getInstance()->getItem($factory, $entityId);
+
 					if (!$entity)
 					{
 						$this->addError(ErrorCode::getNotFoundError());

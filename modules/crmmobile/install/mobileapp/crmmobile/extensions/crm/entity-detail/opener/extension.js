@@ -51,9 +51,9 @@ jn.define('crm/entity-detail/opener', (require, exports, module) => {
 
 			this
 				.checkAvailability(entityTypeId)
-				.then(() => {
+				.then(() => this.prepareAnalytics(analytics, entityTypeId))
+				.then((preparedAnalytics) => {
 					widgetParams.titleParams = this.prepareTitleParams(payload, widgetParams.titleParams);
-					const preparedAnalytics = this.prepareAnalytics(analytics, entityTypeId);
 					const analyticsEvent = preparedAnalytics.getEvent();
 					if (analyticsEvent === 'entity_add_open'
 						|| analyticsEvent === 'entity_copy_open')
@@ -61,7 +61,7 @@ jn.define('crm/entity-detail/opener', (require, exports, module) => {
 						preparedAnalytics.send();
 						preparedAnalytics.setEvent(
 							analyticsEvent === 'entity_add_open'
-								? 'entity_add'
+								? 'entity_create'
 								: 'entity_copy',
 						);
 					}
@@ -90,13 +90,15 @@ jn.define('crm/entity-detail/opener', (require, exports, module) => {
 			;
 		}
 
-		static prepareAnalytics(analytics, entityTypeId)
+		static async prepareAnalytics(analytics, entityTypeId)
 		{
+			const crmMode = await CrmMode.getCurrentCrmMode();
+
 			return new AnalyticsEvent(analytics)
 				.setTool('crm')
 				.setCategory('entity_operations')
 				.setType(Type.getTypeForAnalytics(entityTypeId))
-				.setP1(`crmMode_${CrmMode.getCrmModeFromCache().toLowerCase()}`);
+				.setP1(`crmMode_${crmMode.toLowerCase()}`);
 		}
 
 		/**

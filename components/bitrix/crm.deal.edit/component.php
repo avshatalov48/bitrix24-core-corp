@@ -131,10 +131,6 @@ elseif (isset($_REQUEST['conv_quote_id']) && $_REQUEST['conv_quote_id'] > 0)
 	}
 }
 
-$arEntityAttr = $arParams['ELEMENT_ID'] > 0
-	? CCrmDeal::GetPermissionAttributes(array($arParams['ELEMENT_ID']), $arResult['CATEGORY_ID'])
-	: array();
-
 //region external context ID
 $arResult['EXTERNAL_CONTEXT'] = isset($_REQUEST['external_context']) ? $_REQUEST['external_context'] : '';
 //endregion
@@ -144,8 +140,7 @@ if($isEditMode)
 	$isPermitted = CCrmDeal::CheckUpdatePermission(
 		$arParams['ELEMENT_ID'],
 		$userPermissions,
-		$arResult['CATEGORY_ID'],
-		array('ENTITY_ATTRS' => $arEntityAttr)
+		$arResult['CATEGORY_ID']
 	);
 }
 elseif($isCopyMode)
@@ -153,8 +148,7 @@ elseif($isCopyMode)
 	$isPermitted = CCrmDeal::CheckReadPermission(
 		$arParams['ELEMENT_ID'],
 		$userPermissions,
-		$arResult['CATEGORY_ID'],
-		array('ENTITY_ATTRS' => $arEntityAttr)
+		$arResult['CATEGORY_ID']
 	);
 }
 else
@@ -181,7 +175,7 @@ $arResult['TAX_MODE'] = $bTaxMode ? 'Y' : 'N';
 
 if($isEditMode)
 {
-	CCrmDeal::PrepareConversionPermissionFlags($arParams['ELEMENT_ID'], $arResult, $userPermissions);
+	CCrmDeal::PrepareConversionPermissionFlags($arParams['ELEMENT_ID'], $arResult);
 	if($arResult['CAN_CONVERT'])
 	{
 		$config = \Bitrix\Crm\Conversion\DealConversionConfig::load();
@@ -793,8 +787,7 @@ else
 			$arBizProcParametersValues = $CCrmBizProc->CheckFields(
 				$isEditMode ? $arResult['ELEMENT']['ID'] : false,
 				false,
-				$arResult['ELEMENT']['ASSIGNED_BY'],
-				$isEditMode ? $arEntityAttr : null
+				$arResult['ELEMENT']['ASSIGNED_BY']
 			);
 
 			if ($arBizProcParametersValues === false)
@@ -1213,11 +1206,11 @@ else
 			$entityID = $arParams['ELEMENT_ID'];
 			$arResult['ERROR_MESSAGE'] = '';
 
-			if (!CCrmDeal::CheckDeletePermission($entityID, $userPermissions, $arResult['CATEGORY_ID'], array('ENTITY_ATTRS' => $arEntityAttr)))
+			if (!CCrmDeal::CheckDeletePermission($entityID, $userPermissions, $arResult['CATEGORY_ID']))
 			{
 				$arResult['ERROR_MESSAGE'] .= GetMessage('CRM_PERMISSION_DENIED').'<br />';
 			}
-			elseif (!$CCrmBizProc->Delete($entityID, $arEntityAttr, array('DealCategoryId' => $arResult['CATEGORY_ID'])))
+			elseif (!$CCrmBizProc->Delete($entityID, null, array('DealCategoryId' => $arResult['CATEGORY_ID'])))
 			{
 				$arResult['ERROR_MESSAGE'] .= $CCrmBizProc->LAST_ERROR;
 			}
@@ -1260,13 +1253,13 @@ else
 
 $arResult['STAGE_LIST'] = array();
 $arResult['~STAGE_LIST'] = Bitrix\Crm\Category\DealCategory::getStageList($arResult['CATEGORY_ID']);
+$stagePermissions = \Bitrix\Crm\Service\Container::getInstance()->getUserPermissions()->stage();
 foreach ($arResult['~STAGE_LIST'] as $statusID => $statusTitle)
 {
-	$permissionType = $isEditMode
-		? CCrmDeal::GetStageUpdatePermissionType($statusID, $userPermissions, $arResult['CATEGORY_ID'])
-		: CCrmDeal::GetStageCreatePermissionType($statusID, $userPermissions, $arResult['CATEGORY_ID']);
-
-	if ($permissionType > BX_CRM_PERM_NONE)
+	if ($isEditMode
+		? $stagePermissions->canUpdateInStage(CCrmOwnerType::Deal, $arResult['CATEGORY_ID'], $statusID)
+		: $stagePermissions->canAddInStage(CCrmOwnerType::Deal, $arResult['CATEGORY_ID'], $statusID)
+	)
 	{
 		$arResult['STAGE_LIST'][$statusID] = $statusTitle;
 	}

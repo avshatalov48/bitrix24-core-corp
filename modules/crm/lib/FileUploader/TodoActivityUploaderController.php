@@ -38,7 +38,7 @@ class TodoActivityUploaderController extends ActivityUploaderController
 	{
 		['entityTypeId' => $entityTypeId, 'entityId' => $entityId] = $this->getOptions();
 
-		return $this->userPermissions->checkReadPermissions($entityTypeId, $entityId);
+		return $this->userPermissions->item()->canRead($entityTypeId, $entityId);
 	}
 
 	public function verifyFileOwner(FileOwnershipCollection $files): void

@@ -11,7 +11,7 @@ class Conversion extends Presenter
 	/** @var \CCrmOwnerType */
 	protected $crmOwnerType = \CCrmOwnerType::class;
 
-	protected function getHistoryTitle(string $fieldName = null): string
+	protected function getHistoryTitle(string $fieldName = null, array $settings = []): string
 	{
 		return (string)Loc::getMessage('CRM_TIMELINE_PRESENTER_CONVERSION_TITLE');
 	}

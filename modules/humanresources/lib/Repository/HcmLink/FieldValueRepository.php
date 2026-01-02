@@ -40,13 +40,13 @@ class FieldValueRepository implements Contract\Repository\HcmLink\FieldValueRepo
 	}
 
 	protected function getModelByUnique(
-		int $employeeId,
+		int $entityId,
 		int $fieldId,
 	): ?Model\HcmLink\FieldValue
 	{
 		$query = FieldValueTable::query()
 		   ->setSelect(['*'])
-		   ->setFilter(['=EMPLOYEE_ID' => $employeeId, '=FIELD_ID' => $fieldId])
+		   ->setFilter(['=EMPLOYEE_ID' => $entityId, '=FIELD_ID' => $fieldId])
 		   ->setLimit(1)
 		;
 
@@ -54,11 +54,11 @@ class FieldValueRepository implements Contract\Repository\HcmLink\FieldValueRepo
 	}
 
 	public function getByUnique(
-		int $employeeId,
+		int $entityId,
 		int $fieldId,
 	): ?Item\HcmLink\FieldValue
 	{
-		$model = $this->getModelByUnique($employeeId, $fieldId);
+		$model = $this->getModelByUnique($entityId, $fieldId);
 
 		return  $model ? $this->getItemFromModel($model): null;
 	}
@@ -85,7 +85,7 @@ class FieldValueRepository implements Contract\Repository\HcmLink\FieldValueRepo
 	): Model\HcmLink\FieldValue
 	{
 		$model = $model ?? FieldValueTable::createObject(true);
-		$model->setEmployeeId($item->employeeId)
+		$model->setEmployeeId($item->entityId)
 			->setFieldId($item->fieldId)
 			->setValue($item->value)
 			->setExpiredAt($item->expiredAt)
@@ -104,21 +104,13 @@ class FieldValueRepository implements Contract\Repository\HcmLink\FieldValueRepo
 	): Item\HcmLink\FieldValue
 	{
 		return new Item\HcmLink\FieldValue(
-			employeeId: $model->getEmployeeId(),
+			entityId: $model->getEmployeeId(),
 			fieldId: $model->getFieldId(),
 			value: $model->getValue(),
 			createdAt: $model->getCreatedAt(),
 			expiredAt: $model->getExpiredAt(),
 			id: $model->hasId() ? $model->getId() : null,
 		);
-	}
-
-	public function getByFieldAndEmployee(
-		Item\HcmLink\Field $field,
-		Item\HcmLink\Employee $employee,
-	): ?Item\HcmLink\FieldValue
-	{
-		return $this->getByUnique($employee->id, $field->id);
 	}
 
 	protected function toItemCollection(
@@ -134,11 +126,16 @@ class FieldValueRepository implements Contract\Repository\HcmLink\FieldValueRepo
 		return new Item\Collection\HcmLink\FieldValueCollection(...$result);
 	}
 
-	public function getByFieldIdsAndEmployeeIds(array $fieldIds, array $employeeIds): FieldValueCollection
+	public function getByFieldIdsAndEntityIds(array $fieldIds, array $entityIds): FieldValueCollection
 	{
+		if (empty($fieldIds) || empty($entityIds))
+		{
+			return new FieldValueCollection();
+		}
+
 		$modelCollection = FieldValueTable::query()
 			->setSelect(['*'])
-			->whereIn('EMPLOYEE_ID', $employeeIds)
+			->whereIn('EMPLOYEE_ID', $entityIds)
 			->whereIn('FIELD_ID', $fieldIds)
 			->fetchCollection()
 		;

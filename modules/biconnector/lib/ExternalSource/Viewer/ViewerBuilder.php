@@ -77,6 +77,17 @@ final class ViewerBuilder
 			;
 		}
 
+		if ($this->type === BIConnector\ExternalSource\Type::Rest)
+		{
+			$provider = new Provider\Rest();
+			$settings = $this->settings;
+			$settings['dataset'] = $this->externalTableData;
+			$provider
+				->setSourceId($this->sourceId)
+				->setSettings($settings)
+			;
+		}
+
 		return $provider;
 	}
 }

@@ -1,9 +1,12 @@
 <?php
+
 return [
 	'extensions' => [
-		'type',
-		'tourist',
+		'asset-manager',
 		'intranet:invite-new',
-		'intranet:invite-status-box'
+		'intranet:invite-opener-new/api',
+		'layout/ui/status-box',
+		'loc',
+		'notify',
 	],
 ];

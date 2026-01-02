@@ -9,7 +9,15 @@ class Error extends \Bitrix\Main\Error
 {
 	public const
 		CALL_NOT_FOUND = 'CALL_NOT_FOUND',
-		SEND_PULL_ERROR = 'SEND_PULL_ERROR'
+		SEND_PULL_ERROR = 'SEND_PULL_ERROR',
+		WRONG_JWT = 'WRONG_JWT',
+		BALANCER_ERROR = 'BALANCER_ERROR',
+		PORTAL_REGISTER_ERROR = 'PORTAL_REGISTER_ERROR',
+		PUBLIC_URL_EMPTY = 'PUBLIC_URL_EMPTY',
+		PUBLIC_URL_MALFORMED = 'PUBLIC_URL_MALFORMED',
+		PUBLIC_URL_LOCALHOST = 'PUBLIC_URL_LOCALHOST',
+		PUBLIC_URL_CONVERTING_PUNYCODE = 'PUBLIC_URL_CONVERTING_PUNYCODE',
+		PUBLIC_URL_FAIL = 'PUBLIC_URL_FAIL'
 	;
 
 	protected string $description = '';
@@ -75,5 +83,16 @@ class Error extends \Bitrix\Main\Error
 	protected function loadErrorDescription($code, $replacements): string
 	{
 		return Loc::getMessage("ERROR_{$code}_DESC", $replacements) ?? '';
+	}
+
+	protected static function htmlToBbCodeLink(string $html): string
+	{
+		return preg_replace(
+			[
+				"#<a[^>]+href\\s*=\\s*('|\")(.+?)(?:\\1)[^>]*>(.*?)</a[^>]*>#isu",
+				"#<a[^>]+href(\\s*=\\s*)([^'\">]+)>(.*?)</a[^>]*>#isu"
+			],
+			"[url=\\2]\\3[/url]", $html
+		);
 	}
 }

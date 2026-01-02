@@ -3,13 +3,11 @@
  * @module crm/entity-detail/component/payment-automation-menu-item
  */
 jn.define('crm/entity-detail/component/payment-automation-menu-item', (require, exports, module) => {
-	const AppTheme = require('apptheme');
-	const { CrmStageListItem } = require('crm/stage-list/item');
+	const { StageStep } = require('layout/ui/stage-list/item/step');
 	const { stayStageItem } = require('layout/ui/stage-list');
 	const { CrmStageListView } = require('crm/stage-list-view');
 	const { Loc } = require('loc');
 	const { getEntityMessage } = require('crm/loc');
-	const { WidgetHeaderButton } = require('layout/ui/widget-header-button');
 	const { NotifyManager } = require('notify-manager');
 	const { PlanRestriction } = require('layout/ui/plan-restriction');
 	const { connect } = require('statemanager/redux/connect');
@@ -21,6 +19,16 @@ jn.define('crm/entity-detail/component/payment-automation-menu-item', (require, 
 		selectEntities,
 	} = require('crm/statemanager/redux/slices/stage-settings');
 	const { Icon } = require('ui-system/blocks/icon');
+	const { Color, Indent } = require('tokens');
+	const { ButtonSize, ButtonDesign, Button } = require('ui-system/form/buttons/button');
+	const { Box } = require('ui-system/layout/box');
+	const { BoxFooter } = require('ui-system/layout/dialog-footer');
+	const { Area } = require('ui-system/layout/area');
+	const { AreaList } = require('ui-system/layout/area-list');
+	const { Text3 } = require('ui-system/typography/text');
+	const { getMediumHeight } = require('utils/page-manager');
+
+	const TEST_ID_PREFIX = 'payment-automation';
 
 	/**
 	 * @class AutomationStageComponent
@@ -42,13 +50,6 @@ jn.define('crm/entity-detail/component/payment-automation-menu-item', (require, 
 
 			this.stages = this.getStages();
 			this.setCurrentStages();
-
-			this.saveButton = new WidgetHeaderButton({
-				widget: this.layout,
-				text: Loc.getMessage('M_CRM_ACTION_PAYMENT_AUTOMATION_STAGE_SAVE'),
-				loadingText: Loc.getMessage('M_CRM_ACTION_PAYMENT_AUTOMATION_STAGE_SAVING'),
-				onClick: () => this.saveStages(),
-			});
 		}
 
 		setCurrentStages()
@@ -142,7 +143,12 @@ jn.define('crm/entity-detail/component/payment-automation-menu-item', (require, 
 		{
 			return View(
 				{
-					style: styles.loader,
+					style: {
+						backgroundColor: Color.bgPrimary.toHex(),
+						flexGrow: 1,
+						justifyContent: 'center',
+						alignItems: 'center',
+					},
 				},
 				new Loader({
 					style: {
@@ -153,67 +159,6 @@ jn.define('crm/entity-detail/component/payment-automation-menu-item', (require, 
 					size: 'large',
 				}),
 			);
-		}
-
-		renderCurrentStageItems()
-		{
-			return View(
-				{
-					style: styles.currentStageContainer,
-				},
-				this.renderOnPaymentStage(),
-				this.renderSeparator(),
-				this.renderOnDeliveryStage(),
-			);
-		}
-
-		renderOnPaymentStage()
-		{
-			const text = Loc.getMessage('M_CRM_ACTION_PAYMENT_AUTOMATION_STAGE_AFTER_PAYMENT')
-				.toLocaleUpperCase(env.languageId);
-
-			return View(
-				{},
-				Text({
-					style: styles.currentStageTitle,
-					text,
-				}),
-				View(
-					{
-						style: styles.currentStageItem,
-						onClick: () => this.openStagesWindow({ type: 'stageOnOrderPaid' }),
-					},
-					this.getStageListItem(this.getStageByStatusId(this.state.stageOnOrderPaid)),
-				),
-			);
-		}
-
-		renderOnDeliveryStage()
-		{
-			const text = Loc.getMessage('M_CRM_ACTION_PAYMENT_AUTOMATION_STAGE_AFTER_DELIVERY')
-				.toLocaleUpperCase(env.languageId);
-
-			return View(
-				{},
-				Text({
-					style: styles.currentStageTitle,
-					text,
-				}),
-				View(
-					{
-						style: styles.currentStageItem,
-						onClick: () => this.openStagesWindow({ type: 'stageOnDeliveryFinished' }),
-					},
-					this.getStageListItem(this.getStageByStatusId(this.state.stageOnDeliveryFinished)),
-				),
-			);
-		}
-
-		renderSeparator()
-		{
-			return View({
-				style: styles.separator,
-			});
 		}
 
 		getStageByStatusId(statusId)
@@ -228,7 +173,7 @@ jn.define('crm/entity-detail/component/payment-automation-menu-item', (require, 
 
 		getStageListItem(stage)
 		{
-			return CrmStageListItem({
+			return new StageStep({
 				readOnly: true,
 				canMoveStages: false,
 				onSelectedStage: null,
@@ -281,21 +226,97 @@ jn.define('crm/entity-detail/component/payment-automation-menu-item', (require, 
 
 		render()
 		{
-			return View(
+			return this.state.loading
+				? this.renderLoader()
+				: this.renderContentWrapper();
+		}
+
+		renderContentWrapper()
+		{
+			return Box(
 				{
-					style: styles.stagesContainer,
-					title: Loc.getMessage('M_CRM_ACTION_PAYMENT_AUTOMATION_TITLE'),
+					resizableByKeyboard: true,
+					safeArea: { bottom: true },
+					footer: this.renderFooter(),
 				},
-				this.state.loading
-					? this.renderLoader()
-					: this.renderCurrentStageItems(),
-				Text({
-					style: styles.stageHintText,
-					text: getEntityMessage(
-						'M_CRM_ACTION_PAYMENT_AUTOMATION_SELECT_STAGE_TEXT',
-						this.props.entityTypeId,
+				this.renderContent(),
+			);
+		}
+
+		renderContent()
+		{
+			return AreaList(
+				{
+					testId: `${TEST_ID_PREFIX}-area-list`,
+					ref: this.#bindScrollViewRef,
+					resizableByKeyboard: true,
+					showsVerticalScrollIndicator: true,
+				},
+				Area(
+					{
+						divider: true,
+						testId: `${TEST_ID_PREFIX}-stage-after-payment-area`,
+						isFirst: true,
+						title: Loc.getMessage('M_CRM_ACTION_PAYMENT_AUTOMATION_STAGE_AFTER_PAYMENT'),
+					},
+					View(
+						{
+							onClick: () => this.openStagesWindow({ type: 'stageOnOrderPaid' }),
+						},
+						this.getStageListItem(this.getStageByStatusId(this.state.stageOnOrderPaid)),
 					),
-				}),
+				),
+				Area(
+					{
+						testId: `${TEST_ID_PREFIX}-stage-after-delivery-area`,
+						title: Loc.getMessage('M_CRM_ACTION_PAYMENT_AUTOMATION_STAGE_AFTER_DELIVERY'),
+					},
+					View(
+						{
+							onClick: () => this.openStagesWindow({ type: 'stageOnDeliveryFinished' }),
+						},
+						this.getStageListItem(this.getStageByStatusId(this.state.stageOnDeliveryFinished)),
+						Text3({
+							text: getEntityMessage(
+								'M_CRM_ACTION_PAYMENT_AUTOMATION_SELECT_STAGE_TEXT',
+								this.props.entityTypeId,
+							),
+							style: {
+								marginTop: Indent.XL3.toNumber(),
+							},
+							color: Color.base3,
+						}),
+					),
+				),
+			);
+		}
+
+		#bindScrollViewRef = (ref) => {
+			this.scrollViewRef = ref;
+		};
+
+		renderFooter()
+		{
+			return BoxFooter(
+				{
+					safeArea: Application.getPlatform() !== 'android',
+					keyboardButton: {
+						text: Loc.getMessage('M_CRM_ACTION_PAYMENT_AUTOMATION_STAGE_SAVE'),
+						onClick: () => this.saveStages(),
+						testId: `${TEST_ID_PREFIX}-save-buttom`,
+						disabled: this.state.error,
+					},
+				},
+				Button(
+					{
+						design: ButtonDesign.FILLED,
+						size: ButtonSize.L,
+						text: Loc.getMessage('M_CRM_ACTION_PAYMENT_AUTOMATION_STAGE_SAVE'),
+						stretched: true,
+						onClick: () => this.saveStages(),
+						testId: `${TEST_ID_PREFIX}-save-button`,
+					},
+				),
 			);
 		}
 	}
@@ -326,7 +347,7 @@ jn.define('crm/entity-detail/component/payment-automation-menu-item', (require, 
 
 	const openAutomationBackdrop = (entityId, entityTypeId, categoryId) => {
 		const widgetParams = {
-			backgroundColor: AppTheme.colors.bgSecondary,
+			backgroundColor: Color.bgSecondary.toHex(),
 			backdrop: {
 				swipeAllowed: true,
 				forceDismissOnSwipeDown: false,
@@ -334,7 +355,8 @@ jn.define('crm/entity-detail/component/payment-automation-menu-item', (require, 
 				showOnTop: false,
 				adoptHeightByKeyboard: true,
 				shouldResizeContent: true,
-				navigationBarColor: AppTheme.colors.bgSecondary,
+				navigationBarColor: Color.bgSecondary.toHex(),
+				mediumPositionHeight: getMediumHeight({ height: 362 }),
 			},
 		};
 
@@ -348,6 +370,7 @@ jn.define('crm/entity-detail/component/payment-automation-menu-item', (require, 
 				});
 				widget.setTitle({
 					text: Loc.getMessage('M_CRM_ACTION_PAYMENT_AUTOMATION_TITLE'),
+					type: 'dialog',
 				});
 				widget.enableNavigationBarBorder(false);
 				widget.showComponent(layoutComponent);
@@ -366,50 +389,6 @@ jn.define('crm/entity-detail/component/payment-automation-menu-item', (require, 
 		return {
 			stages: selectEntities(state, stageIds),
 		};
-	};
-
-	const styles = {
-		stagesContainer: {
-			backgroundColor: AppTheme.colors.bgSecondary,
-		},
-		currentStageContainer: {
-			backgroundColor: AppTheme.colors.bgContentPrimary,
-			paddingLeft: 16,
-			paddingRight: 16,
-			paddingTop: 6,
-			paddingBottom: 0,
-			borderRadius: 12,
-			flexGrow: 0,
-			flexDirection: 'column',
-		},
-		currentStageTitle: {
-			color: AppTheme.colors.base4,
-			fontSize: 10,
-			marginTop: 8,
-			marginBottom: 0,
-		},
-		currentStageItem: {},
-		separator: {
-			borderBottomColor: AppTheme.colors.bgSeparatorPrimary,
-			borderBottomWidth: 1,
-			marginBottom: 6,
-		},
-		loader: {
-			width: '100%',
-			height: '100%',
-			backgroundColor: AppTheme.colors.bgPrimary,
-			flexGrow: 1,
-			flexDirection: 'column',
-			justifyContent: 'center',
-			alignItems: 'center',
-		},
-		stageHintText: {
-			fontSize: 14,
-			color: AppTheme.colors.base4,
-			marginTop: 12,
-			marginLeft: 16,
-			marginRight: 16,
-		},
 	};
 
 	module.exports = { getPaymentAutomationMenuItem };

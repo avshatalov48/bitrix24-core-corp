@@ -3,15 +3,9 @@
  }
 
 .invite-title-container {
-	display: -webkit-box;
-	display: -ms-flexbox;
 	display: flex;
-	-webkit-box-align: center;
-	    -ms-flex-align: center;
-	        align-items: center;
-	-webkit-box-pack: start;
-	    -ms-flex-pack: start;
-	        justify-content: flex-start;
+	align-items: center;
+	justify-content: flex-start;
 	border-bottom: 1px solid #edeef0;
 	padding-bottom: 9px;
 	margin-bottom: 17px;
@@ -21,8 +15,7 @@
 .invite-title-icon {
 	width: 47px;
 	height: 47px;
-	-ms-flex-preferred-size: 47px;
-	    flex-basis: 47px;
+	flex-basis: 47px;
 	background-repeat: no-repeat;
 }
 
@@ -50,18 +43,12 @@
 }
 
 .invite-form-row {
-	display: -webkit-box;
-	display: -ms-flexbox;
 	display: flex;
-	-webkit-box-align: start;
-	    -ms-flex-align: start;
-	        align-items: flex-start;
+	align-items: flex-start;
 }
 
 .invite-form-col {
-	-webkit-box-flex: 1;
-	    -ms-flex: 1;
-	        flex: 1;
+	flex: 1;
 	margin-bottom: 17px;
 }
 
@@ -75,11 +62,7 @@
 
 .invite-form-buttons {
 	border-top: 1px solid #edeef0;
-	display: -webkit-box;
-	display: -ms-flexbox;
 	display: flex;
-	-webkit-box-align: baseline;
-	    -ms-flex-align: baseline;
-	        align-items: baseline;
+	align-items: baseline;
 	padding-top: 23px;
 }

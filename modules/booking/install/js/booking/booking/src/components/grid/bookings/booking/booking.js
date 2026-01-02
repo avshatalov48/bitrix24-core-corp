@@ -1,34 +1,41 @@
+import { Event, Type } from 'main.core';
 import { mapGetters } from 'ui.vue3.vuex';
 
-import { Model } from 'booking.const';
-import { Duration } from 'booking.lib.duration';
-import { mousePosition } from 'booking.lib.mouse-position';
+import { Model, DraggedElementKind } from 'booking.const';
 import { isRealId } from 'booking.lib.is-real-id';
-import { grid } from 'booking.lib.grid';
-import type { BookingModel } from 'booking.model.bookings';
-import type { ClientModel, ClientData } from 'booking.model.clients';
+import { BookingAnalytics } from 'booking.lib.analytics';
+import { bookingService } from 'booking.provider.service.booking-service';
+import type {
+	BookingModel,
+	OverbookingMapItem,
+	OverbookingResourceIntersections,
+} from 'booking.model.bookings';
+import type { Occupancy, DraggedDataTransfer } from 'booking.model.interface';
 
-
-import { AddClient } from './add-client/add-client';
-import { BookingTime } from './booking-time/booking-time';
 import { Actions } from './actions/actions';
-import { Name } from './name/name';
-import { Note } from './note/note';
-import { Profit } from './profit/profit';
-import { Communication } from './communication/communication';
-import { CrmButton } from './crm-button/crm-button';
-import { Counter } from './counter/counter';
-import { DisabledPopup } from './disabled-popup/disabled-popup';
-import { Resize } from './resize/resize';
-import type { BookingUiDuration } from './types';
+import { BookingBase } from './booking-base';
 import './booking.css';
+import {
+	countBookingLeftOffset,
+	countBookingWidth,
+	getOverbookingFreeSpace,
+	findTimeForDroppedBooking,
+} from './lib';
+import type {
+	BookingUiDuration,
+	OverlappingBookings,
+} from './types';
+import type { ActionsPopupOptions } from './actions/actions';
 
 export type { BookingUiDuration };
 
-const BookingWidth = 280;
-
+// @vue/component
 export const Booking = {
 	name: 'Booking',
+	components: {
+		BookingBase,
+		Actions,
+	},
 	props: {
 		bookingId: {
 			type: [Number, String],
@@ -43,304 +50,372 @@ export const Booking = {
 			required: true,
 		},
 		/**
-		 * @param {BookingUiDuration[]} uiBookings
+		 * @param {BookingUiGroup[]} bookingUiGroups
 		 */
-		uiBookings: {
+		bookingUiGroups: {
 			type: Array,
 			default: () => [],
 		},
 	},
-	data(): Object
+	data(): { dropArea: boolean, freeSpace: ?Occupancy }
 	{
 		return {
-			visible: true,
-			isDisabledPopupShown: false,
-			resizeFromTs: null,
-			resizeToTs: null,
+			dropArea: false,
+			freeSpace: null,
 		};
-	},
-	mounted(): void
-	{
-		this.updateVisibility();
-		this.updateVisibilityDuringTransition();
-
-		setTimeout(() => {
-			if (!this.isReal && mousePosition.isMousePressed())
-			{
-				void this.$refs.resize.startResize();
-			}
-		}, 200);
-	},
-	beforeUnmount(): void
-	{
-		if (this.deletingBookings[this.bookingId] || !this.booking?.resourcesIds.includes(this.resourceId))
-		{
-			this.$el.remove();
-		}
 	},
 	computed: {
 		...mapGetters({
-			resourcesIds: `${Model.Interface}/resourcesIds`,
-			zoom: `${Model.Interface}/zoom`,
-			scroll: `${Model.Interface}/scroll`,
-			editingBookingId: `${Model.Interface}/editingBookingId`,
-			isEditingBookingMode: `${Model.Interface}/isEditingBookingMode`,
+			getBookingById: `${Model.Bookings}/getById`,
+			overbookingMap: `${Model.Bookings}/overbookingMap`,
+			selectedDateTs: `${Model.Interface}/selectedDateTs`,
 			deletingBookings: `${Model.Interface}/deletingBookings`,
+			animationPause: `${Model.Interface}/animationPause`,
+			isBookingCreatedFromEmbed: `${Model.Interface}/isBookingCreatedFromEmbed`,
+			editingBookingId: `${Model.Interface}/editingBookingId`,
+			draggedDataTransfer: `${Model.Interface}/draggedDataTransfer`,
+			draggedBookingId: `${Model.Interface}/draggedBookingId`,
+			getWaitListItemById: `${Model.WaitList}/getById`,
+			getResourceById: `${Model.Resources}/getById`,
+			isDeletingResourceFilterMode: `${Model.Filter}/isDeletingResourceFilterMode`,
+			deletingResource: `${Model.Filter}/deletingResource`,
 		}),
-		isReal(): boolean
-		{
-			return isRealId(this.bookingId);
-		},
 		booking(): BookingModel
 		{
-			return this.$store.getters[`${Model.Bookings}/getById`](this.bookingId);
+			return this.getBookingById(this.bookingId);
 		},
-		client(): ClientModel
+		deletingBookings(): number[]
 		{
-			const clientData: ClientData = this.booking.primaryClient;
+			return Object.values(this.$store.getters[`${Model.Interface}/deletingBookings`]);
+		},
+		overbooking(): OverbookingMapItem | null
+		{
+			return this.overbookingMap.get(this.bookingId) || null;
+		},
+		overbookingInResource(): OverbookingResourceIntersections | null
+		{
+			return this.overbooking?.items
+				?.find((item) => item.resourceId === this.resourceId) || null;
+		},
+		hasOverbooking(): boolean
+		{
+			return (this.overbookingInResource?.intersections || [])
+				.some(({ id }) => !this.deletingBookings.includes(id));
+		},
+		isShifted(): boolean
+		{
+			return (
+				this.hasOverbooking
+				&& Type.isPlainObject(this.overbookingInResource)
+				&& this.overbookingInResource.shifted
+			);
+		},
+		overlappingBookings(): OverlappingBookings
+		{
+			const bookingId = !this.isShifted || !this.hasOverbooking
+				? this.bookingId
+				: this.overbookingDependencies[0];
 
-			return clientData ? this.$store.getters[`${Model.Clients}/getByClientData`](clientData) : null;
+			return this.bookingUiGroups.find(({ bookingIds }) => bookingIds.includes((bookingId)))?.bookingIds || [];
 		},
-		left(): number
+		overbookingDependencies(): number[]
 		{
-			return grid.calculateLeft(this.resourceId);
-		},
-		top(): number
-		{
-			return grid.calculateTop(this.dateFromTs);
-		},
-		height(): number
-		{
-			return grid.calculateHeight(this.dateFromTs, this.dateToTs);
-		},
-		realHeight(): number
-		{
-			return grid.calculateRealHeight(this.dateFromTs, this.dateToTs);
-		},
-		dateFromTs(): number
-		{
-			return this.resizeFromTs ?? this.booking.dateFromTs;
-		},
-		dateToTs(): number
-		{
-			return this.resizeToTs ?? this.booking.dateToTs;
-		},
-		dateFromTsRounded(): number
-		{
-			return this.roundTimestamp(this.resizeFromTs) ?? this.dateFromTs;
-		},
-		dateToTsRounded(): number
-		{
-			return this.roundTimestamp(this.resizeToTs) ?? this.dateToTs;
-		},
-		disabled(): boolean
-		{
-			return this.isEditingBookingMode && this.editingBookingId !== this.bookingId;
-		},
-		overlappingBookings(): BookingUiDuration[]
-		{
-			const uiBooking = this.uiBookings.find((booking) => this.booking.dateFromTs === booking.fromTs);
-			if (!uiBooking)
-			{
-				return [];
-			}
-
-			const { fromTs, toTs } = uiBooking;
-
-			return [
-				...this.uiBookings.filter((booking) => fromTs > booking.fromTs && fromTs < booking.toTs),
-				uiBooking,
-				...this.uiBookings.filter((booking) => toTs > booking.fromTs && toTs < booking.toTs),
-			];
+			return (this.overbookingInResource?.intersections || []).map(({ id }) => id);
 		},
 		bookingWidth(): number
 		{
-			const overlappingBookingsCount = this.overlappingBookings.length;
+			if (this.hasOverbooking)
+			{
+				return countBookingWidth(this.overlappingBookings) / 2;
+			}
 
-			return BookingWidth / (overlappingBookingsCount > 0 ? overlappingBookingsCount : 1);
+			return countBookingWidth(this.overlappingBookings);
 		},
-		bookingOffset(): number
+		leftOffset(): number
 		{
-			const index = this.overlappingBookings.findIndex(({ id }) => id === this.booking.id);
+			if (this.isShifted)
+			{
+				const bookingId = this.overbookingDependencies[0];
+				const leftOffset = countBookingLeftOffset({
+					bookingId,
+					bookingWidth: this.bookingWidth,
+					overlappingBookings: this.overlappingBookings,
+				});
 
-			return this.bookingWidth * this.zoom * index;
+				return leftOffset * 2 + this.bookingWidth;
+			}
+
+			return countBookingLeftOffset({
+				bookingId: this.booking.id,
+				bookingWidth: this.hasOverbooking ? this.bookingWidth * 2 : this.bookingWidth,
+				overlappingBookings: this.overlappingBookings,
+			});
 		},
-		shortView(): boolean
+		actionsPopupOptions(): ActionsPopupOptions
 		{
-			return this.overlappingBookings.length > 1;
+			return {
+				overbooking: {
+					disabled: this.overbooking !== null,
+					hidden: this.isDeletedResource,
+				},
+				waitList: {
+					hidden: this.isDeletedResource,
+				},
+			};
 		},
-		isExpiredBooking(): boolean
+		realBooking(): boolean
 		{
-			return this.booking.dateToTs < this.nowTs;
+			return Type.isNumber(this.bookingId);
+		},
+		hasAccent(): boolean
+		{
+			return this.editingBookingId === this.bookingId || this.isBookingCreatedFromEmbed(this.bookingId);
+		},
+		isDeletedResource(): boolean
+		{
+			return this.getResourceById(this.resourceId)?.isDeleted ?? false;
+		},
+		isShaded(): boolean
+		{
+			return (
+				this.isDeletingResourceFilterMode
+				&& this.resourceId !== this.deletingResource.id
+			);
+		},
+	},
+	watch: {
+		draggedDataTransfer: {
+			handler(draggedDataTransfer: DraggedDataTransfer): void
+			{
+				if (this.hasOverbooking)
+				{
+					return;
+				}
+
+				if (draggedDataTransfer.kind === DraggedElementKind.Booking && draggedDataTransfer.id === this.bookingId)
+				{
+					return;
+				}
+
+				if (!draggedDataTransfer || !draggedDataTransfer.kind || !draggedDataTransfer.id)
+				{
+					this.stopDropHandler();
+				}
+				else
+				{
+					this.startDropHandler();
+				}
+			},
+			deep: true,
 		},
 	},
 	methods: {
-		updateVisibilityDuringTransition(): void
+		dragMouseEnter(): void
 		{
-			this.animation?.stop();
-			this.animation = new BX.easing({
-				duration: 200,
-				start: {},
-				finish: {},
-				step: this.updateVisibility,
-			});
-			this.animation.animate();
-		},
-		updateVisibility(): void
-		{
-			if (!this.$el)
+			if (this.isDeletedResource)
+			{
+				this.dropArea = false;
+
+				return;
+			}
+
+			if (this.dropArea || !this.draggedDataTransfer.id)
 			{
 				return;
 			}
 
-			const rect = this.$el.getBoundingClientRect();
-			this.visible = rect.right > 0 && rect.left < window.innerWidth;
-		},
-		onNoteMouseEnter(): void
-		{
-			this.showNoteTimeout = setTimeout(() => this.$refs.note.showViewPopup(), 100);
-		},
-		onNoteMouseLeave(): void
-		{
-			clearTimeout(this.showNoteTimeout);
-			this.$refs.note.closeViewPopup();
-		},
-		onClick(event: PointerEvent): void
-		{
-			if (this.disabled)
+			if (this.draggedDataTransfer.kind === DraggedElementKind.WaitListItem)
 			{
-				this.isDisabledPopupShown = true;
+				this.freeSpace = {
+					fromTs: this.booking.dateFromTs,
+					toTs: this.booking.dateToTs,
+					resourcesIds: this.booking.resourcesIds,
+				};
+				this.dropArea = true;
 
-				event.stopPropagation();
+				return;
+			}
+
+			const draggedBookingId = this.draggedBookingId;
+			if (draggedBookingId === null)
+			{
+				return;
+			}
+
+			const draggedBooking = this.getBookingById(draggedBookingId);
+			const bookingDuration = this.booking.dateToTs - this.booking.dateFromTs;
+			const draggedBookingDuration = draggedBooking.dateToTs - draggedBooking.dateFromTs;
+			if (bookingDuration >= draggedBookingDuration && draggedBooking.resourcesIds.length <= 1)
+			{
+				this.freeSpace = {
+					fromTs: this.booking.dateFromTs,
+					toTs: this.booking.dateToTs,
+					resourcesIds: this.booking.resourcesIds,
+				};
+				this.dropArea = true;
+
+				return;
+			}
+
+			const excludeBookingFn = (booking: BookingModel): boolean => {
+				if (booking.id === this.draggedBookingId)
+				{
+					return true;
+				}
+
+				const overbooking = this.overbookingMap.get(booking.id);
+				const resourceId = this.resourceId;
+
+				return !overbooking || overbooking.items.some((item) => item.resourceId === resourceId);
+			};
+			const colliding = this.$store.getters[`${Model.Interface}/getColliding`](
+				this.resourceId,
+				excludeBookingFn,
+			);
+			if (colliding.length === 0)
+			{
+				this.freeSpace = {
+					fromTs: this.booking.dateFromTs,
+					toTs: this.booking.dateToTs,
+					resourcesIds: this.booking.resourcesIds,
+				};
+				this.dropArea = true;
+
+				return;
+			}
+
+			const freeSpace = getOverbookingFreeSpace({
+				booking: this.booking,
+				colliding,
+				selectedDateTs: this.selectedDateTs,
+				draggedBookingResourcesIds: draggedBooking.resourcesIds,
+			});
+			this.freeSpace = freeSpace;
+			this.dropArea = freeSpace && (freeSpace.toTs - freeSpace.fromTs) >= draggedBookingDuration;
+		},
+		dragMouseLeave(): void
+		{
+			this.dropArea = false;
+			this.freeSpace = null;
+		},
+		async dropElement(): void
+		{
+			const id = this.draggedDataTransfer.id;
+			if (!id || !this.freeSpace)
+			{
+				return;
+			}
+
+			if (this.draggedDataTransfer.kind === DraggedElementKind.Booking)
+			{
+				await this.dropBooking(id);
+
+				return;
+			}
+
+			if (this.draggedDataTransfer.kind === DraggedElementKind.WaitListItem)
+			{
+				await this.dropWaitListItem(id);
 			}
 		},
-		resizeUpdate(resizeFromTs: number | null, resizeToTs: number | null): void
+		async dropBooking(id: number | string): Promise<void>
 		{
-			this.resizeFromTs = resizeFromTs;
-			this.resizeToTs = resizeToTs;
-		},
-		roundTimestamp(timestamp: number | null): number | null
-		{
-			const fiveMinutes = Duration.getUnitDurations().i * 5;
+			const droppedBooking = this.getBookingById(id);
+			const { dateFromTs, dateToTs } = findTimeForDroppedBooking(this.freeSpace, this.booking, droppedBooking);
+			const overbooking = {
+				id,
+				dateFromTs,
+				dateToTs,
+				timezoneFrom: droppedBooking.timezoneFrom,
+				timezoneTo: droppedBooking.timezoneTo,
+				resourcesIds: [
+					...new Set([
+						this.resourceId,
+						...droppedBooking.resourcesIds.slice(1, droppedBooking.resourcesIds.length),
+					]),
+				],
+			};
 
-			return timestamp ? Math.round(timestamp / fiveMinutes) * fiveMinutes : null;
+			if (!isRealId(id))
+			{
+				await this.$store.dispatch(`${Model.Bookings}/update`, { id, booking: overbooking });
+
+				return;
+			}
+
+			await bookingService.update({
+				id,
+				...overbooking,
+			});
 		},
-	},
-	watch: {
-		scroll(): void
+		async dropWaitListItem(id: number): Promise<void>
 		{
-			this.updateVisibility();
+			const droppedWaitListItem = this.getWaitListItemById(id);
+			const clients = [...droppedWaitListItem.clients];
+			const resource = this.getResourceById(this.resourceId);
+			const timezone = resource?.slotRanges?.[0]?.timezone;
+
+			const overbooking: BookingModel = {
+				id: `wl${id}`,
+				resourcesIds: [this.resourceId],
+				name: droppedWaitListItem.name,
+				note: droppedWaitListItem.note,
+				clients,
+				primaryClient: clients.length > 0 ? clients[0] : undefined,
+				externalData: [...droppedWaitListItem.externalData],
+				dateFromTs: this.booking.dateFromTs,
+				dateToTs: this.booking.dateToTs,
+				timezoneFrom: timezone,
+				timezoneTo: timezone,
+			};
+			const result = await bookingService.createFromWaitListItem(id, overbooking);
+
+			if (result.success && result.booking)
+			{
+				BookingAnalytics.sendAddBooking({ isOverbooking: true });
+			}
 		},
-		zoom(): void
+		startDropHandler(): void
 		{
-			this.updateVisibility();
+			Event.bind(this.$el, 'mousemove', this.dragMouseEnter, { capture: true });
+			Event.bind(this.$el, 'mouseleave', this.dragMouseLeave, { capture: true });
+			Event.bind(this.$el, 'mouseup', this.dropElement, { capture: true });
 		},
-		resourcesIds(): void
+		stopDropHandler(): void
 		{
-			this.updateVisibilityDuringTransition();
+			this.dropArea = false;
+			this.freeSpace = null;
+			Event.unbind(this.$el, 'mousemove', this.dragMouseEnter, { capture: true });
+			Event.unbind(this.$el, 'mouseleave', this.dragMouseLeave, { capture: true });
+			Event.unbind(this.$el, 'mouseup', this.dropElement, { capture: true });
 		},
-	},
-	components: {
-		AddClient,
-		BookingTime,
-		Actions,
-		Name,
-		Note,
-		Profit,
-		Communication,
-		CrmButton,
-		Counter,
-		DisabledPopup,
-		Resize,
 	},
 	template: `
-		<div
-			class="booking-booking-booking"
-			data-element="booking-booking"
-			:data-id="bookingId"
-			:data-resource-id="resourceId"
-			:style="{
-				'--left': left + bookingOffset + 'px',
-				'--top': top + 'px',
-				'--height': height + 'px',
-				'--width': bookingWidth + 'px',
+		<BookingBase
+			:bookingId
+			:resourceId
+			:nowTs
+			:leftOffset
+			:bookingClass="{
+				'--short': overlappingBookings.length > 1,
+				'--overbooking': hasOverbooking,
+				'--overbooking-bg': hasOverbooking || overbooking !== null,
+				'--shifted': isShifted && !realBooking,
+				'--drop-area': dropArea,
+				'--accent': hasAccent,
+				'--shaded': isShaded,
+				'not-transition': animationPause,
 			}"
-			:class="{
-				'--not-real': !isReal,
-				'--zoom-is-less-than-08': zoom < 0.8,
-				'--compact-mode': realHeight < 40 || zoom < 0.8,
-				'--small': realHeight <= 15,
-				'--short': shortView,
-				'--disabled': disabled,
-				'--confirmed': booking.isConfirmed,
-				'--expired': isExpiredBooking,
-				'--resizing': resizeFromTs && resizeToTs,
-			}"
-			@click.capture="onClick"
+			:width="bookingWidth"
 		>
-			<div v-if="visible" class="booking-booking-booking-padding">
-				<div class="booking-booking-booking-inner">
-					<div class="booking-booking-booking-content">
-						<div class="booking-booking-booking-content-row">
-							<div
-								v-show="!shortView"
-								class="booking-booking-booking-name-container"
-								@mouseenter="onNoteMouseEnter"
-								@mouseleave="onNoteMouseLeave"
-								@click="$refs.note.showViewPopup()"
-							>
-								<Name :bookingId="bookingId" :resourceId="resourceId"/>
-								<Note
-									:bookingId="bookingId"
-									:bindElement="() => $el"
-									ref="note"
-								/>
-							</div>
-							<BookingTime
-								:bookingId="bookingId"
-								:resourceId="resourceId"
-								:dateFromTs="dateFromTsRounded"
-								:dateToTs="dateToTsRounded"
-							/>
-							<Profit :bookingId="bookingId" :resourceId="resourceId"/>
-						</div>
-						<div class="booking-booking-booking-content-row --lower">
-							<BookingTime
-								:bookingId="bookingId"
-								:resourceId="resourceId"
-								:dateFromTs="dateFromTsRounded"
-								:dateToTs="dateToTsRounded"
-							/>
-							<div v-if="client" class="booking-booking-booking-buttons">
-								<Communication/>
-								<CrmButton :bookingId="bookingId"/>
-							</div>
-							<AddClient
-								v-else
-								:bookingId="bookingId"
-								:resourceId="resourceId"
-								:expired="isExpiredBooking"
-							/>
-						</div>
-					</div>
-					<Actions :bookingId="bookingId" :resourceId="resourceId"/>
-				</div>
-			</div>
-			<Resize
-				v-if="!disabled"
-				:bookingId="bookingId"
-				:resourceId="resourceId"
-				ref="resize"
-				@update="resizeUpdate"
-			/>
-			<Counter :bookingId="bookingId"/>
-			<DisabledPopup
-				v-if="isDisabledPopupShown"
-				:bookingId="bookingId"
-				:resourceId="resourceId"
-				:bindElement="() => $el"
-				@close="isDisabledPopupShown = false"
-			/>
-		</div>
+			<template #actions>
+				<Actions
+					:bookingId
+					:resourceId
+					:actionsPopupOptions
+				/>
+			</template>
+			<div class="booking--booking-pseudo-overbooking"></div>
+		</BookingBase>
 	`,
 };

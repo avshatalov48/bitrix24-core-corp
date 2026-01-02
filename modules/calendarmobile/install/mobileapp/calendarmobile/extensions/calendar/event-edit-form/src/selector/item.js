@@ -7,16 +7,18 @@ jn.define('calendar/event-edit-form/selector/item', (require, exports, module) =
 	const { Text2 } = require('ui-system/typography/text');
 	const { IconView } = require('ui-system/blocks/icon');
 	const { BadgeCounter, BadgeCounterDesign } = require('ui-system/blocks/badges/counter');
+	const { Checkbox } = require('ui-system/form/checkbox');
 
 	/**
 	 * @param item {SectionModel | LocationModel}
 	 * @param icon {Icon}
+	 * @param isSection {Boolean}
 	 * @param isSelected {Boolean}
 	 * @param isReserved {Boolean}
 	 * @returns {BaseMethods}
 	 * @constructor
 	 */
-	const SelectorItem = ({ item, icon, isSelected, isReserved }) => View(
+	const SelectorItem = ({ item, icon, isSection, isSelected, isReserved }) => View(
 		{
 			style: {
 				flexDirection: 'row',
@@ -64,12 +66,18 @@ jn.define('calendar/event-edit-form/selector/item', (require, exports, module) =
 					text: item.name,
 					ellipsize: 'end',
 					numberOfLines: 1,
-					color: isSelected ? Color.accentMainPrimary : Color.base0,
+					color: (isSelected && !isSection) ? Color.accentMainPrimary : Color.base0,
 					style: {
-						fontWeight: isSelected ? '500' : '400',
+						fontWeight: (isSelected && !isSection) ? '500' : '400',
 					},
 				}),
 			),
+			(isSelected && isSection) && new Checkbox({
+				testId: `calendar-event-edit-form-selector-item-${item.id}-checkbox`,
+				checked: true,
+				useState: false,
+				size: 24,
+			}),
 			isReserved && BadgeCounter({
 				testId: `calendar-event-edit-form-selector-item-${item.id}-badge-reserved`,
 				value: Loc.getMessage('M_CALENDAR_EVENT_EDIT_FORM_RESERVED'),

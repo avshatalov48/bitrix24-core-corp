@@ -4,13 +4,11 @@ namespace Bitrix\AI\ThirdParty;
 
 use Bitrix\Main\Type\Dictionary;
 
+/**
+ * @property Item[] $values
+ */
 class Collection extends Dictionary
 {
-	/**
-	 * @var Item[]
-	 */
-	protected $values = [];
-
 	/**
 	 * Return the current element.
 	 */

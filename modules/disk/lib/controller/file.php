@@ -4,6 +4,7 @@ namespace Bitrix\Disk\Controller;
 
 use Bitrix\Disk;
 use Bitrix\Disk\Configuration;
+use Bitrix\Disk\Controller\Response\PreviewResponseBuilder;
 use Bitrix\Disk\Driver;
 use Bitrix\Disk\Integration\Bitrix24Manager;
 use Bitrix\Disk\Internals\Engine;
@@ -291,32 +292,7 @@ class File extends BaseObject
 
 	public function showPreviewAction(Disk\File $file, $width = 0, $height = 0, $exact = null)
 	{
-		if (!$file->getView()->getPreviewData())
-		{
-			return null;
-		}
-
-		$fileName = $file->getView()->getPreviewName();
-		$fileData = $file->getView()->getPreviewData();
-
-		if (empty($fileName) || empty($fileData) || !is_array($fileData))
-		{
-			return null;
-		}
-
-		$response = Response\ResizedImage::createByImageData(
-			$fileData,
-			$width,
-			$height
-		);
-
-		$response
-			->setResizeType($exact === 'Y' ? BX_RESIZE_IMAGE_EXACT : BX_RESIZE_IMAGE_PROPORTIONAL)
-			->setName($file->getName())
-			->setCacheTime(86400)
-		;
-
-		return $response;
+		return (new PreviewResponseBuilder())->createByFile($file, $width, $height, $exact);
 	}
 
 	public function downloadAction(Disk\File $file)
@@ -374,7 +350,7 @@ class File extends BaseObject
 
 	public function generateExternalLinkAction(Disk\File $file)
 	{
-		if (!Bitrix24Manager::isFeatureEnabled('disk_manual_external_link'))
+		if (!$this->checkExternalLinkFeature($file))
 		{
 			$this->addError(new Error('Could not generate external link. Feature is disabled by tarif.'));
 

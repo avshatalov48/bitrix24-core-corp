@@ -22,7 +22,7 @@ if (check_bitrix_sessid() && $USER->IsAuthorized())
 {
 	IncludeModuleLangFile(__FILE__);
 
-	$action = $_REQUEST['action'] ?? null;
+	$action = (is_string($_REQUEST['action'] ?? null) ? $_REQUEST['action'] : null);
 	if (!CModule::IncludeModule('timeman'))
 	{
 		echo "{error: 'timeman module not installed', type: 'fatal'}";
@@ -809,8 +809,8 @@ if (check_bitrix_sessid() && $USER->IsAuthorized())
 									? CUtil::JsObjectToPhp($_POST["EVENTS"], true)
 									: null,
 								"ACTIVE" => $active,
-								"REPORT" => $sanitizer->SanitizeHtml($_POST["REPORT"]),
-								"PLANS" => $sanitizer->SanitizeHtml($_POST["PLANS"]),
+								"REPORT" => $sanitizer->SanitizeHtml($_POST["REPORT"] ?? ''),
+								"PLANS" => $sanitizer->SanitizeHtml($_POST["PLANS"] ?? ''),
 							];
 
 							if ($arFields["ACTIVE"] != "Y")
@@ -2484,7 +2484,18 @@ if (check_bitrix_sessid() && $USER->IsAuthorized())
 				{
 					if ($ex = $APPLICATION->GetException())
 					{
-						$error = "{error: '" . CUtil::JSEscape($ex->GetString()) . "', error_id:'" . CUtil::JSEscape($ex->GetId()) . "'}";
+						if ($ex->GetId() === 'SYSTEM_ERROR')
+						{
+							$error = GetMessage('TM_ERROR_UNKNOWN');
+						}
+						else
+						{
+							$error = "{error: '"
+								. CUtil::JSEscape($ex->GetString())
+								. "', error_id:'"
+								. CUtil::JSEscape($ex->GetId())
+								. "'}";
+						}
 					}
 				}
 
@@ -2513,6 +2524,7 @@ if (check_bitrix_sessid() && $USER->IsAuthorized())
 					$info["request_id"] = ($_REQUEST["request_id"] ?? null);
 					if (CModule::IncludeModule("pull"))
 					{
+						/** @deprecated TIMEMANWORKINGDAY_ */
 						CPullWatch::AddToStack('TIMEMANWORKINGDAY_' . $USER->GetID(),
 							[
 								'module_id' => 'timeman',

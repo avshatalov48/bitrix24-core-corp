@@ -293,7 +293,7 @@ export class Picker
 			this.#popups.set(popupId, new Popup({
 				bindElement: this.#getPopupPosition(popupWidth),
 				className: 'ai__picker-popup',
-				autoHide: true,
+				autoHide: false,
 				closeByEsc: false,
 				width: popupWidth,
 				height: this.#getPopupMaxHeight(),
@@ -316,8 +316,9 @@ export class Picker
 						this.#fixOverlayFreez(popupId);
 						Dom.style(document.body, 'overflow-x', 'hidden');
 					},
-					onPopupAfterClose: () => {
+					onPopupAfterClose: (popup: Popup) => {
 						Dom.style(document.body, 'overflow-x', null);
+						popup.destroy();
 					},
 					onAfterShow: () => {
 						bind(window, 'resize', adjustPosition);

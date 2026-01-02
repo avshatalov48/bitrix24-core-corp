@@ -28,16 +28,34 @@ export const AnalyticsEvent = Object.freeze({
 	openResume: 'open_resume',
 	clickCallButton: 'click_call_button',
 	clickStartConf: 'click_start_conf',
+	clickJoin: 'click_join',
 	aiRecordStart: 'ai_record_start',
 	aiOn: 'ai_on',
 	aiOff: 'ai_off',
 	openTab: 'open_tab',
+	openSlider: 'open_slider',
 	clickCreateEvent: 'click_create_event',
 	clickCreateTask: 'click_create_task',
 	viewPopup: 'view_popup',
 	viewNotification: 'view_notification',
 	clickTimeCode: 'click_timecode',
 	playRecord: 'play_record',
+	clickAiOff: 'click_ai_off',
+	delete: 'delete',
+
+	openSettings: 'open_settings',
+	restrictCamera: 'restrict_camera',
+	restrictMic: 'restrict_mic',
+	restrictScreenshare: 'restrict_screenshare',
+	allCamerasOff: 'all_cameras_off',
+	allMicOff: 'all_mic_off',
+	allScreenshareOff: 'all_screenshare_off',
+	userCameraOff: 'user_camera_off',
+	userMicOff: 'user_mic_off',
+	userScreenshareOff: 'user_screenshare_off',
+	deleteUser: 'delete_user',
+	denyRequest: 'deny_request',
+	approveRequest: 'approve_request',
 });
 
 export const AnalyticsTool = Object.freeze({
@@ -74,6 +92,7 @@ export const AnalyticsSection = Object.freeze({
 	chatWindow: 'chat_window',
 	callMessage: 'call_message',
 	callFollowup: 'call_followup',
+	call: 'call',
 });
 
 export const AnalyticsSubSection = Object.freeze({

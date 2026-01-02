@@ -9,6 +9,7 @@ use Bitrix\Booking\Internals\Model\EO_Resource;
 use Bitrix\Booking\Internals\Model\EO_ResourceData;
 use Bitrix\Booking\Internals\Model\ResourceDataTable;
 use Bitrix\Booking\Internals\Model\ResourceTable;
+use Bitrix\Main\Type\DateTime;
 
 class ResourceDataMapper
 {
@@ -25,7 +26,13 @@ class ResourceDataMapper
 			->setName($resource->getName())
 			->setDescription($resource->getDescription())
 			->setCreatedBy($resource->getCreatedBy())
+			->setIsDeleted($resource->isDeleted())
 		;
+
+		if ($resource->getDeletedAt())
+		{
+			$ormResourceData->setDeletedAt(new DateTime($resource->getDeletedAt()));
+		}
 
 		return $ormResourceData;
 	}

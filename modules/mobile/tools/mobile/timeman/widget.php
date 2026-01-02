@@ -53,12 +53,6 @@ if (!empty($_REQUEST['action']))
 
 	$portalInfo = array();
 
-	// adapt timezone
-	if (!empty($userId))
-	{
-		faceidAdjustTimezone($userId);
-	}
-
 	if ($_REQUEST['action'] == 'open')
 	{
 		$outputVisitor = array('id' => (int) $userId);
@@ -269,18 +263,6 @@ function faceidFormatUserInfo($user)
 	);
 
 	return $outputVisitor;
-}
-
-function faceidAdjustTimezone($userId)
-{
-	if (\CTimeZone::OptionEnabled())
-	{
-		$localTime = new DateTime();
-		$userOffset = $localTime->getOffset() + \CTimeZone::GetOffset($userId);
-
-		$cookieValue = $userOffset/-60;
-		CTimeZone::SetCookieValue($cookieValue);
-	}
 }
 
 function isTimemanEnabled($userId)

@@ -115,6 +115,7 @@ class Task extends Base
 
 		$inputEntityId = (array_key_exists('entityId', $fields) ? (int) $fields['entityId'] : 0);
 
+		$groupId = 0;
 		if ($inputEntityId)
 		{
 			$newEntity = (new EntityService())->getEntityById($inputEntityId);
@@ -124,6 +125,8 @@ class Task extends Base
 
 				return null;
 			}
+
+			$groupId = $newEntity->getGroupId();
 		}
 
 		$scrumTask = $this->getItemService()->getItemBySourceId($taskId);
@@ -147,6 +150,8 @@ class Task extends Base
 
 				return null;
 			}
+
+			$groupId = $entity->getGroupId();
 		}
 
 		if (!$scrumTask->getId())
@@ -170,7 +175,7 @@ class Task extends Base
 		{
 			$epicService = new EpicService($this->getUserId());
 			$epic = $epicService->getEpic((int) $fields['epicId']);
-			if (!$epic->getId())
+			if ($epic->getId() > 0 && $epic->getGroupId() !== $groupId)
 			{
 				$this->errorCollection->add([new Error('Epic not found')]);
 

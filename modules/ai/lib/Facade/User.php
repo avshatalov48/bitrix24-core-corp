@@ -176,6 +176,29 @@ class User
 		);
 	}
 
+	public static function getUserPhoto(int $userId): ?string
+	{
+		$user = UserTable::query()
+			->setSelect(['PERSONAL_PHOTO'])
+			->where('ID', $userId)
+			->setLimit(1)
+			->fetch()
+		;
+
+		if (!$user)
+		{
+			return null;
+		}
+
+		$resizedFileSmall = \CFile::ResizeImageGet(
+			$user['PERSONAL_PHOTO'],
+			['width' => 42, 'height' => 42],
+			BX_RESIZE_IMAGE_EXACT
+		);
+
+		return  is_array($resizedFileSmall) ? $resizedFileSmall['src'] : null;
+	}
+
 	/**
 	 *
 	 * @param string $moduleId

@@ -93,7 +93,7 @@ if($mode === 'GET_CLIENT_INFO')
 		__CrmContactShowEndJsonResonse(array('ERROR' => 'Entity ID is not specified.'));
 	}
 
-	if (!\Bitrix\Crm\Service\Container::getInstance()->getUserPermissions()->checkReadPermissions($entityTypeID, $entityID))
+	if (!\Bitrix\Crm\Service\Container::getInstance()->getUserPermissions()->item()->canRead($entityTypeID, $entityID))
 	{
 		__CrmContactShowEndJsonResonse(array('ERROR' => 'Access denied.'));
 	}
@@ -154,7 +154,7 @@ if($mode === 'GET_CLIENT_INFOS')
 		__CrmContactShowEndJsonResonse(array('ERROR' => 'Owner ID is not specified.'));
 	}
 
-	if (!\Bitrix\Crm\Service\Container::getInstance()->getUserPermissions()->checkReadPermissions($ownerTypeID, $ownerID))
+	if (!\Bitrix\Crm\Service\Container::getInstance()->getUserPermissions()->item()->canRead($ownerTypeID, $ownerID))
 	{
 		__CrmContactShowEndJsonResonse(array('ERROR' => 'Access denied.'));
 	}
@@ -375,7 +375,7 @@ if($mode === 'GET_BINGINGS')
 		__CrmContactShowEndJsonResonse(array('ERROR' => 'Owner ID is not specified.'));
 	}
 
-	if (!\Bitrix\Crm\Service\Container::getInstance()->getUserPermissions()->checkReadPermissions($ownerTypeID, $ownerID))
+	if (!\Bitrix\Crm\Service\Container::getInstance()->getUserPermissions()->item()->canRead($ownerTypeID, $ownerID))
 	{
 		__CrmContactShowEndJsonResonse(array('ERROR' => 'Access denied.'));
 	}
@@ -441,7 +441,7 @@ if($mode === 'SAVE_SELECTED_BINDING')
 		__CrmContactShowEndJsonResonse(array('ERROR' => 'Owner ID is not specified.'));
 	}
 
-	if (!\Bitrix\Crm\Service\Container::getInstance()->getUserPermissions()->checkUpdatePermissions($ownerTypeID, $ownerID))
+	if (!\Bitrix\Crm\Service\Container::getInstance()->getUserPermissions()->item()->canUpdate($ownerTypeID, $ownerID))
 	{
 		__CrmContactShowEndJsonResonse(array('ERROR' => 'Access denied.'));
 	}

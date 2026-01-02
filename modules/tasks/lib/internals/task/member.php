@@ -28,6 +28,8 @@ use Bitrix\Tasks\Internals\TaskDataManager;
  */
 class MemberTable extends TaskDataManager
 {
+	use Main\ORM\Data\AddStrategy\Trait\AddInsertIgnoreTrait;
+
 	public const MEMBER_TYPE_ORIGINATOR = 'O';
 	public const MEMBER_TYPE_RESPONSIBLE = 'R';
 	public const MEMBER_TYPE_ACCOMPLICE = 'A';

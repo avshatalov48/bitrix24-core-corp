@@ -56,4 +56,17 @@ interface SupportBot extends NetworkBot
 	 * @return array|null
 	 */
 	public static function getBotSettings(array $params = []): ?array;
+
+	/**
+	 * Support bot was activated.
+	 * @return bool
+	 */
+	public static function isActiveSupport(): bool;
+
+	/**
+	 * Allows certain user write to OL.
+	 * @param int $userId
+	 * @return bool
+	 */
+	public static function isActiveSupportForUser(int $userId): bool;
 }

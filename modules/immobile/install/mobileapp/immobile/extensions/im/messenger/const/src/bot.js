@@ -22,6 +22,7 @@ jn.define('im/messenger/const/bot', (require, exports, module) => {
 		giphy: 'giphy',
 		support: 'support',
 		copilot: 'copilot',
+		aiAssistant: 'AiAssistantBot',
 	});
 
 	const BotCommand = Object.freeze({

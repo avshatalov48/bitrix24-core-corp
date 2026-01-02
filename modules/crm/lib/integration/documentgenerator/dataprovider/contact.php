@@ -15,6 +15,8 @@ class Contact extends CrmEntityDataProvider
 
 	protected $companies;
 
+	private ?int $photoId = null;
+
 	/**
 	 * @return array
 	 */
@@ -109,6 +111,7 @@ class Contact extends CrmEntityDataProvider
 
 			$this->fields['PHOTO']['TITLE'] = GetMessage('CRM_DOCGEN_DATAPROVIDER_PHOTO_TITLE');
 			$this->fields['PHOTO']['TYPE'] = static::FIELD_TYPE_IMAGE;
+			$this->fields['PHOTO']['VALUE'] = [$this, 'getPhoto'];
 
 			$this->fields['PHONE']['TYPE'] = 'PHONE';
 			$this->fields['PHONE']['FORMAT'] = ['mfirst' => true,];
@@ -172,6 +175,12 @@ class Contact extends CrmEntityDataProvider
 		unset($this->data['NAME']);
 		unset($this->data['SECOND_NAME']);
 		unset($this->data['LAST_NAME']);
+
+		if (isset($this->data['PHOTO']) && $this->data['PHOTO'] > 0)
+		{
+			$this->photoId = (int)$this->data['PHOTO'];
+		}
+		unset($this->data['PHOTO']);
 	}
 
 	/**
@@ -338,6 +347,16 @@ class Contact extends CrmEntityDataProvider
 		}
 
 		return $this->companies;
+	}
+
+	public function getPhoto(): ?string
+	{
+		if ($this->photoId > 0)
+		{
+			return \CFile::GetPath($this->photoId);
+		}
+
+		return null;
 	}
 
 	/**

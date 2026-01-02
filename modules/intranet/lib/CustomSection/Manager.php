@@ -2,17 +2,14 @@
 
 namespace Bitrix\Intranet\CustomSection;
 
-use Bitrix\Intranet\CustomSection\DataStructures\Assembler;
 use Bitrix\Intranet\CustomSection\DataStructures\CustomSection;
 use Bitrix\Intranet\CustomSection\DataStructures\CustomSectionPage;
-use Bitrix\Intranet\CustomSection\Entity\CustomSectionTable;
 use Bitrix\Intranet\CustomSection\Manager\ResolveResult;
 use Bitrix\Main\Application;
-use Bitrix\Main\Config\Configuration;
+use Bitrix\Main\DI\ServiceLocator;
 use Bitrix\Main\Engine\CurrentUser;
 use Bitrix\Main\Error;
 use Bitrix\Main\InvalidOperationException;
-use Bitrix\Main\Loader;
 use Bitrix\Main\Localization\Loc;
 use Bitrix\Main\ObjectNotFoundException;
 use Bitrix\Main\Web\Uri;
@@ -35,13 +32,14 @@ class Manager
 	protected const MODULE_ID = 'intranet';
 	protected const LAST_OPENED_OPTION_NAME = 'custom_sections.last_opened_pages';
 
-	/** @var CustomSectionTable */
-	protected $dataManager = CustomSectionTable::class;
-	/** @var Assembler */
-	protected $assembler = Assembler::class;
-	/** @var Provider[] */
-	// moduleId => Provider
-	protected $providers = [];
+	protected Provider\Registry $providerRegistry;
+	protected Repository $repo;
+
+	public function __construct()
+	{
+		$this->providerRegistry = ServiceLocator::getInstance()->get('intranet.customSection.provider.registry');
+		$this->repo = ServiceLocator::getInstance()->get('intranet.customSection.repository');
+	}
 
 	/**
 	 * Compile url for a custom section page
@@ -64,7 +62,18 @@ class Manager
 			static::PAGE_URL_TEMPLATE
 		);
 
-		return new Uri($link);
+		$uri = new Uri($link);
+
+		$page = $this->repo->getCustomSectionPage($customSectionCode, $pageCode);
+		$analytics = $page?->getAnalytics();
+		if (!empty($analytics))
+		{
+			$uri->addParams([
+				'st' => $analytics,
+			]);
+		}
+
+		return $uri;
 	}
 
 	public function getSectionRootUrl(string $customSectionCode): ?Uri
@@ -138,7 +147,7 @@ class Manager
 	 */
 	public function appendSuperLeftMenuSections(array &$superLeftMenuSections): void
 	{
-		foreach ($this->getCustomSections() as $customSection)
+		foreach ($this->repo->getCustomSections() as $customSection)
 		{
 			if ($this->isCustomSectionAvailable($customSection))
 			{
@@ -149,70 +158,6 @@ class Manager
 				array_push($superLeftMenuSections, ...$customSectionPages);
 			}
 		}
-	}
-
-	/**
-	 * @return CustomSection[]
-	 */
-	protected function getCustomSections(): array
-	{
-		$collection = $this->dataManager::getList([
-			'select' => ['*', 'PAGES']
-		])->fetchCollection();
-
-		$sections = [];
-		foreach ($collection as $entityObject)
-		{
-			$section = $this->assembler::constructCustomSectionFromEntityObject($entityObject);
-			$this->loadSystemPagesIntoSection($section);
-			$sections[] = $section;
-		}
-
-		return $sections;
-	}
-
-	protected function getCustomSection(string $customSectionCode): ?CustomSection
-	{
-		$object = $this->dataManager::getList([
-			'select' => ['*', 'PAGES'],
-			'filter' => [
-				'=CODE' => $customSectionCode,
-			],
-		])->fetchObject();
-
-		$section = ($object ? $this->assembler::constructCustomSectionFromEntityObject($object) : null);
-		if (!is_null($section))
-		{
-			$this->loadSystemPagesIntoSection($section);
-		}
-
-		return $section;
-	}
-
-	/**
-	 * Set in $section system pages
-	 *
-	 * @param CustomSection $section
-	 * @return void
-	 */
-	protected function loadSystemPagesIntoSection(CustomSection $section): void
-	{
-		$sectionModuleId = $section->getModuleId();
-		if (is_null($sectionModuleId))
-		{
-			return;
-		}
-
-		$provider = $this->getProvider($sectionModuleId);
-		if (is_null($provider))
-		{
-			return;
-		}
-
-		$systemPages = $provider->getSystemPages($section);
-		$pages = $section->getPages();
-
-		$section->setPages(array_merge($pages, $systemPages));
 	}
 
 	protected function isCustomSectionAvailable(CustomSection $customSection): bool
@@ -285,43 +230,7 @@ class Manager
 
 	protected function getProvider(string $moduleId): ?Provider
 	{
-		if (isset($this->providers[$moduleId]))
-		{
-			return $this->providers[$moduleId];
-		}
-
-		if (!Loader::includeModule($moduleId))
-		{
-			return null;
-		}
-
-		$providerClass = $this->getProviderClass($moduleId);
-		if (!$providerClass)
-		{
-			return null;
-		}
-
-		$provider = new $providerClass();
-		$this->providers[$moduleId] = $provider;
-
-		return $provider;
-	}
-
-	protected function getProviderClass(string $moduleId): ?string
-	{
-		$config = Configuration::getInstance($moduleId)->get('intranet.customSection');
-		if (empty($config))
-		{
-			return null;
-		}
-
-		$providerClass = $config['provider'] ?? null;
-		if (empty($providerClass) || !is_a($providerClass, Provider::class, true))
-		{
-			return null;
-		}
-
-		return $providerClass;
+		return $this->providerRegistry->getProvider($moduleId);
 	}
 
 	protected function compileLeftMenuSectionDescription(CustomSection $customSection): array
@@ -335,7 +244,7 @@ class Manager
 		;
 
 		return [
-			htmlspecialcharsbx($customSection->getTitle()),
+			$customSection->getTitle(),
 			$this->getUrlForPage($customSection->getCode(), $page->getCode()),
 			[ $this->getSectionRootUrl($customSection->getCode()) ],
 			[
@@ -367,7 +276,7 @@ class Manager
 		{
 			$pageUrl = $this->getUrlForPage($customSection->getCode(), $page->getCode());
 			$compiledLeftMenuPages[] = [
-				htmlspecialcharsbx($page->getTitle()),
+				$page->getTitle(),
 				$pageUrl,
 				[],
 				$params,
@@ -567,7 +476,7 @@ class Manager
 			return null;
 		}
 
-		$customSection = $this->getCustomSection((string)$matches['customSectionCode']);
+		$customSection = $this->repo->getCustomSection((string)$matches['customSectionCode']);
 
 		if (!$customSection)
 		{
@@ -714,7 +623,7 @@ class Manager
 	 */
 	public function getSystemPages(string $customSectionCode, bool $ignorePageAvailability = false): array
 	{
-		$section = $this->getCustomSection($customSectionCode);
+		$section = $this->repo->getCustomSection($customSectionCode);
 		if (is_null($section))
 		{
 			return [];

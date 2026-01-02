@@ -4,6 +4,7 @@ namespace Bitrix\Crm\Integration;
 
 use Bitrix\Im;
 use Bitrix\Im\Counter;
+use Bitrix\Im\V2\Message\CounterService;
 use Bitrix\ImOpenLines\Chat;
 use Bitrix\ImOpenLines\Config;
 use Bitrix\ImOpenLines\Model\SessionTable;
@@ -222,10 +223,10 @@ class OpenLineManager
 		return $session ?: [];
 	}
 
-	public static function getChatUnReadMessages(?string $userCode, ?int $userId): int
+	public static function getChatUnReadMessagesCount(?string $userCode, ?int $userId): int
 	{
 		if (
-			!isset($userCode)
+			!$userCode
 			|| !Loader::includeModule('im')
 			|| !Loader::includeModule('imopenlines')
 		)
@@ -234,14 +235,25 @@ class OpenLineManager
 		}
 
 		$chatId = Chat::getChatIdByUserCode($userCode);
-		if ($chatId > 0)
+		if ($chatId <= 0)
+		{
+			return 0;
+		}
+
+		if (!method_exists('\Bitrix\ImOpenLines\Recent', 'isNonAnsweredChat'))
 		{
 			$counters = Counter::get($userId);
 
 			return isset($counters['LINES'][$chatId]) ? (int)$counters['LINES'][$chatId] : 0;
 		}
 
-		return 0;
+		$counter = (new CounterService($userId))->getByChat($chatId);
+		if ($counter === 0)
+		{
+			return (int)\Bitrix\ImOpenLines\Recent::isNonAnsweredChat($chatId, $userId);
+		}
+
+		return $counter;
 	}
 
 	public static function closeDialog(?string $userCode, ?int $userId = null): ?Result
@@ -264,5 +276,44 @@ class OpenLineManager
 		}
 
 		return null;
+	}
+
+	public static function getMessageData(string $userCode, int $limit = 50): array
+	{
+		if (
+			empty($userCode)
+			|| !self::isEnabled()
+			|| !Loader::includeModule('im')
+		)
+		{
+			return [];
+		}
+
+		$chatId = Chat::getChatIdByUserCode($userCode);
+		if ($chatId <= 0)
+		{
+			return [];
+		}
+
+		$data = Im\Chat::getMessages(
+			$chatId,
+			null,
+			[
+				'LIMIT' => $limit,
+				'USER_TAG_SPREAD' => 'Y',
+				'JSON' => 'Y',
+			]
+		);
+
+		if (
+			is_array($data)
+			&& !empty($data['messages'])
+			&& is_array($data['messages'])
+		)
+		{
+			return $data;
+		}
+
+		return [];
 	}
 }

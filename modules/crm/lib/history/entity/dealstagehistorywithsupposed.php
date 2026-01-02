@@ -4,6 +4,7 @@ namespace Bitrix\Crm\History\Entity;
 
 use Bitrix\Main\Application;
 use Bitrix\Main\Entity\DataManager;
+use Bitrix\Main\ORM\Fields\BooleanField;
 use Bitrix\Main\ORM\Fields\DateField;
 use Bitrix\Main\ORM\Fields\DatetimeField;
 use Bitrix\Main\ORM\Fields\IntegerField;
@@ -44,8 +45,12 @@ class DealStageHistoryWithSupposedTable extends DataManager
 			new IntegerField('CATEGORY_ID'),
 			new StringField('STAGE_SEMANTIC_ID'),
 			new StringField('STAGE_ID'),
-			new StringField('IS_LOST'),
-			new StringField('IS_SUPPOSED'),
+			(new BooleanField('IS_LOST'))
+				->configureValues('N', 'Y')
+			,
+			(new BooleanField('IS_SUPPOSED'))
+				->configureValues('N', 'Y')
+			,
 			new DateField('LAST_UPDATE_DATE'),
 			new DateField('CLOSE_DATE'),
 			new IntegerField('SPENT_TIME'),

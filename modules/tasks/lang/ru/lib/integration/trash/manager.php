@@ -1,4 +1,0 @@
-<?php
-$MESS['TASKS_TRASH_MODULE_NAME'] = 'Задачи';
-$MESS['TASKS_TRASH_ENTITY_NAME'] = 'Задача';
-$MESS['TASKS_TEMPLATE_TRASH_ENTITY_NAME'] = 'Шаблон задачи';

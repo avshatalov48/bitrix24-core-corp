@@ -26,6 +26,12 @@ class Group
 		$result = &$params[1];
 		$languageId = $params[2];
 
+		$eventTableName = $params[3];
+		if (!empty($eventTableName) && $eventTableName !== 'socialnetwork_group')
+		{
+			return;
+		}
+
 		$rolesMember = \Bitrix\Socialnetwork\UserToGroupTable::getRolesMember();
 		$rolesMembersString = implode("', '", $rolesMember);
 

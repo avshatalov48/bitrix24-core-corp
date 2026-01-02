@@ -24,6 +24,8 @@ use Bitrix\Main\Type\Collection;
  */
 class UserOptionTable extends Main\Entity\DataManager
 {
+	use Main\ORM\Data\Internal\DeleteByFilterTrait;
+
 	/**
 	 * @return string
 	 */

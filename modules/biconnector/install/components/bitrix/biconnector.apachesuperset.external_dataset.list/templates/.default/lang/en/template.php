@@ -1,6 +1,6 @@
 <?php
 $MESS["BICONNECTOR_SUPERSET_EXTERNAL_DATASET_GRID_DELETE_POPUP_CAPTION_NO"] = "Cancel";
 $MESS["BICONNECTOR_SUPERSET_EXTERNAL_DATASET_GRID_DELETE_POPUP_CAPTION_YES"] = "Yes";
-$MESS["BICONNECTOR_SUPERSET_EXTERNAL_DATASET_GRID_DELETE_POPUP_DESCRIPTION"] = "Are you sure you want to delete this dataset? This will break the charts and diagrams that use data from this dataset.";
-$MESS["BICONNECTOR_SUPERSET_EXTERNAL_DATASET_GRID_DELETE_POPUP_TITLE"] = "Delete dataset";
+$MESS["BICONNECTOR_SUPERSET_EXTERNAL_DATASET_GRID_DELETE_POPUP_DESCRIPTION_MSGVER_1"] = "Are you sure you want to delete this dataset? This will break the charts and diagrams that use data from this dataset.";
+$MESS["BICONNECTOR_SUPERSET_EXTERNAL_DATASET_GRID_DELETE_POPUP_TITLE_MSGVER_1"] = "Delete dataset";
 $MESS["BICONNECTOR_SUPERSET_EXTERNAL_DATASET_GRID_ERROR_SUPERSET"] = "Cannot create dataset. Please try again.";

@@ -1,6 +1,9 @@
 <?php
 namespace PHPSTORM_META
 {
+
+	use Bitrix\Disk\QuickAccess\ImageTokenService;
+
 	registerArgumentsSet('bitrix_disk_serviceLocator_codes',
 		'disk.urlManager',
 		'disk.documentHandlersManager',
@@ -32,6 +35,7 @@ namespace PHPSTORM_META
 		'disk.trackedObjectManager' => \Bitrix\Disk\TrackedObjectManager::class,
 		'disk.onlyofficeConfiguration' => \Bitrix\Disk\Document\OnlyOffice\Configuration::class,
 		'disk.storageRuntimeCache' => \Bitrix\Disk\Internals\Runtime\StorageRuntimeCache::class,
+		'disk.scopeTokenService' => \Bitrix\Disk\QuickAccess\ScopeTokenService::class,
     ]));
 	
 	exitPoint(\Bitrix\Disk\Internals\Controller::end());

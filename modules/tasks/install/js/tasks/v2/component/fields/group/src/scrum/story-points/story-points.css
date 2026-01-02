@@ -1,0 +1,21 @@
+.tasks-field-group-scrum-story-points {
+	padding: 2px 10px;
+	max-width: 30px;
+	overflow: hidden;
+	text-overflow: ellipsis;
+	border-radius: 1in;
+	background: var(--ui-color-base-7);
+	cursor: text;
+}
+
+.tasks-field-group-scrum-story-points.--filled {
+	background: var(--ui-color-accent-soft-blue-3);
+	color: var(--ui-color-accent-main-primary);
+}
+
+.tasks-field-group-scrum-story-points-input {
+	width: 38px;
+	padding: 4px 6px;
+	border: var(--ui-border-width-thin) solid var(--ui-color-accent-main-link);
+	border-radius: var(--ui-border-radius-xs);
+}

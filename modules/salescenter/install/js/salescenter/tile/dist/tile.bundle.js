@@ -123,7 +123,6 @@ this.BX.Salescenter = this.BX.Salescenter || {};
 	    _this = babelHelpers.possibleConstructorReturn(this, babelHelpers.getPrototypeOf(PaySystem).call(this, props));
 	    _this.info = main_core.Type.isString(props.info) && props.info.length > 0 ? props.info : '';
 	    _this.sort = main_core.Type.isInteger(props.sort) ? props.sort : 0;
-	    _this.psModeName = main_core.Type.isString(props.psModeName) && props.psModeName.length > 0 ? props.psModeName : _this.name;
 	    return _this;
 	  }
 	  babelHelpers.createClass(PaySystem, [{

@@ -223,6 +223,17 @@ jn.define('testing/matchers', (require, exports, module) => {
 		}
 	}
 
+	class UndefinedMatcher extends TestingMatcher
+	{
+		/**
+		 * @returns {boolean}
+		 */
+		match()
+		{
+			return typeof this.actualValue === 'undefined';
+		}
+	}
+
 	class NullMatcher extends TestingMatcher
 	{
 		/**
@@ -308,6 +319,69 @@ jn.define('testing/matchers', (require, exports, module) => {
 		}
 	}
 
+	class InstanceOfMatcher extends TestingMatcher
+	{
+		constructor(actualValue, expectedValue)
+		{
+			super(actualValue?.constructor?.name, expectedValue?.prototype?.constructor?.name);
+
+			this.actualOblect = actualValue;
+			this.expectedOblect = expectedValue;
+		}
+
+		/**
+		 * @returns {boolean}
+		 */
+		match()
+		{
+			return this.actualOblect instanceof this.expectedOblect;
+		}
+	}
+
+	class RegexMatcher extends TestingMatcher
+	{
+		/**
+		 * @returns {boolean}
+		 */
+		match()
+		{
+			if (typeof this.actualValue !== 'string')
+			{
+				return false;
+			}
+
+			return this.actualValue.match(this.expectedValue) !== null;
+		}
+	}
+
+	class LessThanMatcher
+	{
+		constructor(actualValue, expectedValue)
+		{
+			this.actualValue = actualValue;
+			this.expectedValue = expectedValue;
+		}
+
+		match()
+		{
+			return this.actualValue < this.expectedValue;
+		}
+	}
+
+	class GreaterThanMatcher
+	{
+		constructor(actualValue, expectedValue)
+		{
+			this.actualValue = actualValue;
+			this.expectedValue = expectedValue;
+		}
+
+		match()
+		{
+			return this.actualValue > this.expectedValue;
+		}
+	}
+
 	module.exports = {
 		TestingMatcher,
 		ExactMatcher,
@@ -315,9 +389,13 @@ jn.define('testing/matchers', (require, exports, module) => {
 		ExceptionMatcher,
 		AsyncExceptionMatcher,
 		DefinedMatcher,
+		UndefinedMatcher,
 		NullMatcher,
 		BooleanMatcher,
 		MatchObjectMatcher,
+		InstanceOfMatcher,
+		RegexMatcher,
+		LessThanMatcher,
+		GreaterThanMatcher,
 	};
-
 });

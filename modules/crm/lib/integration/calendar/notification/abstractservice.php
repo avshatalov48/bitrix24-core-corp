@@ -20,6 +20,7 @@ abstract class AbstractService
 	protected EventLink $eventLink;
 	/** @var ?Event $oldEvent */
 	protected ?Event $oldEvent = null;
+	protected ?int $initiatorId = null;
 
 	/**
 	 * @param CrmDealLink $crmDealLink
@@ -61,6 +62,13 @@ abstract class AbstractService
 	public function setOldEvent(Event $oldEvent): self
 	{
 		$this->oldEvent = $oldEvent;
+
+		return $this;
+	}
+
+	public function setInitiatorId(?int $id): self
+	{
+		$this->initiatorId = $id;
 
 		return $this;
 	}

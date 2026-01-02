@@ -1,0 +1,4 @@
+<?php
+$MESS["M_BP_STARTER_PARAMETERS_STEP_FINISH_BUTTON_TEXT"] = "Бастау";
+$MESS["M_BP_STARTER_PARAMETERS_STEP_SUCCESS_MESSAGE"] = "Бизнес-процесс іске қосылды";
+$MESS["M_BP_STARTER_PARAMETERS_STEP_TITLE"] = "Процестің іске қосылуы";

@@ -1,0 +1,20 @@
+<?php
+$MESS["CRM_SERVICE_FORM_CATEGORY_BOOKING"] = "Онлайн-жазылу";
+$MESS["CRM_SERVICE_FORM_CATEGORY_CRM"] = "Клиенттермен коммуникация";
+$MESS["CRM_SERVICE_FORM_CATEGORY_CRM_AUTOMATION"] = "Өрістерді автоматты түрде толтыру";
+$MESS["CRM_SERVICE_FORM_CATEGORY_CRM_FILLING"] = "CRM толтыру";
+$MESS["CRM_SERVICE_FORM_CATEGORY_DELIVERY"] = "Тапсырысты жеткізу";
+$MESS["CRM_SERVICE_FORM_CATEGORY_DEPENDENCY_FIELD"] = "Тәуелді өрістері бар нысандар";
+$MESS["CRM_SERVICE_FORM_CATEGORY_EVENTS"] = "Іс-шараға тіркелу";
+$MESS["CRM_SERVICE_FORM_CATEGORY_OTHER"] = "Басқасы";
+$MESS["CRM_SERVICE_FORM_CATEGORY_PREPARE_FORM"] = "Нысанды ендіру";
+$MESS["CRM_SERVICE_FORM_CATEGORY_PRODUCTS"] = "Сату";
+$MESS["CRM_SERVICE_FORM_CATEGORY_SOCIAL"] = "Әлеуметтік желілерден өтінімдер";
+$MESS["CRM_SERVICE_FORM_SCENARIO_CODE_ON_SITE_TEXT"] = "Сайтқа ендіру үшін кодты алу немесе нысанды виджетке ендіру үшін осы батырманы басыңыз";
+$MESS["CRM_SERVICE_FORM_SCENARIO_CODE_ON_SITE_TITLE"] = "Сайтқа код";
+$MESS["CRM_SERVICE_FORM_SCENARIO_PARTICIPATION_FORMAT"] = "Қатысу форматы";
+$MESS["CRM_SERVICE_FORM_SCENARIO_PARTICIPATION_FORMAT_LIVE"] = "Тірідей";
+$MESS["CRM_SERVICE_FORM_SCENARIO_PARTICIPATION_FORMAT_ONLINE"] = "Онлайн";
+$MESS["CRM_SERVICE_FORM_SCENARIO_PARTICIPATION_FORMAT_RECORD"] = "Мен жазбаларда қараймын";
+$MESS["CRM_SERVICE_FORM_SCENARIO_PRODUCT2"] = "Төлемі бар тауарлар";
+$MESS["CRM_WEBFORM_COMMENTS_DELIVERY_DATE"] = "Қажетті жеткізу күні мен уақыты";

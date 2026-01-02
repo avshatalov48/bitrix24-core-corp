@@ -2,6 +2,8 @@
  * @module layout/ui/scroll-view
  */
 jn.define('layout/ui/scroll-view', (require, exports, module) => {
+	const { mergeImmutable } = require('utils/object');
+
 	const toArray = (children) => (Array.isArray(children) ? children : [children]);
 
 	/**
@@ -11,19 +13,25 @@ jn.define('layout/ui/scroll-view', (require, exports, module) => {
 	 * @param {boolean} [props.bounces]
 	 * @param {function} [props.onScroll]
 	 * @param {Array<View>} [props.children]
+	 * @param {Object} [props.viewProps]
 	 * @param {...*} [restChildren]
 	 * @returns {ScrollViewMethods}
 	 */
 	const UIScrollView = (props, ...restChildren) => {
-		const { children, ...rest } = props;
+		const { children, viewProps = {}, ...rest } = props;
 
-		const wrapperViewProps = {};
+		let wrapperViewProps = viewProps;
 
 		if (rest.horizontal)
 		{
-			wrapperViewProps.style = {
-				flexDirection: 'row',
-			};
+			wrapperViewProps = mergeImmutable(
+				{
+					style: {
+						flexDirection: 'row',
+					},
+				},
+				wrapperViewProps,
+			);
 		}
 
 		const viewChildren = toArray(restChildren);

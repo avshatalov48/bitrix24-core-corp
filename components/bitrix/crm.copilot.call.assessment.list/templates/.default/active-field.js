@@ -1,4 +1,5 @@
-import { ajax as Ajax, Dom, Reflection, Runtime, Text } from 'main.core';
+import { ajax as Ajax, Dom, Loc, Reflection, Runtime, Tag, Text } from 'main.core';
+import { MessageBox, MessageBoxButtons } from 'ui.dialogs.messagebox';
 import { UI } from 'ui.notification';
 
 const namespace = Reflection.namespace('BX.Crm.Copilot.CallAssessmentList');
@@ -23,13 +24,41 @@ export class ActiveField
 		void Runtime.loadExtension('ui.switcher').then((exports) => {
 			const { Switcher } = exports;
 
-			const switcher = new Switcher({
+			this.switcher = new Switcher({
 				checked: this.#checked,
 				disabled: this.#readOnly,
 				handlers: {
-					checked: (event) => {
+					checked: (event: PointerEvent) => {
 						event.stopPropagation();
-						this.#changeCallAssessmentActive(false);
+
+						const popupContainer = Tag.render`
+							<div class="crm-copilot-call-assessment-list-confirm-container">
+								<div class="crm-copilot-call-assessment-list-confirm-title">
+									${Loc.getMessage('CRM_COPILOT_CALL_ASSESSMENT_LIST_COLUMN_ACTIVITY_CONFIRM_DIALOG_TITLE')}
+								</div>
+								<div class="crm-copilot-call-assessment-list-confirm-message"></div>
+							</div>
+						`;
+
+						MessageBox.show({
+							modal: true,
+							minHeight: 100,
+							minWidth: 400,
+							popupOptions: {
+								content: popupContainer,
+								closeIcon: false,
+							},
+							buttons: MessageBoxButtons.OK_CANCEL,
+							okCaption: Loc.getMessage('CRM_COPILOT_CALL_ASSESSMENT_LIST_COLUMN_ACTIVITY_CONFIRM_DIALOG_OK_BTN'),
+							onOk: (messageBox) => {
+								messageBox.close();
+								this.#changeCallAssessmentActive(false);
+							},
+							onCancel: (messageBox) => {
+								this.switcher.check(true, false);
+								messageBox.close();
+							},
+						});
 					},
 					unchecked: (event) => {
 						event.stopPropagation();
@@ -39,7 +68,7 @@ export class ActiveField
 			});
 
 			Dom.clean(this.#targetNode);
-			switcher.renderTo(this.#targetNode);
+			this.switcher.renderTo(this.#targetNode);
 		});
 	}
 

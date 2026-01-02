@@ -14,6 +14,7 @@
 	var _showNotification = /*#__PURE__*/new WeakSet();
 	var ConfigPermsComponent = /*#__PURE__*/function () {
 	  function ConfigPermsComponent(config) {
+	    var _config$useAirDesign;
 	    babelHelpers.classCallCheck(this, ConfigPermsComponent);
 	    _classPrivateMethodInitSpec(this, _showNotification);
 	    _classPrivateMethodInitSpec(this, _confirmBeforeRedraw);
@@ -25,6 +26,7 @@
 	    this.AccessRights = config.AccessRights;
 	    this.hasLeftMenu = config.hasLeftMenu;
 	    this.menuId = config.menuId;
+	    this.useAirDesign = (_config$useAirDesign = config.useAirDesign) !== null && _config$useAirDesign !== void 0 ? _config$useAirDesign : false;
 	  }
 	  babelHelpers.createClass(ConfigPermsComponent, [{
 	    key: "init",
@@ -104,13 +106,12 @@
 	function _renderHelpButton2() {
 	  var Helper = main_core.Reflection.getClass('top.BX.Helper');
 	  var helpButton = new ui_buttons.Button({
-	    size: ui_buttons.ButtonSize.MEDIUM,
-	    color: ui_buttons.ButtonColor.LIGHT_BORDER,
-	    text: main_core.Loc.getMessage('CRM_CONFIG_PERMS_HELP'),
-	    noCaps: true,
+	    size: ui_buttons.ButtonSize.SMALL,
+	    text: main_core.Loc.getMessage('CRM_CONFIG_PERMS_HELP_MSGVER_1'),
+	    style: ui_buttons.AirButtonStyle.OUTLINE_NO_ACCENT,
+	    useAirDesign: true,
 	    onclick: function onclick() {
-	      var articleCode = '23240636'; // todo replace with the real article code
-
+	      var articleCode = '23240636';
 	      Helper === null || Helper === void 0 ? void 0 : Helper.show("redirect=detail&code=".concat(articleCode));
 	    }
 	  });
@@ -134,9 +135,11 @@
 	  var box = ui_dialogs_messagebox.MessageBox.create({
 	    message: main_core.Loc.getMessage('CRM_CONFIG_PERMS_SAVE_POPUP_TITLE'),
 	    modal: true,
+	    useAirDesign: true,
 	    buttons: [new ui_buttons.SaveButton({
-	      size: ui_buttons.ButtonSize.SMALL,
-	      color: ui_buttons.ButtonColor.PRIMARY,
+	      size: ui_buttons.ButtonSize.LARGE,
+	      style: ui_buttons.AirButtonStyle.FILLED,
+	      useAirDesign: true,
 	      onclick: function onclick(button) {
 	        button.setWaiting(true);
 	        _this2.AccessRights.sendActionRequest().then(function () {
@@ -147,11 +150,16 @@
 	      }
 	    }), new ui_buttons.CancelButton({
 	      text: main_core.Loc.getMessage('CRM_CONFIG_PERMS_SAVE_POPUP_CANCEL'),
-	      size: ui_buttons.ButtonSize.SMALL,
+	      size: ui_buttons.ButtonSize.LARGE,
+	      style: ui_buttons.AirButtonStyle.OUTLINE,
+	      useAirDesign: true,
 	      onclick: function onclick() {
 	        box.close();
 	      }
-	    })]
+	    })],
+	    popupOptions: {
+	      fixed: true
+	    }
 	  });
 	  box.show();
 	}

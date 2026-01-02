@@ -3,6 +3,8 @@ namespace Bitrix\BIConnector;
 
 class LimitManagerBox extends LimitManager
 {
+	public const SUPERSET_LIMIT = 10000000;
+
 	protected $license = null;
 
 	public function __construct()
@@ -33,7 +35,7 @@ class LimitManagerBox extends LimitManager
 	{
 		if ($this->isSuperset())
 		{
-			return 10000000;
+			return static::SUPERSET_LIMIT;
 		}
 
 		return 0;

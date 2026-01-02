@@ -3,11 +3,17 @@
 namespace Bitrix\Disk\Controller;
 
 use Bitrix\Disk;
+use Bitrix\Disk\File;
+use Bitrix\Disk\Document\Flipchart\BoardService;
 use Bitrix\Disk\Driver;
 use Bitrix\Disk\ExternalLink;
+use Bitrix\Disk\Integration\Bitrix24Manager;
 use Bitrix\Disk\Internals;
+use Bitrix\Disk\TypeFile;
+use Bitrix\Main\Analytics\AnalyticsEvent;
 use Bitrix\Main\Diag\Debug;
 use Bitrix\Main\Error;
+use Bitrix\Main\Application;
 use Bitrix\Main\Localization\Loc;
 use Bitrix\Main\Web\Uri;
 
@@ -202,6 +208,14 @@ abstract class BaseObject extends Internals\Engine\Controller
 			return null;
 		}
 
+		if ($object->getType() == Internals\ObjectTable::TYPE_FILE && $object->getRealObject()->getTypeFile() == TypeFile::FLIPCHART)
+		{
+			Application::getInstance()->addBackgroundJob(function() {
+				$event = new AnalyticsEvent('turnon_publiclink', 'boards', 'boards');
+				$event->send();
+			});
+		}
+
 		return $this->parseExternalLinkObject($extLink, $object);
 	}
 
@@ -219,8 +233,19 @@ abstract class BaseObject extends Internals\Engine\Controller
 	protected function disableExternalLink(Disk\BaseObject $object)
 	{
 		$extLink = $this->getExternalLinkObject($object);
-		if (!$extLink || $extLink->delete())
+		if (!$extLink)
 		{
+			return true;
+		}
+
+		if ($extLink->delete())
+		{
+			$file = $object->getRealObject();
+			if ($file instanceof File && $file->getTypeFile() == TypeFile::FLIPCHART)
+			{
+				BoardService::kickGuestsUsers($file);
+			}
+
 			return true;
 		}
 
@@ -255,18 +280,16 @@ abstract class BaseObject extends Internals\Engine\Controller
 			'action' => 'default',
 		), true));
 
+		$isBoard = false;
 		$canEditDocument = null;
 		$availableEdit = $extLink->availableEdit();
 		if ($availableEdit)
 		{
 			$canEditDocument = $extLink->getAccessRight() === $extLink::ACCESS_RIGHT_EDIT;
-			// todo: temporary restriction for board, remove it when it is no longer needed
 			if ($object instanceof Disk\File)
 			{
 				$fileType = (int)$object->getTypeFile();
-				$isNotBoard = $fileType !== Disk\TypeFile::FLIPCHART;
-				$canEditDocument = $canEditDocument && $isNotBoard;
-				$availableEdit = $isNotBoard;
+				$isBoard = $fileType === TypeFile::FLIPCHART;
 			}
 		}
 
@@ -282,6 +305,7 @@ abstract class BaseObject extends Internals\Engine\Controller
 				'canEditDocument' => $canEditDocument,
 				'deathTime' => $extLink->getDeathTime(),
 				'deathTimeTimestamp' => $extLink->hasDeathTime()? $extLink->getDeathTime()->getTimestamp() : null,
+				'isBoard' => $isBoard,
 			],
 		];
 	}
@@ -307,5 +331,13 @@ abstract class BaseObject extends Internals\Engine\Controller
 		return [
 			'operations' => $operations,
 		];
+	}
+
+	protected function checkExternalLinkFeature(Disk\File $file): bool
+	{
+		$isBoardType = (int)$file->getTypeFile() === TypeFile::FLIPCHART;
+		$featureName = $isBoardType ? 'disk_board_external_link' : 'disk_manual_external_link';
+
+		return Bitrix24Manager::isFeatureEnabled($featureName);
 	}
 }

@@ -6,7 +6,6 @@ jn.define('crm/entity-detail/toolbar/content/templates/audio-player-wrapper', (r
 	const AppTheme = require('apptheme');
 	const { throttle, debounce } = require('utils/function');
 	const { Loc } = require('loc');
-	const { Feature } = require('feature');
 	const { ContextMenu } = require('layout/ui/context-menu');
 
 	const MARKER_SIZE = 20;
@@ -95,11 +94,6 @@ jn.define('crm/entity-detail/toolbar/content/templates/audio-player-wrapper', (r
 
 		onProximitySensor()
 		{
-			if (!Feature.canChangeAudioDevice())
-			{
-				return;
-			}
-
 			if (
 				(!device.proximityState && this.state.play)
 				|| (device.proximityState && !this.state.play)
@@ -228,11 +222,6 @@ jn.define('crm/entity-detail/toolbar/content/templates/audio-player-wrapper', (r
 
 		enableProximitySensor()
 		{
-			if (!Feature.canChangeAudioDevice())
-			{
-				return;
-			}
-
 			device.setProximitySensorEnabled(true);
 			device.on('proximityChanged', this.onProximitySensorDebounced);
 		}

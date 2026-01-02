@@ -1,4 +1,5 @@
 <?php
+
 /**
  * Bitrix Framework
  * @package bitrix
@@ -6,6 +7,7 @@
  * @copyright 2001-2013 Bitrix
  */
 
+use Bitrix\Main\Localization\Loc;
 
 IncludeModuleLangFile(__FILE__);
 
@@ -23,31 +25,31 @@ class CTasksNotifySchema
 		return [
 			'tasks' => [
 				'comment' => [
-					'NAME' => GetMessage('TASKS_NS_COMMENT'),
+					'NAME' => Loc::getMessage('TASKS_NS_COMMENT'),
 					'PUSH' => 'Y',
 					'MAIL' => 'N',
 					'XMPP' => 'N',
 					'DISABLED' => [IM_NOTIFY_FEATURE_XMPP],
 				],
 				'reminder' => [
-					'NAME' => GetMessage('TASKS_NS_REMINDER'),
+					'NAME' => Loc::getMessage('TASKS_NS_REMINDER'),
 					'PUSH' => 'Y',
 				],
 				'manage' => [
-					'NAME' => GetMessage('TASKS_NS_MANAGE'),
+					'NAME' => Loc::getMessage('TASKS_NS_MANAGE_MSGVER_1'),
 					'PUSH' => 'Y',
 				],
 				'task_assigned' => [
-					'NAME' => GetMessage('TASKS_NS_TASK_ASSIGNED'),
+					'NAME' => Loc::getMessage('TASKS_NS_TASK_ASSIGNED_MSGVER_1'),
 					'PUSH' => 'Y',
 				],
 				'task_expired_soon' => [
-					'NAME' => GetMessage('TASKS_NS_TASK_EXPIRED_SOON'),
+					'NAME' => Loc::getMessage('TASKS_NS_TASK_EXPIRED_SOON'),
 					'PUSH' => 'Y',
 					'MAIL' => 'N',
 					'XMPP' => 'N',
 					'DISABLED' => [IM_NOTIFY_FEATURE_XMPP, IM_NOTIFY_FEATURE_MAIL],
-				]
+				],
 			],
 		];
 	}
@@ -58,9 +60,9 @@ class CTasksPullSchema
 {
 	public static function OnGetDependentModule()
 	{
-		return array(
+		return [
 			'MODULE_ID' => 'tasks',
-			'USE'       => array('PUBLIC_SECTION')
-		);
+			'USE'       => ['PUBLIC_SECTION'],
+		];
 	}
 }

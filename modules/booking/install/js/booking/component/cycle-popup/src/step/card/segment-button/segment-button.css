@@ -1,0 +1,26 @@
+.booking-cycle-popup-segment-button {
+	display: flex;
+	gap: 4px;
+	width: max-content;
+	padding: 2px;
+	border-radius: var(--ui-border-radius-xs);
+	background: rgba(var(--ui-color-palette-gray-90-rgb), 0.05);
+	user-select: none;
+}
+
+.booking-cycle-popup-segment {
+	padding: 2px 8px;
+	border-radius: var(--ui-border-radius-2xs);
+	color: var(--ui-color-palette-gray-50);
+}
+
+.booking-cycle-popup-segment.--selected {
+	background: var(--ui-color-palette-white-base);
+	color: var(--ui-color-palette-gray-90);
+	cursor: default;
+}
+
+.booking-cycle-popup-segment:not(.--selected):hover {
+	box-shadow: inset 0 0 0 999px rgba(var(--ui-color-palette-white-base-rgb), 0.7);
+	cursor: pointer;
+}

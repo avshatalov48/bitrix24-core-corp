@@ -200,7 +200,8 @@ this.BX.Sign.V2 = this.BX.Sign.V2 || {};
 	          title: currentTemplateSelected.title
 	        },
 	        company: currentTemplateSelected.company,
-	        fields: babelHelpers.classPrivateFieldLooseBase(signSettings, _stepsContext)[_stepsContext].fields
+	        fields: babelHelpers.classPrivateFieldLooseBase(signSettings, _stepsContext)[_stepsContext].fields,
+	        isOnboarding: false
 	      });
 	      const layout = submitDocumentInfo.getLayout();
 	      if (babelHelpers.classPrivateFieldLooseBase(signSettings, _stepsContext)[_stepsContext].fields.length > 0) {

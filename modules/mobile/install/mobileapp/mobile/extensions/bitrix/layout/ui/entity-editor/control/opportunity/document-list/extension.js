@@ -8,13 +8,14 @@ jn.define('layout/ui/entity-editor/control/opportunity/document-list', (require,
 	const { ContextMenu } = require('layout/ui/context-menu');
 	const { EventEmitter } = require('event-emitter');
 	const { handleErrors } = require('crm/error');
-	const { Feature } = require('feature');
 	const { ImageAfterTypes } = require('layout/ui/context-menu/item');
 	const { PaymentPayOpener } = require('crm/terminal/entity/payment-pay-opener');
 	const { Notify } = require('notify');
 	const { MultiFieldDrawer, MultiFieldType } = require('crm/multi-field-drawer');
 	const { TypeId } = require('crm/type');
 	const { PlanRestriction } = require('layout/ui/plan-restriction');
+	const { Random } = require('utils/random');
+	const { Money } = require('money');
 
 	/**
 	 * @class DocumentList
@@ -797,13 +798,6 @@ jn.define('layout/ui/entity-editor/control/opportunity/document-list', (require,
 
 		onClickSendMessageButton(document)
 		{
-			if (!Feature.isReceivePaymentSupported())
-			{
-				Feature.showDefaultUnsupportedWidget();
-
-				return;
-			}
-
 			if (this.resendParams.entityHasContact && !this.resendParams.contactHasPhone)
 			{
 				const multiFieldDrawer = new MultiFieldDrawer({

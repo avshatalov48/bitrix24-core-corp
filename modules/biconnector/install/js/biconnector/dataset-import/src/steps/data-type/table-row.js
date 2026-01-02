@@ -29,10 +29,19 @@ export const TableRow = {
 			required: false,
 			default: {},
 		},
+		disabledElements: {
+			type: Object,
+			required: false,
+			default: null,
+		},
 		isEditMode: {
 			type: Boolean,
 			required: false,
 			default: false,
+		},
+		sourceType: {
+			type: String,
+			required: true,
 		},
 	},
 	data()
@@ -92,6 +101,7 @@ export const TableRow = {
 		{
 			return (this.$store.state.config.fileProperties?.firstLineHeader ?? true)
 				&& this.$store.state.config.connectionProperties?.connectionType
+				&& this.$store.state.config.connectionProperties?.connectionType !== 'rest'
 			;
 		},
 		hintOptions(): Object
@@ -107,6 +117,24 @@ export const TableRow = {
 					autoHide: false,
 				},
 			};
+		},
+		sourceTypeCsv(): boolean
+		{
+			return this.sourceType === 'csv';
+		},
+		sourceTypeExternal(): boolean
+		{
+			return this.sourceType === 'external';
+		},
+		canEditType(): boolean
+		{
+			return !this.isEditMode && this.sourceTypeCsv;
+		},
+		canEditName(): boolean
+		{
+			const isNew = !Boolean(this.fieldSettings?.id > 0);
+
+			return isNew || (this.fieldSettings?.visible && this.sourceTypeExternal);
 		},
 	},
 	emits: [
@@ -131,6 +159,14 @@ export const TableRow = {
 		},
 		onFieldInput(event)
 		{
+			if (!this.canEditName || this.disabledElements?.name)
+			{
+				const input = event.target;
+				input.value = this.fieldSettings.name;
+
+				return;
+			}
+
 			this.displayedValidationErrors[event.target.name] = false;
 			this.$emit('fieldChange', {
 				fieldName: event.target.name,
@@ -202,20 +238,20 @@ export const TableRow = {
 				<input class="format-table__checkbox" ref="visibilityCheckbox" type="checkbox" @change="onCheckboxClick" :checked="enabled">
 			</td>
 			<td class="format-table__cell">
-				<DataTypeButton :selected-type="fieldSettings.type" @value-change="onTypeSelected" :is-edit-mode="isEditMode" />
+				<DataTypeButton :selected-type="fieldSettings.type" @value-change="onTypeSelected" :can-edit="canEditType && !disabledElements?.type" :disabled="!canEditType || disabledElements?.type"/>
 			</td>
 			<td class="format-table__cell">
 				<div
 					class="ui-ctl ui-ctl-textbox ui-ctl-w100 format-table__name-control"
 					:class="{
 						'format-table__text-input--invalid': displayedValidationErrors.name && !isNameValid,
-						'format-table__text-input--disabled': isEditMode,
-						'ui-ctl-after-icon': !isEditMode && !isNameValid,
+						'format-table__text-input--disabled': !canEditName || disabledElements?.name,
+						'ui-ctl-after-icon': canEditName && !isNameValid,
 					}"
 				>
 					<input
 						class="ui-ctl-element format-table__text-input format-table__name-input"
-						:disabled="isEditMode"
+						:disabled="!canEditName || disabledElements?.name"
 						type="text"
 						:placeholder="$Bitrix.Loc.getMessage('DATASET_IMPORT_FIELD_SETTINGS_PLACEHOLDER')"
 						name="name"

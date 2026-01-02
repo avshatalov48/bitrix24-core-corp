@@ -5,6 +5,7 @@ namespace Bitrix\Crm\Service\Display\Field;
 use Bitrix\Crm\Integration\UI\EntitySelector\DynamicMultipleProvider;
 use Bitrix\Crm\Item\Company;
 use Bitrix\Crm\Item\Contact;
+use Bitrix\Crm\ItemMiniCard\Builder\MiniCardHtmlBuilder;
 use Bitrix\Crm\Service\Container;
 use Bitrix\Crm\Service\Display\Options;
 use Bitrix\Crm\UserField\Types\ElementType;
@@ -103,10 +104,7 @@ class CrmField extends BaseLinkedEntitiesField
 				continue;
 			}
 
-			$link = Container::getInstance()->getRouter()->getItemDetailUrl($entityTypeId, $entityElementId);
 			$prefix = '';
-			$tooltipLoader = null;
-			$className = null;
 
 			$hasReadPermission = $this->hasReadPermissions($entityTypeId, $entityElementId, $entityValue);
 			if ($hasReadPermission)
@@ -116,7 +114,6 @@ class CrmField extends BaseLinkedEntitiesField
 				if ($entityTypeId === \CCrmOwnerType::Lead)
 				{
 					$prefix = \CCrmOwnerTypeAbbr::Lead;
-					$className = 'crm_balloon_no_photo';
 				}
 				elseif ($entityTypeId === \CCrmOwnerType::Contact)
 				{
@@ -129,28 +126,14 @@ class CrmField extends BaseLinkedEntitiesField
 				elseif ($entityTypeId === \CCrmOwnerType::Deal)
 				{
 					$prefix = \CCrmOwnerTypeAbbr::Deal;
-					$className = 'crm_balloon_no_photo';
 				}
 				elseif ($entityTypeId === \CCrmOwnerType::Order)
 				{
 					$prefix = \CCrmOwnerTypeAbbr::Order;
-					$tooltipLoader = '/bitrix/components/bitrix/crm.order.details/card.ajax.php';
-				}
-				elseif ($entityTypeId === \CCrmOwnerType::Quote)
-				{
-					$className = 'crm_balloon_no_photo';
 				}
 				elseif (\CCrmOwnerType::isUseFactoryBasedApproach($entityTypeId))
 				{
 					$prefix = \CCrmOwnerTypeAbbr::ResolveByTypeID($entityTypeId);
-					$tooltipLoader = UrlManager::getInstance()->create(
-						'bitrix:crm.controller.tooltip.card',
-						[
-							'sessid' => bitrix_sessid(),
-						]
-					);
-					$className = 'crm_balloon_no_photo';
-					$entityElementId = $entityTypeId . '-' . $entityElementId;
 				}
 
 				$formattedValue = '';
@@ -158,26 +141,18 @@ class CrmField extends BaseLinkedEntitiesField
 				if ($title !== null)
 				{
 					$formattedValue = htmlspecialcharsbx($title);
-
 					if (!$this->isExportContext())
 					{
-						\Bitrix\Main\UI\Extension::load('ui.tooltip');
-
-						$tooltipLoader = (
-							$tooltipLoader
-							??
-							htmlspecialcharsbx('/bitrix/components/bitrix/crm.'
-								. mb_strtolower($entityTypeName)
-								. '.show/card.ajax.php')
-						);
-
-						$className = ($className ?? 'crm_balloon_' . mb_strtolower($entityTypeName));
-						$formattedValue = $this->getHtmlLink($link, $entityElementId, $tooltipLoader, $className,
-							$formattedValue);
+						$formattedValue = (new MiniCardHtmlBuilder($entityTypeId, $entityElementId))
+							->setTitle($title)
+							->setIsRenderScript(!$this->isKanbanContext())
+							->build()
+						;
 					}
 					elseif ($this->isUserField())
 					{
-						$formattedValue = "[$prefix]$formattedValue";
+						$title = htmlspecialcharsbx($title);
+						$formattedValue = "[$prefix]$title";
 					}
 				}
 			}
@@ -562,22 +537,14 @@ class CrmField extends BaseLinkedEntitiesField
 
 	private function hasReadPermissions(int $entityTypeId, int $entityId, $entityValue): bool
 	{
-		$categoryId = 0;
-
-		$factory = Container::getInstance()->getFactory($entityTypeId);
-		if ($factory && $factory->isCategoriesSupported())
-		{
-			$categoryId = $entityValue->getCategoryId();
-		}
-
 		$userPermissions = Container::getInstance()->getUserPermissions();
 
 		if ($entityTypeId === \CCrmOwnerType::Company && \CCrmCompany::isMyCompany($entityId))
 		{
-			return $userPermissions->getMyCompanyPermissions()->canReadBaseFields();
+			return $userPermissions->myCompany()->canReadBaseFields();
 		}
 
-		return $userPermissions->checkReadPermissions($entityTypeId, $entityId, $categoryId);
+		return $userPermissions->item()->canRead($entityTypeId, $entityId);
 	}
 
 	private function getEntityTitle(int $entityTypeId, int $entityId, $entityValue): ?string

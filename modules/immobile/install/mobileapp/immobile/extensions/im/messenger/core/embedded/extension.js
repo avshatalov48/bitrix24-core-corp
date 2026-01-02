@@ -4,11 +4,9 @@
 jn.define('im/messenger/core/embedded', (require, exports, module) => {
 	const { clone } = require('utils/object');
 
-	const {
-		recentModel,
-		usersModel,
-		dialoguesModel,
-	} = require('im/messenger/model');
+	const { recentModel } = require('im/messenger/model/recent');
+	const { usersModel } = require('im/messenger/model/users');
+	const { dialoguesModel } = require('im/messenger/model/dialogues');
 
 	const { CoreApplication } = require('im/messenger/core/base');
 	const { serviceLocator } = require('im/messenger/lib/di/service-locator');

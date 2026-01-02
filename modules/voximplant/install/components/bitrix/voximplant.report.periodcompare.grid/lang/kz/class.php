@@ -1,0 +1,14 @@
+<?php
+$MESS["TELEPHONY_REPORT_PERIOD_COMPARE_CURRENT_DATE"] = "Ағымдағы күн";
+$MESS["TELEPHONY_REPORT_PERIOD_COMPARE_CURRENT_PERIOD_CALLBACK_V2"] = "Ағымдағы кезеңге үшін кері қоңыраулар";
+$MESS["TELEPHONY_REPORT_PERIOD_COMPARE_CURRENT_PERIOD_COUNT_V2"] = "Ағымдағы кезеңдегі қоңыраулардың жалпы саны";
+$MESS["TELEPHONY_REPORT_PERIOD_COMPARE_CURRENT_PERIOD_INCOMING_V2"] = "Ағымдағы кезеңдегі кіріс қоңыраулары";
+$MESS["TELEPHONY_REPORT_PERIOD_COMPARE_CURRENT_PERIOD_MISSED_V2"] = "Ағымдағы кезең үшін қабылданбаған қоңыраулар";
+$MESS["TELEPHONY_REPORT_PERIOD_COMPARE_CURRENT_PERIOD_OUTGOING_V2"] = "Ағымдағы кезеңдегі шығыс қоңыраулары";
+$MESS["TELEPHONY_REPORT_PERIOD_COMPARE_DYNAMICS"] = "Динамика";
+$MESS["TELEPHONY_REPORT_PERIOD_COMPARE_PREVIOUS_DATE"] = "Алдыңғы күн";
+$MESS["TELEPHONY_REPORT_PERIOD_COMPARE_PREVIOUS_PERIOD_CALLBACK_V2"] = "Алдыңғы кезеңге үшін кері қоңыраулар";
+$MESS["TELEPHONY_REPORT_PERIOD_COMPARE_PREVIOUS_PERIOD_COUNT_V2"] = "Алдыңғы кезеңдегі қоңыраулардың жалпы саны";
+$MESS["TELEPHONY_REPORT_PERIOD_COMPARE_PREVIOUS_PERIOD_INCOMING_V2"] = "Алдыңғы кезеңдегі кіріс қоңыраулары";
+$MESS["TELEPHONY_REPORT_PERIOD_COMPARE_PREVIOUS_PERIOD_MISSED_V2"] = "Алдыңғы кезең үшін қабылданбаған қоңыраулар";
+$MESS["TELEPHONY_REPORT_PERIOD_COMPARE_PREVIOUS_PERIOD_OUTGOING_V2"] = "Алдыңғы кезеңдегі шығыс қоңыраулары";

@@ -25,6 +25,7 @@ jn.define('ui-system/blocks/status-block', (require, exports, module) => {
 	 * @property {Align} [verticalAlign=Align.CENTER]
 	 * @property {Function} [forwardRef]
 	 * @property {Object} [style]
+	 * @property {Object} [image]
 	 *
 	 * @class StatusBlock
 	 */
@@ -41,7 +42,7 @@ jn.define('ui-system/blocks/status-block', (require, exports, module) => {
 
 		renderEmptyScreen()
 		{
-			const { style = {}, forwardRef } = this.props;
+			const { style = {}, forwardRef, preventRefresh } = this.props;
 
 			return View(
 				{
@@ -64,7 +65,7 @@ jn.define('ui-system/blocks/status-block', (require, exports, module) => {
 							flexGrow: 1,
 						},
 						refreshing: false,
-						enabled: this.isRefreshable,
+						enabled: preventRefresh ? false : this.isRefreshable,
 						onRefresh: this.handleOnRefresh,
 					},
 					this.renderStatusContent(),
@@ -74,17 +75,20 @@ jn.define('ui-system/blocks/status-block', (require, exports, module) => {
 
 		renderStatusContent()
 		{
-			const { testId, forwardRef, verticalAlign } = this.props;
+			const { testId, forwardRef, verticalAlign, style = {} } = this.props;
 
 			return Area(
 				{
 					ref: forwardRef,
 					testId,
-					style: {
-						flexGrow: 1,
-						justifyContent: Align.resolve(verticalAlign, Align.CENTER).toString(),
-						alignItems: 'center',
-					},
+					style: mergeImmutable(
+						{
+							flexGrow: 1,
+							justifyContent: Align.resolve(verticalAlign, Align.CENTER).toString(),
+							alignItems: 'center',
+						},
+						style,
+					),
 				},
 				this.renderImage(),
 				this.renderTextBlock(),
@@ -141,7 +145,7 @@ jn.define('ui-system/blocks/status-block', (require, exports, module) => {
 
 		renderDescription()
 		{
-			const { description, descriptionColor } = this.props;
+			const { description, descriptionColor, onDescriptionLinkClick } = this.props;
 
 			if (!this.shouldRenderText(description))
 			{
@@ -153,6 +157,7 @@ jn.define('ui-system/blocks/status-block', (require, exports, module) => {
 				value: description,
 				color: Color.resolve(descriptionColor, Color.base2),
 				style: this.getTextStyle(),
+				onLinkClick: onDescriptionLinkClick,
 			});
 		}
 
@@ -249,6 +254,7 @@ jn.define('ui-system/blocks/status-block', (require, exports, module) => {
 
 	StatusBlock.defaultProps = {
 		emptyScreen: false,
+		preventRefresh: false,
 	};
 
 	StatusBlock.propTypes = {
@@ -263,6 +269,8 @@ jn.define('ui-system/blocks/status-block', (require, exports, module) => {
 		forwardRef: PropTypes.func,
 		verticalAlign: PropTypes.instanceOf(Align),
 		style: PropTypes.object,
+		image: PropTypes.object,
+		preventRefresh: PropTypes.bool,
 	};
 
 	module.exports = {
@@ -271,6 +279,7 @@ jn.define('ui-system/blocks/status-block', (require, exports, module) => {
 		 * @returns {StatusBlock}
 		 */
 		StatusBlock: (props) => new StatusBlock(props),
+		VerticalAlign: Align,
 		makeLibraryImagePath,
 	};
 });

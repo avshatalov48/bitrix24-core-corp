@@ -561,7 +561,7 @@ if(typeof BX.Crm.Component.FormRecurring === 'undefined')
 		};
 
 		this.updateExecutionHint = function(params)
-		{			
+		{
 			BX.ajax(
 			{
 				url: this.ajaxUrl,

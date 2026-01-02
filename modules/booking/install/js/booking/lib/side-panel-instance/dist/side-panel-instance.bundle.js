@@ -4,9 +4,11 @@ this.BX.Booking = this.BX.Booking || {};
 (function (exports,main_sidepanel) {
 	'use strict';
 
-	const SidePanelInstance = window === top ? main_sidepanel.SidePanel.Instance : new main_sidepanel.SidePanel.Manager({});
+	const sp = main_sidepanel.SidePanel != null ? main_sidepanel.SidePanel : BX.SidePanel;
+	const ManagerInst = main_sidepanel.Manager != null ? main_sidepanel.Manager : BX.SidePanel.Manager;
+	const SidePanelInstance = window === top ? sp.Instance : new ManagerInst();
 
 	exports.SidePanelInstance = SidePanelInstance;
 
-}((this.BX.Booking.Lib = this.BX.Booking.Lib || {}),BX));
+}((this.BX.Booking.Lib = this.BX.Booking.Lib || {}),BX.SidePanel));
 //# sourceMappingURL=side-panel-instance.bundle.js.map

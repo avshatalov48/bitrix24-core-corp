@@ -5,6 +5,7 @@ import type { DocumentInitiatedType, MemberRoleType } from 'sign.type';
 import { DocumentInitiated, MemberRole } from 'sign.type';
 import { Hint } from 'sign.v2.helper';
 import { BlocksManager } from './blocks/blocksManager';
+import { Api } from 'sign.v2.api';
 import './style.css';
 
 const buttonClassList = [
@@ -25,6 +26,8 @@ type EditorOptions = {
 	languages: {[key: string]: { NAME: string; IS_BETA: boolean; }},
 	isTemplateMode: boolean,
 	documentInitiatedByType?: DocumentInitiatedType,
+	needSkipEditorStep: boolean,
+	disableDocumentSection?: boolean,
 }
 
 type DocumentData = {
@@ -55,13 +58,19 @@ export class Editor extends EventEmitter
 	#urls: string[];
 	#totalPages: number;
 
+	#api: Api = new Api();
 	#sectionElementByType: Map<number, HTMLElement> = new Map();
 	#disabledSections: Set<number> = new Set();
 
 	#needSaveBlocksOnSidePanelClose: boolean = true;
 	#needToLockSidePanelClose: boolean = true;
+	#needSkipEditorStep: boolean = false;
 	#analytics: Analytics | null = null;
 	#isTemplateMode: boolean;
+
+	#disableB2eDocumentSection: boolean = true;
+
+	#onSliderOpenCompleteHandler = this.#handleSliderOnOpenComplete.bind(this);
 
 	constructor(wizardType: string, options: EditorOptions)
 	{
@@ -84,6 +93,7 @@ export class Editor extends EventEmitter
 		this.#wizardType = wizardType;
 		this.#urls = [];
 		this.#totalPages = 0;
+		this.#needSkipEditorStep = options.needSkipEditorStep;
 	}
 
 	#isB2e(): boolean
@@ -185,6 +195,16 @@ export class Editor extends EventEmitter
 		}
 	}
 
+	#handleSliderOnOpenComplete()
+	{
+		this.#blocksManager.initPagesRect();
+		this.#blocksManager.initBlocks(
+			this.#documentData.blocks
+				.filter((block) => this.#isBlockCanBeInitialized(block))
+			,
+		);
+	}
+
 	async renderDocument()
 	{
 		Dom.clean(this.#documentLayout);
@@ -210,15 +230,8 @@ export class Editor extends EventEmitter
 		const { resizeArea } = this.#blocksManager;
 		Dom.append(resizeArea.getLayout(), this.#documentLayout);
 		await Promise.all(promises);
-		EventEmitter.unsubscribeAll('SidePanel.Slider:onOpenComplete');
-		EventEmitter.subscribeOnce('SidePanel.Slider:onOpenComplete', () => {
-			this.#blocksManager.initPagesRect();
-			this.#blocksManager.initBlocks(
-				this.#documentData.blocks
-					.filter((block) => this.#isBlockCanBeInitialized(block))
-				,
-			);
-		});
+		EventEmitter.unsubscribe('SidePanel.Slider:onOpenComplete', this.#onSliderOpenCompleteHandler);
+		EventEmitter.subscribeOnce('SidePanel.Slider:onOpenComplete', this.#onSliderOpenCompleteHandler);
 	}
 
 	show(): Promise
@@ -226,6 +239,7 @@ export class Editor extends EventEmitter
 		return new Promise((resolve) => {
 			this.#closeSidePanel = resolve;
 			this.#sidePanel.open('editor', {
+				cacheable: false,
 				contentCallback: () => {
 					this.#render();
 
@@ -296,11 +310,15 @@ export class Editor extends EventEmitter
 		`;
 		Hint.create(headTitleNode);
 
+		const eyeIconType = this.#needSkipEditorStep ? 'hide' : 'show';
+		const eyeIconElement = this.#renderEyeIcon(eyeIconType);
+
 		return Tag.render`
 			<div class="sign-editor__header">
 				${headTitleNode}
 				<div class="sign-editor__header_right">
 					${helpArticleElement}
+					${this.#isTemplateMode || !this.#isB2e() ? '' : eyeIconElement}
 					<span
 						class="${editButtonClassName}"
 						title="${editButtonTitle}"
@@ -528,7 +546,19 @@ export class Editor extends EventEmitter
 					title: 'SIGN_EDITOR_BLOCK_B2E_REFERENCE_MSG_VER_1',
 					hint: personalDataMessageCode,
 				},
+
 			});
+
+			const documentBlocks = {
+				b2eexternalid: {
+					title: 'SIGN_EDITOR_BLOCK_B2E_EXTERNAL_ID_TITLE',
+					hint: 'SIGN_EDITOR_BLOCK_B2E_EXTERNAL_ID_HINT',
+				},
+				b2edocumentdate: {
+					title: 'SIGN_EDITOR_BLOCK_B2E_DOCUMENT_DATE_TITLE',
+					hint: 'SIGN_EDITOR_BLOCK_B2E_DOCUMENT_DATE_HINT',
+				},
+			};
 
 			if (this.#isDynamicEmployeeFieldAvailable())
 			{
@@ -543,9 +573,10 @@ export class Editor extends EventEmitter
 			titles = {
 				firstParty: 'SIGN_EDITOR_BLOCKS_FIRST_PARTY_B2E',
 				partner: 'SIGN_EDITOR_BLOCKS_EMPLOYEE_B2E',
+				document: 'SIGN_EDITOR_BLOCK_B2E_DOCUMENT_SECTION',
 			};
 
-			return [
+			const blocks = [
 				{
 					title: titles.firstParty,
 					blocks: firstPartyBlocks,
@@ -556,23 +587,36 @@ export class Editor extends EventEmitter
 					blocks: partnerBlocks,
 					part: 2,
 				},
+			];
+
+			if (!this.#disableB2eDocumentSection)
+			{
+				blocks.push({
+					title: titles.document,
+					blocks: documentBlocks,
+					part: 2,
+				});
+			}
+
+			blocks.push(
 				{
 					title: 'SIGN_EDITOR_BLOCKS_GENERAL',
 					blocks: generalBlocks,
 					part: 0,
 				},
 				{
-
 					title: null,
 					blocks: {
 						hcmlinkreference: {
 							title: 'SIGN_EDITOR_BLOCK_B2E_HCMLINK_TITLE',
 							hint: 'SIGN_EDITOR_BLOCK_B2E_HCMLINK_HINT',
-						}
+						},
 					},
 					part: 3,
 				},
-			];
+			);
+
+			return blocks;
 		}
 		else
 		{
@@ -609,6 +653,7 @@ export class Editor extends EventEmitter
 					hint: 'SIGN_EDITOR_BLOCK_PARTNER_STAMP_HINT',
 				},
 			});
+
 			return [
 				{
 					title: titles.firstParty,
@@ -693,8 +738,50 @@ export class Editor extends EventEmitter
 		;
 	}
 
+	setIsB2eDocumentSectionDisabled(value: boolean): void
+	{
+		this.#disableB2eDocumentSection = value;
+	}
+
 	setAnalytics(analytic: Analytics): void
 	{
 		this.#analytics = analytic;
+	}
+
+	#renderEyeIcon(eyeIconType: string): HTMLElement
+	{
+		const eyeIconTitleMessageId = this.#needSkipEditorStep
+			? 'SIGN_EDITOR_SHOW_IN_MASTER'
+			: 'SIGN_EDITOR_HIDE_IN_MASTER'
+		;
+
+		return Tag.render`
+			<span
+				class="sign-editor__header_eye-icon ${eyeIconType}"
+				title="${Loc.getMessage(eyeIconTitleMessageId)}"
+				onclick="${this.#toggleEditStepVisibility.bind(this)}"
+			>
+			</span>
+			<span class="sign-editor__header_vertical-line"></span>
+		`;
+	}
+
+	async #toggleEditStepVisibility(event: MouseEvent): Promise<void>
+	{
+		const eyeIcon = event.currentTarget;
+		const isShow = Dom.hasClass(eyeIcon, 'show');
+		Dom.toggleClass(eyeIcon, ['show', 'hide']);
+		const title = isShow
+			? Loc.getMessage('SIGN_EDITOR_SHOW_IN_MASTER')
+			: Loc.getMessage('SIGN_EDITOR_HIDE_IN_MASTER');
+		Dom.attr(eyeIcon, { title });
+		try
+		{
+			await this.#api.changeEditorStepVisibility(isShow);
+		}
+		catch (error)
+		{
+			console.error(error);
+		}
 	}
 }

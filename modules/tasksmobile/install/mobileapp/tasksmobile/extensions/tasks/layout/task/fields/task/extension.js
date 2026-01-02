@@ -2,18 +2,19 @@
  * @module tasks/layout/task/fields/task
  */
 jn.define('tasks/layout/task/fields/task', (require, exports, module) => {
-	const AppTheme = require('apptheme');
+	const { Color } = require('tokens');
+	const { UIMenu } = require('layout/ui/menu');
 	const { EntitySelectorFieldClass } = require('layout/ui/fields/entity-selector');
 	const { Icon } = require('assets/icons');
+	const { Entry } = require('tasks/entry');
 
 	class TaskField extends EntitySelectorFieldClass
 	{
-		// eslint-disable-next-line no-useless-constructor
 		constructor(props)
 		{
 			super(props);
 			this.state.showAll = false;
-			this.menu = new UI.Menu(this.getUIMenuItems());
+			this.menu = new UIMenu(this.getUIMenuItems());
 		}
 
 		getConfig()
@@ -22,9 +23,14 @@ jn.define('tasks/layout/task/fields/task', (require, exports, module) => {
 
 			return {
 				...config,
-				selectorType: (config.selectorType === '' ? 'task' : config.selectorType),
+				selectorType: (config.selectorType === '' ? this.getDefaultSelectorType() : config.selectorType),
 				canOpenEntity: BX.prop.getBoolean(config, 'canOpenEntity', true),
 			};
+		}
+
+		getDefaultSelectorType()
+		{
+			return 'task';
 		}
 
 		getCurrentTaskId()
@@ -75,7 +81,11 @@ jn.define('tasks/layout/task/fields/task', (require, exports, module) => {
 					style: {
 						paddingBottom: (showPadding ? 8 : undefined),
 					},
-					onClick: (this.isReadOnly() && this.canOpenEntity() && this.openEntity.bind(this, task.id, task.title)),
+					onClick: (this.isReadOnly() && this.canOpenEntity() && this.openEntity.bind(
+						this,
+						task.id,
+						task.title,
+					)),
 				},
 				Text({
 					style: this.styles.taskText,
@@ -91,13 +101,7 @@ jn.define('tasks/layout/task/fields/task', (require, exports, module) => {
 
 		openEntity(taskId, taskTitle)
 		{
-			const task = new Task({ id: env.userId });
-			task.updateData({
-				id: taskId,
-				title: taskTitle,
-			});
-			task.canSendMyselfOnOpen = false;
-			task.open(this.getConfig().parentWidget);
+			Entry.openTask({ taskId }, { parentWidget: this.getConfig().parentWidget });
 		}
 
 		shouldShowEditIcon()
@@ -116,7 +120,9 @@ jn.define('tasks/layout/task/fields/task', (require, exports, module) => {
 					flexDirection: 'column',
 				},
 				taskText: {
-					color: (this.canOpenEntity() ? AppTheme.colors.accentMainLinks : AppTheme.colors.base1),
+					color: this.canOpenEntity()
+						? Color.accentMainLinks.toHex()
+						: Color.base1.toHex(),
 					fontSize: 16,
 				},
 				emptyEntity: {
@@ -155,7 +161,7 @@ jn.define('tasks/layout/task/fields/task', (require, exports, module) => {
 					id: 'selectSubtask',
 					testId: 'selectSubtask',
 					title: BX.message('TASKS_FIELDS_TASK_MENU_SELECT_BUTTON_TEXT'),
-					iconName: Icon.TASK_LIST.getIconName(),
+					iconName: Icon.TASK_LIST,
 					onItemSelected: () => {
 						super.openSelector();
 					},
@@ -164,7 +170,7 @@ jn.define('tasks/layout/task/fields/task', (require, exports, module) => {
 					id: 'createSubtask',
 					testId: 'createSubtask',
 					title: BX.message('TASKS_FIELDS_TASK_MENU_CREATE_BUTTON_TEXT'),
-					iconName: Icon.PLUS.getIconName(),
+					iconName: Icon.PLUS,
 					onItemSelected: () => {
 						this.openTaskCreateForm();
 					},

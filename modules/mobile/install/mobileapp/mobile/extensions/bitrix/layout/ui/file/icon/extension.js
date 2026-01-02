@@ -1,10 +1,15 @@
 /**
+ * @deprecated use `assets/icons` instead
  * @module layout/ui/file/icon
  */
 jn.define('layout/ui/file/icon', (require, exports, module) => {
 	const AppTheme = require('apptheme');
 	const { stringify } = require('utils/string');
 
+	/**
+	 * @deprecated
+	 * @type {{OTHER: string, PICTURE: string, ARCHIVE: string, MEDIA: string}}
+	 */
 	const MediaType = {
 		ARCHIVE: 'archive',
 		MEDIA: 'media',
@@ -12,6 +17,9 @@ jn.define('layout/ui/file/icon', (require, exports, module) => {
 		OTHER: 'other',
 	};
 
+	/**
+	 * @deprecated
+	 */
 	const Presets = {
 		RAR: { color: '#7EAB34', mediaType: MediaType.ARCHIVE },
 		ZIP: { color: '#AC5FBD', mediaType: MediaType.ARCHIVE },
@@ -41,24 +49,23 @@ jn.define('layout/ui/file/icon', (require, exports, module) => {
 		none: { color: '#7E8997', mediaType: MediaType.OTHER },
 	};
 
+	/**
+	 * @deprecated
+	 */
 	const DEFAULT_SIZE = 20;
+	/**
+	 * @deprecated
+	 */
 	const MAX_ALLOWED_EXTENSION_LEN = 4;
+	/**
+	 * @deprecated
+	 */
 	const COMMON_EXTENSION_LEN = 3;
 
 	const trim = (s) => s.trim();
 
 	/**
-	 * @public
-	 * @param {string} fileExt
-	 * @param {number} size
-	 * @return {LayoutComponent}
-	 */
-	function EasyIcon(fileExt, size)
-	{
-		return FileIcon({ fileExt, size });
-	}
-
-	/**
+	 * @deprecated use resolveFileIcon in `assets/icons` instead
 	 * @public
 	 * @param {string} fileExt
 	 * @param {string} mediaType
@@ -99,6 +106,7 @@ jn.define('layout/ui/file/icon', (require, exports, module) => {
 	}
 
 	/**
+	 * @deprecated
 	 * @private
 	 * @param {string} fileExt
 	 * @return {string|null}
@@ -115,6 +123,7 @@ jn.define('layout/ui/file/icon', (require, exports, module) => {
 	}
 
 	/**
+	 * @deprecated
 	 * @private
 	 * @param {string} fileExt
 	 * @param {string} mediaType
@@ -132,6 +141,7 @@ jn.define('layout/ui/file/icon', (require, exports, module) => {
 	}
 
 	/**
+	 * @deprecated
 	 * @private
 	 * @param {string} mediaType
 	 * @return {string}
@@ -142,6 +152,7 @@ jn.define('layout/ui/file/icon', (require, exports, module) => {
 	}
 
 	/**
+	 * @deprecated
 	 * @private
 	 * @param {string} fileExt
 	 * @param {string} color
@@ -166,6 +177,7 @@ jn.define('layout/ui/file/icon', (require, exports, module) => {
 	}
 
 	/**
+	 * @deprecated
 	 * @private
 	 * @param {string} mediaType
 	 * @return {string}
@@ -190,5 +202,5 @@ jn.define('layout/ui/file/icon', (require, exports, module) => {
 		return '';
 	}
 
-	module.exports = { FileIcon, EasyIcon, MediaType };
+	module.exports = { FileIcon, MediaType };
 });

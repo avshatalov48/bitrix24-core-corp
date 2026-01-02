@@ -6,6 +6,7 @@ use Bitrix\Crm\Service\Container;
 use Bitrix\Main\Loader;
 use Bitrix\Main\Localization\Loc;
 use Bitrix\Main\Security\Random;
+use Bitrix\Main\Application;
 
 if (!defined('B_PROLOG_INCLUDED') || B_PROLOG_INCLUDED !== true)
 {
@@ -59,6 +60,10 @@ class CCrmSmsSendComponent extends CBitrixComponent
 
 		global $APPLICATION;
 		$APPLICATION->SetTitle(Loc::getMessage('CRM_SMS_SEND_COMPONENT_TITLE'));
+		if (Loader::includeModule('ui'))
+		{
+			\Bitrix\UI\Toolbar\Facade\Toolbar::deleteFavoriteStar();
+		}
 
 		$this->includeComponentTemplate();
 	}
@@ -129,6 +134,11 @@ class CCrmSmsSendComponent extends CBitrixComponent
 
 	private function canUseBitrix24Provider(): bool
 	{
+		if (Application::getInstance()->getLicense()->getRegion() !== 'ru')
+		{
+			return false;
+		}
+
 		return ($this->arParams['CAN_USE_BITRIX24_PROVIDER'] ?? 'N') === 'Y';
 	}
 

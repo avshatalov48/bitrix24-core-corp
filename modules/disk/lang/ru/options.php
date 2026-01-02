@@ -6,6 +6,7 @@ $MESS["DISK_ALLOW_INDEX_FILES"] = "Индексировать модулем \"�
 $MESS["DISK_ALLOW_INDEX_FILES_2"] = "Индексировать документы";
 $MESS["DISK_MAX_FILE_SIZE_FOR_INDEX"] = "Максимальный размер индексируемого документа (Мб)";
 $MESS["DISK_DEFAULT_VIEWER_SERVICE"] = "Просматривать документы с помощью";
+$MESS["DISK_DEFAULT_VIEWER_SERVICE_BOARD"] = "Битрикс24 Доски";
 $MESS["DISK_DEFAULT_VIEWER_SERVICE_NOTICE_SOC_SERVICE"] = "Не настроен <a href='/bitrix/admin/settings.php?lang=#LANG#&mid=socialservices' target='_blank'>социальный сервис #NAME#</a>.";
 $MESS["DISK_ENABLE_NGINX_MOD_ZIP_SUPPORT"] = "Поддержка скачивания файлов архивом";
 $MESS["DISK_ENABLE_NGINX_MOD_ZIP_SUPPORT_NOTICE"] = "Не установлен модуль <a href='#LINK#' target='_blank'>mod_zip</a>";
@@ -31,4 +32,6 @@ $MESS["DISK_SETTINGS_ONLYOFFICE_SECRET_KEY"] = "Секретный код для
 $MESS["DISK_SETTINGS_ONLYOFFICE_MAX_FILESIZE"] = "Максимальный размер файла для просмотра";
 $MESS["DISK_SETTINGS_B24_DOCS_REGISTER_BUTTON"] = "Подключить #NAME#";
 $MESS["DISK_SETTINGS_B24_DOCS_UNREGISTER_BUTTON"] = "Отключить #NAME#";
+$MESS["BOARDS_REGISTER_TO_PROXY"] = "Подключить";
+$MESS["BOARDS_UNREGISTER_TO_PROXY"] = "Отключить";
 $MESS["DISK_SETTINGS_B24_DOCS_LIMIT_INFO"] = "Ограничение на количество одновременно редактируемых документов: #limit#.";

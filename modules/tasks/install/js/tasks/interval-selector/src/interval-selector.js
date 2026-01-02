@@ -9,6 +9,7 @@ type Params = {
 	intervals: Interval[],
 	defaultInterval: Interval,
 	value: number,
+	showDropdownIcon: boolean,
 }
 
 const DEFAULT_INTERVAL = 'days';
@@ -23,6 +24,7 @@ export class IntervalSelector extends EventEmitter
 
 	#intervals: Interval[];
 	#currentInterval: Interval;
+	#showDropdownIcon: boolean = false;
 
 	constructor(params: Params = {})
 	{
@@ -39,12 +41,17 @@ export class IntervalSelector extends EventEmitter
 		{
 			this.setSuitableInterval(this.#params.value);
 		}
+
+		if (params.showDropdownIcon)
+		{
+			this.#showDropdownIcon = true;
+		}
 	}
 
 	render(): HTMLElement
 	{
 		this.#layout.intervalSelector = Tag.render`
-			<div class="tasks-interval-selector">
+			<div class="tasks-interval-selector${this.#showDropdownIcon ? ' tasks-interval-selector-dropdown' : ''}">
 				${this.#getIntervalPhrase(this.#currentInterval)}
 			</div>
 		`;

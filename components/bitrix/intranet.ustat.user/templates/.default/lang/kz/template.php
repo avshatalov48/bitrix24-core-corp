@@ -1,0 +1,19 @@
+<?php
+$MESS["INTRANET_USTAT_USER_ACTIVITY_COMPANY_TITLE"] = "Компания бойынша <br> орташа";
+$MESS["INTRANET_USTAT_USER_ACTIVITY_DEPT_TITLE"] = "Бөлім бойынша <br> орташа";
+$MESS["INTRANET_USTAT_USER_ACTIVITY_TITLE"] = "Менің <br> белсенділік индексім";
+$MESS["INTRANET_USTAT_USER_ACTIVITY_TITLE_OTHER"] = "Белсенділік <br> индексі";
+$MESS["INTRANET_USTAT_USER_GRAPH_COMPANY"] = "Компания бойынша орташа";
+$MESS["INTRANET_USTAT_USER_GRAPH_DEPT"] = " %DEPT% бөлімі бойынша орташа";
+$MESS["INTRANET_USTAT_USER_GRAPH_ME"] = "Мен";
+$MESS["INTRANET_USTAT_USER_GRAPH_TITLE"] = "Белсенділік пульсі";
+$MESS["INTRANET_USTAT_USER_HELP_ACTIVITY"] = "Таңдалған уақыт кезеңінде жеті құралдың бірін қолдана отырып, порталда жасаған әр түрлі әрекеттердің жиынтығы.";
+$MESS["INTRANET_USTAT_USER_HELP_ACTIVITY_COMPANY"] = "Таңдалған уақыт кезеңінде бүкіл компания қызметкерлерінің порталда жеті құралдың бірін пайдаланып жасаған әрекеттерінің орташа қосындысы.<br><br> <b>Компания бойынша орташа индексі</b> оның белсенділігі мен оның бөлімін бүкіл компанияның белсенділігімен салыстыруға мүмкіндік береді.";
+$MESS["INTRANET_USTAT_USER_HELP_ACTIVITY_DEPT"] = "Сіздің бөлім қызметкерлерінің порталда таңдалған уақыт кезеңінде жеті құралдың бірін пайдаланып жасаған әрекеттерінің орташа қосындысы. <br><br> <b>Бөлім бойынша орташа индексі сіздің белсенділігіңізді бүкіл бөлімнің</b> белсенділігімен салыстыруға мүмкіндік береді.";
+$MESS["INTRANET_USTAT_USER_HELP_GENERAL"] = "<b>Белсенділік пульсі</b> - Таңдалған уақыт кезеңіндегі \"Битрикс24\" -тегі белсенділіктің жалпы көрсеткіштері.";
+$MESS["INTRANET_USTAT_USER_HELP_RATING"] = "Таңдалған уақыт кезеңінде кем дегенде бір рет \"Битрикс24\" құралдарын қолданған компанияның барлық қызметкерлерінің <b>белсенділік рейтингіндегі</b> сіздің позицияңыз.";
+$MESS["INTRANET_USTAT_USER_RATING_TITLE"] = "Менің <br> рейтингім";
+$MESS["INTRANET_USTAT_USER_RATING_TITLE_OTHER"] = "Рейтинг";
+$MESS["INTRANET_USTAT_USER_SECTION_ACTIVITY"] = "Белсенділік";
+$MESS["INTRANET_USTAT_USER_SECTION_MAX_ACTIVITY"] = "Макс.";
+$MESS["INTRANET_USTAT_USER_SECTION_TELL_ABOUT"] = "Бөлісу";

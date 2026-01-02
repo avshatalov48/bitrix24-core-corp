@@ -3,7 +3,10 @@
 namespace Bitrix\Disk\Security;
 
 use Bitrix\Disk\Driver;
+use Bitrix\Disk\Internals\SimpleRightTable;
 use Bitrix\Disk\RightsManager;
+use Bitrix\Disk\Access\AccessCodeEnum;
+use Bitrix\Main\UserAccessTable;
 use CAccess;
 
 class DiskSecurityContext extends SecurityContext
@@ -181,12 +184,30 @@ class DiskSecurityContext extends SecurityContext
 	public function getSqlExpressionForList($columnObjectId, $columnCreatedBy)
 	{
 		$userId = (int)$this->userId;
-		return "
-			EXISTS (SELECT 'x' FROM b_disk_simple_right simple_right
-				INNER JOIN b_user_access uaccess ON uaccess.ACCESS_CODE = simple_right.ACCESS_CODE AND uaccess.USER_ID = {$userId}
-				WHERE (simple_right.OBJECT_ID = {$columnObjectId}))
-			OR EXISTS(SELECT 'x' FROM b_disk_simple_right s2 WHERE s2.ACCESS_CODE = 'CR' AND s2.OBJECT_ID = {$columnObjectId} AND {$columnCreatedBy} = {$userId})
-			OR EXISTS(SELECT 'x' FROM b_disk_simple_right s3 WHERE s3.ACCESS_CODE = 'AU' AND s3.OBJECT_ID = {$columnObjectId})
-		";
+
+		$tableDiskSimpleRight = SimpleRightTable::getTableName();
+		$tableUserAccess = UserAccessTable::getTableName();
+
+		$accessCodeCreator = AccessCodeEnum::CREATOR->value;
+		$accessCodeAuthorizedUser = AccessCodeEnum::AUTHORIZED_USER->value;
+
+		return  <<<SQL
+			EXISTS (
+				SELECT 1
+				FROM $tableDiskSimpleRight simple_right
+				WHERE simple_right.OBJECT_ID = $columnObjectId
+				  AND (
+					  (simple_right.ACCESS_CODE = '$accessCodeCreator' AND $columnCreatedBy = $userId)
+		
+					  OR simple_right.ACCESS_CODE = '$accessCodeAuthorizedUser'
+		
+					  OR simple_right.ACCESS_CODE IN (
+						  SELECT ACCESS_CODE
+						  FROM $tableUserAccess
+						  WHERE USER_ID = $userId
+					  )
+				  )
+			)
+		SQL;
 	}
 }

@@ -58,12 +58,11 @@ class CIntranetUstatOnlineComponent extends UstatOnline
 		$this->checkParams();
 
 		$this->arResult["LIMIT_ONLINE_SECONDS"] = $this->getLimitOnlineSeconds();
-		$this->arResult["IS_FULL_ANIMATION_MODE"] = self::isFullAnimationMode();
-
 		$this->arResult['ONLINE_USERS_ID'] = [];
-		$this->arResult['USERS'] = self::prepareToJson(
-			$this->prepareList()
-		);
+
+		list('count' => $count, 'users' => $users) = $this->prepareList();
+		$this->arResult['USER_COUNT'] = $count;
+		$this->arResult['USERS'] = self::prepareToJson($users);
 
 		$this->checkMaxOnlineOption();
 

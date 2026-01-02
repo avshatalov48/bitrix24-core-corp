@@ -1,5 +1,7 @@
 <?php
 
+declare(strict_types=1);
+
 namespace Bitrix\Booking\Internals\Service\FreeTime;
 
 use Bitrix\Booking\Entity\DateTimeCollection;

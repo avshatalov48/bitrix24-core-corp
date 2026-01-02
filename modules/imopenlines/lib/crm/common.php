@@ -480,7 +480,7 @@ class Common
 		$entityTypeId = \CCrmOwnerType::ResolveID($entityType);
 		$userPermissions = \Bitrix\Crm\Service\Container::getInstance()->getUserPermissions($userId);
 
-		return $userPermissions->checkReadPermissions($entityTypeId, $entityId);
+		return $userPermissions->item()->canRead($entityTypeId, $entityId);
 	}
 
 	/**

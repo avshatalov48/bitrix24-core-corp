@@ -3,6 +3,7 @@ namespace Bitrix\Tasks\Copy\Implement;
 
 use Bitrix\Main\Copy\Container;
 use Bitrix\Tasks\Kanban\TaskStageTable;
+use Exception;
 
 class Stage
 {
@@ -32,17 +33,29 @@ class Stage
 	{
 		$result = [];
 
+		$service = \Bitrix\Tasks\V2\Internal\DI\Container::getInstance()->getTaskStageService();
 		foreach ($stageIds as $oldId => $stageId)
 		{
 			$fields = [
 				"TASK_ID" => $taskId,
 				"STAGE_ID" => $stageId
 			];
-			if (!TaskStageTable::getList(["filter" => $fields])->fetch())
+			try
 			{
-				$addResult = TaskStageTable::add($fields);
-				$result[$oldId] = ($addResult->isSuccess() ? $addResult->getId() : false);
+				if (!TaskStageTable::getList(["filter" => $fields])->fetch())
+				{
+					$result[$oldId] = $service->upsert((int)$taskId, (int)$stageId);
+				}
 			}
+			catch (Exception $e)
+			{
+				$result[$oldId] = false;
+
+				\Bitrix\Tasks\V2\Internal\DI\Container::getInstance()
+					->getLogger()
+					->logError($e);
+			}
+
 		}
 
 		return $result;

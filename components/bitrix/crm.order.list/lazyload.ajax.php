@@ -115,7 +115,7 @@ elseif (isset(
 	$parentEntityId = (int)$filter['ASSOCIATED_ENTITY_ID'];
 	if ($parentEntityTypeId && $parentEntityId)
 	{
-		$isPermitted = Container::getInstance()->getUserPermissions()->checkReadPermissions(
+		$isPermitted = Container::getInstance()->getUserPermissions()->item()->canRead(
 			$parentEntityTypeId,
 			$parentEntityId
 		);

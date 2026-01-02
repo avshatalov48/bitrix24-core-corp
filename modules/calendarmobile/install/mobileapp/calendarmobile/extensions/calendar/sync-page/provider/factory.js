@@ -35,6 +35,7 @@ jn.define('calendar/sync-page/provider/factory', (require, exports, module) => {
 				connected: providerInfo.connected || false,
 				syncOffset: providerInfo.syncOffset,
 				status: providerInfo.status,
+				reconnecting: providerInfo.reconnecting || false,
 			};
 
 			return new SyncProvider(newProps);

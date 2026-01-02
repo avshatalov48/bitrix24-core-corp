@@ -10,6 +10,7 @@ use Bitrix\Sale\Cashbox;
 use Bitrix\SalesCenter\Integration\Bitrix24Manager;
 use Bitrix\SalesCenter\Integration\IntranetManager;
 use Bitrix\SalesCenter\Integration\SaleManager;
+use Bitrix\Main\Application;
 
 /**
  * Class SalesCenterCashboxComponent
@@ -534,6 +535,28 @@ class SalesCenterCashboxComponent extends CBitrixComponent implements Main\Engin
 				'title' => $cashboxSetting['LABEL'],
 				'elements' => [],
 			];
+
+			if (
+				$sectionName === 'VAT'
+				&& Application::getInstance()->getLicense()->getRegion() === 'ru'
+			)
+			{
+				$vat22CashboxCode = match (true)
+				{
+					is_a($this->handler, Cashbox\CashboxAtolFarmV4::class, true),
+					is_a($this->handler, Cashbox\CashboxRobokassa::class, true) => 'vat22',
+					is_a($this->handler, Cashbox\CashboxYooKassa::class, true) => '11',
+					default => null,
+				};
+				if ($vat22CashboxCode)
+				{
+					$section['warning'] = Loc::getMessage(
+						'SC_CASHBOX_FIELDS_VAT_22_WARNING',
+						['#CODE#' => $vat22CashboxCode],
+					);
+				}
+			}
+
 			$isFieldsRequired = (isset($cashboxSetting['REQUIRED']) && $cashboxSetting['REQUIRED'] === 'Y');
 			if (is_array($cashboxSetting['ITEMS']))
 			{

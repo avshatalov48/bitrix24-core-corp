@@ -1,0 +1,55 @@
+.menu-item-plus {
+	position: absolute;
+	left: -18px;
+	top: 0;
+	width: 32px;
+	height: 100%;
+	display: flex;
+	flex-direction: row;
+	align-items: center;
+	justify-content: center;
+	opacity: 0;
+	z-index: 5;
+	cursor: pointer;
+	transition: opacity .2s;
+}
+
+.menu-item-plus-icon {
+	height: 14px;
+	width: 14px;
+	display: flex;
+	flex-direction: row;
+	justify-content: center;
+	align-items: center;
+	background-color: var(--ui-color-design-outline-na-bg);
+	border-radius: var(--ui-border-radius-circle);
+	border: var(--ui-border-width-thin) solid var(--ui-color-design-outline-na-stroke);
+}
+
+.menu-item-plus-icon::before {
+	display: block;
+	content: "";
+	width: 14px;
+	height: 14px;
+	mask-image: url("../images/icons/plus.svg");
+	mask-size: contain;
+	mask-repeat: no-repeat;
+	mask-position: center center;
+	background-color: var(--ui-color-base-2);
+	opacity: 1;
+	transition: opacity .2s;
+}
+
+.menu-collapsed-mode:not(.menu-sliding-mode) .menu-item-plus,
+.menu-items-edit-mode .menu-item-plus,
+.menu-drag-mode .menu-item-plus {
+	display: none;
+}
+
+.menu-item-block:hover .menu-item-plus {
+	opacity: 1;
+}
+
+.menu-item-block .menu-item-plus:hover .menu-item-plus-icon {
+	background-color: color-mix(in srgb, var(--ui-color-design-outline-na-bg) 100%, var(--ui-color-bg-state-hover-default-hex) var(--ui-color-bg-state-hover-default-opacity));
+}

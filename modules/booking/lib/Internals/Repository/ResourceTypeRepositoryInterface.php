@@ -5,14 +5,14 @@ declare(strict_types=1);
 namespace Bitrix\Booking\Internals\Repository;
 
 use Bitrix\Booking\Entity;
-use Bitrix\Main\ORM\Query\Filter\ConditionTree;
+use Bitrix\Booking\Provider\Params\FilterInterface;
 
 interface ResourceTypeRepositoryInterface
 {
 	public function getList(
 		int|null $limit = null,
 		int|null $offset = null,
-		ConditionTree|null $filter = null,
+		FilterInterface|null $filter = null,
 		array|null $sort = null,
 		int|null $userId = null,
 	): Entity\ResourceType\ResourceTypeCollection;

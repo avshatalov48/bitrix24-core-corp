@@ -1,0 +1,1 @@
+{"version":3,"file":"extension.map.js","names":["jn","define","require","exports","module","createEntityAdapter","sliceName","departmentListAdapter"],"sources":["extension.js"],"mappings":"AAGAA,GAAGC,OAAO,sDAAsD,CAACC,EAASC,EAASC,KAClF,MAAMC,oBAAEA,GAAwBH,EAAQ,8BAExC,MAAMI,EAAY,sBAClB,MAAMC,EAAwBF,IAE9BD,EAAOD,QAAU,CAChBG,YACAC,wBACA","ignoreList":[]}

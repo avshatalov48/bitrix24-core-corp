@@ -84,8 +84,8 @@ class Callback extends Controller
 		}
 		else
 		{
-			// Deleting instance was initiated by admins - to recreate instance.
-			SupersetInitializerLogger::logInfo('Superset instance was deleted by admins');
+			// Deleting instance was initiated manually using settings or by admins.
+			SupersetInitializerLogger::logInfo('Superset instance was deleted manually or by admins');
 		}
 
 		SupersetInitializer::setSupersetStatus(SupersetInitializer::SUPERSET_STATUS_DELETED);

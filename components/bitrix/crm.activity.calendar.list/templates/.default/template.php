@@ -1,4 +1,8 @@
 <?php
+
+use Bitrix\Crm\ItemMiniCard\Builder\MiniCardHtmlBuilder;
+use Bitrix\Main\Localization\Loc;
+
 if (!defined('B_PROLOG_INCLUDED') || B_PROLOG_INCLUDED!==true)die();
 
 Bitrix\Main\UI\Extension::load("ui.tooltip");
@@ -106,10 +110,20 @@ function crm_activity_calendar_delete_grid(title, message, btnTitle, path)
 		);
 		if ($arResult['ACTIVITY_ENTITY_LINK'] == 'Y')
 		{
-			$arColumns['ENTITY_TYPE'] = !empty($arCal['ENTITY_TYPE'])? GetMessage('CRM_ENTITY_TYPE_'.$arCal['ENTITY_TYPE']): '';
-			$arColumns['ENTITY_TITLE'] = !empty($arCal['ENTITY_TITLE'])?
-				'<a href="'.$arCal['ENTITY_LINK'].'" bx-tooltip-user-id="'.$arCal['ENTITY_ID'].'" bx-tooltip-loader="'.htmlspecialcharsbx('/bitrix/components/bitrix/crm.'.mb_strtolower($arCal['ENTITY_TYPE']).'.show/card.ajax.php').'" bx-tooltip-classname="crm_balloon'.($arCal['ENTITY_TYPE'] == 'LEAD' || $arCal['ENTITY_TYPE'] == 'DEAL' || $arCal['ENTITY_TYPE'] == 'QUOTE' ? '_no_photo': '_'.mb_strtolower($arCal['ENTITY_TYPE'])).'">'.$arCal['ENTITY_TITLE'].'</a>'
-				: '';
+			$entityTypeId = CCrmOwnerType::ResolveID($arCal['ENTITY_TYPE']);
+			$entityId = (int)$arCal['ENTITY_ID'];
+
+			$arColumns['ENTITY_TYPE'] = !empty($arCal['ENTITY_TYPE'])
+				? Loc::getMessage("CRM_ENTITY_TYPE_{$arCal['ENTITY_TYPE']}")
+				: ''
+			;
+
+			$arColumns['ENTITY_TITLE'] = !empty($arCal['ENTITY_TITLE'])
+				? (new MiniCardHtmlBuilder($entityTypeId, $entityId))
+					->setTitle($arCal['ENTITY_TITLE'])
+					->build()
+				: ''
+			;
 		}
 		else
 		{

@@ -8,6 +8,8 @@ jn.define('bizproc/workflow/starter/catalog-step/view', (require, exports, modul
 	const { PureComponent } = require('layout/pure-component');
 	const { EmptyScreen } = require('layout/ui/empty-screen');
 	const { CatalogStepSkeleton } = require('bizproc/workflow/starter/catalog-step/skeleton');
+	const { Random } = require('utils/random');
+
 	class CatalogStepView extends PureComponent
 	{
 		constructor(props)
@@ -18,7 +20,6 @@ jn.define('bizproc/workflow/starter/catalog-step/view', (require, exports, modul
 			this.templates = this.props.templates || [];
 			this.selectedTemplate = this.props.selectedTemplate || null;
 
-			// eslint-disable-next-line no-undef
 			this.uid = props.uid || Random.getString();
 			this.customEventEmitter = EventEmitter.createWithUid(this.uid);
 

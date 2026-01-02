@@ -25,7 +25,7 @@ final class RestartAutomation extends Base
 		$result = new Result();
 
 		$userPermission = Container::getInstance()->getUserPermissions();
-		if (!$userPermission->canUpdateItem($item))
+		if (!$userPermission->item()->canUpdateItem($item))
 		{
 			return $result->addError(ErrorCode::getAccessDeniedError());
 		}

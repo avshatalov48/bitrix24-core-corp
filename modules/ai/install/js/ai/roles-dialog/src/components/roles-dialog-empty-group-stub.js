@@ -2,8 +2,9 @@ import { mapWritableState } from 'ui.vue3.pinia';
 
 import '../css/roles-dialog-empty-group-stub.css';
 import { type RolesDialogGroupDataEmptyStub } from '../roles-dialog';
-import { Loc, Event, Runtime } from 'main.core';
+import { Loc, Event, Runtime, Extension } from 'main.core';
 import type { AnalyticsOptions } from 'ui.analytics';
+import { UI } from 'ui.notification';
 
 const customDescription = Loc.getMessage('AI_COPILOT_ROLES_EMPTY_CUSTOM_GROUP', {
 	'#LINK#': '<a @click.prevent="openRolesLibrary" href="#">',
@@ -52,6 +53,15 @@ export const getRolesDialogEmptyGroupStubWithStates = (States) => {
 				}
 			},
 			openRolesLibrary() {
+				if (!Extension.getSettings('ai.roles-dialog').get('isLibraryVisible'))
+				{
+					UI.Notification.Center.notify({
+						content: Loc.getMessage('AI_COPILOT_ROLES_LIBRARY_COLLABER_ACCESS_DENIED'),
+					});
+
+					return;
+				}
+
 				if (BX.SidePanel)
 				{
 					this.sendAnalytics();

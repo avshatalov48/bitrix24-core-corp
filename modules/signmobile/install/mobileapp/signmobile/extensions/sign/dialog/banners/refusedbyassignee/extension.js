@@ -55,6 +55,7 @@ jn.define('sign/dialog/banners/refusedbyassignee', (require, exports, module) =>
 				buttonsView: View(
 					{},
 					Button({
+						testId: 'refusedByAssigneeBanner-button-download',
 						text: Loc.getMessage('SIGN_MOBILE_DIALOG_REFUSED_BY_ASSIGNEE_BUTTON_SAVE_TITLE'),
 						size: ButtonSize.XL,
 						design: ButtonDesign.FILLED,
@@ -67,6 +68,7 @@ jn.define('sign/dialog/banners/refusedbyassignee', (require, exports, module) =>
 						},
 					}),
 					Button({
+						testId: 'refusedByAssigneeBanner-button-close',
 						text: Loc.getMessage('SIGN_MOBILE_DIALOG_REFUSED_BY_ASSIGNEE_BUTTON_CLOSE'),
 						size: ButtonSize.XL,
 						design: ButtonDesign.PLAN_ACCENT,

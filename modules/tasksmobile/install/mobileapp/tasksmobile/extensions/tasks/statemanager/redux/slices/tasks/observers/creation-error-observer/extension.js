@@ -2,13 +2,13 @@
  * @module tasks/statemanager/redux/slices/tasks/observers/creation-error-observer
  */
 jn.define('tasks/statemanager/redux/slices/tasks/observers/creation-error-observer', (require, exports, module) => {
-	const { selectEntities } = require('tasks/statemanager/redux/slices/tasks/selector');
+	const { selectTaskEntities } = require('tasks/statemanager/redux/slices/tasks/selector');
 
-	const observeCreationError = (store, onChange) => {
-		let prevTasks = selectEntities(store.getState());
+	const observeCreationError = (store, onChange, { ownerId = env.userId }) => {
+		let prevTasks = selectTaskEntities(store.getState(), ownerId);
 
 		return store.subscribe(() => {
-			const nextTasks = selectEntities(store.getState());
+			const nextTasks = selectTaskEntities(store.getState(), ownerId);
 
 			const { added, removed } = getDiffForCreationErrorObserver(prevTasks, nextTasks);
 			if (added.length > 0 || removed.length > 0)

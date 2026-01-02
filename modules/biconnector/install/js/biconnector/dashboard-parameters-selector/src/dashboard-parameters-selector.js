@@ -1,37 +1,41 @@
 /* eslint-disable operator-linebreak */
 import { Dom, Event, Loc, Tag, Uri } from 'main.core';
 import { BaseEvent, EventEmitter } from 'main.core.events';
-import { TagSelector, Item } from 'ui.entity-selector';
-import { UI } from 'ui.notification';
-import { Button } from 'ui.buttons';
-import { Popup } from 'main.popup';
-import type { Parameter, CheckCompatibilityResult } from './types';
+import { Item, TagItem, TagSelector } from 'ui.entity-selector';
+import type { Parameter, ParameterSelectorParams } from './types';
 import './css/main.css';
 
 export class DashboardParametersSelector
 {
+	#groups: Set<number>;
+	#initialGroups: Set<number>;
 	#scopes: Set<string>;
 	#initialScopes: Set<string>;
 	#params: Set<string>;
 	#initialParams: Set<string>;
-	#scopeParamsMap: {[scopeCode: string]: Array<Parameter>};
+	#scopeParamsMap: {[scopeCode: string]: Parameter[]};
+	#groupSelector: TagSelector;
 	#scopeSelector: TagSelector;
 	#paramsSelector: TagSelector;
 
-	constructor(params)
+	constructor(params: ParameterSelectorParams)
 	{
+		this.#groups = params.groups;
+		this.#initialGroups = new Set(params.groups);
+
 		this.#scopes = params.scopes;
 		this.#initialScopes = new Set(params.scopes);
+
 		this.#params = params.params;
 		this.#initialParams = new Set(params.params);
-		this.#scopeParamsMap = params.scopeParamsMap;
 
-		EventEmitter.subscribe('BIConnector.DashboardParamsSelector:onLoadScope', this.#onLoadScope.bind(this));
+		this.#scopeParamsMap = params.scopeParamsMap;
 	}
 
-	getValues(): {scopes: Set<string>, params: Set<string>}
+	getValues(): { groups: Set<number>, scopes: Set<string>, params: Set<string> }
 	{
 		return {
+			groups: this.#groups,
 			scopes: this.#scopes,
 			params: this.#params,
 		};
@@ -39,10 +43,8 @@ export class DashboardParametersSelector
 
 	getLayout(): HTMLElement
 	{
-		this.#scopeSelector = this.#getScopeSelector();
-
 		const paramsHintText = Loc.getMessage(
-			'DASHBOARD_PARAMS_SELECTOR_PARAMS_HINT',
+			'DASHBOARD_PARAMS_SELECTOR_PARAMS_HINT_MSGVER_2',
 			{
 				'[link]': '<a class="ui-link" onclick="top.BX.Helper.show(`redirect=detail&code=22658454`)">',
 				'[/link]': '</a>',
@@ -53,11 +55,20 @@ export class DashboardParametersSelector
 			<div class="dashboard-params-container">
 				<div class="dashboard-params-title-container">
 					<div class="dashboard-params-title">
+						${Loc.getMessage('DASHBOARD_PARAMS_SELECTOR_GROUPS')}
+						<span data-hint="${Loc.getMessage('DASHBOARD_PARAMS_SELECTOR_GROUPS_HINT')}"></span>
+					</div>
+				</div>
+				<div class="dashboard-params-groups-selector"></div>
+
+				<div class="dashboard-params-title-container">
+					<div class="dashboard-params-title">
 						${Loc.getMessage('DASHBOARD_PARAMS_SELECTOR_SCOPE')}
 						<span data-hint="${Loc.getMessage('DASHBOARD_PARAMS_SELECTOR_SCOPE_HINT')}"></span>
 					</div>
 				</div>
 				<div class="dashboard-params-scope-selector"></div>
+
 				<div class="dashboard-params-title-container">
 					<div>
 						<div class="dashboard-params-title">
@@ -74,12 +85,15 @@ export class DashboardParametersSelector
 		`;
 		BX.UI.Hint.init(container);
 
-		this.#scopeSelector.renderTo(container.querySelector('.dashboard-params-scope-selector'));
+		this.#initGroupSelector();
+		this.#groupSelector.renderTo(container.querySelector('.dashboard-params-groups-selector'));
 
-		// Params selector will be loaded in onLoadScope event handler.
-		const stubParamsSelector = new TagSelector({
-			locked: true,
-		});
+		// Scope selector will be loaded on GroupSelector's onLoadScope event handler.
+		const stubScopeSelector: TagSelector = new TagSelector({ locked: true });
+		stubScopeSelector.renderTo(container.querySelector('.dashboard-params-scope-selector'));
+
+		// Param selector will be loaded on ScopeSelector's onLoadScope event handler.
+		const stubParamsSelector: TagSelector = new TagSelector({ locked: true });
 		stubParamsSelector.renderTo(container.querySelector('.dashboard-params-params-selector'));
 
 		Event.bind(container.querySelector('.dashboard-params-list-link'), 'click', this.#openParamListSlider.bind(this));
@@ -87,19 +101,114 @@ export class DashboardParametersSelector
 		return container;
 	}
 
-	#getScopeSelector(): TagSelector
+	selectGroups(groupIds: number[]): void
+	{
+		for (const groupId: number of groupIds)
+		{
+			const groupItem: ?Item = this.#groupSelector.getDialog().getItem({ id: groupId, entityId: 'biconnector-superset-group' });
+			if (groupItem)
+			{
+				groupItem.select();
+			}
+		}
+	}
+
+	#initGroupSelector(): void
 	{
 		const preselectedItems = [];
+		this.#groups.forEach((groupId: number) => {
+			preselectedItems.push(['biconnector-superset-group', groupId]);
+		});
+
+		const groupSelector: TagSelector = new TagSelector({
+			multiple: true,
+			dialogOptions: {
+				id: 'biconnector-superset-group',
+				context: 'biconnector-superset-group',
+				enableSearch: false,
+				dropdownMode: true,
+				showAvatars: true,
+				compactView: false,
+				dynamicLoad: true,
+				preload: true,
+				width: 383,
+				height: 419,
+				entities: [
+					{
+						id: 'biconnector-superset-group',
+						dynamicLoad: true,
+						options: {},
+					},
+				],
+				preselectedItems,
+				events: {
+					onLoad: () => {
+						this.#initScopeSelector();
+					},
+					'Item:onSelect': (event: BaseEvent) => {
+						const item: Item = event.getData().item;
+						this.#groups.add(item.getId());
+						const groupScopes: string[] = item.getCustomData().get('groupScopes') ?? [];
+						for (const groupScopeCode: string of groupScopes)
+						{
+							const scopeItem: Item = this.#scopeSelector.getDialog().getItem({ id: groupScopeCode, entityId: 'biconnector-superset-scope' });
+							scopeItem.setDeselectable(false);
+							scopeItem.select();
+							const scopeTag: TagItem = this.#scopeSelector.getTag({ id: groupScopeCode, entityId: 'biconnector-superset-scope' });
+							scopeTag.setDeselectable(false);
+							scopeTag.render();
+						}
+						this.#onChange();
+					},
+					'Item:onDeselect': (event: BaseEvent) => {
+						const item: Item = event.getData().item;
+						this.#groups.delete(item.getId());
+						const groupScopes: string[] = item.getCustomData().get('groupScopes') ?? [];
+						for (const groupScopeCode: string of groupScopes)
+						{
+							const scopeItem: Item = this.#scopeSelector.getDialog().getItem({ id: groupScopeCode, entityId: 'biconnector-superset-scope' });
+							scopeItem.setDeselectable(true);
+							scopeItem.deselect();
+						}
+						this.#onChange();
+					},
+				},
+			},
+		});
+		Dom.addClass(groupSelector.getDialog().getContainer(), 'biconnector-settings-entity-selector');
+
+		this.#groupSelector = groupSelector;
+	}
+
+	#initScopeSelector(): void
+	{
+		const groupItems: Item[] = this.#groupSelector.getDialog().getSelectedItems();
+		const groupScopes: Set<string> = new Set();
+		for (const groupItem: Item of groupItems)
+		{
+			for (const groupScope of groupItem.getCustomData().get('groupScopes') ?? [])
+			{
+				groupScopes.add(groupScope);
+			}
+		}
+
+		const preselectedItems = [];
+		const undeselectedItems = [];
 		let hasSelectedAutomatedSolutions = false;
-		this.#scopes.forEach((scope) => {
-			if (scope.startsWith('automated_solution_'))
+		this.#scopes.forEach((scopeCode: string) => {
+			if (scopeCode.startsWith('automated_solution_'))
 			{
 				hasSelectedAutomatedSolutions = true;
 			}
-			preselectedItems.push(['biconnector-superset-scope', scope]);
+
+			if (groupScopes.has(scopeCode))
+			{
+				undeselectedItems.push(['biconnector-superset-scope', scopeCode]);
+			}
+			preselectedItems.push(['biconnector-superset-scope', scopeCode]);
 		});
 
-		const selector = new TagSelector({
+		const scopeSelector: TagSelector = new TagSelector({
 			multiple: true,
 			dialogOptions: {
 				id: 'biconnector-superset-scope',
@@ -120,8 +229,9 @@ export class DashboardParametersSelector
 					},
 				],
 				preselectedItems,
+				undeselectedItems,
 				events: {
-					onLoad: (event) => {
+					onLoad: (event: BaseEvent) => {
 						if (hasSelectedAutomatedSolutions)
 						{
 							const items = event.getTarget()?.getItems();
@@ -129,76 +239,58 @@ export class DashboardParametersSelector
 							const itemNode = automatedSolutionItem.getNodes()?.values()?.next()?.value;
 							itemNode?.setOpen(true);
 						}
-						EventEmitter.emit('BIConnector.DashboardParamsSelector:onLoadScope');
+						this.#initParamsSelector();
 					},
 					'Item:onSelect': (event: BaseEvent) => {
 						const item: Item = event.getData().item;
-						const compatibilityResult = this.#checkParamsCompatibility(item.getId());
-						if (compatibilityResult.paramsToDelete.size > 0 || compatibilityResult.paramsNotToSave.size > 0)
-						{
-							const popup = this.#getCompatibilityPopup(compatibilityResult, item);
-							popup.show();
-						}
-						else
-						{
-							this.#onScopeAdd(compatibilityResult);
-						}
+						this.#onScopeSelect(item);
 					},
 				},
 			},
 			events: {
-				onBeforeTagAdd: (event) => {
+				onBeforeTagAdd: (event: BaseEvent) => {
 					const { tag } = event.getData();
 					this.#scopes.add(tag.getId());
 					this.#onChange();
 				},
-				onBeforeTagRemove: (event) => {
+				onBeforeTagRemove: (event: BaseEvent) => {
 					const { tag } = event.getData();
 					this.#scopes.delete(tag.getId());
 					this.#onChange();
 				},
-				onAfterTagRemove: () => {
-					this.#onScopeRemove();
+				onAfterTagRemove: (event: BaseEvent) => {
+					const { tag } = event.getData();
+					this.#onScopeRemove(tag.getId());
 				},
 			},
 		});
-		Dom.addClass(selector.getDialog().getContainer(), 'biconnector-settings-scope-selector');
+		Dom.addClass(scopeSelector.getDialog().getContainer(), 'biconnector-settings-entity-selector');
+		Dom.clean(document.querySelector('.dashboard-params-scope-selector'));
+		scopeSelector.renderTo(document.querySelector('.dashboard-params-scope-selector'));
 
-		return selector;
+		this.#scopeSelector = scopeSelector;
 	}
 
-	#onLoadScope(): void
-	{
-		this.#paramsSelector = this.#getParamsSelector();
-		Dom.clean(document.querySelector('.dashboard-params-params-selector'));
-		this.#paramsSelector.renderTo(document.querySelector('.dashboard-params-params-selector'));
-	}
-
-	#getParamsSelector(): TagSelector
+	#initParamsSelector(): void
 	{
 		const items = [];
-		const availableParams = this.#getAvailableParamsByScope(this.#scopes);
-		this.#scopes.forEach((scope) => {
-			const scopeParams = this.#scopeParamsMap[scope] ?? [];
+		this.#scopes.forEach((scopeCode: string) => {
+			const scopeParams: Parameter[] = this.#scopeParamsMap[scopeCode] ?? [];
 			scopeParams.forEach((param: Parameter) => {
-				const itemTitle = this.#getItemTitle(param.code);
-				const isAvailable = availableParams.has(param.code);
+				const itemTitle = this.#getParamTitle(param.code);
 				items.push({
 					id: param.code,
 					entityId: 'biconnector-superset-params',
 					title: itemTitle.title,
 					supertitle: itemTitle.supertitle,
 					tabs: 'params',
-					customData: {
-						isAvailable,
-					},
-					textColor: isAvailable ? '#535C69' : '#B0B6BB',
+					textColor: '#535C69',
 				});
 			});
 		});
 
-		this.#scopeParamsMap.global.forEach((param) => {
-			const itemTitle = this.#getItemTitle(param.code);
+		this.#scopeParamsMap.global.forEach((param: Parameter) => {
+			const itemTitle = this.#getParamTitle(param.code);
 			items.push({
 				id: param.code,
 				entityId: 'biconnector-superset-params',
@@ -210,18 +302,18 @@ export class DashboardParametersSelector
 
 		const preselectedItems = [];
 		const tagItems = [];
-		this.#params.forEach((param) => {
-			preselectedItems.push(['biconnector-superset-params', param.code]);
-			const itemTitle = this.#getItemTitle(param);
+		this.#params.forEach((paramCode: string) => {
+			preselectedItems.push(['biconnector-superset-params', paramCode]);
+			const itemTitle = this.#getParamTitle(paramCode);
 			tagItems.push({
-				id: param,
+				id: paramCode,
 				entityId: 'biconnector-superset-params',
 				title: itemTitle.title,
 				supertitle: itemTitle.supertitle,
 			});
 		});
 
-		return new TagSelector({
+		const paramSelector: TagSelector = new TagSelector({
 			id: 'biconnector-superset-params',
 			multiple: true,
 			items: tagItems,
@@ -244,296 +336,74 @@ export class DashboardParametersSelector
 					id: 'params',
 					title: 'params',
 				}],
-				events: {
-					'Item:onBeforeSelect': (event: BaseEvent) => {
-						const item: Item = event.getData().item;
-						if (item.getCustomData().get('isAvailable') === false)
-						{
-							UI.Notification.Center.notify({
-								content: Loc.getMessage('DASHBOARD_PARAMS_SELECTOR_PARAMS_UNAVAILABLE'),
-							});
-							event.preventDefault();
-						}
-					},
-				},
 			},
 			events: {
-				onBeforeTagAdd: (event) => {
+				onBeforeTagAdd: (event: BaseEvent) => {
 					const { tag } = event.getData();
 					this.#params.add(tag.getId());
 					this.#onChange();
 				},
-				onBeforeTagRemove: (event) => {
+				onBeforeTagRemove: (event: BaseEvent) => {
 					const { tag } = event.getData();
 					this.#params.delete(tag.getId());
 					this.#onChange();
 				},
 			},
 		});
+
+		Dom.addClass(paramSelector.getDialog().getContainer(), 'biconnector-settings-entity-selector');
+		Dom.clean(document.querySelector('.dashboard-params-params-selector'));
+		paramSelector.renderTo(document.querySelector('.dashboard-params-params-selector'));
+
+		this.#paramsSelector = paramSelector;
+
+		EventEmitter.emit('BIConnector.DashboardParamsSelector:initCompleted');
 	}
 
-	#checkParamsCompatibility(addedScope: string): CheckCompatibilityResult
+	#onScopeSelect(scopeItem: Item): void
 	{
-		const newParamCodes = new Set();
-		const newParams = this.#scopeParamsMap[addedScope] ?? [];
-		newParams.forEach((param: Parameter) => newParamCodes.add(param.code));
-
-		if (this.#scopes.size === 0)
-		{
-			return {
-				paramsToDelete: new Set(),
-				paramsToSave: newParamCodes,
-				paramsNotToSave: new Set(),
-				intersection: new Set(),
-			};
-		}
-
-		// Intersection of previously selected scopes
-		const firstScope = this.#scopes.values().next().value;
-		let availableParamsWithOldScopes = new Set(
-			(this.#scopeParamsMap[firstScope] ?? []).map((item: Parameter) => item.code) ?? [],
-		);
-		this.#scopes.forEach((scope) => {
-			const scopeParams = new Set(
-				(this.#scopeParamsMap[scope] ?? []).map((item: Parameter) => item.code) ?? [],
-			);
-			availableParamsWithOldScopes = this.#getIntersection(availableParamsWithOldScopes, scopeParams);
-		});
-
-		const intersection = this.#getIntersection(availableParamsWithOldScopes, newParamCodes);
-		const currentParamCodes = this.#params;
-		const globalParams = this.#getGlobalParamsCodes();
-
-		// Don't delete and save global params even if they are not in the intersection.
-		const paramsToDelete = this.#getDifference(currentParamCodes, intersection, globalParams);
-		const paramsToSave = this.#getUnion(
-			this.#getDifference(intersection, currentParamCodes),
-			this.#getIntersection(newParamCodes, globalParams),
-		);
-		const paramsNotToSave = this.#getDifference(newParamCodes, intersection, globalParams);
-
-		return {
-			paramsToDelete,
-			paramsToSave,
-			paramsNotToSave,
-			intersection,
-		};
-	}
-
-	#getCompatibilityPopup(compatibilityResult: CheckCompatibilityResult, selectedScope: Item): Popup
-	{
-		let paramsToDeleteText = null;
-		if (compatibilityResult.paramsToDelete.size > 0)
-		{
-			const paramsToDeleteNames = [];
-			compatibilityResult.paramsToDelete.forEach((param) => paramsToDeleteNames.push(this.#getItemTitle(param).title));
-
-			paramsToDeleteText = Tag.render`
-				<li>
-					${Loc.getMessagePlural(
-						'DASHBOARD_PARAMS_SELECTOR_PARAMS_COMPATIBILITY_POPUP_PARAMS_TO_DELETE',
-						paramsToDeleteNames.length,
-						{ '#PARAMS_TO_DELETE#': paramsToDeleteNames.join(', ') },
-					)}
-				</li>
-			`;
-		}
-
-		let paramsNotToSaveText = null;
-		if (compatibilityResult.paramsNotToSave.size > 0)
-		{
-			const paramsNotToSaveNames = [];
-			compatibilityResult.paramsNotToSave.forEach(
-				(param) => paramsNotToSaveNames.push(this.#getItemTitle(param).title),
-			);
-			paramsNotToSaveText = Tag.render`
-				<li>
-					${Loc.getMessagePlural(
-						'DASHBOARD_PARAMS_SELECTOR_PARAMS_COMPATIBILITY_POPUP_PARAMS_NOT_TO_SAVE',
-						paramsNotToSaveNames.length,
-						{ '#PARAMS_NOT_TO_SAVE#': paramsNotToSaveNames.join(', ') },
-					)}
-				</li>
-			`;
-		}
-
-		const content = Tag.render`
-			<div class="compatibility-params">
-				<div class="compatibility-params-title">
-					${Loc.getMessage('DASHBOARD_PARAMS_SELECTOR_PARAMS_COMPATIBILITY_POPUP_TITLE')}
-				</div>
-				<div class="compatibility-params-content">
-					${Loc.getMessage('DASHBOARD_PARAMS_SELECTOR_PARAMS_COMPATIBILITY_POPUP_CONTENT')}
-					<ul>
-						${paramsToDeleteText}
-						${paramsNotToSaveText}
-					</ul>
-				</div>
-			</div>
-		`;
-
-		const popup = new Popup({
-			width: 330,
-			padding: 14,
-			overlay: true,
-			cacheable: false,
-			content,
-			buttons: [
-				new Button({
-					text: Loc.getMessage('DASHBOARD_PARAMS_SELECTOR_PARAMS_COMPATIBILITY_POPUP_BUTTON_CANCEL'),
-					color: Button.Color.PRIMARY,
-					onclick: () => {
-						selectedScope.deselect();
-						popup.close();
-					},
-				}),
-				new Button({
-					text: Loc.getMessage('DASHBOARD_PARAMS_SELECTOR_PARAMS_COMPATIBILITY_POPUP_BUTTON_CONFIRM'),
-					color: Button.Color.LIGHT_BORDER,
-					onclick: () => {
-						popup.close();
-						selectedScope.select(true);
-						this.#onScopeAdd(compatibilityResult);
-					},
-				}),
-			],
-		});
-
-		return popup;
-	}
-
-	#onScopeAdd(compatibilityResult: CheckCompatibilityResult): void
-	{
-		const dialogItems = this.#paramsSelector.getDialog().getItems();
-		const availableParams = this.#getAvailableParamsByScope(this.#scopes);
-
-		dialogItems.forEach((item: Item) => {
-			if (
-				compatibilityResult.paramsToDelete.has(item.getId())
-				|| !availableParams.has(item.getId())
-			)
-			{
-				item.deselect();
-				item.setTextColor('#B0B6BB');
-				item.customData.set('isAvailable', false);
-			}
-		});
-
-		[...compatibilityResult.paramsToSave.values()].forEach((param) => {
-			const item = this.#paramsSelector.getDialog().getItem(['biconnector-superset-params', param]);
+		const params: Parameter[] = this.#scopeParamsMap[scopeItem.getId()] ?? [];
+		params.forEach((param: Parameter) => {
+			const item: ?Item = this.#paramsSelector.getDialog().getItem(['biconnector-superset-params', param.code]);
 			if (item)
 			{
-				item.customData.set('isAvailable', true);
-				item.setTextColor('#535C69');
 				item.select(true);
 			}
 			else
 			{
-				const itemText = this.#getItemTitle(param);
 				this.#paramsSelector.getDialog().addItem({
-					id: param,
-					title: itemText.title,
+					id: param.code,
+					title: param.title,
 					entityId: 'biconnector-superset-params',
-					supertitle: itemText.supertitle,
+					supertitle: this.#getParamTitle(param.code).supertitle,
 					tabs: 'params',
 					selected: true,
 				});
 			}
 		});
+	}
 
-		[...compatibilityResult.paramsNotToSave.values()].forEach((param) => {
-			const itemText = this.#getItemTitle(param);
-			this.#paramsSelector.getDialog().addItem({
-				id: param,
-				title: itemText.title,
-				entityId: 'biconnector-superset-params',
-				supertitle: itemText.supertitle,
-				tabs: 'params',
-				textColor: '#B0B6BB',
-				customData: {
-					isAvailable: false,
-				},
+	#onScopeRemove(scopeCode: string): void
+	{
+		const params: Parameter[] = this.#scopeParamsMap[scopeCode] ?? [];
+		const dialogItems: Item[] = this.#paramsSelector.getDialog().getItems();
+		params.forEach((param: Parameter) => {
+			dialogItems.forEach((item: Item) => {
+				if (item.getId() === param.code)
+				{
+					item.deselect();
+					this.#paramsSelector.getDialog().removeItem(item);
+				}
 			});
 		});
 	}
 
-	#onScopeRemove()
+	#getParamTitle(paramCode: string): { title: string, supertitle: string }
 	{
-		const availableParams = this.#getAvailableParamsByScope(this.#scopes);
+		let paramTitle: string = paramCode;
+		const paramScopes: Set<string> = new Set();
 
-		[...availableParams.values()].forEach((param) => {
-			const item = this.#paramsSelector.getDialog().getItem(['biconnector-superset-params', param]);
-			if (item)
-			{
-				item.customData.set('isAvailable', true);
-				item.setTextColor('#535C69');
-			}
-			else
-			{
-				const itemText = this.#getItemTitle(param);
-				this.#paramsSelector.getDialog().addItem({
-					id: param,
-					title: itemText.title,
-					entityId: 'biconnector-superset-params',
-					supertitle: itemText.supertitle,
-					tabs: 'params',
-				});
-			}
-		});
-
-		const dialogItems = this.#paramsSelector.getDialog().getItems();
-		dialogItems.forEach((item: Item) => {
-			if (!availableParams.has(item.getId()))
-			{
-				item.deselect();
-				this.#paramsSelector.getDialog().removeItem(item);
-			}
-		});
-	}
-
-	#getAvailableParamsByScope(scopes: Set): Set
-	{
-		const globalParamsCodes = this.#getGlobalParamsCodes();
-		if (scopes.size === 0)
-		{
-			return globalParamsCodes;
-		}
-
-		let availableParams: ?Set = null;
-		scopes.forEach((scope) => {
-			if (availableParams === null)
-			{
-				availableParams = new Set((this.#scopeParamsMap[scope] ?? []).map((item) => item.code));
-			}
-			else
-			{
-				availableParams = this.#getIntersection(
-					availableParams,
-					new Set((this.#scopeParamsMap[scope] ?? []).map((item) => item.code)),
-				);
-			}
-		});
-
-		[...globalParamsCodes.values()].forEach((globalParam) => availableParams.add(globalParam));
-
-		return availableParams;
-	}
-
-	#getGlobalParamsCodes(): Set<string>
-	{
-		const result = [];
-		const globalParams = this.#scopeParamsMap.global ?? [];
-		globalParams.forEach((param: Parameter) => result.push(param.code));
-
-		return new Set(result);
-	}
-
-	#getItemTitle(paramCode: string): {title: string, supertitle: string}
-	{
-		let paramTitle = paramCode;
-		const paramScopes = new Set();
-
-		this.#scopeParamsMap.global.forEach((mapParam) => {
+		this.#scopeParamsMap.global.forEach((mapParam: Parameter) => {
 			if (paramCode === mapParam.code)
 			{
 				paramTitle = mapParam.title;
@@ -541,21 +411,21 @@ export class DashboardParametersSelector
 			}
 		});
 
-		Object.keys(this.#scopeParamsMap).forEach((scope) => {
-			(this.#scopeParamsMap[scope] ?? []).forEach((mapParam) => {
+		Object.keys(this.#scopeParamsMap).forEach((scopeCode: string) => {
+			(this.#scopeParamsMap[scopeCode] ?? []).forEach((mapParam) => {
 				if (paramCode === mapParam.code)
 				{
 					paramTitle = mapParam.title;
 					if (!paramScopes.has('global'))
 					{
-						paramScopes.add(scope);
+						paramScopes.add(scopeCode);
 					}
 				}
 			});
 		});
 
 		const scopeNames = [];
-		this.#scopeSelector.getDialog().getItems().forEach((scopeItem) => {
+		this.#scopeSelector.getDialog().getItems().forEach((scopeItem: Item) => {
 			if (paramScopes.has(scopeItem.getId()))
 			{
 				scopeNames.push(scopeItem.getTitle());
@@ -573,24 +443,29 @@ export class DashboardParametersSelector
 		};
 	}
 
-	#onChange()
+	#onChange(): void
 	{
-		const isScopeChanged =
+		const isGroupsChanged: boolean =
+			this.#groups.size !== this.#initialGroups.size
+			|| [...this.#groups].some((groupId: number) => !this.#initialGroups.has(groupId))
+		;
+
+		const isScopeChanged: boolean =
 			this.#scopes.size !== this.#initialScopes.size
-			|| [...this.#scopes].some((scope) => !this.#initialScopes.has(scope))
+			|| [...this.#scopes].some((scopeCode: string) => !this.#initialScopes.has(scopeCode))
 		;
 
-		const isParamsChanged =
+		const isParamsChanged: boolean =
 			this.#params.size !== this.#initialParams.size
-			|| [...this.#params].some((param) => !this.#initialParams.has(param))
+			|| [...this.#params].some((paramCode: string) => !this.#initialParams.has(paramCode))
 		;
 
-		const isChanged = isScopeChanged || isParamsChanged;
+		const isChanged: boolean = isScopeChanged || isParamsChanged || isGroupsChanged;
 
 		EventEmitter.emit('BIConnector.DashboardParamsSelector:onChange', { isChanged });
 	}
 
-	#openParamListSlider()
+	#openParamListSlider(): void
 	{
 		const componentLink = '/bitrix/components/bitrix/biconnector.apachesuperset.dashboard.url.parameter.list/slider.php';
 		const sliderLink = new Uri(componentLink);
@@ -602,71 +477,5 @@ export class DashboardParametersSelector
 				allowChangeHistory: false,
 			},
 		);
-	}
-
-	/**
-	 * Returns set of elements which are both in set1 and set2.
-	 * @param set1
-	 * @param set2
-	 * @returns Set
-	 */
-	#getIntersection(set1: Set, set2: Set): Set
-	{
-		const result = new Set();
-		set1.forEach((item) => {
-			if (set2.has(item))
-			{
-				result.add(item);
-			}
-		});
-
-		return result;
-	}
-
-	/**
-	 * Returns set of elements which are contained in set1 but not contained in set2 and set3.
-	 * @param set1
-	 * @param set2
-	 * @param set3
-	 * @returns Set
-	 */
-	#getDifference(set1: Set, set2: Set, set3: ?Set): Set
-	{
-		const result = new Set();
-		set1.forEach((item) => {
-			if (!set2.has(item))
-			{
-				if (!set3)
-				{
-					result.add(item);
-				}
-				else if (set3 && !set3.has(item))
-				// eslint-disable-next-line sonarjs/no-duplicated-branches
-				{
-					result.add(item);
-				}
-			}
-		});
-
-		return result;
-	}
-
-	/**
-	 * Returns summary of elements in set1 and set2.
-	 * @param set1
-	 * @param set2
-	 * @returns Set
-	 */
-	#getUnion(set1: Set, set2: Set): Set
-	{
-		const result = new Set();
-		set1.forEach((item) => {
-			result.add(item);
-		});
-		set2.forEach((item) => {
-			result.add(item);
-		});
-
-		return result;
 	}
 }

@@ -5,7 +5,9 @@ namespace Bitrix\BIConnector\Integration\UI\EntitySelector;
 use Bitrix\BIConnector\Access\AccessController;
 use Bitrix\BIConnector\Access\ActionDictionary;
 use Bitrix\BIConnector\ExternalSource\Internal\EO_ExternalSource;
+use Bitrix\BIConnector\ExternalSource\Internal\ExternalSourceRestTable;
 use Bitrix\BIConnector\ExternalSource\Internal\ExternalSourceTable;
+use Bitrix\BIConnector\ExternalSource\Type;
 use Bitrix\Main\Localization\Loc;
 use Bitrix\UI\EntitySelector\BaseProvider;
 use Bitrix\UI\EntitySelector\Dialog;
@@ -84,12 +86,22 @@ class ExternalConnectionProvider extends BaseProvider
 
 	private function makeItem(EO_ExternalSource $source): Item
 	{
+		$avatar = "/bitrix/images/biconnector/database-connections/{$source->getType()}.svg";
+		if ($source->getType() === Type::Rest->value)
+		{
+			$restSourceAvatars = self::loadRestIcons();
+			if (!empty($restSourceAvatars[$source->getId()]))
+			{
+				$avatar = $restSourceAvatars[$source->getId()];
+			}
+		}
+
 		$itemParams = [
 			'id' => $source->getId(),
 			'entityId' => self::ENTITY_ID,
 			'title' => $source->getTitle(),
 			'tabs' => 'connections',
-			'avatar' => "/bitrix/images/biconnector/database-connections/{$source->getType()}.svg",
+			'avatar' => $avatar,
 			'link' => "/bitrix/components/bitrix/biconnector.externalconnection/slider.php?sourceId={$source->getId()}",
 			'linkTitle' => Loc::getMessage('EXTERNAL_CONNECTION_PROVIDER_LINK_TEXT'),
 			'customData' => [
@@ -98,5 +110,29 @@ class ExternalConnectionProvider extends BaseProvider
 		];
 
 		return new Item($itemParams);
+	}
+
+	private static function loadRestIcons(): array
+	{
+		static $icons = null;
+		if ($icons)
+		{
+			return $icons;
+		}
+
+		$icons = [];
+		$sources = ExternalSourceRestTable::getList([
+			'select' => [
+				'SOURCE_ID',
+				'LOGO' => 'CONNECTOR.LOGO'
+			],
+		]);
+
+		while ($source = $sources->fetch())
+		{
+			$icons[$source['SOURCE_ID']] = $source['LOGO'];
+		}
+
+		return $icons;
 	}
 }

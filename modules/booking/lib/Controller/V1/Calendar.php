@@ -4,12 +4,15 @@ declare(strict_types=1);
 
 namespace Bitrix\Booking\Controller\V1;
 
+use Bitrix\Booking\Controller\V1\Response\CalendarGetBookingsDatesCountResponse;
 use Bitrix\Booking\Controller\V1\Response\CalendarGetResourceOccupationResponse;
 use Bitrix\Booking\Controller\V1\Response\CalendarGetBookingsDatesResponse;
 use Bitrix\Booking\Entity\Booking\BookingCollection;
 use Bitrix\Booking\Entity\DatePeriod;
 use Bitrix\Booking\Entity\DateTimeCollection;
 use Bitrix\Booking\Entity\Resource\ResourceCollection;
+use Bitrix\Booking\Internals\Container;
+use Bitrix\Booking\Internals\Repository\BookingRepositoryInterface;
 use Bitrix\Booking\Provider\BookingProvider;
 use Bitrix\Booking\Provider\Params\Booking\BookingFilter;
 use Bitrix\Booking\Provider\Params\Booking\BookingSelect;
@@ -23,10 +26,12 @@ use Bitrix\Main\Request;
 use DateTimeImmutable;
 use DateInterval;
 use DateTimeZone;
+use Bitrix\Main\ORM\Fields\ExpressionField;
 
 class Calendar extends BaseController
 {
 	private BookingProvider $bookingProvider;
+	private BookingRepositoryInterface $bookingRepository;
 	private ResourceProvider $resourceProvider;
 
 	public function __construct(Request $request = null)
@@ -34,6 +39,7 @@ class Calendar extends BaseController
 		parent::__construct($request);
 
 		$this->bookingProvider = new BookingProvider();
+		$this->bookingRepository = Container::getBookingRepository();
 		$this->resourceProvider = new ResourceProvider();
 	}
 
@@ -48,18 +54,28 @@ class Calendar extends BaseController
 		$dateFrom = (new DateTimeImmutable('@' . $dateFromTs))->setTimezone(new DateTimeZone($timezone));
 		$dateTo = (new DateTimeImmutable('@' . $dateToTs))->setTimezone(new DateTimeZone($timezone));
 
-		$resourceCollection = $this->getResourceCollection($resources, $userId);
+		$resourceCollections = [];
+		foreach ($resources as $resourceIds)
+		{
+			$resourceCollections[] = $this->resourceProvider->getList(
+				gridParams: new GridParams(
+					filter: new ResourceFilter(['ID' => $resourceIds],
+					),
+				),
+				userId: $userId,
+			);
+		}
 
 		$multiResourceEachDayFirstOccurrenceResponse = (new TimeProvider())
 			->getMultiResourceEachDayFirstOccurrence(
-				resourceCollections: [$resourceCollection],
+				resourceCollections: $resourceCollections,
 				eventCollection:
-				(empty($resourceCollection->isEmpty()))
+				empty($resourceIds)
 					? new Entity\Booking\BookingCollection()
 					: $this->bookingProvider->getList(
 					gridParams: new GridParams(
 						filter: new BookingFilter([
-							'RESOURCE_ID' => $this->getAllResourceIds([$resourceCollection]),
+							'RESOURCE_ID' => $this->getAllResourceIds($resourceCollections),
 							'WITHIN' => [
 								'DATE_FROM' => $dateFrom->getTimestamp(),
 								'DATE_TO' => $dateTo->getTimestamp(),
@@ -99,7 +115,6 @@ class Calendar extends BaseController
 				bookingCollection: $bookings,
 				dateFrom: $dateFrom,
 				dateTo: $dateTo,
-				withCounters: false,
 			),
 			foundDatesWithCounters: $this->getBookingsDates(
 				bookingCollection: $bookings,
@@ -107,6 +122,53 @@ class Calendar extends BaseController
 				dateTo: $dateTo,
 				withCounters: true,
 			),
+		);
+	}
+
+	public function getBookingsDatesCountAction(
+		string $timezone,
+		array $filter = []
+	): CalendarGetBookingsDatesCountResponse
+	{
+		$countRow = $this->bookingRepository
+			->getQuery(new BookingFilter($filter))
+			->setSelect([
+				'CNT',
+				'MIN_DATE_FROM',
+				'MAX_DATE_FROM',
+			])
+			->registerRuntimeField(
+				new ExpressionField('CNT', 'COUNT(*)')
+			)
+			->registerRuntimeField(
+				new ExpressionField('MIN_DATE_FROM', 'MIN(DATE_FROM)')
+			)
+			->registerRuntimeField(
+				new ExpressionField('MAX_DATE_FROM', 'MAX(DATE_FROM)')
+			)
+			->fetch()
+		;
+
+		$minDate =
+			$countRow['MIN_DATE_FROM'] === null
+				? null
+				: (new DateTimeImmutable('@' . $countRow['MIN_DATE_FROM']))
+				->setTimezone(new DateTimeZone($timezone))
+				->format('Y-m-d')
+		;
+
+		$maxDate =
+			$countRow['MAX_DATE_FROM'] === null
+				? null
+				: (new DateTimeImmutable('@' . $countRow['MAX_DATE_FROM']))
+				->setTimezone(new DateTimeZone($timezone))
+				->format('Y-m-d')
+		;
+
+		return new CalendarGetBookingsDatesCountResponse(
+			count: (int)$countRow['CNT'],
+			minDate: $minDate,
+			maxDate: $maxDate,
 		);
 	}
 
@@ -196,32 +258,5 @@ class Calendar extends BaseController
 		}
 
 		return array_unique($result);
-	}
-
-	private function getResourceCollection(array $resources, int $userId): ResourceCollection
-	{
-		$resourceIdsToSelect = [];
-
-		foreach ($resources as $resourceIds)
-		{
-			foreach ($resourceIds as $resourceId)
-			{
-				$resourceIdsToSelect[] = $resourceId;
-			}
-		}
-
-		if (!empty($resourceIdsToSelect))
-		{
-			return $this->resourceProvider->getList(
-				gridParams: new GridParams(
-					filter: new ResourceFilter([
-						'ID' => $resourceIdsToSelect],
-					),
-				),
-				userId: $userId,
-			);
-		}
-
-		return new ResourceCollection(...[]);
 	}
 }

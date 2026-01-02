@@ -110,3 +110,7 @@ input#field-DEAL_STAGE-9 { font-style: italic; }
 	border-radius: var(--ui-border-radius-xs, 3px);
 	padding: 15px;
 }
+
+.crm-container {
+	position: relative;
+}

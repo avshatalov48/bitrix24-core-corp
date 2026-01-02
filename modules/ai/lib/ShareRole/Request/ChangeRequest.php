@@ -17,16 +17,6 @@ class ChangeRequest extends CreateRequest
 		$dto = parent::getObjectWithData();
 		$dto->roleCode = $this->getString('roleCode');
 
-		if (empty($dto->roleAvatarFile))
-		{
-			$imagePath = $this->getString('roleAvatarUrl');
-			$dto->roleAvatarPaths = [
-				'small' => $imagePath,
-				'medium' => $imagePath,
-				'large' => $imagePath,
-			];
-		}
-
 		$this->baseValidator->strRequire($dto->roleCode, 'roleCode');
 
 		$dto->roleId = $this->roleValidator->getRoleIdNotSystemByCode($dto->roleCode, 'roleCode');

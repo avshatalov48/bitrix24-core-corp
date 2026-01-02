@@ -25,11 +25,11 @@ if (!empty($arResult['BUTTONS']))
 	$template = 'type2';
 	if($type === 'list')
 	{
-		$template = SITE_TEMPLATE_ID === 'bitrix24' ? 'title' : '';
+		$template = 'title';
 	}
 	else if($type === 'details')
 	{
-		$template = SITE_TEMPLATE_ID === 'bitrix24' ? 'slider' : 'type2';
+		$template = 'slider';
 	}
 
 	if ($arParams['TYPE'] === 'show' && \Bitrix\Main\Loader::includeModule('intranet'))
@@ -49,7 +49,7 @@ if (!empty($arResult['BUTTONS']))
 		?><script>
 		BX.ready(function() {
 			var intranetBindingBtn = document.querySelector('.intranet-binding-menu-btn');
-			var quoteToolbar = BX('toolbar_quote_show_1');
+			var quoteToolbar = document.querySelector('[data-role="crm-interface-toolbar-type2"]');
 
 			if (quoteToolbar && intranetBindingBtn)
 			{

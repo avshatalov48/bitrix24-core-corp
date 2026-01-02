@@ -19,7 +19,7 @@ class Http
 		ERROR_ANSWER = 'ANSWER_MALFORMED';
 
 	private const SERVICE_MAP = [
-		'ru' => 'https://marta.bitrix.info/json/',
+		'ru' => 'https://marta.bitrix24.tech/json/',
 		'eu' => 'https://marta-eu.bitrix.info/json/',
 	];
 
@@ -72,14 +72,11 @@ class Http
 		}
 		else
 		{
-			if (in_array($region, ['ru', 'by', 'kz'], true))
+			$serviceEndpoint = match ($region)
 			{
-				$serviceEndpoint = self::SERVICE_MAP['ru'];
-			}
-			else
-			{
-				$serviceEndpoint = self::SERVICE_MAP['eu'];
-			}
+				'ru','by','kz','am','az','ge','kg','uz' => self::SERVICE_MAP['ru'],
+				default => self::SERVICE_MAP['eu'],
+			};
 		}
 
 		return $serviceEndpoint;
@@ -240,6 +237,11 @@ class Http
 						'errorStack' => $errors,
 					]
 				];
+
+				$errors[] = 'url:'.$this->controllerUrl;
+				$errors[] = 'command:'.$command;
+				$systemException = new \Bitrix\Main\SystemException('Network connection error: '.implode('; ', $errors));
+				\Bitrix\Main\Application::getInstance()->getExceptionHandler()->writeToLog($systemException);
 			}
 		}
 		elseif ($waitResponse)

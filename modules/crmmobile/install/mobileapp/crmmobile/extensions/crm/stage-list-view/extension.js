@@ -2,7 +2,6 @@
  * @module crm/stage-list-view
  */
 jn.define('crm/stage-list-view', (require, exports, module) => {
-	const AppTheme = require('apptheme');
 	const { Alert } = require('alert');
 	const { Loc } = require('loc');
 	const { StageListView, StageSelectActions } = require('layout/ui/stage-list-view');

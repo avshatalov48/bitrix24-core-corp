@@ -1,0 +1,20 @@
+<?php
+$MESS["CRM_AUTOMATED_SOLUTION_DETAILS_CARD_CLOSE_TITLE"] = "Мәлімдемені жасыру";
+$MESS["CRM_AUTOMATED_SOLUTION_DETAILS_CARD_COMMON_DESCRIPTION"] = "Автоматтандыру және теңшеу мүмкіндігі бар бөлімге арналған арнайы жұмыс кеңістігі-мысалы, HR департаменті. Жылдам қол жеткізу үшін барлық жұмыс орындары сол жақ мәзірде пайда болады";
+$MESS["CRM_AUTOMATED_SOLUTION_DETAILS_CARD_COMMON_TITLE"] = "Сандық жұмыс орны";
+$MESS["CRM_AUTOMATED_SOLUTION_DETAILS_CARD_TYPES_DESCRIPTION"] = "Цифрлық жұмыс орындары үшін құрылыс блоктары Олар Үміткерлер немесе Түйіндемелер сияқты арнайы элементтерді жасауға және олардың қарым-қатынастарын басқаруға мүмкіндік береді. Ақылды процестер жұмыс орнының жоғарғы мәзірінде пайда болады";
+$MESS["CRM_AUTOMATED_SOLUTION_DETAILS_CARD_TYPES_TITLE"] = "Смарт-процестер";
+$MESS["CRM_AUTOMATED_SOLUTION_DETAILS_FIELD_LABEL_CREATE_TYPE"] = "Жаңа смарт-процесс жасау";
+$MESS["CRM_AUTOMATED_SOLUTION_DETAILS_FIELD_LABEL_CRM_TYPES"] = "CRM-мен байланысты смарт-процессті тасымалдау";
+$MESS["CRM_AUTOMATED_SOLUTION_DETAILS_FIELD_LABEL_EXTERNAL_TYPES"] = "Жұмыс орындарымен байланысты смарт-процессті тасымалдау";
+$MESS["CRM_AUTOMATED_SOLUTION_DETAILS_FIELD_LABEL_TITLE"] = "Жұмыс орнының атауы";
+$MESS["CRM_AUTOMATED_SOLUTION_DETAILS_FIELD_PLACEHOLDER_TITLE"] = "Мысалы, HR-департамент";
+$MESS["CRM_AUTOMATED_SOLUTION_DETAILS_NEED_SAVE_POPUP_MESSAGE"] = "Смарт-процессті жасауғ өту үшін жұмыс орнын сақтаңыз";
+$MESS["CRM_AUTOMATED_SOLUTION_DETAILS_NEED_SAVE_POPUP_YES_CAPTION"] = "Сақтау";
+$MESS["CRM_AUTOMATED_SOLUTION_DETAILS_PERMISSIONS_WILL_BE_RESET_ALERT"] = "Бұл смарт-процестерге кіру құқықтарын қайта баптау қажет болады";
+$MESS["CRM_AUTOMATED_SOLUTION_DETAILS_TAB_COMMON"] = "Баптаулар";
+$MESS["CRM_AUTOMATED_SOLUTION_DETAILS_TAB_TITLE_COMMON"] = "Жұмыс орнының баптаулары";
+$MESS["CRM_AUTOMATED_SOLUTION_DETAILS_TAB_TITLE_TYPES"] = "Смарт-процестер";
+$MESS["CRM_AUTOMATED_SOLUTION_DETAILS_TAB_TYPES"] = "Смарт-процестер";
+$MESS["CRM_AUTOMATED_SOLUTION_DETAILS_TAG_SELECTOR_ADD_BUTTON_CAPTION"] = "Таңдау";
+$MESS["CRM_AUTOMATED_SOLUTION_DETAILS_TITLE"] = "Сандық жұмыс орны";

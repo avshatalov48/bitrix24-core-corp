@@ -19,10 +19,19 @@ jn.define('im/messenger/db/repository/validators/recent', (require, exports, mod
 		{
 			result.id = fields.id.toString();
 		}
+		else if (Type.isNumber(fields.dialogId) || Type.isStringFilled(fields.dialogId))
+		{
+			result.id = fields.dialogId;
+		}
 
 		if (Type.isString(fields.date_last_activity))
 		{
 			result.lastActivityDate = fields.date_last_activity;
+		}
+
+		if (Type.isString(fields.dateLastActivity))
+		{
+			result.lastActivityDate = fields.dateLastActivity;
 		}
 
 		if (Type.isPlainObject(fields.message))
@@ -116,14 +125,29 @@ jn.define('im/messenger/db/repository/validators/recent', (require, exports, mod
 		{
 			params.withAttach = fields.message.params.withAttach;
 		}
+		else if (
+			Type.isObjectLike(fields.message.params?.ATTACH)
+		)
+		{
+			params.withAttach = fields.message.params?.ATTACH;
+		}
 
 		if (Type.isBoolean(fields.message.file) || Type.isPlainObject(fields.message.file))
 		{
 			params.withFile = fields.message.file;
 		}
-		else if (Type.isBoolean(fields.message.params?.withFile) || Type.isPlainObject(fields.message.params?.withFile))
+
+		if (
+			Type.isBoolean(fields.message.params?.withFile)
+			|| Type.isPlainObject(fields.message.params?.withFile)
+			|| Type.isArrayFilled(fields.message.params?.withFile)
+		)
 		{
 			params.withFile = fields.message.params.withFile;
+		}
+		else if (Type.isArray(fields.message.params?.FILE_ID))
+		{
+			params.withFile = fields.message.params?.FILE_ID;
 		}
 
 		if (Type.isDate(fields.message.date) || Type.isString(fields.message.date))

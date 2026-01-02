@@ -74,5 +74,4 @@ class FieldSet extends Callback\Message
 
 		return $this;
 	}
-
 }

@@ -25,6 +25,7 @@ $APPLICATION->IncludeComponent(
 		],
 		'USE_PADDING' => false,
 		'PLAIN_VIEW' => $plainView,
+		'USE_UI_TOOLBAR' => 'Y',
 	]
 );
 

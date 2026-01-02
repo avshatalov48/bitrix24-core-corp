@@ -9,9 +9,6 @@ use Bitrix\Main\Type\DateTime;
 
 interface JobService
 {
-	/**
-	 * @param null|array{error?: array, result?: mixed} $inputData
-	 */
 	public function update(Job $job): ?Job;
 
 	/**
@@ -21,10 +18,19 @@ interface JobService
 	 */
 	public function requestEmployeeList(int $companyId, bool $isForced = false): Result|JobServiceResult;
 
+	/**
+	 *
+	 * @param int $companyId
+	 * @param list<string> $employeeUids
+	 * @param list<string> $fieldUids
+	 * @param array<int, int> $documentIdByEmployeeIdMap
+	 * @return Result|JobServiceResult
+	 */
 	public function requestFieldValue(
 		int $companyId,
 		array $employeeUids,
-		array $fieldUids
+		array $fieldUids,
+		array $documentIdByEmployeeIdMap = [],
 	): JobServiceResult|Result;
 
 	public function completeMapping(int $companyId): Result|JobServiceResult;

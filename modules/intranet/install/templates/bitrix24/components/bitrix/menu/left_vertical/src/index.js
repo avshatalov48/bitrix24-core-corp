@@ -1,7 +1,7 @@
 import Menu from './menu';
+import './styles';
+
 /*
-
-
 BX.Intranet.LeftMenu.updateCounters(counters, send);
 BX.Intranet.LeftMenu.decrementCounter(node, iDecrement);
 BX.Intranet.LeftMenu.isEditMode()

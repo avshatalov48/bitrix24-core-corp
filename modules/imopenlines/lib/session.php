@@ -923,12 +923,18 @@ class Session
 							'WAIT_ACTION' => $this->session['WAIT_ACTION'],
 							'PAUSE' => $this->session['PAUSE'],
 							'LAST_SEND_MAIL_ID' => $this->session['LAST_SEND_MAIL_ID'],
-							//'STATUS' => self::STATUS_WAIT_CLIENT
 						]);
-						Model\SessionCheckTable::add([
-							'SESSION_ID' => $this->session['SESSION_ID'],
-							'DATE_CLOSE' => $dateClose
-						]);
+						try
+						{
+							Model\SessionCheckTable::add([
+								'SESSION_ID' => $this->session['SESSION_ID'],
+								'DATE_CLOSE' => $dateClose
+							]);
+						}
+						catch (Main\DB\DuplicateEntryException $ex)
+						{
+							Model\SessionCheckTable::update($this->session['SESSION_ID'], ['DATE_CLOSE' => $dateClose]);
+						}
 
 						$this->chat->sendJoinMessage($this->joinUserList);
 						$this->chat->join($this->session['OPERATOR_ID'], true, true);
@@ -1466,6 +1472,7 @@ class Session
 					}
 				}
 
+				$update['DATE_MODIFY'] = $currentDate;
 				$update['DATE_CLOSE'] = $currentDate;
 				if (
 					$this->session['TIME_CLOSE'] <= 0

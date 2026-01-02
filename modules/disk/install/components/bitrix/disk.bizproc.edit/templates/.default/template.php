@@ -501,7 +501,10 @@ setTimeout("start()", 0);
 </script>
 <form>
 
-<div id="wf1" style="width: 100%; border-bottom: 2px #efefef dotted; " ></div>
+<div
+	id="wf1"
+	style="width: 100%; border-bottom: 2px #efefef dotted; padding-bottom: 10px; position: relative; z-index: 1; overflow: scroll"
+></div>
 
 <div id="bizprocsavebuttons">
 <br>

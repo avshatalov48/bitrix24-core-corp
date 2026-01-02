@@ -27,6 +27,10 @@ class DocumentsDefaultTemplatesComponent extends CBitrixComponent
 			$this->includeComponentTemplate();
 			return;
 		}
+
+		global $APPLICATION;
+		$APPLICATION->SetTitle(Loc::getMessage('DOCGEN_TEMPLATES_DEFAULT_TITLE'));
+
 		if(!$this->includeModule())
 		{
 			ShowError(Loc::getMessage('DOCGEN_TEMPLATES_DEFAULT_MODULE_ERROR', ['MODULE_ID' => $this->arParams['MODULE_ID']]));
@@ -36,19 +40,6 @@ class DocumentsDefaultTemplatesComponent extends CBitrixComponent
 		{
 			ShowError(Loc::getMessage('DOCGEN_TEMPLATES_PERMISSIONS_ERROR'));
 			return;
-		}
-		$request = \Bitrix\Main\Application::getInstance()->getContext()->getRequest();
-		if($request->get('IFRAME') === 'Y')
-		{
-			$this->arResult['IS_SLIDER'] = true;
-		}
-		else
-		{
-			$this->arResult['IS_SLIDER'] = false;
-			if(SITE_TEMPLATE_ID == "bitrix24")
-			{
-				$this->arResult['TOP_VIEW_TARGET_ID'] = 'pagetitle';
-			}
 		}
 
 		$filter = $this->getFilter();
@@ -64,8 +55,12 @@ class DocumentsDefaultTemplatesComponent extends CBitrixComponent
 				}
 			}
 			$this->arResult['GRID'] = $this->prepareGrid($templates);
-			$this->arResult['FILTER'] = $this->prepareFilter();
-			$this->arResult['TITLE'] = Loc::getMessage('DOCGEN_TEMPLATES_DEFAULT_TITLE');
+
+			if (\Bitrix\Main\Loader::includeModule('ui'))
+			{
+				\Bitrix\UI\Toolbar\Facade\Toolbar::deleteFavoriteStar();
+				\Bitrix\UI\Toolbar\Facade\Toolbar::addFilter($this->prepareFilter());
+			}
 
 			$this->arResult['params'] = [];
 			$this->arResult['params']['gridId'] = $this->gridId;

@@ -1,4 +1,5 @@
 import { Event, Extension, Loc, Tag, Type } from 'main.core';
+import { Actions, Outline } from 'ui.icon-set.api.core';
 import { UserStatisticsLink as CheckInQrAuthPopup } from 'stafftrack.user-statistics-link';
 import { sendData } from 'ui.analytics';
 import './style.css';
@@ -21,18 +22,20 @@ export class StafftrackCheckIn
 	#layout: {
 		counter: HTMLElement,
 	};
+	#isAirTemplate: boolean;
 
 	constructor(params: Params)
 	{
 		const settings = Extension.getSettings('timeman.stafftrack-check-in');
-		if (!settings.isCheckinEnabled)
+		if (!settings.get('isCheckinEnabled'))
 		{
 			return;
 		}
 
-		this.#data = settings.counter;
+		this.#data = settings.get('counter');
 		this.#params = params;
 		this.#layout = {};
+		this.#isAirTemplate = settings.get('isAirTemplate');
 
 		const pwtContainer = params.container.querySelector('#timeman-pwt-container');
 		if (pwtContainer)
@@ -63,9 +66,11 @@ export class StafftrackCheckIn
 
 	#render(): HTMLElement
 	{
+		const iconOutlineName = (this.#isAirTemplate ? Outline.PLAY_L : Actions.PLAY);
+
 		const wrap = Tag.render`
 			<div class="timeman-stafftrack-check-in">
-				<div class="ui-icon-set --play"></div>
+				<div class="ui-icon-set --${iconOutlineName}"></div>
 				<div class="timeman-stafftrack-check-in-text">
 					${Loc.getMessage('TIMEMAN_STAFFTRACK_CHECK_IN')}
 				</div>

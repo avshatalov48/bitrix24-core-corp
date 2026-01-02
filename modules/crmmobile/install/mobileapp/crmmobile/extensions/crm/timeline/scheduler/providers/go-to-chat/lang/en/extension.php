@@ -2,7 +2,6 @@
 $MESS["M_CRM_TIMELINE_SCHEDULER_GTC_ADD_PHONE_TO_CLIENT"] = "Add number";
 $MESS["M_CRM_TIMELINE_SCHEDULER_GTC_CLIENTS_SELECTOR_TITLE"] = "Select customer";
 $MESS["M_CRM_TIMELINE_SCHEDULER_GTC_CLIENT_SELECTOR_LABEL"] = "Message will be sent to";
-$MESS["M_CRM_TIMELINE_SCHEDULER_GTC_DEFAULT_PHONE_TYPE"] = "Work";
 $MESS["M_CRM_TIMELINE_SCHEDULER_GTC_DESCRIPTION"] = "Invite your customer to the messenger to continue conversation. Your chat history will be saved here.";
 $MESS["M_CRM_TIMELINE_SCHEDULER_GTC_DESCRIPTION_COMPANY"] = "Invite your customer to the messenger to continue conversation. Your chat history will be saved to the company.";
 $MESS["M_CRM_TIMELINE_SCHEDULER_GTC_DESCRIPTION_CONTACT"] = "Invite your customer to the messenger to continue conversation. Your chat history will be saved to the contact.";
@@ -37,9 +36,6 @@ $MESS["M_CRM_TIMELINE_SCHEDULER_GTC_NO_PROVIDER_TEXT"] = "Use SMS service to sen
 $MESS["M_CRM_TIMELINE_SCHEDULER_GTC_NO_PROVIDER_TITLE"] = "SMS service is not configured";
 $MESS["M_CRM_TIMELINE_SCHEDULER_GTC_PHONE_DRAWER_WARNING_TEXT"] = "Cannot send SMS to customer because phone number is not provided";
 $MESS["M_CRM_TIMELINE_SCHEDULER_GTC_SEND"] = "Send message";
-$MESS["M_CRM_TIMELINE_SCHEDULER_GTC_SENDING"] = "Sending message...";
-$MESS["M_CRM_TIMELINE_SCHEDULER_GTC_SENDING_DESCRIPTION_BITRIX24"] = "Message sent using Bitrix24";
-$MESS["M_CRM_TIMELINE_SCHEDULER_GTC_SENDING_DESCRIPTION_SMS_PROVIDER"] = "Message sent using #PROVIDER_NAME#";
 $MESS["M_CRM_TIMELINE_SCHEDULER_GTC_TELEGRAM"] = "Telegram";
 $MESS["M_CRM_TIMELINE_SCHEDULER_GTC_TITLE_TEXT"] = "Invite customer to chat";
 $MESS["M_CRM_TIMELINE_SCHEDULER_GTC_VK"] = "VK";

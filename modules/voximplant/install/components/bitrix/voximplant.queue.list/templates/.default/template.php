@@ -3,28 +3,16 @@ if (!defined("B_PROLOG_INCLUDED") || B_PROLOG_INCLUDED!==true) die();
 
 CJSCore::Init(["sidepanel"]);
 
-$isBitrix24Template = (SITE_TEMPLATE_ID == "bitrix24");
-if($isBitrix24Template)
-{
-	$this->SetViewTarget("pagetitle", 100);
-}
-?>
-	<div class="pagetitle-container pagetitle-align-right-container">
-		<span id="add-queue" class="webform-small-button webform-small-button-blue bx24-top-toolbar-add">
-			<span class="webform-small-button-left"></span>
-			<span class="webform-small-button-icon"></span>
-			<span class="webform-small-button-text"><?=GetMessage('VOX_QUEUE_LIST_ADD')?></span>
-			<? if(!$arResult["CAN_CREATE_GROUP"]): ?>
-				<span class="webform-small-button-right voximplant-queue-lock-icon"></span>
-			<? endif ?>
-		</span>
-	</div>
-<?
-
-if($isBitrix24Template)
-{
-	$this->EndViewTarget();
-}
+$buttonAdd = new \Bitrix\UI\Buttons\Button([
+	'text' => GetMessage(('VOX_QUEUE_LIST_ADD')),
+	'icon' => $arResult['CAN_CREATE_GROUP'] ? Bitrix\UI\Buttons\Icon::ADD : Bitrix\UI\Buttons\Icon::LOCK,
+	'color' => \Bitrix\UI\Buttons\Color::PRIMARY,
+	'dataset' => [
+		'toolbar-collapsed-icon' => $arResult['CAN_CREATE_GROUP'] ? Bitrix\UI\Buttons\Icon::ADD : Bitrix\UI\Buttons\Icon::LOCK,
+	]
+]);
+$buttonAdd->addAttribute('id', 'add-queue');
+\Bitrix\UI\Toolbar\Facade\Toolbar::addButton($buttonAdd);
 
 $APPLICATION->IncludeComponent("bitrix:ui.info.helper", "", array());
 

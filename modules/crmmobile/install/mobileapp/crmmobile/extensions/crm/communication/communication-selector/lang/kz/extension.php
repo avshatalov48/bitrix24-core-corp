@@ -1,0 +1,7 @@
+<?php
+$MESS["M_CRM_COMMUNICATION_SELECTOR_TITLE"] = "Байланыс ақпараты";
+$MESS["M_CRM_COMMUNICATION_SELECTOR_TITLE_COMPANY"] = "Компаниядағы байланыстар";
+$MESS["M_CRM_COMMUNICATION_SELECTOR_TITLE_DEAL"] = "Мәміледегі байланыстар";
+$MESS["M_CRM_COMMUNICATION_SELECTOR_TITLE_INVOICE"] = "Шоттағы байланыстар";
+$MESS["M_CRM_COMMUNICATION_SELECTOR_TITLE_LEAD"] = "Лидтегі байланыстар";
+$MESS["M_CRM_COMMUNICATION_SELECTOR_TITLE_QUOTE_MSGVER_1"] = "Ұсыныстағы байланыстар";

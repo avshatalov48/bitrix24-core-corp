@@ -601,8 +601,7 @@ this.BX = this.BX || {};
 	  babelHelpers.createClass(Post$$1, [{
 	    key: "init",
 	    value: function init(data) {
-	      var logId = data.logId,
-	        entryType = data.entryType,
+	      var entryType = data.entryType,
 	        useFollow = data.useFollow,
 	        useTasks = data.useTasks,
 	        perm = data.perm,
@@ -617,19 +616,20 @@ this.BX = this.BX || {};
 	        taskId = data.taskId,
 	        taskData = data.taskData,
 	        calendarEventId = data.calendarEventId;
-	      logId = parseInt(logId);
+	      var logId = data.logId;
+	      logId = parseInt(logId, 10);
 	      if (logId <= 0) {
 	        return;
 	      }
 	      this.logId = logId;
-	      this.postId = parseInt(postId);
-	      this.contentId = parseInt(contentId);
-	      this.taskId = parseInt(taskId);
-	      this.calendarEventId = parseInt(calendarEventId);
-	      this.useFollow = !!useFollow;
-	      this.useTasks = !!useTasks;
-	      this.readOnly = !!readOnly;
-	      this.showFull = !!showFull;
+	      this.postId = parseInt(postId, 10);
+	      this.contentId = parseInt(contentId, 10);
+	      this.taskId = parseInt(taskId, 10);
+	      this.calendarEventId = parseInt(calendarEventId, 10);
+	      this.useFollow = Boolean(useFollow);
+	      this.useTasks = Boolean(useTasks);
+	      this.readOnly = Boolean(readOnly);
+	      this.showFull = Boolean(showFull);
 	      if (main_core.Type.isStringFilled(entryType)) {
 	        this.entryType = entryType;
 	      }
@@ -648,7 +648,7 @@ this.BX = this.BX || {};
 	      if (main_core.Type.isStringFilled(taskData)) {
 	        try {
 	          this.taskData = JSON.parse(taskData);
-	        } catch (e) {
+	        } catch (_unused) {
 	          this.taskData = null;
 	        }
 	      }
@@ -663,12 +663,12 @@ this.BX = this.BX || {};
 	      if (this.logId <= 0) {
 	        return;
 	      }
-	      var node = data.node,
-	        event = data.event;
+	      var event = data.event;
+	      var node = data.node;
 
 	      // for old versions without post menu in the feed
 	      if (!main_core.Type.isDomNode(node)) {
-	        node = document.getElementById('log_entry_favorites_' + this.logId);
+	        node = document.getElementById("log_entry_favorites_".concat(this.logId));
 	      }
 	      if (main_core.Type.isDomNode(node)) {
 	        var oldValue = node.getAttribute('data-favorites') === 'Y' ? 'Y' : 'N';
@@ -702,6 +702,8 @@ this.BX = this.BX || {};
 	                bAjax: false
 	              });
 	            }
+
+	            // eslint-disable-next-line no-undef
 	            BXMobileApp.onCustomEvent('onLogEntryFavorites', {
 	              log_id: _this.logId,
 	              page_id: main_core.Loc.getMessage('MSLPageId')
@@ -731,6 +733,8 @@ this.BX = this.BX || {};
 	        var oldValue = menuNode.getAttribute('data-pinned') === 'Y' ? 'Y' : 'N';
 	        var newValue = oldValue === 'Y' ? 'N' : 'Y';
 	        menuNode.setAttribute('data-pinned', newValue);
+
+	        // eslint-disable-next-line no-undef
 	        BXMobileApp.onCustomEvent('Livefeed::showLoader', {}, true, true);
 	        var action = newValue === 'Y' ? 'socialnetwork.api.livefeed.logentry.pin' : 'socialnetwork.api.livefeed.logentry.unpin';
 	        mobile_ajax.Ajax.runAction(action, {
@@ -744,14 +748,17 @@ this.BX = this.BX || {};
 	            b24statContext: 'mobile'
 	          }
 	        }).then(function (response) {
+	          // eslint-disable-next-line no-undef
 	          BXMobileApp.onCustomEvent('Livefeed::hideLoader', {}, true, true);
 	          if (response.data.success) {
+	            // eslint-disable-next-line no-undef
 	            BXMobileApp.onCustomEvent('Livefeed.PinnedPanel::change', {
 	              logId: _this2.logId,
 	              value: newValue,
 	              postNode: menuNode.closest('.lenta-item'),
 	              pinActionContext: context
 	            }, true, true);
+	            // eslint-disable-next-line no-undef
 	            BXMobileApp.onCustomEvent('Livefeed.PostDetail::pinChanged', {
 	              logId: _this2.logId,
 	              value: newValue
@@ -760,6 +767,7 @@ this.BX = this.BX || {};
 	            menuNode.setAttribute('data-pinned', oldValue);
 	          }
 	        }, function () {
+	          // eslint-disable-next-line no-undef
 	          BXMobileApp.onCustomEvent('Livefeed::hideLoader', {}, true, true);
 	          menuNode.setAttribute('data-pinned', oldValue);
 	        });
@@ -778,6 +786,7 @@ this.BX = this.BX || {};
 	        return;
 	      }
 	      if (this.taskId > 0 && BXMobileAppContext.getApiVersion() >= 31 && this.taskData) {
+	        // eslint-disable-next-line no-undef
 	        BXMobileApp.Events.postToComponent('taskbackground::task::open', [{
 	          id: this.taskId,
 	          taskId: this.taskId,
@@ -798,8 +807,10 @@ this.BX = this.BX || {};
 	        } else if (this.taskId > 0 && this.taskData && pathToTasksRouter.length > 0)
 	          // API version <= 31
 	          {
-	            path = pathToTasksRouter.replace('__ROUTE_PAGE__', 'view').replace('#USER_ID#', main_core.Loc.getMessage('MOBILE_EXT_LIVEFEED_CURRENT_USER_ID')) + '&TASK_ID=' + this.taskId;
+	            path = "".concat(pathToTasksRouter.replace('__ROUTE_PAGE__', 'view').replace('#USER_ID#', main_core.Loc.getMessage('MOBILE_EXT_LIVEFEED_CURRENT_USER_ID')), "&TASK_ID=").concat(this.taskId);
 	          }
+
+	        // eslint-disable-next-line no-undef
 	        __MSLOpenLogEntryNew({
 	          path: path,
 	          log_id: this.logId,
@@ -823,7 +834,7 @@ this.BX = this.BX || {};
 	  }, {
 	    key: "initDetailPin",
 	    value: function initDetailPin() {
-	      var menuNode = document.getElementById('log-entry-menu-' + this.logId);
+	      var menuNode = document.getElementById("log-entry-menu-".concat(this.logId));
 	      if (!menuNode) {
 	        return;
 	      }
@@ -841,6 +852,7 @@ this.BX = this.BX || {};
 	  }, {
 	    key: "expandText",
 	    value: function expandText() {
+	      // eslint-disable-next-line no-undef
 	      oMSL.expandText(this.logId);
 	    }
 	  }]);
@@ -892,7 +904,9 @@ this.BX = this.BX || {};
 	              if (!main_core.Type.isStringFilled(response.SUCCESS) || response.SUCCESS !== 'Y') {
 	                return;
 	              }
-	              BXMobileApp.onCustomEvent('onBlogPostDelete', {}, true, true);
+	              BXMobileApp.onCustomEvent('onBlogPostDelete', {
+	                post_id: postId
+	              }, true, true);
 	              if (context === 'detail') {
 	                app.closeController({
 	                  drop: true
@@ -1142,7 +1156,7 @@ this.BX = this.BX || {};
 	        result.push({
 	          id: 'edit',
 	          title: main_core.Loc.getMessage('MOBILE_EXT_LIVEFEED_POST_MENU_EDIT'),
-	          iconUrl: "".concat(this.iconUrlFolderPath, "pencil.png"),
+	          iconUrl: "".concat(this.iconUrlFolderPath, "edit.png"),
 	          sectionCode: this.sectionCode,
 	          action: function action() {
 	            BlogPost$$1.edit({
@@ -1156,7 +1170,7 @@ this.BX = this.BX || {};
 	        }, {
 	          id: 'delete',
 	          title: main_core.Loc.getMessage('MOBILE_EXT_LIVEFEED_POST_MENU_DELETE'),
-	          iconName: 'delete',
+	          iconUrl: "".concat(this.iconUrlFolderPath, "delete.png"),
 	          sectionCode: this.sectionCode,
 	          action: function action() {
 	            BlogPost$$1["delete"]({
@@ -1171,7 +1185,7 @@ this.BX = this.BX || {};
 	        result.push({
 	          id: 'favorites',
 	          title: main_core.Loc.getMessage("MOBILE_EXT_LIVEFEED_POST_MENU_FAVORITES_".concat(this.favoritesValue ? 'Y' : 'N')),
-	          iconUrl: "".concat(this.iconUrlFolderPath, "favorite.png"),
+	          iconUrl: this.favoritesValue ? "".concat(this.iconUrlFolderPath, "unfavorite.png") : "".concat(this.iconUrlFolderPath, "favorite.png"),
 	          sectionCode: this.sectionCode,
 	          action: function action() {
 	            var postInstance = new Post$$1({
@@ -1189,7 +1203,7 @@ this.BX = this.BX || {};
 	        result.push({
 	          id: 'follow',
 	          title: main_core.Loc.getMessage("MOBILE_EXT_LIVEFEED_POST_MENU_FOLLOW_".concat(this.followValue ? 'Y' : 'N')),
-	          iconUrl: "".concat(this.iconUrlFolderPath, "eye.png"),
+	          iconUrl: this.followValue ? "".concat(this.iconUrlFolderPath, "watch.png") : "".concat(this.iconUrlFolderPath, "unwatch.png"),
 	          sectionCode: this.sectionCode,
 	          action: function action() {
 	            FollowManagerInstance.setFollow({
@@ -1244,7 +1258,7 @@ this.BX = this.BX || {};
 	          result.push({
 	            id: 'createTask',
 	            title: main_core.Loc.getMessage('MOBILE_EXT_LIVEFEED_POST_MENU_CREATE_TASK'),
-	            iconUrl: "".concat(this.iconUrlFolderPath, "n_check.png"),
+	            iconUrl: "".concat(this.iconUrlFolderPath, "task.png"),
 	            sectionCode: this.sectionCode,
 	            action: function action() {
 	              oMSL.createTask({
@@ -4020,10 +4034,10 @@ this.BX = this.BX || {};
 	      if (!main_core.Type.isPlainObject(params)) {
 	        params = {};
 	      }
-	      var postId = typeof params.postId != 'undefined' ? parseInt(params.postId) : 0;
-	      var context = typeof params.context != 'undefined' ? params.context : '';
-	      var pageId = typeof params.pageId != 'undefined' ? params.pageId : '';
-	      var groupId = typeof params.groupId != 'undefined' ? params.groupId : null;
+	      var postId = typeof params.postId === 'undefined' ? 0 : parseInt(params.postId, 10);
+	      var context = typeof params.context === 'undefined' ? '' : params.context;
+	      var pageId = typeof params.pageId === 'undefined' ? '' : params.pageId;
+	      var groupId = typeof params.groupId === 'undefined' ? null : params.groupId;
 	      if (pageId !== this.pageId) {
 	        return;
 	      }

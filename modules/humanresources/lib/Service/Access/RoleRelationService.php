@@ -8,7 +8,7 @@ use Bitrix\HumanResources\Service\Container;
 use Bitrix\Main\Access\Exception\RoleRelationSaveException;
 use Bitrix\Main\DB\SqlQueryException;
 
-class RoleRelationService implements \Bitrix\HumanResources\Contract\Service\Access\RoleRelationService
+class RoleRelationService
 {
 	/**
 	 * @throws RoleRelationSaveException
@@ -29,15 +29,17 @@ class RoleRelationService implements \Bitrix\HumanResources\Contract\Service\Acc
 		Container::getCacheManager()->clean(NodeRepository::NODE_ENTITY_RESTRICTION_CACHE);
 	}
 
-	/**
-	 * @throws SqlQueryException
-	 */
 	public function deleteRelationsByRoleId(int $roleId): void
 	{
-		if (!Container::getAccessRoleRelationRepository()->deleteRelationsByRoleId($roleId))
-		{
-			throw new SqlQueryException();
-		}
+		Container::getAccessRoleRelationRepository()->deleteRelationsByRoleId($roleId);
+	}
+
+	/**
+	 * @param array<int> $roleId
+	 */
+	public function deleteRelationsByRoleIds(array $roleIds): void
+	{
+		Container::getAccessRoleRelationRepository()->deleteRelationsByRoleIds($roleIds);
 	}
 
 	public function getRelationList(array $parameters = []): array

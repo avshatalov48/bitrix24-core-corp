@@ -4,8 +4,8 @@
 jn.define('tasks/layout/checklist/list/src/checkbox/checkbox-counter', (require, exports, module) => {
 	const { Checkbox } = require('ui-system/form/checkbox');
 	const { PureComponent } = require('layout/pure-component');
-	const { ChecklistImportant } = require('tasks/layout/checklist/list/src/checkbox/checkbox-counter/important');
-	const { ChecklistCheckboxProgress } = require('tasks/layout/checklist/list/src/checkbox/checkbox-counter/progress');
+	const { ChecklistImportant } = require('tasks/layout/checklist/list/src/checkbox/important');
+	const { ChecklistCheckboxProgress } = require('tasks/layout/checklist/list/src/checkbox/progress');
 	const { CHECKBOX_SIZE } = require('tasks/layout/checklist/list/src/constants');
 
 	const CHECKBOX_LAYOUT_SIZE = 28;

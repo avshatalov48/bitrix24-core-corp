@@ -1,0 +1,8 @@
+<?php
+$MESS["INTRANET_JS_CONTROL_BUTTON_CHAT"] = "Чатты ашу";
+$MESS["INTRANET_JS_CONTROL_BUTTON_MEETING"] = "Кездесуді құру";
+$MESS["INTRANET_JS_CONTROL_BUTTON_NAME"] = "HD бейне қоңырауы";
+$MESS["INTRANET_JS_CONTROL_BUTTON_NAME_MSG_1"] = "Бейне қоңырау";
+$MESS["INTRANET_JS_CONTROL_BUTTON_POST"] = "Пост жазу";
+$MESS["INTRANET_JS_CONTROL_BUTTON_TASK"] = "Міндетті құру";
+$MESS["INTRANET_JS_CONTROL_BUTTON_VIDEOCALL"] = "Бейне қоңырауды бастау";

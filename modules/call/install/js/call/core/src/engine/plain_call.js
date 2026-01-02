@@ -4,7 +4,7 @@ import {AbstractCall} from './abstract_call';
 import {CallEngine, CallState, CallEvent, UserState, Provider} from './engine';
 import {View} from '../view/view';
 import {SimpleVAD} from './simple_vad'
-import {Hardware} from '../hardware';
+import {Hardware} from '../call_hardware';
 import Util from '../util'
 import {MediaStreamsKinds} from '../call_api';
 
@@ -104,7 +104,7 @@ export class PlainCall extends AbstractCall
 
 		this.deviceList = [];
 
-		this.turnServer = (Browser.isFirefox() ? BX.message('turn_server_firefox') : BX.message('turn_server')) || 'turn.calls.bitrix24.com';
+		this.turnServer = BX.message('turn_server');
 		this.turnServerLogin = BX.message('turn_server_login') || 'bitrix';
 		this.turnServerPassword = BX.message('turn_server_password') || 'bitrix';
 
@@ -115,6 +115,7 @@ export class PlainCall extends AbstractCall
 		this.userData = params.userData;
 
 		this._onUnloadHandler = this.#onUnload.bind(this);
+		this._onOnlineHandler = this.#onOnline.bind(this);
 
 		this.enableMicAutoParameters = params.enableMicAutoParameters !== false;
 		this.microphoneLevelInterval = null;
@@ -127,8 +128,9 @@ export class PlainCall extends AbstractCall
 		this._isRecordWhenCopilotActivePopupAlreadyShow = null;
 		this._isBoostExpired = false;
 
-		window.addEventListener("unload", this._onUnloadHandler);
-	};
+		window.addEventListener('unload', this._onUnloadHandler);
+		window.addEventListener('online', this._onOnlineHandler);
+	}
 
 	get provider()
 	{
@@ -228,11 +230,13 @@ export class PlainCall extends AbstractCall
 			{
 				this.runCallback(CallEvent.onNetworkProblem, e)
 			},
-			onReconnecting: () =>
+			onReconnecting: (e) =>
 			{
 				this._reconnectionEventCount++;
 				this.runCallback(CallEvent.onReconnecting, {
 					reconnectionEventCount: this._reconnectionEventCount,
+					reconnectionReason: e.reconnectionReason,
+					reconnectionReasonInfo: e.reconnectionReasonInfo,
 				});
 			},
 			onReconnected: () =>
@@ -564,7 +568,7 @@ export class PlainCall extends AbstractCall
 		return new Promise(function (resolve, reject)
 		{
 			const currentConstraints = constraintsArray[0];
-			navigator.mediaDevices.getUserMedia(currentConstraints).then(
+			Hardware.getUserMedia(currentConstraints).then(
 				function (stream)
 				{
 					resolve(stream);
@@ -665,7 +669,7 @@ export class PlainCall extends AbstractCall
 				}
 				if (this.deviceList.length === 0)
 				{
-					navigator.mediaDevices.enumerateDevices().then((deviceList) =>
+					Hardware.getCurrentDeviceList().then((deviceList) =>
 					{
 						this.deviceList = deviceList;
 						this.runCallback(CallEvent.onDeviceListUpdated, {
@@ -733,7 +737,7 @@ export class PlainCall extends AbstractCall
 				}
 				if (this.deviceList.length === 0)
 				{
-					navigator.mediaDevices.enumerateDevices().then((deviceList) =>
+					Hardware.getCurrentDeviceList().then((deviceList) =>
 					{
 						this.deviceList = deviceList;
 						this.runCallback(CallEvent.onDeviceListUpdated, {
@@ -811,7 +815,7 @@ export class PlainCall extends AbstractCall
 		return new Promise(function (resolve, reject)
 		{
 			if (window["BXDesktopSystem"] && window["BXDesktopSystem"].GetProperty('versionParts')[3] < 78) {
-				navigator.mediaDevices.getUserMedia({
+				Hardware.getUserMedia({
 					video: {
 						mandatory: {
 							chromeMediaSource: 'screen',
@@ -872,6 +876,8 @@ export class PlainCall extends AbstractCall
 			return;
 		}
 
+		this.waitingLocalScreenShare = true;
+
 		this.getDisplayMedia().then((stream) =>
 		{
 			this.localStreams["screen"] = stream;
@@ -884,6 +890,10 @@ export class PlainCall extends AbstractCall
 			this.runCallback(CallEvent.onUserScreenState, {
 				userId: this.userId,
 				screenState: true,
+			});
+
+			this.runCallback(CallEvent.onLocalScreenUpdated, {
+				track: stream.getVideoTracks()?.[0] || null,
 			});
 
 			if (this.ready)
@@ -900,7 +910,10 @@ export class PlainCall extends AbstractCall
 		}).catch((e) =>
 		{
 			this.log(e);
-		});
+		}).finally(() =>
+		{
+			this.waitingLocalScreenShare = false;
+		})
 	};
 
     onLocalVideoTrackEnded()
@@ -1019,6 +1032,10 @@ export class PlainCall extends AbstractCall
 			screenState: false,
 		});
 
+		this.runCallback(CallEvent.onLocalScreenUpdated, {
+			track: null,
+		});
+
 		for (let userId in this.peers)
 		{
 			if (this.peers[userId].calculatedState === UserState.Connected)
@@ -1030,7 +1047,7 @@ export class PlainCall extends AbstractCall
 
 	isScreenSharingStarted()
 	{
-		return this.localStreams["screen"] instanceof MediaStream;
+		return this.localStreams["screen"] instanceof MediaStream || this.waitingLocalScreenShare;
 	};
 
 	onLocalVoiceStarted()
@@ -1640,7 +1657,7 @@ export class PlainCall extends AbstractCall
 		peer.setReady(true);
 		if (params.restart)
 		{
-			peer.reconnect()
+			peer.reconnect({reconnectionReason: 'GOT_PULL_EVENT_NEGOTIATION_NEEDED'});
 		}
 		else
 		{
@@ -1880,6 +1897,14 @@ export class PlainCall extends AbstractCall
 		}
 	};
 
+	#onOnline()
+	{
+		const peers = Object.values(this.peers);
+		peers.forEach((peer) => {
+			peer.reconnect({reconnectionReason: 'GOT_ONLINE_EVENT_FROM_BROWSER'});
+		});
+	}
+
 	#beforeLeaveCall()
 	{
 		// stop media streams
@@ -1905,7 +1930,8 @@ export class PlainCall extends AbstractCall
 		}
 
 		// remove all event listeners
-		window.removeEventListener("unload", this._onUnloadHandler);
+		window.removeEventListener('unload', this._onUnloadHandler);
+		window.removeEventListener('online', this._onOnlineHandler);
 
 		clearInterval(this.statsInterval);
 		clearInterval(this.pingUsersInterval);
@@ -1931,6 +1957,7 @@ export class PlainCall extends AbstractCall
 		}
 
 		this.#beforeLeaveCall();
+		this.runCallback(CallEvent.onLeave, { local: true });
 
 		return super.destroy();
 	}
@@ -2197,6 +2224,9 @@ class Peer
 		this.isFirefox = false;
 		this.isChrome = false;
 		this.isLegacyMobile = params.isLegacyMobile === true;
+
+		this.lastSuccessedLocaleCandidate = '';
+		this.lastSuccessedRemoteCandidate = '';
 
 		/*sums up from signaling, ready and connection states*/
 		this.calculatedState = this.calculateState();
@@ -2560,7 +2590,9 @@ class Peer
 		else
 		{
 			this.localStreams[tag] = this.call.getLocalStream(tag);
-			this.reconnect();
+
+			const logMessage = 'Reconnect by replaceMediaStream';
+			this.reconnect({ reconnectionReasonInfo: logMessage });
 		}
 	};
 
@@ -2840,6 +2872,25 @@ class Peer
 							default:
 								return;
 						}
+					}
+
+					if (
+						report.type === 'candidate-pair'
+						&& report.state === 'succeeded'
+						&& report.bytesReceived > 0
+						&& report.bytesSent > 0
+						&& this.lastSuccessedLocaleCandidateId !== report.localCandidateId
+						&& this.lastSuccessedRemoteCandidateId !== report.remoteCandidateId
+					)
+					{
+						this.lastSuccessedLocaleCandidateId = report.localCandidateId;
+						this.lastSuccessedRemoteCandidateId = report.remoteCandidateId;
+
+						Util.sendLog({
+							description: `GOT a succeeded candidate-pair for user ${this.userId}`,
+							localCandidateId: report.localCandidateId,
+							remoteCandidateId: report.remoteCandidateId,
+						});
 					}
 
 					if (needCheckInputPacketLost)
@@ -3138,8 +3189,12 @@ class Peer
 		}
 		else if (this.peerConnection.connectionState === "failed")
 		{
-			this.log("peer connection failed. Trying to restore connection immediately");
-			this.reconnect();
+			const logMessage = 'Peer connection failed. Trying to restore connection immediately';
+
+			this.reconnect({
+				reconnectionReason: 'PEER_CONNECTION_FAILED',
+				reconnectionReasonInfo: logMessage,
+			});
 		}
 		// else if (this.peerConnection.connectionState === "disconnected")
 		// {
@@ -3175,11 +3230,6 @@ class Peer
 				this.log("Connectivity problem detected: no ICE candidates from " + s.join(" and ") + " servers");
 				console.error("Connectivity problem detected: no ICE candidates from " + s.join(" and ") + " servers");
 				this.callbacks.onNetworkProblem();
-			}
-
-			if (!this.hasTurn && !this.hasStun)
-			{
-
 			}
 
 			if (!this.getSignaling().isIceTricklingAllowed())
@@ -3356,17 +3406,18 @@ class Peer
 
 	_onConnectionOfferReplyTimeout(connectionId)
 	{
-		this.log("did not receive connection answer for connection " + connectionId);
+		const logMessage = 'Did not receive connection answer for connection ' + connectionId;
+
 		this.call.setPublishingState(MediaStreamsKinds.Camera, false);
 
-		this.reconnect();
+		this.reconnect({ reconnectionReasonInfo: logMessage });
 	};
 
 	_onNegotiationNeededReplyTimeout()
 	{
-		this.log("did not receive connection offer in time");
+		const logMessage = 'Did not receive connection offer in time';
 
-		this.reconnect();
+		this.reconnect({ reconnectionReasonInfo: logMessage });
 	};
 
 	setConnectionOffer(connectionId, sdp, trackList)
@@ -3665,7 +3716,7 @@ class Peer
 		}
 	};
 
-	reconnect()
+	reconnect(reconnectInfoObject)
 	{
 		clearTimeout(this.reconnectAfterDisconnectTimeout);
 
@@ -3680,9 +3731,18 @@ class Peer
 			return;
 		}
 
-		this.callbacks.onReconnecting();
+		this.callbacks.onReconnecting({
+			reconnectionReason: reconnectInfoObject?.reconnectionReason || 'TRYING_RESTORE_ICE_CONNECTION',
+			reconnectionReasonInfo: reconnectInfoObject?.reconnectionReasonInfo || '',
+		});
+
+		if (reconnectInfoObject && reconnectInfoObject.reconnectionReasonInfo)
+		{
+			this.log(reconnectInfoObject.reconnectionReasonInfo);
+		}
 
 		this.log("Trying to restore ICE connection. Attempt " + this.connectionAttempt);
+
 		if (this.isInitiator())
 		{
 			this._destroyPeerConnection();
@@ -3690,7 +3750,7 @@ class Peer
 		}
 		else
 		{
-			this.sendNegotiationNeeded(true);
+			//this.sendNegotiationNeeded(true);
 		}
 	};
 

@@ -176,3 +176,13 @@
 	width: 28px;
 	height: 28px;
 }
+
+.tasks-scrum-epic-toolbar {
+	display: flex;
+	align-items: center;
+	gap: 12px;
+}
+
+.tasks-scrum-epic-filter .main-ui-filter-search {
+	width: 780px;
+}

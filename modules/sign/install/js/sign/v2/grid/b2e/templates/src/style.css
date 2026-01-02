@@ -1,0 +1,69 @@
+.sign-b2e-grid-templates-popup .sign-create-folder-popup-icon {
+	width: 160px;
+	height: 160px;
+	background-image: url('images/folder.svg');
+	background-size: cover;
+	display: inline-block;
+}
+
+.sign-b2e-grid-templates-popup .sign-create-folder-popup-item-container {
+	display: flex;
+	flex-direction: column;
+	align-items: center;
+	justify-content: center;
+	padding-top: 70px;
+}
+
+.sign-b2e-grid-templates-popup .sign-create-folder-title-input-container {
+	padding: 10px;
+	width: 80%;
+}
+
+.sign-b2e-grid-templates-popup__move-to-button {
+	border-radius: 20px;
+	padding: 10px 20px;
+}
+
+.sign-b2e-grid-templates-popup__folder-icon-folder-list{
+	display: inline-block;
+	width: 24px;
+	height: 24px;
+	margin-right: 10px;
+	background-image: url('images/folder.svg');
+	background-size: contain;
+	background-repeat: no-repeat;
+	flex-shrink: 0;
+}
+
+.sign-b2e-grid-templates-popup .popup-window-buttons {
+	padding-bottom: 40px !important;
+	border-top: none !important;
+}
+
+.sign-b2e-grid-templates-popup__folder-list-container {
+	background-color: #EEF2F4;
+	min-height: 240px;
+	max-height: 240px;
+	overflow-y: auto;
+}
+
+.sign-b2e-grid-templates-popup__root-folder,
+.sign-b2e-grid-templates-popup__folder-item {
+	padding: 10px;
+	cursor: pointer;
+	display: flex;
+	align-items: center;
+}
+
+.sign-b2e-grid-templates-popup__root-folder {
+	font-weight: bold;
+}
+
+.sign-b2e-grid-templates-popup__selected-folder {
+	background-color: #D5D9DC;
+}
+
+.sign-b2e-grid-templates-popup__sub-folder-container {
+	padding-left: 20px;
+	display: block;
+}

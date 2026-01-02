@@ -3,6 +3,7 @@
 namespace Bitrix\Tasks\Control\Log;
 
 use ArrayIterator;
+use Bitrix\Main\Engine\Response\Converter;
 use Bitrix\Main\Type\Contract\Arrayable;
 use Countable;
 use IteratorAggregate;
@@ -39,6 +40,13 @@ class TaskLogCollection implements IteratorAggregate, Arrayable, Countable
 	public function toArray(): array
 	{
 		return array_map(static fn (TaskLog $log): array => $log->toArray(), $this->logs);
+	}
+
+	public function toJsonOutputFormat(): array
+	{
+		$converter = new Converter(Converter::OUTPUT_JSON_FORMAT);
+
+		return array_map(static fn (TaskLog $log): array => $converter->process($log->toArray()), $this->logs);
 	}
 
 	public function getLogs(): array

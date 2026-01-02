@@ -1,13 +1,14 @@
-import {rest as Rest} from 'rest.client';
-import {Type, Uri, ajax as Ajax, Event} from 'main.core';
-import {BaseButton} from 'ui.buttons';
+import { rest as Rest } from 'rest.client';
+import { Type, Uri, ajax as Ajax, Event, Runtime } from 'main.core';
 
 import 'clipboard';
 import 'loadext';
 import 'popup';
 import 'sidepanel';
+import 'ui.feedback.form';
 
 import './manager.css';
+import FeedbackType from './feedback-type';
 
 export class Manager
 {
@@ -26,33 +27,38 @@ export class Manager
 
 	static init(options)
 	{
-		options.connectedSiteId = parseInt(options.connectedSiteId);
-		if(options.connectedSiteId > 0)
+		options.connectedSiteId = parseInt(options.connectedSiteId, 10);
+		if (options.connectedSiteId > 0)
 		{
 			Manager.connectedSiteId = options.connectedSiteId;
 		}
-		options.sessionId = parseInt(options.sessionId);
-		if(options.sessionId > 0)
+		options.sessionId = parseInt(options.sessionId, 10);
+		if (options.sessionId > 0)
 		{
 			Manager.sessionId = options.sessionId;
 		}
-		if(Type.isString(options.siteTemplateCode))
+
+		if (Type.isString(options.siteTemplateCode))
 		{
 			Manager.siteTemplateCode = options.siteTemplateCode;
 		}
-		if(Type.isString(options.connectPath))
+
+		if (Type.isString(options.connectPath))
 		{
 			Manager.connectPath = options.connectPath;
 		}
-		if(Type.isBoolean(options.isSitePublished))
+
+		if (Type.isBoolean(options.isSitePublished))
 		{
 			Manager.isSitePublished = options.isSitePublished;
 		}
-		if(Type.isBoolean(options.isSiteExists))
+
+		if (Type.isBoolean(options.isSiteExists))
 		{
 			Manager.isSiteExists = options.isSiteExists;
 		}
-		if(Type.isBoolean(options.isOrderPublicUrlAvailable))
+
+		if (Type.isBoolean(options.isOrderPublicUrlAvailable))
 		{
 			Manager.isOrderPublicUrlAvailable = options.isOrderPublicUrlAvailable;
 		}
@@ -61,18 +67,18 @@ export class Manager
 			Manager.isOrderPublicUrlAvailable = false;
 		}
 
-		if(!Manager.isPullInited)
+		if (!Manager.isPullInited)
 		{
 			Event.ready(Manager.initPull);
 		}
 
 		// the crutch to load landings dynamically
-		if(!top.BX.Landing)
+		if (!top.BX.Landing)
 		{
 			top.BX.Landing = {
 				PageObject: {},
 				Main: {},
-			}
+			};
 		}
 	}
 
@@ -100,19 +106,19 @@ export class Manager
 	{
 		return new Promise((resolve, reject) =>
 		{
-			if(!Manager.connectPath)
+			if (!Manager.connectPath)
 			{
 				reject('no connect path');
 			}
 
 			let url = new Uri(Manager.connectPath);
-			if(!Type.isPlainObject(params))
+			if (!Type.isPlainObject(params))
 			{
 				params = {};
 			}
 			params.analyticsLabel = 'salescenterStartConnection';
 			url.setQueryParams(params);
-			Manager.openSlider(url.toString(), {width: 760}).then(() =>
+			Manager.openSlider(url.toString(), { width: 760 }).then(() =>
 			{
 				resolve();
 			}).catch((reason) =>
@@ -132,19 +138,19 @@ export class Manager
 	{
 		return new Promise((resolve) =>
 		{
-			if(Manager.connectedSiteId > 0 && Manager.isSiteExists)
+			if (Manager.connectedSiteId > 0 && Manager.isSiteExists)
 			{
 				resolve();
 			}
 			else
 			{
 				let url = new Uri('/shop/stores/site/edit/0/');
-				if(!Type.isPlainObject(params))
+				if (!Type.isPlainObject(params))
 				{
 					params = {};
 				}
 				params.analyticsLabel = 'salescenterConnect';
-				if(Manager.siteTemplateCode)
+				if (Manager.siteTemplateCode)
 				{
 					params.tpl = Manager.siteTemplateCode;
 				}
@@ -161,9 +167,9 @@ export class Manager
 	{
 		return new Promise((resolve, reject) =>
 		{
-			if(Manager.connectedSiteId > 0 && !Manager.isSitePublished)
+			if (Manager.connectedSiteId > 0 && !Manager.isSitePublished)
 			{
-				Rest.callMethod('landing.site.publication', {id: Manager.connectedSiteId}).then((result) =>
+				Rest.callMethod('landing.site.publication', { id: Manager.connectedSiteId }).then((result) =>
 				{
 					Manager.isSitePublished = true;
 					Manager.firePublicConnectedSiteEvent();
@@ -182,15 +188,18 @@ export class Manager
 
 	static firePublicConnectedSiteEvent()
 	{
-		top.BX.onCustomEvent('Salescenter.Manager:onPublicConnectedSite', {
-			isSitePublished: true
-		});
+		top.BX.onCustomEvent(
+			'Salescenter.Manager:onPublicConnectedSite',
+			{
+				isSitePublished: true,
+			},
+		);
 	}
 
 	/**
 	 * @returns BX.PopupWindow
 	 */
-	static getPopup({id = '', title = '', text = '', buttons = []})
+	static getPopup({ id = '', title = '', text = '', buttons = [] })
 	{
 		let popup = BX.PopupWindowManager.getPopupById(id);
 
@@ -198,7 +207,7 @@ export class Manager
 			<div class="salescenter-popup-title">${title}</div>
 			<div class="salescenter-popup-text">${text}</div>
 		</div>`;
-		if(popup)
+		if (popup)
 		{
 			popup.setContent(content);
 			popup.setButtons(buttons);
@@ -207,7 +216,7 @@ export class Manager
 		{
 			popup = new BX.PopupWindow(id, null, {
 				zIndex: 200,
-				className: "salescenter-connect-popup",
+				className: 'salescenter-connect-popup',
 				autoHide: true,
 				closeByEsc: true,
 				padding: 0,
@@ -231,16 +240,16 @@ export class Manager
 			text: BX.message('SALESCENTER_MANAGER_CONNECT_POPUP_DESCRIPTION'),
 			buttons: [
 				new BX.PopupWindowButton({
-					text : BX.message('SALESCENTER_MANAGER_CONNECT_POPUP_GO_BUTTON'),
-					className : "ui-btn ui-btn-md ui-btn-primary",
-					events : {
-						click : () =>
+					text: BX.message('SALESCENTER_MANAGER_CONNECT_POPUP_GO_BUTTON'),
+					className: 'ui-btn ui-btn-md ui-btn-primary',
+					events: {
+						click: () =>
 						{
 							Manager.openConnectedSite();
 							popup.close();
-						}
-					}
-				})
+						},
+					},
+				}),
 			],
 		});
 		popup.show();
@@ -249,23 +258,24 @@ export class Manager
 	static copyUrl(url, event)
 	{
 		BX.clipboard.copy(url);
-		if(event && event.target)
+		if (event && event.target)
 		{
 			Manager.showCopyLinkPopup(event.target);
 		}
 	}
 
 	static showCopyLinkPopup = function(node) {
-		if(Manager.popupOuterLink)
+		if (Manager.popupOuterLink)
 		{
 			Manager.popupOuterLink.destroy();
 			Manager.popupOuterLink = null;
-			if(Manager.hideCopyLinkTimeout > 0)
+			if (Manager.hideCopyLinkTimeout > 0)
 			{
 				clearTimeout(Manager.hideCopyLinkTimeout);
 				Manager.hideCopyLinkTimeout = 0;
 			}
-			if(Manager.destroyCopyLinkTimeout > 0)
+
+			if (Manager.destroyCopyLinkTimeout > 0)
 			{
 				clearTimeout(Manager.destroyCopyLinkTimeout);
 				Manager.destroyCopyLinkTimeout = 0;
@@ -292,7 +302,7 @@ export class Manager
 			Manager.popupOuterLink.destroy();
 			Manager.popupOuterLink = null;
 			Manager.destroyCopyLinkTimeout = 0;
-		}, 2200)
+		}, 2200);
 	};
 
 	static addCustomPage(page)
@@ -310,14 +320,19 @@ export class Manager
 
 	static resolveAddPopup(pageId, isSaved)
 	{
-		if(Manager.addUrlResolve && Type.isFunction(Manager.addUrlResolve))
+		if (Manager.addUrlResolve && Type.isFunction(Manager.addUrlResolve))
 		{
 			Manager.addUrlResolve(pageId);
 			Manager.addUrlResolve = null;
 		}
-		if(isSaved && pageId > 0)
+
+		if (isSaved && pageId > 0)
 		{
-			if(Manager.addingCustomPage && Manager.addingCustomPage.id && parseInt(Manager.addingCustomPage.id) === parseInt(pageId))
+			if (
+				Manager.addingCustomPage
+				&& Manager.addingCustomPage.id
+				&& parseInt(Manager.addingCustomPage.id, 10) === parseInt(pageId, 10)
+			)
 			{
 				Manager.showNotification(BX.message('SALESCENTER_MANAGER_UPDATE_URL_SUCCESS'));
 			}
@@ -350,36 +365,40 @@ export class Manager
 
 	static handleAddUrlPopupAutoHide(event)
 	{
-		if(!Manager.addUrlPopup)
+		if (!Manager.addUrlPopup)
 		{
 			return true;
 		}
-		if(event.target !== Manager.addUrlPopup.getPopupContainer() && !Manager.addUrlPopup.getPopupContainer().contains(event.target))
+
+		if (
+			event.target !== Manager.addUrlPopup.getPopupContainer()
+			&& !Manager.addUrlPopup.getPopupContainer().contains(event.target)
+		)
 		{
 			let urlFieldsPopupWindow = null;
 			const urlFieldsPopupMenu = BX.PopupMenu.getMenuById('salescenter-url-fields-popup');
-			if(urlFieldsPopupMenu)
+			if (urlFieldsPopupMenu)
 			{
 				urlFieldsPopupWindow = urlFieldsPopupMenu.popupWindow;
 			}
-			if(!urlFieldsPopupWindow)
+
+			if (!urlFieldsPopupWindow)
 			{
 				return true;
 			}
+
+			if (event.target.dataset['rootMenu'] === 'salescenter-url-fields-popup' || event.target.parentNode.dataset['rootMenu'] === 'salescenter-url-fields-popup')
+			{
+				if (!event.target.classList.contains('menu-popup-item-submenu') && !event.target.parentNode.classList.contains('menu-popup-item-submenu'))
+				{
+					urlFieldsPopupWindow.close();
+				}
+
+				return false;
+			}
 			else
 			{
-				if(event.target.dataset['rootMenu'] === 'salescenter-url-fields-popup' || event.target.parentNode.dataset['rootMenu'] === 'salescenter-url-fields-popup')
-				{
-					if(!event.target.classList.contains('menu-popup-item-submenu') && !event.target.parentNode.classList.contains('menu-popup-item-submenu'))
-					{
-						urlFieldsPopupWindow.close();
-					}
-					return false;
-				}
-				else
-				{
-					return true;
-				}
+				return true;
 			}
 		}
 
@@ -390,7 +409,7 @@ export class Manager
 	{
 		return new Promise((resolve) =>
 		{
-			if(!Manager.addUrlPopup)
+			if (!Manager.addUrlPopup)
 			{
 				Manager.initPopupTemplate().then(() =>
 				{
@@ -407,12 +426,12 @@ export class Manager
 						contentColor: 'white',
 						width: 600,
 						autoHideHandler: Manager.handleAddUrlPopupAutoHide,
-						events : {
+						events: {
 							onPopupClose: () =>
 							{
 								let newPageId = document.getElementById('salescenter-app-add-custom-url-id');
 								const isSaved = document.getElementById('salescenter-app-add-custom-url-is-saved').value === 'y';
-								if(newPageId)
+								if (newPageId)
 								{
 									newPageId = newPageId.value;
 								}
@@ -422,10 +441,10 @@ export class Manager
 								}
 								Manager.resolveAddPopup(newPageId, isSaved);
 							},
-							onPopupDestroy : () =>
+							onPopupDestroy: () =>
 							{
 								Manager.addUrlPopup = null;
-							}
+							},
 						},
 					});
 
@@ -443,19 +462,20 @@ export class Manager
 	{
 		return new Promise((resolve, reject) =>
 		{
-			let method, analyticsLabel;
-			if(fields.analyticsLabel)
+			let method;
+			let analyticsLabel;
+			if (fields.analyticsLabel)
 			{
 				analyticsLabel = fields.analyticsLabel;
 				delete(fields.analyticsLabel);
 			}
-			if(fields.id > 0)
+			if (fields.id > 0)
 			{
 				method = Rest.callMethod('salescenter.page.update', {
 					id: fields.id,
 					fields: fields,
 				});
-				if(!analyticsLabel)
+				if (!analyticsLabel)
 				{
 					analyticsLabel = 'salescenterUpdatePage';
 				}
@@ -465,20 +485,20 @@ export class Manager
 				method = Rest.callMethod('salescenter.page.add', {
 					fields: fields,
 				});
-				if(!analyticsLabel)
+				if (!analyticsLabel)
 				{
 					analyticsLabel = 'salescenterAddPage';
 				}
 			}
 			method.then((result) =>
 			{
-				if(result.answer.result.page)
+				if (result.answer.result.page)
 				{
 					let page = result.answer.result.page;
 					let source = 'other';
-					if(page.landingId > 0)
+					if (page.landingId > 0)
 					{
-						if(parseInt(page.siteId) === parseInt(Manager.connectedSiteId))
+						if (parseInt(page.siteId, 10) === parseInt(Manager.connectedSiteId, 10))
 						{
 							source = 'landing_store_chat';
 						}
@@ -511,7 +531,7 @@ export class Manager
 	static checkUrl(url)
 	{
 		return Rest.callMethod('salescenter.page.geturldata', {
-			url: url
+			url: url,
 		});
 	}
 
@@ -524,10 +544,10 @@ export class Manager
 			{
 				BX.loadExt('landing.master').then(() =>
 				{
-					BX.Landing.Env.getInstance().setOptions({site_id: siteId});
+					BX.Landing.Env.getInstance().setOptions({ site_id: siteId });
 					BX.Landing.UI.Panel.URLList
 						.getInstance()
-						.show('landing', {siteId: siteId})
+						.show('landing', { siteId: siteId })
 						.then((result) =>
 						{
 							Manager.addPage({
@@ -554,14 +574,14 @@ export class Manager
 
 	static showNotification(message)
 	{
-		if(!message)
+		if (!message)
 		{
 			return;
 		}
 		BX.loadExt('ui.notification').then(() =>
 		{
 			BX.UI.Notification.Center.notify({
-				content: message
+				content: message,
 			});
 		});
 	}
@@ -570,9 +590,9 @@ export class Manager
 	{
 		const method = 'salescenter.page.hide';
 		let source = 'other';
-		if(page.landingId > 0)
+		if (page.landingId > 0)
 		{
-			if(parseInt(page.siteId) === parseInt(Manager.connectedSiteId))
+			if (parseInt(page.siteId, 10) === parseInt(Manager.connectedSiteId, 10))
 			{
 				source = 'landing_store_chat';
 			}
@@ -633,16 +653,46 @@ export class Manager
 		window.open(`/shop/stores/site/${siteId}/view/${pageId}/`, '_blank');
 	}
 
-	static openSlider(url, options)
+	static openSlider(url, options): undefined | Promise
 	{
-		if(!Type.isPlainObject(options))
+		if (!Type.isStringFilled(url))
+		{
+			return;
+		}
+
+		if (url.startsWith('feedback:'))
+		{
+			const feedbackType = url.slice(9);
+			switch (feedbackType)
+			{
+				case FeedbackType.FEEDBACK:
+				case FeedbackType.PAYSYSTEM_OFFER:
+				case FeedbackType.DELIVERY_OFFER:
+				{
+					const formConfig = {
+						feedback_type: feedbackType,
+						sender_page: null,
+					};
+
+					return new Promise(() =>
+					{
+						Manager.#showFeedbackForm(formConfig);
+					});
+				}
+				default:
+					break;
+			}
+		}
+
+		if (!Type.isPlainObject(options))
 		{
 			options = {};
 		}
-		options = {...{cacheable: false, allowChangeHistory: false, events: {}}, ...options};
+		options = { ...{ cacheable: false, allowChangeHistory: false, events: {} }, ...options };
+
 		return new Promise((resolve) =>
 		{
-			if(Type.isString(url) && url.length > 1)
+			if (Type.isString(url) && url.length > 1)
 			{
 				options.events.onClose = function(event)
 				{
@@ -659,27 +709,31 @@ export class Manager
 
 	static getOrdersListUrl(params)
 	{
-		if(!Type.isPlainObject(params))
+		if (!Type.isPlainObject(params))
 		{
 			params = {};
 		}
-		if(Manager.sessionId > 0)
+
+		if (Manager.sessionId > 0)
 		{
 			params['sessionId'] = Manager.sessionId;
 		}
+
 		return (new Uri('/saleshub/orders/')).setQueryParams(params).toString();
 	}
 
 	static getPaymentsListUrl(params)
 	{
-		if(!Type.isPlainObject(params))
+		if (!Type.isPlainObject(params))
 		{
 			params = {};
 		}
-		if(Manager.sessionId > 0)
+
+		if (Manager.sessionId > 0)
 		{
 			params['sessionId'] = Manager.sessionId;
 		}
+
 		return (new Uri('/saleshub/payments/')).setQueryParams(params).toString();
 	}
 
@@ -695,14 +749,16 @@ export class Manager
 
 	static getOrderAddUrl(params)
 	{
-		if(!Type.isPlainObject(params))
+		if (!Type.isPlainObject(params))
 		{
 			params = {};
 		}
-		if(Manager.sessionId > 0)
+
+		if (Manager.sessionId > 0)
 		{
 			params['sessionId'] = Manager.sessionId;
 		}
+
 		return (new Uri('/saleshub/orders/order/')).setQueryParams(params).toString();
 	}
 
@@ -713,36 +769,37 @@ export class Manager
 
 	static showOrdersListAfterCreate(orderId)
 	{
-		let ordersListUrl = Manager.getOrdersListUrl({orderId: orderId});
+		let ordersListUrl = Manager.getOrdersListUrl({ orderId: orderId });
 		let listSlider = BX.SidePanel.Instance.getSlider(ordersListUrl);
-		if(!listSlider)
+		if (!listSlider)
 		{
-			ordersListUrl = Manager.getOrdersListUrl({orderId: orderId});
+			ordersListUrl = Manager.getOrdersListUrl({ orderId: orderId });
 			listSlider = BX.SidePanel.Instance.getSlider(ordersListUrl);
 		}
 		let orderAddUrl = Manager.getOrderAddUrl();
 		let addSlider = BX.SidePanel.Instance.getSlider(orderAddUrl);
-		if(addSlider)
+		if (addSlider)
 		{
 			addSlider.destroy();
 		}
-		if(!listSlider)
+
+		if (!listSlider)
 		{
-			Manager.showOrdersList({orderId: orderId});
+			Manager.showOrdersList({ orderId: orderId });
 		}
 		else
 		{
 			top.BX.onCustomEvent(listSlider.getFrameWindow(), 'salescenter-order-create', [
 				{
 					orderId: orderId
-				}
+				},
 			]);
 		}
 	}
 
 	static initPull()
 	{
-		if(BX.PULL)
+		if (BX.PULL)
 		{
 			Manager.isPullInited = true;
 			BX.PULL.subscribe({
@@ -763,7 +820,7 @@ export class Manager
 
 	static getFormAddUrl(formId = 0)
 	{
-		return (new Uri(`/crm/webform/edit/${parseInt(formId)}/`)).setQueryParams({ACTIVE: 'Y', RELOAD_LIST: 'N'}).toString();
+		return (new Uri(`/crm/webform/edit/${parseInt(formId, 10)}/`)).setQueryParams({ ACTIVE: 'Y', RELOAD_LIST: 'N' }).toString();
 	}
 
 	static addNewForm()
@@ -773,7 +830,7 @@ export class Manager
 			Manager.openSlider(Manager.getFormAddUrl()).then((slider) =>
 			{
 				const formId = slider.getData().get('formId');
-				if(formId > 0)
+				if (formId > 0)
 				{
 					Manager.addNewFormPage(formId).then((result) =>
 					{
@@ -802,7 +859,7 @@ export class Manager
 				formId: formId,
 			}).then((result) =>
 			{
-				if(result.answer.result.page)
+				if (result.answer.result.page)
 				{
 					resolve(result.answer.result.page);
 					let landingId = result.answer.result.page.landingId;
@@ -812,17 +869,17 @@ export class Manager
 						text: BX.message('SALESCENTER_MANAGER_NEW_PAGE_COMPLETE'),
 						buttons: [
 							new BX.PopupWindowButton({
-								text : BX.message('SALESCENTER_MANAGER_CONNECT_POPUP_GO_BUTTON'),
-								className : "ui-btn ui-btn-md ui-btn-primary",
-								events : {
-									click : () =>
+								text: BX.message('SALESCENTER_MANAGER_CONNECT_POPUP_GO_BUTTON'),
+								className: 'ui-btn ui-btn-md ui-btn-primary',
+								events: {
+									click: () =>
 									{
 										Manager.editLandingPage(landingId);
 										popup.close();
-									}
-								}
-							})
-						]
+									},
+								},
+							}),
+						],
 					});
 					popup.show();
 				}
@@ -832,7 +889,7 @@ export class Manager
 						id: popupId,
 						title: BX.message('SALESCENTER_MANAGER_ERROR_POPUP'),
 					})
-					.show();
+						.show();
 					reject();
 				}
 			}).catch((error) =>
@@ -850,13 +907,13 @@ export class Manager
 
 	static openConnectedSite(isRecycle = false)
 	{
-		if(Manager.connectedSiteId > 0)
+		if (Manager.connectedSiteId > 0)
 		{
 			let url = new Uri(`/shop/stores/site/${Manager.connectedSiteId}/`);
 			let params = {
 				apply_filter: 'y',
 			};
-			if(isRecycle)
+			if (isRecycle)
 			{
 				params.DELETED = 'Y';
 			}
@@ -1017,75 +1074,85 @@ export class Manager
 
 	static openHelper(event = null, url = '', analyticsArticle = '')
 	{
-		if(event)
+		if (event)
 		{
 			event.preventDefault();
 		}
-		if(analyticsArticle)
+
+		if (analyticsArticle)
 		{
 			Manager.addAnalyticAction({
 				analyticsLabel: 'salescenterOpenHelp',
 				article: analyticsArticle
 			}).then(() =>
 			{
-				if(top.BX.Helper)
+				if (top.BX.Helper)
 				{
 					top.BX.Helper.show(url);
 				}
 			});
 		}
-		else if(top.BX.Helper)
+		else if (top.BX.Helper)
 		{
 			top.BX.Helper.show(url);
 		}
 	}
 
-	static openFeedbackForm(event)
+	static openFeedbackForm(event): void
 	{
-		if(event && Type.isFunction(event.preventDefault))
-		{
-			event.preventDefault();
-		}
-		return Manager.openSlider('/bitrix/components/bitrix/salescenter.feedback/slider.php', {width: 735});
+		const formConfig = {
+			feedback_type: FeedbackType.FEEDBACK,
+			sender_page: null,
+		};
+
+		Manager.openFeedbackFormParams(event, formConfig);
 	}
 
-	static openFeedbackFormParams(event, params, options={})
+	static openFeedbackFormParams(event, params): void
 	{
-		if(event && Type.isFunction(event.preventDefault))
+		if (event && Type.isFunction(event.preventDefault))
 		{
 			event.preventDefault();
 		}
 
-		if(!Type.isPlainObject(params))
-		{
-			params = {};
-		}
+		const formConfig = Type.isPlainObject(params) ? params : {};
 
-		let url = (new Uri('/bitrix/components/bitrix/salescenter.feedback/slider.php')).setQueryParams(params).toString();
-		return Manager.openSlider(url, options);
+		Manager.#showFeedbackForm(formConfig);
 	}
 
 	static openFeedbackPayOrderForm(event)
 	{
-		if(event && Type.isFunction(event.preventDefault))
+		if (event && Type.isFunction(event.preventDefault))
 		{
 			event.preventDefault();
 		}
-		return Manager.openSlider('/bitrix/components/bitrix/salescenter.feedback/slider.php?feedback_type=pay_order', {width: 735});
+
+		const formConfig = {
+			feedback_type: FeedbackType.PAY_ORDER,
+			sender_page: null,
+		};
+
+		Manager.#showFeedbackForm(formConfig);
 	}
 
 	static openFeedbackDeliveryOfferForm(event)
 	{
-		if(event && Type.isFunction(event.preventDefault))
+		if (event && Type.isFunction(event.preventDefault))
 		{
 			event.preventDefault();
 		}
-		return Manager.openSlider('/bitrix/components/bitrix/salescenter.feedback/slider.php?feedback_type=delivery_offer', {width: 735});
+
+		const formConfig = {
+			feedback_type: FeedbackType.DELIVERY_OFFER,
+			sender_page: null,
+		};
+
+		Manager.#showFeedbackForm(formConfig);
 	}
 
 	static openIntegrationRequestForm(event)
 	{
-		let params = Manager.#getDataSettingFromEventDomNode(event)
+		let params = Manager.#getDataSettingFromEventDomNode(event);
 
 		if (event && Type.isFunction(event.preventDefault))
 		{
@@ -1097,12 +1164,44 @@ export class Manager
 			params = {};
 		}
 
-		let url = (new Uri('/bitrix/components/bitrix/salescenter.feedback/slider.php'));
+		params.feedback_type = FeedbackType.INTEGRATION_REQUEST;
 
-		url.setQueryParams({feedback_type: 'integration_request'});
-		url.setQueryParams(params);
+		Manager.#showFeedbackForm(params);
 
-		return Manager.openSlider(url.toString(), {width: 735});
+	/*
+let url = (new Uri('/bitrix/components/bitrix/salescenter.feedback/slider.php'));
+
+url.setQueryParams({feedback_type: 'integration_request'});
+url.setQueryParams(params);
+
+return Manager.openSlider(url.toString(), {width: 735});
+ */
+	}
+
+	static async #showFeedbackForm(formConfig: Object): void
+	{
+		try
+		{
+			const response = await Ajax.runComponentAction(
+				'bitrix:salescenter.feedback',
+				'getFormParams',
+				{
+					mode: 'class',
+					data: formConfig,
+				},
+			);
+
+			const { Form } = await Runtime.loadExtension(['ui.feedback.form']);
+
+			const formIdNumber = Math.round(Math.random() * 1000);
+			const data = response.data;
+			data.id += formIdNumber.toString();
+			Form.open(data);
+		}
+		catch (err)
+		{
+			await console.error(err);
+		}
 	}
 
 	static #parseParamsDataSetting(settings): Object
@@ -1184,11 +1283,11 @@ export class Manager
 	{
 		return new Promise((resolve, reject) =>
 		{
-			if(!Type.isPlainObject(params) || !params.analyticsLabel)
+			if (!Type.isPlainObject(params) || !params.analyticsLabel)
 			{
 				reject('wrong params');
 			}
-			params = {...params, ...{action: 'salescenter.manager.addAnalytic', sessid: BX.bitrix_sessid()}};
+			params = { ...params, ...{ action: 'salescenter.manager.addAnalytic', sessid: BX.bitrix_sessid() } };
 			let request = new XMLHttpRequest();
 			let url = new Uri('/bitrix/services/main/ajax.php');
 			url.setQueryParams(params);
@@ -1197,6 +1296,7 @@ export class Manager
 			{
 				resolve();
 			};
+
 			request.onerror = () =>
 			{
 				reject();
@@ -1209,9 +1309,10 @@ export class Manager
 	{
 		return new Promise((resolve, reject) =>
 		{
-			if(Manager.fieldsMap !== null)
+			if (Manager.fieldsMap !== null)
 			{
 				resolve(Manager.fieldsMap);
+
 				return;
 			}
 			Ajax.runAction('salescenter.manager.getFieldsMap', {
@@ -1231,11 +1332,12 @@ export class Manager
 	{
 		return new Promise((resolve, reject) =>
 		{
-			if(!Type.isInteger(pageId))
+			if (!Type.isInteger(pageId))
 			{
 				resolve(null);
 			}
-			if(!Type.isPlainObject(entities) || entities.length <= 0)
+
+			if (!Type.isPlainObject(entities) || entities.length <= 0)
 			{
 				resolve(null);
 			}

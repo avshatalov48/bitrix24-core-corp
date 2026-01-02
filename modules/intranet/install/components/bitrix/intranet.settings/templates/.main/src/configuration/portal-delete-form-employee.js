@@ -1,6 +1,5 @@
-import { PortalDeleteForm } from './portal-delete-form';
+import PortalDeleteFormType, { PortalDeleteForm } from './portal-delete-form';
 import {ajax, Loc, Tag} from 'main.core';
-import PortalDeleteFormTypes from './portal-delete-form';
 
 export class PortalDeleteFormEmployee extends PortalDeleteForm
 {
@@ -13,22 +12,11 @@ export class PortalDeleteFormEmployee extends PortalDeleteForm
 
 	getDescription(): HTMLElement
 	{
-		const moreDetails = `
-			<a class="ui-section__link" onclick="top.BX.Helper.show('redirect=detail&code=19566456')">
-				${Loc.getMessage('INTRANET_SETTINGS_CANCEL_MORE')}
-			</a>
-		`;
-
 		return Tag.render`
 			${Loc.getMessage('INTRANET_SETTINGS_SECTION_CONFIGURATION_DESCRIPTION_DELETE_PORTAL_EMPLOYEE', {
-				'#MORE_DETAILS#': moreDetails
+				'#MORE_DETAILS#': this.getMoreDetails(),
 			})}
 		`;
-	}
-
-	getBodyClass(): string
-	{
-		return PortalDeleteFormTypes.WARNING;
 	}
 
 	getConfirmButtonText(): ?string
@@ -49,7 +37,7 @@ export class PortalDeleteFormEmployee extends PortalDeleteForm
 
 							if (response.data <= 1)
 							{
-								this.sendChangeFormEvent(this.#isFreeLicense ? 'default' : 'mail');
+								this.sendChangeFormEvent(this.#isFreeLicense ? PortalDeleteFormType.DEFAULT : PortalDeleteFormType.MAIL);
 							}
 						})
 						.catch((reject) => {

@@ -41,6 +41,13 @@ final class ToolsManager
 	private const TERMINAL_TOOL_ID = 'terminal';
 	public const TERMINAL_SLIDER_CODE = 'limit_crm_terminal_off';
 
+	public const REPEAT_SALE_TOOL_ID = 'repeat_sale';
+	public const REPEAT_SALE_SLIDER_CODE = 'limit_v2_crm_repeat_sale_off';
+
+	public const INVENTORY_TOOL_ID = 'inventory_management';
+	public const INVENTORY_SLIDER_CODE = 'limit_store_inventory_management_off';
+
+
 	public function __construct()
 	{
 		$this->canUseIntranetToolsManager = (
@@ -119,6 +126,11 @@ final class ToolsManager
 		;
 	}
 
+	public function checkOnlyBizprocAvailability(): bool
+	{
+		return $this->check(self::BIZPROC_TOOL_ID);
+	}
+
 	public function checkBizprocScriptAvailability(): bool
 	{
 		return
@@ -195,5 +207,18 @@ final class ToolsManager
 		$factory = Container::getInstance()->getFactory($entityTypeId);
 
 		return $factory && $factory->isInCustomSection();
+	}
+
+	public function checkRepeatSaleAvailability(): bool
+	{
+		return
+			$this->check(self::REPEAT_SALE_TOOL_ID)
+			&& $this->checkCrmAvailability()
+		;
+	}
+
+	public function checkInventoryAvailability(): bool
+	{
+		return $this->check(self::INVENTORY_TOOL_ID);
 	}
 }

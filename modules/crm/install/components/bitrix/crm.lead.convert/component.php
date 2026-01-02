@@ -21,8 +21,15 @@ if (!is_array($arLead))
 	LocalRedirect(CComponentEngine::MakePathFromTemplate($arParams['PATH_TO_LEAD_LIST'], array()));
 }
 
-$userPermissions = new CCrmPerms($USER->GetID());
-if(!CCrmLead::CheckConvertPermission($arParams['ELEMENT_ID'], CCrmOwnerType::Undefined, $userPermissions))
+$userPermissionsService = \Bitrix\Crm\Service\Container::getInstance()->getUserPermissions();
+if (!(
+	$userPermissionsService->item()->canUpdate(CCrmOwnerType::Lead, $arParams['ELEMENT_ID'])
+	&& (
+		$userPermissionsService->entityType()->canAddItems(CCrmOwnerType::Deal)
+		|| $userPermissionsService->entityType()->canAddItems(CCrmOwnerType::Contact)
+		|| $userPermissionsService->entityType()->canAddItems(CCrmOwnerType::Company)
+	)
+))
 {
 	ShowError(GetMessage('CRM_PERMISSION_DENIED'));
 	return;
@@ -294,7 +301,7 @@ if($_SERVER['REQUEST_METHOD'] == 'POST' && check_bitrix_sessid())
 		} else if (!$bConvertContact && $iContactId <= 0)
 			$arResult['ERROR_MESSAGE'] .= GetMessage('CRM_CONTACT_ERROR').'<br />';
 
-		if (!$userPermissions->HavePerm('COMPANY', BX_CRM_PERM_NONE, 'ADD'))
+		if (\Bitrix\Crm\Service\Container::getInstance()->getUserPermissions()->entityType()->canAddItems(CCrmOwnerType::Company))
 		{
 			$CCrmCompany = new CCrmCompany(false);
 			if ($bConvertCompany
@@ -310,7 +317,7 @@ if($_SERVER['REQUEST_METHOD'] == 'POST' && check_bitrix_sessid())
 				$arResult['ERROR_MESSAGE'] .= GetMessage('CRM_COMPANY_ERROR').'<br />';*/
 		}
 
-		if (CCrmDeal::CheckCreatePermission($userPermissions, 0))
+		if ($userPermissionsService->entityType()->canAddItems(CCrmOwnerType::Deal))
 		{
 			$CCrmDeal = new CCrmDeal(false);
 			if ($bConvertDeal)
@@ -405,7 +412,7 @@ if($_SERVER['REQUEST_METHOD'] == 'POST' && check_bitrix_sessid())
 
 			$arFields['DEAL']['CONTACT_ID'] = $iContactId;
 
-			if (CCrmDeal::CheckCreatePermission($userPermissions, 0))
+			if ($userPermissionsService->entityType()->canAddItems(CCrmOwnerType::Deal))
 			{
 				if ($bConvertDeal)
 				{
@@ -515,7 +522,7 @@ $arResult['FIELDS']['tab_convert'][] = array(
 	'value' => $sVal
 );
 
-if (!$userPermissions->HavePerm('COMPANY', BX_CRM_PERM_NONE, 'ADD'))
+if (\Bitrix\Crm\Service\Container::getInstance()->getUserPermissions()->entityType()->canAddItems(CCrmOwnerType::Company))
 {
 	ob_start();
 	$APPLICATION->IncludeComponent(
@@ -542,7 +549,7 @@ if (!$userPermissions->HavePerm('COMPANY', BX_CRM_PERM_NONE, 'ADD'))
 	);
 }
 
-if (CCrmDeal::CheckCreatePermission($userPermissions, 0))
+if ($userPermissionsService->entityType()->canAddItems(CCrmOwnerType::Deal))
 {
 	$arDealVals = $arResult['ELEMENT']['DEAL'];
 

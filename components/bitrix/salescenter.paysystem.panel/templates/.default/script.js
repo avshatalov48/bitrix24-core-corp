@@ -413,9 +413,16 @@
 					});
 				}
 			}
-			else if(this.data.type === 'recommend')
+			else if (this.data.type === 'recommend')
 			{
-				BX.SidePanel.Instance.open(this.data.connectPath, {width: 735});
+				if (BX.Type.isPlainObject(this.data.feedbackConfig))
+				{
+					BX.Salescenter.Manager.openFeedbackFormParams(null, this.data.feedbackConfig);
+				}
+				else
+				{
+					BX.SidePanel.Instance.open(this.data.connectPath, { width: 600 });
+				}
 			}
 		},
 

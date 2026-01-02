@@ -1,0 +1,5 @@
+.intranet-user-mini-profile__user-status-description {
+	font-size: var(--ui-font-size-4xs);
+	font-weight: var(--ui-font-weight-normal);
+	color: var(--ui-color-base-3);
+}

@@ -3,6 +3,7 @@
 namespace Bitrix\HumanResources\Item\HcmLink;
 
 use Bitrix\HumanResources\Contract\Item;
+use Bitrix\HumanResources\Item\HcmLink\Job\SettingsData;
 use Bitrix\HumanResources\Type\HcmLink\JobStatus;
 use Bitrix\HumanResources\Type\HcmLink\JobType;
 use Bitrix\Main\Type\Contract\Arrayable;
@@ -23,6 +24,7 @@ class Job implements Item, Arrayable, \JsonSerializable
 		public array     $inputData = [],
 		public array     $outputData = [],
 		public ?int      $id = null,
+		public ?SettingsData $settingsData = null,
 	)
 	{
 	}

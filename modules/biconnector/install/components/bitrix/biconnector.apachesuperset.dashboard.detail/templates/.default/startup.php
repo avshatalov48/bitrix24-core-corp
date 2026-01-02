@@ -34,6 +34,13 @@ Extension::load([
 	'pull.client',
 	'ui.lottie',
 ]);
+CJSCore::Init(['helper']);
+
+$helpDeskUrl = new \Bitrix\Main\Web\Uri(\Bitrix\UI\Util::getHelpdeskUrl(true) . '/widget2/');
+$helpDeskUrl->addParams([
+	'action' => 'open',
+	'redirect' => 'detail',
+]);
 
 $dashboardTitle = htmlspecialcharsbx($arResult['DASHBOARD_TITLE']);
 $APPLICATION->SetTitle($dashboardTitle);
@@ -49,6 +56,7 @@ else
 	$biBuilderLogo = $templateFolder . '/images/bi-builder-logo-ru.svg';
 }
 
+$templateMessages = Loc::loadLanguageFile($_SERVER['DOCUMENT_ROOT'] . $templateFolder . '/template.php');
 
 ?>
 <style>
@@ -76,28 +84,36 @@ else
 			<div class="dashboard-header-logo">
 				<div class="dashboard-header-logo-svg dashboard-header-logo-svg-url"></div>
 			</div>
-			<div class="dashboard-header-title"><?= $dashboardTitle ?></div>
+			<div class="dashboard-header-selector-text"><?= $dashboardTitle ?></div>
 		</div>
 		<div class="dashboard-header-buttons">
-			<button id="edit-btn" disabled="disabled" class="ui-btn ui-btn-default ui-btn-round dashboard-header-buttons-edit disabled"><?= Loc::getMessage('SUPERSET_DASHBOARD_DETAIL_HEADER_EDIT') ?></button>
+			<button id="edit-btn" disabled="disabled" class="ui-btn ui-btn-primary ui-btn-round" disabled><?= Loc::getMessage('SUPERSET_DASHBOARD_DETAIL_HEADER_EDIT') ?></button>
+			<button id="download-btn" disabled="disabled" class="ui-btn ui-btn-primary ui-btn-round" disabled><?= Loc::getMessage('SUPERSET_DASHBOARD_DETAIL_HEADER_DOWNLOAD') ?></button>
+			<button id="share-btn" disabled="disabled" class="ui-btn ui-btn-primary ui-btn-round" disabled><?= Loc::getMessage('SUPERSET_DASHBOARD_DETAIL_HEADER_SHARE') ?></button>
 			<div id="more-btn" disabled="disabled" class="ui-icon ui-icon-service-light-other icon-more dashboard-header-buttons-more disabled"><i></i></div>
 		</div>
 	</div>
 	<div class='biconnector-dashboard__loader'></div>
 </div>
 
-
-
 <script>
 	BX.ready(() => {
 		BX.message(<?= Json::encode(Loc::loadLanguageFile(__FILE__)) ?>);
+		BX.message(<?= Json::encode($templateMessages) ?>);
 
 		new BX.BIConnector.ApacheSuperset.Dashboard.Detail.createSkeleton({
 			container: document.querySelector('.biconnector-dashboard__loader'),
 			dashboardId: <?= (int)$arResult['DASHBOARD_ID'] ?>,
 			status: '<?= \CUtil::JSEscape($arResult['DASHBOARD_STATUS']) ?>',
-			isSupersetAvailable: <?= Json::encode($arResult['IS_SUPERSET_AVAILABLE'] ?? true) ?>,
-			paramsCompatible: <?= Json::encode($arResult['PARAMS_COMPATIBLE'] ?? true) ?>,
-		})
+			dashboardType: '<?= \CUtil::JSEscape($arResult['DASHBOARD_TYPE']) ?>',
+			supersetStatus: '<?= \CUtil::JSEscape($arResult['SUPERSET_STATUS']) ?>',
+			isFirstStartup: <?= Json::encode($arResult['IS_FIRST_STARTUP'] ?? false) ?>,
+			periodicReload: <?= Json::encode($arResult['PERIODIC_RELOAD'] ?? false) ?>,
+		});
+	});
+
+	BX.Helper.init({
+		frameOpenUrl: '<?= $helpDeskUrl ?>',
+		langId: '<?= LANGUAGE_ID ?>'
 	});
 </script>

@@ -23,7 +23,7 @@ export const RecentListContainer = {
 	{
 		onChatClick(dialogId: string)
 		{
-			this.$emit('selectEntity', { layoutName: Layout.openlinesV2.name, entityId: dialogId });
+			this.$emit('selectEntity', { layoutName: Layout.openlinesV2, entityId: dialogId });
 		},
 		loc(phraseCode: string): string
 		{

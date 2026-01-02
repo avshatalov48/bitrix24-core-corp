@@ -57,7 +57,7 @@ $frame = $this->createFrame()->begin();
 		$avatarStyle = (isset($arUser['PERSONAL_PHOTO']['src']) ? "background: url('" . Uri::urnEncode($arUser['PERSONAL_PHOTO']['src']) . "') no-repeat center; background-size: cover;" : '');
 
 		?><a href="<?= $arUser['DETAIL_URL'] ?>" class="<?= implode(' ', $classList) ?>">
-			<span class="user-avatar user-default-avatar" style="<?= $avatarStyle ?>"></span>
+			<span class="sidebar-widget-item-user-avatar user-default-avatar" style="<?= $avatarStyle ?>"></span>
 			<span class="sidebar-user-info">
 				<span class="user-birth-name"><?= CUser::FormatName($arParams['NAME_TEMPLATE'], $arUser, true); ?></span>
 				<span class="user-birth-date"><?php

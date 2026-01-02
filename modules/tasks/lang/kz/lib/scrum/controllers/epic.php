@@ -1,0 +1,20 @@
+<?php
+$MESS["TASKS_EC_ERROR_ACCESS_DENIED"] = "Сізге кіруге рұқсат жоқ.";
+$MESS["TASKS_EC_ERROR_COULD_NOT_DELETE_EPIC"] = "Эпикті жою мүмкін болмады.";
+$MESS["TASKS_EC_ERROR_COULD_NOT_READ_EPIC"] = "Эпикті табу мүмкін болмады.";
+$MESS["TASKS_EC_ERROR_INCLUDE_MODULE_ERROR"] = "Қажетті модульдерді қосу мүмкін болмады.";
+$MESS["TASKS_SCRUM_EPIC_GRID_ACTION_EDIT"] = "Редакциялау";
+$MESS["TASKS_SCRUM_EPIC_GRID_ACTION_REMOVE"] = "Жою";
+$MESS["TASKS_SCRUM_EPIC_GRID_ACTION_VIEW"] = "Қарау";
+$MESS["TASKS_SCRUM_EPIC_GRID_NAME"] = "Эпик атауы";
+$MESS["TASKS_SCRUM_EPIC_GRID_NAME_ERROR"] = "Эпиктің атауы көрсетілмеген";
+$MESS["TASKS_SCRUM_EPIC_GRID_NAME_SHORT"] = "Атауы";
+$MESS["TASKS_SCRUM_EPIC_GRID_TAGS"] = "Тегтер";
+$MESS["TASKS_SCRUM_EPIC_GRID_TASKS_COMPLETED"] = "Орындалған міндеттер";
+$MESS["TASKS_SCRUM_EPIC_GRID_TASKS_TOTAL"] = "Міндеттердің жалпы саны";
+$MESS["TASKS_SCRUM_EPIC_GRID_USER"] = "Жасаушы";
+$MESS["TASKS_SCRUM_EPIC_GRID_USER_SHORT"] = "Жасалды";
+$MESS["TASKS_SCRUM_TASKS_GRID_ASSIGNEE"] = "Орындаушы";
+$MESS["TASKS_SCRUM_TASKS_GRID_NAME"] = "Атауы";
+$MESS["TASKS_SCRUM_TASKS_GRID_RESPONSIBLE"] = "Жауапты";
+$MESS["TASKS_SCRUM_TASKS_GRID_STORY_POINTS"] = "Стори Поинттер";

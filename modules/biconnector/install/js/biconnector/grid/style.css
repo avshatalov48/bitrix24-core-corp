@@ -2,7 +2,7 @@
 	display: inline-flex;
 	flex-direction: column;
 	align-items: center;
-	font-family: var(--ui-font-family-system);
+	font-family: var(--ui-font-family-primary, var(--ui-font-family-system));
 	line-height: var(--ui-font-line-height-md);
 	color: var(--ui-color-base-90);
 }

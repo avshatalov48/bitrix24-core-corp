@@ -5,6 +5,7 @@ jn.define('crm/timeline/item/ui/body/blocks/ecommerce-documents-list', (require,
 	const { TimelineItemBodyBlock } = require('crm/timeline/item/ui/body/blocks/base');
 	const { Loc } = require('loc');
 	const AppTheme = require('apptheme');
+	const { Money } = require('money');
 
 	/**
 	 * @class TimelineItemBodyEcommerceDocumentsList

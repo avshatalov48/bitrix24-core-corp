@@ -2,7 +2,6 @@
  * @module selector/widget/entity
  */
 jn.define('selector/widget/entity', (require, exports, module) => {
-
 	const { EntitySelectorWidget } = require('selector/widget');
 	const { Type } = require('type');
 
@@ -165,10 +164,10 @@ jn.define('selector/widget/entity', (require, exports, module) => {
 
 			if (!createOptions.hasOwnProperty('enableCreation'))
 			{
-				createOptions.enableCreation = this.isCreationEnabled(providerOptions);
+				createOptions.enableCreation = this.isCreationEnabled(providerOptions, createOptions);
 			}
 
-			if (!this.isCreationEnabled(providerOptions))
+			if (!this.isCreationEnabled(providerOptions, createOptions))
 			{
 				createOptions.enableCreation = false;
 			}
@@ -196,9 +195,8 @@ jn.define('selector/widget/entity', (require, exports, module) => {
 			if (createOptions.enableCreation && !createOptions.handler)
 			{
 				createOptions.handler = this.getCreateEntityHandler(
-					providerOptions.entities[0].options,
-					createOptions.getParentLayout,
-					createOptions.analytics,
+					providerOptions?.entities[0]?.options,
+					createOptions,
 				);
 			}
 
@@ -261,7 +259,7 @@ jn.define('selector/widget/entity', (require, exports, module) => {
 			return null;
 		}
 
-		static isCreationEnabled(providerOptions)
+		static isCreationEnabled(providerOptions, createOptions)
 		{
 			return false;
 		}
@@ -281,7 +279,7 @@ jn.define('selector/widget/entity', (require, exports, module) => {
 			return null;
 		}
 
-		static getCreateEntityHandler(providerOptions, getParentLayoutFunction, analytics)
+		static getCreateEntityHandler(providerOptions, createOptions)
 		{
 			return null;
 		}

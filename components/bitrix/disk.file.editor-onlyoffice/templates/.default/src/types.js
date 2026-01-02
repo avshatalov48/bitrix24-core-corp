@@ -6,6 +6,7 @@ export type WaitingOptions = {
 	targetNode: HTMLElement,
 	documentSession: DocumentSession,
 	object: BaseObject,
+	unifiedLinkMode: boolean,
 };
 
 export type CommonWarningOptions = {
@@ -36,6 +37,7 @@ export type EditorOptions = {
 	pullConfig: any,
 	publicChannel: string,
 	sharingControlType: ?SharingControlType,
+	unifiedLinkAccessOnly: boolean,
 };
 
 export type Context = {
@@ -61,6 +63,7 @@ export type BaseObject = {
 	publicChannel: ?string,
 	size: ?number,
 	updatedBy: ?number,
+	uniqueCode: ?string,
 }
 
 export type AttachedObject = {

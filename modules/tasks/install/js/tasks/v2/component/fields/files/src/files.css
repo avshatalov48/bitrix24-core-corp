@@ -1,0 +1,130 @@
+.tasks-field-files {
+	display: flex;
+	flex-direction: column;
+	position: relative;
+}
+
+.tasks-field-files-title {
+	display: flex;
+	flex-direction: row;
+}
+
+.tasks-field-files-main {
+	display: flex;
+	flex: 1;
+	align-items: center;
+	cursor: pointer;
+}
+
+.tasks-field-files-main .ui-icon-set {
+	margin-right: 6px;
+	--ui-icon-set__icon-color: var(--ui-color-accent-main-primary);
+}
+
+.tasks-field-files-add-container {
+	align-items: center;
+}
+
+.tasks-field-files-text {
+	font-size: var(--ui-font-size-lg);
+	font-weight: var(--ui-font-weight-medium);
+}
+
+.tasks-field-files-text.--add {
+	color: var(--ui-color-accent-main-primary);
+}
+
+.tasks-field-files-add {
+	margin-left: auto;
+	--ui-icon-set__icon-size: 20px;
+	--ui-icon-set__icon-color: var(--ui-color-base-4);
+	cursor: pointer;
+}
+
+.tasks-field-files-close {
+	--ui-icon-set__icon-color: var(--ui-color-base-4);
+}
+
+.tasks-field-files-sheet {
+	display: flex;
+	flex-direction: column;
+	height: 100%;
+}
+
+.tasks-field-files-header {
+	display: flex;
+	justify-content: space-between;
+	align-items: center;
+	padding-bottom: var(--ui-space-inline-md);
+	border-bottom: var(--ui-border-width-thin) solid var(--ui-color-divider-default);
+}
+
+.tasks-field-files-title {
+	font-size: 17px;
+	font-weight: var(--ui-font-weight-medium);
+}
+
+.tasks-field-files-header .ui-icon-set {
+	opacity: 0.7;
+	cursor: pointer;
+}
+
+.tasks-field-files-header .ui-icon-set:hover {
+	opacity: 1;
+}
+
+.tasks-field-files-list {
+	overflow: auto;
+	margin: 15px 0;
+}
+
+.tasks-field-files-list.--card {
+	max-height: 90px;
+	overflow-y: hidden;
+	margin: 15px 0 0;
+}
+
+.tasks-field-files-footer {
+	display: flex;
+	flex-direction: row;
+	align-items: center;
+	margin-top: auto;
+	padding-top: var(--ui-space-inline-xl);
+	padding-right: 4px;
+	border-top: var(--ui-border-width-thin) solid var(--ui-color-divider-default);
+	justify-content: flex-end;
+}
+
+.tasks-field-files-footer.--with-archive {
+	justify-content: space-between;
+}
+
+.tasks-field-files-more-button {
+	position: absolute;
+	bottom: 0;
+	right: 0;
+	cursor: pointer;
+	font-size: var(--ui-font-size-md);
+	line-height: var(--ui-typography-line-height);
+	z-index: 2;
+}
+
+.tasks-field-files-more-button-text {
+	color: var(--ui-color-accent-main-link);
+}
+
+.tasks-field-files-shadow {
+	position: relative;
+	pointer-events: none;
+	z-index: 1;
+}
+
+.tasks-field-files-shadow-white {
+	position: absolute;
+	height: 110px;
+	width: 40%;
+	flex-shrink: 0;
+	background: linear-gradient(90deg, rgba(255, 255, 255, 0.00) 11.84%, rgba(255, 255, 255, 1) 79.41%);
+	bottom: 0;
+	right: 0;
+}

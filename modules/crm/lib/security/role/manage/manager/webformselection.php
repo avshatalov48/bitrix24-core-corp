@@ -5,14 +5,14 @@ namespace Bitrix\Crm\Security\Role\Manage\Manager;
 use Bitrix\Crm\Restriction\AvailabilityManager;
 use Bitrix\Crm\Security\Role\Manage\DTO\RoleSelectionManager\CreateSettingsDto;
 use Bitrix\Crm\Security\Role\Manage\Enum\Permission;
+use Bitrix\Crm\Security\Role\Manage\Manager\Contract\SectionableRoleSelectionManager;
 use Bitrix\Crm\Security\Role\Manage\PermissionEntityBuilder;
-use Bitrix\Crm\Security\Role\Manage\RoleSelectionManager;
 use Bitrix\Crm\Service\Container;
 use Bitrix\Main\Localization\Loc;
 use Bitrix\Main\Result;
 use Bitrix\Main\Web\Uri;
 
-class WebFormSelection implements RoleSelectionManager
+class WebFormSelection implements SectionableRoleSelectionManager
 {
 	public const CRITERION = 'webform';
 
@@ -39,7 +39,7 @@ class WebFormSelection implements RoleSelectionManager
 
 	public function hasPermissionsToEditRights(): bool
 	{
-		return Container::getInstance()->getUserPermissions()->canWriteWebFormConfig();
+		return Container::getInstance()->getUserPermissions()->webForm()->canWriteConfig();
 	}
 
 	public function prohibitToSaveRoleWithoutAtLeastOneRight(): bool

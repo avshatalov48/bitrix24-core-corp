@@ -91,6 +91,7 @@ $messages = Loc::loadLanguageFile(__FILE__);
 		AccessRightsOption,
 		AccessRights,
 		hasLeftMenu: <?=$arResult['shouldDisplayLeftMenu'] ? 'true' : 'false' ?>,
+		useAirDesign: <?= defined('AIR_SITE_TEMPLATE') ? 'true' : 'false' ?>,
 	});
 
 	ConfigPerms.init();

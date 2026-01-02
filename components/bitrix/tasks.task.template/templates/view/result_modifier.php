@@ -320,4 +320,5 @@ $arResult['JS_DATA']= array(
 	),
 	'context' => \Bitrix\Main\Context::getCurrent()->getRequest()->get('context'),
 	'backUrl' => Util::secureBackUrl($arResult['TEMPLATE_DATA']['BACKURL']),
+	'gridId' => $arResult['GRID_ID'] ?? null,
 );

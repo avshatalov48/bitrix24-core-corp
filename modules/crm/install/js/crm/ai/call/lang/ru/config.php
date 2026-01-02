@@ -18,7 +18,7 @@ $MESS['CRM_COPILOT_CALL_QUALITY_COMPLIANCE_EMPTY_SCRIPT_LIST_VALUE'] = 'по с�
 $MESS['CRM_COPILOT_CALL_QUALITY_EXPLANATION_TITLE'] = 'CoPilot оценил разговор';
 $MESS['CRM_COPILOT_CALL_QUALITY_EXPLANATION_NOT_IN_RATING'] = 'Не участвует в общем рейтинге';
 $MESS['CRM_COPILOT_CALL_QUALITY_EXPLANATION_IS_PENDING_TITLE'] = 'CoPilot анализирует разговор';
-$MESS['CRM_COPILOT_CALL_QUALITY_EXPLANATION_DISCLAIMER'] = 'Oтветы CoPilot могут быть #LINK_START#неточны#LINK_END#, проверяйте важную информацию';
+$MESS['CRM_COPILOT_CALL_QUALITY_EXPLANATION_DISCLAIMER_MSGVER_1'] = 'Oтветы CoPilot могут быть #LINK_START#неточны#LINK_END#, проверяйте важную информацию';
 
 $MESS['CRM_COPILOT_CALL_QUALITY_OLD_EXPLANATION_TITLE'] = 'Запустите анализ разговора ещё&nbsp;раз';
 $MESS['CRM_COPILOT_CALL_QUALITY_OLD_EXPLANATION_TEXT'] = 'CoPilot уже проанализировал этот разговор, но&nbsp;текст скрипта изменился после оценки. Вы&nbsp;можете оценить разговор ещё&nbsp;раз или&nbsp;посмотреть оценку по&nbsp;предыдущей версии скрипта';

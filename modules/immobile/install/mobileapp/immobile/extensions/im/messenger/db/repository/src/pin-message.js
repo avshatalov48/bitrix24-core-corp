@@ -4,12 +4,12 @@
 jn.define('im/messenger/db/repository/pin-message', (require, exports, module) => {
 	const { Type } = require('type');
 	const { LinkPinTable, LinkPinMessageTable, FileTable, UserTable } = require('im/messenger/db/table');
-	const { LoggerManager } = require('im/messenger/lib/logger');
+	const { getLogger } = require('im/messenger/lib/logger');
 	const { validate: validateMessage } = require('im/messenger/db/repository/validators/message');
 	const { validate: validatePin } = require('im/messenger/db/repository/validators/pin');
 	const { merge } = require('utils/object');
 
-	const logger = LoggerManager.getInstance().getLogger('repository--pin');
+	const logger = getLogger('repository--pin');
 	/**
 	 * @class PinMessageRepository
 	 */
@@ -135,8 +135,8 @@ jn.define('im/messenger/db/repository/pin-message', (require, exports, module) =
 				pinListToAdd.push(pinToAdd);
 			});
 
-			this.pinTable.add(pinListToAdd, true);
-			this.pinMessageTable.add(messageListToAdd, true);
+			await this.pinTable.add(pinListToAdd, true);
+			await this.pinMessageTable.add(messageListToAdd, true);
 		}
 
 		/**
@@ -154,27 +154,30 @@ jn.define('im/messenger/db/repository/pin-message', (require, exports, module) =
 				.map((message) => this.pinMessageTable.validate(validateMessage(message)))
 			;
 
-			this.pinTable.add(pinsToAdd, true);
-			this.pinMessageTable.add(messageToAdd, true);
+			await this.pinTable.add(pinsToAdd, true);
+			await this.pinMessageTable.add(messageToAdd, true);
 		}
 
 		/**
 		 *
-		 * @param {MessagesModelState} modelMessage
+		 * @param {Array<PinUpdateMessageData>} messageDataList
 		 * @return {Promise<void>}
 		 */
-		async updateMessage(modelMessage)
+		async updateMessages(messageDataList)
 		{
-			const messageRow = await this.pinMessageTable.getById(modelMessage.id);
-
-			if (!messageRow)
+			const messageIdList = messageDataList.map((message) => message.id);
+			const messageRows = await this.pinMessageTable.getListByIds(messageIdList);
+			if (!Type.isArrayFilled(messageRows.items))
 			{
 				return;
 			}
+			const messagesToAdd = messageRows.items.map((messageRow) => {
+				const sourceModelMessage = messageDataList.find((messageDats) => messageDats.id === messageRow.id);
 
-			const messageToAdd = this.pinMessageTable.validate(merge(messageRow, modelMessage));
+				return this.pinMessageTable.validate(merge(messageRow, sourceModelMessage.fields));
+			});
 
-			this.pinMessageTable.add([messageToAdd], true);
+			await this.pinMessageTable.add(messagesToAdd, true);
 		}
 
 		async deleteByMessageIdList(messageIdList)

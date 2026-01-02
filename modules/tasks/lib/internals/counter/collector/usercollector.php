@@ -195,6 +195,10 @@ class UserCollector
 			(
 				BUF.UF_TASK_COMMENT_TYPE = " . Comment::TYPE_EXPIRED_SOON . "
 			)
+			OR
+			(
+				BUF.UF_TASK_COMMENT_TYPE = " . Comment::TYPE_ONBOARDING_COMMENT . "
+			)
 		)";
 
 		$counterFilter = $this->getCounterFilter();

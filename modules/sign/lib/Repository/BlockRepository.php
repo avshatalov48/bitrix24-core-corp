@@ -24,7 +24,7 @@ class BlockRepository
 	];
 
 	public function __construct(
-		private ?Serializer\ItemPropertyJsonSerializer $serializer
+		private ?Serializer\ItemPropertyJsonSerializer $serializer,
 	)
 	{
 		$this->serializer ??= new Serializer\ItemPropertyJsonSerializer();
@@ -171,8 +171,8 @@ class BlockRepository
 		return new Item\BlockCollection(
 			...array_map(
 				fn ($model) => $this->extractItemFromModel($model),
-				$modelCollection->getAll()
-			)
+				$modelCollection->getAll(),
+			),
 		);
 	}
 
@@ -229,5 +229,33 @@ class BlockRepository
 	private function convertIntToRole(?int $roleNumber): ?string
 	{
 		return array_flip(static::ROLE_TO_INT_MAP)[$roleNumber] ?? null;
+	}
+
+	public function update(Item\Block $block): Main\Result
+	{
+		$model = Internal\BlockTable::getById($block->id)->fetchObject();
+		if (!$model)
+		{
+			return (new Main\Result())->addError(new Main\Error('Block not found'));
+		}
+
+		$block = $this->getFilledModelFromItem($block, $model);
+
+		return $block->save();
+	}
+
+	public function updateBlocks(Item\BlockCollection $blocks): Main\Result
+	{
+		$result = new Main\Result();
+		foreach ($blocks as $block)
+		{
+			$updateResult = $this->update($block);
+			if (!$updateResult->isSuccess())
+			{
+				$result->addErrors($updateResult->getErrors());
+			}
+		}
+
+		return $result;
 	}
 }

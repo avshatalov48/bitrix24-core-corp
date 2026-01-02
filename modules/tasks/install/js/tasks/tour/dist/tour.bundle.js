@@ -64,7 +64,6 @@ this.BX.Tasks = this.BX.Tasks || {};
 	        target: target,
 	        cursorMode: true,
 	        targetEvent: function targetEvent() {
-	          BX.SidePanel.Instance.open(target.href);
 	          setTimeout(function () {
 	            return _this2.guide.close();
 	          }, 1000);
@@ -160,7 +159,6 @@ this.BX.Tasks = this.BX.Tasks || {};
 	        target: target,
 	        cursorMode: true,
 	        targetEvent: function targetEvent() {
-	          BX.SidePanel.Instance.open(target.href);
 	          setTimeout(function () {
 	            return _this2.guide.close();
 	          }, 1000);

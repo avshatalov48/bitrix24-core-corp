@@ -7,12 +7,14 @@ if (!defined("B_PROLOG_INCLUDED") || B_PROLOG_INCLUDED !== true)
 use Bitrix\Main\Loader;
 use Bitrix\Main\Localization\Loc;
 use Bitrix\Socialnetwork\WorkgroupTable;
-use Bitrix\Tasks\Integration\Intranet\Settings;
+use Bitrix\Tasks\Helper\Filter;
+use Bitrix\Tasks\Internals\Counter;
 use Bitrix\Tasks\Scrum\Service\SprintService;
 use Bitrix\Tasks\TourGuide\PresetsMoved;
 use Bitrix\Tasks\Util\Restriction\Bitrix24Restriction\Limit\FilterLimit;
 use Bitrix\Tasks\Ui\Filter\Task;
 use Bitrix\Tasks\Internals\Routes\RouteDictionary;
+use Bitrix\Tasks\V2\Internal\DI\Container;
 
 Loader::includeModule('socialnetwork');
 
@@ -56,6 +58,8 @@ class TasksInterfaceFilterComponent extends TasksBaseComponent
 	public function executeComponent()
 	{
 		$this->arResult['showPresetTourGuide'] = $this->showPresetTourGuide();
+		$this->arResult['roles'] = $this->prepareRoles();
+
 		return parent::executeComponent();
 	}
 
@@ -197,7 +201,7 @@ class TasksInterfaceFilterComponent extends TasksBaseComponent
 		static::tryParseStringParameter($this->arParams['USE_EXPORT'], 'Y');
 		static::tryParseStringParameter($this->arParams['USE_GROUP_BY_SUBTASKS'], 'N');
 		static::tryParseStringParameter($this->arParams['USE_GROUP_BY_GROUPS'], 'N');
-		static::tryParseStringParameter($this->arParams['USE_LIVE_SEARCH'], 'Y');
+		static::tryParseStringParameter($this->arParams['USE_LIVE_SEARCH'], 'N');
 		static::tryParseStringParameter($this->arParams['SHOW_QUICK_FORM_BUTTON'], 'Y');
 		static::tryParseStringParameter($this->arParams['SHOW_USER_SORT'], 'N');
 		static::tryParseStringParameter($this->arParams['USE_GROUP_SELECTOR'], 'N');
@@ -223,7 +227,7 @@ class TasksInterfaceFilterComponent extends TasksBaseComponent
 		$this->arResult['IS_SCRUM_PROJECT'] = ($group && $group->isScrumProject());
 		$this->arResult['IS_COLLAB'] = ($group && $group->isCollab());
 		$this->arResult['SPRINT'] = $this->getSprint();
-		$this->arResult['IS_TEMPLATES_AVAILABLE'] = (new Settings())->isToolAvailable(Settings::TOOLS['templates']);
+		$this->arResult['IS_TEMPLATES_AVAILABLE'] = Container::getInstance()->getToolService()->isTemplatesAvailable();
 
 		$this->arResult['viewMode'] = $this->getUserTasksViewMode();
 		$this->arResult['viewList'] = $this->getTasksViewList();
@@ -463,7 +467,18 @@ class TasksInterfaceFilterComponent extends TasksBaseComponent
 
 	protected function getData()
 	{
-		$this->arParams['VIEW_STATE_FOR_ANALYTICS'] = \Bitrix\Tasks\Helper\Analytics::getInstance($this->arParams['USER_ID'], $this->arParams['GROUP_ID'] ?? 0)->getViewStateName();
+		$viewState = \Bitrix\Tasks\Helper\Analytics::getInstance($this->arParams['USER_ID'], $this->arParams['GROUP_ID'] ?? 0)->getViewStateName();
+		$sectionType = match (true) {
+			($this->arResult['IS_SCRUM_PROJECT'] ?? false) => 'scrum',
+			($this->arResult['IS_COLLAB'] ?? false) => 'collab',
+			(($this->arParams['MENU_GROUP_ID'] ?? $this->arParams['GROUP_ID'] ?? false) > 0) => 'project',
+			true => 'tasks',
+		};
+
+		$this->arResult['CREATE_BUTTON_ANALYTICS'] = [
+			'sectionType' => $sectionType,
+			'viewState' => $viewState,
+		];
 	}
 
 	private function getTasksViewList(): array
@@ -534,4 +549,18 @@ class TasksInterfaceFilterComponent extends TasksBaseComponent
 		return $this->getTasksViewMode($viewCode);
 	}
 
+	private function prepareRoles(): array
+	{
+		$groupId = (int)$this->arParams['GROUP_ID'] ?? 0;
+		$items = Container::getInstance()->getRoleProvider()->getItems($this->userId, $groupId);
+		$selectedRoleId = Filter::getInstance($this->userId, $groupId)->getDefaultRoleId();
+		$totalCounter = Counter::getInstance($this->userId)->get(Counter\CounterDictionary::COUNTER_MEMBER_TOTAL, $groupId);
+
+		return [
+			'items' => $items,
+			'totalCounter' => $totalCounter,
+			'selectedRoleId' => $selectedRoleId,
+			'selectedRoleName' => $items[$selectedRoleId]['TEXT'] ?? null,
+		];
+	}
 }

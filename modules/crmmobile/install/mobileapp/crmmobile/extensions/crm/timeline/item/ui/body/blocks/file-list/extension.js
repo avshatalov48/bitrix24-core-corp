@@ -5,18 +5,19 @@ jn.define('crm/timeline/item/ui/body/blocks/file-list', (require, exports, modul
 	const AppTheme = require('apptheme');
 	const { TimelineItemBodyBlock } = require('crm/timeline/item/ui/body/blocks/base');
 	const { TodoActivityConfig, CommentConfig } = require('crm/timeline/services/file-selector-configs');
-	const { EasyIcon } = require('layout/ui/file/icon');
 	const { FileSelector } = require('layout/ui/file/selector');
 	const {
 		NativeViewerMediaTypes,
 		getNativeViewerMediaTypeByFileExt,
-		getExtension,
 		openNativeViewer,
 	} = require('utils/file');
 	const { largePen } = require('assets/common');
 	const { withCurrentDomain } = require('utils/url');
 	const { Loc } = require('loc');
 	const { AudioPlayer } = require('layout/ui/audio-player');
+	const { resolveFileIcon } = require('assets/icons');
+	const { SafeImage } = require('layout/ui/safe-image');
+	const { IconView } = require('ui-system/blocks/icon');
 
 	const EditableItemTypes = {
 		Comment: 'Comment',
@@ -217,14 +218,31 @@ jn.define('crm/timeline/item/ui/body/blocks/file-list', (require, exports, modul
 		 */
 		renderFileIcon(file)
 		{
-			return View(
-				{
-					style: {
-						marginRight: 6,
-					},
-				},
-				EasyIcon(getExtension(file.name), 24),
-			);
+			const style = {
+				width: 24,
+				height: 24,
+				marginRight: 6,
+			};
+
+			if (this.#isImage(file) && file.previewUrl)
+			{
+				return SafeImage({
+					style,
+					resizeMode: 'contain',
+					uri: withCurrentDomain(file.previewUrl),
+				});
+			}
+
+			return IconView({
+				style,
+				color: null,
+				icon: resolveFileIcon(file.extension),
+			});
+		}
+
+		#isImage(file)
+		{
+			return getNativeViewerMediaTypeByFileExt(file.extension) === NativeViewerMediaTypes.IMAGE;
 		}
 
 		/**
@@ -309,7 +327,8 @@ jn.define('crm/timeline/item/ui/body/blocks/file-list', (require, exports, modul
 			const params = {
 				focused,
 				files: this.files.map((file) => ({
-					id: file.sourceFileId,
+					id: file.id,
+					sourceFileId: file.sourceFileId,
 					name: file.name,
 					type: file.extension,
 					url: file.viewUrl,
@@ -334,6 +353,7 @@ jn.define('crm/timeline/item/ui/body/blocks/file-list', (require, exports, modul
 				return TodoActivityConfig({
 					...params,
 					activityId: entityId,
+					analyticsEvent: this.factory.analyticsEvent,
 				});
 			}
 

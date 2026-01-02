@@ -15,6 +15,7 @@ class AddBookingCommand extends AbstractCommand
 	public function __construct(
 		public readonly int $createdBy,
 		public readonly Entity\Booking\Booking $booking,
+		public readonly bool $allowOverbooking = false,
 	)
 	{
 	}
@@ -24,6 +25,7 @@ class AddBookingCommand extends AbstractCommand
 		return [
 			'createdBy' => $this->createdBy,
 			'booking' => $this->booking->toArray(),
+			'allowOverbooking' => $this->allowOverbooking,
 		];
 	}
 
@@ -32,6 +34,7 @@ class AddBookingCommand extends AbstractCommand
 		return new self(
 			createdBy: $props['createdBy'],
 			booking: Entity\Booking\Booking::mapFromArray($props['booking']),
+			allowOverbooking: isset($props['allowOverbooking']) && $props['allowOverbooking'],
 		);
 	}
 

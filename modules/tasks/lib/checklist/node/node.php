@@ -9,7 +9,16 @@ use Bitrix\Tasks\Internals\Attribute\Required;
 use Bitrix\Tasks\Internals\Dto\AbstractBaseDto;
 
 /**
+ * @method self setId(int $id)
  * @method self setNodeId(string $nodeId)
+ * @method self setTitle(string $title)
+ * @method self setMembers(array $members)
+ * @method self setAttachments(array $attachments)
+ * @method self setIsComplete(bool $isComplete)
+ * @method self setIsImportant(bool $isImportant)
+ * @method self setParentId(int $parentId)
+ * @method self setParentNodeId(string $parentNodeId)
+ * @method self setSortIndex(int $sortIndex)
  */
 class Node extends AbstractBaseDto
 {

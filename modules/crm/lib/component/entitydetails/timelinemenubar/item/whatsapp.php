@@ -21,11 +21,6 @@ final class WhatsApp extends Sms
 		return 'whatsapp';
 	}
 
-	public function isNew(): bool
-	{
-		return true;
-	}
-
 	public function getTitle(): string
 	{
 		return Loc::getMessage('CRM_TIMELINE_WHATSAPP_TITLE');

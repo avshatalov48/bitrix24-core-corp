@@ -12,11 +12,16 @@ export class Chart extends StageFlow.Chart
 	getStageModelCallback: (id: number) => ?StageModel;
 	isNewItem: boolean = false;
 
+	#isLoadingCallback: () => boolean;
+	#showLoadingNotificationCallback: () => void;
+
 	constructor(
 		params: Object, /** @see StageFlow.Chart */
 		stages: Array,
 		permissionChecker: StagePermissionChecker,
 		gettingStageModelCallback: (id: number) => StageModel,
+		isLoadingCallback: () => boolean,
+		showLoadingNotificationCallback: () => void,
 		isNewItem: boolean = false,
 	)
 	{
@@ -25,6 +30,9 @@ export class Chart extends StageFlow.Chart
 		this.permissionChecker = permissionChecker;
 		this.getStageModelCallback = gettingStageModelCallback;
 		this.isNewItem = isNewItem;
+
+		this.#isLoadingCallback = isLoadingCallback;
+		this.#showLoadingNotificationCallback = showLoadingNotificationCallback;
 
 		if (!this.isNewItem)
 		{
@@ -45,6 +53,13 @@ export class Chart extends StageFlow.Chart
 
 	onStageClick(stage: Stage): void
 	{
+		if (this.isLoading())
+		{
+			this.showLoadingNotification();
+
+			return;
+		}
+
 		if (!this.#isHasPermissionToMove(stage.getId()))
 		{
 			this.permissionChecker.showMissPermissionError();
@@ -57,6 +72,13 @@ export class Chart extends StageFlow.Chart
 
 	onFinalStageClick(stage: Stage): void
 	{
+		if (this.isLoading())
+		{
+			this.showLoadingNotification();
+
+			return;
+		}
+
 		if (!this.#isHasPermissionToMoveAtLeastOneTerminationStage())
 		{
 			this.permissionChecker.showMissPermissionError();
@@ -71,7 +93,7 @@ export class Chart extends StageFlow.Chart
 	{
 		super.setCurrentStageId(stageId);
 
-		this.#adjust();
+		this.adjust();
 
 		return this;
 	}
@@ -214,6 +236,11 @@ export class Chart extends StageFlow.Chart
 
 	#isDisableStageFlow(flowStage: Stage): boolean
 	{
+		if (this.isLoading())
+		{
+			return true;
+		}
+
 		if (flowStage.isFinal())
 		{
 			return false;
@@ -227,7 +254,7 @@ export class Chart extends StageFlow.Chart
 		return !this.#isHasPermissionToMove(flowStage.getId());
 	}
 
-	#adjust(): void
+	adjust(): void
 	{
 		this.#adjustDisableStages();
 		this.#adjustSemanticsSelectorPopupButtons();
@@ -247,5 +274,15 @@ export class Chart extends StageFlow.Chart
 			this.getSemanticPopupSuccessButton(),
 			this.getSemanticPopupFailureButton(),
 		]);
+	}
+
+	isLoading(): boolean
+	{
+		return this.#isLoadingCallback();
+	}
+
+	showLoadingNotification(): void
+	{
+		return this.#showLoadingNotificationCallback();
 	}
 }

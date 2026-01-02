@@ -13,7 +13,7 @@ use Bitrix\Main\EventManager;
 use Bitrix\Main\Loader;
 use Bitrix\Main\Localization\Loc;
 use Bitrix\Main\Result;
-use Bitrix\Main\Type\DateTime;
+use Bitrix\Main\SystemException;
 use Bitrix\Transformer\Command;
 use Bitrix\Transformer\DocumentTransformer;
 use Bitrix\Transformer\FileTransformer;
@@ -45,7 +45,7 @@ final class TransformerManager implements InterfaceCallback
 	 *
 	 * @return bool|string
 	 */
-	public static function call($status, $command, $params, $result = array())
+	public static function call($status, $command, $params, $result = [])
 	{
 		if(!isset($params['documentId']) || empty($params['documentId']))
 		{
@@ -98,7 +98,13 @@ final class TransformerManager implements InterfaceCallback
 	 */
 	protected static function fireEvent($documentId, array $data = [])
 	{
-		EventManager::getInstance()->send(new Event(Driver::MODULE_ID, 'onDocumentTransformationComplete', ['documentId' => $documentId, 'data' => $data]));
+		$event = new Event(
+			Driver::MODULE_ID,
+			'onDocumentTransformationComplete',
+			['documentId' => (int)$documentId, 'data' => $data],
+		);
+
+		EventManager::getInstance()->send($event);
 	}
 
 	private static function updateDocument(Document $document, array $result): array
@@ -106,9 +112,14 @@ final class TransformerManager implements InterfaceCallback
 		$updateData = [];
 		foreach (static::getFormats() as $extension => $format)
 		{
-			if (isset($result['files'][$extension]))
+			if (!empty($result['files'][$extension]))
 			{
 				$fileArray = \CFile::MakeFileArray($result['files'][$extension], $format['TYPE']);
+				if (empty($fileArray['tmp_name']))
+				{
+					throw new SystemException('Could not make file array for ' . $result['files'][$extension]);
+				}
+
 				$fileArray['MODULE_ID'] = Driver::MODULE_ID;
 				$fileArray['name'] = $fileArray['fileName'] = $document->getFileName($extension);
 				$saveResult = FileTable::saveFile($fileArray);
@@ -198,26 +209,23 @@ final class TransformerManager implements InterfaceCallback
 			]);
 		}
 
-		if($this->isConverted($formats))
-		{
-			$status = $this->transformInfo['status'] ?? 0;
-			if ($status === Command::STATUS_SUCCESS)
-			{
-				$this->result->setData([
-					'cancelReason' => new Error(
-						'All transform formats already processed',
-						static::ERROR_CODE_TRANSFORM_FORMATS_PROCESSED,
-					),
-				]);
-			}
-
-			return $this->result;
-		}
-
 		if($this->result->isSuccess())
 		{
 			$transformer = new DocumentTransformer();
-			$this->result = $transformer->transform($this->getBFileId(), $formats, Driver::MODULE_ID, static::class, ['documentId' => $this->document->ID, 'queue' => static::QUEUE_NAME]);
+
+			/** @noinspection PhpCastIsUnnecessaryInspection */
+			$this->result = $transformer->transform(
+				$this->getBFileId(),
+				$formats,
+				Driver::MODULE_ID,
+				static::class,
+				[
+					'documentId' => (int)$this->document->ID,
+					'queue' => static::QUEUE_NAME,
+					// 20 minutes, lower than default timeout. we need speed
+					'timeout' => 20 * 60,
+				],
+			);
 		}
 
 		return $this->result;
@@ -248,48 +256,6 @@ final class TransformerManager implements InterfaceCallback
 		return true;
 	}
 
-	/**
-	 * @param array $formats
-	 * @return boolean
-	 */
-	protected function isConverted(array $formats)
-	{
-		$this->loadTransformInfo();
-		if(!$this->transformInfo)
-		{
-			return false;
-		}
-
-		if($this->transformInfo['status'] == Command::STATUS_ERROR)
-		{
-			return false;
-		}
-		if($this->transformInfo['status'] !== Command::STATUS_SUCCESS)
-		{
-			/** @var DateTime $date */
-			$date = $this->transformInfo['time'];
-			if($date && time() - $date->getTimestamp() > 24*3600)
-			{
-				return false;
-			}
-		}
-		$formatsConverted = count($formats);
-		foreach($this->transformInfo['params']['formats'] as $format)
-		{
-			if(isset($formats[$format]))
-			{
-				$formatsConverted--;
-			}
-		}
-
-		if($formatsConverted == 0)
-		{
-			return true;
-		}
-
-		return false;
-	}
-
 	final public function getLastTransformationResult(): ?Result
 	{
 		$this->loadTransformInfo();
@@ -314,7 +280,15 @@ final class TransformerManager implements InterfaceCallback
 			$error = [];
 		}
 
-		$code = isset($error['code']) && is_int($error['code']) ? $error['code'] : Command::ERROR_CONTROLLER_UNKNOWN_ERROR;
+		if (isset($error['code']) && is_int($error['code']))
+		{
+			$code = $error['code'];
+		}
+		else
+		{
+			$code = Command::ERROR_CONTROLLER_UNKNOWN_ERROR;
+		}
+
 		if (isset($error['message']) && is_string($error['message']) && $error['message'] !== '')
 		{
 			$message = $error['message'];

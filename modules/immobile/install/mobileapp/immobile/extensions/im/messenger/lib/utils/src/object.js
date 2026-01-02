@@ -44,6 +44,13 @@ jn.define('im/messenger/lib/utils/object', (require, exports, module) => {
 
 						if (recursively && BX.type.isArray(value))
 						{
+							if (!key.includes('_'))
+							{
+								const newKey = (key.toUpperCase() === key) ? key.toLowerCase() : key;
+
+								return [newKey, ObjectUtils.convertKeysToCamelCase(originalObject[key])];
+							}
+
 							return [
 								ObjectUtils.stringToCamelCase(key.toLowerCase()),
 								value.map((element) => ObjectUtils.convertKeysToCamelCase(element, recursively)),

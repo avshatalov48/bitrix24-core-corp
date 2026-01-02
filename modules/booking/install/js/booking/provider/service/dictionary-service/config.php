@@ -1,16 +1,37 @@
 <?php
+
+use Bitrix\Booking\Entity\Booking\BookingVisitStatus;
+use Bitrix\Booking\Internals\Service\CounterDictionary;
+use Bitrix\Booking\Internals\Service\Journal\EventProcessor\PushPull\PushPullCommandType;
+use Bitrix\Booking\Internals\Service\Notifications\NotificationTemplateType;
+use Bitrix\Booking\Internals\Service\Notifications\NotificationType;
+use Bitrix\Main\Loader;
+
 if (!defined('B_PROLOG_INCLUDED') || B_PROLOG_INCLUDED !== true)
 {
 	die();
 }
 
+if (!Loader::includeModule('booking'))
+{
+	return [];
+}
+
 return [
-	'css' => 'dist/dictionary-service.bundle.css',
 	'js' => 'dist/dictionary-service.bundle.js',
 	'rel' => [
-		'main.polyfill.core',
+		'main.core',
 		'booking.core',
-		'booking.lib.api-client',
+		'booking.const',
 	],
-	'skip_core' => true,
+	'skip_core' => false,
+	'settings' => [
+		'counters' => CounterDictionary::toArray(),
+		'pushCommands' => PushPullCommandType::toArray(),
+		'notifications' => NotificationType::toArray(),
+		'notificationTemplateTypes' => NotificationTemplateType::toArray(),
+		'bookings' => [
+			'visitStatuses' => BookingVisitStatus::toArray(),
+		],
+	],
 ];

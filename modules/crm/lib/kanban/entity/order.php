@@ -92,6 +92,8 @@ class Order extends Entity
 			'DATE_INSERT' => '',
 			'CLIENT' => '',
 			'ORDER_STAGE' => '',
+			'LAST_ACTIVITY_BY_TIME' => '',
+			'LAST_ACTIVITY_BY_USER_AVATAR' => '',
 		];
 	}
 
@@ -520,18 +522,18 @@ class Order extends Entity
 	}
 
 	/**
-	 * @param array $ids
-	 * @param bool $isIgnore
-	 * @param \CCrmPerms|null $permissions
-	 * @param array $params
-	 * @throws Exception
+	 * @deprecated
 	 */
-	public function deleteItems(array $ids, bool $isIgnore = false, \CCrmPerms $permissions = null, array $params = []): void
+	public function deleteItems(array $ids, bool $isIgnore = false, $permissions = null, array $params = []): void
 	{
 		foreach ($ids as $id)
 		{
 			$id = (int)$id;
-			$checkPermission = \Bitrix\Crm\Order\Permissions\Order::checkDeletePermission($id, $permissions);
+			$checkPermission = Service\Container::getInstance()
+				->getUserPermissions()
+				->item()
+				->canDelete(\CCrmOwnerType::Order, $id)
+			;
 
 			if (!$checkPermission)
 			{
@@ -545,16 +547,6 @@ class Order extends Entity
 				throw new Exception(implode(', ', $res->getErrorMessages()));
 			}
 		}
-	}
-
-	public function checkReadPermissions(int $id = 0, ?\CCrmPerms $permissions = null): bool
-	{
-		return \Bitrix\Crm\Order\Permissions\Order::checkReadPermission();
-	}
-
-	public function checkUpdatePermissions(int $id, ?\CCrmPerms $permissions = null): bool
-	{
-		return \Bitrix\Crm\Order\Permissions\Order::checkUpdatePermission($id, $permissions);
 	}
 
 	public function getItem(int $id, array $fieldsToSelect = []): ?array
@@ -584,13 +576,13 @@ class Order extends Entity
 		return $order->save();
 	}
 
-	public function setItemsAssigned(array $ids, int $assignedId, \CCrmPerms $permissions): Result
+	public function setItemsAssigned(array $ids, int $assignedId): Result
 	{
 		$result = new Result();
 
 		foreach ($ids as $id)
 		{
-			if ($this->checkUpdatePermissions($id, $permissions))
+			if ($this->checkUpdatePermissions($id))
 			{
 				$order = \Bitrix\Crm\Order\Order::load($id);
 				if($order)
@@ -691,15 +683,6 @@ class Order extends Entity
 				'canUseCreateTaskInPanel' => true,
 				'canUseCallListInPanel' => true,
 			]
-		);
-	}
-
-	protected function getHideSumForStagePermissionType(string $stageId, \CCrmPerms $userPermissions): ?string
-	{
-		return $userPermissions->GetPermType(
-			$this->getTypeName(),
-			'HIDE_SUM',
-			["STAGE_ID{$stageId}"]
 		);
 	}
 }

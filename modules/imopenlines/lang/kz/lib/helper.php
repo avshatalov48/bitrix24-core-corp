@@ -1,0 +1,3 @@
+<?php
+$MESS["IMOL_HELPER_TEMPLATE_COLORED"] = "Түрлі түсті";
+$MESS["IMOL_HELPER_TEMPLATE_TRANSPARENT"] = "Мөлдір";

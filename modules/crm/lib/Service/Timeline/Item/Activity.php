@@ -175,19 +175,33 @@ abstract class Activity extends Configurable implements Deadlinable
 		return is_null($this->getAssociatedEntityModel()?->get('ORIGIN_ID'));
 	}
 
-	final protected function getScheduleButton(string $jsEventName, string $buttonType = Button::TYPE_SECONDARY): Button
+	final protected function getScheduleButton(
+		string $jsEventName,
+		string $description = '',
+		string $buttonType = Button::TYPE_SECONDARY,
+	): ?Button
 	{
+		if (!$this->getContext()->getUserPermissions()->item()->canUpdate(
+			$this->getContext()->getEntityTypeId(),
+			$this->getContext()->getEntityId()
+		))
+		{
+			return null;
+		}
+
 		$nearestWorkday = (new WorkTime())
 			->detectNearestWorkDateTime(self::NEAREST_WORK_DATE_DAYS, self::NEAREST_WORK_DATE_HOURS)
 		;
 
-		return (new Button(Loc::getMessage('CRM_COMMON_ACTION_SCHEDULE'), $buttonType))
+		$buttonTitle = Loc::getMessage('CRM_COMMON_ACTION_SCHEDULE_ACTIVITY') ?? Loc::getMessage('CRM_COMMON_ACTION_SCHEDULE');
+
+		return (new Button($buttonTitle, $buttonType))
 			->setAction(
 				(new JsEvent($jsEventName))
 					->addActionParamInt('activityId', $this->getActivityId())
 					->addActionParamString('scheduleDate', $nearestWorkday->toString())
-					->addActionParamInt('scheduleTs', $nearestWorkday->getTimestamp()
-				)
+					->addActionParamInt('scheduleTs', $nearestWorkday->getTimestamp())
+					->addActionParamString('description', $description)
 			)
 		;
 	}

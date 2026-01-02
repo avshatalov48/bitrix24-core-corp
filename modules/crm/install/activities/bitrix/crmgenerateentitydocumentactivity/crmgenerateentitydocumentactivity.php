@@ -8,6 +8,7 @@ if (!defined('B_PROLOG_INCLUDED') || B_PROLOG_INCLUDED !== true)
 use Bitrix\Bizproc\BaseType\Value;
 use Bitrix\Crm\EntityBankDetail;
 use Bitrix\Crm\EntityRequisite;
+use Bitrix\Crm\Integration\Analytics\Dictionary;
 use Bitrix\Crm\Integration\DocumentGeneratorManager;
 use Bitrix\DocumentGenerator;
 use Bitrix\Main\Loader;
@@ -122,7 +123,7 @@ class CBPCrmGenerateEntityDocumentActivity
 			return CBPActivityExecutionStatus::Closed;
 		}
 		$template->setSourceType($providerClassName);
-		$document = \Bitrix\DocumentGenerator\Document::createByTemplate($template, $entityId);
+		$document = DocumentGenerator\Document::createByTemplate($template, $entityId);
 		if (!$document)
 		{
 			$this->WriteToTrackingService('Could not create document', 0, CBPTrackingType::Error);
@@ -164,7 +165,8 @@ class CBPCrmGenerateEntityDocumentActivity
 			$values['MY_COMPANY.BANK_DETAIL'] = $myCompanyBankDetailId;
 		}
 
-		\Bitrix\DocumentGenerator\CreationMethod::markDocumentAsCreatedByAutomation($document);
+		DocumentGenerator\CreationMethod::markDocumentAsCreatedByAutomation($document);
+
 		$targetUserId = CBPHelper::ExtractUsers($this->GetRootActivity()->{CBPDocument::PARAM_TAGRET_USER}, $this->GetDocumentId(), true);
 		if (!$targetUserId)
 		{
@@ -185,7 +187,7 @@ class CBPCrmGenerateEntityDocumentActivity
 
 		$this->DocumentId = $documentData['id'];
 		$this->DocumentNumber = $documentData['number'];
-		$this->DocumentDocx = \Bitrix\DocumentGenerator\Model\FileTable::getBFileId($document->FILE_ID);
+		$this->DocumentDocx = DocumentGenerator\Model\FileTable::getBFileId($document->FILE_ID);
 		if($this->EnablePublicUrl === 'Y')
 		{
 			$result = $document->enablePublicUrl();
@@ -194,6 +196,12 @@ class CBPCrmGenerateEntityDocumentActivity
 				$this->DocumentUrl = (string)$document->getPublicUrl();
 			}
 		}
+
+		\CCrmBizProcHelper::sendOperationsAnalytics(
+			Dictionary::EVENT_ENTITY_CREATE,
+			$this,
+			'document',
+		);
 
 		if ($this->CreateActivity === 'Y')
 		{
@@ -230,7 +238,8 @@ class CBPCrmGenerateEntityDocumentActivity
 				0,
 				CBPTrackingType::Error
 			);
-			return CBPActivityExecutionStatus::Faulting;
+
+			return CBPActivityExecutionStatus::Closed;
 		}
 
 		//Subscribe for PDF generation event.
@@ -285,33 +294,36 @@ class CBPCrmGenerateEntityDocumentActivity
 
 	public function OnExternalEvent($arEventParameters = array())
 	{
-		if($this->DocumentId != $arEventParameters[0])
+		$eventDocumentId = $arEventParameters[0] ?? null;
+		if ((int)$this->DocumentId !== (int)$eventDocumentId)
 		{
 			return;
 		}
-		if ($this->executionStatus != CBPActivityExecutionStatus::Closed)
+
+		if ((int)$this->executionStatus === CBPActivityExecutionStatus::Closed)
 		{
-			$documentData = $arEventParameters[1];
-			if(empty($documentData))
-			{
-				$this->WriteToTrackingService('Transformation Error', 0, CBPTrackingType::Error);
-				$this->Unsubscribe($this);
-				$this->workflow->CloseActivity($this);
-			}
-			else
-			{
-				$bFileId = null;
-				$pdfId = $documentData['pdfId'];
-				if($pdfId > 0)
-				{
-					$bFileId = DocumentGenerator\Model\FileTable::getBFileId($pdfId);
-				}
-				$this->DocumentPdf = $bFileId;
-				$this->WriteToTrackingService(GetMessage("CRM_GEDA_NAME_WAIT_FOR_EVENT_LOG_COMPLETE"));
-				$this->Unsubscribe($this);
-				$this->workflow->CloseActivity($this);
-			}
+			return;
 		}
+
+		$documentData = $arEventParameters[1] ?? [];
+		if (empty($documentData))
+		{
+			$this->WriteToTrackingService('Transformation Error', 0, CBPTrackingType::Error);
+		}
+		else
+		{
+			$bFileId = null;
+			$pdfId = $documentData['pdfId'] ?? null;
+			if ($pdfId > 0)
+			{
+				$bFileId = DocumentGenerator\Model\FileTable::getBFileId($pdfId);
+			}
+			$this->DocumentPdf = $bFileId;
+			$this->WriteToTrackingService(GetMessage('CRM_GEDA_NAME_WAIT_FOR_EVENT_LOG_COMPLETE'));
+		}
+
+		$this->Unsubscribe($this);
+		$this->workflow->CloseActivity($this);
 	}
 
 	public static function GetPropertiesDialog($documentType, $activityName, $arWorkflowTemplate, $arWorkflowParameters, $arWorkflowVariables, $arCurrentValues = null, $formName = '', $popupWindow = null, $siteId = '')

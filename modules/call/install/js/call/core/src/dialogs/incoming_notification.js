@@ -6,6 +6,7 @@ import {DesktopApi} from 'im.v2.lib.desktop-api';
 
 import Util from '../util';
 import { Utils } from 'im.v2.lib.utils';
+import { checkAndEncodeURI } from '../view/tools';
 
 const Events = {
 	onClose: 'onClose',
@@ -17,7 +18,9 @@ const InternalEvents = {
 	setHasCamera: "CallNotification::setHasCamera",
 	contentReady: "CallNotification::contentReady",
 	onButtonClick: "CallNotification::onButtonClick",
-}
+};
+
+const FirstDesktopVersionWithChrome = 76;
 
 export type IncomingNotificationParams = {
 	callerName: string,
@@ -34,6 +37,8 @@ export type IncomingNotificationParams = {
 	onButtonClick: () => void,
 	isMessengerOpen: boolean,
 }
+
+const BroadcastChannelName = 'IncomingNotification';
 
 export class IncomingNotification extends EventEmitter
 {
@@ -73,7 +78,15 @@ export class IncomingNotification extends EventEmitter
 			DesktopApi.subscribe(InternalEvents.onButtonClick, this.onButtonClickHandler);
 			DesktopApi.subscribe(InternalEvents.contentReady, this.onContentReadyHandler);
 		}
-	};
+
+		const broadcastChannel = new BroadcastChannel(BroadcastChannelName);
+		broadcastChannel.onmessage = (event) => {
+			if (event.data.desktopWindowIsReady)
+			{
+				this.#showInDesktop();
+			}
+		};
+	}
 
 	#subscribeEvents(config)
 	{
@@ -87,35 +100,65 @@ export class IncomingNotification extends EventEmitter
 		}
 	}
 
+	#showInDesktop()
+	{
+		if (!this.window)
+		{
+			return;
+		}
+
+		// Workaround to prevent incoming call window from hanging.
+		// Without it, there is a possible scenario, when BXDesktopWindow.ExecuteCommand("close") is executed too early
+		// (if invite window is closed before appearing), which leads to hanging of the window
+		if (this.window.opener.BXIM?.callController && !this.window.opener.BXIM.callController.callNotification)
+		{
+			console.log('Workaround to prevent incoming call window from hanging');
+			this.window.BXDesktopWindow.ExecuteCommand('close');
+
+			return;
+		}
+
+		const width = 460;
+		const height = 580;
+
+		Dom.append(this.content.render(), this.window.document.body);
+		this.window.BXDesktopWindow?.SetProperty('position', { X: 'STP_CENTER', Y: 'STP_VCENTER', Width: width, Height: height });
+	}
+
 	show()
 	{
 		console.log('incoming notification : SHOW');
+
+		const params = {
+			video: this.video,
+			hasCamera: this.hasCamera,
+			callerAvatar: this.callerAvatar,
+			callerName: this.callerName,
+			callerType: this.callerType,
+			callerColor: this.callerColor,
+			microphoneState: this.microphoneState,
+			cameraState: this.cameraState,
+			isMessengerOpen: this.isMessengerOpen,
+		};
+
 		if (DesktopApi.isChatWindow())
 		{
 			console.log('incoming notification : ISDESKTOP');
-			const params = {
-				video: this.video,
-				hasCamera: this.hasCamera,
-				callerAvatar: this.callerAvatar,
-				callerName: this.callerName,
-				callerType: this.callerType,
-				callerColor: this.callerColor,
-				microphoneState: this.microphoneState,
-				cameraState: this.cameraState,
-				isMessengerOpen: this.isMessengerOpen,
-			};
-
 			if (this.window)
 			{
-				this.window.BXDesktopWindow.ExecuteCommand("show");
+				this.window.BXDesktopWindow.ExecuteCommand('show');
 			}
 			else
 			{
+				this.content = new IncomingNotificationContent({
+					...params,
+				});
+
 				const js = `
-					window.callNotification = new BX.Call.IncomingNotificationContent(${JSON.stringify(params)});
-					window.callNotification.showInDesktop();
+					const broadcastChannel = new BroadcastChannel('${BroadcastChannelName}');
+					broadcastChannel.postMessage({ desktopWindowIsReady: true });
 				`;
-				const htmlContent = DesktopApi.prepareHtml("", js);
+				const htmlContent = DesktopApi.prepareHtml('', js);
 				this.window = DesktopApi.createTopmostWindow(htmlContent);
 			}
 		}
@@ -123,15 +166,7 @@ export class IncomingNotification extends EventEmitter
 		{
 			console.log('incoming notification : ISNOTDESKTOP');
 			this.content = new IncomingNotificationContent({
-				video: this.video,
-				hasCamera: this.hasCamera,
-				callerAvatar: this.callerAvatar,
-				callerName: this.callerName,
-				callerType: this.callerType,
-				callerColor: this.callerColor,
-				microphoneState: this.microphoneState,
-				cameraState: this.cameraState,
-				isMessengerOpen: this.isMessengerOpen,
+				...params,
 				onClose: () => this.emit(Events.onClose),
 				onDestroy: () => this.emit(Events.onDestroy),
 				onButtonClick: (e) => this.emit(Events.onButtonClick, Object.assign({}, e.data)),
@@ -223,12 +258,20 @@ export class IncomingNotification extends EventEmitter
 		{
 			this.popup.close();
 		}
+
 		if (this.window)
 		{
-			this.window.BXDesktopWindow.ExecuteCommand("hide");
+			const desktopVersion = window.BXDesktopSystem?.ApiVersion?.();
+			this.window.BXDesktopWindow.ExecuteCommand('hide');
+
+			if (desktopVersion >= FirstDesktopVersionWithChrome)
+			{
+				this.window.BXDesktopWindow.ExecuteCommand('close');
+				this.window = null;
+			}
 		}
 		this.emit(Events.onClose);
-	};
+	}
 
 	destroy()
 	{
@@ -352,7 +395,7 @@ export class IncomingNotificationContent extends EventEmitter
 		if (this.callerAvatar)
 		{
 			avatarImageStyles = {
-				backgroundImage: "url('" + this.callerAvatar + "')",
+				backgroundImage: `url('${checkAndEncodeURI(this.callerAvatar)}')`,
 				backgroundColor: '#fff',
 				backgroundSize: 'cover',
 			}
@@ -527,30 +570,6 @@ export class IncomingNotificationContent extends EventEmitter
 		return this.elements.root;
 	};
 
-	showInDesktop()
-	{
-		// Workaround to prevent incoming call window from hanging.
-		// Without it, there is a possible scenario, when BXDesktopWindow.ExecuteCommand("close") is executed too early
-		// (if invite window is closed before appearing), which leads to hanging of the window
-		if (window.opener.BXIM?.callController && !window.opener.BXIM.callController.callNotification)
-		{
-			BXDesktopWindow.ExecuteCommand("close");
-			return;
-		}
-
-		const width = 450;
-		const height = 575;
-
-		this.render();
-		document.body.appendChild(this.elements.root);
-		DesktopApi.setWindowPosition({
-			x: STP_CENTER,
-			y: STP_VCENTER,
-			width,
-			height
-		});
-	};
-
 	setHasCamera(hasCamera)
 	{
 		this.hasCamera = !!hasCamera;
@@ -599,11 +618,6 @@ export class IncomingNotificationContent extends EventEmitter
 		{
 			this.cameraState = false;
 			this.microphoneState = true;
-		}
-
-		if (this.isMessengerOpen && typeof BX.SidePanel !== 'undefined' && BX.SidePanel.Instance.isOpen())
-		{
-			BX.SidePanel.Instance.close();
 		}
 
 		if (DesktopApi.isDesktop())

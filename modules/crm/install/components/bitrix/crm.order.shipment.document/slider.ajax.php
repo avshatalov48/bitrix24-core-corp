@@ -1,4 +1,9 @@
-<?
+<?php
+
+use Bitrix\Crm\Service\Container;
+use Bitrix\Main\Loader;
+use Bitrix\Main\Localization\Loc;
+
 $siteID = isset($_REQUEST['site'])? mb_substr(preg_replace('/[^a-z0-9_]/i', '', $_REQUEST['site']), 0, 2) : '';
 if($siteID !== '')
 {
@@ -6,7 +11,8 @@ if($siteID !== '')
 }
 
 require($_SERVER['DOCUMENT_ROOT'].'/bitrix/modules/main/include/prolog_before.php');
-\Bitrix\Main\Localization\Loc::loadMessages(__FILE__);
+
+Loc::loadMessages(__FILE__);
 
 /** @var array $arParams */
 /** @var array $arResult */
@@ -26,7 +32,9 @@ $APPLICATION->RestartBuffer();
 			window.location = "<?=CUtil::JSEscape($APPLICATION->GetCurPageParam('', array('IFRAME'))); ?>";
 		}
 	</script>
-	<?$APPLICATION->ShowHead();?>
+	<?php
+	$APPLICATION->ShowHead();
+	?>
 	<style>.task-iframe-popup,
 		.task-iframe-popup.task-form-page,
 		.task-iframe-popup.task-detail-page{
@@ -34,45 +42,55 @@ $APPLICATION->RestartBuffer();
 			padding: 0 15px 21px 21px;
 		}</style>
 </head>
-<body class="crm-iframe-popup crm-detail-page template-<?=SITE_TEMPLATE_ID?> crm-iframe-popup-no-scroll crm-order-shipment-voucher-wrapper <? $APPLICATION->ShowProperty('BodyClass'); ?>" onload="window.top.BX.onCustomEvent(window.top, 'crmEntityIframeLoad');" onunload="window.top.BX.onCustomEvent(window.top, 'crmEntityIframeUnload');">
+<body class="crm-iframe-popup crm-detail-page template-<?=SITE_TEMPLATE_ID?> crm-iframe-popup-no-scroll crm-order-shipment-voucher-wrapper <?php $APPLICATION->ShowProperty('BodyClass'); ?>" onload="window.top.BX.onCustomEvent(window.top, 'crmEntityIframeLoad');" onunload="window.top.BX.onCustomEvent(window.top, 'crmEntityIframeUnload');">
 
 <div class="crm-iframe-header">
 	<div class="pagetitle-wrap">
 		<div class="pagetitle-inner-container">
-			<div class="pagetitle-menu" id="pagetitle-menu"><?
-					$APPLICATION->ShowViewContent("pagetitle");
-					$APPLICATION->ShowViewContent("inside_pagetitle");
-				?></div>
 			<div class="pagetitle">
-			<span id="pagetitle" class="pagetitle-item"><?$APPLICATION->ShowTitle()?></span>
+			<span id="pagetitle" class="pagetitle-item"><?php
+				$APPLICATION->ShowTitle();
+			?></span>
+			</div>
 		</div>
 	</div>
 </div>
 
 <div class="crm-iframe-workarea" id="crm-content-outer">
-	<div class="crm-iframe-sidebar"><?$APPLICATION->ShowViewContent("sidebar"); ?></div>
-	<div class="crm-iframe-content"><?
+	<div class="crm-iframe-sidebar"><?php
+		$APPLICATION->ShowViewContent("sidebar");
+	?></div>
+	<div class="crm-iframe-content"><?php
 
-if (!\Bitrix\Main\Loader::includeModule('crm'))
+if (!Loader::includeModule('crm'))
 {
 	ShowError(GetMessage('CRM_MODULE_NOT_INSTALLED'));
 }
-elseif (!\Bitrix\Main\Loader::includeModule('sale'))
+elseif (!Loader::includeModule('sale'))
 {
 	ShowError(GetMessage('SALE_MODULE_NOT_INSTALLED'));
 }
 else
 {
-	$shipmentId = isset($_REQUEST['shipment_id']) ? $_REQUEST['shipment_id'] : 0;
+	$shipmentId = $_REQUEST['shipment_id'] ?? 0;
 	$shipment = \Bitrix\Crm\Order\Manager::getShipmentObject((int)$shipmentId);
 
+	$serviceContainer = Container::getInstance();
 	if (empty($shipment))
 	{
-		$checkPermissions = \Bitrix\Crm\Order\Permissions\Order::checkCreatePermission();
+		$checkPermissions = $serviceContainer
+			->getUserPermissions()
+			->entityType()
+			->canAddItems(\CCrmOwnerType::Order)
+		;
 	}
 	else
 	{
-		$checkPermissions = \Bitrix\Crm\Order\Permissions\Order::checkUpdatePermission($shipment->getParentOrderId());
+		$checkPermissions = $serviceContainer
+			->getUserPermissions()
+			->item()
+			->canUpdate(\CCrmOwnerType::Order, $shipment->getParentOrderId())
+		;
 	}
 
 	if (!(check_bitrix_sessid()
@@ -90,7 +108,7 @@ else
 		}
 		$componentParams['ENTITY_ID'] = $shipmentId;
 		$componentParams['POPUP_MODE'] = 'Y';
-		$componentParams['EXTERNAL_CONTEXT_ID'] = isset($_REQUEST['external_context_id']) ? $_REQUEST['external_context_id'] : '';
+		$componentParams['EXTERNAL_CONTEXT_ID'] = $_REQUEST['external_context_id'] ?? '';
 
 		$APPLICATION->IncludeComponent(
 			'bitrix:crm.order.shipment.document',
@@ -104,7 +122,5 @@ else
 ?></div>
 </div>
 </body>
-</html><?
+</html><?php
 require($_SERVER['DOCUMENT_ROOT'].'/bitrix/modules/main/include/epilog_after.php');
-die();
-?>

@@ -600,6 +600,7 @@
 .ui-sidepanel-sidebar.salescenter-app-sidebar {
 	width: 260px;
 	margin: 0;
+	padding-left: 4px;
 }
 
 .btn-send-crm {
@@ -2657,7 +2658,7 @@
 	border: 1px solid var(--ui-color-primary);
 	border-radius: 24px;
 	min-height: 25px;
-	font-family: var(--ui-font-family-system);
+	font-family: var(--ui-font-family-primary, var(--ui-font-family-system));
 	font-size: var(--ui-font-size-md);
 	line-height: 20px;
 	color: var(--ui-color-palette-black-base);

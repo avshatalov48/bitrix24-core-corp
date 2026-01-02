@@ -1,5 +1,5 @@
 import { Core } from 'im.v2.application.core';
-import { ListLoadingState as LoadingState } from 'im.v2.component.elements';
+import { ListLoadingState as LoadingState } from 'im.v2.component.elements.list-loading-state';
 import { Utils } from 'im.v2.lib.utils';
 import { StatusGroup } from 'imopenlines.v2.const';
 import { RecentService } from 'imopenlines.v2.provider.service';

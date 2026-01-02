@@ -5,6 +5,7 @@ if (!defined("B_PROLOG_INCLUDED") || B_PROLOG_INCLUDED !== true)
 	die();
 }
 
+use Bitrix\Main\Localization\Loc;
 use Bitrix\UI\Buttons\JsCode;
 use Bitrix\UI\Buttons\JsHandler;
 use Bitrix\UI\Toolbar\ButtonLocation;
@@ -43,27 +44,21 @@ foreach ($arResult['MAPPED_PERSONS'] as $person)
 }
 
 //stub
-ob_start();
-?>
+$stubTitle = Loc::getMessage('HUMANRESOURCES_HCMLINK_MAPPED_USERS_STUB_TITLE');
+$stubDescription = Loc::getMessage('HUMANRESOURCES_HCMLINK_MAPPED_USERS_STUB_DESCRIPTION');
+$stub = <<<HTML
 	<div class="humanresources_hcmlink_mapped_stub_wrapper">
 		<div class="humanresources_hcmlink_mapped_stub_content">
 			<div class="humanresources_hcmlink_mapped_stub_content__icon"></div>
 			<div
-				class="humanresources_hcmlink_mapped_stub_content__title"><?= \Bitrix\Main\Localization\Loc::getMessage(
-					'HUMANRESOURCES_HCMLINK_MAPPED_USERS_STUB_TITLE'
-				) ?></div>
+				class="humanresources_hcmlink_mapped_stub_content__title">$stubTitle</div>
 			<div
-				class="humanresources_hcmlink_mapped_stub_content__description"><?= \Bitrix\Main\Localization\Loc::getMessage(
-					'HUMANRESOURCES_HCMLINK_MAPPED_USERS_STUB_DESCRIPTION'
-				) ?></div>
+				class="humanresources_hcmlink_mapped_stub_content__description">$stubDescription</div>
 		</div>
 	</div>
-
-<?php
-$stub = ob_get_clean();
+HTML;
 $stub = count($rows) > 0 ? null : $stub;
 //endstub
-
 
 $snippet = new \Bitrix\Main\Grid\Panel\Snippet();
 $deleteBtn = $snippet->getRemoveButton();
@@ -83,7 +78,7 @@ Toolbar::addButton(
 		[
 			'color' => \Bitrix\UI\Buttons\Color::SUCCESS,
 			'size' => \Bitrix\UI\Buttons\Size::MEDIUM,
-			'text' => \Bitrix\Main\Localization\Loc::getMessage('HUMANRESOURCES_HCMLINK_MAPPED_USERS_TOOLBAR_BUTTON_INFO'),
+			'text' => Loc::getMessage('HUMANRESOURCES_HCMLINK_MAPPED_USERS_TOOLBAR_BUTTON_INFO'),
 			'className' => 'humanresources_hcmlink_mapped_button_sync_count',
 		]
 	),
@@ -169,8 +164,8 @@ $APPLICATION->IncludeComponent(
 		}
 
 		BX.Humanresources.Hcmlink.MappedPerson.showGuide({
-			title: "<?= \Bitrix\Main\Localization\Loc::getMessage('HUMANRESOURCES_HCMLINK_MAPPED_USERS_TOUR_TITLE') ?>",
-			text: "<?= \Bitrix\Main\Localization\Loc::getMessage('HUMANRESOURCES_HCMLINK_MAPPED_USERS_TOUR_TEXT') ?>",
+			title: "<?= Loc::getMessage('HUMANRESOURCES_HCMLINK_MAPPED_USERS_TOUR_TITLE') ?>",
+			text: "<?= Loc::getMessage('HUMANRESOURCES_HCMLINK_MAPPED_USERS_TOUR_TEXT') ?>",
 			selector: '.humanresources_hcmlink_mapped_button_sync_count',
 			lastShowGuideDate: <?= \CUtil::JSEscape(\CUserOptions::GetOption('ui-tour', 'view_date_hr-guide-hcmlink-mapped-person', 'null')) ?>,
 		});

@@ -11,6 +11,7 @@ return [
 		'main.polyfill.core',
 		'main.core.events',
 		'ui.entity-selector',
+		'sign.type',
 	],
 	'skip_core' => true,
 ];

@@ -7,6 +7,8 @@ export type MultifieldValue = {
 	valueType: string,
 	value: string,
 	valueFormatted: ?string,
+	complexId: ?string,
+	complexName: ?string,
 };
 
 export type SourceData = {

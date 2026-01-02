@@ -4,7 +4,7 @@ namespace Bitrix\HumanResources\Controller\Structure\Node\Member;
 
 use Bitrix\HumanResources\Access\StructureAccessController;
 use Bitrix\HumanResources\Access\StructureActionDictionary;
-use Bitrix\HumanResources\Attribute;
+use Bitrix\HumanResources\Internals\Attribute;
 use Bitrix\HumanResources\Contract\Repository\NodeMemberRepository;
 use Bitrix\HumanResources\Engine\Controller;
 use Bitrix\HumanResources\Exception\UpdateFailedException;

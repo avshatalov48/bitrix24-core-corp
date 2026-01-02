@@ -100,4 +100,5 @@ $MESS["CRM_DEAL_ACTION_MERGE"] = "Объединить";
 $MESS["CRM_DEAL_REBUILD_SECURITY_ATTRS_DLG_TITLE"] = "Идет обновление системы прав доступа";
 $MESS['CRM_DEAL_HAS_INACCESSIBLE_FIELDS'] = 'Вы не можете выполнить данную операцию! Есть поля, которые недоступны для вас. Обратитесь к администратору за получением доступа и решением данной проблемы.';
 $MESS["CRM_DEAL_ADD_TODO"] = "Дело";
-?>
+$MESS["CRM_DEAL_LIST_LINK_DEAL"] = "Выбрать сделку";
+$MESS["CRM_DEAL_LIST_NEW_DEAL"] = "Новая сделка";

@@ -44,24 +44,24 @@ class FlowUserOptionRepository
 
 		if (isset($filter['FLOW_ID']))
 		{
-			$query->addFilter('FLOW_ID', $filter['FLOW_ID']);
+			$query->where('FLOW_ID', $filter['FLOW_ID']);
 		}
 
 		if (isset($filter['NAME']))
 		{
-			$this->validateCode($filter['NAME']);
+			$this->validateName($filter['NAME']);
 
-			$query->addFilter('NAME', $filter['NAME']);
+			$query->where('NAME', $filter['NAME']);
 		}
 
 		if (isset($filter['USER_ID']))
 		{
-			$query->addFilter('USER_ID', $filter['USER_ID']);
+			$query->where('USER_ID', $filter['USER_ID']);
 		}
 
 		if (isset($filter['VALUE']))
 		{
-			$query->addFilter('VALUE', $filter['VALUE']);
+			$query->where('VALUE', $filter['VALUE']);
 		}
 
 		$optionCollection = $query->fetchCollection();

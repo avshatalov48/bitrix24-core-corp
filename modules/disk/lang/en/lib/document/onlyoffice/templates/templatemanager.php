@@ -1,4 +1,4 @@
 <?php
-$MESS["DISK_DOC_OO_TEMPLATES_1_NAME"] = "Tranquil. Sphere";
-$MESS["DISK_DOC_OO_TEMPLATES_2_NAME"] = "Vivid. Classic";
-$MESS["DISK_DOC_OO_TEMPLATES_3_NAME"] = "Easy. Patterns";
+$MESS["DISK_DOC_OO_TEMPLATES_1_NAME"] = "Calm Curves";
+$MESS["DISK_DOC_OO_TEMPLATES_2_NAME"] = "Bright Edge";
+$MESS["DISK_DOC_OO_TEMPLATES_3_NAME"] = "Clean Lines";

@@ -37,10 +37,12 @@ jn.define('im/messenger/db/repository/queue', (require, exports, module) => {
 			return modelMessageList;
 		}
 
+		/**
+		 * @param {Array<QueueModelState>} queue
+		 */
 		async saveFromModel(queue)
 		{
 			const requestListToAdd = [];
-
 			queue.forEach((request) => {
 				const requestToAdd = this.queueTable.validate(request);
 
@@ -50,6 +52,9 @@ jn.define('im/messenger/db/repository/queue', (require, exports, module) => {
 			return this.queueTable.add(requestListToAdd, true);
 		}
 
+		/**
+		* @param {Array<string>} idList
+		*/
 		async deleteByIdList(idList)
 		{
 			return this.queueTable.deleteByIdList(idList);

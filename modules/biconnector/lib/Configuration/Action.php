@@ -7,6 +7,7 @@ use Bitrix\BIConnector\Integration\Superset\Model;
 use Bitrix\BIConnector\Integration\Superset\Model\SupersetDashboardTable;
 use Bitrix\BIConnector\Integration\Superset\SupersetInitializer;
 use Bitrix\BIConnector\Superset\MarketDashboardManager;
+use Bitrix\BIConnector\Superset\SystemDashboardManager;
 use Bitrix\Bitrix24\Feature;
 use Bitrix\Main\EventResult;
 use Bitrix\Main\Loader;
@@ -35,7 +36,6 @@ class Action
 	public const ENTITY_TYPE_POWER_BI = 'POWER_BI';
 	public const ENTITY_TYPE_DATA_STUDIO = 'DATA_STUDIO';
 	public const ENTITY_TYPE_APACHE_SUPERSET = 'APACHE_SUPERSET';
-	public const ENTITY_TYPE_APACHE_SUPERSET_DATASET = 'APACHE_SUPERSET_DATASET';
 	private static array $entityList = [
 		self::ENTITY_CODE => 1000,
 	];
@@ -99,10 +99,6 @@ class Action
 			{
 				$result = static::importSupersetDashboard($content, $event);
 			}
-			elseif ($content['DATA']['type'] === static::ENTITY_TYPE_APACHE_SUPERSET_DATASET)
-			{
-				$result = static::importSupersetDataset($content, $event);
-			}
 		}
 
 		return $result;
@@ -129,116 +125,44 @@ class Action
 			];
 		}
 
-		if (!SupersetInitializer::isSupersetReady())
-		{
-			return [
-				'ERROR_EXCEPTION' => [
-					'message' => Loc::getMessage('BI_CONNECTOR_CONFIGURATION_ACTION_SUPERSET_NOT_READY_ERROR'),
-				],
-			];
-		}
-
 		if ((int)$content['DATA']['fileId'] > 0)
 		{
 			$contextUser = $event->getParameter('CONTEXT_USER');
 			$structure = new Structure($contextUser);
 			$fileInfo = $structure->getUnpackFile((int)$content['DATA']['fileId']);
-			if (!empty($fileInfo['PATH']))
+			if (empty($fileInfo['PATH']))
 			{
-				$filePath = self::saveTempFile($fileInfo['NAME'], $fileInfo['PATH']);
-				$setting = new Setting($contextUser);
-				$setting->set(
-					Structure::CODE_CUSTOM_FILE . static::ENTITY_TYPE_APACHE_SUPERSET . time(),
-					['PATH' => $filePath],
-				);
-				if ($filePath)
+				return [
+					'ERROR_EXCEPTION' => [
+						'message' => 'File "1" in "/files" not found',
+					],
+				];
+			}
+
+			$filePath = self::renameFile($fileInfo['NAME'], $fileInfo['PATH']);
+			$setting = new Setting($contextUser);
+			$setting->set(
+				Structure::CODE_CUSTOM_FILE . static::ENTITY_TYPE_APACHE_SUPERSET . time(),
+				['PATH' => $filePath],
+			);
+			$manager = MarketDashboardManager::getInstance();
+			$importResult = $manager->handleInstallMarketDashboard($filePath, $event);
+			if ($importResult->isSuccess())
+			{
+				$dashboard = $importResult->getData()['dashboard'];
+				if ($dashboard instanceof Model\SupersetDashboard)
 				{
-					$manager = MarketDashboardManager::getInstance();
-					$importResult = $manager->handleInstallMarketDashboard($filePath, $event);
-					if ($importResult->isSuccess())
-					{
-						$dashboard = $importResult->getData()['dashboard'];
-						if ($dashboard instanceof Model\SupersetDashboard)
-						{
-							$manager->applyDashboardSettings($dashboard, $content['DATA']['dashboardSettings'] ?? []);
-						}
-					}
-					else
-					{
-						foreach ($importResult->getErrors() as $error)
-						{
-							$result['ERROR_EXCEPTION'] = [
-								'code' => $error->getCode(),
-								'message' => Loc::getMessage('BI_CONNECTOR_CONFIGURATION_ACTION_DASHBOARD_IMPORT_ERROR'),
-							];
-						}
-					}
-					self::deleteTempFile($filePath);
+					$manager->applyDashboardSettings($dashboard, $content['DATA']['dashboardSettings'] ?? []);
 				}
 			}
-		}
-
-		return $result;
-	}
-
-	/**
-	 * importSupersetDataset
-	 *
-	 * @param array $content Event parameter CONTENT.
-	 * @param Event $event All event parameters.
-	 *
-	 * @return null|array
-	 */
-	private static function importSupersetDataset($content, Event $event)
-	{
-		$result = null;
-
-		if (Loader::includeModule('bitrix24') && !Feature::isFeatureEnabled('bi_constructor'))
-		{
-			return [
-				'ERROR_EXCEPTION' => [
-					'message' => Loc::getMessage('BI_CONNECTOR_CONFIGURATION_ACTION_SUPERSET_TARIFF_ERROR'),
-				],
-			];
-		}
-
-		if (!SupersetInitializer::isSupersetReady())
-		{
-			return [
-				'ERROR_EXCEPTION' => [
-					'message' => Loc::getMessage('BI_CONNECTOR_CONFIGURATION_ACTION_SUPERSET_NOT_READY_ERROR'),
-				],
-			];
-		}
-
-		if ((int)$content['DATA']['fileId'] > 0)
-		{
-			$contextUser = $event->getParameter('CONTEXT_USER');
-			$structure = new Structure($contextUser);
-			$fileInfo = $structure->getUnpackFile((int)$content['DATA']['fileId']);
-			if (!empty($fileInfo['PATH']))
+			else
 			{
-				$filePath = self::saveTempFile($fileInfo['NAME'], $fileInfo['PATH']);
-				$setting = new Setting($contextUser);
-				$setting->set(
-					Structure::CODE_CUSTOM_FILE . static::ENTITY_TYPE_APACHE_SUPERSET_DATASET . time(),
-					['PATH' => $filePath],
-				);
-				if ($filePath)
+				foreach ($importResult->getErrors() as $error)
 				{
-					$manager = MarketDashboardManager::getInstance();
-					$importResult = $manager->handleInstallDatasets($filePath, $event);
-					if (!$importResult->isSuccess())
-					{
-						foreach ($importResult->getErrors() as $error)
-						{
-							$result['ERROR_EXCEPTION'] = [
-								'code' => $error->getCode(),
-								'message' => Loc::getMessage('BI_CONNECTOR_CONFIGURATION_ACTION_DATASET_IMPORT_ERROR'),
-							];
-						}
-					}
-					self::deleteTempFile($filePath);
+					$result['ERROR_EXCEPTION'] = [
+						'code' => $error->getCode(),
+						'message' => Loc::getMessage('BI_CONNECTOR_CONFIGURATION_ACTION_DASHBOARD_IMPORT_ERROR'),
+					];
 				}
 			}
 		}
@@ -541,22 +465,12 @@ class Action
 		return null;
 	}
 
-	private static function saveTempFile(string $name, string $path): string
+	private static function renameFile(string $newName, string $filePath): string
 	{
-		$filePath = sys_get_temp_dir() . DIRECTORY_SEPARATOR . $name;
-		File::putFileContents($filePath, File::getFileContents($path));
+		$file = new File($filePath);
+		$folder = $file->getDirectoryName();
+		$file->rename($folder . DIRECTORY_SEPARATOR . $newName);
 
-		return $filePath;
-	}
-
-	private static function deleteTempFile(string $path): void
-	{
-		if (
-			$path !== ''
-			&& File::isFileExists($path)
-		)
-		{
-			File::deleteFile($path);
-		}
+		return $file->getPath();
 	}
 }

@@ -12,9 +12,6 @@ return [
 		'main.core',
 		'main.core.events',
 		'ui.entity-selector',
-		'ui.notification',
-		'ui.buttons',
-		'main.popup',
 	],
 	'skip_core' => false,
 ];

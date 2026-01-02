@@ -22,8 +22,10 @@ final class SupersetUserRepository
 				'EMAIL',
 				'NAME',
 				'LAST_NAME',
+				'ACTIVE',
 				'SUPERSET_CLIENT_ID' => 'SUPERSET_USER.CLIENT_ID',
 				'SUPERSET_PERMISSION_HASH' => 'SUPERSET_USER.PERMISSION_HASH',
+				'SUPERSET_UPDATED' => 'SUPERSET_USER.UPDATED',
 			])
 			->setFilter([
 				'=ID' => $id,
@@ -48,13 +50,15 @@ final class SupersetUserRepository
 			$email = $user['EMAIL'] ?: ($user['LOGIN'] . '@bitrix.bi');
 
 			return new User(
-				id: $user['ID'],
+				id: (int)$user['ID'],
 				userName: $email,
 				email: $email,
 				firstName: $user['NAME'] ?: $user['LOGIN'],
 				lastName: $user['LAST_NAME'] ?: $user['LOGIN'],
+				active: $user['ACTIVE'] === 'Y',
 				clientId: $user['SUPERSET_CLIENT_ID'] ?: null,
 				permissionHash: $user['SUPERSET_PERMISSION_HASH'] ?: null,
+				updated: $user['SUPERSET_UPDATED'] ? $user['SUPERSET_UPDATED'] === 'Y' : null,
 			);
 		}
 

@@ -14,6 +14,7 @@ jn.define('crm/kanban/toolbar/stage-summary', (require, exports, module) => {
 	const { Loc } = require('loc');
 	const { StageSummary } = require('layout/ui/kanban/toolbar');
 	const { PureComponent } = require('layout/pure-component');
+	const { Money } = require('money');
 	const MAX_FORMATTED_SUM = 1_000_000_000;
 
 	class StageSummaryWrapper extends PureComponent

@@ -329,30 +329,6 @@ if (
 				"css_class"=> "menu-icon-deals",
 			),
 			array(
-				"name"=>Loc::getMessage("MB_CRM_INVOICE"),
-				"hidden"=>$userPerms->HavePerm('INVOICE', BX_CRM_PERM_NONE, 'READ'),
-				"attrs"=>array(
-					"data-url"=> "/mobile/crm/invoice/",
-					"data-modern-style"=>"Y",
-					"data-name"=>Loc::getMessage("MB_CRM_INVOICE"),
-					"data-page-id"=>"crm_invoice_list",
-					"id"=>"crm_invoice_list",
-				),
-				"css_class"=> "menu-icon-invoice",
-			),
-			array(
-				"name"=>Loc::getMessage("MB_CRM_QUOTE"),
-				"hidden"=>$userPerms->HavePerm('QUOTE', BX_CRM_PERM_NONE, 'READ'),
-				"attrs"=>array(
-					"data-url"=> "/mobile/crm/quote/",
-					"data-modern-style"=>"Y",
-					"data-name"=>Loc::getMessage("MB_CRM_QUOTE"),
-					"data-page-id"=>"crm_quote_list",
-					"id"=>"crm_quote_list",
-				),
-				"css_class"=> "menu-icon-quote",
-			),
-			array(
 				"name"=>Loc::getMessage("MB_CRM_LEAD"),
 				"hidden"=>$userPerms->HavePerm('LEAD', BX_CRM_PERM_NONE, 'READ'),
 				"attrs"=>array(

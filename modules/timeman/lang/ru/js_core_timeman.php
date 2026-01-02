@@ -116,8 +116,9 @@ $MESS["JS_CORE_TM_TASKS_CHOOSE"] = "выбрать из списка";
 $MESS["JS_CORE_TM_RESTRICTION_TITLE"] = "Доступ к опции на вашем тарифе ограничен";
 $MESS["JS_CORE_TM_MONITOR"] = "Персональный ассистент рабочего времени";
 $MESS["JS_CORE_TM_MONITOR_OPEN_ERROR"] = "Персональный ассистент рабочего времени доступен только в новой версии приложения Битрикс24 для Windows/Mac";
-$MESS["JS_CORE_TM_MONITOR_DESKTOP_CLOSED_ERROR"] = "Чтобы измерить эффективность рабочего времени, запустите десктоп-приложение Битрикс24.";
+$MESS["JS_CORE_TM_MONITOR_DESKTOP_CLOSED_ERROR"] = "Чтобы измерить эффективность рабочего времени, запустите приложение для компьютера.";
 $MESS["JS_CORE_TM_MONITOR_ENABLE_BUTTON"] = "Включить Персональный ассистент рабочего времени";
+$MESS["JS_CORE_TM_MONITOR_ENABLE_BUTTON_NEW"] = "Персональный ассистент рабочего времени";
 $MESS["JS_CORE_TM_MONITOR_GET_DESKTOP_BUTTON"] = "Скачать Битрикс24";
 $MESS["JS_CORE_TM_MONITOR_ENABLED"] = "Персональный ассистент рабочего времени включён";
 $MESS["JS_CORE_TM_MONITOR_UPDATE_DESKTOP"] = "Вам доступен Персональный ассистент рабочего времени. Чтобы его активировать, установите новую версию приложения Битрикс24 для Windows/Mac";
@@ -125,4 +126,4 @@ $MESS["JS_CORE_TM_MONITOR_REPORT_NOTIFICATION"] = "Не забудьте под�
 $MESS["JS_CORE_TM_MONITOR_REPORT_NOTIFICATION_DESKTOP_DISABLED"] = "Не забудьте поделиться отчетом о рабочем времени с руководителем в приложении Битрикс24.";
 $MESS["JS_CORE_TM_MONITOR_REPORT_OPEN"] = "Посмотреть";
 $MESS["JS_CORE_TMR_REPORT_FULL_NONE"] = "Отчет не требуется";
-?>
+$MESS["JS_CORE_TM_SYSTEM_ERROR"] = "Произошла неизвестная ошибка, попробуйте обновить страницу";

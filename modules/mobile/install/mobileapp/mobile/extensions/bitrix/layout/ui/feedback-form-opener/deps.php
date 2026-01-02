@@ -4,5 +4,6 @@ return [
 	'extensions' => [
 		'tokens',
 		'loc',
+		'apptheme',
 	],
 ];

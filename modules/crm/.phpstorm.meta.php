@@ -46,6 +46,8 @@ namespace PHPSTORM_META
 		'crm.service.accounting',
 		'crm.service.fileUploader',
 		'crm.service.multifieldStorage',
+		'crm.service.pullEventsQueue',
+		'crm.service.lastActivity',
 		'crm.kanban.entity.lead',
 		'crm.kanban.entity.lead.activities',
 		'crm.kanban.entity.deal',
@@ -88,6 +90,8 @@ namespace PHPSTORM_META
 		'crm.model.fieldRepository',
 		'crm.integration.sign',
 		'crm.summary.summaryFactory',
+		'crm.repeatSale.availabilityChecker',
+		'crm.integration.catalog.access.productRowChecker',
 	);
 
 	expectedArguments(\Bitrix\Main\DI\ServiceLocator::get(), 0, argumentsSet('bitrix_crm_serviceLocator_codes'));
@@ -136,6 +140,8 @@ namespace PHPSTORM_META
 		'crm.service.accounting' => \Bitrix\Crm\Service\Accounting::class,
 		'crm.service.fileUploader' => \Bitrix\Crm\Service\FileUploader::class,
 		'crm.service.multifieldStorage' => \Bitrix\Crm\Service\MultifieldStorage::class,
+		'crm.service.pullEventsQueue' => \Bitrix\Crm\Service\PullEventsQueue::class,
+		'crm.service.lastActivity' => \Bitrix\Crm\Service\LastActivity::class,
 		'crm.kanban.entity.lead' => \Bitrix\Crm\Kanban\Entity\Lead::class,
 		'crm.kanban.entity.lead.activities' => \Bitrix\Crm\Kanban\Entity\LeadActivities::class,
 		'crm.kanban.entity.deal' => \Bitrix\Crm\Kanban\Entity\Deal::class,
@@ -181,5 +187,7 @@ namespace PHPSTORM_META
 		'crm.binding.clientBinder' => \Bitrix\Crm\Binding\ClientBinder::class,
 		'crm.service.communication.rankingFactory' => \Bitrix\Crm\Service\Communication\Search\Ranking\RankingFactory::class,
 		'crm.service.integration.im' => \Bitrix\Crm\Integration\Im\ImService::class,
+		'crm.repeatSale.availabilityChecker' => \Bitrix\Crm\RepeatSale\AvailabilityChecker::class,
+		'crm.integration.catalog.access.productRowChecker' => \Bitrix\Crm\Integration\Catalog\Access\ProductRowChecker::class,
 	]));
 }

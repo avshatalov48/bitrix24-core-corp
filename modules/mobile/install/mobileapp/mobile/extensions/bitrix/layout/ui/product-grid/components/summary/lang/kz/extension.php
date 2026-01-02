@@ -1,0 +1,7 @@
+<?php
+$MESS["PRODUCT_GRID_SUMMARY_ITEMS_COUNT_MSGVER_1"] = "Позициялар: #NUM#";
+$MESS["PRODUCT_GRID_SUMMARY_TAX_INCLUDED"] = "Бағаға кіреді";
+$MESS["PRODUCT_GRID_SUMMARY_TAX_NOT_INCLUDED_MSGVER_1"] = "Бағаның үстінен қосылды";
+$MESS["PRODUCT_GRID_SUMMARY_TAX_PARTLY_INCLUDED"] = "Ішінара құнға енгізілген";
+$MESS["PRODUCT_GRID_SUMMARY_TOTAL"] = "Барлығы:";
+$MESS["PRODUCT_GRID_SUMMARY_TOTAL_TAX"] = "Салықтың жалпы сомасы:";

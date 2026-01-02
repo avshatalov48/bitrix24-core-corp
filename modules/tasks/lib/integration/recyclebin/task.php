@@ -2,11 +2,11 @@
 
 namespace Bitrix\Tasks\Integration\Recyclebin;
 
+use Bitrix\Disk\Driver;
 use Bitrix\Main\Application;
 use Bitrix\Main\ArgumentException;
 use Bitrix\Main\Data\Cache;
 use Bitrix\Main\DI\ServiceLocator;
-use Bitrix\Main\Engine\CurrentUser;
 use Bitrix\Main\Entity\DataManager;
 use Bitrix\Main\Error;
 use Bitrix\Main\Loader;
@@ -21,13 +21,13 @@ use Bitrix\Recyclebin\Internals\Models\RecyclebinTable;
 use Bitrix\Tasks\CheckList\Task\TaskCheckListFacade;
 use Bitrix\Tasks\Control\Log\ActionDictionary;
 use Bitrix\Tasks\Control\Log\Command\AddCommand;
-use Bitrix\Tasks\Control\Log\TaskLogService;
 use Bitrix\Tasks\Control\Tag;
 use Bitrix\Tasks\Flow\Internal\FlowTaskTable;
 use Bitrix\Tasks\Integration;
 use Bitrix\Tasks\Integration\Bitrix24;
 use Bitrix\Tasks\Integration\Bitrix24\FeatureDictionary;
 use Bitrix\Tasks\Integration\CRM\TimeLineManager;
+use Bitrix\Tasks\Integration\Disk\UserField;
 use Bitrix\Tasks\Internals\CacheConfig;
 use Bitrix\Tasks\Internals\Counter;
 use Bitrix\Tasks\Internals\Log\LogFacade;
@@ -49,9 +49,10 @@ use Bitrix\Tasks\Kanban\TaskStageTable;
 use Bitrix\Tasks\Replication\Task\Regularity\Time\Service\RegularityService;
 use Bitrix\Tasks\Replication\Repository\TaskRepository;
 use Bitrix\Tasks\Scrum\Internal\ItemTable;
-use Bitrix\Tasks\Util\Restriction\Bitrix24Restriction\Limit\TaskLimit;
+use Bitrix\Tasks\Util\Entity\DateTimeField;
 use Bitrix\Tasks\Util\Type\DateTime;
 use Bitrix\Tasks\Util\User;
+use Bitrix\Tasks\V2\Internal\DI\Container;
 use CCrmActivity;
 use CCrmActivityType;
 use CModule;
@@ -423,7 +424,7 @@ class Task implements Recyclebinable
 			switch ($action)
 			{
 				case 'TASK':
-					TaskTable::insert($data);
+					static::insert($data);
 					break;
 				case 'STAGES':
 					foreach ($data as $value)
@@ -513,7 +514,9 @@ class Task implements Recyclebinable
 					break;
 
 				case 'SCENARIO':
-					ScenarioTable::insertIgnore($taskId, $data);
+					$scenarioService = Container::getInstance()->getScenarioService();
+					$scenarioService->save($taskId, $data);
+
 					break;
 
 				case 'SUBTASK_IDS':
@@ -606,7 +609,7 @@ class Task implements Recyclebinable
 			FavoriteTable::deleteByTaskId($taskId, ['LOW_LEVEL' => true]);
 			SortingTable::deleteByTaskId($taskId);
 			UserOption::deleteByTaskId($taskId);
-			TaskStageTable::clearTask($taskId);
+			Container::getInstance()->getTaskStageRepository()->deleteByTaskId($taskId);
 			TaskCheckListFacade::deleteByEntityIdOnLowLevel($taskId);
 
 			foreach ($tablesToClear as $table => $select)
@@ -726,5 +729,75 @@ class Task implements Recyclebinable
 	public static function previewFromRecyclebin(Entity $entity): void
 	{
 		throw new NotImplementedException("Coming soon...");
+	}
+
+	private static function insert(array $data): void
+	{
+		$fields = TaskTable::getEntity()->getFields();
+		$id = 0;
+		$siteId = SITE_ID;
+		$insertData = [];
+		foreach ($data as $field => $value)
+		{
+			if (!array_key_exists($field, $fields))
+			{
+				continue;
+			}
+			if ($field === 'ID')
+			{
+				$id = (int)$value;
+				continue;
+			}
+			if ($field === 'SITE_ID')
+			{
+				$siteId = $value;
+			}
+			if ($fields[$field] instanceof DateTimeField && is_numeric($value))
+			{
+				$insertData[$field] = DateTime::createFromTimestampGmt($value);
+			}
+			else
+			{
+				$insertData[$field] = $value;
+			}
+		}
+		if (!$id)
+		{
+			return;
+		}
+		$connection = Application::getConnection();
+		$helper = $connection->getSqlHelper();
+		$sql = $helper->getInsertIgnore(TaskTable::getTableName(), ' (ID, SITE_ID)', " VALUES ({$id}, '{$siteId}')");
+		$connection->queryExecute($sql);
+		$taskObject = TaskTable::getByPrimary($id)->fetchObject();
+		if (!$taskObject)
+		{
+			return;
+		}
+		$driver = Driver::getInstance();
+		$userFieldManager = $driver->getUserFieldManager();
+		$attachedObjects = $userFieldManager->getAttachedObjectByEntity(
+			'TASKS_TASK',
+			$id,
+			UserField::getMainSysUFCode()
+		);
+		$ids = array_map(static function($el): int {
+			return $el->getId();
+		}, $attachedObjects);
+		$insertData[UserField::getMainSysUFCode()] = $ids;
+		foreach ($insertData as $field => $value)
+		{
+			$taskObject->set($field, $value);
+		}
+		try
+		{
+			$taskObject->save();
+		}
+		catch (Exception $e)
+		{
+			Container::getInstance()
+				->getLogger()
+				->logError($e);
+		}
 	}
 }

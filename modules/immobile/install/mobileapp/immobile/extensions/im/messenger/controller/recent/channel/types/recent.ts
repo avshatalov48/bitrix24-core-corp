@@ -1,5 +1,5 @@
-import {RawChat, RawFile, RawMessage, RawUser} from "../../../../provider/service/src/types/sync-list-result";
-import {DialogId} from "../../../../types/common";
+import { DialogId } from '../../../../types/common';
+import { RawChat, RawFile, RawMessage, RawUser } from '../../../../provider/pull/base/types/common';
 
 declare type imV2RecentChannelTailResult = {
 	additionalMessages: Array<RawMessage>,

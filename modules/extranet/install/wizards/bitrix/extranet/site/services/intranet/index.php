@@ -7,9 +7,15 @@ if(!CModule::IncludeModule("intranet"))
 
 COption::SetOptionString("intranet", "search_user_url", WIZARD_SITE_DIR."contacts/personal/user/#ID#/", false, WIZARD_SITE_ID);
 
-$rsIBlock = CIBlock::GetList(array(), array("CODE" => "calendar_users_extranet", "TYPE" => "events", "SITE_ID" => WIZARD_SITE_ID));
-if ($arIBlock = $rsIBlock->Fetch())
-	COption::SetOptionString("intranet", "iblock_calendar",  $arIBlock["ID"], false, WIZARD_SITE_ID);
+if (CModule::IncludeModule("iblock"))
+{
+	$rsIBlock = CIBlock::GetList(array(), array("CODE" => "calendar_users_extranet", "TYPE" => "events", "SITE_ID" => WIZARD_SITE_ID));
+
+	if ($arIBlock = $rsIBlock->Fetch())
+	{
+		COption::SetOptionString("intranet", "iblock_calendar",  $arIBlock["ID"], false, WIZARD_SITE_ID);
+	}
+}
 
 COption::SetOptionString('intranet', 'path_user', WIZARD_SITE_DIR.'contacts/personal/user/#USER_ID#/', false, WIZARD_SITE_ID);
 

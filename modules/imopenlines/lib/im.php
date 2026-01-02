@@ -191,11 +191,59 @@ class Im
 	 */
 	public static function chatHide($chatId)
 	{
-		if (Loader::includeModule('im'))
+		return self::hideFromRecent($chatId);
+	}
+
+	public static function hideFromRecent($chatId, bool $sendPull = true)
+	{
+		if (!Loader::includeModule('im'))
 		{
-			return \CIMChat::hide($chatId);
+			return false;
 		}
-		return false;
+
+		$recentItems = \Bitrix\Im\Model\RecentTable::getList([
+			'select' => [
+				'USER_ID'
+			],
+			'filter' => [
+				'=ITEM_TYPE' => \Bitrix\Im\V2\Chat::IM_TYPE_OPEN_LINE,
+				'=ITEM_ID' => $chatId,
+			]
+		]);
+
+		$pushList = [];
+		while ($recent = $recentItems->fetch())
+		{
+			\CIMContactList::DeleteRecent($chatId, true, $recent['USER_ID']);
+
+			if (
+				$sendPull
+				&& !\Bitrix\Im\User::getInstance($recent['USER_ID'])->isConnector()
+			)
+			{
+				$pushList[] = $recent['USER_ID'];
+			}
+		}
+
+		if (
+			!empty($pushList)
+			&& \Bitrix\Main\Loader::includeModule('pull')
+		)
+		{
+			\Bitrix\Pull\Event::add($pushList, [
+				'module_id' => 'im',
+				'command' => 'chatHide',
+				'expiry' => 3600,
+				'params' => [
+					'dialogId' => 'chat' . $chatId,
+					'chatId' => $chatId,
+					'lines' => true
+				],
+				'extra' => \Bitrix\Im\Common::getPullExtra()
+			]);
+		}
+
+		return true;
 	}
 
 	/**

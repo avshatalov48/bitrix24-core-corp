@@ -351,6 +351,19 @@ final class FileLink extends File
 	}
 
 	/**
+	 * @return string|null
+	 * @throws ObjectException
+	 */
+	public function getUniqueCode(): ?string
+	{
+		if ($this->getRealObject() === null) {
+			return null;
+		}
+
+		return $this->getRealObject()->getUniqueCode();
+	}
+
+	/**
 	 * Marks deleted object. It equals to move in trash can.
 	 * @param int $deletedBy Id of user (or SystemUser::SYSTEM_USER_ID).
 	 * @return bool

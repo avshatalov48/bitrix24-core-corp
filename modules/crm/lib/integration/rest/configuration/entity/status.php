@@ -4,7 +4,9 @@ namespace Bitrix\Crm\Integration\Rest\Configuration\Entity;
 
 use Bitrix\Crm\Category\DealCategory;
 use Bitrix\Crm\EO_Status;
+use Bitrix\Crm\Integration\Rest\Configuration\Helper;
 use Bitrix\Crm\PhaseSemantics;
+use Bitrix\Crm\Service\Container;
 use Bitrix\Crm\Status\FunnelStatusCollectionRevalidator;
 use Bitrix\Crm\StatusTable;
 use Bitrix\Main\ArgumentException;
@@ -13,8 +15,10 @@ use Bitrix\Main\LoaderException;
 use Bitrix\Main\Localization\Loc;
 use Bitrix\Main\Application;
 use Bitrix\Main\Loader;
-use Bitrix\Rest\Configuration\Helper;
+use Bitrix\Main\SystemException;
+use Bitrix\Rest\Configuration\Manifest;
 use CAllCrmInvoice;
+use CCrmOwnerType;
 use CCrmStatus;
 use CCrmQuote;
 use Exception;
@@ -50,7 +54,8 @@ class Status
 	];
 	private static $accessManifest = [
 		'total',
-		'crm'
+		'crm',
+		'automated_solution',
 	];
 
 	/**
@@ -108,6 +113,40 @@ class Status
 		return $return;
 	}
 
+	private static function filterTypeListByOptions(array $types, array $options): array
+	{
+		$filteredTypes = [];
+
+		$helper = new Helper();
+		$automatedSolutionModeParams = $helper->getAutomatedSolutionModeParams($options);
+
+		foreach ($types as $typeInfo)
+		{
+			$typeCategoryId = $typeInfo['ID'];
+			if (static::isDynamicEntityStage($typeCategoryId))
+			{
+				$dynamicEntityTypeId = static::getDynamicEntityTypeIdByCategoryId($typeCategoryId);
+				if (
+					$helper->checkDynamicTypeExportConditions(
+						array_merge(
+							$automatedSolutionModeParams,
+							$helper->getDynamicTypeCheckExportParamsByEntityTypeId($dynamicEntityTypeId)
+						)
+					)
+				)
+				{
+					$filteredTypes[] = $typeInfo;
+				}
+			}
+			elseif (!$automatedSolutionModeParams['isAutomatedSolutionMode'])
+			{
+				$filteredTypes[] = $typeInfo;
+			}
+		}
+
+		return $filteredTypes;
+	}
+
 	/**
 	 * @param $option
 	 *
@@ -117,7 +156,7 @@ class Status
 	 */
 	public static function export($option)
 	{
-		if(!Helper::checkAccessManifest($option, static::$accessManifest))
+		if(!Manifest::isEntityAvailable('', $option, static::$accessManifest))
 		{
 			return null;
 		}
@@ -140,6 +179,7 @@ class Status
 			'NEXT' => $step
 		];
 		$typeList = array_values(CCrmStatus::GetEntityTypes());
+		$typeList = static::filterTypeListByOptions($typeList, $option);
 		if($typeList[$step])
 		{
 			if(mb_strpos($typeList[$step]['ID'], static::$dealStageStart) !== false)
@@ -198,7 +238,13 @@ class Status
 	 */
 	public static function clear($option)
 	{
-		if(!Helper::checkAccessManifest($option, static::$accessManifest))
+		if(!Manifest::isEntityAvailable('', $option, static::$accessManifest))
+		{
+			return null;
+		}
+
+		$helper = new Helper();
+		if (!$helper->checkAutomatedSolutionModeClearParams($option))
 		{
 			return null;
 		}
@@ -212,248 +258,319 @@ class Status
 		$result = [
 			'NEXT' => false
 		];
-		$step = $option['STEP'];
+		$step = (int)$option['STEP'];
 		$clearFull = $option['CLEAR_FULL'];
 
 		$entityList = array_values(CCrmStatus::GetEntityTypes());
+		$entityList = static::filterTypeListByOptions($entityList, $option);
+		$staticEntityCount = 0;
+		$dynamicEntityCount = 0;
+		foreach ($entityList as $entityInfo)
+		{
+			static::isDynamicEntityStage($entityInfo['ID']) ? $dynamicEntityCount++ : $staticEntityCount++;
+		}
+		$entitiesCount = $staticEntityCount + $dynamicEntityCount;
+		if ($step >= $staticEntityCount && $dynamicEntityCount > 0 && $step < $entitiesCount)
+		{
+			$index = $entitiesCount + $staticEntityCount - $step - 1;
+		}
+		else
+		{
+			$index = $step;
+		}
 
-		if(!empty($entityList[$step]['ID']))
+		$entityId = $entityList[$index]['ID'] ?? '';
+		$isDynamicType = static::isDynamicEntityStage($entityId);
+		if(!empty($entityId))
 		{
 			$result['NEXT'] = $step;
-			$entityID = $entityList[$step]['ID'];
 
-			// skip dynamic type based statuses
+			// skip dynamic types based on static entity
 			if (
-				isset($entityList[$step]['ENTITY_TYPE_ID'])
-				&& \CCrmOwnerType::isUseDynamicTypeBasedApproach((int)$entityList[$step]['ENTITY_TYPE_ID'])
+				isset($entityList[$index]['ENTITY_TYPE_ID'])
+				&& CCrmOwnerType::isDynamicTypeBasedStaticEntity((int)$entityList[$index]['ENTITY_TYPE_ID'])
 			)
 			{
 				return $result;
 			}
 
-			$entity = new CCrmStatus($entityList[$step]['ID']);
+			$entity = new CCrmStatus($entityId);
 
-			if($clearFull || in_array($entityID, static::$isEntityTypeFunnel))
+			if ($clearFull || $isDynamicType || in_array($entityId, static::$isEntityTypeFunnel))
 			{
 				$langStatus = Application::getDocumentRoot(). BX_ROOT.'/modules/crm/install/index.php';
 				Loc::loadMessages($langStatus);
 
 				$entity->DeleteAll();
-				CCrmStatus::InstallDefault($entityID);
 
-				$addList = [];
-				if($entityList[$step]['ID'] === 'INDUSTRY')
+				if ($isDynamicType)
 				{
-					$addList = [
-						[
-							'NAME' => Loc::getMessage('CRM_INDUSTRY_IT'),
-							'STATUS_ID' => 'IT',
-							'SORT' => 10,
-							'SYSTEM' => 'N'
-						],
-						[
-							'NAME' => Loc::getMessage('CRM_INDUSTRY_TELECOM'),
-							'STATUS_ID' => 'TELECOM',
-							'SORT' => 20,
-							'SYSTEM' => 'N'
-						],
-						[
-							'NAME' => Loc::getMessage('CRM_INDUSTRY_MANUFACTURING'),
-							'STATUS_ID' => 'MANUFACTURING',
-							'SORT' => 30,
-							'SYSTEM' => 'N'
-						],
-						[
-							'NAME' => Loc::getMessage('CRM_INDUSTRY_BANKING'),
-							'STATUS_ID' => 'BANKING',
-							'SORT' => 40,
-							'SYSTEM' => 'N'
-						],
-						[
-							'NAME' => Loc::getMessage('CRM_INDUSTRY_CONSULTING'),
-							'STATUS_ID' => 'CONSULTING',
-							'SORT' => 50,
-							'SYSTEM' => 'N'
-						],
-						[
-							'NAME' => Loc::getMessage('CRM_INDUSTRY_FINANCE'),
-							'STATUS_ID' => 'FINANCE',
-							'SORT' => 60,
-							'SYSTEM' => 'N'
-						],
-						[
-							'NAME' => Loc::getMessage('CRM_INDUSTRY_GOVERNMENT'),
-							'STATUS_ID' => 'GOVERNMENT',
-							'SORT' => 70,
-							'SYSTEM' => 'N'
-						],
-						[
-							'NAME' => Loc::getMessage('CRM_INDUSTRY_DELIVERY'),
-							'STATUS_ID' => 'DELIVERY',
-							'SORT' => 80,
-							'SYSTEM' => 'N'
-						],
-						[
-							'NAME' => Loc::getMessage('CRM_INDUSTRY_ENTERTAINMENT'),
-							'STATUS_ID' => 'ENTERTAINMENT',
-							'SORT' => 90,
-							'SYSTEM' => 'N'
-						],
-						[
-							'NAME' => Loc::getMessage('CRM_INDUSTRY_NOTPROFIT'),
-							'STATUS_ID' => 'NOTPROFIT',
-							'SORT' => 100,
-							'SYSTEM' => 'N'
-						],
-						[
-							'NAME' => Loc::getMessage('CRM_INDUSTRY_OTHER'),
-							'STATUS_ID' => 'OTHER',
-							'SORT' => 110,
-							'SYSTEM' => 'Y'
-						]
-					];
-				}
-				elseif($entityList[$step]['ID'] === 'DEAL_TYPE')
-				{
-					$addList = [
-						[
-							'NAME' => Loc::getMessage('CRM_DEAL_TYPE_SALE'),
-							'STATUS_ID' => 'SALE',
-							'SORT' => 10,
-							'SYSTEM' => 'Y'
-						],
-						[
-							'NAME' => Loc::getMessage('CRM_DEAL_TYPE_COMPLEX'),
-							'STATUS_ID' => 'COMPLEX',
-							'SORT' => 20,
-							'SYSTEM' => 'N'
-						],
-						[
-							'NAME' => Loc::getMessage('CRM_DEAL_TYPE_GOODS'),
-							'STATUS_ID' => 'GOODS',
-							'SORT' => 30,
-							'SYSTEM' => 'N'
-						],
-						[
-							'NAME' => Loc::getMessage('CRM_DEAL_TYPE_SERVICES'),
-							'STATUS_ID' => 'SERVICES',
-							'SORT' => 40,
-							'SYSTEM' => 'N'
-						],
-						[
-							'NAME' => Loc::getMessage('CRM_DEAL_TYPE_SERVICE'),
-							'STATUS_ID' => 'SERVICE',
-							'SORT' => 50,
-							'SYSTEM' => 'N'
-						]
-					];
-				}
-				elseif($entityList[$step]['ID'] === 'DEAL_STATE')
-				{
-					$addList = [
-						[
-							'NAME' => Loc::getMessage('CRM_DEAL_STATE_PLANNED'),
-							'STATUS_ID' => 'PLANNED',
-							'SORT' => 10,
-							'SYSTEM' => 'N'
-						],
-						[
-							'NAME' => Loc::getMessage('CRM_DEAL_STATE_PROCESS'),
-							'STATUS_ID' => 'PROCESS',
-							'SORT' => 20,
-							'SYSTEM' => 'Y'
-						],
-						[
-							'NAME' => Loc::getMessage('CRM_DEAL_STATE_COMPLETE'),
-							'STATUS_ID' => 'COMPLETE',
-							'SORT' => 30,
-							'SYSTEM' => 'Y'
-						],
-						[
-							'NAME' => Loc::getMessage('CRM_DEAL_STATE_CANCELED'),
-							'STATUS_ID' => 'CANCELED',
-							'SORT' => 40,
-							'SYSTEM' => 'Y'
-						]
-					];
-				}
-				elseif($entityList[$step]['ID'] === 'EVENT_TYPE')
-				{
-					$addList = [
-						[
-							'NAME' => Loc::getMessage('CRM_EVENT_TYPE_INFO'),
-							'STATUS_ID' => 'INFO',
-							'SORT' => 10,
-							'SYSTEM' => 'Y'
-						],
-						[
-							'NAME' => Loc::getMessage('CRM_EVENT_TYPE_PHONE'),
-							'STATUS_ID' => 'PHONE',
-							'SORT' => 20,
-							'SYSTEM' => 'Y'
-						],
-						[
-							'NAME' => Loc::getMessage('CRM_EVENT_TYPE_MESSAGE'),
-							'STATUS_ID' => 'MESSAGE',
-							'SORT' => 30,
-							'SYSTEM' => 'Y'
-						]
-					];
-				}
-				elseif($entityList[$step]['ID'] === 'HONORIFIC')
-				{
-					\Bitrix\Crm\Honorific::installDefault();
-				}
-				foreach($addList as $item)
-					$entity->Add($item);
-			}
-			else
-			{
-				$oldData = $entity->GetStatus($entityID);
-				foreach ($oldData as $data)
-				{
-					$entity->Update(
-						$data['ID'],
-						[
-							'SORT' => $data['SORT'] + static::$clearSort
-						]
-					);
-				}
-			}
-		}
-		elseif(DealCategory::isCustomized())
-		{
-			$oldCategory = DealCategory::getAll(false);
-			foreach ($oldCategory as $category)
-			{
-				if ($clearFull)
-				{
-					try
+					if (!empty($entityId) && static::isDynamicEntityStage($entityId))
 					{
-						DealCategory::delete($category['ID']);
-
-						$result['OWNER_DELETE'][] = [
-							'ENTITY_TYPE' => self::OWNER_ENTITY_TYPE_CRM_DEAL_CATEGORY,
-							'ENTITY' => $category['ID']
-						];
-					}
-					catch(Exception $e)
-					{
+						$factory = null;
+						$entityTypeId = static::getDynamicEntityTypeIdByCategoryId($entityId);
+						if ($entityTypeId > 0)
+						{
+							$factory = Container::getInstance()->getFactory($entityTypeId);
+						}
+						if ($factory)
+						{
+							$categoryId = static::getCategoryIdByDynamicEntityId($entityId);
+							$category = $factory->getCategory($categoryId);
+							if ($category)
+							{
+								if ($clearFull)
+								{
+									if (Container::getInstance()->getUserPermissions()->canDeleteCategory($category))
+									{
+										try
+										{
+											$category->delete();
+											$result['OWNER_DELETE'][] = [
+												'ENTITY_TYPE' => static::getDynamicOwnerEntityType($entityTypeId),
+												'ENTITY' => $categoryId
+											];
+										}
+										catch(Exception $e)
+										{
+										}
+									}
+								}
+								else
+								{
+									if (Container::getInstance()->getUserPermissions()->canUpdateCategory($category))
+									{
+										try
+										{
+											$category->setSort(static::$clearSort + $category->getSort());
+											$category->save();
+										}
+										catch(Exception $e)
+										{
+										}
+									}
+								}
+							}
+						}
 					}
 				}
 				else
 				{
-					try
+					CCrmStatus::InstallDefault($entityId);
+
+					$addList = [];
+					if($entityId === 'INDUSTRY')
 					{
-						DealCategory::update(
-							$category['ID'],
+						$addList = [
 							[
-								'SORT' => static::$clearSort + $category['SORT']
+								'NAME' => Loc::getMessage('CRM_INDUSTRY_IT'),
+								'STATUS_ID' => 'IT',
+								'SORT' => 10,
+								'SYSTEM' => 'N'
+							],
+							[
+								'NAME' => Loc::getMessage('CRM_INDUSTRY_TELECOM'),
+								'STATUS_ID' => 'TELECOM',
+								'SORT' => 20,
+								'SYSTEM' => 'N'
+							],
+							[
+								'NAME' => Loc::getMessage('CRM_INDUSTRY_MANUFACTURING'),
+								'STATUS_ID' => 'MANUFACTURING',
+								'SORT' => 30,
+								'SYSTEM' => 'N'
+							],
+							[
+								'NAME' => Loc::getMessage('CRM_INDUSTRY_BANKING'),
+								'STATUS_ID' => 'BANKING',
+								'SORT' => 40,
+								'SYSTEM' => 'N'
+							],
+							[
+								'NAME' => Loc::getMessage('CRM_INDUSTRY_CONSULTING'),
+								'STATUS_ID' => 'CONSULTING',
+								'SORT' => 50,
+								'SYSTEM' => 'N'
+							],
+							[
+								'NAME' => Loc::getMessage('CRM_INDUSTRY_FINANCE'),
+								'STATUS_ID' => 'FINANCE',
+								'SORT' => 60,
+								'SYSTEM' => 'N'
+							],
+							[
+								'NAME' => Loc::getMessage('CRM_INDUSTRY_GOVERNMENT'),
+								'STATUS_ID' => 'GOVERNMENT',
+								'SORT' => 70,
+								'SYSTEM' => 'N'
+							],
+							[
+								'NAME' => Loc::getMessage('CRM_INDUSTRY_DELIVERY'),
+								'STATUS_ID' => 'DELIVERY',
+								'SORT' => 80,
+								'SYSTEM' => 'N'
+							],
+							[
+								'NAME' => Loc::getMessage('CRM_INDUSTRY_ENTERTAINMENT'),
+								'STATUS_ID' => 'ENTERTAINMENT',
+								'SORT' => 90,
+								'SYSTEM' => 'N'
+							],
+							[
+								'NAME' => Loc::getMessage('CRM_INDUSTRY_NOTPROFIT'),
+								'STATUS_ID' => 'NOTPROFIT',
+								'SORT' => 100,
+								'SYSTEM' => 'N'
+							],
+							[
+								'NAME' => Loc::getMessage('CRM_INDUSTRY_OTHER'),
+								'STATUS_ID' => 'OTHER',
+								'SORT' => 110,
+								'SYSTEM' => 'Y'
 							]
-						);
+						];
 					}
-					catch(Exception $e)
+					elseif($entityId === 'DEAL_TYPE')
 					{
+						$addList = [
+							[
+								'NAME' => Loc::getMessage('CRM_DEAL_TYPE_SALE'),
+								'STATUS_ID' => 'SALE',
+								'SORT' => 10,
+								'SYSTEM' => 'Y'
+							],
+							[
+								'NAME' => Loc::getMessage('CRM_DEAL_TYPE_COMPLEX'),
+								'STATUS_ID' => 'COMPLEX',
+								'SORT' => 20,
+								'SYSTEM' => 'N'
+							],
+							[
+								'NAME' => Loc::getMessage('CRM_DEAL_TYPE_GOODS'),
+								'STATUS_ID' => 'GOODS',
+								'SORT' => 30,
+								'SYSTEM' => 'N'
+							],
+							[
+								'NAME' => Loc::getMessage('CRM_DEAL_TYPE_SERVICES'),
+								'STATUS_ID' => 'SERVICES',
+								'SORT' => 40,
+								'SYSTEM' => 'N'
+							],
+							[
+								'NAME' => Loc::getMessage('CRM_DEAL_TYPE_SERVICE'),
+								'STATUS_ID' => 'SERVICE',
+								'SORT' => 50,
+								'SYSTEM' => 'N'
+							]
+						];
+					}
+					elseif($entityId === 'DEAL_STATE')
+					{
+						$addList = [
+							[
+								'NAME' => Loc::getMessage('CRM_DEAL_STATE_PLANNED'),
+								'STATUS_ID' => 'PLANNED',
+								'SORT' => 10,
+								'SYSTEM' => 'N'
+							],
+							[
+								'NAME' => Loc::getMessage('CRM_DEAL_STATE_PROCESS'),
+								'STATUS_ID' => 'PROCESS',
+								'SORT' => 20,
+								'SYSTEM' => 'Y'
+							],
+							[
+								'NAME' => Loc::getMessage('CRM_DEAL_STATE_COMPLETE'),
+								'STATUS_ID' => 'COMPLETE',
+								'SORT' => 30,
+								'SYSTEM' => 'Y'
+							],
+							[
+								'NAME' => Loc::getMessage('CRM_DEAL_STATE_CANCELED'),
+								'STATUS_ID' => 'CANCELED',
+								'SORT' => 40,
+								'SYSTEM' => 'Y'
+							]
+						];
+					}
+					elseif($entityId === 'EVENT_TYPE')
+					{
+						$addList = [
+							[
+								'NAME' => Loc::getMessage('CRM_EVENT_TYPE_INFO'),
+								'STATUS_ID' => 'INFO',
+								'SORT' => 10,
+								'SYSTEM' => 'Y'
+							],
+							[
+								'NAME' => Loc::getMessage('CRM_EVENT_TYPE_PHONE'),
+								'STATUS_ID' => 'PHONE',
+								'SORT' => 20,
+								'SYSTEM' => 'Y'
+							],
+							[
+								'NAME' => Loc::getMessage('CRM_EVENT_TYPE_MESSAGE'),
+								'STATUS_ID' => 'MESSAGE',
+								'SORT' => 30,
+								'SYSTEM' => 'Y'
+							]
+						];
+					}
+					elseif($entityId === 'HONORIFIC')
+					{
+						\Bitrix\Crm\Honorific::installDefault();
+					}
+					foreach($addList as $item)
+					{
+						$entity->Add($item);
+					}
+				}
+			}
+			else
+			{
+				foreach ($entity->GetStatus($entityId) as $data)
+				{
+					$entity->Update($data['ID'], ['SORT' => $data['SORT'] + static::$clearSort]);
+				}
+			}
+		}
+		else
+		{
+			if (DealCategory::isCustomized())
+			{
+				$oldCategory = DealCategory::getAll(false);
+				foreach ($oldCategory as $category)
+				{
+					if ($clearFull)
+					{
+						try
+						{
+							DealCategory::delete($category['ID']);
+
+							$result['OWNER_DELETE'][] = [
+								'ENTITY_TYPE' => self::OWNER_ENTITY_TYPE_CRM_DEAL_CATEGORY,
+								'ENTITY' => $category['ID']
+							];
+						}
+						catch(Exception $e)
+						{
+						}
+					}
+					else
+					{
+						try
+						{
+							DealCategory::update(
+								$category['ID'],
+								[
+									'SORT' => static::$clearSort + $category['SORT']
+								]
+							);
+						}
+						catch(Exception $e)
+						{
+						}
 					}
 				}
 			}
@@ -471,7 +588,13 @@ class Status
 	 */
 	public static function import($import)
 	{
-		if(!Helper::checkAccessManifest($import, static::$accessManifest))
+		if(!Manifest::isEntityAvailable('', $import, static::$accessManifest))
+		{
+			return null;
+		}
+
+		$helper = new Helper();
+		if (!$helper->checkAutomatedSolutionModeImportParams($import))
 		{
 			return null;
 		}
@@ -493,32 +616,46 @@ class Status
 		if(!empty($itemList['ENTITY']['ID']) && !empty($itemList['ITEMS']))
 		{
 			\Bitrix\Main\Type\Collection::sortByColumn($itemList['ITEMS'], 'SORT');
-			$entityID = $itemList['ENTITY']['ID'];
-			if(mb_strpos($entityID, static::$customDealStagePrefix) === false)
+			$entityId = $itemList['ENTITY']['ID'];
+			$isDynamicType = static::isDynamicEntityStage($entityId);
+
+			$automatedSolutionModeParams = $helper->getAutomatedSolutionModeImportParams($import);
+			if (!$isDynamicType && $automatedSolutionModeParams['isAutomatedSolutionMode'])
+			{
+				return $result;
+			}
+
+			if (!(mb_strpos($entityId, static::$customDealStagePrefix) === 0 || $isDynamicType))
 			{
 				$entityList = array_column($entityTypes,'ID');
-				if(!in_array($entityID,$entityList))
+				if(!in_array($entityId, $entityList))
 				{
-					$entityID = '';
+					$entityId = '';
 				}
 			}
 
-			// skip dynamic type based statuses
+			// skip dynamic types based on static entity
 			if (
-				isset($entityTypes[$entityID]['ENTITY_TYPE_ID'])
-				&& \CCrmOwnerType::isUseDynamicTypeBasedApproach((int)$entityTypes[$entityID]['ENTITY_TYPE_ID'])
+				isset($entityTypes[$entityId]['ENTITY_TYPE_ID'])
+				&& CCrmOwnerType::isDynamicTypeBasedStaticEntity((int)$entityTypes[$entityId]['ENTITY_TYPE_ID'])
 			)
 			{
-				$entityID = '';
+				$entityId = '';
 			}
 
-			if($entityID != '')
+			// skip dynamic types if they have not been imported for backward compatibility
+			if ($isDynamicType && !isset($import['RATIO']['CRM_DYNAMIC_TYPES']))
 			{
-				$entity = new CCrmStatus($entityID);
+				$entityId = '';
+			}
+
+			if($entityId != '')
+			{
+				$entity = new CCrmStatus($entityId);
 				//region standard funnel
-				if(in_array($entityID, static::$isEntityTypeFunnel))
+				if(in_array($entityId, static::$isEntityTypeFunnel))
 				{
-					if($entityID == static::$dealStageStart)
+					if($entityId === static::$dealStageStart)
 					{
 						try
 						{
@@ -536,7 +673,7 @@ class Status
 						}
 					}
 
-					$existsStatuses = static::getExistsStatuses($entityID);
+					$existsStatuses = static::getExistsStatuses($entityId);
 					$resultCollection = StatusTable::createCollection();
 
 					foreach ($itemList['ITEMS'] as $item)
@@ -576,7 +713,7 @@ class Status
 						}
 
 						$newStatus = (StatusTable::createObject(false))
-							->setEntityId($entityID)
+							->setEntityId($entityId)
 							->setStatusId($item['STATUS_ID'])
 							->setName($item['NAME'])
 							->setNameInit($item['NAME_INIT'])
@@ -606,13 +743,13 @@ class Status
 
 					(new FunnelStatusCollectionRevalidator($resultCollection))->save();
 				}
-				//end region standard funnel
+				//endregion standard funnel
 				//region custom deal funnel
-				elseif (str_contains($entityID, static::$customDealStagePrefix))
+				elseif (str_contains($entityId, static::$customDealStagePrefix))
 				{
 					try
 					{
-						$dealCategory = [
+						$categoryParams = [
 							'NAME' => $itemList['ENTITY']['NAME'],
 							'SORT' => (
 								(int)$itemList['ENTITY']['SORT'] > 0
@@ -622,33 +759,39 @@ class Status
 
 						if($import['APP_ID'] > 0)
 						{
-							$dealCategory['ORIGIN_ID'] = $import['APP_ID'];
-							$dealCategory['ORIGINATOR_ID'] = DealCategory::MARKETPLACE_CRM_ORIGINATOR;
+							$categoryParams['ORIGIN_ID'] = $import['APP_ID'];
+							$categoryParams['ORIGINATOR_ID'] = DealCategory::MARKETPLACE_CRM_ORIGINATOR;
 						}
 
-						$ID = DealCategory::add($dealCategory);
+						$categotyId = DealCategory::add($categoryParams);
 
-						if($ID > 0)
+						if($categotyId > 0)
 						{
 							$result['OWNER'] = [
 								'ENTITY_TYPE' => self::OWNER_ENTITY_TYPE_CRM_DEAL_CATEGORY,
-								'ENTITY' => $ID
+								'ENTITY' => $categotyId
 							];
 
-							$oldID = DealCategory::convertFromStatusEntityID($itemList['ENTITY']['ID']);
-							$prefixStatusOld = DealCategory::prepareStageNamespaceID($oldID);
-							$prefixStatus = DealCategory::prepareStageNamespaceID($ID);
-							$oldEntityId = static::$customDealStagePrefix . $oldID;
-							$entityID = static::$customDealStagePrefix . $ID;
-							$entity = new CCrmStatus($entityID);
-
-							$defaultStatus = array_column($entity->GetStatus($entityID), null, 'STATUS_ID');
+							$oldEntityId = $itemList['ENTITY']['ID'];
+							$oldCategoryId = DealCategory::convertFromStatusEntityID($oldEntityId);
+							$prefixStatusOld = DealCategory::prepareStageNamespaceID($oldCategoryId);
+							$prefixStatus = DealCategory::prepareStageNamespaceID($categotyId);
+							$newEntityId = static::$customDealStagePrefix . $categotyId;
+							$existsStatuses = static::getExistsStatuses($newEntityId);
+							$resultCollection = StatusTable::createCollection();
 							static::$statusSemantics[$oldEntityId] = [
 								'final' => $prefixStatusOld . ':WON',
 							];
 							foreach ($itemList['ITEMS'] as $item)
 							{
-								$color = $item['COLOR'] ?? $defaultStatus['COLOR'] ?? null;
+								if(!$item['NAME'])
+								{
+									continue;
+								}
+
+								$newStatusId = str_replace($prefixStatusOld, $prefixStatus, $item['STATUS_ID']);
+								$existingCouple = $existsStatuses[$newStatusId] ?? null;
+								$color = $item['COLOR'] ?? $existingCouple?->getColor();
 								if(
 									empty($color)
 									&& is_array($itemList['COLOR_SETTING'])
@@ -658,50 +801,50 @@ class Status
 									$color = $itemList['COLOR_SETTING'][$item['STATUS_ID']]['COLOR'];
 								}
 								$semantics = static::getSemanticsByStatus($item);
-								$statusID = str_replace($prefixStatusOld, $prefixStatus, $item['STATUS_ID']);
-								if (!empty($defaultStatus[$statusID]))
+								if ($existingCouple !== null)
 								{
-									$entity->update(
-										$defaultStatus[$statusID]['ID'],
-										[
-											'NAME' => $item['NAME'],
-											'SORT' => intVal($item['SORT']),
-											'SEMANTICS' => $semantics,
-											'COLOR' => $color,
-											'CATEGORY_ID' => $ID,
-										]
-									);
-									unset($defaultStatus[$statusID]);
+									$existingCouple
+										->setSort((int)($item['SORT']))
+										->setName($item['NAME'])
+										->setColor($color)
+										->setSemantics($semantics)
+										->setCategoryId($categotyId)
+									;
+									$resultCollection->add($existingCouple);
+									unset($existsStatuses[$newStatusId]);
 								}
 								else
 								{
-									$entity->add(
-										[
-											'ENTITY_ID' => $entityID,
-											'STATUS_ID' => str_replace(
-												$prefixStatusOld,
-												$prefixStatus,
-												$item['STATUS_ID']
-											),
-											'NAME' => $item['NAME'],
-											'NAME_INIT' => $item['NAME_INIT'],
-											'SORT' => intVal($item['SORT']),
-											'SYSTEM' => 'N',
-											'SEMANTICS' => $semantics,
-											'COLOR' => $color,
-											'CATEGORY_ID' => $ID,
-										]
-									);
+									$newStatus = (StatusTable::createObject(false))
+										->setEntityId($newEntityId)
+										->setStatusId($newStatusId)
+										->setName($item['NAME'])
+										->setNameInit($item['NAME_INIT'])
+										->setSort((int)($item['SORT']))
+										->setSystem(false)
+										->setColor($color)
+										->setSemantics($semantics)
+										->setCategoryId($categotyId)
+									;
+									$resultCollection->add($newStatus);
 								}
 							}
-							foreach ($defaultStatus as $status)
+							if (!empty($existsStatuses))
 							{
-								if ($status['SYSTEM'] == 'N')
+								foreach ($existsStatuses as $existsStatus)
 								{
-									$entity->delete($status['ID']);
+									if ($existsStatus->getSystem())
+									{
+										$resultCollection->add($existsStatus);
+									}
+									else
+									{
+										$existsStatus->delete();
+									}
 								}
 							}
-							$result['RATIO'][$oldID] = $ID;
+							(new FunnelStatusCollectionRevalidator($resultCollection))->save();
+							$result['RATIO'][$oldCategoryId] = $categotyId;
 						}
 					}
 					catch (Exception $e)
@@ -714,12 +857,172 @@ class Status
 						);
 					}
 				}
-				//end region custom deal funnel
+				//endregion custom deal funnel
+				//region dynamic entity funnel and stages
+				elseif ($isDynamicType)
+				{
+					try
+					{
+						$isDefaultCategory = $itemList['ENTITY']['IS_DEFAULT_CATEGORY'] ?? false;
+						$categoryParams = [
+							'NAME' => $itemList['ENTITY']['CATEGORY_NAME'],
+							'SORT' => (
+							(int)$itemList['ENTITY']['CATEGORY_SORT'] > 0
+								? (int)$itemList['ENTITY']['CATEGORY_SORT'] : 10
+							)
+						];
+
+						$categoryId = 0;
+						$entityTypeId = 0;
+						$factory = null;
+						$oldEntityTypeId = static::getDynamicEntityTypeIdByCategoryId($entityId);
+						$ratioKey = "DYNAMIC_$oldEntityTypeId";
+						if (isset($import['RATIO']['CRM_DYNAMIC_TYPES'][$ratioKey]))
+						{
+							$entityTypeId = (int)$import['RATIO']['CRM_DYNAMIC_TYPES'][$ratioKey];
+						}
+						if ($entityTypeId > 0 && $helper->checkDynamicTypeImportConditions($entityTypeId, $import))
+						{
+							$factory = Container::getInstance()->getFactory($entityTypeId);
+						}
+						unset($ratioKey);
+
+						if ($factory)
+						{
+							if (!$factory->isCategoriesSupported())
+							{
+								throw new SystemException('Dynamic type categories is not supported.');
+							}
+							$category = null;
+							if ($isDefaultCategory)
+							{
+								$category = $factory->getDefaultCategory();
+							}
+							if ($category)
+							{
+								$category->setName($categoryParams['NAME']);
+								$category->setSort($categoryParams['SORT']);
+							}
+							else
+							{
+								$category = $factory->createCategory($categoryParams);
+							}
+							$categoryResult = $category->save();
+							if ($categoryResult->isSuccess())
+							{
+								Container::getInstance()->getDynamicTypesMap()->reloadCategories();
+								$categoryId = $category->getId();
+							}
+							else
+							{
+								throw new SystemException('Failed to import dynamic type category.');
+							}
+						}
+						else
+						{
+							throw new SystemException('Failed to get dynamic type factory.');
+						}
+
+						if($categoryId > 0)
+						{
+							$result['OWNER'] = [
+								'ENTITY_TYPE' => static::getDynamicOwnerEntityType($entityTypeId),
+								'ENTITY' => $categoryId
+							];
+
+							$oldEntityId = $entityId;
+							$oldCategoryId = static::getCategoryIdByDynamicEntityId($oldEntityId);
+							$prefixStatusOld = static::getDynamicStagePrefix($oldEntityTypeId, $oldCategoryId);
+							$prefixStatus = static::getDynamicStagePrefix($entityTypeId, $categoryId);
+							$newEntityId = static::getDynamicEntityId($entityTypeId, $categoryId);
+							$existsStatuses = static::getExistsStatuses($newEntityId);
+							$resultCollection = StatusTable::createCollection();
+							static::$statusSemantics[$oldEntityId] = [
+								'final' => $prefixStatusOld . ':SUCCESS',
+							];
+							foreach ($itemList['ITEMS'] as $item)
+							{
+								if(!$item['NAME'])
+								{
+									continue;
+								}
+
+								$newStatusId = str_replace($prefixStatusOld, $prefixStatus, $item['STATUS_ID']);
+								$existingCouple = $existsStatuses[$newStatusId] ?? null;
+								$color = $item['COLOR'] ?? $existingCouple?->getColor();
+								if(
+									empty($color)
+									&& is_array($itemList['COLOR_SETTING'])
+									&& isset($itemList['COLOR_SETTING'][$item['STATUS_ID']]['COLOR'])
+								)
+								{
+									$color = $itemList['COLOR_SETTING'][$item['STATUS_ID']]['COLOR'];
+								}
+								$semantics = static::getSemanticsByStatus($item);
+								if ($existingCouple !== null)
+								{
+									$existingCouple
+										->setSort((int)($item['SORT']))
+										->setName($item['NAME'])
+										->setColor($color)
+										->setSemantics($semantics)
+										->setCategoryId($categoryId)
+									;
+									$resultCollection->add($existingCouple);
+									unset($existsStatuses[$newStatusId]);
+								}
+								else
+								{
+									$newStatus = (StatusTable::createObject(false))
+										->setEntityId($newEntityId)
+										->setStatusId($newStatusId)
+										->setName($item['NAME'])
+										->setNameInit($item['NAME_INIT'])
+										->setSort((int)($item['SORT']))
+										->setSystem(false)
+										->setColor($color)
+										->setSemantics($semantics)
+										->setCategoryId($categoryId)
+									;
+									$resultCollection->add($newStatus);
+								}
+							}
+							if (!empty($existsStatuses))
+							{
+								foreach ($existsStatuses as $existsStatus)
+								{
+									if ($existsStatus->getSystem())
+									{
+										$resultCollection->add($existsStatus);
+									}
+									else
+									{
+										$existsStatus->delete();
+									}
+								}
+							}
+							(new FunnelStatusCollectionRevalidator($resultCollection))->save();
+
+							$oldCategoryCode = static::getDynamicCategoryCode($oldEntityTypeId, $oldCategoryId);
+							$result['RATIO'][$oldCategoryCode] = $categoryId;
+						}
+					}
+					catch (Exception $e)
+					{
+						$result['ERROR_EXCEPTION'] = Loc::getMessage(
+							'CRM_ERROR_CONFIGURATION_IMPORT_EXCEPTION_DYMANIC_ENTITY_CATEGORY_ADD',
+							[
+								'#NAME#' => $itemList['ENTITY']['NAME'],
+							]
+						);
+					}
+				}
+				//endregion dynamic entity funnel and stages
 				//region dictionary
 				else
 				{
-					$oldList = array_values($entity->GetStatus($entityID));
-					$oldStatusList = array_column($entity->GetStatus($entityID), 'STATUS_ID');
+					$oldList = array_values($entity->GetStatus($entityId));
+					$oldStatusList = array_column($entity->GetStatus($entityId), 'STATUS_ID');
 					foreach ($itemList['ITEMS'] as $item)
 					{
 						$key = array_search($item['STATUS_ID'], $oldStatusList);
@@ -739,7 +1042,7 @@ class Status
 						{
 							$entity->add(
 								[
-									'ENTITY_ID' => $entityID,
+									'ENTITY_ID' => $entityId,
 									'STATUS_ID' => $item['STATUS_ID'],
 									'NAME' => $item['NAME'],
 									'NAME_INIT' => $item['NAME'],
@@ -761,7 +1064,7 @@ class Status
 						}
 					}
 				}
-				//end region dictionary
+				//endregion dictionary
 			}
 		}
 
@@ -806,5 +1109,49 @@ class Status
 		}
 
 		return null;
+	}
+
+	protected static function getDynamicEntityIdPattern(): string
+	{
+		return '/^' . preg_quote(CCrmOwnerType::DynamicTypePrefixName) . '(\\d+)_STAGE_(\\d+)$/u';
+	}
+
+	protected static function isDynamicEntityStage(string $entityId): bool
+	{
+		return preg_match(static::getDynamicEntityIdPattern(), $entityId);
+	}
+
+	protected static function getDynamicEntityTypeIdByCategoryId(string $entityId): int
+	{
+		$matches = [];
+
+		return preg_match(static::getDynamicEntityIdPattern(), $entityId, $matches) ? (int)$matches[1] : 0;
+	}
+
+	protected static function getCategoryIdByDynamicEntityId(string $entityId): int
+	{
+		$matches = [];
+
+		return preg_match(static::getDynamicEntityIdPattern(), $entityId, $matches) ? (int)$matches[2] : 0;
+	}
+
+	protected static function getDynamicEntityId(int $entityTypeId, int $categoryId): string
+	{
+		return CCrmOwnerType::DynamicTypePrefixName . "{$entityTypeId}_STAGE_$categoryId";
+	}
+
+	protected static function getDynamicCategoryCode(int $entityTypeId, int $categoryId): string
+	{
+		return "DT{$entityTypeId}_$categoryId";
+	}
+
+	protected static function getDynamicStagePrefix(int $entityTypeId, int $categoryId): string
+	{
+		return static::getDynamicCategoryCode($entityTypeId, $categoryId) . ':';
+	}
+
+	protected static function getDynamicOwnerEntityType(int $entityTypeId)
+	{
+		return "DYNAMIC_{$entityTypeId}_CATEGORY";
 	}
 }

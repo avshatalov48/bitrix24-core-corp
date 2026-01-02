@@ -8,6 +8,7 @@ jn.define('crm/terminal/product-list/product-card', (require, exports, module) =
 	const { ProductCard } = require('layout/ui/product-grid/components/product-card');
 	const { DiscountPrice } = require('layout/ui/product-grid/components/discount-price');
 	const { isEmpty } = require('utils/object');
+	const { Money, MoneyView } = require('layout/ui/money');
 
 	/**
 	 * @class PaymentProductCard

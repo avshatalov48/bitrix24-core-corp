@@ -1,6 +1,9 @@
 <?php
 namespace Bitrix\Intranet\Binding;
 
+use Bitrix\Bitrix24\License;
+use Bitrix\Intranet\Integration\Market\Label;
+use Bitrix\Main\Application;
 use Bitrix\Main\Loader;
 use Bitrix\Intranet\Binding\Map\MapItem;
 use Bitrix\Intranet\Binding\Map\MapSection;
@@ -134,6 +137,7 @@ class Menu
 			(new MapSection('task', 'tasks_switcher'))
 				->add(new MapItem('user', 'TASK_USER_LIST_TOOLBAR'))
 				->add(new MapItem('group', 'TASK_GROUP_LIST_TOOLBAR'))
+				->skipMarketPlacementCode()
 			,
 			(new MapSection('sonet_group', 'socialnetwork'))
 				->add(new MapItem('group_notifications', 'SONET_GROUP_TOOLBAR'))
@@ -249,6 +253,39 @@ class Menu
 		}
 
 		return $result;
+	}
+
+	protected static function getMarketRef(string $sectionCode, array $placementMap, string $marketCode): string
+	{
+		$defaultRef = Marketplace::getMainDirectory();
+
+		$section = static::getSection($sectionCode);
+		if ($section === null)
+		{
+			return $defaultRef;
+		}
+
+		if ($section->isMarketPlacementCodeSkip())
+		{
+			return $defaultRef;
+		}
+
+		$code = $placementMap[$marketCode] ?? '';
+
+		return "{$defaultRef}/?placement={$code}";
+	}
+
+	protected static function getSection(string $sectionCode): ?MapSection
+	{
+		foreach (static::getMapObject()->getSections() as $section)
+		{
+			if ($section->getCode() === $sectionCode)
+			{
+				return $section;
+			}
+		}
+
+		return null;
 	}
 
 	protected static function getRestPlacementCode(MapSection $section, MapItem $item): string
@@ -691,7 +728,7 @@ class Menu
 					self::getMenuItemsIds($item['items'])
 				);
 			}
-			else if ($item['id'])
+			else if (!empty($item['id']))
 			{
 				$ids[] = $item['id'];
 			}
@@ -858,9 +895,14 @@ class Menu
 							'delimiter' => true
 						];
 					}
+					$message = Loc::getMessage('INTRANET_BIND_MENU_APPS_2');
+					if (Label::isRenamedMarket())
+					{
+						$message = Loc::getMessage('INTRANET_BIND_MENU_APPS_2_MSGVER_1');
+					}
 					$returnItems[] = [
-						'href' => Marketplace::getMainDirectory() . '?placement=' . $placementMap[$marketCode],
-						'text' => Loc::getMessage('INTRANET_BIND_MENU_APPS_2')
+						'href' => static::getMarketRef($sectionCode, $placementMap, $marketCode),
+						'text' => $message,
 					];
 				}
 				if ($inline)

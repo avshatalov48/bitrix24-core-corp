@@ -3,20 +3,23 @@
  */
 jn.define('im/messenger/lib/date-formatter', (require, exports, module) => {
 	const { Type } = require('type');
-	const { Loc } = require('loc');
+	const { Loc } = require('im/messenger/loc');
 	const { Moment } = require('utils/date');
 
 	const DateFormat = Object.freeze({
-		date: 'date',
-		datetime: 'datetime',
-		dayMonth: 'dayMonth',
-		dayOfWeekMonth: 'dayOfWeekMonth',
-		dayShortMonth: 'dayShortMonth',
-		fullDate: 'fullDate',
-		longDate: 'longDate',
-		longTime: 'longTime',
-		mediumDate: 'mediumDate',
-		shortTime: 'shortTime',
+		FORMAT_DATE: 'FORMAT_DATE',
+		FORMAT_DATETIME: 'FORMAT_DATETIME',
+		SHORT_DATE_FORMAT: 'SHORT_DATE_FORMAT',
+		MEDIUM_DATE_FORMAT: 'MEDIUM_DATE_FORMAT',
+		LONG_DATE_FORMAT: 'LONG_DATE_FORMAT',
+		DAY_MONTH_FORMAT: 'DAY_MONTH_FORMAT',
+		DAY_SHORT_MONTH_FORMAT: 'DAY_SHORT_MONTH_FORMAT',
+		SHORT_DAY_OF_WEEK_MONTH_FORMAT: 'SHORT_DAY_OF_WEEK_MONTH_FORMAT',
+		SHORT_DAY_OF_WEEK_SHORT_MONTH_FORMAT: 'SHORT_DAY_OF_WEEK_SHORT_MONTH_FORMAT',
+		DAY_OF_WEEK_MONTH_FORMAT: 'DAY_OF_WEEK_MONTH_FORMAT',
+		FULL_DATE_FORMAT: 'FULL_DATE_FORMAT',
+		SHORT_TIME_FORMAT: 'SHORT_TIME_FORMAT',
+		LONG_TIME_FORMAT: 'LONG_TIME_FORMAT',
 	});
 
 	/**
@@ -97,57 +100,62 @@ jn.define('im/messenger/lib/date-formatter', (require, exports, module) => {
 
 		getShortTime(date)
 		{
-			return this.format(date, DateFormat.shortTime, this.locale);
+			return this.format(date, DateFormat.SHORT_TIME_FORMAT, this.locale);
 		}
 
 		getDayMonth(date)
 		{
-			return this.format(date, DateFormat.dayMonth, this.locale);
+			return this.format(date, DateFormat.DAY_MONTH_FORMAT, this.locale);
 		}
 
 		getDate(date)
 		{
-			return this.format(date, DateFormat.date, this.locale);
+			return this.format(date, DateFormat.FORMAT_DATE, this.locale);
 		}
 
 		getDatetime(date)
 		{
-			return this.format(date, DateFormat.datetime, this.locale);
+			return this.format(date, DateFormat.FORMAT_DATETIME, this.locale);
 		}
 
 		getDayOfWeekMonth(date)
 		{
-			return this.format(date, DateFormat.dayOfWeekMonth, this.locale);
+			return this.format(date, DateFormat.DAY_OF_WEEK_MONTH_FORMAT, this.locale);
 		}
 
 		getDayShortMonth(date)
 		{
-			return this.format(date, DateFormat.dayShortMonth, this.locale);
+			return this.format(date, DateFormat.DAY_SHORT_MONTH_FORMAT, this.locale);
 		}
 
 		getFullDate(date)
 		{
-			return this.format(date, DateFormat.fullDate, this.locale);
+			return this.format(date, DateFormat.FULL_DATE_FORMAT, this.locale);
 		}
 
 		getLongTime(date)
 		{
-			return this.format(date, DateFormat.longTime, this.locale);
+			return this.format(date, DateFormat.LONG_TIME_FORMAT, this.locale);
 		}
 
 		getLongDate(date)
 		{
-			return this.format(date, DateFormat.longDate, this.locale);
+			return this.format(date, DateFormat.LONG_DATE_FORMAT, this.locale);
 		}
 
 		getMediumDate(date)
 		{
-			return this.format(date, DateFormat.mediumDate, this.locale);
+			return this.format(date, DateFormat.MEDIUM_DATE_FORMAT, this.locale);
 		}
 
 		getDayOfWeek(date)
 		{
 			return (new Moment(date)).format('E', this.locale);
+		}
+
+		getMediaFormat(date)
+		{
+			return `${this.getDayMonth(date)}, ${this.getShortTime(date)}`;
 		}
 
 		getQuoteFormat(date)

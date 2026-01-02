@@ -1,7 +1,7 @@
-import { Dom, Event, Tag } from 'main.core';
+import { Dom, Event, Tag, Type, Text } from 'main.core';
 import { BaseEvent, EventEmitter } from 'main.core.events';
 import { BaseField } from './base-field';
-import { TagSelector } from 'ui.entity-selector';
+import { Dialog, Item, TagSelector } from 'ui.entity-selector';
 import '../../css/entity-selector-field.css';
 
 export const ConnectionSelectorField = {
@@ -23,14 +23,14 @@ export const ConnectionSelectorField = {
 	mounted()
 	{
 		const node = this.$refs['entity-selector'];
-		const selector = new TagSelector({
+		const selector: TagSelector = new TagSelector({
 			id: this.options.selectorId,
 			multiple: false,
 			addButtonCaption: this.$Bitrix.Loc.getMessage('DATASET_IMPORT_CONNECTIONS_SELECT'),
 			addButtonCaptionMore: this.$Bitrix.Loc.getMessage('DATASET_IMPORT_CONNECTIONS_CHANGE'),
 			dialogOptions: {
 				id: this.options.selectorId,
-				items: this.prepareItems(this.items),
+				items: this.preparedItems,
 				enableSearch: true,
 				dropdownMode: true,
 				showAvatars: true,
@@ -70,7 +70,7 @@ export const ConnectionSelectorField = {
 			</span>
 		`;
 		Event.bind(footer, 'click', () => {
-			const link = '/bitrix/components/bitrix/biconnector.externalconnection/slider.php';
+			const link = '/bitrix/components/bitrix/biconnector.externalconnection/slider.php?closeAfterCreate=Y';
 			BX.SidePanel.Instance.open(link, {
 				width: 564,
 				allowChangeHistory: false,
@@ -83,31 +83,32 @@ export const ConnectionSelectorField = {
 
 		EventEmitter.subscribe('SidePanel.Slider:onMessage', (event) => {
 			const [messageEvent] = event.getData();
-			if (messageEvent.getEventId() === 'BIConnector:ExternalConnection:onConnectionCreated')
+			if (messageEvent.getEventId() === 'BIConnector:ExternalConnection:onConnectionSave')
 			{
-				this.addSelectedItem(messageEvent);
+				this.onConnectionSave(messageEvent);
 			}
 		});
 	},
-	methods: {
-		prepareItems(items: Array): Array
+	computed: {
+		preparedItems(): Array
 		{
 			const selectorItems = [];
-			items.forEach((item) => {
+			this.items.forEach((item) => {
 				const itemOptions = {
 					id: item.ID,
 					title: item.TITLE,
 					entityId: this.options.selectorId,
 					tabs: this.name,
-					link: `/bitrix/components/bitrix/biconnector.externalconnection/slider.php?sourceId=${item.ID}`,
+					link: `/bitrix/components/bitrix/biconnector.externalconnection/slider.php?sourceId=${item.ID}&closeAfterCreate=Y`,
 					linkTitle: this.$Bitrix.Loc.getMessage('DATASET_IMPORT_CONNECTIONS_ABOUT'),
 					customData: {
 						connectionType: item.TYPE,
 					},
 				};
-				if (item.TYPE)
+
+				if (item.AVATAR)
 				{
-					itemOptions.avatar = `/bitrix/images/biconnector/database-connections/${item.TYPE}.svg`;
+					itemOptions.avatar = item.AVATAR;
 				}
 
 				if (this.connectionId)
@@ -120,27 +121,51 @@ export const ConnectionSelectorField = {
 
 			return selectorItems;
 		},
-		addSelectedItem(event)
+	},
+	methods: {
+		onConnectionSave(event)
 		{
-			const itemOptions: {id: number, name: string, type: string} = event.getData().connection;
-			const item = this.selector.getDialog().addItem({
+			const itemOptions: {id: number, name: string, type: string, avatar: ?string} = event.getData().connection;
+			if (!Type.isStringFilled(itemOptions?.avatar))
+			{
+				itemOptions.avatar = `/bitrix/images/biconnector/database-connections/${itemOptions.type}.svg`;
+			}
+
+			const selector: TagSelector = this.selector;
+			const dialog: Dialog = selector.getDialog();
+			let item: ?Item = dialog.getItem({
 				id: itemOptions.id,
-				title: itemOptions.name,
 				entityId: this.options.selectorId,
-				tabs: this.name,
-				link: `/bitrix/components/bitrix/biconnector.externalconnection/slider.php?sourceId=${itemOptions.id}`,
-				linkTitle: this.$Bitrix.Loc.getMessage('DATASET_IMPORT_CONNECTIONS_ABOUT'),
-				avatar: `/bitrix/images/biconnector/database-connections/${itemOptions.type}.svg`,
-				customData: {
-					connectionType: itemOptions.type,
-				},
 			});
 
 			if (item)
 			{
+				item.setTitle({ text: Text.decode(itemOptions.name), type: 'text' });
+				if (item.isSelected())
+				{
+					selector.removeTags();
+					item.deselect();
+					item.select();
+				}
+			}
+			else
+			{
+				item = dialog.addItem({
+					id: itemOptions.id,
+					title: itemOptions.name,
+					entityId: this.options.selectorId,
+					tabs: this.name,
+					link: `/bitrix/components/bitrix/biconnector.externalconnection/slider.php?sourceId=${itemOptions.id}&closeAfterCreate=Y`,
+					linkTitle: this.$Bitrix.Loc.getMessage('DATASET_IMPORT_CONNECTIONS_ABOUT'),
+					avatar: `/bitrix/images/biconnector/database-connections/${itemOptions.type}.svg`,
+					customData: {
+						connectionType: itemOptions.type,
+					},
+				});
 				item.select();
 			}
-			this.selector.getDialog().hide();
+
+			dialog.hide();
 		},
 	},
 	// language=Vue

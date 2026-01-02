@@ -154,7 +154,11 @@ type Options = {
 	date: ?DateOptions;
 	currency: ?Currency;
 	analytics: ?Analytics;
-	recaptcha: ?ReCaptcha;
+	captcha: {
+		service: string,
+		recaptcha: ?ReCaptcha,
+		yandexCaptcha: ?ReCaptcha,
+	};
 	analyticsHandler: ?Function;
 	dependencies: ?Array<DependenceGroup>;
 	handlers: ?Object;

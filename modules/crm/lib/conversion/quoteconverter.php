@@ -60,16 +60,6 @@ class QuoteConverter extends EntityConverter
 				EntityConversionException::READ_DENIED
 			);
 		}
-
-		if(!\CCrmAuthorizationHelper::CheckUpdatePermission(\CCrmOwnerType::QuoteName, $this->entityID, $permissions))
-		{
-			throw new EntityConversionException(
-				\CCrmOwnerType::Quote,
-				\CCrmOwnerType::Undefined,
-				EntityConversionException::TARG_SRC,
-				EntityConversionException::UPDATE_DENIED
-			);
-		}
 	}
 	/**
 	 * Get converter entity type ID.

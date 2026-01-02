@@ -37,18 +37,12 @@ final class Settings
 		$this->clearMenuOptionName = "clear_more_$this->userId";
 	}
 
-	public function clientHasApiVersion(int $apiVersion): bool
-	{
-		return Mobile::getInstance()::getApiVersion() >= $apiVersion;
-	}
-
 	public function isBetaAvailable(): bool
 	{
 		return (
 			Mobile::getInstance()::$isDev
 			|| (
-				$this->clientHasApiVersion(54)
-				&& Option::get('intranetmobile', Settings::IS_BETA_AVAILABLE, 'N', '-') === 'Y'
+				Option::get('intranetmobile', Settings::IS_BETA_AVAILABLE, 'N', '-') === 'Y'
 			)
 		);
 	}

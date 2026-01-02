@@ -4,6 +4,7 @@ namespace Bitrix\Disk;
 
 use Bitrix\Disk;
 use Bitrix\Disk\Document\Online\UserInfoToken;
+use Bitrix\Disk\Internal\Service\UnifiedLink\UnifiedLinkSupportService;
 use Bitrix\Disk\Internals\AttachedObjectTable;
 use Bitrix\Disk\Internals\EditSessionTable;
 use Bitrix\Disk\Internals\Error\Error;
@@ -16,6 +17,7 @@ use Bitrix\Disk\Internals\RightTable;
 use Bitrix\Disk\Internals\SharingTable;
 use Bitrix\Disk\Internals\SimpleRightTable;
 use Bitrix\Disk\Internals\TrackedObjectTable;
+use Bitrix\Disk\Internals\UniqueCode;
 use Bitrix\Disk\Internals\VersionTable;
 use Bitrix\Disk\Realtime\Events\UserRecentsEvent;
 use Bitrix\Disk\Security\ParameterSigner;
@@ -27,7 +29,9 @@ use Bitrix\Main\Entity\ExpressionField;
 use Bitrix\Main\Entity\Query;
 use Bitrix\Main\Event;
 use Bitrix\Main\Localization\Loc;
+use Bitrix\Main\NotImplementedException;
 use Bitrix\Main\ObjectException;
+use Bitrix\Main\Security\Random;
 use Bitrix\Main\Type\DateTime;
 use CFile;
 
@@ -44,6 +48,7 @@ class File extends BaseObject
 	const ERROR_ALREADY_LOCKED                = 'DISK_FILE_22008';
 	const ERROR_INVALID_LOCK_TOKEN            = 'DISK_FILE_22009';
 	const ERROR_INVALID_USER_FOR_UNLOCK       = 'DISK_FILE_22010';
+	const ERROR_INVALID_FILE_ARRAY 		      = 'DISK_FILE_22011';
 
 	const SECONDS_TO_JOIN_VERSION = 300;
 
@@ -120,6 +125,11 @@ class File extends BaseObject
 			unset($data['PARENT']);
 		}
 
+		if (!isset($data['UNIQUE_CODE']))
+		{
+			$data['UNIQUE_CODE'] = (new UniqueCode())->generateForNewFile();
+		}
+
 		/** @var File $file */
 		$file = parent::add($data, $errorCollection);
 		if($file)
@@ -170,6 +180,18 @@ class File extends BaseObject
 		$filter['TYPE'] = ObjectTable::TYPE_FILE;
 
 		return parent::load($filter, $with);
+	}
+
+	/**
+	 * @param string $uniqueCode
+	 * @param array $with
+	 * @return File|null
+	 * @noinspection PhpDocMissingThrowsInspection
+	 */
+	public static function loadByUniqueCode(string $uniqueCode, array $with = []): ?static
+	{
+		/** @noinspection PhpUnhandledExceptionInspection */
+		return static::load(['=UNIQUE_CODE' => $uniqueCode], $with);
 	}
 
 	protected static function getClassNameModel(array $row)
@@ -318,6 +340,14 @@ class File extends BaseObject
 		}
 
 		$previewFileData['MODULE_ID'] = 'main';
+
+		if (!Disk\Internals\FileHelper::hasValidFileKeys($previewFileData))
+		{
+			$result->addError(new Error('Preview file data is not valid'));
+
+			return $result;
+		}
+
 		$previewId = \CFile::saveFile($previewFileData, 'main_preview', true, true);
 		if (!$previewId)
 		{
@@ -1077,6 +1107,12 @@ class File extends BaseObject
 		}
 		$fileArray['type'] = TypeFile::normalizeMimeType($fileArray['type'], $this->name);
 
+		if (!Disk\Internals\FileHelper::hasValidFileKeys($fileArray))
+		{
+			$this->errorCollection->add(array(new Error('File data is not valid')));
+			return null;
+		}
+
 
 		$fileId = CFile::saveFile($fileArray, Driver::INTERNAL_MODULE_ID, true, true);
 		if(!$fileId)
@@ -1109,8 +1145,9 @@ class File extends BaseObject
 
 	/**
 	 * Returns version of file by version id.
+	 *
 	 * @param int $versionId Id of version.
-	 * @return static
+	 * @return Version
 	 */
 	public function getVersion($versionId)
 	{
@@ -1248,7 +1285,31 @@ class File extends BaseObject
 			return true;
 		}
 
-		$nameService = new ObjectNameService($this->name, $realFolderId, $this->getType());
+		$originalName = $this->name;
+
+		$tmpName = $this->generateUniqueTmpName();
+		$successUpdate = $this->update([
+			'NAME' => $tmpName, // we need to make the file name unique before moving it
+		]);
+		if(!$successUpdate)
+		{
+			return false;
+		}
+
+		/** @var FileTable $tableClassName */
+		$tableClassName = self::getTableClassName();
+
+		$moveResult = $tableClassName::move($this->id, $realFolderId);
+		if (!$moveResult->isSuccess())
+		{
+			$this->errorCollection->addFromResult($moveResult);
+
+			return false;
+		}
+		$this->setAttributesFromResult($moveResult);
+
+		//<editor-fold desc="Rename moved file back">
+		$nameService = new ObjectNameService($originalName, $realFolderId, $this->getType());
 		if ($generateUniqueName)
 		{
 			$nameService->requireUniqueName();
@@ -1262,39 +1323,21 @@ class File extends BaseObject
 			return false;
 		}
 
-		$possibleNewName = $result->getName();
-		$needToRename = $possibleNewName != $this->name;
-
-		$this->name = $possibleNewName;
-
-		if($needToRename)
+		$successUpdate = $this->update([
+			'NAME' => $result->getName()
+		]);
+		if (!$successUpdate)
 		{
-			$successUpdate = $this->update(array(
-				'NAME' => $possibleNewName
-			));
-			if(!$successUpdate)
-			{
-				return false;
-			}
-		}
-
-		/** @var FileTable $tableClassName */
-		$tableClassName = $this->getTableClassName();
-
-		$moveResult = $tableClassName::move($this->id, $realFolderId);
-		if(!$moveResult->isSuccess())
-		{
-			$this->errorCollection->addFromResult($moveResult);
 			return false;
 		}
-		$this->setAttributesFromResult($moveResult);
+		//</editor-fold>
 
 		Driver::getInstance()->getRightsManager()->setAfterMove($this);
 
 		$subscribersAfterMove = Driver::getInstance()->collectSubscribers($this);
 		Driver::getInstance()->sendChangeStatus($subscribersAfterMove);
 
-		if($folder->getRealObject()->getStorageId() != $this->storageId)
+		if ($folder->getRealObject()->getStorageId() != $this->storageId)
 		{
 			$changeStorageIdResult = $tableClassName::changeStorageId($this->id, $folder->getRealObject()->getStorageId());
 			if(!$changeStorageIdResult->isSuccess())
@@ -1307,11 +1350,11 @@ class File extends BaseObject
 			$this->storageId = $folder->getRealObject()->getStorageId();
 		}
 
-		$success = $this->update(array(
+		$success = $this->update([
 			'UPDATE_TIME' => new DateTime(),
 			'UPDATED_BY' => $movedBy,
-		));
-		if(!$success)
+		]);
+		if (!$success)
 		{
 			return null;
 		}
@@ -1331,6 +1374,22 @@ class File extends BaseObject
 		$event->sendToUser();
 
 		return $this;
+	}
+
+	private function generateUniqueTmpName(): string
+	{
+		$uniqueTmpName = $this->name;
+
+		$uniquePart = '_' . Random::getString(32);
+		$maxAllowedLength = 255 - mb_strlen($uniquePart);
+
+		if (mb_strlen($this->name) > $maxAllowedLength)
+		{
+			$uniqueTmpName = mb_substr($this->name, 0, $maxAllowedLength);
+		}
+		$uniqueTmpName .= $uniquePart;
+
+		return $uniqueTmpName;
 	}
 
 	/**
@@ -1836,5 +1895,19 @@ class File extends BaseObject
 			'signature' => ParameterSigner::getImageSignature($this->getId(), 640, 640),
 			'fileId' => $this->getId(),
 		]);
+	}
+
+	public function supportsUnifiedLink(): bool
+	{
+		$realObject = $this->getRealObject();
+
+		if ($realObject === null)
+		{
+			return false;
+		}
+
+		$unifiedLinkSupportService = Main\DI\ServiceLocator::getInstance()->get(UnifiedLinkSupportService::class);
+
+		return $unifiedLinkSupportService->supports($realObject);
 	}
 }

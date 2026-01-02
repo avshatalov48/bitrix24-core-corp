@@ -1,0 +1,25 @@
+<?php
+$MESS["DOWN_TEXT"] = "Жаңарту үшін жіберіңіз...";
+$MESS["LOAD_TEXT"] = "Мәзірді жаңарту...";
+$MESS["MB_CALENDAR_LIST"] = "Күнтізбе";
+$MESS["MB_COMPANY"] = "Қызметкерлер";
+$MESS["MB_CRM_ACTIVITY"] = "Менің істерім";
+$MESS["MB_CRM_COMPANY"] = "Компаниялар";
+$MESS["MB_CRM_CONTACT"] = "Байланыс ақпараты";
+$MESS["MB_CRM_DEAL"] = "Мәмілелер";
+$MESS["MB_CRM_INVOICE"] = "Шоттар";
+$MESS["MB_CRM_LEAD"] = "Лидтер";
+$MESS["MB_CRM_PRODUCT"] = "Тауарлар";
+$MESS["MB_CURRENT_USER_FILES_MAIN_MENU_ITEM"] = "Файлдар";
+$MESS["MB_CURRENT_USER_FILES_MAIN_MENU_ITEM_NEW"] = "Менің дискім";
+$MESS["MB_EXIT"] = "Шығу";
+$MESS["MB_HELP"] = "Көмек";
+$MESS["MB_LIVE_FEED"] = "Жанды лента";
+$MESS["MB_MESSAGES"] = "Чаттар";
+$MESS["MB_SEC_EXTRANET"] = "ЭКСТРАНЕТ ТОПТАРЫ";
+$MESS["MB_SEC_FAVORITE"] = "ТАҢДАУЛЫ";
+$MESS["MB_SEC_GROUPS"] = "ТОПТАР";
+$MESS["MB_SHARED_FILES_MAIN_MENU_ITEM"] = "Ортақ файлдар";
+$MESS["MB_SHARED_FILES_MAIN_MENU_ITEM_NEW"] = "Ортақ диск";
+$MESS["MB_TASKS_MAIN_MENU_ITEM"] = "Міндеттер мен Жобалар";
+$MESS["PULL_TEXT"] = "Жаңарту үшін тартыңыз...";

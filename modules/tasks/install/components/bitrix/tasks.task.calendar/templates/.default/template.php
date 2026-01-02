@@ -2,13 +2,17 @@
 if (!defined("B_PROLOG_INCLUDED") || B_PROLOG_INCLUDED !== true)
 	die();
 
+/** @var CMain $APPLICATION */
+
 use Bitrix\Main\Loader;
 use Bitrix\Main\Localization\Loc;
 use Bitrix\Main\Text\HtmlFilter;
 use Bitrix\Main\UI\Extension;
+use Bitrix\Main\Web\Json;
 use Bitrix\Tasks\Helper\RestrictionUrl;
 use Bitrix\Tasks\Integration\Recyclebin\Task;
 use Bitrix\Tasks\Integration\Socialnetwork\Context\Context;
+use Bitrix\Tasks\Onboarding\DI\OnboardingContainer;
 use Bitrix\Tasks\UI\ScopeDictionary;
 use Bitrix\UI\Toolbar\Facade\Toolbar;
 
@@ -29,20 +33,33 @@ Extension::load([
 	'ui.avatar',
 ]);
 
+$isV2MiniForm = \Bitrix\Tasks\V2\FormV2Feature::isOn('miniform');
+
+if ($isV2MiniForm)
+{
+	Extension::load([
+		'tasks.v2.application.task-card',
+		'tasks.v2.lib.timezone'
+	]);
+}
+
 $isCollab = isset($arResult['CONTEXT']) && $arResult['CONTEXT'] === Context::getCollab();
 $collabClass = $isCollab ? 'sn-collab-tasks__wrapper' : '';
 
 if ($isCollab)
 {
 	Toolbar::deleteFavoriteStar();
-	$this->SetViewTarget('in_pagetitle') ?>
 
-	<div class="sn-collab-icon__wrapper">
-		<div id="sn-collab-icon-<?=HtmlFilter::encode($arResult["OWNER_ID"])?>" class="sn-collab-icon__hexagon-bg"></div>
-	</div>
-	<div class="sn-collab__subtitle"><?=HtmlFilter::encode($arResult["COLLAB_NAME"])?></div>
-	<?php
-	$this->EndViewTarget();
+	$collabName = HtmlFilter::encode($arResult['COLLAB_NAME']);
+
+	Toolbar::addBeforeTitleBoxHtml(
+		'<div class="sn-collab-icon__wrapper">' .
+		'<div id="sn-collab-icon-' . HtmlFilter::encode($arResult['OWNER_ID']) . '" class="sn-collab-icon__hexagon-bg"></div>' .
+		'</div>'
+	);
+	Toolbar::addUnderTitleHtml(
+		'<div class="sn-collab__subtitle" title="' . $collabName . '">' . $collabName . '</div>'
+	);
 }
 /** intranet-settings-support */
 if (($arResult['IS_TOOL_AVAILABLE'] ?? null) === false)
@@ -208,6 +225,24 @@ $APPLICATION->IncludeComponent("bitrix:calendar.interface.grid", "", Array(
 ?>
 
 <script>
+//region Promo
+<?php if ($arResult['needToShowInviteToMobile']) : ?>
+	BX.ready(function() {
+		BX.Runtime.loadExtension('tasks.promo.invite-to-mobile').then(() => {
+			const inviteToMobile = new BX.Tasks.Promo.InviteToMobile({
+				appLink: <?= Json::encode($arResult['inviteToMobileLink']) ?>,
+			});
+
+			inviteToMobile.show();
+			<?php
+				$inviteToMobileService = OnboardingContainer::getInstance()->getInviteToMobileService();
+				$inviteToMobileService->setShown($arParams['USER_ID']);
+			?>
+		});
+	});
+<?php endif; ?>
+//endregion
+
 BX.message({
 	TASKS_DELETE_SUCCESS: '<?= Loader::includeModule('recyclebin') ? Task::getDeleteMessage((int)$arParams['USER_ID']) : Loc::getMessage('TASKS_DELETE_SUCCESS') ?>',
 	TASKS_CALENDAR_NOTIFY_CHANGE_DEADLINE: '<?= Loc::getMessage('TASKS_CALENDAR_NOTIFY_CHANGE_DEADLINE')?>'
@@ -280,6 +315,24 @@ BX.ready(function(){
 	{
 		if (params)
 		{
+			<?php if ($isV2MiniForm) { ?>
+
+			const dateTo = params.entryTime?.to?.getTime();
+			const deadlineTs = dateTo - BX.Tasks.V2.Lib.timezone.getOffset(dateTo);
+			const groupId = <?= empty($currentGroupId) ? 'null' : (int)$currentGroupId ?>;
+
+			BX.Tasks.V2.Application.TaskCard.showCompactCard({
+				deadlineTs,
+				groupId,
+				analytics: {
+					context: '<?= !empty($currentGroupId) ? 'project' : 'tasks' ?>',
+					additionalContext: 'calendar',
+					element: 'quick_button',
+				},
+			});
+
+			<?php } else { ?>
+
 			let url = '<?= CUtil::JSEscape($editTaskPath)?>';
 			const fromDate = BX.date.format(BX.date.convertBitrixFormat(BX.message('FORMAT_DATETIME')), params.entryTime.from.getTime() / 1000);
 			const toDate = BX.date.format(BX.date.convertBitrixFormat(BX.message('FORMAT_DATETIME')), params.entryTime.to.getTime() / 1000);
@@ -302,6 +355,8 @@ BX.ready(function(){
 			});
 
 			BX.SidePanel.Instance.open(createUrl, {loader: "task-new-loader"});
+
+			<?php } ?>
 		}
 	});
 	<?endif;?>
@@ -440,14 +495,6 @@ BX.addCustomEvent('Tasks.Toolbar:onItem', function(event) {
 </script>
 
 <?php
-$isBitrix24Template = SITE_TEMPLATE_ID === "bitrix24";
-if ($isBitrix24Template)
-{
-	$this->SetViewTarget('inside_pagetitle');
-}
-
-if ($arResult['CONTEXT'] !== Context::getSpaces())
-{
 	$APPLICATION->IncludeComponent(
 		'bitrix:tasks.interface.header',
 		'',
@@ -465,6 +512,7 @@ if ($arResult['CONTEXT'] !== Context::getSpaces())
 			'GROUP_ID' => $arParams['GROUP_ID'] ?? null,
 			'MARK_ACTIVE_ROLE' => $arParams['MARK_ACTIVE_ROLE'] ?? null,
 			'MARK_SECTION_ALL' => $arParams['MARK_SECTION_ALL'] ?? null,
+			'MARK_SECTION_TASKS_LIST' => $arParams['MARK_SECTION_TASKS_LIST'] ?? null,
 			'MARK_SPECIAL_PRESET' => $arParams['MARK_SPECIAL_PRESET'] ?? null,
 			'MARK_SECTION_PROJECTS' => $arParams['MARK_SECTION_PROJECTS'] ?? null,
 			'PATH_TO_USER_TASKS' => $arParams['PATH_TO_USER_TASKS'] ?? null,
@@ -489,7 +537,7 @@ if ($arResult['CONTEXT'] !== Context::getSpaces())
 			'SHOW_USER_SORT' => 'N',
 			'SORT_FIELD' => $arParams['SORT_FIELD'] ?? null,
 			'SORT_FIELD_DIR' => $arParams['SORT_FIELD_DIR'] ?? null,
-			'USE_LIVE_SEARCH' => 'Y',
+			'USE_LIVE_SEARCH' => 'N',
 			'SHOW_SECTION_TEMPLATES' => (isset($arParams['GROUP_ID']) && $arParams['GROUP_ID'] > 0) ? 'N' : 'Y',
 			'DEFAULT_ROLEID' => $arParams['DEFAULT_ROLEID'] ?? null,
 			'USE_AJAX_ROLE_FILTER' => 'Y',
@@ -500,7 +548,6 @@ if ($arResult['CONTEXT'] !== Context::getSpaces())
 		$component,
 		array('HIDE_ICONS' => true)
 	);
-}
 
 if (
 	isset($arResult['ERROR']['FATAL'])
@@ -524,9 +571,4 @@ if (
 	{
 		ShowError($error['MESSAGE']);
 	}
-}
-
-if ($isBitrix24Template)
-{
-	$this->EndViewTarget();
 }

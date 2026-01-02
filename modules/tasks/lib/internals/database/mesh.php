@@ -1,33 +1,20 @@
-<?
-/**
- *
- * This class is for internal use only, not a part of public API.
- * It can be changed at any time without notification.
- *
- * @access private
- * todo: create \Bitrix\Tasks\Internals\DataBase\Structure\ClosureMesh, and then make this class deprecated
- */
+<?php
+
 namespace Bitrix\Tasks\Internals\DataBase;
 
-use \Bitrix\Main;
-use \Bitrix\Main\DB;
 use Bitrix\Main\DB\SqlExpression;
-use \Bitrix\Main\Entity;
-use \Bitrix\Main\Localization\Loc;
-use \Bitrix\Main\Application;
-use \Bitrix\Main\Entity\AddResult;
-use \Bitrix\Main\Entity\DeleteResult;
-
+use Bitrix\Main\Application;
+use Bitrix\Main\ORM\Data\AddResult;
+use Bitrix\Main\ORM\Data\DeleteResult;
+use Bitrix\Main\ORM\Fields\IntegerField;
 use Bitrix\Tasks\Util\Assert;
-
-//Loc::loadMessages(__FILE__);
 
 abstract class Mesh extends Tree
 {
 	/**
 	 * Links one item with another. Low-level method.
 	 */
-	public static function createLink($id, $parentId, $behaviour = array('LINK_DATA' => array()))
+	public static function createLink($id, $parentId, $behaviour = array('LINK_DATA' => array())): AddResult
 	{
 		static::applyCreateRestrictions($id, $parentId);
 
@@ -362,7 +349,7 @@ abstract class Mesh extends Tree
 		$map = parent::getMap($entityName);
 
 		return array_merge($map, array(
-			new Entity\IntegerField(static::getMPCITYColumnName(), array(
+			new IntegerField(static::getMPCITYColumnName(), array(
 			))
 		));
 	}

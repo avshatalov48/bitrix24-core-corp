@@ -1,4 +1,4 @@
-<?
+<?php
 if(!defined("B_PROLOG_INCLUDED") || B_PROLOG_INCLUDED!==true)die();
 
 CJSCore::RegisterExt('voximplant_config_sip', array(
@@ -9,25 +9,16 @@ CJSCore::Init(['ui.buttons', 'ui.buttons.icons', 'ui.alerts', 'sidepanel', 'voxi
 
 $APPLICATION->IncludeComponent("bitrix:ui.info.helper", "", array());
 
-$isBitrix24Template = (SITE_TEMPLATE_ID == "bitrix24");
-if($isBitrix24Template)
-{
-	$this->SetViewTarget("pagetitle", 100);
-}
-?>
-<div class="pagetitle-container pagetitle-align-right-container">
-	<? if($arResult["SIP_TYPE"] === CVoxImplantSip::TYPE_CLOUD): ?>
-		<button id="add-connection" class="ui-btn ui-btn-md ui-btn-primary ui-btn-icon-add"><?= GetMessage("VI_CONFIG_SIP_CONNECT_CLOUD") ?></button>
-	<? else: ?>
-		<button id="add-connection" class="ui-btn ui-btn-md ui-btn-primary ui-btn-icon-add"><?= GetMessage("VI_CONFIG_SIP_CONNECT_OFFICE") ?></button>
-	<? endif ?>
-</div>
-<?
-
-if($isBitrix24Template)
-{
-	$this->EndViewTarget();
-}
+$buttonAdd = new \Bitrix\UI\Buttons\Button([
+	'text' => GetMessage(($arResult["SIP_TYPE"] === CVoxImplantSip::TYPE_CLOUD) ? 'VI_CONFIG_SIP_CONNECT_CLOUD' : 'VI_CONFIG_SIP_CONNECT_OFFICE'),
+	'icon' => Bitrix\UI\Buttons\Icon::ADD,
+	'color' => \Bitrix\UI\Buttons\Color::PRIMARY,
+	'dataset' => [
+		'toolbar-collapsed-icon' => Bitrix\UI\Buttons\Icon::ADD,
+	]
+]);
+$buttonAdd->addAttribute('id', 'add-connection');
+\Bitrix\UI\Toolbar\Facade\Toolbar::addButton($buttonAdd);
 ?>
 
 <div class="">

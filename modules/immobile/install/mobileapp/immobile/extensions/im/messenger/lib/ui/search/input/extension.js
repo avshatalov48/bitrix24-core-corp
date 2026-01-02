@@ -2,10 +2,10 @@
  * @module im/messenger/lib/ui/search/input
  */
 jn.define('im/messenger/lib/ui/search/input', (require, exports, module) => {
-	const { lens, cross } = require('im/messenger/assets/common');
-	const { Loc } = require('loc');
+	const { Icon } = require('assets/icons');
 	const { Theme } = require('im/lib/theme');
 	const { transparent } = require('utils/color');
+	const { Loc } = require('im/messenger/loc');
 
 	class SearchInput extends LayoutComponent
 	{
@@ -49,10 +49,9 @@ jn.define('im/messenger/lib/ui/search/input', (require, exports, module) => {
 							height: 21,
 							width: 21,
 						},
+						tintColor: Theme.colors.base4,
 						resizeMode: 'contain',
-						svg: {
-							content: lens(),
-						},
+						named: Icon.SEARCH.getIconName(),
 					}),
 				),
 				View(
@@ -109,9 +108,8 @@ jn.define('im/messenger/lib/ui/search/input', (require, exports, module) => {
 							opacity: this.state.isTextEmpty ? 0 : 1,
 						},
 						resizeMode: 'contain',
-						svg: {
-							content: cross({ strokeWight: 0 }),
-						},
+						tintColor: Theme.colors.base4,
+						named: Icon.CROSS.getIconName(),
 					}),
 				),
 

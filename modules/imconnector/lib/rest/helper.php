@@ -27,9 +27,15 @@ class Helper
 
 		if (
 			!empty($params['ID'])
+			&& is_string($params['ID'])
 			&& !empty($params['NAME'])
+			&& is_string($params['NAME'])
 			&& !empty($params['ICON']['DATA_IMAGE'])
+			&& is_string($params['ICON']['DATA_IMAGE'])
 			&& !empty($params['REST_APP_ID'])
+			&& is_integer($params['REST_APP_ID'])
+			&& !empty($params['PLACEMENT_HANDLER'])
+			&& is_string($params['PLACEMENT_HANDLER'])
 		)
 		{
 			$keyLock = self::LOCK_KEY_NAME . $params['ID'];
@@ -202,8 +208,29 @@ class Helper
 			'=PLACEMENT_HANDLER' => $params['PLACEMENT_HANDLER'],
 		];
 		$placement = PlacementTable::getList(['filter' => $placementBind])->fetch();
-
-		$result = ($placement['ID'] > 0) ? $placement['ID'] : self::addPlacement($params)->getId();
+		if ($placement['ID'] > 0)
+		{
+			$result = $placement['ID'];
+		}
+		else
+		{
+			try
+			{
+				$result = self::addPlacement($params)->getId();
+			}
+			catch (\Bitrix\Main\DB\DuplicateEntryException $exception)
+			{
+				$placement = PlacementTable::getList(['filter' => $placementBind])->fetch();
+				if ($placement['ID'] > 0)
+				{
+					$result = $placement['ID'];
+				}
+				else
+				{
+					throw $exception;
+				}
+			}
+		}
 
 		return (int)$result;
 	}

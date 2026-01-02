@@ -32,9 +32,15 @@ jn.define('im/messenger/const/file-type', (require, exports, module) => {
 		gif: 'gif',
 	});
 
+	const FileAudioType = Object.freeze({
+		mp3: 'mp3',
+		m4a: 'm4a',
+	});
+
 	module.exports = {
 		FileType,
 		FileEmojiType,
 		FileImageType,
+		FileAudioType,
 	};
 });

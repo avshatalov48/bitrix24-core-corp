@@ -12,8 +12,8 @@ use Bitrix\Booking\Entity\Resource\ResourceCollection;
 use Bitrix\Booking\Entity\Slot\RangeCollection;
 use Bitrix\Booking\Internals\Service\FreeTime\EachDayFirstOccurrenceHandler;
 use Bitrix\Booking\Internals\Service\FreeTime\EachDayFirstOccurrenceRequest;
-use Bitrix\Booking\Internals\Service\FreeTime\FirstOccurrenceHandler;
-use Bitrix\Booking\Internals\Service\FreeTime\FirstOccurrenceRequest;
+use Bitrix\Booking\Internals\Service\FreeTime\OccurrenceHandler;
+use Bitrix\Booking\Internals\Service\FreeTime\OccurrenceRequest;
 use Bitrix\Booking\Internals\Service\FreeTime\MultiResourceEachDayFirstOccurrenceHandler;
 use Bitrix\Booking\Internals\Service\FreeTime\MultiResourceEachDayFirstOccurrenceRequest;
 
@@ -41,27 +41,25 @@ class TimeProvider
 		];
 	}
 
-	public function getFirstOccurrence(
+	public function getOccurrences(
 		RangeCollection $slotRanges,
 		BookingCollection $bookingCollection,
 		DatePeriod $searchPeriod,
+		int $stepSize,
 		int|null $sizeInMinutes = null,
-		int|null $maxOccurrence = null
+		int|null $returnCnt = null,
 	): DatePeriodCollection
 	{
-		$request = new FirstOccurrenceRequest(
-			$slotRanges,
-			$bookingCollection,
-			$searchPeriod,
-			$sizeInMinutes,
+		return (new OccurrenceHandler())(
+			(new OccurrenceRequest(
+				slotRanges: $slotRanges,
+				bookingCollection: $bookingCollection,
+				searchPeriod: $searchPeriod,
+				stepSize: $stepSize,
+			))
+				->setSizeInMinutes($sizeInMinutes)
+				->setReturnCnt($returnCnt)
 		);
-
-		if ($maxOccurrence !== null)
-		{
-			$request->setReturnCnt($maxOccurrence);
-		}
-
-		return (new FirstOccurrenceHandler())($request);
 	}
 
 	public function getMultiResourceEachDayFirstOccurrence(

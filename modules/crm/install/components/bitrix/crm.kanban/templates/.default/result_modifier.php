@@ -6,7 +6,7 @@ if (!defined('B_PROLOG_INCLUDED') || B_PROLOG_INCLUDED !== true)
 
 // prepare and some for compatibility
 
-$arResult['ITEMS']['dropzones'] = array();
+$arResult['ITEMS']['dropzones'] = [];
 
 foreach ($arResult['ITEMS']['columns'] as $k => &$column)
 {
@@ -61,15 +61,29 @@ foreach ($arResult['ITEMS']['columns'] as $k => &$column)
 }
 unset($column);
 
-foreach ($arResult['ITEMS']['items'] as $i => &$item)
+foreach ($arResult['ITEMS']['items'] as &$item)
 {
-	$item = array(
+	$isCountable = ($item['countable'] ?? true);
+	$isDroppable = ($item['droppable'] ?? true);
+	$isDraggable = ($item['draggable'] ?? true);
+
+	$item = [
 		'id' => $item['id'],
 		'columnId' => $item['columnId'],
-		'countable' => !isset($item['countable']) || $item['countable'],
-		'droppable' => !isset($item['droppable']) || $item['droppable'],
-		'draggable' => !isset($item['draggable']) || $item['draggable'],
-		'data' => $item
-	);
+		'data' => $item,
+	];
+
+	if (!$isCountable)
+	{
+		$item['countable'] = false;
+	}
+	if (!$isDroppable)
+	{
+		$item['droppable'] = false;
+	}
+	if (!$isDraggable)
+	{
+		$item['draggable'] = false;
+	}
 }
 unset($item);

@@ -27,20 +27,37 @@ $MESS['M_COLLAB_CREATE_UPLOAD_ERROR_TITLE'] = 'Не удалось загруз�
 $MESS['M_COLLAB_CREATE_UPLOAD_ERROR_TEXT'] = 'Попробуйте выбрать другой файл. Если ошибка продолжит возникать, обратитесь к администратору вашего Битрикс24';
 
 $MESS['M_COLLAB_CREATE_PERMISSIONS_ITEM_TITLE'] = 'Права доступа';
+$MESS['M_COLLAB_CREATE_PERMISSIONS_ITEM_TITLE_MSGVER_1'] = 'Управление коллабой';
 $MESS['M_COLLAB_CREATE_PERMISSIONS_ITEM_SUBTITLE'] = 'Настроить';
+$MESS['M_COLLAB_CREATE_PERMISSIONS_ITEM_SUBTITLE_MSGVER_1'] = 'Настройте права доступа';
+$MESS['M_COLLAB_CREATE_TASK_PERMISSIONS_ITEM_TITLE'] = 'Задачи коллабы';
+$MESS['M_COLLAB_CREATE_TASK_PERMISSIONS_ITEM_SUBTITLE'] = 'Настройте права доступа';
 $MESS['M_COLLAB_CREATE_SECURITY_ITEM_TITLE'] = 'Безопасность';
 $MESS['M_COLLAB_CREATE_SECURITY_ITEM_SUBTITLE'] = 'Защитите корпоративные данные';
+$MESS['M_COLLAB_CREATE_AUTO_DELETE_MESSAGES_ITEM_TITLE'] = 'Автоудаление сообщений';
+
+$MESS['M_COLLAB_CREATE_AUTO_DELETE_MESSAGES_ITEM_OFF'] = 'Выкл';
+$MESS['M_COLLAB_CREATE_AUTO_DELETE_MESSAGES_ITEM_HOUR'] = '1 час';
+$MESS['M_COLLAB_CREATE_AUTO_DELETE_MESSAGES_ITEM_DAY'] = '1 день';
+$MESS['M_COLLAB_CREATE_AUTO_DELETE_MESSAGES_ITEM_WEEK'] = '1 нед.';
+$MESS['M_COLLAB_CREATE_AUTO_DELETE_MESSAGES_ITEM_MONTH'] = '1 мес.';
+$MESS['M_COLLAB_CREATE_AUTO_DELETE_PERMISSION_MESSAGE'] = 'Автоудаление отключено администратором вашего Битрикс24';
 
 $MESS['M_COLLAB_PERMISSIONS_OWNER_ITEM_TITLE'] = 'Владелец';
 $MESS['M_COLLAB_PERMISSIONS_MODERATORS_ITEM_TITLE'] = 'Модераторы';
+$MESS['M_COLLAB_PERMISSIONS_SHOW_HISTORY_ITEM_TITLE'] = 'Показывать историю чата новым участникам';
 $MESS['M_COLLAB_PERMISSIONS_MODERATORS_ITEM_SUBTITLE_NONE'] = 'Нет модераторов';
 $MESS['M_COLLAB_PERMISSIONS_INVITERS_ITEM_TITLE'] = 'Кто может приглашать участников';
 $MESS['M_COLLAB_PERMISSIONS_MESSAGE_WRITERS_ITEM_TITLE'] = 'Кто может писать сообщения в чат';
+$MESS['M_COLLAB_PERMISSIONS_ALLOW_GUESTS_INVITATION_ITEM_TITLE'] = 'Разрешить приглашать гостей в коллабу';
 
 $MESS['M_COLLAB_PERMISSIONS_ALL'] = 'Все участники';
 $MESS['M_COLLAB_PERMISSIONS_EMPLOYEES'] = 'Только сотрудники';
 $MESS['M_COLLAB_PERMISSIONS_OWNER_AND_MODERATORS'] = 'Владелец и модераторы';
 $MESS['M_COLLAB_PERMISSIONS_OWNER'] = 'Только владелец';
+
+$MESS['M_COLLAB_PERMISSIONS_TRUE'] = 'Да';
+$MESS['M_COLLAB_PERMISSIONS_FALSE'] = 'Нет';
 
 $MESS['M_COLLAB_SECURITY_PROHIBIT_SCREENSHOT_FOR_GUESTS_TITLE'] = 'Запретить гостям делать скриншоты';
 $MESS['M_COLLAB_SECURITY_PROHIBIT_SCREENSHOT_FOR_GUESTS_SUBTITLE'] = 'Вместо скриншота сохранится чёрный экран. Вся информация в коллабе останется внутри компании';
@@ -63,3 +80,11 @@ $MESS['M_COLLAB_SAVE_CHANGES_ALERT_DESCRIPTION'] = 'Чтобы не потеря
 $MESS['M_COLLAB_SAVE_CHANGES_ALERT_SAVE_AND_EXIT_BUTTON'] = 'Сохранить и выйти';
 $MESS['M_COLLAB_SAVE_CHANGES_ALERT_DESTRUCTIVE_BUTTON'] = 'Выйти без сохранения';
 $MESS['M_COLLAB_SAVE_CHANGES_ALERT_CONTINUE_BUTTON'] = 'Продолжить редактирование';
+
+$MESS['M_COLLAB_TASK_PERMISSIONS_VIEW_ALL'] = 'Кто может просматривать задачи коллабы';
+$MESS['M_COLLAB_TASK_PERMISSIONS_SORT'] = 'Кто может сортировать и перемещать задачи коллабы';
+$MESS['M_COLLAB_TASK_PERMISSIONS_CREATE_TASKS'] = 'Кто может создавать задачи в коллабе';
+$MESS['M_COLLAB_TASK_PERMISSIONS_EDIT_TASKS'] = 'Кто может изменять задачи коллабы';
+$MESS['M_COLLAB_TASK_PERMISSIONS_DELETE_TASKS'] = 'Кто может удалять задачи коллабы';
+
+$MESS['COLLAB_INVITE_TOAST_GUESTS_INVITE_DISABLED'] = 'Администратор вашего Битрикс24 отключил возможность приглашать гостей в коллабы';

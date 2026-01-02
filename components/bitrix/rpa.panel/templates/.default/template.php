@@ -29,8 +29,6 @@ $APPLICATION->SetAdditionalCSS("/bitrix/css/main/font-awesome.css");
 ]);
 
 $this->getComponent()->addToolbar($this);
-\Bitrix\Rpa\Driver::getInstance()->getBitrix24Manager()->addFeedbackButtonToToolbar('panel');
-
 $grid = $arResult['grid'] ?? null;
 
 ?>

@@ -881,7 +881,7 @@ elseif($action === 'DELETE')
 	}
 
 	$bizProc = new CCrmBizProc('LEAD');
-	if (!$bizProc->Delete($ID, \CCrmLead::GetPermissionAttributes(array($ID))))
+	if (!$bizProc->Delete($ID))
 	{
 		__CrmLeadDetailsEndJsonResponse(array('ERROR' => $bizProc->LAST_ERROR));
 	}
@@ -917,7 +917,7 @@ elseif($action === 'EXCLUDE')
 	if(\CCrmLead::CheckDeletePermission($ID, $currentUserPermissions))
 	{
 		$bizProc = new CCrmBizProc('LEAD');
-		if (!$bizProc->Delete($ID, \CCrmLead::GetPermissionAttributes(array($ID))))
+		if (!$bizProc->Delete($ID))
 		{
 			__CrmLeadDetailsEndJsonResponse(array('ERROR' => $bizProc->LAST_ERROR));
 		}

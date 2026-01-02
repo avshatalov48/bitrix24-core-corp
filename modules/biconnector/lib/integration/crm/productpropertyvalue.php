@@ -21,6 +21,17 @@ class ProductPropertyValue
 			return;
 		}
 
+		$params = $event->getParameters();
+		$manager = $params[0];
+		$result = &$params[1];
+		$languageId = $params[2];
+
+		$eventTableName = $params[3];
+		if (!empty($eventTableName) && $eventTableName !== 'crm_product_property_value')
+		{
+			return;
+		}
+
 		$crmCatalogIblockId = \Bitrix\Crm\Product\Catalog::getDefaultId();
 		$crmCatalogIblockOfferId = \Bitrix\Crm\Product\Catalog::getDefaultOfferId();
 		if (!$crmCatalogIblockId)
@@ -51,10 +62,6 @@ class ProductPropertyValue
 				: 1
 		;
 
-		$params = $event->getParameters();
-		$manager = $params[0];
-		$result = &$params[1];
-		$languageId = $params[2];
 		$connection = $manager->getDatabaseConnection();
 		$helper = $connection->getSqlHelper();
 
@@ -78,6 +85,7 @@ class ProductPropertyValue
 				],
 				'FIELDS' => [
 					'ID' => [
+						'IS_PRIMARY' => 'Y',
 						'FIELD_NAME' => 'IEP.ID',
 						'FIELD_TYPE' => 'string',
 					],
@@ -93,6 +101,13 @@ class ProductPropertyValue
 						'IS_METRIC' => 'N',
 						'FIELD_NAME' => 'IEP.VALUE',
 						'FIELD_TYPE' => 'string',
+					],
+					'VALUE_NAME' => [
+						'IS_METRIC' => 'N',
+						'FIELD_NAME' => 'COALESCE(IPE.VALUE, IEP.VALUE)',
+						'FIELD_TYPE' => 'string',
+						'JOIN' => 'LEFT JOIN b_iblock_property_enum IPE ON IEP.IBLOCK_PROPERTY_ID = IPE.PROPERTY_ID AND IEP.VALUE = IPE.ID',
+						'LEFT_JOIN' => 'LEFT JOIN b_iblock_property_enum IPE ON IEP.IBLOCK_PROPERTY_ID = IPE.PROPERTY_ID AND IEP.VALUE = IPE.ID',
 					],
 				],
 			];
@@ -132,6 +147,13 @@ class ProductPropertyValue
 						'IS_METRIC' => 'N',
 						'FIELD_NAME' => 'IEP.VALUE',
 						'FIELD_TYPE' => 'string',
+					],
+					'VALUE_NAME' => [
+						'IS_METRIC' => 'N',
+						'FIELD_NAME' => 'COALESCE(IPE.VALUE, IEP.VALUE)',
+						'FIELD_TYPE' => 'string',
+						'JOIN' => 'LEFT JOIN b_iblock_property_enum IPE ON IEP.IBLOCK_PROPERTY_ID = IPE.PROPERTY_ID AND IEP.VALUE = IPE.ID',
+						'LEFT_JOIN' => 'LEFT JOIN b_iblock_property_enum IPE ON IEP.IBLOCK_PROPERTY_ID = IPE.PROPERTY_ID AND IEP.VALUE = IPE.ID',
 					],
 				],
 				'UNIONS' => [
@@ -176,6 +198,13 @@ class ProductPropertyValue
 						'FIELD_NAME' => 'IEP.VALUE',
 						'FIELD_TYPE' => 'string',
 					],
+					'VALUE_NAME' => [
+						'IS_METRIC' => 'N',
+						'FIELD_NAME' => 'COALESCE(IPE.VALUE, IEP.VALUE)',
+						'FIELD_TYPE' => 'string',
+						'JOIN' => 'LEFT JOIN b_iblock_property_enum IPE ON IEP.IBLOCK_PROPERTY_ID = IPE.PROPERTY_ID AND IEP.VALUE = IPE.ID',
+						'LEFT_JOIN' => 'LEFT JOIN b_iblock_property_enum IPE ON IEP.IBLOCK_PROPERTY_ID = IPE.PROPERTY_ID AND IEP.VALUE = IPE.ID',
+					],
 				],
 				'UNIONS' => [
 					self::getMultipleUnion($helper, $crmCatalogIblockId),
@@ -208,6 +237,13 @@ class ProductPropertyValue
 						'FIELD_NAME' => 'IEP.VALUE',
 						'FIELD_TYPE' => 'string',
 					],
+					'VALUE_NAME' => [
+						'IS_METRIC' => 'N',
+						'FIELD_NAME' => 'COALESCE(IPE.VALUE, IEP.VALUE)',
+						'FIELD_TYPE' => 'string',
+						'JOIN' => 'LEFT JOIN b_iblock_property_enum IPE ON IEP.IBLOCK_PROPERTY_ID = IPE.PROPERTY_ID AND IEP.VALUE = IPE.ID',
+						'LEFT_JOIN' => 'LEFT JOIN b_iblock_property_enum IPE ON IEP.IBLOCK_PROPERTY_ID = IPE.PROPERTY_ID AND IEP.VALUE = IPE.ID',
+					],
 				],
 				'UNIONS' => [
 					...self::getSingleUnion($helper, $crmCatalogIblockId),
@@ -224,7 +260,10 @@ class ProductPropertyValue
 			$fieldInfo['FIELD_DESCRIPTION'] = $messages['CRM_BIC_PRODUCT_PROPERTY_VALUE_FIELD_' . $fieldCode] ?? null;
 			if (!$fieldInfo['FIELD_DESCRIPTION'])
 			{
-				$fieldInfo['FIELD_DESCRIPTION'] = $fieldCode;
+				$fieldInfo['FIELD_DESCRIPTION'] =
+					$messages['CRM_BIC_PRODUCT_PROPERTY_VALUE_FIELD_' . $fieldCode . '_MSGVER_1']
+					?? $fieldCode
+				;
 			}
 
 			$fieldInfo['FIELD_DESCRIPTION_FULL'] = $messages['CRM_BIC_PRODUCT_PROPERTY_VALUE_FIELD_' . $fieldCode . '_FULL'] ?? '';
@@ -243,6 +282,9 @@ class ProductPropertyValue
 		$union = [];
 		foreach ($singlePropertyIds as $singlePropertyId)
 		{
+			$propertyFieldName = 'PROPERTY_' . $singlePropertyId;
+			$propertyIdFieldName = '\'' . $singlePropertyId . '\'';
+
 			$union[] = [
 				'TABLE_NAME' => 'b_iblock_element_prop_s' . $iblockId,
 				'TABLE_ALIAS' => 'IEP',
@@ -254,10 +296,19 @@ class ProductPropertyValue
 						'FIELD_NAME' => 'IEP.IBLOCK_ELEMENT_ID',
 					],
 					'PROPERTY_ID' => [
-						'FIELD_NAME' => '\'' . $singlePropertyId . '\'',
+						'FIELD_NAME' => $propertyIdFieldName,
 					],
 					'VALUE' => [
-						'FIELD_NAME' => 'PROPERTY_' . $singlePropertyId,
+						'FIELD_NAME' => $propertyFieldName,
+					],
+					'VALUE_NAME' => [
+						'FIELD_NAME' => 'COALESCE(IPE.VALUE, IEP.' . $propertyFieldName . ')',
+						'LEFT_JOIN' =>
+							'LEFT JOIN b_iblock_property_enum IPE ON IPE.PROPERTY_ID = '
+							. $propertyIdFieldName
+							. ' AND IPE.ID = IEP.'
+							. $propertyFieldName
+						,
 					],
 				],
 			];
@@ -283,6 +334,10 @@ class ProductPropertyValue
 				],
 				'VALUE' => [
 					'FIELD_NAME' => 'IEP.VALUE',
+				],
+				'VALUE_NAME' => [
+					'FIELD_NAME' => 'COALESCE(IPE.VALUE, IEP.VALUE)',
+					'LEFT_JOIN' => 'LEFT JOIN b_iblock_property_enum IPE ON IEP.IBLOCK_PROPERTY_ID = IPE.PROPERTY_ID AND IEP.VALUE = IPE.ID',
 				],
 			],
 		];

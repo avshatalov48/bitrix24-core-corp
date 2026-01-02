@@ -2,13 +2,11 @@
 
 return [
 	'extensions' => [
-		'apptheme',
 		'loc',
-		'assets/common',
-		'calendar:ajax',
-		'calendar:aha-moments-manager/sync-calendar',
-		'calendar:aha-moments-manager/sync-error',
+		'ui-system/popups/aha-moment',
 	],
 	'bundle' => [
+		'./src/sync-error',
+		'./src/new-menu',
 	],
 ];

@@ -1,6 +1,6 @@
 /* eslint-disable */
 this.BX = this.BX || {};
-(function (exports,main_core,stafftrack_userStatisticsLink,ui_analytics) {
+(function (exports,main_core,ui_iconSet_api_core,stafftrack_userStatisticsLink,ui_analytics) {
 	'use strict';
 
 	let _ = t => t,
@@ -9,6 +9,7 @@ this.BX = this.BX || {};
 	var _params = /*#__PURE__*/babelHelpers.classPrivateFieldLooseKey("params");
 	var _data = /*#__PURE__*/babelHelpers.classPrivateFieldLooseKey("data");
 	var _layout = /*#__PURE__*/babelHelpers.classPrivateFieldLooseKey("layout");
+	var _isAirTemplate = /*#__PURE__*/babelHelpers.classPrivateFieldLooseKey("isAirTemplate");
 	var _bindEvents = /*#__PURE__*/babelHelpers.classPrivateFieldLooseKey("bindEvents");
 	var _onDataReceived = /*#__PURE__*/babelHelpers.classPrivateFieldLooseKey("onDataReceived");
 	var _render = /*#__PURE__*/babelHelpers.classPrivateFieldLooseKey("render");
@@ -45,13 +46,18 @@ this.BX = this.BX || {};
 	      writable: true,
 	      value: void 0
 	    });
+	    Object.defineProperty(this, _isAirTemplate, {
+	      writable: true,
+	      value: void 0
+	    });
 	    const settings = main_core.Extension.getSettings('timeman.stafftrack-check-in');
-	    if (!settings.isCheckinEnabled) {
+	    if (!settings.get('isCheckinEnabled')) {
 	      return;
 	    }
-	    babelHelpers.classPrivateFieldLooseBase(this, _data)[_data] = settings.counter;
+	    babelHelpers.classPrivateFieldLooseBase(this, _data)[_data] = settings.get('counter');
 	    babelHelpers.classPrivateFieldLooseBase(this, _params)[_params] = params;
 	    babelHelpers.classPrivateFieldLooseBase(this, _layout)[_layout] = {};
+	    babelHelpers.classPrivateFieldLooseBase(this, _isAirTemplate)[_isAirTemplate] = settings.get('isAirTemplate');
 	    const pwtContainer = params.container.querySelector('#timeman-pwt-container');
 	    if (pwtContainer) {
 	      pwtContainer.before(babelHelpers.classPrivateFieldLooseBase(this, _render)[_render]());
@@ -71,15 +77,16 @@ this.BX = this.BX || {};
 	  babelHelpers.classPrivateFieldLooseBase(this, _renderCounter)[_renderCounter]();
 	}
 	function _render2() {
+	  const iconOutlineName = babelHelpers.classPrivateFieldLooseBase(this, _isAirTemplate)[_isAirTemplate] ? ui_iconSet_api_core.Outline.PLAY_L : ui_iconSet_api_core.Actions.PLAY;
 	  const wrap = main_core.Tag.render(_t || (_t = _`
 			<div class="timeman-stafftrack-check-in">
-				<div class="ui-icon-set --play"></div>
+				<div class="ui-icon-set --${0}"></div>
 				<div class="timeman-stafftrack-check-in-text">
 					${0}
 				</div>
 				${0}
 			</div>
-		`), main_core.Loc.getMessage('TIMEMAN_STAFFTRACK_CHECK_IN'), babelHelpers.classPrivateFieldLooseBase(this, _renderCounter)[_renderCounter]());
+		`), iconOutlineName, main_core.Loc.getMessage('TIMEMAN_STAFFTRACK_CHECK_IN'), babelHelpers.classPrivateFieldLooseBase(this, _renderCounter)[_renderCounter]());
 	  main_core.Event.bind(wrap, 'click', babelHelpers.classPrivateFieldLooseBase(this, _onClickHandler)[_onClickHandler].bind(this));
 	  return wrap;
 	}
@@ -116,5 +123,5 @@ this.BX = this.BX || {};
 
 	exports.StafftrackCheckIn = StafftrackCheckIn;
 
-}((this.BX.Timeman = this.BX.Timeman || {}),BX,BX.Stafftrack,BX.UI.Analytics));
+}((this.BX.Timeman = this.BX.Timeman || {}),BX,BX.UI.IconSet,BX.Stafftrack,BX.UI.Analytics));
 //# sourceMappingURL=stafftrack-check-in.bundle.js.map

@@ -78,9 +78,9 @@ class ProductRow extends EO_ProductRow implements \JsonSerializable
 	 *
 	 * @return array Compatible with CCrmProductRow
 	 */
-	public function toArray(): array
+	public function toArray($valuesType = Values::ALL): array
 	{
-		$result = $this->collectValues(Values::ALL, FieldTypeMask::SCALAR);
+		$result = $this->collectValues($valuesType, FieldTypeMask::SCALAR);
 
 		foreach ($result as &$value)
 		{

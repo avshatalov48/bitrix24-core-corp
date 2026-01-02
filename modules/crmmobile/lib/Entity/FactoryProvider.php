@@ -44,18 +44,19 @@ final class FactoryProvider
 			$entityTypeId = $factory->getEntityTypeId();
 			$categoryId = self::getCategoryIdForCheckPermission($factory);
 
-			if (!$userPermissions->checkReadPermissions($entityTypeId, 0, $categoryId))
+			if (
+				(is_null($categoryId) && $userPermissions->entityType()->canReadItems($entityTypeId))
+				|| (!is_null($categoryId) && $userPermissions->entityType()->canReadItemsInCategory($entityTypeId, $categoryId))
+			)
 			{
-				continue;
+				$result[] = [
+					'entityTypeId' => $entityTypeId,
+					'entityTypeName' => $factory->getEntityName(),
+					'title' => $factory->getEntityDescription(),
+					'supported' => in_array($entityTypeId, $supportedEntityTypeIds, true),
+					'restricted' => RestrictionManager::isEntityRestricted($entityTypeId),
+				];
 			}
-
-			$result[] = [
-				'entityTypeId' => $entityTypeId,
-				'entityTypeName' => $factory->getEntityName(),
-				'title' => $factory->getEntityDescription(),
-				'supported' => in_array($entityTypeId, $supportedEntityTypeIds, true),
-				'restricted' => RestrictionManager::isEntityRestricted($entityTypeId),
-			];
 		}
 
 		return $result;
@@ -133,7 +134,10 @@ final class FactoryProvider
 		foreach ($factories as $factory)
 		{
 			$categoryId = self::getCategoryIdForCheckPermission($factory);
-			if ($userPermissions->checkReadPermissions($factory->getEntityTypeId(), 0, $categoryId))
+			if (
+				(is_null($categoryId) && $userPermissions->entityType()->canReadItems($factory->getEntityTypeId()))
+				|| (!is_null($categoryId) && $userPermissions->entityType()->canReadItemsInCategory($factory->getEntityTypeId(), $categoryId))
+			)
 			{
 				$result[] = $factory;
 			}

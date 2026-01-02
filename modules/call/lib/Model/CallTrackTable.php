@@ -79,7 +79,7 @@ class CallTrackTable extends DataManager
 				->configureNullable(),
 
 			(new StringField('DOWNLOAD_URL'))
-				->configureRequired(),
+				->configureNullable(),
 
 			(new StringField('FILE_NAME'))
 				->configureSize(100)

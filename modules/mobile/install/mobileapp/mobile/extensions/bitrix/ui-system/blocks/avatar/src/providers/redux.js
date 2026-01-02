@@ -4,7 +4,7 @@
 jn.define('ui-system/blocks/avatar/src/providers/redux', (require, exports, module) => {
 	const { connect } = require('statemanager/redux/connect');
 	const { usersSelector } = require('statemanager/redux/slices/users');
-	const { AvatarEntityType } = require('ui-system/blocks/avatar/src/enums/entity-type-enum');
+	const { AvatarEntityType } = require('ui-system/blocks/avatar/src/enums/entity-type');
 
 	const mapStateToProps = (state, props) => {
 		const {

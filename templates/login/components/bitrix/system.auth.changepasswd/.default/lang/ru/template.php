@@ -1,15 +1,9 @@
-<?
-$MESS ['AUTH_CHANGE_PASSWORD'] = "Смена пароля";
-$MESS ['AUTH_LOGIN'] = "Логин";
-$MESS ['AUTH_CHECKWORD'] = "Контрольная строка";
-$MESS ['AUTH_NEW_PASSWORD'] = "Новый пароль";
-$MESS ['AUTH_NEW_PASSWORD_CONFIRM'] = "Подтверждение пароля";
-$MESS ['AUTH_CHANGE'] = "Изменить пароль";
-$MESS ['AUTH_REQ'] = "Обязательные поля";
-$MESS ['AUTH_AUTH'] = "Авторизация";
-$MESS ['AUTH_NEW_PASSWORD_REQ'] = "Новый пароль";
-$MESS["AUTH_SECURE_NOTE"]="Перед отправкой формы пароль будет зашифрован в браузере. Это позволит избежать передачи пароля в открытом виде.";
-$MESS["AUTH_NONSECURE_NOTE"]="Пароль будет отправлен в открытом виде. Включите JavaScript в браузере, чтобы зашифровать пароль перед отправкой.";
-$MESS["AUTH_CAPTCHA_PROMT"] = "Введите слово на картинке";
-$MESS["auth_change_pass_current_pass"] = "Текущий пароль";
-?>
+<?php
+$MESS["INTRANET_CHANGE_PASS_CONFIRM"] = "Подтверждение пароля";
+$MESS["INTRANET_CHANGE_PASS_NEW_PASS"] = "Новый пароль";
+$MESS["INTRANET_CHANGE_PASS_CURRENT_PASS"] = "Текущий пароль";
+$MESS["INTRANET_CHANGE_PASS_TITLE"] = "Восстановление пароля";
+$MESS["INTRANET_CHANGE_PASS_CAPTCHA_PROMT"] = "Введите буквы с картинки";
+$MESS["INTRANET_CHANGE_PASS_AUTH_LINK"] = "Войти";
+$MESS["INTRANET_CHANGE_PASS_BUTTON"] = "Продолжить";
+$MESS["INTRANET_CHANGE_PASS_CREATE_TITLE"] = "Придумайте пароль";

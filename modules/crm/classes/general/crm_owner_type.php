@@ -219,7 +219,7 @@ class CCrmOwnerType
 			return $typeId % 2 === 0;
 		}
 
-		return ($typeId >= static::DynamicTypeStart && $typeId < static::DynamicTypeEnd);;
+		return ($typeId >= static::DynamicTypeStart && $typeId < static::DynamicTypeEnd);
 	}
 
 	public static function isPossibleSuspendedDynamicTypeId(int $typeId): bool
@@ -925,7 +925,7 @@ class CCrmOwnerType
 			}
 			case self::Order:
 			{
-				if ($bCheckPermissions && !\Bitrix\Crm\Order\Permissions\Order::checkReadPermission())
+				if ($bCheckPermissions && !Container::getInstance()->getUserPermissions()->entityType()->canReadItems(CCrmOwnerType::Order))
 				{
 					return '';
 				}
@@ -1032,7 +1032,13 @@ class CCrmOwnerType
 			}
 			case self::Order:
 			{
-				if ($bCheckPermissions && !\Bitrix\Crm\Order\Permissions\Order::checkReadPermission($ID))
+				if (
+					$bCheckPermissions
+					&& !Container::getInstance()
+						->getUserPermissions()
+						->item()
+						->canRead(\CCrmOwnerType::Order, $ID)
+				)
 				{
 					return '';
 				}
@@ -1041,16 +1047,25 @@ class CCrmOwnerType
 			}
 			case self::OrderShipment:
 			{
-				if ($bCheckPermissions && !\Bitrix\Crm\Order\Permissions\Shipment::checkReadPermission($ID))
-				{
-					return '';
-				}
+				if (
+					$bCheckPermissions
+					&& !Container::getInstance()
+						->getUserPermissions()
+						->item()
+						->canRead(\CCrmOwnerType::OrderShipment, $ID)
+				)
 
 				return self::GetDetailsUrl($typeID, $ID, $bCheckPermissions = false);
 			}
 			case self::OrderPayment:
 			{
-				if ($bCheckPermissions && !\Bitrix\Crm\Order\Permissions\Payment::checkReadPermission($ID))
+				if (
+					$bCheckPermissions
+					&& !Container::getInstance()
+						->getUserPermissions()
+						->item()
+						->canRead(\CCrmOwnerType::OrderPayment, $ID)
+				)
 				{
 					return '';
 				}
@@ -1587,7 +1602,7 @@ class CCrmOwnerType
 			case self::DealCategory:
 			{
 				$arRes = isset($options['FIELDS']) ? $options['FIELDS'] : null;
-				if(!is_array($arRes) && (!$checkRights || Bitrix\Crm\Category\DealCategory::checkReadPermission()))
+				if(!is_array($arRes) && (!$checkRights || Container::getInstance()->getUserPermissions()->entityType()->canReadItemsInCategory(CCrmOwnerType::Deal, (int)$ID)))
 				{
 					$arRes = Bitrix\Crm\Category\DealCategory::get($ID);
 				}
@@ -1648,7 +1663,7 @@ class CCrmOwnerType
 				$up = Container::getInstance()->getUserPermissions();
 				if (
 					$checkRights
-					&& !$up->checkReadPermissions($typeID, $ID, $item->getCategoryIdForPermissions())
+					&& !$up->item()->canReadItem($item)
 				)
 				{
 					self::$CAPTIONS[$key] = '';
@@ -3058,7 +3073,11 @@ class CCrmOwnerType
 			}
 			case self::Order:
 			{
-				if($checkRights && !\Bitrix\Crm\Order\Permissions\Order::checkReadPermission($entityId))
+				if($checkRights && !Container::getInstance()
+						->getUserPermissions()
+						->item()
+						->canRead(\CCrmOwnerType::Order, $entityId)
+				)
 				{
 					break;
 				}
@@ -3745,6 +3764,7 @@ class CCrmOwnerTypeAbbr
 			case CCrmOwnerType::SuspendedLeadName:
 				return self::SuspendedLead;
 			case CCrmOwnerType::DealName:
+			case CCrmOwnerType::DealRecurringName:
 				return self::Deal;
 			case CCrmOwnerType::SuspendedDealName:
 				return self::SuspendedDeal;

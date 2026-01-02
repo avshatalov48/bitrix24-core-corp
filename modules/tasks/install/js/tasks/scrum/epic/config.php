@@ -14,6 +14,7 @@ return [
 		'ui.notification',
 		'main.core',
 		'ui.dialogs.messagebox',
+		'color_picker',
 		'ui.design-tokens',
 		'ui.fonts.opensans',
 	],

@@ -18,12 +18,14 @@ use Bitrix\Crm\Service\Timeline\Layout\Common\Icon;
 use Bitrix\Main\ArgumentTypeException;
 use Bitrix\Main\Loader;
 use Bitrix\Main\Localization\Loc;
+use Bitrix\Main\Type\DateTime;
 use Bitrix\Main\Web\Uri;
 use Bitrix\Sign\FeatureResolver;
 use Bitrix\Sign\Item\Member;
 use Bitrix\Sign\Item\MemberCollection;
 use Bitrix\Sign\Repository\DocumentRepository;
 use Bitrix\Sign\Repository\MemberRepository;
+use Bitrix\Sign\Service\Sign\Document\SignUntilService;
 use Bitrix\Sign\Service\Sign\DocumentService;
 use Bitrix\Sign\Service\Sign\MemberService;
 use Bitrix\Sign\Type\Document\EntityType;
@@ -41,6 +43,7 @@ final class SignB2eDocument extends Activity
 	private ?MemberRepository $memberRepository = null;
 	private ?MemberCollection $members = null;
 	private DocumentService $documentService;
+	private ?SignUntilService $signUntilService = null;
 	private ?MemberService $memberService = null;
 	private ?bool $isSignDocumentFill = null;
 	private ?bool $isSignDocumentReview = null;
@@ -57,16 +60,27 @@ final class SignB2eDocument extends Activity
 	{
 		if (Loader::includeModule('sign'))
 		{
-			$this->documentRepository = \Bitrix\Sign\Service\Container::instance()->getDocumentRepository();
-			$this->memberRepository = \Bitrix\Sign\Service\Container::instance()->getMemberRepository();
-			$this->documentService = \Bitrix\Sign\Service\Container::instance()->getDocumentService();
+			$container = \Bitrix\Sign\Service\Container::instance();
+			$this->documentRepository = $container->getDocumentRepository();
+			$this->memberRepository = $container->getMemberRepository();
+			$this->documentService = $container->getDocumentService();
 
-			if (method_exists(
-				'\Bitrix\Sign\Service\Cache\Memory\Sign\MemberService',
-				'getUserRepresentedName'
-			))
+			$featureResolver = class_exists('\Bitrix\Sign\FeatureResolver')
+				? \Bitrix\Sign\FeatureResolver::instance()
+				: null
+			;
+
+			if ($featureResolver)
 			{
-				$this->memberService = new \Bitrix\Sign\Service\Cache\Memory\Sign\MemberService();
+				$this->signUntilService = $featureResolver->released('signUntilDate')
+					? $container->getSignUntilService()
+					: null
+				;
+
+				$this->memberService = $featureResolver->released('memberServiceCached')
+					? new \Bitrix\Sign\Service\Cache\Memory\Sign\MemberService()
+					: $container->getMemberService()
+				;
 			}
 		}
 
@@ -191,6 +205,50 @@ final class SignB2eDocument extends Activity
 			);
 	}
 
+	private function getSignUntilBlock(): Layout\Body\ContentBlock\ContentBlockWithTitle
+	{
+		if ($this->signUntilService === null)
+		{
+			return (new Layout\Body\ContentBlock\ContentBlockWithTitle())
+				->setTitle(Loc::getMessage('CRM_SIGN_B2E_ACTIVITY_DOCUMENT_SIGN_UNTIL'))
+				->setContentBlock((new Layout\Body\ContentBlock\Text())
+					->setValue('-')
+				)
+			;
+		}
+
+		$readOnly =
+			!$this->hasUpdatePermission()
+			|| $this->isSignDocumentStopped()
+			|| $this->isSignDocumentDone()
+			|| $this->signUntilService->isSignUntilDateInPast($this->getSignDocument()->dateSignUntil)
+		;
+
+		return (new Layout\Body\ContentBlock\ContentBlockWithTitle())
+			->setInline(false)
+			->setTitle(Loc::getMessage('CRM_SIGN_B2E_ACTIVITY_DOCUMENT_SIGN_UNTIL'))
+			->setContentBlock((new Layout\Body\ContentBlock\EditableDate())
+				->setReadonly($readOnly)
+				->setStyle(Layout\Body\ContentBlock\EditableDate::STYLE_PILL)
+				->setDate($this->getSignDocument()?->dateSignUntil)
+				->setWithTime()
+				->setAction(
+					(new Layout\Action\JsEvent('SignB2eDocument:ModifyDateSignUntil'))
+						->addActionParamString('uid', $this->getSignDocument()?->uid)
+						->setAnimation(Layout\Action\Animation::disableBlock())
+				)
+				->setBackgroundColor(
+					match (true)
+					{
+						$readOnly => Layout\Body\ContentBlock\EditableDate::BACKGROUND_COLOR_DEFAULT,
+						$this->signUntilService->isSignUntilDateReachedWarningPeriod($this->getSignDocument()->dateSignUntil)
+							=> Layout\Body\ContentBlock\EditableDate::BACKGROUND_COLOR_WARNING,
+						default => Layout\Body\ContentBlock\EditableDate::BACKGROUND_COLOR_DEFAULT,
+					}
+				)
+			);
+	}
+
 	public function getContentBlocks(): ?array
 	{
 		$blocks = [];
@@ -204,6 +262,14 @@ final class SignB2eDocument extends Activity
 		if (!$this->getSignDocument())
 		{
 			return $blocks;
+		}
+
+		if (
+			$this->signUntilService !== null
+			&& $this->getSignDocument()->dateSignUntil !== null
+		)
+		{
+			$blocks['signUntil'] = $this->getSignUntilBlock();
 		}
 
 		$blocks['company'] = $this->getCompanyBlock();

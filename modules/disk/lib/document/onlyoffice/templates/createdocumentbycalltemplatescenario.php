@@ -77,11 +77,18 @@ final class CreateDocumentByCallTemplateScenario
 			return $fileResult;
 		}
 
+		if (empty($fileResult->getData()['bfile']))
+		{
+			$result->addError(new Error("Could not create file by template ({$templateId})"));
+
+			return $result;
+		}
+
 		$fileArray = $fileResult->getData()['bfile'];
 		$chatTitle = $this->getChatTitle($this->call->getAssociatedEntity());
 
 		$newFile = $targetFolder->uploadFile($fileArray, [
-			'NAME' => Loc::getMessage("DISK_DOCUMENT_OO_DOC_BY_CALL_TEMPLATE_FILENAME_1", ['#NAME#' => $chatTitle]) . '.docx',
+			'NAME' => Loc::getMessage("DISK_DOCUMENT_OO_DOC_BY_CALL_TEMPLATE_FILENAME_MSGVER_1", ['#NAME#' => $chatTitle]) . '.docx',
 			'CREATED_BY' => $this->userId,
 			'CODE' => self::CODE_RESUME,
 		], [], true);
@@ -211,7 +218,7 @@ final class CreateDocumentByCallTemplateScenario
 	protected function getLangMessages(): array
 	{
 		return [
-			'TITLE' => Loc::getMessage('DISK_DOCUMENT_OO_DOC_BY_CALL_TEMPLATE_DOC_TITLE'),
+			'TITLE' => Loc::getMessage('DISK_DOCUMENT_OO_DOC_BY_CALL_TEMPLATE_DOC_TITLE_MSGVER_1'),
 			'DATETIME' => Loc::getMessage('DISK_DOCUMENT_OO_DOC_BY_CALL_TEMPLATE_DOC_DATETIME'),
 			'MEMBERS' => Loc::getMessage('DISK_DOCUMENT_OO_DOC_BY_CALL_TEMPLATE_DOC_MEMBERS'),
 			'RESUME_SUBTITLE' => Loc::getMessage('DISK_DOCUMENT_OO_DOC_BY_CALL_TEMPLATE_DOC_RESUME_SUBTITLE'),

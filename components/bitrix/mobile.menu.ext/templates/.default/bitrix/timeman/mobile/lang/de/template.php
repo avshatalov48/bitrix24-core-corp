@@ -1,5 +1,4 @@
 <?php
-$MESS["TM_NOTIF_EXPIRED"] = "Sie haben Ihren vorherigen Arbeitstag nicht geschlossen.";
 $MESS["TM_NOTIF_EXPIRED_MSGVER_1"] = "Sie haben den vorherigen Arbeitstag nicht beendet.";
 $MESS["TM_NOTIF_START"] = "Arbeitstag starten";
 $MESS["TM_STATUS_COMPLETED"] = "Beendet";

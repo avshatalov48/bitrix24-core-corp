@@ -5,6 +5,7 @@ if (!defined('B_PROLOG_INCLUDED') || B_PROLOG_INCLUDED !== true)
 	die();
 }
 
+use Bitrix\Crm\Category\CategoryPullManager;
 use Bitrix\Crm\Service\Container;
 use Bitrix\Main\Localization\Loc;
 use Bitrix\Main\Text\HtmlFilter;
@@ -76,5 +77,10 @@ if ($arResult['CATEGORY_COUNTER'] > 0)
 {
 	$categoryButton->setCounter($arResult['CATEGORY_COUNTER']);
 }
+
+CategoryPullManager::getInstance()->subscribe(
+	Container::getInstance()->getUserPermissions()->getUserId(),
+	CategoryPullManager::EVENT_CATEGORIES_UPDATED,
+);
 
 Toolbar::addButton($categoryButton, ButtonLocation::AFTER_TITLE);

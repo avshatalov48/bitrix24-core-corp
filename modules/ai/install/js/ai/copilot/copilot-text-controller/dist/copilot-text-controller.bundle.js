@@ -627,9 +627,13 @@ this.BX = this.BX || {};
 	      disabled: true,
 	      icon: ui_iconSet_api_core.Actions.PLUS_50
 	    };
-	    let result = [...getMenuItemsFromEngines(engines, selectedEngineCode, copilotTextController), connectAiMenuItem, {
-	      separator: true
-	    }, getMarketMenuItem()];
+	    const isLibraryAvailable = main_core.Extension.getSettings('ai.copilot').get('isLibraryVisible');
+	    let result = [...getMenuItemsFromEngines(engines, selectedEngineCode, copilotTextController)];
+	    if (isLibraryAvailable) {
+	      result.push(connectAiMenuItem, {
+	        separator: true
+	      }, getMarketMenuItem());
+	    }
 	    if (canEditSettings) {
 	      const settingsPageLink = main_core.Extension.getSettings('ai.copilot.copilot-text-controller').settingsPageLink;
 	      result = [...result, {
@@ -661,7 +665,7 @@ this.BX = this.BX || {};
 	  return {
 	    code: 'market',
 	    href: '/market/collection/ai_provider_partner_crm/',
-	    text: main_core.Loc.getMessage('AI_COPILOT_SEARCH_IN_MARKET'),
+	    text: main_core.Loc.getMessage('AI_COPILOT_SEARCH_IN_MARKET_MSGVER_1'),
 	    icon: ui_iconSet_api_core.Main.MARKET_1,
 	    arrow: false
 	  };
@@ -693,7 +697,7 @@ this.BX = this.BX || {};
 	      }),
 	      notHighlight: true
 	    };
-	    const promptMasterMenuItem = copilotTextController.getLastCommandCode() === 'zero_prompt' && copilotTextController.isReadonly() === false && copilotTextController.getSelectedPromptCodeWithSimpleTemplate() === null ? {
+	    const promptMasterMenuItem = isPromptMasterAvailable(copilotTextController) ? {
 	      code: 'prompt-master',
 	      text: main_core.Loc.getMessage('AI_COPILOT_MENU_ITEM_CREATE_PROMPT'),
 	      icon: ui_iconSet_api_core.Main.BOOKMARK_1,
@@ -808,6 +812,10 @@ this.BX = this.BX || {};
 	    })
 	  };
 	}
+	function isPromptMasterAvailable(copilotTextController) {
+	  const isLibraryAvailable = main_core.Extension.getSettings('ai.copilot').get('isLibraryVisible');
+	  return copilotTextController.getLastCommandCode() === 'zero_prompt' && copilotTextController.isReadonly() === false && copilotTextController.getSelectedPromptCodeWithSimpleTemplate() === null && isLibraryAvailable;
+	}
 
 	class CopilotGeneralMenuItems extends CopilotMenuItems {
 	  static getMenuItems(options) {
@@ -831,35 +839,14 @@ this.BX = this.BX || {};
 	      }),
 	      labelText: main_core.Loc.getMessage('AI_COPILOT_MENU_ITEM_LABEL_NEW')
 	    }] : [];
-	    return [...imageMenuItem, favouriteSectionSeparator, ...getGeneralMenuItemsFromPrompts(favouritePrompts, copilotTextController, true), ...(copilotTextController.isReadonly() === false ? [{
+	    const promptLibraryItem = getPromptLibraryItem(copilotTextController);
+	    return [...imageMenuItem, favouriteSectionSeparator, ...getGeneralMenuItemsFromPrompts(favouritePrompts, copilotTextController, true), ...(shouldDisplayCustomPromptSection(copilotTextController, userPrompts) ? [{
 	      code: 'user-prompt-separator',
 	      separator: true,
 	      title: main_core.Loc.getMessage('AI_COPILOT_USER_PROMPTS_MENU_SECTION'),
 	      text: main_core.Loc.getMessage('AI_COPILOT_USER_PROMPTS_MENU_SECTION'),
 	      isNew: true
-	    }, ...getGeneralMenuItemsFromPrompts(userPrompts, copilotTextController, false), {
-	      code: 'promptLib',
-	      text: main_core.Loc.getMessage('AI_COPILOT_MENU_ITEM_AI_PROMPT_LIB'),
-	      icon: ui_iconSet_api_core.Main.PROMPTS_LIBRARY,
-	      highlightText: true,
-	      command: async () => {
-	        if (BX.SidePanel) {
-	          copilotTextController.getAnalytics().setCategoryPromptSaving();
-	          copilotTextController.getAnalytics().sendEventOpenPromptLibrary();
-	          BX.SidePanel.Instance.open('/bitrix/components/bitrix/ai.prompt.library.grid/slider.php', {
-	            cacheable: false,
-	            events: {
-	              onCloseStart: () => {
-	                copilotTextController.getAnalytics().setCategoryText();
-	                copilotTextController.updateGeneralMenuPrompts();
-	              }
-	            }
-	          });
-	        } else {
-	          window.location.href = '/bitrix/components/bitrix/ai.prompt.library.grid/slider.php';
-	        }
-	      }
-	    }] : []), ...getGeneralMenuItemsFromPrompts(systemPrompts, copilotTextController), ...getSelectedEngineMenuItem(engines, selectedEngineCode, copilotTextController, canEditSettings), {
+	    }, ...getGeneralMenuItemsFromPrompts(userPrompts, copilotTextController, false), promptLibraryItem] : []), ...getGeneralMenuItemsFromPrompts(systemPrompts, copilotTextController), ...getSelectedEngineMenuItem(engines, selectedEngineCode, copilotTextController, canEditSettings), {
 	      code: 'about_open_copilot',
 	      text: main_core.Loc.getMessage('AI_COPILOT_MENU_ITEM_ABOUT_COPILOT'),
 	      icon: ui_iconSet_api_core.Main.INFO,
@@ -933,6 +920,39 @@ this.BX = this.BX || {};
 	    }),
 	    icon: ui_iconSet_api_core.Main.COPILOT_AI
 	  }];
+	}
+	function getPromptLibraryItem(copilotTextController) {
+	  const isLibraryVisible = main_core.Extension.getSettings('ai.copilot').get('isLibraryVisible');
+	  if (isLibraryVisible) {
+	    return {
+	      code: 'promptLib',
+	      text: main_core.Loc.getMessage('AI_COPILOT_MENU_ITEM_AI_PROMPT_LIB'),
+	      icon: ui_iconSet_api_core.Main.PROMPTS_LIBRARY,
+	      highlightText: true,
+	      command: async () => {
+	        if (BX.SidePanel) {
+	          copilotTextController.getAnalytics().setCategoryPromptSaving();
+	          copilotTextController.getAnalytics().sendEventOpenPromptLibrary();
+	          BX.SidePanel.Instance.open('/bitrix/components/bitrix/ai.prompt.library.grid/slider.php', {
+	            cacheable: false,
+	            events: {
+	              onCloseStart: () => {
+	                copilotTextController.getAnalytics().setCategoryText();
+	                copilotTextController.updateGeneralMenuPrompts();
+	              }
+	            }
+	          });
+	        } else {
+	          window.location.href = '/bitrix/components/bitrix/ai.prompt.library.grid/slider.php';
+	        }
+	      }
+	    };
+	  }
+	  return null;
+	}
+	function shouldDisplayCustomPromptSection(copilotTextController, userPrompt) {
+	  const isLibraryAvailable = main_core.Extension.getSettings('ai.copilot').get('isLibraryVisible');
+	  return copilotTextController.isReadonly() === false && isLibraryAvailable || userPrompt.length > 0;
 	}
 
 	class BaseMenuItem extends main_core_events.EventEmitter {
@@ -1113,7 +1133,7 @@ this.BX = this.BX || {};
 	  constructor(options) {
 	    super({
 	      icon: ui_iconSet_api_core.Main.MARKET_1,
-	      text: main_core.Loc.getMessage('AI_COPILOT_SEARCH_IN_MARKET'),
+	      text: main_core.Loc.getMessage('AI_COPILOT_SEARCH_IN_MARKET_MSGVER_1'),
 	      href: '/market/collection/ai_provider_partner_crm/',
 	      ...options
 	    });
@@ -2195,7 +2215,7 @@ this.BX = this.BX || {};
 	  }
 	}
 	function _handleGenerateError2(res) {
-	  var _res$errors, _res$errors$;
+	  var _res$errors, _res$errors$, _res$errors2, _firstError$customDat, _firstError$customDat2;
 	  const maxGenerateRestartErrors = 4;
 	  const firstErrorCode = res == null ? void 0 : (_res$errors = res.errors) == null ? void 0 : (_res$errors$ = _res$errors[0]) == null ? void 0 : _res$errors$.code;
 	  if (res instanceof Error) {
@@ -2276,13 +2296,16 @@ this.BX = this.BX || {};
 	    babelHelpers.classPrivateFieldLooseBase(this, _errorMenu)[_errorMenu].open();
 	    main_core.Dom.addClass(babelHelpers.classPrivateFieldLooseBase(this, _copilotContainer$2)[_copilotContainer$2], '--error');
 	  }
+	  const firstError = res == null ? void 0 : (_res$errors2 = res.errors) == null ? void 0 : _res$errors2[0];
 	  ai_ajaxErrorHandler.AjaxErrorHandler.handleTextGenerateError({
 	    baasOptions: {
 	      bindElement: babelHelpers.classPrivateFieldLooseBase(this, _inputField$2)[_inputField$2].getContainer().querySelector('.ai__copilot_input-field-baas-point'),
 	      context: babelHelpers.classPrivateFieldLooseBase(this, _engine$2)[_engine$2].getContextId(),
 	      useAngle: false
 	    },
-	    errorCode: firstErrorCode
+	    errorCode: firstErrorCode,
+	    showSliderWithMsg: firstError == null ? void 0 : (_firstError$customDat = firstError.customData) == null ? void 0 : _firstError$customDat.showSliderWithMsg,
+	    sliderCode: firstError == null ? void 0 : (_firstError$customDat2 = firstError.customData) == null ? void 0 : _firstError$customDat2.sliderCode
 	  });
 	}
 	function _initErrorMenu2() {

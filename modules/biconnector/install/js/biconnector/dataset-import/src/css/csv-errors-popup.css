@@ -1,0 +1,136 @@
+.errors-popup {
+	padding: 20px 24px;
+}
+
+.popup-header {
+	font-size: var(--ui-font-size-xl);
+	margin: 0 0 18px;
+}
+
+.popup-hint {
+	color: var(--ui-color-palette-black-base);
+	margin-bottom: 24px;
+}
+
+.popup-hint a {
+	cursor: pointer;
+}
+
+.popup-buttons-wrapper {
+	display: flex;
+	flex-direction: row;
+	justify-content: center;
+	padding-top: 13px;
+}
+
+.popup-errors-summary {
+	display: flex;
+	flex-direction: row;
+	justify-content: space-between;
+	align-items: center;
+	font-size: var(--ui-font-size-lg);
+	margin-bottom: 10px;
+}
+
+.popup-errors-count {
+	display: flex;
+	flex-direction: row;
+	align-items: center;
+}
+
+.errors-counter {
+	border-radius: var(--ui-border-radius-sm);
+	background-color: var(--ui-color-palette-red-50);
+	color: var(--ui-color-palette-white-base);
+	font-size: var(--ui-font-size-xs);
+	line-height: 14px;
+	padding: 1px 5px;
+	margin-left: 6px;
+}
+
+.popup-errors-log-button {
+	font-size: var(--ui-font-size-xs);
+	font-weight: var(--ui-font-weight-medium);
+	line-height: var(--ui-font-line-height-sm);
+	padding: 5px 10px;
+}
+
+.popup-errors-log-button:active {
+	background-color: #EBEFF2;
+	border-color: #EBEFF2;
+}
+
+.popup-errors-log-button.ui-btn-wait,
+.popup-errors-log-button.ui-btn-wait:hover {
+	background-color: transparent;
+	border-color: transparent;
+}
+
+.popup-error-table-wrapper {
+	background-color: var(--ui-color-palette-gray-03);
+	border-bottom-left-radius: var(--ui-border-radius-sm);
+	border-bottom-right-radius: var(--ui-border-radius-sm);
+}
+
+.popup-error-table-scroll {
+	display: block;
+	/* 300px all errors block - 43px table header */
+	max-height: 257px;
+	overflow: auto;
+	scrollbar-width: thin;
+	scrollbar-color: rgba(var(--ui-color-palette-gray-90-rgb), .13) transparent;
+}
+
+.popup-error-header-wrapper {
+	background-color: var(--ui-color-palette-gray-03);
+	border-radius: var(--ui-border-radius-sm) var(--ui-border-radius-sm) 0 0;
+}
+
+.popup-error-table {
+	table-layout: fixed;
+	border-collapse: collapse;
+	width: 100%;
+}
+
+.popup-error-header {
+	table-layout: fixed;
+	border-collapse: collapse;
+	width: 100%;
+}
+
+.popup-error-table td,
+.popup-error-header-cell {
+	padding: 14px;
+	font-weight: var(--ui-font-weight-normal);
+}
+
+.popup-error-header-cell {
+	color: var(--ui-color-palette-gray-70);
+}
+
+.popup-error-table-row-cell {
+	min-height: 46px;
+	color: var(--ui-color-palette-gray-90);
+	border-top: 1px solid var(--ui-color-palette-gray-20);
+}
+
+.cell-error-number {
+	width: 3%;
+	text-align: center;
+	color: var(--ui-color-palette-gray-70);
+}
+
+.cell-error-message {
+	width: 55%;
+}
+
+.cell-error-line {
+	width: 7%;
+}
+
+.cell-error-column-name {
+	width: 35%;
+	max-width: 35%;
+	text-overflow: ellipsis;
+	overflow: hidden;
+}

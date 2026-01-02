@@ -6,6 +6,7 @@
 	border-radius: 6px;
 	padding: 13px 11px;
 	background-color: var(--ui-color-palette-white-base);
+	max-width: 264px;
 }
 
 .hr-hcmlink-item-user_info {
@@ -30,16 +31,19 @@
 
 .hr-hcmlink-item-user__info-name {
 	font-size: var(--ui-font-size-xl);
-	font-family: var(--ui-font-family-system);
+	font-family: var(--ui-font-family-primary, var(--ui-font-family-system));
 	color: var(--ui-color-palette-gray-90);
 	margin-bottom: 4px;
+	overflow: hidden;
+	text-overflow: ellipsis;
+	white-space: nowrap;
 }
 
 .hr-hcmlink-item-user__info-position {
 	font-size: var(--ui-font-size-xs);
-	font-family: var(--ui-font-family-system);
+	font-family: var(--ui-font-family-primary, var(--ui-font-family-system));
 	color: var(--ui-color-palette-gray-60);
+	overflow: hidden;
+	text-overflow: ellipsis;
+	white-space: nowrap;
 }
-
-
-

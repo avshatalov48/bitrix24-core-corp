@@ -1,14 +1,16 @@
 <?php
-
-use Bitrix\Crm\Integration\Bitrix24Manager;
-use Bitrix\Main\Localization\Loc;
-use Bitrix\Main\UI\Extension;
-use Bitrix\Main\Web\Json;
-
 if (!defined("B_PROLOG_INCLUDED") || B_PROLOG_INCLUDED !== true)
 {
 	die();
 }
+
+/** @var array $arParams */
+/** @var array $arResult */
+/** @var CMain $APPLICATION */
+
+use Bitrix\Main\Localization\Loc;
+use Bitrix\Main\UI\Extension;
+use Bitrix\UI\Toolbar\Facade\Toolbar;
 
 Extension::load([
 	"ui.buttons",
@@ -26,6 +28,32 @@ Extension::load([
 	"ui.icons.disk",
 	"sign.v2.document-send",
 ]);
+
+$APPLICATION->SetTitle(htmlspecialcharsbx($arResult['title']));
+
+if (\Bitrix\Main\Loader::includeModule('ui'))
+{
+	Toolbar::deleteFavoriteStar();
+
+	Toolbar::addButton(
+		(new \Bitrix\UI\Buttons\Button([
+			'color' => \Bitrix\UI\Buttons\Color::LIGHT_BORDER,
+			'icon' => \Bitrix\UI\Buttons\Icon::PRINT,
+		]))
+			->setUniqId('crm-document-print')
+		,
+	);
+
+	Toolbar::addButton(
+		(new \Bitrix\UI\Buttons\Button([
+			'color' => \Bitrix\UI\Buttons\Color::LIGHT_BORDER,
+			'icon' =>  \Bitrix\UI\Buttons\Icon::DOWNLOAD,
+			'text' => Loc::getMessage('CRM_COMMON_ACTION_DOWNLOAD'),
+		]))
+			->setUniqId('crm-document-download')
+		,
+	);
+}
 
 $renderRequisiteSection = function(?string $entityName, array $data): void {
 	?>
@@ -47,39 +75,6 @@ $renderRequisiteSection = function(?string $entityName, array $data): void {
 <?php
 };
 ?>
-<!DOCTYPE html>
-<html lang="<?=LANGUAGE_ID;?>">
-<head>
-	<script data-skip-moving="true">
-		// Prevent loading page without header and footer
-		if (window === window.top)
-		{
-			window.location = "<?=CUtil::JSEscape((new \Bitrix\Main\Web\Uri(\Bitrix\Main\Application::getInstance()->getContext()->getRequest()->getRequestUri()))->deleteParams(['IFRAME', 'IFRAME_TYPE']));?>" + window.location.hash;
-		}
-	</script>
-	<?php $APPLICATION->ShowHead(); ?>
-</head>
-<body class="crm__document-view--slider-wrap">
-<div class="crm__document-view--title">
-	<div class="crm__document-view--container-docs-preview">
-		<div class="pagetitle">
-			<span id="pagetitle" class="pagetitle-item crm__document-view--pagetitle-item"><?=htmlspecialcharsbx($arResult['title']);?></span>
-		</div>
-		<div class="crm__document-view--buttons">
-			<button class="ui-btn ui-btn-md ui-btn-light-border ui-btn-icon-print" data-btn-uniqid="crm-document-print"></button>
-
-			<div
-				class="ui-btn-split ui-btn-light-border crm__document-view--btn-icon-pdf"
-				data-btn-uniqid="crm-document-download"
-			>
-				<button class="ui-btn-main">
-					<span class="ui-btn-text"><?=Loc::getMessage('CRM_COMMON_ACTION_DOWNLOAD');?></span>
-				</button>
-				<button class="ui-btn-menu"></button>
-			</div>
-		</div>
-	</div>
-</div>
 <div class="crm__document-view--wrap">
 	<div class="crm__document-view--inner crm__document-view--inner-slider">
 		<div class="crm__document-view--img">
@@ -146,7 +141,3 @@ $renderRequisiteSection = function(?string $entityName, array $data): void {
 		}
 	});
 </script>
-</body>
-</html>
-<?php
-\CMain::FinalActions();

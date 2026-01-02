@@ -46,7 +46,7 @@ class StructureTable extends ORM\Data\DataManager
 				->configureTitle('Structure name')
 			,
 			(new ORM\Fields\EnumField('TYPE'))
-				->configureValues(StructureType::values())
+				->configureValues(StructureType::names())
 				->configureDefaultValue(StructureType::DEFAULT)
 				->configureTitle('Structure type')
 			,

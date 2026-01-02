@@ -5,6 +5,7 @@ import { Dialog, ItemOptions } from 'ui.entity-selector';
 import { EntitySelectorEntity, Model } from 'booking.const';
 import { ResourceTypeModel } from 'booking.model.resource-types';
 import { resourceTypeService } from 'booking.provider.service.resources-type-service';
+import { EmptyRichLoc } from 'booking.component.help-desk-loc';
 
 import { ErrorMessage } from '../error-message/error-message';
 import './base-fields.css';
@@ -85,6 +86,7 @@ export const BaseFields = {
 				context: 'bookingResourceCreationType',
 				multiple: false,
 				cacheable: true,
+				preselectedItems: [[this.entityId, this.initialResourceType?.typeId]],
 				entities: [
 					{
 						id: this.entityId,
@@ -179,6 +181,7 @@ export const BaseFields = {
 	},
 	components: {
 		ErrorMessage,
+		EmptyRichLoc,
 	},
 	template: `
 		<div ref="baseFieldsForm" class="ui-form resource-creation-wizard__form-settings --base">
@@ -198,13 +201,21 @@ export const BaseFields = {
 								type="text"
 								class="ui-ctl-element"
 								:class="{ '--error': invalidResourceName }"
-								:placeholder="this.loc('BRCW_SETTINGS_CARD_NAME_PLACEHOLDER')"
+								:placeholder="loc('BRCW_SETTINGS_CARD_NAME_LABEL')"
 							/>
 						</div>
 						<ErrorMessage
 							v-if="invalidResourceName"
 							:message="errorMessage"
 						/>
+					</div>
+					<div class="ui-form-line">
+						<div class="booking--rcw--resource-name-description">
+							<EmptyRichLoc
+								:message="loc('BRCW_SETTINGS_CARD_NAME_DESCRIPTION')"
+								:rules="['nowrap']"
+							/>
+						</div>
 					</div>
 				</div>
 				<div class="ui-form-row">

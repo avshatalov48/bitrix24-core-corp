@@ -6,6 +6,7 @@ use Bitrix\Main\ModuleManager;
 use Bitrix\Main\ORM\Query\Result;
 use Bitrix\Tasks\Provider\Exception\TaskListException;
 use Exception;
+use Bitrix\Tasks\Provider\Query\TaskQueryBuilder;
 
 class TaskList
 {

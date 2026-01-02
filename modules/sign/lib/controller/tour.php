@@ -19,6 +19,7 @@ final class Tour extends Controller
 		if (!$validateTourIdResult->isSuccess())
 		{
 			$this->addErrors($validateTourIdResult->getErrors());
+
 			return;
 		}
 
@@ -42,6 +43,7 @@ final class Tour extends Controller
 		if (!$validateTourIdResult->isSuccess())
 		{
 			$this->addErrors($validateTourIdResult->getErrors());
+
 			return [];
 		}
 

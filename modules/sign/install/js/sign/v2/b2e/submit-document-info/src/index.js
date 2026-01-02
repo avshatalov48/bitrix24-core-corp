@@ -25,6 +25,7 @@ type Options = {
 		title: string,
 	},
 	fields: Array<TemplateField>,
+	isOnboarding: boolean;
 };
 
 type MemberInvitedToSignEventData = {
@@ -92,7 +93,7 @@ export class SubmitDocumentInfo extends EventEmitter
 
 	#onProgressClosePageBtnClick(): void
 	{
-		this.emit(this.event.onProgressClosePageBtnClick);
+		this.emit(this.events.onProgressClosePageBtnClick);
 		BX.SidePanel.Instance.close();
 	}
 
@@ -103,18 +104,25 @@ export class SubmitDocumentInfo extends EventEmitter
 			() => {
 				if (this.#options.fields.length === 0)
 				{
+					const title = this.#options.isOnboarding
+						? Loc.getMessage('SIGN_SUBMIT_DOCUMENT_INFO_READY_TO_SEND_ONBOARDING_TITLE')
+						: Loc.getMessage('SIGN_SUBMIT_DOCUMENT_INFO_READY_TO_SEND_TITLE')
+					;
+					const description = this.#options.isOnboarding
+						? Loc.getMessage('SIGN_SUBMIT_DOCUMENT_INFO_READY_TO_SEND_ONBOARDING_DESCRIPTION')
+						: Loc.getMessage('SIGN_SUBMIT_DOCUMENT_INFO_READY_TO_SEND_DESCRIPTION', { '#TITLE#': Text.encode(this.#options.template.title) })
+					;
+
 					return Tag.render`
 						<div class="sign-submit-document-info-center-container">
 							<div class="sign-submit-document-info-center-icon">
 								<img src="${readyToSendImage}" alt="">
 							</div>
 							<p class="sign-submit-document-info-center-title">
-								${Loc.getMessage('SIGN_SUBMIT_DOCUMENT_INFO_READY_TO_SEND_TITLE')}
+								${Text.encode(title)}
 							</p>
 							<p class="sign-submit-document-info-center-description">
-								${Loc.getMessage('SIGN_SUBMIT_DOCUMENT_INFO_READY_TO_SEND_DESCRIPTION', {
-									'#TITLE#': Text.encode(this.#options.template.title),
-								})}
+								${description}
 							</p>
 							<form id="${this.#fieldFormId}"></form>
 						</div>
@@ -147,6 +155,7 @@ export class SubmitDocumentInfo extends EventEmitter
 		}
 
 		let employeeMember = null;
+		let assigneeMember = null;
 		let document: null | { id: number, providerCode: ProviderCodeType } = null;
 		EventEmitter.emit('BX.Sign.SignSettingsEmployee:onBeforeTemplateSend');
 		try
@@ -154,7 +163,9 @@ export class SubmitDocumentInfo extends EventEmitter
 			const sendResult = await this.#api.template.send(
 				this.#options.template.uid,
 				this.#getFieldValues(),
+				this.#options.isOnboarding,
 			);
+			assigneeMember = sendResult.assigneeMember;
 			employeeMember = sendResult.employeeMember;
 			document = sendResult.document;
 		}
@@ -168,7 +179,7 @@ export class SubmitDocumentInfo extends EventEmitter
 		{
 			EventEmitter.emit('BX.Sign.SignSettingsEmployee:onAfterTemplateSend');
 		}
-		const { uid: memberUid, id: memberId } = employeeMember;
+		const { uid: memberUid, id: memberId } = this.#options.isOnboarding ? assigneeMember : employeeMember;
 		this.emit(this.events.documentSendedSuccessFully, { document });
 
 		this.#showProgress();

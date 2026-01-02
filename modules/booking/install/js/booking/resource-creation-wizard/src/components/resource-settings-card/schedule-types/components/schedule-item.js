@@ -73,6 +73,7 @@ export const ScheduleItem = {
 					:message="description"
 					:code="code"
 					:anchor="anchorCode"
+					:rules="['nowrap']"
 					class="booking--rcw--schedule-item-text-description"
 					link-class="booking--rcw--more booking--rcw--schedule-item-text-description-more"
 				/>

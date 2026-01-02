@@ -2,12 +2,17 @@
 
 namespace Bitrix\Disk\Controller;
 
+use Bitrix\Disk\AttachedObject;
 use Bitrix\Disk\Driver;
+use Bitrix\Disk\File;
 use Bitrix\Disk\Internals\Error\Error;
-use Bitrix\Main\Application;
+use Bitrix\Disk\Version;
 use Bitrix\Main\Engine\ActionFilter;
 use Bitrix\Disk;
+use Bitrix\Disk\UrlManager;
 use Bitrix\Disk\ZipNginx;
+use Bitrix\Main\Engine\AutoWire\BinderArgumentException;
+use Bitrix\Main\Engine\AutoWire\ExactParameter;
 use Bitrix\Main\Engine\CurrentUser;
 
 class CommonActions extends BaseObject
@@ -19,7 +24,7 @@ class CommonActions extends BaseObject
 			'class' => Disk\Controller\Action\SearchAction::class,
 			'+prefilters' => [
 				new ActionFilter\CloseSession(),
-			]
+			],
 		];
 
 		$configureActions['getArchiveLink'] = [
@@ -28,10 +33,10 @@ class CommonActions extends BaseObject
 			],
 			'+prefilters' => [
 				new ActionFilter\HttpMethod(
-					[ActionFilter\HttpMethod::METHOD_POST]
+					[ActionFilter\HttpMethod::METHOD_POST],
 				),
 				new Disk\Internals\Engine\ActionFilter\HumanReadableError(),
-			]
+			],
 		];
 
 		$configureActions['downloadArchive'] = [
@@ -44,13 +49,13 @@ class CommonActions extends BaseObject
 				new Disk\Internals\Engine\ActionFilter\HumanReadableError(),
 				new Disk\Internals\Engine\ActionFilter\CheckArchiveSignature(),
 				new ActionFilter\CloseSession(),
-			]
+			],
 		];
 
 		return $configureActions;
 	}
 
-	public function searchItemsAction(string $search, CurrentUser $currentUser,): array
+	public function searchItemsAction(string $search, CurrentUser $currentUser): array
 	{
 		$storageFileFinder = new Disk\Search\StorageFileFinder($currentUser->getId());
 		$objects = $storageFileFinder->findModelsByText($search);
@@ -60,88 +65,23 @@ class CommonActions extends BaseObject
 		];
 	}
 
-	public function resolveFolderPathAction(string $entityType, string $entityId, string $path, CurrentUser $currentUser): ?array
+	public function resolveFolderPathAction(
+		string $entityType,
+		string $entityId,
+		string $path,
+		CurrentUser $currentUser,
+	): ?array
 	{
-		$storage = $this->getStorageByType($entityType, $entityId);
-		if (!$storage)
+		$result = (new UrlManager())->resolveFolderPath($entityType, $entityId, $path, $currentUser);
+		if (!$result->isSuccess())
 		{
-			$this->addError(new Error('Could not find storage.'));
+			$this->addError($result->getError());
 
 			return null;
 		}
 
-		$securityContext = $storage->getSecurityContext($currentUser->getId());
-
-		if ($path === '/')
-		{
-			return [
-				'targetFolder' => $storage->getRootObject(),
-				'breadcrumbs' => [],
-			];
-		}
-
-		$resolvedData = Driver::getInstance()->getUrlManager()->resolvePathUnderRootObject($storage->getRootObject(), $path);
-		if (empty($resolvedData['RELATIVE_ITEMS']))
-		{
-			$this->addError(new Error('Could not resolve path.'));
-
-			return null;
-		}
-
-		[
-			'RELATIVE_ITEMS' => $breadcrumbs,
-			'OBJECT_ID' => $currentFolderId,
-		] = $resolvedData;
-
-		$folder = Disk\Folder::loadById($currentFolderId);
-		if (!$folder)
-		{
-			$this->addError(new Error('Could not find folder by id.'));
-
-			return null;
-		}
-
-		if (!$folder->canRead($securityContext))
-		{
-			$this->addError(new Error('Access denied.'));
-
-			return null;
-		}
-
-		$reformattedBreadcrumbs = [];
-		foreach ($breadcrumbs as $crumb)
-		{
-			$reformattedBreadcrumbs[] = [
-				'id' => (int)$crumb['ID'],
-				'name' => $crumb['NAME'],
-			];
-		}
-
-		return [
-			'targetFolder' => $folder,
-			'breadcrumbs' => $reformattedBreadcrumbs,
-		];
+		return $result->getData();
 	}
-
-	private function getStorageByType(string $entityType, string $entityId): ?Disk\Storage
-	{
-		$storage = null;
-		if ($entityType === 'user')
-		{
-			$storage = Driver::getInstance()->getStorageByUserId((int)$entityId);
-		}
-		elseif ($entityType === 'group')
-		{
-			$storage = Driver::getInstance()->getStorageByGroupId((int)$entityId);
-		}
-		elseif ($entityType === 'common')
-		{
-			$storage = Driver::getInstance()->getStorageByCommonId($entityId);
-		}
-
-		return $storage;
-	}
-
 
 	public function getRightsAction(Disk\BaseObject $object, CurrentUser $currentUser): ?array
 	{
@@ -188,9 +128,8 @@ class CommonActions extends BaseObject
 		Disk\BaseObject $object,
 		string $newName,
 		bool $autoCorrect = false,
-		bool $generateUniqueName = false
-	)
-	{
+		bool $generateUniqueName = false,
+	) {
 		return $this->rename($object, $newName, $autoCorrect, $generateUniqueName);
 	}
 
@@ -239,6 +178,7 @@ class CommonActions extends BaseObject
 				if (!$object->restore($currentUserId))
 				{
 					$this->errorCollection->add($object->getErrors());
+
 					continue;
 				}
 
@@ -278,7 +218,7 @@ class CommonActions extends BaseObject
 			[
 				'objectCollection' => $objectCollection->getIds(),
 				'signature' => Disk\Security\ParameterSigner::getArchiveSignature($objectCollection->getIds()),
-			]
+			],
 		);
 
 		return [
@@ -286,11 +226,27 @@ class CommonActions extends BaseObject
 		];
 	}
 
+	public function checkFileLimitAction(Disk\Type\ObjectCollection $objectCollection)
+	{
+		$isFileLimitExceeded = false;
+
+		$userId = $this->getCurrentUser()?->getId();
+		if (ZipNginx\Archive::isFileLimitExceededByObjects($objectCollection, $userId))
+		{
+			$isFileLimitExceeded = true;
+		}
+
+		return [
+			'isFileLimitExceeded' => $isFileLimitExceeded,
+		];
+	}
+
 	public function downloadArchiveAction(Disk\Type\ObjectCollection $objectCollection): ZipNginx\Archive
 	{
 		$archiveName = 'archive' . date('y-m-d');
+		$userId = $this->getCurrentUser()?->getId();
 
-		return ZipNginx\Archive::createByObjects($archiveName, $objectCollection, $this->getCurrentUser()?->getId());
+		return ZipNginx\Archive::createByObjects($archiveName, $objectCollection, $userId);
 	}
 
 	public function listRecentlyUsedAction()

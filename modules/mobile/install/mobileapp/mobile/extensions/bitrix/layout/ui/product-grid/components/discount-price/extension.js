@@ -3,6 +3,7 @@
  */
 jn.define('layout/ui/product-grid/components/discount-price', (require, exports, module) => {
 	const AppTheme = require('apptheme');
+	const { Money } = require('money');
 
 	/**
 	 * @param {{

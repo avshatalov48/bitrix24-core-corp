@@ -327,16 +327,25 @@ class Comment extends Base
 			trim(static::getCommentParser()->getText($timeline->getDescription())),
 			static::MAXIMUM_NOTIFICATION_COMMENT_TEXT_LENGTH
 		);
-		$message = Loc::getMessage('RPA_COMMENT_MENTION_NOTIFY'.$userSuffix, [
-			'#ITEM#' => '<a href="'.Driver::getInstance()->getUrlManager()->getItemDetailUrl(
-				$item->getType()->getId(),
-				$item->getId()
-			).'" class="bx-notifier-item-action">'.$item->getName().'</a>',
-			'#TYPE#' => $item->getType()->getTitle(),
-			'#COMMENT#' => $text,
-		]);
 
-		if (!$message)
+		$url = Driver::getInstance()->getUrlManager()->getItemDetailUrl(
+			$item->getType()->getId(),
+			$item->getId()
+		);
+
+		$processName = $item->getType()->getTitle();
+
+		$messageSimple = Loc::getMessage(
+			"RPA_COMMENT_MENTION_NOTIFY_SIMPLE{$userSuffix}",
+			[
+				'#PROCESS_NAME#' => $processName,
+				'#COMMENT#' => $text,
+			]
+		);
+
+		$message = Loc::getMessage("RPA_COMMENT_MENTION_NOTIFY_DEFAULT{$userSuffix}");
+
+		if (!$messageSimple)
 		{
 			return;
 		}
@@ -345,8 +354,26 @@ class Comment extends Base
 			$timeline->getId(),
 			$timeline->getUserId(),
 			$timeline->getDescription(),
-			$message,
-			$previouslyMentionedUserIds
+			$messageSimple,
+			$previouslyMentionedUserIds,
+			[
+				'notify' => [
+					'PARAMS' => [
+						'COMPONENT_ID' => 'BizprocEntity',
+						'COMPONENT_PARAMS' => [
+							'SUBJECT' => $message,
+							'ENTITY' => [
+								'TITLE' => $processName,
+								'HREF' => $url,
+								'CONTENT_TYPE' => 'text',
+								'CONTENT' => [
+									'VALUE' => $text,
+								],
+							],
+						],
+					],
+				]
+			]
 		);
 	}
 }

@@ -32,6 +32,8 @@ class sign extends CModule
 		'main' => [
 			'OnUserTypeBuildList' => [[\Bitrix\Sign\UserFields\SnilsUserType::class, 'OnUserTypeBuildList']],
 			'OnUISelectorGetProviderByEntityType' => [[\Bitrix\Sign\Integration\Main\UiSelector\EventHandler::class, 'OnUISelectorGetProviderByEntityType']],
+			'OnAfterUserUpdate' => [[\Bitrix\Sign\Integration\Main\SignersListEventHandler::class, 'OnAfterUserUpdate']],
+			'OnAfterUserDelete' => [[\Bitrix\Sign\Integration\Main\SignersListEventHandler::class, 'OnAfterUserDelete']],
 		],
 		'pull' => [
 			'OnGetDependentModule' => [[\Bitrix\Sign\SignPullSchema::class, 'OnGetDependentModule']],
@@ -45,6 +47,11 @@ class sign extends CModule
 				[\Bitrix\Sign\Rest\B2e\Provider::class, 'onRestServiceBuildDescription'],
 				[\Bitrix\Sign\Rest\B2e\HcmLink\SignedFile::class, 'onRestServiceBuildDescription'],
 			]
+		],
+		'im' => [
+			'OnGetNotifySchema' => [
+				[\Bitrix\Sign\Integration\Im\NotificationEventHandler::class, 'onGetNotifySchema']
+			],
 		],
 	];
 

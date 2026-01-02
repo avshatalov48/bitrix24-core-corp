@@ -12,7 +12,9 @@ jn.define('layout/ui/wizard/step', (require, exports, module) => {
 		constructor(props)
 		{
 			this.props = props;
+
 			this.titleChangeCallback = () => {};
+
 			this.stepAvailabilityChangeCallback = () => {};
 		}
 
@@ -35,12 +37,37 @@ jn.define('layout/ui/wizard/step', (require, exports, module) => {
 			};
 		}
 
+		isActive()
+		{
+			return true;
+		}
+
 		/**
 		 * Create step layout object
 		 *
 		 * @returns {View}
 		 */
 		createLayout(props)
+		{
+			return null;
+		}
+
+		/**
+		 * Widget background color
+		 *
+		 * @return {string|*}
+		 */
+		getBackgroundColor()
+		{
+			return AppTheme.colors.bgSecondary;
+		}
+
+		/**
+		 * Widget title type
+		 *
+		 * @return {string|null}
+		 */
+		getTitleType()
 		{
 			return null;
 		}
@@ -90,6 +117,11 @@ jn.define('layout/ui/wizard/step', (require, exports, module) => {
 			return true;
 		}
 
+		canSkip()
+		{
+			return false;
+		}
+
 		isNeedToSkip()
 		{
 			return false;
@@ -116,6 +148,23 @@ jn.define('layout/ui/wizard/step', (require, exports, module) => {
 		getNextStepButtonText()
 		{
 			return BX.message('WIZARD_STEP_BUTTON_CONTINUE_TEXT');
+		}
+
+		getSkipStepButtonText()
+		{
+			return BX.message('WIZARD_STEP_BUTTON_SKIP_TEXT');
+		}
+
+		getLayoutWidget()
+		{
+			return this.layoutWidget || PageManager;
+		}
+
+		setLayoutWidget(layoutWidget)
+		{
+			this.layoutWidget = layoutWidget;
+
+			return this;
 		}
 
 		/**
@@ -147,6 +196,14 @@ jn.define('layout/ui/wizard/step', (require, exports, module) => {
 		}
 
 		/**
+		 * Executed when user tries to move wizard to next step
+		 *
+		 * @param {StepSwitchButtonType} stepSwitchButtonType
+		 */
+		onBeforeMoveToNextStep(stepSwitchButtonType)
+		{}
+
+		/**
 		 * Executed when user tries to move wizard to next step.
 		 * Can return
 		 *  - true: allow move to next step
@@ -169,24 +226,21 @@ jn.define('layout/ui/wizard/step', (require, exports, module) => {
 		 * Executed when the user has passed the last step
 		 */
 		onFinishStep()
-		{
-		}
+		{}
 
 		/**
 		 * Callback executed when wizard enter this step
 		 * @param stepId
 		 */
 		onEnterStep()
-		{
-		}
+		{}
 
 		/**
 		 * Callback executed when wizard leave this step
 		 * @param stepId
 		 */
 		onLeaveStep(stepId)
-		{
-		}
+		{}
 	}
 
 	module.exports = { WizardStep };

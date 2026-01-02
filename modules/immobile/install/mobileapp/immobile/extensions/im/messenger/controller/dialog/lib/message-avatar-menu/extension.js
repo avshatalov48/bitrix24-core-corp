@@ -2,7 +2,7 @@
  * @module im/messenger/controller/dialog/lib/message-avatar-menu
  */
 jn.define('im/messenger/controller/dialog/lib/message-avatar-menu', (require, exports, module) => {
-	const { Loc } = require('loc');
+	const { Loc } = require('im/messenger/loc');
 	const { Icon } = require('assets/icons');
 
 	const { serviceLocator } = require('im/messenger/lib/di/service-locator');
@@ -59,7 +59,7 @@ jn.define('im/messenger/controller/dialog/lib/message-avatar-menu', (require, ex
 
 			];
 
-			if (this.options.isCanMention)
+			if (this.options.canMention)
 			{
 				actions.push({
 					id: 'mention',

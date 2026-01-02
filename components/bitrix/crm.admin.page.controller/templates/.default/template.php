@@ -14,6 +14,7 @@ if (!$isSlider)
 		array(
 			"ID" => $arResult["MENU_ID"] ?? '',
 			"ITEMS" => $arResult["MENU_ITEMS"] ?? [],
+			'THEME' => defined('AIR_SITE_TEMPLATE') ? 'air' : null,
 		)
 	);
 }

@@ -15,6 +15,7 @@ use Bitrix\Main\ORM\Fields\BooleanField;
 use Bitrix\Main\ORM\Fields\IntegerField;
 use Bitrix\Main\ORM\Fields\Relations\Reference;
 use Bitrix\Main\ORM\Query\Join;
+use Bitrix\Main\ORM\Data\AddStrategy;
 
 /**
  * Class QuoteContactTable
@@ -34,6 +35,8 @@ use Bitrix\Main\ORM\Query\Join;
  */
 class QuoteContactTable extends DataManager
 {
+	use AddStrategy\Trait\MergeByDefaultTrait;
+
 	/**
 	 * Get table name.
 	 * @return string
@@ -42,6 +45,7 @@ class QuoteContactTable extends DataManager
 	{
 		return 'b_crm_quote_contact';
 	}
+
 	/**
 	 * Get table fields map.
 	 * @return array

@@ -1,6 +1,10 @@
 <?php
 namespace Bitrix\Crm\Security;
 
+/**
+ * @deprecated
+ * @see \Bitrix\Crm\Service\UserPermissions
+ */
 class EntityPermissionType
 {
 	const UNDEFINED	= 0x0;

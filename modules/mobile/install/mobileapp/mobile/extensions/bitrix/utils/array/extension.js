@@ -1,10 +1,14 @@
-(() => {
-	const { mergeImmutable } = jn.require('utils/object');
+/**
+ * @module utils/array
+ */
+jn.define('utils/array', (require, exports, module) => {
+	const { mergeImmutable } = require('utils/object');
 
 	/**
-	 * @param {Array} array
+	 * @template T
+	 * @param {Array<T>} array
 	 * @param {number} size
-	 * @returns {Array}
+	 * @returns {Array<T>}
 	 */
 	function chunk(array, size)
 	{
@@ -29,13 +33,20 @@
 
 	/**
 	 * Gets the last element of array
-	 * @param array
+	 * @template T
+	 * @param {Array<T>} array
+	 * @return {T | null}
 	 */
 	function last(array)
 	{
 		return Array.isArray(array) ? array[array.length - 1] : null;
 	}
 
+	/**
+	 * @template T
+	 * @param {Array<T>} array
+	 * @return {Array<T>}
+	 */
 	function unique(array)
 	{
 		return [...new Set(array)];
@@ -43,9 +54,10 @@
 
 	/**
 	 * Returns a new array with unique items by predicate
-	 * @param {[]} arr
+	 * @template T
+	 * @param {Array<T>} arr
 	 * @param {string|function} predicate
-	 * @returns {any[]}
+	 * @returns {Array<T>}
 	 */
 	function uniqBy(arr, predicate)
 	{
@@ -66,16 +78,17 @@
 
 	/**
 	 * Creates an array of elements, sorted in ascending order by
-	 * the results of running each element in a collection thru each iteratee.
-	 * @param collection
+	 * the results of running each element in a collection through each iteratee.
+	 * @template T
+	 * @param {Iterable<T>} collection
 	 * @param predicate
-	 * @return {array}
+	 * @return {Array<T>}
 	 */
 	function sortBy(collection, predicate)
 	{
-		const sortBy = (key) => (a, b) => ((a[key] > b[key]) ? 1 : ((b[key] > a[key]) ? -1 : 0));
+		const createComparer = (key) => (a, b) => ((a[key] > b[key]) ? 1 : ((b[key] > a[key]) ? -1 : 0));
 
-		return [...collection].sort(sortBy(predicate));
+		return [...collection].sort(createComparer(predicate));
 	}
 
 	/**
@@ -127,36 +140,32 @@
 	}
 
 	/**
-	 * @class ArrayUtils
-	 * @deprecated Please import specific utilities directly, using jn.require()
+	 * @param {[string|number[]]} arrays
+	 * @returns {string|number[]}
 	 */
-	class ArrayUtils
+	function intersection(...arrays)
 	{
-		static last(array)
+		if (arrays.length === 0)
 		{
-			return last(array);
+			return [];
 		}
 
-		static uniqBy(arr, predicate)
-		{
-			return uniqBy(arr, predicate);
-		}
+		const [firstArray, ...restArrays] = arrays;
+		const items = firstArray.filter((item) => {
+			return restArrays.every((array) => array.includes(item));
+		});
+
+		return unique(items);
 	}
 
-	jnexport(ArrayUtils);
-
-	/**
-	 * @module utils/array
-	 */
-	jn.define('utils/array', (require, exports, module) => {
-		module.exports = {
-			last,
-			chunk,
-			unique,
-			uniqBy,
-			mergeBy,
-			sortBy,
-			replaceBy,
-		};
-	});
-})();
+	module.exports = {
+		last,
+		chunk,
+		unique,
+		uniqBy,
+		mergeBy,
+		sortBy,
+		replaceBy,
+		intersection,
+	};
+});

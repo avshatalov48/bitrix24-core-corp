@@ -86,16 +86,15 @@ export default class B2eReference extends Dummy
 
 	#setContentText(value: ?string): void
 	{
-		const text =
-			Type.isStringFilled(value)
-				? value
-				: Loc.getMessage('SIGN_EDITOR_BLOCK_B2E_REFERENCE_MSG_VER_1')
+		const text = Type.isStringFilled(value)
+			? value
+			: Loc.getMessage('SIGN_EDITOR_BLOCK_B2E_REFERENCE_MSG_VER_1')
 		;
 		this.#content.textContent = text;
 		this.#content.title = text;
 	}
 
-	#loadFieldAndCategoryCaption(): Promise<{categoryCaption: string, fieldCaption: string}>
+	#loadFieldAndCategoryCaption(): Promise<{ categoryCaption: string, fieldCaption: string }>
 	{
 		if (!Type.isStringFilled(this.#field))
 		{
@@ -122,8 +121,7 @@ export default class B2eReference extends Dummy
 					categoryCaption: Loc.getMessage('SIGN_EDITOR_BLOCKS_EMPLOYEE_B2E'),
 					fieldCaption: field ? field.caption : defaultCaption,
 				};
-			})
-		;
+			});
 	}
 
 	/**
@@ -185,7 +183,7 @@ export default class B2eReference extends Dummy
 				},
 				title: Loc.getMessage('SIGN_EDITOR_BLOCK_B2E_REFERENCE_MSG_VER_1'),
 				categoryCaptions: {
-					'PROFILE': Loc.getMessage('SIGN_EDITOR_BLOCKS_EMPLOYEE_B2E')
+					PROFILE: Loc.getMessage('SIGN_EDITOR_BLOCKS_EMPLOYEE_B2E'),
 				},
 				fieldsFactory: this.#getSelectorFieldsFactory(),
 			});

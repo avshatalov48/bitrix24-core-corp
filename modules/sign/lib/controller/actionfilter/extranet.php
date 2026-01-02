@@ -1,4 +1,5 @@
 <?php
+
 namespace Bitrix\Sign\Controller\ActionFilter;
 
 use Bitrix\Main\Error;
@@ -17,6 +18,7 @@ final class Extranet extends \Bitrix\Main\Engine\ActionFilter\Base
 		if (!\Bitrix\Sign\Main\User::isIntranet())
 		{
 			$this->addError(new Error('Extranet site is not allowed.', 'EXTRANET_IS_NOT_ALLOWED'));
+
 			return new EventResult(EventResult::ERROR, null, null, $this);
 		}
 

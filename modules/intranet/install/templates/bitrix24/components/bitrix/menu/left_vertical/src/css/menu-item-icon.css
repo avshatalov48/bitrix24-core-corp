@@ -1,0 +1,255 @@
+.menu-item-icon {
+	--menu-item-icon: var(--menu-item-icon-default);
+	--menu-item-icon-default: '';
+	--menu-item-icon-active: '';
+
+	display: flex;
+	flex-direction: row;
+	align-items: center;
+	justify-content: center;
+	mask-position: center;
+	mask-repeat: no-repeat;
+	mask-size: contain;
+	background-color: var(--ui-color-design-plain-content-icon-secondary);
+	font-size: var(--ui-font-size-4xs);
+	font-weight: var(--ui-font-weight-medium, 500);
+	color: var(--ui-color-design-plain-content-icon-secondary);
+	transition: 0.2s ease-in-out width, 0.2s ease-in-out height, 0.2s ease-in-out background-color, 0.2s ease-in-out color;
+}
+
+.menu-item-icon,
+.menu-collapsed-mode.menu-animation-opening-mode .menu-item-block:not(.menu-item-active):not(.menu-item-no-icon-state) .menu-item-icon {
+	color: var(--ui-color-design-plain-content-icon-secondary);
+}
+
+.menu-item-icon,
+.menu-collapsed-mode.menu-animation-opening-mode .menu-item-block.menu-item-no-icon-state:not(.menu-item-active) .menu-item-icon {
+	color: var(--ui-color-design-plain-content-icon-secondary);
+}
+
+.menu-collapsed-mode:not(.menu-sliding-mode):not(.menu-animation-opening-mode) .menu-item-block:not(.menu-item-no-icon-state) .menu-item-icon,
+.menu-animation-closing-mode .menu-item-icon {
+	background-color: var(--ui-color-design-plain-content-icon);
+}
+
+.menu-collapsed-mode:not(.menu-sliding-mode):not(.menu-animation-opening-mode) .menu-item-block.menu-item-no-icon-state .menu-item-icon,
+.menu-animation-closing-mode .menu-item-icon {
+	color: var(--ui-color-design-plain-content-icon);
+}
+
+.menu-item-block:hover .menu-item-icon,
+.menu-item-active .menu-item-icon,
+.menu-item-block[data-contains-active-item="Y"].menu-item-group-collapsing .menu-item-icon {
+	transition-duration: 0s;
+	background-color: var(--ui-color-design-selection-content-icon);
+}
+
+.menu-item-icon,
+.menu-item-block.menu-item-group-expanding .menu-item-icon {
+	mask-image: var(--menu-item-icon);
+}
+
+.menu-item-active .menu-item-icon,
+.menu-item-block[data-contains-active-item="Y"].menu-item-group-collapsing .menu-item-icon {
+	mask-image: var(--menu-item-icon-active);
+}
+
+.menu-item-icon,
+.menu-item-group[data-collapse-mode="expanded"].menu-item-group-collapsing .menu-item-icon {
+	width: 26px;
+	height: 26px;
+}
+
+.menu-item-group[data-collapse-mode="expanded"] .menu-item-icon,
+.menu-item-group.menu-item-group-expanding .menu-item-icon {
+	width: 22px;
+	height: 22px;
+}
+
+.menu-item-no-icon-state .menu-item-icon {
+	mask-image: none;
+	background-color: var(--ui-color-base-8);
+	border-radius: 50%;
+}
+
+.menu-item-no-icon-state:hover .menu-item-icon,
+.menu-item-no-icon-state.menu-item-active .menu-item-icon,
+.menu-item-no-icon-state.menu-item-block[data-contains-active-item="Y"].menu-item-group-collapsing .menu-item-icon {
+	background-color: var(--ui-color-base-8);
+	color: var(--ui-color-design-selection-content-icon);
+}
+
+.menu-live-feed .menu-item-icon {
+	--menu-item-icon-default: url("../images/icons/menu-items/outline/news.svg");
+	--menu-item-icon-active: url("../images/icons/menu-items/solid/news.svg");
+}
+
+.menu-tasks .menu-item-icon {
+	--menu-item-icon-default: url("../images/icons/menu-items/outline/tasks.svg");
+	--menu-item-icon-active: url("../images/icons/menu-items/solid/tasks.svg");
+}
+
+.menu-im-messenger .menu-item-icon {
+	--menu-item-icon-default: url("../images/icons/menu-items/outline/chats.svg");
+	--menu-item-icon-active: url("../images/icons/menu-items/solid/chats.svg");
+}
+
+.menu-im-collab .menu-item-icon {
+	--menu-item-icon-default: url("../images/icons/menu-items/outline/collabs.svg");
+	--menu-item-icon-active: url("../images/icons/menu-items/solid/collabs.svg");
+}
+
+.menu-all-groups .menu-item-icon {
+	--menu-item-icon-default: url("../images/icons/menu-items/outline/groups.svg");
+	--menu-item-icon-active: url("../images/icons/menu-items/solid/groups.svg");
+}
+
+.menu-files .menu-item-icon {
+	--menu-item-icon-default: url("../images/icons/menu-items/outline/disk.svg");
+	--menu-item-icon-active: url("../images/icons/menu-items/solid/disk.svg");
+}
+
+.menu-calendar .menu-item-icon {
+	--menu-item-icon-default: url("../images/icons/menu-items/outline/calendar.svg");
+	--menu-item-icon-active: url("../images/icons/menu-items/solid/calendar.svg");
+}
+
+.menu-sign .menu-item-icon {
+	--menu-item-icon-default: url("../images/icons/menu-items/outline/sign.svg");
+	--menu-item-icon-active: url("../images/icons/menu-items/solid/sign.svg");
+}
+
+.menu-sign-b2e .menu-item-icon {
+	--menu-item-icon-default: url("../images/icons/menu-items/outline/sign-b2e.svg");
+	--menu-item-icon-active: url("../images/icons/menu-items/solid/sign-b2e.svg");
+}
+
+.menu-external-mail .menu-item-icon {
+	--menu-item-icon-default: url("../images/icons/menu-items/outline/mail.svg");
+	--menu-item-icon-active: url("../images/icons/menu-items/solid/mail.svg");
+}
+
+.menu-crm-favorite .menu-item-icon {
+	--menu-item-icon-default: url("../images/icons/menu-items/outline/crm.svg");
+	--menu-item-icon-active: url("../images/icons/menu-items/solid/crm.svg");
+}
+
+.menu-booking .menu-item-icon {
+	--menu-item-icon-default: url("../images/icons/menu-items/outline/booking.svg");
+	--menu-item-icon-active: url("../images/icons/menu-items/solid/booking.svg");
+}
+
+.menu-sites .menu-item-icon {
+	--menu-item-icon-default: url("../images/icons/menu-items/outline/sites.svg");
+	--menu-item-icon-active: url("../images/icons/menu-items/solid/sites.svg");
+}
+
+.menu-bi-constructor .menu-item-icon {
+	--menu-item-icon-default: url("../images/icons/menu-items/outline/bi-constructor.svg");
+	--menu-item-icon-active: url("../images/icons/menu-items/solid/bi-constructor.svg");
+}
+
+.menu-company .menu-item-icon {
+	--menu-item-icon-default: url("../images/icons/menu-items/outline/employee.svg");
+	--menu-item-icon-active: url("../images/icons/menu-items/solid/employee.svg");
+}
+
+.menu-marketing .menu-item-icon {
+	--menu-item-icon-default: url("../images/icons/menu-items/outline/marketing.svg");
+	--menu-item-icon-active: url("../images/icons/menu-items/solid/marketing.svg");
+}
+
+.menu-shop .menu-item-icon {
+	--menu-item-icon-default: url("../images/icons/menu-items/outline/sites-shop.svg");
+	--menu-item-icon-active: url("../images/icons/menu-items/solid/sites-shop.svg");
+}
+
+.menu-marketplace-sect .menu-item-icon {
+	--menu-item-icon-default: url("../images/icons/menu-items/outline/market.svg");
+	--menu-item-icon-active: url("../images/icons/menu-items/solid/market.svg");
+}
+
+.menu-tariff .menu-item-icon,
+.menu-updates .menu-item-icon {
+	--menu-item-icon-default: url("../images/icons/menu-items/outline/tariff.svg");
+	--menu-item-icon-active: url("../images/icons/menu-items/solid/tariff.svg");
+}
+
+.menu-configs-sect .menu-item-icon,
+.menu-settings .menu-item-icon {
+	--menu-item-icon-default: url("../images/icons/menu-items/outline/settings.svg");
+	--menu-item-icon-active: url("../images/icons/menu-items/solid/settings.svg");
+}
+
+.menu-services .menu-item-icon,
+.menu-services-sect .menu-item-icon {
+	--menu-item-icon-default: url("../images/icons/menu-items/outline/service.svg");
+	--menu-item-icon-active: url("../images/icons/menu-items/solid/service.svg");
+}
+
+.menu-automation .menu-item-icon {
+	--menu-item-icon-default: url("../images/icons/menu-items/outline/automation.svg");
+	--menu-item-icon-active: url("../images/icons/menu-items/solid/automation.svg");
+}
+
+.menu-devops .menu-item-icon,
+.menu-devops-sect .menu-item-icon {
+	--menu-item-icon-default: url("../images/icons/menu-items/outline/devops.svg");
+	--menu-item-icon-active: url("../images/icons/menu-items/solid/devops.svg");
+}
+
+.menu-documents .menu-item-icon {
+	--menu-item-icon-default: url("../images/icons/menu-items/outline/documents.svg");
+	--menu-item-icon-active: url("../images/icons/menu-items/solid/documents.svg");
+}
+
+.menu-boards .menu-item-icon {
+	--menu-item-icon-default: url("../images/icons/menu-items/outline/boards.svg");
+	--menu-item-icon-active: url("../images/icons/menu-items/solid/boards.svg");
+}
+
+.menu-teamwork.menu-item-group .menu-item-icon {
+	--menu-item-icon-default: url("../images/icons/menu-items/outline/teamwork.svg");
+	--menu-item-icon-active: url("../images/icons/menu-items/solid/teamwork.svg");
+}
+
+.menu-marketplace-group.menu-item-group .menu-item-icon {
+	--menu-item-icon-default: url("../images/icons/menu-items/outline/apps.svg");
+	--menu-item-icon-active: url("../images/icons/menu-items/solid/apps.svg");
+}
+
+.menu-crm-store .menu-item-icon {
+	--menu-item-icon-default: url("../images/icons/menu-items/outline/crm-store.svg");
+	--menu-item-icon-active: url("../images/icons/menu-items/solid/crm-store.svg");
+}
+
+.menu-blog .menu-item-icon {
+	--menu-item-icon-default: url("../images/icons/menu-items/outline/blog.svg");
+	--menu-item-icon-active: url("../images/icons/menu-items/solid/blog.svg");
+}
+
+.main-page .menu-item-icon {
+	--menu-item-icon-default: url("../images/icons/menu-items/outline/main-page.svg");
+	--menu-item-icon-active: url("../images/icons/menu-items/solid/main-page.svg");
+}
+
+.menu-contact-center .menu-item-icon {
+	--menu-item-icon-default: url("../images/icons/menu-items/outline/contact-center.svg");
+	--menu-item-icon-active: url("../images/icons/menu-items/solid/contact-center.svg");
+}
+
+.menu-about-sect .menu-item-icon {
+	--menu-item-icon-default: url("../images/icons/menu-items/outline/about.svg");
+	--menu-item-icon-active: url("../images/icons/menu-items/solid/about.svg");
+}
+
+.menu-expand .menu-item-icon {
+	--menu-item-icon-default: url("../images/icons/chevron-down.svg");
+	--menu-item-icon-active: url("../images/icons/chevron-down.svg");
+}
+
+.menu-expand.menu-favorites-more-btn-open .menu-item-icon {
+	transform: rotate(180deg);
+	--menu-item-icon-default: url("../images/icons/chevron-down.svg");
+	--menu-item-icon-active: url("../images/icons/chevron-down.svg");
+}

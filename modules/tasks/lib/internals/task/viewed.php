@@ -2,28 +2,21 @@
 namespace Bitrix\Tasks\Internals\Task;
 
 use Bitrix\Main\Application;
-use Bitrix\Main\ArgumentException;
 use Bitrix\Main\ArgumentTypeException;
 use Bitrix\Main\DB\SqlQueryException;
 use Bitrix\Main\Entity\BooleanField;
-use Bitrix\Main\Event;
-use Bitrix\Main\ObjectPropertyException;
-use Bitrix\Main\SystemException;
+use Bitrix\Main\ORM\Data\AddStrategy\Trait\AddMergeTrait;
 use Bitrix\Main\UserTable;
 use Bitrix\Main\Type\DateTime;
 use Bitrix\Main\ORM\Data\Internal\MergeTrait;
-use Bitrix\Tasks\Integration\CRM\TimeLineManager;
-use Bitrix\Tasks\Integration\Forum;
 use Bitrix\Tasks\Integration\Pull\PushCommand;
 use Bitrix\Tasks\Integration\Pull\PushService;
-use Bitrix\Tasks\Internals\Counter\CounterService;
-use Bitrix\Tasks\Internals\Counter\Event\EventDictionary;
-use Bitrix\Tasks\Internals\Log\Logger;
 use Bitrix\Tasks\Internals\TaskDataManager;
 use Bitrix\Tasks\Internals\TaskTable;
 use Bitrix\Tasks\MemberTable;
 use Bitrix\Tasks\Internals\Counter\CounterDictionary;
-use Throwable;
+use Bitrix\Tasks\V2\Internal\DI\Container;
+use Bitrix\Tasks\V2\Internal\Service\Task\ViewService;
 
 /**
  * Class ViewedTable
@@ -45,6 +38,7 @@ use Throwable;
  */
 class ViewedTable extends TaskDataManager
 {
+	use AddMergeTrait;
 	use MergeTrait;
 
 	private const STEP_LIMIT = 5000;
@@ -103,7 +97,7 @@ class ViewedTable extends TaskDataManager
 		];
 	}
 	
-	public static function sendPushTaskView(int $userId, int $taskId): void
+	private static function sendPushTaskView(int $userId, int $taskId): void
 	{
 		PushService::addEvent([$userId], [
 			'module_id' => 'tasks',
@@ -257,116 +251,30 @@ class ViewedTable extends TaskDataManager
 	}
 
 	/**
-	 * @param int $taskId
-	 * @param int $userId
-	 * @param DateTime|null $viewedDate
-	 * @param array $parameters
-	 * @throws ArgumentException
-	 * @throws ObjectPropertyException
-	 * @throws SystemException
+	 * @deprecated
+	 * @TasksV2
+	 * @use ViewService
 	 */
 	public static function set(int $taskId, int $userId, ?DateTime $viewedDate = null, array $parameters = []): void
 	{
 		$parameters['SEND_PUSH'] = ($parameters['SEND_PUSH'] ?? !isset($viewedDate));
 		$parameters['IS_REAL_VIEW'] = ($parameters['IS_REAL_VIEW'] ?? false);
 		$parameters['UPDATE_TOPIC_LAST_VISIT'] = ($parameters['UPDATE_TOPIC_LAST_VISIT'] ?? true);
-		$parameters['SOURCE_VIEWED_DATE'] = $viewedDate;
 
 		$viewedDate = ($viewedDate ?? new DateTime());
 
-		static::onBeforeView($taskId);
-		static::viewTask($taskId, $userId, $viewedDate, $parameters);
-		static::onAfterView($taskId, $userId, $viewedDate, $parameters);
-	}
-	
-	private static function onBeforeView(int $taskId): void
-	{
-		CounterService::getInstance()->collectData($taskId);
-	}
-	
-	private static function viewTask(int $taskId, int $userId, DateTime $viewedDate, array $parameters = []): void
-	{
-		$cacheKey = $taskId . '.' . $userId . '.' . $viewedDate->getTimestamp();
-		if (isset(static::$cache[$cacheKey]))
-		{
-			return;
-		}
+		$view = new \Bitrix\Tasks\V2\Internal\Entity\Task\View(
+			taskId: $taskId,
+			userId: $userId,
+			viewedTs: $viewedDate->getTimestamp(),
+			isRealView: (bool)$parameters['IS_REAL_VIEW'],
+		);
 
-		$view = static::getView($taskId, $userId);
-
-		if (null !== $view)
-		{
-			static::updateView($view, $viewedDate, $parameters);
-		}
-		else
-		{
-			static::addView($taskId, $userId, $viewedDate, $parameters);
-		}
-
-		self::$cache[$cacheKey] = true;
-	}
-
-	private static function getView(int $taskId, int $userId): ?View
-	{
-		try
-		{
-			return static::query()
-				->setSelect(['TASK_ID', 'USER_ID', 'IS_REAL_VIEW'])
-				->where('TASK_ID', $taskId)
-				->where('USER_ID', $userId)
-				->fetchObject();
-		}
-		catch (Throwable $t)
-		{
-			Logger::log($t, 'TASKS_DEBUG_VIEW_GET');
-			return  null;
-		}
-	}
-
-	private static function updateView(View $item, DateTime $viewedDate, array $parameters = []): void
-	{
-		$primary = ['TASK_ID' => $item->getTaskId(), 'USER_ID' => $item->getUserId()];
-		$params = ['VIEWED_DATE' => $viewedDate];
-		if ($parameters['IS_REAL_VIEW'] && !$item->getIsRealView())
-		{
-			$params['IS_REAL_VIEW'] = 'Y';
-			static::onFirstRealView($item->getTaskId(), $item->getUserId());
-		}
-		try
-		{
-			static::update($primary, $params);
-		}
-		catch (Throwable $t)
-		{
-			Logger::log($t, 'TASKS_DEBUG_VIEW_UPDATE');
-		}
-	}
-
-	private static function addView(int $taskId, int $userId, DateTime $viewedDate, array $parameters = []): void
-	{
-		$connection = Application::getConnection();
-		$helper = $connection->getSqlHelper();
-
-		$isRealView = $parameters['IS_REAL_VIEW'] === 'N' || $parameters['IS_REAL_VIEW'] === false ? 'N' : 'Y';
-
-		$fields = "(TASK_ID, USER_ID, VIEWED_DATE, IS_REAL_VIEW)";
-		try
-		{
-			$values = "({$taskId}, {$userId}, {$helper->convertToDbDateTime($viewedDate)}, '{$isRealView}')";
-
-			$sql = $helper->getInsertIgnore(static::getTableName(), " {$fields}", " VALUES {$values}");
-
-			$connection->query($sql);
-		}
-		catch (Throwable $t)
-		{
-			Logger::log($t, 'TASKS_DEBUG_VIEW_ADD');
-		}
-
-		if ($parameters['IS_REAL_VIEW'])
-		{
-			static::onFirstRealView($taskId, $userId);
-		}
+		Container::getInstance()->getViewService()->set(
+			view: $view,
+			sendPush: (bool)$parameters['SEND_PUSH'],
+			updateTopicLastVisit: (bool)$parameters['UPDATE_TOPIC_LAST_VISIT']
+		);
 	}
 
 	/**
@@ -394,55 +302,5 @@ class ViewedTable extends TaskDataManager
 			);
 			$connection->query($sql);
 		}
-	}
-
-	/**
-	 * @param int $taskId
-	 * @param int $userId
-	 * @param DateTime $viewedDate
-	 * @param array $parameters
-	 * @throws ArgumentException
-	 * @throws SqlQueryException
-	 * @throws ObjectPropertyException
-	 * @throws SystemException
-	 */
-	private static function onAfterView(int $taskId, int $userId, DateTime $viewedDate, array $parameters): void
-	{
-		if ($parameters['SEND_PUSH'])
-		{
-			static::sendPushTaskView($userId, $taskId);
-		}
-		if ($parameters['UPDATE_TOPIC_LAST_VISIT'])
-		{
-			Forum\Task\UserTopic::updateLastVisit($taskId, $userId, $viewedDate);
-		}
-
-		$eventParameters = [
-			'taskId' => $taskId,
-			'userId' => $userId,
-			'isRealView' => $parameters['IS_REAL_VIEW'],
-		];
-		$event = new Event('tasks', 'onTaskUpdateViewed', $eventParameters);
-		$event->send();
-		CounterService::addEvent(
-			EventDictionary::EVENT_AFTER_TASK_VIEW,
-			[
-				'TASK_ID' => $taskId,
-				'USER_ID' => $userId,
-			]
-		);
-
-		TimeLineManager::get($taskId)
-			->setUserId($userId)
-			->onTaskAllCommentViewed()
-			->save();
-	}
-
-	private static function onFirstRealView(int $taskId, int $userId): void
-	{
-		TimeLineManager::get($taskId)
-			->setUserId($userId)
-			->onTaskViewed()
-			->save();
 	}
 }

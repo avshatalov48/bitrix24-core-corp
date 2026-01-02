@@ -95,7 +95,7 @@ return [
 			'api_host' => 'https://flip-backend',
 			'jwt_secret' => 'secret_token',
 			'jwt_ttl' => 30,
-			'app_url' => 'https://flip_backend/app',
+			'app_url' => 'https://flip-backend/app',
 			'save_delta_time' => 30,
 			'save_probability_coef' => 0.1,
 			'webhook_url' => '/bitrix/services/main/ajax.php?action=disk.integration.flipchart.webhook',

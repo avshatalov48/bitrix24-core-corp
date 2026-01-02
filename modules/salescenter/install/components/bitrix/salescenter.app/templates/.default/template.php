@@ -1,13 +1,31 @@
 <?php
 
+if (!defined('B_PROLOG_INCLUDED') || B_PROLOG_INCLUDED !== true)
+{
+	die();
+}
+
+/**
+ * @global \CMain $APPLICATION
+ * @var array $arParams
+ * @var array $arResult
+ */
+
+use Bitrix\Main\Application;
+use Bitrix\Main\Loader;
+use Bitrix\Main\Page\Asset;
+use Bitrix\Main\UI\Extension;
 use Bitrix\SalesCenter\Integration\Bitrix24Manager;
+use Bitrix\UI\Toolbar\Facade\Toolbar;
 
-if (!defined('B_PROLOG_INCLUDED') || B_PROLOG_INCLUDED !== true) die();
+Loader::includeModule('ui');
 
-\Bitrix\Main\Page\Asset::getInstance()->addJs('/bitrix/components/bitrix/ui.image.input/templates/.default/script.js');
-\Bitrix\Main\Page\Asset::getInstance()->addCss('/bitrix/components/bitrix/ui.image.input/templates/.default/style.css');
+$asset = Asset::getInstance();
+$asset->addJs('/bitrix/components/bitrix/ui.image.input/templates/.default/script.js');
+$asset->addCss('/bitrix/components/bitrix/ui.image.input/templates/.default/style.css');
 
-\Bitrix\Main\UI\Extension::load([
+Extension::load([
+	'window',
 	'salescenter.app',
 	'ui.common',
 	'currency',
@@ -17,29 +35,32 @@ if (!defined('B_PROLOG_INCLUDED') || B_PROLOG_INCLUDED !== true) die();
 	'bitrix24.phoneverify',
 ]);
 
-if (\Bitrix\Main\Loader::includeModule('location'))
+if (Loader::includeModule('location'))
 {
-	\Bitrix\Main\UI\Extension::load(['location.core', 'location.widget',]);
+	Extension::load([
+		'location.core',
+		'location.widget',
+	]);
 }
-if (\Bitrix\Main\Loader::includeModule('crm'))
+if (Loader::includeModule('crm'))
 {
-	\Bitrix\Main\Page\Asset::getInstance()->addJs('/bitrix/js/crm/common.js');
+	$asset->addJs('/bitrix/js/crm/common.js');
 }
 
-if (\Bitrix\Main\Application::getInstance()->getContext()->getRequest()->get('IFRAME') == 'Y')
+if (Application::getInstance()->getContext()->getRequest()->get('IFRAME') === 'Y')
 {
 	$bodyClass = $APPLICATION->GetPageProperty('BodyClass');
 	$APPLICATION->SetPageProperty('BodyClass', ($bodyClass ? $bodyClass.' ' : '').'no-all-paddings no-background no-hidden');
-}
 
-CUtil::InitJSCore(array('window'));
+	Toolbar::deleteFavoriteStar();
+}
 
 /**
  * User selector data
  */
-if (\Bitrix\Main\Loader::includeModule('socialnetwork'))
+if (Loader::includeModule('socialnetwork'))
 {
-	Bitrix\Main\Page\Asset::getInstance()->addJs('/bitrix/js/crm/entity-editor/js/field-selector.js');
+	$asset->addJs('/bitrix/js/crm/entity-editor/js/field-selector.js');
 
 	$socialNetworkData = \Bitrix\Socialnetwork\Integration\Main\UISelector\Entities::getData(
 		[
@@ -47,7 +68,7 @@ if (\Bitrix\Main\Loader::includeModule('socialnetwork'))
 			'context' => \Bitrix\Crm\Entity\EntityEditor::getUserSelectorContext(),
 		]);
 
-	\CJSCore::init(array('socnetlogdest'));
+	Extension::load(['socnetlogdest']);
 	?>
 	<script>
 		BX.ready(
@@ -63,27 +84,19 @@ if (\Bitrix\Main\Loader::includeModule('socialnetwork'))
 	<?php
 }
 
-$this->SetViewTarget('pagetitle');
-?>
-	<div class="pagetitle-container pagetitle-align-right-container">
-		<?php
-		if ($arResult['mode'] && $arResult['mode'] === 'terminal_payment')
-		{
-			Bitrix24Manager::getInstance()->renderFeedbackTerminalOfferButton();
-		}
-		else
-		{
-			Bitrix24Manager::getInstance()->renderIntegrationRequestButton(
-				[
-					Bitrix24Manager::ANALYTICS_SENDER_PAGE => Bitrix24Manager::ANALYTICS_LABEL_SALESHUB_RECEIVING_PAYMENT
-				]
-			);
-			Bitrix24Manager::getInstance()->renderFeedbackButton();
-		}
-		?>
-	</div>
-<?php
-$this->EndViewTarget();
+$bitrix24Manager = Bitrix24Manager::getInstance();
+
+if (isset($arResult['mode']) && $arResult['mode'] === 'terminal_payment')
+{
+	$bitrix24Manager->addFeedbackTerminalOfferButtonToToolbar();
+}
+else
+{
+	$bitrix24Manager->addIntegrationRequestButtonToToolbar([
+		Bitrix24Manager::ANALYTICS_SENDER_PAGE => Bitrix24Manager::ANALYTICS_LABEL_SALESHUB_RECEIVING_PAYMENT
+	]);
+	$bitrix24Manager->addFeedbackButtonToToolbar();
+}
 
 $this->SetViewTarget('below_pagetitle');
 ?>
@@ -92,9 +105,6 @@ $this->SetViewTarget('below_pagetitle');
 	</div>
 <?php
 $this->EndViewTarget();
-
-// todo a bit later
-//Bitrix24Manager::getInstance()->addFeedbackButtonToToolbar();
 
 if (!empty($arResult['CURRENCIES']))
 {
@@ -140,4 +150,3 @@ if (!empty($arResult['CURRENCIES']))
 		</script>
 		<?php
 	}
-	?>

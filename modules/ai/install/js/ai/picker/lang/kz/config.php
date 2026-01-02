@@ -1,0 +1,25 @@
+<?php
+$MESS["AI_JS_PICKER_GENERAL_AGREE_WITH_TERMS"] = "Мен келісемін";
+$MESS["AI_JS_PICKER_GENERAL_HELP_LINK"] = "Сұрауларды қалай жазуға болады";
+$MESS["AI_JS_PICKER_HISTORY_LOADING"] = "Тарих жүктеліп жатыр...";
+$MESS["AI_JS_PICKER_IMAGE_ACTION_COPY"] = "Көшіру";
+$MESS["AI_JS_PICKER_IMAGE_ACTION_COPY_NOTIFY"] = "Кескін көшірілді";
+$MESS["AI_JS_PICKER_IMAGE_ACTION_USE"] = "Қою";
+$MESS["AI_JS_PICKER_IMAGE_EMPTY_STATE"] = "Мұнда сіздің суреттеріңіз пайда болады";
+$MESS["AI_JS_PICKER_IMAGE_HEADER"] = "Суретті өз сөзіңізбен сипаттаңыз";
+$MESS["AI_JS_PICKER_IMAGE_HINT_TEXT"] = "Жақында ImageAssistant AI орыс тілін түсінуді үйренеді, ал а&nbsp;әзірге ол ағылшын тілінде жазуды сұрайды";
+$MESS["AI_JS_PICKER_IMAGE_HINT_TITLE"] = "Сипаттама ағылшын тілінде болуы керек";
+$MESS["AI_JS_PICKER_IMAGE_MAX_CAPACITY"] = "Соңғы #capacity# сұраулар сақталады";
+$MESS["AI_JS_PICKER_IMAGE_PLACEHOLDER"] = "Мысалы: large, heart shaped bouquet of red roses on a white background";
+$MESS["AI_JS_PICKER_IMAGE_SUBMIT"] = "Суретті салу";
+$MESS["AI_JS_PICKER_INIT_ERROR"] = "AI жұмысында қате пайда болды, бетті жаңартып көріңіз.";
+$MESS["AI_JS_PICKER_TEXT_ACTION_COPY"] = "Көшіру";
+$MESS["AI_JS_PICKER_TEXT_ACTION_COPY_NOTIFY"] = "Мәтін көшірілді";
+$MESS["AI_JS_PICKER_TEXT_ACTION_USE"] = "Қою";
+$MESS["AI_JS_PICKER_TEXT_GENERATE_FAILED"] = "Бірдеңе дұрыс болмады, қайталап көріңіз";
+$MESS["AI_JS_PICKER_TEXT_HEADER"] = "Не туралы мәтін қажет екенін жазыңыз";
+$MESS["AI_JS_PICKER_TEXT_LOADER"] = "Жазып жатыр";
+$MESS["AI_JS_PICKER_TEXT_MAX_CAPACITY"] = "Соңғы #capacity# сұраулар сақталады";
+$MESS["AI_JS_PICKER_TEXT_PLACEHOLDER"] = "Мысалы: Мен үшін раушан, қызғалдақ және лалагүлдің барлық гүл шоқтарына жеңілдіктер туралы жаңалықтың мәтінін жаз";
+$MESS["AI_JS_PICKER_TEXT_PREVIOUS_ITEMS_LABEL"] = "Алдыңғы нұсқалар";
+$MESS["AI_JS_PICKER_TEXT_SUBMIT"] = "Мәтінді жазу";

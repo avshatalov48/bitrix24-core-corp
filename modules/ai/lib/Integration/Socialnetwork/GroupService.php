@@ -1,4 +1,6 @@
-<?php declare(strict_types=1);
+<?php
+
+declare(strict_types=1);
 
 namespace Bitrix\AI\Integration\Socialnetwork;
 
@@ -84,6 +86,8 @@ class GroupService
 	{
 		$list = WorkgroupTable::query()
 			->setSelect(['ID'])
+			->where('ACTIVE', '=', true)
+			->where('CLOSED', '=', false)
 			->fetchCollection()
 		;
 

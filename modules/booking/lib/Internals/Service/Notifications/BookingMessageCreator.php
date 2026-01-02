@@ -124,19 +124,21 @@ abstract class BookingMessageCreator
 
 	protected function getManagerName(): string
 	{
+		$defaultManagerName = ' ';
+
 		$managerId = $this->booking->getCreatedBy();
 		if (!$managerId)
 		{
-			return '';
+			return $defaultManagerName;
 		}
 
 		$user = \CUser::getById($managerId)->fetch();
 		if (!$user)
 		{
-			return '';
+			return $defaultManagerName;
 		}
 
-		return $user['NAME'] ?? '';
+		return $user['NAME'] ?: $defaultManagerName;
 	}
 
 	protected function getDateFrom(): string

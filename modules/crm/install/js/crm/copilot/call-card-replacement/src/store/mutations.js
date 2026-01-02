@@ -18,7 +18,6 @@ export default {
 		state.callId = options.callId;
 		state.assessment = prepareCallAssessment(callAssessment);
 		state.hasAvailableSelectorItems = options.hasAvailableSelectorItems ?? true;
-		state.isAttachCallAssessment = true;
 	},
 
 	setCallAssessmentFromSelector(state: ApplicationState, selector: CallAssessmentSelector): void
@@ -35,10 +34,5 @@ export default {
 	setCallAssessment(state: ApplicationState, assessment: Object): void
 	{
 		state.assessment = prepareCallAssessment(assessment);
-	},
-
-	setAttachCallAssessmentEnabled(state: ApplicationState, isAttach: boolean): void
-	{
-		state.isAttachCallAssessment = isAttach;
 	},
 };

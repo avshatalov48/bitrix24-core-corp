@@ -4,6 +4,7 @@ use Bitrix\BIConnector\Superset\Grid\ExternalSourceRepository;
 use Bitrix\BIConnector\Superset\Grid\ExternalSourceGrid;
 use Bitrix\BIConnector\Superset\Grid\Settings\ExternalSourceSettings;
 use Bitrix\Main\Localization\Loc;
+use Bitrix\Main\UI\Filter\Options;
 use Bitrix\UI\Toolbar\Facade\Toolbar;
 use Bitrix\UI\Buttons;
 use Bitrix\UI\Toolbar\ButtonLocation;
@@ -42,6 +43,7 @@ class ApacheSupersetExternalSourceListComponent extends CBitrixComponent
 
 		$this->grid->processRequest();
 		$rows = $this->loadRows();
+		$this->arResult['SOURCE_TITLE_LIST'] = $this->prepareSourceTitleList($rows);
 		$this->arResult['ENABLED_TRACKING_SOURCE_DATASET_INFO'] = in_array('CRM', array_column($rows, 'MODULE'), true);
 		$this->arResult['GRID'] = $this->grid;
 
@@ -51,10 +53,10 @@ class ApacheSupersetExternalSourceListComponent extends CBitrixComponent
 	private function init(): void
 	{
 		$this->initGrid();
+		$this->initGridFilter();
 		$this->initExternalSourceRepo();
 		$this->initPagination();
 		$this->initStub();
-		$this->initGridFilter();
 		$this->initCreateButton();
 	}
 
@@ -91,20 +93,24 @@ class ApacheSupersetExternalSourceListComponent extends CBitrixComponent
 	private function initGridFilter(): void
 	{
 		$filter = $this->grid->getFilter();
+		$gridId = $this->grid->getId();
+
 		if ($filter)
 		{
 			$options = \Bitrix\Main\Filter\Component\ComponentParams::get(
-				$this->grid->getFilter(),
+				$filter,
 				[
-					'GRID_ID' => $this->grid->getId(),
+					'GRID_ID' => $gridId,
 					'FILTER_PRESETS' => $this->getFilterPresets(),
 				]
 			);
+
+			$this->prepareFilterOption($gridId);
 		}
 		else
 		{
 			$options = [
-				'FILTER_ID' => $this->grid->getId(),
+				'FILTER_ID' => $gridId,
 			];
 		}
 
@@ -193,5 +199,34 @@ class ApacheSupersetExternalSourceListComponent extends CBitrixComponent
 				</div>
 			</div>
 		HTML;
+	}
+
+	private function prepareFilterOption(string $filterId): void
+	{
+		$existOptions = new Options($filterId);
+		if ($existOptions->getDefaultFilterId() === Options::DEFAULT_FILTER)
+		{
+			$newOption = new Options(
+				$filterId,
+				$this->getFilterPresets(),
+			);
+			$newOption->save();
+		}
+	}
+
+	private function prepareSourceTitleList(array $rows): array
+	{
+		$result = [];
+
+		foreach ($rows as $row)
+		{
+			if ($row['MODULE'] === 'BI')
+			{
+				$id = (int)$row['ID'];
+				$result[$id] = $row['TITLE'] ?? (string)$id;
+			}
+		}
+
+		return $result;
 	}
 }

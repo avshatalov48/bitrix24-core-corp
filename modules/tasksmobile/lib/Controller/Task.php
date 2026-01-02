@@ -3,7 +3,9 @@
 namespace Bitrix\TasksMobile\Controller;
 
 use Bitrix\Main\Error;
+use Bitrix\Main\Loader;
 use Bitrix\Main\UI\PageNavigation;
+use Bitrix\Mobile\Provider\ViewersProvider;
 use Bitrix\Tasks\Access\ActionDictionary;
 use Bitrix\Tasks\Access\Model\TaskModel;
 use Bitrix\Tasks\Access\TaskAccessController;
@@ -53,6 +55,7 @@ class Task extends Base
 	public function getUserListTasksAction(
 		TaskRequestFilter $searchParams,
 		string $order = TaskProvider::ORDER_ACTIVITY,
+		?bool $isASC = null,
 		array $extra = [],
 		PageNavigation $pageNavigation = null,
 	): array
@@ -60,6 +63,7 @@ class Task extends Base
 		$result = (new TaskProvider(
 			$this->getCurrentUser()?->getId(),
 			$order,
+			$isASC,
 			$extra,
 			$searchParams,
 			$pageNavigation
@@ -80,6 +84,7 @@ class Task extends Base
 		TaskRequestFilter $searchParams,
 		?int $stageId = null,
 		string $order = TaskProvider::ORDER_ACTIVITY,
+		?bool $isASC = null,
 		array $extra = [],
 		PageNavigation $pageNavigation = null,
 	): array
@@ -87,6 +92,7 @@ class Task extends Base
 		$result = (new TaskProvider(
 			$this->getCurrentUser()?->getId(),
 			$order,
+			$isASC,
 			$extra,
 			$searchParams,
 			$pageNavigation,
@@ -107,6 +113,7 @@ class Task extends Base
 		TaskRequestFilter $searchParams,
 		?int $stageId = null,
 		string $order = TaskProvider::ORDER_ACTIVITY,
+		?bool $isASC = null,
 		array $extra = [],
 		PageNavigation $pageNavigation = null,
 	): array
@@ -114,6 +121,7 @@ class Task extends Base
 		$result = (new TaskProvider(
 			$this->getCurrentUser()?->getId(),
 			$order,
+			$isASC,
 			$extra,
 			$searchParams,
 			$pageNavigation,
@@ -134,6 +142,7 @@ class Task extends Base
 		TaskRequestFilter $searchParams,
 		int $projectId,
 		string $order = TaskProvider::ORDER_ACTIVITY,
+		?bool $isASC = null,
 		array $extra = [],
 		PageNavigation $pageNavigation = null,
 	): array
@@ -141,6 +150,7 @@ class Task extends Base
 		$result = (new TaskProvider(
 			$this->getCurrentUser()?->getId(),
 			$order,
+			$isASC,
 			$extra,
 			$searchParams,
 			$pageNavigation
@@ -163,6 +173,7 @@ class Task extends Base
 		int $projectId,
 		?int $stageId = null,
 		string $order = TaskProvider::ORDER_ACTIVITY,
+		?bool $isASC = null,
 		array $extra = [],
 		PageNavigation $pageNavigation = null,
 	): array
@@ -170,6 +181,7 @@ class Task extends Base
 		$result = (new TaskProvider(
 			$this->getCurrentUser()?->getId(),
 			$order,
+			$isASC,
 			$extra,
 			$searchParams,
 			$pageNavigation,
@@ -192,6 +204,7 @@ class Task extends Base
 		int $projectId,
 		?int $stageId = null,
 		string $order = TaskProvider::ORDER_ACTIVITY,
+		?bool $isASC = null,
 		array $extra = [],
 		PageNavigation $pageNavigation = null,
 	): array
@@ -199,6 +212,7 @@ class Task extends Base
 		$result = (new TaskProvider(
 			$this->getCurrentUser()?->getId(),
 			$order,
+			$isASC,
 			$extra,
 			$searchParams,
 			$pageNavigation,
@@ -221,6 +235,7 @@ class Task extends Base
 		int $projectId,
 		?int $stageId = null,
 		string $order = TaskProvider::ORDER_ACTIVITY,
+		?bool $isASC = null,
 		array $extra = [],
 		PageNavigation $pageNavigation = null,
 	): array
@@ -228,6 +243,7 @@ class Task extends Base
 		$result = (new TaskProvider(
 			$this->getCurrentUser()?->getId(),
 			$order,
+			$isASC,
 			$extra,
 			$searchParams,
 			$pageNavigation,
@@ -239,35 +255,10 @@ class Task extends Base
 	public function getDashboardSettingsAction(Settings $settings, int $projectId = 0, int $ownerId = 0): array
 	{
 		return [
-			'view' => $settings->getDashboardSelectedView($projectId),
-			'displayFields' => KanbanFieldsProvider::getFullState(),
+			'view' => 'LIST',
+			'displayFields' => KanbanFieldsProvider::getFullState($this->getCurrentUser()?->getId() ?? 0),
 			'calendarSettings' => \Bitrix\Tasks\Util\Calendar::getSettings(),
-			'canCreateTask' => $this->getCanCreateTaskForDashboard($projectId, $ownerId),
 		];
-	}
-
-	/**
-	 * @param int $projectId
-	 * @param int $ownerId
-	 * @return bool
-	 */
-	private function getCanCreateTaskForDashboard(int $projectId = 0, int $ownerId = 0): bool
-	{
-		$userId = (int)$this->getCurrentUser()?->getId();
-		$ownerId = ($ownerId ?: $userId);
-
-		if ($projectId > 0 || $ownerId !== $userId)
-		{
-			$task = TaskModel::createFromArray([
-				'CREATED_BY' => $userId,
-				'RESPONSIBLE_ID' => $ownerId,
-				'GROUP_ID' => $projectId,
-			]);
-
-			return TaskAccessController::can($userId, ActionDictionary::ACTION_TASK_SAVE, null, $task);
-		}
-
-		return true;
 	}
 
 	public function getAction(int $taskId, $params = []): array|TaskDto
@@ -283,6 +274,14 @@ class Task extends Base
 			$kanbanOwnerId = isset($params['KANBAN_OWNER_ID']) && (int)$params['KANBAN_OWNER_ID'] !== 0
 				? (int)$params['KANBAN_OWNER_ID']
 				: null;
+
+			if (($params['MARKED_AS_VIEWED'] ?? 'Y') === 'Y')
+			{
+				if (TaskAccessController::can($userId, ActionDictionary::ACTION_TASK_READ, $taskId))
+				{
+					ViewersProvider::setUserContentView('TASK', $taskId, $userId);
+				}
+			}
 
 			$getResult = $provider->getFullTask($taskId, $workMode, $kanbanOwnerId);
 
@@ -308,6 +307,8 @@ class Task extends Base
 					],
 				];
 			}
+
+			$this->subscribeUserToViewPush($taskId);
 
 			return $this->convertKeysToCamelCase($getResult);
 		}
@@ -656,12 +657,12 @@ class Task extends Base
 		}
 	}
 
-	public function pinAction(int $taskId): ?array
+	public function pinAction(int $taskId, ?int $projectId = null): ?array
 	{
 		try
 		{
 			$provider = new TaskProvider($this->getCurrentUser()?->getId());
-			$pinResult = $provider->pin($taskId);
+			$pinResult = $provider->pin($taskId, $projectId);
 
 			return $this->prepareActionResult($pinResult, $taskId);
 		}
@@ -673,12 +674,12 @@ class Task extends Base
 		}
 	}
 
-	public function unpinAction(int $taskId): ?array
+	public function unpinAction(int $taskId, ?int $projectId = null): ?array
 	{
 		try
 		{
 			$provider = new TaskProvider($this->getCurrentUser()?->getId());
-			$unpinResult = $provider->unpin($taskId);
+			$unpinResult = $provider->unpin($taskId, $projectId);
 
 			return $this->prepareActionResult($unpinResult, $taskId);
 		}
@@ -841,6 +842,15 @@ class Task extends Base
 		}
 
 		return $result;
+	}
+
+	private function subscribeUserToViewPush($taskId): void
+	{
+		if (Loader::includeModule('pull'))
+		{
+			$tag = "CONTENTVIEWTASK-$taskId";
+			\CPullWatch::Add($this->getCurrentUser()?->getId(), $tag);
+		}
 	}
 
 	public function updateUserPlannerTaskStageAction(

@@ -18,6 +18,14 @@ use Bitrix\Main\Localization\Loc;
 \Bitrix\Main\Page\Asset::getInstance()->addJS('/bitrix/js/timeman/component/basecomponent.js');
 \Bitrix\Main\Page\Asset::getInstance()->addCss('/bitrix/components/bitrix/timeman.worktime.grid/templates/.default/violation-style.css');
 
+$isAirTemplate = defined('AIR_SITE_TEMPLATE');
+if ($isAirTemplate)
+{
+	$runtimeInfo = CTimeMan::initRuntimeInfo();
+	
+	CJSCore::Init(['timeman']);
+}
+
 /** @var \Bitrix\Timeman\Form\Worktime\WorktimeRecordForm $recordForm */
 $recordForm = $arResult['recordForm'];
 /** @var \Bitrix\Timeman\Helper\UserHelper $userHelper */
@@ -26,24 +34,45 @@ $userHelper = $arResult['userHelper'] ?? null;
 ?>
 <div class="<?= $arResult['isSlider'] ? 'timeman-report-slider' : ''; ?>">
 
-	<? if (defined('SITE_TEMPLATE_ID') && SITE_TEMPLATE_ID == 'bitrix24'): ?>
-		<? $this->SetViewTarget('inside_pagetitle'); ?>
-		<div class="timeman-report-nav">
-			<? if (isset($arResult['RECORD_PREV_HREF'])): ?>
-				<a href="#" class="timeman-report-nav-arrow timeman-report-nav-arrow-prev"
-						data-role="navigation-record"
-						data-url="<?= $arResult['RECORD_PREV_HREF']; ?>"
+	<?php if (defined('SITE_TEMPLATE_ID') && SITE_TEMPLATE_ID == 'bitrix24'): ?>
+		<?php
+		$prevLink = '';
+		$nextLink = '';
+		$formatedDate = htmlspecialcharsbx($arResult['REPORT_FORMATTED_DATE']);
+		if (isset($arResult['RECORD_PREV_HREF']))
+		{
+			$prevLink = <<<HTML
+				<a
+					href="#"
+					class="timeman-report-nav-arrow timeman-report-nav-arrow-prev"
+					data-role="navigation-record"
+					data-url="{$arResult['RECORD_PREV_HREF']}"
 				></a>
-			<? endif; ?>
-			<span class="timeman-report-nav-current"><?= htmlspecialcharsbx($arResult['REPORT_FORMATTED_DATE']) ?></span>
-			<? if (isset($arResult['RECORD_NEXT_HREF'])): ?>
-				<a href="#" class="timeman-report-nav-arrow timeman-report-nav-arrow-next"
-						data-role="navigation-record"
-						data-url="<?= $arResult['RECORD_NEXT_HREF']; ?>"
+			HTML;
+		}
+		if (isset($arResult['RECORD_NEXT_HREF']))
+		{
+			$nextLink = <<<HTML
+				<a
+					href="#"
+					class="timeman-report-nav-arrow timeman-report-nav-arrow-next"
+					data-role="navigation-record"
+					data-url="{$arResult['RECORD_NEXT_HREF']}"
 				></a>
-			<? endif; ?>
-		</div>
-		<? $this->EndViewTarget(); ?>
+			HTML;
+		}
+		\Bitrix\UI\Toolbar\Facade\Toolbar::addRightCustomHtml(
+			<<<HTML
+				<div class="timeman-report-nav">
+					{$prevLink}
+					<span class="timeman-report-nav-current">{$formatedDate}</span>
+					{$nextLink}
+				</div>
+			HTML,
+			['align' => 'right'],
+		);
+		\Bitrix\UI\Toolbar\Facade\Toolbar::deleteFavoriteStar();
+		?>
 	<? endif; ?>
 	<div class="timeman-report-wrap">
 		<div class="timeman-report-inner"><?
@@ -245,6 +274,9 @@ $userHelper = $arResult['userHelper'] ?? null;
 		</div>
 	</div>
 	<script>
+		<?php if ($isAirTemplate): ?>
+		BX.timeman('bx_tm', <?= CUtil::PhpToJsObject($runtimeInfo); ?>, '<?= SITE_ID ?>');
+		<?php endif; ?>
 		BX.ready(function ()
 		{
 			BX.message({

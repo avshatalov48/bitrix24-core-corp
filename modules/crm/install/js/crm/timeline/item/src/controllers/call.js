@@ -272,7 +272,7 @@ export class Call extends Base
 			});
 	}
 
-	#openCallScoringResult(actionData: Object): void
+	async #openCallScoringResult(actionData: Object): void
 	{
 		if (
 			!Type.isInteger(actionData.activityId)
@@ -283,7 +283,9 @@ export class Call extends Base
 			return;
 		}
 
-		const callScoring = new CallScoringResultDialog.CallQuality({
+		await top.BX.Runtime.loadExtension('crm.ai.call');
+
+		const callScoring = new top.BX.Crm.AI.Call.CallQuality({
 			activityId: actionData.activityId,
 			ownerTypeId: actionData.ownerTypeId,
 			ownerId: actionData.ownerId,
@@ -331,7 +333,9 @@ export class Call extends Base
 			}
 			else
 			{
-				BX?.UI?.InfoHelper.show(data.sliderCode);
+				data.sliderCode?.includes('redirect=detail&code')
+				? top.BX.Helper.show(data.sliderCode)
+				: BX?.UI?.InfoHelper.show(data.sliderCode);
 			}
 		}
 		else if (this.#isAiMarketplaceAppsExist(data))
@@ -476,11 +480,6 @@ export class Call extends Base
 
 				BX.UI.Feedback.Form.open({
 					id: 'b24_ai_provider_partner_crm_feedback',
-					defaultForm: {
-						id: 682,
-						lang: 'en',
-						sec: '3sd3le',
-					},
 					forms: [{
 						zones: ['cn'],
 						id: 678,
@@ -491,6 +490,11 @@ export class Call extends Base
 						id: 680,
 						lang: 'vn',
 						sec: '2v97xr',
+					}, {
+						zones: ['en'],
+						id: 682,
+						lang: 'en',
+						sec: '3sd3le',
 					}],
 				});
 			},

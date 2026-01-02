@@ -1,9 +1,12 @@
 <?php
 if (!defined('B_PROLOG_INCLUDED') || B_PROLOG_INCLUDED !== true) die();
 
-use Bitrix\Main\UI\Extension,
-	Bitrix\Main\Localization\Loc,
-	Bitrix\SalesCenter\Integration\Bitrix24Manager;
+use Bitrix\Main\UI\Extension;
+use Bitrix\Main\Localization\Loc;
+
+/**
+ * @global CMain $APPLICATION
+ */
 
 $messages = Loc::loadLanguageFile(__FILE__);
 

@@ -144,16 +144,15 @@ class EntityDetails extends Controller
 		return $this->getConfigurator()->toArray();
 	}
 
-	public function loadTabCountersAction(Item $entity): array
+	public function loadTabCountersAction(int $entityTypeId, int $entityId): array
 	{
-		return $this->getConfigurator()->mapTabs(function (Tabs\Base $tab) use ($entity) {
+		return $this->getConfigurator()->mapTabs(function (Tabs\Base $tab) use ($entityTypeId, $entityId)  {
 			$value = 0;
 
 			switch ($tab->getId())
 			{
 				case 'timeline':
-					$entityId = $entity->getId();
-					$counter = new EntityActivityCounter($entity->getEntityTypeId(), [$entityId]);
+					$counter = new EntityActivityCounter($entityTypeId, [$entityId]);
 					$deadlinesCount = $counter->getDeadlinesCount($entityId);
 					$incomingCount = $counter->getIncomingCount($entityId);
 					$value = $deadlinesCount + $incomingCount;
@@ -539,14 +538,13 @@ class EntityDetails extends Controller
 		}
 
 		$userPermissions = Container::getInstance()->getUserPermissions();
-		$crmPermissions = $userPermissions->getCrmPermissions();
 
 		$entityTypeId = $entity->getEntityTypeId();
 		$entityId = $entity->getId();
 
 		if ($entityTypeId === \CCrmOwnerType::Company && \CCrmCompany::isMyCompany($entityId))
 		{
-			$myCompanyPermissions = $userPermissions->getMyCompanyPermissions();
+			$myCompanyPermissions = $userPermissions->myCompany();
 
 			return [
 				'add' => $myCompanyPermissions->canAdd(),
@@ -560,11 +558,14 @@ class EntityDetails extends Controller
 		$categoryId = $entity->isCategoriesSupported() ? $entity->getCategoryId() : null;
 
 		return [
-			'add' => $userPermissions->checkAddPermissions($entityTypeId, $categoryId),
-			'read' => $userPermissions->checkReadPermissions($entityTypeId, $entityId, $categoryId),
-			'update' => $userPermissions->checkUpdatePermissions($entityTypeId, $entityId, $categoryId),
-			'delete' => $userPermissions->checkDeletePermissions($entityTypeId, $entityId, $categoryId),
-			'exclude' => !$crmPermissions->HavePerm('EXCLUSION', BX_CRM_PERM_NONE, 'WRITE'),
+			'add' =>
+				is_null($categoryId)
+					? $userPermissions->entityType()->canAddItems($entityTypeId)
+					: $userPermissions->entityType()->canAddItemsInCategory($entityTypeId, $categoryId),
+			'read' => $userPermissions->item()->canRead($entityTypeId, $entityId),
+			'update' => $userPermissions->item()->canUpdate($entityTypeId, $entityId),
+			'delete' => $userPermissions->item()->canDelete($entityTypeId, $entityId),
+			'exclude' => $userPermissions->exclusion()->canEditItems(),
 		];
 	}
 
@@ -885,10 +886,9 @@ class EntityDetails extends Controller
 		}
 
 		$userPermissions = Container::getInstance()->getUserPermissions();
-		$hasReadPermission = $userPermissions->checkReadPermissions(
+		$hasReadPermission = $userPermissions->item()->canRead(
 			$entity->getEntityTypeId(),
-			$sourceEntityId,
-			$entity->isCategoriesSupported() ? $entity->getCategoryId() : null
+			$sourceEntityId
 		);
 		if (!$hasReadPermission)
 		{

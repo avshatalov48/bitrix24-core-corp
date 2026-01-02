@@ -17,6 +17,7 @@ if (!defined('B_PROLOG_INCLUDED') || B_PROLOG_INCLUDED !== true)
 use Bitrix\Main;
 use Bitrix\Main\Localization\Loc;
 use Bitrix\Main\UI\Extension;
+use Bitrix\Main\Web\Json;
 
 Loc::loadMessages(__FILE__);
 $messages = Loc::loadLanguageFile(__FILE__);
@@ -30,14 +31,18 @@ Extension::load([
 	'ui.common',
 	'ui.forms',
 	'ui.alerts',
+	'ui.label',
+	'ui.entity-selector',
 	'ui.switcher',
 	'ui.hint',
 	'salescenter.manager',
 	'ui.sidepanel-content',
 	'ui.notification',
+	'main.core',
 	'main.popup',
 	'ui.dialogs.messagebox',
 	'ui.buttons.icons',
+	'loader',
 ]);
 ?>
 
@@ -116,30 +121,35 @@ Extension::load([
 							</a>
 						<?php endif;?>
 					</div>
-					<div data-bx-salescenter-block="profile" style="display: none;">
-						<div class="salescenter-auth-popup-settings">
-							<div class="salescenter-auth-popup-social salescenter-auth-popup-social-yandex">
-								<div class="salescenter-auth-popup-social-delimiter"></div>
-								<div class="salescenter-auth-popup-social-user">
-									<a target="_top" data-bx-salescenter-auth-link="" data-bx-salescenter-auth-name="" class="salescenter-auth-popup-social-user-link" title=""></a>
-								</div>
-								<div class="salescenter-auth-popup-social-shutoff">
-									<span data-bx-salescenter-auth-logout="" class="salescenter-auth-popup-social-shutoff-link"><?=Loc::getMessage('SALESCENTER_SP_YANDEX_LOGOUT_MSGVER_1')?></span>
+					<?php if (
+						$arResult['AUTH']['TYPE'] === Bitrix\Seo\Checkout\Service::TYPE_YANDEX
+						|| $arResult['AUTH']['TYPE'] === Bitrix\Seo\Checkout\Service::TYPE_YOOKASSA
+					): ?>
+						<div data-bx-salescenter-block="profile" style="display: none;">
+							<div class="salescenter-auth-popup-settings">
+								<div class="salescenter-auth-popup-social salescenter-auth-popup-social-yandex">
+									<div class="salescenter-auth-popup-social-delimiter"></div>
+									<div class="salescenter-auth-popup-social-user">
+										<a target="_top" data-bx-salescenter-auth-link="" data-bx-salescenter-auth-name="" class="salescenter-auth-popup-social-user-link" title=""></a>
+									</div>
+									<div class="salescenter-auth-popup-social-shutoff">
+										<span data-bx-salescenter-auth-logout="" class="salescenter-auth-popup-social-shutoff-link"><?=Loc::getMessage('SALESCENTER_SP_YANDEX_LOGOUT_MSGVER_1')?></span>
+									</div>
 								</div>
 							</div>
 						</div>
-					</div>
-					<div data-bx-salescenter-block="auth" style="display: none;" class="salescenter-button-container">
-						<div class="ui-text-2"><?=Loc::getMessage('SALESCENTER_SP_CONNECT_HINT')?></div>
-						<a id="bx-salescenter-create-button" href="https://yookassa.ru/joinups/?source=bitrix24" target="_blank" class="ui-btn ui-btn-md ui-btn-primary">
-							<?=Loc::getMessage('SALESCENTER_SP_CREATE_YOOKASSA_PAYMENT_BUTTON')?>
-						</a>
-						<a id="bx-salescenter-connect-button" href="javascript: void(0);" class="ui-btn ui-btn-md ui-btn-light-border">
-							<?=Loc::getMessage('SALESCENTER_SP_CONNECT_YOOKASSA_PAYMENT_BUTTON')?>
-						</a>
-					</div>
-					<div id="salescenter-settings-block" class="salescenter-button-container">
-						<?php if ($arResult['PAY_SYSTEM_ROBOKASSA_SETTINGS']['IS_SUPPORT_SETTINGS']): ?>
+						<div data-bx-salescenter-block="auth" style="display: none;" class="salescenter-button-container">
+							<div class="ui-text-2"><?=Loc::getMessage('SALESCENTER_SP_CONNECT_HINT')?></div>
+							<a id="bx-salescenter-create-button" href="https://yookassa.ru/joinups/?source=bitrix24" target="_blank" class="ui-btn ui-btn-md ui-btn-primary">
+								<?=Loc::getMessage('SALESCENTER_SP_CREATE_YOOKASSA_PAYMENT_BUTTON')?>
+							</a>
+							<a id="bx-salescenter-connect-button" href="javascript: void(0);" class="ui-btn ui-btn-md ui-btn-light-border">
+								<?=Loc::getMessage('SALESCENTER_SP_CONNECT_YOOKASSA_PAYMENT_BUTTON')?>
+							</a>
+						</div>
+					<?php endif; ?>
+					<?php if ($arResult['PAY_SYSTEM_ROBOKASSA_SETTINGS']['IS_SUPPORT_SETTINGS']): ?>
+						<div id="salescenter-settings-block" class="salescenter-button-container">
 							<?php if (!$arResult['PAY_SYSTEM_ROBOKASSA_SETTINGS']['IS_SETTINGS_EXISTS']): ?>
 								<span id="salescenter-settings-paysystem-register-component">
 									<?php
@@ -163,15 +173,103 @@ Extension::load([
 									<?= $arResult['SETTINGS_FORM_LINK_NAME'] ?>
 								</a>
 							<?php endif; ?>
-						<?php elseif ($arResult['IS_PS_INNER_SETUP']): ?>
+						</div>
+					<?php elseif ($arResult['IS_PS_INNER_SETUP']): ?>
+						<div id="salescenter-settings-block" class="salescenter-button-container">
 							<a id="bx-salescenter-add-button" class="ui-btn ui-btn-md ui-btn-light-border ui-btn-width">
 								<?=Loc::getMessage('SALESCENTER_SP_ADD_PAYMENT_BUTTON')?>
 							</a>
-						<?php endif; ?>
-					</div>
+						</div>
+					<?php endif; ?>
 				</div>
 			</div>
 		</div>
+
+		<?php
+			if ($arResult['AUTH']['TYPE'] === Bitrix\Seo\Checkout\Service::TYPE_TBANK_BUSINESS):
+		?>
+			<div data-bx-salescenter-block="auth" class="ui-slider-section" style="display: none;">
+				<div class="ui-slider-heading-4"><?= Loc::getMessage('SALESCENTER_SP_PARAMS_CONNECT_TITLE') ?></div>
+				<div class="salescenter-paysystem-information-block">
+					<div class="salescenter-paysystem-information-block-description">
+						<?= Loc::getMessage('SALESCENTER_SP_CONNECT_TBANK_BUSINESS_DESCRIPTION') ?>
+					</div>
+				</div>
+				<div class="ui-ctl-label-text">
+					<label><?= Loc::getMessage('SALESCENTER_SP_CONNECT_COMPANY_SELECT_TITLE') ?></label>
+				</div>
+				<div data-bx-salescenter-company-list="empty" style="display: none;" class="salescenter-paysystem-business-company">
+					<div id="bx-salescenter-business-company-empty" class="salescenter-paysystem-business-company-empty">
+						<div type="empty" class="salescenter-paysystem-business-company-icon"></div>
+						<div class="salescenter-paysystem-business-company-info">
+							<span class="salescenter-paysystem-business-empty-company-label"><?= Loc::getMessage('SALESCENTER_SP_CONNECT_COMPANY_EMPTY_LIST') ?></span>
+						</div>
+					</div>
+					<div class="salescenter-paysystem-business-company-action">
+						<a id="bx-salescenter-business-company-create-button" href="javascript: void(0);" class="ui-btn ui-btn-xs ui-btn-success ui-btn-round"><?= Loc::getMessage('SALESCENTER_SP_CONNECT_CREATE_COMPANY_SHORT') ?></a>
+					</div>
+				</div>
+				<div data-bx-salescenter-company-list="selector" style="display: none;" class="salescenter-paysystem-business-company">
+					<div id="bx-salescenter-business-company-info" class="salescenter-paysystem-business-company-selector">
+						<div type="selected" class="salescenter-paysystem-business-company-icon"></div>
+						<div class="salescenter-paysystem-business-company-info">
+							<div class="salescenter-paysystem-business-company-title">
+								<span class="salescenter-paysystem-business-company-name"></span>
+								<div style="display: none;" id="bx-salescenter-business-alert-block" class="salescenter-paysystem-business-company-alert">
+									<span class="ui-label ui-label-md ui-label-lightorange ui-label-fill">
+										<span class="ui-label-inner"></span>
+									</span>
+								</div>
+							</div>
+							<div class="salescenter-paysystem-business-company-details"></div>
+						</div>
+						<div class="salescenter-paysystem-business-company-selector-icon"></div>
+					</div>
+					<div class="salescenter-paysystem-business-company-action">
+						<a data-bx-salescenter-action="edit" id="bx-salescenter-business-company-edit-button" href="javascript: void(0);" style="display: none;" class="ui-btn ui-btn-xs ui-btn-light-border ui-btn-round"><?= Loc::getMessage('SALESCENTER_SP_CONNECT_COMPANY_EDIT_BUTTON') ?></a>
+						<a data-bx-salescenter-action="fill" id="bx-salescenter-business-company-fill-button" href="javascript: void(0);" style="display: none;" class="ui-btn ui-btn-xs ui-btn-success ui-btn-round"><?= Loc::getMessage('SALESCENTER_SP_CONNECT_COMPANY_FILL_BUTTON') ?></a>
+					</div>
+				</div>
+				<div class="salescenter-paysystem-business-connect">
+					<a id="bx-salescenter-business-connect-button" href="javascript: void(0);" class="ui-btn ui-btn-md ui-btn-primary ui-btn-disabled">
+						<?= Loc::getMessage('SALESCENTER_SP_CONNECT_TBANK_BUSINESS_CONNECT_BUTTON') ?>
+					</a>
+				</div>
+			</div>
+			<div data-bx-salescenter-block="profile" class="ui-slider-section" style="display: none;">
+				<div class="ui-slider-heading-4"><?= Loc::getMessage('SALESCENTER_SP_PARAMS_CONNECT_TITLE') ?></div>
+				<?php if (isset($arResult['AUTH']['PROFILE']['HAS_CHANGES']) && $arResult['AUTH']['PROFILE']['HAS_CHANGES']): ?>
+					<div class="salescenter-paysystem-warning-block">
+						<div class="salescenter-paysystem-warning-block-icon"></div>
+						<div class="salescenter-paysystem-warning-block-description">
+							<?= Loc::getMessage('SALESCENTER_SP_CONNECT_SELECTED_COMPANY_HAS_CHANGES') ?>
+						</div>
+					</div>
+				<?php endif;?>
+				<div class="ui-ctl-label-text">
+					<label><?= Loc::getMessage('SALESCENTER_SP_CONNECT_COMPANY_SELECT_TITLE') ?></label>
+				</div>
+				<?php $companyInfo = $arResult['AUTH']['PROFILE']; ?>
+				<div class="salescenter-paysystem-business-company">
+					<div class="salescenter-paysystem-business-company-profile">
+						<div type="selected" class="salescenter-paysystem-business-company-icon"></div>
+						<div class="salescenter-paysystem-business-company-info">
+							<div class="salescenter-paysystem-business-company-title">
+								<span class="salescenter-paysystem-business-company-name" title="<?= htmlspecialcharsbx($companyInfo['TITLE'] ?? '') ?>"><?= htmlspecialcharsbx($companyInfo['TITLE'] ?? '') ?></span>
+							</div>
+							<div class="salescenter-paysystem-business-company-details"><?= $companyInfo['LABEL']['DETAILS'] ?? '' ?></div>
+						</div>
+					</div>
+				</div>
+				<div class="salescenter-paysystem-business-connect">
+					<a href="javascript: void(0);" data-bx-salescenter-auth-logout="" class="ui-btn ui-btn-md ui-btn-light-border">
+						<?= Loc::getMessage('SALESCENTER_SP_CONNECT_TBANK_BUSINESS_DISCONNECT_BUTTON') ?>
+					</a>
+				</div>
+			</div>
+		<?php
+			endif;
+		?>
 
 		<div class="ui-alert ui-alert-danger" style="display: none;">
 			<span class="ui-alert-message" id="salescenter-paysystem-error"></span>
@@ -231,14 +329,13 @@ Extension::load([
 					</div>
 				</div>
 			</div>
-
-			<div class="ui-slider-section">
-				<?php
-				if ($arResult['IS_CASHBOX_ENABLED'])
-				{
-					$paySystemId = (int)$arResult['PAYSYSTEM_ID'];
-					$isCanPrintCheckSelf = $arResult['IS_CAN_PRINT_CHECK_SELF'];
-					?>
+			<?php
+			if ($arResult['IS_CASHBOX_ENABLED'])
+			{
+				$paySystemId = (int)$arResult['PAYSYSTEM_ID'];
+				$isCanPrintCheckSelf = $arResult['IS_CAN_PRINT_CHECK_SELF'];
+				?>
+				<div class="ui-slider-section">
 					<div class="ui-slider-heading-4"><?=Loc::getMessage('SALESCENTER_SP_PARAMS_FORM_CASHBOX_TITLE')?></div>
 					<div class="salescenter-editor-section-content">
 						<div class="ui-ctl ui-ctl-checkbox ui-ctl-w100">
@@ -320,7 +417,7 @@ Extension::load([
 								<div class="salescenter-paysystem-cashbox-block-inner">
 									<div class="salescenter-paysystem-cashbox-block-title"><?= $cashboxTitle ?></div>
 									<div class="salescenter-main-cashbox-switcher-container">
-									<span data-switcher="<?=htmlspecialcharsbx(Main\Web\Json::encode([
+									<span data-switcher="<?=htmlspecialcharsbx(Json::encode([
 										'id' => 'salescenter-paysystem-cashbox',
 										'checked' => $arResult['IS_FISCALIZATION_ENABLE'],
 										'inputName' => 'CAN_PRINT_CHECK_SELF',
@@ -344,10 +441,10 @@ Extension::load([
 							</div>
 						<?php endif ?>
 					</div>
-					<?php
-				}
-				?>
-			</div>
+				</div>
+			<?php
+			}
+			?>
 			<div hidden><?=$arResult["BUS_VAL"];?></div>
 
 			<div class="ui-slider-section">
@@ -502,6 +599,9 @@ Extension::load([
 			isExistsOnlyCommonSettings: <?=CUtil::PhpToJSObject($arResult['PAY_SYSTEM_ROBOKASSA_SETTINGS']['IS_ONLY_COMMON_SETTINGS_EXISTS'] ?? false)?>,
 			settingsMenuId: 'settings-menu',
 			buttonPanelId: '<?=CUtil::JSEscape($buttonPanelId)?>',
+			myCompanyList: <?= Json::encode($arResult['COMPANY_LIST'] ?? []) ?>,
+			selectedCompanyId: <?= $arResult['DEFAULT_COMPANY'] ?? 0 ?>,
+			isInitBusinessConnectComponents: <?= Json::encode($arResult['IS_INIT_BUSINESS_CONNECT_COMPONENTS'] ?? false) ?>,
 		})
 
 		BX.SalecenterPaySystemCashbox.init({

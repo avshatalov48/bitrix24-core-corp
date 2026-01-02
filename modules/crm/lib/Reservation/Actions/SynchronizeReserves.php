@@ -3,7 +3,6 @@
 namespace Bitrix\Crm\Reservation\Actions;
 
 use Bitrix\Crm\Order\OrderDealSynchronizer;
-use Bitrix\Crm\ProductRow;
 use Bitrix\Crm\ProductRowCollection;
 use Bitrix\Crm\Reservation\ProductRowReservation;
 use Bitrix\Crm\Reservation\Strategy\Reserve\ReservationResult;
@@ -34,10 +33,6 @@ abstract class SynchronizeReserves extends Action
 
 		foreach ($productRows as $row)
 		{
-			/**
-			 * @var ProductRow $row
-			 */
-
 			$rowId = (int)($row->getId() ?? 0);
 			if (!$rowId)
 			{
@@ -63,7 +58,6 @@ abstract class SynchronizeReserves extends Action
 			// if empty the store, that we don't know where create reserve.
 			if (empty($productReservation->getStoreId()))
 			{
-				$this->deleteReservationIds[] = $productReservation->getId();
 				continue;
 			}
 

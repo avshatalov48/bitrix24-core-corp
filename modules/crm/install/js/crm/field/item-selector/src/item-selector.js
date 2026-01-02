@@ -240,7 +240,7 @@ export class ItemSelector
 			}
 			else
 			{
-				this.#addButton = new ItemSelectorButton();
+				this.#addButton = new ItemSelectorButton({});
 
 				Dom.append(this.#getAddButtonEl(), this.#containerEl);
 			}

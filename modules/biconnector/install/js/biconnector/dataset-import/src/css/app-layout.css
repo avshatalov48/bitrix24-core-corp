@@ -38,3 +38,15 @@
 .app-root__button--blocked {
 	pointer-events: none;
 }
+
+.app-body .ui-side-panel-header {
+	position: sticky;
+	top: 0;
+	background-color: var(--ui-color-palette-gray-05);
+	z-index: 100;
+	padding-left: 8px;
+}
+
+.app-body .ui-side-panel-content {
+	position: relative;
+}

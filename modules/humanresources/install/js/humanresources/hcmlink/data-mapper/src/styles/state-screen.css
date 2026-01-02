@@ -45,7 +45,7 @@
 .hr-hcmlink-mapping-person__state-screen_title {
 	display: block;
 	margin-bottom: 16px;
-	font: var(--ui-font-weight-medium) var(--ui-font-size-4xl) var(--ui-font-family-system);
+	font: var(--ui-font-weight-medium) var(--ui-font-size-4xl) var(--ui-font-family-primary, var(--ui-font-family-system));
 	color: var(--ui-color-base-90);
 	text-align: center;
 	max-width: 407px;
@@ -55,7 +55,7 @@
 	display: block;
 	margin-bottom: 30px;
 	max-width: 407px;
-	font: var(--ui-font-size-xl) var(--ui-font-family-system);
+	font: var(--ui-font-size-xl) var(--ui-font-family-primary, var(--ui-font-family-system));
 	color: var(--ui-color-base-60);
 	text-align: center;
 }

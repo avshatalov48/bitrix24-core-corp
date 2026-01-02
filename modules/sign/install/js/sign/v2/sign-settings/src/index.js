@@ -1,6 +1,5 @@
 import { Dom, Loc, Reflection, Tag, Type } from 'main.core';
 import { MemoryCache } from 'main.core.cache';
-import { FeatureStorage } from 'sign.feature-storage';
 import { DocumentMode, type DocumentModeType } from 'sign.type';
 import type { AnalyticsOptions } from 'sign.v2.analytics';
 import { Analytics, Context } from 'sign.v2.analytics';
@@ -49,11 +48,11 @@ export class SignSettings
 		this.#type = type;
 		this.documentsGroup = new Map();
 		this.documentsGroupUids = [];
-		const { languages } = config.documentSendConfig ?? {};
+		const { languages, needSkipEditorStep } = config.documentSendConfig ?? {};
 		const EditorConstructor = Reflection.getClass('top.BX.Sign.V2.Editor');
 		this.editor = new EditorConstructor(
 			type,
-			{ languages, isTemplateMode: this.isTemplateMode(), documentInitiatedByType: initiatedByType },
+			{ languages, isTemplateMode: this.isTemplateMode(), documentInitiatedByType: initiatedByType, needSkipEditorStep },
 		);
 		this.#preview = new Preview({ layout: { getAfterPreviewLayoutCallback: () => this.getAfterPreviewLayout() } });
 	}
@@ -114,23 +113,32 @@ export class SignSettings
 
 	#getLayout(): HTMLElement
 	{
-		const className = this.#type === 'b2e' ? 'sign-settings --b2e' : 'sign-settings';
-
 		this.#previewLayout = this.#preview.getLayout();
 
-		this.#container = Tag.render`
+		this.#container = this.getLayoutTemplate(
+			this.#createHead(),
+			this.wizard.getLayout(),
+			this.#previewLayout,
+		);
+
+		return this.#container;
+	}
+
+	getLayoutTemplate(header: HTMLElement, wizard: HTMLElement, preview: HTMLElement): HTMLElement
+	{
+		const className = this.#type === 'b2e' ? 'sign-settings --b2e' : 'sign-settings';
+
+		return Tag.render`
 			<div class="sign-settings__scope ${className}">
 				<div class="sign-settings__sidebar">
-					${this.#createHead()}
-					${this.wizard.getLayout()}
+					${header}
+					${wizard}
 				</div>
-				<div style="display: flex; flex-direction: column;">
-					${this.#previewLayout}
+				<div class="sing-settings-preview-block">
+					${preview}
 				</div>
 			</div>
 		`;
-
-		return this.#container;
 	}
 
 	#getOverlayContainer(): HTMLElement
@@ -147,7 +155,7 @@ export class SignSettings
 	#showCompleteNotification(): void
 	{
 		const Notification = Reflection.getClass('top.BX.UI.Notification');
-		const notificationText = this.#isGroupDocuments()
+		const notificationText = this.isGroupDocuments()
 			? Loc.getMessage('SIGN_SETTINGS_COMPLETE_NOTIFICATION_TEXT_GROUP')
 			: Loc.getMessage('SIGN_SETTINGS_COMPLETE_NOTIFICATION_TEXT');
 
@@ -183,26 +191,34 @@ export class SignSettings
 		return this.documentsGroup.size === 1;
 	}
 
-	#isGroupDocuments(): boolean
+	isGroupDocuments(): boolean
 	{
 		return this.documentsGroup.size > 1;
 	}
 
-	async #renderPages(documentData: DocumentDetails, preparedPages: boolean = false): Promise<void>
+	async renderPages(
+		documentData: DocumentDetails,
+		preparedPages: boolean = false,
+		isSelectBlank: boolean = true,
+	): Promise<void>
 	{
 		this.#preview.urls = [];
 		this.disablePreviewReady();
 		this.#preview.setBlocks(documentData.blocks);
-
+		this.editor.setUrls([], 0);
 		this.wizard.toggleBtnActiveState('back', true);
-		const handler = (urls, totalPages): void => {
+		const handler = (urls, totalPages, newBlocks): void => {
 			this.enablePreviewReady();
 			this.#preview.urls = urls;
 			this.editor.setUrls(urls, totalPages);
+			if (Type.isArray(newBlocks))
+			{
+				this.#preview.setBlocks(newBlocks);
+			}
 			this.wizard.toggleBtnActiveState('back', false);
 		};
 
-		this.documentSetup.waitForPagesList(documentData, handler, preparedPages);
+		this.documentSetup.waitForPagesList(documentData, handler, preparedPages, isSelectBlank);
 	}
 
 	getFirstDocumentUidFromGroup(): string
@@ -215,11 +231,27 @@ export class SignSettings
 		return this.documentsGroup.values().next().value;
 	}
 
+	/**
+	 * Returns document data with settings in the wizard
+	 */
+	getDocumentSetupData(): DocumentDetails
+	{
+		const firstDocumentData = this.getFirstDocumentDataFromGroup() || {};
+		const setupData = this.documentSetup.setupData || {};
+
+		return { ...firstDocumentData, ...setupData };
+	}
+
 	#subscribeOnEditorEvents(): void
 	{
 		this.editor.subscribe('save', ({ data }) => {
 			const blocks = data.blocks;
 			const uid = data.uid;
+
+			if (this.documentsGroup.has(uid) === false)
+			{
+				return;
+			}
 
 			const selectedDocument = this.documentsGroup.get(uid);
 			selectedDocument.blocks = blocks;
@@ -270,7 +302,7 @@ export class SignSettings
 				stage: 'send',
 				method: async (event) => {
 					const { uid } = event.getData();
-					if (uid && this.#isGroupDocuments())
+					if (uid && this.isGroupDocuments())
 					{
 						await this.#executeEditorActionsForGroup(uid);
 					}
@@ -332,7 +364,7 @@ export class SignSettings
 		this.#subscribeOnEditorEvents();
 	}
 
-	async #getPagesUrls(data: DocumentDetails): Promise
+	async getPagesUrls(data: DocumentDetails): Promise
 	{
 		const documentUrls = [];
 		const handler = (urls): void => {
@@ -353,7 +385,7 @@ export class SignSettings
 		{
 			const openEditorButton = this.#container.querySelector(`span[data-id="${setupData.id}"]`);
 			Dom.addClass(openEditorButton, 'ui-btn-clock');
-			await this.#getPagesUrls(setupData);
+			await this.getPagesUrls(setupData);
 			Dom.removeClass(openEditorButton, 'ui-btn-clock');
 			this.documentSetup.blankSelector.disableSelectedBlank(setupData.blankId);
 			this.documentSetup.resetDocument();
@@ -385,7 +417,7 @@ export class SignSettings
 		Dom.append(this.#currentOverlay, this.#overlayContainer);
 	}
 
-	async setupDocument(uid?: string, preparedPages: boolean = false): Promise<DocumentDetails> | null
+	async setupDocument(uid?: string, preparedPages: boolean = false): Promise<DocumentDetails>
 	{
 		if (this.documentSetup.isSameBlankSelected())
 		{
@@ -410,16 +442,7 @@ export class SignSettings
 			return null;
 		}
 
-		if (
-			this.documentsGroup.size === 0
-			|| (this.editedDocument && this.isFirstDocumentSelected(this.editedDocument.uid))
-			|| this.isTemplateMode()
-			|| this.isB2bSignMaster
-			|| !FeatureStorage.isGroupSendingEnabled()
-		)
-		{
-			this.#renderPages(setupData, preparedPages);
-		}
+		await this.renderPages(setupData, preparedPages);
 
 		if (this.#preview.hasUrls())
 		{
@@ -447,7 +470,9 @@ export class SignSettings
 			: Loc.getMessage('SIGN_SETTINGS_SEND_FOR_SIGN');
 		this.wizard = new Wizard(metadata, {
 			back: { className: 'ui-btn-light-border' },
-			next: { className: 'ui-btn-primary' },
+			next: {
+				className: 'ui-btn-primary',
+			},
 			complete: {
 				className: 'ui-btn-primary',
 				title,

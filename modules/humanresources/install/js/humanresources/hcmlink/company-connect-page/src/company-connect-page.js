@@ -45,7 +45,7 @@ export class CompanyConnectPage
 					<div>
 						<button class="ui-btn ui-btn-success ui-btn-md ui-btn-round" 
 								onclick="${this.#openAppPage}">
-							${Loc.getMessage('HUMANRESOURCES_HCMLINK_CONNECTOR_PAGE_ACTION_INSTALL')}	
+							${Loc.getMessage('HUMANRESOURCES_HCMLINK_CONNECTOR_PAGE_ACTION_INSTALL_V1')}	
 					   </button>
 		           </div>
 				</div>

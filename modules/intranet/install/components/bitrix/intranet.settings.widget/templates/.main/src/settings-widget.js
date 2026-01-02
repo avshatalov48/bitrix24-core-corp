@@ -2,10 +2,9 @@ import {ajax, Dom, Event, Loc, Tag, Text, Type} from 'main.core';
 import {PopupComponentsMaker, PopupComponentsMakerItem} from 'ui.popupcomponentsmaker';
 import type {SettingsWidgetOptions, SettingsWidgetHoldingOptions, MainPageConfiguration} from './types/options';
 import {Label, LabelSize} from 'ui.label';
-import {BaseEvent, EventEmitter} from 'main.core.events';
-import {MenuItem, Popup} from 'main.popup';
-import { sendData } from 'ui.analytics';
+import {EventEmitter} from 'main.core.events';
 import { RequisiteSection } from './requisite-section';
+import { WidgetLoader } from 'intranet.widget-loader';
 import 'ui.icon-set.actions';
 import 'ui.icon-set.main';
 import 'ui.icons.b24';
@@ -79,14 +78,19 @@ export class SettingsWidget extends EventEmitter
 		return this;
 	}
 
-	setWidgetPopup(widgetPopup: PopupComponentsMaker)
+	setWidgetLoader(widgetLoader: WidgetLoader)
 	{
-		this.#widgetPopup = widgetPopup;
+		this.#widgetPopup = new PopupComponentsMaker({
+			width: 374,
+			popupLoader: widgetLoader.getPopup(),
+			useAngle: false,
+		});
 
 		this.#widgetPopup.getPopup().subscribe('onClose', () => {
 			Event.unbindAll(this.getWidget().getPopup().getPopupContainer(), 'click');
 		});
 
+		widgetLoader.clearBeforeInsertContent();
 		this.#getItemsList()
 			.then(() => {
 				this.#drawItemsList();
@@ -96,13 +100,13 @@ export class SettingsWidget extends EventEmitter
 		return this;
 	}
 
-	static bindWidget(popup): ?SettingsWidget
+	static bindWidget(widgetLoader: WidgetLoader): ?SettingsWidget
 	{
 		const instance = this.getInstance();
 
 		if (instance)
 		{
-			instance.setWidgetPopup(popup);
+			instance.setWidgetLoader(widgetLoader);
 		}
 
 		return instance;
@@ -202,7 +206,6 @@ export class SettingsWidget extends EventEmitter
 	#drawItemsList(): void
 	{
 		const container = this.getWidget().getPopup().getPopupContainer();
-		Dom.clean(container);
 
 		Dom.append(this.#getHeader(), container);
 
@@ -369,7 +372,7 @@ export class SettingsWidget extends EventEmitter
 		`;
 
 		const element = Tag.render`
-			<div onclick="${onclick}" class="intranet-settings-widget_box --clickable">
+			<div onclick="${onclick}" class="intranet-settings-widget_box --clickable" data-testid="settings-widget-block-main-page">
 				<div class="intranet-settings-widget_inner">
 					<div class="intranet-settings-widget_icon-box --green">
 						<div class="ui-icon-set --home-page"></div>
@@ -497,7 +500,7 @@ export class SettingsWidget extends EventEmitter
 		`;
 
 		const element = Tag.render`
-			<div class="intranet-settings-widget__branch" onclick="${onclickOpen}">
+			<div class="intranet-settings-widget__branch" onclick="${onclickOpen}" data-testid="settings-widget-block-filial-network">
 				<div class="intranet-settings-widget__branch-icon_box">
 					<div class="ui-icon-set intranet-settings-widget__branch-icon --filial-network"></div>
 					${!this.#holding.canBeHolding ? lockIcon : ''}
@@ -532,7 +535,7 @@ export class SettingsWidget extends EventEmitter
 		};
 
 		const element = Tag.render`
-			<span onclick="${onclick}" class="intranet-settings-widget_box --clickable">
+			<span onclick="${onclick}" class="intranet-settings-widget_box --clickable" data-testid="settings-widget-block-security">
 				<div class="intranet-settings-widget_inner">
 					<div class="intranet-settings-widget_icon-box ${this.#otp.IS_ACTIVE === 'Y' ? '--green' : '--yellow'}">
 						<div class="ui-icon-set --shield"></div>
@@ -556,7 +559,7 @@ export class SettingsWidget extends EventEmitter
 		};
 
 		const element = Tag.render`
-			<span onclick="${onclick}" class="intranet-settings-widget_box --clickable">
+			<span onclick="${onclick}" class="intranet-settings-widget_box --clickable" data-testid="settings-widget-block-general-settings">
 				<div class="intranet-settings-widget_inner">
 					<div class="intranet-settings-widget_icon-box --gray">
 						<div class="ui-icon-set --settings-2"></div>
@@ -580,7 +583,7 @@ export class SettingsWidget extends EventEmitter
 		};
 
 		const element = Tag.render`
-			<div onclick="${onclick}" class="intranet-settings-widget_box --clickable">
+			<div onclick="${onclick}" class="intranet-settings-widget_box --clickable" data-testid="settings-widget-block-migrate">
 				<div class="intranet-settings-widget_inner">
 					<div class="intranet-settings-widget_icon-box --gray">
 						<div class="ui-icon-set --market-1"></div>

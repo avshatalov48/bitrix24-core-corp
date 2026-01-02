@@ -16,6 +16,15 @@ interface EmployeeRepository
 
 	public function getByUnique(int $companyId, string $code): ?Employee;
 
+	/**
+	 * @param int $companyId
+	 * @param array<string> $uniqueList
+	 * @param int $limit
+	 *
+	 * @return EmployeeCollection
+	 */
+	public function listByUniqueList(int $companyId, array $uniqueList, int $limit = 100, int $offset = 0): EmployeeCollection;
+
 	public function getCollectionByPersonIds(array $personIds, ?int $limit): EmployeeCollection;
 
 	public function getSeveralByPersonIds(array $personIds): EmployeeCollection;

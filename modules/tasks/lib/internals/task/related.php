@@ -1,13 +1,11 @@
-<?
-/**
- * Class RelatedTable
- *
- * @package Bitrix\Tasks
- **/
+<?php
 
 namespace Bitrix\Tasks\Internals\Task;
 
-use Bitrix\Tasks\Internals\TaskDataManager;
+use Bitrix\Main\ORM\Data\AddStrategy\Trait\AddInsertIgnoreTrait;
+use Bitrix\Main\ORM\Data\DataManager;
+use Bitrix\Main\ORM\Data\Internal\DeleteByFilterTrait;
+use Bitrix\Main\ORM\Fields\IntegerField;
 
 /**
  * Class RelatedTable
@@ -25,42 +23,29 @@ use Bitrix\Tasks\Internals\TaskDataManager;
  * @method static \Bitrix\Tasks\Internals\Task\EO_Related wakeUpObject($row)
  * @method static \Bitrix\Tasks\Internals\Task\EO_Related_Collection wakeUpCollection($rows)
  */
-class RelatedTable extends TaskDataManager
+class RelatedTable extends DataManager
 {
-	/**
-	 * Returns DB table name for entity.
-	 *
-	 * @return string
-	 */
-	public static function getTableName()
+	use AddInsertIgnoreTrait;
+	use DeleteByFilterTrait;
+
+	public static function getTableName(): string
 	{
 		return 'b_tasks_dependence';
 	}
 
-	/**
-	 * @return static
-	 */
-	public static function getClass()
+	public static function getClass(): string
 	{
-		return get_called_class();
+		return static::class;
 	}
 
-	/**
-	 * Returns entity map definition.
-	 *
-	 * @return array
-	 */
-	public static function getMap()
+	public static function getMap(): array
 	{
-		return array(
-			'TASK_ID' => array(
-				'data_type' => 'integer',
-				'primary' => true,
-			),
-			'DEPENDS_ON_ID' => array(
-				'data_type' => 'integer',
-				'primary' => true,
-			),
-		);
+		return [
+			(new IntegerField('TASK_ID'))
+				->configurePrimary(),
+
+			(new IntegerField('DEPENDS_ON_ID'))
+				->configurePrimary(),
+		];
 	}
 }

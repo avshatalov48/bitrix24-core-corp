@@ -1151,6 +1151,18 @@ class Cleaner implements IErrorable, Volume\IVolumeTimeLimit
 	{
 		$subTaskDone = true;
 
+		$securityContext = $this->getSecurityContext($this->getOwner(), $folder);
+		if (!$securityContext->canDelete($folder->getId()))
+		{
+			$this->collectError(
+				new Error('Not allowed to drop folder #'. $folder->getId(), 'ACCESS_DENIED'),
+				false,
+				true
+			);
+
+			return false;
+		}
+
 		if (!$this->isAllowClearStorage($folder->getStorage()))
 		{
 			$this->collectError(

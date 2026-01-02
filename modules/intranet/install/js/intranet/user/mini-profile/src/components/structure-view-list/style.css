@@ -1,0 +1,88 @@
+.intranet-user-mini-profile__structure-view-list {
+	display: flex;
+	height: 100%;
+	width: 100%;
+	flex-flow: column;
+	gap: 10px;
+}
+
+.intranet-user-mini-profile__structure-view-list__preview-zone {
+	display: flex;
+	flex-flow: row nowrap;
+	overflow: hidden;
+	position: relative;
+	gap: var(--preview-zone-gap);
+	--preview-zone-gap: 10px;
+	height: 100%;
+
+	--min-department-height: 96px;
+	--missing-max-department-count: 0;
+	min-height: calc(405px - var(--missing-max-department-count) * var(--min-department-height))
+}
+
+.intranet-user-mini-profile__structure-view-list__preview-zone.--one-branch {
+	min-height: 0 !important;
+}
+
+.intranet-user-mini-profile__structure-view-control {
+	display: flex;
+	flex-flow: row nowrap;
+	background-color: var(--ui-color-base-7);
+	gap: 2px;
+	border-radius: 8px;
+	width: min-content;
+	justify-self: end;
+	align-self: end;
+}
+
+.intranet-user-mini-profile__structure-view-control-action {
+	cursor: pointer;
+	--ui-icon-set__icon-color: var(--ui-color-base-2);
+}
+.intranet-user-mini-profile__structure-view-control-action.--disabled {
+	cursor: none;
+	pointer-events: none;
+	--ui-icon-set__icon-color: var(--ui-color-base-5);
+}
+
+.intranet-user-mini-profile-structure-view-carousel-prev-enter-active, .intranet-user-mini-profile-structure-view-carousel-prev-leave-active,
+.intranet-user-mini-profile-structure-view-carousel-next-enter-active, .intranet-user-mini-profile-structure-view-carousel-next-leave-active {
+	transition: all .3s ease-out;
+}
+
+.intranet-user-mini-profile-structure-view-carousel-next-leave-to,
+.intranet-user-mini-profile-structure-view-carousel-prev-leave-to,
+.intranet-user-mini-profile-structure-view-carousel-next-enter-from,
+.intranet-user-mini-profile-structure-view-carousel-prev-enter-from
+{
+	opacity: 0;
+}
+
+.intranet-user-mini-profile-structure-view-carousel-next-enter-from {
+	transform: translateX(calc(100% + var(--preview-zone-gap)));
+}
+.intranet-user-mini-profile-structure-view-carousel-next-enter-to {
+	transform: translateX(0);
+}
+.intranet-user-mini-profile-structure-view-carousel-prev-enter-from {
+	transform: translateX(calc(-100% - var(--preview-zone-gap)));
+}
+.intranet-user-mini-profile-structure-view-carousel-prev-enter-to {
+	transform: translateX(0);
+}
+.intranet-user-mini-profile-structure-view-carousel-prev-leave-to {
+	transform: translateX(calc(100% + var(--preview-zone-gap)));
+}
+.intranet-user-mini-profile-structure-view-carousel-next-leave-to {
+	transform: translateX(calc(-100% - var(--preview-zone-gap)));
+}
+
+.intranet-user-mini-profile-structure-view-carousel-prev-enter-from,
+.intranet-user-mini-profile-structure-view-carousel-prev-enter-to,
+.intranet-user-mini-profile-structure-view-carousel-prev--enter,
+.intranet-user-mini-profile-structure-view-carousel-next-enter-from,
+.intranet-user-mini-profile-structure-view-carousel-next-enter-to,
+.intranet-user-mini-profile-structure-view-carousel-next-enter
+{
+	position: absolute;
+}

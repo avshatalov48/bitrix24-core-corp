@@ -8,7 +8,7 @@ import ClientCommandHandler from "./client-command-handler";
 import ServerCommandHandler from "./server-command-handler";
 import UserManager from "./user-manager";
 import {LegacyPopup, SharingControlType} from "disk.sharing-legacy-popup";
-import {ExternalLink} from "disk.external-link";
+import { ExternalLink, ExternalLinkForUnifiedLink } from "disk.external-link";
 import {PromoPopup} from "disk.onlyoffice-promo-popup";
 import CustomErrorControl from "./custom-error-controls";
 
@@ -38,6 +38,7 @@ export default class OnlyOffice
 	usersInDocument: UserManager = null;
 	sharingControlType: ?SharingControlType = null;
 	brokenDocumentOpened: boolean = false;
+	unifiedLinkAccessOnly: boolean = false;
 
 	constructor(editorOptions: EditorOptions)
 	{
@@ -66,8 +67,8 @@ export default class OnlyOffice
 			context: this.context,
 			userBoxNode: this.userBoxNode,
 		});
+		this.unifiedLinkAccessOnly = options.unifiedLinkAccessOnly;
 
-		this.sendTelemetryEvent('load');
 		this.initializeEditor(options.editorJson);
 
 		const currentSlider = BX.SidePanel.Instance.getSliderByWindow(window);
@@ -116,26 +117,6 @@ export default class OnlyOffice
 			});
 			BX.PULL.start(this.pullConfig);
 		}
-	}
-
-	sendTelemetryEvent(action, data): void
-	{
-		data = data || {};
-
-		const currentSlider = BX.SidePanel.Instance.getSliderByWindow(window);
-		if (!currentSlider)
-		{
-			return;
-		}
-
-		const currentSliderData = currentSlider.getData();
-		data.action = action;
-		data.uid = currentSliderData.get('uid');
-		data.documentSessionId = this.context.documentSession.id;
-		data.documentSessionHash = this.context.documentSession.hash;
-		data.fileSize = this.context.object.size;
-
-		BX.Disk.sendTelemetryEvent(data);
 	}
 
 	bindEvents(): void
@@ -319,7 +300,14 @@ export default class OnlyOffice
 			return;
 		}
 
-		ExternalLink.showPopup(this.context.object.id);
+		if (this.unifiedLinkAccessOnly)
+		{
+			ExternalLinkForUnifiedLink.showPopup(this.context.object.uniqueCode);
+		}
+		else
+		{
+			ExternalLink.showPopup(this.context.object.id);
+		}
 	}
 
 	handleClickEditSubItems(event, menuItem: MenuItem): void
@@ -436,8 +424,6 @@ export default class OnlyOffice
 		PULL.sendMessageToChannels([this.context.object.publicChannel], 'disk', 'exitDocument', {
 			fromUserId: this.context.currentUser.id,
 		});
-
-		this.sendTelemetryEvent('exit');
 
 		this.emitEventOnClosed();
 
@@ -574,8 +560,6 @@ export default class OnlyOffice
 
 	handleDocumentReady(): void
 	{
-		this.sendTelemetryEvent('ready');
-
 		this.caughtDocumentReady = Date.now();
 	}
 

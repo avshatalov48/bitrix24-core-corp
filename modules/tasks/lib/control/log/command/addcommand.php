@@ -3,7 +3,7 @@
 namespace Bitrix\Tasks\Control\Log\Command;
 
 use Bitrix\Main\Type\DateTime;
-use Bitrix\Tasks\AbstractCommand;
+use Bitrix\Tasks\Flow\AbstractCommand;
 use Bitrix\Tasks\Control\Log\Change;
 use Bitrix\Tasks\Internals\Attribute\Min;
 use Bitrix\Tasks\Internals\Attribute\Nullable;

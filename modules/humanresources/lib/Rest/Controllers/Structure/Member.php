@@ -154,6 +154,6 @@ final class Member extends RestController
 
 	private function getNodeMemberDontExistError(int $id): Main\Error
 	{
-		return new Main\Error("Node member with id: ${id} dont exist",'HR_NODE_MEMBER_DONT_EXIST');
+		return new Main\Error("Node member with id: {$id} dont exist",'HR_NODE_MEMBER_DONT_EXIST');
 	}
 }

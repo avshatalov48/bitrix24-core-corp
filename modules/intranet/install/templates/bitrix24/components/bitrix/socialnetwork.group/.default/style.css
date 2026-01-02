@@ -132,6 +132,14 @@ a.socialnetwork-group-title-link:hover {
 	display: none;
 }
 
+.socialnetwork-group-description-wrapper {
+	display: block;
+	overflow: hidden;
+	background: #fff;
+	padding: 10px 0 0 0;
+	border-radius: var(--ui-border-radius-md);
+}
+
 .socialnetwork-group-description {
 	text-align: left;
 	vertical-align: top;

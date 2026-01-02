@@ -74,6 +74,7 @@ class TypePreset
 					'isSourceEnabled' => true,
 					'isUseInUserfieldEnabled' => true,
 					'isObserversEnabled' => true,
+					'isRecurringEnabled' => true,
 					'isRecyclebinEnabled' => true,
 					'isAutomationEnabled' => true,
 					'isBizProcEnabled' => true,

@@ -11,7 +11,6 @@ return [
 	'js' => 'dist/sign-settings.bundle.js',
 	'rel' => [
 		'main.core.cache',
-		'sign.feature-storage',
 		'sign.v2.analytics',
 		'sign.v2.document-setup',
 		'sign.v2.preview',

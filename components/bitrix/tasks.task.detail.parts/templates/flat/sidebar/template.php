@@ -352,13 +352,13 @@ $canReadGroupTasks = (
 						'bitrix:tasks.widget.replication',
 						'view',
 						array(
-							'DATA' => $taskData["SE_TEMPLATE"]["REPLICATE_PARAMS"],
+							'DATA' => $taskData["SE_TEMPLATE"]["REPLICATE_PARAMS"] ?? null,
 							'COMPANY_WORKTIME' => $arResult['AUX_DATA']['COMPANY_WORKTIME'] ?? null,
 							'REPLICATE' => $taskData["REPLICATE"],
 							'ENABLE_SYNC' => true,
-							'ENTITY_ID' => $taskData["SE_TEMPLATE"]["ID"],
+							'ENTITY_ID' => $taskData["SE_TEMPLATE"]["ID"] ?? null,
 							'PATH_TO_TEMPLATES_TEMPLATE' => $arParams['PATH_TO_TEMPLATES_TEMPLATE'],
-							'TEMPLATE_CREATED_BY' => $taskData["SE_TEMPLATE"]['CREATED_BY'],
+							'TEMPLATE_CREATED_BY' => $taskData["SE_TEMPLATE"]['CREATED_BY'] ?? null,
 						),
 						null,
 						array("HIDE_ICONS" => "Y", "ACTIVE_COMPONENT" => "Y")
@@ -444,7 +444,7 @@ if(\Bitrix\Main\Loader::includeModule('rest'))
 {
 	$restPlacementHandlerList = \Bitrix\Rest\PlacementTable::getHandlersList(\CTaskRestService::PLACEMENT_TASK_VIEW_SIDEBAR);
 	$restPlacementHandlerList = array_filter($restPlacementHandlerList, function($placement) use ($taskData) {
-		$groupIdOption = (string)$placement['OPTIONS']['groupId'];
+		$groupIdOption = (string)($placement['OPTIONS']['groupId'] ?? '');
 		if ($groupIdOption == '')
 		{
 			return true;

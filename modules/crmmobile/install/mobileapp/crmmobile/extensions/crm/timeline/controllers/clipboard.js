@@ -47,7 +47,7 @@ jn.define('crm/timeline/controllers/clipboard', (require, exports, module) => {
 					? Loc.getMessage('M_CRM_TIMELINE_CONTROLLER_CLIPBOARD_LINK_COPIED')
 					: Loc.getMessage('M_CRM_TIMELINE_CONTROLLER_CLIPBOARD_TEXT_COPIED');
 
-				copyToClipboard(content, confirmMessage);
+				copyToClipboard(content, confirmMessage, true, true);
 				Haptics.impactLight();
 			}
 		}

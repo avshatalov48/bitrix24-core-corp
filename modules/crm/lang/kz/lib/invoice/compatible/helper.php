@@ -1,0 +1,22 @@
+<?php
+$MESS["CRM_INVOICE_COMPAT_HELPER_CANCEL_ERROR"] = "Шот төлеуді болдырмау қатесі. #MESSAGE#";
+$MESS["CRM_INVOICE_COMPAT_HELPER_DELETE_ERROR"] = "Шотты жою қатесі. #MESSAGE#";
+$MESS["CRM_INVOICE_COMPAT_HELPER_DUB_CANCEL"] = "#ID# идентификаторы бар шотты төлеу болдырылмады";
+$MESS["CRM_INVOICE_COMPAT_HELPER_DUB_PAY"] = "#ID# идентификаторы бар шот төленді";
+$MESS["CRM_INVOICE_COMPAT_HELPER_DUB_STATUS"] = "#ID# идентификаторы бар шоттың қажетті мәртебесі бар";
+$MESS["CRM_INVOICE_COMPAT_HELPER_EMPTY_ACCOUNT_NUMBER"] = "Шот нөмірі бос болуы мүмкін емес";
+$MESS["CRM_INVOICE_COMPAT_HELPER_EMPTY_CURRENCY"] = "Валюта көрсетілмеген";
+$MESS["CRM_INVOICE_COMPAT_HELPER_EMPTY_PERS_TYPE"] = "Төлеуші түрі көрсетілмеген";
+$MESS["CRM_INVOICE_COMPAT_HELPER_EMPTY_SITE"] = "Шоттың сайты көрсетілмеген";
+$MESS["CRM_INVOICE_COMPAT_HELPER_EMPTY_USER_ID"] = "Сатып алушының идентификаторы көрсетілмеген";
+$MESS["CRM_INVOICE_COMPAT_HELPER_EXISTING_ACCOUNT_NUMBER"] = "Көрсетілген шот нөмірі бұрыннан пайдаланылады";
+$MESS["CRM_INVOICE_COMPAT_HELPER_NO_INVOICE"] = "#ID# идентификаторы бар шот табылмады";
+$MESS["CRM_INVOICE_COMPAT_HELPER_NO_INVOICE_ID"] = "Шоттың идентификаторы берілмеген";
+$MESS["CRM_INVOICE_COMPAT_HELPER_PAY_ERROR"] = "Шотты төлеу қатесі. #MESSAGE#";
+$MESS["CRM_INVOICE_COMPAT_HELPER_WRONG_CURRENCY"] = "#ID# идентификаторы бар валюта табылмады";
+$MESS["CRM_INVOICE_COMPAT_HELPER_WRONG_DELIVERY"] = "#ID# идентификаторы бар жеткізу қызметі табылмады";
+$MESS["CRM_INVOICE_COMPAT_HELPER_WRONG_PERSON_TYPE"] = "#ID# идентификаторы бар төлеуші түрі табылмады";
+$MESS["CRM_INVOICE_COMPAT_HELPER_WRONG_PS"] = "#ID# идентификаторы бар төлем жүйесі табылмады";
+$MESS["CRM_INVOICE_COMPAT_HELPER_WRONG_SITE"] = "#ID# идентификаторы бар сайт табылмады";
+$MESS["CRM_INVOICE_COMPAT_HELPER_WRONG_STATUS"] = "#ID# идентификаторы бар мәртебе табылмады";
+$MESS["CRM_INVOICE_COMPAT_HELPER_WRONG_USER"] = "#ID# идентификаторы бар пайдаланушы табылмады";

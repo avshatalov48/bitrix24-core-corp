@@ -2,10 +2,11 @@
 
 return [
 	'extensions' => [
-		'apptheme',
-		'layout/ui/fields/entity-selector',
-		'tasks:task',
-		'layout/ui/menu',
+		'tokens',
 		'assets/icons',
+		'layout/ui/fields/entity-selector',
+		'layout/ui/menu',
+		'tasks:entry',
+		'tasks:task',
 	],
 ];

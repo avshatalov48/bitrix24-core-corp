@@ -48,19 +48,24 @@ abstract class BaseItemGroupAction extends GroupAction
 
 	final protected function canUpdateItemsInCategory(): bool
 	{
-		return $this->userPermissions->checkUpdatePermissions(
-			$this->factory->getEntityTypeId(),
-			0,
-			$this->gridSettings->getCategoryId()
-		);
+		return is_null($this->gridSettings->getCategoryId())
+			? $this->userPermissions->entityType()->canUpdateItems($this->factory->getEntityTypeId())
+			: $this->userPermissions->entityType()->canUpdateItemsInCategory(
+				$this->factory->getEntityTypeId(),
+				$this->gridSettings->getCategoryId()
+			)
+
+		;
 	}
 
 	final protected function canDeleteItemsInCategory(): bool
 	{
-		return $this->userPermissions->checkDeletePermissions(
-			$this->factory->getEntityTypeId(),
-			0,
-			$this->gridSettings->getCategoryId()
-		);
+		return is_null($this->gridSettings->getCategoryId())
+			? $this->userPermissions->entityType()->canDeleteItems($this->factory->getEntityTypeId())
+			: $this->userPermissions->entityType()->canDeleteItemsInCategory(
+				$this->factory->getEntityTypeId(),
+				$this->gridSettings->getCategoryId()
+			)
+		;
 	}
 }

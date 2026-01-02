@@ -1,5 +1,8 @@
 <?php
 
+use Bitrix\Tasks\Integration\Bizproc\Document\Task;
+use Bitrix\Tasks\Internals\Task\Result\ResultManager;
+
 if (!defined('B_PROLOG_INCLUDED') || B_PROLOG_INCLUDED !== true)
 {
 	die();
@@ -64,9 +67,11 @@ class CBPTasksGetDocumentActivity extends CBPActivity
 
 		$taskId = (int)$taskId;
 		$map = $this->FieldsMap;
-		$document = \Bitrix\Tasks\Integration\Bizproc\Document\Task::getDocument($taskId);
+		$select = self::getSelectFieldsFromMap($map);
+		$task = \CTasks::GetByID($taskId, false, ['select' => array_unique($select)]);
+		$fields = $task ? $task->fetch() : null;
 
-		if (!$document || !is_array($map))
+		if (!$fields || !is_array($map))
 		{
 			$this->writeDebugInfo($logMap);
 
@@ -81,14 +86,38 @@ class CBPTasksGetDocumentActivity extends CBPActivity
 
 		$this->SetPropertiesTypes($map);
 
+		if (CModule::IncludeModule('forum'))
+		{
+			if (isset($map['COMMENT_RESULT']))
+			{
+				$fields['COMMENT_RESULT'] =
+					(new ResultManager(0))
+						->getTaskResults($taskId)
+				;
+			}
+			if (isset($map['COMMENT_RESULT_LAST']))
+			{
+				$fields['COMMENT_RESULT_LAST'] = ResultManager::getLastResult(
+					$taskId
+				);
+			}
+		}
+
+		if (isset($map['HALF_TIME_BEFORE_EXPIRE_MESSAGE']) || isset($map['HIMSELF_ADMIN_TASK_NOT_TAKEN_MESSAGE']))
+		{
+			$fields = Task::setFlowMessages($fields);
+		}
+
+		Task::convertFieldsToDocument($fields, $map);
+
 		foreach ($map as $id => $field)
 		{
-			$this->arProperties[$id] = $document[$id];
+			$this->arProperties[$id] = $fields[$id];
 		}
 
 		if ($this->workflow->isDebug())
 		{
-			$this->writeDebugInfo($this->getDebugInfo($document, array_merge($logMap, $map)));
+			$this->writeDebugInfo($this->getDebugInfo($fields, array_merge($logMap, $map)));
 		}
 
 		return CBPActivityExecutionStatus::Closed;
@@ -149,7 +178,7 @@ class CBPTasksGetDocumentActivity extends CBPActivity
 
 	private static function getDocumentFieldsOptions(): array
 	{
-		$fields = \Bitrix\Tasks\Integration\Bizproc\Document\Task::getDocumentFields(null);
+		$fields = Task::getDocumentFields(null);
 
 		$options = [];
 		foreach ($fields as $fieldKey => $fieldValue)
@@ -236,7 +265,7 @@ class CBPTasksGetDocumentActivity extends CBPActivity
 
 	private static function buildFieldsMap($fields): array
 	{
-		$documentFields = \Bitrix\Tasks\Integration\Bizproc\Document\Task::getDocumentFields(null);
+		$documentFields = Task::getDocumentFields(null);
 
 		$map = [];
 		if (is_array($fields))
@@ -251,6 +280,25 @@ class CBPTasksGetDocumentActivity extends CBPActivity
 		}
 
 		return $map;
+	}
+
+	private static function getSelectFieldsFromMap(array $map): array
+	{
+		$select = array_keys($map);
+		if (isset($map['IS_IMPORTANT']))
+		{
+			$select[] = 'PRIORITY';
+		}
+		if (isset($map['STATUS']))
+		{
+			$select[] = 'REAL_STATUS';
+		}
+		if (isset($map['IS_EXPIRED']))
+		{
+			$select = array_merge($select, ['DEADLINE', 'REAL_STATUS', 'CLOSED_DATE']);
+		}
+
+		return $select;
 	}
 
 	private static function checkAdminPermission()

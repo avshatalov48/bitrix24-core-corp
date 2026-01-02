@@ -74,6 +74,7 @@ class rpa extends CModule
 		$eventManager->registerEventHandler('pull', 'OnGetDependentModule', $this->MODULE_ID, '\Bitrix\Rpa\Driver', 'onGetDependentModule', 800);
 		$eventManager->registerEventHandler('disk', 'onBuildAdditionalConnectorList', 'rpa', '\Bitrix\Rpa\Driver', 'onDiskBuildConnectorList');
 		$eventManager->registerEventHandler('rest', 'OnRestServiceBuildDescription', $this->MODULE_ID, '\Bitrix\Rpa\Driver', 'onRestServiceBuildDescription');
+		$eventManager->registerEventHandlerCompatible('im', 'OnGetNotifySchema', 'rpa', \Bitrix\Rpa\Integration\Im\NotifySchema::class, 'onGetNotifySchema');
 		RegisterModuleDependences("main", "OnAfterRegisterModule", "main", 'rpa', "installUserFields", 200, "/modules/rpa/install/index.php");
 
 		RegisterModule($this->MODULE_ID);
@@ -162,6 +163,7 @@ class rpa extends CModule
 		$eventManager->unRegisterEventHandler('pull', 'OnGetDependentModule', $this->MODULE_ID, '\Bitrix\Rpa\Driver', 'onGetDependentModule');
 		$eventManager->unRegisterEventHandler('disk', 'onBuildAdditionalConnectorList', $this->MODULE_ID, '\Bitrix\Rpa\Driver', 'onDiskBuildConnectorList');
 		$eventManager->unRegisterEventHandler('rest', 'OnRestServiceBuildDescription', $this->MODULE_ID, '\Bitrix\Rpa\Driver', 'onRestServiceBuildDescription');
+		$eventManager->unRegisterEventHandler('im', 'OnGetNotifySchema', 'rpa', \Bitrix\Rpa\Integration\Im\NotifySchema::class, 'onGetNotifySchema');
 		UnRegisterModuleDependences("main", "OnAfterRegisterModule", "main", $this->MODULE_ID, "installUserFields", "/modules/rpa/install/index.php");
 
 		UnRegisterModule($this->MODULE_ID);

@@ -26,6 +26,14 @@ class ActivityRelationMapping
 					'FIELD_NAME' => 'AB.OWNER_TYPE_ID',
 					'FIELD_TYPE' => 'int',
 				],
+				'CREATED_AT' => [
+					'IS_METRIC' => 'N', // 'Y'
+					'FIELD_NAME' => 'CA.CREATED',
+					'FIELD_TYPE' => 'datetime',
+					'TABLE_ALIAS' => 'CA',
+					'JOIN' => 'INNER JOIN b_crm_act CA ON AB.ACTIVITY_ID = CA.ID',
+					'LEFT_JOIN' => 'LEFT JOIN b_crm_act CA ON AB.ACTIVITY_ID = CA.ID',
+				],
 			],
 		];
 	}

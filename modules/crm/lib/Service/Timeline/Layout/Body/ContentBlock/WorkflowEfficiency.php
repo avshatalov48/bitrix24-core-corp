@@ -89,7 +89,7 @@ class WorkflowEfficiency extends ContentBlock
 			'executionTime' => $this->getExecutionTime(),
 			'processTimeText' => Loc::getMessage('CRM_WORKFLOW_EFFICIENCY_PROCESS_TIME'),
 			'workflowResult' => $this->getWorkflowResult(),
-			'author' => $this->getAuthor(),
+			'author' => $this->getAuthor(), //TODO has a dependency on bizproc, delete after update
 		];
 	}
 }

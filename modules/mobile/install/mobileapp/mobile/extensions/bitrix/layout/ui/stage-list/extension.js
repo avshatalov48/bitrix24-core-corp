@@ -22,7 +22,9 @@ jn.define('layout/ui/stage-list', (require, exports, module) => {
 	 * @property {function} onOpenStageDetail
 	 * @property {function} onSelectedStage
 	 */
-	const AppTheme = require('apptheme');
+
+	const { Color, Indent, Corner } = require('tokens');
+	const { Text4 } = require('ui-system/typography/text');
 	const { Loc } = require('loc');
 	const { clone } = require('utils/object');
 	const { PureComponent } = require('layout/pure-component');
@@ -31,7 +33,6 @@ jn.define('layout/ui/stage-list', (require, exports, module) => {
 		MIN_STAGE_HEIGHT,
 	} = require('layout/ui/stage-list/item');
 
-	const ALL_STAGES_ITEM_ID = 0;
 	const ALL_STAGES_ITEM_STATUS_ID = '';
 
 	const STAY_STAGE_ITEM_ID = 0;
@@ -139,22 +140,16 @@ jn.define('layout/ui/stage-list', (require, exports, module) => {
 			return View(
 				{
 					style: {
-						borderRadius: 12,
-						flexDirection: 'column',
-						marginBottom: 8,
-						backgroundColor: AppTheme.colors.bgContentPrimary,
+						borderRadius: Corner.L.toNumber(),
+						marginBottom: Indent.M.toNumber(),
 					},
 				},
-				this.shouldShowStageListTitle && Text({
+				this.shouldShowStageListTitle && Text4({
 					text: this.getStageListTitle(),
 					style: {
-						color: AppTheme.colors.base2,
-						fontSize: 15,
-						fontWeight: '500',
-						marginLeft: 22,
-						marginRight: 19,
-						marginBottom: 4,
-						marginTop: 13,
+						color: Color.base4.toHex(),
+						marginHorizontal: Indent.XL3.toNumber(),
+						marginVertical: Indent.L.toNumber(),
 					},
 				}),
 				this.renderStayStageItem(),
@@ -193,7 +188,7 @@ jn.define('layout/ui/stage-list', (require, exports, module) => {
 
 		calculateHeight(stages)
 		{
-			return stages.length * MIN_STAGE_HEIGHT + 5;
+			return stages.length * MIN_STAGE_HEIGHT;
 		}
 
 		renderStageListItem(stage)
@@ -288,14 +283,6 @@ jn.define('layout/ui/stage-list', (require, exports, module) => {
 
 			return View(
 				{},
-				View(
-					{
-						style: {
-							height: 4,
-							backgroundColor: AppTheme.colors.bgSecondary,
-						},
-					},
-				),
 				...this.prepareStagesData(finalStages).map((stage) => this.renderStageListItem(stage)),
 			);
 		}
@@ -330,7 +317,7 @@ jn.define('layout/ui/stage-list', (require, exports, module) => {
 		id: kanbanSettingsId,
 		stage: {
 			id: kanbanSettingsId,
-			color: AppTheme.colors.bgContentPrimary,
+			color: Color.base7.toHex(),
 			name: BX.message('STAGE_LIST_ALL_STAGES_TITLE'),
 			statusId: ALL_STAGES_ITEM_STATUS_ID,
 			listMode: true,
@@ -341,8 +328,8 @@ jn.define('layout/ui/stage-list', (require, exports, module) => {
 	const stayStageItem = (showContentBorder = false) => ({
 		id: STAY_STAGE_ITEM_ID,
 		statusId: STAY_STAGE_ITEM_STATUS_ID,
-		color: AppTheme.colors.bgContentPrimary,
-		borderColor: AppTheme.colors.accentBrandBlue,
+		color: Color.bgContentPrimary.toHex(),
+		borderColor: Color.accentMainPrimaryalt.toHex(),
 		name: Loc.getMessage('STAGE_LIST_STAY_STAGE_TITLE'),
 		count: null,
 		total: null,

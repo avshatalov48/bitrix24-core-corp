@@ -8,7 +8,7 @@ use Bitrix\Mobile\Dto\Dto;
 
 final class RelatedCrmItemDto extends Dto
 {
-	public string $id;
+	public int|string $id;
 	public string $type;
 	public string $title;
 	public string $subtitle;

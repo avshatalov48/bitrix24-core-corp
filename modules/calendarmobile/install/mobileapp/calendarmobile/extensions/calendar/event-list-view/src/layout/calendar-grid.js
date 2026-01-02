@@ -3,8 +3,9 @@
  */
 jn.define('calendar/event-list-view/layout/calendar-grid', (require, exports, module) => {
 	const { Type } = require('type');
-	const { Color } = require('tokens');
+	const { Color, Component } = require('tokens');
 
+	const { CalendarType } = require('calendar/enums');
 	const { DateHelper } = require('calendar/date-helper');
 	const { EventModel } = require('calendar/model/event');
 	const { EventManager } = require('calendar/data-managers/event-manager');
@@ -52,33 +53,43 @@ jn.define('calendar/event-list-view/layout/calendar-grid', (require, exports, mo
 		{
 			return View(
 				{},
-				!this.props.isHidden && CalendarView(
-					{
-						style: {
-							backgroundColor: Color.bgNavigation.toHex(),
-							borderBottomWidth: 1,
-							borderBottomColor: Color.bgSeparatorSecondary.toHex(),
-						},
-						textStyle: {
-							today: {
-								textColor: Color.accentMainPrimary.toHex(),
-							},
-							todaySelected: {
-								backgroundColor: Color.accentMainPrimary.toHex(),
-								textColor: Color.baseWhiteFixed.toHex(),
-							},
-							currentWeekNumber: {
-								textColor: Color.accentMainPrimary.toHex(),
-							},
-						},
-						initialDate: Math.round((State.selectedDate.getTime() - this.timezoneOffset) / 1000),
-						showWeekNumbers: this.props.showWeekNumbers,
-						firstWeekday: SettingsManager.getFirstWeekday(),
-						onMonthSwitched: this.onMonthSwitched,
-						onDateSelected: this.onDateSelected,
-						ref: this.#bindCalendarRef,
+				!this.props.isHidden && this.renderContent(),
+			);
+		}
+
+		renderContent()
+		{
+			return View(
+				{
+					style: {
+						paddingTop: State.isTabsViewMode ? Component.areaPaddingTAt.toNumber() : 0,
 					},
-				),
+				},
+				CalendarView({
+					style: {
+						backgroundColor: Color.bgNavigation.toHex(),
+						borderBottomWidth: 1,
+						borderBottomColor: Color.bgSeparatorSecondary.toHex(),
+					},
+					textStyle: {
+						today: {
+							textColor: Color.accentMainPrimary.toHex(),
+						},
+						todaySelected: {
+							backgroundColor: Color.accentMainPrimary.toHex(),
+							textColor: Color.baseWhiteFixed.toHex(),
+						},
+						currentWeekNumber: {
+							textColor: Color.accentMainPrimary.toHex(),
+						},
+					},
+					initialDate: Math.round((State.selectedDate.getTime() - this.timezoneOffset) / 1000),
+					showWeekNumbers: this.props.showWeekNumbers,
+					firstWeekday: SettingsManager.getFirstWeekday(),
+					onMonthSwitched: this.onMonthSwitched,
+					onDateSelected: this.onDateSelected,
+					ref: this.#bindCalendarRef,
+				}),
 			);
 		}
 
@@ -88,7 +99,8 @@ jn.define('calendar/event-list-view/layout/calendar-grid', (require, exports, mo
 		};
 
 		onDateSelected = (timestamp) => {
-			const date = new Date(timestamp * 1000 + this.timezoneOffset);
+			const date = new Date(timestamp * 1000);
+			date.setTime(date.getTime() + this.getSetDateOffset(date));
 
 			State.setSelectedDate(date);
 		};
@@ -101,7 +113,8 @@ jn.define('calendar/event-list-view/layout/calendar-grid', (require, exports, mo
 				});
 			}
 
-			const date = new Date(timestamp * 1000 + this.timezoneOffset);
+			const date = new Date(timestamp * 1000);
+			date.setTime(date.getTime() + this.getSetDateOffset(date));
 
 			this.setMonthTitle(date);
 			this.setDateAfterMonthSwitch(date);
@@ -121,10 +134,26 @@ jn.define('calendar/event-list-view/layout/calendar-grid', (require, exports, mo
 
 		setMonthTitle(date)
 		{
-			const text = DateHelper.getShortMonthName(date);
-			const detailText = date.getFullYear().toString();
+			if (State.isBaseViewMode)
+			{
+				this.props.layout.setTitle({
+					text: this.getMonth(date),
+					detailText: this.getYear(date),
+					useLargeTitleMode: true,
+				});
+			}
+		}
 
-			this.props.layout.setTitle({ text, detailText, useLargeTitleMode: true });
+		getMonth(date)
+		{
+			const monthName = DateHelper.getShortMonthName(date);
+
+			return monthName.charAt(0).toUpperCase() + monthName.slice(1);
+		}
+
+		getYear(date)
+		{
+			return date.getFullYear().toString();
 		}
 
 		setDateAfterMonthSwitch(date)
@@ -157,11 +186,18 @@ jn.define('calendar/event-list-view/layout/calendar-grid', (require, exports, mo
 				return;
 			}
 
-			const events = selectByMonth(store.getState(), {
-				date,
-				sectionIds: SectionManager.getActiveSectionsIds(),
-				showDeclined: false,
+			const sectionIds = SectionManager.getActiveSectionsIds().filter((sectionId) => {
+				return !this.props.hiddenSections.includes(sectionId);
 			});
+
+			const events = selectByMonth(
+				store.getState(),
+				{
+					date,
+					sectionIds,
+					showDeclined: false,
+				},
+			);
 
 			const checkedDates = [];
 			const inviteDates = [];
@@ -222,21 +258,27 @@ jn.define('calendar/event-list-view/layout/calendar-grid', (require, exports, mo
 		{
 			const invites = {};
 
+			if (State.calType === CalendarType.USER && State.ownerId !== Number(env.userId))
+			{
+				return invites;
+			}
+
 			events.forEach((reduxEvent) => {
 				const event = EventModel.fromReduxModel(reduxEvent);
-				const isLongWithTime = false;
+				const isLongWithTime = event.isLongWithTime();
 
 				if (event.isInvited())
 				{
-					let type = 'single';
+					let type = inviteEventTypes.single;
+
 					if (isLongWithTime)
 					{
-						type = 'long';
+						type = inviteEventTypes.long;
 					}
 
 					if (event.isRecurrence())
 					{
-						type = 'recurrent';
+						type = inviteEventTypes.recurrent;
 					}
 
 					invites[type] ??= {};
@@ -299,17 +341,35 @@ jn.define('calendar/event-list-view/layout/calendar-grid', (require, exports, mo
 		{
 			return [...events].sort((event1, event2) => DateHelper.compareDayCodes(event1.dayCode, event2.dayCode));
 		}
+
+		getSetDateOffset(date)
+		{
+			return isAndroid ? 0 : DateHelper.getDateTimezoneOffset(date);
+		}
 	}
 
-	const mapStateToProps = (state) => ({
-		showWeekNumbers: state.showWeekNumbers,
-		isHidden: state.isSearchMode && !state.invitesSelected,
-		events: selectByMonth(store.getState(), {
-			date: state.selectedDate,
-			sectionIds: SectionManager.getActiveSectionsIds(),
-			showDeclined: state.showDeclined,
-		}),
-	});
+	const inviteEventTypes = {
+		single: 'single',
+		long: 'long',
+		recurrent: 'recurrent',
+	};
+
+	const mapStateToProps = (state) => {
+		const sectionIds = SectionManager.getActiveSectionsIds().filter((sectionId) => {
+			return !state.hiddenSections.includes(sectionId);
+		});
+
+		return {
+			showWeekNumbers: state.showWeekNumbers,
+			isHidden: state.isSearchMode && !state.invitesSelected,
+			hiddenSections: state.hiddenSections,
+			events: selectByMonth(store.getState(), {
+				sectionIds,
+				date: state.selectedDate,
+				showDeclined: state.showDeclined,
+			}),
+		};
+	};
 
 	module.exports = { CalendarGrid: observeState(CalendarGrid, mapStateToProps) };
 });

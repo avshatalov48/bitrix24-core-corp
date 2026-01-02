@@ -2,7 +2,7 @@
 
 namespace Bitrix\HumanResources\Type\HcmLink;
 
-use Bitrix\HumanResources\Trait\ValuesTrait;
+use Bitrix\HumanResources\Internals\Trait\ValuesTrait;
 
 enum FieldType: int
 {
@@ -23,6 +23,10 @@ enum FieldType: int
 	case INN = 1033;
 	case POSITION = 1034;
 	case DEPARTMENT = 1035;
+
+	case DOCUMENT_REGISTRATION_NUMBER = 1036;
+	case DOCUMENT_UID = 1037;
+	case DOCUMENT_DATE = 1038;
 
 	public function isSpecial(): bool
 	{

@@ -64,8 +64,21 @@ jn.define('im/messenger/lib/helper/url', (require, exports, module) => {
 				return queryString.split('&').reduce(
 					(params, param) => {
 						const [key, value] = param.split('=');
+						let decodedValue = '';
+						if (value)
+						{
+							const replaced = value.replaceAll('+', ' ');
+							try
+							{
+								decodedValue = decodeURIComponent(replaced);
+							}
+							catch
+							{
+								decodedValue = value;
+							}
+						}
 						// eslint-disable-next-line no-param-reassign
-						params[key] = value ? decodeURIComponent(value.replace(/\+/g, ' ')) : '';
+						params[key] = decodedValue;
 
 						return params;
 					},
@@ -74,6 +87,33 @@ jn.define('im/messenger/lib/helper/url', (require, exports, module) => {
 			}
 
 			return {};
+		}
+
+		/**
+		 * @return {boolean}
+		 */
+		get isEncoded()
+		{
+			if (!Type.isString(this.href))
+			{
+				return false;
+			}
+
+			if (!/%[\da-f]{2}/i.test(this.href))
+			{
+				return false;
+			}
+
+			try
+			{
+				decodeURIComponent(this.href);
+
+				return true;
+			}
+			catch
+			{
+				return false;
+			}
 		}
 	}
 

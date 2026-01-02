@@ -288,6 +288,8 @@ class Invoice extends \CCrmDocument implements \IBPWorkflowDocument
 
 	static public function GetDocument($documentId)
 	{
+		$args = func_get_args();
+		$select = $args[2] ?? ['*'];
 		$arDocumentID = static::GetDocumentInfo($documentId);
 		if (empty($arDocumentID))
 			throw new \CBPArgumentNullException('documentId');
@@ -295,7 +297,10 @@ class Invoice extends \CCrmDocument implements \IBPWorkflowDocument
 		$arResult = null;
 
 		//TODO: use new API
-		$invoiceFields = \CCrmInvoice::GetByID($arDocumentID['ID'], false);
+		$invoiceFields = \CCrmInvoice::GetList(
+			arFilter: ['ID' => $arDocumentID['ID'], 'CHECK_PERMISSIONS' => 'N'],
+			arSelectFields: $select
+		);
 
 		if ($invoiceFields)
 		{
@@ -415,8 +420,17 @@ class Invoice extends \CCrmDocument implements \IBPWorkflowDocument
 		);
 	}
 
-	public static function createAutomationTarget($documentType)
+	public static function createAutomationTarget($documentType, string|int|null $documentId = null)
 	{
+		if (is_string($documentId))
+		{
+			[$entityTypeId, $entityId] = \CCrmBizProcHelper::resolveEntityIdByDocumentId($documentId);
+			if ($entityId > 0 && $entityTypeId === \CCrmOwnerType::Invoice)
+			{
+				return \Bitrix\Crm\Automation\Factory::getTarget(\CCrmOwnerType::Invoice, $entityId);
+			}
+		}
+
 		return \Bitrix\Crm\Automation\Factory::createTarget(\CCrmOwnerType::Invoice);
 	}
 

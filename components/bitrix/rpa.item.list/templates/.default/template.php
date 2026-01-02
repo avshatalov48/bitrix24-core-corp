@@ -25,7 +25,6 @@ if($component->getErrors())
 
 <?php
 $component->addToolbar($this);
-\Bitrix\Rpa\Driver::getInstance()->getBitrix24Manager()->addFeedbackButtonToToolbar('list');
 ?>
 
 <div class="rpa-wrapper">

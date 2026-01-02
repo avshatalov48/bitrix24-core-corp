@@ -3,26 +3,16 @@ if (!defined("B_PROLOG_INCLUDED") || B_PROLOG_INCLUDED!==true) die();
 
 CJSCore::Init(["voximplant.common", "sidepanel"]);
 
-$isBitrix24Template = (SITE_TEMPLATE_ID == "bitrix24");
-if($isBitrix24Template)
-{
-	$this->SetViewTarget("pagetitle", 100);
-}
-?>
-<div class="pagetitle-container pagetitle-align-right-container">
-	<span id="add-ivr" class="webform-small-button webform-small-button-blue bx24-top-toolbar-add">
-		<span class="webform-small-button-left"></span>
-		<span class="webform-small-button-icon"></span>
-		<span class="webform-small-button-text"><?=GetMessage('VOX_IVR_LIST_ADD_2')?></span>
-		<span class="webform-small-button-right"></span>
-	</span>
-</div>
-<?
-
-if($isBitrix24Template)
-{
-	$this->EndViewTarget();
-}
+$buttonAdd = new \Bitrix\UI\Buttons\Button([
+	'text' => GetMessage(('VOX_IVR_LIST_ADD_2')),
+	'icon' => Bitrix\UI\Buttons\Icon::ADD,
+	'color' => \Bitrix\UI\Buttons\Color::PRIMARY,
+	'dataset' => [
+		'toolbar-collapsed-icon' => Bitrix\UI\Buttons\Icon::ADD,
+	]
+]);
+$buttonAdd->addAttribute('id', 'add-ivr');
+\Bitrix\UI\Toolbar\Facade\Toolbar::addButton($buttonAdd);
 
 $APPLICATION->IncludeComponent("bitrix:ui.info.helper", "", array());
 

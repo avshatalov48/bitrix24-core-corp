@@ -120,6 +120,13 @@ final class Payment
 			$sum = (int)($sum * 100);
 		}
 
+		$purpose = $data->getPurpose();
+		if (!is_null($purpose))
+		{
+			$maxLength = $dataGenerator->getFieldValueMaximumLength(FinancialTransactionsRu::FIELD_PURPOSE);
+			$purpose = trim(mb_substr($purpose, 0, $maxLength));
+		}
+
 		$dataGenerator->setFields([
 			//receiver info
 			FinancialTransactionsRu::FIELD_NAME => $receiverData->getName(),
@@ -132,6 +139,7 @@ final class Payment
 
 			//general transaction info
 			FinancialTransactionsRu::FIELD_SUM => $sum,
+			FinancialTransactionsRu::FIELD_PURPOSE => $purpose,
 
 			//sender info
 			FinancialTransactionsRu::FIELD_PAYER_INN => $senderData->getInn(),

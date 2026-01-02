@@ -7,7 +7,6 @@ return [
 		'layout/ui/search-bar',
 		'ui-system/blocks/status-block',
 		'ui-system/layout/box',
-		'user/profile',
 		'loc',
 
 		'asset-manager',
@@ -23,5 +22,8 @@ return [
 		'intranet:statemanager/redux/slices/employees/observers/stateful-list-observer',
 		'intranet:invite-opener-new',
 		'intranet:analytics',
+		'intranet:statemanager/redux/slices/employees',
+		'analytics',
+		'user-profile',
 	],
 ];

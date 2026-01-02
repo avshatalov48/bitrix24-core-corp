@@ -1,10 +1,14 @@
 <?php
-if(!defined('B_PROLOG_INCLUDED') || B_PROLOG_INCLUDED!==true)
+
+if (!defined('B_PROLOG_INCLUDED') || B_PROLOG_INCLUDED !== true)
+{
 	die();
+}
 
 use Bitrix\Crm;
-use Bitrix\Main\Localization\Loc;
+use Bitrix\Crm\Service\Container;
 use Bitrix\Crm\Component\ComponentError;
+use Bitrix\Main\Localization\Loc;
 use Bitrix\Main\Type\Date;
 
 Loc::loadMessages(__FILE__);
@@ -15,84 +19,96 @@ class CCrmOrderShipmentDocumentComponent extends \CBitrixComponent
 	{
 		global $APPLICATION;
 		//region Params
-		$this->arResult['ENTITY_ID'] = isset($this->arParams['~ENTITY_ID']) ? $this->arParams['~ENTITY_ID'] : 0;
+		$this->arResult['ENTITY_ID'] = $this->arParams['~ENTITY_ID'] ?? 0;
 
+		$serviceContainer = Container::getInstance();
 		$shipment = Crm\Order\Manager::getShipmentObject((int)$this->arResult['ENTITY_ID']);
 		if (empty($shipment))
 		{
-			$checkPermissions = \Bitrix\Crm\Order\Permissions\Order::checkCreatePermission();
+			$checkPermissions = $serviceContainer
+				->getUserPermissions()
+				->entityType()
+				->canAddItems(\CCrmOwnerType::Order)
+			;
 		}
 		else
 		{
-			$checkPermissions = \Bitrix\Crm\Order\Permissions\Order::checkUpdatePermission($shipment->getParentOrderId());
+			$checkPermissions = $serviceContainer
+				->getUserPermissions()
+				->item()
+				->canUpdate(\CCrmOwnerType::Order, $shipment->getParentOrderId())
+			;
 		}
 
 		if (!$checkPermissions)
 		{
 			ShowError(ComponentError::getMessage(ComponentError::PERMISSION_DENIED));
+
 			return;
 		}
 
 		$APPLICATION->SetTitle(Loc::getMessage('CRM_ORDER_SHIPMENT_DOCUMENT_TITLE'));
 
-		$this->guid = $this->arResult['GUID'] = isset($this->arParams['GUID'])
-			? $this->arParams['GUID'] : "order_shipment_document_{$this->arResult['ENTITY_ID']}";
+		$this->arResult['GUID'] = $this->arParams['GUID'] ?? "order_shipment_document_{$this->arResult['ENTITY_ID']}";
 
-		$this->arResult['EDITOR_CONFIG_ID'] = isset($this->arParams['EDITOR_CONFIG_ID'])
-			? $this->arParams['EDITOR_CONFIG_ID'] : 'order_shipment_document_detail';
+		$this->arResult['EDITOR_CONFIG_ID'] = $this->arParams['EDITOR_CONFIG_ID'] ?? 'order_shipment_document_detail';
 
 		$this->arResult['CONTEXT_ID'] = \CCrmOwnerType::OrderShipmentName.'_'.$this->arResult['ENTITY_ID'];
 
-		$this->arResult['ENTITY_FIELDS'] = array(
-			array(
+		$this->arResult['ENTITY_FIELDS'] = [
+			[
 				'name' => 'FIELDS',
 				'type' => 'order_subsection',
 				'required' => true,
-				'elements' => array(
-					array(
+				'elements' => [
+					[
 						'name' => 'TRACKING_NUMBER',
 						'title' => Loc::getMessage('CRM_ORDER_SHIPMENT_FIELD_TRACKING_NUMBER'),
 						'type' => 'text',
 						'editable' => true,
 						'enabledMenu' => false,
-						'transferable' => false
-					),
-					array(
+						'transferable' => false,
+					],
+					[
 						'name' => 'DELIVERY_DOC_NUM',
 						'title' => Loc::getMessage('CRM_ORDER_SHIPMENT_FIELD_DELIVERY_DOC_NUM'),
 						'type' => 'text',
 						'editable' => true,
 						'enabledMenu' => false,
-						'transferable' => false
-					),
-					array(
+						'transferable' => false,
+					],
+					[
 						'name' => 'DELIVERY_DOC_DATE',
 						'title' => Loc::getMessage('CRM_ORDER_SHIPMENT_FIELD_DELIVERY_DOC_DATE'),
 						'type' => 'datetime',
 						'editable' => true,
 						'enabledMenu' => false,
 						'transferable' => false,
-						'data' => array('enableTime' => false)
-					)
-				)
-			)
-		);
+						'data' => [
+							'enableTime' => false,
+						],
+					],
+				],
+			],
+		];
 
-		$this->arResult['ENTITY_CONFIG'] = array(
-			array(
+		$this->arResult['ENTITY_CONFIG'] = [
+			[
 				'name' => 'document',
 				'title' => Loc::getMessage('CRM_ORDER_SHIPMENT_DOCUMENT_SUBTITLE'),
 				'type' => 'section',
-				'data' => array(
-					'showButtonPanel' => false
-				),
-				'elements' => array(
-					array('name' => 'FIELDS')
-				)
-			)
-		);
+				'data' => [
+					'showButtonPanel' => false,
+				],
+				'elements' => [
+					[
+						'name' => 'FIELDS',
+					],
+				],
+			],
+		];
 
-		$this->arResult['ENTITY_DATA'] = array();
+		$this->arResult['ENTITY_DATA'] = [];
 		if (!empty($shipment))
 		{
 			$entityData = $shipment->getFieldValues();
@@ -111,6 +127,7 @@ class CCrmOrderShipmentDocumentComponent extends \CBitrixComponent
 
 		$this->includeComponentTemplate();
 	}
+
 	protected function prepareFieldInfos()
 	{
 		return $this->arResult['ENTITY_FIELDS'];

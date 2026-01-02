@@ -155,57 +155,6 @@ class Center
 		];
 	}
 
-	public static function getFaceCard()
-	{
-		if (!Loader::includeModule("rest") || !Loader::includeModule("faceId") || !FaceId::isAvailable())
-		{
-			return [];
-		}
-
-		$appId = AppTable::getByClientId(\CRestUtil::BITRIX_1C_APP_CODE)['CLIENT_ID'];
-		$appSettings = Option::get("rest", "options_".$appId, "");
-		if (!empty($appSettings))
-		{
-			$appSettings = unserialize($appSettings, ["allowed_classes" => false]);
-		}
-
-		return [
-			[
-				"id" => "facecard",
-				"name" => Loc::getMessage("INTRANET_AI_FACE_CARD"),
-				"iconClass" => "ui-icon ui-icon-service-1c",
-				"iconColor" => "",
-				"selected" => isset($appSettings["facecard"]) && $appSettings["facecard"] === "Y" ? true : false,
-				"data" => array(
-					"url" => SITE_DIR."onec/facecard/"
-				)
-			]
-		];
-	}
-
-	public static function getFaceTracker()
-	{
-		if (!Loader::includeModule('faceId') || !FaceId::isAvailable())
-		{
-			return [];
-		}
-
-		$selected = AgreementTable::checkUser($GLOBALS['USER']->getId());
-
-		return [
-			[
-				'id' => 'face-tracker',
-				'name' => Loc::getMessage('INTRANET_AI_FACE_TRACKER'),
-				'iconClass' => 'intranet-ai-center-icon intranet-ai-center-icon-face-tracker',
-				'iconColor' => '#1876d1',
-				'selected' => $selected,
-				'data' => array(
-					'url' => SITE_DIR.'crm/face-tracker/'
-				)
-			]
-		];
-	}
-
 	private static function isCrmMlFeaturesAvailable(): bool
 	{
 		if (Loader::includeModule('crm'))

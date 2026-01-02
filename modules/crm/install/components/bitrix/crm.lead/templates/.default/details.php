@@ -15,7 +15,6 @@ if (isset($_REQUEST['IFRAME']) && $_REQUEST['IFRAME'] === 'Y')
 		[
 			'ENTITY_TYPE_ID' => CCrmOwnerType::Lead,
 			'ENTITY_ID' => $arResult['VARIABLES']['lead_id'],
-			'ENABLE_TITLE_EDIT' => true,
 			'EXTRAS' => [
 				'ANALYTICS' => [
 					'c_section' => Dictionary::SECTION_LEAD,

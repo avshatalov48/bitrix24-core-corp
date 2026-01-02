@@ -2,6 +2,7 @@
 
 use Bitrix\Disk\Analytics\DiskAnalytics;
 use Bitrix\Disk\Configuration;
+use Bitrix\Disk\Document\Flipchart\BoardService;
 use Bitrix\Disk\Document\SessionTerminationServiceFactory;
 use Bitrix\Disk\Driver;
 use Bitrix\Disk\ExternalLink;
@@ -22,9 +23,16 @@ use Bitrix\Disk\ProxyType;
 use Bitrix\Disk\Security\SecurityContext;
 use Bitrix\Disk\Sharing;
 use Bitrix\Disk\Storage;
+use Bitrix\Disk\TypeFile;
+use Bitrix\Disk\Internal\Access\UnifiedLink\UnifiedLinkAccessCheckHandler;
+use Bitrix\Disk\Internal\Access\UnifiedLink\UnifiedLinkAccessLevel;
+use Bitrix\Disk\Internal\Command\UnifiedLink\SetAccessCommand;
 use Bitrix\Disk\User;
 use Bitrix\Disk\Ui;
+use Bitrix\Main\Analytics\AnalyticsEvent;
 use Bitrix\Main\Application;
+use Bitrix\Main\DI\ServiceLocator;
+use Bitrix\Main\Engine\CurrentUser;
 use Bitrix\Main\Entity\ExpressionField;
 use Bitrix\Main\Entity\Query;
 use Bitrix\Main\EventResult;
@@ -60,6 +68,13 @@ class DiskFolderListAjaxController extends \Bitrix\Disk\Internals\Controller
 	const ERROR_DISK_QUOTA                     = 'DISK_FLAC_22005';
 
 	private ?array $prevRightsOnStorage = null;
+	private ServiceLocator $serviceLocator;
+
+	public function __construct()
+	{
+		$this->serviceLocator = ServiceLocator::getInstance();
+		parent::__construct();
+	}
 
 	protected function listActions()
 	{
@@ -834,7 +849,7 @@ class DiskFolderListAjaxController extends \Bitrix\Disk\Internals\Controller
 		$rightsManager = Driver::getInstance()->getRightsManager();
 		foreach($changedDomainRights as $rights)
 		{
-			list($old, $new) = $rights;
+			[$old, $new] = $rights;
 
 			$taskName = $rightsManager->getTaskNameById($new['TASK_ID']);
 			switch($taskName)
@@ -867,7 +882,7 @@ class DiskFolderListAjaxController extends \Bitrix\Disk\Internals\Controller
 		$rightsManager = Driver::getInstance()->getRightsManager();
 		foreach($changedDomainRights as $rights)
 		{
-			list($old, $new) = $rights;
+			[$old, $new] = $rights;
 
 			$sharingId = $rightsManager->getIdBySharingDomain($old['DOMAIN']);
 			if(!$sharingId)
@@ -971,7 +986,14 @@ class DiskFolderListAjaxController extends \Bitrix\Disk\Internals\Controller
 
 		$rightsManager = Driver::getInstance()->getRightsManager();
 		$securityContext = $object->getStorage()->getCurrentUserSecurityContext();
-		if(!$object->canRead($securityContext))
+
+		$isAccessDeniedByUnifiedLink = false;
+		if ($object instanceof File)
+		{
+			$accessByUnifiedLink = $this->getUnifiedLinkCurrentAccessLevel($object);
+			$isAccessDeniedByUnifiedLink = $accessByUnifiedLink === UnifiedLinkAccessLevel::Denied;
+		}
+		if($isAccessDeniedByUnifiedLink && !$object->canRead($securityContext))
 		{
 			$this->sendJsonAccessDeniedResponse();
 		}
@@ -1000,10 +1022,17 @@ class DiskFolderListAjaxController extends \Bitrix\Disk\Internals\Controller
 			$this->sendJsonErrorResponse();
 		}
 
-		$this->sendJsonSuccessResponse(array(
+		$response = array(
 			'members' => $entityList,
 			'owner' => $this->getOwner($object),
-		));
+		);
+
+		if ($object instanceof File && $object->supportsUnifiedLink())
+		{
+			$response['unifiedLink'] = $this->getUnifiedLinkData($object);
+		}
+
+		$this->sendJsonSuccessResponse($response);
 	}
 
 	protected function processActionShowSharingDetailChangeRights($objectId)
@@ -1060,7 +1089,7 @@ class DiskFolderListAjaxController extends \Bitrix\Disk\Internals\Controller
 		$owner['canOnlyShare'] = $canOnlyShare;
 		$owner['maxTaskName'] = $maxTaskName;
 
-		$this->sendJsonSuccessResponse(array(
+		$response = array(
 			'members' => $entityList,
 			'owner' => $owner,
 			'destination' => array(
@@ -1079,7 +1108,32 @@ class DiskFolderListAjaxController extends \Bitrix\Disk\Internals\Controller
 				),
 				'itemsSelected' => $destination['SELECTED'],
 			),
-		));
+		);
+
+		if ($object instanceof File && $object->supportsUnifiedLink())
+		{
+			$response['unifiedLink'] = $this->getUnifiedLinkData($object);
+		}
+
+		$this->sendJsonSuccessResponse($response);
+	}
+
+	private function getUnifiedLinkData(File $object): array
+	{
+		return [
+			'currentAccessLevel' => $this->getUnifiedLinkCurrentAccessLevel($object),
+			'availableAccessLevels' => array_map(static fn (UnifiedLinkAccessLevel $accessLevel) => [
+				'value' => $accessLevel->value,
+				'name' => $accessLevel->getTitle(),
+			], UnifiedLinkAccessLevel::cases()),
+		];
+	}
+
+	private function getUnifiedLinkCurrentAccessLevel(File $object): UnifiedLinkAccessLevel
+	{
+		$userId = (int)CurrentUser::get()->getId();
+
+		return (new UnifiedLinkAccessCheckHandler($userId))->check($object);
 	}
 
 	protected function getOwner(BaseObject $object): array
@@ -1220,10 +1274,39 @@ class DiskFolderListAjaxController extends \Bitrix\Disk\Internals\Controller
 
 		\Bitrix\Disk\Driver::getInstance()->getTrackedObjectManager()->refresh($object);
 
+		$isBoard = $object instanceof \Bitrix\Disk\File && $object->getTypeFile() == TypeFile::FLIPCHART;
+		$isFolder = $object instanceof \Bitrix\Disk\Folder;
+
 		$currentUserId = $this->getUser()->getId();
 		$entityToNewShared = $this->request->getPost('entityToNewShared');
 		if(!empty($entityToNewShared) && is_array($entityToNewShared))
 		{
+			$unifiedLinkAccessChanged = false;
+			$unifiedLinkData = $entityToNewShared['unifiedLink'];
+			if (isset($unifiedLinkData['newAccessLevel']))
+			{
+				$unifiedLinkNewAccessLevel = UnifiedLinkAccessLevel::tryFrom($unifiedLinkData['newAccessLevel']);
+				if ($unifiedLinkNewAccessLevel !== null)
+				{
+					$result = (new SetAccessCommand($objectId, $unifiedLinkNewAccessLevel))->run();
+
+					if ($result->isSuccess())
+					{
+						$unifiedLinkAccessChanged = true;
+						if ($isBoard)
+						{
+							BoardService::kickUnallowedUsers($object);
+						}
+					}
+					else
+					{
+						$this->sendJsonErrorResponse([
+							'unifiedLinkChangeError' => true,
+						]);
+					}
+				}
+			}
+
 			$extendedRights = $entityToNewShared;
 			$newExtendedRightsReformat = array();
 			foreach($extendedRights as $entityId => $right)
@@ -1301,6 +1384,14 @@ class DiskFolderListAjaxController extends \Bitrix\Disk\Internals\Controller
 							"CODE" => \Bitrix\Main\FinderDestTable::convertRights(array_unique($destinationCodes))
 						]);
 					}
+
+					if ($isBoard)
+					{
+						Application::getInstance()->addBackgroundJob(function() {
+							$event = new AnalyticsEvent('give_access', 'boards', 'boards');
+							$event->send();
+						});
+					}
 				}
 			}
 			if($needToOverwrite)
@@ -1315,8 +1406,10 @@ class DiskFolderListAjaxController extends \Bitrix\Disk\Internals\Controller
 				foreach($needToOverwrite as $sharingRow)
 				{
 					$sharingDomain = $rightsManager->getSharingDomain($sharingRow['ID']);
+					$isSharingToGroup = $sharingRow['TYPE'] == SharingTable::TYPE_TO_GROUP;
+					$accessCodeSuffix = $isSharingToGroup ? '_K' : ''; // todo refactor. Move this logic to Sharing
 					$newRights[] = array(
-						'ACCESS_CODE' => $sharingRow['TO_ENTITY'],
+						'ACCESS_CODE' => $sharingRow['TO_ENTITY'] . $accessCodeSuffix,
 						'TASK_ID' => $rightsManager->getTaskIdByName($newExtendedRightsReformat[$sharingRow['TO_ENTITY']]),
 						'DOMAIN' => $sharingDomain,
 					);
@@ -1326,6 +1419,15 @@ class DiskFolderListAjaxController extends \Bitrix\Disk\Internals\Controller
 						/** @var \Bitrix\Disk\Sharing $sharingModel */
 						$sharingModel = Sharing::buildFromArray($sharingRow);
 						$sharingModel->changeTaskName($newExtendedRightsReformat[$sharingRow['TO_ENTITY']]);
+
+						if ($isBoard)
+						{
+							Application::getInstance()->addBackgroundJob(
+								function () use ($object) {
+									BoardService::kickUnallowedUsers($object);
+								}
+							);
+						}
 					}
 					else
 					{
@@ -1370,7 +1472,15 @@ class DiskFolderListAjaxController extends \Bitrix\Disk\Internals\Controller
 				}
 			);
 
-			$this->sendJsonSuccessResponse();
+			if ($isFolder)
+			{
+				/** @var Folder $object */
+				$this->terminateSessionsForAllBoardsInFolder($object, $securityContext, $deletedOrChangedSharingItems);
+			}
+
+			$this->sendJsonSuccessResponse([
+				'unifiedLinkAccessChanged' => $unifiedLinkAccessChanged,
+			]);
 		}
 		else
 		{
@@ -1385,12 +1495,47 @@ class DiskFolderListAjaxController extends \Bitrix\Disk\Internals\Controller
 			}
 
 			Application::getInstance()->addBackgroundJob(
-				function () use ($object, $deletedSharingItems) {
+				function () use ($object, $deletedSharingItems, $isBoard) {
 					$this->terminateAllSessionsForChangedOrDeletedSharingItems($object->getId(), $deletedSharingItems);
+					if ($isBoard)
+					{
+						BoardService::kickUnallowedUsers($object);
+					}
 				}
 			);
 
+			if ($isFolder)
+			{
+				/** @var Folder $object */
+				$this->terminateSessionsForAllBoardsInFolder($object, $securityContext, $deletedSharingItems);
+			}
+
 			$this->sendJsonSuccessResponse();
+		}
+	}
+
+	protected function terminateSessionsForAllBoardsInFolder(Folder $object, SecurityContext $securityContext, array $deletedOrChangedSharingItems)
+	{
+		$objectsInFolder = $object->getDescendants($securityContext);
+		$boardsInFolder = [];
+		foreach ($objectsInFolder as $descObject)
+		{
+			if ($descObject->getRealObject() instanceof File && $descObject->getRealObject()->getTypeFile() == TypeFile::FLIPCHART)
+			{
+				$boardsInFolder[] = $descObject->getRealObject();
+			}
+		}
+		if ($boardsInFolder)
+		{
+			Application::getInstance()->addBackgroundJob(
+				function () use ($boardsInFolder, $deletedOrChangedSharingItems) {
+					foreach ($boardsInFolder as $board)
+					{
+						$this->terminateAllSessionsForChangedOrDeletedSharingItems($board->getId(), $deletedOrChangedSharingItems);
+						BoardService::kickUnallowedUsers($board);
+					}
+				}
+			);
 		}
 	}
 
@@ -1659,7 +1804,7 @@ class DiskFolderListAjaxController extends \Bitrix\Disk\Internals\Controller
 	protected function processActionDisableExternalLink($objectId)
 	{
 		/** @var ExternalLink $extLink */
-		list(, $extLink) = $this->getObjectAndExternalLink($objectId);
+		[, $extLink] = $this->getObjectAndExternalLink($objectId);
 		if(!$extLink || $extLink->delete())
 		{
 			$this->sendJsonSuccessResponse();
@@ -1670,7 +1815,7 @@ class DiskFolderListAjaxController extends \Bitrix\Disk\Internals\Controller
 	protected function processActionGetExternalLink($objectId)
 	{
 		/** @var ExternalLink $extLink */
-		list(, $extLink) = $this->getObjectAndExternalLink($objectId);
+		[, $extLink] = $this->getObjectAndExternalLink($objectId);
 
 		if(!$extLink)
 		{
@@ -1697,7 +1842,7 @@ class DiskFolderListAjaxController extends \Bitrix\Disk\Internals\Controller
 	{
 		/** @var File|Folder $object */
 		/** @var ExternalLink $extLink */
-		list($object, $extLink) = $this->getObjectAndExternalLink($objectId);
+		[$object, $extLink] = $this->getObjectAndExternalLink($objectId);
 
 		if($forceCreate && !$extLink)
 		{
@@ -1745,7 +1890,7 @@ class DiskFolderListAjaxController extends \Bitrix\Disk\Internals\Controller
 	{
 		/** @var File|Folder $object */
 		/** @var ExternalLink $extLink */
-		list($object, $extLink) = $this->getObjectAndExternalLink($objectId);
+		[$object, $extLink] = $this->getObjectAndExternalLink($objectId);
 
 		if(!$extLink)
 		{
@@ -1812,7 +1957,7 @@ class DiskFolderListAjaxController extends \Bitrix\Disk\Internals\Controller
 	protected function processActionGenerateExternalLink($objectId)
 	{
 		/** @var File|Folder $object */
-		list($object, $extLink) = $this->getObjectAndExternalLink($objectId);
+		[$object, $extLink] = $this->getObjectAndExternalLink($objectId);
 		if(!$extLink)
 		{
 			$extLink = $object->addExternalLink(array(

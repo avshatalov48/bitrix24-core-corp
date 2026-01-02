@@ -12,16 +12,20 @@ class CheckWritePermission extends BaseCheckPermission
 	{
 		if ($entityTypeId === \CCrmOwnerType::Company && \CCrmCompany::isMyCompany($entityId))
 		{
-			$myCompanyPermissions = Container::getInstance()->getUserPermissions()->getMyCompanyPermissions();
+			$myCompanyPermissions = Container::getInstance()->getUserPermissions()->myCompany();
 
 			return $myCompanyPermissions->canUpdate();
 		}
 
 		if ($entityId)
 		{
-			return $this->userPermissions->checkUpdatePermissions($entityTypeId, $entityId, $categoryId);
+			return $this->userPermissions->item()->canUpdate($entityTypeId, $entityId);
 		}
 
-		return $this->userPermissions->checkAddPermissions($entityTypeId, $categoryId);
+		return
+			is_null($categoryId)
+			? $this->userPermissions->entityType()->canAddItems($entityTypeId)
+			: $this->userPermissions->entityType()->canAddItemsInCategory($entityTypeId, $categoryId)
+		;
 	}
 }

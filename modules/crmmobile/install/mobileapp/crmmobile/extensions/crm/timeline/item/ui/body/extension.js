@@ -40,6 +40,7 @@ jn.define('crm/timeline/item/ui/body', (require, exports, module) => {
 				itemScopeEventBus: this.props.itemScopeEventBus,
 				timelineScopeEventBus: this.props.timelineScopeEventBus,
 				onAction: this.props.onAction || nothing,
+				analyticsEvent: this.props.analyticsEvent || null,
 			});
 
 			/** @type {TimelineItemBodyBlock[]} */

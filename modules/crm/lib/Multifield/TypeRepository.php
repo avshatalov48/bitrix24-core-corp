@@ -10,7 +10,7 @@ use Bitrix\Crm\Multifield\Type\Web;
 
 final class TypeRepository
 {
-	public static function isTypeDefined($typeId): bool
+	public static function isTypeDefined(mixed $typeId): bool
 	{
 		foreach (self::getAll() as $type)
 		{
@@ -23,7 +23,7 @@ final class TypeRepository
 		return false;
 	}
 
-	public static function getTypeCaption($typeId): string
+	public static function getTypeCaption(mixed $typeId): string
 	{
 		foreach (self::getAll() as $type)
 		{

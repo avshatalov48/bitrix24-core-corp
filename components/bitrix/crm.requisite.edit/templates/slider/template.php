@@ -32,11 +32,7 @@ Asset::getInstance()->addJs('/bitrix/js/crm/slider.js');
 Asset::getInstance()->addCss('/bitrix/js/crm/css/slider.css');
 Asset::getInstance()->addCss('/bitrix/js/crm/css/crm.css');
 Asset::getInstance()->addCss('/bitrix/themes/.default/crm-entity-show.css');
-
-if(SITE_TEMPLATE_ID === 'bitrix24')
-{
-	Asset::getInstance()->addCss("/bitrix/themes/.default/bitrix24/crm-entity-show.css");
-}
+Asset::getInstance()->addCss('/bitrix/themes/.default/bitrix24/crm-entity-show.css');
 
 $elementID = isset($arResult['ELEMENT_ID']) ? (int)$arResult['ELEMENT_ID'] : 0;
 $presetID = isset($arResult['PRESET_ID']) ? (int)$arResult['PRESET_ID'] : 0;

@@ -6,6 +6,7 @@ export type FlowData = {
 	flowEfficiency: number,
 	canEditFlow: boolean,
 	createTaskUrl: string,
+	isFeatureTrialable: boolean,
 };
 
 export class CopilotAdvice

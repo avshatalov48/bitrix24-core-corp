@@ -13,3 +13,7 @@ $MESS['CRM_INTEGRATION_AI_EVENTHANDLER_SETTINGS_ENGINE_TEXT_TITLE'] = 'Выбе�
 $MESS['CRM_INTEGRATION_AI_EVENTHANDLER_SETTING_CALL_ASSESSMENT_TITLE'] = 'CoPilot для оценки звонка по скрипту';
 $MESS['CRM_INTEGRATION_AI_EVENTHANDLER_SETTINGS_CALL_ASSESSMENT_HEADER'] = 'CoPilot проанализирует разговор менеджера с клиентом на соответствие скрипту и подскажет, что можно улучшить';
 $MESS['CRM_INTEGRATION_AI_EVENTHANDLER_SETTINGS_CALL_ASSESSMENT_ENGINE_TITLE'] = 'Выберите модель AI для оценки звонка по скрипту';
+
+$MESS['CRM_INTEGRATION_AI_EVENTHANDLER_SETTING_REPEAT_SALE_TITLE'] = 'CoPilot для сценариев повторных продаж';
+$MESS['CRM_INTEGRATION_AI_EVENTHANDLER_SETTINGS_REPEAT_SALE_HEADER'] = 'CoPilot проанализирует историю покупок клиентов и подготовит рекомендации для менеджеров';
+$MESS['CRM_INTEGRATION_AI_EVENTHANDLER_SETTINGS_REPEAT_SALE_ENGINE_TITLE'] = 'Выберите модель AI для сценариев повторных продаж';

@@ -4,20 +4,29 @@ namespace Bitrix\Transformer;
 
 use Bitrix\Main\Data\Cache;
 use Bitrix\Main\Error;
+use Bitrix\Main\Localization\Loc;
 use Bitrix\Main\Result;
+use Bitrix\Transformer\Entity\CommandTable;
 
 abstract class FileTransformer implements InterfaceCallback
 {
-	const MAX_EXECUTION_TIME = 14400;
+	/**
+	 * @deprecated
+	 *
+	 * Transformer module handles timeouts on its own. You don't need to check max execution time.
+	 */
+	public const MAX_EXECUTION_TIME = 14400;
 
-	const MAX_FILESIZE = 104857600; // 100 Mb
+	public const MAX_FILESIZE = 104857600; // 100 Mb
 
-	const IMAGE = 'jpg';
-	const MD5 = 'md5';
-	const SHA1 = 'sha1';
-	const CRC32 = 'crc32';
+	public const IMAGE = 'jpg';
+	public const MD5 = 'md5';
+	public const SHA1 = 'sha1';
+	public const CRC32 = 'crc32';
 
-	const CACHE_PATH = '/bx/transformer/command/';
+	public const CACHE_PATH = '/bx/transformer/command/';
+
+	private const MAX_FAILED_TRANSFORMATIONS = 5;
 
 	/**
 	 * Make transformation of a file
@@ -28,25 +37,41 @@ abstract class FileTransformer implements InterfaceCallback
 	 * @param array $params Extra params.
 	 * @return \Bitrix\Main\Result
 	 */
-	public function transform($file, $formats, $module, $callback, $params = array())
+	public function transform($file, $formats, $module, $callback, $params = [])
 	{
 		$result = new Result();
-		if(empty($formats))
+		if (empty($formats))
 		{
 			$result->addError(new Error('Formats is empty'));
 		}
+
 		$foundFile = new File($file);
 		$publicPath = $foundFile->getPublicPath();
-		if(empty($publicPath))
+		if (empty($publicPath))
 		{
 			$result->addError(new Error('File '.$file.' not found'));
 		}
+
 		$fileSize = $foundFile->getSize();
-		if(!empty($fileSize) && $fileSize > static::MAX_FILESIZE)
+		if (!empty($fileSize) && $fileSize > static::MAX_FILESIZE)
 		{
 			$result->addError(new Error($this->getFileTypeName().' is too big'));
+
 		}
-		if(!$result->isSuccess())
+
+		if (!empty($publicPath) && $this->isFileProbablyCorrupted($publicPath))
+		{
+			$result->addError(new Error(
+				Loc::getMessage('TRANSFORMER_FILE_TRANSFORMER_FILE_CORRUPTED'),
+				Command::ERROR_CORRUPTED_FILE,
+				[
+					'originalMessage' => 'File has been converted with errors too many times, probably corrupted',
+					'jsonCode' => 'corruptedFile',
+				],
+			));
+		}
+
+		if (!$result->isSuccess())
 		{
 			Log::logger()->error(
 				'{errors}',
@@ -60,18 +85,84 @@ abstract class FileTransformer implements InterfaceCallback
 
 			return $result;
 		}
+
 		$params['file'] = $publicPath;
 		$params['fileSize'] = $fileSize;
 		$params['formats'] = $formats;
-		$command = new Command($this->getCommandName(), $params, $module, $callback);
-		$result = $command->save();
-		if($result->isSuccess())
+
+		return $this->sendCommand($publicPath, $params, (array)$module, (array)$callback);
+	}
+
+	private function isFileProbablyCorrupted(string $file): bool
+	{
+		// it would be better to check formats as well - may be another format will not return an error.
+		// but formats are serialized in PARAMS
+		// without DB normalization, it's impossible
+
+		$count = CommandTable::getCount([
+			'=COMMAND' => $this->getCommandName(),
+			'=FILE' => $file,
+			'=ERROR_CODE' => Command::ERROR_CONTROLLER_TRANSFORMATION_COMMAND,
+		]);
+
+		return $count >= self::MAX_FAILED_TRANSFORMATIONS;
+	}
+
+	private function sendCommand(string $file, array $params, array $module, array $callback): Result
+	{
+		$existingCommandArray = $this->findCommandInProgress($file, $params);
+
+		if (!$existingCommandArray)
 		{
-			$http = new Http();
-			self::clearInfoCache($file);
-			$result = $command->send($http);
+			return $this->sendNewCommand($file, $params, $module, $callback);
 		}
-		return $result;
+
+		$command = Command::initFromArray($existingCommandArray);
+
+		$updateResult = $command->appendCallback($module, $callback);
+		if (!$updateResult->isSuccess())
+		{
+			return $updateResult;
+		}
+
+		return (new Result())->setData(['commandId' => $command->getId()]);
+	}
+
+	private function findCommandInProgress(string $file, array $params): array | false
+	{
+		return CommandTable::query()
+			->setSelect(['*'])
+			->whereNotIn('STATUS', [Command::STATUS_SUCCESS, Command::STATUS_ERROR])
+			->where('COMMAND', $this->getCommandName())
+			->where('FILE', $file)
+			->where('PARAMS', CommandTable::encode($params))
+			->addOrder('ID', 'DESC')
+			->setLimit(1)
+			->fetch()
+		;
+	}
+
+	private function sendNewCommand(string $file, array $params, array $module, array $callback): Result
+	{
+		$command = new Command($this->getCommandName(), $params, $module, $callback);
+
+		$result = $command->save();
+		if (!$result->isSuccess())
+		{
+			return $result;
+		}
+
+		self::clearInfoCache($file);
+
+		return $command->send($this->getHttp());
+	}
+
+	/**
+	 * @internal Don't override or use this method. Can be removed anytime.
+	 */
+	protected function getHttp(): Http
+	{
+		return new Http();
 	}
 
 	/**
@@ -188,11 +279,16 @@ abstract class FileTransformer implements InterfaceCallback
 	 * ).
 	 * @return mixed
 	 */
-	public static function call($status, $command, $params, $result = array())
+	public static function call($status, $command, $params, $result = [])
 	{
 		Log::logger()->debug(
 			'callback {class} called with status {status} ({statusText})',
-			['class' => static::class, 'status' => $status, 'statusText' => Command::getStatusText($status), 'result' => $result]
+			[
+				'class' => static::class,
+				'status' => $status,
+				'statusText' => Command::getStatusText($status),
+				'result' => $result,
+			]
 		);
 		return true;
 	}

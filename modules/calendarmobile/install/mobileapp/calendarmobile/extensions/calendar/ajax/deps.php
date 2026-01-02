@@ -1,7 +1,7 @@
 <?php
 return [
 	'extensions' => [
-		'rest',
+		'rest/run-action-executor',
 	],
 	'bundle' => [
 		'./base',
@@ -10,5 +10,6 @@ return [
 		'./sync',
 		'./settings',
 		'./accessibility',
+		'./booking',
 	],
 ];

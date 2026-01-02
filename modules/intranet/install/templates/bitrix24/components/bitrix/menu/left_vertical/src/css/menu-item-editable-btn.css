@@ -1,0 +1,75 @@
+.menu-fav-editable-btn {
+	position: absolute;
+	top: 0;
+	right: 4px;
+	height: 100%;
+	width: 22px;
+	min-width: 22px;
+	display: flex;
+	justify-content: center;
+	align-items: center;
+	opacity: 0;
+	transition: opacity 0.2s;
+	cursor: pointer;
+	z-index: 2;
+}
+
+.menu-fav-editable-btn-hide {
+	display: none;
+}
+
+.menu-items-edit-mode .menu-fav-editable-btn-hide {
+	display: flex;
+}
+
+.menu-favorites-btn-icon {
+	display: inline-block;
+	width: 18px;
+	height: 18px;
+	mask-image: url("../images/icons/settings.svg");
+	mask-repeat: no-repeat;
+	mask-position: center;
+	mask-size: contain;
+	background-color: var(--ui-color-design-plain-content-icon-secondary);
+	opacity: 0.8;
+}
+
+.menu-item-block:hover .menu-fav-editable-btn,
+.menu-item-block-hover .menu-fav-editable-btn,
+.menu-collapsed-mode.menu-sliding-mode .menu-item-block:hover .menu-fav-editable-btn,
+.menu-collapsed-mode.menu-sliding-mode .menu-item-block-hover .menu-fav-editable-btn {
+	opacity: 1;
+	transition-delay: 1000ms;
+	pointer-events: auto;
+}
+
+.menu-collapsed-mode .menu-item-block:hover .menu-fav-editable-btn,
+.menu-collapsed-mode .menu-item-block-hover .menu-fav-editable-btn {
+	opacity: 0;
+	pointer-events: none;
+}
+
+.menu-collapsed-mode.menu-sliding-opening-mode .menu-fav-editable-btn,
+.menu-collapsed-mode.menu-sliding-closing-mode .menu-fav-editable-btn {
+	display: none !important;
+}
+
+.menu-items-edit-mode .menu-fav-editable-btn,
+.menu-item-block:hover .menu-fav-editable-btn,
+.menu-item-block-hover .menu-fav-editable-btn {
+	opacity: 1;
+}
+
+.menu-fav-editable-btn:hover .menu-favorites-btn-icon,
+.menu-fav-editable-btn.--open .menu-favorites-btn-icon {
+	opacity: 1;
+}
+
+.menu-fav-editable-btn.--open .menu-favorites-btn-icon {
+	background-color: var(--ui-color-design-selection-content-icon-secondary);
+	opacity: 1;
+}
+
+.menu-fav-editable-btn:hover {
+	opacity: 1;
+}

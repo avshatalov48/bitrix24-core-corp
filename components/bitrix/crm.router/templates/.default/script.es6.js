@@ -1,4 +1,4 @@
-import { Reflection, Runtime, Type } from "main.core";
+import { Reflection, Runtime, Type } from 'main.core';
 
 const namespace = Reflection.namespace('BX.Crm.Component');
 
@@ -21,6 +21,15 @@ class Router
 		});
 
 		BX.SidePanel.Instance.bindAnchors({rules: preparedRules});
+	}
+
+	static bindAnchor(roots: string[], rule: BX.SidePanel.Rule): void
+	{
+		const rules = [
+			this.prependRootsToRuleConditions(roots, rule),
+		];
+
+		BX.SidePanel.Instance.bindAnchors({ rules });
 	}
 
 	/**

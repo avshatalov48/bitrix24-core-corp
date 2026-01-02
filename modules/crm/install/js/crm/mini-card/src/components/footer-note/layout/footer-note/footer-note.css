@@ -1,0 +1,6 @@
+.crm-mini-card-content__footer-note {
+	font-weight: var(--ui-font-weight-regular);
+	font-size: var(--ui-font-size-xs);
+	line-height: var(--ui-font-line-height-sm);
+	color: var(--ui-color-base-4);
+}

@@ -342,10 +342,10 @@ class Feed
 			params = {};
 		}
 
-		const postId = (typeof params.postId != 'undefined' ? parseInt(params.postId) : 0);
-		const context = (typeof params.context != 'undefined' ? params.context : '');
-		const pageId = (typeof params.pageId != 'undefined' ? params.pageId : '');
-		const groupId = (typeof params.groupId != 'undefined' ? params.groupId : null);
+		const postId = (typeof params.postId === 'undefined' ? 0 : parseInt(params.postId, 10));
+		const context = (typeof params.context === 'undefined' ? '' : params.context);
+		const pageId = (typeof params.pageId === 'undefined' ? '' : params.pageId);
+		const groupId = (typeof params.groupId === 'undefined' ? null : params.groupId);
 
 		if (pageId !== this.pageId)
 		{
@@ -366,7 +366,7 @@ class Feed
 			entityType: 'BLOG_POST',
 			entityId: postId,
 			queueKey: params.key,
-			action: 'add'
+			action: 'add',
 		});
 	}
 
@@ -387,7 +387,7 @@ class Feed
 			entityId: postId,
 			queueKey: params.key,
 			action: 'update',
-			pinned: pinned
+			pinned,
 		});
 	}
 

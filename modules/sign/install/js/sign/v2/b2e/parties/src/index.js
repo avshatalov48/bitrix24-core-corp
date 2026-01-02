@@ -1,26 +1,35 @@
 import { Dom, Loc, Tag, Type, Extension } from 'main.core';
-import { CompanySelector } from 'sign.v2.b2e.company-selector';
-import { DocumentValidation } from 'sign.v2.b2e.document-validation';
+import { EventEmitter } from 'main.core.events';
+import { CompanySelector, type ProviderSelectedEvent, type CompanySelectedEvent } from 'sign.v2.b2e.company-selector';
+import { DocumentValidation, maxReviewersCount } from 'sign.v2.b2e.document-validation';
 import { RepresentativeSelector } from 'sign.v2.b2e.representative-selector';
 import type { BlankSelectorConfig } from 'sign.v2.blank-selector';
-import type { Provider } from 'sign.v2.api';
+import type { Provider, SetupMember } from 'sign.v2.api';
 import type { DocumentInitiatedType, MemberRoleType, DocumentModeType } from 'sign.type';
-import { DocumentMode } from 'sign.type';
-import { Hint } from 'sign.v2.helper';
+import { DocumentMode, MemberRole, EntityType } from 'sign.type';
+import { Helpdesk, Hint } from 'sign.v2.helper';
 import { isTemplateMode } from 'sign.v2.sign-settings';
+
+import './style.css';
 
 const blockWarningClass = 'sign-document-b2e-parties__item_content--warning';
 
-type PartiesData = { entityType: string, entityId: ?number, role?: MemberRoleType };
+export type PartiesData = { entityType: string, entityId: ?number, role?: MemberRoleType };
 type Options = BlankSelectorConfig & { documentInitiatedType?: DocumentInitiatedType, documentMode?: DocumentModeType };
 
 const currentUserId = Extension.getSettings('sign.v2.b2e.parties').get('currentUserId');
+const reviewerSelectorContainerListId = 'reviewer-selector-list-container';
 
-export class Parties
+const HelpdeskCodes = Object.freeze({
+	ReviewerRoleDetails: '20801214',
+});
+
+export class Parties extends EventEmitter
 {
 	#companySelector: CompanySelector = null;
 	#representativeSelector: RepresentativeSelector = null;
 	#documentValidation: DocumentValidation = null;
+	#addReviewerButton: ?HTMLElement = null;
 	#ui = {
 		container: HTMLDivElement = null,
 		blocks: {
@@ -32,17 +41,35 @@ export class Parties
 
 	constructor(blankSelectorConfig: Options, hcmLinkAvailable: boolean)
 	{
+		super();
+		this.setEventNamespace('BX.Sign.V2.B2e.Parties');
+
 		const { region, documentInitiatedType, documentMode } = blankSelectorConfig;
-		this.#representativeSelector = new RepresentativeSelector({ context: `sign_b2e_representative_selector_assignee_${currentUserId}` });
 		const isTemplate = isTemplateMode(documentMode || DocumentMode.document);
 
+		this.#representativeSelector = new RepresentativeSelector({
+			roleEnabled: isTemplate,
+			context: `sign_b2e_representative_selector_assignee_${currentUserId}`,
+		});
 		this.#companySelector = new CompanySelector({
 			region,
 			documentInitiatedType,
 			isHcmLinkAvailable: hcmLinkAvailable,
 			needOpenCrmSaveAndEditCompanySliders: isTemplate,
 		});
-		this.#documentValidation = new DocumentValidation();
+
+		this.#companySelector.subscribe('onSelect', (event: CompanySelectedEvent) => {
+			this.emit('onCompanySelect', event);
+		});
+
+		this.#companySelector.subscribe('onProviderSelect', (event: ProviderSelectedEvent) => {
+			this.emit('onProviderSelect', event);
+		});
+
+		this.#documentValidation = new DocumentValidation(
+			isTemplate,
+			() => this.#checkAddReviewerLimit(),
+		);
 	}
 
 	setEntityId(entityId: number): void
@@ -55,19 +82,9 @@ export class Parties
 		this.#companySelector.setInitiatedByType(initiatedByType);
 	}
 
-	setLastSavedIntegrationId(integrationId: number | null): void
+	async reloadCompanyProviders(selectFirst: boolean): void
 	{
-		this.#companySelector.setLastSavedIntegrationId(integrationId);
-	}
-
-	setIntegrationSelectorAvailability(isAvailable: boolean): void
-	{
-		this.#companySelector.setIntegrationSelectorAvailability(isAvailable);
-	}
-
-	async reloadCompanyProviders(): void
-	{
-		await this.#companySelector.reloadCompanyProviders();
+		await this.#companySelector.reloadCompanyProviders(selectFirst);
 	}
 
 	setEditorAvailability(isAvailable: boolean): void
@@ -83,19 +100,37 @@ export class Parties
 		this.#documentValidation.editorRepresentativeSelector.onSelectorItemDeselectedHandler();
 	}
 
-	loadCompany(companyUid: string): void
+	loadCompany(companyUid: string, entityId: number | null): void
 	{
-		this.#companySelector.load(companyUid);
+		this.#companySelector.load(companyUid, entityId);
 	}
 
-	loadRepresentative(representativeId: number): void
+	loadFirstCompany(): void
 	{
-		this.#representativeSelector.load(representativeId);
+		this.#companySelector.loadFirstCompany();
 	}
 
-	loadValidator(memberId: number, role: MemberRoleType): void
+	loadRepresentative(representativeId: number, entityType: string = EntityType.USER): void
 	{
-		this.#documentValidation.load(memberId, role);
+		this.#representativeSelector.load(representativeId, entityType);
+	}
+
+	loadFirstRepresentative(): void
+	{
+		this.#representativeSelector.loadFistRepresentative();
+	}
+
+	loadValidator(members: Array<SetupMember>): void
+	{
+		const reviewers = members.filter(
+			(member: SetupMember): boolean => member.role === MemberRole.reviewer,
+		);
+		this.#documentValidation.loadReviewers(reviewers);
+
+		const editors = members.filter(
+			(member: SetupMember): boolean => member.role === MemberRole.editor,
+		);
+		this.#documentValidation.loadEditors(editors);
 	}
 
 	getLayout(): HTMLElement
@@ -128,12 +163,22 @@ export class Parties
 				${this.#companySelector.getProviderLayout()}
 			</div>
 		`;
+
 		const validationReviewerLayout = Tag.render`
 			<div class="sign-b2e-settings__item --reviewer">
 				<p class="sign-b2e-settings__item_title">
 					${Loc.getMessage('SIGN_PARTIES_ITEM_VALIDATION_REVIEWER')}
 				</p>
-				${this.#documentValidation.getReviewerLayout()}
+				<div id="${reviewerSelectorContainerListId}">
+					${this.#documentValidation.getReviewerLayoutList()}
+				</div>
+				${this.#createAddReviewerButton()}
+				<p class="sign-wizard__notice">
+				${Helpdesk.replaceLink(
+					Loc.getMessage('SIGN_PARTIES_ADD_REVIEWER_BUTTON_HINT', { '#LIMIT#': maxReviewersCount }),
+					HelpdeskCodes.ReviewerRoleDetails,
+				)}
+				</p>
 			</div>
 		`;
 
@@ -160,14 +205,49 @@ export class Parties
 		return this.#ui.container;
 	}
 
+	#createAddReviewerButton(): HTMLElement
+	{
+		this.#addReviewerButton = Tag.render`
+			<button type="button" class="sign-b2e-document-setup__add-button">
+				<span class="sign-b2e-document-setup__add-button_text">
+					${Loc.getMessage('SIGN_PARTIES_ADD_REVIEWER_BUTTON_TITLE')}
+				</span>
+				<span class="sign-b2e-document-setup__add-button_disabled_hint" data-hint="${Loc.getMessage('SIGN_PARTIES_ADD_REVIEWER_BUTTON_DISABLED_HINT', { '#LIMIT#': maxReviewersCount })}"></span>
+			</button>
+		`;
+		Hint.create(this.#addReviewerButton);
+
+		BX.bind(this.#addReviewerButton, 'click', (): void => {
+			const container = document.getElementById(reviewerSelectorContainerListId);
+			if (container === null)
+			{
+				return;
+			}
+
+			const selector = this.#documentValidation.addReviewerRepresentativeSelector();
+			Dom.append(selector, container);
+
+			this.#checkAddReviewerLimit();
+		});
+
+		this.#checkAddReviewerLimit();
+
+		return this.#addReviewerButton;
+	}
+
+	#checkAddReviewerLimit(): void
+	{
+		if (this.#addReviewerButton === null)
+		{
+			return;
+		}
+
+		this.#addReviewerButton.disabled = this.#documentValidation.getReviewerRepresentativeSelectorCount() >= maxReviewersCount;
+	}
+
 	#validate(): boolean
 	{
-		const validationResults = [
-			this.#companySelector.validate(),
-			this.#representativeSelector.validate(),
-		];
-
-		return validationResults.every((result: boolean) => result === true);
+		return this.#companySelector.validate() && this.#representativeSelector.validate();
 	}
 
 	async save(documentId: string)
@@ -175,7 +255,7 @@ export class Parties
 		this.#removeWarningFromBlocks();
 		if (!this.#validate())
 		{
-			throw new Error();
+			throw new Error('Validation failed');
 		}
 
 		try
@@ -189,33 +269,39 @@ export class Parties
 		}
 	}
 
-	getSelectedIntegrationId(): number | null
-	{
-		return this.#companySelector.getIntegrationId();
-	}
-
 	getSelectedProvider(): Provider | null
 	{
 		return this.#companySelector.getSelectedCompanyProvider();
 	}
 
+	isProviderSelected(): boolean
+	{
+		return Boolean(this.#companySelector.getSelectedCompanyProvider());
+	}
+
+	isRepresentativeSelected(): boolean
+	{
+		return Boolean(this.#representativeSelector.getRepresentativeId());
+	}
+
 	getParties(): Record<string, PartiesData> & { validation: Array<PartiesData> }
 	{
-		const validationData = this.#documentValidation.getValidationData();
-
 		return {
 			representative: {
-				entityType: 'user',
+				entityType: this.#representativeSelector.getRepresentativeItemType(),
 				entityId: this.#representativeSelector.getRepresentativeId(),
 			},
 			company: {
 				entityType: 'company',
 				entityId: this.#companySelector.getCompanyId(),
 			},
-			validation: Object.entries(validationData).map(([role, entityId]) => {
-				return { entityType: 'user', entityId, role };
-			}),
+			validation: this.#documentValidation.getValidationData(),
 		};
+	}
+
+	getSelectedCompanyId(): number
+	{
+		return this.#companySelector.getCompanyId();
 	}
 
 	#setWarning(block: HTMLDivElement): void

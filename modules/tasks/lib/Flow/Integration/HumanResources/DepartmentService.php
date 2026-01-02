@@ -2,6 +2,7 @@
 
 namespace Bitrix\Tasks\Flow\Integration\HumanResources;
 
+use Bitrix\HumanResources\Config\Storage;
 use Bitrix\HumanResources\Contract\Repository\NodeRepository;
 use Bitrix\HumanResources\Service\Container;
 use Bitrix\HumanResources\Util\NodeMemberCounterHelper;
@@ -49,5 +50,13 @@ class DepartmentService
 		$items = $nodeCollection->getItemMap();
 
 		return $this->nodeMemberCounterHelper->countByNodeId(array_shift($items)->id, $findRecursive);
+	}
+
+	public static function isCompanyStructureConverted(): bool
+	{
+		return
+			Loader::includeModule('humanresources')
+			&& Storage::instance()->isCompanyStructureConverted()
+		;
 	}
 }

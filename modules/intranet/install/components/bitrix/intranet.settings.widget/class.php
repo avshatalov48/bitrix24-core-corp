@@ -193,7 +193,10 @@ class IntranetSettingsWidgetComponent extends CBitrixComponent implements \Bitri
 		$result['HOLDING'] = null;
 		$result['MAIN_PAGE'] = [
 			'isAvailable' => self::$cachedResult['IS_WIDGET_MENU_ITEM_SHOW'],
-			'isNew' => self::$cachedResult['IS_WIDGET_MENU_ITEM_SHOW'] && time() < mktime(23, 59, 59, 9, 30, 2024),
+			'isNew' =>
+				self::$cachedResult['IS_WIDGET_MENU_ITEM_SHOW']
+				&& time() < mktime(23, 59, 59, 9, 30, 2024)
+			,
 			'settingsPath' => (new Intranet\Site\FirstPage\MainFirstPage())->getSettingsPath() . '&analyticContext=widget_settings_settings',
 		];
 
@@ -251,12 +254,11 @@ class IntranetSettingsWidgetComponent extends CBitrixComponent implements \Bitri
 				self::$cachedResult['SPOTLIGHT'] = false;
 				self::$cachedResult['SPOTLIGHT_AFTER_CREATE'] = false;
 				$mainPageAccess = new MainPage\Access();
-				self::$cachedResult['IS_MAIN_PAGE_AVAILABLE'] = $mainPageAccess->canEdit();
-				self::$cachedResult['IS_WIDGET_MENU_ITEM_SHOW'] = $mainPageAccess->canEdit(false);
+				self::$cachedResult['IS_WIDGET_MENU_ITEM_SHOW'] = $mainPageAccess->canView();
 				$spotlight = new Spotlight('intranet-main-page');
 				$spotlightAfterFirstCreate = new Spotlight('intranet-main-page-after-create');
 
-				if (self::$cachedResult['IS_MAIN_PAGE_AVAILABLE'])
+				if ($mainPageAccess->canEdit())
 				{
 					if ($spotlight->isAvailable())
 					{

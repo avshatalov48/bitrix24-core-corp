@@ -34,7 +34,10 @@ class CheckListMemberDecorator extends CheckListDecorator
 		$updatedNodes = Nodes::createFromArray($mergeResult->getData()['TRAVERSED_ITEMS'] ?? []);
 
 		$members = $this->extractMembers($nodes);
-		if (empty($members))
+		if (
+			empty($members['AUDITORS'])
+			&& empty($members['ACCOMPLICES'])
+		)
 		{
 			return $updatedNodes;
 		}

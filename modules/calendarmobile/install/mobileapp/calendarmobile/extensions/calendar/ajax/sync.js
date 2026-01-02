@@ -5,7 +5,6 @@ jn.define('calendar/ajax/sync', (require, exports, module) => {
 	const { BaseAjax } = require('calendar/ajax/base');
 
 	const SyncActions = {
-		GET_SYNC_INFO: 'getSyncInfo',
 		GET_SECTIONS_FOR_PROVIDER: 'getSectionsForProvider',
 		CHANGE_SECTION_STATUS: 'changeSectionStatus',
 		DEACTIVATE_CONNECTION: 'deactivateConnection',
@@ -26,14 +25,6 @@ jn.define('calendar/ajax/sync', (require, exports, module) => {
 		getEndpoint()
 		{
 			return 'calendarmobile.sync';
-		}
-
-		/**
-		 * @return {Promise<Object, void>}
-		 */
-		getSyncInfo()
-		{
-			return this.fetch(SyncActions.GET_SYNC_INFO);
 		}
 
 		/**

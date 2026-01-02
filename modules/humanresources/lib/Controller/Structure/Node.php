@@ -2,26 +2,33 @@
 
 namespace Bitrix\HumanResources\Controller\Structure;
 
-use Bitrix\HumanResources\Access\Permission\PermissionDictionary;
-use Bitrix\HumanResources\Access\Permission\PermissionVariablesDictionary;
-use Bitrix\HumanResources\Access\StructureAccessController;
 use Bitrix\HumanResources\Access\StructureActionDictionary;
-use Bitrix\HumanResources\Attribute;
-use Bitrix\HumanResources\Contract\Repository\NodeMemberRepository;
+use Bitrix\HumanResources\Builder\Structure\Filter\Column\IdFilter;
+use Bitrix\HumanResources\Builder\Structure\Filter\Column\Node\NodeTypeFilter;
+use Bitrix\HumanResources\Builder\Structure\Filter\NodeFilter;
+use Bitrix\HumanResources\Builder\Structure\Filter\SelectionCondition\Node\NodeAccessFilter;
+use Bitrix\HumanResources\Builder\Structure\NodeDataBuilder;
+use Bitrix\HumanResources\Config\Feature;
+use Bitrix\HumanResources\Internals\Attribute;
+use Bitrix\HumanResources\Command\Structure\Node\NodeOrderCommand;
 use Bitrix\HumanResources\Contract\Repository\NodeRepository;
-use Bitrix\HumanResources\Contract\Service\NodeMemberService;
-use Bitrix\HumanResources\Contract\Service\UserService;
+use Bitrix\HumanResources\Contract\Service\NodeService;
+use Bitrix\HumanResources\Engine\Controller;
+use Bitrix\HumanResources\Exception\CommandException;
+use Bitrix\HumanResources\Exception\CommandValidateException;
 use Bitrix\HumanResources\Exception\CreationFailedException;
 use Bitrix\HumanResources\Exception\DeleteFailedException;
 use Bitrix\HumanResources\Exception\WrongStructureItemException;
-use Bitrix\HumanResources\Util\StructureHelper;
-use Bitrix\HumanResources\Contract\Repository\RoleRepository;
-use Bitrix\HumanResources\Service\Container;
-use Bitrix\HumanResources\Engine\Controller;
-use Bitrix\HumanResources\Contract\Service\NodeService;
+use Bitrix\HumanResources\Internals\Attribute\Access\LogicOr;
+use Bitrix\HumanResources\Internals\Attribute\StructureActionAccess;
 use Bitrix\HumanResources\Item;
+use Bitrix\HumanResources\Repository\Access\PermissionRestrictedNodeRepository;
+use Bitrix\HumanResources\Service\Container;
 use Bitrix\HumanResources\Type\AccessibleItemType;
+use Bitrix\HumanResources\Type\IntegerCollection;
 use Bitrix\HumanResources\Type\NodeEntityType;
+use Bitrix\HumanResources\Type\StructureAction;
+use Bitrix\HumanResources\Util\StructureHelper;
 use Bitrix\Main\ArgumentException;
 use Bitrix\Main\Engine\CurrentUser;
 use Bitrix\Main\Error;
@@ -31,28 +38,29 @@ use Bitrix\Main\SystemException;
 
 final class Node extends Controller
 {
+	private const ERROR_TEAMS_DISABLED = 'ERROR_TEAMS_DISABLED';
 	private readonly NodeService $nodeService;
 	private readonly NodeRepository $nodeRepository;
-	private StructureAccessController $accessController;
 
 	public function __construct(Request $request = null)
 	{
-		$userId = CurrentUser::get()->getId();
-		if (!$userId)
-		{
-			throw new \Bitrix\Main\AccessDeniedException();
-		}
+		$this->nodeService = Container::getNodeService();
+		$this->nodeRepository = new PermissionRestrictedNodeRepository();
 
 		parent::__construct($request);
-		$this->nodeService = Container::getNodeService();
-		$this->nodeRepository = Container::getNodeRepository(true);
-		$this->accessController = StructureAccessController::getInstance($userId);
 	}
 
-	#[Attribute\StructureActionAccess(
-		permission: StructureActionDictionary::ACTION_DEPARTMENT_CREATE,
-		itemType: AccessibleItemType::NODE,
-		itemParentIdRequestKey: 'parentId',
+	#[Attribute\Access\LogicOr(
+		new Attribute\StructureActionAccess(
+			permission: StructureActionDictionary::ACTION_DEPARTMENT_CREATE,
+			itemType: AccessibleItemType::NODE,
+			itemParentIdRequestKey: 'parentId',
+		),
+		new Attribute\StructureActionAccess(
+			permission: StructureActionDictionary::ACTION_TEAM_CREATE,
+			itemType: AccessibleItemType::NODE,
+			itemParentIdRequestKey: 'parentId',
+		),
 	)]
 	public function addAction(
 		string $name,
@@ -60,14 +68,35 @@ final class Node extends Controller
 		Item\Structure $structure,
 		NodeEntityType $entityType = NodeEntityType::DEPARTMENT,
 		?string $description = null,
+		?string $colorName = null,
 	): array
 	{
+		if (!$parentId)
+		{
+			$this->addError(new Error('Cannot create a node without specifying the parentId'));
+
+			return [];
+		}
+
+		// temp check for adding a team
+		if ($entityType === NodeEntityType::TEAM && !Feature::instance()->isCrossFunctionalTeamsAvailable())
+		{
+			$this->addError(new Error(
+					Loc::getMessage('HUMANRESOURCES_COMPANY_STRUCTURE_TEAMS_DISABLED_ERROR_MSGVER_1'),
+					self::ERROR_TEAMS_DISABLED,
+				)
+			);
+
+			return [];
+		}
+
 		$node = new Item\Node(
 			name: $name,
 			type: $entityType,
 			structureId: $structure->id,
 			parentId: $parentId,
 			description: $description,
+			colorName: $colorName,
 		);
 
 		try
@@ -89,10 +118,17 @@ final class Node extends Controller
 		return [];
 	}
 
-	#[Attribute\StructureActionAccess(
-		permission: StructureActionDictionary::ACTION_DEPARTMENT_DELETE,
-		itemType: AccessibleItemType::NODE,
-		itemIdRequestKey: 'nodeId',
+	#[LogicOr(
+		new StructureActionAccess(
+			permission: StructureActionDictionary::ACTION_DEPARTMENT_DELETE,
+			itemType: AccessibleItemType::NODE,
+			itemIdRequestKey: 'nodeId',
+		),
+		new StructureActionAccess(
+			permission: StructureActionDictionary::ACTION_TEAM_DELETE,
+			itemType: AccessibleItemType::NODE,
+			itemIdRequestKey: 'nodeId',
+		),
 	)]
 	public function deleteAction(Item\Node $node): array
 	{
@@ -106,17 +142,25 @@ final class Node extends Controller
 		}
 		catch (\Throwable $e)
 		{
-			$this->addError(new Error(Loc::getMessage('HUMAN_RESOURCES_NODE_DELETE_FAILED')));
+			$this->addError(new Error('Failed to delete node'));
 		}
 
 		return [];
 	}
 
-	#[Attribute\StructureActionAccess(
-		permission: StructureActionDictionary::ACTION_DEPARTMENT_EDIT,
-		itemType: AccessibleItemType::NODE,
-		itemIdRequestKey: 'nodeId',
-		itemParentIdRequestKey: 'parentId',
+	#[LogicOr(
+		new StructureActionAccess(
+			permission: StructureActionDictionary::ACTION_DEPARTMENT_EDIT,
+			itemType: AccessibleItemType::NODE,
+			itemIdRequestKey: 'nodeId',
+			itemParentIdRequestKey: 'parentId',
+		),
+		new StructureActionAccess(
+			permission: StructureActionDictionary::ACTION_TEAM_EDIT,
+			itemType: AccessibleItemType::NODE,
+			itemIdRequestKey: 'nodeId',
+			itemParentIdRequestKey: 'parentId',
+		),
 	)]
 	public function updateAction(
 		Item\Node $node,
@@ -124,6 +168,7 @@ final class Node extends Controller
 		?int $parentId = null,
 		?string $description = null,
 		?int $sort = null,
+		?string $colorName = null,
 	): array
 	{
 		if ($name)
@@ -144,6 +189,11 @@ final class Node extends Controller
 		if ($sort)
 		{
 			$node->sort = $sort;
+		}
+
+		if ($colorName)
+		{
+			$node->colorName = $colorName;
 		}
 
 		try
@@ -168,15 +218,29 @@ final class Node extends Controller
 			return [];
 		}
 
-		$nodeCollection = $this->nodeService->getNodesByUserId($currentUserId);
+		$this->nodeRepository->setSelectableNodeEntityTypes([
+			NodeEntityType::DEPARTMENT,
+			NodeEntityType::TEAM,
+		]);
+		$nodeCollection = $this->nodeRepository->findAllByUserId($currentUserId);
+		$this->nodeRepository->setSelectableNodeEntityTypes([
+			NodeEntityType::DEPARTMENT,
+		]);
 
 		return array_column($nodeCollection->getItemMap(), 'id');
 	}
 
-	#[Attribute\StructureActionAccess(
-		permission: StructureActionDictionary::ACTION_STRUCTURE_VIEW,
-		itemType: AccessibleItemType::NODE,
-		itemIdRequestKey: 'nodeId',
+	#[LogicOr(
+		new StructureActionAccess(
+			permission: StructureActionDictionary::ACTION_STRUCTURE_VIEW,
+			itemType: AccessibleItemType::NODE,
+			itemIdRequestKey: 'nodeId',
+		),
+		new StructureActionAccess(
+			permission: StructureActionDictionary::ACTION_TEAM_VIEW,
+			itemType: AccessibleItemType::NODE,
+			itemIdRequestKey: 'nodeId',
+		),
 	)]
 	public function getAction(Item\Node $node): array
 	{
@@ -186,10 +250,28 @@ final class Node extends Controller
 	#[Attribute\StructureActionAccess(
 		permission: StructureActionDictionary::ACTION_STRUCTURE_VIEW_ACCESS
 	)]
-	public function getByIdsAction(array $nodeIds): array
+	public function getByIdsAction(array $nodeIds, Item\Structure $structure): array
 	{
 		$result = [];
-		$nodeCollection = $this->nodeRepository->findAllByIds($nodeIds);
+		$nodeIds = array_filter(array_map('intval', $nodeIds));
+		if (empty($nodeIds))
+		{
+			return $result;
+		}
+
+		$nodeCollection =
+			(new NodeDataBuilder())
+				->addFilter(
+					new NodeFilter(
+						idFilter: new IdFilter(new IntegerCollection(...$nodeIds)),
+						entityTypeFilter: NodeTypeFilter::fromNodeTypes([NodeEntityType::DEPARTMENT, NodeEntityType::TEAM]),
+						structureId: $structure->id,
+						active: true,
+						accessFilter: new NodeAccessFilter(StructureAction::ViewAction),
+					),
+				)
+				->getAll()
+		;
 
 		foreach ($nodeCollection as $node)
 		{
@@ -199,13 +281,46 @@ final class Node extends Controller
 		return $result;
 	}
 
+	/**
+	 * @param array<int> $nodeIds
+	 * @param Item\Structure $structure
+	 *
+	 * * @return array<int, array{
+	 *     id: int,
+	 *     name: string,
+	 *     avatar: string,
+	 *     url: string,
+	 *     workPosition: ?string,
+	 *     gender: string,
+	 *     isInvited: bool,
+	 *     role: string,
+	 * }>
+	 */
 	#[Attribute\StructureActionAccess(
 		permission: StructureActionDictionary::ACTION_STRUCTURE_VIEW_ACCESS
 	)]
-	public function getHeadsByIdsAction(array $nodeIds): array
+	public function getHeadsByIdsAction(array $nodeIds, Item\Structure $structure): array
 	{
 		$result = [];
-		$nodeCollection = $this->nodeRepository->findAllByIds($nodeIds);
+		$nodeIds = array_filter(array_map('intval', $nodeIds));
+		if (empty($nodeIds))
+		{
+			return $result;
+		}
+
+		$nodeCollection =
+			(new NodeDataBuilder())
+				->addFilter(
+					new NodeFilter(
+						idFilter: new IdFilter(new IntegerCollection(...$nodeIds)),
+						entityTypeFilter: NodeTypeFilter::fromNodeTypes([NodeEntityType::DEPARTMENT, NodeEntityType::TEAM]),
+						structureId: $structure->id,
+						active: true,
+						accessFilter: new NodeAccessFilter(StructureAction::ViewAction),
+					)
+				)
+				->getAll()
+		;
 
 		foreach ($nodeCollection as $node)
 		{
@@ -215,29 +330,42 @@ final class Node extends Controller
 		return $result;
 	}
 
-	#[Attribute\StructureActionAccess(
-		permission: StructureActionDictionary::ACTION_STRUCTURE_VIEW,
-		itemType: AccessibleItemType::NODE,
-		itemIdRequestKey: 'nodeId',
+	#[LogicOr(
+		new StructureActionAccess(
+			permission: StructureActionDictionary::ACTION_DEPARTMENT_EDIT,
+			itemType: AccessibleItemType::NODE,
+			itemIdRequestKey: 'nodeId',
+			itemParentIdRequestKey: 'parentId',
+		),
+		new StructureActionAccess(
+			permission: StructureActionDictionary::ACTION_TEAM_EDIT,
+			itemType: AccessibleItemType::NODE,
+			itemIdRequestKey: 'nodeId',
+			itemParentIdRequestKey: 'parentId',
+		),
 	)]
-	public function getChildAction(Item\Node $node): array
+	public function changeOrderAction(Item\Node $node, int $direction, int $count): array
 	{
-		$permissionValue = $this->accessController->getUser()->getPermission(
-			PermissionDictionary::HUMAN_RESOURCES_STRUCTURE_VIEW,
-		);
-
-		if (!$permissionValue || $permissionValue === PermissionVariablesDictionary::VARIABLE_SELF_DEPARTMENTS)
+		try
 		{
-			return [];
+			$orderResult = (new NodeOrderCommand(
+				$node,
+				$direction,
+				$count,
+			))->run();
+
+			if (!$orderResult->isSuccess())
+			{
+				$this->addErrors($orderResult->getErrors());
+
+				return [];
+			}
+		}
+		catch (CommandException|CommandValidateException)
+		{
+			$this->addError((new Error('Failed to change order')));
 		}
 
-		$childNodes = $this->nodeRepository->getChildOf($node);
-		$result = [];
-		foreach ($childNodes as $childNode)
-		{
-			$result[$childNode->id] = StructureHelper::getNodeInfo($childNode);
-		}
-
-		return $result;
+		return [];
 	}
 }

@@ -64,13 +64,11 @@ class Entity extends Main\Engine\Controller
 		$values = [];
 		foreach($items as $item)
 		{
-			$entityTypeId = isset($item['ENTITY_TYPE_ID']) ? (int)$item['ENTITY_TYPE_ID'] : 0;
-			$entityId = isset($item['ENTITY_ID']) ? (int)$item['ENTITY_ID'] : 0;
-			$categoryId = isset($item['CATEGORY_ID']) ? (int)$item['CATEGORY_ID'] : 0;
+			[$entityTypeId, $entityId, $categoryId, $isMyCompany] = self::expandItem($item);
 
 			if(\CCrmOwnerType::IsDefined($entityTypeId) && $entityId > 0)
 			{
-				$values[] = "{$entityTypeId}:{$entityId}:{$categoryId}";
+				$values[] = self::getItemKey($entityTypeId, $entityId, $categoryId, $isMyCompany);
 			}
 		}
 
@@ -163,6 +161,7 @@ class Entity extends Main\Engine\Controller
 		$actualCategoryId = isset($options['EXPAND_CATEGORY_ID'])
 			? (int)$options['EXPAND_CATEGORY_ID']
 			: 0;
+		$checkIsMyCompany = isset($options['CHECK_IS_MY_COMPANY']) && $options['CHECK_IS_MY_COMPANY'];
 
 		$items = [];
 
@@ -183,6 +182,7 @@ class Entity extends Main\Engine\Controller
 			$storedEntityTypeId = (int)$parts[0];
 			$storedCategoryId = isset($parts[2]) ? (int)$parts[2] : 0;
 			$entityId = (int)$parts[1];
+			$isMyCompany = isset($parts[3]) ? (int)$parts[3] : 0;
 
 			if (
 				$actualEntityTypeId !== $storedEntityTypeId
@@ -192,7 +192,12 @@ class Entity extends Main\Engine\Controller
 				continue;
 			}
 
-			if (!$permissions->checkReadPermissions($storedEntityTypeId, $entityId, $storedCategoryId))
+			if (!$permissions->item()->canRead($storedEntityTypeId, $entityId))
+			{
+				continue;
+			}
+
+			if ($checkIsMyCompany && !$isMyCompany)
 			{
 				continue;
 			}
@@ -201,6 +206,7 @@ class Entity extends Main\Engine\Controller
 				'ENTITY_TYPE_ID' => $storedEntityTypeId,
 				'ENTITY_ID' => $entityId,
 				'CATEGORY_ID' => $storedCategoryId,
+				'IS_MY_COMPANY' => $isMyCompany,
 			];
 		}
 
@@ -213,15 +219,16 @@ class Entity extends Main\Engine\Controller
 				$items,
 				(int)$options['EXPAND_ENTITY_TYPE_ID'],
 				$actualCategoryId,
-				static::ITEMS_LIMIT - $qty
+				static::ITEMS_LIMIT - $qty,
+				$checkIsMyCompany,
 			);
 
 			$currentItemsHashes = array_map(fn ($item) => self::itemToStringKey($item), $currentItems);
 
-			$newlyItems = array_filter($items, function (array $item) use ($currentItemsHashes) {
+			$newlyItems = array_filter($items, static function (array $item) use ($currentItemsHashes) {
 				$itemHash = self::itemToStringKey($item);
 
-				return !in_array($itemHash, $currentItemsHashes);
+				return !in_array($itemHash, $currentItemsHashes, true);
 			});
 
 			if (!empty($newlyItems))
@@ -235,11 +242,9 @@ class Entity extends Main\Engine\Controller
 
 	private static function itemToStringKey(array $item): string
 	{
-		$entityTypeId = isset($item['ENTITY_TYPE_ID']) ? (int)$item['ENTITY_TYPE_ID'] : 0;
-		$entityId = isset($item['ENTITY_ID']) ? (int)$item['ENTITY_ID'] : 0;
-		$categoryId = isset($item['CATEGORY_ID']) ? (int)$item['CATEGORY_ID'] : 0;
+		[$entityTypeId, $entityId, $categoryId, $isMyCompany] = self::expandItem($item);
 
-		return "{$entityTypeId}:{$entityId}:{$categoryId}";
+		return self::getItemKey($entityTypeId, $entityId, $categoryId, $isMyCompany);
 	}
 
 	/**
@@ -254,15 +259,14 @@ class Entity extends Main\Engine\Controller
 		array &$items,
 		int $entityTypeId,
 		int $categoryId,
-		int $limit = self::ITEMS_LIMIT
+		int $limit = self::ITEMS_LIMIT,
+		bool $isMyCompany = false,
 	): void
 	{
 		$map = [];
 		foreach ($items as $item)
 		{
-			$storedEntityTypeId = isset($item['ENTITY_TYPE_ID']) ? (int)$item['ENTITY_TYPE_ID'] : 0;
-			$storedEntityId = isset($item['ENTITY_ID']) ? (int)$item['ENTITY_ID'] : 0;
-			$storedCategoryId = isset($item['CATEGORY_ID']) ? (int)$item['CATEGORY_ID'] : 0;
+			[$storedEntityTypeId, $storedEntityId, $storedCategoryId, $isMyCompany] = self::expandItem($item);
 
 			if (
 				 $storedEntityId <= 0
@@ -274,26 +278,32 @@ class Entity extends Main\Engine\Controller
 				continue;
 			}
 
-			$map["{$storedEntityTypeId}:{$storedEntityId}:{$storedCategoryId}"] = $item;
+			$map[self::getItemKey($storedEntityTypeId, $storedEntityId, $storedCategoryId, $isMyCompany)] = $item;
 		}
 
-		$userPermissions = \CCrmPerms::GetCurrentUserPermissions();
 		$entityIDs = null;
 		if($entityTypeId === \CCrmOwnerType::Lead)
 		{
-			$entityIDs = \CCrmLead::GetTopIDs($limit, 'DESC', $userPermissions);
+			$entityIDs = \CCrmLead::GetTopIDs($limit, 'DESC');
 		}
 		elseif($entityTypeId === \CCrmOwnerType::Contact)
 		{
-			$entityIDs = \CCrmContact::GetTopIDsInCategory($categoryId, $limit, 'DESC', $userPermissions);
+			$entityIDs = \CCrmContact::GetTopIDsInCategory($categoryId, $limit, 'DESC');
 		}
 		elseif($entityTypeId === \CCrmOwnerType::Company)
 		{
-			$entityIDs = \CCrmCompany::GetTopIDsInCategory($categoryId, $limit, 'DESC', $userPermissions);
+			if ($isMyCompany)
+			{
+				$entityIDs = \CCrmCompany::GetTopIDsOfMyCompanies($limit, 'DESC');
+			}
+			else
+			{
+				$entityIDs = \CCrmCompany::GetTopIDsInCategory($categoryId, $limit, 'DESC');
+			}
 		}
 		elseif($entityTypeId === \CCrmOwnerType::Deal)
 		{
-			$entityIDs = \CCrmDeal::GetTopIDs($limit, 'DESC', $userPermissions);
+			$entityIDs = \CCrmDeal::GetTopIDs($limit, 'DESC');
 		}
 		elseif($entityTypeId === \CCrmOwnerType::Order)
 		{
@@ -328,7 +338,7 @@ class Entity extends Main\Engine\Controller
 
 		foreach($entityIDs as $entityId)
 		{
-			$key = "{$entityTypeId}:{$entityId}:{$categoryId}";
+			$key = self::getItemKey($entityTypeId, $entityId, $categoryId, (int)$isMyCompany);
 			if(isset($map[$key]))
 			{
 				continue;
@@ -338,10 +348,31 @@ class Entity extends Main\Engine\Controller
 				'ENTITY_TYPE_ID' => $entityTypeId,
 				'ENTITY_ID' => (int)$entityId,
 				'CATEGORY_ID' => $categoryId,
+				'IS_MY_COMPANY' => (int)$isMyCompany,
 			];
 		}
 
 		$items = array_values($map);
+	}
+
+	private static function getItemKey(
+		string|int $entityTypeId,
+		string|int $entityId,
+		string|int $categoryId,
+		int $isMyCompany = 0
+	): string
+	{
+		return "{$entityTypeId}:{$entityId}:{$categoryId}:{$isMyCompany}";
+	}
+
+	private static function expandItem(mixed $item): array
+	{
+		$entityTypeId = isset($item['ENTITY_TYPE_ID']) ? (int)$item['ENTITY_TYPE_ID'] : 0;
+		$entityId = isset($item['ENTITY_ID']) ? (int)$item['ENTITY_ID'] : 0;
+		$categoryId = isset($item['CATEGORY_ID']) ? (int)$item['CATEGORY_ID'] : 0;
+		$isMyCompany = isset($item['IS_MY_COMPANY']) && $item['IS_MY_COMPANY'];
+
+		return [$entityTypeId, $entityId, $categoryId, $isMyCompany];
 	}
 	//endregion
 }

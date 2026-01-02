@@ -24,19 +24,6 @@ export class CopilotPopup
 	getPopupTemplate()
 	{
 		const getButton = () => {
-			if (this.isCopilotActive)
-			{
-				return {
-					props: { className: 'bx-call-copilot-popup__button bx-call-copilot-popup__button_gray' },
-					text: BX.message('CALL_COPILOT_POPUP_BUTTON_DISABLE'),
-					events: {
-						click: () => {
-							this.callbacks.updateCopilotState();
-							this.close();
-						},
-					}
-				}
-			}
 
 			if (!this.isCopilotFeaturesEnabled)
 			{
@@ -46,6 +33,16 @@ export class CopilotPopup
 					props: { className: 'bx-call-copilot-popup__button bx-call-copilot-popup__button_transparent' },
 					text: BX.message('CALL_COPILOT_POPUP_BUTTON_COMING_SOON'),
 				}
+			}
+
+			if (!CallAI.settingsEnabled)
+			{
+				this.sendAnalytics('error_turnedoff');
+
+				return {
+					props: { className: 'bx-call-copilot-popup__button bx-call-copilot-popup__button_transparent' },
+					text: Loc.getMessage('CALL_COPILOT_POPUP_SETTINGS_DISABLED'),
+				};
 			}
 
 			if (!CallAI.tariffAvailable)
@@ -64,16 +61,6 @@ export class CopilotPopup
 				}
 			}
 
-			if (!CallAI.settingsEnabled)
-			{
-				this.sendAnalytics('error_turnedoff');
-
-				return {
-					props: { className: 'bx-call-copilot-popup__button bx-call-copilot-popup__button_transparent' },
-					text: Loc.getMessage('CALL_COPILOT_POPUP_SETTINGS_DISABLED'),
-				};
-			}
-
 			if (!CallAI.agreementAccepted)
 			{
 				this.sendAnalytics('agreement_limit');
@@ -81,6 +68,20 @@ export class CopilotPopup
 				return {
 					props: { className: 'bx-call-copilot-popup__button bx-call-copilot-popup__button_transparent' },
 					text: BX.message('CALL_COPILOT_POPUP_CONCERN_NOT_ACCEPTED'),
+				}
+			}
+
+			if (this.isCopilotActive)
+			{
+				return {
+					props: { className: 'bx-call-copilot-popup__button bx-call-copilot-popup__button_gray' },
+					text: BX.message('CALL_COPILOT_POPUP_BUTTON_DISABLE'),
+					events: {
+						click: () => {
+							this.callbacks.updateCopilotState();
+							this.close();
+						},
+					}
 				}
 			}
 

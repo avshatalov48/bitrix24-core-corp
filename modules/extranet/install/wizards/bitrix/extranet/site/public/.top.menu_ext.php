@@ -1,6 +1,7 @@
 <?php
 
 use Bitrix\Extranet\Service\ServiceContainer;
+use Bitrix\Intranet\Settings\Tools\ToolsManager;
 use Bitrix\Main\Loader;
 use Bitrix\Main\Localization\Loc;
 use Bitrix\Main\ModuleManager;
@@ -77,14 +78,16 @@ else
 }
 
 if (
-	Loader::includeModule('socialnetwork')
+	ToolsManager::getInstance()->checkAvailabilityByToolId('collab')
+	&& Loader::includeModule('socialnetwork')
 	&& Collab\CollabFeature::isOn()
 	&& Collab\CollabFeature::isFeatureEnabled()
+	&& Collab\Requirement::check()->isSuccess()
 )
 {
 	$menuItems[] = [
 		Loc::getMessage('EXTRANET_LEFT_MENU_IM_COLLAB'),
-		$isCollaber ? '/extranet/?IM_COLLAB' : '/extranet/online/?IM_COLLAB',
+		SITE_DIR . 'online/?IM_COLLAB',
 		[],
 		[
 			'menu_item_id' => 'menu_im_collab',

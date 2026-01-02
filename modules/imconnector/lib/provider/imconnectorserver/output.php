@@ -45,7 +45,7 @@ class Output extends Base\Output
 	];
 
 	private const SERVICE_MAP = [
-		'ru' => 'https://im-ru.bitrix.info',
+		'ru' => 'https://im.bitrix24.tech',
 		'eu' => 'https://im.bitrix.info',
 	];
 
@@ -124,14 +124,11 @@ class Output extends Base\Output
 		}
 		else
 		{
-			if (in_array($region, ['ru', 'by', 'kz'], true))
+			$serviceEndpoint = match ($region)
 			{
-				$serviceEndpoint = self::SERVICE_MAP['ru'];
-			}
-			else
-			{
-				$serviceEndpoint = self::SERVICE_MAP['eu'];
-			}
+				'ru','by','kz','am','az','ge','kg','uz' => self::SERVICE_MAP['ru'],
+				default => self::SERVICE_MAP['eu'],
+			};
 		}
 
 		if (!(mb_strpos($serviceEndpoint, 'https://') === 0 || mb_strpos($serviceEndpoint, 'http://') === 0))

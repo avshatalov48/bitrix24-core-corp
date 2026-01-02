@@ -40,48 +40,59 @@ export default class ItemActive
 		links.forEach((link) => {
 			const linkUri = new Uri(link.url);
 			let changeActiveItem = false;
-			if (!theMostOfTheLinks
-				||
-				theMostOfTheLinks.uri.getPath().length < linkUri.getPath().length)
+			if (
+				!theMostOfTheLinks
+				|| theMostOfTheLinks.uri.getPath().length < linkUri.getPath().length
+			)
 			{
 				changeActiveItem = true;
 			}
 			else if (theMostOfTheLinks.uri.getPath().length === linkUri.getPath().length)
 			{
 				const actualParams = this.#actualLink.getQueryParams();
-				const maxCount = Object.keys(actualParams).length;
 				const theMostOfTheLinkServiceData = {
 					params: theMostOfTheLinks.uri.getQueryParams(),
-					mismatches: maxCount
+					matches: 0,
 				};
 				const comparedLinkParams = {
 					params: linkUri.getQueryParams(),
-					mismatches: maxCount
+					matches: 0,
 				};
-				Array.from(
-					Object.keys(actualParams)
-				).forEach((key) => {
-					if (String(actualParams[key]) === String(theMostOfTheLinkServiceData.params[key]))
-					{
-						theMostOfTheLinkServiceData.mismatches--;
-					}
-					if (String(actualParams[key]) === String(comparedLinkParams.params[key]))
-					{
-						comparedLinkParams.mismatches--;
-					}
-				});
 
-				if (link.priority > 0 && item instanceof ItemSystem)
+				for (const key of Object.keys(actualParams))
 				{
-					link.priority += 1;
+					if (
+						key in actualParams
+						&& key in theMostOfTheLinkServiceData.params
+						&& String(actualParams[key]) === String(theMostOfTheLinkServiceData.params[key])
+					)
+					{
+						theMostOfTheLinkServiceData.matches++;
+					}
+
+					if (
+						key in actualParams
+						&& key in comparedLinkParams.params
+						&& String(actualParams[key]) === String(comparedLinkParams.params[key])
+					)
+					{
+						comparedLinkParams.matches++;
+					}
 				}
 
-				if (theMostOfTheLinkServiceData.mismatches > comparedLinkParams.mismatches
-					|| theMostOfTheLinks.priority < link.priority)
+				if (
+					comparedLinkParams.matches > theMostOfTheLinkServiceData.matches
+					|| (
+						comparedLinkParams.matches === theMostOfTheLinkServiceData.matches
+						&& Object.keys(comparedLinkParams.params).length < Object.keys(theMostOfTheLinkServiceData.params).length
+					)
+					|| theMostOfTheLinks.priority < link.priority
+				)
 				{
 					changeActiveItem = true;
 				}
 			}
+
 			if (changeActiveItem)
 			{
 				theMostOfTheLinks = {
@@ -102,8 +113,10 @@ export default class ItemActive
 			this.item = item;
 
 			this.highlight();
+
 			return true;
 		}
+
 		return false;
 	}
 

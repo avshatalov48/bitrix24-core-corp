@@ -8,7 +8,6 @@ use Bitrix\Crm\Activity\ToDo\ColorSettings\ColorSettingsProvider;
 use Bitrix\Crm\Activity\TodoPingSettingsProvider;
 use Bitrix\Crm\Integration\AI\AIManager;
 use Bitrix\Crm\Integration\AI\EventHandler;
-use Bitrix\Crm\Integration\Calendar;
 use Bitrix\Crm\ItemIdentifier;
 use Bitrix\Crm\Service\Container;
 use Bitrix\Crm\Service\Timeline\Context;
@@ -633,6 +632,7 @@ class ToDo extends Activity
 			->setText($description)
 			->setEditable(false)
 			->setUseBBCodeEditor(true)
+			->setAllowFiles(false)
 		;
 
 		if (!$this->isScheduled() && $this->getContext()->getType() === Context::MOBILE)
@@ -750,6 +750,7 @@ class ToDo extends Activity
 			->setTitle(Loc::getMessage('CRM_TIMELINE_ITEM_TODO_USERS_TITLE'))
 			->setContentBlock($lineOfTextBlocks)
 			->setInline()
+			->setWordWrap()
 		;
 	}
 

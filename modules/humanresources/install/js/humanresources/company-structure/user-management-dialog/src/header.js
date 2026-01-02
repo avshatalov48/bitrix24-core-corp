@@ -1,14 +1,17 @@
+import { EntityTypes } from 'humanresources.company-structure.utils';
 import { Dom, Event, Tag, Loc, Text } from 'main.core';
 import { BaseHeader, type Dialog, type Tab, type HeadOptions } from 'ui.entity-selector';
 import { Menu, PopupManager } from 'main.popup';
 import { BaseUserManagementDialogFooter } from './footer';
-import { memberRoles } from 'humanresources.company-structure.api';
+import { memberRoles, type MemberRolesType } from 'humanresources.company-structure.api';
 
 export class BaseUserManagementDialogHeader extends BaseHeader
 {
 	title: string;
 	description: string;
 	role: string;
+	memberRoles: MemberRolesType;
+	entityType: string;
 
 	constructor(context: Dialog | Tab, options: HeadOptions)
 	{
@@ -16,7 +19,9 @@ export class BaseUserManagementDialogHeader extends BaseHeader
 
 		this.tiltle = Text.encode(this.getOption('title') ?? '');
 		this.description = Text.encode(this.getOption('description') ?? '');
-		this.role = this.getOption('role') ?? memberRoles.employee;
+		this.memberRoles = this.getOption('memberRoles') ?? memberRoles;
+		this.role = this.getOption('role') ?? this.memberRoles.employee;
+		this.entityType = this.getOption('entityType') ?? EntityTypes.department;
 	}
 
 	render(): HTMLElement
@@ -35,7 +40,7 @@ export class BaseUserManagementDialogHeader extends BaseHeader
 		});
 
 		this.header = header;
-		if (this.role === memberRoles.employee)
+		if (this.role === this.memberRoles.employee)
 		{
 			const employeeAddSubtitle = Tag.render`
 				<span class="hr-user-management-dialog__header-description">
@@ -60,7 +65,7 @@ export class BaseUserManagementDialogHeader extends BaseHeader
 					${Loc.getMessage('HUMANRESOURCES_COMPANY_STRUCTURE_USER_MANAGEMENT_DIALOG_ROLE_PICKER_TEXT')}
 					</span>
 				<div ref="roleSwitcher" class="hr-user-management-dialog__role_switcher">
-					${Loc.getMessage('HUMANRESOURCES_COMPANY_STRUCTURE_USER_MANAGEMENT_DIALOG_HEAD_ROLE_TITLE')}
+					${this.#getHeadRoleText()}
 				</div>
 			</div>
 		`;
@@ -102,12 +107,12 @@ export class BaseUserManagementDialogHeader extends BaseHeader
 					<div 
 						data-test-id="hr-company-structure_user-management-dialog__role-switcher-head"
 					>
-						${Loc.getMessage('HUMANRESOURCES_COMPANY_STRUCTURE_USER_MANAGEMENT_DIALOG_HEAD_ROLE_TITLE')}
+						${this.#getHeadRoleText()}
 					</div>
 				`,
 				onclick: () => {
-					this.roleSwitcher.innerText = Loc.getMessage('HUMANRESOURCES_COMPANY_STRUCTURE_USER_MANAGEMENT_DIALOG_HEAD_ROLE_TITLE');
-					this.#changeRole(memberRoles.head);
+					this.roleSwitcher.innerText = this.#getHeadRoleText();
+					this.#changeRole(this.memberRoles.head);
 					roleSwitcherMenu.destroy();
 				},
 			},
@@ -116,12 +121,12 @@ export class BaseUserManagementDialogHeader extends BaseHeader
 					<div 
 						data-test-id="hr-company-structure_user-management-dialog__role-switcher-deputy"
 					>
-						${Loc.getMessage('HUMANRESOURCES_COMPANY_STRUCTURE_USER_MANAGEMENT_DIALOG_DEPUTY_ROLE_TITLE')}
+						${this.#getDeputyRoleText()}
 					</div>
 				`,
 				onclick: () => {
-					this.roleSwitcher.innerText = Loc.getMessage('HUMANRESOURCES_COMPANY_STRUCTURE_USER_MANAGEMENT_DIALOG_DEPUTY_ROLE_TITLE');
-					this.#changeRole(memberRoles.deputyHead);
+					this.roleSwitcher.innerText = this.#getDeputyRoleText();
+					this.#changeRole(this.memberRoles.deputyHead);
 					roleSwitcherMenu.destroy();
 				},
 			},
@@ -144,5 +149,21 @@ export class BaseUserManagementDialogHeader extends BaseHeader
 		const currentFooterOptions = this.getDialog().getFooter().getOptions();
 		currentFooterOptions.role = role;
 		this.getDialog().setFooter(BaseUserManagementDialogFooter, currentFooterOptions);
+	}
+
+	#getHeadRoleText(): string
+	{
+		return this.entityType === EntityTypes.team
+			? Loc.getMessage('HUMANRESOURCES_COMPANY_STRUCTURE_USER_MANAGEMENT_DIALOG_TEAM_HEAD_ROLE_TITLE')
+			: Loc.getMessage('HUMANRESOURCES_COMPANY_STRUCTURE_USER_MANAGEMENT_DIALOG_HEAD_ROLE_TITLE')
+		;
+	}
+
+	#getDeputyRoleText(): string
+	{
+		return this.entityType === EntityTypes.team
+			? Loc.getMessage('HUMANRESOURCES_COMPANY_STRUCTURE_USER_MANAGEMENT_DIALOG_TEAM_DEPUTY_ROLE_TITLE')
+			: Loc.getMessage('HUMANRESOURCES_COMPANY_STRUCTURE_USER_MANAGEMENT_DIALOG_DEPUTY_ROLE_TITLE')
+		;
 	}
 }

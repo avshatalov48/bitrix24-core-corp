@@ -90,6 +90,10 @@ class Result extends Base
 		}
 
 		$result = (new ResultManager($userId))->createFromComment($commentId, false);
+		if (!$result)
+		{
+			return null;
+		}
 
 		if (!empty($params['WITH_FILE_INFO']) && $params['WITH_FILE_INFO'] == 'Y')
 		{

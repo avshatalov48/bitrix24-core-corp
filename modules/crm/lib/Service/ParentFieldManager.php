@@ -376,6 +376,7 @@ class ParentFieldManager
 					'parentEntityTypeId' => $parentEntityTypeId,
 				],
 				'TITLE' => \CCrmOwnerType::GetDescription($parentEntityTypeId),
+				'CLASS' => Field\ParentEntityId::class,
 			];
 		}
 
@@ -551,7 +552,7 @@ class ParentFieldManager
 		$parentEntityId = (int)$componentParams['PARENT_ENTITY_ID'];
 		if ($parentEntityTypeId && $parentEntityId)
 		{
-			$isPermitted = Container::getInstance()->getUserPermissions()->checkReadPermissions(
+			$isPermitted = Container::getInstance()->getUserPermissions()->item()->canRead(
 				$parentEntityTypeId,
 				$parentEntityId
 			);

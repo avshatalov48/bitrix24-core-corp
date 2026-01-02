@@ -452,9 +452,6 @@ class CCrmOrderShipmentDetailsComponent extends Crm\Component\EntityDetails\Base
 			$allStatuses[$status['STATUS_ID']] = $status['NAME'];
 		}
 
-		$statusSelectorPermissionType = ($this->mode === ComponentMode::CREATION ||
-			$this->mode === ComponentMode::COPING) ? EntityPermissionType::CREATE : EntityPermissionType::UPDATE;
-
 		foreach(array_keys($allStatuses) as $statusID)
 		{
 			if($this->mode === ComponentMode::VIEW)
@@ -463,7 +460,12 @@ class CCrmOrderShipmentDetailsComponent extends Crm\Component\EntityDetails\Base
 			}
 			else
 			{
-				if(!\Bitrix\Crm\Order\Permissions\Order::checkStatusPermission($statusID, $statusSelectorPermissionType, $this->userPermissions))
+				$hasEditPermission = ($this->mode === ComponentMode::CREATION || $this->mode === ComponentMode::COPING)
+					? $this->userPermissionsService->stage()->canAddInStage(CCrmOwnerType::Order, null, $statusID)
+					: $this->userPermissionsService->stage()->canUpdateInStage(CCrmOwnerType::Order, null, $statusID)
+				;
+
+				if(!$hasEditPermission)
 				{
 					$disabledStatusIDs[] = $statusID;
 				}
@@ -799,7 +801,7 @@ class CCrmOrderShipmentDetailsComponent extends Crm\Component\EntityDetails\Base
 			'type' => 'order_property_wrapper',
 			'transferable' => false,
 			'editable' => true,
-			'isDragEnabled' => $this->userPermissions->HavePerm('CONFIG', BX_CRM_PERM_CONFIG, 'WRITE'),
+			'isDragEnabled' => $this->userPermissionsService->isCrmAdmin(),
 			'elements' => [],
 			'sortedElements' => [
 				'active' => isset($this->arResult['SHIPMENT_PROPERTIES']['ACTIVE']) && is_array($this->arResult['SHIPMENT_PROPERTIES']['ACTIVE'])

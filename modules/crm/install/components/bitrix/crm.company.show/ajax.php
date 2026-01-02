@@ -94,11 +94,11 @@ if($mode === 'GET_CLIENT_INFO')
 	$isMyCompany = \CCrmCompany::isMyCompany($entityID);
 	if ($isMyCompany)
 	{
-		if (!\Bitrix\Crm\Service\Container::getInstance()->getUserPermissions()->getMyCompanyPermissions()->canReadBaseFields($entityID))
+		if (!\Bitrix\Crm\Service\Container::getInstance()->getUserPermissions()->myCompany()->canReadBaseFields($entityID))
 		{
 			__CrmCompanyShowEndJsonResonse(array('ERROR' => 'Access denied.'));
 		}
-	} elseif (!\Bitrix\Crm\Service\Container::getInstance()->getUserPermissions()->checkReadPermissions($entityTypeID, $entityID))
+	} elseif (!\Bitrix\Crm\Service\Container::getInstance()->getUserPermissions()->item()->canRead($entityTypeID, $entityID))
 	{
 		__CrmCompanyShowEndJsonResonse(array('ERROR' => 'Access denied.'));
 	}
@@ -163,7 +163,7 @@ if($mode === 'GET_CLIENT_INFOS')
 		__CrmCompanyShowEndJsonResonse(array('ERROR' => 'Owner ID is not specified.'));
 	}
 
-	if (!\Bitrix\Crm\Service\Container::getInstance()->getUserPermissions()->checkReadPermissions($ownerTypeID, $ownerID))
+	if (!\Bitrix\Crm\Service\Container::getInstance()->getUserPermissions()->item()->canRead($ownerTypeID, $ownerID))
 	{
 		__CrmCompanyShowEndJsonResonse(array('ERROR' => 'Access denied.'));
 	}

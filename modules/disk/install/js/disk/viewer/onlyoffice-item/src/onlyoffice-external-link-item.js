@@ -32,10 +32,6 @@ export default class OnlyofficeExternalLinkItem extends BX.UI.Viewer.Item
 	loadData ()
 	{
 		const uid = BX.util.getRandomString(16);
-		BX.Disk.sendTelemetryEvent({
-			action: 'start',
-			uid: uid
-		});
 
 		BX.SidePanel.Instance.open(this.getDocumentViewUrl(), {
 			width: '100%',

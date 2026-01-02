@@ -14,7 +14,6 @@ use Bitrix\MobileApp\Mobile;
 class Crm implements Tabable
 {
 	private const INITIAL_COMPONENT = 'crm:crm.tabs';
-	private const MINIMAL_API_VERSION = 45;
 
 	/** @var Context $context */
 	private $context;
@@ -25,11 +24,6 @@ class Crm implements Tabable
 			!Loader::includeModule('crm')
 			|| !Loader::includeModule('crmmobile')
 		)
-		{
-			return false;
-		}
-
-		if (Mobile::getApiVersion() < self::MINIMAL_API_VERSION)
 		{
 			return false;
 		}
@@ -89,9 +83,11 @@ class Crm implements Tabable
 	public function getMenuData(): ?array
 	{
 		return [
+			'id' => 'crm',
+			'sort' => 100,
+			'section_code' => 'crm',
 			'title' => $this->getTitle(),
 			'useLetterImage' => true,
-			'min_api_version' => self::MINIMAL_API_VERSION,
 			'color' => '#00ace3',
 			'imageUrl' => 'favorite/icon-crm.png',
 			'imageName' => $this->getIconId(),
@@ -99,6 +95,12 @@ class Crm implements Tabable
 				'id' => 'crm_tabs',
 				'onclick' => Utils::getComponentJSCode($this->getComponentParams()),
 				'counter' => 'crm_all_no_orders',
+				'analytics' => [
+					'tool' => 'crm',
+					'category' => 'entity_operations',
+					'event' => 'open_section',
+					'c_section' => 'ava_menu',
+				],
 			],
 		];
 	}

@@ -2,22 +2,100 @@
  * @module tasks/entry
  */
 jn.define('tasks/entry', (require, exports, module) => {
-	const AppTheme = require('apptheme');
 	const { Loc } = require('loc');
-	const { Feature } = require('feature');
+	const { Color } = require('tokens');
 	const { checkDisabledToolById } = require('settings/disabled-tools');
 	const { InfoHelper } = require('layout/ui/info-helper');
 	const { FeatureId } = require('tasks/enum');
 	const { getFeatureRestriction, tariffPlanRestrictionsReady } = require('tariff-plan-restriction');
 
 	/**
-	 * @typedef {{id?: string|number, taskId?: string|number, title?: string, taskInfo?: object }} OpenTaskData
-	 * @typedef {{
-	 * 	taskObject?: object,
-	 * 	userId?: number,
-	 * 	parentWidget?: object,
-	 * 	context?: 'tasks.dashboard'
-	 * }} OpenTaskParams
+	 * @typedef {object} OpenTaskData
+	 * @property {string|number} [id]
+	 * @property {string|number} [taskId]
+	 */
+
+	/**
+	 * @typedef {object} OpenTaskParams
+	 * @property {number} [userId=env.userId]
+	 * @property {PageManager} [parentWidget]
+	 * @property {object} [analyticsLabel]
+	 * @property {boolean} [shouldOpenComments=false]
+	 * @property {string} [view]
+	 * @property {number} [kanbanOwnerId]
+	 */
+
+	/**
+	 * @typedef {object} TaskCreationDataGroupDto
+	 * @property {number} id
+	 * @property {string} name
+	 * @property {string} image
+	 * @property {object} additionalData
+	 */
+
+	/**
+	 * @typedef {object} TaskCreationDataUserDto
+	 * @property {number} id
+	 * @property {string} name
+	 * @property {string?} image
+	 * @property {string?} link
+	 * @property {string?} workPosition
+	 */
+
+	/**
+	 * @typedef {object} TaskCreationDataFileDto
+	 * @property {string} id
+	 * @property {string} name
+	 * @property {string} type
+	 * @property {string} url
+	 */
+
+	/**
+	 * @typedef {object} TaskCreationDataTagDto
+	 * @property {string} id
+	 * @property {string} name
+	 */
+
+	/**
+	 * @typedef {object} TaskCreationDataCrmElementDto
+	 * @property {string} id
+	 * @property {string} title
+	 * @property {string} subtitle
+	 * @property {string} type
+	 * @property {boolean} hidden
+	 */
+
+	/**
+	 * @typedef {object} OpenTaskCreationData
+	 * @property {object} [initialTaskData]
+	 * @property {string} [initialTaskData.guid]
+	 * @property {string} [initialTaskData.title]
+	 * @property {string} [initialTaskData.description]
+	 * @property {Date} [initialTaskData.deadline]
+	 * @property {number} [initialTaskData.groupId]
+	 * @property {TaskCreationDataGroupDto} [initialTaskData.group]
+	 * @property {number} [initialTaskData.flowId]
+	 * @property {number} [initialTaskData.priority] - one of values from {@link tasks/enum.TaskPriority}
+	 * @property {number} [initialTaskData.parentId]
+	 * @property {number} [initialTaskData.relatedTaskId]
+	 * @property {TaskCreationDataUserDto} [initialTaskData.responsible]
+	 * @property {TaskCreationDataUserDto[]} [initialTaskData.accomplices]
+	 * @property {TaskCreationDataUserDto[]} [initialTaskData.auditors]
+	 * @property {TaskCreationDataFileDto[]} [initialTaskData.files]
+	 * @property {TaskCreationDataTagDto[]} [initialTaskData.tags]
+	 * @property {TaskCreationDataCrmElementDto[]} [initialTaskData.crm]
+	 * @property {boolean} [initialTaskData.allowTimeTracking]
+	 * @property {number} [initialTaskData.startDatePlan]
+	 * @property {number} [initialTaskData.endDatePlan]
+	 * @property {number} [initialTaskData.IM_CHAT_ID]
+	 * @property {number} [initialTaskData.IM_MESSAGE_ID]
+	 * @property {string} [view] - one of values from {@link tasks/enum.ViewMode}
+	 * @property {object} [stage]
+	 * @property {number} [copyId]
+	 * @property {string} [context]
+	 * @property {boolean} [closeAfterSave]
+	 * @property {object} [analyticsLabel]
+	 * @property {PageManager} [layoutWidget]
 	 */
 
 	class Entry
@@ -70,10 +148,11 @@ jn.define('tasks/entry', (require, exports, module) => {
 				titleParams: {
 					text: Loc.getMessage('TASKSMOBILE_ENTRY_EFFICIENCY_TITLE'),
 				},
-				backgroundColor: AppTheme.colors.bgSecondary,
+				enableNavigationBarBorder: false,
+				backgroundColor: Color.bgSecondary.toHex(),
 				backdrop: {
-					mediumPositionHeight: 600,
-					navigationBarColor: AppTheme.colors.bgSecondary,
+					mediumPositionHeight: 530,
+					navigationBarColor: Color.bgSecondary.toHex(),
 				},
 				cache: false,
 			});
@@ -87,41 +166,24 @@ jn.define('tasks/entry', (require, exports, module) => {
 		 */
 		static async openTask(data, params = {})
 		{
-			const taskAvailable = await Entry.checkToolAvailable('tasks', 'limit_tasks_off');
-			if (!taskAvailable)
+			const isTaskToolAvailable = await Entry.checkToolAvailable('tasks', 'limit_tasks_off');
+			if (!isTaskToolAvailable)
 			{
 				return;
 			}
 
-			if (Feature.isAirStyleSupported())
-			{
-				Entry.#openTaskDetailNew(data, params);
-			}
-			else
-			{
-				Entry.#openTaskDetailLegacy(data, params);
-			}
-		}
-
-		/**
-		 * @private
-		 * @param {OpenTaskData} data
-		 * @param {OpenTaskParams} params
-		 * @return {void}
-		 */
-		static async #openTaskDetailNew(data, params = {})
-		{
 			const {
-				userId = env.userId,
+				userId = Number(env.userId),
 				parentWidget,
-				context,
 				analyticsLabel,
 				shouldOpenComments = false,
 				view,
 				kanbanOwnerId,
+				projectId = null,
 			} = params;
 			const taskId = data.id || data.taskId;
 			const guid = Entry.getGuid();
+			const isFlowToolDisabled = await checkDisabledToolById('flows', false);
 
 			if (parentWidget)
 			{
@@ -132,11 +194,12 @@ jn.define('tasks/entry', (require, exports, module) => {
 					userId,
 					taskId,
 					guid,
-					context,
 					analyticsLabel,
 					shouldOpenComments,
 					view,
 					kanbanOwnerId,
+					projectId,
+					isFlowToolDisabled,
 				});
 			}
 			else
@@ -144,6 +207,7 @@ jn.define('tasks/entry', (require, exports, module) => {
 				PageManager.openComponent('JSStackComponent', {
 					name: 'JSStackComponent',
 					componentCode: 'tasks.task.view-new',
+					// eslint-disable-next-line no-undef
 					scriptPath: availableComponents['tasks:tasks.task.view-new'].publicUrl,
 					canOpenInDefault: true,
 					rootWidget: {
@@ -162,179 +226,33 @@ jn.define('tasks/entry', (require, exports, module) => {
 						TASK_ID: taskId,
 						USER_ID: (userId || env.userId),
 						GUID: guid,
-						CONTEXT: context,
 						VIEW: view,
 						SHOULD_OPEN_COMMENTS: shouldOpenComments,
 						analyticsLabel,
 						kanbanOwnerId,
+						IS_FLOW_TOOL_DISABLED: isFlowToolDisabled,
 					},
 				});
 			}
 		}
 
 		/**
-		 * @private
-		 * @param {OpenTaskData} data
-		 * @param {OpenTaskParams} params
+		 * @public
+		 * @param {OpenTaskCreationData} data
 		 * @return {void}
 		 */
-		static #openTaskDetailLegacy(data, params = {})
+		static async openTaskCreation(data)
 		{
-			const { taskObject, userId, parentWidget } = params;
-			const taskId = data.id || data.taskId;
-			const defaultTitle = Loc.getMessage('TASKSMOBILE_ENTRY_TASK_DEFAULT_TITLE');
-			const guid = Entry.getGuid();
-
-			if (Feature.isPreventBottomSheetDismissSupported())
+			const isTaskToolAvailable = await Entry.checkToolAvailable('tasks', 'limit_tasks_off');
+			if (!isTaskToolAvailable)
 			{
-				PageManager.openComponent('JSStackComponent', {
-					name: 'JSStackComponent',
-					componentCode: 'tasks.task.view',
-					scriptPath: availableComponents['tasks:tasks.task.view'].publicUrl,
-					canOpenInDefault: true,
-					rootWidget: {
-						name: 'layout',
-						settings: {
-							objectName: 'layout',
-							modal: true,
-							backdrop: {
-								mediumPositionPercent: 89,
-								onlyMediumPosition: true,
-								forceDismissOnSwipeDown: true,
-								swipeAllowed: true,
-								swipeContentAllowed: true,
-								horizontalSwipeAllowed: false,
-								hideNavigationBar: true,
-								navigationBarColor: AppTheme.colors.bgSecondary,
-							},
-						},
-					},
-					params: {
-						COMPONENT_CODE: 'tasks.task.view',
-						TASK_ID: taskId,
-						USER_ID: (userId || env.userId),
-						TASK_OBJECT: taskObject,
-						GUID: guid,
-					},
-				}, (parentWidget || null));
-
 				return;
 			}
 
-			PageManager.openComponent('JSStackComponent', {
-				name: 'JSStackComponent',
-				componentCode: 'tasks.task.tabs',
-				scriptPath: availableComponents['tasks:tasks.task.tabs'].publicUrl,
-				canOpenInDefault: true,
-				rootWidget: {
-					name: 'tabs',
-					settings: {
-						objectName: 'tabs',
-						modal: true,
-						title: (taskObject?.title || data.title || data.taskInfo?.title || defaultTitle),
-						grabTitle: false,
-						grabButtons: true,
-						grabSearch: false,
-						tabs: Entry.getTaskTabs(taskId, guid, taskObject),
-						leftButtons: [
-							{
-								svg: {
-									content: '<svg width="20" height="20" viewBox="0 0 20 20" fill="none" xmlns="http://www.w3.org/2000/svg"><path fill-rule="evenodd" clip-rule="evenodd" d="M14.722 6.79175L10.9495 10.5643L9.99907 11.5L9.06666 10.5643L5.29411 6.79175L3.96289 8.12297L10.008 14.1681L16.0532 8.12297L14.722 6.79175Z" fill="#A8ADB4"/></svg>',
-								},
-								isCloseButton: true,
-							},
-						],
-					},
-				},
-				params: {
-					COMPONENT_CODE: 'tasks.task.tabs',
-					TASK_ID: taskId,
-					USER_ID: (userId || env.userId),
-					TASK_OBJECT: taskObject,
-					GUID: guid,
-				},
-			}, (parentWidget || null));
-		}
+			const isFlowToolDisabled = await checkDisabledToolById('flows', false);
 
-		static getTaskTabs(taskId, guid, taskObject)
-		{
-			const tabCounterData = Entry.getTabCounterData(taskObject);
-
-			return {
-				items: [
-					{
-						id: 'tasks.task.view',
-						title: Loc.getMessage('TASKSMOBILE_ENTRY_TASK_TABS_VIEW'),
-						counter: tabCounterData.expired.value,
-						label: (tabCounterData.expired.value > 0 ? String(tabCounterData.expired.value) : ''),
-						style: {
-							activeBadgeColor: tabCounterData.expired.color,
-							inactiveBadgeColor: tabCounterData.expired.color,
-						},
-						widget: {
-							name: 'layout',
-							code: 'tasks.task.view',
-							settings: {
-								objectName: 'layout',
-							},
-						},
-					},
-					{
-						id: 'tasks.task.comments',
-						title: Loc.getMessage('TASKSMOBILE_ENTRY_TASK_TABS_COMMENTS'),
-						counter: tabCounterData.newComments.value,
-						label: (tabCounterData.newComments.value > 0 ? String(tabCounterData.newComments.value) : ''),
-						style: {
-							activeBadgeColor: tabCounterData.newComments.color,
-							inactiveBadgeColor: tabCounterData.newComments.color,
-						},
-						widget: {
-							name: 'web',
-							code: 'tasks.task.comments',
-							settings: {
-								page: {
-									url: `${env.siteDir}mobile/tasks/snmrouter/?routePage=comments&TASK_ID=${taskId}&GUID=${guid}`,
-									loading: {
-										type: 'comments',
-									},
-									preload: true,
-								},
-							},
-						},
-					},
-				],
-			};
-		}
-
-		static getTabCounterData(task)
-		{
-			let expiredCounter = 0;
-			let newCommentsCounter = 0;
-			let expiredCounterColor = Task.counterColors.gray;
-			let newCommentsCounterColor = Task.counterColors.gray;
-
-			if (task)
-			{
-				expiredCounter = (!task.isCompletedCounts && !task.isDeferred && task.isExpired ? 1 : 0);
-				newCommentsCounter = task._counter.value - expiredCounter;
-
-				if (task.isMember && !task.isMuted)
-				{
-					expiredCounterColor = Task.counterColors.danger;
-					newCommentsCounterColor = Task.counterColors.success;
-				}
-			}
-
-			return {
-				expired: {
-					value: expiredCounter,
-					color: expiredCounterColor,
-				},
-				newComments: {
-					value: newCommentsCounter,
-					color: newCommentsCounterColor,
-				},
-			};
+			const { CreateNew } = await requireLazy('tasks:layout/task/create-new');
+			CreateNew.open({ ...data, isFlowToolDisabled });
 		}
 
 		static async openTaskList(data)
@@ -367,6 +285,7 @@ jn.define('tasks/entry', (require, exports, module) => {
 						? Loc.getMessage('TASKSMOBILE_ENTRY_COLLAB_TASK_LIST_TITLE')
 						: (extendedData.groupName || Loc.getMessage('TASKSMOBILE_ENTRY_TASK_LIST_TITLE'))
 				),
+				// eslint-disable-next-line no-undef
 				scriptPath: availableComponents['tasks:tasks.dashboard'].publicUrl,
 				rootWidget: {
 					name: 'layout',
@@ -384,7 +303,6 @@ jn.define('tasks/entry', (require, exports, module) => {
 					FLOW_ID: extendedData.flowId,
 					FLOW_NAME: extendedData.flowName,
 					FLOW_EFFICIENCY: extendedData.flowEfficiency,
-					CAN_CREATE_TASK: extendedData.canCreateTask,
 					DATA: extendedData,
 					SITE_ID: siteId,
 					SITE_DIR: siteDir,
@@ -400,9 +318,8 @@ jn.define('tasks/entry', (require, exports, module) => {
 
 	if (typeof jnComponent?.preload === 'function')
 	{
-		const componentCode = Feature.isAirStyleSupported() ? 'tasks:tasks.task.view-new' : 'tasks:tasks.task.view';
-
-		const { publicUrl } = availableComponents[componentCode] || {};
+		// eslint-disable-next-line no-undef
+		const { publicUrl } = availableComponents['tasks:tasks.task.view-new'] || {};
 
 		if (publicUrl)
 		{

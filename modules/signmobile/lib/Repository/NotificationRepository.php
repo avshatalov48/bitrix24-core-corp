@@ -3,16 +3,17 @@
 namespace Bitrix\SignMobile\Repository;
 
 use Bitrix\Main\Application;
-use Bitrix\Main\Engine\CurrentUser;
 use Bitrix\Main\Type\DateTime;
 use Bitrix\SignMobile\Item\Notification;
 use Bitrix\SignMobile\Model\SignMobileNotificationsTable;
+use Bitrix\Main\ORM;
 
 class NotificationRepository
 {
-	private function getModelRow(Notification $item): ?array
+
+	public function getOne(int $userId, int $typeId): ?Notification
 	{
-		return SignMobileNotificationsTable::getRow(
+		$row = SignMobileNotificationsTable::getRow(
 			[
 				'select' => [
 					'ID',
@@ -22,18 +23,31 @@ class NotificationRepository
 					'DATE_UPDATE',
 				],
 				'filter' => [
-					'=USER_ID' => $item->getUserId(),
-					'=TYPE' => $item->getType(),
+					'=USER_ID' => $userId,
+					'=TYPE' => $typeId,
 				],
 			]
 		);
+
+		if (!is_null($row))
+		{
+			return new Notification(
+				(int)$row['TYPE'],
+				(int)$row['USER_ID'],
+				(int)$row['SIGN_MEMBER_ID'],
+				(isset($row['DATE_UPDATE']) && $row['DATE_UPDATE'] instanceof DateTime) ? $row['DATE_UPDATE'] : null,
+				id: (int)$row['ID'],
+			);
+		}
+
+		return null;
 	}
 
-	private function updateModelRow(int $id, Notification $item): void
+	public function update(Notification $item): ORM\Data\UpdateResult
 	{
-		SignMobileNotificationsTable::update(
+		return SignMobileNotificationsTable::update(
 			[
-				'ID' => $id,
+				'ID' => $item->getId(),
 			],
 			[
 				'DATE_UPDATE' => $item->getDateUpdate(),
@@ -42,7 +56,11 @@ class NotificationRepository
 		);
 	}
 
-	private function addModelRow(Notification $item): bool
+	/**
+	 * @param Notification $item
+	 * @return int Affected rows count.
+	 */
+	public function insertIgnore(Notification $item): int
 	{
 		$connection = Application::getConnection();
 		$fields = [
@@ -58,50 +76,7 @@ class NotificationRepository
 		$query = $sqlHelper->getInsertIgnore($table, "($columns)", " VALUES ($values)");
 		$connection->queryExecute($query);
 
-		return (bool)$connection->getAffectedRowsCount();
+		return $connection->getAffectedRowsCount();
 	}
 
-	public function getByType(int $type): ?Notification
-	{
-		$currentUserId = (int)CurrentUser::get()->getId();
-
-		$prototypeForFind = new Notification(
-			$type,
-			$currentUserId,
-		);
-
-		$row = $this->getModelRow($prototypeForFind);
-
-		if (!is_null($row))
-		{
-			return new Notification(
-				(int)$row['TYPE'],
-				(int)$row['USER_ID'],
-				(int)$row['SIGN_MEMBER_ID'],
-				(isset($row['DATE_UPDATE']) && $row['DATE_UPDATE'] instanceof DateTime) ? $row['DATE_UPDATE'] : null,
-			);
-		}
-
-		return null;
-	}
-
-	public function insertIfDifferent(Notification $item): bool
-	{
-		if ($this->addModelRow($item))
-		{
-			return true;
-		}
-
-		$row = $this->getModelRow($item);
-		if (is_array($row) && isset($row['SIGN_MEMBER_ID']) && isset($row['ID']))
-		{
-			if ((int) $row['SIGN_MEMBER_ID'] !== $item->getSignMemberId())
-			{
-				$this->updateModelRow((int)$row['ID'], $item);
-				return true;
-			}
-		}
-
-		return false;
-	}
 }

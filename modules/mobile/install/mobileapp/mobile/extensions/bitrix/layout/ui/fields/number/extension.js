@@ -4,12 +4,8 @@
 jn.define('layout/ui/fields/number', (require, exports, module) => {
 	const { StringFieldClass } = require('layout/ui/fields/string');
 	const { PropTypes } = require('utils/validation');
-	const { parseAmount } = require('utils/number');
 	const { stringify } = require('utils/string');
-	const { isEqual } = require('utils/object');
-
-	const isIOS = Application.getPlatform() === 'ios';
-	const API_VERSION = Application.getApiVersion();
+	const { MoneyField } = require('layout/ui/money-field');
 
 	/** @var NumberPrecision */
 	const Types = {
@@ -31,58 +27,6 @@ jn.define('layout/ui/fields/number', (require, exports, module) => {
 	 */
 	class NumberField extends StringFieldClass
 	{
-		shouldComponentUpdate(nextProps, nextState)
-		{
-			if (API_VERSION < 58)
-			{
-				return super.shouldComponentUpdate(nextProps, nextState);
-			}
-
-			nextState = Array.isArray(nextState) ? nextState[0] : nextState;
-
-			let prevPropsToCompare = this.props;
-			let nextPropsToCompare = nextProps;
-
-			if (this.fieldValue !== null)
-			{
-				const fieldValue = parseAmount(
-					this.fieldValue,
-					'.',
-					this.getGroupSeparatorSeparator(),
-				);
-				const nextAmount = parseAmount(
-					nextProps.value,
-					isIOS ? '.' : nextProps.config.decimalSeparator || '.',
-					nextProps.config.groupSeparator || ' ',
-				);
-
-				this.fieldValue = null;
-
-				if (!isEqual(fieldValue, nextAmount) && !isNaN(nextAmount) && !isNaN(fieldValue))
-				{
-					this.logComponentDifference({ value: fieldValue }, { value: nextAmount }, null, null);
-
-					return true;
-				}
-
-				const { value: prevValue, ...prevPropsWithoutValue } = this.props;
-				const { value: nextValue, ...nextPropsWithoutValue } = nextProps;
-
-				prevPropsToCompare = prevPropsWithoutValue;
-				nextPropsToCompare = nextPropsWithoutValue;
-			}
-
-			const hasChanged = !isEqual(prevPropsToCompare, nextPropsToCompare) || !isEqual(this.state, nextState);
-			if (hasChanged)
-			{
-				this.logComponentDifference(prevPropsToCompare, nextPropsToCompare, this.state, nextState);
-
-				return true;
-			}
-
-			return false;
-		}
-
 		renderReadOnlyContent()
 		{
 			return View(
@@ -188,15 +132,7 @@ jn.define('layout/ui/fields/number', (require, exports, module) => {
 
 		isNumber(text)
 		{
-			let preparedValue = text;
-			if (typeof preparedValue === 'string' && preparedValue !== '' && API_VERSION > 57)
-			{
-				preparedValue = isIOS
-					? Number(preparedValue)
-					: parseAmount(text, this.getDecimalSeparator(), this.getGroupSeparatorSeparator());
-			}
-
-			return !isNaN(Number(preparedValue));
+			return !isNaN(Number(text));
 		}
 
 		isInteger(value)
@@ -270,7 +206,7 @@ jn.define('layout/ui/fields/number', (require, exports, module) => {
 	};
 
 	NumberField.propTypes = {
-		value: PropTypes.number,
+		value: PropTypes.oneOfType([PropTypes.string, PropTypes.number]),
 		shouldShowToolbar: PropTypes.bool,
 		hideZero: PropTypes.bool,
 		decimalSeparator: PropTypes.oneOf(['.', ',']),

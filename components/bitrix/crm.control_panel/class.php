@@ -111,45 +111,60 @@ class CrmControlPanel extends CBitrixComponent
 				'ID' => ControlPanelMenuMapper::MENU_ID_CRM_SALES,
 				'TEXT' => Loc::getMessage('CRM_CTRL_PANEL_ITEM_SALES'),
 				'SUB_ITEMS' => [
+					[
+						'ID' => ControlPanelMenuMapper::COMMUNICATIONS_CENTER,
+						'TEXT' => Loc::getMessage('CRM_CTRL_PANEL_ITEM_SALE_CHANNELS'),
+						'URL' => '',
+						'SUB_ITEMS' => [
+							['ID' => 'TELEPHONY', 'SLIDER_MODE' => true],
+							['ID' => 'MAIL', 'SLIDER_MODE' => true],
+							['ID' => 'MESSENGERS', 'SLIDER_MODE' => true],
+							['ID' => 'SITEBUTTON'],
+							['ID' => 'WEBFORM'],
+							['ID' => 'CONTACT_CENTER', 'SLIDER_MODE' => true],
+						],
+					],
+					[
+						'ID' => ControlPanelMenuMapper::SALES_MANAGEMENT,
+						'TEXT' => Loc::getMessage('CRM_CTRL_PANEL_ITEM_SALES_MANAGEMENT'),
+						'URL' => '',
+						'SUB_ITEMS' => [
+							['ID' => 'SALES_CENTER', 'SLIDER_MODE' => true],
+							['ID' => 'SALES_CENTER_PAYMENT', 'SLIDER_MODE' => true],
+							['ID' => 'SALES_CENTER_DELIVERY', 'SLIDER_MODE' => true],
+							['ID' => 'TERMINAL'],
+						],
+					],
 					['ID' => 'SMART_INVOICE'],
 					['ID' => 'INVOICE'],
 					['ID' => 'QUOTE'],
-					['ID' => 'SALES_CENTER', 'SLIDER_MODE' => true],
-					['ID' => 'TERMINAL'],
 					['ID' => 'CALL_ASSESSMENT'],
+					['ID' => 'REPEAT_SALE_SEGMENT'],
+					['ID' => 'ONEC', 'SLIDER_MODE' => true],
+					['ID' => 'MARKETPLACE_CRM_MIGRATION', 'SLIDER_MODE' => true],
+					['ID' => 'MARKETPLACE_CRM_SOLUTIONS', 'SLIDER_MODE' => true],
 				],
 			],
-			['ID' => 'BIC_DASHBOARDS'],
 			[
 				'ID' => ControlPanelMenuMapper::MENU_ID_CRM_ANALYTICS,
 				'TEXT' => Loc::getMessage('CRM_CTRL_PANEL_ITEM_ANALYTICS'),
 				'URL' => '',
 				'SUB_ITEMS' => [
-					['ID' => 'ANALYTICS_SALES_FUNNEL'],
-					['ID' => 'ANALYTICS_MANAGERS'],
-					['ID' => 'ANALYTICS_CALLS'],
-					['ID' => 'ANALYTICS_DIALOGS'],
-					['ID' => 'CRM_TRACKING', 'SLIDER_MODE' => true],
-					['ID' => 'REPORT'],
-					['ID' => 'ANALYTICS_BI'],
-				],
-			],
-			[
-				'ID' => ControlPanelMenuMapper::MENU_ID_CRM_INTEGRATIONS,
-				'TEXT' => Loc::getMessage('CRM_CTRL_PANEL_ITEM_INTEGRATIONS'),
-				'IS_DISABLED' => $this->isOldMenuStructure(),
-				'SUB_ITEMS' => [
-					['ID' => 'TELEPHONY', 'SLIDER_MODE' => true],
-					['ID' => 'MAIL', 'SLIDER_MODE' => true],
-					['ID' => 'MESSENGERS', 'SLIDER_MODE' => true],
-					['ID' => 'SITEBUTTON'],
-					['ID' => 'WEBFORM'],
-					['ID' => 'CONTACT_CENTER', 'SLIDER_MODE' => true],
-					['ID' => 'MARKETPLACE', 'SLIDER_MODE' => true],
-					['ID' => 'MARKETPLACE_CRM_MIGRATION', 'SLIDER_MODE' => true],
-					['ID' => 'ONEC', 'SLIDER_MODE' => true],
-					['ID' => 'MARKETPLACE_CRM_SOLUTIONS', 'SLIDER_MODE' => true],
-					['ID' => 'DEVOPS', 'SLIDER_MODE' => true],
+					[
+						'ID' => ControlPanelMenuMapper::MENU_ID_CRM_OPERATIONAL_ANALYTICS,
+						'TEXT' => Loc::getMessage('CRM_CTRL_PANEL_ITEM_OPERATIONAL_ANALYTICS'),
+						'URL' => '',
+						'SUB_ITEMS' => [
+							['ID' => 'ANALYTICS_SALES_FUNNEL'],
+							['ID' => 'ANALYTICS_MANAGERS'],
+							['ID' => 'ANALYTICS_CALLS'],
+							['ID' => 'ANALYTICS_DIALOGS'],
+							['ID' => 'CRM_TRACKING', 'SLIDER_MODE' => true],
+							['ID' => 'REPORT'],
+							['ID' => 'ANALYTICS_BI'],
+						],
+					],
+					['ID' => 'BIC_DASHBOARDS'],
 				],
 			],
 			['ID' => 'DYNAMIC_ITEMS'],
@@ -160,23 +175,25 @@ class CrmControlPanel extends CBitrixComponent
 				'SUB_ITEMS' => [
 					['ID' => 'SETTINGS'],
 					['ID' => 'MY_COMPANY'],
+					['ID' => 'CRM_PERMISSIONS'],
+					['ID' => 'CATALOG_PERMISSIONS'],
+					['ID' => 'FEATURES_LIST', 'SLIDER_MODE' => false],
 					[
-						'ID' => 'PERMISSIONS',
+						'ID' => ControlPanelMenuMapper::MENU_ID_CRM_INTEGRATIONS,
+						'TEXT' => Loc::getMessage('CRM_CTRL_PANEL_ITEM_INTEGRATIONS'),
+						'IS_DISABLED' => $this->isOldMenuStructure(),
 						'SUB_ITEMS' => [
-							['ID' => 'CRM_PERMISSIONS'],
-							['ID' => 'CATALOG_PERMISSIONS'],
+							['ID' => 'MARKETPLACE', 'SLIDER_MODE' => true],
+							['ID' => 'DEVOPS', 'SLIDER_MODE' => true],
 						],
 					],
-					['ID' => 'SALES_CENTER_PAYMENT', 'SLIDER_MODE' => true],
-					['ID' => 'SALES_CENTER_DELIVERY', 'SLIDER_MODE' => true],
-					['ID' => 'FEATURES_LIST', 'SLIDER_MODE' => false],
 				],
 			],
-			['ID' => 'RECYCLE_BIN'],
-			['ID' => 'EVENT'],
 			['ID' => 'MY_ACTIVITY'],
+			['ID' => 'EVENT'],
 			['ID' => 'START'],
 			['ID' => 'STREAM'],
+			['ID' => 'RECYCLE_BIN'],
 		];
 	}
 
@@ -225,7 +242,7 @@ class CrmControlPanel extends CBitrixComponent
 			if (
 				$category->getIsSystem()
 				|| $category->getIsDefault()
-				|| !$userPermissionsService->canViewItemsInCategory($category)
+				|| !$userPermissionsService->category()->canReadItems($category)
 			)
 			{
 				continue;
@@ -242,7 +259,7 @@ class CrmControlPanel extends CBitrixComponent
 			);
 			$menuId = CCrmOwnerType::ResolveName($entityTypeId) . '_C' . $categoryId;
 			$actions = [];
-			if ($userPermissionsService->checkAddPermissions($entityTypeId, $categoryId))
+			if ($userPermissionsService->entityType()->canAddItemsInCategory($entityTypeId, $categoryId))
 			{
 				$actions[] = [
 					'ID' => 'CREATE',
@@ -284,6 +301,11 @@ class CrmControlPanel extends CBitrixComponent
 			return null;
 		}
 		$categoryId = $this->contractorCategories[$entityTypeId];
+
+		if (!Container::getInstance()->getUserPermissions()->entityType()->canReadItemsInCategory($entityTypeId, $categoryId))
+		{
+			return null;
+		}
 
 		$counter = EntityCounterFactory::create(
 			$entityTypeId,

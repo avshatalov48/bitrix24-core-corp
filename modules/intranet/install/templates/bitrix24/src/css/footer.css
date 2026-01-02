@@ -1,0 +1,118 @@
+.air-footer {
+	padding-top: 24px;
+	padding-bottom: 24px;
+	display: flex;
+	flex-direction: row;
+	align-items: center;
+	color: var(--ui-color-base-4);
+	font-size: var(--ui-font-size-sm);
+	line-height: var(--ui-font-line-height-2xs);
+}
+
+.air-footer__buttons {
+	margin-right: 16px;
+	display: flex;
+	flex-direction: row;
+	align-items: center;
+	gap: 0 8px;
+}
+
+.air-footer-button {
+	--air-footer-button-color: var(--ui-color-design-outline-content);
+
+	box-sizing: border-box;
+	min-height: 28px;
+	display: flex;
+	align-items: center;
+	padding: 2px 10px;
+	background:
+		linear-gradient(to right, var(--ui-color-design-outline-bg), var(--ui-color-design-outline-bg)),
+		var(--air-theme-background-blurred, none)
+	;
+	color: var(--air-footer-button-color);
+	font-size: var(--ui-font-size-md);
+	line-height: var(--ui-font-line-height-sm);
+	border: none;
+	border-radius: var(--ui-border-radius-sm);
+	cursor: pointer;
+	text-decoration: none;
+}
+
+.air-footer-button,
+.air-footer-button::after {
+	transition: 0.2s ease-in-out color, 0.2s ease-in-out background-color;
+}
+
+.air-footer-button:hover,
+.air-footer-button:focus {
+	background-color: color-mix(in srgb, var(--ui-color-design-outline-bg) 100%, var(--ui-color-bg-state-hover-default-hex) var(--ui-color-bg-state-hover-default-opacity));
+	transition-duration: 0s;
+}
+
+.air-footer-button:active {
+	background-color: color-mix(in srgb, var(--ui-color-design-outline-bg) 100%, var(--ui-color-bg-state-click-default-hex) var(--ui-color-bg-state-click-default-opacity));
+}
+
+.air-footer-button-logo {
+	display: inline-flex;
+}
+
+.air-footer-button-logo__number {
+	display: inline-block;
+}
+
+.air-footer-button.--logo-clock::after {
+	content: '';
+	display: inline-block;
+	width: 8px;
+	height: 8px;
+	margin-left: 2px;
+	margin-top: 6px;
+	align-self: flex-start;
+	mask-image: url("../images/clock.svg");
+	mask-size: 8px;
+	mask-position: top center;
+	background-color: var(--air-footer-button-color);
+}
+
+.air-footer-button.--dropdown {
+	padding-right: 4px;
+}
+.air-footer-button.--dropdown::after {
+	content: '';
+	display: inline-block;
+	width: 24px;
+	height: 24px;
+	mask-image: url("../images/icons/chevron-down.svg");
+	background-color: var(--air-footer-button-color);
+}
+
+.air-footer__copyright {
+	margin-right: 16px;
+}
+
+.air-footer__links {
+	display: flex;
+	flex-direction: row;
+	align-items: center;
+	gap: 0 16px;
+}
+
+.air-footer__link {
+	margin: 0;
+	padding: 0;
+	background: none;
+	border: none;
+	color: inherit;
+	cursor: pointer;
+	transition: 0.2s ease-in-out color;
+}
+
+.air-footer__link:hover {
+	color: color-mix(in srgb, var(--ui-color-base-4) 100%, var(--ui-color-bg-state-hover-default-overlay-hex) var(--ui-color-bg-state-hover-default-overlay-opacity));
+	transition-duration: 0s;
+}
+
+.air-footer__link:active {
+	color: color-mix(in srgb, var(--ui-color-base-4) 100%, var(--ui-color-bg-state-click-default-overlay-hex) var(--ui-color-bg-state-click-default-overlay-opacity));
+}

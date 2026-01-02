@@ -1,5 +1,6 @@
-import {Event, Loc, Tag} from 'main.core';
-import {EventEmitter} from 'main.core.events';
+import { Loc } from 'main.core';
+import { EventEmitter } from 'main.core.events';
+import { Button, ButtonState, ButtonColor, ButtonSize } from 'ui.buttons';
 
 type Params = {
 	canCompleteSprint: boolean
@@ -18,19 +19,23 @@ export class CompleteSprintButton extends EventEmitter
 
 	render(): HTMLElement
 	{
-		const disableUiClass = (this.canCompleteSprint ? '' : 'ui-btn-disabled');
+		const completeBtn = new Button({
+			text: Loc.getMessage('TASKS_SCRUM_ACTIONS_COMPLETE_SPRINT'),
+			color: ButtonColor.PRIMARY,
+			size: ButtonSize.EXTRA_SMALL,
+			round: true,
+			noCaps: true,
+			onclick: () => {
+				this.onCompleteSprintClick();
+			},
+		});
 
-		const node = Tag.render`
-			<div class="ui-btn ui-btn-sm ui-btn-primary ui-btn-xs ui-btn-round ui-btn-no-caps ${disableUiClass}">
-				<span>
-					${Loc.getMessage('TASKS_SCRUM_ACTIONS_COMPLETE_SPRINT')}
-				</span>
-			</div>
-		`;
+		if (!this.canCompleteSprint)
+		{
+			completeBtn.setStyle(ButtonState.DISABLED);
+		}
 
-		Event.bind(node, 'click', this.onCompleteSprintClick.bind(this));
-
-		return node;
+		return completeBtn.render();
 	}
 
 	onCompleteSprintClick()

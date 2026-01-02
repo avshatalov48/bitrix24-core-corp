@@ -7,7 +7,10 @@ return [
 		'require-lazy',
 		'qrauth/utils',
 		'utils/prop',
-		'apptheme',
+		'tokens',
+		'ui-system/blocks/icon',
+		'ui-system/typography/text',
+
 		'crm:loc',
 		'crm:type',
 	],

@@ -106,7 +106,7 @@ this.BX = this.BX || {};
 	          editRolesAllowed: this.editFeaturesAllowed
 	        });
 	      }
-	      this.projectWidgetInstance.show(event.target);
+	      this.projectWidgetInstance.show(event.currentTarget);
 	      if (this.projectWidgetInstance.widget && this.projectWidgetInstance.widget.getPopup()) {
 	        BX.UI.Hint.init(this.projectWidgetInstance.widget.getPopup().getContentContainer());
 	      }
@@ -135,7 +135,7 @@ this.BX = this.BX || {};
 	            container: controlButtonContainer,
 	            entityType: 'workgroup',
 	            entityId: _this.groupId,
-	            buttonClassName: "intranet-control-btn-no-hover".concat(_this.inIframe ? ' ui-btn-themes' : '')
+	            airDesign: true
 	          });
 	        });
 	      }
@@ -184,10 +184,12 @@ this.BX = this.BX || {};
 	        }
 	        socialnetwork_common.Common.reload();
 	      } else if (['afterSetFavorites'].includes(eventData.code)) {
-	        var sonetGroupMenu = socialnetwork_common.GroupMenu.getInstance();
-	        var favoritesValue = sonetGroupMenu.favoritesValue;
-	        sonetGroupMenu.setItemTitle(!favoritesValue);
-	        sonetGroupMenu.favoritesValue = !favoritesValue;
+	        var sonetGroupMenu = socialnetwork_common.GroupMenu === null || socialnetwork_common.GroupMenu === void 0 ? void 0 : socialnetwork_common.GroupMenu.getInstance();
+	        if (sonetGroupMenu) {
+	          var favoritesValue = sonetGroupMenu.favoritesValue;
+	          sonetGroupMenu.setItemTitle(!favoritesValue);
+	          sonetGroupMenu.favoritesValue = !favoritesValue;
+	        }
 	      } else if (['afterDelete', 'afterLeave'].includes(eventData.code) && main_core.Type.isPlainObject(eventData.data) && !main_core.Type.isUndefined(eventData.data.groupId) && Number(eventData.data.groupId) === this.groupId) {
 	        top.location.href = this.urls.GroupsList;
 	      } else if (['afterSetSubscribe'].includes(eventData.code) && main_core.Type.isPlainObject(eventData.data) && !main_core.Type.isUndefined(eventData.data.groupId) && Number(eventData.data.groupId) === this.groupId && this.moreButtonInstance) {

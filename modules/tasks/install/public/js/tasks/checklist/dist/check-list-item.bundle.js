@@ -260,8 +260,9 @@ this.BX = this.BX || {};
 	  }]);
 	  function CheckListItemFields(fields) {
 	    babelHelpers.classCallCheck(this, CheckListItemFields);
-	    this.fields = ['id', 'copiedId', 'parentId', 'title', 'sortIndex', 'displaySortIndex', 'isComplete', 'isImportant', 'isSelected', 'isCollapse', 'completedCount', 'totalCount', 'members', 'attachments'];
+	    this.fields = ['id', 'copiedId', 'nodeId', 'parentId', 'title', 'sortIndex', 'displaySortIndex', 'isComplete', 'isImportant', 'isSelected', 'isCollapse', 'completedCount', 'totalCount', 'members', 'attachments'];
 	    this.id = null;
+	    this.nodeId = null;
 	    this.parentId = null;
 	    this.title = '';
 	    this.sortIndex = 0;
@@ -301,6 +302,16 @@ this.BX = this.BX || {};
 	    key: "setId",
 	    value: function setId(id) {
 	      this.id = id;
+	    }
+	  }, {
+	    key: "getNodeId",
+	    value: function getNodeId() {
+	      return this.nodeId;
+	    }
+	  }, {
+	    key: "setNodeId",
+	    value: function setNodeId(nodeId) {
+	      this.nodeId = nodeId;
 	    }
 	  }, {
 	    key: "getCopiedId",
@@ -571,6 +582,10 @@ this.BX = this.BX || {};
 	        case 'jpeg':
 	        case 'gif':
 	          fileExtension = 'img';
+	          break;
+	        case 'flp':
+	        case 'board':
+	          fileExtension = 'board';
 	          break;
 	        default:
 	          fileExtension = 'empty';
@@ -1113,7 +1128,6 @@ this.BX = this.BX || {};
 	        });
 	        return;
 	      }
-	      debugger;
 	      var inputText = this.input.value;
 	      var mentioned = +this.mentioned;
 	      var start = this.inputCursorPosition.start || 0;
@@ -2365,7 +2379,7 @@ this.BX = this.BX || {};
 	    key: "getAttachmentsLayout",
 	    value: function getAttachmentsLayout() {
 	      var _this16 = this;
-	      var searchId = this.fields.getId() || this.fields.getCopiedId();
+	      var searchId = this.fields.getId() || this.fields.getCopiedId() || this.fields.getNodeId();
 	      var optionManager = this.optionManager;
 	      var optionAttachments = optionManager.attachments;
 	      var attachmentsLayout = '';
@@ -2382,6 +2396,16 @@ this.BX = this.BX || {};
 	        }
 	        Object.keys(attachmentsLayout).forEach(function (key) {
 	          var attachment = attachmentsLayout[key];
+	          if ('serverPreviewUrl' in attachment) {
+	            attachmentsLayout[key] = _this16.getLoadedAttachmentLayout({
+	              id: attachment.serverFileId,
+	              name: attachment.name,
+	              viewUrl: attachment.serverPreviewUrl,
+	              size: attachment.size,
+	              ext: attachment.name.split('.').splice(-1)[0].toLowerCase()
+	            });
+	            return;
+	          }
 	          var fileId = attachment.getAttribute('data-bx-id');
 	          var extension = CheckListItem.getFileExtension(attachment.getAttribute('data-bx-extension'));
 	          var extensionClass = "ui-icon-file-".concat(extension);
@@ -2416,7 +2440,7 @@ this.BX = this.BX || {};
 	      var _this17 = this;
 	      var fields = item.FIELDS;
 	      var id = fields.id || fields.copiedId;
-	      if (id === this.fields.getId() || id === this.fields.getCopiedId()) {
+	      if ((id === this.fields.getId() || id === this.fields.getCopiedId()) && fields.nodeId === this.fields.getNodeId()) {
 	        return fields.attachments;
 	      }
 	      var found = null;

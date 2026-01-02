@@ -20,7 +20,7 @@ class CreateDto
 	public string $roleText;
 	public int $roleId;
 	public string $industryCode = 'custom';
-	public array $roleAvatarPaths = [];
+	public array $roleAvatar = [];
 	public ShareType $shareType;
 
 	public function getHash(): string
@@ -32,7 +32,7 @@ class CreateDto
 				$this->roleDescription .
 				$this->roleText .
 				implode(',', $this->accessCodesData) .
-				Json::encode($this->roleAvatarPaths)
+				Json::encode($this->roleAvatar)
 			);
 		}
 

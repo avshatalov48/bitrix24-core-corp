@@ -24,6 +24,11 @@ class AdviceService
 		$this->init();
 	}
 
+	public static function onBoostActivated(Event $event): void
+	{
+		\Bitrix\Tasks\Flow\Integration\AI\Event\CopilotRequestLimitListener::onBoostActivated($event); // todo tmp, relink event
+	}
+
 	public function replace(ReplaceAdviceCommand $command): void
 	{
 		$command->validateAdd();

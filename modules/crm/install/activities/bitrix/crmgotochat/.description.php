@@ -34,7 +34,11 @@ $arActivityDescription = [
 
 if (Loader::includeModule('crm'))
 {
-	$canUseNotifications = \Bitrix\Crm\Integration\NotificationsManager::canUse();
+	$canUseNotifications = (
+		\Bitrix\Crm\Integration\NotificationsManager::canUse()
+		&& !\Bitrix\Crm\Settings\Crm::isBox()
+		&& \Bitrix\Main\Application::getInstance()->getLicense()->getRegion() === 'ru'
+	);
 	if (!$canUseNotifications)
 	{
 		$arActivityDescription['EXCLUDED'] = true;

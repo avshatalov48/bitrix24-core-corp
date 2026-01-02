@@ -13,5 +13,5 @@ export type DashboardEmbeddedParameters = {
 	embeddedUrl: string,
 	canEdit: boolean,
 	canExport: boolean,
-	paramsCompatible: boolean,
+	isUseExternalDatasets: boolean,
 }

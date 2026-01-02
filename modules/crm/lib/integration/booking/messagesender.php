@@ -5,10 +5,12 @@ declare(strict_types=1);
 namespace Bitrix\Crm\Integration\Booking;
 
 use Bitrix\Booking\Entity\Booking\Booking;
-use Bitrix\Booking\Entity\Booking\Client;
+use Bitrix\Booking\Entity\Client\Client;
 use Bitrix\Booking\Entity\Message\MessageStatus;
 use Bitrix\Booking\Entity\Message\MessageTemplateBased;
 use Bitrix\Booking\Provider\NotificationsAvailabilityProvider;
+use Bitrix\Booking\Provider\NotificationsLanguageProvider;
+use Bitrix\Booking\Service\BookingFeature;
 use Bitrix\Crm\Integration\NotificationsManager;
 use Bitrix\Crm\Item\Deal;
 use Bitrix\Crm\MessageSender\Channel\ChannelRepository;
@@ -26,6 +28,13 @@ use Bitrix\Crm\Multifield\Type\Phone;
 
 class MessageSender implements \Bitrix\Booking\Interfaces\MessageSender
 {
+	private NotificationsLanguageProvider $notificationsLanguageProvider;
+
+	public function __construct()
+	{
+		$this->notificationsLanguageProvider = new NotificationsLanguageProvider();
+	}
+
 	public function getModuleId(): string
 	{
 		return 'crm';
@@ -73,7 +82,15 @@ class MessageSender implements \Bitrix\Booking\Interfaces\MessageSender
 			->setTo($this->makeTo($channelItemIdentifier, $primaryClient))
 			->setTemplateCode($message->getTemplateCode())
 			->setPlaceholders($message->getPlaceholders())
+			->setLanguageId($this->notificationsLanguageProvider->getLanguageId())
 		;
+
+		if (BookingFeature::isFeatureEnabledByTrial())
+		{
+			$facilitator->setAdditionalFields([
+				'SKIP_QUOTA' => true,
+			]);
+		}
 
 		return $facilitator->send();
 	}
@@ -159,12 +176,16 @@ class MessageSender implements \Bitrix\Booking\Interfaces\MessageSender
 	public function getMessageStatus(int $messageId): MessageStatus
 	{
 		$messageInfo = NotificationsManager::getMessageByInfoId($messageId);
-		if (!isset($messageInfo['MESSAGE']['STATUS']))
+
+		return $this->resolveMessageStatus($messageInfo['MESSAGE']['STATUS'] ?? '');
+	}
+
+	public static function resolveMessageStatus(string $status): MessageStatus
+	{
+		if ($status === '')
 		{
 			return MessageStatus::sending();
 		}
-
-		$status = $messageInfo['MESSAGE']['STATUS'];
 
 		$sentStatuses = [
 			Notifications\MessageStatus::ENQUEUED_LOCAL,
@@ -172,7 +193,7 @@ class MessageSender implements \Bitrix\Booking\Interfaces\MessageSender
 			Notifications\MessageStatus::SENT,
 			Notifications\MessageStatus::IN_DELIVERY,
 		];
-		if (in_array($messageInfo['MESSAGE']['STATUS'], $sentStatuses, true))
+		if (in_array($status, $sentStatuses, true))
 		{
 			return MessageStatus::sent();
 		}

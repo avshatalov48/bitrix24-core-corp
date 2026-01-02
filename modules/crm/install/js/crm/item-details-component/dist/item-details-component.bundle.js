@@ -1,9 +1,8 @@
 /* eslint-disable */
 this.BX = this.BX || {};
-(function (exports,crm_messagesender,crm_stageModel,crm_stage_permissionChecker,main_core,main_core_events,main_loader,main_popup,ui_dialogs_messagebox,ui_stageflow,crm_itemDetailsComponent_stageFlow) {
+(function (exports,crm_itemDetailsComponent_pagetitle,crm_itemDetailsComponent_stageFlow,crm_messagesender,crm_stageModel,crm_stage_permissionChecker,main_core,main_core_events,main_loader,ui_dialogs_messagebox,ui_stageflow,crm_integration_analytics) {
 	'use strict';
 
-	var _templateObject, _templateObject2, _templateObject3;
 	function ownKeys(object, enumerableOnly) { var keys = Object.keys(object); if (Object.getOwnPropertySymbols) { var symbols = Object.getOwnPropertySymbols(object); enumerableOnly && (symbols = symbols.filter(function (sym) { return Object.getOwnPropertyDescriptor(object, sym).enumerable; })), keys.push.apply(keys, symbols); } return keys; }
 	function _objectSpread(target) { for (var i = 1; i < arguments.length; i++) { var source = null != arguments[i] ? arguments[i] : {}; i % 2 ? ownKeys(Object(source), !0).forEach(function (key) { babelHelpers.defineProperty(target, key, source[key]); }) : Object.getOwnPropertyDescriptors ? Object.defineProperties(target, Object.getOwnPropertyDescriptors(source)) : ownKeys(Object(source)).forEach(function (key) { Object.defineProperty(target, key, Object.getOwnPropertyDescriptor(source, key)); }); } return target; }
 	var BACKGROUND_COLOR = 'd3d7dc';
@@ -14,6 +13,8 @@ this.BX = this.BX || {};
 	    babelHelpers.defineProperty(this, "categoryId", null);
 	    babelHelpers.defineProperty(this, "permissionChecker", null);
 	    babelHelpers.defineProperty(this, "receiversJSONString", '');
+	    babelHelpers.defineProperty(this, "targetUpdateStage", null);
+	    babelHelpers.defineProperty(this, "stageBeforeUpdate", null);
 	    if (main_core.Type.isPlainObject(params)) {
 	      this.entityTypeId = main_core.Text.toInteger(params.entityTypeId);
 	      this.entityTypeName = params.entityTypeName;
@@ -42,7 +43,6 @@ this.BX = this.BX || {};
 	      this.currentStageId = params.currentStageId;
 	      this.messages = params.messages;
 	      this.signedParameters = params.signedParameters;
-	      this.documentButtonParameters = params.documentButtonParameters;
 	      this.userFieldCreateUrl = params.userFieldCreateUrl;
 	      this.editorGuid = params.editorGuid;
 	      this.isStageFlowActive = params.isStageFlowActive;
@@ -52,7 +52,9 @@ this.BX = this.BX || {};
 	      if (main_core.Type.isString(params.receiversJSONString)) {
 	        this.receiversJSONString = params.receiversJSONString;
 	      }
-	      this.isPageTitleEditable = Boolean(params.isPageTitleEditable);
+	      if (main_core.Type.isStringFilled(params.categorySelectorTarget)) {
+	        this.categorySelectorTarget = params.categorySelectorTarget;
+	      }
 	    }
 	    this.container = document.querySelector('[data-role="crm-item-detail-container"]');
 	    this.handleClosePartialEntityEditor = this.handleClosePartialEntityEditor.bind(this);
@@ -62,20 +64,6 @@ this.BX = this.BX || {};
 	    key: "isNew",
 	    value: function isNew() {
 	      return this.id <= 0;
-	    }
-	  }, {
-	    key: "getCurrentCategory",
-	    value: function getCurrentCategory() {
-	      var _this2 = this;
-	      var currentCategory = null;
-	      if (this.categories && this.categoryId) {
-	        this.categories.forEach(function (category) {
-	          if (category.categoryId === _this2.categoryId) {
-	            currentCategory = category;
-	          }
-	        });
-	      }
-	      return currentCategory;
 	    }
 	  }, {
 	    key: "getLoader",
@@ -106,6 +94,37 @@ this.BX = this.BX || {};
 	    value: function stopProgress() {
 	      this.isProgress = false;
 	      this.getLoader().hide();
+	    }
+	  }, {
+	    key: "startStageUpdateProgress",
+	    value: function startStageUpdateProgress(stage) {
+	      this.isProgress = true;
+	      this.targetUpdateStage = stage;
+	      this.stageflowChart.adjust();
+	    }
+	  }, {
+	    key: "stopStageUpdateProgress",
+	    value: function stopStageUpdateProgress() {
+	      this.isProgress = false;
+	      this.targetUpdateStage = null;
+	      this.stageflowChart.adjust();
+	    }
+	  }, {
+	    key: "showStageUpdatingNotification",
+	    value: function showStageUpdatingNotification() {
+	      if (this.targetUpdateStage === null || !this.messages.stageLoadingMessage) {
+	        return;
+	      }
+	      var stageName = main_core.Text.encode(this.targetUpdateStage.getName());
+	      BX.UI.Notification.Center.notify({
+	        content: this.messages.stageLoadingMessage.replace('#stage#', stageName),
+	        autoHideDelay: 3000
+	      });
+	    }
+	  }, {
+	    key: "isStageUpdating",
+	    value: function isStageUpdating() {
+	      return this.targetUpdateStage !== null && this.isProgress;
 	    }
 	  }, {
 	    key: "getStageById",
@@ -148,33 +167,11 @@ this.BX = this.BX || {};
 	    value: function init() {
 	      this.initStageFlow();
 	      this.bindEvents();
-	      this.initDocumentButton();
 	      this.initReceiversRepository();
-	      if (this.isNew()) {
-	        var pageTitleElement = document.getElementById('pagetitle');
-	        main_core.Dom.style(pageTitleElement, 'padding-right', '15px');
-	        this.initCategoriesSelector(pageTitleElement);
-
-	        // beautify element
-	        var categorySelectorElement = document.getElementById('pagetitle_sub');
-	        main_core.Dom.style(categorySelectorElement, {
-	          position: 'relative',
-	          padding: '10px',
-	          'z-index': 1000,
-	          'background-size': 'contain'
-	        });
-	      } else {
-	        this.initPageTitleButtons();
+	      this.initCategoriesSelector();
+	      if (!this.isNew()) {
 	        this.initPull();
 	        this.initTours();
-	      }
-	    }
-	  }, {
-	    key: "initDocumentButton",
-	    value: function initDocumentButton() {
-	      if (main_core.Type.isPlainObject(this.documentButtonParameters) && this.documentButtonParameters.buttonId && BX.DocumentGenerator && BX.DocumentGenerator.Button) {
-	        this.documentButton = new BX.DocumentGenerator.Button(this.documentButtonParameters.buttonId, this.documentButtonParameters);
-	        this.documentButton.init();
 	      }
 	    }
 	  }, {
@@ -183,103 +180,23 @@ this.BX = this.BX || {};
 	      crm_messagesender.ReceiverRepository.onDetailsLoad(this.entityTypeId, this.id, this.receiversJSONString);
 	    }
 	  }, {
-	    key: "initPageTitleButtons",
-	    value: function initPageTitleButtons() {
-	      var pageTitleButtons = main_core.Tag.render(_templateObject || (_templateObject = babelHelpers.taggedTemplateLiteral(["\n\t\t\t<span id=\"pagetitle_btn_wrapper\" class=\"pagetitile-button-container\">\n\t\t\t\t<span id=\"page_url_copy_btn\" class=\"crm-page-link-btn\"></span>\n\t\t\t</span>\n\t\t"])));
-	      if (this.isPageTitleEditable) {
-	        var editButton = main_core.Tag.render(_templateObject2 || (_templateObject2 = babelHelpers.taggedTemplateLiteral(["\n\t\t\t\t<span id=\"pagetitle_edit\" class=\"pagetitle-edit-button\"></span>\n\t\t\t"])));
-	        main_core.Dom.prepend(editButton, pageTitleButtons);
-	      }
-	      var pageTitle = document.getElementById('pagetitle');
-	      main_core.Dom.insertAfter(pageTitleButtons, pageTitle);
-	      this.initCategoriesSelector(pageTitleButtons);
-	    }
-	  }, {
 	    key: "initCategoriesSelector",
-	    value: function initCategoriesSelector(target) {
-	      if (main_core.Type.isArray(this.categories) && this.categories.length > 0) {
-	        var currentCategory = this.getCurrentCategory();
-	        if (currentCategory) {
-	          var categoriesSelector = main_core.Tag.render(_templateObject3 || (_templateObject3 = babelHelpers.taggedTemplateLiteral(["\n\t\t\t\t\t<div id=\"pagetitle_sub\" class=\"pagetitle-sub\">\n\t\t\t\t\t\t<a href=\"#\" onclick=\"", "\">\n\t\t\t\t\t\t\t", "\n\t\t\t\t\t\t</a>\n\t\t\t\t\t</div>\n\t\t\t\t"])), this.onCategorySelectorClick.bind(this), currentCategory.text);
-	          main_core.Dom.insertAfter(categoriesSelector, target);
-	        }
-	      }
-	    }
-	  }, {
-	    key: "onCategorySelectorClick",
-	    value: function onCategorySelectorClick(event) {
-	      var _this3 = this;
-	      if (!this.categoryId || !this.categories) {
+	    value: function initCategoriesSelector() {
+	      if (!main_core.Type.isArrayFilled(this.categories) || !main_core.Type.isStringFilled(this.categorySelectorTarget)) {
 	        return;
 	      }
-	      var notCurrentCategories = this.categories.filter(function (category) {
-	        return category.categoryId !== _this3.categoryId;
+	      var changer = crm_itemDetailsComponent_pagetitle.CategoryChanger.renderToTarget(this.categorySelectorTarget, {
+	        entityTypeId: this.entityTypeId,
+	        entityId: this.id,
+	        categoryId: this.categoryId,
+	        categories: this.categories,
+	        editorGuid: this.editorGuid
 	      });
-	      notCurrentCategories.forEach(function (category) {
-	        delete category.href;
-	        category.onclick = function () {
-	          _this3.onCategorySelect(category.categoryId);
-	        };
-	      });
-	      main_popup.PopupMenu.show({
-	        id: "item-detail-".concat(this.entityTypeId, "-").concat(this.id),
-	        bindElement: event.target,
-	        items: notCurrentCategories
-	      });
-	    }
-	  }, {
-	    key: "onCategorySelect",
-	    value: function onCategorySelect(categoryId) {
-	      var _this4 = this;
-	      if (this.isProgress) {
+	      if (!changer) {
 	        return;
 	      }
-	      if (this.isNew()) {
-	        var _this$getEditor;
-	        if ((_this$getEditor = this.getEditor()) !== null && _this$getEditor !== void 0 && _this$getEditor.isChanged()) {
-	          ui_dialogs_messagebox.MessageBox.show({
-	            modal: true,
-	            title: main_core.Loc.getMessage('CRM_ITEM_DETAIL_CHANGE_FUNNEL_CONFIRM_DIALOG_TITLE'),
-	            message: main_core.Loc.getMessage('CRM_ITEM_DETAIL_CHANGE_FUNNEL_CONFIRM_DIALOG_MESSAGE'),
-	            minHeight: 100,
-	            buttons: ui_dialogs_messagebox.MessageBoxButtons.OK_CANCEL,
-	            okCaption: main_core.Loc.getMessage('CRM_ITEM_DETAIL_CHANGE_FUNNEL_CONFIRM_DIALOG_OK_BTN'),
-	            onOk: function onOk(messageBox) {
-	              messageBox.close();
-	              _this4.reloadPageWhenCategoryChanged(categoryId);
-	            },
-	            onCancel: function onCancel(messageBox) {
-	              return messageBox.close();
-	            }
-	          });
-	        } else {
-	          this.reloadPageWhenCategoryChanged(categoryId);
-	        }
-	        return;
-	      }
-	      this.startProgress();
-	      main_core.ajax.runAction('crm.controller.item.update', {
-	        analyticsLabel: 'crmItemDetailsChangeCategory',
-	        data: {
-	          entityTypeId: this.entityTypeId,
-	          id: this.id,
-	          fields: {
-	            categoryId: categoryId
-	          }
-	        }
-	      }).then(function () {
-	        setTimeout(function () {
-	          // @todo: what if editor is changed ?
-	          window.location.reload();
-	        }, 500);
-	      })["catch"](this.showErrorsFromResponse.bind(this));
-	    }
-	  }, {
-	    key: "reloadPageWhenCategoryChanged",
-	    value: function reloadPageWhenCategoryChanged(categoryId) {
-	      var url = new main_core.Uri(window.location.href);
-	      url.setQueryParam('categoryId', categoryId);
-	      window.location.href = url.toString();
+	      changer.subscribe('onProgressStart', this.startProgress.bind(this));
+	      changer.subscribe('onProgressStop', this.stopProgress.bind(this));
 	    }
 	  }, {
 	    key: "initStageFlow",
@@ -304,18 +221,18 @@ this.BX = this.BX || {};
 	          finalStageSelectorTitle: main_core.Loc.getMessage('CRM_ITEM_DETAIL_STAGEFLOW_FINAL_STAGE_SELECTOR')
 	        }
 	      };
-	      this.stageflowChart = new crm_itemDetailsComponent_stageFlow.Chart(chartParams, flowStagesData, this.permissionChecker, this.getStageById.bind(this), this.isNew());
+	      this.stageflowChart = new crm_itemDetailsComponent_stageFlow.Chart(chartParams, flowStagesData, this.permissionChecker, this.getStageById.bind(this), this.isStageUpdating.bind(this), main_core.Runtime.throttle(this.showStageUpdatingNotification.bind(this), 300), this.isNew(), this.entityTypeId);
 	      main_core.Dom.append(this.stageflowChart.render(), stageFlowContainer);
 	    }
 	  }, {
 	    key: "prepareStageFlowStagesData",
 	    value: function prepareStageFlowStagesData() {
-	      var _this5 = this;
+	      var _this2 = this;
 	      var flowStagesData = [];
 	      this.stages.forEach(function (stage) {
 	        var data = stage.getData();
 	        var color = stage.getColor().indexOf('#') === 0 ? stage.getColor().substr(1) : stage.getColor();
-	        if (_this5.isNew()) {
+	        if (_this2.isNew()) {
 	          color = BACKGROUND_COLOR;
 	        }
 	        data.isSuccess = stage.isSuccess();
@@ -339,7 +256,7 @@ this.BX = this.BX || {};
 	  }, {
 	    key: "initPull",
 	    value: function initPull() {
-	      var _this6 = this;
+	      var _this3 = this;
 	      var Pull = BX.PULL;
 	      if (!Pull) {
 	        console.error('pull is not initialized');
@@ -352,17 +269,17 @@ this.BX = this.BX || {};
 	        moduleId: 'crm',
 	        command: this.pullTag,
 	        callback: function callback(params) {
-	          var _params$item, _this6$stageflowChart;
+	          var _params$item, _this3$stageflowChart;
 	          if (!(params !== null && params !== void 0 && (_params$item = params.item) !== null && _params$item !== void 0 && _params$item.data)) {
 	            return;
 	          }
 	          var columnId = params.item.data.columnId;
-	          if ((_this6$stageflowChart = _this6.stageflowChart) !== null && _this6$stageflowChart !== void 0 && _this6$stageflowChart.isActive) {
-	            var currentStage = _this6.getStageById(_this6.stageflowChart.currentStage);
+	          if ((_this3$stageflowChart = _this3.stageflowChart) !== null && _this3$stageflowChart !== void 0 && _this3$stageflowChart.isActive) {
+	            var currentStage = _this3.getStageById(_this3.stageflowChart.currentStage);
 	            if ((currentStage === null || currentStage === void 0 ? void 0 : currentStage.statusId) !== columnId) {
-	              var newStage = _this6.getStageByStatusId(columnId);
+	              var newStage = _this3.getStageByStatusId(columnId);
 	              if (newStage) {
-	                _this6.updateStage(newStage);
+	                _this3.updateStage(newStage);
 	              }
 	            }
 	          }
@@ -396,7 +313,7 @@ this.BX = this.BX || {};
 	  }, {
 	    key: "onStageChange",
 	    value: function onStageChange(stageFlowStage) {
-	      var _this7 = this;
+	      var _this4 = this;
 	      if (this.isProgress) {
 	        return;
 	      }
@@ -405,7 +322,10 @@ this.BX = this.BX || {};
 	        console.error('Wrong stage');
 	        return;
 	      }
-	      this.startProgress();
+	      this.prepareAnalyticsData(stage);
+	      this.stageBeforeUpdate = this.getStageById(this.currentStageId);
+	      this.setStageToFlowChart(stage);
+	      this.startStageUpdateProgress(stage);
 	      main_core.ajax.runAction('crm.controller.item.update', {
 	        analyticsLabel: 'crmItemDetailsMoveItem',
 	        data: {
@@ -416,7 +336,8 @@ this.BX = this.BX || {};
 	          }
 	        }
 	      }).then(function () {
-	        _this7.stopProgress();
+	        _this4.sendAnalyticsData(crm_integration_analytics.Dictionary.STATUS_SUCCESS);
+	        _this4.stopStageUpdateProgress();
 	        var currentSlider = null;
 	        if (main_core.Reflection.getClass('BX.SidePanel.Instance.getTopSlider')) {
 	          currentSlider = BX.SidePanel.Instance.getTopSlider();
@@ -429,14 +350,19 @@ this.BX = this.BX || {};
 	                "sliderUrl": currentSlider.getUrl()
 	              };
 	            }
-	            BX.Crm.EntityEvent.fireUpdate(_this7.entityTypeId, _this7.id, '', eventParams);
+	            BX.Crm.EntityEvent.fireUpdate(_this4.entityTypeId, _this4.id, '', eventParams);
 	          }
 	        }
-	        _this7.updateStage(stage);
+	        _this4.stageBeforeUpdate = null;
+	        _this4.updateStage(stage);
 	      })["catch"](function (response) {
-	        _this7.stopProgress();
-	        if (!_this7.partialEditorId) {
-	          _this7.showErrorsFromResponse(response);
+	        _this4.stopStageUpdateProgress();
+	        if (_this4.stageBeforeUpdate !== null) {
+	          _this4.setStageToFlowChart(_this4.stageBeforeUpdate);
+	          _this4.stageBeforeUpdate = null;
+	        }
+	        if (!_this4.partialEditorId) {
+	          _this4.showErrorsFromResponse(response);
 	          return;
 	        }
 	        var requiredFields = [];
@@ -448,22 +374,23 @@ this.BX = this.BX || {};
 	          }
 	        });
 	        if (requiredFields.length > 0) {
-	          BX.Crm.PartialEditorDialog.close(_this7.partialEditorId);
-	          _this7.partialEntityEditor = BX.Crm.PartialEditorDialog.create(_this7.partialEditorId, {
-	            title: BX.prop.getString(_this7.messages, "partialEditorTitle", "Please fill in all required fields"),
-	            entityTypeName: _this7.entityTypeName,
-	            entityTypeId: _this7.entityTypeId,
-	            entityId: _this7.id,
+	          BX.Crm.PartialEditorDialog.close(_this4.partialEditorId);
+	          _this4.partialEntityEditor = BX.Crm.PartialEditorDialog.create(_this4.partialEditorId, {
+	            title: BX.prop.getString(_this4.messages, "partialEditorTitle", "Please fill in all required fields"),
+	            entityTypeName: _this4.entityTypeName,
+	            entityTypeId: _this4.entityTypeId,
+	            entityId: _this4.id,
 	            fieldNames: requiredFields,
 	            helpData: null,
-	            context: _this7.editorContext || null,
+	            context: _this4.editorContext || null,
 	            isController: true,
 	            stageId: stage.getStatusId()
 	          });
-	          _this7.bindPartialEntityEditorEvents();
-	          _this7.partialEntityEditor.open();
+	          _this4.bindPartialEntityEditorEvents();
+	          _this4.partialEntityEditor.open();
 	        } else {
-	          _this7.showErrorsFromResponse(response);
+	          _this4.sendAnalyticsData(crm_integration_analytics.Dictionary.STATUS_ERROR);
+	          _this4.showErrorsFromResponse(response);
 	        }
 	      });
 	    }
@@ -471,13 +398,18 @@ this.BX = this.BX || {};
 	    key: "updateStage",
 	    value: function updateStage(stage) {
 	      var currentStage = this.getStageById(this.stageflowChart.currentStage);
-	      this.stageflowChart.setCurrentStageId(stage.getId());
+	      this.setStageToFlowChart(stage);
 	      main_core_events.EventEmitter.emit('BX.Crm.ItemDetailsComponent:onStageChange', {
 	        entityTypeId: this.entityTypeId,
 	        id: this.id,
 	        stageId: stage.getStatusId(),
 	        previousStageId: currentStage ? currentStage.getStatusId() : null
 	      });
+	    }
+	  }, {
+	    key: "setStageToFlowChart",
+	    value: function setStageToFlowChart(stage) {
+	      this.stageflowChart.setCurrentStageId(stage.getId());
 	    }
 	  }, {
 	    key: "showError",
@@ -527,7 +459,7 @@ this.BX = this.BX || {};
 	  }, {
 	    key: "handleItemDelete",
 	    value: function handleItemDelete() {
-	      var _this8 = this;
+	      var _this5 = this;
 	      if (this.isProgress) {
 	        return;
 	      }
@@ -537,16 +469,16 @@ this.BX = this.BX || {};
 	        modal: true,
 	        buttons: ui_dialogs_messagebox.MessageBoxButtons.YES_CANCEL,
 	        onYes: function onYes(messageBox) {
-	          _this8.startProgress();
+	          _this5.startProgress();
 	          main_core.ajax.runAction('crm.controller.item.delete', {
 	            analyticsLabel: 'crmItemDetailsDeleteItem',
 	            data: {
-	              entityTypeId: _this8.entityTypeId,
-	              id: _this8.id
+	              entityTypeId: _this5.entityTypeId,
+	              id: _this5.id
 	            }
 	          }).then(function (_ref4) {
 	            var data = _ref4.data;
-	            _this8.stopProgress();
+	            _this5.stopProgress();
 	            var currentSlider = null;
 	            if (main_core.Reflection.getClass('BX.SidePanel.Instance.getTopSlider')) {
 	              currentSlider = BX.SidePanel.Instance.getTopSlider();
@@ -559,17 +491,17 @@ this.BX = this.BX || {};
 	                    "sliderUrl": currentSlider.getUrl()
 	                  };
 	                }
-	                BX.Crm.EntityEvent.fireDelete(_this8.entityTypeId, _this8.id, '', eventParams);
+	                BX.Crm.EntityEvent.fireDelete(_this5.entityTypeId, _this5.id, '', eventParams);
 	              }
 	              currentSlider.close();
 	            } else {
 	              var link = data.redirectUrl;
 	              if (main_core.Type.isStringFilled(link)) {
-	                var url = _this8.normalizeUrl(new main_core.Uri(link));
+	                var url = _this5.normalizeUrl(new main_core.Uri(link));
 	                location.href = url.toString();
 	              }
 	            }
-	          })["catch"](_this8.showErrorsFromResponse.bind(_this8));
+	          })["catch"](_this5.showErrorsFromResponse.bind(_this5));
 	          messageBox.close();
 	        }
 	      });
@@ -594,13 +526,16 @@ this.BX = this.BX || {};
 	      if (main_core.Type.isArray(data) && data.length === 2) {
 	        var parameters = data[1];
 	        if (parameters.isCancelled) {
+	          this.sendAnalyticsData(crm_integration_analytics.Dictionary.STATUS_ERROR);
 	          return;
 	        }
 	        var stage = this.getStageByStatusId(parameters.stageId);
 	        if (!stage) {
+	          this.sendAnalyticsData(crm_integration_analytics.Dictionary.STATUS_ERROR);
 	          return;
 	        }
 	        this.updateStage(stage);
+	        this.sendAnalyticsData(crm_integration_analytics.Dictionary.STATUS_SUCCESS);
 	      }
 	    }
 	  }, {
@@ -657,16 +592,38 @@ this.BX = this.BX || {};
 	  }, {
 	    key: "initTours",
 	    value: function initTours() {
-	      var _this9 = this;
+	      var _this6 = this;
 	      if (this.automationCheckAutomationTourGuideData) {
 	        main_core.Runtime.loadExtension('bizproc.automation.guide').then(function (exports) {
 	          var CrmCheckAutomationGuide = exports.CrmCheckAutomationGuide;
 	          if (CrmCheckAutomationGuide) {
-	            var _this9$categoryId;
-	            CrmCheckAutomationGuide.showCheckAutomation(_this9.entityTypeName, (_this9$categoryId = _this9.categoryId) !== null && _this9$categoryId !== void 0 ? _this9$categoryId : 0, _this9.automationCheckAutomationTourGuideData['options']);
+	            var _this6$categoryId;
+	            CrmCheckAutomationGuide.showCheckAutomation(_this6.entityTypeName, (_this6$categoryId = _this6.categoryId) !== null && _this6$categoryId !== void 0 ? _this6$categoryId : 0, _this6.automationCheckAutomationTourGuideData['options']);
 	          }
 	        });
 	      }
+	    }
+	  }, {
+	    key: "prepareAnalyticsData",
+	    value: function prepareAnalyticsData(stage) {
+	      var stageSemantic = stage.getSemantics();
+	      if (stageSemantic === 'F') {
+	        this.analyticsData = crm_integration_analytics.Builder.Entity.CloseEvent.createDefault(this.entityTypeId).setElement(crm_integration_analytics.Dictionary.ELEMENT_LOSE_BUTTON).buildData();
+	      } else if (stageSemantic === 'S') {
+	        this.analyticsData = crm_integration_analytics.Builder.Entity.CloseEvent.createDefault(this.entityTypeId).setElement(crm_integration_analytics.Dictionary.ELEMENT_WON_BUTTON).buildData();
+	      } else {
+	        this.analyticsData = crm_integration_analytics.Builder.Entity.ChangeStageEvent.createDefault(this.entityTypeId).setElement(crm_integration_analytics.Dictionary.ELEMENT_STAGE_BAR_BUTTON).buildData();
+	      }
+	    }
+	  }, {
+	    key: "sendAnalyticsData",
+	    value: function sendAnalyticsData(status) {
+	      if (!this.analyticsData) {
+	        return;
+	      }
+	      BX.UI.Analytics.sendData(_objectSpread(_objectSpread({}, this.analyticsData), {}, {
+	        status: status
+	      }));
 	    }
 	  }]);
 	  return ItemDetailsComponent;
@@ -674,5 +631,5 @@ this.BX = this.BX || {};
 
 	exports.ItemDetailsComponent = ItemDetailsComponent;
 
-}((this.BX.Crm = this.BX.Crm || {}),BX.Crm.MessageSender,BX.Crm.Models,BX.Crm.Stage,BX,BX.Event,BX,BX.Main,BX.UI.Dialogs,BX.UI,BX.Crm.ItemDetailsComponent));
+}((this.BX.Crm = this.BX.Crm || {}),BX.Crm.ItemDetailsComponent.PageTitle,BX.Crm.ItemDetailsComponent,BX.Crm.MessageSender,BX.Crm.Models,BX.Crm.Stage,BX,BX.Event,BX,BX.UI.Dialogs,BX.UI,BX.Crm.Integration.Analytics));
 //# sourceMappingURL=item-details-component.bundle.js.map

@@ -1,13 +1,18 @@
 <?php
 $MESS["IMMOBILE_MESSENGER_UI_NOTIFY_ALERT_DELETE_CHANNEL_DESCRIPTION"] = "This channel, its posts, files and comments will be deleted permanently. Do you want to delete the channel?";
+$MESS["IMMOBILE_MESSENGER_UI_NOTIFY_ALERT_DELETE_CHANNEL_POSTS_TITLE"] = "Delete selected posts";
 $MESS["IMMOBILE_MESSENGER_UI_NOTIFY_ALERT_DELETE_CHANNEL_POST_DESCRIPTION"] = "This post, its comments and reactions will be deleted. Do you want to delete the post?";
 $MESS["IMMOBILE_MESSENGER_UI_NOTIFY_ALERT_DELETE_CHANNEL_POST_TITLE"] = "Delete post";
-$MESS["IMMOBILE_MESSENGER_UI_NOTIFY_ALERT_DELETE_CHANNEL_TITLE"] = "Delete channel";
+$MESS["IMMOBILE_MESSENGER_UI_NOTIFY_ALERT_DELETE_CHANNEL_TITLE_MSGVER_1"] = "Delete channel";
 $MESS["IMMOBILE_MESSENGER_UI_NOTIFY_ALERT_DELETE_CHAT_DESCRIPTION"] = "This chat, its messages and files will be deleted permanently. Do you want to delete the chat?";
-$MESS["IMMOBILE_MESSENGER_UI_NOTIFY_ALERT_DELETE_CHAT_TITLE"] = "Delete chat";
+$MESS["IMMOBILE_MESSENGER_UI_NOTIFY_ALERT_DELETE_CHAT_TITLE_MSGVER_1"] = "Delete chat";
 $MESS["IMMOBILE_MESSENGER_UI_NOTIFY_ALERT_DELETE_COLLAB_CONFIRM_YES"] = "Yes";
 $MESS["IMMOBILE_MESSENGER_UI_NOTIFY_ALERT_DELETE_COLLAB_DESCRIPTION"] = "This will delete the collab including all communication history. This action cannot be undone. Are you sure you want to proceed? ";
 $MESS["IMMOBILE_MESSENGER_UI_NOTIFY_ALERT_DELETE_COLLAB_TITLE"] = "Delete collab";
+$MESS["IMMOBILE_MESSENGER_UI_NOTIFY_ALERT_DELETE_GALLERY_CONFIRM_YES"] = "Yes";
+$MESS["IMMOBILE_MESSENGER_UI_NOTIFY_ALERT_DELETE_GALLERY_DESCRIPTION"] = "Are you sure you want to delete all files in this message?";
+$MESS["IMMOBILE_MESSENGER_UI_NOTIFY_ALERT_DELETE_GALLERY_TITLE"] = "Delete gallery";
+$MESS["IMMOBILE_MESSENGER_UI_NOTIFY_ALERT_DELETE_MESSAGES_TITLE"] = "Delete selected messages";
 $MESS["IMMOBILE_MESSENGER_UI_NOTIFY_ALERT_LEAVE_CHANNEL_CONFIRM_TITLE"] = "Do you want to unsubscribe from the channel?";
 $MESS["IMMOBILE_MESSENGER_UI_NOTIFY_ALERT_LEAVE_CHANNEL_CONFIRM_YES"] = "Yes";
 $MESS["IMMOBILE_MESSENGER_UI_NOTIFY_ALERT_LEAVE_CHAT_CONFIRM_TITLE"] = "Are you sure you want to leave the chat?";

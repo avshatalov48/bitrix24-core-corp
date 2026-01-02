@@ -3,12 +3,14 @@
 namespace Bitrix\BIConnector\Access\Service;
 
 use Bitrix\BIConnector\Access\ActionDictionary;
+use Bitrix\BIConnector\Access\Permission\PermissionDictionary;
 use Bitrix\BIConnector\Access\Permission\PermissionTable;
 use Bitrix\BIConnector\Access\Role\RoleTable;
 use Bitrix\BIConnector\Access\Role\RoleUtil;
 use Bitrix\Main\Application;
 use Bitrix\Main\DB\SqlQueryException;
 use Bitrix\Main\Error;
+use Bitrix\Main\Localization\Loc;
 use Bitrix\Main\Result;
 use Bitrix\Main\Text\Encoding;
 
@@ -24,65 +26,120 @@ final class RolePermissionService
 
 	/**
 	 * @param array $permissionSettings
+	 * @param array $accessRights
 	 *
 	 * @return Result
-	 * @throws SqlQueryException
 	 */
-	public function saveRolePermissions(array $permissionSettings): Result
+	public function saveRolePermissions(array $permissionSettings, array $accessRights = []): Result
 	{
 		$query = [];
 		$roles = [];
 		$result = new Result();
+		$db = Application::getConnection();
 
-		foreach ($permissionSettings as &$setting)
+		try
 		{
-			$roleId = (int)$setting['id'];
-			$roleTitle = (string)$setting['title'];
+			$db->startTransaction();
 
-			$saveRoleResult = $this->saveRole($roleTitle, $roleId);
-			if (!$saveRoleResult->isSuccess())
+			$groupPermissionIdList = array_reduce($accessRights, static function ($carry, $permission) {
+				if (PermissionDictionary::isDashboardGroupPermission($permission['id']))
+				{
+					$carry[] = $permission['additionalRightData']['group'];
+				}
+
+				return $carry;
+			}, []);
+
+			if (!empty($groupPermissionIdList))
 			{
-				$result->addErrors($saveRoleResult->getErrors());
-				continue;
+				$dashboardGroupMap = [];
+				foreach ($groupPermissionIdList as $group)
+				{
+					$groupInfo = [
+						'id' => str_starts_with($group['id'], 'new_')
+							? null
+							: PermissionDictionary::getDashboardGroupIdFromPermission($group['id']),
+						'name' => $group['name'],
+					];
+					$scopeList = isset($group['scopes'])
+						? array_column($group['scopes'], 'code')
+						: [];
+					$dashboards = $group['dashboards'] ?? [];
+
+					$saveResult = DashboardGroupService::saveGroup(
+						$groupInfo,
+						$scopeList,
+						$dashboards
+					);
+					if (!$saveResult->isSuccess())
+					{
+						$result->addErrors($saveResult->getErrors());
+						$db->rollbackTransaction();
+
+						return $result;
+					}
+					$dashboardGroupMap[$group['id']] = $saveResult->getData()['id'];
+				}
+
+				$permissionSettings = array_map(static function ($userGroup) use ($dashboardGroupMap) {
+					foreach ($userGroup['accessRights'] as &$accessRight)
+					{
+						if (str_starts_with($accessRight['id'], 'new_G'))
+						{
+							$accessRight['id'] = PermissionDictionary::getDashboardGroupPermissionId(
+								$dashboardGroupMap[$accessRight['id']]
+							);
+						}
+					}
+
+					return $userGroup;
+				}, $permissionSettings);
 			}
-			$roleId = $saveRoleResult->getData()['id'];
 
-			$setting['id'] = $roleId;
-			$roles[] = $roleId;
-
-			if (!isset($setting['accessRights']))
+			foreach ($permissionSettings as &$setting)
 			{
-				continue;
-			}
+				$roleId = (int)$setting['id'];
+				$roleTitle = (string)$setting['title'];
 
-			foreach ($setting['accessRights'] as $permission)
-			{
-				$permissionId = (int)$permission['id'];
+				$saveRoleResult = $this->saveRole($roleTitle, $roleId);
+				if (!$saveRoleResult->isSuccess())
+				{
+					$result->addErrors($saveRoleResult->getErrors());
+					$db->rollbackTransaction();
 
-				if ($permissionId < 1)
+					return $result;
+				}
+				$roleId = $saveRoleResult->getData()['id'];
+
+				$setting['id'] = $roleId;
+				$roles[] = $roleId;
+
+				if (!isset($setting['accessRights']))
 				{
 					continue;
 				}
 
-				$query[] = [
-					'ROLE_ID' => $roleId,
-					'PERMISSION_ID' => $permissionId,
-					'VALUE' => $permission['value'],
-				];
+				foreach ($setting['accessRights'] as $permission)
+				{
+					$permissionId = $permission['id'];
+
+					$query[] = [
+						'ROLE_ID' => $roleId,
+						'PERMISSION_ID' => $permissionId,
+						'VALUE' => $permission['value'],
+					];
+				}
 			}
-		}
-		unset($setting);
+			unset($setting);
 
-		if ($query)
-		{
-			$db = Application::getConnection();
-
-			try
+			if ($query)
 			{
-				$db->startTransaction();
 				if (!PermissionTable::deleteList(['=ROLE_ID' => $roles]))
 				{
-					throw new SqlQueryException(self::DB_ERROR_KEY);
+					$result->addError(new Error(Loc::getMessage('BICONNECTOR_APACHESUPERSET_CONFIG_PERMISSIONS_DB_ERROR')));
+					$db->rollbackTransaction();
+
+					return $result;
 				}
 
 				RoleUtil::insertPermissions($query);
@@ -92,22 +149,16 @@ final class RolePermissionService
 				}
 
 				$this->roleRelationService->saveRoleRelation($permissionSettings);
+			}
 
-				$db->commitTransaction();
-			}
-			catch (\Exception $e)
-			{
-				$db->rollbackTransaction();
-				$result->addError(new Error('Saving permissions failed.'));
-				\CEventLog::add([
-					'SEVERITY' => 'ERROR',
-					'AUDIT_TYPE_ID' => self::DB_ERROR_KEY,
-					'MODULE_ID' => 'biconnector',
-					'DESCRIPTION' => "Error saving permissions. Exception: {$e->getMessage()}. Permissions: " . json_encode($permissionSettings),
-				]);
-			}
+			$db->commitTransaction();
+			$result->setData(['permissionSettings' => $permissionSettings]);
 		}
-		$result->setData(['permissionSettings' => $permissionSettings]);
+		catch (\Exception $e)
+		{
+			$db->rollbackTransaction();
+			$result->addError(new Error($e->getMessage()));
+		}
 
 		return $result;
 	}
@@ -120,10 +171,17 @@ final class RolePermissionService
 	 */
 	public function saveRole(string $name, int $roleId = null): Result
 	{
+		$result = new Result();
+
+		if (empty($name))
+		{
+			$result->addError(new Error(Loc::getMessage('BICONNECTOR_ACCESS_SAVE_ROLE_ERROR_NO_NAME')));
+
+			return $result;
+		}
 		$nameField = [
 			'NAME' => Encoding::convertEncodingToCurrent($name),
 		];
-		$result = new Result();
 
 		try
 		{
@@ -133,16 +191,7 @@ final class RolePermissionService
 			}
 			else
 			{
-				$role = RoleTable::getList([
-					'filter' => [
-						'=NAME' => $nameField['NAME'],
-					]
-				])->fetchObject();
-
-				if (!$role)
-				{
-					$role = RoleTable::add($nameField);
-				}
+				$role = RoleTable::add($nameField);
 			}
 		}
 		catch (\Exception $e)

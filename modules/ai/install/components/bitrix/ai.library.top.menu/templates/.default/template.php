@@ -17,5 +17,6 @@ $APPLICATION->includeComponent(
 		'ID' => 'libraries',
 		'ITEMS' => $arResult['menuItems'],
 		"EDIT_MODE" => false,
+		"THEME" => defined("AIR_SITE_TEMPLATE") ? "air" : null,
 	)
 );

@@ -32,8 +32,8 @@ if (!defined('B_PROLOG_INCLUDED') || B_PROLOG_INCLUDED !== true)
 						<span class="crm-activity-visit-facesearch-main-user-date-item"><?=htmlspecialcharsbx($arResult["VK_PROFILES"][0]['personal'])?></span>
 					</div>
 					<div class="crm-activity-visit-facesearch-main-user-social-link">
-						<a href="http://vk.com/<?=htmlspecialcharsbx($arResult["VK_PROFILES"][0]['id'])?>" class="crm-activity-visit-facesearch-main-user-social-link-item" target="_blank">
-							vk.com/<?= htmlspecialcharsbx($arResult["VK_PROFILES"][0]['id'])?>
+						<a href="http://vk.ru/<?=htmlspecialcharsbx($arResult["VK_PROFILES"][0]['id'])?>" class="crm-activity-visit-facesearch-main-user-social-link-item" target="_blank">
+							vk.ru/<?= htmlspecialcharsbx($arResult["VK_PROFILES"][0]['id'])?>
 						</a>
 					</div>
 				</div>
@@ -68,8 +68,8 @@ if (!defined('B_PROLOG_INCLUDED') || B_PROLOG_INCLUDED !== true)
 									<span class="crm-activity-visit-facesearch-main-user-date-item"><?=htmlspecialcharsbx($arResult["VK_PROFILES"][$i]['personal'])?></span>
 								</div>
 								<div class="crm-activity-visit-facesearch-main-user-social-link">
-									<a href="http://vk.com/<?=htmlspecialcharsbx($arResult["VK_PROFILES"][$i]['id'])?>" class="crm-activity-visit-facesearch-main-user-social-link-item" target="_blank">
-										vk.com/<?= htmlspecialcharsbx($arResult["VK_PROFILES"][$i]['id'])?>
+									<a href="http://vk.ru/<?=htmlspecialcharsbx($arResult["VK_PROFILES"][$i]['id'])?>" class="crm-activity-visit-facesearch-main-user-social-link-item" target="_blank">
+										vk.ru/<?= htmlspecialcharsbx($arResult["VK_PROFILES"][$i]['id'])?>
 									</a>
 								</div>
 							</div>

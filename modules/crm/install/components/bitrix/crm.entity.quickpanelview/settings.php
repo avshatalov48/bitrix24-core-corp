@@ -72,7 +72,7 @@ if($USER->IsAuthorized() && check_bitrix_sessid())
 			$options['bottom'] = $config['bottom'];
 		}
 
-		if(isset($_POST['forAllUsers']) && $_POST['forAllUsers'] === 'Y' && CCrmAuthorizationHelper::CanEditOtherSettings())
+		if(isset($_POST['forAllUsers']) && $_POST['forAllUsers'] === 'Y' && \Bitrix\Crm\Service\Container::getInstance()->getUserPermissions()->entityEditor()->canEditCommonView())
 		{
 			if(isset($_POST['delete']) && $_POST['delete'] === 'Y')
 			{
@@ -84,7 +84,7 @@ if($USER->IsAuthorized() && check_bitrix_sessid())
 	}
 	elseif($action == 'resetconfig')
 	{
-		if(isset($_POST['forAllUsers']) && $_POST['forAllUsers'] === 'Y' && CCrmAuthorizationHelper::CanEditOtherSettings())
+		if(isset($_POST['forAllUsers']) && $_POST['forAllUsers'] === 'Y' && \Bitrix\Crm\Service\Container::getInstance()->getUserPermissions()->entityEditor()->canEditCommonView())
 		{
 			CUserOptions::DeleteOptionsByName('crm.entity.quickpanelview', $guid);
 		}

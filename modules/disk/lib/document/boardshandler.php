@@ -2,6 +2,7 @@
 
 namespace Bitrix\Disk\Document;
 
+use Bitrix\Disk\Document\Flipchart\Configuration;
 use Bitrix\Disk\Internals\Error\Error;
 use Bitrix\Main\Localization\Loc;
 
@@ -33,6 +34,14 @@ class BoardsHandler extends DocumentHandler
 	public function checkAccessibleTokenService(): bool
 	{
 		return true;
+	}
+
+	public static function isCloudRegistrationAvailable(): bool
+	{
+		$boardsProxyEnabled = Configuration::isUsingDocumentProxy();
+		$cloudRegistration = Configuration::getCloudRegistrationData();
+
+		return $boardsProxyEnabled && $cloudRegistration;
 	}
 
 	/**

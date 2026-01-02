@@ -2,9 +2,9 @@
 
 namespace Bitrix\Crm\Integration\Recyclebin;
 
+use Bitrix\Crm;
 use Bitrix\Crm\Service\Container;
 use Bitrix\Main;
-use Bitrix\Crm;
 use Bitrix\Recyclebin;
 use Bitrix\Recyclebin\Internals\Models\RecyclebinTable;
 
@@ -117,6 +117,7 @@ class Dynamic extends RecyclableEntity
 				'SLOTS' => self::prepareDataSlots($entity),
 				'SLOT_MAP' => self::prepareDataSlotMap($entity),
 				'FILES' => $entity->getFiles(),
+				'DATETIME' => method_exists($entity, 'getDateTime') ? $entity->getDateTime() : null,
 			]
 		);
 	}

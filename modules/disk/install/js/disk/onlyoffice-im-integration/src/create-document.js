@@ -31,7 +31,7 @@ export default class CreateDocument
 			const url = BX.util.add_url_param('/bitrix/services/main/ajax.php', {
 				action: 'disk.api.integration.messengerCall.createDocumentInCall' ,
 				typeFile: options.typeFile,
-				callId: this.options.call.id,
+				callUuid: this.options.call.uuid,
 				dialogId: this.options.dialog.id,
 			});
 
@@ -60,7 +60,7 @@ export default class CreateDocument
 		return new Promise((resolve, reject) => {
 			Ajax.runAction('disk.api.integration.messengerCall.selectTemplateOrOpenExisting', {
 				data: {
-					callId: this.options.call.id,
+					callUuid: this.options.call.uuid,
 					dialogId: this.options.dialog.id,
 				}
 			}).then((response) => {

@@ -10,14 +10,19 @@ export class ResourceCreationWizardDataExtractor
 		this.#data = data;
 	}
 
-	getAdvertisingResourceTypes(): AdvertisingResourceType[]
+	getAdvertisingTypes(): AdvertisingResourceType[]
 	{
 		return this.#data.advertisingResourceTypes ?? [];
 	}
 
-	getNotificationsSettings(): NotificationsSettings
+	getNotifications(): NotificationsSettings
 	{
-		return this.#data.notificationsSettings;
+		return this.#data.notificationsSettings.notifications;
+	}
+
+	getSenders(): NotificationsSettings
+	{
+		return this.#data.notificationsSettings.senders;
 	}
 
 	getCompanyScheduleSlots(): SlotRange[]
@@ -30,8 +35,18 @@ export class ResourceCreationWizardDataExtractor
 		return Boolean(this.#data.isCompanyScheduleAccess);
 	}
 
+	getCompanyScheduleUrl(): string
+	{
+		return this.#data.companyScheduleUrl;
+	}
+
 	getWeekStart(): string
 	{
 		return this.#data.weekStart;
+	}
+
+	isChannelChoiceAvailable(): boolean
+	{
+		return this.#data.isChannelChoiceAvailable;
 	}
 }

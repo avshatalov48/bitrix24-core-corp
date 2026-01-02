@@ -2,7 +2,6 @@
  * @module im/messenger/controller/search/base
  */
 jn.define('im/messenger/controller/search/base', (require, exports, module) => {
-
 	const { Type } = require('type');
 	const { DialogSelector } = require('im/messenger/controller/dialog-selector');
 

@@ -6,4 +6,5 @@ module.exports = {
 	},
 	namespace: 'BX.Intranet.UstatOnline',
 	adjustConfigPhp: false,
+	browserslist: true,
 };

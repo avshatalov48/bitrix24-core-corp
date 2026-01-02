@@ -40,12 +40,24 @@ jn.define('disk/file-grid/collab-recent-files', (require, exports, module) => {
 
 		isShowFloatingButton()
 		{
-			return this.state.folderRights?.canAdd;
+			return this.canUserUploadToFolder();
 		}
 
 		isCollabFolder()
 		{
 			return true;
+		}
+
+		canUserUploadToFolder()
+		{
+			const preventByCollabAvailability = !this.props.isCollabToolEnabled;
+
+			if (this.isCollabFolder() && preventByCollabAvailability)
+			{
+				return false;
+			}
+
+			return this.state.folderRights?.canAdd;
 		}
 
 		/**

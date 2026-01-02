@@ -1,0 +1,3 @@
+<?php
+$MESS["CRM_CALL_TRACKER_DIRECTION_INCOMING"] = "Кіріс қоңырау";
+$MESS["CRM_CALL_TRACKER_DIRECTION_OUTGOING"] = "Шығыс қоңырау";

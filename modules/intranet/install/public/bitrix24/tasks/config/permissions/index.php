@@ -33,10 +33,9 @@ $APPLICATION->IncludeComponent(
 		'USE_PADDING' => false,
 		'PLAIN_VIEW' => false,
 		'PAGE_MODE' => false,
-		'PAGE_MODE_OFF_BACK_URL' => "/company/personal/user/".$USER->getId()."/tasks/"
+		'PAGE_MODE_OFF_BACK_URL' => SITE_DIR . "company/personal/user/".$USER->getId()."/tasks/"
 	]
 );
 
 require($_SERVER["DOCUMENT_ROOT"]."/bitrix/footer.php");
 ?>
-

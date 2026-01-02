@@ -15,7 +15,7 @@ export const Toolbar = {
 	],
 
 	props: {
-		isMappingReady: {
+		showCounters: {
 			required: true,
 			type: Boolean,
 		},
@@ -74,7 +74,7 @@ export const Toolbar = {
 				</div>
 			</div>
 			<div class="hr-hcmlink-sync__search-container">
-				<div v-if="isMappingReady"
+				<div v-if="showCounters"
 					class="hr-hcmlink-sync__toolbar-bubble hr-hcmlink-sync__toolbar-bubble-right"
 					:class="[isDone ? '--done' : '--not-done']"
 				>
@@ -87,7 +87,7 @@ export const Toolbar = {
 				</div>
 			</div>
 		</div>
-		<div v-if="isMappingReady" class="hr-hcmlink-sync__toolbar-row hr-hcmlink-sync__toolbar-row-counter">
+		<div v-if="showCounters" class="hr-hcmlink-sync__toolbar-row hr-hcmlink-sync__toolbar-row-counter">
 			<Counter
 				:countAllPersonsForMap=countAllPersonsForMap
 				:countMappedPersons=countMappedPersons

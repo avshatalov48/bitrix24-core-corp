@@ -141,15 +141,12 @@ class CCrmSiteButtonListComponent extends \CBitrixComponent
 			return;
 		}
 
-		/**@var $USER \CUser*/
-		global $USER;
-		$CrmPerms = new CCrmPerms($USER->GetID());
-		if($CrmPerms->HavePerm('BUTTON', BX_CRM_PERM_NONE))
+		if(!\Bitrix\Crm\Service\Container::getInstance()->getUserPermissions()->siteButton()->canRead())
 		{
 			ShowError(Loc::getMessage('CRM_PERMISSION_DENIED'));
 			return;
 		}
-		$this->arResult['PERM_CAN_EDIT'] = !$CrmPerms->HavePerm('BUTTON', BX_CRM_PERM_NONE, 'WRITE');
+		$this->arResult['PERM_CAN_EDIT'] = \Bitrix\Crm\Service\Container::getInstance()->getUserPermissions()->siteButton()->canEdit();
 
 		global $APPLICATION;
 		$APPLICATION->SetTitle(Loc::getMessage('CRM_BUTTON_LIST_TITLE'));

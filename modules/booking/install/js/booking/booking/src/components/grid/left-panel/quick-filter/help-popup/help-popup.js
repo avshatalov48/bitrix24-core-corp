@@ -4,6 +4,11 @@ import { StickyPopup } from 'booking.component.popup';
 import './help-popup.css';
 
 export const HelpPopup = {
+	name: 'HelpPopup',
+	components: {
+		RichLoc,
+		StickyPopup,
+	},
 	emits: ['close'],
 	props: {
 		bindElement: {
@@ -33,10 +38,6 @@ export const HelpPopup = {
 			this.$emit('close');
 		},
 	},
-	components: {
-		StickyPopup,
-		RichLoc,
-	},
 	template: `
 		<StickyPopup
 			:id="popupId"
@@ -48,7 +49,7 @@ export const HelpPopup = {
 					<div class="booking-quick-filter-help-popup-icon"></div>
 				</div>
 				<div class="booking-quick-filter-help-popup-description">
-					<RichLoc :text="loc('BOOKING_QUICK_FILTER_HELP')" placeholder="[bold]">
+					<RichLoc :text="loc('BOOKING_QUICK_FILTER_HELP_MSGVER_1')" placeholder="[bold]">
 						<template #bold="{ text }">
 							<span>{{ text }}</span>
 						</template>

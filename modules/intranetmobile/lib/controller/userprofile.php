@@ -2,7 +2,6 @@
 
 namespace Bitrix\IntranetMobile\Controller;
 
-use Bitrix\Intranet\CurrentUser;
 use Bitrix\Intranet\Entity\Type\Email;
 use Bitrix\Intranet\Entity\Type\Phone;
 use Bitrix\Main\Engine\Controller;
@@ -109,18 +108,21 @@ class UserProfile extends Controller
 
 	private function canCurrentUserEdit(int $userId): bool
 	{
-		Loader::includeModule('socialnetwork');
-
-		$currentUserPerms = \CSocNetUserPerms::initUserPerms(
-			CurrentUser::get()->getId(),
-			$userId,
-			\CSocNetUser::isCurrentUserModuleAdmin(SITE_ID, false)
-		);
-
-		return $currentUserPerms['IsCurrentUser']
-			|| (
-				$currentUserPerms['Operations']['modifyuser']
-				&& $currentUserPerms['Operations']['modifyuser_main']
+		if (Loader::includeModule('socialnetwork'))
+		{
+			$currentUserPerms = \CSocNetUserPerms::initUserPerms(
+				\Bitrix\Main\Engine\CurrentUser::get()->getId(),
+				$userId,
+				\CSocNetUser::isCurrentUserModuleAdmin(SITE_ID, false)
 			);
+
+			return $currentUserPerms['IsCurrentUser']
+				|| (
+					$currentUserPerms['Operations']['modifyuser']
+					&& $currentUserPerms['Operations']['modifyuser_main']
+				);
+		}
+
+		return false;
 	}
 }

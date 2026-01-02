@@ -17,15 +17,20 @@ jn.define('ui-system/blocks/chips/chip-button/src/size-enum', (require, exports,
 			text: Text4,
 			radius: Corner.M,
 			height: 32,
+			icon: Indent.M,
+			avatar: {
+				size: 20,
+			},
 			indent: {
 				left: {
 					text: Indent.XL.toNumber(),
-					icon: Indent.M.toNumber(),
+					icon: Indent.S.toNumber(),
+					avatar: Indent.M.toNumber(),
 				},
 				right: {
 					text: Indent.XL.toNumber(),
-					dropdown: Indent.S.toNumber(),
-					icon: Indent.M.toNumber(),
+					dropdown: Indent.XS.toNumber(),
+					icon: Indent.S.toNumber(),
 				},
 			},
 		});
@@ -34,15 +39,20 @@ jn.define('ui-system/blocks/chips/chip-button/src/size-enum', (require, exports,
 			text: Text5,
 			radius: Corner.S,
 			height: 24,
+			icon: Indent.S,
+			avatar: {
+				size: 20,
+			},
 			indent: {
 				left: {
 					text: Indent.L.toNumber(),
-					icon: Indent.S.toNumber(),
+					icon: Indent.XS.toNumber(),
+					avatar: Indent.S.toNumber(),
 				},
 				right: {
 					text: Indent.L.toNumber(),
 					dropdown: Indent.XS.toNumber(),
-					icon: Indent.S.toNumber(),
+					icon: Indent.XS.toNumber(),
 				},
 			},
 		});
@@ -65,6 +75,16 @@ jn.define('ui-system/blocks/chips/chip-button/src/size-enum', (require, exports,
 		getRadius()
 		{
 			return this.getValue().radius;
+		}
+
+		getAvatar()
+		{
+			return this.getValue().avatar;
+		}
+
+		getIconIndents()
+		{
+			return this.getValue().icon;
 		}
 	}
 

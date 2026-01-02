@@ -129,8 +129,8 @@ class Wizard extends Base
 			$entityTypeName = \CCrmOwnerType::ResolveName($entityTypeId);
 			$serviceUserPermissions = Container::getInstance()->getUserPermissions();
 			$permissions[$entityTypeName] = [
-				'read' => $serviceUserPermissions->checkReadPermissions($entityTypeId),
-				'add' => $serviceUserPermissions->checkAddPermissions($entityTypeId),
+				'read' => $serviceUserPermissions->entityType()->canReadItems($entityTypeId),
+				'add' => $serviceUserPermissions->entityType()->canAddItems($entityTypeId),
 			];
 		}
 

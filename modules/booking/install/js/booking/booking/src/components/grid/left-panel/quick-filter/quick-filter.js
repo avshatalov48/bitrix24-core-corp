@@ -23,11 +23,11 @@ export const QuickFilter = {
 	computed: {
 		active(): boolean
 		{
-			return this.hour in this.$store.getters[`${Model.Interface}/quickFilter`].active;
+			return this.hour in this.$store.getters[`${Model.Filter}/quickFilter`].active;
 		},
 		hovered(): boolean
 		{
-			return this.hour in this.$store.getters[`${Model.Interface}/quickFilter`].hovered;
+			return this.hour in this.$store.getters[`${Model.Filter}/quickFilter`].hovered;
 		},
 	},
 	methods: {
@@ -37,24 +37,24 @@ export const QuickFilter = {
 
 			if (this.active)
 			{
-				void this.$store.dispatch(`${Model.Interface}/deactivateQuickFilter`, this.hour);
+				void this.$store.dispatch(`${Model.Filter}/deactivateQuickFilter`, this.hour);
 			}
 			else
 			{
-				void this.$store.dispatch(`${Model.Interface}/activateQuickFilter`, this.hour);
+				void this.$store.dispatch(`${Model.Filter}/activateQuickFilter`, this.hour);
 			}
 		},
 		hover(): void
 		{
 			this.helpPopupTimeout = setTimeout(() => this.showHelpPopup(), 1000);
 
-			void this.$store.dispatch(`${Model.Interface}/hoverQuickFilter`, this.hour);
+			void this.$store.dispatch(`${Model.Filter}/hoverQuickFilter`, this.hour);
 		},
 		flee(): void
 		{
 			this.closeHelpPopup();
 
-			void this.$store.dispatch(`${Model.Interface}/fleeQuickFilter`, this.hour);
+			void this.$store.dispatch(`${Model.Filter}/fleeQuickFilter`, this.hour);
 		},
 		showHelpPopup(): void
 		{

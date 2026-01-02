@@ -6,6 +6,7 @@
 	const { WorkflowList } = require('bizproc/workflow/list');
 	const { Loc } = require('loc');
 	const { inAppUrl } = require('in-app-url');
+	const { AnalyticsEvent } = require('analytics');
 
 	class TabComponent extends PureComponent
 	{
@@ -14,6 +15,12 @@
 		inactiveTime;
 		listRef;
 
+		constructor(props)
+		{
+			super(props);
+			this.analyticsSection = BX.componentParameters.get('analyticsSection', null);
+		}
+
 		render()
 		{
 			return new WorkflowList({
@@ -21,6 +28,7 @@
 				ref: (ref) => {
 					this.listRef = ref;
 				},
+				analyticsSection: this.analyticsSection,
 			});
 		}
 
@@ -31,6 +39,13 @@
 
 			BX.addCustomEvent('onTabsSelected', (tabId) => this.onTabsSelected(tabId));
 			BX.addCustomEvent('onTabsReSelected', (tabId) => this.onTabsReSelected(tabId));
+
+			new AnalyticsEvent({
+				tool: 'automation',
+				category: 'bizproc_operations',
+				event: 'processes_open',
+				c_section: this.analyticsSection,
+			}).send();
 
 			let openUrl = BX.prop.getString(
 				{ openUrl: BX.componentParameters.get('openUrl', null) },

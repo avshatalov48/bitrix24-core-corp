@@ -29,6 +29,7 @@ $request = \Bitrix\Main\Context::getCurrent()->getRequest();
 			'USE_AJAX_ROLE_FILTER' => $arParams['USE_AJAX_ROLE_FILTER'],
 			'MARK_ACTIVE_ROLE' => $arParams['MARK_ACTIVE_ROLE'] ?? null,
 			'MARK_SECTION_ALL' => $arParams['MARK_SECTION_ALL'] ?? null,
+			'MARK_SECTION_TASKS_LIST' => $arParams['MARK_SECTION_TASKS_LIST'] ?? null,
 			'MARK_SPECIAL_PRESET' => $arParams['MARK_SPECIAL_PRESET'] ?? null,
 			'MARK_TEMPLATES' => $arParams['MARK_TEMPLATES'] ?? null,
 			'MARK_SECTION_PROJECTS' => $arParams['MARK_SECTION_PROJECTS'] ?? null,
@@ -111,6 +112,11 @@ if ($arParams['SHOW_FILTER'] === 'Y')
 ?>
 
 <?php
+$request = \Bitrix\Main\Context::getCurrent()->getRequest();
+$relationToId = $request->get('relationToId');
+
+if (!$relationToId)
+{
 	$APPLICATION->IncludeComponent(
 		'bitrix:tasks.interface.toolbar',
 		'',
@@ -141,6 +147,7 @@ if ($arParams['SHOW_FILTER'] === 'Y')
 		$component,
 		array('HIDE_ICONS' => true)
 	);
+}
 
 ?>
 

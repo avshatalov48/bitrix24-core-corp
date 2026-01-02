@@ -20,7 +20,7 @@ final class ConfigExtender implements PermissionExtender
 
 	public function expand(EO_Role $targetRole, EO_Role $sourceRole): bool
 	{
-		$configPermission = PermissionsUtil::findNotEmptyCrmConfig($sourceRole);
+		$configPermission = PermissionsUtil::findPermAllowingCrmConfig($sourceRole);
 		if ($configPermission === null)
 		{
 			return false;

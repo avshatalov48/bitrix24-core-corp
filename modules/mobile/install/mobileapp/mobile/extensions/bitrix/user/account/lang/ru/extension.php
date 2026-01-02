@@ -8,3 +8,4 @@ $MESS['DISCLAIMER_DELETE_ACCOUNT'] = 'Сейчас мы перенаправим
 $MESS["DELETE_ACCOUNT_CONTINUE"] = "ПРОДОЛЖИТЬ";
 $MESS["DELETE_ACCOUNT_TITLE"] = "Удаление профиля";
 $MESS["DELETE_ACCOUNT_WARNING"] = "Внимание!";
+$MESS['DELETE_BITRIX24_TITLE'] = 'Удаление Битрикс24';

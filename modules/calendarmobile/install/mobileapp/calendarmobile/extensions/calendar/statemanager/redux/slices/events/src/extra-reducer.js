@@ -38,10 +38,17 @@ jn.define('calendar/statemanager/redux/slices/events/extra-reducer', (require, e
 	};
 
 	const saveRejected = (state, action) => {
-		const { eventId, reject } = action.meta.arg;
+		const { eventId, initialReduxFields, reject } = action.meta.arg;
 		const response = action.payload;
 
-		eventsAdapter.removeOne(state, eventId);
+		if (Type.isNil(initialReduxFields))
+		{
+			eventsAdapter.removeOne(state, eventId);
+		}
+		else
+		{
+			eventsAdapter.upsertOne(state, { ...Model.getDefault(), ...initialReduxFields });
+		}
 
 		reject(response);
 	};

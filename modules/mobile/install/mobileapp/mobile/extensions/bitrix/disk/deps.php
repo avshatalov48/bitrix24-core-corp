@@ -2,9 +2,12 @@
 
 return [
 	'extensions' => [
-		"rest",
-		"helpers/holder",
-		"user/list",
-		"notify",
+		'rest',
+		'rest/run-action-executor',
+		'helpers/holder',
+		'user/list',
+		'notify',
+		'utils/copy',
+		'utils/object',
 	],
 ];

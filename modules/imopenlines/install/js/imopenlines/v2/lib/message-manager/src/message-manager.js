@@ -3,7 +3,7 @@ import { OpenLinesMessageComponent, FormType } from 'imopenlines.v2.const';
 
 import type { ImModelMessage } from 'im.v2.model';
 
-type MessageComponentValues = $Values<typeof OpenLinesMessageComponent> | $Values<typeof MessageComponent>;
+export type MessageComponentValues = $Values<typeof OpenLinesMessageComponent> | $Values<typeof MessageComponent>;
 
 const OpenLinesComponentList = new Set([
 	OpenLinesMessageComponent.StartDialogMessage,

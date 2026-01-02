@@ -19,7 +19,7 @@ abstract class BaseCollection implements Countable, IteratorAggregate
 	/**
 	 * @var list<T>
 	 */
-	private array $items = [];
+	protected array $items = [];
 
 	/**
 	 * @param list<T> $items
@@ -166,7 +166,7 @@ abstract class BaseCollection implements Countable, IteratorAggregate
 	 * @param mixed $item
 	 * @return bool
 	 */
-	private function isValidType(mixed $item): bool
+	protected function isValidType(mixed $item): bool
 	{
 		return $item instanceof (static::getItemClassName());
 	}

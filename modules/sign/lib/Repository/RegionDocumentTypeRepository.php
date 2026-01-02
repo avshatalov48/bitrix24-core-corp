@@ -12,7 +12,7 @@ class RegionDocumentTypeRepository
 	{
 		return match ($regionCode)
 		{
-			'ru' => $this->getRuTypes(),
+			'ru' => $this->getRuTypes()->sortByCode(),
 			default => new RegionDocumentTypeCollection(),
 		};
 	}

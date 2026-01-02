@@ -359,3 +359,7 @@
 	mask-size: contain;
 	mask-position: center;
 }
+
+.crm-timeline__card_icon.--code-repeat-sale i {
+	mask-image: url("../../images/timeline-card-icons/crm-timeline__repeat-sale.svg");
+}

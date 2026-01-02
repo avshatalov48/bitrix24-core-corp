@@ -1,0 +1,15 @@
+.bitrix24-light-theme .app__right-bar.--transparent {
+	background-color: rgba(0, 0, 0, .2);
+}
+
+.bitrix24-dark-theme .app__right-bar.--transparent {
+	background-color: rgba(255, 255, 255, .6);
+}
+
+.bitrix24-default-theme .app__right-bar.--transparent {
+	background-color: rgba(255, 255, 255, .6);
+}
+
+.im-chat-recent-list {
+	height: 100%;
+}

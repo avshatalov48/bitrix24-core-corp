@@ -30,7 +30,6 @@ if (!CModule::IncludeModule('crm'))
 
 use Bitrix\Crm;
 
-$userPerms = CCrmPerms::GetCurrentUserPermissions();
 if(!CCrmPerms::IsAuthorized())
 {
 	__CrmPSListEndResponse(array('ERROR' => 'Access denied.'));
@@ -46,8 +45,13 @@ elseif ($action === 'CONVERT_PS_REQUISITES')
 {
 	\Bitrix\Main\Localization\Loc::loadMessages(__FILE__);
 
-	if(!(CCrmCompany::CheckCreatePermission() && CCrmCompany::CheckUpdatePermission(0)
-		&& CCrmCompany::CheckReadPermission(0) && $userPerms->HavePerm('CONFIG', BX_CRM_PERM_CONFIG, 'WRITE')))
+	$userPermissions = \Bitrix\Crm\Service\Container::getInstance()->getUserPermissions();
+	if(!(
+		$userPermissions->isCrmAdmin()
+		&& $userPermissions->entityType()->canAddItems(CCrmOwnerType::Company)
+		&& $userPermissions->entityType()->canUpdateItems(CCrmOwnerType::Company)
+		&& $userPermissions->entityType()->canReadItems(CCrmOwnerType::Company)
+	))
 	{
 		__CrmPSListEndResponse(array('ERROR' => 'Access denied.'));
 	}

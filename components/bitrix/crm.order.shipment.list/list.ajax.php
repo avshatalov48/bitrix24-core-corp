@@ -48,7 +48,7 @@ if ($action === 'SAVE_PROGRESS' && check_bitrix_sessid())
 	if($statusId === '' || $ID <= 0  || $typeName !== CCrmOwnerType::OrderShipmentName)
 		__CrmOrderShipmentListEndResponse(array('ERROR' => 'Invalid data.'));
 
-	if (!\Bitrix\Crm\Order\Permissions\Shipment::checkUpdatePermission($ID, $userPerms))
+	if (!\Bitrix\Crm\Service\Container::getInstance()->getUserPermissions()->item()->canUpdate(CCrmOwnerType::OrderShipment, $ID))
 		__CrmOrderShipmentListEndResponse(array('ERROR' => 'Access denied.'));
 
 	$shipment = \Bitrix\Crm\Order\Manager::getShipmentObject($ID);

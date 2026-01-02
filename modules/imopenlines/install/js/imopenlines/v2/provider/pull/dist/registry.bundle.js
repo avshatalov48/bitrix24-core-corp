@@ -86,7 +86,7 @@ this.BX.OpenLines.v2.Provider = this.BX.OpenLines.v2.Provider || {};
 	    const userId = im_v2_application_core.Core.getUserId();
 	    if (chatIsOpened && params.userId === userId) {
 	      void im_public.Messenger.openLines();
-	      im_v2_lib_layout.LayoutManager.getInstance().setLastOpenedElement(im_v2_const.Layout.openlinesV2.name, '');
+	      im_v2_lib_layout.LayoutManager.getInstance().setLastOpenedElement(im_v2_const.Layout.openlinesV2, '');
 	    }
 	    if (!recentItem || params.userId !== im_v2_application_core.Core.getUserId()) {
 	      return;

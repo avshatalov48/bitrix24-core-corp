@@ -2,6 +2,7 @@
  * @module im/chat/selector/providers/chat
  */
 jn.define('im/chat/selector/providers/chat', (require, exports, module) => {
+	const { md5 } = require('utils/hash');
 
 	const imagePath = '/bitrix/mobileapp/immobile/extensions/im/chat/selector/providers/chat/images/';
 
@@ -156,9 +157,9 @@ jn.define('im/chat/selector/providers/chat', (require, exports, module) => {
 
 		cacheId()
 		{
-			return CommonUtils.md5({
+			return md5({
 				id: this.id(),
-				context: this.context
+				context: this.context,
 			});
 		}
 

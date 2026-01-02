@@ -1,7 +1,7 @@
 /**
- * @module tasks/layout/checklist/list/src/checkbox/checkbox-counter/important
+ * @module tasks/layout/checklist/list/src/checkbox/important
  */
-jn.define('tasks/layout/checklist/list/src/checkbox/checkbox-counter/important', (require, exports, module) => {
+jn.define('tasks/layout/checklist/list/src/checkbox/important', (require, exports, module) => {
 	const { Color, Component } = require('tokens');
 	const { animate } = require('animation');
 	const { PureComponent } = require('layout/pure-component');

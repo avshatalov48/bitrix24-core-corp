@@ -23,9 +23,9 @@ final class Tourist extends JsonController
 		return \Bitrix\Mobile\Tourist::getEvents();
 	}
 
-	public function rememberAction(string $event): array
+	public function rememberAction(string $event, ?string $context = null, ?int $count = null, ?int $timestamp = null): array
 	{
-		return \Bitrix\Mobile\Tourist::remember($event);
+		return \Bitrix\Mobile\Tourist::remember($event, $context, $count, $timestamp);
 	}
 
 	public function forgetAction(string $event): void

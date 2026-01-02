@@ -13,5 +13,7 @@ return [
 
 		'intranet:portal-logo',
 		'intranet:user-mini-profile-form',
+
+		'background/ui-manager',
 	],
 ];

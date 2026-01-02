@@ -174,15 +174,6 @@ class Quote extends Entity
 		);
 	}
 
-	public function canAddItemToStage(string $stageId, \CCrmPerms $userPermissions, string $semantics = PhaseSemantics::UNDEFINED): bool
-	{
-		return Container::getInstance()->getUserPermissions()->checkAddPermissions(
-			$this->getTypeId(),
-			$this->getCategoryId(),
-			$stageId
-		);
-	}
-
 	public function getAllowStages(array $filter = []): array
 	{
 		if (isset($filter['=STATUS_ID']))
@@ -223,14 +214,5 @@ class Quote extends Entity
 		}
 
 		return $fields;
-	}
-
-	protected function getHideSumForStagePermissionType(string $stageId, \CCrmPerms $userPermissions): ?string
-	{
-		return $userPermissions->GetPermType(
-			$this->getTypeName(),
-			'HIDE_SUM',
-			["STAGE_ID{$stageId}"]
-		);
 	}
 }

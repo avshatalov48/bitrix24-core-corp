@@ -2,11 +2,13 @@
  * @module tasks/checklist/controller
  */
 jn.define('tasks/checklist/controller', (require, exports, module) => {
+	const { Loc } = require('loc');
 	const { clone } = require('utils/object');
 	const { debounce } = require('utils/function');
-	const { PropTypes } = require('utils/validation');
 	const { ChecklistWidget } = require('tasks/checklist/widget');
 	const { CheckListFlatTree } = require('tasks/checklist/flat-tree');
+	const { PropTypes } = require('utils/validation');
+	const { showErrorToast, Position } = require('toast');
 
 	/**
 	 * @typedef {Object} ChecklistControllerProps
@@ -140,7 +142,7 @@ jn.define('tasks/checklist/controller', (require, exports, module) => {
 					}
 
 					resolve(response.data);
-				}).catch(console.error);
+				}).catch(reject);
 			});
 		}
 
@@ -544,6 +546,11 @@ jn.define('tasks/checklist/controller', (require, exports, module) => {
 			}
 			catch (error)
 			{
+				showErrorToast({
+					message: Loc.getMessage('TASKSMOBILE_CHECKLIST_CONTROLLER_SAVE_ERROR'),
+					position: Position.BOTTOM,
+				});
+
 				console.error(error);
 
 				return false;
@@ -629,7 +636,7 @@ jn.define('tasks/checklist/controller', (require, exports, module) => {
 	};
 
 	ChecklistController.propTypes = {
-		taskId: PropTypes.number,
+		taskId: PropTypes.oneOfType([PropTypes.string, PropTypes.number]),
 		groupId: PropTypes.number,
 		userId: PropTypes.number,
 		checklistTree: PropTypes.object,

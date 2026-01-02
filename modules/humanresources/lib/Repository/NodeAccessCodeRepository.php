@@ -5,11 +5,10 @@ namespace Bitrix\HumanResources\Repository;
 use Bitrix\HumanResources\Model\NodeBackwardAccessCodeTable;
 use Bitrix\HumanResources\Item;
 use Bitrix\HumanResources\Contract;
+use Bitrix\HumanResources\Type\AccessCodeType;
 
 class NodeAccessCodeRepository implements Contract\Repository\NodeAccessCodeRepository
 {
-	public const HUMAN_RESOURCES_PREFIX = 'HR';
-
 	public function createByNode(Item\Node $node): ?string
 	{
 		$existed =
@@ -24,21 +23,8 @@ class NodeAccessCodeRepository implements Contract\Repository\NodeAccessCodeRepo
 		{
 			return $existed['ACCESS_CODE'];
 		}
+		$node->accessCode = AccessCodeType::HrStructureNodeType->value . $node->id;
 
-		$node->accessCode = self::HUMAN_RESOURCES_PREFIX . $node->id;
-
-		$nodeBackwardCode = NodeBackwardAccessCodeTable::getEntity()->createObject();
-		$result = $nodeBackwardCode
-			->setNodeId($node->id)
-			->setAccessCode($node->accessCode)
-			->save()
-		;
-
-		if ($result->isSuccess())
-		{
-			return $node->accessCode;
-		}
-
-		return null;
+		return $node->accessCode;
 	}
 }

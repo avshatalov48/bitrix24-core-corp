@@ -14,6 +14,7 @@ jn.define('imconnector/connectors/telegram/view/edit', (require, exports, module
 	const { QrButton } = require('imconnector/lib/ui/buttons/qr');
 	const { SettingStep } = require('imconnector/lib/ui/setting-step');
 	const { withPressed } = require('utils/color');
+	const { QRCodeAuthComponent } = require('qrauth');
 
 	class EditView extends LayoutComponent
 	{
@@ -159,6 +160,7 @@ jn.define('imconnector/connectors/telegram/view/edit', (require, exports, module
 								width: 282,
 								height: 45,
 							},
+							forceCopy: true,
 						}),
 						complete: CompleteButton({
 							text: Loc.getMessage('IMCONNECTORMOBILE_TELEGRAM_EDIT_COPY_LINK_COMPLETE'),

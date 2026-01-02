@@ -200,7 +200,7 @@ else
 						<div
 							class="salescenter-order-details__item-button"
 							data-role="document-share-action"
-							data-title="<?=CUtil::JSEscape($arResult['DOCUMENT'][$extension]['title'])?>"
+							data-title="<?=CUtil::JSEscape($arResult['DOCUMENT']['title'])?>"
 							data-url="<?=CUtil::JSEscape($arResult['DOCUMENT'][$extension]['url'])?>"
 						>
 							<a href="javascript:void(0);">
@@ -218,9 +218,8 @@ else
 					"INCLUDED_IN_ORDER_TEMPLATE" => "Y",
 					"ALLOW_PAYMENT_REDIRECT" => "Y",
 					"ACTIVE_DATE_FORMAT" => "d F Y, H:i",
+					'USER_CONSENTS' => $arParams['USER_CONSENTS'] ?? null,
 					"USER_CONSENT" => $arParams['USER_CONSENT'] ?? null,
-					"USER_CONSENT_ID" => $arParams['USER_CONSENT_ID'] ?? null,
-					"USER_CONSENT_IS_CHECKED" => $arParams['USER_CONSENT_IS_CHECKED'] ?? null,
 					"USER_CONSENT_IS_LOADED" => $arParams['USER_CONSENT_IS_LOADED'] ?? null,
 					"ALLOW_SELECT_PAY_SYSTEM" => $arParams["ALLOW_SELECT_PAYMENT_PAY_SYSTEM"] ?? null,
 					"TEMPLATE_MODE" => "graymode",

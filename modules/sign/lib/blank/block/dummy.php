@@ -1,4 +1,5 @@
 <?php
+
 namespace Bitrix\Sign\Blank\Block;
 
 use Bitrix\Main\Localization\Loc;
@@ -44,8 +45,8 @@ abstract class Dummy
 	public static function isEmpty(array $data): bool
 	{
 		return
-			($data['data']['text'] ?? '') === '' &&
-			($data['data']['src'] ?? '') === '';
+			($data['data']['text'] ?? '') === ''
+			&& ($data['data']['src'] ?? '') === '';
 	}
 
 	/**

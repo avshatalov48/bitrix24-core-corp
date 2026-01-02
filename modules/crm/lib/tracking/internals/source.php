@@ -3,6 +3,7 @@ namespace Bitrix\Crm\Tracking\Internals;
 
 use Bitrix\Main\Localization\Loc;
 use Bitrix\Main\ORM\Data\DataManager;
+use Bitrix\Main\ORM\Fields\Validators\LengthValidator;
 use Bitrix\Main\Type\DateTime;
 
 use Bitrix\Crm\Tracking;
@@ -93,6 +94,15 @@ class SourceTable extends DataManager
 			],
 			'AD_ACCOUNT_ID' => [
 				'data_type' => 'string',
+			],
+			'CREATED_BY_ID' => [
+				'data_type' => 'integer',
+			],
+			'UPDATED_BY_ID' => [
+				'data_type' => 'integer',
+			],
+			'DESCRIPTION' => [
+				'data_type' => 'text',
 			],
 		];
 	}

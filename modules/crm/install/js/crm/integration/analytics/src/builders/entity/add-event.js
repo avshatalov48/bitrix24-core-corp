@@ -47,7 +47,7 @@ export class AddEvent
 		return filterOutNilValues({
 			tool: Dictionary.TOOL_CRM,
 			category: Dictionary.CATEGORY_ENTITY_OPERATIONS,
-			event: Dictionary.EVENT_ENTITY_ADD,
+			event: Dictionary.EVENT_ENTITY_CREATE,
 			type,
 			c_section: `${type}_section`,
 			c_sub_section: this.#subSection,

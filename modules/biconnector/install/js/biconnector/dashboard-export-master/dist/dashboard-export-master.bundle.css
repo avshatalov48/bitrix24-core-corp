@@ -10,10 +10,10 @@
 }
 
 .bic-export-body {
-	padding: 2px 18px;
 	-webkit-box-flex: 1;
 	    -ms-flex-positive: 1;
 	        flex-grow: 1;
+	padding: 2px 18px 20px;
 }
 
 .bic-export-header {
@@ -37,18 +37,10 @@
 	color: var(--ui-color-base-default);
 }
 
-.bic-setting-value.ui-switcher {
-	margin-top: 10px;
-}
-
 .bic-export-hint {
 	padding: 16px 0 9px 0;
 	font-size: 14px;
 	color: var(--ui-color-palette-gray-90);
-}
-
-.bic-setting-item-export-with-settings {
-	margin-top: 12px;
 }
 
 .bic-setting-item {
@@ -79,9 +71,10 @@
 	color: var(--ui-color-palette-gray-70);
 	border-bottom: 1px dashed var(--ui-color-palette-gray-70);
 	cursor: pointer;
+	font-size: 15px;
 }
 
-.bic-scopes-not-to-export {
+.bic-group-placeholder {
 	color: var(--ui-color-palette-gray-50);
 }
 
@@ -123,4 +116,30 @@
 .bic-settings-link.disabled,
 .bic-export-hint.disabled {
 	display: none;
+}
+
+.bic-group-selector-button {
+	-webkit-box-pack: start;
+	    -ms-flex-pack: start;
+	        justify-content: flex-start;
+	padding-left: 12px;
+	width: 324px;
+	font-weight: 400;
+	text-transform: none;
+	font-size: 14px;
+}
+
+.bic-setting-item-group{
+	margin-bottom: 24px;
+}
+
+.biconnector-group-selector .ui-selector-tab-labels {
+	display: none;
+}
+
+.bic-group-selector-button:hover {
+	background-color: #f7f8f8;
+	-webkit-transition: background-color ease 100ms;
+	-o-transition: background-color ease 100ms;
+	transition: background-color ease 100ms;
 }

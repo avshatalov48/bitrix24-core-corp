@@ -17,5 +17,3 @@ $MESS["CRM_PERMS_DLG_BTN"] = "Удалить";
 $MESS["CRM_PERMS_ROLE_DELETE"] = "Удалить роль";
 $MESS["CRM_PERMS_PERM_INHERIT"] = "Наследовать";
 $MESS["CRM_PERMS_AUTOMATION_DISABLED_HELP"] = "Настройка актуальна только при выключенной опции \"Разрешить изменять настройки\"";
-$MESS["CRM_PERMS_RESTRICTION"] = "Настроить права доступа сотрудников к CRM можно <a target=\"_blank\" href=\"https://www.bitrix24.ru/prices/\">в коммерческих тарифах</a>.";
-?>

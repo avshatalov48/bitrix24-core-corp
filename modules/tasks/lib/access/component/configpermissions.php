@@ -14,6 +14,8 @@ class ConfigPermissions
 		SECTION_ROBOTS 		= 'SECTION_ROBOTS',
 		SECTION_ACCESS		= 'SECTION_ACCESS';
 
+	private const SECTION_FLOWS = 'SECTION_FLOWS';
+
 	private const PREVIEW_LIMIT = 0;
 
 	public function getAccessRights()
@@ -95,6 +97,9 @@ class ConfigPermissions
 				PermissionDictionary::TEMPLATE_DEPARTMENT_EDIT,
 				PermissionDictionary::TEMPLATE_NON_DEPARTMENT_EDIT,
 				PermissionDictionary::TEMPLATE_REMOVE,
+			],
+			self::SECTION_FLOWS => [
+				PermissionDictionary::FLOW_CREATE
 			],
 			self::SECTION_ROBOTS => [
 				PermissionDictionary::TASK_ROBOT_EDIT

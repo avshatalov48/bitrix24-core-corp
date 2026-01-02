@@ -73,3 +73,5 @@ export class ApiClient
 		return data;
 	}
 }
+
+export const apiClient = new ApiClient();

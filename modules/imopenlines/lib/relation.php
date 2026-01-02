@@ -72,6 +72,7 @@ class Relation
 			'DEPARTMENT' => 'N',
 			'USE_CACHE' => 'N'
 		]);
+		$chat = \Bitrix\Im\V2\Chat::getInstance($this->chatId);
 
 		$pushMessage = [
 			'module_id' => 'im',
@@ -82,8 +83,10 @@ class Relation
 				'chatTitle' => '',
 				'chatOwner' => $this->userId,
 				'chatExtranet' => 'N',
+				'containsCollaber' => false,
 				'users' => $users['users'],
 				'newUsers' => [$this->userId],
+				'relations' => $chat->getRelationsByUserIds([$this->userId])->toRestFormat(),
 				'userCount' => count($this->userIds),
 				'date' => date('H:i:s'),
 				'lines' => $this->getLine()

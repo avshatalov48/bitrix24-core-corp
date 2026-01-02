@@ -1,0 +1,4 @@
+<?php
+$MESS["CRM_COLUMN_PRODUCT_PRICE"] = "Бағасы";
+$MESS["CRM_PRODUCT_PROP_DOWNLOAD"] = "Жүктеу";
+$MESS["CRM_PRODUCT_PROP_ENLARGE"] = "Үлкейту";

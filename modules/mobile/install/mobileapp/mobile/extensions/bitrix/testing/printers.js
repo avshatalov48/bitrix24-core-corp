@@ -51,11 +51,12 @@ jn.define('testing/printers', (require, exports, module) => {
 			console.log(`✅ [ok] ${message}`);
 		}
 
-		printFail({ message, expected, actual })
+		printFail({ message, expected, actual, trace })
 		{
 			console.group(`🛑 [fail] ${message}`);
 			console.log('expected:', expected);
 			console.log('actual:', actual);
+			console.log('trace:', trace);
 			console.groupEnd();
 		}
 	}

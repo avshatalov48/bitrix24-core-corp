@@ -2,6 +2,7 @@
  * @module im/messenger/core/chat/application
  */
 jn.define('im/messenger/core/chat/application', (require, exports, module) => {
+	const { WaitingEntity } = require('im/messenger/const');
 	const { CoreApplication } = require('im/messenger/core/base/application');
 	const { EntityReady } = require('entity-ready');
 	const {
@@ -14,11 +15,20 @@ jn.define('im/messenger/core/chat/application', (require, exports, module) => {
 	 */
 	class ChatApplication extends CoreApplication
 	{
+		getWaitingEntityId()
+		{
+			return WaitingEntity.core.chat;
+		}
+
+		async init()
+		{
+			await EntityReady.wait(WaitingEntity.core.navigation);
+
+			await super.init();
+		}
+
 		async initStoreManager()
 		{
-			this.isReady = false;
-			EntityReady.addCondition('chat-core', () => this.isReady);
-
 			this.storeManager = new VuexManager(this.getStore())
 				.enableMultiContext({
 					storeName: 'immobile-messenger-store',
@@ -34,9 +44,6 @@ jn.define('im/messenger/core/chat/application', (require, exports, module) => {
 			;
 
 			await this.storeManager.buildAsync(this.getMutationManager());
-
-			this.isReady = true;
-			EntityReady.ready('chat-core');
 		}
 
 		/**

@@ -6,8 +6,8 @@ jn.define('im/messenger/lib/state-manager/vuex-manager/mutation-handlers-waiter'
 	const { Uuid } = require('utils/uuid');
 
 	const { MessengerMutationManagerEvent } = require('im/messenger/lib/state-manager/vuex-manager/const');
-	const { LoggerManager } = require('im/messenger/lib/logger');
-	const logger = LoggerManager.getInstance().getLogger('core--messenger-mutation-handlers-waiter');
+	const { getLogger } = require('im/messenger/lib/logger');
+	const logger = getLogger('core--messenger-mutation-handlers-waiter');
 
 	/**
 	 * @class MessengerMutationHandlersWaiter
@@ -79,7 +79,7 @@ jn.define('im/messenger/lib/state-manager/vuex-manager/mutation-handlers-waiter'
 				resolveMutationCompletePromise = resolve;
 			});
 
-			const handlersCompleteHandler = (mutation, state) => {
+			const handlersCompleteHandler = (mutation) => {
 				const actionUuid = mutation?.payload?.actionUid;
 				if (this.actionUid !== actionUuid)
 				{

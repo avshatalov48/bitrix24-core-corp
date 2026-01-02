@@ -140,17 +140,29 @@ class MailService extends AbstractService
 
 	public function sendCrmSharingCancelled(): bool
 	{
+		if ($this->initiatorId === $this->eventLink->getHostId())
+		{
+			return false;
+		}
+
 		$to = $this->getEmailAddress();
 		if (is_null($to))
 		{
 			return false;
 		}
 
-		return (new Sharing\Notification\Mail())
-			->setEventLink($this->eventLink)
-			->setEvent($this->event)
-			->notifyAboutMeetingCancelled($to)
+		$notificationService =
+			(new Sharing\Notification\Mail())
+				->setEventLink($this->eventLink)
+				->setEvent($this->event)
 		;
+
+		if (method_exists($notificationService, 'setInitiatorId'))
+		{
+			$notificationService->setInitiatorId($this->initiatorId);
+		}
+
+		return $notificationService->notifyAboutMeetingCancelled($to);
 	}
 
 	public function sendCrmSharingEdited(): bool

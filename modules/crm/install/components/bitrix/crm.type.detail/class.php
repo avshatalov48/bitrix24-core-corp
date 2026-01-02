@@ -78,7 +78,7 @@ class CrmTypeDetailComponent extends Base
 				return;
 			}
 
-			if (!$userPermissions->canUpdateType($this->type->getEntityTypeId()))
+			if (!$userPermissions->dynamicType()->canUpdate($this->type->getEntityTypeId()))
 			{
 				$this->errorCollection[] = new Error(Loc::getMessage('CRM_TYPE_TYPE_ACCESS_DENIED'));
 			}
@@ -91,7 +91,7 @@ class CrmTypeDetailComponent extends Base
 				);
 			}
 		}
-		elseif($userPermissions->canAddType($automatedSolutionId))
+		elseif($userPermissions->dynamicType()->canAdd($automatedSolutionId))
 		{
 			$this->type = $this->createDraftType();
 			$this->getApplication()->setTitle(Loc::getMessage('CRM_TYPE_DETAIL_NEW_TITLE'));
@@ -162,14 +162,14 @@ class CrmTypeDetailComponent extends Base
 		if (!$this->type->getId())
 		{
 			$this->arResult['canEditAutomatedSolution'] = $this->arResult['isExternal']
-				? $this->userPermissions->canEditAutomatedSolutions()
+				? $this->userPermissions->automatedSolution()->canEdit()
 				: $this->userPermissions->isCrmAdmin();
 		}
 		else
 		{
-			$this->arResult['canEditAutomatedSolution'] = $this->type->getCustomSectionId() > 0 ? $this->userPermissions->canEditAutomatedSolutions() : $this->userPermissions->isCrmAdmin();
+			$this->arResult['canEditAutomatedSolution'] = $this->type->getCustomSectionId() > 0 ? $this->userPermissions->automatedSolution()->canEdit() : $this->userPermissions->isCrmAdmin();
 		}
-		$this->arResult['canToggleAutomatedSolutionSwitcher'] = $this->userPermissions->canEditAutomatedSolutions() && $this->userPermissions->isCrmAdmin();
+		$this->arResult['canToggleAutomatedSolutionSwitcher'] = $this->userPermissions->automatedSolution()->canEdit() && $this->userPermissions->isCrmAdmin();
 
 		$this->initializeRestrictionValues();
 

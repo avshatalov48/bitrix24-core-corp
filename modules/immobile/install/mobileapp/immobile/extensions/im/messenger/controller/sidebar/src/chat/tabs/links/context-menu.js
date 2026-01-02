@@ -2,7 +2,7 @@
  * @module im/messenger/controller/sidebar/chat/tabs/links/context-menu
  */
 jn.define('im/messenger/controller/sidebar/chat/tabs/links/context-menu', (require, exports, module) => {
-	const { Loc } = require('loc');
+	const { Loc } = require('im/messenger/loc');
 	const { Icon } = require('assets/icons');
 	const { UIMenu } = require('layout/ui/menu');
 	const { serviceLocator } = require('im/messenger/lib/di/service-locator');
@@ -133,6 +133,7 @@ jn.define('im/messenger/controller/sidebar/chat/tabs/links/context-menu', (requi
 					notificationText: this.url,
 					notificationIcon: Icon.LINK,
 				},
+				true,
 			);
 			logger.log(`${this.constructor.name}.copyLink`);
 		}

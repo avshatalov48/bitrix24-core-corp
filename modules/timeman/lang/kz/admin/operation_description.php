@@ -1,0 +1,23 @@
+<?php
+$MESS["OP_DESC_TM_MANAGE"] = "Жұмыс уақытын дербес есепке алу мүмкіндігі";
+$MESS["OP_DESC_TM_MANAGE_ALL"] = "Біреудің жұмыс уақытын есепке алуды басқару";
+$MESS["OP_DESC_TM_READ"] = "Барлық есептерге қолжетімділік";
+$MESS["OP_DESC_TM_READ_SCHEDULES_ALL"] = "Барлық жұмыс күнінің тәртібіне қолжетімділік";
+$MESS["OP_DESC_TM_READ_SHIFT_PLANS_ALL"] = "Барлық жұмыс күнінің тәртібінің кестелеріне қолжетімділік";
+$MESS["OP_DESC_TM_READ_SUBORDINATE"] = "Субординация баптауларына сәйкес есептерге қол жеткізу";
+$MESS["OP_DESC_TM_SETTINGS"] = "Модуль баптауларын өзгертуге қолжетімділік";
+$MESS["OP_DESC_TM_UPDATE_SCHEDULES_ALL"] = "Барлық жұмыс күнінің тәртібін өзгертуге қолжетімділік";
+$MESS["OP_DESC_TM_UPDATE_SHIFT_PLANS_ALL"] = "Барлық жұмыс күн тәртібінің барлық кестелерін өзгертуге қолжетімділік";
+$MESS["OP_DESC_TM_WRITE"] = "Барлық жазбаларды өңдеуге және растауға қолжетімділік";
+$MESS["OP_DESC_TM_WRITE_SUBORDINATE"] = "Субординация баптауларына сәйкес жазбаларды өңдеуге және растауға қолжетімділік";
+$MESS["OP_NAME_TM_MANAGE"] = "Жұмыс күнін ашу/жабу";
+$MESS["OP_NAME_TM_MANAGE_ALL"] = "Біреудің жұмыс күнін ашу/жабу";
+$MESS["OP_NAME_TM_READ"] = "Барлық жазбаларды оқу";
+$MESS["OP_NAME_TM_READ_SCHEDULES_ALL"] = "Барлық жұмыс күнінің тәртібін оқу";
+$MESS["OP_NAME_TM_READ_SHIFT_PLANS_ALL"] = "Барлық жұмыс күнінің тәртібінің кестесін оқу";
+$MESS["OP_NAME_TM_READ_SUBORDINATE"] = "Субординация баптауларына сәйкес оқу";
+$MESS["OP_NAME_TM_SETTINGS"] = "Модуль баптауларын өзгерту";
+$MESS["OP_NAME_TM_UPDATE_SCHEDULES_ALL"] = "Барлық жұмыс күнінің тәртібін редакциялау";
+$MESS["OP_NAME_TM_UPDATE_SHIFT_PLANS_ALL"] = "Барлық жұмыс күнінің тәртібінің кестелерін редакциялау";
+$MESS["OP_NAME_TM_WRITE"] = "Барлық жазбаларды редакциялау";
+$MESS["OP_NAME_TM_WRITE_SUBORDINATE"] = "Субординация баптауларына сәйкес редакциялау";

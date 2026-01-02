@@ -1,4 +1,5 @@
-<?
+<?php
+
 require($_SERVER["DOCUMENT_ROOT"]."/bitrix/header.php");
 IncludeModuleLangFile($_SERVER["DOCUMENT_ROOT"]."/bitrix/modules/intranet/public_bitrix24/report/telephony/index.php");
 
@@ -23,7 +24,9 @@ else
 			'USE_PADDING' => false,
 			'PAGE_MODE' => false,
 			'PAGE_MODE_OFF_BACK_URL' => '/telephony/',
+			'USE_UI_TOOLBAR' => 'Y',
 		]
 	);
 }
-?><?require($_SERVER["DOCUMENT_ROOT"]."/bitrix/footer.php");?>
+
+require($_SERVER["DOCUMENT_ROOT"]."/bitrix/footer.php");

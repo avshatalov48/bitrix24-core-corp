@@ -1,0 +1,7 @@
+.menu-settings-save-btn {
+	display: none;
+}
+
+.menu-items-edit-mode .menu-settings-save-btn {
+	display: flex;
+}

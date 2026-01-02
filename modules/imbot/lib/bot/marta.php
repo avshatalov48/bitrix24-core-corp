@@ -1,6 +1,11 @@
 <?php
 namespace Bitrix\ImBot\Bot;
 
+use Bitrix\AiAssistant\Service\GuardService;
+use Bitrix\Im\V2\Entity\User\Data\BotData;
+use Bitrix\Main\Application;
+use Bitrix\Main\DI\ServiceLocator;
+use Bitrix\Main\Loader;
 use Bitrix\Main\Localization\Loc;
 use Bitrix\Main\Config\Option;
 
@@ -29,10 +34,7 @@ class Marta extends Base
 		if (self::getBotId())
 			return $agentMode? "": self::getBotId();
 
-		$birthday = new \Bitrix\Main\Type\DateTime(Loc::getMessage('IMBOT_BOT_BIRTHDAY', null, $language).' 19:45:00', 'Y-m-d H:i:s');
-		$birthday = $birthday->format(\Bitrix\Main\Type\Date::convertFormatToPhp(\CSite::GetDateFormat('SHORT')));
-
-		$botId = \Bitrix\Im\Bot::register(Array(
+		$botId = \Bitrix\Im\Bot::register([
 			'CODE' => self::BOT_CODE,
 			'TYPE' => \Bitrix\Im\Bot::TYPE_BOT,
 			'MODULE_ID' => self::MODULE_ID,
@@ -43,17 +45,13 @@ class Marta extends Base
 			'METHOD_MESSAGE_ADD' => 'onMessageAdd',
 			'METHOD_WELCOME_MESSAGE' => 'onChatStart',
 			'METHOD_BOT_DELETE' => 'onBotDelete',
-			'PROPERTIES' => Array(
-				'NAME' => Loc::getMessage('IMBOT_BOT_NAME', null, $language),
+			'PROPERTIES' => [
+				'NAME' => Loc::getMessage('IMBOT_BOT_NAME_MSGVER_1', null, $language),
 				'COLOR' => Loc::getMessage('IMBOT_BOT_COLOR', null, $language),
-				//'EMAIL' => Loc::getMessage('IMBOT_BOT_EMAIL', null, $language),
-				'PERSONAL_BIRTHDAY' => $birthday,
-				'WORK_POSITION' => Loc::getMessage('IMBOT_BOT_WORK_POSITION', null, $language),
-				'PERSONAL_WWW' => Loc::getMessage('IMBOT_BOT_SITE', null, $language),
-				'PERSONAL_GENDER' => Loc::getMessage('IMBOT_BOT_GENDER', null, $language),
+				'WORK_POSITION' => Loc::getMessage('IMBOT_BOT_WORK_POSITION_MSGVER_1', null, $language),
 				'PERSONAL_PHOTO' => self::uploadAvatar($language),
-			)
-		));
+			],
+		]);
 		if ($botId)
 		{
 			self::setBotId($botId);
@@ -130,6 +128,13 @@ class Marta extends Base
 		return $agentMode? "": $botId;
 	}
 
+	public static function uploadAvatar($lang = LANGUAGE_ID)
+	{
+		$avatarUrl = Application::getDocumentRoot() . '/bitrix/modules/imbot/install/avatar/infobot/default.png';
+
+		return \CFile::makeFileArray($avatarUrl);
+	}
+
 	/**
 	 * Agent for deferred bot registration.
 	 * @return string
@@ -149,6 +154,34 @@ class Marta extends Base
 		}
 
 		return __METHOD__ . '();';
+	}
+
+	public static function updateBotPropertiesAgent(): string
+	{
+		if (self::getBotId() === 0)
+		{
+			return '';
+		}
+
+		$language = 'en';
+		if (Loader::includeModule('im'))
+		{
+			$language = BotData::getInstance(self::getBotId())->getBotData()['LANG'] ?? 'en';
+		}
+
+		(new \CUser())->Update(self::getBotId(), ['PERSONAL_PHOTO' => self::uploadAvatar()]);
+		\Bitrix\Im\Bot::update(Array('BOT_ID' => self::getBotId()), [
+			'PROPERTIES' => [
+				'NAME' => Loc::getMessage('IMBOT_BOT_NAME_MSGVER_1', null, $language),
+				'COLOR' => Loc::getMessage('IMBOT_BOT_COLOR', null, $language),
+				'WORK_POSITION' => Loc::getMessage('IMBOT_BOT_WORK_POSITION_MSGVER_1', null, $language),
+				'PERSONAL_BIRTHDAY' => '',
+				'PERSONAL_WWW' => '',
+				'PERSONAL_GENDER' => '',
+			],
+		]);
+
+		return '';
 	}
 
 	public static function unRegister()
@@ -263,7 +296,7 @@ class Marta extends Base
 		{
 			if ($messageFields['COMMAND_PARAMS'] == 'welcome')
 			{
-				$message = Loc::getMessage('IMBOT_BOT_ENABLE_WELCOME', Array('#USER_NAME#' => $userName));
+				$message = Loc::getMessage('IMBOT_BOT_ENABLE_WELCOME_MSGVER_1', ['#USER_NAME#' => $userName, '#URL#'=> (new \Bitrix\Main\License\UrlProvider)->getTechDomain()]);
 				$dateNow = new \Bitrix\Main\Type\DateTime();
 				self::setBotOption($messageFields['DIALOG_ID'], 'planner_message', $dateNow->format('Ymd'));
 			}
@@ -276,7 +309,7 @@ class Marta extends Base
 		{
 			if ($messageFields['COMMAND_PARAMS'] == 'welcome')
 			{
-				$message = Loc::getMessage('IMBOT_BOT_DISABLE_WELCOME', Array('#USER_NAME#' => $userName));
+				$message = Loc::getMessage('IMBOT_BOT_DISABLE_WELCOME_MSGVER_1', ['#USER_NAME#' => $userName, '#URL#'=> (new \Bitrix\Main\License\UrlProvider)->getTechDomain()]);
 				self::setBotOption($messageFields['DIALOG_ID'], 'planner_message', '20290219');
 			}
 			else
@@ -315,7 +348,6 @@ class Marta extends Base
 		if (!in_array($messageFields['COMMAND_PARAMS'], Array('en', 'ru')))
 			return false;
 
-		global $GLOBALS;
 		$grantAccess = \IsModuleInstalled('bitrix24')? $GLOBALS['USER']->CanDoOperation('bitrix24_config'): $GLOBALS["USER"]->IsAdmin();
 		if (!$grantAccess)
 			return false;
@@ -325,18 +357,14 @@ class Marta extends Base
 
 		\Bitrix\Im\Bot::startWriting(Array('BOT_ID' => self::getBotId()), $messageFields['DIALOG_ID']);
 
-		\Bitrix\Im\Bot::update(Array('BOT_ID' => self::getBotId()), Array(
+		\Bitrix\Im\Bot::update(Array('BOT_ID' => self::getBotId()), [
 			'LANG' => $language,
-			'PROPERTIES' => Array(
-				'NAME' => Loc::getMessage('IMBOT_BOT_NAME', null, $language),
+			'PROPERTIES' => [
+				'NAME' => Loc::getMessage('IMBOT_BOT_NAME_MSGVER_1', null, $language),
 				'COLOR' => Loc::getMessage('IMBOT_BOT_COLOR', null, $language),
-				'EMAIL' => Loc::getMessage('IMBOT_BOT_EMAIL', null, $language),
-				'WORK_POSITION' => Loc::getMessage('IMBOT_BOT_WORK_POSITION', null, $language),
-				'PERSONAL_WWW' => Loc::getMessage('IMBOT_BOT_SITE', null, $language),
-				'PERSONAL_GENDER' => Loc::getMessage('IMBOT_BOT_GENDER', null, $language),
-				'PERSONAL_PHOTO' => self::uploadAvatar($language),
-			)
-		));
+				'WORK_POSITION' => Loc::getMessage('IMBOT_BOT_WORK_POSITION_MSGVER_1', null, $language),
+			],
+		]);
 
 		self::sendAnswer(0, Array(
 			'DIALOG_ID' => $messageFields['DIALOG_ID'],
@@ -428,11 +456,15 @@ class Marta extends Base
 
 	public static function onAfterTmDayStart($params)
 	{
-		//$dateNow = new \Bitrix\Main\Type\DateTime();
-		//if (self::getBotOption($params['USER_ID'], 'planner_message', 0) < $dateNow->format('Ymd'))
-		//{
-		//	\CAgent::AddAgent('\\Bitrix\\ImBot\\Bot\\Marta::addPlannerMessageAgent('.$params['USER_ID'].');', "imbot", "N", 60, "", "Y", \ConvertTimeStamp(time()+\CTimeZone::GetOffset()+60, "FULL"));
-		//}
+		if (
+			Loader::includeModule('aiassistant')
+			&& Option::get('aiassistant', 'marta_registration_enabled', 'N') === 'Y'
+			&& ServiceLocator::getInstance()->get(GuardService::class)->shouldShowMartaWidget()
+		)
+		{
+			return;
+		}
+
 		self::notifyAboutPlans($params['USER_ID'], $params['USER_ID']);
 	}
 

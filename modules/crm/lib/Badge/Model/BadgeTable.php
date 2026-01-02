@@ -5,6 +5,7 @@ namespace Bitrix\Crm\Badge\Model;
 use Bitrix\Crm\Badge\SourceIdentifier;
 use Bitrix\Crm\ItemIdentifier;
 use Bitrix\Main\Application;
+use Bitrix\Main\ORM\Fields\ArrayField;
 use Bitrix\Main\ORM\Fields\DatetimeField;
 use Bitrix\Main\ORM\Fields\IntegerField;
 use Bitrix\Main\ORM\Fields\StringField;
@@ -57,6 +58,8 @@ class BadgeTable extends \Bitrix\Main\Entity\DataManager
 				->configureRequired(),
 			(new IntegerField('SOURCE_ENTITY_ID'))
 				->configureRequired(),
+			(new ArrayField('SETTINGS'))
+				->configureNullable()
 		];
 	}
 

@@ -1,0 +1,20 @@
+<?php
+$MESS["iblock_dep_act"] = "Бөлімше белсенді";
+$MESS["iblock_dep_addit"] = "Қосымша";
+$MESS["iblock_dep_changed"] = "Өзгертілді";
+$MESS["iblock_dep_chief"] = "Басшы";
+$MESS["iblock_dep_code"] = "Символдық код";
+$MESS["iblock_dep_created"] = "Жасалды";
+$MESS["iblock_dep_dep"] = "Бөлімше ";
+$MESS["iblock_dep_desc"] = "Сипаттама";
+$MESS["iblock_dep_det_pict"] = "Егжей-тегжейлі кескін";
+$MESS["iblock_dep_name"] = "Бөлімше атауы";
+$MESS["iblock_dep_name1"] = "Битрикс";
+$MESS["iblock_dep_name2"] = "Бухгалтерия";
+$MESS["iblock_dep_name3"] = "Сату бөлімі";
+$MESS["iblock_dep_name5"] = "Маркетинг және жарнама бөлімі";
+$MESS["iblock_dep_parent"] = "Жоғары тұрған бөлімше";
+$MESS["iblock_dep_pict"] = "Кескін";
+$MESS["iblock_dep_sort"] = "Сұрыптау";
+$MESS["iblock_dep_userprop"] = "Пайдаланушы қасиеттері";
+$MESS["iblock_dep_userprop_add"] = "Пайдаланушы қасиетін қосу";

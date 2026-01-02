@@ -3,7 +3,7 @@
  */
 jn.define('layout/polyfill', (require, exports, module) => {
 
-	const ShimmerViewPolyfill = Application.getApiVersion() >= 49 ? ShimmerView : View;
+	const ShimmerViewPolyfill = ShimmerView;
 
 	module.exports = {
 		ShimmerView: ShimmerViewPolyfill,

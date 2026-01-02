@@ -2289,7 +2289,7 @@ if($ufEntityID !== '')
 
 $arResult['ENTITY_DATA'] = $entityData;
 $arResult['ENTITY_FIELDS'] = $entityFields;
-$arResult['CAN_EDIT_OTHER_SETTINGS'] = CCrmAuthorizationHelper::CanEditOtherSettings();
+$arResult['CAN_EDIT_OTHER_SETTINGS'] = \Bitrix\Crm\Service\Container::getInstance()->getUserPermissions()->entityEditor()->canEditCommonView();
 $arResult['ENTITY_CONTEXT'] = $entityContext;
 $arResult['CONFIG'] = $config;
 

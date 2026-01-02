@@ -74,6 +74,7 @@ class RoleRepository extends BaseRepository
 				'AVATAR',
 				'INSTRUCTION',
 				'AUTHOR_ID',
+				'HASH',
 				'DESCRIPTION_TEXT' => 'ROLE_TRANSLATE_DESCRIPTION.TEXT',
 				'NAME_TEXT' => 'ROLE_TRANSLATE_NAME.TEXT',
 				'ACCESS_CODES' => $accessCodesField,

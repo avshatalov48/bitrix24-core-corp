@@ -14,6 +14,8 @@ class Company extends CrmEntityDataProvider
 	protected $revenue;
 	protected $contacts;
 
+	private ?int $logoId = null;
+
 	public function getFields()
 	{
 		if($this->fields === null)
@@ -23,6 +25,7 @@ class Company extends CrmEntityDataProvider
 				'TITLE' => GetMessage('CRM_DOCGEN_DATAPROVIDER_COMPANY_TYPE_TITLE'),
 			];
 			$this->fields['LOGO']['TYPE'] = static::FIELD_TYPE_IMAGE;
+			$this->fields['LOGO']['VALUE'] = [$this, 'getLogo'];
 			$this->fields['INDUSTRY_TYPE'] = [
 				'TITLE' => GetMessage('CRM_DOCGEN_DATAPROVIDER_INDUSTRY_TYPE_TITLE'),
 			];
@@ -184,6 +187,12 @@ class Company extends CrmEntityDataProvider
 			$this->revenue = $this->data['REVENUE'] ?? 0;
 			unset($this->data['REVENUE']);
 		}
+
+		if (isset($this->data['LOGO']) && $this->data['LOGO'] > 0)
+		{
+			$this->logoId = (int)$this->data['LOGO'];
+		}
+		unset($this->data['LOGO']);
 	}
 
 	/**
@@ -415,6 +424,16 @@ class Company extends CrmEntityDataProvider
 		}
 
 		return $this->contacts;
+	}
+
+	public function getLogo(): ?string
+	{
+		if ($this->logoId > 0)
+		{
+			return \CFile::GetPath($this->logoId);
+		}
+
+		return null;
 	}
 
 	/**

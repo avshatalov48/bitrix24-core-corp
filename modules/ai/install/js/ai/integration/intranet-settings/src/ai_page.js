@@ -1,4 +1,4 @@
-import {Loc, Runtime, Type} from 'main.core';
+import {Loc, Runtime, Tag, Type} from 'main.core';
 import {EventEmitter} from 'main.core.events';
 import {Alert, AlertColor, AlertSize} from 'ui.alerts';
 import {BaseField} from 'ui.form-elements.view';
@@ -82,7 +82,7 @@ export class AiPage extends BaseSettingsPage
 		const section = new SettingsSection({
 			parent: this,
 			section: {
-				title: title,
+				title,
 				titleIconClasses: 'ui-icon-set ' + (icon.code ?? AiPage.#groupIconDefaultIcon),
 				isOpen: this.isOpen,
 			},
@@ -128,10 +128,11 @@ export class AiPage extends BaseSettingsPage
 		return section;
 	}
 
-	#buildItem(item: AiSettingsItem): SettingsRow
+	#buildItem(
+		{ code, header, onSave, options, recommended, restriction, title, type, value }: AiSettingsItem,
+	): SettingsRow
 	{
-		const { code, type, title, header, value, options, recommended } = item;
-		const withOnSave = item.onSave && item.onSave.switcher;
+		const withOnSave = onSave && onSave.switcher;
 
 		const row = new SettingsRow({
 			row: {
@@ -142,13 +143,25 @@ export class AiPage extends BaseSettingsPage
 		let field = null;
 		if (type === 'boolean')
 		{
-			field = new Checker({
+			const checkerOptions = {
+				title,
 				inputName: code,
-				title: title,
 				checked: value,
 				hintOn: header,
 				hintOff: header,
-			});
+			};
+
+			if (restriction)
+			{
+				checkerOptions.isEnable = false;
+				checkerOptions.checked = false;
+
+				const messageNode = Tag.render`<span>${restriction.helpMessage}</span>`;
+				checkerOptions.helpMessageProvider = this.helpMessageProviderFactory(messageNode);
+				checkerOptions.bannerCode = restriction.bannerCode;
+			}
+
+			field = new Checker(checkerOptions);
 		}
 
 		else if (type === 'list')
@@ -197,7 +210,7 @@ export class AiPage extends BaseSettingsPage
 		{
 			const onSaveField = new Checker({
 				inputName: code + '_onsave',
-				title: item.onSave.switcher,
+				title: onSave.switcher,
 				checked: false,
 				size: 'extra-small',
 				noMarginBottom: true,
@@ -241,6 +254,14 @@ export class AiPage extends BaseSettingsPage
 				const parent = this.#itemFields[relation.parent];
 				if (parent && parent.field && parent.field instanceof Checker)
 				{
+					if (!parent.field.isChecked())
+					{
+						relation.children.forEach(child => {
+							const node = this.#itemFields[child]?.row?.getRowView();
+							node.hide();
+						});
+					}
+
 					EventEmitter.subscribe(parent.field, 'change', event => {
 						const isActive = event.getData();
 						relation.children.forEach(child => {

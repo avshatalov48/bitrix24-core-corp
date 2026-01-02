@@ -7,8 +7,6 @@ if(!defined('B_PROLOG_INCLUDED') || B_PROLOG_INCLUDED !== true)
 /** @var CMain $APPLICATION */
 /** @var array $arResult */
 
-use Bitrix\Crm\Feature;
-use Bitrix\Crm\Feature\PermissionsLayoutV2;
 use Bitrix\Crm\Service\Container;
 use Bitrix\Crm\Service\TypePreset;
 use Bitrix\Main\Localization\Loc;
@@ -399,8 +397,18 @@ $renderFieldSelector = static function (?string $title, bool $isActive, string $
 					Loc::getMessage('CRM_TYPE_DETAIL_FIELD_OBSERVERS'),
 					$type->getIsObserversEnabled(),
 					'isObserversEnabled',
-					'crm-type-field-icon-type1'
+					'crm-type-field-icon-type5'
 				);
+
+				if (\Bitrix\Crm\Feature::enabled(Bitrix\Crm\Feature\RecurringDynamic::class))
+				{
+					echo $renderFieldSelector(
+						Loc::getMessage('CRM_TYPE_DETAIL_FIELD_RECURRING'),
+						$type->getIsRecurringEnabled() ?? false,
+						'isRecurringEnabled',
+						'crm-type-field-icon-type6',
+					);
+				}
 				?>
 			</div>
 			<div class="ui-title-3">
@@ -652,9 +660,7 @@ BX.ready(function()
 	BX.UI.Hint.init(form);
 	BX.UI.Switcher.initByClassName();
 
-	BX.Crm.Component.FeatureManager.getInstance()
-		.setPermissionsLayoutV2Enabled(<?= Feature::enabled(PermissionsLayoutV2::class) ? 'true' : 'false' ?>)
-	;
+	BX.Crm.Component.FeatureManager.getInstance().setPermissionsLayoutV2Enabled(true);
 
 	<?php if (isset($customSectionSwitcherID) && ($isNew || !$arResult['canToggleAutomatedSolutionSwitcher'])) :?>
 		const customSectionSwitcher = BX.UI.Switcher.getById('<?= $customSectionSwitcherID ?>');

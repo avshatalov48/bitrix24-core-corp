@@ -1,32 +1,46 @@
 <?php
 namespace Bitrix\Crm\Recurring;
 
-use Bitrix\Main\Type\Date,
-	Bitrix\Main\Type\DateTime,
-	Bitrix\Main\Localization\Loc,
-	Bitrix\Main,
-	Bitrix\Main\Result;
+use Bitrix\Crm\Service\Container;
+use Bitrix\Main;
+use Bitrix\Main\Localization\Loc;
+use Bitrix\Main\Result;
+use Bitrix\Main\Type\Date;
+use Bitrix\Main\Type\DateTime;
+use CCrmOwnerType;
 
 Loc::loadMessages(__FILE__);
 
 class Manager
 {
-	const INVOICE = 'Invoice';
-	const DEAL = 'Deal';
-	const SINGLE_EXECUTION = 1;
-	const SINGLE_EXECUTION_NAME = 'single';
-	const MULTIPLY_EXECUTION = 2;
-	const MULTIPLY_EXECUTION_NAME = 'multiple';
+	public const INVOICE = 'Invoice';
+	public const DYNAMIC = 'Dynamic';
+	public const DEAL = 'Deal';
 
-	/**
-	 * @return array
-	 */
-	private static function getEntityTypeList()
+	public const SINGLE_EXECUTION = 1;
+	public const SINGLE_EXECUTION_NAME = 'single';
+	public const MULTIPLY_EXECUTION = 2;
+	public const MULTIPLY_EXECUTION_NAME = 'multiple';
+
+	private const ENTITY_TYPE_LIST = [
+		CCrmOwnerType::Invoice => self::INVOICE,
+		CCrmOwnerType::SmartInvoice => self::DYNAMIC,
+		CCrmOwnerType::Deal => self::DEAL,
+	];
+
+	public static function getEntityTypeList(): array
 	{
-		return array(
-			self::INVOICE,
-			self::DEAL
-		);
+		return array_values(self::ENTITY_TYPE_LIST);
+	}
+
+	public static function isAvailableEntityTypeId(int $entityTypeId): bool
+	{
+		if (isset(self::ENTITY_TYPE_LIST[$entityTypeId]))
+		{
+			return true;
+		}
+
+		return CCrmOwnerType::isPossibleDynamicTypeId($entityTypeId);
 	}
 
 	/**
@@ -45,7 +59,7 @@ class Manager
 
 	/**
 	 * Update a recurring entity.
-	 * 
+	 *
 	 * @param $typeEntity
 	 * @param $primary
 	 * @param $data
@@ -59,7 +73,7 @@ class Manager
 
 	/**
 	 * Creating new entities by recurring template entities. Filter is used for filtering from {EntityType}RecurTable
-	 * 
+	 *
 	 * @param $typeEntity
 	 * @param $filter
 	 * @param $limit
@@ -246,7 +260,7 @@ class Manager
 
 	/**
 	 * Create new entities in agent. By default limit of exposing is 10 entities by hit.
-	 * 
+	 *
 	 * @param $typeEntity. 		Entity type from class constants. Default is INVOICE for compatibility.
 	 *
 	 * @return string
@@ -263,22 +277,13 @@ class Manager
 		if (!$entity || !$entity->isAllowedExpose())
 			return '';
 
-		$today = new Date();
 		$limit = Main\Config\Option::get('crm', 'day_limit_exposing_invoices', 10);
 
-		$params = array(
+		$params = [
 			'select' => ['ID'],
-			'filter' => array(
-				'<=NEXT_EXECUTION' => $today,
-				array(
-					"LOGIC" => "OR",
-					array("LAST_EXECUTION" => null),
-					array("<LAST_EXECUTION" => $today)
-				),
-				'=ACTIVE' => "Y"
-			),
-			'runtime' => $entity->getRuntimeTemplateField()
-		);
+			'filter' => self::getTodayFilter(),
+			'runtime' => $entity->getRuntimeTemplateField(),
+		];
 
 		$todayEntities = $entity->getList($params);
 		$todayCount = count($todayEntities->fetchAll());
@@ -310,18 +315,25 @@ class Manager
 	{
 		$today = new Date();
 		return static::expose(
-			array(
-				'<=NEXT_EXECUTION' => $today,
-				array(
-					"LOGIC" => "OR",
-					array("LAST_EXECUTION" => null),
-					array("<LAST_EXECUTION" => $today)
-				),
-				'=ACTIVE' => "Y"
-			),
+			self::getTodayFilter(),
 			$limit,
 			$typeEntity
 		);
+	}
+
+	protected static function getTodayFilter(): array
+	{
+		$today = new Date();
+
+		return [
+			'<=NEXT_EXECUTION' => $today,
+			[
+				'LOGIC' => 'OR',
+				['LAST_EXECUTION' => null],
+				['<LAST_EXECUTION' => $today],
+			],
+			'=ACTIVE' => 'Y',
+		];
 	}
 
 	/**
@@ -398,5 +410,21 @@ class Manager
 			return $nextTimeStamp < $endTimeStamp;
 
 		return false;
+	}
+
+	public static function getEntityListTitle(int $entityTypeId): ?string
+	{
+		if (!self::isAvailableEntityTypeId($entityTypeId))
+		{
+			return null;
+		}
+
+		Container::getInstance()->getLocalization()->loadMessages();
+
+		$entityTypeName = CCrmOwnerType::ResolveName($entityTypeId);
+
+		return
+			Loc::getMessage('CRM_RECURRING_LIST_TITLE_' . $entityTypeName)
+			?? Loc::getMessage('CRM_RECURRING_LIST_TITLE');
 	}
 }

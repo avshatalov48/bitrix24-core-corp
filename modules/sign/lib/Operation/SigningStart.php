@@ -14,27 +14,23 @@ use Bitrix\Sign\Repository\DocumentRepository;
 use Bitrix\Sign\Repository\MemberRepository;
 use Bitrix\Sign\Service\Container;
 use Bitrix\Sign\Service\Integration\Crm\EventHandlerService;
+use Bitrix\Sign\Service\Sign\Document\SignUntilService;
 use Bitrix\Sign\Service\Sign\LegalLogService;
 use Bitrix\Sign\Type;
 
 class SigningStart implements Contract\Operation
 {
-	private readonly MemberRepository $memberRepository;
-	private readonly Logger $logger;
-
 	public function __construct(
 		private string $uid,
 		private ?DocumentRepository $documentRepository = null,
 		private ?EventHandlerService $eventHandlerService = null,
 		private ?LegalLogService $legalLogService = null,
-		?MemberRepository $memberRepository = null,
-		?Logger $logger = null
+		private ?Logger $logger = null,
 	)
 	{
 		$this->documentRepository ??= Container::instance()->getDocumentRepository();
 		$this->eventHandlerService ??= Container::instance()->getEventHandlerService();
 		$this->legalLogService ??= Container::instance()->getLegalLogService();
-		$this->memberRepository = $memberRepository ?? Container::instance()->getMemberRepository();
 		$this->logger = $logger ?? Logger::getInstance();
 	}
 
@@ -45,6 +41,17 @@ class SigningStart implements Contract\Operation
 		if (!$document)
 		{
 			return $result->addError(new Main\Error('Document not found'));
+		}
+
+		// allow old blanks without signUntil date
+		if ($document->dateSignUntil !== null)
+		{
+			$validationResult = (new Operation\Document\Validation\ValidateDateSignUntil($document))->launch();
+
+			if (!$validationResult->isSuccess())
+			{
+				return $result->addErrors($validationResult->getErrors());
+			}
 		}
 
 		$signingStartResponse = Container::instance()->getApiDocumentSigningService()

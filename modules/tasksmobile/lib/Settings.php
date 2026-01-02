@@ -36,18 +36,12 @@ final class Settings
 		$this->userId = $userId;
 	}
 
-	public function clientHasApiVersion(int $apiVersion): bool
-	{
-		return Mobile::getInstance()::getApiVersion() >= $apiVersion;
-	}
-
 	public function isBetaAvailable(): bool
 	{
 		return (
 			Mobile::getInstance()::$isDev
 			|| (
-				$this->clientHasApiVersion(54)
-				&& Option::get('tasksmobile', Settings::IS_BETA_AVAILABLE, 'Y', '-') === 'Y'
+				Option::get('tasksmobile', Settings::IS_BETA_AVAILABLE, 'Y', '-') === 'Y'
 			)
 		);
 	}
@@ -74,28 +68,6 @@ final class Settings
 
 	public function isTaskFlowAvailable(): bool
 	{
-		return FlowFeature::isOn() && $this->clientHasApiVersion(54);
-	}
-
-	public function getDashboardSelectedView(int $projectId = 0): string
-	{
-		Task::setUserId($this->userId);
-		Task::setGroupId($projectId);
-
-		$listState = Task::getListStateInstance()->getState();
-		$selectedView = $listState['VIEW_SELECTED']['CODENAME'];
-		$map = [
-			'VIEW_MODE_LIST' => 'LIST',
-			'VIEW_MODE_KANBAN' => 'KANBAN',
-			'VIEW_MODE_TIMELINE' => 'DEADLINE',
-			'VIEW_MODE_PLAN' => 'PLANNER',
-		];
-
-		if (!isset($map[$selectedView]) || ($map[$selectedView] === 'KANBAN' && $projectId === 0))
-		{
-			return 'LIST';
-		}
-
-		return $map[$selectedView];
+		return FlowFeature::isOn();
 	}
 }

@@ -31,7 +31,15 @@ jn.define('layout/ui/empty-screen', (require, exports, module) => {
 		 */
 		get image()
 		{
-			return this.props.image || null;
+			if (!this.props.image)
+			{
+				return null;
+			}
+
+			return {
+				resizeMode: 'contain',
+				...this.props.image,
+			};
 		}
 
 		/**
@@ -68,6 +76,11 @@ jn.define('layout/ui/empty-screen', (require, exports, module) => {
 		get containerStyle()
 		{
 			const defaultStyles = {
+				position: 'absolute',
+				top: 0,
+				left: 0,
+				right: 0,
+				bottom: 0,
 				flexDirection: 'column',
 				flexGrow: 1,
 				justifyContent: 'center',
@@ -148,6 +161,15 @@ jn.define('layout/ui/empty-screen', (require, exports, module) => {
 						bottom: true,
 					},
 				},
+				View(
+					{
+						clickable: false,
+						style: this.containerStyle,
+					},
+					this.renderIcon(),
+					this.renderTitle(),
+					this.renderDescription(),
+				),
 				RefreshView(
 					{
 						style: {
@@ -160,11 +182,11 @@ jn.define('layout/ui/empty-screen', (require, exports, module) => {
 					},
 					View(
 						{
-							style: this.containerStyle,
+							style: {
+								flex: 1,
+								minHeight: 290,
+							},
 						},
-						this.renderIcon(),
-						this.renderTitle(),
-						this.renderDescription(),
 					),
 				),
 			);
@@ -180,6 +202,7 @@ jn.define('layout/ui/empty-screen', (require, exports, module) => {
 			return View(
 				{
 					style: this.iconStyle,
+					clickable: false,
 				},
 				Image(this.image),
 			);

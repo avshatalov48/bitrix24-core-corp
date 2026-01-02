@@ -15,12 +15,11 @@ use Bitrix\Main\Web\Json;
  *
  * @final
  * @internal
+ * @deprecated
  */
 final class Provider
 {
 	const ERROR_EMPTY_SERVER_RESPONSE = 'EMPTY_SERVER_RESPONSE';
-
-	const SERVER_URI = 'store-connect.bitrix.info';
 
 	const TYPE_BITRIX24 = 'B24';
 	const TYPE_CP = 'CP';
@@ -56,7 +55,13 @@ final class Provider
 		$this->domain = self::getDomainDefault();
 
 		$this->connectorName = $connectorName;
-		$this->controllerUrl = 'https://'.self::SERVER_URI.'/imwebhook/portal.php';
+		$this->controllerUrl = $this->getControllerUrl();
+	}
+
+	private function getControllerUrl(): string
+	{
+		throw new \Bitrix\Main\NotSupportedException('Store connector is not supported.');
+		// return 'https://' . self::SERVER_URI . '/imwebhook/portal.php';
 	}
 
 	/**

@@ -1,9 +1,11 @@
 export const Model = Object.freeze({
+	BookingInfo: 'booking-info',
 	Bookings: 'bookings',
 	Clients: 'clients',
 	Counters: 'counters',
 	Dictionary: 'dictionary',
 	Favorites: 'favorites',
+	FormsMenu: 'forms-menu',
 	Interface: 'interface',
 	MainResources: 'main-resources',
 	MessageStatus: 'message-status',
@@ -11,4 +13,6 @@ export const Model = Object.freeze({
 	ResourceCreationWizard: 'resource-creation-wizard',
 	ResourceTypes: 'resourceTypes',
 	Resources: 'resources',
+	WaitList: 'wait-list',
+	Filter: 'filter',
 });

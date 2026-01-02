@@ -1,0 +1,19 @@
+<?php
+$MESS["TSF_DOD_CREATE_BUTTON"] = "Жасау";
+$MESS["TSF_DOD_HINT"] = "Нәтиженің дайындығы анықталатын критерийлері бар чек парағы";
+$MESS["TSF_DOD_HINT_NEW"] = "Міндеттің дайындығы анықталатын критерийлері бар чек парағы";
+$MESS["TSF_DOD_OPEN_BUTTON"] = "Ашу";
+$MESS["TSF_DOD_TITLE"] = "DOD";
+$MESS["TSF_DOD_TITLE_NEW"] = "DoD";
+$MESS["TSF_EPIC_CREATE_BUTTON"] = "Жасау";
+$MESS["TSF_EPIC_HINT"] = "Бэклог міндеттері бекітілетін маңызды мақсаттар, жаһандық жоспарлар";
+$MESS["TSF_EPIC_OPEN_BUTTON"] = "Ашу";
+$MESS["TSF_EPIC_TITLE"] = "Эпиктер";
+$MESS["TSF_MIGRATION_LABEL"] = "Миграция";
+$MESS["TSF_MIGRATION_TITLE"] = "Деректерді басқа жүйеден тасымалдау";
+$MESS["TSF_TEAM_SPEED_BUTTON"] = "Команданың жылдамдығы";
+$MESS["TSF_TEAM_SPEED_DIAGRAM"] = "Міндеттердің жану диаграммасы";
+$MESS["TSF_TEAM_SPEED_LABEL"] = "Жақында";
+$MESS["TSF_TUTORIAL_TEXT"] = "Тегін оқу курсы";
+$MESS["TSF_TUTORIAL_TITLE"] = "Скрам бойынша қалай жұмыс істеу керек";
+$MESS["TSM_ERROR_POPUP_TITLE"] = "Қате орын алды";

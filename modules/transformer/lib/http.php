@@ -1,14 +1,15 @@
 <?php
+
 namespace Bitrix\Transformer;
 
-use Bitrix\Main\Application;
 use Bitrix\Main\ArgumentException;
 use Bitrix\Main\ArgumentNullException;
 use Bitrix\Main\ArgumentTypeException;
 use Bitrix\Main\Config\Option;
 use Bitrix\Main\DI\ServiceLocator;
 use Bitrix\Main\Engine\UrlManager;
-use Bitrix\Main\Entity\ExpressionField;
+use Bitrix\Main\ORM\Fields\ExpressionField;
+use Bitrix\Main\Service\MicroService\Client;
 use Bitrix\Main\Type\DateTime;
 use Bitrix\Main\Web\Json;
 use Bitrix\Main\Web\Uri;
@@ -16,60 +17,33 @@ use Bitrix\Transformer\Entity\CommandTable;
 
 class Http
 {
-	const MODULE_ID = 'transformer';
+	public const MODULE_ID = 'transformer';
 
-	const TYPE_BITRIX24 = 'B24';
-	const TYPE_CP = 'BOX';
-	const VERSION = 1;
+	/**
+	 * @deprecated use Client::TYPE_BITRIX24
+	 */
+	public const TYPE_BITRIX24 = Client::TYPE_BITRIX24;
+	/**
+	 * @deprecated use Client::TYPE_BOX
+	 */
+	public const TYPE_CP = Client::TYPE_BOX;
+	public const VERSION = 1;
 
-	const BACK_URL = '/bitrix/tools/transformer_result.php';
+	public const BACK_URL = '/bitrix/tools/transformer_result.php';
 
 	/**
 	 * @deprecated
 	 */
-	const CONNECTION_ERROR = 'no connection with controller';
-
-	/**
-	 * @deprecated \Bitrix\Transformer\Http\ControllerResolver::getDefaultCloudControllerUrl
-	 */
-	public const CLOUD_CONVERTER_URL = 'https://transformer-de.bitrix.info/bitrix/tools/transformercontroller/add_queue.php';
+	public const CONNECTION_ERROR = 'no connection with controller';
 
 	public const CIRCUIT_BREAKER_ERRORS_THRESHOLD = 5;
 	public const CIRCUIT_BREAKER_ERRORS_SEARCH_PERIOD = 1800;
 
-	private $licenceCode = '';
-	private $domain = '';
-	private $type = '';
+	private string $domain = '';
 
 	public function __construct()
 	{
-		if(defined('BX24_HOST_NAME'))
-		{
-			$this->licenceCode = BX24_HOST_NAME;
-		}
-		else
-		{
-			$this->licenceCode = Application::getInstance()->getLicense()->getPublicHashKey();
-		}
-		$this->type = self::getPortalType();
 		$this->domain = self::getServerAddress();
-	}
-
-	/**
-	 * @return string
-	 */
-	private static function getPortalType()
-	{
-		if(defined('BX24_HOST_NAME'))
-		{
-			$type = self::TYPE_BITRIX24;
-		}
-		else
-		{
-			$type = self::TYPE_CP;
-		}
-
-		return $type;
 	}
 
 	/**
@@ -77,35 +51,14 @@ class Http
 	 */
 	public static function getServerAddress()
 	{
-		$publicUrl = \Bitrix\Main\Config\Option::get(self::MODULE_ID, 'portal_url');
+		$publicUrl = Option::get(self::MODULE_ID, 'portal_url');
 
-		if(!empty($publicUrl))
+		if (!empty($publicUrl))
 		{
 			return $publicUrl;
 		}
 
 		return UrlManager::getInstance()->getHostUrl();
-	}
-
-	/**
-	 * Sign string with license or bx_sign.
-	 *
-	 * @param string $type Type of the license.
-	 * @param string $str String to sign.
-	 * @return string
-	 */
-	private static function requestSign($type, $str)
-	{
-		if($type == self::TYPE_BITRIX24 && function_exists('bx_sign'))
-		{
-			return bx_sign($str);
-		}
-		else
-		{
-			/** @var string $LICENSE_KEY */
-			include($_SERVER['DOCUMENT_ROOT'].'/bitrix/license_key.php');
-			return md5($str.md5($LICENSE_KEY));
-		}
 	}
 
 	/**
@@ -118,18 +71,18 @@ class Http
 	 * @throws ArgumentNullException
 	 * @throws ArgumentTypeException
 	 */
-	public function query($command, $guid, $params = array())
+	public function query($command, $guid, $params = [])
 	{
-		if($command == '')
+		if ($command == '')
 		{
 			throw new ArgumentNullException('command');
 		}
-		if(!is_array($params))
+		if (!is_array($params))
 		{
 			throw new ArgumentTypeException('params', 'array');
 		}
 
-		$controllerUrl = ServiceLocator::getInstance()->get('transformer.http.controllerResolver')->resolveControllerUrl(
+		$controllerUrl = ServiceLocator::getInstance()->get('transformer.service.http.controllerResolver')->resolveControllerUrl(
 			$command,
 			$params['queue'] ?? null,
 		);
@@ -159,10 +112,10 @@ class Http
 			);
 		}
 
-		if($params['file'])
+		if ($params['file'])
 		{
-			$uri = new \Bitrix\Main\Web\Uri($params['file']);
-			if($uri->getHost() == '')
+			$uri = new Uri($params['file']);
+			if ($uri->getHost() == '')
 			{
 				$params['file'] = (new Uri($this->domain.$params['file']))->getLocator();
 			}
@@ -170,20 +123,25 @@ class Http
 
 		$params['back_url'] = $this->getBackUrl($guid);
 
-		$post = array('command' => $command, 'params' => $params);
+		$post = [
+			'command' => $command,
+			'params' => $params,
+			'BX_LICENCE' => Client::getLicenseCode(),
+			'BX_DOMAIN' => $this->domain,
+			'BX_TYPE' => Client::getPortalType(),
+			'BX_VERSION' => self::VERSION,
+			'BX_REGION' => \Bitrix\Main\Application::getInstance()->getLicense()->getRegion(),
+		];
 
-		if(!empty($params['queue']))
+		if (!empty($params['queue']))
 		{
 			$post['QUEUE'] = $params['queue'];
 		}
-		$post['BX_LICENCE'] = $this->licenceCode;
-		$post['BX_DOMAIN'] = $this->domain;
-		$post['BX_TYPE'] = $this->type;
-		$post['BX_VERSION'] = self::VERSION;
-		$post['BX_HASH'] = self::requestSign($this->type, md5(implode('|', $post)));
 
-		$socketTimeout = Option::get(self::MODULE_ID, 'connection_time', 8);
-		$streamTimeout = Option::get(self::MODULE_ID, 'stream_time', 8);
+		$post['BX_HASH'] = Client::signRequest($post);
+
+		$socketTimeout = Option::get(self::MODULE_ID, 'connection_time');
+		$streamTimeout = Option::get(self::MODULE_ID, 'stream_time');
 
 		$logContext += [
 			'request' => $post,
@@ -207,8 +165,10 @@ class Http
 			$logContext,
 		);
 
-		if($response === false)
+		if ($response === false)
 		{
+			$logContext['httpClientErrors'] = $httpClient->getError();
+
 			return $this->logErrorAndReturnResponse(
 				'Error connecting to server',
 				Command::ERROR_CONNECTION,
@@ -220,12 +180,11 @@ class Http
 		try
 		{
 			$json = Json::decode($response);
-			$decodeErrorMessage = null;
 		}
 		catch(ArgumentException $e)
 		{
 			$json = null;
-			$decodeErrorMessage = $e->getMessage();
+			$logContext['decodeError'] = $e->getMessage();
 		}
 
 		if (!is_array($json))
@@ -233,7 +192,7 @@ class Http
 			return $this->logErrorAndReturnResponse(
 				'Error decoding response from server: {decodeError}',
 				Command::ERROR_CONNECTION_RESPONSE,
-				$logContext + ['decodeError' => $decodeErrorMessage],
+				$logContext,
 				$controllerUrl,
 			);
 		}
@@ -273,8 +232,8 @@ class Http
 	private function getBackUrl($id)
 	{
 		$uri = new Uri(self::BACK_URL);
-		$uri->addParams(array('id' => $id));
-		if($uri->getHost() == '')
+		$uri->addParams(['id' => $id]);
+		if ($uri->getHost() == '')
 		{
 			$uri = (new Uri($this->domain.$uri->getPathQuery()))->getLocator();
 		}

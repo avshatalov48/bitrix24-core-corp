@@ -700,6 +700,12 @@ if (CModule::IncludeModule("calendar") && class_exists("CCalendar") && !class_ex
 				$arPeriodMapTmp = array("M" => "min", "H" => "hour", "D" => "day", "S" => "min");
 				foreach ($arVAlarm as $valarm)
 				{
+					$action = $valarm->GetPropertyValue("ACTION");
+					if ($action === 'NONE')
+					{
+						continue;
+					}
+
 					$trigger = $valarm->GetPropertyValue("TRIGGER");
 
 					if (preg_match('/^[-]?P(T?)([0-9]+)([HMDS])$/i', $trigger, $arMatches))

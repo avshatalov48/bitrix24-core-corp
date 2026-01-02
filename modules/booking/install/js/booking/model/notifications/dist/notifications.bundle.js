@@ -4,6 +4,7 @@ this.BX.Booking = this.BX.Booking || {};
 (function (exports,ui_vue3_vuex,booking_const) {
 	'use strict';
 
+	/* eslint-disable no-param-reassign */
 	class Notifications extends ui_vue3_vuex.BuilderModel {
 	  getName() {
 	    return booking_const.Model.Notifications;
@@ -21,7 +22,8 @@ this.BX.Booking = this.BX.Booking || {};
 	        type: '',
 	        text: '',
 	        textSms: ''
-	      }]
+	      }],
+	      isExpanded: false
 	    };
 	  }
 	  getGetters() {
@@ -51,6 +53,10 @@ this.BX.Booking = this.BX.Booking || {};
 	      /** @function notifications/upsertManySenders */
 	      upsertManySenders: (store, senders) => {
 	        senders.forEach(sender => store.commit('upsertSender', sender));
+	      },
+	      /** @function notifications/setIsExpanded */
+	      setIsExpanded: (store, payload) => {
+	        store.commit('setIsExpanded', payload);
 	      }
 	    };
 	  }
@@ -65,6 +71,12 @@ this.BX.Booking = this.BX.Booking || {};
 	        var _state$senders, _sender$code, _state$senders$_sende;
 	        (_state$senders$_sende = (_state$senders = state.senders)[_sender$code = sender.code]) != null ? _state$senders$_sende : _state$senders[_sender$code] = sender;
 	        Object.assign(state.senders[sender.code], sender);
+	      },
+	      setIsExpanded: (state, {
+	        type,
+	        isExpanded
+	      }) => {
+	        state.notifications[type].isExpanded = isExpanded;
 	      }
 	    };
 	  }

@@ -46,6 +46,11 @@ export class ControlPage extends FormPage
 		this.#flow = flow;
 	}
 
+	getFlowId(): ?number
+	{
+		return this.#flow.id ?? null;
+	}
+
 	getId(): string
 	{
 		return 'control';
@@ -135,6 +140,9 @@ export class ControlPage extends FormPage
 			enableDepartments: false,
 			multiple: false,
 			values: [['user', this.#flow.ownerId]],
+			dialogEvents: {
+				onLoad: this.onDialogLoad,
+			},
 		});
 
 		this.#layout.notifyOnQueueOverflow = new ValueChecker({
@@ -183,6 +191,9 @@ export class ControlPage extends FormPage
 			enableAll: true,
 			enableDepartments: true,
 			className: '',
+			dialogEvents: {
+				onLoad: this.onDialogLoad,
+			},
 		});
 
 		this.#layout.controlPageForm = Tag.render`

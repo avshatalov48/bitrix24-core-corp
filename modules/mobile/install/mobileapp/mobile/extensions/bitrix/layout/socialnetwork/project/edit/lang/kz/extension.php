@@ -1,0 +1,6 @@
+<?php
+$MESS["MOBILE_LAYOUT_PROJECT_EDIT_CANCEL"] = "Болдырмау";
+$MESS["MOBILE_LAYOUT_PROJECT_EDIT_ERROR_AVATAR_IS_UPLOADING"] = "Жоба аватары әлі жүктелуде";
+$MESS["MOBILE_LAYOUT_PROJECT_EDIT_ERROR_NO_TITLE"] = "Жобаның атауы көрсетілмеген";
+$MESS["MOBILE_LAYOUT_PROJECT_EDIT_HEADER_TITLE"] = "Жобаны редакциялау";
+$MESS["MOBILE_LAYOUT_PROJECT_EDIT_SAVE"] = "Сақтау";

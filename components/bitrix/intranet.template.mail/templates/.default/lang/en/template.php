@@ -1,6 +1,10 @@
 <?php
 $MESS["INTRANET_BITRIX24"] = "Bitrix24";
+$MESS["INTRANET_BITRIX24_PROMO"] = "Your ultimate workspace";
 $MESS["INTRANET_CHANGE_NOTIFY_SETTINGS"] = "Edit notification settings";
+$MESS["INTRANET_EXPLANATION_TEXT"] = "Ignore this message if you didn't expect it.";
+$MESS["INTRANET_INVITATION_JOIN"] = "Join";
+$MESS["INTRANET_INVITATION_JOIN_TEXT"] = "Join our team on Bitrix24";
 $MESS["INTRANET_INVITE_ACCEPT"] = "Accept invitation";
 $MESS["INTRANET_INVITE_FOOTER"] = "This is an automatically generated notification. You received this email because you were invited to join Bitrix24 account. You can edit notification settings as soon as you accept the invitation.";
 $MESS["INTRANET_INVITE_IMG_LINK"] = "https://www.bitrix24.com/images/mail/tutorials/tools_en.png";
@@ -14,4 +18,6 @@ $MESS["INTRANET_MAIL_TITLE_IM_NEW_MESSAGE_GROUP"] = "New messages from #NAME#";
 $MESS["INTRANET_MAIL_TITLE_IM_NEW_NOTIFY"] = "New notification from #NAME#";
 $MESS["INTRANET_OPEN"] = "View";
 $MESS["INTRANET_OPEN_NOTIFY"] = "View notifications";
+$MESS["INTRANET_PERSONAL_DATA_TEXT"] = "Privacy Policy";
 $MESS["INTRANET_SITE_LINK"] = "https://www.bitrix24.com/";
+$MESS["INTRANET_YOUR_BITRIX24"] = "Your Bitrix24:";

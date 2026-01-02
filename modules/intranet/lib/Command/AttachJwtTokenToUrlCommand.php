@@ -2,10 +2,8 @@
 
 namespace Bitrix\Intranet\Command;
 
-use Bitrix\Intranet\Contract\Command;
-use Bitrix\Intranet\Service\ServiceContainer;
 use Bitrix\Main\Context;
-use Bitrix\Main\Result;
+use Bitrix\Main\Loader;
 use Bitrix\Main\Web\Uri;
 use Bitrix\Main\Config\Option;
 
@@ -18,7 +16,7 @@ class AttachJwtTokenToUrlCommand
 	)
 	{}
 
-	static function createDefaultInstance(string $token): self
+	private static function getUri(): Uri
 	{
 		$serverName = Option::get('main', 'server_name');
 
@@ -34,7 +32,28 @@ class AttachJwtTokenToUrlCommand
 		$baseUrl = (Context::getCurrent()->getRequest()->isHttps() ? 'https://' : 'http://') . $serverName;
 		$uri = new Uri($baseUrl);
 
-		return new AttachJwtTokenToUrlCommand($uri, $token);
+		if (!Loader::includeModule('bitrix24'))
+		{
+			$uri->setPath('/auth/registration_link.php');
+			$uri->addParams(['register' => 'yes']);
+		}
+
+		return $uri;
+	}
+
+	static function createDefaultInstance(string $token): self
+	{
+		$uri = self::getUri();
+
+		return new AttachJwtTokenToUrlCommand($uri, $token, 'invite_token');
+	}
+
+	static function createInstanceWithUserLang(string $token, string $userLang = LANGUAGE_ID): self
+	{
+		$uri = self::getUri();
+		$uri->addParams(['user_lang' => $userLang]);
+
+		return new AttachJwtTokenToUrlCommand($uri, $token, 'invite_token');
 	}
 
 	public function attach(): Uri

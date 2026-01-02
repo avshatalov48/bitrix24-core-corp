@@ -14,6 +14,7 @@ use Bitrix\Main\Localization\Loc;
 use Bitrix\Main\Text\HtmlFilter;
 use Bitrix\Main\UI\Extension;
 use Bitrix\Main\Web\Json;
+use Bitrix\UI\Toolbar\Facade\Toolbar;
 
 Extension::load([
 	'amcharts4',
@@ -25,13 +26,10 @@ Extension::load([
 
 $messages = Loc::loadLanguageFile(__FILE__);
 
-$this->SetViewTarget('pagetitle');
-?>
-
-<div id="tasks-scrum-sprint-burn-down-chart-selector"></div>
-
-<?php
-$this->EndViewTarget();
+Toolbar::addRightCustomHtml(
+	'<div id="tasks-scrum-sprint-burn-down-chart-selector"></div>',
+	['align' => 'right'],
+);
 ?>
 
 <div id="tasks-scrum-sprint-burn-down-chart-info" class="tasks-scrum-sprint-burn-down-info">

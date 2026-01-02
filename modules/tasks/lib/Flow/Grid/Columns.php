@@ -38,7 +38,10 @@ abstract class Columns
 
 	final public static function set(Column $column): void
 	{
-		self::$columns[$column->getId()] = $column;
+		if ($column->isAvailable())
+		{
+			self::$columns[$column->getId()] = $column;
+		}
 	}
 
 	final public static function get(string $id): Column

@@ -1,7 +1,7 @@
 /* eslint-disable */
 this.BX = this.BX || {};
 this.BX.Tasks = this.BX.Tasks || {};
-(function (exports,main_loader,main_popup,tasks_sidePanelIntegration,main_core) {
+(function (exports,main_loader,main_popup,tasks_sidePanelIntegration,main_sidepanel,main_core) {
 	'use strict';
 
 	let _ = t => t,
@@ -80,16 +80,49 @@ this.BX.Tasks = this.BX.Tasks || {};
 	}
 
 	let _$1 = t => t,
-	  _t$1;
+	  _t$1,
+	  _t2$1,
+	  _t3;
 	var _serial = /*#__PURE__*/babelHelpers.classPrivateFieldLooseKey("serial");
+	var _title = /*#__PURE__*/babelHelpers.classPrivateFieldLooseKey("title");
+	var _url = /*#__PURE__*/babelHelpers.classPrivateFieldLooseKey("url");
 	var _createdBy = /*#__PURE__*/babelHelpers.classPrivateFieldLooseKey("createdBy");
 	var _creator = /*#__PURE__*/babelHelpers.classPrivateFieldLooseKey("creator");
 	var _responsibleId = /*#__PURE__*/babelHelpers.classPrivateFieldLooseKey("responsibleId");
 	var _responsible = /*#__PURE__*/babelHelpers.classPrivateFieldLooseKey("responsible");
 	var _timeInStatus = /*#__PURE__*/babelHelpers.classPrivateFieldLooseKey("timeInStatus");
+	var _canRead = /*#__PURE__*/babelHelpers.classPrivateFieldLooseKey("canRead");
+	var _getTitleElement = /*#__PURE__*/babelHelpers.classPrivateFieldLooseKey("getTitleElement");
+	var _getSerialElement = /*#__PURE__*/babelHelpers.classPrivateFieldLooseKey("getSerialElement");
+	var _getTitleClass = /*#__PURE__*/babelHelpers.classPrivateFieldLooseKey("getTitleClass");
+	var _openTask = /*#__PURE__*/babelHelpers.classPrivateFieldLooseKey("openTask");
+	var _getSerial = /*#__PURE__*/babelHelpers.classPrivateFieldLooseKey("getSerial");
 	class Line {
 	  constructor(lineData) {
+	    Object.defineProperty(this, _getSerial, {
+	      value: _getSerial2
+	    });
+	    Object.defineProperty(this, _openTask, {
+	      value: _openTask2
+	    });
+	    Object.defineProperty(this, _getTitleClass, {
+	      value: _getTitleClass2
+	    });
+	    Object.defineProperty(this, _getSerialElement, {
+	      value: _getSerialElement2
+	    });
+	    Object.defineProperty(this, _getTitleElement, {
+	      value: _getTitleElement2
+	    });
 	    Object.defineProperty(this, _serial, {
+	      writable: true,
+	      value: void 0
+	    });
+	    Object.defineProperty(this, _title, {
+	      writable: true,
+	      value: void 0
+	    });
+	    Object.defineProperty(this, _url, {
 	      writable: true,
 	      value: void 0
 	    });
@@ -113,30 +146,68 @@ this.BX.Tasks = this.BX.Tasks || {};
 	      writable: true,
 	      value: void 0
 	    });
+	    Object.defineProperty(this, _canRead, {
+	      writable: true,
+	      value: void 0
+	    });
 	    babelHelpers.classPrivateFieldLooseBase(this, _serial)[_serial] = parseInt(lineData.serial, 10);
 	    babelHelpers.classPrivateFieldLooseBase(this, _createdBy)[_createdBy] = parseInt(lineData.createdBy, 10);
 	    babelHelpers.classPrivateFieldLooseBase(this, _creator)[_creator] = new Member(lineData.creator);
 	    babelHelpers.classPrivateFieldLooseBase(this, _responsibleId)[_responsibleId] = parseInt(lineData.responsibleId, 10);
 	    babelHelpers.classPrivateFieldLooseBase(this, _responsible)[_responsible] = new Member(lineData.responsible);
 	    babelHelpers.classPrivateFieldLooseBase(this, _timeInStatus)[_timeInStatus] = lineData.timeInStatus.formatted;
+	    babelHelpers.classPrivateFieldLooseBase(this, _title)[_title] = lineData.title;
+	    babelHelpers.classPrivateFieldLooseBase(this, _url)[_url] = lineData.url;
+	    babelHelpers.classPrivateFieldLooseBase(this, _canRead)[_canRead] = Boolean(lineData.canRead);
 	  }
 	  render() {
 	    return main_core.Tag.render(_t$1 || (_t$1 = _$1`
-			<div class="tasks-flow__task-queue-line">
-				<div class="tasks-flow__task-queue-line_number">${0}</div>
-				<div class="tasks-flow__task-queue-line_avatar">${0}</div>
-				<div class="ui-icon-set --chevron-right" style="--ui-icon-set__icon-size: 18px;"></div>
-				<div class="tasks-flow__task-queue-line_avatar">${0}</div>
-				<div class="tasks-flow__task-queue-line_time" title="${0}">${0}</div>
+			<div class="tasks-flow__task-queue-line-container">
+				<div class="tasks-flow__task-queue-line">
+					${0}
+					${0}
+					<div class="tasks-flow__task-queue-line_time" title="${0}">${0}</div>
+				</div>
+				
+				<div class="tasks-flow__task-queue-line-avatars">
+					<div class="tasks-flow__task-queue-line_avatar">${0}</div>
+					<div class="ui-icon-set --chevron-right" style="--ui-icon-set__icon-size: 14px; color: #A8ADB4"></div>
+					<div class="tasks-flow__task-queue-line_avatar">${0}</div>
+				</div>
 			</div>
-		`), babelHelpers.classPrivateFieldLooseBase(this, _serial)[_serial], babelHelpers.classPrivateFieldLooseBase(this, _creator)[_creator].render(), babelHelpers.classPrivateFieldLooseBase(this, _responsible)[_responsible].render(), babelHelpers.classPrivateFieldLooseBase(this, _timeInStatus)[_timeInStatus], babelHelpers.classPrivateFieldLooseBase(this, _timeInStatus)[_timeInStatus]);
+		`), babelHelpers.classPrivateFieldLooseBase(this, _getSerialElement)[_getSerialElement](), babelHelpers.classPrivateFieldLooseBase(this, _getTitleElement)[_getTitleElement](), babelHelpers.classPrivateFieldLooseBase(this, _timeInStatus)[_timeInStatus], babelHelpers.classPrivateFieldLooseBase(this, _timeInStatus)[_timeInStatus], babelHelpers.classPrivateFieldLooseBase(this, _creator)[_creator].render(), babelHelpers.classPrivateFieldLooseBase(this, _responsible)[_responsible].render());
 	  }
+	}
+	function _getTitleElement2() {
+	  return main_core.Tag.render(_t2$1 || (_t2$1 = _$1`
+			<div class="${0}" onclick="${0}">${0}</div>
+		`), babelHelpers.classPrivateFieldLooseBase(this, _getTitleClass)[_getTitleClass](), babelHelpers.classPrivateFieldLooseBase(this, _openTask)[_openTask].bind(this), main_core.Text.encode(babelHelpers.classPrivateFieldLooseBase(this, _title)[_title]));
+	}
+	function _getSerialElement2() {
+	  return main_core.Tag.render(_t3 || (_t3 = _$1`
+			<div class="tasks-flow__task-queue-line_number">${0}</div>
+		`), babelHelpers.classPrivateFieldLooseBase(this, _getSerial)[_getSerial]());
+	}
+	function _getTitleClass2() {
+	  return babelHelpers.classPrivateFieldLooseBase(this, _canRead)[_canRead] ? 'tasks-flow__task-queue-line_title-access' : 'tasks-flow__task-queue-line_title';
+	}
+	function _openTask2() {
+	  if (!babelHelpers.classPrivateFieldLooseBase(this, _canRead)[_canRead]) {
+	    return;
+	  }
+	  main_sidepanel.SidePanel.Instance.open(babelHelpers.classPrivateFieldLooseBase(this, _url)[_url]);
+	}
+	function _getSerial2() {
+	  if (babelHelpers.classPrivateFieldLooseBase(this, _serial)[_serial] < 10) {
+	    return `0${babelHelpers.classPrivateFieldLooseBase(this, _serial)[_serial]}`;
+	  }
+	  return babelHelpers.classPrivateFieldLooseBase(this, _serial)[_serial];
 	}
 
 	let _$2 = t => t,
 	  _t$2,
-	  _t2$1,
-	  _t3,
+	  _t2$2,
+	  _t3$1,
 	  _t4;
 	var _params = /*#__PURE__*/babelHelpers.classPrivateFieldLooseKey("params");
 	var _flowId = /*#__PURE__*/babelHelpers.classPrivateFieldLooseKey("flowId");
@@ -329,19 +400,25 @@ this.BX.Tasks = this.BX.Tasks || {};
 							<span class="tasks-flow__task-queue-popup_label-text" title="${0}">
 								${0}
 							</span>
-							${0}
 						</span>
+						<div class="tasks-flow__task-queue-popup_status-counter-box">
+							<span class="tasks-flow__task-queue-popup_status" title="${0}">
+								${0}
+							</span>
+							${0}
+						</div>
+							<div class="tasks-flow__task-queue-popup_delimiter"></div>
 						${0}
 					</div>
 				</div>
 			</div>
-		`), main_core.Loc.getMessage(`TASKS_FLOW_TASK_QUEUE_POPUP_LABEL_${babelHelpers.classPrivateFieldLooseBase(this, _type)[_type]}`), main_core.Loc.getMessage(`TASKS_FLOW_TASK_QUEUE_POPUP_LABEL_${babelHelpers.classPrivateFieldLooseBase(this, _type)[_type]}`), babelHelpers.classPrivateFieldLooseBase(this, _renderCounterContainer)[_renderCounterContainer](), babelHelpers.classPrivateFieldLooseBase(this, _renderLines)[_renderLines]());
+		`), main_core.Loc.getMessage(`TASKS_FLOW_TASK_QUEUE_POPUP_LABEL_${babelHelpers.classPrivateFieldLooseBase(this, _type)[_type]}`), main_core.Loc.getMessage(`TASKS_FLOW_TASK_QUEUE_POPUP_LABEL_${babelHelpers.classPrivateFieldLooseBase(this, _type)[_type]}`), main_core.Loc.getMessage(`TASKS_FLOW_TASK_QUEUE_POPUP_STATUS_${babelHelpers.classPrivateFieldLooseBase(this, _type)[_type]}`), main_core.Loc.getMessage(`TASKS_FLOW_TASK_QUEUE_POPUP_STATUS_${babelHelpers.classPrivateFieldLooseBase(this, _type)[_type]}`), babelHelpers.classPrivateFieldLooseBase(this, _renderCounterContainer)[_renderCounterContainer](), babelHelpers.classPrivateFieldLooseBase(this, _renderLines)[_renderLines]());
 	  babelHelpers.classPrivateFieldLooseBase(this, _layout)[_layout].popupContainer = popupContainer;
 	  babelHelpers.classPrivateFieldLooseBase(this, _layout)[_layout].popupContent = popupContent;
 	  return babelHelpers.classPrivateFieldLooseBase(this, _layout)[_layout].popupContainer;
 	}
 	function _renderCounterContainer2() {
-	  babelHelpers.classPrivateFieldLooseBase(this, _layout)[_layout].counterContainer = main_core.Tag.render(_t2$1 || (_t2$1 = _$2`
+	  babelHelpers.classPrivateFieldLooseBase(this, _layout)[_layout].counterContainer = main_core.Tag.render(_t2$2 || (_t2$2 = _$2`
 			<div class="tasks-flow__total-task-counter-container ui-counter">
 					${0}
 			</div>
@@ -350,7 +427,7 @@ this.BX.Tasks = this.BX.Tasks || {};
 	  return babelHelpers.classPrivateFieldLooseBase(this, _layout)[_layout].counterContainer;
 	}
 	function _renderTotalTaskCounter2() {
-	  babelHelpers.classPrivateFieldLooseBase(this, _layout)[_layout].totalTaskCounter = main_core.Tag.render(_t3 || (_t3 = _$2`
+	  babelHelpers.classPrivateFieldLooseBase(this, _layout)[_layout].totalTaskCounter = main_core.Tag.render(_t3$1 || (_t3$1 = _$2`
 			<div class="tasks-flow__total-task-counter ui-counter-inner"></div>
 		`));
 	  return babelHelpers.classPrivateFieldLooseBase(this, _layout)[_layout].totalTaskCounter;
@@ -429,5 +506,5 @@ this.BX.Tasks = this.BX.Tasks || {};
 
 	exports.TaskQueue = TaskQueue;
 
-}((this.BX.Tasks.Flow = this.BX.Tasks.Flow || {}),BX,BX.Main,BX.Tasks,BX));
+}((this.BX.Tasks.Flow = this.BX.Tasks.Flow || {}),BX,BX.Main,BX.Tasks,BX.SidePanel,BX));
 //# sourceMappingURL=task-queue.bundle.js.map

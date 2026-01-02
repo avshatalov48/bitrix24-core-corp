@@ -12,7 +12,10 @@ interface RoleRepository
 	public function getRoleList(): array;
 
 	public function create(string $roleName): AddResult;
+
 	public function delete(int $roleId): DeleteResult;
+
+	public function deleteByIds(array $roleIds): void;
 
 	public function updateName(int $roleId, string $name): UpdateResult;
 

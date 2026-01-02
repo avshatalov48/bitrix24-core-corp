@@ -11,7 +11,15 @@ class DatePeriodCollection implements \IteratorAggregate, Arrayable, \Countable
 	/** @var $items DatePeriod[] */
 	protected array $items = [];
 
-	public function getitems(): array
+	public function __construct(DatePeriod ...$datePeriods)
+	{
+		foreach ($datePeriods as $datePeriod)
+		{
+			$this->items[] = $datePeriod;
+		}
+	}
+
+	public function getItems(): array
 	{
 		return $this->items;
 	}
@@ -42,5 +50,10 @@ class DatePeriodCollection implements \IteratorAggregate, Arrayable, \Countable
 	public function add(DatePeriod $datePeriod): void
 	{
 		$this->items[] = $datePeriod;
+	}
+
+	public function getFirstCollectionItem(): DatePeriod|null
+	{
+		return empty($this->items) ? null : $this->items[0] ?? null;
 	}
 }

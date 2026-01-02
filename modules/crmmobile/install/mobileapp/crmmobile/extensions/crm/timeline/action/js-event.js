@@ -24,6 +24,7 @@ jn.define('crm/timeline/action/js-event', (require, exports, module) => {
 			this.controllers.map((controller) => controller.onItemAction({
 				action: this.value,
 				actionParams: this.actionParams,
+				analyticsEvent: this.source.props.analyticsEvent,
 			}));
 			this.sendAnalytics();
 		}

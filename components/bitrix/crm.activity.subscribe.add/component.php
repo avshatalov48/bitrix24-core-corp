@@ -11,9 +11,11 @@ CModule::IncludeModule('fileman');
 
 global $USER, $APPLICATION;
 
-$CCrmPerms = new CCrmPerms($USER->GetID());
-if ($CCrmPerms->HavePerm($arParams['ENTITY_TYPE'], BX_CRM_PERM_NONE, 'READ'))
+$entityTypeId = CCrmOwnerType::ResolveID((string)$arParams['ENTITY_TYPE']);
+if (!$entityTypeId || !\Bitrix\Crm\Service\Container::getInstance()->getUserPermissions()->entityType()->canReadItems($entityTypeId))
+{
 	return;
+}
 
 CUtil::InitJSCore();
 

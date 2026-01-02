@@ -1,25 +1,4 @@
-#workarea-content {
-	background: #ebf1f4 !important;
-}
-
-.docs-template-wrap-slider {
-	padding: 0 25px;}
-
-.docs-template-pagetitle-inner {
-	display: flex;
-	box-sizing: border-box;
-	align-items: center;
-	-webkit-box-pack: start;
-	justify-content: flex-start;
-	-webkit-box-align: center;
-}
-
-.docs-template-pagetitle-item {
-	margin-right: 20px;
-}
-
 .docs-template-info-message {
-	margin: 12px 0 3px;
 	padding: 14px 20px 14px 19px;
 	border-radius: var(--ui-border-radius-xs, 3px);
 	background-color: #f8f4bc;
@@ -46,7 +25,6 @@
 
 .docs-template-grid {
 	width: 100%;
-	height: 621px;
 }
 
 .docs-template-grid-img {

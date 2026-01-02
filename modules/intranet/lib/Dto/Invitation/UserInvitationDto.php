@@ -16,6 +16,7 @@ class UserInvitationDto
 		public readonly ?Phone $phone = null,
 		public readonly ?Email $email = null,
 		public ?InvitationStatus $invitationStatus = null,
+		public readonly ?string $languageId = null,
 	)
 	{
 	}

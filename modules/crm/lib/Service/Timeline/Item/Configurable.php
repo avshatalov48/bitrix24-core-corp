@@ -2,6 +2,8 @@
 
 namespace Bitrix\Crm\Service\Timeline\Item;
 
+use Bitrix\Crm\Integration\Analytics\Builder\communication\WhatsAppPinUnpinEvent;
+use Bitrix\Crm\Integration\Analytics\Dictionary;
 use Bitrix\Crm\Activity\Entity\ConfigurableRestApp\Dto\ContentBlockDto;
 use Bitrix\Crm\Integration\Intranet\BindingMenu\CodeBuilder;
 use Bitrix\Crm\Integration\Intranet\BindingMenu\SectionCode;
@@ -9,6 +11,7 @@ use Bitrix\Crm\Service\Container;
 use Bitrix\Crm\Service\Timeline\Context;
 use Bitrix\Crm\Service\Timeline\Item;
 use Bitrix\Crm\Service\Timeline\Layout;
+use Bitrix\Crm\Service\Timeline\Layout\Action\Analytics;
 use Bitrix\Crm\Service\Timeline\Layout\Action\Redirect;
 use Bitrix\Crm\Service\Timeline\Layout\Action\RunAjaxAction;
 use Bitrix\Crm\Service\Timeline\Layout\Body\ContentBlock\Note;
@@ -25,6 +28,7 @@ use Bitrix\Main\Localization\Loc;
 use Bitrix\Main\Type\DateTime;
 use Bitrix\Main\Web\Uri;
 use Bitrix\Rest\AppTable;
+use Bitrix\UI\Util;
 
 abstract class Configurable extends Item
 {
@@ -557,21 +561,36 @@ abstract class Configurable extends Item
 		return null;
 	}
 
+	private function prepareAnalyticsEventData():WhatsAppPinUnpinEvent
+	{
+		$entityTypeName = Dictionary::getAnalyticsEntityType($this->getContext()->getEntityTypeId());
+		$section = $entityTypeName . '_section';
+
+		return WhatsAppPinUnpinEvent::createDefault($section);
+	}
 	protected function getUnpinAction(): Layout\Action
 	{
+		$analyticsEvent = $this->prepareAnalyticsEventData();
+		$analyticsEvent->setElement(Dictionary::ELEMENT_WA_NOTE_UNPIN);
+
 		return (new RunAjaxAction('crm.timeline.item.unpin'))
 			->addActionParamInt('id', $this->getModel()->getId())
 			->addActionParamInt('ownerTypeId', $this->getContext()->getEntityTypeId())
 			->addActionParamInt('ownerId', $this->getContext()->getEntityId())
+			->setAnalytics(new Analytics($analyticsEvent->buildData()))
 		;
 	}
 
 	protected function getPinAction(): Layout\Action
 	{
+		$analyticsEvent = $this->prepareAnalyticsEventData();
+		$analyticsEvent->setElement(Dictionary::ELEMENT_WA_NOTE_PIN);
+
 		return (new RunAjaxAction('crm.timeline.item.pin'))
 			->addActionParamInt('id', $this->getModel()->getId())
 			->addActionParamInt('ownerTypeId', $this->getContext()->getEntityTypeId())
 			->addActionParamInt('ownerId', $this->getContext()->getEntityId())
+			->setAnalytics(new Analytics($analyticsEvent->buildData()))
 		;
 	}
 
@@ -683,5 +702,13 @@ abstract class Configurable extends Item
 	protected function canBeReloaded(): bool
 	{
 		return true;
+	}
+
+	final protected function getLinkOnHelp(string $code): ?string
+	{
+		return Loader::includeModule('ui')
+			? Util::getArticleUrlByCode($code)
+			: ''
+		;
 	}
 }

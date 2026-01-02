@@ -7,21 +7,22 @@
  */
 jn.define('im/messenger/controller/dialog/lib/context-manager/context-manager', (require, exports, module) => {
 	const { Type } = require('type');
+	const { AnalyticsEvent } = require('analytics');
 
 	const { AfterScrollMessagePosition } = require('im/messenger/view/dialog');
-	const { EventType, ComponentCode, DialogType, OpenDialogContextType, Analytics } = require('im/messenger/const');
+	const { EventType, ComponentCode, DialogType, OpenDialogContextType, Analytics, NavigationTabByComponent } = require('im/messenger/const');
 	const { Feature } = require('im/messenger/lib/feature');
-	const { LoggerManager } = require('im/messenger/lib/logger');
-	const { MessengerEmitter } = require('im/messenger/lib/emitter');
+	const { getLogger } = require('im/messenger/lib/logger');
 	const { Notification } = require('im/messenger/lib/ui/notification');
 	const { SoftLoader } = require('im/messenger/lib/helper');
-	const { ComponentCodeService } = require('im/messenger/provider/service');
+	const { ComponentCodeService } = require('im/messenger/provider/services/component-code');
 	const { openPlanLimitsWidgetByError, openPlanLimitsWidget } = require('im/messenger/lib/plan-limit');
 	const { DialogHelper } = require('im/messenger/lib/helper');
-	const { AnalyticsEvent } = require('analytics');
+	const { MessengerEmitter } = require('im/messenger/lib/emitter');
+
 	const { serviceLocator } = require('im/messenger/lib/di/service-locator');
 
-	const logger = LoggerManager.getInstance().getLogger('dialog--context-manager');
+	const logger = getLogger('dialog--context-manager');
 
 	/**
 	 * @class ContextManager
@@ -74,22 +75,6 @@ jn.define('im/messenger/controller/dialog/lib/context-manager/context-manager', 
 			}
 
 			this.#logError('messageService is not initialized.');
-
-			return null;
-		}
-
-		/**
-		 * @return {ChatService|null}
-		 */
-		get #chatService()
-		{
-			const chatService = this.#dialogLocator.get('chat-service');
-			if (chatService)
-			{
-				return chatService;
-			}
-
-			this.#logError('chatService is not initialized.');
 
 			return null;
 		}
@@ -161,6 +146,7 @@ jn.define('im/messenger/controller/dialog/lib/context-manager/context-manager', 
 		#bindEvents()
 		{
 			this.#goToMessageContextHandler = this.goToMessageContextInCurrentDialog.bind(this);
+			this.goToMessageContext = this.goToMessageContext.bind(this);
 		}
 
 		#subscribeEvents()
@@ -192,19 +178,10 @@ jn.define('im/messenger/controller/dialog/lib/context-manager/context-manager', 
 			parentMessageId = null,
 			withMessageHighlight = true,
 			targetMessagePosition = AfterScrollMessagePosition.top,
-			showNotificationIfUnsupported = true,
 			showPlanLimitWidget = true,
 			context = OpenDialogContextType.default,
 		})
 		{
-			if (!Feature.isGoToMessageContextSupported && showNotificationIfUnsupported)
-			{
-				Notification.showComingSoon();
-				this.#log('goToMessageContext() method is not supported');
-
-				return;
-			}
-
 			this.#log(`goToMessageContext: dialogId: ${dialogId}, messageId: ${messageId}, parentMessageId: ${parentMessageId}, withMessageHighlight: ${withMessageHighlight}`);
 
 			const messageIdAsNumber = parseInt(messageId, 10);
@@ -294,7 +271,6 @@ jn.define('im/messenger/controller/dialog/lib/context-manager/context-manager', 
 				messageId: this.#getDialogById(this.#dialogId).lastMessageId,
 				withMessageHighlight: false,
 				targetMessagePosition: AfterScrollMessagePosition.bottom,
-				showNotificationIfUnsupported: false,
 				showPlanLimitWidget: false,
 			};
 
@@ -315,13 +291,6 @@ jn.define('im/messenger/controller/dialog/lib/context-manager/context-manager', 
 			if (!Type.isNumber(postMessageId))
 			{
 				throw new TypeError('ContextManager.goToPostMessageContext: postMessageId must be a number value.');
-			}
-
-			if (!Feature.isGoToMessageContextSupported)
-			{
-				Notification.showComingSoon();
-
-				return;
 			}
 
 			if (this.#isMessageRendered(postMessageId))
@@ -347,19 +316,25 @@ jn.define('im/messenger/controller/dialog/lib/context-manager/context-manager', 
 		 * @param {GoToMessageContextByCommentsChatIdEvent} options
 		 */
 		async goToMessageContextByCommentChatId({
+			dialogId,
 			commentChatId,
 			withMessageHighlight = true,
 		})
 		{
-			this.#log(`goToMessageContextByCommentsChatId: commentChatId: ${commentChatId}`);
+			this.#log(`goToMessageContextByCommentsChatId: dialogId: ${dialogId} commentChatId: ${commentChatId}`);
 			if (!Type.isNumber(commentChatId))
 			{
 				throw new TypeError('ContextManager.goToMessageContextByCommentChatId: commentChatId must be a number value.');
 			}
 
-			if (!Feature.isGoToMessageContextSupported)
+			const messageId = await this.#getParentMessageIdByCommentChatId(commentChatId);
+			if (messageId)
 			{
-				Notification.showComingSoon();
+				await this.goToMessageContext({
+					dialogId,
+					messageId,
+					withMessageHighlight: true,
+				});
 
 				return;
 			}
@@ -392,7 +367,36 @@ jn.define('im/messenger/controller/dialog/lib/context-manager/context-manager', 
 			context = OpenDialogContextType.default,
 		)
 		{
-			const componentCode = await this.#getComponentCode(dialogId, messageId, parentMessageId);
+			if (Feature.isMessengerV2Enabled)
+			{
+				serviceLocator.get('dialog-manager').openDialog({
+					dialogId,
+					messageId,
+					withMessageHighlight,
+					context,
+				})
+					.catch((error) => {
+						logger.error(`${this.constructor.name}.#goToAnotherDialogMessageContext error`, error);
+
+						ComponentCodeService.showToastByErrorCode(error[0]?.code);
+					});
+
+				return;
+			}
+			let componentCode = null;
+			try
+			{
+				componentCode = await this.#getComponentCode(dialogId, messageId, parentMessageId);
+			}
+			catch (error)
+			{
+				this.#logError(`goToAnotherDialogMessageContext.getComponentCode catch: ${error[0]?.code}`);
+
+				ComponentCodeService.showToastByErrorCode(error[0]?.code);
+
+				return;
+			}
+
 			this.#log(`#goToAnotherDialogMessageContext: dialogId: ${dialogId}, messageId: ${messageId}, withMessageHighlight: ${withMessageHighlight} componentCode: ${componentCode}`);
 			if (!componentCode)
 			{
@@ -401,13 +405,21 @@ jn.define('im/messenger/controller/dialog/lib/context-manager/context-manager', 
 				return;
 			}
 
-			MessengerEmitter.emit(EventType.messenger.openDialog, {
-				dialogId,
-				messageId,
-				withMessageHighlight,
-				checkComponentCode: false,
-				context,
-			}, componentCode);
+			MessengerEmitter.emit(
+				EventType.navigation.broadCastEventCheckTabPreload,
+				{
+					broadCastEvent: EventType.messenger.openDialog,
+					toTab: NavigationTabByComponent[componentCode],
+					data: {
+						dialogId,
+						messageId,
+						withMessageHighlight,
+						checkComponentCode: false,
+						context,
+					},
+				},
+				ComponentCode.imNavigation,
+			);
 		}
 
 		/**
@@ -593,6 +605,28 @@ jn.define('im/messenger/controller/dialog/lib/context-manager/context-manager', 
 			const dialog = this.#store.getters['dialoguesModel/getById'](dialogId);
 
 			return dialog || {};
+		}
+
+		/**
+		 * @param {number} commentChatId
+		 *
+		 * @return {number|null}
+		 */
+		async #getParentMessageIdByCommentChatId(commentChatId)
+		{
+			const commentInfo = this.#store.getters['commentModel/getCommentInfoByCommentChatId'](commentChatId);
+			if (commentInfo)
+			{
+				return commentInfo.messageId;
+			}
+
+			const databaseCommentInfo = await this.#core.getRepository().comment.getByCommentChatId(commentChatId);
+			if (databaseCommentInfo)
+			{
+				return databaseCommentInfo.parentMessageId;
+			}
+
+			return null;
 		}
 
 		#log(message)

@@ -13,6 +13,7 @@ use Bitrix\Sign\Service;
 class MyB2eReference extends Configuration
 {
 	private ProfileProvider $profileProvider;
+
 	public function __construct(bool $skipSecurity = false)
 	{
 		$this->profileProvider = Service\Container::instance()->getServiceProfileProvider();
@@ -33,7 +34,7 @@ class MyB2eReference extends Configuration
 				new Main\Error(
 					Main\Localization\Loc::getMessage('SIGN_BLANKS_BLOCK_CONFIGURATION_MY_B2E_REFERENCE_ERROR_FIELD_NOT_SELECTED'),
 					'REFERENCE_ERROR_FIELD_NOT_SELECTED',
-				)
+				),
 			);
 		}
 
@@ -60,7 +61,7 @@ class MyB2eReference extends Configuration
 		{
 			$data = array_merge(
 				$data,
-				$fieldValue
+				$fieldValue,
 			);
 		}
 
@@ -102,7 +103,7 @@ class MyB2eReference extends Configuration
 	private function getEntityIdByFieldCode(
 		string $fieldCode,
 		Item\Document $document,
-		Item\Member $member
+		Item\Member $member,
 	): ?int
 	{
 		$entityTypeId = (new CRM\FieldCode($fieldCode))->getEntityTypeId();

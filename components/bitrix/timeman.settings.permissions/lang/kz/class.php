@@ -1,0 +1,26 @@
+<?php
+$MESS["OP_NAME_TM_MANAGE"] = "Жұмыс күнін ашу/жабу";
+$MESS["OP_NAME_TM_MANAGE_ALL"] = "Біреудің жұмыс күнін ашу/жабу";
+$MESS["OP_NAME_TM_READ"] = "Барлық жазбаларды оқу";
+$MESS["OP_NAME_TM_READ_SCHEDULES_ALL"] = "Барлық жұмыс күндерінің тәртібін оқу";
+$MESS["OP_NAME_TM_READ_SHIFT_PLANS_ALL"] = "Барлық жұмыс күндерінің тәртібін оқу";
+$MESS["OP_NAME_TM_READ_SUBORDINATE"] = "Субординация баптауларына сәйкес оқу";
+$MESS["OP_NAME_TM_SETTINGS"] = "Модуль баптауларын өзгерту";
+$MESS["OP_NAME_TM_UPDATE_SCHEDULES_ALL"] = "Барлық жұмыс күндерінің тәртібін редакциялау";
+$MESS["OP_NAME_TM_UPDATE_SHIFT_PLANS_ALL"] = "Барлық жұмыс күн тәртіптерінің кестелерін редакциялау";
+$MESS["OP_NAME_TM_WRITE"] = "Барлық жазбаларды редакциялау";
+$MESS["OP_NAME_TM_WRITE_SUBORDINATE"] = "Субординация баптауларына сәйкес редакциялау";
+$MESS["TASK_NAME_TIMEMAN_DENIED_CONVERTED_EDITABLE"] = "Қолжетімділік жабық";
+$MESS["TASK_NAME_TIMEMAN_FULL_ACCESS_CONVERTED_EDITABLE"] = "Толық қолжетімділік";
+$MESS["TASK_NAME_TIMEMAN_READ_CONVERTED_EDITABLE"] = "Кадрлар бөлімі";
+$MESS["TASK_NAME_TIMEMAN_SUBORDINATE_CONVERTED_EDITABLE"] = "Қызметкер немесе бөлімше басшысы";
+$MESS["TASK_NAME_TIMEMAN_WRITE_CONVERTED_EDITABLE"] = "Басшылық";
+$MESS["TIMEMAN_SETTINGS_PERMS_ADD_ROLE_TITLE"] = "Жаңа рөлді құру";
+$MESS["TIMEMAN_SETTINGS_PERMS_CAN_NOT_EDIT_SYSTEM_TASK"] = "Жүйелік қолжетімділік деңгейлері тек қарауға арналған, оларды редакциялау мүмкін емес.";
+$MESS["TIMEMAN_SETTINGS_PERMS_EDIT_ROLE_NOT_FOUND"] = "Рөл табылмады";
+$MESS["TIMEMAN_SETTINGS_PERMS_EDIT_ROLE_TITLE"] = "#ROLE# рөлін редакциялау";
+$MESS["TIMEMAN_SETTINGS_PERMS_EDIT_SETTINGS"] = "Баптауларды өзгертуге рұқсат ету";
+$MESS["TIMEMAN_SETTINGS_PERMS_MODULE_TIMEMAN_ERROR"] = "\"Жұмыс уақытын есепке алу\" модулі орнатылмаған";
+$MESS["TIMEMAN_SETTINGS_PERMS_PERMISSIONS_ERROR"] = "Қолжетімділік баптауларын өзгертуге құқығыңыз жеткіліксіз";
+$MESS["TIMEMAN_SETTINGS_PERMS_TITLE"] = "Қолжетімділік құқығын баптау";
+$MESS["TIMEMAN_SETTINGS_PERMS_UNKNOWN_ACCESS_CODE"] = "(танылмаған қолжетімділік идентификаторы)";

@@ -298,6 +298,9 @@ foreach ($arParams['DOCS_BINDINGS'] as $item)
 		$fromValue = $activity['__parent']['SETTINGS']['EMAIL_META']['__email'];
 	}
 
+	$ownerTypeId = (int)$activity['OWNER_TYPE_ID'];
+	$ownerId = (int)$activity['OWNER_ID'];
+
 	$APPLICATION->includeComponent(
 		'bitrix:main.mail.form', '',
 		array(
@@ -310,7 +313,9 @@ foreach ($arParams['DOCS_BINDINGS'] as $item)
 			'USE_SIGNATURES' => true,
 			'USE_CALENDAR_SHARING' => true,
 			'COPILOT_PARAMS' => $arParams['COPILOT_PARAMS'],
-			'SELECTED_RECIPIENTS_JSON' => Message::getSelectedRecipientsForDialog($activity['COMMUNICATIONS'], $activity['INITIAL_OWNER_TYPE'], $activity['INITIAL_OWNER_ID'], true)->toJsObject(),
+			'OWNER_TYPE_ID' => $ownerTypeId,
+			'OWNER_ID' => $ownerId,
+			'SELECTED_RECIPIENTS_JSON' => Message::getSelectedRecipientsForDialog($activity['COMMUNICATIONS'], $activity['INITIAL_OWNER_TYPE'], (int) $activity['INITIAL_OWNER_ID'], true)->toJsObject(),
 			'FIELDS' => array(
 				array(
 					'name'     => 'DATA[from]',

@@ -5,6 +5,9 @@
 	const require = (ext) => jn.require(ext);
 
 	const AppTheme = require('apptheme');
+	const { reflectFunction } = require('utils/function');
+	const { BaseListSearchDelegate } = require('list/search');
+
 	/**
 	 * @typedef {string} RecipientDataSet {{GROUPS: string, USERS: string, DEPARTMENTS: string}}
 	 * @enum {RecipientDataSet}

@@ -6,7 +6,6 @@ if (!defined('B_PROLOG_INCLUDED') || B_PROLOG_INCLUDED !== true)
 }
 
 return [
-	'css' => 'dist/main-page-service.bundle.css',
 	'js' => 'dist/main-page-service.bundle.js',
 	'rel' => [
 		'main.polyfill.core',
@@ -18,6 +17,7 @@ return [
 		'booking.provider.service.client-service',
 		'booking.provider.service.resources-service',
 		'booking.provider.service.resources-type-service',
+		'booking.provider.service.wait-list-service',
 	],
 	'skip_core' => true,
 ];

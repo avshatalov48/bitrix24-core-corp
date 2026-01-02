@@ -16,9 +16,11 @@ jn.define('tasks/flow-list/simple-list/items/flow-redux/src/flow-similar-content
 			return `flow-similar-content-${this.props.id}`;
 		}
 
-		openFlowTasksListButtonClickHandler = () => {};
+		toShowHeaderToolbar = () => {
+			return false;
+		};
 
-		cardClickHandler = () => {};
+		openFlowTasksListButtonClickHandler = () => {};
 	}
 
 	module.exports = {

@@ -3,9 +3,9 @@ namespace Bitrix\Crm\Activity\Provider;
 
 use Bitrix\Crm\Activity\Provider\ToDo\ToDo;
 use Bitrix\Crm\Badge\SourceIdentifier;
+use Bitrix\Crm\Feature;
 use Bitrix\Crm\ItemIdentifier;
 use Bitrix\Crm\Service\Container;
-use Bitrix\Crm\Service\Timeline\Monitor;
 use Bitrix\Crm\Settings;
 use Bitrix\Main\Localization\Loc;
 use Bitrix\Main\ORM\Query;
@@ -71,7 +71,8 @@ class ProviderManager
 			CalendarSharing::getId() => CalendarSharing::className(),
 			Tasks\Comment::getId() => Tasks\Comment::class,
 			Tasks\Task::getId() => Tasks\Task::class,
-			Booking::getId() => Booking::class,
+			Booking\Booking::getId() => Booking\Booking::class,
+			Booking\WaitListItem::getId() => Booking\WaitListItem::class,
 			Bizproc\Workflow::getId() => Bizproc\Workflow::class,
 			Bizproc\Comment::getId() => Bizproc\Comment::class,
 			Bizproc\Task::getId() => Bizproc\Task::class,
@@ -90,6 +91,11 @@ class ProviderManager
 		if (!$checkAvailable || Zoom::isAvailable())
 		{
 			$providersList[Zoom::getId()] = Zoom::className();
+		}
+
+		if (Feature::enabled(Feature\RepeatSale::class))
+		{
+			$providersList[RepeatSale::getId()] = RepeatSale::className();
 		}
 
 		return array_merge($providersList, self::anotherProviders());
@@ -250,12 +256,6 @@ class ProviderManager
 		}
 
 		$provider::syncBadges($activityId, $activityFields, $bindingsFiltered);
-		foreach ($bindingsFiltered as $singleBinding)
-		{
-			Monitor::getInstance()->onBadgesSync(
-				new ItemIdentifier((int)$singleBinding['OWNER_TYPE_ID'], (int)$singleBinding['OWNER_ID'])
-			);
-		}
 	}
 
 	final public static function syncBadgesOnBindingsChange(

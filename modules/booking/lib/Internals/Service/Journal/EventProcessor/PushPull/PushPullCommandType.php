@@ -24,6 +24,13 @@ enum PushPullCommandType: string implements \JsonSerializable
 
 	case CountersUpdated = 'countersUpdated';
 
+	case WaitListItemAdded = 'waitListItemAdded';
+	case WaitListItemUpdated = 'waitListItemUpdated';
+	case WaitListItemDeleted = 'waitListItemDeleted';
+	case WaitListItemClientUpdated = 'waitListItemClientUpdated';
+
+	case MessageSent = 'messageSent';
+
 	public function jsonSerialize(): array
 	{
 		return [

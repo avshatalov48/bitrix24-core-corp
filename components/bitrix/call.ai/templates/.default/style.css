@@ -4,9 +4,12 @@
 	--call-component-call-ai__light-title-color: var(--ui-color-palette-gray-02, #f8fafB);
 	--call-component-call-ai__gray-text-color: var(--ui-color-palette-black-base, #333333);
 	--call-component-call-ai__light-gray-text-color: var(--ui-color-palette-gray-90, #525C69);
+	--call-component-call-ai__middle-gray-text-color: #555555;
+	--call-component-call-ai__ligth-gray-color: #909090;
 	--call-component-call-ai__primary-text-color: var(--ui-color-palette-blue-60, #11A9D9);
 	--call-component-call-ai__link-color: var(--ui-color-link-primary-base, #2066B0);
 	--call-component-call-ai__copilot-color: var(--ui-color-copilot-primary, #8E52EC);
+	--call-component-call-ai__time-code-color: #1F86FF;
 
 	--call-component-call-ai__light-background: var(--ui-color-palette-white-base, #ffffff);
 	--call-component-call-ai__light-background-rgb: var(--ui-color-palette-white-base-rgb, rgb(255, 255, 255));
@@ -25,13 +28,30 @@
 	--call-component-call-ai__disclaimer-color: #B6AAC8;
 
 	--call-component-call-ai__slider-bg: #9074E1;
+	--call-component-call-ai__slider-bg-new: #8B44FF;
+
+	--call-component-call-ai__success-icon-color: #1BCE7B;
+	--call-component-call-ai__failure-icon-color: var(--ui-color-palette-red-50, #FF5752);
+
+	--call-component-call-ai__recommendations-result-color-rgb: 31, 134, 255;
+	--call-component-call-ai__recommendations-task-color-rgb: 27, 206, 123;
+	--call-component-call-ai__recommendations-meetings-color-rgb: 177, 94, 245;
+
+	--call-component-call-ai__resume-block-border: var(--ui-color-palette-gray-20, #DFE0E3)
 }
+
 .bx-call-mention {
 	display: inline-block;
 	color: var(--call-component-call-ai__mention-color);
 	border-bottom: 1px dotted var(--call-component-call-ai__mention-color);
 	cursor: pointer;
 }
+
+.bx-call-component-call-ai__resume-title > .bx-call-mention {
+	color: inherit !important;
+	border-bottom: 1px dotted var(--call-component-call-ai__light-text-color) !important;
+}
+
 .ui-page-slider-wrapper.bx-call-component-call-ai-page {
 	height: 100% !important;
 	background: url('images/copilot-slider-bg.png') fixed 100% 0 no-repeat !important;
@@ -513,6 +533,12 @@
 .bx-call-component-call-ai-decryption-block__name {
 	font: var(--ui-font-size-md, 14px)/var(--ui-font-line-height-lg, 22px) var(--ui-font-family-primary);
 	font-weight: var(--ui-font-weight-medium, 500);
+	color: var(--call-component-call-ai__light-gray-text-color);
+}
+
+.bx-call-component-call-ai-resume-block__header {
+	font: var(--ui-font-size-md, 14px)/var(--ui-font-line-height-lg, 22px) var(--ui-font-family-primary);
+	font-weight: var(--ui-font-weight-bold, 700);
 	color: var(--call-component-call-ai__light-gray-text-color);
 }
 

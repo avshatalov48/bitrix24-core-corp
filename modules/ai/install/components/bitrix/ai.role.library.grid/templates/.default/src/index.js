@@ -129,7 +129,6 @@ export class Controller
 					id: role.code,
 					text: role.instruction,
 					name: role.nameTranslate,
-					avatar: role.avatar,
 					avatarUrl: role.avatarUrl,
 					itemsWithAccess: role.accessCodes,
 					authorId: role.authorId,

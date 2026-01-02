@@ -10,8 +10,19 @@ import { BatteryIcon, BATTERY_ICON_HEIGHT, BATTERY_ICON_WIDTH } from './battery-
 import { WorkloadPopup } from './workload-popup/workload-popup';
 import './resource-workload.css';
 
+type BookingDuration = {
+	dateFromTs: number,
+	dateToTs: number,
+	duration: number,
+};
+
+// @vue/component
 export const ResourceWorkload = {
 	name: 'ResourceWorkload',
+	components: {
+		BatteryIcon,
+		WorkloadPopup,
+	},
 	props: {
 		resourceId: {
 			type: Number,
@@ -45,11 +56,16 @@ export const ResourceWorkload = {
 				return 0;
 			}
 
-			return Math.round(this.bookingCount / this.slotsCount * 100);
+			const slotsDuration = this.slotSize * this.slotsCount;
+			const percent = this.bookings.reduce((acc, booking: BookingDuration) => {
+				return acc + booking.duration * 100 / slotsDuration;
+			}, 0);
+
+			return Math.round(percent);
 		},
-		bookingCount(): number
+		slotSize(): number
 		{
-			return this.bookings.length;
+			return this.resource.slotRanges[0].slotSize ?? 60;
 		},
 		slotsCount(): number
 		{
@@ -61,17 +77,28 @@ export const ResourceWorkload = {
 				}),
 			);
 
-			const slotSize = this.resource.slotRanges[0].slotSize ?? 60;
-
 			return Math.floor(slotRanges.reduce((sum, slotRange) => {
-				return sum + (slotRange.to - slotRange.from) / slotSize;
+				return sum + Math.round((slotRange.to - slotRange.from) / this.slotSize);
 			}, 0));
 		},
-		bookings(): BookingModel[]
+		bookings(): BookingDuration[]
 		{
 			const dateTs = this.selectedDateTs;
 
-			return this.$store.getters[`${Model.Bookings}/getByDateAndResources`](dateTs, [this.resourceId]);
+			return this.$store.getters[`${Model.Bookings}/getByDateAndResources`](dateTs, [this.resourceId])
+				.map((booking: BookingModel) => {
+					return {
+						dateFromTs: booking.dateFromTs,
+						dateToTs: booking.dateToTs,
+						duration: (booking.dateToTs - booking.dateFromTs) / 60000,
+					};
+				});
+		},
+		bookingsDuration(): number
+		{
+			return this.bookings.reduce((acc, booking: BookingDuration) => {
+				return acc + booking.duration;
+			}, 0);
 		},
 		resource(): ResourceModel
 		{
@@ -87,6 +114,15 @@ export const ResourceWorkload = {
 		bookingsCount(): number
 		{
 			return this.bookings.length;
+		},
+	},
+	watch: {
+		bookingsCount(newCount: number, previousCount: number): void
+		{
+			if (this.isGrid && newCount > previousCount && ahaMoments.shouldShow(AhaMoment.ResourceWorkload))
+			{
+				void this.showAhaMoment();
+			}
 		},
 	},
 	methods: {
@@ -121,19 +157,6 @@ export const ResourceWorkload = {
 			ahaMoments.setShown(AhaMoment.ResourceWorkload);
 		},
 	},
-	watch: {
-		bookingsCount(newCount: number, previousCount: number): void
-		{
-			if (this.isGrid && newCount > previousCount && ahaMoments.shouldShow(AhaMoment.ResourceWorkload))
-			{
-				void this.showAhaMoment();
-			}
-		},
-	},
-	components: {
-		BatteryIcon,
-		WorkloadPopup,
-	},
 	template: `
 		<div
 			class="booking-booking-header-resource-workload"
@@ -144,7 +167,7 @@ export const ResourceWorkload = {
 			@mouseenter="onMouseEnter"
 			@mouseleave="onMouseLeave"
 		>
-			<BatteryIcon 
+			<BatteryIcon
 				:percent="workLoadPercent"
 				:data-id="resourceId"
 				:height="batteryIconOptions.height"
@@ -155,7 +178,7 @@ export const ResourceWorkload = {
 			v-if="isPopupShown"
 			:resourceId="resourceId"
 			:slotsCount="slotsCount"
-			:bookingCount="bookingCount"
+			:bookingCount="Math.ceil(bookingsDuration / slotSize)"
 			:workLoadPercent="workLoadPercent"
 			:bindElement="$refs.container"
 			@close="closePopup"

@@ -1,26 +1,24 @@
 <?php
 
-namespace Bitrix\Timeman\Integration\Stafftrack;
+namespace Bitrix\Timeman\Integration\StaffTrack;
 
 use Bitrix\Main\Loader;
-use Bitrix\Stafftrack\Feature;
+use Bitrix\StaffTrack\Feature;
 
 class CheckIn
 {
-	static ?bool $isCheckInEnabled = null;
-
 	public static function isEnabled(): bool
 	{
-		if (isset(self::$isCheckInEnabled))
+		if (!Loader::includeModule('stafftrack'))
 		{
-			return self::$isCheckInEnabled;
+			return false;
 		}
 
-		self::$isCheckInEnabled = Loader::includeModule('stafftrack')
-			&& Feature::isCheckInEnabled()
-			&& Feature::isCheckInEnabledBySettings()
-		;
+		return Feature::isCheckInEnabled() && Feature::isCheckInEnabledBySettings();
+	}
 
-		return self::$isCheckInEnabled;
+	public static function isCheckInStartEnabled(): bool
+	{
+		return self::isEnabled() && Feature::isCheckInStartEnabled();
 	}
 }

@@ -20,6 +20,7 @@ class FieldDto
 		public readonly ?string $groupKey = null,
 		public readonly ?string $groupConcat = null,
 		public readonly ?string $groupCount = null,
+		public readonly ?bool $isValueSplitable = null,
 	)
 	{
 		$this->type = $this->mapType($type);
@@ -62,6 +63,7 @@ class FieldDto
 			'GROUP_KEY' => $this->groupKey,
 			'GROUP_CONCAT' => $this->groupConcat,
 			'GROUP_COUNT' => $this->groupCount,
+			'IS_VALUE_SPLITABLE' => $this->isValueSplitable,
 		];
 	}
 }

@@ -42,16 +42,7 @@ class RpaFeedbackComponent extends \Bitrix\Rpa\Components\Base
 
 		$b24Manager = \Bitrix\Rpa\Driver::getInstance()->getBitrix24Manager();
 
-		$this->arResult = $b24Manager->getFeedbackFormInfo();
-		$this->arResult['type'] = 'slider_inline';
-		$this->arResult['fields']['values']['CONTACT_EMAIL'] = CurrentUser::get()->getEmail();
-		$this->arResult['presets'] = [
-			'from_domain' => defined('BX24_HOST_NAME') ? BX24_HOST_NAME : Option::get('main', 'server_name', ''),
-			'b24_plan' => $b24Manager->getLicenseType(),
-			'b24_zone' => $b24Manager->getPortalZone(),
-			'c_name' => CurrentUser::get()->getFullName(),
-			'sender_page' => $this->arParams['context'] ?? 'panel',
-		];
+		$this->arResult['forms'] = $b24Manager->getFeedbackFormInfo();
 
 		$this->getApplication()->setTitle(Loc::getMessage('RPA_FEEDBACK_TITLE'));
 		$this->includeComponentTemplate();

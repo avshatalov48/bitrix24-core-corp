@@ -36,7 +36,7 @@ class call extends \CModule
 
 		$APPLICATION->includeAdminFile(
 			Loc::getMessage('CALL_INSTALL_TITLE'),
-			$_SERVER['DOCUMENT_ROOT'].'/bitrix/modules/'.$this->MODULE_ID.'/install/step1.php'
+			$_SERVER['DOCUMENT_ROOT'].'/bitrix/modules/call/install/step1.php'
 		);
 	}
 
@@ -59,7 +59,7 @@ class call extends \CModule
 			return false;
 		}
 
-		\Bitrix\Main\ModuleManager::registerModule($this->MODULE_ID);
+		\Bitrix\Main\ModuleManager::registerModule('call');
 
 		$eventManager = \Bitrix\Main\EventManager::getInstance();
 
@@ -122,6 +122,15 @@ class call extends \CModule
 			'onCallFinished'
 		);
 
+		/** @see \Bitrix\Call\EventHandler::onCallFinished */
+		$eventManager->registerEventHandler(
+			'call',
+			'onCallFinished',
+			'call',
+			'\Bitrix\Call\EventHandler',
+			'onCallFinished'
+		);
+
 		/** @see \Bitrix\Call\EventHandler::onChatUserLeave */
 		$eventManager->registerEventHandler(
 			'im',
@@ -129,6 +138,15 @@ class call extends \CModule
 			'call',
 			'\Bitrix\Call\EventHandler',
 			'onChatUserLeave'
+		);
+
+		/** @see \Bitrix\Call\EventHandler::onChatUserAdd */
+		$eventManager->registerEventHandler(
+			'im',
+			'OnChatUserAdd',
+			'call',
+			'\Bitrix\Call\EventHandler',
+			'onChatUserAdd'
 		);
 
 		/** @see \Bitrix\Call\Integration\AI\CallAIService::finishTasks */
@@ -140,6 +158,39 @@ class call extends \CModule
 			'',
 			'Y',
 			\ConvertTimeStamp(time()+\CTimeZone::GetOffset() + rand(4320, 86400), 'FULL')
+		);
+
+		/** @see \Bitrix\Call\Call::finishOldCallsAgent */
+		\CAgent::AddAgent(
+			'Bitrix\Call\Call::finishOldCallsAgent();',
+			'call',
+			'N',
+			3600,
+			'',
+			'Y',
+			\ConvertTimeStamp(time()+\CTimeZone::GetOffset() + rand(4320, 86400), 'FULL')
+		);
+
+		/** @see \Bitrix\Call\JwtCall::registerPortalAgent() */
+		\CAgent::AddAgent(
+			'Bitrix\Call\JwtCall::registerPortalAgent();',
+			'call',
+			'N',
+			300,
+			'',
+			'Y',
+			\ConvertTimeStamp(time()+\CTimeZone::GetOffset() + rand(100, 500), 'FULL')
+		);
+
+		/** @see \Bitrix\Call\Integration\Im\CallFollowupBot::delayRegister */
+		\CAgent::AddAgent(
+			'Bitrix\Call\Integration\Im\CallFollowupBot::delayRegister();',
+			'call',
+			'N',
+			100,
+			'',
+			'Y',
+			\ConvertTimeStamp(time() + \CTimeZone::GetOffset() + \rand(600, 900), 'FULL')
 		);
 
 		return true;
@@ -173,7 +224,7 @@ class call extends \CModule
 		{
 			$APPLICATION->includeAdminFile(
 				Loc::getMessage('CALL_UNINSTALL_TITLE'),
-				$_SERVER['DOCUMENT_ROOT'].'/bitrix/modules/'.$this->MODULE_ID.'/install/unstep1.php'
+				$_SERVER['DOCUMENT_ROOT'].'/bitrix/modules/call/install/unstep1.php'
 			);
 		}
 		elseif ($step == 2)
@@ -183,7 +234,7 @@ class call extends \CModule
 
 			$APPLICATION->includeAdminFile(
 				Loc::getMessage('CALL_UNINSTALL_TITLE'),
-				$_SERVER['DOCUMENT_ROOT'].'/bitrix/modules/'.$this->MODULE_ID.'/install/unstep2.php'
+				$_SERVER['DOCUMENT_ROOT'].'/bitrix/modules/call/install/unstep2.php'
 			);
 		}
 	}
@@ -191,6 +242,16 @@ class call extends \CModule
 	public function unInstallDB(bool $saveData = true)
 	{
 		global $APPLICATION, $DB;
+
+		if (\Bitrix\Main\Loader::includeModule('call'))
+		{
+			if (\Bitrix\Call\Settings::isNewCallsEnabled())
+			{
+				\Bitrix\Call\JwtCall::unregisterPortal();
+			}
+
+			\Bitrix\Call\Integration\Im\CallFollowupBot::unRegister();
+		}
 
 		$connection = \Bitrix\Main\Application::getConnection();
 		$errors = [];
@@ -221,8 +282,19 @@ class call extends \CModule
 
 		\CAgent::RemoveModuleAgents('call');
 
-		\Bitrix\Main\ModuleManager::unRegisterModule($this->MODULE_ID);
+		\CAdminNotify::DeleteByTag('call_registration');/** @see \Bitrix\Call\NotifyService::ADMIN_NOTIFICATION_TAG */
+
+		\Bitrix\Main\ModuleManager::unRegisterModule('call');
 
 		return true;
+	}
+
+	/**
+	 * Uninstall files.
+	 * @return bool
+	 */
+	public function uninstallFiles()
+	{
+		\DeleteDirFilesEx('/bitrix/js/call/');
 	}
 }

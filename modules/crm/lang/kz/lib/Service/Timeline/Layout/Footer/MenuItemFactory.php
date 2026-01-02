@@ -1,0 +1,5 @@
+<?php
+$MESS["CRM_TIMELINE_MENU_CANCEL"] = "Болдырмау";
+$MESS["CRM_TIMELINE_MENU_DELETE"] = "Жою";
+$MESS["CRM_TIMELINE_MENU_EDIT"] = "Өзгерту";
+$MESS["CRM_TIMELINE_MENU_VIEW"] = "Қарау";

@@ -2,8 +2,11 @@
 
 namespace Bitrix\Crm\Service\Timeline\Layout\Body\ContentBlock;
 
+use Bitrix\Crm\Integration\Analytics\Builder\communication\WhatsAppDeleteEvent;
+use Bitrix\Crm\Integration\Analytics\Dictionary;
 use Bitrix\Crm\Service\Timeline\Context;
 use Bitrix\Crm\Service\Timeline\Layout;
+use Bitrix\Crm\Service\Timeline\Layout\Action\Analytics;
 use Bitrix\Crm\Service\Timeline\Layout\Action\RunAjaxAction;
 use Bitrix\Crm\Service\Timeline\Layout\Body\ContentBlock;
 use Bitrix\Main\Localization\Loc;
@@ -62,12 +65,32 @@ class Note extends ContentBlock
 		];
 	}
 
+	private function prepareAnalyticsData(): WhatsAppDeleteEvent
+	{
+		$entityTypeName = Dictionary::getAnalyticsEntityType($this->context->getEntityTypeId());
+		$section = $entityTypeName . '_section';
+
+		return WhatsAppDeleteEvent::createDefault($section);
+	}
+
 	private function buildSaveAction(): RunAjaxAction {
-		return $this->buildAction('crm.timeline.note.save');
+		$analyticsEvent = $this->prepareAnalyticsData()
+			->setEvent(Dictionary::EVENT_WA_TIMELINE)
+			->setType(Dictionary::TYPE_WA_ACTIVITY_CREATE)
+			->setElement(Dictionary::ELEMENT_WA_NOTE);
+
+		return $this->buildAction('crm.timeline.note.save')
+			->setAnalytics(new Analytics($analyticsEvent->buildData()));
 	}
 
 	private function buildDeleteAction(): RunAjaxAction {
-		return $this->buildAction('crm.timeline.note.delete');
+		$analyticsEvent = $this->prepareAnalyticsData()
+			->setEvent(Dictionary::EVENT_WA_DELETE)
+			->setType(Dictionary::TYPE_WA_ACTIVITY_DELETE)
+			->setElement(Dictionary::ELEMENT_WA_NOTE_DELETE);
+
+		return $this->buildAction('crm.timeline.note.delete')
+			->setAnalytics(new Analytics($analyticsEvent->buildData()));
 	}
 
 	private function buildAction(string  $action): RunAjaxAction {

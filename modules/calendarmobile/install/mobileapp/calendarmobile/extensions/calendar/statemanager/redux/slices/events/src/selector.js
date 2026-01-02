@@ -14,36 +14,6 @@ jn.define('calendar/statemanager/redux/slices/events/selector', (require, export
 		selectById,
 	} = eventsAdapter.getSelectors((state) => state[sliceName]);
 
-	// eslint-disable-next-line sonarjs/cognitive-complexity
-	const sorted = (events) => events.sort((a, b) => {
-		if (a.isFullDay !== b.isFullDay)
-		{
-			return a.isFullDay ? -1 : 1;
-		}
-
-		if (a.isFullDay && b.isFullDay)
-		{
-			if (a.dateFromTs === b.dateFromTs)
-			{
-				return a.id - b.id;
-			}
-
-			return a.dateFromTs - b.dateFromTs;
-		}
-
-		if (a.dateFromTs === b.dateFromTs)
-		{
-			if (a.dateToTs === b.dateToTs)
-			{
-				return a.id - b.id;
-			}
-
-			return a.dateToTs - b.dateToTs;
-		}
-
-		return a.dateFromTs - b.dateFromTs;
-	});
-
 	const selectByIdAndDate = createDraftSafeSelector(
 		(state) => state,
 		(state, { eventId }) => selectById(state, eventId),
@@ -92,9 +62,7 @@ jn.define('calendar/statemanager/redux/slices/events/selector', (require, export
 	const selectByIds = createDraftSafeSelector(
 		(state, { parseRecursion }) => (parseRecursion ? selectAllParsed(state, getWholeLifeLimits()) : selectAll(state)),
 		(state, { ids }) => ids,
-		(allEvents, ids) => sorted(
-			allEvents.filter((event) => ids.includes(event.id)),
-		),
+		(allEvents, ids) => allEvents.filter((event) => ids.includes(event.id)),
 	);
 
 	const selectByDate = createDraftSafeSelector(
@@ -103,17 +71,15 @@ jn.define('calendar/statemanager/redux/slices/events/selector', (require, export
 		(state, { date }) => getDateLimits(date).toLimit,
 		(state, { sectionIds }) => sectionIds,
 		(state, { showDeclined }) => showDeclined,
-		(allEvents, fromLimit, toLimit, sectionIds, showDeclined) => sorted(
-			allEvents
-				.filter((event) => event.dateToTs > fromLimit
-					&& event.dateFromTs < toLimit
-					&& (
-						showDeclined
-						|| event.meetingStatus !== EventMeetingStatus.DECLINED
-					)
-					&& sectionIds.includes(event.sectionId))
-			,
-		),
+		(allEvents, fromLimit, toLimit, sectionIds, showDeclined) => allEvents
+			.filter((event) => event.dateToTs > fromLimit
+				&& event.dateFromTs < toLimit
+				&& (
+					showDeclined
+					|| event.meetingStatus !== EventMeetingStatus.DECLINED
+				)
+				&& sectionIds.includes(event.sectionId))
+		,
 	);
 
 	const selectByMonth = createDraftSafeSelector(

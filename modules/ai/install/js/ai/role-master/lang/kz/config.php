@@ -1,0 +1,27 @@
+<?php
+$MESS["ROLE_MASTER_ABOUT_ROLE_MASTER_LINK"] = "Толығырақ";
+$MESS["ROLE_MASTER_BACK_TO_EDITOR_BTN"] = "Редакторға оралу";
+$MESS["ROLE_MASTER_CLOSE_BTN"] = "Жабу";
+$MESS["ROLE_MASTER_EDIT_WARNING_TEXT"] = "Рөл оны қолданатындардың барлығында өзгереді";
+$MESS["ROLE_MASTER_FILE_DROPAREA_TEXT"] = "Файлдарды осы аймаққа жылжытыңыз";
+$MESS["ROLE_MASTER_LOADER_TEXT"] = "Рөлді сақтау";
+$MESS["ROLE_MASTER_NEXT_BUTTON"] = "Жалғастыру";
+$MESS["ROLE_MASTER_POPUP_TITLE"] = "Жаңа рөл";
+$MESS["ROLE_MASTER_POPUP_TITLE_EDIT_MODE"] = "Рөлді редакциялау";
+$MESS["ROLE_MASTER_PREV_BUTTON"] = "Артқа";
+$MESS["ROLE_MASTER_REPEAT_REQUEST_BTN"] = "Қайталап көру";
+$MESS["ROLE_MASTER_ROLE_AVATAR_AND_NAME_FIELD"] = "Атауы және белгішесі";
+$MESS["ROLE_MASTER_ROLE_AVATAR_AND_NAME_FIELD_PLACEHOLDER"] = "70 таңбаға дейін";
+$MESS["ROLE_MASTER_ROLE_DESCRIPTION_FIELD"] = "Сипаты";
+$MESS["ROLE_MASTER_ROLE_DESCRIPTION_FIELD_HINT"] = "«Сипатты» өрісіне арналған кеңес";
+$MESS["ROLE_MASTER_ROLE_DESCRIPTION_FIELD_PLACEHOLDER"] = "Мен деректердің үлкен көлемін талдауға, тұжырымдаманы жақсартуға, жобаға түсіндірме жазба жазуға көмектесемін";
+$MESS["ROLE_MASTER_ROLE_MAIN_STEP_TITLE"] = "Атауы және қолжетімділігі";
+$MESS["ROLE_MASTER_ROLE_TEXT_FIELD_PLACEHOLDER"] = "Рөліңіз үшін осы жерге промпт мәтінін жазыңыз. Мысалы, сіз Сәулетші рөлін қосасыз.Үлгі мәтін: Тәжірибелі сәулетші ретінде әрекет етіңіз. Сіздің міндетіңіз – маған деректерді, соның ішінде климаттық және географиялық сипаттамаларды талдауға көмектесу";
+$MESS["ROLE_MASTER_ROLE_TEXT_STEP_TITLE"] = "Рөл үшін промпт қосыңыз";
+$MESS["ROLE_MASTER_ROLE_TEXT_STEP_TITLE_HINT"] = "Рөлді орнатыңыз, міндетті жасаңыз және не нәрсеге баса назар аудару керектігін жазыңыз";
+$MESS["ROLE_MASTER_ROLE_USERS_WITH_ACCESS_FIELD"] = "Кімге қолжетімді";
+$MESS["ROLE_MASTER_SAVE_BUTTON"] = "Сақтау";
+$MESS["ROLE_MASTER_SAVE_PROMPT_ON_ERROR_SHORT_TEXT"] = "Рөлді сақтау мүмкін болмады";
+$MESS["ROLE_MASTER_SAVE_PROMPT_ON_ERROR_TEXT"] = "Егер жағдай қайталанса, промпт мәтінін көшіру және оны жоғалтпау үшін редакторға оралыңыз";
+$MESS["ROLE_MASTER_SAVING_DONE"] = "Дайын";
+$MESS["ROLE_MASTER_USER_SELECTOR_ADD_BTN"] = "Өзгерту";

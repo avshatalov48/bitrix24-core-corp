@@ -26,6 +26,12 @@ class DealStageHistory
 		$result = &$params[1];
 		$languageId = $params[2];
 
+		$eventTableName = $params[3];
+		if (!empty($eventTableName) && $eventTableName !== 'crm_deal_stage_history')
+		{
+			return;
+		}
+
 		$connection = $manager->getDatabaseConnection();
 		$helper = $connection->getSqlHelper();
 

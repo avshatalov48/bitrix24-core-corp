@@ -37,6 +37,7 @@ Extension::load([
 	'ui.design-tokens',
 	'ui.fonts.opensans',
 	'ui.analytics',
+	'ui.navigationpanel',
 ]);
 
 Extension::load('date');
@@ -68,7 +69,7 @@ $viewName = $this->getComponent()->getTemplatePage();
 
 $messages = Loc::loadLanguageFile(__FILE__);
 
-$isBitrix24Template = (SITE_TEMPLATE_ID === 'bitrix24');
+$isBitrix24Template = (SITE_TEMPLATE_ID === 'bitrix24' || SITE_TEMPLATE_ID === 'air');
 
 /** @var Filter $filterInstance */
 $filterInstance = $arResult['filterInstance'];
@@ -185,6 +186,7 @@ $APPLICATION->includeComponent(
 		'USER_ID' => $arParams['USER_ID'] ?? null,
 		'GROUP_ID' => $arParams['GROUP_ID'] ?? null,
 		'SPRINT_ID' => ($arResult['completedSprintId'] ?? -1),
+		'ACTIVE_SPRINT_ID' => (int)($arResult['activeSprintId'] ?? 0),
 		'MENU_GROUP_ID' => $arParams['GROUP_ID'] ?? null,
 		'PATH_TO_USER_TASKS_TEMPLATES' => $arParams['PATH_TO_USER_TASKS_TEMPLATES'] ?? null,
 		'PATH_TO_GROUP_TASKS_TASK' => $arParams['PATH_TO_GROUP_TASKS_TASK'] ?? null,
@@ -207,8 +209,8 @@ if ($isBitrix24Template)
 }
 ?>
 
-	<div class="task-interface-toolbar">
-		<div id="tasks-scrum-switcher" class="task-interface-toolbar--item --visible"></div>
+	<div class="ui-actions-bar">
+		<div id="tasks-scrum-switcher" class="ui-actions-bar__panel"></div>
 		<?php
 		if ($viewName === 'plan')
 		{
@@ -231,9 +233,7 @@ if ($isBitrix24Template)
 			);
 		}
 		?>
-		<div id="tasks-scrum-sprint-stats" class=
-		"tasks-scrum-sprint-stats task-interface-toolbar--item --without-bg --align-right"></div>
-		<div id="tasks-scrum-right-container" class="task-interface-toolbar--item --align-right">
+		<div id="tasks-scrum-right-container" class="ui-actions-bar__buttons">
 		</div>
 	</div>
 
@@ -243,9 +243,3 @@ if ($isBitrix24Template)
 	$this->EndViewTarget();
 }
 ?>
-<script>
-	BX.ready(function()
-	{
-
-	})
-</script>

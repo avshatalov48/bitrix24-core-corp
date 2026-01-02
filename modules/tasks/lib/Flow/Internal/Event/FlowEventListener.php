@@ -2,14 +2,17 @@
 
 namespace Bitrix\Tasks\Flow\Internal\Event;
 
+use Bitrix\HumanResources\Item\Node;
 use Bitrix\Main\ArgumentException;
 use Bitrix\Main\DB\SqlQueryException;
+use Bitrix\Main\Event;
 use Bitrix\Main\SystemException;
+use Bitrix\Tasks\Flow\Integration\HumanResources\DepartmentService;
 use Bitrix\Tasks\Flow\Internal\Event\Project\FlowProjectEventHandler;
 use Bitrix\Tasks\Flow\Internal\Event\Task\FlowTaskEventHandler;
 use Bitrix\Tasks\Flow\Internal\Event\Template\FlowTemplateEventHandler;
 use Bitrix\Tasks\Flow\Option\FlowUserOption\FlowUserOptionService;
-use Bitrix\Tasks\Flow\Responsible;
+use Bitrix\Tasks\Flow\Migration\Exclusion\EventHandler;
 use Exception;
 
 class FlowEventListener
@@ -127,7 +130,7 @@ class FlowEventListener
 			return;
 		}
 
-		(new Responsible\EventHandler())->onAfterUserUpdate($updatedUserId);
+		(new EventHandler())->onAfterUserUpdate($updatedUserId);
 	}
 
 	public static function onAfterUserDelete($deletedUserId): void
@@ -141,7 +144,27 @@ class FlowEventListener
 
 		FlowUserOptionService::deleteAllForUser($deletedUserId);
 
-		(new Responsible\EventHandler())->onAfterUserDelete($deletedUserId);
+		(new EventHandler())->onAfterUserDelete($deletedUserId);
+	}
+
+	public static function onAfterDepartmentDelete(Event $event): void
+	{
+		if (!DepartmentService::isCompanyStructureConverted())
+		{
+			return;
+		}
+
+		/** @var Node $node */
+		$node = $event->getParameter('node');
+
+		$departmentAccessCode = $node?->accessCode;
+
+		if (!$departmentAccessCode)
+		{
+			return;
+		}
+
+		(new EventHandler())->onAfterDepartmentDelete($departmentAccessCode);
 	}
 
 	/**

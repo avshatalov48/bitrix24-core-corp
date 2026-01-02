@@ -9,6 +9,7 @@ use Bitrix\Crm\Service\Container;
 use Bitrix\Crm\Service\FileUploader;
 use Bitrix\Main\ORM\Objectify\EntityObject;
 use Bitrix\Main\Result;
+use Bitrix\Main\Type\ArrayHelper;
 
 final class File implements FieldImplementation
 {
@@ -289,7 +290,8 @@ final class File implements FieldImplementation
 
 	private function isFileBoundToItem(Field $field, int $fileId): bool
 	{
-		$ids = array_filter((array)$this->get($field->getName()));
+		$ids = (array)$this->get($field->getName());
+		ArrayHelper::normalizeArrayValuesByInt($ids);
 
 		return in_array($fileId, $ids, true);
 	}

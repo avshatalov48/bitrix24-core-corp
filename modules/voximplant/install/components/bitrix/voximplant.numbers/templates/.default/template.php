@@ -77,30 +77,16 @@ if($isBitrix24Template)
 {
 	$bodyClass = $APPLICATION->GetPageProperty("BodyClass");
 	$APPLICATION->SetPageProperty("BodyClass", ($bodyClass ? $bodyClass." " : "")."pagetitle-toolbar-field-view");
-	$this->SetViewTarget("inside_pagetitle", 0);
-	?><div class="pagetitle-container pagetitle-flexible-space"><?
 }
 
-$APPLICATION->IncludeComponent(
-	"bitrix:main.ui.filter",
-	"",
-	array(
-		"GRID_ID" => $arResult["GRID_ID"],
-		"FILTER_ID" => $arResult["FILTER_ID"],
-		"FILTER" => $arResult["FILTER"],
-		"FILTER_PRESETS" => $arResult["FILTER_PRESETS"] ?? null,
-		"ENABLE_LIVE_SEARCH" => false,
-		"ENABLE_LABEL" => true
-	),
-	$component,
-	array()
-);
-
-if($isBitrix24Template)
-{
-	?></div><?
-	$this->EndViewTarget();
-}
+\Bitrix\UI\Toolbar\Facade\Toolbar::addFilter([
+	"GRID_ID" => $arResult["GRID_ID"],
+	"FILTER_ID" => $arResult["FILTER_ID"],
+	"FILTER" => $arResult["FILTER"],
+	"FILTER_PRESETS" => $arResult["FILTER_PRESETS"] ?? null,
+	"ENABLE_LIVE_SEARCH" => false,
+	"ENABLE_LABEL" => true
+]);
 
 $APPLICATION->IncludeComponent(
 	'bitrix:main.ui.grid',

@@ -169,49 +169,44 @@ class Shipment extends Sale\Shipment
 			}
 		}
 
-		$automationAvailable = Crm\Automation\Factory::isAutomationAvailable(\CCrmOwnerType::Order);
-
-		if ($automationAvailable)
+		if (!$this->isSystem() && !$isNew && $this->isChanged())
 		{
-			if (!$this->isSystem() && !$isNew && $this->isChanged())
-			{
-				Crm\Automation\Trigger\ShipmentChangedTrigger::execute(
-					[['OWNER_TYPE_ID' => \CCrmOwnerType::Order, 'OWNER_ID' => $this->getField('ORDER_ID')]],
-					['SHIPMENT' => $this]
-				);
-			}
+			Crm\Automation\Trigger\ShipmentChangedTrigger::execute(
+				[['OWNER_TYPE_ID' => \CCrmOwnerType::Order, 'OWNER_ID' => $this->getField('ORDER_ID')]],
+				['SHIPMENT' => $this]
+			);
+		}
 
-			if ($this->fields->isChanged('ALLOW_DELIVERY') && $this->isAllowDelivery())
-			{
-				Crm\Automation\Trigger\AllowDeliveryTrigger::execute(
-					[['OWNER_TYPE_ID' => \CCrmOwnerType::Order, 'OWNER_ID' => $this->getField('ORDER_ID')]],
-					['SHIPMENT' => $this]
-				);
-			}
+		if ($this->fields->isChanged('ALLOW_DELIVERY') && $this->isAllowDelivery())
+		{
+			Crm\Automation\Trigger\AllowDeliveryTrigger::execute(
+				[['OWNER_TYPE_ID' => \CCrmOwnerType::Order, 'OWNER_ID' => $this->getField('ORDER_ID')]],
+				['SHIPMENT' => $this]
+			);
+		}
 
-			if (
-				$this->fields->isChanged('STATUS_ID')
-				&& $this->getField('STATUS_ID') === DeliveryStatus::getFinalStatus()
-			)
-			{
-				Crm\Automation\Trigger\ShipmentChangedTrigger::execute(
-					[['OWNER_TYPE_ID' => \CCrmOwnerType::Order, 'OWNER_ID' => $this->getField('ORDER_ID')]],
-					['SHIPMENT' => $this]
-				);
-			}
+		if (
+			$this->fields->isChanged('STATUS_ID')
+			&& $this->getField('STATUS_ID') === DeliveryStatus::getFinalStatus()
+		)
+		{
+			Crm\Automation\Trigger\ShipmentChangedTrigger::execute(
+				[['OWNER_TYPE_ID' => \CCrmOwnerType::Order, 'OWNER_ID' => $this->getField('ORDER_ID')]],
+				['SHIPMENT' => $this]
+			);
+		}
 
-			if ($this->fields->isChanged('TRACKING_NUMBER') && !empty($this->getField('TRACKING_NUMBER')))
-			{
-				Crm\Automation\Trigger\FillTrackingNumberTrigger::execute(
-					[['OWNER_TYPE_ID' => \CCrmOwnerType::Order, 'OWNER_ID' => $this->getField('ORDER_ID')]],
-					['SHIPMENT' => $this]
-				);
-			}
+		if ($this->fields->isChanged('TRACKING_NUMBER') && !empty($this->getField('TRACKING_NUMBER')))
+		{
+			Crm\Automation\Trigger\FillTrackingNumberTrigger::execute(
+				[['OWNER_TYPE_ID' => \CCrmOwnerType::Order, 'OWNER_ID' => $this->getField('ORDER_ID')]],
+				['SHIPMENT' => $this]
+			);
 		}
 
 		if ($this->fields->isChanged('DEDUCTED'))
 		{
-			if ($automationAvailable && $this->getField('DEDUCTED') == "Y")
+			if ($this->getField('DEDUCTED') == "Y")
 			{
 				Crm\Automation\Trigger\DeductedTrigger::execute(
 					[['OWNER_TYPE_ID' => \CCrmOwnerType::Order, 'OWNER_ID' => $this->getField('ORDER_ID')]],

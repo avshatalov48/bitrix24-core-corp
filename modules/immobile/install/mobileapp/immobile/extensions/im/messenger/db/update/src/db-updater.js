@@ -5,6 +5,8 @@ jn.define('im/messenger/db/update/updater', (require, exports, module) => {
 	const { Type } = require('type');
 	const { OptionTable } = require('im/messenger/db/table');
 
+	const { updaterQueryBuilder } = require('im/messenger/db/update/update-query-builder');
+
 	/**
 	 * @class Updater
 	 */
@@ -144,6 +146,64 @@ jn.define('im/messenger/db/update/updater', (require, exports, module) => {
 		/**
 		 * @param {string} tableName
 		 * @param {string} columnName
+		 * @param {string} value
+		 * @return {Promise<number>}
+		 */
+		async getRowsCountWithValue(tableName, columnName, value)
+		{
+			const isColumnExists = await this.isColumnExists(tableName, columnName);
+			if (!isColumnExists)
+			{
+				console.error(`${this.constructor.name}.getRowsCountWithValue: column is not exist: ${columnName}`);
+
+				return 0;
+			}
+
+			const query = `SELECT COUNT(*) FROM ${tableName} WHERE ${columnName} = ?`;
+
+			const countValue = await this.executeSql({
+				query,
+				values: [value],
+			});
+
+			if (!countValue && !Type.isArrayFilled(countValue.rows?.[0]))
+			{
+				return 0;
+			}
+
+			return countValue.rows[0][0];
+		}
+
+		/**
+		 * @param {string} tableName
+		 * @param {string} columnName
+		 * @param {string} value
+		 * @return {Promise<boolean>}
+		 */
+		async deleteRowsWithValue(tableName, columnName, value)
+		{
+			try
+			{
+				const query = `DELETE FROM ${tableName} WHERE ${columnName} = ?`;
+
+				await this.executeSql({
+					query,
+					values: [value],
+				});
+			}
+			catch (error)
+			{
+				console.error(`${this.constructor.name}.deleteRowsWithValue ${tableName} ${columnName} ${value} catch:`, error);
+
+				return false;
+			}
+
+			return true;
+		}
+
+		/**
+		 * @param {string} tableName
+		 * @param {string} columnName
 		 * @return {Promise<boolean>}
 		 */
 		async isIndexExists(tableName, columnName)
@@ -253,6 +313,35 @@ jn.define('im/messenger/db/update/updater', (require, exports, module) => {
 			return this.executeSql({
 				query: 'COMMIT TRANSACTION',
 			});
+		}
+
+		/**
+		 * @param {typeof Table} TableClass
+		 * @param {string} columnName
+		 */
+		async addColumnIfNotExists(TableClass, columnName)
+		{
+			const table = new TableClass();
+			const isColumnExist = await this.isColumnExists(table.getName(), columnName);
+			if (isColumnExist)
+			{
+				return;
+			}
+
+			try
+			{
+				const query = updaterQueryBuilder.addColumn(table, columnName);
+
+				await this.executeSql({
+					query,
+				});
+			}
+			catch (error)
+			{
+				console.error(error);
+
+				throw error;
+			}
 		}
 	}
 

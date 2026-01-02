@@ -13,6 +13,9 @@ use Bitrix\Sign\Connector;
 use Bitrix\Sign\Service;
 use Bitrix\Sign\Callback;
 use Bitrix\Sign\Contract;
+use Bitrix\Sign\Service\Providers\ProviderVisibilityService;
+use Bitrix\Sign\Service\Sign\Document\TemplateFolderService;
+use Bitrix\Sign\Service\Sign\Document\TemplateGridService;
 use Psr\Container\ContainerInterface;
 
 class Container
@@ -53,6 +56,11 @@ class Container
 	public function getApiService(): ApiService
 	{
 		return self::getService('sign.service.api');
+	}
+
+	public function getHumanResourcesStructureNodeService(): Service\Integration\HumanResources\StructureNodeService
+	{
+		return self::getService('sign.service.integration.humanresources.structurenode');
 	}
 
 	public function getUserService(): Service\UserService
@@ -163,6 +171,11 @@ class Container
 	public function getCrmSignDocumentService(): Service\Integration\Crm\DocumentService
 	{
 		return self::getService('sign.service.integration.crm.document');
+	}
+
+	public function getCrmEntityRelationService(): Service\Integration\Crm\EntityRelationService
+	{
+		return self::getService('sign.service.integration.crm.entity.relation');
 	}
 
 	public function getSignMobileMemberService(): Service\Integration\SignMobile\MemberService
@@ -283,6 +296,11 @@ class Container
 	public function getHcmLinkFieldService(): Service\Integration\HumanResources\HcmLinkFieldService
 	{
 		return static::getService('sign.service.integration.humanresources.hcmlink.field');
+	}
+
+	public function getHumanResourcesNodeService(): Service\Integration\HumanResources\NodeService
+	{
+		return static::getService('sign.service.integration.humanresources.node');
 	}
 
 	public function getHcmLinkSignedFileService(): Service\Integration\HumanResources\HcmLinkSignedFileService
@@ -481,5 +499,70 @@ class Container
 	public function getAccessControllerFactory(): AccessControllerFactory
 	{
 		return static::getService('sign.access.controller.factory');
+	}
+
+	public function getTemplateFolderRepository(): Repository\Document\TemplateFolderRepository
+	{
+		return static::getService('sign.repository.document.templateFolder');
+	}
+
+	public function getTemplateFolderRelationRepository(): Repository\Document\TemplateFolderRelationRepository
+	{
+		return static::getService('sign.repository.document.templateFolderRelation');
+	}
+
+	public function getTemplateGridRepository(): Repository\Grid\TemplateGridRepository
+	{
+		return static::getService('sign.repository.document.templateGrid');
+	}
+
+	public function getTemplateFolderService(): TemplateFolderService
+	{
+		return static::getService('sign.service.document.templateFolder');
+	}
+
+	public function getTemplateAccessService(): Service\Sign\Document\Template\AccessService
+	{
+		return static::getService('sign.service.document.template.access');
+	}
+
+	public function getTemplateFolderRelationService(): Service\Sign\Document\Template\TemplateFolderRelationService
+	{
+		return static::getService('sign.service.document.template.templateFolderRelation');
+	}
+
+	public function getSignUntilService(): Service\Sign\Document\SignUntilService
+	{
+		return self::getService('sign.service.sign.document.signUntil');
+	}
+
+	public function getLocalizedErrorService(): LocalizedErrorService
+	{
+		return self::getService('sign.service.localizedError');
+	}
+
+	public function getSignersListRepository(): Repository\SignersList\SignersListRepository
+	{
+		return static::getService('sign.repository.signerslist');
+	}
+
+	public function getSignersListUserRepository(): Repository\SignersList\SignersListUserRepository
+	{
+		return static::getService('sign.repository.signerslistuser');
+	}
+
+	public function getSignersListService(): SignersListService
+	{
+		return static::getService('sign.service.signerslist');
+	}
+
+	public function getOnboardingService(): OnboardingService
+	{
+		return static::getService('sign.service.onboarding');
+	}
+
+	public function getProviderVisibilityService(): ProviderVisibilityService
+	{
+		return static::getService('sign.service.provider.visibility');
 	}
 }

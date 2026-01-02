@@ -1,5 +1,5 @@
-import { Text, Type } from 'main.core';
 import { Model } from 'crm.model';
+import { Text, Type } from 'main.core';
 
 export type TypeModelData = {
 	id: ?number,
@@ -17,6 +17,7 @@ export type TypeModelData = {
 	isSourceEnabled?: boolean,
 	isUseInUserfieldEnabled?: boolean,
 	isObserversEnabled?: boolean,
+	isRecurringEnabled?: boolean,
 	isRecyclebinEnabled?: boolean,
 	isAutomationEnabled?: boolean,
 	isBizProcEnabled?: boolean,
@@ -207,6 +208,16 @@ export class TypeModel extends Model
 	setIsObserversEnabled(isObserversEnabled: boolean)
 	{
 		this.data.isObserversEnabled = (isObserversEnabled === true);
+	}
+
+	getIsRecurringEnabled(): boolean
+	{
+		return this.data.isRecurringEnabled;
+	}
+
+	setIsRecurringEnabled(isRecurringEnabled: boolean)
+	{
+		this.data.isRecurringEnabled = (isRecurringEnabled === true);
 	}
 
 	getIsRecyclebinEnabled(): boolean
@@ -401,11 +412,12 @@ export class TypeModel extends Model
 			'isSourceEnabled',
 			'isUseInUserfieldEnabled',
 			'isObserversEnabled',
+			'isRecurringEnabled',
 			'isRecyclebinEnabled',
 			'isAutomationEnabled',
 			'isBizProcEnabled',
 			'isSetOpenPermissions',
-			'isCountersEnabled'
+			'isCountersEnabled',
 		];
 	}
 }

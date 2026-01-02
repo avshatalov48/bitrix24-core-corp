@@ -25,7 +25,7 @@ $helper = new \Bitrix\Tasks\UI\Component\TemplateHelper('TasksWidgetMemberSelect
 			}
 
 			$user = User::extractPublicData($user);
-			$user['COLLABER_NO_HAS_COMMON_GROUP'] = !empty($collaberNoHasCommonGroup) ?? null;
+			$user['COLLABER_NO_HAS_COMMON_GROUP'] = !empty($collaberNoHasCommonGroup);
 			$user['VALUE'] = $user['ID'];
 			$user['DISPLAY'] = User::formatName($user, false, $arParams['NAME_TEMPLATE']);
 

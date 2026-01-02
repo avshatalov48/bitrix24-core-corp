@@ -1,20 +1,17 @@
 <?php
+
 namespace Bitrix\Sign\Access\Service;
 
 use Bitrix\Main\ArgumentException;
-use Bitrix\Main\Engine\CurrentUser;
 use Bitrix\Main\Loader;
 use Bitrix\Main\ObjectPropertyException;
 use Bitrix\Main\Result;
 use Bitrix\Main\Localization\Loc;
 use Bitrix\Main\SystemException;
-use Bitrix\Sign\Access\AccessController;
-use Bitrix\Sign\Access\Model\UserModel;
 use Bitrix\Sign\Access\Permission\PermissionTable;
 use Bitrix\Sign\Access\Permission\PermissionDictionary;
 use Bitrix\Sign\Access\Permission\SignPermissionDictionary;
 use Bitrix\Sign\Access\SectionDictionary;
-use CCrmPerms;
 
 Loc::loadMessages(__FILE__);
 
@@ -40,11 +37,11 @@ class RolePermissionService extends \Bitrix\Crm\Integration\Sign\Access\Service\
 			{
 				if ($accessRight['id'] === PermissionDictionary::SIGN_CRM_CONTACT_READ)
 				{
-					$setting['accessRights'][] = ['id' => PermissionDictionary::SIGN_CRM_CONTACT_ADD, 'value' => $accessRight['value'],];
-					$setting['accessRights'][] = ['id' => PermissionDictionary::SIGN_CRM_CONTACT_WRITE, 'value' => $accessRight['value'],];
-					$setting['accessRights'][] = ['id' => PermissionDictionary::SIGN_CRM_CONTACT_DELETE, 'value' => $accessRight['value'],];
-					$setting['accessRights'][] = ['id' => PermissionDictionary::SIGN_CRM_CONTACT_IMPORT, 'value' => $accessRight['value'],];
-					$setting['accessRights'][] = ['id' => PermissionDictionary::SIGN_CRM_CONTACT_EXPORT, 'value' => $accessRight['value'],];
+					$setting['accessRights'][] = ['id' => PermissionDictionary::SIGN_CRM_CONTACT_ADD, 'value' => $accessRight['value']];
+					$setting['accessRights'][] = ['id' => PermissionDictionary::SIGN_CRM_CONTACT_WRITE, 'value' => $accessRight['value']];
+					$setting['accessRights'][] = ['id' => PermissionDictionary::SIGN_CRM_CONTACT_DELETE, 'value' => $accessRight['value']];
+					$setting['accessRights'][] = ['id' => PermissionDictionary::SIGN_CRM_CONTACT_IMPORT, 'value' => $accessRight['value']];
+					$setting['accessRights'][] = ['id' => PermissionDictionary::SIGN_CRM_CONTACT_EXPORT, 'value' => $accessRight['value']];
 				}
 			}
 			$setting['signAccessRights'] = $setting['accessRights'] ?? [];
@@ -64,10 +61,10 @@ class RolePermissionService extends \Bitrix\Crm\Integration\Sign\Access\Service\
 		{
 			PermissionTable::deleteList(['=ROLE_ID' => $roleId]);
 		}
-		
+
 		return $deleteResult;
 	}
-	
+
 	/**
 	 * @return array
 	 */
@@ -78,7 +75,7 @@ class RolePermissionService extends \Bitrix\Crm\Integration\Sign\Access\Service\
 		$roles = [];
 		foreach ($res as $row)
 		{
-			$roleId = (int) $row['ID'];
+			$roleId = (int)$row['ID'];
 
 			$roles[] = [
 				'id' => $roleId,
@@ -111,7 +108,7 @@ class RolePermissionService extends \Bitrix\Crm\Integration\Sign\Access\Service\
 					?: SignPermissionDictionary::getType($permissionId);
 				$title = PermissionDictionary::getTitle($permissionId)
 					?: SignPermissionDictionary::getTitle($permissionId);
-				
+
 				$rights[] = [
 					'id' => $permissionId,
 					'type' => $type,
@@ -120,7 +117,7 @@ class RolePermissionService extends \Bitrix\Crm\Integration\Sign\Access\Service\
 					'variables' => $this->getAbleOptions(!is_int($permissionId)),
 				];
 			}
-			
+
 			$res[] = [
 				'sectionTitle' => SectionDictionary::getTitle($sectionId),
 				'rights' => $rights,
@@ -138,24 +135,24 @@ class RolePermissionService extends \Bitrix\Crm\Integration\Sign\Access\Service\
 				'title' => Loc::getMessage('SIGN_ACCESS_ROLE_NONE'),
 			],
 			[
-				'id' => CCrmPerms::PERM_ALL,
+				'id' => \Bitrix\Crm\Service\UserPermissions::PERMISSION_ALL,
 				'title' => Loc::getMessage('SIGN_ACCESS_ROLE_ALL'),
 			],
 			[
-				'id' => CCrmPerms::PERM_SELF,
+				'id' => \Bitrix\Crm\Service\UserPermissions::PERMISSION_SELF,
 				'title' => Loc::getMessage('SIGN_ACCESS_ROLE_SELF'),
 			],
 			[
-				'id' => CCrmPerms::PERM_DEPARTMENT,
+				'id' => \Bitrix\Crm\Service\UserPermissions::PERMISSION_DEPARTMENT,
 				'title' => Loc::getMessage('SIGN_ACCESS_ROLE_SELF_DEPARTMENT'),
 			],
 			[
-				'id' => CCrmPerms::PERM_SUBDEPARTMENT,
+				'id' => \Bitrix\Crm\Service\UserPermissions::PERMISSION_SUBDEPARTMENT,
 				'title' => Loc::getMessage('SIGN_ACCESS_ROLE_SELF_DEPARTMENT_ALL'),
 			],
 		],$showOpen ? [
 			[
-				'id' => CCrmPerms::PERM_OPEN,
+				'id' => \Bitrix\Crm\Service\UserPermissions::PERMISSION_OPENED,
 				'title' => Loc::getMessage('SIGN_ACCESS_ROLE_OPENED'),
 			],
 		] : []);
@@ -171,7 +168,7 @@ class RolePermissionService extends \Bitrix\Crm\Integration\Sign\Access\Service\
 			return static::$settings;
 		}
 		$res = $this->getRoleList();
-		
+
 		$roles = [];
 		foreach ($res as $row)
 		{
@@ -202,7 +199,7 @@ class RolePermissionService extends \Bitrix\Crm\Integration\Sign\Access\Service\
 				'VALUE' => $signPermission['VALUE'],
 			];
 		}
-		
+
 		return $preparedPermissions;
 	}
 
@@ -247,7 +244,7 @@ class RolePermissionService extends \Bitrix\Crm\Integration\Sign\Access\Service\
 
 		$signPermissions = PermissionTable::query()
 			->setSelect(['ID'])
-			->whereNotIn('VALUE', ['0', \CCrmPerms::PERM_NONE])
+			->whereNotIn('VALUE', ['0', \Bitrix\Crm\Service\UserPermissions::PERMISSION_NONE])
 			->setLimit(1)
 			->fetchAll()
 		;
@@ -259,7 +256,7 @@ class RolePermissionService extends \Bitrix\Crm\Integration\Sign\Access\Service\
 	{
 		return PermissionDictionary::getList();
 	}
-	
+
 	protected function getPermissionCode(string $id): ?string
 	{
 		return PermissionDictionary::getName($id);

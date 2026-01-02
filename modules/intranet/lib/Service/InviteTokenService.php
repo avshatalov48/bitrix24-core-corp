@@ -2,11 +2,12 @@
 
 namespace Bitrix\Intranet\Service;
 
+use Bitrix\Bitrix24\Integration\Network\RegisterSettingsSynchronizer;
+use Bitrix\Main\Config\Option;
 use Bitrix\Main\Loader;
 use Bitrix\Main\Security\Random;
 use Bitrix\Main\SystemException;
 use Bitrix\Main\Web\JWT;
-use Bitrix\Socialservices\Network;
 use InvalidArgumentException;
 use UnexpectedValueException;
 
@@ -52,30 +53,36 @@ final class InviteTokenService
 
 	private function getJwtSecret(): ?string
 	{
-		if (
-			Loader::includeModule('bitrix24')
-			&& Loader::includeModule('socialservices')
-		)
+		if (Loader::includeModule('bitrix24'))
 		{
-			$secret = Network::getRegisterSettings()['INVITE_TOKEN_SECRET'] ?? null;
-			if (empty($secret))
-			{
-				$secret = $this->reCreateSecret();
-			}
-
-			return $secret;
+			$secret = RegisterSettingsSynchronizer::getRegisterSettings()['INVITE_TOKEN_SECRET'] ?? null;
+		}
+		else
+		{
+			$secret = Option::get('socialservices', 'new_user_registration_invite_token_secret', null);
 		}
 
-		return null;
+		if (empty($secret))
+		{
+			$secret = $this->reCreateSecret();
+		}
+
+		return $secret;
 	}
 
 	private function reCreateSecret(): string
 	{
 		$secret = Random::getString(12);
-
-		Network::setRegisterSettings([
-			'INVITE_TOKEN_SECRET' => $secret,
-		]);
+		if (Loader::includeModule('bitrix24'))
+		{
+			RegisterSettingsSynchronizer::setRegisterSettings([
+				'INVITE_TOKEN_SECRET' => $secret,
+			]);
+		}
+		else
+		{
+			Option::set('socialservices', 'new_user_registration_invite_token_secret', $secret);
+		}
 
 		return $secret;
 	}

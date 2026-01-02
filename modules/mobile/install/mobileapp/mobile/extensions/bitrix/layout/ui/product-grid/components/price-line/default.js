@@ -3,6 +3,7 @@
  */
 jn.define('layout/ui/product-grid/components/price-line/default', (require, exports, module) => {
 	const { Styles } = require('layout/ui/product-grid/components/price-line/styles');
+	const { Money, MoneyView } = require('layout/ui/money');
 
 	class PriceLine extends LayoutComponent
 	{

@@ -48,6 +48,18 @@ class OptionsBuilder
 		return $this;
 	}
 
+	public function setOperationsIfNotNull(?array $operations): self
+	{
+		if ($operations === null)
+		{
+			return $this;
+		}
+
+		$this->operations = $operations;
+
+		return $this;
+	}
+
 	public function setReadAllAllowed(?bool $readAllAllowed): self
 	{
 		$this->readAllAllowed = $readAllAllowed;

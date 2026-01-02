@@ -41,13 +41,16 @@ class TypeFileUpdater extends Stepper
 		}
 
 		$sql = 'UPDATE b_disk_tracked_object track
-					SET track.TYPE_FILE = (
-						SELECT obj.TYPE_FILE
-						FROM b_disk_object obj
-						WHERE obj.ID = track.OBJECT_ID
-					)
+				SET track.TYPE_FILE = (
+					SELECT obj.TYPE_FILE
+					FROM b_disk_object obj
+					WHERE obj.ID = track.OBJECT_ID
+				)
 				WHERE track.TYPE_FILE IS NULL
-				ORDER BY track.ID DESC
+					AND EXISTS (
+						SELECT ID FROM b_disk_object obj WHERE track.OBJECT_ID = obj.ID
+					)
+				ORDER BY id DESC
 				LIMIT ' . self::ROWS_PER_STEP;
 
 		$connection = Application::getConnection();

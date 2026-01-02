@@ -8,6 +8,7 @@ use Bitrix\Crm\Integrity\Volatile\FieldCategory;
 use Bitrix\Crm\Model\FieldMultiPhoneCountryTable;
 use Bitrix\Crm\Multifield;
 use Bitrix\Main;
+use Bitrix\Main\Web\Json;
 
 if (!defined('CACHED_b_field_multi')) define('CACHED_b_field_multi', 360000);
 
@@ -146,8 +147,8 @@ class CCrmFieldMulti
 					Multifield\Type\Web::VALUE_TYPE_VK => [
 						'FULL' => GetMessage('CRM_FM_ENTITY_WEB_VK'),
 						'SHORT' => GetMessage('CRM_FM_ENTITY_WEB_VK_SHORT'),
-						'TEMPLATE' => '<a href="https://vk.com/#VALUE_URL#" target="_blank">#VALUE_HTML#</a>',
-						'LINK' => 'https://vk.com/#VALUE_URL#',
+						'TEMPLATE' => '<a href="https://vk.ru/#VALUE_URL#" target="_blank">#VALUE_HTML#</a>',
+						'LINK' => 'https://vk.ru/#VALUE_URL#',
 					],
 					Multifield\Type\Web::VALUE_TYPE_LIVEJOURNAL => [
 						'FULL' => GetMessage('CRM_FM_ENTITY_WEB_LIVEJOURNAL'),
@@ -210,8 +211,8 @@ class CCrmFieldMulti
 					Multifield\Type\Im::VALUE_TYPE_VK => [
 						'FULL' => GetMessage('CRM_FM_ENTITY_IM_VK'),
 						'SHORT' => GetMessage('CRM_FM_ENTITY_IM_VK_SHORT'),
-						'TEMPLATE' => '<a href="https://vk.com/#VALUE_URL#" target="_blank">#VALUE_HTML#</a>',
-						'LINK' => 'https://vk.com/#VALUE_URL#',
+						'TEMPLATE' => '<a href="https://vk.ru/#VALUE_URL#" target="_blank">#VALUE_HTML#</a>',
+						'LINK' => 'https://vk.ru/#VALUE_URL#',
 					],
 					Multifield\Type\Im::VALUE_TYPE_SKYPE => [
 						'FULL' => GetMessage('CRM_FM_ENTITY_IM_SKYPE'),
@@ -285,7 +286,9 @@ class CCrmFieldMulti
 					],
 				],
 			);
+			self::filterOldMessengers();
 		}
+
 		return self::$ENTITY_TYPES;
 	}
 
@@ -1788,6 +1791,25 @@ class CCrmFieldMulti
 
 		return $country ?? '';
 	}
-}
 
-?>
+	private static function filterOldMessengers(): void
+	{
+		$oldMessengers = Multifield\Type\Im::DEPRECATED_MESSENGERS;
+		$oldMessengersInUse = Json::decode(
+			Main\Config\Option::get('crm', 'old_messengers_in_use', '[]'),
+		);
+
+		if (!is_array($oldMessengersInUse))
+		{
+			$oldMessengersInUse = [];
+		}
+
+		$unusedOldMessengers = array_diff($oldMessengers, $oldMessengersInUse);
+		$unusedOldMessengers = array_flip($unusedOldMessengers);
+
+		self::$ENTITY_TYPES[Multifield\Type\Im::ID] = array_diff_key(
+			self::$ENTITY_TYPES[Multifield\Type\Im::ID],
+			$unusedOldMessengers,
+		);
+	}
+}

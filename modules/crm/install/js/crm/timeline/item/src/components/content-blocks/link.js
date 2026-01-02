@@ -1,6 +1,7 @@
 import { Action } from '../../action';
 import { TextColor } from '../enums/text-color';
 import { TextDecoration } from '../enums/text-decoration';
+import { TextSize } from '../enums/text-size';
 
 export default {
 	props: {
@@ -8,32 +9,30 @@ export default {
 		action: Object,
 		title: {
 			type: String,
-			required: false,
 			default: '',
 		},
 		color: {
 			type: String,
-			required: false,
 			default: '',
 		},
 		bold: {
 			type: Boolean,
-			required: false,
 			default: false,
+		},
+		size: {
+			type: String,
+			default: 'md',
 		},
 		decoration: {
 			type: String,
-			required: false,
 			default: '',
 		},
 		icon: {
 			type: String,
-			required: false,
 			default: '',
 		},
 		rowLimit: {
 			type: Number,
-			required: false,
 			default: 0,
 		},
 	},
@@ -88,6 +87,7 @@ export default {
 				'crm-timeline__card_link',
 				this.colorClassName,
 				this.boldClassName,
+				this.sizeClassname,
 				this.decorationClassName,
 				this.rowLimitClassName,
 			];
@@ -104,6 +104,14 @@ export default {
 		boldClassName(): string
 		{
 			return this.bold ? '--bold' : '';
+		},
+
+		sizeClassname(): string
+		{
+			const upperCaseSizeProp = this.size ? this.size.toUpperCase() : '';
+			const size = TextSize[upperCaseSizeProp] ?? TextSize.SM;
+
+			return `--size-${size}`;
 		},
 
 		decorationClassName(): string
@@ -136,6 +144,7 @@ export default {
 		{
 			return this.rowLimit ? '--limit' : '';
 		},
+
 		rowLimitStyle(): Object
 		{
 			if (this.rowLimit && this.rowLimit > 0)
@@ -161,22 +170,20 @@ export default {
 	},
 
 	template:
-		`
-			<a
-				v-if="href"
-				v-bind="linkAttrs"
-				:class="className"
-				:title="title"
-				:style="rowLimitStyle"
-			>{{text}}<span v-if="icon" :class="iconClassName"></span>
-			</a>
-			<span
-				v-else
-				@click="executeAction"
-				:class="className"
-				:title="title"
-				:style="rowLimitStyle"
-			>{{text}}<span v-if="icon" :class="iconClassName"></span>
-			</span>
-		`,
+		`<a
+			v-if="href"
+			v-bind="linkAttrs"
+			:class="className"
+			:title="title"
+			:style="rowLimitStyle"
+		>{{text}}<span v-if="icon" :class="iconClassName"></span>
+		</a>
+		<span
+			v-else
+			@click="executeAction"
+			:class="className"
+			:title="title"
+			:style="rowLimitStyle"
+		>{{text}}<span v-if="icon" :class="iconClassName"></span>
+		</span>`,
 };

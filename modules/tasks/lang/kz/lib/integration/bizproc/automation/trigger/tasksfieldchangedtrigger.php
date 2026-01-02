@@ -1,0 +1,5 @@
+<?php
+$MESS["TASKS_AUTOMATION_TRIGGER_FIELD_CHANGED_DESCRIPTION"] = "Егер элементте өріс мәндері өзгертілсе, сатыны өзгертеді";
+$MESS["TASKS_AUTOMATION_TRIGGER_FIELD_CHANGED_NAME"] = "Өрістердің өзгеруін қадағалау";
+$MESS["TASKS_AUTOMATION_TRIGGER_FIELD_CHANGED_PROPERTY_FIELDS"] = "Өрістерді бақылау";
+$MESS["TASKS_AUTOMATION_TRIGGER_FIELD_CHANGED_PROPERTY_FIELDS_CHOOSE"] = "Өрістерді таңдау";

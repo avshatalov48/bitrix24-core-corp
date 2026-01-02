@@ -1,4 +1,4 @@
-<?
+<?php
 $MESS["SALESCENTER_DEFAULT_TITLE"] = "Продажи в чате";
 $MESS["SALESCENTER_LEFT_PAGES"] = "Страницы для чата";
 $MESS["SALESCENTER_LEFT_SEND_BY_SMS"] = "Отправить по SMS";

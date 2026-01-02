@@ -13,9 +13,9 @@ return [
 		'utils/copy',
 		'utils/string',
 		'haptics',
-		'user/profile',
 		'analytics',
 		'in-app-url',
+		'user-profile',
 	],
 	'bundle' => [
 		'./base',

@@ -1,0 +1,20 @@
+<?php
+$MESS["CRM_DP_AUTOSEARCH_COMPLETE_CONFLICTED_TEXT"] = "Телнұсқаларды тексеріп, қолмен біріктіру керек: #CONFLICTS_COUNT#";
+$MESS["CRM_DP_AUTOSEARCH_COMPLETE_RESOLVE_CONFLICT_BUTTON"] = "Біріктіруді бастау";
+$MESS["CRM_DP_AUTOSEARCH_COMPLETE_RESOLVE_CONFLICT_LIST_LINK"] = "Табылған сәйкестіктер тізімі";
+$MESS["CRM_DP_AUTOSEARCH_COMPLETE_TEXT"] = "Автоматты түрде біріктірілген телнұсқалар: #FOUND_ITEMS_COUNT#";
+$MESS["CRM_DP_AUTOSEARCH_COMPLETE_TEXT_COMPANY"] = "Автоматты түрде біріктірілген компания телнұсқалары: #FOUND_ITEMS_COUNT#";
+$MESS["CRM_DP_AUTOSEARCH_COMPLETE_TEXT_CONTACT"] = "Автоматты түрде біріктірілген байланыс телнұсқалары: #FOUND_ITEMS_COUNT#";
+$MESS["CRM_DP_AUTOSEARCH_COMPLETE_TEXT_LEAD"] = "Автоматты түрде біріктірілген лид телнұсқалары: #FOUND_ITEMS_COUNT#";
+$MESS["CRM_DP_AUTOSEARCH_EMPTY_RESULTS_COMPANY"] = "Компания телнұсқаларын автоматты түрде біріктіру мүмкін болмады.";
+$MESS["CRM_DP_AUTOSEARCH_EMPTY_RESULTS_CONTACT"] = "Байланыс телнұсқаларын автоматты түрде біріктіру мүмкін болмады.";
+$MESS["CRM_DP_AUTOSEARCH_EMPTY_RESULTS_LEAD"] = "Лид телнұсқаларын автоматты түрде біріктіру мүмкін болмады.";
+$MESS["CRM_DP_AUTOSEARCH_SETTINGS_CONFLICTS_FOUND"] = "Біз телнұсқалардың бір бөлігін біріктірмедік, саны: #CONFLICTS_COUNT#";
+$MESS["CRM_DP_AUTOSEARCH_SETTINGS_INTERVAL_TITLE"] = "Тексеру жиілігі";
+$MESS["CRM_DP_AUTOSEARCH_SETTINGS_NOTE"] = "Телнұсқаларды іздеу және біріктіру көрсетілген баптауларға сәйкес автоматты түрде жүзеге асырылады.";
+$MESS["CRM_DP_AUTOSEARCH_SETTINGS_TITLE"] = "Телнұсқаларды автоматты түрде іздеу";
+$MESS["CRM_DP_AUTOSEARCH_START_CONFIRMATION_BUTTON"] = "Қосу";
+$MESS["CRM_DP_AUTOSEARCH_START_CONFIRMATION_TEXT"] = "Автоматты іздеуді және телнұсқаларды кесте бойынша біріктіруді қосу керек пе?";
+$MESS["CRM_DP_AUTOSEARCH_START_CONFIRMATION_TEXT_COMPANY"] = "Біз CRM-де компаниялар телнұсқаларын таптық: #TOTAL_ENTITIES_COUNT#.<br>Таңдалған өрістер бойынша толық сәйкес: #FOUND_ITEMS_COUNT#.";
+$MESS["CRM_DP_AUTOSEARCH_START_CONFIRMATION_TEXT_CONTACT"] = "Біз CRM-де байланыс телнұсқаларын таптық: #TOTAL_ENTITIES_COUNT#.<br>Таңдалған өрістер бойынша толық сәйкес: #FOUND_ITEMS_COUNT#.";
+$MESS["CRM_DP_AUTOSEARCH_START_CONFIRMATION_TEXT_LEAD"] = "Біз CRM-де лид телнұсқаларын таптық: #TOTAL_ENTITIES_COUNT#.<br>Таңдалған өрістер бойынша толық сәйкес: #FOUND_ITEMS_COUNT#.";

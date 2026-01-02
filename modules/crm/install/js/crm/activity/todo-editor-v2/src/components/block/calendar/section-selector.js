@@ -106,7 +106,14 @@ export const SectionSelector = {
 	computed: {
 		currentSectionTitle(): string
 		{
-			return this.sections.find((section) => section.ID === this.selectedSectionId)?.NAME ?? '';
+			const title = this.sections.find((section) => section.ID === this.selectedSectionId)?.NAME ?? null;
+
+			if (title)
+			{
+				return title;
+			}
+
+			return this.sections.find((section) => section.DEFAULT)?.NAME ?? '';
 		},
 		hasSections(): boolean
 		{

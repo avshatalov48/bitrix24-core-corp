@@ -4,6 +4,8 @@ namespace Bitrix\Crm\Dto\Validator;
 
 use Bitrix\Crm\Dto\Dto;
 use Bitrix\Crm\Dto\Validator;
+use Bitrix\Main\Error;
+use Bitrix\Main\Localization\Loc;
 use Bitrix\Main\Result;
 
 final class IntegerField extends Validator
@@ -29,7 +31,7 @@ final class IntegerField extends Validator
 			$this->isLessThanMax($value) === false
 		)
 		{
-			return $result->addError($this->getWrongFieldError($this->fieldToCheck, $this->dto->getName()));
+			return $result->addError($this->error());
 		}
 
 		return $result;
@@ -53,5 +55,54 @@ final class IntegerField extends Validator
 		}
 
 		return $value < $this->max;
+	}
+
+	private function error(): Error
+	{
+		return new Error(
+			message: $this->buildErrorMessage(),
+			code: 'INTEGER_FIELD',
+			customData: [
+				'FIELD' => $this->fieldToCheck,
+				'PARENT_OBJECT' => $this->dto->getName(),
+				'MIN' => $this->min,
+				'MAX' => $this->max,
+			],
+		);
+	}
+
+	private function buildErrorMessage(): string
+	{
+		$commonReplace = [
+			'#FIELD#' => $this->fieldToCheck,
+			'#PARENT_OBJECT#' => $this->dto->getName(),
+		];
+
+		if ($this->min !== null && $this->max !== null)
+		{
+			return Loc::getMessage('CRM_DTO_VALIDATOR_INTEGER_FIELD_MIN_MAX', [
+				...$commonReplace,
+				'#MIN#' => $this->min,
+				'#MAX#' => $this->max,
+			]);
+		}
+
+		if ($this->min !== null)
+		{
+			return Loc::getMessage('CRM_DTO_VALIDATOR_INTEGER_FIELD_MIN', [
+				...$commonReplace,
+				'#MIN#' => $this->min,
+			]);
+		}
+
+		if ($this->max !== null)
+		{
+			return Loc::getMessage('CRM_DTO_VALIDATOR_INTEGER_FIELD_MAX', [
+				...$commonReplace,
+				'#MAX#' => $this->max,
+			]);
+		}
+
+		return Loc::getMessage('CRM_DTO_VALIDATOR_INTEGER_FIELD', $commonReplace);
 	}
 }

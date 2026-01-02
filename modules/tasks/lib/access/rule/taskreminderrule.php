@@ -36,7 +36,7 @@ class TaskReminderRule extends \Bitrix\Main\Access\Rule\AbstractRule
 			return false;
 		}
 
-		foreach ($params as $reminder)
+		foreach ($params ?? [] as $reminder)
 		{
 			if (!array_key_exists('RECEPIENT_TYPE', $reminder))
 			{

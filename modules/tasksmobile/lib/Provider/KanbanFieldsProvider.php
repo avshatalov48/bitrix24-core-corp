@@ -4,8 +4,9 @@ declare(strict_types=1);
 
 namespace Bitrix\TasksMobile\Provider;
 
-use Bitrix\Tasks\Components\Kanban\ItemField;
-use Bitrix\Tasks\Components\Kanban\UserSettings;
+use Bitrix\Tasks\V2\Internal\Service\Kanban\Display\DisplayFactory;
+use Bitrix\Tasks\V2\Internal\Service\Kanban\Display\UserSettings\AbstractUserSettings;
+use Bitrix\Tasks\V2\Internal\Service\Kanban\Display\ViewModeType;
 use Bitrix\TasksMobile\Dto\TaskFieldDto;
 use Bitrix\TasksMobile\Enum\ViewMode;
 
@@ -13,104 +14,64 @@ final class KanbanFieldsProvider
 {
 	private string $viewMode;
 	private bool $isScrum;
-	private UserSettings $userSettings;
+	private AbstractUserSettings $userSettings;
 
-	public function __construct(string $viewMode, bool $isScrum = false)
-	{
-		$this->viewMode = ViewMode::validated($viewMode);
-		$this->isScrum = $isScrum;
-		$this->userSettings = new UserSettings($this->convertViewMode());
-	}
-
-	public static function getFullState(bool $isScrum = false): array
+	public static function getFullState(int $userId, bool $isScrum = false): array
 	{
 		$result = [];
 
 		foreach (ViewMode::values() as $viewMode)
 		{
 			$provider = new self($viewMode, $isScrum);
-			$result[$viewMode] = $provider->getViewState();
+			$result[$viewMode] = $provider->getViewState($userId);
 		}
 
 		return $result;
 	}
 
-	/**
-	 * @return ItemField[]
-	 */
-	public function getPossibleFields(): array
+	private function __construct(string $viewMode, bool $isScrum = false)
 	{
-		return [
-			$this->userSettings->getProject(),
-			$this->userSettings->getAccomplices(),
-			$this->userSettings->getAuditors(),
-			$this->userSettings->getCheckList(),
-			$this->userSettings->getFiles(),
-			$this->userSettings->getDateStarted(),
-			$this->userSettings->getDateFinished(),
-			$this->userSettings->getTimeSpent(),
-			$this->userSettings->getId(),
-			$this->userSettings->getCrm(),
-			$this->userSettings->getTags(),
-			$this->userSettings->getMark(),
-		];
-	}
+		$this->viewMode = ViewMode::validated($viewMode);
+		$this->isScrum = $isScrum;
 
-	public function isFieldVisible(ItemField $field): bool
-	{
-		$code = $field->getCode();
-
-		if ($this->isScrum && $this->userSettings->isFieldDefault($code))
-		{
-			return true;
-		}
-		if (!$this->userSettings->hasSelectedCustomFields() && $this->userSettings->isFieldDefault($code))
-		{
-			return true;
-		}
-		if (!$this->isScrum && $this->userSettings->isFieldSelected($code))
-		{
-			return true;
-		}
-
-		return false;
+		$this->userSettings = DisplayFactory::getInstance()->createUserSettings($this->convertViewMode());
 	}
 
 	/**
 	 * @return TaskFieldDto[]
 	 */
-	public function getViewState(): array
+	private function getViewState(int $userId): array
 	{
 		$fields = [];
-		foreach ($this->getPossibleFields() as $field)
+		foreach ($this->userSettings->getItemFields($userId) as $field)
 		{
 			$fields[$field->getCode()] = TaskFieldDto::make([
 				'code' => $field->getCode(),
 				'title' => $field->getTitle(),
-				'visible' => $this->isFieldVisible($field),
+				'visible' => $this->userSettings->required($field),
 			]);
 		}
 
 		return $fields;
 	}
 
-	private function convertViewMode(): string
+	private function convertViewMode(): ViewModeType
 	{
 		if ($this->isScrum)
 		{
-			return 'kanban_scrum';
+			return ViewModeType::Scrum;
 		}
 
 		if ($this->viewMode === ViewMode::DEADLINE)
 		{
-			return 'kanban_timeline_personal';
+			return ViewModeType::KanbanTimelinePersonal;
 		}
 
 		if ($this->viewMode === ViewMode::PLANNER)
 		{
-			return 'kanban_personal';
+			return ViewModeType::KanbanPersonal;
 		}
 
-		return 'kanban';
+		return ViewModeType::Kanban;
 	}
 }

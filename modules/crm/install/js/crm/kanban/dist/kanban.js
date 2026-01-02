@@ -4,6 +4,8 @@ this.BX.Crm = this.BX.Crm || {};
 (function (exports,crm_integration_analytics,ui_notification,main_popup,main_core_events,pull_queuemanager,crm_kanban_sort,main_core) {
 	'use strict';
 
+	function ownKeys(object, enumerableOnly) { var keys = Object.keys(object); if (Object.getOwnPropertySymbols) { var symbols = Object.getOwnPropertySymbols(object); enumerableOnly && (symbols = symbols.filter(function (sym) { return Object.getOwnPropertyDescriptor(object, sym).enumerable; })), keys.push.apply(keys, symbols); } return keys; }
+	function _objectSpread(target) { for (var i = 1; i < arguments.length; i++) { var source = null != arguments[i] ? arguments[i] : {}; i % 2 ? ownKeys(Object(source), !0).forEach(function (key) { babelHelpers.defineProperty(target, key, source[key]); }) : Object.getOwnPropertyDescriptors ? Object.defineProperties(target, Object.getOwnPropertyDescriptors(source)) : ownKeys(Object(source)).forEach(function (key) { Object.defineProperty(target, key, Object.getOwnPropertyDescriptor(source, key)); }); } return target; }
 	function _classPrivateMethodInitSpec(obj, privateSet) { _checkPrivateRedeclaration(obj, privateSet); privateSet.add(obj); }
 	function _classPrivateFieldInitSpec(obj, privateMap, value) { _checkPrivateRedeclaration(obj, privateMap); privateMap.set(obj, value); }
 	function _checkPrivateRedeclaration(obj, privateCollection) { if (privateCollection.has(obj)) { throw new TypeError("Cannot initialize the same private elements twice on an object"); } }
@@ -23,11 +25,15 @@ this.BX.Crm = this.BX.Crm || {};
 	var _getPreparedNotifyCode = /*#__PURE__*/new WeakSet();
 	var _getPreparedNotifyContent = /*#__PURE__*/new WeakSet();
 	var _onFailure = /*#__PURE__*/new WeakSet();
-	var _prepareAnalyticsData = /*#__PURE__*/new WeakSet();
+	var _prepareAnalyticsChangeStageEventData = /*#__PURE__*/new WeakSet();
+	var _prepareAnalyticsCloseEventData = /*#__PURE__*/new WeakSet();
+	var _sendAnalyticsData = /*#__PURE__*/new WeakSet();
 	var SimpleAction = /*#__PURE__*/function () {
 	  function SimpleAction(_grid2, _params2) {
 	    babelHelpers.classCallCheck(this, SimpleAction);
-	    _classPrivateMethodInitSpec(this, _prepareAnalyticsData);
+	    _classPrivateMethodInitSpec(this, _sendAnalyticsData);
+	    _classPrivateMethodInitSpec(this, _prepareAnalyticsCloseEventData);
+	    _classPrivateMethodInitSpec(this, _prepareAnalyticsChangeStageEventData);
 	    _classPrivateMethodInitSpec(this, _onFailure);
 	    _classPrivateMethodInitSpec(this, _getPreparedNotifyContent);
 	    _classPrivateMethodInitSpec(this, _getPreparedNotifyCode);
@@ -90,8 +96,7 @@ this.BX.Crm = this.BX.Crm || {};
 	      var _this = this;
 	      _classPrivateMethodGet(this, _prepareExecute, _prepareExecute2).call(this);
 	      if (babelHelpers.classPrivateFieldGet(this, _params).action === 'status') {
-	        _classPrivateMethodGet(this, _prepareAnalyticsData, _prepareAnalyticsData2).call(this);
-	        babelHelpers.classPrivateFieldGet(this, _grid).registerAnalyticsCloseEvent(babelHelpers.classPrivateFieldGet(this, _analyticsData), BX.Crm.Integration.Analytics.Dictionary.STATUS_ATTEMPT);
+	        _classPrivateMethodGet(this, _prepareAnalyticsChangeStageEventData, _prepareAnalyticsChangeStageEventData2).call(this);
 	      }
 	      return new Promise(function (resolve, reject) {
 	        babelHelpers.classPrivateFieldGet(_this, _grid).ajax(babelHelpers.classPrivateFieldGet(_this, _params), function (data) {
@@ -115,10 +120,10 @@ this.BX.Crm = this.BX.Crm || {};
 	}
 	function _onSuccess2(data, resolve) {
 	  if (!data || data.error) {
-	    babelHelpers.classPrivateFieldGet(this, _grid).registerAnalyticsCloseEvent(babelHelpers.classPrivateFieldGet(this, _analyticsData), BX.Crm.Integration.Analytics.Dictionary.STATUS_ERROR);
+	    _classPrivateMethodGet(this, _sendAnalyticsData, _sendAnalyticsData2).call(this, crm_integration_analytics.Dictionary.STATUS_ERROR);
 	    _classPrivateMethodGet(this, _handleErrorOnSimpleAction, _handleErrorOnSimpleAction2).call(this, data, resolve);
 	  } else {
-	    babelHelpers.classPrivateFieldGet(this, _grid).registerAnalyticsCloseEvent(babelHelpers.classPrivateFieldGet(this, _analyticsData), BX.Crm.Integration.Analytics.Dictionary.STATUS_SUCCESS);
+	    _classPrivateMethodGet(this, _sendAnalyticsData, _sendAnalyticsData2).call(this, crm_integration_analytics.Dictionary.STATUS_SUCCESS);
 	    _classPrivateMethodGet(this, _handleSuccessOnSimpleAction, _handleSuccessOnSimpleAction2).call(this, data, resolve);
 	  }
 	  babelHelpers.classPrivateFieldSet(this, _analyticsData, null);
@@ -219,22 +224,41 @@ this.BX.Crm = this.BX.Crm || {};
 	  return content;
 	}
 	function _onFailure2(error, callback) {
-	  babelHelpers.classPrivateFieldGet(this, _grid).registerAnalyticsCloseEvent(babelHelpers.classPrivateFieldGet(this, _analyticsData), BX.Crm.Integration.Analytics.Dictionary.STATUS_ERROR);
+	  _classPrivateMethodGet(this, _sendAnalyticsData, _sendAnalyticsData2).call(this, crm_integration_analytics.Dictionary.STATUS_ERROR);
 	  babelHelpers.classPrivateFieldSet(this, _analyticsData, null);
 	  BX.Kanban.Utils.showErrorDialog("Error: ".concat(error), true);
 	  callback(new Error(error));
 	}
-	function _prepareAnalyticsData2() {
-	  var _babelHelpers$classPr = babelHelpers.slicedToArray(babelHelpers.classPrivateFieldGet(this, _params).entity_id, 1),
-	    entityId = _babelHelpers$classPr[0];
+	function _prepareAnalyticsChangeStageEventData2() {
+	  var _babelHelpers$classPr;
+	  var targetColumn = (_babelHelpers$classPr = babelHelpers.classPrivateFieldGet(this, _grid).getColumn(babelHelpers.classPrivateFieldGet(this, _params).status)) !== null && _babelHelpers$classPr !== void 0 ? _babelHelpers$classPr : babelHelpers.classPrivateFieldGet(this, _grid).getDropZoneArea().getDropZone(babelHelpers.classPrivateFieldGet(this, _params).status);
+	  var columnType = targetColumn ? targetColumn.getData().type : babelHelpers.classPrivateFieldGet(this, _params).type;
+	  if (columnType === 'PROGRESS') {
+	    babelHelpers.classPrivateFieldSet(this, _analyticsData, crm_integration_analytics.Builder.Entity.ChangeStageEvent.createDefault(babelHelpers.classPrivateFieldGet(this, _params).entity_type, babelHelpers.classPrivateFieldGet(this, _params).entity_id.length).setSubSection(crm_integration_analytics.Dictionary.SUB_SECTION_KANBAN).setElement(crm_integration_analytics.Dictionary.ELEMENT_GRID_ROW_CONTEXT_MENU).buildData());
+	  } else {
+	    _classPrivateMethodGet(this, _prepareAnalyticsCloseEventData, _prepareAnalyticsCloseEventData2).call(this);
+	  }
+	}
+	function _prepareAnalyticsCloseEventData2() {
+	  var _babelHelpers$classPr3;
+	  var _babelHelpers$classPr2 = babelHelpers.slicedToArray(babelHelpers.classPrivateFieldGet(this, _params).entity_id, 1),
+	    entityId = _babelHelpers$classPr2[0];
 	  var item = babelHelpers.classPrivateFieldGet(this, _grid).getItem(entityId);
-	  var targetColumn = babelHelpers.classPrivateFieldGet(this, _grid).getColumn(babelHelpers.classPrivateFieldGet(this, _params).status);
+	  var targetColumn = (_babelHelpers$classPr3 = babelHelpers.classPrivateFieldGet(this, _grid).getColumn(babelHelpers.classPrivateFieldGet(this, _params).status)) !== null && _babelHelpers$classPr3 !== void 0 ? _babelHelpers$classPr3 : babelHelpers.classPrivateFieldGet(this, _grid).getDropZoneArea().getDropZone(babelHelpers.classPrivateFieldGet(this, _params).status);
 	  var type = targetColumn ? targetColumn.getData().type : babelHelpers.classPrivateFieldGet(this, _params).type;
 	  babelHelpers.classPrivateFieldSet(this, _analyticsData, babelHelpers.classPrivateFieldGet(this, _grid).getDefaultAnalyticsCloseEvent(item, type, babelHelpers.classPrivateFieldGet(this, _params).entity_id.toString()));
-	  babelHelpers.classPrivateFieldGet(this, _analyticsData).c_element = BX.Crm.Integration.Analytics.Dictionary.ELEMENT_WON_TOP_ACTIONS;
+	  babelHelpers.classPrivateFieldGet(this, _analyticsData).c_element = crm_integration_analytics.Dictionary.ELEMENT_WON_TOP_ACTIONS;
 	  if (type === 'LOOSE') {
-	    babelHelpers.classPrivateFieldGet(this, _analyticsData).c_element = BX.Crm.Integration.Analytics.Dictionary.ELEMENT_LOSE_TOP_ACTIONS;
+	    babelHelpers.classPrivateFieldGet(this, _analyticsData).c_element = crm_integration_analytics.Dictionary.ELEMENT_LOSE_TOP_ACTIONS;
 	  }
+	}
+	function _sendAnalyticsData2(status) {
+	  if (!babelHelpers.classPrivateFieldGet(this, _analyticsData)) {
+	    return;
+	  }
+	  BX.UI.Analytics.sendData(_objectSpread(_objectSpread({}, babelHelpers.classPrivateFieldGet(this, _analyticsData)), {}, {
+	    status: status
+	  }));
 	}
 	NAMESPACE.SimpleAction = SimpleAction;
 

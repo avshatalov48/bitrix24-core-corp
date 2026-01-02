@@ -3,8 +3,10 @@
  */
 jn.define('ui-system/blocks/switcher', (require, exports, module) => {
 	const { transition, parallel } = require('animation');
-	const { SwitcherMode } = require('ui-system/blocks/switcher/src/mode-enum');
-	const { SwitcherSize } = require('ui-system/blocks/switcher/src/size-enum');
+	const { PropTypes } = require('utils/validation');
+	const { SwitcherMode } = require('ui-system/blocks/switcher/src/enums/mode-enum');
+	const { SwitcherSize } = require('ui-system/blocks/switcher/src/enums/size-enum');
+	const { TestIdWrapper } = require('ui-system/blocks/switcher/src/test-id-wrapper');
 
 	/**
 	 * @typedef {Object} SwitcherProps
@@ -34,19 +36,22 @@ jn.define('ui-system/blocks/switcher', (require, exports, module) => {
 			this.#initializeState(props);
 		}
 
-		shouldComponentUpdate(nextProps, nextState)
+		shouldComponentUpdate(nextProps)
 		{
-			const { checked } = this.props;
+			const { checked, disabled } = this.props;
 
-			const shouldUpdate = !this.isUseState() && nextProps.checked === checked;
+			if (disabled !== nextProps.disabled)
+			{
+				return true;
+			}
 
-			return Boolean(nextProps.force) || shouldUpdate;
+			return !this.#isUseState() && nextProps.checked === checked;
 		}
 
 		componentWillReceiveProps(props)
 		{
 			this.#initializeState(props);
-			this.#animateToggle();
+			void this.#animateToggle();
 		}
 
 		#initializeState(props = {})
@@ -60,11 +65,6 @@ jn.define('ui-system/blocks/switcher', (require, exports, module) => {
 
 		#animateToggle()
 		{
-			if (this.isDisabled())
-			{
-				return Promise.resolve();
-			}
-
 			return new Promise((resolve) => {
 				const animate = parallel(
 					transition(this.thumbRef, {
@@ -94,37 +94,23 @@ jn.define('ui-system/blocks/switcher', (require, exports, module) => {
 
 		render()
 		{
-			const { style } = this.props;
-
-			const clickable = this.isUseState();
-
 			return View(
 				{
-					clickable,
-					testId: this.#getTestId(),
-					style: {
-						alignItems: 'flex-start',
-						...style,
+					ref: (ref) => {
+						this.trackRef = ref;
 					},
+					style: this.getTrackStyle(),
+					clickable: this.#hasOnClick(),
 					onClick: this.handleOnClick,
 				},
 				View(
 					{
 						clickable: false,
 						ref: (ref) => {
-							this.trackRef = ref;
+							this.thumbRef = ref;
 						},
-						style: this.getTrackStyle(),
+						style: this.getThumbStyle(),
 					},
-					View(
-						{
-							clickable: false,
-							ref: (ref) => {
-								this.thumbRef = ref;
-							},
-							style: this.getThumbStyle(),
-						},
-					),
 				),
 			);
 		}
@@ -132,20 +118,17 @@ jn.define('ui-system/blocks/switcher', (require, exports, module) => {
 		handleOnClick = async () => {
 			const { onClick } = this.props;
 
-			if (this.isDisabled() || this.animateInProgress)
+			if (this.animateInProgress)
 			{
 				return;
 			}
 
-			if (this.isUseState())
+			if (!this.isDisabled() && this.#isUseState())
 			{
 				await this.toggleChecked();
 			}
 
-			if (onClick)
-			{
-				onClick(this.isChecked());
-			}
+			onClick?.(this.isChecked());
 		};
 
 		toggleChecked()
@@ -189,6 +172,7 @@ jn.define('ui-system/blocks/switcher', (require, exports, module) => {
 		getTrackStyle()
 		{
 			return {
+				position: 'relative',
 				...this.getTrackColor(this.isChecked()),
 				...this.#getSize().getTrackStyle(this.isDisabled()),
 			};
@@ -211,6 +195,7 @@ jn.define('ui-system/blocks/switcher', (require, exports, module) => {
 		{
 			const { compact = false, size } = this.props;
 
+			/** @deprecated use @param {size} */
 			if (compact)
 			{
 				return SwitcherSize.S;
@@ -219,9 +204,12 @@ jn.define('ui-system/blocks/switcher', (require, exports, module) => {
 			return SwitcherSize.resolve(size, SwitcherSize.M);
 		}
 
+		/**
+		 * @returns {SwitcherMode}
+		 */
 		#getMode()
 		{
-			const { mode = SwitcherMode.SOLID } = this.props;
+			const mode = this.props?.mode || SwitcherMode.SOLID;
 
 			return this.isDisabled() ? mode.getDisabled() : mode;
 		}
@@ -231,15 +219,7 @@ jn.define('ui-system/blocks/switcher', (require, exports, module) => {
 			return this.#getSize().getThumbPosition(this.isChecked());
 		}
 
-		#getTestId()
-		{
-			const { testId } = this.props;
-			const prefix = this.isChecked() ? '' : 'un';
-
-			return `${testId}_${prefix}selected`;
-		}
-
-		isUseState()
+		#isUseState()
 		{
 			const { useState } = this.props;
 
@@ -259,10 +239,16 @@ jn.define('ui-system/blocks/switcher', (require, exports, module) => {
 
 			return Boolean(disabled);
 		}
+
+		#hasOnClick()
+		{
+			const { onClick } = this.props;
+
+			return Boolean(onClick);
+		}
 	}
 
 	Switcher.defaultProps = {
-		compact: false,
 		checked: false,
 		useState: true,
 		trackColor: {},
@@ -270,7 +256,6 @@ jn.define('ui-system/blocks/switcher', (require, exports, module) => {
 	};
 
 	Switcher.propTypes = {
-		testId: PropTypes.string.isRequired,
 		checked: PropTypes.bool,
 		useState: PropTypes.bool,
 		mode: PropTypes.instanceOf(SwitcherMode),
@@ -291,7 +276,7 @@ jn.define('ui-system/blocks/switcher', (require, exports, module) => {
 				backgroundColor: PropTypes.string,
 			}),
 		}),
-		onClick: PropTypes.func,
+		onClick: PropTypes.oneOfType([PropTypes.func, PropTypes.bool]),
 	};
 
 	module.exports = {
@@ -299,7 +284,7 @@ jn.define('ui-system/blocks/switcher', (require, exports, module) => {
 		 * @param {SwitcherProps} props
 		 * @returns {Switcher}
 		 */
-		Switcher: (props) => new Switcher(props),
+		Switcher: (props) => TestIdWrapper(props, Switcher),
 		SwitcherMode,
 		SwitcherSize,
 	};

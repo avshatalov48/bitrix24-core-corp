@@ -195,6 +195,7 @@ $arResult['AUX_TEMPLATE_DATA']['EDITOR_PARAMETERS'] = [
 			'contextId' => 'tasks_' . $arResult['TEMPLATE_DATA']['ID'],
 			'category' => 'tasks',
 		],
+		'ctrlEnterHandler' => 'taskCtrlEnterHandler',
 	],
 	//"USE_CLIENT_DATABASE" => "Y",
 	//"ALLOW_EMAIL_INVITATION" => ($arResult["ALLOW_EMAIL_INVITATION"] ? 'Y' : 'N')
@@ -562,7 +563,12 @@ if (
 	$arResult['DATA']['CURRENT_TASKS']['PARENT'][] = $relatedTasks[$parentTaskId];
 }
 
-$validParams = ParameterTable::getLegacyMap();
+$legacyParamsMap = ParameterTable::getLegacyMap();
+$validParams = [
+	ParameterTable::PARAM_SUBTASKS_TIME => $legacyParamsMap[ParameterTable::PARAM_SUBTASKS_TIME],
+	ParameterTable::PARAM_SUBTASKS_AUTOCOMPLETE => $legacyParamsMap[ParameterTable::PARAM_SUBTASKS_AUTOCOMPLETE],
+	ParameterTable::PARAM_RESULT_REQUIRED => $legacyParamsMap[ParameterTable::PARAM_RESULT_REQUIRED],
+];
 
 $params = array();
 if(Bitrix\Tasks\Util\Type::isIterable($taskData['SE_PARAMETER'] ?? null))

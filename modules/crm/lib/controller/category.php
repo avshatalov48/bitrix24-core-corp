@@ -73,7 +73,7 @@ class Category extends Base
 			return null;
 		}
 
-		if (!$this->userPermissions->canViewItemsInCategory($category))
+		if (!$this->userPermissions->category()->canReadItems($category))
 		{
 			$this->addError(ErrorCode::getAccessDeniedError());
 			return null;
@@ -91,7 +91,7 @@ class Category extends Base
 		{
 			return null;
 		}
-		$categories = $this->userPermissions->filterAvailableForReadingCategories(
+		$categories = $this->userPermissions->category()->filterAvailableForReadingCategories(
 			$factory->getCategories()
 		);
 
@@ -146,13 +146,7 @@ class Category extends Base
 			return;
 		}
 
-		if (!$this->userPermissions->canDeleteCategory($category))
-		{
-			$this->addError(ErrorCode::getAccessDeniedError());
-			return;
-		}
-
-		if (!$this->userPermissions->canDeleteCategory($category))
+		if (!$this->userPermissions->category()->canDelete($category))
 		{
 			$this->addError(ErrorCode::getAccessDeniedError());
 			return;
@@ -186,7 +180,7 @@ class Category extends Base
 		}
 
 		$category = $factory->createCategory();
-		if (!$this->userPermissions->canAddCategory($category))
+		if (!$this->userPermissions->category()->canAdd($category))
 		{
 			$this->addError(ErrorCode::getAccessDeniedError());
 			return null;
@@ -209,7 +203,7 @@ class Category extends Base
 			return null;
 		}
 
-		if (!$this->userPermissions->canUpdateCategory($category))
+		if (!$this->userPermissions->category()->canUpdate($category))
 		{
 			$this->addError(ErrorCode::getAccessDeniedError());
 			return null;

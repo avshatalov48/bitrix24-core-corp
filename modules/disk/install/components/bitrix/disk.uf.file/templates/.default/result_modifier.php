@@ -1,5 +1,8 @@
 <?php
 
+/** @var array $arResult */
+/** @var array $arParams */
+
 use Bitrix\Disk\Security\ParameterSigner;
 
 if(!defined("B_PROLOG_INCLUDED") || B_PROLOG_INCLUDED!==true)die();
@@ -30,6 +33,7 @@ if (mb_strpos($this->__page, "show") === 0)
 		elseif (array_key_exists("IMAGE", $file))
 		{
 			$src = $file["PREVIEW_URL"].(mb_strpos($file["PREVIEW_URL"], "?") === false ? "?" : "&");
+
 			$file["THUMB"] = array(
 				"src" => $src.http_build_query(array_merge($arParams["THUMB_SIZE"], array("exact" => "Y", 'signature' => ParameterSigner::getImageSignature($file['ID'], $arParams["THUMB_SIZE"]["width"], $arParams["THUMB_SIZE"]["height"])))),
 				"width" => $arParams["THUMB_SIZE"]["width"],

@@ -9,14 +9,15 @@ use Bitrix\Catalog;
 use Bitrix\Catalog\Access\AccessController;
 use Bitrix\Catalog\Access\ActionDictionary;
 use Bitrix\Crm;
+use Bitrix\Crm\Activity\LastCommunication\LastCommunicationTimeFormatter;
 use Bitrix\Crm\Attribute\FieldAttributeManager;
 use Bitrix\Crm\Category\DealCategory;
 use Bitrix\Crm\Component\EntityDetails\ComponentMode;
 use Bitrix\Crm\Component\EntityDetails\Traits;
-use Bitrix\Crm\Controller\Action\Entity\SearchAction;
 use Bitrix\Crm\Conversion\LeadConversionWizard;
 use Bitrix\Crm\Conversion\QuoteConversionWizard;
 use Bitrix\Crm\Integration\Catalog\WarehouseOnboarding;
+use Bitrix\Crm\Integration\UI\EntityEditor\DefaultEntityConfig\DealDefaultEntityConfig;
 use Bitrix\Crm\Recurring;
 use Bitrix\Crm\Restriction\RestrictionManager;
 use Bitrix\Crm\Service\Container;
@@ -26,6 +27,7 @@ use Bitrix\Crm\Settings\LayoutSettings;
 use Bitrix\Crm\Tracking;
 use Bitrix\Currency;
 use Bitrix\Main;
+use Bitrix\Main\Engine\UrlManager;
 use Bitrix\Main\Localization\Loc;
 use Bitrix\SalesCenter\Integration\LandingManager;
 
@@ -54,8 +56,7 @@ class CCrmDealDetailsComponent
 	protected $guid = '';
 	/** @var int */
 	private $userID = 0;
-	/** @var  CCrmPerms|null */
-	private $userPermissions = null;
+	private Crm\Service\UserPermissions $userPermissionsService;
 	/** @var string */
 	private $userFieldEntityID;
 	/** @var CCrmUserType|null  */
@@ -122,8 +123,8 @@ class CCrmDealDetailsComponent
 
 		parent::__construct($component);
 
-		$this->userID = CCrmSecurityHelper::GetCurrentUserID();
-		$this->userPermissions = CCrmPerms::GetCurrentUserPermissions();
+		$this->userID = Container::getInstance()->getContext()->getUserId();
+		$this->userPermissionsService = Container::getInstance()->getUserPermissions($this->userID);
 		$this->userFieldEntityID = \CCrmDeal::GetUserFieldEntityID();
 		$this->userType = new \CCrmUserType($USER_FIELD_MANAGER, $this->userFieldEntityID);
 		$this->userFieldDispatcher = \Bitrix\Main\UserField\Dispatcher::instance();
@@ -209,63 +210,9 @@ class CCrmDealDetailsComponent
 			return $this->arResult['ENTITY_CONFIG'];
 		}
 
-		$userFieldConfigElements = array();
-		foreach(array_keys($this->userFieldInfos) as $fieldName)
-		{
-			$userFieldConfigElements[] = array('name' => $fieldName);
-		}
+		$userFieldNames = array_keys($this->userFieldInfos);
 
-		$this->arResult['ENTITY_CONFIG'] = array(
-			array(
-				'name' => 'main',
-				'title' => Loc::getMessage('CRM_DEAL_SECTION_MAIN'),
-				'type' => 'section',
-				'elements' => array(
-					array('name' => 'TITLE'),
-					array('name' => 'STAGE_ID'),
-					array('name' => 'OPPORTUNITY_WITH_CURRENCY'),
-					array('name' => 'CLOSEDATE'),
-					array('name' => 'CLIENT'),
-				)
-			),
-			array(
-				'name' => 'additional',
-				'title' => Loc::getMessage('CRM_DEAL_SECTION_ADDITIONAL'),
-				'type' => 'section',
-				'elements' =>
-					array_merge(
-						array(
-							array('name' => 'TYPE_ID'),
-							array('name' => 'SOURCE_ID'),
-							array('name' => 'SOURCE_DESCRIPTION'),
-							array('name' => 'BEGINDATE'),
-							//array('name' => 'LOCATION_ID'),
-							array('name' => 'OPENED'),
-							array('name' => 'ASSIGNED_BY_ID'),
-							array('name' => 'OBSERVER'),
-							array('name' => 'COMMENTS'),
-							array('name' => 'UTM'),
-						),
-						$userFieldConfigElements
-					)
-			),
-			array(
-				'name' => 'products',
-				'title' => Loc::getMessage('CRM_DEAL_SECTION_PRODUCTS'),
-				'type' => 'section',
-				'elements' => array(
-					array('name' => "PRODUCT_ROW_SUMMARY")
-				)
-			),
-			array(
-				'name' => 'recurring',
-				'title' => Loc::getMessage('CRM_DEAL_SECTION_RECURRING'),
-				'type' => 'section',
-				'elements' => array(
-					array('name' => 'RECURRING')
-				)
-			)
-		);
+		$this->arResult['ENTITY_CONFIG'] = (new DealDefaultEntityConfig($userFieldNames))->get();
 
 		return $this->arResult['ENTITY_CONFIG'];
 	}
@@ -365,8 +312,8 @@ class CCrmDealDetailsComponent
 		}
 
 		//region Category && Category List
-		$categoryReadMap = array_fill_keys(\CCrmDeal::GetPermittedToReadCategoryIDs($this->userPermissions), true);
-		$categoryCreateMap = array_fill_keys(\CCrmDeal::GetPermittedToCreateCategoryIDs($this->userPermissions), true);
+		$categoryReadMap = array_fill_keys($this->userPermissionsService->category()->getAvailableForReadingCategoriesIds(CCrmOwnerType::Deal), true);
+		$categoryCreateMap = array_fill_keys($this->userPermissionsService->category()->getAvailableForAddingCategoriesIds(CCrmOwnerType::Deal), true);
 		$this->arResult['READ_CATEGORY_LIST'] = $this->arResult['CREATE_CATEGORY_LIST'] = array();
 		foreach(DealCategory::getAll(true) as $item)
 		{
@@ -427,13 +374,13 @@ class CCrmDealDetailsComponent
 
 		if ($this->isCopyMode)
 		{
-			if (!\CCrmDeal::CheckReadPermission($this->entityID, $this->userPermissions, $this->categoryID))
+			if (!$this->userPermissionsService->item()->canRead(CCrmOwnerType::Deal, $this->entityID))
 			{
 				Crm\Component\EntityDetails\Error::showError(Crm\Component\EntityDetails\Error::NoReadPermission, CCrmOwnerType::Deal);
 
 				return;
 			}
-			elseif (!\CCrmDeal::CheckCreatePermission($this->userPermissions, $this->categoryID))
+			elseif (!$this->userPermissionsService->entityType()->canAddItemsInCategory(CCrmOwnerType::Deal, $this->categoryID))
 			{
 				Crm\Component\EntityDetails\Error::showError(Crm\Component\EntityDetails\Error::NoAddPermission, CCrmOwnerType::Deal);
 
@@ -451,8 +398,9 @@ class CCrmDealDetailsComponent
 			);
 			$recurring = $dealRecurringData->fetch();
 			if (!($recurring
-				&&\CCrmDeal::CheckReadPermission($this->entityID, $this->userPermissions, $this->categoryID)
-				&& \CCrmDeal::CheckCreatePermission($this->userPermissions, $recurring['CATEGORY_ID'])))
+				&& $this->userPermissionsService->item()->canRead(CCrmOwnerType::Deal, $this->entityID)
+				&& $this->userPermissionsService->entityType()->canAddItemsInCategory(CCrmOwnerType::Deal, $recurring['CATEGORY_ID'])
+			))
 			{
 				Crm\Component\EntityDetails\Error::showError(Crm\Component\EntityDetails\Error::NoAddPermission, CCrmOwnerType::Deal);
 
@@ -464,8 +412,8 @@ class CCrmDealDetailsComponent
 		elseif ($this->isEditMode)
 		{
 			if (
-				!\CCrmDeal::CheckUpdatePermission(0)
-				&& !\CCrmDeal::CheckReadPermission()
+				!$this->userPermissionsService->entityType()->canUpdateItemsInCategory(CCrmOwnerType::Deal, $this->categoryID)
+				&& !$this->userPermissionsService->entityType()->canReadItemsInCategory(CCrmOwnerType::Deal, $this->categoryID)
 			)
 			{
 				Crm\Component\EntityDetails\Error::showError(Crm\Component\EntityDetails\Error::NoAccessToEntityType, CCrmOwnerType::Deal);
@@ -473,8 +421,8 @@ class CCrmDealDetailsComponent
 				return;
 			}
 			elseif (
-				!\CCrmDeal::CheckUpdatePermission($this->entityID, $this->userPermissions, $this->categoryID)
-				&& !\CCrmDeal::CheckReadPermission($this->entityID, $this->userPermissions, $this->categoryID)
+				!$this->userPermissionsService->item()->canUpdate(CCrmOwnerType::Deal, $this->entityID)
+				&& !$this->userPermissionsService->item()->canRead(CCrmOwnerType::Deal, $this->entityID)
 			)
 			{
 				Crm\Component\EntityDetails\Error::showError(Crm\Component\EntityDetails\Error::NoReadPermission, CCrmOwnerType::Deal);
@@ -482,7 +430,7 @@ class CCrmDealDetailsComponent
 				return;
 			}
 		}
-		elseif (!\CCrmDeal::CheckCreatePermission($this->userPermissions, $this->categoryID))
+		elseif (!$this->userPermissionsService->entityType()->canAddItemsInCategory(CCrmOwnerType::Deal, $this->categoryID))
 		{
 			Crm\Component\EntityDetails\Error::showError(Crm\Component\EntityDetails\Error::NoAddPermission, CCrmOwnerType::Deal);
 
@@ -722,6 +670,7 @@ class CCrmDealDetailsComponent
 									'ENABLE_TOOLBAR' => true,
 									'PRESERVE_HISTORY' => true,
 									'ADD_EVENT_NAME' => 'CrmCreateQuoteFromDeal',
+									'EXTENDED_INTERNAL_MODE' => true,
 									'ANALYTICS' => [
 										// we dont know where from this component was opened from - it could be anywhere on portal
 										'c_section' => \Bitrix\Crm\Integration\Analytics\Dictionary::SECTION_DEAL,
@@ -1040,10 +989,7 @@ class CCrmDealDetailsComponent
 		}
 		//endregion
 
-		//region LEGEND
-		$categoryID = (int)($this->entityData['CATEGORY_ID'] ?? 0);
-		$this->arResult['LEGEND'] = \Bitrix\Crm\Category\DealCategory::getName($categoryID);
-
+		//region CATEGORY LABEL
 		if ($this->arResult['ENTITY_ID'] > 0)
 		{
 			if (
@@ -1051,14 +997,14 @@ class CCrmDealDetailsComponent
 				&& $this->entityData['IS_RETURN_CUSTOMER'] === 'Y'
 			)
 			{
-				$this->arResult['LEGEND'] .= ' ('.Loc::getMessage('CRM_DEAL_RETURNING').')';
+				$this->arResult['CATEGORY_LABEL'] = '#CATEGORY# ('.Loc::getMessage('CRM_DEAL_RETURNING').')';
 			}
 			elseif(
 				isset($this->entityData['IS_REPEATED_APPROACH'])
 				&& $this->entityData['IS_REPEATED_APPROACH'] === 'Y'
 			)
 			{
-				$this->arResult['LEGEND'] .= ' ('.Loc::getMessage('CRM_DEAL_REPEATED_APPROACH').')';
+				$this->arResult['CATEGORY_LABEL'] = '#CATEGORY# ('.Loc::getMessage('CRM_DEAL_REPEATED_APPROACH').')';
 			}
 		}
 		//endregion
@@ -1256,6 +1202,8 @@ class CCrmDealDetailsComponent
 		{
 			$recurringViewText  =  Loc::getMessage("CRM_DEAL_FIELD_RECURRING_NOTHING_SELECTED");
 		}
+
+		$dealRecurringRestriction = null;
 		if (!$this->isEnableRecurring)
 		{
 			$dealRecurringRestriction = RestrictionManager::getDealRecurringRestriction();
@@ -1263,7 +1211,9 @@ class CCrmDealDetailsComponent
 		//endregion
 
 		$allStages = Bitrix\Crm\Category\DealCategory::getStageList($this->categoryID);
-		$prohibitedStageIDS = array();
+
+		$prohibitedStageIDS = [];
+		$stagePermissions = $this->userPermissionsService->stage();
 		foreach(array_keys($allStages) as $stageID)
 		{
 			if(isset($this->arResult['READ_ONLY']) && $this->arResult['READ_ONLY'])
@@ -1272,11 +1222,10 @@ class CCrmDealDetailsComponent
 			}
 			else
 			{
-				$permissionType = $this->isEditMode
-					? \CCrmDeal::GetStageUpdatePermissionType($stageID, $this->userPermissions, $this->categoryID)
-					: \CCrmDeal::GetStageCreatePermissionType($stageID, $this->userPermissions, $this->categoryID);
-
-				if($permissionType == BX_CRM_PERM_NONE)
+				if (!($this->isEditMode
+					? $stagePermissions->canUpdateInStage(CCrmOwnerType::Deal, $this->categoryID, $stageID)
+					: $stagePermissions->canAddInStage(CCrmOwnerType::Deal, $this->categoryID, $stageID)
+				))
 				{
 					$prohibitedStageIDS[] = $stageID;
 				}
@@ -1490,8 +1439,6 @@ class CCrmDealDetailsComponent
 					'categoryParams' => $categoryParams,
 					'map' => array('data' => 'CLIENT_DATA'),
 					'info' => 'CLIENT_INFO',
-					'lastCompanyInfos' => 'LAST_COMPANY_INFOS',
-					'lastContactInfos' => 'LAST_CONTACT_INFOS',
 					'loaders' => array(
 						'primary' => array(
 							CCrmOwnerType::CompanyName => array(
@@ -1558,7 +1505,7 @@ class CCrmDealDetailsComponent
 			),
 			array(
 				"name" => "RECURRING",
-				"title" => Loc::getMessage("CRM_DEAL_SECTION_RECURRING"),
+				"title" => DealDefaultEntityConfig::getRecurringSectionTitle(),
 				"type" => "recurring",
 				"editable" => isset($this->arResult['CREATE_CATEGORY_LIST'])
 								&& is_array($this->arResult['CREATE_CATEGORY_LIST'])
@@ -1567,22 +1514,42 @@ class CCrmDealDetailsComponent
 				'enableAttributes' => false,
 				"enableRecurring" => $this->isEnableRecurring,
 				"elements" => $this->prepareRecurringElements(),
-				"data" => array(
-					'loaders' => array(
-						'action' => 'GET_DEAL_HINT',
-						'url' => '/bitrix/components/bitrix/crm.interface.form.recurring/ajax.php?'.bitrix_sessid_get()
-					),
-					"view" => array(
-						'text' => $recurringViewText
-					),
-					"fieldData" => [
+				'data' => [
+					'loaders' => [
+						'url' => UrlManager::getInstance()->create('crm.recurring.hint.get')->getUri(),
+					],
+					'view' => [
+						'text' => $recurringViewText,
+					],
+					'fieldData' => [
 						'MULTIPLE_EXECUTION' => Recurring\Manager::MULTIPLY_EXECUTION,
 						'SINGLE_EXECUTION' => Recurring\Manager::SINGLE_EXECUTION,
 						'NON_ACTIVE' => Recurring\Calculator::SALE_TYPE_NON_ACTIVE_DATE,
 					],
-					"restrictScript" => (!$this->isEnableRecurring && !empty($dealRecurringRestriction)) ? $dealRecurringRestriction->prepareInfoHelperScript() : ""
-				)
+					'restrictScript' => (!$this->isEnableRecurring && $dealRecurringRestriction !== null) ? $dealRecurringRestriction->prepareInfoHelperScript() : '',
+				],
 			),
+			[
+				'name' => 'MOVED_BY_ID',
+				'title' => Loc::getMessage('CRM_DEAL_FIELD_MOVED_BY_ID'),
+				'type' => 'user',
+				'editable' => false,
+				'data' => [
+					'enableEditInView' => false,
+					'formated' => 'MOVED_BY_FORMATTED_NAME',
+					'position' => 'MOVED_BY_WORK_POSITION',
+					'photoUrl' => 'MOVED_BY_PHOTO_URL',
+					'showUrl' => 'PATH_TO_MOVED_BY_USER',
+					'pathToProfile' => $this->arResult['PATH_TO_USER_PROFILE'] ?? null
+				],
+				'enableAttributes' => false
+			],
+			[
+				'name' => 'MOVED_TIME',
+				'title' => Loc::getMessage('CRM_DEAL_FIELD_MOVED_TIME'),
+				'type' => 'datetime',
+				'editable' => false,
+			],
 		);
 
 		Tracking\UI\Details::appendEntityFields($this->entityFieldInfos);
@@ -1622,6 +1589,8 @@ class CCrmDealDetailsComponent
 			$this->entityFieldInfos,
 			array_values($this->prepareParentFieldInfos())
 		);
+
+		(new Crm\Filter\Field\LastCommunicationField())->addLastCommunicationFieldInfo($this->entityFieldInfos);
 
 		$this->arResult['ENTITY_FIELDS'] = $this->entityFieldInfos;
 
@@ -1990,8 +1959,6 @@ class CCrmDealDetailsComponent
 					CCrmOwnerType::Contact,
 					CCrmOwnerType::Deal,
 					array(
-						'userID' => $this->userID,
-						'userPermissions' => $this->userPermissions,
 						'companyID' => $this->entityData['COMPANY_ID']
 					)
 				);
@@ -2142,18 +2109,8 @@ class CCrmDealDetailsComponent
 		//region Responsible
 		if(isset($this->entityData['ASSIGNED_BY_ID']) && $this->entityData['ASSIGNED_BY_ID'] > 0)
 		{
-			$dbUsers = \CUser::GetList(
-				'ID',
-				'ASC',
-				array('ID' => $this->entityData['ASSIGNED_BY_ID']),
-				array(
-					'FIELDS' => array(
-						'ID',  'LOGIN', 'PERSONAL_PHOTO',
-						'NAME', 'SECOND_NAME', 'LAST_NAME'
-					)
-				)
-			);
-			$user = is_object($dbUsers) ? $dbUsers->Fetch() : null;
+			$user = Container::getInstance()->getUserBroker()->getById($this->entityData['ASSIGNED_BY_ID']);
+
 			if(is_array($user))
 			{
 				$this->entityData['ASSIGNED_BY_LOGIN'] = $user['LOGIN'];
@@ -2171,20 +2128,28 @@ class CCrmDealDetailsComponent
 		}
 
 		//region User Fields
-		foreach($this->userFields as $fieldName => $userField)
+		foreach ($this->userFields as $fieldName => $userField)
 		{
-			$fieldValue = isset($userField['VALUE']) ? $userField['VALUE'] : '';
-			$fieldData = isset($this->userFieldInfos[$fieldName])
-				? $this->userFieldInfos[$fieldName] : null;
-
-			if(!is_array($fieldData))
+			$fieldValue = $userField['VALUE'] ?? '';
+			$fieldData = $this->userFieldInfos[$fieldName] ?? null;
+			if (!is_array($fieldData))
 			{
 				continue;
 			}
 
 			$isEmptyField = true;
 			$fieldParams = $fieldData['data']['fieldInfo'];
-			if((is_string($fieldValue) && $fieldValue !== '')
+
+			if (
+				$this->entityID <= 0
+				&& $fieldParams['USER_TYPE_ID'] === 'boolean'
+			)
+			{
+				$fieldValue = (string)$fieldParams['SETTINGS']['DEFAULT_VALUE'];
+			}
+
+			if (
+				(is_string($fieldValue) && $fieldValue !== '')
 				|| (is_array($fieldValue) && !empty($fieldValue))
 			)
 			{
@@ -2193,27 +2158,27 @@ class CCrmDealDetailsComponent
 			}
 
 			$fieldSignature = $this->userFieldDispatcher->getSignature($fieldParams);
-			if($isEmptyField)
+			if ($isEmptyField)
 			{
-				$this->entityData[$fieldName] = array(
+				$this->entityData[$fieldName] = [
 					'SIGNATURE' => $fieldSignature,
-					'IS_EMPTY' => true
-				);
+					'IS_EMPTY' => true,
+				];
 			}
 			else
 			{
-				$this->entityData[$fieldName] = array(
+				$this->entityData[$fieldName] = [
 					'VALUE' => $fieldValue,
 					'SIGNATURE' => $fieldSignature,
-					'IS_EMPTY' => false
-				);
+					'IS_EMPTY' => false,
+				];
 
 				if($fieldData['data']['fieldInfo']['USER_TYPE_ID'] === 'file')
 				{
-					$values = is_array($fieldValue) ? $fieldValue : array($fieldValue);
-					$this->entityData[$fieldName]['EXTRAS'] = array(
+					$values = is_array($fieldValue) ? $fieldValue : [$fieldValue];
+					$this->entityData[$fieldName]['EXTRAS'] = [
 						'OWNER_TOKEN' => \CCrmFileProxy::PrepareOwnerToken(array_fill_keys($values, $this->entityID))
-					);
+					];
 				}
 			}
 		}
@@ -2275,6 +2240,54 @@ class CCrmDealDetailsComponent
 			);
 		}
 		//endregion
+		$movedByID = isset($this->entityData['MOVED_BY_ID']) ? (int)$this->entityData['MOVED_BY_ID'] : 0;
+		if($movedByID > 0)
+		{
+			$user = Container::getInstance()->getUserBroker()->getById($movedByID);
+			if(is_array($user))
+			{
+				$this->entityData['MOVED_BY_LOGIN'] = $user['LOGIN'];
+				$this->entityData['MOVED_BY_NAME'] = isset($user['NAME']) ? $user['NAME'] : '';
+				$this->entityData['MOVED_BY_SECOND_NAME'] = isset($user['SECOND_NAME']) ? $user['SECOND_NAME'] : '';
+				$this->entityData['MOVED_BY_LAST_NAME'] = isset($user['LAST_NAME']) ? $user['LAST_NAME'] : '';
+				$this->entityData['MOVED_BY_PERSONAL_PHOTO'] = isset($user['PERSONAL_PHOTO']) ? $user['PERSONAL_PHOTO'] : '';
+			}
+
+			$this->entityData['MOVED_BY_FORMATTED_NAME'] =
+				\CUser::FormatName(
+					$this->arResult['NAME_TEMPLATE'],
+					[
+						'LOGIN' => $this->entityData['MOVED_BY_LOGIN'],
+						'NAME' => $this->entityData['MOVED_BY_NAME'],
+						'LAST_NAME' => $this->entityData['MOVED_BY_LAST_NAME'],
+						'SECOND_NAME' => $this->entityData['MOVED_BY_SECOND_NAME']
+					],
+					true,
+					false
+				);
+
+			$movedByPhotoID = isset($this->entityData['MOVED_BY_PERSONAL_PHOTO'])
+				? (int)$this->entityData['MOVED_BY_PERSONAL_PHOTO'] : 0;
+
+			if($movedByPhotoID > 0)
+			{
+				$file = new CFile();
+				$fileInfo = $file->ResizeImageGet(
+					$movedByPhotoID,
+					['width' => 60, 'height'=> 60],
+					BX_RESIZE_IMAGE_EXACT
+				);
+				if(is_array($fileInfo) && isset($fileInfo['src']))
+				{
+					$this->entityData['MOVED_BY_PHOTO_URL'] = $fileInfo['src'];
+				}
+			}
+
+			$this->entityData['PATH_TO_MOVED_BY_USER'] = CComponentEngine::MakePathFromTemplate(
+				$this->arResult['PATH_TO_USER_PROFILE'] ?? null,
+				['user_id' => $movedByID]
+			);
+		}
 		//region Observers
 		if(isset($this->entityData['OBSERVER_IDS']) && !empty($this->entityData['OBSERVER_IDS']))
 		{
@@ -2313,14 +2326,13 @@ class CCrmDealDetailsComponent
 				$this->entityData
 			);
 
-			$isEntityReadPermitted = \CCrmCompany::CheckReadPermission($companyID, $this->userPermissions);
+			$isEntityReadPermitted = $this->userPermissionsService->item()->canRead(CCrmOwnerType::Company, $companyID);
 			$companyInfo = \CCrmEntitySelectorHelper::PrepareEntityInfo(
 				CCrmOwnerType::CompanyName,
 				$companyID,
 				array(
 					'ENTITY_EDITOR_FORMAT' => true,
 					'IS_HIDDEN' => !$isEntityReadPermitted,
-					'USER_PERMISSIONS' => $this->userPermissions,
 					'REQUIRE_REQUISITE_DATA' => true,
 					'REQUIRE_EDIT_REQUISITE_DATA' => true,
 					'REQUIRE_MULTIFIELDS' => true,
@@ -2365,14 +2377,13 @@ class CCrmDealDetailsComponent
 		);
 		foreach($contactIDs as $contactID)
 		{
-			$isEntityReadPermitted = CCrmContact::CheckReadPermission($contactID, $this->userPermissions);
+			$isEntityReadPermitted = $this->userPermissionsService->item()->canRead(CCrmOwnerType::Contact, $contactID);
 			$clientInfo['CONTACT_DATA'][] = CCrmEntitySelectorHelper::PrepareEntityInfo(
 				CCrmOwnerType::ContactName,
 				$contactID,
 				array(
 					'ENTITY_EDITOR_FORMAT' => true,
 					'IS_HIDDEN' => !$isEntityReadPermitted,
-					'USER_PERMISSIONS' => $this->userPermissions,
 					'REQUIRE_REQUISITE_DATA' => true,
 					'REQUIRE_EDIT_REQUISITE_DATA' => ($iteration === 0), // load full requisite data for first item only (due to performance optimisation)
 					'REQUIRE_MULTIFIELDS' => true,
@@ -2384,34 +2395,6 @@ class CCrmDealDetailsComponent
 			$iteration++;
 		}
 		$this->entityData['CLIENT_INFO'] = $clientInfo;
-
-		if ($this->enableSearchHistory)
-		{
-			$categoryParams = CCrmComponentHelper::getEntityClientFieldCategoryParams(
-				CCrmOwnerType::Deal,
-				$this->categoryID
-			);
-			$this->entityData['LAST_COMPANY_INFOS'] = SearchAction::prepareSearchResultsJson(
-				Crm\Controller\Entity::getRecentlyUsedItems(
-					'crm.deal.details',
-					'company',
-					[
-						'EXPAND_ENTITY_TYPE_ID' => CCrmOwnerType::Company,
-						'EXPAND_CATEGORY_ID' => $categoryParams[CCrmOwnerType::Company]['categoryId'],
-					]
-				)
-			);
-			$this->entityData['LAST_CONTACT_INFOS'] = SearchAction::prepareSearchResultsJson(
-				Crm\Controller\Entity::getRecentlyUsedItems(
-					'crm.deal.details',
-					'contact',
-					[
-						'EXPAND_ENTITY_TYPE_ID' => CCrmOwnerType::Contact,
-						'EXPAND_CATEGORY_ID' => $categoryParams[CCrmOwnerType::Contact]['categoryId'],
-					]
-				)
-			);
-		}
 
 		//region Requisites
 		$this->entityData['REQUISITE_BINDING'] = array();
@@ -2658,6 +2641,8 @@ class CCrmDealDetailsComponent
 			}
 		}
 
+		(new LastCommunicationTimeFormatter())->formatDetailDate($this->entityData);
+
 		$this->arResult['ENTITY_DATA'] = $this->entityData;
 
 		return $this->entityData;
@@ -2671,25 +2656,25 @@ class CCrmDealDetailsComponent
 		{
 			$entityId = $this->entityID;
 			$item = null;
-			if($this->conversionWizard !== null)
+			if ($this->conversionWizard !== null)
 			{
 				$entityId = $this->conversionWizard->converter->getEntityID();
-				if($entityId > 0)
+				if ($entityId > 0)
 				{
 					$entityTypeId = $this->conversionWizard->converter->getEntityTypeID();
-					$item = Container::getInstance()->getFactory($entityTypeId)->getItem($entityId);
+					$item = Container::getInstance()->getFactory($entityTypeId)?->getItem($entityId);
 				}
 			}
-			else if($entityId > 0)
+			elseif ($entityId > 0)
 			{
-				$item = $this->factory->getItem($entityId);
+				$item = $this->factory->getItem($entityId, $this->editorAdapter->getProductRowSummaryItemFieldsToSelect());
 			}
 
-			if(!$item)
+			if (!$item)
 			{
 				$item = $this->factory->createItem();
+				$item->setCategoryId((int)($this->arResult['CATEGORY_ID'] ?? 0));
 			}
-
 
 			$mode = $this->getComponentMode();
 			$productRowSummaryData = $this->editorAdapter->getProductRowSummaryDataByItem($item, $mode);
@@ -2774,20 +2759,22 @@ class CCrmDealDetailsComponent
 	{
 		if($this->stages === null)
 		{
-			$this->stages = array();
+			$this->stages = [];
+
+			$stagePermissions = $this->userPermissionsService->stage();
 			$allStages = Bitrix\Crm\Category\DealCategory::getStageList($this->categoryID);
 			foreach ($allStages as $stageID => $stageTitle)
 			{
-				$permissionType = $this->isEditMode
-					? \CCrmDeal::GetStageUpdatePermissionType($stageID, $this->userPermissions, $this->categoryID)
-					: \CCrmDeal::GetStageCreatePermissionType($stageID, $this->userPermissions, $this->categoryID);
-
-				if ($permissionType > BX_CRM_PERM_NONE)
+				if ($this->isEditMode
+					? $stagePermissions->canUpdateInStage(CCrmOwnerType::Deal, $this->categoryID, $stageID)
+					: $stagePermissions->canAddInStage(CCrmOwnerType::Deal, $this->categoryID, $stageID)
+				)
 				{
 					$this->stages[$stageID] = $stageTitle;
 				}
 			}
 		}
+
 		return $this->stages;
 	}
 
@@ -3381,12 +3368,10 @@ class CCrmDealDetailsComponent
 			$params = array();
 		}
 
-		$userID = (isset($params['userID']) && $params['userID'] > 0)
-			? (int)$params['userID'] : \CCrmSecurityHelper::GetCurrentUserID();
-		$userPermissions = $params['userPermissions'] ?? \CCrmPerms::GetCurrentUserPermissions();
-
-		$results = array();
-		if($ownerEntityTypeID === \CCrmOwnerType::Deal && \CCrmDeal::CheckReadPermission(0, $userPermissions))
+		$userID = Container::getInstance()->getContext()->getUserId();
+		$userPermissions = Container::getInstance()->getUserPermissions();
+		$results = [];
+		if ($ownerEntityTypeID === \CCrmOwnerType::Deal && $userPermissions->entityType()->canReadItems(CCrmOwnerType::Deal))
 		{
 			if($entityTypeID === \CCrmOwnerType::Contact)
 			{
@@ -3417,7 +3402,7 @@ class CCrmDealDetailsComponent
 						$contactIds = $dealsContacts[$dealId] ?? [];
 						foreach ($contactIds as $contactId)
 						{
-							if(\CCrmContact::CheckReadPermission($contactId, $userPermissions))
+							if ($userPermissions->item()->canRead(CCrmOwnerType::Contact, $contactId))
 							{
 								$results[] = $contactId;
 							}
@@ -3496,17 +3481,29 @@ class CCrmDealDetailsComponent
 	{
 		$this->arResult['READ_ONLY'] = true;
 
+		if ($this->isReadOnlyForced())
+		{
+			return;
+		}
+
 		if ($this->isEditMode)
 		{
-			if (\CCrmDeal::CheckUpdatePermission($this->entityID, $this->userPermissions))
+			if ($this->userPermissionsService->item()->canUpdate(CCrmOwnerType::Deal, $this->entityID))
 			{
 				$this->arResult['READ_ONLY'] = false;
 			}
 		}
-		elseif (\CCrmDeal::CheckCreatePermission($this->userPermissions))
+		elseif ($this->userPermissionsService->entityType()->canAddItems(CCrmOwnerType::Deal))
 		{
 			$this->arResult['READ_ONLY'] = false;
 		}
+	}
+
+	private function isReadOnlyForced(): bool
+	{
+		$isForcedReadonly = $this->request->get('FORCE_READONLY');
+
+		return $isForcedReadonly === 'Y';
 	}
 
 	private function initializeConfigId(): void
@@ -3517,7 +3514,7 @@ class CCrmDealDetailsComponent
 	private function initializeConversionScheme(): void
 	{
 		$this->arResult['PERMISSION_ENTITY_TYPE'] = DealCategory::convertToPermissionEntityType($this->categoryID);
-		CCrmDeal::PrepareConversionPermissionFlags($this->entityID, $this->arResult, $this->userPermissions);
+		CCrmDeal::PrepareConversionPermissionFlags($this->entityID, $this->arResult);
 
 		if (isset($this->arResult['LEAD_ID']) && $this->arResult['LEAD_ID'] > 0 && isset($this->arParams['LEAD_ID']))
 		{

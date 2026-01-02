@@ -2,6 +2,7 @@
 if (!defined('B_PROLOG_INCLUDED') || B_PROLOG_INCLUDED!==true)die();
 
 use Bitrix\Crm\Integration\StorageType;
+use Bitrix\Crm\ItemMiniCard\Builder\MiniCardHtmlBuilder;
 use Bitrix\Crm\Restriction\RestrictionManager;
 
 if (!CModule::IncludeModule('crm'))
@@ -19,18 +20,18 @@ $currentUserID = CCrmSecurityHelper::GetCurrentUserID();
 $userPermissions = CCrmPerms::GetCurrentUserPermissions();
 $CCrmQuote = new CCrmQuote();
 $arResult['ELEMENT_ID'] = $arParams['ELEMENT_ID'] = isset($arParams['ELEMENT_ID']) ? intval($arParams['ELEMENT_ID']) : 0;
-if ($arResult['ELEMENT_ID'] <= 0 || $CCrmQuote->cPerms->HavePerm('QUOTE', BX_CRM_PERM_NONE, 'READ'))
+if ($arResult['ELEMENT_ID'] <= 0 || !\Bitrix\Crm\Service\Container::getInstance()->getUserPermissions()->entityType()->canReadItems(CCrmOwnerType::Quote))
 {
 	ShowError(GetMessage('CRM_PERMISSION_DENIED'));
 	return;
 }
 
 $arResult['EDITABLE_FIELDS'] = array();
-$arResult['CAN_EDIT'] = CCrmQuote::CheckUpdatePermission($arResult['ELEMENT_ID'], $CCrmQuote->cPerms);
+$arResult['CAN_EDIT'] = \Bitrix\Crm\Service\Container::getInstance()->getUserPermissions()->item()->canUpdate(CCrmOwnerType::Quote, $arResult['ELEMENT_ID']);
 $arResult['PREFIX'] = isset($arParams['~PREFIX']) ? $arParams['~PREFIX'] : 'crm_quote_show';
 $arResult['TACTILE_FORM_ID'] = 'CRM_QUOTE_EDIT_V12';
 
-CCrmQuote::PrepareConversionPermissionFlags($arResult['ELEMENT_ID'], $arResult, $CCrmQuote->cPerms);
+CCrmQuote::PrepareConversionPermissionFlags($arResult['ELEMENT_ID'], $arResult);
 
 if($arResult['CAN_CONVERT'])
 {
@@ -513,10 +514,10 @@ $arResult['FIELDS']['tab_1'][] = array(
 	'id' => 'LEAD_ID',
 	'name' => GetMessage('CRM_QUOTE_FIELD_LEAD_ID'),
 	'value' => isset($arResult['ELEMENT']['LEAD_TITLE'])
-		? ($CCrmQuote->cPerms->HavePerm('LEAD', BX_CRM_PERM_NONE, 'READ')
-			? $arResult['ELEMENT']['LEAD_TITLE'] :
-			'<a href="'.$arResult['PATH_TO_LEAD_SHOW'].'" bx-tooltip-user-id="LEAD_'.$arResult['ELEMENT']['~LEAD_ID'].'" bx-tooltip-loader="'.htmlspecialcharsbx('/bitrix/components/bitrix/crm.lead.show/card.ajax.php').'" bx-tooltip-classname="crm_balloon_lead">'.$arResult['ELEMENT']['LEAD_TITLE'].'</a>'
-		) : '',
+		? (new MiniCardHtmlBuilder(CCrmOwnerType::Lead, (int)$arResult['ELEMENT']['~LEAD_ID']))
+			->setTitle($arResult['ELEMENT']['LEAD_TITLE'])
+			->build()
+		: '',
 	'type' => 'custom',
 	'isTactile' => true
 );
@@ -527,10 +528,10 @@ $arResult['FIELDS']['tab_1'][] = array(
 	'id' => 'DEAL_ID',
 	'name' => GetMessage('CRM_QUOTE_FIELD_DEAL_ID'),
 	'value' => isset($arResult['ELEMENT']['DEAL_TITLE'])
-		? (!CCrmDeal::CheckReadPermission($arResult['ELEMENT']['~DEAL_ID'], $userPermissions)
-			? $arResult['ELEMENT']['DEAL_TITLE'] :
-			'<a href="'.$arResult['PATH_TO_DEAL_SHOW'].'" bx-tooltip-user-id="DEAL_'.$arResult['ELEMENT']['~DEAL_ID'].'" bx-tooltip-loader="'.htmlspecialcharsbx('/bitrix/components/bitrix/crm.deal.show/card.ajax.php').'" bx-tooltip-classname="crm_balloon_deal">'.$arResult['ELEMENT']['DEAL_TITLE'].'</a>'
-		) : '',
+		? (new MiniCardHtmlBuilder(CCrmOwnerType::Deal, (int)$arResult['ELEMENT']['~DEAL_ID']))
+			->setTitle($arResult['ELEMENT']['DEAL_TITLE'])
+			->build()
+		: '',
 	'type' => 'custom',
 	'isTactile' => true
 );
@@ -1039,7 +1040,7 @@ if (CCrmDeal::CheckReadPermission($dealID, $userPermissions))
 	}
 }
 
-if (!$CCrmQuote->cPerms->HavePerm('INVOICE', BX_CRM_PERM_NONE, 'READ'))
+if (\Bitrix\Crm\Service\Container::getInstance()->getUserPermissions()->entityType()->canReadItems(CCrmOwnerType::Invoice))
 {
 	$arResult['FIELDS']['tab_invoice'][] = array(
 		'id' => 'QUOTE_INVOICE',

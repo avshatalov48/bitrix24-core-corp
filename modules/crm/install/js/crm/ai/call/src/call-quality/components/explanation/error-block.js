@@ -32,9 +32,10 @@ export const ErrorBlock = {
 				<div class="call-quality__explanation-title">
 					{{ $Bitrix.Loc.getMessage('CRM_COPILOT_CALL_QUALITY_ERROR_TITLE') }}
 				</div>
-				<div class="call-quality__explanation-text">
-					{{ explanationText }}
-				</div>
+				<div 
+					class="call-quality__explanation-text"
+					v-html="explanationText"
+				></div>
 			</div>
 		</div>
 	`,

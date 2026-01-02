@@ -1,0 +1,25 @@
+<?php
+$MESS["VOX_START_5_NUMBER_RENT"] = "5 нөмір пакеті";
+$MESS["VOX_START_10_NUMBER_RENT"] = "10 нөмір пакеті";
+$MESS["VOX_START_ACCESS_CONTROL"] = "Қолжетімділік құқығы";
+$MESS["VOX_START_CALLER_ID"] = "Нөміріңізді байланыстыру";
+$MESS["VOX_START_COMMON_SETTINGS"] = "Жалпы баптаулар";
+$MESS["VOX_START_CONFIGURE_BLACK_LIST"] = "Қара тізім";
+$MESS["VOX_START_CONFIGURE_GROUPS"] = "Пайдаланушылар тобы";
+$MESS["VOX_START_CONFIGURE_IVR"] = "Дауыстық мәзір";
+$MESS["VOX_START_CONFIGURE_NUMBERS"] = "Нөмірлерді баптау";
+$MESS["VOX_START_CONFIGURE_TELEPHONY"] = "Телефонияны баптау";
+$MESS["VOX_START_CONFIGURE_USERS"] = "Телефония пайдаланушылары";
+$MESS["VOX_START_CONTRACTOR_DOCUMENTS"] = "Жабу құжаттары";
+$MESS["VOX_START_CRM_CALLBACK"] = "Кері қоңырау";
+$MESS["VOX_START_CRM_INTEGRATION_FORM_CREATE"] = "Жасау";
+$MESS["VOX_START_CRM_INTEGRATION_FORM_HELP"] = "Бұл қалай жұмыс істейді?";
+$MESS["VOX_START_CRM_INTEGRATION_FORM_LIST"] = "Нысан тізімі";
+$MESS["VOX_START_INTEGRATION_REQUIRED"] = "Интеграция қажет пе?";
+$MESS["VOX_START_NUMBER_RENT"] = "Нөмірді жалға алу";
+$MESS["VOX_START_SEE_ALL"] = "Барлығын қарау";
+$MESS["VOX_START_SIP_PBX_CLOUD"] = "Бұлтты SIP АТС";
+$MESS["VOX_START_SIP_PBX_OFFICE"] = "Кеңселік SIP АТС";
+$MESS["VOX_START_SIP_PHONES"] = "Аппаратты қосу";
+$MESS["VOX_START_TOTAL_APPLICATIONS"] = "Барлық шешімдер";
+$MESS["VOX_START_UPLOAD_DOCUMENTS"] = "Құжаттарды жүктеу";

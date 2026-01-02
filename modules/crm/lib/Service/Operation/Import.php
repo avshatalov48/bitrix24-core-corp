@@ -25,7 +25,7 @@ class Import extends Operation\Add
 		$result = new Result();
 
 		$userPermissions = Container::getInstance()->getUserPermissions($this->getContext()->getUserId());
-		$canImportItem = $userPermissions->canImportItem($this->item);
+		$canImportItem = $userPermissions->item()->canImportItem($this->item);
 
 		if (!$canImportItem)
 		{

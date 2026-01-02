@@ -1,8 +1,10 @@
 import type { AjaxResponse } from 'main.core';
+
 import { Core } from 'booking.core';
-import { ApiClient } from 'booking.lib.api-client';
 import { Model } from 'booking.const';
+import { ApiClient } from 'booking.lib.api-client';
 import type { ResourceModel } from 'booking.model.resources';
+
 import { mapModelToDto, mapDtoToModel } from './mappers';
 
 class ResourceService
@@ -71,7 +73,7 @@ class ResourceService
 
 	#updateResourcesFromFavorites(): void
 	{
-		const isFilterMode = Core.getStore().getters[`${Model.Interface}/isFilterMode`];
+		const isFilterMode = Core.getStore().getters[`${Model.Filter}/isFilterMode`];
 		if (isFilterMode)
 		{
 			return;
@@ -82,17 +84,29 @@ class ResourceService
 		void Core.getStore().dispatch(`${Model.Interface}/setResourcesIds`, favorites);
 	}
 
-	async delete(resourceId: number): Promise<void>
+	async delete(resourceId: number, withFutureBookings: boolean = false): Promise<void>
 	{
 		try
 		{
-			await (new ApiClient()).post('Resource.delete', { id: resourceId });
+			const action = withFutureBookings ? 'Resource.forceDelete' : 'Resource.delete';
+			const { removedBookingIds } = await (new ApiClient()).post(action, { id: resourceId });
 
-			await Promise.all([
-				Core.getStore().dispatch(`${Model.Resources}/delete`, resourceId),
-				Core.getStore().dispatch(`${Model.Favorites}/delete`, resourceId),
-				Core.getStore().dispatch(`${Model.Interface}/deleteResourceId`, resourceId),
-			]);
+			const $store = Core.getStore();
+			const updateStoreActions = [
+				$store.dispatch(`${Model.Resources}/delete`, resourceId),
+				$store.dispatch(`${Model.Favorites}/delete`, resourceId),
+				$store.dispatch(`${Model.Interface}/deleteResourceId`, resourceId),
+				$store.dispatch(`${Model.Interface}/removeDeletingResource`, resourceId),
+			];
+
+			if (removedBookingIds)
+			{
+				updateStoreActions.push(
+					$store.dispatch(`${Model.Bookings}/deleteMany`, removedBookingIds),
+				);
+			}
+
+			await Promise.all(updateStoreActions);
 		}
 		catch (error)
 		{
@@ -100,15 +114,15 @@ class ResourceService
 		}
 	}
 
-	async hasBookings(resourceId: number): Promise<?boolean>
+	async hasFutureBookings(resourceId: number): Promise<?boolean>
 	{
 		try
 		{
-			return (new ApiClient()).post('Resource.hasBookings', { resourceId });
+			return (new ApiClient()).post('Resource.hasFutureBookings', { resourceId });
 		}
 		catch (error)
 		{
-			console.error('ResourceService: hasBookings error', error);
+			console.error('ResourceService: hasFutureBookings error', error);
 		}
 
 		return Promise.resolve();

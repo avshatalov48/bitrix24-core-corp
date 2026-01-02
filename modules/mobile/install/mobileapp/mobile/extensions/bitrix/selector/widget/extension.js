@@ -7,7 +7,6 @@ jn.define('selector/widget', (require, exports, module) => {
 	const { uniqBy } = require('utils/array');
 	const { isEqual, get, mergeImmutable } = require('utils/object');
 	const { CommonSelectorProvider } = require('selector/providers/common');
-	const { Feature } = require('feature');
 	const { showToast } = require('toast');
 	const { Type } = require('type');
 
@@ -16,8 +15,6 @@ jn.define('selector/widget', (require, exports, module) => {
 
 	const CREATE_BUTTON_CODE = 'create';
 	const DEFAULT_RETURN_KEY = 'done';
-
-	const isAirStyleSupported = Feature.isAirStyleSupported();
 
 	/**
 	 * @class EntitySelectorWidget
@@ -191,22 +188,18 @@ jn.define('selector/widget', (require, exports, module) => {
 
 		show({ widgetParams = this.widgetParams } = {}, parentWidget = PageManager)
 		{
-			let airWidgetParams = {};
 			const sendButtonName = widgetParams.sendButtonName ?? Loc.getMessage('PROVIDER_WIDGET_SELECT');
 
-			if (isAirStyleSupported)
-			{
-				airWidgetParams = {
-					sendButtonName: this.allowMultipleSelection ? sendButtonName : null,
-					titleParams: {
-						type: 'dialog',
-					},
-				};
+			const airWidgetParams = {
+				sendButtonName: this.allowMultipleSelection ? sendButtonName : null,
+				titleParams: {
+					type: 'dialog',
+				},
+			};
 
-				if (widgetParams.title)
-				{
-					airWidgetParams.titleParams.text = widgetParams.title;
-				}
+			if (widgetParams.title)
+			{
+				airWidgetParams.titleParams.text = widgetParams.title;
 			}
 
 			return new Promise((resolve, reject) => {
@@ -238,29 +231,12 @@ jn.define('selector/widget', (require, exports, module) => {
 						this.widget.setLeftButtons(this.leftButtons);
 					}
 
-					if (!isAirStyleSupported)
-					{
-						this.widget.setRightButtons([
-							{
-								name: (
-									this.closeOnSelect
-										? BX.message('PROVIDER_WIDGET_CLOSE')
-										: BX.message('PROVIDER_WIDGET_SELECT')
-								),
-								type: 'text',
-								color: Color.accentMainLinks.toHex(),
-								callback: () => this.close(),
-							},
-						]);
-					}
-
-
-
 					this.widget.allowMultipleSelection(this.allowMultipleSelection);
 					this.provider.loadRecent?.();
 
 					this.widget.on('send', () => this.close());
 					this.widget.on('onViewShown', this.onViewShown);
+					this.widget.on('onInfoIconClicked', this.onInfoIconClicked);
 
 					this.widget.setListener((eventName, data) => {
 						const callbackName = `${eventName}Listener`;
@@ -289,6 +265,18 @@ jn.define('selector/widget', (require, exports, module) => {
 					.catch(reject);
 			});
 		}
+
+		onInfoIconClicked = ({ item, text, scope }) => {
+			this.handleOnEventsCallback('onInfoIconClicked', { item, text, scope });
+		};
+
+		getAllowMultipleSelection = () => {
+			return this.allowMultipleSelection;
+		};
+
+		setShouldSetInitiallySelectedItems = (value) => {
+			this.shouldSetInitiallySelectedItems = value;
+		};
 
 		// region widget event listeners
 
@@ -361,6 +349,11 @@ jn.define('selector/widget', (require, exports, module) => {
 			if (item.params?.code === CREATE_BUTTON_CODE)
 			{
 				this.createItems(text);
+			}
+
+			if (this.closeOnSelect)
+			{
+				this.close();
 			}
 		}
 
@@ -705,25 +698,48 @@ jn.define('selector/widget', (require, exports, module) => {
 				this.widget.setItems(this.currentItems, this.currentSections, { animate: animation });
 			}
 
-			if (isAirStyleSupported)
+			if (this.isCreationModeActive())
 			{
-				if (this.isCreationModeActive())
-				{
-					this.widget.setRightButtons([
-						{
-							type: 'plus',
-							testId: 'ENTITY_SELECTOR_PLUS_BUTTON',
-							callback: () => {
-								this.createItems(this.queryText);
-							},
+				this.widget.setRightButtons([
+					{
+						type: 'plus',
+						testId: 'ENTITY_SELECTOR_PLUS_BUTTON',
+						callback: () => {
+							this.createItems(this.queryText);
 						},
-					]);
-				}
-				else
-				{
-					this.widget.setRightButtons([]);
-				}
+					},
+				]);
 			}
+			else
+			{
+				this.widget.setRightButtons([]);
+			}
+		}
+
+		disableCreation()
+		{
+			this.createOptions.enableCreation = false;
+			this.createOptions.canCreateWithEmptySearch = false;
+			this.widget.setRightButtons([]);
+		}
+
+		enableCreation(handler = () => {})
+		{
+			this.createOptions = {
+				...this.createOptions,
+				enableCreation: true,
+				canCreateWithEmptySearch: true,
+				handler,
+			};
+			this.widget.setRightButtons([
+				{
+					type: 'plus',
+					testId: 'ENTITY_SELECTOR_PLUS_BUTTON',
+					callback: () => {
+						this.createItems(this.queryText);
+					},
+				},
+			]);
 		}
 
 		isCreationModeActive()
@@ -735,16 +751,6 @@ jn.define('selector/widget', (require, exports, module) => {
 
 		getCommonSectionButtonText()
 		{
-			if (isAirStyleSupported)
-			{
-				return '';
-			}
-
-			if (this.isCreationModeActive())
-			{
-				return this.getCreateButtonItemTitle();
-			}
-
 			return '';
 		}
 

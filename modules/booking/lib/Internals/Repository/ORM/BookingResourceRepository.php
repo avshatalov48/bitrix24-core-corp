@@ -21,6 +21,7 @@ class BookingResourceRepository
 			$data[] = [
 				'BOOKING_ID' => $booking->getId(),
 				'RESOURCE_ID' => $resource->getId(),
+				'IS_PRIMARY' => $resourceCollection->getPrimary() === $resource ? 'Y' : 'N',
 			];
 		}
 
@@ -32,13 +33,14 @@ class BookingResourceRepository
 
 	public function unLink(Booking $booking, ResourceCollection $resourceCollection): void
 	{
-		/** @var Resource $resource */
-		foreach ($resourceCollection as $resource)
+		if ($resourceCollection->isEmpty())
 		{
-			BookingResourceTable::deleteByFilter([
-				'=BOOKING_ID' => $booking->getId(),
-				'=RESOURCE_ID' => $resource->getId(),
-			]);
+			return;
 		}
+
+		BookingResourceTable::deleteByFilter([
+			'=BOOKING_ID' => $booking->getId(),
+			'RESOURCE_ID' => $resourceCollection->getEntityIds(),
+		]);
 	}
 }

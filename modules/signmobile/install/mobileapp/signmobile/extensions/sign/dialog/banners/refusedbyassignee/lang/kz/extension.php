@@ -1,0 +1,6 @@
+<?php
+$MESS["SIGN_MOBILE_DIALOG_REFUSED_BY_ASSIGNEE_BUTTON_CLOSE"] = "Жабу";
+$MESS["SIGN_MOBILE_DIALOG_REFUSED_BY_ASSIGNEE_BUTTON_SAVE_TITLE"] = "Жүктеу";
+$MESS["SIGN_MOBILE_DIALOG_REFUSED_BY_ASSIGNEE_DESCRIPTION"] = "[COLOR=\"#COLOR_OF_HIGHLIGHTED_TEXT#\"]#DOCUMENT_TITLE#[/COLOR] құжаты қабылданбады. Сіз қол қойған дананы жүктей аласыз";
+$MESS["SIGN_MOBILE_DIALOG_REFUSED_BY_ASSIGNEE_SAVE_FILE_ERROR_TEXT"] = "Әрекетті орындау мүмкін болмады, қосымшаны қайта іске қосып, қайталап көріңіз";
+$MESS["SIGN_MOBILE_DIALOG_REFUSED_BY_ASSIGNEE_TITLE"] = "Құжат қабылданбады";

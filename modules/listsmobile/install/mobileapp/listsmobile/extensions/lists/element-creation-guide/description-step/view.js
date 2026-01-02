@@ -4,11 +4,12 @@
 jn.define('lists/element-creation-guide/description-step/view', (require, exports, module) => {
 	const AppTheme = require('apptheme');
 	const { Loc } = require('loc');
-	const { Stub } = require('lists/element-creation-guide/stub');
-	const { DescriptionStepSkeleton } = require('lists/element-creation-guide/description-step/skeleton');
 	const { PureComponent } = require('layout/pure-component');
 	const { EventEmitter } = require('event-emitter');
 	const { inAppUrl } = require('in-app-url');
+	const { Random } = require('utils/random');
+	const { Stub } = require('lists/element-creation-guide/stub');
+	const { DescriptionStepSkeleton } = require('lists/element-creation-guide/description-step/skeleton');
 
 	class DescriptionStepView extends PureComponent
 	{
@@ -16,7 +17,6 @@ jn.define('lists/element-creation-guide/description-step/view', (require, export
 		{
 			super(props);
 
-			// eslint-disable-next-line no-undef
 			this.uid = props.uid || Random.getString();
 			this.customEventEmitter = EventEmitter.createWithUid(this.uid);
 		}

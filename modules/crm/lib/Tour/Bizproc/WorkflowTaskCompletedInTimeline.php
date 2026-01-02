@@ -34,7 +34,6 @@ class WorkflowTaskCompletedInTimeline extends Base
 	protected function getOptions(): array
 	{
 		return [
-			'disableBannerDispatcher' => true,
 			'hideTourOnMissClick' => true,
 			'steps' => [
 				'popup' => [

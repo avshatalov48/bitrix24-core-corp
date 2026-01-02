@@ -97,6 +97,11 @@ abstract class Common
 		return $this->isGantt === false;
 	}
 
+	public function isGroup(): bool
+	{
+		return $this->groupId > 0;
+	}
+
 	protected function getGroupId(): ?int
 	{
 		return $this->groupId;

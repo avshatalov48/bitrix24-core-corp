@@ -26,11 +26,12 @@ use Bitrix\Tasks\Comments\Internals\Comment;
 use Bitrix\Tasks\Internals\Counter\CounterDictionary;
 use Bitrix\Tasks\Internals\Counter\CounterTable;
 use Bitrix\Tasks\Internals\Counter\Deadline;
+use Bitrix\Tasks\Internals\Log\Logger;
 use Bitrix\Tasks\Internals\Task\LabelTable;
 use Bitrix\Tasks\Internals\Task\MemberTable;
 use Bitrix\Tasks\Internals\Task\MetaStatus;
+use Bitrix\Tasks\Internals\Task\ProjectDependenceTable;
 use Bitrix\Tasks\Internals\Task\RelatedTable;
-use Bitrix\Tasks\Internals\Task\ScenarioTable;
 use Bitrix\Tasks\Internals\Task\SearchIndexTable;
 use Bitrix\Tasks\Internals\Task\Status;
 use Bitrix\Tasks\Internals\Task\TaskTagTable;
@@ -38,10 +39,10 @@ use Bitrix\Tasks\Internals\Task\UserOptionTable;
 use Bitrix\Tasks\Internals\TaskTable;
 use Bitrix\Tasks\Internals\UserOption\Option;
 use Bitrix\Tasks\Provider\Exception\InvalidFilterException;
-use Bitrix\Tasks\Provider\Exception\LoadModuleException;
 use Bitrix\Tasks\Provider\TasksUFManager;
 use Bitrix\Tasks\Scrum\Form\EntityForm;
 use Bitrix\Tasks\Util\Entity\DateTimeField;
+use Bitrix\Tasks\V2\Internal\DI\Container;
 
 class TaskFilterBuilder
 {
@@ -274,6 +275,10 @@ class TaskFilterBuilder
 					{
 						$conditionTree->where($subFilter);
 					}
+					elseif ($field === 'ID')
+					{
+						Logger::logWarn('Pay attention! Providing an empty ID filter may fetch all tasks.');
+					}
 					break;
 
 				case "REFERENCE:RESPONSIBLE_ID":
@@ -438,6 +443,14 @@ class TaskFilterBuilder
 
 					$tagsCount = count($tags);
 
+					if ($tagsCount === 1) // simplify in case of 1 tag
+					{
+						$this->registerRuntimeField(TaskQueryBuilder::ALIAS_TASK_TAG_NAME);
+						$conditionTree->where(TaskQueryBuilder::ALIAS_TASK_TAG_NAME . '.NAME', $tags[0]);
+
+						break;
+					}
+
 					$subQuery = TaskQueryBuilder::createQuery(
 						TaskQueryBuilder::ALIAS_TASK_TAG,
 						LabelTable::getEntity()
@@ -490,6 +503,34 @@ class TaskFilterBuilder
 					$conditionTree->where($subFilter);
 					break;
 
+				case 'SPRINT_ID':
+				case 'BACKLOG_ID':
+					$subFilter = $this->createSubfilter(
+						TaskQueryBuilder::ALIAS_SCRUM_ITEM . ".ENTITY_ID",
+						$val,
+						$operation,
+						self::CAST_NUMBER
+					);
+
+					if (!$subFilter)
+					{
+						break;
+					}
+
+					$entityForm = $field === 'SPRINT_ID' ? EntityForm::SPRINT_TYPE : EntityForm::BACKLOG_TYPE;
+
+					$condition = new Condition(
+						TaskQueryBuilder::ALIAS_SCRUM_ENTITY.'.ENTITY_TYPE',
+						'=',
+						$entityForm);
+
+					$subFilter->logic('and');
+					$subFilter->addCondition($condition);
+
+					$conditionTree->where($subFilter);
+					$this->registerRuntimeField(TaskQueryBuilder::ALIAS_SCRUM_ITEM);
+					break;
+
 				case 'REAL_STATUS':
 					$containCompletedSprint =
 						is_array($val) && in_array(EntityForm::STATE_COMPLETED_IN_ACTIVE_SPRINT, $val, true);
@@ -500,6 +541,7 @@ class TaskFilterBuilder
 						$scrumFilter = Query::filter()
 							->logic('and')
 							->whereNotNull(TaskQueryBuilder::ALIAS_SCRUM_ITEM . '.ID')
+							->where(TaskQueryBuilder::ALIAS_SCRUM_ENTITY . '.STATUS', EntityForm::SPRINT_ACTIVE)
 							->where('STATUS', Status::COMPLETED);
 
 						if ($subFilter)
@@ -841,6 +883,34 @@ class TaskFilterBuilder
 					$conditionTree->where($subFilter);
 					break;
 
+				case 'GANTT_ANCESTOR_ID':
+					if (empty($val))
+					{
+						break;
+					}
+
+					$val = (int)$val;
+					if ($val <= 0)
+					{
+						break;
+					}
+
+					$subQuery = TaskQueryBuilder::createQuery(
+						TaskQueryBuilder::ALIAS_TASK_GANTT,
+						ProjectDependenceTable::getEntity()
+					);
+
+					$subQuery->setSelect([new ExpressionField('1', '1')]);
+					$subQuery->where('TASK_ID', $val);
+					$subQuery->where('DIRECT', 1);
+					$subQuery->where('DEPENDS_ON_ID', new SqlExpression('%s'));
+
+					$subFilter = Query::filter();
+					$subFilter->whereExpr("EXISTS({$subQuery->getQuery()})", ['ID']);
+
+					$conditionTree->where($subFilter);
+					break;
+
 				case 'ONLY_ROOT_TASKS':
 					if ($val !== 'Y')
 					{
@@ -1087,45 +1157,48 @@ class TaskFilterBuilder
 					break;
 
 				case 'WITH_NEW_COMMENTS':
-					if (!Loader::includeModule('forum'))
-					{
-						throw new LoadModuleException();
-					}
+					Loader::requireModule('forum');
+
+					$notViewedCommentFilter = Query::filter()
+						->logic('and')
+						->whereNotNull(TaskQueryBuilder::ALIAS_TASK_VIEW . '.VIEWED_DATE')
+						->whereColumn(TaskQueryBuilder::ALIAS_FORUM_MESSAGE . '.POST_DATE', '>', TaskQueryBuilder::ALIAS_TASK_VIEW . '.VIEWED_DATE');
+
+					$newCommentFilter = Query::filter()
+						->logic('and')
+						->whereNull(TaskQueryBuilder::ALIAS_TASK_VIEW . '.VIEWED_DATE')
+						->whereColumn(TaskQueryBuilder::ALIAS_FORUM_MESSAGE . '.POST_DATE', '>=', 'CREATED_DATE');
+
+					$unreadCommentFilter = Query::filter()
+						->logic('or')
+						->where($notViewedCommentFilter)
+						->where($newCommentFilter);
+
+					$notExpiredOrOnboardingFilter = Query::filter()
+						->logic('or')
+						->whereNull(TaskQueryBuilder::ALIAS_FORUM_MESSAGE . '.UF_TASK_COMMENT_TYPE')
+						->whereNotIn(TaskQueryBuilder::ALIAS_FORUM_MESSAGE . '.UF_TASK_COMMENT_TYPE', [Comment::TYPE_EXPIRED, Comment::TYPE_ONBOARDING_COMMENT]);
+
+					$notMyFilter = Query::filter()
+						->logic('and')
+						->whereNot(TaskQueryBuilder::ALIAS_FORUM_MESSAGE . '.AUTHOR_ID', $this->behalfUserId)
+						->where($notExpiredOrOnboardingFilter);
+
+					$onboardingFilter = Query::filter()
+						->where(TaskQueryBuilder::ALIAS_FORUM_MESSAGE . '.UF_TASK_COMMENT_TYPE', '=', Comment::TYPE_ONBOARDING_COMMENT)
+						->where(TaskQueryBuilder::ALIAS_TASK_COUNTERS . '.USER_ID', '=', $this->behalfUserId);
+
+					$systemCommentFilter = Query::filter()
+						->logic('or')
+						->where($notMyFilter)
+						->where(TaskQueryBuilder::ALIAS_FORUM_MESSAGE . '.UF_TASK_COMMENT_TYPE', Comment::TYPE_EXPIRED_SOON)
+						->where($onboardingFilter);
+
 					$subFilter = Query::filter()
 						->logic('and')
-						->where(
-							Query::filter()
-								->logic('or')
-								->where(
-									Query::filter()
-										->logic('and')
-										->whereNotNull(TaskQueryBuilder::ALIAS_TASK_VIEW . '.VIEWED_DATE')
-										->whereColumn(TaskQueryBuilder::ALIAS_FORUM_MESSAGE . '.POST_DATE', '>', TaskQueryBuilder::ALIAS_TASK_VIEW . '.VIEWED_DATE')
-								)
-								->where(
-									Query::filter()
-										->logic('and')
-										->whereNull(TaskQueryBuilder::ALIAS_TASK_VIEW . '.VIEWED_DATE')
-										->whereColumn(TaskQueryBuilder::ALIAS_FORUM_MESSAGE . '.POST_DATE', '>=', 'CREATED_DATE')
-								)
-						)
+						->where($unreadCommentFilter)
 						->where(TaskQueryBuilder::ALIAS_FORUM_MESSAGE . '.NEW_TOPIC', 'N')
-						->where(
-							Query::filter()
-								->logic('or')
-								->where(
-									Query::filter()
-										->logic('and')
-										->whereNot(TaskQueryBuilder::ALIAS_FORUM_MESSAGE . '.AUTHOR_ID', $this->behalfUserId)
-										->where(
-											Query::filter()
-												->logic('or')
-												->whereNull(TaskQueryBuilder::ALIAS_FORUM_MESSAGE . '.UF_TASK_COMMENT_TYPE')
-												->whereNot(TaskQueryBuilder::ALIAS_FORUM_MESSAGE . '.UF_TASK_COMMENT_TYPE', Comment::TYPE_EXPIRED)
-										)
-								)
-								->where(TaskQueryBuilder::ALIAS_FORUM_MESSAGE . '.UF_TASK_COMMENT_TYPE', Comment::TYPE_EXPIRED_SOON)
-						);
+						->where($systemCommentFilter);
 
 					$startCounterDate = \COption::GetOptionString("tasks", "tasksDropCommentCounters", null);
 					if ($startCounterDate)
@@ -1136,6 +1209,8 @@ class TaskFilterBuilder
 					$conditionTree->where($subFilter);
 					$this->registerRuntimeField(TaskQueryBuilder::ALIAS_FORUM_MESSAGE);
 					$this->registerRuntimeField(TaskQueryBuilder::ALIAS_TASK_VIEW);
+					$this->registerRuntimeField(TaskQueryBuilder::ALIAS_TASK_COUNTERS);
+
 					break;
 
 				case 'IS_MUTED':
@@ -1190,41 +1265,24 @@ class TaskFilterBuilder
 
 				case 'SCENARIO_NAME':
 					$filter = $this->query->getWhere();
-					$scenario = (array_key_exists('SCENARIO_NAME', $filter))
-						? $filter['SCENARIO_NAME']
-						: null;
+					$scenario = $filter['SCENARIO_NAME'] ?? null;
 
 					if ($scenario === null)
 					{
 						break;
 					}
-					// filter by valid values
-					if (is_array($scenario))
+
+					$scenarios = is_array($scenario) ? $scenario : [$scenario];
+
+					$scenarios = Container::getInstance()->getScenarioService()->filterValid($scenarios);
+					if (empty($scenarios))
 					{
-						$scenario = ScenarioTable::filterByValidScenarios($scenario);
-						if (empty($scenario))
-						{
-							break;
-						}
-					}
-					else
-					{
-						if (!ScenarioTable::isValidScenario($scenario))
-						{
-							break;
-						}
+						break;
 					}
 
 					$this->registerRuntimeField(TaskQueryBuilder::ALIAS_TASK_SCENARIO);
 
-					if (is_array($scenario))
-					{
-						$conditionTree->whereIn(TaskQueryBuilder::ALIAS_TASK_SCENARIO . '.SCENARIO', $scenario);
-					}
-					else
-					{
-						$conditionTree->where(TaskQueryBuilder::ALIAS_TASK_SCENARIO . '.SCENARIO', $scenario);
-					}
+					$conditionTree->whereIn(TaskQueryBuilder::ALIAS_TASK_SCENARIO . '.SCENARIO', $scenarios);
 
 					break;
 

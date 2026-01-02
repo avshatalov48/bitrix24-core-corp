@@ -23,7 +23,7 @@
 .hr-department-detail-content__move-user-department_item-error {
 	display: flex;
 	align-items: center;
-	font: 13px/16px var(--ui-font-family-system);
+	font: 13px/16px var(--ui-font-family-primary, var(--ui-font-family-system));
 	color: var(--ui-field-color-warning);
 	margin-top: 3px;
 }

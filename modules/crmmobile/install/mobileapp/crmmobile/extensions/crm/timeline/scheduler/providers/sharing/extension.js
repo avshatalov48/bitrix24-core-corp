@@ -11,6 +11,7 @@ jn.define('crm/timeline/scheduler/providers/sharing', (require, exports, module)
 	const { EventEmitter } = require('event-emitter');
 	const { get } = require('utils/object');
 	const { copyToClipboard } = require('utils/copy');
+	const { Random } = require('utils/random');
 	const { showEmailBanner } = require('communication/email-menu');
 	const { getFeatureRestriction, tariffPlanRestrictionsReady } = require('tariff-plan-restriction');
 
@@ -451,7 +452,9 @@ jn.define('crm/timeline/scheduler/providers/sharing', (require, exports, module)
 				NotifyManager.hideLoadingIndicator(true);
 				Haptics.notifySuccess();
 				this.onActivityCreate(response);
-				this.close(() => copyToClipboard(link.url, Loc.getMessage('M_CRM_TIMELINE_SCHEDULER_SHARING_LINK_COPIED')));
+				this.close(() => {
+					copyToClipboard(link.url, Loc.getMessage('M_CRM_TIMELINE_SCHEDULER_SHARING_LINK_COPIED'), true, true);
+				});
 			}).catch((error) => {
 				NotifyManager.hideLoadingIndicator(false);
 				Haptics.notifyFailure();

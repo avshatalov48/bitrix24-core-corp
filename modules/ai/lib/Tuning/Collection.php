@@ -6,14 +6,10 @@ use Bitrix\Main\Type\Dictionary;
 
 /**
  * Dictionary for work with Item objects
+ * @property Item[] $values
  */
 class Collection extends Dictionary
 {
-	/**
-	 * @var Item[]
-	 */
-	protected $values = [];
-
 	/**
 	 * Return the current element.
 	 */

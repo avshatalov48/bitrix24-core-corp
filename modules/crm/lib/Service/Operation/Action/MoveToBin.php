@@ -6,6 +6,7 @@ use Bitrix\Crm\Item;
 use Bitrix\Crm\Recycling\ControllerManager;
 use Bitrix\Crm\Service\Operation\Action;
 use Bitrix\Main\Error;
+use Bitrix\Main\ORM\Objectify\Values;
 use Bitrix\Main\Result;
 
 class MoveToBin extends Action
@@ -24,9 +25,13 @@ class MoveToBin extends Action
 			return $result;
 		}
 
+		$data = $item->getCompatibleData(Values::ALL, true);
+
 		$recyclingController->moveToBin(
 			$item->getId(),
-			['FIELDS' => $item->getCompatibleData()]
+			[
+				'FIELDS' => $data,
+			]
 		);
 
 		return $result;

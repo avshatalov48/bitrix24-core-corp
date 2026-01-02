@@ -3449,7 +3449,9 @@ if(typeof(BX.CrmEntityType) === "undefined")
 		bankDetail: "BANK_DETAIL",
 		smartdocument: "SMART_DOCUMENT",
 		smartb2edocument: 'SMART_B2E_DOC',
-		agentcontract: "AGENT_CONTRACT"
+		agentcontract: "AGENT_CONTRACT",
+		storedocument: "STORE_DOCUMENT",
+		shipmentdocument: "SHIPMENT_DOCUMENT",
 	};
 	BX.CrmEntityType.abbreviations =
 	{
@@ -3655,6 +3657,14 @@ if(typeof(BX.CrmEntityType) === "undefined")
 		else if(name === BX.CrmEntityType.names.agentcontract)
 		{
 			return this.enumeration.agentcontract;
+		}
+		else if (name === BX.CrmEntityType.names.storedocument)
+		{
+			return this.enumeration.storeDocument;
+		}
+		else if (name === BX.CrmEntityType.names.shipmentdocument)
+		{
+			return this.enumeration.shipmentDocument;
 		}
 		else if (BX.CrmEntityType.isDynamicTypeByName(name))
 		{
@@ -12501,7 +12511,6 @@ if(typeof(BX.CrmRemoteAction))
 	{
 		this._id = "";
 		this._settings = {};
-		this._serviceUrl = "";
 		this._redirectUrl = "";
 	};
 	BX.CrmRemoteAction.prototype =
@@ -12510,13 +12519,6 @@ if(typeof(BX.CrmRemoteAction))
 		{
 			this._id = id;
 			this._settings = settings ? settings : {};
-
-			this._serviceUrl = this.getSetting("serviceUrl", "");
-			if(!BX.type.isNotEmptyString(this._serviceUrl))
-			{
-				throw "BX.CrmRemoteAction: service url not found!";
-			}
-
 			this._redirectUrl = this.getSetting("redirectUrl", "");
 		},
 		getId: function()
@@ -12531,24 +12533,7 @@ if(typeof(BX.CrmRemoteAction))
 		{
 			if(BX.type.isNotEmptyString(redirectUrl))
 			{
-				this._redirectUrl = redirectUrl;
-			}
-
-			BX.ajax(
-				{
-					method: "POST",
-					dataType: "html",
-					url: this._serviceUrl,
-					data: this.getSetting("data", {}),
-					onsuccess: BX.delegate(this.onActionSuccess, this)
-				}
-			);
-		},
-		onActionSuccess: function(data)
-		{
-			if(BX.type.isNotEmptyString(this._redirectUrl))
-			{
-				document.location.href = this._redirectUrl;
+				document.location.href = redirectUrl;
 			}
 		}
 	};

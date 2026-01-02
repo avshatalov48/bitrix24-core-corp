@@ -4,10 +4,11 @@ declare(strict_types=1);
 
 namespace Bitrix\Booking\Controller\V1;
 
+use Bitrix\Booking\Command\Booking\CreateBookingFromWaitListItemCommand;
+use Bitrix\Booking\Controller\V1\Filter\AllowByFeature;
 use Bitrix\Booking\Internals\Exception\ErrorBuilder;
 use Bitrix\Booking\Internals\Exception\Exception;
 use Bitrix\Booking\Internals\Container;
-use Bitrix\Booking\Service\BookingFeature;
 use Bitrix\Booking\Command\Booking\AddBookingCommand;
 use Bitrix\Booking\Command\Booking\RemoveBookingCommand;
 use Bitrix\Booking\Command\Booking\UpdateBookingCommand;
@@ -22,6 +23,32 @@ use Bitrix\Main\UI\PageNavigation;
 
 class Booking extends BaseController
 {
+	public function configureActions(): array
+	{
+		return [
+			'add' => [
+				'+prefilters' => [
+					new AllowByFeature(),
+				],
+			],
+			'addList' => [
+				'+prefilters' => [
+					new AllowByFeature(),
+				],
+			],
+			'update' => [
+				'+prefilters' => [
+					new AllowByFeature(),
+				],
+			],
+			'createFromWaitListItem' => [
+				'+prefilters' => [
+					new AllowByFeature(),
+				],
+			],
+		];
+	}
+
 	public function listAction(
 		PageNavigation $navigation,
 		array $filter = [],
@@ -100,13 +127,6 @@ class Booking extends BaseController
 
 	public function addAction(array $booking): Entity\Booking\Booking|null
 	{
-		if (!BookingFeature::isFeatureEnabled())
-		{
-			$this->addError(ErrorBuilder::build('Access denied'));
-
-			return null;
-		}
-
 		try
 		{
 			$booking = Entity\Booking\Booking::mapFromArray($booking);
@@ -121,6 +141,7 @@ class Booking extends BaseController
 		$addBookingCommand = new AddBookingCommand(
 			createdBy: (int)CurrentUser::get()->getId(),
 			booking: $booking,
+			allowOverbooking: true,
 		);
 
 		$result = $addBookingCommand->run();
@@ -136,13 +157,6 @@ class Booking extends BaseController
 
 	public function addListAction(array $bookingList): Entity\Booking\BookingCollection|null
 	{
-		if (!BookingFeature::isFeatureEnabled())
-		{
-			$this->addError(ErrorBuilder::build('Access denied'));
-
-			return null;
-		}
-
 		$collection = new Entity\Booking\BookingCollection();
 
 		foreach ($bookingList as $fields)
@@ -164,6 +178,7 @@ class Booking extends BaseController
 			$addBookingCommand = new AddBookingCommand(
 				createdBy: (int)CurrentUser::get()->getId(),
 				booking: Entity\Booking\Booking::mapFromArray($fields),
+				allowOverbooking: true,
 			);
 
 			$result = $addBookingCommand->run();
@@ -178,13 +193,6 @@ class Booking extends BaseController
 
 	public function updateAction(array $booking): Entity\Booking\Booking|null
 	{
-		if (!BookingFeature::isFeatureEnabled())
-		{
-			$this->addError(ErrorBuilder::build('Access denied'));
-
-			return null;
-		}
-
 		if (empty($booking['id']))
 		{
 			$this->addError(ErrorBuilder::build('Booking identifier is not specified.'));
@@ -214,6 +222,7 @@ class Booking extends BaseController
 		$command = new UpdateBookingCommand(
 			updatedBy: (int)CurrentUser::get()->getId(),
 			booking: $booking,
+			allowOverbooking: true,
 		);
 
 		$result = $command->run();
@@ -258,5 +267,31 @@ class Booking extends BaseController
 		}
 
 		return [];
+	}
+
+	public function createFromWaitListItemAction(
+		CurrentUser $currentUser,
+		int $waitListItemId,
+		array $resources,
+		array $datePeriod,
+	): Entity\Booking\Booking|null
+	{
+		$createFromWaitListItemCommand = new CreateBookingFromWaitListItemCommand(
+			waitListItemId: $waitListItemId,
+			resources: $resources,
+			datePeriod: $datePeriod,
+			createdBy: (int)$currentUser->getId(),
+			allowOverbooking: true,
+		);
+
+		$result = $createFromWaitListItemCommand->run();
+		if (!$result->isSuccess())
+		{
+			$this->addErrors($result->getErrors());
+
+			return null;
+		}
+
+		return $result->getBooking();
 	}
 }

@@ -1,8 +1,11 @@
 import { Dom } from 'main.core';
+import { Set } from 'ui.icon-set.api.core';
+import { type MenuItem } from 'main.popup';
 import { isMessageFromCopilot } from '../../helpers/is-message-from-copilot';
 import { CopilotChatMessageMenu } from './copilot-chat-message-menu';
 import type { CopilotChatMessage, CopilotChatMessageButton } from '../../types';
 import { HtmlFormatter } from 'ui.bbcode.formatter.html-formatter';
+import { CopilotChatMessageStatus } from '../../copilot-chat';
 
 import '../../css/copilot-chat-message.css';
 
@@ -10,7 +13,7 @@ export const CopilotChatMessageDefault = {
 	components: {
 		CopilotChatMessageMenu,
 	},
-	emits: ['buttonClick'],
+	emits: ['buttonClick', 'remove', 'retry'],
 	props: {
 		message: {
 			type: Object,
@@ -65,16 +68,40 @@ export const CopilotChatMessageDefault = {
 			});
 		},
 		formattedDeliveryTime(): string {
-			return this.formatTime(this.messageData.dateCreated);
+			return this.formatTime(this.messageData.dateCreate);
 		},
 		messageButtons(): CopilotChatMessageButton[] {
 			return this.messageData.params?.buttons ?? [];
 		},
 		isSomeButtonSelected(): boolean {
-			return this.messageButtons.some((button) => button.isSelected);
+			return this.messageButtons.some((button) => button.selected);
 		},
 		showMenuButton(): boolean {
 			return this.menuItems?.length > 0;
+		},
+		isErrorMessage(): boolean {
+			return this.messageData.status === CopilotChatMessageStatus.ERROR;
+		},
+		errorMessageMenuItems(): MenuItem[] {
+			return [
+				{
+					id: 'retry',
+					text: this.$Bitrix.Loc.getMessage('AI_COPILOT_CHAT_RETRY_MESSAGE'),
+					onclick: () => {
+						this.$emit('retry', this.messageData.id);
+					},
+				},
+				{
+					id: 'remove',
+					text: this.$Bitrix.Loc.getMessage('AI_COPILOT_CHAT_REMOVE_MESSAGE'),
+					onclick: () => {
+						this.$emit('remove', this.messageData.id);
+					},
+				},
+			];
+		},
+		Icons() {
+			return Set;
 		},
 	},
 	methods: {
@@ -124,13 +151,13 @@ export const CopilotChatMessageDefault = {
 					</div>
 					<div class="ai__copilot-chat-message_status-info">
 						<div
-							v-if="messageData.dateCreated"
+							v-if="messageData.dateCreate"
 							class="ai__copilot-chat-message_time"
 						>
 							{{ formattedDeliveryTime }}
 						</div>
 						<div
-							v-if="messageData.status"
+							v-if="messageData.status && isMessageFromCopilot === false"
 							class="ai__copilot-chat-message_status"
 							:class="'--' + messageData.status"
 						></div>
@@ -140,7 +167,7 @@ export const CopilotChatMessageDefault = {
 					<button
 						v-for="button in messageButtons"
 						class="ai__copilot-chat-message_action-button"
-						:class="{'--selected': button.isSelected}"
+						:class="{'--selected': button.selected}"
 						:disabled="isSomeButtonSelected || disableAllActions"
 						@click="$emit('buttonClick', button.id)"
 					>
@@ -155,6 +182,16 @@ export const CopilotChatMessageDefault = {
 				<CopilotChatMessageMenu
 					:menu-items="menuItems"
 					:message="message"
+				/>
+			</div>
+			<div
+				v-else-if="isErrorMessage"
+				class="ai__copilot-chat-message_retry-button"
+			>
+				<CopilotChatMessageMenu
+					:menu-items="errorMessageMenuItems"
+					:message="message"
+					:icon="Icons.REDO_1"
 				/>
 			</div>
 		</div>

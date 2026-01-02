@@ -14,6 +14,7 @@
 				parentWidget: layout,
 				context: BX.componentParameters.get('context', null),
 				folderId: BX.componentParameters.get('folderId', null),
+				scrollToItemId: BX.componentParameters.get('scrollToItemId', null),
 			}),
 		);
 	});

@@ -2,12 +2,13 @@
 
 namespace Bitrix\HumanResources\Engine;
 
-use Bitrix\HumanResources\Attribute;
+use Bitrix\HumanResources\Internals\Attribute;
 use Bitrix\HumanResources\Config\Storage;
 use Bitrix\HumanResources\Exception\ElementNotFoundException;
 use Bitrix\HumanResources\Item;
 use Bitrix\HumanResources\Service\Container;
 use Bitrix\HumanResources\Type\MemberEntityType;
+use Bitrix\HumanResources\Type\NodeEntityType;
 use Bitrix\Intranet;
 use Bitrix\Main;
 use Bitrix\Main\Error;
@@ -152,7 +153,9 @@ abstract class Controller extends Main\Engine\Controller
 						return null;
 					}
 
-					return Container::getNodeRepository()->getById((int)$nodeId);
+					return Container::getNodeRepository()
+					->getById((int)$nodeId)
+					;
 				}
 			),
 			new Main\Engine\AutoWire\ExactParameter(
@@ -167,7 +170,9 @@ abstract class Controller extends Main\Engine\Controller
 						return null;
 					}
 
-					return Container::getNodeRepository()->getById((int)$targetNodeId);
+					return Container::getNodeRepository()
+						->getById((int)$targetNodeId)
+					;
 				}
 			),
 			new Main\Engine\AutoWire\ExactParameter(
@@ -188,7 +193,7 @@ abstract class Controller extends Main\Engine\Controller
 			new Main\Engine\AutoWire\ExactParameter(
 				Item\NodeMember::class,
 				'nodeMember',
-				function ($className, $nodeMemberId): ?Item\NodeMember
+				function ($className, $nodeMemberId = null): ?Item\NodeMember
 				{
 					if (!is_numeric($nodeMemberId))
 					{
@@ -203,7 +208,7 @@ abstract class Controller extends Main\Engine\Controller
 			new Main\Engine\AutoWire\ExactParameter(
 				Item\NodeMember::class,
 				'nodeUserMember',
-				function ($className, $nodeId, $userId): ?Item\NodeMember
+				function ($className, $nodeId = null, $userId = null): ?Item\NodeMember
 				{
 					if (!is_numeric($nodeId))
 					{
@@ -229,7 +234,7 @@ abstract class Controller extends Main\Engine\Controller
 				{
 					if (!$roleId && !$roleXmlId)
 					{
-						throw new ElementNotFoundException('Role not found');
+						return null;
   					}
 
 					$roleRepository = Container::getRoleRepository();

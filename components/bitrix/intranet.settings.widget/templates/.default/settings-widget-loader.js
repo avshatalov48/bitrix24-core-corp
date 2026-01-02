@@ -1,14 +1,15 @@
-import {PopupComponentsMaker} from 'ui.popupcomponentsmaker';
-import {Dom, Tag, ajax, Runtime} from "main.core";
+import { ajax, Runtime } from "main.core";
+import { WidgetLoader } from 'intranet.widget-loader';
 
 export class SettingsWidgetLoader
 {
 	static #instance: SettingsWidgetLoader;
-	#popup: PopupComponentsMaker;
+	#widgetLoader: WidgetLoader;
 	#isBitrix24: boolean = false;
 	#isAdmin: boolean = false;
 	#isRequisite: boolean = false;
 	#isMainPageAvailable: boolean = false;
+	#node: ?HTMLElement = false;
 
 	constructor(params)
 	{
@@ -20,9 +21,8 @@ export class SettingsWidgetLoader
 
 	showOnce(node)
 	{
-		const popup = this.#getWidgetPopup().getPopup();
-
-		popup.setBindElement(node);
+		this.#node = node;
+		const popup = this.#getWidgetLoader().getPopup();
 		popup.show();
 
 		const popupContainer = popup.getPopupContainer();
@@ -41,101 +41,47 @@ export class SettingsWidgetLoader
 		;
 	}
 
-	#getWidgetPopup(): PopupComponentsMaker
+	#getWidgetLoader(): WidgetLoader
 	{
-		if (this.#popup)
+		if (this.#widgetLoader)
 		{
-			return this.#popup;
+			return this.#widgetLoader;
 		}
 
-		const popup = new PopupComponentsMaker({
+		const widgetLoader = new WidgetLoader({
+			id: "bx-settings-header-popup",
+			bindElement: this.#node,
 			width: 374,
 		});
 
-		const container = popup.getPopup().getPopupContainer();
-
-		Dom.clean(container);
-		Dom.addClass(container, 'intranet-widget-skeleton__wrap');
-
-		Dom.append(this.getHeaderSkeleton(), container);
+		widgetLoader.addHeaderSkeleton();
 
 		if (this.#isRequisite)
 		{
-			Dom.append(this.getItemSkeleton(), container);
+			widgetLoader.addItemSkeleton(22);
 		}
 
 		if (this.#isMainPageAvailable)
 		{
-			Dom.append(this.getItemSkeleton(), container);
+			widgetLoader.addItemSkeleton(22);
 		}
 
 		if (this.#isAdmin)
 		{
-			Dom.append(this.getSplitItemSkeleton(), container);
+			widgetLoader.addSplitItemSkeleton(22);
 		}
 
 		if (this.#isBitrix24)
 		{
-			Dom.append(this.getItemSkeleton(), container);
+			widgetLoader.addItemSkeleton(22);
 		}
 
-		Dom.append(this.getItemSkeleton(), container);
-		Dom.append(this.getFooterSkeleton(), container);
+		widgetLoader.addItemSkeleton(22);
+		widgetLoader.addFooterSkeleton();
 
-		this.#popup = popup;
+		this.#widgetLoader = widgetLoader;
 
-		return popup;
-	}
-
-	getHeaderSkeleton(): HTMLElement
-	{
-		return Tag.render`
-			<div class="intranet-widget-skeleton__header">
-				<div style="max-width: 95px; height: 8px;" class="intranet-widget-skeleton__line"></div>
-			</div>
-		`;
-	}
-
-	getItemSkeleton(): HTMLElement
-	{
-		return Tag.render`
-			<div class="intranet-widget-skeleton__row">
-				<div class="intranet-widget-skeleton__item">
-					<div style="width: 26px; height: 26px; margin-right: 8px;" class="intranet-widget-skeleton__circle"></div>
-					<div style="max-width: 130px;" class="intranet-widget-skeleton__line"></div>
-					<div style="width: 12px; height: 12px; margin-left: auto;" class="intranet-widget-skeleton__circle"></div>
-				</div>
-			</div>
-		`;
-	}
-
-	getSplitItemSkeleton(): HTMLElement
-	{
-		return  Tag.render`
-			<div class="intranet-widget-skeleton__row">
-				<div class="intranet-widget-skeleton__item">
-					<div style="width: 26px; height: 26px; margin-right: 8px;" class="intranet-widget-skeleton__circle"></div>
-					<div style="max-width: 75px;" class="intranet-widget-skeleton__line"></div>
-					<div style="width: 12px; height: 12px; margin-left: auto;" class="intranet-widget-skeleton__circle"></div>
-				</div>
-				<div class="intranet-widget-skeleton__item">
-					<div style="width: 26px; height: 26px; margin-right: 8px;" class="intranet-widget-skeleton__circle"></div>
-					<div style="max-width: 75px;" class="intranet-widget-skeleton__line"></div>
-					<div style="width: 12px; height: 12px; margin-left: auto;" class="intranet-widget-skeleton__circle"></div>
-				</div>
-			</div>
-		`;
-	}
-
-	getFooterSkeleton(): HTMLElement
-	{
-		return Tag.render`
-			<div class="intranet-widget-skeleton__footer">
-				<div style="max-width: 40px;" class="intranet-widget-skeleton__line"></div>
-				<div style="max-width: 40px;" class="intranet-widget-skeleton__line"></div>
-				<div style="max-width: 40px;" class="intranet-widget-skeleton__line"></div>
-			</div>
-		`;
+		return this.#widgetLoader;
 	}
 
 	#load(): Promise
@@ -161,7 +107,7 @@ export class SettingsWidgetLoader
 				if (typeof BX.Intranet.SettingsWidget !== 'undefined')
 				{
 					setTimeout(() => {
-						BX.Intranet.SettingsWidget.bindWidget(this.#getWidgetPopup());
+						BX.Intranet.SettingsWidget.bindWidget(this.#getWidgetLoader());
 						resolve();
 					}, 0);
 				}

@@ -15,6 +15,7 @@ $MESS["AI_COPILOT_ROLES_GROUP_LIST_HEADER_HINT"] = "CoPilot roles are grouped by
 $MESS["AI_COPILOT_ROLES_GROUP_LIST_HEADER_HINT_2"] = "CoPilot roles are grouped by industry sector. Select the one that fits you most for more accurate responses.";
 $MESS["AI_COPILOT_ROLES_HELP_ITEM_DESCRIPTION"] = "Use the feedback form to let us know.";
 $MESS["AI_COPILOT_ROLES_HELP_ITEM_TITLE"] = "Can't find your role?";
+$MESS["AI_COPILOT_ROLES_LIBRARY_COLLABER_ACCESS_DENIED"] = "Role library is available to employees only.";
 $MESS["AI_COPILOT_ROLES_LIBRARY_TITLE"] = "Role library";
 $MESS["AI_COPILOT_ROLES_MAIN_CONTENT_HEADER"] = "Roles";
 $MESS["AI_COPILOT_ROLES_MAIN_CONTENT_HEADER_HINT"] = "The role helps CoPilot come up with replies most pertinent to the selected area of expertise. You will get a more accurate reply while saving time on trying to find a correct wording for your query.";

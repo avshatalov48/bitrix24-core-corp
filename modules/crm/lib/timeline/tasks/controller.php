@@ -703,29 +703,32 @@ final class Controller extends FactoryBasedController
 
 	public function getAssignedByEntity(?ItemIdentifier $identifier): ?int
 	{
-		if (is_null($identifier))
+		if ($identifier === null)
 		{
 			return null;
 		}
 
 		$factory = Container::getInstance()->getFactory($identifier->getEntityTypeId());
-		if (!is_null($factory))
+		if ($factory === null)
 		{
-			$assignedByFieldName = $factory->getEntityFieldNameByMap(Item::FIELD_NAME_ASSIGNED);
-			$data = $factory->getDataClass()::getList([
-				'select' => [
-					$assignedByFieldName
-				],
-				'filter' => [
-					Item::FIELD_NAME_ID => $identifier->getEntityId()
-				],
-				'limit' => 1,
-			])->fetch() ?? [];
-
-			return $data[$assignedByFieldName] ?? null;
+			return null;
 		}
 
-		return null;
+		$assignedByFieldName = $factory->getEntityFieldNameByMap(Item::FIELD_NAME_ASSIGNED);
+
+		$data = $factory->getDataClass()::getList([
+			'select' => [
+				$assignedByFieldName
+			],
+			'filter' => [
+				Item::FIELD_NAME_ID => $identifier->getEntityId()
+			],
+			'limit' => 1,
+		])->fetch() ?? [];
+
+		$assignedBy = (int)($data[$assignedByFieldName] ?? null);
+
+		return $assignedBy > 0 ? $assignedBy : null;
 	}
 
 	public function prepareHistoryDataModel(array $data, array $options = null): array

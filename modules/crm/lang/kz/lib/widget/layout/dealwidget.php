@@ -1,0 +1,20 @@
+<?php
+$MESS["CRM_DEAL_WGT_DEAL_IN_WORK"] = "Жұмыстағы мәмілелер";
+$MESS["CRM_DEAL_WGT_DEMO_CONTENT"] = "Егер сізде әлі мәміле болмаса, дәл қазір <a href=\"#URL#\" class=\"#CLASS_NAME#\">бірінші мәмілені</a> құрыңыз!";
+$MESS["CRM_DEAL_WGT_DEMO_TITLE"] = "Бұл демо-ұсыныс, сіз оны жасырып, мәмілелеріңіз бойынша сараптау ала аласыз.";
+$MESS["CRM_DEAL_WGT_EMPLOYEE_DEAL_IN_WORK"] = "Қызметкерлер бойынша жұмыстағы мәмілелер";
+$MESS["CRM_DEAL_WGT_FUNNEL"] = "Мәмілелер бойынша сату иірімі";
+$MESS["CRM_DEAL_WGT_PAYMENT_CONTROL"] = "Жеңген мәмілелер бойынша төлемдерді бақылау";
+$MESS["CRM_DEAL_WGT_QTY_ACTIVITY"] = "Істер саны";
+$MESS["CRM_DEAL_WGT_QTY_CALL"] = "Қоңыраулар саны";
+$MESS["CRM_DEAL_WGT_QTY_DEAL_IDLE"] = "Ұмытылған мәмілелер саны";
+$MESS["CRM_DEAL_WGT_QTY_DEAL_IN_WORK"] = "Жұмыстағы мәмілелер саны";
+$MESS["CRM_DEAL_WGT_QTY_DEAL_WON"] = "Жеңген мәмілелер саны";
+$MESS["CRM_DEAL_WGT_QTY_EMAIL"] = "Хаттар саны";
+$MESS["CRM_DEAL_WGT_QTY_MEETING"] = "Кездесулер саны";
+$MESS["CRM_DEAL_WGT_RATING"] = "Жеңген мәмілелер сомасы бойынша рейтинг";
+$MESS["CRM_DEAL_WGT_SUM_DEAL_IN_WORK"] = "Жұмыстағы мәмілелер сомасы";
+$MESS["CRM_DEAL_WGT_SUM_DEAL_OVERALL"] = "Мәмілелердің жалпы сомасы";
+$MESS["CRM_DEAL_WGT_SUM_DEAL_WON"] = "Жеңген мәмілелер сомасы";
+$MESS["CRM_DEAL_WGT_SUM_INVOICE_OVERALL"] = "Ұсынылған шоттар сомасы";
+$MESS["CRM_DEAL_WGT_SUM_INVOICE_OWED"] = "Ұсынылмаған шоттар сомасы";

@@ -50,7 +50,7 @@ class LoadTemplatesAction extends Action
 			);
 			if ($averageTimeResponse->isSuccess())
 			{
-				$template['time'] = $averageTimeResponse->getAverageDuration();
+				$template['time'] = $averageTimeResponse->getRoundedAverageDuration();
 			}
 
 			$modifiedTemplates[] = $template;

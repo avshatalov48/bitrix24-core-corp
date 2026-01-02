@@ -1,0 +1,2 @@
+<?php
+$MESS["CRM_DTO_VALIDATOR_LOGIC_LOGIC_OR_ERROR"] = "Fix one of these errors for #PARENT_OBJECT#: #ERROR_MESSAGES#.";

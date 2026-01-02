@@ -13,6 +13,7 @@ jn.define('lists/element-details', (require, exports, module) => {
 	const { FocusManager } = require('layout/ui/fields/focus-manager');
 	const { EntityManager } = require('layout/ui/entity-editor/manager');
 	const { CollapsibleText } = require('layout/ui/collapsible-text');
+	const { Random } = require('utils/random');
 	const { Line } = require('utils/skeleton');
 
 	class ElementDetails extends PureComponent
@@ -78,7 +79,6 @@ jn.define('lists/element-details', (require, exports, module) => {
 			this.scrollViewRef = null;
 			this.scrollY = 0;
 
-			// eslint-disable-next-line no-undef
 			this.uid = props.uid || Random.getString();
 			this.customEventEmitter = EventEmitter.createWithUid(this.uid);
 

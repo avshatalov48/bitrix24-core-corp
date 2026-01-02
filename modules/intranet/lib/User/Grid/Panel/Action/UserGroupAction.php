@@ -2,17 +2,25 @@
 
 namespace Bitrix\Intranet\User\Grid\Panel\Action;
 
+use Bitrix\Intranet\User\Access\UserAccessController;
 use Bitrix\Intranet\User\Grid\Panel\Action\Group\ConfirmChildAction;
 use Bitrix\Intranet\User\Grid\Panel\Action\Group\DeclineChildAction;
 use Bitrix\Intranet\User\Grid\Panel\Action\Group\DeleteChildAction;
 use Bitrix\Intranet\User\Grid\Panel\Action\Group\FireChildAction;
 use Bitrix\Intranet\User\Grid\Panel\Action\Group\ReInviteChildAction;
+use Bitrix\Intranet\User\Grid\Panel\Action\Group\UserAccessChildAction;
 use Bitrix\Intranet\User\Grid\Settings\UserSettings;
 use Bitrix\Main\Grid\Panel\Action\GroupAction;
-use Bitrix\Main\ModuleManager;
 
 class UserGroupAction extends GroupAction
 {
+	private const ACCESS_ACTIONS = [
+		ConfirmChildAction::class,
+		DeclineChildAction::class,
+		FireChildAction::class,
+		DeleteChildAction::class,
+	];
+
 	public function __construct(
 		private readonly UserSettings $settings
 	)
@@ -33,20 +41,14 @@ class UserGroupAction extends GroupAction
 			$actions[] = new ReInviteChildAction($this->getSettings());
 		}
 
-		if ($this->getSettings()->isCurrentUserAdmin())
+		$access = UserAccessController::createByDefault();
+		/** @var UserAccessChildAction $actionClass */
+		foreach (self::ACCESS_ACTIONS as $actionClass)
 		{
-			if (ModuleManager::isModuleInstalled('bitrix24'))
+			if ($access->check($actionClass::getActionType()))
 			{
-				$actions = array_merge($actions, [
-					new ConfirmChildAction($this->getSettings()),
-					new DeclineChildAction($this->getSettings()),
-				]);
+				$actions[] = new $actionClass($this->getSettings());
 			}
-
-			$actions = array_merge($actions, [
-				new FireChildAction($this->getSettings()),
-				new DeleteChildAction($this->getSettings()),
-			]);
 		}
 
 		return $actions;

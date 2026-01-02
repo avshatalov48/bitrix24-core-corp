@@ -10,7 +10,7 @@ final class Factory
 {
 	public static function getSource(Type $type, int $sourceId, ?int $datasetId = null): Base
 	{
-		self::checkParams($type, $sourceId, $datasetId);
+		self::checkParams($type, $datasetId);
 
 		$id = self::resolveId($type, $sourceId, $datasetId);
 
@@ -18,6 +18,7 @@ final class Factory
 		{
 			Type::Csv => new Csv($id),
 			Type::Source1C => new Source1C($id),
+			Type::Rest => new Rest($id),
 			default => throw new SystemException("Unknown type {$type->value}"),
 		};
 	}
@@ -33,17 +34,11 @@ final class Factory
 		return $id;
 	}
 
-	private static function checkParams(Type $type, int $sourceId, ?int $datasetId = null): void
+	private static function checkParams(Type $type, ?int $datasetId = null): void
 	{
 		if ($type === Type::Csv && (int)$datasetId <= 0)
 		{
 			throw new ArgumentException('Must be greater than zero.', 'datasetId');
-		}
-
-		if ($type !== Type::Csv && $sourceId <= 0)
-		{
-			// TODO Handle using check connection method - source doesn't exist yet
-			// throw new ArgumentException('Must be greater than zero.', 'sourceId');
 		}
 	}
 }

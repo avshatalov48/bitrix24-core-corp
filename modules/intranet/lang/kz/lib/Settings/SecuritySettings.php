@@ -1,0 +1,24 @@
+<?php
+$MESS["INTRANET_SETTINGS_FIELD_BADGE_WATER_MARKS_SOON"] = "Жақында";
+$MESS["INTRANET_SETTINGS_FIELD_HINT_ALLOW_AUTO_DELETE_TO_BE_ENABLED"] = "Чат қатысушылары хабарламаларды автоматты түрде жою қосымшасын басқара алады. Автоматты түрде жою қосылған чаттардағы хабарламалар таңдалған уақыт аралығынан кейін автоматты түрде жойылады.";
+$MESS["INTRANET_SETTINGS_FIELD_HINT_DISABLE_COPY_MSGVER_1"] = "Ішкі хат алмасуды құпия ұстаңыз. Қызметкерлер қосымшаның ішінде бір-біріне хабарлама жібере алады, бірақ мәтінді көшіру және Битрикс24 тысында жіберуге мүмкін болмайды.";
+$MESS["INTRANET_SETTINGS_FIELD_HINT_DISABLE_SCREENSHOT_MSGVER_1"] = "Скриншот түсіруге тырысқанда, қызметкерлер тыйым салу туралы хабарды көреді, скриншот сақталмайды. Бұл құпия деректерді жайылып кетуден қорғайды, барлық ақпарат компания ішінде қалады.";
+$MESS["INTRANET_SETTINGS_FIELD_HINT_WATER_MARKS_ENABLED"] = "Корпоративтік ақпаратты қорғау үшін арнайы символдық шифрлау. Егер ақпарат жайылып кетсе, скриншотта немесе экранның фотосуретінде жіберушіні оңай табуға болатын арнайы таңбалар қалады";
+$MESS["INTRANET_SETTINGS_FIELD_LABEL_ALLOW_AUTO_DELETE_TO_BE_ENABLED"] = "Чаттардағы хабарламаларды автоматты түрде жоюды қосу мүмкіндігі";
+$MESS["INTRANET_SETTINGS_FIELD_LABEL_DEVISE_HISTORY_CLEANUP_DAYS"] = "Кіру тарихын қанша күн сақтау керек";
+$MESS["INTRANET_SETTINGS_FIELD_LABEL_DISABLE_COPY_MSGVER_1"] = "Мобильді қосымшада мәтінді көшіруге тыйым салу";
+$MESS["INTRANET_SETTINGS_FIELD_LABEL_DISABLE_SCREENSHOT_MSGVER_1"] = "Мобильді қосымшада скриншоттарға тыйым салу";
+$MESS["INTRANET_SETTINGS_FIELD_LABEL_SECURITY_OTP"] = "Барлық қызметкерлер үшін міндетті";
+$MESS["INTRANET_SETTINGS_FIELD_LABEL_SELECT_ACCEPTED_IP"] = "Рұқсат етілген IP-мекенжайларын үтірмен бөлу арқылы немесе IP- мекенжай ауқымдарын сызықша арқылы тізімдеңіз";
+$MESS["INTRANET_SETTINGS_FIELD_LABEL_WATER_MARKS_ENABLED"] = "Компьютердегі деректерді қорғауға арналған сутаңбалары";
+$MESS["INTRANET_SETTINGS_SECTION_SECURITY_DESCRIPTION_USER_SELECT"] = "Кімге тыйым салу керектігін таңдаңыз";
+$MESS["INTRANET_SETTINGS_SECTION_TITLE_ACCESS_IP"] = "IP мекенжайлары бойынша кіруді шектеу";
+$MESS["INTRANET_SETTINGS_SECTION_TITLE_BLACK_LIST"] = "Қара тізім";
+$MESS["INTRANET_SETTINGS_SECTION_TITLE_DATA_LEAK_PROTECTION"] = "Ақпаратты жайылып кетуден қорғау";
+$MESS["INTRANET_SETTINGS_SECTION_TITLE_DEVICES_HISTORY"] = "Кіру тарихы";
+$MESS["INTRANET_SETTINGS_SECTION_TITLE_EVENT_LOG"] = "Оқиғалар журналы";
+$MESS["INTRANET_SETTINGS_SECTION_TITLE_OTP"] = "Екі факторлы аутентификация";
+$MESS["INTRANET_SETTINGS_SECTION_TITLE_PASSWORD_RECOVERY"] = "Құпиясөзді қалпына келтіру ";
+$MESS["INTRANET_SETTINGS_SECURITY_MODULE_ERROR"] = "Security модулі жоқ";
+$MESS["INTRANET_SETTINGS_SECURITY_UNLIMITED_DAYS"] = "Шексіз";
+$MESS["INTRANET_SETTINGS_SECURITY_WRONG_IP_ERROR"] = "IP қате енгізілген";

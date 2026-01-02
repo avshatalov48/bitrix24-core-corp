@@ -3,7 +3,7 @@
  */
 jn.define('layout/ui/fields/base/theme/air-compact', (require, exports, module) => {
 	const { withTheme } = require('layout/ui/fields/theme');
-	const { AirCompactThemeView, ColorScheme } = require('layout/ui/fields/base/theme/air-compact/src/view');
+	const { AirCompactThemeView, AirCompactThemeViewClass, ColorScheme } = require('layout/ui/fields/base/theme/air-compact/src/view');
 
 	/**
 	 * @param {object} field - instance of the FieldClassComponentClass.
@@ -41,6 +41,7 @@ jn.define('layout/ui/fields/base/theme/air-compact', (require, exports, module) 
 		AirCompactThemeWrapper,
 		AirCompactThemeField,
 		AirCompactThemeView,
+		AirCompactThemeViewClass,
 		ColorScheme,
 	};
 });

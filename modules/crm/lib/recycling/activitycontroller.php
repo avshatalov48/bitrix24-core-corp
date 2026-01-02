@@ -438,10 +438,11 @@ class ActivityController extends BaseController
 				$fields,
 				false,
 				false,
-				array(
+				[
 					'IS_RESTORATION' => true,
-					'DISABLE_USER_FIELD_CHECK' => true
-				)
+					'MOVED_TO_BIN_DATETIME' => $params['DATETIME'] ?? null,
+					'DISABLE_USER_FIELD_CHECK' => true,
+				],
 			);
 		}
 

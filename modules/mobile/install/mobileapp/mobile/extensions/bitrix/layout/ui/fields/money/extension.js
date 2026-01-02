@@ -9,11 +9,9 @@ jn.define('layout/ui/fields/money', (require, exports, module) => {
 	const { SelectField } = require('layout/ui/fields/select');
 	const { StringField } = require('layout/ui/fields/string');
 	const { stringify } = require('utils/string');
-	const { parseAmount } = require('utils/number');
 	const { Type } = require('type');
-
-	const isIOS = Application.getPlatform() === 'ios';
-	const API_VERSION = Application.getApiVersion();
+	const { Money } = require('money');
+	const { MoneyView } = require('layout/ui/money');
 
 	/**
 	 * @class MoneyField
@@ -89,10 +87,9 @@ jn.define('layout/ui/fields/money', (require, exports, module) => {
 		getFormatConfig()
 		{
 			const config = this.getConfig();
-			const value = this.getValue();
-			const formats = Money.create(value).format;
+			const formats = Money.create(this.getValue()).format;
 			const thousandsSeparator = jnComponent.convertHtmlEntities(formats.THOUSANDS_SEP);
-			const useGroupSeparator = !isIOS && BX.prop.getBoolean(config, 'useGroupSeparator', true);
+			const useGroupSeparator = BX.prop.getBoolean(config, 'useGroupSeparator', true);
 
 			return {
 				useGroupSeparator: thousandsSeparator === '' ? false : useGroupSeparator,
@@ -100,7 +97,7 @@ jn.define('layout/ui/fields/money', (require, exports, module) => {
 				groupSeparator: thousandsSeparator || ' ',
 				precision: formats.DECIMALS,
 				decimalSeparator: formats.DEC_POINT,
-				hideZero: formats.HIDE_ZERO === 'Y' && !isIOS,
+				hideZero: this.isReadOnly() ? formats.HIDE_ZERO === 'Y' : true,
 			};
 		}
 
@@ -245,41 +242,21 @@ jn.define('layout/ui/fields/money', (require, exports, module) => {
 			}
 
 			let { amount } = value;
-			const { currency } = value;
 
-			if (API_VERSION > 57)
+			if (Type.isString(amount) || !Type.isNil(amount))
 			{
-				if (Type.isString(amount) || !Type.isNil(amount))
+				if (Type.isNumber(Number(amount)))
 				{
-					if (Type.isNumber(Number(amount)))
-					{
-						amount = amount === 0 ? 0 : (
-							this.isReadOnly() || isIOS
-								? String(amount)
-								: new Money({ amount, currency }).editableFormattedAmount
-						);
-					}
-					else
-					{
-						amount = null;
-					}
+					amount = amount === 0 ? 0 : String(amount);
+				}
+				else
+				{
+					amount = null;
 				}
 			}
 			else
 			{
-				if (Type.isString(amount))
-				{
-					amount = amount === '' ? undefined : Number(amount);
-				}
-				else if (!Type.isNil(amount))
-				{
-					amount = Number(amount);
-				}
-
-				if (!Type.isNumber(amount))
-				{
-					amount = null;
-				}
+				amount = null;
 			}
 
 			return {
@@ -291,7 +268,7 @@ jn.define('layout/ui/fields/money', (require, exports, module) => {
 
 		isEmptyValue(value)
 		{
-			return !value.hasOwnProperty('amount') || !Type.isNumber(Number(value.amount));
+			return !value.hasOwnProperty('amount') || Type.isNil(value.amount) || !Type.isNumber(Number(value.amount));
 		}
 
 		setCustomAmountClickHandler(handler)
@@ -305,35 +282,21 @@ jn.define('layout/ui/fields/money', (require, exports, module) => {
 		{
 			let amount = value.amount;
 			const currency = value.currency;
+			const { currency: prevCurrency } = this.getValue();
 
-			if (API_VERSION > 57)
+			if (currency !== prevCurrency)
 			{
-				const { currency: prevCurrency, amount: prevAmount } = this.getValue();
-
-				const decimalSeparator = isIOS ? '.' : Money.formats[prevCurrency].DEC_POINT;
-				const thousandsSeparator = Money.formats[prevCurrency].THOUSANDS_SEP;
-
-				if (currency !== prevCurrency)
+				const currentDecimalDigits = Money.formats[currency].DECIMALS;
+				if (currentDecimalDigits === 0 && Type.isString(amount))
 				{
-					amount = typeof amount === 'number' ? amount : parseAmount(amount, decimalSeparator, thousandsSeparator);
-				}
-				else if (amount === prevAmount)
-				{
-					return;
-				}
-				else if (!isIOS)
-				{
-					amount = parseAmount(amount, decimalSeparator, thousandsSeparator);
-				}
-
-				if (value.amount !== '')
-				{
-					amount = BX.type.isNumber(Number(amount)) ? String(amount) : '';
+					const parts = String(amount).split('.');
+					amount = parts[0];
 				}
 			}
-			else if (value.amount !== '' && value.amount !== null)
+
+			if (amount !== '' && amount !== null)
 			{
-				amount = BX.type.isNumber(Number(value.amount)) ? String(value.amount) : '';
+				amount = BX.type.isNumber(Number(value.amount)) ? String(amount) : '';
 			}
 
 			this.handleChange({ ...value, amount });

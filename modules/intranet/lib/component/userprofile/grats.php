@@ -253,12 +253,12 @@ class Grats
 
 				if (!empty($authorsIdList))
 				{
-					$res = \Bitrix\Main\UserTable::getList(array(
-						'filter' => array(
+					$res = \Bitrix\Main\UserTable::getList([
+						'filter' => [
 							'@ID' => $authorsIdList,
-						),
-						'select' => array('ID', 'NAME', 'LAST_NAME', 'SECOND_NAME', 'LOGIN', 'PERSONAL_PHOTO')
-					));
+						],
+						'select' => ['ID', 'NAME', 'LAST_NAME', 'SECOND_NAME', 'LOGIN', 'PERSONAL_PHOTO', 'ACTIVE']
+					]);
 					while($userFields = $res->fetch())
 					{
 						$authorsList[$userFields['ID']] = array_merge($userFields, array(

@@ -2,12 +2,11 @@
 
 namespace Bitrix\Crm\Security\Role\Manage\Entity;
 
+use Bitrix\Crm\Category\PermissionEntityTypeHelper;
 use Bitrix\Crm\Model\Dynamic\Type;
-use Bitrix\Crm\Model\EO_ItemCategory;
 use Bitrix\Crm\Security\Role\Manage\DTO\EntityDTO;
 use Bitrix\Crm\Security\Role\Manage\PermissionAttrPresets;
 use Bitrix\Crm\Service;
-use Bitrix\Crm\Security\Role\Manage\Entity\Trait;
 
 class DynamicItem implements PermissionEntity, FilterableByTypes, FilterableByCategory
 {
@@ -61,7 +60,9 @@ class DynamicItem implements PermissionEntity, FilterableByTypes, FilterableByCa
 
 			foreach ($categories as $category)
 			{
-				$entityName = Service\UserPermissions::getPermissionEntityType($type->getEntityTypeId(), $category->getId());
+				$entityName = (new PermissionEntityTypeHelper($type->getEntityTypeId()))
+					->getPermissionEntityTypeForCategory($category->getId())
+				;
 
 				$fields = [];
 				if ($type->getIsStagesEnabled())

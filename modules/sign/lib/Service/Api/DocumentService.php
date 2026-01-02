@@ -105,4 +105,29 @@ class DocumentService
 
 		return $response->addErrors($result->getErrors());
 	}
+
+	public function modifyDateSignUntil(Item\Api\Document\ModifyDateSignUntilRequest $request): Item\Api\Document\ModifyDateSignUntilResponse
+	{
+		$result = new Main\Result();
+		if ($request->documentUid === '')
+		{
+			$result->addError(new Main\Error('Request: field `documentUid` is empty'));
+		}
+
+		if ($request->timestamp === '')
+		{
+			$result->addError(new Main\Error('Request: field `timestamp` is empty'));
+		}
+
+		if ($result->isSuccess())
+		{
+			$result = $this->api->post(
+				"v1/document.signUntil.update/$request->documentUid/",
+				$this->serializer->serialize($request)
+			);
+		}
+		$response = new Item\Api\Document\ModifyDateSignUntilResponse();
+
+		return $response->addErrors($result->getErrors());
+	}
 }

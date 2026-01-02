@@ -3,6 +3,7 @@
 namespace Bitrix\Crm\Integration\Intranet;
 
 use Bitrix\Crm\Integration\Intranet\CustomSection\Page;
+use Bitrix\Main\Type\Collection;
 use Bitrix\Main\Type\Contract\Arrayable;
 
 class CustomSection implements Arrayable
@@ -15,6 +16,11 @@ class CustomSection implements Arrayable
 	protected $title;
 	/** @var Page[] */
 	protected $pages = [];
+
+	public function __clone(): void
+	{
+		$this->pages = Collection::clone($this->pages);
+	}
 
 	/**
 	 * Returns ID of this custom section

@@ -1,0 +1,23 @@
+.intranet-user-mini-profile__detailed-info-item {
+	display: flex;
+	flex-flow:column;
+	gap: 4px;
+}
+
+.intranet-user-mini-profile__detailed-info-item__title {
+	font-weight: var(--ui-font-weight-normal);
+	font-size: var(--ui-font-size-sm);
+	color: var(--ui-color-palette-gray-50);
+	line-height: 17px;
+	letter-spacing: -0.05px;
+}
+
+.intranet-user-mini-profile__detailed-info-item__value {
+	font-weight: var(--ui-font-weight-normal);
+	font-size: var(--ui-font-size-md);
+	color: var(--ui-color-palette-black-base);
+	overflow: hidden;
+	text-overflow: ellipsis;
+	line-height: 19px;
+	display: flex;
+}

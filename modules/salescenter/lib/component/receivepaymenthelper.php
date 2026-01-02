@@ -4,9 +4,11 @@ namespace Bitrix\SalesCenter\Component;
 
 use Bitrix\Crm\Activity\Provider\BaseMessage;
 use Bitrix\Crm\Activity\Provider\Sms;
+use Bitrix\Crm\Integration\NotificationsManager;
 use Bitrix\Crm\Integration\SmsManager;
 use Bitrix\Crm\MessageSender\SenderRepository;
 use Bitrix\Crm\Order\Payment;
+use Bitrix\Main\Application;
 use Bitrix\Main\Loader;
 use Bitrix\MessageService\Message;
 use Bitrix\SalesCenter\Integration\CrmManager;
@@ -37,6 +39,17 @@ class ReceivePaymentHelper
 				'connectUrl' => $sender::getConnectUrl(),
 				'usageErrors' =>  $sender::getUsageErrors()
 			];
+
+			if (
+				$sender::getSenderCode() === NotificationsManager::getSenderCode()
+				&& Application::getInstance()->getLicense()->getRegion() !== 'ru'
+			)
+			{
+				$senderData['isAvailable'] = false;
+				$senderData['isConnected'] = false;
+				$senderData['connectUrl'] = null;
+			}
+
 			if ($sender::getSenderCode() === SmsManager::getSenderCode())
 			{
 				$senderData['smsSenders'] = self::getSmsSenderList();

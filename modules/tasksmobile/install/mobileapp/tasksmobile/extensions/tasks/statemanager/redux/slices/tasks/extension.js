@@ -9,11 +9,10 @@ jn.define('tasks/statemanager/redux/slices/tasks', (require, exports, module) =>
 	const { ExpirationRegistry } = require('tasks/statemanager/redux/slices/tasks/expiration-registry');
 	const { sliceName, tasksAdapter, initialState } = require('tasks/statemanager/redux/slices/tasks/meta');
 	const { TaskModel } = require('tasks/statemanager/redux/slices/tasks/model/task');
-	const { mapStateToTaskModel } = require('tasks/statemanager/redux/slices/tasks/mapper');
 	const {
 		selectAll,
 		selectById,
-		selectEntities,
+		selectTaskEntities,
 		selectIds,
 		selectTotal,
 		selectByTaskIdOrGuid,
@@ -43,6 +42,7 @@ jn.define('tasks/statemanager/redux/slices/tasks', (require, exports, module) =>
 		selectActions,
 		selectTimerState,
 		selectDatePlan,
+		selectRunningTask,
 	} = require('tasks/statemanager/redux/slices/tasks/selector');
 	const {
 		create,
@@ -150,18 +150,22 @@ jn.define('tasks/statemanager/redux/slices/tasks', (require, exports, module) =>
 		initialState,
 		reducers: {
 			tasksAdded: (state, { payload }) => {
-				const tasks = payload.map((task) => {
-					return TaskModel.prepareReduxTaskFromServerTask(task, state.entities[task.id]);
+				const { tasks, ownerId } = payload;
+
+				const tasksPrepared = tasks.map((task) => {
+					return TaskModel.prepareReduxTaskFromServerTask(task, state.entities[task.id], { ownerId });
 				});
 
-				tasksAdapter.addMany(state, tasks);
+				tasksAdapter.addMany(state, tasksPrepared);
 			},
 			tasksUpserted: (state, { payload }) => {
-				const tasks = payload.map((task) => {
-					return TaskModel.prepareReduxTaskFromServerTask(task, state.entities[task.id]);
+				const { tasks, ownerId } = payload;
+
+				const tasksPrepared = tasks.map((task) => {
+					return TaskModel.prepareReduxTaskFromServerTask(task, state.entities[task.id], { ownerId });
 				});
 
-				tasksAdapter.upsertMany(state, tasks);
+				tasksAdapter.upsertMany(state, tasksPrepared);
 			},
 			setRelatedTasks: (state, { payload }) => {
 				const { taskId, relatedTasks } = payload;
@@ -174,13 +178,6 @@ jn.define('tasks/statemanager/redux/slices/tasks', (require, exports, module) =>
 						relatedTasks,
 					});
 				}
-			},
-			taskUpdatedFromOldTaskModel: (state, { payload }) => {
-				const { task: oldTaskModel } = payload;
-				// eslint-disable-next-line no-underscore-dangle
-				const task = state.entities[oldTaskModel._id];
-
-				tasksAdapter.upsertOne(state, TaskModel.prepareReduxTaskFromOldTaskModel(oldTaskModel, task));
 			},
 			taskExpired: (state, { payload }) => {
 				const { taskId } = payload;
@@ -253,6 +250,15 @@ jn.define('tasks/statemanager/redux/slices/tasks', (require, exports, module) =>
 				tasksAdapter.upsertOne(state, {
 					...task,
 					commentsCount: task.commentsCount + 1,
+				});
+			},
+			updateViewsCount: (state, { payload }) => {
+				const { taskId, totalCounter } = payload;
+				const task = state.entities[taskId];
+
+				tasksAdapter.upsertOne(state, {
+					...task,
+					viewsCount: totalCounter,
 				});
 			},
 			tasksRead: (state, { payload }) => {
@@ -357,7 +363,6 @@ jn.define('tasks/statemanager/redux/slices/tasks', (require, exports, module) =>
 		tasksAdded,
 		tasksUpserted,
 		setRelatedTasks,
-		taskUpdatedFromOldTaskModel,
 		taskExpired,
 		taskRemoved,
 		markAsRemoved,
@@ -365,23 +370,22 @@ jn.define('tasks/statemanager/redux/slices/tasks', (require, exports, module) =>
 		updateChecklist,
 		updateUploadingFiles,
 		commentWritten,
+		updateViewsCount,
 		tasksRead,
 		setTimeElapsed,
 		setAttachedFiles,
 	} = actions;
 
 	ExpirationRegistry.setReducers({ taskExpired });
-	ExpirationRegistry.setSelectors({ selectWillExpire });
+	ExpirationRegistry.setSelectors({ selectWillExpire, selectByTaskIdOrGuid });
 	ReducerRegistry.register(sliceName, tasksReducer);
 
 	module.exports = {
 		tasksReducer,
-		mapStateToTaskModel,
 
 		tasksAdded,
 		tasksUpserted,
 		setRelatedTasks,
-		taskUpdatedFromOldTaskModel,
 		taskExpired,
 		taskRemoved,
 		markAsRemoved,
@@ -389,13 +393,14 @@ jn.define('tasks/statemanager/redux/slices/tasks', (require, exports, module) =>
 		updateChecklist,
 		updateUploadingFiles,
 		commentWritten,
+		updateViewsCount,
 		tasksRead,
 		setTimeElapsed,
 		setAttachedFiles,
 
 		selectAll,
 		selectById,
-		selectEntities,
+		selectTaskEntities,
 		selectIds,
 		selectTotal,
 		selectByTaskIdOrGuid,
@@ -423,6 +428,7 @@ jn.define('tasks/statemanager/redux/slices/tasks', (require, exports, module) =>
 		selectSubTasksIdsByTaskId,
 		selectRelatedTasksById,
 		selectTimerState,
+		selectRunningTask,
 		selectDatePlan,
 		selectWithCreationError,
 

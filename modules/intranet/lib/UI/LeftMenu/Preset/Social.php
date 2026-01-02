@@ -70,6 +70,20 @@ class Social extends PresetAbstract
 		}
 
 		$structure = static::STRUCTURE;
+
+		$structure['shown']['menu_teamwork'] = [
+			'menu_im_messenger',
+			'menu_live_feed',
+			'menu_im_collab',
+			'menu_calendar',
+			'menu_documents',
+			'menu_boards',
+			'menu_files',
+			'menu_external_mail',
+			'menu_all_groups',
+			'menu_all_spaces',
+		];
+
 		$found = false;
 		$filler = function(&$item, $key) use (&$filler, &$found) {
 			if ($key === 'menu_marketplace_group')

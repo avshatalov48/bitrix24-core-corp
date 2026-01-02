@@ -58,11 +58,14 @@ class CCrmDocumentDeal extends CCrmDocument implements IBPWorkflowDocument
 
 	public static function GetDocument($documentId)
 	{
+		$args = func_get_args();
+		$select = $args[2] ?? ['*'];
 		$documentInfo = static::GetDocumentInfo($documentId);
 
 		return new Crm\Integration\BizProc\Document\ValueCollection\Deal(
 			CCrmOwnerType::Deal,
-			$documentInfo['ID']
+			$documentInfo['ID'],
+			$select
 		);
 	}
 
@@ -688,8 +691,17 @@ class CCrmDocumentDeal extends CCrmDocument implements IBPWorkflowDocument
 		);
 	}
 
-	public static function createAutomationTarget($documentType)
+	public static function createAutomationTarget($documentType, string|int|null $documentId = null)
 	{
+		if (is_string($documentId))
+		{
+			[$entityTypeId, $entityId] = CCrmBizProcHelper::resolveEntityIdByDocumentId($documentId);
+			if ($entityId > 0 && $entityTypeId === CCrmOwnerType::Deal)
+			{
+				return Crm\Automation\Factory::getTarget(CCrmOwnerType::Deal, $entityId);
+			}
+		}
+
 		return Crm\Automation\Factory::createTarget(\CCrmOwnerType::Deal);
 	}
 

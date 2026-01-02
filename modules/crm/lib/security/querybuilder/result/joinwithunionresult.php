@@ -11,7 +11,6 @@ use Bitrix\Main\ORM\Query\Query;
 /**
  * Version of JoinResult optimized for using union. Applies when it is explicitly specified to use this method
  * of obtaining the result using the `PERMISSION_BUILDER_OPTION_OBSERVER_JOIN_AS_UNION` parameter.
- * @link http://jabber.bx/view.php?id=181240
  */
 final class JoinWithUnionResult implements ResultOption
 {

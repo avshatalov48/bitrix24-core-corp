@@ -415,9 +415,12 @@ jn.define('tasks/statemanager/redux/slices/tasks/extra-reducer', (require, expor
 		const { taskId } = action.meta.arg;
 
 		const oldTaskState = state.entities[taskId];
-		const newTaskState = preparePingNewState(oldTaskState);
+		if (oldTaskState)
+		{
+			const newTaskState = preparePingNewState(oldTaskState);
 
-		upsertOne(state, action, oldTaskState, newTaskState);
+			upsertOne(state, action, oldTaskState, newTaskState);
+		}
 	};
 
 	const preparePinNewState = (oldTaskState) => ({
@@ -770,15 +773,32 @@ jn.define('tasks/statemanager/redux/slices/tasks/extra-reducer', (require, expor
 
 	const onCommonActionFulfilled = (state, action) => {
 		const { requestId, arg } = action.meta;
-		const { status, data } = action.payload;
+		const { status, data, errors } = action.payload;
 		const { taskId } = arg;
 
 		const existingTask = state.entities[taskId];
-		const preparedTask = (
-			status === 'success'
-				? onCommonActionSuccess(requestId, existingTask, data)
-				: onCommonActionError(requestId, existingTask)
-		);
+
+		if (status === 'success')
+		{
+			const preparedTask = onCommonActionSuccess(requestId, existingTask, data);
+
+			if (!isEqual(existingTask, preparedTask))
+			{
+				tasksAdapter.updateOne(state, { id: taskId, changes: preparedTask });
+			}
+
+			return;
+		}
+
+		if (errors.some((error) => error.code === 1))
+		{
+			onCommonActionError(requestId, existingTask);
+			tasksAdapter.removeOne(state, taskId);
+
+			return;
+		}
+
+		const preparedTask = onCommonActionError(requestId, existingTask);
 
 		if (!isEqual(existingTask, preparedTask))
 		{

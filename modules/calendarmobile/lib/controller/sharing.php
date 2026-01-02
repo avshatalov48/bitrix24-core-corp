@@ -219,7 +219,7 @@ class Sharing extends Controller
 			return $result;
 		}
 
-		if (!\Bitrix\Crm\Service\Container::getInstance()->getUserPermissions()->checkUpdatePermissions($entityTypeId, $entityId))
+		if (!\Bitrix\Crm\Service\Container::getInstance()->getUserPermissions()->item()->canUpdate($entityTypeId, $entityId))
 		{
 			$this->addError(\Bitrix\Crm\Controller\ErrorCode::getAccessDeniedError());
 

@@ -193,6 +193,10 @@ final class FillFieldsSettings implements \JsonSerializable, AutoStartInterface
 
 	public static function checkReadPermissions(int $entityTypeId, ?int $categoryId = null, ?int $userId = null): bool
 	{
-		return Container::getInstance()->getUserPermissions($userId)->checkUpdatePermissions($entityTypeId, 0, $categoryId);
+		$userPermissions = Container::getInstance()->getUserPermissions($userId)->entityType();
+		return (is_null($categoryId))
+			? $userPermissions->canUpdateItems($entityTypeId)
+			: $userPermissions->canUpdateItemsInCategory($entityTypeId, $categoryId)
+		;
 	}
 }

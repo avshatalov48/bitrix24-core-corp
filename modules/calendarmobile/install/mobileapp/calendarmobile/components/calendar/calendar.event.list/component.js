@@ -6,8 +6,8 @@
 	const { H2 } = require('ui-system/typography/heading');
 
 	const { CalendarEventListView } = require('calendar/event-list-view');
-	const { SearchLayout } = require('calendar/event-list-view/search/layout');
 	const { EventAjax } = require('calendar/ajax');
+	const { CalendarType, ViewMode } = require('calendar/enums');
 
 	/**
 	 * @class CalendarEventList
@@ -21,27 +21,27 @@
 			this.layout = props.layout;
 			this.ownerId = props.ownerId;
 			this.calType = props.calType;
+			this.viewMode = props.viewMode;
 
 			this.state = {
 				loading: true,
 				error: false,
 				errorMessage: null,
 				readOnly: false,
+				user: {},
+				counters: {},
 				sharingInfo: {},
 				ahaMoments: {},
 				settings: {},
 				sectionInfo: [],
+				additionalSectionInfo: {},
 				locationInfo: [],
+				categoryInfo: [],
 				filterPresets: {},
 				syncInfo: {},
 				collabInfo: [],
-				user: {},
-				counters: {},
 				collabSectionInfo: [],
-				categoryInfo: [],
 			};
-
-			this.searchRef = null;
 		}
 
 		componentDidMount()
@@ -89,34 +89,36 @@
 			if (data && data.sectionInfo)
 			{
 				const readOnly = BX.prop.getBoolean(data, 'readOnly', false);
+				const user = BX.prop.getArray(data, 'user', []);
+				const counters = BX.prop.getObject(data, 'counters', {});
 				const sharingInfo = BX.prop.getObject(data, 'sharingInfo', {});
 				const ahaMoments = BX.prop.getObject(data, 'ahaMoments', {});
 				const settings = BX.prop.getObject(data, 'settings', {});
 				const sectionInfo = BX.prop.getArray(data, 'sectionInfo', []);
+				const additionalSectionInfo = BX.prop.getObject(data, 'additionalSectionInfo', {});
 				const locationInfo = BX.prop.getArray(data, 'locationInfo', []);
+				const categoryInfo = BX.prop.getArray(data, 'categoryInfo', {});
 				const filterPresets = BX.prop.getObject(data, 'filterPresets', {});
 				const syncInfo = BX.prop.getObject(data, 'syncInfo', {});
 				const collabInfo = BX.prop.getArray(data, 'collabInfo', []);
-				const user = BX.prop.getArray(data, 'user', []);
-				const counters = BX.prop.getObject(data, 'counters', {});
 				const collabSectionInfo = BX.prop.getArray(data, 'collabSectionInfo', {});
-				const categoryInfo = BX.prop.getArray(data, 'categoryInfo', {});
 
 				this.setState({
 					loading: false,
 					readOnly,
+					user,
+					counters,
 					sharingInfo,
 					ahaMoments,
 					settings,
 					sectionInfo,
+					additionalSectionInfo,
 					locationInfo,
+					categoryInfo,
 					filterPresets,
 					syncInfo,
 					collabInfo,
-					user,
-					counters,
 					collabSectionInfo,
-					categoryInfo,
 				});
 			}
 		}
@@ -166,7 +168,6 @@
 				},
 				this.state.loading && this.renderLoader(),
 				!this.state.loading && this.renderContent(),
-				!this.state.loading && this.renderSearch(),
 			);
 		}
 
@@ -180,34 +181,10 @@
 				layout: this.layout,
 				ownerId: this.ownerId,
 				calType: this.calType,
-				readOnly: this.state.readOnly,
-				sharingInfo: this.state.sharingInfo,
-				ahaMoments: this.state.ahaMoments,
-				settings: this.state.settings,
-				sectionInfo: this.state.sectionInfo,
-				locationInfo: this.state.locationInfo,
-				filterPresets: this.state.filterPresets,
-				syncInfo: this.state.syncInfo,
-				collabInfo: this.state.collabInfo,
-				user: this.state.user,
-				counters: this.state.counters,
-				collabSectionInfo: this.state.collabSectionInfo,
-				categoryInfo: this.state.categoryInfo,
+				viewMode: this.viewMode,
+				...this.state,
 			});
 		}
-
-		renderSearch()
-		{
-			return new SearchLayout({
-				layout: this.layout,
-				presets: this.state.filterPresets,
-				ref: this.#bindSearch,
-			});
-		}
-
-		#bindSearch = (ref) => {
-			this.searchRef = ref;
-		};
 
 		renderLoader()
 		{
@@ -229,12 +206,14 @@
 
 	BX.onViewLoaded(() => {
 		const ownerId = BX.componentParameters.get('OWNER_ID', env.userId);
-		const calType = BX.componentParameters.get('CAL_TYPE', 'user');
+		const calType = BX.componentParameters.get('CAL_TYPE', CalendarType.USER);
+		const viewMode = BX.componentParameters.get('VIEW_MODE', ViewMode.BASE);
 
 		layout.enableNavigationBarBorder(false);
 		layout.showComponent(new CalendarEventList({
 			ownerId,
 			calType,
+			viewMode,
 			layout,
 		}));
 	});

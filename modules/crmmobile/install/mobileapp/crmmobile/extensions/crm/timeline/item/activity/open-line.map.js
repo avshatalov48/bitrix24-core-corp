@@ -1,1 +1,0 @@
-{"version":3,"sources":["open-line.js"],"names":["jn","define","require","exports","module","TimelineItemBase","OpenLineActivity"],"mappings":"AAGAA,GAAGC,OAAO,wCAAwC,CAACC,EAASC,EAASC,KAEpE,MAAMC,iBAAEA,GAAqBH,EAAQ,0BAKrC,MAAMI,UAAyBD,GAK/BD,EAAOD,QAAU,CAAEG,iBAAAA","file":"open-line.map.js"}

@@ -6,29 +6,35 @@ this.BX.Booking.Provider = this.BX.Booking.Provider || {};
 	'use strict';
 
 	class BookingActionsService {
-	  async getDealData(bookingId) {
-	    return Promise.resolve();
-	  }
 	  async getDocData(bookingId) {
 	    return Promise.resolve();
 	  }
 	  async getMessageData(bookingId) {
-	    const status = await new booking_lib_apiClient.ApiClient().post('MessageStatus.get', {
+	    const status = await booking_lib_apiClient.apiClient.post('MessageStatus.get', {
 	      bookingId
 	    });
-	    await Promise.all([booking_core.Core.getStore().dispatch(`${booking_const.Model.MessageStatus}/upsert`, {
+	    await Promise.all([this.$store.dispatch(`${booking_const.Model.MessageStatus}/upsert`, {
 	      bookingId,
 	      status
 	    })]);
 	  }
 	  async sendMessage(bookingId, notificationType) {
-	    return new booking_lib_apiClient.ApiClient().post('Message.send', {
+	    var _booking$messages;
+	    const message = await booking_lib_apiClient.apiClient.post('Message.send', {
 	      bookingId,
 	      notificationType
 	    });
+	    const booking = this.$store.getters[`${booking_const.Model.Bookings}/getById`](bookingId);
+	    void this.$store.dispatch(`${booking_const.Model.Bookings}/update`, {
+	      id: booking.id,
+	      booking: {
+	        ...booking,
+	        messages: [...((_booking$messages = booking.messages) != null ? _booking$messages : []), message]
+	      }
+	    });
 	  }
-	  async getVisitData(bookingId) {
-	    return Promise.resolve();
+	  get $store() {
+	    return booking_core.Core.getStore();
 	  }
 	}
 	const bookingActionsService = new BookingActionsService();

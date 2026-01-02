@@ -3,15 +3,17 @@
  */
 jn.define('calendar/sync-page/settings', (require, exports, module) => {
 	const AppTheme = require('apptheme');
-	const { SyncAjax } = require('calendar/ajax');
 	const { BottomSheet } = require('bottom-sheet');
 	const { LoadingScreenComponent } = require('layout/ui/loading-screen');
 	const { Loc } = require('loc');
 	const { TimeAgoFormat } = require('layout/ui/friendly-date/time-ago-format');
 	const { Moment } = require('utils/date/moment');
+	const { Icon, IconView } = require('ui-system/blocks/icon');
+	const { Color } = require('tokens');
+
+	const { SyncAjax } = require('calendar/ajax');
 	const { SyncSettingsSection } = require('calendar/sync-page/settings/section');
 	const { SyncSettingsMenu } = require('calendar/sync-page/settings/menu');
-	const { Color } = require('tokens');
 
 	/**
 	 * @class SyncSettings
@@ -22,14 +24,14 @@ jn.define('calendar/sync-page/settings', (require, exports, module) => {
 		{
 			super(props);
 
+			this.layoutWidget = null;
+			this.sections = [];
+
 			this.state = {
 				loading: true,
 			};
 
-			this.sections = [];
-			this.layoutWidget = null;
-
-			this.onShowMoreMenu = this.showMoreMenu.bind(this);
+			this.moreButtonRef = null;
 
 			void this.loadData();
 		}
@@ -294,19 +296,15 @@ jn.define('calendar/sync-page/settings', (require, exports, module) => {
 						justifyContent: 'center',
 						flexGrow: 1,
 					},
-					onClick: this.onShowMoreMenu,
+					onClick: this.showMoreMenu,
 				},
-				Image(
-					{
-						svg: {
-							content: icons.moreMenu,
-						},
-						style: {
-							height: 24,
-							width: 25,
-						},
+				IconView({
+					size: 32,
+					icon: Icon.MORE,
+					forwardRef: (ref) => {
+						this.moreButtonRef = ref;
 					},
-				),
+				}),
 			);
 		}
 
@@ -392,18 +390,16 @@ jn.define('calendar/sync-page/settings', (require, exports, module) => {
 			});
 		}
 
-		showMoreMenu()
-		{
+		showMoreMenu = () => {
 			const menu = new SyncSettingsMenu({
-				layoutWidget: this.layoutWidget,
-				onChooseDisable: () => this.deactivateConnection(),
+				onItemSelected: this.deactivateConnection,
+				targetElementRef: this.moreButtonRef,
 			});
 
 			menu.show();
-		}
+		};
 
-		deactivateConnection()
-		{
+		deactivateConnection = () => {
 			// eslint-disable-next-line promise/catch-or-return
 			SyncAjax.deactivateConnection(this.props.connectionId).then((response) => {
 				if (response.errors && response.errors.length > 0)
@@ -416,7 +412,7 @@ jn.define('calendar/sync-page/settings', (require, exports, module) => {
 					this.props.customEventEmitter.emit('Calendar.Sync::onConnectionDisabled', [{ type: this.props.type }]);
 				}
 			});
-		}
+		};
 	}
 
 	const icons = {

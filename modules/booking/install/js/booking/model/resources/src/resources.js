@@ -30,6 +30,7 @@ export class Resources extends BuilderModel
 			workLoad: null,
 			counter: null,
 			isMain: false,
+			isDeleted: false,
 			isConfirmationNotificationOn: true,
 			isFeedbackNotificationOn: true,
 			isInfoNotificationOn: false,
@@ -43,6 +44,8 @@ export class Resources extends BuilderModel
 			createdBy: 0,
 			createdAt: 0,
 			updatedAt: 0,
+			deletedAt: 0,
+			entities: [],
 		};
 	}
 
@@ -50,7 +53,11 @@ export class Resources extends BuilderModel
 	{
 		return {
 			/** @function resources/get */
-			get: (state: ResourcesState): ResourceModel[] => Object.values(state.collection),
+			get: (state: ResourcesState, getters, rootState, rootGetters): ResourceModel[] => {
+				const deletingResources = rootGetters[`${Model.Interface}/deletingResources`];
+
+				return Object.values(state.collection).filter(({ id }) => !deletingResources[id]);
+			},
 			/** @function resources/getById */
 			getById: (state: ResourcesState) => (id: number): ResourceModel => state.collection[id],
 			/** @function resources/getByIds */

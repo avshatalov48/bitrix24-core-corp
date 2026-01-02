@@ -5,6 +5,8 @@ declare(strict_types=1);
 namespace Bitrix\Booking\Internals\Repository;
 
 use Bitrix\Booking\Entity;
+use Bitrix\Booking\Provider\Params\FilterInterface;
+use Bitrix\Booking\Provider\Params\SelectInterface;
 use Bitrix\Main\ORM\Query\Filter\ConditionTree;
 
 interface ResourceRepositoryInterface
@@ -12,8 +14,9 @@ interface ResourceRepositoryInterface
 	public function getList(
 		int|null $limit = null,
 		int|null $offset = null,
-		ConditionTree|null $filter = null,
+		FilterInterface $filter = null,
 		array|null $sort = null,
+		SelectInterface|null $select = null,
 		int|null $userId = null,
 	): Entity\Resource\ResourceCollection;
 	public function getTotal(ConditionTree|null $filter = null, int|null $userId = null): int;

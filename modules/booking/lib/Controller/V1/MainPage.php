@@ -8,10 +8,12 @@ use Bitrix\Bitrix24\License;
 use Bitrix\Booking\Controller\V1\Response\MainPageGetCountersResponse;
 use Bitrix\Booking\Controller\V1\Response\MainPageGetResponse;
 use Bitrix\Booking\Entity\DatePeriod;
+use Bitrix\Booking\Entity\WaitListItem\WaitListItemCollection;
 use Bitrix\Booking\Interfaces\ProviderInterface;
 use Bitrix\Booking\Internals\Container;
 use Bitrix\Booking\Internals\Exception\ErrorBuilder;
 use Bitrix\Booking\Internals\Exception\Exception;
+use Bitrix\Booking\Internals\Integration\Crm\WebForm;
 use Bitrix\Booking\Internals\Service\Notifications\MessageSenderPicker;
 use Bitrix\Booking\Internals\Repository\CounterRepositoryInterface;
 use Bitrix\Booking\Provider\BookingProvider;
@@ -22,7 +24,10 @@ use Bitrix\Booking\Provider\OptionProvider;
 use Bitrix\Booking\Provider\Params\Booking\BookingFilter;
 use Bitrix\Booking\Provider\Params\Booking\BookingSelect;
 use Bitrix\Booking\Provider\Params\GridParams;
+use Bitrix\Booking\Provider\Params\WaitListItem\WaitListItemFilter;
+use Bitrix\Booking\Provider\Params\WaitListItem\WaitListItemSelect;
 use Bitrix\Booking\Provider\ResourceTypeProvider;
+use Bitrix\Booking\Provider\WaitListItemProvider;
 use Bitrix\Main\Engine\CurrentUser;
 use Bitrix\Booking\Entity;
 use Bitrix\Main\Loader;
@@ -39,6 +44,7 @@ class MainPage extends BaseController
 	private ProviderInterface|null $provider;
 	private MoneyStatisticsProvider $moneyStatisticsProvider;
 	private ClientStatisticsProvider $clientStatisticsProvider;
+	private WaitListItemProvider $waitListItemProvider;
 
 	public function __construct(Request $request = null)
 	{
@@ -51,6 +57,7 @@ class MainPage extends BaseController
 		$this->provider = Container::getProviderManager()::getCurrentProvider();
 		$this->moneyStatisticsProvider = new MoneyStatisticsProvider();
 		$this->clientStatisticsProvider = new ClientStatisticsProvider();
+		$this->waitListItemProvider = new WaitListItemProvider();
 	}
 
 	public function getForBookingAction(
@@ -88,6 +95,8 @@ class MainPage extends BaseController
 
 			$resourceTypes = $this->getResourceTypes($userId);
 
+			$waitListItemCollection = new WaitListItemCollection();
+
 			return new MainPageGetResponse(
 				favorites: null,
 				bookingCollection: $bookings,
@@ -95,8 +104,10 @@ class MainPage extends BaseController
 				providerModuleId: $this->provider?->getModuleId(),
 				clientsDataRecent: $this->getClientsDataRecent(),
 				isCurrentSenderAvailable: MessageSenderPicker::canUseCurrentSender(),
+				waitListItemCollection: $waitListItemCollection,
 				isIntersectionForAll: true,
 				counters: $this->counterRepository->getList($userId),
+				formsMenu: $this->getFormsMenu(),
 			);
 		}
 		catch (Exception $e)
@@ -123,6 +134,7 @@ class MainPage extends BaseController
 			$favoritesIds = $favorites->getResources()->getEntityIds();
 			$bookings = $this->getBookings($userId, $datePeriod, $favoritesIds);
 			$resourceTypes = $this->getResourceTypes($userId);
+			$waitListItems = $this->getWaitListItems($userId);
 
 			return new MainPageGetResponse(
 				favorites: $favorites,
@@ -131,8 +143,10 @@ class MainPage extends BaseController
 				providerModuleId: $this->provider?->getModuleId(),
 				clientsDataRecent: $this->getClientsDataRecent(),
 				isCurrentSenderAvailable: MessageSenderPicker::canUseCurrentSender(),
+				waitListItemCollection: $waitListItems,
 				isIntersectionForAll: $this->isIntersectionForAll($userId),
 				counters: $this->counterRepository->getList($userId),
+				formsMenu: $this->getFormsMenu(),
 			);
 		}
 		catch (Exception $e)
@@ -224,6 +238,7 @@ class MainPage extends BaseController
 			->withCounters($bookings, $userId)
 			->withClientsData($bookings)
 			->withExternalData($bookings)
+			->withMessages($bookings)
 		;
 
 		return $bookings;
@@ -231,11 +246,54 @@ class MainPage extends BaseController
 
 	private function getResourceTypes(int $userId): Entity\ResourceType\ResourceTypeCollection
 	{
-		return $this->resourceTypeProvider->getList(new GridParams(), $userId);
+		$resourceTypes = $this->resourceTypeProvider->getList(new GridParams(), $userId);
+
+		$this->resourceTypeProvider
+			->withResourcesCnt($resourceTypes)
+		;
+
+		return $resourceTypes;
 	}
 
 	private function getClientsDataRecent(): array
 	{
 		return $this->provider?->getClientProvider()?->getClientDataRecent() ?? [];
+	}
+
+	private function getWaitListItems(int $userId): WaitListItemCollection
+	{
+		$waitListItems = $this->waitListItemProvider->getList(
+			new GridParams(
+				filter: new WaitListItemFilter(),
+				select: new WaitListItemSelect([
+					'CLIENTS',
+					'EXTERNAL_DATA',
+					'NOTE',
+				]),
+			),
+			$userId,
+		);
+
+		$this->waitListItemProvider
+			->withClientsData($waitListItems)
+			->withExternalData($waitListItems)
+		;
+
+		return $waitListItems;
+	}
+
+	private function getFormsMenu(): array
+	{
+		if (!WebForm::isAvailable() || !WebForm::canRead())
+		{
+			return [];
+		}
+
+		return [
+			'canEdit' => WebForm::canEdit(),
+			'createFormLink' => WebForm::getCreateFormLink(),
+			'formsListLink' => WebForm::getFormsListLink(),
+			'formList' => WebForm::getFormsList(),
+		];
 	}
 }

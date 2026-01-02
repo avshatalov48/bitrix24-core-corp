@@ -68,23 +68,9 @@ final class SignGroupEntityProvider extends \Bitrix\Main\UI\Selector\EntityBase
 	 */
 	private function getGroupId(string $filterValue): ?int
 	{
-		try
-		{
-			$employeeGroupId = GroupTable::getList(
-					[
-						'select' => ['ID'],
-						'filter' => ['=STRING_ID' => $filterValue],
-					]
-				)
-				->fetch()
-			;
-		}
-		catch (Throwable $e)
-		{
-			return null;
-		}
+		$employeeGroupId = \CGroup::GetIDByCode($filterValue);
 
-		return $employeeGroupId ? (int)$employeeGroupId['ID'] : null;
+		return $employeeGroupId ? (int)$employeeGroupId : null;
 	}
 
 	/**

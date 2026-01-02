@@ -59,6 +59,9 @@ use Bitrix\Crm\Conversion\EntityConversionException;
 use Bitrix\Crm\Conversion\LeadConversionConfig;
 use Bitrix\Crm\Conversion\LeadConversionType;
 use Bitrix\Crm\Conversion\LeadConversionWizard;
+use Bitrix\Crm\Integration\Analytics\Builder\Entity\ConvertEvent;
+use Bitrix\Crm\Integration\Analytics\ConvertEventsContainer;
+use Bitrix\Crm\Integration\Analytics\Dictionary;
 use Bitrix\Crm\Integrity\Volatile;
 use Bitrix\Crm\Synchronization\UserFieldSynchronizer;
 use Bitrix\Main\Localization\Loc;
@@ -291,8 +294,7 @@ elseif ($action === 'SAVE_PROGRESS' && check_bitrix_sessid())
 		die();
 	}
 
-	$entityAttrs = $userPerms->GetEntityAttr($targetTypeName, array($ID));
-	if (!$userPerms->CheckEnityAccess($targetTypeName, 'WRITE', $entityAttrs[$ID]))
+	if (!\Bitrix\Crm\Service\Container::getInstance()->getUserPermissions()->item()->canUpdate(CCrmOwnerType::Lead, $ID))
 	{
 		$APPLICATION->RestartBuffer();
 		echo CUtil::PhpToJSObject(
@@ -318,13 +320,17 @@ elseif ($action === 'SAVE_PROGRESS' && check_bitrix_sessid())
 	}
 
 	$arFields = array('STATUS_ID' => $statusID);
-	$CCrmLead = new CCrmLead(false);
-	if($CCrmLead->Update(
+	$CCrmLead = new CCrmLead();
+	if ($CCrmLead->Update(
 		$ID,
 		$arFields,
 		true,
 		true,
-		array(/*'DISABLE_USER_FIELD_CHECK' => true,*/ 'REGISTER_SONET_EVENT' => true))
+		[
+			/*'DISABLE_USER_FIELD_CHECK' => true,*/
+			'REGISTER_SONET_EVENT' => true,
+			'eventId' => $_REQUEST['EVENT_ID'] ?? null,
+		])
 	)
 	{
 		$arErrors = array();
@@ -1227,7 +1233,15 @@ elseif ($action === 'PROCESS_BATCH_CONVERSION' && check_bitrix_sessid())
 	}
 	else
 	{
-		$wizard = new LeadConversionWizard($currentEntityID, $config);
+		$analyticsConvertEvent = ConvertEvent::createDefault()
+			->setSrcEntityTypeId(CCrmOwnerType::Lead)
+			->setSection(Dictionary::SECTION_LEAD)
+			->setSubSection(Dictionary::SUB_SECTION_LIST)
+			->setElement(Dictionary::ELEMENT_GRID_GROUP_ACTIONS)
+			->setStatus(Dictionary::STATUS_SUCCESS);
+		$eventsContainer = new ConvertEventsContainer($analyticsConvertEvent);
+
+		$wizard = new LeadConversionWizard($currentEntityID, $config, $eventsContainer);
 		if(!$enableUserFieldCheck)
 		{
 			$wizard->enableUserFieldCheck(false);
@@ -1238,7 +1252,11 @@ elseif ($action === 'PROCESS_BATCH_CONVERSION' && check_bitrix_sessid())
 		{
 			$errorText = $wizard->getErrorText();
 			$wizard->undo();
+			$eventsContainer->setErrorStatus();
 		}
+
+		$eventsContainer->submitEvents();
+
 		LeadConversionWizard::remove($currentEntityID);
 	}
 

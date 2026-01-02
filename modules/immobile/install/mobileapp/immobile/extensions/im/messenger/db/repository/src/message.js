@@ -7,28 +7,42 @@ jn.define('im/messenger/db/repository/message', (require, exports, module) => {
 	const { Feature } = require('im/messenger/lib/feature');
 	const {
 		FileTable,
+		TranscriptTable,
 		UserTable,
 		ReactionTable,
 		MessageTable,
+		MessagePushTable,
 		MessageTableGetLinkedListDirection,
+		VoteTable,
 	} = require('im/messenger/db/table');
-	const { LoggerManager } = require('im/messenger/lib/logger');
+	const { merge } = require('utils/object');
+	const { getLogger } = require('im/messenger/lib/logger');
+	const { AsyncQueue, createPromiseWithResolvers } = require('im/messenger/lib/utils');
 
-	const { validate } = require('im/messenger/db/repository/validators/message');
+	const {
+		validate,
+		validatePush,
+	} = require('im/messenger/db/repository/validators/message');
 
-	const logger = LoggerManager.getInstance().getLogger('repository--message');
+	const logger = getLogger('repository--message');
 
 	/**
 	 * @class MessageRepository
 	 */
 	class MessageRepository
 	{
+		/** @type {Map<number, AsyncQueue>} */
+		#chatMessageQueueCollection = new Map();
+
 		constructor()
 		{
 			this.fileTable = new FileTable();
+			this.tanscriptTable = new TranscriptTable();
 			this.userTable = new UserTable();
 			this.reactionTable = new ReactionTable();
 			this.messageTable = new MessageTable();
+			this.messagePushTable = new MessagePushTable();
+			this.voteTable = new VoteTable();
 		}
 
 		/**
@@ -99,6 +113,29 @@ jn.define('im/messenger/db/repository/message', (require, exports, module) => {
 
 		/**
 		 * @param {number} chatId
+		 * @param {string} searchText
+		 * @param {'asc'|'desc'} order='asc'
+		 * @param {number} limit=50
+		 *
+		 * @returns {{items: *[]}}
+		 */
+		async searchByText({
+			chatId,
+			searchText,
+			order = 'asc',
+			limit = 50,
+		})
+		{
+			if (!Feature.isLocalStorageEnabled)
+			{
+				return this.#getDefaultPageResult();
+			}
+
+			return this.messageTable.searchByText(chatId, searchText, order, limit);
+		}
+
+		/**
+		 * @param {number} chatId
 		 * @param {number} messageId
 		 *
 		 * @return {Promise<MessageRepositoryPage>}
@@ -116,6 +153,23 @@ jn.define('im/messenger/db/repository/message', (require, exports, module) => {
 			logger.log('MessageRepository.get result: ', messageList);
 
 			return messageList;
+		}
+
+		/**
+		 * @param {MessageId} messageId
+		 * @return {Promise}
+		 */
+		async getMessageById(messageId)
+		{
+			logger.log('MessageRepository.getMessageById request: ', messageId);
+
+			const message = await this.messageTable.getById(messageId);
+			if (!message)
+			{
+				return null;
+			}
+
+			return message;
 		}
 
 		/**
@@ -185,6 +239,27 @@ jn.define('im/messenger/db/repository/message', (require, exports, module) => {
 		}
 
 		/**
+		 * @param {number} options.chatId
+		 * @param {number} [options.fromMessageId]
+		 *
+		 * @return {Promise<MessageRepositoryPage>}
+		 */
+		async getPushPage(options)
+		{
+			if (!Feature.isLocalStorageEnabled)
+			{
+				return this.#getDefaultPageResult();
+			}
+
+			const getListResult = await this.messagePushTable.getPage(options);
+			const messageList = await this.#getMessagesWithAdditionalData(getListResult);
+
+			logger.log('MessageRepository.getPushPage result', messageList);
+
+			return messageList;
+		}
+
+		/**
 		 * @param chatId
 		 * @param contextMessageId
 		 * @param limit
@@ -240,6 +315,11 @@ jn.define('im/messenger/db/repository/message', (require, exports, module) => {
 					...topPage.reactionList,
 					...contextMessage.reactionList,
 					...bottomPage.reactionList,
+				],
+				voteList: [
+					...topPage.voteList,
+					...contextMessage.voteList,
+					...bottomPage.voteList,
 				],
 				hasContextMessage: Type.isArrayFilled(contextMessage.messageList),
 			};
@@ -314,12 +394,15 @@ jn.define('im/messenger/db/repository/message', (require, exports, module) => {
 			const userIdList = new Set([...authorIdList, ...reactionUserIdList]);
 			const userList = await this.userTable.getListByIds([...userIdList]);
 
+			const voteList = await this.voteTable.getListByIds([...messageIdList]);
+
 			return {
 				messageList: modelMessageList.reverse(),
 				additionalMessageList: additionalMessageList.items,
 				userList: userList.items,
 				fileList: fileList.items,
 				reactionList: reactionList.items,
+				voteList: voteList.items,
 			};
 		}
 
@@ -333,7 +416,7 @@ jn.define('im/messenger/db/repository/message', (require, exports, module) => {
 				messageListToAdd.push(messageToAdd);
 			});
 
-			return this.messageTable.add(messageListToAdd, true);
+			return this.#saveMessages(messageListToAdd, true);
 		}
 
 		async saveFromRest(messageList)
@@ -348,7 +431,50 @@ jn.define('im/messenger/db/repository/message', (require, exports, module) => {
 				messageListToAdd.push(messageToAdd);
 			});
 
-			return this.messageTable.add(messageListToAdd, true);
+			return this.#saveMessages(messageListToAdd);
+		}
+
+		/**
+		 * @param {Array<RawMessage>} messageList
+		 * @return {Promise<any>}
+		 */
+		async updateFromRest(messageList)
+		{
+			const updatedMessageIdList = messageList.map((message) => message.id);
+			const existingMessages = await this.messageTable.getListByIds(updatedMessageIdList, false);
+
+			const existingMessagesCollection = {};
+			existingMessages.items.forEach((message) => {
+				existingMessagesCollection[message.id] = message;
+			});
+
+			const updatedMessageList = [];
+			messageList.forEach((message) => {
+				const existingMessage = existingMessagesCollection[message.id];
+
+				if (existingMessage)
+				{
+					const validatedMessage = this.messageTable.validate(validate(message));
+					updatedMessageList.push(merge(existingMessage, validatedMessage));
+				}
+			});
+
+			return this.#saveMessages(updatedMessageList);
+		}
+
+		async saveFromPush(messageList)
+		{
+			const messageListToAdd = [];
+
+			messageList.forEach((message) => {
+				const messageToAdd = this.messagePushTable.validate(
+					validatePush(message),
+				);
+
+				messageListToAdd.push(messageToAdd);
+			});
+
+			return this.messagePushTable.add(messageListToAdd, true);
 		}
 
 		async deleteByIdList(idList)
@@ -368,7 +494,7 @@ jn.define('im/messenger/db/repository/message', (require, exports, module) => {
 			}
 			catch (error)
 			{
-				logger.error('MessageRepository: messageTable.deleteByIdList error: ', error);
+				logger.error(`${this.constructor.name}: messageTable.deleteByIdList error: `, error);
 			}
 
 			try
@@ -377,7 +503,25 @@ jn.define('im/messenger/db/repository/message', (require, exports, module) => {
 			}
 			catch (error)
 			{
-				logger.error('MessageRepository: fileTable.deleteByIdList error: ', error);
+				logger.error(`${this.constructor.name}: fileTable.deleteByIdList error: `, error);
+			}
+
+			try
+			{
+				await this.tanscriptTable.deleteByIdList(fileIdList);
+			}
+			catch (error)
+			{
+				logger.error(`${this.constructor.name}: tanscriptTable.deleteByIdList error: `, error);
+			}
+
+			try
+			{
+				await this.voteTable.deleteByIdList(idList);
+			}
+			catch (error)
+			{
+				logger.error(`${this.constructor.name}: voteTable.deleteByIdList error: `, error);
 			}
 		}
 
@@ -413,6 +557,11 @@ jn.define('im/messenger/db/repository/message', (require, exports, module) => {
 			return Promise.all(deletePromiseList);
 		}
 
+		async clearPushMessages()
+		{
+			return this.messagePushTable.truncate();
+		}
+
 		/**
 		 * @return {MessageRepositoryPage}
 		 */
@@ -425,6 +574,73 @@ jn.define('im/messenger/db/repository/message', (require, exports, module) => {
 				fileList: [],
 				reactionList: [],
 			};
+		}
+
+		/**
+		 * @param {Array<MessagesModelState>} messageList
+		 */
+		async #saveMessages(messageList)
+		{
+			if (!Type.isArrayFilled(messageList))
+			{
+				return;
+			}
+
+			try
+			{
+				const chatMessageCollection = this.#groupByChatId(messageList);
+
+				const promiseList = [];
+				for (const [chatId, messageListToAdd] of chatMessageCollection.entries())
+				{
+					if (!this.#chatMessageQueueCollection.has(chatId))
+					{
+						const queue = new AsyncQueue();
+						this.#chatMessageQueueCollection.set(chatId, queue);
+					}
+					const { resolve, promise } = createPromiseWithResolvers();
+
+					this.#chatMessageQueueCollection.get(chatId).enqueue(
+						async () => {
+							await this.messageTable.add(messageListToAdd, true);
+
+							resolve();
+						},
+						(error) => {
+							logger.error(`${this.constructor.name}.#saveMessages queue error`, error);
+
+							resolve();
+						},
+					);
+					promiseList.push(promise);
+				}
+
+				await Promise.all(promiseList);
+			}
+			catch (error)
+			{
+				logger.error(`${this.constructor.name}.#saveMessages error`, error);
+			}
+		}
+
+		/**
+		 * @param {Array<MessagesModelState>} messageList
+		 * @returns {Map<number, Array<MessagesModelState>>}
+		 */
+		#groupByChatId(messageList)
+		{
+			return messageList.reduce((map, currentItem) => {
+				const { chatId } = currentItem;
+
+				if (!map.has(chatId))
+				{
+					map.set(chatId, []);
+				}
+
+				map.get(chatId).push(currentItem);
+
+				return map;
+			}, new Map());
 		}
 	}
 

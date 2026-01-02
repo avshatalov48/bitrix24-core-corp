@@ -1,0 +1,26 @@
+<?php
+$MESS["IMMOBILE_LAST_SEEN_F"] = "#DATE# #TIME#-де болды";
+$MESS["IMMOBILE_LAST_SEEN_M"] = "#DATE# #TIME#-де болды";
+$MESS["IMMOBILE_LAST_SEEN_SHORT_F"] = "#LAST_SEEN# болды";
+$MESS["IMMOBILE_LAST_SEEN_SHORT_M"] = "#LAST_SEEN# болды";
+$MESS["IMMOBILE_STATUS_AWAY"] = "Орында емеспін";
+$MESS["IMMOBILE_STATUS_AWAY_TITLE"] = "#TIME# орнында жоқ";
+$MESS["IMMOBILE_STATUS_BOT"] = "Чат-бот";
+$MESS["IMMOBILE_STATUS_BREAK"] = "Үзіліс";
+$MESS["IMMOBILE_STATUS_DND"] = "Мазаламаңыз";
+$MESS["IMMOBILE_STATUS_GUEST"] = "Қолжетімсіз";
+$MESS["IMMOBILE_STATUS_LINES-ONLINE"] = "Ашық желілерді пайдаланушы";
+$MESS["IMMOBILE_STATUS_MOBILE"] = "Онлайн, телефоннан";
+$MESS["IMMOBILE_STATUS_NA"] = "Қолжетімсіз";
+$MESS["IMMOBILE_STATUS_NETWORK_MSGVER_1"] = "Битрикс24 Network";
+$MESS["IMMOBILE_STATUS_OFFLINE"] = "Желіде емес";
+$MESS["IMMOBILE_STATUS_ONLINE"] = "Онлайн";
+$MESS["IMMOBILE_STATUS_TEXT_AWAY"] = "Орында емеспін";
+$MESS["IMMOBILE_STATUS_TEXT_BREAK"] = "Үзіліс";
+$MESS["IMMOBILE_STATUS_TEXT_DND"] = "Мазаламаңыз";
+$MESS["IMMOBILE_STATUS_TEXT_IDLE"] = "Орында емеспін";
+$MESS["IMMOBILE_STATUS_TEXT_MOBILE-ONLINE"] = "Онлайн, телефоннан";
+$MESS["IMMOBILE_STATUS_TEXT_OFFLINE"] = "Офлайн";
+$MESS["IMMOBILE_STATUS_TEXT_ONLINE"] = "Онлайн";
+$MESS["IMMOBILE_STATUS_VACATION"] = "Демалыста";
+$MESS["IMMOBILE_STATUS_VACATION_TITLE"] = "#DATE# дейін демалыста";

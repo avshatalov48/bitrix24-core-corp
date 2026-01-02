@@ -2,7 +2,7 @@
 
 namespace Bitrix\Tasks\Flow\Notification\Exception;
 
-use Bitrix\Tasks\Exception;
+use Exception;
 
 class InvalidPayload extends Exception
 {

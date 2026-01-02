@@ -1,4 +1,35 @@
+.booking-sidebar-calendar-container {
+	--width: 274px;
+	--height: 296px;
+	--scale: calc(260 / 300);
+	--real-width: calc(var(--width) * var(--scale));
+	--real-height: calc(var(--height) * var(--scale));
+	--real-height-count: calc(var(--height) * var(--scale) + 44px);
+	width: var(--real-width);
+	height: calc(var(--height) - var(--real-height));
+	transition: height 180ms ease;
+}
+
+.booking-sidebar-calendar-container.--expanded {
+	height: var(--real-height);
+}
+
+.booking-sidebar-calendar-container.--expanded.--counter {
+	height: var(--real-height-count);
+}
+
+.booking-sidebar-calendar-container.--counter:not(.--expanded) {
+	margin-bottom: 43px;
+}
+
 .booking-booking-sidebar-calendar {
+	box-sizing: border-box;
+	width: var(--width);
+	max-height: var(--height);
+	transform: scale(var(--scale));
+	transform-origin: top left;
+	overflow: hidden;
+
 	display: flex;
 	flex-direction: column;
 	justify-content: center;
@@ -6,7 +37,6 @@
 	background: var(--ui-color-palette-white-base);
 	border-radius: 12px;
 	border: 1px solid var(--ui-color-base-10);
-	box-shadow: 0 0 30px 10px var(--ui-color-base-02);
 	pointer-events: all;
 }
 
@@ -16,22 +46,11 @@
 }
 
 .booking-booking-sidebar-calendar-header .ui-icon-set {
-	--ui-icon-set__icon-color: var(--ui-color-base-40);
 	--ui-icon-set__icon-size: 20px;
 }
 
-.booking-booking-sidebar-calendar-button {
-	display: flex;
-	cursor: pointer;
-}
-
-.booking-booking-sidebar-calendar-button:hover {
-	box-shadow: inset 0 0 999px rgba(0, 0, 0, 0.03);
-	border-radius: 4px;
-}
-
-.booking-booking-sidebar-calendar-button.--collapse {
-	margin-left: auto;
+.booking-sidebar-button.--right {
+	margin-right: auto;
 }
 
 .booking-booking-sidebar-calendar-title {
@@ -39,7 +58,6 @@
 	text-align: center;
 	color: var(--ui-color-base-90);
 	font-size: var(--ui-font-size-lg);
-	cursor: default;
 }
 
 .booking-booking-sidebar-calendar-date-picker {
@@ -48,6 +66,6 @@
 	transition: height 180ms ease;
 }
 
-.booking-booking-sidebar-calendar-date-picker.--expanded {
+.booking-sidebar-calendar-container.--expanded .booking-booking-sidebar-calendar-date-picker {
 	height: 254px;
 }

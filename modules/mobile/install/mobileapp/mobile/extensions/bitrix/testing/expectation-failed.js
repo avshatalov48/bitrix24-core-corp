@@ -5,10 +5,11 @@ jn.define('testing/expectation-failed', (require, exports, module) => {
 
 	class ExpectationFailed
 	{
-		constructor(actualValue, expectedValue)
+		constructor(actualValue, expectedValue, trace)
 		{
 			this.actualValue = actualValue;
 			this.expectedValue = expectedValue;
+			this.trace = trace;
 		}
 	}
 

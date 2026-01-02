@@ -76,11 +76,6 @@ $canInsertUserData = !\Bitrix\Main\Loader::includeModule('bitrix24') || !\CBitri
 <table class="bg-container" cellpadding="0" cellspacing="0" border="0" style="padding-top: 0; padding-right: 10px; padding-bottom: 0; padding-left: 10px; width: 100%; border-radius: 10px; background-image: url(<?=$this->getFolder()?>/images/collab/orion-bg.jpg); background-size: cover;">
 	<tr>
 		<td>
-			<!--[if gte mso 9]>
-			<v:rect xmlns:v="urn:schemas-microsoft-com:vml" fill="true" stroke="false" style="width:600px;height:1200px;">
-				<v:fill type="frame" src="<?=$this->getFolder()?>/images/collab/orion-bg.jpg" color="#f4f4f4" />
-				<v:textbox inset="0,0,0,0">
-			<![endif]-->
 			<table class="email-container" cellpadding="0" cellspacing="0" border="0" style="width: 100%; max-width: 600px; margin: 0 auto;">
 				<tr>
 					<td>

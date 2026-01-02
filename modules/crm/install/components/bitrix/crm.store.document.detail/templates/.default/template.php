@@ -1,4 +1,5 @@
 <?php
+
 if (!defined('B_PROLOG_INCLUDED') || B_PROLOG_INCLUDED !== true)
 {
 	die();
@@ -6,10 +7,21 @@ if (!defined('B_PROLOG_INCLUDED') || B_PROLOG_INCLUDED !== true)
 
 use Bitrix\Main\Application;
 use Bitrix\Main\IO\File;
+use Bitrix\Main\Loader;
 use Bitrix\Main\Localization\Loc;
 use Bitrix\Main\UI\Extension;
 use Bitrix\Main\Web\Json;
-use Bitrix\Main\Loader;
+use Bitrix\UI\Buttons;
+use Bitrix\UI\Toolbar\ButtonLocation;
+use Bitrix\UI\Toolbar\Facade\Toolbar;
+
+/** @global CMain $APPLICATION */
+/** @var CrmStoreDocumentDetailComponent $component */
+/** @var array $arResult */
+/** @var array $arParams */
+/** @var string $templateFolder */
+
+Loader::includeModule('ui');
 
 global $APPLICATION;
 
@@ -66,21 +78,18 @@ if (
 	Extension::load('sale.address');
 }
 
-if (isset($arResult['TOOLBAR_ID']))
-{
-	$APPLICATION->IncludeComponent(
-		'bitrix:crm.interface.toolbar',
-		(SITE_TEMPLATE_ID === 'bitrix24' ? 'slider' : 'type2'),
-		[
-			'TOOLBAR_ID' => $arResult['TOOLBAR_ID'],
-			'BUTTONS' => $arResult['BUTTONS'] ?? []
-		],
-		$component,
-		['HIDE_ICONS' => 'Y']
-	);
-}
+Toolbar::deleteFavoriteStar();
 
-if ((int)$arResult['ENTITY_DATA']['ID'] > 0)
+$insidePageTitleConfig = [
+	'enablePageLink' => false,
+	'enableStatusLabel' => false,
+	'statusLabel' => [
+		'text' => '',
+		'color' => '',
+	],
+];
+$documentId = (int)$arResult['ENTITY_DATA']['ID'];
+if ($documentId > 0)
 {
 	$labelColorClass = 'ui-label-light';
 	$isDocumentCancelled = $arResult['ENTITY_DATA']['DEDUCTED'] === 'N' && !empty($arResult['ENTITY_DATA']['EMP_DEDUCTED_ID']);
@@ -102,24 +111,32 @@ if ((int)$arResult['ENTITY_DATA']['ID'] > 0)
 		$labelText = Loc::getMessage('CRM_STORE_DOCUMENT_DETAIL_DOCUMENT_STATUS_' . $arResult['ENTITY_DATA']['DEDUCTED']);
 	}
 
-	$this->SetViewTarget('in_pagetitle');
-	?>
-	<div class="catalog-title-buttons-wrapper">
-	<span id="pagetitle_btn_wrapper" class="pagetitile-button-container">
-		<span id="page_url_copy_btn" class="page-link-btn"></span>
-	</span>
-		<span class="ui-label ui-label-lg document-status-label ui-label-fill <?= $labelColorClass ?>">
-		<span class="ui-label-inner">
-			<?= $labelText ?>
-		</span>
-	</span>
-	</div>
-	<div class="catalog-title-document-type">
-		<?= Loc::getMessage('CRM_STORE_DOCUMENT_DETAIL_DOC_TYPE_SHORT_SHIPMENT') ?>
-	</div>
-	<?php
-	$this->EndViewTarget();
+	$insidePageTitleConfig['enablePageLink'] = true;
+	$insidePageTitleConfig['enableStatusLabel'] = true;
+	$insidePageTitleConfig['statusLabel']['text'] = $labelText;
+	$insidePageTitleConfig['statusLabel']['color'] = $labelColorClass;
+
+	$underText =
+		'<div class="catalog-title-document-type">'
+		. Loc::getMessage('CRM_STORE_DOCUMENT_DETAIL_DOC_TYPE_SHORT_SHIPMENT')
+		. '</div>'
+	;
+	Toolbar::addUnderTitleHtml($underText);
+	unset($underText);
 }
+
+if (is_array($arResult['CRM_DOCUMENT_BUTTON_CONFIG']))
+{
+	$documentButton = new Buttons\DocumentButton();
+	$documentButton->setDocumentButtonConfig($arResult['CRM_DOCUMENT_BUTTON_CONFIG']);
+	Toolbar::addButton($documentButton, ButtonLocation::RIGHT);
+}
+
+$feedBackButton = new Buttons\FeedbackButton([
+	'highlight' => $documentId <= 0,
+	'click' => new Buttons\JsCode('BX.Catalog.DocumentCard.Slider.openFeedbackForm();'),
+]);
+Toolbar::addButton($feedBackButton, ButtonLocation::RIGHT);
 
 $tabs = [
 	[
@@ -236,30 +253,38 @@ $tabContainerClassName .= ' ui-entity-stream-section-planned-above-overlay';
 				inventoryManagementFeatureCode: <?= CUtil::PhpToJSObject($arResult['INVENTORY_MANAGEMENT_FEATURE_SLIDER_CODE']) ?>,
 				copyLinkButtonId: 'page_url_copy_btn',
 				inventoryManagementSource: <?= CUtil::PhpToJSObject($arResult['INVENTORY_MANAGEMENT_SOURCE']) ?>,
+				insidePageTitleConfig: <?= Json::encode($insidePageTitleConfig) ?>,
 			}
 		);
 	}
 
 	BX.ready(function () {
 		BX.Crm.Store.DocumentCard.Document.Instance.adjustToolPanel();
-		<?php if (isset($arResult['TOOLBAR_ID'])):?>
+		<?php
+		/* if (isset($arResult['TOOLBAR_ID'])):?>
 			BX.Catalog.DocumentCard.FeedbackButton.render(
 				document.getElementById('<?=CUtil::JSEscape($arResult['TOOLBAR_ID'])?>'),
 				<?=CUtil::JSEscape(((int)$arResult['DOCUMENT_ID'] <= 0))?>
 			);
-		<?php endif; ?>
+		<?php
+		endif; */ ?>
 
-		<?php if (isset($arResult['FOCUSED_TAB'])): ?>
+		<?php
+		if (isset($arResult['FOCUSED_TAB'])): ?>
 			const tabId = '<?=CUtil::JSEscape($arResult['FOCUSED_TAB'])?>';
 			BX.Crm.Store.DocumentCard.Document.Instance.focusOnTab(tabId);
-		<?php endif; ?>
+		<?php
+		endif;
 
-		<?if ($arResult['WAREHOUSE_CRM_TOUR_DATA']['IS_TOUR_AVAILABLE']):?>
+		if ($arResult['WAREHOUSE_CRM_TOUR_DATA']['IS_TOUR_AVAILABLE']):
+		?>
 		const onboardingData = {
 			chain:  Number(<?=CUtil::PhpToJSObject($arResult['WAREHOUSE_CRM_TOUR_DATA']['CHAIN_DATA']['CHAIN'])?>),
 			chainStep: Number(<?=CUtil::PhpToJSObject($arResult['WAREHOUSE_CRM_TOUR_DATA']['CHAIN_DATA']['STAGE'])?>),
 		};
 		BX.Crm.Store.DocumentCard.Document.Instance.enableOnboardingChain(onboardingData);
-		<?endif;?>
+		<?php
+		endif;
+		?>
 	});
 </script>

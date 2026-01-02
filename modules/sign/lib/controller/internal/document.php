@@ -1,4 +1,5 @@
 <?php
+
 namespace Bitrix\Sign\Controller\Internal;
 
 use Bitrix\Sign\Document as DocumentCore;
@@ -31,7 +32,7 @@ class Document extends \Bitrix\Sign\Controller\Controller
             if ($document->getDataValue('VERSION') == 2)
             {
                 $response = Service\Container::instance()->getApiDocumentSigningService()->sendInvite(
-                    new SendInviteRequest($document->getUid(), $memberHash)
+                    new SendInviteRequest($document->getUid(), $memberHash),
                 );
                 if (!$response->isSuccess())
                 {
@@ -44,8 +45,8 @@ class Document extends \Bitrix\Sign\Controller\Controller
             else
             {
                 $result = Proxy::sendCommand('document.resend', [
-                    'hash' => $document->getHash(),
-                    'members' => [$document->getMemberByHash($memberHash)->toArray()]
+                	'hash' => $document->getHash(),
+                	'members' => [$document->getMemberByHash($memberHash)->toArray()],
                 ]);
 
                 if ($result)

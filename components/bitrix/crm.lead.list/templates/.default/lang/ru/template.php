@@ -123,3 +123,5 @@ $MESS["CRM_LEAD_BACKGROUND_DUPLICATE_MERGE_STATE"] = "#processed#%";
 $MESS["CRM_LEAD_BACKGROUND_DUPLICATE_VOL_DATA_PREPARE_TITLE"] = "Подготовка данных для поиска дубликатов лидов";
 $MESS["CRM_LEAD_BACKGROUND_DUPLICATE_VOL_DATA_PREPARE_STATE"] = "#processed#%";
 $MESS["CRM_LEAD_ADD_TODO"] = "Дело";
+$MESS["CRM_LEAD_LIST_NEW_DEAL"] = "Новый лид";
+$MESS["CRM_LEAD_LIST_LINK_LEAD"] = "Выбрать лид";

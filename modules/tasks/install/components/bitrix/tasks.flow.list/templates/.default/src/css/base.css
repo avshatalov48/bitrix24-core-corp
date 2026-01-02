@@ -1,21 +1,5 @@
-.tasks-flow__pagetitle-view .pagetitle-below {
-	min-height: 52px;
-	display: flex;
-	align-items: center;
-	margin-right: var(--ui-space-inline-sm);
-	border-top: var(--ui-border-width-thin) solid rgba(var(--ui-color-background-primary-rgb), var(--ui-opacity-40));
-}
-
-.bitrix24-dark-theme .tasks-flow__pagetitle-view .pagetitle-below {
-	border-top-color: rgba(var(--ui-color-base-solid-rgb), var(--ui-opacity-5));
-}
-
 .tasks-flow__grid-column-center .main-grid-head-title {
 	padding-right: 0;
-}
-
-.tasks-flow__pagetitle-view .task-interface-toolbar {
-	min-height: 31px;
 }
 
 .tasks-flow__list-cell.--disable {
@@ -336,35 +320,35 @@
 	background-image: url('./images/efficiency-chart_gray.svg');
 }
 
-.tasks-flow__not-enough-tasks-popup-title {
+.tasks-flow__copilot-advice-error-popup-title {
 	display: flex;
 	align-items: center;
 	padding-bottom: 4px;
 }
 
-.tasks-flow__not-enough-tasks-popup-icon.ui-icon-set {
+.tasks-flow__copilot-advice-error-popup-icon.ui-icon-set {
 	--ui-icon-set__icon-size: 20px;
 	--ui-icon-set__icon-base-color: var(--ui-color-copilot-primary);
 }
 
-.tasks-flow__not-enough-tasks-popup-title-text {
+.tasks-flow__copilot-advice-error-popup-title-text {
 	color: var(--ui-color-copilot-primary);
 	font-size: var(--ui-font-size-lg);
 	font-weight: var(--ui-font-weight-medium);
 }
 
-.tasks-flow__not-enough-tasks-popup-description {
+.tasks-flow__copilot-advice-error-popup-description {
 	font-size: var(--ui-font-size-xs);
 	padding-bottom: 8px;
 }
 
-.tasks-flow__not-enough-tasks-popup-example {
+.tasks-flow__copilot-advice-error-popup-example {
 	display: flex;
 	justify-content: flex-end;
 	padding-bottom: 2px;
 }
 
-.tasks-flow__not-enough-tasks-popup-example-text {
+.tasks-flow__copilot-advice-error-popup-example-text {
 	font-size: var(--ui-font-size-xs);
 	color: var(--ui-color-palette-gray-50);
 	cursor: pointer;
@@ -374,7 +358,7 @@
 	text-decoration-color: var(--ui-color-palette-gray-50);
 }
 
-.tasks-flow__not-enough-tasks-popup-example-text:hover {
+.tasks-flow__copilot-advice-error-popup-example-text:hover {
 	color: var(--ui-color-palette-gray-70);
 	text-decoration-color: var(--ui-color-palette-gray-70);
 }
@@ -409,10 +393,6 @@
 	height: 28px;
 	margin-right: 6px;
 	flex-shrink: 0;
-}
-
-.tasks-flow__bi-analytics-container {
-	padding-left: 13px;
 }
 
 .tasks-flow__list-analytics {
@@ -552,19 +532,6 @@
 
 .tasks-flow__list-flow-highlighted td:not([style*="background-color"]) {
 	animation: highlightRowTd 900ms ease;
-}
-
-.tasks-flow__bi-analytics {
-	height: 27px;
-	background: rgba(255, 255, 255, .15);
-	line-height: 25px;
-	font-size: var(--ui-font-size-sm);
-	font-weight: var(--ui-font-weight-semi-bold, 600);
-}
-
-.tasks-flow__additional-items {
-	display: flex;
-	justify-content: space-between;
 }
 
 #tasks-flow-list .main-grid-cell-counter:empty {

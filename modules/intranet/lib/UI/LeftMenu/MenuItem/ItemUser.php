@@ -26,7 +26,6 @@ abstract class ItemUser extends Item
 
 	public function adjustData($data, LeftMenu\User $user): array
 	{
-		$data['TEXT'] = htmlspecialcharsbx($data['TEXT']);
 		/* @var $storage ItemUser */
 		if ($storage = reset($this->storage))
 		{

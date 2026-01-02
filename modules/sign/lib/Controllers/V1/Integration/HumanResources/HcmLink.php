@@ -8,6 +8,8 @@ use Bitrix\HumanResources\Result\Service\HcmLink\GetMultipleVacancyEmployeesResu
 use Bitrix\Sign\Access\ActionDictionary;
 use Bitrix\Sign\Attribute\Access\LogicOr;
 use Bitrix\Sign\Attribute\ActionAccess;
+use Bitrix\Sign\Item\Document;
+use Bitrix\Sign\Item\DocumentCollection;
 use Bitrix\Sign\Service\Container;
 use Bitrix\HumanResources;
 use Bitrix\Main;
@@ -28,22 +30,44 @@ class HcmLink extends \Bitrix\Sign\Engine\Controller
 			return [];
 		}
 
-		$integrations = HumanResources\Service\Container::getHcmLinkCompanyRepository()
-			->getByCompanyId($id)
+		$companies = [];
+		$companyCollection = HumanResources\Service\Container::getHcmLinkCompanyRepository()
+			 ->getByCompanyId($id)
 		;
 
-		$result = [];
-		/** @var Company $integration */
-		foreach ($integrations->getItemMap() as $integration)
+		foreach ($companyCollection as $company)
 		{
-			$result[] = [
-				'id' => $integration->id,
-				'title' => $integration->title,
-				'subtitle' => $integration->data['config']['title'] ?? null,
+			$documentSettingFieldsCollection = HumanResources\Service\Container::getHcmLinkFieldService()
+			   ->getListByEntityType(HumanResources\Type\HcmLink\FieldEntityType::DOCUMENT, $company->id)
+			;
+
+			$extractFieldsAndMap = static function ($type) use ($documentSettingFieldsCollection) {
+				$settingFields = $documentSettingFieldsCollection
+					->filter(
+						static fn(HumanResources\Item\HcmLink\Field $field) => $field->type == $type
+					)
+					->map(static fn(HumanResources\Item\HcmLink\Field $field) => [
+						'id' => $field->id,
+						'title' => $field->title,
+					])
+				;
+
+				return array_values($settingFields);
+			};
+
+			$companies[] = [
+				'id' => $company->id,
+				'title' => $company->title,
+				'subtitle' => $company->data['config']['title'] ?? null,
+				'availableSettings' => [
+					'documentType' => $extractFieldsAndMap(HumanResources\Type\HcmLink\FieldType::DOCUMENT_UID),
+					'externalId' => $extractFieldsAndMap(HumanResources\Type\HcmLink\FieldType::DOCUMENT_REGISTRATION_NUMBER),
+					'date' => $extractFieldsAndMap(HumanResources\Type\HcmLink\FieldType::DOCUMENT_DATE),
+				],
 			];
 		}
 
-		return $result;
+		return $companies;
 	}
 
 	#[ActionAccess(
@@ -144,6 +168,7 @@ class HcmLink extends \Bitrix\Sign\Engine\Controller
 
 		return [
 			'company' => [
+				'id' => $company->id,
 				'title' => $company->title,
 			],
 			'employees' => $result->employees,
@@ -210,7 +235,7 @@ class HcmLink extends \Bitrix\Sign\Engine\Controller
 		$memberCollection = $memberRepository->listMembersByDocumentIdAndUserIds(
 			$document->id,
 			$document->representativeId,
-			...$userIds
+			...$userIds,
 		);
 		foreach ($memberCollection as $member)
 		{
@@ -279,5 +304,183 @@ class HcmLink extends \Bitrix\Sign\Engine\Controller
 		}
 
 		return true;
+	}
+
+	#[ActionAccess(
+		ActionDictionary::ACTION_B2E_DOCUMENT_EDIT,
+		AccessibleItemType::DOCUMENT,
+		itemIdOrUidRequestKey: 'documentUids'
+	)]
+	public function loadBulkNotMappedMembersAction(array $documentUids): array
+	{
+		if (!$this->isAvailable())
+		{
+			$this->addError(new Main\Error('Is not available', 'HCM_LINK_NOT_AVAILABLE'));
+
+			return [];
+		}
+
+		if (empty($documentUids))
+		{
+			$this->addErrorByMessage('No document uids');
+
+			return [];
+		}
+
+		$container = Container::instance();
+		$documents = $container->getDocumentRepository()->listByUids($documentUids);
+		$notFoundDocuments = array_diff($documentUids, $documents->listUidsWithoutNull());
+		if (!empty($notFoundDocuments))
+		{
+			$this->addErrorByMessage('Not found documents with uids: ' . implode(',', $notFoundDocuments));
+
+			return [];
+		}
+
+		$documentsByIntegrationIds = $this->mapDocumentsByIntegrationIds($documents);
+
+		$integrations = [];
+		$hcmMapperService = HumanResources\Service\Container::getHcmLinkMapperService();
+		foreach ($documentsByIntegrationIds as $hcmLinkCompanyId => $companyDocuments)
+		{
+			$userIds = $container->getMemberService()->getUniqueUserIdsByDocuments($companyDocuments);
+			$result = $hcmMapperService->filterNotMappedUserIds($hcmLinkCompanyId, ...$userIds);
+
+			if (!$result instanceof FilterNotMappedUserIdsResult)
+			{
+				$this->addErrors($result->getErrors());
+
+				return [];
+			}
+
+			$integrations[] = [
+				'integrationId' => $hcmLinkCompanyId,
+				'userIds' => $result->userIds,
+				'allUserIds' => $userIds,
+			];
+		}
+
+		return $integrations;
+	}
+
+	#[ActionAccess(
+		ActionDictionary::ACTION_B2E_DOCUMENT_EDIT,
+		AccessibleItemType::DOCUMENT,
+		itemIdOrUidRequestKey: 'documentUids'
+	)]
+	public function loadBulkMultipleVacancyEmployeeAction(array $documentUids): array
+	{
+		if (!$this->isAvailable())
+		{
+			$this->addError(new Main\Error('Is not available', 'HCM_LINK_NOT_AVAILABLE'));
+
+			return [];
+		}
+
+		if (empty($documentUids))
+		{
+			$this->addErrorByMessage('No document uids');
+
+			return [];
+		}
+
+		$container = Container::instance();
+		$documents = $container->getDocumentRepository()->listByUids($documentUids);
+		$notFoundDocuments = array_diff($documentUids, $documents->listUidsWithoutNull());
+		if (!empty($notFoundDocuments))
+		{
+			$this->addErrorByMessage('Not found documents with uids: ' . implode(',', $notFoundDocuments));
+
+			return [];
+		}
+
+		$documents = $documents->filter(static fn(Document $document) => $document->hcmLinkCompanyId);
+		$documentsByIntegrationIds = $this->mapDocumentsByIntegrationIds($documents);
+		if (empty($documentsByIntegrationIds))
+		{
+			return [];
+		}
+
+		$userIdsByDocumentIds = $container
+			->getMemberRepository()
+			->listUserIdsWithEmployeeIdIsNotSetByDocumentIds($documents)
+		;
+
+		if (empty($userIdsByDocumentIds))
+		{
+			return [];
+		}
+
+		$integrations = [];
+		foreach ($documentsByIntegrationIds as $hcmLinkCompanyId => $companyDocuments)
+		{
+			$userIds = [];
+			foreach ($companyDocuments as $document)
+			{
+				$documentUsers = $userIdsByDocumentIds[$document->id] ?? [];
+				$userIds = array_values(array_unique(array_merge($userIds, $documentUsers)));
+			}
+
+			if (empty($userIds))
+			{
+				continue;
+			}
+
+			$result = HumanResources\Service\Container::getHcmLinkMapperService()
+				->getEmployeesWithMultipleVacancy($hcmLinkCompanyId, ...$userIds)
+			;
+
+			if (!$result instanceof GetMultipleVacancyEmployeesResult)
+			{
+				$this->addErrors($result->getErrors());
+
+				return [];
+			}
+
+			$company = HumanResources\Service\Container::getHcmLinkCompanyRepository()
+				->getById($hcmLinkCompanyId)
+			;
+			if (!$company)
+			{
+				$this->addErrorByMessage('Cant find hcmlink company');
+
+				return [];
+			}
+
+			$integrations[] = [
+				'company' => [
+					'id' => $company->id,
+					'title' => $company->title,
+				],
+				'employees' => $result->employees,
+			];
+		}
+
+		return $integrations;
+	}
+
+	/**
+	 * @param DocumentCollection $documents
+	 *
+	 * @return array<int, DocumentCollection>
+	 */
+	private function mapDocumentsByIntegrationIds(DocumentCollection $documents): array
+	{
+		$documentsByIntegrationIds = [];
+		foreach ($documents as $document)
+		{
+			if (!$document->hcmLinkCompanyId)
+			{
+				continue;
+			}
+
+			if (!isset($documentsByIntegrationIds[$document->hcmLinkCompanyId]))
+			{
+				$documentsByIntegrationIds[$document->hcmLinkCompanyId] = new DocumentCollection();
+			}
+			$documentsByIntegrationIds[$document->hcmLinkCompanyId]->add($document);
+		}
+
+		return $documentsByIntegrationIds;
 	}
 }

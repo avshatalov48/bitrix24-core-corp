@@ -1,0 +1,11 @@
+<?php
+$MESS["BICONNECTOR_APP_NOT_FOUND"] = "Дереккөз коды көрсетілмеген";
+$MESS["BICONNECTOR_CONNECTION_NOT_ACTIVE"] = "Қосылым белсенсіз";
+$MESS["BICONNECTOR_CONNECTION_NOT_ACTIVE_DESC"] = "Датасетті өңдеу үшін қосылымды белсендіріңіз";
+$MESS["BICONNECTOR_CSV_IMPORT_ACCESS_ERROR"] = "Аналитиктің жұмыс орнына кіру құқығы жеткіліксіз";
+$MESS["BICONNECTOR_CSV_IMPORT_SEPARATOR_COLON"] = "Қос нүкте";
+$MESS["BICONNECTOR_CSV_IMPORT_SEPARATOR_COMMA"] = "Үтір";
+$MESS["BICONNECTOR_CSV_IMPORT_SEPARATOR_SEMICOLON"] = "Нүктелі үтір";
+$MESS["BICONNECTOR_CSV_IMPORT_UTF8"] = "UTF-8";
+$MESS["BICONNECTOR_CSV_IMPORT_WIN1251"] = "Windows-1251";
+$MESS["BICONNECTOR_DATASET_NOT_FOUND"] = "Датасет табылмады";

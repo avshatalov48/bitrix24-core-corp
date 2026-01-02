@@ -2,39 +2,6 @@
  * @module im/messenger/const/permission
  */
 jn.define('im/messenger/const/permission', (require, exports, module) => {
-	const DialogActionType = Object.freeze({
-		avatar: 'avatar',
-		call: 'call',
-		extend: 'extend',
-		leave: 'leave',
-		leaveOwner: 'leaveOwner',
-		kick: 'kick',
-		mute: 'mute',
-		rename: 'rename',
-		send: 'send',
-		deleteOthersMessage: 'deleteOthersMessage',
-		userList: 'userList',
-		changeOwner: 'changeOwner',
-		changeManagers: 'changeManagers',
-		delete: 'delete',
-		update: 'update',
-
-		mention: 'mention',
-		reply: 'reply',
-		readMessage: 'readMessage',
-		openComments: 'openComments',
-		followComments: 'followComments',
-		openSidebar: 'openSidebar',
-		pinMessage: 'pinMessage',
-		setReaction: 'setReaction',
-		partialQuote: 'partialQuote',
-		createMeeting: 'createMeeting',
-		createTask: 'createTask',
-		openAvatarMenu: 'openAvatarMenu',
-		openMessageMenu: 'openMessageMenu',
-		openSidebarMenu: 'openSidebarMenu',
-	});
-
 	const ActionByUserType = Object.freeze({
 		createChannel: 'createChannel',
 		createChat: 'createChat',
@@ -45,6 +12,7 @@ jn.define('im/messenger/const/permission', (require, exports, module) => {
 		getMarket: 'getMarket',
 		getOpenlines: 'getOpenlines',
 		leaveCollab: 'leaveCollab',
+		changeMessagesAutoDeleteDelay: 'changeMessagesAutoDeleteDelay',
 	});
 
 	const DialogPermissions = Object.freeze({
@@ -52,7 +20,6 @@ jn.define('im/messenger/const/permission', (require, exports, module) => {
 		manageUsersDelete: 'manageUsersDelete',
 		manageUi: 'manageUi',
 		manageSettings: 'manageSettings',
-		canPost: 'canPost',
 		manageMessages: 'manageMessages',
 	});
 
@@ -63,7 +30,6 @@ jn.define('im/messenger/const/permission', (require, exports, module) => {
 	});
 
 	module.exports = {
-		DialogActionType,
 		ActionByUserType,
 		DialogPermissions,
 		RightsLevel,

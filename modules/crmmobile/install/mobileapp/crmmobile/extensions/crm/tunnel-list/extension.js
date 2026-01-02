@@ -7,9 +7,15 @@ jn.define('crm/tunnel-list', (require, exports, module) => {
 	const { throttle } = require('utils/function');
 	const { clone } = require('utils/object');
 	const { connect } = require('statemanager/redux/connect');
-	const AppTheme = require('apptheme');
 	const { getTunnelUniqueId, selectItemsByIds } = require('crm/statemanager/redux/slices/tunnels');
+	const { Area } = require('ui-system/layout/area');
+	const { Indent, Color } = require('tokens');
+	const { Text4 } = require('ui-system/typography/text');
+	const { IconView, Icon } = require('ui-system/blocks/icon');
 
+	/**
+	 * @class TunnelList
+	 */
 	class TunnelList extends LayoutComponent
 	{
 		constructor(props)
@@ -40,30 +46,11 @@ jn.define('crm/tunnel-list', (require, exports, module) => {
 
 		render()
 		{
-			return View(
+			return Area(
 				{
-					style: {
-						backgroundColor: AppTheme.colors.bgContentPrimary,
-						borderRadius: 12,
-					},
+					title: BX.message('TUNNEL_LIST_TITLE'),
+					divider: true,
 				},
-				View(
-					{
-						style: {
-							paddingTop: 10,
-							paddingLeft: 20,
-							paddingBottom: this.state.tunnels.length > 0 ? 9 : 0,
-						},
-					},
-					Text({
-						style: {
-							color: AppTheme.colors.base2,
-							fontSize: 15,
-							fontWeight: '500',
-						},
-						text: BX.message('TUNNEL_LIST_TITLE'),
-					}),
-				),
 				this.renderTunnels(),
 				this.renderAddTunnel(),
 			);
@@ -110,14 +97,14 @@ jn.define('crm/tunnel-list', (require, exports, module) => {
 							srcCategoryId,
 							srcStageId,
 							dstStageId: this.selectedStage.id,
-							dstCategoryId: this.selectedKanbanSettings.kanbanSettingsId,
+							dstCategoryId: this.selectedKanbanSettings.categoryId,
 						}),
 						isNewTunnel: true,
 						srcCategoryId,
 						srcStageId,
 						srcStageStatusId,
 						srcStageColor,
-						dstCategoryId: this.selectedKanbanSettings.kanbanSettingsId,
+						dstCategoryId: this.selectedKanbanSettings.categoryId,
 						dstCategoryName: this.selectedKanbanSettings.name,
 						dstStageId: this.selectedStage.id,
 						dstStageName: this.selectedStage.name,
@@ -184,34 +171,33 @@ jn.define('crm/tunnel-list', (require, exports, module) => {
 		{
 			return View(
 				{
+					testId: 'tunnel-list-add-button',
+					onClick: this.openCategoryListHandler,
 					style: {
-						paddingTop: 4,
-						paddingBottom: 6,
+						flexDirection: 'row',
+						alignItems: 'center',
+						marginTop: Indent.M.toNumber(),
 					},
 				},
-				new BaseButton({
-					icon: svgImages.addTunnelIcon,
-					text: BX.message('TUNNEL_LIST_ADD_BUTTON_TEXT'),
-					style: {
-						button: {
-							borderColor: AppTheme.colors.bgSeparatorPrimary,
-							justifyContent: 'flex-start',
-						},
-						icon: {
-							tintColor: AppTheme.colors.base3,
-							marginRight: 16,
-							marginLeft: 25,
-							width: 12,
-							height: 12,
-						},
-						text: {
-							color: AppTheme.colors.base1,
-							fontWeight: 'normal',
-							fontSize: 18,
+				IconView({
+					size: 24,
+					icon: Icon.PLUS,
+					color: Color.base4,
+				}),
+				View(
+					{
+						style: {
+							flex: 1,
+							marginLeft: Indent.M.toNumber(),
 						},
 					},
-					onClick: this.openCategoryListHandler,
-				}),
+					Text4({
+						text: BX.message('TUNNEL_LIST_ADD_BUTTON_TEXT'),
+						color: Color.base4,
+						numberOfLines: 1,
+						ellipsize: 'end',
+					}),
+				),
 			);
 		}
 
@@ -261,10 +247,6 @@ jn.define('crm/tunnel-list', (require, exports, module) => {
 	const mapStateToProps = (state, { tunnelIds }) => ({
 		tunnels: selectItemsByIds(state, tunnelIds),
 	});
-
-	const svgImages = {
-		addTunnelIcon: '<svg width="12" height="13" viewBox="0 0 12 13" fill="none" xmlns="http://www.w3.org/2000/svg"><path fill-rule="evenodd" clip-rule="evenodd" d="M7 0.5H5V5.5H0V7.5H5V12.5H7V7.5H12V5.5H7V0.5Z" fill="#828B95"/></svg>',
-	};
 
 	module.exports = {
 		TunnelList: connect(mapStateToProps)(TunnelList),

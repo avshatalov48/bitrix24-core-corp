@@ -9,6 +9,7 @@ use Bitrix\Main\ErrorCollection;
 use Bitrix\Main\Localization\Loc;
 use Bitrix\Main\Type\RandomSequence;
 use Bitrix\Tasks\CheckList\CheckListFacade;
+use Bitrix\Tasks\Integration\SocialNetwork\Group;
 use Bitrix\Tasks\Internals\TaskTable;
 use Bitrix\Tasks\Scrum\Checklist\TypeChecklistFacade;
 use Bitrix\Tasks\Scrum\Form\TypeForm;
@@ -31,9 +32,18 @@ class DefinitionOfDoneService implements Errorable
 
 	public static function existsDod(int $groupId): bool
 	{
+		static $cache = [];
+
+		if (isset($cache[$groupId]))
+		{
+			return $cache[$groupId];
+		}
+
 		$types = (new DefinitionOfDoneService())->getTypes($groupId);
 
-		return (!empty($types));
+		$cache[$groupId] = !empty($types);
+
+		return $cache[$groupId];
 	}
 
 	public function mergeList(string $facade, int $entityId, array $items): Result
@@ -185,8 +195,92 @@ class DefinitionOfDoneService implements Errorable
 		return false;
 	}
 
+	public function areNecessary(array $mapIds): array
+	{
+		$taskService = new TaskService($this->executiveUserId);
+
+		$taskIds = array_keys($mapIds);
+		$tasksInfo = $taskService->getTasksInfo($taskIds);
+
+		$results = [];
+
+		$parentIds = [];
+		foreach ($tasksInfo as $task)
+		{
+			if (isset($task['PARENT_ID']) && $task['PARENT_ID'] > 0)
+			{
+				$parentIds[$task['ID']] = (int)$task['PARENT_ID'];
+			}
+		}
+
+		$parentTasks = [];
+		if (!empty($parentIds))
+		{
+			$queryObject = TaskTable::getList([
+				'filter' => [
+					'ID' => array_values($parentIds),
+					'GROUP_ID' => array_values($mapIds),
+				],
+				'select' => ['ID', 'GROUP_ID'],
+			]);
+
+			while ($parentTask = $queryObject->fetch())
+			{
+				$parentTasks[$parentTask['ID']] = $parentTask['GROUP_ID'];
+			}
+		}
+
+		foreach ($mapIds as $taskId => $groupId)
+		{
+			if (!Group::canReadGroupTasks($this->executiveUserId, $groupId))
+			{
+				$results[$taskId] = false;
+
+				continue;
+			}
+
+			$task = $tasksInfo[$taskId] ?? null;
+			if (!$task)
+			{
+				$results[$taskId] = false;
+
+				continue;
+			}
+
+			$parentId = $parentIds[$taskId] ?? null;
+			if (
+				$parentId
+				&& isset($parentTasks[$parentId])
+				&& $parentTasks[$parentId] === $groupId
+			)
+			{
+				$results[$taskId] = false;
+
+				continue;
+			}
+
+			if (self::existsDod($groupId))
+			{
+				$results[$taskId] = true;
+
+				continue;
+			}
+
+			$results[$taskId] = false;
+		}
+
+		return $results;
+	}
+
 	public function getTypes(int $groupId): array
 	{
+		static $typesCache = [];
+
+		if (isset($typesCache[$groupId]))
+		{
+			return $typesCache[$groupId];
+		}
+
 		$typeService = new TypeService();
 		$backlogService = new BacklogService();
 
@@ -197,6 +291,8 @@ class DefinitionOfDoneService implements Errorable
 		{
 			$types[] = $type->toArray();
 		}
+
+		$typesCache[$groupId] = $types;
 
 		return $types;
 	}

@@ -11,4 +11,3 @@ $disk_default_option = array(
 	"disk_object_lock_enabled" => "N",
 	"disk_version_limit_per_file" => 0,
 );
-?>

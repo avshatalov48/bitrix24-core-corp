@@ -2,7 +2,9 @@
 namespace Bitrix\Disk\Internals;
 
 use Bitrix\Disk\TypeFile;
+use Bitrix\Disk\Internal\Repository\UnifiedLinkAccessRepository;
 use Bitrix\Main\Application;
+use Bitrix\Main\DB\MysqlCommonConnection;
 use Bitrix\Main\Entity;
 use Bitrix\Main\Entity\Result;
 use Bitrix\Main\Entity\UpdateResult;
@@ -44,6 +46,7 @@ Loc::loadMessages(__FILE__);
  * <li> PREVIEW_ID int optional
  * <li> VIEW_ID int optional
  * <li> SEARCH_INDEX string optional
+ * <li> UNIQUE_CODE string optional
  * </ul>
  *
  * @package Bitrix\Disk
@@ -310,6 +313,10 @@ class ObjectTable extends DataManager
 				),
 				'join_type' => 'INNER',
 			),
+			'UNIQUE_CODE' => array(
+				'data_type' => 'string',
+				'validation' => array(__CLASS__, 'validateUniqueCode'),
+			),
 		);
 	}
 
@@ -346,6 +353,14 @@ class ObjectTable extends DataManager
 		return array(
 			new Entity\Validator\Length(null, 50),
 		);
+	}
+
+	public static function validateUniqueCode(): array
+	{
+		return [
+			new Entity\Validator\Unique,
+			new Entity\Validator\Length(UniqueCode::DEFAULT_LENGTH, UniqueCode::DEFAULT_LENGTH),
+		];
 	}
 
 	public static function validateXmlId()
@@ -431,6 +446,14 @@ class ObjectTable extends DataManager
 			$result->modifyFields(array('SYNC_UPDATE_TIME' => new DateTime()));
 		}
 
+		/** @var EO_Object $object */
+		$object = $event->getParameter('object');
+		$isSetUniqueCodeField = isset(static::getMap()['UNIQUE_CODE']);
+		if ($isSetUniqueCodeField && $object->remindActual('UNIQUE_CODE') !== null)
+		{
+			$result->unsetField('UNIQUE_CODE');
+		}
+
 		return $result;
 	}
 
@@ -440,6 +463,7 @@ class ObjectTable extends DataManager
 		if($deleteResult->isSuccess())
 		{
 			ObjectPathTable::deleteByObject($primary);
+			UnifiedLinkAccessRepository::deleteByObjectId((int)$primary);
 		}
 
 		return $deleteResult;
@@ -521,12 +545,24 @@ class ObjectTable extends DataManager
 		$helper = $connection->getSqlHelper();
 		$update = $helper->prepareUpdate($table, ['SYNC_UPDATE_TIME' => $dateTime,]);
 
-		$sql = "
-			UPDATE {$table} obj
-			INNER JOIN {$tablePath} p ON p.OBJECT_ID = obj.ID
-			SET {$update[0]}
-			WHERE p.PARENT_ID = {$objectId}
-		";
+		if ($connection instanceof MysqlCommonConnection)
+		{
+			$sql = "
+				UPDATE {$table} obj
+				INNER JOIN {$tablePath} p ON p.OBJECT_ID = obj.ID
+				SET {$update[0]}
+				WHERE p.PARENT_ID = {$objectId}
+			";
+		}
+		else
+		{
+			$sql = "
+				UPDATE {$table} AS obj
+				SET {$update[0]}
+				FROM {$tablePath} p
+				WHERE obj.ID = p.OBJECT_ID
+				  AND p.PARENT_ID = {$objectId};";
+		}
 
 		$connection->queryExecute($sql, $update[1]);
 	}

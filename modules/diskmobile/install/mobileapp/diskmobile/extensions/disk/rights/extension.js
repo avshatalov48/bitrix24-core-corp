@@ -9,15 +9,24 @@ jn.define('disk/rights', (require, exports, module) => {
 	const store = require('statemanager/redux/store');
 	const { dispatch } = store;
 
+	const TRACKED_ENDPOINT = 'diskmobile.Common.getTrackedByIdWithRights';
+	const OBJECT_ENDPOINT = 'diskmobile.Common.getByIdWithRights';
+
 	async function fetchObjectWithRights(id)
 	{
 		let diskObject = selectById(store.getState(), id);
+		const isTracked = Boolean(diskObject && diskObject.trackedId);
+
 		if (!diskObject || isEmpty(diskObject.rights))
 		{
 			try
 			{
-				const response = await BX.ajax.runAction('diskmobile.Common.getByIdWithRights', {
-					data: { id },
+				const endpoint = isTracked ? TRACKED_ENDPOINT : OBJECT_ENDPOINT;
+
+				const response = await BX.ajax.runAction(endpoint, {
+					data: {
+						id: diskObject?.trackedId ?? id,
+					},
 				});
 
 				if (response.errors.length > 0)

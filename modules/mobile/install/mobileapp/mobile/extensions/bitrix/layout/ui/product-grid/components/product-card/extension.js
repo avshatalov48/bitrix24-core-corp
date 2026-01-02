@@ -6,6 +6,7 @@ jn.define('layout/ui/product-grid/components/product-card', (require, exports, m
 	const { Styles } = require('layout/ui/product-grid/components/product-card/styles');
 	const { SvgIcons } = require('layout/ui/product-grid/components/product-card/icons');
 	const { FocusContext } = require('layout/ui/product-grid/services/focus-context');
+	const { ImageStack } = require('layout/ui/image-stack');
 	const { transition, pause, chain } = require('animation');
 
 	class ProductCard extends LayoutComponent

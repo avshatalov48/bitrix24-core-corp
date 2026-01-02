@@ -4,47 +4,32 @@
  * @module im/messenger/db/table/table
  */
 jn.define('im/messenger/db/table/table', (require, exports, module) => {
+	/* globals DatabaseTable, include */
 	include('sqlite');
 
 	const { Type } = require('type');
 
 	const { Feature } = require('im/messenger/lib/feature');
 	const { DateHelper } = require('im/messenger/lib/helper');
-	const { LoggerManager } = require('im/messenger/lib/logger');
-	const logger = LoggerManager.getInstance().getLogger('database-table--table');
+	const { getLogger } = require('im/messenger/lib/logger');
 
-	const FieldType = Object.freeze({
-		integer: 'integer',
-		text: 'text',
-		date: 'date',
-		boolean: 'boolean',
-		json: 'json',
-		map: 'map',
-		set: 'set',
-	});
+	const { FieldType, FieldDefaultValue } = require('im/messenger/db/const');
 
-	const FieldDefaultValue = Object.freeze({
-		zeroInteger: 0,
-		emptyText: '',
-		noneText: 'none',
-		emptyDate: '',
-		falseBoolean: '0',
-		trueBoolean: '1',
-		null: null,
-		emptyObject: {}, // these types are a literal format because it will be a JSON.stringify()
-		emptyArray: [],
-		emptyMap: {},
-		emptySet: {},
-	});
+	const logger = getLogger('database-table--table');
 
 	/**
 	 * @abstract
-	 * @implements ITable
 	 * @template TStoredItem
 	 * @implements {ITable<TStoredItem>}
 	 */
 	class Table
 	{
+		/**
+		 * @protected
+		 * @type {IDatabaseTableInstance}
+		 */
+		static databaseTable;
+
 		constructor()
 		{
 			this.fieldsCollection = this.getFieldsCollection();
@@ -56,6 +41,8 @@ jn.define('im/messenger/db/table/table', (require, exports, module) => {
 				[FieldType.map]: this.saveMapFieldHandler.bind(this),
 				[FieldType.set]: this.saveSetFieldHandler.bind(this),
 				[FieldType.text]: this.saveTextFieldHandler.bind(this),
+				[FieldType.object]: this.saveObjectFieldHandler.bind(this),
+				[FieldType.array]: this.saveArrayFieldHandler.bind(this),
 			};
 
 			this.restoreHandlerCollection = {
@@ -65,14 +52,39 @@ jn.define('im/messenger/db/table/table', (require, exports, module) => {
 				[FieldType.map]: this.restoreMapFieldHandler.bind(this),
 				[FieldType.set]: this.restoreSetFieldHandler.bind(this),
 				[FieldType.text]: this.restoreTextFieldHandler.bind(this),
+				[FieldType.object]: this.restoreObjectFieldHandler.bind(this),
+				[FieldType.array]: this.restoreArrayFieldHandler.bind(this),
 			};
+
+			this.getPrimaryKey();
+		}
+
+		/**
+		* @return {IDatabaseTableInstance|null}
+		*/
+		get table()
+		{
+			if (this.constructor.databaseTable)
+			{
+				return this.constructor.databaseTable;
+			}
 
 			if (this.isSupported)
 			{
-				this.table = new DatabaseTable(this.getName(), this.getFields());
+				this.createDatabaseTableInstance();
+
+				return this.constructor.databaseTable;
 			}
 
-			this.getPrimaryKey();
+			return null;
+		}
+
+		/**
+		 * @void
+		 */
+		createDatabaseTableInstance()
+		{
+			this.constructor.databaseTable = new DatabaseTable(this.getName(), this.getFields());
 		}
 
 		/**
@@ -133,6 +145,9 @@ jn.define('im/messenger/db/table/table', (require, exports, module) => {
 			return value === '1';
 		}
 
+		/**
+		 * @deprecated FieldType.json. Use FieldType.object or FieldType.array instead
+		 */
 		saveJSONFieldHandler(key, value)
 		{
 			try
@@ -147,6 +162,9 @@ jn.define('im/messenger/db/table/table', (require, exports, module) => {
 			}
 		}
 
+		/**
+		 * @deprecated FieldType.json. Use FieldType.object or FieldType.array instead
+		 */
 		restoreJSONFieldHandler(key, value)
 		{
 			try
@@ -223,6 +241,64 @@ jn.define('im/messenger/db/table/table', (require, exports, module) => {
 			return value;
 		}
 
+		// eslint-disable-next-line sonarjs/no-identical-functions
+		saveObjectFieldHandler(key, value)
+		{
+			try
+			{
+				return JSON.stringify(value);
+			}
+			catch (error)
+			{
+				logger.error(`Table.restoreDatabaseRow error in ${this.getName()}:`, key, value, error);
+
+				return null;
+			}
+		}
+
+		// eslint-disable-next-line sonarjs/no-identical-functions
+		saveArrayFieldHandler(key, value)
+		{
+			try
+			{
+				return JSON.stringify(value);
+			}
+			catch (error)
+			{
+				logger.error(`Table.restoreDatabaseRow error in ${this.getName()}:`, key, value, error);
+
+				return null;
+			}
+		}
+
+		restoreObjectFieldHandler(key, value)
+		{
+			try
+			{
+				return JSON.parse(value);
+			}
+			catch (error)
+			{
+				logger.error(`Table.restoreDatabaseRow error in ${this.getName()}:`, key, value, error);
+
+				return FieldDefaultValue.emptyObject;
+			}
+		}
+
+		restoreArrayFieldHandler(key, value)
+		{
+			try
+			{
+				return JSON.parse(value);
+			}
+			catch (error)
+			{
+				logger.error(`Table.restoreDatabaseRow error in ${this.getName()}:`, key, value, error);
+
+				return FieldDefaultValue.emptyArray;
+			}
+		}
+
 		get isSupported()
 		{
 			return Feature.isLocalStorageSupported;
@@ -235,6 +311,16 @@ jn.define('im/messenger/db/table/table', (require, exports, module) => {
 
 		/**
 		 * @abstract
+		 * @return {string}
+		 */
+		static getTableName()
+		{
+			throw new Error('Table: getTableName() must be override in subclass.');
+		}
+
+		/**
+		 * @abstract
+		 * @return {string}
 		 */
 		getName()
 		{
@@ -243,12 +329,16 @@ jn.define('im/messenger/db/table/table', (require, exports, module) => {
 
 		/**
 		 * @abstract
+		 * @return {Array<TableField>}
 		 */
 		getFields()
 		{
 			throw new Error('Table: getFields() must be override in subclass.');
 		}
 
+		/**
+		 * @returns { FieldsCollection<ReturnType<this['getFields']>>}
+		 */
 		getFieldsCollection()
 		{
 			if (!this.fieldsCollection)
@@ -260,9 +350,27 @@ jn.define('im/messenger/db/table/table', (require, exports, module) => {
 				});
 
 				this.fieldsCollection = fieldsCollection;
+				this.checkDeprecatedFields(fields);
 			}
 
 			return this.fieldsCollection;
+		}
+
+		/**
+		 * @desc check and reminder about deprecated columns
+		 * @param {Array<object>} fields
+		 */
+		checkDeprecatedFields(fields) {
+			for (const field of fields)
+			{
+				if (field.deprecated)
+				{
+					logger.warn(`Deprecated field used: ${field.name}`, {
+						table: this.getName(),
+						replacement: field.replacement || 'none specified',
+					});
+				}
+			}
 		}
 
 		getDefaultValueByFieldName(fieldName)
@@ -297,6 +405,8 @@ jn.define('im/messenger/db/table/table', (require, exports, module) => {
 		{
 			if (!this.isSupported || this.readOnly || !Feature.isLocalStorageEnabled)
 			{
+				logger.log(`Table.add method in ${this.getName()} is not available`);
+
 				return Promise.resolve();
 			}
 
@@ -332,6 +442,10 @@ jn.define('im/messenger/db/table/table', (require, exports, module) => {
 			;
 		}
 
+		/**
+		 * @param {Array<TStoredItem>} items
+		 * @return {Promise<void>}
+		 */
 		async addIfNotExist(items)
 		{
 			try
@@ -344,6 +458,23 @@ jn.define('im/messenger/db/table/table', (require, exports, module) => {
 
 		/**
 		 *
+		 * @param id
+		 * @param {(item: TStoredItem | null) => TStoredItem} preparedItemCallback
+		 * @return {Promise<void>}
+		 */
+		async merge(id, preparedItemCallback)
+		{
+			const storedItem = await this.getById(id);
+
+			const preparedItem = preparedItemCallback(storedItem);
+
+			// TODO remove after insert method validate into add and update
+			const validatedStoredItem = this.validate(preparedItem);
+
+			return this.add([validatedStoredItem]);
+		}
+
+		/**
 		 * @param {TableGetListOptions<TStoredItem>} options
 		 * @return {Promise<{items: Array<TStoredItem>}>}
 		 */
@@ -402,7 +533,7 @@ jn.define('im/messenger/db/table/table', (require, exports, module) => {
 					items: [],
 				};
 			}
-			const idsFormatted = Type.isNumber(idList[0]) ? idList.toString() : idList.map((id) => `"${id}"`);
+			const idsFormatted = this.createWhereInCondition(this.getPrimaryKey(), idList);
 			const result = await this.executeSql({
 				query: `
 					SELECT * 
@@ -411,6 +542,16 @@ jn.define('im/messenger/db/table/table', (require, exports, module) => {
 				`,
 			});
 
+			return this.prepareListResult(result, shouldRestoreRows);
+		}
+
+		/**
+		 * @param {Array<TStoredItem>} result
+		 * @param {Boolean} shouldRestoreRows
+		 * @returns {{items: *[]}}
+		 */
+		prepareListResult(result, shouldRestoreRows = true)
+		{
 			const {
 				columns,
 				rows,
@@ -452,7 +593,7 @@ jn.define('im/messenger/db/table/table', (require, exports, module) => {
 				return Promise.resolve({});
 			}
 
-			const idsFormatted = Type.isNumber(idList[0]) ? idList.toString() : idList.map((id) => `"${id}"`);
+			const idsFormatted = this.createWhereInCondition(this.getPrimaryKey(), idList);
 			const result = await this.executeSql({
 				query: `
 					DELETE
@@ -466,6 +607,12 @@ jn.define('im/messenger/db/table/table', (require, exports, module) => {
 			return result;
 		}
 
+		/**
+		 * @param {object} options
+		 * @param {object} options.filter
+		 * @param {{[colunmName: string]: any}} options.fields
+		 * @return {Promise<Awaited<{}>>|*}
+		 */
 		update(options)
 		{
 			if (!this.isSupported || this.readOnly || !Feature.isLocalStorageEnabled)
@@ -600,6 +747,11 @@ jn.define('im/messenger/db/table/table', (require, exports, module) => {
 			return restoredRow;
 		}
 
+		/**
+		 * @param selectResult
+		 * @param shouldRestoreRows
+		 * @return {{items: *[]}}
+		 */
 		convertSelectResultToGetListResult(selectResult, shouldRestoreRows)
 		{
 			const {
@@ -629,6 +781,45 @@ jn.define('im/messenger/db/table/table', (require, exports, module) => {
 			});
 
 			return getListResult;
+		}
+
+		/**
+		 * @returns {Logger}
+		 */
+		get logger()
+		{
+			return logger;
+		}
+
+		/**
+		 * @param {string} entityName
+		 * @param {Array<any>} entityList
+		 * @return {string}
+		 */
+		createWhereInCondition(entityName, entityList)
+		{
+			const columnInfo = this.getFieldsCollection()[entityName];
+			if (Type.isNil(columnInfo))
+			{
+				throw new TypeError(`${this.constructor.name}.createWhereInCondition: unknown entityName: ${entityName}`);
+			}
+
+			if (!Type.isArrayFilled(entityList))
+			{
+				this.logger.error(`${this.constructor.name}.createWhereInCondition entityList not must be empty`, entityList);
+
+				return '';
+			}
+
+			const saveHandler = Type.isFunction(this.saveHandlerCollection[columnInfo.type])
+				? this.saveHandlerCollection[columnInfo.type]
+				: (fieldName, fieldValue) => fieldValue
+			;
+
+			return entityList
+				.map((entity) => `"${saveHandler(entityName, entity)}"`)
+				.toString()
+			;
 		}
 	}
 

@@ -1,8 +1,9 @@
-import { MessagesModelState } from '../../../model/types/messages';
-import { UsersModelState } from '../../../model/types/users';
-import { FilesModelState } from '../../../model/types/files';
-import { ReactionsModelState } from '../../../model/types/messages/reactions';
-import { TariffRestrictions } from '../../../model/types/dialogues';
+import { MessagesModelState } from '../../../model/messages/src/types/messages';
+import { UsersModelState } from '../../../model/users/src/types';
+import { FilesModelState } from '../../../model/files/src/types';
+import { ReactionsModelState } from '../../../model/messages/src/reactions/types';
+import { TariffRestrictions } from '../../../model/dialogues/src/types';
+import { VoteModelState } from '../../../model/messages/src/vote/types';
 
 export interface MessageRepositoryPage {
 	messageList: Array<MessagesModelState>,
@@ -10,7 +11,8 @@ export interface MessageRepositoryPage {
 	userList: Array<UsersModelState>,
 	fileList: Array<FilesModelState>,
 	reactionList: Array<ReactionsModelState>,
-	dialogFields?: TariffRestrictions
+	dialogFields?: TariffRestrictions,
+	voteList?: Array<VoteModelState>,
 }
 
 export interface MessageRepositoryContext extends MessageRepositoryPage {

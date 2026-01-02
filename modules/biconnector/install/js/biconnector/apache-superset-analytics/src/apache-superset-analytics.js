@@ -33,13 +33,32 @@ export class ApacheSupersetAnalytics
 			return 'reportAppId_empty';
 		}
 
-		const parts = appId.split('_');
+		const convertedAppId = ApacheSupersetAnalytics.#convertSnakeToCamelCase(appId);
+
+		return `reportAppId_${convertedAppId}`;
+	}
+
+	static buildScopeForAnalyticRequest(scope: string): string
+	{
+		if (!scope)
+		{
+			return 'scope_empty';
+		}
+
+		const convertedScope = ApacheSupersetAnalytics.#convertSnakeToCamelCase(scope);
+
+		return `scope_${convertedScope}`;
+	}
+
+	static #convertSnakeToCamelCase(text: string): string
+	{
+		const parts = text.split('_');
 
 		for (let i = 1; i < parts.length; i++)
 		{
 			parts[i] = parts[i].charAt(0).toUpperCase() + parts[i].slice(1);
 		}
 
-		return `reportAppId_${parts.join('')}`;
+		return parts.join('');
 	}
 }

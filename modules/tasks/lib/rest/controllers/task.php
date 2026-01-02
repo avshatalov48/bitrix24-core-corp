@@ -38,7 +38,6 @@ use Bitrix\Tasks\Helper\Analytics;
 use Bitrix\Tasks\Internals\Task\ParameterTable;
 use Bitrix\Tasks\Internals\Task\Result\ResultManager;
 use Bitrix\Tasks\Internals\Task\Result\ResultTable;
-use Bitrix\Tasks\Internals\Task\ScenarioTable;
 use Bitrix\Tasks\Internals\Task\Status;
 use Bitrix\Tasks\Internals\TaskTable;
 use Bitrix\Tasks\Scrum\Service\TaskService;
@@ -47,6 +46,8 @@ use Bitrix\Tasks\Manager;
 use Bitrix\Tasks\UI;
 use Bitrix\Tasks\Util\Restriction\Bitrix24Restriction\Limit\TaskLimit;
 use Bitrix\Tasks\Util\Type\DateTime;
+use Bitrix\Tasks\V2\Internal\Entity\Task\Scenario;
+use Bitrix\Tasks\V2\Internal\DI\Container;
 use Bitrix\UI\FileUploader\Uploader;
 use CBitrixComponent;
 use CComponentEngine;
@@ -332,6 +333,20 @@ final class Task extends Base
 			if (Loader::includeModule('pull'))
 			{
 				MobileCounter::send($this->getCurrentUser()->getId());
+			}
+
+			if (isset($fields['FLOW_ID']))
+			{
+				// "FLOW_ID" analytics label
+				$isDemo = (Loader::includeModule('bitrix24') && \CBitrix24::IsDemoLicense()) ? 'Y' : 'N';
+
+				Analytics::getInstance($this->getUserId())->onTaskUpdate(
+					event: Analytics::EVENT['task_update'],
+					subSection: Analytics::SUB_SECTION['task_card'],
+					params: [
+						'p1' => 'isDemo_' . $isDemo,
+					],
+				);
 			}
 
 			return $this->getAction($task);
@@ -1063,17 +1078,18 @@ final class Task extends Base
 
 		if ($isMobile)
 		{
-			$fields['SCENARIO_NAME'][] = ScenarioTable::SCENARIO_MOBILE;
+			$fields['SCENARIO_NAME'][] = Scenario::Mobile->value;
 		}
 
 		if (!empty($fields[CRM\UserField::getMainSysUFCode()]))
 		{
-			$fields['SCENARIO_NAME'][] = ScenarioTable::SCENARIO_CRM;
+			$fields['SCENARIO_NAME'][] = Scenario::Crm->value;
 		}
 
 		if (isset($fields['SCENARIO_NAME']) && is_array($fields['SCENARIO_NAME']))
 		{
-			$fields['SCENARIO_NAME'] = ScenarioTable::filterByValidScenarios($fields['SCENARIO_NAME']);
+			$scenarioService = Container::getInstance()->getScenarioService();
+			$fields['SCENARIO_NAME'] = $scenarioService->filterValid($fields['SCENARIO_NAME']);
 		}
 
 		return $fields;
@@ -1900,7 +1916,9 @@ final class Task extends Base
 	{
 		$filter = (!empty($filter) ? $filter : []);
 
-		$userId = ($filter['MEMBER'] ?? $this->getCurrentUser()->getId());
+		$memberId = is_numeric($filter['MEMBER'] ?? null) ? (int)$filter['MEMBER'] : null;
+
+		$userId = ($memberId ?? $this->getCurrentUser()->getId());
 		$roleId = (array_key_exists('ROLE', $filter) ? $filter['ROLE'] : '');
 
 		$filter = $this->processFilterSearchIndex($filter);

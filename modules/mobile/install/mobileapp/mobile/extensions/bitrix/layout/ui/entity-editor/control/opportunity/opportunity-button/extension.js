@@ -4,6 +4,7 @@
 jn.define('layout/ui/entity-editor/control/opportunity/opportunity-button', (require, exports, module) => {
 	const AppTheme = require('apptheme');
 	const { withPressed } = require('utils/color');
+	const { Random } = require('utils/random');
 	const { EventEmitter } = require('event-emitter');
 
 	class OpportunityButton extends LayoutComponent

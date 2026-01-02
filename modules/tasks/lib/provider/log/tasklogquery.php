@@ -3,7 +3,7 @@
 namespace Bitrix\Tasks\Provider\Log;
 
 use Bitrix\Tasks\Provider\Query\AbstractTaskQuery;
-use Bitrix\Tasks\Provider\TaskQueryInterface;
+use Bitrix\Tasks\Provider\Query\TaskQueryInterface;
 
 class TaskLogQuery extends AbstractTaskQuery implements TaskQueryInterface
 {

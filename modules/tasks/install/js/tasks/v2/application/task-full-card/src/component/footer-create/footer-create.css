@@ -1,0 +1,13 @@
+.tasks-full-card-footer-create {
+	display: flex;
+	align-items: center;
+	justify-content: space-between;
+	gap: 10px;
+	width: 100%;
+}
+
+.tasks-full-card-footer-main-buttons {
+	display: flex;
+	align-items: center;
+	gap: 10px;
+}

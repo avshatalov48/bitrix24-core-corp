@@ -2,7 +2,7 @@
 $MESS["TASKS_GRID_STUB_DESCRIPTION"] = "This view will show tasks you and/or your employees are responsible for.";
 $MESS["TASKS_GRID_STUB_DESCRIPTION_COLLAB"] = "You don't have any tasks now.";
 $MESS["TASKS_GRID_STUB_NO_DATA_DESCRIPTION"] = "Try resetting the filter or change the search phrase.";
-$MESS["TASKS_GRID_STUB_NO_DATA_TITLE"] = "Your search request returned no results.";
+$MESS["TASKS_GRID_STUB_NO_DATA_TITLE"] = "Your search request returned no results";
 $MESS["TASKS_GRID_STUB_PROJECT_CREATE_COLLAB"] = "This screen will show collab tasks";
 $MESS["TASKS_GRID_STUB_PROJECT_CREATE_COLLAB_SUBTITLE"] = "Create tasks on this screen or directly from chat messages, and add task participants. [helpdesklink]Learn more[/helpdesklink]";
 $MESS["TASKS_GRID_STUB_PROJECT_CREATE_TASK"] = "Create a task";

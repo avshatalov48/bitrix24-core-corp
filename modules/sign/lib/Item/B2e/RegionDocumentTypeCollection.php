@@ -33,6 +33,19 @@ class RegionDocumentTypeCollection implements Item, ItemCollection, \Iterator, \
 		return $this->iterator->getArrayCopy();
 	}
 
+	public function sortByCode(bool $isDesc = true): static
+	{
+		$items = $this->all();
+		usort($items, function (RegionDocumentType $firstItem, RegionDocumentType $secondItem) use ($isDesc): int
+		{
+			$firstCode = (int)str_replace('.', '', $firstItem->code);
+			$secondCode = (int)str_replace('.', '', $secondItem->code);
+
+			return $isDesc ? $secondCode <=> $firstCode : $firstCode > $secondCode;
+		});
+
+		return new static(...$items);
+	}
 
 	public function toArray(): array
 	{

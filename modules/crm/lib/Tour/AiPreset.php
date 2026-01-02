@@ -2,6 +2,7 @@
 
 namespace Bitrix\Crm\Tour;
 
+use Bitrix\Main\Application;
 use Bitrix\Main\Config\Option;
 use CUserOptions;
 
@@ -17,27 +18,42 @@ class AiPreset extends Base
 	{
 		$isEnableRecognitionPromo = false;
 
-		// if (!\Bitrix\Main\Loader::includeModule('voximplant'))
-		// {
-		// 	return $isEnableRecognitionPromo;
-		// }
-		//
-		// $now = time();
-		// $crmAiPresetActivationTime = Option::get('crm', 'preset_crm_ai_activated');
-		//
-		//
-		// if ($crmAiPresetActivationTime && (strtotime('+60 days', $crmAiPresetActivationTime) > $now))
-		// {
-		// 	$recognitionPromoShowTime = $this->getShowTime();
-		// 	$recognitionPromoShowCount = $this->getNumberOfViews();
-		//
-		// 	$isEnableRecognitionPromo = (
-		// 		!$recognitionPromoShowTime
-		// 		|| ($recognitionPromoShowTime !== 'N' && $recognitionPromoShowTime < $now)
-		// 	) && $recognitionPromoShowCount < $this->numberOfViewsLimit;
-		// }
+		if (!\Bitrix\Main\Loader::includeModule('voximplant') || !$this->isAvailableRegion())
+		{
+			return $isEnableRecognitionPromo;
+		}
+
+		$now = time();
+		$crmAiPresetActivationTime = Option::get('crm', 'preset_crm_ai_activated');
+
+		if ($crmAiPresetActivationTime && (strtotime('+60 days', $crmAiPresetActivationTime) > $now))
+		{
+			$recognitionPromoShowTime = $this->getShowTime();
+			$recognitionPromoShowCount = $this->getNumberOfViews();
+
+			$isEnableRecognitionPromo = (
+				!$recognitionPromoShowTime
+				|| ($recognitionPromoShowTime !== 'N' && $recognitionPromoShowTime < $now)
+			) && $recognitionPromoShowCount < $this->numberOfViewsLimit;
+		}
 
 		return $isEnableRecognitionPromo;
+	}
+
+	private function isAvailableRegion(): bool
+	{
+		$regionBlacklist = [
+			'ua',
+			'cn',
+		];
+
+		$region = Application::getInstance()->getLicense()->getRegion();
+		if ($region === null)
+		{
+			return false; // block AI in unknown region just in case
+		}
+
+		return !in_array(mb_strtolower($region), $regionBlacklist, true);
 	}
 
 	protected function getComponentTemplate(): string

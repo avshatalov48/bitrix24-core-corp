@@ -2,8 +2,9 @@
  * @module im/messenger/controller/user-profile
  */
 jn.define('im/messenger/controller/user-profile', (require, exports, module) => {
+	const { UserProfile: MobileUserProfile } = require('user-profile');
+
 	const { EventType } = require('im/messenger/const');
-	const { openUserProfile } = require('user/profile');
 
 	class UserProfile
 	{
@@ -25,24 +26,16 @@ jn.define('im/messenger/controller/user-profile', (require, exports, module) => 
 
 		async open()
 		{
-			if (Application.getApiVersion() >= 27)
-			{
-				this.subscribeExternalEvents();
-				const layoutWidget = await openUserProfile({
-					userId: this.userId,
-					parentWidget: this.parentWidget,
-				});
+			this.subscribeExternalEvents();
 
-				this.layoutWidget = layoutWidget;
+			this.layoutWidget = await MobileUserProfile.open({
+				ownerId: this.userId,
+				parentWidget: this.parentWidget,
+			});
 
-				layoutWidget.on(EventType.view.close, () => {
-					this.unsubscribeExternalEvents();
-				});
-			}
-			else
-			{
-				PageManager.openPage({ url: `/mobile/users/?user_id=${this.userId}` });
-			}
+			layoutWidget.on(EventType.view.close, () => {
+				this.unsubscribeExternalEvents();
+			});
 		}
 
 		bindMethods()

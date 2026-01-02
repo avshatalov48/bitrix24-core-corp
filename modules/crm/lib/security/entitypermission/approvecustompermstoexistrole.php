@@ -2,14 +2,15 @@
 
 namespace Bitrix\Crm\Security\EntityPermission;
 
+use Bitrix\Crm\Security\Role\GroupCodeGenerator;
 use Bitrix\Crm\Security\Role\Manage\RoleManagementModelBuilder;
 use Bitrix\Crm\Security\Role\Model\EO_RolePermission;
 use Bitrix\Crm\Security\Role\Model\RolePermissionTable;
 use Bitrix\Crm\Security\Role\Utils\RolePermissionLogContext;
+use Bitrix\Crm\Service\Container;
 use Bitrix\Main\ArgumentException;
 use Bitrix\Main\Config\Option;
 use Bitrix\Main\Web\Json;
-use Bitrix\Crm\Service\Container;
 
 final class ApproveCustomPermsToExistRole
 {
@@ -18,6 +19,13 @@ final class ApproveCustomPermsToExistRole
 	private const DONE = false;
 
 	private const CONTINUE = true;
+
+	private ?RoleFinder $roleFinder = null;
+
+	public function __construct()
+	{
+		$this->roleFinder = new RoleFinder();
+	}
 
 	public function execute(): bool
 	{
@@ -41,27 +49,50 @@ final class ApproveCustomPermsToExistRole
 
 		$this->log('Start applying default permission', $defaultPermission->toArray());
 
+		$existingPermissions = $defaultPermission->existingPermissions();
+		$rolesWithPermissionsIds = $this->roleFinder->getRoleIds($existingPermissions);
+		if (empty($rolesWithPermissionsIds) && !empty($existingPermissions))
+		{
+			$this->log('Empty role ids for existing permissions', $existingPermissions);
+		}
+		elseif (!empty($rolesWithPermissionsIds))
+		{
+			$this->log('Roles with permissions ids', $rolesWithPermissionsIds);
+		}
+
 		$roleIds = [];
 
 		$permissionRoleGroups = $defaultPermission->getRoleGroups();
 
 		foreach ($roles as $role)
 		{
+			$roleId = null;
+
 			$roleGroupCode = (string)$role['GROUP_CODE'];
 			if ($roleGroupCode === '' && in_array('CRM', $permissionRoleGroups, true))
 			{
-				$roleIds[] = $role['ID'];
+				$roleId = $role['ID'];
 			}
 			elseif (
-				\Bitrix\Crm\Security\Role\GroupCodeGenerator::isAutomatedSolutionGroupCode($roleGroupCode)
+				GroupCodeGenerator::isAutomatedSolutionGroupCode($roleGroupCode)
 				&& in_array('AUTOMATED_SOLUTION', $permissionRoleGroups, true)
 			)
 			{
-				$roleIds[] = $role['ID'];
+				$roleId = $role['ID'];
 			}
 			elseif(in_array($roleGroupCode, $permissionRoleGroups, true))
 			{
-				$roleIds[] = $role['ID'];
+				$roleId = $role['ID'];
+			}
+
+			if ($roleId)
+			{
+				if (!empty($defaultPermission->existingPermissions()) && !in_array((int)$roleId, $rolesWithPermissionsIds, true))
+				{
+					continue;
+				}
+
+				$roleIds[] = $roleId;
 			}
 		}
 
@@ -197,27 +228,6 @@ final class ApproveCustomPermsToExistRole
 	private function needContinue(array $defaultPermissions): bool
 	{
 		return (empty($defaultPermissions) ? self::DONE : self::CONTINUE);
-	}
-
-	public function appendDefaultPermissionToOptions(DefaultPermission $defaultPermission): void
-	{
-		$defaultPermissions = $this->getDefaultPermissions();
-
-		foreach ($defaultPermissions as &$item)
-		{
-			if ($item->getPermissionClass() === $defaultPermission->getPermissionClass())
-			{
-				$item = $defaultPermission;
-
-				return;
-			}
-		}
-
-		unset($item);
-
-		$defaultPermissions[] = $defaultPermission->toArray();
-
-		$this->saveOption($defaultPermissions);
 	}
 
 	private function removeDefaultPermissionFromOptions(DefaultPermission $defaultPermission): void

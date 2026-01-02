@@ -163,7 +163,7 @@ if (Bitrix\Main\Loader::includeModule('rest'))
 
 	$additionalTabs[] = [
 		'ID' => 'activity_rest_applist',
-		'NAME' => \Bitrix\Main\Localization\Loc::getMessage('TASKS_REST_BUTTON_TITLE_2'),
+		'NAME' => \Bitrix\Main\Localization\Loc::getMessage('TASKS_REST_BUTTON_TITLE_MSGVER_1'),
 		'SLIDER' => true,
 		'ONCLICK' =>'BX.rest.Marketplace.open({PLACEMENT:"'.\CUtil::JSEscape($restReplacement).'"})',
 	];

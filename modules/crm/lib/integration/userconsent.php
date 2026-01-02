@@ -28,12 +28,13 @@ use Bitrix\Crm\WebForm\Manager as WebFormManager;
 use Bitrix\Crm\WebForm\Internals\FormTable;
 use Bitrix\Crm\WebForm\Internals\QueueTable;
 
-Loc::loadLanguageFile(__FILE__);
-
 class UserConsent
 {
-	const PROVIDER_CODE = 'crm/activity';
-	const DATA_PROVIDER_CODE = 'crm/requisites';
+	public const PROVIDER_CODE = 'crm/activity';
+	public const DATA_PROVIDER_CODE = 'crm/requisites';
+
+	public const PROVIDER_CODE_PAYMENT = 'crm/deal/payment';
+	public const DATA_PROVIDER_CODE_PAYMENT = 'crm/deal/payments';
 
 	/**
 	 * Notify.
@@ -118,21 +119,88 @@ class UserConsent
 	 *
 	 * @return EventResult
 	 */
-	public static function onProviderList()
+	public static function onProviderList(): EventResult
 	{
-		$parameters = array(
-			array(
+		$parameters = [
+			[
 				'CODE' => self::PROVIDER_CODE,
 				'NAME' => Loc::getMessage('CRM_USER_CONSENT_PROVIDER_NAME'),
 				'DATA' => function ($id = null)
 				{
-					return array(
-						'NAME' => Loc::getMessage('CRM_USER_CONSENT_PROVIDER_ITEM_NAME', array('%id%' => $id)),
+					return [
+						'NAME' => Loc::getMessage('CRM_USER_CONSENT_PROVIDER_ITEM_NAME', ['%id%' => $id]),
 						'URL' => str_replace('%id%', $id, '/crm/activity/?open_view=%id%')
+					];
+				},
+			],
+			[
+				'CODE' => self::PROVIDER_CODE_PAYMENT,
+				'NAME' => Loc::getMessage('CRM_USER_CONSENT_PROVIDER_PAYMENT_NAME'),
+				'DATA' => function ($id = null): array
+				{
+					$id = (int)$id;
+					if ($id <= 0)
+					{
+						return [];
+					}
+					$iterator = \Bitrix\Crm\Order\Payment::getList([
+						'select' => [
+							'ID',
+							'ORDER_ID',
+							'ACCOUNT_NUMBER',
+							'DATE_BILL',
+						],
+						'filter' => [
+							'=ID' => $id,
+						],
+					]);
+					$payment = $iterator->fetch();
+					unset(
+						$iterator,
 					);
-				}
-			)
-		);
+					if (!$payment)
+					{
+						return [];
+					}
+					$orderId = (int)$payment['ORDER_ID'];
+					$iterator = \Bitrix\Crm\Order\EntityBinding::getList([
+						'select' => ['*'],
+						'filter' => [
+							'=ORDER_ID' => $orderId,
+						],
+					]);
+					$binding = $iterator->fetch();
+					unset(
+						$iterator,
+					);
+					if (!$binding)
+					{
+						return [];
+					}
+
+					$url = \Bitrix\Crm\Service\Container::getInstance()->getRouter()->getItemDetailUrl(
+						(int)$binding['OWNER_TYPE_ID'],
+						(int)$binding['OWNER_ID']
+					);
+
+					$titleReplace = [
+						'#ACCOUNT_NUMBER#' => $payment['ACCOUNT_NUMBER'],
+						'#DATE#' => $payment['DATE_BILL']
+							? ConvertTimeStamp($payment['DATE_BILL']->getTimestamp(), 'SHORT')
+							: ''
+						,
+					];
+
+					return [
+						'NAME' => Loc::getMessage(
+							'CRM_USER_CONSENT_PROVIDER_PAYMENT_ITEM_NAME',
+							$titleReplace
+						),
+						'URL' => $url,
+					];
+				},
+			],
+		];
 
 		return new EventResult(EventResult::SUCCESS, $parameters, 'crm');
 	}
@@ -142,26 +210,26 @@ class UserConsent
 	 *
 	 * @return EventResult
 	 */
-	public static function onDataProviderList()
+	public static function onDataProviderList(): EventResult
 	{
 		/** @var static $className Class name */
 		$className = __CLASS__;
 
-		$parameters = array(
-			array(
+		$parameters = [
+			[
 				'CODE' => self::DATA_PROVIDER_CODE,
 				'NAME' => Loc::getMessage('CRM_USER_CONSENT_DATA_PROVIDER_NAME'),
 				'EDIT_URL' => '/crm/configs/mycompany/',
 				'DATA' => function () use ($className)
 				{
-					\Bitrix\Main\Loader::includeModule('crm');
+					Loader::includeModule('crm');
 					$reqData = $className::getRequisites();
 					if (!is_array($reqData))
 					{
-						$reqData = array();
+						$reqData = [];
 					}
 
-					$data = array();
+					$data = [];
 					$intl = new \Bitrix\Main\UserConsent\Intl(LANGUAGE_ID);
 					if (isset($reqData['RQ_OGRN']) && $reqData['RQ_OGRN'] && LANGUAGE_ID == 'ru')
 					{
@@ -187,9 +255,18 @@ class UserConsent
 					}
 
 					return $data;
-				}
-			)
-		);
+				},
+			],
+			[
+				'CODE' => self::DATA_PROVIDER_CODE_PAYMENT,
+				'NAME' => Loc::getMessage('CRM_USER_CONSENT_DATA_PROVIDER_PAYMENT_NAME'),
+				'EDIT_URL' => '',
+				'DATA' => function ($id = null)
+				{
+					return [];
+				},
+			]
+		];
 
 		return new EventResult(EventResult::SUCCESS, $parameters, 'crm');
 	}

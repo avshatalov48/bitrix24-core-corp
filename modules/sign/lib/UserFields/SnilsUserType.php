@@ -9,7 +9,7 @@ use Bitrix\Sign\Type\FieldType;
 
 Loc::loadMessages(__FILE__);
 
-final class SnilsUserType
+final class SnilsUserType extends StringType
 {
 	public const USER_TYPE_ID = FieldType::SNILS;
 
@@ -19,7 +19,7 @@ final class SnilsUserType
 			'USER_TYPE_ID' => self::USER_TYPE_ID,
 			'CLASS_NAME' => __CLASS__,
 			'DESCRIPTION' => Loc::getMessage('SIGN_USER_FIELD_SNILS'),
-			'BASE_TYPE' => 'string',
+			'BASE_TYPE' => \CUserTypeManager::BASE_TYPE_STRING,
 			'EDIT_CALLBACK' => [self::class, 'getPublicEditHtml'],
 			'VIEW_CALLBACK' => [self::class, 'getPublicViewHtml'],
 			'USE_FIELD_COMPONENT' => false,
@@ -84,7 +84,7 @@ final class SnilsUserType
 		return StringType::getPublicEdit($userField, $additionalParameters);
 	}
 
-	public static function onBeforeSave($arUserField, $value)
+	public static function onBeforeSave($arUserField, $value): string
 	{
 		$validator = new SnilsValidator((string)$value);
 

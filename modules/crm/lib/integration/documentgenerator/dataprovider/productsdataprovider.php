@@ -15,6 +15,7 @@ use Bitrix\DocumentGenerator\DataProviderManager;
 use Bitrix\DocumentGenerator\Dictionary;
 use Bitrix\Main\Localization\Loc;
 use Bitrix\Sale\Repository\PaymentRepository;
+use \Bitrix\Crm\Integration\DocumentGenerator\Value\TaxRate;
 
 abstract class ProductsDataProvider extends CrmEntityDataProvider
 {
@@ -291,7 +292,13 @@ abstract class ProductsDataProvider extends CrmEntityDataProvider
 					'VALUE' => new Money($taxInfo['VALUE_MONEY'], ['CURRENCY_ID' => $currencyID, 'WITH_ZEROS' => true]),
 					'NETTO' => 0,
 					'BRUTTO' => 0,
-					'RATE' => (float)$taxInfo['VALUE'],
+					'RATE' => new TaxRate(
+						isset($taxInfo['VALUE'])
+							? (float)$taxInfo['VALUE']
+							: TaxRate::TAX_FREE
+						,
+						['WITH_PERCENT' => false],
+					),
 					'TAX_INCLUDED' => $taxInfo['IS_IN_PRICE'],
 					'MODE' => Tax::MODE_TAX,
 				]);
@@ -480,13 +487,11 @@ abstract class ProductsDataProvider extends CrmEntityDataProvider
 		foreach($this->products as $product)
 		{
 			$rate = $product->getRawValue('TAX_RATE');
-			if (
-				$rate !== false
-				&& (
-					$rate > 0
-					|| ($rate == 0 && isset($taxNames[$rate]))
-				)
-			)
+			if ($rate === false)
+			{
+				$rate = null;
+			}
+			if ($rate > 0 || ($rate == 0 && isset($taxNames[$rate])))
 			{
 				if(!isset($taxes[$rate]))
 				{
@@ -505,17 +510,27 @@ abstract class ProductsDataProvider extends CrmEntityDataProvider
 						'MODE' => Tax::MODE_VAT,
 					];
 				}
-				$taxes[$product->getRawValue('TAX_RATE')]['VALUE'] += $product->getRawValue('TAX_VALUE_SUM');
-				$taxes[$product->getRawValue('TAX_RATE')]['NETTO'] += $product->getRawValue('PRICE_EXCLUSIVE_SUM');
-				$taxes[$product->getRawValue('TAX_RATE')]['BRUTTO'] += $product->getRawValue('PRICE_SUM');
+				$taxes[$rate]['VALUE'] += $product->getRawValue('TAX_VALUE_SUM');
+				$taxes[$rate]['NETTO'] += $product->getRawValue('PRICE_EXCLUSIVE_SUM');
+				$taxes[$rate]['BRUTTO'] += $product->getRawValue('PRICE_SUM');
 			}
+		}
+		// The tax excluded rate should be shown if there are no other rates
+		if (count($taxes) > 1 && isset($taxes[null]))
+		{
+			unset($taxes[null]);
 		}
 		$currencyID = $this->getCurrencyId();
 		foreach($taxes as &$tax)
 		{
-			$tax['VALUE'] = new Money($tax['VALUE'], ['CURRENCY_ID' => $currencyID, 'WITH_ZEROS' => true]);
+			if ($tax['RATE'] === null)
+			{
+				$tax['VALUE'] = null;
+			}
+			$tax['VALUE'] = new Money($tax['VALUE'], ['CURRENCY_ID' => $currencyID, 'WITH_ZEROS' => true, 'SHOW_DASH_IF_NULL' => true]);
 			$tax['NETTO'] = new Money($tax['NETTO'], ['CURRENCY_ID' => $currencyID, 'WITH_ZEROS' => true]);
 			$tax['BRUTTO'] = new Money($tax['BRUTTO'], ['CURRENCY_ID' => $currencyID, 'WITH_ZEROS' => true]);
+			$tax['RATE'] = new TaxRate($tax['RATE'] ?? TaxRate::TAX_FREE, ['WITH_PERCENT' => false]);
 		}
 
 		return $taxes;

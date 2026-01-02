@@ -11,7 +11,7 @@ final class Widget extends AbstractPermissions
 
 	protected function hasPermissions(): bool
 	{
-		return $this->userPermissions->canWriteButtonConfig();
+		return $this->userPermissions->siteButton()->canWriteConfig();
 	}
 
 	protected function title(): string

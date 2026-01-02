@@ -30,7 +30,6 @@ use Bitrix\Tasks\Access\TaskAccessController;
 use Bitrix\Tasks\Component\Scrum;
 use Bitrix\Tasks\Control\Tag;
 use Bitrix\Tasks\Integration\Bizproc\Automation\Factory;
-use Bitrix\Tasks\Integration\Intranet\Settings;
 use Bitrix\Tasks\Integration\SocialNetwork\Group;
 use Bitrix\Tasks\Internals\Counter;
 use Bitrix\Tasks\Scrum\Form\EntityForm;
@@ -55,6 +54,8 @@ use Bitrix\Tasks\Scrum\Utility\StoryPoints;
 use Bitrix\Tasks\Scrum\Utility\ViewHelper;
 use Bitrix\Tasks\Util;
 use Bitrix\Tasks\Util\Restriction\Bitrix24Restriction;
+use Bitrix\Tasks\Helper\Analytics;
+use Bitrix\Tasks\V2\Internal\DI\Container;
 
 class TasksScrumComponent extends \CBitrixComponent implements Controllerable, Errorable
 {
@@ -270,7 +271,7 @@ class TasksScrumComponent extends \CBitrixComponent implements Controllerable, E
 
 		$this->arResult['debugMode'] = ($this->debugMode ? 'Y' : 'N');
 		$this->arResult['frameMode'] = ($this->frameMode ? 'Y' : 'N');
-		$this->arResult['views'] = $this->getViewsInfo($groupId);
+		$this->arResult['views'] = $this->prepareViewsInfo($this->getViewsInfo($groupId));
 		$this->arResult['culture'] = $this->getCultureInfo();
 
 		switch ($activeTab)
@@ -389,7 +390,7 @@ class TasksScrumComponent extends \CBitrixComponent implements Controllerable, E
 			$this->userId = Util\User::getId();
 
 			$tmpId = (is_string($post['tmpId'] ?? null) ? $post['tmpId'] : '');
-			$name = (is_string($post['name'] ?? null) ? $post['name'] : '');
+			$name = (is_string($post['name'] ?? null) ? trim($post['name']) : '');
 			$entityId = (is_numeric($post['entityId'] ?? null) ? (int) $post['entityId'] : 0);
 			$epicId = (is_numeric($post['epicId']) ? (int) $post['epicId'] : 0);
 			$parentTaskId = (is_numeric($post['parentTaskId'] ?? null) ? (int) $post['parentTaskId'] : 0);
@@ -399,7 +400,7 @@ class TasksScrumComponent extends \CBitrixComponent implements Controllerable, E
 			$sortInfo = (is_array($post['sortInfo'] ?? null) ? $post['sortInfo'] : []);
 			$info = (is_array($post['info'] ?? null) ? $post['info'] : []);
 
-			if (empty($name))
+			if ($name === '')
 			{
 				$this->setError(Loc::getMessage('TASKS_SCRUM_TASK_ADD_NAME_ERROR'));
 
@@ -511,7 +512,7 @@ class TasksScrumComponent extends \CBitrixComponent implements Controllerable, E
 
 			if ($sortInfo)
 			{
-				$itemService->sortItems($this->prepareSortInfo($groupId, $sortInfo), $pushService);
+				$itemService->sortItems($groupId, $this->prepareSortInfo($groupId, $sortInfo), $pushService);
 				if ($itemService->getErrors())
 				{
 					$this->setError(Loc::getMessage('TASKS_SCRUM_TASK_ADD_ERROR'), $itemService->getErrors());
@@ -1129,6 +1130,7 @@ class TasksScrumComponent extends \CBitrixComponent implements Controllerable, E
 		$backlog = $backlogService->getBacklogByGroupId($sprint->getGroupId());
 
 		$itemService->moveItemsToEntity(
+			$backlog->getGroupId(),
 			$itemService->getItemIdsByEntityId($sprint->getId()),
 			$backlog->getId()
 		);
@@ -1212,11 +1214,33 @@ class TasksScrumComponent extends \CBitrixComponent implements Controllerable, E
 					{
 						$kanbanService->addTasksToKanban($targetEntity->getId(), [$taskId]);
 						$kanbanService->addTasksToKanban($targetEntity->getId(), $subTaskIds);
+
+						// "MOVE_TO_SPRINT" analytics label
+						$isDemo = (Loader::includeModule('bitrix24') && \CBitrix24::IsDemoLicense()) ? 'Y' : 'N';
+
+						Analytics::getInstance($this->userId)->onTaskUpdate(
+							event: Analytics::EVENT['task_update'],
+							subSection: Analytics::SUB_SECTION['task_card'],
+							params: [
+								'p1' => 'isDemo_' . $isDemo,
+							],
+						);
 					}
 
 					if (!$sourceEntity->isEmpty() && $sourceEntity->isActiveSprint())
 					{
 						$kanbanService->removeTasksFromKanban($sourceEntity->getId(), $idsToMove);
+
+						// "MOVE_TO_BACKLOG" analytics label
+						$isDemo = (Loader::includeModule('bitrix24') && \CBitrix24::IsDemoLicense()) ? 'Y' : 'N';
+
+						Analytics::getInstance($this->userId)->onTaskUpdate(
+							event: Analytics::EVENT['task_update'],
+							subSection: Analytics::SUB_SECTION['task_card'],
+							params: [
+								'p1' => 'isDemo_' . $isDemo,
+							],
+						);
 					}
 
 					if($sourceEntity->getEntityType() !== $targetEntity->getEntityType())
@@ -1232,7 +1256,7 @@ class TasksScrumComponent extends \CBitrixComponent implements Controllerable, E
 
 		if ($sortInfo)
 		{
-			$itemService->sortItems($this->prepareSortInfo($groupId, $sortInfo), $pushService);
+			$itemService->sortItems($groupId, $this->prepareSortInfo($groupId, $sortInfo), $pushService);
 		}
 
 		return '';
@@ -1306,7 +1330,7 @@ class TasksScrumComponent extends \CBitrixComponent implements Controllerable, E
 
 		if ($sortInfo)
 		{
-			$itemService->sortItems($this->prepareSortInfo($groupId, $sortInfo), $pushService);
+			$itemService->sortItems($groupId, $this->prepareSortInfo($groupId, $sortInfo), $pushService);
 		}
 
 		if ($itemService->getErrors())
@@ -1367,7 +1391,7 @@ class TasksScrumComponent extends \CBitrixComponent implements Controllerable, E
 
 		if ($sortInfo)
 		{
-			$itemService->sortItems($this->prepareSortInfo($groupId, $sortInfo), $pushService);
+			$itemService->sortItems($groupId, $this->prepareSortInfo($groupId, $sortInfo), $pushService);
 		}
 
 		return '';
@@ -1415,7 +1439,7 @@ class TasksScrumComponent extends \CBitrixComponent implements Controllerable, E
 
 		if (!$taskId || !$responsibleId)
 		{
-			$this->setError(Loc::getMessage('TASKS_SCRUM_TASK_RESPONSIBLE_UPDATE_ERROR'));
+			$this->setError(Loc::getMessage('TASKS_SCRUM_TASK_RESPONSIBLE_UPDATE_ERROR_MSGVER_1'));
 
 			return null;
 		}
@@ -1426,7 +1450,7 @@ class TasksScrumComponent extends \CBitrixComponent implements Controllerable, E
 		]);
 		if ($taskService->getErrors())
 		{
-			$this->setError(Loc::getMessage('TASKS_SCRUM_TASK_RESPONSIBLE_UPDATE_ERROR'), $taskService->getErrors());
+			$this->setError(Loc::getMessage('TASKS_SCRUM_TASK_RESPONSIBLE_UPDATE_ERROR_MSGVER_1'), $taskService->getErrors());
 
 			return null;
 		}
@@ -2058,7 +2082,7 @@ class TasksScrumComponent extends \CBitrixComponent implements Controllerable, E
 
 	private function isScrumEnabled(): bool
 	{
-		return (new Settings())->isToolAvailable(Settings::TOOLS['scrum']);
+		return Container::getInstance()->getToolService()->isScrumAvailable();
 	}
 
 	private function includePlanTemplate(int $groupId): void
@@ -2289,7 +2313,7 @@ class TasksScrumComponent extends \CBitrixComponent implements Controllerable, E
 			$completedSprint = $sprintService->getLastCompletedSprint($groupId);
 		}
 
-		$sprintViews = $this->arResult['views'];
+		$sprintViews = $this->getViewsInfo($groupId);
 
 		if ($completedSprint->isEmpty())
 		{
@@ -2664,6 +2688,23 @@ class TasksScrumComponent extends \CBitrixComponent implements Controllerable, E
 				'active' => ($viewHelper->getActiveView($groupId) == 'completed_sprint')
 			],
 		];
+	}
+
+	private function prepareViewsInfo(array $views): array
+	{
+		$result = [];
+
+		foreach ($views as $id => $view) {
+			$result[] = [
+				'id' => $id,
+				'title' => $view['name'],
+				'active' => $view['active'],
+				'url' => $view['url'],
+				'link' => ['href' => $view['url']],
+			];
+		}
+
+		return $result;
 	}
 
 	private function getCultureInfo(): array

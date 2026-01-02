@@ -5,12 +5,17 @@ declare(strict_types=1);
 namespace Bitrix\Booking\Internals\Service\Notifications;
 
 use Bitrix\Booking\Entity\Booking\Booking;
+use Bitrix\Booking\Entity\Message\BookingMessage;
 use Bitrix\Booking\Entity\Message\MessageBodyBased;
 use Bitrix\Booking\Entity\Message\MessageTemplateBased;
 use Bitrix\Booking\Internals\Exception\ErrorBuilder;
+use Bitrix\Booking\Internals\Integration\Pull\PushEvent;
+use Bitrix\Booking\Internals\Integration\Pull\PushService;
 use Bitrix\Booking\Internals\Model\BookingMessageFailureLogTable;
 use Bitrix\Booking\Internals\Model\BookingMessageTable;
+use Bitrix\Booking\Internals\Service\Journal\EventProcessor\PushPull\PushPullCommandType;
 use Bitrix\Main\Error;
+use Bitrix\Main\Loader;
 use Bitrix\Main\Result;
 
 class MessageSender
@@ -44,6 +49,22 @@ class MessageSender
 			return $result->addError($error);
 		}
 
+		if (Loader::includeModule('bitrix24'))
+		{
+			if (
+				!(
+					\CBitrix24::IsLicensePaid()
+					|| \CBitrix24::IsNfrLicense()
+				)
+			)
+			{
+				$error = ErrorBuilder::build('Sending messages is temporarily unavailable on your current plan');
+				$this->logError($booking, $notificationType, $error);
+
+				return $result->addError($error);
+			}
+		}
+
 		$result = $this->messageSender->send($booking, $message);
 
 		if ($result->isSuccess())
@@ -56,6 +77,21 @@ class MessageSender
 				// @todo abstract method getMessageId?
 				'EXTERNAL_MESSAGE_ID' => (int)$result->getData()['ID'],
 			]);
+
+			(new PushService())->sendEvent(
+				new PushEvent(
+					command: PushPullCommandType::MessageSent->value,
+					tag: PushPullCommandType::MessageSent->getTag(),
+					params: [
+						'message' => (new BookingMessage())
+							->setBookingId($booking->getId())
+							->setNotificationType($notificationType)
+							->toArray()
+						,
+					],
+					entityId: $booking->getId(),
+				),
+			);
 		}
 		else
 		{

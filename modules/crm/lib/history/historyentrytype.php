@@ -1,13 +1,15 @@
 <?php
+
 namespace Bitrix\Crm\History;
-use Bitrix\Main;
+
 class HistoryEntryType
 {
-	const UNDEFINED = 0;
-	const CREATION = 1;
-	const MODIFICATION = 2;
-	const FINALIZATION = 3;
-	const JUNK = 4;
+	public const UNDEFINED = 0;
+	public const CREATION = 1;
+	public const MODIFICATION = 2;
+	public const FINALIZATION = 3;
+	public const JUNK = 4;
+	public const CATEGORY_CHANGE = 5;
 
 	public static function isDefined($typeID)
 	{
@@ -17,6 +19,6 @@ class HistoryEntryType
 		}
 
 		$typeID = (int)$typeID;
-		return $typeID >= self::CREATION && $typeID <= self::JUNK;
+		return $typeID >= self::CREATION && $typeID <= self::CATEGORY_CHANGE;
 	}
 }

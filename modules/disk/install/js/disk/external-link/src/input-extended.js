@@ -62,6 +62,11 @@ export default class InputExtended extends Input
 			{
 				this.cache.get('popup').getPopupContainer().setAttribute('externalLinkIsSet', 'Y');
 			}
+
+			if (this.data.isBoard)
+			{
+				this.getCanEditTextContainer().innerHTML = Loc.getMessage('DISK_EXTENSION_EXTERNAL_LINK_ALLOW_EDITING_BOARD');
+			}
 		}
 	}
 
@@ -310,7 +315,7 @@ export default class InputExtended extends Input
 				<div class="ui-form-row">
 					<label class="ui-ctl ui-ctl-checkbox">
 						<input type="checkbox" class="ui-ctl-element" name="canEditDocument">
-						<div class="ui-ctl-label-text">${Loc.getMessage('DISK_EXTENSION_EXTERNAL_LINK_ALLOW_EDITING')}</div>
+						${this.getCanEditTextContainer()}
 					</label>
 				</div>
 			</div>

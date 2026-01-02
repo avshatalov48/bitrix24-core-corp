@@ -750,7 +750,7 @@ final class Template extends \Bitrix\Tasks\Item
 				// you cant do multitasking because of new user
 				if($this->getActualFieldValue('MULTITASK') == 'Y')
 				{
-					$this->setNoMultitaskingAllowed($result, Loc::getMessage('TASKS_ITEM_TASK_TEMPLATE_NO_MULTITASKING_ALLOWED_ERROR_BECAUSE_TYPE_1'));
+					$this->setNoMultitaskingAllowed($result, Loc::getMessage('TASKS_ITEM_TASK_TEMPLATE_NO_MULTITASKING_ALLOWED_ERROR_BECAUSE_TYPE_1_MSGVER_1'));
 				}
 			}
 		}
@@ -800,7 +800,7 @@ final class Template extends \Bitrix\Tasks\Item
 				// you cant use base template because of MULTITASK
 				if($this->getActualFieldValue('BASE_TEMPLATE_ID'))
 				{
-					$this->setNoBaseTemplateAllowed($result, Loc::getMessage('TASKS_ITEM_TASK_TEMPLATE_NO_BASE_TEMPLATE_ALLOWED_ERROR_BECAUSE_MULTITASK'));
+					$this->setNoBaseTemplateAllowed($result, Loc::getMessage('TASKS_ITEM_TASK_TEMPLATE_NO_BASE_TEMPLATE_ALLOWED_ERROR_BECAUSE_MULTITASK_MSGVER_1'));
 				}
 			}
 		}

@@ -6,7 +6,7 @@ $APPLICATION->includeComponent(
 	'bitrix:rpa.router',
 	'',
 	array(
-		'root' => '/rpa/',
+		'root' => SITE_DIR . 'rpa/',
 	)
 );
 

@@ -16,7 +16,6 @@ return [
 		'main.core.events',
 		'ui.entity-selector',
 		'main.core',
-		'phone_number',
 	],
 	'skip_core' => false,
 	'settings' => [

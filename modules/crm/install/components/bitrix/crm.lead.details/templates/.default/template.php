@@ -19,15 +19,6 @@ use Bitrix\Crm\Conversion\LeadConversionType;
 	'crm.conversion',
 ]);
 
-//region LEGEND
-if (isset($arResult['LEGEND']))
-{
-	$this->SetViewTarget('crm_details_legend');
-	echo htmlspecialcharsbx($arResult['LEGEND']);
-	$this->EndViewTarget();
-}
-//endregion
-
 $guid = $arResult['GUID'];
 $prefix = mb_strtolower($guid);
 $activityEditorID = "{$prefix}_editor";
@@ -263,3 +254,13 @@ if (array_key_exists('AUTOMATION_CHECK_AUTOMATION_TOUR_GUIDE_DATA', $arResult)):
 <?php endif;
 
 echo \CCrmComponentHelper::prepareInitReceiverRepositoryJS(\CCrmOwnerType::Lead, (int)($arResult['ENTITY_ID'] ?? 0));
+
+if (isset($arResult['LEGEND']) && \Bitrix\Main\Loader::includeModule('ui'))
+{
+	\Bitrix\Main\UI\Extension::load([
+		// css
+		'crm.item-details-component.pagetitle',
+	]);
+
+	\Bitrix\UI\Toolbar\Facade\Toolbar::addAfterTitleHtml('<div class="crm-details-pagetitle-legend-container">' . htmlspecialcharsbx($arResult['LEGEND']) . '</div>');
+}

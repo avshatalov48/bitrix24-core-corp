@@ -41,6 +41,8 @@ global $USER_FIELD_MANAGER, $USER, $APPLICATION, $DB;
 $isErrorOccured = false;
 $errorMessage = '';
 
+$userPermissionsService = Container::getInstance()->getUserPermissions();
+
 if (!CModule::IncludeModule('crm'))
 {
 	$errorMessage = GetMessage('CRM_MODULE_NOT_INSTALLED');
@@ -64,9 +66,9 @@ if (!$isErrorOccured && $isBizProcInstalled)
 $arResult['CATEGORY_ID'] = (int)($arParams['CATEGORY_ID'] ?? 0);
 $factory = Container::getInstance()->getFactory(\CCrmOwnerType::Contact);
 $category = $factory?->getCategory($arResult['CATEGORY_ID']);
+$arResult['IS_DEFAULT_CATEGORY'] = $factory?->getDefaultCategory()?->getId() === $category?->getId();
 
-$userPermissions = CCrmPerms::GetCurrentUserPermissions();
-if (!$isErrorOccured && !CCrmContact::CheckReadPermission(0, $userPermissions, $arResult['CATEGORY_ID']))
+if (!$isErrorOccured && !$userPermissionsService->entityType()->canReadItemsInCategory(CCrmOwnerType::Contact, $arResult['CATEGORY_ID']))
 {
 	$errorMessage = GetMessage('CRM_PERMISSION_DENIED');
 	$isErrorOccured = true;
@@ -119,12 +121,7 @@ $fieldRestrictionManager = new FieldRestrictionManager(
 $CCrmContact = new CCrmContact();
 if (!$isErrorOccured && $isInExportMode)
 {
-	if ($CCrmContact->cPerms->HavePerm(
-		(new \Bitrix\Crm\Category\PermissionEntityTypeHelper(CCrmOwnerType::Contact))
-			->getPermissionEntityTypeForCategory($arResult['CATEGORY_ID']),
-		BX_CRM_PERM_NONE,
-		'EXPORT'
-	))
+	if (!$userPermissionsService->entityType()->canExportItemsInCategory(CCrmOwnerType::Contact, $arResult['CATEGORY_ID']))
 	{
 		$errorMessage = \Bitrix\Main\Localization\Loc::getMessage('CRM_PERMISSION_DENIED');
 		$isErrorOccured = true;
@@ -154,8 +151,8 @@ if ($isErrorOccured)
 
 $CCrmBizProc = new CCrmBizProc('CONTACT');
 
-$userID = CCrmSecurityHelper::GetCurrentUserID();
-$isAdmin = CCrmPerms::IsAdmin();
+$userID = Container::getInstance()->getContext()->getUserId();
+$isAdmin = $userPermissionsService->isAdmin();
 $enableOutmodedFields = $arResult['ENABLE_OUTMODED_FIELDS'] = ContactSettings::getCurrent()->areOutmodedRequisitesEnabled();
 
 $arResult['CURRENT_USER_ID'] = CCrmSecurityHelper::GetCurrentUserID();
@@ -684,6 +681,8 @@ if ($factory && $category)
 	}
 }
 
+(new Crm\Filter\Field\LastCommunicationField())->addLastCommunicationGridHeader($arResult['HEADERS']);
+
 $CCrmUserType->appendGridHeaders($arResult['HEADERS']);
 
 $arResult['HEADERS_SECTIONS'] = \Bitrix\Crm\Filter\HeaderSections::getInstance()
@@ -993,12 +992,11 @@ if($actionData['ACTIVE'])
 		if ($actionData['NAME'] == 'delete' && isset($actionData['ID']))
 		{
 			$ID = intval($actionData['ID']);
-			$arEntityAttr = $userPermissions->GetEntityAttr('CONTACT', array($ID));
-			if(CCrmAuthorizationHelper::CheckDeletePermission(CCrmOwnerType::ContactName, $ID, $userPermissions, $arEntityAttr))
+			if ($userPermissionsService->item()->canDelete(CCrmOwnerType::Contact, $ID))
 			{
 				$DB->StartTransaction();
 
-				if($CCrmBizProc->Delete($ID, $arEntityAttr)
+				if($CCrmBizProc->Delete($ID)
 					&& $CCrmContact->Delete($ID, array('PROCESS_BIZPROC' => false)))
 				{
 					$DB->Commit();
@@ -1648,15 +1646,13 @@ $arResult['STEXPORT_IS_FIRST_PAGE'] = $pageNum === 1 ? 'Y' : 'N';
 $arResult['STEXPORT_IS_LAST_PAGE'] = $enableNextPage ? 'N' : 'Y';
 
 $arResult['PAGINATION']['URL'] = $APPLICATION->GetCurPageParam('', array('apply_filter', 'clear_filter', 'save', 'page', 'sessid', 'internal'));
-$arResult['PERMS']['ADD']    = !$userPermissions->HavePerm('CONTACT', BX_CRM_PERM_NONE, 'ADD');
-$arResult['PERMS']['WRITE']  = !$userPermissions->HavePerm('CONTACT', BX_CRM_PERM_NONE, 'WRITE');
-$arResult['PERMS']['DELETE'] = !$userPermissions->HavePerm('CONTACT', BX_CRM_PERM_NONE, 'DELETE');
+$arResult['PERMS']['ADD'] = $userPermissionsService->entityType()->canAddItemsInCategory(CCrmOwnerType::Contact, $arResult['CATEGORY_ID']);
+$arResult['PERMS']['WRITE'] = $userPermissionsService->entityType()->canUpdateItemsInCategory(CCrmOwnerType::Contact, $arResult['CATEGORY_ID']);
+$arResult['PERMS']['DELETE'] = $userPermissionsService->entityType()->canDeleteItemsInCategory(CCrmOwnerType::Contact, $arResult['CATEGORY_ID']);
 
-$arResult['PERM_DEAL'] = CCrmDeal::CheckCreatePermission($userPermissions);
-$bQuote = !$CCrmContact->cPerms->HavePerm('QUOTE', BX_CRM_PERM_NONE, 'ADD');
-$arResult['PERM_QUOTE'] = $bQuote;
-$bInvoice = !$userPermissions->HavePerm('INVOICE', BX_CRM_PERM_NONE, 'ADD');
-$arResult['PERM_INVOICE'] = $bInvoice;
+$arResult['PERM_DEAL'] = $userPermissionsService->entityType()->canAddItems(CCrmOwnerType::Deal);
+$arResult['PERM_QUOTE'] = $userPermissionsService->entityType()->canAddItems(CCrmOwnerType::Quote);
+$arResult['PERM_INVOICE'] = $userPermissionsService->entityType()->canAddItems(CCrmOwnerType::Invoice);
 
 $enableExportEvent = $isInExportMode && HistorySettings::getCurrent()->isExportEventEnabled();
 
@@ -1731,7 +1727,7 @@ foreach($arResult['CONTACT'] as &$arContact)
 			'ENTITY_ID' => $companyID
 		);
 
-		if (!CCrmCompany::CheckReadPermission($companyID, $userPermissions))
+		if (!$userPermissionsService->item()->canRead(CCrmOwnerType::Company, $companyID))
 		{
 			$arContact['COMPANY_INFO']['IS_HIDDEN'] = true;
 		}
@@ -1802,7 +1798,7 @@ foreach($arResult['CONTACT'] as &$arContact)
 	;
 	if ($category && $category->getCode())
 	{
-		$analyticsEventBuilder->setP2WithValueNormalization('category', $category->getCode());
+		$analyticsEventBuilder->setP3WithValueNormalization('category', $category->getCode());
 	}
 	$arContact['PATH_TO_CONTACT_COPY'] = $analyticsEventBuilder
 		->buildUri($arContact['PATH_TO_CONTACT_EDIT'])
@@ -2166,13 +2162,13 @@ if (isset($arResult['CONTACT_ID']) && !empty($arResult['CONTACT_ID']))
 	}
 
 	// checking access for operation
-	$arContactAttr = CCrmPerms::GetEntityAttr('CONTACT', $arResult['CONTACT_ID']);
+	$userPermissionsService->item()->preloadPermissionAttributes(CCrmOwnerType::Contact, $arResult['CONTACT_ID']);
 	foreach ($arResult['CONTACT_ID'] as $iContactId)
 	{
-		$arResult['CONTACT'][$iContactId]['EDIT'] = $userPermissions->CheckEnityAccess('CONTACT', 'WRITE', $arContactAttr[$iContactId] ?? []);
-		$arResult['CONTACT'][$iContactId]['DELETE'] = $userPermissions->CheckEnityAccess('CONTACT', 'DELETE', $arContactAttr[$iContactId] ?? []);
+		$arResult['CONTACT'][$iContactId]['EDIT'] = $userPermissionsService->item()->canUpdate(CCrmOwnerType::Contact, $iContactId);
+		$arResult['CONTACT'][$iContactId]['DELETE'] = $userPermissionsService->item()->canDelete(CCrmOwnerType::Contact, $iContactId);
 
-		$arResult['CONTACT'][$iContactId]['BIZPROC_LIST'] = array();
+		$arResult['CONTACT'][$iContactId]['BIZPROC_LIST'] = [];
 
 		if ($isBizProcInstalled && !class_exists(\Bitrix\Bizproc\Controller\Workflow\Starter::class))
 		{
@@ -2188,7 +2184,6 @@ if (isset($arResult['CONTACT_ID']) && !empty($arResult['CONTACT_ID']))
 						'WorkflowTemplateId' => $arBP['ID'],
 						'CreatedBy' => $arResult['CONTACT'][$iContactId]['~ASSIGNED_BY_ID'],
 						'UserIsAdmin' => $isAdmin,
-						'CRMEntityAttr' => $arContactAttr
 					)
 				))
 				{

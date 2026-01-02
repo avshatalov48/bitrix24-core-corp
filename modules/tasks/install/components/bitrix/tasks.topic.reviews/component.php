@@ -156,7 +156,7 @@ else
 
 if (!CForumNew::CanUserViewForum($arParams["FORUM_ID"], $USER->GetUserGroupArray(), $arParams["PERMISSION"]))
 {
-	if ( ! ($USER->IsAdmin() || CTasksTools::IsPortalB24Admin()) )
+	if ( ! ($USER->IsAdmin() || \Bitrix\Tasks\Integration\Bitrix24\User::isAdmin()) )
 	{
 		ShowError(GetMessage("F_ERR_FORUM_NO_ACCESS"));
 		return false;

@@ -1,0 +1,117 @@
+<?php
+$MESS["CRM_COMPANY_TYPE_COMPETITOR"] = "Бәсекелес";
+$MESS["CRM_COMPANY_TYPE_CUSTOMER"] = "Клиент";
+$MESS["CRM_COMPANY_TYPE_INTEGRATOR"] = "Интегратор";
+$MESS["CRM_COMPANY_TYPE_INVESTOR"] = "Инвестор";
+$MESS["CRM_COMPANY_TYPE_OTHER"] = "Басқа";
+$MESS["CRM_COMPANY_TYPE_PARTNER"] = "Серіктес";
+$MESS["CRM_COMPANY_TYPE_PRESS"] = "БАҚ";
+$MESS["CRM_COMPANY_TYPE_PROSPECT"] = "Келешек";
+$MESS["CRM_COMPANY_TYPE_RESELLER"] = "Реселлер";
+$MESS["CRM_CONTACT_TYPE_CLIENT"] = "Клиенттер";
+$MESS["CRM_CONTACT_TYPE_JOURNALIST"] = "Журналисттер";
+$MESS["CRM_CONTACT_TYPE_PARTNER"] = "Серіктестер";
+$MESS["CRM_CONTACT_TYPE_SHARE"] = "Жалпы байланыстар";
+$MESS["CRM_CONTACT_TYPE_SUPPLIER"] = "Жеткізушілер";
+$MESS["CRM_DEAL_STATE_CANCELED"] = "Жойылды";
+$MESS["CRM_DEAL_STATE_COMPLETE"] = "Орындалды";
+$MESS["CRM_DEAL_STATE_PLANNED"] = "Жоспарларда";
+$MESS["CRM_DEAL_STATE_PROCESS"] = "Жұмыс үстінде";
+$MESS["CRM_DEAL_TYPE_COMPLEX"] = "Кешенді сату";
+$MESS["CRM_DEAL_TYPE_GOODS"] = "Тауарды сату";
+$MESS["CRM_DEAL_TYPE_SALE"] = "Сату";
+$MESS["CRM_DEAL_TYPE_SERVICE"] = "Сервистік қызмет көрсету";
+$MESS["CRM_DEAL_TYPE_SERVICES"] = "Қызметті сату";
+$MESS["CRM_EMAIL_CONFIRM_EVENT_DESC"] = "<span style=\"font-size:16px;line-height:20px;\">
+Email мекенжайын растау үшін берілген кодты өзіңіздің Битрикс24-те енгізіңіз.<br>
+
+<span style=\"font-size:24px;line-height:70px;\"><b>#CONFIRM_CODE#</b></span><br>
+
+<span style=\"color:#808080;\">
+email не үшін растау керек?<br><br>
+<span style=\"font-size:14px;\">Ықтимал қателерді болдырмау үшін жіберушінің мекенжайын тексеру маңызды, яғни сіздің клиенттеріңіз дұрыс мекенжайға жауап жібереді. Сонымен қатар, біз адал бизнеске пайдалы құрал бергіміз келеді және хатты қолдан жасай алатын алаяқтардан аулақ болғымыз келеді.</span>
+</span>";
+$MESS["CRM_EMAIL_CONFIRM_EVENT_NAME"] = "Email мекенжайын растау";
+$MESS["CRM_EMAIL_CONFIRM_TYPE_DESC"] = "
+
+#EMAIL# - растау үшін Email-мекенжай
+#CONFIRM_CODE# - Растау коды";
+$MESS["CRM_EMAIL_CONFIRM_TYPE_NAME"] = "Жіберушінің email мекенжайын растау";
+$MESS["CRM_EVENT_TYPE_INFO"] = "Ақпарат";
+$MESS["CRM_EVENT_TYPE_MESSAGE"] = "email жіберілді";
+$MESS["CRM_EVENT_TYPE_PHONE"] = "Телефон қоңырауы";
+$MESS["CRM_GADGET_CLOSED_DEAL_TITLE"] = "Аяқталған мәмілелер";
+$MESS["CRM_GADGET_LAST_EVENT_TITLE"] = "Соңғы оқиғалар";
+$MESS["CRM_GADGET_MY_LEAD_TITLE"] = "Менің лидтерім";
+$MESS["CRM_GADGET_NEW_COMPANY_TITLE"] = "Жаңа компаниялар";
+$MESS["CRM_GADGET_NEW_CONTACT_TITLE"] = "Жаңа байланыстар";
+$MESS["CRM_GADGET_NEW_LEAD_TITLE"] = "Жаңа лидтер";
+$MESS["CRM_INDUSTRY_BANKING"] = "Банк қызметтері";
+$MESS["CRM_INDUSTRY_CONSULTING"] = "Консалтинг";
+$MESS["CRM_INDUSTRY_DELIVERY"] = "Жеткізу";
+$MESS["CRM_INDUSTRY_ENTERTAINMENT"] = "Ойын-сауық";
+$MESS["CRM_INDUSTRY_FINANCE"] = "Қаржы";
+$MESS["CRM_INDUSTRY_GOVERNMENT"] = "Үкімет";
+$MESS["CRM_INDUSTRY_IT"] = "Ақпараттық технологиялар";
+$MESS["CRM_INDUSTRY_MANUFACTURING"] = "Өндіріс";
+$MESS["CRM_INDUSTRY_NOTPROFIT"] = "Пайда табу үшін емес";
+$MESS["CRM_INDUSTRY_OTHER"] = "Басқа";
+$MESS["CRM_INDUSTRY_TELECOM"] = "Телекоммуникация және байланыс";
+$MESS["CRM_INSTALL_DESCRIPTION"] = "Модуль CRM құруға мүмкіндік береді";
+$MESS["CRM_INSTALL_NAME"] = "CRM";
+$MESS["CRM_INSTALL_TITLE"] = "CRM модулін орнату";
+$MESS["CRM_MODULE_UNINSTALL_ERROR"] = "Модульді өшіріп алып тастау мүмкін емес.";
+$MESS["CRM_MODULE_UNINSTALL_ERROR_CRMMOBILE"] = "CRM модулі мобильді CRM дұрыс жұмыс істеуі үшін қажет.\r\nАлдымен crmmobile модулін жойыңыз.";
+$MESS["CRM_ORD_PROP_2"] = "Орналасқан жері";
+$MESS["CRM_ORD_PROP_4"] = "Индекс";
+$MESS["CRM_ORD_PROP_5"] = "Жеткізу мекенжайы";
+$MESS["CRM_ORD_PROP_6"] = "Т.А.Ә.";
+$MESS["CRM_ORD_PROP_7"] = "Заңды мекенжайы";
+$MESS["CRM_ORD_PROP_8"] = "Компания атауы";
+$MESS["CRM_ORD_PROP_9"] = "Телефон";
+$MESS["CRM_ORD_PROP_10"] = "Байланысушы тұлға";
+$MESS["CRM_ORD_PROP_11"] = "Факс";
+$MESS["CRM_ORD_PROP_12"] = "Жеткізу мекенжайы";
+$MESS["CRM_ORD_PROP_13"] = "СТН";
+$MESS["CRM_ORD_PROP_14"] = "ЕСК";
+$MESS["CRM_ORD_PROP_21"] = "Қала";
+$MESS["CRM_ORD_PROP_GROUP_FIZ1"] = "Жеке деректер";
+$MESS["CRM_ORD_PROP_GROUP_FIZ2"] = "Жеткізу деректері";
+$MESS["CRM_ORD_PROP_GROUP_UR1"] = "Компания деректері";
+$MESS["CRM_ORD_PROP_GROUP_UR2"] = "Байланыс ақпараты";
+$MESS["CRM_PERM_D"] = "Қолжетімділік жабық";
+$MESS["CRM_PERM_R"] = "Беттерді оқу";
+$MESS["CRM_PERM_W"] = "Беттерді құру / өзгерту";
+$MESS["CRM_PERM_X"] = "Көрнекі редакторда беттерді құру / өзгерту";
+$MESS["CRM_PERM_Y"] = "Беттер мен тарихты жою";
+$MESS["CRM_PERM_Z"] = "Құқықтарды орнату";
+$MESS["CRM_ROLE_ADMIN"] = "Әкімші";
+$MESS["CRM_ROLE_CHIF"] = "Бөлім басшысы";
+$MESS["CRM_ROLE_DIRECTOR"] = "Директор";
+$MESS["CRM_ROLE_MAN"] = "Менеджер";
+$MESS["CRM_SALE_STATUS_A"] = "Расталды";
+$MESS["CRM_SALE_STATUS_D"] = "Бас тартылды";
+$MESS["CRM_SALE_STATUS_P"] = "Төленген";
+$MESS["CRM_SALE_STATUS_S"] = "Клиентке жіберілді";
+$MESS["CRM_STATUS_TYPE_SOURCE_CALL"] = "Қоңырау ";
+$MESS["CRM_STATUS_TYPE_SOURCE_COMPANY"] = "Науқан";
+$MESS["CRM_STATUS_TYPE_SOURCE_CONFERENCE"] = "Конференция";
+$MESS["CRM_STATUS_TYPE_SOURCE_EMAIL"] = "Электрондық пошта";
+$MESS["CRM_STATUS_TYPE_SOURCE_EMPLOYEE"] = "Қызметкер";
+$MESS["CRM_STATUS_TYPE_SOURCE_HR"] = "HR-департаменті";
+$MESS["CRM_STATUS_TYPE_SOURCE_MAIL"] = "Хат";
+$MESS["CRM_STATUS_TYPE_SOURCE_OTHER"] = "Басқа";
+$MESS["CRM_STATUS_TYPE_SOURCE_PARTNER"] = "Бар клиент";
+$MESS["CRM_STATUS_TYPE_SOURCE_SELF"] = "Өз байланысы";
+$MESS["CRM_STATUS_TYPE_SOURCE_TRADE_SHOW"] = "Көрме";
+$MESS["CRM_STATUS_TYPE_SOURCE_WEB"] = "Веб-сайты";
+$MESS["CRM_STATUS_TYPE_SOURCE_WEB_FORM"] = "Веб-нысан";
+$MESS["CRM_TOP_LINKS_ITEM_NAME"] = "CRM";
+$MESS["CRM_UF_NAME"] = "CRM элементтері";
+$MESS["CRM_UF_NAME_CAL"] = "CRM элементтері";
+$MESS["CRM_UF_NAME_LF_ID"] = "ЖТ үшін CRM мәнінің ID-і";
+$MESS["CRM_UF_NAME_LF_TYPE"] = "ЖТ үшін CRM мәнінің коды";
+$MESS["CRM_UNINSTALL_TITLE"] = "CRM модулін жою";
+$MESS["CRM_UNINS_MODULE_SALE"] = "CRM модулінің жұмысы үшін \"Интернет-дүкен\" модулі қажет.<br />Алдымен қажетті модульді орнатыңыз.";
+$MESS["CRM_VAT_1"] = "ҚҚС қоспағанда";
+$MESS["CRM_VAT_2"] = "ҚҚС 18%";

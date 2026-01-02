@@ -54,6 +54,11 @@ abstract class AbstractCase
 		return $this->getCurrentStrategy()->getRecipients();
 	}
 
+	public function getStrategyAlias(): ?string
+	{
+		return null;
+	}
+
 	protected function createDictionary(array $options): void
 	{
 		$this->dictionary->setValues($options);

@@ -51,11 +51,14 @@ export default class SonetGroupEvent
 		}
 		else if ([ 'afterSetFavorites' ].includes(eventData.code))
 		{
-			const sonetGroupMenu = UIGroupMenu.getInstance();
-			const favoritesValue = sonetGroupMenu.favoritesValue;
+			const sonetGroupMenu = UIGroupMenu?.getInstance();
+			if (sonetGroupMenu)
+			{
+				const favoritesValue = sonetGroupMenu.favoritesValue;
 
-			sonetGroupMenu.setItemTitle(!favoritesValue);
-			sonetGroupMenu.favoritesValue = !favoritesValue;
+				sonetGroupMenu.setItemTitle(!favoritesValue);
+				sonetGroupMenu.favoritesValue = !favoritesValue;
+			}
 		}
 		else if (
 			[ 'afterDelete', 'afterLeave' ].includes(eventData.code)

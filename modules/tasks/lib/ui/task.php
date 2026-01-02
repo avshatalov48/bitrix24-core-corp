@@ -48,9 +48,9 @@ final class Task
 		$urlParams = [
 			'EVENT_TYPE' => $eventType,
 			'EVENT_TASK_ID' => $taskId,
-			'EVENT_OPTIONS[STAY_AT_PAGE]' => $eventOptions['STAY_AT_PAGE'],
-			'EVENT_OPTIONS[SCOPE]' => $eventOptions['SCOPE'],
-			'EVENT_OPTIONS[FIRST_GRID_TASK_CREATION_TOUR_GUIDE]' => $eventOptions['FIRST_GRID_TASK_CREATION_TOUR_GUIDE'],
+			'EVENT_OPTIONS[STAY_AT_PAGE]' => empty($eventOptions['STAY_AT_PAGE'])  ? '' : $eventOptions['STAY_AT_PAGE'],
+			'EVENT_OPTIONS[SCOPE]' => empty($eventOptions['SCOPE'])? '' : $eventOptions['SCOPE'],
+			'EVENT_OPTIONS[FIRST_GRID_TASK_CREATION_TOUR_GUIDE]' => empty($eventOptions['FIRST_GRID_TASK_CREATION_TOUR_GUIDE']) ? '' : $eventOptions['FIRST_GRID_TASK_CREATION_TOUR_GUIDE'],
 		];
 
 		return Util::replaceUrlParameters($url, $urlParams, array_keys($urlParams));

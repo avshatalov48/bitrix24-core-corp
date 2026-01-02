@@ -1,0 +1,94 @@
+.sign-b2e-regional-settings__item {
+	display: inline-block;
+	width: 100%;
+}
+
+.sign-b2e-regional-settings__item.--row {
+	display: flex;
+	flex-flow: row;
+	align-items: center;
+}
+
+.sign-b2e-regional-settings__item-text {
+	display: flex;
+	flex-flow: row;
+	align-items: center;
+	font: 13px / 15.51px var(--ui-font-family-system);
+	color: var(--ui-color-palette-gray-60);
+	margin: 0 0 4px 0;
+}
+
+.sign-b2e-regional-settings-gap {
+	gap: 17px;
+	display: flex;
+	flex-flow: column;
+}
+
+.sign-b2e-regional-settings__step_settings_wrapper {
+	display: grid;
+	grid-template-columns: 25% 75%;
+}
+
+.sign-b2e-regional-settings-company_selector_notice {
+	margin-top: 8px;
+}
+
+.sign-b2e-regional-settings-company_selector_title {
+	font: 16px / 22px var(--font_os_regular);
+	color: var(--ui-color-palette-black-base);
+	word-break: break-all;
+}
+
+.sign-b2e-regional-settings_apply_for_all_settings {
+	margin-top: 20px;
+}
+
+.sign-b2e-regional-settings_apply_for_all_settings_more:hover {
+	text-decoration: underline;
+}
+
+.sign-b2e-regional-settings_apply_for_all_title {
+	margin: 10px 0 5px 0;
+}
+
+.sign-b2e-regional-settings_date_container {
+	margin-left: 8px;
+	position: relative;
+	bottom: 3px;
+	overflow: hidden;
+}
+
+.sign-b2e-regional-settings_date_hint {
+	position: relative;
+	bottom: 3px;
+}
+
+.sign-b2e-regional-settings__counter_connect {
+	height: calc(100% + 50px) !important;
+}
+
+.sign-b2e-regional-settings__counter_connect_with_margin:after,
+.sign-b2e-regional-settings__counter_connect_with_margin:before {
+	margin-left: 14px;
+}
+
+.sign-b2e-regional-settings__counter_connect_with_left {
+	left: 11px !important;
+}
+
+.ui-element-invalid {
+	border: 1px solid var(--ui-color-background-on-alert) !important;
+}
+
+.sign-wizard__step .sign-v2-b2e-vue-util-sign-selector__selected-item-view {
+	border: 1px solid rgb(var(--ui-field-color-border-default)) !important;
+}
+
+.sign-b2e-regional-settings-dropdown .sign-b2e-dropdown {
+	height: 29px;
+	border-radius: 4px;
+}
+
+.sign-b2e-regional-settings-reg-number-input {
+	height: 41px !important;
+}

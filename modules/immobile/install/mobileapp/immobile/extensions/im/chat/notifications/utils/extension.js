@@ -284,33 +284,33 @@
 			{
 				return BX.message('MOBILE_EXT_NOTIFICATION_TODAY_DATETIME').replace(
 					'#datetime#',
-					dateFormatter.get(timestampShort, dateFormatter.formats.shortTime)
+					dateFormatter.get(timestampShort, dateFormatter.formats.SHORT_TIME_FORMAT)
 				);
 			}
 			else if (targetDate >= yesterdayStart && targetDate < yesterdayEnd)
 			{
 				return BX.message('MOBILE_EXT_NOTIFICATION_YESTERDAY_DATETIME').replace(
 					'#datetime#',
-					dateFormatter.get(timestampShort, dateFormatter.formats.shortTime)
+					dateFormatter.get(timestampShort, dateFormatter.formats.SHORT_TIME_FORMAT)
 				);
 			}
 			else if (targetDate.getFullYear() === nowYear)
 			{
 				return BX.message('MOBILE_EXT_NOTIFICATION_FULL_DATETIME').replace(
 					'#time#',
-					dateFormatter.get(timestampShort, dateFormatter.formats.shortTime)
+					dateFormatter.get(timestampShort, dateFormatter.formats.SHORT_TIME_FORMAT)
 				).replace(
 					'#date#',
-					dateFormatter.get(timestampShort, dateFormatter.formats.dayMonth)
+					dateFormatter.get(timestampShort, dateFormatter.formats.DAY_MONTH_FORMAT)
 				);
 			}
 
 			return BX.message('MOBILE_EXT_NOTIFICATION_FULL_DATETIME').replace(
 				'#time#',
-				dateFormatter.get(timestampShort, dateFormatter.formats.shortTime)
+				dateFormatter.get(timestampShort, dateFormatter.formats.SHORT_TIME_FORMAT)
 			).replace(
 				'#date#',
-				dateFormatter.get(timestampShort, dateFormatter.formats.longDate)
+				dateFormatter.get(timestampShort, dateFormatter.formats.LONG_DATE_FORMAT)
 			);
 		},
 

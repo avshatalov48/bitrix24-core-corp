@@ -6,8 +6,11 @@
 jn.define('im/messenger/provider/pull/base/application', (require, exports, module) => {
 	const { BasePullHandler } = require('im/messenger/provider/pull/base/pull-handler');
 	const { Type } = require('type');
+	const {
+		EventType,
+		ComponentCode,
+	} = require('im/messenger/const');
 	const { MessengerEmitter } = require('im/messenger/lib/emitter');
-	const { EventType, DialogType, ComponentCode } = require('im/messenger/const');
 
 	/**
 	 * @class BaseApplicationPullHandler
@@ -16,7 +19,7 @@ jn.define('im/messenger/provider/pull/base/application', (require, exports, modu
 	{
 		handleApplicationOpenChat(params, extra, command)
 		{
-			if (this.interceptEvent(params, extra, command))
+			if (this.interceptEvent(extra))
 			{
 				return;
 			}
@@ -28,10 +31,7 @@ jn.define('im/messenger/provider/pull/base/application', (require, exports, modu
 				return;
 			}
 
-			const componentCode = dialogModelState.type === DialogType.copilot
-				? ComponentCode.imCopilotMessenger : ComponentCode.imMessenger;
-
-			MessengerEmitter.emit(EventType.messenger.openDialog, { dialogId: params.dialogId }, componentCode);
+			MessengerEmitter.emit(EventType.messenger.openDialog, { dialogId: params.dialogId }, ComponentCode.imMessenger);
 		}
 
 		/**

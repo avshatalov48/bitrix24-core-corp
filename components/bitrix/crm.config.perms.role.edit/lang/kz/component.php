@@ -1,0 +1,24 @@
+<?php
+$MESS["CRM_ENTITY_TYPE_BUTTON"] = "Сайтқа виджет";
+$MESS["CRM_ENTITY_TYPE_COMPANY"] = "Компания";
+$MESS["CRM_ENTITY_TYPE_CONTACT"] = "Байланыс";
+$MESS["CRM_ENTITY_TYPE_DEAL"] = "Мәміле";
+$MESS["CRM_ENTITY_TYPE_EXCLUSION"] = "Ерекшеліктер тізімі";
+$MESS["CRM_ENTITY_TYPE_INVOICE"] = "Шот";
+$MESS["CRM_ENTITY_TYPE_LEAD"] = "Лид";
+$MESS["CRM_ENTITY_TYPE_ORDER"] = "Тапсырыс";
+$MESS["CRM_ENTITY_TYPE_QUOTE_MSGVER_1"] = "Ұсыныс";
+$MESS["CRM_ENTITY_TYPE_SALETARGET"] = "Сату жоспары";
+$MESS["CRM_ENTITY_TYPE_WEBFORM"] = "CRM-нысан";
+$MESS["CRM_MODULE_NOT_INSTALLED"] = "Crm модулі орнатылмаған.";
+$MESS["CRM_PERMISSION_DENIED"] = "Қолжетімділікке тыйым салынған";
+$MESS["CRM_PERMS_ENTITY_LIST"] = "Қолжетімділік құқығы";
+$MESS["CRM_PERMS_ROLE_EDIT"] = "Рөлді басқару";
+$MESS["CRM_PERMS_TYPE_"] = "Қолжетімсіз";
+$MESS["CRM_PERMS_TYPE_A"] = "Өз";
+$MESS["CRM_PERMS_TYPE_AUTOMATION_ALL"] = "Өзгерту";
+$MESS["CRM_PERMS_TYPE_AUTOMATION_NONE"] = "Оқу";
+$MESS["CRM_PERMS_TYPE_D"] = "Өз + өз бөлімінің";
+$MESS["CRM_PERMS_TYPE_F"] = "Өзінің + өз бөлімінің + бөлімшелерінің";
+$MESS["CRM_PERMS_TYPE_O"] = "Барлық ашық";
+$MESS["CRM_PERMS_TYPE_X"] = "Барлығы";

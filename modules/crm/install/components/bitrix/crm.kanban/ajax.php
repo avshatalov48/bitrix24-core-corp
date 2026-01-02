@@ -31,7 +31,6 @@ class KanbanAjaxController extends \Bitrix\Main\Engine\Controller
 
 			foreach ($entityIds as $entityId)
 			{
-
 				if (\CCrmOwnerType::isUseDynamicTypeBasedApproach($entityTypeId))
 				{
 					$entityType = \Bitrix\Crm\Integration\Recyclebin\Dynamic::getEntityName($entityTypeId);
@@ -55,7 +54,7 @@ class KanbanAjaxController extends \Bitrix\Main\Engine\Controller
 		}
 		catch (\Exception $e)
 		{
-			$this->errorCollection[] = new Error($e->getMessage(), $e->getCode());
+			$this->errorCollection[] = new \Bitrix\Main\Error($e->getMessage(), $e->getCode());
 
 			return null;
 		}
@@ -74,7 +73,7 @@ class KanbanAjaxController extends \Bitrix\Main\Engine\Controller
 		{
 			$this->addError(new \Bitrix\Main\Error('Entity not found'));
 		}
-		elseif(!$entity->checkReadPermissions(0))
+		elseif(!$entity->checkReadPermissions())
 		{
 			$this->addError(new \Bitrix\Main\Error('Access denied'));
 		}
@@ -100,7 +99,7 @@ class KanbanAjaxController extends \Bitrix\Main\Engine\Controller
 		}
 
 		$entityTypeId = \CCrmOwnerType::ResolveID($entityType);
-		if (!Container::getInstance()->getUserPermissions()->canReadType($entityTypeId))
+		if (!Container::getInstance()->getUserPermissions()->entityType()->canReadItems($entityTypeId))
 		{
 			$this->addError(ErrorCode::getAccessDeniedError());
 

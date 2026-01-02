@@ -8,8 +8,7 @@ use Bitrix\Tasks\Internals\Task\Base;
 abstract class Scope extends Base
 {
 	/**
-	 * @see Context::SPACES
+	 * @see Context
 	 */
-	public const SPACES = 'spaces';
 	public const COLLAB = 'collab';
 }

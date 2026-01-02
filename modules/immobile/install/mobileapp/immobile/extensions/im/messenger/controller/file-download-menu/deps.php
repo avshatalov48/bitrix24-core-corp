@@ -2,14 +2,20 @@
 
 return [
 	'extensions' => [
-		'type',
-		'loc',
-		'utils/url',
-		'notify-manager',
+		'utils/file',
+		'tokens',
 		'layout/ui/context-menu',
-		'im:messenger/lib/di/service-locator',
+		'ui-system/typography',
+		'ui-system/blocks/icon',
+		'im:messenger/loc',
+		'im:messenger/const',
 		'im:messenger/lib/logger',
+		'im:messenger/provider/services/disk',
 		'im:messenger/lib/ui/notification',
-		'im:messenger/assets/file-download-menu',
+		'im:messenger/lib/di/service-locator',
+	],
+	'bundle' => [
+		'./src/file-download',
+		'./src/server-download',
 	],
 ];

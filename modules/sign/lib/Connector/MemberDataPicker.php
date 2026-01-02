@@ -13,8 +13,9 @@ final class MemberDataPicker
 	private const AVAILABLE_CONNECTORS = [User::class, Contact::class, Company::class];
 
 	private Item\Connector\FieldCollection $fetchedFields;
+
 	private function __construct(
-		private Contract\Connector $connector
+		private Contract\Connector $connector,
 	)
 	{
 		$this->fetchedFields = $this->connector->fetchFields();

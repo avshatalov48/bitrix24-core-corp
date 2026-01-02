@@ -4,6 +4,16 @@ if(!defined('B_PROLOG_INCLUDED') || B_PROLOG_INCLUDED!==true) die();
 /** @var CMain $APPLICATION */
 \Bitrix\Main\UI\Extension::load('ui.fonts.opensans');
 $APPLICATION->SetAdditionalCSS('/bitrix/js/crm/css/crm.css');
+
+$APPLICATION->IncludeComponent(
+	'bitrix:crm.entity.disable_alert',
+	'',
+	[
+		'ENTITY_TYPE_ID' => \CCrmOwnerType::Lead,
+		'ENTITY_ID' => $arResult['VARIABLES']['lead_id'],
+	],
+);
+
 $APPLICATION->IncludeComponent(
 	'bitrix:crm.control_panel',
 	'',
@@ -77,4 +87,3 @@ else
 	?></div><?
 }
 ?>
-

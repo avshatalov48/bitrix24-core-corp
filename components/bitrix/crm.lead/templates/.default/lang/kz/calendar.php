@@ -1,0 +1,7 @@
+<?php
+$MESS["CRM_CALENDAR_SETTINGS"] = "Күнтізбе баптаулары";
+$MESS["CRM_CALENDAR_SETTINGS_DATE"] = "Құрылған күні бойынша";
+$MESS["CRM_CALENDAR_SETTINGS_PROPERTY"] = "\"#USERFIELD_NAME#\" қасиеті бойынша";
+$MESS["CRM_CALENDAR_USERFIELD_HELP_MENU"] = "Ресурстарды брондау";
+$MESS["CRM_CALENDAR_VIEW_MODE_DATECREATE"] = "Жасалған күні";
+$MESS["CRM_CALENDAR_VIEW_MODE_USERFIELD"] = "#USERFIELD_NAME#";

@@ -255,7 +255,11 @@ final class Tasks
 			return;
 		}
 
-		Secretary::updateChatUsers($chatId, $addedUsers, $deletedUsers);
+		$parameters = [
+			'HIDE_HISTORY' => false,
+		];
+
+		Secretary::updateChatUsers($chatId, $addedUsers, $deletedUsers, $parameters);
 	}
 
 	private static function isCollaber(int $userId): bool

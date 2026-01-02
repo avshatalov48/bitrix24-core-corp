@@ -5,11 +5,11 @@ declare(strict_types=1);
 namespace Bitrix\Crm\Integration\Booking;
 
 use Bitrix\Booking\Entity\Booking\Booking;
-use Bitrix\Booking\Entity\Booking\Client;
-use Bitrix\Booking\Entity\Booking\ClientCollection;
-use Bitrix\Booking\Entity\Booking\ClientType;
-use Bitrix\Booking\Entity\Booking\ExternalDataCollection;
-use Bitrix\Booking\Entity\Booking\ExternalDataItem;
+use Bitrix\Booking\Entity\Client\Client;
+use Bitrix\Booking\Entity\Client\ClientCollection;
+use Bitrix\Booking\Entity\Client\ClientType;
+use Bitrix\Booking\Entity\ExternalData\ExternalDataCollection;
+use Bitrix\Booking\Entity\ExternalData\ExternalDataItem;
 use Bitrix\Booking\Interfaces\DataProviderInterface;
 use Bitrix\Crm\Item;
 use Bitrix\Crm\Service\Container;

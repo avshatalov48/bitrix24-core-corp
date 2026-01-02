@@ -1,0 +1,45 @@
+<?php
+
+$MESS['M_PROFILE_HEADER_CHAT_BUTTON_TEXT'] = 'Чат';
+$MESS['M_PROFILE_HEADER_VIDEO_CALL_BUTTON_TEXT'] = 'Видеозвонок';
+$MESS['M_PROFILE_HEADER_NOTES_BUTTON_TEXT'] = 'Заметки';
+$MESS['M_PROFILE_HEADER_CHAT_BUTTON_FIRED_TEXT'] = 'История переписки';
+
+$MESS['M_PROFILE_USER_STATUS_FIRED'] = 'Уволен';
+$MESS['M_PROFILE_USER_STATUS_ON_VACATION'] = 'В отпуске до #DATE_TO#';
+$MESS['M_PROFILE_USER_STATUS_DND'] = 'Не беспокоить [COLOR=#COLOR#]#GMT#[/COLOR]';
+$MESS['M_PROFILE_USER_STATUS_ONLINE'] = 'В сети [COLOR=#COLOR#]#GMT#[/COLOR]';
+$MESS['M_PROFILE_USER_STATUS_OFFLINE_WITH_TIME_NO_GENDER'] = 'Был(а) в сети #DATE#';
+$MESS['M_PROFILE_USER_STATUS_OFFLINE_WITH_TIME_M'] = 'Был в сети #DATE#';
+$MESS['M_PROFILE_USER_STATUS_OFFLINE_WITH_TIME_F'] = 'Была в сети #DATE#';
+$MESS['M_PROFILE_USER_STATUS_OFFLINE'] = 'Не в сети';
+
+$MESS['M_PROFILE_GRATITUDE_TITLE'] = 'Благодарности';
+$MESS['M_PROFILE_EFFICIENCY_TITLE'] = 'Эффективность';
+
+$MESS['M_PROFILE_DEPARTMENTS_TITLE'] = 'Структура компании';
+
+$MESS['M_PROFILE_TAGS_TITLE'] = 'Интересы';
+$MESS['M_PROFILE_TAGS_EDIT_MODE_TITLE'] = 'ИНТЕРЕСЫ';
+$MESS['M_PROFILE_TAGS_ADD_BUTTON'] = 'добавить';
+$MESS['M_PROFILE_TAGS_REMOVE_ERROR'] = 'Не удалось удалить тег';
+$MESS['M_PROFILE_TAGS_EXPAND_BUTTON'] = 'Показать все';
+
+$MESS['M_PROFILE_ABOUT_ME_TITLE'] = 'Обо мне';
+$MESS['M_PROFILE_ABOUT_ME_EDIT_MODE_TITLE'] = 'ОБО МНЕ';
+$MESS['M_PROFILE_ABOUT_ME_PLACEHOLDER'] = 'Заполнить';
+
+$MESS['M_PROFILE_EDIT_BUTTON_SAVE'] = 'Сохранить';
+$MESS['M_PROFILE_EDIT_BUTTON_CANCEL'] = 'Выйти без сохранения';
+$MESS['M_PROFILE_EDIT_BUTTON_SUBMIT'] = 'Продолжить';
+
+$MESS['M_PROFILE_AVATAR_CHOOSE_ERROR_TITLE'] = 'Не удалось загрузить фото';
+$MESS['M_PROFILE_AVATAR_CHOOSE_ERROR_TEXT'] = 'Попробуйте выбрать другой файл. Если ошибка появится ещё раз, обратитесь к администратору вашего Битрикс24';
+
+$MESS['M_PROFILE_COMMON_FIELDS_EXPAND_BUTTON'] = 'Показать все';
+$MESS['M_PROFILE_COMMON_FIELDS_INFO_BOX_TITLE'] = 'Информация';
+$MESS['M_PROFILE_COMMON_FIELDS_ADD_VALUE_BUTTON_TEXT'] = 'Добавить';
+$MESS['M_PROFILE_COMMON_FIELDS_PHONE_ERROR_TEXT'] = 'Некорректный номер телефона';
+
+$MESS['M_PROFILE_DEPARTMENT_EMPLOYEE_BOX_TITLE'] = 'Сотрудники';
+$MESS['M_PROFILE_DEPARTMENT_CONTACTS_BOX_TITLE'] = 'Контакты';

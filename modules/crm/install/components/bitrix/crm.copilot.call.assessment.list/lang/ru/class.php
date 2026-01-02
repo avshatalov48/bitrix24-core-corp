@@ -4,6 +4,9 @@ $MESS['CRM_COPILOT_CALL_ASSESSMENT_LIST_TITLE'] = 'Скрипты и Речев�
 $MESS['CRM_COPILOT_CALL_ASSESSMENT_LIST_COLUMN_CLIENT'] = 'Тип клиента';
 $MESS['CRM_COPILOT_CALL_ASSESSMENT_LIST_COLUMN_PROMPT'] = 'Скрипт';
 $MESS['CRM_COPILOT_CALL_ASSESSMENT_LIST_COLUMN_IS_ENABLED'] = 'Статус';
+$MESS['CRM_COPILOT_CALL_ASSESSMENT_LIST_COLUMN_ACTIVITY'] = 'Активность';
+$MESS['CRM_COPILOT_CALL_ASSESSMENT_LIST_COLUMN_ACTIVITY_CONFIRM_DIALOG_TITLE'] = 'Выключить скрипт?';
+$MESS['CRM_COPILOT_CALL_ASSESSMENT_LIST_COLUMN_ACTIVITY_CONFIRM_DIALOG_OK_BTN'] = 'Да, выключить';
 $MESS['CRM_COPILOT_CALL_ASSESSMENT_LIST_COLUMN_MODIFIED_BY'] = 'Изменён';
 $MESS['CRM_COPILOT_CALL_ASSESSMENT_LIST_COLUMN_INSPECTOR'] = 'Проверяющий';
 $MESS['CRM_COPILOT_CALL_ASSESSMENT_LIST_COLUMN_GIST'] = 'Критерии';
@@ -28,3 +31,7 @@ $MESS['CRM_COPILOT_CALL_ASSESSMENT_LIST_COLUMN_STATUS_PENDING'] = 'Ожидае�
 $MESS['CRM_COPILOT_CALL_ASSESSMENT_LIST_COLUMN_STATUS_ERROR'] = 'Нет данных';
 
 $MESS['CRM_COPILOT_CALL_ASSESSMENT_LIST_COLUMN_ASSESSMENT_AVG_TOOLTIP'] = 'Общий процент соответствия этому скрипту. В нём учитываются разговоры всех менеджеров. В этом скрипте соответствие ниже #LOW_BORDER#% квалифицируется как некачественный разговор, выше #HIGH_BORDER#% — как качественный';
+
+$MESS['CRM_COPILOT_CALL_ASSESSMENT_LIST_COLUMN_AVAILABILITY_PERIOD'] = "с #FROM# до #TO#";
+$MESS['CRM_COPILOT_CALL_ASSESSMENT_LIST_COLUMN_AVAILABILITY_CUSTOM'] = "#WEEKDAY_TYPE#, с #FROM# до #TO#";
+$MESS['CRM_COPILOT_CALL_ASSESSMENT_LIST_COLUMN_AVAILABILITY_HINT'] = "Скрипт сейчас неактивен. Вы всегда можете изменить время активности в настройках скрипта";

@@ -1,0 +1,28 @@
+.intranet-user-mini-profile-fade-enter-active {
+	transition: opacity 0.5s ease;
+	pointer-events: none;
+}
+
+.intranet-user-mini-profile-fade-leave-active {
+	transition: opacity 0.5s ease;
+}
+
+.intranet-user-mini-profile-fade-enter-from,
+.intranet-user-mini-profile-fade-leave-to {
+	opacity: 0;
+}
+
+.intranet-user-mini-profile-fade-leave-active,
+.intranet-user-mini-profile-fade-leave-from,
+.intranet-user-mini-profile-fade-leave-to {
+	position: absolute;
+}
+
+.intranet-user-mini-profile__loader-transition-wrapper {
+	position: relative;
+	transition: width 0.5s ease, height 0.5s ease;
+}
+
+.intranet-user-mini-profile__loader-transition-wrapper__loader {
+	overflow: hidden;
+}

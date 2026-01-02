@@ -1,0 +1,20 @@
+<?php
+$MESS["INTASK_C25T_CLEAR"] = "Босату";
+$MESS["INTASK_C25T_CLEAR_CONF"] = "Бронь алынады! Жалғастыру керек пе?";
+$MESS["INTASK_C25T_D1"] = "Дүйсенбі";
+$MESS["INTASK_C25T_D2"] = "Сейсенбі";
+$MESS["INTASK_C25T_D3"] = "Сәрсенбі";
+$MESS["INTASK_C25T_D4"] = "Бейсенбі";
+$MESS["INTASK_C25T_D5"] = "Жұма";
+$MESS["INTASK_C25T_D6"] = "Сенбі";
+$MESS["INTASK_C25T_D7"] = "Жексенбі";
+$MESS["INTASK_C25T_DBL_CLICK"] = "Келіссөздер бөлмесін резервтеу үшін тінтуірдің сол жақ батырмасын екі рет басу";
+$MESS["INTASK_C25T_EDIT"] = "Өзгерту";
+$MESS["INTASK_C25T_FLOOR"] = "Қабат";
+$MESS["INTASK_C25T_NEXT_WEEK"] = "Келесі апта";
+$MESS["INTASK_C25T_PHONE"] = "Телефон";
+$MESS["INTASK_C25T_PLACE"] = "Орын";
+$MESS["INTASK_C25T_PRIOR_WEEK"] = "Алдыңғы апта";
+$MESS["INTASK_C25T_RESERVED_BY"] = "Резервтелді";
+$MESS["INTASK_C25T_SET"] = "Орнату";
+$MESS["INTASK_C25T_TIME"] = "Уақыт";

@@ -22,7 +22,7 @@ class Sharing extends Item
 
 	public function getName(): string
 	{
-		return Loc::getMessage('CRM_TIMELINE_SHARING');
+		return Loc::getMessage('CRM_TIMELINE_SHARING_MSGVER_1');
 	}
 
 	public function isAvailable(): bool

@@ -225,6 +225,8 @@ class CVoxImplantDocuments
 		));
 
 		$messageFields = array(
+			"NOTIFY_MODULE" => "voximplant",
+			"NOTIFY_EVENT" => "admin_notification",
 			"TO_USER_ID" => $userId,
 			"NOTIFY_TYPE" => IM_NOTIFY_SYSTEM,
 			"MESSAGE" => Loc::getMessage('DOCUMENTS_VERIFICATION_NOTIFY'),

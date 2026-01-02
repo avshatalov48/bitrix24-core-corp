@@ -201,7 +201,7 @@ class ConversionManager
 	{
 		$userPermissions = Container::getInstance()->getUserPermissions();
 
-		$canUpdateSourceItem = $userPermissions->canUpdateItem($item);
+		$canUpdateSourceItem = $userPermissions->item()->canUpdateItem($item);
 
 		$result = [];
 		foreach (static::getDestinationEntityTypeIDs($item->getEntityTypeId()) as $destinationEntityTypeId)

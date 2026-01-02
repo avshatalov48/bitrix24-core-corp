@@ -17,6 +17,7 @@
 						componentParams: {
 							openUrl: props.url || null,
 							setTitle: true,
+							analyticsSection: 'link',
 						},
 						object: 'layout',
 					},
@@ -31,6 +32,7 @@
 						canOpenInDefault: true,
 						componentParams: {
 							setTitle: true,
+							analyticsSection: 'link',
 						},
 						object: 'layout',
 					},

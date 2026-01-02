@@ -1,0 +1,17 @@
+.crm-mini-card__field.--client .crm-mini-card__field-value {
+	display: flex;
+	justify-content: space-between;
+	align-items: end;
+	align-self: normal;
+	min-height: 24px;
+	gap: 4px;
+}
+
+.crm-mini-card__field.--client a {
+	color: rgba(1, 84, 200, 1);
+	cursor: pointer;
+}
+
+.crm-mini-card__communication-control {
+	display: flex;
+}

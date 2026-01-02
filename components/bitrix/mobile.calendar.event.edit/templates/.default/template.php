@@ -7,6 +7,16 @@ CUtil::InitJSCore(array('ajax', 'date'));
 /* *********************** From To modal window **************************** */
 
 ?><script>
+BX.message({
+	EC_JS_EVERY_FEW_DAYS: '<?=GetMessageJS('EC_JS_EVERY_FEW_DAYS')?>',
+	EC_JS_EVERY_WEEK: '<?=GetMessageJS('EC_JS_EVERY_WEEK')?>',
+	EC_JS_EVERY_FEW_WEEKS: '<?=GetMessageJS('EC_JS_EVERY_FEW_WEEKS')?>',
+	EC_JS_EVERY_MONTH: '<?=GetMessageJS('EC_JS_EVERY_MONTH')?>',
+	EC_JS_EVERY_FEW_MONTHS: '<?=GetMessageJS('EC_JS_EVERY_FEW_MONTHS')?>',
+	EC_JS_EVERY_YEAR: '<?=GetMessageJS('EC_JS_EVERY_YEAR')?>',
+	EC_JS_EVERY_FEW_YEARS: '<?=GetMessageJS('EC_JS_EVERY_FEW_YEARS')?>',
+})
+
 var DATE_FORMAT = BX.date.convertBitrixFormat(BX.message("FORMAT_DATE"));
 var DATETIME_FORMAT = BX.date.convertBitrixFormat(BX.message("FORMAT_DATETIME"));
 if ((DATETIME_FORMAT.substr(0, DATE_FORMAT.length) == DATE_FORMAT))
@@ -495,37 +505,67 @@ else: /*$arResult('GET_FROM_TO_MODE') == 'Y')*/?>
 			switch (this.oEvent.RRULE.FREQ)
 			{
 				case 'DAILY':
-					repeatHTML += '<b><?= GetMessageJS('EC_JS_EVERY_M')?> ' + interval + '<?= GetMessageJS('EC_JS_DE_DOT')?><?= GetMessageJS('EC_JS__J')?> <?= GetMessageJS('EC_JS_DAY_P')?> </b>';
+					repeatHTML += BX.message('EC_JS_EVERY_FEW_DAYS').replace('#INTERVAL#', interval);
+
 					break;
 				case 'WEEKLY':
-					repeatHTML += '<b><?= GetMessageJS('EC_JS_EVERY_F')?> ';
-					if (interval > 1)
-						repeatHTML += interval + '<?= GetMessageJS('EC_JS_DE_DOT')?><?= GetMessageJS('EC_JS__U')?> ';
-					repeatHTML += '<?= GetMessageJS('EC_JS_WEEK_P')?>: ';
-
 					var n = 0;
+					var daysOfWeek = '';
+
 					for (var i in this.oEvent.RRULE.BYDAY)
 					{
 						if(this.oEvent.RRULE.BYDAY.hasOwnProperty(i) && this.oEvent.RRULE.BYDAY[i])
-							repeatHTML += (n++ > 0 ? ', ' : '') + this.days[this.oEvent.RRULE.BYDAY[i]];
+						{
+							daysOfWeek += (n++ > 0 ? ', ' : '') + this.days[this.oEvent.RRULE.BYDAY[i]];
+						}
 					}
-					repeatHTML += '</b>';
+
+					if (interval > 1)
+					{
+						repeatHTML += BX.message('EC_JS_EVERY_FEW_WEEKS').replace('#INTERVAL#', interval);
+					}
+					else
+					{
+						repeatHTML += BX.message('EC_JS_EVERY_WEEK');
+					}
+
+					repeatHTML = repeatHTML.replace('#DAYS_OF_WEEK#', daysOfWeek);
 
 					break;
 				case 'MONTHLY':
 					date = fromDate.getDate();
-					repeatHTML += '<b><?= GetMessageJS('EC_JS_EVERY_M')?> ';
+
 					if (interval > 1)
-						repeatHTML += interval + '<?= GetMessageJS('EC_JS_DE_DOT')?><?= GetMessageJS('EC_JS__J')?> ';
-					repeatHTML += '<?= GetMessageJS('EC_JS_MONTH_P')?>, <?= GetMessageJS('EC_JS_DE_AM')?>' + date + '<?= GetMessageJS('EC_JS_DE_DOT')?><?= GetMessageJS('EC_JS_DATE_P_')?></b>';
+					{
+						repeatHTML += BX.message('EC_JS_EVERY_FEW_MONTHS').replace('#MONTH#', interval);
+					}
+					else
+					{
+						repeatHTML += BX.message('EC_JS_EVERY_MONTH');
+					}
+
+					repeatHTML = repeatHTML.replace('#DATE#', date);
+
 					break;
 				case 'YEARLY':
 					date = fromDate.getDate();
 					month = fromDate.getMonth() + 1;
-					repeatHTML += '<b><?= GetMessageJS('EC_JS_EVERY_N_')?> ';
+
 					if (interval > 1)
-						repeatHTML += interval + '<?= GetMessageJS('EC_JS_DE_DOT')?><?= GetMessageJS('EC_JS__J')?> ';
-					repeatHTML += '<?= GetMessageJS('EC_JS_YEAR_P')?>, <?= GetMessageJS('EC_JS_DE_AM')?>' + date + '<?= GetMessageJS('EC_JS_DE_DOT')?><?= GetMessageJS('EC_JS_DATE_P_')?> <?= GetMessageJS('EC_JS_DE_DES')?>' + month + '<?= GetMessageJS('EC_JS_DE_DOT')?><?= GetMessageJS('EC_JS_MONTH_P_')?></b>';
+					{
+						repeatHTML += BX.message('EC_JS_EVERY_FEW_YEARS').replace('#YEAR#', interval);
+					}
+					else
+					{
+						repeatHTML += BX.message('EC_JS_EVERY_YEAR');
+					}
+
+					repeatHTML =
+						repeatHTML
+							.replace('#DATE#', date)
+							.replace('#MONTH#', month)
+					;
+
 					break;
 			}
 

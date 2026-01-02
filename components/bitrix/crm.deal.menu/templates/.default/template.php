@@ -22,11 +22,11 @@ if (!empty($arResult['BUTTONS']))
 	$template = 'type2';
 	if($type === 'list')
 	{
-		$template = SITE_TEMPLATE_ID === 'bitrix24' ? 'title' : '';
+		$template = 'title';
 	}
 	else if($type === 'details')
 	{
-		$template = SITE_TEMPLATE_ID === 'bitrix24' ? 'slider' : 'type2';
+		$template = 'slider';
 	}
 
 	$toolbarParams = ($arParams['TOOLBAR_PARAMS'] ?? []);
@@ -65,6 +65,7 @@ BX.ready(
 </script><?
 endif;
 
+// it seems it's used in old deal details
 if(isset($arResult['CATEGORY_CHANGER'])):
 	$categoryChanger = $arResult['CATEGORY_CHANGER'];
 	?><script>

@@ -9,6 +9,6 @@ return [
 		'im:chat/restrequest',
 		'im:chat/timer',
 		'im:chat/dataconverter',
-		'user/profile',
+		'user-profile',
 	]
 ];

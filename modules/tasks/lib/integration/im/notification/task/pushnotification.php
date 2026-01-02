@@ -25,7 +25,7 @@ class PushNotification implements NotificationInterface
 		);
 
 		return (new Link($this->notification->getTask(), $this->notification->getRecepient(), Link::MODE_NONE))
-			->placeLinkAnchor($preparedMessage);
+			->placeLinkAnchor($preparedMessage, $this->notification->getAnalyticsData());
 	}
 
 	public function getParams(Notification\Tag $tag): array

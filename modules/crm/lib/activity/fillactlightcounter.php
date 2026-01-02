@@ -5,6 +5,7 @@ namespace Bitrix\Crm\Activity;
 use Bitrix\Crm\Activity\LightCounter\ActCounterLightTimeTable;
 use Bitrix\Crm\Activity\LightCounter\CalculateParams;
 use Bitrix\Crm\Activity\LightCounter\CounterLightTime;
+use Bitrix\Main\DB\DuplicateEntryException;
 use Bitrix\Main\Type\DateTime;
 
 class FillActLightCounter
@@ -65,11 +66,21 @@ class FillActLightCounter
 
 		if (!$rec)
 		{
-			ActCounterLightTimeTable::add([
-				'ACTIVITY_ID' => $actId,
-				'LIGHT_COUNTER_AT' => $lightTime,
-				'IS_LIGHT_COUNTER_NOTIFIED' => $this->isDateLessThenNow($lightTime) ? 'Y' : 'N'
-			]);
+			try
+			{
+				ActCounterLightTimeTable::add([
+					'ACTIVITY_ID' => $actId,
+					'LIGHT_COUNTER_AT' => $lightTime,
+					'IS_LIGHT_COUNTER_NOTIFIED' => $this->isDateLessThenNow($lightTime) ? 'Y' : 'N'
+				]);
+			}
+			catch (DuplicateEntryException $e)
+			{
+				ActCounterLightTimeTable::update($actId, [
+					'LIGHT_COUNTER_AT' => $lightTime,
+					'IS_LIGHT_COUNTER_NOTIFIED' => $this->isDateLessThenNow($lightTime) ? 'Y' : 'N'
+				]);
+			}
 		}
 	}
 

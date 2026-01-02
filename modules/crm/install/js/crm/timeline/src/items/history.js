@@ -1,8 +1,9 @@
-import CompatibleItem from "./compatible-item";
-import {Item as ItemType} from "../types";
-import Fasten from "../animations/fasten";
-import {DatetimeConverter} from "crm.timeline.tools";
-import {Type, Dom} from "main.core";
+import { DatetimeConverter } from 'crm.timeline.tools';
+import { Dom, Type } from 'main.core';
+
+import CompatibleItem from './compatible-item';
+import { Item as ItemType } from '../types';
+import Fasten from '../animations/fasten';
 
 /** @memberof BX.Crm.Timeline.Items */
 export default class History extends CompatibleItem
@@ -115,7 +116,7 @@ export default class History extends CompatibleItem
 	 */
 	fasten(e)
 	{
-		if (this._fixedHistory._items.length >= 3)
+		if (this._fixedHistory._items.length >= 7)
 		{
 			if (!this.fastenLimitPopup)
 			{

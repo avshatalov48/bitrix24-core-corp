@@ -52,16 +52,6 @@ if (!\CCrmPerms::IsAccessEnabled())
 
 $entityType = \CCrmOwnerType::ActivityName;
 
-$APPLICATION->IncludeComponent(
-	'bitrix:crm.entity.counter.panel',
-	'',
-	[
-		'ENTITY_TYPE_NAME' => $entityType,
-		'EXTRAS' => [],
-		'PATH_TO_ENTITY_LIST' => $arResult['PATH_TO_ACTIVITY_KANBAN'] ?? '',
-	]
-);
-
 $viewMode = ViewMode::MODE_ACTIVITIES;
 $APPLICATION->IncludeComponent(
 	'bitrix:crm.kanban.filter',
@@ -70,6 +60,11 @@ $APPLICATION->IncludeComponent(
 		'VIEW_MODE' => $viewMode,
 		'ENTITY_TYPE' => $entityType,
 		'CUSTOM_SECTION_CODE' => $arResult['CUSTOM_SECTION_CODE'],
+		'COUNTER_PANEL' => [
+			'ENTITY_TYPE_NAME' => $entityType,
+			'EXTRAS' => [],
+			'PATH_TO_ENTITY_LIST' => $arResult['PATH_TO_ACTIVITY_KANBAN'] ?? '',
+		],
 		'NAVIGATION_BAR' => (new NavigationBarPanel(CCrmOwnerType::Activity))
 			->setCustomSectionCode($arResult['CUSTOM_SECTION_CODE'])
 			->setItems([

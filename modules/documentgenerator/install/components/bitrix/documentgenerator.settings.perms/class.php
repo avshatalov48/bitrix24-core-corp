@@ -23,6 +23,11 @@ class DocumentGeneratorSettingsPermsComponent extends CBitrixComponent
 			return;
 		}
 
+		if (Loader::includeModule('ui'))
+		{
+			\Bitrix\UI\Toolbar\Facade\Toolbar::deleteFavoriteStar();
+		}
+
 		$this->arResult['isPermissionsFeatureEnabled'] = Bitrix24Manager::isPermissionsFeatureEnabled();
 
 		$this->arResult['roles'] = \Bitrix\DocumentGenerator\Model\RoleTable::getList()->fetchCollection();

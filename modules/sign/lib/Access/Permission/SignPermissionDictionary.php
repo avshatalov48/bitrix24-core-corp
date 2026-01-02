@@ -1,4 +1,5 @@
 <?php
+
 /**
  * Bitrix Framework
  * @package bitrix
@@ -9,6 +10,8 @@
 namespace Bitrix\Sign\Access\Permission;
 
 use Bitrix\Main\Localization\Loc;
+use Bitrix\Sign\Config\Feature;
+use Bitrix\Sign\Config\Storage;
 use Bitrix\Sign\Helper\IterationHelper;
 
 class SignPermissionDictionary extends \Bitrix\Main\Access\Permission\PermissionDictionary
@@ -31,6 +34,12 @@ class SignPermissionDictionary extends \Bitrix\Main\Access\Permission\Permission
 	public const SIGN_B2E_TEMPLATE_CREATE = 14;
 	public const SIGN_B2E_TEMPLATE_WRITE = 15;
 	public const SIGN_B2E_TEMPLATE_DELETE = 16;
+	public const SIGN_B2E_MY_SAFE_FIRED = 17;
+	public const SIGN_B2E_SIGNERS_LIST_READ = 18;
+	public const SIGN_B2E_SIGNERS_LIST_ADD = 19;
+	public const SIGN_B2E_SIGNERS_LIST_EDIT = 20;
+	public const SIGN_B2E_SIGNERS_LIST_DELETE = 21;
+	public const SIGN_B2E_SIGNERS_LIST_REFUSED = 22;
 
 	public static function isValid(string|int $permission): bool
 	{
@@ -48,6 +57,10 @@ class SignPermissionDictionary extends \Bitrix\Main\Access\Permission\Permission
 			self::SIGN_B2E_TEMPLATE_DELETE,
 			self::SIGN_TEMPLATES,
 			self::SIGN_B2E_TEMPLATES,
+			self::SIGN_B2E_SIGNERS_LIST_ADD,
+			self::SIGN_B2E_SIGNERS_LIST_READ,
+			self::SIGN_B2E_SIGNERS_LIST_DELETE,
+			self::SIGN_B2E_SIGNERS_LIST_EDIT,
 		]);
 	}
 
@@ -88,6 +101,21 @@ class SignPermissionDictionary extends \Bitrix\Main\Access\Permission\Permission
 
 	private static function getPermissionTitleLocCode($permissionId): ?string
 	{
+		if (Feature::instance()->isTemplateFolderGroupingAllowed())
+		{
+			$signB2eTemplateRead = 'SIGN_B2E_TEMPLATE_AND_FOLDER_READ';
+			$signB2eTemplateCreate = 'SIGN_B2E_TEMPLATE_AND_FOLDER_CREATE';
+			$signB2eTemplateWrite = 'SIGN_B2E_TEMPLATE_AND_FOLDER_EDIT';
+			$signB2eTemplateDelete = 'SIGN_B2E_TEMPLATE_AND_FOLDER_DELETE';
+		}
+		else
+		{
+			$signB2eTemplateRead = 'SIGN_B2E_TEMPLATE_READ';
+			$signB2eTemplateCreate = 'SIGN_B2E_TEMPLATE_CREATE';
+			$signB2eTemplateWrite = 'SIGN_B2E_TEMPLATE_EDIT';
+			$signB2eTemplateDelete = 'SIGN_B2E_TEMPLATE_DELETE';
+		}
+
 		return match ($permissionId)
 		{
 			self::SIGN_ACCESS_RIGHTS => 'SIGN_ACCESS_RIGHTS',
@@ -96,16 +124,22 @@ class SignPermissionDictionary extends \Bitrix\Main\Access\Permission\Permission
 			self::SIGN_TEMPLATES => 'SIGN_TEMPLATES',
 			self::SIGN_B2E_MY_SAFE_DOCUMENTS => 'SIGN_B2E_MY_SAFE_DOCUMENTS',
 			self::SIGN_B2E_MY_SAFE => 'SIGN_B2E_MY_SAFE',
+			self::SIGN_B2E_MY_SAFE_FIRED => 'SIGN_B2E_MY_SAFE_FIRED',
 			self::SIGN_B2E_TEMPLATES => 'SIGN_B2E_TEMPLATES_1',
 			self::SIGN_B2E_PROFILE_FIELDS_READ => 'SIGN_B2E_PROFILE_FIELDS_READ',
 			self::SIGN_B2E_PROFILE_FIELDS_ADD => 'SIGN_B2E_PROFILE_FIELDS_ADD',
 			self::SIGN_B2E_PROFILE_FIELDS_EDIT => 'SIGN_B2E_PROFILE_FIELDS_EDIT',
 			self::SIGN_B2E_PROFILE_FIELDS_DELETE => 'SIGN_B2E_PROFILE_FIELDS_DELETE_MSG_VER_1',
 			self::SIGN_B2E_MEMBER_DYNAMIC_FIELDS_DELETE => 'SIGN_B2E_MEMBER_DYNAMIC_FIELDS_DELETE',
-			self::SIGN_B2E_TEMPLATE_READ => 'SIGN_B2E_TEMPLATE_READ',
-			self::SIGN_B2E_TEMPLATE_CREATE => 'SIGN_B2E_TEMPLATE_CREATE',
-			self::SIGN_B2E_TEMPLATE_WRITE => 'SIGN_B2E_TEMPLATE_EDIT',
-			self::SIGN_B2E_TEMPLATE_DELETE => 'SIGN_B2E_TEMPLATE_DELETE',
+			self::SIGN_B2E_TEMPLATE_READ => $signB2eTemplateRead,
+			self::SIGN_B2E_TEMPLATE_CREATE => $signB2eTemplateCreate,
+			self::SIGN_B2E_TEMPLATE_WRITE => $signB2eTemplateWrite,
+			self::SIGN_B2E_TEMPLATE_DELETE => $signB2eTemplateDelete,
+			self::SIGN_B2E_SIGNERS_LIST_READ => 'SIGN_B2E_SIGNERS_LIST_READ',
+			self::SIGN_B2E_SIGNERS_LIST_ADD => 'SIGN_B2E_SIGNERS_LIST_ADD',
+			self::SIGN_B2E_SIGNERS_LIST_EDIT => 'SIGN_B2E_SIGNERS_LIST_EDIT',
+			self::SIGN_B2E_SIGNERS_LIST_DELETE => 'SIGN_B2E_SIGNERS_LIST_DELETE',
+			self::SIGN_B2E_SIGNERS_LIST_REFUSED => 'SIGN_B2E_SIGNERS_LIST_REFUSED',
 			default => null,
 		};
 	}

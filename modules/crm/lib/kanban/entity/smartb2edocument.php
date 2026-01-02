@@ -144,6 +144,7 @@ final class SmartB2eDocument extends Dynamic
 	{
 		$fields = parent::getDefaultAdditionalSelectFields();
 		$fields[Item\SmartB2eDocument::FIELD_NAME_TITLE] = '';
+		$fields[Item\SmartB2eDocument::FIELD_NAME_CREATED_BY] = '';
 		foreach ($this->getCustomFields() as $name => $customField)
 		{
 			$fields[$name] = (string)($customField['title'] ?? null);
@@ -174,7 +175,7 @@ final class SmartB2eDocument extends Dynamic
 		return $fields;
 	}
 
-	public function canAddItemToStage(string $stageId, \CCrmPerms $userPermissions, string $semantics = PhaseSemantics::UNDEFINED): bool
+	public function canAddItemToStage(string $stageId, string $semantics = PhaseSemantics::UNDEFINED): bool
 	{
 		return false;
 	}

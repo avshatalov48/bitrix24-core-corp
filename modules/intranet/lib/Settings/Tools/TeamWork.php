@@ -2,9 +2,9 @@
 
 namespace Bitrix\Intranet\Settings\Tools;
 
+use Bitrix\Intranet\Integration\Socialnetwork\Collab\CollabProviderData;
 use Bitrix\Intranet\UI\LeftMenu\Preset;
 use Bitrix\Main\Engine\CurrentUser;
-use Bitrix\Main\Loader;
 use Bitrix\Main\Localization\Loc;
 use Bitrix\Main\ModuleManager;
 
@@ -14,10 +14,13 @@ class TeamWork extends Tool
 
 	private function getSubgroupAvailability($subgroupId): bool
 	{
-		return match ($subgroupId) {
+		return match ($subgroupId)
+		{
 			'instant_messenger' => ModuleManager::isModuleInstalled('im'),
+			'collab' => (new CollabProviderData())->isAvailable(),
 			'calendar' => ModuleManager::isModuleInstalled('calendar'),
 			'docs' => \Bitrix\Main\Config\Option::get('disk', 'documents_enabled', 'N') === 'Y',
+			'boards' => \Bitrix\Main\Config\Option::get('disk', 'boards_enabled', 'N') === 'Y',
 			'mail' => ModuleManager::isModuleInstalled('mail'),
 			default => true,
 		};
@@ -26,9 +29,11 @@ class TeamWork extends Tool
 	protected const TEAMWORK_SUBGROUP_ID = [
 		'news' => 'menu_live_feed',
 		'instant_messenger' => 'menu_im_messenger',
+		'collab' => 'menu_im_collab',
 		'workgroups' => 'menu_all_groups',
 		'calendar' => 'menu_calendar',
 		'docs' => 'menu_documents',
+		'boards' => 'menu_boards',
 		'disk' => 'menu_files',
 		'mail' => 'menu_external_mail',
 	];
@@ -37,20 +42,25 @@ class TeamWork extends Tool
 	{
 		return [
 			'news' => '/stream/',
+			'instant_messenger' => '/online/',
+			'collab' => '/online/?IM_COLLAB',
 			'workgroups' => '/workgroups/',
 			'calendar' => '/company/personal/user/#USER_ID#/calendar/',
 			'docs' => '/company/personal/user/#USER_ID#/disk/documents/',
 			'disk' => '/company/personal/user/#USER_ID#/disk/path/',
+			'boards' => '/company/personal/user/#USER_ID#/disk/boards/',
 			'mail' => '/mail/',
-			'instant_messenger' => '/online/',
 		];
 	}
 
 	public function getSubgroupNameById(string $id): string
 	{
-		return match ($id) {
+		return match ($id)
+		{
+			'collab' =>  Loc::getMessage('INTRANET_SETTINGS_TOOLS_TEAMWORK_SUBGROUP_COLLAB'),
 			'instant_messenger' => Loc::getMessage('INTRANET_SETTINGS_TOOLS_TEAMWORK_SUBGROUP_MESSENGER'),
 			'news' => Loc::getMessage('INTRANET_SETTINGS_TOOLS_TEAMWORK_SUBGROUP_NEWS_FEED'),
+			'disk' => Loc::getMessage('INTRANET_SETTINGS_TOOLS_TEAMWORK_SUBGROUP_DISK_MSGVER_1'),
 			default => Loc::getMessage('INTRANET_SETTINGS_TOOLS_TEAMWORK_SUBGROUP_' . strtoupper($id)),
 		};
 	}

@@ -169,9 +169,6 @@ $ajaxActions = [
 	"crm_lead_edit" => [
 		"file" => $pathToComponents."mobile.crm.lead.edit/ajax.php"
 	],
-	"crm_product_row_edit" => [
-		"file" => $pathToComponents."mobile.crm.product_row.edit/ajax.php"
-	],
 	"crm_company_edit" => [
 		"file" => $pathToComponents."mobile.crm.company.edit/ajax.php"
 	],
@@ -183,12 +180,6 @@ $ajaxActions = [
 	],
 	"crm_deal_list" => [
 		"file" => $pathToComponents."mobile.crm.deal.list/ajax.php"
-	],
-	"crm_invoice_edit" => [
-		"file" => $pathToComponents."mobile.crm.invoice.edit/ajax.php"
-	],
-	"crm_location_list" => [
-		"file" => $pathToComponents."mobile.crm.location.list/ajax.php"
 	],
 	"crm_product_list" => [
 		"file" => $pathToComponents."mobile.crm.product.list/ajax.php"
@@ -244,12 +235,6 @@ $ajaxActions = [
 	"mobile_crm_deal_actions" => [
 		"file" => $_SERVER["DOCUMENT_ROOT"] . "/bitrix/tools/mobile_crm_deal.php"
 	],
-	"mobile_crm_invoice_list" => [
-		"file" => $pathToComponents."mobile.crm.invoice.list/ajax.php"
-	],
-	"mobile_crm_invoice_actions" => [
-		"file" => $_SERVER["DOCUMENT_ROOT"] . "/bitrix/tools/mobile_crm_invoice.php"
-	],
 	"mobile_crm_contact_list" => [
 		"file" => $pathToComponents."mobile.crm.contact.list/ajax.php"
 	],
@@ -261,12 +246,6 @@ $ajaxActions = [
 	],
 	"mobile_crm_company_actions" => [
 		"file" => $_SERVER["DOCUMENT_ROOT"] . "/bitrix/tools/mobile_crm_company.php"
-	],
-	"mobile_crm_quote_list" => [
-		"file" => $pathToComponents."mobile.crm.quote.list/ajax.php"
-	],
-	"mobile_crm_quote_actions" => [
-		"file" => $_SERVER["DOCUMENT_ROOT"] . "/bitrix/tools/mobile_crm_quote.php"
 	],
 	"mobile_crm_product_actions" => [
 		"file" => $_SERVER["DOCUMENT_ROOT"] . "/bitrix/tools/mobile_crm_product.php"

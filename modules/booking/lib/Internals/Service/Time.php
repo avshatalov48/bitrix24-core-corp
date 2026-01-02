@@ -1,5 +1,7 @@
 <?php
 
+declare(strict_types=1);
+
 namespace Bitrix\Booking\Internals\Service;
 
 use DateTimeImmutable;
@@ -16,6 +18,7 @@ class Time
 	public const DAYS_IN_YEAR = 365;
 	public const DAYTIME_START_HOUR = 8;
 	public const DAYTIME_END_HOUR = 21;
+	public const CONSIDER_BOOKING__DELAYED_AFTER_SECONDS = 300;
 
 	public static function getSecondsFromMidnight(DateTimeImmutable $dateTime): int
 	{
@@ -23,6 +26,14 @@ class Time
 			(int)$dateTime->format('H') * self::SECONDS_IN_HOUR
 			+ (int)$dateTime->format('i') * self::SECONDS_IN_MINUTE
 			+ (int)$dateTime->format('s')
+		);
+	}
+
+	public static function isWorkingTime(DateTimeImmutable $dateTime): bool
+	{
+		return (
+			Time::DAYTIME_START_HOUR <= (int)$dateTime->format('H')
+			&& (int)$dateTime->format('H') < Time::DAYTIME_END_HOUR
 		);
 	}
 

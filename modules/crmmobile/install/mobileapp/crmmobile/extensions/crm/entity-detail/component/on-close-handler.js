@@ -105,6 +105,9 @@ jn.define('crm/entity-detail/component/on-close-handler', (require, exports, mod
 				onActivityCreate: resolve,
 				onSkip: resolve,
 				onCancel: resolve,
+				analytics: detailCard.analytics
+					.setCategory('activity_operations')
+					.setSubSection('notification_popup'),
 			});
 
 			timelineScheduler.openActivityReminder();

@@ -21,8 +21,6 @@ jn.define('qrauth/src/auth', (require, exports, module) => {
 		height: 144,
 		width: 339,
 	};
-	const PAGE_MANAGER_HEIGHT = 450;
-
 	const DEMO_CONTENT = {
 		image: 'qrdemo_v3.png',
 		video: 'qrdemo_v1.mp4',
@@ -61,10 +59,10 @@ jn.define('qrauth/src/auth', (require, exports, module) => {
 				component,
 			});
 
-			const positionHeight = QRCodeAuthComponent.getContentHeight() + PAGE_MANAGER_HEIGHT;
+			const positionHeight = QRCodeAuthComponent.getContentHeight(params);
 			const bottomSheetLayout = await bottomSheet
 				.setParentWidget(parentWidget || PageManager)
-				.setMediumPositionHeight(positionHeight)
+				.setMediumPositionHeight(positionHeight, true)
 				.setNavigationBarColor(Color.bgSecondary.toHex())
 				.setBackgroundColor(Color.bgSecondary.toHex())
 				.open()
@@ -100,13 +98,11 @@ jn.define('qrauth/src/auth', (require, exports, module) => {
 		{
 			return Box(
 				{
+					testId: this.getTestId(),
 					withScroll: true,
 					footer: this.renderBoxFooter(),
 					safeArea: {
 						bottom: true,
-					},
-					style: {
-						paddingVertical: Indent.XL2.toNumber(),
 					},
 				},
 				this.renderDescription(),
@@ -143,9 +139,15 @@ jn.define('qrauth/src/auth', (require, exports, module) => {
 			);
 		}
 
-		static getContentHeight()
+		static getContentHeight({ showHint })
 		{
-			return CONTENT_SIZE.height + Indent.XL3.toNumber();
+			const areaHeight = {
+				hint: showHint ? 115 : 0,
+				content: 328,
+				button: 66,
+			};
+
+			return Object.entries(areaHeight).reduce((acc, [key, value]) => acc + value, 0);
 		}
 
 		renderGuide()
@@ -171,6 +173,7 @@ jn.define('qrauth/src/auth', (require, exports, module) => {
 
 			return Area(
 				{
+					testId: this.getTestId('hint'),
 					isFirst: true,
 					excludePaddingSide: {
 						horizontal: false,
@@ -205,7 +208,9 @@ jn.define('qrauth/src/auth', (require, exports, module) => {
 			const steps = this.getStepsGuide();
 
 			return Area(
-				{},
+				{
+					testId: this.getTestId('steps'),
+				},
 				...steps.map((step, index) => {
 					const isFirst = index === 0;
 					const isLast = index === steps.length - 1;
@@ -276,6 +281,7 @@ jn.define('qrauth/src/auth', (require, exports, module) => {
 
 			return Area(
 				{
+					testId: this.getTestId('demo'),
 					excludePaddingSide: {
 						bottom: true,
 					},
@@ -288,12 +294,14 @@ jn.define('qrauth/src/auth', (require, exports, module) => {
 		}
 
 		renderDemoImage = () => Image({
+			testId: this.getTestId('image'),
 			resizeMode: 'contain',
 			style: CONTENT_SIZE,
 			uri: QRCodeAuthComponent.getDemoImagePath(),
 		});
 
 		renderDemoVideo = () => Video({
+			testId: this.getTestId('video'),
 			style: {
 				...CONTENT_SIZE,
 				backgroundColor: Color.bgPrimary.toHex(),
@@ -329,7 +337,6 @@ jn.define('qrauth/src/auth', (require, exports, module) => {
 				Text2({
 					color: Color.base2,
 					text: Loc.getMessage('STEP_OPEN_SITE_MSGVER_2'),
-					onLinkClick: this.handleOnLinkClick,
 					style: {
 						marginRight: Indent.XS.toNumber(),
 					},
@@ -372,7 +379,6 @@ jn.define('qrauth/src/auth', (require, exports, module) => {
 			return View(
 				{
 					style: {
-						position: 'relative',
 						width: 22,
 						height: 22,
 						borderWidth: 1,
@@ -387,10 +393,6 @@ jn.define('qrauth/src/auth', (require, exports, module) => {
 					size: 20,
 					icon: Icon.QR_CODE,
 					color: Color.base4,
-					style: {
-						position: 'absolute',
-						marginLeft: Indent.M.toNumber(),
-					},
 				}),
 			);
 		}
@@ -407,10 +409,6 @@ jn.define('qrauth/src/auth', (require, exports, module) => {
 
 			return currentDomain;
 		}
-
-		handleOnLinkClick = ({ url }) => {
-			console.log({ url });
-		};
 
 		getParentWidget()
 		{
@@ -463,6 +461,13 @@ jn.define('qrauth/src/auth', (require, exports, module) => {
 		static getContentPath(folder, name)
 		{
 			return `${currentDomain}${pathToExtension}/${folder}/${AppTheme.id}/${name}`;
+		}
+
+		getTestId(suffix)
+		{
+			const { testId } = this.props;
+
+			return [testId, 'qrauth', suffix].filter(Boolean).join('-');
 		}
 	}
 

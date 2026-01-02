@@ -56,16 +56,6 @@ elseif (\Bitrix\Main\Loader::includeModule('calendar'))
 {
 	Calendar::loadResourcebookingUserfieldExtention();
 
-	$APPLICATION->IncludeComponent(
-		'bitrix:crm.entity.counter.panel',
-		'',
-		array(
-			'ENTITY_TYPE_NAME' => CCrmOwnerType::LeadName,
-			'EXTRAS' => [],
-			'PATH_TO_ENTITY_LIST' => $arResult['PATH_TO_LEAD_LIST'] ?? ''
-		)
-	);
-
 	$APPLICATION->ShowViewContent('crm-grid-filter');
 
 	$settingsFilterSelect = CUserOptions::GetOption("calendar", "resourceBooking");

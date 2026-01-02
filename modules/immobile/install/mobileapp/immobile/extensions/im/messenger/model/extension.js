@@ -13,6 +13,7 @@ jn.define('im/messenger/model', (require, exports, module) => {
 	const { draftModel, draftDefaultElement } = require('im/messenger/model/draft');
 	const { queueModel, queueDefaultElement } = require('im/messenger/model/queue');
 	const { commentModel, commentDefaultElement } = require('im/messenger/model/comment');
+	const { anchorModel, anchorDefaultElement } = require('im/messenger/model/anchor');
 
 	module.exports = {
 		applicationModel,
@@ -26,6 +27,7 @@ jn.define('im/messenger/model', (require, exports, module) => {
 		draftModel,
 		queueModel,
 		commentModel,
+		anchorModel,
 
 		recentDefaultElement,
 		messageDefaultElement,
@@ -36,5 +38,6 @@ jn.define('im/messenger/model', (require, exports, module) => {
 		draftDefaultElement,
 		queueDefaultElement,
 		commentDefaultElement,
+		anchorDefaultElement,
 	};
 });

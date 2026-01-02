@@ -37,6 +37,7 @@ jn.define('sign/dialog/banners/error', (require, exports, module) => {
 				buttonsView: View(
 					{},
 					Button({
+						testId: 'errorBanner-button-close',
 						text: Loc.getMessage('SIGN_MOBILE_DIALOG_ERROR_BUTTON_CLOSE_TITLE'),
 						size: ButtonSize.XL,
 						design: ButtonDesign.PLAN_ACCENT,

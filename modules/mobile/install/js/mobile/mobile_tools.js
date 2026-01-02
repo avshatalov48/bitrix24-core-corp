@@ -246,6 +246,14 @@
 					useNewStyle: true,
 					notRequireChanges: true,
 				},
+				{
+					exp: /\/bitrix\/components\/bitrix\/voting\.attached\.result\/slider\.php\?signedattachid=(\d+\.\w+)/gi,
+					replace: '/bitrix/components/bitrix/voting.attached.result/slider.php?signedAttachId=$1',
+				},
+				{
+					exp: /\/vote-result\/([\w.]+)/gi,
+					replace: '/vote-result/$1',
+				},
 			];
 
 			var params = null;
@@ -303,6 +311,13 @@
 					openFunction(data) {
 						// eslint-disable-next-line no-undef
 						BXMobileApp.Events.postToComponent('taskbackground::task::open', [data, params], 'background');
+					},
+				},
+				{
+					resolveFunction: BX.MobileTools.callIdFromUrl,
+					openFunction(data) {
+						// eslint-disable-next-line no-undef
+						BXMobileApp.Events.postToComponent('callbackground::call::followup', data, 'background');
 					},
 				},
 				{
@@ -405,6 +420,12 @@
 								openDialogOptions.withMessageHighlight = true;
 							}
 
+							if (params.botContextData)
+							{
+								openDialogOptions.botContextData = params.botContextData;
+								openDialogOptions.context = 'link';
+							}
+
 							if (params.dialogType === MessengerDialogType.chat)
 							{
 								BXMobileApp.Events.postToComponent(
@@ -476,6 +497,16 @@
 					openFunction(data) {
 						const { eventId } = data;
 						BXMobileApp.Events.postToComponent('calendar::event::ics', { eventId });
+					},
+				},
+				{
+					resolveFunction: BX.MobileTools.getSignedAttachIdFromUrl,
+					openFunction(signedAttachId) {
+						BXMobileApp.Events.postToComponent(
+							'ImMobile.Messenger.VoteResult:open',
+							{ signedAttachId },
+							'im.messenger',
+						);
 					},
 				},
 			];
@@ -654,6 +685,24 @@
 				}
 			}
 		},
+		callIdFromUrl(url)
+		{
+			var regs = [
+				/\/call\/detail\/(\d+)/i,
+				/\/call\/\?callId=(\d+)/i,
+			];
+
+			for (var i = 0; i < regs.length; i++)
+			{
+				var result = url.match(regs[i]);
+				if (result)
+				{
+					return {
+						callId: result[1],
+					};
+				}
+			}
+		},
 		actionFromTaskActionUrl(url)
 		{
 			var regs = [
@@ -732,6 +781,18 @@
 					result: {
 						entityType: 'common',
 						ownerId: `shared_files_${BX.message('SITE_ID')}`,
+						url,
+					},
+				},
+				{
+					regExp: /\/disk\/boards\/(\d+)\/open\/?/i,
+					result: {
+						url,
+					},
+				},
+				{
+					regExp: /\/disk\/file\/([\da-z]+)(?:\/[^?]*)?(?:\?.*)?$/i,
+					result: {
 						url,
 					},
 				},
@@ -830,6 +891,7 @@
 		{
 			const chatRegs = [
 				/\/online\/\?IM_DIALOG=(\d+|chat\d+)&IM_MESSAGE=(\d+)/i,
+				/\/online\/\?IM_DIALOG=(\d+|chat\d+)&BOT_CONTEXT=([^&#]*)/i,
 				/\/online\/\?IM_DIALOG=(\d+|chat\d+)/i,
 				/\/online\/\?IM_COPILOT=(\d+|chat\d+)&IM_MESSAGE=(\d+)/i,
 				/\/online\/\?IM_COPILOT=(\d+|chat\d+)/i,
@@ -887,16 +949,26 @@
 				}
 
 				const dialogId = result[1];
-				const messageId = result[2];
 				const openDialogParams = {
 					dialogType,
 					dialogId,
 					fallbackUrl: url,
 				};
 
-				if (messageId)
+				if (result[2] && result[0].includes('IM_MESSAGE'))
 				{
-					openDialogParams.messageId = parseInt(messageId, 10);
+					openDialogParams.messageId = parseInt(result[2], 10);
+				}
+				else if (result[2] && result[0].includes('BOT_CONTEXT'))
+				{
+					try
+					{
+						openDialogParams.botContextData = decodeURIComponent(result[2]);
+					}
+					catch (error)
+					{
+						console.error('BX.MobileTools.getMessengerOpenDialogParamsFromUrl decodeURIComponent error:', error);
+					}
 				}
 
 				return openDialogParams;
@@ -981,6 +1053,24 @@
 			}
 
 			return { eventId };
+		},
+		getSignedAttachIdFromUrl(url)
+		{
+			const regs = [
+				/\/bitrix\/components\/bitrix\/voting\.attached\.result\/slider\.php\?signedattachid=(\d+\.\w+)/i,
+				/\/vote-result\/([\w.]+)/i,
+			];
+
+			for (const reg of regs)
+			{
+				const result = url.match(reg);
+				if (result)
+				{
+					return result[1];
+				}
+			}
+
+			return null;
 		},
 		createCardScanner(options)
 		{

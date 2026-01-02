@@ -1,4 +1,8 @@
-<?
+<?php
+
+use Bitrix\Crm\Service\Container;
+use Bitrix\Main\Localization\Loc;
+
 define('NO_KEEP_STATISTIC', 'Y');
 define('NO_AGENT_STATISTIC','Y');
 
@@ -39,16 +43,6 @@ if ($iQuoteId > 0)
 	$arQuote['PATH_TO_CONTACT_SHOW'] = \CCrmOwnerType::GetEntityShowPath(\CCrmOwnerType::Contact, $arQuote['CONTACT_ID'], false);
 	$arQuote['PATH_TO_COMPANY_SHOW'] = \CCrmOwnerType::GetEntityShowPath(\CCrmOwnerType::Company, $arQuote['COMPANY_ID'], false);
 
-	$arQuote['CONTACT_FORMATTED_NAME'] = $arQuote['CONTACT_ID'] <= 0 ? ''
-		: CCrmContact::PrepareFormattedName(
-				array(
-					'HONORIFIC' => isset($arQuote['CONTACT_HONORIFIC']) ? $arQuote['CONTACT_HONORIFIC'] : '',
-					'NAME' => isset($arQuote['CONTACT_NAME']) ? $arQuote['CONTACT_NAME'] : '',
-					'LAST_NAME' => isset($arQuote['CONTACT_LAST_NAME']) ? $arQuote['CONTACT_LAST_NAME'] : '',
-					'SECOND_NAME' => isset($arQuote['CONTACT_SECOND_NAME']) ? $arQuote['CONTACT_SECOND_NAME'] : ''
-				)
-		);
-
 	$strName = ($iVersion >= 2 ? '<a href="'.$arQuote['PATH_TO_QUOTE_SHOW'].'" target="_blank">'.htmlspecialcharsbx(empty($arQuote['TITLE']) ? $arQuote['QUOTE_NUMBER'] : $arQuote['QUOTE_NUMBER'].' - '.$arQuote['TITLE']).'</a>' : '');
 	$arProductRows = CCrmQuote::LoadProductRows($arQuote['ID']);
 
@@ -77,17 +71,47 @@ if ($iQuoteId > 0)
 		$fields .= '<span class="bx-ui-tooltip-field-row">
 			<span class="bx-ui-tooltip-field-name">'.GetMessage('CRM_COLUMN_DATE_MODIFY').'</span>: <span class="bx-ui-tooltip-field-value"><span class="fields enumeration">'.FormatDate('x', MakeTimeStamp($arQuote['DATE_MODIFY']), (time() + CTimeZone::GetOffset())).'</span></span>
 		</span>';
-		if (!empty($arQuote['COMPANY_TITLE']))
+
+		if (($arQuote['COMPANY_ID'] ?? 0) > 0)
 		{
-			$fields .= '<span class="bx-ui-tooltip-field-row">
-				<span class="bx-ui-tooltip-field-name">'.GetMessage('CRM_COLUMN_COMPANY_TITLE').'</span>: <span class="bx-ui-tooltip-field-value"><a href="'.$arQuote['PATH_TO_COMPANY_SHOW'].'" target="_blank">'.htmlspecialcharsbx($arQuote['COMPANY_TITLE']).'</a></span>
-			</span>';
+			if (Container::getInstance()->getUserPermissions()->item()->canRead(CCrmOwnerType::Company, $arQuote['COMPANY_ID']))
+			{
+				$fields .= '<span class="bx-ui-tooltip-field-row">
+					<span class="bx-ui-tooltip-field-name">'.Loc::getMessage('CRM_COLUMN_COMPANY_TITLE').'</span>: <span class="bx-ui-tooltip-field-value"><a href="'.$arQuote['PATH_TO_COMPANY_SHOW'].'" target="_blank">'.htmlspecialcharsbx($arQuote['COMPANY_TITLE']).'</a></span>
+				</span>';
+			}
+			else
+			{
+				$fields .= '<span class="bx-ui-tooltip-field-row">
+					<span class="bx-ui-tooltip-field-name">'.Loc::getMessage('CRM_COLUMN_COMPANY_TITLE').'</span>: <span class="bx-ui-tooltip-field-value">'.htmlspecialcharsbx(CCrmViewHelper::GetHiddenEntityCaption(CCrmOwnerType::Company)).'</span>
+				</span>';
+			}
 		}
-		if (!empty($arQuote['CONTACT_FORMATTED_NAME']))
+
+		if (($arQuote['CONTACT_ID'] ?? 0) > 0)
 		{
-			$fields .= '<span class="bx-ui-tooltip-field-row">
-				<span class="bx-ui-tooltip-field-name">'.GetMessage('CRM_COLUMN_CONTACT_FULL_NAME').'</span>: <span class="bx-ui-tooltip-field-value"><a href="'.$arQuote['PATH_TO_CONTACT_SHOW'].'" target="_blank">'.htmlspecialcharsbx($arQuote['CONTACT_FORMATTED_NAME']).'</a></span>
-			</span>';
+			if (Container::getInstance()->getUserPermissions()->item()->canRead(CCrmOwnerType::Contact, $arQuote['CONTACT_ID']))
+			{
+				$formattedName = CCrmContact::PrepareFormattedName([
+					'HONORIFIC' => $arQuote['CONTACT_HONORIFIC'] ?? '',
+					'NAME' => $arQuote['CONTACT_NAME'] ?? '',
+					'LAST_NAME' => $arQuote['CONTACT_LAST_NAME'] ?? '',
+					'SECOND_NAME' => $arQuote['CONTACT_SECOND_NAME'] ?? '',
+				]);
+
+				if (!empty($formattedName))
+				{
+					$fields .= '<span class="bx-ui-tooltip-field-row">
+						<span class="bx-ui-tooltip-field-name">'.Loc::getMessage('CRM_COLUMN_CONTACT_FULL_NAME').'</span>: <span class="bx-ui-tooltip-field-value"><a href="'.$arQuote['PATH_TO_CONTACT_SHOW'].'" target="_blank">'.htmlspecialcharsbx($formattedName).'</a></span>
+					</span>';
+				}
+			}
+			else
+			{
+				$fields .= '<span class="bx-ui-tooltip-field-row">
+					<span class="bx-ui-tooltip-field-name">'.Loc::getMessage('CRM_COLUMN_CONTACT_FULL_NAME').'</span>: <span class="bx-ui-tooltip-field-value">'.htmlspecialcharsbx(CCrmViewHelper::GetHiddenEntityCaption(CCrmOwnerType::Contact)).'</span>
+				</span>';
+			}
 		}
 
 		$strCard = '<div class="bx-ui-tooltip-info-data-cont" id="bx_user_info_data_cont_'.htmlspecialcharsbx($entityId).'"><div class="bx-ui-tooltip-info-data-info crm-tooltip-info">'.$fields.'</div></div>';
@@ -128,18 +152,49 @@ if ($iQuoteId > 0)
 		<span class="fields enumeration">'.FormatDate('x', MakeTimeStamp($arQuote['DATE_MODIFY']), (time() + CTimeZone::GetOffset())).'</span>
 		<br />
 		<br />';
-		if (!empty($arQuote['COMPANY_TITLE']))
+
+		if (($arQuote['COMPANY_ID'] ?? 0) > 0)
 		{
-			$strCard .= '<span class="field-name">'.htmlspecialcharsbx(GetMessage('CRM_COLUMN_COMPANY_TITLE')).'</span>:
-		<a href="'.$arQuote['PATH_TO_COMPANY_SHOW'].'">'.htmlspecialcharsbx($arQuote['COMPANY_TITLE']).'</a>
-		<br />';
+			if (Container::getInstance()->getUserPermissions()->item()->canRead(CCrmOwnerType::Company, $arQuote['COMPANY_ID']))
+			{
+				$strCard .= '<span class="field-name">'.htmlspecialcharsbx(Loc::getMessage('CRM_COLUMN_COMPANY_TITLE')).'</span>:
+					<a href="'.$arQuote['PATH_TO_COMPANY_SHOW'].'">'.htmlspecialcharsbx($arQuote['COMPANY_TITLE']).'</a>
+				<br />';
+			}
+			else
+			{
+				$strCard .= '<span class="field-name">'.htmlspecialcharsbx(Loc::getMessage('CRM_COLUMN_COMPANY_TITLE')).'</span>:
+					'.htmlspecialcharsbx(CCrmViewHelper::GetHiddenEntityCaption(CCrmOwnerType::Company)).'
+				<br />';
+			}
 		}
-		if (!empty($arQuote['CONTACT_FORMATTED_NAME']))
+
+		if (($arQuote['CONTACT_ID'] ?? 0) > 0)
 		{
-			$strCard .= '<span class="field-name">'.htmlspecialcharsbx(GetMessage('CRM_COLUMN_CONTACT_FULL_NAME')).'</span>:
-		<a href="'.$arQuote['PATH_TO_CONTACT_SHOW'].'">'.$arQuote['CONTACT_FORMATTED_NAME'].'</a>
-		<br />';
+			if (Container::getInstance()->getUserPermissions()->item()->canRead(CCrmOwnerType::Contact, $arQuote['CONTACT_ID']))
+			{
+				$formattedName = CCrmContact::PrepareFormattedName([
+					'HONORIFIC' => $arQuote['CONTACT_HONORIFIC'] ?? '',
+					'NAME' => $arQuote['CONTACT_NAME'] ?? '',
+					'LAST_NAME' => $arQuote['CONTACT_LAST_NAME'] ?? '',
+					'SECOND_NAME' => $arQuote['CONTACT_SECOND_NAME'] ?? '',
+				]);
+
+				if (!empty($formattedName))
+				{
+					$strCard .= '<span class="field-name">'.htmlspecialcharsbx(Loc::getMessage('CRM_COLUMN_CONTACT_FULL_NAME')).'</span>:
+						<a href="'.$arQuote['PATH_TO_CONTACT_SHOW'].'">'.htmlspecialcharsbx($formattedName).'</a>
+					<br />';
+				}
+			}
+			else
+			{
+				$strCard .= '<span class="field-name">'.htmlspecialcharsbx(Loc::getMessage('CRM_COLUMN_CONTACT_FULL_NAME')).'</span>:
+					'.htmlspecialcharsbx(CCrmViewHelper::GetHiddenEntityCaption(CCrmOwnerType::Contact)).'
+				<br />';
+			}
 		}
+
 		$strCard .= '</div>
 </div>';
 	}

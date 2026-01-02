@@ -236,11 +236,6 @@
 	font: 11px/13px "Roboto", "Helvetica Neue", Helvetica, Arial, sans-serif;
 }
 
-.order-payment-method-container .main-user-consent-request {
-	padding: 15px;
-	margin: 0;
-}
-
 .bx-dark .main-user-consent-request-announce { color: #fff; }
 
 /*Controls*/
@@ -659,4 +654,30 @@ a.check-link:hover { text-decoration: none; }
 		font-size: 14px;
 	}
 
+}
+
+.salescenter-user-consent-list {
+	padding: 7px 15px 15px;
+}
+
+.main-user-consent-request {
+	display: flex;
+	align-items: flex-start;
+	padding-top: 8px;
+}
+
+.main-user-consent-request input[type="checkbox"] {
+	margin-top: 3px;
+}
+
+.main-user-consent-request .main-user-consent-request-announce-link {
+	flex: 1;
+}
+
+.main-user-consent-request-announce a {
+	padding-left: 10px;
+}
+
+.main-user-consent-request-announce-link {
+	padding-left: 10px;
 }

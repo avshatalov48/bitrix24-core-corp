@@ -571,10 +571,10 @@ div.bx-popup-menu td.popupmenu div.popupitem td.gutter div.btn-copy { background
 	margin-bottom: var(--ui-space-stack-2xs, 8px);
 }
 
-/*.crm-list-top-bar ~ .crm-grid,
-.crm-list-top-bar + div > .crm-grid {
-	--main-grid-top-border-radius: 0;
-}*/
+.crm-list-top-toolbar {
+	padding: 10px 0 9px 0;
+	margin-bottom: var(--ui-space-stack-2xs, 8px);
+}
 
 .crm-toolbar-alignment-right {float:right; text-align:right;}
 

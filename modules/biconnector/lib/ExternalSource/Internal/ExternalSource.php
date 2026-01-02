@@ -6,24 +6,6 @@ use Bitrix\BIConnector;
 
 class ExternalSource extends EO_ExternalSource
 {
-	public function getSettings(): ExternalSourceSettingsCollection
-	{
-		return ExternalSourceSettingsTable::getList([
-			'filter' => [
-				'=SOURCE_ID' => $this->getId(),
-			],
-		])
-			->fetchCollection()
-		;
-	}
-
-	public function removeAllSettings(): void
-	{
-		ExternalSourceSettingsTable::deleteByFilter([
-			'=SOURCE_ID' => $this->getId(),
-		]);
-	}
-
 	/**
 	 * Gets enum type
 	 *

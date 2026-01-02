@@ -38,6 +38,6 @@ class InstantNotification implements NotificationInterface
 			$this->notification->getMessage()->getMetaData()->getCommentId()
 		);
 
-		return $link->placeLinkAnchor($preparedMessage);
+		return $link->placeLinkAnchor($preparedMessage, $this->notification->getAnalyticsData());
 	}
 }

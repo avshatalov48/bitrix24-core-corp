@@ -13,6 +13,7 @@ class Factory extends TypeFactory
 {
 	protected $itemIndexEntities = [];
 	protected $itemFieldsContextEntities = [];
+	protected $itemRecurringEntities = [];
 
 	/**
 	 * @return TypeTable
@@ -73,10 +74,6 @@ class Factory extends TypeFactory
 		return $entity;
 	}
 
-	/**
-	 * @param $type
-	 * @return PrototypeItemFieldsContext
-	 */
 	public function getItemFieldsContextDataClass($type): string
 	{
 		return $this->getItemFieldsContextEntity($type)->getDataClass();
@@ -92,7 +89,7 @@ class Factory extends TypeFactory
 		}
 
 		$entity = $this->getTypeDataClass()::compileItemFieldsContextEntity($type);
-		
+
 		$this->itemFieldsContextEntities[$typeData['ID']] = $entity;
 
 		return $entity;

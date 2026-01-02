@@ -14,6 +14,7 @@ BX.DocumentGenerator.UploadTemplate = {
 	numeratorSelectNode: 'docs-template-num-select',
 	productsTableVariantSelectNode: 'docs-template-products-table-variant-select',
 	numeratorBlockNode: 'add-template-numerator-block',
+	customFieldsBlock: 'add-template-custom-fields-block',
 	regionBlockNode: 'add-template-region-block',
 	fileBlockNode: 'upload-template-file-block',
 	uploadBlockNode: 'upload-template-upload-block',
@@ -345,6 +346,7 @@ BX.DocumentGenerator.UploadTemplate.onFileUploadDone = function(id, item, data)
 		BX.show(BX(BX.DocumentGenerator.UploadTemplate.buttonsBlockNode));
 		BX.show(BX(BX.DocumentGenerator.UploadTemplate.regionBlockNode));
 		BX.show(BX(BX.DocumentGenerator.UploadTemplate.numeratorBlockNode));
+		BX.show(BX(BX.DocumentGenerator.UploadTemplate.customFieldsBlock));
 		BX.show(BX(BX.DocumentGenerator.UploadTemplate.fileBlockNode));
 		BX.hide(BX(BX.DocumentGenerator.UploadTemplate.uploadBlockNode));
 	}
@@ -417,22 +419,25 @@ BX.DocumentGenerator.UploadTemplate.onClickSave = function(event)
 	{
 		BX.hide(BX(this.errorMessageNode));
 		this.startProgress();
+
 		var analyticsLabel, method, data;
 		data = {
 			fields: {
 				fileId: this.fileId,
-				providers: providers,
-				name: name,
+				providers,
+				name,
 				numeratorId: BX(this.numeratorSelectNode).value,
 				productsTableVariant: BX(this.productsTableVariantSelectNode).value,
-				users: users,
-				active: active,
+				users,
+				active,
 				withStamps: stamps,
 				moduleId: this.moduleId,
-				region: BX(this.regionSelectorId).value
-			}
+				region: BX(this.regionSelectorId).value,
+				customFields: BX.Type.isFunction(this.getCustomValues) ? this.getCustomValues() : null,
+			},
 		};
-		if(this.templateId > 0)
+
+		if (this.templateId > 0)
 		{
 			analyticsLabel = 'editTemplate';
 			method = 'documentgenerator.api.template.update';
@@ -515,6 +520,7 @@ BX.DocumentGenerator.UploadTemplate.reInitForm = function()
 			BX.hide(BX(BX.DocumentGenerator.UploadTemplate.activeBlockNode));
 			BX.hide(BX(BX.DocumentGenerator.UploadTemplate.userBlockNode));
 			BX.hide(BX(BX.DocumentGenerator.UploadTemplate.numeratorBlockNode));
+			BX.hide(BX(BX.DocumentGenerator.UploadTemplate.customFieldsBlock));
 			BX.hide(BX(BX.DocumentGenerator.UploadTemplate.buttonsBlockNode));
 			BX.hide(BX(BX.DocumentGenerator.UploadTemplate.regionBlockNode));
 			BX.hide(BX(BX.DocumentGenerator.UploadTemplate.fileBlockNode));

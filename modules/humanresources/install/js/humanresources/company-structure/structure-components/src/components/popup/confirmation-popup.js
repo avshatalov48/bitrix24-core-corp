@@ -63,6 +63,11 @@ export const ConfirmationPopup = {
 			required: false,
 			default: 300,
 		},
+		confirmButtonClass: {
+			type: String,
+			required: false,
+			default: 'ui-btn-primary',
+		},
 	},
 
 	methods: {
@@ -151,8 +156,12 @@ export const ConfirmationPopup = {
 						</div>
 						<div class="hr-confirmation-popup__buttons-container">
 							<button
-								class="ui-btn ui-btn-primary ui-btn-round"
-								:class="{ 'ui-btn-wait': showActionButtonLoader, 'ui-btn-disabled': lockActionButton }"
+								class="ui-btn ui-btn-round"
+								:class="{ 
+									'ui-btn-wait': showActionButtonLoader, 
+									'ui-btn-disabled': lockActionButton, 
+									[confirmButtonClass]: true
+								}"
 								@click="performAction"
 							>
 								{{ confirmBtnText ?? '' }}

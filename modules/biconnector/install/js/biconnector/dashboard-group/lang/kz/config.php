@@ -1,0 +1,23 @@
+<?php
+$MESS["BI_GROUP_ADD_DASHBOARD"] = "Есептерді қосу";
+$MESS["BI_GROUP_DASHBOARD_SCOPES_EMPTY"] = "Көру аймағын таңдау";
+$MESS["BI_GROUP_EMPTY_SUBTITLE"] = "Оларды топқа қосу үшін Есептерді қосу батырмасын басыңыз";
+$MESS["BI_GROUP_EMPTY_TITLE"] = "Топта әлі есептер жоқ";
+$MESS["BI_GROUP_NAME_NEW"] = "Жаңа топ";
+$MESS["BI_GROUP_SAVE"] = "Сақтау";
+$MESS["BI_GROUP_SAVE_CANCEL_MSGVER_1"] = "Болдырмау";
+$MESS["BI_GROUP_SAVE_WARN_DONT_SHOW"] = "Енді көрсетпеңіз";
+$MESS["BI_GROUP_SAVE_WARN_NO"] = "Болдырмау";
+$MESS["BI_GROUP_SAVE_WARN_TEXT_MSGVER_1"] = "Егер сіз оны топтан жойсаңыз, есепке қол жетімділікті жоғалтасыз";
+$MESS["BI_GROUP_SAVE_WARN_TITLE"] = "Есепті топтан жою керек пе?";
+$MESS["BI_GROUP_SAVE_WARN_YES"] = "Жою";
+$MESS["BI_GROUP_SCOPES_DASHBOARD"] = "#FIRST_SCOPES# [hint]және тағы #NUMBER#[/hint]";
+$MESS["BI_GROUP_SCOPES_GROUP"] = "[title]Көріну аймақтары:[/title] #SCOPE#";
+$MESS["BI_GROUP_SCOPES_GROUP_EMPTY"] = "[title]Көріну аймақтары:[/title] таңдау";
+$MESS["BI_GROUP_SCOPES_GROUP_MANY"] = "[title]Көріну аймақтары:[/title] #FIRST_SCOPES# [hint]және тағы #NUMBER#[/hint]";
+$MESS["BI_GROUP_SCOPE_HINT"] = "Таңдалған көріну аймақтары топтағы барлық есептерге қосылады. [link]Толығырақ[/link]";
+$MESS["BI_GROUP_SUBTITLE_PLURAL_0"] = "# COUNT# есеп";
+$MESS["BI_GROUP_SUBTITLE_PLURAL_1"] = "#COUNT# есеп";
+$MESS["BI_GROUP_SUBTITLE_PLURAL_2"] = "#COUNT# есеп";
+$MESS["BI_GROUP_SYSTEM_NAME_HINT"] = "Жүйелік топтың атауын өзгерту мүмкін емес";
+$MESS["BI_GROUP_SYSTEM_SCOPES_HINT"] = "Жүйелік топтың көріну аймағын өзгерту мүмкін емес";

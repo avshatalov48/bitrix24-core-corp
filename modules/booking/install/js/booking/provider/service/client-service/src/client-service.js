@@ -19,6 +19,7 @@ const MethodName = Object.freeze({
 	GetCompanyContacts: 'crm.company.contact.items.get',
 	CompanyUpdate: 'crm.company.update',
 	ContactUpdate: 'crm.contact.update',
+	DealContactGet: 'crm.deal.contact.items.get',
 });
 
 const RequestKey = Object.freeze({
@@ -31,6 +32,7 @@ const RequestKey = Object.freeze({
 	GetCompanyContacts: 'get_company_contacts',
 	CompanyUpdate: 'company_update_#id#',
 	ContactUpdate: 'contact_update_#id#',
+	DealContactGet: 'deal_contact_get_#id#',
 });
 
 class ClientService
@@ -63,23 +65,63 @@ class ClientService
 
 		await Core.getStore().dispatch('clients/update', { id: company.id, client: company });
 
-		return Core.getStore().getters['clients/getByClientData']({
-			id: company.contactId,
+		return this.getContactById(company.contactId);
+	}
+
+	async getContactById(id: number): Promise<ClientModel | undefined>
+	{
+		const contact = Core.getStore().getters['clients/getByClientData']({
+			id,
 			type: {
 				module: Module.Crm,
 				code: CrmEntity.Contact,
 			},
 		});
+
+		return contact || this.#getEntityById({
+			id,
+			methodName: MethodName.ContactGet,
+			requestKey: RequestKey.ContactGet,
+			entityCode: CrmEntity.Contact,
+		});
+	}
+
+	async getCompanyById(id: number): Promise<ClientModel | undefined>
+	{
+		return this.#getEntityById({
+			id,
+			methodName: MethodName.CompanyGet,
+			requestKey: RequestKey.CompanyGet,
+			entityCode: CrmEntity.Company,
+		});
+	}
+
+	async getLinkedContactByDeal(id: number): Promise<ClientModel | undefined>
+	{
+		try
+		{
+			const primaryContactId = await this.#getPrimaryContactIdByDeal(id);
+
+			return primaryContactId ? this.getContactById(primaryContactId) : undefined;
+		}
+		catch (error)
+		{
+			console.error('ClientService: getLinkedContactByDeal error', error);
+
+			return undefined;
+		}
 	}
 
 	async #requestSaveMany(clients: ClientModel[]): Promise<ClientModel[]>
 	{
-		const companies = clients.filter((client) => client.type.code === CrmEntity.Company);
-		const contacts = clients.filter((client) => client.type.code === CrmEntity.Contact);
-		const companiesToAdd = companies.filter((client) => !client.id);
-		const companiesToUpdate = companies.filter((client) => this.#isClientToUpdate(client));
-		const contactsToAdd = contacts.filter((client) => !client.id);
-		const contactsToUpdate = contacts.filter((client) => this.#isClientToUpdate(client));
+		const {
+			companies,
+			companiesToAdd,
+			companiesToUpdate,
+			contactsToAdd,
+			contactsToUpdate,
+		} = this.#categorizeClients(clients);
+
 		const clientsToRequest = [...companiesToAdd, ...companiesToUpdate, ...contactsToAdd, ...contactsToUpdate];
 
 		clientsToRequest.forEach((client, index) => {
@@ -96,7 +138,31 @@ class ClientService
 			...this.#getContactUpdateMethods(contactsToUpdate),
 		};
 
-		const result = await new Promise((resolve) => {
+		const result = await this.#executeBatchRequest(restMethods);
+		this.#handleErrors(result);
+		this.#updateClientIds(companiesToAdd, contactsToAdd, result);
+
+		return clients;
+	}
+
+	#categorizeClients(clients: ClientModel[])
+	{
+		const companies = clients.filter((client: ClientModel) => client.type.code === CrmEntity.Company);
+		const contacts = clients.filter((client: ClientModel) => client.type.code === CrmEntity.Contact);
+
+		return {
+			companies,
+			contacts,
+			companiesToAdd: companies.filter((client: ClientModel) => !client.id),
+			companiesToUpdate: companies.filter(this.#isClientToUpdate.bind(this)),
+			contactsToAdd: contacts.filter((client: ClientModel) => !client.id),
+			contactsToUpdate: contacts.filter(this.#isClientToUpdate.bind(this)),
+		};
+	}
+
+	async #executeBatchRequest(restMethods: RestMethods): Promise<any>
+	{
+		return new Promise((resolve) => {
 			if (Object.keys(restMethods).length === 0)
 			{
 				resolve([]);
@@ -104,7 +170,10 @@ class ClientService
 
 			BX.rest.callBatch(restMethods, (batchResult) => resolve(batchResult));
 		});
+	}
 
+	#handleErrors(result: any)
+	{
 		const errors = Object.values(result)
 			.map((ajaxResult) => ajaxResult.answer.error?.error_description)
 			.filter((error) => error)
@@ -114,16 +183,17 @@ class ClientService
 		{
 			throw new Error(Tag.render`<span>${errors[0]}</span>`.textContent);
 		}
+	}
 
-		companiesToAdd.forEach((client) => {
+	#updateClientIds(companiesToAdd: ClientModel[], contactsToAdd: ClientModel[], result: any)
+	{
+		companiesToAdd.forEach((client: ClientModel) => {
 			client.id = result[this.#getRequestKey(RequestKey.CompanyAdd, client.index)].data();
 		});
 
-		contactsToAdd.forEach((client) => {
+		contactsToAdd.forEach((client: ClientModel) => {
 			client.id = result[this.#getRequestKey(RequestKey.ContactAdd, client.index)].data();
 		});
-
-		return clients;
 	}
 
 	#isClientToUpdate(client: ClientModel): boolean
@@ -143,35 +213,35 @@ class ClientService
 
 	#getParseNameMethods(contacts: ClientModel[]): RestMethods
 	{
-		return contacts.reduce((methods, client) => ({
-			...methods,
-			[this.#getRequestKey(RequestKey.ParseName, client.index)]: {
-				method: MethodName.ParseFormattedName,
-				params: {
-					fields: {
-						FORMATTED_NAME: client.name,
-					},
+		return contacts.reduce((methods, client) => {
+			return {
+				...methods,
+				[this.#getRequestKey(RequestKey.ParseName, client.index)]: {
+					method: MethodName.ParseFormattedName,
+					params: { fields: { FORMATTED_NAME: client.name } },
 				},
-			},
-		}), {});
+			};
+		}, {});
 	}
 
 	#getCompanyAddMethods(companiesToAdd: ClientModel[]): RestMethods
 	{
-		return companiesToAdd.reduce((methods, client) => ({
-			...methods,
-			[this.#getRequestKey(RequestKey.CompanyAdd, client.index)]: {
-				method: MethodName.CompanyAdd,
-				params: {
-					fields: {
-						TITLE: client.name,
-						PHONE: client.phones.map((VALUE) => ({ VALUE, VALUE_TYPE })),
-						EMAIL: client.emails.map((VALUE) => ({ VALUE, VALUE_TYPE })),
+		return companiesToAdd.reduce((methods: {}, client: ClientModel) => {
+			return {
+				...methods,
+				[this.#getRequestKey(RequestKey.CompanyAdd, client.index)]: {
+					method: MethodName.CompanyAdd,
+					params: {
+						fields: {
+							TITLE: client.name,
+							PHONE: client.phones.map((VALUE) => ({ VALUE, VALUE_TYPE })),
+							EMAIL: client.emails.map((VALUE) => ({ VALUE, VALUE_TYPE })),
+						},
+						params: { REGISTER_SONET_EVENT: 'Y' },
 					},
-					params: { REGISTER_SONET_EVENT: 'Y' },
 				},
-			},
-		}), {});
+			};
+		}, {});
 	}
 
 	#getContactAddMethods(contactsToAdd: ClientModel[], companies: ClientModel[]): RestMethods
@@ -187,8 +257,8 @@ class ClientService
 						fields: {
 							COMPANY_ID: companies.length > 0 ? COMPANY_ID : undefined,
 							...this.#prepareContactNameFields(client.index),
-							PHONE: client.phones.map((VALUE) => ({ VALUE, VALUE_TYPE })),
-							EMAIL: client.emails.map((VALUE) => ({ VALUE, VALUE_TYPE })),
+							PHONE: client.phones.map((VALUE: string) => ({ VALUE, VALUE_TYPE })),
+							EMAIL: client.emails.map((VALUE: string) => ({ VALUE, VALUE_TYPE })),
 						},
 						params: { REGISTER_SONET_EVENT: 'Y' },
 					},
@@ -340,6 +410,83 @@ class ClientService
 
 			return 0;
 		}
+	}
+
+	async #getEntityById(params = {}): Promise<ClientModel | undefined>
+	{
+		try
+		{
+			const { id, methodName, requestKey, entityCode } = params;
+
+			const entity = await new Promise((resolve) => {
+				BX.rest.callBatch({
+					[this.#getRequestKey(requestKey, id)]: {
+						method: methodName,
+						params: { id },
+					},
+					[this.#getRequestKey(RequestKey.AddFormattedName)]: {
+						method: MethodName.AddFormattedName,
+						params: {
+							fields: `$result[${this.#getRequestKey(requestKey, id)}]`,
+						},
+					},
+				}, (result) => {
+					const data = result[this.#getRequestKey(RequestKey.AddFormattedName)].data();
+					if (!data?.ID)
+					{
+						resolve(null);
+					}
+
+					resolve({
+						id: Number(data.ID),
+						name: entityCode === CrmEntity.Company ? data.TITLE : data.FORMATTED_NAME,
+						image: entityCode === CrmEntity.Company ? data.LOGO?.showUrl : data.PHOTO?.showUrl,
+						type: {
+							module: Module.Crm,
+							code: entityCode,
+						},
+						phones: data.PHONE?.map(({ VALUE }) => VALUE) ?? [],
+						emails: data.EMAIL?.map(({ VALUE }) => VALUE) ?? [],
+					});
+				});
+			});
+
+			if (entity === null)
+			{
+				return undefined;
+			}
+
+			await Core.getStore().dispatch('clients/upsert', entity);
+
+			return entity;
+		}
+		catch (error)
+		{
+			console.error(`ClientService: getEntityById error for ${entityCode}`, error);
+
+			return undefined;
+		}
+	}
+
+	async #getPrimaryContactIdByDeal(dealId: number): Promise<number | null>
+	{
+		return new Promise((resolve) => {
+			BX.rest.callBatch({
+				[this.#getRequestKey(RequestKey.DealContactGet, dealId)]: {
+					method: MethodName.DealContactGet,
+					params: { id: dealId },
+				},
+			}, (result) => {
+				const data = result[this.#getRequestKey(RequestKey.DealContactGet, dealId)].data();
+				if (!data)
+				{
+					resolve(null);
+				}
+
+				const primaryContact = data.find((item) => item.IS_PRIMARY === 'Y');
+				resolve(primaryContact ? primaryContact.CONTACT_ID : null);
+			});
+		});
 	}
 
 	#getRequestKey(template: string, id: number = 0): string

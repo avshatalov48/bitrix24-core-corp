@@ -12,7 +12,7 @@ $APPLICATION->IncludeComponent(
 			"SEF_MODE" => "Y",
 			"SEF_FOLDER" => "/onec/"
 		),
-		"USE_PADDING" => false
+		'USE_UI_TOOLBAR' => 'Y',
 	),
 	false
 );

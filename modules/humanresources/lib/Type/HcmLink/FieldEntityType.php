@@ -2,7 +2,7 @@
 
 namespace Bitrix\HumanResources\Type\HcmLink;
 
-use Bitrix\HumanResources\Trait\ValuesTrait;
+use Bitrix\HumanResources\Internals\Trait\ValuesTrait;
 
 enum FieldEntityType: int
 {
@@ -11,4 +11,5 @@ enum FieldEntityType: int
 	case UNKNOWN = 0;
 	case EMPLOYEE = 1;
 	case COMPANY = 2;
+	case DOCUMENT = 3;
 }

@@ -295,7 +295,7 @@ class TemplateProvider
 			$field = strtoupper($field);
 			if (array_key_exists($field, $this->arFields))
 			{
-				$arSqlSelect[$field] = \Bitrix\Tasks\DB\Helper::wrapColumnWithFunction($this->arFields[$field]['FIELD'])." AS ".$field;
+				$arSqlSelect[$field] = \Bitrix\Tasks\Internals\DataBase\Helper::wrapColumnWithFunction($this->arFields[$field]['FIELD'])." AS ".$field;
 			}
 		}
 
@@ -437,7 +437,7 @@ class TemplateProvider
 			$treeJoin = "LEFT JOIN ". DependencyTable::getTableName() ." TD on TT.ID = TD.TEMPLATE_ID".($includeSubtree ? "" : " AND TD.DIRECT = 1");
 		}
 
-		$temporalTableName = \Bitrix\Tasks\DB\Helper::getTemporaryTableNameSql();
+		$temporalTableName = \Bitrix\Tasks\Internals\DataBase\Helper::getTemporaryTableNameSql();
 
 		$this->strFrom = "FROM
 				b_tasks_template TT

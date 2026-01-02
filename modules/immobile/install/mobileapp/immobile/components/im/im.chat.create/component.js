@@ -4,9 +4,12 @@
  * @bxjs_lang_path component.php
  */
 
-var { EventType } = jn.require('im/messenger/const');
-var { openIntranetInviteWidget } = jn.require('intranet/invite-opener-new');
 var { AnalyticsEvent } = jn.require('analytics');
+
+var { openIntranetInviteWidget } = jn.require('intranet/invite-opener-new');
+
+var { EventType } = jn.require('im/messenger/const');
+var { Feature } = jn.require('im/messenger/lib/feature');
 
 /* Clean session variables after page restart */
 if (typeof clearInterval === 'undefined')
@@ -301,10 +304,7 @@ ChatCreate.event.onInviteEmployees = function(event)
 {
 	console.log('ChatCreate.event.onInviteEmployees', event);
 
-	if (
-		Application.getApiVersion() < 34
-		|| !BX.componentParameters.get('INTRANET_INVITATION_CAN_INVITE', false)
-	)
+	if (!Feature.isIntranetInvitationAvailable)
 	{
 		return false;
 	}

@@ -7,7 +7,6 @@ use Bitrix\Main\Grid\Panel\Action\Group\GroupChildAction;
 use Bitrix\Main\Grid\Panel\Actions;
 use Bitrix\Main\Grid\Panel\Snippet;
 use Bitrix\Main\Grid\Panel\Snippet\Onchange;
-use Bitrix\Main\Localization\Loc;
 use Bitrix\Main\Web\Json;
 
 abstract class UserGroupChildAction extends GroupChildAction
@@ -43,14 +42,14 @@ abstract class UserGroupChildAction extends GroupChildAction
 			[
 				'ACTION' => Actions::CREATE,
 				'DATA' => [
-					(new Snippet)->getApplyButton([
+					(new Snippet())->getApplyButton([
 						'ONCHANGE' => [
 							[
 								'ACTION' => Actions::CALLBACK,
 								'DATA' => [
 									[
 										'JS' => $this->getJsCallBack(),
-									]
+									],
 								],
 							],
 						],

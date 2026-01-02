@@ -1,9 +1,12 @@
-<?
+<?php
 
 use Bitrix\Main\Loader;
 use Bitrix\Main\Localization\Loc;
 use Bitrix\Main\Error;
 use Bitrix\Main\ErrorCollection;
+
+use Bitrix\Ui\Form\UrlProvider;
+use Bitrix\UI\Form\FormsProvider;
 
 use Bitrix\Crm\Tracking;
 
@@ -49,6 +52,8 @@ class CrmTrackingListComponent extends CBitrixComponent
 
 		$this->arResult['ACTION_URI'] = $this->getPath() . '/ajax.php';
 
+		$this->arResult['FEEDBACK_FORM_URI'] = (new UrlProvider())->getPartnerPortalUrl();
+		$this->arResult['FEEDBACK_FORMS_DATA'] = FormsProvider::getForms();
 
 		return true;
 	}

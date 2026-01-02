@@ -6,7 +6,6 @@ $MESS["TELEPHONY_BALANCE_2"] = "Текущий баланс доступен в 
 $MESS["TELEPHONY_REFRESH"] = "Обновить";
 $MESS["TELEPHONY_PAY"] = "Пополнить";
 $MESS["TELEPHONY_TARIFFS_2"] = "Тарифы";
-$MESS["TELEPHONY_TARIFFS_LINK"] = "https://www.bitrix24.ru/prices/tariffs.php";
 $MESS["TELEPHONY_HISTORY"] = "Расходы";
 $MESS["TELEPHONY_RUR"] = "руб";
 $MESS["TELEPHONY_UAH"] = "грн";
@@ -38,4 +37,3 @@ $MESS["VI_ERROR"] = "При получении данных произошла �
 $MESS["VI_LOCK_RECORD_TITLE"] = "Запись разговоров";
 $MESS["VI_LOCK_RECORD_TEXT"] = "На вашем тарифном плане доступна запись #LIMIT# звонков в месяц, осталось #REMAINING#.";
 $MESS["VI_LOCK_RECORD_LINK"] = "Дополнительная информация";
-?>

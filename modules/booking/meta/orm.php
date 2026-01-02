@@ -1,5 +1,193 @@
 <?php
 
+/* ORMENTITYANNOTATION:Bitrix\Booking\Internals\Model\ResourceLinkedEntityTable:booking/lib/Internals/Model/ResourceLinkedEntityTable.php */
+namespace Bitrix\Booking\Internals\Model {
+	/**
+	 * EO_ResourceLinkedEntity
+	 * @see \Bitrix\Booking\Internals\Model\ResourceLinkedEntityTable
+	 *
+	 * Custom methods:
+	 * ---------------
+	 *
+	 * @method \int getId()
+	 * @method \Bitrix\Booking\Internals\Model\EO_ResourceLinkedEntity setId(\int|\Bitrix\Main\DB\SqlExpression $id)
+	 * @method bool hasId()
+	 * @method bool isIdFilled()
+	 * @method bool isIdChanged()
+	 * @method \int getResourceId()
+	 * @method \Bitrix\Booking\Internals\Model\EO_ResourceLinkedEntity setResourceId(\int|\Bitrix\Main\DB\SqlExpression $resourceId)
+	 * @method bool hasResourceId()
+	 * @method bool isResourceIdFilled()
+	 * @method bool isResourceIdChanged()
+	 * @method \int remindActualResourceId()
+	 * @method \int requireResourceId()
+	 * @method \Bitrix\Booking\Internals\Model\EO_ResourceLinkedEntity resetResourceId()
+	 * @method \Bitrix\Booking\Internals\Model\EO_ResourceLinkedEntity unsetResourceId()
+	 * @method \int fillResourceId()
+	 * @method \int getEntityId()
+	 * @method \Bitrix\Booking\Internals\Model\EO_ResourceLinkedEntity setEntityId(\int|\Bitrix\Main\DB\SqlExpression $entityId)
+	 * @method bool hasEntityId()
+	 * @method bool isEntityIdFilled()
+	 * @method bool isEntityIdChanged()
+	 * @method \int remindActualEntityId()
+	 * @method \int requireEntityId()
+	 * @method \Bitrix\Booking\Internals\Model\EO_ResourceLinkedEntity resetEntityId()
+	 * @method \Bitrix\Booking\Internals\Model\EO_ResourceLinkedEntity unsetEntityId()
+	 * @method \int fillEntityId()
+	 * @method \string getEntityType()
+	 * @method \Bitrix\Booking\Internals\Model\EO_ResourceLinkedEntity setEntityType(\string|\Bitrix\Main\DB\SqlExpression $entityType)
+	 * @method bool hasEntityType()
+	 * @method bool isEntityTypeFilled()
+	 * @method bool isEntityTypeChanged()
+	 * @method \string remindActualEntityType()
+	 * @method \string requireEntityType()
+	 * @method \Bitrix\Booking\Internals\Model\EO_ResourceLinkedEntity resetEntityType()
+	 * @method \Bitrix\Booking\Internals\Model\EO_ResourceLinkedEntity unsetEntityType()
+	 * @method \string fillEntityType()
+	 * @method \Bitrix\Main\Type\DateTime getCreatedAt()
+	 * @method \Bitrix\Booking\Internals\Model\EO_ResourceLinkedEntity setCreatedAt(\Bitrix\Main\Type\DateTime|\Bitrix\Main\DB\SqlExpression $createdAt)
+	 * @method bool hasCreatedAt()
+	 * @method bool isCreatedAtFilled()
+	 * @method bool isCreatedAtChanged()
+	 * @method \Bitrix\Main\Type\DateTime remindActualCreatedAt()
+	 * @method \Bitrix\Main\Type\DateTime requireCreatedAt()
+	 * @method \Bitrix\Booking\Internals\Model\EO_ResourceLinkedEntity resetCreatedAt()
+	 * @method \Bitrix\Booking\Internals\Model\EO_ResourceLinkedEntity unsetCreatedAt()
+	 * @method \Bitrix\Main\Type\DateTime fillCreatedAt()
+	 * @method \string getData()
+	 * @method \Bitrix\Booking\Internals\Model\EO_ResourceLinkedEntity setData(\string|\Bitrix\Main\DB\SqlExpression $data)
+	 * @method bool hasData()
+	 * @method bool isDataFilled()
+	 * @method bool isDataChanged()
+	 * @method \string remindActualData()
+	 * @method \string requireData()
+	 * @method \Bitrix\Booking\Internals\Model\EO_ResourceLinkedEntity resetData()
+	 * @method \Bitrix\Booking\Internals\Model\EO_ResourceLinkedEntity unsetData()
+	 * @method \string fillData()
+	 * @method \Bitrix\Booking\Internals\Model\EO_Resource getResource()
+	 * @method \Bitrix\Booking\Internals\Model\EO_Resource remindActualResource()
+	 * @method \Bitrix\Booking\Internals\Model\EO_Resource requireResource()
+	 * @method \Bitrix\Booking\Internals\Model\EO_ResourceLinkedEntity setResource(\Bitrix\Booking\Internals\Model\EO_Resource $object)
+	 * @method \Bitrix\Booking\Internals\Model\EO_ResourceLinkedEntity resetResource()
+	 * @method \Bitrix\Booking\Internals\Model\EO_ResourceLinkedEntity unsetResource()
+	 * @method bool hasResource()
+	 * @method bool isResourceFilled()
+	 * @method bool isResourceChanged()
+	 * @method \Bitrix\Booking\Internals\Model\EO_Resource fillResource()
+	 *
+	 * Common methods:
+	 * ---------------
+	 *
+	 * @property-read \Bitrix\Main\ORM\Entity $entity
+	 * @property-read array $primary
+	 * @property-read int $state @see \Bitrix\Main\ORM\Objectify\State
+	 * @property-read \Bitrix\Main\Type\Dictionary $customData
+	 * @property \Bitrix\Main\Authentication\Context $authContext
+	 * @method mixed get($fieldName)
+	 * @method mixed remindActual($fieldName)
+	 * @method mixed require($fieldName)
+	 * @method bool has($fieldName)
+	 * @method bool isFilled($fieldName)
+	 * @method bool isChanged($fieldName)
+	 * @method \Bitrix\Booking\Internals\Model\EO_ResourceLinkedEntity set($fieldName, $value)
+	 * @method \Bitrix\Booking\Internals\Model\EO_ResourceLinkedEntity reset($fieldName)
+	 * @method \Bitrix\Booking\Internals\Model\EO_ResourceLinkedEntity unset($fieldName)
+	 * @method void addTo($fieldName, $value)
+	 * @method void removeFrom($fieldName, $value)
+	 * @method void removeAll($fieldName)
+	 * @method \Bitrix\Main\ORM\Data\Result delete()
+	 * @method mixed fill($fields = \Bitrix\Main\ORM\Fields\FieldTypeMask::ALL) flag or array of field names
+	 * @method mixed[] collectValues($valuesType = \Bitrix\Main\ORM\Objectify\Values::ALL, $fieldsMask = \Bitrix\Main\ORM\Fields\FieldTypeMask::ALL)
+	 * @method \Bitrix\Main\ORM\Data\AddResult|\Bitrix\Main\ORM\Data\UpdateResult|\Bitrix\Main\ORM\Data\Result save()
+	 * @method static \Bitrix\Booking\Internals\Model\EO_ResourceLinkedEntity wakeUp($data)
+	 */
+	class EO_ResourceLinkedEntity {
+		/* @var \Bitrix\Booking\Internals\Model\ResourceLinkedEntityTable */
+		static public $dataClass = '\Bitrix\Booking\Internals\Model\ResourceLinkedEntityTable';
+		/**
+		 * @param bool|array $setDefaultValues
+		 */
+		public function __construct($setDefaultValues = true) {}
+	}
+}
+namespace Bitrix\Booking\Internals\Model {
+	/**
+	 * EO_ResourceLinkedEntity_Collection
+	 *
+	 * Custom methods:
+	 * ---------------
+	 *
+	 * @method \int[] getIdList()
+	 * @method \int[] getResourceIdList()
+	 * @method \int[] fillResourceId()
+	 * @method \int[] getEntityIdList()
+	 * @method \int[] fillEntityId()
+	 * @method \string[] getEntityTypeList()
+	 * @method \string[] fillEntityType()
+	 * @method \Bitrix\Main\Type\DateTime[] getCreatedAtList()
+	 * @method \Bitrix\Main\Type\DateTime[] fillCreatedAt()
+	 * @method \string[] getDataList()
+	 * @method \string[] fillData()
+	 * @method \Bitrix\Booking\Internals\Model\EO_Resource[] getResourceList()
+	 * @method \Bitrix\Booking\Internals\Model\EO_ResourceLinkedEntity_Collection getResourceCollection()
+	 * @method \Bitrix\Booking\Internals\Model\EO_Resource_Collection fillResource()
+	 *
+	 * Common methods:
+	 * ---------------
+	 *
+	 * @property-read \Bitrix\Main\ORM\Entity $entity
+	 * @method void add(\Bitrix\Booking\Internals\Model\EO_ResourceLinkedEntity $object)
+	 * @method bool has(\Bitrix\Booking\Internals\Model\EO_ResourceLinkedEntity $object)
+	 * @method bool hasByPrimary($primary)
+	 * @method \Bitrix\Booking\Internals\Model\EO_ResourceLinkedEntity getByPrimary($primary)
+	 * @method \Bitrix\Booking\Internals\Model\EO_ResourceLinkedEntity[] getAll()
+	 * @method bool remove(\Bitrix\Booking\Internals\Model\EO_ResourceLinkedEntity $object)
+	 * @method void removeByPrimary($primary)
+	 * @method array|\Bitrix\Main\ORM\Objectify\Collection|null fill($fields = \Bitrix\Main\ORM\Fields\FieldTypeMask::ALL) flag or array of field names
+	 * @method static \Bitrix\Booking\Internals\Model\EO_ResourceLinkedEntity_Collection wakeUp($data)
+	 * @method \Bitrix\Main\ORM\Data\Result save($ignoreEvents = false)
+	 * @method void offsetSet() ArrayAccess
+	 * @method void offsetExists() ArrayAccess
+	 * @method void offsetUnset() ArrayAccess
+	 * @method void offsetGet() ArrayAccess
+	 * @method void rewind() Iterator
+	 * @method \Bitrix\Booking\Internals\Model\EO_ResourceLinkedEntity current() Iterator
+	 * @method mixed key() Iterator
+	 * @method void next() Iterator
+	 * @method bool valid() Iterator
+	 * @method int count() Countable
+	 * @method \Bitrix\Booking\Internals\Model\EO_ResourceLinkedEntity_Collection merge(?\Bitrix\Booking\Internals\Model\EO_ResourceLinkedEntity_Collection $collection)
+	 * @method bool isEmpty()
+	 * @method array collectValues(int $valuesType = \Bitrix\Main\ORM\Objectify\Values::ALL, int $fieldsMask = \Bitrix\Main\ORM\Fields\FieldTypeMask::ALL, bool $recursive = false)
+	 */
+	class EO_ResourceLinkedEntity_Collection implements \ArrayAccess, \Iterator, \Countable {
+		/* @var \Bitrix\Booking\Internals\Model\ResourceLinkedEntityTable */
+		static public $dataClass = '\Bitrix\Booking\Internals\Model\ResourceLinkedEntityTable';
+	}
+}
+namespace Bitrix\Booking\Internals\Model {
+	/**
+	 * Common methods:
+	 * ---------------
+	 *
+	 * @method EO_ResourceLinkedEntity_Result exec()
+	 * @method \Bitrix\Booking\Internals\Model\EO_ResourceLinkedEntity fetchObject()
+	 * @method \Bitrix\Booking\Internals\Model\EO_ResourceLinkedEntity_Collection fetchCollection()
+	 */
+	class EO_ResourceLinkedEntity_Query extends \Bitrix\Main\ORM\Query\Query {}
+	/**
+	 * @method \Bitrix\Booking\Internals\Model\EO_ResourceLinkedEntity fetchObject()
+	 * @method \Bitrix\Booking\Internals\Model\EO_ResourceLinkedEntity_Collection fetchCollection()
+	 */
+	class EO_ResourceLinkedEntity_Result extends \Bitrix\Main\ORM\Query\Result {}
+	/**
+	 * @method \Bitrix\Booking\Internals\Model\EO_ResourceLinkedEntity createObject($setDefaultValues = true)
+	 * @method \Bitrix\Booking\Internals\Model\EO_ResourceLinkedEntity_Collection createCollection()
+	 * @method \Bitrix\Booking\Internals\Model\EO_ResourceLinkedEntity wakeUpObject($row)
+	 * @method \Bitrix\Booking\Internals\Model\EO_ResourceLinkedEntity_Collection wakeUpCollection($rows)
+	 */
+	class EO_ResourceLinkedEntity_Entity extends \Bitrix\Main\ORM\Entity {}
+}
 /* ORMENTITYANNOTATION:Bitrix\Booking\Internals\Model\OptionTable:booking/lib/Internals/Model/OptionTable.php */
 namespace Bitrix\Booking\Internals\Model {
 	/**
@@ -369,6 +557,16 @@ namespace Bitrix\Booking\Internals\Model {
 	 * @method bool isResourceFilled()
 	 * @method bool isResourceChanged()
 	 * @method \Bitrix\Booking\Internals\Model\EO_Resource fillResource()
+	 * @method \boolean getIsPrimary()
+	 * @method \Bitrix\Booking\Internals\Model\EO_BookingResource setIsPrimary(\boolean|\Bitrix\Main\DB\SqlExpression $isPrimary)
+	 * @method bool hasIsPrimary()
+	 * @method bool isIsPrimaryFilled()
+	 * @method bool isIsPrimaryChanged()
+	 * @method \boolean remindActualIsPrimary()
+	 * @method \boolean requireIsPrimary()
+	 * @method \Bitrix\Booking\Internals\Model\EO_BookingResource resetIsPrimary()
+	 * @method \Bitrix\Booking\Internals\Model\EO_BookingResource unsetIsPrimary()
+	 * @method \boolean fillIsPrimary()
 	 *
 	 * Common methods:
 	 * ---------------
@@ -423,6 +621,8 @@ namespace Bitrix\Booking\Internals\Model {
 	 * @method \Bitrix\Booking\Internals\Model\EO_Resource[] getResourceList()
 	 * @method \Bitrix\Booking\Internals\Model\EO_BookingResource_Collection getResourceCollection()
 	 * @method \Bitrix\Booking\Internals\Model\EO_Resource_Collection fillResource()
+	 * @method \boolean[] getIsPrimaryList()
+	 * @method \boolean[] fillIsPrimary()
 	 *
 	 * Common methods:
 	 * ---------------
@@ -657,16 +857,16 @@ namespace Bitrix\Booking\Internals\Model {
 	 * @method bool hasId()
 	 * @method bool isIdFilled()
 	 * @method bool isIdChanged()
-	 * @method \int getBookingId()
-	 * @method \Bitrix\Booking\Internals\Model\EO_BookingClient setBookingId(\int|\Bitrix\Main\DB\SqlExpression $bookingId)
-	 * @method bool hasBookingId()
-	 * @method bool isBookingIdFilled()
-	 * @method bool isBookingIdChanged()
-	 * @method \int remindActualBookingId()
-	 * @method \int requireBookingId()
-	 * @method \Bitrix\Booking\Internals\Model\EO_BookingClient resetBookingId()
-	 * @method \Bitrix\Booking\Internals\Model\EO_BookingClient unsetBookingId()
-	 * @method \int fillBookingId()
+	 * @method \int getEntityId()
+	 * @method \Bitrix\Booking\Internals\Model\EO_BookingClient setEntityId(\int|\Bitrix\Main\DB\SqlExpression $entityId)
+	 * @method bool hasEntityId()
+	 * @method bool isEntityIdFilled()
+	 * @method bool isEntityIdChanged()
+	 * @method \int remindActualEntityId()
+	 * @method \int requireEntityId()
+	 * @method \Bitrix\Booking\Internals\Model\EO_BookingClient resetEntityId()
+	 * @method \Bitrix\Booking\Internals\Model\EO_BookingClient unsetEntityId()
+	 * @method \int fillEntityId()
 	 * @method \int getClientTypeId()
 	 * @method \Bitrix\Booking\Internals\Model\EO_BookingClient setClientTypeId(\int|\Bitrix\Main\DB\SqlExpression $clientTypeId)
 	 * @method bool hasClientTypeId()
@@ -697,6 +897,16 @@ namespace Bitrix\Booking\Internals\Model {
 	 * @method \Bitrix\Booking\Internals\Model\EO_BookingClient resetIsPrimary()
 	 * @method \Bitrix\Booking\Internals\Model\EO_BookingClient unsetIsPrimary()
 	 * @method \boolean fillIsPrimary()
+	 * @method \string getEntityType()
+	 * @method \Bitrix\Booking\Internals\Model\EO_BookingClient setEntityType(\string|\Bitrix\Main\DB\SqlExpression $entityType)
+	 * @method bool hasEntityType()
+	 * @method bool isEntityTypeFilled()
+	 * @method bool isEntityTypeChanged()
+	 * @method \string remindActualEntityType()
+	 * @method \string requireEntityType()
+	 * @method \Bitrix\Booking\Internals\Model\EO_BookingClient resetEntityType()
+	 * @method \Bitrix\Booking\Internals\Model\EO_BookingClient unsetEntityType()
+	 * @method \string fillEntityType()
 	 * @method \Bitrix\Booking\Internals\Model\EO_Booking getBooking()
 	 * @method \Bitrix\Booking\Internals\Model\EO_Booking remindActualBooking()
 	 * @method \Bitrix\Booking\Internals\Model\EO_Booking requireBooking()
@@ -707,6 +917,16 @@ namespace Bitrix\Booking\Internals\Model {
 	 * @method bool isBookingFilled()
 	 * @method bool isBookingChanged()
 	 * @method \Bitrix\Booking\Internals\Model\EO_Booking fillBooking()
+	 * @method \Bitrix\Booking\Internals\Model\EO_Booking getWaitList()
+	 * @method \Bitrix\Booking\Internals\Model\EO_Booking remindActualWaitList()
+	 * @method \Bitrix\Booking\Internals\Model\EO_Booking requireWaitList()
+	 * @method \Bitrix\Booking\Internals\Model\EO_BookingClient setWaitList(\Bitrix\Booking\Internals\Model\EO_Booking $object)
+	 * @method \Bitrix\Booking\Internals\Model\EO_BookingClient resetWaitList()
+	 * @method \Bitrix\Booking\Internals\Model\EO_BookingClient unsetWaitList()
+	 * @method bool hasWaitList()
+	 * @method bool isWaitListFilled()
+	 * @method bool isWaitListChanged()
+	 * @method \Bitrix\Booking\Internals\Model\EO_Booking fillWaitList()
 	 * @method \Bitrix\Booking\Internals\Model\EO_ClientType getClientType()
 	 * @method \Bitrix\Booking\Internals\Model\EO_ClientType remindActualClientType()
 	 * @method \Bitrix\Booking\Internals\Model\EO_ClientType requireClientType()
@@ -768,17 +988,22 @@ namespace Bitrix\Booking\Internals\Model {
 	 * ---------------
 	 *
 	 * @method \int[] getIdList()
-	 * @method \int[] getBookingIdList()
-	 * @method \int[] fillBookingId()
+	 * @method \int[] getEntityIdList()
+	 * @method \int[] fillEntityId()
 	 * @method \int[] getClientTypeIdList()
 	 * @method \int[] fillClientTypeId()
 	 * @method \int[] getClientIdList()
 	 * @method \int[] fillClientId()
 	 * @method \boolean[] getIsPrimaryList()
 	 * @method \boolean[] fillIsPrimary()
+	 * @method \string[] getEntityTypeList()
+	 * @method \string[] fillEntityType()
 	 * @method \Bitrix\Booking\Internals\Model\EO_Booking[] getBookingList()
 	 * @method \Bitrix\Booking\Internals\Model\EO_BookingClient_Collection getBookingCollection()
 	 * @method \Bitrix\Booking\Internals\Model\EO_Booking_Collection fillBooking()
+	 * @method \Bitrix\Booking\Internals\Model\EO_Booking[] getWaitListList()
+	 * @method \Bitrix\Booking\Internals\Model\EO_BookingClient_Collection getWaitListCollection()
+	 * @method \Bitrix\Booking\Internals\Model\EO_Booking_Collection fillWaitList()
 	 * @method \Bitrix\Booking\Internals\Model\EO_ClientType[] getClientTypeList()
 	 * @method \Bitrix\Booking\Internals\Model\EO_BookingClient_Collection getClientTypeCollection()
 	 * @method \Bitrix\Booking\Internals\Model\EO_ClientType_Collection fillClientType()
@@ -1419,6 +1644,26 @@ namespace Bitrix\Booking\Internals\Model {
 	 * @method \Bitrix\Booking\Internals\Model\EO_ResourceData resetUpdatedAt()
 	 * @method \Bitrix\Booking\Internals\Model\EO_ResourceData unsetUpdatedAt()
 	 * @method \Bitrix\Main\Type\DateTime fillUpdatedAt()
+	 * @method \boolean getIsDeleted()
+	 * @method \Bitrix\Booking\Internals\Model\EO_ResourceData setIsDeleted(\boolean|\Bitrix\Main\DB\SqlExpression $isDeleted)
+	 * @method bool hasIsDeleted()
+	 * @method bool isIsDeletedFilled()
+	 * @method bool isIsDeletedChanged()
+	 * @method \boolean remindActualIsDeleted()
+	 * @method \boolean requireIsDeleted()
+	 * @method \Bitrix\Booking\Internals\Model\EO_ResourceData resetIsDeleted()
+	 * @method \Bitrix\Booking\Internals\Model\EO_ResourceData unsetIsDeleted()
+	 * @method \boolean fillIsDeleted()
+	 * @method \Bitrix\Main\Type\DateTime getDeletedAt()
+	 * @method \Bitrix\Booking\Internals\Model\EO_ResourceData setDeletedAt(\Bitrix\Main\Type\DateTime|\Bitrix\Main\DB\SqlExpression $deletedAt)
+	 * @method bool hasDeletedAt()
+	 * @method bool isDeletedAtFilled()
+	 * @method bool isDeletedAtChanged()
+	 * @method \Bitrix\Main\Type\DateTime remindActualDeletedAt()
+	 * @method \Bitrix\Main\Type\DateTime requireDeletedAt()
+	 * @method \Bitrix\Booking\Internals\Model\EO_ResourceData resetDeletedAt()
+	 * @method \Bitrix\Booking\Internals\Model\EO_ResourceData unsetDeletedAt()
+	 * @method \Bitrix\Main\Type\DateTime fillDeletedAt()
 	 *
 	 * Common methods:
 	 * ---------------
@@ -1475,6 +1720,10 @@ namespace Bitrix\Booking\Internals\Model {
 	 * @method \Bitrix\Main\Type\DateTime[] fillCreatedAt()
 	 * @method \Bitrix\Main\Type\DateTime[] getUpdatedAtList()
 	 * @method \Bitrix\Main\Type\DateTime[] fillUpdatedAt()
+	 * @method \boolean[] getIsDeletedList()
+	 * @method \boolean[] fillIsDeleted()
+	 * @method \Bitrix\Main\Type\DateTime[] getDeletedAtList()
+	 * @method \Bitrix\Main\Type\DateTime[] fillDeletedAt()
 	 *
 	 * Common methods:
 	 * ---------------
@@ -1617,6 +1866,17 @@ namespace Bitrix\Booking\Internals\Model {
 	 * @method bool isNotificationSettingsFilled()
 	 * @method bool isNotificationSettingsChanged()
 	 * @method \Bitrix\Booking\Internals\Model\EO_ResourceNotificationSettings fillNotificationSettings()
+	 * @method \Bitrix\Booking\Internals\Model\EO_ResourceLinkedEntity_Collection getEntities()
+	 * @method \Bitrix\Booking\Internals\Model\EO_ResourceLinkedEntity_Collection requireEntities()
+	 * @method \Bitrix\Booking\Internals\Model\EO_ResourceLinkedEntity_Collection fillEntities()
+	 * @method bool hasEntities()
+	 * @method bool isEntitiesFilled()
+	 * @method bool isEntitiesChanged()
+	 * @method void addToEntities(\Bitrix\Booking\Internals\Model\EO_ResourceLinkedEntity $resourceLinkedEntity)
+	 * @method void removeFromEntities(\Bitrix\Booking\Internals\Model\EO_ResourceLinkedEntity $resourceLinkedEntity)
+	 * @method void removeAllEntities()
+	 * @method \Bitrix\Booking\Internals\Model\EO_Resource resetEntities()
+	 * @method \Bitrix\Booking\Internals\Model\EO_Resource unsetEntities()
 	 *
 	 * Common methods:
 	 * ---------------
@@ -1679,6 +1939,9 @@ namespace Bitrix\Booking\Internals\Model {
 	 * @method \Bitrix\Booking\Internals\Model\EO_ResourceNotificationSettings[] getNotificationSettingsList()
 	 * @method \Bitrix\Booking\Internals\Model\EO_Resource_Collection getNotificationSettingsCollection()
 	 * @method \Bitrix\Booking\Internals\Model\EO_ResourceNotificationSettings_Collection fillNotificationSettings()
+	 * @method \Bitrix\Booking\Internals\Model\EO_ResourceLinkedEntity_Collection[] getEntitiesList()
+	 * @method \Bitrix\Booking\Internals\Model\EO_ResourceLinkedEntity_Collection getEntitiesCollection()
+	 * @method \Bitrix\Booking\Internals\Model\EO_ResourceLinkedEntity_Collection fillEntities()
 	 *
 	 * Common methods:
 	 * ---------------
@@ -1736,6 +1999,193 @@ namespace Bitrix\Booking\Internals\Model {
 	 */
 	class EO_Resource_Entity extends \Bitrix\Main\ORM\Entity {}
 }
+/* ORMENTITYANNOTATION:Bitrix\Booking\Internals\Model\DelayedTaskTable:booking/lib/Internals/Model/DelayedTaskTable.php */
+namespace Bitrix\Booking\Internals\Model {
+	/**
+	 * EO_DelayedTask
+	 * @see \Bitrix\Booking\Internals\Model\DelayedTaskTable
+	 *
+	 * Custom methods:
+	 * ---------------
+	 *
+	 * @method \int getId()
+	 * @method \Bitrix\Booking\Internals\Model\EO_DelayedTask setId(\int|\Bitrix\Main\DB\SqlExpression $id)
+	 * @method bool hasId()
+	 * @method bool isIdFilled()
+	 * @method bool isIdChanged()
+	 * @method \string getCode()
+	 * @method \Bitrix\Booking\Internals\Model\EO_DelayedTask setCode(\string|\Bitrix\Main\DB\SqlExpression $code)
+	 * @method bool hasCode()
+	 * @method bool isCodeFilled()
+	 * @method bool isCodeChanged()
+	 * @method \string remindActualCode()
+	 * @method \string requireCode()
+	 * @method \Bitrix\Booking\Internals\Model\EO_DelayedTask resetCode()
+	 * @method \Bitrix\Booking\Internals\Model\EO_DelayedTask unsetCode()
+	 * @method \string fillCode()
+	 * @method \string getType()
+	 * @method \Bitrix\Booking\Internals\Model\EO_DelayedTask setType(\string|\Bitrix\Main\DB\SqlExpression $type)
+	 * @method bool hasType()
+	 * @method bool isTypeFilled()
+	 * @method bool isTypeChanged()
+	 * @method \string remindActualType()
+	 * @method \string requireType()
+	 * @method \Bitrix\Booking\Internals\Model\EO_DelayedTask resetType()
+	 * @method \Bitrix\Booking\Internals\Model\EO_DelayedTask unsetType()
+	 * @method \string fillType()
+	 * @method \string getData()
+	 * @method \Bitrix\Booking\Internals\Model\EO_DelayedTask setData(\string|\Bitrix\Main\DB\SqlExpression $data)
+	 * @method bool hasData()
+	 * @method bool isDataFilled()
+	 * @method bool isDataChanged()
+	 * @method \string remindActualData()
+	 * @method \string requireData()
+	 * @method \Bitrix\Booking\Internals\Model\EO_DelayedTask resetData()
+	 * @method \Bitrix\Booking\Internals\Model\EO_DelayedTask unsetData()
+	 * @method \string fillData()
+	 * @method \string getStatus()
+	 * @method \Bitrix\Booking\Internals\Model\EO_DelayedTask setStatus(\string|\Bitrix\Main\DB\SqlExpression $status)
+	 * @method bool hasStatus()
+	 * @method bool isStatusFilled()
+	 * @method bool isStatusChanged()
+	 * @method \string remindActualStatus()
+	 * @method \string requireStatus()
+	 * @method \Bitrix\Booking\Internals\Model\EO_DelayedTask resetStatus()
+	 * @method \Bitrix\Booking\Internals\Model\EO_DelayedTask unsetStatus()
+	 * @method \string fillStatus()
+	 * @method \Bitrix\Main\Type\DateTime getCreatedAt()
+	 * @method \Bitrix\Booking\Internals\Model\EO_DelayedTask setCreatedAt(\Bitrix\Main\Type\DateTime|\Bitrix\Main\DB\SqlExpression $createdAt)
+	 * @method bool hasCreatedAt()
+	 * @method bool isCreatedAtFilled()
+	 * @method bool isCreatedAtChanged()
+	 * @method \Bitrix\Main\Type\DateTime remindActualCreatedAt()
+	 * @method \Bitrix\Main\Type\DateTime requireCreatedAt()
+	 * @method \Bitrix\Booking\Internals\Model\EO_DelayedTask resetCreatedAt()
+	 * @method \Bitrix\Booking\Internals\Model\EO_DelayedTask unsetCreatedAt()
+	 * @method \Bitrix\Main\Type\DateTime fillCreatedAt()
+	 * @method \Bitrix\Main\Type\DateTime getUpdatedAt()
+	 * @method \Bitrix\Booking\Internals\Model\EO_DelayedTask setUpdatedAt(\Bitrix\Main\Type\DateTime|\Bitrix\Main\DB\SqlExpression $updatedAt)
+	 * @method bool hasUpdatedAt()
+	 * @method bool isUpdatedAtFilled()
+	 * @method bool isUpdatedAtChanged()
+	 * @method \Bitrix\Main\Type\DateTime remindActualUpdatedAt()
+	 * @method \Bitrix\Main\Type\DateTime requireUpdatedAt()
+	 * @method \Bitrix\Booking\Internals\Model\EO_DelayedTask resetUpdatedAt()
+	 * @method \Bitrix\Booking\Internals\Model\EO_DelayedTask unsetUpdatedAt()
+	 * @method \Bitrix\Main\Type\DateTime fillUpdatedAt()
+	 *
+	 * Common methods:
+	 * ---------------
+	 *
+	 * @property-read \Bitrix\Main\ORM\Entity $entity
+	 * @property-read array $primary
+	 * @property-read int $state @see \Bitrix\Main\ORM\Objectify\State
+	 * @property-read \Bitrix\Main\Type\Dictionary $customData
+	 * @property \Bitrix\Main\Authentication\Context $authContext
+	 * @method mixed get($fieldName)
+	 * @method mixed remindActual($fieldName)
+	 * @method mixed require($fieldName)
+	 * @method bool has($fieldName)
+	 * @method bool isFilled($fieldName)
+	 * @method bool isChanged($fieldName)
+	 * @method \Bitrix\Booking\Internals\Model\EO_DelayedTask set($fieldName, $value)
+	 * @method \Bitrix\Booking\Internals\Model\EO_DelayedTask reset($fieldName)
+	 * @method \Bitrix\Booking\Internals\Model\EO_DelayedTask unset($fieldName)
+	 * @method void addTo($fieldName, $value)
+	 * @method void removeFrom($fieldName, $value)
+	 * @method void removeAll($fieldName)
+	 * @method \Bitrix\Main\ORM\Data\Result delete()
+	 * @method mixed fill($fields = \Bitrix\Main\ORM\Fields\FieldTypeMask::ALL) flag or array of field names
+	 * @method mixed[] collectValues($valuesType = \Bitrix\Main\ORM\Objectify\Values::ALL, $fieldsMask = \Bitrix\Main\ORM\Fields\FieldTypeMask::ALL)
+	 * @method \Bitrix\Main\ORM\Data\AddResult|\Bitrix\Main\ORM\Data\UpdateResult|\Bitrix\Main\ORM\Data\Result save()
+	 * @method static \Bitrix\Booking\Internals\Model\EO_DelayedTask wakeUp($data)
+	 */
+	class EO_DelayedTask {
+		/* @var \Bitrix\Booking\Internals\Model\DelayedTaskTable */
+		static public $dataClass = '\Bitrix\Booking\Internals\Model\DelayedTaskTable';
+		/**
+		 * @param bool|array $setDefaultValues
+		 */
+		public function __construct($setDefaultValues = true) {}
+	}
+}
+namespace Bitrix\Booking\Internals\Model {
+	/**
+	 * EO_DelayedTask_Collection
+	 *
+	 * Custom methods:
+	 * ---------------
+	 *
+	 * @method \int[] getIdList()
+	 * @method \string[] getCodeList()
+	 * @method \string[] fillCode()
+	 * @method \string[] getTypeList()
+	 * @method \string[] fillType()
+	 * @method \string[] getDataList()
+	 * @method \string[] fillData()
+	 * @method \string[] getStatusList()
+	 * @method \string[] fillStatus()
+	 * @method \Bitrix\Main\Type\DateTime[] getCreatedAtList()
+	 * @method \Bitrix\Main\Type\DateTime[] fillCreatedAt()
+	 * @method \Bitrix\Main\Type\DateTime[] getUpdatedAtList()
+	 * @method \Bitrix\Main\Type\DateTime[] fillUpdatedAt()
+	 *
+	 * Common methods:
+	 * ---------------
+	 *
+	 * @property-read \Bitrix\Main\ORM\Entity $entity
+	 * @method void add(\Bitrix\Booking\Internals\Model\EO_DelayedTask $object)
+	 * @method bool has(\Bitrix\Booking\Internals\Model\EO_DelayedTask $object)
+	 * @method bool hasByPrimary($primary)
+	 * @method \Bitrix\Booking\Internals\Model\EO_DelayedTask getByPrimary($primary)
+	 * @method \Bitrix\Booking\Internals\Model\EO_DelayedTask[] getAll()
+	 * @method bool remove(\Bitrix\Booking\Internals\Model\EO_DelayedTask $object)
+	 * @method void removeByPrimary($primary)
+	 * @method array|\Bitrix\Main\ORM\Objectify\Collection|null fill($fields = \Bitrix\Main\ORM\Fields\FieldTypeMask::ALL) flag or array of field names
+	 * @method static \Bitrix\Booking\Internals\Model\EO_DelayedTask_Collection wakeUp($data)
+	 * @method \Bitrix\Main\ORM\Data\Result save($ignoreEvents = false)
+	 * @method void offsetSet() ArrayAccess
+	 * @method void offsetExists() ArrayAccess
+	 * @method void offsetUnset() ArrayAccess
+	 * @method void offsetGet() ArrayAccess
+	 * @method void rewind() Iterator
+	 * @method \Bitrix\Booking\Internals\Model\EO_DelayedTask current() Iterator
+	 * @method mixed key() Iterator
+	 * @method void next() Iterator
+	 * @method bool valid() Iterator
+	 * @method int count() Countable
+	 * @method \Bitrix\Booking\Internals\Model\EO_DelayedTask_Collection merge(?\Bitrix\Booking\Internals\Model\EO_DelayedTask_Collection $collection)
+	 * @method bool isEmpty()
+	 * @method array collectValues(int $valuesType = \Bitrix\Main\ORM\Objectify\Values::ALL, int $fieldsMask = \Bitrix\Main\ORM\Fields\FieldTypeMask::ALL, bool $recursive = false)
+	 */
+	class EO_DelayedTask_Collection implements \ArrayAccess, \Iterator, \Countable {
+		/* @var \Bitrix\Booking\Internals\Model\DelayedTaskTable */
+		static public $dataClass = '\Bitrix\Booking\Internals\Model\DelayedTaskTable';
+	}
+}
+namespace Bitrix\Booking\Internals\Model {
+	/**
+	 * Common methods:
+	 * ---------------
+	 *
+	 * @method EO_DelayedTask_Result exec()
+	 * @method \Bitrix\Booking\Internals\Model\EO_DelayedTask fetchObject()
+	 * @method \Bitrix\Booking\Internals\Model\EO_DelayedTask_Collection fetchCollection()
+	 */
+	class EO_DelayedTask_Query extends \Bitrix\Main\ORM\Query\Query {}
+	/**
+	 * @method \Bitrix\Booking\Internals\Model\EO_DelayedTask fetchObject()
+	 * @method \Bitrix\Booking\Internals\Model\EO_DelayedTask_Collection fetchCollection()
+	 */
+	class EO_DelayedTask_Result extends \Bitrix\Main\ORM\Query\Result {}
+	/**
+	 * @method \Bitrix\Booking\Internals\Model\EO_DelayedTask createObject($setDefaultValues = true)
+	 * @method \Bitrix\Booking\Internals\Model\EO_DelayedTask_Collection createCollection()
+	 * @method \Bitrix\Booking\Internals\Model\EO_DelayedTask wakeUpObject($row)
+	 * @method \Bitrix\Booking\Internals\Model\EO_DelayedTask_Collection wakeUpCollection($rows)
+	 */
+	class EO_DelayedTask_Entity extends \Bitrix\Main\ORM\Entity {}
+}
 /* ORMENTITYANNOTATION:Bitrix\Booking\Internals\Model\NotesTable:booking/lib/Internals/Model/NotesTable.php */
 namespace Bitrix\Booking\Internals\Model {
 	/**
@@ -1750,16 +2200,16 @@ namespace Bitrix\Booking\Internals\Model {
 	 * @method bool hasId()
 	 * @method bool isIdFilled()
 	 * @method bool isIdChanged()
-	 * @method \int getBookingId()
-	 * @method \Bitrix\Booking\Internals\Model\EO_Notes setBookingId(\int|\Bitrix\Main\DB\SqlExpression $bookingId)
-	 * @method bool hasBookingId()
-	 * @method bool isBookingIdFilled()
-	 * @method bool isBookingIdChanged()
-	 * @method \int remindActualBookingId()
-	 * @method \int requireBookingId()
-	 * @method \Bitrix\Booking\Internals\Model\EO_Notes resetBookingId()
-	 * @method \Bitrix\Booking\Internals\Model\EO_Notes unsetBookingId()
-	 * @method \int fillBookingId()
+	 * @method \int getEntityId()
+	 * @method \Bitrix\Booking\Internals\Model\EO_Notes setEntityId(\int|\Bitrix\Main\DB\SqlExpression $entityId)
+	 * @method bool hasEntityId()
+	 * @method bool isEntityIdFilled()
+	 * @method bool isEntityIdChanged()
+	 * @method \int remindActualEntityId()
+	 * @method \int requireEntityId()
+	 * @method \Bitrix\Booking\Internals\Model\EO_Notes resetEntityId()
+	 * @method \Bitrix\Booking\Internals\Model\EO_Notes unsetEntityId()
+	 * @method \int fillEntityId()
 	 * @method \string getDescription()
 	 * @method \Bitrix\Booking\Internals\Model\EO_Notes setDescription(\string|\Bitrix\Main\DB\SqlExpression $description)
 	 * @method bool hasDescription()
@@ -1770,6 +2220,16 @@ namespace Bitrix\Booking\Internals\Model {
 	 * @method \Bitrix\Booking\Internals\Model\EO_Notes resetDescription()
 	 * @method \Bitrix\Booking\Internals\Model\EO_Notes unsetDescription()
 	 * @method \string fillDescription()
+	 * @method \string getEntityType()
+	 * @method \Bitrix\Booking\Internals\Model\EO_Notes setEntityType(\string|\Bitrix\Main\DB\SqlExpression $entityType)
+	 * @method bool hasEntityType()
+	 * @method bool isEntityTypeFilled()
+	 * @method bool isEntityTypeChanged()
+	 * @method \string remindActualEntityType()
+	 * @method \string requireEntityType()
+	 * @method \Bitrix\Booking\Internals\Model\EO_Notes resetEntityType()
+	 * @method \Bitrix\Booking\Internals\Model\EO_Notes unsetEntityType()
+	 * @method \string fillEntityType()
 	 *
 	 * Common methods:
 	 * ---------------
@@ -1814,10 +2274,12 @@ namespace Bitrix\Booking\Internals\Model {
 	 * ---------------
 	 *
 	 * @method \int[] getIdList()
-	 * @method \int[] getBookingIdList()
-	 * @method \int[] fillBookingId()
+	 * @method \int[] getEntityIdList()
+	 * @method \int[] fillEntityId()
 	 * @method \string[] getDescriptionList()
 	 * @method \string[] fillDescription()
+	 * @method \string[] getEntityTypeList()
+	 * @method \string[] fillEntityType()
 	 *
 	 * Common methods:
 	 * ---------------
@@ -1919,6 +2381,16 @@ namespace Bitrix\Booking\Internals\Model {
 	 * @method \Bitrix\Booking\Internals\Model\EO_ResourceTypeNotificationSettings resetTemplateTypeInfo()
 	 * @method \Bitrix\Booking\Internals\Model\EO_ResourceTypeNotificationSettings unsetTemplateTypeInfo()
 	 * @method \string fillTemplateTypeInfo()
+	 * @method \int getInfoDelay()
+	 * @method \Bitrix\Booking\Internals\Model\EO_ResourceTypeNotificationSettings setInfoDelay(\int|\Bitrix\Main\DB\SqlExpression $infoDelay)
+	 * @method bool hasInfoDelay()
+	 * @method bool isInfoDelayFilled()
+	 * @method bool isInfoDelayChanged()
+	 * @method \int remindActualInfoDelay()
+	 * @method \int requireInfoDelay()
+	 * @method \Bitrix\Booking\Internals\Model\EO_ResourceTypeNotificationSettings resetInfoDelay()
+	 * @method \Bitrix\Booking\Internals\Model\EO_ResourceTypeNotificationSettings unsetInfoDelay()
+	 * @method \int fillInfoDelay()
 	 * @method \boolean getIsConfirmationOn()
 	 * @method \Bitrix\Booking\Internals\Model\EO_ResourceTypeNotificationSettings setIsConfirmationOn(\boolean|\Bitrix\Main\DB\SqlExpression $isConfirmationOn)
 	 * @method bool hasIsConfirmationOn()
@@ -1939,6 +2411,46 @@ namespace Bitrix\Booking\Internals\Model {
 	 * @method \Bitrix\Booking\Internals\Model\EO_ResourceTypeNotificationSettings resetTemplateTypeConfirmation()
 	 * @method \Bitrix\Booking\Internals\Model\EO_ResourceTypeNotificationSettings unsetTemplateTypeConfirmation()
 	 * @method \string fillTemplateTypeConfirmation()
+	 * @method \int getConfirmationDelay()
+	 * @method \Bitrix\Booking\Internals\Model\EO_ResourceTypeNotificationSettings setConfirmationDelay(\int|\Bitrix\Main\DB\SqlExpression $confirmationDelay)
+	 * @method bool hasConfirmationDelay()
+	 * @method bool isConfirmationDelayFilled()
+	 * @method bool isConfirmationDelayChanged()
+	 * @method \int remindActualConfirmationDelay()
+	 * @method \int requireConfirmationDelay()
+	 * @method \Bitrix\Booking\Internals\Model\EO_ResourceTypeNotificationSettings resetConfirmationDelay()
+	 * @method \Bitrix\Booking\Internals\Model\EO_ResourceTypeNotificationSettings unsetConfirmationDelay()
+	 * @method \int fillConfirmationDelay()
+	 * @method \int getConfirmationRepetitions()
+	 * @method \Bitrix\Booking\Internals\Model\EO_ResourceTypeNotificationSettings setConfirmationRepetitions(\int|\Bitrix\Main\DB\SqlExpression $confirmationRepetitions)
+	 * @method bool hasConfirmationRepetitions()
+	 * @method bool isConfirmationRepetitionsFilled()
+	 * @method bool isConfirmationRepetitionsChanged()
+	 * @method \int remindActualConfirmationRepetitions()
+	 * @method \int requireConfirmationRepetitions()
+	 * @method \Bitrix\Booking\Internals\Model\EO_ResourceTypeNotificationSettings resetConfirmationRepetitions()
+	 * @method \Bitrix\Booking\Internals\Model\EO_ResourceTypeNotificationSettings unsetConfirmationRepetitions()
+	 * @method \int fillConfirmationRepetitions()
+	 * @method \int getConfirmationRepetitionsInterval()
+	 * @method \Bitrix\Booking\Internals\Model\EO_ResourceTypeNotificationSettings setConfirmationRepetitionsInterval(\int|\Bitrix\Main\DB\SqlExpression $confirmationRepetitionsInterval)
+	 * @method bool hasConfirmationRepetitionsInterval()
+	 * @method bool isConfirmationRepetitionsIntervalFilled()
+	 * @method bool isConfirmationRepetitionsIntervalChanged()
+	 * @method \int remindActualConfirmationRepetitionsInterval()
+	 * @method \int requireConfirmationRepetitionsInterval()
+	 * @method \Bitrix\Booking\Internals\Model\EO_ResourceTypeNotificationSettings resetConfirmationRepetitionsInterval()
+	 * @method \Bitrix\Booking\Internals\Model\EO_ResourceTypeNotificationSettings unsetConfirmationRepetitionsInterval()
+	 * @method \int fillConfirmationRepetitionsInterval()
+	 * @method \int getConfirmationCounterDelay()
+	 * @method \Bitrix\Booking\Internals\Model\EO_ResourceTypeNotificationSettings setConfirmationCounterDelay(\int|\Bitrix\Main\DB\SqlExpression $confirmationCounterDelay)
+	 * @method bool hasConfirmationCounterDelay()
+	 * @method bool isConfirmationCounterDelayFilled()
+	 * @method bool isConfirmationCounterDelayChanged()
+	 * @method \int remindActualConfirmationCounterDelay()
+	 * @method \int requireConfirmationCounterDelay()
+	 * @method \Bitrix\Booking\Internals\Model\EO_ResourceTypeNotificationSettings resetConfirmationCounterDelay()
+	 * @method \Bitrix\Booking\Internals\Model\EO_ResourceTypeNotificationSettings unsetConfirmationCounterDelay()
+	 * @method \int fillConfirmationCounterDelay()
 	 * @method \boolean getIsReminderOn()
 	 * @method \Bitrix\Booking\Internals\Model\EO_ResourceTypeNotificationSettings setIsReminderOn(\boolean|\Bitrix\Main\DB\SqlExpression $isReminderOn)
 	 * @method bool hasIsReminderOn()
@@ -1959,6 +2471,16 @@ namespace Bitrix\Booking\Internals\Model {
 	 * @method \Bitrix\Booking\Internals\Model\EO_ResourceTypeNotificationSettings resetTemplateTypeReminder()
 	 * @method \Bitrix\Booking\Internals\Model\EO_ResourceTypeNotificationSettings unsetTemplateTypeReminder()
 	 * @method \string fillTemplateTypeReminder()
+	 * @method \int getReminderDelay()
+	 * @method \Bitrix\Booking\Internals\Model\EO_ResourceTypeNotificationSettings setReminderDelay(\int|\Bitrix\Main\DB\SqlExpression $reminderDelay)
+	 * @method bool hasReminderDelay()
+	 * @method bool isReminderDelayFilled()
+	 * @method bool isReminderDelayChanged()
+	 * @method \int remindActualReminderDelay()
+	 * @method \int requireReminderDelay()
+	 * @method \Bitrix\Booking\Internals\Model\EO_ResourceTypeNotificationSettings resetReminderDelay()
+	 * @method \Bitrix\Booking\Internals\Model\EO_ResourceTypeNotificationSettings unsetReminderDelay()
+	 * @method \int fillReminderDelay()
 	 * @method \boolean getIsFeedbackOn()
 	 * @method \Bitrix\Booking\Internals\Model\EO_ResourceTypeNotificationSettings setIsFeedbackOn(\boolean|\Bitrix\Main\DB\SqlExpression $isFeedbackOn)
 	 * @method bool hasIsFeedbackOn()
@@ -1999,6 +2521,26 @@ namespace Bitrix\Booking\Internals\Model {
 	 * @method \Bitrix\Booking\Internals\Model\EO_ResourceTypeNotificationSettings resetTemplateTypeDelayed()
 	 * @method \Bitrix\Booking\Internals\Model\EO_ResourceTypeNotificationSettings unsetTemplateTypeDelayed()
 	 * @method \string fillTemplateTypeDelayed()
+	 * @method \int getDelayedDelay()
+	 * @method \Bitrix\Booking\Internals\Model\EO_ResourceTypeNotificationSettings setDelayedDelay(\int|\Bitrix\Main\DB\SqlExpression $delayedDelay)
+	 * @method bool hasDelayedDelay()
+	 * @method bool isDelayedDelayFilled()
+	 * @method bool isDelayedDelayChanged()
+	 * @method \int remindActualDelayedDelay()
+	 * @method \int requireDelayedDelay()
+	 * @method \Bitrix\Booking\Internals\Model\EO_ResourceTypeNotificationSettings resetDelayedDelay()
+	 * @method \Bitrix\Booking\Internals\Model\EO_ResourceTypeNotificationSettings unsetDelayedDelay()
+	 * @method \int fillDelayedDelay()
+	 * @method \int getDelayedCounterDelay()
+	 * @method \Bitrix\Booking\Internals\Model\EO_ResourceTypeNotificationSettings setDelayedCounterDelay(\int|\Bitrix\Main\DB\SqlExpression $delayedCounterDelay)
+	 * @method bool hasDelayedCounterDelay()
+	 * @method bool isDelayedCounterDelayFilled()
+	 * @method bool isDelayedCounterDelayChanged()
+	 * @method \int remindActualDelayedCounterDelay()
+	 * @method \int requireDelayedCounterDelay()
+	 * @method \Bitrix\Booking\Internals\Model\EO_ResourceTypeNotificationSettings resetDelayedCounterDelay()
+	 * @method \Bitrix\Booking\Internals\Model\EO_ResourceTypeNotificationSettings unsetDelayedCounterDelay()
+	 * @method \int fillDelayedCounterDelay()
 	 *
 	 * Common methods:
 	 * ---------------
@@ -2049,14 +2591,26 @@ namespace Bitrix\Booking\Internals\Model {
 	 * @method \boolean[] fillIsInfoOn()
 	 * @method \string[] getTemplateTypeInfoList()
 	 * @method \string[] fillTemplateTypeInfo()
+	 * @method \int[] getInfoDelayList()
+	 * @method \int[] fillInfoDelay()
 	 * @method \boolean[] getIsConfirmationOnList()
 	 * @method \boolean[] fillIsConfirmationOn()
 	 * @method \string[] getTemplateTypeConfirmationList()
 	 * @method \string[] fillTemplateTypeConfirmation()
+	 * @method \int[] getConfirmationDelayList()
+	 * @method \int[] fillConfirmationDelay()
+	 * @method \int[] getConfirmationRepetitionsList()
+	 * @method \int[] fillConfirmationRepetitions()
+	 * @method \int[] getConfirmationRepetitionsIntervalList()
+	 * @method \int[] fillConfirmationRepetitionsInterval()
+	 * @method \int[] getConfirmationCounterDelayList()
+	 * @method \int[] fillConfirmationCounterDelay()
 	 * @method \boolean[] getIsReminderOnList()
 	 * @method \boolean[] fillIsReminderOn()
 	 * @method \string[] getTemplateTypeReminderList()
 	 * @method \string[] fillTemplateTypeReminder()
+	 * @method \int[] getReminderDelayList()
+	 * @method \int[] fillReminderDelay()
 	 * @method \boolean[] getIsFeedbackOnList()
 	 * @method \boolean[] fillIsFeedbackOn()
 	 * @method \string[] getTemplateTypeFeedbackList()
@@ -2065,6 +2619,10 @@ namespace Bitrix\Booking\Internals\Model {
 	 * @method \boolean[] fillIsDelayedOn()
 	 * @method \string[] getTemplateTypeDelayedList()
 	 * @method \string[] fillTemplateTypeDelayed()
+	 * @method \int[] getDelayedDelayList()
+	 * @method \int[] fillDelayedDelay()
+	 * @method \int[] getDelayedCounterDelayList()
+	 * @method \int[] fillDelayedCounterDelay()
 	 *
 	 * Common methods:
 	 * ---------------
@@ -2566,6 +3124,16 @@ namespace Bitrix\Booking\Internals\Model {
 	 * @method \Bitrix\Booking\Internals\Model\EO_ResourceNotificationSettings resetTemplateTypeInfo()
 	 * @method \Bitrix\Booking\Internals\Model\EO_ResourceNotificationSettings unsetTemplateTypeInfo()
 	 * @method \string fillTemplateTypeInfo()
+	 * @method \int getInfoDelay()
+	 * @method \Bitrix\Booking\Internals\Model\EO_ResourceNotificationSettings setInfoDelay(\int|\Bitrix\Main\DB\SqlExpression $infoDelay)
+	 * @method bool hasInfoDelay()
+	 * @method bool isInfoDelayFilled()
+	 * @method bool isInfoDelayChanged()
+	 * @method \int remindActualInfoDelay()
+	 * @method \int requireInfoDelay()
+	 * @method \Bitrix\Booking\Internals\Model\EO_ResourceNotificationSettings resetInfoDelay()
+	 * @method \Bitrix\Booking\Internals\Model\EO_ResourceNotificationSettings unsetInfoDelay()
+	 * @method \int fillInfoDelay()
 	 * @method \boolean getIsConfirmationOn()
 	 * @method \Bitrix\Booking\Internals\Model\EO_ResourceNotificationSettings setIsConfirmationOn(\boolean|\Bitrix\Main\DB\SqlExpression $isConfirmationOn)
 	 * @method bool hasIsConfirmationOn()
@@ -2586,6 +3154,46 @@ namespace Bitrix\Booking\Internals\Model {
 	 * @method \Bitrix\Booking\Internals\Model\EO_ResourceNotificationSettings resetTemplateTypeConfirmation()
 	 * @method \Bitrix\Booking\Internals\Model\EO_ResourceNotificationSettings unsetTemplateTypeConfirmation()
 	 * @method \string fillTemplateTypeConfirmation()
+	 * @method \int getConfirmationDelay()
+	 * @method \Bitrix\Booking\Internals\Model\EO_ResourceNotificationSettings setConfirmationDelay(\int|\Bitrix\Main\DB\SqlExpression $confirmationDelay)
+	 * @method bool hasConfirmationDelay()
+	 * @method bool isConfirmationDelayFilled()
+	 * @method bool isConfirmationDelayChanged()
+	 * @method \int remindActualConfirmationDelay()
+	 * @method \int requireConfirmationDelay()
+	 * @method \Bitrix\Booking\Internals\Model\EO_ResourceNotificationSettings resetConfirmationDelay()
+	 * @method \Bitrix\Booking\Internals\Model\EO_ResourceNotificationSettings unsetConfirmationDelay()
+	 * @method \int fillConfirmationDelay()
+	 * @method \int getConfirmationRepetitions()
+	 * @method \Bitrix\Booking\Internals\Model\EO_ResourceNotificationSettings setConfirmationRepetitions(\int|\Bitrix\Main\DB\SqlExpression $confirmationRepetitions)
+	 * @method bool hasConfirmationRepetitions()
+	 * @method bool isConfirmationRepetitionsFilled()
+	 * @method bool isConfirmationRepetitionsChanged()
+	 * @method \int remindActualConfirmationRepetitions()
+	 * @method \int requireConfirmationRepetitions()
+	 * @method \Bitrix\Booking\Internals\Model\EO_ResourceNotificationSettings resetConfirmationRepetitions()
+	 * @method \Bitrix\Booking\Internals\Model\EO_ResourceNotificationSettings unsetConfirmationRepetitions()
+	 * @method \int fillConfirmationRepetitions()
+	 * @method \int getConfirmationRepetitionsInterval()
+	 * @method \Bitrix\Booking\Internals\Model\EO_ResourceNotificationSettings setConfirmationRepetitionsInterval(\int|\Bitrix\Main\DB\SqlExpression $confirmationRepetitionsInterval)
+	 * @method bool hasConfirmationRepetitionsInterval()
+	 * @method bool isConfirmationRepetitionsIntervalFilled()
+	 * @method bool isConfirmationRepetitionsIntervalChanged()
+	 * @method \int remindActualConfirmationRepetitionsInterval()
+	 * @method \int requireConfirmationRepetitionsInterval()
+	 * @method \Bitrix\Booking\Internals\Model\EO_ResourceNotificationSettings resetConfirmationRepetitionsInterval()
+	 * @method \Bitrix\Booking\Internals\Model\EO_ResourceNotificationSettings unsetConfirmationRepetitionsInterval()
+	 * @method \int fillConfirmationRepetitionsInterval()
+	 * @method \int getConfirmationCounterDelay()
+	 * @method \Bitrix\Booking\Internals\Model\EO_ResourceNotificationSettings setConfirmationCounterDelay(\int|\Bitrix\Main\DB\SqlExpression $confirmationCounterDelay)
+	 * @method bool hasConfirmationCounterDelay()
+	 * @method bool isConfirmationCounterDelayFilled()
+	 * @method bool isConfirmationCounterDelayChanged()
+	 * @method \int remindActualConfirmationCounterDelay()
+	 * @method \int requireConfirmationCounterDelay()
+	 * @method \Bitrix\Booking\Internals\Model\EO_ResourceNotificationSettings resetConfirmationCounterDelay()
+	 * @method \Bitrix\Booking\Internals\Model\EO_ResourceNotificationSettings unsetConfirmationCounterDelay()
+	 * @method \int fillConfirmationCounterDelay()
 	 * @method \boolean getIsReminderOn()
 	 * @method \Bitrix\Booking\Internals\Model\EO_ResourceNotificationSettings setIsReminderOn(\boolean|\Bitrix\Main\DB\SqlExpression $isReminderOn)
 	 * @method bool hasIsReminderOn()
@@ -2606,6 +3214,16 @@ namespace Bitrix\Booking\Internals\Model {
 	 * @method \Bitrix\Booking\Internals\Model\EO_ResourceNotificationSettings resetTemplateTypeReminder()
 	 * @method \Bitrix\Booking\Internals\Model\EO_ResourceNotificationSettings unsetTemplateTypeReminder()
 	 * @method \string fillTemplateTypeReminder()
+	 * @method \int getReminderDelay()
+	 * @method \Bitrix\Booking\Internals\Model\EO_ResourceNotificationSettings setReminderDelay(\int|\Bitrix\Main\DB\SqlExpression $reminderDelay)
+	 * @method bool hasReminderDelay()
+	 * @method bool isReminderDelayFilled()
+	 * @method bool isReminderDelayChanged()
+	 * @method \int remindActualReminderDelay()
+	 * @method \int requireReminderDelay()
+	 * @method \Bitrix\Booking\Internals\Model\EO_ResourceNotificationSettings resetReminderDelay()
+	 * @method \Bitrix\Booking\Internals\Model\EO_ResourceNotificationSettings unsetReminderDelay()
+	 * @method \int fillReminderDelay()
 	 * @method \boolean getIsFeedbackOn()
 	 * @method \Bitrix\Booking\Internals\Model\EO_ResourceNotificationSettings setIsFeedbackOn(\boolean|\Bitrix\Main\DB\SqlExpression $isFeedbackOn)
 	 * @method bool hasIsFeedbackOn()
@@ -2646,6 +3264,26 @@ namespace Bitrix\Booking\Internals\Model {
 	 * @method \Bitrix\Booking\Internals\Model\EO_ResourceNotificationSettings resetTemplateTypeDelayed()
 	 * @method \Bitrix\Booking\Internals\Model\EO_ResourceNotificationSettings unsetTemplateTypeDelayed()
 	 * @method \string fillTemplateTypeDelayed()
+	 * @method \int getDelayedDelay()
+	 * @method \Bitrix\Booking\Internals\Model\EO_ResourceNotificationSettings setDelayedDelay(\int|\Bitrix\Main\DB\SqlExpression $delayedDelay)
+	 * @method bool hasDelayedDelay()
+	 * @method bool isDelayedDelayFilled()
+	 * @method bool isDelayedDelayChanged()
+	 * @method \int remindActualDelayedDelay()
+	 * @method \int requireDelayedDelay()
+	 * @method \Bitrix\Booking\Internals\Model\EO_ResourceNotificationSettings resetDelayedDelay()
+	 * @method \Bitrix\Booking\Internals\Model\EO_ResourceNotificationSettings unsetDelayedDelay()
+	 * @method \int fillDelayedDelay()
+	 * @method \int getDelayedCounterDelay()
+	 * @method \Bitrix\Booking\Internals\Model\EO_ResourceNotificationSettings setDelayedCounterDelay(\int|\Bitrix\Main\DB\SqlExpression $delayedCounterDelay)
+	 * @method bool hasDelayedCounterDelay()
+	 * @method bool isDelayedCounterDelayFilled()
+	 * @method bool isDelayedCounterDelayChanged()
+	 * @method \int remindActualDelayedCounterDelay()
+	 * @method \int requireDelayedCounterDelay()
+	 * @method \Bitrix\Booking\Internals\Model\EO_ResourceNotificationSettings resetDelayedCounterDelay()
+	 * @method \Bitrix\Booking\Internals\Model\EO_ResourceNotificationSettings unsetDelayedCounterDelay()
+	 * @method \int fillDelayedCounterDelay()
 	 *
 	 * Common methods:
 	 * ---------------
@@ -2696,14 +3334,26 @@ namespace Bitrix\Booking\Internals\Model {
 	 * @method \boolean[] fillIsInfoOn()
 	 * @method \string[] getTemplateTypeInfoList()
 	 * @method \string[] fillTemplateTypeInfo()
+	 * @method \int[] getInfoDelayList()
+	 * @method \int[] fillInfoDelay()
 	 * @method \boolean[] getIsConfirmationOnList()
 	 * @method \boolean[] fillIsConfirmationOn()
 	 * @method \string[] getTemplateTypeConfirmationList()
 	 * @method \string[] fillTemplateTypeConfirmation()
+	 * @method \int[] getConfirmationDelayList()
+	 * @method \int[] fillConfirmationDelay()
+	 * @method \int[] getConfirmationRepetitionsList()
+	 * @method \int[] fillConfirmationRepetitions()
+	 * @method \int[] getConfirmationRepetitionsIntervalList()
+	 * @method \int[] fillConfirmationRepetitionsInterval()
+	 * @method \int[] getConfirmationCounterDelayList()
+	 * @method \int[] fillConfirmationCounterDelay()
 	 * @method \boolean[] getIsReminderOnList()
 	 * @method \boolean[] fillIsReminderOn()
 	 * @method \string[] getTemplateTypeReminderList()
 	 * @method \string[] fillTemplateTypeReminder()
+	 * @method \int[] getReminderDelayList()
+	 * @method \int[] fillReminderDelay()
 	 * @method \boolean[] getIsFeedbackOnList()
 	 * @method \boolean[] fillIsFeedbackOn()
 	 * @method \string[] getTemplateTypeFeedbackList()
@@ -2712,6 +3362,10 @@ namespace Bitrix\Booking\Internals\Model {
 	 * @method \boolean[] fillIsDelayedOn()
 	 * @method \string[] getTemplateTypeDelayedList()
 	 * @method \string[] fillTemplateTypeDelayed()
+	 * @method \int[] getDelayedDelayList()
+	 * @method \int[] fillDelayedDelay()
+	 * @method \int[] getDelayedCounterDelayList()
+	 * @method \int[] fillDelayedCounterDelay()
 	 *
 	 * Common methods:
 	 * ---------------
@@ -2783,16 +3437,16 @@ namespace Bitrix\Booking\Internals\Model {
 	 * @method bool hasId()
 	 * @method bool isIdFilled()
 	 * @method bool isIdChanged()
-	 * @method \int getBookingId()
-	 * @method \Bitrix\Booking\Internals\Model\EO_BookingExternalData setBookingId(\int|\Bitrix\Main\DB\SqlExpression $bookingId)
-	 * @method bool hasBookingId()
-	 * @method bool isBookingIdFilled()
-	 * @method bool isBookingIdChanged()
-	 * @method \int remindActualBookingId()
-	 * @method \int requireBookingId()
-	 * @method \Bitrix\Booking\Internals\Model\EO_BookingExternalData resetBookingId()
-	 * @method \Bitrix\Booking\Internals\Model\EO_BookingExternalData unsetBookingId()
-	 * @method \int fillBookingId()
+	 * @method \int getEntityId()
+	 * @method \Bitrix\Booking\Internals\Model\EO_BookingExternalData setEntityId(\int|\Bitrix\Main\DB\SqlExpression $entityId)
+	 * @method bool hasEntityId()
+	 * @method bool isEntityIdFilled()
+	 * @method bool isEntityIdChanged()
+	 * @method \int remindActualEntityId()
+	 * @method \int requireEntityId()
+	 * @method \Bitrix\Booking\Internals\Model\EO_BookingExternalData resetEntityId()
+	 * @method \Bitrix\Booking\Internals\Model\EO_BookingExternalData unsetEntityId()
+	 * @method \int fillEntityId()
 	 * @method \string getModuleId()
 	 * @method \Bitrix\Booking\Internals\Model\EO_BookingExternalData setModuleId(\string|\Bitrix\Main\DB\SqlExpression $moduleId)
 	 * @method bool hasModuleId()
@@ -2823,6 +3477,16 @@ namespace Bitrix\Booking\Internals\Model {
 	 * @method \Bitrix\Booking\Internals\Model\EO_BookingExternalData resetValue()
 	 * @method \Bitrix\Booking\Internals\Model\EO_BookingExternalData unsetValue()
 	 * @method \string fillValue()
+	 * @method \string getEntityType()
+	 * @method \Bitrix\Booking\Internals\Model\EO_BookingExternalData setEntityType(\string|\Bitrix\Main\DB\SqlExpression $entityType)
+	 * @method bool hasEntityType()
+	 * @method bool isEntityTypeFilled()
+	 * @method bool isEntityTypeChanged()
+	 * @method \string remindActualEntityType()
+	 * @method \string requireEntityType()
+	 * @method \Bitrix\Booking\Internals\Model\EO_BookingExternalData resetEntityType()
+	 * @method \Bitrix\Booking\Internals\Model\EO_BookingExternalData unsetEntityType()
+	 * @method \string fillEntityType()
 	 * @method \Bitrix\Booking\Internals\Model\EO_Booking getBooking()
 	 * @method \Bitrix\Booking\Internals\Model\EO_Booking remindActualBooking()
 	 * @method \Bitrix\Booking\Internals\Model\EO_Booking requireBooking()
@@ -2833,6 +3497,16 @@ namespace Bitrix\Booking\Internals\Model {
 	 * @method bool isBookingFilled()
 	 * @method bool isBookingChanged()
 	 * @method \Bitrix\Booking\Internals\Model\EO_Booking fillBooking()
+	 * @method \Bitrix\Booking\Internals\Model\EO_Booking getWaitList()
+	 * @method \Bitrix\Booking\Internals\Model\EO_Booking remindActualWaitList()
+	 * @method \Bitrix\Booking\Internals\Model\EO_Booking requireWaitList()
+	 * @method \Bitrix\Booking\Internals\Model\EO_BookingExternalData setWaitList(\Bitrix\Booking\Internals\Model\EO_Booking $object)
+	 * @method \Bitrix\Booking\Internals\Model\EO_BookingExternalData resetWaitList()
+	 * @method \Bitrix\Booking\Internals\Model\EO_BookingExternalData unsetWaitList()
+	 * @method bool hasWaitList()
+	 * @method bool isWaitListFilled()
+	 * @method bool isWaitListChanged()
+	 * @method \Bitrix\Booking\Internals\Model\EO_Booking fillWaitList()
 	 *
 	 * Common methods:
 	 * ---------------
@@ -2877,17 +3551,22 @@ namespace Bitrix\Booking\Internals\Model {
 	 * ---------------
 	 *
 	 * @method \int[] getIdList()
-	 * @method \int[] getBookingIdList()
-	 * @method \int[] fillBookingId()
+	 * @method \int[] getEntityIdList()
+	 * @method \int[] fillEntityId()
 	 * @method \string[] getModuleIdList()
 	 * @method \string[] fillModuleId()
 	 * @method \string[] getEntityTypeIdList()
 	 * @method \string[] fillEntityTypeId()
 	 * @method \string[] getValueList()
 	 * @method \string[] fillValue()
+	 * @method \string[] getEntityTypeList()
+	 * @method \string[] fillEntityType()
 	 * @method \Bitrix\Booking\Internals\Model\EO_Booking[] getBookingList()
 	 * @method \Bitrix\Booking\Internals\Model\EO_BookingExternalData_Collection getBookingCollection()
 	 * @method \Bitrix\Booking\Internals\Model\EO_Booking_Collection fillBooking()
+	 * @method \Bitrix\Booking\Internals\Model\EO_Booking[] getWaitListList()
+	 * @method \Bitrix\Booking\Internals\Model\EO_BookingExternalData_Collection getWaitListCollection()
+	 * @method \Bitrix\Booking\Internals\Model\EO_Booking_Collection fillWaitList()
 	 *
 	 * Common methods:
 	 * ---------------
@@ -3321,6 +4000,16 @@ namespace Bitrix\Booking\Internals\Model {
 	 * @method \Bitrix\Booking\Internals\Model\EO_Booking resetVisitStatus()
 	 * @method \Bitrix\Booking\Internals\Model\EO_Booking unsetVisitStatus()
 	 * @method \string fillVisitStatus()
+	 * @method \string getSource()
+	 * @method \Bitrix\Booking\Internals\Model\EO_Booking setSource(\string|\Bitrix\Main\DB\SqlExpression $source)
+	 * @method bool hasSource()
+	 * @method bool isSourceFilled()
+	 * @method bool isSourceChanged()
+	 * @method \string remindActualSource()
+	 * @method \string requireSource()
+	 * @method \Bitrix\Booking\Internals\Model\EO_Booking resetSource()
+	 * @method \Bitrix\Booking\Internals\Model\EO_Booking unsetSource()
+	 * @method \string fillSource()
 	 * @method \int getCreatedBy()
 	 * @method \Bitrix\Booking\Internals\Model\EO_Booking setCreatedBy(\int|\Bitrix\Main\DB\SqlExpression $createdBy)
 	 * @method bool hasCreatedBy()
@@ -3490,6 +4179,8 @@ namespace Bitrix\Booking\Internals\Model {
 	 * @method \string[] fillDescription()
 	 * @method \string[] getVisitStatusList()
 	 * @method \string[] fillVisitStatus()
+	 * @method \string[] getSourceList()
+	 * @method \string[] fillSource()
 	 * @method \int[] getCreatedByList()
 	 * @method \int[] fillCreatedBy()
 	 * @method \Bitrix\Main\Type\DateTime[] getCreatedAtList()
@@ -3570,4 +4261,208 @@ namespace Bitrix\Booking\Internals\Model {
 	 * @method \Bitrix\Booking\Internals\Model\EO_Booking_Collection wakeUpCollection($rows)
 	 */
 	class EO_Booking_Entity extends \Bitrix\Main\ORM\Entity {}
+}
+/* ORMENTITYANNOTATION:Bitrix\Booking\Internals\Model\WaitListItemTable:booking/lib/Internals/Model/WaitListItemTable.php */
+namespace Bitrix\Booking\Internals\Model {
+	/**
+	 * EO_WaitListItem
+	 * @see \Bitrix\Booking\Internals\Model\WaitListItemTable
+	 *
+	 * Custom methods:
+	 * ---------------
+	 *
+	 * @method \int getId()
+	 * @method \Bitrix\Booking\Internals\Model\EO_WaitListItem setId(\int|\Bitrix\Main\DB\SqlExpression $id)
+	 * @method bool hasId()
+	 * @method bool isIdFilled()
+	 * @method bool isIdChanged()
+	 * @method \int getCreatedBy()
+	 * @method \Bitrix\Booking\Internals\Model\EO_WaitListItem setCreatedBy(\int|\Bitrix\Main\DB\SqlExpression $createdBy)
+	 * @method bool hasCreatedBy()
+	 * @method bool isCreatedByFilled()
+	 * @method bool isCreatedByChanged()
+	 * @method \int remindActualCreatedBy()
+	 * @method \int requireCreatedBy()
+	 * @method \Bitrix\Booking\Internals\Model\EO_WaitListItem resetCreatedBy()
+	 * @method \Bitrix\Booking\Internals\Model\EO_WaitListItem unsetCreatedBy()
+	 * @method \int fillCreatedBy()
+	 * @method \Bitrix\Main\Type\DateTime getCreatedAt()
+	 * @method \Bitrix\Booking\Internals\Model\EO_WaitListItem setCreatedAt(\Bitrix\Main\Type\DateTime|\Bitrix\Main\DB\SqlExpression $createdAt)
+	 * @method bool hasCreatedAt()
+	 * @method bool isCreatedAtFilled()
+	 * @method bool isCreatedAtChanged()
+	 * @method \Bitrix\Main\Type\DateTime remindActualCreatedAt()
+	 * @method \Bitrix\Main\Type\DateTime requireCreatedAt()
+	 * @method \Bitrix\Booking\Internals\Model\EO_WaitListItem resetCreatedAt()
+	 * @method \Bitrix\Booking\Internals\Model\EO_WaitListItem unsetCreatedAt()
+	 * @method \Bitrix\Main\Type\DateTime fillCreatedAt()
+	 * @method \Bitrix\Main\Type\DateTime getUpdatedAt()
+	 * @method \Bitrix\Booking\Internals\Model\EO_WaitListItem setUpdatedAt(\Bitrix\Main\Type\DateTime|\Bitrix\Main\DB\SqlExpression $updatedAt)
+	 * @method bool hasUpdatedAt()
+	 * @method bool isUpdatedAtFilled()
+	 * @method bool isUpdatedAtChanged()
+	 * @method \Bitrix\Main\Type\DateTime remindActualUpdatedAt()
+	 * @method \Bitrix\Main\Type\DateTime requireUpdatedAt()
+	 * @method \Bitrix\Booking\Internals\Model\EO_WaitListItem resetUpdatedAt()
+	 * @method \Bitrix\Booking\Internals\Model\EO_WaitListItem unsetUpdatedAt()
+	 * @method \Bitrix\Main\Type\DateTime fillUpdatedAt()
+	 * @method \boolean getIsDeleted()
+	 * @method \Bitrix\Booking\Internals\Model\EO_WaitListItem setIsDeleted(\boolean|\Bitrix\Main\DB\SqlExpression $isDeleted)
+	 * @method bool hasIsDeleted()
+	 * @method bool isIsDeletedFilled()
+	 * @method bool isIsDeletedChanged()
+	 * @method \boolean remindActualIsDeleted()
+	 * @method \boolean requireIsDeleted()
+	 * @method \Bitrix\Booking\Internals\Model\EO_WaitListItem resetIsDeleted()
+	 * @method \Bitrix\Booking\Internals\Model\EO_WaitListItem unsetIsDeleted()
+	 * @method \boolean fillIsDeleted()
+	 * @method \Bitrix\Booking\Internals\Model\EO_BookingClient_Collection getClients()
+	 * @method \Bitrix\Booking\Internals\Model\EO_BookingClient_Collection requireClients()
+	 * @method \Bitrix\Booking\Internals\Model\EO_BookingClient_Collection fillClients()
+	 * @method bool hasClients()
+	 * @method bool isClientsFilled()
+	 * @method bool isClientsChanged()
+	 * @method void addToClients(\Bitrix\Booking\Internals\Model\EO_BookingClient $bookingClient)
+	 * @method void removeFromClients(\Bitrix\Booking\Internals\Model\EO_BookingClient $bookingClient)
+	 * @method void removeAllClients()
+	 * @method \Bitrix\Booking\Internals\Model\EO_WaitListItem resetClients()
+	 * @method \Bitrix\Booking\Internals\Model\EO_WaitListItem unsetClients()
+	 * @method \Bitrix\Booking\Internals\Model\EO_BookingExternalData_Collection getExternalData()
+	 * @method \Bitrix\Booking\Internals\Model\EO_BookingExternalData_Collection requireExternalData()
+	 * @method \Bitrix\Booking\Internals\Model\EO_BookingExternalData_Collection fillExternalData()
+	 * @method bool hasExternalData()
+	 * @method bool isExternalDataFilled()
+	 * @method bool isExternalDataChanged()
+	 * @method void addToExternalData(\Bitrix\Booking\Internals\Model\EO_BookingExternalData $bookingExternalData)
+	 * @method void removeFromExternalData(\Bitrix\Booking\Internals\Model\EO_BookingExternalData $bookingExternalData)
+	 * @method void removeAllExternalData()
+	 * @method \Bitrix\Booking\Internals\Model\EO_WaitListItem resetExternalData()
+	 * @method \Bitrix\Booking\Internals\Model\EO_WaitListItem unsetExternalData()
+	 * @method \Bitrix\Booking\Internals\Model\EO_Notes getNote()
+	 * @method \Bitrix\Booking\Internals\Model\EO_Notes remindActualNote()
+	 * @method \Bitrix\Booking\Internals\Model\EO_Notes requireNote()
+	 * @method \Bitrix\Booking\Internals\Model\EO_WaitListItem setNote(\Bitrix\Booking\Internals\Model\EO_Notes $object)
+	 * @method \Bitrix\Booking\Internals\Model\EO_WaitListItem resetNote()
+	 * @method \Bitrix\Booking\Internals\Model\EO_WaitListItem unsetNote()
+	 * @method bool hasNote()
+	 * @method bool isNoteFilled()
+	 * @method bool isNoteChanged()
+	 * @method \Bitrix\Booking\Internals\Model\EO_Notes fillNote()
+	 *
+	 * Common methods:
+	 * ---------------
+	 *
+	 * @property-read \Bitrix\Main\ORM\Entity $entity
+	 * @property-read array $primary
+	 * @property-read int $state @see \Bitrix\Main\ORM\Objectify\State
+	 * @property-read \Bitrix\Main\Type\Dictionary $customData
+	 * @property \Bitrix\Main\Authentication\Context $authContext
+	 * @method mixed get($fieldName)
+	 * @method mixed remindActual($fieldName)
+	 * @method mixed require($fieldName)
+	 * @method bool has($fieldName)
+	 * @method bool isFilled($fieldName)
+	 * @method bool isChanged($fieldName)
+	 * @method \Bitrix\Booking\Internals\Model\EO_WaitListItem set($fieldName, $value)
+	 * @method \Bitrix\Booking\Internals\Model\EO_WaitListItem reset($fieldName)
+	 * @method \Bitrix\Booking\Internals\Model\EO_WaitListItem unset($fieldName)
+	 * @method void addTo($fieldName, $value)
+	 * @method void removeFrom($fieldName, $value)
+	 * @method void removeAll($fieldName)
+	 * @method \Bitrix\Main\ORM\Data\Result delete()
+	 * @method mixed fill($fields = \Bitrix\Main\ORM\Fields\FieldTypeMask::ALL) flag or array of field names
+	 * @method mixed[] collectValues($valuesType = \Bitrix\Main\ORM\Objectify\Values::ALL, $fieldsMask = \Bitrix\Main\ORM\Fields\FieldTypeMask::ALL)
+	 * @method \Bitrix\Main\ORM\Data\AddResult|\Bitrix\Main\ORM\Data\UpdateResult|\Bitrix\Main\ORM\Data\Result save()
+	 * @method static \Bitrix\Booking\Internals\Model\EO_WaitListItem wakeUp($data)
+	 */
+	class EO_WaitListItem {
+		/* @var \Bitrix\Booking\Internals\Model\WaitListItemTable */
+		static public $dataClass = '\Bitrix\Booking\Internals\Model\WaitListItemTable';
+		/**
+		 * @param bool|array $setDefaultValues
+		 */
+		public function __construct($setDefaultValues = true) {}
+	}
+}
+namespace Bitrix\Booking\Internals\Model {
+	/**
+	 * EO_WaitListItem_Collection
+	 *
+	 * Custom methods:
+	 * ---------------
+	 *
+	 * @method \int[] getIdList()
+	 * @method \int[] getCreatedByList()
+	 * @method \int[] fillCreatedBy()
+	 * @method \Bitrix\Main\Type\DateTime[] getCreatedAtList()
+	 * @method \Bitrix\Main\Type\DateTime[] fillCreatedAt()
+	 * @method \Bitrix\Main\Type\DateTime[] getUpdatedAtList()
+	 * @method \Bitrix\Main\Type\DateTime[] fillUpdatedAt()
+	 * @method \boolean[] getIsDeletedList()
+	 * @method \boolean[] fillIsDeleted()
+	 * @method \Bitrix\Booking\Internals\Model\EO_BookingClient_Collection[] getClientsList()
+	 * @method \Bitrix\Booking\Internals\Model\EO_BookingClient_Collection getClientsCollection()
+	 * @method \Bitrix\Booking\Internals\Model\EO_BookingClient_Collection fillClients()
+	 * @method \Bitrix\Booking\Internals\Model\EO_BookingExternalData_Collection[] getExternalDataList()
+	 * @method \Bitrix\Booking\Internals\Model\EO_BookingExternalData_Collection getExternalDataCollection()
+	 * @method \Bitrix\Booking\Internals\Model\EO_BookingExternalData_Collection fillExternalData()
+	 * @method \Bitrix\Booking\Internals\Model\EO_Notes[] getNoteList()
+	 * @method \Bitrix\Booking\Internals\Model\EO_WaitListItem_Collection getNoteCollection()
+	 * @method \Bitrix\Booking\Internals\Model\EO_Notes_Collection fillNote()
+	 *
+	 * Common methods:
+	 * ---------------
+	 *
+	 * @property-read \Bitrix\Main\ORM\Entity $entity
+	 * @method void add(\Bitrix\Booking\Internals\Model\EO_WaitListItem $object)
+	 * @method bool has(\Bitrix\Booking\Internals\Model\EO_WaitListItem $object)
+	 * @method bool hasByPrimary($primary)
+	 * @method \Bitrix\Booking\Internals\Model\EO_WaitListItem getByPrimary($primary)
+	 * @method \Bitrix\Booking\Internals\Model\EO_WaitListItem[] getAll()
+	 * @method bool remove(\Bitrix\Booking\Internals\Model\EO_WaitListItem $object)
+	 * @method void removeByPrimary($primary)
+	 * @method array|\Bitrix\Main\ORM\Objectify\Collection|null fill($fields = \Bitrix\Main\ORM\Fields\FieldTypeMask::ALL) flag or array of field names
+	 * @method static \Bitrix\Booking\Internals\Model\EO_WaitListItem_Collection wakeUp($data)
+	 * @method \Bitrix\Main\ORM\Data\Result save($ignoreEvents = false)
+	 * @method void offsetSet() ArrayAccess
+	 * @method void offsetExists() ArrayAccess
+	 * @method void offsetUnset() ArrayAccess
+	 * @method void offsetGet() ArrayAccess
+	 * @method void rewind() Iterator
+	 * @method \Bitrix\Booking\Internals\Model\EO_WaitListItem current() Iterator
+	 * @method mixed key() Iterator
+	 * @method void next() Iterator
+	 * @method bool valid() Iterator
+	 * @method int count() Countable
+	 * @method \Bitrix\Booking\Internals\Model\EO_WaitListItem_Collection merge(?\Bitrix\Booking\Internals\Model\EO_WaitListItem_Collection $collection)
+	 * @method bool isEmpty()
+	 * @method array collectValues(int $valuesType = \Bitrix\Main\ORM\Objectify\Values::ALL, int $fieldsMask = \Bitrix\Main\ORM\Fields\FieldTypeMask::ALL, bool $recursive = false)
+	 */
+	class EO_WaitListItem_Collection implements \ArrayAccess, \Iterator, \Countable {
+		/* @var \Bitrix\Booking\Internals\Model\WaitListItemTable */
+		static public $dataClass = '\Bitrix\Booking\Internals\Model\WaitListItemTable';
+	}
+}
+namespace Bitrix\Booking\Internals\Model {
+	/**
+	 * Common methods:
+	 * ---------------
+	 *
+	 * @method EO_WaitListItem_Result exec()
+	 * @method \Bitrix\Booking\Internals\Model\EO_WaitListItem fetchObject()
+	 * @method \Bitrix\Booking\Internals\Model\EO_WaitListItem_Collection fetchCollection()
+	 */
+	class EO_WaitListItem_Query extends \Bitrix\Main\ORM\Query\Query {}
+	/**
+	 * @method \Bitrix\Booking\Internals\Model\EO_WaitListItem fetchObject()
+	 * @method \Bitrix\Booking\Internals\Model\EO_WaitListItem_Collection fetchCollection()
+	 */
+	class EO_WaitListItem_Result extends \Bitrix\Main\ORM\Query\Result {}
+	/**
+	 * @method \Bitrix\Booking\Internals\Model\EO_WaitListItem createObject($setDefaultValues = true)
+	 * @method \Bitrix\Booking\Internals\Model\EO_WaitListItem_Collection createCollection()
+	 * @method \Bitrix\Booking\Internals\Model\EO_WaitListItem wakeUpObject($row)
+	 * @method \Bitrix\Booking\Internals\Model\EO_WaitListItem_Collection wakeUpCollection($rows)
+	 */
+	class EO_WaitListItem_Entity extends \Bitrix\Main\ORM\Entity {}
 }

@@ -29,7 +29,6 @@ if($this->getComponent()->getErrors())
 
 /** @see \Bitrix\Rpa\Components\Base::addToolbar() */
 $this->getComponent()->addToolbar($this);
-\Bitrix\Rpa\Driver::getInstance()->getBitrix24Manager()->addFeedbackButtonToToolbar('kanban');
 
 //load Bizproc Automation API
 $APPLICATION->includeComponent(

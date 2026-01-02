@@ -16,6 +16,7 @@ use Bitrix\Tasks\Scrum\Checklist\ItemChecklistFacade;
 use Bitrix\Tasks\Util\User;
 use Bitrix\Tasks\Access\TaskAccessController;
 use Bitrix\Tasks\Access\ActionDictionary;
+use Bitrix\Tasks\Helper\Analytics;
 
 Loc::loadMessages(__FILE__);
 
@@ -236,6 +237,24 @@ class TasksWidgetCheckListNewComponent extends TasksBaseComponent
 			['OPEN_TIME' => (new DateTime())->getTimestamp()]
 		);
 
+		$analytics = Analytics::getInstance($this->userId);
+
+		$checkListPointsCount = array_reduce($items, static fn($carry, $item) => $carry + ($item['IS_COMPLETE'] === 'Y' ? 1 : 0), 0);
+
+		$analytics->onTaskUpdate(
+			event: Analytics::EVENT['add_checklist'],
+			section: Analytics::SECTION[$analytics->getTaskContext($taskId)],
+			element: Analytics::ELEMENT['checklist_button'],
+			subSection: Analytics::SUB_SECTION['existing'],
+			params: [
+				'p1' => $analytics->getIsDemoParameter(),
+				'p2' => 'checklistCount_' . (string)$params['analyticsData']['checklistCount'],
+				'p3' => $analytics->getViewersCountParameter($taskId),
+				'p4' => 'checklistpointsCount_' . (string)$checkListPointsCount,
+				'p5' => $analytics->getCoexecutorsCountParameter($taskId),
+			],
+		);
+
 		return $result;
 	}
 
@@ -301,6 +320,8 @@ class TasksWidgetCheckListNewComponent extends TasksBaseComponent
 			'CAN_ADD_ACCOMPLICE' => $this->arResult['CAN_ADD_ACCOMPLICE'],
 		];
 
+		$this->arResult['NEW_FILE_IDS'] = [];
+
 		if (!$checkListItems)
 		{
 			$this->arResult['UF_CHECKLIST_FILES'] = [];
@@ -324,6 +345,7 @@ class TasksWidgetCheckListNewComponent extends TasksBaseComponent
 			$checkListItems[$id] = $this->prepareItemActions($item);
 
 			$this->arResult['UF_CHECKLIST_FILES'][$id] = (($item['UF_CHECKLIST_FILES'] ?? null) ?: []);
+			$this->arResult['NEW_FILE_IDS'][$id] = (($item['NEW_FILE_IDS'] ?? null) ?: []);
 		}
 
 		$this->arResult['UF_CHECKLIST_FILES'] = array_filter(

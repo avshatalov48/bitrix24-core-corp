@@ -67,7 +67,7 @@ final class SignB2eDocument extends Base
 
 		$userPermissions = Container::getInstance()->getUserPermissions($userId);
 
-		return $userPermissions->checkReadPermissions(\CCrmOwnerType::SmartB2eDocument, $documentId);
+		return $userPermissions->item()->canRead(\CCrmOwnerType::SmartB2eDocument, $documentId);
 	}
 
 	public static function checkUpdatePermission(array $activityFields, $userId = null): bool

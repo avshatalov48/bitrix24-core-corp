@@ -155,7 +155,7 @@ class CrmConfigPermsRoleEditV2 extends CBitrixComponent implements Controllerabl
 
 	private function hasAccessToManageCrmPermissions(): bool
 	{
-		return Container::getInstance()->getUserPermissions()->canWriteConfig();
+		return Container::getInstance()->getUserPermissions()->isCrmAdmin();
 	}
 
 }

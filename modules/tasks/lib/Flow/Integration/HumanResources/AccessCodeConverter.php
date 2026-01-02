@@ -24,6 +24,10 @@ class AccessCodeConverter
 	 */
 	private array $accessCodes;
 	private NodeRepository $nodeRepository;
+	/**
+	 * @var array<int, bool>
+	 */
+	private static array $isUserActive = [];
 
 	/**
 	 * @throws LoaderException
@@ -49,6 +53,7 @@ class AccessCodeConverter
 	public function getUserIds(): array
 	{
 		$userIds = $this->getUserIdsByDepartmentEntities();
+
 		$userIds = array_merge($userIds, $this->getUserIdsByUserEntities());
 
 		return array_unique($userIds);
@@ -62,11 +67,30 @@ class AccessCodeConverter
 	private function getUserIdsByUserEntities(): array
 	{
 		$userIds = $this->getUsers()->getAccessCodeIdList();
+
 		if (empty($userIds))
 		{
 			return [];
 		}
 
+		$userIdsToQuery = array_filter(
+			$userIds,
+			static fn($userId) => !isset(static::$isUserActive[$userId])
+		);
+
+		if (!empty($userIdsToQuery))
+		{
+			$this->fillUserIdsActivity($userIdsToQuery);
+		}
+
+		return array_filter(
+			$userIds,
+			static fn($userId) => static::$isUserActive[$userId]
+		);
+	}
+
+	private function fillUserIdsActivity(array $userIds): void
+	{
 		$sqlHelper = Application::getConnection()->getSqlHelper();
 		$orderField = new ExpressionField(
 			'ID_SEQUENCE',
@@ -82,7 +106,12 @@ class AccessCodeConverter
 			->setOrder($orderField->getName())
 		;
 
-		return $query->exec()->fetchCollection()->getIdList();
+		$activeUserIds = $query->exec()->fetchCollection()->getIdList();
+
+		foreach ($userIds as $userId)
+		{
+			static::$isUserActive[$userId] = in_array($userId, $activeUserIds, true);
+		}
 	}
 
 	/**
@@ -117,20 +146,14 @@ class AccessCodeConverter
 				$withAllChildNodes,
 			);
 
-			$membersList = array_filter(
-				$memberCollectionByNode->getItemMap(),
-				static fn(NodeMember $member) => $member->active === true
-			);
-
-			$memberIdsByNode = array_map(
-				static fn(NodeMember $member) => $member->entityId,
-				$membersList
-			);
-
-			$userIds = [...$userIds, ...$memberIdsByNode];
+			foreach ($memberCollectionByNode->getItemMap() as $member)
+			{
+				static::$isUserActive[$member->entityId] = true;
+				$userIds[$member->entityId] = true;
+			}
 		}
 
-		return array_unique($userIds);
+		return array_keys($userIds);
 	}
 
 	private function getEntityIdByAccessCode(string $accessCode): int

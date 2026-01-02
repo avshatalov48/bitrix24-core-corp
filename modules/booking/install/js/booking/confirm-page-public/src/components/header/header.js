@@ -77,6 +77,11 @@ export const Header = {
 				return this.loc('BOOKING_CONFIRM_PAGE_BOOKING_CONFIRMATION_WAITING');
 			}
 
+			if (this.context === 'info.pub.page')
+			{
+				return this.loc('BOOKING_CONFIRM_PAGE_BOOKING_INFO');
+			}
+
 			return this.isBookingCanceled
 				? this.loc('BOOKING_CONFIRM_PAGE_BOOKING_CANCELED')
 				: this.loc('BOOKING_CONFIRM_PAGE_BOOKING_CONFIRMED')

@@ -1,0 +1,4 @@
+.intranet-user-mini-profile__detailed-info__contact-item-value {
+	color: var(--ui-color-accent-main-link);
+	cursor: pointer;
+}

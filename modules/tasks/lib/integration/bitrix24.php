@@ -18,6 +18,19 @@ abstract class Bitrix24 extends \Bitrix\Tasks\Integration
 {
 	const MODULE_NAME = 'bitrix24';
 
+	public static function isFeatureEnabledByTrial(string $featureName): bool
+	{
+		if(!static::includeModule())
+		{
+			return false;
+		}
+
+		return (
+			Feature::isFeatureEnabled($featureName)
+			&& array_key_exists($featureName, Feature::getTrialFeatureList())
+		);
+	}
+
 	public static function getSettingsURL()
 	{
 		if(!static::includeModule())

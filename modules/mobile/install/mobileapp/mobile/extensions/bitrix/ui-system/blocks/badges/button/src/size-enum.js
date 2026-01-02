@@ -12,6 +12,7 @@ jn.define('ui-system/blocks/badges/button/src/size-enum', (require, exports, mod
 		static S = new BadgeButtonSize('S', 18);
 		static M = new BadgeButtonSize('M', 20);
 		static L = new BadgeButtonSize('L', 22);
+		static XL = new BadgeButtonSize('XL', 24);
 
 		/**
 		 *

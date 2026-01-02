@@ -1,5 +1,6 @@
-import {UsersModelState} from "../../../../model/types/users";
-import {DialoguesModelState} from "../../../../model/types/dialogues";
+import { UsersModelState } from '../../../../model/users/src/types';
+import { DialogOptionalParams, DialogType } from '../../../../model/dialogues/src/types';
+import { CopilotRoleData } from '../../../../model/dialogues/src/copilot/types';
 
 export type RecentProviderItem = {
 	id: string,
@@ -8,41 +9,56 @@ export type RecentProviderItem = {
 	title: string,
 	avatar: string,
 	sort: number,
-	customData: {
-		id: number,
-		dateUpdate: string,
-		avatar: string,
-		color: string,
-		description: string,
-		dialogId: string,
-		diskFolderId: number,
-		entityData1: string,
-		entityData2: string,
-		entityData3: string,
-		entityId: string,
-		entityType: string,
-		extranet: boolean,
-		name: string,
-		owner: number,
-		active: boolean,
-		firstName: string,
-		lastName: string,
-		workPosition: string,
-		avatarHr: string,
-		gender: string,
-		birthday: string,
-		network: boolean,
-		bot: boolean,
-		connector: boolean,
-		externalAuthId: string,
-		status: boolean,
-		idle: boolean,
-		lastActivityDate: string | boolean,
-		mobileLastDate: string | boolean,
-		desktopLastDate: string | boolean,
-		absent: boolean,
-		departments: Array<number>,
-		phones: boolean,
-	},
+	customData: RecentProviderItemCustomData,
 };
 
+export type RecentProviderItemCustomData = {
+	dateMessage: string | null,
+	id: string,
+	secondSort: number,
+	byUser?: boolean,
+	chat: RecentProviderChatItem,
+	user?: RecentProviderUserItem,
+	copilot?: CopilotRoleData,
+}
+
+export type RecentProviderUserItem = UsersModelState & {
+	botData: null | object;
+}
+export type RecentProviderChatItem = {
+	avatar: string,
+	color: string,
+	description: string,
+	dialogId: string,
+	diskFolderId: number,
+	entityData1: string,
+	entityData2: string,
+	entityData3: string,
+	entityId: string,
+	entityLink: object,
+	entityType: string,
+	extranet: false,
+	id: number,
+	isNew: false,
+	messageType: string,
+	muteList: Array<number>,
+	name: string,
+	backgroundId: string,
+	textFieldEnabled: boolean,
+	owner: number,
+	parentChatId: number,
+	parentMessageId: number,
+	permissions: string,
+	role: string,
+	type: string,
+}
+
+export type RecentProviderUserDataForDialogModel = {
+	dialogId: string,
+	avatar: string,
+	color: string,
+	name: string,
+	type: DialogType.user,
+	backgroundId: string,
+	textFieldEnabled: boolean,
+}

@@ -91,7 +91,13 @@ class Bitrix24
 	 */
 	public static function getPortalZone(): string
 	{
-		return Application::getInstance()->getLicense()->getRegion() ?? 'ru';
+		static $zone = null;
+		if ($zone === null)
+		{
+			$zone = Application::getInstance()->getLicense()->getRegion() ?? 'ru';
+		}
+
+		return $zone;
 	}
 
 	/**
@@ -101,7 +107,7 @@ class Bitrix24
 	{
 		$zone = self::getPortalZone();
 
-		return $zone !== 'ru' && $zone !== 'by' && $zone !== 'kz';
+		return $zone !== 'ru' && $zone !== 'by' && $zone !== 'kz' && $zone !== 'uz';
 	}
 
 	/**

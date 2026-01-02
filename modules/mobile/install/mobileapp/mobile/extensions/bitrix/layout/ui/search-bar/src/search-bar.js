@@ -47,7 +47,7 @@ jn.define('layout/ui/search-bar/search-bar', (require, exports, module) => {
 			this.onItemClick = this.onItemClick.bind(this);
 			this.onTextChanged = this.onTextChanged.bind(this);
 
-			this.debounceSearch = debounce((params) => this.search(params, false), 500, this);
+			this.debounceSearch = debounce((params) => this.search(params, false), 700, this);
 		}
 
 		/**
@@ -366,6 +366,8 @@ jn.define('layout/ui/search-bar/search-bar', (require, exports, module) => {
 		 */
 		onCancel()
 		{
+			this.lastSearchResultStatus = null;
+
 			const newState = mergeImmutable(this.state, {
 				search: '',
 				counterId: null,
@@ -457,6 +459,15 @@ jn.define('layout/ui/search-bar/search-bar', (require, exports, module) => {
 				return;
 			}
 
+			if (
+				params
+				&& this.shouldPreventSearchByLastResultStatus(text)
+				&& !this.hasPresetOrCounterChanged(params)
+			)
+			{
+				return;
+			}
+
 			const newState = {
 				search: text,
 				counterId: null,
@@ -507,6 +518,28 @@ jn.define('layout/ui/search-bar/search-bar', (require, exports, module) => {
 					callback();
 				}
 			});
+		}
+
+		/**
+		 * @param {string} text
+		 * @return {boolean}
+		 */
+		shouldPreventSearchByLastResultStatus(text)
+		{
+			return Boolean(
+				this.lastSearchResultStatus
+				&& !this.lastSearchResultStatus.hasResult
+				&& text.startsWith(this.lastSearchResultStatus.filterText),
+			);
+		}
+
+		hasPresetOrCounterChanged(params)
+		{
+			const { preset, counter } = params;
+			const presetId = preset?.id || null;
+			const counterId = counter?.code || null;
+
+			return Boolean(presetId !== this.state.presetId || counterId !== this.state.counterId);
 		}
 
 		/**
@@ -654,6 +687,19 @@ jn.define('layout/ui/search-bar/search-bar', (require, exports, module) => {
 			this.search(searchParams, false);
 		}
 
+		/**
+		 * @public
+		 * @param {boolean} hasResult
+		 * @param {string} filterText
+		 */
+		updateLastSearchResultStatus(hasResult, filterText)
+		{
+			this.lastSearchResultStatus = {
+				hasResult,
+				filterText,
+			};
+		}
+
 		// endregion
 	}
 
@@ -674,22 +720,23 @@ jn.define('layout/ui/search-bar/search-bar', (require, exports, module) => {
 			top: 0,
 			position: isVisible ? 'absolute' : 'relative',
 			zIndex: 10,
-			height: isVisible ? 44 : 0,
+			height: isVisible ? 50 : 0,
+			display: isVisible ? 'flex' : 'none',
 			width: '100%',
 			backgroundColor: Color.bgNavigation.toHex(),
 			opacity: 1,
 			borderBottomWidth: 1,
-			paddingTop: Application.getPlatform() === 'ios' ? 3 : 0,
+			paddingTop: Application.getPlatform() === 'ios' ? 6 : 0,
 		}),
 		presetsScrollView: {
-			height: 44,
+			height: 50,
 		},
 		presetsWrapper: {
 			flexDirection: 'row',
 			alignItems: 'center',
 			alignContent: 'center',
 			marginTop: 0,
-			height: 34,
+			height: 40,
 			paddingHorizontal: Component.paddingLr.toNumber(),
 		},
 	};

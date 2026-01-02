@@ -1,14 +1,9 @@
 <?php
-$MESS["AUTH_AUTH"] = "Authorization";
-$MESS["AUTH_CAPTCHA_PROMT"] = "Type text from image";
-$MESS["AUTH_CHANGE"] = "Change password";
-$MESS["AUTH_CHANGE_PASSWORD"] = "Password changing";
-$MESS["AUTH_CHECKWORD"] = "Check string";
-$MESS["AUTH_LOGIN"] = "Login";
-$MESS["AUTH_NEW_PASSWORD"] = "New Password";
-$MESS["AUTH_NEW_PASSWORD_CONFIRM"] = "Password Confirmation";
-$MESS["AUTH_NEW_PASSWORD_REQ"] = "New Password";
-$MESS["AUTH_NONSECURE_NOTE"] = "The password will be sent in open form. Enable JavaScript in your web browser to enable password encryption.";
-$MESS["AUTH_REQ"] = "Required fields";
-$MESS["AUTH_SECURE_NOTE"] = "The password will be encrypted before it is sent. This will prevent the password from appearing in open form over data transmission channels.";
-$MESS["auth_change_pass_current_pass"] = "Current password";
+$MESS["INTRANET_CHANGE_PASS_AUTH_LINK"] = "Log in";
+$MESS["INTRANET_CHANGE_PASS_BUTTON"] = "Next";
+$MESS["INTRANET_CHANGE_PASS_CAPTCHA_PROMT"] = "Enter text";
+$MESS["INTRANET_CHANGE_PASS_CONFIRM"] = "Confirm password";
+$MESS["INTRANET_CHANGE_PASS_CREATE_TITLE"] = "Create password";
+$MESS["INTRANET_CHANGE_PASS_CURRENT_PASS"] = "Current password";
+$MESS["INTRANET_CHANGE_PASS_NEW_PASS"] = "New password";
+$MESS["INTRANET_CHANGE_PASS_TITLE"] = "Recover password";

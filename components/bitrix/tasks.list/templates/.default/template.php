@@ -474,7 +474,7 @@ if (
 					echo htmlspecialcharsbx(GetMessage('TASKS_LIST_GROUP_ACTION_SUBSTRACT_DEADLINE'));
 				?></option>
 				<option value="change_responsible"><?php
-					echo htmlspecialcharsbx(GetMessage('TASKS_LIST_GROUP_ACTION_CHANGE_RESPONSIBLE'));
+					echo htmlspecialcharsbx(Loc::getMessage('TASKS_LIST_GROUP_ACTION_CHANGE_RESPONSIBLE_MSGVER_1'));
 				?></option>
 				<option value="change_originator"><?php
 					echo htmlspecialcharsbx(GetMessage('TASKS_LIST_GROUP_ACTION_CHANGE_ORIGINATOR'));

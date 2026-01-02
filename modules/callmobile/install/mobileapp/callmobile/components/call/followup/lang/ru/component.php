@@ -1,0 +1,26 @@
+<?php
+$MESS['CALL_COMPONENT_EFFICIENCY_AGENDA_CLEARLY'] = "Озвучили повестку";
+$MESS['CALL_COMPONENT_EFFICIENCY_AGENDA_COVERED'] = "Обсудили всё продуктивно";
+$MESS['CALL_COMPONENT_EFFICIENCY_AGENDA_CONCLUSIONS'] = "Подвели итоги";
+$MESS['CALL_COMPONENT_EFFICIENCY_AGENDA_TIME_EXCEED'] = "Уложились в тайминг";
+$MESS['CALL_COMPONENT_ABOUT'] = "О чем встреча";
+$MESS['CALL_COMPONENT_GRADE'] = "Оценка";
+$MESS['CALL_COMPONENT_AGREEMENTS'] = "Итоги";
+$MESS['CALL_COMPONENT_INSIGHTS'] = "Анализ";
+$MESS['CALL_COMPONENT_SUMMARY'] = "Резюме";
+$MESS['CALL_COMPONENT_EFFICIENCY_RECOMMENDATIONS'] = "Оценка от CoPilot";
+$MESS['CALL_COMPONENT_EFFICIENCY'] = "Эффективность";
+$MESS['CALL_COMPONENT_AGREEMENTS_COMMON'] = "Что решили";
+$MESS['CALL_COMPONENT_AGREEMENTS_TASKS'] = "Задачи";
+$MESS['CALL_COMPONENT_AGREEMENTS_MEETINGS'] = "Встречи";
+$MESS['CALL_COMPONENT_TASK_CREATE'] = "Создать задачу";
+$MESS['CALL_COMPONENT_MEETING_TYPE'] = "Тип встречи";
+$MESS['CALL_COMPONENT_MEETING_CREATE'] = "Создать встречу";
+$MESS['CALL_COMPONENT_EFFICIENCY_RECOMMENDATIONS_0'] = "Чтобы проводить встречи с пользой, постарайтесь выполнять все рекомендации";
+$MESS['CALL_COMPONENT_EFFICIENCY_RECOMMENDATIONS_75'] = "Вы отлично постарались, но кое-что ещё можно улучшить:";
+$MESS['CALL_COMPONENT_EFFICIENCY_RECOMMENDATIONS_100'] = "Вы отлично постарались!";
+$MESS['CALL_COMPONENT_TRANSCRIPTIONS'] = "Расшифровка встречи";
+$MESS['CALL_COMPONENT_EFFICIENCY_0'] = "Не хватило ясности";
+$MESS['CALL_COMPONENT_EFFICIENCY_50'] = "Есть недочёты";
+$MESS['CALL_COMPONENT_EFFICIENCY_75'] = "Хорошо, но есть что улучшить";
+$MESS['CALL_COMPONENT_EFFICIENCY_100'] = "Отлично";

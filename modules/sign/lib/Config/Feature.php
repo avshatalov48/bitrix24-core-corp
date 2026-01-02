@@ -8,6 +8,7 @@ use Bitrix\Main;
 final class Feature
 {
 	public const SIGN_COLLAB_INTEGRATION_ENABLED_OPTION = 'SIGN_COLLAB_INTEGRATION_ENABLED';
+	public const SIGN_B2E_ROBOT_ENABLED_OPTION = 'SIGN_B2E_ROBOT_ENABLED_OPTION';
 	private static ?self $instance = null;
 
 	public static function instance(): self
@@ -20,9 +21,14 @@ final class Feature
 		return self::$instance;
 	}
 
+	public function isDocumentTemplatesAvailable(): bool
+	{
+		return $this->isSendDocumentByEmployeeEnabled() || $this->isB2eRobotEnabled();
+	}
+
 	public function isSendDocumentByEmployeeEnabled(?string $region = null): bool
 	{
-		$region = $region ?? Main\Application::getInstance()->getLicense()->getRegion();
+		$region ??= Main\Application::getInstance()->getLicense()->getRegion();
 
 		$publicitySettings = $this->read('service.b2e.init-by-employee.publicity');
 		if (!is_array($publicitySettings))
@@ -43,8 +49,28 @@ final class Feature
 	{
 		return
 			Option::get('sign', self::SIGN_COLLAB_INTEGRATION_ENABLED_OPTION, true)
-			&& Storage::instance()->isAvailable()
-		;
+			&& Storage::instance()->isAvailable();
+	}
+
+	public function isB2eRobotEnabled(?string $region = null): bool
+	{
+		$region ??= Main\Application::getInstance()->getLicense()->getRegion();
+
+		$publicitySettings = $this->read('service.b2e.robot.publicity');
+		if (!is_array($publicitySettings))
+		{
+			return false;
+		}
+
+		$isPublic = (bool)($publicitySettings[$region] ?? false);
+		if (!$isPublic)
+		{
+			return false;
+		}
+
+		return
+			Option::get('sign', self::SIGN_B2E_ROBOT_ENABLED_OPTION, true)
+			&& Storage::instance()->isAvailable();
 	}
 
 	public function enableOption(string $name): void
@@ -59,7 +85,7 @@ final class Feature
 
 	public function isSenderTypeAvailable(): bool
 	{
-		return Option::get("sign", "is_sender_type_available", 'N') === 'Y';
+		return $this->isB2eRobotEnabled() && $this->isSendDocumentByEmployeeEnabled();
 	}
 
 	public function isMultiDocumentLoadingEnabled(): bool
@@ -69,7 +95,17 @@ final class Feature
 
 	public function isGroupSendingEnabled(): bool
 	{
-		return Option::get("sign", "is_group_sending_enabled", 'N') === 'Y';
+		return Option::get("sign", "is_group_sending_enabled", 'Y') === 'Y';
+	}
+
+	public function isDocumentsInSignersSelectorEnabled(): bool
+	{
+		return Option::get("sign", "is_documents_in_signers_selector_enabled", 'N') === 'Y';
+	}
+
+	public function isTemplateFolderGroupingAllowed(): bool
+	{
+		return Option::get('sign', 'TEMPLATE_FOLDER_GROUPING_ALLOWED', 'Y') === 'Y';
 	}
 
 	private function read(string $name): mixed
@@ -82,5 +118,4 @@ final class Feature
 
 		return Main\Config\Configuration::getInstance('sign')->get($name);
 	}
-
 }

@@ -2,9 +2,9 @@
 
 namespace Bitrix\HumanResources\Result\Service\HcmLink;
 
-use Bitrix\HumanResources\Result\SuccessResult;
+use Bitrix\HumanResources\Result\PropertyResult;
 
-class GetMultipleVacancyEmployeesResult extends SuccessResult
+class GetMultipleVacancyEmployeesResult extends PropertyResult
 {
 	public function __construct(
 		public array $employees,

@@ -10,7 +10,8 @@ class Audio extends Payload implements IPayload
 	private const DEFAULT_USAGE_COST_DEMO_PLAN = 1;
 
 	public function __construct(
-		protected string $payload
+		protected string $payload,
+		protected string $fileExtension = ''
 	) {}
 
 	/**
@@ -21,6 +22,7 @@ class Audio extends Payload implements IPayload
 		return [
 			'file' => $this->payload,
 			'fields' => $this->markers,
+			'fileExtension' => $this->fileExtension,
 		];
 	}
 

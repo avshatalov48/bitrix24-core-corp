@@ -80,8 +80,7 @@ class CBitrixCrmConfigLocationEdit2Component extends CBitrixComponent
 	{
 		$result = true;
 
-		$CrmPerms = new CCrmPerms($GLOBALS['USER']->GetID());
-		if (!$CrmPerms->HavePerm('CONFIG', BX_CRM_PERM_CONFIG, 'WRITE'))
+		if (!\Bitrix\Crm\Service\Container::getInstance()->getUserPermissions()->isCrmAdmin())
 		{
 			$this->errors['FATAL'][] = Loc::getMessage('CRM_CLE2_PERMISSION_DENIED');
 			$result = false;

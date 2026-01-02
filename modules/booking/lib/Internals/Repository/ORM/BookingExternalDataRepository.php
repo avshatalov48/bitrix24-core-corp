@@ -5,23 +5,28 @@ declare(strict_types=1);
 namespace Bitrix\Booking\Internals\Repository\ORM;
 
 use Bitrix\Booking\Entity;
-use Bitrix\Booking\Entity\Booking\Booking;
 use Bitrix\Booking\Internals\Model\BookingExternalDataTable;
+use Bitrix\Booking\Internals\Model\Enum\EntityType;
 
 class BookingExternalDataRepository
 {
-	public function link(Booking $booking, Entity\Booking\ExternalDataCollection $collection): void
+	public function link(
+		int $entityId,
+		EntityType $entityType,
+		Entity\ExternalData\ExternalDataCollection $collection
+	): void
 	{
 		$data = [];
 
-		/** @var Entity\Booking\ExternalDataItem $item */
+		/** @var Entity\ExternalData\ExternalDataItem $item */
 		foreach ($collection as $item)
 		{
 			$data[] = [
-				'BOOKING_ID' => $booking->getId(),
+				'ENTITY_ID' => $entityId,
 				'MODULE_ID' => $item->getModuleId(),
 				'ENTITY_TYPE_ID' => $item->getEntityTypeId(),
 				'VALUE' => $item->getValue(),
+				'ENTITY_TYPE' => $entityType->value,
 			];
 		}
 
@@ -31,16 +36,21 @@ class BookingExternalDataRepository
 		}
 	}
 
-	public function unLink(Booking $booking, Entity\Booking\ExternalDataCollection $collection): void
+	public function unLink(
+		int $entityId,
+		EntityType $entityType,
+		Entity\ExternalData\ExternalDataCollection $collection
+	): void
 	{
-		/** @var Entity\Booking\ExternalDataItem $item */
+		/** @var Entity\ExternalData\ExternalDataItem $item */
 		foreach ($collection as $item)
 		{
 			$this->unLinkByFilter([
-				'=BOOKING_ID' => $booking->getId(),
+				'=ENTITY_ID' => $entityId,
 				'=MODULE_ID' => $item->getModuleId(),
 				'=ENTITY_TYPE_ID' => $item->getEntityTypeId(),
 				'=VALUE' => $item->getValue(),
+				'=ENTITY_TYPE' => $entityType->value,
 			]);
 		}
 	}

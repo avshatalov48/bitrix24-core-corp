@@ -43,7 +43,7 @@ class CleanAgent implements AgentInterface
 		$deleteIds = [];
 		$query = EventTable::query()
 			->addSelect('ID')
-			->where('PROCESSED', '>', DateTime::createFromTimestamp(0))
+			->where('PROCESSED', '!=', DateTime::createFromTimestamp(0))
 			->where('PROCESSED', '<', DateTime::createFromTimestamp(time() - self::TTL))
 			->setLimit(self::getLimit())
 			->exec()

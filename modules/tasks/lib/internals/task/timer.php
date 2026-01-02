@@ -1,15 +1,14 @@
-<?
-/**
- * Class TimerTable
- *
- * @package Bitrix\Tasks
- **/
+<?php
 
 namespace Bitrix\Tasks\Internals\Task;
 
-use Bitrix\Main,
-	Bitrix\Main\Localization\Loc;
-//Loc::loadMessages(__FILE__);
+use Bitrix\Main\ORM\Data\AddStrategy\Trait\AddInsertIgnoreTrait;
+use Bitrix\Main\ORM\Data\AddStrategy\Trait\AddMergeTrait;
+use Bitrix\Main\ORM\Data\DataManager;
+use Bitrix\Main\ORM\Data\Internal\DeleteByFilterTrait;
+use Bitrix\Main\ORM\Data\Internal\MergeTrait;
+use Bitrix\Main\ORM\Fields\IntegerField;
+use Bitrix\Tasks\Internals\UpdateByFilterTrait;
 
 /**
  * Class TimerTable
@@ -27,50 +26,36 @@ use Bitrix\Main,
  * @method static \Bitrix\Tasks\Internals\Task\EO_Timer wakeUpObject($row)
  * @method static \Bitrix\Tasks\Internals\Task\EO_Timer_Collection wakeUpCollection($rows)
  */
-class TimerTable extends Main\Entity\DataManager
+class TimerTable extends DataManager
 {
-	/**
-	 * Returns DB table name for entity.
-	 *
-	 * @return string
-	 */
-	public static function getTableName()
+	use UpdateByFilterTrait;
+	use AddInsertIgnoreTrait;
+	use AddMergeTrait;
+
+	public static function getTableName(): string
 	{
 		return 'b_tasks_timer';
 	}
 
-	/**
-	 * @return static
-	 */
-	public static function getClass()
+	public static function getClass(): string
 	{
-		return get_called_class();
+		return static::class;
 	}
 
-	/**
-	 * Returns entity map definition.
-	 *
-	 * @return array
-	 */
-	public static function getMap()
+	public static function getMap(): array
 	{
-		return array(
-			'TASK_ID' => array(
-				'data_type' => 'integer',
-				'required' => true,
-			),
-			'USER_ID' => array(
-				'data_type' => 'integer',
-				'primary' => true,
-			),
-			'TIMER_STARTED_AT' => array(
-				'data_type' => 'integer',
-				'required' => true,
-			),
-			'TIMER_ACCUMULATOR' => array(
-				'data_type' => 'integer',
-				'required' => true,
-			),
-		);
+		return [
+			(new IntegerField('USER_ID'))
+				->configurePrimary(),
+
+			(new IntegerField('TASK_ID'))
+				->configureRequired(),
+
+			(new IntegerField('TIMER_STARTED_AT'))
+				->configureRequired(),
+
+			(new IntegerField('TIMER_ACCUMULATOR'))
+				->configureRequired(),
+		];
 	}
 }

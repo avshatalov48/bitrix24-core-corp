@@ -35,4 +35,10 @@ final class LogMessageType
 
 	public const BOOKING_CREATED = 28;
 	public const RESTART_AUTOMATION = 29;
+	public const WAIT_LIST_ITEM_CREATED = 30;
+	public const WAIT_LIST_ITEM_DELETED = 31;
+	public const BOOKING_MESSAGE_STATUS_UPDATE = 32;
+	public const BOOKING_STATUS_UPDATE = 33;
+	public const REPEAT_SALE_CREATED = 34;
+	public const BOOKING_CREATION_ERROR = 35;
 }

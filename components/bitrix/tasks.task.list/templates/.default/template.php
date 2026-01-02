@@ -19,6 +19,7 @@ use Bitrix\Main\Web\Json;
 use Bitrix\Tasks\Helper\RestrictionUrl;
 use Bitrix\Tasks\Integration\Recyclebin\Task;
 use Bitrix\Tasks\Integration\Socialnetwork\Context\Context;
+use Bitrix\Tasks\Onboarding\DI\OnboardingContainer;
 use Bitrix\Tasks\Slider\Exception\SliderException;
 use Bitrix\Tasks\Slider\Factory\SliderFactory;
 use Bitrix\Tasks\UI\ScopeDictionary;
@@ -39,6 +40,8 @@ global $APPLICATION;
 Asset::getInstance()->addJs("/bitrix/js/tasks/task-iframe-popup.js");
 $APPLICATION->SetAdditionalCSS("/bitrix/js/tasks/css/tasks.css");
 
+$isV2Form = \Bitrix\Tasks\V2\FormV2Feature::isOn('miniform', (int)$arParams['GROUP_ID']);
+
 Extension::load([
 	'ui.design-tokens',
 	'ui.fonts.opensans',
@@ -54,6 +57,20 @@ Extension::load([
 	'tasks.group-actions-stepper',
 	'tasks.flow.entity-selector',
 ]);
+
+$timeManagerData = [];
+if (Loader::includeModule('intranet'))
+{
+	$intranetData = CIntranetPlanner::getData(SITE_ID, true);
+	CIntranetPlanner::initScripts($intranetData);
+
+	$timeManagerData = $intranetData['DATA'];
+}
+
+if ($isV2Form)
+{
+	Extension::load('tasks.v2.application.task-card');
+}
 
 /** intranet-settings-support */
 if (($arResult['IS_TOOL_AVAILABLE'] ?? null) === false)
@@ -91,8 +108,7 @@ $APPLICATION->SetPageProperty(
 	"{$bodyClass} page-one-column transparent-workarea {$collabClass}"
 );
 
-if ($arResult['CONTEXT'] !== Context::getSpaces())
-{
+Asset::getInstance()->addCss('/bitrix/components/bitrix/tasks.interface.toolbar/templates/.default/style.css');
 	$APPLICATION->IncludeComponent(
 		'bitrix:tasks.interface.header',
 		'',
@@ -113,6 +129,7 @@ if ($arResult['CONTEXT'] !== Context::getSpaces())
 
 			'MARK_ACTIVE_ROLE' => $arParams['MARK_ACTIVE_ROLE'] ?? null,
 			'MARK_SECTION_ALL' => $arParams['MARK_SECTION_ALL'] ?? null,
+			'MARK_SECTION_TASKS_LIST' => $arParams['MARK_SECTION_TASKS_LIST'] ?? null,
 			'MARK_SECTION_PROJECTS' => $arParams['MARK_SECTION_PROJECTS'] ?? null,
 			'MARK_SPECIAL_PRESET' => $arParams['MARK_SPECIAL_PRESET'] ?? null,
 
@@ -152,7 +169,6 @@ if ($arResult['CONTEXT'] !== Context::getSpaces())
 		$component,
 		['HIDE_ICONS' => true]
 	);
-}
 ?>
 
 <?php
@@ -312,17 +328,14 @@ $arResult['EXPORT_EXCEL_PARAMS'] = [
 		),
 	],
 	'optionsFields' => [
-		'EXPORT_ALL_FIELDS' => [
-			'name' => 'COLUMNS',
-			'type' => 'checkbox',
-			'title' => Loc::getMessage('TASKS_EXCEL_POPUP_PARAGRAPH_1'),
-			'value' => 'N'
-		],
-		'REQUISITE_MULTILINE' => [
-			'name' => 'ALL_COLUMNS',
-			'type' => 'checkbox',
-			'title' => Loc::getMessage('TASKS_EXCEL_POPUP_PARAGRAPH_2'),
-			'value' => 'N'
+		'updateMethod' => [
+			'name' => 'EXPORT_COLUMNS',
+			'type' => 'radio',
+			'list' => [
+				'COLUMNS_FROM_LIST' => Loc::getMessage('TASKS_EXCEL_POPUP_PARAGRAPH_1'),
+				'ALL_COLUMNS' => Loc::getMessage('TASKS_EXCEL_POPUP_PARAGRAPH_2'),
+			],
+			'value' => 'ALL_COLUMNS',
 		],
 	],
 	'messages' => [
@@ -350,6 +363,7 @@ if (ProjectLimit::canTurnOnTrial())
 				limitFeatureId: '<?= ProjectLimit::getFeatureId() ?>',
 			};
 			BX.Tasks.GridActions.groupId = '<?= (int)$arParams['GROUP_ID']?>';
+			BX.Tasks.GridActions.ownerId = '<?= (int)$arResult['OWNER_ID']?>';
 
 			BX.message({
 				TASKS_CONFIRM_GROUP_ACTION: '<?=GetMessageJS('TASKS_CONFIRM_GROUP_ACTION')?>',
@@ -368,6 +382,20 @@ if (ProjectLimit::canTurnOnTrial())
 				TASKS_TASK_LIST_TAGS_ARE_CONVERTING_TEXT: '<?= Json::encode(GetMessageJS('TASKS_TASK_LIST_TAGS_ARE_CONVERTING_TEXT')) ?>',
 				TASKS_TASK_LIST_TAGS_ARE_CONVERTING_COME_BACK_LATER: '<?=GetMessageJS('TASKS_TASK_LIST_TAGS_ARE_CONVERTING_COME_BACK_LATER')?>',
 			});
+
+			<?php if ($arResult['needToShowInviteToMobile']) : ?>
+				BX.Runtime.loadExtension('tasks.promo.invite-to-mobile').then(() => {
+					const inviteToMobile = new BX.Tasks.Promo.InviteToMobile({
+						appLink: <?= Json::encode($arResult['inviteToMobileLink']) ?>,
+					});
+
+					inviteToMobile.show();
+					<?php
+						$inviteToMobileService = OnboardingContainer::getInstance()->getInviteToMobileService();
+						$inviteToMobileService->setShown($arParams['USER_ID']);
+					?>
+				});
+			<?php endif; ?>
 
 			BX.Tasks.GridInstance = new BX.Tasks.Grid(<?=Json::encode([
 				'gridId' => $arParams['GRID_ID'],
@@ -391,6 +419,7 @@ if (ProjectLimit::canTurnOnTrial())
 						"{$templateFolder}/images/tasks-projects-trello.svg",
 					],
 				],
+				'isV2Form' => $isV2Form ? 'true' : 'false',
 			])?>);
 
 			new BX.Tasks.Grid.Sorting({
@@ -407,6 +436,7 @@ if (ProjectLimit::canTurnOnTrial())
 					'gridId' => $arParams['GRID_ID'],
 					'userId' => $arResult['USER_ID'],
 					'tours' => $arResult['tours'],
+					'isV2Form' => $isV2Form,
 				])
 			?>);
 
@@ -414,6 +444,8 @@ if (ProjectLimit::canTurnOnTrial())
 				.create(<?= \CUtil::PhpToJSObject($arResult['EXPORT_EXCEL_PARAMS']) ?>)
 				.setHandler(BX.UI.StepProcessing.ProcessCallback.RequestStart)
 			;
+			
+			BX.TasksTimerManager.onDataRecieved(<?=Json::encode($timeManagerData)?>);
 		}
 	);
 </script>

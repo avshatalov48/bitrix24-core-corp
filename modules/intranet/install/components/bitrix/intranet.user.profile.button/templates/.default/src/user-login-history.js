@@ -116,7 +116,7 @@ export default class UserLoginHistory
 		};
 
 		let loginHistoryWidget = Tag.render`
-				<div class="system-auth-form__item system-auth-form__scope --vertical">
+				<div class="system-auth-form__item system-auth-form__scope --vertical --padding-sm">
 					<div class="system-auth-form__item-container --center ${this.#isActive() ? '--border' : ''}">
 						<div class="system-auth-form__item-logo">
 							<div class="system-auth-form__item-logo--image ${this.#isActive() ? '--history' : '--history-gray'}" onclick="${showSliderLoginHistory}">
@@ -124,7 +124,7 @@ export default class UserLoginHistory
 							</div>
 						</div>
 						<div class="system-auth-form__item-container --center">
-							<div class="system-auth-form__item-title --sm ${this.#isActive() ? '--link' : ''}" onclick="${showSliderLoginHistory}">${Loc.getMessage('INTRANET_USER_PROFILE_HISTORY_TITLE')}</div>
+							<div class="system-auth-form__item-title ${this.#isActive() ? '--sm --link' : '--light'}" onclick="${showSliderLoginHistory}">${Loc.getMessage('INTRANET_USER_PROFILE_HISTORY_TITLE')}</div>
 							${this.#getLockIcon()}
 						</div>
 						<div class="system-auth-form__item-content">

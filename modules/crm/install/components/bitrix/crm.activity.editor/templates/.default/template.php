@@ -11,13 +11,9 @@ $APPLICATION->SetAdditionalCSS("/bitrix/themes/.default/crm-entity-show.css");
 
 $skipVisualComponents = (
 	isset($arParams['SKIP_VISUAL_COMPONENTS']) && $arParams['SKIP_VISUAL_COMPONENTS'] === 'Y'
-	&& SITE_TEMPLATE_ID === 'bitrix24'
 );
 
-if(SITE_TEMPLATE_ID === 'bitrix24')
-{
-	$APPLICATION->SetAdditionalCSS("/bitrix/themes/.default/bitrix24/crm-entity-show.css");
-}
+$APPLICATION->SetAdditionalCSS('/bitrix/themes/.default/bitrix24/crm-entity-show.css');
 
 $jsCoreInit = array('date', 'popup', 'ajax', 'crm_activity_planner', 'crm_visit_tracker');
 if($arResult['ENABLE_DISK'])

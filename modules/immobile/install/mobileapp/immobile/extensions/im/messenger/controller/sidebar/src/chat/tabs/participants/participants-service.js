@@ -2,7 +2,7 @@
  * @module im/messenger/controller/sidebar/chat/tabs/participants/participants-service
  */
 jn.define('im/messenger/controller/sidebar/chat/tabs/participants/participants-service', (require, exports, module) => {
-	const { Loc } = require('loc');
+	const { Loc } = require('im/messenger/loc');
 	const { Type } = require('type');
 	const { LoggerManager } = require('im/messenger/lib/logger');
 	const logger = LoggerManager.getInstance().getLogger('sidebar--participants-service');
@@ -166,11 +166,7 @@ jn.define('im/messenger/controller/sidebar/chat/tabs/participants/participants-s
 			const isAdmin = this.isGroupDialog ? ownerId === user.id : false;
 			const isManager = dialogData?.managerList.includes(user.id);
 			const crownStatus = (isAdmin || isManager) ? this.sidebarUserService.getStatusCrown(isAdmin) : null;
-			let userId = user.id;
-			if (Type.isUndefined(userId) && user.type === DialogType.user)
-			{
-				userId = parseInt(user.dialogId, 10);
-			}
+			const userId = this.prepareUserId(user);
 
 			return {
 				id: userId,
@@ -187,6 +183,22 @@ jn.define('im/messenger/controller/sidebar/chat/tabs/participants/participants-s
 				isManager,
 				isSuperEllipseAvatar: this.isSuperEllipseAvatar(),
 			};
+		}
+
+		/**
+		 * @param {object} user - users data
+		 * @return {number}
+		 */
+		prepareUserId(user)
+		{
+			const userId = user.id;
+			const isDirect = Type.isUndefined(userId) && DialogHelper.createByDialogId(this.dialogId).isDirect;
+			if (isDirect)
+			{
+				return parseInt(user.dialogId, 10);
+			}
+
+			return userId;
 		}
 
 		/**

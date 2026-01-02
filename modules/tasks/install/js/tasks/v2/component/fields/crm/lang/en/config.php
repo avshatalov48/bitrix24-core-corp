@@ -1,0 +1,9 @@
+<?php
+$MESS["TASKS_V2_CRM_AND_COUNT"] = "and #COUNT# more";
+$MESS["TASKS_V2_CRM_COLLAPSE"] = "Collapse";
+$MESS["TASKS_V2_CRM_EDIT"] = "Edit";
+$MESS["TASKS_V2_CRM_ENTITY_TITLE"] = "#TYPE_NAME# [a]#TITLE#[/a]";
+$MESS["TASKS_V2_CRM_OPEN"] = "Open";
+$MESS["TASKS_V2_CRM_TITLE"] = "CRM items:";
+$MESS["TASKS_V2_CRM_TITLE_CHIP"] = "CRM items";
+$MESS["TASKS_V2_CRM_UNLINK"] = "Detach";

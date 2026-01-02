@@ -2,9 +2,11 @@
 
 namespace Bitrix\Crm\Service;
 
+use Bitrix\Crm\Activity\LastCommunication\LastCommunicationAvailabilityChecker;
 use Bitrix\Crm\Activity\Provider\ProviderManager;
 use Bitrix\Crm\Activity\TodoCreateNotification;
 use Bitrix\Crm\Category\Entity\Category;
+use Bitrix\Crm\Category\PermissionEntityTypeHelper;
 use Bitrix\Crm\Cleaning\CleaningManager;
 use Bitrix\Crm\Conversion\EntityConversionConfig;
 use Bitrix\Crm\Counter\EntityCounterSettings;
@@ -13,10 +15,12 @@ use Bitrix\Crm\EO_Status;
 use Bitrix\Crm\EO_Status_Collection;
 use Bitrix\Crm\Field;
 use Bitrix\Crm\Item;
+use Bitrix\Crm\Model\LastCommunicationTable;
 use Bitrix\Crm\PhaseSemantics;
 use Bitrix\Crm\RelationIdentifier;
 use Bitrix\Crm\Service\EventHistory\TrackedObject;
 use Bitrix\Crm\Service\Operation\Action\Compatible\SocialNetwork\ProcessSendNotification;
+use Bitrix\Crm\Service\Operation\Action\RestoreFromBin;
 use Bitrix\Crm\Settings\Crm;
 use Bitrix\Crm\Settings\HistorySettings;
 use Bitrix\Crm\Statistics;
@@ -25,7 +29,6 @@ use Bitrix\Crm\UI\Filter\EntityHandler;
 use Bitrix\Crm\UserField\Visibility\VisibilityManager;
 use Bitrix\Crm\UtmTable;
 use Bitrix\Main\Application;
-use Bitrix\Main\Config\Option;
 use Bitrix\Main\Entity\ExpressionField;
 use Bitrix\Main\InvalidOperationException;
 use Bitrix\Main\Localization\Loc;
@@ -40,18 +43,15 @@ abstract class Factory
 {
 	protected const STAGES_CACHE_TTL = 86400;
 
+	protected ?Field\Collection $userFieldCollection = null;
 	protected $fieldsCollection;
 	protected $categories;
-	protected $stages;
-	protected $stageCollections;
 	protected $userType;
 	protected $editorAdapter;
 	protected $isParentFieldsAdded = false;
+	protected bool $isRecurringMode = false;
 	protected $itemsCategoryCache = [];
 	private array $itemsStageCache = [];
-
-	/** @var StatusTable */
-	protected $statusTableClassName = StatusTable::class;
 
 	protected $itemClassName = Item::class;
 
@@ -90,7 +90,14 @@ abstract class Factory
 		{
 			$settings += UtmTable::getUtmFieldsInfo();
 		}
-		$settings += Container::getInstance()->getParentFieldManager()->getParentFieldsInfo($this->getEntityTypeId());
+
+		$container = Container::getInstance();
+		$settings += $container->getParentFieldManager()->getParentFieldsInfo($this->getEntityTypeId());
+
+		if (LastCommunicationAvailabilityChecker::getInstance()->isEnabled())
+		{
+			$settings += LastCommunicationTable::getFieldsInfo();
+		}
 
 		foreach ($settings as $name => &$field)
 		{
@@ -194,6 +201,16 @@ abstract class Factory
 			$item->addImplementation(new Item\FieldImplementation\File($entityObject, $fileFields, $this->getFieldsMap()));
 		}
 
+		if ($this->isRecurringEnabled())
+		{
+			$item->addImplementation(
+				new Item\FieldImplementation\Recurring(
+					$this->getEntityTypeId(),
+					$item->getId(),
+				),
+			);
+		}
+
 		if ($item->isCategoriesSupported())
 		{
 			$item->refreshCategoryDependentDisabledFields();
@@ -260,6 +277,9 @@ abstract class Factory
 			EditorAdapter::FIELD_PRODUCT_ROW_SUMMARY => Loc::getMessage('CRM_COMMON_PRODUCTS'),
 			EditorAdapter::FIELD_OPPORTUNITY => Loc::getMessage('CRM_TYPE_ITEM_FIELD_NAME_OPPORTUNITY_WITH_CURRENCY'),
 			EditorAdapter::FIELD_UTM => Loc::getMessage('CRM_COMMON_UTM'),
+			EditorAdapter::FIELD_LAST_COMMUNICATION => Loc::getMessage('CRM_TYPE_ITEM_FIELD_NAME_LAST_COMMUNICATION_TIME'),
+			EditorAdapter::FIELD_REPEAT_SALE_SEGMENT_ID => Loc::getMessage('CRM_TYPE_ITEM_FIELD_NAME_REPEAT_SALE_SEGMENT_ID'),
+			Item::FIELD_NAME_RECURRING => Loc::getMessage('CRM_TYPE_DYNAMIC_FIELD_RECURRING'),
 		];
 	}
 
@@ -481,7 +501,7 @@ abstract class Factory
 			}
 		}
 
-		$parameters = $userPermissions->applyAvailableItemsGetListParameters(
+		$parameters = $userPermissions->itemsList()->applyAvailableItemsGetListParameters(
 			$parameters,
 			$entityTypes,
 			$operation,
@@ -493,7 +513,10 @@ abstract class Factory
 	protected function collectEntityTypesForPermissions(array &$filter, ?int $userId = null): array
 	{
 		$userPermissions = Container::getInstance()->getUserPermissions($userId);
-		$entityTypes = [$userPermissions::getPermissionEntityType($this->getEntityTypeId())];
+		$permissionEntityTypeHelper = new PermissionEntityTypeHelper($this->getEntityTypeId());
+		$entityTypes = [
+			$permissionEntityTypeHelper->getPermissionEntityTypeForCategory(0)
+		];
 		if ($this->isCategoriesSupported())
 		{
 			$entityTypes = [];
@@ -511,14 +534,12 @@ abstract class Factory
 			{
 				$categoryIDs = (array)($operationInfo['CONDITION']);
 
-				foreach($categoryIDs as $categoryId)
+				foreach ($categoryIDs as $categoryId)
 				{
-					if($categoryId >= 0)
+					$categoryId = (int)$categoryId;
+					if ($categoryId >= 0)
 					{
-						$entityTypes[] = $userPermissions::getPermissionEntityType(
-							$this->getEntityTypeId(),
-							$categoryId
-						);
+						$entityTypes[] = $permissionEntityTypeHelper->getPermissionEntityTypeForCategory($categoryId);
 					}
 				}
 			}
@@ -529,7 +550,7 @@ abstract class Factory
 				$availableCategoriesIds = [];
 				foreach ($categories as $category)
 				{
-					if (!$userPermissions->canReadTypeInCategory($this->getEntityTypeId(), $category->getId()))
+					if (!$userPermissions->entityType()->canReadItemsInCategory($this->getEntityTypeId(), $category->getId()))
 					{
 						$shouldStrictByCategories = true;
 					}
@@ -537,10 +558,7 @@ abstract class Factory
 					{
 						$availableCategoriesIds[] = $category->getId();
 					}
-					$entityTypes[] = $userPermissions::getPermissionEntityType(
-						$this->getEntityTypeId(),
-						$category->getId()
-					);
+					$entityTypes[] = $permissionEntityTypeHelper->getPermissionEntityTypeForCategory($category->getId());
 				}
 
 				if ($shouldStrictByCategories && !empty($availableCategoriesIds))
@@ -590,10 +608,11 @@ abstract class Factory
 	 * Returns number of items filtered by $filter.
 	 *
 	 * @param array $filter
+	 * @param null|int $ttl
 	 *
 	 * @return int
 	 */
-	public function getItemsCount(array $filter = []): int
+	public function getItemsCount(array $filter = [], ?int $ttl = null): int
 	{
 		$this->addParentFieldsReferences();
 		$tableName = $this->getDataClass()::getTableName();
@@ -605,7 +624,50 @@ abstract class Factory
 		$params = $this->replaceCommonFieldNames(['filter' => $filter]);
 		$normalizedFilter = $params['filter'] ?? [];
 
-		return $this->getDataClass()::getCount($normalizedFilter);
+		if ($this->isRecurringEnabled())
+		{
+			$normalizedFilter['IS_RECURRING'] = 'N';
+		}
+
+		$cache = [];
+		if ($ttl > 0)
+		{
+			$cache['ttl'] = $ttl;
+		}
+
+		return $this->getDataClass()::getCount($normalizedFilter, $cache);
+	}
+
+	public function getItemsOpportunityAccountAmount(array $filter = [], ?int $ttl = null): int
+	{
+		if (!isset($this->getFieldsInfo()['OPPORTUNITY_ACCOUNT']))
+		{
+			throw new InvalidOperationException('Error calc amount for opportunity_account field for entity ' . $this->getEntityTypeId());
+		}
+
+		$this->addParentFieldsReferences();
+		$tableName = $this->getDataClass()::getTableName();
+		if (!Application::getConnection()->isTableExists($tableName))
+		{
+			return 0;
+		}
+
+		$params = $this->replaceCommonFieldNames(['filter' => $filter]);
+		$normalizedFilter = $params['filter'] ?? [];
+
+		$query = $this->getDataClass()::query()
+			->addSelect(new \Bitrix\Main\ORM\Fields\ExpressionField('SUM', 'SUM(OPPORTUNITY)'))
+			->setFilter($normalizedFilter)
+		;
+
+		if ($ttl >= 0)
+		{
+			$query->setCacheTtl($ttl);
+		}
+
+		$result = $query->exec()->fetch();
+
+		return (int)$result['SUM'];
 	}
 
 	/**
@@ -627,7 +689,7 @@ abstract class Factory
 		$filter = $params['filter'] ?? [];
 
 		$entityTypes = $this->collectEntityTypesForPermissions($filter, $userId);
-		$filter = Container::getInstance()->getUserPermissions($userId)->applyAvailableItemsFilter(
+		$filter = Container::getInstance()->getUserPermissions($userId)->itemsList()->applyAvailableItemsFilter(
 			$filter,
 			$entityTypes,
 			$operation
@@ -715,7 +777,9 @@ abstract class Factory
 			$select[] = Item::FIELD_NAME_PRODUCTS . '.PRODUCT_ROW_RESERVATION';
 		}
 
-		return $select;
+		$selectWithoutRecurring = array_diff($select, [Item::FIELD_NAME_RECURRING]);
+
+		return $selectWithoutRecurring;
 	}
 
 	private function prepareFilter(array $filter): array
@@ -888,13 +952,17 @@ abstract class Factory
 		{
 			return null;
 		}
+		if (!$item->isNew()) // for existing items stage shouldn't be changed
+		{
+			return $item->getStageId();
+		}
+
 		$categoryId = $this->isCategoriesSupported() ? $item->getCategoryId() : 0;
 		$stages = $this->getStages($categoryId);
-		$startStageId = $userPermissions->getStartStageId(
+		$startStageId = $userPermissions->stage()->getFirstAvailableForAddStageId(
 			$this->getEntityTypeId(),
-			$stages,
 			$categoryId,
-			$item->isNew() ? $userPermissions::OPERATION_ADD : $userPermissions::OPERATION_UPDATE
+			$stages
 		);
 
 		if ($startStageId)
@@ -1250,6 +1318,29 @@ abstract class Factory
 	}
 
 	/**
+	 * Returns collection of all user fields of this entity type. (Even those, that are not visible for current user).
+	 *
+	 * @return Field\Collection
+	 */
+	public function getUserFieldsCollection(): Field\Collection
+	{
+		if ($this->userFieldCollection === null)
+		{
+			$fields = [];
+			$userFields = $this->getUserFields();
+			foreach ($this->getUserFieldsInfo() as $name => $info)
+			{
+				$info['USER_FIELD'] = $userFields[$name];
+				$fields[] = $this->createField($name, $info);
+			}
+
+			$this->userFieldCollection = new Field\Collection($fields);
+		}
+
+		return $this->userFieldCollection;
+	}
+
+	/**
 	 * Returns collection of all fields of this entity type. (Even those, that are not visible for current user).
 	 *
 	 * @return Field\Collection
@@ -1259,18 +1350,13 @@ abstract class Factory
 		if ($this->fieldsCollection === null)
 		{
 			$fields = [];
-			$userFields = $this->getUserFields();
 			foreach ($this->getFieldsInfo() as $name => $info)
 			{
 				$fields[$name] = $this->createField($name, $info);
 			}
-			foreach ($this->getUserFieldsInfo() as $name => $info)
-			{
-				$info['USER_FIELD'] = $userFields[$name];
-				$fields[$name] = $this->createField($name, $info);
-			}
 
 			$this->fieldsCollection = new Field\Collection($fields);
+			$this->fieldsCollection->merge($this->getUserFieldsCollection());
 		}
 
 		return $this->fieldsCollection;
@@ -1291,6 +1377,7 @@ abstract class Factory
 	{
 		$this->clearUserFieldsInfoCache();
 		$this->fieldsCollection = null;
+		$this->userFieldCollection = null;
 
 		return $this;
 	}
@@ -1373,6 +1460,14 @@ abstract class Factory
 			$operation->disableSaveToHistory();
 		}
 
+		if ($this->isBizProcSupported())
+		{
+			$operation->addAction(
+				Operation::ACTION_AFTER_SAVE,
+				new Operation\Action\DeleteBizProc(),
+			);
+		}
+
 		return $operation;
 	}
 
@@ -1409,6 +1504,12 @@ abstract class Factory
 		$restore->removeAction(
 			Operation::ACTION_AFTER_SAVE,
 			ProcessSendNotification\WhenAddingEntity::class,
+		);
+
+		$restore->addAction(
+			Operation::ACTION_BEFORE_SAVE,
+			new RestoreFromBin($item->getCreatedTime()),
+			0,
 		);
 
 		return $restore;
@@ -1543,6 +1644,11 @@ abstract class Factory
 		return $this->isStagesSupported();
 	}
 
+	public function getStageBroker(): Broker\Stage
+	{
+		return Container::getInstance()->getStageBroker($this->getEntityTypeId());
+	}
+
 	/**
 	 * Returns stages for $categoryId.
 	 *
@@ -1552,59 +1658,25 @@ abstract class Factory
 	 */
 	public function getStages(int $categoryId = null): EO_Status_Collection
 	{
-		if(!isset($this->stageCollections[$categoryId]))
-		{
-			$filter = [
-				'=ENTITY_ID' => $this->getStagesEntityId($categoryId),
-			];
-
-			$this->stageCollections[$categoryId] = $this->statusTableClassName::getList([
-				'order' => [
-					'SORT' => 'ASC',
-				],
-				'filter' => $filter,
-				'cache' => ['ttl' => static::STAGES_CACHE_TTL],
-			])->fetchCollection();
-			foreach($this->stageCollections[$categoryId] as $stage)
-			{
-				$this->stages[$stage->getStatusId()] = $stage;
-			}
-		}
-
-		return $this->stageCollections[$categoryId];
+		return $this->getStageBroker()->getByCategoryId($categoryId);
 	}
 
 	public function purgeStagesCache(): Factory
 	{
-		$this->stageCollections = [];
-		$this->stages = [];
+		$this->getStageBroker()->clearCache();
 
 		return $this;
 	}
 
 	public function getStage(string $statusId): ?EO_Status
 	{
-		if (isset($this->stages[$statusId]))
-		{
-			return $this->stages[$statusId];
-		}
+		return $this->getStageBroker()->getById($statusId);
+	}
 
-		if ($this->isCategoriesSupported())
-		{
-			$stagesArrays = [];
-			foreach ($this->getCategories() as $category)
-			{
-				$stagesArrays[] = $this->getStages($category->getId())->getAll();
-			}
-
-			$stages = $stagesArrays ? array_merge(...$stagesArrays) : [];
-		}
-		else
-		{
-			$stages = $this->getStages()->getAll();
-		}
-
-		foreach ($stages as $stage)
+	public function getStageFromCategory(int $categoryId, string $statusId): ?EO_Status
+	{
+		$stageCollection = $this->getStages($categoryId);
+		foreach ($stageCollection->getAll() as $stage)
 		{
 			if ($stage->getStatusId() === $statusId)
 			{
@@ -1709,6 +1781,16 @@ abstract class Factory
 		return true;
 	}
 
+	public function isRecurringAvailable(): bool
+	{
+		return false;
+	}
+
+	public function isRecurringEnabled(): bool
+	{
+		return false;
+	}
+
 	/**
 	 * Returns true if this entity supports 'SOURCE_ID' and 'SOURCE_DESCRIPTION' fields for its elements
 	 *
@@ -1751,11 +1833,21 @@ abstract class Factory
 	}
 
 	/**
-	 * Returns true if this entity supported by business processes designer.
+	 * Returns true if this entity supported by business processes designer and business process integration is enabled.
 	 *
 	 * @return bool
 	 */
 	public function isBizProcEnabled(): bool
+	{
+		return $this->isBizProcSupported();
+	}
+
+	/**
+	 * Returns true if this entity supported by business processes designer.
+	 *
+	 * @return bool
+	 */
+	public function isBizProcSupported(): bool
 	{
 		return false;
 	}
@@ -1857,14 +1949,7 @@ abstract class Factory
 	 */
 	public function isLastActivityEnabled(): bool
 	{
-		if (!$this->isLastActivitySupported())
-		{
-			return false;
-		}
-
-		$isEnabled = Option::get('crm', 'enable_last_activity_for_' . mb_strtolower($this->getEntityName()), 'Y');
-
-		return ($isEnabled === 'Y');
+		return $this->isLastActivitySupported();
 	}
 
 	public function isSmartActivityNotificationEnabled(): bool
@@ -2082,7 +2167,7 @@ abstract class Factory
 		$filter = $parameters['filter'] ?? [];
 		$select = $parameters['select'] ?? [];
 
-		if (count($filter) === 1 && $this->isFilterContainField($filter, Item::FIELD_NAME_ID))
+		if (count($filter) === 1 && $this->isFilterContainStrictFilterByField($filter, Item::FIELD_NAME_ID))
 		{
 			return true;
 		}
@@ -2095,15 +2180,26 @@ abstract class Factory
 		return false;
 	}
 
-	private function isFilterContainField(array $array, string $field): bool
+	private function isFilterContainStrictFilterByField(array $array, string $field): bool
 	{
 		$keys = array_keys($array);
+
+		$sqlWhere = new \CSQLWhere();
 		foreach ($keys as $key)
 		{
-			// remove any special symbols from $key
-			$key = preg_replace('/[^a-zA-Z0-9_]/', '', $key);
-
-			if ($key === $field)
+			$filterCondition = $sqlWhere->MakeOperation($key);
+			if (
+				$filterCondition['FIELD'] === $field
+				&& in_array(
+					$filterCondition['OPERATION'],
+					[
+						'I', // '=ID'
+						'SE', // '==ID'
+						'E', // 'ID'
+						'IN', // '@ID'
+					]
+				)
+			)
 			{
 				return true;
 			}
@@ -2131,5 +2227,31 @@ abstract class Factory
 	public function isCommunicationRoutingSupported(): bool
 	{
 		return false;
+	}
+
+	/**
+	 * returns true if entity does not use crm permissions interfaces to manage roles and permissions
+	 * @return bool
+	 */
+	public function hasCustomPermissionsUI(): bool
+	{
+		return false;
+	}
+
+	public function setIsRecurringMode(bool $isRecurringMode): self
+	{
+		if (!$this->isRecurringAvailable())
+		{
+			throw new \RuntimeException('Entity type ' . $this->getEntityName() . ' does not support recurring mode');
+		}
+
+		$this->isRecurringMode = $isRecurringMode;
+
+		return $this;
+	}
+
+	public function isRecurringMode(): bool
+	{
+		return $this->isRecurringEnabled() && $this->isRecurringMode;
 	}
 }

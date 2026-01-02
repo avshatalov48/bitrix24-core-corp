@@ -33,7 +33,12 @@ final class B2eEventCreator
 		{
 			return;
 		}
+
 		$crmController = B2eController::getInstance();
+		$triggerInputData = [
+			'eventType' => $eventType,
+		];
+			
 		switch ($eventType)
 		{
 			case EventData::TYPE_ON_REGISTER:
@@ -47,14 +52,22 @@ final class B2eEventCreator
 			case EventData::TYPE_ON_STOPPED:
 				$crmController->onSignStopped($itemIdentifier, $documentData);
 				SigningStoppedTrigger::executeBySmartDocumentId($itemIdentifier->getEntityId());
-				CompletedTrigger::executeBySmartDocumentId($itemIdentifier->getEntityId());
+				CompletedTrigger::executeBySmartDocumentId(
+					$itemIdentifier->getEntityId(),
+					$triggerInputData,
+				);
 				$this->completeActivity($crmController, $itemIdentifier);
+				$this->sendEvent($documentData, $eventType);
 				break;
 			case EventData::TYPE_ON_CANCELED_BY_RESPONSIBILITY_PERSON:
 				$crmController->onCancelByResponsiblePerson($itemIdentifier, $documentData);
 				SigningStoppedTrigger::executeBySmartDocumentId($itemIdentifier->getEntityId());
-				CompletedTrigger::executeBySmartDocumentId($itemIdentifier->getEntityId());
+				CompletedTrigger::executeBySmartDocumentId(
+					$itemIdentifier->getEntityId(),
+					$triggerInputData,
+				);
 				$this->completeActivity($crmController, $itemIdentifier);
+				$this->sendEvent($documentData, $eventType);
 				break;
 			case EventData::TYPE_ON_CANCELED_BY_EMPLOYEE:
 				$crmController->onCancelByEmployee($itemIdentifier, $documentData);
@@ -63,14 +76,22 @@ final class B2eEventCreator
 			case EventData::TYPE_ON_CANCELED_BY_REVIEWER:
 				$crmController->onCancelByReviewer($itemIdentifier, $documentData);
 				SigningStoppedTrigger::executeBySmartDocumentId($itemIdentifier->getEntityId());
-				CompletedTrigger::executeBySmartDocumentId($itemIdentifier->getEntityId());
+				CompletedTrigger::executeBySmartDocumentId(
+					$itemIdentifier->getEntityId(),
+					$triggerInputData,
+				);
 				$this->completeActivity($crmController, $itemIdentifier);
+				$this->sendEvent($documentData, $eventType);
 				break;
 			case EventData::TYPE_ON_CANCELED_BY_EDITOR:
 				$crmController->onCancelByEditor($itemIdentifier, $documentData);
 				SigningStoppedTrigger::executeBySmartDocumentId($itemIdentifier->getEntityId());
-				CompletedTrigger::executeBySmartDocumentId($itemIdentifier->getEntityId());
+				CompletedTrigger::executeBySmartDocumentId(
+					$itemIdentifier->getEntityId(),
+					$triggerInputData,
+				);
 				$this->completeActivity($crmController, $itemIdentifier);
+				$this->sendEvent($documentData, $eventType);
 				break;
 			case EventData::TYPE_ON_SIGNED_BY_EMPLOYEE:
 				$crmController->onSignedByEmployee($itemIdentifier, $documentData, $messageData);
@@ -94,8 +115,12 @@ final class B2eEventCreator
 			case EventData::TYPE_ON_DONE:
 				$crmController->onSignCompleted($itemIdentifier, $documentData);
 				SigningDoneTrigger::executeBySmartDocumentId($itemIdentifier->getEntityId());
-				CompletedTrigger::executeBySmartDocumentId($itemIdentifier->getEntityId());
+				CompletedTrigger::executeBySmartDocumentId(
+					$itemIdentifier->getEntityId(),
+					$triggerInputData,
+				);
 				$this->completeActivity($crmController, $itemIdentifier);
+				$this->sendEvent($documentData, $eventType);
 				break;
 			case EventData::TYPE_ON_STARTED:
 				$crmController->onSignStarted($itemIdentifier, $documentData);
@@ -176,9 +201,17 @@ final class B2eEventCreator
 
 	private function executeTriggerOnSignedByReviewer(DocumentData $documentData, ItemIdentifier $itemIdentifier): void
 	{
-		$hasEditor = Container::instance()->getMemberRepository()->isDocumentHasEditor($documentData->getDocumentId());
+		$hasEditor = Container::instance()
+			->getMemberRepository()
+			->isDocumentHasEditor($documentData->getDocumentId())
+		;
 
-		if ($hasEditor === false)
+		$hasWaitReviewer = Container::instance()
+			->getMemberRepository()
+			->isDocumentHasWaitReviewer($documentData->getDocumentId())
+		;
+
+		if ($hasWaitReviewer === false && $hasEditor === false)
 		{
 			SigningTrigger::executeBySmartDocumentId($itemIdentifier->getEntityId());
 		}
@@ -240,6 +273,14 @@ final class B2eEventCreator
 		if (method_exists($b2eController, 'notifyAboutActivityChange'))
 		{
 			$b2eController->notifyAboutActivityChange($itemIdentifier);
+		}
+	}
+
+	private function sendEvent(DocumentData $documentData, string $eventName): void
+	{
+		foreach (GetModuleEvents('sign', $eventName, true) as $arEvent)
+		{
+			ExecuteModuleEventEx($arEvent, [$documentData->getDocumentId()]);
 		}
 	}
 }

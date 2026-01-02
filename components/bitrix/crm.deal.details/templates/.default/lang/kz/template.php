@@ -1,0 +1,27 @@
+<?php
+$MESS["CRM_DEAL_CONV_ACCESS_DENIED"] = "Операцияны орындау үшін байланыстарды, компанияларды және мәмілелерді жасауға рұқсаттар қажет.";
+$MESS["CRM_DEAL_CONV_DIALOG_CANCEL_BTN"] = "Болдырмау";
+$MESS["CRM_DEAL_CONV_DIALOG_CONTINUE_BTN"] = "Жалғастыру";
+$MESS["CRM_DEAL_CONV_DIALOG_SYNC_ENTITY_LIST_TITLE"] = "Жетіспейтін өрістер жасалатын мәндерді таңдаңыз";
+$MESS["CRM_DEAL_CONV_DIALOG_SYNC_FILED_LIST_TITLE"] = "Қандай өрістер жасалады";
+$MESS["CRM_DEAL_CONV_DIALOG_SYNC_LEGEND"] = "Таңдалған мәндерде мәміледен деректерді жіберуге болатын өрістер жоқ. Барлық қолжетімді ақпаратты сақтау үшін жетіспейтін өрістер жасалатын мәндерді таңдаңыз.";
+$MESS["CRM_DEAL_CONV_DIALOG_TITLE"] = "Мәміле негізінде мән құру";
+$MESS["CRM_DEAL_CONV_GENERAL_ERROR"] = "Жалпы түрлендіру қатесі.";
+$MESS["CRM_DEAL_DETAIL_ATTR_GR_TYPE_JUNK"] = "Сәтсіз";
+$MESS["CRM_DEAL_DETAIL_ATTR_GR_TYPE_PIPELINE"] = "Жұмыста + табысты";
+$MESS["CRM_DEAL_DETAIL_ATTR_REQUIRED_FULL"] = "Сатыдан бастап міндетті";
+$MESS["CRM_DEAL_DETAIL_ATTR_REQUIRED_FULL_1"] = "Сатыда міндетті";
+$MESS["CRM_DEAL_DETAIL_ATTR_REQUIRED_SHORT"] = "Міндетті";
+$MESS["CRM_DEAL_DETAIL_AUTOMATION_DEBUG_ITEM"] = "Ретке келтіруде";
+$MESS["CRM_DEAL_DETAIL_CHANGE_FUNNEL_CONFIRM_DIALOG_MESSAGE"] = "Мәміледегі өзгерістер сақталмайды";
+$MESS["CRM_DEAL_DETAIL_CHANGE_FUNNEL_CONFIRM_DIALOG_OK_BTN"] = "Иә, өзгерту";
+$MESS["CRM_DEAL_DETAIL_CHANGE_FUNNEL_CONFIRM_DIALOG_TITLE"] = "Иірімді өзгерту керек пе?";
+$MESS["CRM_DEAL_DETAIL_HISTORY_STUB"] = "Дәл қазір сіз мәміле жасайсыз...";
+$MESS["CRM_DEAL_DETAIL_WAREHOUSE_ADD_DOCUMENT_GUIDE_TEXT"] = "Клиент пен өнім туралы барлық деректер құжатқа көшіріледі. <br/><br/>Егер сіз мәміле процесінде іске асыру құжатын рәсімдемесеңіз, ол жабылғаннан кейін автоматты түрде қалыптасады";
+$MESS["CRM_DEAL_DETAIL_WAREHOUSE_ADD_DOCUMENT_GUIDE_TITLE"] = "Іске асыруды тікелей мәміледен жүргізуге болады";
+$MESS["CRM_DEAL_DETAIL_WAREHOUSE_AUTOMATIC_RESERVATION_GUIDE_TEXT"] = "Енді сізде CRM-де қойма есебі бар.<br/><br/>Басқа менеджер бұл тауарды кездейсоқ сатпауы үшін затты клиентке бекітуге болады";
+$MESS["CRM_DEAL_DETAIL_WAREHOUSE_AUTOMATIC_RESERVATION_GUIDE_TITLE"] = "Тауарды резервтеу";
+$MESS["CRM_DEAL_DETAIL_WAREHOUSE_PRODUCT_STORE_GUIDE_TEXT"] = "Егер сізде тауардың қажетті мөлшері болмаса, сіз бірнеше қойманы таңдай аласыз";
+$MESS["CRM_DEAL_DETAIL_WAREHOUSE_PRODUCT_STORE_GUIDE_TITLE"] = "Затты резервтегіңіз келетін қойманы таңдаңыз";
+$MESS["CRM_DEAL_DETAIL_WAREHOUSE_SUCCESS_DEAL_GUIDE_TEXT"] = "Мәміле сәтті жабылғаннан кейін автоматты түрде жасалады";
+$MESS["CRM_DEAL_DETAIL_WAREHOUSE_SUCCESS_DEAL_GUIDE_TITLE"] = "Сату құжаты";

@@ -4238,7 +4238,7 @@ class CCrmLiveFeed
 			$messageAuthorId = $arMessage['AUTHOR_ID'];
 		}
 
-		$occurAsUserId = CTasksTools::getOccurAsUserId();
+		$occurAsUserId = \Bitrix\Tasks\Util\User::getOccurAsId();
 		if (!$occurAsUserId)
 		{
 			$occurAsUserId = ($messageAuthorId ?: 1);
@@ -7456,32 +7456,6 @@ class CCrmLiveFeedComponent
 							)
 							{
 								$bHasAccess = false;
-/*
-commented in http://jabber.bx/view.php?id=0063797
-
-								if (in_array('U'.$val, $arSocnetRights))
-								{
-									$url = $strLogEntryURL;
-									$bHasAccess = true;
-								}
-
-								if (!$bHasAccess)
-								{
-									$arAccessCodes = array();
-									$dbAccess = CAccess::GetUserCodes($val);
-									while($arAccess = $dbAccess->Fetch())
-									{
-										$arAccessCodes[] = $arAccess["ACCESS_CODE"];
-									}
-
-									$arTmp = array_intersect($arAccessCodes, $arSocnetRights);
-									if (!empty($arTmp))
-									{
-										$url = $strLogEntryURL;
-										$bHasAccess = true;
-									}
-								}
-*/
 								if (!$bHasAccess)
 								{
 									$userPermissions = CCrmPerms::GetUserPermissions($val);

@@ -5,7 +5,6 @@ declare(strict_types=1);
 namespace Bitrix\Tasks\Flow\Integration\BIConnector;
 
 use Bitrix\BIConnector\Superset\Dashboard\UrlParameter\Parameter;
-use Bitrix\BIConnector\Superset\Scope\MenuItem\MenuItemCreatorTasksFlows;
 use Bitrix\BIConnector\Superset\Scope\MenuItem\MenuItemCreatorTasksFlowsFlow;
 use Bitrix\BIConnector\Superset\Scope\ScopeService;
 use Bitrix\Main\Loader;
@@ -22,25 +21,6 @@ final class FlowBIAnalytics
 		}
 
 		return self::$instance;
-	}
-
-	public function getFlowsDashboards(): array
-	{
-		if (!Loader::includeModule('biconnector'))
-		{
-			return [];
-		}
-
-		if (!class_exists(MenuItemCreatorTasksFlows::class))
-		{
-			return [];
-		}
-
-		$dashboards = ScopeService::getInstance()->prepareScopeMenuItem(
-			ScopeService::BIC_SCOPE_TASKS_FLOWS,
-		);
-
-		return $this->getPreparedDashboards($dashboards);
 	}
 
 	public function getFlowDashboards(int $flowId): array

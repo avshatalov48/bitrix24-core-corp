@@ -5,11 +5,14 @@ namespace Bitrix\Crm\Model\Dynamic;
 use Bitrix\Crm\CompanyTable;
 use Bitrix\Crm\ContactTable;
 use Bitrix\Crm\FieldContext\Repository;
+use Bitrix\Crm\Item;
+use Bitrix\Crm\Item\SmartB2eDocument;
+use Bitrix\Crm\Item\SmartDocument;
+use Bitrix\Crm\Item\SmartInvoice;
 use Bitrix\Crm\Model\AssignedTable;
 use Bitrix\Crm\ProductRowTable;
 use Bitrix\Crm\Service\Container;
 use Bitrix\Main;
-use Bitrix\Main\Config\Option;
 use Bitrix\Main\Localization\Loc;
 use Bitrix\Main\ORM;
 use Bitrix\Main\ORM\Event;
@@ -439,14 +442,17 @@ abstract class PrototypeItem extends Main\UserField\Internal\PrototypeItemDataMa
 	public static function getOwnFieldNames(): array
 	{
 		$names = parent::getOwnFieldNames();
-		$names[\Bitrix\Crm\Item::FIELD_NAME_ASSIGNED] = \Bitrix\Crm\Item::FIELD_NAME_ASSIGNED;
-		$names[\Bitrix\Crm\Item::FIELD_NAME_LAST_ACTIVITY_TIME] = \Bitrix\Crm\Item::FIELD_NAME_LAST_ACTIVITY_TIME;
-		$names[\Bitrix\Crm\Item::FIELD_NAME_LAST_ACTIVITY_BY] = \Bitrix\Crm\Item::FIELD_NAME_LAST_ACTIVITY_BY;
-		$names[\Bitrix\Crm\Item\SmartInvoice::FIELD_NAME_COMMENTS] = \Bitrix\Crm\Item\SmartInvoice::FIELD_NAME_COMMENTS;
-		$names[\Bitrix\Crm\Item\SmartInvoice::FIELD_NAME_ACCOUNT_NUMBER] = \Bitrix\Crm\Item\SmartInvoice::FIELD_NAME_ACCOUNT_NUMBER;
-		$names[\Bitrix\Crm\Item\SmartInvoice::FIELD_NAME_LOCATION_ID] = \Bitrix\Crm\Item\SmartInvoice::FIELD_NAME_LOCATION_ID;
-		$names[\Bitrix\Crm\Item\SmartDocument::FIELD_NAME_NUMBER] = \Bitrix\Crm\Item\SmartDocument::FIELD_NAME_NUMBER;
-		$names[\Bitrix\Crm\Item\SmartB2eDocument::FIELD_NAME_NUMBER] = \Bitrix\Crm\Item\SmartB2eDocument::FIELD_NAME_NUMBER;
+
+		$names[Item::FIELD_NAME_ASSIGNED] = Item::FIELD_NAME_ASSIGNED;
+		$names[Item::FIELD_NAME_LAST_ACTIVITY_TIME] = Item::FIELD_NAME_LAST_ACTIVITY_TIME;
+		$names[Item::FIELD_NAME_LAST_ACTIVITY_BY] = Item::FIELD_NAME_LAST_ACTIVITY_BY;
+		$names[Item::FIELD_NAME_COMMENTS] = Item::FIELD_NAME_COMMENTS;
+		$names[Item::FIELD_NAME_LOCATION_ID] = Item::FIELD_NAME_LOCATION_ID;
+		$names[Item::FIELD_NAME_RECURRING] = Item::FIELD_NAME_RECURRING;
+		$names[Item::FIELD_NAME_IS_RECURRING] = Item::FIELD_NAME_IS_RECURRING;
+		$names[SmartInvoice::FIELD_NAME_ACCOUNT_NUMBER] = SmartInvoice::FIELD_NAME_ACCOUNT_NUMBER;
+		$names[SmartDocument::FIELD_NAME_NUMBER] = SmartDocument::FIELD_NAME_NUMBER;
+		$names[SmartB2eDocument::FIELD_NAME_NUMBER] = SmartB2eDocument::FIELD_NAME_NUMBER;
 
 		return $names;
 	}

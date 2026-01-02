@@ -1,3 +1,5 @@
+// @vue/component
+
 import { DateTimeFormat } from 'main.date';
 import { mapGetters } from 'ui.vue3.vuex';
 
@@ -7,6 +9,9 @@ import { Duration } from 'booking.lib.duration';
 
 export const MultiBookingItem = {
 	name: 'MultiBookingItem',
+	components: {
+		UiButton,
+	},
 	emits: ['remove-selected'],
 	props: {
 		id: {
@@ -45,9 +50,6 @@ export const MultiBookingItem = {
 		{
 			return ButtonSize.EXTRA_SMALL;
 		},
-	},
-	components: {
-		UiButton,
 	},
 	template: `
 		<div class="booking--multi-booking--book">

@@ -5,13 +5,20 @@ namespace Bitrix\Tasks\Flow\Controllers\Trait;
 use Bitrix\Main\ArgumentException;
 use Bitrix\Main\Engine\CurrentUser;
 use Bitrix\Main\Engine\Response\Converter;
+use Bitrix\Main\Localization\Loc;
 use Bitrix\Main\ObjectPropertyException;
 use Bitrix\Main\SystemException;
 use Bitrix\Main\UI\PageNavigation;
+use Bitrix\Tasks\Access\AccessCacheLoader;
+use Bitrix\Tasks\Access\ActionDictionary;
+use Bitrix\Tasks\Access\Model\TaskModel;
+use Bitrix\Tasks\Access\TaskAccessController;
 use Bitrix\Tasks\Flow\Controllers\Task\Cache\TaskCountCache;
+use Bitrix\Tasks\Flow\Grid\Preload\AccessPreloader;
 use Bitrix\Tasks\Provider\Exception\TaskListException;
 use Bitrix\Tasks\Provider\TaskList;
 use Bitrix\Tasks\Provider\TaskQuery;
+use Bitrix\Tasks\Slider\Path\TaskPathMaker;
 use Closure;
 
 trait TaskTrait
@@ -76,6 +83,11 @@ trait TaskTrait
 
 	private function formatTasks(array $tasks): array
 	{
+		$preloader = new AccessCacheLoader();
+		$preloader->preload($this->userId, array_column($tasks, 'ID'));
+
+		$accessController = TaskAccessController::getInstance($this->userId);
+
 		$creatorIds = array_column($tasks, 'CREATED_BY');
 		$responsibleIds = array_column($tasks, 'RESPONSIBLE_ID');
 
@@ -85,11 +97,33 @@ trait TaskTrait
 		$response = [];
 		foreach ($tasks as $task)
 		{
+			$model = TaskModel::createFromId($task['ID']);
+			$canRead = $accessController->check(ActionDictionary::ACTION_TASK_READ, $model);
+
+			if ($canRead)
+			{
+				$title = $task['TITLE'];
+				$url = TaskPathMaker::getPath([
+					'task_id' => $task['ID'],
+					'user_id' => $this->userId,
+				]);
+			}
+			else
+			{
+				$title = Loc::getMessage('TASKS_FLOW_TASK_TRAIT_TASK', [
+					'#TASK_ID#' => $task['ID'],
+				]);
+				$url = '';
+			}
+
 			$response[] = [
+				'TITLE' => $title,
+				'URL' => $url,
 				'SERIAL' => $task['SERIAL'],
 				'CREATOR' => $members[$task['CREATED_BY']],
 				'RESPONSIBLE' => $members[$task['RESPONSIBLE_ID']],
 				'TIME_IN_STATUS' => $task['TIME_IN_STATUS'],
+				'CAN_READ' => (int)$canRead,
 			];
 		}
 

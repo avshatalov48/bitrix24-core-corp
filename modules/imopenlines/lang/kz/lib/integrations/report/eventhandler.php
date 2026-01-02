@@ -1,0 +1,22 @@
+<?php
+$MESS["REPORT_ACTIVITY_WIDGET_TITLE"] = "Белсенділік";
+$MESS["REPORT_ALL_TREATMENT_COUNT_NUMBER_BLOCK_TITLE"] = "Барлық жүгінулердің саны";
+$MESS["REPORT_ALL_TREATMENT_COUNT_TITLE"] = "Барлық жүгінулердің саны";
+$MESS["REPORT_ANSWERED_TREATMENT_COUNT_NUMBER_BLOCK_TITLE"] = "Қабылданған жүгінулер саны";
+$MESS["REPORT_APPOINTED_TREATMENT_COUNT_NUMBER_BLOCK_TITLE"] = "Тағайындалған жүгінулер саны";
+$MESS["REPORT_AVERAGE_NUMBER_BLOCK_WIDGET_TITLE"] = "Жауаптың орташа уақыты (саны)";
+$MESS["REPORT_AVERAGE_TIME_TO_ANSWER_TITLE"] = "Жауаптың орташа уақыты ";
+$MESS["REPORT_CONTENTMENT_NUMBER_BLOCK_WIDGET_TITLE"] = "Қанағаттанған клиенттердің пайызы (саны)";
+$MESS["REPORT_CONTENTMENT_TITLE"] = "Қанағаттанған клиенттердің пайызы ";
+$MESS["REPORT_DUPLICATE_TREATMENT_COUNT_NUMBER_BLOCK_TITLE_NEW"] = "Қайталанған жүгінулер саны";
+$MESS["REPORT_DYNAMICS_OF_REACTION_WIDGET_TITLE"] = "Реакция динамикасы";
+$MESS["REPORT_DYNAMICS_OF_VOTE_WIDGET_TITLE"] = "Бағалау динамикасы ";
+$MESS["REPORT_FIRST_TREATMENT_COUNT_NUMBER_BLOCK_TITLE_NEW"] = "Бастапқы жүгінулер саны";
+$MESS["REPORT_LOAD_BY_CHANNEL_WIDGET_TITLE"] = "Арналар бойынша жүктеме";
+$MESS["REPORT_NEGATIVE_MARKED_ACTIVITY_WIDGET_TITLE"] = "Теріс бағаланған жүгінулер саны";
+$MESS["REPORT_OPEN_LINES_CATEGORY"] = "Ашық желілер";
+$MESS["REPORT_OPEN_LINES_CATEGORY_NEW"] = "Ашық желілер";
+$MESS["REPORT_POSITIVE_MARKED_TREATMENT_COUNT_TITLE"] = "Оң бағаланған жүгінулер саны";
+$MESS["REPORT_SKIPPED_TREATMENT_COUNT_NUMBER_BLOCK_TITLE"] = "Жіберілген жүгінулер саны";
+$MESS["REPORT_STAFF_CUT_WIDGET_TITLE_NEW"] = "Қызметкерлер бойынша тексеру";
+$MESS["REPORT_TREATMENT_COUNT_NUMBER_BLOCK_WIDGET_TITLE"] = "Жүгіну саны бар үштік сандық блок";

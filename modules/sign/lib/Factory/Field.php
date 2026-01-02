@@ -6,6 +6,7 @@ use Bitrix\Fileman\UserField\Types\AddressType;
 use Bitrix\Location\Entity\Address;
 use Bitrix\Location\Service\FormatService;
 use Bitrix\Main;
+use Bitrix\Sign\Blanks\Block\Factory;
 use Bitrix\Sign\Connector\MemberConnectorFactory;
 use Bitrix\Sign\Helper\Field\NameHelper;
 use Bitrix\Sign\Integration\CRM;
@@ -236,6 +237,12 @@ final class Field
 					$registeredFields,
 				),
 				BlockCode::B2E_HCMLINK_REFERENCE => $this->createHcmLinkFields(
+					$block,
+					$member,
+					$document,
+					$registeredFields,
+				),
+				BlockCode::B2E_EXTERNAL_DATE_CREATE, BlockCode::B2E_EXTERNAL_ID => $this->createB2eRegionalFields(
 					$block,
 					$member,
 					$document,
@@ -529,21 +536,37 @@ final class Field
 		Item\Document $document,
 		Item\MemberCollection $members,
 		Item\B2e\RequiredField $requiredField,
-	): ?Item\Field
+	): Item\FieldCollection
 	{
-		$firstByRole = $members->findFirstByRole($requiredField->role);
-		if (!$firstByRole)
+		$result = new Item\FieldCollection();
+		foreach ($members->filterByRole($requiredField->role) as $memberItem)
 		{
-			return null;
+			if ($memberItem === null)
+			{
+				continue;
+			}
+
+			if ($memberItem->party === null)
+			{
+				continue;
+			}
+
+			$block = $this->blockFactory->makeStubBlockByRequiredField($document, $requiredField, $memberItem->party);
+			if ($block === null)
+			{
+				continue;
+			}
+
+			$field = $this->createByBlocks(new Item\BlockCollection($block), $memberItem, $document)->getFirst();
+			if ($field === null)
+			{
+				continue;
+			}
+
+			$result->add($field);
 		}
 
-		$block = $this->blockFactory->makeStubBlockByRequiredField($document, $requiredField, $firstByRole->party);
-		if (!$block)
-		{
-			return null;
-		}
-
-		return $this->createByBlocks(new Item\BlockCollection($block), $firstByRole, $document)->getFirst();
+		return $result;
 	}
 
 	public function createDocumentMemberFields(
@@ -828,5 +851,47 @@ final class Field
 	private function getFieldRequiredByType(string $fieldType): ?bool
 	{
 		return in_array($fieldType, self::NOT_REQUIRED_FIELD_TYPES, true) ? false : null;
+	}
+
+	private function createB2eRegionalFields(
+		Item\Block $block,
+		Item\Member $member,
+		Item\Document $document,
+		Item\FieldCollection $registeredFields,
+	): Item\FieldCollection
+	{
+		if (!Type\DocumentScenario::isB2EScenario($document->scenario))
+		{
+			return new Item\FieldCollection();
+		}
+
+		$fieldType = self::getB2eRegionalFieldTypeByBlockCode($block->code);
+		$fieldName = NameHelper::create($block->code, $fieldType, $member->party);
+
+		$field = $registeredFields->getFirstFieldByName($fieldName);
+		if ($field !== null)
+		{
+			return new Item\FieldCollection($field);
+		}
+
+		$field = new Item\Field(
+			blankId: 0,
+			party: $member->party,
+			type: $fieldType,
+			name: $fieldName,
+			label: Factory::getStaticLabelByBlockCode($block->code),
+			required: $this->getFieldRequiredByType($fieldType),
+		);
+
+		return new Item\FieldCollection($field);
+	}
+
+	private static function getB2eRegionalFieldTypeByBlockCode(string $code): string
+	{
+		return match ($code)
+		{
+			BlockCode::B2E_EXTERNAL_ID => FieldType::EXTERNAL_ID,
+			BlockCode::B2E_EXTERNAL_DATE_CREATE => FieldType::EXTERNAL_DATE,
+		};
 	}
 }

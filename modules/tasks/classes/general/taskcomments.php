@@ -108,15 +108,6 @@ class CTaskComments
 		return $message;
 	}
 
-	protected static function getOccurAsUserId($messageAuthorId)
-	{
-		$occurAsUserId = CTasksTools::getOccurAsUserId();
-		if ( ! $occurAsUserId )
-			$occurAsUserId = ($messageAuthorId ? $messageAuthorId : 1);
-
-		return $messageAuthorId;
-	}
-
 	/**
 	 * Create new comment for task
 	 *
@@ -315,7 +306,7 @@ class CTaskComments
 			{
 				try
 				{
-					$oTask = CTaskItem::getInstance($taskId, CTasksTools::GetCommanderInChief());
+					$oTask = CTaskItem::getInstance($taskId, \Bitrix\Tasks\Util\User::getAdminId());
 					$arTask = $oTask->getData();
 				}
 				catch (TasksException $e)
@@ -358,7 +349,7 @@ class CTaskComments
 				}
 			}
 
-			$occurAsUserId = CTasksTools::getOccurAsUserId();
+			$occurAsUserId = \Bitrix\Tasks\Util\User::getOccurAsId();
 			if ( ! $occurAsUserId )
 				$occurAsUserId = ($userId ? $userId : 1);
 
@@ -447,8 +438,8 @@ class CTaskComments
 			return (false);
 
 		if (
-			CTasksTools::isAdmin($userId)
-			|| CTasksTools::IsPortalB24Admin($userId)
+			\Bitrix\Tasks\Util\User::isAdmin($userId)
+			|| \Bitrix\Tasks\Integration\Bitrix24\User::isAdmin($userId)
 		)
 		{
 			return (true);
@@ -589,7 +580,7 @@ class CTaskComments
 
 		try
 		{
-			$oTask  = new CTaskItem((int)$taskId, CTasksTools::getCommanderInChief());
+			$oTask  = new CTaskItem((int)$taskId, \Bitrix\Tasks\Util\User::getAdminId());
 			$arTask = $oTask->getData(false);
 		}
 		catch (TasksException | CTaskAssertException $e)
@@ -1074,7 +1065,7 @@ class CTaskComments
 			}
 			*/
 
-			$occurAsUserId = CTasksTools::getOccurAsUserId();
+			$occurAsUserId = \Bitrix\Tasks\Util\User::getOccurAsId();
 			if ( ! $occurAsUserId )
 				$occurAsUserId = ($arMessage["AUTHOR_ID"] ? $arMessage["AUTHOR_ID"] : 1);
 
@@ -1119,7 +1110,7 @@ class CTaskComments
 		{
 			if ($methodName === 'add')
 			{
-				$occurAsUserId = CTasksTools::getOccurAsUserId();
+				$occurAsUserId = \Bitrix\Tasks\Util\User::getOccurAsId();
 				if ( ! $occurAsUserId )
 					$occurAsUserId = $executiveUserId;
 

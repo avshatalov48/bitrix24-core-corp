@@ -20,9 +20,6 @@ $MESS["CRM_LEAD_FIELD_POST"] = "Должность";
 $MESS["CRM_LEAD_FIELD_ADDRESS"] = "Адрес";
 $MESS["CRM_LEAD_FIELD_COMMENTS"] = "Комментарий";
 $MESS["CRM_LEAD_FIELD_PRODUCTS"] = "Товары";
-$MESS["CRM_LEAD_SECTION_MAIN"] = "О лиде";
-$MESS["CRM_LEAD_SECTION_ADDITIONAL"] = "Дополнительно";
-$MESS["CRM_LEAD_SECTION_PRODUCTS"] = "Товары";
 $MESS["CRM_LEAD_TAB_PRODUCTS"] = "Товары";
 $MESS["CRM_LEAD_TAB_AUTOMATION"] = "Роботы";
 $MESS["CRM_LEAD_TAB_BIZPROC"] = "Бизнес-процессы";
@@ -46,4 +43,6 @@ $MESS["CRM_LEAD_FIELD_CONTACT_LEGEND"] = "Контакты, связанные �
 $MESS["CRM_LEAD_RETURNING"] = "Повторный лид";
 $MESS["CRM_LEAD_FIELD_OBSERVERS"] = "Наблюдатели";
 $MESS["CRM_LEAD_FIELD_ADD_OBSERVER"] = "Добавить наблюдателя";
+$MESS["CRM_LEAD_FIELD_MOVED_BY_ID"] = "Кто изменил стадию";
+$MESS["CRM_LEAD_FIELD_MOVED_TIME"] = "Дата изменения стадии";
 ?>

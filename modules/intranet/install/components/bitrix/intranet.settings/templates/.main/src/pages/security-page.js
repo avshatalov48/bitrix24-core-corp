@@ -4,12 +4,11 @@ import 'ui.icon-set.actions';
 import 'ui.icon-set.main';
 import { EventEmitter } from 'main.core.events';
 import { Section, Row } from 'ui.section';
-import { Checker, Selector, SingleChecker, UserSelector, TextInput} from 'ui.form-elements.view';
+import { Checker, Selector, SingleChecker, UserSelector, TextInput, FieldFactory } from 'ui.form-elements.view';
 import { Switcher, SwitcherSize } from 'ui.switcher';
 import { Popup } from 'main.popup';
-import { SettingsSection, SettingsField, SettingsRow, BaseSettingsPage } from 'ui.form-elements.field';
-import {TagSelector} from "ui.entity-selector";
-import { AnalyticSettingsEvent } from '../analytic';
+import { SettingsSection, SettingsField, SettingsRow, BaseSettingsPage, DescriptionField } from 'ui.form-elements.field';
+import { Counter } from 'ui.cnt';
 
 export class SecurityPage extends BaseSettingsPage
 {
@@ -37,13 +36,14 @@ export class SecurityPage extends BaseSettingsPage
 			this.#buildOTPSection()?.renderTo(contentNode);
 		}
 
+		this.#buildDataLeakProtectionSection()?.renderTo(contentNode);
+
 		// if (isBitrix24)
 		// {
 		// 	this.#buildPasswordRecoverySection().renderTo(contentNode);
 		// }
 		this.#buildDevicesHistorySection()?.renderTo(contentNode);
 		this.#buildEventLogSection()?.renderTo(contentNode);
-		this.#buildMobileAppSection()?.renderTo(contentNode);
 		if (isBitrix24)
 		{
 			this.#buildAccessIPSection()?.renderTo(contentNode);
@@ -402,43 +402,11 @@ export class SecurityPage extends BaseSettingsPage
 
 	#getUserSelectorRow(ipUsersList): SettingsRow
 	{
-		const userSelector = new UserSelector({
+		const userSelector = FieldFactory.createUserSelector({
 			inputName: `SECURITY_IP_ACCESS_${ipUsersList.fieldNumber}_USERS[]`,
 			label: this.getValue('IP_ACCESS_RIGHTS_ENABLED_LABEL') ?? Loc.getMessage('INTRANET_SETTINGS_FIELD_LABEL_SELECT_USER_ACCESS_IP'),
 			values: Object.values(ipUsersList.users),
 			enableDepartments: true,
-			encodeValue: (value) => {
-				if (!Type.isNil(value.id))
-				{
-					return value.id === 'all-users' ? 'AU' : value.type + value.id.toString().split(':')[0];
-				}
-
-				return null;
-			},
-			decodeValue: (value: string) => {
-				if (value === 'AU')
-				{
-					return {
-						type: value,
-						id: '',
-					}
-				}
-
-				const arr = value.match(/^(U|DR|D)(\d+)/);
-
-				if (!Type.isArray(arr))
-				{
-					return {
-						type: null,
-						id: null,
-					};
-				}
-
-				return {
-					type: arr[1],
-					id: arr[2],
-				}
-			},
 		});
 
 		return new SettingsField({
@@ -647,30 +615,60 @@ export class SecurityPage extends BaseSettingsPage
 		return new Section(params);
 	}
 
-	#buildMobileAppSection(): ?SettingsSection
+	#buildDataLeakProtectionSection(): ?SettingsSection
 	{
-		if (!this.hasValue('sectionMobileApp'))
+		if (!this.hasValue('sectionDataLeakProtection'))
 		{
 			return;
 		}
 
-		const mobileAppSection = new Section(this.getValue('sectionMobileApp'));
+		const mobileAppSection = new Section(this.getValue('sectionDataLeakProtection'));
 
 		const settingsSection = new SettingsSection({
 			section: mobileAppSection,
 			parent: this,
 		});
 
-		if (this.hasValue('switcherDisableCopy'))
-		{
-			let disableCopyField = new Checker(this.getValue('switcherDisableCopy'));
-			SecurityPage.addToSectionHelper(disableCopyField, settingsSection);
-		}
-
 		if (this.hasValue('switcherDisableScreenshot'))
 		{
-			let disableCopyScreenshotField = new Checker(this.getValue('switcherDisableScreenshot'));
-			SecurityPage.addToSectionHelper(disableCopyScreenshotField, settingsSection);
+			const disableCopyScreenshotChecker = new Checker(this.getValue('switcherDisableScreenshot'));
+			const disableCopyScreenshotSelector = FieldFactory.createUserSelector({
+				...this.getValue('selectorDisableScreenshot'),
+				enableDepartments: true,
+			});
+
+			SecurityPage.addToSectionCheckerHelper(
+				disableCopyScreenshotChecker,
+				[disableCopyScreenshotSelector],
+				settingsSection
+			);
+		}
+
+		if (this.hasValue('switcherDisableCopy'))
+		{
+			const disableCopyCopyChecker = new Checker(this.getValue('switcherDisableCopy'));
+			const disableCopyCopySelector = FieldFactory.createUserSelector({
+				...this.getValue('selectorDisableCopy'),
+				enableDepartments: true,
+			});
+
+			SecurityPage.addToSectionCheckerHelper(
+				disableCopyCopyChecker,
+				[disableCopyCopySelector],
+				settingsSection
+			);
+		}
+
+		if (this.hasValue('isAutoDeleteMessagesEnabled'))
+		{
+			const allowAutoDeleteField = new Checker(this.getValue('isAutoDeleteMessagesEnabled'));
+			SecurityPage.addToSectionHelper(allowAutoDeleteField, settingsSection);
+		}
+
+		if (this.hasValue('isWaterMarksEnabled'))
+		{
+			const allowAutoDeleteField = new Checker(this.getValue('isWaterMarksEnabled'));
+			SecurityPage.addToSectionHelper(allowAutoDeleteField, settingsSection);
 		}
 
 		return settingsSection;

@@ -5449,6 +5449,133 @@ var Vue = exports.Vue;
       return Controller$$1;
     }(Controller);
 
+    function _regeneratorRuntime() { /*! regenerator-runtime -- Copyright (c) 2014-present, Facebook, Inc. -- license (MIT): https://github.com/facebook/regenerator/blob/main/LICENSE */ _regeneratorRuntime = function _regeneratorRuntime() { return exports; }; var exports = {}, Op = Object.prototype, hasOwn = Op.hasOwnProperty, defineProperty = Object.defineProperty || function (obj, key, desc) { obj[key] = desc.value; }, $Symbol = "function" == typeof Symbol ? Symbol : {}, iteratorSymbol = $Symbol.iterator || "@@iterator", asyncIteratorSymbol = $Symbol.asyncIterator || "@@asyncIterator", toStringTagSymbol = $Symbol.toStringTag || "@@toStringTag"; function define(obj, key, value) { return Object.defineProperty(obj, key, { value: value, enumerable: !0, configurable: !0, writable: !0 }), obj[key]; } try { define({}, ""); } catch (err) { define = function define(obj, key, value) { return obj[key] = value; }; } function wrap(innerFn, outerFn, self, tryLocsList) { var protoGenerator = outerFn && outerFn.prototype instanceof Generator ? outerFn : Generator, generator = Object.create(protoGenerator.prototype), context = new Context(tryLocsList || []); return defineProperty(generator, "_invoke", { value: makeInvokeMethod(innerFn, self, context) }), generator; } function tryCatch(fn, obj, arg) { try { return { type: "normal", arg: fn.call(obj, arg) }; } catch (err) { return { type: "throw", arg: err }; } } exports.wrap = wrap; var ContinueSentinel = {}; function Generator() {} function GeneratorFunction() {} function GeneratorFunctionPrototype() {} var IteratorPrototype = {}; define(IteratorPrototype, iteratorSymbol, function () { return this; }); var getProto = Object.getPrototypeOf, NativeIteratorPrototype = getProto && getProto(getProto(values([]))); NativeIteratorPrototype && NativeIteratorPrototype !== Op && hasOwn.call(NativeIteratorPrototype, iteratorSymbol) && (IteratorPrototype = NativeIteratorPrototype); var Gp = GeneratorFunctionPrototype.prototype = Generator.prototype = Object.create(IteratorPrototype); function defineIteratorMethods(prototype) { ["next", "throw", "return"].forEach(function (method) { define(prototype, method, function (arg) { return this._invoke(method, arg); }); }); } function AsyncIterator(generator, PromiseImpl) { function invoke(method, arg, resolve, reject) { var record = tryCatch(generator[method], generator, arg); if ("throw" !== record.type) { var result = record.arg, value = result.value; return value && "object" == babelHelpers["typeof"](value) && hasOwn.call(value, "__await") ? PromiseImpl.resolve(value.__await).then(function (value) { invoke("next", value, resolve, reject); }, function (err) { invoke("throw", err, resolve, reject); }) : PromiseImpl.resolve(value).then(function (unwrapped) { result.value = unwrapped, resolve(result); }, function (error) { return invoke("throw", error, resolve, reject); }); } reject(record.arg); } var previousPromise; defineProperty(this, "_invoke", { value: function value(method, arg) { function callInvokeWithMethodAndArg() { return new PromiseImpl(function (resolve, reject) { invoke(method, arg, resolve, reject); }); } return previousPromise = previousPromise ? previousPromise.then(callInvokeWithMethodAndArg, callInvokeWithMethodAndArg) : callInvokeWithMethodAndArg(); } }); } function makeInvokeMethod(innerFn, self, context) { var state = "suspendedStart"; return function (method, arg) { if ("executing" === state) throw new Error("Generator is already running"); if ("completed" === state) { if ("throw" === method) throw arg; return doneResult(); } for (context.method = method, context.arg = arg;;) { var delegate = context.delegate; if (delegate) { var delegateResult = maybeInvokeDelegate(delegate, context); if (delegateResult) { if (delegateResult === ContinueSentinel) continue; return delegateResult; } } if ("next" === context.method) context.sent = context._sent = context.arg;else if ("throw" === context.method) { if ("suspendedStart" === state) throw state = "completed", context.arg; context.dispatchException(context.arg); } else "return" === context.method && context.abrupt("return", context.arg); state = "executing"; var record = tryCatch(innerFn, self, context); if ("normal" === record.type) { if (state = context.done ? "completed" : "suspendedYield", record.arg === ContinueSentinel) continue; return { value: record.arg, done: context.done }; } "throw" === record.type && (state = "completed", context.method = "throw", context.arg = record.arg); } }; } function maybeInvokeDelegate(delegate, context) { var methodName = context.method, method = delegate.iterator[methodName]; if (undefined === method) return context.delegate = null, "throw" === methodName && delegate.iterator["return"] && (context.method = "return", context.arg = undefined, maybeInvokeDelegate(delegate, context), "throw" === context.method) || "return" !== methodName && (context.method = "throw", context.arg = new TypeError("The iterator does not provide a '" + methodName + "' method")), ContinueSentinel; var record = tryCatch(method, delegate.iterator, context.arg); if ("throw" === record.type) return context.method = "throw", context.arg = record.arg, context.delegate = null, ContinueSentinel; var info = record.arg; return info ? info.done ? (context[delegate.resultName] = info.value, context.next = delegate.nextLoc, "return" !== context.method && (context.method = "next", context.arg = undefined), context.delegate = null, ContinueSentinel) : info : (context.method = "throw", context.arg = new TypeError("iterator result is not an object"), context.delegate = null, ContinueSentinel); } function pushTryEntry(locs) { var entry = { tryLoc: locs[0] }; 1 in locs && (entry.catchLoc = locs[1]), 2 in locs && (entry.finallyLoc = locs[2], entry.afterLoc = locs[3]), this.tryEntries.push(entry); } function resetTryEntry(entry) { var record = entry.completion || {}; record.type = "normal", delete record.arg, entry.completion = record; } function Context(tryLocsList) { this.tryEntries = [{ tryLoc: "root" }], tryLocsList.forEach(pushTryEntry, this), this.reset(!0); } function values(iterable) { if (iterable) { var iteratorMethod = iterable[iteratorSymbol]; if (iteratorMethod) return iteratorMethod.call(iterable); if ("function" == typeof iterable.next) return iterable; if (!isNaN(iterable.length)) { var i = -1, next = function next() { for (; ++i < iterable.length;) if (hasOwn.call(iterable, i)) return next.value = iterable[i], next.done = !1, next; return next.value = undefined, next.done = !0, next; }; return next.next = next; } } return { next: doneResult }; } function doneResult() { return { value: undefined, done: !0 }; } return GeneratorFunction.prototype = GeneratorFunctionPrototype, defineProperty(Gp, "constructor", { value: GeneratorFunctionPrototype, configurable: !0 }), defineProperty(GeneratorFunctionPrototype, "constructor", { value: GeneratorFunction, configurable: !0 }), GeneratorFunction.displayName = define(GeneratorFunctionPrototype, toStringTagSymbol, "GeneratorFunction"), exports.isGeneratorFunction = function (genFun) { var ctor = "function" == typeof genFun && genFun.constructor; return !!ctor && (ctor === GeneratorFunction || "GeneratorFunction" === (ctor.displayName || ctor.name)); }, exports.mark = function (genFun) { return Object.setPrototypeOf ? Object.setPrototypeOf(genFun, GeneratorFunctionPrototype) : (genFun.__proto__ = GeneratorFunctionPrototype, define(genFun, toStringTagSymbol, "GeneratorFunction")), genFun.prototype = Object.create(Gp), genFun; }, exports.awrap = function (arg) { return { __await: arg }; }, defineIteratorMethods(AsyncIterator.prototype), define(AsyncIterator.prototype, asyncIteratorSymbol, function () { return this; }), exports.AsyncIterator = AsyncIterator, exports.async = function (innerFn, outerFn, self, tryLocsList, PromiseImpl) { void 0 === PromiseImpl && (PromiseImpl = Promise); var iter = new AsyncIterator(wrap(innerFn, outerFn, self, tryLocsList), PromiseImpl); return exports.isGeneratorFunction(outerFn) ? iter : iter.next().then(function (result) { return result.done ? result.value : iter.next(); }); }, defineIteratorMethods(Gp), define(Gp, toStringTagSymbol, "Generator"), define(Gp, iteratorSymbol, function () { return this; }), define(Gp, "toString", function () { return "[object Generator]"; }), exports.keys = function (val) { var object = Object(val), keys = []; for (var key in object) keys.push(key); return keys.reverse(), function next() { for (; keys.length;) { var key = keys.pop(); if (key in object) return next.value = key, next.done = !1, next; } return next.done = !0, next; }; }, exports.values = values, Context.prototype = { constructor: Context, reset: function reset(skipTempReset) { if (this.prev = 0, this.next = 0, this.sent = this._sent = undefined, this.done = !1, this.delegate = null, this.method = "next", this.arg = undefined, this.tryEntries.forEach(resetTryEntry), !skipTempReset) for (var name in this) "t" === name.charAt(0) && hasOwn.call(this, name) && !isNaN(+name.slice(1)) && (this[name] = undefined); }, stop: function stop() { this.done = !0; var rootRecord = this.tryEntries[0].completion; if ("throw" === rootRecord.type) throw rootRecord.arg; return this.rval; }, dispatchException: function dispatchException(exception) { if (this.done) throw exception; var context = this; function handle(loc, caught) { return record.type = "throw", record.arg = exception, context.next = loc, caught && (context.method = "next", context.arg = undefined), !!caught; } for (var i = this.tryEntries.length - 1; i >= 0; --i) { var entry = this.tryEntries[i], record = entry.completion; if ("root" === entry.tryLoc) return handle("end"); if (entry.tryLoc <= this.prev) { var hasCatch = hasOwn.call(entry, "catchLoc"), hasFinally = hasOwn.call(entry, "finallyLoc"); if (hasCatch && hasFinally) { if (this.prev < entry.catchLoc) return handle(entry.catchLoc, !0); if (this.prev < entry.finallyLoc) return handle(entry.finallyLoc); } else if (hasCatch) { if (this.prev < entry.catchLoc) return handle(entry.catchLoc, !0); } else { if (!hasFinally) throw new Error("try statement without catch or finally"); if (this.prev < entry.finallyLoc) return handle(entry.finallyLoc); } } } }, abrupt: function abrupt(type, arg) { for (var i = this.tryEntries.length - 1; i >= 0; --i) { var entry = this.tryEntries[i]; if (entry.tryLoc <= this.prev && hasOwn.call(entry, "finallyLoc") && this.prev < entry.finallyLoc) { var finallyEntry = entry; break; } } finallyEntry && ("break" === type || "continue" === type) && finallyEntry.tryLoc <= arg && arg <= finallyEntry.finallyLoc && (finallyEntry = null); var record = finallyEntry ? finallyEntry.completion : {}; return record.type = type, record.arg = arg, finallyEntry ? (this.method = "next", this.next = finallyEntry.finallyLoc, ContinueSentinel) : this.complete(record); }, complete: function complete(record, afterLoc) { if ("throw" === record.type) throw record.arg; return "break" === record.type || "continue" === record.type ? this.next = record.arg : "return" === record.type ? (this.rval = this.arg = record.arg, this.method = "return", this.next = "end") : "normal" === record.type && afterLoc && (this.next = afterLoc), ContinueSentinel; }, finish: function finish(finallyLoc) { for (var i = this.tryEntries.length - 1; i >= 0; --i) { var entry = this.tryEntries[i]; if (entry.finallyLoc === finallyLoc) return this.complete(entry.completion, entry.afterLoc), resetTryEntry(entry), ContinueSentinel; } }, "catch": function _catch(tryLoc) { for (var i = this.tryEntries.length - 1; i >= 0; --i) { var entry = this.tryEntries[i]; if (entry.tryLoc === tryLoc) { var record = entry.completion; if ("throw" === record.type) { var thrown = record.arg; resetTryEntry(entry); } return thrown; } } throw new Error("illegal catch attempt"); }, delegateYield: function delegateYield(iterable, resultName, nextLoc) { return this.delegate = { iterator: values(iterable), resultName: resultName, nextLoc: nextLoc }, "next" === this.method && (this.arg = undefined), ContinueSentinel; } }, exports; }
+
+    // @vue/component
+    var BookingField = {
+      name: 'BookingField',
+      props: {
+        field: {
+          type: Object,
+          required: true
+        }
+      },
+      data: function data() {
+        return {
+          component: null,
+          dependencies: null
+        };
+      },
+      mounted: function mounted() {
+        var _this = this;
+        return babelHelpers.asyncToGenerator( /*#__PURE__*/_regeneratorRuntime().mark(function _callee() {
+          var _b24form$common, _b24form$common$prope, _b24form$common$prope2;
+          var scriptLink;
+          return _regeneratorRuntime().wrap(function _callee$(_context) {
+            while (1) switch (_context.prev = _context.next) {
+              case 0:
+                scriptLink = (_b24form$common = b24form.common) === null || _b24form$common === void 0 ? void 0 : (_b24form$common$prope = _b24form$common.properties) === null || _b24form$common$prope === void 0 ? void 0 : (_b24form$common$prope2 = _b24form$common$prope.booking) === null || _b24form$common$prope2 === void 0 ? void 0 : _b24form$common$prope2.link;
+                if (scriptLink) {
+                  _context.next = 3;
+                  break;
+                }
+                return _context.abrupt("return");
+              case 3:
+                _context.next = 5;
+                return new Promise(function (resolve) {
+                  var node = document.createElement('script');
+                  node.src = "".concat(scriptLink, "?").concat(Math.trunc(Date.now() / 60000));
+                  node.onload = resolve;
+                  document.head.append(node);
+                });
+              case 5:
+                _this.component = BX.Booking.CrmForms.Field;
+                _this.dependencies = {
+                  mixinDropdown: MixinDropDown,
+                  mixinField: MixinField
+                };
+              case 7:
+              case "end":
+                return _context.stop();
+            }
+          }, _callee);
+        }))();
+      },
+      methods: {
+        onChange: function onChange(value) {
+          var selected = true;
+          this.field.items = [];
+          if (value) {
+            this.field.addItem({
+              value: value,
+              selected: selected
+            });
+          }
+        },
+        runAction: function runAction(action, options) {
+          var _this2 = this;
+          return babelHelpers.asyncToGenerator( /*#__PURE__*/_regeneratorRuntime().mark(function _callee2() {
+            var _options$data;
+            var formData, host, url, response;
+            return _regeneratorRuntime().wrap(function _callee2$(_context2) {
+              while (1) switch (_context2.prev = _context2.next) {
+                case 0:
+                  formData = _this2.createFormData((_options$data = options === null || options === void 0 ? void 0 : options.data) !== null && _options$data !== void 0 ? _options$data : {});
+                  host = _this2.$root.form.identification.address;
+                  url = "".concat(host, "/bitrix/services/main/ajax.php?action=").concat(action);
+                  _context2.next = 5;
+                  return window.b24form.App.post(url, formData);
+                case 5:
+                  response = _context2.sent;
+                  return _context2.abrupt("return", response.json());
+                case 7:
+                case "end":
+                  return _context2.stop();
+              }
+            }, _callee2);
+          }))();
+        },
+        createFormData: function createFormData(data) {
+          if (data instanceof FormData) {
+            return data;
+          }
+          var formData = new FormData();
+          Object.keys(data).forEach(function (key) {
+            var value = data[key];
+            if (Array.isArray(value)) {
+              value.forEach(function (it) {
+                return formData.append("".concat(key, "[]"), it);
+              });
+            } else {
+              formData.set(key, JSON.stringify(value));
+            }
+          });
+          return formData;
+        }
+      },
+      template: "\n\t\t<div>\n\t\t\t<component\n\t\t\t\tv-if=\"component\"\n\t\t\t\tv-bind=\"{ field, runAction, dependencies }\"\n\t\t\t\t:is=\"component\"\n\t\t\t\t@change=\"onChange\"\n\t\t\t/>\n\t\t</div>\n\t"
+    };
+
+    var Controller$o = /*#__PURE__*/function (_BaseField$Controller) {
+      babelHelpers.inherits(Controller$$1, _BaseField$Controller);
+      function Controller$$1() {
+        babelHelpers.classCallCheck(this, Controller$$1);
+        return babelHelpers.possibleConstructorReturn(this, babelHelpers.getPrototypeOf(Controller$$1).apply(this, arguments));
+      }
+      babelHelpers.createClass(Controller$$1, null, [{
+        key: "type",
+        value: function type() {
+          return 'booking';
+        }
+      }, {
+        key: "component",
+        value: function component() {
+          return BookingField;
+        }
+      }]);
+      return Controller$$1;
+    }(Controller);
+
     var Item$3 = /*#__PURE__*/function (_BaseItem) {
       babelHelpers.inherits(Item$$1, _BaseItem);
       function Item$$1(options) {
@@ -5472,7 +5599,7 @@ var Vue = exports.Vue;
       template: "\n\t\t<transition-group name=\"b24-form-field-a-slide\" tag=\"div\"\n\t\t\tv-if=\"field.nestedFields.length > 0\"\t\t\n\t\t>\n\t\t\t<Field\n\t\t\t\tv-for=\"nestedField in field.nestedFields\"\n\t\t\t\t:field=\"nestedField\"\n\t\t\t\t:key=\"field.name + '-' + nestedField.name\"\n\t\t\t\t@input-blur=\"\"\n\t\t\t\t@input-focus=\"\"\n\t\t\t\t@input-key-down=\"\"\n\t\t\t/>\n\t\t</transition-group>\n\t"
     };
 
-    var Controller$o = /*#__PURE__*/function (_BaseField$Controller) {
+    var Controller$p = /*#__PURE__*/function (_BaseField$Controller) {
       babelHelpers.inherits(Controller$$1, _BaseField$Controller);
       babelHelpers.createClass(Controller$$1, null, [{
         key: "type",
@@ -5580,7 +5707,7 @@ var Vue = exports.Vue;
       return Controller$$1;
     }(Controller);
 
-    var Controller$p = /*#__PURE__*/function (_ContainerController) {
+    var Controller$q = /*#__PURE__*/function (_ContainerController) {
       babelHelpers.inherits(Controller$$1, _ContainerController);
       function Controller$$1() {
         babelHelpers.classCallCheck(this, Controller$$1);
@@ -5598,9 +5725,9 @@ var Vue = exports.Vue;
         }
       }]);
       return Controller$$1;
-    }(Controller$o);
+    }(Controller$p);
 
-    var Controller$q = /*#__PURE__*/function (_ContainerController) {
+    var Controller$r = /*#__PURE__*/function (_ContainerController) {
       babelHelpers.inherits(Controller$$1, _ContainerController);
       function Controller$$1() {
         babelHelpers.classCallCheck(this, Controller$$1);
@@ -5665,13 +5792,14 @@ var Vue = exports.Vue;
         }
       }]);
       return Controller$$1;
-    }(Controller$o);
+    }(Controller$p);
 
-    var controllers = [Controller$1, Controller$3, Controller$2, Controller$4, Controller$5, Controller$6, Controller$7, Controller$8, Controller$9, Controller$b, Controller$a, Controller$d, Controller$c, Controller$e, Controller$f, Controller$g, Controller$h, Controller$i, Controller$j, Controller$k, Controller$l, Controller$m, Controller$n, Controller$o, Controller$p, Controller$q];
+    function ownKeys$2(object, enumerableOnly) { var keys = Object.keys(object); if (Object.getOwnPropertySymbols) { var symbols = Object.getOwnPropertySymbols(object); enumerableOnly && (symbols = symbols.filter(function (sym) { return Object.getOwnPropertyDescriptor(object, sym).enumerable; })), keys.push.apply(keys, symbols); } return keys; }
+    function _objectSpread$2(target) { for (var i = 1; i < arguments.length; i++) { var source = null != arguments[i] ? arguments[i] : {}; i % 2 ? ownKeys$2(Object(source), !0).forEach(function (key) { babelHelpers.defineProperty(target, key, source[key]); }) : Object.getOwnPropertyDescriptors ? Object.defineProperties(target, Object.getOwnPropertyDescriptors(source)) : ownKeys$2(Object(source)).forEach(function (key) { Object.defineProperty(target, key, Object.getOwnPropertyDescriptor(source, key)); }); } return target; }
+    var controllers = [Controller$1, Controller$3, Controller$2, Controller$4, Controller$5, Controller$6, Controller$7, Controller$8, Controller$9, Controller$b, Controller$a, Controller$d, Controller$c, Controller$e, Controller$f, Controller$g, Controller$h, Controller$i, Controller$j, Controller$k, Controller$l, Controller$m, Controller$n, Controller$o, Controller$p, Controller$q, Controller$r];
     var component = Controller.component();
-    component.components = Object.assign({}, component.components || {}, controllers.reduce(function (accum, controller) {
-      accum['field-' + controller.type()] = controller.component();
-      return accum;
+    component.components = _objectSpread$2(_objectSpread$2({}, component.components), controllers.reduce(function (acc, controller) {
+      return _objectSpread$2(_objectSpread$2({}, acc), {}, babelHelpers.defineProperty({}, "field-".concat(controller.type()), controller.component()));
     }, {}));
     var Factory = /*#__PURE__*/function () {
       function Factory() {
@@ -5680,13 +5808,13 @@ var Vue = exports.Vue;
       babelHelpers.createClass(Factory, null, [{
         key: "create",
         value: function create(options) {
-          var controller = controllers.filter(function (controller) {
-            return options.type === controller.type();
-          })[0];
-          if (!controller) {
+          var Controller$$1 = controllers.find(function (it) {
+            return options.type === it.type();
+          });
+          if (!Controller$$1) {
             throw new Error("Unknown field type '".concat(options.type, "'"));
           }
-          return new controller(options);
+          return new Controller$$1(options);
         }
       }, {
         key: "getControllers",
@@ -5831,8 +5959,8 @@ var Vue = exports.Vue;
     }();
 
     var _OppositeActionTypes;
-    function ownKeys$2(object, enumerableOnly) { var keys = Object.keys(object); if (Object.getOwnPropertySymbols) { var symbols = Object.getOwnPropertySymbols(object); enumerableOnly && (symbols = symbols.filter(function (sym) { return Object.getOwnPropertyDescriptor(object, sym).enumerable; })), keys.push.apply(keys, symbols); } return keys; }
-    function _objectSpread$2(target) { for (var i = 1; i < arguments.length; i++) { var source = null != arguments[i] ? arguments[i] : {}; i % 2 ? ownKeys$2(Object(source), !0).forEach(function (key) { babelHelpers.defineProperty(target, key, source[key]); }) : Object.getOwnPropertyDescriptors ? Object.defineProperties(target, Object.getOwnPropertyDescriptors(source)) : ownKeys$2(Object(source)).forEach(function (key) { Object.defineProperty(target, key, Object.getOwnPropertyDescriptor(source, key)); }); } return target; }
+    function ownKeys$3(object, enumerableOnly) { var keys = Object.keys(object); if (Object.getOwnPropertySymbols) { var symbols = Object.getOwnPropertySymbols(object); enumerableOnly && (symbols = symbols.filter(function (sym) { return Object.getOwnPropertyDescriptor(object, sym).enumerable; })), keys.push.apply(keys, symbols); } return keys; }
+    function _objectSpread$3(target) { for (var i = 1; i < arguments.length; i++) { var source = null != arguments[i] ? arguments[i] : {}; i % 2 ? ownKeys$3(Object(source), !0).forEach(function (key) { babelHelpers.defineProperty(target, key, source[key]); }) : Object.getOwnPropertyDescriptors ? Object.defineProperties(target, Object.getOwnPropertyDescriptors(source)) : ownKeys$3(Object(source)).forEach(function (key) { Object.defineProperty(target, key, Object.getOwnPropertyDescriptor(source, key)); }); } return target; }
     function _classPrivateFieldInitSpec$3(obj, privateMap, value) { _checkPrivateRedeclaration$5(obj, privateMap); privateMap.set(obj, value); }
     function _checkPrivateRedeclaration$5(obj, privateCollection) { if (privateCollection.has(obj)) { throw new TypeError("Cannot initialize the same private elements twice on an object"); } }
     var ConditionEvents = {
@@ -5936,13 +6064,13 @@ var Vue = exports.Vue;
           }
           dep.condition.operation = ConditionOperations.indexOf(dep.condition.operation) > 0 ? dep.condition.operation : Operations.equal;
           var item = {
-            condition: _objectSpread$2({
+            condition: _objectSpread$3({
               target: '',
               event: '',
               value: '',
               operation: ''
             }, dep.condition),
-            action: _objectSpread$2({
+            action: _objectSpread$3({
               target: '',
               type: '',
               value: ''
@@ -6017,7 +6145,7 @@ var Vue = exports.Vue;
                   return;
                 }
               }
-              _this2.runAction(_objectSpread$2(_objectSpread$2({}, dep.action), {}, {
+              _this2.runAction(_objectSpread$3(_objectSpread$3({}, dep.action), {}, {
                 type: actionType
               }), field);
             });
@@ -6243,10 +6371,10 @@ var Vue = exports.Vue;
       babelHelpers.createClass(ReCaptcha$$1, [{
         key: "adjust",
         value: function adjust(options) {
-          if (typeof options.key !== "undefined") {
+          if (typeof options.key !== 'undefined') {
             babelHelpers.classPrivateFieldSet(this, _key, options.key);
           }
-          if (typeof options.use !== "undefined") {
+          if (typeof options.use !== 'undefined') {
             babelHelpers.classPrivateFieldSet(this, _use, options.use);
           }
         }
@@ -6258,7 +6386,7 @@ var Vue = exports.Vue;
       }, {
         key: "isVerified",
         value: function isVerified() {
-          return !this.canUse() || !!babelHelpers.classPrivateFieldGet(this, _response);
+          return !this.canUse() || Boolean(babelHelpers.classPrivateFieldGet(this, _response));
         }
       }, {
         key: "getKey",
@@ -6266,8 +6394,11 @@ var Vue = exports.Vue;
           if (babelHelpers.classPrivateFieldGet(this, _key)) {
             return babelHelpers.classPrivateFieldGet(this, _key);
           }
+
+          // eslint-disable-next-line no-undef
           if (b24form && b24form.common) {
-            return (b24form.common.properties.recaptcha || {}).key;
+            // eslint-disable-next-line no-undef
+            return (b24form.common.properties.captcha.recaptcha || {}).key;
           }
           return null;
         }
@@ -6298,7 +6429,7 @@ var Vue = exports.Vue;
           babelHelpers.classPrivateFieldSet(this, _target, target);
           babelHelpers.classPrivateFieldSet(this, _widgetId, window.grecaptcha.render(target, {
             sitekey: this.getKey(),
-            //this.#key,
+            // this.#key,
             badge: 'inline',
             size: 'invisible',
             callback: function callback(response) {
@@ -6322,16 +6453,127 @@ var Vue = exports.Vue;
 
     function _classPrivateFieldInitSpec$6(obj, privateMap, value) { _checkPrivateRedeclaration$8(obj, privateMap); privateMap.set(obj, value); }
     function _checkPrivateRedeclaration$8(obj, privateCollection) { if (privateCollection.has(obj)) { throw new TypeError("Cannot initialize the same private elements twice on an object"); } }
+    var _key$1 = /*#__PURE__*/new WeakMap();
+    var _use$1 = /*#__PURE__*/new WeakMap();
+    var _widgetId$1 = /*#__PURE__*/new WeakMap();
+    var _response$1 = /*#__PURE__*/new WeakMap();
+    var _target$1 = /*#__PURE__*/new WeakMap();
+    var _callback$1 = /*#__PURE__*/new WeakMap();
+    var YandexCaptcha = /*#__PURE__*/function () {
+      function YandexCaptcha() {
+        babelHelpers.classCallCheck(this, YandexCaptcha);
+        _classPrivateFieldInitSpec$6(this, _key$1, {
+          writable: true,
+          value: void 0
+        });
+        _classPrivateFieldInitSpec$6(this, _use$1, {
+          writable: true,
+          value: false
+        });
+        _classPrivateFieldInitSpec$6(this, _widgetId$1, {
+          writable: true,
+          value: void 0
+        });
+        _classPrivateFieldInitSpec$6(this, _response$1, {
+          writable: true,
+          value: void 0
+        });
+        _classPrivateFieldInitSpec$6(this, _target$1, {
+          writable: true,
+          value: void 0
+        });
+        _classPrivateFieldInitSpec$6(this, _callback$1, {
+          writable: true,
+          value: void 0
+        });
+      }
+      babelHelpers.createClass(YandexCaptcha, [{
+        key: "adjust",
+        value: function adjust(options) {
+          if (typeof options.key !== 'undefined') {
+            babelHelpers.classPrivateFieldSet(this, _key$1, options.key);
+          }
+          if (typeof options.use !== 'undefined') {
+            babelHelpers.classPrivateFieldSet(this, _use$1, options.use);
+          }
+        }
+      }, {
+        key: "canUse",
+        value: function canUse() {
+          return babelHelpers.classPrivateFieldGet(this, _use$1) && this.getKey();
+        }
+      }, {
+        key: "isVerified",
+        value: function isVerified() {
+          return !this.canUse() || Boolean(babelHelpers.classPrivateFieldGet(this, _response$1));
+        }
+      }, {
+        key: "getKey",
+        value: function getKey() {
+          if (babelHelpers.classPrivateFieldGet(this, _key$1)) {
+            return babelHelpers.classPrivateFieldGet(this, _key$1);
+          }
+
+          // eslint-disable-next-line no-undef
+          if (b24form && b24form.common) {
+            // eslint-disable-next-line no-undef
+            return (b24form.common.properties.captcha.yandexCaptcha || {}).key;
+          }
+          return null;
+        }
+      }, {
+        key: "getResponse",
+        value: function getResponse() {
+          return babelHelpers.classPrivateFieldGet(this, _response$1);
+        }
+      }, {
+        key: "verify",
+        value: function verify(callback) {
+          if (!window.smartCaptcha) {
+            return;
+          }
+          if (callback) {
+            babelHelpers.classPrivateFieldSet(this, _callback$1, callback);
+          }
+          babelHelpers.classPrivateFieldSet(this, _response$1, '');
+          window.smartCaptcha.execute(babelHelpers.classPrivateFieldGet(this, _widgetId$1));
+        }
+      }, {
+        key: "render",
+        value: function render(target) {
+          var _this = this;
+          if (!window.smartCaptcha) {
+            return;
+          }
+          babelHelpers.classPrivateFieldSet(this, _target$1, target);
+          window.smartCaptcha.render(target, {
+            sitekey: this.getKey(),
+            invisible: true,
+            callback: function callback(response) {
+              babelHelpers.classPrivateFieldSet(_this, _response$1, response);
+              if (babelHelpers.classPrivateFieldGet(_this, _callback$1)) {
+                babelHelpers.classPrivateFieldGet(_this, _callback$1).call(_this);
+                babelHelpers.classPrivateFieldSet(_this, _callback$1, null);
+              }
+            }
+          });
+        }
+      }]);
+      return YandexCaptcha;
+    }();
+
+    function _classPrivateFieldInitSpec$7(obj, privateMap, value) { _checkPrivateRedeclaration$9(obj, privateMap); privateMap.set(obj, value); }
+    function _checkPrivateRedeclaration$9(obj, privateCollection) { if (privateCollection.has(obj)) { throw new TypeError("Cannot initialize the same private elements twice on an object"); } }
     var _currency = /*#__PURE__*/new WeakMap();
     var _fields = /*#__PURE__*/new WeakMap();
     var Basket = /*#__PURE__*/function () {
       function Basket(fields, currency) {
         babelHelpers.classCallCheck(this, Basket);
-        _classPrivateFieldInitSpec$6(this, _currency, {
+        _classPrivateFieldInitSpec$7(this, _currency, {
           writable: true,
           value: void 0
         });
-        _classPrivateFieldInitSpec$6(this, _fields, {
+        _classPrivateFieldInitSpec$7(this, _fields, {
           writable: true,
           value: []
         });
@@ -7374,9 +7616,9 @@ var Vue = exports.Vue;
       }
       loaded = false;
       var node = document.createElement('SCRIPT');
-      node.setAttribute("type", "text/javascript");
-      node.setAttribute("async", "");
-      node.setAttribute("src", 'https://www.google.com/recaptcha/api.js');
+      node.setAttribute('type', 'text/javascript');
+      node.setAttribute('async', '');
+      node.setAttribute('src', 'https://www.google.com/recaptcha/api.js');
       node.onload = function () {
         return window.grecaptcha.ready(function () {
           loaded = true;
@@ -7406,39 +7648,85 @@ var Vue = exports.Vue;
           return _this.renderCaptcha();
         });
       },
-      template: "<div v-if=\"canUse()\" class=\"b24-form-recaptcha\"><div></div></div>"
+      template: "\n\t\t<div v-if=\"canUse()\" class=\"b24-form-recaptcha\"><div></div></div>\n\t"
+    };
+
+    var loaded$1 = null;
+    var callbacks$1 = [];
+    function load$1(callback) {
+      if (loaded$1) {
+        callback();
+        return;
+      }
+      callbacks$1.push(callback);
+      if (loaded$1 === false) {
+        return;
+      }
+      loaded$1 = false;
+      var node = document.createElement('SCRIPT');
+      node.setAttribute('type', 'text/javascript');
+      node.setAttribute('defer', '');
+      node.setAttribute('src', 'https://smartcaptcha.yandexcloud.net/captcha.js?render=onload&onload=onloadFunction');
+      node.onload = function () {
+        loaded$1 = true;
+        callbacks$1.forEach(function (innerCallback) {
+          return innerCallback();
+        });
+      };
+      (document.getElementsByTagName('head')[0] || document.documentElement).appendChild(node);
+    }
+    var YandexCaptcha$1 = {
+      props: ['form'],
+      methods: {
+        canUse: function canUse() {
+          return this.form.yandexCaptcha.canUse();
+        },
+        renderCaptcha: function renderCaptcha() {
+          this.form.yandexCaptcha.render(this.$el.children[0]);
+        }
+      },
+      mounted: function mounted() {
+        var _this = this;
+        if (!this.canUse()) {
+          return;
+        }
+        load$1(function () {
+          return _this.renderCaptcha();
+        });
+      },
+      template: "\n\t\t<div v-if=\"canUse()\" class=\"b24-form-yandex-captcha\"><div></div></div>\n\t"
     };
 
     var Form = {
       props: {
         form: {
-          type: Controller$r
+          type: Controller$s
         }
       },
       components: {
-        'field': Factory.getComponent(),
+        field: Factory.getComponent(),
         'abuse-block': AbuseBlock,
         'agreement-block': AgreementBlock,
         'state-block': StateBlock,
         'pager-block': PagerBlock,
         'basket-block': BasketBlock,
-        'recaptcha-block': ReCaptcha$2
+        'recaptcha-block': ReCaptcha$2,
+        'yandex-captcha-block': YandexCaptcha$1
       },
-      template: "\n\t\t<div class=\"b24-form-wrapper\"\n\t\t\t:class=\"classes()\"\n\t\t>\n\t\t\t<div v-if=\"form.title || form.desc\" class=\"b24-form-header b24-form-padding-side\">\n\t\t\t\t<div v-if=\"form.title\" class=\"b24-form-header-title\">{{ form.title }}</div>\n\t\t\t\t<div class=\"b24-form-header-description\"\n\t\t\t\t\tv-if=\"form.desc\"\n\t\t\t\t\tv-html=\"form.desc\"\n\t\t\t\t></div>\n\t\t\t</div>\n\t\t\t<div v-else class=\"b24-form-header-padding\"></div>\n\n\t\t\t<div class=\"b24-form-content b24-form-padding-side\">\n\t\t\t\t<form\n\t\t\t\t\tmethod=\"post\"\n\t\t\t\t\tnovalidate\n\t\t\t\t\t@submit=\"submit\"\n\t\t\t\t\tv-if=\"form.pager\"\n\t\t\t\t>\n\t\t\t\t\t<component\n\t\t\t\t\t\t:is=\"'pager-block'\"\n\t\t\t\t\t\t:pager=\"form.pager\"\n\t\t\t\t\t\tv-if=\"form.pager.iterable()\"\n\t\t\t\t\t></component>\n\n\t\t\t\t\t<div v-if=\"!form.disabled\">\n\t\t\t\t\t\t<component\n\t\t\t\t\t\t\t:is=\"'field'\"\n\t\t\t\t\t\t\tv-for=\"field in form.pager.current().fields\"\n\t\t\t\t\t\t\t:key=\"field.id\"\n\t\t\t\t\t\t\t:field=\"field\"\n\t\t\t\t\t\t></component>\n\t\t\t\t\t</div>\n\n\t\t\t\t\t<component\n\t\t\t\t\t\t:is=\"'agreement-block'\"\n\t\t\t\t\t\t:formId=\"form.getId()\"\n\t\t\t\t\t\t:fields=\"form.agreements\"\n\t\t\t\t\t\t:view=\"form.view\"\n\t\t\t\t\t\t:messages=\"form.messages\"\n\t\t\t\t\t\tv-if=\"form.pager.ended()\"\n\t\t\t\t\t></component>\n\n\t\t\t\t\t<component\n\t\t\t\t\t\t:is=\"'basket-block'\"\n\t\t\t\t\t\t:basket=\"form.basket\"\n\t\t\t\t\t\t:messages=\"form.messages\"\n\t\t\t\t\t></component>\n\n\t\t\t\t\t<div class=\"b24-form-btn-container\">\n\t\t\t\t\t\t<div class=\"b24-form-btn-block\"\n\t\t\t\t\t\t\tv-if=\"!form.pager.beginning()\"\n\t\t\t\t\t\t\t@click.prevent=\"prevPage()\"\n\t\t\t\t\t\t>\n\t\t\t\t\t\t\t<button type=\"button\" class=\"b24-form-btn b24-form-btn-white b24-form-btn-border\">\n\t\t\t\t\t\t\t\t{{ form.messages.get('navBack') }}\n\t\t\t\t\t\t\t</button>\n\t\t\t\t\t\t</div>\n\n\t\t\t\t\t\t<div class=\"b24-form-btn-block\"\n\t\t\t\t\t\t\tv-if=\"!form.pager.ended()\"\n\t\t\t\t\t\t\t@click.prevent=\"nextPage()\"\n\t\t\t\t\t\t>\n\t\t\t\t\t\t\t<button type=\"button\" class=\"b24-form-btn\">\n\t\t\t\t\t\t\t\t{{ form.messages.get('navNext') }}\n\t\t\t\t\t\t\t</button>\n\t\t\t\t\t\t</div>\n\t\t\t\t\t\t<div class=\"b24-form-btn-block\"\n\t\t\t\t\t\t\tv-if=\"form.pager.ended()\"\n\t\t\t\t\t\t>\n\t\t\t\t\t\t\t<button type=\"submit\" class=\"b24-form-btn\">\n\t\t\t\t\t\t\t\t{{ form.buttonCaption || form.messages.get('defButton') }}\n\t\t\t\t\t\t\t</button>\n\t\t\t\t\t\t</div>\n\t\t\t\t\t</div>\n\n\t\t\t\t\t<span style=\"color: red;\" v-show=\"false && hasErrors\">\n\t\t\t\t\t\tDebug: fill fields\n\t\t\t\t\t</span>\n\t\t\t\t</form>\n\t\t\t</div>\n\n\t\t\t<state-block :form=\"form\" />\n\n\t\t\t<recaptcha-block :form=\"form\" />\n\n\t\t\t<div class=\"b24-form-sign\">\n\t\t\t\t<select v-show=\"false\" v-model=\"form.messages.language\">\n\t\t\t\t\t<option\n\t\t\t\t\t\tv-for=\"language in form.languages\"\n\t\t\t\t\t\t:value=\"language\"\n\t\t\t\t\t>\n\t\t\t\t\t\t{{ language }}\n\t\t\t\t\t</option>\n\t\t\t\t</select>\n\n\t\t\t\t<component\n\t\t\t\t\tv-if=\"abuseEnabled\"\n\t\t\t\t\t:is=\"'abuse-block'\"\n\t\t\t\t\t:messages=\"form.messages\"\n\t\t\t\t\t:abuseLink=\"abuseLink\"\n\t\t\t\t></component>\n\n\t\t\t\t<div class=\"b24-form-sign-info\" v-if=\"form.useSign\">\n\t\t\t\t\t<span class=\"b24-form-sign-text\">{{ form.messages.get('sign') }}</span>\n\t\t\t\t\t<span class=\"b24-form-sign-bx\">{{ getSignBy() }}</span>\n\t\t\t\t\t<span class=\"b24-form-sign-24\">24</span>\n\t\t\t\t</div>\n\t\t\t</div>\n\t\t</div>\n\t",
       computed: {
         hasErrors: function hasErrors() {
           return this.form.validated && !this.form.valid();
         },
         abuseEnabled: function abuseEnabled() {
           var _this$form, _this$form$abuse;
-          return !!((_this$form = this.form) !== null && _this$form !== void 0 && (_this$form$abuse = _this$form.abuse) !== null && _this$form$abuse !== void 0 && _this$form$abuse.link);
+          return Boolean((_this$form = this.form) === null || _this$form === void 0 ? void 0 : (_this$form$abuse = _this$form.abuse) === null || _this$form$abuse === void 0 ? void 0 : _this$form$abuse.link);
         },
         abuseLink: function abuseLink() {
           return this.abuseEnabled ? this.getQueryParametersForAbuseLink() : '';
         },
         isDark: function isDark() {
           var _this$form2, _this$form2$design;
-          return !!((_this$form2 = this.form) !== null && _this$form2 !== void 0 && (_this$form2$design = _this$form2.design) !== null && _this$form2$design !== void 0 && _this$form2$design.isDark());
+          return Boolean((_this$form2 = this.form) === null || _this$form2 === void 0 ? void 0 : (_this$form2$design = _this$form2.design) === null || _this$form2$design === void 0 ? void 0 : _this$form2$design.isDark());
         }
       },
       methods: {
@@ -7488,14 +7776,15 @@ var Vue = exports.Vue;
             if (!border.hasOwnProperty(pos) || !border[pos]) {
               continue;
             }
-            list.push('b24-form-border-' + pos);
+            list.push("b24-form-border-".concat(pos));
           }
           if (this.form.loading || this.form.sent || this.form.error || this.form.disabled) {
             list.push('b24-from-state-on');
           }
           return list;
         }
-      }
+      },
+      template: "\n\t\t<div class=\"b24-form-wrapper\"\n\t\t\t:class=\"classes()\"\n\t\t>\n\t\t\t<div v-if=\"form.title || form.desc\" class=\"b24-form-header b24-form-padding-side\">\n\t\t\t\t<div v-if=\"form.title\" class=\"b24-form-header-title\">{{ form.title }}</div>\n\t\t\t\t<div class=\"b24-form-header-description\"\n\t\t\t\t\tv-if=\"form.desc\"\n\t\t\t\t\tv-html=\"form.desc\"\n\t\t\t\t></div>\n\t\t\t</div>\n\t\t\t<div v-else class=\"b24-form-header-padding\"></div>\n\n\t\t\t<div class=\"b24-form-content b24-form-padding-side\">\n\t\t\t\t<form\n\t\t\t\t\tmethod=\"post\"\n\t\t\t\t\tnovalidate\n\t\t\t\t\t@submit=\"submit\"\n\t\t\t\t\tv-if=\"form.pager\"\n\t\t\t\t>\n\t\t\t\t\t<component\n\t\t\t\t\t\t:is=\"'pager-block'\"\n\t\t\t\t\t\t:pager=\"form.pager\"\n\t\t\t\t\t\tv-if=\"form.pager.iterable()\"\n\t\t\t\t\t></component>\n\n\t\t\t\t\t<div v-if=\"!form.disabled\">\n\t\t\t\t\t\t<component\n\t\t\t\t\t\t\t:is=\"'field'\"\n\t\t\t\t\t\t\tv-for=\"field in form.pager.current().fields\"\n\t\t\t\t\t\t\t:key=\"field.id\"\n\t\t\t\t\t\t\t:field=\"field\"\n\t\t\t\t\t\t></component>\n\t\t\t\t\t</div>\n\n\t\t\t\t\t<component\n\t\t\t\t\t\t:is=\"'agreement-block'\"\n\t\t\t\t\t\t:formId=\"form.getId()\"\n\t\t\t\t\t\t:fields=\"form.agreements\"\n\t\t\t\t\t\t:view=\"form.view\"\n\t\t\t\t\t\t:messages=\"form.messages\"\n\t\t\t\t\t\tv-if=\"form.pager.ended()\"\n\t\t\t\t\t></component>\n\n\t\t\t\t\t<component\n\t\t\t\t\t\t:is=\"'basket-block'\"\n\t\t\t\t\t\t:basket=\"form.basket\"\n\t\t\t\t\t\t:messages=\"form.messages\"\n\t\t\t\t\t></component>\n\n\t\t\t\t\t<div class=\"b24-form-btn-container\">\n\t\t\t\t\t\t<div class=\"b24-form-btn-block\"\n\t\t\t\t\t\t\tv-if=\"!form.pager.beginning()\"\n\t\t\t\t\t\t\t@click.prevent=\"prevPage()\"\n\t\t\t\t\t\t>\n\t\t\t\t\t\t\t<button type=\"button\" class=\"b24-form-btn b24-form-btn-white b24-form-btn-border\">\n\t\t\t\t\t\t\t\t{{ form.messages.get('navBack') }}\n\t\t\t\t\t\t\t</button>\n\t\t\t\t\t\t</div>\n\n\t\t\t\t\t\t<div class=\"b24-form-btn-block\"\n\t\t\t\t\t\t\tv-if=\"!form.pager.ended()\"\n\t\t\t\t\t\t\t@click.prevent=\"nextPage()\"\n\t\t\t\t\t\t>\n\t\t\t\t\t\t\t<button type=\"button\" class=\"b24-form-btn\">\n\t\t\t\t\t\t\t\t{{ form.messages.get('navNext') }}\n\t\t\t\t\t\t\t</button>\n\t\t\t\t\t\t</div>\n\t\t\t\t\t\t<div class=\"b24-form-btn-block\"\n\t\t\t\t\t\t\tv-if=\"form.pager.ended()\"\n\t\t\t\t\t\t>\n\t\t\t\t\t\t\t<button type=\"submit\" class=\"b24-form-btn\">\n\t\t\t\t\t\t\t\t{{ form.buttonCaption || form.messages.get('defButton') }}\n\t\t\t\t\t\t\t</button>\n\t\t\t\t\t\t</div>\n\t\t\t\t\t</div>\n\n\t\t\t\t\t<span style=\"color: red;\" v-show=\"false && hasErrors\">\n\t\t\t\t\t\tDebug: fill fields\n\t\t\t\t\t</span>\n\t\t\t\t</form>\n\t\t\t</div>\n\n\t\t\t<state-block :form=\"form\" />\n\n\t\t\t<recaptcha-block :form=\"form\" />\n\n\t\t\t<yandex-captcha-block :form=\"form\" />\n\n\t\t\t<div class=\"b24-form-sign\">\n\t\t\t\t<select v-show=\"false\" v-model=\"form.messages.language\">\n\t\t\t\t\t<option\n\t\t\t\t\t\tv-for=\"language in form.languages\"\n\t\t\t\t\t\t:value=\"language\"\n\t\t\t\t\t>\n\t\t\t\t\t\t{{ language }}\n\t\t\t\t\t</option>\n\t\t\t\t</select>\n\n\t\t\t\t<component\n\t\t\t\t\tv-if=\"abuseEnabled\"\n\t\t\t\t\t:is=\"'abuse-block'\"\n\t\t\t\t\t:messages=\"form.messages\"\n\t\t\t\t\t:abuseLink=\"abuseLink\"\n\t\t\t\t></component>\n\n\t\t\t\t<div class=\"b24-form-sign-info\" v-if=\"form.useSign\">\n\t\t\t\t\t<span class=\"b24-form-sign-text\">{{ form.messages.get('sign') }}</span>\n\t\t\t\t\t<span class=\"b24-form-sign-bx\">{{ getSignBy() }}</span>\n\t\t\t\t\t<span class=\"b24-form-sign-24\">24</span>\n\t\t\t\t</div>\n\t\t\t</div>\n\t\t</div>\n\t"
     };
 
     var Wrapper = {
@@ -7635,18 +7924,18 @@ var Vue = exports.Vue;
       'b24-form-widget': Widget$1
     };
 
-    function _classPrivateFieldInitSpec$7(obj, privateMap, value) { _checkPrivateRedeclaration$9(obj, privateMap); privateMap.set(obj, value); }
-    function _checkPrivateRedeclaration$9(obj, privateCollection) { if (privateCollection.has(obj)) { throw new TypeError("Cannot initialize the same private elements twice on an object"); } }
+    function _classPrivateFieldInitSpec$8(obj, privateMap, value) { _checkPrivateRedeclaration$a(obj, privateMap); privateMap.set(obj, value); }
+    function _checkPrivateRedeclaration$a(obj, privateCollection) { if (privateCollection.has(obj)) { throw new TypeError("Cannot initialize the same private elements twice on an object"); } }
     var _data = /*#__PURE__*/new WeakMap();
     var _offset = /*#__PURE__*/new WeakMap();
     var Chunk = /*#__PURE__*/function () {
       function Chunk(data, offset) {
         babelHelpers.classCallCheck(this, Chunk);
-        _classPrivateFieldInitSpec$7(this, _data, {
+        _classPrivateFieldInitSpec$8(this, _data, {
           writable: true,
           value: null
         });
-        _classPrivateFieldInitSpec$7(this, _offset, {
+        _classPrivateFieldInitSpec$8(this, _offset, {
           writable: true,
           value: 0
         });
@@ -7672,9 +7961,9 @@ var Vue = exports.Vue;
       return Chunk;
     }();
 
-    function _classPrivateMethodInitSpec$3(obj, privateSet) { _checkPrivateRedeclaration$a(obj, privateSet); privateSet.add(obj); }
-    function _classPrivateFieldInitSpec$8(obj, privateMap, value) { _checkPrivateRedeclaration$a(obj, privateMap); privateMap.set(obj, value); }
-    function _checkPrivateRedeclaration$a(obj, privateCollection) { if (privateCollection.has(obj)) { throw new TypeError("Cannot initialize the same private elements twice on an object"); } }
+    function _classPrivateMethodInitSpec$3(obj, privateSet) { _checkPrivateRedeclaration$b(obj, privateSet); privateSet.add(obj); }
+    function _classPrivateFieldInitSpec$9(obj, privateMap, value) { _checkPrivateRedeclaration$b(obj, privateMap); privateMap.set(obj, value); }
+    function _checkPrivateRedeclaration$b(obj, privateCollection) { if (privateCollection.has(obj)) { throw new TypeError("Cannot initialize the same private elements twice on an object"); } }
     function _classPrivateMethodGet$3(receiver, privateSet, fn) { if (!privateSet.has(receiver)) { throw new TypeError("attempted to get private field on non-instance"); } return fn; }
     var _file = /*#__PURE__*/new WeakMap();
     var _fileData = /*#__PURE__*/new WeakMap();
@@ -7702,55 +7991,55 @@ var Vue = exports.Vue;
         _classPrivateMethodInitSpec$3(babelHelpers.assertThisInitialized(_this), _postChunk);
         _classPrivateMethodInitSpec$3(babelHelpers.assertThisInitialized(_this), _uploadChunk);
         _classPrivateMethodInitSpec$3(babelHelpers.assertThisInitialized(_this), _getNextChunk);
-        _classPrivateFieldInitSpec$8(babelHelpers.assertThisInitialized(_this), _file, {
+        _classPrivateFieldInitSpec$9(babelHelpers.assertThisInitialized(_this), _file, {
           writable: true,
           value: void 0
         });
-        _classPrivateFieldInitSpec$8(babelHelpers.assertThisInitialized(_this), _fileData, {
+        _classPrivateFieldInitSpec$9(babelHelpers.assertThisInitialized(_this), _fileData, {
           writable: true,
           value: void 0
         });
-        _classPrivateFieldInitSpec$8(babelHelpers.assertThisInitialized(_this), _fieldId, {
+        _classPrivateFieldInitSpec$9(babelHelpers.assertThisInitialized(_this), _fieldId, {
           writable: true,
           value: void 0
         });
-        _classPrivateFieldInitSpec$8(babelHelpers.assertThisInitialized(_this), _chunkOffset, {
+        _classPrivateFieldInitSpec$9(babelHelpers.assertThisInitialized(_this), _chunkOffset, {
           writable: true,
           value: null
         });
-        _classPrivateFieldInitSpec$8(babelHelpers.assertThisInitialized(_this), _fileToken, {
+        _classPrivateFieldInitSpec$9(babelHelpers.assertThisInitialized(_this), _fileToken, {
           writable: true,
           value: null
         });
-        _classPrivateFieldInitSpec$8(babelHelpers.assertThisInitialized(_this), _identification, {
+        _classPrivateFieldInitSpec$9(babelHelpers.assertThisInitialized(_this), _identification, {
           writable: true,
           value: void 0
         });
-        _classPrivateFieldInitSpec$8(babelHelpers.assertThisInitialized(_this), _controller, {
+        _classPrivateFieldInitSpec$9(babelHelpers.assertThisInitialized(_this), _controller, {
           writable: true,
           value: 'crm.fileUploader.siteFormFileUploaderController'
         });
-        _classPrivateFieldInitSpec$8(babelHelpers.assertThisInitialized(_this), _action, {
+        _classPrivateFieldInitSpec$9(babelHelpers.assertThisInitialized(_this), _action, {
           writable: true,
           value: 'crm.site.fileUploader.upload'
         });
-        _classPrivateFieldInitSpec$8(babelHelpers.assertThisInitialized(_this), _currentChunk, {
+        _classPrivateFieldInitSpec$9(babelHelpers.assertThisInitialized(_this), _currentChunk, {
           writable: true,
           value: void 0
         });
-        _classPrivateFieldInitSpec$8(babelHelpers.assertThisInitialized(_this), _started, {
+        _classPrivateFieldInitSpec$9(babelHelpers.assertThisInitialized(_this), _started, {
           writable: true,
           value: false
         });
-        _classPrivateFieldInitSpec$8(babelHelpers.assertThisInitialized(_this), _uploaded, {
+        _classPrivateFieldInitSpec$9(babelHelpers.assertThisInitialized(_this), _uploaded, {
           writable: true,
           value: false
         });
-        _classPrivateFieldInitSpec$8(babelHelpers.assertThisInitialized(_this), _chunkOptions, {
+        _classPrivateFieldInitSpec$9(babelHelpers.assertThisInitialized(_this), _chunkOptions, {
           writable: true,
           value: void 0
         });
-        _classPrivateFieldInitSpec$8(babelHelpers.assertThisInitialized(_this), _additionalControllerOptions, {
+        _classPrivateFieldInitSpec$9(babelHelpers.assertThisInitialized(_this), _additionalControllerOptions, {
           writable: true,
           value: []
         });
@@ -7992,9 +8281,9 @@ var Vue = exports.Vue;
       });
     }
 
-    function _classPrivateMethodInitSpec$4(obj, privateSet) { _checkPrivateRedeclaration$b(obj, privateSet); privateSet.add(obj); }
-    function _classPrivateFieldInitSpec$9(obj, privateMap, value) { _checkPrivateRedeclaration$b(obj, privateMap); privateMap.set(obj, value); }
-    function _checkPrivateRedeclaration$b(obj, privateCollection) { if (privateCollection.has(obj)) { throw new TypeError("Cannot initialize the same private elements twice on an object"); } }
+    function _classPrivateMethodInitSpec$4(obj, privateSet) { _checkPrivateRedeclaration$c(obj, privateSet); privateSet.add(obj); }
+    function _classPrivateFieldInitSpec$a(obj, privateMap, value) { _checkPrivateRedeclaration$c(obj, privateMap); privateMap.set(obj, value); }
+    function _checkPrivateRedeclaration$c(obj, privateCollection) { if (privateCollection.has(obj)) { throw new TypeError("Cannot initialize the same private elements twice on an object"); } }
     function _classPrivateMethodGet$4(receiver, privateSet, fn) { if (!privateSet.has(receiver)) { throw new TypeError("attempted to get private field on non-instance"); } return fn; }
     var _form$2 = /*#__PURE__*/new WeakMap();
     var _files = /*#__PURE__*/new WeakMap();
@@ -8011,35 +8300,35 @@ var Vue = exports.Vue;
         babelHelpers.classCallCheck(this, Uploader);
         _classPrivateMethodInitSpec$4(this, _getCurrentUploadingFile);
         _classPrivateMethodInitSpec$4(this, _uploadNext);
-        _classPrivateFieldInitSpec$9(this, _form$2, {
+        _classPrivateFieldInitSpec$a(this, _form$2, {
           writable: true,
           value: void 0
         });
-        _classPrivateFieldInitSpec$9(this, _files, {
+        _classPrivateFieldInitSpec$a(this, _files, {
           writable: true,
           value: void 0
         });
-        _classPrivateFieldInitSpec$9(this, _fileUploader, {
+        _classPrivateFieldInitSpec$a(this, _fileUploader, {
           writable: true,
           value: void 0
         });
-        _classPrivateFieldInitSpec$9(this, _filesControllers, {
+        _classPrivateFieldInitSpec$a(this, _filesControllers, {
           writable: true,
           value: void 0
         });
-        _classPrivateFieldInitSpec$9(this, _currentFileIndex, {
+        _classPrivateFieldInitSpec$a(this, _currentFileIndex, {
           writable: true,
           value: 0
         });
-        _classPrivateFieldInitSpec$9(this, _summarySize, {
+        _classPrivateFieldInitSpec$a(this, _summarySize, {
           writable: true,
           value: 0
         });
-        _classPrivateFieldInitSpec$9(this, _allProgress, {
+        _classPrivateFieldInitSpec$a(this, _allProgress, {
           writable: true,
           value: 0
         });
-        _classPrivateFieldInitSpec$9(this, _lastUpdateTime, {
+        _classPrivateFieldInitSpec$a(this, _lastUpdateTime, {
           writable: true,
           value: null
         });
@@ -8171,10 +8460,10 @@ var Vue = exports.Vue;
       return babelHelpers.classPrivateFieldGet(this, _files)[babelHelpers.classPrivateFieldGet(this, _currentFileIndex)];
     }
 
-    function ownKeys$3(object, enumerableOnly) { var keys = Object.keys(object); if (Object.getOwnPropertySymbols) { var symbols = Object.getOwnPropertySymbols(object); enumerableOnly && (symbols = symbols.filter(function (sym) { return Object.getOwnPropertyDescriptor(object, sym).enumerable; })), keys.push.apply(keys, symbols); } return keys; }
-    function _objectSpread$3(target) { for (var i = 1; i < arguments.length; i++) { var source = null != arguments[i] ? arguments[i] : {}; i % 2 ? ownKeys$3(Object(source), !0).forEach(function (key) { babelHelpers.defineProperty(target, key, source[key]); }) : Object.getOwnPropertyDescriptors ? Object.defineProperties(target, Object.getOwnPropertyDescriptors(source)) : ownKeys$3(Object(source)).forEach(function (key) { Object.defineProperty(target, key, Object.getOwnPropertyDescriptor(source, key)); }); } return target; }
-    function _classPrivateFieldInitSpec$a(obj, privateMap, value) { _checkPrivateRedeclaration$c(obj, privateMap); privateMap.set(obj, value); }
-    function _checkPrivateRedeclaration$c(obj, privateCollection) { if (privateCollection.has(obj)) { throw new TypeError("Cannot initialize the same private elements twice on an object"); } }
+    function ownKeys$4(object, enumerableOnly) { var keys = Object.keys(object); if (Object.getOwnPropertySymbols) { var symbols = Object.getOwnPropertySymbols(object); enumerableOnly && (symbols = symbols.filter(function (sym) { return Object.getOwnPropertyDescriptor(object, sym).enumerable; })), keys.push.apply(keys, symbols); } return keys; }
+    function _objectSpread$4(target) { for (var i = 1; i < arguments.length; i++) { var source = null != arguments[i] ? arguments[i] : {}; i % 2 ? ownKeys$4(Object(source), !0).forEach(function (key) { babelHelpers.defineProperty(target, key, source[key]); }) : Object.getOwnPropertyDescriptors ? Object.defineProperties(target, Object.getOwnPropertyDescriptors(source)) : ownKeys$4(Object(source)).forEach(function (key) { Object.defineProperty(target, key, Object.getOwnPropertyDescriptor(source, key)); }); } return target; }
+    function _classPrivateFieldInitSpec$b(obj, privateMap, value) { _checkPrivateRedeclaration$d(obj, privateMap); privateMap.set(obj, value); }
+    function _checkPrivateRedeclaration$d(obj, privateCollection) { if (privateCollection.has(obj)) { throw new TypeError("Cannot initialize the same private elements twice on an object"); } }
     var DefaultOptions$4 = {
       view: 'inline'
     };
@@ -8184,7 +8473,7 @@ var Vue = exports.Vue;
     var _properties = /*#__PURE__*/new WeakMap();
     var _personalisation = /*#__PURE__*/new WeakMap();
     var _vue = /*#__PURE__*/new WeakMap();
-    var Controller$r = /*#__PURE__*/function (_Event) {
+    var Controller$s = /*#__PURE__*/function (_Event) {
       babelHelpers.inherits(Controller$$1, _Event);
       function Controller$$1() {
         var _options$editMode;
@@ -8192,7 +8481,7 @@ var Vue = exports.Vue;
         var options = arguments.length > 0 && arguments[0] !== undefined ? arguments[0] : DefaultOptions$4;
         babelHelpers.classCallCheck(this, Controller$$1);
         _this = babelHelpers.possibleConstructorReturn(this, babelHelpers.getPrototypeOf(Controller$$1).call(this, options));
-        _classPrivateFieldInitSpec$a(babelHelpers.assertThisInitialized(_this), _id$2, {
+        _classPrivateFieldInitSpec$b(babelHelpers.assertThisInitialized(_this), _id$2, {
           writable: true,
           value: void 0
         });
@@ -8204,15 +8493,15 @@ var Vue = exports.Vue;
         babelHelpers.defineProperty(babelHelpers.assertThisInitialized(_this), "analyticsHandler", {});
         babelHelpers.defineProperty(babelHelpers.assertThisInitialized(_this), "languages", []);
         babelHelpers.defineProperty(babelHelpers.assertThisInitialized(_this), "language", 'en');
-        _classPrivateFieldInitSpec$a(babelHelpers.assertThisInitialized(_this), _fields$1, {
+        _classPrivateFieldInitSpec$b(babelHelpers.assertThisInitialized(_this), _fields$1, {
           writable: true,
           value: []
         });
-        _classPrivateFieldInitSpec$a(babelHelpers.assertThisInitialized(_this), _dependence, {
+        _classPrivateFieldInitSpec$b(babelHelpers.assertThisInitialized(_this), _dependence, {
           writable: true,
           value: void 0
         });
-        _classPrivateFieldInitSpec$a(babelHelpers.assertThisInitialized(_this), _properties, {
+        _classPrivateFieldInitSpec$b(babelHelpers.assertThisInitialized(_this), _properties, {
           writable: true,
           value: {}
         });
@@ -8228,7 +8517,7 @@ var Vue = exports.Vue;
           title: '$',
           format: '$#'
         });
-        _classPrivateFieldInitSpec$a(babelHelpers.assertThisInitialized(_this), _personalisation, {
+        _classPrivateFieldInitSpec$b(babelHelpers.assertThisInitialized(_this), _personalisation, {
           writable: true,
           value: {
             title: '',
@@ -8246,7 +8535,7 @@ var Vue = exports.Vue;
           text: '',
           handler: null
         });
-        _classPrivateFieldInitSpec$a(babelHelpers.assertThisInitialized(_this), _vue, {
+        _classPrivateFieldInitSpec$b(babelHelpers.assertThisInitialized(_this), _vue, {
           writable: true,
           value: void 0
         });
@@ -8256,8 +8545,11 @@ var Vue = exports.Vue;
         babelHelpers.classPrivateFieldSet(babelHelpers.assertThisInitialized(_this), _dependence, new Manager(babelHelpers.assertThisInitialized(_this)));
         _this.analytics = new Analytics$1(babelHelpers.assertThisInitialized(_this));
         _this.recaptcha = new ReCaptcha$1();
+        _this.yandexCaptcha = new YandexCaptcha();
         _this.abuse = options.abuse;
         _this.emit(EventTypes.initBefore, options);
+
+        // eslint-disable-next-line no-param-reassign
         options = _this.adjust(options);
         _this.uploader = new Uploader(babelHelpers.assertThisInitialized(_this));
         babelHelpers.classPrivateFieldSet(babelHelpers.assertThisInitialized(_this), _id$2, options.id || Math.random().toString().split('.')[1] + Math.random().toString().split('.')[1]);
@@ -8346,8 +8638,14 @@ var Vue = exports.Vue;
             return false;
           }
           storeFieldValues(this.getFields());
-          if (!this.recaptcha.isVerified()) {
+          if (this.recaptcha.canUse() && !this.recaptcha.isVerified()) {
             this.recaptcha.verify(function () {
+              return _this3.submit();
+            });
+            return false;
+          }
+          if (this.yandexCaptcha.canUse() && !this.yandexCaptcha.isVerified()) {
+            this.yandexCaptcha.verify(function () {
               return _this3.submit();
             });
             return false;
@@ -8376,7 +8674,10 @@ var Vue = exports.Vue;
           formData.set('properties', JSON.stringify(babelHelpers.classPrivateFieldGet(this, _properties)));
           formData.set('consents', JSON.stringify(consents));
           formData.set('recaptcha', this.recaptcha.getResponse());
+          formData.set('yandexSmartCaptcha', this.yandexCaptcha.getResponse());
           formData.set('timeZoneOffset', new Date().getTimezoneOffset());
+
+          // eslint-disable-next-line promise/catch-or-return
           promise.then(function () {
             formData.set('values', JSON.stringify(_this3.values()));
           });
@@ -8522,12 +8823,15 @@ var Vue = exports.Vue;
             this.visible = !!options.visible;
           }
           if (typeof options.design !== 'undefined') {
-            this.design.adjust(_objectSpread$3({
+            this.design.adjust(_objectSpread$4({
               proxy: options.proxy
             }, options.design));
           }
-          if (typeof options.recaptcha !== 'undefined') {
-            this.recaptcha.adjust(options.recaptcha);
+          if (typeof options.captcha !== 'undefined' && options.captcha.service === 'google' && typeof options.captcha.recaptcha !== 'undefined') {
+            this.recaptcha.adjust(options.captcha.recaptcha);
+          }
+          if (typeof options.captcha !== 'undefined' && options.captcha.service === 'yandex' && typeof options.captcha.yandexCaptcha !== 'undefined') {
+            this.yandexCaptcha.adjust(options.captcha.yandexCaptcha);
           }
           if (Array.isArray(options.dependencies)) {
             babelHelpers.classPrivateFieldGet(this, _dependence).setDependencies(options.dependencies);
@@ -8931,18 +9235,18 @@ var Vue = exports.Vue;
         applyOldenLoaderData: applyOldenLoaderData
     });
 
-    function _classPrivateFieldInitSpec$b(obj, privateMap, value) { _checkPrivateRedeclaration$d(obj, privateMap); privateMap.set(obj, value); }
-    function _checkPrivateRedeclaration$d(obj, privateCollection) { if (privateCollection.has(obj)) { throw new TypeError("Cannot initialize the same private elements twice on an object"); } }
+    function _classPrivateFieldInitSpec$c(obj, privateMap, value) { _checkPrivateRedeclaration$e(obj, privateMap); privateMap.set(obj, value); }
+    function _checkPrivateRedeclaration$e(obj, privateCollection) { if (privateCollection.has(obj)) { throw new TypeError("Cannot initialize the same private elements twice on an object"); } }
     var _forms = /*#__PURE__*/new WeakMap();
     var _userProviderPromise = /*#__PURE__*/new WeakMap();
     var Application = /*#__PURE__*/function () {
       function Application() {
         babelHelpers.classCallCheck(this, Application);
-        _classPrivateFieldInitSpec$b(this, _forms, {
+        _classPrivateFieldInitSpec$c(this, _forms, {
           writable: true,
           value: []
         });
-        _classPrivateFieldInitSpec$b(this, _userProviderPromise, {
+        _classPrivateFieldInitSpec$c(this, _userProviderPromise, {
           writable: true,
           value: void 0
         });
@@ -8962,7 +9266,7 @@ var Vue = exports.Vue;
       }, {
         key: "create",
         value: function create(options) {
-          var form = new Controller$r(options);
+          var form = new Controller$s(options);
           babelHelpers.classPrivateFieldGet(this, _forms).push(form);
           return form;
         }

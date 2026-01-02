@@ -2,8 +2,9 @@
 
 return [
 	'extensions' => [
-		'im:lib/theme',
 		'type',
+		'assets/icons',
+		'im:lib/theme',
 		'im:messenger/lib/ui/base/avatar',
 	],
 	'bundle' => [

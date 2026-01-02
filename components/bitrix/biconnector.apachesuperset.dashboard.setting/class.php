@@ -2,14 +2,15 @@
 
 if (!defined('B_PROLOG_INCLUDED') || B_PROLOG_INCLUDED !== true)
 {
-	die();
+	die;
 }
 
 use Bitrix\BIConnector\Access\AccessController;
 use Bitrix\BIConnector\Access\ActionDictionary;
-use Bitrix\BIConnector\Access\Model\DashboardAccessItem;
 use Bitrix\BIConnector\Integration\Superset\Integrator\Integrator;
 use Bitrix\BIConnector\Integration\Superset\Model\Dashboard;
+use Bitrix\BIConnector\Integration\Superset\Model\SupersetDashboardGroupBindingTable;
+use Bitrix\BIConnector\Integration\Superset\Model\SupersetDashboardGroupTable;
 use Bitrix\BIConnector\Integration\Superset\Repository\SupersetUserRepository;
 use Bitrix\BIConnector\Superset\Dashboard\UrlParameter;
 use Bitrix\BIConnector\Superset\Scope\ScopeService;
@@ -100,14 +101,14 @@ class ApacheSupersetDashboardSettingComponent
 					'color' => Buttons\Color::LIGHT_BORDER,
 					'size'  => Buttons\Size::MEDIUM,
 					'click' => new Buttons\JsCode(
-						"top.BX.Helper.show('redirect=detail&code=20337242');"
+						"top.BX.Helper.show('redirect=detail&code=20337242');",
 					),
 					'text' => Loc::getMessage('BICONNECTOR_SUPERSET_DASHBOARD_SETTINGS_DASHBOARD_HELP'),
 					'dataset' => [
 						'toolbar-collapsed-icon' => Buttons\Icon::INFO,
 					],
-				]
-			)
+				],
+			),
 		);
 
 		$this->includeComponentTemplate();
@@ -121,14 +122,14 @@ class ApacheSupersetDashboardSettingComponent
 			'SIGNED_PARAMETERS' => $this->getSignedParameters(),
 		];
 
-		$settingsPanel =
-			(new SettingsPanel('BICONNECTOR_SUPERSET_DASHBOARD_SETTINGS'))
-			->addController(
-				$this->getController(),
-				new IconController('ICON_CONTROLLER')
-			)
-			->addSection($this->getFilterSection())
-			->setAjaxData($ajaxData)
+		$settingsPanel
+			= (new SettingsPanel('BICONNECTOR_SUPERSET_DASHBOARD_SETTINGS'))
+				->addController(
+					$this->getController(),
+					new IconController('ICON_CONTROLLER'),
+				)
+				->addSection($this->getFilterSection())
+				->setAjaxData($ajaxData)
 		;
 
 		if (AccessController::getCurrent()->checkByEntity(ActionDictionary::ACTION_BIC_DASHBOARD_EDIT, $this->dashboard))
@@ -136,9 +137,9 @@ class ApacheSupersetDashboardSettingComponent
 			$settingsPanel->addSection($this->getOwnerSection());
 		}
 
-		if (AccessController::getCurrent()->check(ActionDictionary::ACTION_BIC_EDIT_SCOPE))
+		if (AccessController::getCurrent()->check(ActionDictionary::ACTION_BIC_GROUP_MODIFY))
 		{
-			$settingsPanel->addSection($this->getParamsSection());
+			$settingsPanel->addSection($this->getGroupsSection());
 		}
 
 		if (isset($this->arParams['DASHBOARD_ID']))
@@ -153,9 +154,9 @@ class ApacheSupersetDashboardSettingComponent
 	{
 		return
 			(new SettingsComponentController('SETTING_COMPONENT_CONTROLLER'))
-			->setConfig([
-				'dashboardAnalyticInfo' => $this->getDashboardInfo(),
-			])
+				->setConfig([
+					'dashboardAnalyticInfo' => $this->getDashboardInfo(),
+				])
 		;
 	}
 
@@ -233,17 +234,17 @@ class ApacheSupersetDashboardSettingComponent
 		;
 	}
 
-	private function getParamsSection(): EntityEditorSection
+	private function getGroupsSection(): EntityEditorSection
 	{
 		return (new EntityEditorSection(
-			name: 'DASHBOARD_PARAMETERS',
-			title: Loc::getMessage('BICONNECTOR_SUPERSET_DASHBOARD_SETTINGS_SECTION_PARAMS_TITLE'),
+			name: 'DASHBOARD_GROUPS',
+			title: Loc::getMessage('BICONNECTOR_SUPERSET_DASHBOARD_SETTINGS_SECTION_GROUPS_TITLE'),
 		))
-			->addField(new Field\DashboardParametersField(
-				id: 'DASHBOARD_PARAMETERS',
+			->addField(new Field\DashboardGroupsField(
+				id: 'DASHBOARD_GROUPS',
 				dashboard: $this->dashboard,
 			))
-			->setIconClass('--graphs-diagram')
+			->setIconClass('--folder-empty')
 		;
 	}
 
@@ -379,7 +380,7 @@ class ApacheSupersetDashboardSettingComponent
 				return null;
 			}
 
-			$userTo = (new SupersetUserRepository)->getById($newOwnerId);
+			$userTo = (new SupersetUserRepository())->getById($newOwnerId);
 			if (!$userTo)
 			{
 				$this->errorCollection->setError(
@@ -405,7 +406,7 @@ class ApacheSupersetDashboardSettingComponent
 			}
 
 			$currentOwnerId = $dashboardObject->getOwnerId();
-			$userFrom = (new SupersetUserRepository)->getById($currentOwnerId);
+			$userFrom = (new SupersetUserRepository())->getById($currentOwnerId);
 			if (!$userFrom)
 			{
 				$this->errorCollection->setError(
@@ -428,8 +429,37 @@ class ApacheSupersetDashboardSettingComponent
 			$result['OWNER_ID'] = (int)$data['OWNER_ID'];
 		}
 
-		if (AccessController::getCurrent()->check(ActionDictionary::ACTION_BIC_EDIT_SCOPE))
+		if (AccessController::getCurrent()->check(ActionDictionary::ACTION_BIC_GROUP_MODIFY))
 		{
+			$dashboardObject->unsetGroups();
+			$groupIds = array_flip($data['DASHBOARD_PARAMETERS']['GROUPS'] ?? []);
+
+			$bindings = SupersetDashboardGroupBindingTable::getList([
+				'filter' => ['DASHBOARD_ID' => $dashboardObject->getId()],
+			])
+				->fetchCollection()
+			;
+
+			foreach ($bindings as $binding)
+			{
+				if (isset($groupIds[$binding->getGroupId()]))
+				{
+					unset($groupIds[$binding->getGroupId()]);
+				}
+				else
+				{
+					$binding->delete();
+				}
+			}
+
+			foreach (array_flip($groupIds) as $groupId)
+			{
+				SupersetDashboardGroupBindingTable::add([
+					'DASHBOARD_ID' => $dashboardObject->getId(),
+					'GROUP_ID' => $groupId,
+				]);
+			}
+
 			$scopes = $data['DASHBOARD_PARAMETERS']['SCOPE'] ?? [];
 			$saveScopeResult = ScopeService::getInstance()->saveDashboardScopes($dashboardObject->getId(), $scopes);
 			if (!$saveScopeResult->isSuccess())

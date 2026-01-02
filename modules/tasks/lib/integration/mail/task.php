@@ -13,7 +13,8 @@ namespace Bitrix\Tasks\Integration\Mail;
 use \Bitrix\Main\Event;
 use \Bitrix\Main\Localization\Loc;
 use Bitrix\Main\Loader;
-use Bitrix\Tasks\Internals\Log\LogFacade;
+use Bitrix\Tasks\V2\Internal\DI\Container;
+use Bitrix\Tasks\V2\Internal\Service\Link\LinkService;
 use Exception;
 
 Loc::loadMessages(__FILE__);
@@ -130,9 +131,13 @@ final class Task extends \Bitrix\Tasks\Integration\Mail
 		return $task?->getId(); // required, dont remove
 	}
 
+	/**
+	 * @deprecated
+	 * @use LinkService
+	 */
 	public static function getDefaultPublicPath($taskId)
 	{
-		return \Bitrix\Tasks\UI\Task::makeActionUrl('/pub/task.php?task_id=#task_id#', $taskId);
+		return Container::getInstance()->getLinkService()->getPublic((int)$taskId);
 	}
 
 	public static function getReplyTo($userId, $taskId, $postUrl, $siteId, $backUrl = '')

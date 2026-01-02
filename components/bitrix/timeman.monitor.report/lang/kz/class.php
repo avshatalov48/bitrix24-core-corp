@@ -1,0 +1,10 @@
+<?php
+$MESS["TIMEMAN_PWT_REPORT_FILTER_EMPLOYEE"] = "Қызметкер";
+$MESS["TIMEMAN_PWT_REPORT_FILTER_PERIOD"] = "Есептік кезең";
+$MESS["TIMEMAN_PWT_REPORT_FILTER_PRESET_CURRENT_MONTH"] = "Бір айға арналған менің есебім";
+$MESS["TIMEMAN_PWT_REPORT_FILTER_WORKING_HOURS"] = "Кезең аралығына арналған жұмыс уақыты";
+$MESS["TIMEMAN_PWT_REPORT_GRID_HEADER_EMPLOYEE"] = "Қызметкер";
+$MESS["TIMEMAN_PWT_REPORT_GRID_HEADER_WORKING_HOURS"] = "Кезең аралығына арналған жұмыс уақыты";
+$MESS["TIMEMAN_PWT_REPORT_GRID_ROW_COUNT"] = "Барлығы";
+$MESS["TIMEMAN_PWT_REPORT_GRID_SHOW_ROW_COUNT"] = "Санын көрсету";
+$MESS["TIMEMAN_PWT_REPORT_GRID_WORK_TIME"] = "Жұмыс уақыты";

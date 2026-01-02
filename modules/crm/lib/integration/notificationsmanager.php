@@ -102,20 +102,12 @@ class NotificationsManager implements ICanSendMessage
 			return null;
 		}
 
-		//@TODO temporarily getting rid of imconnector dependency in crm 21.600.0
-//		/** @var \Bitrix\ImConnector\Tools\Connectors\Notifications $toolsNotifications */
-//		$toolsNotifications = ServiceLocator::getInstance()->get('ImConnector.toolsNotifications');
-//		if (!$toolsNotifications->isEnabled())
-//		{
-//			return null;
-//		}
-
 		if (!static::isEnabled())
 		{
 			return null;
 		}
 
-		if (static::canUseTmp())
+		if (Settings::getScenarioAvailability(Settings::SCENARIO_CRM_PAYMENT) === FeatureStatus::AVAILABLE)
 		{
 			if (
 				Loader::includeModule('imopenlines')
@@ -225,9 +217,10 @@ class NotificationsManager implements ICanSendMessage
 	public static function sendMessage(array $messageFields)
 	{
 		$templateCode = $messageFields['TEMPLATE_CODE'] ?? null;
+		$languageId = isset($messageFields['LANGUAGE_ID']) ? (string)$messageFields['LANGUAGE_ID'] : '';
 
 		$canSendMessage = (
-			is_string($templateCode) && self::checkTemplateCode($templateCode)
+			is_string($templateCode) && self::checkTemplateCode($templateCode, $languageId)
 				? static::canUse()
 				: static::canSendMessage()
 		);
@@ -239,7 +232,18 @@ class NotificationsManager implements ICanSendMessage
 				NotificationsPromoManager::usePromo();
 			}
 
-			return Message::create($messageFields)->enqueue();
+			$message = Message::create($messageFields);
+			if (
+				isset($messageFields['ADDITIONAL_FIELDS']['SKIP_QUOTA'])
+				&& $messageFields['ADDITIONAL_FIELDS']['SKIP_QUOTA'] === true
+				&& method_exists($message, 'setSkipQuota')
+			)
+			{
+				$message->setSkipQuota(true);
+				unset($messageFields['ADDITIONAL_FIELDS']['SKIP_QUOTA']);
+			}
+
+			return $message->enqueue();
 		}
 
 		return false;
@@ -518,22 +522,9 @@ class NotificationsManager implements ICanSendMessage
 		return Settings::getScenarioAvailability(Settings::SCENARIO_CRM_PAYMENT) !== FeatureStatus::UNAVAILABLE;
 	}
 
-	/**
-	 *
-	 * @return bool
-	 * @see \Bitrix\ImConnector\Tools\Connectors\Notifications::canUse
-	 */
-	private static function canUseTmp(): bool
+	private static function checkTemplateCode(string $templateCode, string $languageId): bool
 	{
-		return
-			Loader::includeModule('notifications')
-			&&  Settings::getScenarioAvailability(Settings::SCENARIO_CRM_PAYMENT) === FeatureStatus::AVAILABLE
-		;
-	}
-
-	private static function checkTemplateCode(string $templateCode): bool
-	{
-		$availableTemplates = [
+		$onlyRuTemplates = [
 			GoToChat::NOTIFICATIONS_MESSAGE_CODE,
 			Calendar\Notification\NotificationService::TEMPLATE_SHARING_EVENT_INVITATION,
 			Calendar\Notification\NotificationService::TEMPLATE_SHARING_EVENT_AUTO_ACCEPTED,
@@ -541,15 +532,24 @@ class NotificationsManager implements ICanSendMessage
 			Calendar\Notification\NotificationService::TEMPLATE_SHARING_EVENT_CANCELLED,
 			Calendar\Notification\NotificationService::TEMPLATE_SHARING_EVENT_EDITED,
 		];
+		if (
+			$languageId === 'ru'
+			&& in_array($templateCode, $onlyRuTemplates, true)
+		)
+		{
+			return true;
+		}
+
+		$allLangTemplates = [];
 
 		if (Loader::includeModule('booking'))
 		{
 			foreach (NotificationTemplateCodesProvider::getAll() as $bookingTemplate)
 			{
-				$availableTemplates[] = $templateCode;
+				$allLangTemplates[] = $bookingTemplate;
 			}
 		}
 
-		return in_array($templateCode, $availableTemplates, true);
+		return in_array($templateCode, $allLangTemplates, true);
 	}
 }

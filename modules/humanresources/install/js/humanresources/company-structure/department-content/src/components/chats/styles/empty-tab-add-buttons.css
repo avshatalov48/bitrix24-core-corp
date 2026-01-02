@@ -1,0 +1,6 @@
+.hr-department-detail-content__chat-empty-tab-add_buttons-container {
+	display: flex;
+	flex-direction: row;
+	align-items: center;
+	margin-top: 12px;
+}

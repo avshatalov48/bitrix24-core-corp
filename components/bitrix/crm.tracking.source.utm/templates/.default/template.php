@@ -21,7 +21,7 @@ use Bitrix\Main\UI\Extension;
 			</div>
 			<div class="crm-analytics-utm-editor-field">
 				<span class="crm-analytics-utm-editor-field-title"><?= Loc::getMessage("CRM_TRACKING_SOURCE_UTM_SITE_NAME") ?></span>
-				<input class="crm-analytics-utm-editor-field-input" type="text" placeholder="https://yoursite.ru">
+				<input class="crm-analytics-utm-editor-field-input" type="text" placeholder="https://example.com">
 				<div class="crm-analytics-utm-editor-field-decs"><?= Loc::getMessage("CRM_TRACKING_SOURCE_UTM_SITE_NAME_DESC") ?></div>
 			</div>
 		</div>

@@ -4,6 +4,11 @@ use Bitrix\Main\Config\Option;
 
 require($_SERVER['DOCUMENT_ROOT'] . '/bitrix/header.php');
 
+if (\Bitrix\Main\Loader::includeModule('ui'))
+{
+	\Bitrix\UI\Toolbar\Facade\Toolbar::deleteFavoriteStar();
+}
+
 $APPLICATION->IncludeComponent(
 	'bitrix:ui.sidepanel.wrapper',
 	'',
@@ -26,7 +31,8 @@ $APPLICATION->IncludeComponent(
 			'NAME_TEMPLATE' => CSite::GetNameFormat(false)
 		],
 		'USE_PADDING' => true,
-	]
+		'USE_UI_TOOLBAR' => 'Y',
+	],
 );
 
 require($_SERVER['DOCUMENT_ROOT'] . '/bitrix/footer.php');

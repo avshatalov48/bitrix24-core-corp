@@ -8,7 +8,7 @@ $MESS["JS_DISK_DOC_PROCESS_NOW_DOWNLOAD_FROM_SERVICE"] = "Загрузка до�
 $MESS["JS_DISK_DOC_PROCESS_SAVE_AS"] = "Сохранить как";
 $MESS["JS_DISK_DOC_PROCESS_CREATE_DESCR_SAVE_DOC_F"] = "В одном из окон вы создаете новый документ. Если вы завершили работу над документом, нажмите \"#SAVE_AS_DOC#\", чтобы перейти к добавлению документа на портал.";
 $MESS["JS_DISK_DOC_PROCESS_NOW_CREATING_IN_SERVICE"] = "Создание документа в #SERVICE#";
-$MESS["JS_DISK_DOC_TRY_TO_OPEN_BY_LOCAL_PROGRAM"] = "Попробуйте <a href='#' id='#ID#'>открыть документ</a> с помощью Битрикс24.Десктоп";
+$MESS["JS_DISK_DOC_TRY_TO_OPEN_BY_LOCAL_PROGRAM"] = "Попробуйте <a href='#' id='#ID#'>открыть документ</a> с помощью приложения для компьютера";
 $MESS["JS_DISK_DOC_TRY_TO_OPEN_BY_LOCAL_PROGRAM_TITLE"] = "Не удалось открыть файл. Попробуйте <a href='#' id='#ID#'>открыть</a> его с помощью Битрикс24.Диск.";
 $MESS["JS_DISK_DOC_TRY_TO_OPEN_BY_LOCAL_PROGRAM_OR_DOWNLOAD"] = "Или <a href=\"#DOWNLOAD_LINK#\" target=\"_blank\">скачайте</a> файл.";
 $MESS["JS_DISK_DOC_WAITING_FOR_BITRIX24_DESKTOP"] = "Запуск приложения Битрикс24";

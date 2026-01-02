@@ -520,25 +520,25 @@ class crm extends CModule
 			$CCrmRole = new CCrmRole();
 			$roles = RolePreset::GetDefaultRolesPreset();
 
-			$adminRoleID = null;
-			foreach ($roles as $presetKey => $role)
+			$rolesRelations = [];
+			foreach ($roles as $role)
 			{
-				if ($presetKey === RolePreset::ADMIN)
+				$roleId = $CCrmRole->Add($role);
+				if ($roleId && $role['RELATIONS'] ?? false)
 				{
-					$adminRoleID = $CCrmRole->Add($roles[RolePreset::ADMIN]);
-					continue;
+					foreach ($role['RELATIONS'] as $relation)
+					{
+						if (!isset($rolesRelations[$relation]))
+						{
+							$rolesRelations[$relation] = [];
+						}
+						$rolesRelations[$relation][] = $roleId;
+					}
 				}
-
-				$CCrmRole->Add($role);
 			}
-
-			$dbGroup = CGroup::GetList('', '', ['STRING_ID' => 'MARKETING_AND_SALES']);
-			$arGroup = $dbGroup->Fetch();
-			if ($adminRoleID && $arGroup)
+			if (!empty($rolesRelations))
 			{
-				$CCrmRole->SetRelation(
-					['G' . $arGroup['ID'] => [$adminRoleID]]
-				);
+				$CCrmRole->SetRelation($rolesRelations);
 			}
 
 			(new \Bitrix\Crm\Copilot\CallAssessment\FillPreliminaryCallAssessments())->execute();
@@ -625,6 +625,7 @@ class crm extends CModule
 			false,
 		);
 
+		\Bitrix\Main\Config\Option::set('crm', 'repeat_sale_segment_initialization', 'Y');
 		(new \Bitrix\Crm\Copilot\CallAssessment\FillPreliminaryCallAssessments())->execute();
 
 		\Bitrix\Crm\EntityRequisite::installDefaultPresets();
@@ -757,6 +758,7 @@ class crm extends CModule
 				$tableNamesToDelete[] = $typeFactory->getItemFieldsContextDataClass($type)::getTableName();
 				$tableNamesToDelete[] = \Bitrix\Crm\Security\AccessAttribute\Manager::getEntity(CCrmOwnerType::ResolveName($type->getEntityTypeId()))->getDBTableName();
 			}
+
 			foreach ($tableNamesToDelete as $tableName)
 			{
 				if ($connection->isTableExists($tableName))
@@ -1012,7 +1014,6 @@ class crm extends CModule
 		RegisterModuleDependences('report', 'OnReportUpdate', 'crm', 'CCrmReportHelper', 'clearMenuCache');
 		RegisterModuleDependences('report', 'OnReportDelete', 'crm', 'CCrmReportHelper', 'clearMenuCache');
 		RegisterModuleDependences('iblock', 'OnIBlockDelete', 'crm', 'CAllCrmCatalog', 'OnIBlockDelete');
-		RegisterModuleDependences('iblock', 'OnAfterIBlockElementDelete', 'crm', '\Bitrix\Crm\Order\Import\Instagram', 'onAfterIblockElementDelete');
 
 		RegisterModuleDependences('socialnetwork', 'OnFillSocNetLogEvents', 'crm', 'CCrmExternalSaleImport', 'OnFillSocNetLogEvents');
 
@@ -1141,6 +1142,8 @@ class crm extends CModule
 		$eventManager->registerEventHandler('main', 'OnAfterUserTypeDelete', 'crm', '\Bitrix\Crm\UserField\UserFieldHistory', 'onDelete');
 
 		$eventManager->registerEventHandler('documentgenerator', 'onGetDataProviderList', 'crm', '\Bitrix\Crm\Integration\DocumentGeneratorManager', 'getDataProviders');
+		$eventManager->registerEventHandler('documentgenerator', 'onModifyCustomFields', 'crm', '\Bitrix\Crm\Integration\DocumentGeneratorManager', 'onModifyCustomFields');
+		$eventManager->registerEventHandler('documentgenerator', 'onDeleteTemplate', 'crm', '\Bitrix\Crm\Integration\DocumentGeneratorManager', 'onDeleteTemplate');
 		$eventManager->registerEventHandler('documentgenerator', 'onCreateDocument', 'crm', '\Bitrix\Crm\Integration\DocumentGeneratorManager', 'onCreateDocument');
 		$eventManager->registerEventHandler('documentgenerator', 'onDocumentTransformationComplete', 'crm', '\Bitrix\Crm\Integration\DocumentGeneratorManager', 'onDocumentTransformationComplete');
 		$eventManager->registerEventHandler('documentgenerator', 'onUpdateDocument', 'crm', '\Bitrix\Crm\Integration\DocumentGeneratorManager', 'onUpdateDocument');
@@ -1322,6 +1325,14 @@ class crm extends CModule
 			'crm',
 			'\Bitrix\Crm\Activity\Provider\Notification',
 			'onMessageStatusUpdated'
+		);
+
+		$eventManager->registerEventHandler(
+			'notifications',
+			'onMessageSuccessfullyUpdated',
+			'crm',
+			'\Bitrix\Crm\Integration\Booking\EventHandler',
+			'onMessageStatusUpdate'
 		);
 
 		$eventManager->registerEventHandler(
@@ -1665,6 +1676,46 @@ class crm extends CModule
 			'\Bitrix\Crm\Integration\Booking\EventHandler',
 			'onBookingDelete'
 		);
+
+		$eventManager->registerEventHandler(
+			'booking',
+			'onWaitListItemAdd',
+			'crm',
+			'\Bitrix\Crm\Integration\Booking\EventHandler',
+			'onWaitListItemAdd'
+		);
+
+		$eventManager->registerEventHandler(
+			'booking',
+			'onWaitListItemUpdate',
+			'crm',
+			'\Bitrix\Crm\Integration\Booking\EventHandler',
+			'onWaitListItemUpdate'
+		);
+
+		$eventManager->registerEventHandler(
+			'booking',
+			'onWaitListItemDelete',
+			'crm',
+			'\Bitrix\Crm\Integration\Booking\EventHandler',
+			'onWaitListItemDelete'
+		);
+
+		$eventManager->registerEventHandler(
+			'intranet',
+			'onLicenseHasChanged',
+			'crm',
+			'\Bitrix\Crm\RepeatSale\AgentsManager',
+			'onLicenseHasChanged'
+		);
+
+		$eventManager->registerEventHandler(
+			'booking',
+			'onBookingStatusUpdated',
+			'crm',
+			'\Bitrix\Crm\Integration\Booking\EventHandler',
+			'onBookingStatusUpdated'
+		);
 	}
 
 	private function installAgents()
@@ -1781,8 +1832,6 @@ class crm extends CModule
 		{
 			\Bitrix\Crm\Agent\MovedByField\DealFieldAgent::bind();
 		}
-		// set initial values for LAST_ACTIVITY_TIME and LAST_ACTIVITY_BY fields
-		\Bitrix\Crm\Update\Entity\LastActivityFields::bindOnCrmModuleInstallIfNeeded();
 
 		\Bitrix\Crm\Update\Entity\ContactId::bindOnCrmModuleInstallIfNeeded();
 
@@ -1857,6 +1906,45 @@ class crm extends CModule
 			false,
 			false
 		);
+
+		/**
+		 * @see \Bitrix\Crm\Agent\RepeatSale\OnlyCalcSchedulerAgent
+		 */
+		\CAgent::AddAgent(
+			'Bitrix\Crm\Agent\RepeatSale\OnlyCalcSchedulerAgent::run();',
+			'crm',
+			'N',
+			3600,
+			'',
+			'Y',
+			\ConvertTimeStamp(time() + \CTimeZone::GetOffset() + 600, 'FULL'),
+		);
+
+		/**
+		 * @see \Bitrix\Crm\Agent\RepeatSale\JobExecutorAgent
+		 */
+		\CAgent::AddAgent(
+			'Bitrix\Crm\Agent\RepeatSale\JobExecutorAgent::run();',
+			'crm',
+			'N',
+			60,
+			'',
+			'Y',
+			\ConvertTimeStamp(time() + \CTimeZone::GetOffset() + 800, 'FULL'),
+		);
+
+		/**
+		 * @see \Bitrix\Crm\Agent\Copilot\AiQueueBufferAgent
+		 */
+		\CAgent::AddAgent(
+			'Bitrix\Crm\Agent\Copilot\AiQueueBufferAgent::run();',
+			'crm',
+			'N',
+			60 * 10,
+			'',
+			'Y',
+			\ConvertTimeStamp(time() + \CTimeZone::GetOffset() + 600, 'FULL')
+		);
 	}
 
 	private function uninstallEventHandlers()
@@ -1873,7 +1961,6 @@ class crm extends CModule
 		UnRegisterModuleDependences('report', 'OnReportUpdate', 'crm', 'CCrmReportHelper', 'clearMenuCache');
 		UnRegisterModuleDependences('report', 'OnReportDelete', 'crm', 'CCrmReportHelper', 'clearMenuCache');
 		UnRegisterModuleDependences('iblock', 'OnIBlockDelete', 'crm', 'CCrmCatalog', 'OnIBlockDelete');
-		UnRegisterModuleDependences('iblock', 'OnAfterIBlockElementDelete', 'crm', '\Bitrix\Crm\Order\Import\Instagram', 'onAfterIblockElementDelete');
 
 		UnRegisterModuleDependences("socialnetwork", "OnFillSocNetLogEvents", "crm", "CCrmExternalSaleImport", "OnFillSocNetLogEvents");
 
@@ -1995,7 +2082,10 @@ class crm extends CModule
 		$eventManager->unRegisterEventHandler('main', 'OnAfterUserTypeAdd', 'crm', '\Bitrix\Crm\UserField\UserFieldHistory', 'onAdd');
 		$eventManager->unRegisterEventHandler('main', 'OnAfterUserTypeUpdate', 'crm', '\Bitrix\Crm\UserField\UserFieldHistory', 'onUpdate');
 		$eventManager->unRegisterEventHandler('main', 'OnAfterUserTypeDelete', 'crm', '\Bitrix\Crm\UserField\UserFieldHistory', 'onDelete');
+
 		$eventManager->unRegisterEventHandler('documentgenerator', 'onGetDataProviderList', 'crm', '\Bitrix\Crm\Integration\DocumentGeneratorManager', 'getDataProviders');
+		$eventManager->unRegisterEventHandler('documentgenerator', 'onModifyCustomFields', 'crm', '\Bitrix\Crm\Integration\DocumentGeneratorManager', 'onModifyCustomFields');
+		$eventManager->unRegisterEventHandler('documentgenerator', 'onDeleteTemplate', 'crm', '\Bitrix\Crm\Integration\DocumentGeneratorManager', 'onDeleteTemplate');
 		$eventManager->unRegisterEventHandler('documentgenerator', 'onCreateDocument', 'crm', '\Bitrix\Crm\Integration\DocumentGeneratorManager', 'onCreateDocument');
 		$eventManager->unRegisterEventHandler('documentgenerator', 'onDocumentTransformationComplete', 'crm', '\Bitrix\Crm\Integration\DocumentGeneratorManager', 'onDocumentTransformationComplete');
 		$eventManager->unRegisterEventHandler('documentgenerator', 'onUpdateDocument', 'crm', '\Bitrix\Crm\Integration\DocumentGeneratorManager', 'onUpdateDocument');
@@ -2157,6 +2247,14 @@ class crm extends CModule
 			'crm',
 			'\Bitrix\Crm\Activity\Provider\Notification',
 			'onMessageStatusUpdated'
+		);
+
+		$eventManager->unRegisterEventHandler(
+			'notifications',
+			'onMessageSuccessfullyUpdated',
+			'crm',
+			'\Bitrix\Crm\Integration\Booking\EventHandler',
+			'onMessageStatusUpdate'
 		);
 
 		$eventManager->unRegisterEventHandler(
@@ -2499,6 +2597,46 @@ class crm extends CModule
 			'crm',
 			'\Bitrix\Crm\Integration\Booking\EventHandler',
 			'onBookingDelete'
+		);
+
+		$eventManager->unRegisterEventHandler(
+			'booking',
+			'onWaitListItemAdd',
+			'crm',
+			'\Bitrix\Crm\Integration\Booking\EventHandler',
+			'onWaitListItemAdd'
+		);
+
+		$eventManager->unRegisterEventHandler(
+			'booking',
+			'onWaitListItemUpdate',
+			'crm',
+			'\Bitrix\Crm\Integration\Booking\EventHandler',
+			'onWaitListItemUpdate'
+		);
+
+		$eventManager->unRegisterEventHandler(
+			'booking',
+			'onWaitListItemDelete',
+			'crm',
+			'\Bitrix\Crm\Integration\Booking\EventHandler',
+			'onWaitListItemDelete'
+		);
+
+		$eventManager->unRegisterEventHandler(
+			'booking',
+			'onBookingStatusUpdated',
+			'crm',
+			'\Bitrix\Crm\Integration\Booking\EventHandler',
+			'onBookingStatusUpdated'
+		);
+
+		$eventManager->unRegisterEventHandler(
+			'intranet',
+			'onLicenseHasChanged',
+			'crm',
+			'\Bitrix\Crm\RepeatSale\AgentsManager',
+			'onLicenseHasChanged'
 		);
 	}
 

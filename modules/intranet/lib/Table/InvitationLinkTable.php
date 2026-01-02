@@ -2,7 +2,7 @@
 
 namespace Bitrix\Intranet\Table;
 
-use Bitrix\Intranet\Model\InvitationLink;
+use Bitrix\Intranet\Internal\Model\InvitationLink;
 use Bitrix\Main\ORM\Data\DataManager;
 use Bitrix\Main\ORM\Fields\DatetimeField;
 use Bitrix\Main\ORM\Fields\IntegerField;
@@ -19,9 +19,9 @@ use Bitrix\Main\ORM\Fields\StringField;
  * @method static EO_InvitationLink_Result getById($id)
  * @method static EO_InvitationLink_Result getList(array $parameters = [])
  * @method static EO_InvitationLink_Entity getEntity()
- * @method static \Bitrix\Intranet\Model\InvitationLink createObject($setDefaultValues = true)
+ * @method static \Bitrix\Intranet\Internal\Model\InvitationLink createObject($setDefaultValues = true)
  * @method static \Bitrix\Intranet\Table\EO_InvitationLink_Collection createCollection()
- * @method static \Bitrix\Intranet\Model\InvitationLink wakeUpObject($row)
+ * @method static \Bitrix\Intranet\Internal\Model\InvitationLink wakeUpObject($row)
  * @method static \Bitrix\Intranet\Table\EO_InvitationLink_Collection wakeUpCollection($rows)
  */
 class InvitationLinkTable extends DataManager

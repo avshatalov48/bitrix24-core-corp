@@ -27,6 +27,7 @@ $APPLICATION->IncludeComponent(
 			'REST_HANDLER_CODE' => $request->get('restHandlerCode'),
 		],
 		'USE_PADDING' => false,
+		'USE_UI_TOOLBAR' => 'Y',
 	]
 );
 

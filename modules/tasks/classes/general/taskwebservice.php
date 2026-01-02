@@ -15,6 +15,7 @@ use Bitrix\Recyclebin\Internals\Models\RecyclebinDataTable;
 use Bitrix\Recyclebin\Internals\Models\RecyclebinTable;
 use Bitrix\Tasks\Integration\Recyclebin\Manager;
 use Bitrix\Tasks\Internals\Task\Priority;
+use Bitrix\Tasks\V2\Internal\DI\Container;
 
 IncludeModuleLangFile(__FILE__);
 
@@ -484,8 +485,9 @@ class CTasksWebService extends IWebService
 			{
 				if ($path = CFile::GetPath($taskFile["FILE_ID"]))
 				{
+					$url = Container::getInstance()->getUrlService()->getHostUrl();
 					$data .= '<Attachment>'
-						. tasksServerName() . '/tasks/getfile/' . (int) $taskId
+						. $url . '/tasks/getfile/' . (int) $taskId
 						. '/' . (int) $taskFile['FILE_ID']
 						. '/' . urlencode(mb_strtolower(basename($path)))
 					. '</Attachment>';

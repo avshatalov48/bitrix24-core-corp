@@ -3,9 +3,9 @@
  */
 jn.define('im/messenger/controller/dialog/lib/emitter', (require, exports, module) => {
 	const { Type } = require('type');
-	const { LoggerManager } = require('im/messenger/lib/logger');
+	const { getLogger } = require('im/messenger/lib/logger');
 
-	const logger = LoggerManager.getInstance().getLogger('dialog--emitter');
+	const logger = getLogger('dialog--emitter');
 
 	/**
 	 * @implements {IDialogEmitter}

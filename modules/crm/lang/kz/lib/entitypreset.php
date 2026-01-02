@@ -1,0 +1,27 @@
+<?php
+$MESS["CRM_ENTITY_PRESET_ACTIVE_FIELD"] = "Белсенді";
+$MESS["CRM_ENTITY_PRESET_COUNTRY_ID_FIELD"] = "Елдің ID";
+$MESS["CRM_ENTITY_PRESET_CREATED_BY_ID_FIELD"] = "Жасады";
+$MESS["CRM_ENTITY_PRESET_DATE_CREATE_FIELD"] = "Жасалған күні";
+$MESS["CRM_ENTITY_PRESET_DATE_MODIFY_FIELD"] = "Өзгерту күні";
+$MESS["CRM_ENTITY_PRESET_ENTITY_TYPE_ID_FIELD"] = "Мән түрінің ID";
+$MESS["CRM_ENTITY_PRESET_ERR_DELETE_PRESET_DEF_FOR_COMPANY"] = "Сіз қалыпты жоя алмайсыз, өйткені ол компания үшін негізгі болып табылады.";
+$MESS["CRM_ENTITY_PRESET_ERR_DELETE_PRESET_DEF_FOR_CONTACT"] = "Сіз қалыпты жоя алмайсыз, өйткені ол байланыстар үшін негізгі болып табылады.";
+$MESS["CRM_ENTITY_PRESET_ERR_DELETE_PRESET_USED"] = "Сіз қалыпты жоя алмайсыз, өйткені ол бойынша деректемелер құрылып қойды.";
+$MESS["CRM_ENTITY_PRESET_ERR_INVALID_ENTITY_TYPE"] = "Үлгі үшін жарамсыз нысан түрі.";
+$MESS["CRM_ENTITY_PRESET_ERR_PRESET_NOT_FOUND"] = "Қалып табылмады.";
+$MESS["CRM_ENTITY_PRESET_FIELD_NAME_FIELD"] = "Аты";
+$MESS["CRM_ENTITY_PRESET_FIELD_TITLE_FIELD"] = "Қалыптағы атауы";
+$MESS["CRM_ENTITY_PRESET_ID_FIELD"] = "ID";
+$MESS["CRM_ENTITY_PRESET_IN_SHORT_LIST_FIELD"] = "Қысқа тізімде көрсету";
+$MESS["CRM_ENTITY_PRESET_MODIFY_BY_ID_FIELD"] = "Өзгертті";
+$MESS["CRM_ENTITY_PRESET_NAME_EMPTY"] = "Атаусыз қалып";
+$MESS["CRM_ENTITY_PRESET_NAME_FIELD"] = "Атауы";
+$MESS["CRM_ENTITY_PRESET_SORT_FIELD"] = "Сұрыптау";
+$MESS["CRM_ENTITY_PRESET_UF_TYPE_BOOLEAN"] = "Иә/Жоқ";
+$MESS["CRM_ENTITY_PRESET_UF_TYPE_DATETIME"] = "Күні";
+$MESS["CRM_ENTITY_PRESET_UF_TYPE_DOUBLE"] = "Сан";
+$MESS["CRM_ENTITY_PRESET_UF_TYPE_STRING"] = "Жол";
+$MESS["CRM_ENTITY_PRESET_XML_ID_FIELD"] = "Сыртқы код";
+$MESS["CRM_ENTITY_TYPE_REQUISITE"] = "Деректемелер";
+$MESS["CRM_ENTITY_TYPE_REQUISITE_DESC"] = "Деректеме қалыптары";

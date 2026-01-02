@@ -30,7 +30,7 @@ final class Task extends Base
 
 	public static function getName()
 	{
-		return Loc::getMessage('CRM_ACTIVITY_PROVIDER_BIZPROC_TASK_NAME') ?? '';
+		return Loc::getMessage('CRM_ACTIVITY_PROVIDER_BIZPROC_TASK_NAME_MSGVER_1') ?? '';
 	}
 
 	public static function getTypes()

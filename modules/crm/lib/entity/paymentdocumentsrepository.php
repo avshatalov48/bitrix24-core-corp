@@ -260,7 +260,14 @@ class PaymentDocumentsRepository
 		$factory = Crm\Service\Container::getInstance()->getFactory($this->ownerTypeId);
 		if ($factory && $factory->isLinkWithProductsEnabled())
 		{
-			$item = $factory->getItem($this->ownerId);
+			$item = $factory->getItem(
+				$this->ownerId,
+				[
+					'OPPORTUNITY',
+					'CURRENCY_ID',
+				],
+			);
+
 			if ($item)
 			{
 				$this->entityAmount = $item->getOpportunity();

@@ -7,12 +7,12 @@ if (!defined("B_PROLOG_INCLUDED") || B_PROLOG_INCLUDED !== true)
 use Bitrix\Main\Localization\Loc;
 use Bitrix\Main\ObjectException;
 use Bitrix\Main\UI\Filter;
-use Bitrix\Tasks\Integration\Intranet\Settings;
 use Bitrix\Tasks\Internals\Effective;
 use Bitrix\Tasks\Util\Error\Collection;
 use Bitrix\Tasks\Integration\Bitrix24;
 use Bitrix\Tasks\Util\Type\DateTime;
 use Bitrix\Tasks\Util\User;
+use Bitrix\Tasks\V2\Internal\DI\Container;
 
 Loc::loadMessages(__FILE__);
 
@@ -140,7 +140,7 @@ class TasksReportEffectiveComponent extends TasksBaseComponent
 			return;
 		}
 
-		$arResult['IS_TOOL_AVAILABLE'] = (new Settings())->isToolAvailable(Settings::TOOLS['effective']);
+		$arResult['IS_TOOL_AVAILABLE'] = Container::getInstance()->getToolService()->isEffectiveAvailable();
 	}
 
 	protected function checkParameters()

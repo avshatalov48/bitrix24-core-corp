@@ -1,3 +1,4 @@
+/* eslint-disable */
 (function (exports,ui_vue,ui_vue_vuex) {
     'use strict';
 

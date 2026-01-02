@@ -1,3 +1,4 @@
+import { Builder, Dictionary } from 'crm.integration.analytics';
 import { Loc } from 'main.core';
 import { EntityCatalog } from 'ui.entity-catalog';
 import { fetchTemplates, Templates } from './http';
@@ -13,8 +14,12 @@ export class TemplateCatalogCreator
 		learnMore: Loc.getMessage('CRM_GROUP_ACTIONS_WHATSAPP_MESSAGE_POPUP_MORE'),
 	};
 
+	#entityTypeId: string | number | null;
+
 	async create(entityTypeId: number, categoryId: ?number): Promise<EntityCatalog>
 	{
+		this.#entityTypeId = entityTypeId;
+
 		const rawTemplates = await fetchTemplates(entityTypeId, categoryId);
 
 		const itemsData = this.#getTemplateItems(entityTypeId, categoryId, rawTemplates);
@@ -37,6 +42,11 @@ export class TemplateCatalogCreator
 			title: Loc.getMessage('CRM_GROUP_ACTIONS_WHATSAPP_MESSAGE_POPUP_TITLE'),
 			popupOptions: {
 				overlay: true,
+				events: {
+					onPopupClose: () => {
+						this.#submitAnalytics();
+					},
+				},
 			},
 		});
 	}
@@ -124,5 +134,18 @@ export class TemplateCatalogCreator
 				${this.#messages.learnCompliance}
 			</div>
 		`;
+	}
+
+	#submitAnalytics()
+	{
+		const analyticsData = Builder.Communication.FormEvent.createDefault(
+			this.#entityTypeId,
+		)
+			.setEvent(Dictionary.EVENT_WA_POPUP)
+			.setSubSection(Dictionary.SUB_SECTION_LIST)
+			.setElement(Dictionary.ELEMENT_WA_POPUP_CLOSE)
+			.buildData();
+
+		BX.UI.Analytics.sendData(analyticsData);
 	}
 }

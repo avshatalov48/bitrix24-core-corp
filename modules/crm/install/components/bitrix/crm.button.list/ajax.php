@@ -109,18 +109,12 @@ class CrmSiteButtonListAjaxController extends \Bitrix\Crm\SiteButton\ComponentCo
 
 	protected function checkPermissionsWrite()
 	{
-		/**@var $USER \CUser*/
-		global $USER;
-		$CrmPerms = new CCrmPerms($USER->GetID());
-		return !$CrmPerms->HavePerm('BUTTON', BX_CRM_PERM_NONE, 'WRITE');
+		return \Bitrix\Crm\Service\Container::getInstance()->getUserPermissions()->siteButton()->canEdit();
 	}
 
 	protected function checkPermissions()
 	{
-		/**@var $USER \CUser*/
-		global $USER;
-		$CrmPerms = new CCrmPerms($USER->GetID());
-		return !$CrmPerms->HavePerm('BUTTON', BX_CRM_PERM_NONE, 'READ');
+		return \Bitrix\Crm\Service\Container::getInstance()->getUserPermissions()->siteButton()->canRead();
 	}
 
 	protected function prepareRequestData()

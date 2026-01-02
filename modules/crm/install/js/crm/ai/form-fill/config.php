@@ -19,6 +19,7 @@ return [
 		'ui.notification',
 		'main.core',
 		'ui.buttons',
+		'crm.integration.ui.settings',
 	],
 	'skip_core' => false,
 ];

@@ -30,6 +30,11 @@ jn.define('layout/ui/friendly-date/time-ago-format', (require, exports, module) 
 			return BX.prop.getBoolean(this.props, 'futureAllowed', false);
 		}
 
+		get showTime()
+		{
+			return BX.prop.getBoolean(this.props, 'showTime', false);
+		}
+
 		/**
 		 * @public
 		 * @param {Moment} moment

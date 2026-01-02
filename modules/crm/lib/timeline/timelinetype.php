@@ -36,4 +36,5 @@ class TimelineType
 	public const SIGN_B2E_DOCUMENT = 29;
 	public const SIGN_B2E_DOCUMENT_LOG = 30;
 	public const BOOKING = 31;
+	public const WAIT_LIST_ITEM = 32;
 }

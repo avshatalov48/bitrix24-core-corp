@@ -1,0 +1,3 @@
+<?php
+$MESS["CRM_BP_DOCUMENT_SMART_DOCUMENT_ENTITY_NAME"] = "Қолтаңба";
+$MESS["CRM_BP_DOCUMENT_SMART_DOCUMENT_ENTITY_NAME_1"] = "Қол қойылатын құжат";

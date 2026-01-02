@@ -24,6 +24,7 @@ return [
 		'layout/ui/context-menu/item',
 		'layout/ui/kanban/filter',
 		'ui-system/blocks/icon',
+		'utils/function',
 
 		'crm:type',
 		'crm:loc',

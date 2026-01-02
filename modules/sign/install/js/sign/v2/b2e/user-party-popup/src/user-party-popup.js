@@ -1,7 +1,8 @@
-import { Tag, Text, Dom, Loc, Browser } from 'main.core';
+import { Tag, Text, Dom, Loc } from 'main.core';
 import { Popup } from 'main.popup';
 import { Api } from 'sign.v2.api';
 import { Loader } from 'main.loader';
+import { MemberRole, type MemberRoleType } from 'sign.type';
 import 'main.polyfill.intersectionobserver';
 import './user-party-popup.css';
 
@@ -9,6 +10,8 @@ const pageSize = 20;
 
 type PopupOptions = {
 	bindElement: HTMLElement,
+	isDepartmentsVisible: boolean,
+	role: MemberRoleType,
 };
 
 type Department = {
@@ -128,10 +131,7 @@ export class UserPartyPopup
 
 	async #init(): Promise
 	{
-		const [members, departments] = await Promise.all([
-			this.#loadMembersPage(1),
-			this.#loadDepartmentsPage(1),
-		]);
+		const members = await this.#loadMembersPage(1);
 
 		if (members.length > 0)
 		{
@@ -142,13 +142,22 @@ export class UserPartyPopup
 			}
 		}
 
-		if (departments.length > 0)
+		if (this.#options.isDepartmentsVisible === false)
 		{
-			this.#appendDepartmentsToPopup(departments);
-			if (departments.length >= pageSize)
-			{
-				this.#departmentsObserver.observe(this.#ui.departmentsContent.lastChild);
-			}
+			return;
+		}
+
+		const departments = await this.#loadDepartmentsPage(1);
+
+		if (departments.length === 0)
+		{
+			return;
+		}
+
+		this.#appendDepartmentsToPopup(departments);
+		if (departments.length >= pageSize)
+		{
+			this.#departmentsObserver.observe(this.#ui.departmentsContent.lastChild);
 		}
 	}
 
@@ -207,16 +216,26 @@ export class UserPartyPopup
 			e.preventDefault();
 		};
 
+		let departmentsTab = Tag.render``;
+
+		if (this.#options.isDepartmentsVisible === true)
+		{
+			departmentsTab = Tag.render`
+				<span onclick="${departmentsOnclick}" class="bx-user-party-popup-popup-head-item --department">
+					<span class="bx-user-party-popup-popup-head-icon"></span>
+					<span class="bx-user-party-popup-popup-head-text">${Loc.getMessage(
+				'SIGN_USER_PARTY_POPUP_TAB_DEPARTMENTS')}</span>
+				</span>
+			`;
+		}
+
 		this.#ui.tabs = Tag.render`
 			<span class="bx-user-party-popup-popup-head">
 				<span onclick="${membersOnclick}" class="bx-user-party-popup-popup-head-item --member bx-user-party-popup-popup-head-item-current">
 					<span class="bx-user-party-popup-popup-head-icon"></span>
 					<span class="bx-user-party-popup-popup-head-text">${Loc.getMessage('SIGN_USER_PARTY_POPUP_TAB_MEMBERS')}</span>
 				</span>
-				<span onclick="${departmentsOnclick}" class="bx-user-party-popup-popup-head-item --department">
-					<span class="bx-user-party-popup-popup-head-icon"></span>
-					<span class="bx-user-party-popup-popup-head-text">${Loc.getMessage('SIGN_USER_PARTY_POPUP_TAB_DEPARTMENTS')}</span>
-				</span>
+				${departmentsTab}
 			</span>
 		`;
 
@@ -321,7 +340,8 @@ export class UserPartyPopup
 
 	async #loadMembersPage(page: number): Promise<Member[]>
 	{
-		const response: ResponseMembers = await this.#api.getMembersForDocument(this.#documentUid, page, pageSize);
+		const role = this.#options.role ?? MemberRole.signer;
+		const response: ResponseMembers = await this.#api.getMembersForDocument(this.#documentUid, page, pageSize, role);
 
 		return response?.members || [];
 	}
@@ -352,12 +372,24 @@ export class UserPartyPopup
 			const memberName = Text.encode(member.name);
 			const avatar = Tag.render`<span class="bx-user-party-popup-popup-user-icon"></span>`;
 
-			this.#ui.membersContent.append(Tag.render`
-				<a href="${Text.encode(member.profileUrl)}" data-member-id="${Text.encode(member.memberId)}" class="bx-user-party-popup-popup-user-item --user">
-					${avatar}
-					<span class="bx-user-party-popup-popup-user-name" title="${memberName}">${memberName}</span>
-				</a>
-			`);
+			if (member.profileUrl)
+			{
+				this.#ui.membersContent.append(Tag.render`
+					<a href="${Text.encode(member.profileUrl)}" data-member-id="${Text.encode(member.memberId)}" class="bx-user-party-popup-popup-user-item --user">
+						${avatar}
+						<span class="bx-user-party-popup-popup-user-name" title="${memberName}">${memberName}</span>
+					</a>
+				`);
+			}
+			else
+			{
+				this.#ui.membersContent.append(Tag.render`
+					<span class="bx-user-party-popup-popup-user-item --role">
+						${avatar}
+						<span class="bx-user-party-popup-popup-user-name" title="${memberName}">${memberName}</span>
+					</span>
+				`);
+			}
 
 			if (member.avatar)
 			{

@@ -1,18 +1,11 @@
-<?
-$MESS ['CT_MAIN_REG_INIT_CONFIRM'] = "Подтвердить";
-$MESS ['CT_MAIN_REG_INIT_TITLE'] = "Подтверждение регистрации";
-$MESS ['CT_MAIN_REG_INIT_LOGIN_TITLE'] = "E-mail";
-$MESS ['CT_MAIN_REG_INIT_CHECKWORD_TITLE'] = "Контрольное слово";
-$MESS ['CT_MAIN_REG_INIT_PASSWORD_TITLE'] = "Пароль <span class=\"login-label-thin\">(мин. 6 символов)</span>";
-$MESS ['CT_MAIN_REG_INIT_CONFIRM_PASSWORD_TITLE'] = "Подтверждение пароля";
-$MESS ['CT_MAIN_REG_INIT_REMEMBER_TITLE'] = "Запомнить меня на этом компьютере";
-$MESS ['CT_MAIN_REG_INIT_NAME_TITLE'] = "Имя";
-$MESS ['CT_MAIN_REG_INIT_LAST_NAME_TITLE'] = "Фамилия";
-$MESS ['CT_MAIN_REG_INIT_WORK_COMPANY_TITLE'] = "Компания";
-$MESS ['CT_MAIN_REG_INIT_WORK_PHONE_TITLE'] = "Телефон";
-$MESS ['CT_MAIN_REG_INIT_PERSONAL_PHOTO_TITLE'] = "Фото";
-$MESS ['CT_MAIN_REG_INIT_PERSONAL_PHOTO_DOWNLOAD'] = "Загрузить";
-$MESS ['CT_MAIN_REG_INIT_REQUIRED_COMMENT'] = "Обязательные поля";
-$MESS ['CT_MAIN_REG_INIT_FUTURE_COMMENT'] = "В дальнейшем вы сможете изменить и дополнить данные аккаунта на странице изменения своего профиля.";
-$MESS ['CT_MAIN_REG_INIT_AUTH_LINK'] = "Ссылка на регистрацию недействительна. Пожалуйста, обратитесь к администратору портала.";
-?>
+<?php
+$MESS["INTRANET_AUTH_TITLE"] = "Подтверждение регистрации";
+$MESS["INTRANET_AUTH_EMAIL"] = "E-mail";
+$MESS["INTRANET_AUTH_PASSWORD"] = "Пароль";
+$MESS["INTRANET_AUTH_CONFIRM_PASSWORD"] = "Подтверждение пароля";
+$MESS["INTRANET_AUTH_REMEMBER_ME"] = "Запомнить меня";
+$MESS["INTRANET_AUTH_NAME"] = "Имя";
+$MESS["INTRANET_AUTH_LAST_NAME"] = "Фамилия";
+$MESS["INTRANET_AUTH_REG_INIT_ERROR"] = "Ссылка на регистрацию недействительна. Пожалуйста, обратитесь к администратору портала.";
+$MESS["INTRANET_INIT_USER_ALREADY_EXISTS"] = "Вы уже присоединились к этому Битрикс24. Введите логин и пароль, чтобы войти";
+$MESS["INTRANET_AUTH_CONTINUE_BUTTON"] = "Продолжить";

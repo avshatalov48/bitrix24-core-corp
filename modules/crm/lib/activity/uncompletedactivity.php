@@ -3,15 +3,13 @@
 namespace Bitrix\Crm\Activity;
 
 use Bitrix\Crm\Activity\Entity\EntityUncompletedActivityTable;
-use Bitrix\Crm\Activity\Entity\IncomingChannelTable;
 use Bitrix\Crm\Activity\LightCounter\ActCounterLightTimeRepo;
 use Bitrix\Crm\Activity\UncompletedActivity\SyncByActivityChange;
 use Bitrix\Crm\Activity\UncompletedActivity\UncompletedActivityRepo;
 use Bitrix\Crm\Activity\UncompletedActivity\UpsertDto;
 use Bitrix\Crm\ItemIdentifier;
-use Bitrix\Crm\Service\Timeline\Monitor;
+use Bitrix\Crm\Service\Container;
 use Bitrix\Crm\Settings\CounterSettings;
-use Bitrix\Main\DB\SqlQueryException;
 use Bitrix\Main\Type\DateTime;
 
 class UncompletedActivity
@@ -26,6 +24,10 @@ class UncompletedActivity
 	public static function synchronizeForUncompletedActivityChange(UncompletedActivityChange $change): void
 	{
 		if ($change->isChangedAlreadyCompletedActivity())
+		{
+			return;
+		}
+		if ($change->isChangedAlreadyDeletedCompletedActivity())
 		{
 			return;
 		}
@@ -183,7 +185,7 @@ class UncompletedActivity
 	{
 		if ($this->trySynchronizeByActivityChange())
 		{
-			Monitor::getInstance()->onUncompletedActivityChange($this->itemIdentifier);
+			Container::getInstance()->getPullEventsQueue()->onUncompletedActivityChange($this->itemIdentifier);
 
 			return;
 		}
@@ -249,7 +251,7 @@ class UncompletedActivity
 
 		if ($isChanged)
 		{
-			Monitor::getInstance()->onUncompletedActivityChange($this->itemIdentifier);
+			Container::getInstance()->getPullEventsQueue()->onUncompletedActivityChange($this->itemIdentifier);
 		}
 	}
 

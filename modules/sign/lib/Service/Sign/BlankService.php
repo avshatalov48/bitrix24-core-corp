@@ -16,6 +16,8 @@ use Bitrix\Sign\Item\Document;
 use Bitrix\Sign\Item\Fs\File;
 use Bitrix\Sign\Item\Fs\FileCollection;
 use Bitrix\Sign\Item\Fs\FileContent;
+use Bitrix\Sign\Operation\SaveBlankPreviewPage;
+use Bitrix\Sign\Repository\Blank\ResourceRepository;
 use Bitrix\Sign\Repository\BlankRepository;
 use Bitrix\Sign\Repository\FileRepository;
 use Bitrix\Sign\Service\Container;
@@ -27,6 +29,7 @@ class BlankService
 	private BlankFileService $blankFileService;
 	private BlankRepository $blankRepository;
 	private FileRepository $fileRepository;
+	private readonly ResourceRepository $resourceRepository;
 
 	public function __construct(
 		?BlankFileService $blankFileService = null,
@@ -40,6 +43,7 @@ class BlankService
 			->getBlankRepository();
 		$this->fileRepository = $fileRepository ?? Container::instance()
 			->getFileRepository();
+		$this->resourceRepository = Container::instance()->getBlankResourceRepository();
 	}
 
 	/**
@@ -90,7 +94,7 @@ class BlankService
 			$firstFile = File::createByLegacyFile($resultFile);
 		}
 
-		$blank = $this->blankRepository->add(
+		$addResult = $this->blankRepository->add(
 			new Blank(
 				title: $firstFile->name,
 				fileCollection: new FileCollection($firstFile),
@@ -100,9 +104,9 @@ class BlankService
 		);
 		$files = $fileCollection->toArray();
 
-		if ($blank->isSuccess() && $firstFile->isImage)
+		if ($addResult->isSuccess() && $firstFile->isImage)
 		{
-			$result = $this->blankFileService->addImagesToBlank($blank->getId(), $files);
+			$result = $this->blankFileService->addImagesToBlank($addResult->getId(), $files);
 			if (!$result->isSuccess())
 			{
 				return (new AddResult())->addErrors($result->getErrors());
@@ -116,7 +120,7 @@ class BlankService
 			}
 		}
 
-		return $blank;
+		return $addResult;
 	}
 
 	/**
@@ -153,6 +157,11 @@ class BlankService
 				$pendingFiles->makePersistent();
 				$file = $pendingFiles->get($fileId);
 				$persistentFileId = $file->getFileId();
+
+				if ($persistentFileId === null)
+				{
+					return (new AddResult())->addError(new Error('Failed to save uploaded file'));
+				}
 			}
 
 			$signFile = new \Bitrix\Sign\File((int)($persistentFileId ?: $fileId));
@@ -208,5 +217,31 @@ class BlankService
 		}
 
 		return $this->deleteWithResources($blank);
+	}
+
+	public function getPreviewUrl(int $blankId): ?string
+	{
+		if ($blankId < 1)
+		{
+			return null;
+		}
+
+		$resource = $this->resourceRepository->getFirstByBlankId($blankId);
+		if ($resource === null)
+		{
+			return null;
+		}
+
+		return $this->fileRepository->getFileSrc($resource->fileId);
+	}
+
+	public function getById(int $blankId): ?Blank
+	{
+		if ($blankId < 1)
+		{
+			return null;
+		}
+
+		return $this->blankRepository->getById($blankId);
 	}
 }

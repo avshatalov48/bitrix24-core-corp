@@ -4,8 +4,8 @@ declare(strict_types=1);
 
 namespace Bitrix\Booking\Internals\Model;
 
-use Bitrix\Main\Entity\DataManager;
-use Bitrix\Main\Entity\BooleanField;
+use Bitrix\Main\ORM\Data\DataManager;
+use Bitrix\Main\ORM\Fields\BooleanField;
 use Bitrix\Main\ORM\Fields\IntegerField;
 use Bitrix\Main\ORM\Fields\Relations\CascadePolicy;
 use Bitrix\Main\ORM\Fields\Relations\OneToMany;
@@ -75,6 +75,13 @@ class ResourceTable extends DataManager
 				ResourceNotificationSettingsTable::getEntity(),
 				Join::on('this.ID', 'ref.RESOURCE_ID')
 			)),
+			(new OneToMany(
+				'ENTITIES',
+				ResourceLinkedEntityTable::class,
+				'RESOURCE',
+			))
+				->configureJoinType(Join::TYPE_LEFT)
+				->configureCascadeDeletePolicy(CascadePolicy::FOLLOW),
 		];
 	}
 }

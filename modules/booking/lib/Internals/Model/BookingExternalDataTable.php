@@ -4,7 +4,8 @@ declare(strict_types=1);
 
 namespace Bitrix\Booking\Internals\Model;
 
-use Bitrix\Main\Entity\DataManager;
+use Bitrix\Booking\Internals\Model\Enum\EntityType;
+use Bitrix\Main\ORM\Data\DataManager;
 use Bitrix\Main\ORM\Data\Internal\DeleteByFilterTrait;
 use Bitrix\Main\ORM\Fields\IntegerField;
 use Bitrix\Main\ORM\Fields\Relations\Reference;
@@ -52,8 +53,9 @@ final class BookingExternalDataTable extends DataManager
 				->configurePrimary()
 				->configureAutocomplete(),
 
-			(new IntegerField('BOOKING_ID'))
-				->configureRequired(),
+			(new IntegerField('ENTITY_ID'))
+				->configureRequired()
+				->configureDefaultValue(0),
 
 			(new StringField('MODULE_ID'))
 				->addValidator(new LengthValidator(1, 255))
@@ -67,6 +69,9 @@ final class BookingExternalDataTable extends DataManager
 				->addValidator(new LengthValidator(1, 255))
 				->configureRequired(),
 
+			(new StringField('ENTITY_TYPE'))
+				->addValidator(new LengthValidator(1, 255))
+				->configureRequired(),
 		];
 	}
 
@@ -76,7 +81,15 @@ final class BookingExternalDataTable extends DataManager
 			(new Reference(
 				'BOOKING',
 				BookingTable::getEntity(),
-				Join::on('this.BOOKING_ID', 'ref.ID')
+				Join::on('this.ENTITY_ID', 'ref.ID')
+					->where('this.ENTITY_TYPE', EntityType::Booking->value)
+			)),
+
+			(new Reference(
+				'WAIT_LIST',
+				BookingTable::getEntity(),
+				Join::on('this.ENTITY_ID', 'ref.ID')
+					->where('this.ENTITY_TYPE', EntityType::WaitList->value)
 			)),
 		];
 	}

@@ -68,7 +68,12 @@ export const CallButton = {
 		},
 		callButtonText(): string
 		{
-			const locCode = CallTypes[this.lastCallType].locCode;
+			let locCode = CallTypes[this.lastCallType].locCode;
+
+			if (this.hasActiveCurrentCall)
+			{
+				locCode = 'CALL_CHAT_HEADER_BUTTON_RETURN_TO_CALL_TEXT';
+			}
 
 			return this.loc(locCode);
 		},
@@ -138,11 +143,13 @@ export const CallButton = {
 		callButtonContainerClasses(): Array<String>
 		{
 			return [
+				'--ui-context-content-light',
 				'bx-call-chat-header-call-button__scope',
 				'bx-call-chat-header-call-button__container',
 				...(this.isConference ? ['--conference'] : []),
-				...(this.isCopilotCall ? ['--copilot'] : []),
+				...(this.isCopilotCall && !this.hasActiveCurrentCall ? ['--copilot'] : []),
 				...(!this.isActive ? ['--disabled'] : []),
+				...(this.hasActiveCurrentCall ? ['--return'] : []),
 			];
 		},
 		canShowPromo(): boolean
@@ -292,9 +299,9 @@ export const CallButton = {
 				@click="onButtonClick"
 				ref="call-button"
 			>
-				<CallButtonTitle :compactMode="compactMode" :copilotMode="isCopilotCall" :text="callButtonText" />
-				<div class="bx-call-chat-header-call-button__separator"></div>
-				<div class="bx-call-chat-header-call-button__chevron_container" @click.stop="onMenuClick">
+				<CallButtonTitle :showIcon="!hasActiveCurrentCall" :compactMode="compactMode" :copilotMode="isCopilotCall" :text="callButtonText" />
+				<div v-if="!hasActiveCurrentCall" class="bx-call-chat-header-call-button__separator"></div>
+				<div v-if="!hasActiveCurrentCall" class="bx-call-chat-header-call-button__chevron_container" @click.stop="onMenuClick">
 					<div class="bx-call-chat-header-call-button__chevron" ref="menu"></div>
 				</div>
 			</div>

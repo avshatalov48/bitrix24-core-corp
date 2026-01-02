@@ -84,6 +84,7 @@ class Task
 							)
 					)
 					->where('FM.UF_TASK_COMMENT_TYPE', Internals\Comment::TYPE_EXPIRED_SOON)
+					->where('FM.UF_TASK_COMMENT_TYPE', Internals\Comment::TYPE_ONBOARDING_COMMENT)
 			)
 		;
 

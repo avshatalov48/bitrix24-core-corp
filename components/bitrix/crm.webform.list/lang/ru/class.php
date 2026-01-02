@@ -1,4 +1,4 @@
-<?
+<?php
 $MESS["CRM_MODULE_NOT_INSTALLED"] = "Модуль CRM не установлен.";
 $MESS["BIZPROC_MODULE_NOT_INSTALLED"] = "Модуль Бизнес-процессы не установлен.";
 $MESS["CRM_MODULE_NOT_INSTALLED_CURRENCY"] = "Модуль currency не установлен.";
@@ -54,4 +54,4 @@ $MESS['CRM_WEBFORM_LIST_FILTER_INTEGRATIONS_VKONTAKTE'] = 'Вконтакте';
 $MESS['CRM_WEBFORM_LIST_FILTER_PRESET_WHATSAPP'] = 'WhatsApp';
 $MESS["CRM_WEBFORM_LIST_VIEWS_SUBMITS_MENU_HINT"] = "Сравнение количества заполненных форм за последние 2 недели с количеством заполнений за 2 недели до этого";
 $MESS["CRM_WEBFORM_LIST_VIEWS_CONVERSION_MENU_HINT"] = "Количество заполнений к количеству просмотров за последние 2 недели";
-?>
+$MESS["CRM_WEBFORM_LIST_FILTER_PRESET_BOOKING_FORMS"] = "Онлайн-запись";

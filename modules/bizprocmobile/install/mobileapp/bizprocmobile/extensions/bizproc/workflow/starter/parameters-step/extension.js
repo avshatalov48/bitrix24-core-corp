@@ -9,6 +9,7 @@ jn.define('bizproc/workflow/starter/parameters-step', (require, exports, module)
 	const { FocusManager } = require('layout/ui/fields/focus-manager');
 	const { ProgressBarNumber } = require('bizproc/wizard/progress-bar-number');
 	const { ParametersStepComponent } = require('bizproc/workflow/starter/parameters-step/component');
+	const { Random } = require('utils/random');
 
 	class ParametersStep extends WizardStep
 	{
@@ -16,7 +17,6 @@ jn.define('bizproc/workflow/starter/parameters-step', (require, exports, module)
 		{
 			super(props);
 
-			// eslint-disable-next-line no-undef
 			this.uid = props.uid || Random.getString();
 			this.customEventEmitter = EventEmitter.createWithUid(this.uid);
 

@@ -1,3 +1,4 @@
+// @vue/component
 export const DetailPanelCollapsedTitle = {
 	name: 'detailPanelCollapsedTitle',
 
@@ -41,7 +42,7 @@ export const DetailPanelCollapsedTitle = {
 				v-if="avatars.length > maxVisibleAvatarsCount"
 				class="humanresources-detail-panel__collapsed-title-avatar --additional"
 			>
-			 +{{ additionalCount }}	
+			 +{{ additionalCount }}
 			</div>
 			<div class="humanresources-detail-panel__title">{{ title }}</div>
 		</div>

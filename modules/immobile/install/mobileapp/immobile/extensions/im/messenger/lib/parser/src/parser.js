@@ -4,9 +4,8 @@
  * @module im/messenger/lib/parser/parser
  */
 jn.define('im/messenger/lib/parser/parser', (require, exports, module) => {
-	const { Loc } = require('loc');
+	const { Loc } = require('im/messenger/loc');
 	const { Type } = require('type');
-	const { Feature } = require('im/messenger/lib/feature');
 	const { serviceLocator } = require('im/messenger/lib/di/service-locator');
 	const { Logger } = require('im/messenger/lib/logger');
 	const { parserUrl } = require('im/messenger/lib/parser/functions/url');
@@ -24,6 +23,7 @@ jn.define('im/messenger/lib/parser/parser', (require, exports, module) => {
 	const { parsedElements } = require('im/messenger/lib/parser/utils/parsed-elements');
 	const { parserSmile } = require('im/messenger/lib/parser/functions/smile');
 	const { parserContext } = require('im/messenger/lib/parser/functions/context');
+	const { parserDate } = require('im/messenger/lib/parser/functions/date');
 
 	const parser = {
 		decodeMessageFromText(text, options = {})
@@ -32,6 +32,8 @@ jn.define('im/messenger/lib/parser/parser', (require, exports, module) => {
 			{
 				return [];
 			}
+
+			text = parserDate.decode(text);
 
 			// TODO: support bb code [context]
 			text = text.replace(
@@ -50,25 +52,18 @@ jn.define('im/messenger/lib/parser/parser', (require, exports, module) => {
 			});
 
 			text = parserCommon.decodeNewLine(text);
+			text = parserImage.decodeImageWithSize(text);
 			text = parserUrl.prepareGifUrl(text);
 			text = parserSmile.decodeSmile(text, options);
 			text = parserMention.decode(text);
 			text = parserAction.decodePut(text);
 			text = parserAction.decodeSend(text);
-
-			if (Feature.isChatDialogWidgetSupportsSendPutCallBbCodes)
-			{
-				text = parserCall.simplifyPch(text);
-				text = parserCall.decode(text);
-			}
-			else
-			{
-				text = parserCall.simplify(text);
-			}
-
+			text = parserCall.simplifyPch(text);
+			text = parserCall.decode(text);
 			text = parserQuote.decodeArrowQuote(text);
 			text = parserQuote.decodeQuote(text, options);
 			text = parserQuote.decodeCode(text);
+			text = parserImage.decodeIcon(text);
 			text = parserQuote.decodeTextAroundQuotes(text);
 
 			const elementList = parsedElements.getOrderedList(text);
@@ -157,6 +152,7 @@ jn.define('im/messenger/lib/parser/parser', (require, exports, module) => {
 			text = parserCall.simplify(text);
 			text = parserImage.simplifyLink(text);
 			text = parserImage.simplifyIcon(text);
+			text = parserImage.simplifyImage(text);
 			text = parserUrl.simplify(text);
 			text = parserDisk.simplify(text);
 			text = parserCommon.simplifyNewLine(text);
@@ -168,6 +164,7 @@ jn.define('im/messenger/lib/parser/parser', (require, exports, module) => {
 			});
 
 			text = parserContext.simplify(text);
+			text = parserDate.simplify(text);
 
 			if (text.length === 0 && showPhraseMessageWasDeleted)
 			{
@@ -216,6 +213,7 @@ jn.define('im/messenger/lib/parser/parser', (require, exports, module) => {
 				files,
 				showFilePrefix: false,
 			});
+			text = parserQuote.truncateDoubleLineBreak(text);
 
 			return text.trim();
 		},

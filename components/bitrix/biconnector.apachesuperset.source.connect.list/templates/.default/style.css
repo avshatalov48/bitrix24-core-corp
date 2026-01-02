@@ -3,7 +3,8 @@
 }
 
 .biconnector-superset-source-list-card {
-	width: 265px;
+	width: 100%;
+	max-inline-size: 276px;
 	min-height: 265px;
 	display: flex;
 	flex-direction: column;
@@ -12,9 +13,6 @@
 	border-radius: 12px;
 	background-color: #ffffff;
 	box-sizing: border-box;
-
-	margin-right: 16px;
-	margin-bottom: 16px;
 }
 
 .biconnector-superset-source-list-card button {
@@ -26,7 +24,7 @@
 	position: relative;
 	left: -6px;
 	align-items: flex-end;
-	width: 224px;
+	flex-wrap: wrap;
 }
 
 .biconnector-superset-source-list-card__icon {
@@ -35,13 +33,19 @@
 	justify-content: center;
 }
 
+.biconnector-superset-source-list-card__icon_image {
+	background-size: contain !important;
+	background-repeat: no-repeat !important;
+	background-position: center !important;
+}
+
 .biconnector-superset-source-list-card__desc-title {
 	font-size: var(--ui-font-size-lg);
 	font-weight: var(--ui-font-weight-bold);
 	margin-bottom: 8px;
+	overflow: hidden;
+	text-overflow: ellipsis;
 }
-
-
 
 .biconnector-superset-source-list-card__desc-text {
 	font-size: var(--ui-font-size-xs);
@@ -92,8 +96,10 @@
 }
 
 .biconnector-superset-source-list {
-	display: flex;
-	flex-wrap: wrap;
+	display: grid;
+	gap: 16px;
+	grid-template-columns: repeat(auto-fill, minmax(212px, 1fr));
+	justify-items: center;
 }
 
 .biconnector-superset-source-list-card__first-connect-button {

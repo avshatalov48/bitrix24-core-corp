@@ -56,6 +56,7 @@ jn.define('sign/dialog/banners/signedbyassignee', (require, exports, module) => 
 				buttonsView: View(
 					{},
 					Button({
+						testId: 'signedByAssigneeBanner-button-close',
 						text: Loc.getMessage('SIGN_MOBILE_DIALOG_SIGNED_SIGNED_BY_ASSIGNEE_BUTTON_CLOSE'),
 						size: ButtonSize.XL,
 						design: ButtonDesign.PLAN_ACCENT,

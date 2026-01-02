@@ -3,6 +3,7 @@
 namespace Bitrix\Sign\Item;
 
 use Bitrix\Sign\Contract\ItemCollection;
+use Bitrix\Sign\Helper\CloneHelper;
 use Bitrix\Sign\Helper\IterationHelper;
 
 class BlockCollection implements ItemCollection, \Iterator, \Countable
@@ -125,7 +126,7 @@ class BlockCollection implements ItemCollection, \Iterator, \Countable
 	/**
 	 * @return array<int>
 	 */
-	public function getIds(): iterable
+	public function getIds(): array
 	{
 		$result = [];
 
@@ -135,5 +136,37 @@ class BlockCollection implements ItemCollection, \Iterator, \Countable
 		}
 
 		return $result;
+	}
+
+	public function copyWithBlackId(int $blankId): static
+	{
+		$collection = new static();
+
+		foreach ($this as $block)
+		{
+			$block = clone $block;
+			$block->blankId = $blankId;
+			$collection->add($block);
+		}
+
+		return $collection;
+	}
+
+	public function copyAndSetPageIfItGreaterThan(int $page): static
+	{
+		$collection = new static();
+
+		foreach ($this as $block)
+		{
+			$block = clone $block;
+			$block->position = CloneHelper::cloneIfNotNull($block->position);
+			if ($block->position?->page > $page)
+			{
+				$block->position->page = $page;
+				$collection->add($block);
+			}
+		}
+
+		return $collection;
 	}
 }

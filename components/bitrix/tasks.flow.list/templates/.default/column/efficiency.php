@@ -9,7 +9,9 @@ use Bitrix\Main\Localization\Loc;
 use Bitrix\Main\Web\Json;
 use Bitrix\Tasks\Flow\Flow;
 use Bitrix\Tasks\Flow\Integration;
+use Bitrix\Tasks\Flow\Integration\AI\Configuration;
 use Bitrix\Tasks\Flow\Integration\AI\FlowCopilotFeature;
+use Bitrix\Tasks\Flow\Integration\AI\Provider\CollectedDataStatus;
 use Bitrix\Tasks\Slider\Path\PathMaker;
 use Bitrix\Tasks\Slider\Path\TaskPathMaker;
 
@@ -18,13 +20,13 @@ if (!function_exists('renderEfficiencyColumn'))
 	function renderEfficiencyColumn(array $data, array $arResult, bool $isActive): string
 	{
 		/** @var Flow $flow */
-		['flow' => $flow, 'efficiency' => $efficiency, 'isEnoughTasksForCopilot' => $isEnoughTasksForCopilot] = $data;
+		['flow' => $flow, 'efficiency' => $efficiency, 'adviceInfo' => $adviceInfo] = $data;
 		$disableClass = $isActive ? '' : '--disable';
-		$efficiencyChartClass = $efficiency < 70 ? '--danger' : '';
+		$efficiencyChartClass = $efficiency <= Configuration::getMaxValueForLowEfficiency() ? '--danger' : '';
 
-		if (Loader::includeModule('ai') && FlowCopilotFeature::isOn() && $isActive)
+		if ($isActive && Loader::includeModule('ai') && FlowCopilotFeature::isOn())
 		{
-			$efficiencyValueNode = getCopilotEfficiencyNode($arResult, $flow, (int)$efficiency, (bool)$isEnoughTasksForCopilot);
+			$efficiencyValueNode = getCopilotEfficiencyNode($arResult, $flow, (int)$efficiency, $adviceInfo);
 		}
 		else
 		{
@@ -47,34 +49,78 @@ if (!function_exists('renderEfficiencyColumn'))
 
 	if (!function_exists('getCopilotEfficiencyNode'))
 	{
-		function getCopilotEfficiencyNode(array $arResult, Flow $flow, int $efficiency, bool $isEnoughTasksForCopilot): string
+		function getCopilotEfficiencyNode(array $arResult, Flow $flow, int $efficiency, array $adviceInfo): string
 		{
 			$userId = (int)$arResult['currentUserId'];
 
-			if ($isEnoughTasksForCopilot)
+			$isAdviceExists = $adviceInfo['IS_ADVICE_EXISTS'];
+			$isShouldShowBoostPopup = false;
+			$isAdviceFetching = false;
+			$isAdviceErrorOccurred = false;
+
+			if (!$isAdviceExists)
 			{
-				$createTaskUri = TaskPathMaker::getPath([
-					'task_id' => 0,
-					'user_id' => $userId,
-					'action' => PathMaker::EDIT_ACTION
-				]);
-				$createTaskUri = CUtil::JSEscape($createTaskUri);
+				$isShouldShowBoostPopup = $adviceInfo['STATUS'] === CollectedDataStatus::LIMIT_EXCEEDED;
 
-				$flowId = $flow->getId();
-				$accessController = $flow->getAccessController($userId);
-				$canEditFlow = $accessController->canUpdate();
+				$isAdviceFetching = in_array(
+					$adviceInfo['STATUS'],
+					[CollectedDataStatus::COLLECTED, CollectedDataStatus::COLLECTING],
+					true
+				);
 
-				$canEditFlow = Json::encode($canEditFlow);
-				$onCopilotIconClick = "BX.Tasks.Flow.CopilotAdvice.show({
-					flowId: {$flowId},
-					flowEfficiency: {$efficiency},
-					canEditFlow: {$canEditFlow},
-					createTaskUrl: '{$createTaskUri}'
-				})";
+				$isAdviceErrorOccurred = $adviceInfo['STATUS'] === CollectedDataStatus::ERROR;
 			}
-			else
-			{
-				$onCopilotIconClick = 'BX.Tasks.Flow.NotEnoughTasksPopup.show(this)';
+
+			 switch (true) {
+				case $isAdviceErrorOccurred:
+					$onCopilotIconClick = "BX.Tasks.Flow.CopilotAdviceErrorPopup.show(
+						this, 
+						BX.Tasks.Flow.CopilotAdviceErrorTypes.UnexpectedError
+					);";
+
+					break;
+				case $isAdviceFetching:
+					$onCopilotIconClick = "BX.Tasks.Flow.CopilotAdviceErrorPopup.show(
+						this, 
+						BX.Tasks.Flow.CopilotAdviceErrorTypes.AdviceFetching
+					);";
+
+					break;
+				case $isShouldShowBoostPopup:
+					$onCopilotIconClick = "BX.loadExt('baas.store').then(function(exports) {
+						BX.Baas.Store.Widget.getInstance().bind(this).show();
+					}.bind(this));";
+
+					break;
+				case $isAdviceExists:
+					$createTaskUri = TaskPathMaker::getPath([
+						'task_id' => 0,
+						'user_id' => $userId,
+						'action' => PathMaker::EDIT_ACTION
+					]);
+					$createTaskUri = CUtil::JSEscape($createTaskUri);
+
+					$accessController = $flow->getAccessController($userId);
+					$canEditFlow = $accessController->canUpdate();
+
+					$canEditFlow = Json::encode($canEditFlow);
+					$isFeatureTrialable = Json::encode($arResult['isFeatureTrialable']);
+					$onCopilotIconClick = "BX.Tasks.Flow.CopilotAdvice.show({
+						flowId: {$flow->getId()},
+						flowEfficiency: {$efficiency},
+						canEditFlow: {$canEditFlow},
+						createTaskUrl: '{$createTaskUri}',
+						isFeatureTrialable: '{$isFeatureTrialable}',
+					});";
+
+					break;
+				default:
+					$onCopilotIconClick = "BX.Tasks.Flow.CopilotAdviceErrorPopup.show(
+						this, 
+						BX.Tasks.Flow.CopilotAdviceErrorTypes.NotEnoughTasks
+					);";
+
+					break;
 			}
 
 			return <<<HTML

@@ -433,7 +433,8 @@ abstract class EntityBase
 
 		$queryBuilder = \Bitrix\Crm\Service\Container::getInstance()
 			->getUserPermissions($userId)
-			->createListQueryBuilder($permEntities, $builderOptions)
+			->itemsList()
+			->createQueryBuilder($permEntities, $builderOptions)
 		;
 
 		return $queryBuilder->build();

@@ -4,12 +4,13 @@
 }
 
 .dataset-import-step.dataset-import-step--full-height .ui-section__wrapper {
-	height: calc(100vh - 102px);
+	/* 74px is slider header, 66 is bottom buttons block, 18px is padding before button block */
+	height: calc(100vh - 74px - 66px - 18px);
 }
 
 .dataset-import-step.dataset-import-step--sticky {
 	position: sticky;
-	top: 18px;
+	top: 74px;
 }
 
 .dataset-import-step__content .ui-alert {

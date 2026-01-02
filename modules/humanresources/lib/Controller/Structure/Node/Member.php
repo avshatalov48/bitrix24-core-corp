@@ -3,27 +3,28 @@
 namespace Bitrix\HumanResources\Controller\Structure\Node;
 
 use Bitrix\HumanResources\Access\StructureActionDictionary;
-use Bitrix\HumanResources\Attribute;
-use Bitrix\HumanResources\Contract\Repository\RoleRepository;
-use Bitrix\HumanResources\Contract\Service\UserService;
-use Bitrix\HumanResources\Engine\Controller;
+use Bitrix\HumanResources\Exception\DeleteFailedException;
+use Bitrix\HumanResources\Internals\Attribute;
 use Bitrix\HumanResources\Contract\Repository\NodeMemberRepository;
+use Bitrix\HumanResources\Contract\Repository\RoleRepository;
+use Bitrix\HumanResources\Contract\Service\NodeMemberService;
+use Bitrix\HumanResources\Engine\Controller;
 use Bitrix\HumanResources\Exception\CreationFailedException;
 use Bitrix\HumanResources\Exception\UpdateFailedException;
+use Bitrix\HumanResources\Internals\Attribute\Access\LogicOr;
+use Bitrix\HumanResources\Internals\Attribute\StructureActionAccess;
+use Bitrix\HumanResources\Internals\Service\Container as InternalContainer;
 use Bitrix\HumanResources\Item;
-use Bitrix\HumanResources\Contract\Service\NodeMemberService;
 use Bitrix\HumanResources\Item\NodeMember;
+use Bitrix\HumanResources\Contract\Repository\NodeRepository;
 use Bitrix\HumanResources\Service\Container;
+use Bitrix\HumanResources\Service\UserService;
 use Bitrix\HumanResources\Type\AccessibleItemType;
 use Bitrix\HumanResources\Type\MemberEntityType;
 use Bitrix\HumanResources\Type\NodeEntityType;
 use Bitrix\Main;
-use Bitrix\Main\ArgumentException;
-use Bitrix\Main\DB\SqlQueryException;
 use Bitrix\Main\Error;
-use Bitrix\Main\Localization\Loc;
 use Bitrix\Main\Request;
-use Bitrix\Main\SystemException;
 
 final class Member extends Controller
 {
@@ -31,6 +32,7 @@ final class Member extends Controller
 	private readonly NodeMemberService $nodeMemberService;
 	private readonly RoleRepository $roleRepository;
 	private readonly UserService $userService;
+	private readonly NodeRepository $nodeRepository;
 
 	private const ERROR_CODE_MEMBER_ALREADY_BELONGS_TO_NODE = 'MEMBER_ALREADY_BELONGS_TO_NODE';
 
@@ -40,86 +42,39 @@ final class Member extends Controller
 		$this->nodeMemberService = Container::getNodeMemberService();
 		$this->roleRepository = Container::getRoleRepository();
 		$this->userService = Container::getUserService();
+		$this->nodeRepository = Container::getNodeRepository();
 
 		parent::__construct($request);
 	}
 
-	/**
-	 * @throws ArgumentException
-	 * @throws SqlQueryException
-	 * @throws SystemException
-	 * @throws CreationFailedException
-	 */
-	#[Attribute\Access\LogicOr(
-		new Attribute\StructureActionAccess(
-			permission: StructureActionDictionary::ACTION_DEPARTMENT_CREATE,
-			itemType: AccessibleItemType::NODE,
-			itemIdRequestKey: 'nodeId',
-		),
-		new Attribute\StructureActionAccess(
+	#[LogicOr(
+		new StructureActionAccess(
 			permission: StructureActionDictionary::ACTION_EMPLOYEE_ADD_TO_DEPARTMENT,
+			itemType: AccessibleItemType::NODE,
+			itemIdRequestKey: 'targetNodeId',
+		),
+		new StructureActionAccess(
+			permission: StructureActionDictionary::ACTION_TEAM_MEMBER_ADD,
 			itemType: AccessibleItemType::NODE,
 			itemIdRequestKey: 'nodeId',
 		),
 	)]
-	public function addAction(
-		Item\NodeMember $nodeMember,
-		Item\Node $node,
-	): array
-	{
-		$nodeMember->nodeId = $node->id;
-		$this->nodeMemberRepository->create($nodeMember);
-
-		return [];
-	}
-
-	#[Attribute\Access\LogicOr(
-		new Attribute\StructureActionAccess(
-			permission: StructureActionDictionary::ACTION_DEPARTMENT_CREATE,
-			itemType: AccessibleItemType::NODE,
-			itemIdRequestKey: 'nodeId',
-		),
-		new Attribute\StructureActionAccess(
-			permission: StructureActionDictionary::ACTION_EMPLOYEE_ADD_TO_DEPARTMENT,
-			itemType: AccessibleItemType::NODE,
-			itemIdRequestKey: 'nodeId',
-		),
-		new Attribute\StructureActionAccess(
+	#[LogicOr(
+		new StructureActionAccess(
 			permission: StructureActionDictionary::ACTION_EMPLOYEE_REMOVE_FROM_DEPARTMENT,
 			itemType: AccessibleItemType::NODE,
 			itemIdRequestKey: 'nodeId',
 		),
-	)]
-	public function moveAction(
-		Item\NodeMember $nodeMember,
-		Item\Node $node,
-	):array
-	{
-		try
-		{
-			$this->nodeMemberService->moveMember($nodeMember, $node);
-		}
-		catch (UpdateFailedException $exception)
-		{
-			$this->addErrors($exception->getErrors()->toArray());
-		}
-
-		return [];
-	}
-
-	#[Attribute\StructureActionAccess(
-		permission: StructureActionDictionary::ACTION_EMPLOYEE_ADD_TO_DEPARTMENT,
-		itemType: AccessibleItemType::NODE,
-		itemIdRequestKey: 'targetNodeId',
-	)]
-	#[Attribute\StructureActionAccess(
-		permission: StructureActionDictionary::ACTION_EMPLOYEE_REMOVE_FROM_DEPARTMENT,
-		itemType: AccessibleItemType::NODE,
-		itemIdRequestKey: 'nodeId',
+		new StructureActionAccess(
+			permission: StructureActionDictionary::ACTION_TEAM_MEMBER_REMOVE,
+			itemType: AccessibleItemType::NODE,
+			itemIdRequestKey: 'nodeId',
+		),
 	)]
 	public function moveUserAction(
 		Item\NodeMember $nodeUserMember,
 		Item\Node $targetNode,
+		?Item\Role $role,
 	):array
 	{
 		if ($nodeUserMember->nodeId === $targetNode->id)
@@ -136,9 +91,17 @@ final class Member extends Controller
 
 		try
 		{
-			$employeeRole = $this->roleRepository->findByXmlId(NodeMember::DEFAULT_ROLE_XML_ID['EMPLOYEE']);
-			$nodeUserMember->role = $employeeRole->id;
-			$this->nodeMemberService->moveMember($nodeUserMember, $targetNode);
+			if (!$role)
+			{
+				$xmlId = $targetNode->type->isTeam()
+					? NodeMember::TEAM_ROLE_XML_ID['TEAM_EMPLOYEE']
+					: NodeMember::DEFAULT_ROLE_XML_ID['EMPLOYEE']
+				;
+
+				$role = $this->roleRepository->findByXmlId($xmlId);
+			}
+
+			InternalContainer::getNodeMemberService()->moveMember($nodeUserMember, $targetNode, $role);
 		}
 		catch (UpdateFailedException $exception)
 		{
@@ -157,14 +120,25 @@ final class Member extends Controller
 			}
 			$this->addErrors($errors->toArray());
 		}
+		catch (\Exception $e)
+		{
+			$this->addError(new Error('Can\'t move member'));
+		}
 
 		return [];
 	}
 
-	#[Attribute\StructureActionAccess(
-		permission: StructureActionDictionary::ACTION_STRUCTURE_VIEW,
-		itemType: AccessibleItemType::NODE,
-		itemIdRequestKey: 'nodeId',
+	#[LogicOr(
+		new StructureActionAccess(
+			permission: StructureActionDictionary::ACTION_STRUCTURE_VIEW,
+			itemType: AccessibleItemType::NODE,
+			itemIdRequestKey: 'nodeId',
+		),
+		new StructureActionAccess(
+			permission: StructureActionDictionary::ACTION_TEAM_VIEW,
+			itemType: AccessibleItemType::NODE,
+			itemIdRequestKey: 'nodeId',
+		),
 	)]
 	public function getUserMemberAction(
 		Item\User $user,
@@ -190,30 +164,41 @@ final class Member extends Controller
 		];
 	}
 
-	#[Attribute\StructureActionAccess(
-		permission: StructureActionDictionary::ACTION_EMPLOYEE_REMOVE_FROM_DEPARTMENT,
-		itemType: AccessibleItemType::NODE_MEMBER,
-		itemIdRequestKey: 'nodeMemberId',
-	)]
-	public function deleteAction(
-		Item\NodeMember $member,
-	): array
-	{
-		return [
-			'success' => $this->nodeMemberRepository->remove($member),
-		];
-	}
-
-	#[Attribute\StructureActionAccess(
-		permission: StructureActionDictionary::ACTION_EMPLOYEE_REMOVE_FROM_DEPARTMENT,
-		itemType: AccessibleItemType::NODE,
-		itemIdRequestKey: 'nodeId',
+	#[LogicOr(
+		new StructureActionAccess(
+			permission: StructureActionDictionary::ACTION_EMPLOYEE_REMOVE_FROM_DEPARTMENT,
+			itemType: AccessibleItemType::NODE,
+			itemIdRequestKey: 'nodeId',
+		),
+		new StructureActionAccess(
+			permission: StructureActionDictionary::ACTION_TEAM_MEMBER_REMOVE,
+			itemType: AccessibleItemType::NODE,
+			itemIdRequestKey: 'nodeId',
+		),
 	)]
 	public function deleteUserAction(
 		Item\NodeMember $nodeUserMember,
 	): array
 	{
-		$nodeMember = $this->nodeMemberService->removeUserMemberFromDepartment($nodeUserMember);
+		$node = $this->nodeRepository->getById($nodeUserMember->nodeId);
+		if ($node->type === NodeEntityType::DEPARTMENT
+			&& !InternalContainer::getNodeMemberService()->isUserInMultipleNodes($nodeUserMember->entityId)
+		)
+		{
+			$this->addError(new Error('Can\'t remove user from last department'));
+
+			return [ 'userMovedToRoot' => false ];
+		}
+
+		$nodeMember = null;
+		try
+		{
+			$nodeMember = $this->nodeMemberService->removeUserMemberFromDepartment($nodeUserMember);
+		}
+		catch (\Exception $e)
+		{
+			$this->addError(new Error($e->getMessage()));
+		}
 
 		return [
 			'userMovedToRoot' => $nodeMember !== null,
@@ -228,10 +213,17 @@ final class Member extends Controller
 		return $this->nodeMemberRepository->countAllByStructureAndGroupByNode($structure);
 	}
 
-	#[Attribute\StructureActionAccess(
-		permission: StructureActionDictionary::ACTION_EMPLOYEE_ADD_TO_DEPARTMENT,
-		itemType: AccessibleItemType::NODE,
-		itemIdRequestKey: 'nodeId',
+	#[LogicOr(
+		new StructureActionAccess(
+			permission: StructureActionDictionary::ACTION_EMPLOYEE_ADD_TO_DEPARTMENT,
+			itemType: AccessibleItemType::NODE,
+			itemIdRequestKey: 'nodeId',
+		),
+		new StructureActionAccess(
+			permission: StructureActionDictionary::ACTION_TEAM_MEMBER_ADD,
+			itemType: AccessibleItemType::NODE,
+			itemIdRequestKey: 'nodeId',
+		),
 	)]
 	public function addUserMemberAction(Item\Node $node, array $userIds, Item\Role $role): ?array
 	{
@@ -264,7 +256,7 @@ final class Member extends Controller
 		}
 		catch (\Throwable $e)
 		{
-			$this->addError(new Error(Loc::getMessage('HUMAN_RESOURCES_MEMBER_ADD_FAILED')));
+			$this->addError(new Error('Failed to add user to node'));
 		}
 
 		$result['userCount'] = $this->nodeMemberRepository->countAllByByNodeId($node->id);
@@ -278,13 +270,8 @@ final class Member extends Controller
 	 *      MEMBER_EMPLOYEE?: list<int>,
 	 *      MEMBER_DEPUTY_HEAD?: list<int>
 	 * } $userIds
- *
+	 *
 	 * @return array
-	 * @throws ArgumentException
-	 * @throws Main\DB\DuplicateEntryException
-	 * @throws Main\ObjectPropertyException
-	 * @throws SqlQueryException
-	 * @throws SystemException
 	 */
 	#[Attribute\Access\LogicOr(
 		new Attribute\StructureActionAccess(
@@ -297,11 +284,37 @@ final class Member extends Controller
 			itemType: AccessibleItemType::NODE,
 			itemIdRequestKey: 'nodeId',
 		),
+		new Attribute\StructureActionAccess(
+			permission: StructureActionDictionary::ACTION_TEAM_CREATE,
+			itemType: AccessibleItemType::NODE,
+			itemParentIdRequestKey: 'parentId',
+		),
+		new Attribute\StructureActionAccess(
+			permission: StructureActionDictionary::ACTION_TEAM_MEMBER_ADD,
+			itemType: AccessibleItemType::NODE,
+			itemIdRequestKey: 'nodeId',
+		),
 	)]
 	public function saveUserListAction(Item\Node $node, array $userIds = []): array
 	{
 		$userMovedToRootIds = [];
-		$nodeMemberCollection =  $this->nodeMemberService->saveUsersToDepartment($node, $userIds);
+		try
+		{
+			$nodeMemberCollection = $this->nodeMemberService->saveUsersToDepartment($node, $userIds);
+		}
+		catch (DeleteFailedException $e)
+		{
+			$this->addError(new Error($e->getMessage()));
+
+			return [];
+		}
+		catch (\Exception $e)
+		{
+			$this->addError(new Error('Can\'t save user list'));
+
+			return [];
+		}
+
 		foreach ($nodeMemberCollection as $nodeMember)
 		{
 			if ($nodeMember->nodeId === $node->id)
@@ -376,5 +389,12 @@ final class Member extends Controller
 		$result['userCount'] = $this->nodeMemberRepository->countAllByByNodeId($node->id);
 
 		return $result;
+	}
+
+	public function getMultipleUsersMapAction(): array
+	{
+		$internalNodeMemberRepository = InternalContainer::getNodeMemberRepository();
+
+		return $internalNodeMemberRepository->getMultipleNodeMembers(NodeEntityType::DEPARTMENT);
 	}
 }

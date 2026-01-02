@@ -2,6 +2,7 @@
 
 return [
 	'extensions' => [
+		'utils/color',
 		'utils/object',
 		'utils/enums/base',
 	],

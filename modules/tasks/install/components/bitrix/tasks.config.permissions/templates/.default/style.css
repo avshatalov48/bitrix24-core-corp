@@ -33,8 +33,14 @@
 	padding-left: 30px;
 }
 
+.tasks-permission-header-container {
+	display: flex;
+	min-height: 24px;
+	align-items: flex-end;
+}
+
 .tasks-permission-header-link {
-	margin-right: 18px;
+	margin: 0 18px;
 	text-decoration: none;
 	color: #1f67b0;
 	font-size: 13px;

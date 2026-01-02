@@ -1,12 +1,13 @@
 /* eslint-disable */
 this.BX = this.BX || {};
 this.BX.Call = this.BX.Call || {};
-(function (exports,main_core_events,im_v2_lib_localStorage,im_v2_lib_promo,im_public,im_v2_application_core,im_v2_const,im_v2_lib_permission,im_v2_lib_menu,im_v2_lib_call,im_v2_lib_rest,im_v2_lib_feature,call_lib_analytics,call_const,call_component_elements,main_core,call_core,ui_vue3_directives_hint) {
+(function (exports,main_core_events,im_v2_lib_localStorage,im_v2_lib_promo,ui_system_menu,im_public,im_v2_application_core,im_v2_const,im_v2_lib_permission,im_v2_lib_menu,im_v2_lib_call,im_v2_lib_rest,im_v2_lib_feature,call_lib_analytics,call_const,call_component_elements,main_core,call_core,ui_vue3_directives_hint) {
 	'use strict';
 
-	let _ = t => t,
-	  _t;
-	var _getDelimiter = /*#__PURE__*/babelHelpers.classPrivateFieldLooseKey("getDelimiter");
+	const MenuSectionCode = Object.freeze({
+	  main: 'main',
+	  phone: 'phone'
+	});
 	var _getVideoCallItem = /*#__PURE__*/babelHelpers.classPrivateFieldLooseKey("getVideoCallItem");
 	var _getAudioCallItem = /*#__PURE__*/babelHelpers.classPrivateFieldLooseKey("getAudioCallItem");
 	var _analyticsOnStartCallClick = /*#__PURE__*/babelHelpers.classPrivateFieldLooseKey("analyticsOnStartCallClick");
@@ -14,7 +15,6 @@ this.BX.Call = this.BX.Call || {};
 	var _getWorkPhoneItem = /*#__PURE__*/babelHelpers.classPrivateFieldLooseKey("getWorkPhoneItem");
 	var _getInnerPhoneItem = /*#__PURE__*/babelHelpers.classPrivateFieldLooseKey("getInnerPhoneItem");
 	var _getZoomItem = /*#__PURE__*/babelHelpers.classPrivateFieldLooseKey("getZoomItem");
-	var _getUserPhoneHtml = /*#__PURE__*/babelHelpers.classPrivateFieldLooseKey("getUserPhoneHtml");
 	var _isCallAvailable = /*#__PURE__*/babelHelpers.classPrivateFieldLooseKey("isCallAvailable");
 	var _getUser = /*#__PURE__*/babelHelpers.classPrivateFieldLooseKey("getUser");
 	var _isUser = /*#__PURE__*/babelHelpers.classPrivateFieldLooseKey("isUser");
@@ -33,9 +33,6 @@ this.BX.Call = this.BX.Call || {};
 	    });
 	    Object.defineProperty(this, _isCallAvailable, {
 	      value: _isCallAvailable2
-	    });
-	    Object.defineProperty(this, _getUserPhoneHtml, {
-	      value: _getUserPhoneHtml2
 	    });
 	    Object.defineProperty(this, _getZoomItem, {
 	      value: _getZoomItem2
@@ -58,9 +55,6 @@ this.BX.Call = this.BX.Call || {};
 	    Object.defineProperty(this, _getVideoCallItem, {
 	      value: _getVideoCallItem2
 	    });
-	    Object.defineProperty(this, _getDelimiter, {
-	      value: _getDelimiter2
-	    });
 	    this.id = 'bx-im-chat-header-call-menu';
 	  }
 	  getMenuOptions() {
@@ -76,19 +70,22 @@ this.BX.Call = this.BX.Call || {};
 	    return 'bx-im-messenger__scope bx-call-chat-header-call-button__scope';
 	  }
 	  getMenuItems() {
-	    return [babelHelpers.classPrivateFieldLooseBase(this, _getVideoCallItem)[_getVideoCallItem](), babelHelpers.classPrivateFieldLooseBase(this, _getAudioCallItem)[_getAudioCallItem](), babelHelpers.classPrivateFieldLooseBase(this, _getZoomItem)[_getZoomItem](), babelHelpers.classPrivateFieldLooseBase(this, _getDelimiter)[_getDelimiter](), babelHelpers.classPrivateFieldLooseBase(this, _getPersonalPhoneItem)[_getPersonalPhoneItem](), babelHelpers.classPrivateFieldLooseBase(this, _getWorkPhoneItem)[_getWorkPhoneItem](), babelHelpers.classPrivateFieldLooseBase(this, _getInnerPhoneItem)[_getInnerPhoneItem]()];
+	    return [...this.groupItems([babelHelpers.classPrivateFieldLooseBase(this, _getVideoCallItem)[_getVideoCallItem](), babelHelpers.classPrivateFieldLooseBase(this, _getAudioCallItem)[_getAudioCallItem](), babelHelpers.classPrivateFieldLooseBase(this, _getZoomItem)[_getZoomItem]()], MenuSectionCode.main), ...this.groupItems([babelHelpers.classPrivateFieldLooseBase(this, _getPersonalPhoneItem)[_getPersonalPhoneItem](), babelHelpers.classPrivateFieldLooseBase(this, _getWorkPhoneItem)[_getWorkPhoneItem](), babelHelpers.classPrivateFieldLooseBase(this, _getInnerPhoneItem)[_getInnerPhoneItem]()], MenuSectionCode.phone)];
 	  }
-	}
-	function _getDelimiter2() {
-	  return {
-	    delimiter: true
-	  };
+	  getMenuGroups() {
+	    return [{
+	      code: MenuSectionCode.main
+	    }, {
+	      code: MenuSectionCode.phone
+	    }];
+	  }
 	}
 	function _getVideoCallItem2() {
 	  const isAvailable = babelHelpers.classPrivateFieldLooseBase(this, _isCallAvailable)[_isCallAvailable](this.context.dialogId);
 	  return {
-	    text: main_core.Loc.getMessage('CALL_CONTENT_CHAT_HEADER_VIDEOCALL'),
-	    onclick: () => {
+	    title: main_core.Loc.getMessage('CALL_CONTENT_CHAT_HEADER_VIDEOCALL'),
+	    design: isAvailable ? ui_system_menu.MenuItemDesign.Default : ui_system_menu.MenuItemDesign.Disabled,
+	    onClick: () => {
 	      if (!isAvailable) {
 	        return;
 	      }
@@ -96,15 +93,15 @@ this.BX.Call = this.BX.Call || {};
 	      call_const.CallTypes.video.start(this.context.dialogId);
 	      this.emit(CallMenu.events.onMenuItemClick, call_const.CallTypes.video);
 	      this.menuInstance.close();
-	    },
-	    disabled: !isAvailable
+	    }
 	  };
 	}
 	function _getAudioCallItem2() {
 	  const isAvailable = babelHelpers.classPrivateFieldLooseBase(this, _isCallAvailable)[_isCallAvailable](this.context.dialogId);
 	  return {
-	    text: main_core.Loc.getMessage('CALL_CONTENT_CHAT_HEADER_CALL_MENU_AUDIO'),
-	    onclick: () => {
+	    title: main_core.Loc.getMessage('CALL_CONTENT_CHAT_HEADER_CALL_MENU_AUDIO'),
+	    design: isAvailable ? ui_system_menu.MenuItemDesign.Default : ui_system_menu.MenuItemDesign.Disabled,
+	    onClick: () => {
 	      if (!isAvailable) {
 	        return;
 	      }
@@ -112,8 +109,7 @@ this.BX.Call = this.BX.Call || {};
 	      call_const.CallTypes.audio.start(this.context.dialogId);
 	      this.emit(CallMenu.events.onMenuItemClick, call_const.CallTypes.audio);
 	      this.menuInstance.close();
-	    },
-	    disabled: !isAvailable
+	    }
 	  };
 	}
 	function _analyticsOnStartCallClick2(callType) {
@@ -134,10 +130,10 @@ this.BX.Call = this.BX.Call || {};
 	  }
 	  const title = main_core.Loc.getMessage('CALL_CONTENT_CHAT_HEADER_CALL_MENU_PERSONAL_PHONE');
 	  return {
-	    className: 'menu-popup-no-icon bx-call-chat-header-call-button-menu__item',
-	    html: babelHelpers.classPrivateFieldLooseBase(this, _getUserPhoneHtml)[_getUserPhoneHtml](title, phones.personalMobile),
-	    onclick: () => {
-	      im_public.Messenger.startPhoneCall(phones.personalMobile);
+	    title,
+	    subtitle: phones.personalMobile,
+	    onClick: () => {
+	      void im_public.Messenger.startPhoneCall(phones.personalMobile);
 	      this.menuInstance.close();
 	    }
 	  };
@@ -152,12 +148,11 @@ this.BX.Call = this.BX.Call || {};
 	  if (!phones.workPhone) {
 	    return null;
 	  }
-	  const title = main_core.Loc.getMessage('CALL_CONTENT_CHAT_HEADER_CALL_MENU_WORK_PHONE');
 	  return {
-	    className: 'menu-popup-no-icon bx-call-chat-header-call-button-menu__item',
-	    html: babelHelpers.classPrivateFieldLooseBase(this, _getUserPhoneHtml)[_getUserPhoneHtml](title, phones.workPhone),
-	    onclick: () => {
-	      im_public.Messenger.startPhoneCall(phones.workPhone);
+	    title: main_core.Loc.getMessage('CALL_CONTENT_CHAT_HEADER_CALL_MENU_WORK_PHONE'),
+	    subtitle: phones.workPhone,
+	    onClick: () => {
+	      void im_public.Messenger.startPhoneCall(phones.workPhone);
 	      this.menuInstance.close();
 	    }
 	  };
@@ -172,12 +167,11 @@ this.BX.Call = this.BX.Call || {};
 	  if (!phones.innerPhone) {
 	    return null;
 	  }
-	  const title = main_core.Loc.getMessage('CALL_CONTENT_CHAT_HEADER_CALL_MENU_INNER_PHONE_MSGVER_1');
 	  return {
-	    className: 'menu-popup-no-icon bx-call-chat-header-call-button-menu__item',
-	    html: babelHelpers.classPrivateFieldLooseBase(this, _getUserPhoneHtml)[_getUserPhoneHtml](title, phones.innerPhone),
-	    onclick: () => {
-	      im_public.Messenger.startPhoneCall(phones.innerPhone);
+	    title: main_core.Loc.getMessage('CALL_CONTENT_CHAT_HEADER_CALL_MENU_INNER_PHONE_MSGVER_1'),
+	    subtitle: phones.innerPhone,
+	    onClick: () => {
+	      void im_public.Messenger.startPhoneCall(phones.innerPhone);
 	      this.menuInstance.close();
 	    }
 	  };
@@ -187,15 +181,11 @@ this.BX.Call = this.BX.Call || {};
 	  if (!isActive) {
 	    return null;
 	  }
-	  const classNames = ['bx-call-chat-header-call-button-menu__zoom', 'menu-popup-no-icon'];
 	  const isFeatureAvailable = im_v2_lib_feature.FeatureManager.isFeatureAvailable(im_v2_lib_feature.Feature.zoomAvailable);
-	  if (!isFeatureAvailable) {
-	    classNames.push('--disabled');
-	  }
 	  return {
-	    className: classNames.join(' '),
-	    text: main_core.Loc.getMessage('CALL_CONTENT_CHAT_HEADER_CALL_MENU_ZOOM'),
-	    onclick: () => {
+	    title: main_core.Loc.getMessage('CALL_CONTENT_CHAT_HEADER_CALL_MENU_ZOOM'),
+	    design: isFeatureAvailable ? ui_system_menu.MenuItemDesign.Default : ui_system_menu.MenuItemDesign.Disabled,
+	    onClick: () => {
 	      if (!isFeatureAvailable) {
 	        BX.UI.InfoHelper.show('limit_video_conference_zoom');
 	        return;
@@ -204,14 +194,6 @@ this.BX.Call = this.BX.Call || {};
 	      this.menuInstance.close();
 	    }
 	  };
-	}
-	function _getUserPhoneHtml2(title, phoneNumber) {
-	  return main_core.Tag.render(_t || (_t = _`
-			<span class="bx-call-chat-header-call-button-menu__phone_container">
-				<span class="bx-call-chat-header-call-button-menu__phone_title">${0}</span>
-				<span class="bx-call-chat-header-call-button-menu__phone_number">${0}</span>
-			</span>
-		`), title, phoneNumber);
 	}
 	function _isCallAvailable2(dialogId) {
 	  if (im_v2_lib_call.CallManager.getInstance().hasActiveCurrentCall(dialogId)) {
@@ -269,6 +251,10 @@ this.BX.Call = this.BX.Call || {};
 	    copilotMode: {
 	      type: Boolean,
 	      default: false
+	    },
+	    showIcon: {
+	      type: Boolean,
+	      default: true
 	    }
 	  },
 	  computed: {
@@ -277,7 +263,7 @@ this.BX.Call = this.BX.Call || {};
 	    }
 	  },
 	  template: `
-		<div :class="callButtonIconClasses"></div>
+		<div v-if="showIcon || compactMode" :class="callButtonIconClasses"></div>
 		<div v-if="!compactMode" class="bx-call-chat-header-call-button__text">
 			{{ text }}
 		</div>
@@ -427,7 +413,10 @@ this.BX.Call = this.BX.Call || {};
 	      return this.dialog.type === im_v2_const.ChatType.videoconf;
 	    },
 	    callButtonText() {
-	      const locCode = call_const.CallTypes[this.lastCallType].locCode;
+	      let locCode = call_const.CallTypes[this.lastCallType].locCode;
+	      if (this.hasActiveCurrentCall) {
+	        locCode = 'CALL_CHAT_HEADER_BUTTON_RETURN_TO_CALL_TEXT';
+	      }
 	      return this.loc(locCode);
 	    },
 	    hasActiveCurrentCall() {
@@ -479,7 +468,7 @@ this.BX.Call = this.BX.Call || {};
 	      return this.isCopilotActive && this.userCount >= this.copilotMinUserLimit && !this.isConference && this.isTariffAvailable;
 	    },
 	    callButtonContainerClasses() {
-	      return ['bx-call-chat-header-call-button__scope', 'bx-call-chat-header-call-button__container', ...(this.isConference ? ['--conference'] : []), ...(this.isCopilotCall ? ['--copilot'] : []), ...(!this.isActive ? ['--disabled'] : [])];
+	      return ['--ui-context-content-light', 'bx-call-chat-header-call-button__scope', 'bx-call-chat-header-call-button__container', ...(this.isConference ? ['--conference'] : []), ...(this.isCopilotCall && !this.hasActiveCurrentCall ? ['--copilot'] : []), ...(!this.isActive ? ['--disabled'] : []), ...(this.hasActiveCurrentCall ? ['--return'] : [])];
 	    },
 	    canShowPromo() {
 	      return this.isCopilotCall && im_v2_lib_promo.PromoManager.getInstance().needToShow(this.promoId) && !this.hasActiveCurrentCall && this.isActive;
@@ -594,9 +583,9 @@ this.BX.Call = this.BX.Call || {};
 				@click="onButtonClick"
 				ref="call-button"
 			>
-				<CallButtonTitle :compactMode="compactMode" :copilotMode="isCopilotCall" :text="callButtonText" />
-				<div class="bx-call-chat-header-call-button__separator"></div>
-				<div class="bx-call-chat-header-call-button__chevron_container" @click.stop="onMenuClick">
+				<CallButtonTitle :showIcon="!hasActiveCurrentCall" :compactMode="compactMode" :copilotMode="isCopilotCall" :text="callButtonText" />
+				<div v-if="!hasActiveCurrentCall" class="bx-call-chat-header-call-button__separator"></div>
+				<div v-if="!hasActiveCurrentCall" class="bx-call-chat-header-call-button__chevron_container" @click.stop="onMenuClick">
 					<div class="bx-call-chat-header-call-button__chevron" ref="menu"></div>
 				</div>
 			</div>
@@ -611,5 +600,5 @@ this.BX.Call = this.BX.Call || {};
 
 	exports.CallButton = CallButton;
 
-}((this.BX.Call.Component = this.BX.Call.Component || {}),BX.Event,BX.Messenger.v2.Lib,BX.Messenger.v2.Lib,BX.Messenger.v2.Lib,BX.Messenger.v2.Application,BX.Messenger.v2.Const,BX.Messenger.v2.Lib,BX.Messenger.v2.Lib,BX.Messenger.v2.Lib,BX.Messenger.v2.Lib,BX.Messenger.v2.Lib,BX.Call.Lib,BX.Call.Const,BX.Call.Component.Elements,BX,BX.Call,BX.Vue3.Directives));
+}((this.BX.Call.Component = this.BX.Call.Component || {}),BX.Event,BX.Messenger.v2.Lib,BX.Messenger.v2.Lib,BX.UI.System,BX.Messenger.v2.Lib,BX.Messenger.v2.Application,BX.Messenger.v2.Const,BX.Messenger.v2.Lib,BX.Messenger.v2.Lib,BX.Messenger.v2.Lib,BX.Messenger.v2.Lib,BX.Messenger.v2.Lib,BX.Call.Lib,BX.Call.Const,BX.Call.Component.Elements,BX,BX.Call,BX.Vue3.Directives));
 //# sourceMappingURL=call-button.bundle.js.map

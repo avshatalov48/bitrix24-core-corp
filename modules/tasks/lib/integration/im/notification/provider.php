@@ -19,6 +19,9 @@ use Bitrix\Tasks\Internals\Notification\EntityOperation;
 use Bitrix\Tasks\Internals\Notification\Message;
 use Bitrix\Tasks\Internals\Notification\ProviderInterface;
 use Bitrix\Tasks\Internals\UserOption;
+use Bitrix\Tasks\Onboarding\Notification\Message\TaskNotViewedOneDay;
+use Bitrix\Tasks\Onboarding\Notification\Message\TaskNotViewedTwoDays;
+use Bitrix\Tasks\Onboarding\Notification\Message\TooManyTasks;
 
 class Provider implements ProviderInterface
 {
@@ -89,6 +92,15 @@ class Provider implements ProviderInterface
 				case EntityCode::CODE_TASK . ':' . EntityOperation::ADD_TO_FLOW_WITH_HIMSELF_DISTRIBUTION:
 					$this->pushNotification((new Notification\UseCase\Flow\TaskAddedToFlowWithHimselfDistribution())->getNotification($message));
 					break;
+				case EntityCode::CODE_TASK . ':' . EntityOperation::NOT_VIEWED_ONE_DAY:
+					$this->pushNotification((new TaskNotViewedOneDay())->getNotification($message));
+					break;
+				case EntityCode::CODE_TASK . ':' . EntityOperation::NOT_VIEWED_TWO_DAYS:
+					$this->pushNotification((new TaskNotViewedTwoDays())->getNotification($message));
+					break;
+				case EntityCode::CODE_TASK . ':' . EntityOperation::TOO_MANY_TASKS:
+					$this->pushNotification((new TooManyTasks())->getNotification($message));
+					break;
 			}
 
 		}
@@ -106,7 +118,7 @@ class Provider implements ProviderInterface
 		$params = [
 			'FROM_USER_ID' => $notification->getSender()->getId(),
 			'TO_USER_ID' => $notification->getRecepient()->getId(),
-			'NOTIFY_TYPE' => IM_NOTIFY_FROM,
+			'NOTIFY_TYPE' => $notification->getNotifyType(),
 			'NOTIFY_MODULE' => 'tasks',
 			'NOTIFY_EVENT' => 'manage', // possibly different values
 			'NOTIFY_TAG' => $tag->getName(),
@@ -115,6 +127,7 @@ class Provider implements ProviderInterface
 			'NOTIFY_MESSAGE_OUT' => (new Notification\Task\EmailNotification($notification))->getMessage(),
 			'PUSH_MESSAGE' => (new Notification\Task\PushNotification($notification))->getMessage(),
 			'PUSH_PARAMS' => (new Notification\Task\PushNotification($notification))->getParams($tag),
+			'NOTIFY_BUTTONS' => $notification->getButtons(),
 		];
 
 		$params = array_merge($params, $notification->getParams());

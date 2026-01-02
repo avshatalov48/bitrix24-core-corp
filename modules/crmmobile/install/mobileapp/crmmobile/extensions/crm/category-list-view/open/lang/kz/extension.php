@@ -1,0 +1,5 @@
+<?php
+$MESS["M_CRM_CATEGORY_LIST_ACTION_CHANGE_CATEGORY_ALERT_OK"] = "Иірімді өзгерту";
+$MESS["M_CRM_CATEGORY_LIST_ACTION_CHANGE_CATEGORY_ALERT_TEXT"] = "Сіз иірімді өзгерткіңіз келетініне сенімдісіз бе?";
+$MESS["M_CRM_CATEGORY_LIST_ACTION_CHANGE_CATEGORY_ALERT_TITLE"] = "Иірімді ауыстыру";
+$MESS["M_CRM_CATEGORY_LIST_ACTION_CHANGE_CATEGORY_TITLE"] = "Иірімді таңдаңыз";

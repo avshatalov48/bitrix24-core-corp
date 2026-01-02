@@ -2,7 +2,7 @@
 
 namespace Bitrix\Crm\Security\Role\Manage\Entity;
 
-use Bitrix\Crm\Security\Role\Manage\AttrPreset\UserRoleAndHierarchy;
+use Bitrix\Crm\Security\Role\Manage\AttrPreset\UserDepartmentAndOpened;
 use Bitrix\Crm\Security\Role\Manage\DTO\EntityDTO;
 use Bitrix\Crm\Security\Role\Manage\PermissionAttrPresets;
 use Bitrix\Crm\Security\Role\Manage\Permissions\Read;
@@ -15,22 +15,21 @@ class SaleTarget implements PermissionEntity
 {
 	private function permissions(): array
 	{
-		$hierarchy = (new UserRoleAndHierarchy())
-			->exclude(UserRoleAndHierarchy::THIS_ROLE)
-			->exclude(UserRoleAndHierarchy::OPEN)
+		$hierarchy = (new UserDepartmentAndOpened())
+			->exclude(UserDepartmentAndOpened::OPEN)
 		;
 
 		return [
 			new Read(
 				$hierarchy->getVariants(),
-				(new DependentVariables\UserRoleAndHierarchyAsAttributes())
-					->setHierarchy($hierarchy)
+				(new DependentVariables\UserDepartmentAndOpenedAsAttributes())
+					->setPermissionPreset($hierarchy)
 					->addSelectedVariablesAlias(
 						[
-							UserRoleAndHierarchy::SELF,
-							UserRoleAndHierarchy::DEPARTMENT,
-							UserRoleAndHierarchy::SUBDEPARTMENTS,
-							UserRoleAndHierarchy::ALL,
+							UserDepartmentAndOpened::SELF,
+							UserDepartmentAndOpened::DEPARTMENT,
+							UserDepartmentAndOpened::SUBDEPARTMENTS,
+							UserDepartmentAndOpened::ALL,
 						],
 						Loc::getMessage('CRM_SECURITY_ROLE_PERMS_TYPE_X'),
 					)

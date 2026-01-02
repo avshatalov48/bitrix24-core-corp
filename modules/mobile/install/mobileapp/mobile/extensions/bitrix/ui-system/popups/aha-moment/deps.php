@@ -16,5 +16,6 @@ return [
 	],
 	'bundle' => [
 		'./src/direction-enum',
+		'./src/hint',
 	],
 ];

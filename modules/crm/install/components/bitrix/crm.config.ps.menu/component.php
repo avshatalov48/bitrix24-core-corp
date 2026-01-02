@@ -28,9 +28,7 @@ $arResult['BUTTONS'] = array();
 
 $psID = isset($arParams['PS_ID']) ? strval($arParams['PS_ID']) : '';
 
-$CrmPerms = new CCrmPerms($USER->GetID());
-
-$psAdd = $psEdit = $psDelete = $CrmPerms->HavePerm('CONFIG', BX_CRM_PERM_CONFIG, 'WRITE');
+$psAdd = $psEdit = $psDelete = \Bitrix\Crm\Service\Container::getInstance()->getUserPermissions()->isCrmAdmin();
 
 $exists = intval($psID > 0) && is_array(CSalePaySystem::GetList(
 																	array(),

@@ -28,8 +28,7 @@ class CrmConfigurationCheckerComponent extends \CBitrixComponent implements \Bit
 		}
 		else
 		{
-			$CrmPerms = CCrmPerms::GetCurrentUserPermissions();
-			if (!$CrmPerms->HavePerm("CONFIG", BX_CRM_PERM_CONFIG, "WRITE"))
+			if (!\Bitrix\Crm\Service\Container::getInstance()->getUserPermissions()->isCrmAdmin())
 			{
 				$this->errorCollection->setError(new \Bitrix\Main\Error(Loc::getMessage("CRM_DONT_HAVE_CONFIG_PERMS"), "ACCESS_DENIED"), "ACCESS_DENIED");
 			}
@@ -113,6 +112,10 @@ class CrmConfigurationCheckerComponent extends \CBitrixComponent implements \Bit
 
 		global $APPLICATION;
 		$APPLICATION->SetTitle($this->configurator->getTitle());
+		if (\Bitrix\Main\Loader::includeModule('ui'))
+		{
+			\Bitrix\UI\Toolbar\Facade\Toolbar::deleteFavoriteStar();
+		}
 		$this->includeComponentTemplate();
 	}
 
@@ -183,7 +186,7 @@ class CrmConfigurationCheckerComponent extends \CBitrixComponent implements \Bit
 		];
 		return $result;
 	}
-	
+
 	public function showSliderAction()
 	{
 		$result = ["show" => "N", "lastVisit" => null];
@@ -212,4 +215,3 @@ class CrmConfigurationCheckerComponent extends \CBitrixComponent implements \Bit
 		return $this->errorCollection->getErrorByCode($code);
 	}
 }
-

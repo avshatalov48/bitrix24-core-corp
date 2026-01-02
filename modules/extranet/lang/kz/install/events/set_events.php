@@ -1,4 +1,10 @@
 <?php
+$MESS["EXTRANET_COLLAB_JOIN_DESC"] = "#USER_ID# - Пайдаланушы ID
+#EMAIL# - Пайдаланушының email
+#SITE_NAME# - Cайт атауы
+#SERVER_NAME# - сайттың URL мекенжайы (http:// жоқ)";
+$MESS["EXTRANET_COLLAB_JOIN_NAME"] = "Жаңа пайдаланушыны сайтқа шақыру";
+$MESS["EXTRANET_COLLAB_JOIN_SUBJECT"] = "Сіз коллабқа қосылдыңыз";
 $MESS["EXTRANET_INVITATION_DESC"] = "#CHECKWORD# - Бақылау жолы
 #USER_ID# - пайдаланушының ID-і
 #EMAIL# - пайдаланушының email-ы

@@ -1,5 +1,7 @@
 <?
 
+use Bitrix\Crm\Service\Container;
+
 define('STOP_STATISTICS', true);
 define('BX_SECURITY_SHOW_MESSAGE', true);
 define('NO_KEEP_STATISTIC', 'Y');
@@ -40,8 +42,7 @@ if (!CModule::IncludeModule('crm'))
 	return;
 }
 
-$userPerms = CCrmPerms::GetCurrentUserPermissions();
-if(!CCrmPerms::IsAuthorized())
+if(!\Bitrix\Crm\Service\Container::getInstance()->getContext()->getUserId())
 {
 	return;
 }
@@ -52,7 +53,12 @@ if (isset($_REQUEST['MODE']) && $_REQUEST['MODE'] === 'SEARCH')
 {
 	\Bitrix\Main\Localization\Loc::loadMessages(__FILE__);
 
-	if(!\Bitrix\Crm\Order\Permissions\Order::checkReadPermission(0, $userPerms))
+	if (
+		!Container::getInstance()
+			->getUserPermissions()
+			->entityType()
+			->canReadItems(\CCrmOwnerType::Order)
+	)
 	{
 		__CrmOrderListEndResponse(array('ERROR' => 'Access denied.'));
 	}
@@ -157,8 +163,15 @@ elseif ($action === 'SAVE_PROGRESS' && check_bitrix_sessid())
 	if($statusId === '' || $ID <= 0  || $typeName !== CCrmOwnerType::OrderName)
 		__CrmOrderListEndResponse(array('ERROR' => 'Invalid data.'));
 
-	if (!\Bitrix\Crm\Order\Permissions\Order::checkUpdatePermission($ID, $userPerms))
+	if (
+		!Container::getInstance()
+			->getUserPermissions()
+			->item()
+			->canUpdate(\CCrmOwnerType::Order, $ID)
+	)
+	{
 		__CrmOrderListEndResponse(array('ERROR' => 'Access denied.'));
+	}
 
 	$res = \Bitrix\Crm\Order\Manager::setOrderStatus($ID, $statusId, $reasonCanceled);
 
@@ -183,7 +196,12 @@ elseif ($action === 'GET_ROW_COUNT')
 {
 	\Bitrix\Main\Localization\Loc::loadMessages(__FILE__);
 
-	if(!\Bitrix\Crm\Order\Permissions\Order::checkReadPermission(0, $userPerms))
+	if (
+		!Container::getInstance()
+			->getUserPermissions()
+			->entityType()
+			->canReadItems(\CCrmOwnerType::Order)
+	)
 	{
 		__CrmOrderListEndResponse(array('ERROR' => 'Access denied.'));
 	}

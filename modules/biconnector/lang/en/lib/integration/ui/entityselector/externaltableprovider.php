@@ -1,0 +1,3 @@
+<?php
+$MESS["EXTERNAL_TABLE_PROVIDER_EMPTY_EXTERNAL_SOURCE"] = "Connection source was not found.";
+$MESS["EXTERNAL_TABLE_PROVIDER_UNKNOWN_TYPE_EXTERNAL_SOURCE"] = "Unknown connection type.";

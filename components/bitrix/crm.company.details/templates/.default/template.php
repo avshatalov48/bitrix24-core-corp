@@ -65,17 +65,6 @@ $APPLICATION->IncludeComponent(
 				BX.message({
 					"CRM_TIMELINE_HISTORY_STUB": "<?=GetMessageJS('CRM_COMPANY_DETAIL_HISTORY_STUB')?>"
 				});
-
-				<?
-				$labelText = $arResult['CATEGORY_ID']
-					? NamingHelper::getInstance()->getSingleName($arResult['CATEGORY_ID'])
-					: \CCrmOwnerType::GetDescription(\CCrmOwnerType::Company)
-				?>
-				var slider = top.BX && top.BX.SidePanel && top.BX.SidePanel.Instance.getSliderByWindow(window);
-				if (slider)
-				{
-					slider.getLabel().setText('<?=CUtil::JSEscape($labelText)?>');
-				}
 			}
 		);
 </script><?

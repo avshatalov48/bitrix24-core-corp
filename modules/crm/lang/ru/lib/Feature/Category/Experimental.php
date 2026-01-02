@@ -1,0 +1,2 @@
+<?php
+$MESS['FEATURE_CATEGORY_EXPERIMENTAL_NAME'] = 'Другое';

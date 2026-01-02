@@ -1,0 +1,5 @@
+<?php
+$MESS["STAFFTRACK_INTEGRATION_IM_ADDRESS"] = "#ADDRESS# (дәлдігі 500 м)";
+$MESS["STAFFTRACK_INTEGRATION_IM_CHECK_IN"] = "Жұмыста чекин";
+$MESS["STAFFTRACK_INTEGRATION_IM_USER_LINK_STATISTICS"] = "Менің чекиндерім: #LINK#";
+$MESS["STAFFTRACK_INTEGRATION_IM_USER_LINK_STATISTICS_V2"] = "Осы жерде [URL=#LINK#]менің чекиндерімді[/URL] көруге болады ";

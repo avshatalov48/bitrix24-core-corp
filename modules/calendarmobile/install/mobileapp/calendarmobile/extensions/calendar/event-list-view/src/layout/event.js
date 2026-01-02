@@ -7,7 +7,7 @@ jn.define('calendar/event-list-view/layout/event', (require, exports, module) =>
 	const { Indent, Color, Corner } = require('tokens');
 	const { BadgeCounter, BadgeCounterDesign } = require('ui-system/blocks/badges/counter');
 	const { BadgeStatus, BadgeStatusMode, BadgeStatusSize } = require('ui-system/blocks/badges/status');
-	const { Text2, Text5, Text6 } = require('ui-system/typography/text');
+	const { Text2, Text5 } = require('ui-system/typography/text');
 	const { Button, ButtonSize, ButtonDesign } = require('ui-system/form/buttons/button');
 	const { IconView, Icon } = require('ui-system/blocks/icon');
 
@@ -19,11 +19,13 @@ jn.define('calendar/event-list-view/layout/event', (require, exports, module) =>
 	const { SectionManager } = require('calendar/data-managers/section-manager');
 	const { EventMeetingStatus, CalendarType, Counters } = require('calendar/enums');
 	const { RecursionModeMenu } = require('calendar/layout/menu/recursion-mode');
+	const { AppRatingClient } = require('calendar/app-rating-client');
 
 	const { dispatch } = require('statemanager/redux/store');
 	const { setMeetingStatus } = require('calendar/statemanager/redux/slices/events');
 
 	const isAndroid = Application.getPlatform() === 'android';
+	const ICON_SIZE = 18;
 
 	class Event
 	{
@@ -70,8 +72,8 @@ jn.define('calendar/event-list-view/layout/event', (require, exports, module) =>
 					style: {
 						flexDirection: 'row',
 						paddingVertical: Indent.XL.toNumber(),
-						borderTopWidth: 1,
-						borderTopColor: Color.bgSeparatorSecondary.toHex(),
+						borderBottomWidth: 1,
+						borderBottomColor: Color.bgSeparatorSecondary.toHex(),
 					},
 					clickable: true,
 					onClick: this.openEventViewForm,
@@ -91,8 +93,13 @@ jn.define('calendar/event-list-view/layout/event', (require, exports, module) =>
 						width: 6,
 						height: '100%',
 						borderRadius: Corner.S.toNumber(),
-						backgroundColor: this.getEventColor(),
+						borderWidth: 1.2,
+						borderColor: this.getEventColor(),
 						opacity: this.isDeclinedOrHasPassed() ? 0.4 : 1,
+						backgroundColor: (this.event.isLongWithTime() && !this.event.isFullDay())
+							? Color.bgContentPrimary.toHex()
+							: this.getEventColor()
+						,
 					},
 					testId: `event_${this.event.getId()}_color`,
 				},
@@ -148,7 +155,7 @@ jn.define('calendar/event-list-view/layout/event', (require, exports, module) =>
 				ellipsize: 'end',
 				style: {
 					flex: 1,
-					opacity: (this.event.isSharingEvent() && this.hasPassed) ? 0.7 : 1,
+					opacity: this.getNameOpacity(),
 				},
 			});
 		}
@@ -160,7 +167,25 @@ jn.define('calendar/event-list-view/layout/event', (require, exports, module) =>
 				return Color.accentMainWarning;
 			}
 
+			if (this.event.isBookingEvent())
+			{
+				return Color.accentExtraPink;
+			}
+
 			return this.isDeclinedOrHasPassed() ? Color.base3 : Color.base1;
+		}
+
+		getNameOpacity()
+		{
+			if (
+				(this.event.isSharingEvent() || this.event.isBookingEvent())
+				&& this.hasPassed
+			)
+			{
+				return 0.7;
+			}
+
+			return 1;
 		}
 
 		getLocationColor()
@@ -180,9 +205,42 @@ jn.define('calendar/event-list-view/layout/event', (require, exports, module) =>
 					},
 					IconView({
 						icon: Icon.PERSON,
-						size: 18,
+						size: ICON_SIZE,
 						color: Color.accentMainWarning,
 					}),
+				);
+			}
+
+			if (this.event.isBookingEvent())
+			{
+				if (!Icon.SOLID_ONLINE_BOOKING)
+				{
+					return null;
+				}
+
+				return View(
+					{
+						style: {
+							paddingRight: Indent.S.toNumber(),
+						},
+					},
+					View(
+						{
+							style: {
+								width: ICON_SIZE + 2,
+								height: ICON_SIZE + 2,
+								alignItems: 'center',
+								justifyContent: 'center',
+								backgroundColor: Color.accentExtraPink.toHex(),
+								borderRadius: 512,
+							},
+						},
+						IconView({
+							icon: Icon.SOLID_ONLINE_BOOKING,
+							size: ICON_SIZE,
+							color: Color.baseWhiteFixed,
+						}),
+					),
 				);
 			}
 
@@ -212,7 +270,7 @@ jn.define('calendar/event-list-view/layout/event', (require, exports, module) =>
 					},
 					IconView({
 						icon: Icon.REPEAT,
-						size: 18,
+						size: ICON_SIZE,
 						color: this.getNameColor(),
 					}),
 				);
@@ -271,6 +329,7 @@ jn.define('calendar/event-list-view/layout/event', (require, exports, module) =>
 				{
 					testId: `event_${this.event.getId()}_not_participating`,
 					style: {
+						paddingTop: Indent.XS2.toNumber(),
 						alignItems: 'center',
 						flexDirection: 'row',
 					},
@@ -280,7 +339,7 @@ jn.define('calendar/event-list-view/layout/event', (require, exports, module) =>
 					mode: BadgeStatusMode.WARNING_GREY,
 					size: BadgeStatusSize.SMALL,
 				}),
-				Text6({
+				Text5({
 					text: Loc.getMessage('M_CALENDAR_EVENT_LIST_NOT_ATTENDED'),
 					color: Color.base4,
 					style: {
@@ -292,7 +351,7 @@ jn.define('calendar/event-list-view/layout/event', (require, exports, module) =>
 
 		renderCollabName()
 		{
-			return Text6({
+			return Text5({
 				testId: `event_${this.event.getId()}_collab_name`,
 				color: Color.collabAccentPrimaryAlt,
 				text: Loc.getMessage('M_CALENDAR_EVENT_LIST_COLLAB_NAME', {
@@ -392,10 +451,9 @@ jn.define('calendar/event-list-view/layout/event', (require, exports, module) =>
 
 				if (this.dayCode === DateHelper.getDayCode(dateTo.date))
 				{
-					return Loc.getMessage('M_CALENDAR_EVENT_LIST_TILL_TIME').replace(
-						'#TIME#',
-						dateTo.format(shortTime()).toLocaleUpperCase(env.languageId),
-					);
+					return Loc.getMessage('M_CALENDAR_EVENT_LIST_TILL_TIME', {
+						'#TIME#': dateTo.format(shortTime()).toLocaleUpperCase(env.languageId),
+					});
 				}
 
 				return Loc.getMessage('M_CALENDAR_EVENT_LIST_ALL_DAY');
@@ -418,11 +476,19 @@ jn.define('calendar/event-list-view/layout/event', (require, exports, module) =>
 
 		openEventViewForm = () => {
 			EventView.open({
-				ownerId: State.ownerId,
-				calType: State.calType,
-				parentLayout: this.props.layout,
 				eventId: this.event.getId(),
+				parentId: this.event.getParentId(),
+				ownerId: this.event.getOwnerId(),
+				calType: this.event.getCalType(),
+				parentLayout: this.props.layout,
 				dateFromTs: this.getEventDateFrom().getTime(),
+				onClose: this.onEventViewFormClose,
+			});
+		};
+
+		onEventViewFormClose = () => {
+			AppRatingClient.tryOpenAppRatingAfterCalendarEventViewed({
+				parentWidget: this.props.layout,
 			});
 		};
 
@@ -468,7 +534,11 @@ jn.define('calendar/event-list-view/layout/event', (require, exports, module) =>
 					const filterResultIds = State.filterResultIds.filter((id) => id !== this.event.getId());
 					State.setFilterResultIds(filterResultIds);
 
-					if (State.calType === CalendarType.USER && State.counters[Counters.INVITES] > 0)
+					if (
+						State.calType === CalendarType.USER
+						&& State.ownerId === Number(env.userId)
+						&& State.counters[Counters.INVITES] > 0
+					)
 					{
 						State.setUserInvitesCounter(State.counters[Counters.INVITES] - 1);
 					}

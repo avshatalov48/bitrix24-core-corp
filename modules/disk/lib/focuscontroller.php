@@ -2,12 +2,14 @@
 
 namespace Bitrix\Disk;
 
+use Bitrix\Disk\Internal\Service\UnifiedLink\UnifiedLinkAccessService;
 use Bitrix\Disk\Internals;
 use Bitrix\Disk\Internals\Error\Error;
 use Bitrix\Disk\Internals\Grid\FolderListOptions;
 use Bitrix\Disk\Internals\ObjectTable;
 use Bitrix\Main;
 use Bitrix\Main\Application;
+use Bitrix\Main\DI\ServiceLocator;
 use Bitrix\Main\Entity\ExpressionField;
 use Bitrix\Main\Entity\Query;
 use Bitrix\Main\Localization\Loc;
@@ -98,7 +100,7 @@ final class FocusController extends Internals\Controller
 		$finalPage = $this->getPageWithObject($object, $gridOptions, $filter);
 		$urlManager = Driver::getInstance()->getUrlManager();
 
-		LocalRedirect($this->buildUrlToFocus($urlManager->getPathInListing($object), $object->getId(), $finalPage, $gridOptions));
+		LocalRedirect($this->buildUrlToFocus($urlManager->getPathInListing($object), $object->getId(), $finalPage, $gridOptions, $object));
 	}
 
 	protected function processActionShowObjectInTrashCanGrid($objectId)
@@ -140,11 +142,16 @@ final class FocusController extends Internals\Controller
 		LocalRedirect($this->buildUrlToFocus($urlManager->getPathInTrashcanListing($object), $object->getId(), $finalPage, $gridOptions));
 	}
 
-	private function buildUrlToFocus($listingPath, $objectId, $finalPage, FolderListOptions $gridOptions)
+	private function buildUrlToFocus($listingPath, $objectId, $finalPage, FolderListOptions $gridOptions, File|Folder|null $object = null)
 	{
 		$command = $this->request->getQuery('cmd')?: '';
 		if ($command)
 		{
+			if ($command === 'show' && $object instanceof File && $object->supportsUnifiedLink())
+			{
+				return Driver::getInstance()->getUrlManager()->getUnifiedLink($object);
+			}
+
 			$command = '!' . $command;
 		}
 
@@ -183,10 +190,20 @@ final class FocusController extends Internals\Controller
 
 	private function checkReadRights(BaseObject $object)
 	{
-		$storage = $object->getStorage();
-		$securityContext = $storage->getCurrentUserSecurityContext();
+		if ($object instanceof File && $object->supportsUnifiedLink())
+		{
+			$unifiedLinkAccessService = ServiceLocator::getInstance()->get(UnifiedLinkAccessService::class);
 
-		if (!$object->canRead($securityContext))
+			$canRead = $unifiedLinkAccessService->check($object)->canRead();
+		}
+		else
+		{
+			$storage = $object->getStorage();
+			$securityContext = $storage->getCurrentUserSecurityContext();
+			$canRead = $object->canRead($securityContext);
+		}
+
+		if (!$canRead)
 		{
 			$this->errorCollection[] = new Error('Could not find file or folder', self::ERROR_COULD_NOT_READ_FILE);
 

@@ -2,6 +2,8 @@
 namespace Bitrix\Crm\Entity;
 
 use Bitrix\Crm;
+use Bitrix\Crm\Integration\UI\EntityEditor\Configuration;
+use Bitrix\Crm\Integration\UI\EntityEditor\DefaultEntityConfigFactory;
 use Bitrix\Crm\Service\Container;
 use Bitrix\Main;
 use Bitrix\Ui\EntityForm\Scope;
@@ -76,7 +78,7 @@ class EntityEditorConfig
 		if (
 			$configScope !== Crm\Entity\EntityEditorConfigScope::CUSTOM
 			|| !$userScopeId
-			|| !isset(Scope::getInstance()->getUserScopes($configId, 'crm')[$userScopeId])
+			|| !isset(Scope::getInstance($this->userID)->getUserScopes($configId, 'crm')[$userScopeId])
 		)
 		{
 			$userScopeId = null;
@@ -128,7 +130,7 @@ class EntityEditorConfig
 			|| \CCrmOwnerType::isUseFactoryBasedApproach($entityTypeID);
 	}
 
-	protected function getConfigId(): string
+	public function getConfigId(): string
 	{
 		$optionName = $this->resolveOptionName();
 		if($optionName === '')
@@ -140,99 +142,12 @@ class EntityEditorConfig
 		return $optionName;
 	}
 
-	protected function resolveOptionName()
+	protected function resolveOptionName(): string
 	{
-		switch($this->entityTypeID)
-		{
-			case \CCrmOwnerType::Lead:
-				{
-					$prefix = '';
-					$customerType = isset($this->extras['LEAD_CUSTOMER_TYPE'])
-						? (int)$this->extras['LEAD_CUSTOMER_TYPE'] : Crm\CustomerType::UNDEFINED;
-					if($customerType !== Crm\CustomerType::UNDEFINED && $customerType !== Crm\CustomerType::GENERAL)
-					{
-						$prefix = mb_strtolower(Crm\CustomerType::resolveName($customerType));
-					}
-					$optionName = $prefix !== '' ? "{$prefix}_lead_details" : 'lead_details';
-					break;
-				}
-			case \CCrmOwnerType::Deal:
-				{
-					$optionName = 'deal_details';
-					break;
-				}
-			case \CCrmOwnerType::Contact:
-				{
-					$optionName = 'contact_details';
-					break;
-				}
-			case \CCrmOwnerType::Company:
-				{
-					$optionName = 'company_details';
-					break;
-				}
-			case \CCrmOwnerType::Quote:
-			{
-				$optionName = 'QUOTE_details';
-				break;
-			}
-			case \CCrmOwnerType::StoreDocument:
-			{
-				$optionName = 'store_document_details';
-				break;
-			}
-			case \CCrmOwnerType::ShipmentDocument:
-			{
-				$optionName = 'realization_document_delivery_details'; // or realization_document_shipment_details ?
-				break;
-			}
-			default:
-			{
-				$optionName = '';
-			}
-		}
-
-		if (empty($optionName) && \CCrmOwnerType::isUseDynamicTypeBasedApproach($this->entityTypeID))
-		{
-			$componentName = Crm\Service\Container::getInstance()->getRouter()->getItemDetailComponentName($this->entityTypeID);
-			if ($componentName)
-			{
-				$componentClassName = \CBitrixComponent::includeComponentClass($componentName);
-				if ($componentClassName)
-				{
-					/** @var Crm\Component\EntityDetails\FactoryBased $component */
-					$component = new $componentClassName;
-					$component->initComponent($componentName);
-					$params = [
-						'ENTITY_TYPE_ID' => $this->entityTypeID,
-					];
-					$categoryId = $this->extras['CATEGORY_ID'] ?? $this->extras['DEAL_CATEGORY_ID'] ?? null;
-					if ($categoryId > 0)
-					{
-						$params['categoryId'] = $categoryId;
-					}
-					//@codingStandardsIgnoreStart
-					$component->arParams = $params;
-					//@codingStandardsIgnoreEnd
-					$component->init();
-					$optionName = $component->getEditorConfigId();
-
-					return $optionName;
-				}
-			}
-		}
-		if (empty($optionName) && \CCrmOwnerType::IsDefined($this->entityTypeID))
-		{
-			$optionName = mb_strtolower(\CCrmOwnerType::ResolveName($this->entityTypeID)) . '_details';
-		}
-		$categoryId = $this->extras['CATEGORY_ID'] ?? $this->extras['DEAL_CATEGORY_ID'] ?? 0;
-
-		$useUppercase = in_array($this->entityTypeID, [
-			\CCrmOwnerType::Contact,
-			\CCrmOwnerType::Company,
-		]);
-
-		return (new Crm\Category\EditorHelper($this->entityTypeID))->getEditorConfigId($categoryId, $optionName, $useUppercase);
+		return (new EntityEditorOptionBuilder($this->entityTypeID))
+			->setCategoryId($this->categoryId())
+			->setCustomerType($this->customerType())
+			->build();
 	}
 
 	public function canDoOperation($operation)
@@ -241,8 +156,7 @@ class EntityEditorConfig
 		{
 			if($this->scope === Crm\Entity\EntityEditorConfigScope::PERSONAL)
 			{
-				return ($this->userID > 0 && $this->userID === \CCrmSecurityHelper::GetCurrentUserID())
-					|| \CCrmAuthorizationHelper::CanEditOtherSettings();
+				return Container::getInstance()->getUserPermissions()->entityEditor()->canEditPersonalViewForUser((int)$this->userID);
 			}
 			elseif($this->scope === Crm\Entity\EntityEditorConfigScope::COMMON)
 			{
@@ -255,17 +169,16 @@ class EntityEditorConfig
 		{
 			if($this->scope === Crm\Entity\EntityEditorConfigScope::PERSONAL)
 			{
-				return ($this->userID > 0 && $this->userID === \CCrmSecurityHelper::GetCurrentUserID())
-					|| \CCrmAuthorizationHelper::CanEditOtherSettings();
+				return Container::getInstance()->getUserPermissions()->entityEditor()->canEditPersonalViewForUser((int)$this->userID);
 			}
 			elseif($this->scope === Crm\Entity\EntityEditorConfigScope::COMMON)
 			{
-				return \CCrmAuthorizationHelper::CheckConfigurationUpdatePermission();
+				return Container::getInstance()->getUserPermissions()->entityEditor()->canEditCommonView();
 			}
 		}
 		elseif(strcasecmp($operation, EntityEditorConfigOperation::FORCE_COMMON_SCOPE_FOR_ALL) === 0)
 		{
-			return \CCrmAuthorizationHelper::CanEditOtherSettings();
+			return Container::getInstance()->getUserPermissions()->entityEditor()->canEditCommonView();
 		}
 
 		return false;
@@ -293,6 +206,28 @@ class EntityEditorConfig
 		}
 
 		return is_array($result) ? $this->normalize($result) : $result;
+	}
+
+	public function getDefault(): ?array
+	{
+		return DefaultEntityConfigFactory::create($this->entityTypeID)?->get();
+	}
+
+	public function getConfiguration(bool $useDefaultIfNotExists = false): ?Configuration
+	{
+		$config = $this->get();
+		if ($config === null && $useDefaultIfNotExists)
+		{
+			$config = $this->getDefault();
+		}
+
+		if ($config === null)
+		{
+			return null;
+		}
+
+		return Configuration::fromArray($config)
+			->setEntityEditorConfig($this);
 	}
 
 	public function set(array $data)
@@ -441,7 +376,10 @@ class EntityEditorConfig
 			$effectiveSection = array(
 				'type' => 'section',
 				'name' => $data[$i]['name'],
-				'title' => isset($data[$i]['title']) ? $data[$i]['title'] : $data[$i]['name']
+				'title' =>
+					(isset($data[$i]['title']) && is_string($data[$i]['title']))
+						? $data[$i]['title']
+						: $data[$i]['name']
 			);
 
 			$effectiveElements = array();
@@ -510,7 +448,7 @@ class EntityEditorConfig
 				return false;
 			}
 
-			if(!(isset($data[$i]['title']) && trim($data[$i]['title']) !== ''))
+			if(!(isset($data[$i]['title']) && is_string($data[$i]['title'])))
 			{
 				$errors[] = "Section at index {$i} does not have title.";
 				return false;
@@ -596,7 +534,9 @@ class EntityEditorConfig
 
 		$isPersonalViewAllowed = Container::getInstance()
 			->getUserPermissions($this->userID)
-			->isPersonalViewAllowed($this->entityTypeID, $categoryId) ;
+			->entityEditor()
+			->canSwitchToPersonalView($this->entityTypeID, $categoryId)
+		;
 
 		if ($configScope === EntityEditorConfigScope::PERSONAL && !$isPersonalViewAllowed)
 		{
@@ -604,5 +544,15 @@ class EntityEditorConfig
 		}
 
 		return $configScope;
+	}
+
+	private function categoryId(): ?int
+	{
+		return $this->extras['CATEGORY_ID'] ?? $this->extras['DEAL_CATEGORY_ID'] ?? null;
+	}
+
+	private function customerType(): int
+	{
+		return isset($this->extras['LEAD_CUSTOMER_TYPE']) ? (int)$this->extras['LEAD_CUSTOMER_TYPE'] : Crm\CustomerType::UNDEFINED;
 	}
 }

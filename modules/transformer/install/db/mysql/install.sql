@@ -12,8 +12,12 @@ CREATE TABLE IF NOT EXISTS `b_transformer_command` (
 	`UPDATE_TIME` datetime,
 	`SEND_TIME` datetime,
 	`CONTROLLER_URL` varchar(255),
+	`DEADLINE` datetime,
+
 	PRIMARY KEY (ID),
+
 	unique index ux_b_transformer_command_guid (GUID),
 	index ix_trans_commands_file (FILE),
-	INDEX ix_trans_time_error (UPDATE_TIME, ERROR (128))
+	INDEX ix_trans_time_error (UPDATE_TIME, ERROR (128)),
+	INDEX ix_b_transformer_command_status_deadline (STATUS, DEADLINE)
 );

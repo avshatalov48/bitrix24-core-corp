@@ -2,7 +2,6 @@
 $MESS['TASKS_IMPORT_HEADERS_TITLE'] = 'Название';
 $MESS['TASKS_IMPORT_HEADERS_DESCRIPTION'] = 'Описание';
 $MESS['TASKS_IMPORT_HEADERS_PRIORITY'] = 'Это важная задача';
-$MESS['TASKS_IMPORT_HEADERS_RESPONSIBLE'] = 'Ответственный';
 $MESS['TASKS_IMPORT_HEADERS_ASSIGNEE'] = 'Исполнитель';
 $MESS['TASKS_IMPORT_HEADERS_ORIGINATOR'] = 'Постановщик';
 $MESS['TASKS_IMPORT_HEADERS_ACCOMPLICES'] = 'Соисполнители';
@@ -11,7 +10,7 @@ $MESS['TASKS_IMPORT_HEADERS_DEADLINE'] = 'Крайний срок';
 $MESS['TASKS_IMPORT_HEADERS_START_DATE_PLAN'] = 'Начать задачу с';
 $MESS['TASKS_IMPORT_HEADERS_END_DATE_PLAN'] = 'Завершить задачу';
 $MESS['TASKS_IMPORT_HEADERS_END_DATE_PLAN_V2'] = 'Завершить задачу';
-$MESS['TASKS_IMPORT_HEADERS_ALLOW_CHANGE_DEADLINE'] = 'Разрешить ответственному менять сроки задачи';
+$MESS['TASKS_IMPORT_HEADERS_ALLOW_CHANGE_DEADLINE_MSGVER_1'] = 'Разрешить исполнителю менять сроки задачи';
 $MESS['TASKS_IMPORT_HEADERS_MATCH_WORK_TIME'] = 'Пропустить выходные и праздничные дни';
 $MESS['TASKS_IMPORT_HEADERS_TASK_CONTROL'] = 'Принять работу после завершения задачи';
 $MESS['TASKS_IMPORT_HEADERS_TASK_CONTROL_V2'] = 'Проконтролировать задачу после завершения';

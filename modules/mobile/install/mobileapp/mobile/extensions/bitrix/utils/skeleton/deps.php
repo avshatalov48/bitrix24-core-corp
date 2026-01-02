@@ -2,8 +2,7 @@
 
 return [
 	'extensions' => [
-		'apptheme',
-		'feature',
+		'tokens',
 		'layout/polyfill',
 	],
 ];

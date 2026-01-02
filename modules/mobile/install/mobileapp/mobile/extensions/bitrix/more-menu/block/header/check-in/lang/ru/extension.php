@@ -1,0 +1,9 @@
+<?php
+
+$MESS['MORE_MENU_HEADER_CHECK_IN_TITLE'] = 'Чекин на работе';
+$MESS['MORE_MENU_HEADER_CHECK_IN_CLOSED'] = 'Нет чекинов';
+
+$MESS['MORE_MENU_HEADER_CHECK_IN_BUTTON_START'] = 'Отправить';
+$MESS['MORE_MENU_HEADER_CHECK_IN_BUTTON_DEFAULT'] = 'Мои чекины';
+
+$MESS['MORE_MENU_HEADER_CHECK_IN_CANCEL'] = 'Чекин отменен в #TIME#';

@@ -8,23 +8,29 @@ use Bitrix\Booking\Entity;
 use Bitrix\Booking\Internals\Container;
 use Bitrix\Booking\Internals\Exception\Resource\UpdateResourceException;
 use Bitrix\Booking\Internals\Service\Journal\JournalEvent;
+use Bitrix\Booking\Internals\Service\Journal\JournalServiceInterface;
 use Bitrix\Booking\Internals\Service\Journal\JournalType;
 use Bitrix\Booking\Internals\Repository\FavoritesRepositoryInterface;
+use Bitrix\Booking\Internals\Service\ResourceService;
 
 class UpdateResourceCommandHandler
 {
 	private FavoritesRepositoryInterface $favoritesRepository;
+	private ResourceService $resourceService;
+	private JournalServiceInterface $journalService;
 
 	public function __construct()
 	{
 		$this->favoritesRepository = Container::getFavoritesRepository();
+		$this->resourceService = Container::getResourceService();
+		$this->journalService = Container::getJournalService();
 	}
 
 	public function __invoke(UpdateResourceCommand $command): Entity\Resource\Resource
 	{
 		$currentResource = Container::getResourceRepository()->getById($command->resource->getId());
 
-		if (!$currentResource)
+		if (!$currentResource || $currentResource->isDeleted())
 		{
 			throw new UpdateResourceException('Resource not found');
 		}
@@ -38,6 +44,10 @@ class UpdateResourceCommandHandler
 			fn: function() use ($command, $currentResource) {
 				// update slot ranges
 				$this->handleSlotRanges($command, $currentResource);
+				$resourceEntityChanges = $this->resourceService->handleResourceEntities(
+					$currentResource,
+					$command->resource->getEntityCollection(),
+				);
 
 				// update resource
 				$updatedResourceId = Container::getResourceRepository()->save($command->resource);
@@ -54,7 +64,7 @@ class UpdateResourceCommandHandler
 				}
 
 				// fire new ResourceUpdated event
-				Container::getJournalService()->append(
+				$this->journalService->append(
 					new JournalEvent(
 						entityId: $command->resource->getId(),
 						type: JournalType::ResourceUpdated,
@@ -63,6 +73,7 @@ class UpdateResourceCommandHandler
 							[
 								'resource' => $updatedResource->toArray(),
 								'currentUserId' => $command->updatedBy,
+								'resourceEntityChanges' => $resourceEntityChanges,
 							],
 						),
 					),

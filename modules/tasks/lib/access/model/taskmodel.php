@@ -8,11 +8,9 @@
 
 namespace Bitrix\Tasks\Access\Model;
 
-use Bitrix\Main\Access\AccessibleItem;
 use Bitrix\Tasks\Access\AccessibleTask;
 use Bitrix\Tasks\Access\Role\RoleDictionary;
 use Bitrix\Tasks\CheckList\Task\TaskCheckListFacade;
-use Bitrix\Tasks\Flow;
 use Bitrix\Tasks\Internals\Registry\TaskRegistry;
 use Bitrix\Tasks\Internals\Registry\GroupRegistry;
 use Bitrix\Tasks\Internals\Task\Status;
@@ -26,21 +24,15 @@ class TaskModel implements AccessibleTask
 	private $groupId;
 	private $status;
 	private $group;
-	private $flowId = null;
+	private ?int $flowId = null;
+	private ?int $parentId = null;
 
-	/**
-	 * @param int $taskId
-	 */
 	public static function invalidateCache(int $taskId): void
 	{
 		unset(static::$cache[$taskId]);
 		TaskRegistry::getInstance()->drop($taskId);
 	}
 
-	/**
-	 * @param int $groupId
-	 * @return static
-	 */
 	public static function createNew(int $groupId = 0): self
 	{
 		$model = new self();
@@ -50,11 +42,7 @@ class TaskModel implements AccessibleTask
 		return $model;
 	}
 
-	/**
-	 * @param int $taskId
-	 * @return AccessibleItem
-	 */
-	public static function createFromId(int $taskId): AccessibleItem
+	public static function createFromId(int $taskId): static
 	{
 		if (!isset(static::$cache[$taskId]))
 		{
@@ -66,10 +54,6 @@ class TaskModel implements AccessibleTask
 		return static::$cache[$taskId];
 	}
 
-	/**
-	 * @param \Bitrix\Tasks\Item\Task $item
-	 * @return TaskModel
-	 */
 	public static function createFromTaskItem(\Bitrix\Tasks\Item\Task $item): static
 	{
 		$item = $item->getRawValues();
@@ -99,10 +83,6 @@ class TaskModel implements AccessibleTask
 		return $model;
 	}
 
-	/**
-	 * @param array $request
-	 * @return static
-	 */
 	public static function createFromRequest(array $request): self
 	{
 		$model = new self();
@@ -164,11 +144,6 @@ class TaskModel implements AccessibleTask
 		return $model;
 	}
 
-	/**
-	 * @param array $data
-	 * @param array $default
-	 * @return static
-	 */
 	public static function createFromArray(array $data, array $default = []): self
 	{
 		$model = new self();
@@ -263,6 +238,11 @@ class TaskModel implements AccessibleTask
 			$model->setFlowId((int)$data['FLOW_ID']);
 		}
 
+		if (!empty($data['PARENT_ID']) && (int)$data['PARENT_ID'] > 0)
+		{
+			$model->setParentId((int)$data['PARENT_ID']);
+		}
+
 		return $model;
 	}
 
@@ -270,10 +250,6 @@ class TaskModel implements AccessibleTask
 	{
 	}
 
-	/**
-	 * @param string|null $role
-	 * @return array
-	 */
 	public function getMembers(string $role = null): array
 	{
 		if ($this->members === null)
@@ -310,9 +286,6 @@ class TaskModel implements AccessibleTask
 		return [];
 	}
 
-	/**
-	 * @return int
-	 */
 	public function getGroupId(): int
 	{
 		if ($this->groupId === null)
@@ -328,9 +301,6 @@ class TaskModel implements AccessibleTask
 		return $this->groupId;
 	}
 
-	/**
-	 * @return int
-	 */
 	public function getFlowId(): int
 	{
 		if ($this->flowId === null)
@@ -346,9 +316,6 @@ class TaskModel implements AccessibleTask
 		return $this->flowId;
 	}
 
-	/**
-	 * @return array|null
-	 */
 	public function getGroup(): ?array
 	{
 		$groupId = $this->getGroupId();
@@ -375,76 +342,59 @@ class TaskModel implements AccessibleTask
 		return $this->group;
 	}
 
-	/**
-	 * @return int
-	 */
 	public function getId(): int
 	{
 		return $this->id;
 	}
 
-	/**
-	 * @param int $id
-	 * @return $this
-	 */
 	public function setId(int $id): self
 	{
 		$this->id = $id;
 		return $this;
 	}
 
-	/**
-	 * @param array $members
-	 * @return $this
-	 */
 	public function setMembers(array $members): self
 	{
 		$this->members = $members;
 		return $this;
 	}
 
-	/**
-	 * @param int $groupId
-	 * @return $this
-	 */
 	public function setGroupId(int $groupId): self
 	{
 		$this->groupId = $groupId;
 		return $this;
 	}
 
-	/**
-	 * @param int $value
-	 * @return $this
-	 */
 	public function setStatus(int $value): self
 	{
 		$this->status = $value;
 		return $this;
 	}
 
-	/**
-	 * @param int $value
-	 * @return $this
-	 */
 	public function setFlowId(int $value): self
 	{
 		$this->flowId = $value;
 		return $this;
 	}
 
-	/**
-	 * @return bool
-	 */
+	public function getParentId(): ?int
+	{
+		return $this->parentId;
+	}
+
+	public function setParentId(int $parentId): self
+	{
+		$this->parentId = $parentId;
+
+		return $this;
+	}
+
 	public function isClosed(): bool
 	{
 		$status = $this->getStatus();
 		return $status === Status::COMPLETED;
 	}
 
-	/**
-	 * @return bool
-	 */
 	public function isDeleted(): bool
 	{
 		$task = $this->getTask();
@@ -455,9 +405,6 @@ class TaskModel implements AccessibleTask
 		return $task['ZOMBIE'] === 'Y';
 	}
 
-	/**
-	 * @return int|null
-	 */
 	public function getStatus(): ?int
 	{
 		if (!is_null($this->status))
@@ -473,9 +420,6 @@ class TaskModel implements AccessibleTask
 		return (int) $task['STATUS'];
 	}
 
-	/**
-	 * @return bool
-	 */
 	public function isAllowedChangeDeadline(): bool
 	{
 		$task = $this->getTask();
@@ -486,9 +430,28 @@ class TaskModel implements AccessibleTask
 		return $task['ALLOW_CHANGE_DEADLINE'] === 'Y';
 	}
 
-	/**
-	 * @return bool
-	 */
+	public function isAllowedChangeDatePlan(): bool
+	{
+		$task = $this->getTask(true);
+		if (!$task)
+		{
+			return false;
+		}
+
+		return ($task['ALLOW_CHANGE_DATE_PLAN'] ?? null) === 'Y';
+	}
+
+	public function isResultRequired(): bool
+	{
+		$task = $this->getTask(true);
+		if (!$task)
+		{
+			return false;
+		}
+
+		return ($task['IS_RESULT_REQUIRED'] ?? null) === 'Y';
+	}
+
 	public function isAllowedTimeTracking(): bool
 	{
 		$task = $this->getTask();
@@ -499,11 +462,6 @@ class TaskModel implements AccessibleTask
 		return $task['ALLOW_TIME_TRACKING'] === 'Y';
 	}
 
-	/**
-	 * @param int $userId
-	 * @param string|null $role
-	 * @return bool
-	 */
 	public function isMember(int $userId, string $role = null): bool
 	{
 		$roles = $this->getUserRoles($userId);
@@ -514,10 +472,6 @@ class TaskModel implements AccessibleTask
 		return in_array($role, $roles);
 	}
 
-	/**
-	 * @param int $userId
-	 * @return array
-	 */
 	public function getUserRoles(int $userId): array
 	{
 		$roles = [];
@@ -537,7 +491,6 @@ class TaskModel implements AccessibleTask
 	}
 
 	/**
-	 * @return array
 	 * @throws \Bitrix\Main\ArgumentException
 	 * @throws \Bitrix\Main\NotImplementedException
 	 * @throws \Bitrix\Main\SystemException
@@ -551,10 +504,6 @@ class TaskModel implements AccessibleTask
 		return TaskCheckListFacade::getByEntityId($this->id);
 	}
 
-	/**
-	 * @param int $userId
-	 * @return bool
-	 */
 	public function isFavorite(int $userId): bool
 	{
 		$task = $this->getTask(true);
@@ -565,12 +514,6 @@ class TaskModel implements AccessibleTask
 		return in_array($userId, $task['IN_FAVORITES']);
 	}
 
-	/**
-	 * @param int $userId
-	 * @param bool $recursive
-	 * @param array $roles
-	 * @return bool
-	 */
 	public function isInDepartment(int $userId, bool $recursive = false, array $roles = []): bool
 	{
 		$userDepartments = \CIntranetUtils::GetUserDepartments($userId);
@@ -581,10 +524,6 @@ class TaskModel implements AccessibleTask
 		return !empty(array_intersect($userDepartments, $this->getDepartments($roles)));
 	}
 
-	/**
-	 * @param bool $withRelations
-	 * @return array|null
-	 */
 	private function getTask(bool $withRelations = false): ?array
 	{
 		if (!$this->id)
@@ -594,10 +533,6 @@ class TaskModel implements AccessibleTask
 		return TaskRegistry::getInstance()->get($this->id, $withRelations);
 	}
 
-	/**
-	 * @param array $roles
-	 * @return array
-	 */
 	private function getDepartments(array $roles = []): array
 	{
 		$task = $this->getTask(true);

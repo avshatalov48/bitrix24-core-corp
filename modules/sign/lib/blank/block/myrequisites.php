@@ -1,4 +1,5 @@
 <?php
+
 namespace Bitrix\Sign\Blank\Block;
 
 use Bitrix\Main\Localization\Loc;
@@ -6,7 +7,6 @@ use Bitrix\Main\Result;
 use Bitrix\Sign\Blank\Block;
 use Bitrix\Sign\Blank\Section;
 use Bitrix\Sign\Document;
-use Bitrix\Sign\Error;
 use Bitrix\Sign\Integration\CRM;
 
 class MyRequisites extends Dummy
@@ -48,7 +48,7 @@ class MyRequisites extends Dummy
 				}
 
 				$data['data'] = [
-					'text' => implode('[br]', $textLines)
+					'text' => implode('[br]', $textLines),
 				];
 			}
 			
@@ -61,8 +61,8 @@ class MyRequisites extends Dummy
 				$fieldSet = \Bitrix\Crm\Integration\Sign\Form::getFieldSet(
 					\CCrmOwnerType::Company, CRM::getMyDefaultPresetId(
 						$document->getEntityId(),
-						$document->getCompanyId()
-					)
+						$document->getCompanyId(),
+					),
 				);
 				
 				if ($fieldSet && !empty($fieldSet->getFields()))
@@ -72,7 +72,7 @@ class MyRequisites extends Dummy
 			}
 		}
 
-		return $data + ['hasFields' => $hasFields,];
+		return $data + ['hasFields' => $hasFields];
 	}
 
 	/**
@@ -93,9 +93,9 @@ class MyRequisites extends Dummy
 						'code' => $block->getCode(),
 						'presetId' => CRM::getMyDefaultPresetId(
 							$block->getDocument()->getEntityId(),
-							$block->getDocument()->getCompanyId()
+							$block->getDocument()->getCompanyId(),
 						),
-					]
+					],
 				));
 		}
 

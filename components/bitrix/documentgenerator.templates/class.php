@@ -1,5 +1,6 @@
 <?php
 
+use Bitrix\DocumentGenerator\CustomField;
 use Bitrix\DocumentGenerator\DataProviderManager;
 use Bitrix\DocumentGenerator\Driver;
 use Bitrix\DocumentGenerator\Model\TemplateProviderTable;
@@ -12,7 +13,10 @@ use Bitrix\Main\Loader;
 use Bitrix\Main\Localization\Loc;
 use Bitrix\Main\Web\Uri;
 
-if(!defined('B_PROLOG_INCLUDED') || B_PROLOG_INCLUDED !== true) die();
+if (!defined('B_PROLOG_INCLUDED') || B_PROLOG_INCLUDED !== true)
+{
+	die();
+}
 
 class DocumentsTemplateComponent extends CBitrixComponent implements Controllerable
 {
@@ -41,31 +45,20 @@ class DocumentsTemplateComponent extends CBitrixComponent implements Controllera
 	 */
 	public function executeComponent()
 	{
-		$request = \Bitrix\Main\Application::getInstance()->getContext()->getRequest();
-		if($request->get('IFRAME') === 'Y')
-		{
-			$this->arResult['IS_SLIDER'] = true;
-		}
-		else
-		{
-			$this->arResult['IS_SLIDER'] = false;
-			if(SITE_TEMPLATE_ID == "bitrix24")
-			{
-				$this->arResult['TOP_VIEW_TARGET_ID'] = 'pagetitle';
-			}
-		}
 		if(!$this->includeModules())
 		{
 			$this->arResult['ERROR'] = Loc::getMessage('DOCGEN_TEMPLATE_DOWNLOAD_ADD_TEMPLATE_ERROR_MODULE');
 			$this->includeComponentTemplate();
 			return;
 		}
+
 		if(!Driver::getInstance()->getUserPermissions()->canModifyTemplates())
 		{
 			$this->arResult['ERROR'] = Loc::getMessage('DOCGEN_TEMPLATE_DOWNLOAD_PERMISSIONS_ERROR');
 			$this->includeComponentTemplate();
 			return;
 		}
+
 		if(!isset($this->arParams['USER_NAME_FORMAT']))
 		{
 			$this->arParams['USER_NAME_FORMAT'] = DataProviderManager::getInstance()->getCulture()->getNameFormat();
@@ -74,31 +67,33 @@ class DocumentsTemplateComponent extends CBitrixComponent implements Controllera
 		{
 			$this->arParams['USER_PROFILE_URL'] = \Bitrix\Main\Config\Option::get('intranet', 'path_user', '/company/personal/user/#USER_ID#/', SITE_ID);
 		}
+
 		if ($this->getTemplateName() === 'upload')
 		{
 			$this->arResult['TITLE'] = Loc::getMessage('DOCGEN_TEMPLATE_DOWNLOAD_ADD_TEMPLATE');
 			$this->arResult['PROVIDERS'] = $this->getProviders();
 			$this->arResult['REGIONS'] = Driver::getInstance()->getRegionsList();
 			$this->arResult['PRODUCTS_TABLE_VARIANT'] = TemplateTable::getProductsTableVariantList();
-			if($this->arParams['ID'] > 0)
+			if ($this->arParams['ID'] > 0)
 			{
 				$template = \Bitrix\DocumentGenerator\Template::loadById($this->arParams['ID']);
-				if($template)
+				if ($template)
 				{
-					if(!Driver::getInstance()->getUserPermissions()->canModifyTemplate($template->ID))
+					if (!Driver::getInstance()->getUserPermissions()->canModifyTemplate($template->ID))
 					{
 						$this->arResult['ERROR'] = Loc::getMessage('DOCGEN_TEMPLATE_DOWNLOAD_PERMISSIONS_ERROR_TEMPLATE');
 					}
 					else
 					{
-						if($template->CODE)
+						if ($template->CODE)
 						{
 							$defaultTemplates = \Bitrix\DocumentGenerator\Controller\Template::getDefaultTemplateList(['CODE' => $template->CODE, 'NAME' => $template->NAME]);
-							if($defaultTemplates->isSuccess() && isset($defaultTemplates->getData()[$template->CODE]))
+							if ($defaultTemplates->isSuccess() && isset($defaultTemplates->getData()[$template->CODE]))
 							{
 								$this->arResult['params']['defaultCode'] = $template->CODE;
 							}
 						}
+
 						$this->arResult['TITLE'] = Loc::getMessage('DOCGEN_TEMPLATE_DOWNLOAD_EDIT_TEMPLATE').' '.$template->NAME;
 						$this->arResult['params']['downloadUrl'] = $template->getDownloadUrl();
 						$this->arResult['TEMPLATE']['fileName'] = $template->getFileName();
@@ -116,10 +111,12 @@ class DocumentsTemplateComponent extends CBitrixComponent implements Controllera
 						{
 							$this->arParams['MODULE'] = $template->MODULE_ID;
 						}
-						foreach($template->getDataProviders() as $provider)
+
+						foreach ($template->getDataProviders() as $provider)
 						{
 							$this->arResult['TEMPLATE']['PROVIDERS'][] = $this->arResult['PROVIDERS'][$provider];
 						}
+
 						$users = $template->getUsers();
 						$this->arResult['TEMPLATE']['USERS'] = array_values($users);
 					}
@@ -133,10 +130,12 @@ class DocumentsTemplateComponent extends CBitrixComponent implements Controllera
 			{
 				$this->arResult['TEMPLATE']['USERS'] = ['UA'];
 			}
+
 			if(!$this->arResult['TEMPLATE']['REGION'])
 			{
 				$this->arResult['TEMPLATE']['REGION'] = Driver::getInstance()->getCurrentRegion()['CODE'];
 			}
+
 			$this->arResult['params']['uploadUrl'] = Bitrix\Main\Engine\UrlManager::getInstance()->create('documentgenerator.api.file.upload')->getLocator();
 			$this->arResult['userSelectorName'] = 'add-template-users';
 			$numeratorList = \Bitrix\Main\Numerator\Numerator::getListByType(Driver::NUMERATOR_TYPE);
@@ -147,10 +146,20 @@ class DocumentsTemplateComponent extends CBitrixComponent implements Controllera
 			}
 			$this->arResult['numeratorList'] = $numeratorList;
 			$this->arResult['params']['addRegionUrl'] = $this->getRegionEditUrl();
+
+			$moduleId =	$this->arParams['MODULE'] ?? '';
+			$templateId = $this->arParams['ID'] ?? null;
+			$fieldsManager = (new CustomField\Registry($templateId))->getManager($moduleId);
+			if ($fieldsManager !== null)
+			{
+				$this->arResult['customFieldsManager'] = $fieldsManager;
+				$this->arResult['TEMPLATE']['CUSTOM_FIELDS'] = $fieldsManager->getFields();
+				$this->arResult['TEMPLATE']['CUSTOM_FIELDS_JS'] = $fieldsManager->getJavaScript();
+			}
 		}
 		else
 		{
-			$this->processGridActions($request);
+			$this->processGridActions($this->request);
 
 			$this->arResult['params'] = [];
 			$this->arResult['params']['uploadUri'] = $this->arParams['UPLOAD_URI'];
@@ -201,6 +210,12 @@ class DocumentsTemplateComponent extends CBitrixComponent implements Controllera
 			$this->arResult['TITLE'] = Loc::getMessage('DOCGEN_TEMPLATE_LIST_TITLE');
 			$this->arResult['FILTER'] = $this->prepareFilter();
 			$this->arResult['GRID'] = $this->prepareGrid();
+		}
+
+		if (!empty($this->arResult['TITLE']))
+		{
+			global $APPLICATION;
+			$APPLICATION->SetTitle($this->arResult['TITLE']);
 		}
 
 		$this->includeComponentTemplate();
@@ -432,7 +447,7 @@ class DocumentsTemplateComponent extends CBitrixComponent implements Controllera
 	 */
 	protected function prepareFilter()
 	{
-		$filter = [
+		return [
 			'FILTER_ID' => $this->filterId,
 			'GRID_ID' => $this->gridId,
 			'FILTER' => $this->getDefaultFilterFields(),
@@ -440,8 +455,6 @@ class DocumentsTemplateComponent extends CBitrixComponent implements Controllera
 			'ENABLE_LABEL' => true,
 			'RESET_TO_DEFAULT_MODE' => false,
 		];
-
-		return $filter;
 	}
 
 	protected function getDefaultFilterFields()
@@ -554,9 +567,10 @@ class DocumentsTemplateComponent extends CBitrixComponent implements Controllera
 			$filter['=MODULE_ID'] = $this->arParams['MODULE'];
 		}
 
-		$filter = array_merge($filter, Driver::getInstance()->getUserPermissions()->getFilterForTemplateList());
-
-		return $filter;
+		return array_merge(
+			$filter,
+			Driver::getInstance()->getUserPermissions()->getFilterForTemplateList()
+		);
 	}
 
 	/**

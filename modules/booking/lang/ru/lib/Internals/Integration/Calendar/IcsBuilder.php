@@ -1,0 +1,4 @@
+<?php
+
+$MESS ['BOOKING_INTEGRATION_CALENDAR_ICS_NAME_TPL'] = "Ваша запись: #RESOURCE_TYPE# #RESOURCE_NAME# (#COMPANY_NAME#)";
+$MESS ['BOOKING_INTEGRATION_CALENDAR_ICS_DESCRIPTION_TPL'] = "Создано через Битрикс24 Онлайн-запись. Детали записи: #URL#";

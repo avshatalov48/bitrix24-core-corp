@@ -47,7 +47,7 @@ export const Switcher = {
 		loading: Boolean,
 		hiddenText: Boolean,
 	},
-	beforeCreate(): void
+	created(): void
 	{
 		this.switcher = new UISwitcher({
 			id: this.id,
@@ -69,6 +69,12 @@ export const Switcher = {
 	mounted(): void
 	{
 		this.switcher.renderTo(this.$refs.switcherWrapper);
+		if (this.modelValue !== this.switcher.checked)
+		{
+			this.switcher.check(this.modelValue);
+		}
+
+		this.toggleTextVisibility(this.hiddenText);
 	},
 	methods: {
 		checked(): void
@@ -96,7 +102,12 @@ export const Switcher = {
 		},
 		toggleTextVisibility(hidden: boolean): void
 		{
-			const node = this.switcher.getNode();
+			const node = this.switcher?.getNode?.() || null;
+			if (node === null)
+			{
+				return;
+			}
+
 			const elOn = node.querySelector('.ui-switcher-enabled');
 			const elOff = node.querySelector('.ui-switcher-disabled');
 

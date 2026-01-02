@@ -1,0 +1,2 @@
+<?php
+$MESS["DOCUMENTGENERATOR_MODEL_FIELD_CLASS_VALIDATION"] = "#CLASSNAME# класы #PARENT# мұрагері болып табылмайды";

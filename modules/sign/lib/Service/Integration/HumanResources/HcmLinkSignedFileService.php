@@ -133,7 +133,22 @@ class HcmLinkSignedFileService
 			documentDate: $document->dateCreate,
 			documentName: $document->title,
 			fileName: $fileNameResult->fileName,
+			documentUid: $this->getDocumentUid($document, $member->id),
 		);
+	}
+
+	private function getDocumentUid(Item\Document $document, int $memberId): ?string
+	{
+		if (!$document->hcmLinkDocumentTypeSettingId)
+		{
+			return null;
+		}
+
+		$fieldValue = HumanResources\Service\Container::getHcmLinkFieldValueRepository()
+			->getByUnique($memberId, $document->hcmLinkDocumentTypeSettingId)
+		;
+
+		return $fieldValue?->value;
 	}
 
 	private function isAvailable(): bool

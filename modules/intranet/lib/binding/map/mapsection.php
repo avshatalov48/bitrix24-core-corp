@@ -14,6 +14,8 @@ class MapSection
 	/** @var MapItem[] */
 	protected $items = [];
 
+	protected bool $skipMarketPlacementCode = false;
+
 	public function __construct(string $scope, string $code)
 	{
 		$this->scope = $scope;
@@ -168,5 +170,18 @@ class MapSection
 		}
 
 		return $result;
+	}
+
+
+	public function isMarketPlacementCodeSkip(): bool
+	{
+		return $this->skipMarketPlacementCode;
+	}
+
+	public function skipMarketPlacementCode(bool $skip = true): static
+	{
+		$this->skipMarketPlacementCode = $skip;
+
+		return $this;
 	}
 }

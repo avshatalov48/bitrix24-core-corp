@@ -25,6 +25,7 @@ type exportLinkType = {
 	canEditDocument: ?boolean,
 	deathTime: ?string,
 	deathTimeTimestamp ?: number,
+	isBoard: boolean,
 };
 
 export default class Input
@@ -224,6 +225,13 @@ export default class Input
 	{
 		return this.cache.remember('password', () => {
 			return document.createElement('span');
+		});
+	}
+
+	getCanEditTextContainer(): HTMLElement
+	{
+		return this.cache.remember('canEditText', () => {
+			return Tag.render`<div class="ui-ctl-label-text">${Loc.getMessage('DISK_EXTENSION_EXTERNAL_LINK_ALLOW_EDITING')}</div>`;
 		});
 	}
 

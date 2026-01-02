@@ -1,0 +1,39 @@
+.menu-item-link-arrow {
+	display: inline-block;
+	margin-left: 7px;
+	width: 18px;
+	height: 18px;
+	position: absolute;
+	top: 50%;
+	right: 6px;
+	transform: translateY(-50%);
+	transition: background-color .2s;
+}
+
+.menu-item-link-arrow .ui-icon-set {
+	--ui-icon-set__icon-base-color: var(--menu-item-color);
+	--ui-icon-set__icon-size: 18px;
+}
+
+.menu-item-block[data-collapse-mode="expanded"].menu-item-group-collapsing .menu-item-link-arrow,
+.menu-item-block[data-collapse-mode="collapsed"] .menu-item-link-arrow,
+.menu-item-block.menu-item-group-collapsing .menu-item-link-arrow {
+	transform: translateY(-50%) rotate(0deg);
+}
+
+.menu-item-block[data-collapse-mode="expanded"] .menu-item-link-arrow,
+.menu-item-block.menu-item-group-expanding .menu-item-link-arrow {
+	transform: translateY(-50%) rotate(180deg);
+}
+
+/*.menu-collapsed-mode:not(.menu-sliding-mode).menu-animation-opening-mode .menu-item-link-arrow {*/
+/*	display: inline-block;*/
+/*}*/
+
+.menu-animation-closing-mode .menu-item-link-arrow,
+.menu-animation-opening-mode .menu-item-link-arrow,
+.menu-collapsed-mode.menu-sliding-opening-mode .menu-item-link-arrow,
+.menu-collapsed-mode:not(.menu-sliding-mode) .menu-item-link-arrow {
+	display: none;
+}
+

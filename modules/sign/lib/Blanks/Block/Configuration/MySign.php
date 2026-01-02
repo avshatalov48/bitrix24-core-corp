@@ -3,7 +3,6 @@
 namespace Bitrix\Sign\Blanks\Block\Configuration;
 
 use Bitrix\Sign\Blanks\Block\Configuration;
-use Bitrix\Sign\Connector\MemberConnectorFactory;
 use Bitrix\Sign\Item;
 use Bitrix\Sign\Repository\FileRepository;
 use Bitrix\Sign\Service\Container;
@@ -11,6 +10,7 @@ use Bitrix\Sign\Service\Container;
 class MySign extends Configuration
 {
 	private FileRepository $fileRepository;
+
 	public function __construct(
 		?FileRepository $fileRepository = null,
 	)
@@ -18,7 +18,7 @@ class MySign extends Configuration
 		$this->fileRepository = $fileRepository ?? Container::instance()->getFileRepository();
 	}
 
-	function loadData(Item\Block $block, Item\Document $document, ?Item\Member $member = null): array
+	public function loadData(Item\Block $block, Item\Document $document, ?Item\Member $member = null): array
 	{
 		$data = $block->data;
 

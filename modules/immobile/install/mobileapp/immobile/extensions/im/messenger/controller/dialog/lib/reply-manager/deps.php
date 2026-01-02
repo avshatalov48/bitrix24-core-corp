@@ -2,9 +2,9 @@
 
 return [
 	'extensions' => [
-		'loc',
 		'type',
 		'utils/object',
+		'im:messenger/loc',
 		'im:messenger/const',
 		'im:messenger/view/dialog',
 		'im:messenger/lib/parser',

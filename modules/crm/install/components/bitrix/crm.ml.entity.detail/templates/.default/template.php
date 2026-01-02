@@ -29,7 +29,6 @@ Extension::load([
 	'date',
 	'ui.buttons',
 	'ui.hint',
-	'ui.feedback.form',
 ]);
 
 $bodyClass = $APPLICATION->GetPageProperty('BodyClass');
@@ -61,15 +60,6 @@ Toolbar::addButton([
 	'color' => Color::LIGHT_BORDER,
 	'click' => new JsHandler(
 		'BX.Crm.entityDetailView.showHelp'
-	),
-]);
-
-Toolbar::addButton([
-	'text' => Loc::getMessage('CRM_ML_FEEDBACK'),
-	'color' => Color::LIGHT_BORDER,
-	'click' => new JsHandler(
-		'BX.Crm.entityDetailView.showFeedbackForm',
-		'BX.Crm.entityDetailView'
 	),
 ]);
 
@@ -152,13 +142,6 @@ if (!$arResult['SCORING_ENABLED'] && Loader::includeModule('bitrix24'))
 			trainingHistory: <?= Json::encode($arResult["TRAINING_HISTORY"])?>,
 			errors: <?= Json::encode($arResult["ERRORS"] ?? [])?>,
 			scoringEnabled: <?= ($arResult["SCORING_ENABLED"]) ? "true" : "false" ?>,
-			feedbackParams: <?= Json::encode([
-					'id' => $arResult["FEEDBACK_PARAMS"]["ID"],
-					'portal' => $arResult["FEEDBACK_PARAMS"]["PORTAL"],
-					'presets' => $arResult["FEEDBACK_PARAMS"]["PRESETS"],
-					'form' => $arResult["FEEDBACK_PARAMS"]["FORM"],
-					'title' => Loc::getMessage("CRM_ML_FEEDBACK"),
-				])?>,
 		});
 		BX.Crm.entityDetailView.show();
 	});

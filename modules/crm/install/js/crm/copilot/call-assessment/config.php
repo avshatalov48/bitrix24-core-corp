@@ -1,8 +1,17 @@
 <?php
 
+use Bitrix\Crm\Feature;
+use Bitrix\Main\Loader;
+
 if (!defined('B_PROLOG_INCLUDED') || B_PROLOG_INCLUDED !== true)
 {
 	die();
+}
+
+$settings = [];
+if (Loader::includeModule('crm'))
+{
+	$settings['callAssessmentAvailabilityEnabled'] = Feature::enabled(Feature\CopilotCallAssessmentAvailability::class);
 }
 
 return [
@@ -16,12 +25,16 @@ return [
 		'ui.text-editor',
 		'ui.icon-set.main',
 		'ui.notification',
-		'main.core.events',
 		'ui.entity-selector',
-		'main.core',
 		'ui.info-helper',
 		'ui.forms',
+		'main.date',
+		'crm.timeline.tools',
+		'main.core.events',
+		'ui.date-picker',
+		'main.core',
 		'ui.design-tokens',
 	],
 	'skip_core' => false,
+	'settings' => $settings,
 ];

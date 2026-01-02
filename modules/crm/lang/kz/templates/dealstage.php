@@ -1,0 +1,24 @@
+<?php
+$MESS["CRM_BP_DEAL_PROPERTIES_1"] = "Мәртебелері бар бизнес-процесс";
+$MESS["CRM_BP_DEAL_PROPERTIES_1_TITLE"] = "Мәртебе: Жаңа (Талдау)";
+$MESS["CRM_BP_DEAL_PROPERTIES_2"] = "Оқиға қабықшасы";
+$MESS["CRM_BP_DEAL_PROPERTIES_2_TITLE"] = "Ұсыныс жасау";
+$MESS["CRM_BP_DEAL_PROPERTIES_3_TITLE"] = "Мәртебені орнату";
+$MESS["CRM_BP_DEAL_PROPERTIES_4_TITLE"] = "Мәртебеге кіру";
+$MESS["CRM_BP_DEAL_PROPERTIES_5_TITLE"] = "Құжатты өзгерту";
+$MESS["CRM_BP_DEAL_PROPERTIES_6_TITLE"] = "Өңдеу";
+$MESS["CRM_BP_DEAL_PROPERTIES_7_TITLE"] = "Мәртебе: Ұсыныс жасалды";
+$MESS["CRM_BP_DEAL_PROPERTIES_8_TITLE"] = "Ұсыныс";
+$MESS["CRM_BP_DEAL_PROPERTIES_10_TITLE"] = "Болдырылмай тастады";
+$MESS["CRM_BP_DEAL_PROPERTIES_11_TITLE"] = "Шот";
+$MESS["CRM_BP_DEAL_PROPERTIES_13_TITLE"] = "Мәртебе: болдырылмай тастады";
+$MESS["CRM_BP_DEAL_PROPERTIES_14_TITLE"] = "Ұсыныс";
+$MESS["CRM_BP_DEAL_PROPERTIES_15_TITLE"] = "Мәртебе: Шот";
+$MESS["CRM_BP_DEAL_PROPERTIES_16_TITLE"] = "Сәтті";
+$MESS["CRM_BP_DEAL_PROPERTIES_17_TITLE"] = "Мәртебе: Сәттілік";
+$MESS["CRM_BP_DEAL_PROPERTIES_18_TITLE"] = "PHP коды";
+$MESS["CRM_BP_DEAL_PROPERTIES_19_TITLE"] = "Қосалқы сатылым";
+$MESS["CRM_BP_DEAL_PROPERTIES_20_TITLE"] = "Міндетті іске қосу уақыты";
+$MESS["CRM_BP_DEAL_TASK_NAME"] = "Мәміле бойынша қосалқы сатылым: {=Document:TITLE} (Бизнес-процестен орнатылды)";
+$MESS["CRM_BP_DEAL_TASK_TEXT"] = "Мәміле бойынша қызметтерді қосымша сату: {=Document:TITLE}";
+$MESS["CRM_BP_DEAL_TITLE"] = "Сатылар бойынша орындау";

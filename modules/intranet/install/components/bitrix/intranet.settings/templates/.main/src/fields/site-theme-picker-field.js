@@ -4,6 +4,7 @@ import { SettingsField } from "ui.form-elements.field";
 import { BaseField } from 'ui.form-elements.view';
 import { Ears } from 'ui.ears'
 import { setPortalSettings, setPortalThemeSettings } from './site-utils';
+import { ThemePickerDialog } from 'intranet.theme-picker.dialog';
 
 
 export type SiteThemeOptions = {
@@ -34,6 +35,7 @@ export type SiteThemePickerOptions = {
 class ThemePickerElement extends BaseField
 {
 	#themePicker: BX.Intranet.Bitrix24.ThemePicker;
+	#themePickerDialog: ThemePickerDialog;
 
 	constructor(themePickerSettings: SiteThemePickerOptions)
 	{
@@ -49,17 +51,18 @@ class ThemePickerElement extends BaseField
 
 	#initThemePicker(themePickerSettings: SiteThemePickerOptions)
 	{
-		this.#themePicker = new BX.Intranet.Bitrix24.ThemePicker(themePickerSettings);
+		this.#themePicker = new top.BX.Intranet.Bitrix24.ThemePicker(themePickerSettings);
 		this.#themePicker.setThemes(themePickerSettings.themes);
 		this.#themePicker.setBaseThemes(themePickerSettings.baseThemes);
-		this.#themePicker.applyThemeAssets = () => {};
-		this.#themePicker.getContentContainer = () => {
+		this.#themePickerDialog = new ThemePickerDialog(this.#themePicker);
+		this.#themePickerDialog.applyThemeAssets = () => {};
+		this.#themePickerDialog.getContentContainer = () => {
 			return this.render().querySelector('div[data-role="theme-container"]');
 		};
 
-		const closure = this.#themePicker.handleRemoveBtnClick.bind(this.#themePicker);
-		this.#themePicker.handleRemoveBtnClick = (event: Event) => {
-			const item = this.#themePicker.getItemNode(event);
+		const closure = this.#themePickerDialog.handleRemoveBtnClick.bind(this.#themePickerDialog);
+		this.#themePickerDialog.handleRemoveBtnClick = (event: Event) => {
+			const item = this.#themePickerDialog.getItemNode(event);
 			if (!item)
 			{
 				return;
@@ -70,14 +73,14 @@ class ThemePickerElement extends BaseField
 			//TODO Shift all <td>
 		};
 
-		const handleItemClick = this.#themePicker.handleItemClick.bind(this.#themePicker);
-		this.#themePicker.handleItemClick = (event: Event) => {
+		const handleItemClick = this.#themePickerDialog.handleItemClick.bind(this.#themePickerDialog);
+		this.#themePickerDialog.handleItemClick = (event: Event) => {
 			handleItemClick(event);
 			this.applyTheme(event);
 		};
 
-		const addItem = this.#themePicker.addItem.bind(this.#themePicker);
-		this.#themePicker.addItem = (theme) => {
+		const addItem = this.#themePickerDialog.addItem.bind(this.#themePickerDialog);
+		this.#themePickerDialog.addItem = (theme) => {
 			addItem(theme);
 			this.applyPortalThemePreview(theme);
 			this.showSaveButton();
@@ -86,7 +89,7 @@ class ThemePickerElement extends BaseField
 
 	applyTheme(event: ?Event)
 	{
-		const themeNode = event ? this.#themePicker.getItemNode(event) : null;
+		const themeNode = event ? this.#themePickerDialog.getItemNode(event) : null;
 		let themeSettings = themeNode ?
 			this.#themePicker.getTheme(themeNode.dataset.themeId)
 			: this.#themePicker.getAppliedTheme()
@@ -140,49 +143,97 @@ class ThemePickerElement extends BaseField
 		const container = Tag.render`
 		<div class="intranet-theme-settings ui-section__row">
 			<div class="ui-section__row theme-dialog-preview">
-				<section data-role="preview" style="background-color: #0a51ae;" class="intranet-settings__main-widget_section --preview">
-					<div class="intranet-settings__main-widget__bang"></div>
-					<aside class="intranet-settings__main-widget__aside">
-						<div class="intranet-settings__main-widget__aside_item --active"></div>
-						<div class="intranet-settings__main-widget__aside_item"></div>
-						<div class="intranet-settings__main-widget__aside_item"></div>
-						<div class="intranet-settings__main-widget__aside_item"></div>
-						<div class="intranet-settings__main-widget__aside_item"></div>
-					</aside>
-					<main class="intranet-settings__main-widget_main">
-						<div class="intranet-settings__main-widget_header --with-logo">
-							<div class="intranet-settings__main-widget_header_left">
-								<div class="intranet-settings__main-widget_logo" data-role="logo"></div>
-								<div class="intranet-settings__main-widget_name" data-role="title">Bitrix</div>
-								<div class="intranet-settings__main-widget_logo24" data-role="logo24">24</div>
+				
+				<section class="intranet-settings__preview --preview" data-role="preview">
+					<div class="preview__header">
+						<div class="preview__header-box">
+							<div class="preview__header-left-box">
+								<div class="preview__menu-switcher">
+									<span class="preview__menu-switcher__icon"></span>
+								</div>
+								<div class="preview__block-item"></div>
+								<div class="preview__block-item"></div>
+								<div class="preview__block-item"></div>
 							</div>
-							<div class="intranet-settings__main-widget_header_right">
-								<div class="intranet-settings__main-widget_lane_item"></div>
-								<div class="intranet-settings__main-widget_lane_item"></div>
-							</div>
-						</div>
-						<div class="intranet-settings__main-widget_lane_box">
-							<div class="intranet-settings__main-widget_lane_item"></div>
-							<div class="intranet-settings__main-widget_lane_inline --space-between">
-								<div class="intranet-settings__main-widget_lane_item --sm"></div>
-								<div class="intranet-settings__main-widget_lane_item --bg-30"></div>
-								<div class="intranet-settings__main-widget_lane_item --square"></div>
-							</div>
-							<div class="intranet-settings__main-widget_lane_inner">
-								<div class="intranet-settings__main-widget_lane_item"></div>
-								<div class="intranet-settings__main-widget_lane_item --bg-30"></div>
-								<div class="intranet-settings__main-widget_lane_item --bg-30"></div>
+							<div class="preview__header-right-box">
+								<div class="intranet-settings__logo-box">
+									<div class="intranet-settings__main-widget_logo" data-role="logo"></div>
+									<div class="intranet-settings__main-widget_name" data-role="title">Bitrix</div>
+									<div class="intranet-settings__logo24" data-role="logo24">
+										24
+									</div>
+								</div>	
+								<div class="preview__circle_container">	
+									<div class="preview__circle_item"></div>
+								</div>				
 							</div>
 						</div>
-					</main>
-					<aside class="intranet-settings__main-widget__aside --right-side">
-						<div class="intranet-settings__main-widget__aside_item --active"></div>
-						<div class="intranet-settings__main-widget__aside_item"></div>
-						<div class="intranet-settings__main-widget__aside_item"></div>
-						<div class="intranet-settings__main-widget__aside_item"></div>
-						<div class="intranet-settings__main-widget__aside_item"></div>
-					</aside>
+					</div>
+					<div class="preview__main">
+						<div class="preview__main-left">
+							<div class="preview__circle_container">
+								<div class="preview__circle_item-outline">
+									<div class="preview__circle_item --active"></div>
+								</div>
+							</div>	
+							<div class="preview__circle_container">	
+								<div class="preview__circle_item"></div>
+							</div>	
+							<div class="preview__circle_container">	
+								<div class="preview__circle_item"></div>
+							</div>	
+							<div class="preview__circle_container">	
+								<div class="preview__circle_item"></div>
+							</div>	
+							<div class="preview__circle_container">	
+								<div class="preview__circle_item"></div>
+							</div>	
+							<div class="preview__circle_container">	
+								<div class="preview__circle_item"></div>
+							</div>	
+						</div>
+						<div class="preview__main-center">
+							<div class="preview__main-row">
+								<div class="preview__main-row-left">
+									<div class="preview__block-item --w145"></div>
+									<div class="preview__block-item --opacity80 --w47"></div>
+									<div class="preview__block-item --w90"></div>
+								</div>
+								<div class="preview__main-row-right">
+									<div class="preview__block-item --w50"></div>
+								</div>
+							</div>
+							<div class="preview__main-row">
+								<div class="preview__main-row-left">
+									<div class="preview__block-item --w80"></div>
+									<div class="preview__block-item --w50"></div>
+								</div>
+								<div class="preview__main-row-right">
+									<div class="preview__block-item --w90"></div>
+								</div>
+							</div>
+							<div class="preview__main-column">
+								<div class="preview__main-header"></div>
+								<div class="preview__main-table"></div>
+							</div>
+						</div>
+						<div class="preview__main-right">
+							<div class="preview__circle_container">	
+								<div class="preview__circle_item --light"></div>
+							</div>	
+							<div class="preview__circle_container">	
+								<div class="preview__circle_item --light"></div>
+							</div>	
+							<div class="preview__circle_container">	
+								<div class="preview__circle_item --light"></div>
+							</div>	
+							<div class="preview__circle_container">	
+								<div class="preview__circle_item --light"></div>
+							</div>	
+						</div>
+					</div>
 				</section>
+				
 			</div>
 			<div class="ui-section__row theme-dialog-content" data-role="theme-container"></div>
 			<input type="hidden" name="themeId" value="" disabled>
@@ -195,7 +246,7 @@ class ThemePickerElement extends BaseField
 		`;
 		const themeContainer = container.querySelector('div[data-role="theme-container"]');
 		Array.from(this.#themePicker.getThemes()).forEach((theme) => {
-			const itemNode = this.#themePicker.createItem(theme);
+			const itemNode = this.#themePickerDialog.createItem(theme);
 			if (this.#themePicker.canSetDefaultTheme() !== true)
 			{
 				Event.unbindAll(itemNode, 'click');
@@ -231,7 +282,8 @@ class ThemePickerElement extends BaseField
 		{
 			return this.showBanner();
 		}
-		this.#themePicker.getNewThemeDialog().show();
+
+		this.#themePickerDialog.getNewThemeDialog().show();
 	}
 
 	handleLockButtonClick()

@@ -52,6 +52,7 @@ $MESS["IMOL_CHAT_NOTIFY_RATING_VALUE_LIKE"] = "positive";
 $MESS["IMOL_CHAT_NOTIFY_SCHEMA_RATING_CLIENT_new"] = "Client rating notification";
 $MESS["IMOL_CHAT_NOTIFY_SCHEMA_RATING_HEAD"] = "Supervisor rating notification";
 $MESS["IMOL_CHAT_NO_OPERATOR_AVAILABLE_IN_QUEUE_NEW"] = "Enquiry has been resubmitted to the queue because there are no agents available";
+$MESS["IMOL_CHAT_OPERATOR_STARTED_DAY"] = "#USER# has clocked in. This agent can now see this conversation.";
 $MESS["IMOL_CHAT_PAUSE_OFF_NEW"] = "Auto close date set according to queue rules";
 $MESS["IMOL_CHAT_PAUSE_ON"] = "Auto close postponed until #DATE#";
 $MESS["IMOL_CHAT_RETURNED_TO_QUEUE_NEW"] = "Enquiry has been resubmitted to the queue.";

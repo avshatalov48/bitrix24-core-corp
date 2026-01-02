@@ -11,11 +11,6 @@ jn.define('tasks/layout/simple-list/items/task-redux', (require, exports, module
 	{
 		taskContentRef = null;
 
-		constructor(props)
-		{
-			super(props);
-		}
-
 		getStyles()
 		{
 			return mergeImmutable(super.getStyles(), {
@@ -32,7 +27,7 @@ jn.define('tasks/layout/simple-list/items/task-redux', (require, exports, module
 
 		renderItemContent()
 		{
-			const { testId, itemLayoutOptions, item } = this.props;
+			const { testId, itemLayoutOptions, item, params } = this.props;
 
 			return TaskContentView({
 				forwardedRef: this.bindRef,
@@ -41,6 +36,8 @@ jn.define('tasks/layout/simple-list/items/task-redux', (require, exports, module
 				id: item.id,
 				showBorder: item.showBorder,
 				isLastPinned: item.isLastPinned,
+				projectId: params.projectId,
+				ownerId: params.ownerId,
 			});
 		}
 

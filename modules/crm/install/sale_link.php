@@ -8,6 +8,7 @@ use Bitrix\Crm\RequisiteAddress;
 use	Bitrix\Sale\BusinessValue;
 use Bitrix\Sale\Internals\BusinessValuePersonDomainTable;
 use Bitrix\Catalog;
+use Bitrix\Main\Type\DateTime;
 
 /**
  * @global $DB CDatabase
@@ -78,6 +79,7 @@ switch ($languageId)
 	case 'fr':
 	case 'by':
 	case 'ru':
+	case 'uz':
 		$countryLangId = $languageId;
 		break;
 	default:
@@ -115,6 +117,10 @@ switch ($countryLangId)
 	case 'in':
 		$shopLocalization = 'en';
 		$billPsLocalization = $quotePsLocalization = 'en';
+		break;
+	case 'uz':
+		$shopLocalization = $quotePsLocalization = 'ru';
+		$billPsLocalization = 'uz';
 		break;
 	default:
 		$shopLocalization = $countryLangId;
@@ -2029,7 +2035,119 @@ if (!Main\Loader::includeModule('catalog'))
 	return;
 }
 
-if($billPsLocalization == "ru")
+if($billPsLocalization === 'ru')
+{
+	$vat = Catalog\Model\Vat::getRow([
+		'select' => [
+			'ID',
+		],
+		'filter' => [
+			'=EXCLUDE_VAT' => 'Y',
+		],
+	]);
+	if ($vat === null)
+	{
+		Catalog\Model\Vat::add([
+			'NAME' => Loc::getMessage('CRM_VAT_1'),
+			'ACTIVE' => 'Y',
+			'SORT' => 100,
+			'EXCLUDE_VAT' => 'Y',
+			'RATE' => null,
+		]);
+	}
+	$vat = Catalog\Model\Vat::getRow([
+		'select' => [
+			'ID',
+		],
+		'filter' => [
+			'=EXCLUDE_VAT' => 'N',
+			'=RATE' => 0,
+		],
+	]);
+	if ($vat === null)
+	{
+		Catalog\Model\Vat::add([
+			'NAME' => Loc::getMessage('CRM_VAT_0'),
+			'ACTIVE' => 'Y',
+			'SORT' => 200,
+			'EXCLUDE_VAT' => 'N',
+			'RATE' => 0,
+		]);
+	}
+	// TODO:: Remove DateTime check after 01.01.2026
+	$vat22BeginDateString = Main\Config\Option::get('crm', 'vat22BeginDate', '2026-01-01 00:00:00');
+	$vat22BeginDate = new DateTime($vat22BeginDateString, 'Y-m-d H:i:s');
+	$nowDate = new DateTime();
+
+	if ($nowDate->getTimestamp() >= $vat22BeginDate->getTimestamp() - \CTimeZone::GetOffset())
+	{
+		$vatRateValue = 22;
+		$vatNamePhraseCode = 'CRM_VAT_22';
+	}
+	else
+	{
+		$vatRateValue = 20;
+		$vatNamePhraseCode = 'CRM_VAT_21';
+	}
+	$vat = Catalog\Model\Vat::getRow([
+		'select' => [
+			'ID',
+		],
+		'filter' => [
+			'=RATE' => $vatRateValue,
+		],
+	]);
+	if ($vat === null)
+	{
+		Catalog\Model\Vat::add([
+			'NAME' => Loc::getMessage($vatNamePhraseCode),
+			'ACTIVE' => 'Y',
+			'SORT' => 300,
+			'EXCLUDE_VAT' => 'N',
+			'RATE' => $vatRateValue,
+		]);
+	}
+}
+elseif($billPsLocalization === 'kz')
+{
+	$vat = Catalog\Model\Vat::getRow([
+		'select' => [
+			'ID',
+		],
+		'filter' => [
+			'=EXCLUDE_VAT' => 'Y',
+		],
+	]);
+	if ($vat === null)
+	{
+		Catalog\Model\Vat::add([
+			'NAME' => Loc::getMessage('CRM_VAT_1'),
+			'ACTIVE' => 'Y',
+			'SORT' => 100,
+			'EXCLUDE_VAT' => 'Y',
+			'RATE' => null,
+		]);
+	}
+	$vat = Catalog\Model\Vat::getRow([
+		'select' => [
+			'ID',
+		],
+		'filter' => [
+			'=RATE' => 12,
+		],
+	]);
+	if ($vat === null)
+	{
+		Catalog\Model\Vat::add([
+			'NAME' => Loc::getMessage('CRM_VAT_3'),
+			'ACTIVE' => 'Y',
+			'SORT' => 200,
+			'EXCLUDE_VAT' => 'N',
+			'RATE' => 12,
+		]);
+	}
+}
+elseif($billPsLocalization === 'uz')
 {
 	$vat = Catalog\Model\Vat::getRow([
 		'select' => [
@@ -2073,45 +2191,6 @@ if($billPsLocalization == "ru")
 			'ID',
 		],
 		'filter' => [
-			'=RATE' => 20,
-		],
-	]);
-	if ($vat === null)
-	{
-		Catalog\Model\Vat::add([
-			'NAME' => Loc::getMessage('CRM_VAT_21'),
-			'ACTIVE' => 'Y',
-			'SORT' => 300,
-			'EXCLUDE_VAT' => 'N',
-			'RATE' => 20,
-		]);
-	}
-}
-elseif($billPsLocalization == "kz")
-{
-	$vat = Catalog\Model\Vat::getRow([
-		'select' => [
-			'ID',
-		],
-		'filter' => [
-			'=EXCLUDE_VAT' => 'Y',
-		],
-	]);
-	if ($vat === null)
-	{
-		Catalog\Model\Vat::add([
-			'NAME' => Loc::getMessage('CRM_VAT_1'),
-			'ACTIVE' => 'Y',
-			'SORT' => 100,
-			'EXCLUDE_VAT' => 'Y',
-			'RATE' => null,
-		]);
-	}
-	$vat = Catalog\Model\Vat::getRow([
-		'select' => [
-			'ID',
-		],
-		'filter' => [
 			'=RATE' => 12,
 		],
 	]);
@@ -2120,7 +2199,7 @@ elseif($billPsLocalization == "kz")
 		Catalog\Model\Vat::add([
 			'NAME' => Loc::getMessage('CRM_VAT_3'),
 			'ACTIVE' => 'Y',
-			'SORT' => 200,
+			'SORT' => 300,
 			'EXCLUDE_VAT' => 'N',
 			'RATE' => 12,
 		]);
@@ -2129,11 +2208,18 @@ elseif($billPsLocalization == "kz")
 
 // get default vat
 $defCatVatId = 0;
+$defCatVatIdFilter = [];
+$createCatalogParams = [];
+if ($billPsLocalization === 'uz')
+{
+	$defCatVatIdFilter['=RATE'] = 12;
+}
 $vat = Catalog\Model\Vat::getRow([
 	'select' => [
 		'ID',
 		'SORT',
 	],
+	'filter' => $defCatVatIdFilter,
 	'order' => [
 		'SORT' => 'ASC',
 	],
@@ -2141,6 +2227,7 @@ $vat = Catalog\Model\Vat::getRow([
 if ($vat !== null)
 {
 	$defCatVatId = (int)$vat['ID'];
+	$createCatalogParams = ['VAT_ID' => $defCatVatId];
 }
 
 $arActiveLangs = array();
@@ -2193,7 +2280,7 @@ $arCatalogId = array();
 $dbCatalogList = CCrmCatalog::GetList();
 while ($arCatalog = $dbCatalogList->Fetch())
 	$arCatalogId[] = $arCatalog['ID'];
-$defCatalogId = CCrmCatalog::EnsureDefaultExists();
+$defCatalogId = CCrmCatalog::EnsureDefaultExists($createCatalogParams);
 if ($defCatalogId > 0)
 {
 	if (!in_array($defCatalogId, $arCatalogId))

@@ -1,0 +1,21 @@
+<?php
+$MESS["CRM_ALL"] = "Барлығы";
+$MESS["CRM_COLUMN_NUMERATOR_LIST_ID"] = "ID";
+$MESS["CRM_COLUMN_NUMERATOR_LIST_NAME"] = "Нөмірлеуіш атауы";
+$MESS["CRM_COLUMN_NUMERATOR_LIST_TEMPLATE"] = "Нөмір қалыбы";
+$MESS["CRM_COLUMN_NUMERATOR_LIST_TEMPLATE_NAME"] = "Нөмірлеуішті қолданатын қалыптар";
+$MESS["CRM_COLUMN_NUMERATOR_LIST_TYPE"] = "Түрі";
+$MESS["CRM_MODULE_NOT_INSTALLED"] = "Crm модулі орнатылмаған.";
+$MESS["CRM_NUMERATOR_LIST_CREATE_NUMERATOR"] = "Нөмірлеуішті жасау";
+$MESS["CRM_NUMERATOR_LIST_DELETE"] = "Нөмірлеуішті жою";
+$MESS["CRM_NUMERATOR_LIST_DELETE_CONFIRM"] = "\"%s\" жойғыңыз келетініне сенімдісіз бе?";
+$MESS["CRM_NUMERATOR_LIST_DELETE_ERROR"] = "\"#NUMERATOR_NAME#\" нөмірлеуішін жою мүмкін болмады";
+$MESS["CRM_NUMERATOR_LIST_DELETE_TITLE"] = "Осы нөмірлеуішті жою";
+$MESS["CRM_NUMERATOR_LIST_EDIT"] = "Редакциялау";
+$MESS["CRM_NUMERATOR_LIST_EDIT_ERROR"] = "\"#NUMERATOR_NAME#\" нөмірлеуішін сақтау мүмкін болмады";
+$MESS["CRM_NUMERATOR_LIST_EDIT_TITLE"] = "Осы нөмірлеуішті редакциялау парақшасына өту";
+$MESS["CRM_NUMERATOR_LIST_FILTER_ENTITIES"] = "СРМ бөліміне байланыстыру";
+$MESS["CRM_NUMERATOR_LIST_INTERNAL_ERROR_TITLE"] = "Ішкі қате пайда болды";
+$MESS["CRM_NUMERATOR_LIST_PAGE_TITLE"] = "Құжаттарға арналған нөмірлеуіштер";
+$MESS["CRM_PERMISSION_DENIED"] = "Қолжетімділікке тыйым салынған";
+$MESS["DOCUMENTGENERATOR_MODULE_NOT_INSTALLED"] = "Documentgenerator модулі орнатылмаған.";

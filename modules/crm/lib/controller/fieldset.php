@@ -16,7 +16,8 @@ class FieldSet extends Main\Engine\JsonController
 	{
 		$hasReadAccessToEntity = Crm\Service\Container::getInstance()
 			->getUserPermissions()
-			->checkReadPermissions($entityTypeId, $entityId)
+			->item()
+			->canRead($entityTypeId, $entityId)
 		;
 		if (!$hasReadAccessToEntity)
 		{
@@ -40,7 +41,7 @@ class FieldSet extends Main\Engine\JsonController
 	public function getAction(int $id): array
 	{
 		$permissions = Crm\Service\Container::getInstance()->getUserPermissions();
-		if (!$permissions->canReadConfig())
+		if (!$this->checkPermission())
 		{
 			$this->addError(new Main\Error(Loc::getMessage('CRM_CONTROLLER_FIELDSET_READ_CONFIG_DENIED')));
 			return [];
@@ -86,7 +87,7 @@ class FieldSet extends Main\Engine\JsonController
 
 	private function checkPermission(): bool
 	{
-		$canWriteConfig = Crm\Service\Container::getInstance()->getUserPermissions()->canWriteConfig();
+		$canWriteConfig = Crm\Service\Container::getInstance()->getUserPermissions()->isCrmAdmin();
 		if ($canWriteConfig)
 		{
 			return true;

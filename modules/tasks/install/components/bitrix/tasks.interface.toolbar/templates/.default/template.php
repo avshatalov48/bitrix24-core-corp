@@ -14,7 +14,12 @@ use Bitrix\Tasks\Integration\Bizproc\Automation\Factory;
 use Bitrix\Tasks\UI\ScopeDictionary;
 use Bitrix\Tasks\Update\SortConverter;
 use Bitrix\Tasks\Util\Restriction\Bitrix24Restriction\Limit;
-use Bitrix\Tasks\Integration\Socialnetwork\Context\Context;
+use Bitrix\Main\Web\Json;
+
+/**
+ * @global CMain $APPLICATION
+ * @var array $arResult
+ */
 
 $bodyClass = $APPLICATION->GetPageProperty('BodyClass');
 $APPLICATION->SetPageProperty('BodyClass', ($bodyClass? $bodyClass.' ' : '').'pagetitle-toolbar-field-view tasks-pagetitle-view');
@@ -24,10 +29,12 @@ Extension::load([
 	'ui.counter',
 	'ui.fonts.opensans',
 	'ui.hint',
+	'ui.navigationpanel',
+	'ui.actions-bar'
 ]);
 
 $showViewMode = (isset($arParams['SHOW_VIEW_MODE']) && $arParams['SHOW_VIEW_MODE'] === 'Y');
-$isBitrix24Template = (SITE_TEMPLATE_ID === 'bitrix24');
+$isBitrix24Template = (SITE_TEMPLATE_ID === 'bitrix24' || SITE_TEMPLATE_ID === 'air');
 $isExtranetUser = (bool)Bitrix\Tasks\Integration\Extranet\User::isExtranet();
 if ($isBitrix24Template)
 {
@@ -36,40 +43,42 @@ if ($isBitrix24Template)
 
 ?>
 
-<div class="task-interface-toolbar">
+<div class="ui-actions-bar task-interface-toolbar">
 <?php if ($showViewMode && !($arParams['PROJECT_VIEW'] === 'Y' && !$arParams['GROUP_ID'])):?>
-<div class="task-interface-toolbar--item --visible">
-    <div class="tasks-view-switcher">
-        <?php
-			$template = ($arParams['GROUP_ID'] > 0 ? 'PATH_TO_GROUP_TASKS' : 'PATH_TO_USER_TASKS');
-			$link = CComponentEngine::makePathFromTemplate($template, [
-				'user_id' => $arParams['OWNER_ID'],
-				'group_id' => $arParams['GROUP_ID'],
-			]);
+	<?php
+		$template = ($arParams['GROUP_ID'] > 0 ? 'PATH_TO_GROUP_TASKS' : 'PATH_TO_USER_TASKS');
+		$link = CComponentEngine::makePathFromTemplate($template, [
+			'user_id' => $arParams['OWNER_ID'],
+			'group_id' => $arParams['GROUP_ID'],
+		]);
 
-			foreach ($arResult['VIEW_LIST'] as $viewKey => $view)
+		$items = [];
+
+		foreach ($arResult['VIEW_LIST'] as $viewKey => $view)
+		{
+			$item = [];
+			// kanban only for group
+			if ((int) $arParams['GROUP_ID'] <= 0 && $viewKey == 'VIEW_MODE_KANBAN')
 			{
-				// kanban only for group
-				if ((int) $arParams['GROUP_ID'] <= 0 && $viewKey == 'VIEW_MODE_KANBAN')
-				{
-					continue;
-				}
-
-				$active = array_key_exists('SELECTED', $view) && $view['SELECTED'] === 'Y';
-				$state = \Bitrix\Tasks\Ui\Filter\Task::getListStateInstance()->getState();
-				$url = '?F_STATE=sV'.CTaskListState::encodeState($view['ID']);
-				if (isset($_REQUEST['IFRAME']))
-				{
-					$url .= '&IFRAME='.($_REQUEST['IFRAME'] == 'Y' ? 'Y' : 'N');
-				}
-
-				?><a class="tasks-view-switcher--item<?=($active ? ' tasks-view-switcher--item --active' : '')?>"
-					 href="<?=$url?>" id="tasks_<?= mb_strtolower($viewKey)?>">
-					<?=$view['SHORT_TITLE']?>
-				</a><?php
+				continue;
 			}
-	?></div>
-</div>
+
+			$active = array_key_exists('SELECTED', $view) && $view['SELECTED'] === 'Y';
+			$state = \Bitrix\Tasks\Ui\Filter\Task::getListStateInstance()->getState();
+			$url = '?F_STATE=sV'.CTaskListState::encodeState($view['ID']);
+			if (isset($_REQUEST['IFRAME']))
+			{
+				$url .= '&IFRAME='.($_REQUEST['IFRAME'] == 'Y' ? 'Y' : 'N');
+			}
+
+			$item['active'] = (bool)$active;
+			$item['id'] = 'tasks_' . mb_strtolower($viewKey);
+			$item['title'] = $view['SHORT_TITLE'];
+			$item['link']['href'] = $url;
+			$items[] = $item;
+		}
+	?>
+	<div class="ui-actions-bar__panel" id="tasks-nav-panel"></div>
 <?php endif?>
 
 <?php if (!$isBitrix24Template):?>
@@ -94,8 +103,7 @@ if ($isBitrix24Template)
 	}
 	?>
 <?php if (!$isExtranetUser):?>
-	<div class="task-interface-toolbar--item --without-bg --align-right">
-		<div class="task-interface-toolbar--item--scope">
+		<div class="ui-actions-bar__buttons" id="task-interface-toolbar__buttons">
 			<?php
 			$robotBtnIgnoreList = [
 				ScopeDictionary::SCOPE_SCRUM_PROJECTS_GRID,
@@ -126,9 +134,9 @@ if ($isBitrix24Template)
 				$uiClass = 'ui-btn ui-btn-xs ui-btn-light-border ui-btn-no-caps ui-btn-themes ui-btn-round';
 				$onClick = ($showLimitSlider ? $openLimitSliderAction : $openRobotSliderAction);
 
-				?><button class="<?=$uiClass?> <?=$lockClass?> task-interface-btn-toolbar --robots --small"
+				?><button class="<?=$uiClass?> <?=$lockClass?> task-interface-btn-toolbar --robots --small ui-btn-icon-robots"
 					<?=($showViewMode ? '' : "data-project-id='{$groupId}'")?> onclick="<?=$onClick?>">
-					<?=GetMessage('TASKS_SWITCHER_ITEM_ROBOTS')?>
+					<span class="ui-btn-text"><?=GetMessage('TASKS_SWITCHER_ITEM_ROBOTS')?></span>
 				</button><?php
 			}
 
@@ -150,7 +158,13 @@ if ($isBitrix24Template)
 			}
 			?>
 		</div>
-	</div>
+<!---->
+	<script>
+		(new BX.UI.ActionsBar.RightButtons({
+			buttonsContainer: BX('task-interface-toolbar__buttons'),
+			collapsable: true,
+		})).init();
+	</script>
 <?php endif;?>
 <?php
 if (!$isBitrix24Template):?>
@@ -210,6 +224,15 @@ if ($arResult['SPOTLIGHT_SIMPLE_COUNTERS'])
 <script>
 	BX.ready(function()
 	{
+		const navBlock = document.getElementById('tasks-nav-panel');
+		if (navBlock)
+		{
+			(new BX.UI.NavigationPanel({
+				target: navBlock,
+				items: <?= Json::encode($items ?? []) ?>,
+			})).init();
+		}
+
 		BX.message({
 			_VIEW_TYPE: '<?= $state['VIEW_SELECTED']['CODENAME'] ?? "" ?>'
 		});
@@ -253,11 +276,11 @@ if ($arResult['SPOTLIGHT_SIMPLE_COUNTERS'])
 		var toolbarCounters = document.querySelector('.task-interface-toolbar');
 		if(toolbarCounters)
 		{
-			var toolbarCountersItems = toolbarCounters.querySelectorAll('.task-interface-toolbar--item');
-			var toolbarCountersRobots = toolbarCounters.querySelector('.--align-right');
+			var toolbarCountersItems = toolbarCounters.querySelectorAll('.ui-actions-bar__panel');
+			var toolbarCountersRobots = toolbarCounters.querySelector('.ui-actions-bar__buttons');
 			if(toolbarCountersRobots)
 			{
-				toolbarCountersRobots.classList.add('task-interface-toolbar--item--' + toolbarCountersItems.length);
+				toolbarCountersRobots.classList.add('task-interface-toolbar--item--3');
 			}
 		}
 

@@ -23,7 +23,7 @@ class DocumentTransformer extends FileTransformer
 
 	protected function getCommandName()
 	{
-		return 'Bitrix\TransformerController\Document';
+		return WellKnownControllerCommand::Document->value;
 	}
 
 	protected function getFileTypeName()

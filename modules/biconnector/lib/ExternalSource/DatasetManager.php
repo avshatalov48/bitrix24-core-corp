@@ -5,10 +5,14 @@ namespace Bitrix\BIConnector\ExternalSource;
 use Bitrix\Main;
 use Bitrix\Main\Localization\Loc;
 use Bitrix\Main\Engine\CurrentUser;
+use Bitrix\Main\Engine\Response\Converter;
 
-final class DatasetManager
+class DatasetManager
 {
+	public const EVENT_ON_BEFORE_ADD_DATASET = 'onBeforeAddDataset';
 	public const EVENT_ON_AFTER_ADD_DATASET = 'onAfterAddDataset';
+	public const EVENT_ON_BEFORE_UPDATE_DATASET = 'onBeforeUpdateDataset';
+	public const EVENT_ON_AFTER_UPDATE_DATASET = 'onAfterUpdateDataset';
 	public const EVENT_ON_AFTER_DELETE_DATASET = 'onAfterDeleteDataset';
 
 	/**
@@ -21,11 +25,37 @@ final class DatasetManager
 	 *
 	 * @return Main\Result
 	 */
-	public static function add(array $dataset, array $fields, array $settings, int $sourceId = null): Main\Result
+	public static function add(array $dataset, array $fields, array $settings = [], int $sourceId = null): Main\Result
 	{
 		$result = new Main\Result();
 
-		$checkResult = self::checkAndPrepareBeforeAdd($dataset, $fields, $settings);
+		$event = new Main\Event(
+			'biconnector',
+			self::EVENT_ON_BEFORE_ADD_DATASET,
+			[
+				'dataset' => $dataset,
+				'fields' => $fields,
+				'settings' => $settings,
+			]
+		);
+		$event->send();
+
+		foreach ($event->getResults() as $eventResult)
+		{
+			if ($eventResult->getType() === Main\EventResult::ERROR)
+			{
+				$error = $eventResult->getParameters();
+				$result->addError(
+					$error instanceof Main\Error
+						? $error
+						: new Main\Error(Loc::getMessage('BICONNECTOR_EXTERNAL_SOURCE_DATASET_MANAGER_ADD_ERROR'))
+				);
+
+				return $result;
+			}
+		}
+
+		$checkResult = static::checkAndPrepareBeforeAdd($dataset, $fields, $settings, $sourceId);
 		if (!$checkResult->isSuccess())
 		{
 			$result->addErrors($checkResult->getErrors());
@@ -55,15 +85,19 @@ final class DatasetManager
 				$result->addErrors($addFieldsResult->getErrors());
 			}
 
-			$addSettingsResult = self::addSettingsToDataset($id, $settings);
-			if (!$addSettingsResult->isSuccess())
+			if ($settings)
 			{
-				$result->addErrors($addSettingsResult->getErrors());
+				$addSettingsResult = self::addSettingsToDataset($id, $settings);
+				if (!$addSettingsResult->isSuccess())
+				{
+					$result->addErrors($addSettingsResult->getErrors());
+				}
 			}
 
 			if ($sourceId)
 			{
 				$relationAddResult = Internal\ExternalSourceDatasetRelationTable::addRelation($sourceId, $id);
+				if (!$relationAddResult->isSuccess())
 				{
 					$result->addErrors($relationAddResult->getErrors());
 				}
@@ -120,7 +154,12 @@ final class DatasetManager
 		return $result;
 	}
 
-	private static function checkAndPrepareBeforeAdd(array $dataset, array $fields, array $settings): Main\Result
+	protected static function checkAndPrepareBeforeAdd(
+		array $dataset,
+		array $fields,
+		array $settings,
+		int $sourceId = null
+	): Main\Result
 	{
 		$result = new Main\Result();
 
@@ -128,6 +167,8 @@ final class DatasetManager
 		if (!$checkBeforeResult->isSuccess())
 		{
 			$result->addErrors($checkBeforeResult->getErrors());
+
+			return $result;
 		}
 
 		if (empty($dataset))
@@ -136,7 +177,8 @@ final class DatasetManager
 		}
 		else
 		{
-			if (in_array($dataset['NAME'], SupersetServiceIntegration::getTableList(), true))
+			$datasetName = $dataset['NAME'];
+			if (in_array($datasetName, SupersetServiceIntegration::getTableList(), true))
 			{
 				$result->addError(
 					new Main\Error(
@@ -158,7 +200,7 @@ final class DatasetManager
 			$result->addError(new Main\Error('$fields is empty', 'FIELDS_EMPTY'));
 		}
 
-		if (empty($settings))
+		if (empty($settings) && is_null($sourceId))
 		{
 			$result->addError(new Main\Error('$settings is empty', 'SETTINGS_EMPTY'));
 		}
@@ -185,7 +227,34 @@ final class DatasetManager
 	{
 		$result = new Main\Result();
 
-		$checkResult = self::checkAndPrepareBeforeUpdate($dataset, $fields, $settings);
+		$event = new Main\Event(
+			'biconnector',
+			self::EVENT_ON_BEFORE_UPDATE_DATASET,
+			[
+				'id' => $id,
+				'dataset' => $dataset,
+				'fields' => $fields,
+				'settings' => $settings,
+			]
+		);
+		$event->send();
+
+		foreach ($event->getResults() as $eventResult)
+		{
+			if ($eventResult->getType() === Main\EventResult::ERROR)
+			{
+				$error = $eventResult->getParameters();
+				$result->addError(
+					$error instanceof Main\Error
+						? $error
+						: new Main\Error(Loc::getMessage('BICONNECTOR_EXTERNAL_SOURCE_DATASET_MANAGER_UPDATE_ERROR'))
+				);
+
+				return $result;
+			}
+		}
+
+		$checkResult = static::checkAndPrepareBeforeUpdate($id, $dataset, $fields, $settings);
 		if (!$checkResult->isSuccess())
 		{
 			$result->addErrors($checkResult->getErrors());
@@ -214,23 +283,62 @@ final class DatasetManager
 		if ($fields)
 		{
 			$currentFields = self::getDatasetFieldsById($id);
-			foreach ($fields as $field)
+
+			if (isset($fields[0]['id'], $fields[0]['visible']))
 			{
-				$fieldId = $field['ID'] ? (int)$field['ID'] : null;
-				if ($fieldId)
+				$converter = new Converter(Converter::KEYS | Converter::TO_UPPER | Converter::RECURSIVE);
+				$fields = $converter->process($fields);
+			}
+
+			$fieldsToUpdate = array_filter($fields, static function ($field) use ($currentFields) {
+				return isset($field['ID']) && $currentFields->getByPrimary($field['ID']) !== null;
+			});
+
+			foreach ($fieldsToUpdate as $fieldToUpdate)
+			{
+				$currentField = $currentFields->getByPrimary($fieldToUpdate['ID']);
+				if (isset($fieldToUpdate['VISIBLE']) && $fieldToUpdate['VISIBLE'] !== $currentField->getVisible())
 				{
-					$currentField = $currentFields->getByPrimary($fieldId);
-					if (isset($field['VISIBLE']) && $field['VISIBLE'] !== $currentField->getVisible())
+					$currentField->setVisible($fieldToUpdate['VISIBLE']);
+				}
+
+				if (isset($fieldToUpdate['NAME']) && $fieldToUpdate['NAME'] !== $currentField->getName())
+				{
+					$currentField->setName($fieldToUpdate['NAME']);
+				}
+
+				if (
+					$currentField->isVisibleChanged()
+					|| $currentField->isNameChanged()
+				)
+				{
+					$saveFieldResult = $currentField->save();
+					if (!$saveFieldResult->isSuccess())
 					{
-						// update only VISIBLE field
-						$currentField->setVisible($field['VISIBLE']);
-						$saveFieldResult = $currentField->save();
-						if (!$saveFieldResult->isSuccess())
-						{
-							$result->addErrors($saveFieldResult->getErrors());
-						}
+						$result->addErrors($saveFieldResult->getErrors());
 					}
 				}
+			}
+
+			$fieldsToAdd = array_filter($fields, static function ($field) {
+				return !isset($field['ID']) || (int)$field['ID'] === 0;
+			});
+			if ($fieldsToAdd)
+			{
+				$addFieldsResult = self::addFieldsToDataset($id, $fieldsToAdd);
+				if (!$addFieldsResult->isSuccess())
+				{
+					$result->addErrors($addFieldsResult->getErrors());
+				}
+			}
+
+			$fieldsToDelete = array_diff(
+				$currentFields->getIdList(),
+				array_map('intval', array_column($fields, 'ID'))
+			);
+			if ($fieldsToDelete)
+			{
+				Internal\ExternalDatasetFieldTable::deleteByFilter(['=ID' => $fieldsToDelete]);
 			}
 		}
 
@@ -256,12 +364,36 @@ final class DatasetManager
 		else
 		{
 			$connection->rollbackTransaction();
+
+			return $result;
+		}
+
+		$event = new Main\Event(
+			'biconnector',
+			self::EVENT_ON_AFTER_UPDATE_DATASET,
+			[
+				'dataset' => self::getById($id),
+			]
+		);
+		$event->send();
+
+		foreach ($event->getResults() as $eventResult)
+		{
+			if ($eventResult->getType() === Main\EventResult::ERROR)
+			{
+				$error = $eventResult->getParameters();
+				$result->addError(
+					$error instanceof Main\Error
+						? $error
+						: new Main\Error(Loc::getMessage('BICONNECTOR_EXTERNAL_SOURCE_DATASET_MANAGER_UPDATE_ERROR'))
+				);
+			}
 		}
 
 		return $result;
 	}
 
-	private static function checkAndPrepareBeforeUpdate(array $dataset, array $fields, array $settings): Main\Result
+	protected static function checkAndPrepareBeforeUpdate(int $id, array $dataset, array $fields, array $settings): Main\Result
 	{
 		$result = new Main\Result();
 
@@ -269,9 +401,23 @@ final class DatasetManager
 		if (!$checkBeforeResult->isSuccess())
 		{
 			$result->addErrors($checkBeforeResult->getErrors());
+
+			return $result;
 		}
 
-		if (!empty($dataset))
+		$currentDataset = self::getById($id);
+		if (!$currentDataset)
+		{
+			$result->addError(
+				new Main\Error(
+					Loc::getMessage('BICONNECTOR_EXTERNAL_SOURCE_DATASET_MANAGER_DATASET_NOT_FOUND')
+				)
+			);
+
+			return $result;
+		}
+
+		if ($dataset)
 		{
 			$dataset['DATE_UPDATE'] = new Main\Type\DateTime();
 
@@ -280,7 +426,7 @@ final class DatasetManager
 				$dataset['UPDATED_BY_ID'] = CurrentUser::get()->getId();
 			}
 
-			unset($dataset['NAME']);
+			unset($dataset['NAME'], $dataset['TYPE']);
 		}
 
 		$result->setData([
@@ -292,7 +438,7 @@ final class DatasetManager
 		return $result;
 	}
 
-	private static function checkBefore(array $dataset, array $fields, array $settings): Main\Result
+	protected static function checkBefore(array $dataset, array $fields, array $settings): Main\Result
 	{
 		$result = new Main\Result();
 
@@ -311,7 +457,7 @@ final class DatasetManager
 		return $result;
 	}
 
-	private static function addFieldsToDataset(int $id, array $fields): Main\Result
+	protected static function addFieldsToDataset(int $id, array $fields): Main\Result
 	{
 		$result = new Main\Result();
 

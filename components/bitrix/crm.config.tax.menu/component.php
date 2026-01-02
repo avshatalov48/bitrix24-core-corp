@@ -29,10 +29,8 @@ $arResult['BUTTONS'] = array();
 
 $taxID = isset($arParams['TAX_ID']) ? strval($arParams['TAX_ID']) : '';
 
-$CrmPerms = new CCrmPerms($USER->GetID());
-
-$taxAdd = $taxEdit = $taxDelete = $CrmPerms->HavePerm('CONFIG', BX_CRM_PERM_CONFIG, 'WRITE');
-$taxShow = $CrmPerms->HavePerm('CONFIG', BX_CRM_PERM_CONFIG, 'READ');
+$taxAdd = $taxEdit = $taxDelete = \Bitrix\Crm\Service\Container::getInstance()->getUserPermissions()->isCrmAdmin();
+$taxShow = \Bitrix\Crm\Service\Container::getInstance()->getUserPermissions()->entityType()->canReadSomeItemsInCrm();
 
 $exists = intval($taxID > 0) && is_array(CCrmTax::GetByID($taxID));
 

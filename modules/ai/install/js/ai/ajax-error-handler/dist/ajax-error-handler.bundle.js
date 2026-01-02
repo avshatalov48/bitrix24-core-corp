@@ -46,7 +46,7 @@ this.BX = this.BX || {};
 	    switch (code) {
 	      case ErrorCode.MONTHLY_LIMIT:
 	        {
-	          return babelHelpers.classPrivateFieldLooseBase(this, _handleMonthlyLimitError)[_handleMonthlyLimitError]();
+	          return babelHelpers.classPrivateFieldLooseBase(this, _handleMonthlyLimitError)[_handleMonthlyLimitError](handleGenerateErrorParams == null ? void 0 : handleGenerateErrorParams.sliderCode);
 	        }
 	      case ErrorCode.DAILY_LIMIT:
 	        {
@@ -58,6 +58,9 @@ this.BX = this.BX || {};
 	        }
 	      case ErrorCode.BAAS_LIMIT:
 	        {
+	          if (handleGenerateErrorParams != null && handleGenerateErrorParams.showSliderWithMsg && handleGenerateErrorParams != null && handleGenerateErrorParams.sliderCode) {
+	            return babelHelpers.classPrivateFieldLooseBase(this, _handleMonthlyLimitError)[_handleMonthlyLimitError](handleGenerateErrorParams.sliderCode);
+	          }
 	          return babelHelpers.classPrivateFieldLooseBase(this, _handleBaasLimitError)[_handleBaasLimitError](handleGenerateErrorParams.baasOptions);
 	        }
 	      case ErrorCode.OTHER:
@@ -80,7 +83,7 @@ this.BX = this.BX || {};
 	    switch (code) {
 	      case ErrorCode.MONTHLY_LIMIT:
 	        {
-	          return babelHelpers.classPrivateFieldLooseBase(this, _handleMonthlyLimitError)[_handleMonthlyLimitError]();
+	          return babelHelpers.classPrivateFieldLooseBase(this, _handleMonthlyLimitError)[_handleMonthlyLimitError](handleGenerateErrorParams == null ? void 0 : handleGenerateErrorParams.sliderCode);
 	        }
 	      case ErrorCode.DAILY_LIMIT:
 	        {
@@ -92,6 +95,9 @@ this.BX = this.BX || {};
 	        }
 	      case ErrorCode.BAAS_LIMIT:
 	        {
+	          if (handleGenerateErrorParams != null && handleGenerateErrorParams.showSliderWithMsg && handleGenerateErrorParams != null && handleGenerateErrorParams.sliderCode) {
+	            return babelHelpers.classPrivateFieldLooseBase(this, _handleMonthlyLimitError)[_handleMonthlyLimitError](handleGenerateErrorParams.sliderCode);
+	          }
 	          return babelHelpers.classPrivateFieldLooseBase(this, _handleBaasLimitError)[_handleBaasLimitError](handleGenerateErrorParams.baasOptions);
 	        }
 	      case ErrorCode.OTHER:
@@ -134,8 +140,8 @@ this.BX = this.BX || {};
 	function _handleDailyLimitError2() {
 	  babelHelpers.classPrivateFieldLooseBase(AjaxErrorHandler, _showInfoHelper)[_showInfoHelper](babelHelpers.classPrivateFieldLooseBase(AjaxErrorHandler, _replaceSliderCodeWithBoxLimitCodeIfBox)[_replaceSliderCodeWithBoxLimitCodeIfBox]('limit_copilot_max_number_daily_requests'));
 	}
-	function _handleMonthlyLimitError2() {
-	  babelHelpers.classPrivateFieldLooseBase(AjaxErrorHandler, _showInfoHelper)[_showInfoHelper](babelHelpers.classPrivateFieldLooseBase(AjaxErrorHandler, _replaceSliderCodeWithBoxLimitCodeIfBox)[_replaceSliderCodeWithBoxLimitCodeIfBox]('limit_copilot_requests'));
+	function _handleMonthlyLimitError2(sliderCode) {
+	  babelHelpers.classPrivateFieldLooseBase(AjaxErrorHandler, _showInfoHelper)[_showInfoHelper](sliderCode != null ? sliderCode : 'limit_copilot_requests');
 	}
 	async function _handleTariffLimitError2() {
 	  babelHelpers.classPrivateFieldLooseBase(AjaxErrorHandler, _showInfoHelper)[_showInfoHelper](babelHelpers.classPrivateFieldLooseBase(AjaxErrorHandler, _replaceSliderCodeWithBoxLimitCodeIfBox)[_replaceSliderCodeWithBoxLimitCodeIfBox]('limit_copilot_requests'));
@@ -156,10 +162,6 @@ this.BX = this.BX || {};
 	    useAngle = true,
 	    useSlider = false
 	  } = baasOptions;
-	  if (babelHelpers.classPrivateFieldLooseBase(AjaxErrorHandler, _isCloud)[_isCloud]() === false) {
-	    babelHelpers.classPrivateFieldLooseBase(AjaxErrorHandler, _showInfoHelper)[_showInfoHelper](babelHelpers.classPrivateFieldLooseBase(AjaxErrorHandler, _boxLimitSliderCode)[_boxLimitSliderCode]);
-	    return;
-	  }
 	  if (useSlider) {
 	    main_core.Runtime.loadExtension('ui.info-helper').then(({
 	      InfoHelper

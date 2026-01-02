@@ -8,13 +8,11 @@ jn.define('im/messenger/provider/pull/base', (require, exports, module) => {
 	const { BaseDialogPullHandler } = require('im/messenger/provider/pull/base/dialog');
 	const { BaseMessagePullHandler } = require('im/messenger/provider/pull/base/message');
 	const { BaseApplicationPullHandler } = require('im/messenger/provider/pull/base/application');
-	const { BaseCounterPullHandler } = require('im/messenger/provider/pull/base/counter');
 
 	module.exports = {
 		BasePullHandler,
 		BaseDialogPullHandler,
 		BaseMessagePullHandler,
 		BaseApplicationPullHandler,
-		BaseCounterPullHandler,
 	};
 });

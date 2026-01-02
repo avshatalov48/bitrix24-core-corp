@@ -8,7 +8,8 @@ if (!defined('B_PROLOG_INCLUDED') || B_PROLOG_INCLUDED !== true)
 /**
  * Bitrix vars
  * @var array $arResult
- * @var object $APPLICATION
+ * @var array $arParams
+ * @global \CMain $APPLICATION
  */
 
 use Bitrix\Crm\Component\EntityList\ActivityFieldRestrictionManager;
@@ -36,16 +37,11 @@ $filterLastPreset = CUserOptions::getOption('crm', $filterLastPresetId);
 
 $data = $arResult['DATA'] ?? [];
 $returnAsHtml = $arParams['RETURN_AS_HTML_MODE'] ?? false;
-$isBitrix24Template = SITE_TEMPLATE_ID === 'bitrix24';
 
-$isChangeViewTarget = !$returnAsHtml && $isBitrix24Template;
-
-if ($isChangeViewTarget)
+if (!$returnAsHtml)
 {
 	$bodyClass = $APPLICATION->GetPageProperty('BodyClass');
 	$APPLICATION->SetPageProperty('BodyClass', ($bodyClass ? $bodyClass.' ' : '').'crm-pagetitle-view');
-
-	$this->SetViewTarget('below_pagetitle', 1000);
 }
 
 $phrases = Loc::loadLanguageFile(__FILE__);
@@ -61,32 +57,35 @@ if ($activityFieldRestrictionManager->hasRestrictions())
 
 ?>
 
-<div id="<?= $containerId ?>" class="crm-counter"></div>
+<div id="<?= $containerId ?>" class="ui-actions-bar__panel"></div>
 <script>
-	BX.ready(function() {
-		BX.message(<?=CUtil::phpToJsObject($phrases)?>);
-		BX.message(<?= CUtil::PhpToJSObject($arResult['ENTITY_PLURALS']) ?>);
+	(function () {
+		BX.message(<?= \Bitrix\Main\Web\Json::encode($phrases) ?>);
+		BX.message(<?= \Bitrix\Main\Web\Json::encode($arResult['ENTITY_PLURALS']) ?>);
 
-		// init counter panel
-		(new BX.Crm.EntityCounterPanel({
+		const panel = new BX.Crm.EntityCounterPanel({
 			id: "<?= $containerId ?>",
 			entityTypeId: <?= $entityTypeId ?>,
 			entityTypeName: "<?= CUtil::JSEscape($entityTypeName ?? '') ?>",
 			userId: <?= (int)$arResult['USER_ID'] ?>,
 			userName: "<?= CUtil::JSEscape($arResult['USER_NAME']) ?>",
-			data: <?= CUtil::PhpToJSObject($data) ?>,
-			codes: <?= CUtil::PhpToJSObject($arResult['CODES']) ?>,
-			extras: <?= CUtil::PhpToJSObject($arResult['EXTRAS']) ?>,
+			data: <?= \Bitrix\Main\Web\Json::encode($data) ?>,
+			codes: <?= \Bitrix\Main\Web\Json::encode($arResult['CODES']) ?>,
+			extras: <?= \Bitrix\Main\Web\Json::encode($arResult['EXTRAS']) ?>,
 			withExcludeUsers: <?= $arResult['WITH_EXCLUDE_USERS'] ? 'true' : 'false' ?>,
 			filterLastPresetId: "<?= $filterLastPresetId ?>",
-			filterLastPresetData: <?= CUtil::PhpToJSObject($filterLastPreset) ?>,
-			lockedCallback: <?= CUtil::PhpToJSObject($lockedCallback) ?>,
+			filterLastPresetData: <?= \Bitrix\Main\Web\Json::encode($filterLastPreset) ?>,
+			lockedCallback: <?= \Bitrix\Main\Web\Json::encode($lockedCallback) ?>,
 			filterResponsibleFiledName: "<?= CUtil::JSEscape($arResult['FILTER_RESPONSIBLE_FILED_NAME']) ?>"
-		})).init();
-	});
+		});
+
+		// render right away
+		panel.init();
+
+		// bind filter and events when the filter is fully ready
+		BX.ready(() => {
+			panel.bindToFilter();
+			panel.bindEvents();
+		});
+	})();
 </script>
-<?php
-if ($isChangeViewTarget)
-{
-	$this->EndViewTarget();
-}

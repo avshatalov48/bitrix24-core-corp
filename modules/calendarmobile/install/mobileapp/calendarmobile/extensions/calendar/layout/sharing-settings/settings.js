@@ -15,6 +15,7 @@ jn.define('calendar/layout/sharing-settings/settings', (require, exports, module
 	const { SharingAjax } = require('calendar/ajax');
 	const { Analytics } = require('calendar/sharing/analytics');
 	const { Color } = require('tokens');
+	const { Random } = require('utils/random');
 
 	/**
 	 * @class SharingSettings
@@ -31,7 +32,6 @@ jn.define('calendar/layout/sharing-settings/settings', (require, exports, module
 			}
 			else
 			{
-				// eslint-disable-next-line no-undef
 				this.uid = Random.getString();
 				this.customEventEmitter = EventEmitter.createWithUid(this.uid);
 			}

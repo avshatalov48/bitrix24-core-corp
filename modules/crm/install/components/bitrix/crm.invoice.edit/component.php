@@ -26,8 +26,10 @@ if (!CModule::IncludeModule('sale'))
 }
 
 $CCrmInvoice = new CCrmInvoice();
-if ($CCrmInvoice->cPerms->HavePerm('INVOICE', BX_CRM_PERM_NONE, 'WRITE')
-	&& $CCrmInvoice->cPerms->HavePerm('INVOICE', BX_CRM_PERM_NONE, 'ADD'))
+if (
+	!\Bitrix\Crm\Service\Container::getInstance()->getUserPermissions()->entityType()->canUpdateItems(CCrmOwnerType::Invoice)
+	&& !\Bitrix\Crm\Service\Container::getInstance()->getUserPermissions()->entityType()->canAddItems(CCrmOwnerType::Invoice)
+)
 {
 	ShowError(GetMessage('CRM_PERMISSION_DENIED'));
 	return;
@@ -48,7 +50,6 @@ $arResult['INTERNAL'] = $bInternal;
 global $DB, $USER, $USER_FIELD_MANAGER;
 
 $CCrmUserType = new CCrmUserType($USER_FIELD_MANAGER, CCrmInvoice::$sUFEntityID);
-$userPermissions = CCrmPerms::GetCurrentUserPermissions();
 
 $bEdit = false;
 $bCopy = false;
@@ -184,8 +185,6 @@ elseif ($bEdit || $bCopy)
 		$bEdit = false;
 		$bCopy = false;
 	}
-	else
-		$arEntityAttr = $CCrmInvoice->cPerms->GetEntityAttr('INVOICE', array($arParams['ELEMENT_ID']));
 
 	//HACK: MSSQL returns '.00' for zero value
 	if(isset($arFields['~PRICE']))
@@ -496,8 +495,10 @@ if (!$bEdit && !$bCopy)
 	}
 }
 
-if (($bEdit && !$CCrmInvoice->cPerms->CheckEnityAccess('INVOICE', 'WRITE', $arEntityAttr[$arParams['ELEMENT_ID']]) ||
-	(!$bEdit && $CCrmInvoice->cPerms->HavePerm('INVOICE', BX_CRM_PERM_NONE, 'ADD'))))
+if (
+	($bEdit && !\Bitrix\Crm\Service\Container::getInstance()->getUserPermissions()->item()->canUpdate(CCrmOwnerType::Invoice, $arParams['ELEMENT_ID']))
+	|| (!$bEdit && !\Bitrix\Crm\Service\Container::getInstance()->getUserPermissions()->entityType()->canAddItems(CCrmOwnerType::Invoice))
+)
 {
 	ShowError(GetMessage('CRM_PERMISSION_DENIED'));
 	return;
@@ -535,8 +536,14 @@ if (isset($arPersonTypes['COMPANY']) && isset($arPersonTypes['CONTACT']))
 		if($clientPostInfo['COMPANY_ISSET'])
 		{
 			$companyId = $clientPostInfo['COMPANY'];
-			if ($companyId > 0 && $companyId !== $prevCompanyID
-				&& !CCrmCompany::CheckReadPermission($companyId))
+			if (
+				$companyId > 0
+				&& $companyId !== $prevCompanyID
+				&& !\Bitrix\Crm\Service\Container::getInstance()
+					->getUserPermissions()
+					->item()
+					->canRead(CCrmOwnerType::Company, $companyId)
+			)
 			{
 				$companyId = $prevCompanyID;
 			}
@@ -555,8 +562,14 @@ if (isset($arPersonTypes['COMPANY']) && isset($arPersonTypes['CONTACT']))
 		if($clientPostInfo['CONTACT_ISSET'])
 		{
 			$contactId = $clientPostInfo['CONTACT'];
-			if ($contactId > 0 && $contactId !== $prevContactID
-				&& !CCrmContact::CheckReadPermission($contactId))
+			if (
+				$contactId > 0
+				&& $contactId !== $prevContactID
+				&& !\Bitrix\Crm\Service\Container::getInstance()
+					->getUserPermissions()
+					->item()
+					->canRead(CCrmOwnerType::Contact, $contactId)
+			)
 			{
 				$contactId = ($clientPostInfo['COMPANY_ISSET'] && $companyId !== $prevCompanyID) ?
 					0 : $prevContactID;
@@ -701,7 +714,14 @@ else
 			if(isset($_POST['UF_QUOTE_ID']))
 			{
 				$quoteID = (int)$_POST['UF_QUOTE_ID'];
-				if ($quoteID > 0 && $quoteID !== $prevQuoteID && !CCrmQuote::CheckReadPermission($quoteID))
+				if (
+					$quoteID > 0
+					&& $quoteID !== $prevQuoteID
+					&& !\Bitrix\Crm\Service\Container::getInstance()
+						->getUserPermissions()
+						->item()
+						->canRead(CCrmOwnerType::Quote, $quoteID)
+				)
 				{
 					$quoteID = $prevQuoteID;
 				}
@@ -721,7 +741,14 @@ else
 			if(isset($_POST['UF_DEAL_ID']))
 			{
 				$dealID = (int)$_POST['UF_DEAL_ID'];
-				if ($dealID > 0 && $dealID !== $prevDealID && !CCrmDeal::CheckReadPermission($dealID))
+				if (
+					$dealID > 0
+					&& $dealID !== $prevDealID
+					&& !\Bitrix\Crm\Service\Container::getInstance()
+						->getUserPermissions()
+						->item()
+						->canRead(CCrmOwnerType::Deal, $dealID)
+				)
 				{
 					$dealID = $prevDealID;
 				}
@@ -760,7 +787,10 @@ else
 				$myCompanyId = (int)$_POST['UF_MYCOMPANY_ID'];
 				if ($myCompanyId < 0)
 					$myCompanyId = 0;
-				if($myCompanyId > 0 && CCrmCompany::CheckReadPermission($myCompanyId))
+				if($myCompanyId > 0 && \Bitrix\Crm\Service\Container::getInstance()
+						->getUserPermissions()
+						->item()
+						->canRead(CCrmOwnerType::Company, $myCompanyId))
 				{
 					$mcRequisiteIdLinked = isset($_POST['MC_REQUISITE_ID']) ? max((int)$_POST['MC_REQUISITE_ID'], 0) : 0;
 					$mcBankDetailIdLinked = isset($_POST['MC_BANK_DETAIL_ID']) ? max((int)$_POST['MC_BANK_DETAIL_ID'], 0) : 0;
@@ -1359,7 +1389,11 @@ else
 
 				if (isset($_POST['apply']))
 				{
-					if (CCrmInvoice::CheckUpdatePermission($ID))
+					if (\Bitrix\Crm\Service\Container::getInstance()
+						->getUserPermissions()
+						->item()
+						->canUpdate(CCrmOwnerType::Invoice, $ID)
+					)
 					{
 						LocalRedirect(
 							CComponentEngine::makePathFromTemplate(
@@ -1380,7 +1414,11 @@ else
 				}
 				elseif (isset($_POST['saveAndView']))
 				{
-					if(CCrmInvoice::CheckReadPermission($ID))
+					if (\Bitrix\Crm\Service\Container::getInstance()
+						->getUserPermissions()
+						->item()
+						->canRead(CCrmOwnerType::Invoice, $ID)
+					)
 					{
 						LocalRedirect(
 							empty($arResult['INVOICE_REFERER']) ?
@@ -1453,7 +1491,11 @@ else
 		if ($bEdit)
 		{
 			$arResult['ERROR_MESSAGE'] = '';
-			if (!$CCrmInvoice->cPerms->CheckEnityAccess('INVOICE', 'DELETE', $arEntityAttr[$arParams['ELEMENT_ID']]))
+			if (!\Bitrix\Crm\Service\Container::getInstance()
+				->getUserPermissions()
+				->item()
+				->canDelete(CCrmOwnerType::Invoice, (int)$arParams['ELEMENT_ID'])
+			)
 			{
 				$arResult['ERROR_MESSAGE'] .= GetMessage('CRM_PERMISSION_DENIED').'<br />';
 			}
@@ -1504,10 +1546,16 @@ else
 
 $arResult['STATUS_LIST'] = array();
 $arResult['~STATUS_LIST'] = CCrmStatus::GetStatusList('INVOICE_STATUS');
+$entityStagePermissions = \Bitrix\Crm\Service\Container::getInstance()->getUserPermissions()->stage();
 foreach ($arResult['~STATUS_LIST'] as $sStatusId => $sStatusTitle)
 {
-	if ($CCrmInvoice->cPerms->GetPermType('INVOICE', $bEdit ? 'WRITE' : 'ADD', array('STATUS_ID'.$sStatusId)) > BX_CRM_PERM_NONE)
+	if (
+		(!$bEdit && $entityStagePermissions->canAddInStage(CCrmOwnerType::Invoice, null, $sStatusId))
+		||($bEdit && $entityStagePermissions->canUpdateInStage(CCrmOwnerType::Invoice, null, $sStatusId))
+	)
+	{
 		$arResult['STATUS_LIST'][$sStatusId] = $sStatusTitle;
+	}
 }
 $arResult['CURRENCY_LIST'] = CCrmCurrencyHelper::PrepareListItems();
 
@@ -1857,7 +1905,7 @@ $arResult['FIELDS']['tab_1'][] = array(
 		'ENTITY_SELECTOR_SEARCH_OPTIONS' => array(
 			'ONLY_MY_COMPANIES' => 'Y'
 		),
-		'ENABLE_ENTITY_CREATION'=> $userPermissions->HavePerm('CONFIG', BX_CRM_PERM_CONFIG, 'WRITE'),
+		'ENABLE_ENTITY_CREATION'=> \Bitrix\Crm\Service\Container::getInstance()->getUserPermissions()->isAdminForEntity(CCrmOwnerType::Invoice),
 		'ENTITY_CREATE_URL'=> CCrmOwnerType::GetEditUrl(CCrmOwnerType::Company, 0, false),
 		'READ_ONLY' => false,
 		'FORM_NAME' => $arResult['FORM_ID'],

@@ -1,39 +1,16 @@
 <?php
 
+declare(strict_types=1);
+
 namespace Bitrix\Booking\Internals\Service\Notifications\Agent;
 
-use Bitrix\Booking\Internals\Container;
-use Bitrix\Booking\Internals\Service\Journal\JournalEvent;
-use Bitrix\Booking\Internals\Service\Journal\JournalType;
-
+/**
+ * @deprecated
+ */
 class NotifyManagerAboutNonConfirmedBookingAgent
 {
-	public static function notify(int $bookingId): void
+	public static function execute(): string
 	{
-
-		$booking = Container::getBookingRepository()->getById($bookingId);
-		if (!$booking)
-		{
-			return;
-		}
-
-		if (
-			$booking->isConfirmed()
-			|| $booking->isVisitStatusKnown()
-		)
-		{
-			return;
-		}
-
-		//@todo add im notification
-
-		Container::getJournalService()
-			->append(
-				new JournalEvent(
-					entityId: $booking->getId(),
-					type: JournalType::BookingManagerConfirmNotificationSent,
-					data: [],
-				),
-			);
+		return '';
 	}
 }

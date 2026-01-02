@@ -2,7 +2,6 @@
  * @module im/lib/theme
  */
 jn.define('im/lib/theme', (require, exports, module) => {
-	const { Feature } = require('feature');
 	const AppTheme = require('apptheme');
 
 	let tokens = null;
@@ -24,10 +23,7 @@ jn.define('im/lib/theme', (require, exports, module) => {
 		 */
 		static get colors()
 		{
-			if (
-				Theme.isDesignSystemSupported
-				&& tokens?.Color
-			)
+			if (tokens?.Color)
 			{
 				tokenCollection ??= Theme.createNewDesignTokenCollection();
 
@@ -50,10 +46,7 @@ jn.define('im/lib/theme', (require, exports, module) => {
 		 */
 		static get color()
 		{
-			if (
-				Theme.isDesignSystemSupported
-				&& tokens?.Color
-			)
+			if (tokens?.Color)
 			{
 				return tokens?.Color;
 			}
@@ -83,11 +76,6 @@ jn.define('im/lib/theme', (require, exports, module) => {
 			});
 
 			return result;
-		}
-
-		static get isDesignSystemSupported()
-		{
-			return Feature.isAirStyleSupported();
 		}
 
 		/**

@@ -1,0 +1,25 @@
+<?php
+$MESS["CRM_ALL"] = "Барлығы";
+$MESS["CRM_JS_STATUS_ACTION_ERROR"] = "Қате орын алды";
+$MESS["CRM_JS_STATUS_ACTION_SUCCESS"] = "Сәтті";
+$MESS["CRM_REQUISITE_COPY"] = "Көшіру";
+$MESS["CRM_REQUISITE_COPY_TITLE_COMPANY"] = "Деректемелерді көшіру";
+$MESS["CRM_REQUISITE_COPY_TITLE_CONTACT"] = "Деректемелерді көшіру";
+$MESS["CRM_REQUISITE_DELETE"] = "Жою";
+$MESS["CRM_REQUISITE_DELETE_CONFIRM"] = "Жойғыңыз келетініне сенімдісіз бе?";
+$MESS["CRM_REQUISITE_DELETE_TITLE_COMPANY"] = "Деректемелерді жою";
+$MESS["CRM_REQUISITE_DELETE_TITLE_CONTACT"] = "Деректемелерді жою";
+$MESS["CRM_REQUISITE_EDIT"] = "Редакциялау";
+$MESS["CRM_REQUISITE_EDIT_TITLE_COMPANY"] = "Деректемелерді редакциялау";
+$MESS["CRM_REQUISITE_EDIT_TITLE_CONTACT"] = "Деректемелерді редакциялау";
+$MESS["CRM_REQUISITE_POPUP_CANCEL_BUTTON_TITLE"] = "Жабу";
+$MESS["CRM_REQUISITE_POPUP_ERR_PRESET_NOT_SELECTED_COMPANY"] = "Таңдауға қолжетімді деректемелер қалыбы жоқ";
+$MESS["CRM_REQUISITE_POPUP_ERR_PRESET_NOT_SELECTED_CONTACT"] = "Таңдауға қолжетімді деректемелер қалыбы жоқ";
+$MESS["CRM_REQUISITE_POPUP_SAVE_BUTTON_TITLE"] = "Сақтау";
+$MESS["CRM_REQUISITE_POPUP_TITLE_COMPANY"] = "Компания деректемелері";
+$MESS["CRM_REQUISITE_POPUP_TITLE_CONTACT"] = "Байланыстың деректемелері";
+$MESS["CRM_REQUISITE_PRESET_SELECTOR_TEXT"] = "Жаңасын қосу";
+$MESS["CRM_REQUISITE_PRESET_SELECTOR_TITLE_COMPANY"] = "Қалыпты пайдаланып деректемелерді қосу";
+$MESS["CRM_REQUISITE_PRESET_SELECTOR_TITLE_CONTACT"] = "Қалыпты пайдаланып деректемелерді қосу";
+$MESS["CRM_SHOW_ROW_COUNT"] = "Санын көрсету";
+$MESS["CRM_STATUS_INIT"] = "- Ұсыныс мәртебесі -";

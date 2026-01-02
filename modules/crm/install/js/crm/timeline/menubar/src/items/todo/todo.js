@@ -164,6 +164,11 @@ export default class ToDo extends Item
 		this.#toDoEditor.setDeadline(deadLine);
 	}
 
+	setDescription(description: String): void
+	{
+		this.#toDoEditor.setDescription(description);
+	}
+
 	focus(): void
 	{
 		this.#toDoEditor.setFocused();

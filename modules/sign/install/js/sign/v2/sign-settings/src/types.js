@@ -18,4 +18,5 @@ export type SignOptions = {
 	documentMode: 'document' | 'template',
 	templateUid?: string,
 	initiatedByType?: DocumentInitiatedType,
+	b2eDocumentLimitCount: number,
 };

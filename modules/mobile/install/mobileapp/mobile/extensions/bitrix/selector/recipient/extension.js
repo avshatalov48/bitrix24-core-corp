@@ -79,3 +79,12 @@
 
 	window.RecipientSelector = RecipientSelector;
 })();
+
+/**
+ * @module selector/recipient
+ */
+jn.define('selector/recipient', (require, exports, module) => {
+	module.exports = {
+		RecipientSelector: window.RecipientSelector,
+	};
+});

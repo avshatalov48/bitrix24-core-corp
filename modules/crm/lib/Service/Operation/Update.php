@@ -5,10 +5,10 @@ namespace Bitrix\Crm\Service\Operation;
 use Bitrix\Crm\Automation\Helper;
 use Bitrix\Crm\Comparer\ComparerBase;
 use Bitrix\Crm\Field\Collection;
-use Bitrix\Crm\Integration\PullManager;
+use Bitrix\Crm\Integration\BizProc\Starter\CrmStarter;
+use Bitrix\Crm\Integration\BizProc\Starter\Dto\RunDataDto;
 use Bitrix\Crm\Integrity;
 use Bitrix\Crm\Item;
-use Bitrix\Crm\ItemIdentifier;
 use Bitrix\Crm\Restriction\RestrictionManager;
 use Bitrix\Crm\Service\Container;
 use Bitrix\Crm\Service\Operation;
@@ -37,6 +37,7 @@ class Update extends Operation
 			->getUserPermissions(
 				$this->getContext()->getUserId()
 			)
+			->item()
 			->canUpdateItem(
 				$this->item
 			)
@@ -310,28 +311,25 @@ class Update extends Operation
 	{
 		parent::sendPullEvent();
 
-		PullManager::getInstance()->sendItemUpdatedEvent($this->pullItem, $this->pullParams);
+		Container::getInstance()->getPullEventsQueue()->scheduleItemUpdatedEvent(
+			$this->getItemIdentifier(),
+			$this->pullItem,
+			$this->pullParams,
+		);
 	}
 
 	protected function runAutomation(): Result
 	{
 		$result = parent::runAutomation();
 
-		if($result->isSuccess())
+		if($result->isSuccess() && isset($result->getData()['runData'], $result->getData()['newStarter']))
 		{
-			/** @var \Bitrix\Crm\Automation\Starter $starter */
-			$starter = $result->getData()['starter'];
+			/** @var CrmStarter $starter */
+			$starter = $result->getData()['newStarter'];
+			/** @var RunDataDto $runData */
+			$runData = $result->getData()['runData'];
 
-			return $starter->runOnUpdate(
-				Helper::prepareCompatibleData(
-					$this->itemBeforeSave->getEntityTypeId(),
-					$this->itemBeforeSave->getCompatibleData(Values::CURRENT)
-				),
-				Helper::prepareCompatibleData(
-					$this->itemBeforeSave->getEntityTypeId(),
-					$this->itemBeforeSave->getCompatibleData(Values::ACTUAL)
-				)
-			);
+			return $starter->runAutomation($runData, \CCrmBizProcEventType::Edit);
 		}
 
 		return $result;
@@ -394,52 +392,5 @@ class Update extends Operation
 		$factory = Container::getInstance()->getFactory($this->getItem()->getEntityTypeId());
 
 		return $factory?->isStagesEnabled() && $this->wasItemMovedToFinalStage();
-	}
-
-	private function isTransitionAllowed(): bool
-	{
-		if ($this->item->getStageId() === $this->item->remindActual('STAGE_ID'))
-		{
-			return true;
-		}
-
-		if ($this->item->isCategoriesSupported() && ($this->item->getCategoryId() !== $this->item->remindActual('CATEGORY_ID')))
-		{
-			return true;
-		}
-
-		return Container::getInstance()->getUserPermissions($this->getContext()->getUserId())->isStageTransitionAllowed(
-			$this->item->remindActual('STAGE_ID'),
-			$this->item->getStageId(),
-			ItemIdentifier::createByItem($this->item),
-		);
-	}
-
-	protected function preSaveChecks(): ?Result
-	{
-		$checkResult = parent::preSaveChecks();
-		if ($checkResult)
-		{
-			return $checkResult;
-		}
-
-		if (!$this->isCheckAccessEnabled())
-		{
-			return null;
-		}
-
-		$userPermissions = Container::getInstance()->getUserPermissions($this->getContext()->getUserId());
-
-		if ($userPermissions->isAdminForEntity($this->item->getEntityTypeId()))
-		{
-			return null;
-		}
-
-		if ($this->item->isStagesEnabled() && !$this->isTransitionAllowed())
-		{
-			return (new Result())->addError(new Error(Loc::getMessage('CRM_PERMISSION_STAGE_TRANSITION_NOT_ALLOWED')));
-		}
-
-		return null;
 	}
 }

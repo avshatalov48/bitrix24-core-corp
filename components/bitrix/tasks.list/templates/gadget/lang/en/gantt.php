@@ -2,7 +2,6 @@
 $MESS["INTASK_FROM_DATE_TLP"] = "from #DATE#";
 $MESS["INTASK_LIST_EMPTY"] = "No tasks assigned.";
 $MESS["INTASK_NO_DATE_TLP"] = "due date is not assigned";
-$MESS["INTASK_TASKASSIGNEDTO"] = "Assigned to";
 $MESS["INTASK_TASKASSIGNEDTO_V2"] = "Assignee";
 $MESS["INTASK_TASKPRIORITY"] = "Priority";
 $MESS["INTASK_TASKSTATUS"] = "Status";

@@ -57,6 +57,7 @@ jn.define('crm/timeline/item/ui/body/blocks/base-editable-block', (require, expo
 				readOnly: !this.state.editable,
 				bbCodeEditorParams: {
 					closeOnSave: true,
+					allowFiles: this.props.allowFiles,
 				},
 				useBBCodeEditor: this.props.useBBCodeEditor,
 			};

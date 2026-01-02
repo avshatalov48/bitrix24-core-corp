@@ -2,22 +2,20 @@
  * @module im/messenger/controller/user-add
  */
 jn.define('im/messenger/controller/user-add', (require, exports, module) => {
-	/* global ChatUtils */
 	const { Type } = require('type');
-	const { Loc } = require('loc');
+	const { Loc } = require('im/messenger/loc');
+	const { clone } = require('utils/object');
 
 	const { Logger } = require('im/messenger/lib/logger');
 	const { serviceLocator } = require('im/messenger/lib/di/service-locator');
 	const { EventType, RestMethod, ComponentCode } = require('im/messenger/const');
-	const {
-		ChatTitle,
-		ChatAvatar,
-	} = require('im/messenger/lib/element');
+	const { ChatTitle } = require('im/messenger/lib/element/chat-title');
+	const { ChatAvatar } = require('im/messenger/lib/element/chat-avatar');
 	const { MessengerEmitter } = require('im/messenger/lib/emitter');
 	const { MessengerParams } = require('im/messenger/lib/params');
 	const { DialogHelper } = require('im/messenger/lib/helper/dialog');
 	const { UserAddView } = require('im/messenger/controller/user-add/view');
-	const { ChatService } = require('im/messenger/provider/service');
+	const { ChatService } = require('im/messenger/provider/services/chat');
 	const { Theme } = require('im/lib/theme');
 
 	class UserAdd
@@ -76,7 +74,7 @@ jn.define('im/messenger/controller/user-add', (require, exports, module) => {
 		getUserList()
 		{
 			const userItems = [];
-			const recentUserList = ChatUtils.objectClone(this.store.getters['recentModel/getUserList']());
+			const recentUserList = clone(this.store.getters['recentModel/getUserList']());
 			const recentUserListIndex = {};
 			if (Type.isArrayFilled(recentUserList))
 			{
@@ -91,7 +89,7 @@ jn.define('im/messenger/controller/user-add', (require, exports, module) => {
 				});
 			}
 
-			const colleaguesList = ChatUtils.objectClone(this.store.getters['usersModel/getList']());
+			const colleaguesList = clone(this.store.getters['usersModel/getList']());
 			if (Type.isArrayFilled(colleaguesList))
 			{
 				colleaguesList.forEach((user) => {
@@ -154,7 +152,7 @@ jn.define('im/messenger/controller/user-add', (require, exports, module) => {
 			this.subscribeExternalEvents()
 			// eslint-disable-next-line es/no-optional-chaining
 			const mediumPositionPercent = this.options.widgetOptions?.mediumPositionPercent || 50;
-			const backgroundColor = Theme.isDesignSystemSupported ? Theme.colors.bgSecondary : Theme.colors.bgContentTertiary;
+			const backgroundColor = Theme.colors.bgSecondary;
 			const widgetConfig = {
 				title: this.title,
 				backgroundColor,

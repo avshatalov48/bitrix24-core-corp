@@ -1,7 +1,7 @@
 import {Dom} from 'main.core'
 import {EventEmitter} from 'main.core.events'
 import {Popup} from 'main.popup'
-import {Hardware} from '../hardware';
+import {Hardware} from '../call_hardware';
 import {BackgroundDialog} from '../dialogs/background_dialog';
 import 'ui.switcher';
 import Util from '../util';
@@ -183,6 +183,7 @@ export class DeviceSelector
 							: null,
 					]
 				}),
+
 				Dom.create("div", {
 					props: {className: "bx-call-view-device-selector-bottom"},
 					children: [
@@ -481,7 +482,7 @@ class DeviceMenu
 				this.elements.menuInner = Dom.create("div", {
 					props: {className: "bx-call-view-device-selector-menu-inner" + (this.menuBlocked ? ' inactive' : '')},
 					children: this.deviceList.map(this.renderDevice.bind(this))
-				})
+				}),
 			]
 		});
 		return this.elements.root;
@@ -573,4 +574,4 @@ class DeviceMenu
 			deviceId: this.selectedDevice
 		})
 	};
-}
+};

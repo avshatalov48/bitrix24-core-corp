@@ -26,6 +26,7 @@ interface DocumentService
 		int $fileId,
 		Document $document,
 		int $smartDocumentId,
+		int $createdById,
 		bool $isNew = false
 	): Result;
 
@@ -36,13 +37,15 @@ interface DocumentService
 	 * @param int $oldBlank
 	 * @param Document $document
 	 * @param int $smartDocumentId
+	 * @param int $createdById
 	 * @return mixed
 	 */
 	public function createSignDocumentFromBlank(
 		int $fileId,
 		int $oldBlankId,
 		Document $document,
-		int $smartDocumentId
+		int $smartDocumentId,
+		int $createdById,
 	): Result;
 
 	/**

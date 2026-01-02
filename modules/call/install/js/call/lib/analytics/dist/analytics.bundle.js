@@ -34,16 +34,33 @@ this.BX.Call = this.BX.Call || {};
 	  openResume: 'open_resume',
 	  clickCallButton: 'click_call_button',
 	  clickStartConf: 'click_start_conf',
+	  clickJoin: 'click_join',
 	  aiRecordStart: 'ai_record_start',
 	  aiOn: 'ai_on',
 	  aiOff: 'ai_off',
 	  openTab: 'open_tab',
+	  openSlider: 'open_slider',
 	  clickCreateEvent: 'click_create_event',
 	  clickCreateTask: 'click_create_task',
 	  viewPopup: 'view_popup',
 	  viewNotification: 'view_notification',
 	  clickTimeCode: 'click_timecode',
-	  playRecord: 'play_record'
+	  playRecord: 'play_record',
+	  clickAiOff: 'click_ai_off',
+	  delete: 'delete',
+	  openSettings: 'open_settings',
+	  restrictCamera: 'restrict_camera',
+	  restrictMic: 'restrict_mic',
+	  restrictScreenshare: 'restrict_screenshare',
+	  allCamerasOff: 'all_cameras_off',
+	  allMicOff: 'all_mic_off',
+	  allScreenshareOff: 'all_screenshare_off',
+	  userCameraOff: 'user_camera_off',
+	  userMicOff: 'user_mic_off',
+	  userScreenshareOff: 'user_screenshare_off',
+	  deleteUser: 'delete_user',
+	  denyRequest: 'deny_request',
+	  approveRequest: 'approve_request'
 	});
 	const AnalyticsTool = Object.freeze({
 	  im: 'im',
@@ -75,7 +92,8 @@ this.BX.Call = this.BX.Call || {};
 	  chatList: 'chat_list',
 	  chatWindow: 'chat_window',
 	  callMessage: 'call_message',
-	  callFollowup: 'call_followup'
+	  callFollowup: 'call_followup',
+	  call: 'call'
 	});
 	const AnalyticsSubSection = Object.freeze({
 	  finishButton: 'finish_button',
@@ -121,8 +139,19 @@ this.BX.Call = this.BX.Call || {};
 	  aiOff: 'ai_off'
 	});
 
+	var _callAutoStartRecordSent = /*#__PURE__*/babelHelpers.classPrivateFieldLooseKey("callAutoStartRecordSent");
 	class Copilot {
+	  constructor() {
+	    Object.defineProperty(this, _callAutoStartRecordSent, {
+	      writable: true,
+	      value: []
+	    });
+	  }
 	  onAIRecordStart(params) {
+	    if (params != null && params.isAutostart && babelHelpers.classPrivateFieldLooseBase(this, _callAutoStartRecordSent)[_callAutoStartRecordSent].includes(params.callId)) {
+	      return;
+	    }
+	    babelHelpers.classPrivateFieldLooseBase(this, _callAutoStartRecordSent)[_callAutoStartRecordSent].push(params.callId);
 	    const errorCodes = {
 	      AI_UNAVAILABLE_ERROR: AnalyticsStatus.errorB24,
 	      AI_SETTINGS_ERROR: AnalyticsStatus.errorB24,
@@ -135,8 +164,10 @@ this.BX.Call = this.BX.Call || {};
 	      event: AnalyticsEvent.aiRecordStart,
 	      type: params.callType,
 	      c_section: AnalyticsSection.callFollowup,
+	      p2: `chatUserCount_${params.chatUserCount}`,
 	      p5: `callId_${params.callId}`
 	    };
+	    resultData.p1 = params != null && params.isAutostart ? 'launchType_auto' : 'launchType_manual';
 	    if (params != null && params.userCount) {
 	      resultData.p3 = `userCount_${params.userCount}`;
 	    }
@@ -159,6 +190,14 @@ this.BX.Call = this.BX.Call || {};
 	      category: AnalyticsCategory.callFollowup,
 	      event: AnalyticsEvent.openTab,
 	      type: params.tabName,
+	      p5: `callId_${params.callId}`
+	    });
+	  }
+	  onOpenFollowUpSlider(params) {
+	    ui_analytics.sendData({
+	      tool: AnalyticsTool.im,
+	      category: AnalyticsCategory.callFollowup,
+	      event: AnalyticsEvent.openSlider,
 	      p5: `callId_${params.callId}`
 	    });
 	  }
@@ -209,6 +248,34 @@ this.BX.Call = this.BX.Call || {};
 	      tool: AnalyticsTool.im,
 	      category: AnalyticsCategory.callFollowup,
 	      event: AnalyticsEvent.playRecord,
+	      p5: `callId_${params.callId}`
+	    });
+	  }
+	  onClickAIOff(params) {
+	    ui_analytics.sendData({
+	      tool: AnalyticsTool.im,
+	      category: AnalyticsCategory.call,
+	      event: AnalyticsEvent.clickAiOff,
+	      type: params.callType,
+	      p5: `callId_${params.callId}`
+	    });
+	  }
+	  onSelectAIOff(params) {
+	    ui_analytics.sendData({
+	      tool: AnalyticsTool.im,
+	      category: AnalyticsCategory.call,
+	      event: AnalyticsEvent.aiOff,
+	      type: params.callType,
+	      p5: `callId_${params.callId}`
+	    });
+	  }
+	  onSelectAIDelete(params) {
+	    ui_analytics.sendData({
+	      tool: AnalyticsTool.im,
+	      category: AnalyticsCategory.callFollowup,
+	      event: AnalyticsEvent.delete,
+	      type: params.callType,
+	      c_section: AnalyticsSection.call,
 	      p5: `callId_${params.callId}`
 	    });
 	  }
@@ -323,7 +390,7 @@ this.BX.Call = this.BX.Call || {};
 	      c_element: params.withVideo ? AnalyticsElement.videoButton : AnalyticsElement.audioButton,
 	      status: params.status,
 	      p1: params.mediaParams.video ? AnalyticsDeviceStatus.videoOn : AnalyticsDeviceStatus.videoOff,
-	      p2: params.mediaParams.audio ? AnalyticsDeviceStatus.micOn : AnalyticsDeviceStatus.micOff,
+	      p2: `chatUserCount_${params.userCounter}`,
 	      p3: params.isCopilotActive ? AnalyticsAIStatus.aiOn : AnalyticsAIStatus.aiOff,
 	      p5: `callId_${params.callId}`
 	    });
@@ -342,6 +409,7 @@ this.BX.Call = this.BX.Call || {};
 	    });
 	  }
 	  onStartCall(params) {
+	    var _params$associatedEnt;
 	    const resultData = {
 	      tool: AnalyticsTool.im,
 	      category: AnalyticsCategory.call,
@@ -349,13 +417,25 @@ this.BX.Call = this.BX.Call || {};
 	      type: params.callType,
 	      status: params.status,
 	      p1: params.mediaParams.video ? AnalyticsDeviceStatus.videoOn : AnalyticsDeviceStatus.videoOff,
-	      p2: params.mediaParams.audio ? AnalyticsDeviceStatus.micOn : AnalyticsDeviceStatus.micOff,
+	      p2: `chatUserCount_${(_params$associatedEnt = params.associatedEntity) == null ? void 0 : _params$associatedEnt.userCounter}`,
 	      p3: params.isCopilotActive ? AnalyticsAIStatus.aiOn : AnalyticsAIStatus.aiOff,
 	      p5: `callId_${params.callId}`
 	    };
 	    if (params.associatedEntity.advanced.chatType === im_v2_const.ChatType.collab) {
 	      resultData.p4 = im_v2_lib_analytics.getCollabId(this.normalizeChatId(params.associatedEntity.id));
 	    }
+	    ui_analytics.sendData(resultData);
+	  }
+	  onStartCallError(params) {
+	    const resultData = {
+	      tool: AnalyticsTool.im,
+	      category: AnalyticsCategory.call,
+	      event: AnalyticsEvent.startCall,
+	      type: params.callType,
+	      status: `error_${params.errorCode}`,
+	      p3: params.errorMessage ? `msg_${params.errorMessage}`.slice(0, 100) : undefined,
+	      p5: 'callId_0'
+	    };
 	    ui_analytics.sendData(resultData);
 	  }
 	  onJoinCall(params) {
@@ -384,15 +464,41 @@ this.BX.Call = this.BX.Call || {};
 	    }
 	    ui_analytics.sendData(sendParams);
 	  }
+	  onJoinCallError(params) {
+	    const resultData = {
+	      tool: AnalyticsTool.im,
+	      category: AnalyticsCategory.call,
+	      event: AnalyticsEvent.connect,
+	      type: params.callType,
+	      status: `error_${params.errorCode}`,
+	      p3: params.errorMessage ? `msg_${params.errorMessage}`.slice(0, 100) : undefined,
+	      p5: `callId_${params.callId}`
+	    };
+	    ui_analytics.sendData(resultData);
+	  }
 	  onReconnect(params) {
+	    var _params$reconnectionR;
+	    const reconnectionReasonInfo = (_params$reconnectionR = params.reconnectionReasonInfo) == null ? void 0 : _params$reconnectionR.replace(`Handling a remote offer failed: InvalidAccessError: `, '*').replace(/_/g, '').substring(0, 100);
 	    ui_analytics.sendData({
 	      tool: AnalyticsTool.im,
 	      category: AnalyticsCategory.call,
 	      event: AnalyticsEvent.reconnect,
 	      type: params.callType,
 	      c_section: AnalyticsSection.callWindow,
-	      status: params.status,
+	      status: params.reconnectionReason || '',
+	      p3: `msg_${reconnectionReasonInfo}`,
 	      p4: `attemptNumber_${params.reconnectionEventCount}`,
+	      p5: `callId_${params.callId}`
+	    });
+	  }
+	  onReconnectError(params) {
+	    ui_analytics.sendData({
+	      tool: AnalyticsTool.im,
+	      category: AnalyticsCategory.call,
+	      event: AnalyticsEvent.reconnect,
+	      type: params.callType,
+	      status: `error_${params.errorCode}`,
+	      p3: params.errorMessage ? `msg_${params.errorMessage}`.slice(0, 100) : undefined,
 	      p5: `callId_${params.callId}`
 	    });
 	  }
@@ -706,6 +812,112 @@ this.BX.Call = this.BX.Call || {};
 	      resultData.p4 = im_v2_lib_analytics.getCollabId(params.dialog.chatId);
 	    }
 	    ui_analytics.sendData(resultData);
+	  }
+	  onOpenCallSettings(params) {
+	    ui_analytics.sendData({
+	      tool: AnalyticsTool.im,
+	      category: AnalyticsCategory.call,
+	      event: AnalyticsEvent.openSettings,
+	      type: params.callType,
+	      p5: `callId_${params.callId}`
+	    });
+	  }
+	  onDeleteUser(params) {
+	    ui_analytics.sendData({
+	      tool: AnalyticsTool.im,
+	      category: AnalyticsCategory.call,
+	      event: AnalyticsEvent.deleteUser,
+	      type: params.callType,
+	      p5: `callId_${params.callId}`
+	    });
+	  }
+	  onCallSettingsChanged(params) {
+	    let event = '';
+	    switch (params.typeOfSetting) {
+	      case 'mic':
+	        event = AnalyticsEvent.restrictMic;
+	        break;
+	      case 'cam':
+	        event = AnalyticsEvent.restrictCamera;
+	        break;
+	      case 'screenshare':
+	        event = AnalyticsEvent.restrictScreenshare;
+	        break;
+	    }
+	    if (event) {
+	      ui_analytics.sendData({
+	        tool: AnalyticsTool.im,
+	        category: AnalyticsCategory.call,
+	        event: event,
+	        type: params.callType,
+	        /*p1: params.settingEnabled,*/
+	        p5: `callId_${params.callId}`
+	      });
+	    }
+	  }
+	  onTurnOffAllParticipansStream(params) {
+	    let event = '';
+	    switch (params.typeOfStream) {
+	      case 'mic':
+	        event = AnalyticsEvent.allMicOff;
+	        break;
+	      case 'cam':
+	        event = AnalyticsEvent.allCamerasOff;
+	        break;
+	      case 'screenshare':
+	        event = AnalyticsEvent.allScreenshareOff;
+	        break;
+	    }
+	    if (event) {
+	      ui_analytics.sendData({
+	        tool: AnalyticsTool.im,
+	        category: AnalyticsCategory.call,
+	        event: event,
+	        type: params.callType,
+	        p5: `callId_${params.callId}`
+	      });
+	    }
+	  }
+	  onTurnOffParticipantStream(params) {
+	    let event = '';
+	    switch (params.typeOfSetting) {
+	      case 'mic':
+	        event = AnalyticsEvent.userMicOff;
+	        break;
+	      case 'cam':
+	        event = AnalyticsEvent.userCameraOff;
+	        break;
+	      case 'screenshare':
+	        event = AnalyticsEvent.userScreenshareOff;
+	        break;
+	    }
+	    if (event) {
+	      ui_analytics.sendData({
+	        tool: AnalyticsTool.im,
+	        category: AnalyticsCategory.call,
+	        event: event,
+	        type: params.callType,
+	        p5: `callId_${params.callId}`
+	      });
+	    }
+	  }
+	  onAllowPermissionToSpeakResponse(params) {
+	    ui_analytics.sendData({
+	      tool: AnalyticsTool.im,
+	      category: AnalyticsCategory.call,
+	      event: AnalyticsEvent.approveRequest,
+	      type: params.callType,
+	      p5: `callId_${params.callId}`
+	    });
+	  }
+	  onDisallowPermissionToSpeakResponse(params) {
+	    ui_analytics.sendData({
+	      tool: AnalyticsTool.im,
+	      category: AnalyticsCategory.call,
+	      event: AnalyticsEvent.denyRequest,
+	      type: params.callType,
+	      p5: `callId_${params.callId}`
+	    });
 	  }
 	}
 	function _getCallElementParam2(callType) {

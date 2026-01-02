@@ -6,14 +6,12 @@ use Bitrix\HumanResources\Engine\HcmLinkController;
 use Bitrix\HumanResources\Exception\UpdateFailedException;
 use Bitrix\HumanResources\Item\HcmLink\Person;
 use Bitrix\HumanResources\Result\Service\HcmLink\FilterNotMappedUserIdsResult;
-use Bitrix\HumanResources\Result\Service\HcmLink\GetMappingEntityCollectionResult;
 use Bitrix\HumanResources\Result\Service\HcmLink\JobServiceResult;
 use Bitrix\HumanResources\Service\Container;
-use Bitrix\HumanResources\Type\HcmLink\JobType;
-use Bitrix\HumanResources\Ui\EntitySelector\HcmLink\PersonDataProvider;
 use Bitrix\HumanResources\Type\HcmLink\JobStatus;
-use Bitrix\Main;
+use Bitrix\HumanResources\Type\HcmLink\JobType;
 use Bitrix\Intranet;
+use Bitrix\Main;
 use Bitrix\Main\Localization\Loc;
 
 class Mapper extends HcmLinkController
@@ -223,8 +221,7 @@ class Mapper extends HcmLinkController
 			return [];
 		}
 
-		$company = Container::getHcmLinkCompanyRepository()->getById($companyId);
-		$result = Container::getHcmLinkJobService()->requestEmployeeList($company->id, $isForced);
+		$result = Container::getHcmLinkJobService()->requestEmployeeList($companyId, $isForced);
 		if ($result instanceof JobServiceResult)
 		{
 			$jobId = $result->job->id;

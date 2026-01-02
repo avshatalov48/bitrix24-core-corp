@@ -1,0 +1,36 @@
+.tasks-check-list-popup {
+	height: 100%;
+	box-sizing: border-box;
+}
+
+.tasks-check-list-popup-show {
+	animation: popupShowAnimation 300ms;
+	animation-fill-mode: both;
+}
+
+.tasks-check-list-popup-close {
+	animation: popupCloseAnimation 300ms;
+	animation-fill-mode: both;
+}
+
+@keyframes popupShowAnimation {
+	0% {
+		opacity: 0;
+		transform: translateY(550px);
+	}
+	100% {
+		opacity: 1;
+		transform: translateY(0px);
+	}
+}
+
+@keyframes popupCloseAnimation {
+	0% {
+		opacity: 1;
+		transform: translateY(0px);
+	}
+	100% {
+		opacity: 0;
+		transform: translateY(550px);
+	}
+}

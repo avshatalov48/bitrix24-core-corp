@@ -19,7 +19,11 @@ class CTaskElapsedTime
 		return true;
 	}
 
-
+	/**
+	 * @deprecated
+	 * @TasksV2
+	 * @use \Bitrix\Tasks\V2\Internal\Service\Task\ElapsedTimeService
+	 */
 	function Add($arFields, $arParams = array())
 	{
 		global $DB;
@@ -30,21 +34,12 @@ class CTaskElapsedTime
 		elseif ($userId = \Bitrix\Tasks\Util\User::getId())
 			$executiveUserId = $userId;
 
-		$occurAsUserId = CTasksTools::getOccurAsUserId();
+		$occurAsUserId = \Bitrix\Tasks\Util\User::getOccurAsId();
 		if ( ! $occurAsUserId )
 			$occurAsUserId = ($executiveUserId ? $executiveUserId : 1);
 
 		if ($this->CheckFields($arFields))
 		{
-			$curDuration = 0;
-			$rsTask = CTasks::getList(
-				array(),
-				array('ID' => $arFields['TASK_ID']),
-				array('ID', 'TIME_SPENT_IN_LOGS')
-			);
-			if ($rsTask && ($arTask = $rsTask->fetch()))
-				$curDuration = (int) $arTask['TIME_SPENT_IN_LOGS'];
-
 			// Maintance backward compatibility
 			if (isset($arFields['MINUTES'], $arFields['SECONDS']))
 			{
@@ -60,12 +55,6 @@ class CTaskElapsedTime
 				CTaskAssert::assert(false);
 			}
 
-			foreach(GetModuleEvents('tasks', 'OnBeforeTaskElapsedTimeAdd', true) as $arEvent)
-			{
-				if (ExecuteModuleEventEx($arEvent, array(&$arFields))===false)
-					return false;
-			}
-
 			$arFields['SOURCE'] = CTaskElapsedItem::SOURCE_MANUAL;
 			if (isset($arParams['SOURCE_SYSTEM']) && ($arParams['SOURCE_SYSTEM'] === 'Y'))
 				$arFields['SOURCE'] = CTaskElapsedItem::SOURCE_SYSTEM;
@@ -74,6 +63,46 @@ class CTaskElapsedTime
 				$createdDate = Bitrix\Main\Type\DateTime::createFromUserTime($arFields['CREATED_DATE']);
 			else
 				$createdDate = new Bitrix\Main\Type\DateTime();
+
+			if (\Bitrix\Tasks\V2\FormV2Feature::isOn('elapsed'))
+			{
+				$service = \Bitrix\Tasks\V2\Internal\DI\Container::getInstance()->getElapsedTimeService();
+				$mapper = \Bitrix\Tasks\V2\Internal\DI\Container::getInstance()->getElapsedTimeMapper();
+
+				$arFields['CREATED_DATE'] = $createdDate;
+
+				$elapsedTime = $mapper->mapToEntity($arFields);
+
+				try
+				{
+					[$id] = $service->add($elapsedTime);
+				}
+				catch (\Bitrix\Tasks\V2\Internal\Exception\Task\ElapsedTimeException $e)
+				{
+					\Bitrix\Tasks\V2\Internal\DI\Container::getInstance()
+						->getLogger()
+						->logError($e);
+
+					return false;
+				}
+
+				return $id;
+			}
+
+			$curDuration = 0;
+			$rsTask = CTasks::getList(
+				array(),
+				array('ID' => $arFields['TASK_ID']),
+				array('ID', 'TIME_SPENT_IN_LOGS')
+			);
+			if ($rsTask && ($arTask = $rsTask->fetch()))
+				$curDuration = (int) $arTask['TIME_SPENT_IN_LOGS'];
+
+			foreach(GetModuleEvents('tasks', 'OnBeforeTaskElapsedTimeAdd', true) as $arEvent)
+			{
+				if (ExecuteModuleEventEx($arEvent, array(&$arFields))===false)
+					return false;
+			}
 
 			$addResult = \Bitrix\Tasks\Internals\Task\ElapsedTimeTable::add(array(
 				"CREATED_DATE" => $createdDate,
@@ -199,7 +228,7 @@ class CTaskElapsedTime
 				$update["COMMENT_TEXT"] = $arFields['COMMENT_TEXT'];
 			$updateResult = \Bitrix\Tasks\Internals\Task\ElapsedTimeTable::update($ID, $update);
 
-			$occurAsUserId = CTasksTools::getOccurAsUserId();
+			$occurAsUserId = \Bitrix\Tasks\Util\User::getOccurAsId();
 			if ( ! $occurAsUserId )
 				$occurAsUserId = ($executiveUserId ? $executiveUserId : 1);
 
@@ -259,9 +288,9 @@ class CTaskElapsedTime
 				return false;
 		}
 
-		$deleteResult = \Bitrix\Tasks\ElapsedTimeTable::delete($ID);
+		$deleteResult = \Bitrix\Tasks\Internals\Task\ElapsedTimeTable::delete($ID);
 
-		$occurAsUserId = CTasksTools::getOccurAsUserId();
+		$occurAsUserId = \Bitrix\Tasks\Util\User::getOccurAsId();
 		if ( ! $occurAsUserId )
 			$occurAsUserId = ($executiveUserId ? $executiveUserId : 1);
 
@@ -421,7 +450,7 @@ class CTaskElapsedTime
 		}
 		elseif (
 			\Bitrix\Tasks\Util\User::isAdmin()
-			|| CTasksTools::IsPortalB24Admin()
+			|| \Bitrix\Tasks\Integration\Bitrix24\User::isAdmin()
 			|| ($userID == $task["RESPONSIBLE_ID"])
 			|| (is_array($task["ACCOMPLICES"]) && in_array($userId, $task["ACCOMPLICES"]))
 		)

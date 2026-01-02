@@ -39,6 +39,11 @@ use Bitrix\Tasks\Internals\Task\MemberTable;
 use Exception;
 use Throwable;
 
+use Bitrix\Main\ORM\Fields\ExpressionField;
+use Bitrix\Main\ORM\Fields\Relations\ManyToMany;
+use Bitrix\Main\ORM\Fields\Relations\OneToMany;
+use Bitrix\Main\ORM\Fields\Relations\Reference;
+
 final class FlowProvider
 {
 	private static int $listCount = 0;
@@ -175,13 +180,25 @@ final class FlowProvider
 		return $map;
 	}
 
-	public function getFlowFields(): array
+	public function getFlowFields(bool $withReferenceFields = true): array
 	{
 		$entity = FlowTable::getEntity();
 
 		$fields = [];
 		foreach ($entity->getFields() as $field)
 		{
+			if (!$withReferenceFields)
+			{
+				if (
+					$field instanceof Reference
+					|| $field instanceof OneToMany
+					|| $field instanceof ManyToMany
+					|| $field instanceof ExpressionField
+				)
+				{
+					continue;
+				}
+			}
 			$fields[$field->getName()] = $field->getTitle();
 		}
 
@@ -252,7 +269,7 @@ final class FlowProvider
 		string $oldStatus = ''
 	): array
 	{
-		list($total, $newQueueSubsequence, $newQueue) = $this->getDirectorsQueue($flowId, $newStatus);
+		[$total, $newQueueSubsequence, $newQueue] = $this->getDirectorsQueue($flowId, $newStatus);
 
 		$pushParams = [
 			'activity' => true,
@@ -267,7 +284,7 @@ final class FlowProvider
 
 		if ($oldStatus)
 		{
-			list($total, $oldQueueSubsequence, $oldQueue) = $this->getDirectorsQueue($flowId, $oldStatus);
+			[$total, $oldQueueSubsequence, $oldQueue] = $this->getDirectorsQueue($flowId, $oldStatus);
 
 			$pushParams['oldStatus'] = [
 				'id' => $oldStatus,

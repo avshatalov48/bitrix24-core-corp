@@ -1,4 +1,9 @@
-body {
-	background: #6A31ED url(amethyst-inspiration.jpg) fixed 0 0 no-repeat;
-	background-size: cover;
+:root {
+  --air-theme-bg-color: #6A31ED;
+  --air-theme-bg-size: cover;
+  --air-theme-bg-repeat: no-repeat;
+  --air-theme-bg-position: 0 0;
+  --air-theme-bg-attachment: fixed;
+  --air-theme-bg-image: url(/bitrix/templates/bitrix24/themes/light/amethyst-inspiration/amethyst-inspiration.jpg);
+  --air-theme-bg-image-blurred: url(/bitrix/templates/bitrix24/themes/light/amethyst-inspiration/amethyst-inspiration-blurred.webp);
 }

@@ -72,13 +72,14 @@ class TemplateTaskReplicator extends AbstractReplicator
 			return $this->replicationResult;
 		}
 
+		/** @var RepositoryInterface $repositoryClass */
+		$repositoryClass = $this->getRepositoryClass();
+		/** @var ProducerInterface $producerClass */
+		$producerClass = $this->getProducerClass();
+
 		$tree = $this->buildTree()[$this->entityId] ?? [];
 		foreach ($tree as $templateId)
 		{
-			/** @var RepositoryInterface $repositoryClass */
-			$repositoryClass = $this->getRepositoryClass();
-			/** @var ProducerInterface $producerClass */
-			$producerClass = $this->getProducerClass();
 			$this->currentResults[] = (new $producerClass(new $repositoryClass($templateId)))
 				->setCreatedDate(new DateTime())
 				->setParentTaskId($this->parentTaskId)

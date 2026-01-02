@@ -2,7 +2,7 @@
  * @module im/messenger/controller/sidebar/channel/profile-user-counter-view
  */
 jn.define('im/messenger/controller/sidebar/channel/profile-user-counter-view', (require, exports, module) => {
-	const { Loc } = require('loc');
+	const { Loc } = require('im/messenger/loc');
 	const { SidebarProfileUserCounter } = require('im/messenger/controller/sidebar/chat/sidebar-profile-user-counter');
 
 	/**

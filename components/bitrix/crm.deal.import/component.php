@@ -12,8 +12,7 @@ if (!CModule::IncludeModule('crm'))
 	return;
 }
 
-$CrmPerms = CCrmPerms::GetCurrentUserPermissions();
-if (!CCrmDeal::CheckImportPermission($CrmPerms))
+if (!\Bitrix\Crm\Service\Container::getInstance()->getUserPermissions()->entityType()->canImportItems(CCrmOwnerType::Deal))
 {
 	ShowError(GetMessage('CRM_PERMISSION_DENIED'));
 	return;
@@ -118,7 +117,7 @@ if(isset($_REQUEST['getSample']) && $_REQUEST['getSample'] == 'csv')
 	echo "\n";
 	die();
 }
-else if (isset($_REQUEST['import']) && isset($_SESSION['CRM_IMPORT_FILE']))
+else if (isset($_REQUEST['import']) && file_exists($_SESSION['CRM_IMPORT_FILE'] ?? ''))
 {
 	$APPLICATION->RestartBuffer();
 

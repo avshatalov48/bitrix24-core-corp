@@ -7,7 +7,7 @@ if (!CModule::IncludeModule('crm'))
 	return;
 }
 
-if (!CCrmPerms::IsAccessEnabled())
+if (!\Bitrix\Crm\Service\Container::getInstance()->getUserPermissions()->entityType()->canReadSomeItemsInCrm())
 {
 	ShowError(GetMessage('CRM_PERMISSION_DENIED'));
 	return;
@@ -28,7 +28,6 @@ if($uid === '')
 }
 $arResult['UID'] = $arParams['UID'] = $uid;
 $currentUserID = $arResult['USER_ID'] = CCrmSecurityHelper::GetCurrentUserID();
-$userPerms = CCrmPerms::GetCurrentUserPermissions();
 
 $typeID = CCrmActivityType::Undefined;
 $ownerID = 0;
@@ -206,7 +205,7 @@ else
 
 						if(!CCrmOwnerType::IsDefined($entityTypeID)
 							|| $entityID <= 0
-							|| !CCrmActivity::CheckUpdatePermission($entityTypeID, $entityID, $userPerms))
+							|| !CCrmActivity::CheckUpdatePermission($entityTypeID, $entityID))
 						{
 							continue;
 						}
@@ -236,7 +235,7 @@ else
 						$contactID = isset($deal['CONTACT_ID']) ? intval($deal['CONTACT_ID']) : 0;
 						$companyID = isset($deal['COMPANY_ID']) ? intval($deal['COMPANY_ID']) : 0;
 
-						if($contactID > 0 && CCrmActivity::CheckUpdatePermission(CCrmOwnerType::Contact, $contactID, $userPerms))
+						if($contactID > 0 && CCrmActivity::CheckUpdatePermission(CCrmOwnerType::Contact, $contactID))
 						{
 							$comms[] = array(
 								'TYPE' => '',
@@ -251,7 +250,7 @@ else
 							);
 						}
 
-						if(empty($comms) && $companyID > 0 && CCrmActivity::CheckUpdatePermission(CCrmOwnerType::Company, $companyID, $userPerms))
+						if(empty($comms) && $companyID > 0 && CCrmActivity::CheckUpdatePermission(CCrmOwnerType::Company, $companyID))
 						{
 							$comms[] = array(
 								'TYPE' => '',
@@ -307,7 +306,7 @@ else
 
 						if(!CCrmOwnerType::IsDefined($entityTypeID)
 							|| $entityID <= 0
-							|| !CCrmActivity::CheckUpdatePermission($entityTypeID, $entityID, $userPerms))
+							|| !CCrmActivity::CheckUpdatePermission($entityTypeID, $entityID))
 						{
 							continue;
 						}
@@ -342,7 +341,7 @@ else
 						$companyID = isset($deal['COMPANY_ID']) ? intval($deal['COMPANY_ID']) : 0;
 
 						$comms = array();
-						if($contactID > 0 && CCrmActivity::CheckUpdatePermission(CCrmOwnerType::Contact, $contactID, $userPerms))
+						if($contactID > 0 && CCrmActivity::CheckUpdatePermission(CCrmOwnerType::Contact, $contactID))
 						{
 							$commValue = CCrmActivity::GetDefaultCommunicationValue(CCrmOwnerType::Contact, $contactID, $commType);
 							if($commValue !== '')
@@ -361,7 +360,7 @@ else
 							}
 						}
 
-						if(empty($comms) && $companyID > 0 && CCrmActivity::CheckUpdatePermission(CCrmOwnerType::Company, $companyID, $userPerms))
+						if(empty($comms) && $companyID > 0 && CCrmActivity::CheckUpdatePermission(CCrmOwnerType::Company, $companyID))
 						{
 							$commValue = CCrmActivity::GetDefaultCommunicationValue(CCrmOwnerType::Company, $companyID, $commType);
 							if($commValue !== '')

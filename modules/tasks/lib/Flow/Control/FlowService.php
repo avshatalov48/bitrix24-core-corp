@@ -16,7 +16,7 @@ use Bitrix\Tasks\Flow\Control\Exception\FlowNotAddedException;
 use Bitrix\Tasks\Flow\Control\Exception\FlowNotDeletedException;
 use Bitrix\Tasks\Flow\Control\Exception\FlowNotFoundException;
 use Bitrix\Tasks\Flow\Control\Exception\FlowNotUpdatedException;
-use Bitrix\Tasks\InvalidCommandException;
+use Bitrix\Tasks\Flow\Control\Exception\InvalidCommandException;
 use Bitrix\Tasks\Flow\Flow;
 use Bitrix\Tasks\Internals\Log\Logger;
 use Throwable;

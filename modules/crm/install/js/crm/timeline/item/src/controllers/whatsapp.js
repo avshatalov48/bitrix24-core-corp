@@ -1,8 +1,10 @@
+import { Builder, Dictionary } from 'crm.integration.analytics';
 import { Loc, Type } from 'main.core';
 import { MessageBox, MessageBoxButtons } from 'ui.dialogs.messagebox';
+import type { WhatsAppDeleteEvent as WhatsAppDeleteEventStructure } from 'crm.integration.types';
+import ConfigurableItem from '../configurable-item';
 
 import { ActionParams, Base } from './base';
-import ConfigurableItem from '../configurable-item';
 
 declare type WhatsAppParams = {
 	template: Object,
@@ -12,6 +14,23 @@ declare type WhatsAppParams = {
 
 export class WhatsApp extends Base
 {
+	getDeleteActionMethod(): string
+	{
+		return 'crm.timeline.activity.delete';
+	}
+
+	getDeleteActionCfg(recordId: Number, ownerTypeId: Number, ownerId: Number): Object
+	{
+		return {
+			data: {
+				activityId: recordId,
+				ownerTypeId,
+				ownerId,
+				analytics: this.#buildAnalyticsData(),
+			},
+		};
+	}
+
 	onItemAction(item: ConfigurableItem, actionParams: ActionParams): void
 	{
 		const { action, actionType, actionData } = actionParams;
@@ -84,5 +103,12 @@ export class WhatsApp extends Base
 	static isItemSupported(item: ConfigurableItem): boolean
 	{
 		return (item.getType() === 'Activity:Whatsapp');
+	}
+
+	#buildAnalyticsData(ownerTypeId: number): ?WhatsAppDeleteEventStructure
+	{
+		return Builder.Communication.DeleteEvent.createDefault(ownerTypeId)
+			.setElement(Dictionary.ELEMENT_WA_MESSAGE_DELETE)
+			.buildData();
 	}
 }

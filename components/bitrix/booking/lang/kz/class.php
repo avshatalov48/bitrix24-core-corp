@@ -1,0 +1,5 @@
+<?php
+$MESS["BOOKING_TOP_MENU_ITEM_FORMS"] = "Нысандар";
+$MESS["BOOKING_TOP_MENU_ITEM_FORMS_ALL_FORMS"] = "Барлық нысандар";
+$MESS["BOOKING_TOP_MENU_ITEM_FORMS_CREATE_FORM"] = "Нысан жасау";
+$MESS["BOOKING_TOP_MENU_ITEM_RECORDS"] = "Жазбалар";

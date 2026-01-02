@@ -2,7 +2,7 @@ import { EventEmitter } from 'main.core.events';
 
 import { Analytics } from 'im.v2.lib.analytics';
 import { ImModelSidebarMeetingItem, ImModelChat } from 'im.v2.model';
-import { Button as MessengerButton, ButtonColor, ButtonSize } from 'im.v2.component.elements';
+import { ChatButton, ButtonColor, ButtonSize } from 'im.v2.component.elements.button';
 import { EventType, SidebarDetailBlock, ActionByRole, Layout } from 'im.v2.const';
 import { EntityCreator } from 'im.v2.lib.entity-creator';
 import { PermissionManager } from 'im.v2.lib.permission';
@@ -16,7 +16,7 @@ import '../css/meeting.css';
 // @vue/component
 export const MeetingPreview = {
 	name: 'MeetingPreview',
-	components: { MeetingItem, DetailEmptyState, MessengerButton },
+	components: { MeetingItem, DetailEmptyState, ChatButton },
 	props:
 	{
 		dialogId: {
@@ -122,7 +122,7 @@ export const MeetingPreview = {
 						<div v-if="firstMeeting" class="bx-im-sidebar__forward-icon"></div>
 					</div>
 					<transition name="add-button">
-						<MessengerButton
+						<ChatButton
 							v-if="showAddButton"
 							:text="loc('IM_SIDEBAR_ADD_BUTTON_TEXT')"
 							:size="ButtonSize.S"

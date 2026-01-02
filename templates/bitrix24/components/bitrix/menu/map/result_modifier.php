@@ -1,5 +1,7 @@
 <?php
 
+use Bitrix\Intranet\Integration\Templates\Air\TopMenu;
+use Bitrix\Intranet\Site\Sections\CollaborationSection;
 use Bitrix\Main\Loader;
 use Bitrix\Main\Localization\Loc;
 
@@ -10,18 +12,12 @@ if (!defined('B_PROLOG_INCLUDED') || B_PROLOG_INCLUDED !== true)
 
 $APPLICATION->setTitle(Loc::getMessage('SITEMAP_TITLE'));
 
-$menuItems = $arResult;
-$arResult = [
-	'MAP_ITEMS' => [],
-];
-
-if (!Loader::includeModule('intranet'))
+if (!is_array($arResult) || empty($arResult) || !Loader::includeModule('intranet'))
 {
 	return;
 }
 
-\Bitrix\Main\UI\Extension::load(['ui.info-helper']);
-
+$items = TopMenu::convertFromFileMenu($arResult);
 $teamWorkIds = array_flip([
 	'menu_live_feed',
 	'menu_im_messenger',
@@ -33,78 +29,32 @@ $teamWorkIds = array_flip([
 	'menu_all_groups',
 ]);
 
-$expandSubMenu = function($item, $subMenuItems) use (&$arResult, &$expandSubMenu) {
-	foreach ($subMenuItems as $subMenu)
-	{
-		if (isset($subMenu['IS_DELIMITER']))
-		{
-			continue;
-		}
+$items = array_filter($items, static function ($item) use ($teamWorkIds) {
+	return !isset($teamWorkIds[$item['ID']]) ?? false;
+});
 
-		$subMenuItem = [
-			'DEPTH_LEVEL' => $item['DEPTH_LEVEL'] + 1,
-			'TEXT' => $subMenu['TEXT'],
-			'LINK' => $subMenu['URL'] ?? '',
-			'PERMISSION' => $item['PERMISSION'],
-			'SELECTED' => false,
+$collaborationItems = CollaborationSection::getItems();
+if (!empty($collaborationItems))
+{
+	$subMenuData = array_map(function ($item) {
+		return [
+			'TEXT' => $item['title'],
+			'LINK' => $item['url'],
+			'PARAMS' => $item['menuData'] ?? [],
+			'DEPTH_LEVEL' => 1,
 		];
+	}, $collaborationItems);
 
-		$arResult['MAP_ITEMS'][] = $subMenuItem;
-
-		if (isset($subMenu['ITEMS']) && is_array($subMenu['ITEMS']))
-		{
-			$expandSubMenu($subMenuItem, $subMenu['ITEMS']);
-		}
-	}
-};
-
-$teamworkItems = [];
-foreach ($menuItems as $itemIndex => $item)
-{
-	if (isset($item['PERMISSION']) && $item['PERMISSION'] <= 'D')
-	{
-		continue;
-	}
-
-	$menuId = $item['PARAMS']['menu_item_id'] ?? '';
-	if (isset($teamWorkIds[$menuId]))
-	{
-		$teamworkItems[] = array_merge($item, ['DEPTH_LEVEL' => 2]);
-
-		//Skip empty root items
-		if (
-			$item['DEPTH_LEVEL'] !== 1
-			|| !isset($menuItems[$itemIndex + 1])
-			|| $menuItems[$itemIndex + 1]['DEPTH_LEVEL'] !== 1)
-		{
-			$arResult['MAP_ITEMS'][] = $item;
-		}
-	}
-	else
-	{
-		$arResult['MAP_ITEMS'][] = $item;
-
-		if (isset($item['PARAMS']['sub_menu']) && is_array($item['PARAMS']['sub_menu']))
-		{
-			$expandSubMenu($item, $item['PARAMS']['sub_menu']);
-		}
-	}
-}
-
-if (!empty($teamworkItems))
-{
-	array_unshift($teamworkItems, [
+	$teamWorkItem = [
 		'TEXT' => Loc::getMessage('SITEMAP_TEAMWORK'),
-		'LINK' => SITE_DIR,
-		'SELECTED' => false,
-		'PERMISSION' => 'X',
-		'PARAMS' => array(
-			'menu_item_item' => 'my_instruments'
-		),
-		'DEPTH_LEVEL' => 1,
-		'IS_PARENT' => true,
-		'ADDITIONAL_LINKS' => array()
-	]);
+		'URL' => SITE_DIR,
+		'ITEMS' => TopMenu::convertFromFileMenu($subMenuData),
+	];
 
-	$arResult['MAP_ITEMS'] = array_merge($teamworkItems, $arResult['MAP_ITEMS']);
+	array_unshift($items, $teamWorkItem);
 }
+
+$arResult = ['MAP_ITEMS' => $items];
+
+\Bitrix\Main\UI\Extension::load(['ui.info-helper']);
+

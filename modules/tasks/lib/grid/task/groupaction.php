@@ -39,6 +39,7 @@ class GroupAction
 	public const ACTION_ADD_FAVORITE = 'addtofavorite';
 	public const ACTION_REMOVE_FAVORITE = 'removefromfavorite';
 	public const ACTION_SET_GROUP = 'setgroup';
+	public const ACTION_SET_COLLAB = 'setcollab';
 	public const ACTION_DELETE = 'delete';
 	public const ACTION_SET_FLOW = 'setflow';
 
@@ -331,10 +332,12 @@ class GroupAction
 
 		if (ProjectLimit::isFeatureEnabledOrTrial())
 		{
-			$name = $isCollaber ? 'TASKS_LIST_GROUP_ACTION_SET_COLLAB' : 'TASKS_LIST_GROUP_ACTION_SET_GROUP';
+			$textKey = $isCollaber ? 'TASKS_LIST_GROUP_ACTION_SET_COLLAB' : 'TASKS_LIST_GROUP_ACTION_SET_GROUP';
+			$actionKey = $isCollaber ? self::ACTION_SET_COLLAB : self::ACTION_SET_GROUP;
+
 			$actionList[] = [
-				'NAME' => Loc::getMessage($name),
-				'VALUE' => self::ACTION_SET_GROUP,
+				'NAME' => Loc::getMessage($textKey),
+				'VALUE' => $actionKey,
 				'ONCHANGE' => [
 					[
 						'ACTION' => Actions::CREATE,
@@ -360,7 +363,7 @@ class GroupAction
 					[
 						'ACTION' => Actions::CALLBACK,
 						'DATA' => [
-							['JS' => "BX.Tasks.GridActions.setCurrentGroupAction('setgroup')"],
+							['JS' => "BX.Tasks.GridActions.setCurrentGroupAction('$actionKey')"],
 						],
 					],
 				],

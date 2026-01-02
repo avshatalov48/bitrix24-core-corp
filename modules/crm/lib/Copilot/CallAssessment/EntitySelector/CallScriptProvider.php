@@ -63,7 +63,14 @@ final class CallScriptProvider extends BaseProvider
 		$filter = empty($recentIds) ? [] : ['!ID' => $recentIds];
 		$filter['IS_ENABLED'] = 'Y';
 
-		$collection = CopilotCallAssessmentController::getInstance()->getList([
+		$controller = CopilotCallAssessmentController::getInstance();
+		$additionalFilter = $controller->getCurrentAvailableAssessmentFilter();
+		if ($additionalFilter)
+		{
+			$filter[] = $additionalFilter;
+		}
+
+		$collection = $controller->getList([
 			'select' => ['*', 'CLIENT_TYPES'],
 			'filter' => $filter,
 			'order' => ['TITLE' => 'ASC'],
@@ -106,12 +113,21 @@ final class CallScriptProvider extends BaseProvider
 			return [];
 		}
 
-		$collection = CopilotCallAssessmentController::getInstance()->getList([
+		$controller = CopilotCallAssessmentController::getInstance();
+
+		$filter = [
+			'@ID' => $ids,
+			'IS_ENABLED' => 'Y',
+		];
+		$additionalFilter = $controller->getCurrentAvailableAssessmentFilter();
+		if ($additionalFilter)
+		{
+			$filter[] = $additionalFilter;
+		}
+		
+		$collection = $controller->getList([
 			'select' => ['*', 'CLIENT_TYPES'],
-			'filter' => [
-				'@ID' => $ids,
-				'IS_ENABLED' => 'Y',
-			],
+			'filter' => $filter,
 		]);
 
 		return $this->createItemsByCollection($collection);
@@ -119,13 +135,19 @@ final class CallScriptProvider extends BaseProvider
 
 	public function doSearch(SearchQuery $searchQuery, Dialog $dialog): void
 	{
-		$query = $searchQuery->getQuery();
+		$controller = CopilotCallAssessmentController::getInstance();
+		$filter = [
+			'%TITLE' => $searchQuery->getQuery(),
+			'IS_ENABLED' => 'Y',
+		];
+		$additionalFilter = $controller->getCurrentAvailableAssessmentFilter();
+		if ($additionalFilter)
+		{
+			$filter[] = $additionalFilter;
+		}
 
-		$collection = CopilotCallAssessmentController::getInstance()->getList([
-			'filter' => [
-				'%TITLE' => $query,
-				'IS_ENABLED' => 'Y',
-			],
+		$collection = $controller->getList([
+			'filter' => $filter,
 		]);
 
 		$items = $this->createItemsByCollection($collection);

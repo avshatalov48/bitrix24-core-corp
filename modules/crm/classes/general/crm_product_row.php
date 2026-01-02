@@ -1133,6 +1133,10 @@ class CAllCrmProductRow
 		{
 			$result['PRICE_BRUTTO'] = round((float)$product['PRICE_BRUTTO'], 2);
 		}
+		elseif ($discountSum === 0.0) // avoid influence of $priceNetto rounding
+		{
+			$result['PRICE_BRUTTO'] = $inclusivePrice;
+		}
 		else
 		{
 			$result['PRICE_BRUTTO'] = round(static::CalculateInclusivePrice($priceNetto, $result['TAX_RATE']), 2);
@@ -1218,7 +1222,7 @@ class CAllCrmProductRow
 			$owner = null;
 			if (!isset($totalInfo['CURRENCY']) || !isset($totalInfo['PERSON_TYPE_ID']))
 			{
-				$owner = self::getOwnerData($ownerType, $ownerID);
+				$owner = self::getOwnerData($ownerType, $ownerID, ['COMPANY_ID', 'CONTACT_ID', 'CURRENCY_ID', 'LOCATION_ID']);
 			}
 
 			// Determine person type
@@ -1318,7 +1322,7 @@ class CAllCrmProductRow
 	{
 		$result = array();
 
-		$owner = self::getOwnerData($ownerType, $ownerID);
+		$owner = self::getOwnerData($ownerType, $ownerID, ['CURRENCY_ID', 'EXCH_RATE']);
 
 		if(is_array($owner))
 		{
@@ -1621,7 +1625,7 @@ class CAllCrmProductRow
 			}
 			else
 			{
-				$arParams = self::getOwnerData($ownerType, $ownerID, $checkPerms);
+				$arParams = self::getOwnerData($ownerType, $ownerID, ['LOCATION_ID'], $checkPerms);
 			}
 
 			if(!is_array($arParams))
@@ -1988,21 +1992,21 @@ class CAllCrmProductRow
 	}
 	// <-- Contract
 
-	public static function getOwnerData(string $ownerType, $ownerID, $bCheckPerms = false): ?array
+	public static function getOwnerData(string $ownerType, $ownerID, array $selectFields, $bCheckPerms = false): ?array
 	{
 		$owner = null;
 
 		if($ownerType === CCrmOwnerTypeAbbr::Deal)
 		{
-			$owner = CCrmDeal::GetByID($ownerID, $bCheckPerms);
+			$owner = CCrmDeal::GetListEx([], ['ID' => $ownerID, 'CHECK_PERMISSIONS' => $bCheckPerms ? 'Y' : 'N'], false, false, $selectFields)->Fetch();
 		}
 		elseif($ownerType === CCrmOwnerTypeAbbr::Quote)
 		{
-			$owner = CCrmQuote::GetByID($ownerID, $bCheckPerms);
+			$owner = CCrmQuote::GetList([], ['ID' => $ownerID, 'CHECK_PERMISSIONS' => $bCheckPerms ? 'Y' : 'N'], false, false, $selectFields)->Fetch();
 		}
 		elseif($ownerType === CCrmOwnerTypeAbbr::Lead)
 		{
-			$owner = CCrmLead::GetByID($ownerID, $bCheckPerms);
+			$owner = CCrmLead::GetListEx([], ['ID' => $ownerID, 'CHECK_PERMISSIONS' => $bCheckPerms ? 'Y' : 'N'], false, false, $selectFields)->Fetch();
 		}
 
 		return is_array($owner) ? $owner : null;

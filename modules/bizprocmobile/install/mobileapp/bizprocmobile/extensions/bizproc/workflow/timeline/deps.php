@@ -27,7 +27,7 @@ return [
 		'layout/ui/user/avatar',
 		'statemanager/redux/slices/users',
 		'statemanager/redux/store',
-		'user/profile',
+		'user-profile',
 		'utils/function',
 		'utils/date/duration',
 		'utils/date',
@@ -41,5 +41,6 @@ return [
 		'utils/file',
 
 		'bizproc:helper/duration',
+		'bizproc:workflow/result',
 	],
 ];

@@ -96,6 +96,8 @@ class PromptTable extends Entity\DataManager
 
 			new Entity\StringField('PROMPT'),
 
+			new Entity\TextField('JSON_OUTPUT_SCHEMA'),
+
 			(new ArrayField('TEXT_TRANSLATES'))
 				->configureDefaultValue('')
 				->configureSerializationJson(),

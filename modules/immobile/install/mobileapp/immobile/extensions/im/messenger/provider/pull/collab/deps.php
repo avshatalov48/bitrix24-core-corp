@@ -4,16 +4,13 @@ return [
 	'extensions' => [
 		'im:messenger/provider/pull/chat',
 		'type',
-		'loc',
 		'utils/object',
+		'im:messenger/loc',
 		'im:messenger/lib/di/service-locator',
 		'im:messenger/const',
-		'im:messenger/lib/converter',
-		'im:messenger/lib/element',
 		'im:messenger/lib/helper',
 		'im:messenger/lib/logger',
 		'im:messenger/lib/params',
-		'im:messenger/lib/counters',
 		'im:messenger/lib/notifier',
 		'im:messenger/lib/emitter',
 		'im:messenger/lib/uuid-manager',
@@ -22,7 +19,7 @@ return [
 		'im:chat/utils',
 		'im:chat/messengercommon',
 		'im:chat/dataconverter',
-		'im:messenger/provider/pull/lib/recent/chat',
+		'im:messenger/provider/pull/lib/new-message-manager/collab',
 		'im:messenger/provider/pull/lib/file',
 	],
 	'bundle' => [
@@ -31,6 +28,5 @@ return [
 		'./src/file',
 		'./src/user',
 		'./src/collab-info',
-		'./src/counter',
 	],
 ];

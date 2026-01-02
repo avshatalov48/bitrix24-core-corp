@@ -3,6 +3,7 @@
 namespace Bitrix\Crm\Component\EntityDetails\TimelineMenuBar\Item;
 
 use Bitrix\Crm\Component\EntityDetails\TimelineMenuBar\Item;
+use Bitrix\Crm\Integration\Market\Label;
 use Bitrix\Main\UI\Extension;
 
 class Market extends Item
@@ -14,6 +15,11 @@ class Market extends Item
 
 	public function getName(): string
 	{
+		if (Label::isRenamedMarket())
+		{
+			return \Bitrix\Main\Localization\Loc::getMessage('CRM_REST_BUTTON_TITLE_MSGVER_1');
+		}
+
 		return \Bitrix\Main\Localization\Loc::getMessage('CRM_REST_BUTTON_TITLE_2');
 	}
 

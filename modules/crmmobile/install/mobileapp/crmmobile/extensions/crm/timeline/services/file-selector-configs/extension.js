@@ -36,10 +36,19 @@ jn.define('crm/timeline/services/file-selector-configs', (require, exports, modu
 					ownerTypeId: options.entityTypeId,
 					ownerId: options.entityId,
 					id: options.activityId,
-					fileTokens: selector.getFiles().map((file) => file.token || file.id),
+					fileTokens: selector.getFiles().map((file) => file.sourceFileId || file.token || file.id),
 				};
 
-				BX.ajax.runAction('crm.activity.todo.updateFiles', { data })
+				const analyticsEvent = options.analyticsEvent || null;
+
+				BX.ajax.runAction('crm.activity.todo.updateFiles', {
+					data,
+					analyticsLabel: analyticsEvent
+						?.setEvent('activity_edit')
+						.setElement('edit_button')
+						.setP4('addBlock_1')
+						.exportToObject(),
+				})
 					.then(() => successHandler(resolve))
 					.catch((err) => errorHandler(err, resolve));
 			}),
@@ -56,7 +65,7 @@ jn.define('crm/timeline/services/file-selector-configs', (require, exports, modu
 			required: false,
 			files: [],
 			controller: {
-				endpoint: 'crm.FileUploader.CommentUploaderController',
+				endpoint: 'disk.Uf.Integration.DiskUploaderController',
 				options: {
 					entityTypeId: options.entityTypeId,
 					entityId: options.entityId,
@@ -67,7 +76,7 @@ jn.define('crm/timeline/services/file-selector-configs', (require, exports, modu
 					ownerTypeId: options.entityTypeId,
 					ownerId: options.entityId,
 					id: options.id,
-					files: selector.getFiles().map((file) => file.token || file.id),
+					files: selector.getFiles().map((file) => file.serverFileId || file.token || file.id),
 				};
 
 				BX.ajax.runAction('crm.timeline.comment.updateFiles', { data })

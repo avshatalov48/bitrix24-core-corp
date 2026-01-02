@@ -1,7 +1,6 @@
 (() => {
 	const require = (ext) => jn.require(ext);
 	const { Color } = require('tokens');
-
 	const { testSuites, report, ConsolePrinter, JnLayoutPrinter } = require('testing');
 
 	class UnitTestDashboard extends LayoutComponent
@@ -143,7 +142,7 @@
 	}
 
 	BX.onViewLoaded(async () => {
-		await executeTests();
+		await executeTests().catch(console.error);
 
 		layout.showComponent(new UnitTestDashboard({}));
 	});

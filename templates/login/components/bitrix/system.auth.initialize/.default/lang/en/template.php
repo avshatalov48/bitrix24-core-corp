@@ -1,18 +1,11 @@
-<?
-$MESS["CT_MAIN_REG_INIT_CONFIRM"] = "Confirm";
-$MESS["CT_MAIN_REG_INIT_LOGIN_TITLE"] = "E-mail";
-$MESS["CT_MAIN_REG_INIT_TITLE"] = "Registration Confirmation";
-$MESS["CT_MAIN_REG_INIT_CHECKWORD_TITLE"] = "Checkword";
-$MESS["CT_MAIN_REG_INIT_PASSWORD_TITLE"] = "Password <span class=\"login-label-thin\">(6 or more characters)</span>";
-$MESS["CT_MAIN_REG_INIT_CONFIRM_PASSWORD_TITLE"] = "Confirm Password";
-$MESS["CT_MAIN_REG_INIT_REMEMBER_TITLE"] = "Remember me on this computer";
-$MESS["CT_MAIN_REG_INIT_NAME_TITLE"] = "First Name";
-$MESS["CT_MAIN_REG_INIT_LAST_NAME_TITLE"] = "Last Name";
-$MESS["CT_MAIN_REG_INIT_WORK_COMPANY_TITLE"] = "Company";
-$MESS["CT_MAIN_REG_INIT_WORK_PHONE_TITLE"] = "Phone";
-$MESS["CT_MAIN_REG_INIT_PERSONAL_PHOTO_TITLE"] = "Profile Picture";
-$MESS["CT_MAIN_REG_INIT_REQUIRED_COMMENT"] = "Required Fields";
-$MESS["CT_MAIN_REG_INIT_FUTURE_COMMENT"] = "You can change your personal information on the profile settings page.";
-$MESS["CT_MAIN_REG_INIT_AUTH_LINK"] = "To authorize or recover the password, proceed to the <a href='#LINK#'>authorization page</a>";
-$MESS["CT_MAIN_REG_INIT_PERSONAL_PHOTO_DOWNLOAD"] = "Browse";
-?>
+<?php
+$MESS["INTRANET_AUTH_CONFIRM_PASSWORD"] = "Confirm password";
+$MESS["INTRANET_AUTH_CONTINUE_BUTTON"] = "Continue";
+$MESS["INTRANET_AUTH_EMAIL"] = "Email address";
+$MESS["INTRANET_AUTH_LAST_NAME"] = "Last name";
+$MESS["INTRANET_AUTH_NAME"] = "First name";
+$MESS["INTRANET_AUTH_PASSWORD"] = "Password";
+$MESS["INTRANET_AUTH_REG_INIT_ERROR"] = "Your registration link is not valid. Please contact the Bitrix24 administrator.";
+$MESS["INTRANET_AUTH_REMEMBER_ME"] = "Remember me";
+$MESS["INTRANET_AUTH_TITLE"] = "Registration confirmation";
+$MESS["INTRANET_INIT_USER_ALREADY_EXISTS"] = "You have already joined this Bitrix24. Enter your login and password to log in.";

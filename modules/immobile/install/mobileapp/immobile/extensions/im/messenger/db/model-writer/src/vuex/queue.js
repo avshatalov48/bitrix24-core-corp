@@ -6,6 +6,7 @@
 jn.define('im/messenger/db/model-writer/vuex/queue', (require, exports, module) => {
 	const { Type } = require('type');
 	const { Writer } = require('im/messenger/db/model-writer/vuex/writer');
+	const { Logger } = require('im/messenger/lib/logger');
 
 	class QueueWriter extends Writer
 	{
@@ -26,60 +27,59 @@ jn.define('im/messenger/db/model-writer/vuex/queue', (require, exports, module) 
 		}
 
 		/**
-		 * @param {MutationPayload} mutation.payload
+		 * @param {MutationPayload<QueueAddData, QueueAddActions>} payload
 		 */
-		addRouter(mutation)
+		addRouter({ payload })
 		{
-			if (this.checkIsValidMutation(mutation) === false)
+			if (this.checkIsValidMutation(payload) === false)
 			{
 				return;
 			}
 
-			const data = mutation?.payload?.data || {};
-			if (!Type.isArrayFilled(data.requests))
-			{
-				return;
-			}
-
-			const requests = [];
-			data.requests.forEach((request) => {
-				if (request.requestName)
-				{
-					requests.push(request);
-				}
-			});
-
+			const requests = payload?.data?.requests ?? [];
 			if (!Type.isArrayFilled(requests))
 			{
 				return;
 			}
 
-			this.repository.queue.saveFromModel(requests);
+			this.repository.queue.saveFromModel(requests)
+				.catch((error) => Logger.error(`${this.constructor.name}.saveFromModel.catch:`, error));
 		}
 
 		/**
-		 * @param {MutationPayload} mutation.payload
+		 * @param {MutationPayload<QueueDeleteByIdData, QueueDeleteByIdActions>} payload
 		 * @return {Promise}
 		 */
-		deleteRouter(mutation)
+		deleteRouter({ payload })
 		{
-			if (this.checkIsValidMutation(mutation) === false)
+			if (this.checkIsValidMutation(payload) === false)
 			{
-				return Promise.resolve(false);
+				return;
 			}
-			const data = mutation?.payload.data || {};
-			let ids;
-			if (mutation?.payload?.actionName === 'deleteById')
+			const requestsIds = payload.data.requestsIds ?? [];
+			if (requestsIds.length > 0)
 			{
-				ids = data.requestsIds;
+				this.repository.queue.deleteByIdList(requestsIds)
+					.catch((error) => Logger.error(`${this.constructor.name}.saveFromModel.catch:`, error));
+			}
+		}
+
+		/**
+		 * @protected
+		 * @param payload
+		 * @return {boolean}
+		 */
+		checkIsValidMutation(payload)
+		{
+			const actionName = payload?.actionName;
+			if (actionName)
+			{
+				return true;
 			}
 
-			if (ids.length > 0)
-			{
-				return this.repository.queue.deleteByIdList(ids);
-			}
+			Logger.error('Writer: invalid mutation skipped: ', payload);
 
-			return Promise.resolve(false);
+			return false;
 		}
 	}
 

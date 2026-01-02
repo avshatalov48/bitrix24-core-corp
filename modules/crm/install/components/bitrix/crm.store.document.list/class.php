@@ -5,6 +5,7 @@ use Bitrix\Catalog\Config\State;
 use Bitrix\Catalog\Url\InventoryManagementSourceBuilder;
 use Bitrix\Catalog\Access\ActionDictionary;
 use Bitrix\Catalog\StoreDocumentTable;
+use Bitrix\Crm\ItemMiniCard\Builder\MiniCardHtmlBuilder;
 use Bitrix\Crm\Order\Internals\ShipmentRealizationTable;
 use Bitrix\Sale\Internals\ShipmentItemTable;
 use Bitrix\Main;
@@ -775,21 +776,15 @@ class CrmStoreDocumentListComponent extends CBitrixComponent implements Controll
 	{
 		$contactId = (int)$contact['ID'];
 
-		$name = \CUser::FormatName(
+		$title = \CUser::FormatName(
 			\CSite::GetNameFormat(false),
 			$contact
 		);
-		$name = htmlspecialcharsbx($name);
 
-		$contactUrl = "/crm/contact/details/{$contactId}/";
-		$userId = "CONTACT_{$contactId}";
-
-		return "<a href='{$contactUrl}'
-		 		   bx-tooltip-user-id='{$userId}'
-		 		   bx-tooltip-loader='/bitrix/components/bitrix/crm.contact.show/card.ajax.php'
-		 		   bx-tooltip-classname='crm_balloon_contact'>
-		 		   {$name}
-		 		</a>";
+		return (new MiniCardHtmlBuilder(CCrmOwnerType::Contact, $contactId))
+			->setTitle($title)
+			->build()
+		;
 	}
 
 	private function getContactCompanyLink($client): string

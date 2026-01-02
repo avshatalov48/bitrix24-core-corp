@@ -33,6 +33,6 @@
 
 .sign-user-profile-post-edit-stub-default {
 	margin-bottom: 16px;
-	font: var(--ui-font-size-lg) var(--ui-font-family-system);
+	font: var(--ui-font-size-lg) var(--ui-font-family-primary, var(--ui-font-family-system));
 	color: var(--ui-color-base-90);
 }

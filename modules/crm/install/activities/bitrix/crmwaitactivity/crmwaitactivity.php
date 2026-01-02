@@ -2,6 +2,8 @@
 
 use Bitrix\Main\Localization\Loc;
 
+use Bitrix\Crm\Integration\Analytics\Dictionary;
+
 if (!defined('B_PROLOG_INCLUDED') || B_PROLOG_INCLUDED !== true)
 {
 	die();
@@ -34,7 +36,9 @@ class CBPCrmWaitActivity extends CBPActivity
 			return CBPActivityExecutionStatus::Closed;
 		}
 
-		$documentId = $this->GetDocumentId();
+		$documentId = $this->getDocumentId();
+		$documentType = $this->getDocumentType();
+
 		[$ownerTypeName, $ownerId] = explode('_', $documentId[2]);
 		$ownerTypeId = CCrmOwnerType::ResolveID($ownerTypeName);
 		$responsibleId = CCrmOwnerType::GetResponsibleID($ownerTypeId, $ownerId, false);
@@ -58,9 +62,15 @@ class CBPCrmWaitActivity extends CBPActivity
 
 		if ($waitType === static::WAIT_TYPE_BEFORE)
 		{
-			$document = CBPRuntime::GetRuntime()
-				->GetService('DocumentService')
-				->GetDocument($documentId);
+			$documentService = CBPRuntime::GetRuntime()->GetService('DocumentService');
+			if (defined('\CBPDocument::PARAM_USED_DOCUMENT_FIELDS'))
+			{
+				$document = $documentService->GetDocument($documentId, select: [$targetField]);
+			}
+			else
+			{
+				$document = $documentService->GetDocument($documentId);
+			}
 
 			if (!isset($document[$targetField]))
 			{
@@ -117,6 +127,12 @@ class CBPCrmWaitActivity extends CBPActivity
 		if ($result->isSuccess())
 		{
 			$this->WaitId = $result->getId();
+
+			\CCrmBizProcHelper::sendOperationsAnalytics(
+				Dictionary::EVENT_ENTITY_EDIT,
+				$this,
+				$documentType[2] ?? '',
+			);
 		}
 		else
 		{

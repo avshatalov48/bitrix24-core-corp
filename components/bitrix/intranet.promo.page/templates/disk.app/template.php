@@ -16,13 +16,36 @@ if (!defined("B_PROLOG_INCLUDED") || B_PROLOG_INCLUDED !== true)
 	<div class="intranet-promo-section intranet-promo-step-1">
 		<div class="intranet-promo-step-num">1</div>
 		<div class="intranet-promo-section-title">
-			<?=Loc::getMessage(
-				"INTRANET_DISK_PROMO_STEP1_TITLE",
-				array(
-					"#LINK_START#" => '<a href="'.$arResult["DOWNLOAD_PATH"].'" class="intranet-promo-section-link">',
-					"#LINK_END#" => "</a>"
-				)
-			)?>
+			<?php if ($arResult['PAGE'] === 'MACOS'):
+				$macosIntelLink = !empty($arResult['DOWNLOAD_PATH']['macos']) && filter_var($arResult['DOWNLOAD_PATH']['macos'], FILTER_VALIDATE_URL)
+					? htmlspecialcharsbx($arResult['DOWNLOAD_PATH']['macos'])
+					: '#';
+				$macosArmLink = !empty($arResult['DOWNLOAD_PATH']['macosArm']) && filter_var($arResult['DOWNLOAD_PATH']['macosArm'], FILTER_VALIDATE_URL)
+					? htmlspecialcharsbx($arResult['DOWNLOAD_PATH']['macosArm'])
+					: '#';
+				?>
+			<?= Loc::getMessage(
+				'INTRANET_DISK_PROMO_STEP1_TITLE_MACOS',
+				[
+					'#INTEL_LINK_START#' => '<a href="'. $macosIntelLink .'" class="intranet-promo-section-link">',
+					"#INTEL_LINK_END#" => '</a>',
+					'#ARM64_LINK_START#' => '<a href="'. $macosArmLink .'" class="intranet-promo-section-link">',
+					'#ARM64_LINK_END#' => '</a>'
+				]
+			) ?>
+			<?php else:
+				$windowsLink = !empty($arResult['DOWNLOAD_PATH']['windows']) && filter_var($arResult['DOWNLOAD_PATH']['windows'], FILTER_VALIDATE_URL)
+					? htmlspecialcharsbx($arResult['DOWNLOAD_PATH']['windows'])
+					: '#';
+				?>
+			<?= Loc::getMessage(
+				'INTRANET_DISK_PROMO_STEP1_TITLE',
+				[
+					'#LINK_START#' => '<a href="'. $windowsLink .'" class="intranet-promo-section-link">',
+					'#LINK_END#' => '</a>'
+				]
+			) ?>
+			<?php endif; ?>
 		</div>
 	</div>
 	<div class="intranet-promo-section intranet-promo-step-2">

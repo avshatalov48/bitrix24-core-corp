@@ -6,6 +6,7 @@ use Bitrix\AI\Context;
 use Bitrix\AI\Facade\Bitrix24;
 use Bitrix\AI\Limiter\Plan;
 use Bitrix\AI\Model\UsageTable;
+use Bitrix\Main\Config\Option;
 use Bitrix\Main\Type\DateTime;
 
 class Daily implements IPeriod
@@ -34,6 +35,12 @@ class Daily implements IPeriod
 	 */
 	public function getCurrentUsage(): int
 	{
+		$testUsageCount = (int)Option::get('ai', 'test_daily_usage', -1);
+		if ($testUsageCount >= 0)
+		{
+			return $testUsageCount;
+		}
+
 		$result = UsageTable::query()
 			->setSelect(['USAGE_COUNT'])
 			->where('USER_ID', $this->context->getUserId())

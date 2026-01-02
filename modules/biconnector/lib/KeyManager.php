@@ -53,14 +53,14 @@ class KeyManager
 		if (empty($data))
 		{
 			$errorCollection->setError(
-				new Error('', static::ERROR_EMPTY_DATA)
+				new Error('Empty key data', static::ERROR_EMPTY_DATA)
 			);
 		}
 
 		if ($data['USER_ID'] <= 0)
 		{
 			$errorCollection->setError(
-				new Error('', static::ERROR_EMPTY_USER_ID)
+				new Error('Empty user id', static::ERROR_EMPTY_USER_ID)
 			);
 		}
 

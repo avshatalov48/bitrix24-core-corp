@@ -5,7 +5,11 @@ namespace Bitrix\Intranet\Component;
 use Bitrix\HumanResources\Compatibility\Utils\DepartmentBackwardAccessCode;
 use Bitrix\HumanResources\Item\NodeMember;
 use Bitrix\HumanResources\Service\Container;
-use Bitrix\Intranet\Service\ServiceContainer;
+use Bitrix\Intranet\Entity\Department;
+use Bitrix\Intranet\Entity\User;
+use Bitrix\Intranet\Integration\HumanResources\DepartmentAssigner;
+use Bitrix\Intranet\Internal\Repository\User\Profile\ProfileRepository;
+use Bitrix\Intranet\Repository\HrDepartmentRepository;
 use Bitrix\Intranet\Util;
 use Bitrix\Main\Event;
 use Bitrix\Main\EventManager;
@@ -271,27 +275,7 @@ class UserProfile extends \CBitrixComponent implements \Bitrix\Main\Engine\Contr
 			return $this->userData;
 		}
 
-		$filter = [
-			"ID_EQUAL_EXACT" => $this->arParams["ID"]
-		];
-
-		$params = [
-			"FIELDS" => [
-				'ID', 'ACTIVE', 'CONFIRM_CODE', 'EXTERNAL_AUTH_ID', 'LAST_ACTIVITY_DATE', 'DATE_REGISTER',
-				'LOGIN', 'EMAIL', 'NAME', 'SECOND_NAME', 'LAST_NAME', 'WORK_POSITION',
-				'PERSONAL_PHOTO', 'PERSONAL_BIRTHDAY', 'PERSONAL_GENDER',
-				'PERSONAL_WWW', 'PERSONAL_MOBILE', 'WORK_PHONE', 'PERSONAL_CITY',
-				'TIME_ZONE', 'AUTO_TIME_ZONE', 'TIME_ZONE_OFFSET',
-				'PERSONAL_COUNTRY', 'PERSONAL_FAX', 'PERSONAL_MAILBOX',
-				'PERSONAL_PHONE', 'PERSONAL_STATE', 'PERSONAL_STREET', 'PERSONAL_ZIP',
-				'WORK_CITY', 'WORK_COUNTRY', 'WORK_COMPANY', 'WORK_DEPARTMENT',
-				'PERSONAL_PROFESSION', 'WORK_NOTES', 'WORK_PROFILE', 'LANGUAGE_ID',
-			],
-			'SELECT' => [ 'UF_DEPARTMENT', 'UF_PHONE_INNER', 'UF_SKYPE', 'UF_SKYPE_LINK', 'UF_ZOOM', 'UF_PUBLIC' ]
-		];
-
-		$dbUser = \CUser::GetList("id", "asc", $filter, $params);
-		$user = $dbUser->fetch();
+		$user = ProfileRepository::createByDefault()->getUserDataById($this->arParams['ID']);
 
 		foreach ($user as $field => $value)
 		{
@@ -305,6 +289,11 @@ class UserProfile extends \CBitrixComponent implements \Bitrix\Main\Engine\Contr
 				$user["LAST_ACTIVITY_DATE_FROM_DB"] = $value;
 				$user[$field] = DateTime::createFromTimestamp(MakeTimeStamp($value, 'YYYY-MM-DD HH:MI:SS'));
 				$user[$field] = FormatDateFromDB($user[$field]);
+			}
+
+			if (in_array($field, ['DEPARTMENT_HEAD', 'TEAM']) && empty($value))
+			{
+				$user[$field] = '';
 			}
 		}
 
@@ -340,7 +329,10 @@ class UserProfile extends \CBitrixComponent implements \Bitrix\Main\Engine\Contr
 		if (
 			$this->arParams["ID"] == $USER->GetID()
 			&& Loader::includeModule("socialnetwork")
-			&& \CSocNetUser::IsCurrentUserModuleAdmin(SITE_ID, false)
+			&& (
+				$USER->isAdmin()
+				|| \CSocNetUser::IsCurrentUserModuleAdmin(SITE_ID, false)
+			)
 		)
 		{
 			$user["SHOW_SONET_ADMIN"] = true;
@@ -453,6 +445,7 @@ class UserProfile extends \CBitrixComponent implements \Bitrix\Main\Engine\Contr
 		}
 
 		$ufReserved = $this->getFormInstance()->getReservedUfFields();
+
 		foreach ($data as $fieldName => $fieldValue)
 		{
 			if (in_array($fieldName, $ufReserved))
@@ -460,12 +453,8 @@ class UserProfile extends \CBitrixComponent implements \Bitrix\Main\Engine\Contr
 				unset($data[$fieldName]);
 			}
 		}
+
 		$USER_FIELD_MANAGER->EditFormAddFields('USER', $newFields, [ 'FORM' => $data ]);
-		if (!$USER->Update($this->arParams['ID'], $newFields))
-		{
-			$this->errorCollection[] = new Error($USER->LAST_ERROR);
-			return null;
-		}
 
 		if (
 			isset($newFields['UF_DEPARTMENT']) &&
@@ -473,15 +462,35 @@ class UserProfile extends \CBitrixComponent implements \Bitrix\Main\Engine\Contr
 			(int)$this->arParams['ID'] > 0
 		)
 		{
-			$departmentRepository = ServiceContainer::getInstance()
-				->departmentRepository();
+			$departmentRepository = new HrDepartmentRepository();
+			$newDepartmentCollection = $departmentRepository->findAllByIds($newFields['UF_DEPARTMENT']);
+			$departmentAssigner = new DepartmentAssigner($newDepartmentCollection);
+			$departmentAssigner->reassignUser(new User(id: (int)$this->arParams['ID']));
+			$assignedDepartments = $newFields['UF_DEPARTMENT'];
+			unset($newFields['UF_DEPARTMENT']);
+		}
+
+		if (!$USER->Update($this->arParams['ID'], $newFields))
+		{
+			$this->errorCollection[] = new Error($USER->LAST_ERROR);
+			return null;
+		}
+
+		if (
+			!empty($assignedDepartments)
+			&& (int)$this->arParams['ID'] > 0
+		)
+		{
+			$departmentRepository = new HrDepartmentRepository();
 			$departmentCollection = $departmentRepository->getDepartmentByHeadId((int)$this->arParams['ID']);
+
 			foreach ($departmentCollection as $department)
 			{
-				if (in_array($department->getId(), $newFields['UF_DEPARTMENT']))
+				if (in_array($department->getId(), $assignedDepartments))
 				{
 					continue;
 				}
+
 				$departmentRepository->unsetHead($department->getId());
 			}
 		}
@@ -498,6 +507,12 @@ class UserProfile extends \CBitrixComponent implements \Bitrix\Main\Engine\Contr
 		}
 
 		$this->arResult['User'] = $this->getUserData(true);
+
+		if (!empty($assignedDepartments))
+		{
+			$this->arResult['User']['UF_DEPARTMENT'] = $assignedDepartments;
+		}
+
 		return [
 			'ENTITY_DATA' => $this->getFormInstance()->getData($this->arResult),
 			'SUCCESS' => 'Y'
@@ -592,6 +607,7 @@ class UserProfile extends \CBitrixComponent implements \Bitrix\Main\Engine\Contr
 						->isCollaberById((int)$user["ID"]);
 					$user["STATUS"] = $isCollaber ? "collaber" : "extranet";
 					$user["IS_EXTRANET"] = true;
+					$user["IS_COLLABER"] = $isCollaber;
 				}
 				else
 				{
@@ -677,7 +693,11 @@ class UserProfile extends \CBitrixComponent implements \Bitrix\Main\Engine\Contr
 
 			//managers
 			$user['MANAGERS'] = [];
-			$managers = \CIntranetUtils::GetDepartmentManager($user["UF_DEPARTMENT"], $user["ID"], true);
+			$iblockDepartmentIds = (new HrDepartmentRepository())
+				->findAllByIds(is_array($user['UF_DEPARTMENT']) ? $user['UF_DEPARTMENT'] : [])
+				->map(fn (Department $department) => $department->getIblockSectionId());
+			$managers = \CIntranetUtils::GetDepartmentManager($iblockDepartmentIds, $user["ID"], true);
+
 			foreach ($managers as $key => $manager)
 			{
 				if ((int)$manager["PERSONAL_PHOTO"] <= 0)
@@ -701,8 +721,16 @@ class UserProfile extends \CBitrixComponent implements \Bitrix\Main\Engine\Contr
 				$manager["LINK"] = \CComponentEngine::MakePathFromTemplate($this->arParams['PATH_TO_USER'], [
 					'user_id' => $manager['ID'],
 				]);
+				$preparedManager = [
+					'ID' => $manager['ID'],
+					'FULL_NAME' => $manager['FULL_NAME'],
+					'PHOTO' => $manager['PHOTO'],
+					'LINK' => $manager['LINK'],
+					'PERSONAL_PHOTO' => $manager['PERSONAL_PHOTO'],
+					'WORK_POSITION' => $manager['WORK_POSITION'],
+				];
 
-				$user['MANAGERS'][$key] = $manager;
+				$user['MANAGERS'][$key] = $preparedManager;
 			}
 
 			if ($this->arParams["CACHE_TIME"] > 0)
@@ -1304,6 +1332,7 @@ class UserProfile extends \CBitrixComponent implements \Bitrix\Main\Engine\Contr
 				$subUser = [];
 
 				$subUser["ID"] = $preparedUser->id;
+				$subUser["WORK_POSITION"] = $preparedUser->workPosition;
 				$subUser["PERSONAL_PHOTO"] = $userService->getUserAvatar($preparedUser, 100);
 				$subUser["FULL_NAME"] = $userService->getUserName($preparedUser);
 				$subUser["PHOTO"] = $userService->getUserAvatar($preparedUser, 100);

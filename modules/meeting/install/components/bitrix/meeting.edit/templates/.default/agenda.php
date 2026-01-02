@@ -3,6 +3,8 @@ if(!defined("B_PROLOG_INCLUDED") || B_PROLOG_INCLUDED!==true)die();
 
 $bTask = CBXFeatures::IsFeatureEnabled('tasks') && IsModuleInstalled('tasks');
 
+$APPLICATION->SetAdditionalCSS('/bitrix/js/intranet/intranet-common.css');
+
 \Bitrix\Main\Localization\Loc::loadLanguageFile(__FILE__);
 
 $APPLICATION->IncludeComponent('bitrix:main.calendar', '', array('SILENT' => 'Y'));

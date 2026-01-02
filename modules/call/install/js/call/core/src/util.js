@@ -1,13 +1,213 @@
-import { Type, Extension } from 'main.core'
-import {CallEngine, Provider} from './engine/engine';
-import { MediaStreamsKinds } from './call_api';
-import { View } from './view/view';
+import { Type, Extension } from 'main.core';
+import { CallEngine, Provider, RoomType } from './engine/engine';
+import { CallEngineLegacy } from './engine/engine_legacy';
+import {
+	ClientPlatform,
+	ClientVersion,
+	MediaStreamsKinds,
+	JoinRequestFailedCodes,
+	JoinResponseError,
+} from './call_api';
+import { CallTokenManager } from 'call.lib.call-token-manager';
+import { CallSettingsManager } from 'call.lib.settings-manager';
 import { CallAI } from './call_ai';
+
+import {EventEmitter} from 'main.core.events'
+import {Event} from 'main.core';
 
 const blankAvatar = '/bitrix/js/im/images/blank.gif';
 
 let userData = {}
 let usersInProcess = {}
+
+let abortController = null;
+
+/* User role & room permission */
+let roomPermissions =
+{
+	AudioEnabled: false,
+	VideoEnabled: false,
+	ScreenShareEnabled: false,
+};
+
+let userPermissions =
+{
+	ask: false,
+	audio: true,
+	can_approve: false,
+	change_role: false,
+	change_settings: false,
+	end_call: false,
+	give_permissions: false,
+	invite: false,
+	join_call: false,
+	kick_user: false,
+	mute: false,
+	mute_others: false,
+	record_call: false,
+	screen_share: true,
+	update: false,
+	video: true,
+	view_users: false,
+};
+
+const UsersRoles =
+{
+	ADMIN: 'ADMIN', // chat admin
+	MANAGER: 'MANAGER', // aka moderator
+	USER: 'USER', // regular user
+}
+
+const regularUserRoles = [UsersRoles.USER]; // TODO got this from signaling in future
+
+let currentUserRole = UsersRoles.USER;
+
+function setCurrentUserRole(role)
+{
+	if (role)
+	{
+		currentUserRole = role.toUpperCase();
+	}
+}
+
+function setRoomPermissions(_roomPermissions)
+{
+	if (!Type.isPlainObject(_roomPermissions))
+	{
+		return;
+	}
+
+	roomPermissions = _roomPermissions;
+}
+
+function setUserPermissionsByRoomPermissions(_roomPermissions)
+{
+	if (this.isRegularUser(this.getCurrentUserRole()))
+	{
+		let permissions = this.getUserPermissions();
+
+		for (let permission in _roomPermissions)
+		{
+			if (_roomPermissions.hasOwnProperty(permission))
+			{
+				switch (permission)
+				{
+					case 'AudioEnabled':
+						permissions.audio = _roomPermissions[permission];
+						break;
+					case 'VideoEnabled':
+						permissions.video = _roomPermissions[permission];
+						break;
+					case 'ScreenShareEnabled':
+						permissions.screen_share = _roomPermissions[permission];
+						break;
+				}
+			}
+		}
+
+		this.setUserPermissions(permissions);
+	}
+}
+
+function updateUserPermissionByNewRoomPermission(_roomPermission, value)
+{
+	if (this.isRegularUser(this.getCurrentUserRole()))
+	{
+		let permissions = this.getUserPermissions();
+
+		switch (_roomPermission)
+		{
+			case 'audio':
+				permissions.audio = value;
+				break;
+			case 'video':
+				permissions.video = value;
+				break;
+			case 'screen_share':
+				permissions.screen_share = value;
+				break;
+		}
+
+		this.setUserPermissions(permissions);
+	}
+}
+
+function isRegularUser(_role)
+{
+	return regularUserRoles.includes(_role);
+}
+
+function getRoomPermissions()
+{
+	return roomPermissions;
+}
+
+function setUserPermissions(_userPermissions)
+{
+	if (Type.isPlainObject(_userPermissions))
+	{
+		for (let permission in _userPermissions)
+		{
+			if (userPermissions.hasOwnProperty(permission))
+			{
+				userPermissions[permission] = _userPermissions[permission];
+			}
+		}
+	}
+}
+
+function getUserPermissions()
+{
+	return userPermissions;
+}
+
+function getCurrentUserRole()
+{
+	return currentUserRole;
+}
+
+function havePermissionToBroadcast(type)
+{
+	let havePermission = false;
+
+	switch (type)
+	{
+		case 'mic':
+
+			havePermission = userPermissions.audio;
+			break;
+		case 'cam':
+
+			havePermission = userPermissions.video;
+			break;
+		case 'screenshare':
+
+			havePermission = userPermissions.screen_share;
+			break;
+	}
+
+	return havePermission;
+}
+
+function canControlChangeSettings()
+{
+	return !!(userPermissions.change_settings && getCurrentBitrixCall());
+}
+
+function canControlGiveSpeakPermission()
+{
+	return !!userPermissions.give_permissions;
+}
+
+function getUserRoleByUserId(userId)
+{
+	if (userData.hasOwnProperty(userId))
+	{
+		return userData[userId].role;
+	}
+}
+
+/* ------ */
 
 function updateUserData(callId, users)
 {
@@ -22,39 +222,41 @@ function updateUserData(callId, users)
 		usersToUpdate.push(users[i]);
 	}
 
-	let result = new Promise((resolve, reject) =>
-	{
-		if (usersToUpdate.length === 0)
+	const result = new Promise((resolve, reject) => {
+		if (usersToUpdate.length === 0 || !callId)
 		{
-			return resolve();
+			resolve();
+
+			return;
 		}
 
-		CallEngine.getRestClient().callMethod("im.call.getUsers", {
-			callId: callId,
-			userIds: usersToUpdate
-		}).then((response) =>
-		{
-			const result = Type.isPlainObject(response.answer.result) ? response.answer.result : {};
-			users.forEach((userId) =>
-			{
-				if (result[userId])
+		BX.ajax.runAction('im.call.getUsers', {
+			data: {
+				callId,
+				userIds: usersToUpdate,
+			},
+		}).then((response) => {
+			const data = Type.isPlainObject(response.data) ? response.data : {};
+
+			users.forEach((userId) => {
+				if (data[userId])
 				{
-					userData[userId] = result[userId];
+					userData[userId] = data[userId];
 				}
 				delete usersInProcess[userId];
 			});
-			resolve();
 
-		}).catch(function (error)
-		{
+			resolve();
+		}).catch((error) => {
 			reject(error.answer);
 		});
 	});
 
-	for (let i = 0; i < usersToUpdate.length; i++)
+	for (const userId of usersToUpdate)
 	{
-		usersInProcess[usersToUpdate[i]] = result;
+		usersInProcess[userId] = result;
 	}
+
 	return result;
 }
 
@@ -63,7 +265,10 @@ function setUserData(users)
 	for (let userId in users)
 	{
 		userData[userId] = users[userId];
+
 	}
+
+	//setCurrentUserRole(userData[CallEngine.getCurrentUserId()].role);
 }
 
 const getDateForLog = () =>
@@ -452,15 +657,7 @@ function reportConnectionResult(callId, connectionResult)
 
 function sendTelemetryEvent(options)
 {
-	const url = (document.location.protocol == "https:" ? "https://" : "http://") + "bitrix.info/bx_stat";
-	const req = new XMLHttpRequest();
-	req.open("POST", url, true);
-	req.setRequestHeader("Content-Type", "application/x-www-form-urlencoded");
-	req.withCredentials = true;
-	options.op = "call";
-	options.d = document.location.host;
-	const query = BX.util.buildQueryString(options);
-	req.send(query);
+
 }
 
 const isDesktop = () =>
@@ -496,36 +693,34 @@ function isBlank(url)
 
 function stopMediaStreamAudioTracks(mediaStream)
 {
-    if (!mediaStream instanceof MediaStream)
-    {
-        return;
-    }
+	if (!mediaStream instanceof MediaStream)
+	{
+		return;
+	}
 
-    mediaStream.getAudioTracks().forEach(function (track)
-    {
-        if (track.readyState == 'live' && track.kind === 'audio') {
-            track.stop();
-        }
-
-        mediaStream.removeTrack(track);
-    });
+	mediaStream.getAudioTracks().forEach(function (track)
+	{
+		if (track.kind === 'audio') {
+			track.stop();
+			mediaStream.removeTrack(track);
+		}
+	});
 }
 
 function stopMediaStreamVideoTracks(mediaStream)
 {
-    if (!mediaStream instanceof MediaStream)
-    {
-        return;
-    }
+	if (!mediaStream instanceof MediaStream)
+	{
+		return;
+	}
 
-    mediaStream.getTracks().forEach(function (track)
-    {
-        if (track.readyState == 'live' && track.kind === 'video') {
-            track.stop();
-        }
-
-        mediaStream.removeTrack(track);
-    });
+	mediaStream.getTracks().forEach(function (track)
+	{
+		if (track.kind === 'video') {
+			track.stop();
+			mediaStream.removeTrack(track);
+		}
+	});
 }
 
 function stopMediaStream(mediaStream)
@@ -548,6 +743,29 @@ function getConferenceProvider(): string{
 	}
 
 	return Provider.Plain;
+}
+
+function getCurrentBitrixCall()
+{
+	for (let callId in CallEngine.calls)
+	{
+		if(CallEngine.calls[callId].BitrixCall)
+		{
+			return CallEngine.calls[callId];
+			break;
+		}
+	}
+
+	for (let callId in CallEngineLegacy.calls)
+	{
+		if(CallEngineLegacy.calls[callId].BitrixCall)
+		{
+			return CallEngineLegacy.calls[callId];
+			break;
+		}
+	}
+
+	return false;
 }
 
 function setCodecToReport(report, codecs, reportsWithoutCodecs)
@@ -779,6 +997,111 @@ const isConferenceChatEnabled = () =>
 	return BX.message('conference_chat_enabled');
 }
 
+const getCallConnectionData = async (callOptions, chatId, mustCreate = true) => {
+	if (!Type.isPlainObject(callOptions))
+	{
+		callOptions = {};
+	}
+
+	return new Promise(async (resolve, reject) =>
+	{
+		abortController = new AbortController();
+		const callBalancerUrl = CallSettingsManager.callBalancerUrl;
+
+		const roomType = callOptions.provider === Provider.Plain && CallSettingsManager.isJwtInPlainCallsEnabled()
+			? RoomType.Personal
+			: RoomType.Small;
+		const url = `${callBalancerUrl}/v2/join?mustCreate=${Boolean(mustCreate)}`;
+
+		const userToken = await CallTokenManager.getUserToken(chatId);
+
+		const data = JSON.stringify({
+			userToken,
+			roomType,
+			clientVersion: ClientVersion,
+			clientPlatform: ClientPlatform,
+			...callOptions,
+		});
+
+		let responseInfo = null;
+		fetch(url, {
+			method: 'POST',
+			body: data,
+			signal: abortController.signal,
+		})
+			.then((response) => {
+				responseInfo = { status: response?.status, ok: response?.ok };
+
+				return response.json();
+			})
+			.catch((error) => {
+				if (error instanceof SyntaxError)
+				{
+					throw new JoinResponseError(error.message, JoinRequestFailedCodes.JsonParsingError);
+				}
+				else
+				{
+					throw error;
+				}
+			})
+			.then((response) => {
+				if (!responseInfo?.ok)
+				{
+					if (response?.error)
+					{
+						throw new JoinResponseError(response?.error?.message, response?.error?.code);
+					}
+					else
+					{
+						throw new JoinResponseError(`Response status: ${responseInfo.status}`, JoinRequestFailedCodes.UnexpectedResponse);
+					}
+				}
+				resolve(response);
+			})
+			.catch((error) => {
+				try
+				{
+					if (error?.xhr?.responseText)
+					{
+						const response = JSON.parse(error.xhr.responseText);
+						if (response.error)
+						{
+							reject(response);
+						}
+					}
+				}
+				catch (e)
+				{
+					reject(e);
+				}
+
+				reject(error);
+			})
+			.finally(() => {
+				abortController = null;
+			});
+	});
+};
+
+const getCallConnectionDataById = async (callUuid) => {
+	const call = await CallEngine.getCallWithId(callUuid);
+
+	return getCallConnectionData(
+		{
+			callType: call.call.type,
+			instanceId: call.call.instanceId,
+			provider: call.call.provider,
+			callToken: CallTokenManager.getTokenCached(call.call.associatedEntity.chatId),
+		},
+		call.call.associatedEntity.chatId,
+		false,
+	);
+};
+
+const abortGetCallConnectionData = () => {
+	abortController?.abort();
+};
+
 function startSelfTest()
 {
 	const link = BX.Call.Util.getClientSelfTestUrl();
@@ -808,9 +1131,24 @@ function openArticle(articleCode)
 	infoHelper.show(articleCode);
 }
 
+const getAiSettings = () =>
+{
+	return Extension.getSettings('call.core')?.ai || {};
+}
+
 const isUserControlFeatureEnabled = () =>
 {
 	return Extension.getSettings('call.core')?.isUserControlFeatureEnabled;
+}
+
+const isDisableCameraNewJoinedUsersFeatureEnabled = () =>
+{
+	return Extension.getSettings('call.core')?.isDisableCameraNewJoinedUsersFeatureEnabled;
+}
+
+const countDisableCameraNewJoinedUsersFeature = () =>
+{
+	return Extension.getSettings('call.core')?.countDisableCameraNewJoinedUsersFeature;
 }
 
 const isPictureInPictureFeatureEnabled = () =>
@@ -822,6 +1160,25 @@ const isNewQOSEnabled = () =>
 {
 	return Extension.getSettings('call.core')?.isNewQOSEnabled;
 }
+
+const isKibanaLogsEnabled = () =>
+{
+	return Extension.getSettings('call.core')?.isKibanaLogsEnabled;
+}
+
+const isChatMountInPage = () =>
+{
+	return Extension.getSettings('call.core')?.isAirDesignEnabled && Extension.getSettings('call.core')?.shouldHideQuickAccess;
+}
+
+/* ws logger */
+
+function sendLog(params)
+{
+	const evnt = new Event.BaseEvent({data: params});
+	Event.EventEmitter.emit('BX.Call.Logger:sendLog', evnt);
+}
+
 
 export default {
 	updateUserData,
@@ -863,6 +1220,7 @@ export default {
     stopMediaStreamVideoTracks,
     stopMediaStreamAudioTracks,
 	getConferenceProvider,
+	getCurrentBitrixCall,
 	setCodecToReport,
 	saveReportWithoutCodecs,
 	processReportsWithoutCodecs,
@@ -877,10 +1235,34 @@ export default {
 	getTimeText,
 	getTimeInSeconds,
 	isConferenceChatEnabled,
+	getCallConnectionData,
+	getCallConnectionDataById,
+	abortGetCallConnectionData,
 	startSelfTest,
 	useTcpSdp,
 	openArticle,
+	getAiSettings,
 	isUserControlFeatureEnabled,
 	isPictureInPictureFeatureEnabled,
 	isNewQOSEnabled,
+	sendLog,
+	isChatMountInPage,
+	roomPermissions,
+	getCurrentUserRole,
+	havePermissionToBroadcast,
+	setRoomPermissions,
+	getRoomPermissions,
+	setUserPermissions,
+	getUserPermissions,
+	updateUserPermissionByNewRoomPermission,
+	setUserPermissionsByRoomPermissions,
+	canControlChangeSettings,
+	canControlGiveSpeakPermission,
+	setCurrentUserRole,
+	UsersRoles,
+	isRegularUser,
+	getUserRoleByUserId,
+	isDisableCameraNewJoinedUsersFeatureEnabled,
+	countDisableCameraNewJoinedUsersFeature,
+	isKibanaLogsEnabled,
 }

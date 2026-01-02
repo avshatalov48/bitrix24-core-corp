@@ -477,7 +477,12 @@ class ItemService implements Errorable
 	 * @param PushService|null $pushService For push.
 	 * @return void
 	 */
-	public function moveItemsToEntity(array $itemIds, int $entityId, PushService $pushService = null): void
+	public function moveItemsToEntity(
+		int $groupId,
+		array $itemIds,
+		int $entityId,
+		PushService $pushService = null,
+	): void
 	{
 		if (empty($itemIds))
 		{
@@ -514,7 +519,7 @@ class ItemService implements Errorable
 				];
 			}
 
-			$this->sortItems($sortInfo, $pushService);
+			$this->sortItems($groupId, $sortInfo, $pushService);
 		}
 		catch (\Exception $exception)
 		{
@@ -614,61 +619,21 @@ class ItemService implements Errorable
 		}
 	}
 
-	public function sortItems(array $sortInfo, PushService $pushService = null): void
+	public function sortItems(int $groupId, array $sortInfo, PushService $pushService = null): void
 	{
-		$itemIds = [];
-		$sortWhens = [];
-		$entityWhens = [];
+		$entities = $this->getActiveEntities($groupId);
+		$allItems = $this->getAllItemsForEntities($entities);
 
-		$updatedItems = [];
+		$visibleItems = $this->prepareVisibleItemsData($sortInfo, $allItems);
+		$sortedVisibleItemIds = $this->sortVisibleItemsByNewOrder($visibleItems);
 
-		foreach($sortInfo as $itemId => $info)
-		{
-			$itemId = (is_numeric($itemId ?? null) ? (int) $itemId : 0);
-			$sort = (is_numeric($info['sort'] ?? null) ? (int) $info['sort'] : 0);
-			$entityId = (is_numeric($info['entityId'] ?? null) ? (int) $info['entityId'] : 0);
-			$updatedItemId = (is_numeric($info['updatedItemId'] ?? null) ? (int) $info['updatedItemId'] : 0);
-			$tmpId = (is_string($info['tmpId'] ?? null) ? $info['tmpId'] : '');
+		$newOrder = $this->buildNewItemOrder($allItems, $sortedVisibleItemIds);
+		$newSortMap = $this->createSortMapFromOrder($newOrder);
 
-			if ($itemId)
-			{
-				$itemIds[] = $itemId;
-				$sortWhens[] = 'WHEN ID = ' . $itemId . ' THEN ' . $sort;
+		$updatedItems = $this->prepareUpdatedItemsData($visibleItems, $newSortMap);
+		$this->updateItemsSortOrder($newSortMap, $sortInfo);
 
-				if ($updatedItemId)
-				{
-					$updatedItems[$itemId] = [
-						'sort' => $sort,
-						'tmpId' => $tmpId,
-					];
-					if ($entityId)
-					{
-						$entityWhens[] = 'WHEN ID = ' . $itemId . ' THEN ' . $entityId;
-						$updatedItems[$itemId]['entityId'] = $entityId;
-					}
-				}
-			}
-		}
-
-		if ($itemIds)
-		{
-			$data = [];
-			if ($sortWhens)
-			{
-				$data['SORT'] = new SqlExpression('(CASE ' . implode(' ', $sortWhens) . ' END)');
-			}
-			if ($entityWhens && count($entityWhens) === count($sortWhens))
-			{
-				$data['ENTITY_ID'] = new SqlExpression('(CASE ' . implode(' ', $entityWhens) . ' END)');
-			}
-
-			ItemTable::updateMulti($itemIds, $data);
-		}
-
-		if ($updatedItems && $pushService)
-		{
-			$pushService->sendSortItemEvent($updatedItems);
-		}
+		$this->sendSortEventsIfNeeded($updatedItems, $pushService);
 	}
 
 	/**
@@ -866,6 +831,169 @@ class ItemService implements Errorable
 	public function getErrorByCode($code)
 	{
 		return $this->errorCollection->getErrorByCode($code);
+	}
+
+	private function getActiveEntities(int $groupId): array
+	{
+		return EntityTable::getList([
+			'select' => ['ID'],
+			'filter' => [
+				'GROUP_ID' => $groupId,
+				'!=STATUS' => EntityForm::SPRINT_COMPLETED,
+			],
+			'order' => ['ID' => 'ASC']
+		])->fetchAll();
+	}
+
+	private function getAllItemsForEntities(array $entities): array
+	{
+		$entityIds = array_map(fn($data) => $data['ID'], $entities);
+
+		return ItemTable::getList([
+			'select' => ['ID', 'SORT', 'ENTITY_ID'],
+			'filter' => ['ENTITY_ID' => $entityIds],
+			'order' => ['SORT' => 'ASC']
+		])->fetchAll();
+	}
+
+	private function prepareVisibleItemsData(array $sortInfo, array $allItems): array
+	{
+		$visibleItems = [];
+
+		$currentSortMap = array_column($allItems, 'SORT', 'ID');
+
+		foreach ($sortInfo as $itemId => $info)
+		{
+			$itemId = (is_numeric($itemId ?? null) ? (int)$itemId : 0);
+			$newRelativeSort = (is_numeric($info['sort'] ?? null) ? (int)$info['sort'] : 0);
+			$currentEntityId = (is_numeric($info['entityId'] ?? null) ? (int)$info['entityId'] : 0);
+			$updatedItemId = (is_numeric($info['updatedItemId'] ?? null) ? (int)$info['updatedItemId'] : 0);
+			$tmpId = (is_string($info['tmpId'] ?? null) ? $info['tmpId'] : '');
+
+			if ($itemId)
+			{
+				$visibleItems[$itemId] = [
+					'newRelativeSort' => $newRelativeSort,
+					'currentSort' => $currentSortMap[$itemId] ?? 0,
+					'entityId' => $currentEntityId,
+					'updatedItemId' => $updatedItemId,
+					'tmpId' => $tmpId
+				];
+			}
+		}
+
+		return $visibleItems;
+	}
+
+	private function sortVisibleItemsByNewOrder(array $visibleItems): array
+	{
+		uasort($visibleItems, fn($a, $b) => $a['newRelativeSort'] <=> $b['newRelativeSort']);
+
+		return array_keys($visibleItems);
+	}
+
+	private function buildNewItemOrder(array $allItems, array $sortedVisibleItemIds): array
+	{
+		$newOrder = [];
+
+		$allItemIds = array_column($allItems, 'ID');
+
+		$visibleIndex = 0;
+		$visibleCount = count($sortedVisibleItemIds);
+		foreach ($allItemIds as $itemId)
+		{
+			if (in_array($itemId, $sortedVisibleItemIds))
+			{
+				if ($visibleIndex < $visibleCount)
+				{
+					$newOrder[] = $sortedVisibleItemIds[$visibleIndex++];
+				}
+			}
+			else
+			{
+				$newOrder[] = $itemId;
+			}
+		}
+
+		return $newOrder;
+	}
+
+	private function createSortMapFromOrder(array $itemOrder): array
+	{
+		$sortMap = [];
+		$sortValue = 0;
+
+		foreach ($itemOrder as $itemId)
+		{
+			$sortMap[$itemId] = $sortValue++;
+		}
+
+		return $sortMap;
+	}
+
+	private function prepareUpdatedItemsData(array $visibleItems, array $sortMap): array
+	{
+		$updatedItems = [];
+
+		foreach ($visibleItems as $itemId => $itemData)
+		{
+			if ($itemData['updatedItemId'])
+			{
+				$updatedItems[$itemId] = [
+					'sort' => $sortMap[$itemId],
+					'tmpId' => $itemData['tmpId'],
+				];
+
+				if ($itemData['entityId'])
+				{
+					$updatedItems[$itemId]['entityId'] = $itemData['entityId'];
+				}
+			}
+		}
+
+		return $updatedItems;
+	}
+
+	private function updateItemsSortOrder(array $sortMap, array $sortInfo): void
+	{
+		$itemIds = [];
+		$sortWhens = [];
+		$entityWhens = [];
+
+		foreach ($sortMap as $itemId => $sort)
+		{
+			$itemIds[] = $itemId;
+			$sortWhens[] = 'WHEN ID = ' . $itemId . ' THEN ' . $sort;
+
+			if (isset($sortInfo[$itemId]['entityId']) && $sortInfo[$itemId]['entityId'])
+			{
+				$entityWhens[] = 'WHEN ID = ' . $itemId . ' THEN ' . (int)$sortInfo[$itemId]['entityId'];
+			}
+		}
+
+		if (empty($itemIds))
+		{
+			return;
+		}
+
+		ItemTable::updateMulti($itemIds, [
+			'SORT' => new SqlExpression('(CASE ' . implode(' ', $sortWhens) . ' END)')
+		]);
+
+		if (!empty($entityWhens))
+		{
+			$entityCase = '(CASE ' . implode(' ', $entityWhens) . ' ELSE ENTITY_ID END)';
+
+			ItemTable::updateMulti($itemIds, ['ENTITY_ID' => new SqlExpression($entityCase)]);
+		}
+	}
+
+	private function sendSortEventsIfNeeded(array $updatedItems, ?PushService $pushService): void
+	{
+		if ($updatedItems && $pushService)
+		{
+			$pushService->sendSortItemEvent($updatedItems);
+		}
 	}
 
 	private function getItemsFromDb(array $select = [], array $filter = [], array $order = []): array

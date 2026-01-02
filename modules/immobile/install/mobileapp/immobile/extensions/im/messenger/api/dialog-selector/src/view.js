@@ -3,10 +3,10 @@
  */
 jn.define('im/messenger/api/dialog-selector/view', (require, exports, module) => {
 	const { SingleSelector } = require('im/messenger/lib/ui/selector');
-	const { ChatLayoutConverter } = require('im/messenger/lib/converter');
-	const { LoggerManager } = require('im/messenger/lib/logger');
+	const { ChatLayoutConverter } = require('im/messenger/lib/converter/ui/layout');
+	const { getLogger } = require('im/messenger/lib/logger');
 
-	const logger = LoggerManager.getInstance().getLogger('forward-selector');
+	const logger = getLogger('forward-selector');
 
 	/**
 	 * @typedef {LayoutComponent<SingleSelectorProps, {}>} DialogSelectorView

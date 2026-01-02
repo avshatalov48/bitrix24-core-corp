@@ -31,7 +31,7 @@ class Ids
 		$cacheId = implode('_', [self::$cacheId, $id]);
 
 		if (self::getCacheObject()->InitCache(self::$cacheTtl, $cacheId, self::$cacheDir)
-			&& ($tmpVal = self::getCacheObject()->GetVars())
+			&& !is_null($tmpVal = self::getCacheObject()->GetVars())
 		)
 		{
 			return $tmpVal;

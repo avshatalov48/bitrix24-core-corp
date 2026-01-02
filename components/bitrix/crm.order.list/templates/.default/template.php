@@ -23,11 +23,7 @@ use Bitrix\Main\Web\Uri;
  */
 
 $APPLICATION->SetAdditionalCSS("/bitrix/themes/.default/crm-entity-show.css");
-
-if (SITE_TEMPLATE_ID === 'bitrix24')
-{
-	$APPLICATION->SetAdditionalCSS("/bitrix/themes/.default/bitrix24/crm-entity-show.css");
-}
+$APPLICATION->SetAdditionalCSS('/bitrix/themes/.default/bitrix24/crm-entity-show.css');
 
 if (CModule::IncludeModule('bitrix24') && !\Bitrix\Crm\CallList\CallList::isAvailable())
 {
@@ -976,6 +972,7 @@ $APPLICATION->IncludeComponent(
 		'ENABLE_ROW_COUNT_LOADER' => true,
 		'PRESERVE_HISTORY' => $arResult['PRESERVE_HISTORY'],
 		'MESSAGES' => $messages,
+		'COUNTER_PANEL' => array('ENTITY_TYPE_NAME' => CCrmOwnerType::OrderName),
 		'NAVIGATION_BAR' => (new NavigationBarPanel(CCrmOwnerType::Order))
 			->setItems([
 				NavigationBarPanel::ID_AUTOMATION,

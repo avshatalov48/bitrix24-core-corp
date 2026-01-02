@@ -19,6 +19,7 @@ import ToDo from './items/todo/todo';
 import Visit from './items/visit';
 import Wait from './items/wait';
 import Zoom from './items/zoom';
+import Booking from './items/booking/booking';
 
 export default class Factory
 {
@@ -75,6 +76,9 @@ export default class Factory
 				break;
 			case 'einvoice_app_installer':
 				item = new EInvoiceApp();
+				break;
+			case 'booking':
+				item = new Booking();
 				break;
 			default:
 				item = null;

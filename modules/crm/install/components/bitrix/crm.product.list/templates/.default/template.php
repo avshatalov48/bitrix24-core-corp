@@ -20,10 +20,7 @@ CCrmComponentHelper::RegisterScriptLink('/bitrix/js/crm/interface_grid.js');
 
 $APPLICATION->SetAdditionalCSS('/bitrix/js/crm/css/crm.css');
 $APPLICATION->SetAdditionalCSS("/bitrix/themes/.default/crm-entity-show.css");
-if (SITE_TEMPLATE_ID === 'bitrix24')
-{
-	$APPLICATION->SetAdditionalCSS("/bitrix/themes/.default/bitrix24/crm-entity-show.css");
-}
+$APPLICATION->SetAdditionalCSS('/bitrix/themes/.default/bitrix24/crm-entity-show.css');
 
 ?>
 <script>

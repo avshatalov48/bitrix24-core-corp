@@ -43,8 +43,8 @@ class EventHandler
 					"TO_USER_ID" => $userId,
 					"FROM_USER_ID" => 0,
 					"NOTIFY_TYPE" => IM_NOTIFY_SYSTEM,
-					"NOTIFY_MODULE" => "im",
-					"NOTIFY_TAG" => "IM_CONFIG_NOTICE",
+					"NOTIFY_MODULE" => "intranet",
+					"NOTIFY_TAG" => "INTRANET|CALLBACK_LIMIT|$userId",
 					"NOTIFY_MESSAGE" => Loc::getMessage('MAIN_MAIL_CALLBACK_LIMIT_NOTIFICATION_MSGVER2', [
 						'#EMAIL#' => $email,
 						'#LIMIT#' => SenderSendCounter::DEFAULT_LIMIT,

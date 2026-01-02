@@ -24,3 +24,14 @@ body.ui-action-panel-shown .pagetitle-below {
 .crm-kanban-popup-border {
 	padding-top: 10px;
 }
+
+.crm-kanban-action-panel-container {
+	height: 0;
+	overflow:hidden;
+}
+
+.crm-kanban-action-panel {
+	margin-top: 10px;
+	width: 100%;
+	height: 58px;
+}

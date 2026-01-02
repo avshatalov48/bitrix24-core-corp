@@ -1,0 +1,2 @@
+<?php
+$MESS["CRM_QUOTE_DETAILS_EDITOR_MAIN_SECTION_TITLE_MSGVER_1"] = "About estimate";

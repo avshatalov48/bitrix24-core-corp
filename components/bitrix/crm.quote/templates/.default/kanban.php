@@ -84,27 +84,6 @@ else
 	$entityType = \CCrmOwnerType::QuoteName;
 	$isBitrix24Template = SITE_TEMPLATE_ID === 'bitrix24';
 
-	// counters
-	if ($isBitrix24Template)
-	{
-		$this->SetViewTarget('below_pagetitle', 1000);
-	}
-
-	$APPLICATION->IncludeComponent(
-		'bitrix:crm.entity.counter.panel',
-		'',
-		[
-			'ENTITY_TYPE_NAME' => $entityType,
-			'EXTRAS' => [],
-			'PATH_TO_ENTITY_LIST' => $arResult['PATH_TO_QUOTE_KANBAN'],
-		]
-	);
-
-	if ($isBitrix24Template)
-	{
-		$this->EndViewTarget();
-	}
-
 	// menu
 	$APPLICATION->IncludeComponent(
 		'bitrix:crm.quote.menu',
@@ -127,6 +106,10 @@ else
 		'',
 		[
 			'ENTITY_TYPE' => $entityType,
+			'COUNTER_PANEL' => [
+				'ENTITY_TYPE_NAME' => $entityType,
+				'EXTRAS' => [],
+			],
 			'NAVIGATION_BAR' => (new NavigationBarPanel(CCrmOwnerType::Quote))
 				->setItems([
 					NavigationBarPanel::ID_AUTOMATION,

@@ -355,7 +355,7 @@ class CommentPoster
 		$responsibleId = (int)$taskData['RESPONSIBLE_ID'];
 		$accomplices = (array)$taskData['ACCOMPLICES'];
 		$auditors = (array)$taskData['AUDITORS'];
-		$flowId = (int)$taskData['FLOW_ID'];
+		$flowId = (int)($taskData['FLOW_ID'] ?? 0);
 
 		if (in_array($this->authorId, $accomplices, true))
 		{
@@ -1322,7 +1322,7 @@ class CommentPoster
 				break;
 
 			case 'TASK_CHANGE_RESPONSIBLE':
-				if ($flowId = (TaskRegistry::getInstance())->get($taskId)['FLOW_ID'])
+				if ($flowId = (TaskRegistry::getInstance())->get($taskId, true)['FLOW_ID'])
 				{
 					$url->addParams([
 						'flowId' => $flowId,
@@ -1331,7 +1331,7 @@ class CommentPoster
 				break;
 
 			case 'SHOW_FLOW_ATTENDEES':
-				if ($flowId = (TaskRegistry::getInstance())->get($taskId)['FLOW_ID'])
+				if ($flowId = (TaskRegistry::getInstance())->get($taskId, true)['FLOW_ID'])
 				{
 					$alreadyDisplayedUsers = self::parseUserIdsFromMessage($message);
 					$url->addParams([

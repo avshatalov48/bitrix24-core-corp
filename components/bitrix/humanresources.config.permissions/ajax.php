@@ -5,12 +5,11 @@ if (!defined("B_PROLOG_INCLUDED") || B_PROLOG_INCLUDED !== true)
 	die();
 }
 
-use Bitrix\HumanResources\Access\StructureAccessController;
-use Bitrix\HumanResources\Access\StructureActionDictionary;
-use Bitrix\HumanResources\Access\Service;
+use Bitrix\HumanResources\Enum\Access\RoleCategory;
 use Bitrix\HumanResources\Service\Container;
+use Bitrix\HumanResources\Internals\Service\Container as InternalsContainer;
+use Bitrix\Main;
 use Bitrix\Main\Localization\Loc;
-use Bitrix\Main\Engine\CurrentUser;
 
 if (!Bitrix\Main\Loader::includeModule('humanresources'))
 {
@@ -21,34 +20,46 @@ class HumanResourcesConfigPermissionsAjaxController extends \Bitrix\Main\Engine\
 {
 	/**
 	 * @param list<array{id: string, type: string, title: string, accessRights: array, accessCodes?: array}> $userGroups
+	 * @param array|null $deletedUserGroups
+	 * @param array|null $parameters
+	 *
 	 * @return array|null
 	 */
-	public function savePermissionsAction(array $userGroups): ?array
+	public function savePermissionsAction(array $userGroups = [], ?array $deletedUserGroups = null, ?array $parameters = []): array
 	{
-		if (!\Bitrix\HumanResources\Config\Storage::canUsePermissionConfig())
+		$category = RoleCategory::tryFrom($parameters['category'] ?? '');
+
+		if (!$category)
 		{
 			return [];
 		}
 
-		if (
-			empty($userGroups)
-			|| !check_bitrix_sessid()
-			|| !StructureAccessController::can(CurrentUser::get()->getId(), StructureActionDictionary::ACTION_USERS_ACCESS_EDIT)
-		)
+		$accessService = InternalsContainer::getAccessService();
+		if (!$accessService->checkAccessToEditPermissions($category))
 		{
-			return null;
+			$this->addError(new Main\Error('Access denied', 'ACCESS_DENIED'));
+
+			return [];
 		}
 
 		try
 		{
 			$permissionService = Container::getAccessRolePermissionService();
-			$permissionService->saveRolePermissions($userGroups);
+			$permissionService->setCategory($category);
 
-			(Container::getAccessRoleRelationService())->saveRoleRelation($userGroups);
+			if (!empty($userGroups))
+			{
+				$permissionService->saveRolePermissions($userGroups);
+				Container::getAccessRoleRelationService()->saveRoleRelation($userGroups);
+			}
+
+			if (is_array($deletedUserGroups))
+			{
+				$this->deleteUserGroups($deletedUserGroups);
+			}
 
 			return [
 				'USER_GROUPS' => $permissionService->getUserGroups(),
-				'ACCESS_RIGHTS' => $permissionService->getAccessRights()
 			];
 		}
 		catch (\Exception)
@@ -58,42 +69,44 @@ class HumanResourcesConfigPermissionsAjaxController extends \Bitrix\Main\Engine\
 			);
 		}
 
-		return null;
+		return [];
 	}
 
-	public function deleteRoleAction(int $roleId): void
+	public function loadAction(?array $parameters): array
 	{
-		if (
-			!check_bitrix_sessid()
-			|| !StructureAccessController::can(CurrentUser::get()->getId(), StructureActionDictionary::ACTION_USERS_ACCESS_EDIT)
-		)
+		$category = RoleCategory::tryFrom($parameters['category'] ?? '');
+
+		if (!$category)
+		{
+			return [];
+		}
+
+		$accessService = InternalsContainer::getAccessService();
+		if (!$accessService->checkAccessToEditPermissions($category))
+		{
+			$this->addError(new Main\Error('Access denied', 'ACCESS_DENIED'));
+
+			return [];
+		}
+
+		$permissionService = Container::getAccessRolePermissionService();
+		$permissionService->setCategory($category);
+
+		return [
+			'USER_GROUPS' => $permissionService->getUserGroups(),
+			'ACCESS_RIGHTS' => $permissionService->getAccessRights(),
+		];
+	}
+
+	private function deleteUserGroups(array $deletedUserGroups): void
+	{
+		$deletedUserGroups = array_filter($deletedUserGroups, is_numeric(...));
+		$deletedUserGroups = array_map(static fn($groupId) => (int)$groupId, $deletedUserGroups);
+		if (empty($deletedUserGroups))
 		{
 			return;
 		}
 
-		try
-		{
-			(Container::getAccessRolePermissionService())->deleteRole($roleId);
-		}
-		catch (\Exception)
-		{
-			$this->errorCollection[] = new \Bitrix\Main\Error(
-				Loc::getMessage('HUMAN_RESOURCES_CONFIG_ROLE_DELETE_DB_ERROR') ?? ''
-			);
-		}
-	}
-
-	public function loadAction(): array
-	{
-		if (!StructureAccessController::can(CurrentUser::get()->getId(), StructureActionDictionary::ACTION_USERS_ACCESS_EDIT))
-		{
-			return [];
-		}
-		$permissionService = Container::getAccessRolePermissionService();
-
-		return [
-			'USER_GROUPS' => $permissionService->getUserGroups(),
-			'ACCESS_RIGHTS' => $permissionService->getAccessRights()
-		];
+		Container::getAccessRolePermissionService()->deleteRoles($deletedUserGroups);
 	}
 }

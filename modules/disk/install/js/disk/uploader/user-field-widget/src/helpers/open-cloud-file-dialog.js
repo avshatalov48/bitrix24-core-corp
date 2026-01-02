@@ -1,6 +1,9 @@
 import { Runtime, Text, Type, ajax, Event } from 'main.core';
+import { FeaturePromotersRegistry } from 'ui.info-helper';
 import { Uploader } from 'ui.uploader.core';
 
+import { DocumentService } from '../const';
+import { userFieldSettings } from '../user-field-settings';
 import { loadDiskFileDialog } from './load-disk-file-dialog';
 import CloudLoadController from './cloud-load-controller';
 import CloudUploadController from './cloud-upload-controller';
@@ -8,9 +11,16 @@ import CloudUploadController from './cloud-upload-controller';
 const loadingDialogs: Set<string> = new Set();
 
 export const openCloudFileDialog = (options): void => {
+	if (!userFieldSettings.canUseImportService())
+	{
+		FeaturePromotersRegistry.getPromoter({ featureId: userFieldSettings.getImportFeatureId() }).show();
+
+		return;
+	}
+
 	options = Type.isPlainObject(options) ? options : {};
 	const dialogId: string = Type.isStringFilled(options.dialogId) ? options.dialogId : `cloud-dialog-${Text.getRandom(5)}`;
-	const serviceId: string = Type.isStringFilled(options.serviceId) ? options.serviceId : 'gdrive';
+	const serviceId: string = Type.isStringFilled(options.serviceId) ? options.serviceId : DocumentService.Google;
 	const onLoad: ?Function = Type.isFunction(options.onLoad) ? options.onLoad : null;
 	const onSelect: ?Function = Type.isFunction(options.onSelect) ? options.onSelect : null;
 	const onClose: ?Function = Type.isFunction(options.onClose) ? options.onClose : null;
@@ -68,7 +78,7 @@ export const openCloudFileDialog = (options): void => {
 			},
 		};
 
-		if (serviceId === 'gdrive')
+		if (serviceId === DocumentService.Google)
 		{
 			ajax({
 				url: '/bitrix/tools/disk/uf.php?action=getGoogleAppData',

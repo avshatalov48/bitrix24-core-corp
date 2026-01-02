@@ -157,37 +157,37 @@ class CAllTimeManEntry
 
 		if (isset($arFields['TIME_LEAKS']))
 		{
-			$arFields['TIME_LEAKS'] = intval($arFields['TIME_LEAKS']);
+			$arFields['TIME_LEAKS'] = self::clampDaySeconds(intval($arFields['TIME_LEAKS']));
 		}
 		elseif ($action == 'UPDATE')
 		{
-			$arFields['TIME_LEAKS'] = intval($arEntry['TIME_LEAKS']);
+			$arFields['TIME_LEAKS'] = self::clampDaySeconds(intval($arEntry['TIME_LEAKS']));
 		}
 
 		if ($ts_start > 0 && $ts_finish > 0 && $arFields['PAUSED'] != 'Y' && !isset($arFields['DURATION']))
 		{
-			$arFields['DURATION'] = $arFields['TIME_FINISH'] - $arFields['TIME_START'] - $arFields['TIME_LEAKS'];
+			$arFields['DURATION'] = self::correctDuration($arFields['TIME_FINISH'] - $arFields['TIME_START'] - $arFields['TIME_LEAKS']);
 		}
 
 		if (isset($arFields['DURATION']))
 		{
-			$arFields['DURATION'] = intval($arFields['DURATION']);
+			$arFields['DURATION'] = self::correctDuration(intval($arFields['DURATION']));
 		}
 		elseif (
 			$arFields['DATE_FINISH'] ?? null
 			&& $arFields['PAUSED'] != 'Y'
 		)
 		{
-			$arFields['DURATION'] = $arFields['TIME_FINISH'] - $arFields['TIME_START'] - $arFields['TIME_LEAKS'];
+			$arFields['DURATION'] = self::correctDuration($arFields['TIME_FINISH'] - $arFields['TIME_START'] - $arFields['TIME_LEAKS']);
 		}
 
 		if (isset($arFields['TIME_LEAKS_ADD']))
 		{
-			$arFields['TIME_LEAKS'] += intval($arFields['TIME_LEAKS_ADD']);
+			$arFields['TIME_LEAKS'] = self::clampDaySeconds($arFields['TIME_LEAKS'] + intval($arFields['TIME_LEAKS_ADD']));
 
 			if ($arFields['DATE_FINISH'])
 			{
-				$arFields['DURATION'] -= intval($arFields['TIME_LEAKS_ADD']);
+				$arFields['DURATION'] = self::correctDuration(intval($arFields['DURATION']) - intval($arFields['TIME_LEAKS_ADD']));
 			}
 
 			unset($arFields['TIME_LEAKS_ADD']);
@@ -931,13 +931,23 @@ class CAllTimeManEntry
 
 	private static function correctDuration(int $duration): int
 	{
+		return self::clampDaySeconds($duration);
+	}
+
+	private static function clampDaySeconds(int $seconds): int
+	{
 		$secondsPerDay = 86400;
 
-		if ($duration < 0)
+		if ($seconds < 0)
 		{
-			return $duration + $secondsPerDay;
+			return 0;
 		}
 
-		return $duration;
+		if ($seconds > $secondsPerDay)
+		{
+			return $secondsPerDay;
+		}
+
+		return $seconds;
 	}
 }

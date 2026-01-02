@@ -46,13 +46,6 @@ else
 {
 	$entityType = \CCrmOwnerType::OrderName;
 
-	// counters stub
-	$APPLICATION->IncludeComponent(
-		'bitrix:crm.entity.counter.panel',
-		'',
-		array('ENTITY_TYPE_NAME' => $entityType)
-	);
-
 	// menu
 	$APPLICATION->IncludeComponent(
 		'bitrix:crm.order.menu',
@@ -73,6 +66,7 @@ else
 		'',
 		[
 			'ENTITY_TYPE' => $entityType,
+			'COUNTER_PANEL' => ['ENTITY_TYPE_NAME' => $entityType],
 			'NAVIGATION_BAR' => (new NavigationBarPanel(CCrmOwnerType::Order))
 				->setItems([
 					NavigationBarPanel::ID_AUTOMATION,

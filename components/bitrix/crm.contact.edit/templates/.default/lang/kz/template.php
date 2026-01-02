@@ -1,0 +1,20 @@
+<?php
+$MESS["CRM_CONTACT_CREATE_TITLE"] = "Жаңа байланыс";
+$MESS["CRM_CONTACT_EDIT_DUP_CTRL_BANK_DETAIL_SUMMARY_TITLE"] = "банк деректемесі бойынша";
+$MESS["CRM_CONTACT_EDIT_DUP_CTRL_EMAIL_SUMMARY_TITLE"] = "e-mail бойынша";
+$MESS["CRM_CONTACT_EDIT_DUP_CTRL_FULL_NAME_SUMMARY_TITLE"] = "ТАӘ бойынша";
+$MESS["CRM_CONTACT_EDIT_DUP_CTRL_PHONE_SUMMARY_TITLE"] = "телефон бойынша";
+$MESS["CRM_CONTACT_EDIT_DUP_CTRL_REQUISITE_SUMMARY_TITLE"] = "деректеме бойынша";
+$MESS["CRM_CONTACT_EDIT_DUP_CTRL_SHORT_SUMMARY_TITLE"] = "табылды";
+$MESS["CRM_CONTACT_EDIT_DUP_CTRL_SUMMARY_TITLE"] = "Табылған сәйкестіктер";
+$MESS["CRM_CONTACT_EDIT_DUP_CTRL_WARNING_ACCEPT_BTN_TITLE"] = "Елемеу және сақтау";
+$MESS["CRM_CONTACT_EDIT_DUP_CTRL_WARNING_CANCEL_BTN_TITLE"] = "Болдырмау";
+$MESS["CRM_CONTACT_EDIT_DUP_CTRL_WARNING_DLG_TITLE"] = "Телнұсқаларға күдік";
+$MESS["CRM_CONTACT_EDIT_TITLE"] = "№#ID# &mdash; #NAME# байланыс";
+$MESS["CRM_IMPORT_SNS"] = "Кәдімгі қосудан басқа, сіз vCard көмегімен байланысты қосудың артықшылығын пайдалана аласыз.<br>Ол үшін <b>MS Outlook</b> пошта клиентінде Байланыстарға өтіп, қажетті визиткаларды таңдаңыз, содан кейін жоғарғы панельде \"<b>%ARROW% байланысын</b>\" визит картасы ретінде жіберу тармағын таңдап, <b>%EMAIL%</b> мекенжайына жіберіңіз";
+$MESS["CRM_TAB_1"] = "Байланыс";
+$MESS["CRM_TAB_1_TITLE"] = "Байланыс қасиеттері";
+$MESS["CRM_TAB_2"] = "Оқиғалар";
+$MESS["CRM_TAB_2_TITLE"] = "Байланыс оқиғалары";
+$MESS["CRM_TAB_3"] = "Бизнес-процестер";
+$MESS["CRM_TAB_3_TITLE"] = "Мәміленің бизнес-процестері";

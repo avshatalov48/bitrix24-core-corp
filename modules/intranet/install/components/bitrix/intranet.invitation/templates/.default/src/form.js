@@ -1,87 +1,96 @@
-import {Type, Dom, Event, Loc} from 'main.core';
-import {Submit} from './submit';
-import {SelfRegister} from './self-register';
-import {Row} from "./row";
-import {Selector} from "./selector";
-import {EventEmitter} from "main.core.events";
-import {ActiveDirectory} from "./active-directory";
+import { Type, Dom, Event, Loc } from 'main.core';
+import DepartmentControl from 'intranet.department-control';
+import { InputRowFactory, InputRowType } from './input-row-factory';
+import { MessageBar } from './message-bar';
+import { Navigation } from './navigation';
+import { PageProvider } from './page-provider';
+import { LinkPage } from './page/link-page';
+import { LocalEmailPage } from './page/local-email-page';
+import { SubmitButton } from './submit-button';
+import { EventEmitter, BaseEvent } from 'main.core.events';
+import { ActiveDirectory } from './active-directory';
 import { Analytics } from './analytics';
+import { Transport } from './transport';
 
 export default class Form extends EventEmitter
 {
 	constructor(formParams)
 	{
 		super();
+		this.setEventNamespace('BX.Intranet.Invitation');
 		const params = Type.isPlainObject(formParams) ? formParams : {};
-
-		this.signedParameters = params.signedParameters;
-		this.componentName = params.componentName;
-
 		this.menuContainer = params.menuContainerNode;
+		this.subMenuContainer = params.subMenuContainerNode;
 		this.contentContainer = params.contentContainerNode;
-		this.contentBlocks = {};
+		this.pageContainer = this.contentContainer.querySelector('.popup-window-tabs-content-invite');
 		this.userOptions = params.userOptions;
-
-		this.isExtranetInstalled = params.isExtranetInstalled === "Y";
-		this.isCloud = params.isCloud === "Y";
-		this.isAdmin = params.isAdmin === "Y";
-		this.isInvitationBySmsAvailable = params.isInvitationBySmsAvailable === "Y";
-		this.isCreatorEmailConfirmed = params.isCreatorEmailConfirmed === "Y";
-		this.regenerateUrlBase = params.regenerateUrlBase;
+		this.isExtranetInstalled = params.isExtranetInstalled === 'Y';
+		this.isCloud = params.isCloud === 'Y';
+		this.isAdmin = params.isAdmin === 'Y';
+		this.canCurrentUserInvite = params.canCurrentUserInvite === true;
+		this.isInvitationBySmsAvailable = params.isInvitationBySmsAvailable === 'Y';
+		this.isCreatorEmailConfirmed = params.isCreatorEmailConfirmed === 'Y';
 		this.firstInvitationBlock = params.firstInvitationBlock;
 		this.isSelfRegisterEnabled = params.isSelfRegisterEnabled;
 		this.analyticsLabel = params.analyticsLabel;
 		this.projectLimitExceeded = Type.isBoolean(params.projectLimitExceeded) ? params.projectLimitExceeded : true;
 		this.projectLimitFeatureId = Type.isString(params.projectLimitFeatureId) ? params.projectLimitFeatureId : '';
+		this.wishlistValue = Type.isStringFilled(params.wishlistValue) ? params.wishlistValue : '';
 		this.isCollabEnabled = params.isCollabEnabled === 'Y';
+		this.registerNeedeConfirm = params.registerConfirm === true;
+		this.useLocalEmailProgram = params.useLocalEmailProgram === true;
+		this.transport = new Transport({
+			componentName: params.componentName,
+			signedParameters: params.signedParameters,
+		});
 
 		if (Type.isDomNode(this.contentContainer))
 		{
-			const blocks = Array.prototype.slice.call(
-				this.contentContainer.querySelectorAll(".js-intranet-invitation-block")
-			);
-			(blocks || []).forEach((block) => {
-				let blockType = block.getAttribute("data-role");
-				blockType = blockType.replace("-block", "");
-				this.contentBlocks[blockType] = block;
+			this.messageBar = new MessageBar({
+				errorContainer: this.contentContainer.querySelector("[data-role='error-message']"),
+				successContainer: this.contentContainer.querySelector("[data-role='success-message']"),
 			});
-
-			this.errorMessageBlock = this.contentContainer.querySelector("[data-role='error-message']");
-			this.successMessageBlock = this.contentContainer.querySelector("[data-role='success-message']");
 
 			BX.UI.Hint.init(this.contentContainer);
 		}
 
-		this.button = document.querySelector("#intranet-invitation-btn");
-
 		if (Type.isDomNode(this.menuContainer))
 		{
-			this.menuItems = Array.prototype.slice.call(this.menuContainer.querySelectorAll("a"));
-
-			(this.menuItems || []).forEach((item) => {
-				Event.bind(item, 'click', () => {
-					this.changeContent(item.getAttribute('data-action'));
-				});
-
-				if (item.getAttribute('data-action') === this.firstInvitationBlock)
-				{
-					BX.fireEvent(item, 'click');
-				}
-			});
+			this.#initMenu();
 		}
 
-		this.submit = new Submit(this);
-		this.submit.subscribe('onInputError', (event) => {
-			this.showErrorMessage(event.data.error);
+		this.submitButton = new SubmitButton({
+			node: document.querySelector('#intranet-invitation-btn'),
+			events: {
+				click: (event) => {
+					if (
+						!this.isCreatorEmailConfirmed
+						&& !(this.navigation.current() instanceof LinkPage)
+						&& !(this.navigation.current() instanceof LocalEmailPage)
+					)
+					{
+						this.messageBar.showError(Loc.getMessage('INTRANET_INVITE_DIALOG_CONFIRM_CREATOR_EMAIL_ERROR'));
+
+						return;
+					}
+
+					if (!this.submitButton.isWaiting() && this.submitButton.isEnabled())
+					{
+						this.submitButton.wait();
+						EventEmitter.emit(this.navigation.current(), 'BX.Intranet.Invitation:submit', {
+							context: this,
+						});
+						if (this.isCloud)
+						{
+							BX.userOptions.del('intranet.invitation', 'open_invitation_form_ts');
+						}
+					}
+				},
+			},
 		});
 
 		this.analytics = new Analytics(this.analyticsLabel, this.isAdmin);
 		this.analytics.sendOpenSliderData(this.analyticsLabel.source);
-
-		if (this.isCloud)
-		{
-			this.selfRegister = new SelfRegister(this);
-		}
 
 		this.arrowBox = document.querySelector('.invite-wrap-decal-arrow');
 		if (Type.isDomNode(this.arrowBox))
@@ -90,320 +99,244 @@ export default class Form extends EventEmitter
 			this.arrowHeight = this.arrowRect.height;
 			this.setSetupArrow();
 		}
+
+		EventEmitter.subscribe('BX.Intranet.Invitation:onChangeForm', () => {
+			this.submitButton.enable();
+		});
+
+		this.navigation = this.createNavigation();
+		this.navigation?.subscribe('onBeforeChangePage', () => {
+			this.messageBar.hideAll();
+		});
+		this.navigation?.subscribe('onAfterChangePage', this.onAfterChangePage.bind(this));
+
+		this.navigation.showFirst();
+
+		this.subscribe('BX.Intranet.Invitation:onSendData', this.onSendRequest.bind(this));
+
+		EventEmitter.subscribe('BX.Intranet.Invitation:onSubmitReady', () => {
+			this.submitButton.ready();
+		});
+
+		EventEmitter.subscribe('BX.Intranet.Invitation:onSubmitDisabled', () => {
+			this.submitButton.disable();
+		});
+
+		EventEmitter.subscribe('BX.Intranet.Invitation:onSubmitWait', () => {
+			this.submitButton.wait();
+		});
 	}
 
-	renderSelector(params)
+	onAfterChangePage(event: BaseEvent)
 	{
-		this.selector = new Selector(this, params);
-		this.selector.render();
+		const section = this.getSubSection();
+		const page = event.getData().current;
+		let subSection = null;
+		if (page)
+		{
+			subSection = page.getAnalyticTab();
+			if (page.getSubmitButtonText())
+			{
+				this.submitButton.setLabel(page.getSubmitButtonText());
+			}
+
+			if (page.getButtonState() === SubmitButton.ENABLED_STATE)
+			{
+				this.submitButton.enable();
+			}
+			else if (page.getButtonState() === SubmitButton.DISABLED_STATE)
+			{
+				this.submitButton.disable();
+			}
+		}
+
+		if (this.analytics && section && subSection)
+		{
+			this.analytics.sendTabData(section, subSection);
+		}
 	}
 
-	getSubSection()
+	getSubSection(): string
 	{
 		const regex = /analyticsLabel\[source]=(\w*)&/gm;
-		let match = regex.exec(decodeURI(window.location));
+		const match = regex.exec(decodeURI(window.location));
 		if (match?.length > 1)
 		{
 			return match[1];
 		}
+
 		return null;
+	}
+
+	#initMenu()
+	{
+		this.menuItems = Array.prototype.slice.call(this.menuContainer.querySelectorAll('a'));
+		if (Type.isDomNode(this.subMenuContainer))
+		{
+			const subMenuItem = Array.prototype.slice.call(this.subMenuContainer.querySelectorAll('a'));
+
+			this.menuItems = [...this.menuItems, ...subMenuItem];
+		}
+
+		(this.menuItems || []).forEach((item) => {
+			Event.bind(item, 'click', () => {
+				this.changeContent(item.getAttribute('data-action'));
+				this.activeMenuItem(this.navigation.getCurrentCode());
+			});
+
+			if (item.getAttribute('data-action') === this.firstInvitationBlock)
+			{
+				Dom.addClass(item.parentElement, 'ui-sidepanel-menu-active');
+			}
+			else
+			{
+				Dom.removeClass(item.parentElement, 'ui-sidepanel-menu-active');
+			}
+		});
+	}
+
+	activeMenuItem(itemType: string)
+	{
+		(this.menuItems || []).forEach((item) => {
+			Dom.removeClass(item.parentElement, 'ui-sidepanel-menu-active');
+			if (item.getAttribute('data-action') === itemType)
+			{
+				Dom.addClass(item.parentElement, 'ui-sidepanel-menu-active');
+			}
+		});
 	}
 
 	changeContent(action)
 	{
-		this.hideErrorMessage();
-		this.hideSuccessMessage();
-		let section = this.getSubSection();
-		let subSection = "";
-
-		if (action.length > 0)
+		if (!Type.isStringFilled(action))
 		{
-			if (action === 'active-directory')
-			{
-				if (!this.activeDirectory)
-				{
-					this.activeDirectory = new ActiveDirectory(this);
-				}
-
-				this.activeDirectory.showForm();
-				this.analytics.sendTabData(section, Analytics.TAB_AD);
-
-				return;
-			}
-
-			const projectId = (
-				this.userOptions.hasOwnProperty('groupId')
-					? parseInt(this.userOptions.groupId, 10)
-					: 0
-			);
-
-			const departmentsId = (
-				(this.userOptions.hasOwnProperty('departmentsId') && Array.isArray(this.userOptions.departmentsId))
-					? this.userOptions.departmentsId.map((id) => parseInt(id, 10))
-					: []
-			);
-			for (let type in this.contentBlocks)
-			{
-				let block = this.contentBlocks[type];
-
-				if (type === action)
-				{
-					Dom.removeClass(block, 'invite-block-hidden');
-					Dom.addClass(block, 'invite-block-shown');
-
-					const params = {
-						contentBlock: this.contentBlocks[action]
-					};
-					const row = new Row(this, params);
-
-					if (action === 'invite')
-					{
-						subSection = Analytics.TAB_EMAIL;
-						row.renderInviteInputs(5);
-					}
-					else if (action === 'invite-with-group-dp')
-					{
-						subSection = Analytics.TAB_DEPARTMENT;
-						row.renderInviteInputs(3);
-
-						const selectorParams = {
-							contentBlock: this.contentBlocks[action]
-								.querySelector("[data-role='entity-selector-container']"),
-							options: {
-								department: true,
-								project: true,
-								projectId: projectId,
-								departmentsId: departmentsId,
-								isAdmin: this.isAdmin,
-								projectLimitExceeded: this.projectLimitExceeded,
-								projectLimitFeatureId: this.projectLimitFeatureId,
-							}
-						};
-						this.renderSelector(selectorParams);
-					}
-					else if (action === 'extranet')
-					{
-						subSection = Analytics.TAB_EXTRANET;
-						row.renderInviteInputs(3);
-
-						const selectorParams = {
-							contentBlock: this.contentBlocks[action]
-								.querySelector("[data-role='entity-selector-container']"),
-							options: {
-								department: false,
-								project: "extranet",
-								projectId: projectId,
-								isAdmin: this.isAdmin,
-								projectLimitExceeded: this.projectLimitExceeded,
-								projectLimitFeatureId: this.projectLimitFeatureId,
-								showCreateButton: !this.isCollabEnabled,
-							}
-						};
-						this.renderSelector(selectorParams);
-					}
-					else if (action === "add")
-					{
-						subSection = Analytics.TAB_REGISTRATION;
-						row.renderRegisterInputs();
-
-						const selectorParams = {
-							contentBlock: this.contentBlocks[action]
-								.querySelector("[data-role='entity-selector-container']"),
-							options: {
-								department: true,
-								project: true,
-								projectId: projectId,
-								isAdmin: this.isAdmin,
-								projectLimitExceeded: this.projectLimitExceeded,
-								projectLimitFeatureId: this.projectLimitFeatureId,
-							}
-						};
-						this.renderSelector(selectorParams);
-					}
-					else if (action === "integrator")
-					{
-						subSection = Analytics.TAB_INTEGRATOR;
-						row.renderIntegratorInput();
-					}
-					else if (action === "self")
-					{
-						subSection = Analytics.TAB_LINK;
-					}
-					else if (action === "mass-invite")
-					{
-						subSection = Analytics.TAB_MASS;
-					}
-				}
-				else
-				{
-					Dom.removeClass(block, 'invite-block-shown');
-					Dom.addClass(block, 'invite-block-hidden');
-				}
-			}
-
-			if (this.analytics && section && subSection)
-			{
-				this.analytics.sendTabData(section, subSection);
-			}
-			this.changeButton(action);
-		}
-	}
-
-	changeButton(action)
-	{
-		Event.unbindAll(this.button, 'click');
-
-		if (!this.isCreatorEmailConfirmed)
-		{
-			Event.bind(this.button, 'click', () => {
-				this.showErrorMessage(Loc.getMessage('INTRANET_INVITE_DIALOG_CONFIRM_CREATOR_EMAIL_ERROR'));
-			});
 			return;
 		}
 
-		this.activateButton();
-
-		if (action === "invite")
+		if (action === 'active-directory')
 		{
-			this.button.innerText = Loc.getMessage('BX24_INVITE_DIALOG_ACTION_INVITE');
+			if (!this.activeDirectory)
+			{
+				this.activeDirectory = new ActiveDirectory(this);
+			}
 
-			Event.bind(this.button, 'click',() => {
-				if (!this.submit.waitingResponse) {
-					this.submit.submitInvite();
-				}
-			});
+			this.activeDirectory.showForm();
+			this.analytics.sendTabData(this.getSubSection(), Analytics.TAB_AD);
+
+			return;
 		}
-		else if (action === "mass-invite")
-		{
-			this.button.innerText = Loc.getMessage('BX24_INVITE_DIALOG_ACTION_INVITE');
 
-			Event.bind(this.button, 'click',() => {
-				if (!this.submit.waitingResponse) {
-					this.submit.submitMassInvite();
-				}
-			});
+		this.navigation.show(action);
+	}
+
+	createNavigation(): Navigation
+	{
+		return new Navigation({
+			container: this.pageContainer,
+			first: this.firstInvitationBlock,
+			pages: (new PageProvider()).provide.call(this),
+		});
+	}
+
+	onSendRequest(event: BaseEvent)
+	{
+		this.submitButton.disable();
+		const request = event.getData();
+		this.messageBar.hideAll();
+		if (Type.isArray(request.errors) && request.errors.length > 0)
+		{
+			this.submitButton.enable();
+			this.submitButton.ready();
+			this.messageBar.showError(request.errors[0]);
+
+			return;
 		}
-		else if (action === "invite-with-group-dp")
-		{
-			this.button.innerText = Loc.getMessage('BX24_INVITE_DIALOG_ACTION_INVITE');
 
-			Event.bind(this.button, 'click', () => {
-				if (!this.submit.waitingResponse) {
-					this.submit.submitInviteWithGroupDp();
-				}
-			});
-		}
-		else if (action === "add")
-		{
-			this.button.innerText = Loc.getMessage('BX24_INVITE_DIALOG_ACTION_ADD');
+		request.userOptions = this.userOptions;
+		request.analyticsData = this.analyticsLabel;
+		request.data.analyticsData = this.analyticsLabel;
+		// eslint-disable-next-line promise/catch-or-return
+		this.transport.send(request).then((response) => {
+			this.submitButton.ready();
 
-			Event.bind(this.button, 'click', () => {
-				if (!this.submit.waitingResponse) {
-					this.submit.submitAdd();
-				}
-			});
-		}
-		else if (action === "self")
-		{
-			this.button.innerText = Loc.getMessage('BX24_INVITE_DIALOG_ACTION_SAVE');
-			this.disableButton();
-
-			Event.bind(this.button, 'click', () => {
-				if (this.isButtonActive())
+			if (response.data)
+			{
+				if (request?.action === 'self')
 				{
-					this.submit.submitSelf();
+					this.messageBar.showSuccess(response.data);
+					this.isSelfRegisterEnabled = request.data.allow_register === 'Y';
+					EventEmitter.emit(EventEmitter.GLOBAL_TARGET, 'BX.Intranet.Invitation:selfChange', {
+						selfEnabled: this.isSelfRegisterEnabled,
+					});
 				}
-			});
-		}
-		else if (action === "integrator")
-		{
-			this.button.innerText = Loc.getMessage('BX24_INVITE_DIALOG_ACTION_INVITE');
-
-			Event.bind(this.button, 'click', () => {
-				if (!this.submit.waitingResponse) {
-					this.submit.submitIntegrator();
+				else if (this.useLocalEmailProgram && request?.action === 'invite' && request?.type === 'invite-email')
+				{
+					EventEmitter.emit(EventEmitter.GLOBAL_TARGET, 'BX.Intranet.Invitation:InviteSuccess');
 				}
-			});
-		}
-		else if (action === "extranet")
-		{
-			this.button.innerText = Loc.getMessage('BX24_INVITE_DIALOG_ACTION_INVITE');
-
-			Event.bind(this.button, 'click', () => {
-				if (!this.submit.waitingResponse) {
-					this.submit.submitExtranet();
+				else
+				{
+					this.changeContent('success');
+					this.submitButton.sendSuccessEvent(response.data);
 				}
-			});
-		}
-		else if (action === "success")
-		{
-			this.button.innerText = Loc.getMessage('BX24_INVITE_DIALOG_ACTION_INVITE_MORE');
-
-			Event.bind(this.button, 'click', () => {
-				BX.fireEvent(this.menuItems[0], 'click');
-			});
-		}
-	}
-
-	disableButton()
-	{
-		Dom.addClass(this.button, "ui-btn-disabled");
-	}
-
-	activateButton()
-	{
-		Dom.removeClass(this.button, "ui-btn-disabled");
-	}
-
-	isButtonActive()
-	{
-		return !Dom.hasClass(this.button, "ui-btn-disabled");
-	}
-
-	showSuccessMessage(successText)
-	{
-		this.hideErrorMessage();
-
-		if (Type.isDomNode(this.successMessageBlock))
-		{
-			this.successMessageBlock.style.display = "block";
-			const alert = this.successMessageBlock.querySelector(".ui-alert-message");
-			if (Type.isDomNode(alert))
-			{
-				alert.innerHTML = BX.util.htmlspecialchars(successText);
+				EventEmitter.emit(EventEmitter.GLOBAL_TARGET, 'BX.Intranet.Invitation:onInviteRequestSuccess', {
+					response,
+				});
 			}
-		}
-	}
 
-	hideSuccessMessage()
-	{
-		if (Type.isDomNode(this.successMessageBlock))
-		{
-			this.successMessageBlock.style.display = "none";
-		}
-	}
+			EventEmitter.subscribe(
+				EventEmitter.GLOBAL_TARGET,
+				'SidePanel.Slider:onClose',
+				() => {
+					BX.SidePanel.Instance.postMessageTop(window, 'BX.Bitrix24.EmailConfirmation:showPopup');
+				},
+			);
+		}, (response) => {
+			this.submitButton.enable();
+			this.submitButton.ready();
 
-	showErrorMessage(errorText)
-	{
-		this.hideSuccessMessage();
-
-		if (Type.isDomNode(this.errorMessageBlock) && errorText)
-		{
-			this.errorMessageBlock.style.display = "block";
-			const alert = this.errorMessageBlock.querySelector(".ui-alert-message");
-			if (Type.isDomNode(alert))
+			if (response.data === 'user_limit')
 			{
-				alert.innerHTML = BX.util.htmlspecialchars(errorText);
+				// eslint-disable-next-line no-undef
+				B24.licenseInfoPopup.show(
+					'featureID',
+					Loc.getMessage('BX24_INVITE_DIALOG_USERS_LIMIT_TITLE'),
+					Loc.getMessage('BX24_INVITE_DIALOG_USERS_LIMIT_TEXT'),
+				);
 			}
-		}
+			else
+			{
+				this.messageBar.showError(response.errors[0].message);
+			}
+
+			if (request?.action === 'invite' && this.useLocalEmailProgram && request?.type === 'invite-email')
+			{
+				EventEmitter.emit(EventEmitter.GLOBAL_TARGET, 'BX.Intranet.Invitation:InviteFailed');
+			}
+		});
 	}
 
-	hideErrorMessage()
+	createDepartmentControl(): DepartmentControl
 	{
-		if (Type.isDomNode(this.errorMessageBlock))
-		{
-			this.errorMessageBlock.style.display = "none";
-		}
+		const departmentsId = Type.isArray(this.userOptions?.departmentList)
+			? this.userOptions.departmentList
+			: [];
+		const rootDepartment = this.userOptions?.rootDepartment;
+
+		return new DepartmentControl({
+			departmentList: departmentsId,
+			rootDepartment: Type.isObject(rootDepartment) ? rootDepartment : null,
+		});
+	}
+
+	createInputRowFactory(useOnlyPhone: boolean = false): InputRowFactory
+	{
+		const inputRowType = useOnlyPhone
+			? InputRowType.PHONE
+			: (this.isInvitationBySmsAvailable ? InputRowType.ALL : InputRowType.EMAIL);
+
+		return new InputRowFactory({
+			inputRowType,
+		});
 	}
 
 	getSetupArrow()
@@ -413,9 +346,8 @@ export default class Form extends EventEmitter
 		this.sliderContent = document.querySelector('.ui-page-slider-workarea');
 		this.sliderHeader = document.querySelector('.ui-side-panel-wrap-title-wrap');
 		this.buttonPanel = document.querySelector('.ui-button-panel');
-		this.inviteButton = document.querySelector('.invite-form-buttons');
 
-		this.sliderHeaderHeight = this.sliderHeader.getBoundingClientRect().height;
+		this.sliderHeaderHeight = this.sliderHeader?.getBoundingClientRect().height;
 		this.buttonPanelRect = this.buttonPanel.getBoundingClientRect();
 		this.panelRect = this.panelConfirmBtn.getBoundingClientRect();
 		this.btnWidth = Math.ceil(this.panelRect.width);
@@ -423,35 +355,51 @@ export default class Form extends EventEmitter
 		this.sliderContentRect = this.sliderContent.getBoundingClientRect();
 
 		this.bodyHeight = this.body.getBoundingClientRect().height - this.buttonPanelRect.height + this.sliderHeaderHeight;
-		this.contentHeight = this.arrowHeight + this.sliderContentRect.height + this.buttonPanelRect.height + this.sliderHeaderHeight - 65;
+		this.contentHeight = this.arrowHeight
+			+ this.sliderContentRect.height
+			+ this.buttonPanelRect.height
+			+ this.sliderHeaderHeight
+			- 65;
 	}
 
 	updateArrow()
 	{
 		this.bodyHeight = this.body.getBoundingClientRect().height - this.buttonPanelRect.height + this.sliderHeaderHeight;
-		this.contentHeight = this.arrowHeight + this.sliderContentRect.height + this.buttonPanelRect.height + this.sliderHeaderHeight - 65;
-		this.contentHeight > this.bodyHeight ? this.body.classList.add('js-intranet-invitation-arrow-hide') : this.body.classList.remove('js-intranet-invitation-arrow-hide');
+		this.contentHeight = this.arrowHeight
+			+ this.sliderContentRect.height
+			+ this.buttonPanelRect.height
+			+ this.sliderHeaderHeight - 65;
+		// eslint-disable-next-line no-unused-expressions
+		this.contentHeight > this.bodyHeight
+			? Dom.addClass(this.body, 'js-intranet-invitation-arrow-hide')
+			: Dom.removeClass(this.body, 'js-intranet-invitation-arrow-hide');
 	}
 
 	setSetupArrow()
 	{
 		this.getSetupArrow();
 		const btnPadding = 40;
-		this.arrowBox.style.left = (this.panelRect.left + (this.btnWidth / 2) - (this.arrowWidth / 2) - btnPadding) + 'px';
-		this.contentHeight > this.bodyHeight ? this.body.classList.add('js-intranet-invitation-arrow-hide') : this.body.classList.remove('js-intranet-invitation-arrow-hide');
+		Dom.style(
+			this.arrowBox,
+			'left',
+			`${this.panelRect.left + (this.btnWidth / 2) - (this.arrowWidth / 2) - btnPadding}px`,
+		);
+		// eslint-disable-next-line no-unused-expressions
+		this.contentHeight > this.bodyHeight
+			? Dom.addClass(this.body, 'js-intranet-invitation-arrow-hide')
+			: Dom.removeClass(this.body, 'js-intranet-invitation-arrow-hide');
 
-		window.addEventListener('resize', function() {
+		Event.bind(window, 'resize', () => {
 			if (window.innerWidth <= 1100)
 			{
-				this.arrowBox.style.left = (this.panelRect.left + (this.btnWidth / 2) - (this.arrowWidth / 2) - btnPadding) + 'px';
+				Dom.style(
+					this.arrowBox,
+					'left',
+					`${this.panelRect.left + (this.btnWidth / 2) - (this.arrowWidth / 2) - btnPadding}px`,
+				);
 			}
 			this.getSetupArrow();
 			this.updateArrow();
-		}.bind(this))
-
-		this.inviteButton.addEventListener('click', function() {
-			this.getSetupArrow();
-			this.updateArrow();
-		}.bind(this))
+		});
 	}
 }

@@ -30,6 +30,7 @@ if (!empty($arResult['ERROR_MESSAGES']))
 }
 
 Extension::load([
+	'biconnector.grid.editable-columns',
 	'ui.dialogs.messagebox',
 	'ui.hint',
 	'pull.client',

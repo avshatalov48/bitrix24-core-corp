@@ -13,35 +13,25 @@ import { BasePullHandler } from './base-pull-handler';
 
 export class BookingPullHandler extends BasePullHandler
 {
-	constructor(props)
-	{
-		super(props);
-
-		this.handleBookingAdded = this.#handleBookingAdded.bind(this);
-		this.handleBookingDeleted = this.#handleBookingDeleted.bind(this);
-		this.updateCounters = this.#updateCounters.bind(this);
-	}
-
 	getMap(): { [command: string]: Function }
 	{
 		return {
-			bookingAdded: this.handleBookingAdded,
-			bookingUpdated: this.handleBookingAdded,
-			bookingDeleted: this.handleBookingDeleted,
+			bookingAdded: this.#handleBookingAdded,
+			bookingUpdated: this.#handleBookingAdded,
+			bookingDeleted: this.#handleBookingDeleted,
 		};
 	}
 
 	getDelayedMap(): { [command: string]: Function }
 	{
 		return {
-			bookingAdded: this.updateCounters,
-			bookingUpdated: this.updateCounters,
-			bookingDeleted: this.updateCounters,
+			bookingAdded: this.#updateCounters,
+			bookingUpdated: this.#updateCounters,
+			bookingDeleted: this.#updateCounters,
 		};
 	}
 
-	#handleBookingAdded(params: { booking: BookingDto }): void
-	{
+	#handleBookingAdded = (params: { booking: BookingDto }): void => {
 		const bookingDto = params.booking;
 
 		const booking = BookingMappers.mapDtoToModel(bookingDto);
@@ -57,16 +47,14 @@ export class BookingPullHandler extends BasePullHandler
 			Core.getStore().dispatch('bookings/upsert', booking),
 			Core.getStore().dispatch('clients/upsertMany', clients),
 		]);
-	}
+	};
 
-	#handleBookingDeleted(params: { id: number }): void
-	{
+	#handleBookingDeleted = (params: { id: number }): void => {
 		void Core.getStore().dispatch(`${Model.Bookings}/delete`, params.id);
 		void Core.getStore().dispatch(`${Model.Interface}/addDeletingBooking`, params.id);
-	}
+	};
 
-	async #updateCounters(): Promise<void>
-	{
+	#updateCounters = async (): Promise<void> => {
 		await mainPageService.fetchCounters();
-	}
+	};
 }

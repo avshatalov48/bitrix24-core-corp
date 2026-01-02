@@ -37,7 +37,9 @@ class TimelineEntryCategory
 		APPLICATION = 'application',
 		ORDER = 'order',
 		ORDER_CHECK = 'check',
-		LOG_MESSAGE = 'log-message';
+		LOG_MESSAGE = 'log-message',
+		REPEAT_SALE = 'repeat-sale'
+	;
 
 	/**
 	 * Get Category descriptions
@@ -71,6 +73,7 @@ class TimelineEntryCategory
 			self::ORDER => Loc::getMessage('CRM_TIMELINE_CATEGORY_ORDER'),
 			self::ORDER_CHECK => Loc::getMessage('CRM_TIMELINE_CATEGORY_ORDER_CHECK'),
 			self::LOG_MESSAGE => Loc::getMessage('CRM_TIMELINE_CATEGORY_LOG_MESSAGE'),
+			self::REPEAT_SALE => Loc::getMessage('CRM_TIMELINE_CATEGORY_REPEAT_SALE'),
 		];
 
 		if (Main\Config\Option::get('mobile', 'crm_call_tracker_enabled', 'N') === 'Y')
@@ -271,6 +274,13 @@ class TimelineEntryCategory
 					$categoryFilter->where(
 						Main\Entity\Query::filter()
 							->where('TYPE_ID', Crm\Timeline\TimelineType::LOG_MESSAGE)
+					);
+				}
+				elseif($entryCategoryID === self::REPEAT_SALE)
+				{
+					$categoryFilter->where(
+						Main\Entity\Query::filter()
+							->where('ASSOCIATED_ENTITY_CLASS_NAME', Crm\Activity\Provider\RepeatSale::getId())
 					);
 				}
 			}

@@ -285,6 +285,9 @@ class CCrmStatus
 					'ENTITY_TYPE_ID' => $type->getEntityTypeId(),
 					'IS_ENABLED' => $type->getIsStagesEnabled(),
 					'CATEGORY_ID' => $category->getId(),
+					'CATEGORY_NAME' => $category->getName(),
+					'CATEGORY_SORT' => $category->getSort(),
+					'IS_DEFAULT_CATEGORY' => $category->getIsDefault(),
 				];
 			}
 		}
@@ -1172,6 +1175,12 @@ class CCrmStatus
 				'SYSTEM' => 'Y'
 			],
 			[
+				'NAME' => Loc::getMessage('CRM_STATUS_TYPE_SOURCE_REPEAT_SALE'),
+				'STATUS_ID' => 'REPEAT_SALE',
+				'SORT' => 76,
+				'SYSTEM' => 'Y'
+			],
+			[
 				'NAME' => GetMessage('CRM_STATUS_TYPE_SOURCE_CALLBACK'),
 				'STATUS_ID' => 'CALLBACK',
 				'SORT' => 77,
@@ -1193,7 +1202,13 @@ class CCrmStatus
 				'NAME' => GetMessage('CRM_STATUS_TYPE_SOURCE_OTHER'),
 				'STATUS_ID' => 'OTHER',
 				'SORT' => 80,
-			]
+			],
+			[
+				'NAME' => Loc::getMessage('CRM_STATUS_TYPE_SOURCE_BOOKING'),
+				'STATUS_ID' => 'BOOKING',
+				'SORT' => 81,
+				'SYSTEM' => 'Y'
+			],
 		];
 	}
 
@@ -1270,6 +1285,7 @@ class CCrmStatus
 	public static function GetDefaultDealStages($namespace = ''): array
 	{
 		$prefix = empty($namespace) ? '' :  "{$namespace}:";
+		$colorGenerator = new \Bitrix\Crm\Stage\DefaultProcessColorGenerator();
 
 		return [
 			[
@@ -1277,35 +1293,35 @@ class CCrmStatus
 				'STATUS_ID' => "{$prefix}NEW",
 				'SORT' => 10,
 				'SYSTEM' => 'Y',
-				'COLOR' => '#39A8EF',
+				'COLOR' => $colorGenerator->generate(),
 			],
 			[
 				'NAME' => GetMessage('CRM_DEAL_STAGE_PREPARATION'),
 				'STATUS_ID' => "{$prefix}PREPARATION",
 				'SORT' => 20,
 				'SYSTEM' => 'N',
-				'COLOR' => '#2FC6F6',
+				'COLOR' => $colorGenerator->generate(),
 			],
 			[
 				'NAME' => GetMessage('CRM_DEAL_STAGE_PREPAYMENT_INVOICE'),
 				'STATUS_ID' => "{$prefix}PREPAYMENT_INVOICE", //PRELIMINARY_INVOICE
 				'SORT' => 30,
 				'SYSTEM' => 'N',
-				'COLOR' => '#55D0E0',
+				'COLOR' => $colorGenerator->generate(),
 			],
 			[
 				'NAME' => GetMessage('CRM_DEAL_STAGE_EXECUTING'),
 				'STATUS_ID' => "{$prefix}EXECUTING",
 				'SORT' => 40,
 				'SYSTEM' => 'N',
-				'COLOR' => '#47E4C2',
+				'COLOR' => $colorGenerator->generate(),
 			],
 			[
 				'NAME' => GetMessage('CRM_DEAL_STAGE_FINAL_INVOICE'),
 				'STATUS_ID' => "{$prefix}FINAL_INVOICE",
 				'SORT' => 50,
 				'SYSTEM' => 'N',
-				'COLOR' => '#FFA900',
+				'COLOR' => $colorGenerator->generate(),
 			],
 			[
 				'NAME' => GetMessage('CRM_DEAL_STAGE_WON'),
@@ -1752,27 +1768,22 @@ class CCrmStatus
 	//region user permissions
 	public static function CheckCreatePermission(): bool
 	{
-		$perms = CCrmPerms::GetCurrentUserPermissions();
-
-		return $perms->HavePerm('CONFIG', BX_CRM_PERM_CONFIG, 'WRITE');
+		return \Bitrix\Crm\Service\Container::getInstance()->getUserPermissions()->isCrmAdmin();
 	}
 
 	public static function CheckUpdatePermission($ID): bool
 	{
-		$perms = CCrmPerms::GetCurrentUserPermissions();
-		return $perms->HavePerm('CONFIG', BX_CRM_PERM_CONFIG, 'WRITE');
+		return \Bitrix\Crm\Service\Container::getInstance()->getUserPermissions()->isCrmAdmin();
 	}
 
 	public static function CheckDeletePermission($ID): bool
 	{
-		$perms = CCrmPerms::GetCurrentUserPermissions();
-		return $perms->HavePerm('CONFIG', BX_CRM_PERM_CONFIG, 'WRITE');
+		return \Bitrix\Crm\Service\Container::getInstance()->getUserPermissions()->isCrmAdmin();
 	}
 
 	public static function CheckReadPermission($ID = 0): bool
 	{
-		$perms = CCrmPerms::GetCurrentUserPermissions();
-		return $perms->HavePerm('CONFIG', BX_CRM_PERM_CONFIG, 'READ');
+		return \Bitrix\Crm\Service\Container::getInstance()->getUserPermissions()->entityType()->canReadSomeItemsInCrmOrAutomatedSolutions();
 	}
 	//endregion
 }

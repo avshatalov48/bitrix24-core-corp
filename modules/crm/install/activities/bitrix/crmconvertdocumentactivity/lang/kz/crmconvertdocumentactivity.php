@@ -1,0 +1,19 @@
+<?php
+$MESS["CRM_CVTDA_ALREADY_CONVERTED_1"] = "Құжат қазірдің өзінде түрлендірілді, орындалу тоқтатылды";
+$MESS["CRM_CVTDA_COMPANY"] = "Компанияны";
+$MESS["CRM_CVTDA_CONTACT"] = "Байланыс";
+$MESS["CRM_CVTDA_DEAL"] = "Мәмілені";
+$MESS["CRM_CVTDA_DEAL_CATEGORY_ID"] = "Мәміле иірімі";
+$MESS["CRM_CVTDA_DEFAULT_CONTACT_NAME"] = "Атаусыз";
+$MESS["CRM_CVTDA_DISABLE_ACTIVITY_COMPLETION"] = "Түрлендіру кезінде істерді жаппау";
+$MESS["CRM_CVTDA_EMPTY_PROP"] = "Жасалатын мәндер көрсетілмеген";
+$MESS["CRM_CVTDA_INCORRECT_DOCUMENT"] = "Құжаттың бұл түрін түрлендіру мүмкін емес";
+$MESS["CRM_CVTDA_INVOICE"] = "Шот";
+$MESS["CRM_CVTDA_ITEMS"] = "Негізінде жасау";
+$MESS["CRM_CVTDA_QUOTE"] = "Ұсыныс";
+$MESS["CRM_CVTDA_REQUEST_DESCRIPTION_DEAL"] = "Мәміле негізінде келесі құжаттарды жасау қажет: #ITEMS#";
+$MESS["CRM_CVTDA_REQUEST_DESCRIPTION_LEAD"] = "Лид негізінде келесі құжаттарды жасау қажет: #ITEMS#";
+$MESS["CRM_CVTDA_REQUEST_SUBJECT_DEAL"] = "Мәмілені түрлендіру қажет";
+$MESS["CRM_CVTDA_REQUEST_SUBJECT_LEAD"] = "Лидті түрлендіру қажет";
+$MESS["CRM_CVTDA_RESPONSIBLE"] = "Жауапты";
+$MESS["CRM_CVTDA_WIZARD_NOT_FOUND"] = "Түрлендіру шеберін инициализациялау мүмкін болмады";

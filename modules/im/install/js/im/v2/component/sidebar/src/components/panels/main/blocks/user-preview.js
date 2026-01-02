@@ -1,7 +1,9 @@
 import { Analytics } from 'im.v2.lib.analytics';
 import { hint } from 'ui.vue3.directives.hint';
 
-import { ChatAvatar, AvatarSize, ChatTitle, Button as MessengerButton, ButtonColor, ButtonSize } from 'im.v2.component.elements';
+import { ChatTitle } from 'im.v2.component.elements.chat-title';
+import { ChatButton, ButtonColor, ButtonSize } from 'im.v2.component.elements.button';
+import { ChatAvatar, AvatarSize } from 'im.v2.component.elements.avatar';
 import { ActionByRole, ActionByUserType, UserType } from 'im.v2.const';
 import { Utils } from 'im.v2.lib.utils';
 import { AddToChat } from 'im.v2.component.entity-selector';
@@ -18,7 +20,7 @@ import type { ImModelChat, ImModelUser } from 'im.v2.model';
 export const UserPreview = {
 	name: 'UserPreview',
 	directives: { hint },
-	components: { ChatAvatar, ChatTitle, MessengerButton, AddToChat, AutoDelete },
+	components: { ChatAvatar, ChatTitle, ChatButton, AddToChat, AutoDelete },
 	props: {
 		dialogId: {
 			type: String,
@@ -106,7 +108,7 @@ export const UserPreview = {
 				class="bx-im-sidebar-main-preview-personal-chat__invite-button-container" 
 				ref="add-members"
 			>
-				<MessengerButton
+				<ChatButton
 					v-if="canInviteMembers"
 					:text="$Bitrix.Loc.getMessage('IM_SIDEBAR_CREATE_GROUP_CHAT')"
 					:size="ButtonSize.S"

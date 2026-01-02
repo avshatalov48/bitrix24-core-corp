@@ -52,8 +52,16 @@ class CBPCrmGetRelationsInfoActivity extends \Bitrix\Bizproc\Activity\BaseActivi
 		$searchResult = $this->findParentDocumentId();
 		if ($searchResult->isSuccess())
 		{
-			$document = static::getDocumentService()->GetDocument($searchResult->getData());
 			$documentFields = array_keys($this->ParentEntityFields);
+
+			if (defined('\CBPDocument::PARAM_USED_DOCUMENT_FIELDS'))
+			{
+				$document = static::getDocumentService()->GetDocument($searchResult->getData(), select: $documentFields);
+			}
+			else
+			{
+				$document = static::getDocumentService()->GetDocument($searchResult->getData());
+			}
 
 			foreach ($documentFields as $fieldId)
 			{

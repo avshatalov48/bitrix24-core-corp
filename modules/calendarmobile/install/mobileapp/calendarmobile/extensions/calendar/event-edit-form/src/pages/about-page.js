@@ -7,14 +7,14 @@ jn.define('calendar/event-edit-form/pages/about-page', (require, exports, module
 	const { Box } = require('ui-system/layout/box');
 	const { Area } = require('ui-system/layout/area');
 	const { Text4 } = require('ui-system/typography/text');
-	const { DialogFooter } = require('ui-system/layout/dialog-footer');
 	const { Button, Icon, ButtonSize, ButtonDesign } = require('ui-system/form/buttons/button');
 	const { UIScrollView } = require('layout/ui/scroll-view');
+	const { BoxFooter } = require('ui-system/layout/dialog-footer');
 
 	const { EventNameInput } = require('calendar/event-edit-form/layout/event-name-input');
 	const { EventSettings } = require('calendar/event-edit-form/layout/event-settings');
 	const { AttendeesSelector } = require('calendar/event-edit-form/layout/attendees-selector');
-	const { SelectDateTimeButton } = require('calendar/event-edit-form/layout/select-date-time-button');
+	const { SelectDateTimeButton } = require('calendar/event-edit-form/button/select-date-time');
 	const { SectionInfo } = require('calendar/event-edit-form/layout/section-info');
 	const { Description } = require('calendar/event-edit-form/layout/description');
 	const { SaveEventContainer } = require('calendar/event-edit-form/layout/save-event-container');
@@ -40,17 +40,11 @@ jn.define('calendar/event-edit-form/pages/about-page', (require, exports, module
 				{
 					resizableByKeyboard: true,
 					backgroundColor: Color.bgSecondary,
-					style: {
-						flex: 1,
-					},
-					safeArea: {
-						bottom: true,
-					},
+					style: { flex: 1 },
+					safeArea: { bottom: true },
+					footer: this.renderBoxFooter(),
 				},
 				this.renderContent(),
-				!this.editAttendeesMode && this.renderSelectDateTimeButton(),
-				this.editAttendeesMode && this.renderSaveEventContainer(),
-				this.renderDialogFooter(),
 			);
 		}
 
@@ -88,6 +82,7 @@ jn.define('calendar/event-edit-form/pages/about-page', (require, exports, module
 					style: {
 						marginVertical: Indent.S.toNumber(),
 						flexDirection: 'row',
+						alignItems: 'center',
 					},
 				},
 				this.renderTitleInput(),
@@ -116,20 +111,27 @@ jn.define('calendar/event-edit-form/pages/about-page', (require, exports, module
 				leftIconColor: Color.base4,
 				size: ButtonSize.L,
 				design: ButtonDesign.PLAIN_NO_ACCENT,
-				onClick: () => EventSettings.open(this.layout),
+				onClick: this.openEventSettings,
 			});
 		}
 
 		renderSectionInfo()
 		{
-			return new SectionInfo({ layout: this.layout });
+			return View(
+				{
+					style: {
+						marginBottom: Indent.XL.toNumber(),
+					},
+				},
+				new SectionInfo({ layout: this.layout }),
+			);
 		}
 
 		renderDescription()
 		{
 			return Area(
 				{
-					title: Loc.getMessage('M_CALENDAR_EVENT_EDIT_DESCRIPTION'),
+					title: Loc.getMessage('M_CALENDAR_EVENT_EDIT_DESCRIPTION_TITLE'),
 				},
 				new Description({ layout: this.layout }),
 			);
@@ -139,7 +141,7 @@ jn.define('calendar/event-edit-form/pages/about-page', (require, exports, module
 		{
 			return Area(
 				{
-					isFirst: !this.props.editAttendeesMode,
+					isFirst: !this.editAttendeesMode,
 				},
 				Text4({
 					testId: 'calendar-event-edit-form-attendees-title',
@@ -152,12 +154,7 @@ jn.define('calendar/event-edit-form/pages/about-page', (require, exports, module
 
 		renderSelectDateTimeButton()
 		{
-			return Area(
-				{
-					isFirst: true,
-				},
-				new SelectDateTimeButton({ layout: this.layout }),
-			);
+			return new SelectDateTimeButton({ layout: this.layout });
 		}
 
 		renderSaveEventContainer()
@@ -165,17 +162,23 @@ jn.define('calendar/event-edit-form/pages/about-page', (require, exports, module
 			return new SaveEventContainer({ layout: this.layout });
 		}
 
-		renderDialogFooter()
+		renderBoxFooter()
 		{
-			return DialogFooter({
-				safeArea: true,
-				keyboardButton: {
-					text: Loc.getMessage('M_CALENDAR_EVENT_EDIT_FORM_READY'),
-					testId: 'calendar-event-edit-form-event-name-input-btn',
-					onClick: () => Keyboard.dismiss(),
+			return BoxFooter(
+				{
+					safeArea: true,
+					keyboardButton: {
+						text: Loc.getMessage('M_CALENDAR_EVENT_EDIT_FORM_READY'),
+						testId: 'calendar-event-edit-form-event-name-input-btn',
+						onClick: () => Keyboard.dismiss(),
+					},
 				},
-			});
+				!this.editAttendeesMode && this.renderSelectDateTimeButton(),
+				this.editAttendeesMode && this.renderSaveEventContainer(),
+			);
 		}
+
+		openEventSettings = () => EventSettings.open(this.layout);
 	}
 
 	module.exports = { AboutPage };

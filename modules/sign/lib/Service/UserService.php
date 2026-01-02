@@ -15,6 +15,11 @@ class UserService
 		return Container::instance()->getUserRepository()->getById($userId);
 	}
 
+	public function listByIds(array $userIds): \Bitrix\Sign\Item\UserCollection
+	{
+		return Container::instance()->getUserRepository()->getByIds($userIds);
+	}
+
 	public function getUserName(User $user): string
 	{
 		return CUser::FormatName(

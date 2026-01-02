@@ -240,8 +240,6 @@ export class BatchConversionManager
 			sessid: BX.bitrix_sessid(),
 		};
 
-		this.#sendAnalyticsData('attempt');
-
 		Ajax(
 			{
 				url: this._serviceUrl,
@@ -491,13 +489,10 @@ export class BatchConversionManager
 			}
 
 			this._failedItemCount++;
-			this.#sendAnalyticsData('error');
 		}
 
 		if (state === ProcessState.completed)
 		{
-			this.#sendAnalyticsData('success');
-
 			SummaryPanel.create(
 				this._id,
 				{

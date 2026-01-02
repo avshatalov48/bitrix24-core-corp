@@ -195,8 +195,8 @@ final class CTaskRestService extends IRestService
 		try
 		{
 			if ( ! (
-				CTasksTools::IsAdmin()
-				|| CTasksTools::IsPortalB24Admin()
+				\Bitrix\Tasks\Util\User::isAdmin()
+				|| \Bitrix\Tasks\Integration\Bitrix24\User::isAdmin()
 			))
 			{
 				throw new TasksException('Only root can do this', TasksException::TE_ACCESS_DENIED);
@@ -209,9 +209,9 @@ final class CTaskRestService extends IRestService
 
 			$userId = array_pop($args);
 
-			CTasksTools::setOccurAsUserId($userId);
+			\Bitrix\Tasks\Util\User::setOccurAsId($userId);
 
-			$parsedReturnValue = CTasksTools::getOccurAsUserId();
+			$parsedReturnValue = \Bitrix\Tasks\Util\User::getOccurAsId();
 			$withoutExceptions = true;
 		}
 		catch (CTaskAssertException $e)
@@ -291,7 +291,7 @@ final class CTaskRestService extends IRestService
 				throw new TasksException('Invalid status given', TasksException::TE_WRONG_ARGUMENTS);
 			}
 
-			$oTask = CTaskItem::getInstance($taskId, CTasksTools::getCommanderInChief());	// act as Admin
+			$oTask = CTaskItem::getInstance($taskId, \Bitrix\Tasks\Util\User::getAdminId());	// act as Admin
 			$oTask->update(array('STATUS' => $statusId));
 
 			$parsedReturnValue = null;

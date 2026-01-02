@@ -16,5 +16,7 @@ jn.define('ui-system/form/inputs/input/src/enums/mode-enum', (require, exports, 
 		static NAKED = new InputMode('NAKED', 'naked');
 	}
 
-	module.exports = { InputMode };
+	module.exports = {
+		InputMode: InputMode.export(),
+	};
 });

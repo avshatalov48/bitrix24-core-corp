@@ -45,11 +45,12 @@ class Token extends Base
 
 	/**
 	 * @param string $userId Identifier of user.
-	 * @return array|false token object from database.
+	 * @return string|false token object from database.
 	 */
 	protected function getToken($userId)
 	{
 		$token = TokensTable::getToken($userId);
+
 		if (!$token)
 		{
 			$result = TokensTable::createToken($userId);
@@ -60,6 +61,7 @@ class Token extends Base
 			$result = TokensTable::updateToken($token, $userId);
 			$token = $result['TOKEN'];
 		}
+
 		return $token;
 	}
 

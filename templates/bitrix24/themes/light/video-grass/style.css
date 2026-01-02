@@ -1,4 +1,8 @@
-body {
-	background: #365511 url(grass-poster.jpg) fixed 0 0 no-repeat;
-	background-size: cover;
+:root {
+  --air-theme-bg-color: #365511;
+  --air-theme-bg-size: cover;
+  --air-theme-bg-repeat: no-repeat;
+  --air-theme-bg-position: 0 0;
+  --air-theme-bg-attachment: fixed;
+  --air-theme-bg-image: url(/bitrix/templates/bitrix24/themes/light/video-grass/grass-poster.jpg);
 }

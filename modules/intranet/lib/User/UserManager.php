@@ -8,15 +8,12 @@ use Bitrix\Intranet\Service\ServiceContainer;
 use Bitrix\Intranet\User\Filter\ExtranetUserSettings;
 use Bitrix\Intranet\User\Filter\IntranetUserSettings;
 use Bitrix\Intranet\User\Filter\Presets\FilterPreset;
-use Bitrix\Intranet\User\Filter\Provider\ExtranetUserDataProvider;
 use Bitrix\Intranet\User\Filter\Provider\IntegerUserDataProvider;
 use Bitrix\Intranet\User\Filter\Provider\IntranetUserDataProvider;
 use Bitrix\Intranet\User\Filter\Provider\PhoneUserDataProvider;
-use Bitrix\Intranet\User\Filter\Provider\StringUserDataProvider;
 use Bitrix\Intranet\User\Filter\UserFilter;
 use Bitrix\Intranet\UserTable;
 use Bitrix\Main\ArgumentException;
-use Bitrix\Main\Entity\ReferenceField;
 use Bitrix\Main\Filter\UserDataProvider;
 use Bitrix\Main\ModuleManager;
 use Bitrix\Main\ObjectPropertyException;
@@ -131,20 +128,24 @@ final class UserManager
 			}
 		}
 
+		if (isset($params['filter']['DEPARTMENT']))
+		{
+			$department = $this->getDepartmentCollection()
+				->filter(fn (Department $department) => $department->getId() === $params['filter']['DEPARTMENT'])
+				->first();
+
+			if ($department)
+			{
+				$params['filter']['DEPARTMENT'] = $department->getIblockSectionId();
+			}
+		}
+
 		$params['filter'] = $this->filter->getValue($params['filter'] ?? null);
 
 		$query = UserTable::query();
 		$query->setSelect($params['select'])
 			->setFilter($params['filter'])
 			->setDistinct(true);
-
-		// remove this after b_extranet_user migration
-		$extranetGroupId = \Bitrix\Main\Loader::includeModule('extranet') ? \CExtranet::getExtranetUserGroupId() : 0;
-
-		if ($extranetGroupId)
-		{
-			$query->addSelect('EXTRANET_GROUP');
-		}
 
 		if (isset($params['order']))
 		{
@@ -176,6 +177,10 @@ final class UserManager
 					$user['UF_DEPARTMENT'][$department->getId()] = htmlspecialcharsbx($department->getName());
 				}
 			}
+			else
+			{
+				$user['UF_DEPARTMENT'] = [];
+			}
 
 			$userId = $user['ID'];
 			$result[$userId]['data'] = $user;
@@ -187,8 +192,7 @@ final class UserManager
 
 	private function getDepartmentCollection(): DepartmentCollection
 	{
-		$this->departmentCollection ??= ServiceContainer::getInstance()
-			->departmentRepository()
+		$this->departmentCollection ??= (new \Bitrix\Intranet\Repository\HrDepartmentRepository())
 			->getAllTree();
 
 		return $this->departmentCollection;

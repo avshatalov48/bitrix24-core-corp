@@ -26,7 +26,6 @@ else
 			'SEF_FOLDER' => '/',
 			'SEF_URL_TEMPLATES' => [
 				'list' => 'bi/dashboard/',
-				'detail' => 'bi/dashboard/detail/#dashboardId#/'
 			],
 		]
 	);

@@ -34,19 +34,39 @@ $APPLICATION->setTitle(htmlspecialcharsbx(
 			: $existedScheduleTitle
 	)
 );
+
+ob_start();
+$APPLICATION->IncludeComponent(
+	'bitrix:ui.feedback.form',
+	'',
+	$arResult['feedbackParams']
+);
+$feedbackBtn = ob_get_contents();
+ob_end_clean();
+
 if ($arResult['showShiftPlanBtn'])
 {
-	$this->SetViewTarget('pagetitle') ?>
-	<a href="<?php echo $arResult['shiftPlanLink']; ?>" class="ui-btn ui-btn-themes ui-btn-light-border"><?php echo htmlspecialcharsbx(Loc::getMessage('TM_SCHEDULE_EDIT_SHIFT_PLAN_BTN_TITLE')); ?></a>
-	<?
-	$this->EndViewTarget();
+	$distributeShiftsTitle = Loc::getMessage('TM_SCHEDULE_EDIT_SHIFT_PLAN_BTN_TITLE');
+	$distributeShifts = <<<HTML
+		<a
+			href="{$arResult['shiftPlanLink']}"
+			class="ui-btn ui-btn-themes ui-btn-light-border"
+		>
+			$distributeShiftsTitle
+		</a>
+		$feedbackBtn
+	HTML;
+	
+	\Bitrix\UI\Toolbar\Facade\Toolbar::addRightCustomHtml(
+		$distributeShifts,
+		['align' => 'right'],
+	);
 }
-if (\Bitrix\Main\Loader::includeModule('ui'))
+else
 {
-	$APPLICATION->IncludeComponent(
-		'bitrix:ui.feedback.form',
-		'',
-		$arResult['feedbackParams']
+	\Bitrix\UI\Toolbar\Facade\Toolbar::addRightCustomHtml(
+		$feedbackBtn,
+		['align' => 'right'],
 	);
 }
 ?>
@@ -189,18 +209,6 @@ if (\Bitrix\Main\Loader::includeModule('ui'))
 								htmlspecialcharsbx(Loc::getMessage('TIMEMAN_SCHEDULE_EDIT_REPORT_ALLOW_BROWSER'));
 								?></label>
 						</div>
-						<? if (\Bitrix\Main\Loader::includeModule('faceid') && \Bitrix\FaceId\FaceId::isAvailable()): ?>
-							<div class="timeman-schedule-form-limit-item">
-								<input class="timeman-schedule-form-violation-hidden-input" type="checkbox" id="Bitrix24.Time"
-										data-role="startTimeAllowedDevice"
-									<?= $scheduleForm->isB24TimeDeviceAllowed() || $arResult['isNewSchedule'] ? 'checked' : ''; ?>
-										name="<?= $scheduleFormName . '[allowedDevices][b24time]'; ?>"
-								>
-								<label class="timeman-schedule-form-violation-hidden-label" for="Bitrix24.Time"><?=
-									htmlspecialcharsbx(Loc::getMessage('TIMEMAN_SCHEDULE_EDIT_REPORT_ALLOW_B24_TIME'));
-									?></label>
-							</div>
-						<? endif; ?>
 						<div class="timeman-schedule-form-limit-item">
 							<input class="timeman-schedule-form-violation-hidden-input" type="checkbox" id="mobile"
 									data-role="startTimeAllowedDevice"

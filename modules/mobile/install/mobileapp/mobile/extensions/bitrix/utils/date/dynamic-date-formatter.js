@@ -94,7 +94,7 @@ jn.define('utils/date/dynamic-date-formatter', (require, exports, module) => {
 		 * @private
 		 * @param {Moment} moment
 		 * @param {String} delta
-		 * @returns {Number|null}
+		 * @returns {Number|null} - in seconds
 		 */
 		resolveDelta(moment, delta)
 		{
@@ -102,19 +102,26 @@ jn.define('utils/date/dynamic-date-formatter', (require, exports, module) => {
 			{
 				case DynamicDateFormatter.deltas.MINUTE:
 					return 60;
+
 				case DynamicDateFormatter.deltas.HOUR:
 					return 3600;
+
 				case DynamicDateFormatter.deltas.DAY:
 					return 86400;
+
 				case DynamicDateFormatter.deltas.YESTERDAY:
 				case DynamicDateFormatter.deltas.TOMORROW:
 					return 86400 * 2;
+
 				case DynamicDateFormatter.deltas.WEEK:
-					return 604_800;
+					return 86400 * 7;
+
 				case DynamicDateFormatter.deltas.MONTH:
-					return moment.endOfMonth.date.getDate();
+					return 86400 * moment.endOfMonth.date.getDate();
+
 				case DynamicDateFormatter.deltas.YEAR:
-					return moment.daysInYear;
+					return 86400 * moment.daysInYear;
+
 				default:
 					return null;
 			}
@@ -137,22 +144,34 @@ jn.define('utils/date/dynamic-date-formatter', (require, exports, module) => {
 			{
 				case DynamicDateFormatter.periods.MINUTE:
 					return getDelta(
-						toSeconds(moment.hasPassed
-							? dateNow.setSeconds(0, 0)
-							: dateNow.setSeconds(59, 0)),
+						toSeconds(
+							moment.hasPassed
+								? dateNow.setSeconds(0, 0)
+								: dateNow.setSeconds(59, 0)
+							,
+						),
 					);
+
 				case DynamicDateFormatter.periods.HOUR:
 					return getDelta(
-						toSeconds(moment.hasPassed
-							? dateNow.setMinutes(0, 0, 0)
-							: dateNow.setMinutes(59, 59, 0)),
+						toSeconds(
+							moment.hasPassed
+								? dateNow.setMinutes(0, 0, 0)
+								: dateNow.setMinutes(59, 59, 0)
+							,
+						),
 					);
+
 				case DynamicDateFormatter.periods.DAY:
 					return getDelta(
-						toSeconds(moment.hasPassed
-							? dateNow.setHours(0, 0, 0, 0)
-							: dateNow.setHours(23, 59, 59, 0)),
+						toSeconds(
+							moment.hasPassed
+								? dateNow.setHours(0, 0, 0, 0)
+								: dateNow.setHours(23, 59, 59, 0)
+							,
+						),
 					);
+
 				case DynamicDateFormatter.periods.YESTERDAY:
 					// eslint-disable-next-line no-case-declarations
 					const dateYesterday = moment.clone().getNow().addDays(-1).date;
@@ -160,6 +179,7 @@ jn.define('utils/date/dynamic-date-formatter', (require, exports, module) => {
 					return getDelta(
 						toSeconds(dateYesterday.setHours(0, 0, 0, 0)),
 					);
+
 				case DynamicDateFormatter.periods.TOMORROW:
 					// eslint-disable-next-line no-case-declarations
 					const dateTomorrow = moment.clone().getNow().addDays(1).date;
@@ -167,24 +187,31 @@ jn.define('utils/date/dynamic-date-formatter', (require, exports, module) => {
 					return getDelta(
 						toSeconds(dateTomorrow.setHours(23, 59, 59, 0)),
 					);
+
 				case DynamicDateFormatter.periods.WEEK:
 					return getDelta(
 						moment.hasPassed
 							? moment.clone().getNow().startOfWeek.timestamp
-							: moment.clone().getNow().endOfWeek.timestamp,
+							: moment.clone().getNow().endOfWeek.timestamp
+						,
 					);
+
 				case DynamicDateFormatter.periods.MONTH:
 					return getDelta(
 						moment.hasPassed
 							? moment.clone().getNow().startOfMonth.timestamp
-							: moment.clone().getNow().endOfMonth.timestamp,
+							: moment.clone().getNow().endOfMonth.timestamp
+						,
 					);
+
 				case DynamicDateFormatter.periods.YEAR:
 					return getDelta(
 						moment.hasPassed
 							? moment.clone().getNow().startOfYear.timestamp
-							: moment.clone().getNow().endOfYear.timestamp,
+							: moment.clone().getNow().endOfYear.timestamp
+						,
 					);
+
 				default:
 					return null;
 			}

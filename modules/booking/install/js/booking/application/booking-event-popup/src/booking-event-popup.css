@@ -1,0 +1,30 @@
+.booking-event-popup__content {
+	padding: 0 11px 11px;
+}
+
+.booking-event-popup__title {
+	margin-bottom: 25px;
+	font-size: var(--ui-font-size-2xl);
+	line-height: var(--ui-font-line-height-md);
+	letter-spacing: var(--ui-letter-spacing-s);
+	font-weight: var(--ui-font-weight-medium);
+	color: var(--ui-color-text-primary);
+}
+
+.booking-event-popup__resources {
+	display: flex;
+	padding: 12px;
+	flex-direction: column;
+	gap: 14px;
+	align-self: stretch;
+	border: var(--ui-border-width-thin) solid rgba(var(--ui-color-base-solid-rgb), var(--ui-opacity-5));
+	border-radius: var(--ui-border-radius-lg);
+}
+
+.booking-event-popup .popup-window-content {
+	scrollbar-width: none
+}
+
+.booking-event-popup .popup-window-content::-webkit-scrollbar {
+	width: 0;
+}

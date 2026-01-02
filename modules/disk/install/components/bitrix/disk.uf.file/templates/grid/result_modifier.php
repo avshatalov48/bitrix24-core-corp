@@ -44,8 +44,8 @@ if ($this->__page == "show")
 				"width" => $file["IMAGE"]["WIDTH"],
 				"height" => $file["IMAGE"]["HEIGHT"]);
 
-			$arSize = array_change_key_case(is_array($arParams["SIZE"][ $file["ID"]]) ? $arParams["SIZE"][$file["ID"]] : array(), CASE_LOWER);
-			$bExactly = ($arSize["width"] > 0 && $arSize["height"] > 0);
+			$arSize = array_change_key_case(isset($arParams["SIZE"][$file["ID"]]) && is_array($arParams["SIZE"][$file["ID"]]) ? $arParams["SIZE"][$file["ID"]] : array(), CASE_LOWER);
+			$bExactly = (isset($arSize["width"]) && $arSize["width"] > 0 && isset($arSize["height"]) && $arSize["height"] > 0);
 
 			if (!empty($arParams["MAX_SIZE"]) && ($arParams["MAX_SIZE"]["width"] > 0 || $arParams["MAX_SIZE"]["height"] > 0))
 			{

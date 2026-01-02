@@ -3,7 +3,7 @@
 use Bitrix\Crm\Integration\IntranetManager;
 use Bitrix\Crm\Service\Container;
 use Bitrix\DiskMobile\AirDiskFeature;
-use Bitrix\Intranet\AI;
+use Bitrix\Intranet\Invitation;
 use Bitrix\Intranet\Settings\Tools\ToolsManager;
 use Bitrix\Main\Config\Option;
 use Bitrix\Main\Loader;
@@ -13,6 +13,11 @@ use Bitrix\Mobile\Config\Feature;
 use Bitrix\MobileApp\Janative\Manager;
 use Bitrix\Main\EventManager;
 use Bitrix\MobileApp\Mobile;
+use Bitrix\Im\V2\Chat\CopilotChat;
+use Bitrix\Tasks\Flow\Integration\AI\FlowCopilotFeature;
+use Bitrix\Tasks\Flow\FlowFeature;
+use Bitrix\Mobile\Feature\SupportFeature;
+use Bitrix\Mobile\Provider\SupportProvider;
 
 if (!defined("B_PROLOG_INCLUDED") || B_PROLOG_INCLUDED !== true)
 {
@@ -76,87 +81,6 @@ $workgroupsComponentVersion = Manager::getComponentVersion("workgroups");
 
 $menuStructure = [];
 $favoriteItems = [];
-
-if (Mobile::getApiVersion() < 41)
-{
-	$favoriteItems[] = [
-		"hidden" => ($isExtranetUser || !ModuleManager::isModuleInstalled("bizproc")),
-		"title" => Loc::getMessage("MB_BP_MAIN_MENU_ITEM"),
-		"imageUrl" => $imageDir . "favorite/icon-bp.png",
-		"color" => "#33c3bd",
-		'imageName' => 'business_process',
-		"attrs" => [
-			"url" => $siteDir . "mobile/bp/?USER_STATUS=0",
-			"id" => "bp_list",
-			"counter" => "bp_tasks",
-		],
-	];
-}
-
-if (Loader::includeModule('signmobile')
-	&& class_exists(\Bitrix\SignMobile\Config\Feature::class)
-	&& method_exists(\Bitrix\SignMobile\Config\Feature::class, 'isMyDocumentsGridAvailable')
-	&& \Bitrix\SignMobile\Config\Feature::instance()->isMyDocumentsGridAvailable()
-)
-{
-	$counterId = 'sign_b2e_current';
-	if (enum_exists(\Bitrix\Sign\Type\CounterType::class))
-	{
-		$counterId = \Bitrix\Sign\Type\CounterType::SIGN_B2E_MY_DOCUMENTS->value;
-	}
-
-	$favoriteItems[] = [
-		"title" => Loc::getMessage("MENU_MY_DOCUMENTS"),
-		"imageUrl" => $imageDir . "sign/my-documents.png",
-		'imageName' => 'sign',
-		"color" => '#1F86FF',
-		"hidden" => false,
-		"attrs" => [
-			"id" => "signmobile",
-			"counter" => $counterId,
-			"onclick" => <<<JS
-				ComponentHelper.openLayout({
-					name: 'sign:sign.b2e.grid',
-					object: 'layout',
-					widgetParams: {
-						titleParams: {text: "{$hereDocGetMessage("MENU_MY_DOCUMENTS")}", type: "section"},
-					}
-				});
-			JS,
-		],
-	];
-}
-
-if (Mobile::getApiVersion() < 41)
-{
-	$favoriteItems[] = [
-		"title" => Loc::getMessage("MB_CURRENT_USER_FILES_MAIN_MENU_ITEM_NEW"),
-		"imageUrl" => $imageDir . "favorite/icon-mydisk.png",
-		"color" => "#20A1E7",
-		"attrs" => [
-			"onclick" => <<<JS
-
-				ComponentHelper.openList({
-					name:"user.disk",
-					object:"list",
-					version:"{$diskComponentVersion}",
-					componentParams:{userId: env.userId},
-					widgetParams:{
-						title:"{$hereDocGetMessage("MB_CURRENT_USER_FILES_MAIN_MENU_ITEM_NEW")}",
-						useSearch: true,
-						doNotHideSearchResult: true
-					}
-				});
-
-JS
-			,
-			"id" => "doc_user",
-		],
-		"hidden" => !$diskEnabled || !$allowedFeatures["files"],
-		"id" => "doc_user",
-	];
-}
-
 
 $favoriteItems[] = [
 	"imageUrl" => $imageDir . "favorite/icon-disk.png",
@@ -317,7 +241,11 @@ if (
 	!$isExtranetUser
 	&& IsModuleInstalled('crm')
 	&& CModule::IncludeModule('crm')
-	&& CCrmPerms::IsAccessEnabled()
+	&& (
+		method_exists(\Bitrix\Crm\Service\UserPermissions::class, 'entityType')
+		? \Bitrix\Crm\Service\Container::getInstance()->getUserPermissions()->entityType()->canReadSomeItemsInCrmOrAutomatedSolutions()
+		: CCrmPerms::IsAccessEnabled()
+	)
 )
 {
 	$crmIsInitialized = \Bitrix\Crm\Settings\Crm::wasInitiated();
@@ -368,7 +296,7 @@ if (
 			foreach ($pages as $page)
 			{
 				$entityTypeId = IntranetManager::getEntityTypeIdByPageSettings($page->getSettings());
-				if (Container::getInstance()->getUserPermissions()->canReadType($entityTypeId))
+				if (Container::getInstance()->getUserPermissions()->entityType()->canReadItems($entityTypeId))
 				{
 					$hasPermissions = true;
 					break;
@@ -590,12 +518,9 @@ if (
 	$myBitrix24Items = [];
 
 	if (
-		(
-			\CModule::IncludeModule('bitrix24')
-			|| $USER->isAdmin()
-		)
-		&& Loader::includeModule('intranet')
+		Loader::includeModule('intranet')
 		&& Loader::includeModule('intranetmobile')
+		&& Invitation::canCurrentUserInvite()
 	)
 	{
 		$myBitrix24Items[] = [
@@ -609,13 +534,18 @@ if (
 				'highlightWithCounter' => true,
 				'counter' => 'menu_invite',
 				'onclick' => <<<JS
-						requireLazy('intranet:invite-opener-new')
-							.then(({ openIntranetInviteWidget }) => {
-								if (openIntranetInviteWidget)
+					void requireLazy('intranet:invite-opener-new')
+						.then(async ({ openIntranetInviteWidget }) => {
+							if (openIntranetInviteWidget)
+							{
+								const { AnalyticsEvent } = await requireLazy('analytics', false);
+								if (AnalyticsEvent)
 								{
-									openIntranetInviteWidget({});
+									openIntranetInviteWidget({ analytics: new AnalyticsEvent().setSection('more_menu') });
 								}
-							});
+							}
+						})
+					;
 				JS,
 			],
 		];
@@ -742,6 +672,50 @@ JS,
 		],
 	];
 
+	$supportTitle = Loc::getMessage('MENU_BITRIX24_SUPPORT24');
+	$supportBotId = (int)(new SupportProvider())->getBotId();
+	$isSupportActive = Feature::isEnabled(SupportFeature::class);
+	$isSupportShown = SupportProvider::isSupportShownForUser();
+
+	if ($isSupportActive && isset($supportBotId) && $supportBotId > 0)
+	{
+		$myBitrix24Items[] = [
+			'id' => 'support',
+			'title' => $supportTitle,
+			'color' => '#1E8EC2',
+			'imageUrl' => $imageDir . 'favorite/support.png',
+			'imageName' => 'feedback',
+			'attrs' => [
+				'showHighlighted' => !$isSupportShown,
+				'onclick' => <<<JS
+					let botId = {$supportBotId};
+
+					if (botId && Number(botId) > 0)
+					{
+						void requireLazy('im:messenger/api/dialog-opener')
+							.then(({ DialogOpener }) => DialogOpener.open({ dialogId: Number(botId) }))
+							.then(() => requireLazy('tourist', false))
+							.then(({ Tourist }) => Tourist.remember('show_support', {}))
+							.catch(async (error) => {
+								console.error('Error in support opener:', error);
+
+								const { showErrorToast } = await requireLazy('toast', false);
+								showErrorToast({
+									message: "{$hereDocGetMessage('MENU_BITRIX24_SUPPORT24_ERROR_TEXT')}",
+									},
+									this.layout,
+								);
+							});
+					}
+					else
+					{
+						console.error('Empty or invalid botId', botId);
+					}
+			JS,
+			],
+		];
+	}
+
 	$menuStructure[] = [
 		'title' => Loc::getMessage('MB_SEC_B24_MSGVER_1'),
 		'sort' => 1,
@@ -843,37 +817,56 @@ JS
 
 }
 
-if (Loader::includeModule("intranet") && !$isExtranetUser)
+if (
+	Loader::includeModule('intranet')
+	&& !$isExtranetUser
+	&& Loader::includeModule('ai')
+	&& \Bitrix\Main\Application::getInstance()->getLicense()->getRegion() !== 'cn'
+)
 {
-	$assistantApp = AI\Center::getAssistantApp();
-	$assistantAppId = is_array($assistantApp) && $assistantApp["ACTIVE"] === "Y" ? intval($assistantApp["ID"]) : 0;
-	$assistants = AI\Center::getAssistants();
+	$isCopilotAvailable = CopilotChat::isActive() && CopilotChat::isAvailable();
+	$availableFeatures = [
+		'crm' => true,
+		'flow-up' => true,
+	];
 
-	if ($assistantAppId > 0 && count($assistants) > 0)
+	if (Loader::includeModule('im'))
 	{
-		$items = [];
-		foreach ($assistants as $assistant)
-		{
-			$hidden = isset($assistant['data']['featureEnabled']) && $assistant['data']['featureEnabled'] === false;
-			$items[] = [
-				"title" => $assistant["name"],
-				"hidden" => $hidden,
-				"attrs" => [
-					"url" =>
-						"/mobile/marketplace/?id=$assistantAppId&" .
-						"lazyload=Y&mobileMode=Y&assistantId={$assistant["id"]}",
-					"cache" => false,
-				],
-			];
-		}
-
-		$menuStructure[] = [
-			"title" => Loc::getMessage("MENU_AI"),
-			"sort" => 110,
-			"hidden" => false,
-			"items" => $items,
-		];
+		$availableFeatures['copilotChat'] = CopilotChat::isActive() && CopilotChat::isAvailable();
 	}
+
+	if (Loader::includeModule('tasks') && Loader::includeModule('tasksmobile'))
+	{
+		$availableFeatures['flowCopilot'] = FlowFeature::isOn() && FlowCopilotFeature::isOn();
+	}
+
+	$menuStructure[] = [
+		'title' => Loc::getMessage('MENU_AI_MSGVER_1'),
+		'sort' => 101,
+		'hidden' => false,
+		'items' => [
+			[
+				'title' => Loc::getMessage('MENU_COPILOT'),
+				'hidden' => false,
+				'imageName' => 'copilot',
+				'isNew' => true,
+				'attrs' => [
+					'availableFeatures' => $availableFeatures,
+					'onclick' => <<<JS
+						requireLazy('copilot-features')
+							.then(({ openCopilotFeatures }) => {
+								if (openCopilotFeatures)
+								{
+									openCopilotFeatures(item.params.availableFeatures);
+								}
+							});
+JS
+					,
+				],
+				'tag' => Loc::getMessage('MENU_TAG_NEW'),
+			],
+		],
+	];
 }
 
 if (Option::get('mobile', 'developers_menu_section', 'N') === 'Y')
@@ -948,21 +941,19 @@ JS,
 	];
 
 	$developerMenuItems[] = [
-		"title" => "Fields Test",
-		"imageUrl" => $imageDir . "catalog/icon-catalog-store.png",
+		"title" => "AppRatingManager test tool",
 		"color" => '#8590a2',
+		"imageUrl" => $imageDir . "catalog/icon-catalog-store.png",
 		"hidden" => false,
 		"attrs" => [
-			"id" => "fields.component",
+			"id" => "appratingmanager.testing.tool",
 			"onclick" => <<<JS
 				ComponentHelper.openLayout({
-						name: "fields.test",
-						version: '1',
-						object: "layout",
-						componentParams: {},
-						widgetParams: {
-							title: "Fields Test"
-						}
+					name: 'appratingmanager.testing.tool',
+					object: 'layout',
+					widgetParams: {
+						title: 'AppRatingManager test tool'
+					}
 				});
 JS,
 		],
@@ -1036,14 +1027,12 @@ JS,
 	}
 }
 
-$useAssets = Mobile::getApiVersion() >= 54;
 $popupMenuItems = [
 	[
 		"title" => Loc::getMessage("MENU_CHANGE_ACCOUNT"),
 		"sectionCode" => "menu",
 		"id" => "switch_account",
 		"iconName" => "log_out",
-		"iconUrl" => !$useAssets ? $imageDir . "settings/change_account_popup.png?5" : null,
 		"onclick" => <<<JS
 				Application.exit();
 JS

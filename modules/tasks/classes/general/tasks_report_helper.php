@@ -523,6 +523,13 @@ class CTasksReportHelper extends CReportHelper
 		$filter[] = $permFilter;
 	}
 
+	public static function getAlternatePhrasesOfColumns(): array
+	{
+		return [
+			'TASKS_TASK_ENTITY_RESPONSIBLE_FIELD' => Main\Localization\Loc::getMessage('TASKS_TASK_ENTITY_ASSIGNEE_FIELD'),
+		];
+	}
+
 	protected static function rewriteTagsFilter(&$filter, &$runtime)
 	{
 		global $DB;

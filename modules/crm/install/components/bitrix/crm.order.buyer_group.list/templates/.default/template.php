@@ -1,33 +1,48 @@
-<? if (!defined('B_PROLOG_INCLUDED') || B_PROLOG_INCLUDED!==true)die();
-
-use Bitrix\Main\Localization\Loc;
+<?php
+if (!defined('B_PROLOG_INCLUDED') || B_PROLOG_INCLUDED !== true)
+{
+	die();
+}
 
 /**
+ * @global \CMain $APPLICATION
  * @var CBitrixComponentTemplate $this
  * @var array $arParams
  * @var array $arResult
  */
 
-Bitrix\Main\Page\Asset::getInstance()->addJs('/bitrix/js/crm/interface_grid.js');
+use Bitrix\Main\Loader;
+use Bitrix\Main\Localization\Loc;
+use Bitrix\Main\Page\Asset;
+use Bitrix\Main\UI\Extension;
+use Bitrix\UI\Buttons;
+use Bitrix\UI\Toolbar\Facade\Toolbar;
 
-\Bitrix\Main\UI\Extension::load('ui.buttons');
-\CJSCore::init("sidepanel");
+Loader::includeModule('ui');
+
+Asset::getInstance()->addJs('/bitrix/js/crm/interface_grid.js');
+
+Extension::load([
+	'ui.buttons',
+	'sidepanel',
+]);
 
 $bodyClass = $APPLICATION->getPageProperty("BodyClass", false);
 $APPLICATION->setPageProperty("BodyClass", trim(sprintf("%s %s", $bodyClass, "pagetitle-toolbar-field-view no-background")));
+
+Toolbar::addButton(new Buttons\AddButton([
+	'color' => Buttons\Color::PRIMARY,
+	'text' => Loc::getMessage('CRM_ORDER_BUYER_GROUP_LIST_BTN_ADD'),
+	'link' => $arResult['PATH_TO_CREATE_GROUP'],
+	'dataset' => [
+		'toolbar-collapsed-icon' => Buttons\Icon::ADD,
+	],
+]));
+
 ?>
 
-<? $this->setViewTarget('inside_pagetitle', 10); ?>
-	<div class="pagetitle-container pagetitle-align-right-container" style="padding-right: 12px;">
-		<a class="webform-small-button webform-small-button-blue bx24-top-toolbar-add adm-toolbar-panel-button"
-				href="<?=htmlspecialcharsbx($arResult['PATH_TO_CREATE_GROUP'])?>">
-			<?=Loc::getMessage('CRM_ORDER_BUYER_GROUP_LIST_BTN_ADD')?>
-		</a>
-	</div>
-<? $this->endViewTarget(); ?>
-
 <div class='crm-buyer-groups-edit-wrapper'>
-	<?
+	<?php
 	$APPLICATION->IncludeComponent(
 		'bitrix:crm.interface.grid',
 		'titleflex',
@@ -57,22 +72,24 @@ $APPLICATION->setPageProperty("BodyClass", trim(sprintf("%s %s", $bodyClass, "pa
 			'ENABLE_LABEL' => $arResult['FILTER']['ENABLE_LABEL'],
 			'RESET_TO_DEFAULT_MODE' => $arResult['FILTER']['RESET_TO_DEFAULT_MODE'],
 
-			'SORT' => isset($arResult['GRID_SORT']['sort']) ? $arResult['GRID_SORT']['sort'] : [],
-			'SORT_VARS' => isset($arResult['GRID_SORT']['vars']) ? $arResult['GRID_SORT']['vars'] : [],
+			'SORT' => $arResult['GRID_SORT']['sort'] ?? [],
+			'SORT_VARS' => $arResult['GRID_SORT']['vars'] ?? [],
 
-			'EXTENSION' => array(
+			'EXTENSION' => [
 				'ID' => $arResult['MANAGER_ID'],
-				'CONFIG' => array(
+				'CONFIG' => [
 					'gridId' => $arResult['GRID']['ID']
-				),
-				'MESSAGES' => array(
-					'deletionDialogTitle' => GetMessage('CRM_ORDER_BUYER_GROUP_LIST_DELETE_GROUP_TITLE'),
-					'deletionDialogMessage' => GetMessage('CRM_ORDER_BUYER_GROUP_LIST_DELETE_CONFIRM'),
-					'deletionDialogButtonTitle' => GetMessage('CRM_ORDER_BUYER_GROUP_LIST_DELETE')
-				)
-			),
+				],
+				'MESSAGES' => [
+					'deletionDialogTitle' => Loc::getMessage('CRM_ORDER_BUYER_GROUP_LIST_DELETE_GROUP_TITLE'),
+					'deletionDialogMessage' => Loc::getMessage('CRM_ORDER_BUYER_GROUP_LIST_DELETE_CONFIRM'),
+					'deletionDialogButtonTitle' => Loc::getMessage('CRM_ORDER_BUYER_GROUP_LIST_DELETE'),
+				],
+			],
 		]
 	);
+
+	Toolbar::setFilter('');
 	?>
 </div>
 

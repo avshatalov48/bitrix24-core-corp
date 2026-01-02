@@ -6,6 +6,6 @@ return [
 		'layout/ui/fields/string',
 		'layout/ui/fields/textarea',
 		'layout/ui/file',
-		'notify',
+		'utils/copy',
 	],
 ];

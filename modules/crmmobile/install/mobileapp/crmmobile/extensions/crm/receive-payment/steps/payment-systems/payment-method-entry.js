@@ -6,6 +6,7 @@ jn.define('crm/receive-payment/steps/payment-systems/payment-method-entry', (req
 	const { BooleanField } = require('layout/ui/fields/boolean');
 	const { handleErrors } = require('crm/error');
 	const { EventEmitter } = require('event-emitter');
+	const { Random } = require('utils/random');
 
 	/**
 	 * @class PaymentMethodEntry

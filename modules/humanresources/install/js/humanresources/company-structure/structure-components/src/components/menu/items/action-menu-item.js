@@ -23,6 +23,10 @@ export const ActionMenuItem = {
 			required: false,
 			default: '',
 		},
+		dataTestId: {
+			type: String,
+			required: false,
+		},
 	},
 
 	computed: {
@@ -38,7 +42,10 @@ export const ActionMenuItem = {
 	},
 
 	template: `
-		<div class="hr-structure-action-popup-menu-item">
+		<div
+			class="hr-structure-action-popup-menu-item"
+			:data-test-id="dataTestId"
+		>
 			<div class="hr-structure-action-popup-menu-item__content">
 				<div
 					class="hr-structure-action-popup-menu-item__content-title"

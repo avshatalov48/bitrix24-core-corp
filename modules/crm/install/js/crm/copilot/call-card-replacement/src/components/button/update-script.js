@@ -1,6 +1,5 @@
 import { Button, ButtonSize, ButtonColor, ButtonStyle, ButtonState } from 'ui.buttons';
 import { Router } from 'crm.router';
-import { Loc } from 'main.core';
 import { mapGetters } from 'ui.vue3.vuex';
 
 export const UpdateScript = {
@@ -22,23 +21,6 @@ export const UpdateScript = {
 	},
 
 	methods: {
-		showHint(): void
-		{
-			if (!this.isScriptSelected)
-			{
-				return;
-			}
-
-			top.BX.UI.Hint.popupParameters = {
-				closeByEsc: true,
-				autoHide: true,
-			};
-
-			const hintMessage = Loc.getMessage('CRM_COPILOT_CALL_CARD_REPLACEMENT_UPDATE_SCRIPT_BUTTON_TITLE_HINT');
-			top.BX.UI.Hint.show(this.$refs.button, hintMessage, true);
-		},
-
-		// temporarily disabled
 		openScriptDetailsSlider(): void
 		{
 			if (!this.isScriptSelected)
@@ -57,7 +39,7 @@ export const UpdateScript = {
 	},
 
 	template: `
-		<button ref="button" :class="classname" @click="showHint" :disabled="!isScriptSelected">
+		<button ref="button" :class="classname" @click="openScriptDetailsSlider" :disabled="!isScriptSelected">
 			<span class="ui-btn-text">
 				{{ $Bitrix.Loc.getMessage('CRM_COPILOT_CALL_CARD_REPLACEMENT_UPDATE_SCRIPT_BUTTON_TITLE') }}
 			</span>

@@ -28,28 +28,38 @@ jn.define('tasks/flow-list/simple-list/items/flow-redux/src/flow-promo-content',
 			return CardDesign.SECONDARY;
 		}
 
-		cardClickHandler = () => {};
-
 		renderHeader()
 		{
 			return View(
-				{},
-				H4({
-					testId: `${this.testId}-name`,
-					text: this.flowName,
-					numberOfLines: 2,
-					ellipsize: 'end',
-				}),
-				this.description !== '' && Text6({
-					testId: `${this.testId}-planned-completion-time`,
-					text: this.description,
-					color: Color.base4,
-					numberOfLines: 4,
-					ellipsize: 'end',
+				{
 					style: {
-						marginTop: Indent.XS.toNumber(),
+						flexDirection: 'row',
 					},
-				}),
+				},
+				View(
+					{
+						style: {
+							flex: 1,
+						},
+					},
+					H4({
+						testId: `${this.testId}-name`,
+						text: this.flowName,
+						numberOfLines: 2,
+						ellipsize: 'end',
+					}),
+					this.description !== '' && Text6({
+						testId: `${this.testId}-planned-completion-time`,
+						text: this.description,
+						color: Color.base4,
+						numberOfLines: 4,
+						ellipsize: 'end',
+						style: {
+							marginTop: Indent.XS.toNumber(),
+						},
+					}),
+				),
+				this.toShowHeaderToolbar() && this.renderHeaderToolbar(),
 			);
 		}
 

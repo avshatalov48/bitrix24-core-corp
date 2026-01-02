@@ -4,6 +4,7 @@ use Bitrix\Disk\Configuration;
 use Bitrix\Disk\Integration\Bitrix24Manager;
 use Bitrix\Disk\Internals\DiskComponent;
 use Bitrix\Disk\Internals\Engine\Contract\SidePanelWrappable;
+use Bitrix\Disk\TypeFile;
 use Bitrix\Disk\Ui\FileAttributes;
 use Bitrix\Disk\Version;
 use Bitrix\Main\Type\DateTime;
@@ -142,13 +143,13 @@ class CDiskFileHistoryComponent extends DiskComponent implements SidePanelWrappa
 							}
 						})",
 				];
-			}
-			if ($this->file->canRestore($securityContext) && $this->file->canDelete($securityContext))
-			{
-				$actions[] = [
-					"id" => "delete",
-					"text" => Loc::getMessage('DISK_FILE_VIEW_HISTORY_ACT_DELETE'),
-					"onclick" => "BX.Disk['FileHistoryComponent_{$this->getComponentId()}'].openDeleteConfirm({
+
+				if ($this->file->canDelete($securityContext))
+				{
+					$actions[] = [
+						"id" => "delete",
+						"text" => Loc::getMessage('DISK_FILE_VIEW_HISTORY_ACT_DELETE'),
+						"onclick" => "BX.Disk['FileHistoryComponent_{$this->getComponentId()}'].openDeleteConfirm({
 							object: {
 								id: {$this->file->getId()},
 								name: '{$this->file->getName()}'
@@ -157,14 +158,31 @@ class CDiskFileHistoryComponent extends DiskComponent implements SidePanelWrappa
 								id: {$version->getId()}
 							}
 						})",
-				];
+					];
+				}
 			}
 
-			$attr = FileAttributes::tryBuildByFileId($version->getFileId(), new Uri($urlManager->getUrlForDownloadVersion($version)))
+			$fileFromVersion = $version->getObject();
+
+			$attr = FileAttributes::tryBuildByFileId($version->getFileId(), new Uri($urlManager->getUrlForDownloadVersion($version)), $fileFromVersion)
 				->setTitle($version->getName())
 				->setGroupBy($this->componentId)
 				->setVersionId($version->getId())
 			;
+
+			if ((int)$this->file->getTypeFile() === TypeFile::FLIPCHART)
+			{
+				$openUrl = $this->getUrlManager()->getUrlForViewBoardVersion($this->file, (int)$version->getId());
+				$attr->addAction([
+					'type' => 'open',
+					'buttonIconClass' => ' ',
+					'action' => 'BX.Disk.Viewer.Actions.openInNewTab',
+					'params' => [
+						'objectId' => $version->getFileId(),
+						'url' => $openUrl,
+					],
+				]);
+			}
 
 			$createUser = $version->getCreateUser();
 			$createdByLink = \CComponentEngine::makePathFromTemplate(

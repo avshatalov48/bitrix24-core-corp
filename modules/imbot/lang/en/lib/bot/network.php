@@ -13,6 +13,7 @@ $MESS["IMBOT_NETWORK_ERROR_LINE_DISABLED"] = "Message not sent![br] This open ch
 $MESS["IMBOT_NETWORK_ERROR_LINE_NOT_FOUND"] = "Open Channel is currently not available";
 $MESS["IMBOT_NETWORK_ERROR_NETWORK_ERROR"] = "Network connectivity error";
 $MESS["IMBOT_NETWORK_ERROR_NOT_FOUND"] = "Message not sent![br] This open channel is not currently available";
+$MESS["IMBOT_NETWORK_ERROR_NOT_FOUND_MSGVER_1"] = "Message has not been sent.[br]Open Channel is currently not available. [helpdesklink]Learn more[/helpdesklink]";
 $MESS["IMBOT_NETWORK_ERROR_PUBLIC_URL_ANSWER_MALFORMED"] = "Error verifying public site address: unrecognized server response";
 $MESS["IMBOT_NETWORK_ERROR_PUBLIC_URL_CONNECT_ERROR"] = "Error verifying public site address: cannot connect";
 $MESS["IMBOT_NETWORK_ERROR_PUBLIC_URL_EMPTY"] = "Please provide the public site address in the \"Bitrix24 Chat Bots\" module settings";

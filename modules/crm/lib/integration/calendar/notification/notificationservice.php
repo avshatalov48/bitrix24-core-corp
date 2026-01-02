@@ -7,6 +7,7 @@ use Bitrix\Crm\Integration\NotificationsManager;
 use Bitrix\Crm\MessageSender;
 use Bitrix\Calendar\Sharing;
 use Bitrix\Crm\ItemIdentifier;
+use Bitrix\Main\Application;
 use Bitrix\Main\Localization\Loc;
 use Bitrix\Calendar\Core\Event;
 use Bitrix\Calendar\Core;
@@ -33,7 +34,7 @@ class NotificationService extends AbstractService
 			return false;
 		}
 
-		return NotificationsManager::canUse();
+		return NotificationsManager::canUse() && Application::getInstance()->getLicense()->getRegion() === 'ru';
 	}
 
 
@@ -109,6 +110,11 @@ class NotificationService extends AbstractService
 	 */
 	public function sendCrmSharingCancelled(): bool
 	{
+		if ($this->initiatorId === $this->eventLink->getHostId())
+		{
+			return false;
+		}
+
 		$manager = Sharing\Helper::getOwnerInfo($this->crmDealLink->getOwnerId());
 		$template = self::TEMPLATE_SHARING_EVENT_CANCELLED;
 		$placeholders = [

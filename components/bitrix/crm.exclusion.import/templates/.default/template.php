@@ -7,14 +7,17 @@ if (!defined("B_PROLOG_INCLUDED") || B_PROLOG_INCLUDED!==true)
 use Bitrix\Main\Localization\Loc;
 use Bitrix\Main\Web\Json;
 use Bitrix\Main\UI\Extension;
+use Bitrix\UI\Toolbar\Facade\Toolbar;
 
 Extension::load("ui.buttons");
 Extension::load("ui.buttons.icons");
+\Bitrix\Main\Loader::includeModule('ui');
 
 /** @var CMain $APPLICATION */
 /** @var array $arParams */
 /** @var array $arResult */
 $containerId = 'bx-crm-exclusion-import';
+Toolbar::deleteFavoriteStar();
 ?>
 <script>
 	BX.ready(function () {
@@ -50,7 +53,7 @@ $containerId = 'bx-crm-exclusion-import';
 				</div>
 			</div>
 		</div>
-		
+
 	</div>
 
 

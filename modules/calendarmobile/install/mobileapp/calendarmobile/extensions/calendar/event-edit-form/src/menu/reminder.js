@@ -10,7 +10,7 @@ jn.define('calendar/event-edit-form/menu/reminder', (require, exports, module) =
 	{
 		getItems()
 		{
-			const reminders = [0, 5, 15, 30, 60, 120, 1440, 2880];
+			const reminders = [-1, 0, 5, 15, 30, 60, 120, 1440];
 
 			return reminders.map((reminder) => ({
 				id: String(reminder),
@@ -23,9 +23,14 @@ jn.define('calendar/event-edit-form/menu/reminder', (require, exports, module) =
 
 		formatReminder(reminder)
 		{
-			if (reminder === 0)
+			if (reminder === -1)
 			{
 				return Loc.getMessage('M_CALENDAR_EVENT_EDIT_FORM_BOOLEAN_N');
+			}
+
+			if (reminder === 0)
+			{
+				return Loc.getMessage('M_CALENDAR_EVENT_EDIT_FORM_REMINDER_AT_MOMENT');
 			}
 
 			return Duration.createFromMinutes(reminder).format();

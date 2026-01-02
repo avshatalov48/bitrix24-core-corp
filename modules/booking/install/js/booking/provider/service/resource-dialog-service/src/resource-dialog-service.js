@@ -70,23 +70,24 @@ class ResourceDialogService
 		}
 	}
 
-	async doSearch(query: string, dateTs: number): Promise<void>
+	async doSearch(query: string, dateTs: number, typeIds: number[]): Promise<void>
 	{
-		if (!Type.isStringFilled(query))
+		if (!Type.isStringFilled(query) && typeIds.length === 0)
 		{
 			return;
 		}
 
-		if (this.#isQueryLoaded(query))
+		const fullQuery = `${query}-${typeIds.join('-')}`;
+		if (this.#isQueryLoaded(fullQuery))
 		{
 			return;
 		}
 
-		this.#queryCache.push(query);
+		this.#queryCache.push(fullQuery);
 
 		try
 		{
-			const data = await new ApiClient().post('ResourceDialog.doSearch', { query, dateTs });
+			const data = await new ApiClient().post('ResourceDialog.doSearch', { query, dateTs, typeIds });
 
 			await this.#upsertResponseData(data, dateTs);
 		}

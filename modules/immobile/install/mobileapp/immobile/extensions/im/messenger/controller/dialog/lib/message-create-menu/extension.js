@@ -2,17 +2,14 @@
  * @module im/messenger/controller/dialog/lib/message-create-menu
  */
 jn.define('im/messenger/controller/dialog/lib/message-create-menu', (require, exports, module) => {
-	const { Loc } = require('loc');
+	const { Loc } = require('im/messenger/loc');
 	const { isModuleInstalled } = require('module');
 
 	const { ContextMenu } = require('layout/ui/context-menu');
 	const { Icon } = require('assets/icons');
-	const { AnalyticsEvent } = require('analytics');
-	const { Analytics } = require('im/messenger/const');
 	const { Logger } = require('im/messenger/lib/logger');
 	const { EntityManager } = require('im/messenger/controller/dialog/lib/entity-manager');
-	const { AnalyticsHelper } = require('im/messenger/provider/service/classes/analytics/helper');
-	const { DialogHelper } = require('im/messenger/lib/helper');
+	const { AnalyticsService } = require('im/messenger/provider/services/analytics');
 
 	/**
 	 * @class MessageCreateMenu
@@ -72,7 +69,8 @@ jn.define('im/messenger/controller/dialog/lib/message-create-menu', (require, ex
 			this.setCloseMenuPromise();
 			this.createMenu();
 			this.menu.show().catch((err) => Logger.error('MessageCreateMenu.open.catch:', err));
-			this.#senAnalyticsShowMenu();
+
+			AnalyticsService.getInstance().sendOpenMessageCreateMenu(this.dialogId);
 		}
 
 		createMenu()
@@ -143,28 +141,6 @@ jn.define('im/messenger/controller/dialog/lib/message-create-menu', (require, ex
 				this.entityManager.createTaskFomMessage(this.messageData);
 			})
 				.catch((error) => Logger.log(`${this.constructor.name}.onClickActionTask.closePromise.catch:`, error));
-		}
-
-		#senAnalyticsShowMenu()
-		{
-			const dialog = this.store.getters['dialoguesModel/getById'](this.dialogId);
-
-			const analytics = new AnalyticsEvent()
-				.setTool(Analytics.Tool.im)
-				.setCategory(AnalyticsHelper.getCategoryByChatType(dialog.type))
-				.setEvent(Analytics.Event.clickAttach)
-				.setSection(Analytics.Section.messageContextMenu)
-				.setP1(AnalyticsHelper.getP1ByChatType())
-				.setP2(AnalyticsHelper.getP2ByUserType())
-				.setP5(AnalyticsHelper.getFormattedChatId(dialog.chatId));
-
-			const isCollab = DialogHelper.createByDialogId(this.dialogId)?.isCollab;
-			if (isCollab)
-			{
-				analytics.setP4(AnalyticsHelper.getFormattedCollabIdByDialogId(dialog.dialogId));
-			}
-
-			analytics.send();
 		}
 	}
 

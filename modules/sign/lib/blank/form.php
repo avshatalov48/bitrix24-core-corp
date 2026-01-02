@@ -1,4 +1,5 @@
 <?php
+
 namespace Bitrix\Sign\Blank;
 
 class Form

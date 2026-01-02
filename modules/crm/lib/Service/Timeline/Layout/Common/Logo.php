@@ -52,6 +52,8 @@ class Logo
 
 	public const BIZPROC = 'bizproc';
 	public const BIZPROC_TASK = 'bizproc-task';
+	public const BOOKING_WAIT_LIST_ITEM = 'booking-wait-list-item';
+	public const REPEAT_SALE = 'repeat-sale';
 	//endregion
 
 	public static function getInstance(string $code): self
@@ -135,6 +137,7 @@ class Logo
 			case self::ZOOM:
 			case self::BIZPROC:
 			case self::BIZPROC_TASK:
+			case self::REPEAT_SALE:
 				return (new Body\Logo($this->getCode()))
 					->setInCircle(true)
 				;

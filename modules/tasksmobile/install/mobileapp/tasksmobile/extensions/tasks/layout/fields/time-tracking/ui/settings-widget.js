@@ -3,12 +3,12 @@
  */
 jn.define('tasks/layout/fields/time-tracking/ui/settings-widget', (require, exports, module) => {
 	const { Loc } = require('tasks/loc');
+	const { SettingSelector } = require('ui-system/blocks/setting-selector');
+	const { SwitcherSize } = require('ui-system/blocks/switcher');
 	const { Card } = require('ui-system/layout/card');
-	const { Switcher, SwitcherSize } = require('ui-system/blocks/switcher');
-	const { H4 } = require('ui-system/typography/heading');
-	const { Text5 } = require('ui-system/typography/text');
+
 	const { StringInput, InputDesign } = require('ui-system/form/inputs/string');
-	const { Component, Indent, Color } = require('tokens');
+	const { Component, Indent } = require('tokens');
 	const { TimeTrackingSettingsWidgetSaveButton } = require('tasks/layout/fields/time-tracking/ui/save-button');
 	const { toHours, toMinutes, sumSeconds } = require('tasks/layout/fields/time-tracking/time-utils');
 
@@ -150,26 +150,41 @@ jn.define('tasks/layout/fields/time-tracking/ui/settings-widget', (require, expo
 
 		#renderTimeTrackingOption()
 		{
-			return Option({
-				testId: 'TimeTrackingSettingsWidget_EnableTimeTracking',
-				onClick: () => this.#toggleTimeTracking(),
-				title: Loc.getMessage('M_TASKS_TIME_TRACKING_WIDGET_ENABLE_TIME_TRACKING'),
-				subtitle: Loc.getMessage('M_TASKS_TIME_TRACKING_WIDGET_ENABLE_TIME_TRACKING_HINT'),
-				checked: this.state.allowTimeTracking,
-			});
+			return Card(
+				{
+					border: true,
+					testId: 'TimeTrackingSettingsWidget_EnableTimeTrackingCard',
+				},
+				SettingSelector({
+					testId: 'TimeTrackingSettingsWidget_EnableTimeTracking',
+					checked: this.state.allowTimeTracking,
+					title: Loc.getMessage('M_TASKS_TIME_TRACKING_WIDGET_ENABLE_TIME_TRACKING'),
+					subtitle: Loc.getMessage('M_TASKS_TIME_TRACKING_WIDGET_ENABLE_TIME_TRACKING_HINT'),
+					switcherSize: SwitcherSize.L,
+					onClick: () => this.#toggleTimeTracking(),
+				}),
+			);
 		}
 
 		#renderTimeLimitOption()
 		{
-			return Option(
+			return Card(
 				{
+					border: true,
+					testId: '',
+					style: {
+						marginTop: Component.cardListGap.toNumber(),
+					},
+				},
+				SettingSelector({
 					testId: 'TimeTrackingSettingsWidget_SetTimeLimit',
-					onClick: () => this.#toggleTimeLimit(),
+					checked: this.state.useTimeLimit,
 					title: Loc.getMessage('M_TASKS_TIME_TRACKING_WIDGET_ENABLE_TIME_LIMIT'),
 					subtitle: Loc.getMessage('M_TASKS_TIME_TRACKING_WIDGET_ENABLE_TIME_LIMIT_HINT'),
-					checked: this.state.useTimeLimit,
-				},
-				this.state.useTimeLimit && this.#renderTimeEditForm(),
+					switcherSize: SwitcherSize.L,
+					onClick: () => this.#toggleTimeLimit(),
+					additionalContent: this.state.useTimeLimit ? this.#renderTimeEditForm() : null,
+				}),
 			);
 		}
 
@@ -216,52 +231,6 @@ jn.define('tasks/layout/fields/time-tracking/ui/settings-widget', (require, expo
 			});
 		}
 	}
-
-	const Option = (props = {}, ...children) => {
-		const {
-			title,
-			subtitle,
-			onClick,
-			testId,
-			checked = false,
-		} = props;
-
-		return Card(
-			{
-				onClick,
-				testId: `${testId}_Container`,
-				border: true,
-				style: {
-					marginBottom: Component.cardListGap.getValue(),
-				},
-			},
-			View(
-				{
-					style: {
-						flexDirection: 'row',
-						justifyContent: 'space-between',
-						marginBottom: Indent.XS2.getValue(),
-					},
-				},
-				H4({
-					text: title,
-					color: Color.base1,
-				}),
-				Switcher({
-					checked,
-					onClick,
-					testId: `${testId}_Switcher`,
-					size: SwitcherSize.L,
-					useState: false,
-				}),
-			),
-			Text5({
-				text: subtitle,
-				color: Color.base3,
-			}),
-			...children,
-		);
-	};
 
 	const Form = (...children) => View({
 		style: {

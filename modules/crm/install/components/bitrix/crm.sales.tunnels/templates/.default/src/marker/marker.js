@@ -535,81 +535,81 @@ export default class Marker extends Event.EventEmitter
 
 	addLinkTo(destination: Marker, robotAction: string, preventSave = false)
 	{
-		setTimeout(() => {
-			if (![...this.links].some(link => link.to === destination))
-			{
-				const linksRoot = this.getLinksRoot();
-				const path = this.getLinkPath(destination);
+		if (![...this.links].some(link => link.to === destination))
+		{
+			const linksRoot = this.getLinksRoot();
+			const path = this.getLinkPath(destination);
 
-				const line = d3.line();
+			const line = d3.line();
 
-				const fromId = this.data.column.getId().replace(':', '-');
-				const toId = destination.data.column.getId().replace(':', '-');
+			const fromId = this.data.column.getId().replace(':', '-');
+			const toId = destination.data.column.getId().replace(':', '-');
 
-				const arrowId = `${fromId}-${toId}`;
+			const arrowId = `${fromId}-${toId}`;
 
-				const arrow = linksRoot
-					.select('defs')
-					.append('svg:marker')
-					.attr('id', arrowId)
-					.attr('refX', 8)
-					.attr('refY', 6)
-					.attr('markerWidth', 30)
-					.attr('markerHeight', 30)
-					.attr('markerUnits', 'userSpaceOnUse')
-					.attr('orient', 'auto')
-					.append('path')
-					.attr('d', 'M 0 0 12 6 0 12 3 6')
-					.attr('class', 'crm-st-svg-link-arrow')
-					.select(function selectCallback() {
-						return this.parentNode;
-					});
-
-				const linkNode = linksRoot
-					.append('path')
-					.attr('class', 'crm-st-svg-link')
-					.attr('marker-end', `url(#${arrowId})`)
-					.attr('d', line(path));
-
-				this.showTunnelButton(path);
-
-				const link = {
-					from: this,
-					to: destination,
-					node: linkNode,
-					robotAction,
-					arrow,
-					path,
-				};
-
-				this.emit('Marker:linkFrom', {link, preventSave});
-				destination.emit('Marker:linkTo', {link, preventSave});
-
-				this.links.add(link);
-
-				const menu = this.getTunnelsListMenu();
-				const id = menu.getMenuItems().length;
-
-				menu.addMenuItem({
-					id: `#${id}`,
-					text: Text.encode(destination.name),
-					events: {
-						onMouseEnter() {
-							Marker.highlightLink(link);
-						},
-						onMouseLeave() {
-							Marker.unhighlightLinks();
-						},
-					},
-					items: this.getTunnelMenuItems(link),
+			const arrow = linksRoot
+				.select('defs')
+				.append('svg:marker')
+				.attr('id', arrowId)
+				.attr('refX', 8)
+				.attr('refY', 6)
+				.attr('markerWidth', 30)
+				.attr('markerHeight', 30)
+				.attr('markerUnits', 'userSpaceOnUse')
+				.attr('orient', 'auto')
+				.append('path')
+				.attr('d', 'M 0 0 12 6 0 12 3 6')
+				.attr('class', 'crm-st-svg-link-arrow')
+				.select(function selectCallback() {
+					return this.parentNode;
 				});
-			}
 
-			if (this.links.size > 1)
-			{
-				this.setTunnelsCounterValue(this.links.size);
-			}
-		});
+			const linkNode = linksRoot
+				.append('path')
+				.attr('class', 'crm-st-svg-link')
+				.attr('marker-end', `url(#${arrowId})`)
+				.attr('d', line(path));
+
+			this.showTunnelButton(path);
+
+			const link = {
+				from: this,
+				to: destination,
+				node: linkNode,
+				robotAction,
+				arrow,
+				path,
+			};
+
+			this.emit('Marker:linkFrom', { link, preventSave });
+			destination.emit('Marker:linkTo', { link, preventSave });
+
+			this.links.add(link);
+
+			const menu = this.getTunnelsListMenu();
+			const id = menu.getMenuItems().length;
+
+			menu.addMenuItem({
+				id: `#${id}`,
+				text: Text.encode(destination.name),
+				events: {
+					onMouseEnter()
+					{
+						Marker.highlightLink(link);
+					},
+					onMouseLeave()
+					{
+						Marker.unhighlightLinks();
+					},
+				},
+				items: this.getTunnelMenuItems(link),
+			});
+		}
+
+		if (this.links.size > 1)
+		{
+			this.setTunnelsCounterValue(this.links.size);
+		}
 	}
 
 	addStubLinkTo(destination: Marker)

@@ -1,0 +1,27 @@
+<?php
+$MESS["BX24_CLOSE_BUTTON"] = "Жабу";
+$MESS["BX24_INVITE_BUTTON"] = "Шақыру";
+$MESS["BX24_INVITE_DIALOG_EMAIL_ERROR"] = "Email дұрыс емес енгізілді:";
+$MESS["BX24_INVITE_DIALOG_EMAIL_LIMIT_EXCEEDED"] = "Шақырудағы e-mail мекенжайлары санының лимиті асып кетті.";
+$MESS["BX24_INVITE_DIALOG_ERROR_EMPTY_EMAIL"] = "E-mail көрсетілмеген";
+$MESS["BX24_INVITE_DIALOG_ERROR_EMPTY_EMAIL_LIST"] = "E-mail көрсетілмеген";
+$MESS["BX24_INVITE_DIALOG_ERROR_EMPTY_LAST_NAME"] = "Тегі көрсетілмеген";
+$MESS["BX24_INVITE_DIALOG_ERROR_EMPTY_PASSWORD"] = "Құпиясөз көрсетілмеген";
+$MESS["BX24_INVITE_DIALOG_ERROR_EMPTY_PHONE_LIST"] = "Телефон нөмірлері көрсетілмеген";
+$MESS["BX24_INVITE_DIALOG_ERROR_EXTRANET_USER_TRANSFER"] = "Сыртқы пайдаланушыны қайта құру мүмкін болмады";
+$MESS["BX24_INVITE_DIALOG_ERROR_USER_TRANSFER"] = "Пошта пайдаланушысын қайта құру мүмкін болмады";
+$MESS["BX24_INVITE_DIALOG_ERROR_WRONG_PASSWORD_CONFIRM"] = "Құпиясөзді растау дұрыс емес";
+$MESS["BX24_INVITE_DIALOG_ERROR_WRONG_USER"] = "Пошта пайдаланушысы дұрыс көрсетілмеген";
+$MESS["BX24_INVITE_DIALOG_INVITE_MESSAGE_TEXT_1"] = "Сіздерді біздің компанияның Битрикс24-іне шақырамын. Мұнда біз жобалар мен міндеттер бойынша бірлесіп жұмыс істей аламыз, құжаттарды басқара аламыз, кездесулер мен жиналыстарды жоспарлай аламыз, блогтарда сөйлесе аламыз және тағысын тағы.";
+$MESS["BX24_INVITE_DIALOG_MAX_COUNT_ERROR"] = "Шақырылған қызметкерлер саны тарифтік жоспардың шектеу мүмкіндігінен көп.";
+$MESS["BX24_INVITE_DIALOG_PASSWORD_SAME"] = "бұрын қолданған";
+$MESS["BX24_INVITE_DIALOG_PHONE_ERROR"] = "Телефон нөмірлері дұрыс енгізілмеген:";
+$MESS["BX24_INVITE_DIALOG_PHONE_LIMIT_EXCEEDED"] = "Шақырудағы телефон нөмірлері санының лимиті асып кетті.";
+$MESS["BX24_INVITE_DIALOG_USER_EXIST_ERROR1"] = "#EMAIL# email-ы бар пайдаланушы бұрыннан бар.";
+$MESS["BX24_INVITE_DIALOG_USER_EXIST_ERROR2"] = "#EMAIL_LIST# email-нан пайдаланушылар бұрыннан бар.";
+$MESS["BX24_INVITE_DIALOG_USER_ID_NO_EXIST_ERROR"] = "Пайдаланушының ID-і дұрыс көрсетілмеген";
+$MESS["BX24_INVITE_DIALOG_USER_PHONE_EXIST_ERROR1"] = "#PHONE# телефон нөмірі бар пайдаланушы бұрыннан бар.";
+$MESS["BX24_INVITE_DIALOG_USER_PHONE_EXIST_ERROR2"] = "#PHONE_LIST# телефон нөмірлері бар пайдаланушылар бұрыннан бар.";
+$MESS["BX24_INVITE_TITLE_ADD"] = "Қызметкерді қосу";
+$MESS["BX24_INVITE_TITLE_INVITE"] = "Әріптестеріңізді шақырыңыз";
+$MESS["BX24_LOADING"] = "Жүктеу...";

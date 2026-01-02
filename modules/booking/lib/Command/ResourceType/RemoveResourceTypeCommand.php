@@ -26,6 +26,14 @@ class RemoveResourceTypeCommand extends AbstractCommand
 		];
 	}
 
+	public static function mapFromArray(array $props): self
+	{
+		return new self(
+			id: $props['id'],
+			removedBy: $props['removedBy'],
+		);
+	}
+
 	protected function execute(): Result
 	{
 		try

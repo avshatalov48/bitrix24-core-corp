@@ -1,5 +1,11 @@
-(() => {
+/**
+ * @module money
+ */
+jn.define('money', (require, exports, module) => {
 	const MAX_RETRY_COUNT = 3;
+
+	const { isEmpty } = require('utils/object');
+	const { number_format } = require('utils/string');
 
 	/**
 	 * @class Money
@@ -49,13 +55,7 @@
 				const cache = new Cache('MoneyCurrencyFormatList');
 				const cachedData = cache.get();
 
-				if (CommonUtils.isNotEmptyObject(cachedData))
-				{
-					Money.formats = cachedData;
-					BX.postComponentEvent('Money::onLoad', []);
-					resolve(cachedData);
-				}
-				else
+				if (isEmpty(cachedData))
 				{
 					BX.ajax.runAction('mobile.currency.format.list', {})
 						.then((response) => {
@@ -68,12 +68,18 @@
 							reject(response.errors);
 						})
 						.finally(() => {
-							if (!CommonUtils.isNotEmptyObject(Money.formats))
+							if (isEmpty(Money.formats))
 							{
 								retryCount++;
 								setTimeout(() => Money.init(retryCount), 200 * retryCount);
 							}
 						});
+				}
+				else
+				{
+					Money.formats = cachedData;
+					BX.postComponentEvent('Money::onLoad', []);
+					resolve(cachedData);
 				}
 			});
 		}
@@ -120,7 +126,6 @@
 
 		/**
 		 * @private
-		 * @param hideZero
 		 * @returns {string}
 		 */
 		numberFormat()
@@ -132,7 +137,7 @@
 				decimals = 0;
 			}
 
-			return CommonUtils.number_format(
+			return number_format(
 				this.amount,
 				decimals,
 				this.format.DEC_POINT,
@@ -160,6 +165,16 @@
 	Money.formats = {};
 
 	Money.init();
+
+	module.exports = {
+		Money,
+	};
+});
+
+// todo remove after all global usages in other modules will be cleaned
+(function() {
+	const require = (ext) => jn.require(ext);
+	const { Money } = require('money');
 
 	jnexport(Money);
 })();

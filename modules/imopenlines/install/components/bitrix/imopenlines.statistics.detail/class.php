@@ -1912,15 +1912,25 @@ class ImOpenLinesComponentStatisticsDetail extends \CBitrixComponent
 				}
 			}
 
-			$newRow["TIME_ANSWER_WO_BOT"] = $row["data"]["TIME_ANSWER"]? $row["data"]["TIME_ANSWER"]-$row["data"]["TIME_BOT"]: 0;
-			$newRow["TIME_CLOSE_WO_BOT"] = $row["data"]["TIME_CLOSE"]? $row["data"]["TIME_CLOSE"]-$row["data"]["TIME_BOT"]: 0;
-			$newRow["TIME_CLOSE"] = $row["data"]["TIME_CLOSE"] != $row["data"]["TIME_BOT"]? $row["data"]["TIME_CLOSE"]: 0;
-			$newRow["TIME_DIALOG_WO_BOT"] = $row["data"]["TIME_DIALOG"]? $row["data"]["TIME_DIALOG"]-$row["data"]["TIME_BOT"]: 0;
-			$newRow["TIME_FIRST_ANSWER"] = $row["data"]["TIME_FIRST_ANSWER"]? $row["data"]["TIME_FIRST_ANSWER"]-$row["data"]["TIME_BOT"]: 0;
+			$newRow["TIME_ANSWER_WO_BOT"] = $row["data"]["TIME_ANSWER"] ?: 0;
+			$newRow["TIME_DIALOG_WO_BOT"] = $row["data"]["TIME_DIALOG"] ? $row["data"]["TIME_DIALOG"]-$row["data"]["TIME_FIRST_ANSWER"] : 0;
+			$newRow["TIME_FIRST_ANSWER"] = $row["data"]["TIME_FIRST_ANSWER"] ?: 0;
 			$newRow["EXTRA_REGISTER"] = $row["data"]["EXTRA_REGISTER"]? $row["data"]["EXTRA_REGISTER"]: ($this->excelMode? '': '-');
 			$newRow["EXTRA_TARIFF"] = $row["data"]["EXTRA_TARIFF"]? $row["data"]["EXTRA_TARIFF"]: ($this->excelMode? '': '-');
 			$newRow["EXTRA_USER_LEVEL"] = $row["data"]["EXTRA_USER_LEVEL"]? $row["data"]["EXTRA_USER_LEVEL"]: ($this->excelMode? '': '-');
 			$newRow["EXTRA_PORTAL_TYPE"] = $row["data"]["EXTRA_PORTAL_TYPE"]? $row["data"]["EXTRA_PORTAL_TYPE"]: ($this->excelMode? '': '-');
+
+			if (
+				$row["data"]["DATE_OPERATOR_CLOSE"] instanceof \Bitrix\Main\Type\DateTime
+				&& $row["data"]["DATE_CREATE"] instanceof \Bitrix\Main\Type\DateTime
+			)
+			{
+				$newRow["TIME_CLOSE_WO_BOT"] = $row["data"]["DATE_OPERATOR_CLOSE"]->getTimestamp() - $row["data"]["DATE_CREATE"]->getTimestamp();
+			}
+			else
+			{
+				$newRow["TIME_CLOSE_WO_BOT"] = 0;
+			}
 
 			if ($this->isNeedKpi)
 			{

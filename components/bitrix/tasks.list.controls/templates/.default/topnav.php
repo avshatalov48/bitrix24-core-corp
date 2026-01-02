@@ -35,7 +35,7 @@ $taskListGlobalOpts = array(
 	'enable_gantt_hint' => \Bitrix\Main\Config\Option::get('tasks', 'task_list_enable_gantt_hint')
 );
 
-if(SITE_TEMPLATE_ID === "bitrix24")
+if(SITE_TEMPLATE_ID === "bitrix24" || SITE_TEMPLATE_ID === 'air')
 {
 	$this->SetViewTarget($arParams["MENU_TARGET"], 100);
 }
@@ -177,7 +177,7 @@ if ($arParams["SHOW_SECTIONS_BAR"] === "Y")
 	if ($arResult["BX24_RU_ZONE"])
 	{
 		$menuItems[] = array(
-			"TEXT" => GetMessage("TASKS_PANEL_TAB_APPLICATIONS_2"),
+			"TEXT" => GetMessage("TASKS_PANEL_TAB_APPLICATIONS_MSGVER_1"),
 			"URL" => \Bitrix\Tasks\Integration\Market\Router::getCategoryPath('tasks'),
 			"ID" => "view_apps",
 		);
@@ -204,12 +204,12 @@ if ($arParams["SHOW_SECTIONS_BAR"] === "Y")
 		)
 	);
 }
-if(SITE_TEMPLATE_ID === "bitrix24")
+if(SITE_TEMPLATE_ID === "bitrix24" || SITE_TEMPLATE_ID === 'air')
 {
 	$this->EndViewTarget();
 }
 
-if(SITE_TEMPLATE_ID === "bitrix24")
+if(SITE_TEMPLATE_ID === "bitrix24" || SITE_TEMPLATE_ID === 'air')
 {
 	$this->SetViewTarget($arParams["CONTROLS_TARGET"], 200);
 }
@@ -852,7 +852,7 @@ if ($arParams['SHOW_FILTER_BAR'] === 'Y')
 	</script>
 	<?
 }
-if(SITE_TEMPLATE_ID === "bitrix24")
+if(SITE_TEMPLATE_ID === "bitrix24" || SITE_TEMPLATE_ID === 'air')
 {
 	$this->EndViewTarget();
 }

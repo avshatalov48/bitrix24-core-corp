@@ -26,7 +26,7 @@ class ExternalSourceDataProvider extends EntityDataProvider
 
 	public function prepareFields(): array
 	{
-		return [
+		$result = [
 			'TYPE' => $this->createField('TYPE', [
 				'name' => Loc::getMessage('BICONNECTOR_SUPERSET_EXTERNAL_SOURCE_GRID_FILTER_TITLE_TYPE'),
 				'default' => true,
@@ -53,13 +53,15 @@ class ExternalSourceDataProvider extends EntityDataProvider
 					],
 				],
 			]),
-//			'CREATED_BY_ID' => $this->createField('CREATED_BY_ID', [
-//				'name' => Loc::getMessage('BICONNECTOR_SUPERSET_EXTERNAL_SOURCE_GRID_FILTER_TITLE_CREATED_BY'),
-//				'default' => true,
-//				'type' => 'entity_selector',
-//				'partial' => true,
-//			]),
+			'CREATED_BY_ID' => $this->createField('CREATED_BY_ID', [
+				'name' => Loc::getMessage('BICONNECTOR_SUPERSET_EXTERNAL_SOURCE_GRID_FILTER_TITLE_CREATED_BY'),
+				'default' => true,
+				'type' => 'entity_selector',
+				'partial' => true,
+			]),
 		];
+
+		return $result;
 	}
 
 	public function prepareFieldData($fieldID): ?array
@@ -71,6 +73,7 @@ class ExternalSourceDataProvider extends EntityDataProvider
 			{
 				$filterItemsList[$source['CODE']] = $source['NAME'];
 			}
+
 			return [
 				'params' => [
 					'multiple' => 'N',
@@ -92,13 +95,13 @@ class ExternalSourceDataProvider extends EntityDataProvider
 			];
 		}
 
-//		if ($fieldID === 'CREATED_BY_ID')
-//		{
-//			return $this->getUserEntitySelectorParams(
-//				$fieldID . '_filter',
-//				['fieldName' => $fieldID]
-//			);
-//		}
+		if ($fieldID === 'CREATED_BY_ID')
+		{
+			return $this->getUserEntitySelectorParams(
+				$fieldID . '_filter',
+				['fieldName' => $fieldID]
+			);
+		}
 
 		return null;
 	}

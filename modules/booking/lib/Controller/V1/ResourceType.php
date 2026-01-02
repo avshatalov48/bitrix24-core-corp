@@ -8,7 +8,6 @@ use Bitrix\Booking\Command\ResourceType\AddResourceTypeCommand;
 use Bitrix\Booking\Command\ResourceType\RemoveResourceTypeCommand;
 use Bitrix\Booking\Command\ResourceType\UpdateResourceTypeCommand;
 use Bitrix\Booking\Entity;
-use Bitrix\Booking\Internals\Container;
 use Bitrix\Booking\Internals\Exception\ErrorBuilder;
 use Bitrix\Booking\Internals\Exception\Exception;
 use Bitrix\Booking\Provider\Params\GridParams;
@@ -16,10 +15,20 @@ use Bitrix\Booking\Provider\Params\ResourceType\ResourceTypeFilter;
 use Bitrix\Booking\Provider\Params\ResourceType\ResourceTypeSort;
 use Bitrix\Booking\Provider\ResourceTypeProvider;
 use Bitrix\Main\Engine\CurrentUser;
+use Bitrix\Main\Request;
 use Bitrix\Main\UI\PageNavigation;
 
 class ResourceType extends BaseController
 {
+	private ResourceTypeProvider $resourceTypeProvider;
+
+	public function __construct(Request $request = null)
+	{
+		parent::__construct($request);
+
+		$this->resourceTypeProvider = new ResourceTypeProvider();
+	}
+
 	public function listAction(
 		PageNavigation $navigation,
 		array $filter = [],
@@ -41,10 +50,14 @@ class ResourceType extends BaseController
 	{
 		try
 		{
-			return (new ResourceTypeProvider())->getById(
+			$resourceType = $this->resourceTypeProvider->getById(
 				userId: (int)CurrentUser::get()->getId(),
 				id: $id
 			);
+
+			$this->resourceTypeProvider->withResourceCnt($resourceType);
+
+			return $resourceType;
 		}
 		catch (Exception $e)
 		{
@@ -93,7 +106,10 @@ class ResourceType extends BaseController
 			return null;
 		}
 
-		$entity = Container::getResourceTypeRepository()->getById((int)$resourceType['id']);
+		$entity = $this->resourceTypeProvider->getById(
+			userId: (int)CurrentUser::get()->getId(),
+			id: (int)$resourceType['id']
+		);
 		if (!$entity)
 		{
 			$this->addError(ErrorBuilder::build('Resource type has not been found.'));
@@ -126,7 +142,12 @@ class ResourceType extends BaseController
 			return null;
 		}
 
-		return $result->getResourceType();
+		/** @var Entity\ResourceType\ResourceType $resourceType */
+		$resourceType = $result->getResourceType();
+
+		$this->resourceTypeProvider->withResourceCnt($resourceType);
+
+		return $resourceType;
 	}
 
 	public function deleteAction(int $id): array|null

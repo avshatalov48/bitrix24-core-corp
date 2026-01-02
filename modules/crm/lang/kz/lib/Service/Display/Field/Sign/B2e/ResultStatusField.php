@@ -1,0 +1,3 @@
+<?php
+$MESS["CRM_FIELD_SIGN_B2E_RESULT_STATUS_DONE"] = "Қол қойылды";
+$MESS["CRM_FIELD_SIGN_B2E_RESULT_STATUS_STOPPED"] = "Қол қою тоқтатылды";

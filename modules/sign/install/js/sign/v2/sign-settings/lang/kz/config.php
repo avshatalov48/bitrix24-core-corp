@@ -1,0 +1,23 @@
+<?php
+$MESS["SIGN_SETTINGS_B2B_LOAD_DOCUMENT"] = "Құжат";
+$MESS["SIGN_SETTINGS_B2B_PREPARING_DOCUMENT"] = "Дайындық";
+$MESS["SIGN_SETTINGS_B2B_TITLE_SUB"] = "Құжатты қол қоюға жіберу үшін 3 қарапайым қадамды орындаңыз";
+$MESS["SIGN_SETTINGS_B2E_COMPANY"] = "Компания";
+$MESS["SIGN_SETTINGS_B2E_EMPLOYEES"] = "Қызметкерлер";
+$MESS["SIGN_SETTINGS_B2E_REGIONAL_SETTINGS"] = "Қосымша параметрлерді орындаңыз";
+$MESS["SIGN_SETTINGS_B2E_REGIONAL_SETTINGS_SHORT"] = "Қосымша";
+$MESS["SIGN_SETTINGS_B2E_ROUTES"] = "Маршруттар";
+$MESS["SIGN_SETTINGS_B2E_TITLE_SUB"] = "Бірнеше қарапайым қадамдарды орындаңыз";
+$MESS["SIGN_SETTINGS_COMPLETE_NOTIFICATION_TEXT"] = "Құжат қол қоюға жіберілді";
+$MESS["SIGN_SETTINGS_COMPLETE_NOTIFICATION_TEXT_GROUP"] = "Құжаттар қол қоюға жіберілді";
+$MESS["SIGN_SETTINGS_CREATE_TEMPLATE"] = "Сақтау";
+$MESS["SIGN_SETTINGS_SEND_DOCUMENT"] = "Жіберу";
+$MESS["SIGN_SETTINGS_SEND_DOCUMENT_CREATE"] = "Құру";
+$MESS["SIGN_SETTINGS_SEND_FOR_SIGN"] = "Қол қоюға жіберу";
+$MESS["SIGN_SETTINGS_TEMPLATES_LIST"] = "Барлық қалыптар";
+$MESS["SIGN_SETTINGS_TEMPLATE_CHANGED"] = "Қалып өзгертілді";
+$MESS["SIGN_SETTINGS_TEMPLATE_CREATED"] = "Құжат қалыбы құрылды";
+$MESS["SIGN_SETTINGS_TEMPLATE_CREATED_INFO"] = "Қалыптар мен бағыттарды КЭҚА бөлімінде редакциялауға болады";
+$MESS["SIGN_SETTINGS_TITLE"] = "Қол қоюға арналған жаңа құжат";
+$MESS["SIGN_SETTINGS_TITLE_TEMPLATE"] = "Процесс қалыбы";
+$MESS["SIGN_SETTINGS_TITLE_TEMPLATE_EDIT"] = "Қалыпты редакциялау";

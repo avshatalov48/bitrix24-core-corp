@@ -3,7 +3,6 @@
  */
 jn.define('ui-system/blocks/icon', (require, exports, module) => {
 	const { Color } = require('tokens');
-	const { Feature } = require('feature');
 	const { PropTypes } = require('utils/validation');
 	const { outline, Icon } = require('assets/icons');
 	const { OutlineIconTypes } = require('assets/icons/types');
@@ -27,16 +26,12 @@ jn.define('ui-system/blocks/icon', (require, exports, module) => {
 	 * @property {number} [size.width]
 	 * @property {boolean} [disabled]
 	 * @property {Object} [style]
+	 * @property {Function} [onClick]
 	 *
 	 * @class IconView
 	 */
 	class IconView extends LayoutComponent
 	{
-		static isFallbackUrlSupported()
-		{
-			return Feature.isFallbackUrlSupported();
-		}
-
 		render()
 		{
 			const { testId, forwardRef } = this.props;
@@ -90,9 +85,6 @@ jn.define('ui-system/blocks/icon', (require, exports, module) => {
 		getEnumIconParams()
 		{
 			const { icon } = this.props;
-
-			const named = icon.getIconName();
-			const path = icon.getPath();
 			const svgContent = icon.getSvg();
 
 			if (svgContent)
@@ -104,22 +96,12 @@ jn.define('ui-system/blocks/icon', (require, exports, module) => {
 				};
 			}
 
-			if (IconView.isFallbackUrlSupported())
-			{
-				return {
-					named: {
-						named,
-						fallbackUrl: withCurrentDomain(path),
-					},
-				};
-			}
-
-			if (named)
-			{
-				return { named };
-			}
-
-			return {};
+			return {
+				named: {
+					named: icon.getIconName(),
+					fallbackUrl: withCurrentDomain(icon.getPath()),
+				},
+			};
 		}
 
 		getIconContent()

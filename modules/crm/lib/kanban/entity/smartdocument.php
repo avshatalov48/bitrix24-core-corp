@@ -15,7 +15,7 @@ class SmartDocument extends Dynamic
 		return $fields;
 	}
 
-	public function canAddItemToStage(string $stageId, \CCrmPerms $userPermissions, string $semantics = PhaseSemantics::UNDEFINED): bool
+	public function canAddItemToStage(string $stageId, string $semantics = PhaseSemantics::UNDEFINED): bool
 	{
 		return false;
 	}

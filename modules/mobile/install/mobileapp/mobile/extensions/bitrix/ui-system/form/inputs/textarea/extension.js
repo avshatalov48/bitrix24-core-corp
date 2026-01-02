@@ -11,7 +11,7 @@ jn.define('ui-system/form/inputs/textarea', (require, exports, module) => {
 	/**
 	 * @typedef {InputProps} TextAreaInputProps
 	 * @property {boolean} [showCharacterCount=true]
-	 * @property {number} [height=60]
+	 * @property {number|null} [height=96] - null is for auto height based on content
 	 *
 	 * @class TextAreaInput
 	 */
@@ -21,14 +21,14 @@ jn.define('ui-system/form/inputs/textarea', (require, exports, module) => {
 		{
 			const { height } = this.props;
 
-			return Number(height);
+			return height;
 		}
 
 		getFieldStyle()
 		{
 			return {
 				...super.getFieldStyle(),
-				height: '100%',
+				height: (this.getContainerHeight() ? '100%' : undefined),
 			};
 		}
 

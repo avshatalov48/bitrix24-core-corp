@@ -57,18 +57,16 @@ if(isset($arResult['jsParams']['messages']['crmTimelineHistoryStub']))
 {
 	$messages['CRM_TIMELINE_HISTORY_STUB'] = $arResult['jsParams']['messages']['crmTimelineHistoryStub'];
 }
-?>
 
-<script>
+// messages should be loaded on page before entity-details, otherwise timeline wont have the stub message
+?><script>
 	BX.ready(function() {
 		BX.message(<?=\Bitrix\Main\Web\Json::encode($messages)?>);
 		var params = <?=CUtil::PhpToJSObject($arResult['jsParams'], false, false, true);?>;
 		params.errorTextContainer = document.getElementById('crm-type-item-details-error-text-container');
 		(new BX.Crm.ItemDetailsComponent(params)).init();
 	});
-</script>
-
-<?php
+</script><?php
 
 $componentParams = $arResult['entityDetailsParams'];
 

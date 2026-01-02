@@ -66,7 +66,7 @@ class Type extends Base
 		$userPermissions = Container::getInstance()->getUserPermissions($this->getCurrentUser()->getId());
 		if (
 			!$userPermissions->isAdminForEntity($type->getEntityTypeId())
-			&& !$userPermissions->canReadType($type->getEntityTypeId())
+			&& !$userPermissions->entityType()->canReadItems($type->getEntityTypeId())
 		)
 		{
 			$this->addError(ErrorCode::getAccessDeniedError());
@@ -85,7 +85,7 @@ class Type extends Base
 		if (
 			!$userPermissions->isAdminForEntity($entityTypeId)
 			&& !$userPermissions->isCrmAdmin()
-			&& !$userPermissions->canReadType($entityTypeId)
+			&& !$userPermissions->entityType()->canReadItems($entityTypeId)
 		)
 		{
 			$this->addError(ErrorCode::getAccessDeniedError());
@@ -211,7 +211,7 @@ class Type extends Base
 		$entityTypeId = $fields['entityTypeId'] ?? 0;
 		$userPermissions = Container::getInstance()->getUserPermissions($this->getCurrentUser()->getId());
 		$automatedSolutionId = $fields['customSectionId'] ?? 0;
-		$hasPermissions = $automatedSolutionId ? $userPermissions->isAutomatedSolutionAdmin($automatedSolutionId) : $userPermissions->isCrmAdmin();
+		$hasPermissions = $automatedSolutionId ? $userPermissions->automatedSolution()->isAutomatedSolutionAdmin($automatedSolutionId) : $userPermissions->isCrmAdmin();
 		if (!$hasPermissions)
 		{
 			$this->addError(ErrorCode::getAccessDeniedError());
@@ -287,7 +287,7 @@ class Type extends Base
 		$automatedSolutionId = (int)($fields['customSectionId'] ?? 0);
 		if ($isNew)
 		{
-			$hasPermissions = $automatedSolutionId ? $userPermissions->isAutomatedSolutionAdmin($automatedSolutionId) : $userPermissions->isCrmAdmin();
+			$hasPermissions = $automatedSolutionId ? $userPermissions->automatedSolution()->isAutomatedSolutionAdmin($automatedSolutionId) : $userPermissions->isCrmAdmin();
 		}
 		else
 		{
@@ -324,7 +324,7 @@ class Type extends Base
 			&& (
 				(!$type->getCustomSectionId() && !$userPermissions->isCrmAdmin())
 				||
-				(!$type->getCustomSectionId() && !$userPermissions->isAutomatedSolutionAdmin($automatedSolutionId))
+				(!$type->getCustomSectionId() && !$userPermissions->automatedSolution()->isAutomatedSolutionAdmin($automatedSolutionId))
 			)
 		)
 		{
@@ -369,6 +369,8 @@ class Type extends Base
 			}
 		}
 
+		$isTitleChanged = $type->isChanged('TITLE');
+
 		$result = $type->save();
 		if($result->isSuccess())
 		{
@@ -384,7 +386,7 @@ class Type extends Base
 			}
 
 			$typeFromContainer = Container::getInstance()->getDynamicTypesMap()->getTypesCollection()->getByPrimary($type->getId());  // to avoid inconsistent with data from \Bitrix\Crm\Service\Container::getTypeByEntityTypeId
-			$customSectionsResult = $this->saveCustomSections($typeFromContainer, $fields);
+			$customSectionsResult = $this->saveCustomSections($typeFromContainer, $fields, $isTitleChanged);
 			if (!$customSectionsResult->isSuccess())
 			{
 				$this->addErrors($customSectionsResult->getErrors());
@@ -658,8 +660,17 @@ class Type extends Base
 	 * - if page exists and there is not sectionId - delete record
 	 * - if page does not exist - add record.
 	 */
-	protected function saveCustomSections(Dynamic\Type $type, array $fields): Result
+	protected function saveCustomSections(Dynamic\Type $type, array $fields, bool $isTypeTitleChanged): Result
 	{
-		return Container::getInstance()->getAutomatedSolutionManager()->setAutomatedSolutions($type, $fields);
+		static $whitelist = [
+			'CUSTOM_SECTION_ID' => true,
+			'CUSTOM_SECTIONS' => true,
+		];
+
+		$whitelistedFields = array_intersect_key($fields, $whitelist);
+
+		$whitelistedFields['IS_TYPE_TITLE_CHANGED'] = $isTypeTitleChanged;
+
+		return Container::getInstance()->getAutomatedSolutionManager()->setAutomatedSolutions($type, $whitelistedFields);
 	}
 }

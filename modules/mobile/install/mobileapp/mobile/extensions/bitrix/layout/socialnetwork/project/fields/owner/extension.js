@@ -17,6 +17,7 @@
 						provider: {
 							context: 'GROUP_INVITE_OWNER',
 						},
+						reloadEntityListFromProps: true,
 						entityList: [this.props.ownerData],
 						parentWidget: this.props.parentWidget,
 					},

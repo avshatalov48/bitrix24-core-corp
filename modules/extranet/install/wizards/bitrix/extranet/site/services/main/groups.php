@@ -67,14 +67,9 @@ $group = new CGroup;
 foreach ($arGroups as $arGroup)
 {
 	//Add Group
-	$groupID = 0;
+	$groupID = CGroup::GetIDByCode($arGroup["STRING_ID"]);
 
-	$dbResult = CGroup::GetList('', '', Array("STRING_ID" => $arGroup["STRING_ID"], "STRING_ID_EXACT_MATCH" => "Y"));
-	if ($arExistsGroup = $dbResult->Fetch())
-	{
-		$groupID = $arExistsGroup["ID"];
-	}
-	else
+	if (!$groupID)
 	{
 		$groupID = $group->Add($arGroup);
 	}

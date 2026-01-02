@@ -15,8 +15,8 @@ $MESS["ELEMENT_MENU_CALL"] = "Позвонить";
 $MESS["ELEMENT_MENU_ANSWER"] = "Ответить";
 $MESS["ELEMENT_MENU_SKIP"] = "Пропустить";
 $MESS["ELEMENT_MENU_FINISH"] = "Завершить";
-$MESS["ELEMENT_MENU_MUTE"] = "Не следить";
-$MESS["ELEMENT_MENU_UNMUTE"] = "Следить";
+$MESS["ELEMENT_MENU_MUTE_MSGVER_1"] = "Не следить";
+$MESS["ELEMENT_MENU_UNMUTE_MSGVER_1"] = "Следить";
 $MESS["ELEMENT_MENU_SPAM"] = "Спам";
 $MESS["ELEMENT_MENU_ABOUT_CHAT"] = "О чате";
 $MESS["ELEMENT_MENU_INVITE_RESEND"] = "Пригласить повторно";
@@ -29,4 +29,3 @@ $MESS["USER_INVITED_2"] = "Приглашение не принято";
 $MESS["CALL_STATUS_JOIN"] = "Подключиться к звонку";
 $MESS["CALL_STATUS_REMOTE"] = "Звонок на другом устройстве";
 $MESS["CALL_STATUS_OPEN"] = "Перейти к звонку";
-?>

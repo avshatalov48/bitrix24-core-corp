@@ -7,6 +7,7 @@ namespace Bitrix\Disk\Promo\Boards;
 enum BoardsPopupState: string
 {
 	case New = 'new';
+	case Acknowledged = 'acknowledged';
 	case Viewed = 'viewed';
 	case Completed = 'completed';
 }

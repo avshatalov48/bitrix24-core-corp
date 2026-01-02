@@ -29,12 +29,10 @@ $asset->addJs('/bitrix/js/crm/common.js');
 $asset->addCss('/bitrix/themes/.default/crm-entity-show.css');
 $asset->addCss('/bitrix/js/crm/css/crm.css');
 
-if(SITE_TEMPLATE_ID === 'bitrix24')
-{
-	$APPLICATION->SetAdditionalCSS('/bitrix/themes/.default/bitrix24/crm-entity-show.css');
-	$bodyClass = $APPLICATION->GetPageProperty('BodyClass');
-	$APPLICATION->SetPageProperty('BodyClass', ($bodyClass ? $bodyClass.' ' : '').'pagetitle-toolbar-field-view flexible-layout crm-toolbar crm-pagetitle-view');
-}
+$APPLICATION->SetAdditionalCSS('/bitrix/themes/.default/bitrix24/crm-entity-show.css');
+$bodyClass = $APPLICATION->GetPageProperty('BodyClass');
+$APPLICATION->SetPageProperty('BodyClass', ($bodyClass ? $bodyClass.' ' : '').'pagetitle-toolbar-field-view flexible-layout crm-toolbar crm-pagetitle-view');
+
 $quid = $arResult['GUID'];
 $prefix = mb_strtolower($quid);
 $containerID = "{$prefix}_container";

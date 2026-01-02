@@ -13,6 +13,7 @@ use Bitrix\Main\Loader;
 use Bitrix\Main\Localization\Loc;
 use Bitrix\Main\Result;
 use Bitrix\Main\Type\DateTime;
+use CCrmOwnerType;
 
 Loc::loadMessages(__FILE__);
 
@@ -72,7 +73,7 @@ final class CallList
 
 		if ($checkPermissions && !$userPermissions->isAdmin() && (int)$callList->getEntityTypeId() !== 0)
 		{
-			$canReadType = $userPermissions->canReadType((int)$callList->getEntityTypeId());
+			$canReadType = $userPermissions->entityType()->canReadItems((int)$callList->getEntityTypeId());
 			if (!$canReadType)
 			{
 				throw new \Bitrix\Main\SystemException('Access Denied', 403);
@@ -106,7 +107,7 @@ final class CallList
 
 				if ($checkPermissions)
 				{
-					$canReadItem = $userPermissions->checkReadPermissions($callList->entityTypeId, $item->getElementId());
+					$canReadItem = $userPermissions->item()->canRead($callList->entityTypeId, $item->getElementId());
 					if (!$canReadItem)
 					{
 						unset($callList->items[$key]);
@@ -825,8 +826,27 @@ final class CallList
 			);
 		}
 
-		$contactFields = count($contactIds) > 0 ? self::resolveItemFields(\CCrmOwnerType::Contact, array_keys($contactIds)) : array();
-		$companyFields = count($companyIds) > 0 ? self::resolveItemFields(\CCrmOwnerType::Company, array_keys($companyIds)) : array();
+		$itemPermissions = Container::getInstance()->getUserPermissions()->item();
+
+		$contactIds = array_filter(
+			$contactIds,
+			static fn($contactId) => $itemPermissions->canRead(CCrmOwnerType::Contact, $contactId),
+		);
+		$contactFields =
+			count($contactIds) > 0
+				? self::resolveItemFields(\CCrmOwnerType::Contact, array_keys($contactIds))
+				: []
+		;
+
+		$companyIds = array_filter(
+			$companyIds,
+			static fn($companyId) => $itemPermissions->canRead(CCrmOwnerType::Company, $companyId),
+		);
+		$companyFields =
+			count($companyIds) > 0
+				? self::resolveItemFields(\CCrmOwnerType::Company, array_keys($companyIds))
+				: []
+		;
 
 		if(count($companyFields) > 0 || count($contactFields) > 0)
 		{

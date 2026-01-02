@@ -1471,7 +1471,7 @@ this.BX.Messenger = this.BX.Messenger || {};
 	  }, {
 	    key: "setIosInset",
 	    value: function setIosInset() {
-	      if (!im_lib_utils.Utils.platform.isIos() || Application.getApiVersion() <= 39) {
+	      if (!im_lib_utils.Utils.platform.isIos()) {
 	        return false;
 	      }
 	      var getScrollElement = function getScrollElement() {
@@ -1620,9 +1620,8 @@ this.BX.Messenger = this.BX.Messenger || {};
 	        if (!dialogData.init) {
 	          return false;
 	        }
-	        var isAvailableChatCall = Application.getApiVersion() >= 36;
 	        var maxParticipants = this.controller.application.getData().call.maxParticipants;
-	        if (dialogData.userCounter > maxParticipants || !isAvailableChatCall || dialogData.entityType === 'VIDEOCONF' && dialogData.entityData1 === 'BROADCAST') {
+	        if (dialogData.userCounter > maxParticipants || dialogData.entityType === 'VIDEOCONF' && dialogData.entityData1 === 'BROADCAST') {
 	          if (dialogData.type !== im_const.DialogType.call && dialogData.restrictions.extend) {
 	            app.exec('setRightButtons', {
 	              items: [{

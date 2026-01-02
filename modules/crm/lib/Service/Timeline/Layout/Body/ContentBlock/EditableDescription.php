@@ -15,17 +15,36 @@ class EditableDescription extends ContentBlock
 	public const BG_COLOR_YELLOW = 'yellow';
 	public const BG_COLOR_WHITE = 'white';
 
+	public const AI_NONE = '';
+	public const AI_SUCCESS = 'success';
+	public const AI_IN_PROGRESS = 'in_progress';
+
+	protected ?string $headerText = null;
 	protected ?string $text = null;
 	protected ?string $backgroundColor = null;
 	protected ?bool $editable = true;
 	protected ?bool $copied = false;
 	protected string $height = self::HEIGHT_LONG;
+	protected string $copilotStatus = self::AI_NONE;
 	protected array $copilotSettings = [];
 	protected ?bool $useBBCodeEditor = null;
+	protected ?bool $allowFiles = null;
 
 	public function getRendererName(): string
 	{
 		return 'EditableDescription';
+	}
+
+	public function getHeaderText(): ?string
+	{
+		return $this->headerText;
+	}
+
+	public function setHeaderText(?string $headerText): self
+	{
+		$this->headerText = $headerText;
+
+		return $this;
 	}
 
 	public function getText(): ?string
@@ -61,6 +80,18 @@ class EditableDescription extends ContentBlock
 	{
 		$this->copied = $copied;
 
+		return $this;
+	}
+	
+	public function getCopilotStatus(): string
+	{
+		return $this->copilotStatus;
+	}
+	
+	public function setCopilotStatus(string $copilotStatus): self
+	{
+		$this->copilotStatus = $copilotStatus;
+		
 		return $this;
 	}
 
@@ -112,17 +143,32 @@ class EditableDescription extends ContentBlock
 		return $this;
 	}
 
+	public function setAllowFiles(bool $isAllowed): self
+	{
+		$this->allowFiles = $isAllowed;
+
+		return $this;
+	}
+
+	public function getAllowFiles(): ?bool
+	{
+		return $this->allowFiles;
+	}
+
 	protected function getProperties(): array
 	{
 		return [
+			'headerText' => $this->getHeaderText(),
 			'text' => html_entity_decode($this->getText()),
 			'saveAction' => $this->getAction(),
 			'editable' => $this->getEditable(),
 			'copied' => $this->getCopied(),
 			'height' => $this->getHeight(),
 			'backgroundColor' => $this->getBackgroundColor(),
+			'copilotStatus' => $this->getCopilotStatus(),
 			'copilotSettings' => $this->getCopilotSettings(),
 			'useBBCodeEditor' => $this->getUseBBCodeEditor(),
+			'allowFiles' => $this->getAllowFiles(),
 		];
 	}
 }

@@ -16,6 +16,7 @@ return [
 		'ui.bbcode.formatter.html-formatter',
 		'crm.copilot.call-assessment-selector',
 		'pull.client',
+		'ui.icon-set.api.core',
 		'ui.vue',
 		'ui.vue3.vuex',
 		'im.v2.lib.phone',

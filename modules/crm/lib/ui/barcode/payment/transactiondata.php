@@ -12,6 +12,8 @@ final class TransactionData
 	/** @var float|null */
 	private $sum;
 
+	private ?string $purpose = null;
+
 	public function __construct(TransactionPartyData $receiverData, ?TransactionPartyData $senderData = null)
 	{
 		$this->receiverData = $receiverData;
@@ -36,6 +38,18 @@ final class TransactionData
 	public function setSum(float $sum): self
 	{
 		$this->sum = $sum;
+
+		return $this;
+	}
+
+	public function getPurpose(): ?string
+	{
+		return $this->purpose;
+	}
+
+	public function setPurpose(?string $purpose): self
+	{
+		$this->purpose = $purpose;
 
 		return $this;
 	}

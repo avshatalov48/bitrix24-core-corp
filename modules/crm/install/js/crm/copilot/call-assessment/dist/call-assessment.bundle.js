@@ -1,7 +1,7 @@
 /* eslint-disable */
 this.BX = this.BX || {};
 this.BX.Crm = this.BX.Crm || {};
-(function (exports,ui_vue3,pull_queuemanager,ui_buttons,ui_bbcode_parser,ui_textEditor,ui_iconSet_main,ui_notification,main_core_events,ui_entitySelector,main_core,ui_infoHelper) {
+(function (exports,ui_vue3,pull_queuemanager,ui_buttons,ui_bbcode_parser,ui_textEditor,ui_iconSet_main,ui_notification,ui_entitySelector,ui_infoHelper,ui_forms,main_date,crm_timeline_tools,main_core_events,ui_datePicker,main_core) {
 	'use strict';
 
 	const BreadcrumbsEvents = {
@@ -380,7 +380,7 @@ this.BX.Crm = this.BX.Crm || {};
 	    },
 	    onValidationFailed() {
 	      ui_notification.UI.Notification.Center.notify({
-	        content: main_core.Loc.getMessage('CRM_COPILOT_CALL_ASSESSMENT_PAGE_VALIDATION_ERROR'),
+	        content: this.$Bitrix.Loc.getMessage('CRM_COPILOT_CALL_ASSESSMENT_PAGE_VALIDATION_ERROR'),
 	        autoHideDelay: 3000
 	      });
 	    },
@@ -1022,26 +1022,658 @@ this.BX.Crm = this.BX.Crm || {};
 	`
 	};
 
+	const Button$1 = {
+	  props: {
+	    action: {
+	      type: String,
+	      required: true
+	    },
+	    index: {
+	      type: Number,
+	      required: true
+	    }
+	  },
+	  computed: {
+	    classList() {
+	      return {
+	        'crm-copilot__call-assessment-availability-selector-button': true,
+	        '--add': this.action === 'add',
+	        '--remove': this.action !== 'add'
+	      };
+	    }
+	  },
+	  methods: {
+	    onClick() {
+	      const {
+	        action,
+	        index
+	      } = this;
+	      this.$emit('button-click', {
+	        index,
+	        action
+	      });
+	    }
+	  },
+	  template: `
+		<div :class="classList" @click="onClick"></div>
+	`
+	};
+
+	const Chevron = {
+	  props: {
+	    isExpanded: {
+	      type: Boolean,
+	      default: false
+	    }
+	  },
+	  computed: {
+	    classList() {
+	      return {
+	        'crm-copilot__call-assessment-availability-selector-chevron': true,
+	        '--expanded': this.isExpanded
+	      };
+	    }
+	  },
+	  template: `
+		<div :class="classList"></div>
+	`
+	};
+
+	const PeriodRow = {
+	  components: {
+	    Chevron
+	  },
+	  props: {
+	    startPoint: {
+	      type: String,
+	      required: true
+	    },
+	    endPoint: {
+	      type: String,
+	      required: true
+	    },
+	    modelValue: {
+	      type: Object,
+	      default: {}
+	    }
+	  },
+	  emits: ['update:modelValue'],
+	  data() {
+	    return {
+	      currentStartPoint: this.startPoint,
+	      currentEndPoint: this.endPoint,
+	      isExpanded: false
+	    };
+	  },
+	  created() {
+	    this.datePicker = new ui_datePicker.DatePicker({
+	      rangeStartInput: this.$refs.start,
+	      rangeEndInput: this.$refs.end,
+	      selectionMode: 'range',
+	      defaultTime: '08:00',
+	      dateFormat: crm_timeline_tools.DatetimeConverter.getSiteDateTimeFormat(true),
+	      timeFormat: crm_timeline_tools.DatetimeConverter.getSiteShortTimeFormat(),
+	      selectedDates: [this.currentStartPoint, this.currentEndPoint],
+	      enableTime: true,
+	      events: {
+	        onSelectChange: event => {
+	          const dates = event.getTarget().getSelectedDates().map(date => event.getTarget().formatDate(date, crm_timeline_tools.DatetimeConverter.getSiteDateTimeFormat(true)));
+	          if (dates[0]) {
+	            this.currentStartPoint = dates[0];
+	          }
+	          if (dates[1]) {
+	            this.currentEndPoint = dates[1];
+	          }
+	          this.$emit('update:modelValue', {
+	            startPoint: this.currentStartPoint,
+	            endPoint: this.currentEndPoint
+	          });
+	        },
+	        onShow: () => {
+	          this.isExpanded = true;
+	        },
+	        onHide: () => {
+	          this.isExpanded = false;
+	        }
+	      }
+	    });
+	  },
+	  mounted() {
+	    this.datePicker.setTargetNode(this.$refs.wrapper);
+	    this.datePicker.selectRange(this.currentStartPoint, this.currentEndPoint);
+	  },
+	  beforeUnmount() {
+	    this.datePicker.destroy();
+	  },
+	  methods: {
+	    showPicker(event) {
+	      event.preventDefault();
+	      event.stopPropagation();
+	      this.datePicker.show();
+	    }
+	  },
+	  template: `
+		<div
+			class="crm-copilot__call-assessment-availability-selector-row"
+			ref="wrapper"
+		>
+			<div class="crm-copilot__call-assessment-availability-selector-row-wrapper">
+				<input
+					type="text"
+					ref="start"
+					class="crm-copilot__call-assessment-availability-selector-input"
+					autocomplete="off"
+					readonly="readonly"
+					@click="showPicker"
+					:value="currentStartPoint"
+				>
+				<Chevron 
+					:isExpanded="isExpanded"
+					@click="showPicker"
+				/>
+			</div>
+			<div class="crm-copilot__call-assessment-availability-selector-delimiter"></div>
+			<div class="crm-copilot__call-assessment-availability-selector-row-wrapper">
+				<input
+					type="text"
+					ref="end"
+					class="crm-copilot__call-assessment-availability-selector-input"
+					autocomplete="off"
+					readonly="readonly"
+					@click="showPicker"
+					:value="currentEndPoint"
+				>
+				<Chevron 
+					:isExpanded="isExpanded"
+					@click="showPicker"
+				/>
+			</div>
+		</div>
+	`
+	};
+
+	const weekdayType = Object.freeze({
+	  monday: 'monday',
+	  tuesday: 'tuesday',
+	  wednesday: 'wednesday',
+	  thursday: 'thursday',
+	  friday: 'friday',
+	  saturday: 'saturday',
+	  sunday: 'sunday',
+	  working: 'working',
+	  weekends: 'weekends'
+	});
+
+	var _errorMessage$2 = /*#__PURE__*/babelHelpers.classPrivateFieldLooseKey("errorMessage");
+	class TimePeriod {
+	  constructor() {
+	    Object.defineProperty(this, _errorMessage$2, {
+	      writable: true,
+	      value: null
+	    });
+	  }
+	  validate(startTime, endTime) {
+	    const parseTime = dateTimeStr => {
+	      const [, time] = dateTimeStr.split(' ');
+	      const [hours, minutes] = time.split(':').map(Number);
+	      return new Date(9999, 11, 31, hours, minutes);
+	    };
+	    const start = parseTime(startTime);
+	    const end = parseTime(endTime);
+	    if (Number.isNaN(start) || Number.isNaN(end)) {
+	      babelHelpers.classPrivateFieldLooseBase(this, _errorMessage$2)[_errorMessage$2] = main_core.Loc.getMessage('CRM_COPILOT_CALL_ASSESSMENT_PAGE_SETTINGS_VALIDATION_TIME_ERROR_1');
+	      return false;
+	    }
+	    if (start.getTime() >= end.getTime()) {
+	      babelHelpers.classPrivateFieldLooseBase(this, _errorMessage$2)[_errorMessage$2] = main_core.Loc.getMessage('CRM_COPILOT_CALL_ASSESSMENT_PAGE_SETTINGS_VALIDATION_TIME_ERROR_2');
+	      return false;
+	    }
+	    babelHelpers.classPrivateFieldLooseBase(this, _errorMessage$2)[_errorMessage$2] = null;
+	    return true;
+	  }
+	  getError() {
+	    return babelHelpers.classPrivateFieldLooseBase(this, _errorMessage$2)[_errorMessage$2];
+	  }
+	}
+
+	const CustomRow = {
+	  components: {
+	    Chevron
+	  },
+	  props: {
+	    weekdayType: {
+	      type: String,
+	      required: true
+	    },
+	    startPoint: {
+	      type: String,
+	      required: true
+	    },
+	    endPoint: {
+	      type: String,
+	      required: true
+	    },
+	    modelValue: {
+	      type: Object,
+	      default: {}
+	    }
+	  },
+	  emits: ['update:modelValue'],
+	  data() {
+	    var _this$weekdayType;
+	    return {
+	      currentWeekdayType: (_this$weekdayType = this.weekdayType) != null ? _this$weekdayType : weekdayType.working,
+	      currentStartPoint: this.startPoint,
+	      currentEndPoint: this.endPoint,
+	      isExpandedStartPoint: false,
+	      isExpandedEndPoint: false,
+	      timePeriodValidator: new TimePeriod()
+	    };
+	  },
+	  created() {
+	    this.datePicker = new ui_datePicker.DatePicker({
+	      type: 'time',
+	      dateFormat: crm_timeline_tools.DatetimeConverter.getSiteDateTimeFormat(true),
+	      timeFormat: crm_timeline_tools.DatetimeConverter.getSiteShortTimeFormat(),
+	      minuteStep: 5,
+	      events: {
+	        onSelectChange: event => {
+	          const wrapper = event.getTarget().getInputField().parentNode;
+	          if (!main_core.Type.isDomNode(wrapper)) {
+	            return;
+	          }
+	          const dates = event.getTarget().getSelectedDates().map(date => event.getTarget().formatDate(date, crm_timeline_tools.DatetimeConverter.getSiteDateTimeFormat(true)));
+	          if (!dates[0]) {
+	            return;
+	          }
+	          if ((wrapper == null ? void 0 : wrapper.getAttribute('id')) === 'start-point-selector') {
+	            this.currentStartPoint = dates[0];
+	          } else if ((wrapper == null ? void 0 : wrapper.getAttribute('id')) === 'end-point-selector') {
+	            this.currentEndPoint = dates[0];
+	          }
+	          const isValidRow = this.timePeriodValidator.validate(this.currentStartPoint, this.currentEndPoint);
+	          if (isValidRow) {
+	            main_core.Dom.removeClass(this.$refs.start, '--invalid');
+	            main_core.Dom.removeClass(this.$refs.end, '--invalid');
+	          } else {
+	            main_core.Dom.addClass(this.$refs.start, '--invalid');
+	            main_core.Dom.addClass(this.$refs.end, '--invalid');
+	          }
+	          this.$emit('update:modelValue', {
+	            weekdayType: this.currentWeekdayType,
+	            startPoint: this.currentStartPoint,
+	            endPoint: this.currentEndPoint
+	          });
+	        },
+	        onHide: () => {
+	          this.isExpandedStartPoint = false;
+	          this.isExpandedEndPoint = false;
+	        }
+	      }
+	    });
+	  },
+	  beforeUnmount() {
+	    this.datePicker.destroy();
+	  },
+	  computed: {
+	    weekdayTypeList() {
+	      return [{
+	        value: weekdayType.monday,
+	        title: this.$Bitrix.Loc.getMessage('CRM_COPILOT_CALL_ASSESSMENT_PERIOD_SELECTOR_PERIOD_MONDAY')
+	      }, {
+	        value: weekdayType.tuesday,
+	        title: this.$Bitrix.Loc.getMessage('CRM_COPILOT_CALL_ASSESSMENT_PERIOD_SELECTOR_PERIOD_TUESDAY')
+	      }, {
+	        value: weekdayType.wednesday,
+	        title: this.$Bitrix.Loc.getMessage('CRM_COPILOT_CALL_ASSESSMENT_PERIOD_SELECTOR_PERIOD_WEDNESDAY')
+	      }, {
+	        value: weekdayType.thursday,
+	        title: this.$Bitrix.Loc.getMessage('CRM_COPILOT_CALL_ASSESSMENT_PERIOD_SELECTOR_PERIOD_THURSDAY')
+	      }, {
+	        value: weekdayType.friday,
+	        title: this.$Bitrix.Loc.getMessage('CRM_COPILOT_CALL_ASSESSMENT_PERIOD_SELECTOR_PERIOD_FRIDAY')
+	      }, {
+	        value: weekdayType.saturday,
+	        title: this.$Bitrix.Loc.getMessage('CRM_COPILOT_CALL_ASSESSMENT_PERIOD_SELECTOR_PERIOD_SATURDAY')
+	      }, {
+	        value: weekdayType.sunday,
+	        title: this.$Bitrix.Loc.getMessage('CRM_COPILOT_CALL_ASSESSMENT_PERIOD_SELECTOR_PERIOD_SUNDAY')
+	      }, {
+	        value: weekdayType.working,
+	        title: this.$Bitrix.Loc.getMessage('CRM_COPILOT_CALL_ASSESSMENT_PERIOD_SELECTOR_PERIOD_WORKING_DAYS')
+	      }, {
+	        value: weekdayType.weekends,
+	        title: this.$Bitrix.Loc.getMessage('CRM_COPILOT_CALL_ASSESSMENT_PERIOD_SELECTOR_PERIOD_WEEKENDS')
+	      }];
+	    },
+	    startTimeString() {
+	      return this.currentStartPoint.split(' ')[1];
+	    },
+	    endTimeString() {
+	      return this.currentEndPoint.split(' ')[1];
+	    }
+	  },
+	  watch: {
+	    currentWeekdayType(weekdayType$$1) {
+	      this.currentWeekdayType = weekdayType$$1;
+	      this.$emit('update:modelValue', {
+	        weekdayType: this.currentWeekdayType,
+	        startPoint: this.currentStartPoint,
+	        endPoint: this.currentEndPoint
+	      });
+	    }
+	  },
+	  methods: {
+	    showPicker(event) {
+	      event.preventDefault();
+	      event.stopPropagation();
+	      const wrapper = event.target.parentNode;
+	      if (!main_core.Type.isDomNode(wrapper)) {
+	        return;
+	      }
+	      this.datePicker.setTargetNode(wrapper);
+	      if ((wrapper == null ? void 0 : wrapper.getAttribute('id')) === 'start-point-selector') {
+	        this.datePicker.setInputField(this.$refs.start);
+	        this.datePicker.selectDate(this.currentStartPoint);
+	        this.isExpandedStartPoint = true;
+	      } else if ((wrapper == null ? void 0 : wrapper.getAttribute('id')) === 'end-point-selector') {
+	        this.datePicker.setInputField(this.$refs.end);
+	        this.datePicker.selectDate(this.currentEndPoint);
+	        this.isExpandedEndPoint = true;
+	      }
+	      this.datePicker.show();
+	    }
+	  },
+	  template: `
+		<div class="crm-copilot__call-assessment-availability-selector-row">
+			<div 
+				class="crm-copilot__call-assessment-availability-selector-row-wrapper"
+				style="padding-right: 15px;"
+			>
+				<div class="ui-ctl ui-ctl-w100 ui-ctl-after-icon ui-ctl-dropdown">
+					<div class="ui-ctl-after ui-ctl-icon-angle"></div>
+					<select
+						class="ui-ctl-element crm-copilot__call-assessment-availability-selector-input  --weekday-type"
+						v-model="currentWeekdayType"
+						:value="currentWeekdayType"
+					>
+						<option
+							v-for="typeItem in weekdayTypeList"
+							:value="typeItem.value"
+							:disabled="currentWeekdayType === typeItem.value"
+						>
+							{{typeItem.title}}
+						</option>
+					</select>
+				</div>
+			</div>
+			<div 
+				id="start-point-selector"
+				class="crm-copilot__call-assessment-availability-selector-row-wrapper"
+			>
+				<input 
+					type="text"
+					ref="start"
+					class="crm-copilot__call-assessment-availability-selector-input --time"
+					autocomplete="off"
+					readonly="readonly"
+					@click="showPicker"
+					:value="startTimeString"
+				>
+				<Chevron
+					:isExpanded="isExpandedStartPoint"
+					@click="showPicker"
+				/>
+			</div>
+			<div class="crm-copilot__call-assessment-availability-selector-delimiter"></div>
+			<div
+				id="end-point-selector"
+				class="crm-copilot__call-assessment-availability-selector-row-wrapper"
+			>
+				<input
+					type="text"
+					ref="end"
+					class="crm-copilot__call-assessment-availability-selector-input --time"
+					autocomplete="off"
+					readonly="readonly"
+					@click="showPicker"
+					:value="endTimeString"
+				>
+				<Chevron
+					:isExpanded="isExpandedEndPoint"
+					@click="showPicker"
+				/>
+			</div>
+		</div>
+	`
+	};
+
+	const availabilityType = Object.freeze({
+	  always_active: 'always_active',
+	  inactive: 'inactive',
+	  period: 'period',
+	  custom: 'custom'
+	});
+
+	const TypeSelector = {
+	  components: {
+	    Button: Button$1,
+	    PeriodRow,
+	    CustomRow
+	  },
+	  props: {
+	    availabilityType: {
+	      type: String,
+	      required: true
+	    },
+	    readOnly: {
+	      type: Boolean
+	    }
+	  },
+	  data() {
+	    return {
+	      currentAvailabilityType: this.availabilityType,
+	      availabilityTypeData: {}
+	    };
+	  },
+	  beforeCreate() {
+	    this.availabilityTypeList = availabilityType;
+	    this.dateTimeFormat = crm_timeline_tools.DatetimeConverter.getSiteDateTimeFormat(true);
+	  },
+	  computed: {
+	    typeList() {
+	      return [{
+	        value: availabilityType.always_active,
+	        title: this.$Bitrix.Loc.getMessage('CRM_COPILOT_CALL_ASSESSMENT_AVAILABILITY_SELECTOR_ALWAYS_ACTIVE')
+	      }, {
+	        value: availabilityType.period,
+	        title: this.$Bitrix.Loc.getMessage('CRM_COPILOT_CALL_ASSESSMENT_AVAILABILITY_SELECTOR_PERIOD')
+	      }, {
+	        value: availabilityType.custom,
+	        title: this.$Bitrix.Loc.getMessage('CRM_COPILOT_CALL_ASSESSMENT_AVAILABILITY_SELECTOR_CUSTOM')
+	      }, {
+	        value: availabilityType.inactive,
+	        title: this.$Bitrix.Loc.getMessage('CRM_COPILOT_CALL_ASSESSMENT_AVAILABILITY_SELECTOR_INACTIVE')
+	      }];
+	    },
+	    hasRows() {
+	      return main_core.Type.isArrayFilled(this.availabilityTypeData[this.currentAvailabilityType]);
+	    },
+	    rowsForCurrentType() {
+	      var _this$availabilityTyp;
+	      return (_this$availabilityTyp = this.availabilityTypeData[this.currentAvailabilityType]) != null ? _this$availabilityTyp : [];
+	    },
+	    isExtendedAvailabilityType() {
+	      return this.currentAvailabilityType !== availabilityType.always_active && this.currentAvailabilityType !== availabilityType.inactive;
+	    }
+	  },
+	  watch: {
+	    currentAvailabilityType(availabilityType$$1) {
+	      this.$emit('type-change', {
+	        availabilityType: availabilityType$$1
+	      });
+	    }
+	  },
+	  methods: {
+	    onActionButtonClick({
+	      action,
+	      index
+	    }) {
+	      if (this.currentAvailabilityType === availabilityType.always_active || this.currentAvailabilityType === availabilityType.inactive) {
+	        return;
+	      }
+	      if (action === 'add') {
+	        const item = this.currentAvailabilityType === availabilityType.period ? this.getDefaultDatePeriodItem() : this.getDefaultCustomItem();
+	        this.rowsForCurrentType.push(item);
+	      } else
+	        // remove
+	        {
+	          this.rowsForCurrentType.splice(index, 1);
+	        }
+	    },
+	    onUpdateCustomRow(row) {
+	      this.$emit('data-change', {
+	        availabilityType: this.currentAvailabilityType,
+	        availabilityTypeData: this.getAvailabilityData(),
+	        updatedRow: row
+	      });
+	    },
+	    getDefaultDatePeriodItem() {
+	      const startPointDate = this.getRoundedToNearestMinuteDate(new Date(), 15);
+	      const endPointDate = this.getRoundedToNearestMinuteDate(new Date(), 15);
+	      endPointDate.setDate(endPointDate.getDate() + 7); // 1 week by default
+
+	      return {
+	        startPoint: main_date.DateTimeFormat.format(this.dateTimeFormat, startPointDate),
+	        endPoint: main_date.DateTimeFormat.format(this.dateTimeFormat, endPointDate)
+	      };
+	    },
+	    getDefaultCustomItem() {
+	      const startPointDate = Math.round(new Date().setHours(8, 0, 0, 0) / 1000);
+	      const endPointDate = Math.round(new Date().setHours(18, 0, 0, 0) / 1000);
+	      return {
+	        weekdayType: weekdayType.working,
+	        startPoint: main_date.DateTimeFormat.format(this.dateTimeFormat, startPointDate),
+	        endPoint: main_date.DateTimeFormat.format(this.dateTimeFormat, endPointDate)
+	      };
+	    },
+	    getRoundedToNearestMinuteDate(date, minutes) {
+	      const currentTime = date.getTime();
+	      const ms = minutes * 60 * 1000;
+	      const roundedTime = Math.round(currentTime / ms) * ms;
+	      return new Date(roundedTime);
+	    },
+	    getAvailabilityData() {
+	      var _this$availabilityTyp2;
+	      return (_this$availabilityTyp2 = this.availabilityTypeData[this.currentAvailabilityType]) != null ? _this$availabilityTyp2 : [];
+	    },
+	    setAvailabilityData(availabilityData) {
+	      if (main_core.Type.isArrayFilled(availabilityData)) {
+	        this.availabilityTypeData[this.currentAvailabilityType] = availabilityData;
+	        if (this.currentAvailabilityType === this.availabilityTypeList.period) {
+	          this.availabilityTypeData[this.availabilityTypeList.custom] = [this.getDefaultCustomItem()];
+	        } else if (this.currentAvailabilityType === this.availabilityTypeList.custom) {
+	          this.availabilityTypeData[this.availabilityTypeList.period] = [this.getDefaultDatePeriodItem()];
+	        }
+	        return;
+	      }
+	      this.availabilityTypeData = {
+	        [this.availabilityTypeList.period]: [this.getDefaultDatePeriodItem()],
+	        [this.availabilityTypeList.custom]: [this.getDefaultCustomItem()]
+	      };
+	    }
+	  },
+	  template: `
+		<div class="crm-copilot__call-assessment-availability-selector">
+			<div class="ui-ctl ui-ctl-w100 ui-ctl-after-icon ui-ctl-dropdown">
+				<div class="ui-ctl-after ui-ctl-icon-angle"></div>
+				<select
+					class="ui-ctl-element"
+					v-model="currentAvailabilityType"
+					:value="currentAvailabilityType"
+				>
+					<option
+						v-for="typeItem in typeList"
+						:value="typeItem.value"
+						:disabled="readOnly && currentAvailabilityType !== typeItem.value"
+					>
+						{{typeItem.title}}
+					</option>
+				</select>
+			</div>
+			<div 
+				class="crm-copilot__call-assessment-availability-rows"
+				v-if="isExtendedAvailabilityType"
+			>
+				<div
+					class="crm-copilot__call-assessment-availability-row"
+					v-if="currentAvailabilityType === availabilityTypeList.period"
+					v-for="(row, index) in rowsForCurrentType"
+				>
+					<PeriodRow
+						:start-point="row.startPoint"
+						:end-point="row.endPoint"
+						v-model="availabilityTypeData[availabilityTypeList.period][index]"
+					/>
+					<Button
+						:action="(index < rowsForCurrentType.length - 1 ? 'remove' : 'add')"
+						:index="index"
+						@button-click="onActionButtonClick"
+					/>
+				</div>
+				<div
+					class="crm-copilot__call-assessment-availability-row"
+					v-if="currentAvailabilityType === availabilityTypeList.custom"
+					v-for="(row, index) in rowsForCurrentType"
+				>
+					<CustomRow
+						:weekday-type="row.weekdayType"
+						:start-point="row.startPoint"
+						:end-point="row.endPoint"
+						v-model="availabilityTypeData[availabilityTypeList.custom][index]"
+						v-on:update:modelValue="onUpdateCustomRow"
+					/>
+					<Button
+						:action="(index < rowsForCurrentType.length - 1 ? 'remove' : 'add')"
+						:index="index"
+						@button-click="onActionButtonClick"
+					/>
+				</div>
+			</div>
+		</div>
+	`
+	};
+
 	const SettingsPage = {
 	  extends: BasePage,
+	  components: {
+	    TypeSelector
+	  },
 	  data() {
-	    var _this$settings$baas, _this$data$callTypeId;
-	    let autoCheckTypeId = 0;
+	    var _this$settings$baas, _this$data$callTypeId, _this$data$availabili, _this$data$availabili2;
+	    let currentAutoCheckTypeId = 0;
 	    if ((_this$settings$baas = this.settings.baas) != null && _this$settings$baas.hasPackage) {
 	      var _this$data$autoCheckT;
-	      autoCheckTypeId = (_this$data$autoCheckT = this.data.autoCheckTypeId) != null ? _this$data$autoCheckT : 1;
+	      currentAutoCheckTypeId = (_this$data$autoCheckT = this.data.autoCheckTypeId) != null ? _this$data$autoCheckT : 1;
 	    }
 	    return {
 	      id: 'settings',
 	      callTypeId: (_this$data$callTypeId = this.data.callTypeId) != null ? _this$data$callTypeId : 1,
-	      autoCheckTypeId
+	      autoCheckTypeId: currentAutoCheckTypeId,
+	      availabilityType: (_this$data$availabili = this.data.availabilityType) != null ? _this$data$availabili : availabilityType.always_active,
+	      availabilityData: (_this$data$availabili2 = this.data.availabilityData) != null ? _this$data$availabili2 : [],
+	      timePeriodValidator: new TimePeriod(),
+	      timePeriodError: null
 	    };
 	  },
 	  methods: {
 	    getData() {
+	      var _this$$refs$typeSelec, _this$$refs$typeSelec2;
 	      return {
 	        callTypeId: this.callTypeId,
-	        autoCheckTypeId: this.autoCheckTypeId
+	        autoCheckTypeId: this.autoCheckTypeId,
+	        availabilityType: this.availabilityType,
+	        availabilityData: (_this$$refs$typeSelec = (_this$$refs$typeSelec2 = this.$refs.typeSelector) == null ? void 0 : _this$$refs$typeSelec2.getAvailabilityData()) != null ? _this$$refs$typeSelec : []
 	      };
 	    },
 	    onAutoCheckTypeIdChange(event) {
@@ -1059,55 +1691,84 @@ this.BX.Crm = this.BX.Crm || {};
 	          this.autoCheckTypeId = 0;
 	        });
 	      }
+	    },
+	    onAvailabilityTypeChange(data) {
+	      this.availabilityType = data.availabilityType;
+	      this.timePeriodError = null;
+	    },
+	    onAvailabilityDataChange(data) {
+	      // @todo: setup "availabilityData" data here in the future if needed
+	      // const { availabilityType, availabilityTypeData, updatedRow } = data;
+
+	      this.validate();
+	      this.onValidationFailed();
+	    },
+	    validate() {
+	      if (this.availabilityType === availabilityType.custom) {
+	        var _this$$refs$typeSelec3, _this$$refs$typeSelec4;
+	        const data = (_this$$refs$typeSelec3 = (_this$$refs$typeSelec4 = this.$refs.typeSelector) == null ? void 0 : _this$$refs$typeSelec4.getAvailabilityData()) != null ? _this$$refs$typeSelec3 : [];
+	        const invalidItems = data.filter(item => {
+	          return !this.timePeriodValidator.validate(item.startPoint, item.endPoint);
+	        });
+	        return invalidItems.length === 0;
+	      }
+	      return true;
+	    },
+	    onValidationFailed() {
+	      this.timePeriodError = this.timePeriodValidator.getError();
 	    }
+	  },
+	  mounted() {
+	    var _this$$refs$typeSelec5;
+	    (_this$$refs$typeSelec5 = this.$refs.typeSelector) == null ? void 0 : _this$$refs$typeSelec5.setAvailabilityData(this.availabilityData);
 	  },
 	  computed: {
 	    pageTitle() {
-	      return main_core.Loc.getMessage('CRM_COPILOT_CALL_ASSESSMENT_PAGE_SETTINGS_TITLE');
+	      return this.$Bitrix.Loc.getMessage('CRM_COPILOT_CALL_ASSESSMENT_PAGE_SETTINGS_TITLE');
 	    },
 	    pageDescription() {
-	      return main_core.Loc.getMessage('CRM_COPILOT_CALL_ASSESSMENT_PAGE_SETTINGS_DESCRIPTION');
+	      return this.$Bitrix.Loc.getMessage('CRM_COPILOT_CALL_ASSESSMENT_PAGE_SETTINGS_DESCRIPTION');
 	    },
 	    pageSectionSettingsCallType() {
-	      return main_core.Loc.getMessage('CRM_COPILOT_CALL_ASSESSMENT_PAGE_SETTINGS_CALL_TYPE');
+	      return this.$Bitrix.Loc.getMessage('CRM_COPILOT_CALL_ASSESSMENT_PAGE_SETTINGS_CALL_TYPE');
 	    },
 	    pageSectionSettingsCallTypeDescription() {
-	      return main_core.Loc.getMessage('CRM_COPILOT_CALL_ASSESSMENT_PAGE_SETTINGS_CALL_TYPE_DESCRIPTION');
+	      return this.$Bitrix.Loc.getMessage('CRM_COPILOT_CALL_ASSESSMENT_PAGE_SETTINGS_CALL_TYPE_DESCRIPTION');
+	    },
+	    pageSectionSettingsCheck() {
+	      return this.$Bitrix.Loc.getMessage('CRM_COPILOT_CALL_ASSESSMENT_PAGE_SETTINGS_CHECK');
+	    },
+	    pageSectionSettingsCheckDescription() {
+	      return this.$Bitrix.Loc.getMessage('CRM_COPILOT_CALL_ASSESSMENT_PAGE_SETTINGS_CHECK_DESCRIPTION');
 	    },
 	    callTypes() {
 	      return [{
 	        id: 1,
-	        title: main_core.Loc.getMessage('CRM_COPILOT_CALL_ASSESSMENT_PAGE_SETTINGS_CALL_TYPE_ALL')
+	        title: this.$Bitrix.Loc.getMessage('CRM_COPILOT_CALL_ASSESSMENT_PAGE_SETTINGS_CALL_TYPE_ALL')
 	      }, {
 	        id: 2,
-	        title: main_core.Loc.getMessage('CRM_COPILOT_CALL_ASSESSMENT_PAGE_SETTINGS_CALL_TYPE_INCOMING')
+	        title: this.$Bitrix.Loc.getMessage('CRM_COPILOT_CALL_ASSESSMENT_PAGE_SETTINGS_CALL_TYPE_INCOMING')
 	      }, {
 	        id: 3,
-	        title: main_core.Loc.getMessage('CRM_COPILOT_CALL_ASSESSMENT_PAGE_SETTINGS_CALL_TYPE_OUTGOING')
+	        title: this.$Bitrix.Loc.getMessage('CRM_COPILOT_CALL_ASSESSMENT_PAGE_SETTINGS_CALL_TYPE_OUTGOING')
 	      }];
-	    },
-	    pageSectionSettingsCheck() {
-	      return main_core.Loc.getMessage('CRM_COPILOT_CALL_ASSESSMENT_PAGE_SETTINGS_CHECK');
-	    },
-	    pageSectionSettingsCheckDescription() {
-	      return main_core.Loc.getMessage('CRM_COPILOT_CALL_ASSESSMENT_PAGE_SETTINGS_CHECK_DESCRIPTION');
 	    },
 	    checkTypes() {
 	      return [{
 	        value: 1,
-	        title: main_core.Loc.getMessage('CRM_COPILOT_CALL_ASSESSMENT_PAGE_SETTINGS_CHECK_FIRST_INCOMING')
+	        title: this.$Bitrix.Loc.getMessage('CRM_COPILOT_CALL_ASSESSMENT_PAGE_SETTINGS_CHECK_FIRST_INCOMING')
 	      }, {
 	        value: 2,
-	        title: main_core.Loc.getMessage('CRM_COPILOT_CALL_ASSESSMENT_PAGE_SETTINGS_CHECK_ALL_INCOMING')
+	        title: this.$Bitrix.Loc.getMessage('CRM_COPILOT_CALL_ASSESSMENT_PAGE_SETTINGS_CHECK_ALL_INCOMING')
 	      }, {
 	        value: 3,
-	        title: main_core.Loc.getMessage('CRM_COPILOT_CALL_ASSESSMENT_PAGE_SETTINGS_CHECK_ALL_OUTGOING')
+	        title: this.$Bitrix.Loc.getMessage('CRM_COPILOT_CALL_ASSESSMENT_PAGE_SETTINGS_CHECK_ALL_OUTGOING')
 	      }, {
 	        value: 4,
-	        title: main_core.Loc.getMessage('CRM_COPILOT_CALL_ASSESSMENT_PAGE_SETTINGS_CHECK_ALL')
+	        title: this.$Bitrix.Loc.getMessage('CRM_COPILOT_CALL_ASSESSMENT_PAGE_SETTINGS_CHECK_ALL')
 	      }, {
 	        value: 0,
-	        title: main_core.Loc.getMessage('CRM_COPILOT_CALL_ASSESSMENT_PAGE_SETTINGS_CHECK_DISABLED')
+	        title: this.$Bitrix.Loc.getMessage('CRM_COPILOT_CALL_ASSESSMENT_PAGE_SETTINGS_CHECK_DISABLED')
 	      }];
 	    },
 	    isBaasAvailable() {
@@ -1121,10 +1782,19 @@ this.BX.Crm = this.BX.Crm || {};
 	    packageEmptySliderCode() {
 	      var _this$settings$baas$a, _this$settings$baas4;
 	      return (_this$settings$baas$a = (_this$settings$baas4 = this.settings.baas) == null ? void 0 : _this$settings$baas4.aiPackagesEmptySliderCode) != null ? _this$settings$baas$a : null;
+	    },
+	    pageSectionSettingsAvailability() {
+	      return this.$Bitrix.Loc.getMessage('CRM_COPILOT_CALL_ASSESSMENT_PAGE_SETTINGS_AVAILABILITY');
+	    },
+	    pageSectionSettingsAvailabilityDescription() {
+	      return this.$Bitrix.Loc.getMessage('CRM_COPILOT_CALL_ASSESSMENT_PAGE_SETTINGS_AVAILABILITY_DESCRIPTION');
+	    },
+	    isCallAssessmentAvailabilityEnabled() {
+	      return main_core.Extension.getSettings('crm.copilot.call-assessment').get('callAssessmentAvailabilityEnabled');
 	    }
 	  },
 	  template: `
-		<div v-if="isActive">
+		<div v-show="isActive">
 			<div class="crm-copilot__call-assessment_page-section">
 				<Breadcrumbs :active-tab-id="id" />
 				<header class="crm-copilot__call-assessment_page-section-header">
@@ -1135,7 +1805,7 @@ this.BX.Crm = this.BX.Crm || {};
 						{{ pageDescription }}
 					</div>
 				</header>
-				
+
 				<div class="crm-copilot__call-assessment_page-section-body">
 					<AiDisabledInSettings v-if="!isEnabled" />
 					<div :class="this.getBodyFieldClassList(['ui-ctl', 'ui-ctl-after-icon', 'ui-ctl-dropdown', 'ui-ctl-w100'])">
@@ -1157,7 +1827,7 @@ this.BX.Crm = this.BX.Crm || {};
 						</div>
 					</div>
 				</div>
-				
+
 				<div 
 					v-if="isBaasAvailable"
 					class="crm-copilot__call-assessment_page-section-body"
@@ -1182,6 +1852,28 @@ this.BX.Crm = this.BX.Crm || {};
 						</div>
 						<div class="crm-copilot__call-assessment_page-section-body-field-description">
 							{{ pageSectionSettingsCheckDescription }}
+						</div>
+					</div>
+				</div>
+
+				<div
+					v-if="isCallAssessmentAvailabilityEnabled"
+					class="crm-copilot__call-assessment_page-section-body"
+				>
+					<div class="crm-copilot__call-assessment_page-section-body-field">
+						<label>{{ pageSectionSettingsAvailability }}</label>
+						<TypeSelector
+							ref="typeSelector"
+							:availabilityType="availabilityType"
+							:readOnly="readOnly"
+							@typeChange="onAvailabilityTypeChange"
+							@dataChange="onAvailabilityDataChange"
+						/>
+						<div class="crm-copilot__call-assessment_page-section-body-field-description">
+							{{ pageSectionSettingsAvailabilityDescription }}
+						</div>
+						<div v-if="timePeriodError" class="crm-copilot__call-assessment_page-section-body-field-error">
+							{{ timePeriodError }}
 						</div>
 					</div>
 				</div>
@@ -1243,7 +1935,7 @@ this.BX.Crm = this.BX.Crm || {};
 	  },
 	  methods: {
 	    initPagesData(data) {
-	      var _data$lowBorder, _data$highBorder;
+	      var _data$availabilityTyp, _data$availabilityDat, _data$lowBorder, _data$highBorder;
 	      return {
 	        client: {
 	          data: {
@@ -1253,7 +1945,9 @@ this.BX.Crm = this.BX.Crm || {};
 	        settings: {
 	          data: {
 	            callTypeId: data == null ? void 0 : data.callTypeId,
-	            autoCheckTypeId: data == null ? void 0 : data.autoCheckTypeId
+	            autoCheckTypeId: data == null ? void 0 : data.autoCheckTypeId,
+	            availabilityType: (_data$availabilityTyp = data == null ? void 0 : data.availabilityType) != null ? _data$availabilityTyp : availabilityType.always_active,
+	            availabilityData: (_data$availabilityDat = data == null ? void 0 : data.availabilityData) != null ? _data$availabilityDat : []
 	          }
 	        },
 	        control: {
@@ -1480,57 +2174,20 @@ this.BX.Crm = this.BX.Crm || {};
 	`
 	};
 
-	let _ = t => t,
-	  _t,
-	  _t2;
 	var _container = /*#__PURE__*/babelHelpers.classPrivateFieldLooseKey("container");
 	var _app = /*#__PURE__*/babelHelpers.classPrivateFieldLooseKey("app");
 	var _layoutComponent = /*#__PURE__*/babelHelpers.classPrivateFieldLooseKey("layoutComponent");
-	var _titleId = /*#__PURE__*/babelHelpers.classPrivateFieldLooseKey("titleId");
-	var _titleEditButtonId = /*#__PURE__*/babelHelpers.classPrivateFieldLooseKey("titleEditButtonId");
-	var _titleInputContainer = /*#__PURE__*/babelHelpers.classPrivateFieldLooseKey("titleInputContainer");
-	var _titleNode = /*#__PURE__*/babelHelpers.classPrivateFieldLooseKey("titleNode");
-	var _titleInput = /*#__PURE__*/babelHelpers.classPrivateFieldLooseKey("titleInput");
-	var _inputEditButton = /*#__PURE__*/babelHelpers.classPrivateFieldLooseKey("inputEditButton");
 	var _title = /*#__PURE__*/babelHelpers.classPrivateFieldLooseKey("title");
 	var _textEditor = /*#__PURE__*/babelHelpers.classPrivateFieldLooseKey("textEditor");
 	var _isReadOnly = /*#__PURE__*/babelHelpers.classPrivateFieldLooseKey("isReadOnly");
 	var _isEnabled = /*#__PURE__*/babelHelpers.classPrivateFieldLooseKey("isEnabled");
 	var _initTitleInlineEditing = /*#__PURE__*/babelHelpers.classPrivateFieldLooseKey("initTitleInlineEditing");
-	var _bindTitleInlineEditingStart = /*#__PURE__*/babelHelpers.classPrivateFieldLooseKey("bindTitleInlineEditingStart");
-	var _appendTitleInput = /*#__PURE__*/babelHelpers.classPrivateFieldLooseKey("appendTitleInput");
-	var _hideTitle = /*#__PURE__*/babelHelpers.classPrivateFieldLooseKey("hideTitle");
-	var _bindTitleInlineEditingFinish = /*#__PURE__*/babelHelpers.classPrivateFieldLooseKey("bindTitleInlineEditingFinish");
-	var _getInputEditButton = /*#__PURE__*/babelHelpers.classPrivateFieldLooseKey("getInputEditButton");
-	var _hideInputAndShowTitle = /*#__PURE__*/babelHelpers.classPrivateFieldLooseKey("hideInputAndShowTitle");
-	var _getTitleNode = /*#__PURE__*/babelHelpers.classPrivateFieldLooseKey("getTitleNode");
 	var _getTextEditor = /*#__PURE__*/babelHelpers.classPrivateFieldLooseKey("getTextEditor");
 	class CallAssessment$1 {
 	  constructor(containerId, _params = {}) {
 	    var _params$config$readOn, _params$config, _params$config$isEnab, _params$config2, _params$config3, _params$config$isCopy, _params$config4, _params$config$baasSe, _params$config5;
 	    Object.defineProperty(this, _getTextEditor, {
 	      value: _getTextEditor2
-	    });
-	    Object.defineProperty(this, _getTitleNode, {
-	      value: _getTitleNode2
-	    });
-	    Object.defineProperty(this, _hideInputAndShowTitle, {
-	      value: _hideInputAndShowTitle2
-	    });
-	    Object.defineProperty(this, _getInputEditButton, {
-	      value: _getInputEditButton2
-	    });
-	    Object.defineProperty(this, _bindTitleInlineEditingFinish, {
-	      value: _bindTitleInlineEditingFinish2
-	    });
-	    Object.defineProperty(this, _hideTitle, {
-	      value: _hideTitle2
-	    });
-	    Object.defineProperty(this, _appendTitleInput, {
-	      value: _appendTitleInput2
-	    });
-	    Object.defineProperty(this, _bindTitleInlineEditingStart, {
-	      value: _bindTitleInlineEditingStart2
 	    });
 	    Object.defineProperty(this, _initTitleInlineEditing, {
 	      value: _initTitleInlineEditing2
@@ -1544,30 +2201,6 @@ this.BX.Crm = this.BX.Crm || {};
 	      value: null
 	    });
 	    Object.defineProperty(this, _layoutComponent, {
-	      writable: true,
-	      value: null
-	    });
-	    Object.defineProperty(this, _titleId, {
-	      writable: true,
-	      value: null
-	    });
-	    Object.defineProperty(this, _titleEditButtonId, {
-	      writable: true,
-	      value: null
-	    });
-	    Object.defineProperty(this, _titleInputContainer, {
-	      writable: true,
-	      value: null
-	    });
-	    Object.defineProperty(this, _titleNode, {
-	      writable: true,
-	      value: null
-	    });
-	    Object.defineProperty(this, _titleInput, {
-	      writable: true,
-	      value: null
-	    });
-	    Object.defineProperty(this, _inputEditButton, {
 	      writable: true,
 	      value: null
 	    });
@@ -1609,124 +2242,31 @@ this.BX.Crm = this.BX.Crm || {};
 	    });
 	    babelHelpers.classPrivateFieldLooseBase(this, _layoutComponent)[_layoutComponent] = babelHelpers.classPrivateFieldLooseBase(this, _app)[_app].mount(babelHelpers.classPrivateFieldLooseBase(this, _container)[_container]);
 	  }
-	  onTitleInlineEditingStart() {
-	    if (babelHelpers.classPrivateFieldLooseBase(this, _titleInputContainer)[_titleInputContainer] !== null) {
-	      return;
-	    }
-	    babelHelpers.classPrivateFieldLooseBase(this, _appendTitleInput)[_appendTitleInput]();
-	    babelHelpers.classPrivateFieldLooseBase(this, _hideTitle)[_hideTitle]();
-	    babelHelpers.classPrivateFieldLooseBase(this, _bindTitleInlineEditingFinish)[_bindTitleInlineEditingFinish]();
-	  }
-	  onTitleInputBlur(event) {
-	    this.onTitleInlineEditingFinish(event, false);
-	  }
-	  onTitleInputEnterPressed(event) {
-	    if (event.key === 'Enter') {
-	      this.onTitleInlineEditingFinish(event, false);
-	    }
-	  }
-	  onTitleInlineEditingFinish(event, checkTarget = true) {
-	    if (babelHelpers.classPrivateFieldLooseBase(this, _titleInputContainer)[_titleInputContainer] === null || babelHelpers.classPrivateFieldLooseBase(this, _titleInput)[_titleInput] === null) {
-	      return;
-	    }
-	    if (checkTarget && (event.target === babelHelpers.classPrivateFieldLooseBase(this, _titleInput)[_titleInput] || event.target === babelHelpers.classPrivateFieldLooseBase(this, _getInputEditButton)[_getInputEditButton]())) {
-	      return;
-	    }
-	    const title = babelHelpers.classPrivateFieldLooseBase(this, _titleInput)[_titleInput].value;
-	    if (!main_core.Type.isStringFilled(title)) {
-	      babelHelpers.classPrivateFieldLooseBase(this, _titleInput)[_titleInput].focus();
-	      return;
-	    }
-	    babelHelpers.classPrivateFieldLooseBase(this, _title)[_title] = title;
-	    babelHelpers.classPrivateFieldLooseBase(this, _layoutComponent)[_layoutComponent].setTitle(babelHelpers.classPrivateFieldLooseBase(this, _title)[_title]);
-	    main_core.Event.unbind(document, 'mousedown', this.onTitleInlineEditingFinish);
-	    main_core.Event.unbind(babelHelpers.classPrivateFieldLooseBase(this, _titleInput)[_titleInput], 'keyup', this.onTitleInputEnterPressed);
-	    main_core.Event.unbind(babelHelpers.classPrivateFieldLooseBase(this, _titleInput)[_titleInput], 'blur', this.onTitleInputBlur);
-	    babelHelpers.classPrivateFieldLooseBase(this, _hideInputAndShowTitle)[_hideInputAndShowTitle]();
-	  }
 	}
 	function _initTitleInlineEditing2(params) {
 	  if (babelHelpers.classPrivateFieldLooseBase(this, _isReadOnly)[_isReadOnly]) {
 	    return;
 	  }
-	  this.onTitleInlineEditingStart = this.onTitleInlineEditingStart.bind(this);
-	  this.onTitleInlineEditingFinish = this.onTitleInlineEditingFinish.bind(this);
-	  this.onTitleInputEnterPressed = this.onTitleInputEnterPressed.bind(this);
-	  this.onTitleInputBlur = this.onTitleInputBlur.bind(this);
+	  const ToolbarManager = main_core.Reflection.getClass('BX.UI.ToolbarManager');
+	  const toolbar = ToolbarManager == null ? void 0 : ToolbarManager.getDefaultToolbar();
+	  if (toolbar) {
+	    const ToolbarEvents = main_core.Reflection.getClass('BX.UI.ToolbarEvents');
+	    toolbar.subscribe(ToolbarEvents.finishEditing, ({
+	      data
+	    }) => {
+	      const {
+	        updatedTitle
+	      } = data;
+	      babelHelpers.classPrivateFieldLooseBase(this, _title)[_title] = updatedTitle;
+	      babelHelpers.classPrivateFieldLooseBase(this, _layoutComponent)[_layoutComponent].setTitle(babelHelpers.classPrivateFieldLooseBase(this, _title)[_title]);
+	    });
+	  }
 	  const {
-	    config,
 	    data
 	  } = params;
-	  const {
-	    titleId,
-	    titleEditButtonId
-	  } = config != null ? config : {};
-	  if (!main_core.Type.isStringFilled(titleId) || !main_core.Type.isStringFilled(titleEditButtonId)) {
-	    return;
-	  }
-	  babelHelpers.classPrivateFieldLooseBase(this, _titleEditButtonId)[_titleEditButtonId] = titleEditButtonId;
-	  babelHelpers.classPrivateFieldLooseBase(this, _titleId)[_titleId] = titleId;
 	  if (main_core.Type.isString(data == null ? void 0 : data.title)) {
 	    babelHelpers.classPrivateFieldLooseBase(this, _title)[_title] = data.title;
 	  }
-	  babelHelpers.classPrivateFieldLooseBase(this, _bindTitleInlineEditingStart)[_bindTitleInlineEditingStart]();
-	}
-	function _bindTitleInlineEditingStart2() {
-	  main_core.Event.bind(babelHelpers.classPrivateFieldLooseBase(this, _getInputEditButton)[_getInputEditButton](), 'click', this.onTitleInlineEditingStart);
-	}
-	function _appendTitleInput2() {
-	  babelHelpers.classPrivateFieldLooseBase(this, _titleInput)[_titleInput] = main_core.Tag.render(_t || (_t = _`
-			<input value="${0}" type="text" class="crm-copilot__call-assessment_title-item" />
-		`), main_core.Text.encode(babelHelpers.classPrivateFieldLooseBase(this, _title)[_title]));
-	  babelHelpers.classPrivateFieldLooseBase(this, _titleInputContainer)[_titleInputContainer] = main_core.Tag.render(_t2 || (_t2 = _`
-			<div class="crm-copilot__call-assessment_title-wrapper">
-				${0}
-			</div>
-		`), babelHelpers.classPrivateFieldLooseBase(this, _titleInput)[_titleInput]);
-	  main_core.Dom.append(babelHelpers.classPrivateFieldLooseBase(this, _titleInputContainer)[_titleInputContainer], babelHelpers.classPrivateFieldLooseBase(this, _getTitleNode)[_getTitleNode]().parentNode);
-	  babelHelpers.classPrivateFieldLooseBase(this, _titleInput)[_titleInput].focus();
-	  const length = babelHelpers.classPrivateFieldLooseBase(this, _titleInput)[_titleInput].value.length;
-	  babelHelpers.classPrivateFieldLooseBase(this, _titleInput)[_titleInput].selectionStart = length;
-	  babelHelpers.classPrivateFieldLooseBase(this, _titleInput)[_titleInput].selectionEnd = length;
-	  main_core.Dom.addClass(document.querySelector('.copilot-call-assessment-pagetitle-description'), '--title-edit');
-	}
-	function _hideTitle2() {
-	  main_core.Dom.style(babelHelpers.classPrivateFieldLooseBase(this, _getTitleNode)[_getTitleNode](), {
-	    display: 'none'
-	  });
-	  main_core.Dom.style(babelHelpers.classPrivateFieldLooseBase(this, _getInputEditButton)[_getInputEditButton](), {
-	    display: 'none'
-	  });
-	}
-	function _bindTitleInlineEditingFinish2() {
-	  main_core.Event.bind(document, 'mousedown', this.onTitleInlineEditingFinish);
-	  main_core.Event.bind(babelHelpers.classPrivateFieldLooseBase(this, _titleInput)[_titleInput], 'keyup', this.onTitleInputEnterPressed);
-	  main_core.Event.bind(babelHelpers.classPrivateFieldLooseBase(this, _titleInput)[_titleInput], 'blur', this.onTitleInputBlur);
-	}
-	function _getInputEditButton2() {
-	  if (babelHelpers.classPrivateFieldLooseBase(this, _inputEditButton)[_inputEditButton] === null) {
-	    babelHelpers.classPrivateFieldLooseBase(this, _inputEditButton)[_inputEditButton] = document.getElementById(babelHelpers.classPrivateFieldLooseBase(this, _titleEditButtonId)[_titleEditButtonId]);
-	  }
-	  return babelHelpers.classPrivateFieldLooseBase(this, _inputEditButton)[_inputEditButton];
-	}
-	function _hideInputAndShowTitle2() {
-	  const titleNode = babelHelpers.classPrivateFieldLooseBase(this, _getTitleNode)[_getTitleNode]();
-	  titleNode.innerText = babelHelpers.classPrivateFieldLooseBase(this, _title)[_title];
-	  main_core.Dom.style(titleNode, {
-	    display: 'inline-block'
-	  });
-	  main_core.Dom.style(babelHelpers.classPrivateFieldLooseBase(this, _getInputEditButton)[_getInputEditButton](), {
-	    display: 'inline-block'
-	  });
-	  main_core.Dom.remove(babelHelpers.classPrivateFieldLooseBase(this, _titleInputContainer)[_titleInputContainer]);
-	  babelHelpers.classPrivateFieldLooseBase(this, _titleInputContainer)[_titleInputContainer] = null;
-	  main_core.Dom.removeClass(document.querySelector('.copilot-call-assessment-pagetitle-description'), '--title-edit');
-	}
-	function _getTitleNode2() {
-	  if (babelHelpers.classPrivateFieldLooseBase(this, _titleNode)[_titleNode] === null) {
-	    babelHelpers.classPrivateFieldLooseBase(this, _titleNode)[_titleNode] = document.getElementById(babelHelpers.classPrivateFieldLooseBase(this, _titleId)[_titleId]);
-	  }
-	  return babelHelpers.classPrivateFieldLooseBase(this, _titleNode)[_titleNode];
 	}
 	function _getTextEditor2({
 	  prompt: content
@@ -1758,5 +2298,5 @@ this.BX.Crm = this.BX.Crm || {};
 
 	exports.CallAssessment = CallAssessment$1;
 
-}((this.BX.Crm.Copilot = this.BX.Crm.Copilot || {}),BX.Vue3,BX.Pull,BX.UI,BX.UI.BBCode,BX.UI.TextEditor,BX,BX,BX.Event,BX.UI.EntitySelector,BX,BX.UI));
+}((this.BX.Crm.Copilot = this.BX.Crm.Copilot || {}),BX.Vue3,BX.Pull,BX.UI,BX.UI.BBCode,BX.UI.TextEditor,BX,BX,BX.UI.EntitySelector,BX.UI,BX,BX.Main,BX.Crm.Timeline,BX.Event,BX.UI.DatePicker,BX));
 //# sourceMappingURL=call-assessment.bundle.js.map

@@ -3,14 +3,13 @@
 if(!defined("B_PROLOG_INCLUDED") || B_PROLOG_INCLUDED!==true)die();
 
 use Bitrix\Crm\Component\EntityDetails\FactoryBased;
+use Bitrix\Crm\Integration\UI\EntityEditor\DefaultEntityConfig\SmartInvoiceDefaultEntityConfig;
 use Bitrix\Crm\Item;
 use Bitrix\Crm\Kanban\Entity\Deadlines\DeadlinesStageManager;
 use Bitrix\Crm\Kanban\ViewMode;
-use Bitrix\Crm\Security\EntityPermissionType;
 use Bitrix\Crm\Service\EditorAdapter;
 use Bitrix\Main\Loader;
 use Bitrix\Main\Localization\Loc;
-use \Bitrix\Crm\Component\EntityDetails\Error;
 
 Loader::includeModule('crm');
 
@@ -63,77 +62,9 @@ class CrmSmartInvoiceDetailsComponent extends FactoryBased
 
 	public function getEditorEntityConfig(): array
 	{
-		$sections = [];
+		$userFieldNames = array_keys($this->prepareEntityUserFields());
 
-		$mainElements = [
-			['name' => Item::FIELD_NAME_STAGE_ID],
-			['name' => EditorAdapter::FIELD_OPPORTUNITY],
-			['name' => Item::FIELD_NAME_BEGIN_DATE],
-			['name' => Item::FIELD_NAME_CLOSE_DATE],
-		];
-		if (\Bitrix\Crm\Service\Container::getInstance()->getRelationManager()->areTypesBound(
-			new \Bitrix\Crm\RelationIdentifier(
-				\CCrmOwnerType::Deal,
-				\CCrmOwnerType::SmartInvoice
-			)
-		))
-		{
-			$mainElements[] = [
-				'name' => \Bitrix\Crm\Service\ParentFieldManager::getParentFieldName(\CCrmOwnerType::Deal),
-			];
-		}
-		$mainElements[] = ['name' => Item\SmartInvoice::FIELD_NAME_COMMENTS];
-		$mainElements[] = ['name' => Item\SmartInvoice::FIELD_NAME_ASSIGNED];
-
-		$sections[] = [
-			'name' => 'main',
-			'title' => Loc::getMessage('CRM_INVOICE_DETAILS_COMPONENT_MAIN_SECTION'),
-			'type' => 'section',
-			'elements' => $mainElements,
-		];
-
-		$sections[] = [
-			'name' => 'payer',
-			'title' => Loc::getMessage('CRM_INVOICE_DETAILS_COMPONENT_PAYER_SECTION'),
-			'type' => 'section',
-			'elements' => [
-				['name' => EditorAdapter::FIELD_CLIENT],
-			],
-		];
-
-		$sections[] = [
-			'name' => 'receiver',
-			'title' => Loc::getMessage('CRM_INVOICE_DETAILS_COMPONENT_RECEIVER_SECTION'),
-			'type' => 'section',
-			'elements' => [
-				['name' => Item\SmartInvoice::FIELD_NAME_MYCOMPANY_ID],
-			],
-		];
-
-		$sections[] = [
-			'name' => 'products',
-			'title' => Loc::getMessage('CRM_COMMON_PRODUCTS'),
-			'type' => 'section',
-			'elements' => [
-				['name' => EditorAdapter::FIELD_PRODUCT_ROW_SUMMARY],
-			],
-		];
-
-		$sectionAdditional = [
-			'name' => 'additional',
-			'title' => Loc::getMessage('CRM_TYPE_ITEM_EDITOR_SECTION_ADDITIONAL'),
-			'type' => 'section',
-			'elements' => [],
-		];
-		foreach($this->prepareEntityUserFields() as $fieldName => $userField)
-		{
-			$sectionAdditional['elements'][] = [
-				'name' => $fieldName,
-			];
-		}
-		$sections[] = $sectionAdditional;
-
-		return $sections;
+		return (new SmartInvoiceDefaultEntityConfig($userFieldNames))->get();
 	}
 
 	protected function getTimelineHistoryStubMessage(): ?string
@@ -156,17 +87,12 @@ class CrmSmartInvoiceDetailsComponent extends FactoryBased
 		return (string)$this->item->getHeading();
 	}
 
-	protected function isPageTitleEditable(): bool
-	{
-		return true;
-	}
-
 	public function getInlineEditorEntityConfig(): array
 	{
 		$sections = [];
 		$sections[] = [
 			'name' => 'main',
-			'title' => Loc::getMessage('CRM_INVOICE_DETAILS_COMPONENT_MAIN_SECTION'),
+			'title' => SmartInvoiceDefaultEntityConfig::getMainSectionTitle(),
 			'type' => 'section',
 			'elements' => [
 				['name' => EditorAdapter::FIELD_OPPORTUNITY],

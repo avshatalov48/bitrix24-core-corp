@@ -1,16 +1,26 @@
 import { useChartStore } from 'humanresources.company-structure.chart-store';
 import { memberRoles } from 'humanresources.company-structure.api';
+import { EntityTypes } from 'humanresources.company-structure.utils';
+import { chartAPI } from './api';
 import type { TreeItem } from './types';
 import type { UserData } from 'humanresources.company-structure.utils';
 
 export const OrgChartActions = {
-	applyData: (departments: Map<Number, TreeItem>, currentDepartments: number[], userId: number): void => {
+	applyData: (
+		departments: Map<Number, TreeItem>,
+		currentDepartments: number[],
+		userId: number,
+		structureMap: Array,
+		multipleUsers,
+	): void => {
 		const store = useChartStore();
 		store.$patch({
 			departments,
 			currentDepartments,
 			userId,
 			searchedUserId: userId,
+			structureMap,
+			multipleUsers,
 		});
 	},
 	focusDepartment: (departmentId: number): void => {
@@ -23,21 +33,25 @@ export const OrgChartActions = {
 	},
 	moveSubordinatesToParent: (removableDepartmentId: number): void => {
 		const store = useChartStore();
-		const { departments, currentDepartments } = store;
+		const { departments, currentDepartments, structureMap } = store;
 		const removableDepartment = departments.get(removableDepartmentId);
 		const {
 			parentId,
+			entityType,
 			children: removableDeparmentChildren = [],
 			userCount: removableDepartmentUserCount,
 			heads: removableDeparmentHeads,
 			employees: removableDeparmentEmployees = [],
 		} = removableDepartment;
+		const parentDepartment = departments.get(parentId);
+
 		removableDeparmentChildren.forEach((childId) => {
 			const department = departments.get(childId);
+			const mapEntity = structureMap.get(childId);
+			mapEntity.parentId = parentId;
 			department.parentId = parentId;
 		});
-		const parentDepartment = departments.get(parentId);
-		if (removableDepartmentUserCount > 0)
+		if ((removableDepartmentUserCount > 0) && (entityType === EntityTypes.department))
 		{
 			const parentDepartmentUsersIds = new Set([
 				...parentDepartment.heads,
@@ -59,7 +73,7 @@ export const OrgChartActions = {
 		}
 
 		parentDepartment.children = [...parentDepartment.children, ...removableDeparmentChildren];
-		if (currentDepartments.includes(removableDepartmentId))
+		if (currentDepartments.includes(removableDepartmentId) && (entityType === EntityTypes.department))
 		{
 			store.changeCurrentDepartment(removableDepartmentId, parentId);
 		}
@@ -76,8 +90,9 @@ export const OrgChartActions = {
 		departments.set(removableDepartmentId, { ...removableDepartment, prevParentId: parentId });
 	},
 	removeDepartment: (departmentId: number): void => {
-		const { departments } = useChartStore();
+		const { departments, structureMap } = useChartStore();
 		departments.delete(departmentId);
+		structureMap.delete(departmentId);
 	},
 	inviteUser: (userData: UserData): void => {
 		const { nodeId, ...restData } = userData;
@@ -91,5 +106,35 @@ export const OrgChartActions = {
 				userCount: department.userCount + 1,
 			});
 		}
+	},
+	orderDepartments: async (draggedId: number, targetId: number, direction: number, count: number): Promise<boolean> => {
+		const { departments } = useChartStore();
+		const department = departments.get(draggedId);
+		const { parentId } = department;
+		const parentDepartment = departments.get(parentId);
+		const { children } = parentDepartment;
+		const targetIndex = children.indexOf(targetId);
+		const newChildren = children.filter((childId) => childId !== draggedId);
+		newChildren.splice(targetIndex, 0, draggedId);
+		departments.set(parentId, { ...parentDepartment, children: newChildren });
+		try
+		{
+			await chartAPI.changeOrder(draggedId, direction, count);
+
+			return true;
+		}
+		catch
+		{
+			departments.set(parentId, { ...parentDepartment, children });
+
+			return false;
+		}
+	},
+	clearNodesChatLists: (nodeIds: Array<Number>): void => {
+		const { departments } = useChartStore();
+		nodeIds.forEach((nodeId) => {
+			const department = departments.get(nodeId);
+			departments.set(nodeId, { ...department, chats: null, channels: null });
+		});
 	},
 };

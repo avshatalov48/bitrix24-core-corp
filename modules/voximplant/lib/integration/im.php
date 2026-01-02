@@ -26,7 +26,7 @@ class Im
 		$notification = Encoding::convertEncodingToCurrent($notification);
 
 		$admins = array();
-		$cursor = \CAllGroup::GetGroupUserEx(1);
+		$cursor = \CGroup::GetGroupUserEx(1);
 		while($user = $cursor->fetch())
 		{
 			$admins[] = $user["USER_ID"];
@@ -77,7 +77,7 @@ class Im
 		$notification = Encoding::convertEncodingToCurrent($notification);
 
 		$admins = array();
-		$cursor = \CAllGroup::GetGroupUserEx(1);
+		$cursor = \CGroup::GetGroupUserEx(1);
 		while($user = $cursor->fetch())
 		{
 			$admins[] = $user["USER_ID"];

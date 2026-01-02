@@ -1,0 +1,10 @@
+<?php
+$MESS["CRM_IBLOCK_PROPERTY_BIND_CRM_ELEMENT"] = "CRM элементтеріне байланыстыру";
+$MESS["CRM_IBLOCK_PROPERTY_ENTITY_COMPANY"] = "Компания";
+$MESS["CRM_IBLOCK_PROPERTY_ENTITY_CONTACT"] = "Байланыс";
+$MESS["CRM_IBLOCK_PROPERTY_ENTITY_DEAL"] = "Мәміле";
+$MESS["CRM_IBLOCK_PROPERTY_ENTITY_LEAD"] = "Лид";
+$MESS["CRM_IBLOCK_PROPERTY_ENTITY_SAVE"] = "Сақтау";
+$MESS["CRM_IBLOCK_PROPERTY_FORMAT_ERROR"] = "\"CRM элементтеріне байланыстыру\" өрісінің пішімі дұрыс емес";
+$MESS["CRM_IBLOCK_PROPERTY_SETTINGS_LABLE_ENTITY"] = "Қолжетімді мән:";
+$MESS["CRM_IBLOCK_PROPERTY_SETTINGS_LABLE_VISIBLE"] = "CRM картасында көрсету:";

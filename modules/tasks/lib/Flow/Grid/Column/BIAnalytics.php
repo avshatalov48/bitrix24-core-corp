@@ -2,10 +2,12 @@
 
 namespace Bitrix\Tasks\Flow\Grid\Column;
 
+use Bitrix\Main\Loader;
 use Bitrix\Main\Localization\Loc;
 use Bitrix\Tasks\Flow\Flow;
 use Bitrix\Tasks\Flow\Integration\BIConnector\FlowBIAnalytics;
 use Bitrix\Tasks\Flow\Provider\FlowProvider;
+use Bitrix\Tasks\V2\Internal\DI\Container;
 
 final class BIAnalytics extends Column
 {
@@ -26,11 +28,24 @@ final class BIAnalytics extends Column
 	private function init(): void
 	{
 		$this->id = 'BI_ANALYTICS';
-		$this->name = Loc::getMessage('TASKS_FLOW_LIST_COLUMN_BIANALYTICS');
+		$this->name = Loc::getMessage('TASKS_FLOW_LIST_COLUMN_BIANALYTICS_MSGVER_1');
 		$this->sort = '';
 		$this->default = true;
 		$this->editable = false;
 		$this->resizeable = false;
 		$this->width = null;
+	}
+
+	public function isAvailable(): bool
+	{
+		if (
+			Loader::includeModule('biconnector')
+			&& Container::getInstance()->getToolService()->isCrmBiAvailable()
+		)
+		{
+			return true;
+		}
+
+		return false;
 	}
 }

@@ -1,10 +1,12 @@
 /**
- * @module user/account-delete
+ * @module user/account
  */
-jn.define('user/account-delete', (require, exports, module) => {
+jn.define('user/account', (require, exports, module) => {
 	const AppTheme = require('apptheme');
 	const { withPressed } = require('utils/color');
 	const imagePath = `${currentDomain}/bitrix/mobileapp/mobile/extensions/bitrix/user/account/images/`;
+	const { qrauth } = require('qrauth/utils');
+	const { Loc } = require('loc');
 
 	class Disclaimer extends LayoutComponent
 	{
@@ -123,5 +125,13 @@ jn.define('user/account-delete', (require, exports, module) => {
 		return currentDomain.match(regExp) !== null;
 	}
 
-	module.exports = { openDeleteDialog, isCloudAccount, Disclaimer };
+	function openDeleteBitrix24Dialog(){
+		void qrauth.open({
+			redirectUrl: "/settings/configs/?analyticContext=deletePortal&page=configuration",
+			showHint: true,
+			title: Loc.getMessage('DELETE_BITRIX24_TITLE'),
+			analyticsSection: 'deletePortal',
+		})
+	}
+	module.exports = { openDeleteDialog, isCloudAccount, Disclaimer, openDeleteBitrix24Dialog };
 });

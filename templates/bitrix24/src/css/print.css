@@ -1,0 +1,41 @@
+@media print {
+	body {
+		-webkit-print-color-adjust: exact;
+		color-adjust: exact;
+	}
+
+	.root,
+	.app {
+		min-width: auto !important;
+	}
+
+	body,
+	.app,
+	.page__workarea,
+	.page__workarea-content {
+		background: #fff !important;
+	}
+
+	.page__workarea-content {
+		margin-right: 20px;
+	}
+
+	#panel,
+	.app__header,
+	#air-footer,
+	#right-bar,
+	.app__left-menu,
+	.main-buttons,
+	.theme-video-container,
+	.start-page #sidebar,
+	.profile-menu {
+		display: none !important;
+	}
+
+	.pagetitle-inner-container > *:not(.pagetitle),
+	.ui-toolbar > *:not(.ui-toolbar-title-box):not(.ui-toolbar-title-inner):not(.ui-toolbar-title-item-box):not(.ui-toolbar-title-item):not(.ui-toolbar-title-item),
+	.ui-toolbar-star,
+	.pagetitle-star {
+		display: none !important;
+	}
+}

@@ -10,6 +10,7 @@ namespace Bitrix\Crm\WebForm;
 use Bitrix\Crm\Category\DealCategory;
 use Bitrix\Crm\StatusTable;
 use Bitrix\Main\Localization\Loc;
+use Bitrix\Main\ModuleManager;
 use Bitrix\Main\SystemException;
 
 Loc::loadMessages(__FILE__);
@@ -166,6 +167,25 @@ class EntityFieldProvider
 					]
 				)
 			);
+		}
+
+		if (ModuleManager::isModuleInstalled('booking'))
+		{
+			$fields['BOOKING'] = [
+				'CAPTION' => Loc::getMessage('CRM_WEBFORM_FIELD_PROVIDER_BOOKING'),
+				'FIELDS' => [
+					[
+						'type' => Booking::RESOURCE_FIELD_TYPE,
+						'entity_field_name' => 'BOOKING',
+						'entity_name' => 'BOOKING',
+						'name' => 'BOOKING_BOOKING',
+						'caption' => Loc::getMessage('CRM_WEBFORM_FIELD_PROVIDER_RESOURCE_SELECTION'),
+						'multiple' => false,
+						'required' => true,
+						'size' => null,
+					],
+				],
+			];
 		}
 
 		return $fields;

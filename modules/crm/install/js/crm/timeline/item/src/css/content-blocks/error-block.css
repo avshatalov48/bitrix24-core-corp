@@ -1,0 +1,90 @@
+.crm-timeline__error-block_wrapper {
+	padding-bottom: 12px;
+	white-space: normal;
+	margin-right: 20px;
+	opacity: var(--ui-opacity-full);
+}
+
+.crm-timeline__error-block_wrapper.--hidden {
+	opacity: var(--ui-opacity-none);
+	transition: opacity 0.5s ease;
+}
+
+.crm-timeline__error-block {
+	display: flex;
+	flex-direction: column;
+	align-items: flex-start;
+	padding: 10px 30px 10px 20px;
+	max-height: 124px;
+	z-index: 1;
+	position: relative;
+	border: var( --ui-border-width-thin) var(--ui-text-decoration-style-solid) #FB7595;
+	border-radius: var(--ui-border-radius-lg);
+	background-color: var(--crm-timeline__card-color-background);
+	line-height: var(--ui-font-line-height-md);
+	font-family: var(--ui-font-family-primary, var(--ui-font-family-helvetica));
+	font-size: var(--ui-font-size-md);
+	font-weight: var(--ui-font-weight-normal);
+}
+
+.crm-timeline__error-block__header {
+	display: flex;
+	flex-direction: row;
+	align-items: center;
+	line-height: var(--ui-font-line-height-lg);
+}
+
+.crm-timeline__error-block__header-icon {
+	width: 25px;
+	height: 25px;
+	margin-right: 8px;
+	display: none;
+}
+
+.crm-timeline__error-block__header-icon.--ai {
+	display: block;
+	background: transparent url('../../images/common/crm-timeline__copilot-error.svg') no-repeat center;
+}
+
+.crm-timeline__error-block__header-title {
+	color: #EB5757;
+	font-size: var(--ui-font-size-md);
+	font-weight: var(--ui-font-weight-medium);
+	letter-spacing: var(--ui-text-letter-spacing-1);
+}
+
+.crm-timeline__error-block_close-btn {
+	position: absolute;
+	width: 24px;
+	height: 24px;
+	top: 8px;
+	right: 12px;
+	padding: 0;
+	border: 0;
+	cursor: pointer;
+	background: transparent url('../../images/common/crm-timeline__cross.svg') no-repeat center;
+	opacity: var(--ui-opacity-60);
+	transition: var(--crm-timeline__transition-hover);
+}
+
+.crm-timeline__error-block_close-btn:hover {
+	opacity: var(--ui-opacity-80);
+	transition: unset;
+}
+
+.crm-timeline__error-block__description {
+	width: 100%;
+	padding-top: 8px;
+	box-sizing: border-box;
+	white-space: pre-wrap;
+	font-family: inherit;
+	vertical-align: middle;
+	border: none;
+	background-color: transparent;
+	outline: none;
+	resize: none;
+	word-break: break-word;
+	font-size: var(--ui-font-size-md);
+	line-height: var(--ui-font-line-height-md);
+	color: var(--ui-color-text-primary);
+}

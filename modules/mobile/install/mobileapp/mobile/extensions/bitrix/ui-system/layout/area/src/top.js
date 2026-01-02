@@ -24,7 +24,6 @@ jn.define('ui-system/layout/area/src/top', (require, exports, module) => {
 		const { horizontal } = excludePaddingSide;
 
 		const style = {
-			alignSelf: 'flex-start',
 			paddingVertical: Indent.L.toNumber(),
 			paddingLeft: horizontal ? 0 : Component.areaPaddingLr.toNumber(),
 			paddingRight: horizontal ? 0 : Component.areaPaddingLr.toNumber(),

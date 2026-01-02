@@ -6,7 +6,6 @@ if (!defined('B_PROLOG_INCLUDED') || B_PROLOG_INCLUDED !== true)
 }
 
 return [
-	'css' => 'dist/mouse-position.bundle.css',
 	'js' => 'dist/mouse-position.bundle.js',
 	'rel' => [
 		'main.core',

@@ -46,35 +46,3 @@ CJSCore::RegisterExt('mobile_tools', [
 		];
 	},
 ]);
-
-EventManager::getInstance()->addEventHandler('main', 'onGetThirdPartySoftware', function () {
-	return new EventResult(
-		EventResult::SUCCESS,
-		[
-			(new Copyright('Redux Toolkit'))
-				->setCopyright('Copyright (c) 2018 Mark Erikson')
-				->setProductUrl('https://redux-toolkit.js.org')
-				->setLicence(Copyright::LICENCE_MIT),
-
-			(new Copyright('Redux-State-Sync 3'))
-				->setCopyright('Copyright (c) 2018 MU AOHUA')
-				->setProductUrl('https://github.com/AOHUA/redux-state-sync')
-				->setLicence(Copyright::LICENCE_MIT),
-
-			(new Copyright('Logger for Redux'))
-				->setCopyright('Copyright (c) 2016 Eugene Rodionov')
-				->setProductUrl('https://github.com/LogRocket/redux-logger')
-				->setLicence(Copyright::LICENCE_MIT),
-
-			(new Copyright('redux-batched-subscribe'))
-				->setCopyright('Copyright (c) 2016 Terry Appleby')
-				->setProductUrl('https://github.com/tappleby/redux-batched-subscribe')
-				->setLicence(Copyright::LICENCE_MIT),
-
-			(new Copyright('redux-batched-actions'))
-				->setCopyright('Copyright (c) 2016 Tim Shelburne')
-				->setProductUrl('https://github.com/tshelburne/redux-batched-actions')
-				->setLicence(Copyright::LICENCE_MIT),
-		],
-	);
-});

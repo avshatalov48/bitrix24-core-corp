@@ -29,7 +29,6 @@ $MESS["TASKS_PRIORITY_1"] = "Normal";
 $MESS["TASKS_PRIORITY_2"] = "High";
 $MESS["TASKS_QUICK_TITLE"] = "Task Name";
 $MESS["TASKS_REPORTS"] = "Reports";
-$MESS["TASKS_RESPONSIBLE"] = "Responsible";
 $MESS["TASKS_TEMPLATES"] = "Templates";
 $MESS["TASKS_TEMPLATE_COPY"] = "Copy template";
 $MESS["TASKS_TEMPLATE_TITLE"] = "Name";

@@ -1780,17 +1780,22 @@ if(typeof(BX.CrmUIGridExtension) === "undefined")
 		//BX.onCustomEvent(this, 'CREATED', [self]);
 		return self;
 	};
-	BX.CrmUIGridExtension.getCountRow = function(gridId, serviceUrl)
+	BX.CrmUIGridExtension.getCountRow = function(gridId, params)
 	{
-		fetch(serviceUrl, {
-			method: 'POST',
-			headers: {
-				'Content-Type': 'application/json'
-			},
-		})
-			.then(response => response.json())
-			.then(result => {
-				const rowCount = result.DATA.TEXT;
+		const componentName = params.componentName;
+		const actionName = params.actionName;
+		const data = params.data;
+
+		BX.ajax.runComponentAction(
+				componentName,
+				actionName,
+				{
+					mode: 'class',
+					data: data,
+				},
+			)
+			.then(response => {
+				const rowCount = response.data;
 				const rowCountWrapper = document.getElementById(`${gridId}_row_count_wrapper`);
 				if (rowCountWrapper) {
 					rowCountWrapper.textContent = rowCount;

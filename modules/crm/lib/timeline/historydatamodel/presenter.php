@@ -3,11 +3,8 @@
 namespace Bitrix\Crm\Timeline\HistoryDataModel;
 
 use Bitrix\Crm\Service\Container;
-use Bitrix\Main\Context;
-use Bitrix\Main\IO\Path;
 use Bitrix\Main\Localization\Loc;
 use Bitrix\Main\Type\DateTime;
-use Bitrix\Sale\Cashbox\CheckManager;
 
 /**
  * Class Presenter
@@ -72,9 +69,14 @@ class Presenter
 	{
 		$settings = (array)($data['SETTINGS'] ?? []);
 
-		$data['TITLE'] = $this->getHistoryTitle($settings['FIELD'] ?? null);
+		$data['TITLE'] = $this->getHistoryTitle($settings['FIELD'] ?? null, $settings);
 		$data['START_NAME'] = $settings['START_NAME'] ?? $settings['START'] ?? '';
 		$data['FINISH_NAME'] = $settings['FINISH_NAME'] ?? $settings['FINISH'] ?? '';
+
+		if (!empty($data['SETTINGS']['BASE']))
+		{
+			$data['BASE'] = $this->prepareBasedInfo($data['SETTINGS']['BASE']);
+		}
 
 		$data = $this->prepareDataBySettingsForSpecificEvent($data, $settings);
 
@@ -83,7 +85,7 @@ class Presenter
 		return $data;
 	}
 
-	protected function getHistoryTitle(string $fieldName = null): string
+	protected function getHistoryTitle(?string $fieldName = null, array $settings = []): string
 	{
 		return '';
 	}
@@ -135,5 +137,35 @@ class Presenter
 			'SHOW_URL' => $user['SHOW_URL'] ?? null,
 			'IMAGE_URL' => $user['PHOTO_URL'] ?? null,
 		];
+	}
+
+	protected function prepareBasedInfo(array $base): ?array
+	{
+		if (empty($base))
+		{
+			return [];
+		}
+
+		$entityTypeId = $base['ENTITY_TYPE_ID'] ?? 0;
+		$entityId = $base['ENTITY_ID'] ?? 0;
+		$source = $base['SOURCE'] ?? '';
+
+		$result = [];
+
+		if ($entityId > 0 && \CCrmOwnerType::IsDefined($entityTypeId))
+		{
+			$result = ['CAPTION' => Loc::getMessage('CRM_TIMELINE_PRESENTER_CAPTION')];
+
+			if (\CCrmOwnerType::TryGetEntityInfo($entityTypeId, $entityId, $baseEntityInfo, false))
+			{
+				$result['ENTITY_INFO'] = $baseEntityInfo;
+				if (!empty($source))
+				{
+					$result['ENTITY_INFO']['SOURCE'] = $source;
+				}
+			}
+		}
+
+		return $result;
 	}
 }

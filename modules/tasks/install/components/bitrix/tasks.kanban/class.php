@@ -19,11 +19,11 @@ use \Bitrix\Main\Application;
 use Bitrix\Tasks\Component\Kanban\ScrumManager;
 use Bitrix\Tasks\Helper\Analytics;
 use Bitrix\Tasks\Integration\Bizproc\Listener;
-use Bitrix\Tasks\Integration\Intranet\Settings;
 use Bitrix\Tasks\Integration\Pull\PushCommand;
 use Bitrix\Tasks\Integration\Socialnetwork\Context\Context;
 use Bitrix\Tasks\Internals\Log\LogFacade;
 use Bitrix\Tasks\Internals\Registry\TaskRegistry;
+use Bitrix\Tasks\Internals\Task\Mark;
 use Bitrix\Tasks\Internals\Task\MetaStatus;
 use Bitrix\Tasks\Internals\Task\Status;
 use Bitrix\Tasks\Internals\TaskTable;
@@ -38,6 +38,7 @@ use \Bitrix\Tasks\Internals\UserOption;
 use \Bitrix\Tasks\Access\ActionDictionary;
 
 use \Bitrix\Tasks\Integration\SocialNetwork;
+use Bitrix\Tasks\Onboarding\DI\OnboardingContainer;
 use Bitrix\Tasks\Scrum\Form\EpicForm;
 use Bitrix\Tasks\Scrum\Form\ItemForm;
 use Bitrix\Tasks\Scrum\Service\EpicService;
@@ -48,17 +49,22 @@ use Bitrix\Tasks\Scrum\Service\TaskService;
 use Bitrix\Tasks\Scrum\Service\KanbanService;
 use Bitrix\Tasks\Scrum\Utility\ViewHelper;
 
-use \Bitrix\Tasks\Components\Kanban\UserSettings;
-use \Bitrix\Tasks\Components\Kanban\DisplayService;
-use \Bitrix\Tasks\Components\Kanban\Services\Members;
-use \Bitrix\Tasks\Components\Kanban\Services\CheckList;
-use \Bitrix\Tasks\Components\Kanban\Services\Tags;
-use \Bitrix\Tasks\Components\Kanban\Services\Files;
-use \Bitrix\Tasks\Components\Kanban\Services\Logs;
-use \Bitrix\Tasks\Components\Kanban\Services\Time;
-use \Bitrix\Tasks\Components\Kanban\Services\Counters;
+use Bitrix\Tasks\V2\Internal\Service\Kanban\Display\Service\Display\AbstractDisplayService;
+use Bitrix\Tasks\V2\Internal\Service\Kanban\Display\DisplayFactory;
+use Bitrix\Tasks\V2\Internal\Service\Kanban\Display\Service\MemberService;
+use Bitrix\Tasks\V2\Internal\Service\Kanban\Display\Service\CheckListService;
+use Bitrix\Tasks\V2\Internal\Service\Kanban\Display\Service\TagService;
+use Bitrix\Tasks\V2\Internal\Service\Kanban\Display\Service\FileService;
+use Bitrix\Tasks\V2\Internal\Service\Kanban\Display\Service\LogService;
+use Bitrix\Tasks\V2\Internal\Service\Kanban\Display\Service\TimeService;
+use Bitrix\Tasks\V2\Internal\Service\Kanban\Display\Service\CounterService;
+use Bitrix\Tasks\V2\Internal\Service\Kanban\Display\ViewModeType;
 
 use Bitrix\Tasks\TourGuide;
+use Bitrix\Tasks\V2\Internal\DI\Container;
+use Bitrix\Tasks\V2\Public\Command\Task\Kanban\AddTaskStageRelationCommand;
+use Bitrix\Tasks\V2\Public\Command\Task\Kanban\DeleteTaskStageRelationCommand;
+use Bitrix\Tasks\V2\Public\Command\Task\Kanban\MoveTaskCommand;
 
 class TasksKanbanComponent extends \CBitrixComponent implements Controllerable, Errorable
 {
@@ -83,15 +89,14 @@ class TasksKanbanComponent extends \CBitrixComponent implements Controllerable, 
 	protected $errors = array();
 	protected $avatarSize = array('width' => 38, 'height' => 38);
 	protected $previewSize = array('width' => 1000, 'height' => 1000);
-	protected DisplayService $displayService;
-	protected UserSettings $kanbanUserSettings;
-	protected Time $timeService;
-	protected Tags $tagsService;
-	protected Logs $logsService;
-	protected Files $filesService;
-	protected Members $membersService;
-	protected Counters $countersService;
-	protected CheckList $checkListService;
+	protected AbstractDisplayService $displayService;
+	protected TimeService $timeService;
+	protected TagService $tagsService;
+	protected LogService $logsService;
+	protected FileService $filesService;
+	protected MemberService $membersService;
+	protected CounterService $countersService;
+	protected CheckListService $checkListService;
 
 	/**
 	 * Init class' vars, check conditions.
@@ -179,23 +184,17 @@ class TasksKanbanComponent extends \CBitrixComponent implements Controllerable, 
 			SocialNetwork::setLogDestinationLast(['SG' => [$this->arParams['GROUP_ID']]]);
 		}
 
-		$this->tagsService = new Tags();
-		$this->timeService = new Time();
-		$this->checkListService = new CheckList();
-		$this->logsService = new Logs($this->userId);
-		$this->kanbanUserSettings = new UserSettings(
-			$this->getViewMode($this->arParams)
-		);
-		$this->filesService = new Files($this->previewSize);
-		$this->membersService = new Members($this->arParams['~NAME_TEMPLATE']);
-		$this->countersService = new Counters($this->userId, (int)$this->arParams['USER_ID']);
-		$this->displayService = new DisplayService(
-			$this->isScrum(),
-			$this->kanbanUserSettings,
-			$this->filesService,
-			$this->tagsService,
-			$this->membersService,
-			$this->checkListService
+		$this->tagsService = new TagService();
+		$this->timeService = new TimeService();
+		$this->checkListService = new CheckListService();
+		$this->logsService = new LogService($this->userId);
+		$this->filesService = new FileService($this->previewSize);
+		$this->membersService = new MemberService();
+		$this->countersService = new CounterService($this->userId, (int)$this->arParams['USER_ID']);
+
+		$this->displayService = DisplayFactory::getInstance()->createDisplayService(
+			$this->getViewModeType(),
+			$this->userId,
 		);
 
 		return $init;
@@ -300,13 +299,6 @@ class TasksKanbanComponent extends \CBitrixComponent implements Controllerable, 
 			StagesTable::setWorkMode(StagesTable::WORK_MODE_GROUP);
 		}
 
-		// remeber view
-//		Filter\Task::getListStateInstance()->setViewMode(
-//			$params['PERSONAL'] == 'Y'
-//			? \CTaskListState::VIEW_MODE_PLAN
-//			: \CTaskListState::VIEW_MODE_KANBAN
-//		);
-
 		// preview sizes
 		if (isset($params['PREVIEW_WIDTH']) && $params['PREVIEW_WIDTH'] > 0)
 		{
@@ -326,18 +318,6 @@ class TasksKanbanComponent extends \CBitrixComponent implements Controllerable, 
 		{
 			$this->taskType = static::TASK_TYPE_USER;
 		}
-
-		//		if (
-		//			$this->taskType == static::TASK_TYPE_GROUP /*&&
-		//			!$params['GROUP_ID_FORCED']*/
-		//		)
-		//		{
-		//			Filter\Task::setGroupId($params['GROUP_ID']);
-		//		}
-		//		else
-		//		{
-		//			Filter\Task::setUserId($params['USER_ID']);
-		//		}
 
 		if (StagesTable::getWorkMode() === StagesTable::WORK_MODE_ACTIVE_SPRINT)
 		{
@@ -414,11 +394,25 @@ class TasksKanbanComponent extends \CBitrixComponent implements Controllerable, 
 		);
 
 		$this->arResult['IS_TOOL_AVAILABLE'] = $this->isToolAvailable();
+		$this->setPromoParams();
+	}
+
+	private function setPromoParams(): void
+	{
+		$inviteToMobileService = OnboardingContainer::getInstance()->getInviteToMobileService();
+
+		$needToShowInviteToMobile = $inviteToMobileService->needToShow((int)$this->userId);
+		$this->arResult['needToShowInviteToMobile'] = $needToShowInviteToMobile;
+
+		if ($needToShowInviteToMobile)
+		{
+			$this->arResult['inviteToMobileLink'] = $inviteToMobileService->getInviteLink((int)$this->userId);
+		}
 	}
 
 	private function isToolAvailable(): bool
 	{
-		return (new Settings())->isToolAvailable(Settings::TOOLS['base_tasks']);
+		return Container::getInstance()->getToolService()->isBaseTasksAvailable();
 	}
 
 	/**
@@ -789,7 +783,7 @@ class TasksKanbanComponent extends \CBitrixComponent implements Controllerable, 
 			}
 		}
 
-		return $GLOBALS['USER']->isAdmin() || \CTasksTools::IsPortalB24Admin();
+		return $GLOBALS['USER']->isAdmin() || \Bitrix\Tasks\Integration\Bitrix24\User::isAdmin();
 	}
 
 	/**
@@ -1310,6 +1304,7 @@ class TasksKanbanComponent extends \CBitrixComponent implements Controllerable, 
 				'canSort' => $this->isAdmin() && $this->arParams['TIMELINE_MODE'] !== 'Y',
 				'canAddItem' => $canAddItem,
 				'viewStateName'=> $viewModeForAnalytics,
+				'canSortItems' => $stage['CAN_SORT_ITEMS'] ?? true,
 			];
 		}
 
@@ -1351,21 +1346,20 @@ class TasksKanbanComponent extends \CBitrixComponent implements Controllerable, 
 		$activityDate = $item['ACTIVITY_DATE'] ?? null;
 
 		$canEdit = $task->isActionAllowed(CTaskItem::ACTION_EDIT);
-		$markProp = (!in_array($item['MARK'], ['P', 'N'])) ? 'NONE': $item['MARK'];
-		$data = array(
+		$item['MARK_PROP_MESSAGE'] = Mark::getMessage((string)($item['MARK'] ?? ''));
+
+		$data = [
 			// base
 			'id' => $item['ID'],
 			'parentId' => $item['PARENT_ID'],
 			'stage_id' => $item['STAGE_ID'],
 			'groupId' => $item['GROUP_ID'],
-			'name' => $this->displayService->fillTitle($item['TITLE']),
 			'background' => '',
 			'author' => $item['CREATED_BY'],
 			'responsible' => $item['RESPONSIBLE_ID'],
 			'tags' => [],
 			'counter' => 0,
 			'deadline' => $this->getDeadlineProps($item),
-			'deadline_visibility' => $this->displayService->fillDeadLineVisibility(),
 			// time
 			'time_tracking' => $item['ALLOW_TIME_TRACKING'] === 'Y',
 			'time_logs' => (int)$item['TIME_SPENT_IN_LOGS'],
@@ -1412,25 +1406,14 @@ class TasksKanbanComponent extends \CBitrixComponent implements Controllerable, 
 			'completed' => (int)$item['STATUS'] === Status::COMPLETED,
 			'completed_supposedly' => (int)$item['STATUS'] === Status::SUPPOSEDLY_COMPLETED,
 			'muted' => $item['IS_MUTED'] === 'Y',
-			'item_fields' => [
-				$this->displayService->fillId($item['ID']),
-				$this->displayService->fillProject($item['GROUP_ID']),
-				$this->displayService->fillFlow($item['FLOW_ID'] ?? 0),
-				$this->displayService->fillMark(Loc::getMessage("TASKS_MARK_$markProp")),
-				$this->displayService->fillDateStart($item['DATE_START'] ?? ''),
-				$this->displayService->fillDateFinishPlan($item['END_DATE_PLAN'] ?? ''),
-				$this->displayService->fillTimeSpent((int)$item['TIME_SPENT_IN_LOGS']),
-				$this->displayService->fillCrmData($item),
-				$this->displayService->fillAuditors($item['AUDITORS']),
-				$this->displayService->fillAccomplices($item['ACCOMPLICES']),
-			],
-		);
+		];
+
 		if ($data['date_start'])
 		{
 			$data['date_start'] = $data['date_start']->getTimestamp();
 		}
 
-		return $data;
+		return array_merge_recursive($data, $this->displayService->fill($item, $this->userId));
 	}
 
 	/**
@@ -1669,16 +1652,7 @@ class TasksKanbanComponent extends \CBitrixComponent implements Controllerable, 
 		$items = $this->getNewLog($items);
 		$items = $this->getTimeStarted($items);
 		$items = $this->getCounters($items);
-		$items = $this->displayService->fillTags($items);
-		$items = $this->displayService->fillFiles($items);
-		$items = $this->displayService->fillCheckList($items);
-		if (
-			isset($this->arParams['SPRINT_SELECTED'])
-			&& $this->arParams['SPRINT_SELECTED'] === 'Y'
-		)
-		{
-			$items = $this->getScrumData($items);
-		}
+		$items = $this->displayService->fillBatch($items);
 
 		$items = $this->sendEvent('KanbanComponentGetItems', $items);
 
@@ -2124,11 +2098,7 @@ class TasksKanbanComponent extends \CBitrixComponent implements Controllerable, 
 		$this->arResult['TOURS'] = $this->processTours();
 		$this->arResult['ADMINS'] = [];
 		$this->arResult['CONTEXT'] = $this->arParams['CONTEXT'] ?? Context::getDefault();
-		if (!$this->isScrum())
-		{
-			// Kanban User Selected Fields
-			$this->arResult['POPUP_FIELDS_SECTIONS'] = $this->kanbanUserSettings->getPopupSections();
-		}
+		$this->arResult['POPUP_FIELDS_SECTIONS'] = $this->displayService->getPopupSections($this->userId);
 
 		$this->arResult['DEFAULT_PRESET_KEY'] = (
 			$this->filterInstance ? $this->filterInstance->getDefaultPresetKey() : ''
@@ -2599,10 +2569,10 @@ class TasksKanbanComponent extends \CBitrixComponent implements Controllerable, 
 					$kanbanService = new KanbanService();
 					$kanbanService->removeTasksFromKanban($params['SPRINT_ID'], [$newId]);
 				}
-				TaskStageTable::add([
-					'TASK_ID' => $newId,
-					'STAGE_ID' => $columnId,
-				]);
+				(new AddTaskStageRelationCommand(
+					taskId: $newId,
+					stageId: (int)$columnId,
+				))->run();
 			}
 			// set sort
 			if ((int)$params['GROUP_ID'] === 0)
@@ -2729,10 +2699,11 @@ class TasksKanbanComponent extends \CBitrixComponent implements Controllerable, 
 						// update some fields, if fields is exists
 						if (isset($stages[$columnId]['TO_UPDATE']))
 						{
+							$taskInst = CTaskItem::getInstance($taskId, $this->userId);
+
 							$acceesAllowed = true;
 							if ($stages[$columnId]['TO_UPDATE_ACCESS'])
 							{
-								$taskInst = CTaskItem::getInstance($taskId, $this->userId);
 								if (!$taskInst->checkAccess(ActionDictionary::getActionByLegacyId($stages[$columnId]['TO_UPDATE_ACCESS'])))
 								{
 									$acceesAllowed = false;
@@ -2781,9 +2752,10 @@ class TasksKanbanComponent extends \CBitrixComponent implements Controllerable, 
 							));
 							while ($rowStg = $resStg->fetch())
 							{
-								TaskStageTable::update($rowStg['ID'], array(
-									'STAGE_ID' => $columnId
-								));
+								(new MoveTaskCommand(
+									relationId: (int)$rowStg['ID'],
+									stageId: (int)$columnId
+								))->run();
 
 								if (
 									$this->arParams['PERSONAL'] === 'Y'
@@ -2858,6 +2830,17 @@ class TasksKanbanComponent extends \CBitrixComponent implements Controllerable, 
 			}
 		}
 
+		// "STAGE_ID" analytics label
+		$isDemo = (Loader::includeModule('bitrix24') && \CBitrix24::IsDemoLicense()) ? 'Y' : 'N';
+
+		Analytics::getInstance($this->userId)->onTaskUpdate(
+			event: Analytics::EVENT['task_update'],
+			subSection: Analytics::SUB_SECTION['task_card'],
+			params: [
+				'p1' => 'isDemo_' . $isDemo,
+			],
+		);
+
 		return array();
 	}
 
@@ -2888,9 +2871,13 @@ class TasksKanbanComponent extends \CBitrixComponent implements Controllerable, 
 				'STAGE.ENTITY_ID' => $this->arParams['STAGES_ENTITY_ID']
 			]
 		]);
+
 		while ($taskStage = $taskStageTable->fetch())
 		{
-			TaskStageTable::update($taskStage['ID'], ['STAGE_ID' => $finishColumnId]);
+			(new MoveTaskCommand(
+				relationId: (int)$taskStage['ID'],
+				stageId: (int)$finishColumnId
+			))->run();
 		}
 
 		$this->completeTask($taskId);
@@ -2928,9 +2915,13 @@ class TasksKanbanComponent extends \CBitrixComponent implements Controllerable, 
 				'STAGE.ENTITY_ID' => $this->arParams['STAGES_ENTITY_ID'],
 			]
 		]);
+
 		while ($taskStage = $taskStageTable->fetch())
 		{
-			TaskStageTable::update($taskStage['ID'], ['STAGE_ID' => $newColumnId]);
+			(new MoveTaskCommand(
+				relationId: (int)$taskStage['ID'],
+				stageId: (int)$newColumnId
+			))->run();
 		}
 
 		$this->renewTask($taskId);
@@ -3471,6 +3462,7 @@ class TasksKanbanComponent extends \CBitrixComponent implements Controllerable, 
 					'FROM_USER_ID' => $this->userId,
 					'NOTIFY_TYPE' => IM_NOTIFY_FROM,
 					'NOTIFY_MODULE' => 'tasks',
+					'NOTIFY_EVENT' => 'admin_notification',
 					'NOTIFY_TAG' => 'TASKS|NOTIFY_ADMIN|'.$userId.'|'.$this->userId,
 					'NOTIFY_MESSAGE' => Loc::getMessage('TASK_ACCESS_NOTIFY_MESSAGE', array(
 						'#URL#' => $groupId > 0
@@ -3554,25 +3546,69 @@ class TasksKanbanComponent extends \CBitrixComponent implements Controllerable, 
 					return [];
 				}
 
-				if (
-					$taskData['CREATED_BY'] == $this->userId
-					&& $task->checkAccess(ActionDictionary::ACTION_TASK_EDIT)
-				)
+				try
 				{
-					$task->update(array(
-						'RESPONSIBLE_ID' => $responsible
-					));
+					if (
+						$taskData['CREATED_BY'] == $this->userId
+						&& $task->checkAccess(ActionDictionary::ACTION_TASK_EDIT)
+					)
+					{
+						$task->update([
+							'RESPONSIBLE_ID' => $responsible,
+						]);
+					}
+					elseif ($task->checkAccess(ActionDictionary::ACTION_TASK_DELEGATE, \Bitrix\Tasks\Access\Model\TaskModel::createFromId((int) $taskId)))
+					{
+						$task->delegate($responsible);
+					}
+					elseif ($task->checkAccess(ActionDictionary::ACTION_TASK_EDIT))
+					{
+						$task->update([
+							'RESPONSIBLE_ID' => $responsible,
+						]);
+					}
 				}
-				elseif ($task->checkAccess(ActionDictionary::ACTION_TASK_DELEGATE, \Bitrix\Tasks\Access\Model\TaskModel::createFromId((int) $taskId)))
+				catch (TasksException $e)
 				{
-					$task->delegate($responsible);
+					$this->errors[] = new Error($e->getMessage());
+
+					return [];
 				}
-				elseif ($task->checkAccess(ActionDictionary::ACTION_TASK_EDIT))
+
+				$analytics = Analytics::getInstance($this->userId);
+
+				$params = $this->request('params');
+
+				$groupId = isset($params['GROUP_ID']) ? (int)$params['GROUP_ID'] : 0;
+				$isPersonal = isset($params['PERSONAL']) && $params['PERSONAL'] === 'Y';
+				$isTimelineMode = isset($params['TIMELINE_MODE']) && $params['TIMELINE_MODE'] === 'Y';
+				$sprintId = isset($params['SPRINT_ID']) ? (int)$params['SPRINT_ID'] : -1;
+
+				$subSection = 'list';
+				if ($isPersonal)
 				{
-					$task->update(array(
-						'RESPONSIBLE_ID' => $responsible
-					));
+					if ($isTimelineMode)
+					{
+						$subSection = 'deadline';
+					}
+					else
+					{
+						$subSection = 'planner';
+					}
 				}
+				elseif ($groupId > 0 || $sprintId > 0)
+				{
+					$subSection = 'kanban';
+				}
+
+
+				$analytics->onTaskUpdate(
+					event: Analytics::EVENT['assignee_change'],
+					section: Analytics::SECTION[$analytics->getTaskContext($taskId)],
+					element: Analytics::ELEMENT['context_menu'],
+					subSection: $subSection,
+				);
+
 
 				//tmp, bug #85959
 				if (false && ($e = $this->application->GetException()))
@@ -3953,7 +3989,13 @@ class TasksKanbanComponent extends \CBitrixComponent implements Controllerable, 
 						$this->completeTask($taskId);
 						break;
 					case 'mute':
-						UserOption::add($taskId, $this->userId, UserOption\Option::MUTED);
+						try
+						{
+							UserOption::add($taskId, $this->userId, UserOption\Option::MUTED);
+						}
+						catch (\Bitrix\Main\DB\DuplicateEntryException)
+						{
+						}
 						break;
 					case 'unmute':
 						UserOption::delete($taskId, $this->userId, UserOption\Option::MUTED);
@@ -4167,18 +4209,21 @@ class TasksKanbanComponent extends \CBitrixComponent implements Controllerable, 
 					if (is_array($checkTS[$row['ID']] ?? null) && count($checkTS[$row['ID']] ?? []) > 1)
 					{
 						array_pop($checkTS[$row['ID']]);
-						foreach ($checkTS[$row['ID']] as $tsId)
-						{
-							TaskStageTable::delete($tsId);
-						}
+
+						$toDelete = $checkTS[$row['ID']];
+						Collection::normalizeArrayValuesByInt($toDelete, false);
+
+						(new DeleteTaskStageRelationCommand(
+							relationIds: $toDelete
+						))->run();
 					}
 					// not exists in any stage - add in default
 					elseif (!isset($checkTS[$row['ID']]))
 					{
-						TaskStageTable::add(array(
-							'STAGE_ID' => $defaultStageId,
-							'TASK_ID' => $row['ID']
-						));
+						(new AddTaskStageRelationCommand(
+							taskId: (int)$row['ID'],
+							stageId: $defaultStageId,
+						))->run();
 					}
 					$lastId = $row['ID'];
 				}
@@ -4226,7 +4271,7 @@ class TasksKanbanComponent extends \CBitrixComponent implements Controllerable, 
 			return false;
 		}
 
-		return $this->kanbanUserSettings->saveUserSelectedFields($fields);
+		return $this->displayService->saveUserSelectedFields($fields);
 	}
 
 	private function isScrum(): bool
@@ -4235,25 +4280,30 @@ class TasksKanbanComponent extends \CBitrixComponent implements Controllerable, 
 		{
 			return true;
 		}
+
 		return false;
 	}
 
-	private function getViewMode(array $params): string
+	private function getViewModeType(): ViewModeType
 	{
-		$mode = 'kanban';
 		if ($this->isScrum())
 		{
-			$mode .= '_scrum';
+			return ViewModeType::Scrum;
 		}
-		if (isset($params['TIMELINE_MODE']) && $params['TIMELINE_MODE'] === 'Y')
+
+		$mode = 'kanban';
+
+		if (isset($this->arParams['TIMELINE_MODE']) && $this->arParams['TIMELINE_MODE'] === 'Y')
 		{
 			$mode .= '_timeline';
 		}
-		if (isset($params['PERSONAL']) && $params['PERSONAL'] === 'Y')
+
+		if (isset($this->arParams['PERSONAL']) && $this->arParams['PERSONAL'] === 'Y')
 		{
 			$mode .= '_personal';
 		}
-		return $mode;
+
+		return ViewModeType::tryFrom($mode);
 	}
 
 	/**

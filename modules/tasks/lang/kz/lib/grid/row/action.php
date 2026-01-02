@@ -1,0 +1,21 @@
+<?php
+$MESS["TASKS_GRID_ROW_ACTION_ACCEPT"] = "Міндетті қабылдау";
+$MESS["TASKS_GRID_ROW_ACTION_ADD_SUB_TASK"] = "Қосымша міндетті қосу";
+$MESS["TASKS_GRID_ROW_ACTION_ADD_TO_FAVORITES"] = "Таңдаулыға қосу";
+$MESS["TASKS_GRID_ROW_ACTION_ADD_TO_TIMEMAN"] = "Жұмыс күнінің жоспарына қосу";
+$MESS["TASKS_GRID_ROW_ACTION_APPROVE"] = "Жұмысты қабылдау";
+$MESS["TASKS_GRID_ROW_ACTION_COMPLETE"] = "Аяқтау";
+$MESS["TASKS_GRID_ROW_ACTION_COPY"] = "Көшіру";
+$MESS["TASKS_GRID_ROW_ACTION_DEFER"] = "Кейінге қалдыру";
+$MESS["TASKS_GRID_ROW_ACTION_EDIT"] = "Редакциялау";
+$MESS["TASKS_GRID_ROW_ACTION_MUTE"] = "Дыбыссыз";
+$MESS["TASKS_GRID_ROW_ACTION_PAUSE"] = "Тоқтата тұру";
+$MESS["TASKS_GRID_ROW_ACTION_PIN"] = "Бекіту";
+$MESS["TASKS_GRID_ROW_ACTION_PING"] = "Пинг";
+$MESS["TASKS_GRID_ROW_ACTION_REMOVE"] = "Жою";
+$MESS["TASKS_GRID_ROW_ACTION_REMOVE_FROM_FAVORITES"] = "Таңдаулыдан жою";
+$MESS["TASKS_GRID_ROW_ACTION_RENEW"] = "Қайта бастау";
+$MESS["TASKS_GRID_ROW_ACTION_START"] = "Орындауды бастау";
+$MESS["TASKS_GRID_ROW_ACTION_UNMUTE"] = "Дыбысты қосу";
+$MESS["TASKS_GRID_ROW_ACTION_UNPIN"] = "Бекітуден шығару";
+$MESS["TASKS_GRID_ROW_ACTION_VIEW"] = "Қарау";

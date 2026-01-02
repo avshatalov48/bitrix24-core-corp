@@ -10,7 +10,7 @@ export class MarketMenuItem extends BaseMenuItem
 	{
 		super({
 			icon: Main.MARKET_1,
-			text: Loc.getMessage('AI_COPILOT_SEARCH_IN_MARKET'),
+			text: Loc.getMessage('AI_COPILOT_SEARCH_IN_MARKET_MSGVER_1'),
 			href: '/market/collection/ai_provider_partner_crm/',
 			...options,
 		});

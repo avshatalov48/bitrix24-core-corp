@@ -3,6 +3,7 @@
 namespace Bitrix\Salescenter;
 
 use Bitrix\Main;
+use Bitrix\Main\Application;
 
 /**
  * Class SaleshubItem
@@ -10,18 +11,12 @@ use Bitrix\Main;
  */
 final class SaleshubItem
 {
-	private const QUERY_DEFAULT_URL = 'https://util.bitrixsoft.com/b24/saleshub.php';
-	private const QUERY_URL = [
-		'ru' => 'https://util.1c-bitrix.ru/b24/saleshub.php',
-		'ua' => 'https://util.bitrix.ua/b24/saleshub.php',
-		'en' => 'https://util.bitrixsoft.com/b24/saleshub.php',
-		'kz' => 'https://util.1c-bitrix.kz/b24/saleshub.php',
-		'by' => 'https://util.1c-bitrix.by/b24/saleshub.php'
-	];
+	private const QUERY_PATH = '/b24/saleshub.php';
 
 	/**
+	 * Returns paysystem list from server.
+	 *
 	 * @return array
-	 * @throws Main\ArgumentException
 	 */
 	public static function getPaysystemItems(): array
 	{
@@ -50,6 +45,11 @@ final class SaleshubItem
 		return $result;
 	}
 
+	/**
+	 * Returns sms providers from server.
+	 *
+	 * @return array
+	 */
 	public static function getSmsProviderItems(): array
 	{
 		$result = [];
@@ -82,23 +82,9 @@ final class SaleshubItem
 	 */
 	private static function getDomain(): string
 	{
-		$domain = null;
-		$b24Manager = \Bitrix\SalesCenter\Integration\Bitrix24Manager::getInstance();
-		if ($b24Manager->isEnabled())
-		{
-			$zone = $b24Manager->getPortalZone();
-			if (isset(self::QUERY_URL[$zone]))
-			{
-				$domain = self::QUERY_URL[$zone];
-			}
-		}
+		$license = Application::getInstance()->getLicense();
 
-		if (!$domain)
-		{
-			$domain = self::QUERY_DEFAULT_URL;
-		}
-
-		return $domain;
+		return $license->getDomainStoreLicense() . self::QUERY_PATH;
 	}
 
 	/**
@@ -121,7 +107,7 @@ final class SaleshubItem
 		{
 			return Main\Web\Json::decode($data);
 		}
-		catch (Main\ArgumentException $exception)
+		catch (Main\ArgumentException)
 		{
 			return false;
 		}

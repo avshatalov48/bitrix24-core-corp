@@ -1,4 +1,4 @@
-import type { RawFile, RawMessage, RawUser, RawChat } from 'im.v2.provider.service';
+import type { RawFile, RawMessage, RawUser, RawChat } from 'im.v2.provider.service.types';
 import type { StatusGroupName } from 'imopenlines.v2.const';
 
 export type RawSession = {

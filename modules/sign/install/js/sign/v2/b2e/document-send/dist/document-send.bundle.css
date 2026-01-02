@@ -1,13 +1,31 @@
-.sign-b2e-send__lang-selector {
+.sign-b2e-send__lang-dt-container .sign-wizard__notice {
+	margin-top: 0;
+}
+
+.sign-b2e-send__lang-dt-container {
+	display: -webkit-box;
+	display: -ms-flexbox;
+	display: flex;
+	-ms-flex-wrap: wrap;
+	    flex-wrap: wrap;
+	gap: 12px;
+}
+
+.sign-b2e-send__lang-selector,
+.sign-b2e-send__datetime-limit-selector {
 	margin: 10px 0 0 0;
+	-webkit-box-flex: 0;
+	    -ms-flex: none;
+	        flex: none;
+}
+
+.sign-b2e-send .sign-lang-selector,
+.sign-b2e-send .sign-datetime-limit-selector {
+	display: inline-block;
 }
 
 .sign-b2e-send {
 	position: relative;
-}
-
-.sign-b2e-send .sign-lang-selector {
-	display: inline-block;
 }
 
 .sign-b2e-send .sign-reminder-selector {
@@ -32,12 +50,6 @@
 
 .sign-b2e-send__config-container .sign-b2e-send__communications {
 	margin-top: 0;
-}
-
-.sign-b2e-send__deadline {
-	font: 12px/14.32px var(--ui-font-family-system);
-	color: var(--ui-color-palette-gray-60);
-	display: none;
 }
 
 .sign-b2e-send__title {
@@ -116,7 +128,7 @@
 .sign-b2e-send__party_signing-employees,
 .sign-b2e-send__company-items_item-title {
 	color: var(--ui-color-palette-gray-50);
-	font: 11px/13.13px var(--ui-font-family-system);
+	font: 11px/13.13px var(--ui-font-family-primary, var(--ui-font-family-system));
 	margin: 0;
 }
 
@@ -127,7 +139,7 @@
 
 .sign-document-b2e-user-party__item-list_item-text {
 	color: var(--ui-color-palette-gray-90);
-	font: 11px/12px var(--ui-font-family-system);
+	font: 11px/12px var(--ui-font-family-primary, var(--ui-font-family-system));
 	white-space: nowrap;
 	max-width: 46px;
 	overflow: hidden;
@@ -192,16 +204,16 @@
 }
 .sign-b2e-send__party-item-separator {
 	color: var(--ui-color-palette-gray-30);
-	font: 20px/13.13px var(--ui-font-family-system);
+	font: 20px/13.13px var(--ui-font-family-primary, var(--ui-font-family-system));
 }
 
 .sign-b2e-send__party_item-info-header {
-	font: 16px/20px var(--ui-font-family-system);
+	font: 16px/20px var(--ui-font-family-primary, var(--ui-font-family-system));
 	color: var(--ui-color-palette-gray-90);
 }
 
 .sign-b2e-send__party_item-info-footer {
-	font: 12px/14.32px var(--ui-font-family-system);
+	font: 12px/14.32px var(--ui-font-family-primary, var(--ui-font-family-system));
 	color: var(--ui-color-palette-gray-60);
 }
 
@@ -236,7 +248,7 @@
 }
 
 .sign-b2e-send__communications_title {
-	font: 13px/15.51px var(--ui-font-family-system);
+	font: 13px/15.51px var(--ui-font-family-primary, var(--ui-font-family-system));
 	color: var(--ui-color-palette-gray-60);
 	margin-right: 5px;
 }
@@ -265,7 +277,7 @@
 
 .sign-b2e-send__communications_communication-type-text {
 	display: inline-block;
-	font: 13px/17.2px var(--ui-font-family-system);
+	font: 13px/17.2px var(--ui-font-family-primary, var(--ui-font-family-system));
 	color: var(--ui-color-palette-gray-90);
 	background: var(--ui-color-palette-gray-05);
 	padding: 5px 10px;
@@ -452,4 +464,8 @@
 
 .sign-b2e-settings__item .sign-b2e-hcm-link-party-checker-container {
 	margin-top: 10px;
+}
+
+.sign-b2e-document-send-reviewers {
+	margin-top: 5px;
 }

@@ -1,11 +1,7 @@
-<?
-$MESS["IMBOT_BOT_NAME"] = "Марта";
+<?php
+$MESS["IMBOT_BOT_NAME_MSGVER_1"] = "Инфобот";
 $MESS["IMBOT_BOT_COLOR"] = "PINK";
-$MESS["IMBOT_BOT_GENDER"] = "F";
-$MESS["IMBOT_BOT_BIRTHDAY"] = "1992-03-02";
-$MESS["IMBOT_BOT_EMAIL"] = "support@bitrix24.ru";
-$MESS["IMBOT_BOT_SITE"] = "http://bitrix24.ru";
-$MESS["IMBOT_BOT_WORK_POSITION"] = "Ваш личный помощник";
+$MESS["IMBOT_BOT_WORK_POSITION_MSGVER_1"] = "Бот для уведомлений";
 $MESS["IMBOT_BOT_WELCOME_MESSAGE_3"] = "Привет! Я - просто бот, который сможет прислать тебе ответы, которые найду в наших статьях поддержки :)";
 $MESS["IMBOT_BOT_WELCOME_MESSAGE_CHAT_2"] = "Привет! [br] Чтобы я ответила в чате, упомяните меня в сообщении или кликните на мой аватар :)";
 $MESS["IMBOT_BOT_WELCOME_MESSAGE_LINES_2"] = "Чем я могу вам помочь? :) [br] Для соединения с оператором [send=0]отправьте цифру 0[/send].";
@@ -29,7 +25,9 @@ $MESS["IMBOT_BOT_MESSAGE_TASKS_3"] = "Обратите внимание на э�
 $MESS["IMBOT_BOT_MESSAGE_NEW_1"] = "А у нас появились команды! Доступны они в любом чате в поле ввода текста :)";
 $MESS["IMBOT_BOT_CHANGE_LANG"] = "Теперь я говорю по-русски :{}";
 $MESS["IMBOT_BOT_ENABLE_WELCOME"] = "Ураа! Спасибо #USER_NAME#! Я не подведу :{} https://marta.bitrix.info/upload/enable.gif";
+$MESS["IMBOT_BOT_ENABLE_WELCOME_MSGVER_1"] = "Ураа! Спасибо #USER_NAME#! Я не подведу :{} https://marta.#URL#/upload/enable.gif";
 $MESS["IMBOT_BOT_DISABLE_WELCOME"] = "Очень жаль #USER_NAME#... Я просто хотела тебе помочь :cry: https://marta.bitrix.info/upload/disable.gif";
+$MESS["IMBOT_BOT_DISABLE_WELCOME_MSGVER_1"] = "Очень жаль #USER_NAME#... Я просто хотела тебе помочь :cry: https://marta.#URL#/upload/disable.gif";
 $MESS["IMBOT_BOT_RENAME_TEXT"] = "Я заметила, что вы не назвали свой Битрикс24! Давайте придумаем красивое имя?";
 $MESS["IMBOT_BOT_RENAME_LATER"] = "Хорошо, я напомню вам через неделю!";
 $MESS["IMBOT_BOT_RENAME_DONE"] = "Вы придумали отличное имя! Ваш Битрикс24 теперь будет доступен по адресу: #NEW_DOMAIN# :)";
@@ -37,4 +35,3 @@ $MESS["IMBOT_BOT_RENAME_BUTTON_NOW"] = "Задать имя";
 $MESS["IMBOT_BOT_RENAME_BUTTON_LATER"] = "Напомнить через неделю";
 $MESS["IMBOT_ICON_PLAY_TITLE"] = "Крестики-нолики";
 $MESS["IMBOT_ICON_PLAY_DESCRIPTION"] = "Сыграть с Мартой в крестики-нолики";
-?>

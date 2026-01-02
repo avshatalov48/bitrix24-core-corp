@@ -2,6 +2,7 @@
 
 namespace Bitrix\Crm\Component\EntityDetails\SaleProps;
 
+use Bitrix\Crm\Service\Container;
 use Bitrix\Main\Localization\Loc;
 
 Loc::loadMessages(__FILE__);
@@ -14,8 +15,7 @@ trait AjaxProcessorTrait
 {
 	protected function sortPropertiesAction()
 	{
-		$userPermissions = \CCrmPerms::GetCurrentUserPermissions();
-		$allowConfig = $userPermissions->HavePerm('CONFIG', BX_CRM_PERM_CONFIG, 'WRITE');
+		$allowConfig = Container::getInstance()->getUserPermissions()->isCrmAdmin();
 		if (!$allowConfig)
 		{
 			$this->addError(Loc::getMessage('CRM_ORDER_ACCESS_DENIED'));
@@ -127,7 +127,7 @@ trait AjaxProcessorTrait
 
 	protected function savePropertyConfigAction()
 	{
-		$allowConfig = $this->userPermissions->HavePerm('CONFIG', BX_CRM_PERM_CONFIG, 'WRITE');
+		$allowConfig = Container::getInstance()->getUserPermissions()->isCrmAdmin();
 		if (!$allowConfig)
 		{
 			$this->addError(Loc::getMessage('CRM_ORDER_ACCESS_DENIED'));

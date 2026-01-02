@@ -1,6 +1,6 @@
 import { ajax } from 'main.core';
 import { Analytics as AnalyticsType, AnalyticsSourceType } from './analytics';
-import { memberRoles } from './member-roles';
+import { memberRoles, teamMemberRoles, memberRolesKeys, getMemberRoles, type MemberRolesType } from './member-roles';
 import { UI } from 'ui.notification';
 import { sendData as analyticsSendData } from 'ui.analytics';
 
@@ -46,19 +46,25 @@ const request = async (method: string, endPoint: string, data: Object = {}, anal
 	return response.data;
 };
 
+const reportedErrorTypes = new Set([
+	'STRUCTURE_ACCESS_DENIED',
+	'ERROR_TEAMS_DISABLED',
+]);
+
 const handleResponseError = (response: Error) => {
 	if (response.errors?.length > 0)
 	{
 		const [error] = response.errors;
-		if (error.code !== 'STRUCTURE_ACCESS_DENIED')
+
+		if (reportedErrorTypes.has(error.code))
 		{
-			throw error;
+			UI.Notification.Center.notify({
+				content: error.message,
+				autoHideDelay: 4000,
+			});
 		}
 
-		UI.Notification.Center.notify({
-			content: error.message,
-			autoHideDelay: 4000,
-		});
+		throw error;
 	}
 };
 
@@ -66,4 +72,14 @@ const getData = (endPoint: string, data: ?Object, analytics: ?AnalyticsType) => 
 
 const postData = (endPoint: string, data: Object, analytics: ?AnalyticsType) => request('POST', endPoint, data, analytics ?? {});
 
-export { getData, postData, memberRoles, AnalyticsSourceType };
+export {
+	getData,
+	postData,
+	memberRoles,
+	teamMemberRoles,
+	memberRolesKeys,
+	getMemberRoles,
+	AnalyticsSourceType,
+	reportedErrorTypes,
+};
+export type { MemberRolesType };

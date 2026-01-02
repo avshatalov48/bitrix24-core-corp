@@ -22,7 +22,7 @@ class CrmOrderPropsFormEditTemplate
 		>
 			<div class="pinable-block crm-orderform-edit-task-options-item crm-orderform-edit-task-options-item-se-project">
 				<span data-bx-crm-orderform-edit-option-pin="" class="task-option-fixedbtn %FIXED_CLASS%"></span>
-				<span class="crm-orderform-edit-task-options-item-param">%CAPTION%:</span>
+				<span class="crm-orderform-edit-task-options-item-param">%CAPTION%</span>
 				<div class="crm-orderform-edit-task-options-item-open-inner">
 					%CONTENT%
 				</div>
@@ -811,35 +811,33 @@ function GetCrmOrderPropsFormFieldRelationTemplate($params)
 	<div id="<?=$idPrefix?>" class="crm-orderform-edit-task-options-rule-stage">
 		<span id="<?=$idPrefix?>_BTN_REMOVE" class="crm-orderform-edit-task-edit-deal-stage-close" title="<?=Loc::getMessage('CRM_ORDERFORM_EDIT_TMPL_REMOVE')?>"></span>
 		<div class="crm-orderform-edit-task-options-rule-select-container">
-			<span class="crm-orderform-edit-task-options-rule-select-item rule-select-item-if"><?=Loc::getMessage('CRM_ORDERFORM_EDIT_TMPL_DEP_IF')?>:</span>
+			<span class="crm-orderform-edit-task-options-rule-select-item rule-select-item-if"><?=Loc::getMessage('CRM_ORDERFORM_EDIT_TMPL_DEP_IF')?></span>
 
 			<input type="hidden" name="<?=$namePrefix?>[IF_FIELD_CODE]" id="<?=$idPrefix?>_IF_FIELD_CODE" value="<?=htmlspecialcharsbx($params['IF_FIELD_CODE'])?>">
 			<input type="hidden" value="<?=htmlspecialcharsbx($ifValue)?>" name="<?=$namePrefix?>[IF_VALUE]" id="<?=$idPrefix?>_IF_VALUE">
 
 			<select id="<?=$idPrefix?>_IF_FIELD_CODE_CTRL" class="crm-orderform-edit-task-options-rule-select"></select>
-			<span class="crm-orderform-edit-task-options-rule-select-item rule-select-item-equally">&ndash; <?=Loc::getMessage('CRM_ORDERFORM_EDIT_TMPL_DEP_EQUAL')?> &ndash;</span>
+			<span class="crm-orderform-edit-task-options-rule-select-item rule-select-item-equally rule-select-item-equally-line"><?=Loc::getMessage('CRM_ORDERFORM_EDIT_TMPL_DEP_EQUAL')?></span>
 			<select multiple style="display: none;" id="<?=$idPrefix?>_IF_VALUE_CTRL_S" class="crm-orderform-edit-task-options-rule-select"></select>
 			<input style="display: none;" id="<?=$idPrefix?>_IF_VALUE_CTRL_I" class="crm-orderform-edit-task-options-rule-input">
 		</div>
 		<div class="crm-orderform-edit-task-options-rule-select-container">
-			<span class="crm-orderform-edit-task-options-rule-select-item rule-select-item-to"><?=Loc::getMessage('CRM_ORDERFORM_EDIT_TMPL_DEP_THEN')?>:</span>
+			<span class="crm-orderform-edit-task-options-rule-select-item rule-select-item-to"><?=Loc::getMessage('CRM_ORDERFORM_EDIT_TMPL_DEP_THEN')?></span>
 
 			<select name="<?=$namePrefix?>[DO_ACTION]" id="<?=$idPrefix?>_DO_ACTION" class="crm-orderform-edit-task-options-rule-select">
 				<? foreach($actionList as $action): ?>
 					<option value="<?=htmlspecialcharsbx($action['VALUE'])?>" <?=($action['SELECTED'] ? 'selected' : '')?>><?=htmlspecialcharsbx($action['CAPTION'])?></option>
 				<? endforeach; ?>
 			</select>
-
-			<span class="crm-orderform-edit-task-options-rule-select-item rule-select-item-equally-line">&ndash;</span>
-
+			<span class="crm-orderform-edit-task-options-rule-select-item rule-select-item-equally-line"><?=Loc::getMessage('CRM_ORDERFORM_EDIT_TMPL_DEP_EQUAL')?></span>
 			<input type="hidden" name="<?=$namePrefix?>[DO_FIELD_CODE]" id="<?=$idPrefix?>_DO_FIELD_CODE" value="<?=htmlspecialcharsbx($params['DO_FIELD_CODE'])?>">
 			<select id="<?=$idPrefix?>_DO_FIELD_CODE_CTRL" class="crm-orderform-edit-task-options-rule-select"></select>
 		</div>
 		<span id="<?=$idPrefix?>_ELSE_HIDE" style="display: <?=(!$isSelectedActionHide ? 'block' : 'none')?>;" class="crm-orderform-edit-task-options-info">
-			<?=Loc::getMessage('CRM_ORDERFORM_EDIT_TMPL_DEP_ELSE_HIDE', array('%name%' => '<span></span>'))?>
+			<?=Loc::getMessage('CRM_ORDERFORM_EDIT_TMPL_DEP_ELSE_HIDE_MSGVER_1', array('%name%' => '<span></span>'))?>
 		</span>
 		<span id="<?=$idPrefix?>_ELSE_SHOW" style="display: <?=($isSelectedActionHide ? 'block' : 'none')?>;" class="crm-orderform-edit-task-options-info">
-			<?=Loc::getMessage('CRM_ORDERFORM_EDIT_TMPL_DEP_ELSE_SHOW', array('%name%' => '<span></span>'))?>
+			<?=Loc::getMessage('CRM_ORDERFORM_EDIT_TMPL_DEP_ELSE_SHOW_MSGVER_1', array('%name%' => '<span></span>'))?>
 		</span>
 	</div><!--crm-orderform-edit-task-edit-deal-stage-->
 	<?

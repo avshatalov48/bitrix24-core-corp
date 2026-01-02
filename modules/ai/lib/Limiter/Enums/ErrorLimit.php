@@ -6,4 +6,5 @@ enum ErrorLimit: string
 {
 	case PROMO_LIMIT = 'PROMO_LIMIT';
 	case BAAS_LIMIT = 'BAAS_LIMIT';
+	case RATE_LIMIT = 'RATE_LIMIT';
 }

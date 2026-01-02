@@ -19,9 +19,12 @@ class DashboardRowAssembler extends RowAssembler
 	protected function prepareFieldAssemblers(): array
 	{
 		return [
-			new Field\Dashboard\NameFieldAssembler([
-				'TITLE',
-			]),
+			new Field\Dashboard\NameFieldAssembler(
+				[
+					'TITLE',
+				],
+				$this->settings,
+			),
 			new Field\Dashboard\StatusFieldAssembler(
 				[
 					'STATUS',
@@ -46,6 +49,12 @@ class DashboardRowAssembler extends RowAssembler
 				],
 				$this->settings,
 			),
+			new Field\Dashboard\GroupFieldAssembler(
+				[
+					'GROUPS',
+				],
+				$this->settings,
+			),
 			new Field\Dashboard\ScopeFieldAssembler([
 				'SCOPE',
 			]),
@@ -58,9 +67,12 @@ class DashboardRowAssembler extends RowAssembler
 			new Field\Dashboard\FilterPeriodFieldAssembler([
 				'FILTER_PERIOD',
 			]),
-			new Field\Dashboard\IdFieldAssembler([
-				'ID',
-			]),
+			new Field\Dashboard\IdFieldAssembler(
+				[
+					'ID',
+				],
+				$this->settings,
+			),
 			new Field\Base\DateFieldAssembler([
 				'DATE_CREATE',
 			]),
@@ -68,5 +80,20 @@ class DashboardRowAssembler extends RowAssembler
 				'DATE_MODIFY',
 			]),
 		];
+	}
+
+	/**
+	 * @param array $rowsList
+	 *
+	 * @return array[]
+	 */
+	public function prepareRows(array $rowsList): array
+	{
+		foreach ($rowsList as &$row)
+		{
+			$row['attrs'] = ['data-group-id' => $row['data']['ENTITY_TYPE'] ?? null];
+		}
+
+		return parent::prepareRows($rowsList);
 	}
 }

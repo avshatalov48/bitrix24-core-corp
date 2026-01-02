@@ -48,7 +48,7 @@ class Sender extends MicroService\BaseSender
 
 		$request['BX_TYPE'] = Client::getPortalType();
 		$request['BX_LICENCE'] = Client::getLicenseCode();
-		$request['SERVER_NAME'] = self::getServerName();
+		$request['SERVER_NAME'] = $this->getClientServerName();
 		if ($user && $user->clientId)
 		{
 			$request['BX_CLIENT_ID'] = $user->clientId;
@@ -97,7 +97,7 @@ class Sender extends MicroService\BaseSender
 		$data = $parameters + [
 				'BX_TYPE' => Client::getPortalType(),
 				'BX_LICENCE' => Client::getLicenseCode(),
-				'SERVER_NAME' => self::getServerName(),
+				'SERVER_NAME' => $this->getClientServerName(),
 			];
 
 		if ($user && $user->clientId)
@@ -189,7 +189,7 @@ class Sender extends MicroService\BaseSender
 		return $result;
 	}
 
-	private static function getServerName(): string
+	protected function getClientServerName(): string
 	{
 		if (defined('BX24_HOST_NAME'))
 		{
@@ -205,6 +205,20 @@ class Sender extends MicroService\BaseSender
 			$scheme = "http://";
 		}
 
-		return $scheme . \Bitrix\Main\Config\Option::get("main", "server_name");
+		$rootServerName = \Bitrix\Main\Config\Option::get('main', 'server_name');
+		if (!empty($rootServerName))
+		{
+			return $scheme . $rootServerName;
+		}
+
+		if (defined("SITE_SERVER_NAME") && SITE_SERVER_NAME !== '')
+		{
+			return $scheme . SITE_SERVER_NAME;
+		}
+
+		$serverName = $_SERVER['SERVER_NAME'] ?? '';
+
+
+		return $scheme . $serverName;
 	}
 }

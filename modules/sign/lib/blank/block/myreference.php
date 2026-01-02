@@ -1,4 +1,5 @@
 <?php
+
 namespace Bitrix\Sign\Blank\Block;
 
 use Bitrix\Main\ArgumentException;
@@ -10,7 +11,6 @@ use Bitrix\Sign\Blank\Form;
 use Bitrix\Sign\Blank\Section;
 use Bitrix\Sign\Document;
 use Bitrix\Sign\Document\Member;
-use Bitrix\Sign\Error;
 use Bitrix\Sign\Integration\CRM;
 use Bitrix\Sign\Service\Container;
 use Bitrix\Sign\Type\Member\Role;
@@ -76,12 +76,13 @@ class MyReference extends Dummy
 					{
 						$data['data'] = array_merge(
 							$data['data'],
-							$fieldValue
+							$fieldValue,
 						);
 					}
 				}
 			}
 		}
+
 		return $data;
 	}
 
@@ -97,7 +98,7 @@ class MyReference extends Dummy
 		$memberPart = $block->getPart();
 		$presetId = CRM::getMyDefaultPresetId(
 			$block->getDocument()->getEntityId(),
-			$block->getDocument()->getCompanyId()
+			$block->getDocument()->getCompanyId(),
 		);
 
 		if ($blockData['data']['field'] ?? null)
@@ -133,7 +134,7 @@ class MyReference extends Dummy
 		{
 			return $result->addError(
 				new \Bitrix\Main\Error(Loc::getMessage('SIGN_CORE_BLOCK_REQUISITES_ERROR_EMPTY'),
-				'REQUISITES_ERROR_EMPTY'
+				'REQUISITES_ERROR_EMPTY',
 			));
 		}
 
@@ -155,8 +156,7 @@ class MyReference extends Dummy
 			$party = Container::instance()->getMemberRepository()->convertRoleToInt(Role::ASSIGNEE);
 			$presetId = (int)$party === $member->getPart()
 				? \Bitrix\Sign\Integration\CRM::getMyDefaultPresetId($member->getPart())
-				: \Bitrix\Sign\Integration\CRM::getOtherSidePresetId($member->getPart())
-			;
+				: \Bitrix\Sign\Integration\CRM::getOtherSidePresetId($member->getPart());
 		}
 		catch (ArgumentException|LoaderException $e)
 		{
@@ -169,7 +169,7 @@ class MyReference extends Dummy
 	private static function getEntityIdByFieldCode(
 		string $fieldCode,
 		Document $document,
-		Member $member
+		Member $member,
 	): ?int
 	{
 		$entityTypeId = (new CRM\FieldCode($fieldCode))->getEntityTypeId();

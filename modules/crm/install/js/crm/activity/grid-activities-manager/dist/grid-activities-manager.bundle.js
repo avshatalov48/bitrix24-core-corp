@@ -1,3 +1,4 @@
+/* eslint-disable */
 this.BX = this.BX || {};
 this.BX.Crm = this.BX.Crm || {};
 (function (exports,main_core) {
@@ -121,7 +122,7 @@ this.BX.Crm = this.BX.Crm || {};
 	  if (taskId <= 0) {
 	    return;
 	  }
-	  let taskOpenUrl = allowEdit ? '/company/personal/user/#user_id#/tasks/task/edit/#task_id#/' : '/company/personal/user/#user_id#/tasks/task/view/#task_id#/';
+	  let taskOpenUrl = '/company/personal/user/#user_id#/tasks/task/view/#task_id#/';
 	  taskOpenUrl = taskOpenUrl.replace('#user_id#', babelHelpers.classPrivateFieldLooseBase(this, _getCurrentUserId)[_getCurrentUserId]());
 	  taskOpenUrl = taskOpenUrl.replace('#task_id#', taskId);
 	  if (BX.SidePanel) {

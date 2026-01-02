@@ -67,6 +67,10 @@ export const BaseApp = {
 				: this.$Bitrix.Loc.getMessage('DATASET_IMPORT_UNSAVED_CHANGES_TEXT')
 			;
 		},
+		sourceType(): string
+		{
+			return '';
+		},
 	},
 	mounted()
 	{
@@ -219,11 +223,19 @@ export const BaseApp = {
 		},
 		onSaveButtonClick()
 		{
-			if (!this.onSaveStart())
-			{
-				return;
-			}
-
+			this.onSaveStart()
+				.then(() => {
+					this.handleSaveAction();
+				})
+				.catch(() => {})
+			;
+		},
+		onCancelButtonClick()
+		{
+			this.closeApp();
+		},
+		handleSaveAction()
+		{
 			if (this.isEditMode)
 			{
 				this.updateDataset();
@@ -232,10 +244,6 @@ export const BaseApp = {
 			{
 				this.saveDataset();
 			}
-		},
-		onCancelButtonClick()
-		{
-			this.closeApp();
 		},
 		saveDataset()
 		{
@@ -268,9 +276,9 @@ export const BaseApp = {
 					this.onSaveError();
 				});
 		},
-		onSaveStart()
+		onSaveStart(): Promise
 		{
-			return true;
+			return Promise.resolve();
 		},
 		onSaveEnd()
 		{

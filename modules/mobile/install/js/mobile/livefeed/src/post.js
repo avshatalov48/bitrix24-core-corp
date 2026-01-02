@@ -1,6 +1,6 @@
-import {FollowManagerInstance} from "./feed";
-import {Loc, Type} from 'main.core';
-import {Ajax} from 'mobile.ajax';
+import { FollowManagerInstance } from './feed';
+import { Loc, Type } from 'main.core';
+import { Ajax } from 'mobile.ajax';
 
 class Post
 {
@@ -40,8 +40,7 @@ class Post
 
 	init(data)
 	{
-		let {
-			logId,
+		const {
 			entryType,
 			useFollow,
 			useTasks,
@@ -58,10 +57,12 @@ class Post
 			taskId,
 			taskData,
 
-			calendarEventId
+			calendarEventId,
 		} = data;
 
-		logId = parseInt(logId);
+		let { logId } = data;
+
+		logId = parseInt(logId, 10);
 
 		if (logId <= 0)
 		{
@@ -70,43 +71,48 @@ class Post
 
 		this.logId = logId;
 
-		this.postId = parseInt(postId);
-		this.contentId = parseInt(contentId);
-		this.taskId = parseInt(taskId);
-		this.calendarEventId = parseInt(calendarEventId);
+		this.postId = parseInt(postId, 10);
+		this.contentId = parseInt(contentId, 10);
+		this.taskId = parseInt(taskId, 10);
+		this.calendarEventId = parseInt(calendarEventId, 10);
 
-		this.useFollow = !!useFollow;
-		this.useTasks = !!useTasks;
-		this.readOnly = !!readOnly;
-		this.showFull = !!showFull;
+		this.useFollow = Boolean(useFollow);
+		this.useTasks = Boolean(useTasks);
+		this.readOnly = Boolean(readOnly);
+		this.showFull = Boolean(showFull);
 
 		if (Type.isStringFilled(entryType))
 		{
 			this.entryType = entryType;
 		}
+
 		if (Type.isStringFilled(perm))
 		{
 			this.perm = perm;
 		}
+
 		if (Type.isStringFilled(url))
 		{
 			this.url = url;
 		}
+
 		if (Type.isStringFilled(entityXmlId))
 		{
 			this.entityXmlId = entityXmlId;
 		}
+
 		if (Type.isStringFilled(contentTypeId))
 		{
 			this.contentTypeId = contentTypeId;
 		}
+
 		if (Type.isStringFilled(taskData))
 		{
 			try
 			{
 				this.taskData = JSON.parse(taskData);
 			}
-			catch(e)
+			catch
 			{
 				this.taskData = null;
 			}
@@ -125,12 +131,13 @@ class Post
 			return;
 		}
 
-		let {node, event} = data;
+		const { event } = data;
+		let { node } = data;
 
 		// for old versions without post menu in the feed
 		if (!Type.isDomNode(node))
 		{
-			node = document.getElementById('log_entry_favorites_' + this.logId);
+			node = document.getElementById(`log_entry_favorites_${this.logId}`);
 		}
 
 		if (Type.isDomNode(node))
@@ -156,12 +163,12 @@ class Post
 			Ajax.runAction('socialnetwork.api.livefeed.changeFavorites', {
 				data: {
 					logId: this.logId,
-					value: newValue
+					value: newValue,
 				},
 				analyticsLabel: {
 					b24statAction: (newValue === 'Y' ? 'addFavorites' : 'removeFavorites'),
-					b24statContext: 'mobile'
-				}
+					b24statContext: 'mobile',
+				},
 			}).then((response) => {
 				if (response.data.success)
 				{
@@ -171,10 +178,11 @@ class Post
 							logId: this.logId,
 							bOnlyOn: true,
 							bRunEvent: true,
-							bAjax: false
+							bAjax: false,
 						});
 					}
 
+					// eslint-disable-next-line no-undef
 					BXMobileApp.onCustomEvent('onLogEntryFavorites', {
 						log_id: this.logId,
 						page_id: Loc.getMessage('MSLPageId')
@@ -196,7 +204,7 @@ class Post
 		}
 	}
 
-	setPinned(data):void
+	setPinned(data): void
 	{
 		if (this.logId <= 0)
 		{
@@ -205,7 +213,7 @@ class Post
 
 		const {
 			menuNode,
-			context
+			context,
 		} = data;
 
 		if (Type.isDomNode(menuNode))
@@ -215,6 +223,7 @@ class Post
 
 			menuNode.setAttribute('data-pinned', newValue);
 
+			// eslint-disable-next-line no-undef
 			BXMobileApp.onCustomEvent('Livefeed::showLoader', {}, true, true);
 
 			const action = (
@@ -226,26 +235,29 @@ class Post
 			Ajax.runAction(action, {
 				data: {
 					params: {
-						logId: this.logId
-					}
+						logId: this.logId,
+					},
 				},
 				analyticsLabel: {
 					b24statAction: (newValue === 'Y' ? 'pinLivefeedEntry' : 'unpinLivefeedEntry'),
-					b24statContext: 'mobile'
-				}
+					b24statContext: 'mobile',
+				},
 			}).then((response) => {
+				// eslint-disable-next-line no-undef
 				BXMobileApp.onCustomEvent('Livefeed::hideLoader', {}, true, true);
 				if (response.data.success)
 				{
+					// eslint-disable-next-line no-undef
 					BXMobileApp.onCustomEvent('Livefeed.PinnedPanel::change', {
 						logId: this.logId,
 						value: newValue,
 						postNode: menuNode.closest('.lenta-item'),
-						pinActionContext: context
+						pinActionContext: context,
 					}, true, true);
+					// eslint-disable-next-line no-undef
 					BXMobileApp.onCustomEvent('Livefeed.PostDetail::pinChanged', {
 						logId: this.logId,
-						value: newValue
+						value: newValue,
 					}, true, true);
 				}
 				else
@@ -253,6 +265,7 @@ class Post
 					menuNode.setAttribute('data-pinned', oldValue);
 				}
 			}, () => {
+				// eslint-disable-next-line no-undef
 				BXMobileApp.onCustomEvent('Livefeed::hideLoader', {}, true, true);
 				menuNode.setAttribute('data-pinned', oldValue);
 			});
@@ -267,7 +280,7 @@ class Post
 			pathToTasksRouter,
 			event,
 			focusComments,
-			showFull
+			showFull,
 		} = params;
 
 		if (!Type.isStringFilled(pathToEmptyPage))
@@ -281,6 +294,7 @@ class Post
 			&& this.taskData
 		)
 		{
+			// eslint-disable-next-line no-undef
 			BXMobileApp.Events.postToComponent('taskbackground::task::open', [
 				{
 					id: this.taskId,
@@ -290,12 +304,12 @@ class Post
 						title: this.taskData.title,
 						creatorIcon: this.taskData.creatorIcon,
 						responsibleIcon: this.taskData.responsibleIcon
-					}
+					},
 				},
 				{
 					taskId: this.taskId,
-					getTaskInfo: true
-				}
+					getTaskInfo: true,
+				},
 			]);
 		}
 		else
@@ -316,13 +330,18 @@ class Post
 				&& pathToTasksRouter.length > 0
 			) // API version <= 31
 			{
-				path = pathToTasksRouter
-					.replace('__ROUTE_PAGE__', 'view')
-					.replace('#USER_ID#', Loc.getMessage('MOBILE_EXT_LIVEFEED_CURRENT_USER_ID')) + '&TASK_ID=' + this.taskId;
+				path = `${
+					pathToTasksRouter
+						.replace('__ROUTE_PAGE__', 'view')
+						.replace('#USER_ID#', Loc.getMessage('MOBILE_EXT_LIVEFEED_CURRENT_USER_ID'))
+				}&TASK_ID=${
+					this.taskId
+				}`;
 			}
 
+			// eslint-disable-next-line no-undef
 			__MSLOpenLogEntryNew({
-				path: path,
+				path,
 				log_id: this.logId,
 				entry_type: this.entryType,
 				use_follow: (this.useFollow ? 'Y' : 'N'),
@@ -344,7 +363,7 @@ class Post
 
 	initDetailPin()
 	{
-		const menuNode = document.getElementById('log-entry-menu-' + this.logId);
+		const menuNode = document.getElementById(`log-entry-menu-${this.logId}`);
 		if (!menuNode)
 		{
 			return;
@@ -369,10 +388,11 @@ class Post
 
 	expandText()
 	{
+		// eslint-disable-next-line no-undef
 		oMSL.expandText(this.logId);
 	}
 }
 
 export {
-	Post
-}
+	Post,
+};

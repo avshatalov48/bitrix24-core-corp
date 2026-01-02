@@ -7,7 +7,6 @@ use Bitrix\Main\Localization\Loc;
 use Bitrix\Sign\Blanks\Block\Configuration;
 use Bitrix\Sign\Connector\MemberConnectorFactory;
 use Bitrix\Sign\Contract\RequisiteConnector;
-use Bitrix\Sign\Integration\CRM;
 use Bitrix\Sign\Integration\CRM\FieldCode;
 use Bitrix\Sign\Item;
 use Bitrix\Sign\Service\Container;
@@ -21,7 +20,8 @@ class Requisites extends Configuration
 	)
 	{
 		$this->memberConnectorFactory = $memberConnectorFactory ?? Container::instance()
-			->getMemberConnectorFactory();
+			->getMemberConnectorFactory()
+		;
 	}
 
 	public function validate(Item\Block $block): Main\Result
@@ -38,15 +38,15 @@ class Requisites extends Configuration
 						'field' => 'requisites',
 						'code' => $block->code,
 						'presetId' => $block->data['presetId'],
-					]
-				)
+					],
+				),
 			);
 		}
 
 		return $result;
 	}
 
-	function loadData(Item\Block $block, Item\Document $document, ?Item\Member $member = null): array
+	public function loadData(Item\Block $block, Item\Document $document, ?Item\Member $member = null): array
 	{
 		$result = [];
 		$result['hasFields'] = false;
@@ -76,6 +76,7 @@ class Requisites extends Configuration
 			if ($fieldDescription === null || $fieldDescription['TYPE'] !== 'list')
 			{
 				$textLines[] = "{$requisite->label}: {$requisite->value}";
+
 				continue;
 			}
 
@@ -85,6 +86,7 @@ class Requisites extends Configuration
 				if (($item['ID'] ?? null) === $requisite->value)
 				{
 					$itemValue = $item['VALUE'] ?? '';
+
 					break;
 				}
 			}

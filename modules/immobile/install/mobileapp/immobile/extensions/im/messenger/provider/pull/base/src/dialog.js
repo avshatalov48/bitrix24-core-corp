@@ -5,14 +5,15 @@
  */
 jn.define('im/messenger/provider/pull/base/dialog', (require, exports, module) => {
 	const { BasePullHandler } = require('im/messenger/provider/pull/base/pull-handler');
-	const { Counters } = require('im/messenger/lib/counters');
 	const { Type } = require('type');
 	const { clone } = require('utils/object');
+	const { unique } = require('utils/array');
 	const { MessengerParams } = require('im/messenger/lib/params');
 	const { MessengerEmitter } = require('im/messenger/lib/emitter');
 	const { DialogHelper } = require('im/messenger/lib/helper');
-	const { EventType, DialogType, ComponentCode, UserRole } = require('im/messenger/const');
+	const { EventType, DialogType, UserRole } = require('im/messenger/const');
 	const { ChatDataProvider, RecentDataProvider } = require('im/messenger/provider/data');
+	const { serviceLocator } = require('im/messenger/lib/di/service-locator');
 
 	/**
 	 * @class BaseDialogPullHandler
@@ -21,7 +22,7 @@ jn.define('im/messenger/provider/pull/base/dialog', (require, exports, module) =
 	{
 		handleChatUpdate(params, extra, command)
 		{
-			if (this.interceptEvent(params, extra, command))
+			if (this.interceptEvent(extra))
 			{
 				return;
 			}
@@ -34,24 +35,24 @@ jn.define('im/messenger/provider/pull/base/dialog', (require, exports, module) =
 			}).catch((err) => this.logger.error(`${this.getClassName()}.handleChatUpdate.dialoguesModel/update.catch:`, err));
 		}
 
-		handleReadAllChats(params, extra, command)
+		handleChatFieldsUpdate(params, extra, command)
 		{
-			if (this.interceptEvent(params, extra, command))
+			if (this.interceptEvent(extra))
 			{
 				return;
 			}
 
-			this.logger.info(`${this.getClassName()}.handleReadAllChats`);
+			this.logger.info(`${this.getClassName()}.handleChatFieldsUpdate:`, params, extra, command);
 
-			this.store.dispatch('dialoguesModel/clearAllCounters')
-				.then(() => this.store.dispatch('recentModel/clearAllCounters'))
-				.then(() => Counters.update())
-			;
+			this.store.dispatch('dialoguesModel/update', {
+				dialogId: params.dialogId,
+				fields: params,
+			}).catch((err) => this.logger.error(`${this.getClassName()}.handleChatFieldsUpdate.dialoguesModel/update.catch:`, err));
 		}
 
 		handleChatPin(params, extra, command)
 		{
-			if (this.interceptEvent(params, extra, command))
+			if (this.interceptEvent(extra))
 			{
 				return;
 			}
@@ -66,7 +67,7 @@ jn.define('im/messenger/provider/pull/base/dialog', (require, exports, module) =
 
 		handleChatMuteNotify(params, extra, command)
 		{
-			if (this.interceptEvent(params, extra, command))
+			if (this.interceptEvent(extra))
 			{
 				return;
 			}
@@ -79,15 +80,34 @@ jn.define('im/messenger/provider/pull/base/dialog', (require, exports, module) =
 
 				return;
 			}
+			const {
+				dialogId,
+				chatId,
+				muted,
+				counter,
+				counterType,
+				parentChatId = 0,
+			} = params;
 
-			const dialog = clone(this.store.getters['dialoguesModel/getById'](params.dialogId));
+			/** @type {CounterState} */
+			const counterState = {
+				chatId,
+				counter,
+				type: counterType,
+				parentChatId,
+			};
+
+			const dialog = clone(this.store.getters['dialoguesModel/getById'](dialogId));
 			if (Type.isUndefined(dialog))
 			{
+				this.updateCounterChatMutedCollection(counterState, muted);
+				serviceLocator.get('tab-counters').update();
+
 				return;
 			}
 
 			const muteList = new Set(dialog.muteList);
-			if (params.muted)
+			if (muted)
 			{
 				muteList.add(MessengerParams.getUserId());
 			}
@@ -97,21 +117,22 @@ jn.define('im/messenger/provider/pull/base/dialog', (require, exports, module) =
 			}
 
 			this.store.dispatch('dialoguesModel/set', [{
-				dialogId: params.dialogId,
+				dialogId,
 				muteList: [...muteList],
 			}]).catch((err) => this.logger.error(`${this.getClassName()}.handleChatMuteNotify.dialoguesModel/set.catch:`, err));
 
 			this.store.dispatch('sidebarModel/changeMute', {
-				dialogId: params.dialogId,
-				isMute: params.muted,
+				dialogId,
+				isMute: muted,
 			}).catch((err) => this.logger.error(`${this.getClassName()}.handleChatMuteNotify.sidebarModel/changeMute.catch:`, err));
 
-			Counters.update();
+			this.updateCounterChatMutedCollection(counterState, muted);
+			serviceLocator.get('tab-counters').update();
 		}
 
 		handleChatHide(params, extra, command)
 		{
-			if (this.interceptEvent(params, extra, command))
+			if (this.interceptEvent(extra))
 			{
 				return;
 			}
@@ -120,8 +141,9 @@ jn.define('im/messenger/provider/pull/base/dialog', (require, exports, module) =
 			{
 				if (MessengerParams.isOpenlinesOperator())
 				{
-					delete Counters.openlinesCounter.detail[params.dialogId];
-					Counters.update();
+					const tabCounters = serviceLocator.get('tab-counters');
+					tabCounters.deleteCounterByChatId(params.chatId);
+					tabCounters.update();
 				}
 
 				return;
@@ -130,14 +152,14 @@ jn.define('im/messenger/provider/pull/base/dialog', (require, exports, module) =
 			this.logger.info(`${this.getClassName()}.handleChatHide`, params);
 
 			this.store.dispatch('recentModel/delete', { id: params.dialogId })
-				.then(() => Counters.updateDelayed())
+				.then(() => serviceLocator.get('tab-counters').updateDelayed())
 				.catch((err) => this.logger.error(`${this.getClassName()}.handleChatHide.updateDelayed().catch:`, err))
 			;
 		}
 
 		handleChatRename(params, extra, command)
 		{
-			if (this.interceptEvent(params, extra, command))
+			if (this.interceptEvent(extra))
 			{
 				return;
 			}
@@ -155,7 +177,7 @@ jn.define('im/messenger/provider/pull/base/dialog', (require, exports, module) =
 
 		handleGeneralChatId(params, extra, command)
 		{
-			if (this.interceptEvent(params, extra, command))
+			if (this.interceptEvent(extra))
 			{
 				return;
 			}
@@ -173,7 +195,7 @@ jn.define('im/messenger/provider/pull/base/dialog', (require, exports, module) =
 
 		handleChatUnread(params, extra, command)
 		{
-			if (this.interceptEvent(params, extra, command))
+			if (this.interceptEvent(extra))
 			{
 				return;
 			}
@@ -198,52 +220,119 @@ jn.define('im/messenger/provider/pull/base/dialog', (require, exports, module) =
 				id: dialogId,
 				unread: params.active,
 				counter,
-			}]).then(() => Counters.update());
+			}]).then(() => serviceLocator.get('tab-counters').update());
 		}
 
 		handleChatUserAdd(params, extra, command)
 		{
-			if (this.interceptEvent(params, extra, command))
+			if (this.interceptEvent(extra))
 			{
 				return;
 			}
 
 			this.logger.info(`${this.getClassName()}.handleChatUserAdd`, params, extra);
-			const dialogId = params.dialogId;
+			const {
+				dialogId,
+				newUsers,
+				userCount,
+				users,
+				chatExtranet = false,
+				containsCollaber = false,
+			} = params || {};
 
-			if (params.newUsers.includes(MessengerParams.getUserId()))
+			const dialogModel = this.#getDialogModel(dialogId);
+
+			unique(newUsers).forEach((userId) => {
+				const userDialogModel = this.#getDialogModel(userId);
+				if (userDialogModel)
+				{
+					void this.store.dispatch('sidebarModel/sidebarCommonChatsModel/set', {
+						chatId: userDialogModel.chatId,
+						chats: [dialogModel],
+					});
+				}
+			});
+
+			/** @type {Partial<DialoguesModelState>} */
+			const dialogUpdatingFields = {};
+
+			if (Boolean(dialogModel?.extranet) !== chatExtranet)
+			{
+				dialogUpdatingFields.extranet = chatExtranet;
+			}
+
+			if (Boolean(dialogModel?.containsCollaber) !== containsCollaber)
+			{
+				dialogUpdatingFields.containsCollaber = containsCollaber;
+			}
+
+			if (newUsers.includes(MessengerParams.getUserId()))
+			{
+				dialogUpdatingFields.role = UserRole.member;
+			}
+
+			if (Object.keys(dialogUpdatingFields).length > 0)
 			{
 				this.store.dispatch('dialoguesModel/update', {
 					dialogId,
-					fields: {
-						role: UserRole.member,
-					},
+					fields: dialogUpdatingFields,
 				});
 			}
 
-			this.store.dispatch('usersModel/set', Object.values(params.users))
-				.catch((err) => this.logger.error(`${this.getClassName()}.handleChatUserAdd.usersModel/set.catch:`, err));
+			this.store.dispatch('usersModel/set', Object.values(users)).catch((err) => {
+				this.logger.error(`${this.getClassName()}.handleChatUserAdd.usersModel/set.catch:`, err);
+			});
 			this.store.dispatch('dialoguesModel/addParticipants', {
 				dialogId,
-				participants: params.newUsers,
-				userCounter: params.userCount,
-			}).catch((err) => this.logger.error(`${this.getClassName()}.handleChatUserAdd.dialoguesModel/addParticipants.catch:`, err));
+				participants: newUsers,
+				userCounter: userCount,
+			}).catch((err) => {
+				this.logger.error(
+					`${this.getClassName()}.handleChatUserAdd.dialoguesModel/addParticipants.catch:`,
+					err,
+				);
+			});
 		}
 
+		/**
+		 * @param {Object} params
+		 * @param {DialogId} params.dialogId
+		 * @param {string} params.chatId
+		 * @param {number} params.userId
+		 * @param {number} params.userCount
+		 * @param {boolean} params.chatExtranet
+		 * @param {Object} extra
+		 * @param {Object} command
+		 * @returns {Promise<void>}
+		 */
 		async handleChatUserLeave(params, extra, command)
 		{
-			if (this.interceptEvent(params, extra, command))
+			if (this.interceptEvent(extra))
 			{
 				return;
 			}
 
 			this.logger.info(`${this.getClassName()}.handleChatUserLeave`, params);
 
-			const dialogId = params.dialogId;
+			const {
+				userId,
+				chatId,
+				dialogId,
+				userCount,
+				chatExtranet,
+				containsCollaber,
+			} = params;
 
-			this.deleteCounters(params.dialogId);
+			const userDialogModel = this.#getDialogModel(userId);
 
-			if (Number(params.userId) === MessengerParams.getUserId())
+			void this.store.dispatch('sidebarModel/sidebarCommonChatsModel/delete', {
+				chatId: userDialogModel.chatId,
+				id: chatId,
+			});
+
+			this.deleteCounters(chatId);
+
+			if (Number(userId) === MessengerParams.getUserId())
 			{
 				const chatProvider = new ChatDataProvider();
 				const chatDataResult = await chatProvider.get({ dialogId });
@@ -256,10 +345,10 @@ jn.define('im/messenger/provider/pull/base/dialog', (require, exports, module) =
 				const chatHelper = DialogHelper.createByModel(chatData);
 
 				// close and delete the comment chat linked to this channel
-				if (chatHelper.isChannel)
+				if (chatHelper?.isChannel)
 				{
 					void this.store.dispatch('commentModel/deleteChannelCounters', {
-						channelId: params.chatId,
+						channelId: chatId,
 					});
 
 					const commentChatData = this.store.getters['dialoguesModel/getByParentChatId'](chatData.chatId);
@@ -294,36 +383,55 @@ jn.define('im/messenger/provider/pull/base/dialog', (require, exports, module) =
 					shouldSendDeleteAnalytics: false,
 				});
 
-				Counters.update();
+				serviceLocator.get('tab-counters').update();
 			}
 
 			this.store.dispatch('dialoguesModel/removeParticipants', {
 				dialogId,
-				participants: [params.userId],
-				userCounter: params.userCount,
-			})
-				.catch((error) => {
-					this.logger.error(
-						`${this.getClassName()}.handleChatUserLeave.dialoguesModel/removeParticipants.catch:`,
-						error,
-					);
-				})
-			;
+				participants: [userId],
+				userCounter: userCount,
+			}).catch((error) => {
+				this.logger.error(
+					`${this.getClassName()}.handleChatUserLeave.dialoguesModel/removeParticipants.catch:`,
+					error,
+				);
+			});
+
+			const dialogModel = this.#getDialogModel(dialogId);
+			/** @type {Partial<DialoguesModelState>} */
+			const dialogUpdatingFields = {};
+
+			if (Boolean(dialogModel?.extranet) !== chatExtranet)
+			{
+				dialogUpdatingFields.extranet = chatExtranet;
+			}
+
+			if (Boolean(dialogModel?.containsCollaber) !== containsCollaber)
+			{
+				dialogUpdatingFields.containsCollaber = containsCollaber;
+			}
+
+			if (Object.keys(dialogUpdatingFields).length > 0)
+			{
+				this.store.dispatch('dialoguesModel/update', {
+					dialogId,
+					fields: dialogUpdatingFields,
+				});
+			}
 		}
 
 		/**
-		 * @param {String} dialogId
+		 * @param {number} chatId
 		 * @void
 		 */
-		deleteCounters(dialogId)
+		deleteCounters(chatId)
 		{
-			delete Counters.chatCounter.detail[dialogId];
-			delete Counters.openlinesCounter.detail[dialogId];
+			serviceLocator.get('tab-counters').deleteCounterByChatId(chatId);
 		}
 
 		handleChatAvatar(params, extra, command)
 		{
-			if (this.interceptEvent(params, extra, command))
+			if (this.interceptEvent(extra))
 			{
 				return;
 			}
@@ -348,7 +456,7 @@ jn.define('im/messenger/provider/pull/base/dialog', (require, exports, module) =
 
 		handleChatChangeColor(params, extra, command)
 		{
-			if (this.interceptEvent(params, extra, command))
+			if (this.interceptEvent(extra))
 			{
 				return;
 			}
@@ -371,7 +479,7 @@ jn.define('im/messenger/provider/pull/base/dialog', (require, exports, module) =
 
 		handleCommentSubscribe(params, extra, command)
 		{
-			if (this.interceptEvent(params, extra, command))
+			if (this.interceptEvent(extra))
 			{
 				return;
 			}
@@ -395,7 +503,7 @@ jn.define('im/messenger/provider/pull/base/dialog', (require, exports, module) =
 
 		handleChatManagers(params, extra, command)
 		{
-			if (this.interceptEvent(params, extra, command))
+			if (this.interceptEvent(extra))
 			{
 				return;
 			}
@@ -414,7 +522,7 @@ jn.define('im/messenger/provider/pull/base/dialog', (require, exports, module) =
 		 */
 		async handleChatDelete(params, extra, command)
 		{
-			if (this.interceptEvent(params, extra, command))
+			if (this.interceptEvent(extra))
 			{
 				return;
 			}
@@ -505,6 +613,34 @@ jn.define('im/messenger/provider/pull/base/dialog', (require, exports, module) =
 		getClassName()
 		{
 			return this.constructor.name;
+		}
+
+		/**
+		 * @param {DialogId} dialogId
+		 * @returns {?DialoguesModelState}
+		 */
+		#getDialogModel(dialogId)
+		{
+			return this.store.getters['dialoguesModel/getById'](dialogId);
+		}
+
+		/**
+		 * @param {CounterState} counterState
+		 * @param {boolean} isMuted
+		 */
+		updateCounterChatMutedCollection(counterState, isMuted)
+		{
+			const tabCounters = serviceLocator.get('tab-counters');
+			if (isMuted)
+			{
+				tabCounters.addChatToMutedCollection(counterState.chatId);
+				tabCounters.deleteCounterByChatId(counterState.chatId);
+			}
+			else
+			{
+				tabCounters.deleteChatFromMutedCollection(counterState.chatId);
+				tabCounters.updateCounterDetailByCounterState(counterState);
+			}
 		}
 	}
 

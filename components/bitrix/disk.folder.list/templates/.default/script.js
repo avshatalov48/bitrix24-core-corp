@@ -1,7 +1,6 @@
-BX.namespace("BX.Disk");
-BX.Disk.FolderListClass = (function (){
-
-	var FolderListClass = function (parameters)
+BX.namespace('BX.Disk');
+BX.Disk.FolderListClass = (function() {
+	const FolderListClass = function(parameters)
 	{
 		this.layout = parameters.layout || {};
 		this.errors = parameters.errors || [];
@@ -17,13 +16,13 @@ BX.Disk.FolderListClass = (function (){
 		if (BX.Main.gridManager)
 		{
 			this.commonGrid = new BX.Disk.Model.FolderList.CommonGrid({
-				instance: BX.Main.gridManager.getById(this.gridId).instance
+				instance: BX.Main.gridManager.getById(this.gridId).instance,
 			});
 		}
 		else
 		{
 			this.commonGrid = new BX.Disk.Model.FolderList.CommonGrid({
-				instance: BX.Main.tileGridManager.getById(this.gridId).instance
+				instance: BX.Main.tileGridManager.getById(this.gridId).instance,
 			});
 		}
 
@@ -47,6 +46,7 @@ BX.Disk.FolderListClass = (function (){
 		this.isUserCollaber = parameters.isUserCollaber;
 		this.collaberTourOnAddButtonId = parameters.collaberTourOnAddButtonId;
 		this.isCollaberTourOnAddButtonViewed = parameters.isCollaberTourOnAddButtonViewed;
+		this.readonlyCollabFolderStateCookieName = parameters.readonlyCollabFolderStateCookieName;
 
 		this.sortFields = parameters.sortFields;
 		this.sort = parameters.sort;
@@ -61,7 +61,7 @@ BX.Disk.FolderListClass = (function (){
 
 		BX.Disk.Page.changeFolder({
 			id: this.currentFolder.id,
-			name: this.currentFolder.name
+			name: this.currentFolder.name,
 		});
 
 		BX.Disk.Page.changeStorage(this.storage);
@@ -74,21 +74,28 @@ BX.Disk.FolderListClass = (function (){
 				{
 					disk: true,
 					folder: {
-						id: this.currentFolder.id
-					}
+						id: this.currentFolder.id,
+					},
 				},
 				null,
-				this.baseGridPageUrl
+				this.baseGridPageUrl,
 			);
 		}
 
 		this.workWithLocationHash();
 		this.processCommand();
 
-		if(this.errors.length)
-			this.showErrors();
-		if(this.information.length)
-			this.showInformation();
+		if (this.errors.length > 0)
+
+		
+    { this.showErrors();
+		}
+
+		if (this.information.length > 0)
+
+		
+    { this.showInformation();
+		}
 
 		if (!this.currentFolder.canAdd)
 		{
@@ -103,34 +110,36 @@ BX.Disk.FolderListClass = (function (){
 
 	FolderListClass.prototype.rerunFilter = function()
 	{
-		var fakePromise = new BX.Promise();
+		const fakePromise = new BX.Promise();
 		this.onFilterApply(this.filter.getParam('FILTER_ID'), {}, this.filter, fakePromise);
 		fakePromise.fulfill();
 	};
 
 	FolderListClass.prototype.showInformation = function()
 	{
-		BX.Disk.showModalWithStatusAction({status: 'success', message: this.information});
+		BX.Disk.showModalWithStatusAction({ status: 'success', message: this.information });
 	};
 
 	FolderListClass.prototype.showErrors = function()
 	{
-		BX.Disk.showModalWithStatusAction({status: 'error', errors: this.errors});
+		BX.Disk.showModalWithStatusAction({ status: 'error', errors: this.errors });
 	};
 
 	FolderListClass.prototype.onHashChange = function()
 	{
-		var matches = document.location.hash.match(/hl-([0-9]+)/g);
-		if(matches)
+		const matches = document.location.hash.match(/hl-(\d+)/g);
+		if (matches)
 		{
-			var command = (document.location.hash.match(/!([a-zA-Z]+)/g) || []).pop();
-			for (var i in matches) {
-				if (!matches.hasOwnProperty(i)) {
+			const command = (document.location.hash.match(/!([A-Za-z]+)/g) || []).pop();
+			for (const i in matches)
+			{
+				if (!matches.hasOwnProperty(i))
+				{
 					continue;
 				}
-				var hl = matches[i];
-				var number = hl.match(/hl-([0-9]+)/);
-				if(number && number[1])
+				const hl = matches[i];
+				const number = hl.match(/hl-(\d+)/);
+				if (number && number[1])
 				{
 					if (this.commonGrid.getItemById(number[1]))
 					{
@@ -138,19 +147,16 @@ BX.Disk.FolderListClass = (function (){
 						this.commonGrid.selectItemById(number[1]);
 						this.runCommandOnObjectId(command, number[1]);
 					}
-					else if(command)
+					else if (command // we didn't find object on current page. May be it will be shown after reload :)
+						&& window.BXIM && BXIM.isOpenNotify())
 					{
-						//we didn't find object on current page. May be it will be shown after reload :)
-						if(window.BXIM && BXIM.isOpenNotify())
-						{
-							document.location.reload();
-							BXIM.closeMessenger();
-						}
+						document.location.reload();
+						BXIM.closeMessenger();
 					}
 				}
 			}
 
-			if(window.BXIM && BXIM.isOpenNotify())
+			if (window.BXIM && BXIM.isOpenNotify())
 			{
 				BXIM.closeMessenger();
 			}
@@ -159,18 +165,15 @@ BX.Disk.FolderListClass = (function (){
 
 	FolderListClass.prototype.processCommand = function()
 	{
-		if (BX.Disk.getUrlParameter('cmd') === 'openSliderBp')
+		if (BX.Disk.getUrlParameter('cmd') === 'openSliderBp' && this.storage.bpListLink)
 		{
-			if (this.storage.bpListLink)
-			{
-				const currentUrl = new URL(window.location.href);
-				const params = new URLSearchParams(currentUrl.search);
-				params.delete('cmd');
-				currentUrl.search = params.toString();
-				window.history.replaceState(null, null, currentUrl.toString());
+			const currentUrl = new URL(window.location.href);
+			const params = new URLSearchParams(currentUrl.search);
+			params.delete('cmd');
+			currentUrl.search = params.toString();
+			window.history.replaceState(null, null, currentUrl.toString());
 
-				this.openSlider(this.storage.bpListLink);
-			}
+			this.openSlider(this.storage.bpListLink);
 		}
 	};
 
@@ -181,7 +184,7 @@ BX.Disk.FolderListClass = (function (){
 
 	FolderListClass.prototype.workWithLocationHash = function()
 	{
-		setTimeout(BX.delegate(function(){
+		setTimeout(BX.delegate(function() {
 			this.onHashChange();
 		}, this), 350);
 	};
@@ -190,10 +193,10 @@ BX.Disk.FolderListClass = (function (){
 	{
 		BX.bind(this.getFilesCountAndSize.button, 'click', BX.proxy(this.onClickGetFilesCountAndSizeButtonButton, this));
 		BX.bind(window, 'hashchange', BX.proxy(this.onHashChange, this));
-		BX.bindDelegate(this.commonGrid.getContainer(), 'click', {className: 'js-disk-grid-open-folder'}, this.openGridFolder.bind(this));
+		BX.bindDelegate(this.commonGrid.getContainer(), 'click', { className: 'js-disk-grid-open-folder' }, this.openGridFolder.bind(this));
 		BX.bind(this.sort.layout.label, 'click', this.showGridSortingMenu.bind(this));
 
-		for (var i = 0; i < this.layout.changeViewButtons.length; ++i)
+		for (let i = 0; i < this.layout.changeViewButtons.length; ++i)
 		{
 			BX.bind(BX(this.layout.changeViewButtons[i]), 'click', this.changeView.bind(this));
 		}
@@ -203,49 +206,49 @@ BX.Disk.FolderListClass = (function (){
 
 		BX.bind(window, 'popstate', this.onPopState.bind(this));
 
-		BX.addCustomEvent("onIframeElementLoadDataToView", BX.proxy(this.onIframeElementLoadDataToView, this));
-		BX.addCustomEvent("onBeforeElementShow", BX.proxy(this.onBeforeElementShow, this));
+		BX.addCustomEvent('onIframeElementLoadDataToView', BX.proxy(this.onIframeElementLoadDataToView, this));
+		BX.addCustomEvent('onBeforeElementShow', BX.proxy(this.onBeforeElementShow, this));
 
-		BX.addCustomEvent("onCreateExtendedFolder", BX.proxy(this.onCreateExtendedFolder, this));
+		BX.addCustomEvent('onCreateExtendedFolder', BX.proxy(this.onCreateExtendedFolder, this));
 
-		BX.addCustomEvent("Grid::beforeRequest", this.onBeforeGridRequest.bind(this));
-		BX.addCustomEvent("BX.TileGrid.Grid:beforeReload", this.onBeforeGridRequest.bind(this));
+		BX.addCustomEvent('Grid::beforeRequest', this.onBeforeGridRequest.bind(this));
+		BX.addCustomEvent('BX.TileGrid.Grid:beforeReload', this.onBeforeGridRequest.bind(this));
 		if (this.commonGrid.isGrid())
 		{
-			BX.addCustomEvent(this.commonGrid.getContainer(), "Grid::optionsChanged", this.onGridOptionsChanged.bind(this));
+			BX.addCustomEvent(this.commonGrid.getContainer(), 'Grid::optionsChanged', this.onGridOptionsChanged.bind(this));
 		}
-		BX.addCustomEvent("Grid::updated", this.onGridUpdated.bind(this));
-		BX.addCustomEvent("BX.Main.Filter:beforeApply", this.onBeforeFilterApply.bind(this));
-		BX.addCustomEvent("BX.Main.Filter:apply", this.onFilterApply.bind(this));
+		BX.addCustomEvent('Grid::updated', this.onGridUpdated.bind(this));
+		BX.addCustomEvent('BX.Main.Filter:beforeApply', this.onBeforeFilterApply.bind(this));
+		BX.addCustomEvent('BX.Main.Filter:apply', this.onFilterApply.bind(this));
 
-		BX.addCustomEvent("onPopupFileUploadClose", this.onPopupFileUploadClose.bind(this));
+		BX.addCustomEvent('onPopupFileUploadClose', this.onPopupFileUploadClose.bind(this));
 
 		if (this.isTrashMode)
 		{
-			BX.addCustomEvent("onStepperProgress", this.onStepperHasBeenFinished.bind(this));
-			BX.addCustomEvent("onStepperHasBeenFinished", this.onStepperHasBeenFinished.bind(this));
+			BX.addCustomEvent('onStepperProgress', this.onStepperHasBeenFinished.bind(this));
+			BX.addCustomEvent('onStepperHasBeenFinished', this.onStepperHasBeenFinished.bind(this));
 		}
 
-		BX.addCustomEvent("Disk.Page:onChangeFolder", this.onChangeFolder.bind(this));
-		BX.addCustomEvent("Disk.TileItem.Item:onItemDblClick", this.onItemDblClick.bind(this));
-		BX.addCustomEvent("Disk.TileItem.Item:onItemEnter", this.onItemDblClick.bind(this));
-		BX.addCustomEvent("Disk.TileItem.Item:onTitleClick", this.handleTitleClickOnTileItem.bind(this));
-		BX.addCustomEvent("Disk.Breadcrumbs:onClickBreadcrumb", this.handleClickOnBreadcrumb.bind(this));
-		BX.addCustomEvent(this.commonGrid.instance, "TileGrid.Grid:onItemRemove", this.handleItemRemoveByTileGrid.bind(this));
-		BX.addCustomEvent(this.commonGrid.instance, "TileGrid.Grid:onItemMove", this.onItemMove.bind(this));
+		BX.addCustomEvent('Disk.Page:onChangeFolder', this.onChangeFolder.bind(this));
+		BX.addCustomEvent('Disk.TileItem.Item:onItemDblClick', this.onItemDblClick.bind(this));
+		BX.addCustomEvent('Disk.TileItem.Item:onItemEnter', this.onItemDblClick.bind(this));
+		BX.addCustomEvent('Disk.TileItem.Item:onTitleClick', this.handleTitleClickOnTileItem.bind(this));
+		BX.addCustomEvent('Disk.Breadcrumbs:onClickBreadcrumb', this.handleClickOnBreadcrumb.bind(this));
+		BX.addCustomEvent(this.commonGrid.instance, 'TileGrid.Grid:onItemRemove', this.handleItemRemoveByTileGrid.bind(this));
+		BX.addCustomEvent(this.commonGrid.instance, 'TileGrid.Grid:onItemMove', this.onItemMove.bind(this));
 
-		BX.addCustomEvent("Disk:onChangeDocumentService", this.onChangeDocumentService.bind(this));
+		BX.addCustomEvent('Disk:onChangeDocumentService', this.onChangeDocumentService.bind(this));
 	};
 
-	FolderListClass.prototype.onBeforeFilterApply = function (filterId, data, filter, promise) {
+	FolderListClass.prototype.onBeforeFilterApply = function(filterId, data, filter, promise) {
 		if (filterId !== this.filterId)
 		{
 			return;
 		}
 
 		this.isFiltetedFolderList = true;
-		promise.then(function () {
-			if (filter.getSearch().getSearchString() || filter.getSearch().getSquares().length)
+		promise.then(() => {
+			if (filter.getSearch().getSearchString() || filter.getSearch().getSquares().length > 0)
 			{
 				this.blockSorting();
 			}
@@ -253,10 +256,10 @@ BX.Disk.FolderListClass = (function (){
 			{
 				this.unblockSorting();
 			}
-		}.bind(this));
+		});
 	};
 
-	FolderListClass.prototype.blockSorting = function ()
+	FolderListClass.prototype.blockSorting = function()
 	{
 		if (this.commonGrid.isGrid())
 		{
@@ -265,7 +268,7 @@ BX.Disk.FolderListClass = (function (){
 		this.sort.layout.label.style.pointerEvents = 'none';
 	};
 
-	FolderListClass.prototype.unblockSorting = function ()
+	FolderListClass.prototype.unblockSorting = function()
 	{
 		if (this.commonGrid.isGrid())
 		{
@@ -274,25 +277,25 @@ BX.Disk.FolderListClass = (function (){
 		this.sort.layout.label.style.pointerEvents = null;
 	};
 
-	var _getSymlinksUnderObjectId = [];
-	FolderListClass.prototype.getSymlinksUnderObjectId = function (object)
+	const _getSymlinksUnderObjectId = [];
+	FolderListClass.prototype.getSymlinksUnderObjectId = function(object)
 	{
-		var objectId = object.id;
-		if(_getSymlinksUnderObjectId[objectId] !== undefined)
+		const objectId = object.id;
+		if (_getSymlinksUnderObjectId[objectId] !== undefined)
 		{
-			var result = new BX.Promise();
+			const result = new BX.Promise();
 			result.fulfill(_getSymlinksUnderObjectId[objectId]);
 
 			return result;
 		}
-		var promise = new BX.Promise();
+		const promise = new BX.Promise();
 
 		BX.Disk.ajax({
 			method: 'POST',
 			dataType: 'json',
 			url: BX.Disk.addToLinkParam(this.ajaxUrl, 'action', 'showSymlinks'),
 			data: object,
-			onsuccess: function (data) {
+			onsuccess(data) {
 				if (!data || !data.status || data.status !== 'success')
 				{
 					return;
@@ -300,29 +303,29 @@ BX.Disk.FolderListClass = (function (){
 
 				_getSymlinksUnderObjectId[objectId] = data.items;
 				promise.fulfill(_getSymlinksUnderObjectId[objectId]);
-			}.bind(this)
+			},
 		});
 
 		return promise;
 	};
 
-	FolderListClass.prototype.needRunFilterUnderLinks = function ()
+	FolderListClass.prototype.needRunFilterUnderLinks = function()
 	{
-		if (!this.filter.getSearch().getSearchString() && !this.filter.getSearch().getSquares().length)
+		if (!this.filter.getSearch().getSearchString() && this.filter.getSearch().getSquares().length === 0)
 		{
 			return false;
 		}
 
-		for(var field in this.filterValueToSkipSearchUnderLinks)
+		for (const field in this.filterValueToSkipSearchUnderLinks)
 		{
-			if(!this.filterValueToSkipSearchUnderLinks.hasOwnProperty(field))
+			if (!this.filterValueToSkipSearchUnderLinks.hasOwnProperty(field))
 			{
 				continue;
 			}
 
-			var value = this.filterValueToSkipSearchUnderLinks[field];
-			var filterFieldsValues = this.filter.getFilterFieldsValues();
-			if(filterFieldsValues[field] == value)
+			const value = this.filterValueToSkipSearchUnderLinks[field];
+			const filterFieldsValues = this.filter.getFilterFieldsValues();
+			if (filterFieldsValues[field] == value)
 			{
 				return false;
 			}
@@ -332,7 +335,6 @@ BX.Disk.FolderListClass = (function (){
 	};
 
 	FolderListClass.prototype.showPopupWindowInfo = function(target) {
-
 		this.popupWindowInfo = new BX.PopupWindow('disk-folder-list-popup-info', target, {
 			className: 'disk-folder-list-popup-info',
 			autoHide: true,
@@ -340,19 +342,19 @@ BX.Disk.FolderListClass = (function (){
 			closeByEsc: true,
 			offsetTop: 5,
 			width: target.offsetWidth - 20,
-			content: '<span class="disk-folder-list-popup-info-content">' + BX.message('DISK_FOLDER_LIST_SEARCH_INDEX_NOTICE_1') + '</span>'
+			content: `<span class="disk-folder-list-popup-info-content">${BX.message('DISK_FOLDER_LIST_SEARCH_INDEX_NOTICE_1')}</span>`,
 		});
 
 		this.popupWindowInfo.show();
 	};
 
-	FolderListClass.prototype.onFilterApply = function (filterId, data, filter, promise, params)
+	FolderListClass.prototype.onFilterApply = function(filterId, data, filter, promise, params)
 	{
 		if (this.showSearchNotice && filter.getSearch().getSearchString())
 		{
-			setTimeout(function() {
+			setTimeout(() => {
 				this.showPopupWindowInfo(filter.search.container);
-			}.bind(this), 200);
+			}, 200);
 		}
 
 		if (filterId !== this.filterId)
@@ -362,9 +364,9 @@ BX.Disk.FolderListClass = (function (){
 
 		if (this.commonGrid.isTile())
 		{
-			promise = promise.then(function () {
+			promise = promise.then(() => {
 				return this.commonGrid.reload();
-			}.bind(this));
+			});
 		}
 
 		if (!this.needRunFilterUnderLinks())
@@ -376,148 +378,139 @@ BX.Disk.FolderListClass = (function (){
 
 		this.runAfterFilterOpenFolder = this.resetFilter.bind(this);
 
-		var folder = BX.Disk.Page.getFolder();
+		const folder = BX.Disk.Page.getFolder();
 		folder.link = window.location.pathname.toString();
 
-		var isTimeToStopSearch = function() {
-			var currentFolderInGrid = BX.Disk.Page.getFolder();
+		const isTimeToStopSearch = function() {
+			const currentFolderInGrid = BX.Disk.Page.getFolder();
+
 			return currentFolderInGrid && currentFolderInGrid.id != folder.id;
 		};
 
-		promise.then(function () {
-
-				if (!this.commonGrid.countItems())
+		promise.then(() => {
+			if (!this.commonGrid.countItems())
+			{
+				if (this.commonGrid.isTile())
 				{
-					if (this.commonGrid.isTile())
-					{
-						this.commonGrid.instance.removeEmptyBlock();
-						this.commonGrid.instance.setMinHeightContainer();
-					}
-					this.commonGrid.fade();
+					this.commonGrid.instance.removeEmptyBlock();
+					this.commonGrid.instance.setMinHeightContainer();
 				}
+				this.commonGrid.fade();
+			}
 
-				this.getSymlinksUnderObjectId(folder).then(function (items) {
+			this.getSymlinksUnderObjectId(folder).then((items) => {
+				let promise = new BX.Promise();
+				const firstPromise = promise;
 
-					var promise = new BX.Promise();
-					var firstPromise = promise;
-
-					items.forEach(function (symlink, index) {
-
-						promise = promise.then(function () {
-							if (isTimeToStopSearch())
-							{
-								return;
-							}
-
-							var promise = new BX.Promise();
-
-							var grid = this.commonGrid.instance;
-							var data = {
-								viewGridStorageId: BX.Disk.Page.getStorage().id
-							};
-
-							if (items.length === index + 1)
-							{
-								this.removeSearchProcessInConnectedFolders();
-							}
-							else if (this.commonGrid.countItems() > 0)
-							{
-								this.showSearchProcessInConnectedFolders();
-							}
-
-							if (this.commonGrid.isGrid())
-							{
-								grid.getData().request(symlink.link, 'POST', data, null, function () {
-									if (isTimeToStopSearch())
-									{
-										return;
-									}
-
-									var bodyRows = BX.Grid.Utils.getByClass(this.getResponse(), grid.settings.get('classBodyRow'));
-
-									if (
-										BX.type.isArray(bodyRows) && bodyRows.length === 1 &&
-										BX.hasClass(bodyRows[0], grid.settings.get('classEmptyRows'))
-									)
-									{
-									}
-									else if (BX.type.isArray(bodyRows) && bodyRows.length === 0 || !BX.type.isArray(bodyRows))
-									{
-									}
-									else
-									{
-										BX.remove(BX.Grid.Utils.getByClass(grid.getContainer(), grid.settings.get('classEmptyRows'), true));
-										grid.adjustEmptyTable(bodyRows);
-										grid.getUpdater().appendBodyRows(bodyRows);
-										grid.getRows().reset();
-										grid.bindOnRowEvents();
-
-										grid.updateCounterDisplayed();
-										grid.updateCounterSelected();
-
-										grid.tableUnfade();
-									}
-
-									promise.fulfill();
-								});
-							}
-							else
-							{
-								var ajaxPromise = BX.ajax.promise({
-									url: BX.util.add_url_param(symlink.link, {
-										grid_id: this.commonGrid.getId(),
-										internal: true
-									}),
-									method: 'POST',
-									dataType: 'json',
-									data: data
-								});
-
-								ajaxPromise.then(function (response) {
-									if (this.commonGrid.countItems())
-									{
-										this.commonGrid.unFade();
-									}
-
-									if (isTimeToStopSearch())
-									{
-										return;
-									}
-
-									response.data.tileGrid.items.forEach(function (item) {
-										this.commonGrid.instance.appendItem(item);
-									}, this);
-
-									promise.fulfill();
-
-								}.bind(this));
-							}
-
-							return promise;
-
-						}.bind(this));
-
-					}, this);
-
-					promise.then(function () {
-						this.layout.fileListContainer.classList.remove('disk-running-filter');
-						this.commonGrid.unFade();
-
-						if (!this.commonGrid.countItems() && this.commonGrid.isTile())
+				items.forEach(function(symlink, index) {
+					promise = promise.then(() => {
+						if (isTimeToStopSearch())
 						{
-							this.commonGrid.instance.setMinHeightContainer();
-							this.commonGrid.instance.appendEmptyBlock();
+							return;
 						}
-					}.bind(this));
 
-					firstPromise.fulfill();
+						const promise = new BX.Promise();
 
-				}.bind(this));
-			}.bind(this)
-		);
+						const grid = this.commonGrid.instance;
+						const data = {
+							viewGridStorageId: BX.Disk.Page.getStorage().id,
+						};
+
+						if (items.length === index + 1)
+						{
+							this.removeSearchProcessInConnectedFolders();
+						}
+						else if (this.commonGrid.countItems() > 0)
+						{
+							this.showSearchProcessInConnectedFolders();
+						}
+
+						if (this.commonGrid.isGrid())
+						{
+							grid.getData().request(symlink.link, 'POST', data, null, function() {
+								if (isTimeToStopSearch())
+								{
+									return;
+								}
+
+								const bodyRows = BX.Grid.Utils.getByClass(this.getResponse(), grid.settings.get('classBodyRow'));
+
+								if (
+									BX.type.isArray(bodyRows) && bodyRows.length === 1
+										&& BX.hasClass(bodyRows[0], grid.settings.get('classEmptyRows'))
+								)
+								{}
+								else if (BX.type.isArray(bodyRows) && bodyRows.length === 0 || !BX.type.isArray(bodyRows))
+								{}
+								else
+								{
+									BX.remove(BX.Grid.Utils.getByClass(grid.getContainer(), grid.settings.get('classEmptyRows'), true));
+									grid.adjustEmptyTable(bodyRows);
+									grid.getUpdater().appendBodyRows(bodyRows);
+									grid.getRows().reset();
+									grid.bindOnRowEvents();
+
+									grid.updateCounterDisplayed();
+									grid.updateCounterSelected();
+
+									grid.tableUnfade();
+								}
+
+								promise.fulfill();
+							});
+						}
+						else
+						{
+							const ajaxPromise = BX.ajax.promise({
+								url: BX.util.add_url_param(symlink.link, {
+									grid_id: this.commonGrid.getId(),
+									internal: true,
+								}),
+								method: 'POST',
+								dataType: 'json',
+								data,
+							});
+
+							ajaxPromise.then((response) => {
+								if (this.commonGrid.countItems())
+								{
+									this.commonGrid.unFade();
+								}
+
+								if (isTimeToStopSearch())
+								{
+									return;
+								}
+
+								response.data.tileGrid.items.forEach(function(item) {
+									this.commonGrid.instance.appendItem(item);
+								}, this);
+
+								promise.fulfill();
+							});
+						}
+
+						return promise;
+					});
+				}, this);
+
+				promise.then(() => {
+					this.layout.fileListContainer.classList.remove('disk-running-filter');
+					this.commonGrid.unFade();
+
+					if (!this.commonGrid.countItems() && this.commonGrid.isTile())
+					{
+						this.commonGrid.instance.setMinHeightContainer();
+						this.commonGrid.instance.appendEmptyBlock();
+					}
+				});
+
+				firstPromise.fulfill();
+			});
+		});
 	};
 
-	FolderListClass.prototype.resetFilter = function ()
+	FolderListClass.prototype.resetFilter = function()
 	{
 		this.isFiltetedFolderList = false;
 		this.filter.getApi().setFields({});
@@ -525,18 +518,18 @@ BX.Disk.FolderListClass = (function (){
 		this.filter.getSearch().adjustPlaceholder();
 	};
 
-	FolderListClass.prototype.onChangeDocumentService = function (service)
+	FolderListClass.prototype.onChangeDocumentService = function(service)
 	{
-		var shouldHide = service !== 'l';
+		const shouldHide = service !== 'l';
 
-		this.commonGrid.getIds().forEach(function(objectId){
-			var actionEdit = this.commonGrid.getActionById(objectId, 'edit');
+		this.commonGrid.getIds().forEach((objectId) => {
+			const actionEdit = this.commonGrid.getActionById(objectId, 'edit');
 			if (!actionEdit)
 			{
 				return;
 			}
 			actionEdit.hide = shouldHide;
-			var menu = this.commonGrid.getActionsMenu(objectId);
+			const menu = this.commonGrid.getActionsMenu(objectId);
 			menu.getMenuItem('edit').hide = shouldHide;
 
 			if (shouldHide)
@@ -547,58 +540,56 @@ BX.Disk.FolderListClass = (function (){
 			{
 				BX.removeClass(menu.getMenuItem('edit').layout.item, 'disk-popup-menu-hidden-item');
 			}
-		}.bind(this));
+		});
 	};
 
-	FolderListClass.prototype.onItemMove = function (sourceItem, destinationItem)
+	FolderListClass.prototype.onItemMove = function(sourceItem, destinationItem)
 	{
 		if (this.isTrashMode)
-		{
-
-		}
+		{}
 		else
 		{
 			BX.ajax.runAction('disk.api.commonActions.move', {
 				analyticsLabel: 'folder.list.dd',
 				data: {
 					objectId: sourceItem.getId(),
-					toFolderId: destinationItem.getId()
-				}
+					toFolderId: destinationItem.getId(),
+				},
 			});
 		}
 	};
 
-	FolderListClass.prototype.handleItemRemoveByTileGrid = function (item)
+	FolderListClass.prototype.handleItemRemoveByTileGrid = function(item)
 	{
 		if (!this.isTrashMode)
 		{
 			BX.ajax.runAction('disk.api.commonActions.markDeleted', {
 				analyticsLabel: 'folder.list.dd',
 				data: {
-					objectId: item.getId()
-				}
+					objectId: item.getId(),
+				},
 			});
 		}
 	};
 
-	FolderListClass.prototype.onItemDblClick = function (item)
+	FolderListClass.prototype.onItemDblClick = function(item)
 	{
 		if (item.isFolder)
 		{
 			this.onOpenFolder({
 				id: item.getId(),
 				name: item.name,
-				link: item.item.titleLink.href
+				link: item.item.titleLink.href,
 			});
 		}
 		else
 		{
-			//BX.SidePanel.Instance.open(item.link);
+			// BX.SidePanel.Instance.open(item.link);
 			BX.fireEvent(item.item.titleLink, 'click');
 		}
 	};
 
-	FolderListClass.prototype.handleTitleClickOnTileItem = function (item, event)
+	FolderListClass.prototype.handleTitleClickOnTileItem = function(item, event)
 	{
 		if (item.isFolder)
 		{
@@ -606,48 +597,47 @@ BX.Disk.FolderListClass = (function (){
 		}
 	};
 
-	FolderListClass.prototype.handleClickOnBreadcrumb = function (breadcrumbLink, event)
+	FolderListClass.prototype.handleClickOnBreadcrumb = function(breadcrumbLink, event)
 	{
 		this.openFolderByAnchor(breadcrumbLink, event);
 	};
 
-	FolderListClass.prototype.onChangeFolder = function (folder, newFolder)
+	FolderListClass.prototype.onChangeFolder = function(folder, newFolder)
 	{
 		if (BX.type.isFunction(this.runAfterFilterOpenFolder))
 		{
 			this.runAfterFilterOpenFolder();
 			this.runAfterFilterOpenFolder = null;
 
-			var folderState = history.state.folder;
+			const folderState = history.state.folder;
 			folderState.link = window.location.pathname.toString();
 
-			BX.onCustomEvent("Disk.FolderListClass:openFolderAfterFilter", [folderState]);
+			BX.onCustomEvent('Disk.FolderListClass:openFolderAfterFilter', [folderState]);
 		}
 	};
 
-	FolderListClass.prototype.onGridUpdated = function ()
-	{
-	};
+	FolderListClass.prototype.onGridUpdated = function()
+	{};
 
-	FolderListClass.prototype.onGridOptionsChanged = function (grid)
+	FolderListClass.prototype.onGridOptionsChanged = function(grid)
 	{
-		var options = grid.getUserOptions().getCurrentOptions();
+		const options = grid.getUserOptions().getCurrentOptions();
 		this.sort.sortBy = options.last_sort_by;
 		this.sort.direction = options.last_sort_order;
 
-		var sortByItem = this.sortFields.find(function(item) {
+		const sortByItem = this.sortFields.find(function(item) {
 			return item.field === this.sort.sortBy;
 		}, this);
 
 		if (sortByItem)
 		{
 			BX.adjust(this.sort.layout.label, {
-				text: sortByItem.label
+				text: sortByItem.label,
 			});
 		}
 	};
 
-	FolderListClass.prototype.onBeforeGridRequest = function (ctx, requestParams)
+	FolderListClass.prototype.onBeforeGridRequest = function(ctx, requestParams)
 	{
 		if (this.gridId !== requestParams.gridId)
 		{
@@ -661,9 +651,9 @@ BX.Disk.FolderListClass = (function (){
 
 		if (requestParams.data.controls)
 		{
-			var obj = {};
-			requestParams.data.rows.forEach(function(e){
-				obj[e] = {ID: e};
+			const obj = {};
+			requestParams.data.rows.forEach((e) => {
+				obj[e] = { ID: e };
 			});
 
 			requestParams.data.rows = obj;
@@ -671,15 +661,15 @@ BX.Disk.FolderListClass = (function (){
 
 		if (requestParams.data.FIELDS || requestParams.data.ID)
 		{
-			if(requestParams.data.FIELDS)
+			if (requestParams.data.FIELDS)
 			{
 				requestParams.data.rows = requestParams.data.FIELDS;
 			}
-			else if(requestParams.data.ID)
+			else if (requestParams.data.ID)
 			{
-				var objId = {};
-				requestParams.data.ID.forEach(function(id){
-					objId[id] = {ID: id};
+				const objId = {};
+				requestParams.data.ID.forEach((id) => {
+					objId[id] = { ID: id };
 				});
 
 				requestParams.data.rows = objId;
@@ -689,7 +679,7 @@ BX.Disk.FolderListClass = (function (){
 			requestParams.data.ID = null;
 			requestParams.data.controls = requestParams.data.controls || {};
 
-			if(this.commonGrid.isGrid())
+			if (this.commonGrid.isGrid())
 			{
 				requestParams.data.controls = BX.mergeEx(requestParams.data.controls, BX.clone(requestParams.data));
 			}
@@ -698,7 +688,7 @@ BX.Disk.FolderListClass = (function (){
 
 	FolderListClass.prototype.runCommandOnObjectId = function(command, objectId)
 	{
-		if(!command)
+		if (!command)
 		{
 			return;
 		}
@@ -707,8 +697,8 @@ BX.Disk.FolderListClass = (function (){
 		{
 			case '!disconnect':
 			case '!detach':
-				var menuItem = this.commonGrid.getActionsMenu(objectId).getMenuItem(command.toLowerCase().substr(1));
-				if(!menuItem || !menuItem.onclick)
+				var menuItem = this.commonGrid.getActionsMenu(objectId).getMenuItem(command.toLowerCase().slice(1));
+				if (!menuItem || !menuItem.onclick)
 				{
 					return;
 				}
@@ -717,13 +707,13 @@ BX.Disk.FolderListClass = (function (){
 				break;
 			case '!share':
 				var menuItem = this.commonGrid.getActionsMenu(objectId).getMenuItem('share-section');
-				if(!menuItem || !menuItem.hasSubMenu())
+				if (!menuItem || !menuItem.hasSubMenu())
 				{
 					return;
 				}
 				menuItem.addSubMenu(menuItem._items);
-				menuItem = menuItem.getSubMenu().getMenuItem(command.toLowerCase().substr(1));
-				if(!menuItem || !menuItem.onclick)
+				menuItem = menuItem.getSubMenu().getMenuItem(command.toLowerCase().slice(1));
+				if (!menuItem || !menuItem.onclick)
 				{
 					return;
 				}
@@ -731,8 +721,9 @@ BX.Disk.FolderListClass = (function (){
 				eval(menuItem.onclick);
 				break;
 			case '!show':
-				var linkWithObject = BX('disk_obj_' + objectId);
-				if(!!linkWithObject) {
+				var linkWithObject = BX(`disk_obj_${objectId}`);
+				if (linkWithObject)
+				{
 					BX.fireEvent(linkWithObject, 'click');
 				}
 				break;
@@ -741,64 +732,68 @@ BX.Disk.FolderListClass = (function (){
 		}
 	};
 
-	//todo create object which will describe folder/file.
+	// todo create object which will describe folder/file.
 	function getObjectDataId(objectId)
 	{
-		var row = this.getRow(objectId);
+		const row = this.getRow(objectId);
+
 		return {
 			row: this.getRow(objectId),
 			title: BX.findChild(row.node, {
 				tagName: 'a',
-				className: 'bx-disk-folder-title'
+				className: 'bx-disk-folder-title',
 			}, true),
-			icon: BX.findChild(row.node, function(node){
+			icon: BX.findChild(row.node, (node) => {
 				return BX.type.isElementNode(node) && (BX.hasClass(node, 'bx-disk-file-icon') || BX.hasClass(node, 'bx-disk-folder-icon'));
-			}, true)
-		}
+			}, true),
+		};
 	}
 
 	function getIconElementByObjectId(objectId)
 	{
-		var row = this.getRow(objectId);
-		return BX.findChild(row.node, function(node){
+		const row = this.getRow(objectId);
+
+		return BX.findChild(row.node, (node) => {
 			return BX.type.isElementNode(node) && (BX.hasClass(node, 'bx-disk-file-icon') || BX.hasClass(node, 'bx-disk-folder-icon'));
 		}, true);
 	}
 
-	FolderListClass.prototype.scrollToObject = function (objectId)
+	FolderListClass.prototype.scrollToObject = function(objectId)
 	{
-		var row = this.getRow(objectId);
+		const row = this.getRow(objectId);
 		this.scrollToRow(row);
 	};
 
-	FolderListClass.prototype.scrollToRow = function (row)
+	FolderListClass.prototype.scrollToRow = function(row)
 	{
-		var rowNode = row.node;
+		const rowNode = row.node;
 
 		(new BX.easing({
-			duration : 500,
-			start : { scroll : window.pageYOffset || document.documentElement.scrollTop },
-			finish : { scroll : BX.pos(rowNode).top },
-			transition : BX.easing.makeEaseOut(BX.easing.transitions.quart),
-			step : function(state){
+			duration: 500,
+			start: { scroll: window.pageYOffset || document.documentElement.scrollTop },
+			finish: { scroll: BX.pos(rowNode).top },
+			transition: BX.easing.makeEaseOut(BX.easing.transitions.quart),
+			step(state) {
 				window.scrollTo(0, state.scroll);
-			}
+			},
 		})).animate();
 	};
 
-	FolderListClass.prototype.openMenuWithServices = function (targetElement) {
-		var obElementViewer = new BX.CViewer({});
-		BX.PopupMenu.show('disk_open_menu_with_services', BX(targetElement), [
+	FolderListClass.prototype.openMenuWithServices = function(targetElement) {
+		const obElementViewer = new BX.CViewer({});
+		BX.PopupMenu.show(
+			'disk_open_menu_with_services',
+			BX(targetElement),
+			[
 				{
 					text: BX.message('DISK_FOLDER_TOOLBAR_LABEL_LOCAL_BDISK_EDIT'),
-					className: "bx-viewer-popup-item item-b24",
-					href: "#",
-					onclick: BX.delegate(function (e) {
-
-						if(BX.CViewer.isEnableLocalEditInDesktop())
+					className: 'bx-viewer-popup-item item-b24',
+					href: '#',
+					onclick: BX.delegate(function(e) {
+						if (BX.CViewer.isEnableLocalEditInDesktop())
 						{
 							this.setEditService('l');
-							BX.adjust(BX('bx-disk-default-service-label'), {text: BX.message('DISK_FOLDER_TOOLBAR_LABEL_LOCAL_BDISK_EDIT')});
+							BX.adjust(BX('bx-disk-default-service-label'), { text: BX.message('DISK_FOLDER_TOOLBAR_LABEL_LOCAL_BDISK_EDIT') });
 							BX.PopupMenu.destroy('disk_open_menu_with_services');
 						}
 						else
@@ -807,76 +802,76 @@ BX.Disk.FolderListClass = (function (){
 						}
 
 						return BX.PreventDefault(e);
-					}, obElementViewer)
+					}, obElementViewer),
 				},
 				{
 					text: obElementViewer.getNameEditService('google'),
-					className: "bx-viewer-popup-item item-gdocs",
-					href: "#",
-					onclick: BX.delegate(function (e) {
+					className: 'bx-viewer-popup-item item-gdocs',
+					href: '#',
+					onclick: BX.delegate(function(e) {
 						this.setEditService('google');
-						BX.adjust(BX('bx-disk-default-service-label'), {text: this.getNameEditService('google')});
+						BX.adjust(BX('bx-disk-default-service-label'), { text: this.getNameEditService('google') });
 						BX.PopupMenu.destroy('disk_open_menu_with_services');
 
 						return BX.PreventDefault(e);
-					}, obElementViewer)
+					}, obElementViewer),
 				},
 				{
 					text: obElementViewer.getNameEditService('office365'),
-					className: "bx-viewer-popup-item item-office365",
-					href: "#",
-					onclick: BX.delegate(function (e) {
+					className: 'bx-viewer-popup-item item-office365',
+					href: '#',
+					onclick: BX.delegate(function(e) {
 						this.setEditService('office365');
-						BX.adjust(BX('bx-disk-default-service-label'), {text: this.getNameEditService('office365')});
+						BX.adjust(BX('bx-disk-default-service-label'), { text: this.getNameEditService('office365') });
 						BX.PopupMenu.destroy('disk_open_menu_with_services');
 
 						return BX.PreventDefault(e);
-					}, obElementViewer)
+					}, obElementViewer),
 				},
 				{
 					text: obElementViewer.getNameEditService('skydrive'),
-					className: "bx-viewer-popup-item item-office",
-					href: "#",
-					onclick: BX.delegate(function (e) {
+					className: 'bx-viewer-popup-item item-office',
+					href: '#',
+					onclick: BX.delegate(function(e) {
 						this.setEditService('skydrive');
-						BX.adjust(BX('bx-disk-default-service-label'), {text: this.getNameEditService('skydrive')});
+						BX.adjust(BX('bx-disk-default-service-label'), { text: this.getNameEditService('skydrive') });
 						BX.PopupMenu.destroy('disk_open_menu_with_services');
 
 						return BX.PreventDefault(e);
-					}, obElementViewer)
-				}
+					}, obElementViewer),
+				},
 			],
 			{
 				angle: {
 					position: 'top',
-					offset: 45
+					offset: 45,
 				},
 				autoHide: true,
 				overlay: {
-					opacity: 0.01
-				}
-			}
+					opacity: 0.01,
+				},
+			},
 		);
 	};
 
-	FolderListClass.prototype.blockFeatures = function () {
+	FolderListClass.prototype.blockFeatures = function() {
 		BX.PopupWindowManager.create('bx-disk-business-tools-info', null, {
 			content: BX('bx-bitrix24-business-tools-info'),
 			closeIcon: true,
-			onPopupClose: function ()
+			onPopupClose()
 			{
 				this.destroy();
 			},
 			autoHide: true,
-			zIndex: 11000
+			zIndex: 11000,
 		}).show();
 	};
 
-	FolderListClass.prototype.runCreatingFile = function (documentType, service) {
-
+	FolderListClass.prototype.runCreatingFile = function(documentType, service, onSuccess = null, byUnifiedLink = false) {
 		if (BX.message('disk_restriction'))
 		{
 			this.blockFeatures();
+
 			return;
 		}
 
@@ -884,39 +879,54 @@ BX.Disk.FolderListClass = (function (){
 		{
 			BX.Disk.Document.Local.Instance.createFile({
 				type: documentType,
-				targetFolderId: BX.Disk.Page.getFolder().id
-			}).then(function (response) {
-				this.commonGrid.reload(BX.Disk.getUrlToShowObjectInGrid(response.object.id))
-			}.bind(this));
+				targetFolderId: BX.Disk.Page.getFolder().id,
+			}).then((response) => {
+				this.commonGrid.reload(BX.Disk.getUrlToShowObjectInGrid(response.object.id));
+				if (onSuccess)
+				{
+					onSuccess(response);
+				}
+			});
 
 			return;
 		}
 
-		var createProcess = new BX.Disk.Document.CreateProcess({
+		const createProcess = new BX.Disk.Document.CreateProcess({
 			typeFile: documentType,
 			targetFolderId: BX.Disk.Page.getFolder().id,
 			serviceCode: service,
+			byUnifiedLink,
 			onAfterSave: function(response) {
 				if (response.status === 'success')
 				{
-					this.commonGrid.reload(BX.Disk.getUrlToShowObjectInGrid(response.object.id))
+					this.commonGrid.reload(BX.Disk.getUrlToShowObjectInGrid(response.object.id));
+					if (onSuccess)
+					{
+						onSuccess(response);
+					}
 				}
-			}.bind(this)
+			}.bind(this),
+			onAfterCreateFile: (response) => {
+				if (response.status === 'success')
+				{
+					this.commonGrid.reload();
+				}
+			},
 		});
 
 		createProcess.start();
 	};
 
-	FolderListClass.prototype.changeView = function (event)
+	FolderListClass.prototype.changeView = function(event)
 	{
-		var link = BX.getEventTarget(event);
+		const link = BX.getEventTarget(event);
 		if (link && this.commonGrid.isTile())
 		{
 			event.preventDefault();
 
 			this.commonGrid.instance.changeTileSize(link.dataset.viewTileSize);
 
-			for (var i = 0; i < this.layout.changeViewButtons.length; ++i)
+			for (let i = 0; i < this.layout.changeViewButtons.length; ++i)
 			{
 				this.layout.changeViewButtons[i].classList.remove('disk-folder-list-view-item-active');
 			}
@@ -929,19 +939,19 @@ BX.Disk.FolderListClass = (function (){
 			}
 
 			BX.ajax.runComponentAction('bitrix:disk.folder.list', 'saveViewOptions', {
-				analyticsLabel: 'tile.' + link.dataset.viewTileSize,
+				analyticsLabel: `tile.${link.dataset.viewTileSize}`,
 				mode: 'class',
 				data: {
 					storageId: BX.Disk.Page.getStorage().id,
 					viewMode: 'tile',
-					viewSize: link.dataset.viewTileSize
-				}
+					viewSize: link.dataset.viewTileSize,
+				},
 			});
 		}
 	};
 
-	FolderListClass.prototype.createFolder = function () {
-		var self = this;
+	FolderListClass.prototype.createFolder = function() {
+		const self = this;
 
 		var modal = BX.Disk.modalWindow({
 			modalId: 'bx-disk-create-folder',
@@ -949,65 +959,67 @@ BX.Disk.FolderListClass = (function (){
 			contentClassName: '',
 			contentStyle: {
 				paddingTop: '30px',
-				paddingBottom: '70px'
+				paddingBottom: '70px',
 			},
 			events: {
-				onAfterPopupShow: function () {
+				onAfterPopupShow() {
 					BX.focus(BX('disk-new-create-filename'));
 				},
-				onPopupClose: function () {
+				onPopupClose() {
 					this.destroy();
-				}
+				},
 			},
 			content: [
 				BX.create('label', {
 					props: {
 						className: 'bx-disk-popup-label',
-						"for": 'disk-new-create-filename'
+						for: 'disk-new-create-filename',
 					},
 					children: [
 						BX.create('span', {
 							props: {
-								className: 'req'
+								className: 'req',
 							},
-							text: '*'
+							text: '*',
 						}),
-						BX.message('DISK_FOLDER_LABEL_NAME_CREATE_FOLDER')
-					]
+						BX.message('DISK_FOLDER_LABEL_NAME_CREATE_FOLDER'),
+					],
 				}),
 				BX.create('input', {
 					props: {
 						id: 'disk-new-create-filename',
 						className: 'bx-disk-popup-input',
 						type: 'text',
-						value: ''
+						value: '',
 					},
 					style: {
 						fontSize: '16px',
-						marginTop: '10px'
-					}
-				})
+						marginTop: '10px',
+					},
+				}),
 			],
 			buttons: [
 				new BX.PopupWindowCustomButton({
 					text: BX.message('DISK_FOLDER_BTN_CREATE_FOLDER'),
-					className: "ui-btn ui-btn-success",
+					className: 'ui-btn ui-btn-success',
 					events: {
-						click: function () {
-							var input = BX('disk-new-create-filename');
-							var newName = input.value;
-							if (!newName || !newName.replace(/\s+/g, '')) {
+						click() {
+							const input = BX('disk-new-create-filename');
+							const newName = input.value;
+							if (!newName || !newName.replaceAll(/\s+/g, ''))
+							{
 								BX.addClass(input, 'disk-animated disk-animate-shake');
-								input.addEventListener('animationend', function(){
+								input.addEventListener('animationend', () => {
 									BX.removeClass(input, 'disk-animated disk-animate-shake');
 								});
 
 								BX.focus(input);
+
 								return;
 							}
 
 							this.addClassName('ui-btn-clock');
-							var button = this;
+							const button = this;
 
 							BX.Disk.ajax({
 								method: 'POST',
@@ -1015,49 +1027,52 @@ BX.Disk.FolderListClass = (function (){
 								url: BX.Disk.addToLinkParam(self.ajaxUrl, 'action', 'addFolder'),
 								data: {
 									targetFolderId: BX.Disk.Page.getFolder().id,
-									name: newName
+									name: newName,
 								},
-								onsuccess: function (data) {
-									if (!data) {
+								onsuccess: function(data) {
+									if (!data)
+									{
 										return;
 									}
-									if (data.status && data.status == 'success') {
+
+									if (data.status && data.status == 'success')
+									{
 										modal.close();
 
 										this.commonGrid.reload(
-											BX.Disk.getUrlToShowObjectInGrid(data.folder.id, {resetFilter: 1}),
-											{}
-										).then(function () {
+											BX.Disk.getUrlToShowObjectInGrid(data.folder.id, { resetFilter: 1 }),
+											{},
+										).then(() => {
 											this.resetFilter();
 											this.commonGrid.selectItemById(data.folder.id);
 
 											if (this.commonGrid.isGrid())
 											{
-												var row = this.getRow(data.folder.id);
+												const row = this.getRow(data.folder.id);
 												this.scrollToRow(row);
 											}
-										}.bind(this));
+										});
 									}
 									else
 									{
 										BX.Disk.showModalWithStatusAction(data);
 										button.removeClassName('ui-btn-clock');
 									}
-								}.bind(self)
+								}.bind(self),
 							});
-						}
-					}
+						},
+					},
 				}),
 				new BX.PopupWindowCustomButton({
 					text: BX.message('DISK_JS_BTN_CLOSE'),
 					className: 'ui-btn ui-btn-link',
 					events: {
-						click: function () {
+						click() {
 							BX.PopupWindowManager.getCurrentPopup().close();
-						}
-					}
-				})
-			]
+						},
+					},
+				}),
+			],
 		});
 	};
 
@@ -1066,182 +1081,175 @@ BX.Disk.FolderListClass = (function (){
 	 * @param {BX.UI.Button} button
 	 * @param e
 	 */
-	FolderListClass.prototype.onClickManageConnectButton = function (button, e)
+	FolderListClass.prototype.onClickManageConnectButton = function(button, e)
 	{
-		if(button.getIcon() === BX.UI.Button.Icon.DISK)
+		if (button.getIcon() === BX.UI.Button.Icon.DISK)
 		{
 			BX.Disk.ajax({
 				method: 'POST',
 				dataType: 'json',
 				url: BX.Disk.addToLinkParam(this.ajaxUrl, 'action', 'connectToUserStorage'),
 				data: {
-					objectId: this.storage.rootObject.id
+					objectId: this.storage.rootObject.id,
 				},
-				onsuccess: BX.delegate(function (response)
+				onsuccess: BX.delegate(function(response)
 				{
 					BX.Disk.showModalWithStatusAction(response);
-					if(response.status != 'success')
+					if (response.status != 'success')
 					{
 						return;
 					}
 					button.setIcon(BX.UI.Button.Icon.DONE);
 					button.setText(BX.message('DISK_FOLDER_LIST_LABEL_ALREADY_CONNECT_DISK'));
 
-					if(!!response.manage.link)
+					if (response.manage.link)
 					{
 						this.storage.manage.link = BX.clone(response.manage.link, true);
 					}
-				}, this)
+				}, this),
 			});
 		}
-		else if(button.getIcon() === BX.UI.Button.Icon.DONE)
+		else if (button.getIcon() === BX.UI.Button.Icon.DONE)
 		{
 			this.openConfirmDetach({
 				object: {
 					id: this.storage.manage.link.object.id,
 					name: this.storage.name,
-					isFolder: true
+					isFolder: true,
 				},
-				onSuccess: function(response){
-					if(response && response.status == 'success')
+				onSuccess(response) {
+					if (response && response.status == 'success')
 					{
-						response.message = BX.message('DISK_FOLDER_LIST_LABEL_DISCONNECTED_DISK')
+						response.message = BX.message('DISK_FOLDER_LIST_LABEL_DISCONNECTED_DISK');
 					}
 					BX.Disk.showModalWithStatusAction(response);
 
 					button.setIcon(BX.UI.Button.Icon.DISK);
 					button.setText(BX.message('DISK_FOLDER_LIST_LABEL_CONNECT_DISK'));
-				}
+				},
 			});
 		}
 	};
 
-	FolderListClass.prototype.showTree = function (params)
+	FolderListClass.prototype.showTree = function(params)
 	{
-		var bindElement = params.bindElement || null;
-		var textElement = params.textElement || null;
-		var valueElement = params.valueElement || null;
-		var onSelect = params.onSelect || null;
+		const bindElement = params.bindElement || null;
+		const textElement = params.textElement || null;
+		const valueElement = params.valueElement || null;
+		const onSelect = params.onSelect || null;
 
-		var targetObjectId = null;
-		var targetObjectNode = null;
+		let targetObjectId = null;
+		let targetObjectNode = null;
 
-		var modalTree = new BX.Disk.Tree.Modal(this.rootObject, {
+		const modalTree = new BX.Disk.Tree.Modal(this.rootObject, {
 			enableKeyboardNavigation: false,
 			events: {
-				onSelectFolder: function(node, objectId) {
-					if(!node.getAttribute('data-can-add'))
+				onSelectFolder(node, objectId) {
+					if (!node.getAttribute('data-can-add'))
 					{
 						BX.removeClass(node, 'selected');
+
 						return;
 					}
 
 					targetObjectId = objectId;
-					if(targetObjectNode)
+					if (targetObjectNode)
 					{
 						BX.removeClass(targetObjectNode, 'selected');
 					}
 					targetObjectNode = node;
-					if(targetObjectId && valueElement)
+					if (targetObjectId && valueElement)
 					{
 						valueElement.value = targetObjectId;
 					}
+
 					if (targetObjectId && BX.type.isFunction(onSelect))
 					{
 						onSelect(targetObjectId);
 					}
 				},
-				onUnSelectFolder: function(node){
+				onUnSelectFolder(node) {
 					targetObjectId = null;
 					targetObjectNode = null;
-					var pos = BX('grid_group_action_target_object');
+					const pos = BX('grid_group_action_target_object');
 					pos && BX.remove(pos);
-				}
+				},
 			},
 			modalParameters: {
-				bindElement: bindElement,
+				bindElement,
 				title: params.title,
-				buttons: params.buttons
-			}
+				buttons: params.buttons,
+			},
 		});
 		modalTree.show();
 	};
 
-	FolderListClass.prototype.onClickGetFilesCountAndSizeButtonButton = function (e)
+	FolderListClass.prototype.onClickGetFilesCountAndSizeButtonButton = function(e)
 	{
 		BX.Disk.ajax({
 			url: BX.Disk.addToLinkParam(this.ajaxUrl, 'action', 'calculateFileSizeAndCount'),
 			method: 'POST',
 			dataType: 'json',
 			data: {
-				folderId: this.currentFolder.id
+				folderId: this.currentFolder.id,
 			},
 			onsuccess: BX.delegate(function(response) {
-				if(!response || response.status != 'success')
+				if (!response || response.status != 'success')
 				{
 					BX.Disk.showModalWithStatusAction(response);
+
 					return;
 				}
 
-				BX.adjust(this.getFilesCountAndSize.sizeContainer, {text: response.size});
-				BX.adjust(this.getFilesCountAndSize.countContainer, {text: response.count});
-
-			}, this)
+				BX.adjust(this.getFilesCountAndSize.sizeContainer, { text: response.size });
+				BX.adjust(this.getFilesCountAndSize.countContainer, { text: response.count });
+			}, this),
 		});
 	};
 
 	FolderListClass.prototype.handleDocumentSaved = function(object, documentSession)
 	{
-		var item = this.commonGrid.getItemById(object.id);
+		const item = this.commonGrid.getItemById(object.id);
 		if (!item || this.commonGrid.isTile())
 		{
 			return;
 		}
 
-		this.commonGrid.instance.updateRow(object.id, null, null, function () {
-			var rowNode = this.commonGrid.instance.getRows().getById(object.id).getNode();
+		this.commonGrid.instance.updateRow(object.id, null, null, () => {
+			const rowNode = this.commonGrid.instance.getRows().getById(object.id).getNode();
 			if (!rowNode)
 			{
 				return;
 			}
 
 			BX.addClass(rowNode, 'main-grid-row-checked');
-			setInterval(function () {
+			setInterval(() => {
 				BX.removeClass(rowNode, 'main-grid-row-checked');
 			}, 8000);
-		}.bind(this));
-	}
+		});
+	};
 
 	FolderListClass.prototype.onSliderMessage = function(event) {
-		var eventData = event.getData();
-		if (event.getEventId() === 'Disk.File:onMarkDeleted')
+		const eventData = event.getData();
+		if (event.getEventId() === 'Disk.File:onMarkDeleted' && eventData.objectId)
 		{
-			if (eventData.objectId)
-			{
-				setTimeout(function () {
-					this.removeRow(eventData.objectId);
-				}.bind(this), 500);
-			}
+			setTimeout(() => {
+				this.removeRow(eventData.objectId);
+			}, 500);
 		}
 
-		if (event.getEventId() === 'Disk.File:onDelete')
+		if (event.getEventId() === 'Disk.File:onDelete' && eventData.objectId)
 		{
-			if (eventData.objectId)
-			{
-				setTimeout(function () {
-					this.removeRow(eventData.objectId);
-				}.bind(this), 500);
-			}
+			setTimeout(() => {
+				this.removeRow(eventData.objectId);
+			}, 500);
 		}
 
-		if (event.getEventId() === 'Disk.File:onRestore')
+		if (event.getEventId() === 'Disk.File:onRestore' && eventData.objectId)
 		{
-			if (eventData.objectId)
-			{
-				setTimeout(function () {
-					this.removeRow(eventData.objectId);
-				}.bind(this), 500);
-			}
+			setTimeout(() => {
+				this.removeRow(eventData.objectId);
+			}, 500);
 		}
 
 		if (event.getEventId() === 'Disk.File:onNewVersionUploaded')
@@ -1251,18 +1259,19 @@ BX.Disk.FolderListClass = (function (){
 
 		if (event.getEventId() === 'Disk.OnlyOffice:onSaved')
 		{
-			if (!eventData.object)
+			if (eventData.object)
 			{
-				this.commonGrid.reload();
+				this.commonGrid.reload(BX.Disk.getUrlToShowObjectInGrid(eventData.object.id));
 			}
 			else
 			{
-				this.commonGrid.reload(BX.Disk.getUrlToShowObjectInGrid(eventData.object.id))
+				this.commonGrid.reload();
 			}
 		}
+
 		if (event.getEventId() === 'Disk.OnlyOffice:onClosed' && eventData.object && eventData.process === 'create')
 		{
-			this.commonGrid.reload(BX.Disk.getUrlToShowObjectInGrid(eventData.object.id))
+			this.commonGrid.reload(BX.Disk.getUrlToShowObjectInGrid(eventData.object.id));
 		}
 
 		if (event.getEventId() === 'Disk.File:onAddSharing')
@@ -1273,42 +1282,43 @@ BX.Disk.FolderListClass = (function (){
 
 	FolderListClass.prototype.onPopState = function(e)
 	{
-		var state = e.state;
-		if(!state || !state.disk || !state.folder)
+		const state = e.state;
+		if (!state || !state.disk || !state.folder)
 		{
 			window.location.reload();
+
 			return;
 		}
 
-		if(!state.folder.link)
+		if (!state.folder.link)
 		{
 			state.folder.link = window.location.pathname.toString();
 		}
 
-		BX.onCustomEvent("Disk.FolderListClass:onPopState", [state.folder]);
+		BX.onCustomEvent('Disk.FolderListClass:onPopState', [state.folder]);
 
 		this.openFolder(state.folder.id, state.folder);
 	};
 
 	FolderListClass.prototype.openGridFolder = function(event)
 	{
-		if(event.shiftKey || event.ctrlKey)
+		if (event.shiftKey || event.ctrlKey)
 		{
 			return;
 		}
 
-		var element = event.target || event.srcElement;
-		if(!element.dataset.objectId)
+		const element = event.target || event.srcElement;
+		if (!element.dataset.objectId)
 		{
 			return;
 		}
 
-		var row = this.getRow(element.dataset.objectId);
-		var a = BX.findChildByClassName(row.node, 'js-disk-grid-folder');
+		const row = this.getRow(element.dataset.objectId);
+		const a = BX.findChildByClassName(row.node, 'js-disk-grid-folder');
 		BX.fireEvent(a, 'click');
 	};
 
-	FolderListClass.prototype.openFolderByAnchor = function (anchor, event)
+	FolderListClass.prototype.openFolderByAnchor = function(anchor, event)
 	{
 		if (event.which !== 1 || event.ctrlKey || event.metaKey)
 		{
@@ -1323,12 +1333,12 @@ BX.Disk.FolderListClass = (function (){
 
 	FolderListClass.prototype.onOpenFolderByAnchor = function(anchor)
 	{
-		var folder = {
+		const folder = {
 			id: anchor.dataset.objectId,
 			canAdd: anchor.dataset.canAdd,
 			link: anchor.href,
 			name: anchor.textContent.trim(),
-			node: anchor
+			node: anchor,
 		};
 
 		return this.onOpenFolder(folder);
@@ -1349,14 +1359,14 @@ BX.Disk.FolderListClass = (function (){
 			return false;
 		}
 
-		BX.onCustomEvent("Disk.FolderListClass:onFolderBeforeOpen", [folder]);
+		BX.onCustomEvent('Disk.FolderListClass:onFolderBeforeOpen', [folder]);
 
-		var state = {
+		const state = {
 			disk: true,
 			folder: {
 				id: folder.id,
-				name: folder.name
-			}
+				name: folder.name,
+			},
 		};
 
 		if (this.shouldUseHistory())
@@ -1364,10 +1374,10 @@ BX.Disk.FolderListClass = (function (){
 			window.history.pushState(
 				state,
 				null,
-				folder.link
+				folder.link,
 			);
 		}
-		BX.onCustomEvent("Window:onPushState", [state, null, folder.link]);
+		BX.onCustomEvent('Window:onPushState', [state, null, folder.link]);
 		this.baseGridPageUrl = folder.link;
 
 		this.openFolder(folder.id, folder);
@@ -1382,7 +1392,7 @@ BX.Disk.FolderListClass = (function (){
 		folder.link = anchor.href;
 		folder.id = folderId;
 
-		this.onOpenFolder(folder)
+		this.onOpenFolder(folder);
 	};
 
 	/**
@@ -1397,15 +1407,15 @@ BX.Disk.FolderListClass = (function (){
 	FolderListClass.prototype.openFolder = function(folderId, folder)
 	{
 		this.commonGrid.reload(folder.link, {
-			resetFilter: 1
-		}).then(function(){
-			BX.onCustomEvent("Disk.FolderListClass:onFolderOpen", [folder, this.isFiltetedFolderList]);
+			resetFilter: 1,
+		}).then(() => {
+			BX.onCustomEvent('Disk.FolderListClass:onFolderOpen', [folder, this.isFiltetedFolderList]);
 
 			this.removeSearchProcessInConnectedFolders();
 
 			BX.Disk.Page.changeFolder({
 				id: folder.id,
-				name: folder.name
+				name: folder.name,
 			});
 
 			if (folder.canAdd === undefined)
@@ -1413,36 +1423,37 @@ BX.Disk.FolderListClass = (function (){
 				BX.ajax.runAction('disk.api.folder.getAllowedOperationsRights', {
 					analyticsLabel: 'folder.list',
 					data: {
-						folderId: folder.id
-					}
-				}).then(function (response) {
+						folderId: folder.id,
+					},
+				}).then((response) => {
+					const operations = response.data.operations;
+					operations.disk_add ? this.setActiveStateToCreateItemsButton() : this.setInactiveStateToCreateItemsButton();
 
-					var operations = response.data.operations;
-					operations.disk_add? this.setActiveStateToCreateItemsButton() : this.setInactiveStateToCreateItemsButton();
-
-					folder.canAdd = !!operations.disk_add;
-
-				}.bind(this));
+					folder.canAdd = Boolean(operations.disk_add);
+				});
 			}
 			else
 			{
-				folder.canAdd? this.setActiveStateToCreateItemsButton() : this.setInactiveStateToCreateItemsButton();
+				folder.canAdd ? this.setActiveStateToCreateItemsButton() : this.setInactiveStateToCreateItemsButton();
 			}
 
 			window.scroll(0, 0);
-		}.bind(this));
+		});
 	};
 
 	FolderListClass.prototype.onClickDeleteGroup = function(e)
 	{
-		if(!this.commonGrid.instance.IsActionEnabled())
-			return false;
-		var allRows = document.getElementById('actallrows_' + this.commonGrid.instance.table_id);
+		if (!this.commonGrid.instance.IsActionEnabled())
+		
+		{ return false;
+		}
+		const allRows = document.getElementById(`actallrows_${this.commonGrid.instance.table_id}`);
 
 		this.openConfirmDeleteGroup({
-			attemptDeleteAll: allRows && allRows.checked
+			attemptDeleteAll: allRows && allRows.checked,
 		});
 		BX.PreventDefault(e);
+
 		return false;
 	};
 
@@ -1517,13 +1528,15 @@ BX.Disk.FolderListClass = (function (){
 		{
 			this.layout.createItemsButton.classList.add('ui-btn-disabled');
 		}
+
 		if (this.layout.emptyBlockUploadFileButtonId)
 		{
-			BX.addClass(this.layout.emptyBlockUploadFileButtonId, 'disk-folder-list-no-data-disabled')
+			BX.addClass(this.layout.emptyBlockUploadFileButtonId, 'disk-folder-list-no-data-disabled');
 		}
+
 		if (this.layout.emptyBlockCreateFolderButtonId)
 		{
-			BX.addClass(this.layout.emptyBlockCreateFolderButtonId, 'disk-folder-list-no-data-disabled')
+			BX.addClass(this.layout.emptyBlockCreateFolderButtonId, 'disk-folder-list-no-data-disabled');
 		}
 	};
 
@@ -1533,13 +1546,15 @@ BX.Disk.FolderListClass = (function (){
 		{
 			this.layout.createItemsButton.classList.remove('ui-btn-disabled');
 		}
+
 		if (this.layout.emptyBlockUploadFileButtonId)
 		{
-			BX.removeClass(this.layout.emptyBlockUploadFileButtonId, 'disk-folder-list-no-data-disabled')
+			BX.removeClass(this.layout.emptyBlockUploadFileButtonId, 'disk-folder-list-no-data-disabled');
 		}
+
 		if (this.layout.emptyBlockCreateFolderButtonId)
 		{
-			BX.removeClass(this.layout.emptyBlockCreateFolderButtonId, 'disk-folder-list-no-data-disabled')
+			BX.removeClass(this.layout.emptyBlockCreateFolderButtonId, 'disk-folder-list-no-data-disabled');
 		}
 	};
 
@@ -1547,9 +1562,21 @@ BX.Disk.FolderListClass = (function (){
 	{
 		if (this.layout.createItemsButton)
 		{
-			this.layout.createItemsButton.dataset.hint = BX.message('DISK_FOLDER_LIST_COLLABER_HINT');
+			this.layout.createItemsButton.dataset.hint = this.getCollaberHintForCreateItemButtons();
+			delete this.layout.createItemsButton.dataset.hintInit;
 			BX.UI.Hint.initNode(this.layout.createItemsButton);
 		}
+	};
+
+	FolderListClass.prototype.getCollaberHintForCreateItemButtons = function()
+	{
+		const isReadonlyCollabFolder = BX.Http.Cookie.get(this.readonlyCollabFolderStateCookieName) === '1';
+		if (isReadonlyCollabFolder)
+		{
+			return BX.message('DISK_FOLDER_LIST_COLLABER_HINT_FOR_READONLY_FOLDER_IN_COLLAB');
+		}
+
+		return BX.message('DISK_FOLDER_LIST_COLLABER_HINT');
 	};
 
 	FolderListClass.prototype.removeHintFromCreateItemButtons = function()
@@ -1564,7 +1591,7 @@ BX.Disk.FolderListClass = (function (){
 	{
 		if (this.commonGrid.isTile())
 		{
-			var item = this.commonGrid.instance.getItem(objectId);
+			const item = this.commonGrid.instance.getItem(objectId);
 			if (item)
 			{
 				item.onRename();
@@ -1574,20 +1601,19 @@ BX.Disk.FolderListClass = (function (){
 		}
 
 		this.commonGrid.instance.getRows().unselectAll();
-		var row = this.commonGrid.instance.getRows().getById(objectId);
+		const row = this.commonGrid.instance.getRows().getById(objectId);
 		row.select();
 		this.commonGrid.instance.editSelected();
 
-		var editorContainer = BX.Grid.Utils.getByClass(row.getNode(), 'main-grid-editor-container', true);
-		var input = BX.findChild(editorContainer, {
-			tag: 'input'
+		const editorContainer = BX.Grid.Utils.getByClass(row.getNode(), 'main-grid-editor-container', true);
+		const input = BX.findChild(editorContainer, {
+			tag: 'input',
 		}, true);
 
-		if(input)
+		if (input)
 		{
-			BX.bind(input, 'keydown', function(event){
-
-				if(event.key === 'Enter')
+			BX.bind(input, 'keydown', (event) => {
+				if (event.key === 'Enter')
 				{
 					event.stopPropagation();
 					event.preventDefault();
@@ -1595,79 +1621,77 @@ BX.Disk.FolderListClass = (function (){
 					this.commonGrid.instance.editSelectedSave();
 				}
 
-				if(event.key === 'Escape')
+				if (event.key === 'Escape')
 				{
 					this.commonGrid.instance.editSelectedCancel();
 				}
-
-			}.bind(this));
-			BX.bind(input, 'blur', function(event){
+			});
+			BX.bind(input, 'blur', (event) => {
 				event.stopPropagation();
 				event.preventDefault();
 				this.commonGrid.instance.editSelectedSave();
-			}.bind(this));
+			});
 
 			BX.focus(input);
 		}
 	};
 
-	FolderListClass.prototype.processGridGroupActionRestore = function ()
+	FolderListClass.prototype.processGridGroupActionRestore = function()
 	{
-		var selectedRows = this.commonGrid.getSelectedIds();
-		if (!selectedRows.length)
+		const selectedRows = this.commonGrid.getSelectedIds();
+		if (selectedRows.length === 0)
 		{
 			return;
 		}
 
-		var self = this;
-		var messageDescription = BX.message('DISK_TRASHCAN_TRASH_RESTORE_DESCR_MULTIPLE');
-		var buttons = [
+		const self = this;
+		const messageDescription = BX.message('DISK_TRASHCAN_TRASH_RESTORE_DESCR_MULTIPLE');
+		const buttons = [
 			new BX.PopupWindowCustomButton({
 				text: BX.message('DISK_TRASHCAN_ACT_RESTORE'),
-				className: "ui-btn ui-btn-success",
+				className: 'ui-btn ui-btn-success',
 				events: {
-					click: function (e) {
+					click(e) {
 						this.addClassName('ui-btn-clock');
 
 						BX.ajax.runAction('disk.api.commonActions.restoreCollection', {
 							analyticsLabel: 'folder.list',
 							data: {
-								objectCollection: selectedRows
-							}
-						}).then(function (response) {
-
+								objectCollection: selectedRows,
+							},
+						}).then(function(response) {
 							if (response.status === 'success')
 							{
 								if (response.data.restoredObjectIds.length > 1)
 								{
 									BX.Disk.showModalWithStatusAction({
 										status: 'success',
-										message: BX.message('DISK_TRASHCAN_TRASH_RESTORE_SUCCESS')
+										message: BX.message('DISK_TRASHCAN_TRASH_RESTORE_SUCCESS'),
 									});
 									this.commonGrid.reload();
 								}
 								else
 								{
-									var firstObjectId = response.data.restoredObjectIds.pop();
+									const firstObjectId = response.data.restoredObjectIds.pop();
 									window.document.location = BX.Disk.getUrlToShowObjectInGrid(firstObjectId);
 								}
 							}
 
 							BX.PopupWindowManager.getCurrentPopup().close();
 						}.bind(self));
-					}
-				}
+					},
+				},
 			}),
 			new BX.PopupWindowCustomButton({
 				text: BX.message('DISK_JS_BTN_CANCEL'),
 				className: 'ui-btn ui-btn-link',
 				events: {
-					click: function (e)
+					click(e)
 					{
 						BX.PopupWindowManager.getCurrentPopup().destroy();
-					}
-				}
-			})
+					},
+				},
+			}),
 		];
 
 		BX.Disk.modalWindow({
@@ -1676,58 +1700,61 @@ BX.Disk.FolderListClass = (function (){
 			contentClassName: 'tac',
 			contentStyle: {
 				paddingTop: '70px',
-				paddingBottom: '70px'
+				paddingBottom: '70px',
 			},
 			content: messageDescription.replace('#NAME#', name),
-			buttons: buttons
+			buttons,
 		});
 	};
 
-	FolderListClass.prototype.openConfirmRestore = function (parameters)
+	FolderListClass.prototype.openConfirmRestore = function(parameters)
 	{
-		var name = parameters.object.name;
-		var objectId = parameters.object.id;
-		var isFolder = parameters.object.isFolder;
-		var messageDescription = '';
-		if (isFolder) {
+		const name = parameters.object.name;
+		const objectId = parameters.object.id;
+		const isFolder = parameters.object.isFolder;
+		let messageDescription = '';
+		if (isFolder)
+		{
 			messageDescription = BX.message('DISK_TRASHCAN_TRASH_RESTORE_FOLDER_CONFIRM');
-		} else {
+		}
+		else
+		{
 			messageDescription = BX.message('DISK_TRASHCAN_TRASH_RESTORE_FILE_CONFIRM');
 		}
 
-		var self = this;
-		var buttons = [
+		const self = this;
+		const buttons = [
 			new BX.PopupWindowCustomButton({
 				text: BX.message('DISK_TRASHCAN_ACT_RESTORE'),
-				className: "ui-btn ui-btn-success",
+				className: 'ui-btn ui-btn-success',
 				events: {
-					click: function (e) {
+					click(e) {
 						this.addClassName('ui-btn-clock');
 
 						BX.ajax.runAction('disk.api.commonActions.restore', {
 							analyticsLabel: 'folder.list',
 							data: {
-								objectId: objectId
-							}
-						}).then(function (response) {
+								objectId,
+							},
+						}).then(function(response) {
 							BX.PopupWindowManager.getCurrentPopup().close();
 							this.commonGrid.selectItemById(objectId);
 
 							window.document.location = BX.Disk.getUrlToShowObjectInGrid(response.data.object.id);
 						}.bind(self));
-					}
-				}
+					},
+				},
 			}),
 			new BX.PopupWindowCustomButton({
 				text: BX.message('DISK_JS_BTN_CANCEL'),
 				className: 'ui-btn ui-btn-link',
 				events: {
-					click: function (e)
+					click(e)
 					{
 						BX.PopupWindowManager.getCurrentPopup().destroy();
-					}
-				}
-			})
+					},
+				},
+			}),
 		];
 
 		BX.Disk.modalWindow({
@@ -1736,18 +1763,18 @@ BX.Disk.FolderListClass = (function (){
 			contentClassName: 'tac',
 			contentStyle: {
 				paddingTop: '70px',
-				paddingBottom: '70px'
+				paddingBottom: '70px',
 			},
 			content: messageDescription.replace('#NAME#', name),
-			buttons: buttons
+			buttons,
 		});
 	};
 
-	FolderListClass.prototype.copyLinkInternalLink = function (link, target)
+	FolderListClass.prototype.copyLinkInternalLink = function(link, target)
 	{
 		target.classList.add('menu-popup-item-accept', 'disk-folder-list-context-menu-item-accept-animate');
-		target.style.minWidth = (target.offsetWidth) + 'px';
-		var textNode = target.querySelector('.menu-popup-item-text');
+		target.style.minWidth = `${target.offsetWidth}px`;
+		const textNode = target.querySelector('.menu-popup-item-text');
 		if (textNode)
 		{
 			textNode.textContent = BX.message('DISK_FOLDER_LIST_ACT_COPIED_INTERNAL_LINK');
@@ -1756,89 +1783,90 @@ BX.Disk.FolderListClass = (function (){
 		BX.clipboard.copy(link);
 	};
 
-	FolderListClass.prototype.openConfirmDelete = function (parameters)
+	FolderListClass.prototype.openConfirmDelete = function(parameters)
 	{
-		var name = parameters.object.name;
-		var objectId = parameters.object.id;
-		var isFolder = parameters.object.isFolder;
-		var isDeleted = parameters.object.isDeleted;
+		const name = parameters.object.name;
+		const objectId = parameters.object.id;
+		const isFolder = parameters.object.isFolder;
+		const isDeleted = parameters.object.isDeleted;
 
-		var canDelete = parameters.canDelete;
-		var messageDescription = '';
+		const canDelete = parameters.canDelete;
+		let messageDescription = '';
 
 		if (isFolder)
 		{
-			messageDescription = BX.message(canDelete? 'DISK_FOLDER_LIST_TRASH_DELETE_DESTROY_FOLDER_CONFIRM' : 'DISK_FOLDER_LIST_TRASH_DELETE_FOLDER_CONFIRM');
+			messageDescription = BX.message(canDelete ? 'DISK_FOLDER_LIST_TRASH_DELETE_DESTROY_FOLDER_CONFIRM' : 'DISK_FOLDER_LIST_TRASH_DELETE_FOLDER_CONFIRM');
 		}
 		else
 		{
-			messageDescription = BX.message(canDelete? 'DISK_FOLDER_LIST_TRASH_DELETE_DESTROY_FILE_CONFIRM' : 'DISK_FOLDER_LIST_TRASH_DELETE_FILE_CONFIRM');
+			messageDescription = BX.message(canDelete ? 'DISK_FOLDER_LIST_TRASH_DELETE_DESTROY_FILE_CONFIRM' : 'DISK_FOLDER_LIST_TRASH_DELETE_FILE_CONFIRM');
 		}
 
 		if (isDeleted)
 		{
-			messageDescription = isFolder?
-				BX.message('DISK_FOLDER_LIST_TRASH_DELETE_DESTROY_DELETED_FOLDER_CONFIRM') :
-				BX.message('DISK_FOLDER_LIST_TRASH_DELETE_DESTROY_DELETED_FILE_CONFIRM');
+			messageDescription = isFolder
+				? BX.message('DISK_FOLDER_LIST_TRASH_DELETE_DESTROY_DELETED_FOLDER_CONFIRM')
+				: BX.message('DISK_FOLDER_LIST_TRASH_DELETE_DESTROY_DELETED_FILE_CONFIRM');
 		}
 
-		var self = this;
-		var buttons = [];
+		const self = this;
+		const buttons = [];
 		if (!isDeleted)
 		{
 			buttons.push(new BX.PopupWindowCustomButton({
-				text: BX.message("DISK_FOLDER_LIST_TRASH_DELETE_BUTTON"),
-				className: "ui-btn ui-btn-success",
+				text: BX.message('DISK_FOLDER_LIST_TRASH_DELETE_BUTTON'),
+				className: 'ui-btn ui-btn-success',
 				events: {
-					click: function (e) {
+					click(e) {
 						this.addClassName('ui-btn-clock');
 
 						BX.ajax.runAction('disk.api.commonActions.markDeleted', {
 							analyticsLabel: 'folder.list',
 							data: {
-								objectId: objectId
-							}
-						}).then(function (response) {
+								objectId,
+							},
+						}).then((response) => {
 							BX.PopupWindowManager.getCurrentPopup().close();
 							self.removeRow(objectId);
 						});
-					}
-				}
+					},
+				},
 			}));
 		}
+
 		if (canDelete)
 		{
 			buttons.push(new BX.PopupWindowCustomButton({
-					text: BX.message("DISK_FOLDER_LIST_TRASH_DESTROY_BUTTON"),
-					className: 'ui-btn ui-btn-light-border',
-					events: {
-						click: function (e)
-						{
-							this.addClassName('ui-btn-clock');
+				text: BX.message('DISK_FOLDER_LIST_TRASH_DESTROY_BUTTON'),
+				className: 'ui-btn ui-btn-light-border',
+				events: {
+					click(e)
+					{
+						this.addClassName('ui-btn-clock');
 
-							BX.ajax.runAction('disk.api.commonActions.delete', {
-								analyticsLabel: 'folder.list',
-								data: {
-									objectId: objectId
-								}
-							}).then(function (response) {
-								BX.PopupWindowManager.getCurrentPopup().close();
-								self.removeRow(objectId);
-							});
-						}
-					}
-				}));
+						BX.ajax.runAction('disk.api.commonActions.delete', {
+							analyticsLabel: 'folder.list',
+							data: {
+								objectId,
+							},
+						}).then((response) => {
+							BX.PopupWindowManager.getCurrentPopup().close();
+							self.removeRow(objectId);
+						});
+					},
+				},
+			}));
 		}
 		buttons.push(
 			new BX.PopupWindowCustomButton({
-				text: BX.message("DISK_FOLDER_LIST_TRASH_CANCEL_DELETE_BUTTON"),
+				text: BX.message('DISK_FOLDER_LIST_TRASH_CANCEL_DELETE_BUTTON'),
 				className: 'ui-btn ui-btn-link',
 				events: {
-					click: function (e) {
+					click(e) {
 						BX.PopupWindowManager.getCurrentPopup().destroy();
-					}
-				}
-			})
+					},
+				},
+			}),
 		);
 
 		BX.Disk.modalWindow({
@@ -1846,47 +1874,46 @@ BX.Disk.FolderListClass = (function (){
 			title: BX.message('DISK_FOLDER_LIST_TRASH_DELETE_TITLE'),
 			contentClassName: 'disk-popup-text-content',
 			content: messageDescription.replace('#NAME#', name),
-			buttons: buttons
+			buttons,
 		});
 	};
 
-	FolderListClass.prototype.onPopupFileUploadClose = function (diskUpload, fileId)
+	FolderListClass.prototype.onPopupFileUploadClose = function(diskUpload, fileId)
 	{
-		this.commonGrid.reload(BX.Disk.getUrlToShowObjectInGrid(fileId, {resetFilter: 1})).then(function () {
-
+		this.commonGrid.reload(BX.Disk.getUrlToShowObjectInGrid(fileId, { resetFilter: 1 })).then(() => {
 			this.resetFilter();
 			this.commonGrid.selectItemById(fileId);
 
 			if (this.commonGrid.isGrid())
 			{
-				var row = this.getRow(fileId);
+				const row = this.getRow(fileId);
 				this.scrollToRow(row);
 			}
-
-		}.bind(this));
+		});
 	};
 
-	FolderListClass.prototype.onStepperHasBeenFinished = function (stepper)
+	FolderListClass.prototype.onStepperHasBeenFinished = function(stepper)
 	{
-		//we don't want to analyze: is it our stepper or not. Because there is strange and not useful structure.
+		// we don't want to analyze: is it our stepper or not. Because there is strange and not useful structure.
 		this.commonGrid.reload();
 	};
 
-	var alreadyRunEmptyTrash = false;
-	FolderListClass.prototype.openConfirmEmptyTrash = function ()
+	let alreadyRunEmptyTrash = false;
+	FolderListClass.prototype.openConfirmEmptyTrash = function()
 	{
-		var storageId = this.storage.id;
-		var buttons = [
+		const storageId = this.storage.id;
+		const buttons = [
 			new BX.PopupWindowCustomButton({
-				text: BX.message("DISK_FOLDER_LIST_TITLE_EMPTY_TRASH"),
-				className: "ui-btn ui-btn-success",
+				text: BX.message('DISK_FOLDER_LIST_TITLE_EMPTY_TRASH'),
+				className: 'ui-btn ui-btn-success',
 				events: {
-					click: function (e) {
+					click(e) {
 						this.addClassName('ui-btn-clock');
 
 						if (alreadyRunEmptyTrash)
 						{
 							BX.PopupWindowManager.getCurrentPopup().close();
+
 							return;
 						}
 
@@ -1894,16 +1921,15 @@ BX.Disk.FolderListClass = (function (){
 						BX.ajax.runAction('disk.api.trashcan.empty', {
 							analyticsLabel: 'folder.list',
 							data: {
-								storageId: storageId
-							}
-						}).then(function (response) {
-
+								storageId,
+							},
+						}).then((response) => {
 							BX.ajax.runComponentAction('bitrix:disk.folder.list', 'getSteppers', {
-								mode: 'class'
-							}).then(function(response) {
+								mode: 'class',
+							}).then((response) => {
 								if (response.data.html)
 								{
-									var place = BX('disk-folder-list-place-for-stepper');
+									const place = BX('disk-folder-list-place-for-stepper');
 									if (place)
 									{
 										BX.html(place, response.data.html);
@@ -1912,22 +1938,22 @@ BX.Disk.FolderListClass = (function (){
 							});
 
 							BX.PopupWindowManager.getCurrentPopup().close();
-						}, function(response) {
+						}, (response) => {
 							BX.Disk.showModalWithStatusAction(response);
 							BX.PopupWindowManager.getCurrentPopup().close();
 						});
-					}
-				}
+					},
+				},
 			}),
 			new BX.PopupWindowCustomButton({
-				text: BX.message("DISK_JS_BTN_CANCEL"),
+				text: BX.message('DISK_JS_BTN_CANCEL'),
 				className: 'ui-btn ui-btn-link',
 				events: {
-					click: function (e) {
+					click(e) {
 						BX.PopupWindowManager.getCurrentPopup().destroy();
-					}
-				}
-			})
+					},
+				},
+			}),
 		];
 
 		BX.Disk.modalWindow({
@@ -1935,28 +1961,31 @@ BX.Disk.FolderListClass = (function (){
 			title: BX.message('DISK_FOLDER_LIST_TITLE_EMPTY_TRASH_TITLE'),
 			contentClassName: 'disk-popup-text-content',
 			content: BX.message('DISK_FOLDER_LIST_TRASH_EMPTY_TRASH_DESCRIPTION'),
-			buttons: buttons
+			buttons,
 		});
 	};
 
-	FolderListClass.prototype.openConfirmDetach = function (parameters)
+	FolderListClass.prototype.openConfirmDetach = function(parameters)
 	{
-		var name = parameters.object.name;
-		var objectId = parameters.object.id;
-		var isFolder = parameters.object.isFolder;
-		var onSuccess = parameters.onSuccess;
-		var messageDescription = '';
-		if (isFolder) {
+		const name = parameters.object.name;
+		const objectId = parameters.object.id;
+		const isFolder = parameters.object.isFolder;
+		const onSuccess = parameters.onSuccess;
+		let messageDescription = '';
+		if (isFolder)
+		{
 			messageDescription = BX.message('DISK_FOLDER_LIST_DETACH_FOLDER_CONFIRM');
-		} else {
+		}
+		else
+		{
 			messageDescription = BX.message('DISK_FOLDER_LIST_DETACH_FILE_CONFIRM');
 		}
-		var buttons = [
+		const buttons = [
 			new BX.PopupWindowCustomButton({
 				text: BX.message('DISK_FOLDER_LIST_DETACH_BUTTON'),
-				className: "ui-btn ui-btn-success",
+				className: 'ui-btn ui-btn-success',
 				events: {
-					click: BX.delegate(function (e) {
+					click: BX.delegate(function(e) {
 						BX.PopupWindowManager.getCurrentPopup().destroy();
 						BX.PreventDefault(e);
 
@@ -1965,15 +1994,17 @@ BX.Disk.FolderListClass = (function (){
 							dataType: 'json',
 							url: BX.Disk.addToLinkParam(this.ajaxUrl, 'action', 'detach'),
 							data: {
-								objectId: objectId
+								objectId,
 							},
-							onsuccess: BX.delegate(function (data) {
-								if (!data) {
+							onsuccess: BX.delegate(function(data) {
+								if (!data)
+								{
 									return;
 								}
-								if(data.status == 'success')
+
+								if (data.status == 'success')
 								{
-									if(BX.type.isFunction(onSuccess))
+									if (BX.type.isFunction(onSuccess))
 									{
 										BX.delegate(onSuccess, this)(data);
 									}
@@ -1981,68 +2012,69 @@ BX.Disk.FolderListClass = (function (){
 									{
 										this.removeRow(objectId);
 									}
+
 									return;
 								}
 								BX.Disk.showModalWithStatusAction(data);
-							}, this)
+							}, this),
 						});
 
 						return false;
-					}, this)
-				}
+					}, this),
+				},
 			}),
 			new BX.PopupWindowCustomButton({
 				text: BX.message('DISK_FOLDER_LIST_TRASH_CANCEL_DELETE_BUTTON'),
 				className: 'ui-btn ui-btn-link',
 				events: {
-					click: function (e) {
+					click(e) {
 						BX.PopupWindowManager.getCurrentPopup().destroy();
-					}
-				}
-			})
+					},
+				},
+			}),
 		];
 
 		BX.Disk.modalWindow({
 			modalId: 'bx-link-unlink-confirm',
-			title: isFolder? BX.message('DISK_FOLDER_LIST_DETACH_FOLDER_TITLE') : BX.message('DISK_FOLDER_LIST_DETACH_FILE_TITLE'),
+			title: isFolder ? BX.message('DISK_FOLDER_LIST_DETACH_FOLDER_TITLE') : BX.message('DISK_FOLDER_LIST_DETACH_FILE_TITLE'),
 			contentClassName: 'tac',
 			contentStyle: {
 				paddingTop: '70px',
-				paddingBottom: '70px'
+				paddingBottom: '70px',
 			},
 			content: messageDescription.replace('#NAME#', BX.util.htmlspecialchars(name)),
-			buttons: buttons
+			buttons,
 		});
 	};
 
-	FolderListClass.prototype.openConfirmDeleteGroup = function ()
+	FolderListClass.prototype.openConfirmDeleteGroup = function()
 	{
-		var messageDescription = BX.message('DISK_FOLDER_LIST_TRASH_DELETE_GROUP_CONFIRM');
-		var buttons = [
+		const messageDescription = BX.message('DISK_FOLDER_LIST_TRASH_DELETE_GROUP_CONFIRM');
+		const buttons = [
 			new BX.PopupWindowCustomButton({
 				text: BX.message('DISK_FOLDER_LIST_TRASH_DELETE_BUTTON'),
-				className: "ui-btn ui-btn-success",
+				className: 'ui-btn ui-btn-success',
 				events: {
-					click: function (e) {
+					click: function(e) {
 						BX.PopupWindowManager.getCurrentPopup().destroy();
 
-						var values = {};
+						const values = {};
 						values[this.commonGrid.getActionKey()] = 'delete';
 
-						var data = {
+						const data = {
 							rows: this.commonGrid.getSelectedIds(),
-							controls: values
+							controls: values,
 						};
 
-						this.commonGrid.reload(null, data).then(function(){
+						this.commonGrid.reload(null, data).then(() => {
 							BX.PopupWindowManager.getCurrentPopup().destroy();
 						});
-					}.bind(this)
-				}
-			})
+					}.bind(this),
+				},
+			}),
 		];
 
-		var canWeDestroyAll = false;
+		const canWeDestroyAll = false;
 		// this.commonGrid.instance.getRows().getSelected().forEach(function(row) {
 		// 	if (!row.node.dataset.canDestroy)
 		// 	{
@@ -2054,35 +2086,36 @@ BX.Disk.FolderListClass = (function (){
 		{
 			buttons.push(
 				new BX.PopupWindowCustomButton({
-					text: BX.message("DISK_FOLDER_LIST_TRASH_DESTROY_BUTTON"),
+					text: BX.message('DISK_FOLDER_LIST_TRASH_DESTROY_BUTTON'),
 					events: {
-						click: function (e) {
+						click: function(e) {
 							BX.PopupWindowManager.getCurrentPopup().destroy();
 
-							var values = {};
+							const values = {};
 							values[this.commonGrid.getActionKey()] = 'destroy';
 
-							var data = {
+							const data = {
 								rows: this.commonGrid.getSelectedIds(),
-								controls: values
+								controls: values,
 							};
 
-							this.commonGrid.reload(null, data).then(function(){
+							this.commonGrid.reload(null, data).then(() => {
 								BX.PopupWindowManager.getCurrentPopup().destroy();
 							});
-						}.bind(this)
-					}
-				}));
+						}.bind(this),
+					},
+				}),
+			);
 		}
 
 		buttons.push(new BX.PopupWindowCustomButton({
 			className: 'ui-btn ui-btn-link',
 			text: BX.message('DISK_FOLDER_LIST_TRASH_CANCEL_DELETE_BUTTON'),
 			events: {
-				click: function (e) {
+				click(e) {
 					BX.PopupWindowManager.getCurrentPopup().destroy();
-				}
-			}
+				},
+			},
 		}));
 
 		BX.Disk.modalWindow({
@@ -2091,47 +2124,47 @@ BX.Disk.FolderListClass = (function (){
 			contentClassName: 'tac',
 			contentStyle: {
 				paddingTop: '70px',
-				paddingBottom: '70px'
+				paddingBottom: '70px',
 			},
 			content: messageDescription,
-			buttons: buttons
+			buttons,
 		});
 	};
 
-	FolderListClass.prototype.openConfirmDestroyGroup = function ()
+	FolderListClass.prototype.openConfirmDestroyGroup = function()
 	{
-		var messageDescription = BX.message('DISK_FOLDER_LIST_TRASH_DESTROY_GROUP_CONFIRM');
-		var buttons = [
+		const messageDescription = BX.message('DISK_FOLDER_LIST_TRASH_DESTROY_GROUP_CONFIRM');
+		const buttons = [
 			new BX.PopupWindowCustomButton({
 				text: BX.message('DISK_FOLDER_LIST_TRASH_DESTROY_BUTTON'),
-				className: "ui-btn ui-btn-success",
+				className: 'ui-btn ui-btn-success',
 				events: {
-					click: function (e) {
+					click: function(e) {
 						BX.PopupWindowManager.getCurrentPopup().destroy();
 
-						var values = {};
+						const values = {};
 						values[this.commonGrid.getActionKey()] = 'destroy';
 
-						var data = {
+						const data = {
 							rows: this.commonGrid.getSelectedIds(),
-							controls: values
+							controls: values,
 						};
 
-						this.commonGrid.reload(null, data).then(function(){
+						this.commonGrid.reload(null, data).then(() => {
 							BX.PopupWindowManager.getCurrentPopup().destroy();
 						});
-					}.bind(this)
-				}
+					}.bind(this),
+				},
 			}),
 			new BX.PopupWindowCustomButton({
 				className: 'ui-btn ui-btn-link',
 				text: BX.message('DISK_JS_BTN_CANCEL'),
 				events: {
-					click: function (e) {
+					click(e) {
 						BX.PopupWindowManager.getCurrentPopup().destroy();
-					}
-				}
-			})
+					},
+				},
+			}),
 		];
 
 		BX.Disk.modalWindow({
@@ -2139,203 +2172,257 @@ BX.Disk.FolderListClass = (function (){
 			title: BX.message('DISK_FOLDER_LIST_TRASH_DELETE_TITLE'),
 			contentClassName: 'disk-popup-text-content',
 			content: messageDescription,
-			buttons: buttons
+			buttons,
 		});
 	};
 
-	FolderListClass.prototype.downloadGroup = function ()
+	FolderListClass.prototype.downloadGroup = function()
 	{
-		var selectedRows = this.commonGrid.getSelectedIds();
-		if (!selectedRows.length)
+		const selectedRows = this.commonGrid.getSelectedIds();
+		if (selectedRows.length === 0)
 		{
 			return;
 		}
 
-		BX.ajax.runAction('disk.api.commonActions.getArchiveLink', {
-			analyticsLabel: 'folder.list',
+		BX.ajax.runAction('disk.api.commonActions.checkFileLimit', {
 			data: {
-				objectCollection: selectedRows
+				objectCollection: selectedRows,
+			},
+		}).then((response) => {
+			if (response.data.isFileLimitExceeded === false)
+			{
+				BX.ajax.runAction('disk.api.commonActions.getArchiveLink', {
+					analyticsLabel: 'folder.list',
+					data: {
+						objectCollection: selectedRows,
+					},
+				}).then((responseSecond) => {
+					this.downloadFile(responseSecond.data.downloadArchiveUri);
+				}).catch((responseSecond) => {
+					BX.Disk.showModalWithStatusAction(responseSecond);
+				});
 			}
-		}).then(function(response){
-			document.location = response.data.downloadArchiveUri;
-		}).catch(function(response){
+			else
+			{
+				this.showErrorPopup();
+			}
+		}).catch((response) => {
 			BX.Disk.showModalWithStatusAction(response);
-		}.bind(this));
+		});
 	};
 
-	FolderListClass.prototype.openConfirmCopyGroup = function ()
+	FolderListClass.prototype.checkFileLimit = async function(folderId, downloadArchiveUri)
 	{
-		var destinationFolderId;
-		var self = this;
-		var buttons = [
+		BX.ajax.runAction('disk.api.folder.checkFileLimit', {
+			data: {
+				id: folderId,
+			},
+		}).then((response) => {
+			if (response.data.isFileLimitExceeded === false)
+			{
+				this.downloadFile(downloadArchiveUri);
+			}
+			else
+			{
+				this.showErrorPopup();
+			}
+		}).catch((response) => {
+			BX.Disk.showModalWithStatusAction(response);
+		});
+	};
+
+	FolderListClass.prototype.showErrorPopup = function()
+	{
+		BX.Runtime.loadExtension('ui.dialogs.messagebox').then((exports) => {
+			exports.MessageBox.show({
+				message: BX.Loc.getMessage('DISK_FOLDER_LIST_ACT_DOWNLOAD_ERROR'),
+				buttons: exports.MessageBoxButtons.OK,
+				onOk(messageBox) {
+					messageBox.close();
+				},
+				useAirDesign: true,
+			});
+		});
+	};
+
+	FolderListClass.prototype.downloadFile = function(url)
+	{
+		window.location.href = url;
+	};
+
+	FolderListClass.prototype.openConfirmCopyGroup = function()
+	{
+		let destinationFolderId;
+		const self = this;
+		const buttons = [
 			new BX.PopupWindowCustomButton({
-				text: BX.message("DISK_FOLDER_LIST_TITLE_GRID_TOOLBAR_COPY_BUTTON"),
-				className: "ui-btn ui-btn-success",
+				text: BX.message('DISK_FOLDER_LIST_TITLE_GRID_TOOLBAR_COPY_BUTTON'),
+				className: 'ui-btn ui-btn-success',
 				events: {
-					click: function (e) {
-						if(!destinationFolderId)
+					click(e) {
+						if (!destinationFolderId)
 						{
 							return;
 						}
 
 						this.addClassName('ui-btn-clock');
 
-						var values = {};
+						const values = {};
 						values[self.commonGrid.getActionKey()] = 'copy';
-						values['destinationFolderId'] = destinationFolderId;
+						values.destinationFolderId = destinationFolderId;
 
-						var data = {
+						const data = {
 							rows: self.commonGrid.getSelectedIds(),
-							controls: values
+							controls: values,
 						};
 
-						self.commonGrid.reload(null, data).then(function(){
+						self.commonGrid.reload(null, data).then(() => {
 							BX.PopupWindowManager.getCurrentPopup().destroy();
 						});
-					}
-				}
+					},
+				},
 			}),
 			new BX.PopupWindowCustomButton({
 				text: BX.message('DISK_JS_BTN_CANCEL'),
 				className: 'ui-btn ui-btn-link',
 				events: {
-					click: function (e) {
+					click(e) {
 						BX.PopupWindowManager.getCurrentPopup().destroy();
-					}
-				}
-			})
+					},
+				},
+			}),
 		];
 
 		this.showTree({
 			title: BX.message('DISK_FOLDER_LIST_TITLE_MODAL_MANY_COPY_TO'),
-			buttons: buttons,
-			onSelect: function (targetObjectId) {
+			buttons,
+			onSelect(targetObjectId) {
 				destinationFolderId = targetObjectId;
-			}
+			},
 		});
 	};
 
-	FolderListClass.prototype.openConfirmMoveGroup = function ()
+	FolderListClass.prototype.openConfirmMoveGroup = function()
 	{
-		var destinationFolderId;
-		var self = this;
-		var buttons = [
+		let destinationFolderId;
+		const self = this;
+		const buttons = [
 			new BX.PopupWindowCustomButton({
-				text: BX.message("DISK_FOLDER_LIST_TITLE_GRID_TOOLBAR_MOVE_BUTTON"),
-				className: "ui-btn ui-btn-success",
+				text: BX.message('DISK_FOLDER_LIST_TITLE_GRID_TOOLBAR_MOVE_BUTTON'),
+				className: 'ui-btn ui-btn-success',
 				events: {
-					click: function (e) {
-						if(!destinationFolderId)
+					click(e) {
+						if (!destinationFolderId)
 						{
 							return;
 						}
 
 						this.addClassName('ui-btn-clock');
 
-						var values = {};
+						const values = {};
 						values[self.commonGrid.getActionKey()] = 'move';
-						values['destinationFolderId'] = destinationFolderId;
+						values.destinationFolderId = destinationFolderId;
 
-						var data = {
+						const data = {
 							rows: self.commonGrid.getSelectedIds(),
-							controls: values
+							controls: values,
 						};
 
-						self.commonGrid.reload(null, data).then(function(){
+						self.commonGrid.reload(null, data).then(() => {
 							BX.PopupWindowManager.getCurrentPopup().destroy();
 						});
-					}
-				}
+					},
+				},
 			}),
 			new BX.PopupWindowCustomButton({
 				text: BX.message('DISK_JS_BTN_CANCEL'),
 				className: 'ui-btn ui-btn-link',
 				events: {
-					click: function (e) {
+					click(e) {
 						BX.PopupWindowManager.getCurrentPopup().destroy();
-					}
-				}
-			})
+					},
+				},
+			}),
 		];
 
 		this.showTree({
 			title: BX.message('DISK_FOLDER_LIST_TITLE_MODAL_MANY_MOVE_TO'),
-			buttons: buttons,
-			onSelect: function (targetObjectId) {
+			buttons,
+			onSelect(targetObjectId) {
 				destinationFolderId = targetObjectId;
-			}
+			},
 		});
 	};
 
-	FolderListClass.prototype.connectObjectToDisk = function (parameters)
+	FolderListClass.prototype.connectObjectToDisk = function(parameters)
 	{
-		var name = parameters.object.name;
-		var objectId = parameters.object.id;
-		var isFolder = parameters.object.isFolder;
+		const name = parameters.object.name;
+		const objectId = parameters.object.id;
+		const isFolder = parameters.object.isFolder;
 
 		BX.Disk.ajaxPromise({
 			method: 'POST',
 			dataType: 'json',
 			url: BX.Disk.addToLinkParam(this.ajaxUrl, 'action', 'connectToUserStorage'),
 			data: {
-				objectId: objectId
-			}
-		}).then(function (response) {
+				objectId,
+			},
+		}).then((response) => {
 			if (!response)
 			{
 				return;
 			}
+
 			if (response.status == 'success')
 			{
 				this.commonGrid.getActionById(objectId, 'connect').hide = true;
 
-				var menu = this.commonGrid.getActionsMenu(objectId);
+				const menu = this.commonGrid.getActionsMenu(objectId);
 				menu.getMenuItem('connect').hide = true;
 				BX.addClass(menu.getMenuItem('connect').layout.item, 'disk-popup-menu-hidden-item');
 
 				BX.Disk.showModalWithStatusAction({
 					status: 'success',
-					message: isFolder ?
-						BX.message('DISK_FOLDER_LIST_SUCCESS_CONNECT_TO_DISK_FOLDER').replace('#NAME#', name) :
-						BX.message('DISK_FOLDER_LIST_SUCCESS_CONNECT_TO_DISK_FILE').replace('#NAME#', name)
-				})
+					message: isFolder
+						? BX.message('DISK_FOLDER_LIST_SUCCESS_CONNECT_TO_DISK_FOLDER').replace('#NAME#', name)
+						: BX.message('DISK_FOLDER_LIST_SUCCESS_CONNECT_TO_DISK_FILE').replace('#NAME#', name),
+				});
 			}
 			else
 			{
 				response.errors = response.errors || [{}];
 				BX.Disk.showModalWithStatusAction({
 					status: 'error',
-					message: response.errors.pop().message
-				})
+					message: response.errors.pop().message,
+				});
 			}
-		}.bind(this));
-
+		});
 	};
 
-	FolderListClass.prototype.unlockFile = function (parameters)
+	FolderListClass.prototype.unlockFile = function(parameters)
 	{
-		var name = parameters.object.name;
-		var objectId = parameters.object.id;
-
+		const name = parameters.object.name;
+		const objectId = parameters.object.id;
 
 		BX.Disk.ajaxPromise({
 			method: 'POST',
 			dataType: 'json',
 			url: BX.Disk.addToLinkParam(this.ajaxUrl, 'action', 'unlock'),
 			data: {
-				objectId: objectId
-			}
-		}).then(function (response) {
+				objectId,
+			},
+		}).then((response) => {
 			if (!response)
 			{
 				return;
 			}
+
 			if (response.status == 'success')
 			{
 				this.commonGrid.getActionById(objectId, 'lock').hide = false;
 				this.commonGrid.getActionById(objectId, 'unlock').hide = true;
 
-				var menu = this.commonGrid.getActionsMenu(objectId);
+				const menu = this.commonGrid.getActionsMenu(objectId);
 				menu.getMenuItem('lock').hide = false;
 				menu.getMenuItem('unlock').hide = true;
 				BX.removeClass(menu.getMenuItem('lock').layout.item, 'disk-popup-menu-hidden-item');
@@ -2348,34 +2435,35 @@ BX.Disk.FolderListClass = (function (){
 				response.errors = response.errors || [{}];
 				BX.Disk.showModalWithStatusAction({
 					status: 'error',
-					message: response.errors.pop().message
-				})
+					message: response.errors.pop().message,
+				});
 			}
-		}.bind(this));
+		});
 	};
 
-	FolderListClass.prototype.lockFile = function (parameters) {
-		var name = parameters.object.name;
-		var objectId = parameters.object.id;
+	FolderListClass.prototype.lockFile = function(parameters) {
+		const name = parameters.object.name;
+		const objectId = parameters.object.id;
 
 		BX.Disk.ajaxPromise({
 			method: 'POST',
 			dataType: 'json',
 			url: BX.Disk.addToLinkParam(this.ajaxUrl, 'action', 'lock'),
 			data: {
-				objectId: objectId
-			}
-		}).then(function (response) {
+				objectId,
+			},
+		}).then((response) => {
 			if (!response)
 			{
 				return;
 			}
+
 			if (response.status == 'success')
 			{
 				this.commonGrid.getActionById(objectId, 'unlock').hide = false;
 				this.commonGrid.getActionById(objectId, 'lock').hide = true;
 
-				var menu = this.commonGrid.getActionsMenu(objectId);
+				const menu = this.commonGrid.getActionsMenu(objectId);
 				menu.getMenuItem('unlock').hide = false;
 				menu.getMenuItem('lock').hide = true;
 				BX.removeClass(menu.getMenuItem('unlock').layout.item, 'disk-popup-menu-hidden-item');
@@ -2388,24 +2476,24 @@ BX.Disk.FolderListClass = (function (){
 				response.errors = response.errors || [{}];
 				BX.Disk.showModalWithStatusAction({
 					status: 'error',
-					message: response.errors.pop().message
-				})
+					message: response.errors.pop().message,
+				});
 			}
-		}.bind(this));
+		});
 	};
 
 	FolderListClass.prototype.showSharingIcon = function(objectId)
 	{
 		if (this.commonGrid.isTile())
 		{
-			var item = this.commonGrid.instance.getItem(objectId);
+			const item = this.commonGrid.instance.getItem(objectId);
 			item && item.markAsShared();
 		}
 		else
 		{
-			var row = this.getRow(objectId);
-			var icon = BX.findChildByClassName(row.node, 'bx-disk-file-icon', true) || BX.findChildByClassName(row.node, 'bx-disk-folder-icon', true);
-			if(icon)
+			const row = this.getRow(objectId);
+			const icon = BX.findChildByClassName(row.node, 'bx-disk-file-icon', true) || BX.findChildByClassName(row.node, 'bx-disk-folder-icon', true);
+			if (icon)
 			{
 				BX.addClass(icon, 'icon-shared shared icon-shared_1 icon-shared_2');
 			}
@@ -2416,14 +2504,14 @@ BX.Disk.FolderListClass = (function (){
 	{
 		if (this.commonGrid.isTile())
 		{
-			var item = this.commonGrid.instance.getItem(objectId);
+			const item = this.commonGrid.instance.getItem(objectId);
 			item && item.unmarkAsShared();
 		}
 		else
 		{
-			var row = this.getRow(objectId);
-			var icon = BX.findChildByClassName(row.node, 'bx-disk-file-icon', true) || BX.findChildByClassName(row.node, 'bx-disk-folder-icon', true);
-			if(icon)
+			const row = this.getRow(objectId);
+			const icon = BX.findChildByClassName(row.node, 'bx-disk-file-icon', true) || BX.findChildByClassName(row.node, 'bx-disk-folder-icon', true);
+			if (icon)
 			{
 				BX.removeClass(icon, 'icon-shared shared icon-shared_1 icon-shared_2');
 			}
@@ -2434,8 +2522,8 @@ BX.Disk.FolderListClass = (function (){
 	{
 		if (this.commonGrid.isGrid())
 		{
-			var row = this.getRow(objectId);
-			var lockIcon = BX.findChildByClassName(row.node, 'js-lock-icon', true);
+			const row = this.getRow(objectId);
+			const lockIcon = BX.findChildByClassName(row.node, 'js-lock-icon', true);
 			if (lockIcon)
 			{
 				BX.show(lockIcon, 'block');
@@ -2443,7 +2531,7 @@ BX.Disk.FolderListClass = (function (){
 		}
 		else
 		{
-			var item = this.commonGrid.instance.getItem(objectId);
+			const item = this.commonGrid.instance.getItem(objectId);
 			item.lock();
 		}
 	};
@@ -2452,16 +2540,16 @@ BX.Disk.FolderListClass = (function (){
 	{
 		if (this.commonGrid.isGrid())
 		{
-			var row = this.getRow(objectId);
-			var lockIcon = BX.findChildByClassName(row.node, 'js-lock-icon', true);
-			if(lockIcon)
+			const row = this.getRow(objectId);
+			const lockIcon = BX.findChildByClassName(row.node, 'js-lock-icon', true);
+			if (lockIcon)
 			{
 				BX.hide(lockIcon, 'block');
 			}
 		}
 		else
 		{
-			var item = this.commonGrid.instance.getItem(objectId);
+			const item = this.commonGrid.instance.getItem(objectId);
 			item.unlock();
 		}
 	};
@@ -2473,72 +2561,83 @@ BX.Disk.FolderListClass = (function (){
 		this.sort.sortBy = sortBy;
 		this.sort.direction = direction.toLowerCase();
 
+
 		this.commonGrid.sortByColumn({
 			sort_by: this.sort.sortBy,
-			sort_order: this.sort.direction
+			sort_order: this.sort.direction,
 		});
 	};
 
 	FolderListClass.prototype.showGridSortingMenu = function(event)
 	{
-		var bindElement = BX.getEventTarget(event);
-		var updateLabel = function(item) {
+		const bindElement = BX.getEventTarget(event);
+		const updateLabel = function(item) {
 			if (bindElement)
 			{
 				BX.adjust(bindElement, {
-					text: item.text
+					text: item.text,
 				});
 			}
 		};
-		var toggleActiveMark = function(item) {
+
+		const toggleActiveMark = function(item) {
 			item.layout.item.classList.toggle('menu-popup-item-accept');
 			item.layout.item.classList.toggle('menu-popup-no-icon');
 		};
 
-		var items = [];
+		const items = [];
+
 		this.sortFields.forEach(function(item) {
 			items.push({
 				title: item.label,
 				text: item.label,
 				field: item.field,
+				className: item.active ? 'menu-popup-item menu-popup-item-accept' : '',
 				onclick: function(event, item) {
-					this.sortByColumn(item.field, 'desc');
+					this.sortFields.forEach((menuItem) => menuItem.active = false);
+					const clickedField = this.sortFields.find((menuItem) => menuItem.field === item.field);
+					if (clickedField)
+					{
+						clickedField.active = true;
+					}
+
+					this.sortByColumn(item.field, this.sort.direction);
 					updateLabel(item);
 					item.menuWindow.close();
-				}.bind(this)
+				}.bind(this),
 			});
 		}, this);
 
 		items.push(
 			{
-				delimiter: true
+				delimiter: true,
 			},
 			{
 				title: BX.message('DISK_FOLDER_LIST_LABEL_SORT_INVERSE_DIRECTION'),
 				text: BX.message('DISK_FOLDER_LIST_LABEL_SORT_INVERSE_DIRECTION'),
-				className: this.sort.direction === 'desc'? 'menu-popup-item menu-popup-item-accept' : '',
+				className: this.sort.direction === 'desc' ? 'menu-popup-item menu-popup-item-accept' : '',
 				onclick: function(event, item) {
 					this.inverseSortByColumn();
 					toggleActiveMark(item);
 					item.menuWindow.close();
-				}.bind(this)
+				}.bind(this),
 			},
 			{
-				delimiter: true
+				delimiter: true,
 			},
 			{
 				title: BX.message('DISK_FOLDER_LIST_LABEL_SORT_MIX_MODE'),
 				text: BX.message('DISK_FOLDER_LIST_LABEL_SORT_MIX_MODE'),
-				className: this.sort.mix? 'menu-popup-item menu-popup-item-accept' : '',
+				className: this.sort.mix ? 'menu-popup-item menu-popup-item-accept' : '',
 				onclick: function(event, item) {
 					this.toggleMixSort();
 					toggleActiveMark(item);
 					item.menuWindow.close();
-				}.bind(this)
-			}
+				}.bind(this),
+			},
 		);
 
-		BX.PopupMenu.create(
+		const menu = BX.PopupMenu.create(
 			'disk-folder-list-sorting-menu',
 			this.sort.layout.label,
 			items,
@@ -2548,29 +2647,30 @@ BX.Disk.FolderListClass = (function (){
 				offsetTop: 0,
 				offsetLeft: 35,
 				angle: {
-					offset: 45
+					offset: 45,
 				},
 				events: {
-					onPopupClose: function ()
+					onPopupClose()
 					{
 						BX.PopupMenu.destroy('disk-folder-list-sorting-menu');
 						this.destroy();
-					}
-				}
-			}
-		).show();
+					},
+				},
+			},
+		);
+		menu.show();
 	};
 
 	FolderListClass.prototype.inverseSortByColumn = function()
 	{
-		var inverseDirection = this.sort.direction === 'desc'? 'asc' : 'desc';
+		const inverseDirection = this.sort.direction === 'desc' ? 'asc' : 'desc';
 
 		this.sortByColumn(this.sort.sortBy, inverseDirection);
 	};
 
 	FolderListClass.prototype.toggleMixSort = function()
 	{
-		if(this.sort.mix)
+		if (this.sort.mix)
 		{
 			this.disableMixSort();
 		}
@@ -2584,7 +2684,7 @@ BX.Disk.FolderListClass = (function (){
 	{
 		this.sort.mix = true;
 		this.commonGrid.reload('', {
-			sortMode: 'mix'
+			sortMode: 'mix',
 		});
 	};
 
@@ -2592,86 +2692,90 @@ BX.Disk.FolderListClass = (function (){
 	{
 		this.sort.mix = false;
 		this.commonGrid.reload('', {
-			sortMode: 'ord'
+			sortMode: 'ord',
 		});
 	};
 
-	FolderListClass.prototype.openExternalLinkDetailSettingsWithEditing = function (objectId)
+	FolderListClass.prototype.openExternalLinkDetailSettingsWithEditing = function(objectId)
 	{
 		BX.Disk.modalWindowActionLoader('disk.api.commonActions.generateExternalLink', {
 			analyticsLabel: 'folder.list',
 			id: 'bx-disk-external-link-loader',
 			postData: {
-				objectId: objectId
+				objectId,
 			},
-			afterSuccessLoad: function(response) {
+			afterSuccessLoad(response) {
 				if (!response || response.status != 'success')
 				{
 					BX.Disk.showModalWithStatusAction(response);
+
 					return;
 				}
 
-				var externalLink = new BX.Disk.Model.ExternalLink.Input({
+				const externalLink = new BX.Disk.Model.ExternalLink.Input({
 					state: response.data.externalLink,
 					data: {
-						objectId: objectId
+						objectId,
 					},
 					models: {
 						externalLinkSettings: new BX.Disk.Model.ExternalLink.Settings({
-							state: response.data.externalLink
+							state: response.data.externalLink,
 						}),
 						externalLinkDescription: new BX.Disk.Model.ExternalLink.Description({
-							state: response.data.externalLink
-						})
-					}
+							state: response.data.externalLink,
+						}),
+					},
 				});
 				externalLink.render();
+
+
 
 				BX.Disk.modalWindow({
 					modalId: 'bx-disk-external-link',
 					title: BX.message('DISK_FOLDER_LIST_TITLE_MODAL_GET_EXT_LINK'),
 					contentClassName: 'disk-popup-external-link-config',
+					className: 'disk-external-link-popup',
 					contentStyle: {},
 					events: {
-						onPopupClose: function () {
+						onPopupClose() {
 							this.destroy();
-						}
+						},
 					},
 					content: [
-						externalLink.getContainer()
+						externalLink.getContainer(),
 					],
 					buttons: [
 						new BX.PopupWindowCustomButton({
 							text: BX.message('DISK_FOLDER_LIST_BTN_SAVE'),
-							className: "ui-btn ui-btn-success",
+							className: 'ui-btn ui-btn-success',
 							events: {
-								click: function () {
+								click() {
 									externalLink.externalLinkSettings.save();
 									BX.PopupWindowManager.getCurrentPopup().close();
-									setTimeout(function(){
-										BX.Disk.showModalWithStatusAction({status: 'success'});
+									setTimeout(() => {
+										BX.Disk.showModalWithStatusAction({ status: 'success' });
 									}, 300);
-								}
-							}
+								},
+							},
 						}),
 						new BX.PopupWindowCustomButton({
 							className: 'ui-btn ui-btn-link',
 							text: BX.message('DISK_JS_BTN_CLOSE'),
 							events: {
-								click: function () {
+								click() {
 									BX.PopupWindowManager.getCurrentPopup().close();
-								}
-							}
-						})
-					]
+								},
+							},
+						}),
+					],
 				});
-			}
+			},
 		});
 	};
 
 	FolderListClass.prototype.onBeforeElementShow = function(viewer, element, status)
 	{
-		if(element.hasOwnProperty('image') || !BX.message('disk_restriction'))
+		if (element.hasOwnProperty('image') || !BX.message('disk_restriction'))
 		{
 			return;
 		}
@@ -2680,22 +2784,22 @@ BX.Disk.FolderListClass = (function (){
 		BX.PopupWindowManager.create('bx-disk-business-tools-info', null, {
 			content: BX('bx-bitrix24-business-tools-info'),
 			closeIcon: true,
-			onPopupClose: function ()
+			onPopupClose()
 			{
 				this.destroy();
 			},
 			autoHide: true,
-			zIndex: 11000
+			zIndex: 11000,
 		}).show();
 	};
 
 	FolderListClass.prototype.onIframeElementLoadDataToView = function(element, responseData)
 	{
-		if(responseData && responseData.status === "restriction" && BX('bx-bitrix24-business-tools-info'))
+		if (responseData && responseData.status === 'restriction' && BX('bx-bitrix24-business-tools-info'))
 		{
-			if(BX.CViewer && BX.CViewer.objNowInShow)
+			if (BX.CViewer && BX.CViewer.objNowInShow)
 			{
-				if(element.currentModalWindow)
+				if (element.currentModalWindow)
 				{
 					element.currentModalWindow.close();
 				}
@@ -2705,21 +2809,21 @@ BX.Disk.FolderListClass = (function (){
 			BX.PopupWindowManager.create('bx-disk-business-tools-info', null, {
 				content: BX('bx-bitrix24-business-tools-info'),
 				closeIcon: true,
-				onPopupClose: function ()
+				onPopupClose()
 				{
 					this.destroy();
 				},
 				autoHide: true,
-				zIndex: 11000
+				zIndex: 11000,
 			}).show();
 		}
 	};
 
-	FolderListClass.prototype.getExternalLink = function (objectId)
+	FolderListClass.prototype.getExternalLink = function(objectId)
 	{
-		var objectData = BX.delegate(getObjectDataId, this)(objectId);
-		var isFolder = BX.hasClass(objectData.icon, 'bx-disk-folder-icon');
-		var queryUrl = this.ajaxUrl;
+		const objectData = BX.delegate(getObjectDataId, this)(objectId);
+		const isFolder = BX.hasClass(objectData.icon, 'bx-disk-folder-icon');
+		let queryUrl = this.ajaxUrl;
 
 		queryUrl = BX.Disk.addToLinkParam(queryUrl, 'action', 'generateExternalLink');
 		queryUrl = BX.Disk.addToLinkParam(queryUrl, 'isFolder', isFolder);
@@ -2728,13 +2832,13 @@ BX.Disk.FolderListClass = (function (){
 			id: 'bx-disk-external-link-loader',
 			responseType: 'json',
 			postData: {
-				objectId: objectId
+				objectId,
 			},
-			afterSuccessLoad: BX.delegate(function(response){
-
-				if(!response || response.status != 'success')
+			afterSuccessLoad: BX.delegate(function(response) {
+				if (!response || response.status != 'success')
 				{
 					BX.Disk.showModalWithStatusAction(response);
+
 					return;
 				}
 				this.cacheExternalLinks[objectId] = response.link;
@@ -2743,213 +2847,218 @@ BX.Disk.FolderListClass = (function (){
 					modalId: 'bx-disk-external-link',
 					title: BX.message('DISK_FOLDER_LIST_TITLE_MODAL_GET_EXT_LINK'),
 					contentClassName: 'tac',
-					contentStyle: {
-					},
+					contentStyle: {},
 					events: {
-						onAfterPopupShow: function () {
-							var inputExtLink = BX('disk-get-external-link');
+						onAfterPopupShow() {
+							const inputExtLink = BX('disk-get-external-link');
 							BX.focus(inputExtLink);
-							inputExtLink.setSelectionRange(0, inputExtLink.value.length)
+							inputExtLink.setSelectionRange(0, inputExtLink.value.length);
 						},
-						onPopupClose: function () {
+						onPopupClose() {
 							this.destroy();
-						}
+						},
 					},
 					content: [
 						BX.create('label', {
 							props: {
 								className: 'bx-disk-popup-label',
-								"for": 'disk-get-external-link'
-							}
+								for: 'disk-get-external-link',
+							},
 						}),
 						BX.create('input', {
 							style: {
-								marginTop: '10px'
+								marginTop: '10px',
 							},
 							props: {
 								id: 'disk-get-external-link',
 								className: 'bx-viewer-inp',
 								type: 'text',
-								value: response.link
-							}
-						})
+								value: response.link,
+							},
+						}),
 					],
 					buttons: [
 						new BX.PopupWindowCustomButton({
 							text: BX.message('DISK_JS_BTN_CLOSE'),
 							className: 'ui-btn ui-btn-link',
 							events: {
-								click: function () {
+								click() {
 									BX.PopupWindowManager.getCurrentPopup().close();
-								}
-							}
-						})
-					]
+								},
+							},
+						}),
+					],
 
 				});
-			}, this)
+			}, this),
 		});
 
 		return false;
 	};
 
-	FolderListClass.prototype.getInternalLink = function (internalLink)
+	FolderListClass.prototype.getInternalLink = function(internalLink)
 	{
 		BX.Disk.modalWindow({
 			modalId: 'bx-disk-internal-link',
 			title: BX.message('DISK_FOLDER_LIST_ACT_COPY_INTERNAL_LINK'),
 			contentClassName: 'tac',
-			contentStyle: {
-			},
+			contentStyle: {},
 			events: {
-				onAfterPopupShow: function () {
-					var inputLink = BX('disk-get-internal-link');
+				onAfterPopupShow() {
+					const inputLink = BX('disk-get-internal-link');
 					BX.focus(inputLink);
-					inputLink.setSelectionRange(0, inputLink.value.length)
+					inputLink.setSelectionRange(0, inputLink.value.length);
 				},
-				onPopupClose: function () {
+				onPopupClose() {
 					this.destroy();
-				}
+				},
 			},
 			content: [
 				BX.create('label', {
 					props: {
 						className: 'bx-disk-popup-label',
-						"for": 'disk-get-internal-link'
-					}
+						for: 'disk-get-internal-link',
+					},
 				}),
 				BX.create('input', {
 					style: {
-						marginTop: '10px'
+						marginTop: '10px',
 					},
 					props: {
 						id: 'disk-get-internal-link',
 						className: 'bx-viewer-inp',
 						type: 'text',
-						value: internalLink
-					}
-				})
+						value: internalLink,
+					},
+				}),
 			],
 			buttons: [
 				new BX.PopupWindowCustomButton({
-					text: BX.message("DISK_JS_BTN_CLOSE"),
+					text: BX.message('DISK_JS_BTN_CLOSE'),
 					className: 'ui-btn ui-btn-link',
 					events: {
-						click: function() {
+						click() {
 							BX.PopupWindowManager.getCurrentPopup().close();
-						}
-					}
-				})
-			]
+						},
+					},
+				}),
+			],
 		});
 	};
 
 	FolderListClass.prototype.openCopyModalWindow = function(rootObject, objectToMove)
 	{
-		var targetObjectId = null;
-		var targetObjectNode = null;
+		let targetObjectId = null;
+		let targetObjectNode = null;
 
-		var modalTree = new BX.Disk.Tree.Modal(this.rootObject, {
+		const modalTree = new BX.Disk.Tree.Modal(this.rootObject, {
 			events: {
-				onSelectFolder: function(node, objectId){
-					if(!node.getAttribute('data-can-add'))
+				onSelectFolder(node, objectId) {
+					if (!node.getAttribute('data-can-add'))
 					{
 						BX.removeClass(node, 'selected');
+
 						return;
 					}
 
-					if(targetObjectNode)
+					if (targetObjectNode)
 					{
 						BX.removeClass(targetObjectNode, 'selected');
 					}
 					targetObjectId = objectId;
 					targetObjectNode = node;
 				},
-				onUnSelectFolder: function(){
+				onUnSelectFolder() {
 					targetObjectId = null;
 					targetObjectNode = null;
-				}
+				},
 			},
 			modalParameters: {
 				title: BX.message('DISK_FOLDER_LIST_TITLE_MODAL_TREE'),
 				contentTitle: BX.message('DISK_FOLDER_LIST_TITLE_MODAL_COPY_TO').replace('#NAME#', objectToMove.name),
 				buttons: [
-				new BX.PopupWindowCustomButton({
-					text: BX.message('DISK_FOLDER_LIST_TITLE_MODAL_COPY_TO_BUTTON'),
-					className: "ui-btn ui-btn-success",
-					events: {
-						click: BX.delegate(function (e) {
-							if(!targetObjectId)
-							{
-								BX.PreventDefault(e);
-								return false;
-							}
+					new BX.PopupWindowCustomButton({
+						text: BX.message('DISK_FOLDER_LIST_TITLE_MODAL_COPY_TO_BUTTON'),
+						className: 'ui-btn ui-btn-success',
+						events: {
+							click: BX.delegate(function(e) {
+								if (!targetObjectId)
+								{
+									BX.PreventDefault(e);
 
-							BX.PopupWindowManager.getCurrentPopup().close();
-							BX.PreventDefault(e);
-
-							BX.Disk.ajax({
-								method: 'POST',
-								dataType: 'json',
-								url: BX.Disk.addToLinkParam(this.ajaxUrl, 'action', 'copyTo'),
-								data: {
-									objectId: objectToMove.id,
-									targetObjectId: targetObjectId
-								},
-								onsuccess: function (data) {
-									if (!data) {
-										return;
-									}
-									if (data.status == 'success') {
-										if(data.isFolder)
-										{
-											data.message = BX.message('DISK_FOLDER_LIST_OK_FOLDER_COPIED').replace('#FOLDER#', data.name);
-										}
-										else
-										{
-											data.message = BX.message('DISK_FOLDER_LIST_OK_FILE_COPIED').replace('#FILE#', data.name);
-										}
-										data.message = data.message.replace('#TARGET_FOLDER#', data.destination.name);
-
-										BX.Disk.showModalWithStatusAction(data);
-										return;
-									}
-									BX.Disk.showModalWithStatusAction(data);
+									return false;
 								}
-							});
 
-							return false;
-						}, this)
-					}
-				}),
-				new BX.PopupWindowCustomButton({
-					text: BX.message('DISK_JS_BTN_CANCEL'),
-					className: 'ui-btn ui-btn-link',
-					events: {
-						click: function (e)
-						{
-							BX.PopupWindowManager.getCurrentPopup().destroy();
-						}
-					}
-				})
+								BX.PopupWindowManager.getCurrentPopup().close();
+								BX.PreventDefault(e);
 
-			]
-			}
+								BX.Disk.ajax({
+									method: 'POST',
+									dataType: 'json',
+									url: BX.Disk.addToLinkParam(this.ajaxUrl, 'action', 'copyTo'),
+									data: {
+										objectId: objectToMove.id,
+										targetObjectId,
+									},
+									onsuccess(data) {
+										if (!data)
+										{
+											return;
+										}
+
+										if (data.status == 'success')
+										{
+											if (data.isFolder)
+											{
+												data.message = BX.message('DISK_FOLDER_LIST_OK_FOLDER_COPIED').replace('#FOLDER#', data.name);
+											}
+											else
+											{
+												data.message = BX.message('DISK_FOLDER_LIST_OK_FILE_COPIED').replace('#FILE#', data.name);
+											}
+											data.message = data.message.replace('#TARGET_FOLDER#', data.destination.name);
+
+											BX.Disk.showModalWithStatusAction(data);
+
+											return;
+										}
+										BX.Disk.showModalWithStatusAction(data);
+									},
+								});
+
+								return false;
+							}, this),
+						},
+					}),
+					new BX.PopupWindowCustomButton({
+						text: BX.message('DISK_JS_BTN_CANCEL'),
+						className: 'ui-btn ui-btn-link',
+						events: {
+							click(e)
+							{
+								BX.PopupWindowManager.getCurrentPopup().destroy();
+							},
+						},
+					}),
+
+				],
+			},
 		});
 		modalTree.show();
 	};
 
 	FolderListClass.prototype.openMoveModalWindow = function(rootObject, objectToMove)
 	{
-		var targetObjectId = null;
-		var targetObjectNode = null;
+		let targetObjectId = null;
+		let targetObjectNode = null;
 
-		var modalTree = new BX.Disk.Tree.Modal(this.rootObject, {
+		const modalTree = new BX.Disk.Tree.Modal(this.rootObject, {
 			events: {
-				onSelectFolder: function (node, objectId) {
-					if(!node.getAttribute('data-can-add'))
+				onSelectFolder(node, objectId) {
+					if (!node.getAttribute('data-can-add'))
 					{
 						BX.removeClass(node, 'selected');
+
 						return;
 					}
 
@@ -2961,10 +3070,10 @@ BX.Disk.FolderListClass = (function (){
 					targetObjectId = objectId;
 					targetObjectNode = node;
 				},
-				onUnSelectFolder: function(){
+				onUnSelectFolder() {
 					targetObjectId = null;
 					targetObjectNode = null;
-				}
+				},
 			},
 			modalParameters: {
 				title: BX.message('DISK_FOLDER_LIST_TITLE_MODAL_TREE'),
@@ -2972,12 +3081,13 @@ BX.Disk.FolderListClass = (function (){
 				buttons: [
 					new BX.PopupWindowCustomButton({
 						text: BX.message('DISK_FOLDER_LIST_TITLE_MODAL_MOVE_TO_BUTTON'),
-						className: "ui-btn ui-btn-success",
+						className: 'ui-btn ui-btn-success',
 						events: {
-							click: BX.delegate(function (e) {
-								if(!targetObjectId)
+							click: BX.delegate(function(e) {
+								if (!targetObjectId)
 								{
 									BX.PreventDefault(e);
+
 									return false;
 								}
 
@@ -2990,10 +3100,9 @@ BX.Disk.FolderListClass = (function (){
 									url: BX.Disk.addToLinkParam(this.ajaxUrl, 'action', 'moveTo'),
 									data: {
 										objectId: objectToMove.id,
-										targetObjectId: targetObjectId
-									}
-								}).then(function (response) {
-
+										targetObjectId,
+									},
+								}).then((response) => {
 									if (this.commonGrid.isGrid())
 									{
 										this.commonGrid.instance.getRows().unselectAll();
@@ -3001,7 +3110,7 @@ BX.Disk.FolderListClass = (function (){
 									this.commonGrid.selectItemById(objectToMove.id);
 									this.commonGrid.reload();
 
-									if(response.isFolder)
+									if (response.isFolder)
 									{
 										response.message = BX.message('DISK_FOLDER_LIST_OK_FOLDER_MOVED').replace('#FOLDER#', response.name);
 									}
@@ -3011,73 +3120,180 @@ BX.Disk.FolderListClass = (function (){
 									}
 									response.message = response.message.replace('#TARGET_FOLDER#', response.destination.name);
 
-
 									BX.Disk.showModalWithStatusAction(response);
-								}.bind(this));
+								});
 
 								return false;
-							}, this)
-						}
+							}, this),
+						},
 					}),
 					new BX.PopupWindowCustomButton({
 						text: BX.message('DISK_JS_BTN_CANCEL'),
 						className: 'ui-btn ui-btn-link',
 						events: {
-							click: function (e)
+							click(e)
 							{
 								BX.PopupWindowManager.getCurrentPopup().destroy();
-							}
-						}
-					})
-				]
-			}
+							},
+						},
+					}),
+				],
+			},
 		});
 		modalTree.show();
 	};
 
+	let isChangedRights = false;
+	let storageNewRights = {};
+	let originalRights = {};
+	let detachedRights = {};
+	let moduleTasks = {};
 
-	var isChangedRights = false;
-	var storageNewRights = {};
-	var originalRights = {};
-	var detachedRights = {};
-	var moduleTasks = {};
+	let entityToNewShared = {};
+	let loadedReadOnlyEntityToNewShared = {};
+	let entityToNewSharedMaxTaskName = '';
 
-	var entityToNewShared = {};
-	var loadedReadOnlyEntityToNewShared = {};
-	var entityToNewSharedMaxTaskName = '';
-
-	FolderListClass.prototype.showSharingDetailWithChangeRights = function (params) {
-
+	FolderListClass.prototype.showSharingDetailWithChangeRights = function(params)
+	{
 		entityToNewShared = {};
 		loadedReadOnlyEntityToNewShared = {};
 
 		params = params || {};
-		var objectId = params.object.id;
+		const objectId = params.object.id;
 
 		BX.Disk.modalWindowLoader(
 			BX.Disk.addToLinkParam(this.ajaxUrl, 'action', 'showSharingDetailChangeRights'),
 			{
-				id: 'folder_list_sharing_detail_object_' + objectId,
+				id: `folder_list_sharing_detail_object_${objectId}`,
 				responseType: 'json',
 				postData: {
-					objectId: objectId
+					objectId,
 				},
-				afterSuccessLoad: BX.delegate(function(response)
-				{
-					if(response.status != 'success')
+				afterSuccessLoad: BX.delegate(function(response) {
+					if (response.status != 'success')
 					{
 						response.errors = response.errors || [{}];
 						BX.Disk.showModalWithStatusAction({
 							status: 'error',
-							message: response.errors.pop().message
-						})
+							message: response.errors.pop().message,
+						});
 					}
 
-					var objectOwner = {
+					const objectOwner = {
 						name: response.owner.name,
 						avatar: response.owner.avatar,
-						link: response.owner.link
+						link: response.owner.link,
 					};
+
+					if (response.unifiedLink)
+					{
+						const accessLevel = response.unifiedLink.availableAccessLevels.find((accessLevel) => { // eslint-disable-next-line no-mixed-spaces-and-tabs
+							return accessLevel.value === response.unifiedLink.currentAccessLevel;
+						});
+
+						const accessLevelNode = BX.create('span', {
+							props: {
+								className: 'bx-disk-filepage-used-people-permission',
+							},
+							text: accessLevel.name,
+						});
+
+						const menuId = 'disk_open_menu_with_rights';
+
+						accessLevelNode.addEventListener('click', (event) => {
+							const menuId = 'access-level-menu';
+							const menuItems = response.unifiedLink.availableAccessLevels.map((accessLevel) => {
+								return {
+									id: accessLevel.value,
+									text: accessLevel.name,
+									onclick() {
+										accessLevelNode.textContent = accessLevel.name;
+										if (entityToNewShared.unifiedLink.currentAccessLevel !== accessLevel.value)
+										{
+											entityToNewShared.unifiedLink.newAccessLevel = accessLevel.value;
+										}
+										BX.PopupMenu.destroy(menuId);
+									},
+								};
+							});
+
+							BX.PopupMenu.show(menuId, event.target, menuItems, {
+								autoHide: true,
+								offsetTop: 0,
+								offsetLeft: 0,
+								angle: {
+									position: 'top',
+									offset: 45,
+								},
+								autoHide: true,
+								overlay: {
+									opacity: 0.01,
+								},
+								events: {
+									onPopupClose() {
+										BX.PopupMenu.destroy(menuId);
+									},
+								},
+							});
+						});
+
+						var unifiedLinkElement = BX.create('table', {
+							props: {
+								id: 'bx-disk-popup-shared-universal-list',
+								className: 'bx-disk-popup-shared-people-list',
+							},
+							children: [
+								BX.create('thead', {
+									children: [
+										BX.create('tr', {
+											children: [
+												BX.create('td', {
+													props: { className: 'bx-disk-popup-shared-people-list-head-col1' },
+												}),
+												BX.create('td', {
+													props: { className: 'bx-disk-popup-shared-people-list-head-col2' },
+													text: BX.message('DISK_FOLDER_LIST_SHARING_LABEL_NAME_RIGHTS'),
+												}),
+												BX.create('td', {
+													props: { className: 'bx-disk-popup-shared-people-list-head-col3' },
+												}),
+											],
+										}),
+										BX.create('tr', {
+											children: [
+												BX.create('td', {
+													props: { className: 'bx-disk-popup-shared-people-list-head-col1' },
+													children: [
+														BX.create('span', {
+															props: { className: 'bx-disk-filepage-used-people-link' },
+															children: [
+																BX.create('span', {
+																	props: {
+																		className: 'bx-disk-filepage-used-people-avatar link',
+																		style: '--ui-icon-set__icon-size: 15px;',
+																	},
+																}),
+																BX.create('span', {
+																	text: BX.message('DISK_FOLDER_LIST_UNIFIED_RIGHT_USERS'),
+																}),
+															],
+														}),
+													],
+												}),
+												BX.create('td', {
+													props: { className: 'bx-disk-popup-shared-people-list-head-col2' },
+													children: [accessLevelNode],
+												}),
+												BX.create('td', {
+													props: { className: 'bx-disk-popup-shared-people-list-head-col3' },
+												}),
+											],
+										}),
+									],
+								}),
+							],
+						});
+					}
 
 					BX.Disk.modalWindow({
 						modalId: 'bx-disk-detail-sharing-folder-change-right',
@@ -3085,12 +3301,13 @@ BX.Disk.FolderListClass = (function (){
 						contentClassName: '',
 						contentStyle: {},
 						events: {
-							onAfterPopupShow: BX.delegate(function () {
-
+							onAfterPopupShow: BX.delegate(function() {
 								BX.addCustomEvent('onChangeRightOfSharing', BX.proxy(this.onChangeRightOfSharing, this));
 
-								for (var i in response.members) {
-									if (!response.members.hasOwnProperty(i)) {
+								for (const i in response.members)
+								{
+									if (!response.members.hasOwnProperty(i))
+									{
 										continue;
 									}
 
@@ -3098,102 +3315,118 @@ BX.Disk.FolderListClass = (function (){
 										item: {
 											id: response.members[i].entityId,
 											name: response.members[i].name,
-											avatar: response.members[i].avatar
+											avatar: response.members[i].avatar,
 										},
 										type: response.members[i].type,
-										right: response.members[i].right
+										right: response.members[i].right,
 									};
 								}
 
+								if (response.unifiedLink)
+								{
+									entityToNewShared.unifiedLink = response.unifiedLink;
+								}
+
 								BX.SocNetLogDestination.init({
-									name : this.destFormName,
-									searchInput : BX('feed-add-post-destination-input'),
-									bindMainPopup : { 'node' : BX('feed-add-post-destination-container'), 'offsetTop' : '5px', 'offsetLeft': '15px'},
-									bindSearchPopup : { 'node' : BX('feed-add-post-destination-container'), 'offsetTop' : '5px', 'offsetLeft': '15px'},
-									callback : {
-										select : BX.proxy(this.onSelectDestination, this),
-										unSelect : BX.proxy(this.onUnSelectDestination, this),
-										openDialog : BX.proxy(this.onOpenDialogDestination, this),
-										closeDialog : BX.proxy(this.onCloseDialogDestination, this),
-										openSearch : BX.proxy(this.onOpenSearchDestination, this),
-										closeSearch : BX.proxy(this.onCloseSearchDestination, this)
+									name: this.destFormName,
+									searchInput: BX('feed-add-post-destination-input'),
+									bindMainPopup: {
+										node: BX('feed-add-post-destination-container'),
+										offsetTop: '5px',
+										offsetLeft: '15px',
+									},
+									bindSearchPopup: {
+										node: BX('feed-add-post-destination-container'),
+										offsetTop: '5px',
+										offsetLeft: '15px',
+									},
+									callback: {
+										select: BX.proxy(this.onSelectDestination, this),
+										unSelect: BX.proxy(this.onUnSelectDestination, this),
+										openDialog: BX.proxy(this.onOpenDialogDestination, this),
+										closeDialog: BX.proxy(this.onCloseDialogDestination, this),
+										openSearch: BX.proxy(this.onOpenSearchDestination, this),
+										closeSearch: BX.proxy(this.onCloseSearchDestination, this),
 									},
 									items: response.destination.items,
 									itemsLast: response.destination.itemsLast,
-									itemsSelected : response.destination.itemsSelected
+									itemsSelected: response.destination.itemsSelected,
 								});
 
-								var BXSocNetLogDestinationFormName = this.destFormName;
-								BX.bind(BX('feed-add-post-destination-container'), 'click', function(e){BX.SocNetLogDestination.openDialog(BXSocNetLogDestinationFormName);BX.PreventDefault(e); });
+								const BXSocNetLogDestinationFormName = this.destFormName;
+								BX.bind(BX('feed-add-post-destination-container'), 'click', (e) => {
+									BX.SocNetLogDestination.openDialog(BXSocNetLogDestinationFormName);
+									BX.PreventDefault(e);
+								});
 								BX.bind(BX('feed-add-post-destination-input'), 'keyup', BX.proxy(this.onKeyUpDestination, this));
 								BX.bind(BX('feed-add-post-destination-input'), 'keydown', BX.proxy(this.onKeyDownDestination, this));
-
 							}, this),
-							onPopupClose: BX.delegate(function () {
-								if(BX.SocNetLogDestination && BX.SocNetLogDestination.isOpenDialog())
+							onPopupClose: BX.delegate(function() {
+								if (BX.SocNetLogDestination && BX.SocNetLogDestination.isOpenDialog())
 								{
-									BX.SocNetLogDestination.closeDialog()
+									BX.SocNetLogDestination.closeDialog();
 								}
 								BX.removeCustomEvent('onChangeRightOfSharing', BX.proxy(this.onChangeRightOfSharing, this));
 								BX.proxy_context.destroy();
-							}, this)
+							}, this),
 						},
 						content: [
 							BX.create('div', {
 								props: {
-									className: 'bx-disk-popup-content'
+									className: 'bx-disk-popup-content',
 								},
 								children: [
 									BX.create('table', {
 										props: {
-											className: 'bx-disk-popup-shared-people-list'
+											className: 'bx-disk-popup-shared-people-list',
 										},
 										children: [
 											BX.create('thead', {
-												html: '<tr>' +
-													'<td class="bx-disk-popup-shared-people-list-head-col1">' + BX.message('DISK_FOLDER_LIST_SHARING_LABEL_OWNER') + '</td>' +
-												'</tr>'
+												html: '<tr>'
+													+ `<td class="bx-disk-popup-shared-people-list-head-col1">${BX.message('DISK_FOLDER_LIST_SHARING_LABEL_OWNER')}</td>`
+													+ '</tr>',
 											}),
 											BX.create('tr', {
-												html: '<tr>' +
-													'<td class="bx-disk-popup-shared-people-list-col1" style="border-bottom: none;"><a class="bx-disk-filepage-used-people-link" href="' + objectOwner.link + '"><span class="bx-disk-filepage-used-people-avatar" style="background-image: url(\'' + encodeURI(objectOwner.avatar) + '\');"></span>' + BX.util.htmlspecialchars(objectOwner.name) + '</a></td>' +
-												'</tr>'
-											})
-										]
+												html: '<tr>'
+													+ `<td class="bx-disk-popup-shared-people-list-col1" style="border-bottom: none;"><a class="bx-disk-filepage-used-people-link" href="${objectOwner.link}"><span class="bx-disk-filepage-used-people-avatar" style="background-image: url('${encodeURI(objectOwner.avatar)}');"></span>${BX.util.htmlspecialchars(objectOwner.name)}</a></td>`
+													+ '</tr>',
+											}),
+										],
 									}),
+									unifiedLinkElement,
 									BX.create('table', {
 										props: {
 											id: 'bx-disk-popup-shared-people-list',
-											className: 'bx-disk-popup-shared-people-list'
+											className: 'bx-disk-popup-shared-people-list',
 										},
 										children: [
 											BX.create('thead', {
-												html: '<tr>' +
-													'<td class="bx-disk-popup-shared-people-list-head-col1">' + BX.message('DISK_FOLDER_LIST_SHARING_LABEL_NAME_RIGHTS_USER') + '</td>' +
-													'<td class="bx-disk-popup-shared-people-list-head-col2">' + BX.message('DISK_FOLDER_LIST_SHARING_LABEL_NAME_RIGHTS') + '</td>' +
-													'<td class="bx-disk-popup-shared-people-list-head-col3"></td>' +
-												'</tr>'
-											})
-										]
+												html: '<tr>'
+													+ `<td class="bx-disk-popup-shared-people-list-head-col1">${BX.message('DISK_FOLDER_LIST_SHARING_LABEL_NAME_RIGHTS_USER')}</td>`
+													+ `<td class="bx-disk-popup-shared-people-list-head-col2">${BX.message('DISK_FOLDER_LIST_SHARING_LABEL_NAME_RIGHTS')}</td>`
+													+ '<td class="bx-disk-popup-shared-people-list-head-col3"></td>'
+													+ '</tr>',
+											}),
+										],
 									}),
 									BX.create('div', {
 										props: {
 											id: 'feed-add-post-destination-container',
-											className: 'feed-add-post-destination-wrap'
+											className: 'feed-add-post-destination-wrap',
 										},
 										children: [
 											BX.create('span', {
 												props: {
-													className: 'feed-add-post-destination-item'
-												}
+													className: 'feed-add-post-destination-item',
+												},
 											}),
 											BX.create('span', {
 												props: {
 													id: 'feed-add-post-destination-input-box',
-													className: 'feed-add-destination-input-box'
+													className: 'feed-add-destination-input-box',
 												},
 												style: {
-													background: 'transparent'
+													background: 'transparent',
 												},
 												children: [
 													BX.create('input', {
@@ -3201,57 +3434,67 @@ BX.Disk.FolderListClass = (function (){
 															type: 'text',
 															value: '',
 															id: 'feed-add-post-destination-input',
-															className: 'feed-add-destination-inp'
-														}
-													})
-												]
+															className: 'feed-add-destination-inp',
+														},
+													}),
+												],
 											}),
 											BX.create('a', {
 												props: {
 													href: '#',
 													id: 'bx-destination-tag',
-													className: 'feed-add-destination-link'
+													className: 'feed-add-destination-link',
 												},
 												style: {
-													background: 'transparent'
+													background: 'transparent',
 												},
 												text: BX.message('DISK_FOLDER_LIST_SHARING_LABEL_NAME_ADD_RIGHTS_USER'),
 												events: {
-													click: BX.delegate(function () {
-													}, this)
-												}
-											})
-										]
-									})
-								]
-							})
+													click: BX.delegate(() => {}, this),
+												},
+											}),
+										],
+									}),
+								],
+							}),
 						],
 						buttons: [
 							new BX.PopupWindowCustomButton({
 								text: BX.message('DISK_FOLDER_LIST_BTN_SAVE'),
-								className: "ui-btn ui-btn-success",
+								className: 'ui-btn ui-btn-success',
 								events: {
-									click: BX.delegate(function () {
-
+									click: BX.delegate(function() {
 										BX.Disk.ajax({
 											method: 'POST',
 											dataType: 'json',
 											url: BX.Disk.addToLinkParam(this.ajaxUrl, 'action', 'changeSharingAndRights'),
 											data: {
-												objectId: objectId,
-												entityToNewShared: entityToNewShared
+												objectId,
+												entityToNewShared,
 											},
-											onsuccess: BX.delegate(function (response) {
-												if (!response) {
+											onsuccess: BX.delegate(function(response) {
+												if (!response)
+												{
 													return;
 												}
-												if(params.object.isFolder)
+
+												if (params.object.isFolder)
 												{
 													response.message = BX.message('DISK_FOLDER_LIST_OK_FOLDER_SHARE_MODIFIED').replace('#FOLDER#', params.object.name);
 												}
 												else
 												{
-													response.message = BX.message('DISK_FOLDER_LIST_OK_FILE_SHARE_MODIFIED').replace('#FILE#', params.object.name);
+													let name = params.object.name.split('.');
+													const ext = name.pop().toLowerCase();
+													name = name.join('.');
+													if (name && ext === 'board')
+													{
+														response.message = BX.message('DISK_FOLDER_LIST_OK_BOARD_SHARE_MODIFIED').replace('#FILE#', name);
+													}
+													else
+													{
+														response.message = BX.message('DISK_FOLDER_LIST_OK_FILE_SHARE_MODIFIED').replace('#FILE#', params.object.name);
+													}
 												}
 												BX.Disk.showModalWithStatusAction(response);
 												this.showSharingIcon(objectId);
@@ -3269,27 +3512,26 @@ BX.Disk.FolderListClass = (function (){
 												// 		BX.addClass(icon, 'icon-shared icon-shared_2 shared');
 												// 	}
 												// }
-											}, this)
+											}, this),
 										});
 
 										BX.PopupWindowManager.getCurrentPopup().close();
-									}, this)
-								}
+									}, this),
+								},
 							}),
 							new BX.PopupWindowCustomButton({
 								text: BX.message('DISK_JS_BTN_CANCEL'),
 								className: 'ui-btn ui-btn-link',
 								events: {
-									click: function (e)
-									{
+									click(e) {
 										BX.PopupWindowManager.getCurrentPopup().destroy();
-									}
-								}
-							})
-						]
+									},
+								},
+							}),
+						],
 					});
-				}, this)
-			}
+				}, this),
+			},
 		);
 	};
 
@@ -3297,41 +3539,45 @@ BX.Disk.FolderListClass = (function (){
 	{
 		item = item || {};
 
-		return (item.provider? item.provider + ': ' : '') + item.name;
+		return (item.provider ? `${item.provider}: ` : '') + item.name;
 	}
 
-	FolderListClass.prototype.showRights = function (params)
+	FolderListClass.prototype.showRights = function(params)
 	{
 		params = params || {};
-		var objectId = params.object.id;
-		var rights = {};
+		const objectId = params.object.id;
+		const rights = {};
 
 		BX.Disk.modalWindowLoader(
 			BX.Disk.addToLinkParam(this.ajaxUrl, 'action', 'showRightsDetail'),
 			{
-				id: 'folder_list_sharing_detail_object_' + objectId,
+				id: `folder_list_sharing_detail_object_${objectId}`,
 				responseType: 'json',
 				postData: {
-					objectId: objectId
+					objectId,
 				},
 				afterSuccessLoad: BX.delegate(function(response)
 				{
-					if(response.status != 'success')
+					if (response.status != 'success')
 					{
 						response.errors = response.errors || [{}];
 						BX.Disk.showModalWithStatusAction({
 							status: 'error',
-							message: response.errors.pop().message
-						})
+							message: response.errors.pop().message,
+						});
 					}
 
-					for (var i in response.rights) {
-						if (!response.rights.hasOwnProperty(i)) {
+					for (const i in response.rights)
+					{
+						if (!response.rights.hasOwnProperty(i))
+						{
 							continue;
 						}
-						var rightsByAccessCode = response.rights[i];
-						for (var j in rightsByAccessCode) {
-							if (!rightsByAccessCode.hasOwnProperty(j)) {
+						const rightsByAccessCode = response.rights[i];
+						for (const j in rightsByAccessCode)
+						{
+							if (!rightsByAccessCode.hasOwnProperty(j))
+							{
 								continue;
 							}
 
@@ -3340,12 +3586,12 @@ BX.Disk.FolderListClass = (function (){
 								item: {
 									id: i,
 									name: showAccessCodeFullName(response.accessCodeNames[i]),
-									avatar: null
+									avatar: null,
 								},
 								type: 'group',
 								right: {
-									title: rightsByAccessCode[j].TASK.TITLE
-								}
+									title: rightsByAccessCode[j].TASK.TITLE,
+								},
 							};
 						}
 					}
@@ -3355,164 +3601,169 @@ BX.Disk.FolderListClass = (function (){
 						title: BX.message('DISK_FOLDER_LIST_SHARING_TITLE_MODAL_3'),
 						contentClassName: '',
 						contentStyle: {
-							//paddingTop: '30px',
-							//paddingBottom: '70px'
+							// paddingTop: '30px',
+							// paddingBottom: '70px'
 						},
 						events: {
-							onAfterPopupShow: BX.delegate(function () {
-								for (var i in rights) {
-									if (!rights.hasOwnProperty(i)) {
+							onAfterPopupShow: BX.delegate(() => {
+								for (const i in rights)
+								{
+									if (!rights.hasOwnProperty(i))
+									{
 										continue;
 									}
 									BX.Disk.appendRight(rights[i]);
-
 								}
-
 							}, this),
-							onPopupClose: BX.delegate(function () {
+							onPopupClose: BX.delegate(() => {
 								BX.proxy_context.destroy();
-							}, this)
+							}, this),
 						},
 						content: [
 							BX.create('div', {
 								props: {
-									className: 'bx-disk-popup-content'
+									className: 'bx-disk-popup-content',
 								},
 								children: [
 									BX.create('table', {
 										props: {
 											id: 'bx-disk-popup-shared-people-list',
-											className: 'bx-disk-popup-shared-people-list'
+											className: 'bx-disk-popup-shared-people-list',
 										},
 										children: [
 											BX.create('thead', {
-												html: '<tr>' +
-													'<td class="bx-disk-popup-shared-people-list-head-col1">' + BX.message('DISK_FOLDER_LIST_SHARING_LABEL_NAME_RIGHTS_USER') + '</td>' +
-													'<td class="bx-disk-popup-shared-people-list-head-col2">' + BX.message('DISK_FOLDER_LIST_SHARING_LABEL_NAME_RIGHTS') + '</td>' +
-													'<td class="bx-disk-popup-shared-people-list-head-col3"></td>' +
-												'</tr>'
-											})
-										]
+												html: '<tr>'
+													+ `<td class="bx-disk-popup-shared-people-list-head-col1">${BX.message('DISK_FOLDER_LIST_SHARING_LABEL_NAME_RIGHTS_USER')}</td>`
+													+ `<td class="bx-disk-popup-shared-people-list-head-col2">${BX.message('DISK_FOLDER_LIST_SHARING_LABEL_NAME_RIGHTS')}</td>`
+													+ '<td class="bx-disk-popup-shared-people-list-head-col3"></td>'
+												+ '</tr>',
+											}),
+										],
 									}),
 									BX.create('a', {
 										text: BX.message('DISK_FOLDER_TOOLBAR_BTN_CREATE_FOLDER'),
 										props: {
 											id: 'bx-disk-destination-object-modal',
-											className: 'bx-disk-btn bx-disk-btn-big bx-disk-btn-transparent border'
+											className: 'bx-disk-btn bx-disk-btn-big bx-disk-btn-transparent border',
 										},
 										events: {
-											click: BX.delegate(function () {
-											}, this)
+											click: BX.delegate(() => {}, this),
 										},
 										children: [
 											BX.create('span', {
 												props: {
-													className: 'bx-disk-btn-icon bx-disk-btn-icon-plus'
-												}
+													className: 'bx-disk-btn-icon bx-disk-btn-icon-plus',
+												},
 											}),
-											BX.message('DISK_FOLDER_LIST_SHARING_LABEL_NAME_ADD_RIGHTS_USER')
-										]
+											BX.message('DISK_FOLDER_LIST_SHARING_LABEL_NAME_ADD_RIGHTS_USER'),
+										],
 									}),
 									BX.create('div', {
 										html:
-												'<span class="feed-add-destination-input-box" id="feed-add-post-destination-input-box">' +
-													'<input autocomplete="nope" type="text" value="" class="feed-add-destination-inp" id="feed-add-post-destination-input"/>' +
-												'</span>'
-									})
-								]
-							})
+												'<span class="feed-add-destination-input-box" id="feed-add-post-destination-input-box">'
+													+ '<input autocomplete="nope" type="text" value="" class="feed-add-destination-inp" id="feed-add-post-destination-input"/>'
+												+ '</span>',
+									}),
+								],
+							}),
 						],
-						buttons: []
+						buttons: [],
 					});
-				}, this)
-			}
+				}, this),
+			},
 		);
-
 	};
 
-	FolderListClass.prototype.showRightsOnStorage = function ()
+	FolderListClass.prototype.showRightsOnStorage = function()
 	{
 		storageNewRights = {};
-		var storageId = this.storage.id;
-		var rights = {};
+		const storageId = this.storage.id;
+		const rights = {};
 
 		BX.Disk.modalWindowLoader(
 			BX.Disk.addToLinkParam(this.ajaxUrl, 'action', 'showRightsOnStorageDetail'),
 			{
-				id: 'folder_list_rights_detail_storage_' + storageId,
+				id: `folder_list_rights_detail_storage_${storageId}`,
 				responseType: 'json',
 				postData: {
-					storageId: storageId
+					storageId,
 				},
 				afterSuccessLoad: BX.delegate(function(response, windowLoader)
 				{
 					windowLoader && windowLoader.close();
 
-					if(response.status !== 'success')
+					if (response.status !== 'success')
 					{
 						response.errors = response.errors || [{}];
 						BX.Disk.showModalWithStatusAction({
 							status: 'error',
-							message: response.errors.pop().message
+							message: response.errors.pop().message,
 						});
 
 						return;
 					}
 
-					if(BX.Disk.isEmptyObject(moduleTasks))
+					if (BX.Disk.isEmptyObject(moduleTasks))
 					{
 						moduleTasks = BX.clone(response.tasks, true);
 						BX.Disk.setModuleTasks(moduleTasks);
 					}
 
-					for (var i in response.rights) {
-						if (!response.rights.hasOwnProperty(i)) {
+					for (const i in response.rights)
+					{
+						if (!response.rights.hasOwnProperty(i))
+						{
 							continue;
 						}
-						var rightsByAccessCode = response.rights[i];
-						for (var j in rightsByAccessCode) {
-							if (!rightsByAccessCode.hasOwnProperty(j)) {
+						const rightsByAccessCode = response.rights[i];
+						for (const j in rightsByAccessCode)
+						{
+							if (!rightsByAccessCode.hasOwnProperty(j))
+							{
 								continue;
 							}
 
 							rights[i] = {
-								readOnly: !!rightsByAccessCode[j].READ_ONLY,
+								readOnly: Boolean(rightsByAccessCode[j].READ_ONLY),
 								item: {
 									id: i,
 									name: showAccessCodeFullName(response.accessCodeNames[i]),
-									avatar: null
+									avatar: null,
 								},
 								type: 'group',
 								right: {
 									title: rightsByAccessCode[j].TASK.TITLE,
-									id: rightsByAccessCode[j].TASK.ID
-								}
+									id: rightsByAccessCode[j].TASK.ID,
+								},
 							};
 						}
 					}
-					var showExtendedRights = !!response.showExtendedRights;
-					var showSystemFolderCheckbox = response.systemFolders.show;
+					const showExtendedRights = Boolean(response.showExtendedRights);
+					const showSystemFolderCheckbox = response.systemFolders.show;
 					var modalWindow = BX.Disk.modalWindow({
 						modalId: 'bx-disk-detail-sharing-folder-change-right',
-						title: BX.message('DISK_FOLDER_LIST_RIGHTS_TITLE_MODAL_WITH_NAME'). replace('#OBJECT#', response.storage.name),
+						title: BX.message('DISK_FOLDER_LIST_RIGHTS_TITLE_MODAL_WITH_NAME').replace('#OBJECT#', response.storage.name),
 						withoutWindowManager: true,
 						contentClassName: '',
 						contentStyle: {
-							//paddingTop: '30px',
-							//paddingBottom: '70px'
+							// paddingTop: '30px',
+							// paddingBottom: '70px'
 						},
 						events: {
-							onAfterPopupShow: BX.delegate(function () {
+							onAfterPopupShow: BX.delegate(function() {
 								storageNewRights = BX.clone(rights, true);
 								isChangedRights = false;
 
 								BX.Access.Init({
-									groups: { disabled: this.isBitrix24 }
+									groups: { disabled: this.isBitrix24 },
 								});
-								var startValue = {};
-								for (var key in storageNewRights) {
-									if(!storageNewRights.hasOwnProperty(key))
-										continue;
+								const startValue = {};
+								for (const key in storageNewRights)
+								{
+									if (!storageNewRights.hasOwnProperty(key))
+									
+									{ continue;
+									}
 
 									storageNewRights[key].isBitrix24 = this.isBitrix24;
 									BX.Disk.appendSystemRight(storageNewRights[key]);
@@ -3521,79 +3772,79 @@ BX.Disk.FolderListClass = (function (){
 								BX.addCustomEvent('onChangeSystemRight', BX.proxy(this.onChangeSystemRight, this));
 								BX.addCustomEvent('onDetachSystemRight', BX.proxy(this.onDetachSystemRight, this));
 
-								BX.bind(BX('feed-add-post-destination-container'), 'click', BX.delegate(function(e){
-									var startValue = {};
-									for (var key in storageNewRights) {
-										if(!storageNewRights.hasOwnProperty(key))
-											continue;
+								BX.bind(BX('feed-add-post-destination-container'), 'click', BX.delegate(function(e) {
+									const startValue = {};
+									for (const key in storageNewRights)
+									{
+										if (!storageNewRights.hasOwnProperty(key))
+										
+										{ continue;
+										}
 										startValue[key] = true;
 									}
 									BX.Access.SetSelected(startValue);
 
-
 									BX.Access.ShowForm({
 										showSelected: true,
-										callback: BX.delegate(function (arRights){
-											var res = [];
-											for (var provider in arRights) {
-												for (var id in arRights[provider]) {
+										callback: BX.delegate(function(arRights) {
+											const res = [];
+											for (const provider in arRights)
+											{
+												for (const id in arRights[provider])
+												{
 													res.push(arRights[provider][id]);
 													this.onSelectSystemRight(arRights[provider][id], provider);
 												}
 											}
-										}, this)
+										}, this),
 									});
 
 									return BX.PreventDefault(e);
 								}, this));
-
-
 							}, this),
-							onPopupClose: BX.delegate(function () {
-
+							onPopupClose: BX.delegate(function() {
 								BX.removeCustomEvent('onChangeSystemRight', BX.proxy(this.onChangeRight, this));
-
-							}, this)
+							}, this),
 						},
 						content: [
 							BX.create('div', {
 								props: {
-									className: 'bx-disk-popup-content'
+									className: 'bx-disk-popup-content',
 								},
 								children: [
 									BX.create('table', {
 										props: {
 											id: 'bx-disk-popup-shared-people-list',
-											className: 'bx-disk-popup-shared-people-list'
+											className: 'bx-disk-popup-shared-people-list',
 										},
 										children: [
 											BX.create('thead', {
-												html: '<tr>' +
-													'<td class="bx-disk-popup-shared-people-list-head-col1">' + BX.message('DISK_FOLDER_LIST_SHARING_LABEL_NAME_RIGHTS_USER') + '</td>' +
-													'<td class="bx-disk-popup-shared-people-list-head-col2">' + BX.message('DISK_FOLDER_LIST_SHARING_LABEL_NAME_RIGHTS') + '</td>' +
-													'<td class="bx-disk-popup-shared-people-list-head-col3"></td>' +
-												'</tr>'
-											})
-										]
+												html: '<tr>'
+													+ `<td class="bx-disk-popup-shared-people-list-head-col1">${BX.message('DISK_FOLDER_LIST_SHARING_LABEL_NAME_RIGHTS_USER')}</td>`
+													+ `<td class="bx-disk-popup-shared-people-list-head-col2">${BX.message('DISK_FOLDER_LIST_SHARING_LABEL_NAME_RIGHTS')}</td>`
+													+ '<td class="bx-disk-popup-shared-people-list-head-col3"></td>'
+												+ '</tr>',
+											}),
+										],
 									}),
 									BX.create('div', {
 										props: {
 											id: 'feed-add-post-destination-container',
-											className: 'feed-add-post-destination-wrap'
+											className: 'feed-add-post-destination-wrap',
 										},
 										children: [
 											BX.create('span', {
 												props: {
-													className: 'feed-add-post-destination-item'
-												}
+													className: 'feed-add-post-destination-item',
+												},
 											}),
 											BX.create('span', {
 												props: {
 													id: 'feed-add-post-destination-input-box',
-													className: 'feed-add-destination-input-box'
+													className: 'feed-add-destination-input-box',
 												},
 												style: {
-													background: 'transparent'
+													background: 'transparent',
 												},
 												children: [
 													BX.create('input', {
@@ -3601,140 +3852,142 @@ BX.Disk.FolderListClass = (function (){
 															type: 'text',
 															value: '',
 															id: 'feed-add-post-destination-input',
-															className: 'feed-add-destination-inp'
-														}
-													})
-												]
+															className: 'feed-add-destination-inp',
+														},
+													}),
+												],
 											}),
 											BX.create('a', {
 												props: {
 													href: '#',
 													id: 'bx-destination-tag',
-													className: 'feed-add-destination-link'
+													className: 'feed-add-destination-link',
 												},
 												style: {
-													background: 'transparent'
+													background: 'transparent',
 												},
 												text: BX.message('DISK_FOLDER_LIST_SHARING_LABEL_NAME_ADD_RIGHTS_USER'),
 												events: {
-													click: BX.delegate(function () {
-													}, this)
-												}
-											})
-										]
+													click: BX.delegate(() => {}, this),
+												},
+											}),
+										],
 									}),
 									BX.create('div', {
 										style: {
 											marginTop: '27px',
-											marginBottom: '20px'
+											marginBottom: '20px',
 										},
 										html:
-											'<div><input type="checkbox" ' + (showExtendedRights? 'checked="checked"' : '') + ' id="showExtendedRights"/><label for="showExtendedRights">' + BX.message("DISK_FOLDER_LIST_LABEL_SHOW_EXTENDED_RIGHTS") + '</label></div>' +
-											(showSystemFolderCheckbox ? '<div><input type="checkbox" id="setRightsOnPseudoSystemFolders"/><label for="setRightsOnPseudoSystemFolders">' + BX.message("DISK_FOLDER_LIST_LABEL_CHANGE_SYSTEM_FOLDERS").replace('#FOLDERS#', response.systemFolders.names.join(', ')) + '</label></div>' : '')
-									})
-								]
-							})
+											`<div><input type="checkbox" ${showExtendedRights ? 'checked="checked"' : ''} id="showExtendedRights"/><label for="showExtendedRights">${BX.message('DISK_FOLDER_LIST_LABEL_SHOW_EXTENDED_RIGHTS')}</label></div>${
+											showSystemFolderCheckbox ? `<div><input type="checkbox" id="setRightsOnPseudoSystemFolders"/><label for="setRightsOnPseudoSystemFolders">${BX.message('DISK_FOLDER_LIST_LABEL_CHANGE_SYSTEM_FOLDERS').replace('#FOLDERS#', response.systemFolders.names.join(', '))}</label></div>` : ''}`,
+									}),
+								],
+							}),
 						],
 						buttons: [
 							new BX.PopupWindowCustomButton({
 								text: BX.message('DISK_FOLDER_LIST_BTN_SAVE'),
-								className: "ui-btn ui-btn-success",
+								className: 'ui-btn ui-btn-success',
 								events: {
-									click: BX.delegate(function () {
-
+									click: BX.delegate(function() {
 										BX.Disk.ajax({
 											method: 'POST',
 											dataType: 'json',
 											url: BX.Disk.addToLinkParam(this.ajaxUrl, 'action', 'saveRightsOnStorage'),
 											data: {
-												isChangedRights: isChangedRights? 1 : 0,
-												showExtendedRights: BX('showExtendedRights').checked? 1 : 0,
-												storageId: storageId,
-												storageNewRights: storageNewRights
+												isChangedRights: isChangedRights ? 1 : 0,
+												showExtendedRights: BX('showExtendedRights').checked ? 1 : 0,
+												storageId,
+												storageNewRights,
 											},
-											onsuccess: BX.delegate(function (response) {
-												if (!response) {
+											onsuccess: BX.delegate((response) => {
+												if (!response)
+												{
 													return;
 												}
 												BX.Disk.showModalWithStatusAction(response);
 												document.location.reload();
-											}, this)
+											}, this),
 										});
 
-										if(!!modalWindow)
+										if (modalWindow)
 										{
 											modalWindow.close();
 										}
-									}, this)
-								}
+									}, this),
+								},
 							}),
 							new BX.PopupWindowCustomButton({
 								text: BX.message('DISK_JS_BTN_CANCEL'),
 								className: 'ui-btn ui-btn-link',
 								events: {
-									click: function (e)
+									click(e)
 									{
-										if(!!modalWindow)
+										if (modalWindow)
 										{
 											modalWindow.close();
 										}
-									}
-								}
-							})
-						]
+									},
+								},
+							}),
+						],
 					});
-				}, this)
-			}
+				}, this),
+			},
 		);
-
 	};
 
-	FolderListClass.prototype.showRightsOnObjectDetail = function (params)
+	FolderListClass.prototype.showRightsOnObjectDetail = function(params)
 	{
 		storageNewRights = {};
-		var storageId = this.storage.id;
-		var rights = {};
+		const storageId = this.storage.id;
+		const rights = {};
 
 		params = params || {};
-		var objectId = params.object.id;
+		const objectId = params.object.id;
 
 		BX.Disk.modalWindowLoader(
 			BX.Disk.addToLinkParam(this.ajaxUrl, 'action', 'showRightsOnObjectDetail'),
 			{
-				id: 'folder_list_rights_detail_object_' + objectId,
+				id: `folder_list_rights_detail_object_${objectId}`,
 				responseType: 'json',
 				postData: {
-					objectId: objectId,
-					storageId: storageId
+					objectId,
+					storageId,
 				},
 				afterSuccessLoad: BX.delegate(function(response, windowLoader)
 				{
 					windowLoader && windowLoader.close();
 
-					if(response.status !== 'success')
+					if (response.status !== 'success')
 					{
 						response.errors = response.errors || [{}];
 						BX.Disk.showModalWithStatusAction({
 							status: 'error',
-							message: response.errors.pop().message
+							message: response.errors.pop().message,
 						});
 
 						return;
 					}
 
-					if(BX.Disk.isEmptyObject(moduleTasks))
+					if (BX.Disk.isEmptyObject(moduleTasks))
 					{
 						moduleTasks = BX.clone(response.tasks, true);
 						BX.Disk.setModuleTasks(moduleTasks);
 					}
 
-					for (var i in response.rights) {
-						if (!response.rights.hasOwnProperty(i)) {
+					for (const i in response.rights)
+					{
+						if (!response.rights.hasOwnProperty(i))
+						{
 							continue;
 						}
-						var rightsByAccessCode = response.rights[i];
-						for (var j in rightsByAccessCode) {
-							if (!rightsByAccessCode.hasOwnProperty(j)) {
+						const rightsByAccessCode = response.rights[i];
+						for (const j in rightsByAccessCode)
+						{
+							if (!rightsByAccessCode.hasOwnProperty(j))
+							{
 								continue;
 							}
 
@@ -3742,37 +3995,40 @@ BX.Disk.FolderListClass = (function (){
 								item: {
 									id: i,
 									name: showAccessCodeFullName(response.accessCodeNames[i]),
-									avatar: null
+									avatar: null,
 								},
 								type: 'group',
 								right: {
 									title: rightsByAccessCode[j].TASK.TITLE,
-									id: rightsByAccessCode[j].TASK.ID
-								}
+									id: rightsByAccessCode[j].TASK.ID,
+								},
 							};
 						}
 					}
 					var modalWindow = BX.Disk.modalWindow({
 						modalId: 'bx-disk-detail-sharing-folder-change-right',
-						title: BX.message('DISK_FOLDER_LIST_RIGHTS_TITLE_MODAL_WITH_NAME'). replace('#OBJECT#', response.object.name),
+						title: BX.message('DISK_FOLDER_LIST_RIGHTS_TITLE_MODAL_WITH_NAME').replace('#OBJECT#', response.object.name),
 						withoutWindowManager: true,
 						contentClassName: '',
 						contentStyle: {
-							//paddingTop: '30px',
-							//paddingBottom: '70px'
+							// paddingTop: '30px',
+							// paddingBottom: '70px'
 						},
 						events: {
-							onAfterPopupShow: BX.delegate(function () {
+							onAfterPopupShow: BX.delegate(function() {
 								storageNewRights = BX.clone(rights, true);
 								originalRights = BX.clone(rights, true);
 								detachedRights = {};
 
 								BX.Access.Init({
-									groups: { disabled: this.isBitrix24 }
+									groups: { disabled: this.isBitrix24 },
 								});
-								for (var key in storageNewRights) {
-									if(!storageNewRights.hasOwnProperty(key))
-										continue;
+								for (const key in storageNewRights)
+								{
+									if (!storageNewRights.hasOwnProperty(key))
+									
+									{ continue;
+									}
 
 									storageNewRights[key].isBitrix24 = this.isBitrix24;
 									BX.Disk.appendSystemRight(storageNewRights[key]);
@@ -3781,79 +4037,79 @@ BX.Disk.FolderListClass = (function (){
 								BX.addCustomEvent('onChangeSystemRight', BX.proxy(this.onChangeSystemRight, this));
 								BX.addCustomEvent('onDetachSystemRight', BX.proxy(this.onDetachSystemRight, this));
 
-								BX.bind(BX('feed-add-post-destination-container'), 'click', BX.delegate(function(e){
-									var startValue = {};
-									for (var key in storageNewRights) {
-										if(!storageNewRights.hasOwnProperty(key))
-											continue;
+								BX.bind(BX('feed-add-post-destination-container'), 'click', BX.delegate(function(e) {
+									const startValue = {};
+									for (const key in storageNewRights)
+									{
+										if (!storageNewRights.hasOwnProperty(key))
+										
+										{ continue;
+										}
 										startValue[key] = true;
 									}
 									BX.Access.SetSelected(startValue);
 
-
 									BX.Access.ShowForm({
 										showSelected: true,
-										callback: BX.delegate(function (arRights){
-											var res = [];
-											for (var provider in arRights) {
-												for (var id in arRights[provider]) {
+										callback: BX.delegate(function(arRights) {
+											const res = [];
+											for (const provider in arRights)
+											{
+												for (const id in arRights[provider])
+												{
 													res.push(arRights[provider][id]);
 													this.onSelectSystemRight(arRights[provider][id], provider);
 												}
 											}
-										}, this)
+										}, this),
 									});
 
 									return BX.PreventDefault(e);
 								}, this));
-
-
 							}, this),
-							onPopupClose: BX.delegate(function () {
-
+							onPopupClose: BX.delegate(function() {
 								BX.removeCustomEvent('onChangeSystemRight', BX.proxy(this.onChangeRight, this));
-
-							}, this)
+							}, this),
 						},
 						content: [
 							BX.create('div', {
 								props: {
-									className: 'bx-disk-popup-content'
+									className: 'bx-disk-popup-content',
 								},
 								children: [
 									BX.create('table', {
 										props: {
 											id: 'bx-disk-popup-shared-people-list',
-											className: 'bx-disk-popup-shared-people-list'
+											className: 'bx-disk-popup-shared-people-list',
 										},
 										children: [
 											BX.create('thead', {
-												html: '<tr>' +
-													'<td class="bx-disk-popup-shared-people-list-head-col1">' + BX.message('DISK_FOLDER_LIST_SHARING_LABEL_NAME_RIGHTS_USER') + '</td>' +
-													'<td class="bx-disk-popup-shared-people-list-head-col2">' + BX.message('DISK_FOLDER_LIST_SHARING_LABEL_NAME_RIGHTS') + '</td>' +
-													'<td class="bx-disk-popup-shared-people-list-head-col3"></td>' +
-												'</tr>'
-											})
-										]
+												html: '<tr>'
+													+ `<td class="bx-disk-popup-shared-people-list-head-col1">${BX.message('DISK_FOLDER_LIST_SHARING_LABEL_NAME_RIGHTS_USER')}</td>`
+													+ `<td class="bx-disk-popup-shared-people-list-head-col2">${BX.message('DISK_FOLDER_LIST_SHARING_LABEL_NAME_RIGHTS')}</td>`
+													+ '<td class="bx-disk-popup-shared-people-list-head-col3"></td>'
+												+ '</tr>',
+											}),
+										],
 									}),
 									BX.create('div', {
 										props: {
 											id: 'feed-add-post-destination-container',
-											className: 'feed-add-post-destination-wrap'
+											className: 'feed-add-post-destination-wrap',
 										},
 										children: [
 											BX.create('span', {
 												props: {
-													className: 'feed-add-post-destination-item'
-												}
+													className: 'feed-add-post-destination-item',
+												},
 											}),
 											BX.create('span', {
 												props: {
 													id: 'feed-add-post-destination-input-box',
-													className: 'feed-add-destination-input-box'
+													className: 'feed-add-destination-input-box',
 												},
 												style: {
-													background: 'transparent'
+													background: 'transparent',
 												},
 												children: [
 													BX.create('input', {
@@ -3861,51 +4117,51 @@ BX.Disk.FolderListClass = (function (){
 															type: 'text',
 															value: '',
 															id: 'feed-add-post-destination-input',
-															className: 'feed-add-destination-inp'
-														}
-													})
-												]
+															className: 'feed-add-destination-inp',
+														},
+													}),
+												],
 											}),
 											BX.create('a', {
 												props: {
 													href: '#',
 													id: 'bx-destination-tag',
-													className: 'feed-add-destination-link'
+													className: 'feed-add-destination-link',
 												},
 												style: {
-													background: 'transparent'
+													background: 'transparent',
 												},
 												text: BX.message('DISK_FOLDER_LIST_SHARING_LABEL_NAME_ADD_RIGHTS_USER'),
 												events: {
-													click: BX.delegate(function () {
-													}, this)
-												}
-											})
-										]
-									})
-								]
-							})
+													click: BX.delegate(() => {}, this),
+												},
+											}),
+										],
+									}),
+								],
+							}),
 						],
 						buttons: [
 							new BX.PopupWindowCustomButton({
 								text: BX.message('DISK_FOLDER_LIST_BTN_SAVE'),
-								className: "ui-btn ui-btn-success",
+								className: 'ui-btn ui-btn-success',
 								events: {
-									click: BX.delegate(function () {
-
+									click: BX.delegate(function() {
 										BX.Disk.ajax({
 											method: 'POST',
 											dataType: 'json',
 											url: BX.Disk.addToLinkParam(this.ajaxUrl, 'action', 'saveRightsOnObject'),
 											data: {
-												objectId: objectId,
+												objectId,
 												objectNewRights: storageNewRights,
-												detachedRights: detachedRights
+												detachedRights,
 											},
-											onsuccess: BX.delegate(function (response) {
-												if (!response) {
+											onsuccess: BX.delegate((response) => {
+												if (!response)
+												{
 													return;
 												}
+
 												if (params.object.isFolder)
 												{
 													response.message = BX.message('DISK_FOLDER_LIST_OK_FOLDER_RIGHTS_MODIFIED').replace('#FOLDER#', params.object.name);
@@ -3916,69 +4172,67 @@ BX.Disk.FolderListClass = (function (){
 												}
 
 												BX.Disk.showModalWithStatusAction(response);
-
-											}, this)
+											}, this),
 										});
 
-										if(!!modalWindow)
+										if (modalWindow)
 										{
 											modalWindow.close();
 										}
-									}, this)
-								}
+									}, this),
+								},
 							}),
 							new BX.PopupWindowCustomButton({
 								text: BX.message('DISK_JS_BTN_CANCEL'),
 								className: 'ui-btn ui-btn-link',
 								events: {
-									click: function (e)
+									click(e)
 									{
-										if(!!modalWindow)
+										if (modalWindow)
 										{
 											modalWindow.close();
 										}
-									}
-								}
-							})
-						]
+									},
+								},
+							}),
+						],
 					});
-				}, this)
-			}
+				}, this),
+			},
 		);
-
 	};
 
-	FolderListClass.prototype.openSlider = function (url)
+	FolderListClass.prototype.openSlider = function(url)
 	{
 		BX.SidePanel.Instance.open(url, {
-			allowChangeHistory: false
+			allowChangeHistory: false,
 		});
 	};
 
-	FolderListClass.prototype.showSettingsOnBizproc = function ()
+	FolderListClass.prototype.showSettingsOnBizproc = function()
 	{
-		var storageId = this.storage.id;
-		var activationBizProc = '';
+		const storageId = this.storage.id;
+		let activationBizProc = '';
 
 		BX.Disk.modalWindowLoader(
 			BX.Disk.addToLinkParam(this.ajaxUrl, 'action', 'showSettingsOnBizproc'),
 			{
 				responseType: 'json',
 				postData: {
-					storageId: storageId
+					storageId,
 				},
 				afterSuccessLoad: BX.delegate(function(response)
 				{
-					if(response.status != 'success')
+					if (response.status != 'success')
 					{
 						response.errors = response.errors || [{}];
 						BX.Disk.showModalWithStatusAction({
 							status: 'error',
-							message: response.errors.pop().message
-						})
+							message: response.errors.pop().message,
+						});
 					}
 
-					if(response.statusBizProc)
+					if (response.statusBizProc)
 					{
 						activationBizProc = 'checked';
 					}
@@ -3987,77 +4241,76 @@ BX.Disk.FolderListClass = (function (){
 						modalId: 'bx-disk-settings-bizproc',
 						title: BX.message('DISK_FOLDER_LIST_BIZPROC_TITLE_MODAL'),
 						contentClassName: '',
-						events: {
-						},
+						events: {},
 						content: [
 							BX.create('table', {
-								html: '<tr><td><label for="activationBizProc">'+BX.message("DISK_FOLDER_LIST_BIZPROC_LABEL")+'</label></td>' +
-								'<td><input type="checkbox" id="activationBizProc" '+activationBizProc+' /></td>' +
-								'</tr>'
-							})
+								html: `<tr><td><label for="activationBizProc">${BX.message('DISK_FOLDER_LIST_BIZPROC_LABEL')}</label></td>`
+								+ `<td><input type="checkbox" id="activationBizProc" ${activationBizProc} /></td>`
+								+ '</tr>',
+							}),
 						],
 						buttons: [
 							new BX.PopupWindowCustomButton({
 								text: BX.message('DISK_FOLDER_LIST_BTN_SAVE'),
-								className: "ui-btn ui-btn-success",
+								className: 'ui-btn ui-btn-success',
 								events: {
-									click: BX.delegate(function () {
-
+									click: BX.delegate(function() {
 										BX.Disk.ajax({
 											method: 'POST',
 											dataType: 'json',
 											url: BX.Disk.addToLinkParam(this.ajaxUrl, 'action', 'saveSettingsOnBizproc'),
 											data: {
-												storageId: storageId,
-												activationBizproc: BX('activationBizProc').checked ? 1 : 0
+												storageId,
+												activationBizproc: BX('activationBizProc').checked ? 1 : 0,
 											},
-											onsuccess: BX.delegate(function (response) {
-												if (!response) {
+											onsuccess: BX.delegate((response) => {
+												if (!response)
+												{
 													return;
 												}
-												if(response.status != 'success')
+
+												if (response.status == 'success')
+												{
+													BX.Disk.showModalWithStatusAction(response);
+												}
+												else
 												{
 													response.errors = response.errors || [{}];
 													BX.Disk.showModalWithStatusAction({
 														status: 'error',
-														message: response.errors.pop().message
-													})
-												}
-												else
-												{
-													BX.Disk.showModalWithStatusAction(response);
+														message: response.errors.pop().message,
+													});
 												}
 												location.reload();
-											}, this)
+											}, this),
 										});
-									}, this)
-								}
+									}, this),
+								},
 							}),
 							new BX.PopupWindowCustomButton({
 								text: BX.message('DISK_JS_BTN_CANCEL'),
 								className: 'ui-btn ui-btn-link',
 								events: {
-									click: function (e)
+									click(e)
 									{
 										BX.PopupWindowManager.getCurrentPopup().destroy();
-									}
-								}
-							})
-						]
+									},
+								},
+							}),
+						],
 
 					});
-				}, this)
-			}
+				}, this),
+			},
 		);
-
 	};
 
-	FolderListClass.prototype.openWindowForSelectDocumentService = function ()
+	FolderListClass.prototype.openWindowForSelectDocumentService = function()
 	{
 		BX.Disk.InformationPopups.openWindowForSelectDocumentService({});
 	};
 
-	FolderListClass.prototype.showHiddenContent = function (el)
+	FolderListClass.prototype.showHiddenContent = function(el)
 	{
 		el.style.display = (el.style.display == 'none') ? 'block' : 'none';
 	};
@@ -4066,110 +4319,107 @@ BX.Disk.FolderListClass = (function (){
 	{
 		if (!el.getAttribute('displayOld'))
 		{
-			el.setAttribute("displayOld", el.style.display)
+			el.setAttribute('displayOld', el.style.display);
 		}
-		el.style.display = "none"
+		el.style.display = 'none';
 	};
 
-	FolderListClass.prototype.showNetworkDriveConnect = function (params)
+	FolderListClass.prototype.showNetworkDriveConnect = function(params)
 	{
 		params = params || {};
-		var link = params.link,
-			showHiddenContent = this.showHiddenContent,
-			hide = this.hide;
+		const link = params.link;
+		const showHiddenContent = this.showHiddenContent;
+		const hide = this.hide;
 		showHiddenContent(BX('bx-disk-network-drive-full'));
 
 		BX.Disk.modalWindow({
 			modalId: 'bx-disk-show-network-drive-connect',
 			title: BX.message('DISK_FOLDER_LIST_PAGE_TITLE_NETWORK_DRIVE'),
 			contentClassName: 'tac',
-			contentStyle: {
-			},
+			contentStyle: {},
 			events: {
-				onAfterPopupShow: function () {
-					var inputLink = BX('disk-get-network-drive-link');
+				onAfterPopupShow() {
+					const inputLink = BX('disk-get-network-drive-link');
 					BX.focus(inputLink);
-					inputLink.setSelectionRange(0, inputLink.value.length)
+					inputLink.setSelectionRange(0, inputLink.value.length);
 				},
-				onPopupClose: function () {
+				onPopupClose() {
 					hide(BX('bx-disk-network-drive'));
 					hide(BX('bx-disk-network-drive-full'));
 					document.body.appendChild(BX('bx-disk-network-drive-full'));
 					this.destroy();
-				}
+				},
 			},
 			content: [
 				BX.create('label', {
-					text: BX.message('DISK_FOLDER_LIST_PAGE_TITLE_NETWORK_DRIVE_DESCR_MODAL') + ' :',
+					text: `${BX.message('DISK_FOLDER_LIST_PAGE_TITLE_NETWORK_DRIVE_DESCR_MODAL')} :`,
 					props: {
 						className: 'bx-disk-popup-label',
-						"for": 'disk-get-network-drive-link'
-					}
+						for: 'disk-get-network-drive-link',
+					},
 				}),
 				BX.create('input', {
 					style: {
-						marginTop: '10px'
+						marginTop: '10px',
 					},
 					props: {
 						id: 'disk-get-network-drive-link',
 						className: 'bx-disk-popup-input',
 						type: 'text',
-						value: link
-					}
+						value: link,
+					},
 				}),
-				BX('bx-disk-network-drive-full')
+				BX('bx-disk-network-drive-full'),
 			],
 			buttons: [
 				new BX.PopupWindowCustomButton({
 					text: BX.message('DISK_JS_BTN_CLOSE'),
 					className: 'ui-btn ui-btn-link',
 					events: {
-						click: function () {
+						click() {
 							BX.PopupWindowManager.getCurrentPopup().close();
-						}
-					}
-				})
-			]
+						},
+					},
+				}),
+			],
 		});
-		if(BX('bx-disk-network-drive-secure-label'))
+		if (BX('bx-disk-network-drive-secure-label'))
 		{
 			hide(BX.findChildByClassName(BX('bx-disk-show-network-drive-connect'), 'bx-disk-popup-label'));
 			hide(BX.findChildByClassName(BX('bx-disk-show-network-drive-connect'), 'bx-disk-popup-input'));
 		}
 	};
 
-
-	FolderListClass.prototype.showSharingDetailWithSharing = function (params) {
-
+	FolderListClass.prototype.showSharingDetailWithSharing = function(params) {
 		entityToNewShared = {};
 		loadedReadOnlyEntityToNewShared = {};
 
 		params = params || {};
-		var objectId = params.object.id;
+		const objectId = params.object.id;
 
 		BX.Disk.modalWindowLoader(
 			BX.Disk.addToLinkParam(this.ajaxUrl, 'action', 'showSharingDetailAppendSharing'),
 			{
-				id: 'folder_list_sharing_detail_object_' + objectId,
+				id: `folder_list_sharing_detail_object_${objectId}`,
 				responseType: 'json',
 				postData: {
-					objectId: objectId
+					objectId,
 				},
 				afterSuccessLoad: BX.delegate(function(response)
 				{
-					if(response.status != 'success')
+					if (response.status != 'success')
 					{
 						response.errors = response.errors || [{}];
 						BX.Disk.showModalWithStatusAction({
 							status: 'error',
-							message: response.errors.pop().message
-						})
+							message: response.errors.pop().message,
+						});
 					}
 
-					var objectOwner = {
+					const objectOwner = {
 						name: response.owner.name,
 						avatar: response.owner.avatar,
-						link: response.owner.link
+						link: response.owner.link,
 					};
 					entityToNewSharedMaxTaskName = response.owner.maxTaskName;
 
@@ -4178,16 +4428,17 @@ BX.Disk.FolderListClass = (function (){
 						title: BX.message('DISK_FOLDER_LIST_SHARING_TITLE_MODAL_3'),
 						contentClassName: '',
 						contentStyle: {
-							//paddingTop: '30px',
-							//paddingBottom: '70px'
+							// paddingTop: '30px',
+							// paddingBottom: '70px'
 						},
 						events: {
-							onAfterPopupShow: BX.delegate(function () {
-
+							onAfterPopupShow: BX.delegate(function() {
 								BX.addCustomEvent('onChangeRightOfSharing', BX.proxy(this.onChangeRightOfSharing, this));
 
-								for (var i in response.members) {
-									if (!response.members.hasOwnProperty(i)) {
+								for (const i in response.members)
+								{
+									if (!response.members.hasOwnProperty(i))
+									{
 										continue;
 									}
 
@@ -4195,103 +4446,105 @@ BX.Disk.FolderListClass = (function (){
 										item: {
 											id: response.members[i].entityId,
 											name: response.members[i].name,
-											avatar: response.members[i].avatar
+											avatar: response.members[i].avatar,
 										},
 										type: response.members[i].type,
-										right: response.members[i].right
+										right: response.members[i].right,
 									};
 								}
 								loadedReadOnlyEntityToNewShared = BX.clone(entityToNewShared, true);
 
 								BX.SocNetLogDestination.init({
-									name : this.destFormName,
-									searchInput : BX('feed-add-post-destination-input'),
-									bindMainPopup : { 'node' : BX('feed-add-post-destination-container'), 'offsetTop' : '5px', 'offsetLeft': '15px'},
-									bindSearchPopup : { 'node' : BX('feed-add-post-destination-container'), 'offsetTop' : '5px', 'offsetLeft': '15px'},
-									callback : {
-										select : BX.proxy(this.onSelectDestination, this),
-										unSelect : BX.proxy(this.onUnSelectDestination, this),
-										openDialog : BX.proxy(this.onOpenDialogDestination, this),
-										closeDialog : BX.proxy(this.onCloseDialogDestination, this),
-										openSearch : BX.proxy(this.onOpenSearchDestination, this),
-										closeSearch : BX.proxy(this.onCloseSearchDestination, this)
+									name: this.destFormName,
+									searchInput: BX('feed-add-post-destination-input'),
+									bindMainPopup: { node: BX('feed-add-post-destination-container'), offsetTop: '5px', offsetLeft: '15px' },
+									bindSearchPopup: { node: BX('feed-add-post-destination-container'), offsetTop: '5px', offsetLeft: '15px' },
+									callback: {
+										select: BX.proxy(this.onSelectDestination, this),
+										unSelect: BX.proxy(this.onUnSelectDestination, this),
+										openDialog: BX.proxy(this.onOpenDialogDestination, this),
+										closeDialog: BX.proxy(this.onCloseDialogDestination, this),
+										openSearch: BX.proxy(this.onOpenSearchDestination, this),
+										closeSearch: BX.proxy(this.onCloseSearchDestination, this),
 									},
 									items: response.destination.items,
 									itemsLast: response.destination.itemsLast,
-									itemsSelected : response.destination.itemsSelected
+									itemsSelected: response.destination.itemsSelected,
 								});
 
-								var BXSocNetLogDestinationFormName = this.destFormName;
-								BX.bind(BX('feed-add-post-destination-container'), 'click', function(e){BX.SocNetLogDestination.openDialog(BXSocNetLogDestinationFormName);BX.PreventDefault(e); });
+								const BXSocNetLogDestinationFormName = this.destFormName;
+								BX.bind(BX('feed-add-post-destination-container'), 'click', (e) =>
+								{ BX.SocNetLogDestination.openDialog(BXSocNetLogDestinationFormName); BX.PreventDefault(e);
+								});
 								BX.bind(BX('feed-add-post-destination-input'), 'keyup', BX.proxy(this.onKeyUpDestination, this));
 								BX.bind(BX('feed-add-post-destination-input'), 'keydown', BX.proxy(this.onKeyDownDestination, this));
 							}, this),
-							onPopupClose: BX.delegate(function () {
-								if(BX.SocNetLogDestination && BX.SocNetLogDestination.isOpenDialog())
+							onPopupClose: BX.delegate(function() {
+								if (BX.SocNetLogDestination && BX.SocNetLogDestination.isOpenDialog())
 								{
-									BX.SocNetLogDestination.closeDialog()
+									BX.SocNetLogDestination.closeDialog();
 								}
 
 								BX.removeCustomEvent('onChangeRightOfSharing', BX.proxy(this.onChangeRightOfSharing, this));
 								BX.proxy_context.destroy();
-							}, this)
+							}, this),
 						},
 						content: [
 							BX.create('div', {
 								props: {
-									className: 'bx-disk-popup-content'
+									className: 'bx-disk-popup-content',
 								},
 								children: [
 									BX.create('table', {
 										props: {
-											className: 'bx-disk-popup-shared-people-list'
+											className: 'bx-disk-popup-shared-people-list',
 										},
 										children: [
 											BX.create('thead', {
-												html: '<tr>' +
-													'<td class="bx-disk-popup-shared-people-list-head-col1">' + BX.message('DISK_FOLDER_LIST_SHARING_LABEL_OWNER') + '</td>' +
-												'</tr>'
+												html: '<tr>'
+													+ `<td class="bx-disk-popup-shared-people-list-head-col1">${BX.message('DISK_FOLDER_LIST_SHARING_LABEL_OWNER')}</td>`
+												+ '</tr>',
 											}),
 											BX.create('tr', {
-												html: '<tr>' +
-													'<td class="bx-disk-popup-shared-people-list-col1" style="border-bottom: none;"><a class="bx-disk-filepage-used-people-link" href="' + objectOwner.link + '"><span class="bx-disk-filepage-used-people-avatar" style="background-image: url(\'' + encodeURI(objectOwner.avatar) + '\');"></span>' + BX.util.htmlspecialchars(objectOwner.name) + '</a></td>' +
-												'</tr>'
-											})
-										]
+												html: '<tr>'
+													+ `<td class="bx-disk-popup-shared-people-list-col1" style="border-bottom: none;"><a class="bx-disk-filepage-used-people-link" href="${objectOwner.link}"><span class="bx-disk-filepage-used-people-avatar" style="background-image: url('${encodeURI(objectOwner.avatar)}');"></span>${BX.util.htmlspecialchars(objectOwner.name)}</a></td>`
+												+ '</tr>',
+											}),
+										],
 									}),
 									BX.create('table', {
 										props: {
 											id: 'bx-disk-popup-shared-people-list',
-											className: 'bx-disk-popup-shared-people-list'
+											className: 'bx-disk-popup-shared-people-list',
 										},
 										children: [
 											BX.create('thead', {
-												html: '<tr>' +
-													'<td class="bx-disk-popup-shared-people-list-head-col1">' + BX.message('DISK_FOLDER_LIST_SHARING_LABEL_NAME_RIGHTS_USER') + '</td>' +
-													'<td class="bx-disk-popup-shared-people-list-head-col2">' + BX.message('DISK_FOLDER_LIST_SHARING_LABEL_NAME_RIGHTS') + '</td>' +
-													'<td class="bx-disk-popup-shared-people-list-head-col3"></td>' +
-												'</tr>'
-											})
-										]
+												html: '<tr>'
+													+ `<td class="bx-disk-popup-shared-people-list-head-col1">${BX.message('DISK_FOLDER_LIST_SHARING_LABEL_NAME_RIGHTS_USER')}</td>`
+													+ `<td class="bx-disk-popup-shared-people-list-head-col2">${BX.message('DISK_FOLDER_LIST_SHARING_LABEL_NAME_RIGHTS')}</td>`
+													+ '<td class="bx-disk-popup-shared-people-list-head-col3"></td>'
+												+ '</tr>',
+											}),
+										],
 									}),
 									BX.create('div', {
 										props: {
 											id: 'feed-add-post-destination-container',
-											className: 'feed-add-post-destination-wrap'
+											className: 'feed-add-post-destination-wrap',
 										},
 										children: [
 											BX.create('span', {
 												props: {
-													className: 'feed-add-post-destination-item'
-												}
+													className: 'feed-add-post-destination-item',
+												},
 											}),
 											BX.create('span', {
 												props: {
 													id: 'feed-add-post-destination-input-box',
-													className: 'feed-add-destination-input-box'
+													className: 'feed-add-destination-input-box',
 												},
 												style: {
-													background: 'transparent'
+													background: 'transparent',
 												},
 												children: [
 													BX.create('input', {
@@ -4299,55 +4552,54 @@ BX.Disk.FolderListClass = (function (){
 															type: 'text',
 															value: '',
 															id: 'feed-add-post-destination-input',
-															className: 'feed-add-destination-inp'
-														}
-													})
-												]
+															className: 'feed-add-destination-inp',
+														},
+													}),
+												],
 											}),
 											BX.create('a', {
 												props: {
 													href: '#',
 													id: 'bx-destination-tag',
-													className: 'feed-add-destination-link'
+													className: 'feed-add-destination-link',
 												},
 												style: {
-													background: 'transparent'
+													background: 'transparent',
 												},
 												text: BX.message('DISK_FOLDER_LIST_SHARING_LABEL_NAME_ADD_RIGHTS_USER'),
 												events: {
-													click: BX.delegate(function () {
-													}, this)
-												}
-											})
-										]
-									})
-								]
-							})
+													click: BX.delegate(() => {}, this),
+												},
+											}),
+										],
+									}),
+								],
+							}),
 						],
 						buttons: [
 							new BX.PopupWindowCustomButton({
 								text: BX.message('DISK_FOLDER_LIST_BTN_SAVE'),
-								className: "ui-btn ui-btn-success",
+								className: 'ui-btn ui-btn-success',
 								events: {
-									click: BX.delegate(function () {
-
+									click: BX.delegate(function() {
 										BX.Disk.ajax({
 											method: 'POST',
 											dataType: 'json',
 											url: BX.Disk.addToLinkParam(this.ajaxUrl, 'action', 'appendSharing'),
 											data: {
-												objectId: objectId,
-												entityToNewShared: entityToNewShared
+												objectId,
+												entityToNewShared,
 											},
-											onsuccess: BX.delegate(function (response) {
-												if (!response) {
+											onsuccess: BX.delegate(function(response) {
+												if (!response)
+												{
 													return;
 												}
 												BX.Disk.showModalWithStatusAction(response);
-												var icon = BX.delegate(getIconElementByObjectId, this)(objectId);
-												if(icon)
+												const icon = BX.delegate(getIconElementByObjectId, this)(objectId);
+												if (icon)
 												{
-													if(!entityToNewShared || BX.Disk.isEmptyObject(entityToNewShared))
+													if (!entityToNewShared || BX.Disk.isEmptyObject(entityToNewShared))
 													{
 														BX.removeClass(icon, 'icon-shared icon-shared_2 shared');
 														BX.removeClass(icon, 'icon-shared_1');
@@ -4357,76 +4609,77 @@ BX.Disk.FolderListClass = (function (){
 														BX.addClass(icon, 'icon-shared icon-shared_2 shared');
 													}
 												}
-
-											}, this)
+											}, this),
 										});
 
 										BX.PopupWindowManager.getCurrentPopup().close();
-									}, this)
-								}
+									}, this),
+								},
 							}),
 							new BX.PopupWindowCustomButton({
 								text: BX.message('DISK_JS_BTN_CANCEL'),
 								className: 'ui-btn ui-btn-link',
 								events: {
-									click: function (e)
+									click(e)
 									{
 										BX.PopupWindowManager.getCurrentPopup().destroy();
-									}
-								}
-							})
-						]
+									},
+								},
+							}),
+						],
 					});
-				}, this)
-			}
+				}, this),
+			},
 		);
 	};
 
-	FolderListClass.prototype.onCreateExtendedFolder = function () {
-		this.showCreateFolderWithSharing({
-
-		});
+	FolderListClass.prototype.onCreateExtendedFolder = function() {
+		this.showCreateFolderWithSharing({});
 	};
 
-	FolderListClass.prototype.showCreateFolderWithSharing = function ()
+	FolderListClass.prototype.showCreateFolderWithSharing = function()
 	{
 		entityToNewShared = {};
 		storageNewRights = {};
-		var storageId = this.storage.id;
-		var rights = {};
+		const storageId = this.storage.id;
+		const rights = {};
 
 		BX.Disk.modalWindowLoader(
 			BX.Disk.addToLinkParam(this.ajaxUrl, 'action', 'showCreateFolderWithSharingInCommon'),
 			{
-				id: 'folder_list_rights_detail_storage_' + storageId,
+				id: `folder_list_rights_detail_storage_${storageId}`,
 				responseType: 'json',
 				postData: {
-					storageId: storageId
+					storageId,
 				},
 				afterSuccessLoad: BX.delegate(function(response)
 				{
-					if(response.status != 'success')
+					if (response.status != 'success')
 					{
 						response.errors = response.errors || [{}];
 						BX.Disk.showModalWithStatusAction({
 							status: 'error',
-							message: response.errors.pop().message
-						})
+							message: response.errors.pop().message,
+						});
 					}
 
-					if(BX.Disk.isEmptyObject(moduleTasks))
+					if (BX.Disk.isEmptyObject(moduleTasks))
 					{
 						moduleTasks = BX.clone(response.tasks, true);
 						BX.Disk.setModuleTasks(moduleTasks);
 					}
 
-					for (var i in response.rights) {
-						if (!response.rights.hasOwnProperty(i)) {
+					for (const i in response.rights)
+					{
+						if (!response.rights.hasOwnProperty(i))
+						{
 							continue;
 						}
-						var rightsByAccessCode = response.rights[i];
-						for (var j in rightsByAccessCode) {
-							if (!rightsByAccessCode.hasOwnProperty(j)) {
+						const rightsByAccessCode = response.rights[i];
+						for (const j in rightsByAccessCode)
+						{
+							if (!rightsByAccessCode.hasOwnProperty(j))
+							{
 								continue;
 							}
 
@@ -4435,13 +4688,13 @@ BX.Disk.FolderListClass = (function (){
 								item: {
 									id: i,
 									name: response.accessCodeNames[i].name,
-									avatar: null
+									avatar: null,
 								},
 								type: 'group',
 								right: {
 									title: rightsByAccessCode[j].TASK.TITLE,
-									id: rightsByAccessCode[j].TASK.ID
-								}
+									id: rightsByAccessCode[j].TASK.ID,
+								},
 							};
 						}
 					}
@@ -4452,132 +4705,131 @@ BX.Disk.FolderListClass = (function (){
 						contentClassName: '',
 						contentStyle: {},
 						events: {
-							onAfterPopupShow: BX.delegate(function () {
+							onAfterPopupShow: BX.delegate(function() {
 								BX.focus(BX('disk-new-create-filename'));
 								storageNewRights = BX.clone(rights, true);
 
-								for (var i in rights) {
-									if (!rights.hasOwnProperty(i)) {
+								for (const i in rights)
+								{
+									if (!rights.hasOwnProperty(i))
+									{
 										continue;
 									}
 									BX.Disk.appendRight(rights[i]);
-
 								}
-
 
 								BX.addCustomEvent('onChangeRightOfSharing', BX.proxy(this.onChangeRightOfSharing, this));
 								BX.addCustomEvent('onChangeRight', BX.proxy(this.onChangeRight, this));
 								BX.addCustomEvent('onDetachRight', BX.proxy(this.onDetachRight, this));
 
 								BX.SocNetLogDestination.init({
-									name : this.destFormName,
-									searchInput : BX('feed-add-post-destination-input'),
-									bindMainPopup : { 'node' : BX('feed-add-post-destination-container'), 'offsetTop' : '5px', 'offsetLeft': '15px'},
-									bindSearchPopup : { 'node' : BX('feed-add-post-destination-container'), 'offsetTop' : '5px', 'offsetLeft': '15px'},
-									callback : {
-										select : BX.proxy(this.onSelectDestination, this),
-										unSelect : BX.proxy(this.onUnSelectDestination, this),
-										openDialog : BX.proxy(this.onOpenDialogDestination, this),
-										closeDialog : BX.proxy(this.onCloseDialogDestination, this),
-										openSearch : BX.proxy(this.onOpenSearchDestination, this),
-										closeSearch : BX.proxy(this.onCloseSearchDestination, this)
+									name: this.destFormName,
+									searchInput: BX('feed-add-post-destination-input'),
+									bindMainPopup: { node: BX('feed-add-post-destination-container'), offsetTop: '5px', offsetLeft: '15px' },
+									bindSearchPopup: { node: BX('feed-add-post-destination-container'), offsetTop: '5px', offsetLeft: '15px' },
+									callback: {
+										select: BX.proxy(this.onSelectDestination, this),
+										unSelect: BX.proxy(this.onUnSelectDestination, this),
+										openDialog: BX.proxy(this.onOpenDialogDestination, this),
+										closeDialog: BX.proxy(this.onCloseDialogDestination, this),
+										openSearch: BX.proxy(this.onOpenSearchDestination, this),
+										closeSearch: BX.proxy(this.onCloseSearchDestination, this),
 									},
 									items: response.destination.items,
 									itemsLast: response.destination.itemsLast,
-									itemsSelected : response.destination.itemsSelected
+									itemsSelected: response.destination.itemsSelected,
 								});
 
-								var BXSocNetLogDestinationFormName = this.destFormName;
-								BX.bind(BX('feed-add-post-destination-container'), 'click', function(e){BX.SocNetLogDestination.openDialog(BXSocNetLogDestinationFormName);BX.PreventDefault(e); });
+								const BXSocNetLogDestinationFormName = this.destFormName;
+								BX.bind(BX('feed-add-post-destination-container'), 'click', (e) =>
+								{ BX.SocNetLogDestination.openDialog(BXSocNetLogDestinationFormName); BX.PreventDefault(e);
+								});
 								BX.bind(BX('feed-add-post-destination-input'), 'keyup', BX.proxy(this.onKeyUpDestination, this));
 								BX.bind(BX('feed-add-post-destination-input'), 'keydown', BX.proxy(this.onKeyDownDestination, this));
-
-
-
 							}, this),
-							onPopupClose: BX.delegate(function () {
-								if(BX.SocNetLogDestination && BX.SocNetLogDestination.isOpenDialog())
+							onPopupClose: BX.delegate(function() {
+								if (BX.SocNetLogDestination && BX.SocNetLogDestination.isOpenDialog())
 								{
-									BX.SocNetLogDestination.closeDialog()
+									BX.SocNetLogDestination.closeDialog();
 								}
 
 								BX.removeCustomEvent('onChangeRight', BX.proxy(this.onChangeRight, this));
 								BX.proxy_context.destroy();
-							}, this)
+							}, this),
 						},
 						content: [
 							BX.create('div', {
 								props: {
-									className: 'bx-disk-popup-content-small'
+									className: 'bx-disk-popup-content-small',
 								},
 								children: [
 									BX.create('label', {
 										props: {
 											className: 'bx-disk-popup-label',
-											"for": 'disk-new-create-filename'
+											for: 'disk-new-create-filename',
 										},
 										children: [
 											BX.create('span', {
 												props: {
-													className: 'req'
+													className: 'req',
 												},
-												text: '*'
+												text: '*',
 											}),
-											BX.message('DISK_FOLDER_LIST_LABEL_NAME_CREATE_FOLDER')
-										]
+											BX.message('DISK_FOLDER_LIST_LABEL_NAME_CREATE_FOLDER'),
+										],
 									}),
 									BX.create('input', {
 										props: {
 											id: 'disk-new-create-filename',
 											className: 'bx-disk-popup-input',
 											type: 'text',
-											value: ''
+											value: '',
 										},
 										style: {
 											fontSize: '16px',
-											marginTop: '10px'
-										}
-									})
-								]
+											marginTop: '10px',
+										},
+									}),
+								],
 							}),
 							BX.create('div', {
 								props: {
-									className: 'bx-disk-popup-content'
+									className: 'bx-disk-popup-content',
 								},
 								children: [
 									BX.create('table', {
 										props: {
 											id: 'bx-disk-popup-shared-people-list',
-											className: 'bx-disk-popup-shared-people-list'
+											className: 'bx-disk-popup-shared-people-list',
 										},
 										children: [
 											BX.create('thead', {
-												html: '<tr>' +
-													'<td class="bx-disk-popup-shared-people-list-head-col1">' + BX.message('DISK_FOLDER_LIST_SHARING_LABEL_NAME_RIGHTS_USER') + '</td>' +
-													'<td class="bx-disk-popup-shared-people-list-head-col2">' + BX.message('DISK_FOLDER_LIST_SHARING_LABEL_NAME_RIGHTS') + '</td>' +
-													'<td class="bx-disk-popup-shared-people-list-head-col3"></td>' +
-												'</tr>'
-											})
-										]
+												html: '<tr>'
+													+ `<td class="bx-disk-popup-shared-people-list-head-col1">${BX.message('DISK_FOLDER_LIST_SHARING_LABEL_NAME_RIGHTS_USER')}</td>`
+													+ `<td class="bx-disk-popup-shared-people-list-head-col2">${BX.message('DISK_FOLDER_LIST_SHARING_LABEL_NAME_RIGHTS')}</td>`
+													+ '<td class="bx-disk-popup-shared-people-list-head-col3"></td>'
+												+ '</tr>',
+											}),
+										],
 									}),
 									BX.create('div', {
 										props: {
 											id: 'feed-add-post-destination-container',
-											className: 'feed-add-post-destination-wrap'
+											className: 'feed-add-post-destination-wrap',
 										},
 										children: [
 											BX.create('span', {
 												props: {
-													className: 'feed-add-post-destination-item'
-												}
+													className: 'feed-add-post-destination-item',
+												},
 											}),
 											BX.create('span', {
 												props: {
 													id: 'feed-add-post-destination-input-box',
-													className: 'feed-add-destination-input-box'
+													className: 'feed-add-destination-input-box',
 												},
 												style: {
-													background: 'transparent'
+													background: 'transparent',
 												},
 												children: [
 													BX.create('input', {
@@ -4585,40 +4837,41 @@ BX.Disk.FolderListClass = (function (){
 															type: 'text',
 															value: '',
 															id: 'feed-add-post-destination-input',
-															className: 'feed-add-destination-inp'
-														}
-													})
-												]
+															className: 'feed-add-destination-inp',
+														},
+													}),
+												],
 											}),
 											BX.create('a', {
 												props: {
 													href: '#',
 													id: 'bx-destination-tag',
-													className: 'feed-add-destination-link'
+													className: 'feed-add-destination-link',
 												},
 												style: {
-													background: 'transparent'
+													background: 'transparent',
 												},
 												text: BX.message('DISK_FOLDER_LIST_SHARING_LABEL_NAME_ADD_RIGHTS_USER'),
 												events: {
-													click: BX.delegate(function () {
-													}, this)
-												}
-											})
-										]
-									})
-								]
-							})
+													click: BX.delegate(() => {}, this),
+												},
+											}),
+										],
+									}),
+								],
+							}),
 						],
 						buttons: [
 							new BX.PopupWindowCustomButton({
 								text: BX.message('DISK_FOLDER_LIST_BTN_SAVE'),
-								className: "ui-btn ui-btn-success",
+								className: 'ui-btn ui-btn-success',
 								events: {
-									click: BX.delegate(function () {
-										var newName = BX('disk-new-create-filename').value;
-										if (!newName) {
+									click: BX.delegate(function() {
+										const newName = BX('disk-new-create-filename').value;
+										if (!newName)
+										{
 											BX.focus(BX('disk-new-create-filename'));
+
 											return;
 										}
 
@@ -4628,41 +4881,42 @@ BX.Disk.FolderListClass = (function (){
 											url: BX.Disk.addToLinkParam(this.ajaxUrl, 'action', 'createFolderWithSharing'),
 											data: {
 												name: newName,
-												storageId: storageId,
+												storageId,
 												storageNewRights: storageNewRights || {},
-												entityToNewShared: entityToNewShared || {}
+												entityToNewShared: entityToNewShared || {},
 											},
-											onsuccess: BX.delegate(function (response) {
-												if (!response) {
+											onsuccess: BX.delegate((response) => {
+												if (!response)
+												{
 													return;
 												}
 												BX.Disk.showModalWithStatusAction(response);
-												if (response.status && response.status == 'success') {
+												if (response.status && response.status == 'success')
+												{
 													window.document.location = BX.Disk.getUrlToShowObjectInGrid(response.folder.id);
 												}
-											}, this)
+											}, this),
 										});
 
 										BX.PopupWindowManager.getCurrentPopup().close();
-									}, this)
-								}
+									}, this),
+								},
 							}),
 							new BX.PopupWindowCustomButton({
 								text: BX.message('DISK_JS_BTN_CANCEL'),
 								className: 'ui-btn ui-btn-link',
 								events: {
-									click: function (e)
+									click(e)
 									{
 										BX.PopupWindowManager.getCurrentPopup().destroy();
-									}
-								}
-							})
-						]
+									},
+								},
+							}),
+						],
 					});
-				}, this)
-			}
+				}, this),
+			},
 		);
-
 	};
 
 	FolderListClass.prototype.onSelectSystemRight = function(item, type)
@@ -4670,15 +4924,15 @@ BX.Disk.FolderListClass = (function (){
 		storageNewRights[item.id] = storageNewRights[item.id] || {};
 		isChangedRights = true;
 
-		var providerPrefix = BX.Access.GetProviderPrefix(type, item.id);
+		const providerPrefix = BX.Access.GetProviderPrefix(type, item.id);
 		storageNewRights[item.id] = {
 			item: {
 				avatar: null,
 				id: item.id,
-				name: (providerPrefix? providerPrefix + ': ': '') + item.name
+				name: (providerPrefix ? `${providerPrefix}: ` : '') + item.name,
 			},
-			type: 'user', //todo fix nd actualize this. May be groups, users, departments, etc.
-			right: 'read'
+			type: 'user', // todo fix nd actualize this. May be groups, users, departments, etc.
+			right: 'read',
 		};
 
 		storageNewRights[item.id].isBitrix24 = this.isBitrix24;
@@ -4690,46 +4944,47 @@ BX.Disk.FolderListClass = (function (){
 		storageNewRights[item.id] = storageNewRights[item.id] || {};
 
 		storageNewRights[item.id] = {
-			item: item,
-			type: type,
-			right: storageNewRights[item.id].right || {}
+			item,
+			type,
+			right: storageNewRights[item.id].right || {},
 		};
 
 		BX.Disk.appendRight({
 			destFormName: this.destFormName,
-			item: item,
-			type: type,
-			right: storageNewRights[item.id].right
+			item,
+			type,
+			right: storageNewRights[item.id].right,
 		});
 	};
 
-	FolderListClass.prototype.onUnSelectRightDestination = function (item, type, search)
+	FolderListClass.prototype.onUnSelectRightDestination = function(item, type, search)
 	{
-		var entityId = item.id;
+		const entityId = item.id;
 
 		delete storageNewRights[entityId];
 
-		var child = BX.findChild(BX('bx-disk-popup-shared-people-list'), {attribute: {'data-dest-id': '' + entityId + ''}}, true);
-		if (child) {
+		const child = BX.findChild(BX('bx-disk-popup-shared-people-list'), { attribute: { 'data-dest-id': `${String(entityId)}` } }, true);
+		if (child)
+		{
 			BX.remove(child);
 		}
 	};
 
 	FolderListClass.prototype.onChangeSystemRight = function(entityId, task)
 	{
-		if(storageNewRights[entityId])
+		if (storageNewRights[entityId])
 		{
 			isChangedRights = true;
 			storageNewRights[entityId].right = {
 				id: task.ID,
-				title: task.TITLE
+				title: task.TITLE,
 			};
 		}
 	};
 
 	FolderListClass.prototype.onDetachSystemRight = function(entityId)
 	{
-		if(storageNewRights[entityId])
+		if (storageNewRights[entityId])
 		{
 			isChangedRights = true;
 			BX.Access.DeleteSelected(entityId);
@@ -4741,18 +4996,18 @@ BX.Disk.FolderListClass = (function (){
 
 	FolderListClass.prototype.onChangeRight = function(entityId, task)
 	{
-		if(storageNewRights[entityId])
+		if (storageNewRights[entityId])
 		{
 			storageNewRights[entityId].right = {
 				id: task.ID,
-				title: task.TITLE
+				title: task.TITLE,
 			};
 		}
 	};
 
 	FolderListClass.prototype.onDetachRight = function(entityId)
 	{
-		if(storageNewRights[entityId])
+		if (storageNewRights[entityId])
 		{
 			delete storageNewRights[entityId];
 		}
@@ -4763,40 +5018,41 @@ BX.Disk.FolderListClass = (function (){
 		entityToNewShared[item.id] = entityToNewShared[item.id] || {};
 		BX.Disk.appendNewShared({
 			maxTaskName: entityToNewSharedMaxTaskName,
-			readOnly: !!loadedReadOnlyEntityToNewShared[item.id],
+			readOnly: Boolean(loadedReadOnlyEntityToNewShared[item.id]),
 			destFormName: this.destFormName,
-			item: item,
-			type: type,
-			right: entityToNewShared[item.id].right
+			item,
+			type,
+			right: entityToNewShared[item.id].right,
 		});
 
 		entityToNewShared[item.id] = {
-			item: item,
-			type: type,
-			right: entityToNewShared[item.id].right || 'disk_access_read'
+			item,
+			type,
+			right: entityToNewShared[item.id].right || 'disk_access_read',
 		};
 	};
 
-	FolderListClass.prototype.onUnSelectDestination = function (item, type, search)
+	FolderListClass.prototype.onUnSelectDestination = function(item, type, search)
 	{
-		var entityId = item.id;
+		const entityId = item.id;
 
-		if(!!loadedReadOnlyEntityToNewShared[entityId])
+		if (loadedReadOnlyEntityToNewShared[entityId])
 		{
 			return false;
 		}
 
 		delete entityToNewShared[entityId];
 
-		var child = BX.findChild(BX('bx-disk-popup-shared-people-list'), {attribute: {'data-dest-id': '' + entityId + ''}}, true);
-		if (child) {
+		const child = BX.findChild(BX('bx-disk-popup-shared-people-list'), { attribute: { 'data-dest-id': `${String(entityId)}` } }, true);
+		if (child)
+		{
 			BX.remove(child);
 		}
 	};
 
 	FolderListClass.prototype.onChangeRightOfSharing = function(entityId, taskName)
 	{
-		if(entityToNewShared[entityId])
+		if (entityToNewShared[entityId])
 		{
 			entityToNewShared[entityId].right = taskName;
 		}
@@ -4807,13 +5063,15 @@ BX.Disk.FolderListClass = (function (){
 		BX.style(BX('feed-add-post-destination-input-box'), 'display', 'inline-block');
 		BX.style(BX('bx-destination-tag'), 'display', 'none');
 		BX.focus(BX('feed-add-post-destination-input'));
-		if(BX.SocNetLogDestination.popupWindow)
-			BX.SocNetLogDestination.popupWindow.adjustPosition({ forceTop: true });
+		if (BX.SocNetLogDestination.popupWindow)
+		
+		{ BX.SocNetLogDestination.popupWindow.adjustPosition({ forceTop: true });
+		}
 	};
 
 	FolderListClass.prototype.onCloseDialogDestination = function()
 	{
-		var input = BX('feed-add-post-destination-input');
+		const input = BX('feed-add-post-destination-input');
 		if (!BX.SocNetLogDestination.isOpenSearch() && input && input.value.length <= 0)
 		{
 			BX.style(BX('feed-add-post-destination-input-box'), 'display', 'none');
@@ -4823,13 +5081,15 @@ BX.Disk.FolderListClass = (function (){
 
 	FolderListClass.prototype.onOpenSearchDestination = function()
 	{
-		if(BX.SocNetLogDestination.popupSearchWindow)
-			BX.SocNetLogDestination.popupSearchWindow.adjustPosition({ forceTop: true });
+		if (BX.SocNetLogDestination.popupSearchWindow)
+		
+		{ BX.SocNetLogDestination.popupSearchWindow.adjustPosition({ forceTop: true });
+		}
 	};
 
 	FolderListClass.prototype.onCloseSearchDestination = function()
 	{
-		var input = BX('feed-add-post-destination-input');
+		const input = BX('feed-add-post-destination-input');
 		if (!BX.SocNetLogDestination.isOpenSearch() && input && input.value.length > 0)
 		{
 			BX.style(BX('feed-add-post-destination-input-box'), 'display', 'none');
@@ -4838,10 +5098,11 @@ BX.Disk.FolderListClass = (function (){
 		}
 	};
 
-	FolderListClass.prototype.onKeyDownDestination = function (event)
+	FolderListClass.prototype.onKeyDownDestination = function(event)
 	{
-		var BXSocNetLogDestinationFormName = this.destFormName;
-		if (event.keyCode == 8 && BX('feed-add-post-destination-input').value.length <= 0) {
+		const BXSocNetLogDestinationFormName = this.destFormName;
+		if (event.keyCode == 8 && BX('feed-add-post-destination-input').value.length <= 0)
+		{
 			BX.SocNetLogDestination.sendEvent = false;
 			BX.SocNetLogDestination.deleteLastItem(BXSocNetLogDestinationFormName);
 		}
@@ -4849,29 +5110,40 @@ BX.Disk.FolderListClass = (function (){
 		return true;
 	};
 
-	FolderListClass.prototype.onKeyUpDestination = function (event)
+	FolderListClass.prototype.onKeyUpDestination = function(event)
 	{
-		var BXSocNetLogDestinationFormName = this.destFormName;
+		const BXSocNetLogDestinationFormName = this.destFormName;
 		if (event.keyCode == 16 || event.keyCode == 17 || event.keyCode == 18 || event.keyCode == 20 || event.keyCode == 244 || event.keyCode == 224 || event.keyCode == 91)
-			return false;
+		
+		{ return false;
+		}
 
-		if (event.keyCode == 13) {
+		if (event.keyCode == 13)
+		{
 			BX.SocNetLogDestination.selectFirstSearchItem(BXSocNetLogDestinationFormName);
+
 			return BX.PreventDefault(event);
 		}
-		if (event.keyCode == 27) {
+
+		if (event.keyCode == 27)
+		{
 			BX('feed-add-post-destination-input').value = '';
 		}
-		else {
+		else
+		{
 			BX.SocNetLogDestination.search(BX('feed-add-post-destination-input').value, true, BXSocNetLogDestinationFormName);
 		}
 
 		if (BX.SocNetLogDestination.sendEvent && BX.SocNetLogDestination.isOpenDialog())
-			BX.SocNetLogDestination.closeDialog();
+		
+		{ BX.SocNetLogDestination.closeDialog();
+		}
 
-		if (event.keyCode == 8) {
+		if (event.keyCode == 8)
+		{
 			BX.SocNetLogDestination.sendEvent = true;
 		}
+
 		return BX.PreventDefault(event);
 	};
 
@@ -4882,33 +5154,33 @@ BX.Disk.FolderListClass = (function (){
 			return;
 		}
 
-		this.layout.loader = BX.create("div", {
+		this.layout.loader = BX.create('div', {
 			props: {
-				className: "bx-disk-interface-filelist-loader"
+				className: 'bx-disk-interface-filelist-loader',
 			},
 			children: [
-				 BX.create("div", {
+				 BX.create('div', {
 					props: {
-						className: "bx-disk-interface-filelist-loader-wrapper"
+						className: 'bx-disk-interface-filelist-loader-wrapper',
 					},
 					children: [
-						this.layout.loaderWrapper = BX.create("div", {
+						this.layout.loaderWrapper = BX.create('div', {
 							props: {
-								className: "bx-disk-interface-filelist-loader-container"
-							}
-						}),
-						BX.create("div", {
-							props: {
-								className: "bx-disk-interface-filelist-loader-text"
+								className: 'bx-disk-interface-filelist-loader-container',
 							},
-							text: BX.message('DISK_FOLDER_LIST_SEARCH_PROGRESS_LABEL')
-						})
-					]
-				})
-			]
+						}),
+						BX.create('div', {
+							props: {
+								className: 'bx-disk-interface-filelist-loader-text',
+							},
+							text: BX.message('DISK_FOLDER_LIST_SEARCH_PROGRESS_LABEL'),
+						}),
+					],
+				}),
+			],
 		});
 
-		var loader = new BX.Loader({size: 170});
+		const loader = new BX.Loader({ size: 170 });
 
 		loader.show(this.layout.loaderWrapper);
 		if (this.commonGrid.isGrid())
@@ -4923,8 +5195,10 @@ BX.Disk.FolderListClass = (function (){
 
 	FolderListClass.prototype.removeSearchProcessInConnectedFolders = function()
 	{
-		if(!this.layout.loader)
-			return;
+		if (!this.layout.loader)
+		
+		{ return;
+		}
 
 		this.layout.loader.parentNode.removeChild(this.layout.loader);
 		this.layout.loader = null;
@@ -4934,13 +5208,12 @@ BX.Disk.FolderListClass = (function (){
 })();
 
 (function() {
-
-	"use strict";
+	'use strict';
 
 	/**
 	 * @namespace BX.Disk.Model.FolderList
 	 */
-	BX.namespace("BX.Disk.Model.FolderList");
+	BX.namespace('BX.Disk.Model.FolderList');
 
 	/**
 	 *
@@ -4955,22 +5228,21 @@ BX.Disk.FolderListClass = (function (){
 		this.templateId = 'search-progress';
 	};
 
-	BX.Disk.Model.FolderList.SearchProgress.prototype =
-	{
+	BX.Disk.Model.FolderList.SearchProgress.prototype =	{
 		__proto__: BX.Disk.Model.Item.prototype,
 		constructor: BX.Disk.Model.FolderList.SearchProgress,
 
-		isTimeToShow: function ()
+		isTimeToShow()
 		{
 			return this.state.total > 0 && this.state.total !== this.state.current;
 		},
 
-		getDefaultStateValues: function ()
+		getDefaultStateValues()
 		{
 			return {
-				isTimeToShow: this.isTimeToShow.bind(this)
+				isTimeToShow: this.isTimeToShow.bind(this),
 			};
-		}
+		},
 	};
 
 	BX.Disk.Model.FolderList.CommonGrid = function(parameters)
@@ -4978,31 +5250,30 @@ BX.Disk.FolderListClass = (function (){
 		this.instance = parameters.instance;
 	};
 
-	BX.Disk.Model.FolderList.CommonGrid.prototype =
-	{
+	BX.Disk.Model.FolderList.CommonGrid.prototype =	{
 		constructor: BX.Disk.Model.FolderList.CommonGrid,
 
-		getId: function ()
+		getId()
 		{
 			return this.instance.getId();
 		},
 
-		isGrid: function ()
+		isGrid()
 		{
 			return !this.isTile();
 		},
 
-		isTile: function ()
+		isTile()
 		{
 			return BX.TileGrid.Grid && (this.instance instanceof BX.TileGrid.Grid);
 		},
 
-		getContainer: function ()
+		getContainer()
 		{
 			return this.instance.getContainer();
 		},
 
-		fade: function ()
+		fade()
 		{
 			if (this.isGrid())
 			{
@@ -5016,7 +5287,7 @@ BX.Disk.FolderListClass = (function (){
 			}
 		},
 
-		unFade: function ()
+		unFade()
 		{
 			if (this.isGrid())
 			{
@@ -5029,108 +5300,96 @@ BX.Disk.FolderListClass = (function (){
 			}
 		},
 
-		getActionKey: function()
+		getActionKey()
 		{
-			return ('action_button_' + this.instance.getId());
+			return (`action_button_${this.instance.getId()}`);
 		},
 
-		getSelectedIds: function ()
+		getSelectedIds()
 		{
 			if (this.isGrid())
 			{
 				return this.instance.getRows().getSelectedIds();
 			}
-			else
-			{
-				return this.instance.getSelectedItems().map(function(item){
-					return item.getId();
-				});
-			}
+
+			return this.instance.getSelectedItems().map((item) => {
+				return item.getId();
+			});
 		},
 
-		getIds: function ()
+		getIds()
 		{
 			if (this.isGrid())
 			{
-				return this.instance.getRows().getBodyChild().map(function (row) {
+				return this.instance.getRows().getBodyChild().map((row) => {
 					return row.getId();
 				});
 			}
-			else
-			{
-				return this.instance.items.map(function(item){
-					return item.id;
-				});
-			}
+
+			return this.instance.items.map((item) => {
+				return item.id;
+			});
 		},
 
-		countItems: function ()
+		countItems()
 		{
 			if (this.isGrid())
 			{
 				return this.instance.getRows().getBodyChild().length;
 			}
-			else
-			{
-				return this.instance.countItems();
-			}
+
+			return this.instance.countItems();
 		},
 
-		reload: function (url, data)
+		reload(url, data)
 		{
 			data = data || {};
 
 			if (this.isGrid())
 			{
-				var promise = new BX.Promise();
+				const promise = new BX.Promise();
 				this.instance.reloadTable(
-					"POST",
+					'POST',
 					data,
-					function() {
+					() => {
 						promise.fulfill();
 					},
-					url
+					url,
 				);
 
 				return promise;
 			}
-			else
-			{
-				return this.instance.reload(url, data);
-			}
+
+			return this.instance.reload(url, data);
 		},
 
-		getActionsMenu: function (itemId)
+		getActionsMenu(itemId)
 		{
 			if (this.isGrid())
 			{
 				return this.instance.getRows().getById(itemId).getActionsMenu();
 			}
-			else
+
+			const item = this.instance.getItem(itemId);
+			if (item)
 			{
-				var item = this.instance.getItem(itemId);
-				if (item)
-				{
-					return item.getActionsMenu();
-				}
+				return item.getActionsMenu();
 			}
 		},
 
-		getItemById: function (id)
+		getItemById(id)
 		{
 			if (this.isGrid())
 			{
 				return this.instance.getRows().getById(id);
 			}
-			else
-			{
-				return this.instance.getItem(id);
-			}
+
+			return this.instance.getItem(id);
 		},
 
-		scrollTo: function (id)
+		scrollTo(id)
 		{
-			var contentNode;
+			let contentNode;
 			if (this.isGrid())
 			{
 				var row = this.instance.getRows().getById(id);
@@ -5141,50 +5400,50 @@ BX.Disk.FolderListClass = (function (){
 			}
 			else
 			{
-				var item = this.instance.getItem(id);
+				const item = this.instance.getItem(id);
 				if (row && row.node)
 				{
 					contentNode = row.getContainer();
 				}
 			}
 
-			if(contentNode)
+			if (contentNode)
 			{
 				(new BX.easing({
-					duration : 500,
-					start : { scroll : window.pageYOffset || document.documentElement.scrollTop },
-					finish : { scroll : BX.pos(contentNode).top },
-					transition : BX.easing.makeEaseOut(BX.easing.transitions.quart),
-					step : function(state){
+					duration: 500,
+					start: { scroll: window.pageYOffset || document.documentElement.scrollTop },
+					finish: { scroll: BX.pos(contentNode).top },
+					transition: BX.easing.makeEaseOut(BX.easing.transitions.quart),
+					step(state) {
 						window.scrollTo(0, state.scroll);
-					}
+					},
 				})).animate();
 			}
 		},
 
-		getActionById: function (id, menuItemId)
+		getActionById(id, menuItemId)
 		{
-			var item = this.getItemById(id);
+			const item = this.getItemById(id);
 			if (!item)
 			{
 				return null;
 			}
 
-			var actions = item.getActions() || [];
-			for (var i = 0; i < actions.length; i++)
+			const actions = item.getActions() || [];
+			for (const action of actions)
 			{
-				if (actions[i].id && actions[i].id === menuItemId)
+				if (action.id && action.id === menuItemId)
 				{
-					return actions[i];
+					return action;
 				}
 			}
 
 			return null;
 		},
 
-		removeItemById: function (itemId)
+		removeItemById(itemId)
 		{
-			BX.fireEvent(document, 'click');
+			BX.fireEvent(document.body, 'click');
 
 			if (this.isGrid())
 			{
@@ -5192,7 +5451,7 @@ BX.Disk.FolderListClass = (function (){
 			}
 			else
 			{
-				var item = this.instance.getItem(itemId);
+				const item = this.instance.getItem(itemId);
 				if (item)
 				{
 					this.instance.removeItem(item);
@@ -5200,13 +5459,13 @@ BX.Disk.FolderListClass = (function (){
 			}
 		},
 
-		selectItemById: function (itemId)
+		selectItemById(itemId)
 		{
-			var item;
+			let item;
 			if (this.isGrid())
 			{
 				item = this.instance.getRows().getById(itemId);
-				if(item)
+				if (item)
 				{
 					item.select();
 				}
@@ -5221,7 +5480,7 @@ BX.Disk.FolderListClass = (function (){
 			}
 		},
 
-		removeSelected: function ()
+		removeSelected()
 		{
 			if (this.isGrid())
 			{
@@ -5229,17 +5488,17 @@ BX.Disk.FolderListClass = (function (){
 			}
 			else
 			{
-				//todo here we have to remove items from server
+				// todo here we have to remove items from server
 			}
 		},
 
-		sortByColumn: function (column)
+		sortByColumn(column)
 		{
 			this.instance.sortByColumn(column);
-		}
+		},
 	};
 
-	BX.namespace("BX.Disk.TileGrid");
+	BX.namespace('BX.Disk.TileGrid');
 
 	/**
 	 *
@@ -5276,54 +5535,56 @@ BX.Disk.FolderListClass = (function (){
 			imageBlock: null,
 			picture: null,
 			fileType: null,
-			icons: null
+			icons: null,
 		};
 		this.actionsMenu = null;
 		this.imageItemHandler = null;
 
-		BX.addCustomEvent(window, 'TileGrid.Grid:onItemDragStart', function() {
-			if(this.actionsMenu)
-				this.actionsMenu.popupWindow.close();
-		}.bind(this));
+		BX.addCustomEvent(window, 'TileGrid.Grid:onItemDragStart', () => {
+			if (this.actionsMenu)
+
+			
+     { this.actionsMenu.popupWindow.close();
+			}
+		});
 	};
 
-	BX.Disk.TileGrid.Item.prototype =
-	{
+	BX.Disk.TileGrid.Item.prototype =	{
 		__proto__: BX.TileGrid.Item.prototype,
 		constructor: BX.TileGrid.Item,
 
-		handleDblClick: function()
+		handleDblClick()
 		{
-			BX.onCustomEvent("Disk.TileItem.Item:onItemDblClick", [this]);
+			BX.onCustomEvent('Disk.TileItem.Item:onItemDblClick', [this]);
 		},
 
-		handleEnter: function()
+		handleEnter()
 		{
-			BX.onCustomEvent("Disk.TileItem.Item:onItemEnter", [this]);
+			BX.onCustomEvent('Disk.TileItem.Item:onItemEnter', [this]);
 		},
 
 		/**
 		 *
 		 * @returns {Element}
 		 */
-		getContent: function()
+		getContent()
 		{
 			this.item.container = BX.create('div', {
 				attrs: {
-					className: this.isFile ? 'disk-folder-list-item' : 'disk-folder-list-item disk-folder-list-item-folder'
+					className: this.isFile ? 'disk-folder-list-item' : 'disk-folder-list-item disk-folder-list-item-folder',
 				},
 				children: [
 					this.getImage(),
 					this.getActionBlock(),
 					BX.create('div', {
 						props: {
-							className: (!this.getLocked() && !this.getSymlink()) ? 'disk-folder-list-item-bottom disk-folder-list-item-bottom-without-icons' : 'disk-folder-list-item-bottom'
+							className: (!this.getLocked() && !this.getSymlink()) ? 'disk-folder-list-item-bottom disk-folder-list-item-bottom-without-icons' : 'disk-folder-list-item-bottom',
 						},
 						children: [
 							this.getTitle(),
-							this.getIconsContainer()
-						]
-					})
+							this.getIconsContainer(),
+						],
+					}),
 				],
 				events: {
 					contextmenu: function(event) {
@@ -5336,23 +5597,23 @@ BX.Disk.FolderListClass = (function (){
 						this.gridTile.resetSelection();
 						this.gridTile.selectItem(this);
 						event.preventDefault();
-					}.bind(this)
-				}
+					}.bind(this),
+				},
 			});
 
-			if(this.image)
+			if (this.image)
 			{
 				this.imageItemHandler = BX.throttle(this.appendImageItem, 20, this);
 				BX.bind(window, 'resize', this.imageItemHandler);
 				BX.bind(window, 'scroll', this.imageItemHandler);
 			}
 
-			return this.item.container
+			return this.item.container;
 		},
 
-		appendImageItem: function()
+		appendImageItem()
 		{
-			if(this.isVisibleOnFolderList())
+			if (this.isVisibleOnFolderList())
 			{
 				this.item.picture.setAttribute('src', this.image);
 				BX.bind(this.item.container, 'animationend', BX.proxy(this.appendImageItem, this));
@@ -5362,73 +5623,73 @@ BX.Disk.FolderListClass = (function (){
 			}
 		},
 
-		lock: function()
+		lock()
 		{
 			this.item.lock.style.display = null;
 		},
 
-		unlock: function()
+		unlock()
 		{
 			this.item.lock.style.display = 'none';
 		},
 
-		getIconsContainer: function()
+		getIconsContainer()
 		{
-			this.item.icons = BX.create("div", {
+			this.item.icons = BX.create('div', {
 				props: {
-					className: "disk-folder-list-item-icons"
+					className: 'disk-folder-list-item-icons',
 				},
 				children: [
 					this.getLocked(),
-					this.getSymlink()
-				]
+					this.getSymlink(),
+				],
 			});
 
-			return this.item.icons
+			return this.item.icons;
 		},
 
-		getLocked: function()
+		getLocked()
 		{
 			this.item.lock = BX.create('div', {
 				attrs: {
-					className: 'disk-folder-list-item-locked'
+					className: 'disk-folder-list-item-locked',
 				},
 				style: {
-					display: this.isLocked? null : 'none'
-				}
+					display: this.isLocked ? null : 'none',
+				},
 			});
 
-			return this.item.lock
+			return this.item.lock;
 		},
 
-		getSymlink: function()
+		getSymlink()
 		{
 			this.item.symlink = BX.create('div', {
 				attrs: {
-					className: 'disk-folder-list-item-shared'
+					className: 'disk-folder-list-item-shared',
 				},
 				style: {
-					display: this.isSymlink? null : 'none'
-				}
+					display: this.isSymlink ? null : 'none',
+				},
 			});
 
-			return this.item.symlink
+			return this.item.symlink;
 		},
 
 		/**
 		 *
 		 * @returns {Element}
 		 */
-		getTitle: function()
+		getTitle()
 		{
 			return this.item.title = BX.create('div', {
 				props: {
-					className: 'disk-folder-list-item-title'
+					className: 'disk-folder-list-item-title',
 				},
 				children: [
-					this.item.titleWrapper = BX.create("div", {
+					this.item.titleWrapper = BX.create('div', {
 						props: {
-							className: 'disk-folder-list-item-title-wrapper'
+							className: 'disk-folder-list-item-title-wrapper',
 						},
 						 children: [
 						 	this.getTitleInput(),
@@ -5437,7 +5698,7 @@ BX.Disk.FolderListClass = (function (){
 						 			className: 'disk-folder-list-item-title-link',
 						 			href: this.link,
 						 			title: this.title,
-									id: 'disk_obj_' + this.id
+									id: `disk_obj_${this.id}`,
 						 		},
 								events: {
 									click: this.handleTitleClick.bind(this),
@@ -5445,46 +5706,46 @@ BX.Disk.FolderListClass = (function (){
 						 		text: this.title,
 						 		dataset: BX.mergeEx({
 						 			objectId: this.id,
-						 			canAdd: this.canAdd
-						 		}, this.attributes)
-						 	})
-						 ]
-					})
-				]
-			})
+						 			canAdd: this.canAdd,
+						 		}, this.attributes),
+						 	}),
+						 ],
+					}),
+				],
+			});
 		},
 
-		handleTitleClick: function (event)
+		handleTitleClick(event)
 		{
-			BX.onCustomEvent("Disk.TileItem.Item:onTitleClick", [this, event]);
+			BX.onCustomEvent('Disk.TileItem.Item:onTitleClick', [this, event]);
 		},
 
-		getTitleInput: function()
+		getTitleInput()
 		{
 			this.item.titleInput = BX.create('input', {
 				attrs: {
 					className: 'disk-folder-list-item-title-input',
 					type: 'text',
-					value: this.title
-				}
+					value: this.title,
+				},
 			});
 
-			BX.bind(this.item.titleInput, 'click', function(event) {
+			BX.bind(this.item.titleInput, 'click', (event) => {
 				event.stopPropagation();
 			});
 
 			BX.addCustomEvent(window, 'BX.TileGrid.Grid:resetSelectAllItems', this.cancelRenaming.bind(this));
 			BX.addCustomEvent(window, 'BX.TileGrid.Grid:selectItem', this.cancelRenaming.bind(this));
 
-			BX.bind(this.item.titleInput, 'keydown', function(event) {
-				if(event.key === 'Escape')
+			BX.bind(this.item.titleInput, 'keydown', (event) => {
+				if (event.key === 'Escape')
 				{
 					this.cancelRenaming();
 
 					event.preventDefault();
 				}
 
-				if(event.key === 'Enter')
+				if (event.key === 'Enter')
 				{
 					this.cancelRenaming();
 					this.runRename();
@@ -5493,17 +5754,17 @@ BX.Disk.FolderListClass = (function (){
 				}
 
 				event.stopPropagation();
-			}.bind(this));
+			});
 
-			BX.bind(this.item.titleInput, 'blur', function(event){
+			BX.bind(this.item.titleInput, 'blur', (event) => {
 				this.cancelRenaming();
 				this.runRename();
-			}.bind(this));
+			});
 
-			return this.item.titleInput
+			return this.item.titleInput;
 		},
 
-		onRename: function()
+		onRename()
 		{
 			this.gridTile.resetSelection();
 			jsDD.Disable();
@@ -5513,7 +5774,7 @@ BX.Disk.FolderListClass = (function (){
 			this.item.titleInput.focus();
 			if (this.isFile)
 			{
-				this.item.titleInput.setSelectionRange(0, this.title.lastIndexOf("."));
+				this.item.titleInput.setSelectionRange(0, this.title.lastIndexOf('.'));
 			}
 			else
 			{
@@ -5521,7 +5782,7 @@ BX.Disk.FolderListClass = (function (){
 			}
 		},
 
-		cancelRenaming: function()
+		cancelRenaming()
 		{
 			BX.removeClass(this.item.title, 'disk-folder-list-item-title-rename');
 			this.item.titleInput.blur();
@@ -5529,13 +5790,13 @@ BX.Disk.FolderListClass = (function (){
 			jsDD.Enable();
 		},
 
-		rename: function(newName)
+		rename(newName)
 		{
 			BX.addClass(this.item.titleLink, 'disk-folder-list-item-title-link-renamed');
 
-			this.item.titleLink.addEventListener('animationend', function(){
+			this.item.titleLink.addEventListener('animationend', () => {
 				BX.removeClass(this.item.titleLink, 'disk-folder-list-item-title-link-renamed');
-			}.bind(this));
+			});
 
 			this.item.titleLink.textContent = newName;
 			this.item.titleLink.setAttribute('title', newName);
@@ -5545,20 +5806,21 @@ BX.Disk.FolderListClass = (function (){
 			jsDD.Enable();
 		},
 
-		rebuildLinkAfterRename: function(name)
+		rebuildLinkAfterRename(name)
 		{
-			if(this.link){
+			if (this.link)
+			{
 				if (this.isFile)
 				{
-					this.link = this.link.substring(0, this.link.lastIndexOf('/') + 1) + encodeURIComponent(name);
+					this.link = this.link.slice(0, Math.max(0, this.link.lastIndexOf('/') + 1)) + encodeURIComponent(name);
 				}
 				else
 				{
-					this.link = this.link.substring(0, this.link.lastIndexOf('/', this.link.length-2) + 1) + encodeURIComponent(name) + '/';
+					this.link = `${this.link.slice(0, Math.max(0, this.link.lastIndexOf('/', this.link.length - 2) + 1)) + encodeURIComponent(name)}/`;
 				}
 
 				this.item.titleLink.href = this.link;
-				this.actions.forEach(function(action){
+				this.actions.forEach(function(action) {
 					if (action.id === 'open' && action.href)
 					{
 						action.href = this.link;
@@ -5569,14 +5831,14 @@ BX.Disk.FolderListClass = (function (){
 			this.destroyActionsMenu();
 		},
 
-		runRename: function()
+		runRename()
 		{
 			if (this.item.titleInput.value === this.title)
 			{
 				return;
 			}
 
-			var oldTitle = this.title;
+			const oldTitle = this.title;
 			this.rename(this.item.titleInput.value);
 
 			BX.ajax.runAction('disk.api.commonActions.rename', {
@@ -5584,25 +5846,28 @@ BX.Disk.FolderListClass = (function (){
 				data: {
 					objectId: this.getId(),
 					newName: this.title,
-					autoCorrect: true
-				}
-			}).then(function (response) {
-				if(response.data.object.name !== this.title)
+					autoCorrect: true,
+				},
+			}).then((response) => {
+				if (response.data.object.name !== this.title)
 				{
 					this.rename(response.data.object.name);
 				}
-			}.bind(this)).catch(function (response) {
+			}).catch((response) => {
 				BX.Disk.showModalWithStatusAction(response);
 				this.rename(oldTitle);
-			}.bind(this));
+			});
 		},
 
-		afterRender: function()
+		afterRender()
 		{
-			if(!this.item.picture)
-				return;
+			if (!this.item.picture)
 
-			if(this.isVisibleOnFolderList())
+			
+     { return;
+			}
+
+			if (this.isVisibleOnFolderList())
 			{
 				this.appendImageItem();
 			}
@@ -5616,52 +5881,55 @@ BX.Disk.FolderListClass = (function (){
 			}.bind(this);
 		},
 
-		isVisibleOnFolderList: function()
+		isVisibleOnFolderList()
 		{
-			var rect = this.layout.container.getBoundingClientRect();
-			var rectBody = document.body.getBoundingClientRect();
-			var itemHeight = this.layout.container.offsetHeight * 2;
+			const rect = this.layout.container.getBoundingClientRect();
+			const rectBody = document.body.getBoundingClientRect();
+			const itemHeight = this.layout.container.offsetHeight * 2;
 
 			if (rect.top < 0 || rect.bottom < 0)
-				return false;
+
+			
+     { return false;
+			}
 
 			return rectBody.height > (rect.top - itemHeight) && rectBody.height >= (rect.bottom - itemHeight);
 		},
 
-		getImage: function()
+		getImage()
 		{
-			var fileExtension = this.getFileExtension(this.title);
+			const fileExtension = this.getFileExtension(this.title);
 
 			this.item.imageBlock = BX.create('div', {
 				attrs: {
-					className: 'disk-folder-list-item-image'
+					className: 'disk-folder-list-item-image',
 				},
 				children: [
 					this.item.fileType = BX.create('div', {
 						attrs: {
-							className: 'ui-icon ui-icon-file ui-icon-file-' + fileExtension
+							className: `ui-icon ui-icon-file ui-icon-file-${fileExtension}`,
 						},
 						style: {
-							width: this.isFolder ? '85%' : '70%'
+							width: this.isFolder ? '85%' : '70%',
 						},
-						html: '<i></i>'
+						html: '<i></i>',
 					}),
-					this.item.picture = (this.image? BX.create('img', {
+					this.item.picture = (this.image ? BX.create('img', {
 						attrs: {
-							className: 'disk-folder-list-item-image-img'
+							className: 'disk-folder-list-item-image-img',
 							// src: this.image
 						},
 						style: {
-							display: 'none'
-						}
-					}) : null)
-				]
+							display: 'none',
+						},
+					}) : null),
+				],
 			});
 
-			return this.item.imageBlock
+			return this.item.imageBlock;
 		},
 
-		markAsShared: function ()
+		markAsShared()
 		{
 			this.isSymlink = true;
 
@@ -5675,7 +5943,7 @@ BX.Disk.FolderListClass = (function (){
 			}
 		},
 
-		unmarkAsShared: function ()
+		unmarkAsShared()
 		{
 			this.isSymlink = false;
 
@@ -5693,11 +5961,11 @@ BX.Disk.FolderListClass = (function (){
 		 *
 		 * @returns {string}
 		 */
-		getFileExtension: function(fileName)
+		getFileExtension(fileName)
 		{
-			var fileExtension = fileName.substring(fileName.lastIndexOf('.') + 1);
+			let fileExtension = fileName.slice(Math.max(0, fileName.lastIndexOf('.') + 1));
 
-			switch(fileExtension)
+			switch (fileExtension)
 			{
 				case 'mp4':
 				case 'mkv':
@@ -5764,45 +6032,60 @@ BX.Disk.FolderListClass = (function (){
 
 				case 'flp':
 				case 'board':
-					fileExtension = 'board'
+					fileExtension = 'board';
+					break;
+
+				case 'odf':
+					fileExtension = 'odf';
+					break;
+
+				case 'odt':
+					fileExtension = 'odt';
+					break;
+
+				case 'ods':
+					fileExtension = 'ods';
+					break;
+
+				case 'odp':
+					fileExtension = 'odp';
 					break;
 
 				default:
-					fileExtension = 'empty'
+					fileExtension = 'empty';
 			}
 
 			this.isFolder ? fileExtension = 'folder' : null;
 			this.isSymlink && this.isFolder ? fileExtension = 'folder-shared' : null;
 
 			return fileExtension;
-
 		},
 
-		getActionBlock: function()
+		getActionBlock()
 		{
 			if (!this.item.action)
 			{
 				this.item.action = BX.create('div', {
 					attrs: {
-						className: 'disk-folder-list-item-action'
+						className: 'disk-folder-list-item-action',
 					},
 					events: {
 						click: function(event) {
 							this.showActionsMenu(event, BX.getEventTarget(event));
-						}.bind(this)
-					}
+						}.bind(this),
+					},
 				});
 			}
 
 			return this.item.action;
 		},
 
-		getActions: function ()
+		getActions()
 		{
 			return this.actions;
 		},
 
-		destroyActionsMenu: function ()
+		destroyActionsMenu()
 		{
 			if (this.actionsMenu)
 			{
@@ -5811,26 +6094,26 @@ BX.Disk.FolderListClass = (function (){
 			}
 		},
 
-		getActionsMenu: function(target)
+		getActionsMenu(target)
 		{
 			if (this.actionsMenu)
 			{
 				return this.actionsMenu;
 			}
 
-			this.actionsMenu = BX.PopupMenu.create('-disk-folder-list-item-action-menu' + this.getId(), target, this.actions, {
+			this.actionsMenu = BX.PopupMenu.create(`-disk-folder-list-item-action-menu${this.getId()}`, target, this.actions, {
 				autoHide: true,
 				offsetLeft: 20,
-				angle: true
+				angle: true,
 			});
 
-			BX.bind(this.actionsMenu.popupWindow.popupContainer, 'click', function(event) {
-				var actionsMenu = this.getActionsMenu();
+			BX.bind(this.actionsMenu.popupWindow.popupContainer, 'click', (event) => {
+				const actionsMenu = this.getActionsMenu();
 				if (actionsMenu)
 				{
-					var target = BX.getEventTarget(event);
-					var item = BX.findParent(target, {
-						className: 'menu-popup-item'
+					const target = BX.getEventTarget(event);
+					const item = BX.findParent(target, {
+						className: 'menu-popup-item',
 					}, 10);
 
 					if (!item || !item.dataset.preventCloseContextMenu)
@@ -5838,30 +6121,30 @@ BX.Disk.FolderListClass = (function (){
 						actionsMenu.close();
 					}
 				}
-			}.bind(this));
+			});
 
 			return this.actionsMenu;
 		},
 
-		showActionsMenu: function(event, bindElement)
+		showActionsMenu(event, bindElement)
 		{
  			BX.fireEvent(document.body, 'click');
 
-			var actionsMenu = this.getActionsMenu(bindElement);
+			const actionsMenu = this.getActionsMenu(bindElement);
 			actionsMenu.show();
 
-			if(!bindElement)
+			if (!bindElement)
 			{
-				actionsMenu.popupWindow.popupContainer.style.top = event.pageY + "px";
-				actionsMenu.popupWindow.popupContainer.style.left = (event.pageX - 35) + "px";
+				actionsMenu.popupWindow.popupContainer.style.top = `${event.pageY}px`;
+				actionsMenu.popupWindow.popupContainer.style.left = `${event.pageX - 35}px`;
 			}
 			else if (bindElement)
 			{
-				var pos = BX.pos(bindElement);
+				const pos = BX.pos(bindElement);
 				pos.forceBindPosition = true;
 				actionsMenu.popupWindow.setBindElement(bindElement);
 				actionsMenu.popupWindow.adjustPosition(pos);
 			}
-		}
-	}
+		},
+	};
 })();

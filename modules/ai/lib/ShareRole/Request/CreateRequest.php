@@ -90,7 +90,10 @@ class CreateRequest extends BaseRequest
 
 		$this->checkCreator();
 
-		$this->object->roleAvatarFile['MODULE_ID'] = 'ai';
+		if (!empty($this->object->roleAvatarFile))
+		{
+			$this->object->roleAvatarFile['MODULE_ID'] = 'ai';
+		}
 
 		return $this->object;
 	}

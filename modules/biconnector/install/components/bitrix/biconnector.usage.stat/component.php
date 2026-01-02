@@ -13,10 +13,13 @@ if (!defined('B_PROLOG_INCLUDED') || B_PROLOG_INCLUDED !== true)
 }
 
 use Bitrix\BIConnector\Configuration\Feature;
+use Bitrix\Main\Loader;
 use Bitrix\Main\Localization\Loc;
 use Bitrix\Main\UI\PageNavigation;
 
-$arResult['CAN_VIEW'] = $USER->CanDoOperation('biconnector_key_manage');
+$arResult['CAN_VIEW'] =
+	$USER->CanDoOperation('biconnector_key_manage')
+	|| (isset($arParams['BI_ANALYTIC']) && $arParams['BI_ANALYTIC'] === 'Y');
 
 if (!$arResult['CAN_VIEW'])
 {
@@ -34,7 +37,10 @@ $APPLICATION->SetTitle(Loc::getMessage('CC_BBUS_TITLE'));
 
 $maxFieldsCount = 5;
 $manager = Bitrix\BIConnector\Manager::getInstance();
-$serviceCode = Feature::isBuilderEnabled() ? 'bi-ctr' : 'gds';
+$serviceCode = Feature::isBuilderEnabled()
+	? \Bitrix\BIConnector\Services\ApacheSuperset::getServiceId()
+	: \Bitrix\BIConnector\Services\GoogleDataStudio::getServiceId()
+;
 $service = $manager->createService($serviceCode);
 $service->setLanguage(LANGUAGE_ID);
 $tables = [];
@@ -53,6 +59,14 @@ if (isset($_GET['over_limit']) && $_GET['over_limit'] === 'Y')
 {
 	$filter['=IS_OVER_LIMIT'] = 'Y';
 }
+if (isset($arParams['BI_ANALYTIC']) && $arParams['BI_ANALYTIC'] === 'Y')
+{
+	$filter['SERVICE_ID'] = 'superset';
+}
+else
+{
+	$filter['!=SERVICE_ID'] = 'superset';
+}
 
 $gridOptions = new Bitrix\Main\Grid\Options($arResult['GRID_ID']);
 $navParams = $gridOptions->GetNavParams();
@@ -64,20 +78,27 @@ $nav->setPageSize($pageSize)->initFromUri();
 $totalCount = \Bitrix\BIConnector\LogTable::getCount($filter);
 $nav->setRecordCount($totalCount);
 
+$select = [
+	'ID',
+	'TIMESTAMP_X',
+	'KEY_ID',
+	'SERVICE_ID',
+	'SOURCE_ID',
+	'ROW_NUM',
+	'DATA_SIZE',
+	'REAL_TIME',
+	'FIELDS',
+	'FILTERS',
+	'ACCESS_KEY' => 'KEY.ACCESS_KEY',
+];
+if (isset($arParams['BI_ANALYTIC']) && $arParams['BI_ANALYTIC'] === 'Y')
+{
+	$select = array_filter($select, function($key)  {
+		return !in_array($key, ['SERVICE_ID', 'KEY_ID']);
+	});
+}
 $logList = \Bitrix\BIConnector\LogTable::getList([
-	'select' => [
-		'ID',
-		'TIMESTAMP_X',
-		'KEY_ID',
-		'SERVICE_ID',
-		'SOURCE_ID',
-		'ROW_NUM',
-		'DATA_SIZE',
-		'REAL_TIME',
-		'FIELDS',
-		'FILTERS',
-		'ACCESS_KEY' => 'KEY.ACCESS_KEY',
-	],
+	'select' => $select,
 	'filter' => $filter,
 	'order' => $arResult['SORT'],
 	'offset' => $nav->getOffset(),
@@ -102,9 +123,16 @@ while ($data = $logList->fetch())
 		$data['SOURCE_ID'] = $tables[$data['SOURCE_ID']];
 	}
 
-	$str = number_format($data['ROW_NUM'], 0, '.', ' ');
-	$str = str_replace(' ', '<span></span>', $str);
-	$data['ROW_NUM'] = '<span class="biconnector-usage-stat-number">' . $str . '</span>';
+	if ($data['ROW_NUM'] === null)
+	{
+		$data['ROW_NUM'] = Loc::getMessage('CC_BBUS_ROWS_NO_DATA');
+	}
+	else
+	{
+		$str = number_format($data['ROW_NUM'], 0, '.', ' ');
+		$str = str_replace(' ', '<span></span>', $str);
+		$data['ROW_NUM'] = '<span class="biconnector-usage-stat-number">' . $str . '</span>';
+	}
 
 	if ($data['DATA_SIZE'])
 	{
@@ -142,8 +170,19 @@ while ($data = $logList->fetch())
 $arResult['NAV'] = $nav;
 $arResult['CURRENT_PAGE'] = $nav->getCurrentPage();
 $arResult['ENABLE_NEXT_PAGE'] = count($arResult['ROWS']) == $nav->getPageSize();
-$emptyStateTitle = Loc::getMessage('CC_BBUS_EMPTYSTATE_TITLE');
-$emptyStateDescription = Loc::getMessage('CC_BBUS_EMPTYSTATE_DESCRIPTION');
+
+if (isset($_GET['over_limit']) && $_GET['over_limit'] === 'Y')
+{
+	$emptyStateTitle = Loc::getMessage('CC_BBUS_EMPTYSTATE_OVER_LIMIT_TITLE');
+	$emptyStateDescription = Loader::includeModule('bitrix24')
+		? Loc::getMessage('CC_BBUS_EMPTYSTATE_OVER_LIMIT_DESCRIPTION_B24')
+		: Loc::getMessage('CC_BBUS_EMPTYSTATE_OVER_LIMIT_DESCRIPTION');
+}
+else
+{
+	$emptyStateTitle = Loc::getMessage('CC_BBUS_EMPTYSTATE_TITLE');
+	$emptyStateDescription = Loc::getMessage('CC_BBUS_EMPTYSTATE_DESCRIPTION');
+}
 $arResult['STUB'] = "
 	<div class=\"biconnector-empty\">
 		<div class=\"biconnector-empty__icon --statistic\"></div>
@@ -151,5 +190,12 @@ $arResult['STUB'] = "
 		<div class=\"biconnector-empty__title-sub\">{$emptyStateDescription}</div>
 	</div>
 ";
+
+$limitManager = \Bitrix\BIConnector\LimitManager::getInstance();
+if (isset($arParams['BI_ANALYTIC']) && $arParams['BI_ANALYTIC'] === 'Y')
+{
+	$limitManager->setIsSuperset();
+}
+$arResult['BICONNECTOR_LIMIT'] = $limitManager->getLimit();
 
 $this->includeComponentTemplate();

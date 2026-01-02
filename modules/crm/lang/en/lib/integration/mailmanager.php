@@ -9,5 +9,5 @@ $MESS["CRM_INTEGRATION_MAIL_MANAGER_ERROR_NO_FROM"] = "There are no mailboxes su
 $MESS["CRM_INTEGRATION_MAIL_MANAGER_ERROR_TOO_BIG_ATTACHMENT"] = "Maximum possible attachment size exceeded (#SIZE#).";
 $MESS["CRM_INTEGRATION_MAIL_MANAGER_ERROR_TO_BLACKLISTED"] = "Your email could not be sent because the recipient #EMAIL# is blacklisted.";
 $MESS["CRM_INTEGRATION_MAIL_MANAGER_ERROR_UNKNOWN"] = "Could not send message.";
-$MESS["CRM_INTEGRATION_MAIL_MANAGER_HISTORY_EVENT_TEXT"] = "Subject: #SUBJECT#<br/>From: #FROM#<br/>To: #TO#<br/><br/>#MESSAGE_BODY#";
+$MESS["CRM_INTEGRATION_MAIL_MANAGER_HISTORY_EVENT_TEXT_MSGVER_1"] = "Subject: #SUBJECT#<br/>From: #FROM#<br/>To: #TO#";
 $MESS["CRM_INTEGRATION_MAIL_MANAGER_NAME"] = "Email";

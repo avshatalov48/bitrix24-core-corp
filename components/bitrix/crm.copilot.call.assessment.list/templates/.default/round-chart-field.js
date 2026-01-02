@@ -1,4 +1,4 @@
-import { Dom, Event, Loc, Reflection, Runtime, Tag } from 'main.core';
+import { Dom, Event, Loc, Reflection, Tag } from 'main.core';
 import { ProgressRound } from 'ui.progressround';
 
 const namespace = Reflection.namespace('BX.Crm.Copilot.CallAssessmentList');
@@ -108,23 +108,17 @@ export class RoundChartField
 		const lowBorder = this.#getBorderById(LOW_BORDER);
 		const highBorder = this.#getBorderById(HIGH_BORDER);
 
-		Runtime.debounce(
-			() => {
-				BX.UI.Hint.show(
-					event.target,
-					Loc.getMessage(
-						'CRM_COPILOT_CALL_ASSESSMENT_LIST_COLUMN_ASSESSMENT_AVG_TOOLTIP',
-						{
-							'#LOW_BORDER#': lowBorder.value,
-							'#HIGH_BORDER#': highBorder.value,
-						}
-					),
-					true,
-				);
-			},
-			50,
-			this,
-		)();
+		BX.UI.Hint.show(
+			event.target,
+			Loc.getMessage(
+				'CRM_COPILOT_CALL_ASSESSMENT_LIST_COLUMN_ASSESSMENT_AVG_TOOLTIP',
+				{
+					'#LOW_BORDER#': lowBorder.value,
+					'#HIGH_BORDER#': highBorder.value,
+				}
+			),
+			true,
+		);
 	}
 
 	#hideTooltip(event: MouseEvent): void

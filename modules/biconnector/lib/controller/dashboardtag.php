@@ -85,11 +85,11 @@ class DashboardTag extends Controller
 
 	/**
 	 * @param int $id
-	 * @param string $title
+	 * @param string $value
 	 *
 	 * @return bool|null
 	 */
-	public function renameAction(int $id, string $title): ?bool
+	public function renameAction(int $id, string $value): ?bool
 	{
 		$tag = SupersetTagTable::getList([
 				'filter' => [
@@ -108,7 +108,7 @@ class DashboardTag extends Controller
 
 		$existedTitle = SupersetTagTable::getRow([
 			'filter' => [
-				'=TITLE' => $title,
+				'=TITLE' => $value,
 			],
 			'select' => ['ID'],
 		]);
@@ -120,7 +120,7 @@ class DashboardTag extends Controller
 			return null;
 		}
 
-		$tag->setTitle($title);
+		$tag->setTitle($value);
 
 		$result = $tag->save();
 		if (!$result->isSuccess())

@@ -5,6 +5,22 @@ namespace Bitrix\Crm\Service\Communication\Entity;
 use Bitrix\Main\DI\ServiceLocator;
 use Bitrix\Main\ORM\Query\Join;
 
+/**
+ * Class CommunicationChannelTable
+ *
+ * DO NOT WRITE ANYTHING BELOW THIS
+ *
+ * <<< ORMENTITYANNOTATION
+ * @method static EO_CommunicationChannel_Query query()
+ * @method static EO_CommunicationChannel_Result getByPrimary($primary, array $parameters = [])
+ * @method static EO_CommunicationChannel_Result getById($id)
+ * @method static EO_CommunicationChannel_Result getList(array $parameters = [])
+ * @method static EO_CommunicationChannel_Entity getEntity()
+ * @method static \Bitrix\Crm\Service\Communication\Entity\EO_CommunicationChannel createObject($setDefaultValues = true)
+ * @method static \Bitrix\Crm\Service\Communication\Entity\EO_CommunicationChannel_Collection createCollection()
+ * @method static \Bitrix\Crm\Service\Communication\Entity\EO_CommunicationChannel wakeUpObject($row)
+ * @method static \Bitrix\Crm\Service\Communication\Entity\EO_CommunicationChannel_Collection wakeUpCollection($rows)
+ */
 class CommunicationChannelTable extends \Bitrix\Main\ORM\Data\DataManager
 {
 	public static function getTableName(): string

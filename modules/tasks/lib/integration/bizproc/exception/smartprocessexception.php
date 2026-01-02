@@ -2,7 +2,7 @@
 
 namespace Bitrix\Tasks\Integration\Bizproc\Exception;
 
-use Bitrix\Tasks\Exception;
+use Exception;
 
 class SmartProcessException extends Exception
 {

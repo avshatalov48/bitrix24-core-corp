@@ -2,6 +2,7 @@
 
 $MESS['TASKS_BTN_ADD_TASK']='Добавить задачу';
 $MESS['TASKS_BTN_CREATE_TASK']='Создать';
+$MESS['TASKS_BTN_ADD_RELATION']='Добавить';
 $MESS['TASKS_BTN_ADD_TASK_BY_TEMPLATE']='Добавить задачу по шаблону';
 $MESS['TASKS_BTN_CREATE_TASK_BY_TEMPLATE']='Задачу по шаблону';
 $MESS['TASKS_BTN_ADD_TASK_BY_TASK']='Задачу';
@@ -32,7 +33,6 @@ $MESS['TASKS_BTN_SORT_ID'] = "ID";
 $MESS['TASKS_BTN_SORT_TITLE'] = "Название";
 $MESS['TASKS_BTN_SORT_DEADLINE'] = "Крайний срок";
 $MESS['TASKS_BTN_SORT_ORIGINATOR_NAME'] = "Постановщик";
-$MESS['TASKS_BTN_SORT_RESPONSIBLE_NAME'] = "Ответственный";
 $MESS['TASKS_BTN_SORT_RESPONSIBLE_NAME_MSGVER_1'] = 'Исполнитель';
 $MESS['TASKS_BTN_SORT_PRIORITY'] = "Важность";
 $MESS['TASKS_BTN_SORT_MARK'] = "Оценка";
@@ -57,3 +57,5 @@ $MESS['TASKS_BTN_ADD_SCRUM_TASK']='Создать задачу';
 $MESS['TASKS_BTN_KANBAN_POPUP_TITLE_CONFIGURE_VIEW']='Настроить карточку просмотра';
 
 $MESS['TASKS_BTN_REPORTS']='Отчеты';
+
+$MESS['TASKS_ALL_ROLES'] = 'Все роли';

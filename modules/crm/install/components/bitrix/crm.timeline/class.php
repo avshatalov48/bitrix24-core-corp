@@ -7,6 +7,7 @@ if (!defined('B_PROLOG_INCLUDED') || B_PROLOG_INCLUDED !== true)
 
 use Bitrix\Crm;
 use Bitrix\Crm\Activity\TodoPingSettingsProvider;
+use Bitrix\Crm\Service\Timeline\Item\Factory\HistoryItem;
 use Bitrix\Crm\Timeline\TimelineEntry;
 use Bitrix\Main;
 use Bitrix\Main\Localization\Loc;
@@ -270,6 +271,7 @@ class CCrmTimelineComponent extends CBitrixComponent
 				'fields' => array(
 					'ENTRY_CATEGORY_ID' => array(
 						Crm\Filter\TimelineEntryCategory::SMS,
+						Crm\Filter\TimelineEntryCategory::WHATSAPP,
 						Crm\Filter\TimelineEntryCategory::ACTIVITY_CALL,
 						Crm\Filter\TimelineEntryCategory::ACTIVITY_VISIT,
 						Crm\Filter\TimelineEntryCategory::ACTIVITY_MEETING,
@@ -407,7 +409,7 @@ class CCrmTimelineComponent extends CBitrixComponent
 		$result = $this->getRepository()->getHistoryItemsPage(
 			(new Crm\Service\Timeline\Repository\Query())
 				->setSearchForFixedItems(true)
-				->setLimit(3)
+				->setLimit(HistoryItem::MAX_PINNED_ITEMS_COUNT)
 		);
 
 		$this->arResult['FIXED_ITEMS'] = $result->getItems();
@@ -430,9 +432,19 @@ class CCrmTimelineComponent extends CBitrixComponent
 				$documentId = \CCrmBizProcHelper::ResolveDocumentId($this->entityTypeID, $this->entityID);
 				$runningIds = \Bitrix\Bizproc\Workflow\Entity\WorkflowInstanceTable::getIdsByDocument($documentId);
 
+				$bpTaskAddInTimelineOption = CUserOptions::getOption(
+					'crm.tour',
+					\Bitrix\Crm\Tour\Bizproc\WorkflowTaskAddInTimeline::OPTION_NAME,
+				);
+
 				if (!empty($runningIds))
 				{
 					$this->arResult['DOCUMENT_HAS_RUNNING_WORKFLOW'] = true;
+
+					if ($bpTaskAddInTimelineOption['closed'] === 'Y')
+					{
+						return;
+					}
 
 					$taskIterator = CBPTaskService::GetList(
 						['ID' => 'ASC'],

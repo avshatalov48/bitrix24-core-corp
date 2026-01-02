@@ -1,6 +1,10 @@
 <?php
 $MESS["INTRANET_BITRIX24"] = "Bitrix24";
+$MESS["INTRANET_BITRIX24_PROMO"] = "Ihr ultimativer Arbeitsplatz";
 $MESS["INTRANET_CHANGE_NOTIFY_SETTINGS"] = "Benachrichtigungseinstellungen bearbeiten";
+$MESS["INTRANET_EXPLANATION_TEXT"] = "Ignorieren Sie diese Nachricht, wenn Sie sie nicht erwartet haben.";
+$MESS["INTRANET_INVITATION_JOIN"] = "Beitreten";
+$MESS["INTRANET_INVITATION_JOIN_TEXT"] = "Treten Sie unserem Team<br>in Bitrix24 bei";
 $MESS["INTRANET_INVITE_ACCEPT"] = "Einladung akzeptieren";
 $MESS["INTRANET_INVITE_FOOTER"] = "Diese Benachrichtigung wurde automatisch erzeugt. Sie haben diese E-Mail erhalten, weil Sie in Bitrix24 eingeladen wurden. Sie werden die Benachrichtigungseinstellungen bearbeiten können, sobald Sie die Einladung akzeptieren.";
 $MESS["INTRANET_INVITE_IMG_LINK"] = "https://www.bitrix24.com/images/mail/tutorials/tools_de.png";
@@ -14,4 +18,6 @@ $MESS["INTRANET_MAIL_TITLE_IM_NEW_MESSAGE_GROUP"] = "Neue Nachrichten von #NAME#
 $MESS["INTRANET_MAIL_TITLE_IM_NEW_NOTIFY"] = "Neue Benachrichtigung von #NAME#";
 $MESS["INTRANET_OPEN"] = "Anzeigen";
 $MESS["INTRANET_OPEN_NOTIFY"] = "Benachrichtigungen anzeigen";
+$MESS["INTRANET_PERSONAL_DATA_TEXT"] = "Datenschutz";
 $MESS["INTRANET_SITE_LINK"] = "https://www.bitrix24.de/";
+$MESS["INTRANET_YOUR_BITRIX24"] = "Ihr Bitrix24:";

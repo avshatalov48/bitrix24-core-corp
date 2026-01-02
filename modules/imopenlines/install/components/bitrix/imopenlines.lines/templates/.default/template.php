@@ -294,18 +294,19 @@ if(\Bitrix\Main\Loader::includeModule("bitrix24"))
 		));
 	});
 </script>
-<?
-if ($arResult['PERM_CAN_EDIT'])
-{
-	$this->SetViewTarget("pagetitle", 10);
-	?>
-	<div class="webform-small-button webform-small-button-blue webform-small-button-add" id="crm-webform-list-create" title="<?=Loc::getMessage('OL_COMPONENT_LIST_ADD_LINE_DESC')?>">
-		<span class="webform-small-button-icon"></span>
-		<span class="webform-small-button-text">
-			<?=Loc::getMessage('OL_COMPONENT_LIST_ADD_LINE')?>
-		</span>
-	</div>
-	<?
-	$this->EndViewTarget();
-}
+<?php
+	if($arResult['PERM_CAN_EDIT'])
+	{
+		\Bitrix\UI\Toolbar\Facade\Toolbar::addButton([
+			'text' => Loc::getMessage('OL_COMPONENT_LIST_ADD_LINE'),
+			'icon' => \Bitrix\UI\Buttons\Icon::ADD,
+			'color' => \Bitrix\UI\Buttons\Color::PRIMARY,
+			'click' => new \Bitrix\UI\Buttons\JsEvent(
+				'BX.Click.CreateLine'
+			),
+			'dataset' => [
+				'toolbar-collapsed-icon' => \Bitrix\UI\Buttons\Icon::ADD
+			]
+		]);
+	}
 ?>

@@ -2,6 +2,7 @@
 
 return [
 	'extensions' => [
-		'im:messenger/view/lib/events-checkpoint',
+		'im:messenger/lib/logger',
+		'im:messenger/view/lib/event-filter',
 	],
 ];

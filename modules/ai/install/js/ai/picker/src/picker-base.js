@@ -251,9 +251,11 @@ export class PickerBase extends Base
 				{
 					AjaxErrorHandler.handleImageGenerateError({
 						errorCode: firstError?.code,
+						showSliderWithMsg: firstError?.customData?.showSliderWithMsg,
+						sliderCode: firstError?.customData?.sliderCode,
 						baasOptions: {
-							bindElement: null,
-							useSlider: true,
+							bindElement: this.context.querySelector('.ai__picker_submit-btn'),
+							useSlider: firstError?.customData?.showSliderWithMsg ?? true,
 							context: 'notSet',
 						},
 					});
@@ -262,7 +264,7 @@ export class PickerBase extends Base
 				}
 				else
 				{
-					this.handleGenerateFail();
+					this.handleGenerateFail(firstError);
 				}
 			});
 	}
@@ -293,11 +295,11 @@ export class PickerBase extends Base
 		});
 	}
 
-	handleGenerateFail(): void
+	handleGenerateFail(err: { code: string, message: string, customData: any }): void
 	{
 		BX.UI.Notification.Center.notify({
 			id: 'AI_JS_PICKER_TEXT_GENERATE_FAILED',
-			content: Loc.getMessage('AI_JS_PICKER_TEXT_GENERATE_FAILED'),
+			content: err?.message ?? Loc.getMessage('AI_JS_PICKER_TEXT_GENERATE_FAILED'),
 			showOnTopWindow: true,
 		});
 

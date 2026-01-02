@@ -22,12 +22,12 @@ import * as LastNameField from './lastname/controller';
 import * as CompanyNameField from './companyname/controller';
 import * as LayoutField from './layout/controller';
 import * as ResourceBookingField from './resourcebooking/controller';
+import * as BookingField from './booking/controller';
 import * as AddressField from './address/controller';
 import * as RqField from './rq/controller';
 import * as Container from './container/controller';
 
-
-let controllers = [
+const controllers = [
 	StringField.Controller,
 	PhoneField.Controller,
 	EmailField.Controller,
@@ -51,48 +51,44 @@ let controllers = [
 	CompanyNameField.Controller,
 	LayoutField.Controller,
 	ResourceBookingField.Controller,
+	BookingField.Controller,
 	Container.Controller,
 	AddressField.Controller,
 	RqField.Controller,
 ];
-let component = BaseField.Controller.component();
-component.components = Object.assign(
-	{},
-	component.components || {},
-	controllers.reduce(
-		(accum, controller) => {
-			accum['field-' + controller.type()] = controller.component();
-			return accum;
-		},
-		{}
-	)
-);
 
+const component = BaseField.Controller.component();
+component.components = {
+	...component.components,
+	...controllers.reduce((acc, controller) => ({
+		...acc,
+		[`field-${controller.type()}`]: controller.component(),
+	}), {}),
+};
 
 class Factory
 {
 	static create(options: BaseField.Options): BaseField.Controller
 	{
-		let controller = controllers
-			.filter(controller => options.type === controller.type())[0];
+		const Controller = controllers.find((it) => options.type === it.type());
 
-		if (!controller)
+		if (!Controller)
 		{
 			throw new Error(`Unknown field type '${options.type}'`);
 		}
 
-		return new controller(options);
+		return new Controller(options);
 	}
 
-	static getControllers ()
+	static getControllers(): BaseField.Controller[]
 	{
 		return controllers;
 	}
 
-	static getComponent ()
+	static getComponent(): Object
 	{
 		return component;
 	}
 }
 
-export {Factory};
+export { Factory };

@@ -1,0 +1,27 @@
+<?php
+$MESS["CRM_SITE_FORM_ABUSE_INFO"] = "Битрикс24 бұл контентке қатысы жоқ.";
+$MESS["CRM_SITE_FORM_ABUSE_INFO_HINT"] = "Битрикс24 нысан мазмұнына жауапты емес, бірақ сіз бізге бұзушылық туралы хабарлай аласыз";
+$MESS["CRM_SITE_FORM_ABUSE_INFO_TEXT"] = "Битрикс24 нысан мазмұны үшін жауап бермейді.";
+$MESS["CRM_SITE_FORM_ABUSE_LINK"] = "Бұзушылық туралы хабарлау";
+$MESS["CRM_SITE_FORM_BASKET_DISCOUNT"] = "Үнемдеу";
+$MESS["CRM_SITE_FORM_BASKET_SUM"] = "Жеңілдіксіз";
+$MESS["CRM_SITE_FORM_BASKET_TOTAL"] = "Төлемге";
+$MESS["CRM_SITE_FORM_CONSENT_ACCEPT"] = "Қабылдаймын";
+$MESS["CRM_SITE_FORM_CONSENT_READ_ALL"] = "Соңына дейін оқып шығыңыз";
+$MESS["CRM_SITE_FORM_CONSENT_REJECT"] = "Қабылдамаймын";
+$MESS["CRM_SITE_FORM_DEF_BUTTON"] = "Сұрау жіберу";
+$MESS["CRM_SITE_FORM_DEF_TITLE"] = "Нысанды толтырыңыз";
+$MESS["CRM_SITE_FORM_FILES_LOADING_TIME_LEFT_FEW_MINUTES"] = "бірнеше минут";
+$MESS["CRM_SITE_FORM_FILES_LOADING_TIME_LEFT_FEW_SECONDS"] = "бірнеше секунд";
+$MESS["CRM_SITE_FORM_FILES_LOADING_TIME_LEFT_LESS_THAN_MINUTE"] = "1 минуттан аз";
+$MESS["CRM_SITE_FORM_MORE_FIELDS_YET"] = "Төменде тағы өрістер бар";
+$MESS["CRM_SITE_FORM_NAV_BACK"] = "Артқа";
+$MESS["CRM_SITE_FORM_NAV_NEXT"] = "Әрі қарай";
+$MESS["CRM_SITE_FORM_SIGN"] = "Зарядталған";
+$MESS["CRM_SITE_FORM_SIGN_BY"] = "Битрикс24";
+$MESS["CRM_SITE_FORM_STATE_BUTTON_PAY"] = "Төлемге өту";
+$MESS["CRM_SITE_FORM_STATE_BUTTON_RESEND"] = "Тағы бір рет жіберіңіз";
+$MESS["CRM_SITE_FORM_STATE_DISABLED"] = "Нысан жарамсыз";
+$MESS["CRM_SITE_FORM_STATE_ERROR"] = "Қате орын алды";
+$MESS["CRM_SITE_FORM_STATE_SUCCESS"] = "Назарыңызға рахмет!";
+$MESS["CRM_SITE_FORM_STATE_SUCCESS_TITLE"] = "Жіберілді!";

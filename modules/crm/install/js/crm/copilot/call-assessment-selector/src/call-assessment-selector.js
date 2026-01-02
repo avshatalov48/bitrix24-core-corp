@@ -1,20 +1,24 @@
-import { Dom, Event, Type } from 'main.core';
-import { BaseEvent } from 'main.core.events';
+import { Dom, Event, Text, Type } from 'main.core';
+import { BaseEvent, EventEmitter } from 'main.core.events';
 import type { PopupOptions } from 'main.popup';
-import { Dialog, DialogOptions, Item } from 'ui.entity-selector';
+import { Dialog, DialogOptions, Item, type ItemOptions } from 'ui.entity-selector';
 import type { DisplayStrategy } from './display-strategy';
-import { CallCardReplacement } from './display-strategy/call-card-replacement';
+import { PullManager } from './pull-manager';
 
 import 'ui.design-tokens';
-import 'ui.fonts.opensans';
 
 const ENTITY_ID = 'copilot_call_script'; /** @php \Bitrix\Crm\Copilot\CallAssessment\EntitySelector\CallScriptProvider */
 
 declare type CallAssessmentSelectorOptions = {
+	id?: string,
 	currentCallAssessment: CallAssessmentItemIdentifier,
+	displayStrategy: DisplayStrategy,
 	additionalSelectorOptions ?: AdditionalSelectorOptions,
-	displayStrategy ?: DisplayStrategy,
 	emptyScriptListTitle ?: string,
+	isPullSubscribe?: boolean,
+	events: {
+		onCallAssessmentUpdate?: Function,
+	},
 };
 
 type AdditionalSelectorOptions = {
@@ -45,6 +49,8 @@ declare type CallAssessmentCustomData = {
 
 export class CallAssessmentSelector
 {
+	#id: string;
+
 	#currentCallAssessmentId: ?number = null;
 	#additionalSelectorOptions: AdditionalSelectorOptions;
 	#displayStrategy: DisplayStrategy;
@@ -53,12 +59,19 @@ export class CallAssessmentSelector
 	#container: HTMLElement;
 	#currentSelectorItem: ?Item = null;
 	#dialog: Dialog = null;
+	#eventEmitter: EventEmitter;
+	#pull: PullManager;
 
 	#isDisplayLoadingState: boolean = true;
 	#isDisabled: boolean = false;
 
+	isSelectsByPull: boolean = false;
+	#changesByPullQueue: ItemOptions[] = [];
+
 	constructor(options: CallAssessmentSelectorOptions)
 	{
+		this.#id = Type.isStringFilled(options.id) ? options.id : Text.getRandom(16);
+
 		const currentCallAssessment = options.currentCallAssessment;
 		if (Type.isNumber(currentCallAssessment.id) && currentCallAssessment.id > 0)
 		{
@@ -68,55 +81,29 @@ export class CallAssessmentSelector
 		this.#additionalSelectorOptions = options.additionalSelectorOptions ?? {};
 		this.#emptyScriptListTitle = options.emptyScriptListTitle ?? null;
 
-		this.#displayStrategy = options.displayStrategy ?? new CallCardReplacement();
+		this.#displayStrategy = options.displayStrategy;
 		this.#displayStrategy.updateTitle(currentCallAssessment.title ?? this.#emptyScriptListTitle);
 
 		this.#container = this.#displayStrategy.getTargetNode();
 		Event.bind(this.#container, 'click', this.#toggleDialog.bind(this));
+
+		this.#bindEvents(options.events);
+		this.#subscribePull();
+	}
+
+	getId(): string
+	{
+		return this.#id;
+	}
+
+	isSelectByPull(): boolean
+	{
+		return this.isSelectsByPull;
 	}
 
 	getCurrentCallAssessmentId(): ?number
 	{
 		return this.#currentCallAssessmentId;
-	}
-
-	setCurrentCallAssessment(
-		callAssessment: CallAssessmentCustomData,
-		isTouchDialog: boolean = false,
-	): void
-	{
-		if (callAssessment.id === this.#currentCallAssessmentId)
-		{
-			return;
-		}
-
-		const isUpdateByDialog = (!isTouchDialog && this.#dialog === null) || this.getDialog().isLoading();
-		this.#currentCallAssessmentId = callAssessment?.id ?? null;
-
-		if (isUpdateByDialog)
-		{
-			const title = callAssessment?.title ?? this.#emptyScriptListTitle;
-			this.#displayStrategy.updateTitle(title);
-
-			// other changes will be made in onLoadDialog
-			return;
-		}
-
-		if (!callAssessment.id)
-		{
-			this.#currentCallAssessmentId = null;
-			this.getDialog().deselectAll();
-			this.#adjustTitle();
-
-			return;
-		}
-
-		this.getDialog().getItems().forEach((item) => {
-			if (item.getId() === callAssessment.id)
-			{
-				item.select();
-			}
-		});
 	}
 
 	getCurrentCallAssessmentItem(): ?CallAssessmentCustomData
@@ -173,7 +160,7 @@ export class CallAssessmentSelector
 			const parentPopupContainer = this.#container.closest('body');
 
 			const dialogOptions: DialogOptions = {
-				...(this.#additionalSelectorOptions.dialog ?? {}),
+				...this.#additionalSelectorOptions.dialog,
 				targetNode: this.#container,
 				multiple: false,
 				dropdownMode: true,
@@ -189,12 +176,9 @@ export class CallAssessmentSelector
 						dynamicSearch: true,
 					},
 				],
-				popupOptions: {
-					targetContainer: parentPopupContainer,
-					...(this.#additionalSelectorOptions.popup ?? {}),
-				},
+				popupOptions: this.#additionalSelectorOptions.popup ?? {},
 				events: {
-					...(this.#additionalSelectorOptions.dialog?.events ?? {}),
+					...(this.#additionalSelectorOptions.dialog?.events),
 					onLoad: this.#onLoadDialog.bind(this),
 					'Item:onBeforeSelect': this.#onItemBeforeSelect.bind(this),
 					'Item:onBeforeDeselect': this.#onItemBeforeDeselect.bind(this),
@@ -215,13 +199,27 @@ export class CallAssessmentSelector
 
 	#onLoadDialog(event: BaseEvent): void
 	{
-		this.#doLoadCurrentSelectorItemByFirstLoad(event);
+		this.#applyChangesByPull();
+
+		const item = this.#getDialogItem(this.#currentCallAssessmentId);
+		if (item === null)
+		{
+			return;
+		}
+
+		this.#updateCurrentSelectorItem(item);
 		this.#callAdditionalEvent(event, 'onLoad');
 	}
 
 	#onItemBeforeSelect(event: BaseEvent): void
 	{
-		this.#updateCurrentSelectorItemByEvent(event);
+		const targetItem: Item = event.getData().item;
+		if (targetItem === null)
+		{
+			return;
+		}
+
+		this.#updateCurrentSelectorItem(targetItem);
 		this.#callAdditionalEvent(event, 'Item:onBeforeSelect');
 	}
 
@@ -256,36 +254,6 @@ export class CallAssessmentSelector
 		event.getTarget().hide();
 	}
 
-	#doLoadCurrentSelectorItemByFirstLoad(event: BaseEvent): void
-	{
-		if (this.#currentSelectorItem !== null)
-		{
-			return;
-		}
-
-		const dialog: Dialog = event.getTarget();
-		let currentSelectorItem = null;
-		dialog.getItems().forEach((item) => {
-			if (item.getId() === this.#currentCallAssessmentId)
-			{
-				currentSelectorItem = item;
-			}
-		});
-
-		this.#updateCurrentSelectorItem(currentSelectorItem);
-	}
-
-	#updateCurrentSelectorItemByEvent(event: BaseEvent): void
-	{
-		const targetItem: Item = event.getData().item;
-		if (targetItem === null)
-		{
-			return;
-		}
-
-		this.#updateCurrentSelectorItem(targetItem);
-	}
-
 	#updateCurrentSelectorItem(item: ?Item): void
 	{
 		this.#currentSelectorItem = item ?? null;
@@ -304,17 +272,19 @@ export class CallAssessmentSelector
 	{
 		const { target } = clickEvent;
 		if (
-			target?.closest('.ui-selector-dialog') === null
+			target?.closest('.call-quality__script-selector') === null
+			&& target?.closest('.ui-selector-dialog') === null
 			&& this.#displayStrategy.getTargetNode() !== target
 		)
 		{
-			this.#dialog?.hide();
+			this.close();
 		}
 	}
 
 	destroy(): void
 	{
 		this.#dialog?.destroy();
+		this.#pull.unsubscribe();
 	}
 
 	close(): void
@@ -344,5 +314,125 @@ export class CallAssessmentSelector
 			cursor: 'inherit',
 			opacity: '1',
 		});
+	}
+
+	#subscribePull(): void
+	{
+		this.#pull = new PullManager({
+			onUpdate: this.#onUpdateItemByPull.bind(this),
+			onSelect: (eventData: Object): void => {
+				this.isSelectsByPull = true;
+				this.#onSelectItemByPull(eventData);
+				this.isSelectsByPull = false;
+			},
+		});
+	}
+
+	#bindEvents(events: { [eventName: string]: Function }): void
+	{
+		this.#eventEmitter = new EventEmitter();
+		this.#eventEmitter.setEventNamespace('Crm.Copilot.CallAssessmentSelector');
+
+		if (Type.isObject(events))
+		{
+			Object.entries(events).forEach(([eventName, listener]) => {
+				this.#eventEmitter.subscribe(eventName, listener);
+			});
+		}
+	}
+
+	#onSelectItemByPull(eventData: Object): void
+	{
+		const { selectorId, itemOptions } = eventData;
+		if (selectorId !== this.getId())
+		{
+			return;
+		}
+
+		if (!this.#isDialogLoaded())
+		{
+			const item = new Item(itemOptions);
+			const event = new BaseEvent({ data: { item } });
+
+			this.#updateCurrentSelectorItem(item);
+			this.#callAdditionalEvent(event, 'Item:onBeforeSelect');
+
+			return;
+		}
+
+		if (!itemOptions.id)
+		{
+			this.#currentCallAssessmentId = null;
+			this.getDialog().deselectAll();
+			this.#adjustTitle();
+
+			return;
+		}
+
+		this.#getDialogItem(itemOptions.id)?.select();
+	}
+
+	#onUpdateItemByPull(eventData: Object): void
+	{
+		const { itemOptions } = eventData;
+		if (itemOptions.id === this.#currentCallAssessmentId)
+		{
+			this.#displayStrategy.updateTitle(itemOptions.title ?? this.#emptyScriptListTitle);
+		}
+
+		if (this.#isDialogLoaded())
+		{
+			this.#updateItem(itemOptions);
+
+			return;
+		}
+
+		this.#addChangeByPull(itemOptions);
+		this.#eventEmitter.emit('onCallAssessmentUpdate', { callAssessment: itemOptions?.customData });
+	}
+
+	#updateItem(itemOptions: ItemOptions, isEmit: boolean = true): void
+	{
+		const item = this.#getDialogItem(String(itemOptions.id));
+		if (item === null)
+		{
+			return;
+		}
+
+		item.setTitle(itemOptions.title);
+		item.setSupertitle(itemOptions.supertitle);
+		item.setBadges(itemOptions.badgesOptions);
+		item.customData = new Map(Object.entries(itemOptions.customData));
+
+		if (isEmit)
+		{
+			this.#eventEmitter.emit('onCallAssessmentUpdate', { callAssessment: itemOptions.customData });
+		}
+	}
+
+	#addChangeByPull(callAssessment: ItemOptions): void
+	{
+		this.#changesByPullQueue.push(callAssessment);
+	}
+
+	#applyChangesByPull(): void
+	{
+		this.#changesByPullQueue.forEach((itemOptions) => this.#updateItem(itemOptions, false));
+		this.#changesByPullQueue = [];
+	}
+
+	#isDialogLoaded(): boolean
+	{
+		return this.#dialog !== null && !this.getDialog().isLoading();
+	}
+
+	#getDialogItem(id: string | number | null): ?Item
+	{
+		if (id === null)
+		{
+			return null;
+		}
+
+		return this.getDialog().getItem([ENTITY_ID, id]);
 	}
 }

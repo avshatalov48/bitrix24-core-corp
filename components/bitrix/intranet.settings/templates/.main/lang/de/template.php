@@ -1,7 +1,7 @@
 <?php
 $MESS["BITRIX24_PARTNER_ORDER_MSGVER_1"] = "Anfrage zur Implementierung";
 $MESS["BITRIX24_PARTNER_POPUP_BUTTON"] = "Anfrage senden";
-$MESS["BITRIX24_PARTNER_POPUP_TITLE"] = "Installation und Implementierung von Bitrix24";
+$MESS["BITRIX24_PARTNER_POPUP_TITLE"] = "Implementierung, Integration und Anpassung von Bitrix24";
 $MESS["INTRANET_SETTINGS_ADDITIONAL_USER_ACCESS_IP"] = "Weitere Nutzer und IP-Adressen hinzufügen";
 $MESS["INTRANET_SETTINGS_BLACK_LIST"] = "Schwarze Liste";
 $MESS["INTRANET_SETTINGS_BUTTON_CREATE"] = "Landingpage erstellen";
@@ -27,6 +27,7 @@ $MESS["INTRANET_SETTINGS_CONFIRM_ACTION_CANCEL"] = "Abbrechen";
 $MESS["INTRANET_SETTINGS_CONFIRM_ACTION_DELETE_PORTAL"] = "Diesen Bitrix24 Account löschen";
 $MESS["INTRANET_SETTINGS_CONFIRM_ACTION_DELETE_PORTAL_FIRE_EMPLOYEE"] = "Mitarbeiter deaktivieren";
 $MESS["INTRANET_SETTINGS_CONFIRM_ACTION_DELETE_PORTAL_MAIL"] = "Eine Nachricht an #MAIL# senden";
+$MESS["INTRANET_SETTINGS_CONFIRM_ACTION_DELETE_PORTAL_NETWORK_LINK"] = "E-Mail-Adresse hinzufügen";
 $MESS["INTRANET_SETTINGS_CONFIRM_ACTION_DESC"] = "Die Änderungen wurden nicht gespeichert. Möchten Sie die Einstellungen wirklich schließen?";
 $MESS["INTRANET_SETTINGS_CONFIRM_ACTION_OK"] = "Schlissen ohne zu speichern";
 $MESS["INTRANET_SETTINGS_CONFIRM_ACTION_TITLE"] = "Aktion bestätigen";
@@ -128,6 +129,7 @@ $MESS["INTRANET_SETTINGS_FIELD_LABEL_NOTIFICATION_EMAIL"] = "Benachrichtigungen 
 $MESS["INTRANET_SETTINGS_FIELD_LABEL_OTP_SWITCHING_MESSAGE_CHAT"] = "Authentifizierungscode in Benachrichtigungen senden";
 $MESS["INTRANET_SETTINGS_FIELD_LABEL_OTP_SWITCHING_PERIOD"] = "Mitarbeiter müssen Zwei-Faktor-Authentifizierung aktivieren innerhalb von:";
 $MESS["INTRANET_SETTINGS_FIELD_LABEL_POST_FEED"] = "Alle Mitarbeiter können im Feed schreiben";
+$MESS["INTRANET_SETTINGS_FIELD_LABEL_POST_FEED_MSGVER_1"] = "Veröffentlichung von Nachrichten an alle erlauben";
 $MESS["INTRANET_SETTINGS_FIELD_LABEL_PUBLISH_TO_ALL_DEFAULT"] = "Alle Mitarbeiter zu Empfängern der Nachricht standardmäßig hinzufügen";
 $MESS["INTRANET_SETTINGS_FIELD_LABEL_SECURITY_OTP"] = "Erforderlich für alle Mitarbeiter";
 $MESS["INTRANET_SETTINGS_FIELD_LABEL_SELECT_ACCEPTED_IP"] = "Erlaubte IP-Adressen (mehrfache Adressen und Adressbereiche sind möglich, z. B.: 123.45.67.89, 176.98.34.122, 0.0.0.0-255.255.255.255):";
@@ -185,9 +187,12 @@ $MESS["INTRANET_SETTINGS_MAINPAGE_SHARE_POPUP_CONTENT"] = "Möchten Sie die Star
 ";
 $MESS["INTRANET_SETTINGS_MAINPAGE_SHARE_POPUP_TITLE_MSGVER_1"] = "Startseite veröffentlichen";
 $MESS["INTRANET_SETTINGS_MAINPAGE_WITHDRAW_POPUP_BTN_CONFIRM"] = "Ja";
+$MESS["INTRANET_SETTINGS_MAINPAGE_WITHDRAW_POPUP_BTN_CONFIRM_FREE"] = "Ja";
 $MESS["INTRANET_SETTINGS_MAINPAGE_WITHDRAW_POPUP_CONTENT"] = "Möchten Sie die Veröffentlichung der Startseite deaktivieren? Sie wird nicht physisch gelöscht, aber der menüpunkt Startseite wird aus dem linken Menü entfernt.
 ";
+$MESS["INTRANET_SETTINGS_MAINPAGE_WITHDRAW_POPUP_CONTENT_FREE"] = "Die Startseite wird aus dem Menü entfernt, sie wird nicht verfügbar, bleibt aber im System erhalten. Sie können diese Seite nur in Professional oder Enterprise Tarifen wiederherstellen. Möchten Sie fortfahren und die Startseite deaktivieren?";
 $MESS["INTRANET_SETTINGS_MAINPAGE_WITHDRAW_POPUP_TITLE"] = "Veröffentlichung der Startseite deaktivieren";
+$MESS["INTRANET_SETTINGS_MAINPAGE_WITHDRAW_POPUP_TITLE_FREE"] = "Startseite deaktivieren";
 $MESS["INTRANET_SETTINGS_OWN_DOMAIN_HELP1"] = "Fügen Sie 4 Einträge vom Typ \"IN NS\" im DNS-Editor Ihrer Domain hinzu. Sie können andere Einträge für diese Domain löschen, wenn sie existieren.";
 $MESS["INTRANET_SETTINGS_OWN_DOMAIN_HELP2"] = "Kontaktieren Sie den Bitrix24 Helpdesk. Nur die Bitrix24 Administratoren können den Helpdesk kontaktieren.";
 $MESS["INTRANET_SETTINGS_OWN_DOMAIN_HELP3"] = "Geben Sie den vollen Namen Ihrer Domain sowie den Nachweis der im Schritt 1 vorgenommenen Änderung der NS-Einträge an. Das kann ein Screenshot vom DNS-Editor sein.";
@@ -199,9 +204,11 @@ $MESS["INTRANET_SETTINGS_PORTAL_DELETE_MAIL_SUBJECT"] = "Anfrage wegen Löschung
 $MESS["INTRANET_SETTINGS_SEARCH"] = "suchen";
 $MESS["INTRANET_SETTINGS_SEARCH_NOT_FOUND"] = "Es wurden keine Einträge gefunden.";
 $MESS["INTRANET_SETTINGS_SEARCH_PLACEHOLDER"] = "Suchen";
+$MESS["INTRANET_SETTINGS_SECTION_CONFIGURATION_DESCRIPTION_DELETE_PORTAL_BOUND"] = "Sie müssen die Verbindung Ihres Bitrix24 mit dem Netzwerk der Niederlassungen trennen, bevor Sie Ihr Bitrix24 löschen. #MORE_DETAILS#";
 $MESS["INTRANET_SETTINGS_SECTION_CONFIGURATION_DESCRIPTION_DELETE_PORTAL_EMPLOYEE"] = "Dieser Bitrix24 muss vor der Löschung nur den Administrator enthalten. Sie müssen alle Mitarbeiter deaktivieren, um fortfahren zu können. #MORE_DETAILS#";
 $MESS["INTRANET_SETTINGS_SECTION_CONFIGURATION_DESCRIPTION_DELETE_PORTAL_MAIL"] = "Möchten Sie diesen Bitrix24 Account löschen, senden Sie uns eine Nachricht an <a class=\"ui-section__link --mail\" href=\"#MAIL_LINK#\">#MAIL#</a>.<br><br> Alle Daten werden permanent gelöscht. #MORE_DETAILS#";
 $MESS["INTRANET_SETTINGS_SECTION_CONFIGURATION_DESCRIPTION_DELETE_PORTAL_MSGVER_1"] = "Nur der Administrator kann Bitrix24 löschen. Sie müssen alle Mitarbeiter deaktivieren, um fortzufahren. Durch diese Aktion werden alle Daten gelöscht, einschließlich Dateien und Nutzerprofile. <br><br>Nachdem dieses Bitrix24 gelöscht wird, können Sie ein anderes mit der gleichen Adresse erstellen. #MORE_DETAILS#";
+$MESS["INTRANET_SETTINGS_SECTION_CONFIGURATION_DESCRIPTION_DELETE_PORTAL_NETWORK"] = "Sie müssen eine E-Mail-Adresse zu Ihrem Account hinzufügen, bevor Sie Ihr Bitrix24 löschen. Wir benötigen diese Adresse, um Ihnen einen Bestätigungscode zu senden. #MORE_DETAILS#";
 $MESS["INTRANET_SETTINGS_SECTION_CONFIGURATION_DESCRIPTION_DELETE_PORTAL_NOT_ADMIN"] = "Nur der Administrator kann den Bitrix24 Account löschen";
 $MESS["INTRANET_SETTINGS_SECTION_CRM_MAPS_DESCRIPTION"] = "Schlüssel Google API ist zur Nutzung von Google Maps erforderlich.  <a target=\"_blank\" class=\"ui-section__link\" href=\"#GOOGLE_API_URL#\">Schlüssel anfordern</a>";
 $MESS["INTRANET_SETTINGS_SECTION_CRM_MAPS_YANDEX_DESCRIPTION"] = "Yandex.Maps erfordert Yandex API Key. <a target=\"_blank\" class=\"ui-section__link\" href=\"#YANDEX_API_URL#\"  \">Den Key anfordern</a>";

@@ -43,6 +43,11 @@ export class ItemIdentifier
 		return this.#entityTypeId;
 	}
 
+	get entityTypeName(): string
+	{
+		return BX.CrmEntityType.resolveName(this.#entityTypeId);
+	}
+
 	get entityId(): number
 	{
 		return this.#entityId;

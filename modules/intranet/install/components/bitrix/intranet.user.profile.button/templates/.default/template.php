@@ -57,8 +57,9 @@ $this->setFrameMode(true);
 	<script>
 		BX.ready(() => {
 			BX.message(<?=CUtil::phpToJsObject(Main\Localization\Loc::loadLanguageFile(__FILE__))?>);
+			let avatar = null;
 			<?php if ($arResult['IS_COLLABER'] ?? false): ?>
-				const avatar = new BX.UI.AvatarRoundGuest({
+				avatar = new BX.UI.AvatarRoundGuest({
 					size: 39,
 					userpicPath: '<?= Uri::urnEncode($arResult['USER_PERSONAL_PHOTO_SRC']) ?>',
 					baseColor: '#19cc45',

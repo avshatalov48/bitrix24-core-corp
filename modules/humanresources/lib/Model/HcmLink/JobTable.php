@@ -70,6 +70,10 @@ class JobTable extends ORM\Data\DataManager
 			(new ORM\Fields\IntegerField('PROGRESS_TOTAL'))
 				->configureTitle('Num of all records')
 			,
+			(new ORM\Fields\ArrayField('SETTINGS_DATA'))
+				->configureSerializationJson()
+				->configureTitle('Settings data')
+			,
 			(new ORM\Fields\ArrayField('INPUT_DATA'))
 				->configureSerializationJson()
 				->configureTitle('Event data for external call')

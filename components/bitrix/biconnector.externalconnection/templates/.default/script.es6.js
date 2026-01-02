@@ -1,6 +1,9 @@
-import { ajax as Ajax, Dom, Event, Loc, Tag, Reflection } from 'main.core';
+import { ajax as Ajax, Dom, Event, Loc, Tag, Text, Reflection } from 'main.core';
 import { BaseEvent } from 'main.core.events';
+import { Popup } from 'main.popup';
 import { Button, ButtonColor, ButtonManager, ButtonState } from 'ui.buttons';
+import { Dialog } from 'ui.entity-selector';
+import { Slider as ImportSlider } from 'biconnector.dataset-import';
 
 type SettingField = {
 	name: string,
@@ -10,9 +13,10 @@ type SettingField = {
 }
 
 type Props = {
-	sourceFields: { id: number, title: string, type: string },
+	sourceFields: { id: number, title: string, type: string, code: string | null, active: boolean },
 	fieldsConfig: { [key: string]: SettingField[] },
 	supportedDatabases: { code: string; name: string }[],
+	closeAfterCreate: boolean,
 }
 
 class ExternalConnectionForm
@@ -31,8 +35,12 @@ class ExternalConnectionForm
 	#initForm()
 	{
 		this.#node = document.querySelector('#connection-form');
-
+		const hintNode = Tag.render`
+			<div class="hint-wrapper"></div>
+		`;
+		Dom.append(hintNode, this.#node);
 		this.#initHint();
+
 		const fieldsNode = Tag.render`
 			<div class="fields-wrapper"></div>
 		`;
@@ -53,15 +61,25 @@ class ExternalConnectionForm
 
 	#initHint()
 	{
+		const node = this.#node.querySelector('.hint-wrapper');
+
+		const articleCodes = {
+			'1c': '23508958',
+			rest: '24486426',
+		};
+
+		const articleCode = articleCodes[this.#props.sourceFields?.type] ?? articleCodes['1c'];
+		const link = `redirect=detail&code=${articleCode}`;
+
 		const hint = Tag.render`
 			<div class="db-connection-hint">
 				${Loc.getMessage('EXTERNAL_CONNECTION_HINT', {
-					'[link]': '<a class="ui-link" onclick="top.BX.Helper.show(`redirect=detail&code=23508958`)">',
+					'[link]': `<a class="ui-link" onclick="top.BX.Helper.show(\`${link}\`)">`,
 					'[/link]': '</a>',
 				})}
 			</div>
 		`;
-		Dom.append(hint, this.#node);
+		Dom.append(hint, node);
 	}
 
 	#initFields()
@@ -76,7 +94,20 @@ class ExternalConnectionForm
 					</div>
 					<div class="ui-ctl ui-ctl-after-icon ui-ctl-dropdown ui-ctl-w100">
 						<div class="ui-ctl-after ui-ctl-icon-angle"></div>
-						<select class="ui-ctl-element" data-code="type"></select>
+						<div class="ui-ctl-element"  id="connection-type-button">
+							${sourceFields.code
+								? Text.encode(this.#props.supportedDatabases.find((db) => db.code === sourceFields.code)?.name)
+								: Text.encode(this.#props.supportedDatabases[0]?.name)
+							}
+						</div>
+						<input 
+							type="hidden" 
+							id="connection-type-code"
+							data-code="code"
+							value="${sourceFields.code
+									? this.#props.supportedDatabases.find((db) => db.code === sourceFields.code)?.code
+									: this.#props.supportedDatabases[0]?.code
+								}">
 					</div>
 				</div>
 				<div class="ui-form-row">
@@ -99,34 +130,57 @@ class ExternalConnectionForm
 		`;
 		Dom.append(fields, fieldsNode);
 
-		const typeSelector = fieldsNode.querySelector('[data-code="type"]');
-		this.#props.supportedDatabases.forEach((database) => {
-			Dom.append(
-				Tag.render`
-					<option 
-						value="${database.code}" 
-						${sourceFields.type === database.code ? 'selected' : ''}
-					>
-						${database.name}
-					</option>
-				`,
-				typeSelector,
-			);
+		const button = document.getElementById('connection-type-button');
+		const dialog = new Dialog({
+			targetNode: button,
+			width: 465,
+			height: 400,
+			autoHide: true,
+			multiple: false,
+			showAvatars: false,
+			compactView: true,
+			dropdownMode: true,
+			enableSearch: true,
+			items: this.#props.supportedDatabases.map((database) => ({
+				id: database.code,
+				entityId: 'biconnector-external-connection',
+				title: database.name,
+				tabs: 'connections',
+			})),
+			events: {
+				'Item:onSelect': (event) => {
+					const item = event.getData().item;
+					const selectedDatabaseCode = item.getId();
+					const selectedDatabaseName = item.getTitle();
+
+					button.textContent = Text.encode(selectedDatabaseName);
+					this.#onChangeType({ target: { value: selectedDatabaseCode } });
+				},
+			},
+			entities: [{
+				id: 'biconnector-external-connection',
+			}],
+			tabs: [
+				{
+					id: 'connections',
+					showInList: true,
+				},
+			],
 		});
-		Event.bind(typeSelector, 'input', this.#onChangeType.bind(this));
 
 		if (sourceFields.id)
 		{
-			const fieldId = Tag.render`
-				<input hidden value="${sourceFields.id}" data-code="id">
-			`;
-			Dom.append(fieldId, fields);
-
-			Dom.attr(typeSelector, 'disabled', true);
+			Dom.attr(button, 'disabled', true);
+		}
+		else
+		{
+			Event.bind(button, 'click', () => {
+				dialog.show();
+			});
 		}
 
 		const fieldConfig = this.#props.fieldsConfig;
-		const connectionType = sourceFields.type ?? this.#props.supportedDatabases[0].code;
+		const connectionType = sourceFields.code ?? this.#props.supportedDatabases[0].code;
 		fieldConfig[connectionType].forEach((field: SettingField) => {
 			let fieldType = field.type;
 			if (field.code === 'password')
@@ -136,7 +190,7 @@ class ExternalConnectionForm
 			const fieldNode = Tag.render`
 				<div class="ui-form-row">
 					<div class="ui-form-label">
-						<div class="ui-ctl-label-text">${field.name}</div>
+						<div class="ui-ctl-label-text">${Text.encode(field.name)}</div>
 					</div>
 					<div class="ui-form-content">
 						<div class="ui-ctl ui-ctl-textbox ui-ctl-w100">
@@ -158,7 +212,13 @@ class ExternalConnectionForm
 
 	#onChangeType(event)
 	{
-		this.#props.sourceFields.type = event.target.value;
+		const value = event.target.value;
+
+		const connector = this.#props.supportedDatabases.find((database) => database.code === value);
+		this.#props.sourceFields.code = value;
+		this.#props.sourceFields.type = connector.type ?? null;
+		Dom.clean(this.#node.querySelector('.hint-wrapper'));
+		this.#initHint();
 		Dom.clean(this.#node.querySelector('.fields-wrapper'));
 		this.#initFields();
 		this.#clearConnectionStatus();
@@ -222,6 +282,12 @@ class ExternalConnectionForm
 			result[field.getAttribute('data-code')] = field.value;
 		});
 
+		const type = this.#props?.sourceFields?.type ?? this.#props.supportedDatabases[0]?.type ?? null;
+		if (type)
+		{
+			result.type = type;
+		}
+
 		return result;
 	}
 
@@ -230,9 +296,7 @@ class ExternalConnectionForm
 		this.#checkConnectButton.setState(ButtonState.WAITING);
 
 		return new Promise((resolve, reject) => {
-			Ajax.runComponentAction('bitrix:biconnector.externalconnection', 'checkConnection', {
-				mode: 'class',
-				signedParameters: this.#props.signedParameters,
+			Ajax.runAction('biconnector.externalsource.source.checkConnectionByData', {
 				data: {
 					data: this.#getConnectionValues(),
 				},
@@ -272,25 +336,118 @@ class ExternalConnectionForm
 				});
 			})
 			.then((response) => {
-				BX.SidePanel.Instance.postMessage(window, 'BIConnector:ExternalConnection:onConnectionCreated', {
+				BX.SidePanel.Instance.postMessage(window, 'BIConnector:ExternalConnection:onConnectionSave', {
 					connection: response.data.connection,
 				});
-				BX.SidePanel.Instance.getTopSlider().close();
+				if (this.#props.closeAfterCreate)
+				{
+					this.#closeSlider();
+				}
+				else
+				{
+					this.#showSaveSuccessPopup(response.data.connection, response.data.supersetIsReady);
+					saveButton.setWaiting(false);
+				}
 			})
 			.catch((response) => {
 				saveButton.setWaiting(false);
-				if (response.errors?.length > 0)
+				if (response?.errors?.length > 0)
 				{
 					BX.UI.Notification.Center.notify({
 						content: response.errors[0].message,
 					});
 				}
-				else
-				{
-					console.error(response);
-				}
 				BX.SidePanel.Instance.postMessage(window, 'BIConnector:ExternalConnection:onConnectionCreationError');
 			});
+	}
+
+	#showSaveSuccessPopup(connection: { id: any, name: string, type: string }, supersetIsReady: boolean)
+	{
+		let popup: ?Popup = null;
+
+		// show for (new or active sources) and ready superset only
+		const showCreateDatasetButton = supersetIsReady
+			&& (
+				!(Object.hasOwn(this.#props.sourceFields, 'id'))
+				|| this.#props.sourceFields.active
+			)
+		;
+		const createDatasetButton = showCreateDatasetButton ? Tag.render`
+			<a class="ui-btn ui-btn-md ui-btn-primary">
+				${Loc.getMessage('EXTERNAL_CONNECTION_CREATE_DATASET')}
+			</a>
+		` : false;
+
+		const closeButton = Tag.render`
+			<a class="ui-btn ui-btn-md ui-btn-light-border">
+				${Loc.getMessage('EXTERNAL_CONNECTION_CLOSE')}
+			</a>
+		`;
+
+		const onPopupClose = () => {
+			this.#closeSlider();
+		};
+
+		const sourceType = this.#props.sourceFields.type ?? this.#props.supportedDatabases[0].code;
+
+		Event.bind(createDatasetButton, 'click', () => {
+			onPopupClose();
+			ImportSlider.open(sourceType, 0, {
+				connectionId: connection.id,
+				connectionType: connection.type,
+			});
+		});
+
+		Event.bind(closeButton, 'click', () => {
+			onPopupClose();
+		});
+
+		const isEditMode = Boolean(this.#props.sourceFields.id);
+		const popupMessageCode = isEditMode ? 'EXTERNAL_CONNECTION_EDIT_SUCCESS' : 'EXTERNAL_CONNECTION_SAVE_SUCCESS';
+		const popupText = Loc.getMessage(
+			popupMessageCode,
+			{ '#CONNECTION_TITLE#': Text.encode(this.#getConnectionValues().title) },
+		);
+
+		const popupContent = Tag.render`
+			<div class="biconnector-popup--full-height">
+				<div class="biconnector-save-progress-popup">
+					<div class="biconnector-save-progress-popup__content">
+						<div class="biconnector-save-progress-popup__success-logo"></div>
+						<div class="biconnector-save-progress-popup__texts">
+							<h3 class="biconnector-save-progress-popup__header">${popupText}</h3>
+						</div>
+						<div class="biconnector-save-progress-popup__buttons">
+							${createDatasetButton}
+							${closeButton}
+						</div>
+					</div>
+				</div>
+			</div>
+		`;
+
+		popup = new Popup({
+			content: popupContent,
+			autoHide: true,
+			events: {
+				onPopupClose,
+				onPopupDestroy: onPopupClose,
+			},
+			fixed: true,
+			width: 500,
+			minHeight: 299,
+			closeIcon: true,
+			noAllPaddings: true,
+			overlay: true,
+		});
+
+		popup.show();
+	}
+
+	#closeSlider()
+	{
+		BX.SidePanel.Instance.postMessage(window, 'BIConnector:ExternalConnection:onConnectionSliderClose');
+		BX.SidePanel.Instance.getTopSlider().close();
 	}
 }
 

@@ -1,0 +1,6 @@
+<?php
+$MESS["CRM_ORDER_CHECK_CONTROLLER_LEGEND"] = "#DATE_CREATE# күнгі #SUM_WITH_CURRENCY# сомаға";
+$MESS["CRM_ORDER_CHECK_CONTROLLER_TITLE"] = "Чек №#CHECK_ID#";
+$MESS["CRM_ORDER_CHECK_SENDED_TO_IM"] = "клиентке чатқа жіберілді.";
+$MESS["CRM_ORDER_CHECK_SENDED_TO_IM_2"] = "Чат арқылы жіберілді";
+$MESS["CRM_ORDER_CHECK_TITLE_2"] = "#DATE_CREATE# күнгі №#CHECK_ID#  кассалық чек";

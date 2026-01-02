@@ -81,6 +81,7 @@ class SupersetScopeProvider extends BaseProvider
 			'title' => ScopeService::getInstance()->getScopeName($scopeCode),
 			'description' => null,
 			'tabs' => 'scopes',
+			'saveable' => false,
 		];
 
 		return new Item($itemParams);

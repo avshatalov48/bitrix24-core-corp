@@ -8,6 +8,7 @@ $MESS["CRM_VAT_0"] = "НДС 0%";
 $MESS["CRM_VAT_2"] = "НДС 18%";
 $MESS["CRM_VAT_3"] = "НДС 12%";
 $MESS["CRM_VAT_21"] = "НДС 20%";
+$MESS["CRM_VAT_22"] = "НДС 22%";
 $MESS["CRM_ORD_PROP_2"] = "Местоположение";
 $MESS["CRM_ORD_PROP_21"] = "Город";
 $MESS["CRM_ORD_PROP_4"] = "Индекс";

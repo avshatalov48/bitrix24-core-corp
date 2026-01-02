@@ -8,6 +8,7 @@ use Bitrix\Main\Entity\DateField;
 use Bitrix\Main\Entity\DatetimeField;
 use Bitrix\Main\Entity\IntegerField;
 use Bitrix\Main\Entity\StringField;
+use Bitrix\Main\ORM\Fields\BooleanField;
 use Bitrix\Main\Type\Date;
 
 /**
@@ -43,8 +44,12 @@ class LeadStatusHistoryWithSupposedTable extends DataManager
 			new DateField('CREATED_DATE'),
 			new StringField('STATUS_SEMANTIC_ID'),
 			new StringField('STATUS_ID'),
-			new StringField('IS_LOST'),
-			new StringField('IS_SUPPOSED'),
+			(new BooleanField('IS_LOST'))
+				->configureValues('N', 'Y')
+			,
+			(new BooleanField('IS_SUPPOSED'))
+				->configureValues('N', 'Y')
+			,
 			new DateField('LAST_UPDATE_DATE'),
 			new DateField('CLOSE_DATE'),
 			new IntegerField('SPENT_TIME'),

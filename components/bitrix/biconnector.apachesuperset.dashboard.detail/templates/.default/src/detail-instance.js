@@ -1,14 +1,16 @@
-import { ajax as Ajax, Dom, Event, Loc, Text, Type } from 'main.core';
+import { Dom, Event, Loc, Text, Type } from 'main.core';
 import { EventEmitter } from 'main.core.events';
 import type { MenuItemOptions } from 'main.popup';
-import { Menu } from 'main.popup';
+import { Menu, MenuItem } from 'main.popup';
 import { Loader } from 'main.loader';
+import { DateTimeFormat } from 'main.date';
 import type { DetailConfig } from './type/detail-config';
 import type { DashboardEmbeddedParameters } from './type/dashboard-embedded-parameters';
 import { DashboardManager } from 'biconnector.apache-superset-dashboard-manager';
 import { ApacheSupersetEmbeddedLoader } from 'biconnector.apache-superset-embedded-loader';
 import { ApacheSupersetAnalytics } from 'biconnector.apache-superset-analytics';
 import { ApacheSupersetFeedbackForm } from 'biconnector.apache-superset-feedback-form';
+import { ChatSelector } from './chat-selector';
 import 'sidepanel';
 
 export class DetailInstance
@@ -43,24 +45,6 @@ export class DetailInstance
 		this.#frameNode = this.#dashboardNode.querySelector('.dashboard-iframe');
 		this.#subscribeEvents();
 		this.#initHeaderButtons();
-		if (!this.#embeddedParams.paramsCompatible)
-		{
-			BX.BIConnector.ApacheSuperset.Dashboard.Detail.createSkeleton({
-				container: this.#frameNode,
-				isSupersetAvailable: true,
-				paramsCompatible: false,
-			});
-
-			ApacheSupersetAnalytics.sendAnalytics('view', 'report_view', {
-				c_element: config.analyticSource,
-				status: 'error',
-				type: this.#embeddedParams.type.toLowerCase(),
-				p1: ApacheSupersetAnalytics.buildAppIdForAnalyticRequest(this.#embeddedParams.appId),
-				p2: this.#embeddedParams.id,
-			});
-
-			return;
-		}
 
 		if (!BX.BIConnector.LimitLockPopup)
 		{
@@ -73,6 +57,8 @@ export class DetailInstance
 			type: this.#embeddedParams.type.toLowerCase(),
 			p1: ApacheSupersetAnalytics.buildAppIdForAnalyticRequest(this.#embeddedParams.appId),
 			p2: this.#embeddedParams.id,
+			...(config.analyticScope && { p3: ApacheSupersetAnalytics.buildScopeForAnalyticRequest(config.analyticScope) }),
+			p4: this.#embeddedParams.isUseExternalDatasets ?? false,
 		});
 	}
 
@@ -82,7 +68,7 @@ export class DetailInstance
 			Dom.clean(this.#frameNode);
 			BX.BIConnector.ApacheSuperset.Dashboard.Detail.createSkeleton({
 				container: this.#frameNode,
-				isSupersetAvailable: true,
+				status: DashboardManager.DASHBOARD_STATUS_LOAD,
 			});
 		});
 
@@ -93,35 +79,16 @@ export class DetailInstance
 			this.#canExport = this.#embeddedParams.canExport;
 
 			let historyUrl = this.#embeddedParams.embeddedUrl;
-			if (this.#embeddedParams.paramsCompatible)
-			{
-				this.#initFrame(this.#embeddedParams);
+			this.#initFrame(this.#embeddedParams);
 
-				ApacheSupersetAnalytics.sendAnalytics('view', 'report_view', {
-					c_element: 'selector',
-					status: 'success',
-					type: this.#embeddedParams.type.toLowerCase(),
-					p1: ApacheSupersetAnalytics.buildAppIdForAnalyticRequest(this.#embeddedParams.appId),
-					p2: this.#embeddedParams.id,
-				});
-			}
-			else
-			{
-				historyUrl = this.#embeddedParams.dashboardUrl;
-				BX.BIConnector.ApacheSuperset.Dashboard.Detail.createSkeleton({
-					container: this.#frameNode,
-					isSupersetAvailable: true,
-					paramsCompatible: false,
-				});
-
-				ApacheSupersetAnalytics.sendAnalytics('view', 'report_view', {
-					c_element: 'selector',
-					status: 'error',
-					type: this.#embeddedParams.type.toLowerCase(),
-					p1: ApacheSupersetAnalytics.buildAppIdForAnalyticRequest(this.#embeddedParams.appId),
-					p2: this.#embeddedParams.id,
-				});
-			}
+			ApacheSupersetAnalytics.sendAnalytics('view', 'report_view', {
+				c_element: 'selector',
+				status: 'success',
+				type: this.#embeddedParams.type.toLowerCase(),
+				p1: ApacheSupersetAnalytics.buildAppIdForAnalyticRequest(this.#embeddedParams.appId),
+				p2: this.#embeddedParams.id,
+				p4: this.#embeddedParams.isUseExternalDatasets ?? false,
+			});
 
 			top.window.history.pushState(null, '', historyUrl);
 			this.#initHeaderButtons();
@@ -166,6 +133,7 @@ export class DetailInstance
 	{
 		this.#initMoreMenu();
 		this.#initDownloadButton();
+		this.#initShareButton();
 
 		this.#editBtn = this.#dashboardNode.querySelector('.dashboard-header-buttons-edit');
 		Event.unbindAll(this.#editBtn);
@@ -271,6 +239,7 @@ export class DetailInstance
 		this.#editBtn.removeAttribute('disabled');
 	}
 
+	// eslint-disable-next-line max-lines-per-function
 	#initDownloadButton(): void
 	{
 		const downloadButton = this.#dashboardNode.querySelector('.dashboard-header-buttons-download');
@@ -282,7 +251,7 @@ export class DetailInstance
 			angle: {
 				position: 'top',
 			},
-			offsetLeft: 55,
+			offsetLeft: (parseInt(getComputedStyle(downloadButton).marginLeft, 10) + downloadButton.offsetWidth) / 2,
 			bindElement: downloadButton,
 			autoHide: true,
 			items: [
@@ -300,19 +269,34 @@ export class DetailInstance
 						this.#embeddedLoader.getScreenshot()
 							.then((imageData: string) => {
 								const dashboardTitle = Text.decode(this.#embeddedParams.title);
+								const datetime = DateTimeFormat.format('Y-m-d H-i-s');
 								this.#downloadFile(
 									imageData.replace('data:image/jpeg;base64,', ''),
-									`${dashboardTitle}.jpeg`,
+									`${dashboardTitle} ${datetime}.jpeg`,
 									'image/jpeg',
 								);
 								menuItem.enable();
 								loader.hide();
+								ApacheSupersetAnalytics.sendAnalytics('download', 'dashboard_download', {
+									status: 'success',
+									type: this.#embeddedParams.type.toLowerCase(),
+									p1: ApacheSupersetAnalytics.buildAppIdForAnalyticRequest(this.#embeddedParams.appId),
+									p2: this.#embeddedParams.id,
+									p3: 'ext_jpeg',
+								});
 							})
 							.catch(() => {
 								menuItem.enable();
 								loader.hide();
 								BX.UI.Notification.Center.notify({
 									content: Loc.getMessage('SUPERSET_DASHBOARD_DETAIL_DOWNLOAD_ERROR'),
+								});
+								ApacheSupersetAnalytics.sendAnalytics('download', 'dashboard_download', {
+									status: 'error',
+									type: this.#embeddedParams.type.toLowerCase(),
+									p1: ApacheSupersetAnalytics.buildAppIdForAnalyticRequest(this.#embeddedParams.appId),
+									p2: this.#embeddedParams.id,
+									p3: 'ext_jpeg',
 								});
 							})
 						;
@@ -332,19 +316,34 @@ export class DetailInstance
 						this.#embeddedLoader.getPdf()
 							.then((imageData: string) => {
 								const dashboardTitle = Text.decode(this.#embeddedParams.title);
+								const datetime = DateTimeFormat.format('Y-m-d H-i-s');
 								this.#downloadFile(
 									imageData,
-									`${dashboardTitle}.pdf`,
+									`${dashboardTitle} ${datetime}.pdf`,
 									'application/pdf',
 								);
 								menuItem.enable();
 								loader.hide();
+								ApacheSupersetAnalytics.sendAnalytics('download', 'dashboard_download', {
+									status: 'success',
+									type: this.#embeddedParams.type.toLowerCase(),
+									p1: ApacheSupersetAnalytics.buildAppIdForAnalyticRequest(this.#embeddedParams.appId),
+									p2: this.#embeddedParams.id,
+									p3: 'ext_pdf',
+								});
 							})
 							.catch(() => {
 								menuItem.enable();
 								loader.hide();
 								BX.UI.Notification.Center.notify({
 									content: Loc.getMessage('SUPERSET_DASHBOARD_DETAIL_DOWNLOAD_ERROR'),
+								});
+								ApacheSupersetAnalytics.sendAnalytics('download', 'dashboard_download', {
+									status: 'error',
+									type: this.#embeddedParams.type.toLowerCase(),
+									p1: ApacheSupersetAnalytics.buildAppIdForAnalyticRequest(this.#embeddedParams.appId),
+									p2: this.#embeddedParams.id,
+									p3: 'ext_pdf',
 								});
 							})
 						;
@@ -358,7 +357,87 @@ export class DetailInstance
 			},
 		});
 
-		Event.bind(downloadButton, 'click', () => downloadMenu.show());
+		Event.bind(downloadButton, 'click', () => {
+			downloadMenu.show();
+			ApacheSupersetAnalytics.sendAnalytics('download', 'click_download', {
+				type: this.#embeddedParams.type.toLowerCase(),
+			});
+		});
+	}
+
+	#initShareButton()
+	{
+		const shareButton = this.#dashboardNode.querySelector('.dashboard-header-buttons-share');
+		Event.unbindAll(shareButton);
+		const downloadMenu = new Menu({
+			closeByEsc: false,
+			closeIcon: false,
+			cacheable: true,
+			angle: {
+				position: 'top',
+			},
+			offsetLeft: (parseInt(getComputedStyle(shareButton).marginLeft, 10) + shareButton.offsetWidth) / 2,
+			bindElement: shareButton,
+			autoHide: true,
+			items: [
+				{
+					id: 'share-screenshot',
+					text: Loc.getMessage('SUPERSET_DASHBOARD_DETAIL_DOWNLOAD_IMAGE'),
+					title: Loc.getMessage('SUPERSET_DASHBOARD_DETAIL_DOWNLOAD_IMAGE'),
+					onclick: (event, menuItem: MenuItem) => {
+						menuItem.menuWindow.close();
+						const moreButton = this.#dashboardNode.querySelector('.dashboard-header-buttons-more');
+						const selector: ChatSelector = new ChatSelector({
+							targetNode: moreButton,
+							dashboardName: Text.decode(this.#embeddedParams.title),
+							fileExtension: 'jpeg',
+							onSend: () => this.#embeddedLoader.getScreenshot(),
+							dashboardId: this.#embeddedParams.id,
+							dashboardType: this.#embeddedParams.type.toLowerCase(),
+							appId: this.#embeddedParams.appId,
+						});
+						selector.show();
+						ApacheSupersetAnalytics.sendAnalytics('share', 'open_selector', {
+							p3: 'ext_jpeg',
+						});
+					},
+				},
+				{
+					id: 'share-pdf',
+					text: Loc.getMessage('SUPERSET_DASHBOARD_DETAIL_DOWNLOAD_PDF'),
+					title: Loc.getMessage('SUPERSET_DASHBOARD_DETAIL_DOWNLOAD_PDF'),
+					onclick: (event, menuItem: MenuItem) => {
+						menuItem.menuWindow.close();
+						const moreButton = this.#dashboardNode.querySelector('.dashboard-header-buttons-more');
+						const selector: ChatSelector = new ChatSelector({
+							targetNode: moreButton,
+							dashboardName: Text.decode(this.#embeddedParams.title),
+							fileExtension: 'pdf',
+							onSend: () => this.#embeddedLoader.getPdf(),
+							dashboardId: this.#embeddedParams.id,
+							dashboardType: this.#embeddedParams.type.toLowerCase(),
+							appId: this.#embeddedParams.appId,
+						});
+						selector.show();
+						ApacheSupersetAnalytics.sendAnalytics('share', 'open_selector', {
+							p3: 'ext_pdf',
+						});
+					},
+				},
+			],
+			events: {
+				onAfterShow: () => {
+					Dom.style(downloadMenu.popupWindow.angle.element, 'left', '17px');
+				},
+			},
+		});
+
+		Event.bind(shareButton, 'click', () => {
+			downloadMenu.show();
+			ApacheSupersetAnalytics.sendAnalytics('share', 'click_share', {
+				type: this.#embeddedParams.type.toLowerCase(),
+			});
+		});
 	}
 
 	#initMoreMenu()

@@ -1,0 +1,23 @@
+<?php
+$MESS["CRM_ACTIVITY_TODO_COMPANY_BECOME_RESPONSIBLE"] = "Сіз \"<a href=\"#URL#\" class=\"bx-notifier-item-action\">#ENTITY_TITLE#</a>\" компаниясында \"#SUBJECT#\" ісіне жауапты болып тағайындалдыңыз";
+$MESS["CRM_ACTIVITY_TODO_COMPANY_NO_LONGER_RESPONSIBLE"] = "Сіз \"<a href=\"#URL#\" class=\"bx-notifier-item-action\">#ENTITY_TITLE#</a>\" компаниясындағы \"#SUBJECT#\" ісі үшін жауапты болуды тоқтаттыңыз.";
+$MESS["CRM_ACTIVITY_TODO_CONTACT_BECOME_RESPONSIBLE"] = "Сіз \"<a href=\"#URL#\" class=\"bx-notifier-item-action\">#ENTITY_TITLE#</a>\" контактінде \"#SUBJECT#\" ісіне жауапты болып тағайындалдыңыз";
+$MESS["CRM_ACTIVITY_TODO_CONTACT_NO_LONGER_RESPONSIBLE"] = "Сіз \"<a href=\"#URL#\" class=\"bx-notifier-item-action\">#ENTITY_TITLE#</a>\" контактісіндегі \"#SUBJECT#\" ісі үшін жауапты болуды тоқтаттыңыз.";
+$MESS["CRM_ACTIVITY_TODO_DEAL_BECOME_RESPONSIBLE"] = "Сіз \"<a href=\"#URL#\" class=\"bx-notifier-item-action\">#ENTITY_TITLE#</a>\" мәмілесінде \"#SUBJECT#\" ісіне жауапты болып тағайындалдыңыз";
+$MESS["CRM_ACTIVITY_TODO_DEAL_NO_LONGER_RESPONSIBLE"] = "Сіз \"<a href=\"#URL#\" class=\"bx-notifier-item-action\">#ENTITY_TITLE#</a>\" мәмілесіндегі \"#SUBJECT#\" ісі үшін жауапты болуды тоқтаттыңыз.";
+$MESS["CRM_ACTIVITY_TODO_DEFAULT_BECOME_RESPONSIBLE"] = "Сіз \"<a href=\"#URL#\" class=\"bx-notifier-item-action\">#ENTITY_TITLE#</a>\" элементінде \"#SUBJECT#\" ісіне жауапты болып тағайындалдыңыз";
+$MESS["CRM_ACTIVITY_TODO_DEFAULT_BECOME_RESPONSIBLE_EMPTY_SUBJECT"] = "Сіз \"<a href=\"#URL#\" class=\"bx-notifier-item-action\">##TODO_ID#</a>\" ісі бойынша жауапты болып тағайындалдыңыз.";
+$MESS["CRM_ACTIVITY_TODO_DEFAULT_BECOME_RESPONSIBLE_EX"] = "Сіз \"<a href=\"#URL#\" class=\"bx-notifier-item-action\">#SUBJECT#</a>\" ісі бойынша жауапты болып тағайындалдыңыз.";
+$MESS["CRM_ACTIVITY_TODO_DEFAULT_NO_LONGER_RESPONSIBLE"] = "Сіз \"<a href=\"#URL#\" class=\"bx-notifier-item-action\">#ENTITY_TITLE#</a>\" элементіндегі \"#SUBJECT#\" ісі үшін жауапты болуды тоқтаттыңыз.";
+$MESS["CRM_ACTIVITY_TODO_DEFAULT_NO_LONGER_RESPONSIBLE_EMPTY_SUBJECT"] = "Сіз \"<a href=\"#URL#\" class=\"bx-notifier-item-action\">##TODO_ID#</a>\" ісі үшін жауапты болуды тоқтаттыңыз.";
+$MESS["CRM_ACTIVITY_TODO_DEFAULT_NO_LONGER_RESPONSIBLE_EX"] = "Сіз \"<a href=\"#URL#\" class=\"bx-notifier-item-action\">#SUBJECT#</a>\" ісі үшін жауапты болуды тоқтаттыңыз.";
+$MESS["CRM_ACTIVITY_TODO_DYNAMIC_BECOME_RESPONSIBLE"] = "Сіз \"<a href=\"#URL#\" class=\"bx-notifier-item-action\">#ENTITY_TITLE#</a>\" смарт-процесінің элементінде \"#SUBJECT#\" ісіне жауапты болып тағайындалдыңыз";
+$MESS["CRM_ACTIVITY_TODO_DYNAMIC_NO_LONGER_RESPONSIBLE"] = "Сіз \"<a href=\"#URL#\" class=\"bx-notifier-item-action\">#ENTITY_TITLE#</a>\" смарт-процес элементіндегі \"#SUBJECT#\" ісі үшін жауапты болуды тоқтаттыңыз.";
+$MESS["CRM_ACTIVITY_TODO_LEAD_BECOME_RESPONSIBLE"] = "Сіз \"<a href=\"#URL#\" class=\"bx-notifier-item-action\">#ENTITY_TITLE#</a>\" лидінде \"#SUBJECT#\" ісіне жауапты болып тағайындалдыңыз";
+$MESS["CRM_ACTIVITY_TODO_LEAD_NO_LONGER_RESPONSIBLE"] = "Сіз \"<a href=\"#URL#\" class=\"bx-notifier-item-action\">#ENTITY_TITLE#</a>\" лидіндегі \"#SUBJECT#\" ісі үшін жауапты болуды тоқтаттыңыз.";
+$MESS["CRM_ACTIVITY_TODO_ORDER_BECOME_RESPONSIBLE"] = "Сіз \"<a href=\"#URL#\" class=\"bx-notifier-item-action\">#ENTITY_TITLE#</a>\" тапсырысында \"#SUBJECT#\" ісіне жауапты болып тағайындалдыңыз";
+$MESS["CRM_ACTIVITY_TODO_ORDER_NO_LONGER_RESPONSIBLE"] = "Сіз \"<a href=\"#URL#\" class=\"bx-notifier-item-action\">#ENTITY_TITLE#</a>\" тапсырысындағы \"#SUBJECT#\" ісі үшін жауапты болуды тоқтаттыңыз.";
+$MESS["CRM_ACTIVITY_TODO_QUOTE_BECOME_RESPONSIBLE"] = "Сіз \"<a href=\"#URL#\" class=\"bx-notifier-item-action\">#ENTITY_TITLE#</a>\" ұсынысында \"#SUBJECT#\" ісіне жауапты болып тағайындалдыңыз";
+$MESS["CRM_ACTIVITY_TODO_QUOTE_NO_LONGER_RESPONSIBLE"] = "Сіз \"<a href=\"#URL#\" class=\"bx-notifier-item-action\">#ENTITY_TITLE#</a>\" ұсынысындағы \"#SUBJECT#\" ісі үшін жауапты болуды тоқтаттыңыз.";
+$MESS["CRM_ACTIVITY_TODO_SMART_INVOICE_BECOME_RESPONSIBLE"] = "Сіз \"<a href=\"#URL#\" class=\"bx-notifier-item-action\">#ENTITY_TITLE#</a>\" шотында \"#SUBJECT#\" ісіне жауапты болып тағайындалдыңыз";
+$MESS["CRM_ACTIVITY_TODO_SMART_INVOICE_NO_LONGER_RESPONSIBLE"] = "Сіз \"<a href=\"#URL#\" class=\"bx-notifier-item-action\">#ENTITY_TITLE#</a>\" шотындағы \"#SUBJECT#\" ісі үшін жауапты болуды тоқтаттыңыз.";

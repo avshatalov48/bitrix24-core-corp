@@ -5,14 +5,15 @@ if (!defined('B_PROLOG_INCLUDED') || B_PROLOG_INCLUDED !== true){
 }
 
 use Bitrix\Crm;
+use Bitrix\Crm\Activity\LastCommunication\LastCommunicationTimeFormatter;
 use Bitrix\Crm\Attribute\FieldAttributeManager;
 use Bitrix\Crm\Category\EditorHelper;
 use Bitrix\Crm\CompanyAddress;
 use Bitrix\Crm\Component\EntityDetails\Traits;
-use Bitrix\Crm\Controller\Action\Entity\SearchAction;
 use Bitrix\Crm\Conversion\LeadConversionWizard;
 use Bitrix\Crm\EntityAddressType;
 use Bitrix\Crm\Format\AddressFormatter;
+use Bitrix\Crm\Integration\UI\EntityEditor\DefaultEntityConfig\CompanyDefaultEntityConfig;
 use Bitrix\Crm\Restriction\RestrictionManager;
 use Bitrix\Crm\Service\Container;
 use Bitrix\Crm\Service\ParentFieldManager;
@@ -207,7 +208,7 @@ class CCrmCompanyDetailsComponent
 
 		if ($this->isMyCompany())
 		{
-			if (!$this->userPermissions->HavePerm('CONFIG', BX_CRM_PERM_CONFIG, 'WRITE'))
+			if (!\Bitrix\Crm\Service\Container::getInstance()->getUserPermissions()->myCompany()->canUpdate())
 			{
 				Crm\Component\EntityDetails\Error::showError(Crm\Component\EntityDetails\Error::NoAddPermission, CCrmOwnerType::Company);
 
@@ -330,6 +331,7 @@ class CCrmCompanyDetailsComponent
 									'ENABLE_TOOLBAR' => true,
 									'PRESERVE_HISTORY' => true,
 									'ADD_EVENT_NAME' => 'CrmCreateDealFromCompany',
+									'EXTENDED_INTERNAL_MODE' => true,
 									'ANALYTICS' => [
 										// we dont know where from this component was opened from - it could be anywhere on portal
 										'c_section' => \Bitrix\Crm\Integration\Analytics\Dictionary::SECTION_COMPANY,
@@ -339,16 +341,6 @@ class CCrmCompanyDetailsComponent
 							]
 						]
 					];
-
-					$relationManager = Crm\Service\Container::getInstance()->getRelationManager();
-					$this->arResult['TABS'] = array_merge(
-						$this->arResult['TABS'],
-						$relationManager->getRelationTabsForDynamicChildren(
-							\CCrmOwnerType::Company,
-							$this->entityID,
-							($this->entityID === 0)
-						)
-					);
 
 					$tabQuote = [
 						'id' => 'tab_quote',
@@ -372,11 +364,14 @@ class CCrmCompanyDetailsComponent
 									'ENABLE_TOOLBAR' => true,
 									'PRESERVE_HISTORY' => true,
 									'ADD_EVENT_NAME' => 'CrmCreateQuoteFromCompany',
+									'EXTENDED_INTERNAL_MODE' => true,
 									'ANALYTICS' => [
 										// we dont know where from this component was opened from - it could be anywhere on portal
 										'c_section' => \Bitrix\Crm\Integration\Analytics\Dictionary::SECTION_COMPANY,
 										'c_sub_section' => \Bitrix\Crm\Integration\Analytics\Dictionary::SUB_SECTION_DETAILS,
 									],
+									'PARENT_ENTITY_TYPE_ID' => CCrmOwnerType::Company,
+									'PARENT_ENTITY_ID' => $this->entityID,
 								], 'crm.quote.list'),
 							],
 						],
@@ -587,6 +582,19 @@ class CCrmCompanyDetailsComponent
 						);
 					}
 				}
+
+				if (!$this->isMyCompany() && !$this->arResult['CATEGORY_ID'])
+				{
+					$relationManager = Crm\Service\Container::getInstance()->getRelationManager();
+					$this->arResult['TABS'] = array_merge(
+						$this->arResult['TABS'],
+						$relationManager->getRelationTabsForDynamicChildren(
+							\CCrmOwnerType::Company,
+							$this->entityID,
+							($this->entityID === 0)
+						)
+					);
+				}
 			}
 			else
 			{
@@ -684,59 +692,10 @@ class CCrmCompanyDetailsComponent
 			return $this->arResult['ENTITY_CONFIG'];
 		}
 
-		$multiFieldConfigElements = [];
-		foreach(array_keys($this->multiFieldInfos) as $fieldName)
-		{
-			$multiFieldConfigElements[] = array('name' => $fieldName);
-		}
+		$userFieldNames = array_keys($this->userFieldInfos);
+		$multiFieldNames = array_keys($this->multiFieldInfos);
 
-		$userFieldConfigElements = [];
-		foreach(array_keys($this->userFieldInfos) as $fieldName)
-		{
-			$userFieldConfigElements[] = array('name' => $fieldName);
-		}
-
-		$this->arResult['ENTITY_CONFIG'] = array(
-			array(
-				'name' => 'main',
-				'title' => Loc::getMessage('CRM_COMPANY_SECTION_MAIN'),
-				'type' => 'section',
-				'elements' =>
-					array_merge(
-						array(
-							array('name' => 'TITLE'),
-							array('name' => 'LOGO'),
-							array('name' => 'COMPANY_TYPE'),
-							array('name' => 'INDUSTRY'),
-							array('name' => 'REVENUE_WITH_CURRENCY'),
-							//array('name' => 'IS_MY_COMPANY')
-						),
-						$multiFieldConfigElements,
-						array(
-							array('name' => 'CONTACT'),
-							array('name' => 'ADDRESS'),
-							array('name' => 'REQUISITES')
-						)
-					)
-			),
-			array(
-				'name' => 'additional',
-				'title' => Loc::getMessage('CRM_COMPANY_SECTION_ADDITIONAL'),
-				'type' => 'section',
-				'elements' =>
-					array_merge(
-						array(
-							array('name' => 'EMPLOYEES'),
-							array('name' => 'OPENED'),
-							array('name' => 'ASSIGNED_BY_ID'),
-							array('name' => 'OBSERVER'),
-							array('name' => 'COMMENTS'),
-							array('name' => self::UTM_FIELD_CODE),
-						),
-						$userFieldConfigElements
-					)
-			)
-		);
+		$this->arResult['ENTITY_CONFIG'] = (new CompanyDefaultEntityConfig($userFieldNames, $multiFieldNames))->get();
 
 		return $this->arResult['ENTITY_CONFIG'];
 	}
@@ -1012,7 +971,6 @@ class CCrmCompanyDetailsComponent
 					'map' => array('data' => 'CLIENT_DATA'),
 					'info' => 'CLIENT_INFO',
 					'fixedLayoutType' => 'CONTACT',
-					'lastContactInfos' => 'LAST_CONTACT_INFOS',
 					'contactLegend' => Loc::getMessage('CRM_COMPANY_FIELD_CONTACT_LEGEND'),
 					'loaders' => array(
 						'primary' => array(
@@ -1215,6 +1173,8 @@ class CCrmCompanyDetailsComponent
 				)
 			);
 		}
+
+		(new Crm\Filter\Field\LastCommunicationField())->addLastCommunicationFieldInfo($this->entityFieldInfos);
 
 		$this->arResult['ENTITY_FIELDS'] = $this->entityFieldInfos;
 
@@ -1750,12 +1710,10 @@ class CCrmCompanyDetailsComponent
 		}
 
 		//region User Fields
-		foreach($this->userFields as $fieldName => $userField)
+		foreach ($this->userFields as $fieldName => $userField)
 		{
-			$fieldValue = isset($userField['VALUE']) ? $userField['VALUE'] : '';
-			$fieldData = isset($this->userFieldInfos[$fieldName])
-				? $this->userFieldInfos[$fieldName] : null;
-
+			$fieldValue = $userField['VALUE'] ?? '';
+			$fieldData = $this->userFieldInfos[$fieldName] ?? null;
 			if (!is_array($fieldData))
 			{
 				continue;
@@ -1763,7 +1721,17 @@ class CCrmCompanyDetailsComponent
 
 			$isEmptyField = true;
 			$fieldParams = $fieldData['data']['fieldInfo'];
-			if((is_string($fieldValue) && $fieldValue !== '')
+
+			if (
+				$this->entityID <= 0
+				&& $fieldParams['USER_TYPE_ID'] === 'boolean'
+			)
+			{
+				$fieldValue = (string)$fieldParams['SETTINGS']['DEFAULT_VALUE'];
+			}
+
+			if (
+				(is_string($fieldValue) && $fieldValue !== '')
 				|| (is_array($fieldValue) && !empty($fieldValue))
 			)
 			{
@@ -1774,25 +1742,25 @@ class CCrmCompanyDetailsComponent
 			$fieldSignature = $this->userFieldDispatcher->getSignature($fieldParams);
 			if ($isEmptyField)
 			{
-				$this->entityData[$fieldName] = array(
+				$this->entityData[$fieldName] = [
 					'SIGNATURE' => $fieldSignature,
-					'IS_EMPTY' => true
-				);
+					'IS_EMPTY' => true,
+				];
 			}
 			else
 			{
-				$this->entityData[$fieldName] = array(
+				$this->entityData[$fieldName] = [
 					'VALUE' => $fieldValue,
 					'SIGNATURE' => $fieldSignature,
-					'IS_EMPTY' => false
-				);
+					'IS_EMPTY' => false,
+				];
 
 				if ($fieldData['data']['fieldInfo']['USER_TYPE_ID'] === 'file')
 				{
-					$values = is_array($fieldValue) ? $fieldValue : array($fieldValue);
-					$this->entityData[$fieldName]['EXTRAS'] = array(
+					$values = is_array($fieldValue) ? $fieldValue : [$fieldValue];
+					$this->entityData[$fieldName]['EXTRAS'] = [
 						'OWNER_TOKEN' => \CCrmFileProxy::PrepareOwnerToken(array_fill_keys($values, $this->entityID))
-					);
+					];
 				}
 			}
 		}
@@ -1941,23 +1909,6 @@ class CCrmCompanyDetailsComponent
 		}
 		$this->entityData['CLIENT_INFO'] = array('CONTACT_DATA' => $contactData);
 
-		if ($this->enableSearchHistory)
-		{
-			$categoryParams = CCrmComponentHelper::getEntityClientFieldCategoryParams(
-				CCrmOwnerType::Company,
-				(int)($this->arResult['CATEGORY_ID'] ?? $this->getCategoryId())
-			);
-			$this->entityData['LAST_CONTACT_INFOS'] = SearchAction::prepareSearchResultsJson(
-				Crm\Controller\Entity::getRecentlyUsedItems(
-					'crm.company.details',
-					'contact',
-					[
-						'EXPAND_ENTITY_TYPE_ID' => CCrmOwnerType::Contact,
-						'EXPAND_CATEGORY_ID' => $categoryParams[CCrmOwnerType::Contact]['categoryId'],
-					]
-				)
-			);
-		}
 		//endregion
 
 		//region Images
@@ -2029,6 +1980,8 @@ class CCrmCompanyDetailsComponent
 				);
 			}
 		}
+
+		(new LastCommunicationTimeFormatter())->formatDetailDate($this->entityData);
 
 		$this->arResult['ENTITY_DATA'] = $this->entityData;
 
@@ -2152,6 +2105,11 @@ class CCrmCompanyDetailsComponent
 	{
 		$this->arResult['READ_ONLY'] = true;
 
+		if ($this->isReadOnlyForced())
+		{
+			return;
+		}
+
 		if ($this->isEditMode)
 		{
 			if (\CCrmCompany::CheckUpdatePermission($this->entityID, $this->userPermissions))
@@ -2163,6 +2121,13 @@ class CCrmCompanyDetailsComponent
 		{
 			$this->arResult['READ_ONLY'] = false;
 		}
+	}
+
+	private function isReadOnlyForced(): bool
+	{
+		$isForcedReadonly = $this->request->get('FORCE_READONLY');
+
+		return $isForcedReadonly === 'Y';
 	}
 
 	private function initializeConfigId(): void

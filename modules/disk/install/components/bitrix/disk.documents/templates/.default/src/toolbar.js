@@ -1,14 +1,9 @@
-import {BaseEvent, EventEmitter} from "main.core.events";
-import CommonGrid from "./grid/common-grid";
-import {Options as GridOptions} from "./options";
-import {Reflection} from "main.core";
+import { Options as GridOptions } from './options';
+import { DocumentHandler } from './types';
 
 export default class Toolbar
 {
-	constructor()
-	{
-
-	}
+	static documentHandlers: DocumentHandler[] = [];
 
 	static reloadGridAndFocus(rowId: ?number)
 	{
@@ -35,15 +30,25 @@ export default class Toolbar
 			return;
 		}
 
+		const byUnifiedLink = this.documentHandlers.some((handler) => handler.supportsUnifiedLink
+			&& handler.code === service);
+
 		const createProcess = new BX.Disk.Document.CreateProcess({
 			typeFile: documentType,
 			serviceCode: service,
+			byUnifiedLink,
 			onAfterSave: (response) => {
 				if (response.status === 'success')
 				{
 					this.reloadGridAndFocus(response.object.id);
 				}
-			}
+			},
+			onAfterCreateFile: (response) => {
+				if (response.status === 'success')
+				{
+					this.reloadGridAndFocus(response.data.id);
+				}
+			},
 		});
 
 		createProcess.start();
@@ -71,10 +76,20 @@ export default class Toolbar
 		return null;
 	}
 
-	static createBoard()
+	static createBoard(analyticsElement = null)
 	{
 		const newTab = window.open('', '_blank');
-		BX.ajax.runAction('disk.integration.flipchart.createDocument')
+		const config = {};
+		if (analyticsElement)
+		{
+			config.analytics = {
+				event: 'create',
+				tool: 'boards',
+				category: 'boards',
+				c_element: analyticsElement,
+			};
+		}
+		BX.ajax.runAction('disk.integration.flipchart.createDocument', config)
 			.then(response => {
 				if (response.status === 'success' && response.data.file)
 				{

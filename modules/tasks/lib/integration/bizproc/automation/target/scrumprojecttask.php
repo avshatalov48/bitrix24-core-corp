@@ -49,9 +49,8 @@ class ScrumProjectTask extends Base
 	{
 		if ($taskStage = $this->getTaskStage())
 		{
-			Tasks\Kanban\TaskStageTable::update($taskStage['ID'], [
-				'STAGE_ID' => $statusId,
-			]);
+			$stageService = Tasks\V2\Internal\DI\Container::getInstance()->getTaskStageService();
+			$stageService->move((int)$taskStage['ID'], (int)$statusId);
 
 			$task = new \CTasks();
 			$result = $task->update($this->getDocumentId(), ['STAGE_ID' => $statusId]);

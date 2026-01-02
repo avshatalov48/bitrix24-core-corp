@@ -1,4 +1,4 @@
-/** eslint-disable */
+/* eslint-disable */
 
 (function ()
 {
@@ -34,8 +34,6 @@
 		this.currentAssociatedEvent = this.associatedEvents.length > 0 ? this.associatedEvents.length - 1 : 0;
 		this.node = params.node;
 		this.settingsButtonId = params.settingsButtonId;
-		this.feedbackParams = BX.prop.getObject(params, "feedbackParams", {});
-		this.feedbackForm = new BX.UI.Feedback.Form(this.feedbackParams);
 
 		this.modelProgress = null;
 		this.currentPrediction = this.predictionHistory.length > 0 ? this.predictionHistory[this.predictionHistory.length - 1] : null;
@@ -904,11 +902,6 @@
 		showHelp: function()
 		{
 			top.BX.Helper.show('redirect=detail&code=9578357');
-		},
-
-		showFeedbackForm: function()
-		{
-			this.feedbackForm.openPanel();
 		},
 
 		showSettingsButton: function()

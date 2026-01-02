@@ -36,6 +36,7 @@ class Pending extends Controller
 
 		$select = [
 			'ID',
+			'TITLE',
 			'CREATED_BY',
 			'RESPONSIBLE_ID',
 			'CREATED_DATE',

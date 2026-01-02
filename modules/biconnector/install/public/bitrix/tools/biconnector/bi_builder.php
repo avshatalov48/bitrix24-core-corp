@@ -27,7 +27,16 @@ while (ob_get_length() !== false)
 header('Content-Type:application/json; charset=UTF-8');
 
 $inputJSON = file_get_contents('php://input');
-$input = $inputJSON ? Json::decode($inputJSON) : [];
+try
+{
+	$input = $inputJSON ? Json::decode($inputJSON) : [];
+}
+catch (Main\ArgumentException $e)
+{
+	echo Json::encode(['error' => 'BAD_REQUEST']);
+	echo "\n";
+	Main\Application::getInstance()->terminate();
+}
 
 if (!Main\Loader::includeModule('biconnector'))
 {
@@ -85,7 +94,7 @@ $isLocked = $lockFile ? flock($lockFile, LOCK_EX) : false;
 
 $manager = BIConnector\Manager::getInstance();
 
-$service = $manager->createService('bi-ctr');
+$service = $manager->createService(BIConnector\Services\ApacheSuperset::getServiceId());
 $service->setLanguage($languageCode);
 
 $limitManager = BIConnector\LimitManager::getInstance();
@@ -95,7 +104,7 @@ if ($supersetKey)
 }
 elseif (
 	!Main\Loader::includeModule('bitrix24')
-	&& $biKey === BIConnector\Superset\KeyManager::getAccessKey()
+	&& BIConnector\Superset\KeyManager::isActiveKey($biKey)
 )
 {
 	$limitManager->setIsSuperset();
@@ -197,16 +206,27 @@ elseif ($service->getTableFields($tableName))
 
 		if (!$resultQuery->isSuccess())
 		{
+			$errorsMsg = [];
+			$errorsDescMsg = [];
 			foreach ($resultQuery->getErrorCollection() as $error)
 			{
-				$outputError = ['error' => $error->getMessage()];
+				$errorsMsg[] = $error->getMessage();
 				if (!empty($error->getCustomData()['description']))
 				{
-					$outputError['errstr'] = $error->getCustomData()['description'];
+					$errorsDescMsg[] = $error->getCustomData()['description'];
 				}
-
-				echo Json::encode($outputError);
 			}
+
+			$outputError = [
+				'error' => implode('; ', $errorsMsg),
+			];
+
+			if (!empty($errorsDescMsg))
+			{
+				$outputError['errstr'] = implode('; ', $errorsDescMsg);
+			}
+
+			echo Json::encode($outputError);
 		}
 	}
 }

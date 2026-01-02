@@ -2,19 +2,19 @@
 this.BX = this.BX || {};
 this.BX.Messenger = this.BX.Messenger || {};
 this.BX.Messenger.v2 = this.BX.Messenger.v2 || {};
-(function (exports,ui_vue3_directives_hint,ui_dialogs_messagebox,ui_infoHelper,im_v2_lib_slider,im_v2_lib_call,im_v2_lib_phone,im_v2_lib_feature,im_v2_lib_analytics,im_v2_lib_permission,im_v2_component_elements,im_v2_lib_utils,im_v2_lib_logger,main_core,main_popup,im_v2_lib_menu,im_v2_lib_desktopApi,im_v2_lib_confirm,im_v2_lib_desktop,ui_buttons,ui_feedback_form,ui_fontawesome4,im_v2_application_core,im_v2_const,im_v2_lib_market) {
+(function (exports,im_v2_lib_logger,im_v2_lib_slider,im_v2_lib_phone,im_v2_lib_feature,im_v2_lib_permission,im_v2_component_elements_scrollWithGradient,im_v2_component_elements_avatar,im_v2_component_elements_button,im_v2_component_elements_popup,im_v2_lib_utils,im_v2_provider_service_settings,main_core,main_popup,im_v2_lib_menu,im_v2_lib_desktopApi,im_v2_lib_confirm,im_v2_lib_desktop,ui_buttons,ui_feedback_form,ui_fontawesome4,im_v2_application_core,im_v2_const,im_v2_lib_market) {
 	'use strict';
 
 	// @vue/component
 	const ButtonPanel = {
 	  name: 'ButtonPanel',
 	  components: {
-	    ChatButton: im_v2_component_elements.Button
+	    ChatButton: im_v2_component_elements_button.ChatButton
 	  },
 	  emits: ['openProfile', 'logout'],
 	  computed: {
-	    ButtonSize: () => im_v2_component_elements.ButtonSize,
-	    ButtonColor: () => im_v2_component_elements.ButtonColor,
+	    ButtonSize: () => im_v2_component_elements_button.ButtonSize,
+	    ButtonColor: () => im_v2_component_elements_button.ButtonColor,
 	    currentUserId() {
 	      return im_v2_application_core.Core.getUserId();
 	    },
@@ -58,57 +58,66 @@ this.BX.Messenger.v2 = this.BX.Messenger.v2 || {};
 	`
 	};
 
-	class StatusService {
-	  constructor() {
-	    this.store = null;
-	    this.restClient = null;
-	    this.store = im_v2_application_core.Core.getStore();
-	    this.restClient = im_v2_application_core.Core.getRestClient();
-	  }
-	  changeStatus(status) {
-	    if (!im_v2_const.UserStatus[status]) {
-	      return false;
+	const UserStatusSize = {
+	  S: 'S',
+	  M: 'M',
+	  L: 'L',
+	  XL: 'XL',
+	  XXL: 'XXL'
+	};
+
+	// @vue/component
+	const UserStatus = {
+	  name: 'UserStatus',
+	  props: {
+	    status: {
+	      type: String,
+	      required: true,
+	      validator(value) {
+	        return Object.values(im_v2_const.UserStatus).includes(value);
+	      }
+	    },
+	    size: {
+	      type: String,
+	      default: UserStatusSize.M,
+	      validator(value) {
+	        return Object.values(UserStatusSize).includes(value);
+	      }
 	    }
-	    im_v2_lib_logger.Logger.warn(`StatusService: change current user status to ${status}`);
-	    this.store.dispatch('users/setStatus', {
-	      status
-	    });
-	    this.store.dispatch('application/settings/set', {
-	      status
-	    });
-	    return this.restClient.callMethod(im_v2_const.RestMethod.imUserStatusSet, {
-	      STATUS: status
-	    }).catch(error => {
-	      // eslint-disable-next-line no-console
-	      console.error('StatusService: changeStatus error', error);
-	    });
-	  }
-	}
+	  },
+	  computed: {
+	    containerClasses() {
+	      return [`--size-${this.size.toLowerCase()}`, `--${this.status}`];
+	    }
+	  },
+	  template: `
+		<div :class="containerClasses" class="bx-im-user-status__container bx-im-user-status__scope"></div>
+	`
+	};
 
 	// @vue/component
 	const UserStatusContent = {
 	  name: 'UserStatusContent',
 	  components: {
-	    UserStatus: im_v2_component_elements.UserStatus
+	    UserStatus
 	  },
 	  emits: ['close'],
 	  computed: {
-	    UserStatusSize: () => im_v2_component_elements.UserStatusSize,
-	    UserStatusType: () => im_v2_const.UserStatus,
+	    UserStatusSize: () => UserStatusSize,
 	    statusList() {
 	      return [im_v2_const.UserStatus.online, im_v2_const.UserStatus.dnd];
 	    }
 	  },
 	  methods: {
 	    onStatusClick(statusName) {
-	      this.getStatusService().changeStatus(statusName);
+	      this.getSettingsService().changeStatus(statusName);
 	      this.$emit('close');
 	    },
-	    getStatusService() {
-	      if (!this.statusService) {
-	        this.statusService = new StatusService();
+	    getSettingsService() {
+	      if (!this.settingsService) {
+	        this.settingsService = new im_v2_provider_service_settings.SettingsService();
 	      }
-	      return this.statusService;
+	      return this.settingsService;
 	    },
 	    getStatusText(status) {
 	      return im_v2_lib_utils.Utils.user.getStatusText(status);
@@ -135,7 +144,7 @@ this.BX.Messenger.v2 = this.BX.Messenger.v2 || {};
 	const UserStatusPopup = {
 	  name: 'UserStatusPopup',
 	  components: {
-	    MessengerPopup: im_v2_component_elements.MessengerPopup,
+	    MessengerPopup: im_v2_component_elements_popup.MessengerPopup,
 	    UserStatusContent
 	  },
 	  props: {
@@ -200,8 +209,8 @@ this.BX.Messenger.v2 = this.BX.Messenger.v2 || {};
 	function _getConnectItem2() {
 	  const title = this.context.connected ? main_core.Loc.getMessage('IM_USER_SETTINGS_DESKTOP_CONTEXT_MENU_DISCONNECT_V2') : main_core.Loc.getMessage('IM_USER_SETTINGS_DESKTOP_CONTEXT_MENU_CONNECT_V2');
 	  return {
-	    text: title,
-	    onclick: function () {
+	    title,
+	    onClick: function () {
 	      var _PopupManager$getPopu2;
 	      if (this.context.connected) {
 	        babelHelpers.classPrivateFieldLooseBase(this, _disconnect)[_disconnect]();
@@ -215,8 +224,8 @@ this.BX.Messenger.v2 = this.BX.Messenger.v2 || {};
 	}
 	function _getDeleteItem2() {
 	  return {
-	    text: main_core.Loc.getMessage('IM_USER_SETTINGS_DESKTOP_CONTEXT_MENU_DELETE_V2'),
-	    onclick: async function () {
+	    title: main_core.Loc.getMessage('IM_USER_SETTINGS_DESKTOP_CONTEXT_MENU_DELETE_V2'),
+	    onClick: async function () {
 	      const userChoice = await im_v2_lib_confirm.showDesktopDeleteConfirm();
 	      if (userChoice === true) {
 	        var _PopupManager$getPopu3;
@@ -385,12 +394,12 @@ this.BX.Messenger.v2 = this.BX.Messenger.v2 || {};
 	const UserSettingsContent = {
 	  name: 'UserSettingsContent',
 	  components: {
-	    ChatAvatar: im_v2_component_elements.ChatAvatar,
-	    UserStatus: im_v2_component_elements.UserStatus,
+	    ChatAvatar: im_v2_component_elements_avatar.ChatAvatar,
+	    UserStatus,
 	    ButtonPanel,
 	    UserStatusPopup,
 	    DesktopAccountList,
-	    ScrollWithGradient: im_v2_component_elements.ScrollWithGradient
+	    ScrollWithGradient: im_v2_component_elements_scrollWithGradient.ScrollWithGradient
 	  },
 	  emits: ['closePopup', 'enableAutoHide', 'disableAutoHide'],
 	  data() {
@@ -399,8 +408,8 @@ this.BX.Messenger.v2 = this.BX.Messenger.v2 || {};
 	    };
 	  },
 	  computed: {
-	    AvatarSize: () => im_v2_component_elements.AvatarSize,
-	    UserStatusSize: () => im_v2_component_elements.UserStatusSize,
+	    AvatarSize: () => im_v2_component_elements_avatar.AvatarSize,
+	    UserStatusSize: () => UserStatusSize,
 	    currentUserId() {
 	      return im_v2_application_core.Core.getUserId();
 	    },
@@ -499,7 +508,7 @@ this.BX.Messenger.v2 = this.BX.Messenger.v2 || {};
 	const UserSettingsPopup = {
 	  name: 'UserSettingsPopup',
 	  components: {
-	    MessengerPopup: im_v2_component_elements.MessengerPopup,
+	    MessengerPopup: im_v2_component_elements_popup.MessengerPopup,
 	    UserSettingsContent
 	  },
 	  props: {
@@ -542,7 +551,7 @@ this.BX.Messenger.v2 = this.BX.Messenger.v2 || {};
 	  components: {
 	    UserSettingsPopup,
 	    UserStatusPopup,
-	    ChatAvatar: im_v2_component_elements.ChatAvatar
+	    ChatAvatar: im_v2_component_elements_avatar.ChatAvatar
 	  },
 	  data() {
 	    return {
@@ -551,7 +560,7 @@ this.BX.Messenger.v2 = this.BX.Messenger.v2 || {};
 	    };
 	  },
 	  computed: {
-	    AvatarSize: () => im_v2_component_elements.AvatarSize,
+	    AvatarSize: () => im_v2_component_elements_avatar.AvatarSize,
 	    currentUserDialogId() {
 	      return im_v2_application_core.Core.getUserId().toString();
 	    },
@@ -608,7 +617,7 @@ this.BX.Messenger.v2 = this.BX.Messenger.v2 || {};
 	          text: item.title,
 	          counter: 0,
 	          active: true,
-	          iconName: item.options.iconName ? item.options.iconName : '',
+	          iconName: item.options.iconName || '',
 	          loadConfiguration: item.loadConfiguration
 	        };
 	      });
@@ -622,12 +631,14 @@ this.BX.Messenger.v2 = this.BX.Messenger.v2 || {};
 	  },
 	  methods: {
 	    onMarketClick() {
-	      im_v2_lib_market.MarketManager.openMarketplace();
+	      this.$emit('clickMarketItem', {
+	        id: im_v2_const.Layout.market
+	      });
 	    },
 	    onMarketItemClick(item) {
 	      this.$emit('clickMarketItem', {
-	        layoutName: im_v2_const.Layout.market.name,
-	        layoutEntityId: item.id
+	        id: im_v2_const.Layout.market,
+	        entityId: item.id
 	      });
 	    },
 	    getMenuItemClasses(item) {
@@ -637,10 +648,13 @@ this.BX.Messenger.v2 = this.BX.Messenger.v2 || {};
 	      };
 	    },
 	    isItemSelected(itemId) {
-	      return this.layout.name === im_v2_const.Layout.market.name && this.layout.entityId === itemId;
+	      return this.layout.name === im_v2_const.Layout.market && this.layout.entityId === itemId;
 	    },
 	    getIconClassNames(item) {
 	      return item.iconName.toString();
+	    },
+	    loc(phraseCode) {
+	      return this.$Bitrix.Loc.getMessage(phraseCode);
 	    }
 	  },
 	  template: `
@@ -651,13 +665,14 @@ this.BX.Messenger.v2 = this.BX.Messenger.v2 || {};
 		>
 			<div class="bx-im-navigation__item --active">
 				<div class="bx-im-navigation__item_icon --market"></div>
-				<div class="bx-im-navigation__item_text" :title="$Bitrix.Loc.getMessage('IM_NAVIGATION_MARKET_TITLE')">
-					{{ $Bitrix.Loc.getMessage('IM_NAVIGATION_MARKET_TITLE') }}
+				<div class="bx-im-navigation__item_text" :title="loc('IM_NAVIGATION_MARKET_TITLE')">
+					{{ loc('IM_NAVIGATION_MARKET_TITLE') }}
 				</div>
 			</div>
 		</div>
 		<div
 			v-for="item in marketMenuItems"
+			:key="item.id"
 			@click="onMarketItemClick(item)"
 			class="bx-im-navigation__item_container"
 		>
@@ -676,17 +691,14 @@ this.BX.Messenger.v2 = this.BX.Messenger.v2 || {};
 	};
 
 	const LayoutToAction = Object.freeze({
-	  [im_v2_const.Layout.market.name]: im_v2_const.ActionByUserType.getMarket,
-	  [im_v2_const.Layout.openlines.name]: im_v2_const.ActionByUserType.getOpenlines,
-	  [im_v2_const.Layout.channel.name]: im_v2_const.ActionByUserType.getChannels
+	  [im_v2_const.Layout.market]: im_v2_const.ActionByUserType.getMarket,
+	  [im_v2_const.Layout.openlines]: im_v2_const.ActionByUserType.getOpenlines,
+	  [im_v2_const.Layout.channel]: im_v2_const.ActionByUserType.getChannels
 	});
 
 	// @vue/component
 	const MessengerNavigation = {
 	  name: 'MessengerNavigation',
-	  directives: {
-	    hint: ui_vue3_directives_hint.hint
-	  },
 	  components: {
 	    UserSettings,
 	    MarketApps
@@ -705,72 +717,59 @@ this.BX.Messenger.v2 = this.BX.Messenger.v2 || {};
 	    };
 	  },
 	  computed: {
+	    NavigationMenuItem: () => im_v2_const.NavigationMenuItem,
 	    menuItems() {
 	      return [{
-	        id: im_v2_const.Layout.chat.name,
+	        id: im_v2_const.NavigationMenuItem.chat,
 	        text: this.prepareNavigationText('IM_NAVIGATION_CHATS'),
-	        counter: this.formatCounter(this.$store.getters['counters/getTotalChatCounter']),
-	        active: true
+	        counter: this.formatCounter(this.$store.getters['counters/getTotalChatCounter'])
 	      }, {
-	        id: im_v2_const.Layout.copilot.name,
+	        id: im_v2_const.NavigationMenuItem.copilot,
 	        text: this.prepareNavigationText('IM_NAVIGATION_COPILOT'),
 	        counter: this.formatCounter(this.$store.getters['counters/getTotalCopilotCounter']),
-	        clickHandler: this.onCopilotClick,
-	        showCondition: () => im_v2_lib_feature.FeatureManager.isFeatureAvailable(im_v2_lib_feature.Feature.copilotAvailable),
-	        active: true
+	        showCondition: () => im_v2_lib_feature.FeatureManager.isFeatureAvailable(im_v2_lib_feature.Feature.copilotAvailable)
 	      }, {
-	        id: im_v2_const.Layout.collab.name,
+	        id: im_v2_const.NavigationMenuItem.collab,
 	        text: this.prepareNavigationText('IM_NAVIGATION_COLLAB'),
 	        counter: this.formatCounter(this.$store.getters['counters/getTotalCollabCounter']),
-	        showCondition: () => im_v2_lib_feature.FeatureManager.isFeatureAvailable(im_v2_lib_feature.Feature.collabAvailable),
-	        active: true
+	        showCondition: () => im_v2_lib_feature.FeatureManager.isFeatureAvailable(im_v2_lib_feature.Feature.collabAvailable)
 	      }, {
-	        id: im_v2_const.Layout.channel.name,
-	        text: this.prepareNavigationText('IM_NAVIGATION_CHANNELS'),
-	        active: true
+	        id: im_v2_const.NavigationMenuItem.channel,
+	        text: this.prepareNavigationText('IM_NAVIGATION_CHANNELS')
 	      }, {
-	        id: im_v2_const.Layout.openlines.name,
+	        id: im_v2_const.NavigationMenuItem.openlines,
 	        text: this.prepareNavigationText('IM_NAVIGATION_OPENLINES'),
 	        counter: this.formatCounter(this.$store.getters['counters/getTotalLinesCounter']),
 	        showCondition: () => {
 	          return !this.isOptionOpenLinesV2Activated();
-	        },
-	        active: true
+	        }
 	      }, {
-	        id: im_v2_const.Layout.openlinesV2.name,
+	        id: im_v2_const.NavigationMenuItem.openlinesV2,
 	        text: this.prepareNavigationText('IM_NAVIGATION_OPENLINES'),
 	        counter: this.formatCounter(this.$store.getters['counters/getTotalLinesCounter']),
-	        showCondition: this.isOptionOpenLinesV2Activated,
-	        active: true
+	        showCondition: this.isOptionOpenLinesV2Activated
 	      }, {
-	        id: im_v2_const.Layout.notification.name,
+	        id: im_v2_const.NavigationMenuItem.notification,
 	        text: this.prepareNavigationText('IM_NAVIGATION_NOTIFICATIONS'),
 	        counter: this.formatCounter(this.$store.getters['notifications/getCounter']),
-	        active: true
+	        showCondition: () => !im_v2_lib_feature.FeatureManager.isFeatureAvailable(im_v2_lib_feature.Feature.isNotificationsStandalone)
 	      }, {
-	        id: im_v2_const.Layout.call.name,
+	        id: im_v2_const.NavigationMenuItem.call,
 	        text: this.prepareNavigationText('IM_NAVIGATION_CALLS_V2'),
-	        clickHandler: this.onCallClick,
-	        showCondition: im_v2_lib_phone.PhoneManager.getInstance().canCall.bind(im_v2_lib_phone.PhoneManager.getInstance()),
-	        active: true
+	        showCondition: im_v2_lib_phone.PhoneManager.getInstance().canCall.bind(im_v2_lib_phone.PhoneManager.getInstance())
 	      }, {
-	        id: 'timemanager',
+	        id: im_v2_const.NavigationMenuItem.timemanager,
 	        text: this.prepareNavigationText('IM_NAVIGATION_TIMEMANAGER'),
-	        clickHandler: this.onTimeManagerClick,
-	        showCondition: this.isTimeManagerActive,
-	        active: true
+	        showCondition: this.isTimeManagerActive
 	      }, {
-	        id: 'main-page',
+	        id: im_v2_const.NavigationMenuItem.homepage,
 	        text: this.prepareNavigationText('IM_NAVIGATION_MAIN_PAGE'),
-	        clickHandler: this.onMainPageClick,
-	        showCondition: this.isMainPageActive,
-	        active: true
+	        showCondition: this.isMainPageActive
 	      }, {
-	        id: 'market'
+	        id: im_v2_const.NavigationMenuItem.market
 	      }, {
-	        id: im_v2_const.Layout.settings.name,
-	        text: this.prepareNavigationText('IM_NAVIGATION_SETTINGS'),
-	        active: true
+	        id: im_v2_const.NavigationMenuItem.settings,
+	        text: this.prepareNavigationText('IM_NAVIGATION_SETTINGS')
 	      }];
 	    },
 	    showCloseIcon() {
@@ -782,43 +781,25 @@ this.BX.Messenger.v2 = this.BX.Messenger.v2 || {};
 	  },
 	  mounted() {
 	    const container = this.$refs.navigation;
-	    this.needBottomShadow = container.scrollTop + container.clientHeight !== container.scrollHeight;
+	    this.needBottomShadow = container && container.scrollTop + container.clientHeight !== container.scrollHeight;
 	  },
 	  methods: {
-	    onMenuItemClick(item, event) {
-	      if (!item.active) {
-	        return;
-	      }
-	      if (main_core.Type.isFunction(item.clickHandler)) {
-	        item.clickHandler(event.target);
-	        return;
-	      }
-	      this.sendClickEvent({
-	        layoutName: item.id
+	    onItemClick(item, event) {
+	      this.$emit('navigationClick', {
+	        id: item.id,
+	        target: event.target
 	      });
 	    },
-	    sendClickEvent({
-	      layoutName,
-	      layoutEntityId = ''
-	    }) {
-	      this.$emit('navigationClick', {
-	        layoutName,
-	        layoutEntityId
-	      });
+	    onMarketItemClick(item) {
+	      this.$emit('navigationClick', item);
 	    },
 	    closeSlider() {
-	      const hasCall = im_v2_lib_call.CallManager.getInstance().hasCurrentCall();
-	      if (hasCall) {
-	        this.showExitConfirm();
-	        return;
-	      }
 	      im_v2_lib_slider.MessengerSlider.getInstance().getCurrent().close();
 	    },
 	    getMenuItemClasses(item) {
 	      return {
 	        '--selected': item.id === this.currentLayoutName,
-	        '--with-counter': item.counter && item.id !== this.currentLayoutName,
-	        '--active': item.active
+	        '--with-counter': item.counter && item.id !== this.currentLayoutName
 	      };
 	    },
 	    formatCounter(counter) {
@@ -827,40 +808,9 @@ this.BX.Messenger.v2 = this.BX.Messenger.v2 || {};
 	      }
 	      return counter > 99 ? '99+' : String(counter);
 	    },
-	    getHintContent(item) {
-	      if (item.active) {
-	        return null;
-	      }
-	      return {
-	        text: this.loc('IM_MESSENGER_NOT_AVAILABLE'),
-	        popupOptions: {
-	          angle: {
-	            position: 'left'
-	          },
-	          targetContainer: document.body,
-	          offsetLeft: 80,
-	          offsetTop: -54
-	        }
-	      };
-	    },
 	    prepareNavigationText(phraseCode) {
 	      return this.loc(phraseCode, {
 	        '#BR#': '</br>'
-	      });
-	    },
-	    showExitConfirm() {
-	      ui_dialogs_messagebox.MessageBox.show({
-	        message: this.loc('IM_NAVIGATION_ACTIVE_CALL_CONFIRM'),
-	        modal: true,
-	        buttons: ui_dialogs_messagebox.MessageBoxButtons.OK_CANCEL,
-	        onOk: messageBox => {
-	          im_v2_lib_call.CallManager.getInstance().leaveCurrentCall();
-	          im_v2_lib_slider.MessengerSlider.getInstance().getCurrent().close();
-	          messageBox.close();
-	        },
-	        onCancel: messageBox => {
-	          messageBox.close();
-	        }
 	      });
 	    },
 	    needToShowMenuItem(item) {
@@ -897,44 +847,12 @@ this.BX.Messenger.v2 = this.BX.Messenger.v2 || {};
 	        behavior: 'smooth'
 	      });
 	    },
-	    onCallClick(clickTarget) {
-	      const MENU_ITEM_CLASS = 'bx-im-navigation__item';
-	      const KEYPAD_OFFSET_TOP = -30;
-	      const KEYPAD_OFFSET_LEFT = 64;
-	      im_v2_lib_phone.PhoneManager.getInstance().openKeyPad({
-	        bindElement: clickTarget.closest(`.${MENU_ITEM_CLASS}`),
-	        offsetTop: KEYPAD_OFFSET_TOP,
-	        offsetLeft: KEYPAD_OFFSET_LEFT
-	      });
-	    },
 	    isTimeManagerActive() {
 	      var _BX$Timeman, _BX$Timeman$Monitor;
 	      return Boolean((_BX$Timeman = BX.Timeman) == null ? void 0 : (_BX$Timeman$Monitor = _BX$Timeman.Monitor) == null ? void 0 : _BX$Timeman$Monitor.isEnabled());
 	    },
-	    async onTimeManagerClick() {
-	      var _BX$Timeman2, _BX$Timeman2$Monitor;
-	      (_BX$Timeman2 = BX.Timeman) == null ? void 0 : (_BX$Timeman2$Monitor = _BX$Timeman2.Monitor) == null ? void 0 : _BX$Timeman2$Monitor.openReport();
-	    },
-	    onCopilotClick() {
-	      if (!im_v2_lib_feature.FeatureManager.isFeatureAvailable(im_v2_lib_feature.Feature.copilotActive)) {
-	        const promoter = new ui_infoHelper.FeaturePromoter({
-	          code: im_v2_const.SliderCode.copilotDisabled
-	        });
-	        promoter.show();
-	        im_v2_lib_analytics.Analytics.getInstance().copilot.onOpenTab({
-	          isAvailable: false
-	        });
-	        return;
-	      }
-	      this.sendClickEvent({
-	        layoutName: im_v2_const.Layout.copilot.name
-	      });
-	    },
 	    isOptionOpenLinesV2Activated() {
 	      return im_v2_lib_feature.FeatureManager.isFeatureAvailable(im_v2_lib_feature.Feature.openLinesV2);
-	    },
-	    onMainPageClick() {
-	      im_v2_lib_utils.Utils.browser.openLink('/');
 	    },
 	    isMainPageActive() {
 	      return im_v2_lib_desktopApi.DesktopApi.isChatWindow();
@@ -961,18 +879,21 @@ this.BX.Messenger.v2 = this.BX.Messenger.v2 || {};
 				</template>
 				<!-- Menu items -->
 				<template v-for="item in menuItems">
-					<MarketApps v-if="needToShowMenuItem(item) && item.id === 'market'" @clickMarketItem="sendClickEvent"/>
+					<MarketApps
+						v-if="needToShowMenuItem(item) && item.id === NavigationMenuItem.market"
+						@clickMarketItem="onMarketItemClick"
+					/>
 					<div
 						v-else-if="needToShowMenuItem(item)"
 						:key="item.id"
-						v-hint="getHintContent(item)"
-						@click="onMenuItemClick(item, $event)"
+						:ref="item.id"
+						@click="onItemClick(item, $event)"
 						class="bx-im-navigation__item_container"
 					>
 						<div :class="getMenuItemClasses(item)" class="bx-im-navigation__item">
 							<div :class="'--' + item.id" class="bx-im-navigation__item_icon"></div>
 							<div class="bx-im-navigation__item_text" :title="item.text" v-html="item.text"></div>
-							<div v-if="item.active && item.counter" class="bx-im-navigation__item_counter">
+							<div v-if="item.counter" class="bx-im-navigation__item_counter">
 								<div class="bx-im-navigation__item_counter-text">
 									{{ item.counter }}
 								</div>
@@ -994,5 +915,5 @@ this.BX.Messenger.v2 = this.BX.Messenger.v2 || {};
 
 	exports.MessengerNavigation = MessengerNavigation;
 
-}((this.BX.Messenger.v2.Component = this.BX.Messenger.v2.Component || {}),BX.Vue3.Directives,BX.UI.Dialogs,BX.UI,BX.Messenger.v2.Lib,BX.Messenger.v2.Lib,BX.Messenger.v2.Lib,BX.Messenger.v2.Lib,BX.Messenger.v2.Lib,BX.Messenger.v2.Lib,BX.Messenger.v2.Component.Elements,BX.Messenger.v2.Lib,BX.Messenger.v2.Lib,BX,BX.Main,BX.Messenger.v2.Lib,BX.Messenger.v2.Lib,BX.Messenger.v2.Lib,BX.Messenger.v2.Lib,BX.UI,BX.UI.Feedback,BX,BX.Messenger.v2.Application,BX.Messenger.v2.Const,BX.Messenger.v2.Lib));
+}((this.BX.Messenger.v2.Component = this.BX.Messenger.v2.Component || {}),BX.Messenger.v2.Lib,BX.Messenger.v2.Lib,BX.Messenger.v2.Lib,BX.Messenger.v2.Lib,BX.Messenger.v2.Lib,BX.Messenger.v2.Component.Elements,BX.Messenger.v2.Component.Elements,BX.Messenger.v2.Component.Elements,BX.Messenger.v2.Component.Elements,BX.Messenger.v2.Lib,BX.Messenger.v2.Service,BX,BX.Main,BX.Messenger.v2.Lib,BX.Messenger.v2.Lib,BX.Messenger.v2.Lib,BX.Messenger.v2.Lib,BX.UI,BX.UI.Feedback,BX,BX.Messenger.v2.Application,BX.Messenger.v2.Const,BX.Messenger.v2.Lib));
 //# sourceMappingURL=navigation.bundle.js.map

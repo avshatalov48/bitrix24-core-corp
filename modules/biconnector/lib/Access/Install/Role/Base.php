@@ -7,11 +7,12 @@ use Bitrix\BIConnector\Access\Role\RoleDictionary;
 use Bitrix\BIConnector\Access\Role\RoleRelationTable;
 use Bitrix\BIConnector\Access\Role\RoleTable;
 use Bitrix\BIConnector\Access\Role\RoleUtil;
+use Bitrix\BIConnector\Integration\Superset\Model\SupersetDashboardGroupTable;
 use Bitrix\Main\Result;
 
 abstract class Base
 {
-	public function __construct(protected string $code, protected bool $isNewPortal = false)
+	public function __construct(protected readonly string $code, protected readonly bool $isNewPortal = false)
 	{
 	}
 
@@ -19,7 +20,54 @@ abstract class Base
 	 * @return array
 	 */
 	abstract protected function getPermissions(): array;
+
 	abstract protected function getRelationUserGroups(): array;
+
+	abstract protected function getDefaultGroupPermissions(): array;
+
+	protected function getGroupPermissions(): array
+	{
+		$groupList = SupersetDashboardGroupTable::getList([
+			'select' => ['ID', 'CODE'],
+			'filter' => [
+				'TYPE' => SupersetDashboardGroupTable::GROUP_TYPE_SYSTEM,
+			],
+			'cache' => [
+				'ttl' => 60,
+			],
+		])
+			->fetchAll()
+		;
+
+		$groupRelation = array_column($groupList, 'ID', 'CODE');
+
+		$groupPermissionsList = [];
+		foreach ($this->getDefaultGroupPermissions() as $groupCode => $groupPermissions)
+		{
+			if (!isset($groupRelation[$groupCode]))
+			{
+				continue;
+			}
+			$permissionId = PermissionDictionary::getDashboardGroupPermissionId($groupRelation[$groupCode]);
+			foreach ($groupPermissions as $permission)
+			{
+				$groupPermissionsList[] = [
+					'permissionId' => $permissionId,
+					'value' => $permission,
+				];
+			}
+		}
+
+		return $groupPermissionsList;
+	}
+
+	/**
+	 * @return string
+	 */
+	public function getCode(): string
+	{
+		return $this->code;
+	}
 
 	public function getMap(): array
 	{
@@ -28,9 +76,12 @@ abstract class Base
 		{
 			$result[] = [
 				'permissionId' => $permissionId,
-				'value' => PermissionDictionary::getDefaultPermissionValue($permissionId)
+				'value' => PermissionDictionary::getDefaultPermissionValue($permissionId),
 			];
 		}
+
+		$groupPermission = $this->getGroupPermissions();
+		$result = array_merge($result, $groupPermission);
 
 		return $result;
 	}
@@ -38,7 +89,7 @@ abstract class Base
 	public function install(): Result
 	{
 		$result = RoleTable::add([
-			'NAME' => RoleDictionary::getRoleName($this->code) ?? $this->code
+			'NAME' => RoleDictionary::getRoleName($this->code) ?? $this->code,
 		]);
 
 		if (!$result->isSuccess())

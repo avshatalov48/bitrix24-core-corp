@@ -17,7 +17,7 @@ use Bitrix\Crm\Integration\AI\AIManager;
 use Bitrix\Crm\Integration\AI\CopilotLauncher;
 use Bitrix\Crm\Integration\AI\Dto\FillItemFieldsFromCallTranscriptionPayload;
 use Bitrix\Crm\Integration\AI\Dto\MultipleFieldFillPayload;
-use Bitrix\Crm\Integration\AI\Dto\ScoreCallPayload;
+use Bitrix\Crm\Integration\AI\Dto\Scoring\ScoreCallPayload;
 use Bitrix\Crm\Integration\AI\Dto\SingleFieldFillPayload;
 use Bitrix\Crm\Integration\AI\ErrorCode as AIErrorCode;
 use Bitrix\Crm\Integration\AI\Feedback;
@@ -31,7 +31,6 @@ use Bitrix\Crm\Service\Container;
 use Bitrix\Crm\Service\Context;
 use Bitrix\Crm\Service\Factory;
 use Bitrix\Crm\Service\Timeline\Config;
-use Bitrix\Crm\Service\Timeline\Monitor;
 use Bitrix\Crm\Service\UserPermissions;
 use Bitrix\Main\ArgumentException;
 use Bitrix\Main\Engine\ActionFilter;
@@ -496,7 +495,7 @@ class AI extends Activity
 			return null;
 		}
 
-		if (!$this->permissions->canUpdateItem($item))
+		if (!$this->permissions->item()->canUpdateItem($item))
 		{
 			$this->addError(ErrorCode::getAccessDeniedError());
 
@@ -656,7 +655,7 @@ class AI extends Activity
 			return;
 		}
 
-		if (!$this->permissions->canUpdateItem($item))
+		if (!$this->permissions->item()->canUpdateItem($item))
 		{
 			$this->addError(ErrorCode::getAccessDeniedError());
 
@@ -792,10 +791,7 @@ class AI extends Activity
 
 		if (
 			!$result->getTarget()
-			|| !$this->permissions->checkUpdatePermissions(
-				$result->getTarget()->getEntityTypeId(),
-				$result->getTarget()->getEntityId()
-			)
+			|| !$this->permissions->item()->canUpdateItemIdentifier($result->getTarget())
 		)
 		{
 			$this->addError(ErrorCode::getAccessDeniedError());
@@ -871,8 +867,6 @@ class AI extends Activity
 		if ($currentUserId === $assignedById)
 		{
 			Badge::deleteByEntity($identifier, Badge::AI_CALL_FIELDS_FILLING_RESULT);
-
-			Monitor::getInstance()->onBadgesSync($identifier);
 		}
 	}
 }

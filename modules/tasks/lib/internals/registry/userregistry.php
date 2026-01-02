@@ -27,6 +27,7 @@ class UserRegistry
 	public const MODE_GROUP = 'group';
 	public const MODE_PROJECT = 'project';
 	public const MODE_SCRUM = 'scrum';
+	public const MODE_COLLAB = 'collab';
 	public const MODE_EXCLUDE_SCRAM = 'ex_scram';
 
 	private static $instance = [];

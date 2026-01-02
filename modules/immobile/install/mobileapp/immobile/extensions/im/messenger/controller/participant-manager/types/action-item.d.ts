@@ -2,6 +2,10 @@ type ActionItem = {
 	id: string,
 	title: string,
 	callback: () => void,
-	icon: object,
+	onItemSelected: () => void,
+	icon: Object,
 	testId: string,
+	style: Object,
 }
+
+export { ActionItem };

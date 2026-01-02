@@ -77,7 +77,7 @@ class SearchAction extends Search\SearchAction
 				$searchResultProvider->setAdditionalFilter($this->getAdditionalFilter($entityTypeId, $options));
 				$searchResultProvider->setAffectedCategories($this->getAffectedCategoriesFromOptions($options));
 
-				if ($this->isMyCompanyFromOptions($options) && Container::getInstance()->getUserPermissions()->getMyCompanyPermissions()->canSearch())
+				if ($this->isMyCompanyFromOptions($options) && Container::getInstance()->getUserPermissions()->myCompany()->canSearch())
 				{
 					$searchResultProvider->setCheckPermissions(false);
 				}

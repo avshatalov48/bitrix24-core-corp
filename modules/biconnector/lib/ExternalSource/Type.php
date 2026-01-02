@@ -6,4 +6,5 @@ Enum Type: string
 {
 	case Csv = 'csv';
 	case Source1C = '1c';
+	case Rest = 'rest';
 }

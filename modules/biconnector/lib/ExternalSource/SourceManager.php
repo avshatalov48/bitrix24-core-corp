@@ -3,14 +3,18 @@
 namespace Bitrix\BIConnector\ExternalSource;
 
 use Bitrix\BIConnector\ExternalSource;
+use Bitrix\BIConnector\ExternalSource\Internal\ExternalSourceRestTable;
+use Bitrix\BIConnector\ExternalSource\Internal\ExternalSourceSettingsCollection;
 use Bitrix\BIConnector\ExternalSource\Internal\ExternalSourceSettingsTable;
 use Bitrix\BIConnector\ExternalSource\Internal\ExternalSourceTable;
 use Bitrix\Main\Application;
 use Bitrix\Main\Engine\CurrentUser;
 use Bitrix\Main\Error;
+use Bitrix\Main\Loader;
 use Bitrix\Main\Localization\Loc;
 use Bitrix\Main\Result;
 use Bitrix\Main\Type\DateTime;
+use Bitrix\Main\Web\Json;
 
 class SourceManager
 {
@@ -28,23 +32,54 @@ class SourceManager
 			$result['1c'] = [
 				[
 					'name' => Loc::getMessage('EXTERNAL_CONNECTION_FIELD_HOST'),
-					'type' => ExternalSourceSettingsTable::SETTING_TYPE_STRING,
+					'type' => ExternalSource\SourceSettingType::String->value,
 					'code' => 'host',
 					'placeholder' => 'http://localhost_23740259475',
 				],
 				[
 					'name' => Loc::getMessage('EXTERNAL_CONNECTION_FIELD_USERNAME'),
-					'type' => ExternalSourceSettingsTable::SETTING_TYPE_STRING,
+					'type' => ExternalSource\SourceSettingType::String->value,
 					'code' => 'username',
 					'placeholder' => 'user@mail.com',
 				],
 				[
 					'name' => Loc::getMessage('EXTERNAL_CONNECTION_FIELD_PASSWORD'),
-					'type' => ExternalSourceSettingsTable::SETTING_TYPE_STRING,
+					'type' => ExternalSource\SourceSettingType::String->value,
 					'code' => 'password',
 					'placeholder' => Loc::getMessage('EXTERNAL_CONNECTION_FIELD_PASSWORD'),
 				],
 			];
+		}
+
+		if (Loader::includeModule('rest'))
+		{
+			$restConnectors = ExternalSource\Internal\ExternalSourceRestConnectorTable::getList([
+				'select' => ['ID', 'SETTINGS'],
+			]);
+
+			while ($restConnector = $restConnectors->fetchObject())
+			{
+				try {
+					$settings = Json::decode($restConnector['SETTINGS']);
+					if (is_array($settings))
+					{
+						$sourceCode = $restConnector->getCode();
+						$result[$sourceCode] = [];
+						foreach ($settings as $setting)
+						{
+							$result[$sourceCode][] = [
+								'name' => $setting['name'],
+								'type' => $setting['type'],
+								'code' => $setting['code'],
+								'placeholder' => Loc::getMessage('EXTERNAL_CONNECTION_FIELD_REST_EXTERNAL_PARAM_PLACEHOLDER'),
+							];
+						}
+					}
+				}
+				catch (\Exception)
+				{
+				}
+			}
 		}
 
 		return $result;
@@ -60,8 +95,24 @@ class SourceManager
 		{
 			$result[] = [
 				'code' => ExternalSource\Type::Source1C->value,
+				'type' => ExternalSource\Type::Source1C->value,
 				'name' => '1C',
 			];
+		}
+
+		if (Loader::includeModule('rest'))
+		{
+			$restSources = ExternalSource\Internal\ExternalSourceRestConnectorTable::getList([
+				'select' => ['TITLE', 'ID'],
+			]);
+			while ($restSource = $restSources->fetchObject())
+			{
+				$result[] = [
+					'code' => $restSource->getCode(),
+					'type' => ExternalSource\Type::Rest->value,
+					'name' => $restSource->getTitle(),
+				];
+			}
 		}
 
 		return $result;
@@ -108,12 +159,17 @@ class SourceManager
 				->setDateCreate(new DateTime())
 				->setCreatedById($userId)
 				->setType($type->value)
-				->setCode($type->value)
+				->setCode($data['code'])
 				->setActive('Y')
 				->setTitle($data['title'])
 				->setDateUpdate(new DateTime())
 				->setUpdatedById($userId)
 			;
+
+			if (isset($data['description']))
+			{
+				$source->setDescription($data['description']);
+			}
 
 			$saveResult = $source->save();
 			if (!$saveResult->isSuccess())
@@ -133,23 +189,46 @@ class SourceManager
 				return $result;
 			}
 
-			$saveResult = $source->save();
-			if (!$saveResult->isSuccess())
+			if ($type === Type::Rest)
 			{
-				$result->addErrors($saveResult->getErrors());
-				$db->rollbackTransaction();
+				$connectorId = (int)str_replace('rest_', '', $data['code']);
+				$addConnectorToSourceResult = ExternalSourceRestTable::add([
+					'SOURCE_ID' => $source->getId(),
+					'CONNECTOR_ID' => $connectorId,
+				]);
 
-				return $result;
+				if (!$addConnectorToSourceResult->isSuccess())
+				{
+					$result->addErrors($addConnectorToSourceResult->getErrors());
+					$db->rollbackTransaction();
+
+					return $result;
+				}
+
+				$avatar = ExternalSourceRestTable::getList([
+					'select' => ['CONNECTOR.LOGO'],
+					'filter' => [
+						'CONNECTOR_ID' => $connectorId,
+					],
+					'limit' => 1
+				])->fetchObject()->getConnector()->getLogo();
+			}
+
+			$connection = [
+				'id' => $source->getId(),
+				'name' => htmlspecialcharsbx($source->getTitle()),
+				'type' => $source->getType(),
+			];
+
+			if ($type === Type::Rest)
+			{
+				$connection['avatar'] = $avatar;
 			}
 
 			$db->commitTransaction();
 
 			$result->setData([
-				'connection' => [
-					'id' => $source->getId(),
-					'name' => htmlspecialcharsbx($source->getTitle()),
-					'type' => $source->getType(),
-				],
+				'connection' => $connection,
 			]);
 
 			return $result;
@@ -209,19 +288,42 @@ class SourceManager
 		try
 		{
 			$db->startTransaction();
-			$source = ExternalSourceTable::getList([
-				'filter' => ['ID' => $sourceId],
-				'limit' => 1,
-			])
-				->fetchObject()
-			;
+			$source = ExternalSourceTable::getById($sourceId)->fetchObject();
+			if (!$source)
+			{
+				$result->addError(new Error(Loc::getMessage('EXTERNAL_CONNECTION_ERROR_NOT_FOUND')));
+
+				return $result;
+			}
 			$userId = (int)CurrentUser::get()->getId();
+
+			if (!isset($data['title']))
+			{
+				$data['title'] = $source->getTitle();
+			}
 
 			$source
 				->setTitle($data['title'])
 				->setDateUpdate(new DateTime())
 				->setUpdatedById($userId)
 			;
+
+			if (isset($data['description']))
+			{
+				$source->setDescription($data['description']);
+			}
+
+			if ($source->getType() === Type::Rest->value)
+			{
+				$connectorId = ExternalSourceRestTable::getList([
+					'filter' => [
+						'SOURCE_ID' => $sourceId,
+					],
+					'limit' => 1,
+				])->fetchObject()->getConnectorId();
+
+				$data['connector_id'] = $connectorId;
+			}
 
 			$saveSettingsResult = self::saveConnectionSettings($source, $data);
 			if (!$saveSettingsResult->isSuccess())
@@ -276,11 +378,9 @@ class SourceManager
 		return $result;
 	}
 
-	private static function saveConnectionSettings(ExternalSource\Internal\ExternalSource $source, array $data): Result
+	protected static function saveConnectionSettings(ExternalSource\Internal\ExternalSource $source, array $data): Result
 	{
 		$result = new Result();
-
-		$source->removeAllSettings();
 
 		$checkResult = self::prepareConnectionSettings($source, $data);
 		if (!$checkResult->isSuccess())
@@ -291,19 +391,41 @@ class SourceManager
 		}
 
 		$settings = $checkResult->getData()['settings'];
+		$existSettings = ExternalSourceSettingsTable::getList([
+			'filter' => ['=SOURCE_ID' => $source->getId()],
+		])->fetchCollection();
+
+		if ($source->getType() === Type::Rest->value)
+		{
+			$deleteSettingsResult = self::removeUnusedSettings($source->getId(), $existSettings);
+			if (!$deleteSettingsResult->isSuccess())
+			{
+				$result->addErrors($deleteSettingsResult->getErrors());
+
+				return $result;
+			}
+		}
 
 		foreach ($settings as $settingData)
 		{
-			$settingItem = ExternalSourceSettingsTable::createObject();
-			$settingItem
-				->setCode($settingData['code'])
-				->setValue($settingData['value'])
-				->setName($settingData['name'])
-				->setType($settingData['type'])
-				->setSourceId($source->getId())
-			;
-			$saveSettingResult = $settingItem->save();
+			$settingItem = $existSettings->getEntityByCode($settingData['code']);
+			if (is_null($settingItem))
+			{
+				$settingItem = ExternalSourceSettingsTable::createObject();
+				$settingItem
+					->setCode($settingData['code'])
+					->setValue($settingData['value'])
+					->setName($settingData['name'])
+					->setType($settingData['type'])
+					->setSourceId($source->getId())
+				;
+			}
+			else
+			{
+				$settingItem->setValue($settingData['value']);
+			}
 
+			$saveSettingResult = $settingItem->save();
 			if (!$saveSettingResult->isSuccess())
 			{
 				$result->addErrors($saveSettingResult->getErrors());
@@ -315,11 +437,24 @@ class SourceManager
 		return $result;
 	}
 
-	private static function prepareConnectionSettings(ExternalSource\Internal\ExternalSource $source, array $data): Result
+	protected static function prepareConnectionSettings(ExternalSource\Internal\ExternalSource $source, array $data): Result
 	{
 		$result = new Result();
 		$settings = [];
-		$requiredFields = self::getFieldsConfig()[$source->getType()] ?? [];
+		if ($source->getType() !== Type::Rest->value)
+		{
+			$configKey = $source->getType();
+		}
+		else
+		{
+			$configKey = $data['code'] ?? $source->getType() . '_' . $data['connector_id'];
+			if (!empty($data['settings']))
+			{
+				$data = $data['settings'];
+			}
+		}
+
+		$requiredFields = self::getFieldsConfig()[$configKey] ?? [];
 		foreach ($requiredFields as $requiredField)
 		{
 			if (isset($data[$requiredField['code']]))
@@ -331,7 +466,7 @@ class SourceManager
 					'type' => $requiredField['type'],
 				];
 			}
-			else
+			elseif ($source->getType() !== Type::Rest->value)
 			{
 				$result->addError(new Error(Loc::getMessage('EXTERNAL_CONNECTION_ERROR_FIELDS_INCOMPLETE')));
 
@@ -342,6 +477,116 @@ class SourceManager
 		$result->setData([
 			'settings' => $settings,
 		]);
+
+		return $result;
+	}
+
+	public static function getSourceSettings(ExternalSource\Internal\ExternalSource $source): ExternalSourceSettingsCollection
+	{
+		return ExternalSourceSettingsTable::getList([
+			'filter' => [
+				'=SOURCE_ID' => $source->getId(),
+			],
+		])
+			->fetchCollection()
+		;
+	}
+
+	public static function deleteSource(int $id): Result
+	{
+		$result = new Result();
+		$source = ExternalSourceTable::getById($id)->fetchObject();
+		if (!$source)
+		{
+			$result->addError(new Error(Loc::getMessage('BICONNECTOR_CONTROLLER_SOURCE_ERROR_NOT_FOUND')));
+
+			return $result;
+		}
+
+		$db = Application::getInstance()->getConnection();
+		try
+		{
+			$db->startTransaction();
+
+			if ($source->getType() === Type::Rest->value)
+			{
+				$sourceConnectorRelation = ExternalSourceRestTable::getList([
+					'select' => ['ID'],
+					'filter' => [
+						'SOURCE_ID' => $source->getId(),
+					],
+					'limit' => 1,
+				])->fetchObject();
+
+				if ($sourceConnectorRelation)
+				{
+					$deleteResult = $sourceConnectorRelation->delete();
+					if (!$deleteResult->isSuccess())
+					{
+						$result->addErrors($deleteResult->getErrors());
+						$db->rollbackTransaction();
+
+						return $result;
+					}
+				}
+			}
+
+			$deleteResult = $source->delete();
+			if (!$deleteResult->isSuccess())
+			{
+				$result->addErrors($deleteResult->getErrors());
+				$db->rollbackTransaction();
+
+				return $result;
+			}
+
+			$db->commitTransaction();
+
+		}
+		catch (\Exception $e)
+		{
+			$result->addError(new Error($e->getMessage()));
+			$db->rollbackTransaction();
+
+			return $result;
+		}
+
+		return $result;
+	}
+
+	private static function removeUnusedSettings(
+		int $sourceId,
+		Internal\ExternalSourceSettingsCollection $existSettings,
+	): Result
+	{
+		$result = new Result();
+
+		$connector = ExternalSourceRestTable::getList([
+			'select' => ['CONNECTOR.SETTINGS'],
+			'filter' => ['=SOURCE_ID' => $sourceId],
+			'limit' => 1,
+		])->fetchObject();
+
+		if (!$connector) //in this case it is an add method, and we don't have a connector yet
+		{
+			return $result;
+		}
+
+		$connectorSettings = Json::decode($connector->getConnector()->getSettings());
+		$settingsCodeList = array_column($connectorSettings, 'code');
+		foreach ($existSettings as $setting)
+		{
+			if (!in_array($setting->getCode(), $settingsCodeList, true))
+			{
+				$deleteSettingsResult = $setting->delete();
+				if (!$deleteSettingsResult->isSuccess())
+				{
+					$result->addErrors($deleteSettingsResult->getErrors());
+
+					return $result;
+				}
+			}
+		}
 
 		return $result;
 	}

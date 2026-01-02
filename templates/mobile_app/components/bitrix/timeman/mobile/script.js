@@ -141,6 +141,7 @@
 					return BX.PreventDefault(e);
 				},
 				show : function() {
+
 					var res = {
 						type: this.type,
 						start_date: this.getStrDate(parseInt(this.node.value)),
@@ -262,6 +263,7 @@
 				this.formats = formats;
 
 				BX.onCustomEvent("onMobileTimeManInit", [this.id]);
+				BXMobileApp.onCustomEvent('OnTimemanOpenDay', {}, true);
 
 				BX.ready(BX.proxy(function(){this.init(DATA);}, this));
 
@@ -586,7 +588,7 @@
 						{
 							menu.push({
 								name: BX.message("TM_MENU_STOP"),
-								icon: 'finish',
+								icon: 'flag',
 								action: BX.proxy(function() {
 									this.showStopForm("normal");
 									_initPage(this.getMenu(status, false));
@@ -597,7 +599,7 @@
 						{
 							menu.push({
 								name: BX.message("TM_MENU_STOP1"),
-								icon: 'finish',
+								icon: 'flag',
 								action: BX.proxy(function(){
 									this.showStopForm("extended");
 									_initPage(this.getMenu(status, false));
@@ -760,15 +762,21 @@
 					timestamp: selectedTimestamp,
 					report: errorReport,
 					request_id: this.id,
-					collectGeoData: this.collectGeoData
+					collectGeoData: this.collectGeoData,
 				}, BX.proxy(this.checkQuery, this));
+
+				BXMobileApp.onCustomEvent('OnTimemanStartDay', {}, true);
+
 				return BX.PreventDefault(e);
 			};
 			d.prototype.pause = function(e) {
 				query('pause', {
 					request_id: this.id,
-					collectGeoData: this.collectGeoData
+					collectGeoData: this.collectGeoData,
 				}, BX.proxy(this.checkQuery, this));
+
+				BXMobileApp.onCustomEvent('OnTimemanPauseDay', {}, true);
+
 				return BX.PreventDefault(e);
 			};
 			d.prototype.resume = function(e) {
@@ -776,6 +784,9 @@
 					request_id: this.id,
 					collectGeoData: this.collectGeoData
 				}, BX.proxy(this.checkQuery, this));
+
+				BXMobileApp.onCustomEvent('OnTimemanResumeDay', {}, true);
+
 				return BX.PreventDefault(e);
 			};
 			d.prototype.stop = function(e) {
@@ -810,6 +821,9 @@
 					q["ready"] = "Y";
 				}
 				query('close', q, BX.proxy(this.checkQuery, this));
+
+				BXMobileApp.onCustomEvent('OnTimemanCloseDay', {}, true);
+
 				return BX.PreventDefault(e);
 			};
 			d.prototype.edit = function() {

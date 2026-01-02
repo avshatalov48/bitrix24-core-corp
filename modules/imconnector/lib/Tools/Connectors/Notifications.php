@@ -1,4 +1,5 @@
 <?php
+
 namespace Bitrix\ImConnector\Tools\Connectors;
 
 use Bitrix\Crm\SiteButton;
@@ -24,6 +25,10 @@ class Notifications
 {
 	protected const CODE_TERMS_AGREEMENT = 'imconnector_terms_notifications_v2';
 	protected const DATA_PROVIDER_CODE = 'imconnector/notifications';
+
+	private const LEGAL_ENTITY_RU = 'ru';
+	private const LEGAL_ENTITY_US = 'us';
+	private const LEGAL_ENTITY_EU = 'eu';
 
 	/**
 	 * @return bool
@@ -56,14 +61,22 @@ class Notifications
 	 */
 	protected static function getIdAgreementTerms(): int
 	{
+		$agreementText = self::getAgreementText();
+		if ($agreementText === null)
+		{
+			return 0;
+		}
+
 		$agreementRow = AgreementTable::getRow([
-			'select' => ['ID'],
+			'select' => [
+				'ID',
+				'AGREEMENT_TEXT',
+			],
 			'filter' => [
 				'=CODE' => self::CODE_TERMS_AGREEMENT,
 				'=ACTIVE' => Agreement::ACTIVE
 			],
 		]);
-
 		$id = $agreementRow ? (int)$agreementRow['ID'] : 0;
 
 		if (!$id)
@@ -71,7 +84,7 @@ class Notifications
 			$addResult = AgreementTable::add([
 				'CODE' => self::CODE_TERMS_AGREEMENT,
 				'NAME' => Loc::getMessage('IMCONNECTOR_NOTIFICATIONS_TOS_AGREEMENT_NAME'),
-				'AGREEMENT_TEXT' => Loc::getMessage('IMCONNECTOR_NOTIFICATIONS_TOS_AGREEMENT_TEXT'),
+				'AGREEMENT_TEXT' => $agreementText,
 				'TYPE' => Agreement::TYPE_CUSTOM,
 				'DATA_PROVIDER' => self::DATA_PROVIDER_CODE,
 				'IS_AGREEMENT_TEXT_HTML' => 'Y',
@@ -81,8 +94,34 @@ class Notifications
 				$id = $addResult->getId();
 			}
 		}
+		elseif ($agreementRow['AGREEMENT_TEXT'] !== $agreementText)
+		{
+			AgreementTable::update(
+				$id,
+				[
+					'AGREEMENT_TEXT' => $agreementText,
+				]
+			);
+		}
 
 		return (int)$id;
+	}
+
+	private static function getAgreementText(): ?string
+	{
+		$agreementLink = self::getAgreementLink();
+		if ($agreementLink === null)
+		{
+			return null;
+		}
+
+		return Loc::getMessage(
+			'IMCONNECTOR_NOTIFICATIONS_TOS_AGREEMENT_TEXT_MSGVER_1',
+			[
+				'#LINK#' => '<a target="_blank" href="' . htmlspecialcharsbx($agreementLink) . '">',
+				'#/LINK#' => '</a>',
+			]
+		);
 	}
 
 	/**
@@ -246,6 +285,11 @@ JS;
 	public static function getWidgetDisclaimerUrl($langId = LANGUAGE_ID)
 	{
 		// TODO: replace with actual url when known
+		$license = new \Bitrix\Main\License();
+		if ($license->isCis())
+		{
+			return 'https://bitrix24.ru';
+		}
 		return 'https://bitrix24.com';
 	}
 
@@ -343,5 +387,62 @@ JS;
 		}
 
 		return null;
+	}
+
+	private static function getAgreementLink(): ?string
+	{
+		$region = Application::getInstance()->getLicense()->getRegion() ?? 'en';
+		$legalEntity = self::getLegalEntityToRegion($region) ?? self::LEGAL_ENTITY_US;
+
+		if ($legalEntity == self::LEGAL_ENTITY_RU)
+		{
+			return 'https://www.bitrix24.ru/about/contact-center.php';
+		}
+		elseif (in_array($legalEntity, [self::LEGAL_ENTITY_EU, self::LEGAL_ENTITY_US], true))
+		{
+			return 'https://www.bitrix24.com/terms/contact_center-rules.php';
+		}
+
+		return null;
+	}
+
+	/**
+	 * Keep in sync with @see \Bitrix\NotificationService\Routing::getAreaToVirtualWhatsAppRegion
+	 *
+	 * @param string $region
+	 * @return string|null
+	 */
+	private static function getLegalEntityToRegion(string $region): ?string
+	{
+		return match ($region) {
+			'ru' => self::LEGAL_ENTITY_RU, // .bitrix24.ru
+			'kz' => self::LEGAL_ENTITY_RU, // .bitrix24.kz
+			'by' => self::LEGAL_ENTITY_RU, // .bitrix24.by
+			'en' => self::LEGAL_ENTITY_US, // .bitrix24.com
+			'fr' => self::LEGAL_ENTITY_EU, // .bitrix24.fr
+			'de' => self::LEGAL_ENTITY_EU, // .bitrix24.de
+			'it' => self::LEGAL_ENTITY_EU, // .bitrix24.it
+			'pl' => self::LEGAL_ENTITY_EU, // .bitrix24.pl
+			'br' => self::LEGAL_ENTITY_US, // .bitrix24.com.br
+			'la' => self::LEGAL_ENTITY_US, // .bitrix24.es
+			'tr' => self::LEGAL_ENTITY_EU, // .bitrix24.com.tr
+			'ua' => self::LEGAL_ENTITY_EU, // .bitrix24.ua
+			'jp' => self::LEGAL_ENTITY_US, // .bitrix24.jp
+			'tc' => self::LEGAL_ENTITY_US, // .bitrix24.cn
+			'sc' => self::LEGAL_ENTITY_US, // .bitrix24.cn
+			'hi' => self::LEGAL_ENTITY_US, // .bitrix24.in
+			'vn' => self::LEGAL_ENTITY_US, // .bitrix24.vn
+			'id' => self::LEGAL_ENTITY_US, // .bitrix24.id
+			'ms' => self::LEGAL_ENTITY_US, // .bitrix24.com
+			'th' => self::LEGAL_ENTITY_US, // .bitrix24.com
+			'cn' => self::LEGAL_ENTITY_US, // .bitrix24.cn
+			'uk' => self::LEGAL_ENTITY_EU, // .bitrix24.uk
+			'eu' => self::LEGAL_ENTITY_EU, // .bitrix24.eu
+			'in' => self::LEGAL_ENTITY_US, // .bitrix24.in
+			'ur' => self::LEGAL_ENTITY_EU, // .bitrix24.ua
+			'co' => self::LEGAL_ENTITY_US, // .bitrix24.co
+			'mx' => self::LEGAL_ENTITY_US, // .bitrix24.mx
+			default => null,
+		};
 	}
 }

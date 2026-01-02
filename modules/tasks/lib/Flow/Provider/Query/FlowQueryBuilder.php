@@ -9,9 +9,8 @@ use Bitrix\Main\ORM\Query\Query;
 use Bitrix\Main\SystemException;
 use Bitrix\Tasks\Access\Model\UserModel;
 use Bitrix\Tasks\Flow\Internal\FlowTable;
-use Bitrix\Tasks\Integration;
-use Bitrix\Tasks\Provider\QueryBuilderInterface;
-use Bitrix\Tasks\Provider\TaskQueryInterface;
+use Bitrix\Tasks\Provider\Query\QueryBuilderInterface;
+use Bitrix\Tasks\Provider\Query\TaskQueryInterface;
 
 class FlowQueryBuilder implements QueryBuilderInterface
 {

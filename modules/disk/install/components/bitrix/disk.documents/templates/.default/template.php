@@ -17,6 +17,7 @@ CJSCore::Init(array(
 	'ui.viewer',
 	'ui.ears',
 	'ui.tilegrid',
+	'ui.icons.disk',
 	'ui.info-helper',
 	'ui.dialogs.messagebox',
 	'disk.users',
@@ -56,7 +57,11 @@ $title = $arResult['VARIANT'] == Disk\Type\DocumentGridVariant::FlipchartList
 $APPLICATION->setTitle($title);
 $bodyClass = $APPLICATION->getPageProperty('BodyClass', false);
 $APPLICATION->setPageProperty('BodyClass', trim(sprintf('%s %s', $bodyClass, $bodyClasses)));
-
+?>
+<script>
+	BX.Disk.Documents.Toolbar.documentHandlers = <?= Main\Web\Json::encode($arResult['DOCUMENT_HANDLERS'])?>;
+</script>
+<?php
 include(__DIR__ . '/toolbar.php');
 include(__DIR__ . '/buttons.php');
 include(__DIR__ . '/grid_views.php');
@@ -105,7 +110,7 @@ $APPLICATION->IncludeComponent(
 
 		'SHOW_MORE_BUTTON' => true,
 		'NAV_OBJECT' => $arResult['NAV_OBJECT'],
-		'TOTAL_ROWS_COUNT' => $arResult['ROWS_COUNT'],
+		'TOTAL_ROWS_COUNT' => $arResult['ROWS_COUNT'] ?? null,
 		'CURRENT_PAGE' => $arResult['CURRENT_PAGE'],
 		'NAV_PARAM_NAME' => $arResult['NAV_OBJECT']->getId(),
 		'ENABLE_NEXT_PAGE' => $arResult['ENABLE_NEXT_PAGE'],

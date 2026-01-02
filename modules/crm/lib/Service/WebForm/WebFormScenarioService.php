@@ -4,6 +4,10 @@ namespace Bitrix\Crm\Service\WebForm;
 
 use Bitrix\Crm\Integration\Bitrix24\Product;
 use Bitrix\Crm\Service\WebForm\Scenario\BaseScenario;
+use Bitrix\Crm\Service\WebForm\Scenario\DependencyScenario\DependencyAction;
+use Bitrix\Crm\Service\WebForm\Scenario\DependencyScenario\DependencyCondition;
+use Bitrix\Crm\Service\WebForm\Scenario\DependencyScenario\DependencyItem;
+use Bitrix\Crm\Service\WebForm\Scenario\DependencyScenario\DependencyListItem;
 use Bitrix\Crm\Service\WebForm\Scenario\DependencyScenario\DependencyScenarioCreator;
 use Bitrix\Crm\Service\WebForm\Scenario\TourScenarioDescription;
 use Bitrix\Crm\Volume\Base;
@@ -13,6 +17,7 @@ use Bitrix\Crm\WebForm\WhatsApp;
 use Bitrix\Main\Context;
 use Bitrix\Main\Engine\CurrentUser;
 use Bitrix\Main\Localization\Loc;
+use Bitrix\Main\ModuleManager;
 
 class WebFormScenarioService
 {
@@ -67,8 +72,16 @@ class WebFormScenarioService
 		$categories = ScenarioCategory::getCategories();
 
 		$categoryResult = [];
-		foreach ($categories as $category)
+		foreach ($categories as $categoryId => $category)
 		{
+			if (
+				$categoryId === ScenarioCategory::BOOKING
+				&& !ModuleManager::isModuleInstalled('booking')
+			)
+			{
+				continue;
+			}
+
 			$categoryResult[] = [
 				'id' => mb_strtolower($category),
 				'title' => Loc::getMessage('CRM_SERVICE_FORM_CATEGORY_' . $category),
@@ -137,6 +150,10 @@ class WebFormScenarioService
 				return $this->prepareExpertScenario($baseScenario);
 			case BaseScenario::SCENARIO_CONTACTS:
 				return $this->prepareContactsScenario($baseScenario);
+			case BaseScenario::SCENARIO_BOOKING_AUTO_SELECTION:
+			case BaseScenario::SCENARIO_BOOKING_ANY_RESOURCE:
+			case BaseScenario::SCENARIO_BOOKING_MANUAL_SETTINGS:
+				return $this->prepareBookingScenario($baseScenario);
 			case BaseScenario::SCENARIO_CALLBACK:
 				return $this->prepareCallbackScenario($baseScenario);
 			case BaseScenario::SCENARIO_FEEDBACK:
@@ -311,6 +328,69 @@ class WebFormScenarioService
 		$this->prepareDealAndResponsibilitiesConfiguration($scenarioOptionBuilder);
 
 		return $baseScenario->setCategory(ScenarioCategory::CRM)
+			->setExpertModeMenuItems($this->getExpertModeDefaultItems())
+			->prepareBuilder($scenarioOptionBuilder)
+		;
+	}
+
+	private function prepareBookingScenario(BaseScenario $baseScenario): BaseScenario
+	{
+		$scenarioOptionBuilder = (new ScenarioOptionBuilder())
+			->addAgreements(true)
+			->useBookingResourceAutoSelection($baseScenario->getId() === BaseScenario::SCENARIO_BOOKING_AUTO_SELECTION)
+			->addCaptcha(true)
+			->setButtonCaption(Loc::getMessage('CRM_SERVICE_FORM_SCENARIO_BOOKING_BUTTON'))
+			->addRecaptcha()
+			->addResult(
+				Loc::getMessage('CRM_SERVICE_FORM_SCENARIO_BOOKING_SUCCESS_TEXT'),
+				Loc::getMessage('CRM_SERVICE_FORM_SCENARIO_BOOKING_FAILURE_TEXT'),
+				false,
+				2
+			)
+			->addFields([
+				[
+					'name' => 'BOOKING_BOOKING',
+					'autocomplete' => false,
+					'required'=> true,
+					'settingsData' => [
+					],
+				],
+				[
+					'name' => 'section_' . mt_rand(1000000, 9999999),
+					'label' => Loc::getMessage('CRM_SERVICE_FORM_CONTACT_INFORMATION'),
+					'visible' => true,
+					'multiple' => false,
+					'type' => 'layout',
+					'content' => [
+						'type' => 'section',
+					],
+					'required'=> false,
+				],
+				[
+					'name' => 'CONTACT_NAME',
+					'autocomplete' => true,
+					'required'=> true,
+				],
+				[
+					'name' => 'CONTACT_LAST_NAME',
+					'autocomplete' => true,
+					'required'=> false,
+				],
+				[
+					'name' => 'CONTACT_PHONE',
+					'autocomplete' => true,
+					'required'=> true,
+					'editing' => [
+						'editable' => ['valueType' => 'WORK'],
+					],
+				],
+			])
+			->addDocumentScheme(Entity::ENUM_ENTITY_SCHEME_DEAL)
+		;
+
+		$this->prepareDealAndResponsibilitiesConfiguration($scenarioOptionBuilder);
+
+		return $baseScenario->setCategory(ScenarioCategory::BOOKING)
 			->setExpertModeMenuItems($this->getExpertModeDefaultItems())
 			->prepareBuilder($scenarioOptionBuilder)
 		;
@@ -770,6 +850,7 @@ class WebFormScenarioService
 	{
 		return[
 			ScenarioMenuItem::FIELDS['id'],
+			ScenarioMenuItem::BOOKING_RESOURCE_AUTO_SELECTION['id'],
 			ScenarioMenuItem::AGREEMENTS['id'],
 			ScenarioMenuItem::CRM['id'],
 			ScenarioMenuItem::PAY_SYSTEMS['id'],

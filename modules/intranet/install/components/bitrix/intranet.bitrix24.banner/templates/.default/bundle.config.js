@@ -5,4 +5,5 @@ module.exports = {
 		css: './style.css',
 	},
 	namespace: 'BX.Intranet',
+	browserslist: true,
 };

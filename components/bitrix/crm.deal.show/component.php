@@ -1,5 +1,6 @@
 <?php
 
+use Bitrix\Crm\ItemMiniCard\Builder\MiniCardHtmlBuilder;
 use Bitrix\Crm\Restriction\RestrictionManager;
 
 if (!defined('B_PROLOG_INCLUDED') || B_PROLOG_INCLUDED!==true)die();
@@ -37,7 +38,7 @@ $arResult['PERMISSION_ENTITY_TYPE'] = \Bitrix\Crm\Category\DealCategory::convert
 $arResult['EDITABLE_FIELDS'] = array();
 $arResult['CAN_EDIT'] = CCrmDeal::CheckUpdatePermission($arResult['ELEMENT_ID'], $userPermissions);
 
-CCrmDeal::PrepareConversionPermissionFlags($arResult['ELEMENT_ID'], $arResult, $userPermissions);
+CCrmDeal::PrepareConversionPermissionFlags($arResult['ELEMENT_ID'], $arResult);
 
 if($arResult['CAN_CONVERT'])
 {
@@ -712,10 +713,10 @@ $arResult['FIELDS']['tab_1'][] = array(
 	'id' => 'QUOTE_ID',
 	'name' => GetMessage('CRM_FIELD_DEAL_QUOTE'),
 	'value' => isset($arResult['ELEMENT']['QUOTE_TITLE'])
-		? (!CCrmQuote::CheckReadPermission(0, $userPermissions)
-			? $arResult['ELEMENT']['QUOTE_TITLE'] :
-			'<a href="'.$arResult['PATH_TO_QUOTE_SHOW'].'" bx-tooltip-user-id="QUOTE_'.$arResult['ELEMENT']['~QUOTE_ID'].'" bx-tooltip-loader="'.htmlspecialcharsbx('/bitrix/components/bitrix/crm.quote.show/card.ajax.php').'" bx-tooltip-classname="crm_balloon_quote">'.$arResult['ELEMENT']['QUOTE_TITLE'].'</a>'
-		) : '',
+		? (new MiniCardHtmlBuilder(CCrmOwnerType::Quote, (int)$arResult['ELEMENT']['~QUOTE_ID']))
+			->setTitle($arResult['ELEMENT']['QUOTE_TITLE'])
+			->build()
+		: '',
 	'type' => 'custom',
 	'isTactile' => true
 );

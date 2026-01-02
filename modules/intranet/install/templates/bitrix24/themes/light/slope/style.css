@@ -1,4 +1,9 @@
-body {
-	background: #2F4B1A url(slope.jpg) fixed 0 0 no-repeat;
-	background-size: cover;
+:root {
+  --air-theme-bg-color: #2F4B1A;
+  --air-theme-bg-size: cover;
+  --air-theme-bg-repeat: no-repeat;
+  --air-theme-bg-position: 0 0;
+  --air-theme-bg-attachment: fixed;
+  --air-theme-bg-image: url(/bitrix/templates/bitrix24/themes/light/slope/slope.jpg);
+  --air-theme-bg-image-blurred: url(/bitrix/templates/bitrix24/themes/light/slope/slope-blurred.webp);
 }

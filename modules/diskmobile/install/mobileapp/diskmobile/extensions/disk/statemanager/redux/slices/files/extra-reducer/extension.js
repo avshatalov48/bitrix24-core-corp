@@ -68,19 +68,16 @@ jn.define('disk/statemanager/redux/slices/files/extra-reducer', (require, export
 	};
 
 	const movePending = (state, action) => {
-		const { objectId, targetId } = action.meta.arg;
+		const { objectId } = action.meta.arg;
 
 		const object = state.entities[objectId];
 		action.meta.arg.oldParentId = object.parentId;
 
-		fileListAdapter.upsertOne(state, {
-			...object,
-			parentId: targetId,
-		});
+		fileListAdapter.removeOne(state, objectId);
 	};
 
 	const moveFulfilled = (state, action) => {
-		const { objectId, onFulfilledSuccess } = action.meta.arg;
+		const { objectId, targetId, onFulfilledSuccess } = action.meta.arg;
 		const object = state.entities[objectId];
 
 		const { errors } = action.payload;
@@ -94,6 +91,10 @@ jn.define('disk/statemanager/redux/slices/files/extra-reducer', (require, export
 		}
 		else
 		{
+			fileListAdapter.upsertOne(state, {
+				...object,
+				parentId: targetId,
+			});
 			onFulfilledSuccess?.();
 		}
 	};

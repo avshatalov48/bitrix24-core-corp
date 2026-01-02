@@ -5,7 +5,6 @@ jn.define('crm/timeline/item/factory', (require, exports, module) => {
 	const { TimelineItemCompatible } = require('crm/timeline/item/compatible');
 	const { GenericTimelineItem } = require('crm/timeline/item/generic');
 	const { TimelineSchedulerCommentProvider } = require('crm/timeline/scheduler/providers');
-	const { get } = require('utils/object');
 
 	const {
 		CallActivity,
@@ -13,6 +12,7 @@ jn.define('crm/timeline/item/factory', (require, exports, module) => {
 		OpenlineChat,
 		VisitActivity,
 		TaskActivity,
+		Todo,
 	} = require('crm/timeline/item/custom-types');
 
 	/**
@@ -73,28 +73,22 @@ jn.define('crm/timeline/item/factory', (require, exports, module) => {
 		'StoreDocumentRealization:Creation',
 		'StoreDocumentConduction:Modification',
 		'Activity:Visit',
+		'Activity:BizprocTask',
+		'Activity:BizprocWorkflowCompleted',
+		'Activity:BizprocCommentAdded',
+		'BizprocWorkflowStarted',
+		'BizprocWorkflowCompleted',
+		'BizprocWorkflowTerminated',
+		'BizprocTaskCreation',
+		'BizprocTaskCompleted',
+		'BizprocTaskDelegated',
+		'BizprocCommentRead',
+		'BizprocCommentAdded',
 	];
 
 	if (TimelineSchedulerCommentProvider.isSupported())
 	{
 		SupportedTypes.push('Comment');
-	}
-
-	if (get(jnExtensionData.get('crm:timeline/item'), 'isBizprocActivityAvailable', false))
-	{
-		SupportedTypes.push(
-			'Activity:BizprocTask',
-			'Activity:BizprocWorkflowCompleted',
-			'Activity:BizprocCommentAdded',
-			'BizprocWorkflowStarted',
-			'BizprocWorkflowCompleted',
-			'BizprocWorkflowTerminated',
-			'BizprocTaskCreation',
-			'BizprocTaskCompleted',
-			'BizprocTaskDelegated',
-			'BizprocCommentRead',
-			'BizprocCommentAdded',
-		);
 	}
 
 	/**
@@ -107,6 +101,8 @@ jn.define('crm/timeline/item/factory', (require, exports, module) => {
 		'Activity:OpenLine': OpenlineChat,
 		'Activity:Visit': VisitActivity,
 		'Activity:TasksTask': TaskActivity,
+		'Activity:ToDo': Todo,
+		TodoCreated: Todo,
 	};
 
 	/**

@@ -10,6 +10,7 @@ use Bitrix\Main\Update\Stepper;
 use Bitrix\Tasks\Flow\Integration\AI\Control\CollectedDataService;
 use Bitrix\Tasks\Flow\Integration\AI\Control\Command\ReplaceCollectedDataCommand;
 use Bitrix\Tasks\Flow\Integration\AI\Provider\CollectedDataProvider;
+use Bitrix\Tasks\Flow\Integration\AI\Provider\CollectedDataStatus;
 use Bitrix\Tasks\Flow\Integration\AI\Registry;
 use Bitrix\Tasks\Flow\Integration\AI\Result\CollectorResult;
 use Bitrix\Tasks\Flow\Integration\AI\Result\Node\Exception\CreateNodeException;
@@ -108,6 +109,7 @@ class FlowCollector extends Stepper
 			(new ReplaceCollectedDataCommand())
 				->setFlowId($this->getFlowId())
 				->setData($result->toArrayFinalize())
+				->setStatus(CollectedDataStatus::COLLECTED)
 		;
 
 		/** @var CollectedDataService $collectedDataService */

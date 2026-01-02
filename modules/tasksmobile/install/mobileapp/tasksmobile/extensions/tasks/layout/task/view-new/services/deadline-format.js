@@ -45,7 +45,7 @@ jn.define('tasks/layout/task/view-new/services/deadline-format', (require, expor
 		},
 		[DynamicDateFormatter.periods.YEAR]: (moment) => {
 			return Loc.getMessage('M_TASK_DETAILS_DEADLINE_DATE_WITH_TIME', {
-				'#DATE#': moment.format(dayMonth()),
+				'#DATE#': moment.format(moment.inThisYear ? dayMonth() : longDate()),
 				'#TIME#': moment.format(shortTime()),
 			});
 		},

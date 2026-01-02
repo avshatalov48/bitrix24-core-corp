@@ -1,7 +1,14 @@
 <?php
-if (!defined('B_PROLOG_INCLUDED') || B_PROLOG_INCLUDED !== true) die();
 
-/** @var CMain $APPLICATION */
+if (!defined('B_PROLOG_INCLUDED') || B_PROLOG_INCLUDED !== true)
+{
+	die();
+}
+
+/**
+ * @var CMain $APPLICATION
+ * @var array $arParams
+ */
 global $APPLICATION;
 ?>
 <!DOCTYPE html>
@@ -14,29 +21,30 @@ global $APPLICATION;
 			window.location = "<?=CUtil::JSEscape($APPLICATION->GetCurPageParam('', array('IFRAME')));?>";
 		}
 	</script>
-	<?$APPLICATION->ShowHead();?>
+	<?php
+	$APPLICATION->ShowHead();
+	?>
 </head>
-<body class="crm-frame-popup template-<?=SITE_TEMPLATE_ID?> <?$APPLICATION->ShowProperty('BodyClass');?>"
+<body class="crm-frame-popup template-<?=SITE_TEMPLATE_ID?> <?php $APPLICATION->ShowProperty('BodyClass'); ?>"
 		onload="window.top.BX.onCustomEvent(window.top, 'crmEntityIframeLoad');"
 		onunload="window.top.BX.onCustomEvent(window.top, 'crmEntityIframeUnload');">
 <div class="pagetitle-wrap">
 	<div class="pagetitle-inner-container">
-		<div class="pagetitle-menu" id="pagetitle-menu">
-			<?$APPLICATION->ShowViewContent("pagetitle");?>
-		</div>
 		<div class="pagetitle">
-			<span id="pagetitle" class="pagetitle-item"><?$APPLICATION->ShowTitle();?></span>
+			<span id="pagetitle" class="pagetitle-item"><?php
+				$APPLICATION->ShowTitle();
+			?></span>
 		</div>
-
-		<?$APPLICATION->ShowViewContent("inside_pagetitle");?>
 	</div>
 </div>
 
 <div id="crm-frame-popup-workarea">
-	<div id="sidebar"><?$APPLICATION->ShowViewContent("sidebar");?></div>
+	<div id="sidebar"><?php
+		$APPLICATION->ShowViewContent("sidebar");
+	?></div>
 	<div id="workarea-content">
 		<div class="workarea-content-paddings">
-			<?
+			<?php
 			$APPLICATION->IncludeComponent(
 				$arParams['POPUP_COMPONENT_NAME'],
 				$arParams['POPUP_COMPONENT_TEMPLATE_NAME'],

@@ -28,9 +28,9 @@ jn.define('bizproc/workflow/timeline', (require, exports, module) => {
 	const { Type } = require('type');
 	const { inAppUrl } = require('in-app-url');
 	const { openNativeViewer } = require('utils/file');
-	const { throttle } = require('utils/function');
 	const { NotifyManager } = require('notify-manager');
 	const { roundSeconds } = require('bizproc/helper/duration');
+	const { WorkflowResult } = require('bizproc/workflow/result');
 
 	const approveTypeLocId = {
 		all: 'BPMOBILE_WORKFLOW_TIMELINE_TASK_WAITING_FOR_ALL',
@@ -716,24 +716,15 @@ jn.define('bizproc/workflow/timeline', (require, exports, module) => {
 			const lastTask = this.timelineData.tasks.at(-1);
 			const isAccepted = !Type.isObjectLike(lastTask) || this.isTaskAccepted(lastTask);
 
-			let totalTime = (
+			const totalTime = (
 				Type.isNumber(this.timelineData.executionTime) ? this.timelineData.executionTime : null
 			);
-			if (Type.isNumber(this.timelineData.timeToStart))
-			{
-				totalTime = totalTime === null ? this.timelineData.timeToStart : totalTime + this.timelineData.timeToStart;
-			}
 
 			const content = [];
 			const users = [];
 			if (this.timelineData.workflowResult)
 			{
 				content.push(this.renderWorkflowResult(this.timelineData.workflowResult));
-			}
-			else if (Type.isObjectLike(lastTask))
-			{
-				content.push(this.renderExtendedTaskStatus(lastTask));
-				users.push({ id: this.timelineData.startedBy });
 			}
 
 			return this.renderStep({
@@ -830,69 +821,7 @@ jn.define('bizproc/workflow/timeline', (require, exports, module) => {
 
 		renderWorkflowResult({ text, files })
 		{
-			return View(
-				{
-					style: {
-						marginBottom: 8,
-					},
-				},
-				View(
-					{
-						style: {
-							flexDirection: 'row',
-							alignItems: 'center',
-							marginBottom: 4,
-						},
-					},
-					SafeImage({
-						style: {
-							width: 24,
-							height: 24,
-							paddingRight: 2,
-						},
-						resizeMode: 'contain',
-						placeholder: {
-							content: flag(),
-						},
-					}),
-					Text({
-						text: Loc.getMessage('BPMOBILE_WORKFLOW_TIMELINE_WORKFLOW_RESULT'),
-						numberOfLines: 1,
-						ellipsize: 'end',
-						style: {
-							color: AppTheme.colors.base1,
-							fontSize: 15,
-							fontWeight: '400',
-						},
-					}),
-				),
-				BBCodeText({
-					testId: `${this.testId}WorkflowResultText`,
-					linksUnderline: false,
-					value: text,
-					style: {
-						color: AppTheme.colors.base4,
-						fontSize: 13,
-						fontWeight: '400',
-					},
-					onLinkClick: ({ url }) => {
-						if (files[url])
-						{
-							const file = files[url];
-							const openViewer = throttle(openNativeViewer, 500);
-							openViewer({
-								fileType: UI.File.getType(UI.File.getFileMimeType(file.type, file.name)),
-								url: file.url,
-								name: file.name,
-							});
-
-							return;
-						}
-
-						inAppUrl.open(url, { parentWidget: this.layout });
-					},
-				}),
-			);
+			return new WorkflowResult({ text, files, testId: this.testId });
 		}
 
 		/**

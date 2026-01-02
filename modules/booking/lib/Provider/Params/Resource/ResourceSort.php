@@ -13,7 +13,7 @@ class ResourceSort extends Sort
 		return [
 			'ID',
 			'TYPE.NAME',
-			'NAME',
+			'DATA.NAME',
 			'DESCRIPTION',
 		];
 	}

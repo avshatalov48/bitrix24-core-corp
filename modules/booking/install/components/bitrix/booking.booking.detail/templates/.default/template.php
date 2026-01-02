@@ -27,7 +27,7 @@ Extension::load(['booking.confirm-page-public', 'ui.design-tokens']);
 		const container = document.getElementById('booking-detail-page');
 		const hash = '';
 		const booking = <?= \Bitrix\Main\Web\Json::encode($arResult['booking']) ?>;
-		const company = '<?= $arResult['company']; ?>';
+		const company = '<?= CUtil::JSEscape($arResult['company']); ?>';
 		const context = 'manager.view.details';
 		new BX.Booking.ConfirmPagePublic({
 			container,

@@ -2,11 +2,22 @@
 
 namespace Bitrix\Crm\EntityForm;
 
+use Bitrix\Crm\Entity\EntityEditorOptionParser;
 use Bitrix\Crm\Service\Container;
 use Bitrix\Ui\EntityForm\Scope;
 
 class ScopeAccess extends \Bitrix\Ui\EntityForm\ScopeAccess
 {
+	protected Scope $scope;
+	protected EntityEditorOptionParser $editorOptionParser;
+
+	public function __construct(string $moduleId = null, int $userId = null)
+	{
+		parent::__construct($moduleId, $userId);
+
+		$this->scope = Scope::getInstance($this->userId);
+		$this->editorOptionParser = new EntityEditorOptionParser();
+	}
 
 	/**
 	 * @param int $scopeId
@@ -14,10 +25,11 @@ class ScopeAccess extends \Bitrix\Ui\EntityForm\ScopeAccess
 	 */
 	public function canRead(int $scopeId): bool
 	{
-		$scope = Scope::getInstance()->getById($scopeId);
+		$scope = $this->scope->getById($scopeId);
+
 		return (
-			isset($scope) && $this->canAddByEntityTypeId($scope['ENTITY_TYPE_ID'])
-			|| Scope::getInstance()->isHasScope($scopeId)
+			(isset($scope) && $this->canAddByEntityTypeId($scope['ENTITY_TYPE_ID']))
+			|| $this->scope->isHasScope($scopeId)
 		);
 	}
 
@@ -26,13 +38,12 @@ class ScopeAccess extends \Bitrix\Ui\EntityForm\ScopeAccess
 	 */
 	public function canAdd(): bool
 	{
-		return Container::getInstance()->getUserPermissions($this->userId)->canWriteConfig();
+		return Container::getInstance()->getUserPermissions($this->userId)->isCrmAdmin();
 	}
 
 	public function canAddByEntityTypeId(string $entityTypeId): bool
 	{
-		$crmEntityTypeId = $this->getCrmEntityTypeIdByEntityTypeId($entityTypeId);
-		return Container::getInstance()->getUserPermissions($this->userId)->isAdminForEntity($crmEntityTypeId);
+		return $this->isAdminForEntityTypeId($entityTypeId);
 	}
 
 	/**
@@ -41,7 +52,7 @@ class ScopeAccess extends \Bitrix\Ui\EntityForm\ScopeAccess
 	 */
 	public function canUpdate(int $scopeId): bool
 	{
-		$scope = Scope::getInstance()->getById($scopeId);
+		$scope = $this->scope->getById($scopeId);
 		return (isset($scope) && $this->canAddByEntityTypeId($scope['ENTITY_TYPE_ID']) && $scope['CATEGORY'] === $this->moduleId);
 	}
 
@@ -69,55 +80,19 @@ class ScopeAccess extends \Bitrix\Ui\EntityForm\ScopeAccess
 
 	public function isAdmin(): bool
 	{
-		return \Bitrix\Crm\Service\Container::getInstance()->getUserPermissions($this->userId)->isAdmin();
+		return Container::getInstance()->getUserPermissions($this->userId)->isAdmin();
 	}
 
 	public function isAdminForEntityTypeId(string $entityTypeId): bool
 	{
-		$crmEntityTypeId = $this->getCrmEntityTypeIdByEntityTypeId($entityTypeId);
-		return \Bitrix\Crm\Service\Container::getInstance()->getUserPermissions($this->userId)->isAdminForEntity($crmEntityTypeId);
-	}
-
-	private function getCrmEntityTypeIdByEntityTypeId(string $entityTypeId): int
-	{
-		// Resolve the CRM entity type ID using the current entity type name.
-		$crmEntityTypeId = \CCrmOwnerType::ResolveID($entityTypeId);
-		// Check if the resolved CRM entity type ID is defined.
-		if (\CCrmOwnerType::IsDefined($crmEntityTypeId))
+		$parseResult = $this->editorOptionParser->parse($entityTypeId);
+		if (!$parseResult->isEntityTypeIdFound())
 		{
-			return $crmEntityTypeId;
+			return false;
 		}
 
-		$firstUnderscoreIndex = strpos($entityTypeId, '_');
-		// Loop while there is an underscore in the entity type ID string.
-		while ($firstUnderscoreIndex)
-		{
-			// Find the last underscore in the entity type ID string.
-			$lastUnderscoreIndex = strrpos($entityTypeId, '_');
-			$entityTypeName = $entityTypeId;
-			// Loop while there is an underscore in the entity type name.
-			while ($lastUnderscoreIndex)
-			{
-				$crmEntityTypeId = \CCrmOwnerType::ResolveID($entityTypeName);
-				if (\CCrmOwnerType::IsDefined($crmEntityTypeId))
-				{
-					return $crmEntityTypeId;
-				}
-				// Update the entity type name by removing the last underscore and the following characters.
-				$entityTypeName = substr($entityTypeId, 0, $lastUnderscoreIndex);
-				$lastUnderscoreIndex = strrpos($entityTypeName, '_');
-			}
-
-			$crmEntityTypeId = \CCrmOwnerType::ResolveID($entityTypeName);
-			if (\CCrmOwnerType::IsDefined($crmEntityTypeId))
-			{
-				return $crmEntityTypeId;
-			}
-			// Update the entity type ID by removing the first underscore and the preceding characters.
-			$entityTypeId = substr($entityTypeId, $firstUnderscoreIndex+1);
-			$firstUnderscoreIndex = strpos($entityTypeId, '_');
-		}
-
-		return $crmEntityTypeId;
+		return Container::getInstance()
+			->getUserPermissions($this->userId)
+			->isAdminForEntity($parseResult->entityTypeId(), $parseResult->categoryId());
 	}
 }

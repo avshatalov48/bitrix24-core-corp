@@ -1,0 +1,21 @@
+<?php
+$MESS["LFP_SCHEME_LIST_ACTIVATE"] = "Белсендіру";
+$MESS["LFP_SCHEME_LIST_ACTIVE"] = "Белсенділік";
+$MESS["LFP_SCHEME_LIST_ADD"] = "Қосылымды қосу";
+$MESS["LFP_SCHEME_LIST_ADD_TITLE"] = "Деректер провайдерлеріне жаңа қосылым қосу";
+$MESS["LFP_SCHEME_LIST_DEACTIVATE"] = "Белсенсіздендіру";
+$MESS["LFP_SCHEME_LIST_DEACTIVATE_CONF"] = "Деректер провайдерлеріне қосылуды белсенсіздендіру керек пе?";
+$MESS["LFP_SCHEME_LIST_DELETE"] = "Жою";
+$MESS["LFP_SCHEME_LIST_DELETE_CONF"] = "Деректер провайдерлеріне қосылуды жою керек пе?";
+$MESS["LFP_SCHEME_LIST_EDIT"] = "Өзгерту";
+$MESS["LFP_SCHEME_LIST_ID"] = "ID";
+$MESS["LFP_SCHEME_LIST_LID"] = "Сайт";
+$MESS["LFP_SCHEME_LIST_NAME"] = "Атауы";
+$MESS["LFP_SCHEME_LIST_NO_RECORD"] = "Жазба табылмады";
+$MESS["LFP_SCHEME_LIST_POST"] = "POST-сұрау";
+$MESS["LFP_SCHEME_LIST_RSS"] = "RSS-лента";
+$MESS["LFP_SCHEME_LIST_SAVE_ERROR"] = "Жазбаны өзгертудің қатесі:";
+$MESS["LFP_SCHEME_LIST_SORT"] = "Сұрыптау";
+$MESS["LFP_SCHEME_LIST_TITLE"] = "Жанды лента үшін деректер провайдерлеріне қосылу";
+$MESS["LFP_SCHEME_LIST_TYPE"] = "Қосылым түрі";
+$MESS["LFP_SCHEME_LIST_XML"] = "Веб-сервис (XML)";

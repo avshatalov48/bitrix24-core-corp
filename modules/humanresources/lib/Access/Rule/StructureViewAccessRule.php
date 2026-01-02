@@ -10,6 +10,11 @@ final class StructureViewAccessRule extends AbstractRule
 {
 	public function execute(\Bitrix\Main\Access\AccessibleItem $item = null, $params = null): bool
 	{
+		if ($this->user->isAdmin())
+		{
+			return true;
+		}
+
 		$permissionValue = $this->user->getPermission(PermissionDictionary::HUMAN_RESOURCES_STRUCTURE_VIEW);
 
 		return ($permissionValue && $permissionValue !== PermissionVariablesDictionary::VARIABLE_NONE);

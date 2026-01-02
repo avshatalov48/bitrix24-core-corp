@@ -3,8 +3,7 @@
  */
 jn.define('ui-system/blocks/chips/chip-filter', (require, exports, module) => {
 	const { Color, Indent } = require('tokens');
-	const { IconView, Icon, iconTypes } = require('ui-system/blocks/icon');
-	const { Feature } = require('feature');
+	const { IconView, Icon } = require('ui-system/blocks/icon');
 	const { ChipInnerTabClass, BadgeCounterDesign } = require('ui-system/blocks/chips/chip-inner-tab');
 
 	/**
@@ -36,7 +35,7 @@ jn.define('ui-system/blocks/chips/chip-filter', (require, exports, module) => {
 		{
 			return this.renderContentWrapper(
 				IconView({
-					icon: Feature.isAirStyleSupported() ? Icon.MORE : iconTypes.outline.more,
+					icon: Icon.MORE,
 					size: 22,
 					color: this.getIconColor(),
 				}),
@@ -56,7 +55,7 @@ jn.define('ui-system/blocks/chips/chip-filter', (require, exports, module) => {
 			}
 
 			return IconView({
-				icon: Feature.isAirStyleSupported() ? Icon.CROSS : iconTypes.outline.cross,
+				icon: Icon.CROSS,
 				size: 22,
 				color: this.getIconColor(),
 			});

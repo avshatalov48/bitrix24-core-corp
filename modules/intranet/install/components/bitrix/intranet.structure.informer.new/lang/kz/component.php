@@ -1,0 +1,4 @@
+<?php
+$MESS["INTR_ISIN_ACCEPTED"] = "Қабылданды";
+$MESS["INTR_ISIN_ICON_ADD"] = "Жазбаны қосу";
+$MESS["INTR_ISIN_NAME_TEMPLATE_DEFAULT"] = "#NOBR##LAST_NAME# #NAME##/NOBR#";

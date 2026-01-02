@@ -19,7 +19,7 @@ class SourceConnectList
 		EventEmitter.subscribe('SidePanel.Slider:onClose', this.#onCloseSlider.bind(this));
 		EventEmitter.subscribe('SidePanel.Slider:onMessage', (event) => {
 			const [messageEvent] = event.getData();
-			if (messageEvent.getEventId() === 'BIConnector:ExternalConnection:onConnectionCreated')
+			if (messageEvent.getEventId() === 'BIConnector:ExternalConnection:onConnectionSliderClose')
 			{
 				this.#closeSlider();
 			}

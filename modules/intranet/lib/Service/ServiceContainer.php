@@ -4,7 +4,9 @@ namespace Bitrix\Intranet\Service;
 
 use Bitrix\Intranet\Contract\Repository\DepartmentRepository;
 use Bitrix\Intranet\Contract\Repository\InvitationLinkRepository;
-use Bitrix\Intranet\Repository\InvitationRepository;
+use Bitrix\Intranet\Internal\Repository\InvitationRepository;
+use Bitrix\Intranet\Service\User\MiniProfileService;
+use Bitrix\Intranet\Public\Service\InvitationService;
 use Bitrix\Main\DI\ServiceLocator;
 use Bitrix\Main\LoaderException;
 use Bitrix\Main\ObjectNotFoundException;
@@ -39,7 +41,7 @@ class ServiceContainer implements ContainerInterface
 
 	public function has(string $id): bool
 	{
-		return $this->serviceLocator->has($this->prefix.$id);
+		return $this->serviceLocator->has($this->prefix . $id);
 	}
 
 	/**
@@ -48,7 +50,7 @@ class ServiceContainer implements ContainerInterface
 	 */
 	public function get(string $id): mixed
 	{
-		return $this->serviceLocator->get($this->prefix.$id);
+		return $this->serviceLocator->get($this->prefix . $id);
 	}
 
 	/**
@@ -61,6 +63,15 @@ class ServiceContainer implements ContainerInterface
 		return $this->get('repository.department');
 	}
 
+	/**
+	 * @throws NotFoundExceptionInterface
+	 * @throws ObjectNotFoundException
+	 */
+	public function hrDepartmentRepository(): DepartmentRepository
+	{
+		return $this->get('repository.hr.department');
+	}
+
 	public function invitationRepository(): InvitationRepository
 	{
 		return $this->get('repository.invitation');
@@ -71,19 +82,14 @@ class ServiceContainer implements ContainerInterface
 		return $this->get('repository.invitation.link');
 	}
 
-	public function registrationService(): RegistrationService
-	{
-		return $this->get('service.registration');
-	}
-
 	public function userRepository(): UserRepositoryContract
 	{
 		return $this->get('repository.user');
 	}
 
-	public function inviteService(): InviteService
+	public function inviteService(): ?InvitationService
 	{
-		return $this->get('service.invitation');
+		return null;//$this->get('service.invitation');
 	}
 
 	public function inviteStatusService(): InviteStatusService
@@ -99,5 +105,10 @@ class ServiceContainer implements ContainerInterface
 	public function getUserService(): UserService
 	{
 		return $this->get('service.user');
+	}
+
+	public function getUserMiniProfileService(): MiniProfileService
+	{
+		return $this->get('service.user.mini-profile');
 	}
 }

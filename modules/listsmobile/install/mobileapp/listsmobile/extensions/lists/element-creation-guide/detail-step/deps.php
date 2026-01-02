@@ -12,6 +12,8 @@ return [
 		'apptheme',
 		'utils/skeleton',
 		'utils/random',
+		'analytics',
+		'type',
 
 		'layout/pure-component',
 		'layout/ui/wizard/step',

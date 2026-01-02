@@ -2,6 +2,8 @@
 
 namespace Bitrix\CalendarMobile\Provider;
 
+use Bitrix\Calendar\Core\Event\Tools\Dictionary;
+use Bitrix\Calendar\Relation\RelationProvider;
 use Bitrix\CalendarMobile\Integration\Disk\Attachment;
 use Bitrix\Intranet\Settings\Tools\ToolsManager;
 use Bitrix\Main\Error;
@@ -60,6 +62,7 @@ final class ViewFormProvider
 			'files' => $this->getFiles($eventArray),
 			'users' => $this->getUsers($eventArray),
 			'settings' => $this->getSettings($eventArray),
+			'entityRelation' => $this->getEntityRelation($eventArray),
 		];
 
 		if (!empty($eventArray['COLLAB_ID']) && $this->requestCollabs)
@@ -225,6 +228,34 @@ final class ViewFormProvider
 		}
 
 		return $result;
+	}
+
+	private function getEntityRelation(array $eventArray): ?array
+	{
+		if (
+			!in_array(
+				$eventArray['EVENT_TYPE'],
+				[Dictionary::EVENT_TYPE['shared_crm'], Dictionary::EVENT_TYPE['booking']],
+				true
+			)
+		)
+		{
+			return null;
+		}
+
+		$eventId = $eventArray['PARENT_ID'] ?? $eventArray['ID'];
+		$relationResult = (new RelationProvider())->getEventRelation($this->userId, $eventId);
+		if (!empty($relationResult->getErrors()) || !$relationResult->getRelation())
+		{
+			return null;
+		}
+
+		$users = UserRepository::getByIds([(int)$relationResult->getRelation()->getOwner()?->getId()]);
+
+		return [
+			...$relationResult->getRelation()->toArray(),
+			'users' => $users,
+		];
 	}
 
 	private function getBaseInfoProvider(array $eventArray): BaseInfoProvider

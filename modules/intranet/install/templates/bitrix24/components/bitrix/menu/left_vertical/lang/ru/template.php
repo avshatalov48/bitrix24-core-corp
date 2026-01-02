@@ -1,10 +1,13 @@
 <?php
+$MESS["MENU_HEADER_LOGO_TEXT"] = "Битрикс";
 $MESS["MENU_ITEM_ACCESS_DENIED"] = "Доступ запрещен";
 $MESS["MENU_HIDE"] = "свернуть";
 $MESS["MENU_SHOW"] = "развернуть";
 $MESS["MENU_HIDDEN_ITEMS"] = "Скрытые";
 $MESS["MENU_MORE_ITEMS_SHOW"] = "Ещё";
 $MESS["MENU_MORE_ITEMS_HIDE"] = "Скрыть";
+$MESS["MENU_MORE_ITEMS_EXPAND"] = "Показать все";
+$MESS["MENU_MORE_ITEMS_COLLAPSE"] = "Свернуть";
 $MESS["MENU_EDIT_READY"] = "Готово";
 $MESS["MENU_EDIT_READY_FULL"] = "Сохранить изменения";
 $MESS["MENU_ADD_TO_FAVORITE"] = "Добавить в избранное";
@@ -103,3 +106,8 @@ $MESS["MENU_SITE_MAP"] = "Карта сайта";
 $MESS["MENU_HELP"] = "Помощь";
 $MESS["MENU_UNAVAILABLE_TOOL_POPUP_DESCRIPTION"] = "Доступ к этому инструменту закрыт для всех сотрудников. Обратитесь к администратору, чтобы он включил инструмент в настройках вашего Битрикс24";
 $MESS["MENU_OPEN_SETTINGS_MAIN_PAGE"] = "Открыть настройки главной страницы";
+$MESS["MENU_INVITE_USERS"] = "Пригласить сотрудников";
+$MESS["LEFT_MENU_SETTINGS"] = "Настройки";
+$MESS["LEFT_MENU_SETTINGS_ITEM_B24_SETTINGS"] = "Настройки Битрикс24";
+$MESS["LEFT_MENU_SETTINGS_ITEM_MESSENGER_SETTINGS"] = "Настройки мессенджера";
+$MESS["LEFT_MENU_SETTINGS_ITEM_MENU_SETTINGS"] = "Настройка левого меню";

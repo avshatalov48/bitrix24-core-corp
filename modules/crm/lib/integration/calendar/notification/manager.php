@@ -11,6 +11,7 @@ use Bitrix\Crm\ItemIdentifier;
 use Bitrix\Crm\MessageSender\Channel;
 use Bitrix\Crm\MessageSender\Channel\ChannelRepository;
 use Bitrix\Crm\Multifield;
+use Bitrix\Main\Application;
 
 class Manager
 {
@@ -64,7 +65,11 @@ class Manager
 		}
 
 		$notificationChannel = $repo->getDefaultForSender(NotificationsManager::getSenderCode());
-		if ($notificationChannel && NotificationsManager::canUse())
+		if (
+			$notificationChannel
+			&& NotificationsManager::canUse()
+			&& Application::getInstance()->getLicense()->getRegion() === 'ru'
+		)
 		{
 			$result[] = self::getChannelArray($notificationChannel, Communication\Type::PHONE_NAME);
 		}

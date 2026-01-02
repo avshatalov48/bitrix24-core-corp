@@ -15,7 +15,6 @@ use Bitrix\Crm\Item;
 use Bitrix\Crm\ItemIdentifier;
 use Bitrix\Crm\Service\Container;
 use Bitrix\Crm\Settings\CounterSettings;
-use Bitrix\Main\Application;
 use Bitrix\Crm\Traits;
 use Bitrix\Main\DI\ServiceLocator;
 use Bitrix\Main\Entity\ReferenceField;
@@ -26,18 +25,18 @@ use Bitrix\Main\Type\DateTime;
 abstract class Monitor
 {
 	use Traits\Singleton;
+	use Traits\BackgroundProcessor;
 
 	protected array $activitiesBindingsChanges = [];
 	protected ActivitiesChangesCollection $activitiesChangesCollection;
 	protected EntitiesChangesCollection $entitiesChangesCollection;
 	private array $loadedEntitiesData = [];
-	private bool $needProcessChangesInBackground = true;
 
 	private function __construct()
 	{
 		$this->clearChangesCollections();
 
-		Application::getInstance()->addBackgroundJob(fn() => $this->processChangesInBackground());
+		$this->ensureProcessingScheduled();
 	}
 
 	abstract protected function processActivitiesChanges(): void;
@@ -83,7 +82,7 @@ abstract class Monitor
 		$this->synchronizeEntityCountableTableByActivityChange($activityChange);
 		$this->activitiesChangesCollection->add($activityChange);
 
-		$this->processChangesIfNeed();
+		$this->ensureProcessingScheduled();
 	}
 
 	public function onActivityUpdate(
@@ -110,7 +109,7 @@ abstract class Monitor
 		}
 		$this->activitiesChangesCollection->add($activityChange);
 
-		$this->processChangesIfNeed();
+		$this->ensureProcessingScheduled();
 	}
 
 	public function onActivityDelete(array $activityFields, array $activityBindings, ?DateTime $oldLightTimeDate): void
@@ -127,7 +126,7 @@ abstract class Monitor
 		$this->synchronizeEntityCountableTableByActivityChange($activityChange);
 		$this->activitiesChangesCollection->add($activityChange);
 
-		$this->processChangesIfNeed();
+		$this->ensureProcessingScheduled();
 	}
 
 	public function onChangeActivityBindings(int $activityId, array $oldActivityBindings, array $newActivityBindings): void
@@ -146,7 +145,7 @@ abstract class Monitor
 		{
 			CountableActivitySynchronizer::synchronizeByActivityId($activityId);
 
-			$this->processChangesIfNeed();
+			$this->ensureProcessingScheduled();
 		}
 	}
 
@@ -168,7 +167,7 @@ abstract class Monitor
 			$this->entitiesChangesCollection->add($change);
 			CountableActivitySynchronizer::synchronizeByEntityChange($change);
 
-			$this->processChangesIfNeed();
+			$this->ensureProcessingScheduled();
 		}
 	}
 
@@ -185,7 +184,7 @@ abstract class Monitor
 			$this->entitiesChangesCollection->add($change);
 			CountableActivitySynchronizer::synchronizeByEntityChange($change);
 
-			$this->processChangesIfNeed();
+			$this->ensureProcessingScheduled();
 		}
 	}
 
@@ -202,7 +201,7 @@ abstract class Monitor
 			$this->entitiesChangesCollection->add($change);
 			CountableActivitySynchronizer::synchronizeByEntityChange($change);
 
-			$this->processChangesIfNeed();
+			$this->ensureProcessingScheduled();
 		}
 	}
 
@@ -212,20 +211,6 @@ abstract class Monitor
 		$this->processEntitiesChanges();
 		$this->processActivityBindingsChanges();
 		$this->clearChangesCollections();
-	}
-
-	private function processChangesInBackground(): void
-	{
-		$this->processChanges();
-		$this->needProcessChangesInBackground = false;
-	}
-
-	private function processChangesIfNeed(): void
-	{
-		if (!$this->needProcessChangesInBackground)
-		{
-			$this->processChanges();
-		}
 	}
 
 	private function clearChangesCollections(): void
@@ -424,5 +409,13 @@ abstract class Monitor
 			$entitiesData = $this->loadEntitiesDataForBindings($changedActivity->getAffectedBindings());
 			CountableActivitySynchronizer::synchronizeByActivityChange($changedActivity, $entitiesData);
 		}
+	}
+
+	/**
+	 * @inheritDoc
+	 */
+	final protected function process(): void
+	{
+		$this->processChanges();
 	}
 }

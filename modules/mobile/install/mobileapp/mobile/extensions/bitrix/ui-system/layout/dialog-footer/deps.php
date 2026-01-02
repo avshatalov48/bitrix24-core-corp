@@ -1,8 +1,11 @@
 <?php
+
 return [
 	'extensions' => [
+		'feature',
 		'tokens',
-		'utils/object',
 		'ui-system/form/buttons/button',
+		'utils/object',
+		'utils/validation',
 	],
 ];

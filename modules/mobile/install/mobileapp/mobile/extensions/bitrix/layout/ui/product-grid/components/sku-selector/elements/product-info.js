@@ -3,6 +3,7 @@
  */
 jn.define('layout/ui/product-grid/components/sku-selector/elements/product-info', (require, exports, module) => {
 	const AppTheme = require('apptheme');
+	const { ImageStack } = require('layout/ui/image-stack');
 
 	function ProductInfo({ name, images })
 	{

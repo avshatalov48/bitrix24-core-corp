@@ -24,6 +24,7 @@ class DocumentOperation extends Callback\Message
 	public function setDocumentCode(string $documentCode): self
 	{
 		$this->data['documentCode'] = $documentCode;
+
 		return $this;
 	}
 
@@ -35,6 +36,7 @@ class DocumentOperation extends Callback\Message
 	public function setMemberCode(string $memberCode): self
 	{
 		$this->data['memberCode'] = $memberCode;
+
 		return $this;
 	}
 
@@ -46,6 +48,7 @@ class DocumentOperation extends Callback\Message
 	public function setSecurityCode(string $securityCode): self
 	{
 		$this->data['securityCode'] = $securityCode;
+
 		return $this;
 	}
 
@@ -57,6 +60,7 @@ class DocumentOperation extends Callback\Message
 	public function setVersion(int $version): self
 	{
 		$this->data['version'] = $version;
+
 		return $this;
 	}
 

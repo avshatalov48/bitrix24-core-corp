@@ -2,6 +2,8 @@
 namespace Bitrix\Crm\Recycling;
 
 use Bitrix\Crm;
+use Bitrix\Crm\ItemIdentifier;
+use Bitrix\Crm\RepeatSale\Log\LogRecyclebinHelper;
 use Bitrix\Main;
 
 Main\Localization\Loc::loadMessages(__FILE__);
@@ -178,6 +180,14 @@ class DealController extends BaseController
 
 		$slots = array_merge($slots, $this->prepareActivityData($entityID, $params));
 
+		$logSlots = LogRecyclebinHelper::getInstance()->getSlots(
+			new ItemIdentifier(\CCrmOwnerType::Deal, $entityID)
+		);
+		if (!empty($logSlots))
+		{
+			$slots = array_merge($slots, $logSlots);
+		}
+
 		return array(
 			'TITLE' => \CCrmOwnerType::GetCaption(
 				\CCrmOwnerType::Deal,
@@ -337,10 +347,11 @@ class DealController extends BaseController
 		$newEntityID = $entity->Add(
 			$fields,
 			true,
-			array(
+			[
 				'IS_RESTORATION' => true,
+				'MOVED_TO_BIN_DATETIME' => $params['DATETIME'] ?? null,
 				'DISABLE_USER_FIELD_CHECK' => true,
-			)
+			],
 		);
 		if($newEntityID <= 0)
 		{
@@ -370,6 +381,12 @@ class DealController extends BaseController
 				$newEntityID,
 				$invoiceIDs
 			);
+		}
+
+		$repeatSaleLog = $slots['REPEAT_SALE_LOG'] ?? null;
+		if (is_array($repeatSaleLog))
+		{
+			LogRecyclebinHelper::getInstance()->restore($newEntityID, $repeatSaleLog);
 		}
 
 		$this->eraseSuspendedUserFields($recyclingEntityID);
@@ -411,6 +428,17 @@ class DealController extends BaseController
 		$this->rebuildSearchIndex($newEntityID);
 		$this->startRecoveryWorkflows($newEntityID);
 		//TODO: start automation???
+
+		$event = new \Bitrix\Main\Event(
+			'crm',
+			'OnCrmDealRecoverFromRecycleBin',
+			[
+				'entityId' => $entityID,
+				'newEntityId' => $newEntityID,
+				'recyclingEntityId' => $recyclingEntityID,
+			],
+		);
+		$event->send();
 
 		return $newEntityID;
 	}
@@ -468,6 +496,16 @@ class DealController extends BaseController
 		);
 
 		Relation::deleteByRecycleBin($recyclingEntityID);
+
+		$event = new \Bitrix\Main\Event(
+			'crm',
+			'OnCrmDealEraseFromRecycleBin',
+			[
+				'entityId' => $entityID,
+				'recyclingEntityId' => $recyclingEntityID,
+			],
+		);
+		$event->send();
 	}
 
 	/**

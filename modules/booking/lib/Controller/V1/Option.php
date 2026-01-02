@@ -25,6 +25,34 @@ class Option extends BaseController
 		$this->optionRepository = Container::getOptionRepository();
 	}
 
+	public function setAction(string $optionName, string $value): array|null
+	{
+		try
+		{
+			$option = OptionDictionary::tryFrom($optionName);
+			if (!$option)
+			{
+				$this->addError(ErrorBuilder::build('Unknown option'));
+
+				return null;
+			}
+
+			$this->optionRepository->set(
+				userId: $this->userId,
+				option: $option,
+				value: $value,
+			);
+
+			return [];
+		}
+		catch (Exception $e)
+		{
+			$this->addError(ErrorBuilder::buildFromException($e));
+
+			return null;
+		}
+	}
+
 	public function setBoolAction(string $optionName, bool $value): array|null
 	{
 		try

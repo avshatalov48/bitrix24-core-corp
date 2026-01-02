@@ -5,6 +5,7 @@ if (!defined('B_PROLOG_INCLUDED') || B_PROLOG_INCLUDED !== true)
 }
 
 use Bitrix\Main\Engine\Response\Converter;
+use Bitrix\Main\Web\Json;
 use Bitrix\Tasks\Flow\Grid\Columns;
 
 /** @var $APPLICATION CMain */
@@ -13,6 +14,11 @@ use Bitrix\Tasks\Flow\Grid\Columns;
 /** @var CBitrixComponent $component */
 
 $converter = new Converter(Converter::UC_FIRST | Converter::TO_CAMEL);
+
+if (($arResult['isToolAvailable'] ?? null) === false)
+{
+	return;
+}
 
 $canDoAction = ($arResult['isFeatureEnabled'] || $arResult['canTurnOnTrial']);
 
@@ -86,7 +92,12 @@ foreach ($arResult['rows'] as $key => $row)
 		$isActive = (($data['isActive'] ?? null) === true);
 		$demoFlow = $isDemoFlow ? 'Y' : 'N';
 
-		$editHandler = "BX.Tasks.Flow.EditForm.createInstance({ flowId: {$data['flowId']}, demoFlow: '{$demoFlow}' })";
+		$isFeatureTrialable = Json::encode($arResult['isFeatureTrialable']);
+		$editHandler = "BX.Tasks.Flow.EditForm.createInstance({ 
+			flowId: {$data['flowId']},
+			demoFlow: '{$demoFlow}',
+			isFeatureTrialable: '{$isFeatureTrialable}',
+		})";
 
 		switch ($id)
 		{

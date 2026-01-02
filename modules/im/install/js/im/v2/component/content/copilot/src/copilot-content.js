@@ -1,7 +1,5 @@
-import 'ui.notification';
-
 import { Messenger } from 'im.public';
-import { ChatService } from 'im.v2.provider.service';
+import { ChatService } from 'im.v2.provider.service.chat';
 import { Logger } from 'im.v2.lib.logger';
 import { Analytics } from 'im.v2.lib.analytics';
 
@@ -10,6 +8,9 @@ import { EmptyState } from './components/empty-state';
 
 import type { ImModelChat, ImModelLayout } from 'im.v2.model';
 import type { JsonObject } from 'main.core';
+
+export { CopilotChatHeader } from './components/chat-header';
+export { CopilotTextarea } from './components/textarea';
 
 // @vue/component
 export const CopilotContent = {
@@ -99,12 +100,7 @@ export const CopilotContent = {
 			Logger.warn(`CopilotContent: loading chat ${this.entityId} with context - ${this.layout.contextId}`);
 
 			await this.getChatService().loadChatWithContext(this.entityId, this.layout.contextId)
-				.catch((error) => {
-					if (error.code === 'ACCESS_ERROR')
-					{
-						this.showNotification(this.loc('IM_CONTENT_CHAT_ACCESS_ERROR_MSGVER_1'));
-					}
-					Logger.error(error);
+				.catch(() => {
 					Messenger.openCopilot();
 				});
 
@@ -117,22 +113,13 @@ export const CopilotContent = {
 			Logger.warn(`CopilotContent: loading chat ${this.entityId}`);
 
 			await this.getChatService().loadChatWithMessages(this.entityId)
-				.catch((error) => {
-					const [firstError] = error;
-					if (firstError.code === 'ACCESS_DENIED')
-					{
-						this.showNotification(this.loc('IM_CONTENT_CHAT_ACCESS_ERROR_MSGVER_1'));
-					}
+				.catch(() => {
 					Messenger.openCopilot();
 				});
 
 			Logger.warn(`CopilotContent: chat ${this.entityId} is loaded`);
 
 			return Promise.resolve();
-		},
-		showNotification(text: string)
-		{
-			BX.UI.Notification.Center.notify({ content: text });
 		},
 		getChatService(): ChatService
 		{

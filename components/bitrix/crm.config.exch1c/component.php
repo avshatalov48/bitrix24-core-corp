@@ -63,9 +63,9 @@ if (!CModule::IncludeModule('catalog'))
 	return;
 }
 
-global $APPLICATION, $USER;
-$CrmPerms = new CCrmPerms($USER->GetID());
-if (!$CrmPerms->HavePerm('CONFIG', BX_CRM_PERM_CONFIG, 'WRITE'))
+global $APPLICATION;
+
+if (!\Bitrix\Crm\Service\Container::getInstance()->getUserPermissions()->isCrmAdmin())
 {
 	ShowError(GetMessage('CRM_PERMISSION_DENIED'));
 	return;
@@ -140,6 +140,5 @@ $arResult =
 	);
 
 $arResult['EXCH_1C_SCRIPT_URL'] = ($GLOBALS['APPLICATION']->IsHTTPS() ? 'https://' : 'http://').$_SERVER['HTTP_HOST'].'/crm/1c_exchange.php';
-$arResult['EXCH_1C_INFORMATION_URL'] = ($GLOBALS['APPLICATION']->IsHTTPS() ? 'https://' : 'http://').'www.bitrix24.ru/blogs/howto/integration1c.php';
 
 $this->IncludeComponentTemplate($componentPage);

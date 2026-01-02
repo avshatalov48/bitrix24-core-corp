@@ -9,7 +9,12 @@ jn.define('layout/ui/context-menu', (require, exports, module) => {
 	const { AreaList } = require('ui-system/layout/area-list');
 	const { PropTypes } = require('utils/validation');
 	const { ContextMenuSection } = require('layout/ui/context-menu/section');
-	const { ContextMenuItem, ImageAfterTypes, BadgeCounterDesign } = require(
+	const {
+		ContextMenuItem,
+		ImageAfterTypes,
+		BadgeCounterDesign,
+		ContextMenuItemType,
+	} = require(
 		'layout/ui/context-menu/item',
 	);
 	const { ContextMenuBanner, BannerPositioning } = require('layout/ui/context-menu/banner');
@@ -599,6 +604,7 @@ jn.define('layout/ui/context-menu', (require, exports, module) => {
 		ImageAfterTypes,
 		ContextMenuItem,
 		BadgeCounterDesign,
+		ContextMenuItemType,
 	};
 });
 

@@ -427,7 +427,7 @@ jn.define('crm/document/share-dialog', (require, exports, module) => {
 		{
 			return this.getPublicUrl()
 				.then((publicUrl) => {
-					copyToClipboard(publicUrl, Loc.getMessage('M_CRM_DOCUMENT_SHARE_DIALOG_COPY_LINK_DONE'));
+					copyToClipboard(publicUrl, Loc.getMessage('M_CRM_DOCUMENT_SHARE_DIALOG_COPY_LINK_DONE'), true, true);
 				})
 				.catch(() => {
 					Alert.alert('', Loc.getMessage('M_CRM_DOCUMENT_SHARE_DIALOG_COPY_LINK_ERROR'));

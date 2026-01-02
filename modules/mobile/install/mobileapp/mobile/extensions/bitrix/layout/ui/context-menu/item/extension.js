@@ -3,8 +3,8 @@
  */
 jn.define('layout/ui/context-menu/item', (require, exports, module) => {
 	const { Type } = require('type');
-	const { Color, Corner, Indent } = require('tokens');
 	const { Loc } = require('loc');
+	const { Color, Corner, Indent } = require('tokens');
 	const { PropTypes } = require('utils/validation');
 	const { AnalyticsLabel } = require('analytics-label');
 	const { ContextMenuSection } = require('layout/ui/context-menu/section');

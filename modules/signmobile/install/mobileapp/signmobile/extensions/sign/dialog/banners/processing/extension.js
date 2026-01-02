@@ -52,6 +52,7 @@ jn.define('sign/dialog/banners/processing', (require, exports, module) => {
 				buttonsView: View(
 					{},
 					Button({
+						testId: 'processingBanner-button-close',
 						text: Loc.getMessage('SIGN_MOBILE_DIALOG_PROCESSING_BUTTON_CLOSE'),
 						size: ButtonSize.XL,
 						design: ButtonDesign.PLAN_ACCENT,

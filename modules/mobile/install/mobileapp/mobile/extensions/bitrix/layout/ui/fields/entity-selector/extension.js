@@ -401,6 +401,7 @@ jn.define('layout/ui/fields/entity-selector', (require, exports, module) => {
 				useLettersForEmptyAvatar,
 				getNonSelectableErrorText,
 				analytics,
+				undeselectableIds,
 			} = this.getConfig();
 
 			let {
@@ -436,6 +437,7 @@ jn.define('layout/ui/fields/entity-selector', (require, exports, module) => {
 						entityIds: this.getEntityTypeIds(),
 						initSelectedIds: this.getSelectedIds(),
 						allowMultipleSelection: this.isMultiple(),
+						undeselectableIds,
 						events: {
 							onCreate: this.onCreateEntity.bind(this),
 							onClose: (currentEntities) => {

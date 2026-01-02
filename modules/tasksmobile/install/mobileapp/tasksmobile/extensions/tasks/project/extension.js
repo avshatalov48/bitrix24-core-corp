@@ -2,7 +2,9 @@
  * @module tasks/project
  */
 jn.define('tasks/project', (require, exports, module) => {
+	const { AvatarClass } = require('ui-system/blocks/avatar');
 	const { ErrorLogger } = require('utils/logger/error-logger');
+	const { RequestExecutor } = require('rest');
 
 	const logger = new ErrorLogger();
 
@@ -154,13 +156,15 @@ jn.define('tasks/project', (require, exports, module) => {
 			Object.values(this.heads)
 				.filter((user) => user.isOwner === 'N')
 				.slice(0, 2)
-				.forEach((user) => icons.push(user.photo))
+				.forEach((user) => {
+					icons.push(this.createAvatar(user));
+				})
 			;
 
 			const owner = Object.values(this.heads).find((user) => user.isOwner === 'Y');
 			if (owner)
 			{
-				icons.splice(0, 0, owner.photo);
+				icons.splice(0, 0, this.createAvatar(owner));
 			}
 
 			return icons;
@@ -173,10 +177,26 @@ jn.define('tasks/project', (require, exports, module) => {
 			Object.values(this.members)
 				.filter((user) => user.isAccessRequesting === 'N')
 				.slice(0, 5)
-				.forEach((user) => icons.push(user.photo))
-			;
+				.forEach((user) => {
+					icons.push(this.createAvatar(user));
+				});
 
 			return icons;
+		}
+
+		createAvatar(user)
+		{
+			const { id, photo } = user;
+
+			return AvatarClass.getAvatar(
+				AvatarClass.resolveEntitySelectorParams({
+					id,
+					size: 20,
+					avatar: photo,
+					withRedux: true,
+					testId: `project-member-${id}`,
+				}),
+			)?.getAvatarNativeProps();
 		}
 
 		getHeadCount()
@@ -205,8 +225,7 @@ jn.define('tasks/project', (require, exports, module) => {
 		{
 			return Object.values(this.members)
 				.filter((user) => user.isAccessRequesting === 'N')
-				.find((user) => user.id === this.project.userId)
-			;
+				.find((user) => user.id === this.project.userId);
 		}
 
 		isInProject()

@@ -65,6 +65,11 @@ class Base extends BaseTrigger
 
 	public function send(): bool
 	{
+		if (method_exists(\Bitrix\Bizproc\Automation\Trigger\BaseTrigger::class, 'send'))
+		{
+			return parent::send();
+		}
+
 		$applied = false;
 		$triggers = $this->getPotentialTriggers();
 		if ($triggers)
@@ -85,6 +90,11 @@ class Base extends BaseTrigger
 
 	protected function applyTrigger(array $trigger): bool
 	{
+		if (method_exists(\Bitrix\Bizproc\Automation\Trigger\BaseTrigger::class, 'applyTrigger'))
+		{
+			return parent::applyTrigger($trigger);
+		}
+
 		$statusId = $trigger['DOCUMENT_STATUS'];
 
 		$target = $this->getTarget();

@@ -20,7 +20,15 @@ jn.define('crm/timeline/stream/base', (require, exports, module) => {
 		 */
 		constructor(props)
 		{
-			const { items, timelineScopeEventBus, isEditable, onChange, onItemAction, entityType } = props;
+			const {
+				items,
+				timelineScopeEventBus,
+				isEditable,
+				onChange,
+				onItemAction,
+				entityType,
+				analyticsEvent = null,
+			} = props;
 
 			/** @type {TimelineItemModel[]} */
 			this.items = [];
@@ -48,6 +56,9 @@ jn.define('crm/timeline/stream/base', (require, exports, module) => {
 			this.itemPositionCalculator = null;
 
 			this.entityType = entityType;
+
+			/** @type {AnalyticsEvent|null} */
+			this.analyticsEvent = analyticsEvent;
 		}
 
 		/**
@@ -133,12 +144,7 @@ jn.define('crm/timeline/stream/base', (require, exports, module) => {
 		 */
 		hasItem(itemId)
 		{
-			if (this.findItem(itemId))
-			{
-				return true;
-			}
-
-			return false;
+			return Boolean(this.findItem(itemId));
 		}
 
 		/**
@@ -428,6 +434,7 @@ jn.define('crm/timeline/stream/base', (require, exports, module) => {
 				},
 				onAction: this.onItemAction.bind(this),
 				entityType: this.entityType,
+				analyticsEvent: this.analyticsEvent,
 			});
 		}
 
@@ -439,7 +446,9 @@ jn.define('crm/timeline/stream/base', (require, exports, module) => {
 			return new Promise((resolve) => {
 				if (this.onChangeHandler)
 				{
-					this.onChangeHandler(this).then(resolve);
+					this.onChangeHandler(this)
+						.then(resolve)
+						.catch(console.error);
 				}
 				resolve();
 			});

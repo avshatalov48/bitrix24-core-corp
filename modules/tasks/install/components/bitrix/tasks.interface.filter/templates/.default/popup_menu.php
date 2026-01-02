@@ -1,22 +1,31 @@
 <?php
 
-use Bitrix\Main\Localization\Loc;
-use Bitrix\Main\Web\Json;
+use Bitrix\Main\UI\Extension;
 use Bitrix\Tasks\Access\TaskAccessController;
-use Bitrix\Tasks\Helper\Filter;
-use Bitrix\Tasks\Integration\Socialnetwork\Context\Context;
-\Bitrix\Main\UI\Extension::load([
+use Bitrix\UI\Buttons;
+use Bitrix\UI\Toolbar\Facade\Toolbar;
+use Bitrix\UI\Toolbar\ButtonLocation;
+
+Extension::load([
 	'ui.stepprocessing',
+	'tasks.deadline.menu',
+	'ui.analytics',
 ]);
 
 if (!defined('B_PROLOG_INCLUDED') || B_PROLOG_INCLUDED !== true)
 {
 	die();
 }
+
+$menuBtn = new Buttons\Button([
+	'color' => Buttons\Color::LIGHT_BORDER,
+	'icon' => Buttons\Icon::SETTING,
+]);
+$menuBtn->addClass('ui-btn-themes webform-cogwheel');
+$menuBtn->addAttribute('id', 'tasks-popupMenuOptions');
+
+Toolbar::addButton($menuBtn, ButtonLocation::RIGHT);
 ?>
-
-<button id="tasks-popupMenuOptions" class="ui-btn ui-btn-light-border ui-btn-themes ui-btn-icon-setting webform-cogwheel"></button>
-
 
 <script>
 	(function()
@@ -292,6 +301,14 @@ if (!defined('B_PROLOG_INCLUDED') || B_PROLOG_INCLUDED !== true)
 		});
 		<?php endif?>
 
+		menuItemsOptions.push({
+			tabId: 'popupMenuOptions',
+			delimiter: true,
+		});
+
+		const deadlineMenu = new BX.Tasks.Deadline.Menu();
+		menuItemsOptions.push(...deadlineMenu.menuItems);
+
 		<?php if($arParams['USE_EXPORT'] == 'Y'):?>
 
 		menuItemsOptions.push({
@@ -378,7 +395,15 @@ if (!defined('B_PROLOG_INCLUDED') || B_PROLOG_INCLUDED !== true)
 			\Bitrix\Tasks\UI\ScopeDictionary::SCOPE_TASKS_KANBAN_TIMELINE,
 			\Bitrix\Tasks\UI\ScopeDictionary::SCOPE_TASKS_KANBAN_PERSONAL,
 		];
-		if (in_array($arParams['SCOPE'], $viewKanbanFieldsPopup)): ?>
+		$scope = (string)($arParams['SCOPE'] ?? '');
+		$sprintId = (int)($arParams['ACTIVE_SPRINT_ID'] ?? 0);
+		if (
+			in_array($scope, $viewKanbanFieldsPopup)
+			|| (
+				$scope === \Bitrix\Tasks\UI\ScopeDictionary::SCOPE_TASKS_KANBAN_SPRINT
+				&& $sprintId > 0
+			)
+		): ?>
 		menuItemsOptions.push({
 			tabId: "popupMenuOptions",
 			text: '<?=GetMessageJS('TASKS_BTN_KANBAN_POPUP_TITLE_CONFIGURE_VIEW')?>',
@@ -403,6 +428,15 @@ if (!defined('B_PROLOG_INCLUDED') || B_PROLOG_INCLUDED !== true)
 			if (BX.data(BX("tasks-popupMenuOptions"), "disabled") !== true)
 			{
 				menu.show();
+
+				BX.UI.Analytics.sendData({
+					tool: 'tasks',
+					category: 'task_operations',
+					event: 'settings_button_click',
+					type: 'task',
+					c_section: 'tasks',
+					c_element: 'settings_button_click',
+				});
 			}
 		}, this));
 	})();

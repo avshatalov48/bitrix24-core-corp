@@ -2,6 +2,7 @@
 $MESS["SCP_SALESCENTER_TITLE"] = "Выбрать онлайн-кассу";
 $MESS["SCP_SALESCENTER_CASHBOX_SUB_TITLE"] = "Онлайн-кассы";
 $MESS["SCP_SALESCENTER_OFFILINE_CASHBOX_SUB_TITLE"] = "Офлайн-касса";
+$MESS["SCP_SALESCENTER_OTHERS_CASHBOX_SUB_TITLE"] = "Другие онлайн-кассы";
 $MESS["SCP_POPUP_CONTENT_MSGVER_1"] = "Вы не сохранили изменения. Уверены, что хотите закрыть настройки?";
 $MESS["SCP_POPUP_BUTTON_CLOSE_MSGVER_1"] = "Да, закрыть";
 $MESS["SCP_POPUP_BUTTON_STAY"] = "Остаться";

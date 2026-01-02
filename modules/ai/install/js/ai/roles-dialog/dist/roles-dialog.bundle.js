@@ -1,6 +1,6 @@
 /* eslint-disable */
 this.BX = this.BX || {};
-(function (exports,ai_engine,ui_notification,main_popup,ui_vue3_components_hint,ui_label,ui_iconSet_animated,main_core_events,ui_vue3_pinia,ui_iconSet_api_vue,ui_iconSet_api_core,main_core) {
+(function (exports,ai_engine,main_popup,ui_vue3_components_hint,ui_label,ui_iconSet_animated,main_core_events,ui_vue3_pinia,ui_notification,ui_iconSet_api_vue,ui_iconSet_api_core,main_core) {
 	'use strict';
 
 	let _ = t => t,
@@ -339,7 +339,7 @@ this.BX = this.BX || {};
 	      return this.$Bitrix.Loc.getMessage('AI_COPILOT_ROLES_GROUP_LIST_HEADER_2');
 	    },
 	    hint() {
-	      return this.$Bitrix.Loc.getMessage('AI_COPILOT_ROLES_GROUP_LIST_HEADER_HINT_2');
+	      return '';
 	    }
 	  },
 	  template: `
@@ -782,6 +782,12 @@ this.BX = this.BX || {};
 	        }
 	      },
 	      openRolesLibrary() {
+	        if (!main_core.Extension.getSettings('ai.roles-dialog').get('isLibraryVisible')) {
+	          ui_notification.UI.Notification.Center.notify({
+	            content: main_core.Loc.getMessage('AI_COPILOT_ROLES_LIBRARY_COLLABER_ACCESS_DENIED')
+	          });
+	          return;
+	        }
 	        if (BX.SidePanel) {
 	          this.sendAnalytics();
 	          BX.SidePanel.Instance.open('/bitrix/components/bitrix/ai.role.library.grid/slider.php', {
@@ -908,6 +914,7 @@ this.BX = this.BX || {};
 	var _title = /*#__PURE__*/babelHelpers.classPrivateFieldLooseKey("title");
 	var _moduleId = /*#__PURE__*/babelHelpers.classPrivateFieldLooseKey("moduleId");
 	var _contextId = /*#__PURE__*/babelHelpers.classPrivateFieldLooseKey("contextId");
+	var _rolesLibraryAvailable = /*#__PURE__*/babelHelpers.classPrivateFieldLooseKey("rolesLibraryAvailable");
 	var _validateOptions = /*#__PURE__*/babelHelpers.classPrivateFieldLooseKey("validateOptions");
 	var _showAfterInit = /*#__PURE__*/babelHelpers.classPrivateFieldLooseKey("showAfterInit");
 	var _subscribeEvents = /*#__PURE__*/babelHelpers.classPrivateFieldLooseKey("subscribeEvents");
@@ -1107,6 +1114,10 @@ this.BX = this.BX || {};
 	      writable: true,
 	      value: void 0
 	    });
+	    Object.defineProperty(this, _rolesLibraryAvailable, {
+	      writable: true,
+	      value: void 0
+	    });
 	    this.setEventNamespace('AI.RolesDialog');
 	    babelHelpers.classPrivateFieldLooseBase(this, _validateOptions)[_validateOptions](_options);
 	    babelHelpers.classPrivateFieldLooseBase(this, _title)[_title] = _options.title || '';
@@ -1123,6 +1134,7 @@ this.BX = this.BX || {};
 	    babelHelpers.classPrivateFieldLooseBase(this, _analytic)[_analytic] = new RolesDialogAnalytics({
 	      cSection: `${babelHelpers.classPrivateFieldLooseBase(this, _moduleId)[_moduleId]}_${babelHelpers.classPrivateFieldLooseBase(this, _contextId)[_contextId]}`
 	    });
+	    babelHelpers.classPrivateFieldLooseBase(this, _rolesLibraryAvailable)[_rolesLibraryAvailable] = main_core.Extension.getSettings('ai.roles-dialog').get('isLibraryVisible');
 	  }
 	  setSelectedRoleCode(code) {
 	    babelHelpers.classPrivateFieldLooseBase(this, _selectedRoleCode)[_selectedRoleCode] = code;
@@ -1288,12 +1300,14 @@ this.BX = this.BX || {};
 	    [EntityCatalog.SLOT_MAIN_CONTENT_ITEM]: '<RolesDialogRoleItem :itemData="itemSlotProps" />',
 	    [EntityCatalog.SLOT_GROUP]: '<RolesDialogGroupItem :groupData="groupSlotProps" />',
 	    [EntityCatalog.SLOT_GROUP_LIST_HEADER]: '<RolesDialogGroupListHeader />',
-	    [EntityCatalog.SLOT_MAIN_CONTENT_EMPTY_GROUP_STUB]: '<RolesDialogEmptyGroupStub />',
-	    [EntityCatalog.SLOT_GROUP_LIST_FOOTER]: '<RolesDialogRolesLibrary />'
+	    [EntityCatalog.SLOT_MAIN_CONTENT_EMPTY_GROUP_STUB]: '<RolesDialogEmptyGroupStub />'
 	  };
 	  if (EntityCatalog.SLOT_MAIN_CONTENT_SEARCH_STUB) {
 	    slots[EntityCatalog.SLOT_MAIN_CONTENT_NO_SELECTED_GROUP_STUB] = '<RolesDialogSearchStub />';
 	    slots[EntityCatalog.SLOT_MAIN_CONTENT_SEARCH_STUB] = '<RolesDialogSearchStub />';
+	  }
+	  if (babelHelpers.classPrivateFieldLooseBase(this, _rolesLibraryAvailable)[_rolesLibraryAvailable]) {
+	    slots[EntityCatalog.SLOT_GROUP_LIST_FOOTER] = '<RolesDialogRolesLibrary />';
 	  }
 	  return slots;
 	}
@@ -1612,5 +1626,5 @@ this.BX = this.BX || {};
 	exports.RolesDialogEvents = RolesDialogEvents;
 	exports.RolesDialog = RolesDialog;
 
-}((this.BX.AI = this.BX.AI || {}),BX.AI,BX,BX.Main,BX.Vue3.Components,BX.UI,BX,BX.Event,BX.Vue3.Pinia,BX.UI.IconSet,BX.UI.IconSet,BX));
+}((this.BX.AI = this.BX.AI || {}),BX.AI,BX.Main,BX.Vue3.Components,BX.UI,BX,BX.Event,BX.Vue3.Pinia,BX,BX.UI.IconSet,BX.UI.IconSet,BX));
 //# sourceMappingURL=roles-dialog.bundle.js.map

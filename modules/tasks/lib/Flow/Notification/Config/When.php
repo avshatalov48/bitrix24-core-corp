@@ -3,8 +3,7 @@
 namespace Bitrix\Tasks\Flow\Notification\Config;
 
 use Bitrix\Tasks\Flow\Notification\Exception\InvalidPayload;
-use Bitrix\Tasks\ValueObjectInterface;
-
+use Bitrix\Tasks\Flow\Notification\Config\ValueObjectInterface;
 class When implements ValueObjectInterface
 {
 	public const BEFORE_EXPIRE_HALF_TIME = 'beforeExpireHalfTime';

@@ -8,10 +8,14 @@ jn.define('calendar/event-view-form', (require, exports, module) => {
 
 	const { H2 } = require('ui-system/typography/heading');
 
+	const { CalendarType } = require('calendar/enums');
+	const { AppRatingClient } = require('calendar/app-rating-client');
+
 	const { MoreButton } = require('calendar/event-view-form/layout/more-button');
 	const { EventViewForm } = require('calendar/event-view-form/form');
-	const { CalendarType } = require('calendar/enums');
 	const { DataLoader } = require('calendar/event-view-form/data-loader');
+
+	const { IconWithText } = require('calendar/event-view-form/layout/icon-with-text');
 
 	const initialLayoutTitle = {
 		text: Loc.getMessage('M_CALENDAR_EVENT_VIEW_FORM_TITLE'),
@@ -39,6 +43,11 @@ jn.define('calendar/event-view-form', (require, exports, module) => {
 			if (this.props.eventId)
 			{
 				this.props.layout.setRightButtons([this.moreButton.getButton()]);
+			}
+
+			if (this.props.onClose)
+			{
+				this.props.layout.on('onViewRemoved', this.props.onClose);
 			}
 		}
 
@@ -128,27 +137,31 @@ jn.define('calendar/event-view-form', (require, exports, module) => {
 		 * @param {object} params
 		 * @param {PageManager} [params.parentLayout]
 		 * @param {number} [params.eventId]
+		 * @param {number} [params.parentId]
 		 * @param {number} [params.dateFromTs]
 		 * @param {number} [params.ownerId]
 		 * @param {string} [params.calType]
+		 * @param {function} [params.onClose]
 		 * @return void
 		 */
 		static async open({
 			parentLayout,
 			eventId,
+			parentId,
 			dateFromTs,
 			ownerId = env.userId,
 			calType = CalendarType.USER,
+			onClose = null,
 		})
 		{
-			const event = DataLoader.getEvent({ eventId, dateFromTs });
+			const { event, eventIdForUser } = DataLoader.getEvent({ eventId, parentId, dateFromTs });
 			const notRequestedUsers = DataLoader.getNotRequestedUserIds(event);
 			const getEventById = true;
 
 			if (!event?.permissions || !event?.files)
 			{
 				const loadEventPromise = DataLoader.loadEvent({
-					eventId,
+					eventId: eventIdForUser,
 					event,
 					notRequestedUsers,
 					getEventById,
@@ -165,18 +178,23 @@ jn.define('calendar/event-view-form', (require, exports, module) => {
 				titleParams: initialLayoutTitle,
 			}).then((layout) => {
 				const component = new EventView({
+					eventId: eventIdForUser,
+					dateFromTs,
 					ownerId,
 					calType,
 					layout,
 					event,
-					eventId,
-					dateFromTs,
+					onClose,
 				});
 
 				layout.showComponent(component);
+				AppRatingClient.increaseCalendarEventViewedCounter();
 			});
 		}
 	}
 
-	module.exports = { EventView };
+	module.exports = {
+		EventView,
+		IconWithText,
+	};
 });

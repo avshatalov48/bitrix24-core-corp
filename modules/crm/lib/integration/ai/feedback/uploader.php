@@ -18,10 +18,10 @@ use Bitrix\Main\Web\Uri;
 use Bitrix\UI\Form\FeedbackForm;
 use Psr\Http\Message\ResponseInterface;
 use Psr\Log\LoggerInterface;
+use Bitrix\Main\License\UrlProvider;
 
 final class Uploader
 {
-	private const ENDPOINT = 'https://product-feedback.bitrix24.com/bitrix/services/main/ajax.php';
 	private const FORM_ID = 654;
 	private const SECURITY_CODE = 'so05ig';
 
@@ -120,7 +120,7 @@ final class Uploader
 
 		return new Http\Request(
 			Http\Method::POST,
-			(new Uri(self::ENDPOINT))->addParams([
+			(new Uri($this->getRequestEndPoint()))->addParams([
 				'action' => 'crm.site.form.fill',
 			]),
 			null,
@@ -178,5 +178,12 @@ final class Uploader
  		}
 
 		return implode('|', $result);
+	}
+
+	private function getRequestEndPoint(): string
+	{
+		$domain = (new UrlProvider())->getFeedbackDomain();
+
+		return "https://{$domain}/bitrix/services/main/ajax.php";
 	}
 }

@@ -61,9 +61,7 @@ $arResult['MYCOMPANY_MODE'] = (isset($arParams['MYCOMPANY_MODE']) && $arParams['
 
 if ($arResult['MYCOMPANY_MODE'] === 'Y')
 {
-	global $USER;
-	$CrmPerms = new CCrmPerms($USER->GetID());
-	if (!$CrmPerms->HavePerm('CONFIG', BX_CRM_PERM_CONFIG, 'WRITE'))
+	if (!\Bitrix\Crm\Service\Container::getInstance()->getUserPermissions()->myCompany()->canRead())
 	{
 		ShowError(GetMessage('CRM_PERMISSION_DENIED'));
 

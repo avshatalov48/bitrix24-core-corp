@@ -15,7 +15,7 @@ jn.define('im/messenger/db/update/version/13', (require, exports, module) => {
 
 			if (isTypeFieldExist === false)
 			{
-				updater.executeSql({
+				await updater.executeSql({
 					query: 'ALTER TABLE b_im_user ADD COLUMN type TEXT',
 				});
 			}

@@ -27,7 +27,7 @@ final class AddEvent extends AbstractBuilder
 	{
 		return [
 			'category' => Dictionary::CATEGORY_ENTITY_OPERATIONS,
-			'event' => Dictionary::EVENT_ENTITY_ADD,
+			'event' => Dictionary::EVENT_ENTITY_CREATE,
 			'type' => Dictionary::getAnalyticsEntityType($this->entityTypeId),
 		];
 	}

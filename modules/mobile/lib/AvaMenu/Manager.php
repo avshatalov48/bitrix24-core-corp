@@ -11,6 +11,7 @@ use Bitrix\Mobile\AvaMenu\Items\Settings;
 use Bitrix\Mobile\AvaMenu\Items\Signing;
 use Bitrix\Mobile\AvaMenu\Items\SwitchAccount;
 use Bitrix\Mobile\AvaMenu\Items\Timeman;
+use Bitrix\Mobile\AvaMenu\Items\WhatsNew;
 use Bitrix\Mobile\Context;
 
 class Manager
@@ -29,6 +30,7 @@ class Manager
 			new Calendar($context),
 			new Signing($context),
 			new Settings($context),
+			new WhatsNew($context),
 			new GoToWeb($context),
 			new SwitchAccount($context),
 		];

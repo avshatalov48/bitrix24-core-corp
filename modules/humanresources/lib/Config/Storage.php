@@ -103,8 +103,8 @@ class Storage
 		return Feature::isFeatureEnabled('humanresources_security');
 	}
 
-	public static function isHRInvitePermissionAvailable(): bool
+	public static function getVisualStructurePublicUrl(): string
 	{
-		return Main\Config\Option::get(self::MODULE_NAME, self::STRUCT_INVITE_PERMISSION_OPTION_NAME, 'N') === 'Y';
+		return '/hr/structure/';
 	}
 }

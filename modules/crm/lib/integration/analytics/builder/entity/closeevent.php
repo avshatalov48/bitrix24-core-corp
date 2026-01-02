@@ -28,7 +28,7 @@ final class CloseEvent extends AbstractBuilder
 	{
 		return [
 			'category' => Dictionary::CATEGORY_ENTITY_OPERATIONS,
-			'event' => Dictionary::EVENT_ENTITY_CLOSE,
+			'event' => Dictionary::EVENT_ENTITY_COMPLETE,
 			'type' => Dictionary::getAnalyticsEntityType($this->entityTypeId),
 		];
 	}

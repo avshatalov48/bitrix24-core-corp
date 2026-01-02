@@ -11,6 +11,11 @@ class EventSenderService implements \Bitrix\HumanResources\Contract\Service\Even
 	public const MODULE_NAME = 'humanresources';
 	private EventManager $eventManager;
 
+	/**
+	 * @var Event[] $eventQueue
+	 */
+	private array $eventQueue = [];
+
 	public function __construct(?EventManager $eventManager = null)
 	{
 		$this->eventManager = $eventManager ?? EventManager::getInstance();
@@ -23,11 +28,25 @@ class EventSenderService implements \Bitrix\HumanResources\Contract\Service\Even
 			$event->name,
 			$eventData,
 		);
-		$event->send();
 
-		return $event;
+		try
+		{
+			$event->send();
+
+			return $event;
+		}
+		catch (\Throwable $t)
+		{
+			AddMessage2Log(
+				'EventSenderService::send: '
+				. $t->getMessage()
+				. '. Trace as string: ' . $t->getTraceAsString(),
+				'humanresources',
+			);
+
+			return $event;
+		}
 	}
-
 
 	/**
 	 * @param string $fromModuleId
@@ -55,5 +74,40 @@ class EventSenderService implements \Bitrix\HumanResources\Contract\Service\Even
 		}
 
 		Container::getSemaphoreService()->lock($fromModuleId. '-' .$event);
+	}
+
+	/**
+	 * @inheritdoc
+	 */
+	public function queueEvent(EventName $event, array $eventData): Event
+	{
+		$event = new Event(
+			self::MODULE_NAME,
+			$event->name,
+			$eventData,
+		);
+		$this->eventQueue[] = $event;
+
+		return $event;
+	}
+
+	/**
+	 * @inheritdoc
+	 */
+	public function sendQueued(): void
+	{
+		foreach ($this->eventQueue as $event)
+		{
+			$event->send();
+		}
+		$this->clearQueue();
+	}
+
+	/**
+	 * @inheritdoc
+	 */
+	public function clearQueue(): void
+	{
+		$this->eventQueue = [];
 	}
 }

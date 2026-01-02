@@ -306,6 +306,8 @@ export class CopilotContextMenu extends EventEmitter
 					useAngle: true,
 				},
 				errorCode: error.getCode(),
+				showSliderWithMsg: error?.customData?.showSliderWithMsg,
+				sliderCode: error?.customData?.sliderCode,
 			});
 		});
 	}
@@ -409,12 +411,18 @@ export class CopilotContextMenu extends EventEmitter
 
 		const result = [
 			...providers,
-			{
-				separator: true,
-			},
-			new ConnectModelMenuItem(),
-			new MarketMenuItem(),
 		];
+
+		if (this.#hasAccessToLibraries())
+		{
+			result.push(
+				{
+					separator: true,
+				},
+				new ConnectModelMenuItem(),
+				new MarketMenuItem(),
+			);
+		}
 
 		if (this.#copilotTextControllerEngine.getPermissions()?.can_edit_settings)
 		{
@@ -422,6 +430,11 @@ export class CopilotContextMenu extends EventEmitter
 		}
 
 		return result;
+	}
+
+	#hasAccessToLibraries(): boolean
+	{
+		return Extension.getSettings('ai.copilot').get('isLibraryVisible');
 	}
 
 	#showResultPopup(): void

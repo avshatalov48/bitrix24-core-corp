@@ -19,6 +19,14 @@ trait AccessErrorTrait
 		$this->errorCollection[] = $class .': '. $message;
 	}
 
+	public function addErrors(Error ...$errors): void
+	{
+		foreach ($errors as $error)
+		{
+			$this->addError($error->getCode(), $error->getMessage());
+		}
+	}
+
 	public function getErrorCollection(): ErrorCollection
 	{
 		$collection = new ErrorCollection();

@@ -349,6 +349,24 @@ class CrmManager extends Base
 		return true;
 	}
 
+	public function getExistingOwnerEntityIds(int $ownerTypeId, array $ownerIds): array
+	{
+		$factory = Crm\Service\Container::getInstance()->getFactory($ownerTypeId);
+		if (!$factory)
+		{
+			return [];
+		}
+
+		$existingEntities = [];
+		$items = $factory->getItems(['select' => ['ID'], 'filter' => ['=ID' => $ownerIds]]);
+		foreach ($items as $item)
+		{
+			$existingEntities[] = $item->getId();
+		}
+
+		return $existingEntities;
+	}
+
 
 	/**
 	 * @param int $ownerId
@@ -743,23 +761,28 @@ class CrmManager extends Base
 
 		$senderId = (mb_strpos($sendingInfo['provider'], '|') === false) ? $sendingInfo['provider'] : 'rest';
 
-		$result = Crm\MessageSender\MessageSender::send(
-			[
-				Crm\Integration\NotificationsManager::getSenderCode() => [
-					'ACTIVITY_PROVIDER_TYPE_ID' => BaseMessage::PROVIDER_TYPE_SALESCENTER_PAYMENT_SENT,
-					'TEMPLATE_CODE' => 'ORDER_LINK',
-					'PLACEHOLDERS' => [
-						'NAME' => $entityCommunication->getCustomerName(),
-						'URL' => $paymentLink,
-					],
+		$senders = [];
+		if (Main\Application::getInstance()->getLicense()->getRegion() === 'ru')
+		{
+			$senders[Crm\Integration\NotificationsManager::getSenderCode()] = [
+				'ACTIVITY_PROVIDER_TYPE_ID' => BaseMessage::PROVIDER_TYPE_SALESCENTER_PAYMENT_SENT,
+				'TEMPLATE_CODE' => 'ORDER_LINK',
+				'PLACEHOLDERS' => [
+					'NAME' => $entityCommunication->getCustomerName(),
+					'URL' => $paymentLink,
 				],
-				Crm\Integration\SmsManager::getSenderCode() => [
-					'ACTIVITY_PROVIDER_TYPE_ID' => BaseMessage::PROVIDER_TYPE_SALESCENTER_PAYMENT_SENT,
-					'MESSAGE_BODY' => $messageBody,
-					'SENDER_ID' => $senderId,
-					'MESSAGE_FROM' => $senderId === 'rest' ? $sendingInfo['provider'] : null,
-				]
-			],
+			];
+		}
+
+		$senders[Crm\Integration\SmsManager::getSenderCode()] = [
+			'ACTIVITY_PROVIDER_TYPE_ID' => BaseMessage::PROVIDER_TYPE_SALESCENTER_PAYMENT_SENT,
+			'MESSAGE_BODY' => $messageBody,
+			'SENDER_ID' => $senderId,
+			'MESSAGE_FROM' => $senderId === 'rest' ? $sendingInfo['provider'] : null,
+		];
+
+		$result = Crm\MessageSender\MessageSender::send(
+			$senders,
 			[
 				'COMMON_OPTIONS' => [
 					'PHONE_NUMBER' => $messageTo,
@@ -1658,5 +1681,22 @@ class CrmManager extends Base
 				? Container::getInstance()->getTerminalPaymentService()->getRuntimeReferenceField()
 				: null
 		;
+	}
+
+	public function getSmartInvoiceDateExpired(int $id): ?Main\Type\Date
+	{
+		$factory = Crm\Service\Container::getInstance()->getFactory(CCrmOwnerType::SmartInvoice);
+		if (!$factory)
+		{
+			return null;
+		}
+
+		$item = $factory->getItem($id);
+		if (!$item)
+		{
+			return null;
+		}
+
+		return $item->getClosedate();
 	}
 }

@@ -10,6 +10,7 @@ use Bitrix\Main\ORM\Data\Internal\MergeTrait;
 use Bitrix\Main\ORM\Fields\ArrayField;
 use Bitrix\Main\ORM\Fields\IntegerField;
 use Bitrix\Main\ORM\Fields\Relations\Reference;
+use Bitrix\Main\ORM\Fields\StringField;
 use Bitrix\Main\ORM\Fields\TextField;
 use Bitrix\Main\ORM\Query\Join;
 use Bitrix\Main\SystemException;
@@ -69,6 +70,9 @@ final class FlowCopilotCollectedDataTable extends DataManager
 			(new ArrayField('DATA'))
 				->configureRequired()
 				->configureSerializationJson(),
+
+			(new StringField('STATUS'))
+				->configureSize(255),
 		];
 	}
 	

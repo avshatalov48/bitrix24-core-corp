@@ -346,7 +346,7 @@ HTML;
 	protected function getToolbarParameters(): array
 	{
 		$buttons = [];
-		if(Container::getInstance()->getUserPermissions()->canAddType($this->filteredByAutomatedSolutionId))
+		if(Container::getInstance()->getUserPermissions()->dynamicType()->canAdd($this->filteredByAutomatedSolutionId))
 		{
 			$eventData = [];
 			if ($this->isExternalDynamicTypes)
@@ -389,14 +389,14 @@ HTML;
 		}
 		if ($this->filteredByAutomatedSolutionId > 0)
 		{
-			return $userPermissions->isAutomatedSolutionAdmin($this->filteredByAutomatedSolutionId);
+			return $userPermissions->automatedSolution()->isAutomatedSolutionAdmin($this->filteredByAutomatedSolutionId);
 		}
 		if ($this->showAllFromAutomatedSolutions)
 		{
-			return $userPermissions->canEditAutomatedSolutions();
+			return $userPermissions->automatedSolution()->canEdit();
 		}
 
-		return $userPermissions->canWriteConfig() && $userPermissions->canEditAutomatedSolutions(); // without filter must be both crm admin and automated solution admin
+		return $userPermissions->isCrmAdmin() && $userPermissions->automatedSolution()->canEdit(); // without filter must be both crm admin and automated solution admin
 	}
 
 	private function getAutomatedSolutionIdFromFilter(): array

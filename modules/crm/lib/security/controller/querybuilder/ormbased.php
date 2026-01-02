@@ -8,6 +8,10 @@ use Bitrix\Crm\Security\Controller\QueryBuilder;
 use Bitrix\Crm\Security\Controller\QueryBuilder\Conditions\ConditionBuilder;
 use Bitrix\Crm\Security\QueryBuilder\QueryBuilderOptions;
 
+/**
+ * @internal
+ * Do not use directly, only through \Bitrix\Crm\Service\Container::getInstance()->getUserPermissions()->itemsList()->createQueryBuilder()
+ */
 class OrmBased extends QueryBuilder
 {
 

@@ -17,7 +17,7 @@
 }
 
 .sign-b2e-document-setup__title-text {
-	font: 13px/15.51px var(--ui-font-family-system);
+	font: 13px/15.51px var(--ui-font-family-primary, var(--ui-font-family-system));
 	color: var(--ui-color-palette-gray-60);
 	margin: 0 0 5px 0;
 }
@@ -81,7 +81,7 @@
 }
 
 .sign-b2e-document-setup__date-selector_label {
-	font: 13px/15.51px var(--ui-font-family-system);
+	font: 13px/15.51px var(--ui-font-family-primary, var(--ui-font-family-system));
 	color: var(--ui-color-palette-gray-60);
 	margin-right: 5px;
 }
@@ -107,7 +107,7 @@
 }
 
 .sign-b2e-document-setup__date-selector_field-text {
-	font: 13px/15.51px var(--ui-font-family-system);
+	font: 13px/15.51px var(--ui-font-family-primary, var(--ui-font-family-system));
 	color: var(--ui-color-palette-gray-90);
 	flex: 1;
 	white-space: nowrap;
@@ -263,21 +263,6 @@
 	border-color: var(--ui-color-base-20);
 }
 
-.sign-b2e-document-setup__add-notice {
-	border-radius: 8px;
-	background: var(--ui-color-palette-blue-15);
-	color: var(--ui-color-base-90);
-	font-size: var(--ui-font-size-sm);
-	line-height: var(--ui-font-line-height-2xs);
-	padding: 12px;
-	margin: 16px 0 0;
-}
-
-.sign-b2e-document-setup__add-notice.--warning {
-	background: var(--ui-color-palette-orange-15);
-	color: var(--ui-color-base-60);
-}
-
 .sign-b2e-document-setup__document-block_hint {
 	color: var(--ui-color-on-primary);
 	font-size: var(--ui-font-size-5xs);
@@ -309,4 +294,49 @@
 	margin-top: 7px;
 	display: inline-block;
 	line-height: 18px;
+}
+
+.sign-b2e-document-setup__reupload__popup {
+	border-radius: var(--ui-border-radius-3xl);
+	padding: 20px;
+}
+
+.sign-b2e-document-setup__reupload__wrapper {
+	display: flex;
+	flex-direction: column;
+	align-items: center;
+	text-align: center;
+	padding: 30px 24px 20px 24px;
+	max-width: 100%;
+	overflow: hidden;
+}
+
+.sign-b2e-document-setup__reupload__icon-container {
+	display: flex;
+	justify-content: center;
+	align-items: center;
+	width: fit-content;
+	height: fit-content;
+	margin-bottom: 32px;
+}
+
+.sign-b2e-document-setup__reupload__icon {
+	width: 120px;
+	height: 120px;
+	object-fit: contain;
+}
+
+.sign-b2e-document-setup__reupload__text {
+	width: 100%;
+}
+
+.sign-b2e-document-setup__reupload__title {
+	font-size: var(--ui-font-size-2xl);
+	font-weight: var(--ui-font-weight-bold);
+	margin-bottom: 20px;
+}
+
+.sign-b2e-document-setup__reupload__description {
+	font-size: var(--ui-font-size-xs);
+	color: var(--ui-color-palette-gray-60);
 }

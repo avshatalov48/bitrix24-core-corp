@@ -4,6 +4,12 @@ if (!defined("B_PROLOG_INCLUDED") || B_PROLOG_INCLUDED!==true)die();
 use Bitrix\Main\Web\Json;
 use Bitrix\Main\Localization\Loc;
 use Bitrix\Main\UI\Extension;
+use Bitrix\UI\Buttons\Color;
+use Bitrix\UI\Buttons\Icon;
+use Bitrix\UI\Toolbar\ButtonLocation;
+use Bitrix\UI\Toolbar\Facade\Toolbar;
+
+\Bitrix\Main\Loader::includeModule('ui');
 
 /** @var CMain $APPLICATION */
 /** @var array $arParams */
@@ -46,48 +52,29 @@ foreach ($arResult['ROWS'] as $index => $data)
 	);
 }
 
+Toolbar::deleteFavoriteStar();
+Toolbar::addFilter([
+	"FILTER_ID" => $arParams['FILTER_ID'],
+	"GRID_ID" => $arParams['GRID_ID'],
+	"FILTER" => $arResult['FILTERS'],
+	"DISABLE_SEARCH" => true,
+	"ENABLE_LABEL" => true,
+]);
 
-$isBitrix24Template = SITE_TEMPLATE_ID === "bitrix24";
-if ($isBitrix24Template)
+if ($arParams['CAN_EDIT'])
 {
-	$this->SetViewTarget('inside_pagetitle');
+	$button = new Bitrix\UI\Buttons\Button([
+		'text' => Loc::getMessage('CRM_EXCLUSION_LIST_BTN_ADD'),
+		'link' => htmlspecialcharsbx($arParams['PATH_TO_IMPORT']),
+		'color' => Color::PRIMARY,
+		'icon' => Icon::ADD,
+	]);
+	$button->addAttribute('id', 'CRM_EXCLUSION_BUTTON_ADD');
+	Toolbar::addButton($button, ButtonLocation::AFTER_TITLE);
 }
-$bodyClass = $APPLICATION->GetPageProperty('BodyClass');
-$bodyClass = ($bodyClass ? $bodyClass . ' ' : '') . ' pagetitle-toolbar-field-view ';
-$APPLICATION->SetPageProperty('BodyClass', $bodyClass);
+
 Extension::load("ui.buttons");
 Extension::load("ui.buttons.icons");
-?>
-	<div class="pagetitle-container pagetitle-flexible-space">
-		<?
-		$APPLICATION->IncludeComponent(
-			"bitrix:main.ui.filter",
-			"",
-			array(
-				"FILTER_ID" => $arParams['FILTER_ID'],
-				"GRID_ID" => $arParams['GRID_ID'],
-				"FILTER" => $arResult['FILTERS'],
-				"DISABLE_SEARCH" => true,
-				"ENABLE_LABEL" => true,
-			)
-		);
-		?>
-	</div>
-	<?if ($arParams['CAN_EDIT']):?>
-	<div class="pagetitle-container pagetitle-align-right-container">
-		<a id="CRM_EXCLUSION_BUTTON_ADD"
-			href="<?=htmlspecialcharsbx($arParams['PATH_TO_IMPORT'])?>"
-			class="ui-btn ui-btn-primary ui-btn-icon-add"
-		>
-			<?=Loc::getMessage('CRM_EXCLUSION_LIST_BTN_ADD')?>
-		</a>
-	</div>
-	<?endif;?>
-<?
-if ($isBitrix24Template)
-{
-	$this->EndViewTarget();
-}
 
 
 $snippet = new \Bitrix\Main\Grid\Panel\Snippet();

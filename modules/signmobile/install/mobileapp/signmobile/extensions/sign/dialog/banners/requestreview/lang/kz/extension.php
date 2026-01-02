@@ -1,0 +1,5 @@
+<?php
+$MESS["SIGN_MOBILE_DIALOG_REQUEST_REVIEW_BUTTON_CLOSE"] = "Кейін келістіру";
+$MESS["SIGN_MOBILE_DIALOG_REQUEST_REVIEW_BUTTON_START_SIGNING"] = "Келісім беру үшін өту";
+$MESS["SIGN_MOBILE_DIALOG_REQUEST_REVIEW_DESCRIPTION"] = "[COLOR=\"#COLOR_OF_HIGHLIGHTED_TEXT#\"]#DOCUMENT_TITLE#[/COLOR] құжаты сіз мақұлдағаннан кейін басқа қатысушыларға жіберіледі.";
+$MESS["SIGN_MOBILE_DIALOG_REQUEST_REVIEW_TITLE"] = "Құжатқа келісім беріңіз";

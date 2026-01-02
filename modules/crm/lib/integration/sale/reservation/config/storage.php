@@ -37,7 +37,18 @@ class Storage
 			}
 			elseif ($schemeItem['type'] === TypeDictionary::OPTION)
 			{
-				$value = (bool)$value;
+				if ($value === 'Y')
+				{
+					$value = true;
+				}
+				elseif ($value === 'N')
+				{
+					$value = false;
+				}
+				else
+				{
+					$value = (bool)$value;
+				}
 			}
 			elseif ($schemeItem['type'] === TypeDictionary::TEXT)
 			{

@@ -1,0 +1,366 @@
+.skeleton__white-bg-element {
+	width: 100%;
+	min-height: 10px;
+	border-radius: 10px;
+	background: #ffffff;
+	overflow: hidden;
+}
+
+.skeleton__feed-wrap {
+	display: flex;
+	flex-direction: column;
+	height: 109px;
+}
+
+.skeleton__feed-wrap_header {
+	display: flex;
+	align-items: center;
+	height: 44px;
+	padding-left: 26px;
+	border-bottom: 1px solid #f6f6f6;
+}
+
+.skeleton__feed-wrap_header-link {
+	height: 6px;
+	margin-right: 33px;
+	margin-top: 6px;
+	border-radius: 2px;
+	background: #eeeff0;
+}
+
+.skeleton__feed-wrap_header-link.--long {
+	width: 82px;
+	margin-right: 38px;
+}
+
+.skeleton__feed-wrap_header-link.--one {
+	width: 50px;
+}
+
+.skeleton__feed-wrap_header-link.--two {
+	width: 60px;
+}
+
+.skeleton__feed-wrap_header-content {
+	flex: 1;
+	display: flex;
+	align-items: center;
+	padding-left: 26px;
+}
+
+.skeleton__feed-wrap_header-text {
+	width: 202px;
+	height: 8px;
+	border-radius: 2px;
+	background: #eeeff0;
+}
+
+.skeleton__title-block {
+	display: flex;
+	align-items: center;
+	height: 78px;
+	padding-left: 10px;
+}
+
+.skeleton__title-block_text {
+	width: 102px;
+	height: 13px;
+	margin-right: auto;
+	border-radius: 2px;
+	background: #d8dcde;
+}
+
+.skeleton__title-block-search {
+	display: flex;
+	align-items: center;
+	width: 183px;
+	height: 40px;
+	box-sizing: border-box;
+	padding: 18px;
+	border-radius: 99rem;
+	background: #ffffff;
+}
+
+.skeleton__title-block_search-text {
+	width: 104px;
+	height: 6px;
+	border-radius: 2px;
+	background: #eeeff0;
+}
+
+.skeleton__title-block_filter {
+	width: 24px;
+	height: 24px;
+	margin-left: 16px;
+	margin-right: 4px;
+	border-radius: 50%;
+	background: #d8dcde;
+}
+
+.skeleton__feed-item {
+	display: flex;
+	height: 364px;
+	box-sizing: border-box;
+	padding: 19px 18px;
+	margin-bottom: 16px;
+}
+
+.skeleton__feed-item_user-icon {
+	flex-shrink: 0;
+	width: 50px;
+	height: 50px;
+	margin-right: 18px;
+	border-radius: 50%;
+	background: #eeeff0;
+}
+
+.skeleton__feed-item_content {
+	flex: 1;
+}
+
+.skeleton__feed-item_main {
+	padding-bottom: 14px;
+	border-bottom: 1px solid #eeeff0;
+}
+
+.skeleton__feed-item_text {
+	width: 68%;
+	height: 8px;
+	margin: 14px 0;
+	border-radius: 2px;
+	background: #eeeff0;
+}
+
+.skeleton__feed-item_text.--name {
+	width: 28%;
+	margin: 9px 0;
+}
+
+.skeleton__feed-item_date {
+	width: 92px;
+	height: 6px;
+	margin: 13px 0 18px;
+	border-radius: 2px;
+	background: #eeeff0;
+}
+
+.skeleton__feed-item_text.--short {
+	width: 42%;
+}
+
+.skeleton__feed-item_nav {
+	display: flex;
+	align-items: center;
+}
+
+.skeleton__feed-item_nav-line {
+	width: 61px;
+	height: 6px;
+	margin: 22px 14px 0 0;
+	border-radius: 2px;
+	background: #eeeff0;
+}
+
+.skeleton__feed-item_nav-line.--two {
+	width: 106px;
+	margin-right: 16px;
+}
+
+.skeleton__feed-item_nav-line.--three {
+	width: 52px;
+}
+
+.skeleton__feed-item_nav-line.--four {
+	width: 26px;
+}
+
+.skeleton__feed-item_like {
+	display: flex;
+	align-items: center;
+	margin: 15px 0;
+}
+
+.skeleton__feed-item_like-icon {
+	flex-shrink: 0;
+	width: 23px;
+	height: 23px;
+	margin-right: 7px;
+	border-radius: 50%;
+	background: #eeeff0;
+}
+
+.skeleton__feed-item_like-name {
+	height: 6px;
+	width: 148px;
+	border-radius: 2px;
+	background: #eeeff0;
+}
+
+
+.skeleton__feed-item_comment {
+	display: flex;
+	align-items: center;
+}
+
+.skeleton__feed-item_comment-icon {
+	width: 37px;
+	height: 37px;
+	margin-right: 7px;
+	border-radius: 50%;
+	background: #eeeff0;
+}
+
+.skeleton__feed-item_comment-block {
+	display: flex;
+	align-items: center;
+	width: 64%;
+	height: 40px;
+	box-sizing: border-box;
+	padding: 19px;
+	border-radius: 99rem;
+	border: 1px solid #eeeff0;
+}
+
+.skeleton__feed-item_comment-text {
+	width: 150px;
+	height: 6px;
+	border-radius: 2px;
+	background: #eeeff0;
+}
+
+.skeleton__intranet-ustat {
+	display: flex;
+	box-sizing: border-box;
+	padding: 12px 13px 14px;
+}
+
+.skeleton__graph-circle{
+	flex-shrink: 0;
+	height: 52px;
+	width: 52px;
+	margin-right: 13px;
+	border-radius: 50%;
+	background: #eeeff0;
+}
+
+.skeleton__graph-right_top {
+	display: flex;
+	margin-top: 2px;
+}
+
+.skeleton__graph-right_top-circle {
+	width: 26px;
+	height: 26px;
+	margin-left: -7px;
+	border: 2px solid #ffffff;
+	border-radius: 50%;
+	background: #eeeff0;
+}
+
+.skeleton__graph-right_top-circle.--first {
+	margin-left: -3px;
+}
+
+.skeleton__graph-right_bottom {
+	display: flex;
+	justify-content: space-between;
+	margin: 8px 0;
+}
+
+.skeleton__graph-right_bottom-line {
+	width: 77px;
+	height: 6px;
+	border-radius: 2px;
+	background: #eeeff0;
+}
+
+.skeleton__sidebar {
+	border-radius: 12px;
+}
+
+.skeleton__sidebar-header {
+	display: flex;
+	align-items: center;
+	height: 40px;
+	box-sizing: border-box;
+	padding: 10px;
+}
+
+.skeleton__sidebar-header_line {
+	width: 118px;
+	height: 8px;
+	margin-right: auto;
+	margin-left: 9px;
+	background: rgba(82, 92, 105, 0.1);
+	border-radius: 2px;
+}
+
+.skeleton__sidebar-header_circle {
+	width: 20px;
+	height: 20px;
+	border-radius: 50%;
+	background: rgba(82, 92, 105, 0.1);
+}
+
+.skeleton__tasks-row {
+	display: flex;
+	align-items: center;
+	padding: 13px 4px 12px 19px;
+}
+
+.skeleton__tasks-row_line {
+	width: 60px;
+	height: 8px;
+	margin-right: auto;
+	border-radius: 2px;
+	background: rgba(82, 92, 105, 0.1);
+}
+
+.skeleton__tasks-row_short-line {
+	width: 18px;
+	height: 12px;
+	margin-right: 15px;
+	border-radius: 2px;
+	background: rgba(82, 92, 105, 0.1);
+}
+
+.skeleton__tasks-row_circle {
+	width: 23px;
+	height: 23px;
+	margin-right: 5px;
+	border-radius: 50%;
+	background: rgba(82, 92, 105, 0.1);
+}
+
+.skeleton__birthdays-row {
+	display: flex;
+	padding: 15px 0 13px;
+}
+
+.skeleton__birthdays-circle {
+	width: 36px;
+	height: 36px;
+	margin: 0 11px 0 17px;
+	border-radius: 50%;
+	background: #eeeff0;
+}
+
+.skeleton__birthdays-info {
+	flex: 1;
+}
+
+.skeleton__birthdays-name {
+	width: 68%;
+	height: 8px;
+	margin: 8px 0;
+	border-radius: 2px;
+	background: #eeeff0;
+}
+
+.skeleton__birthdays-date {
+	width: 48%;
+	height: 5px;
+	margin: 13px 0;
+	border-radius: 2px;
+	background: #eeeff0;
+}

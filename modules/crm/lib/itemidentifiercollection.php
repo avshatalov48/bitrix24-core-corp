@@ -47,6 +47,17 @@ final class ItemIdentifierCollection implements \Iterator, \ArrayAccess, \Counta
 		return $itemIdentifiers;
 	}
 
+	public function toGroupedByEntityTypeIdArray(): array
+	{
+		$itemIdentifiers = [];
+		foreach ($this->itemIdentifiers as $itemIdentifier)
+		{
+			$itemIdentifiers[$itemIdentifier->getEntityTypeId()][] = $itemIdentifier->toArray();
+		}
+
+		return $itemIdentifiers;
+	}
+
 	public function hasItemIdentifier(string $code): bool
 	{
 		return ($this->getItemIdentifier($code) !== null);

@@ -68,7 +68,7 @@ jn.define('disk/statemanager/redux/slices/files/observers/stateful-list', (requi
 			{
 				const nextFile = nextFiles[prevFile.id];
 
-				if (!nextFile || nextFile.isRemoved || nextFile.parentId !== prevFile.parentId)
+				if (!nextFile || nextFile.isRemoved)
 				{
 					removed.push(nextFile || prevFile);
 				}

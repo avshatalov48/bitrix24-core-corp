@@ -70,7 +70,7 @@ final class Conversion extends Base
 	 */
 	private function filterAvailableForAddingCategories(array $categories): array
 	{
-		return array_values(array_filter($categories, $this->userPermissions->canAddItemsInCategory(...)));
+		return $this->userPermissions->category()->filterAvailableForAddingCategories($categories);
 	}
 
 	private function getFactory(int $entityTypeId): ?Factory

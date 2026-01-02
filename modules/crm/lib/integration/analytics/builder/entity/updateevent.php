@@ -27,7 +27,7 @@ final class UpdateEvent extends AbstractBuilder
 	{
 		return [
 			'category' => Dictionary::CATEGORY_ENTITY_OPERATIONS,
-			'event' => Dictionary::EVENT_ENTITY_UPDATE,
+			'event' => Dictionary::EVENT_ENTITY_EDIT,
 			'type' => Dictionary::getAnalyticsEntityType($this->entityTypeId),
 		];
 	}

@@ -32,9 +32,9 @@ if (!CModule::IncludeModule('catalog'))
 	return;
 }
 
-global $APPLICATION, $USER;
-$CrmPerms = new CCrmPerms($USER->GetID());
-if (!$CrmPerms->HavePerm('CONFIG', BX_CRM_PERM_CONFIG, 'WRITE'))
+global $APPLICATION;
+
+if (!\Bitrix\Crm\Service\Container::getInstance()->getUserPermissions()->isCrmAdmin())
 {
 	ShowError(GetMessage('CRM_PERMISSION_DENIED'));
 	return;

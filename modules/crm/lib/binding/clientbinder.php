@@ -16,7 +16,7 @@ class ClientBinder
 	{
 		$result = new Result();
 
-		if (!Container::getInstance()->getUserPermissions()->canUpdateItem($entity))
+		if (!Container::getInstance()->getUserPermissions()->item()->canUpdateItem($entity))
 		{
 			return $result->addError(new Error(Loc::getMessage('CRM_ACCESS_DENIED')));
 		}

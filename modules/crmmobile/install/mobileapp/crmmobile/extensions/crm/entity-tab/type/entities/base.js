@@ -221,6 +221,7 @@ jn.define('crm/entity-tab/type/entities/base', (require, exports, module) => {
 					reminders: this.params.reminders,
 				},
 				user: this.getUserInfo(),
+				analytics: this.params.analyticsEvent?.setCategory('activity_operations'),
 			})).openActivityEditor();
 		}
 

@@ -2,11 +2,14 @@
  * @module calendar/sync-page
  */
 jn.define('calendar/sync-page', (require, exports, module) => {
-	const { SyncProviderFactory } = require('calendar/sync-page/provider');
-	const { Title } = require('calendar/sync-page/title');
+	const { SyncPageTitle } = require('calendar/sync-page/title');
 	const { EventEmitter } = require('event-emitter');
-	const { SyncAjax } = require('calendar/ajax');
 	const { Color } = require('tokens');
+	const { Random } = require('utils/random');
+
+	const { SyncAjax } = require('calendar/ajax');
+	const { SyncProviderFactory } = require('calendar/sync-page/provider');
+	const { PullCommand } = require('calendar/enums');
 
 	/**
 	 * @class SyncPage
@@ -16,63 +19,71 @@ jn.define('calendar/sync-page', (require, exports, module) => {
 		constructor(props)
 		{
 			super(props);
+			this.pullUnsubscribe = null;
 
-			this.pullConfig = {
-				commands: [
-					'refresh_sync_status',
-					'delete_sync_connection',
-				],
-			};
-			this.unsubscribe = null;
-
-			// eslint-disable-next-line no-undef
 			this.uid = Random.getString();
 			this.customEventEmitter = EventEmitter.createWithUid(this.uid);
-			this.onConnectionCreated = this.handleConnectionCreated.bind(this);
-			this.onConnectionDisabled = this.handleConnectionDisabled.bind(this);
 
+			this.initState();
+		}
+
+		initState()
+		{
 			this.state = {
-				syncInfo: this.props.syncInfo,
+				syncInfo: this.prepareSyncInfo(),
 			};
+		}
+
+		prepareSyncInfo()
+		{
+			return Object.keys(this.props.syncInfo).sort().reduce((object, key) => {
+				// eslint-disable-next-line no-param-reassign
+				object[key] = this.props.syncInfo[key];
+
+				return object;
+			}, {});
 		}
 
 		componentDidMount()
 		{
 			this.pullSubscribe();
-			this.customEventEmitter.on('Calendar.Sync::onConnectionCreated', this.onConnectionCreated);
-			this.customEventEmitter.on('Calendar.Sync::onConnectionDisabled', this.onConnectionDisabled);
+			this.bindEvents();
 		}
 
 		componentWillUnmount()
 		{
-			if (this.unsubscribe)
-			{
-				this.unsubscribe();
-			}
+			this.pullUnsubscribe?.();
+			this.unbindEvents();
+		}
 
-			this.customEventEmitter.off('Calendar.Sync::onConnectionCreated', this.onConnectionCreated);
-			this.customEventEmitter.off('Calendar.Sync::onConnectionDisabled', this.onConnectionDisabled);
+		bindEvents()
+		{
+			this.customEventEmitter.on('Calendar.Sync::onConnectionCreated', this.handleConnectionCreated);
+			this.customEventEmitter.on('Calendar.Sync::onConnectionDisabled', this.handleConnectionDisabled);
+			this.customEventEmitter.on('Calendar.Sync::onReconnection', this.handleConnectionReconnected);
+		}
+
+		unbindEvents()
+		{
+			this.customEventEmitter.off('Calendar.Sync::onConnectionCreated', this.handleConnectionCreated);
+			this.customEventEmitter.off('Calendar.Sync::onConnectionDisabled', this.handleConnectionDisabled);
+			this.customEventEmitter.off('Calendar.Sync::onReconnection', this.handleConnectionReconnected);
 		}
 
 		pullSubscribe()
 		{
-			this.unsubscribe = BX.PULL.subscribe({
+			this.pullUnsubscribe = BX.PULL.subscribe({
 				moduleId: 'calendar',
 				callback: (data) => {
 					const command = BX.prop.getString(data, 'command', '');
 					const params = BX.prop.getObject(data, 'params', {});
 
-					if (!this.pullConfig.commands.includes(command))
-					{
-						return;
-					}
-
 					switch (command)
 					{
-						case 'refresh_sync_status':
+						case PullCommand.REFRESH_SYNC_STATUS:
 							this.refreshSyncStatus(params);
 							break;
-						case 'delete_sync_connection':
+						case PullCommand.DELETE_SYNC_CONNECTION:
 							this.deleteSyncConnection(params);
 							break;
 						default:
@@ -98,10 +109,15 @@ jn.define('calendar/sync-page', (require, exports, module) => {
 						},
 						testId: 'sync_page_container',
 					},
-					Title(),
+					this.renderTitle(),
 					this.renderProviders(),
 				),
 			);
+		}
+
+		renderTitle()
+		{
+			return SyncPageTitle();
 		}
 
 		renderProviders()
@@ -131,6 +147,7 @@ jn.define('calendar/sync-page', (require, exports, module) => {
 						this.state.syncInfo[connectionName] = {
 							...this.state.syncInfo[connectionName],
 							...params.syncInfo[connectionName],
+							reconnecting: false,
 						};
 					}
 				});
@@ -150,6 +167,7 @@ jn.define('calendar/sync-page', (require, exports, module) => {
 							type: connectionName,
 							active: false,
 							connected: false,
+							reconnecting: this.state.syncInfo[connectionName].reconnecting || false,
 						};
 					}
 				});
@@ -158,11 +176,10 @@ jn.define('calendar/sync-page', (require, exports, module) => {
 			this.setState({ syncInfo: this.state.syncInfo });
 		}
 
-		handleConnectionCreated(data)
-		{
-			const type = data.type;
+		handleConnectionCreated = (data) => {
+			const { type } = data;
 
-			SyncAjax.clearSuccessfulConnectionNotifier(type);
+			void SyncAjax.clearSuccessfulConnectionNotifier(type);
 
 			if (this.state.syncInfo[type])
 			{
@@ -172,15 +189,15 @@ jn.define('calendar/sync-page', (require, exports, module) => {
 					connected: true,
 					syncOffset: 1,
 					status: true,
+					reconnecting: false,
 				};
 
 				this.setState({ syncInfo: this.state.syncInfo });
 			}
-		}
+		};
 
-		handleConnectionDisabled(data)
-		{
-			const type = data.type;
+		handleConnectionDisabled = (data) => {
+			const { type } = data;
 
 			if (this.state.syncInfo[type])
 			{
@@ -188,11 +205,26 @@ jn.define('calendar/sync-page', (require, exports, module) => {
 					type,
 					active: false,
 					connected: false,
+					reconnecting: false,
 				};
 
 				this.setState({ syncInfo: this.state.syncInfo });
 			}
-		}
+		};
+
+		handleConnectionReconnected = (data) => {
+			const { type } = data;
+
+			if (this.state.syncInfo[type])
+			{
+				this.state.syncInfo[type] = {
+					...this.state.syncInfo[type],
+					reconnecting: true,
+				};
+
+				this.setState({ syncInfo: this.state.syncInfo });
+			}
+		};
 	}
 
 	module.exports = { SyncPage };

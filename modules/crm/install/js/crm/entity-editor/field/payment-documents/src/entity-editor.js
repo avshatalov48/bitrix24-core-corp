@@ -1457,7 +1457,19 @@ export class EntityEditorPaymentDocuments
 				return;
 			}
 
-			reloadWidget();
+			let orderId = false;
+			const orderIds = this._orderIds();
+			if (
+				Type.isPlainObject(params)
+				&& Type.isPlainObject(params.FIELDS)
+			)
+			{
+				orderId = parseInt(params.FIELDS.ID || 0, 10);
+				if (orderIds.includes(orderId))
+				{
+					reloadWidget();
+				}
+			}
 		}, inCompatMode);
 
 		EventEmitter.subscribe('onPullEvent-salescenter', (command, params) => {

@@ -3,6 +3,7 @@ $MESS['CRM_CONTROLLER_REALIZATION_DOCUMENT_ACCESS_DENIED'] = 'Недостато
 $MESS['CRM_CONTROLLER_REALIZATION_DOCUMENT_SHIPMENT_NOT_FOUND_ERROR'] = 'Не найдена отгрузка #ID#';
 $MESS['CRM_CONTROLLER_REALIZATION_DOCUMENT_ORDER_NOT_FOUND_ERROR'] = 'Не найден заказ';
 $MESS['CRM_CONTROLLER_REALIZATION_DOCUMENT_DELETE_DEDUCTED_ERROR'] = 'Вы не можете удалить документ "Реализация ##ID#", так как он проведен';
+$MESS['CRM_CONTROLLER_REALIZATION_DOCUMENT_DELETE_ERROR'] = 'Недостаточно прав для удаления документа "Реализация ##ID#"';
 $MESS['CRM_CONTROLLER_REALIZATION_DOCUMENT_SHIP_DEDUCTED_ERROR'] = 'При проведении документа "Реализация ##ID#" произошла ошибка: Документ уже проведен';
 $MESS['CRM_CONTROLLER_REALIZATION_DOCUMENT_UNSHIP_UNDEDUCTED_ERROR'] = 'При отмене документа "Реализация ##ID#" произошла ошибка: Документ еще не проведен.';
 $MESS["CRM_CONTROLLER_REALIZATION_DOCUMENT_PRODUCT_NOT_FOUND"] = "Введите хотя бы один товар";

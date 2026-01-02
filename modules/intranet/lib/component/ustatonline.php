@@ -7,15 +7,15 @@
  */
 namespace Bitrix\Intranet\Component;
 
+use Bitrix\Intranet\Service\ServiceContainer;
 use Bitrix\Main\Loader;
-use Bitrix\Main\Localization\Loc;
-use Bitrix\Main\ModuleManager;
 use Bitrix\Main\ErrorCollection;
 use Bitrix\Main\Config\Option;
 use Bitrix\Main\Type\Date;
 use Bitrix\Main\Type\DateTime;
 use Bitrix\Intranet\Integration\Timeman\Worktime;
 use Bitrix\Main\UserTable;
+use Bitrix\Main\Entity;
 
 class UstatOnline extends \CBitrixComponent implements \Bitrix\Main\Engine\Contract\Controllerable, \Bitrix\Main\Errorable
 {
@@ -101,17 +101,19 @@ class UstatOnline extends \CBitrixComponent implements \Bitrix\Main\Engine\Contr
 			$CACHE_MANAGER->RegisterTag('user_count');
 
 			$users = UserTable::getList(array(
-				"select" => ["ID"],
+				"select" => [
+					new Entity\ExpressionField('COUNT', 'COUNT(ID)'),
+				],
 				"filter" => [
 					"=ACTIVE" => "Y",
 					"=CONFIRM_CODE" => false,
 					"!UF_DEPARTMENT" => false,
 					"!=EXTERNAL_AUTH_ID" => UserTable::getExternalUserTypes()
 				],
-				'count_total' => true,
 			));
 
-			$userCount = $users->getCount();
+			$userCountData = $users->fetch();
+			$userCount = $userCountData['COUNT'];
 
 			$CACHE_MANAGER->EndTagCache();
 			$cache->endDataCache([
@@ -210,47 +212,28 @@ class UstatOnline extends \CBitrixComponent implements \Bitrix\Main\Engine\Contr
 	{
 		$users = [];
 
-		$select = [
-			"ID", "LAST_NAME", "NAME", "SECOND_NAME", "LOGIN", "PERSONAL_PHOTO", "LAST_ACTIVITY_DATE",
-		];
+		$intranetUserRepository = ServiceContainer::getInstance()->userRepository();
+		$count = $intranetUserRepository->findActiveUsersWithDepartmentsOnlineCount($this->arResult['LIMIT_ONLINE_SECONDS']);
 
-		$date = new DateTime;
+		$userCollection = $intranetUserRepository->findActiveUsersWithDepartmentsOnline(
+			$this->arResult['LIMIT_ONLINE_SECONDS'],
+			$this->arResult['MAX_USER_TO_SHOW']
+		);
 
-		$filter = [
-			'=ACTIVE'       => true,
-			'=IS_REAL_USER' => true,
-			'>=LAST_ACTIVITY_DATE' => $date->add('-'.$this->arResult["LIMIT_ONLINE_SECONDS"].' seconds'),
-			"!UF_DEPARTMENT" => false,
-		];
-
-		$result = UserTable::getList([
-			'select' => $select,
-			'filter' => $filter,
-			'order' => ['LAST_ACTIVITY_DATE' => 'DESC']
-		]);
-
-		while ($user = $result->fetch())
+		foreach ($userCollection as $user)
 		{
-			$users[$user['ID']] = self::prepareUser($user);
-			$this->arResult['ONLINE_USERS_ID'][] = $user['ID'];
+			$users[] = [
+				'ID' => $user->getId(),
+				'AVATAR' => self::getAvatar($user->getId(), $user->getPersonalPhoto()),
+			];
+
+			$this->arResult['ONLINE_USERS_ID'][] = $user->getId();
 		}
 
-		if (count($users) < 10)
-		{
-			unset($filter['>=LAST_ACTIVITY_DATE']);
-			$result = UserTable::getList([
-				'select' => $select,
-				'filter' => $filter,
-				'limit'  => 10,
-			]);
-
-			while ($user = $result->fetch())
-			{
-				$users[$user['ID']] = self::prepareUser($user);
-			}
-		}
-
-		return array_values($users);
+		return [
+			'count' => $count,
+			'users' => array_values($users),
+		];
 	}
 
 	private static function getAvatar($userId, $personalPhotoId)
@@ -520,7 +503,6 @@ class UstatOnline extends \CBitrixComponent implements \Bitrix\Main\Engine\Contr
 		}
 
 		$this->arResult["MAX_ONLINE_USER_COUNT_TODAY"] = count($newValue["userIds"]);
-		$this->arResult["ALL_ONLINE_USER_ID_TODAY"] = $this->arResult['ONLINE_USERS_ID'];
 	}
 
 	public function checkTimeman():bool

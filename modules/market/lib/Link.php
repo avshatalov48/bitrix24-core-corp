@@ -193,8 +193,6 @@ class Link
 
 			if ($region === 'ru') {
 				$result = 'https://www.1c-bitrix.ru/buy/products/b24.php?subscr=y' . $from;
-			} elseif ($region === 'ua') {
-				$result = 'https://www.bitrix.ua/buy/products/b24.php?subscr=y' . $from;
 			}
 		}
 

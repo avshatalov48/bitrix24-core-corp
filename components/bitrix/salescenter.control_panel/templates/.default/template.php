@@ -6,6 +6,11 @@ use Bitrix\Main\Localization\Loc;
 use Bitrix\Main\UI\Extension;
 use Bitrix\SalesCenter\Integration\Bitrix24Manager;
 
+/**
+ * @global CMain $APPLICATION
+ * @var array $arResult
+ */
+
 $messages = Loc::loadLanguageFile(__FILE__);
 
 $bodyClass = $APPLICATION->GetPageProperty("BodyClass");
@@ -86,4 +91,3 @@ Bitrix24Manager::getInstance()->addFeedbackButtonToToolbar();
 		BX.Salescenter.ControlPanel.init();
 	});
 </script>
-<?

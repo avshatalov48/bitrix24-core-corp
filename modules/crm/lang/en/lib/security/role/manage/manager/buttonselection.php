@@ -1,2 +1,2 @@
 <?php
-$MESS["CRM_CONFIG_PERMISSION_BUTTON"] = "Site widgets";
+$MESS["CRM_CONFIG_PERMISSION_BUTTON"] = "Website widgets";

@@ -1,31 +1,25 @@
-import { useChartStore } from 'humanresources.company-structure.chart-store';
+import { useChartStore, UserService } from 'humanresources.company-structure.chart-store';
 import type { DepartmentData } from './types';
 
 export const chartWizardActions = {
-	createDepartment: (departmentData: DepartmentData): void => {
-		const { departments } = useChartStore();
-		const { id: departmentId, parentId } = departmentData;
+	createDepartment: async (departmentData: DepartmentData): void => {
+		const { departments, structureMap } = useChartStore();
+		const { id: departmentId, parentId, entityType } = departmentData;
 		const parent = departments.get(parentId);
 		parent.children = [...parent.children ?? [], departmentId];
+		structureMap.set(departmentId, {
+			id: departmentId,
+			parentId,
+			entityType,
+		});
 		departments.set(departmentId, {
 			...departmentData,
 			id: departmentId,
+			chats: null,
+			channels: null,
 		});
-	},
-	editDepartment: (departmentData: DepartmentData): void => {
-		const { id, parentId } = departmentData;
-		const { departments } = useChartStore();
-		departments.set(id, { ...departmentData });
-		const prevParent = [...departments.values()].find((department) => {
-			return department.children?.includes(id);
-		});
-		if (parentId !== 0 && prevParent.id !== parentId)
-		{
-			prevParent.children = prevParent.children.filter((childId) => childId !== id);
-			const newParent = departments.get(parentId);
-			newParent.children = [...(newParent.children ?? []), id];
-			departments.set(id, { ...departmentData, prevParentId: prevParent.id });
-		}
+
+		await UserService.refreshMultipleUsers();
 	},
 	moveUsersToRootDepartment: (removedUsers: number[], userMovedToRootIds: number[]): void => {
 		const { departments } = useChartStore();
@@ -36,6 +30,8 @@ export const chartWizardActions = {
 			employees: [...(rootNode.employees || []), ...rootEmployees],
 			userCount: rootNode.userCount + rootEmployees.length,
 		});
+
+		UserService.refreshMultipleUsers();
 	},
 	refreshDepartments: (ids: number[]): void => {
 		const store = useChartStore();

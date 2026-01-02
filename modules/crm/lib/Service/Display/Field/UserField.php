@@ -10,6 +10,22 @@ class UserField extends BaseLinkedEntitiesField
 {
 	public const TYPE = 'user';
 
+	public function getFormattedValue(
+		$fieldValue,
+		?int $itemId = null,
+		?Options $displayOptions = null
+	): array | string
+	{
+		if (!empty($fieldValue) && $displayOptions?->isUseRawValue() && $this->getType() === self::TYPE)
+		{
+			$this->setWasRenderedAsHtml(true);
+
+			return $fieldValue;
+		}
+
+		return parent::getFormattedValue($fieldValue, $itemId, $displayOptions);
+	}
+
 	protected function getFormattedValueForKanban($fieldValue, int $itemId, Options $displayOptions)
 	{
 		$results = [];

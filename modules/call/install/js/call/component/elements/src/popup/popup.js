@@ -1,6 +1,8 @@
 import { Popup, PopupManager, PopupOptions } from 'main.popup';
 import { Type } from 'main.core';
 
+import type { JsonObject } from 'main.core';
+
 const POPUP_CONTAINER_PREFIX = '#popup-window-content-';
 const POPUP_BORDER_RADIUS = '10px';
 
@@ -21,7 +23,13 @@ export const CallPopupContainer = {
 			},
 		},
 	},
-	emits: ['close'],
+	emits: ['close', 'popup-instance-created'],
+	data(): JsonObject
+	{
+		return {
+			instance: null,
+		};
+	},
 	computed:
 	{
 		popupContainer(): string
@@ -31,6 +39,11 @@ export const CallPopupContainer = {
 	},
 	created()
 	{
+		if (this.instance)
+		{
+			this.closePopup();
+		}
+
 		this.instance = this.getPopupInstance();
 		this.instance.show();
 	},
@@ -40,6 +53,8 @@ export const CallPopupContainer = {
 			forceBindPosition: true,
 			position: this.getPopupConfig().bindOptions.position
 		});
+
+		this.$emit('popup-instance-created', this.instance);
 	},
 	beforeUnmount()
 	{

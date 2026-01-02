@@ -188,10 +188,14 @@ class WorktimeRecordManager
 		{
 			return null;
 		}
-		if ($this->shift)
+
+		$isCheckInStartEnabled = \Bitrix\Timeman\Integration\Stafftrack\CheckIn::isCheckInStartEnabled();
+
+		if ($this->shift && !$isCheckInStartEnabled)
 		{
 			return $this->getRecommendedStopTimestamp();
 		}
+
 		if ($this->schedule && $this->schedule->isShifted())
 		{
 			/** @var Shift $firstRandomShift */
@@ -203,6 +207,24 @@ class WorktimeRecordManager
 			}
 			return $this->record->getRecordedStartTimestamp() + $firstRandomShift->getDuration();
 		}
+
+		if ($isCheckInStartEnabled)
+		{
+			$checkInStopTimeStamp = $this->record->getRecordedStartTimestamp() + (3600 * 9);
+
+			if (
+				!$this->isTimeBeforeMidnightOfStart(
+					$this->record->getRecordedStartTimestamp(),
+					$checkInStopTimeStamp
+				)
+			)
+			{
+				return null;
+			}
+
+			return $checkInStopTimeStamp;
+		}
+
 		return null;
 	}
 
@@ -218,5 +240,16 @@ class WorktimeRecordManager
 			return TimeHelper::getInstance()->createUserDateTimeFromFormat('U', $this->record->getDateStart()->getTimestamp(), $this->record->getUserId());
 		}
 		return $this->record->buildRecordedStartDateTime();
+	}
+
+	private function isTimeBeforeMidnightOfStart(int $startTimestamp, int $endTimestamp): bool
+	{
+		$startDateTime = (new \DateTimeImmutable())->setTimestamp($startTimestamp);
+
+		$startOfDay = $startDateTime->setTime(0, 0);
+
+		$startOfNextDay = $startOfDay->modify('+1 day');
+
+		return $endTimestamp < $startOfNextDay->getTimestamp();
 	}
 }

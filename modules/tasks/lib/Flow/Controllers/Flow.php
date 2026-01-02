@@ -2,13 +2,12 @@
 
 namespace Bitrix\Tasks\Flow\Controllers;
 
-use Bitrix\Main\ArgumentException;
 use Bitrix\Main\DI\ServiceLocator;
+use Bitrix\Main\Engine\ActionFilter\Scope;
 use Bitrix\Main\Engine\Controller;
 use Bitrix\Main\Engine\CurrentUser;
 use Bitrix\Main\Type\DateTime;
 use Bitrix\Main\UI\EntitySelector\Converter;
-use Bitrix\Main\Web\Json;
 use Bitrix\Tasks\Flow\Access\FlowAccessController;
 use Bitrix\Tasks\Flow\Access\FlowAction;
 use Bitrix\Tasks\Flow\Access\FlowModel;
@@ -21,7 +20,7 @@ use Bitrix\Tasks\Flow\Control\Decorator\ProjectProxyDecorator;
 use Bitrix\Tasks\Flow\Integration\HumanResources\DepartmentService;
 use Bitrix\Tasks\Flow\Option\FlowUserOption\FlowUserOptionRepository;
 use Bitrix\Tasks\Flow\Option\FlowUserOption\FlowUserOptionService;
-use Bitrix\Tasks\InvalidCommandException;
+use Bitrix\Tasks\Flow\Control\Exception\InvalidCommandException;
 use Bitrix\Tasks\Flow\Controllers\Dto\FlowDto;
 use Bitrix\Tasks\Flow\Controllers\Trait\ControllerTrait;
 use Bitrix\Tasks\Flow\Controllers\Trait\MessageTrait;
@@ -37,6 +36,12 @@ use Bitrix\Tasks\Helper\Analytics;
 use InvalidArgumentException;
 use Throwable;
 
+
+use Bitrix\Main\UI\PageNavigation;
+use Bitrix\Tasks\Flow\Provider\Query\FlowQuery;
+use Bitrix\Tasks\Flow\Filter\Filter;
+use Bitrix\Main\ORM\Query\Filter\ConditionTree;
+
 class Flow extends Controller
 {
 	use MessageTrait;
@@ -51,6 +56,16 @@ class Flow extends Controller
 	protected FlowMemberFacade $memberFacade;
 	protected Converter $converter;
 	protected int $userId;
+	protected Filter $filter;
+
+	public function configureActions(): array
+	{
+		return [
+			'getFeatureParams' => [
+				'+prefilters' => [new Scope(Scope::AJAX)]
+			],
+		];
+	}
 
 	protected function init(): void
 	{
@@ -65,6 +80,7 @@ class Flow extends Controller
 		$this->flowUserOptionService = FlowUserOptionService::getInstance();
 		$this->flowUserOptionRepository = FlowUserOptionRepository::getInstance();
 		$this->converter = new Converter();
+		$this->filter = Filter::getInstance($this->userId);
 	}
 
 	/**
@@ -117,7 +133,7 @@ class Flow extends Controller
 	/**
 	 * @restMethod tasks.flow.flow.create
 	 */
-	public function createAction(FlowDto $flowData, string $guideFlow = ''): ?\Bitrix\Tasks\Flow\Flow
+	public function createAction(FlowDto $flowData, array $analyticsParams = []): ?\Bitrix\Tasks\Flow\Flow
 	{
 		$trialFeatureEnabled = false;
 
@@ -153,8 +169,8 @@ class Flow extends Controller
 			->setActivity();
 
 		$addCommand = AddCommand::createFromArray($flowData)
-			->setTaskCreators($this->converter::convertToFinderCodes($flowData->taskCreators))
-			->setResponsibleList($this->converter::convertToFinderCodes($flowData->responsibleList));
+			->setTaskCreators($this->converter::convertToFinderCodes($flowData->taskCreators ?? []))
+			->setResponsibleList($this->converter::convertToFinderCodes($flowData->responsibleList ?? []));
 
 		try
 		{
@@ -182,18 +198,27 @@ class Flow extends Controller
 			return $this->buildErrorResponse($this->getUnknownError(__LINE__));
 		}
 
-		$element = $guideFlow === 'Y' ? 'guide_button' : 'create_button';
-		$subSection = $guideFlow === 'Y' ? 'flow_guide' : 'flows_grid';
-
-		$this->sendFlowCreateFinishAnalytics($element, $subSection);
+		[$element, $subSection] = $this->handleFlowCreateAnalytics($analyticsParams);
+		$this->sendFlowCreateFinishAnalytics($flow, $element, $subSection);
 
 		return $flow;
+	}
+
+	private function handleFlowCreateAnalytics(array $analyticsParams): array
+	{
+		$context = empty($analyticsParams['context']) ? 'flows_grid' : $analyticsParams['context'];
+
+		$guideFlow = $analyticsParams['guideFlow'] ?? '';
+		$element = $guideFlow === 'Y' ? 'guide_button' : 'create_button';
+		$subSection = $guideFlow === 'Y' ? 'flow_guide' : $context;
+
+		return [$element, $subSection];
 	}
 
 	/**
 	 * @restMethod tasks.flow.Flow.update
 	 */
-	public function updateAction(FlowDto $flowData): ?\Bitrix\Tasks\Flow\Flow
+	public function updateAction(FlowDto $flowData, array $analyticsParams = []): ?\Bitrix\Tasks\Flow\Flow
 	{
 		if (!FlowFeature::isFeatureEnabled())
 		{
@@ -202,19 +227,26 @@ class Flow extends Controller
 
 		$flowData->checkPrimary();
 
-		if (!FlowAccessController::can($this->userId, FlowAction::UPDATE, $flowData->id))
+		if (
+			!FlowAccessController::can(
+				$this->userId,
+				FlowAction::SAVE,
+				$flowData->id,
+				FlowModel::createFromArray($flowData)
+			)
+		)
 		{
 			return $this->buildErrorResponse($this->getAccessDeniedError());
 		}
 
 		$updateCommand = UpdateCommand::createFromArray($flowData);
 
-		if ($flowData->hasTaskCreators())
+		if ($flowData->isTaskCreatorsFilled())
 		{
 			$updateCommand->setTaskCreators($this->converter::convertToFinderCodes($flowData->taskCreators));
 		}
 
-		if ($flowData->hasResponsibleList())
+		if ($flowData->isResponsibleListFilled())
 		{
 			$updateCommand->setResponsibleList($this->converter::convertToFinderCodes($flowData->responsibleList));
 		}
@@ -235,7 +267,21 @@ class Flow extends Controller
 			return $this->buildErrorResponse($this->getUnknownError(__LINE__));
 		}
 
+		[$element, $subSection] = $this->handleFlowEditAnalytics($analyticsParams);
+		if (!empty($subSection))
+		{
+			$this->sendFlowEditFinishAnalytics($flow, $element, $subSection);
+		}
+
 		return $flow;
+	}
+
+	private function handleFlowEditAnalytics(array $analyticsParams): array
+	{
+		$element = Analytics::ELEMENT['save_changes_button'];
+		$subSection = $analyticsParams['context'] ?? '';
+
+		return [$element, $subSection];
 	}
 
 	/**
@@ -341,9 +387,19 @@ class Flow extends Controller
 			return $this->buildErrorResponse($this->getUnknownError(__LINE__));
 		}
 
-		$this->sendFlowCreateFinishAnalytics(Analytics::ELEMENT['create_demo_button']);
+		$this->sendFlowCreateFinishAnalytics($flow, Analytics::ELEMENT['create_demo_button']);
 
 		return $flow;
+	}
+
+	/**
+	 * @restMethod tasks.flow.Flow.getFeatureParams
+	 */
+	public function getFeatureParamsAction(): array
+	{
+		return [
+			'isFeatureTrialable' => FlowFeature::isFeatureEnabledByTrial(),
+		];
 	}
 
 	/**
@@ -473,16 +529,178 @@ class Flow extends Controller
 		return $countMap;
 	}
 
-	private function sendFlowCreateFinishAnalytics(string $element, string $subSection = 'flows_grid'): void
+	private function sendFlowCreateFinishAnalytics(
+		\Bitrix\Tasks\Flow\Flow $flow,
+		string $element,
+		string $subSection = 'flows_grid'
+	): void
 	{
-		$demoSuffix = FlowFeature::isFeatureEnabledByTrial() ? 'Y' : 'N';
-
 		Analytics::getInstance($this->userId)->onFlowCreate(
 			Analytics::EVENT['flow_create_finish'],
 			Analytics::SECTION['tasks'],
 			Analytics::ELEMENT[$element],
 			Analytics::SUB_SECTION[$subSection],
-			['p1' => 'isDemo_' . $demoSuffix]
+			$this->getFlowAnalyticsAdditionalParams($flow),
 		);
+	}
+
+	private function sendFlowEditFinishAnalytics(
+		\Bitrix\Tasks\Flow\Flow $flow,
+		string $element,
+		string $subSection = 'flows_grid'
+	): void
+	{
+		Analytics::getInstance($this->userId)->onFlowEdit(
+			Analytics::EVENT['flow_edit_finish'],
+			Analytics::SECTION['tasks'],
+			Analytics::ELEMENT[$element],
+			Analytics::SUB_SECTION[$subSection],
+			$this->getFlowAnalyticsAdditionalParams($flow),
+		);
+	}
+
+	private function getFlowAnalyticsAdditionalParams(\Bitrix\Tasks\Flow\Flow $flow): array
+	{
+		$demoSuffix = FlowFeature::isFeatureEnabledByTrial() ? 'Y' : 'N';
+
+		return [
+			'p1' => 'isDemo_' . $demoSuffix,
+			'p2' => 'distributionType_' . $flow->getDistributionType()->value,
+			'p3' => 'useTemplate_' . (($flow->getTemplateId() !== 0) ? 'Y' : 'N'),
+			'p4' => 'changeDeadline_' . ($flow->canResponsibleChangeDeadline() ? 'Y' : 'N'),
+			'p5' => 'flowId_' . $flow->getId(),
+		];
+	}
+
+	/**
+	 * @restMethod tasks.flow.flow.list
+	 */
+	public function listAction(
+		PageNavigation $pageNavigation,
+		array $select = [],
+		array $filter = [],
+		array $order = [],
+		array $group = [],
+	): ?array
+	{
+		if (!$this->checkOrder($order))
+		{
+			return $this->buildErrorResponse('Incorrect sort field');
+		}
+
+		if (!$this->checkSelect($select))
+		{
+			return $this->buildErrorResponse('Invalid select data');
+		}
+
+		if (!$this->checkFilter($filter))
+		{
+			return $this->buildErrorResponse('Invalid filter data');
+		}
+
+		if (!$this->checkGroup($group))
+		{
+			return $this->buildErrorResponse('Invalid group data');
+		}
+
+		$preparedSelect = $this->prepareSelect($select);
+		$preparedFilter = $this->prepareFilter($filter);
+
+		$flowQuery = new FlowQuery($this->userId);
+		$flowQuery
+			->setSelect($preparedSelect)
+			->setWhere($preparedFilter)
+			->setLimit($pageNavigation->getLimit())
+			->setOffset($pageNavigation->getOffset())
+			->setOrderBy($order)
+			->setGroupBy($group)
+		;
+
+		try
+		{
+			$listFlowData = $this->provider->getList($flowQuery)->toJson();
+		}
+		catch (Throwable $e)
+		{
+			$this->log($e);
+
+			return $this->buildErrorResponse($this->getUnknownError(__LINE__));
+		}
+
+		return array_values($listFlowData);
+	}
+
+	private function checkSelect(array $select): bool
+	{
+		$availableKeys = array_keys($this->provider->getFlowFields(false));
+		$availableKeys[] = '*';
+
+		return empty(array_diff($select, $availableKeys));
+	}
+
+	private function checkOrder(array $order): bool
+	{
+		$orderKeys = array_keys(array_change_key_case($order, CASE_UPPER));
+		$availableKeys = array_keys($this->provider->getFlowFields(false));
+
+		return empty(array_diff($orderKeys, $availableKeys));
+	}
+
+	private function checkFilter(array $filterValues): bool
+	{
+		$availableKeys = $this->provider->getFlowFields(false);
+
+		if ($this->validateFilter($filterValues, $availableKeys))
+		{
+			return true;
+		}
+
+		return false;
+	}
+
+	private function checkGroup(array $group): bool
+	{
+		$availableKeys = array_keys($this->provider->getFlowFields(false));
+
+		return empty(array_diff($group, $availableKeys));
+	}
+
+	private function prepareSelect(array $select): array
+	{
+		$availableKeys = array_keys($this->provider->getFlowFields(false));
+		$select = (!empty($select) && !in_array('*', $select, true) ? $select : $availableKeys);
+		if (!in_array('ID', $select))
+		{
+			$select[] = 'ID';
+		}
+
+		return array_intersect($select, $availableKeys);
+	}
+
+	private function prepareFilter(array $filterValues): ConditionTree
+	{
+		$newFilter = [];
+
+		foreach ($filterValues as $filterFieldName => $filterValue)
+		{
+			$prefix = $this->filter->extractPrefix($filterFieldName);
+			$filterName = str_replace($prefix, '', $filterFieldName);
+
+			if ($prefix === '')
+			{
+				$newFilter[] = [$filterName, $filterValue];
+			}
+			else
+			{
+				$newFilter[] = [$filterName, Filter::CORRECT_FILTER_FIELD_PREFIXES[$prefix], $filterValue];
+			}
+		}
+
+		return ConditionTree::createFromArray($newFilter);
+	}
+
+	private function validateFilter(array $filter, array $allowedFields): bool
+	{
+		return $this->filter->validate($filter, $allowedFields)->isSuccess();
 	}
 }

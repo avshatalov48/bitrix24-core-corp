@@ -25,13 +25,9 @@ if($SITE_ID != '')
 
 $showUsers = !(isset($_GET["SHOW_USERS"]) && $_GET["SHOW_USERS"] === "N");
 
-$showExtranetUsers = SHOW_ALL;
+$showExtranetUsers = SHOW_FROM_EXACT_GROUP;
 
-if(!isset($_GET["SHOW_EXTRANET_USERS"]) || $_GET["SHOW_EXTRANET_USERS"] == "ALL")
-{
-	$showExtranetUsers = SHOW_ALL;
-}
-elseif ($_GET["SHOW_EXTRANET_USERS"] == "FROM_MY_GROUPS") //used when inviting to groups
+if ($_GET["SHOW_EXTRANET_USERS"] == "FROM_MY_GROUPS") //used when inviting to groups
 {
 	$showExtranetUsers = SHOW_FROM_MY_GROUPS;
 }
@@ -138,31 +134,7 @@ if (empty($_REQUEST['GROUP_ID']) && $_REQUEST['MODE'] == 'EMPLOYEES'
 
 		if (CModule::IncludeModule("extranet"))
 		{
-			if ($showExtranetUsers == SHOW_FROM_MY_GROUPS)
-			{
-				$arFilteredUserIDs = CExtranet::GetMyGroupsUsersSimple(CExtranet::GetExtranetSiteID());
-			}
-			elseif ($showExtranetUsers == SHOW_FROM_EXACT_GROUP)
-			{
-				if (CModule::IncludeModule("socialnetwork"))
-				{
-					$dbUsers = CSocNetUserToGroup::GetList(
-						array(),
-						array(
-							"GROUP_ID"    => array($exGroupID),
-							"<=ROLE"      => SONET_ROLES_USER,
-							"USER_ACTIVE" => "Y"
-						),
-						false,
-						false,
-						array("ID", "USER_ID")
-					);
-
-					if ($dbUsers)
-						while ($arUser = $dbUsers->GetNext())
-							$arFilteredUserIDs[] = $arUser["USER_ID"];
-				}
-			}
+			$arFilteredUserIDs = CExtranet::GetMyGroupsUsersSimple(CExtranet::GetExtranetSiteID());
 		}
 	}
 	else
@@ -195,7 +167,14 @@ if (empty($_REQUEST['GROUP_ID']) && $_REQUEST['MODE'] == 'EMPLOYEES'
 			}
 		}
 
-		$arFilter['UF_DEPARTMENT'] = $sectionId;
+		if ($sectionId > 0)
+		{
+			$arFilter['UF_DEPARTMENT'] = $sectionId;
+		}
+		else
+		{
+			$arFilter['!UF_DEPARTMENT'] = false;
+		}
 	}
 
 	$arUsers = array();
@@ -440,42 +419,9 @@ elseif ($_REQUEST['MODE'] == 'SEARCH')
 		}
 		elseif (
 			IsModuleInstalled("extranet")
-			&& $showExtranetUsers != SHOW_ALL
 		)
 		{
-			if (
-				$showExtranetUsers == SHOW_FROM_MY_GROUPS
-				&& CModule::IncludeModule("extranet")
-			)
-			{
-				$arFilteredUserIDs = CExtranet::GetMyGroupsUsersSimple(CExtranet::GetExtranetSiteID());
-			}
-			elseif ($showExtranetUsers == SHOW_FROM_EXACT_GROUP)
-			{
-				$arFilteredUserIDs = array();
-				if (CModule::IncludeModule("socialnetwork"))
-				{
-					$dbUsers = CSocNetUserToGroup::GetList(
-						array(),
-						array(
-							"GROUP_ID" => array($exGroupID),
-							"<=ROLE" => SONET_ROLES_USER,
-							"USER_ACTIVE" => "Y"
-						),
-						false,
-						false,
-						array("ID", "USER_ID")
-					);
-
-					if ($dbUsers)
-					{
-						while ($arUser = $dbUsers->GetNext())
-						{
-							$arFilteredUserIDs[] = $arUser["USER_ID"];
-						}
-					}
-				}
-			}
+			$arFilteredUserIDs = CExtranet::GetMyGroupsUsersSimple(CExtranet::GetExtranetSiteID());
 
 			if (
 				is_array($arFilteredUserIDs)

@@ -4,7 +4,7 @@ namespace Bitrix\Sign\Item\Api\Property\Response\Page\List;
 
 use Bitrix\Sign\Contract;
 
-class PageCollection implements Contract\ItemCollection, Contract\Item
+class PageCollection implements Contract\ItemCollection, Contract\Item, \Countable
 {
 	/** @var Page[] */
 	private array $items;
@@ -23,5 +23,10 @@ class PageCollection implements Contract\ItemCollection, Contract\Item
 	public function toArray(): array
 	{
 		return $this->items;
+	}
+
+	public function count(): int
+	{
+		return count($this->items);
 	}
 }

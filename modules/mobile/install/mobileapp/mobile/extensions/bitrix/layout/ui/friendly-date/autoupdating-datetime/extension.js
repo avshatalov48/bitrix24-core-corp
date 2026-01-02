@@ -3,7 +3,6 @@
  */
 jn.define('layout/ui/friendly-date/autoupdating-datetime', (require, exports, module) => {
 	const { Moment } = require('utils/date');
-	const { Text5 } = require('ui-system/typography/text');
 
 	/**
 	 * @abstract

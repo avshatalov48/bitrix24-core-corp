@@ -16,11 +16,15 @@ use Bitrix\ListsMobile\Command\SaveEntityCommand;
 use Bitrix\ListsMobile\EntityEditor\Converter;
 use Bitrix\ListsMobile\EntityEditor\ElementField;
 use Bitrix\ListsMobile\EntityEditor\Provider;
+use Bitrix\Main\Application;
 use Bitrix\Main\Config\Option;
+use Bitrix\Main\DB\SqlQueryException;
 use Bitrix\Main\Engine\ActionFilter;
 use Bitrix\Main\Engine\Controller;
 use Bitrix\Main\Error;
 use Bitrix\Main\Loader;
+use Bitrix\Main\Localization\Loc;
+use Bitrix\Main\Result;
 use Bitrix\Main\Security\Sign\BadSignatureException;
 use Bitrix\Main\Security\Sign\Signer;
 use Bitrix\Mobile\UI\EntityEditor\FormWrapper;
@@ -313,12 +317,28 @@ class ElementCreationGuide extends Controller
 			$fields['timeToStart'] = $timeToStart;
 		}
 		$saveCommand = new SaveEntityCommand($service, $fields);
-		$result = $saveCommand->execute();
+
+		$conn = Application::getConnection();
+		$conn->startTransaction();
+		try
+		{
+			$result = $saveCommand->execute();
+		}
+		catch (SqlQueryException)
+		{
+			$result = new Result();
+			$result->addError(new Error(Loc::getMessage('LISTS_ELEMENT_CREATION_GUIDE_ADD_ELEMENT_INTERNAL_ERROR')));
+		}
 		if (!$result->isSuccess())
 		{
+			$conn->rollbackTransaction();
 			$this->addErrors($result->getErrors());
 
 			return null;
+		}
+		else
+		{
+			$conn->commitTransaction();
 		}
 
 		return [

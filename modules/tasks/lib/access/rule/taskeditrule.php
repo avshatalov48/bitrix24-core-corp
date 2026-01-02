@@ -1,43 +1,48 @@
 <?php
-/**
- * Bitrix Framework
- * @package bitrix
- * @subpackage tasks
- * @copyright 2001-2021 Bitrix
- */
 
 namespace Bitrix\Tasks\Access\Rule;
 
+use Bitrix\Main\Access\Rule\AbstractRule;
+use Bitrix\Main\Error;
 use Bitrix\Main\Loader;
+use Bitrix\Main\Localization\Loc;
+use Bitrix\Socialnetwork\Internals\Registry\FeaturePermRegistry;
 use Bitrix\Tasks\Access\Model\TaskModel;
+use Bitrix\Tasks\Access\Model\UserModel;
 use Bitrix\Tasks\Access\Permission\PermissionDictionary;
 use Bitrix\Tasks\Access\Role\RoleDictionary;
 use Bitrix\Main\Access\AccessibleItem;
 use Bitrix\Tasks\Access\Rule\Traits\SubordinateTrait;
+use Bitrix\Tasks\Access\TaskAccessController;
 
-class TaskEditRule extends \Bitrix\Main\Access\Rule\AbstractRule
+/**
+ * @property TaskAccessController $controller
+ * @property UserModel $user
+ */
+class TaskEditRule extends AbstractRule
 {
 	use SubordinateTrait;
 
-	public function execute(AccessibleItem $task = null, $params = null): bool
+	public function execute(AccessibleItem $item = null, $params = null): bool
 	{
-		if (!$task)
+		if (!$item instanceof TaskModel)
 		{
 			$this->controller->addError(static::class, 'Incorrect task');
+
 			return false;
 		}
 
-		/** @var TaskModel $task */
+		/** @var TaskModel $item */
 		if ($this->user->isAdmin())
 		{
 			return true;
 		}
 
 		if (
-			$task->getGroupId()
-			&& Loader::includeModule("socialnetwork")
-			&& \Bitrix\Socialnetwork\Internals\Registry\FeaturePermRegistry::getInstance()->get(
-				$task->getGroupId(),
+			$item->getGroupId() > 0
+			&& Loader::includeModule('socialnetwork')
+			&& FeaturePermRegistry::getInstance()->get(
+				$item->getGroupId(),
 				'tasks',
 				'edit_tasks',
 				$this->user->getUserId()
@@ -48,26 +53,26 @@ class TaskEditRule extends \Bitrix\Main\Access\Rule\AbstractRule
 		}
 
 		if (
-			!$task->isClosed()
-			&& $task->isMember($this->user->getUserId(), RoleDictionary::ROLE_DIRECTOR)
+			!$item->isClosed()
+			&& $item->isMember($this->user->getUserId(), RoleDictionary::ROLE_DIRECTOR)
 		)
 		{
 			return true;
 		}
 
 		if (
-			$task->isClosed()
-			&& $task->isMember($this->user->getUserId(), RoleDictionary::ROLE_DIRECTOR)
+			$item->isClosed()
 			&& $this->user->getPermission(PermissionDictionary::TASK_CLOSED_DIRECTOR_EDIT)
+			&& $item->isMember($this->user->getUserId(), RoleDictionary::ROLE_DIRECTOR)
 		)
 		{
 			return true;
 		}
 
 		if (
-			$task->isMember($this->user->getUserId(), RoleDictionary::ROLE_RESPONSIBLE)
-			&& $this->user->getPermission(PermissionDictionary::TASK_ASSIGNEE_EDIT)
-			&& !$task->isClosed()
+			$this->user->getPermission(PermissionDictionary::TASK_ASSIGNEE_EDIT)
+			&& !$item->isClosed()
+			&& $item->isMember($this->user->getUserId(), RoleDictionary::ROLE_RESPONSIBLE)
 		)
 		{
 			return true;
@@ -75,51 +80,54 @@ class TaskEditRule extends \Bitrix\Main\Access\Rule\AbstractRule
 
 		// can edit subordinate's task
 		if (
-			array_intersect($task->getMembers(RoleDictionary::ROLE_DIRECTOR), $this->user->getAllSubordinates())
+			array_intersect($item->getMembers(RoleDictionary::ROLE_DIRECTOR), $this->user->getAllSubordinates())
 		)
 		{
 			return true;
 		}
 
-		$isInDepartment = $task->isInDepartment($this->user->getUserId(), false, [RoleDictionary::ROLE_RESPONSIBLE, RoleDictionary::ROLE_DIRECTOR, RoleDictionary::ROLE_ACCOMPLICE]);
+		$isInDepartment = $item->isInDepartment($this->user->getUserId(), false, [RoleDictionary::ROLE_RESPONSIBLE, RoleDictionary::ROLE_DIRECTOR, RoleDictionary::ROLE_ACCOMPLICE]);
 
 		if (
-			$this->user->getPermission(PermissionDictionary::TASK_DEPARTMENT_EDIT)
-			&& $isInDepartment
-			&& !$task->isClosed()
-		)
-		{
-			return true;
-		}
+			$isInDepartment
+			&& !$item->isClosed()
+			&& $this->user->getPermission(PermissionDictionary::TASK_DEPARTMENT_EDIT)
 
-		if (
-			$this->user->getPermission(PermissionDictionary::TASK_CLOSED_DEPARTMENT_EDIT)
-			&& $isInDepartment
-			&& $task->isClosed()
 		)
 		{
 			return true;
 		}
 
 		if (
-			$this->user->getPermission(PermissionDictionary::TASK_NON_DEPARTMENT_EDIT)
-			&& !$isInDepartment
-			&& !$task->isClosed()
+			$isInDepartment
+			&& $item->isClosed()
+			&& $this->user->getPermission(PermissionDictionary::TASK_CLOSED_DEPARTMENT_EDIT)
 		)
 		{
 			return true;
 		}
 
 		if (
-			$this->user->getPermission(PermissionDictionary::TASK_CLOSED_NON_DEPARTMENT_EDIT)
-			&& !$isInDepartment
-			&& $task->isClosed()
+			!$isInDepartment
+			&& !$item->isClosed()
+			&& $this->user->getPermission(PermissionDictionary::TASK_NON_DEPARTMENT_EDIT)
+		)
+		{
+			return true;
+		}
+
+		if (
+			!$isInDepartment
+			&& $item->isClosed()
+			&& $this->user->getPermission(PermissionDictionary::TASK_CLOSED_NON_DEPARTMENT_EDIT)
 		)
 		{
 			return true;
 		}
 
 		$this->controller->addError(static::class, 'Access to edit task denied');
+		$this->controller->addUserError(new Error(Loc::getMessage('TASKS_TASK_EDIT_RULE_EDIT_DENIED')));
+		
 		return false;
 	}
 }

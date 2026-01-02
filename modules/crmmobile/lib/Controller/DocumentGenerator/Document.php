@@ -110,7 +110,7 @@ final class Document extends BaseJson
 
 				$result['isSigningEnabled'] =
 					($provider instanceof DataProvider\Deal)
-					&& $permissions->checkAddPermissions(\CCrmOwnerType::SmartDocument)
+					&& $permissions->entityType()->canAddItems(\CCrmOwnerType::SmartDocument)
 					&& \Bitrix\Crm\Settings\Crm::isDocumentSigningEnabled()
 					&& \Bitrix\Sign\Config\Storage::instance()->isAvailable()
 				;

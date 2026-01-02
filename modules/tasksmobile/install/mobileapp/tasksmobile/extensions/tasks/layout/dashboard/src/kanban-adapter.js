@@ -113,6 +113,7 @@ jn.define('tasks/layout/dashboard/kanban-adapter', (require, exports, module) =>
 					// getMenuButtons: this.getMenuButtons.bind(this),
 					selectItemStageId: this.selectItemStageId,
 					mutateItemStage: this.mutateItemStage,
+					requestTimeoutInMilliseconds: this.props.requestTimeoutInMilliseconds,
 				}),
 			);
 		}

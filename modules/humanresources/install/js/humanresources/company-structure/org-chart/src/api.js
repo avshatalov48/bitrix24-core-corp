@@ -1,12 +1,14 @@
 import { getData, postData } from 'humanresources.company-structure.api';
+import { getNodeColorSettings } from 'humanresources.company-structure.utils';
 import type { TreeItem } from './types';
 
 const createTreeDataStore = (treeData: Array<TreeItem>): Map<number, TreeItem> => {
 	const dataMap = new Map();
 	treeData.forEach((item) => {
-		const { id, parentId } = item;
+		const { id, parentId, colorName, entityType } = item;
 		const mapItem = dataMap.get(id) ?? {};
-		dataMap.set(id, { ...mapItem, ...item });
+		const teamColor = getNodeColorSettings(colorName, entityType);
+		dataMap.set(id, { ...mapItem, ...item, teamColor });
 		if (parentId === 0)
 		{
 			return;
@@ -33,7 +35,7 @@ export const chartAPI = {
 	getCurrentDepartments: (): Promise<number[]> => {
 		return getData('humanresources.api.Structure.Node.current');
 	},
-	getDictionary: (): Promise<string> => {
+	getDictionary: (): Promise<Object> => {
 		return getData('humanresources.api.Structure.dictionary');
 	},
 	getUserId: (): Promise<number> => {
@@ -41,6 +43,20 @@ export const chartAPI = {
 	},
 	firstTimeOpened: (): Promise<void> => {
 		return postData('humanresources.api.User.firstTimeOpen');
+	},
+	updateDepartment: (nodeId: number, parentId: number): Promise<void> => {
+		return postData('humanresources.api.Structure.Node.update', {
+			nodeId,
+			parentId,
+			name: null,
+		});
+	},
+	changeOrder: (draggedId: Number, direction: Number, count: number): Promise<void> => {
+		return postData('humanresources.api.Structure.Node.changeOrder', {
+			nodeId: draggedId,
+			direction,
+			count,
+		});
 	},
 	createTreeDataStore,
 };

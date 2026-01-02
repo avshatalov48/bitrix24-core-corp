@@ -2,7 +2,7 @@
 this.BX = this.BX || {};
 this.BX.Sign = this.BX.Sign || {};
 this.BX.Sign.V2 = this.BX.Sign.V2 || {};
-(function (exports,main_core,main_popup,sign_v2_api,main_loader) {
+(function (exports,main_core,main_popup,sign_v2_api,main_loader,sign_type) {
 	'use strict';
 
 	let _ = t => t,
@@ -12,7 +12,10 @@ this.BX.Sign.V2 = this.BX.Sign.V2 || {};
 	  _t4,
 	  _t5,
 	  _t6,
-	  _t7;
+	  _t7,
+	  _t8,
+	  _t9,
+	  _t10;
 	const pageSize = 20;
 	var _popup = /*#__PURE__*/babelHelpers.classPrivateFieldLooseKey("popup");
 	var _api = /*#__PURE__*/babelHelpers.classPrivateFieldLooseKey("api");
@@ -192,18 +195,23 @@ this.BX.Sign.V2 = this.BX.Sign.V2 || {};
 	  }
 	}
 	async function _init2() {
-	  const [members, departments] = await Promise.all([babelHelpers.classPrivateFieldLooseBase(this, _loadMembersPage)[_loadMembersPage](1), babelHelpers.classPrivateFieldLooseBase(this, _loadDepartmentsPage)[_loadDepartmentsPage](1)]);
+	  const members = await babelHelpers.classPrivateFieldLooseBase(this, _loadMembersPage)[_loadMembersPage](1);
 	  if (members.length > 0) {
 	    babelHelpers.classPrivateFieldLooseBase(this, _appendMembersToPopup)[_appendMembersToPopup](members);
 	    if (members.length >= pageSize) {
 	      babelHelpers.classPrivateFieldLooseBase(this, _membersObserver)[_membersObserver].observe(babelHelpers.classPrivateFieldLooseBase(this, _ui)[_ui].membersContent.lastChild);
 	    }
 	  }
-	  if (departments.length > 0) {
-	    babelHelpers.classPrivateFieldLooseBase(this, _appendDepartmentsToPopup)[_appendDepartmentsToPopup](departments);
-	    if (departments.length >= pageSize) {
-	      babelHelpers.classPrivateFieldLooseBase(this, _departmentsObserver)[_departmentsObserver].observe(babelHelpers.classPrivateFieldLooseBase(this, _ui)[_ui].departmentsContent.lastChild);
-	    }
+	  if (babelHelpers.classPrivateFieldLooseBase(this, _options)[_options].isDepartmentsVisible === false) {
+	    return;
+	  }
+	  const departments = await babelHelpers.classPrivateFieldLooseBase(this, _loadDepartmentsPage)[_loadDepartmentsPage](1);
+	  if (departments.length === 0) {
+	    return;
+	  }
+	  babelHelpers.classPrivateFieldLooseBase(this, _appendDepartmentsToPopup)[_appendDepartmentsToPopup](departments);
+	  if (departments.length >= pageSize) {
+	    babelHelpers.classPrivateFieldLooseBase(this, _departmentsObserver)[_departmentsObserver].observe(babelHelpers.classPrivateFieldLooseBase(this, _ui)[_ui].departmentsContent.lastChild);
 	  }
 	}
 	function _getPopup2() {
@@ -232,23 +240,29 @@ this.BX.Sign.V2 = this.BX.Sign.V2 || {};
 	    babelHelpers.classPrivateFieldLooseBase(this, _switchTab)[_switchTab]('departments');
 	    e.preventDefault();
 	  };
-	  babelHelpers.classPrivateFieldLooseBase(this, _ui)[_ui].tabs = main_core.Tag.render(_t || (_t = _`
+	  let departmentsTab = main_core.Tag.render(_t || (_t = _``));
+	  if (babelHelpers.classPrivateFieldLooseBase(this, _options)[_options].isDepartmentsVisible === true) {
+	    departmentsTab = main_core.Tag.render(_t2 || (_t2 = _`
+				<span onclick="${0}" class="bx-user-party-popup-popup-head-item --department">
+					<span class="bx-user-party-popup-popup-head-icon"></span>
+					<span class="bx-user-party-popup-popup-head-text">${0}</span>
+				</span>
+			`), departmentsOnclick, main_core.Loc.getMessage('SIGN_USER_PARTY_POPUP_TAB_DEPARTMENTS'));
+	  }
+	  babelHelpers.classPrivateFieldLooseBase(this, _ui)[_ui].tabs = main_core.Tag.render(_t3 || (_t3 = _`
 			<span class="bx-user-party-popup-popup-head">
 				<span onclick="${0}" class="bx-user-party-popup-popup-head-item --member bx-user-party-popup-popup-head-item-current">
 					<span class="bx-user-party-popup-popup-head-icon"></span>
 					<span class="bx-user-party-popup-popup-head-text">${0}</span>
 				</span>
-				<span onclick="${0}" class="bx-user-party-popup-popup-head-item --department">
-					<span class="bx-user-party-popup-popup-head-icon"></span>
-					<span class="bx-user-party-popup-popup-head-text">${0}</span>
-				</span>
+				${0}
 			</span>
-		`), membersOnclick, main_core.Loc.getMessage('SIGN_USER_PARTY_POPUP_TAB_MEMBERS'), departmentsOnclick, main_core.Loc.getMessage('SIGN_USER_PARTY_POPUP_TAB_DEPARTMENTS'));
-	  babelHelpers.classPrivateFieldLooseBase(this, _ui)[_ui].membersContent = main_core.Tag.render(_t2 || (_t2 = _`<div class="bx-user-party-popup-popup-content-container"></div>`));
-	  babelHelpers.classPrivateFieldLooseBase(this, _ui)[_ui].departmentsContent = main_core.Tag.render(_t3 || (_t3 = _`
+		`), membersOnclick, main_core.Loc.getMessage('SIGN_USER_PARTY_POPUP_TAB_MEMBERS'), departmentsTab);
+	  babelHelpers.classPrivateFieldLooseBase(this, _ui)[_ui].membersContent = main_core.Tag.render(_t4 || (_t4 = _`<div class="bx-user-party-popup-popup-content-container"></div>`));
+	  babelHelpers.classPrivateFieldLooseBase(this, _ui)[_ui].departmentsContent = main_core.Tag.render(_t5 || (_t5 = _`
 			<div class="bx-user-party-popup-popup-content-container bx-user-party-popup-popup-content-invisible"></div>
 		`));
-	  const wrapper = main_core.Tag.render(_t4 || (_t4 = _`
+	  const wrapper = main_core.Tag.render(_t6 || (_t6 = _`
 			<div class="bx-sign-user-party-popup">
 				${0}
 				${0}
@@ -308,7 +322,9 @@ this.BX.Sign.V2 = this.BX.Sign.V2 || {};
 	  return newDepartments;
 	}
 	async function _loadMembersPage2(page) {
-	  const response = await babelHelpers.classPrivateFieldLooseBase(this, _api)[_api].getMembersForDocument(babelHelpers.classPrivateFieldLooseBase(this, _documentUid)[_documentUid], page, pageSize);
+	  var _babelHelpers$classPr;
+	  const role = (_babelHelpers$classPr = babelHelpers.classPrivateFieldLooseBase(this, _options)[_options].role) != null ? _babelHelpers$classPr : sign_type.MemberRole.signer;
+	  const response = await babelHelpers.classPrivateFieldLooseBase(this, _api)[_api].getMembersForDocument(babelHelpers.classPrivateFieldLooseBase(this, _documentUid)[_documentUid], page, pageSize, role);
 	  return (response == null ? void 0 : response.members) || [];
 	}
 	async function _loadDepartmentsPage2(page) {
@@ -318,7 +334,7 @@ this.BX.Sign.V2 = this.BX.Sign.V2 || {};
 	function _appendDepartmentsToPopup2(departments) {
 	  departments.forEach(department => {
 	    const deptName = main_core.Text.encode(department.name);
-	    babelHelpers.classPrivateFieldLooseBase(this, _ui)[_ui].departmentsContent.append(main_core.Tag.render(_t5 || (_t5 = _`
+	    babelHelpers.classPrivateFieldLooseBase(this, _ui)[_ui].departmentsContent.append(main_core.Tag.render(_t7 || (_t7 = _`
 				<div data-department-id="${0}" class="bx-user-party-popup-popup-user-item --department">
 					<span class="bx-user-party-popup-popup-user-icon --default"></span>
 					<span class="bx-user-party-popup-popup-user-name" title="${0}">${0}</span>
@@ -329,13 +345,22 @@ this.BX.Sign.V2 = this.BX.Sign.V2 || {};
 	function _appendMembersToPopup2(members) {
 	  members.forEach(member => {
 	    const memberName = main_core.Text.encode(member.name);
-	    const avatar = main_core.Tag.render(_t6 || (_t6 = _`<span class="bx-user-party-popup-popup-user-icon"></span>`));
-	    babelHelpers.classPrivateFieldLooseBase(this, _ui)[_ui].membersContent.append(main_core.Tag.render(_t7 || (_t7 = _`
-				<a href="${0}" data-member-id="${0}" class="bx-user-party-popup-popup-user-item --user">
-					${0}
-					<span class="bx-user-party-popup-popup-user-name" title="${0}">${0}</span>
-				</a>
-			`), main_core.Text.encode(member.profileUrl), main_core.Text.encode(member.memberId), avatar, memberName, memberName));
+	    const avatar = main_core.Tag.render(_t8 || (_t8 = _`<span class="bx-user-party-popup-popup-user-icon"></span>`));
+	    if (member.profileUrl) {
+	      babelHelpers.classPrivateFieldLooseBase(this, _ui)[_ui].membersContent.append(main_core.Tag.render(_t9 || (_t9 = _`
+					<a href="${0}" data-member-id="${0}" class="bx-user-party-popup-popup-user-item --user">
+						${0}
+						<span class="bx-user-party-popup-popup-user-name" title="${0}">${0}</span>
+					</a>
+				`), main_core.Text.encode(member.profileUrl), main_core.Text.encode(member.memberId), avatar, memberName, memberName));
+	    } else {
+	      babelHelpers.classPrivateFieldLooseBase(this, _ui)[_ui].membersContent.append(main_core.Tag.render(_t10 || (_t10 = _`
+					<span class="bx-user-party-popup-popup-user-item --role">
+						${0}
+						<span class="bx-user-party-popup-popup-user-name" title="${0}">${0}</span>
+					</span>
+				`), avatar, memberName, memberName));
+	    }
 	    if (member.avatar) {
 	      const avatarUrl = main_core.Text.encode(`data:image;base64,${member.avatar}`);
 	      main_core.Dom.style(avatar, 'backgroundImage', `url('${avatarUrl}')`);
@@ -347,5 +372,5 @@ this.BX.Sign.V2 = this.BX.Sign.V2 || {};
 
 	exports.UserPartyPopup = UserPartyPopup;
 
-}((this.BX.Sign.V2.B2e = this.BX.Sign.V2.B2e || {}),BX,BX.Main,BX.Sign.V2,BX));
+}((this.BX.Sign.V2.B2e = this.BX.Sign.V2.B2e || {}),BX,BX.Main,BX.Sign.V2,BX,BX.Sign));
 //# sourceMappingURL=user-party-popup.bundle.js.map

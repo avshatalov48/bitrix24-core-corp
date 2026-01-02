@@ -7,27 +7,26 @@ use Bitrix\Crm\Service\Timeline\Item\Model;
 use Bitrix\Crm\Service\Timeline\Layout\Action\Redirect;
 use Bitrix\Crm\Service\Timeline\Layout\Common\Icon;
 use Bitrix\Crm\Service\Timeline\Item\LogMessage;
+use Bitrix\Crm\Settings\Crm;
 use Bitrix\Crm\Timeline;
 use Bitrix\Crm\Service\Timeline\Layout;
 use Bitrix\Crm\Timeline\SignDocument\DocumentData;
 use Bitrix\Crm\Timeline\SignDocument\MessageData;
-use Bitrix\Main\Application;
 use Bitrix\Main\Loader;
 use Bitrix\Main\Localization\Loc;
-use Bitrix\Main\UserTable;
 use Bitrix\Main\Web\Uri;
+use Bitrix\Sign\Item\Document;
 use Bitrix\Sign\Item\Member;
 use Bitrix\Sign\Service\Container;
 use Bitrix\Sign\Service\Sign\MemberService;
 use Bitrix\Sign\Type\Member\Role;
-use Bitrix\Sign\Type\ProviderCode;
 
 class SignB2eDocument extends LogMessage
 {
 	protected ?DocumentData $documentData = null;
 	protected ?MessageData $messageData = null;
-	protected ?\Bitrix\Sign\Item\Document $signDocument = null;
-	private ?\Bitrix\Sign\Item\Member $member = null;
+	protected ?Document $signDocument = null;
+	private ?Member $member = null;
 	private ?MemberService $memberService = null;
 
 	public function __construct(Context $context, Model $model)
@@ -53,7 +52,7 @@ class SignB2eDocument extends LogMessage
 
 	public static function isActive(): bool
 	{
-		return \Bitrix\Crm\Settings\Crm::isDocumentSigningEnabled();
+		return Crm::isDocumentSigningEnabled();
 	}
 
 	public function getIconCode(): ?string
@@ -223,7 +222,7 @@ class SignB2eDocument extends LogMessage
 		return $this->documentData;
 	}
 
-	protected function loadSignDocument(): ?\Bitrix\Sign\Item\Document
+	protected function loadSignDocument(): ?Document
 	{
 		if (!$this->documentData)
 		{
@@ -461,9 +460,10 @@ class SignB2eDocument extends LogMessage
 	{
 		return match ($providerCode)
 		{
-			ProviderCode::SES_RU => Loc::getMessage('CRM_SERVICE_TIMELINE_LAYOUT_SIGNB2EDOCUMENT_DOCUMENT_DELIVERY_CHANNEL_SES'),
-			ProviderCode::SES_COM => Loc::getMessage('CRM_SERVICE_TIMELINE_LAYOUT_SIGNB2EDOCUMENT_DOCUMENT_DELIVERY_CHANNEL_SES_COM'),
-			ProviderCode::GOS_KEY => Loc::getMessage('CRM_SERVICE_TIMELINE_LAYOUT_SIGNB2EDOCUMENT_DOCUMENT_DELIVERY_CHANNEL_GOSKEY'),
+			SignProviderCode::SES_RU->value => Loc::getMessage('CRM_SERVICE_TIMELINE_LAYOUT_SIGNB2EDOCUMENT_DOCUMENT_DELIVERY_CHANNEL_SES'),
+			SignProviderCode::SES_COM->value => Loc::getMessage('CRM_SERVICE_TIMELINE_LAYOUT_SIGNB2EDOCUMENT_DOCUMENT_DELIVERY_CHANNEL_SES_COM'),
+			SignProviderCode::SES_RU_EXPRESS->value => Loc::getMessage('CRM_SERVICE_TIMELINE_LAYOUT_SIGNB2EDOCUMENT_DOCUMENT_DELIVERY_CHANNEL_SES_RU_EXPRESS'),
+			SignProviderCode::GOS_KEY->value => Loc::getMessage('CRM_SERVICE_TIMELINE_LAYOUT_SIGNB2EDOCUMENT_DOCUMENT_DELIVERY_CHANNEL_GOSKEY'),
 			default => $providerCode,
 		};
 	}

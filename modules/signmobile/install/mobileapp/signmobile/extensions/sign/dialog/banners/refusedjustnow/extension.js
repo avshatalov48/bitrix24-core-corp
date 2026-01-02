@@ -70,6 +70,7 @@ jn.define('sign/dialog/banners/refusedjustnow', (require, exports, module) => {
 				buttonsView: View(
 					{},
 					Button({
+						testId: 'refusedJustNowBanner-button-close',
 						text: Loc.getMessage('SIGN_MOBILE_DIALOG_REFUSED_JUST_NOW_BUTTON_CLOSE_TITLE'),
 						size: ButtonSize.XL,
 						design: ButtonDesign.PLAN_ACCENT,

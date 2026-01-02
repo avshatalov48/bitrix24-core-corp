@@ -9,7 +9,6 @@ use Bitrix\Crm\Badge;
 use Bitrix\Crm\Copilot\AiQualityAssessment\Controller\AiQualityAssessmentController;
 use Bitrix\Crm\Copilot\AiQualityAssessment\Entity\AiQualityAssessmentItem;
 use Bitrix\Crm\Copilot\AiQualityAssessment\Entity\AiQualityAssessmentTable;
-use Bitrix\Crm\Copilot\CallAssessment\AssessmentClientTypeResolver;
 use Bitrix\Crm\Copilot\CallAssessment\CallAssessmentItem;
 use Bitrix\Crm\Copilot\CallAssessment\CallAssessmentItemChecker;
 use Bitrix\Crm\Copilot\CallAssessment\Controller\CopilotCallAssessmentController;
@@ -18,22 +17,21 @@ use Bitrix\Crm\Copilot\PullManager;
 use Bitrix\Crm\Dto\Dto;
 use Bitrix\Crm\Integration\AI\AIManager;
 use Bitrix\Crm\Integration\AI\Config;
-use Bitrix\Crm\Integration\AI\Dto\ScoreCallPayload;
+use Bitrix\Crm\Integration\AI\Dto\Scoring\ScoreCallPayload;
 use Bitrix\Crm\Integration\AI\ErrorCode;
 use Bitrix\Crm\Integration\AI\EventHandler;
 use Bitrix\Crm\Integration\AI\Model\EO_Queue;
 use Bitrix\Crm\Integration\AI\Model\QueueTable;
+use Bitrix\Crm\Integration\AI\Operation\Payload\PayloadFactory;
 use Bitrix\Crm\Integration\AI\Result;
 use Bitrix\Crm\Integration\Analytics\Builder\AI\AIBaseEvent;
 use Bitrix\Crm\Integration\Analytics\Builder\AI\CallScoring;
 use Bitrix\Crm\ItemIdentifier;
 use Bitrix\Crm\MultiValueStoreService;
 use Bitrix\Crm\Service\Container;
-use Bitrix\Crm\Service\Timeline\Monitor;
 use Bitrix\Crm\Timeline\AI\Call\Controller;
 use Bitrix\Main;
-use Bitrix\Main\Security\Random;
-use Bitrix\Main\Web\Json;
+use CCrmActivity;
 use CCrmOwnerType;
 
 final class ScoreCall extends AbstractOperation
@@ -61,6 +59,16 @@ final class ScoreCall extends AbstractOperation
 		);
 
 		parent::__construct($target, $userId, $parentJobId);
+	}
+
+	public static function isAccessGranted(int $userId, ItemIdentifier $target): bool
+	{
+		return parent::isAccessGranted($userId, $target)
+			&& CCrmActivity::CheckItemUpdatePermission(
+				['ID' => $target->getEntityId()],
+				Container::getInstance()->getUserPermissions($userId)->getCrmPermissions(),
+			)
+		;
 	}
 
 	public static function isSuitableTarget(ItemIdentifier $target): bool
@@ -122,38 +130,12 @@ final class ScoreCall extends AbstractOperation
 			return (new Main\Result())->addError($checkerResult->getError());
 		}
 
-		$clientType = (new AssessmentClientTypeResolver())->resolveByActivityId($this->target->getEntityId());
-
-		return (new Main\Result())->setData([
-			'payload' => (new \Bitrix\AI\Payload\Prompt('call_scoring'))
-				->setMarkers([
-					'transcript' => $this->transcription,
-					'criteria' => $this->assessmentSettings->getGist(),
-					'client_type' => $clientType?->name ?? '',
-				])
-			,
-		]);
-	}
-
-	protected function getStubPayload(): mixed
-	{
-		$criteriaList = array_map(
-			static fn(int $index) => [
-					'criterion' => "name of criterion {$index}",
-					'status' => (bool)Random::getInt(0, 1),
-					'explanation' => "explanation of criterion {$index}",
-			], [1, 2, 3, 4, 5, 6, 7]
-		);
-
-		$fields = [
-			'call_review' => [
-				'criteria' => $criteriaList,
-			],
-			'overall_summary' => 'The manager successfully met almost all criteria, providing quality service and attention to detail.',
-			'recommendations' => "It is recommended to offer customers a 'gift wrap' promotion for a review on WhatsApp or Instagram to increase customer engagement and loyalty."
-		];
-
-		return Json::encode($fields);
+		return PayloadFactory::build(self::TYPE_ID, $this->userId, $this->target)
+			->setMarkers([
+				'transcript' => $this->transcription,
+				'criteria' => $this->assessmentSettings->getGist(),
+			])->getResult()
+		;
 	}
 
 	protected function getContextLanguageId(): string
@@ -183,9 +165,12 @@ final class ScoreCall extends AbstractOperation
 	// region notify
 	protected static function notifyTimelineAfterSuccessfulLaunch(Result $result): void
 	{
-		$nextTarget = (new Orchestrator())->findPossibleFillFieldsTarget($result->getTarget()?->getEntityId());
+		$activityId = $result->getTarget()?->getEntityId();
+		$nextTarget = (new Orchestrator())->findPossibleFillFieldsTarget($activityId);
 		if ($nextTarget)
 		{
+			self::notifyTimelinesAboutActivityUpdate($activityId, true);
+			
 			Controller::getInstance()->onStartCallScoring(
 				$nextTarget,
 				$result->getTarget()?->getEntityId(),
@@ -235,7 +220,7 @@ final class ScoreCall extends AbstractOperation
 					[
 						'OPERATION_TYPE_ID' => self::TYPE_ID,
 						'ENGINE_ID' => self::$engineId,
-						'ERRORS' => $result->getErrorMessages(),
+						'ERRORS' => array_unique($result->getErrorMessages()),
 					],
 					$result->getUserId(),
 				);
@@ -322,7 +307,6 @@ final class ScoreCall extends AbstractOperation
 			}
 
 			self::notifyTimelinesAboutActivityUpdate($activityId);
-
 			self::notifyCallQualityUpdate($activityId, 'error');
 
 			return;
@@ -383,6 +367,7 @@ final class ScoreCall extends AbstractOperation
 				]
 			);
 
+			self::cleanBadgeByType($activityId, Badge\Badge::AI_CALL_FIELDS_FILLING_RESULT);
 			self::trySyncScoreStatusBadge(
 				$activityId,
 				$assessment,
@@ -415,7 +400,10 @@ final class ScoreCall extends AbstractOperation
 			);
 		}
 
-		MultiValueStoreService::getInstance()->deleteAll(self::generateJobCallAssessmentBindKey($result->getParentJobId(), $activityId));
+		if ($activityId !== null && $result->getParentJobId() !== null)
+		{
+			MultiValueStoreService::getInstance()->deleteAll(self::generateJobCallAssessmentBindKey($result->getParentJobId(), $activityId));
+		}
 	}
 
 	private static function getAssessmentSettings(int $activityId, ?int $assessmentSettingsId = null, ?int $parentJobId = null): ?CallAssessmentItem
@@ -516,7 +504,6 @@ final class ScoreCall extends AbstractOperation
 		);
 
 		$badge->bind($itemIdentifier, $sourceIdentifier);
-		Monitor::getInstance()->onBadgesSync($itemIdentifier);
 	}
 
 	public static function generateJobCallAssessmentBindKey(int $jobId, int $activityId): string

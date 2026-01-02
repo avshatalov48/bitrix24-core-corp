@@ -23,6 +23,18 @@ jn.define('collab/create/src/security', (require, exports, module) => {
 		PROHIBIT_DOWNLOAD_FILES_FOR_GUESTS: 'prohibitDownloadFilesForGuests',
 	};
 
+	/**
+	 * @typedef {Object} CollabCreateSecurityProps
+	 * @property {string} testId
+	 * @property {boolean} prohibitScreenshotForGuests
+	 * @property {boolean} prohibitCopyTextForGuests
+	 * @property {boolean} bitrixSpProtection
+	 * @property {boolean} prohibitDownloadFilesForGuests
+	 * @property {function} onChange
+	 * @property {LayoutWidget} layoutWidget
+
+	 * @class CollabCreateSecurity
+	 */
 	class CollabCreateSecurity extends LayoutComponent
 	{
 		constructor(props)
@@ -31,14 +43,15 @@ jn.define('collab/create/src/security', (require, exports, module) => {
 			this.#initializeState();
 		}
 
-		#initializeState = () => {
+		#initializeState()
+		{
 			this.state = {
 				[Security.PROHIBIT_SCREENSHOT_FOR_GUESTS]: this.props[Security.PROHIBIT_SCREENSHOT_FOR_GUESTS] ?? false,
 				[Security.PROHIBIT_COPY_TEXT_FOR_GUESTS]: this.props[Security.PROHIBIT_COPY_TEXT_FOR_GUESTS] ?? false,
 				[Security.BITRIX_SP_PROTECTION]: this.props[Security.BITRIX_SP_PROTECTION] ?? false,
 				[Security.PROHIBIT_DOWNLOAD_FILES_FOR_GUESTS]: this.props[Security.PROHIBIT_DOWNLOAD_FILES_FOR_GUESTS] ?? false,
 			};
-		};
+		}
 
 		get testId()
 		{
@@ -160,6 +173,10 @@ jn.define('collab/create/src/security', (require, exports, module) => {
 	}
 
 	module.exports = {
+		/**
+		 * @param {CollabCreateSecurityProps} props
+		 * @returns {CollabCreateSecurity}
+		 */
 		CollabCreateSecurity: (props) => new CollabCreateSecurity(props),
 		Security,
 	};

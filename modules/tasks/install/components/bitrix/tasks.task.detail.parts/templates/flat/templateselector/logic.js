@@ -15,8 +15,9 @@ BX.namespace('Tasks.Component');
 			construct: function()
 			{
 				this.callConstruct(BX.Tasks.Util.Widget);
+				this.templateBtn = document.getElementById('templateselector-open');
 
-				BX.bind(this.control('open'), 'click', this.onPopupOpen.bind(this));
+				BX.bind(this.templateBtn, 'click', this.onPopupOpen.bind(this));
 				this.menu = null;
 				this.menuItems = null;
 			},
@@ -159,7 +160,8 @@ BX.namespace('Tasks.Component');
 					},
 					events: {
 						onPopupClose : this.onPopupClose.bind(this)
-					}
+					},
+					maxWidth: 300,
 				});
 
 				if(!this.option('useSlider'))
@@ -180,7 +182,7 @@ BX.namespace('Tasks.Component');
 
 			onPopupClose: function()
 			{
-				BX.removeClass(this.control('open'), "webform-button-active");
+				BX.removeClass(this.templateBtn, "webform-button-active");
 			}
 		}
 	});

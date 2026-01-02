@@ -4,6 +4,8 @@ declare(strict_types=1);
 
 namespace Bitrix\Disk\Controller\Integration\Filter;
 
+use Bitrix\Disk\Document\Flipchart\Configuration;
+use Bitrix\Disk\Document\Flipchart\JwtService;
 use Bitrix\Disk\Internals\Error\Error;
 use Bitrix\Disk\Type\JwtHolder;
 use Bitrix\Main\Context;
@@ -35,14 +37,30 @@ class JwtFilter extends Base
 		$authorization = explode(' ', $authorization);
 		$authorization = $authorization[1];
 
-		try
+
+		// TODO: вынести этот блок куда-то, так как фильтр должен просто проверять корректность заголовка, остальное не его задача
+		if (Configuration::isUsingDocumentProxy())
 		{
-			$data = JWT::decode($authorization, $this->secret, ['HS256']);
+			$jwt = new JwtService();
+			$data = $jwt->decodeWebhookData($authorization);
+			if (!$data)
+			{
+				$this->addError(new Error('Unauthorized', 401));
+				return new EventResult(EventResult::ERROR, null, null, $this);
+			}
+			$data = (object)$data;
 		}
-		catch (\UnexpectedValueException $e)
+		else
 		{
-			$this->addError(new Error('Unauthorized', 401));
-			return new EventResult(EventResult::ERROR, null, null, $this);
+			try
+			{
+				$data = JWT::decode($authorization, $this->secret, ['HS256']);
+			}
+			catch (\UnexpectedValueException $e)
+			{
+				$this->addError(new Error('Unauthorized', 401));
+				return new EventResult(EventResult::ERROR, null, null, $this);
+			}
 		}
 
 		$this->jwtHolder->setJwtData($data);

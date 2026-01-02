@@ -86,3 +86,4 @@ $MESS["CRM_VAT_1"] = "Tax excluded";
 $MESS["CRM_VAT_2"] = "Tax rate: 18%";
 $MESS["CRM_VAT_3"] = "Tax rate: 12%";
 $MESS["CRM_VAT_21"] = "Tax rate: 20%";
+$MESS["CRM_VAT_22"] = "Tax rate: 22%";

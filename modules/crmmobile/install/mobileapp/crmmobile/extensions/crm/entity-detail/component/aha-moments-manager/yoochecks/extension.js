@@ -7,6 +7,7 @@ jn.define('crm/entity-detail/component/aha-moments-manager/yoochecks', (require,
 	const { Oauth } = require('crm/payment-system/creation/actions/oauth');
 	const { Before } = require('crm/payment-system/creation/actions/before');
 	const { handleErrors } = require('crm/error');
+	const { Random } = require('utils/random');
 
 	const pathToExtension = `${currentDomain}/bitrix/mobileapp/crmmobile/extensions/crm/entity-detail/component/aha-moments-manager/yoochecks`;
 

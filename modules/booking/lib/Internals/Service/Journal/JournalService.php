@@ -9,10 +9,14 @@ use Bitrix\Booking\Internals\Service\Journal\EventProcessor\Counter\CounterEvent
 use Bitrix\Booking\Internals\Service\Journal\EventProcessor\PushPull\PushPullEventProcessor;
 use Bitrix\Booking\Internals\Service\Journal\EventProcessor\Booking\BookingEventProcessor;
 use Bitrix\Booking\Internals\Service\Journal\EventProcessor\Resource\ResourceEventProcessor;
+use Bitrix\Booking\Internals\Service\Journal\EventProcessor\ResourceType\ResourceTypeEventProcessor;
+use Bitrix\Booking\Internals\Service\Journal\EventProcessor\WaitListItem\WaitListItemEventProcessor;
 use Bitrix\Main\Application;
 
 final class JournalService implements JournalServiceInterface
 {
+	private const LOCK_KEY = 'booking.journallock';
+
 	public function __construct()
 	{
 		$this->enableJob();
@@ -35,6 +39,11 @@ final class JournalService implements JournalServiceInterface
 
 	public static function process(): void
 	{
+		if (!Application::getConnection()->lock(self::LOCK_KEY))
+		{
+			return;
+		}
+
 		$eventCollection = Container::getJournalRepository()->getPending();
 		if ($eventCollection->isEmpty())
 		{
@@ -42,11 +51,15 @@ final class JournalService implements JournalServiceInterface
 		}
 
 		(new BookingEventProcessor())->process($eventCollection);
-		(new ResourceEventProcessor())->process($eventCollection);
+		(new ResourceEventProcessor(Container::getDelayedTaskService()))->process($eventCollection);
+		(new ResourceTypeEventProcessor())->process($eventCollection);
+		(new WaitListItemEventProcessor())->process($eventCollection);
 		(new CounterEventProcessor())->process($eventCollection);
 		(new PushPullEventProcessor())->process($eventCollection);
 		// other event processors ...
 
 		Container::getJournalRepository()->markProcessed($eventCollection);
+
+		Application::getConnection()->unlock(self::LOCK_KEY);
 	}
 }

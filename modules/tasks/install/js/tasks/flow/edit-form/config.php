@@ -5,15 +5,6 @@ if (!defined('B_PROLOG_INCLUDED') || B_PROLOG_INCLUDED !== true)
 	die();
 }
 
-$needUseSchedule = true;
-if (\Bitrix\Main\Loader::includeModule('tasks'))
-{
-	$needUseSchedule =
-		\Bitrix\Tasks\Integration\Calendar\Calendar::needUseCalendar('flow')
-		&& \Bitrix\Tasks\Integration\Calendar\Calendar::needUseSchedule()
-	;
-}
-
 return [
 	'css' => 'dist/edit-form.bundle.css',
 	'js' => 'dist/edit-form.bundle.js',
@@ -35,7 +26,7 @@ return [
 	],
 	'settings' => [
 		'currentUser' => \Bitrix\Main\Engine\CurrentUser::get()->getId(),
-		'needUseSchedule' => $needUseSchedule,
+		'needUseSchedule' => true,
 	],
 	'skip_core' => false,
 ];

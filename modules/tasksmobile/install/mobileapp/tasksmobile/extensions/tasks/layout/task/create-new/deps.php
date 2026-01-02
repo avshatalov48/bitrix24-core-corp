@@ -6,7 +6,6 @@ return [
 		'analytics',
 		'bbcode/formatter/plain-text-formatter',
 		'bottom-sheet',
-		'feature',
 		'haptics',
 
 		'layout/ui/form',
@@ -69,6 +68,8 @@ return [
 		'utils/guid',
 		'utils/string',
 		'utils/function',
+		'tasks:utils/stages',
+		'tasks:app-rating-client',
 	],
 	'bundle' => [
 		'./src/bottom-panel',

@@ -9,6 +9,7 @@ return [
 	'js' => 'dist/parties.bundle.js',
 	'rel' => [
 		'main.core',
+		'main.core.events',
 		'sign.v2.b2e.company-selector',
 		'sign.v2.b2e.document-validation',
 		'sign.v2.b2e.representative-selector',

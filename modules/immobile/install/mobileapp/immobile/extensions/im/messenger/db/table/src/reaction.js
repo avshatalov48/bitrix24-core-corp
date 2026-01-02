@@ -8,6 +8,7 @@ jn.define('im/messenger/db/table/reaction', (require, exports, module) => {
 	const {
 		Table,
 		FieldType,
+		FieldDefaultValue,
 	} = require('im/messenger/db/table/table');
 
 	class ReactionTable extends Table
@@ -29,6 +30,7 @@ jn.define('im/messenger/db/table/reaction', (require, exports, module) => {
 				{ name: 'ownReactions', type: FieldType.set },
 				{ name: 'reactionCounters', type: FieldType.json },
 				{ name: 'reactionUsers', type: FieldType.map },
+				{ name: 'dialogId', type: FieldType.text, defaultValue: FieldDefaultValue.emptyText },
 			];
 		}
 
@@ -40,7 +42,7 @@ jn.define('im/messenger/db/table/reaction', (require, exports, module) => {
 					items: [],
 				};
 			}
-			const idsFormatted = Type.isNumber(idList[0]) ? idList.toString() : idList.map((id) => `"${id}"`);
+			const idsFormatted = this.createWhereInCondition(this.getPrimaryKey(), idList);
 			const result = await this.executeSql({
 				query: `
 					SELECT * 

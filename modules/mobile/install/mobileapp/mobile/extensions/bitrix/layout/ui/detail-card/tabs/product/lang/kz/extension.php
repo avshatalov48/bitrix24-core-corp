@@ -1,0 +1,22 @@
+<?php
+$MESS["CSPL_CREATE_PRODUCT_IN_DESKTOP_VERSION_MSGVER_1"] = "Тауарды веб-нұсқада жасау";
+$MESS["CSPL_DOCUMENT_HAS_NO_PRODUCTS"] = "Қазір құжатта тауарлар жоқ";
+$MESS["CSPL_MENU"] = "Мәзір";
+$MESS["CSPL_MENU_ADD_NEW_PRODUCT_TITLE"] = "Жаңа тауар";
+$MESS["CSPL_MENU_CHOOSE_FROM_DB"] = "Каталогтан таңдау";
+$MESS["CSPL_MENU_CREATE_ARTNUMBER"] = "Сериялық нөмірі бар тауар";
+$MESS["CSPL_MENU_CREATE_BARCODE"] = "Штрихкодтары бар тауар";
+$MESS["CSPL_MENU_CREATE_PRODUCT"] = "Тауар жасау";
+$MESS["CSPL_MENU_CREATE_SKU"] = "Вариациялары бар тауар";
+$MESS["CSPL_MENU_SEARCH_PRODUCT_BY_BARCODE"] = "Штрихкод бойынша табу";
+$MESS["CSPL_PRODUCT_CONTEXT_MENU_EDIT"] = "Редакциялау";
+$MESS["CSPL_PRODUCT_CONTEXT_MENU_OPEN"] = "Ашу";
+$MESS["CSPL_PRODUCT_DELETE_CONFIRMATION"] = "Құжаттан жазбаны жойғыңыз келетініне сенімдісіз бе?";
+$MESS["CSPL_PRODUCT_DETAIL_BACKDROP_TITLE"] = "Тауар деректері";
+$MESS["CSPL_PRODUCT_NOT_FOUND_BY_BARCODE"] = "Мұндай штрихкоды бар тауар табылмады";
+$MESS["CSPL_REMOVE_PRODUCT_ERROR"] = "Құжаттан тауарды жою мүмкін емес";
+$MESS["CSPL_UNKNOWN_ERROR"] = "Бірдеңе дұрыс емес сияқты...";
+$MESS["CSPL_UPDATE_TAB_ERROR"] = "Деректерді жүктеу кезінде қате пайда болды";
+$MESS["CSPL_VALIDATION_ERROR_EMPTY_NAME"] = "№#NUM# позициясында тауардың атауы жоқ";
+$MESS["CSPL_VALIDATION_ERROR_PHOTO_HAS_ERROR"] = "№#NUM# позициясында қате жүктелген тауардың фотосуреттері бар. Оларды жойып, қайта жүктеп көріңіз.";
+$MESS["CSPL_VALIDATION_ERROR_PHOTO_IS_LOADING"] = "№#NUM# позициясында тауардың жүктелмеген фотосуреттері бар";

@@ -15,6 +15,8 @@ $component->setMenuIndex('sign_b2e_employee_template_list');
 $APPLICATION->IncludeComponent(
 	'bitrix:sign.b2e.employee.template.list',
 	'',
-	[],
+	[
+		'URL_LIST_FOR_RELOAD' => $arParams['URL_LIST_FOR_RELOAD_TEMPLATE_GRID'] ?? [],
+	],
 	$this->getComponent(),
 );

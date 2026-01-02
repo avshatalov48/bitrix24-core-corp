@@ -64,7 +64,9 @@ class Track extends EO_CallTrack
 		$chatId = $this->fillCall()?->getChatId();
 		if ($chatId)
 		{
-			if ($this->hasDiskFileId())
+			$callInitiatorId = $this->getCall()->getInitiatorId();
+
+			if ($this->getDiskFileId())
 			{
 				$diskFileId = $this->getDiskFileId();
 			}
@@ -76,7 +78,7 @@ class Track extends EO_CallTrack
 						new TrackError(TrackError::DISK_ATTACH_ERROR, 'Can not put file on chat disk')
 					);
 				}
-				$diskFileId = \CIMDisk::UploadFileFromMain($chatId, [$this->getFileId()])[0];
+				$diskFileId = \CIMDisk::UploadFileFromMain($chatId, [$this->getFileId()], $callInitiatorId)[0];
 			}
 
 			if ($diskFileId)
@@ -94,7 +96,7 @@ class Track extends EO_CallTrack
 				$file = \Bitrix\Im\V2\Entity\File\FileItem::initByDiskFileId($diskFileId);
 				$link = (new \Bitrix\Im\V2\Link\File\FileItem)
 					->setSubtype($type)
-					->setAuthorId($this->getCall()->getInitiatorId())
+					->setAuthorId($callInitiatorId)
 					->setChatId($this->getCall()->getChatId())
 					->setEntity($file)
 				;
@@ -117,11 +119,11 @@ class Track extends EO_CallTrack
 	public function drop(): Result
 	{
 		$deleted = false;
-		if ($this->hasDiskFileId() && $this->getDiskFileId())
+		if ($this->getDiskFileId())
 		{
 			if (Loader::includeModule('im'))
 			{
-				\Bitrix\Im\V2\Link\File\FileItem::getByDiskFileId($this->getDiskFileId())?->delete();
+				(new \Bitrix\Im\V2\Link\File\FileService())->deleteFilesByDiskFileId($this->getDiskFileId());
 			}
 			if (Loader::includeModule('disk'))
 			{
@@ -134,12 +136,12 @@ class Track extends EO_CallTrack
 			}
 		}
 
-		if (!$deleted && $this->hasFileId() && $this->getFileId())
+		if (!$deleted && $this->getFileId())
 		{
 			\CFile::Delete($this->getFileId());
 		}
 
-		if ($this->hasExternalTrackId())
+		if ($this->getExternalTrackId())
 		{
 			(new ControllerClient())->dropTrack($this);
 		}
@@ -175,7 +177,7 @@ class Track extends EO_CallTrack
 			$absolute
 		);
 
-		if (Loader::includeModule('ai'))
+		if ($absolute && Loader::includeModule('ai'))
 		{
 			$publicUrl = \Bitrix\AI\Config::getValue('public_url') ?? '';
 			if (!empty($publicUrl))
@@ -266,7 +268,7 @@ class Track extends EO_CallTrack
 	public static function getTrackForCall(int $callId, string $type): ?self
 	{
 		return CallTrackTable::getList([
-			'select' => ['ID'],
+			'select' => ['*'],
 			'filter' => [
 				'=CALL_ID' => $callId,
 				'=TYPE' => $type,

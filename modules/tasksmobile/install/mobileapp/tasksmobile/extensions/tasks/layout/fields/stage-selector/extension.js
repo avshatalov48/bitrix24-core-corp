@@ -112,11 +112,12 @@ jn.define('tasks/layout/fields/stage-selector', (require, exports, module) => {
 
 			if (
 				actionParams.selectedStatusId === DeadlinePeriod.PERIOD_OVERDUE
+				|| actionParams.selectedStatusId === DeadlinePeriod.PERIOD_DONE
 			)
 			{
 				Alert.confirm(
-					Loc.getMessage('TASKS_STAGE_SELECTOR_UNAVAILABLE_STAGE_TITLE'),
-					Loc.getMessage('TASKS_STAGE_SELECTOR_UNAVAILABLE_STAGE_TEXT'),
+					Loc.getMessage('TASKS_STAGE_SELECTOR_UNAVAILABLE_STAGE_TITLE_MSGVER_2'),
+					Loc.getMessage('TASKS_STAGE_SELECTOR_UNAVAILABLE_STAGE_TEXT_MSGVER_2'),
 				);
 
 				return Promise.reject();

@@ -186,10 +186,6 @@ export class Converter
 			return;
 		}
 
-		this.#config.getActiveItems().forEach((item) => {
-			this.#sendAnalyticsData(item.getEntityTypeId(), Dictionary.STATUS_ATTEMPT);
-		});
-
 		this.#collectAdditionalData(schemeItem).then((result: ResolveResult) => {
 			if (result.isCanceled)
 			{

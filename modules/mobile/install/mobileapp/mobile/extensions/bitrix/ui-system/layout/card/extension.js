@@ -3,6 +3,7 @@
  */
 jn.define('ui-system/layout/card', (require, exports, module) => {
 	const { Component, Indent, Color } = require('tokens');
+	const { PropTypes } = require('utils/validation');
 	const { CardDesign } = require('ui-system/layout/card/src/card-design-enum');
 	const { BadgeStatus, BadgeStatusMode } = require('ui-system/blocks/badges/status');
 	const { IconView, Icon } = require('ui-system/blocks/icon');
@@ -23,6 +24,7 @@ jn.define('ui-system/layout/card', (require, exports, module) => {
 	 * @property {boolean} [selected=true]
 	 * @property {boolean} [accent=false]
 	 * @property {boolean} [border=false]
+	 * @property {boolean} [withPressed=false]
 	 * @property {BadgeStatusMode} [badgeMode=null]
 	 * @property {function} [onClose=null]
 	 * @property {function} [onClick=null]
@@ -46,6 +48,7 @@ jn.define('ui-system/layout/card', (require, exports, module) => {
 			hideCross = true,
 			selected = false,
 			accent = false,
+			withPressed = false,
 			onClick = null,
 			onClose = null,
 			...restProps
@@ -61,11 +64,11 @@ jn.define('ui-system/layout/card', (require, exports, module) => {
 		const {
 			backgroundColor: designBackgroundColor,
 			accentColor: designAccentColor,
-		} = CardDesign.resolve(design, CardDesign.PRIMARY).getValue();
+		} = CardDesign.resolve(design, CardDesign.PRIMARY).getStyle({ withPressed });
 
 		const cardStyle = {
 			borderRadius: Component.cardCorner.toNumber(),
-			backgroundColor: designBackgroundColor.toHex(),
+			backgroundColor: designBackgroundColor,
 		};
 
 		if (border)
@@ -83,7 +86,7 @@ jn.define('ui-system/layout/card', (require, exports, module) => {
 		if (accent)
 		{
 			cardStyle.borderWidth = 2;
-			cardStyle.borderColor = designAccentColor?.toHex();
+			cardStyle.borderColor = designAccentColor;
 		}
 
 		const status = BadgeStatusMode.has(badgeMode)
@@ -121,20 +124,15 @@ jn.define('ui-system/layout/card', (require, exports, module) => {
 			{
 				...restProps,
 				testId,
-				onClick: () => {
-					if (onClick)
-					{
-						onClick();
-					}
-				},
+				onClick,
 				style: {
 					position: 'relative',
 					paddingLeft,
 					paddingRight,
 					paddingTop,
 					paddingBottom,
-					...style,
 					...cardStyle,
+					...style,
 				},
 			},
 			...children,
@@ -148,6 +146,7 @@ jn.define('ui-system/layout/card', (require, exports, module) => {
 		selected: true,
 		border: false,
 		accent: false,
+		withPressed: false,
 		excludePaddingSide: {},
 		onClose: null,
 		onClick: null,
@@ -157,6 +156,7 @@ jn.define('ui-system/layout/card', (require, exports, module) => {
 		testId: PropTypes.string.isRequired,
 		hideCross: PropTypes.bool,
 		selected: PropTypes.bool,
+		withPressed: PropTypes.bool,
 		border: PropTypes.bool,
 		design: PropTypes.instanceOf(CardDesign),
 		badgeMode: PropTypes.instanceOf(BadgeStatusMode),

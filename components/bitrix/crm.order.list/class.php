@@ -11,6 +11,7 @@ use Bitrix\Catalog;
 use Bitrix\Crm\Agent\Search\OrderSearchContentRebuildAgent;
 use Bitrix\Crm\Component\EntityList\FieldRestrictionManager;
 use Bitrix\Crm\Component\EntityList\FieldRestrictionManagerTypes;
+use Bitrix\Crm\ItemIdentifier;
 use Bitrix\Crm\Order;
 use Bitrix\Crm\Product\Url;
 use Bitrix\Crm\Service;
@@ -26,7 +27,7 @@ Loc::loadMessages(__FILE__);
 class CCrmOrderListComponent extends \CBitrixComponent
 {
 	protected $userId = 0;
-	protected $userPermissions;
+	protected ?Service\UserPermissions $userPermissionsService = null;
 	protected $errors = array();
 	protected $isInternal = false;
 	protected FieldRestrictionManager $fieldRestrictionManager;
@@ -159,19 +160,19 @@ class CCrmOrderListComponent extends \CBitrixComponent
 			return false;
 		}
 
-		$this->userPermissions = CCrmPerms::GetCurrentUserPermissions();
+		$this->userPermissionsService = Container::getInstance()->getUserPermissions();
 		$this->fieldRestrictionManager = new FieldRestrictionManager(
 			FieldRestrictionManager::MODE_GRID,
 			[FieldRestrictionManagerTypes::ACTIVITY]
 		);
 
-		if (!\Bitrix\Crm\Order\Permissions\Order::checkReadPermission(0, $this->userPermissions))
+		if (!$this->userPermissionsService->entityType()->canReadItems(CCrmOwnerType::Order))
 		{
 			$this->addError(Loc::getMessage('CRM_PERMISSION_DENIED'));
 			return false;
 		}
 
-		$this->userId = CCrmSecurityHelper::GetCurrentUserID();
+		$this->userId = $this->userPermissionsService->getUserId();
 		$this->isInternal = !empty($this->arParams['INTERNAL_FILTER']);
 		CUtil::InitJSCore(array('ajax', 'tooltip'));
 
@@ -196,7 +197,7 @@ class CCrmOrderListComponent extends \CBitrixComponent
 					break;
 			}
 
-			if ($this->isExportMode() && !\Bitrix\Crm\Order\Permissions\Order::checkExportPermission($this->userPermissions))
+			if ($this->isExportMode() && !$this->userPermissionsService->entityType()->canExportItems(CCrmOwnerType::Order))
 			{
 				$this->addError(Loc::getMessage('CRM_PERMISSION_DENIED'));
 				return false;
@@ -362,7 +363,7 @@ class CCrmOrderListComponent extends \CBitrixComponent
 
 						while($order = $res->Fetch())
 						{
-							if(\Bitrix\Crm\Order\Permissions\Order::checkDeletePermission($order['ID'], $this->userPermissions))
+							if($this->userPermissionsService->item()->canDelete(CCrmOwnerType::Order, $order['ID']))
 							{
 								try
 								{
@@ -391,8 +392,10 @@ class CCrmOrderListComponent extends \CBitrixComponent
 					{
 						foreach($actionData['FIELDS'] as $ID => $arSrcData)
 						{
-							if (!\Bitrix\Crm\Order\Permissions\Order::checkUpdatePermission($ID, $this->userPermissions))
+							if (!$this->userPermissionsService->item()->canUpdate(CCrmOwnerType::Order, (int)$ID))
+							{
 								continue;
+							}
 
 							$order = Order\Order::load($ID);
 
@@ -431,7 +434,7 @@ class CCrmOrderListComponent extends \CBitrixComponent
 
 							while($order = $res->fetch())
 							{
-								if(\Bitrix\Crm\Order\Permissions\Order::checkUpdatePermission($order['ID'], $this->userPermissions))
+								if ($this->userPermissionsService->item()->canUpdate(CCrmOwnerType::Order, $order['ID']))
 								{
 									$setRes = Order\Manager::setOrderStatus($order['ID'], $actionData['STATUS_ID'], $reasonCanceled);
 
@@ -461,7 +464,7 @@ class CCrmOrderListComponent extends \CBitrixComponent
 
 							while($orderFields = $res->fetch())
 							{
-								if(\Bitrix\Crm\Order\Permissions\Order::checkUpdatePermission($orderFields['ID'], $this->userPermissions))
+								if ($this->userPermissionsService->item()->canUpdate(CCrmOwnerType::Order, $orderFields['ID']))
 								{
 									$order = Order\Order::load($orderFields['ID']);
 
@@ -494,7 +497,7 @@ class CCrmOrderListComponent extends \CBitrixComponent
 				{
 					$ID = (int)$actionData['ID'];
 
-					if(\Bitrix\Crm\Order\Permissions\Order::checkDeletePermission($ID, $this->userPermissions))
+					if ($this->userPermissionsService->item()->canDelete(CCrmOwnerType::Order, $ID))
 					{
 						$res = Order\Order::delete($ID);
 
@@ -1270,7 +1273,7 @@ class CCrmOrderListComponent extends \CBitrixComponent
 			AddEventHandler('crm', 'onCrmOrderListItemBuildMenu', array('\Bitrix\Crm\CallList\CallList', 'handleOnCrmOrderListItemBuildMenu'));
 		}
 
-		\Bitrix\Crm\Order\Permissions\Order::prepareConversionPermissionFlags(0, $this->arResult, $this->userPermissions);
+		\Bitrix\Crm\Order\Permissions\Order::prepareConversionPermissionFlags(0, $this->arResult);
 
 		if ($this->arResult['CAN_CONVERT'])
 		{
@@ -1310,9 +1313,9 @@ class CCrmOrderListComponent extends \CBitrixComponent
 		$this->arResult['EVENT_LIST'] = CCrmStatus::GetStatusListEx('EVENT_TYPE');
 		$this->arResult['FILTER'] = array();
 		$this->arResult['FILTER_PRESETS'] = array();
-		$this->arResult['PERMS']['ADD'] = \Bitrix\Crm\Order\Permissions\Order::checkCreatePermission($this->userPermissions);
-		$this->arResult['PERMS']['WRITE'] = \Bitrix\Crm\Order\Permissions\Order::checkUpdatePermission(0, $this->userPermissions);
-		$this->arResult['PERMS']['DELETE'] = \Bitrix\Crm\Order\Permissions\Order::checkDeletePermission(0, $this->userPermissions);
+		$this->arResult['PERMS']['ADD'] =  $this->userPermissionsService->entityType()->canAddItems(CCrmOwnerType::Order);
+		$this->arResult['PERMS']['WRITE'] = $this->userPermissionsService->entityType()->canUpdateItems(CCrmOwnerType::Order);
+		$this->arResult['PERMS']['DELETE'] = $this->userPermissionsService->entityType()->canDeleteItems(CCrmOwnerType::Order);
 		$this->arResult['AJAX_MODE'] = $this->arParams['AJAX_MODE'] ?? ($this->arResult['INTERNAL'] ? 'N' : 'Y');
 		$this->arResult['AJAX_ID'] = $this->arParams['AJAX_ID'] ?? '';
 		$this->arResult['AJAX_OPTION_JUMP'] = $this->arParams['AJAX_OPTION_JUMP'] ?? 'N';
@@ -1739,7 +1742,7 @@ class CCrmOrderListComponent extends \CBitrixComponent
 		);
 		//endregion
 
-		$entityAttrs = \Bitrix\Crm\Order\Permissions\Order::getPermissionAttributes(array_keys($this->arResult['ORDER']));
+		$this->userPermissionsService->item()->preloadPermissionAttributes(CCrmOwnerType::Order, array_keys($this->arResult['ORDER']));
 
 		$this->arResult['PAGINATION']['URL'] = $APPLICATION->GetCurPageParam('', array('apply_filter', 'clear_filter', 'save', 'page', 'sessid', 'internal'));
 		$now = time() + CTimeZone::GetOffset();
@@ -2001,7 +2004,7 @@ class CCrmOrderListComponent extends \CBitrixComponent
 					'ENTITY_ID' => $contactID
 				);
 
-				if (!CCrmContact::CheckReadPermission($contactID, $this->userPermissions))
+				if (!$this->userPermissionsService->item()->canRead(CCrmOwnerType::Contact, $contactID))
 				{
 					$arOrder['CONTACT_INFO']['IS_HIDDEN'] = true;
 				}
@@ -2026,7 +2029,7 @@ class CCrmOrderListComponent extends \CBitrixComponent
 					'ENTITY_ID' => $companyID
 				);
 
-				if (!CCrmCompany::CheckReadPermission($companyID, $this->userPermissions))
+				if (!$this->userPermissionsService->item()->canRead(CCrmOwnerType::Contact, $companyID))
 				{
 					$arOrder['COMPANY_INFO']['IS_HIDDEN'] = true;
 				}
@@ -2126,17 +2129,8 @@ class CCrmOrderListComponent extends \CBitrixComponent
 
 			if (!(is_object($USER) && $USER->IsAdmin()))
 			{
-				$arOrder['EDIT'] = \Bitrix\Crm\Order\Permissions\Order::checkUpdatePermission(
-					$entityID,
-					$this->userPermissions,
-					array('ENTITY_ATTRS' => $entityAttrs)
-				);
-
-				$arOrder['DELETE'] = \Bitrix\Crm\Order\Permissions\Order::checkDeletePermission(
-					$entityID,
-					$this->userPermissions,
-					array('ENTITY_ATTRS' => $entityAttrs)
-				);
+				$arOrder['EDIT'] = $entityID && $this->userPermissionsService->item()->canUpdate(CCrmOwnerType::Order, $entityID);
+				$arOrder['DELETE'] =  $entityID && $this->userPermissionsService->item()->canDelete(CCrmOwnerType::Order, $entityID);
 			}
 
 			if (!empty( $basketData[$entityID]))

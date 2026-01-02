@@ -1,0 +1,8 @@
+.confirm-page__footer {
+	display: flex;
+	align-self: stretch;
+	flex-direction: column;
+	align-items: center;
+	margin-top: 12px;
+	gap: 12px;
+}

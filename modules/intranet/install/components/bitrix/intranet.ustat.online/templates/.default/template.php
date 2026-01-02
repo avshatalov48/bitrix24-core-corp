@@ -12,15 +12,20 @@ CJSCore::Init("finder");
 
 use Bitrix\Main\Localization\Loc;
 
+$inlineClassnameModifier = '';
 if ($arResult['DISPLAY_MODE'] === 'sidebar')
 {
 	$this->SetViewTarget("sidebar", 10);
 	$frame = $this->createFrame()->begin();
 }
+else
+{
+	$inlineClassnameModifier = '--inline';
+}
 
 $containerDataId = 'intranet-ustat-online-container-' . rand();
 ?>
-<div class="intranet-ustat-online-box" data-id="<?=$containerDataId?>">
+<div class="intranet-ustat-online-box <?= $inlineClassnameModifier ?>" data-id="<?=$containerDataId?>">
 	<div class="intranet-ustat-online-badge">live</div>
 	<div id="intranet-ustat-online-hint" class="intranet-ustat-online-hint" onclick="BX.Helper.show('redirect=detail&code=11584442');">
 		<div class="intranet-ustat-online-hint-item">
@@ -76,15 +81,12 @@ $containerDataId = 'intranet-ustat-online-container-' . rand();
 		new BX.Intranet.UstatOnline({
 			signedParameters: '<?=$this->getComponent()->getSignedParameters()?>',
 			componentName: '<?=$this->getComponent()->getName() ?>',
+			user_count: <?=$arResult['USER_COUNT']?>,
 			users: <?=$arResult['USERS']?>,
-			currentUserId: <?=intval($USER->GetID())?>,
 			limitOnlineSeconds: <?=$arResult["LIMIT_ONLINE_SECONDS"]?>,
 			maxOnlineUserCountToday: '<?=$arResult["MAX_ONLINE_USER_COUNT_TODAY"]?>',
-			maxUserToShow: <?=$arResult["MAX_USER_TO_SHOW"]?>,
-			allOnlineUserIdToday: <?=CUtil::PhpToJSObject($arResult["ALL_ONLINE_USER_ID_TODAY"])?>,
 			ustatOnlineContainerNode: document.querySelector("[data-id='<?=$containerDataId?>']"),
 			isTimemanAvailable: '<?=$arResult["IS_FEATURE_TIMEMAN_AVAILABLE"] ? "Y" : "N"?>',
-			isFullAnimationMode: '<?=$arResult["IS_FULL_ANIMATION_MODE"] ? "Y" : "N"?>'
 		});
 	});
 </script>

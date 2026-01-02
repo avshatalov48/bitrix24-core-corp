@@ -1,0 +1,25 @@
+<?php
+$MESS["CRM_COMPANY_COUNT_0"] = "Компания";
+$MESS["CRM_COMPANY_COUNT_1"] = "Компаниялар";
+$MESS["CRM_COMPANY_COUNT_2"] = "Компаниялардың";
+$MESS["CRM_COMPANY_PLURAL_0"] = "Компания";
+$MESS["CRM_COMPANY_PLURAL_1"] = "Компаниялар";
+$MESS["CRM_COMPANY_PLURAL_2"] = "Компаниялардың";
+$MESS["CRM_CONTACT_COUNT_0"] = "Байланыс";
+$MESS["CRM_CONTACT_COUNT_1"] = "Байланысты";
+$MESS["CRM_CONTACT_COUNT_2"] = "Контактілердің";
+$MESS["CRM_CONTACT_PLURAL_0"] = "Байланыс";
+$MESS["CRM_CONTACT_PLURAL_1"] = "Байланысты";
+$MESS["CRM_CONTACT_PLURAL_2"] = "Контактілердің";
+$MESS["CRM_DEAL_COUNT_0"] = "Мәміле";
+$MESS["CRM_DEAL_COUNT_1"] = "Мәмілелер";
+$MESS["CRM_DEAL_COUNT_2"] = "Мәміле";
+$MESS["CRM_DEAL_PLURAL_0"] = "Мәміле";
+$MESS["CRM_DEAL_PLURAL_1"] = "Мәмілелер";
+$MESS["CRM_DEAL_PLURAL_2"] = "Мәміле";
+$MESS["CRM_LEAD_COUNT_0"] = "Лид";
+$MESS["CRM_LEAD_COUNT_1"] = "Лидтің";
+$MESS["CRM_LEAD_COUNT_2"] = "Лидтер";
+$MESS["CRM_LEAD_PLURAL_0"] = "Лид";
+$MESS["CRM_LEAD_PLURAL_1"] = "Лидтің";
+$MESS["CRM_LEAD_PLURAL_2"] = "Лидтер";

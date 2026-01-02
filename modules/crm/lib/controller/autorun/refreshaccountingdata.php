@@ -13,7 +13,7 @@ final class RefreshAccountingData extends Base
 {
 	protected function processItem(Factory $factory, Item $item, PreparedData $data): Result
 	{
-		if (!Container::getInstance()->getUserPermissions()->canUpdateItem($item))
+		if (!Container::getInstance()->getUserPermissions()->item()->canUpdateItem($item))
 		{
 			return (new Result())->addError(ErrorCode::getAccessDeniedError());
 		}

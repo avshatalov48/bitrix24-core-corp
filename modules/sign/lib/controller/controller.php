@@ -1,4 +1,5 @@
 <?php
+
 namespace Bitrix\Sign\Controller;
 
 use Bitrix\Crm\Service\Container;
@@ -18,7 +19,8 @@ class Controller extends \Bitrix\Main\Engine\Controller
 			$this->addError(new Main\Error('Access denied.'));
 		}
 
-		Logger::getInstance()->dump($action->getArguments(), static::class.' before: ' . $action->getName().'Action');
+		Logger::getInstance()->dump($action->getArguments(), static::class . ' before: ' . $action->getName() . 'Action');
+
 		return parent::processBeforeAction($action);
 	}
 
@@ -29,7 +31,7 @@ class Controller extends \Bitrix\Main\Engine\Controller
 	 */
 	protected function processAfterAction(Action $action, $result)
 	{
-		Logger::getInstance()->dump($result, static::class.' after: ' . $action->getName().'Action');
+		Logger::getInstance()->dump($result, static::class . ' after: ' . $action->getName() . 'Action');
 
 		$errorsCollection = Error::getInstance()->getErrors();
 
@@ -38,13 +40,13 @@ class Controller extends \Bitrix\Main\Engine\Controller
 		{
 			$this->addError(new \Bitrix\Main\Error(
 				$error->getMessage(),
-				$error->getCode()
+				$error->getCode(),
 			));
 		}
 
 		if (($controllerErrors = $this->getErrors()) && count($controllerErrors) > 0)
 		{
-			Logger::getInstance()->dump($controllerErrors, static::class.' errors: ' . $action->getName().'Action');
+			Logger::getInstance()->dump($controllerErrors, static::class . ' errors: ' . $action->getName() . 'Action');
 		}
 
 		if ($this->getErrors())
@@ -59,7 +61,7 @@ class Controller extends \Bitrix\Main\Engine\Controller
 	 * @return Controller
 	 * @throws \Bitrix\Main\ObjectNotFoundException
 	 */
-	public static function getInstance(): Controller
+	public static function getInstance(): self
 	{
 		if (!ServiceLocator::getInstance()->has(static::getServiceLocatorIdentifier()))
 		{

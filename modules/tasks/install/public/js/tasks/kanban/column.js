@@ -23,7 +23,7 @@
 	BX.Tasks.Kanban.Column.prototype = {
 		__proto__: BX.Kanban.Column.prototype,
 		constructor: BX.Tasks.Kanban.Column,
-		
+
 		/**
 		 * Customize title buttons.
 		 * @returns {DOMNode}
@@ -196,7 +196,7 @@
 
 			promise.fulfill(this);
 		},
-		
+
 		/**
 		 * Hook on add column button.
 		 * @param {MouseEvent} event
@@ -228,7 +228,7 @@
 				this.getGrid().accessNotify();
 			}
 		},
-		
+
 		/**
 		 * Switch from view to edit mode (column).
 		 * @returns {void}
@@ -258,6 +258,45 @@
 		handleAddItemButtonClick: function(event)
 		{
 			const gridData = this.getGridData();
+
+			let section = 'tasks';
+			let subSection = 'kanban';
+			switch (gridData.kanbanType)
+			{
+				case 'TL':
+					subSection = 'deadline';
+					break;
+				case 'P':
+					subSection = 'planner';
+					break;
+				case 'K':
+					subSection = 'kanban';
+					break;
+			}
+
+			if (gridData.params.SPRINT_ID > 0)
+			{
+				section = 'scrum';
+			}
+			else if (
+				parseInt(gridData.groupId, 10) > 0
+				&& gridData.params.SPRINT_ID < 0
+			)
+			{
+				section = 'project';
+			}
+
+			BX.Runtime.loadExtension('ui.analytics').then(() => {
+				BX.UI.Analytics.sendData({
+					tool: 'tasks',
+					category: 'task_operations',
+					event: 'click_create',
+					type: 'task',
+					section,
+					subSection,
+					element: 'quick_button',
+				});
+			});
 
 			if (gridData.addItemInSlider === true && BX.SidePanel.Instance)
 			{

@@ -24,5 +24,6 @@ $APPLICATION->IncludeComponent(
 			'PATH_TO_EDIT' => $arResult['PATH_TO_EDIT'],
 		],
 		'USE_PADDING' => false,
+		'USE_UI_TOOLBAR' => 'Y',
 	)
 );

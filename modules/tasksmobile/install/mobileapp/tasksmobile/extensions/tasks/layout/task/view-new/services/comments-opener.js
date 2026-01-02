@@ -48,7 +48,6 @@ jn.define('tasks/layout/task/view-new/services/comments-opener', (require, expor
 				routePage: 'comments',
 				widgetGuid: this.#widgetGuid,
 				TASK_ID: taskId,
-				IS_TABS_MODE: false,
 			};
 			let url = `${env.siteDir}mobile/tasks/snmrouter/?`;
 

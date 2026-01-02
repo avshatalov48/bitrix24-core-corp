@@ -6,6 +6,9 @@
 jn.define('im/messenger/db/model-writer/vuex/recent', (require, exports, module) => {
 	const { Type } = require('type');
 	const { clone } = require('utils/object');
+	const { getLoggerWithContext } = require('im/messenger/lib/logger');
+	const { DialogHelper } = require('im/messenger/lib/helper');
+	const logger = getLoggerWithContext('writer--recent', 'RecentWriter');
 
 	const { Writer } = require('im/messenger/db/model-writer/vuex/writer');
 
@@ -45,20 +48,32 @@ jn.define('im/messenger/db/model-writer/vuex/recent', (require, exports, module)
 				'set',
 				'update',
 				'clearAllCounters',
+				'setFirstPageByTab',
 			];
+
 			if (!saveActions.includes(actionName))
 			{
+				logger.warn('addRouter skip: unknown action', actionName);
+
 				return;
 			}
 
 			if (!Type.isArrayFilled(data.recentItemList))
 			{
+				logger.error('addRouter skip: empty recentItemList');
+
 				return;
 			}
 
 			const itemIdCollection = {};
 			data.recentItemList.forEach((item) => {
 				if (!Type.isObject(item) || !Type.isObject(item.fields))
+				{
+					return;
+				}
+
+				const dialogHelper = DialogHelper.createByDialogId(item.fields.id);
+				if (!dialogHelper?.isLocalStorageSupported)
 				{
 					return;
 				}
@@ -71,6 +86,8 @@ jn.define('im/messenger/db/model-writer/vuex/recent', (require, exports, module)
 				.filter((item) => itemIdCollection[item.id] === true)
 			;
 			recentItemsToSave = clone(recentItemsToSave);
+
+			logger.log('addRouter saving recent items...', recentItemsToSave.length);
 
 			this.repository.recent.saveFromModel(recentItemsToSave);
 		}
@@ -89,13 +106,19 @@ jn.define('im/messenger/db/model-writer/vuex/recent', (require, exports, module)
 			];
 			if (!saveActions.includes(actionName))
 			{
+				logger.warn('deleteRouter skip: unknown action', actionName);
+
 				return;
 			}
 
 			if (!data.id)
 			{
+				logger.error('deleteRouter skip: no data id');
+
 				return;
 			}
+
+			logger.log('deleteRouter deleting recent item id...', data.id);
 
 			this.repository.recent.deleteById(data.id);
 		}

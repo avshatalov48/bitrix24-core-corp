@@ -80,7 +80,7 @@ export const UserListPopup = {
 					<div v-for="user in this.usersData" :key="user.id" class="bx-call-users-popup__user-item">
 						<img
 							v-if="user.avatar"
-							:src="encodeURI(user.avatar)"
+							:src="user.avatar"
 							:alt="user.name"
 							class="bx-call-users-popup__user-avatar"
 							draggable="false"

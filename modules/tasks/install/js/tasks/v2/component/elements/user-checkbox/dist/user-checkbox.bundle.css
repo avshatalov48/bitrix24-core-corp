@@ -1,0 +1,22 @@
+.b24-user-checkbox-container {
+	display: flex;
+	gap: 6px;
+	align-items: center;
+	width: 40px;
+	height: 18px;
+	border-radius: var(--ui-border-radius-lg);
+	background-color: var(--ui-color-base-7);
+	cursor: pointer;
+}
+
+.b24-user-checkbox-container .b24-user-checkbox-number {
+	color: var(--ui-color-base-3);
+}
+
+.b24-user-checkbox-container.--checked {
+	background-color: var(--ui-color-accent-main-primary);
+}
+
+.b24-user-checkbox-container.--checked .b24-user-checkbox-number {
+	color: var(--ui-color-base-white-fixed);
+}

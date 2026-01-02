@@ -1,6 +1,7 @@
 <?php
 namespace Bitrix\Crm\Widget\Custom;
 
+use Bitrix\Crm\Service\Container;
 use Bitrix\Crm\Widget\Custom\Entity\SaleTargetTable;
 use Bitrix\Main;
 use Bitrix\Main\Localization\Loc;
@@ -68,12 +69,7 @@ class SaleTarget
 
 	public function canEdit($userId)
 	{
-		if (\CCrmPerms::IsAdmin($userId))
-		{
-			return true;
-		}
-		$permissions = new \CCrmPerms($userId);
-		return $permissions->HavePerm('SALETARGET', $permissions::PERM_ALL, 'WRITE');
+		return Container::getInstance()->getUserPermissions((int)$userId)->saleTarget()->canEdit();
 	}
 
 	public function getConfigurations()
@@ -425,15 +421,13 @@ class SaleTarget
 
 	private function applyReadPermissions(array &$configuration, $userId)
 	{
-		if (!$configuration['id'] || \CCrmPerms::IsAdmin($userId))
+		$userPermissions = Container::getInstance()->getUserPermissions($userId);
+		if (!$configuration['id'] || $userPermissions->isAdmin())
 		{
 			return;
 		}
 
-		$permissions = new \CCrmPerms($userId);
-		$permission = $permissions->GetPermType('SALETARGET', 'READ');
-
-		if ($permission === $permissions::PERM_NONE)
+		if (!$userPermissions->saleTarget()->canRead())
 		{
 			$configuration['target']['totalGoal'] = -1;
 			foreach ($configuration['target']['goal'] as $id => $value)
@@ -441,7 +435,7 @@ class SaleTarget
 				$configuration['target']['goal'][$id] = -1;
 			}
 		}
-		elseif ($permission === $permissions::PERM_ALL || $configuration['type'] === static::TYPE_COMPANY)
+		elseif ($userPermissions->saleTarget()->canReadAll() || $configuration['type'] === static::TYPE_COMPANY)
 		{
 			return;
 		}
@@ -449,8 +443,7 @@ class SaleTarget
 		{
 			foreach ($configuration['target']['goal'] as $id => $value)
 			{
-				$dealPermission = $permissions->GetPermType($id > 0 ? 'DEAL_C'.$id : 'DEAL', 'READ');
-				if ($dealPermission === $permissions::PERM_NONE)
+				if (!$userPermissions->entityType()->canReadItemsInCategory(\CCrmOwnerType::Deal, $id))
 				{
 					$configuration['target']['goal'][$id] = -1;
 				}
@@ -458,7 +451,7 @@ class SaleTarget
 		}
 		elseif ($configuration['type'] === static::TYPE_USER)
 		{
-			$userIds = $this->splitUsersByPermission($userId, array_keys($configuration['target']['goal']), $permission);
+			$userIds = $userPermissions->saleTarget()->filterAvailableToReadUserIds(array_keys($configuration['target']['goal']));
 			foreach ($configuration['target']['goal'] as $id => $value)
 			{
 				if (!in_array($id, $userIds))
@@ -467,78 +460,6 @@ class SaleTarget
 				}
 			}
 		}
-	}
-
-	private function splitUsersByPermission($targetUserId, $userIds, $permission)
-	{
-		$targetUserId = (int)$targetUserId;
-		$resultIds = array();
-
-		if (
-			$permission !== \CCrmPerms::PERM_SELF
-			&& $permission !== \CCrmPerms::PERM_DEPARTMENT
-			&& $permission !== \CCrmPerms::PERM_SUBDEPARTMENT
-		)
-		{
-			return $resultIds;
-		}
-
-		$targetDepartments = $this->getUserDepartments($targetUserId, $permission);
-
-		foreach ($userIds as $checkUserId)
-		{
-			$checkUserId = (int)$checkUserId;
-			if ($checkUserId === $targetUserId)
-			{
-				$resultIds[] = $checkUserId;
-				continue;
-			}
-			if ($permission !== \CCrmPerms::PERM_SELF)
-			{
-				$checkDepartments = $this->getUserDepartments($checkUserId, \CCrmPerms::PERM_DEPARTMENT);
-				$sect = array_intersect($targetDepartments, $checkDepartments);
-
-				if ($sect)
-				{
-					$resultIds[] = $checkUserId;
-				}
-			}
-		}
-
-		return $resultIds;
-	}
-
-	private function getUserDepartments($userId, $permission)
-	{
-		$departments = array();
-		$permissions = \CCrmPerms::GetUserAttr($userId);
-		if (
-			isset($permissions['INTRANET'])
-			&& (
-				$permission === \CCrmPerms::PERM_DEPARTMENT || $permission === \CCrmPerms::PERM_SUBDEPARTMENT
-			)
-		)
-		{
-			foreach ($permissions['INTRANET'] as $code)
-			{
-				if (mb_strpos($code, 'D') === 0)
-				{
-					$departments[] = (int)mb_substr($code, 1);
-				}
-			}
-		}
-		if (isset($permissions['SUBINTRANET']) && $permission === \CCrmPerms::PERM_SUBDEPARTMENT)
-		{
-			foreach ($permissions['SUBINTRANET'] as $code)
-			{
-				if (mb_strpos($code, 'D') === 0)
-				{
-					$departments[] = (int)mb_substr($code, 1);
-				}
-			}
-		}
-
-		return $departments;
 	}
 
 	private function getUsers(array $userIds, $inactive = false)

@@ -13,7 +13,7 @@ use Bitrix\Main\Localization\Loc;
 
 class Config
 {
-	private const CACHE_TIME = 3600;
+	private const CACHE_TIME = 600;
 	public const CACHE_DIR = '/imopenlines/livechat/';
 	public const CACHE_ID_PREFIX_ = 'livechat_config_';
 
@@ -69,12 +69,18 @@ class Config
 			$queue = [];
 			$operatorDataType = \Bitrix\ImOpenLines\Config::operatorDataConfig($result['CONFIG_ID']);
 
+			$hasOnlineOperator = false;
 			foreach ($config['QUEUE'] as $userId)
 			{
 				$userArray = \Bitrix\ImOpenLines\Queue::getUserData($result['CONFIG_ID'], $userId);
 				if (!$userArray)
 				{
 					continue;
+				}
+
+				if ($config['CHECK_AVAILABLE'] === 'Y' && $hasOnlineOperator !== true)
+				{
+					$hasOnlineOperator = \Bitrix\ImOpenLines\Queue::isOperatorActive($userId);
 				}
 
 				$queue[] = $userArray;
@@ -114,7 +120,7 @@ class Config
 				'VOTE_ENABLE' => $config['VOTE_MESSAGE'] === 'Y',
 				'CONSENT_URL' => $config['AGREEMENT_ID'] && $config['AGREEMENT_MESSAGE'] == 'Y' ? \Bitrix\ImOpenLines\Common::getAgreementLink($config['AGREEMENT_ID'], $config['LANGUAGE_ID'], true) : '',
 				'OPERATORS' => $queue,
-				'ONLINE' => $config['QUEUE_ONLINE'] === 'Y',
+				'ONLINE' => $config['CHECK_AVAILABLE'] === 'Y' ? $hasOnlineOperator === true : $config['QUEUE_ONLINE'] === 'Y',
 				'CONNECTORS' => $connectors,
 				'DISK' => [
 					'ENABLED' => \Bitrix\Main\ModuleManager::isModuleInstalled('disk'),

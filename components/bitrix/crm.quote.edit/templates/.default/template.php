@@ -10,10 +10,7 @@ use \Bitrix\Crm\Category\DealCategory;
 $APPLICATION->SetAdditionalCSS('/bitrix/js/crm/css/crm.css');
 $APPLICATION->SetAdditionalCSS("/bitrix/themes/.default/crm-entity-show.css");
 
-if(SITE_TEMPLATE_ID === 'bitrix24')
-{
-	$APPLICATION->SetAdditionalCSS("/bitrix/themes/.default/bitrix24/crm-entity-show.css");
-}
+$APPLICATION->SetAdditionalCSS('/bitrix/themes/.default/bitrix24/crm-entity-show.css');
 
 if(isset($arResult['CONVERSION_LEGEND'])):
 	?><div class="crm-view-message"><?=$arResult['CONVERSION_LEGEND']?></div><?

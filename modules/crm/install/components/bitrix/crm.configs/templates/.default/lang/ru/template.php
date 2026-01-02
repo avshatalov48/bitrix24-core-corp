@@ -70,6 +70,7 @@ $MESS["CRM_CONFIGS_DESCRIPTION_CREATION_ON_THE_BASIS"] = "Создавайте �
 	соответствие полей и сохраните свои настройки.";
 $MESS["CRM_CONFIGS_DESCRIPTION_OTHER"] = "Загляните в этот раздел и выполните дополнительные настройки вашей CRM.";
 $MESS["CRM_CONFIGS_TAB_APPS_2"] = "Битрикс24.Маркет";
+$MESS["CRM_CONFIGS_TAB_APPS_2_MSGVER_1"] = "Маркетплейс";
 $MESS["CRM_CONFIGS_CRM_APPLICATION"] = "Приложения для CRM";
 $MESS["CRM_CONFIGS_TAB_NUMERATOR"] = "Нумератор";
 $MESS["CRM_CONFIGS_NUMERATOR_FOR_DOCUMENT"] = "Для документов";

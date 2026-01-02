@@ -1,0 +1,28 @@
+.booking-cycle-popup-step {
+	display: flex;
+	flex-direction: column;
+	gap: var(--ui-space-stack-sm);
+}
+
+.booking-cycle-popup-step-header {
+	display: flex;
+	align-items: center;
+}
+
+.booking-cycle-popup-step-number {
+	margin-right: var(--ui-space-inline-xs2);
+	--size: 20px;
+	width: var(--size);
+	height: var(--size);
+	line-height: var(--size);
+	text-align: center;
+	border-radius: var(--ui-border-radius-pill);
+	background: var(--ui-color-palette-blue-20);
+	color: var(--ui-color-accent-light-blue);
+	font-size: var(--ui-font-size-xs);
+}
+
+.booking-cycle-popup-step-title {
+	font-size: var(--ui-font-size-md);
+	font-weight: var(--ui-font-weight-medium);
+}

@@ -29,7 +29,7 @@ jn.define('bizproc/task/tasks-performer/rules/sequential-task-rule', (require, e
 				return Promise.resolve();
 			}
 
-			const { doTaskRequest, delegateRequest, finishRule } = await this.showTask(task);
+			const { doTaskRequest, delegateRequest, finishRule } = await this.showTask(task, false);
 
 			if (finishRule === true)
 			{

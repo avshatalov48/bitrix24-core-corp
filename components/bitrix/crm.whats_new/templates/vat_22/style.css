@@ -1,0 +1,22 @@
+.crm-whats-new-vat-22_content-description {
+	color: var(--ui-color-palette-gray-90);
+	font-feature-settings: 'liga' off, 'clig' off;
+	font-size: var(--ui-font-size-md);
+	line-height: var(--ui-font-line-height-2xs);
+}
+
+.crm-whats-new-vat-22_content-description p {
+	margin-top: 19px;
+	margin-bottom: 0;
+}
+
+.crm-whats-new-vat-22_content-description a {
+	outline-color: var(--ui-color-accent-main-link);
+	color: var(--ui-color-accent-main-link);
+	text-decoration: underline;
+	text-underline-position: under;
+	text-decoration-style: dashed;
+	text-decoration-thickness: 1px;
+	cursor: pointer;
+	text-decoration-color: rgba(var(--ui-color-accent-main-link), 1);
+}

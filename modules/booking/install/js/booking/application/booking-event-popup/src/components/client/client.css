@@ -1,0 +1,61 @@
+.booking-event-popup__person {
+	overflow: hidden;
+	display: flex;
+	align-items: center;
+	gap: 10px;
+	max-width: 100%;
+}
+
+.booking-event-popup__person-block {
+	display: flex;
+	gap: 10px;
+	justify-content: space-between;
+	margin-bottom: 10px;
+}
+
+.booking-event-popup__person_avatar {
+	--booking-event-popup__person_avatar-size: 36px;
+
+	flex-shrink: 0;
+	width: var(--booking-event-popup__person_avatar-size);
+	height: var(--booking-event-popup__person_avatar-size);
+	border-radius: var(--ui-border-radius-lg);
+}
+
+.booking-event-popup__person_data {
+	overflow: hidden;
+	letter-spacing: var(--ui-letter-spacing-l);
+}
+
+.booking-event-popup__person_status {
+	overflow: hidden;
+	text-overflow: ellipsis;
+	font-size: var(--ui-font-size-sm);
+	line-height: var(--ui-font-line-height-2xs);
+	color: var(--ui-color-base-50);
+}
+
+.booking-event-popup__person_name {
+	--booking-event-popup-person-name-color: var(--ui-color-accent-main-link);
+
+	display: flex;
+	align-items: start;
+	overflow: hidden;
+	text-overflow: ellipsis;
+	white-space: nowrap;
+	font-size: var(--ui-font-size-md);
+	line-height: var(--ui-font-line-height-sm);
+	color: var(--booking-event-popup-person-name-color);
+}
+
+.booking-event-popup__person_name.--no-access {
+	--booking-event-popup-person-name-color: var(--ui-color-base-50);
+}
+
+.booking-event-popup__person_name:not(.--no-access) {
+	cursor: pointer;
+}
+
+.booking-event-popup__person_bell-button {
+	margin-left: auto;
+}

@@ -13,7 +13,7 @@ final class ConvertEvent extends AbstractBuilder
 	private ?int $dstEntityTypeId = null;
 	private ?int $srcEntityTypeId = null;
 
-	public static function createDefault(int $dstEntityTypeId): self
+	public static function createDefault(?int $dstEntityTypeId = null): self
 	{
 		$self = new self();
 		$self->dstEntityTypeId = $dstEntityTypeId;

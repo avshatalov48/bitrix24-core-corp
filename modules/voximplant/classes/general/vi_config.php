@@ -41,6 +41,9 @@ class CVoxImplantConfig
 	const BACKUP_NUMBER_COMMON = 'COMMON';
 	const BACKUP_NUMBER_SPECIFIC = 'SPECIFIC';
 
+	const DOWNLOAD_RU = 'repos.1c-bitrix.ru';
+	const DOWNLOAD_OTHER = 'dl.bitrix24.com';
+
 	public static function SetPortalNumber($number)
 	{
 		$numbers = self::GetPortalNumbers(true, true);
@@ -520,7 +523,20 @@ class CVoxImplantConfig
 		return array('EN', 'DE', 'RU', 'UA', 'ES', 'BR');
 	}
 
-	public static function GetDefaultMelodies($lang = 'EN')
+	/**
+	 * Get download URL based on account language and region
+	 *
+	 * @return string
+	 */
+	public static function getDownloadUrl()
+	{
+		return CVoxImplantMain::getRegionLink([
+			'ru,by,kz,am,az,ge,kg,uz' => static::DOWNLOAD_RU,
+			'default' => static::DOWNLOAD_OTHER
+		]);
+	}
+
+	public static function getDefaultMelodies($lang = 'EN')
 	{
 		if ($lang !== false)
 		{
@@ -539,17 +555,25 @@ class CVoxImplantConfig
 			$lang = '#LANG_ID#';
 		}
 
-		return array(
-			"MELODY_WELCOME" => "https://dl.bitrix24.com/telephony/".$lang."01.mp3",
-			"MELODY_WAIT" => "https://dl.bitrix24.com/telephony/MELODY.mp3",
-			"MELODY_ENQUEUE" => "https://dl.bitrix24.com/telephony/".$lang."07.mp3",
-			"MELODY_HOLD" => "https://dl.bitrix24.com/telephony/MELODY.mp3",
-			"MELODY_VOICEMAIL" => "https://dl.bitrix24.com/telephony/".$lang."03.mp3",
-			"MELODY_VOTE" => "https://dl.bitrix24.com/telephony/".$lang."04.mp3",
-			"MELODY_VOTE_END" => "https://dl.bitrix24.com/telephony/".$lang."05.mp3",
-			"MELODY_RECORDING" => "https://dl.bitrix24.com/telephony/".$lang."06.mp3",
-			"WORKTIME_DAYOFF_MELODY" => "https://dl.bitrix24.com/telephony/".$lang."03.mp3",
+		$arResult = array(
+			"MELODY_WELCOME" => 'https://%url%/telephony/%lang%01.mp3',
+			"MELODY_WAIT" => 'https://%url%/telephony/MELODY.mp3',
+			"MELODY_ENQUEUE" => 'https://%url%/telephony/%lang%07.mp3',
+			"MELODY_HOLD" => "https://%url%/telephony/MELODY.mp3",
+			"MELODY_VOICEMAIL" => 'https://%url%/telephony/%lang%03.mp3',
+			"MELODY_VOTE" => 'https://%url%/telephony/%lang%04.mp3',
+			"MELODY_VOTE_END" => 'https://%url%/telephony/%lang%05.mp3',
+			"MELODY_RECORDING" => 'https://%url%/telephony/%lang%06.mp3',
+			"WORKTIME_DAYOFF_MELODY" => 'https://%url%/telephony/%lang%03.mp3',
 		);
+
+		$downloadUrl = static::getDownloadUrl();
+		foreach ($arResult as $i => $url)
+		{
+			$arResult[$i] = strtr($url, ['%url%' => $downloadUrl, '%lang%' => $lang]);
+		}
+
+		return $arResult;
 	}
 
 	public static function GetMelody($name, $lang = 'EN', $fileId = 0)
@@ -575,7 +599,7 @@ class CVoxImplantConfig
 
 		if ($result == '')
 		{
-			$default = CVoxImplantConfig::GetDefaultMelodies($lang);
+			$default = CVoxImplantConfig::getDefaultMelodies($lang);
 			$result = isset($default[$name])? $default[$name]: '';
 		}
 

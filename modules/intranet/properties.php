@@ -1,8 +1,12 @@
 <?php
 
+use Bitrix\HumanResources\Integration\UI\DepartmentProvider;
 use Bitrix\Intranet\UserField\Types\EmployeeType;
 use Bitrix\Main;
 use Bitrix\Main\Loader;
+use Bitrix\Main\Type;
+use Bitrix\Main\UI;
+use Bitrix\Main\Web\Json;
 use Bitrix\SocialNetwork;
 
 IncludeModuleLangFile(__FILE__);
@@ -206,6 +210,9 @@ class CUserTypeEmployeeDisplay extends \Bitrix\Main\UserField\TypeBase
 
 class CIBlockPropertyEmployee extends CIEmployeeProperty
 {
+	private const DEPARTMENT_PROVIDER_ID = 'structure-node';
+	private const USER_PROVIDER_ID = 'user';
+
 	private const USER_PROFILE_PUBLIC = 'PUBLIC';
 	private const USER_PROFILE_ADMIN = 'ADMIN';
 
@@ -221,6 +228,7 @@ class CIBlockPropertyEmployee extends CIEmployeeProperty
 			"USER_TYPE" =>"employee",
 			"DESCRIPTION" => GetMessage('INTR_PROP_EMP_TITLE'),
 			"GetPropertyFieldHtml" => [__CLASS__,"GetPropertyFieldHtml"],
+			'GetPropertyFieldHtmlMulty' => [__CLASS__,'GetPropertyFieldHtmlMulty'],
 			"GetAdminListViewHTML" => [__CLASS__,"getAdminListViewHtmlExtended"],
 			"GetPublicViewHTML" => [__CLASS__,"getPublicViewHtmlExtended"],
 			"GetPublicEditHTML" => [__CLASS__,"GetPublicEditHTML"],
@@ -270,7 +278,47 @@ class CIBlockPropertyEmployee extends CIEmployeeProperty
 
 	public static function GetPropertyFieldHtml($arProperty, $value, $strHTMLControlName)
 	{
-		return parent::GetEditForm($value, $strHTMLControlName);
+		$arProperty['MULTIPLE'] = 'N';
+
+		$config = [
+			'CONTAINER_ID' => preg_replace(
+				"/[^a-zA-Z0-9_]/i",
+				"x",
+				$strHTMLControlName['VALUE'].'_'.mt_rand(0, 10000)
+			),
+			'FIELD_NAME' => $strHTMLControlName['VALUE'],
+			'CONTEXT' => static::getFieldContext($arProperty['IBLOCK_ID'] ?? 0),
+		];
+
+		return self::renderField($arProperty, $value, $config);
+	}
+
+	public static function GetPropertyFieldHtmlMulty($property, $values, $control): string
+	{
+		$ids = [];
+		foreach ($values as $row)
+		{
+			if (is_array($row))
+			{
+				$ids[] = $row['VALUE'] ?? null;
+			}
+			else
+			{
+				$ids[] = $row;
+			}
+		}
+
+		$config = [
+			'CONTAINER_ID' => preg_replace(
+				"/[^a-zA-Z0-9_]/i",
+				"x",
+				$control['VALUE'].'_'.mt_rand(0, 10000)
+			),
+			'FIELD_NAME' => $control['VALUE'],
+			'CONTEXT' => static::getFieldContext($property['IBLOCK_ID'] ?? 0),
+		];
+
+		return self::renderField($property, $ids, $config);
 	}
 
 	/**
@@ -295,15 +343,11 @@ class CIBlockPropertyEmployee extends CIEmployeeProperty
 			if (!empty($user))
 			{
 				$name = htmlspecialcharsbx('(' . $user['LOGIN'] . ') ' . $user['NAME'] . ' ' . $user['LAST_NAME']);
-				$mode = defined("PUBLIC_MODE") && PUBLIC_MODE == 1
-					? self::USER_PROFILE_PUBLIC
-					: self::USER_PROFILE_ADMIN
-				;
-				$url = self::getUserProfileUrl($mode, $user);
+				$url = self::getUserProfileUrl(self::USER_PROFILE_PUBLIC, $user);
 
 				if ($url !== null)
 				{
-					$result .= '[<a href="' . htmlspecialcharsbx($url) . '">' . htmlspecialcharsbx($user['ID']) . '</a>] ' . $name;
+					$result .= '[<a href="' . htmlspecialcharsbx($url) . '" target="_blank">' . htmlspecialcharsbx($user['ID']) . '</a>] ' . $name;
 				}
 				else
 				{
@@ -491,6 +535,10 @@ class CIBlockPropertyEmployee extends CIEmployeeProperty
 	{
 		if (!empty($arProperty['SETTINGS']['USE_ENTITY_SELECTOR']))
 		{
+			if (($strHTMLControlName['VALUE'] ?? '') === 'DEFAULT_VALUE')
+			{
+				$arProperty['MULTIPLE'] = 'N';
+			}
 			return self::renderEntitySelector($arProperty, $value, $strHTMLControlName);
 		}
 
@@ -737,72 +785,32 @@ class CIBlockPropertyEmployee extends CIEmployeeProperty
 
 	private static function renderEntitySelector($arProperty, $value, $strHTMLControlName, $multiple = false): string
 	{
-		\Bitrix\Main\UI\Extension::load([
-			'ui.entity-selector',
-		]);
+		$rowId = (string)($strHTMLControlName['ROW_ID'] ?? '');
+		$fieldName = (string)(
+			$strHTMLControlName['FIELD_NAME'] ?? current(explode('[', $strHTMLControlName['VALUE']))
+		);
 
-		Loader::includeModule('ui');
+		$config = [
+			'ROW_ID' => $rowId,
+			'FIELD_NAME' => $fieldName,
+			'CONTEXT' => static::getFieldContext($arProperty['IBLOCK_ID'] ?? 0),
+		];
 
-		$ids = array_values(array_filter(array_map(
+		$val = array_values(array_filter(array_map(
 			function($val)
 			{
 				$id = is_array($val) ? $val['VALUE'] : $val;
 
-				return $id > 0 ? ['user', $id] : null;
+				return $id > 0 ? $id : null;
 			},
 			$multiple ? $value : [$value]
 		)));
 
-		$selectedItems = Main\Web\Json::encode(
-			\Bitrix\UI\EntitySelector\Dialog::getSelectedItems($ids)->toArray()
+		return self::renderField(
+			$arProperty,
+			$val,
+			$config
 		);
-
-		$inputName = current(explode('[', $strHTMLControlName['VALUE'])) . ($multiple ? '[]' : '');
-		$controlId = CUtil::JSEscape('tag-selector-' . $arProperty['FIELD_ID']);
-		$jsMultiple = $multiple ? 'true' : 'false';
-		$inputNode = '<input type="hidden" name="' . htmlspecialcharsbx($inputName) . '" value="${id}" />';
-
-		$html = <<<HTML
-			<script>
-				BX.ready(() => {
-					const valuesNode = document.getElementById('{$controlId}-values');
-					
-					const addItem = (id) => BX.Dom.append(BX.Tag.render`{$inputNode}`, valuesNode);
-					const removeItem = (id) => BX.Dom.remove(valuesNode.querySelector('[value="' + id + '"]'));
-					
-					const selector = new BX.UI.EntitySelector.TagSelector({
-						multiple: {$jsMultiple},
-						id: '{$controlId}',
-						events: {
-							onTagAdd: (event) => addItem(event.getData().tag.getId()),
-							onTagRemove: (event) => removeItem(event.getData().tag.getId()),
-						},
-						dialogOptions: {
-							id: '{$controlId}',
-							context: 'IBLOCK_EMPLOYEE',
-							selectedItems: {$selectedItems},
-							entities: [
-								{
-									id: 'user',
-									options: {
-										intranetUsersOnly: true,
-										inviteEmployeeLink: false,
-									},
-								},
-								{id: 'department'},
-							],
-						}
-					});
-		
-					selector.renderTo(document.getElementById('{$controlId}'));
-					{$selectedItems}.forEach(({id}) => addItem(id));
-				});
-			</script>
-			<div id="{$controlId}-values" style="display: none"></div>
-			<div id="{$controlId}" style="min-width:250px"></div>
-		HTML;
-
-		return $html;
 	}
 
 	public static function ConvertFromToDB($arProperty, $value)
@@ -868,98 +876,144 @@ class CIBlockPropertyEmployee extends CIEmployeeProperty
 
 	public static function GetUIEntityEditorPropertyEditHtml(array $params = [])
 	{
-		\Bitrix\Main\UI\Extension::load(['ui.entity-selector', 'ui.buttons', 'ui.forms']);
+		$property = [
+			'MULTIPLE' => ($params['SETTINGS']['MULTIPLE'] ?? 'N') === 'Y' ? 'Y' : 'N',
+		];
 
-		$isMultipleValue = $params['SETTINGS']['MULTIPLE'] === 'Y';
+		$config = [
+			'FIELD_NAME' => $params['FIELD_NAME'],
+			'CHANGE_EVENTS' => [
+				'onChangeIblockElement',
+			],
+			'CONTEXT' => 'CATALOG_PRODUCT_CARD_EMPLOYEES',
+		];
 
-		$isMultipleValue = CUtil::PhpToJSObject($isMultipleValue);
+		return self::renderField(
+			$property,
+			$params['VALUE'] ?? null,
+			$config
+		);
+	}
 
-		$preselectedItems = [];
+	protected static function getFieldContext(int|string $iblockId): string
+	{
+		return 'IBLOCK_' . $iblockId . '_EMPLOYEES';
+	}
 
-		if (!is_array($params['VALUE']))
+	private static function renderField(array $property, array|int|string|null $values, array $config): string
+	{
+		if (!Loader::includeModule('humanresources'))
 		{
-			$params['VALUE'] = (!empty($params['VALUE'])) ? [$params['VALUE']] : [];
+			return '';
 		}
 
-		foreach ($params['VALUE'] as $value)
+		$rowId = trim((string)($config['ROW_ID'] ?? ''));
+		$fieldName = trim((string)($config['FIELD_NAME'] ?? ''));
+		if ($fieldName === '')
 		{
-			$preselectedItems[] = ['user', $value];
+			return '';
 		}
 
-		$selectedItems = \Bitrix\UI\EntitySelector\Dialog::getSelectedItems($preselectedItems)->toJsObject();
+		$containerId =
+			$config['CONTAINER_ID'] ?? $rowId . ($rowId !== '' ? '_' : '') . $fieldName . '_container'
+		;
 
-		$container_id = $params['FIELD_NAME'] . '_container';
-		$container_hidden_id = $params['FIELD_NAME'] . '_container_hidden';
+		if (!is_array($values))
+		{
+			$values = !empty($values) ? [$values] : [];
+		}
+		Type\Collection::normalizeArrayValuesByInt($values, false);
+
+		$multiple = ($property['MULTIPLE'] ?? 'N') === 'Y';
+
+		$config['CONTEXT'] = (string)($config['CONTEXT'] ?? '');
+		if ($config['CONTEXT'] === '')
+		{
+			$config['CONTEXT'] = null;
+		}
+
+		$config['CHANGE_EVENTS'] ??= [];
+		if (!is_array($config['CHANGE_EVENTS']))
+		{
+			$config['CHANGE_EVENTS'] = is_string($config['CHANGE_EVENTS']) ? [$config['CHANGE_EVENTS']] : [];
+		}
+
+		$config['SEARCH_TITLE'] = (string)($config['SEARCH_TITLE'] ?? '');
+		if ($config['SEARCH_TITLE'] === '')
+		{
+			$config['SEARCH_TITLE'] = GetMessage('INTR_PROP_EMP_SELECTOR_SEARCH_TITLE');
+		}
+		$config['SEARCH_SUBTITLE'] = (string)($config['SEARCH_SUBTITLE'] ?? '');
+		if ($config['SEARCH_SUBTITLE'] === '')
+		{
+			$config['SEARCH_SUBTITLE'] = GetMessage('INTR_PROP_EMP_SELECTOR_SEARCH_SUBTITLE');
+		}
+
+		$entityValues = [];
+		foreach ($values as $value)
+		{
+			$entityValues[] = [
+				static::USER_PROVIDER_ID,
+				$value,
+			];
+		}
+
+		$userOptions = [
+			'collabers' => false,
+			'intranetUsersOnly' => true,
+			'emailUsers' => false,
+			'inviteEmployeeLink' => false,
+		];
+
+		$entities = [
+			[
+				'id' => static::USER_PROVIDER_ID,
+				'dynamicLoad' => true,
+				'dynamicSearch' => true,
+				'options'=> $userOptions,
+			],
+			[
+				'id' => static::DEPARTMENT_PROVIDER_ID,
+				'dynamicLoad' => true,
+				'dynamicSearch' => true,
+				'options'=> [
+					'selectMode' => DepartmentProvider::MODE_USERS_ONLY,
+					'flatMode' => false,
+					'fillRecentTab' => false,
+					'restricted' => 'view',
+					'includedNodeEntityTypes' => ['department'],
+					'useMultipleTabs' => false,
+					'userOptions' => $userOptions,
+				],
+			],
+		];
+
+		$config = Json::encode([
+			'containerId' => $containerId,
+			'fieldName' => $fieldName . ($multiple ? '[]' : ''),
+			'context' => $config['CONTEXT'],
+			'multiple' => $multiple,
+			'collectionType' => 'int',
+			'selectedItems' => $entityValues,
+			'entities' => $entities,
+			'searchMessages' => [
+				'title' => $config['SEARCH_TITLE'],
+				'subtitle' => $config['SEARCH_SUBTITLE'],
+			],
+			'changeEvents' => $config['CHANGE_EVENTS'],
+		]);
+
+		UI\Extension::load('ui.field-selector');
 
 		return <<<HTML
-			<div id="{$container_id}" name="{$container_id}"></div>
-			<div id ="{$container_hidden_id}" name="{$container_hidden_id}"></div>
+			<div id="$containerId"></div>
 			<script>
-				(function() {
-					var selector = new BX.UI.EntitySelector.TagSelector({
-						id: '{$container_id}',
-						multiple: {$isMultipleValue},
-
-						dialogOptions: {
-							height: 300,
-							id: '{$container_id}',
-							multiple: {$isMultipleValue},
-							context: 'CATALOG_PRODUCT_CARD_EMPLOYEES',
-							selectedItems: {$selectedItems},
-
-							events: {
-								'Item:onSelect': setSelectedInputs.bind(this, 'Item:onSelect'),
-								'Item:onDeselect': setSelectedInputs.bind(this, 'Item:onDeselect'),
-							},
-
-							entities: [
-								{
-									id: 'user',
-									options:{
-										inviteEmployeeLink: false,
-									},
-								},
-								{
-									id: 'department',
-									options:{
-										inviteEmployeeLink: false,
-									},
-								}
-							]
-						}
-					})
-
-					function setSelectedInputs(eventName, event)
-					{
-						var dialog = event.getData().item.getDialog();
-						if (!dialog.isMultiple())
-						{
-							dialog.hide();
-						}
-						var selectedItems = dialog.getSelectedItems();
-						if (Array.isArray(selectedItems))
-						{
-							var htmlInputs = '';
-							selectedItems.forEach(function(item)
-							{
-								htmlInputs +=
-									'<input type="hidden" name="{$params['FIELD_NAME']}[]" value="' + item['id'] + '" />'
-								;
-							});
-							if (htmlInputs === '')
-							{
-								htmlInputs =
-									'<input type="hidden" name="{$params['FIELD_NAME']}[]" value="0" />'
-								;
-							}
-							document.getElementById('{$container_hidden_id}').innerHTML = htmlInputs;
-							BX.Event.EventEmitter.emit('onChangeEmployee');
-						}
-					}
-
-					selector.renderTo(document.getElementById('{$container_id}'));
-				})();
+			(function() {
+				const selector = new BX.UI.FieldSelector({$config});
+				selector.render();
+			})();
 			</script>
-HTML;
+			HTML
+		;
 	}
 }

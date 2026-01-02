@@ -15,6 +15,7 @@ export class SignDropdown extends EventEmitter
 	#selector: Dialog;
 	#selectedItemId: string = '';
 	#selectedItemCaption: string = '';
+	#isOnSelectEventEnabled: boolean = true;
 
 	constructor(dialogOptions: {
 		className?: string,
@@ -105,6 +106,16 @@ export class SignDropdown extends EventEmitter
 		foundItem.select();
 	}
 
+	/**
+	 * Without events
+	 */
+	setItemSelected(id: string): void
+	{
+		this.#isOnSelectEventEnabled = false;
+		this.selectItem(id);
+		this.#isOnSelectEventEnabled = true;
+	}
+
 	getLayout(): HTMLElement
 	{
 		return this.#dom;
@@ -120,7 +131,28 @@ export class SignDropdown extends EventEmitter
 		return this.#selectedItemCaption;
 	}
 
+	show(): void
+	{
+		Dom.style(this.#dom, { display: 'flex' });
+	}
+
+	hide(): void
+	{
+		Dom.style(this.#dom, { display: 'none' });
+	}
+
 	#onSelect(item: ItemOptions): void
+	{
+		this.#setItemSelected(item);
+		if (this.#isOnSelectEventEnabled === false)
+		{
+			return;
+		}
+
+		this.emit(this.events.onSelect, { item });
+	}
+
+	#setItemSelected(item: ItemOptions): void
 	{
 		this.#selectedItemId = item.id;
 		const { title, caption } = item;
@@ -129,7 +161,6 @@ export class SignDropdown extends EventEmitter
 		{
 			titleNode.textContent = title;
 			titleNode.title = title;
-			this.emit(this.events.onSelect, { item });
 
 			return;
 		}
@@ -137,6 +168,5 @@ export class SignDropdown extends EventEmitter
 		titleNode.title = `${title} ${caption}`;
 		titleNode.firstElementChild.textContent = title;
 		titleNode.lastElementChild.textContent = caption;
-		this.emit(this.events.onSelect, { item });
 	}
 }

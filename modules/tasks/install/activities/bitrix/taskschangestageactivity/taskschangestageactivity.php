@@ -1,7 +1,15 @@
-<?
-if (!defined('B_PROLOG_INCLUDED') || B_PROLOG_INCLUDED!==true)die();
+<?php
 
 use Bitrix\Tasks;
+
+use Bitrix\Main\Loader;
+
+use Bitrix\Crm\Integration\Analytics\Dictionary;
+
+if (!defined('B_PROLOG_INCLUDED') || B_PROLOG_INCLUDED!==true)
+{
+	die();
+}
 
 class CBPTasksChangeStageActivity extends CBPActivity
 {
@@ -23,8 +31,8 @@ class CBPTasksChangeStageActivity extends CBPActivity
 			return CBPActivityExecutionStatus::Closed;
 		}
 
-		$documentId = $this->GetDocumentId();
-		$documentType = $this->GetDocumentType();
+		$documentId = $this->getDocumentId();
+		$documentType = $this->getDocumentType();
 		$targetStage = (int) $this->TargetStage;
 
 		$target = Tasks\Integration\Bizproc\Automation\Factory::createTarget($documentType[2], $documentId[2]);
@@ -45,6 +53,18 @@ class CBPTasksChangeStageActivity extends CBPActivity
 			return $this->endExecution(GetMessage('TASKS_CHANGE_STAGE_RECURSION'));
 		}
 		// end check recursion
+
+		if (
+			Loader::includeModule('crm')
+			&& method_exists(CCrmBizProcHelper::class, 'sendOperationsAnalytics')
+		)
+		{
+			\CCrmBizProcHelper::sendOperationsAnalytics(
+				Dictionary::EVENT_ENTITY_EDIT,
+				$this,
+				$documentType[2] ?? '',
+			);
+		}
 
 		$target->setDocumentStatus($targetStage);
 

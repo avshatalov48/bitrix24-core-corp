@@ -61,8 +61,10 @@ this.BX.Booking = this.BX.Booking || {};
 	    return data;
 	  }
 	}
+	const apiClient = new ApiClient();
 
 	exports.ApiClient = ApiClient;
+	exports.apiClient = apiClient;
 
 }((this.BX.Booking.Lib = this.BX.Booking.Lib || {}),BX));
 //# sourceMappingURL=api-client.bundle.js.map

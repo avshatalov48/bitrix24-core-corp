@@ -9,6 +9,7 @@ return [
 		'crm:loc',
 		'crm:type',
 		'event-emitter',
+		'utils/random',
 	],
 	'bundle' => [
 		'./status-block',

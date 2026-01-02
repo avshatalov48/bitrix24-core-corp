@@ -3,9 +3,10 @@
  */
 jn.define('im/messenger/controller/search/experimental/selector', (require, exports, module) => {
 	const { EventType } = require('im/messenger/const');
-	const { Loc } = require('loc');
+	const { Loc } = require('im/messenger/loc');
+	const { Feature } = require('im/messenger/lib/feature');
 	const { RecentProvider } = require('im/messenger/controller/search/experimental/provider');
-	const { SearchConverter } = require('im/messenger/lib/converter/search');
+	const { RecentSearchUiConverter } = require('im/messenger/lib/converter/ui/recent-search');
 	const { Logger } = require('im/messenger/lib/logger');
 	const { DialogHelper } = require('im/messenger/lib/helper');
 	const { serviceLocator } = require('im/messenger/lib/di/service-locator');
@@ -53,6 +54,11 @@ jn.define('im/messenger/controller/search/experimental/selector', (require, expo
 
 		open()
 		{
+			if (Feature.isMessengerV2Enabled)
+			{
+				this.ui.showSearchBar();
+			}
+
 			this.loadRecentSearchFromServer();
 			this.isOpen = true;
 			this.drawRecent(this.recentItems);
@@ -216,7 +222,7 @@ jn.define('im/messenger/controller/search/experimental/selector', (require, expo
 					return null;
 				}
 
-				return SearchConverter.toUserSearchItem(userModel, sectionCode);
+				return RecentSearchUiConverter.toUserSearchItem(userModel, sectionCode);
 			}
 
 			if (DialogHelper.isDialogId(itemId))
@@ -228,7 +234,7 @@ jn.define('im/messenger/controller/search/experimental/selector', (require, expo
 					return null;
 				}
 
-				return SearchConverter.toDialogSearchItem(dialogModel, sectionCode);
+				return RecentSearchUiConverter.toDialogSearchItem(dialogModel, sectionCode);
 			}
 
 			return null;
@@ -266,7 +272,7 @@ jn.define('im/messenger/controller/search/experimental/selector', (require, expo
 				.map((userId) => {
 					const user = this.store.getters['usersModel/getById'](userId);
 
-					return SearchConverter.toUserCarouselItem(user);
+					return RecentSearchUiConverter.toUserCarouselItem(user);
 				})
 			;
 

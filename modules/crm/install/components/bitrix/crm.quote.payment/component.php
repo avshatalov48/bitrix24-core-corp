@@ -14,8 +14,7 @@ if (!CModule::IncludeModule('sale'))
 	return;
 }
 
-$CCrmQuote = new CCrmQuote();
-if ($CCrmQuote->cPerms->HavePerm('QUOTE', BX_CRM_PERM_NONE, 'READ'))
+if (!\Bitrix\Crm\Service\Container::getInstance()->getUserPermissions()->entityType()->canReadItems(CCrmOwnerType::Quote))
 {
 	ShowError(GetMessage('CRM_PERMISSION_DENIED'));
 	return;

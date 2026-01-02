@@ -1,0 +1,23 @@
+<?php
+$MESS["TASKS_FIELDS_RESULT_ADD_WIDGET_PLACEHOLDER"] = "Адамды, топты немесе бөлімді белгілеу үшін @ басыңыз";
+$MESS["TASKS_FIELDS_RESULT_ADD_WIDGET_TITLE"] = "Жұмыс нәтижесі";
+$MESS["TASKS_FIELDS_RESULT_AIR_ADD_RESULT"] = "Тағы нәтижені қосу";
+$MESS["TASKS_FIELDS_RESULT_AIR_COMPACT_TITLE"] = "Жұмыс нәтижелері";
+$MESS["TASKS_FIELDS_RESULT_AIR_COMPACT_TITLE_MULTI"] = "Жұмыс нәтижелері: #COUNT#";
+$MESS["TASKS_FIELDS_RESULT_AIR_SHOW_MORE_PLURAL_0"] = "Тағы #COUNT# нәтижені көрсету";
+$MESS["TASKS_FIELDS_RESULT_AIR_SHOW_MORE_PLURAL_1"] = "Тағы #COUNT# нәтижені көрсету";
+$MESS["TASKS_FIELDS_RESULT_AIR_SHOW_MORE_PLURAL_2"] = "Тағы #COUNT# нәтижені көрсету";
+$MESS["TASKS_FIELDS_RESULT_AIR_TITLE"] = "Жұмыс нәтижесі";
+$MESS["TASKS_FIELDS_RESULT_DATE_FORMAT"] = "#DATE# #TIME#-де";
+$MESS["TASKS_FIELDS_RESULT_DATE_FORMAT_TODAY"] = "Бүгін #TIME#-де";
+$MESS["TASKS_FIELDS_RESULT_DATE_FORMAT_YESTERDAY"] = "кеше #TIME#-де";
+$MESS["TASKS_FIELDS_RESULT_EMPTY_ERROR"] = "Жұмыстың нәтижесін көрсетіңіз";
+$MESS["TASKS_FIELDS_RESULT_LIST_WIDGET_TITLE"] = "Жұмыс нәтижелері";
+$MESS["TASKS_FIELDS_RESULT_MENU_REMOVE"] = "Нәтижені алып тастау";
+$MESS["TASKS_FIELDS_RESULT_MENU_UPDATE"] = "Нәтижені өзгерту";
+$MESS["TASKS_FIELDS_RESULT_REMOVE_CONFIRM_DESCRIPTION"] = "Пікір міндетте қалады, бірақ нәтиже ретінде белгіленбейді.";
+$MESS["TASKS_FIELDS_RESULT_REMOVE_CONFIRM_TITLE"] = "Нәтижені жою керек пе?";
+$MESS["TASKS_FIELDS_RESULT_REMOVE_CONFIRM_TITLE_V2"] = "Нәтижені алып тастау керек пе?";
+$MESS["TASKS_FIELDS_RESULT_REMOVE_CONFIRM_YES"] = "Жою";
+$MESS["TASKS_FIELDS_RESULT_VIEW_ACTION_COMPLETE"] = "Міндетті аяқтау";
+$MESS["TASKS_FIELDS_RESULT_VIEW_ANOTHER_RESULTS"] = "Басқа нәтижелер";

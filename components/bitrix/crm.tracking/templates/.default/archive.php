@@ -25,6 +25,7 @@ $APPLICATION->IncludeComponent(
 		],
 		'USE_PADDING' => false,
 		'RELOAD_PAGE_AFTER_SAVE' => true,
-		'BUTTONS' => ['close' => $arResult['PATH_TO_ARCHIVE']]
+		'BUTTONS' => ['close' => $arResult['PATH_TO_ARCHIVE']],
+		'USE_UI_TOOLBAR' => 'Y',
 	)
 );

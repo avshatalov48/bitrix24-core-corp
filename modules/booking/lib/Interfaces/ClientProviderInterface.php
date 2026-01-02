@@ -4,10 +4,9 @@ declare(strict_types=1);
 
 namespace Bitrix\Booking\Interfaces;
 
-use Bitrix\Booking\Entity\Booking\Client;
-use Bitrix\Booking\Entity\Booking\ClientCollection;
-use Bitrix\Booking\Entity\Booking\ClientTypeCollection;
-use Bitrix\Booking\Interfaces\MessageSender;
+use Bitrix\Booking\Entity\Client\Client;
+use Bitrix\Booking\Entity\Client\ClientCollection;
+use Bitrix\Booking\Entity\Client\ClientTypeCollection;
 
 interface ClientProviderInterface
 {

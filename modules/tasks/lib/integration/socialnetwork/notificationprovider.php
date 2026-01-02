@@ -9,18 +9,14 @@
 namespace Bitrix\Tasks\Integration\SocialNetwork;
 
 use Bitrix\Main\Loader;
-use Bitrix\Tasks\Integration\Socialnetwork\Space\SpaceService;
 use Bitrix\Tasks\Integration\SocialNetwork\UseCase\TaskCreated;
 use Bitrix\Tasks\Integration\SocialNetwork\UseCase\TaskDeleted;
 use Bitrix\Tasks\Integration\SocialNetwork\UseCase\TaskStatusChanged;
 use Bitrix\Tasks\Integration\SocialNetwork\UseCase\TaskUpdated;
-use Bitrix\Tasks\Internals\Log\LogFacade;
 use Bitrix\Tasks\Internals\Notification\EntityCode;
 use Bitrix\Tasks\Internals\Notification\EntityOperation;
 use Bitrix\Tasks\Internals\Notification\Message;
 use Bitrix\Tasks\Internals\Notification\ProviderInterface;
-use CSocNetLogRights;
-use Error;
 
 class NotificationProvider implements ProviderInterface
 {
@@ -61,39 +57,5 @@ class NotificationProvider implements ProviderInterface
 
 	public function pushMessages(): void
 	{
-		if (!SpaceService::useNotificationStrategy())
-		{
-			return;
-		}
-
-		$rightsData = [];
-		foreach ($this->messages as $message)
-		{
-			$rights = $message->getMetaData()->getParams()['rights'] ?? null;
-			if (is_null($rights))
-			{
-				continue;
-			}
-
-			$rightsData = array_merge($rightsData, $rights);
-		}
-
-		$rightsData = array_unique($rightsData);
-		foreach ($rightsData as $right)
-		{
-			[$rightId, $logId] = explode('_', $right);
-			/**
-			 * In the case of fatal Postgres error, e.g. duplicate key,
-			 * we should catch a fatal error to compatability.
-			 */
-			try
-			{
-				CSocNetLogRights::Add($logId, $rightId, false, true, false);
-			}
-			catch (Error $error)
-			{
-				LogFacade::logThrowable($error);
-			}
-		}
 	}
 }

@@ -1,5 +1,6 @@
 <?php
 
+use Bitrix\Main\Loader;
 use Bitrix\Main\Localization\Loc;
 use Bitrix\Main\Web\Json;
 use Bitrix\Main\UI;
@@ -8,12 +9,12 @@ use Bitrix\Tasks\Flow\FlowFeature;
 use Bitrix\Tasks\Helper\Analytics;
 use Bitrix\Tasks\Helper\RestrictionUrl;
 use Bitrix\Tasks\Integration\Bitrix24;
-use Bitrix\Tasks\Integration\Intranet\Settings;
 use Bitrix\Tasks\Integration\SocialNetwork\Group;
 use Bitrix\Tasks\Internals\Task\MetaStatus;
 use Bitrix\Tasks\Internals\Task\Priority;
 use Bitrix\Tasks\Slider\Path\TaskPathMaker;
 use Bitrix\Tasks\Util;
+use Bitrix\Tasks\V2\Internal\DI\Container;
 
 if (!defined("B_PROLOG_INCLUDED") || B_PROLOG_INCLUDED !== true)
 {
@@ -65,7 +66,7 @@ $can = $arResult["CAN"]["TASK"]["ACTION"] ?? [];
 $userFields = $arResult["AUX_DATA"]["USER_FIELDS"] ?? [];
 $diskUfCode = \Bitrix\Tasks\Integration\Disk\UserField::getMainSysUFCode();
 $mailUfCode = \Bitrix\Tasks\Integration\Mail\UserField::getMainSysUFCode();
-$isBitrix24Template = (SITE_TEMPLATE_ID === "bitrix24");
+$isBitrix24Template = (SITE_TEMPLATE_ID === "bitrix24" || SITE_TEMPLATE_ID === 'air');
 $taskLimitExceeded = $arResult['AUX_DATA']['TASK_LIMIT_EXCEEDED'];
 $taskRecurrentRestrict = $arResult['AUX_DATA']['TASK_RECURRENT_RESTRICT'];
 
@@ -664,7 +665,7 @@ if (
 		{
 			$restPlacementHandlerList = \Bitrix\Rest\PlacementTable::getHandlersList(\CTaskRestService::PLACEMENT_TASK_VIEW_TAB);
 			$restPlacementHandlerList = array_filter($restPlacementHandlerList, function($placement) use ($arParams) {
-				$groupIdOption = (string)$placement['OPTIONS']['groupId'];
+				$groupIdOption = (string)($placement['OPTIONS']['groupId'] ?? '');
 				if ($groupIdOption == '')
 				{
 					return true;
@@ -983,7 +984,7 @@ $APPLICATION->IncludeComponent(
 );
 
 $this->EndViewTarget();
-$isTemplatesAvailable = (new Settings())->isToolAvailable(Settings::TOOLS['templates']);
+$isTemplatesAvailable = Container::getInstance()->getToolService()->isTemplatesAvailable();
 
 $request = \Bitrix\Main\Context::getCurrent()->getRequest();
 if (!empty($request->get('ta_sec')))
@@ -993,12 +994,22 @@ if (!empty($request->get('ta_sec')))
 	{
 		$params['p1'] = $request->get('p1');
 	}
+	else
+	{
+		$isDemo = (Loader::includeModule('bitrix24') && \CBitrix24::IsDemoLicense()) ? 'Y' : 'N';
+		$params['p1'] = 'isDemo_' . $isDemo;
+	}
+
+	$params['p3'] = 'viewersCount_' . (string)count($arResult["DATA"]["TASK"]["SE_AUDITOR"]);
+	$params['p5'] = 'coexecutorsCount_' . (string)count($arResult["DATA"]["TASK"]["SE_ACCOMPLICE"]);
 
 	Analytics::getInstance($arParams["USER_ID"])->onTaskView(
 		$request->get('ta_sec'),
 		$request->get('ta_el'),
 		$request->get('ta_sub'),
 		$params,
+		$request->get('ta_ev'),
+		$request->get('ta_type')
 	);
 }
 ?>
@@ -1092,6 +1103,7 @@ if (!empty($request->get('ta_sec')))
 			category: 'readonly_livefeed',
 		},
 		canEditTask: <?= Json::encode($arResult['canEditTask']) ?>,
+		canCreateFlow: <?= Json::encode($arResult['canCreateFlow']) ?>,
 		isExtranetUser: <?= $arResult['isExtranetUser'] ? 'true' : 'false' ?>,
 		flowParams: {
 			id: <?= (int)($arResult['DATA']['FLOW']['ID'] ?? 0) ?>,
@@ -1101,6 +1113,8 @@ if (!empty($request->get('ta_sec')))
 			limitCode: '<?= FlowFeature::LIMIT_CODE ?>',
 			isFeatureEnabled: <?= Json::encode(FlowFeature::isFeatureEnabled() || FlowFeature::canTurnOnTrial()) ?>,
 			isFeatureTrialable: <?= Json::encode(FlowFeature::isFeatureEnabledByTrial()) ?>,
+
+			context: '<?= Analytics::SUB_SECTION['task_card'] ?>',
 		},
 		toggleFlowParams: {
 			scope: 'taskView',

@@ -67,6 +67,8 @@ export class Bizproc extends Base
 		if (responsibleId > 0 && Text.toInteger(item.getCurrentUser()?.userId) === responsibleId)
 		{
 			this.#doTask(actionData, item);
+
+			return;
 		}
 
 		UI.Notification.Center.notify({

@@ -36,6 +36,7 @@ $MESS["TOP_MENU_MARKETING"] = "Marketing";
 $MESS["TOP_MENU_MARKETING2"] = "Marketing";
 $MESS["TOP_MENU_MARKETPLACE_2"] = "Applications";
 $MESS["TOP_MENU_MARKETPLACE_3"] = "Market";
+$MESS["TOP_MENU_MARKETPLACE_3_MSGVER_1"] = "Market";
 $MESS["TOP_MENU_ONEC"] = "1C + Bitrix24 CRM";
 $MESS["TOP_MENU_OPENLINES"] = "Open Channels";
 $MESS["TOP_MENU_PHOTO"] = "Photos";

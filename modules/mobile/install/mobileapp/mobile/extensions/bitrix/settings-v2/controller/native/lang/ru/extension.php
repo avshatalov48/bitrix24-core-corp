@@ -1,0 +1,3 @@
+<?
+$MESS['SETTINGS_V2_CONTROLLER_RELOADED_SETTING_CHANGE_TITLE'] = 'Внимание';
+$MESS['SETTINGS_V2_CONTROLLER_RELOADED_SETTING_CHANGE_DESCRIPTION'] = 'Приложение будет перезагружено для применения изменений';

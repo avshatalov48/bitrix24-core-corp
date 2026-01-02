@@ -2,10 +2,13 @@
 
 namespace Bitrix\Crm\Filter;
 
+use Bitrix\Crm\Activity\LastCommunication\LastCommunicationAvailabilityChecker;
 use Bitrix\Crm\Counter\EntityCounterType;
 use Bitrix\Crm\Currency;
 use Bitrix\Crm\Integration\Main\UISelector;
 use Bitrix\Crm\Item;
+use Bitrix\Crm\Model\AssignedTable;
+use Bitrix\Crm\Model\LastCommunicationTable;
 use Bitrix\Crm\PhaseSemantics;
 use Bitrix\Crm\Service\Container;
 use Bitrix\Crm\Service\Factory;
@@ -19,6 +22,7 @@ use Bitrix\Main\Grid\Editor;
 use Bitrix\Main\InvalidOperationException;
 use Bitrix\Main\Loader;
 use Bitrix\Main\Localization\Loc;
+use Bitrix\Main\ModuleManager;
 use Bitrix\Main\Text\StringHelper;
 
 class ItemDataProvider extends EntityDataProvider
@@ -469,9 +473,88 @@ class ItemDataProvider extends EntityDataProvider
 			'customCaption' => Loc::getMessage('CRM_FILTER_ITEMDATAPROVIDER_ACTIVITY_BLOCK'),
 		];
 
+		if (LastCommunicationAvailabilityChecker::getInstance()->isEnabled())
+		{
+			[$code, $name] = LastCommunicationTable::getLastStateCodeName();
+			$fields[$code] = [
+				'type' => static::TYPE_DATE,
+				'displayGrid' => true,
+				'displayFilter' => true,
+				'defaultGrid' => false,
+				'defaultFilter' => false,
+				'sortField' => $code,
+				'customCaption' => $name,
+			];
+		}
+
+		if ($this->factory->isRecurringMode())
+		{
+			$this->appendRecurringFields($fields);
+		}
+
 		$this->addParentFieldsInfo($fields);
 
 		return $fields;
+	}
+
+	protected function appendRecurringFields(array &$fields): void
+	{
+		$fields[Item::FIELD_NAME_RECURRING_ACTIVE] = [
+			'type' => static::TYPE_BOOLEAN,
+			'displayGrid' => true,
+			'displayFilter' => true,
+			'defaultGrid' => true,
+			'defaultFilter' => false,
+			'customCaption' => Loc::getMessage('CRM_FILTER_ITEMDATAPROVIDER_RECURRING_ACTIVE_TITLE'),
+			'filterOptionPreset' => static::PRESET_BOOLEAN,
+		];
+
+		$code = 'CRM_FILTER_ITEMDATAPROVIDER_RECURRING_COUNTER_REPEAT';
+		if ($this->getEntityTypeId() === \CCrmOwnerType::SmartInvoice)
+		{
+			$code .= '_INVOICE';
+		}
+
+		$fields[Item::FIELD_NAME_RECURRING_COUNTER_REPEAT] = [
+			'type' => static::TYPE_NUMBER,
+			'displayGrid' => true,
+			'displayFilter' => true,
+			'defaultGrid' => true,
+			'defaultFilter' => false,
+			'customCaption' => Loc::getMessage($code),
+		];
+		$fields[Item::FIELD_NAME_RECURRING_NEXT_EXECUTION] = [
+			'type' => static::TYPE_DATE,
+			'displayGrid' => true,
+			'displayFilter' => true,
+			'defaultGrid' => true,
+			'defaultFilter' => false,
+			'customCaption' => Loc::getMessage('CRM_FILTER_ITEMDATAPROVIDER_RECURRING_NEXT_EXECUTION'),
+		];
+		$fields[Item::FIELD_NAME_RECURRING_START_DATE] = [
+			'type' => static::TYPE_DATE,
+			'displayGrid' => true,
+			'displayFilter' => true,
+			'defaultGrid' => true,
+			'defaultFilter' => false,
+			'customCaption' => Loc::getMessage('CRM_FILTER_ITEMDATAPROVIDER_RECURRING_START_DATE'),
+		];
+		$fields[Item::FIELD_NAME_RECURRING_LIMIT_DATE] = [
+			'type' => static::TYPE_DATE,
+			'displayGrid' => true,
+			'displayFilter' => true,
+			'defaultGrid' => true,
+			'defaultFilter' => false,
+			'customCaption' => Loc::getMessage('CRM_FILTER_ITEMDATAPROVIDER_RECURRING_LIMIT_DATE'),
+		];
+		$fields[Item::FIELD_NAME_RECURRING_LIMIT_REPEAT] = [
+			'type' => static::TYPE_NUMBER,
+			'displayGrid' => true,
+			'displayFilter' => true,
+			'defaultGrid' => true,
+			'defaultFilter' => false,
+			'customCaption' => Loc::getMessage('CRM_FILTER_ITEMDATAPROVIDER_RECURRING_LIMIT_REPEAT'),
+		];
 	}
 
 	/**
@@ -778,32 +861,72 @@ class ItemDataProvider extends EntityDataProvider
 		)
 		{
 			$factory = Container::getInstance()->getFactory($this->getEntityTypeId());
-			$referenceClass = $factory?->getDataClass();
+			if ($fieldID === Item::FIELD_NAME_ASSIGNED && $this->canUseAssignedTableForUserProvider())
+			{
+				$referenceClass = AssignedTable::class;
+				$referenceFieldName = 'ASSIGNED_BY';
 
-			$params = [
-				'fieldName' => $fieldID,
-				'entityTypeId' => $this->getEntityTypeId(),
-				'module' => 'crm',
-				'referenceClass' => $fieldID !== Item::FIELD_NAME_OBSERVERS ? $referenceClass : null,
-			];
+				$params = [
+					'fieldName' => $referenceFieldName,
+					'referenceClass' => $referenceClass,
+					'referenceFieldName' => $referenceFieldName,
+					'referenceAdditionalFilter' => ['ENTITY_TYPE_ID' => $this->getEntityTypeId()],
+				];
+			}
+			else
+			{
+				$referenceClass = $factory?->getDataClass();
 
-			if ($factory->isCountersEnabled() && $fieldID === Item::FIELD_NAME_ASSIGNED)
+				$params = [
+					'fieldName' => $fieldID,
+					'referenceClass' => $fieldID !== Item::FIELD_NAME_OBSERVERS ? $referenceClass : null,
+				];
+			}
+
+			$params['module'] = 'crm';
+			$params['entityTypeId'] = $this->getEntityTypeId();
+
+			if ($factory?->isCountersEnabled() && $fieldID === Item::FIELD_NAME_ASSIGNED)
 			{
 				$params['isEnableAllUsers'] = true;
 				$params['isEnableOtherUsers'] = true;
+				$params['isEnableStructureNode'] = true;
 			}
 
-			if ($fieldID === 'ACTIVITY_RESPONSIBLE_IDS')
+			if ($fieldID === 'ACTIVITY_RESPONSIBLE_IDS' || $fieldID === Item::FIELD_NAME_OBSERVERS)
 			{
 				$params['referenceClass'] = null;
+				$params['referenceFieldName'] = null;
+				$params['referenceAdditionalFilter'] = null;
 				$params['isEnableAllUsers'] = true;
 				$params['isEnableOtherUsers'] = true;
+				$params['isEnableStructureNode'] = true;
 			}
 
-			return $this->getUserEntitySelectorParams(
-				EntitySelector::CONTEXT,
-				$params
-			);
+			$selectorParams = $this->getUserEntitySelectorParams(EntitySelector::CONTEXT, $params);
+
+			// @todo delete this after deploy main 25.700.0
+			if (
+				$this->canUseAssignedTableForUserProvider()
+				&& $fieldID === Item::FIELD_NAME_ASSIGNED
+			)
+			{
+				foreach ($selectorParams['params']['dialogOptions']['entities'] as $entityKey => $entity)
+				{
+					if ($entity['id'] === 'fired-user')
+					{
+						$referenceFieldName = 'ASSIGNED_BY';
+						$selectorParams['params']['dialogOptions']['entities'][$entityKey]['options']['fieldName'] = $referenceFieldName;
+						$selectorParams['params']['dialogOptions']['entities'][$entityKey]['options']['referenceClass'] = AssignedTable::class;
+						$selectorParams['params']['dialogOptions']['entities'][$entityKey]['options']['referenceFieldName'] = $referenceFieldName;
+						$selectorParams['params']['dialogOptions']['entities'][$entityKey]['options']['referenceAdditionalFilter'] = ['ENTITY_TYPE_ID' => $this->getEntityTypeId()];
+
+						break;
+					}
+				}
+			}
+
+			return $selectorParams;
 		}
 
 		if (in_array($fieldID, $this->getFieldNamesByType(static::TYPE_CRM_ENTITY, static::DISPLAY_IN_FILTER)))
@@ -941,6 +1064,17 @@ class ItemDataProvider extends EntityDataProvider
 		}
 
 		return $result;
+	}
+
+	private function canUseAssignedTableForUserProvider(): bool
+	{
+		$socialNetworkVersion = ModuleManager::getVersion('socialnetwork');
+		if (!$socialNetworkVersion)
+		{
+			return false;
+		}
+
+		return version_compare($socialNetworkVersion, '25.100.0') >= 0;
 	}
 
 	/**

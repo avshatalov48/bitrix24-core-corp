@@ -37,6 +37,8 @@ jn.define('tasks/dashboard/src/sorting', (require, exports, module) => {
 			});
 
 			this.view = data.view;
+			this.isProject = data.isProject ?? false;
+			this.ownerId = Number(data.ownerId ?? env.userId);
 		}
 
 		/**
@@ -92,8 +94,7 @@ jn.define('tasks/dashboard/src/sorting', (require, exports, module) => {
 		 * @param {Object} item
 		 * @return {number}
 		 */
-		getSortingSection(item)
-		{
+		getSortingSection = (item) => {
 			if (this.view === Views.LIST)
 			{
 				if (item.isCreationErrorExist)
@@ -101,7 +102,10 @@ jn.define('tasks/dashboard/src/sorting', (require, exports, module) => {
 					return 0;
 				}
 
-				if (item.isPinned)
+				const isPinned = this.ownerId === Number(env.userId)
+					&& (this.isProject ? item.isPinnedInGroup : item.isPinned);
+
+				if (isPinned)
 				{
 					return 1;
 				}
@@ -115,28 +119,40 @@ jn.define('tasks/dashboard/src/sorting', (require, exports, module) => {
 			}
 
 			return 1;
-		}
+		};
 
-		/**
-		 * @private
-		 * @static
-		 * @param {object} item
-		 * @return {number}
-		 */
-		static getSortingSection(item)
-		{
-			if (item.isCreationErrorExist)
+		getSortItemsCallback = () => (a, b) => {
+			const aSection = this.getSortingSection(a) ?? 0;
+			const bSection = this.getSortingSection(b) ?? 0;
+
+			if (aSection !== bSection)
 			{
-				return 0;
+				return Math.sign(aSection - bSection);
 			}
 
-			if (item.isPinned)
+			const aSortProperty = this.getPropertyValue(a, this.getType()) ?? this.noPropertyValue;
+			const bSortProperty = this.getPropertyValue(b, this.getType()) ?? this.noPropertyValue;
+
+			if (aSortProperty !== bSortProperty)
 			{
-				return 1;
+				if (this.getType() === TasksDashboardSorting.types.DEADLINE)
+				{
+					if (aSortProperty === this.noPropertyValue && bSortProperty !== this.noPropertyValue)
+					{
+						return 1;
+					}
+
+					if (bSortProperty === this.noPropertyValue && aSortProperty !== this.noPropertyValue)
+					{
+						return -1;
+					}
+				}
+
+				return (aSortProperty < bSortProperty ? -1 : 1) * (this.isASC ? 1 : -1);
 			}
 
-			return 2;
-		}
+			return 0;
+		};
 	}
 
 	module.exports = { TasksDashboardSorting };

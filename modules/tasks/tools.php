@@ -5,175 +5,9 @@ use Bitrix\Tasks\Internals\Task\Status;
 
 IncludeModuleLangFile(__FILE__);
 
-class TasksException extends \Bitrix\Tasks\Exception
-{
-	const TE_TASK_NOT_FOUND_OR_NOT_ACCESSIBLE  = 0x000001;
-	const TE_ACCESS_DENIED                     = 0x100002;
-	const TE_ACTION_NOT_ALLOWED                = 0x000004;
-	const TE_ACTION_FAILED_TO_BE_PROCESSED     = 0x000008;
-	const TE_TRYED_DELEGATE_TO_WRONG_PERSON    = 0x000010;
-	const TE_FILE_NOT_ATTACHED_TO_TASK         = 0x000020;
-	const TE_UNKNOWN_ERROR                     = 0x000040;
-	const TE_FILTER_MANIFEST_MISMATCH          = 0x000080;
-	const TE_WRONG_ARGUMENTS                   = 0x000100;
-	const TE_ITEM_NOT_FOUND_OR_NOT_ACCESSIBLE  = 0x000200;
-	const TE_SQL_ERROR                         = 0x000400;
-
-	const TE_FLAG_SERIALIZED_ERRORS_IN_MESSAGE = 0x100000;
-
-	private static $errSymbolsMap = array(
-		'TE_TASK_NOT_FOUND_OR_NOT_ACCESSIBLE'  => 0x000001,
-		'TE_ACCESS_DENIED'                     => 0x100002,
-		'TE_ACTION_NOT_ALLOWED'                => 0x000004,
-		'TE_ACTION_FAILED_TO_BE_PROCESSED'     => 0x000008,
-		'TE_TRYED_DELEGATE_TO_WRONG_PERSON'    => 0x000010,
-		'TE_FILE_NOT_ATTACHED_TO_TASK'         => 0x000020,
-		'TE_UNKNOWN_ERROR'                     => 0x000040,
-		'TE_FILTER_MANIFEST_MISMATCH'          => 0x000080,
-		'TE_WRONG_ARGUMENTS'                   => 0x000100,
-		'TE_ITEM_NOT_FOUND_OR_NOT_ACCESSIBLE'  => 0x000200,
-		'TE_SQL_ERROR'                         => 0x000400,
-
-		'TE_FLAG_SERIALIZED_ERRORS_IN_MESSAGE' => 0x100000
-	);
-
-	public function checkIsActionNotAllowed()
-	{
-		return $this->checkOfType(self::TE_ACTION_NOT_ALLOWED);
-	}
-
-	public function checkOfType($type)
-	{
-		return $this->getCode() & $type;
-	}
-
-	protected function dumpAuxError()
-	{
-		return false;
-	}
-
-	public function __construct($message = false, $code = 0)
-	{
-		$parameters = array();
-
-		if(!$message)
-		{
-			$message = $GLOBALS['APPLICATION']->GetException();
-		}
-
-		// exception extra data goes to log
-		if($this->checkOfType(self::TE_FLAG_SERIALIZED_ERRORS_IN_MESSAGE) && $message !== false)
-		{
-			$parameters['AUX']['ERROR'] = unserialize($message, ['allowed_classes' => false]);
-		}
-
-		parent::__construct(
-			$message,
-			$parameters,
-			array(
-				'CODE' => $code
-			)
-		);
-	}
-
-	/**
-	 * @deprecated
-	 */
-	public static function renderErrorCode($e)
-	{
-		$errCode    = $e->getCode();
-		$strErrCode = $errCode . '/';
-
-		if ($e instanceof TasksException)
-		{
-			$strErrCode .= 'TE';
-
-			foreach (self::$errSymbolsMap as $symbol => $code)
-			{
-				if ($code & $errCode)
-					$strErrCode .= '/'.mb_substr($symbol, 3);
-			}
-		}
-		elseif ($e instanceof CTaskAssertException)
-			$strErrCode .= 'CTAE';
-		else
-			$strErrCode .= 'Unknown';
-
-		return ($strErrCode);
-	}
-
-	public function isSerialized(): bool
-	{
-		try
-		{
-			$result = unserialize($this->getMessage(), ['allowed_classes' => false]);
-			if ($result === false)
-			{
-				return false;
-			}
-
-			return true;
-		}
-		catch (ErrorException)
-		{
-			return false;
-		}
-	}
-}
-
-
-class CTasksPerHitOption
-{
-	public static function set($moduleId, $optionName, $value)
-	{
-		self::managePerHitOptions('write', $moduleId, $optionName, $value);
-	}
-
-
-	public static function get($moduleId, $optionName)
-	{
-		return (self::managePerHitOptions('read', $moduleId, $optionName));
-	}
-
-
-	public static function getHitTimestamp()
-	{
-		static $t = null;
-
-		if ($t === null)
-			$t = time();
-
-		return ($t);
-	}
-
-
-	private static function managePerHitOptions($operation, $moduleId, $optionName, $value = null)
-	{
-		static $arOptions = array();
-
-		$oName = $moduleId . '::' . $optionName;
-
-		if ( ! array_key_exists($oName, $arOptions) )
-			$arOptions[$oName] = null;
-
-		$rc = null;
-
-		if ($operation === 'read')
-			$rc = $arOptions[$oName];
-		elseif ($operation === 'write')
-			$arOptions[$oName] = $value;
-		else
-			CTaskAssert::assert(false);
-
-		return ($rc);
-	}
-}
-
-
 function tasksFormatDate($in_date)
 {
 	$date = $in_date;
-	$strDate = false;
 
 	if (!is_int($in_date))
 		$date = MakeTimeStamp($in_date);
@@ -204,11 +38,7 @@ function tasksFormatDate($in_date)
 	{
 		$strDate = FormatDate("yesterday", $date);
 	}
-	//	disabled, since it is not clear for foreigners
-	//	elseif (date("Y", $now) == date("Y", $date))
-	//	{
-	//		$strDate = ToLower(FormatDate("j F", $date));
-	//	}
+
 	else
 	{
 		if (defined('FORMAT_DATE'))
@@ -220,30 +50,6 @@ function tasksFormatDate($in_date)
 	}
 
 	return $strDate;
-}
-
-/**
- * @param $arParams
- * @return mixed|string
- * @deprecated
- */
-function tasksPeriodToStr($arParams)
-{
-	return \Bitrix\Tasks\UI\Task\Template::makeReplicationPeriodString($arParams);
-}
-
-
-function taskMessSuffix($number)
-{
-	switch ($number)
-	{
-		case 2:
-			return "_ND";
-		case 3:
-			return "_RD";
-		default:
-			return "_TH";
-	}
 }
 
 function tasksFormatName($name, $lastName, $login, $secondName = "", $nameTemplate = "", $bEscapeSpecChars = false)
@@ -313,40 +119,6 @@ function tasksFormatNameShort($name, $lastName, $login, $secondName = "", $nameT
 		$rc = htmlspecialcharsbx($rc);
 
 	return ($rc);
-}
-
-
-function tasksFormatHours($hours)
-{
-	$hoursOriginal = $hours = intval($hours);
-
-	$hours %= 100;
-	if ($hours >= 5 && $hours <= 20)
-		return $hoursOriginal. " ".GetMessage("TASKS_HOURS_P");
-
-	$hours %= 10;
-	if ($hours == 1)
-		return $hoursOriginal. " ".GetMessage("TASKS_HOURS_N");
-
-	if ($hours >= 2 && $hours <= 4)
-		return $hoursOriginal. " ".GetMessage("TASKS_HOURS_G");
-
-	return $hoursOriginal. " ".GetMessage("TASKS_HOURS_P");
-
-}
-
-
-function tasksTimeCutZeros($time)
-{
-	if (IsAmPmMode())
-	{
-		return trim(mb_substr($time, 11, 11) == "12:00:00 am"? mb_substr($time, 0, 10) : mb_substr($time, 0, 22));
-	}
-	else
-	{
-		return mb_substr($time, 11, 8) == "00:00:00"? mb_substr($time, 0, 10) : mb_substr($time, 0, 16);
-	}
-
 }
 
 /**@deprecated
@@ -712,103 +484,6 @@ function tasksGetItemMenu($task, $arPaths, $site_id = SITE_ID, $bGantt = false, 
 	<?
 }
 
-
-function tasksRenderListItem($task, $childrenCount, $arPaths, $depth = 0,
-	$plain = false, $defer = false, $site_id = SITE_ID, $updatesCount = 0,
-	$projectExpanded = true, $taskAdded = false,
-	$componentName = "bitrix:tasks.list.item", $componentTemplate = ".default",
-	$userNameTemplate = "", $arAllowedTaskActions = null, $ynIframe = 'N'
-)
-{
-	global $APPLICATION;
-
-	$APPLICATION->IncludeComponent(
-		$componentName, $componentTemplate, array(
-			"TASK" => $task,
-			"CHILDREN_COUNT" => $childrenCount,
-			"PATHS" => $arPaths,
-			"DEPTH" => $depth,
-			"PLAIN" => $plain,
-			"DEFER" => $defer,
-			"SITE_ID" => $site_id,
-			"UPDATES_COUNT" => $updatesCount,
-			"PROJECT_EXPANDED" => $projectExpanded,
-			"TASK_ADDED" => $taskAdded,
-			'ALLOWED_ACTIONS' => $arAllowedTaskActions,
-			'IFRAME'          => $ynIframe,
-			"NAME_TEMPLATE" => $userNameTemplate
-		), null, array("HIDE_ICONS" => "Y")
-	);
-}
-
-function templatesGetListItemActions($template, $arPaths)
-{
-	$addTaskUrl = CComponentEngine::MakePathFromTemplate($arPaths["PATH_TO_TASKS_TASK_ADD_BY_TEMPLATE"], array("task_id" => 0, "action" => "edit"));
-	$addTaskUrl .= (mb_strpos($addTaskUrl, "?") === false ? "?" : "&")."TEMPLATE=".$template["ID"];
-
-	$viewUrl = CComponentEngine::MakePathFromTemplate($arPaths["PATH_TO_TEMPLATES_TEMPLATE"], array("template_id" => $template["ID"], "action" => "view"));
-	$editUrl = CComponentEngine::MakePathFromTemplate($arPaths["PATH_TO_TEMPLATES_TEMPLATE"], array("template_id" => $template["ID"], "action" => "edit"));
-	$addSubTmplUrl = CComponentEngine::MakePathFromTemplate($arPaths["PATH_TO_TASKS_TASK"], array("task_id" => 0, "action" => "edit"))."?BASE_TEMPLATE=".intval($template["ID"]);
-	$copyUrl = CComponentEngine::MakePathFromTemplate($arPaths["PATH_TO_TASKS_TASK"], array("task_id" => 0, "action" => "edit"))."?COPY=".intval($template["ID"]);
-	?>
-
-	{ text : "<?php echo GetMessage("TASKS_VIEW_TASK")?>", title : "<?php echo GetMessage("TASKS_VIEW_TASK")?>", className : "menu-popup-item-view", href : "<?php echo CUtil::JSEscape($viewUrl)?>" },
-
-	<?if(!intval($template['BASE_TEMPLATE_ID']) && $template['TPARAM_TYPE'] != CTaskTemplates::TYPE_FOR_NEW_USER):?>
-		{ text : "<?php echo GetMessage("TASKS_ADD_TEMPLATE_TASK")?>", title : "<?php echo GetMessage("TASKS_ADD_TEMPLATE_TASK")?>", className : "menu-popup-item-create", href : "<?php echo CUtil::JSEscape($addTaskUrl)?>" },
-	<?endif?>
-
-	<?if($template['TPARAM_TYPE'] != CTaskTemplates::TYPE_FOR_NEW_USER):?>
-		{ text : "<?=GetMessage("TASKS_ADD_SUB_TEMPLATE")?>", title : "<?php echo GetMessage("TASKS_ADD_SUB_TEMPLATE")?>", className : "menu-popup-item-create", href : "<?=CUtil::JSEscape($addSubTmplUrl)?>" },
-	<?endif?>
-
-	{ text : "<?=GetMessage("TASKS_TEMPLATE_COPY")?>", title : "<?php echo GetMessage("TASKS_TEMPLATE_COPY")?>", className : "menu-popup-item-copy", href : "<?=CUtil::JSEscape($copyUrl)?>" },
-
-	<?if($template['ALLOWED_ACTIONS']['UPDATE']):?>
-		{ text : "<?php echo GetMessage("TASKS_EDIT_TASK")?>", title : "<?php echo GetMessage("TASKS_EDIT_TASK")?>", className : "menu-popup-item-edit", href : "<?php echo CUtil::JSEscape($editUrl)?>" },
-	<?endif?>
-	<?if($template['ALLOWED_ACTIONS']['DELETE']):?>
-		{ text : "<?php echo GetMessage("TASKS_DELETE_TASK")?>", title : "<?php echo GetMessage("TASKS_DELETE_TASK")?>", className : "menu-popup-item-delete", onclick : function() { if(confirm("<?php echo GetMessage("TASKS_DELETE_TASKS_CONFIRM")?>")){this.menuItems = []; DeleteTemplate(<?php echo $template["ID"]?>);} this.popupWindow.close(); } },
-	<?endif?>
-
-	<?
-}
-
-function templatesRenderListItem($template, $arPaths, $depth = 0, $plain = false, $defer = false, $nameTemplate = "")
-{
-	$anchor_id = RandString(8);
-
-	$addUrl = CComponentEngine::MakePathFromTemplate($arPaths["PATH_TO_TASKS_TASK"], array("task_id" => 0, "action" => "edit"));
-	$addUrl .= (mb_strpos($addUrl, "?") === false ? "?" : "&")."TEMPLATE=".$template["ID"];
-	$editUrl = CComponentEngine::MakePathFromTemplate($arPaths["PATH_TO_TEMPLATES_TEMPLATE"], array("template_id" => $template["ID"], "action" => "edit"));
-	?>
-	<script<?php echo $defer ? "  defer=\"defer\"" : ""?>>
-		tasksMenuPopup[<?php echo $template["ID"]?>] = [
-			<?templatesGetListItemActions($template, $arPaths)?>
-		];
-	</script>
-	<tr class="task-list-item task-depth-<?php echo $depth?>" id="template-<?php echo $template["ID"]?>" ondblclick="jsUtils.Redirect([], '<?php echo CUtil::JSEscape(CComponentEngine::MakePathFromTemplate($arPaths["PATH_TO_TEMPLATES_TEMPLATE"], array("template_id" => $template["ID"], "action" => "edit")))?>');" title="<?php echo GetMessage("TASKS_DOUBLE_CLICK")?>">
-		<td class="task-title-column">
-			<div class="task-title-container">
-				<div class="task-title-info">
-					<?php if ($template["MULTITASK"] == "Y"):?><span class="task-title-multiple" title="<?php echo GetMessage("TASKS_MULTITASK")?>"></span><?php endif?><a href="<?php echo CComponentEngine::MakePathFromTemplate($arPaths["PATH_TO_TEMPLATES_TEMPLATE"], array("template_id" => $template["ID"], "action" => "edit"))?>" class="task-title-link" title=""><?php echo $template["TITLE"]?></a>
-				</div>
-			</div>
-		</td>
-		<td class="task-menu-column"><a href="javascript: void(0)" class="task-menu-button" onclick="return ShowMenuPopup(<?php echo $template["ID"]?>, this);" title="<?php echo GetMessage("TASKS_MENU")?>"><i class="task-menu-button-icon"></i></a></td>
-		<td class="task-flag-column">&nbsp;</td>
-		<td class="task-priority-column">
-			<i class="task-priority-icon task-priority-<?php if ($template["PRIORITY"] == 0):?>low<?php elseif ($template["PRIORITY"] == 2):?>high<?php else:?>medium<?php endif?>" title="<?php echo GetMessage("TASKS_PRIORITY")?>: <?php echo GetMessage("TASKS_PRIORITY_".$template["PRIORITY"])?>"></i>
-		</td>
-		<td class="task-deadline-column"><?php if ($template["DEADLINE"]):?><span class="task-deadline-datetime"><span class="task-deadline-date"><?php echo tasksFormatDate($template["DEADLINE"])?></span></span><?php if(date("H:i", strtotime($template["DEADLINE"])) != "00:00"):?> <span class="task-deadline-time"><?php echo date("H:i", strtotime($template["DEADLINE"]))?></span><?php endif?><?php else:?>&nbsp;<?php endif?></td>
-		<td class="task-responsible-column"><a class="task-responsible-link" href="<?php echo CComponentEngine::MakePathFromTemplate($arPaths["PATH_TO_USER_PROFILE"], array("user_id" => $template["RESPONSIBLE_ID"]))?>" id="anchor_responsible_<?php echo $anchor_id?>" bx-tooltip-user-id="<?=$template["RESPONSIBLE_ID"]?>"><?php echo tasksFormatNameShort($template["RESPONSIBLE_NAME"], $template["RESPONSIBLE_LAST_NAME"], $template["RESPONSIBLE_LOGIN"], $template["RESPONSIBLE_SECOND_NAME"], $nameTemplate)?></a></td>
-		<td class="task-director-column"><a class="task-director-link" href="<?php echo CComponentEngine::MakePathFromTemplate($arPaths["PATH_TO_USER_PROFILE"], array("user_id" => $template["CREATED_BY"]))?>" id="anchor_created_<?php echo $anchor_id?>" bx-tooltip-user-id="<?=$template["CREATED_BY"]?>"><?php echo tasksFormatNameShort($template["CREATED_BY_NAME"], $template["CREATED_BY_LAST_NAME"], $template["CREATED_BY_LOGIN"], $template["CREATED_BY_SECOND_NAME"], $nameTemplate)?></a></td>
-		<td class="task-grade-column">&nbsp;</td>
-		<td class="task-complete-column">&nbsp;</td>
-	</tr>
-	<?php
-}
-
 /**@deprecated
  *
  * @param $arTask
@@ -1076,154 +751,15 @@ function tasksStatus2String($status)
 	return $strStatus;
 }
 
-
+/**
+ * @deprecated and will be removed
+ *
+ * @use \Bitrix\Tasks\V2\Internal\Service\UrlService
+ */
 function tasksServerName($server_name = false)
 {
-	if (!$server_name)
-	{
-		if (defined("SITE_SERVER_NAME") && SITE_SERVER_NAME)
-		{
-			$server_name = SITE_SERVER_NAME;
-		}
-		else
-		{
-			$server_name = COption::GetOptionString("main", "server_name", $_SERVER['HTTP_HOST']);
-		}
-	}
-
-	if (
-		(mb_substr(mb_strtolower($server_name), 0, 8) !== 'https://')
-		&& (mb_substr(mb_strtolower($server_name), 0, 7) !== 'http://')
-	)
-	{
-		if (CMain::IsHTTPS())
-			$server_name = 'https://' . $server_name;
-		else
-			$server_name = 'http://' . $server_name;
-	}
-
-	$server_name_wo_protocol = str_replace(
-		array('http://', 'https://', 'HTTP://', 'HTTPS://'), 	// Yeah, I know: 'hTtpS://', ...
-		array('', '', '', ''),
-		$server_name
-	);
-
-	// Cutoff all what is after '/' (include '/' itself)
-	$slashPos = mb_strpos($server_name_wo_protocol, '/');
-	if ($slashPos >= 1)
-	{
-		$length = $slashPos;
-		$server_name_wo_protocol = mb_substr(0, $length);
-	}
-
-	$isServerPortAlreadyGiven = false;
-	if (mb_strpos($server_name_wo_protocol, ':') !== false)
-		$isServerPortAlreadyGiven = true;
-
-	$server_port = '';
-
-	if (
-		!$isServerPortAlreadyGiven
-		&& isset($_SERVER['SERVER_PORT'])
-		&& ($_SERVER['SERVER_PORT'] <> '')
-		&& ($_SERVER['SERVER_PORT'] != '80')
-		&& ($_SERVER['SERVER_PORT'] != '443')
-	)
-	{
-		$server_port = ':' . $_SERVER['SERVER_PORT'];
-	}
-
-	if ( ! $isServerPortAlreadyGiven )
-		$server_name .= $server_port;
-
-	return ($server_name);
+	return \Bitrix\Tasks\V2\Internal\DI\Container::getInstance()->getUrlService()->getHostUrl((string)$server_name);
 }
-
-
-function tasksGetLastSelected($arManagers, $bSubordinateOnly = false, $nameTemplate = "")
-{
-	static $arLastUsers;
-
-	$userId = \Bitrix\Tasks\Util\User::getId();
-
-	if (!isset($arLastUsers))
-	{
-		$arSubDeps = CTasks::GetSubordinateDeps();
-
-		$arLastSelected = CUserOptions::GetOption("tasks", "user_search", array());
-		if (is_array($arLastSelected) && ($arLastSelected['last_selected'] ?? null) <> '')
-			$arLastSelected = array_unique(explode(',', $arLastSelected['last_selected']));
-		else
-			$arLastSelected = false;
-
-		if (is_array($arLastSelected))
-		{
-			$currentUser = array_search($userId, $arLastSelected);
-			if ($currentUser !== false)
-			{
-				unset($arLastSelected[$currentUser]);
-			}
-			array_unshift($arLastSelected, $userId);
-		}
-		else
-		{
-			$arLastSelected = is_array($arLastSelected) ? $arLastSelected : [];
-
-			$arLastSelected[] = $userId;
-		}
-
-		$arFilter = array('ACTIVE' => 'Y');
-		if ($bSubordinateOnly)
-		{
-			$arFilter["UF_DEPARTMENT"] = $arSubDeps;
-		}
-		else
-		{
-			$arFilter['!UF_DEPARTMENT'] = false;
-		}
-		$arFilter['ID'] = is_array($arLastSelected) ? implode('|', array_slice($arLastSelected, 0, 10)) : '-1';
-		$dbRes = CUser::GetList('last_name', 'asc', $arFilter, array('SELECT' => array('UF_DEPARTMENT')));
-		$arLastUsers = array();
-		while ($arRes = $dbRes->GetNext())
-		{
-			$arPhoto = array('IMG' => '');
-
-			if (!$arRes['PERSONAL_PHOTO'])
-			{
-				switch ($arRes['PERSONAL_GENDER'])
-				{
-					case "M":
-						$suffix = "male";
-						break;
-					case "F":
-						$suffix = "female";
-						break;
-					default:
-						$suffix = "unknown";
-				}
-				$arRes['PERSONAL_PHOTO'] = COption::GetOptionInt("socialnetwork", "default_user_picture_".$suffix, false, isset($arParams['SITE_ID']) ? $arParams['SITE_ID'] : SITE_ID);
-			}
-
-			if ($arRes['PERSONAL_PHOTO'] > 0)
-				$arPhoto = CIntranetUtils::InitImage($arRes['PERSONAL_PHOTO'], 30, 0, BX_RESIZE_IMAGE_EXACT);
-
-			$arLastUsers[$arRes['ID']] = array(
-				'ID' => $arRes['ID'],
-				'NAME' => CUser::FormatName(empty($nameTemplate) ? CSite::GetNameFormat() : $nameTemplate, $arRes, true, false),
-				'LOGIN' => $arRes['LOGIN'],
-				'EMAIL' => $arRes['EMAIL'],
-				'WORK_POSITION' => htmlspecialcharsBack($arRes['WORK_POSITION'] ? $arRes['WORK_POSITION'] : $arRes['PERSONAL_PROFESSION']),
-				'PHOTO' => isset($arPhoto['CACHE']['src']) ? $arPhoto['CACHE']['src'] : "",
-				'HEAD' => false,
-				'SUBORDINATE' => is_array($arSubDeps) && is_array($arRes['UF_DEPARTMENT']) && array_intersect($arRes['UF_DEPARTMENT'], $arSubDeps) ? 'Y' : 'N',
-				'SUPERORDINATE' => in_array($arRes["ID"], $arManagers) ? 'Y' : 'N'
-			);
-		}
-	}
-
-	return $arLastUsers;
-}
-
 
 define("TASKS_FILTER_SESSION_INDEX", "FILTER");
 
@@ -1278,60 +814,6 @@ function tasksPredefinedFilters($userID, $roleFilterSuffix = "")
 	);
 }
 
-/**
- * @param $component
- * @param bool $bShowError
- * @param string $errText
- *
- * @deprecated
- */
-function ShowInFrame(&$component, $bShowError = false, $errText = '')
-{
-	global $APPLICATION;
-
-	$APPLICATION->RestartBuffer();
-	?><!DOCTYPE html PUBLIC "-//W3C//DTD XHTML 1.0 Transitional//EN" "http://www.w3.org/TR/xhtml1/DTD/xhtml1-transitional.dtd">
-	<html xmlns="http://www.w3.org/1999/xhtml" xml:lang="<?=LANGUAGE_ID?>" lang="<?=LANGUAGE_ID?>">
-		<head><?php
-			$APPLICATION->ShowHead();
-			$APPLICATION->AddHeadString('
-				<style>
-				body {background: #fff !important; text-align: left !important; color: #000 !important;}
-				div.bx-core-dialog-overlay {opacity: 0 !important; -moz-opacity: 0 !important; -khtml-opacity: 0 !important; filter:progid:DXImageTransform.Microsoft.Alpha(opacity=0) !important;}
-				div#tasks-content-outer {padding: 15px;}
-				.task-comment-content{ font-family:Verdana, sans-serif; padding-top:6px; word-wrap: break-word; width: 620px; overflow: hidden;}
-				.task-detail-description { font-size:13px; color:#222; padding: 0 0 5px; word-wrap: break-word; width: 585px; overflow: hidden;}
-				</style>
-			', false, true);
-		?></head>
-		<body class="<?$APPLICATION->ShowProperty("BodyClass");?>" onload="if (window.top.BX.TasksIFrameInst) window.top.BX.TasksIFrameInst.onTaskLoaded();">
-			<div id="tasks-content-outer">
-				<table cellpadding="0" cellspading="0" width="100%">
-					<tr>
-						<td valign="top"><?php
-							if ($bShowError)
-							{
-								?><div id="task-reminder-link"><?php
-									ShowError($errText);
-								?></div><?php
-							}
-							else
-								$component->IncludeComponentTemplate();
-						?></td>
-						<?php if($APPLICATION->GetViewContent("sidebar_tools_1") <> ''): ?>
-							<td width="10"></td>
-							<td valign="top" width="230"><?php $APPLICATION->ShowViewContent("sidebar_tools_1") ?></td>
-						<?php endif?>
-					</tr>
-				</table>
-			</div>
-		</body>
-	</html><?
-	require($_SERVER['DOCUMENT_ROOT'] . '/bitrix/modules/main/include/epilog_after.php');
-	die();
-}
-
-
 function __checkForum($forumID)
 {
 	if (!($settingsForumID = COption::GetOptionString("tasks", "task_forum_id")))
@@ -1365,65 +847,5 @@ function __checkForum($forumID)
 
 		CForumNew::Update($forumID, array("GROUP_ID"=>$arGroups, "INDEXATION" => "Y"));
 		COption::RemoveOption("tasks", "forum_checked");
-	}
-}
-
-
-/**
- * This function is deprecated. See CTaskFiles::removeTemporaryFile()
- *
- * @deprecated
- */
-function deleteUploadedFiles($arFileIDs)
-{
-	$arFileIDs = (array) $arFileIDs;
-	foreach($arFileIDs as $fileID)
-	{
-		$key = array_search(intval($fileID), $_SESSION["TASKS_UPLOADED_FILES"]);
-		if ($key !== false)
-		{
-			unset($_SESSION["TASKS_UPLOADED_FILES"][$key]);
-		}
-	}
-}
-
-
-/**
- * This function is deprecated. See CTaskFiles::saveFileTemporary()
- *
- * @deprecated
- */
-function addUploadedFiles($arFileIDs)
-{
-	$arFileIDs = (array) $arFileIDs;
-	if (!is_array($_SESSION["TASKS_UPLOADED_FILES"]))
-		$_SESSION["TASKS_UPLOADED_FILES"] = array();
-	$_SESSION["TASKS_UPLOADED_FILES"] = array_merge($_SESSION["TASKS_UPLOADED_FILES"], $arFileIDs);
-}
-
-
-/**
- * This function is deprecated.
- *
- * @deprecated
- */
-function cleanupUploadedFiles()
-{
-	if (isset($_SESSION["TASKS_UPLOADED_FILES"]) && is_array($_SESSION["TASKS_UPLOADED_FILES"]))
-	{
-		foreach($_SESSION["TASKS_UPLOADED_FILES"] as $fileID)
-		{
-			CFile::Delete($fileID);
-		}
-		$_SESSION["TASKS_UPLOADED_FILES"] = array();
-	}
-}
-
-
-if ( ! function_exists('tasksFormatFileSize') )
-{
-	function tasksFormatFileSize($in)
-	{
-		return(CFile::FormatSize($in));
 	}
 }

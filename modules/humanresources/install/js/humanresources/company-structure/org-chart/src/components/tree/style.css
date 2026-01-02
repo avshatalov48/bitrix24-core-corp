@@ -38,7 +38,7 @@
 }
 
 .humanresources-tree__message-box .popup-window-titlebar {
-	font: var(--ui-font-weight-bold) 15px/18px var(--ui-font-family-system);
+	font: var(--ui-font-weight-bold) 15px/18px var(--ui-font-family-primary, var(--ui-font-family-system));
 	padding: 0 14px;
 	color: #535c69;
 }
@@ -48,7 +48,7 @@
 }
 
 .humanresources-tree__message-box .popup-window-content {
-	font: 14px/17px var(--ui-font-family-system);
+	font: 14px/17px var(--ui-font-family-primary, var(--ui-font-family-system));
 	padding: 4px 14px 10px 14px;
 	color: var(--ui-color-palette-gray-90);
 }
@@ -56,4 +56,84 @@
 .humanresources-tree__message-box .popup-window-buttons {
 	padding-top: 15px;
 	border-top: 1px solid #f1f2f3;
+}
+
+.humanresources-tree.--drag-progress .humanresources-tree__node:not(.--focused) > .humanresources-tree__node_summary:hover {
+	box-shadow: 0px 2px 4px 0px rgba(0, 0, 0, 12%);
+}
+
+.humanresources-tree.--drag-progress .humanresources-tree__node_add-subdivision {
+	display: none;
+}
+
+.humanresources-tree.--drag-progress .humanresources-tree__node.--blur > .humanresources-tree__node_summary {
+	opacity: 60%;
+}
+
+.humanresources-tree.--drag-progress .humanresources-tree__node_department,
+.humanresources-tree.--drag-progress .humanresources-tree__node_description,
+.humanresources-tree.--drag-progress .humanresources-tree__node_subdivisions {
+	pointer-events: none;
+}
+
+.humanresources-tree__position-pointer {
+	background-color: rgba(229, 249, 255, 0.74);
+	background-image: repeating-linear-gradient(90deg, rgba(47, 198, 246, 0.43), rgba(47, 198, 246, 0.43) 10px, transparent 10px, transparent 20px), repeating-linear-gradient(180deg, rgba(47, 198, 246, 0.43), rgba(47, 198, 246, 0.43) 10px, transparent 10px, transparent 20px), repeating-linear-gradient(90deg, rgba(47, 198, 246, 0.43), rgba(47, 198, 246, 0.43) 10px, transparent 10px, transparent 20px), repeating-linear-gradient(180deg, rgba(47, 198, 246, 0.43), rgba(47, 198, 246, 0.43) 10px, transparent 10px, transparent 20px);
+	background-position: left 5px top, right top -11px, left 5px bottom, left top -11px;
+	background-repeat: repeat-x, repeat-y, repeat-x, repeat-y;
+	background-size: calc(100% * 20) 2px, 2px calc(100% * 20), calc(100% * 20) 2px, 2px calc(100% * 20);
+	box-sizing: border-box;
+	border-radius: 12px;
+	position: absolute;
+	top: 0;
+	left: 0;
+	z-index: 1;
+}
+
+.humanresources-tree__position-pointer.--inside {
+	background: linear-gradient(180deg, rgba(255, 255, 255, 0.85) 0%, #FFFFFF 52.89%);
+	box-shadow: 0px 1.75px 15.78px 0px rgba(0, 0, 0, 0.16);
+	font: 12px/15px var(--ui-font-family-primary, var(--ui-font-family-system));
+	outline: 5px solid white;
+	outline-offset: -4px;
+}
+
+.humanresources-tree__position-pointer > div {
+	display: none;
+	align-items: center;
+	flex-direction: column;
+	justify-content: center;
+	height: 100%;
+}
+
+.humanresources-tree__position-pointer.--inside:not(.--no-permission) > div:first-child {
+	display: flex;
+	--ui-icon-set__icon-color: var(--ui-color-palette-blue-50);
+}
+
+.humanresources-tree__position-pointer.--inside.--no-permission > div:last-child  {
+	display: flex;
+	--ui-icon-set__icon-color: var(--ui-color-palette-red-50);
+}
+
+.humanresources-tree__node.humanresources-tree__dnd-ghost {
+	z-index: 2;
+	position: absolute;
+	border: 1px solid var(--ui-color-palette-blue-40);
+}
+
+.humanresources-tree__node.humanresources-tree__dnd-ghost > .humanresources-tree__node_summary {
+	cursor: grabbing;
+}
+
+.humanresources-tree__dnd-ghost.--disabled-events {
+	pointer-events: none;
+}
+
+.humanresources-tree__dnd-ghost .humanresources-tree__node_children {
+	display: none;
+}
+
+.humanresources-tree__dnd-ghost .humanresources-tree__node_subdivisions.humanresources-tree__node_arrow:after {
+	transform: rotate(45deg);
 }

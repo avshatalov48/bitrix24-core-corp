@@ -2,7 +2,7 @@
 
 namespace Bitrix\Crm\Security\Role\UIAdapters\AccessRights\ControlMapper\DependentVariables;
 
-use Bitrix\Crm\Security\Role\Manage\AttrPreset\UserRoleAndHierarchy;
+use Bitrix\Crm\Security\Role\Manage\AttrPreset\UserDepartmentAndOpened;
 use Bitrix\Crm\Security\Role\UIAdapters\AccessRights\ControlMapper\BaseControlMapper;
 use Bitrix\Crm\Security\Role\UIAdapters\RoleEditV2\MultivariablesCompatibilityAdapter;
 use Bitrix\Crm\Service\UserPermissions;
@@ -12,11 +12,6 @@ class ValuesAsSettings extends BaseControlMapper
 {
 	public function getType(): string
 	{
-		if (!defined('\Bitrix\Main\Access\Permission\PermissionDictionary::TYPE_DEPENDENT_VARIABLES'))
-		{
-			return 'dependent_variables';
-		}
-
 		return PermissionDictionary::TYPE_DEPENDENT_VARIABLES;
 	}
 
@@ -27,7 +22,7 @@ class ValuesAsSettings extends BaseControlMapper
 		{
 			if (!empty($attr))
 			{
-				return (new UserRoleAndHierarchy())->convertSingleToMultiValue($attr);
+				return (new UserDepartmentAndOpened())->convertSingleToMultiValue($attr);
 			}
 
 			return (array)$settings;

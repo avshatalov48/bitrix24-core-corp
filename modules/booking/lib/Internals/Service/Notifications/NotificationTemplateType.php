@@ -9,6 +9,10 @@ use Bitrix\Main\Localization\Loc;
 
 Loc::loadMessages($_SERVER['DOCUMENT_ROOT'] . BX_ROOT . '/modules/booking/lib/Internals/NotificationTemplateType.php');
 
+/**
+ * @todo delete this enum and use enums from Bitrix\Booking\Entity\Enum
+ */
+
 enum NotificationTemplateType: string
 {
 	use DictionaryTrait;

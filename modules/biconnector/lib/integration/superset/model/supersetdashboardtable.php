@@ -38,9 +38,9 @@ use Bitrix\Rest\AppTable;
  * @method static EO_SupersetDashboard_Result getList(array $parameters = [])
  * @method static EO_SupersetDashboard_Entity getEntity()
  * @method static \Bitrix\BIConnector\Integration\Superset\Model\SupersetDashboard createObject($setDefaultValues = true)
- * @method static \Bitrix\BIConnector\Integration\Superset\Model\EO_SupersetDashboard_Collection createCollection()
+ * @method static \Bitrix\BIConnector\Integration\Superset\Model\SupersetDashboardCollection createCollection()
  * @method static \Bitrix\BIConnector\Integration\Superset\Model\SupersetDashboard wakeUpObject($row)
- * @method static \Bitrix\BIConnector\Integration\Superset\Model\EO_SupersetDashboard_Collection wakeUpCollection($rows)
+ * @method static \Bitrix\BIConnector\Integration\Superset\Model\SupersetDashboardCollection wakeUpCollection($rows)
  */
 
 final class SupersetDashboardTable extends DataManager
@@ -53,10 +53,16 @@ final class SupersetDashboardTable extends DataManager
 	public const DASHBOARD_STATUS_READY = 'R';
 	public const DASHBOARD_STATUS_DRAFT = 'D';
 	public const DASHBOARD_STATUS_FAILED = 'F';
+	public const DASHBOARD_STATUS_NOT_INSTALLED = 'N';
 
 	public static function getObjectClass()
 	{
 		return SupersetDashboard::class;
+	}
+
+	public static function getCollectionClass()
+	{
+		return SupersetDashboardCollection::class;
 	}
 
 	/**
@@ -88,6 +94,7 @@ final class SupersetDashboardTable extends DataManager
 					self::DASHBOARD_STATUS_READY,
 					self::DASHBOARD_STATUS_DRAFT,
 					self::DASHBOARD_STATUS_FAILED,
+					self::DASHBOARD_STATUS_NOT_INSTALLED,
 				])
 				->configureDefaultValue(self::DASHBOARD_STATUS_READY)
 			,
@@ -174,6 +181,15 @@ final class SupersetDashboardTable extends DataManager
 			))
 				->configureJoinType(Join::TYPE_LEFT)
 				->configureCascadeDeletePolicy(Fields\Relations\CascadePolicy::FOLLOW)
+			,
+
+			(new Fields\Relations\ManyToMany(
+				'GROUPS',
+				SupersetDashboardGroupTable::class,
+			))
+				->configureMediatorTableName('b_biconnector_superset_dashboard_group_binding')
+				->configureLocalPrimary('ID', 'DASHBOARD_ID')
+				->configureRemotePrimary('ID', 'GROUP_ID')
 			,
 		];
 	}

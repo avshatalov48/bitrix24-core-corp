@@ -17,7 +17,6 @@ export const OpenLinesTextarea = {
 		<ChatTextarea
 			:dialogId="dialogId"
 			:key="dialogId"
-			:withAudioInput="false"
 		>
 		</ChatTextarea>
 	`,

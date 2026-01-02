@@ -1,0 +1,22 @@
+<?php
+$MESS["IMOL_CRM_BUTTON_CANCEL"] = "Болдырмау";
+$MESS["IMOL_CRM_BUTTON_CHANGE"] = "Ауыстыру";
+$MESS["IMOL_CRM_COMPANY_EXTEND"] = "Байланыс ақпараты компанияға сақталды";
+$MESS["IMOL_CRM_CONTACT_EXTEND"] = "Байланыс ақпараты контактіге сақталды";
+$MESS["IMOL_CRM_CREATE_ACTIVITY_2"] = "Ашық желі чаты - \"#LEAD_NAME#\" (#CONNECTOR_NAME#)";
+$MESS["IMOL_CRM_CREATE_LEAD_COMMENTS_NEW"] = "Лид \"#CONNECTOR_NAME#\" арнасы арқылы \"#LINE_NAME#\" ашық желісіне пайдаланушының жүгінуі негізінде жасалды.";
+$MESS["IMOL_CRM_ERROR_CREATING_LEAD"] = "Лидті құру қатесі";
+$MESS["IMOL_CRM_ERROR_NOT_LOAD_CRM"] = "CRM жүктеу қатесі";
+$MESS["IMOL_CRM_ERROR_NOT_LOAD_IM"] = "Мессенджерді жүктеу қатесі";
+$MESS["IMOL_CRM_ERROR_NO_CRM_BINDINGS"] = "Істің қолжетімді байланысы жоқ";
+$MESS["IMOL_CRM_ERROR_NO_ID_ACTIVITY"] = "Істің id көрсетілмеген";
+$MESS["IMOL_CRM_ERROR_NO_REQUIRED_PARAMETERS"] = "Барлық міндетті параметрлер берілмеген";
+$MESS["IMOL_CRM_ERROR_NO_SESSION"] = "Ашық желі сессиясы жоқ";
+$MESS["IMOL_CRM_LEAD_ADD"] = "Байланыс ақпараты негізінде жаңа лид құрылды";
+$MESS["IMOL_CRM_LEAD_EXTEND"] = "Байланыс ақпараты лидте сақталады";
+$MESS["IMOL_CRM_LINE_TYPE_FACEBOOK"] = "Facebook";
+$MESS["IMOL_CRM_LINE_TYPE_LIVECHAT"] = "Онлайн-чат";
+$MESS["IMOL_CRM_LINE_TYPE_NETWORK"] = "Битрикс24.Network";
+$MESS["IMOL_CRM_LINE_TYPE_SKYPEBOT"] = "Skype";
+$MESS["IMOL_CRM_LINE_TYPE_TELEGRAMBOT"] = "Telegram";
+$MESS["IMOL_CRM_LINE_TYPE_VKGROUP"] = "ВКонтакте";

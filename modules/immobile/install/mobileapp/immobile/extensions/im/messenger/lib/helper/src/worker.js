@@ -35,11 +35,19 @@ jn.define('im/messenger/lib/helper/worker', (require, exports, module) => {
 			this.isStarted = true;
 		}
 
-		stop()
+		/**
+		 * @param {?Boolean} skipCallback
+		 */
+		stop({ skipCallback = true } = {})
 		{
 			clearInterval(this.tickIntervalId);
 			this.tickIntervalId = null;
 			this.isStarted = false;
+
+			if (!skipCallback)
+			{
+				this.callback();
+			}
 		}
 
 		isHasOnce()

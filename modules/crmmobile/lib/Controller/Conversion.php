@@ -95,12 +95,12 @@ class Conversion extends Base
 			$userPermissions = Container::getInstance()->getUserPermissions();
 			$conversionData['permissions'] = [
 				\CCrmOwnerType::Contact => [
-					'read' => $userPermissions->checkReadPermissions(\CCrmOwnerType::Contact, 0, 0),
-					'write' => $userPermissions->checkUpdatePermissions(\CCrmOwnerType::Contact, 0, 0),
+					'read' => $userPermissions->entityType()->canReadItems(\CCrmOwnerType::Contact),
+					'write' => $userPermissions->entityType()->canUpdateItems(\CCrmOwnerType::Contact),
 				],
 				\CCrmOwnerType::Company => [
-					'read' => $userPermissions->checkReadPermissions(\CCrmOwnerType::Company, 0, 0),
-					'write' => $userPermissions->checkUpdatePermissions(\CCrmOwnerType::Company, 0, 0),
+					'read' => $userPermissions->entityType()->canReadItems(\CCrmOwnerType::Company),
+					'write' => $userPermissions->entityType()->canUpdateItems(\CCrmOwnerType::Company),
 				],
 			];
 		}

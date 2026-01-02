@@ -44,7 +44,7 @@ final class DatasetViewer
 		return $this;
 	}
 
-	public function getData(): array
+	public function getData(bool $skipCache = false): array
 	{
 		$result = [];
 
@@ -69,19 +69,175 @@ final class DatasetViewer
 			}
 
 			$headerData = [
-				'name' => $this->fields[$i]['NAME'] ?? self::prepareCode($names[$i]),
+				'name' => $this->prepareCode($names[$i]),
 				'externalCode' => $externalCodes[$i],
 				'type' => $type,
 				'visible' => $this->fields[$i]['VISIBLE'] ?? true,
 			];
-			if (isset($this->fields[$i]['ID']))
-			{
-				$headerData['id'] = (int)$this->fields[$i]['ID'];
-			}
+
 			$result['headers'][] = $headerData;
 		}
 
-		$result['data'] = $this->convertData($data);
+		$result['data'] = $this->convertData($data, $types);
+
+		return $result;
+	}
+
+	public function getDataForView(): array
+	{
+		$data = $this->getData();
+
+		if ($this->needFilterData())
+		{
+			return $this->filterDataByFields($data);
+		}
+
+		return $data;
+	}
+
+	public function getDataForSync(): array
+	{
+		$data = $this->getData();
+
+		if ($this->needMergeData())
+		{
+			return $this->mergeDataWithFields($data);
+		}
+
+		return $data;
+	}
+
+	private function needFilterData(): bool
+	{
+		return $this->fields && $this->file === null;
+	}
+
+	private function filterDataByFields(array $data): array
+	{
+		$result = [
+			'headers' => [],
+			'data' => [],
+		];
+
+		$externalCodes = array_column($data['headers'], 'externalCode');
+		$data['data'] = array_map(
+			static function ($row) use ($externalCodes) {
+				return array_combine($externalCodes, $row);
+			},
+			$data['data']
+		);
+
+		foreach ($this->fields as $field)
+		{
+			$header = [
+				'name' => $field['NAME'],
+				'externalCode' => $field['EXTERNAL_CODE'],
+				'type' => FieldType::from($field['TYPE']),
+				'visible' => $field['VISIBLE'],
+			];
+
+			if (isset($field['ID']) && (int)$field['ID'] > 0)
+			{
+				$header['id'] = (int)$field['ID'];
+			}
+
+			$result['headers'][] = $header;
+		}
+
+		$existingExternalCodes = array_column($this->fields, 'EXTERNAL_CODE');
+		foreach ($data['data'] as $row)
+		{
+			$tmp = [];
+
+			foreach ($existingExternalCodes as $externalCode)
+			{
+				if (isset($row[$externalCode]))
+				{
+					$tmp[] = $row[$externalCode];
+				}
+				else
+				{
+					$tmp[] = '';
+				}
+			}
+
+			$result['data'][] = $tmp;
+		}
+
+		return $result;
+	}
+
+	private function needMergeData(): bool
+	{
+		return $this->fields && $this->file === null;
+	}
+
+	private function mergeDataWithFields(array $data): array
+	{
+		$result = [
+			'headers' => [],
+			'data' => [],
+		];
+
+		$externalCodes = array_column($data['headers'], 'externalCode');
+		$data['headers'] = array_combine($externalCodes, $data['headers']);
+		$data['data'] = array_map(
+			static function (array $row) use ($externalCodes) {
+				return array_combine($externalCodes, $row);
+			},
+			$data['data']
+		);
+
+		$fields = array_combine(array_column($this->fields, 'EXTERNAL_CODE'), $this->fields);
+
+		$newFields = [];
+		foreach ($data['headers'] as $externalCode => $header)
+		{
+			$field = $fields[$externalCode] ?? null;
+			if ($field)
+			{
+				$tmp = [
+					'name' => $field['NAME'],
+					'externalCode' => $field['EXTERNAL_CODE'],
+					'type' => FieldType::from($field['TYPE']),
+					'visible' => $field['VISIBLE'],
+				];
+
+				if (isset($field['ID']) && (int)$field['ID'] > 0)
+				{
+					$tmp['id'] = (int)$field['ID'];
+				}
+
+				$result['headers'][$externalCode] = $tmp;
+			}
+			else
+			{
+				$newFields[$externalCode] = $header;
+			}
+		}
+
+		$currentExternalCodes = array_flip(array_column($this->fields, 'EXTERNAL_CODE'));
+
+		if ($newFields)
+		{
+			$result['headers'] = array_merge($result['headers'], $newFields);
+
+			$newExternalCodes = array_flip(array_column($newFields, 'externalCode'));
+			$currentExternalCodes = array_merge($currentExternalCodes, $newExternalCodes);
+		}
+
+		$currentExternalCodes = array_filter($currentExternalCodes, function ($code) use ($result) {
+			return array_key_exists($code, $result['headers']);
+		}, ARRAY_FILTER_USE_KEY );
+		$result['headers'] = array_values(array_merge($currentExternalCodes, $result['headers']));
+
+		$result['data'] = array_map(
+			static function (array $row) use ($currentExternalCodes) {
+				return array_merge($currentExternalCodes, $row);
+			},
+			$data['data']
+		);
+		$result['data'] = array_map('array_values', $result['data']);
 
 		return $result;
 	}
@@ -108,7 +264,7 @@ final class DatasetViewer
 		return $viewerBuilder->build();
 	}
 
-	private function convertData(array $data): array
+	private function convertData(array $data, array $types): array
 	{
 		$needUseDefaultType = $this->needUseDefaultType($data);
 
@@ -118,82 +274,79 @@ final class DatasetViewer
 			$formats[$setting['TYPE']] = $setting['FORMAT'];
 		}
 
-		foreach ($data as $rowNumber => $rowValue)
+		foreach ($data as $rowIndex => $rowValue)
 		{
-			foreach ($rowValue as $columnNumber => $columnValue)
+			foreach ($rowValue as $columnIndex => $columnValue)
 			{
-				if ($needUseDefaultType)
+				$type = $needUseDefaultType
+					? $types[$columnIndex]
+					: FieldType::from($this->fields[$columnIndex]['TYPE']);
+				switch ($type)
 				{
-					$data[$rowNumber][$columnNumber] = TypeConverter::convertToString($columnValue);
-				}
-				else
-				{
-					$type = FieldType::from($this->fields[$columnNumber]['TYPE']);
-					switch ($type)
-					{
-						case FieldType::Int:
-							$data[$rowNumber][$columnNumber] = TypeConverter::convertToInt($columnValue);
+					case FieldType::Int:
+						$data[$rowIndex][$columnIndex] = TypeConverter::convertToInt($columnValue);
 
-							break;
-						case FieldType::String:
-							$data[$rowNumber][$columnNumber] = TypeConverter::convertToString($columnValue);
+						break;
 
-							break;
+					case FieldType::Double:
+						$delimiter = $formats[FieldType::Double->value];
+						$data[$rowIndex][$columnIndex] = TypeConverter::convertToDouble(
+							$columnValue,
+							delimiter: $delimiter
+						);
 
-						case FieldType::Double:
-							$delimiter = $formats[FieldType::Double->value];
-							$data[$rowNumber][$columnNumber] = TypeConverter::convertToDouble(
+						break;
+
+					case FieldType::Date:
+						$format = $formats[FieldType::Date->value];
+						$value = TypeConverter::convertToDate(
+							$columnValue,
+							$format
+						);
+						if ($value)
+						{
+							$data[$rowIndex][$columnIndex] = $value->format('Y-m-d');
+						}
+						else
+						{
+							$data[$rowIndex][$columnIndex] = '';
+						}
+
+						break;
+
+					case FieldType::DateTime:
+						$format = $formats[FieldType::DateTime->value];
+						$value = TypeConverter::convertToDateTime(
+							$columnValue,
+							$format
+						);
+						if ($value)
+						{
+							$data[$rowIndex][$columnIndex] = $value->format('Y-m-d H:i:s');
+						}
+						else
+						{
+							$data[$rowIndex][$columnIndex] = '';
+						}
+
+						break;
+
+					case FieldType::Money:
+						$delimiter = $formats[FieldType::Money->value];
+						$data[$rowIndex][$columnIndex] = self::formatMoney(
+							TypeConverter::convertToMoney(
 								$columnValue,
 								delimiter: $delimiter
-							);
+							)
+						);
 
-							break;
+						break;
 
-						case FieldType::Date:
-							$format = $formats[FieldType::Date->value];
-							$value = TypeConverter::convertToDate(
-								$columnValue,
-								$format
-							);
-							if ($value)
-							{
-								$data[$rowNumber][$columnNumber] = $value->format('Y-m-d');
-							}
-							else
-							{
-								$data[$rowNumber][$columnNumber] = '';
-							}
+					case FieldType::String:
+					default:
+						$data[$rowIndex][$columnIndex] = TypeConverter::convertToString($columnValue);
 
-							break;
-
-						case FieldType::DateTime:
-							$format = $formats[FieldType::DateTime->value];
-							$value = TypeConverter::convertToDateTime(
-								$columnValue,
-								$format
-							);
-							if ($value)
-							{
-								$data[$rowNumber][$columnNumber] = $value->format('Y-m-d H:i:s');
-							}
-							else
-							{
-								$data[$rowNumber][$columnNumber] = '';
-							}
-
-							break;
-
-						case FieldType::Money:
-							$delimiter = $formats[FieldType::Money->value];
-							$data[$rowNumber][$columnNumber] = self::formatMoney(
-								TypeConverter::convertToMoney(
-									$columnValue,
-									delimiter: $delimiter
-								)
-							);
-
-							break;
-					}
+						break;
 				}
 			}
 		}
@@ -213,6 +366,11 @@ final class DatasetViewer
 			return true;
 		}
 
+		if ($this->type === Type::Rest || $this->type === Type::Source1C)
+		{
+			return true;
+		}
+
 		return false;
 	}
 
@@ -221,8 +379,13 @@ final class DatasetViewer
 		return number_format($value, 2, '.', '');
 	}
 
-	private static function prepareCode(string $name): string
+	private function prepareCode(string $name): string
 	{
+		if ($this->type === Type::Rest)
+		{
+			return $name;
+		}
+
 		$transliteratedName = \CUtil::translit($name, LANGUAGE_ID, ['change_case' => 'U']);
 		if ($transliteratedName === '_')
 		{

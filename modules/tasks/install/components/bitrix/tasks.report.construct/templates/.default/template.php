@@ -2,10 +2,10 @@
 
 use Bitrix\Main\Web\Json;
 use Bitrix\Tasks\Helper\RestrictionUrl;
-use Bitrix\Tasks\Integration\Intranet\Settings;
 use Bitrix\Tasks\Internals\Task\MetaStatus;
 use Bitrix\Tasks\Internals\Task\Priority;
 use Bitrix\Tasks\Internals\Task\Status;
+use Bitrix\Tasks\V2\Internal\DI\Container;
 
 if (!defined("B_PROLOG_INCLUDED") || B_PROLOG_INCLUDED !== true)
 {
@@ -13,8 +13,8 @@ if (!defined("B_PROLOG_INCLUDED") || B_PROLOG_INCLUDED !== true)
 }
 
 /** intranet-settings-support */
-$settings = new Settings();
-if (!$settings->isToolAvailable(Settings::TOOLS['base_tasks']) || !$settings->isToolAvailable(Settings::TOOLS['report']))
+$toolService = Container::getInstance()->getToolService();
+if (!$toolService->isBaseTasksAvailable() || !$toolService->isReportAvailable())
 {
 	$APPLICATION->IncludeComponent("bitrix:tasks.error", "limit", [
 		'LIMIT_CODE' => RestrictionUrl::TASK_LIMIT_OFF_SLIDER_URL,

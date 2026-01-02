@@ -5,24 +5,21 @@ use Bitrix\Main\Web\Json;
 
 if (!defined("B_PROLOG_INCLUDED") || B_PROLOG_INCLUDED !== true)
 {
-	die();
+	die;
 }
-
-\Bitrix\Main\UI\Extension::load([
-	'spotlight',
-	'ui.banner-dispatcher',
-]);
 
 /**
  * @var array $arResult
  */
 
-
-$frame = $this->createFrame()->begin("");
 ?>
+
 <div id="intranet-settings-widget-open-button_<?=$arResult['NUMBER']?>" class="intranet-settings-widget__logo-btn" data-role="holding_widget_pointer">
 	<i class="ui-icon-set --settings"></i>
 </div>
+<?php
+$frame = $this->createFrame()->begin("");
+?>
 
 <script>
 	BX.ready(() => {
@@ -36,7 +33,7 @@ $frame = $this->createFrame()->begin("");
 				isMainPageAvailable: <?= Json::encode($arResult['IS_WIDGET_MENU_ITEM_SHOW']) ?>,
 			}).showOnce(button);
 		}
-		BX.bind(button, 'click', bindCallbackInitial);
+		BX.Event.bind(button, 'click', bindCallbackInitial);
 		<?php if ($arResult['SPOTLIGHT'] || $arResult['SPOTLIGHT_AFTER_CREATE']): ?>
 		<?php
 		if ($arResult['SPOTLIGHT'])
@@ -61,40 +58,45 @@ $frame = $this->createFrame()->begin("");
 					</div>
 				`;
 				const spotlightId = '<?= \CUtil::JSEscape($spotlightId)?>';
-				BX.UI.BannerDispatcher.toQueue((onDone) => {
-					const spotlight = new BX.SpotLight({
-						id: spotlightId,
-						targetElement: button,
-						top: 2,
-						content: content,
-						targetVertex: 'middle-center',
-						lightMode: true,
-						autoSave: true,
-						events: {
-							onClose: () => {
-								const buttons = document.querySelectorAll('.intranet-settings-widget__logo-btn');
-								const spotlights = [];
-								buttons.forEach(button => {
-									if (button.spotlight && button.spotlight !== spotlight)
-									{
-										spotlights.push(button.spotlight);
-									}
 
-									delete button.spotlight;
-								});
+				BX.Runtime.loadExtension(['ui.banner-dispatcher', 'spotlight']).then((exports) => {
+					const { BannerDispatcher } = exports;
 
-								spotlights.forEach(sp => sp.destroy());
-								onDone();
-							}
-						},
+					BannerDispatcher.toQueue((onDone) => {
+						const spotlight = new BX.SpotLight({
+							id: spotlightId,
+							targetElement: button,
+							top: 2,
+							content: content,
+							targetVertex: 'middle-center',
+							lightMode: true,
+							autoSave: true,
+							events: {
+								onClose: () => {
+									const buttons = document.querySelectorAll('.intranet-settings-widget__logo-btn');
+									const spotlights = [];
+									buttons.forEach(button => {
+										if (button.spotlight && button.spotlight !== spotlight)
+										{
+											spotlights.push(button.spotlight);
+										}
+
+										delete button.spotlight;
+									});
+
+									spotlights.forEach(sp => sp.destroy());
+									onDone();
+								}
+							},
+						});
+
+						button.spotlight = spotlight;
+						spotlight.show();
+						setTimeout(() => {
+							spotlight.getPopup().show();
+							spotlight.save();
+						}, 1500);
 					});
-
-					button.spotlight = spotlight;
-					spotlight.show();
-					setTimeout(() => {
-						spotlight.getPopup().show();
-						spotlight.save();
-					}, 1500);
 				});
 			}
 		<?php endif; ?>

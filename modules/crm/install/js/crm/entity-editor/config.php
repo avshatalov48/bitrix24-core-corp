@@ -34,7 +34,6 @@ return array(
 		"/bitrix/js/crm/entity-editor/js/validator.js",
 		"/bitrix/js/crm/entity-editor/js/manager.js",
 		"/bitrix/js/crm/entity-editor/js/client-editor.js",
-		"/bitrix/js/crm/entity-editor/js/field-attr.js",
 		"/bitrix/js/crm/entity-editor/js/multiple-user.js",
 		"/bitrix/js/crm/entity-editor/js/order.js",
 		"/bitrix/js/crm/entity-editor/js/product-list.js",

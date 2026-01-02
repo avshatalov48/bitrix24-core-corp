@@ -6,5 +6,6 @@ return [
 		'apptheme',
 		'helpers/holder',
 		'project/utils',
+		'utils/object',
 	],
 ];

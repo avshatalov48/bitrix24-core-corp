@@ -13,6 +13,8 @@ enum Type: string
 	case GeneralChannel = 'GENERAL_CHANNEL';
 	case Comment = 'COMMENT';
 	case Copilot = 'COPILOT';
+	case AiAssistant = 'AI_ASSISTANT';
+	case AiAssistantEntity = 'AI_ASSISTANT_ENTITY';
 	case Collab = 'COLLAB';
 	case Announcement = 'ANNOUNCEMENT';
 	case Videoconference = 'VIDEOCONF';

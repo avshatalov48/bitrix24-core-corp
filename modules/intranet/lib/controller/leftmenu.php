@@ -7,6 +7,8 @@ use Bitrix\Intranet\Settings\Tools\Sites;
 use Bitrix\Intranet\Settings\Tools\Tasks;
 use Bitrix\Intranet\Settings\Tools\TeamWork;
 use Bitrix\Intranet\Portal\FirstPage;
+use Bitrix\Main\DB\SqlExpression;
+use Bitrix\Main\Entity\ReferenceField;
 use Bitrix\Main\Error;
 use Bitrix\Main\EventManager;
 use Bitrix\Main\Event;
@@ -14,10 +16,34 @@ use Bitrix\Main\Loader;
 use Bitrix\Main\ModuleManager;
 use Bitrix\Main\Localization\Loc;
 use Bitrix\Main\Config\Option;
-
+use Bitrix\Main\Engine\ActionFilter;
+use Bitrix\Main\Type\Collection;
+use Bitrix\Socialnetwork\UserToGroupTable;
+use Bitrix\Socialnetwork\WorkgroupFavoritesTable;
+use Bitrix\Socialnetwork\WorkgroupSiteTable;
+use Bitrix\Socialnetwork\WorkgroupTable;
 
 class LeftMenu extends \Bitrix\Main\Engine\Controller
 {
+	protected function getDefaultPreFilters()
+	{
+		return [
+			new ActionFilter\Authentication(),
+			new ActionFilter\HttpMethod([ActionFilter\HttpMethod::METHOD_POST]),
+			new ActionFilter\Csrf(),
+			new ActionFilter\CloseSession()
+		];
+	}
+
+	public function configureActions(): array
+	{
+		return [
+			'setPreset' => [
+				'-prefilters' => [ActionFilter\CloseSession::class],
+			],
+		];
+	}
+
 	protected function processBeforeAction(\Bitrix\Main\Engine\Action $action)
 	{
 		parent::processBeforeAction($action);
@@ -25,12 +51,6 @@ class LeftMenu extends \Bitrix\Main\Engine\Controller
 		if (Loader::includeModule('intranet'))
 		{
 			\Bitrix\Intranet\Composite\CacheProvider::deleteUserCache();
-		}
-
-		if (defined('BX_COMP_MANAGED_CACHE'))
-		{
-			global $CACHE_MANAGER;
-			$CACHE_MANAGER->ClearByTag('bitrix24_left_menu');
 		}
 
 		FirstPage::getInstance()->clearCache();
@@ -853,14 +873,28 @@ class LeftMenu extends \Bitrix\Main\Engine\Controller
 		\CUserOptions::SetOption('intranet', 'left_menu_groups_' . SITE_ID, $groups);
 	}
 
-	public function collapseMenuAction()
+	public function collapseMenuAction(string $context = '')
 	{
-		\CUserOptions::SetOption('intranet', 'left_menu_collapsed', 'Y');
+		if ($context === 'online')
+		{
+			\CUserOptions::SetOption('intranet', 'left_menu_collapsed:online', 'Y');
+		}
+		else
+		{
+			\CUserOptions::SetOption('intranet', 'left_menu_collapsed', 'Y');
+		}
 	}
 
-	public function expandMenuAction()
+	public function expandMenuAction(string $context = '')
 	{
-		\CUserOptions::SetOption('intranet', 'left_menu_collapsed', 'N');
+		if ($context === 'online')
+		{
+			\CUserOptions::SetOption('intranet', 'left_menu_collapsed:online', 'N');
+		}
+		else
+		{
+			\CUserOptions::SetOption('intranet', 'left_menu_collapsed', 'N');
+		}
 	}
 
 	public function setGroupFilterAction()
@@ -893,6 +927,169 @@ class LeftMenu extends \Bitrix\Main\Engine\Controller
 		}
 	}
 
+	public function getGroupsAction(): array
+	{
+		$filter = \CUserOptions::getOption('intranet', 'left_menu_group_filter_' . SITE_ID, 'all');;
+
+		return [
+			'filter' => $filter,
+			'groups' => static::getMyGroups(),
+		];
+	}
+
+	public static function getMyGroups(): array
+	{
+		$userId = $GLOBALS['USER']->getId();
+		$cacheTtl = defined('BX_COMP_MANAGED_CACHE') ? 2592000 : 600;
+		$cacheId = 'bitrix24_group_list_v2' . $userId . '_' . SITE_ID . '_' . isModuleInstalled('extranet');
+		$cacheDir = '/bx/bitrix24_group_list/' . substr(md5($userId), 0, 2) . '/' . $userId . '/';
+
+		$cache = new \CPHPCache();
+
+		if ($cache->initCache($cacheTtl, $cacheId, $cacheDir))
+		{
+			return $cache->getVars();
+		}
+
+		$cache->startDataCache();
+		if (defined('BX_COMP_MANAGED_CACHE'))
+		{
+			$GLOBALS['CACHE_MANAGER']->startTagCache($cacheDir);
+			$GLOBALS['CACHE_MANAGER']->registerTag('sonet_user2group_U' . $userId);
+			$GLOBALS['CACHE_MANAGER']->registerTag('sonet_group');
+			$GLOBALS['CACHE_MANAGER']->registerTag('sonet_group_favorites_U' . $userId);
+			$GLOBALS['CACHE_MANAGER']->endTagCache();
+		}
+
+		$groups = [];
+		if (!Loader::includeModule('socialnetwork') || $userId <= 0)
+		{
+			return $groups;
+		}
+
+		$extranetSiteId = \COption::getOptionString('extranet', 'extranet_site');
+		$getGroups = function($siteId, $limit, $ids = []) use ($userId, $extranetSiteId) {
+			$groups = WorkgroupTable::getList([
+				'filter' => [
+					'=ACTIVE' => 'Y',
+					'!=CLOSED' => 'Y',
+					'=GS.SITE_ID' => $siteId,
+					'<=UG.ROLE' => UserToGroupTable::ROLE_USER,
+					'!=TYPE' => \Bitrix\Socialnetwork\Item\Workgroup\Type::Collab->value,
+				] + (empty($ids) ? [] : ['!@ID' => $ids]),
+				'order' => [
+					'NAME' => 'ASC',
+				],
+				'select' => ['ID', 'NAME'],
+				'count_total' => false,
+				'offset' => 0,
+				'limit' => $limit,
+				'runtime' => [
+					new ReferenceField(
+						'UG',
+						UserToGroupTable::getEntity(),
+						['=ref.GROUP_ID' => 'this.ID', '=ref.USER_ID' => new SqlExpression($userId)],
+						['join_type' => 'INNER'],
+					),
+					new ReferenceField(
+						'GS',
+						WorkgroupSiteTable::getEntity(),
+						['=ref.GROUP_ID' => 'this.ID'],
+						['join_type' => 'INNER'],
+					),
+				],
+			]);
+
+			$result = [];
+			while ($group = $groups->fetch())
+			{
+				$result[$group['ID']] = [
+					'id' => $group['ID'],
+					'title' => $group['NAME'],
+					'url' => SITE_DIR . 'workgroups/group/' . $group["ID"] . '/',
+					'extranet' => $siteId === $extranetSiteId,
+					'favorite' => false,
+				];
+			}
+
+			return $result;
+		};
+
+		$getFavorites = function($siteId, $limit, $ids = []) use ($userId, $extranetSiteId) {
+			$groups = WorkgroupTable::getList([
+				'filter' => [
+					'=GF.USER_ID' => $userId,
+					'=GS.SITE_ID' => $siteId,
+					[
+						'LOGIC' => 'OR',
+						'=VISIBLE' => 'Y',
+						'<=UG.ROLE' => UserToGroupTable::ROLE_USER,
+					],
+				] + (empty($ids) ? [] : ['!@ID' => $ids]),
+				'order' => [
+					'NAME' => 'ASC',
+				],
+				'select' => ['ID', 'NAME'],
+				'count_total' => false,
+				'offset' => 0,
+				'limit' => $limit,
+				'runtime' => [
+					new ReferenceField(
+						'UG',
+						UserToGroupTable::getEntity(),
+						['=ref.GROUP_ID' => 'this.ID', '=ref.USER_ID' => new SqlExpression($userId)],
+						['join_type' => 'LEFT'],
+					),
+					new ReferenceField(
+						'GS',
+						WorkgroupSiteTable::getEntity(),
+						['=ref.GROUP_ID' => 'this.ID'],
+						['join_type' => 'INNER'],
+					),
+					new ReferenceField(
+						'GF',
+						WorkgroupFavoritesTable::getEntity(),
+						['=ref.GROUP_ID' => 'this.ID'],
+						['join_type' => 'INNER']
+					),
+				  ],
+			  ]);
+
+			$result = [];
+			while ($group = $groups->fetch())
+			{
+				$result[$group['ID']] = [
+					'id' => $group['ID'],
+					'title' => $group['NAME'],
+					'url' => SITE_DIR . 'workgroups/group/' . $group["ID"] . '/',
+					'extranet' => $siteId === $extranetSiteId,
+					'favorite' => true,
+				];
+			}
+
+			return $result;
+		};
+
+		// Main\ModuleManager::isModuleInstalled($module_id);
+
+		$extranetGroups = isModuleInstalled('extranet') ? $getGroups($extranetSiteId, 150) : [];
+		$intranetGroups = $getGroups(SITE_ID, 150, array_keys($extranetGroups));
+		$favoriteExtranetGroups = isModuleInstalled('extranet') ? $getFavorites($extranetSiteId, 100) : [];
+		$favoriteIntranetGroups = $getFavorites(SITE_ID, 100, array_keys($favoriteExtranetGroups));
+
+		$groups = array_replace(
+			$extranetGroups,
+			$intranetGroups,
+			$favoriteExtranetGroups,
+			$favoriteIntranetGroups
+		);
+
+		Collection::sortByColumn($groups, 'title');
+		$cache->endDataCache($groups);
+
+		return $groups;
+	}
+
 	public function resetAllAction()
 	{
 		if (!$this->isCurrentUserAdmin())
@@ -922,6 +1119,7 @@ class LeftMenu extends \Bitrix\Main\Engine\Controller
 		\CUserOptions::DeleteOptionsByName('intranet', 'left_menu_sorted_items_' . $siteId);
 		\CUserOptions::DeleteOptionsByName('intranet', 'left_menu_groups_' . $siteId);
 		\CUserOptions::DeleteOptionsByName('intranet', 'left_menu_collapsed');
+		\CUserOptions::DeleteOptionsByName('intranet', 'left_menu_collapsed:online');
 
 		\COption::RemoveOption('intranet', 'left_menu_preset');
 		\COption::RemoveOption('intranet', 'show_menu_preset_popup');

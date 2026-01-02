@@ -10,7 +10,7 @@ jn.define('im/messenger/controller/sidebar/chat/sidebar-rest-service', (require,
 	const { MessengerEmitter } = require('im/messenger/lib/emitter');
 	const logger = LoggerManager.getInstance().getLogger('sidebar--sidebar-rest-service');
 	const { serviceLocator } = require('im/messenger/lib/di/service-locator');
-	const { ChatService } = require('im/messenger/provider/service');
+	const { ChatService } = require('im/messenger/provider/services/chat');
 
 	/**
 	 * @class SidebarRestService

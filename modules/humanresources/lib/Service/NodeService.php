@@ -2,17 +2,17 @@
 
 namespace Bitrix\HumanResources\Service;
 
-use Bitrix\HumanResources\Exception\DeleteFailedException;
-use Bitrix\HumanResources\Exception\UpdateFailedException;
-use Bitrix\HumanResources\Exception\WrongStructureItemException;
-use Bitrix\HumanResources\Enum\NodeActiveFilter;
-use Bitrix\HumanResources\Item\Collection\NodeCollection;
-use Bitrix\HumanResources\Item\Node;
+use Bitrix\HumanResources\Command\Structure\Node\NodeOrderCommand;
 use Bitrix\HumanResources\Contract;
 use Bitrix\HumanResources\Enum\DepthLevel;
 use Bitrix\HumanResources\Enum\Direction;
+use Bitrix\HumanResources\Enum\NodeActiveFilter;
+use Bitrix\HumanResources\Exception\CreationFailedException;
+use Bitrix\HumanResources\Exception\UpdateFailedException;
+use Bitrix\HumanResources\Item\Collection\NodeCollection;
+use Bitrix\HumanResources\Item\Node;
+use Bitrix\HumanResources\Type\NodeEntityType;
 use Bitrix\Main\ArgumentException;
-use Bitrix\Main\DB\SqlQueryException;
 use Bitrix\Main\Error;
 use Bitrix\Main\ObjectPropertyException;
 use Bitrix\Main\SystemException;
@@ -74,6 +74,20 @@ class NodeService implements Contract\Service\NodeService
 	 */
 	public function insertNode(Node $node, bool $move = true): Node
 	{
+		if ($node->parentId)
+		{
+			$parentNode = $this->nodeRepository->getById($node->parentId);
+			if (!$parentNode)
+			{
+				throw (new CreationFailedException())->addError(new Error("Parent node with id $node->parentId dont exist"));
+			}
+
+			if ($node->type === NodeEntityType::DEPARTMENT && $parentNode->type === NodeEntityType::TEAM)
+			{
+				throw (new CreationFailedException())->addError(new Error("The parent type does not match the type of the node being created"));
+			}
+		}
+
 		if ($move)
 		{
 			return $this->insertAndMoveNode($node);
@@ -100,7 +114,20 @@ class NodeService implements Contract\Service\NodeService
 			: Direction::ROOT
 		;
 
-		return $this->structureWalkerService->moveNode($direction, $node, $targetNode);
+		$lastSibling = null;
+
+		if ($targetNode)
+		{
+			$lastSibling = $this->nodeRepository->getChildOf($targetNode)->getLast();
+		}
+
+		$lastSiblingSort = $lastSibling ? $lastSibling->sort : 0;
+
+		$node = $this->structureWalkerService->moveNode($direction, $node, $targetNode);
+
+		$node->sort = $lastSiblingSort + NodeOrderCommand::ORDER_STEP;
+
+		return $this->nodeRepository->update($node);
 	}
 
 	public function removeNode(Node $node): bool
@@ -151,6 +178,11 @@ class NodeService implements Contract\Service\NodeService
 			$node->parentId !== $nodeEntity->parentId
 		)
 		{
+			if ($node->parentId === $node->id)
+			{
+				throw (new UpdateFailedException())->addError(new Error("Node can't be its own parent"));
+			}
+
 			$targetNode = $this->nodeRepository->getById($node->parentId);
 			if (!$targetNode)
 			{
@@ -164,6 +196,11 @@ class NodeService implements Contract\Service\NodeService
 			}
 
 			$this->moveNode($nodeEntity, $targetNode);
+		}
+
+		if ($node->sort !== $nodeEntity->sort)
+		{
+			$node->sort = $nodeEntity->sort;
 		}
 
 		return $this->nodeRepository->update($node);

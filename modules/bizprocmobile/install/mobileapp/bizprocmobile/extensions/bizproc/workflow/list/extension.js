@@ -23,6 +23,7 @@ jn.define('bizproc/workflow/list', (require, exports, module) => {
 	const { WorkflowItem } = require('bizproc/workflow/list/item');
 	const { Skeleton } = require('bizproc/workflow/list/skeleton');
 	const { BottomPanel } = require('bizproc/workflow/list/bottom-panel');
+	const { AnalyticsEvent } = require('analytics');
 
 	SkeletonFactory.register('workflow', Skeleton);
 
@@ -372,8 +373,18 @@ jn.define('bizproc/workflow/list', (require, exports, module) => {
 		handleFloatingButtonClick()
 		{
 			void requireLazy('lists:element-creation-guide').then(({ ElementCreationGuide }) => {
+
+				new AnalyticsEvent({
+					tool: 'automation',
+					category: 'bizproc_operations',
+					event: 'drawer_open',
+					c_section: this.props.analyticsSection,
+					c_element: 'floating_button',
+				}).send();
+
 				ElementCreationGuide.open({
 					layout: this.layout,
+					analyticsSection: this.props.analyticsSection,
 				});
 			});
 		}

@@ -169,116 +169,11 @@ foreach ($event->getResults() as $eventResult)
 	}
 }
 
-$isAvaMenuAvailable = \Bitrix\MobileApp\Mobile::getInstance()::getApiVersion() >= 54;
-if ($isAvaMenuAvailable)
-{
-	$arResult["menu"][] = [
-		"title" => "",
-		"sort" => 0,
-		"items" => [],
-	];
-}
-else
-{
-	$editProfilePath = \Bitrix\MobileApp\Janative\Manager::getComponentPath("user.profile");
-	$workPosition = \CUtil::addslashes($arResult["user"]["WORK_POSITION"] ?? '');
-	$canEditProfile = $USER->CanDoOperation('edit_own_profile');
-
-	$arResult["menu"][] = [
-		"title" => "",
-		"sort" => 0,
-		"items" => [
-			[
-				"title" => $arResult["user"]["fullName"],
-				"imageUrl" => $arResult["user"]["avatar"],
-				"type" => "userinfo",
-				"color" => '#404f5d',
-				"styles" => [
-					"subtitle" => [
-						"image" => [
-							"useTemplateRender" => true,
-						],
-						"additionalImage" => [
-							"name" => $canEditProfile ? "pencil" : "",
-							"useTemplateRender" => true,
-						],
-					],
-					"title" => [
-						"font" => [
-							"fontStyle" => "medium",
-							"size" => 19,
-							"color" => "#333333",
-						],
-					],
-				],
-				"useLetterImage" => true,
-				"subtitle" => $canEditProfile ? GetMessage("MENU_EDIT_PROFILE") : GetMessage("MENU_VIEW_PROFILE"),
-				"params" => [
-					"url" => SITE_DIR . "mobile/users/?ID=" . $userId,
-					"onclick" => <<<JS
-					let canEdit = Boolean($canEditProfile);
-					let imageUrl =  this.imageUrl? this.imageUrl: "";
-					let top = {
-								imageUrl: imageUrl,
-								value: imageUrl,
-								title: this.title,
-								subtitle: "$workPosition",
-								sectionCode: "top",
-								height: 160,
-								type:"userpic",
-								useLetterImage:true,
-								color:"#2e455a"
-					};
-
-					PageManager.openComponent("JSStackComponent",
-					{
-						scriptPath:"$editProfilePath",
-						componentCode: "profile.view",
-						params: {
-							"userId": $userId,
-							mode:canEdit?"edit":"view",
-							items:[
-									top,
-									{ type:"loading", sectionCode:"1", title:""}
-								],
-								sections:[
-									{id: "top", backgroundColor:"#f0f0f0"},
-									{id: "1", backgroundColor:"#f0f0f0"},
-								]
-						},
-						rootWidget:{
-							name:canEdit?"form":"list",
-							settings:{
-								objectName:"form",
-								items:[
-									{
-										"id":"PERSONAL_PHOTO",
-										useLetterImage:true,
-										color:"#2e455a",
-										imageUrl: this.imageUrl,
-										type:"userpic",
-										title:this.title,
-										sectionCode:"0"},
-									{ type:"loading", sectionCode:"1", title:""}
-								],
-								sections:[
-									{id: "0", backgroundColor:"#f0f0f0"},
-									{id: "1", backgroundColor:"#f0f0f0"},
-								],
-								groupStyle: true,
-								title: BX.message("PROFILE_INFO")
-							}
-						}
-					});
-
-JS
-					,
-
-				],
-			],
-		],
-	];
-}
+$arResult["menu"][] = [
+	"title" => "",
+	"sort" => 0,
+	"items" => [],
+];
 
 $counterList = [];
 $isStressLevelTurnOn = Option::get('intranet', 'stresslevel_available', 'Y') == 'Y';
@@ -452,6 +347,16 @@ array_walk($arResult["menu"], function (&$section) use (&$counterList) {
 });
 
 $events = \Bitrix\Mobile\Tourist::getEvents();
+$winter2024RuReleaseTime = 1732579200; // 26.11.2024
+$winter2024WorldReleaseTime = 1733875200; // 11.12.2024
+
+$isCloud = Loader::includeModule('bitrix24');
+$isRussianRegion = false;
+if ($isCloud)
+{
+	$isRussianRegion = \CBitrix24::getPortalZone() === 'ru';
+}
+$thresholdTime = $isRussianRegion ? $winter2024RuReleaseTime : $winter2024WorldReleaseTime;
 
 $showPresetsCounter = false;
 if (!isset($events['visited_tab_presets']))
@@ -459,23 +364,13 @@ if (!isset($events['visited_tab_presets']))
 	$user = UserTable::getById($USER->GetID())->fetchObject();
 	if ($user && $user->getDateRegister())
 	{
-		$time = 1733875200;
-		if (\CModule::IncludeModule('bitrix24'))
-		{
-			$zone = \CBitrix24::getPortalZone();
-			if ($zone === 'ru')
-			{
-				$time = 1732579200;
-			}
-		}
-
-		$showPresetsCounter = $user->getDateRegister()->getTimestamp() > $time;
+		$showPresetsCounter = $user->getDateRegister()->getTimestamp() > $thresholdTime;
 	}
 }
 
-$usersCount = 0;
+$hasMoreThanOneUser = false;
 $isUserFirstTimeInInvitations = !isset($events['visit_invitations']);
-$isUserAdmin = ((\CModule::IncludeModule('bitrix24') ? \CBitrix24::isPortalAdmin($USER->GetID()) : $USER->isAdmin()));
+$isUserAdmin = (($isCloud ? \CBitrix24::isPortalAdmin($USER->GetID()) : $USER->isAdmin()));
 
 if (
 	$isUserFirstTimeInInvitations
@@ -484,10 +379,33 @@ if (
 	&& Loader::includeModule('intranetmobile')
 )
 {
-	$usersCount = (new \Bitrix\IntranetMobile\Provider\UserProvider())->getAllUsersCount();
+	$hasMoreThanOneUser = (new \Bitrix\IntranetMobile\Provider\UserProvider())->hasMoreThanOneUser();
 }
 
 $showDiskCounter = !isset($events['visited_disk_tabs']);
+if ($showDiskCounter)
+{
+	$portalCreatedTime = null;
+	if ($isCloud)
+	{
+		$portalCreatedTime = (int)\CBitrix24::getCreateTime();
+	}
+	else
+	{
+		$userQueryResult = \Bitrix\Main\UserTable::query()
+			->setSelect(['ID', 'DATE_REGISTER'])
+			->where('ID', 1)
+			->setLimit(1)
+			->fetchObject();
+
+		$portalCreatedTime = $userQueryResult?->getDateRegister()->getTimestamp();
+	}
+
+	if ($portalCreatedTime !== null)
+	{
+		$showDiskCounter = $portalCreatedTime < $thresholdTime;
+	}
+}
 
 $arResult = array_merge($arResult, [
 	"counterList" => $counterList,
@@ -500,7 +418,7 @@ $arResult = array_merge($arResult, [
 		"rootStructureSectionId" => $rootStructureSectionId,
 	],
 	'customCounters' => [
-		'menu_invite' => ($isUserAdmin && $usersCount === 1 && $isUserFirstTimeInInvitations) ? 1 : 0,
+		'menu_invite' => ($isUserAdmin && $hasMoreThanOneUser && $isUserFirstTimeInInvitations) ? 1 : 0,
 		'menu_tab_presets' => $showPresetsCounter ? 1 : 0,
 		'menu_disk_tabs' => $showDiskCounter ? 1 : 0,
 	],

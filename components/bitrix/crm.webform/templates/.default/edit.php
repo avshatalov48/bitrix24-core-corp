@@ -45,12 +45,13 @@ $componentParameters = array(
 if ($_REQUEST['IFRAME'] == 'Y')
 {
 	$APPLICATION->IncludeComponent(
-		'bitrix:crm.webform.popup',
+		'bitrix:ui.sidepanel.wrapper',
 		'',
 		array(
 			'POPUP_COMPONENT_NAME' => 'bitrix:crm.webform.edit',
 			'POPUP_COMPONENT_TEMPLATE_NAME' => '',
 			'POPUP_COMPONENT_PARAMS' => $componentParameters,
+			'USE_UI_TOOLBAR' => "Y",
 		)
 	);
 }

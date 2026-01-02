@@ -1,0 +1,24 @@
+<?php
+$MESS["CRM_TAB_ACTIVITY_CONFIG"] = "Істер";
+$MESS["CRM_TAB_ACTIVITY_CONFIG_TITLE2"] = "Іс баптаулары";
+$MESS["CRM_TAB_CONFIG"] = "Хаттарды жіберу";
+$MESS["CRM_TAB_CONFIG_TITLE"] = "Хаттарды жіберу параметрлерін баптау";
+$MESS["CRM_TAB_DEAL_CONFIG"] = "Мәмілелер";
+$MESS["CRM_TAB_DEAL_CONFIG_TITLE"] = "Мәміле баптаулары";
+$MESS["CRM_TAB_DUPLICATE_CONTROL"] = "Телнұсқаларды бақылау";
+$MESS["CRM_TAB_DUPLICATE_CONTROL_TITLE"] = "Телнұсқаларды басқаруды баптау";
+$MESS["CRM_TAB_FORMAT"] = "Пішімдеу";
+$MESS["CRM_TAB_FORMAT_TITLE"] = "Пішімдеу баптаулары";
+$MESS["CRM_TAB_GENERAL"] = "Жалпы";
+$MESS["CRM_TAB_GENERAL_TITLE"] = "Жалпы баптаулар";
+$MESS["CRM_TAB_HISTORY"] = "Тарих";
+$MESS["CRM_TAB_HISTORY_TITLE"] = "Тарих баптаулары";
+$MESS["CRM_TAB_LIVEFEED2"] = "Жанды лента";
+$MESS["CRM_TAB_LIVEFEED_TITLE2"] = "Жанды лента баптаулары";
+$MESS["CRM_TAB_RECYCLE_BIN_CONFIG"] = "Себет";
+$MESS["CRM_TAB_RECYCLE_BIN_CONFIG_TITLE"] = "Себет баптаулары";
+$MESS["CRM_TAB_REST_2"] = "Маркет";
+$MESS["CRM_TAB_REST_2_MSGVER_1"] = "Маркетплейс";
+$MESS["CRM_TAB_REST_TITLE"] = "Қосымша баптаулары";
+$MESS["CRM_TAB_STATUS_CONFIG"] = "Анықтамалықтар";
+$MESS["CRM_TAB_STATUS_CONFIG_TITLE"] = "Анықтамалық баптаулары";

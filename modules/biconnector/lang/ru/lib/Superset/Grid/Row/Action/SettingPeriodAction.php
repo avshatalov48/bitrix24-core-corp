@@ -1,3 +1,0 @@
-<?php
-
-$MESS['BICONNECTOR_DASHBOARD_GRID_ACTION_SETTING_PERIOD'] = 'Период отчёта';

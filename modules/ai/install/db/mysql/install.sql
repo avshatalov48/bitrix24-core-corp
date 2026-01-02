@@ -77,6 +77,7 @@ create table if not exists b_ai_prompt
 	IS_NEW TINYINT(1) UNSIGNED default 0,
     IS_ACTIVE TINYINT(1) UNSIGNED default 1,
 	IS_SYSTEM char(1) not null default 'N',
+	JSON_OUTPUT_SCHEMA text default null,
 	DATE_CREATE timestamp NOT NULL DEFAULT current_timestamp,
 	DATE_MODIFY timestamp NOT NULL DEFAULT current_timestamp,
 	PRIMARY KEY (ID),
@@ -356,4 +357,52 @@ create table if not exists b_ai_role_translate_description
 
 	INDEX IX_B_ROLE_ID (ROLE_ID),
 	UNIQUE IX_B_ROLE_LANG (ROLE_ID, LANG)
+);
+
+CREATE TABLE IF NOT EXISTS b_ai_chatbot_chatbot
+(
+	ID int not null auto_increment,
+	MODULE_ID varchar(50) not null,
+	CODE varchar(255) not null,
+	CLASS varchar(255) not null,
+	DATE_CREATE datetime default current_timestamp,
+	PRIMARY KEY (ID),
+	INDEX IX_B_CHAT_CODE (CODE)
+);
+
+CREATE TABLE IF NOT EXISTS b_ai_chatbot_chat
+(
+	ID int not null auto_increment,
+	CHATBOT_ID int default null,
+	CODE varchar(255) not null,
+	AUTHOR_ID int default null,
+	PARAMS text default null,
+	INPUT_STATUS varchar(255) default null,
+	DATE_CREATE datetime default current_timestamp,
+	PRIMARY KEY (ID),
+	UNIQUE IX_B_CHATBOT_ID_MESSAGE_ID (CHATBOT_ID, CODE)
+);
+
+CREATE TABLE IF NOT EXISTS b_ai_chatbot_message
+(
+	ID int not null auto_increment,
+	CHAT_ID int not null,
+	AUTHOR_ID int not null,
+	TYPE varchar(20) not null,
+	CONTENT text not null,
+	PARAMS text default null,
+	DATE_CREATE datetime default current_timestamp,
+	PRIMARY KEY (ID),
+	INDEX IX_B_CHATBOT_MESSAGE_CHAT_ID (CHAT_ID)
+);
+
+CREATE TABLE IF NOT EXISTS b_ai_chatbot_message_unread
+(
+	ID int not null auto_increment,
+	CHAT_ID int not null,
+	AUTHOR_ID int not null,
+	MESSAGE_ID int not null,
+	DATE_CREATE datetime default current_timestamp,
+	PRIMARY KEY (ID),
+	INDEX IX_B_CHATBOT_CHAT_ID_MESSAGE_ID (CHAT_ID, MESSAGE_ID)
 );

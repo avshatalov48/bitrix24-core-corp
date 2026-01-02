@@ -1,6 +1,6 @@
 import { CopilotChat, CopilotChatMessageType } from 'ai.copilot-chat.ui';
 import type { CopilotChatMessage, CopilotChatOptions } from 'ai.copilot-chat.ui';
-import { Loc, ajax, Tag } from 'main.core';
+import { Loc, ajax, Tag, Runtime } from 'main.core';
 import { EditForm } from 'tasks.flow.edit-form';
 import { getDefaultChatOptions } from './default-chat-options';
 import { Main as IconSetMain } from 'ui.icon-set.api.core';
@@ -32,6 +32,20 @@ export class Chat
 		}
 
 		this.#copilotChat.show();
+		void this.#sendAnalytics();
+	}
+
+	async #sendAnalytics(): Promise<void>
+	{
+		const { sendData } = await Runtime.loadExtension('ui.analytics');
+
+		sendData({
+			tool: 'tasks',
+			category: 'flows',
+			event: 'copilot_advice_view',
+			c_section: 'tasks',
+			c_sub_section: 'flows_grid',
+		});
 	}
 
 	#getChatOptions(): CopilotChatOptions
@@ -71,7 +85,11 @@ export class Chat
 						text: Loc.getMessage('TASKS_FLOW_COPILOT_ADVICE_POPUP_EDIT_FLOW'),
 						onclick: (event, menuItem) => {
 							menuItem?.menuWindow.close?.();
-							EditForm.createInstance({ flowId: this.#flowData.flowId });
+							EditForm.createInstance({
+								isFeatureTrialable: this.#flowData.isFeatureTrialable,
+								flowId: this.#flowData.flowId,
+								context: 'copilot_advice',
+							});
 						},
 					},
 				],

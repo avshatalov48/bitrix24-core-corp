@@ -30,6 +30,17 @@ export default class ItemMenu
 	{
 		this.#menu.getPopupWindow().setMaxWidth(500);
 
+		if (Type.isStringFilled(this.#item.customData.viewLink))
+		{
+			this.#menu.addMenuItem({
+				id: 'view',
+				text: Loc.getMessage('DISK_UF_WIDGET_OPEN_FILE_MENU_TITLE'),
+				href: this.#item.customData.viewLink,
+				target: '_blank',
+				onclick: (event, menuItem: MenuItem): void => menuItem.getMenuWindow().close(),
+			}, 'download');
+		}
+
 		if (this.#userFieldControl.canItemAllowEdit(this.#item))
 		{
 			this.#menu.addMenuItem({ delimiter: true });

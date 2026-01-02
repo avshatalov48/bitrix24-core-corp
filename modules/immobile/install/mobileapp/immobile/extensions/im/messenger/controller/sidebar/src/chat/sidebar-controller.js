@@ -6,7 +6,7 @@ jn.define('im/messenger/controller/sidebar/chat/sidebar-controller', (require, e
 	const { isOnline } = require('device/connection');
 
 	const { Type } = require('type');
-	const { Loc } = require('loc');
+	const { Loc } = require('im/messenger/loc');
 	const { chevronRight } = require('assets/common');
 	const { LoggerManager } = require('im/messenger/lib/logger');
 	const logger = LoggerManager.getInstance().getLogger('sidebar--sidebar-controller');
@@ -30,13 +30,14 @@ jn.define('im/messenger/controller/sidebar/chat/sidebar-controller', (require, e
 	const { Logger } = require('im/messenger/lib/logger');
 	const { MessengerParams } = require('im/messenger/lib/params');
 	const { ChatPermission, UserPermission } = require('im/messenger/lib/permission-manager');
-	const { Calls } = require('im/messenger/lib/integration/immobile/calls');
+	const { CallManager } = require('im/messenger/lib/integration/callmobile/call-manager');
+	const { serviceLocator } = require('im/messenger/lib/di/service-locator');
 
 	const { Notification, ToastType } = require('im/messenger/lib/ui/notification');
 	const { showDeleteChatAlert, showLeaveChatAlert } = require('im/messenger/lib/ui/alert');
 	const { ButtonFactory } = require('im/messenger/lib/ui/base/buttons');
 
-	const { AnalyticsService } = require('im/messenger/provider/service');
+	const { AnalyticsService } = require('im/messenger/provider/services/analytics');
 	const { ChatDataProvider, RecentDataProvider } = require('im/messenger/provider/data');
 
 	const { SidebarButtonId } = require('im/messenger/controller/sidebar/lib/const');
@@ -197,8 +198,8 @@ jn.define('im/messenger/controller/sidebar/chat/sidebar-controller', (require, e
 					dialogData = await this.sidebarRestService.getDialogById();
 				}
 
-				this.permission = ChatPermission.isCanCall(dialogData, true);
-				this.isDisableCallButton = !this.permission.isCanCall;
+				this.permission = ChatPermission.canCall(dialogData, true);
+				this.isDisableCallButton = !this.permission.canCall;
 			}
 			else
 			{
@@ -213,8 +214,8 @@ jn.define('im/messenger/controller/sidebar/chat/sidebar-controller', (require, e
 					userData = await this.sidebarRestService.getUserById();
 				}
 
-				this.permission = UserPermission.isCanCall(userData, true);
-				this.isDisableCallButton = !this.permission.isCanCall;
+				this.permission = UserPermission.canCall(userData, true);
+				this.isDisableCallButton = !this.permission.canCall;
 				this.isBot = this.permission.isBot;
 				this.isNetwork = this.permission.isNetwork;
 			}
@@ -484,7 +485,7 @@ jn.define('im/messenger/controller/sidebar/chat/sidebar-controller', (require, e
 		 */
 		onClickInfoBLock()
 		{
-			if (!this.isGroupDialog && !this.isBot)
+			if (!this.isGroupDialog && !this.isBot && !this.isNotes)
 			{
 				this.callUserProfile();
 			}
@@ -511,10 +512,10 @@ jn.define('im/messenger/controller/sidebar/chat/sidebar-controller', (require, e
 				return;
 			}
 
-			if (this.permission.isCanCall)
+			if (this.permission.canCall)
 			{
-				Calls.sendAnalyticsEvent(this.dialogId, Analytics.Element.videocall, Analytics.Section.chatSidebar);
-				Calls.createVideoCall(this.dialogId);
+				CallManager.getInstance().sendAnalyticsEvent(this.dialogId, Analytics.Element.videocall, Analytics.Section.chatSidebar);
+				CallManager.getInstance().createVideoCall(this.dialogId);
 			}
 			else
 			{
@@ -561,10 +562,10 @@ jn.define('im/messenger/controller/sidebar/chat/sidebar-controller', (require, e
 				return;
 			}
 
-			if (this.permission.isCanCall)
+			if (this.permission.canCall)
 			{
-				Calls.sendAnalyticsEvent(this.dialogId, Analytics.Element.audiocall, Analytics.Section.chatSidebar);
-				Calls.createAudioCall(this.dialogId);
+				CallManager.getInstance().sendAnalyticsEvent(this.dialogId, Analytics.Element.audiocall, Analytics.Section.chatSidebar);
+				CallManager.getInstance().createAudioCall(this.dialogId);
 			}
 			else
 			{

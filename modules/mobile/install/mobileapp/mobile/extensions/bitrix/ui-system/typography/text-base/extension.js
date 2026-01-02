@@ -7,13 +7,14 @@ jn.define('ui-system/typography/text-base', (require, exports, module) => {
 	const { Typography, Color } = require('tokens');
 
 	/**
-	 * @param {object} props
-	 * @param {number | string} props.size
-	 * @param {boolean} props.accent
-	 * @param {boolean} props.header
-	 * @param {TextInput | Text | TextField} props.nativeElement
-	 * @param {Typography} props.typography
+	 * @typedef {Object} TextBaseProps
+	 * @property {number | string} [size]
+	 * @property {boolean} [accent]
+	 * @property {boolean} [header]
+	 * @property {TextInput | Text | TextField} [nativeElement]
+	 * @property {Typography} [typography]
 	 *
+	 * @param {TextBase} props
 	 * @return TextBase
 	 */
 	const TextBase = (props) => {

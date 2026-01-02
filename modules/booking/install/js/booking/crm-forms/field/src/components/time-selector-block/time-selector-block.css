@@ -1,0 +1,33 @@
+.booking--crm-forms--time-selector-block-header {
+	display: flex;
+	padding-top: 12px;
+	align-items: center;
+	gap: 7px;
+}
+
+.booking--crm-forms--time-selector-block-resource {
+	display: flex;
+	flex-direction: column;
+	flex-grow: 1;
+}
+
+.booking--crm-forms--time-selector-block-resource-name {
+	overflow: hidden;
+	color: var(--booking--crm-forms--title-color);
+	text-overflow: ellipsis;
+	font-size: 17px;
+	font-style: normal;
+	font-weight: 400;
+	line-height: normal;
+}
+
+.booking--crm-forms--time-selector-block-resource-type-name {
+	overflow: hidden;
+	color: var(--booking--crm-forms--resource-type-name-color);
+	opacity: var(--booking--crm-forms--resource-type-name-opacity);
+	text-overflow: ellipsis;
+	font-size: 12px;
+	font-style: normal;
+	font-weight: 400;
+	line-height: normal;
+}

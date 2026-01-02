@@ -1,0 +1,48 @@
+.tasks-field-parent-task {
+	display: flex;
+	flex-direction: column;
+	background: var(--ui-color-base-8);
+	border-radius: var(--ui-border-radius-md);
+	box-shadow: 0 1px 1px rgba(0, 0, 0, 0.04);
+}
+
+.tasks-field-parent-task-title {
+	display: flex;
+	align-items: center;
+	flex-direction: row;
+	padding: var(--ui-space-inset-sm) var(--ui-space-inset-md2);
+}
+
+.tasks-field-parent-task-main {
+	display: flex;
+	align-items: center;
+	cursor: pointer;
+	flex: 1;
+}
+
+.tasks-field-parent-task-main.--readonly {
+	cursor: default;
+}
+
+.tasks-field-parent-task-main .ui-icon-set {
+	margin-right: 6px;
+	--ui-icon-set__icon-color: var(--ui-color-accent-main-primary);
+}
+
+.tasks-field-parent-task-icon {
+	margin-left: auto;
+	--ui-icon-set__icon-size: 20px;
+	--ui-icon-set__icon-color: var(--ui-color-base-4);
+	cursor: pointer;
+}
+
+.tasks-field-parent-task-edit-container {
+	margin-left: auto;
+	align-items: center;
+}
+
+.tasks-field-parent-task-deadline {
+	margin-left: 12px;
+	color: var(--ui-color-base-50);
+	font-size: var(--ui-font-size-sm);
+}

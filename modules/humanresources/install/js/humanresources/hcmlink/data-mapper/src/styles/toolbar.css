@@ -51,7 +51,7 @@
 	 border-radius: 20px;
 	 padding: 10px 15px;
 	 font-size: var(--ui-font-size-md);
-	 font-family: var(--ui-font-family-system);
+	 font-family: var(--ui-font-family-primary, var(--ui-font-family-system));
  }
 
 .hr-hcmlink-sync__toolbar-bubble-right {

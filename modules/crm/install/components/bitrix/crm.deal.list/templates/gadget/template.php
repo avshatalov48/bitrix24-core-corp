@@ -1,4 +1,7 @@
 <?php
+
+use Bitrix\Crm\ItemMiniCard\Builder\MiniCardHtmlBuilder;
+
 if(!defined("B_PROLOG_INCLUDED") || B_PROLOG_INCLUDED!==true)die();
 
 Bitrix\Main\UI\Extension::load("ui.tooltip");
@@ -14,7 +17,11 @@ else
 		echo '<div class="crm-gadg-block">';
 
 		echo '<div class="crm-gadg-title">';
-		echo '<a href="', $arDeal['PATH_TO_DEAL_SHOW'], '" class="crm-gadg-link" title="', $arDeal['TITLE'], '" bx-tooltip-user-id="DEAL_', $arDeal['~ID'], '" bx-tooltip-loader="', htmlspecialcharsbx('/bitrix/components/bitrix/crm.deal.show/card.ajax.php'), '" bx-tooltip-classname="crm_balloon_no_photo">', $arDeal['TITLE'], '</a>';
+		echo (new MiniCardHtmlBuilder(CCrmOwnerType::Deal, (int)$arDeal['~ID']))
+			->setTitle($arDeal['TITLE'] ?? '')
+			->setLinkClassName('crm-gadg-link')
+			->build()
+		;
 		echo '<span class="crm-gadg-title-deadline"> &ndash; </span>';
 		echo '<span class="crm-gadg-title-status">', $arDeal['DEAL_TYPE_NAME'], '</span>';
 		echo '</div>';

@@ -2,10 +2,11 @@
  * @module im/messenger/lib/dev/menu/dialog-snippets
  */
 jn.define('im/messenger/lib/dev/menu/dialog-snippets', (require, exports, module) => {
-    const { serviceLocator } = require('im/messenger/lib/di/service-locator');
+	const { serviceLocator } = require('im/messenger/lib/di/service-locator');
 	const { SingleSelector } = require('im/messenger/lib/ui/selector');
 	const { CheckBox } = require('im/messenger/lib/ui/base/checkbox');
-	const { ChatTitle, ChatAvatar } = require('im/messenger/lib/element');
+	const { ChatTitle } = require('im/messenger/lib/element/chat-title');
+	const { ChatAvatar } = require('im/messenger/lib/element/chat-avatar');
 	const AppTheme = require('apptheme');
 	const { MessageRest } = require('im/messenger/provider/rest');
 	const { MessengerEmitter } = require('im/messenger/lib/emitter');
@@ -215,7 +216,7 @@ jn.define('im/messenger/lib/dev/menu/dialog-snippets', (require, exports, module
 				// eslint-disable-next-line no-await-in-loop
 				await MessageRest.send({
 					dialogId,
-					text: messageText,
+					text: String(messageText),
 				});
 
 				this.setState({

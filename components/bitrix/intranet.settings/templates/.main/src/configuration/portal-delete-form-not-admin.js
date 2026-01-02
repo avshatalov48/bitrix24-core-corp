@@ -1,14 +1,9 @@
-import PortalDeleteFormTypes, {PortalDeleteForm} from "./portal-delete-form";
+import {PortalDeleteForm} from "./portal-delete-form";
 import {Loc, Tag} from "main.core";
 
 export class PortalDeleteFormNotAdmin extends PortalDeleteForm
 {
 	getButtonContainer() {}
-
-	getBodyClass(): string
-	{
-		return PortalDeleteFormTypes.WARNING;
-	}
 
 	getDescription(): HTMLElement
 	{

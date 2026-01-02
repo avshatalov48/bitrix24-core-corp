@@ -379,7 +379,6 @@ final class DocumentData implements \JsonSerializable, Arrayable
 		return $this->initiatorUserId;
 	}
 
-
 	public function toArray(): array
 	{
 		$data = [

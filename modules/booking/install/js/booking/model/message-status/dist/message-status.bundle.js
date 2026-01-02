@@ -46,7 +46,9 @@ this.BX.Booking = this.BX.Booking || {};
 	        } = payload;
 	        // eslint-disable-next-line no-param-reassign
 	        (_state$collection$boo = (_state$collection = state.collection)[bookingId]) != null ? _state$collection$boo : _state$collection[bookingId] = status;
-	        Object.assign(state.collection[bookingId], status);
+	        if (status) {
+	          Object.assign(state.collection[bookingId], status);
+	        }
 	      }
 	    };
 	  }

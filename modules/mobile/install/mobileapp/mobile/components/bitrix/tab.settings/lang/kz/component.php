@@ -1,0 +1,23 @@
+<?php
+$MESS["ERROR"] = "Қате";
+$MESS["PRESET_APPLY_ERROR"] = "Мәзір баптауларын қолдану мүмкін болмады";
+$MESS["PRESET_NAME_CRM"] = "CRM";
+$MESS["PRESET_NAME_DEFAULT"] = "Әдепкі бойынша";
+$MESS["PRESET_NAME_MANUAL"] = "Пайдаланушы баптаулары";
+$MESS["PRESET_NAME_OL"] = "Ашық желі операторы";
+$MESS["PRESET_NAME_STREAM"] = "Кеңсе";
+$MESS["PRESET_NAME_TASK"] = "Міндеттер";
+$MESS["PRESET_TITLE"] = "Дайын баптаулар";
+$MESS["SETTINGS_TAB_ACTIVE_TITLE"] = "Белсенді тармақтар";
+$MESS["SETTINGS_TAB_APPLIED"] = "Баптаулар енгізілді! \nБір сәт күте тұрыңыз...";
+$MESS["SETTINGS_TAB_BUTTON_DONE"] = "Дайын";
+$MESS["SETTINGS_TAB_CANT_MOVE"] = "\"#title#\" тармағының орнын ауыстыру мүмкін емес";
+$MESS["SETTINGS_TAB_INACTIVE_TITLE"] = "Белсенсіз тармақтар";
+$MESS["SETTINGS_TAB_MAKE_INACTIVE"] = "Жою";
+$MESS["TAB_NAME_CHAT"] = "Чаттар";
+$MESS["TAB_NAME_CRM"] = "CRM";
+$MESS["TAB_NAME_MENU"] = "Мәзір";
+$MESS["TAB_NAME_NOTIFY"] = "Мәлімдемелер";
+$MESS["TAB_NAME_OL"] = "Ашық желілер";
+$MESS["TAB_NAME_STREAM"] = "Жанды лента";
+$MESS["TAB_NAME_TASK"] = "Міндеттер";

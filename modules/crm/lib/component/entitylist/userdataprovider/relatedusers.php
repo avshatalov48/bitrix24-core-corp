@@ -104,6 +104,7 @@ final class RelatedUsers extends Base
 			'CREATED_BY',
 			'MODIFY_BY',
 			'ASSIGNED_BY',
+			'MOVED_BY'
 		];
 	}
 

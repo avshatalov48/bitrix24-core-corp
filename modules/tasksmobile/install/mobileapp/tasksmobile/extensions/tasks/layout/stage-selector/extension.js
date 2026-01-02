@@ -16,6 +16,7 @@ jn.define('tasks/layout/stage-selector', (require, exports, module) => {
 		selectStages,
 		selectCanMoveStage,
 	} = require('tasks/statemanager/redux/slices/kanban-settings');
+	const { DeadlinePeriod } = require('tasks/enum');
 
 	/**
 	 * @class TasksStageSelector
@@ -237,12 +238,13 @@ jn.define('tasks/layout/stage-selector', (require, exports, module) => {
 			}
 
 			if (
-				actionParams.selectedStatusId === 'PERIOD1'
+				actionParams.selectedStatusId === DeadlinePeriod.PERIOD_OVERDUE
+				|| actionParams.selectedStatusId === DeadlinePeriod.PERIOD_DONE
 			)
 			{
 				Alert.confirm(
-					Loc.getMessage('TASKS_STAGE_SELECTOR_UNAVAILABLE_STAGE_TITLE'),
-					Loc.getMessage('TASKS_STAGE_SELECTOR_UNAVAILABLE_STAGE_TEXT'),
+					Loc.getMessage('TASKS_STAGE_SELECTOR_UNAVAILABLE_STAGE_TITLE_MSGVER_2'),
+					Loc.getMessage('TASKS_STAGE_SELECTOR_UNAVAILABLE_STAGE_TEXT_MSGVER_2'),
 				);
 
 				return Promise.reject();

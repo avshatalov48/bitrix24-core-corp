@@ -1,0 +1,9 @@
+<?php
+$MESS["TIMEMAN_ACTION_READ"] = "Оқу";
+$MESS["TIMEMAN_ACTION_UPDATE"] = "Өзгерту";
+$MESS["TIMEMAN_DEFAULT_OPERATION_TITLE"] = "Қолжетімсіз";
+$MESS["TIMEMAN_ROLE_CANCEL"] = "Болдырмау";
+$MESS["TIMEMAN_ROLE_ENTITY"] = "Мән";
+$MESS["TIMEMAN_ROLE_LABEL"] = "Рөл";
+$MESS["TIMEMAN_ROLE_PERMISSION"] = "Құқық";
+$MESS["TIMEMAN_ROLE_SAVE"] = "Сақтау";

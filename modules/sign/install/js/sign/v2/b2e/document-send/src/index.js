@@ -1,15 +1,17 @@
 import { Tag, Loc, Type, Dom } from 'main.core';
 import { EventEmitter, type BaseEvent } from 'main.core.events';
+import { Timezone } from 'main.date';
 import { type DocumentDetails } from 'sign.v2.document-setup';
 import { isTemplateMode } from 'sign.v2.sign-settings';
 import { UserParty } from 'sign.v2.b2e.user-party';
 import { ReminderSelector, type Options as ReminderOptions } from 'sign.v2.b2e.reminder-selector';
 import type { MemberRoleType, DocumentModeType } from 'sign.type';
-import { MemberRole, Reminder } from 'sign.type';
+import { MemberRole, Reminder, ProviderCode } from 'sign.type';
 import { Item, EntityTypes } from './item';
-import { Api } from 'sign.v2.api';
+import { Api, type Provider } from 'sign.v2.api';
 import { DocumentSummary } from 'sign.v2.document-summary';
 import { LangSelector } from 'sign.v2.lang-selector';
+import { DatetimeLimitSelector } from 'sign.v2.datetime-limit-selector';
 import type { PartiesData, DocumentData } from './type';
 import type { DocumentSendConfig } from 'sign.v2.b2b.document-send';
 import { Hint } from 'sign.v2.helper';
@@ -17,6 +19,7 @@ import { ProgressBar } from 'ui.progressbar';
 import { HcmLinkPartyChecker } from 'sign.v2.b2e.hcm-link-party-checker';
 import type { Analytics } from 'sign.v2.analytics';
 
+import 'sign.v2.ui.notice';
 import './style.css';
 
 export type CommunicationType = 'idle' | 'phone' | 'email';
@@ -26,12 +29,6 @@ type CommunicationSelectedData = {
 		id: string,
 		option: CommunicationType,
 	}
-};
-type Member = {
-	presetId: number,
-	part: number,
-	uid: string,
-	role: MemberRoleType,
 };
 
 const ReminderSelectorOptionsByRole: Record<MemberRoleType, ReminderOptions> = {
@@ -46,7 +43,6 @@ export class DocumentSend extends EventEmitter
 	events = Object.freeze({
 		onTemplateComplete: 'onTemplateComplete',
 	});
-	// members: Array<Member> | null;
 
 	#ui = {
 		container: HTMLDivElement = null,
@@ -72,7 +68,7 @@ export class DocumentSend extends EventEmitter
 		company: Item,
 		representative: Item,
 		employees: UserParty,
-		reviewer: Item,
+		reviewers: UserParty,
 		editor: Item,
 	};
 
@@ -80,6 +76,7 @@ export class DocumentSend extends EventEmitter
 	#documentSummary: DocumentSummary;
 	#documentData: Map<string, DocumentDetails>;
 	#langSelector: LangSelector;
+	#dateTimeLimitSelector: DatetimeLimitSelector | null = null;
 	#progress: ProgressBar;
 	#progressOverlay: ?HTMLElement;
 	#progressContainer: ?HTMLElement;
@@ -87,10 +84,14 @@ export class DocumentSend extends EventEmitter
 	#reminderSelectorByRole: Record<MemberRoleType, ReminderSelector> = {};
 	#documentMode: DocumentModeType;
 	#isExistingTemplate: boolean = false;
+	#isOpenedFromRobot: boolean = false;
+	#templateFolderId: number = 0;
 
 	#analytics: ?Analytics;
 
 	#hcmLinkPartyChecker: HcmLinkPartyChecker | null = null;
+
+	#provider: Provider | null = null;
 
 	constructor(documentSendConfig: DocumentSendConfig)
 	{
@@ -98,9 +99,9 @@ export class DocumentSend extends EventEmitter
 		this.setEventNamespace('BX.Sign.V2.B2e.DocumentSend');
 		this.#items.company = new Item({ entityType: EntityTypes.Company });
 		this.#items.representative = new Item({ entityType: EntityTypes.User });
-		this.#items.reviewer = new Item({ entityType: EntityTypes.User });
 		this.#items.editor = new Item({ entityType: EntityTypes.User });
-		this.#items.employees = new UserParty({ mode: 'view' });
+		this.#items.employees = new UserParty({ mode: 'view', role: MemberRole.signer });
+		this.#items.reviewers = new UserParty({ mode: 'view', role: MemberRole.reviewer });
 		this.#documentSummary = new DocumentSummary({
 			events: {
 				changeTitle: (event: BaseEvent) => {
@@ -113,11 +114,13 @@ export class DocumentSend extends EventEmitter
 				},
 			},
 		});
-		const { region, languages, documentMode, analytics } = documentSendConfig;
+		const { region, languages, documentMode, isOpenedFromRobot, analytics, templateFolderId } = documentSendConfig;
+		this.#isOpenedFromRobot = isOpenedFromRobot;
 		this.#langSelector = new LangSelector(region, languages);
 		this.#documentData = {};
 		this.#analytics = analytics;
 		this.#documentMode = documentMode;
+		this.#templateFolderId = templateFolderId;
 		this.#ui.employeesTitle = Tag.render`
 			<p class="sign-b2e-send__party_signing-employees">
 				${Loc.getMessage('SIGN_SEND_SIGNING_EMPLOYEES', { '#CNT#': 0 })}
@@ -136,10 +139,27 @@ export class DocumentSend extends EventEmitter
 		if (!this.#isTemplateMode())
 		{
 			this.#hcmLinkPartyChecker = new HcmLinkPartyChecker({
-			    api: new Api(),
-		    });
-			
-			this.#hcmLinkPartyChecker.subscribe('updateValidation', (event) => this.#onHcmLinkCheckerUpdateValidation(event));
+				api: new Api(),
+			});
+
+			this.#hcmLinkPartyChecker.subscribe(
+				'updateValidation',
+				(event) => this.#onHcmLinkCheckerUpdateValidation(event),
+			);
+		}
+
+		if (!this.#isTemplateMode())
+		{
+			this.#dateTimeLimitSelector = new DatetimeLimitSelector();
+
+			this.#dateTimeLimitSelector
+				.subscribe('beforeDateModify', () => {
+					this.emit('disableComplete');
+				})
+				.subscribe('afterDateModify', () => {
+					this.emit('enableComplete');
+				})
+			;
 		}
 	}
 
@@ -162,29 +182,28 @@ export class DocumentSend extends EventEmitter
 
 		this.#documentData = documentData;
 
+		const uids = [...documentData.values()].map((data) => data.uid);
 		const lastUid = [...documentData.values()].pop().uid;
-		const documentGroupUids = Array.from(documentData.keys());
+		const documentGroupUids = [...documentData.keys()];
 
-		this.#langSelector.setDocumentUid(lastUid);
+		this.#langSelector.setDocumentUids(uids);
+
+		if (!Type.isNull(this.#dateTimeLimitSelector))
+		{
+			this.#dateTimeLimitSelector.setDocumentUids(uids);
+
+			const untilDate = documentData?.values().next().value?.dateSignUntilUserTime;
+			if (untilDate)
+			{
+				this.#dateTimeLimitSelector.setDate(new Date(untilDate));
+			}
+		}
+
 		this.#items.employees.setDocumentUid(lastUid);
+		this.#items.reviewers.setDocumentUid(lastUid);
 
 		this.#hcmLinkPartyChecker?.setDocumentGroupUids(documentGroupUids);
 		void this.#hcmLinkPartyChecker?.check();
-	}
-
-	#getCompanyCommunication(): CommunicationType | null
-	{
-		return this.#communicationSelectedOption.company?.option ?? null;
-	}
-
-	#getValidationCommunication(): CommunicationType | null
-	{
-		return this.#communicationSelectedOption.validation?.option ?? null;
-	}
-
-	#getEmployeeCommunication(): CommunicationType | null
-	{
-		return this.#communicationSelectedOption.employee?.option ?? null;
 	}
 
 	#getProgressAnimateLayout(): HTMLElement
@@ -219,7 +238,8 @@ export class DocumentSend extends EventEmitter
 
 		const summaryTitle = this.#isTemplateMode()
 			? Loc.getMessage('SIGN_DOCUMENT_SUMMARY_TEMPLATE_TITLE')
-			: Loc.getMessage('SIGN_DOCUMENT_SUMMARY_TITLE');
+			: Loc.getMessage('SIGN_DOCUMENT_SUMMARY_TITLE')
+		;
 
 		this.#itemsToHide = [];
 		const summaryLayout = Tag.render`
@@ -228,15 +248,7 @@ export class DocumentSend extends EventEmitter
 					${summaryTitle}
 				</p>
 				${this.#documentSummary.getLayout()}
-				<div class="sign-b2e-send__lang-selector">
-					${this.#langSelector.getLayout()}
-					<span
-						data-hint="${Loc.getMessage('SIGN_DOCUMENT_SEND_LANG_SELECTOR_HINT')}"
-					></span>
-				</div>
-				<span class="sign-b2e-send__deadline">
-					${Loc.getMessage('SIGN_DOCUMENT_SEND_DEADLINE')}
-				</span>
+				${this.#renderLangAndDateContainer()}
 			</div>
 		`;
 		this.#itemsToHide.push(summaryLayout);
@@ -300,34 +312,46 @@ export class DocumentSend extends EventEmitter
 			: Loc.getMessage('SIGN_SEND_SIGNING_VALIDATION_HEAD_REVIEWER')
 		;
 		const validationTitles = {
-			[MemberRole.reviewer]: {
-				header: reviewerHeaderText,
-				hint: Loc.getMessage('SIGN_SEND_SIGNING_VALIDATION_TITLE_REVIEWER'),
-			},
 			[MemberRole.editor]: {
 				header: Loc.getMessage('SIGN_SEND_SIGNING_VALIDATION_HEAD_EDITOR'),
 				hint: Loc.getMessage('SIGN_SEND_SIGNING_VALIDATION_TITLE_EDITOR'),
 			},
 		};
-		this.#partiesData.validation.forEach(({ role }) => {
+
+		this.#partiesData.validation.forEach(({ role }): void => {
+			if (role === MemberRole.reviewer)
+			{
+				return;
+			}
+
+			const roleBlockLayout = this.#items[role].getLayout();
+			if (!roleBlockLayout)
+			{
+				return;
+			}
+
 			const { hint, header } = validationTitles[role];
-			const validationLayout = Tag.render`
-				<div class="sign-b2e-settings__item">
-					<p class="sign-b2e-settings__item_title">
-						${header}
-					</p>
-					<div class="sign-b2e-send__party_item">
-						<p class="sign-b2e-send__company-items_item-title">
-							${hint}
-						</p>
-						${this.#items[role].getLayout()}
-						${this.#getCommunicationsLayout('validation')}
-					</div>
-				</div>
-			`;
+			const validationLayout = this.#getPartyLayout(header, hint, roleBlockLayout);
 			this.#itemsToHide.push(validationLayout);
 			Dom.append(validationLayout, layout);
 		});
+
+		if (this.#items.reviewers.getPreselectedUserData().length > 0)
+		{
+			const reviewerListLayout = Tag.render`
+				<div class="sign-b2e-document-send-reviewers">
+					${this.#items.reviewers.getLayout()}
+				</div>
+			`;
+			const reviewersLayout = this.#getPartyLayout(
+				reviewerHeaderText,
+				Loc.getMessage('SIGN_SEND_SIGNING_VALIDATION_TITLE_REVIEWER_MSGVER_1'),
+				reviewerListLayout,
+			);
+			this.#itemsToHide.push(reviewersLayout);
+			Dom.append(reviewersLayout, layout);
+		}
+
 		Dom.append(companyLayout, layout);
 		if (!Type.isNull(usersLayout))
 		{
@@ -345,6 +369,80 @@ export class DocumentSend extends EventEmitter
 		Hint.create(layout);
 
 		return layout;
+	}
+
+	#getPartyLayout(header: string, hint: string, layout: HTMLDivElement): HTMLDivElement
+	{
+		return Tag.render`
+			<div class="sign-b2e-settings__item">
+				<p class="sign-b2e-settings__item_title">
+					${header}
+				</p>
+				<div class="sign-b2e-send__party_item">
+					<p class="sign-b2e-send__company-items_item-title">
+						${hint}
+					</p>
+					${layout}
+					${this.#getCommunicationsLayout('validation')}
+				</div>
+			</div>
+		`;
+	}
+
+	#renderLangAndDateContainer(): HTMLElement
+	{
+		const showSignUntil = !Type.isNull(this.#dateTimeLimitSelector);
+
+		const dateSignUntilLayout = showSignUntil
+			? this.#renderDateSignUntilSelectorLayout()
+			: null
+		;
+
+		const goskeySignUntilNotice = showSignUntil && this.#provider?.code === ProviderCode.goskey
+			? this.#renderGoskeyAlertForSignUntilSelector()
+			: null
+		;
+
+		return Tag.render`
+			<div class="sign-b2e-send__lang-dt-container">
+				${this.#renderLangSelectorLayout()}
+				${dateSignUntilLayout}
+				${goskeySignUntilNotice}
+			</div>
+		`;
+	}
+
+	#renderLangSelectorLayout(): HTMLElement
+	{
+		return Tag.render`
+			<div class="sign-b2e-send__lang-selector">
+				${this.#langSelector.getLayout()}
+				<span
+					data-hint="${Loc.getMessage('SIGN_DOCUMENT_SEND_LANG_SELECTOR_HINT')}"
+				></span>
+			</div>
+		`;
+	}
+
+	#renderDateSignUntilSelectorLayout(): HTMLElement
+	{
+		return Tag.render`
+			<div class="sign-b2e-send__datetime-limit-selector">
+				${this.#dateTimeLimitSelector.getLayout()}
+				<span
+					data-hint="${Loc.getMessage('SIGN_DOCUMENT_SEND_DATETIME_LIMIT_SELECTOR_HINT')}"
+				></span>
+			</div>
+		`;
+	}
+
+	#renderGoskeyAlertForSignUntilSelector(): HTMLElement
+	{
+		return Tag.render`
+			<p class="sign-wizard__notice">
+				${Loc.getMessage('SIGN_DOCUMENT_SEND_DATETIME_LIMIT_SELECTOR_GOSKEY_ALERT')}
+			</p>
+		`;
 	}
 
 	#getProgressOverlay(): HTMLElement
@@ -381,8 +479,8 @@ export class DocumentSend extends EventEmitter
 					<div class="sign-b2e-template-status-img"></div>
 					<div class="sign-b2e-template-status-title">${templateTitle}</div>
 					<div class="sign-b2e-template-status-info">${Loc.getMessage('SIGN_SETTINGS_TEMPLATE_CREATED_INFO')}</div>
-					<button class="ui-btn ui-btn-light-border ui-btn-round" onclick="BX.SidePanel.Instance.close();">${Loc.getMessage('SIGN_SETTINGS_TEMPLATES_LIST')}</button>
-				</div>
+					${this.#getAllTemplatesBtn()}
+					</div>
 			 </div>
 		`;
 	}
@@ -403,9 +501,31 @@ export class DocumentSend extends EventEmitter
 		`;
 	}
 
+	#getAllTemplatesBtn(): HTMLElement | null
+	{
+		if (this.#isOpenedFromRobot)
+		{
+			return null;
+		}
+
+		return Tag.render`
+			<button class="ui-btn ui-btn-light-border ui-btn-round" onclick="BX.SidePanel.Instance.close();">
+				${Loc.getMessage('SIGN_SETTINGS_TEMPLATES_LIST')}
+			</button>
+		`;
+	}
+
 	resetUserPartyPopup(): DocumentSend
 	{
 		this.#items.employees.resetUserPartyPopup();
+		this.#items.reviewers.resetUserPartyPopup();
+
+		return this;
+	}
+
+	setProvider(provider: Provider | null): DocumentSend
+	{
+		this.#provider = provider;
 
 		return this;
 	}
@@ -432,17 +552,30 @@ export class DocumentSend extends EventEmitter
 
 		if (Type.isArrayFilled(parties?.employees))
 		{
-			this.#items.employees.setSignersIds(parties?.employees.map((employee) => {
+			this.#items.employees.setUserIds(parties?.employees.map((employee) => {
 				return { entityId: employee.entityId, entityType: employee.entityType };
 			}));
 		}
 
 		if (Type.isArrayFilled(parties?.validation))
 		{
+			const reviewerIdList = [];
 			parties.validation.forEach((party) => {
 				const { entityId, entityType, role } = party;
+				if (role === MemberRole.reviewer)
+				{
+					reviewerIdList.push({ entityId, entityType });
+
+					return;
+				}
+
 				this.#items[role].setItemData({ entityId, entityType });
 			});
+
+			if (reviewerIdList.length > 0)
+			{
+				this.#items.reviewers.setUserIds(reviewerIdList);
+			}
 		}
 
 		this.#refreshView();
@@ -459,10 +592,20 @@ export class DocumentSend extends EventEmitter
 			this.emit('disableBack');
 			await this.#saveReminderTypesForRoles();
 
+			if (this.#dateTimeLimitSelector)
+			{
+				await this.#dateTimeLimitSelector.saveSelectedDateForUids();
+			}
 			this.#showProgressOverlay();
 			if (this.#isTemplateMode())
 			{
-				const { template: { id: templateId } } = await api.template.completeTemplate(this.documentData.values().next().value.templateUid);
+				const documentTemplateId = this.documentData.values().next().value.templateUid;
+				const {
+					template:
+						{
+							id: templateId,
+						},
+				} = await api.template.completeTemplate(documentTemplateId, this.#templateFolderId);
 				this.emit('onTemplateComplete', { templateId });
 			}
 			else if (this.#isGroupDocuments())
@@ -537,6 +680,11 @@ export class DocumentSend extends EventEmitter
 		}
 	}
 
+	isDateTimeLimitSelectorValid(): boolean
+	{
+		return this.#dateTimeLimitSelector ? this.#dateTimeLimitSelector.isValid() : true;
+	}
+
 	#sleep(ms: Number): Promise
 	{
 		return new Promise((resolve) => {
@@ -557,7 +705,7 @@ export class DocumentSend extends EventEmitter
 		return Tag.render`
 			<div class="sign-b2e-send__communications">
 				<span class="sign-b2e-send__communications_title">
-					${Loc.getMessage('SIGN_DOCUMENT_SEND_COMMUNICATION_TITLE')}
+					${Loc.getMessage('SIGN_DOCUMENT_SEND_COMMUNICATION_TITLE_MSGVER_1')}
 				</span>
 				<div class="sign-b2e-send__communications_communication-type">
 					<span class="sign-b2e-send__communications_communication-type-text">

@@ -33,6 +33,8 @@ $APPLICATION->SetPageProperty('BodyClass', ($bodyClass ? $bodyClass.' ' : '') . 
 	'ui.avatar-editor',
 	'avatar_editor',
 	'ui.avatar',
+	'ui.fonts.inter',
+	'intranet.transfer-to-intranet',
 ]);
 
 CJSCore::Init("loader");
@@ -63,21 +65,21 @@ Page\Asset::getInstance()->addJs($templateFolder.'/js/tags-users-popup.js');
 Page\Asset::getInstance()->addJs($templateFolder.'/js/form-entity.js');
 Page\Asset::getInstance()->addCss('/bitrix/components/bitrix/socialnetwork.blog.blog/templates/.default/style.css');
 
+UI\Toolbar\Facade\Toolbar::deleteFavoriteStar();
 if (!$arResult['IS_CURRENT_USER_COLLABER'] && !in_array($arResult["User"]["STATUS"], ['email', 'extranet', 'collaber']))
 {
-	$this->SetViewTarget('inside_pagetitle');
 	$APPLICATION->includeComponent(
 		'bitrix:intranet.binding.menu',
 		'',
 		array(
 			'SECTION_CODE' => 'user_detail',
 			'MENU_CODE' => 'top_menu',
+			'USE_UI_TOOLBAR' => 'Y',
 			'CONTEXT' => [
 				'USER_ID' => $arResult['User']['ID']
 			]
 		)
 	);
-	$this->EndViewTarget();
 }
 
 if (
@@ -85,18 +87,15 @@ if (
 	&& $arResult["User"]["STATUS"] !== "email"
 )
 {
-	$this->SetViewTarget('inside_pagetitle');
-
 	if ($arResult["Permissions"]['edit'])
 	{
-		?>
-		<span
-			onclick="BX.SidePanel.Instance.open('<?=$arResult["Urls"]["CommonSecurity"]."?page=auth"?>', {width: 1100});"
-			class="ui-btn ui-btn-light-border ui-btn-themes"
-		>
-			<?=Loc::getMessage("INTRANET_USER_PROFILE_PASSWORDS")?>
-		</span>
-		<?php
+		UI\Toolbar\Facade\Toolbar::addButton([
+			'text' => Loc::getMessage("INTRANET_USER_PROFILE_PASSWORDS"),
+			'color' => UI\Buttons\Color::LIGHT_BORDER,
+			'onclick' => new UI\Buttons\JsCode(
+				'BX.SidePanel.Instance.open("' . $arResult['Urls']['CommonSecurity'] . '?page=auth"' . ', {width: 1100});'
+			),
+		]);
 	}
 
 	if (
@@ -104,17 +103,14 @@ if (
 		&& ($arResult["IsOwnProfile"] || $USER->CanDoOperation('security_edit_user_otp'))
 	)
 	{
-		?>
-		<span
-			onclick="BX.SidePanel.Instance.open('<?=$arResult["Urls"]["CommonSecurity"]."?page=otpConnected"?>', {width: 1100});"
-			class="ui-btn ui-btn-light-border ui-btn-themes"
-		>
-			<?=Loc::getMessage("INTRANET_USER_PROFILE_SECURITY")?>
-		</span>
-		<?php
+		UI\Toolbar\Facade\Toolbar::addButton([
+			'text' => Loc::getMessage("INTRANET_USER_PROFILE_SECURITY"),
+			'color' => UI\Buttons\Color::LIGHT_BORDER,
+			'onclick' => new UI\Buttons\JsCode(
+				'BX.SidePanel.Instance.open("' . $arResult['Urls']['CommonSecurity'] . '?page=otpConnected"' . ', {width: 1100});'
+			),
+		]);
 	}
-
-	$this->EndViewTarget();
 }
 
 if (
@@ -140,14 +136,17 @@ if (
 		<div class="intranet-user-profile-column-block">
 			<div class="intranet-user-profile-rank">
 				<?php
+				$haveAvailableActions = in_array(true, $arResult['ACTIONS_AVAILABILITY'], true);
+
 				if (
-					isset($arResult["User"]["STATUS"]) && !empty($arResult["User"]["STATUS"])
+					!empty($arResult["User"]["STATUS"])
 					&& (
 						!(
 							$arResult["User"]["STATUS"] === "employee"
 							&& ($arResult["IsOwnProfile"] || !$arResult["Permissions"]['edit'])
 						)
 						|| $arResult["User"]["SHOW_SONET_ADMIN"]
+						|| $haveAvailableActions
 					)
 				)
 				{
@@ -155,7 +154,7 @@ if (
 						'intranet-user-profile-rank-item',
 						'intranet-user-profile-rank-' . $arResult["User"]["STATUS"],
 					];
-					if ($arResult["Permissions"]['edit'])
+					if ($arResult["Permissions"]['edit'] || $haveAvailableActions)
 					{
 						$classList[] = 'intranet-user-profile-rank-item-pointer';
 					}
@@ -166,7 +165,7 @@ if (
 							?? Loc::getMessage("INTRANET_USER_PROFILE_".$arResult["User"]["STATUS"]
 							))?></span>
 						<?php
-						if ($arResult["Permissions"]['edit'])
+						if ($arResult["Permissions"]['edit'] || $haveAvailableActions)
 						{
 							?>
 							<span class="intranet-user-profile-rank-item-config"></span>
@@ -249,7 +248,7 @@ if (
 						</a>
 						<?php
 					}
-					else
+					else if (isset($arResult["User"]["STATUS"]) && !in_array($arResult["User"]["STATUS"], ['visitor', 'email', 'shop'], true))
 					{
 						?>
 						<a
@@ -308,6 +307,7 @@ if (
 		if (
 			$arResult["StressLevel"]['AVAILABLE'] === 'Y'
 			&& !$arResult["isExtranetSite"]
+			&& isset($arResult["User"]["STATUS"])
 			&& !in_array($arResult["User"]["STATUS"], ['email', 'extranet', 'collaber'])
 		)
 		{
@@ -888,7 +888,7 @@ if ($arResult["adminRightsRestricted"])
 		"INTRANET_USER_PROFILE_REINVITE" : "<?= CUtil::JSEscape(Loc::getMessage("INTRANET_USER_PROFILE_REINVITE")) ?>",
 		"INTRANET_USER_PROFILE_DELETE" : "<?= CUtil::JSEscape(Loc::getMessage("INTRANET_USER_PROFILE_DELETE")) ?>",
 		"INTRANET_USER_PROFILE_FIRE" : "<?= CUtil::JSEscape(Loc::getMessage("INTRANET_USER_PROFILE_FIRE")) ?>",
-		"INTRANET_USER_PROFILE_MOVE_TO_INTRANET" : "<?= CUtil::JSEscape(Loc::getMessage("INTRANET_USER_PROFILE_MOVE_TO_INTRANET")) ?>",
+		"INTRANET_USER_PROFILE_MOVE_TO_INTRANET_MSGVER_1" : "<?= CUtil::JSEscape(Loc::getMessage("INTRANET_USER_PROFILE_MOVE_TO_INTRANET_MSGVER_1")) ?>",
 		"INTRANET_USER_PROFILE_HIRE" : "<?= CUtil::JSEscape(Loc::getMessage("INTRANET_USER_PROFILE_HIRE")) ?>",
 		"INTRANET_USER_PROFILE_ADMIN_MODE" : "<?= CUtil::JSEscape(Loc::getMessage("INTRANET_USER_PROFILE_ADMIN_MODE")) ?>",
 		"INTRANET_USER_PROFILE_QUIT_ADMIN_MODE" : "<?= CUtil::JSEscape(Loc::getMessage("INTRANET_USER_PROFILE_QUIT_ADMIN_MODE")) ?>",
@@ -952,6 +952,9 @@ if ($arResult["adminRightsRestricted"])
 		gratPostListPageSize: <?= (int)$arParams['GRAT_POST_LIST_PAGE_SIZE'] ?>,
 		userId: <?= (int)$arResult["User"]["ID"] ?>,
 		userStatus: <?= CUtil::PhpToJSObject($arResult["User"]["STATUS"]) ?>,
+		isCollaber: "<?=($arResult["User"]["IS_COLLABER"] ?? null) ? "Y" : "N"?>",
+		userFullName: <?= CUtil::PhpToJSObject($arResult["User"]["FULL_NAME"]) ?>,
+		userPhoto: <?= CUtil::PhpToJSObject($arResult["User"]["PHOTO"]) ?>,
 		isIntegratorUser: '<?=($arResult["User"]['IS_INTEGRATOR'] ?? null) ? "Y" : "N"?>',
 		isOwnProfile: '<?=$arResult["IsOwnProfile"] ? "Y" : "N"?>',
 		urls: <?= CUtil::PhpToJSObject($arResult["Urls"]) ?>,
@@ -970,11 +973,15 @@ if ($arResult["adminRightsRestricted"])
 			formId: '<?= (!empty($arResult["ProfileBlogPost"]["formParams"]) ? CUtil::JSEscape($arResult["ProfileBlogPost"]["formParams"]["FORM_ID"]) : '') ?>',
 			lheId: '<?= (!empty($arResult["ProfileBlogPost"]["formParams"]) ? CUtil::JSEscape($arResult["ProfileBlogPost"]["formParams"]["LHE"]["id"]) : '') ?>'
 		},
-		initialFields: <?=CUtil::PhpToJSObject($arResult["User"])?>,
+		personalMobile: '<?= \CUtil::JSEscape($arResult["User"]["PERSONAL_MOBILE"] ?? '') ?>',
+		personalPhoto: '<?= \CUtil::JSEscape($arResult["User"]["PERSONAL_PHOTO"] ?? '') ?>',
+		photo: '<?= \CUtil::JSEscape($arResult["User"]["PHOTO"] ?? '')  ?>',
 		gridId: '<?='INTRANET_USER_GRID_'.SITE_ID?>',
 		isCurrentUserAdmin: '<?=$arResult["IS_CURRENT_USER_ADMIN"] ? "Y" : "N"?>',
 		voximplantEnablePhones: <?=CUtil::PhpToJSObject($arResult["User"]["VOXIMPLANT_ENABLE_PHONES"])?>,
 		userpicUploadAttribute: <?= \Bitrix\Main\Web\Json::encode(UI\Avatar\Mask\Helper::getHTMLAttribute($arResult["User"]["PERSONAL_PHOTO"])) ?>,
+		actionsAvailability: <?= \Bitrix\Main\Web\Json::encode($arResult['ACTIONS_AVAILABILITY']) ?>,
+		rootDepartment: <?= \Bitrix\Main\Web\Json::encode($arResult['ROOT_DEPARTMENT']) ?>,
 	});
 </script>
 

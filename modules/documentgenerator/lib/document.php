@@ -59,9 +59,11 @@ class Document
 	protected $isCheckAccess = false;
 	protected $userId;
 	protected ?string $placeholderForFieldEmptyValue = null;
+	protected bool $isCheckFields = true;
 
 	/**
 	 * Document constructor.
+	 *
 	 * @param Body $body
 	 * @param array $fields
 	 * @param array $data
@@ -76,7 +78,8 @@ class Document
 		$this->values = [
 			Template::DOCUMENT_PROVIDER_PLACEHOLDER => $this,
 		];
-		if($value)
+
+		if ($value)
 		{
 			$this->values[Template::MAIN_PROVIDER_PLACEHOLDER] = $value;
 		}
@@ -169,6 +172,13 @@ class Document
 	public function setPlaceholderForFieldEmptyValue(?string $placeholderForFieldEmptyValue): Document
 	{
 		$this->placeholderForFieldEmptyValue = $placeholderForFieldEmptyValue;
+
+		return $this;
+	}
+
+	public function setCheckFields(bool $isCheckFields): Document
+	{
+		$this->isCheckFields = $isCheckFields;
 
 		return $this;
 	}
@@ -269,6 +279,11 @@ class Document
 	 */
 	public function checkFields(bool $requiredOnly = true): array
 	{
+		if (!$this->isCheckFields)
+		{
+			return [];
+		}
+
 		$emptyFields = [];
 
 		if($this->result->isSuccess())
@@ -717,6 +732,8 @@ class Document
 			}
 		}
 
+		DataProviderManager::getInstance()->resetContext();
+
 		return $fields;
 	}
 
@@ -884,6 +901,8 @@ class Document
 				$this->result = $bodyResult;
 			}
 		}
+
+		DataProviderManager::getInstance()->resetContext();
 
 		return $this;
 	}
@@ -1607,6 +1626,10 @@ class Document
 		{
 			$fieldNames[$placeholder] = $placeholder;
 		}
+		foreach($this->getCustomFields() as $placeholder => $field)
+		{
+			$fieldNames[$placeholder] = $placeholder;
+		}
 		foreach($this->externalFields as $placeholder => $field)
 		{
 			$fieldNames[$placeholder] = $placeholder;
@@ -1782,6 +1805,39 @@ class Document
 				'REQUIRED' => 'Y',
 			],
 		];
+	}
+
+	protected function getCustomFields(): array
+	{
+		$result = [];
+		$templateId = $this->getTemplate()?->ID ?? null;
+		if (!$templateId)
+		{
+			return [];
+		}
+		$moduleId = $this->getTemplate()?->MODULE_ID ?? '';
+		$fieldsManager = (new CustomField\Registry($templateId))->getManager($moduleId);
+		if (isset($fieldsManager))
+		{
+			$fields = $fieldsManager->getDocumentFields($this);
+			foreach ($fields as $field)
+			{
+				$fieldData = [
+					'TITLE' => $field['TITLE'],
+					'VALUE' => $field['VALUE'],
+					'GROUP' => [
+						Loc::getMessage('DOCUMENT_GROUP_NAME'),
+						'',
+					],
+				];
+				$result[$field['UID']] = $fieldData;
+
+				// add field data for compatibility
+				$this->fields[$field['UID']] = $fieldData;
+			}
+		}
+
+		return $result;
 	}
 
 	protected function getDocumentDefaultFieldsValues(): array

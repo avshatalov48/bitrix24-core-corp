@@ -142,12 +142,8 @@ class CCrmNotifierSchemeType
 					'XMPP' => 'Y',
 					'PUSH' => 'N',
 				],
-				'post' => [
-					'NAME' => GetMessage('CRM_NOTIFY_SCHEME_LIVEFEED_POST'),
-					'PUSH' => 'N',
-				],
 				'mention' => [
-					'NAME' => GetMessage('CRM_NOTIFY_SCHEME_LIVEFEED_MENTION'),
+					'NAME' => GetMessage('CRM_NOTIFY_SCHEME_MENTION'),
 					'PUSH' => 'N',
 				],
 				self::WebFormName => [
@@ -176,14 +172,14 @@ class CCrmNotifierSchemeType
 					'NAME' => GetMessage('CRM_NOTIFY_SCHEME_MERGE'),
 					'PUSH' => 'N',
 				],
-				'other' => [
-					'NAME' => GetMessage('CRM_NOTIFY_SCHEME_OTHER'),
-					'PUSH' => 'N',
-				],
 				'pingTodoActivity' => [
 					'NAME' => GetMessage('CRM_NOTIFY_SCHEME_PING_TODO_ACTIVITY'),
 					'MAIL' => 'N',
 					'PUSH' => 'Y',
+				],
+				'other' => [
+					'NAME' => GetMessage('CRM_NOTIFY_SCHEME_OTHER'),
+					'PUSH' => 'N',
 				],
 			],
 		];

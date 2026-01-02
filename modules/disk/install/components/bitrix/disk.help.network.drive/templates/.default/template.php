@@ -14,53 +14,7 @@ if(!defined('B_PROLOG_INCLUDED') || B_PROLOG_INCLUDED!==true) die();
 use Bitrix\Main\Localization\Loc;
 
 $serverParams = $arResult["SERVER_PARAMS"];
-if ($serverParams['CLIENT_OS'] == 'Windows XP' || in_array($serverParams['CLIENT_OS'], array('Windows 2000', 'Windows 2003')))
-{
-	if (!$serverParams['SECURE']): ?>
-		<div id="bx-disk-network-drive-full" style="display:none;" class="bx-disk-network-drive-full-style">
-			<p>
-				<a href="javascript:void(0);" class="" id="bx-disk-network-drive-link">
-					<?= Loc::getMessage("DISK_NETWORK_DRIVE_SHAREDDRIVE_TITLE");?>
-				</a>
-			</p>
-			<div class="bx-disk-network-drive-style" id="bx-disk-network-drive" style="display:none;">
-				<?=
-					Loc::getMessage('DISK_NETWORK_DRIVE_CONNECTOR_HELP_MAPDRIVE',
-						array(
-							'#TEMPLATE_FOLDER#' => $templateFolder,
-							'#TEMPLATE_LINK#' => $arResult["TEMPLATE_LINK"])
-					);
-				?>
-			</div>
-			<? if ($serverParams['AUTH_MODE'] == 'BASIC'): ?>
-				<p><?= Loc::getMessage("DISK_NETWORK_DRIVE_REGISTERPATCH", array("#LINK#" => "/bitrix/webdav/xp.reg"));?></p>
-			<? endif;?>
-		</div>
-	<? endif;
-}
-elseif ($serverParams['CLIENT_OS'] == 'Windows 2008' || $serverParams['CLIENT_OS'] == 'Windows Vista')
-{ ?>
-	<div id="bx-disk-network-drive-full" style="display:none;" class="bx-disk-network-drive-full-style">
-		<p>
-			<a href="javascript:void(0);" class="" id="bx-disk-network-drive-link">
-				<?= Loc::getMessage("DISK_NETWORK_DRIVE_SHAREDDRIVE_TITLE");?>
-			</a>
-		</p>
-		<div class="bx-disk-network-drive-style" id="bx-disk-network-drive" style="display:none;">
-			<?=
-				Loc::getMessage('DISK_NETWORK_DRIVE_CONNECTOR_HELP_MAPDRIVE',
-					array(
-						'#TEMPLATE_FOLDER#' => $templateFolder,
-						'#TEMPLATE_LINK#' => $arResult["TEMPLATE_LINK"])
-				);
-			?>
-		</div>
-		<? if ($serverParams['AUTH_MODE'] == 'BASIC'): ?>
-			<p><?= Loc::getMessage("DISK_NETWORK_DRIVE_REGISTERPATCH", array("#LINK#" => "/bitrix/webdav/vista.reg"));?></p>
-		<? endif;?>
-	</div>
-<? }
-elseif ($serverParams['CLIENT_OS'] == 'Windows 7' || $serverParams['CLIENT_OS'] == 'Windows 8')
+if ($serverParams['CLIENT_OS'] == 'Windows 7' || $serverParams['CLIENT_OS'] == 'Windows 8')
 {?>
 	<div id="bx-disk-network-drive-full" style="display:none;" class="bx-disk-network-drive-full-style">
 		<? if ($serverParams['SECURE']): ?>
@@ -83,9 +37,6 @@ elseif ($serverParams['CLIENT_OS'] == 'Windows 7' || $serverParams['CLIENT_OS'] 
 				?>
 			</div>
 		<? endif; ?>
-		<? if ($serverParams['AUTH_MODE'] == 'BASIC'): ?>
-			<p><?= Loc::getMessage("DISK_NETWORK_DRIVE_REGISTERPATCH", array("#LINK#" => "/bitrix/webdav/vista.reg"));?></p>
-		<? endif;?>
 	</div>
 <?}
 elseif ($serverParams['CLIENT_OS'] == 'Linux')
@@ -138,6 +89,6 @@ else
 		width = Math.min(width, screen.width-10);
 		height = Math.min(height, screen.height-28);
 		alt = encodeURI(alt);
-		window.open('/bitrix/tools/imagepg.php?alt='+alt+'&img='+sImgPath,'','scrollbars='+scroll+',resizable=yes, width='+width+',height='+height+',left='+left+',top='+top);
+		window.open(sImgPath,'','scrollbars='+scroll+',resizable=yes, width='+width+',height='+height+',left='+left+',top='+top);
 	}
 </script>

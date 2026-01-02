@@ -20,6 +20,7 @@ return [
 		'main.core.events',
 		'sign.v2.api',
 		'ui.entity-selector',
+		'ui.notification',
 	],
 	'skip_core' => false,
 ];

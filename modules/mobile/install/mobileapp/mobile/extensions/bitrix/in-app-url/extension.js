@@ -2,7 +2,7 @@
  * @module in-app-url
  */
 jn.define('in-app-url', (require, exports, module) => {
-	const { InAppUrl } = require('in-app-url/in-app-url');
+	const { InAppUrl } = require('in-app-url/src/in-app-url');
 
 	const inAppUrl = new InAppUrl();
 
@@ -21,6 +21,13 @@ jn.define('in-app-url', (require, exports, module) => {
 		'bizproc/in-app-url/routes',
 		'disk/in-app-url/routes',
 		'in-app-url/routes',
+		'in-app-url/routes/development-routes',
+		'in-app-url/routes/timeman',
+		'in-app-url/routes/stafftrack',
+		'in-app-url/routes/settings',
+		'in-app-url/routes/bitrix24',
+		'intranet/in-app-url/routes',
+		'call/in-app-url/routes',
 	];
 
 	routes.forEach((ext) => {

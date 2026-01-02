@@ -211,6 +211,29 @@ class Folder extends BaseObject
 		return $this->getAllowedOperationsRights($folder);
 	}
 
+	public function checkFileLimitAction(Disk\Folder $folder): array
+	{
+		$isFileLimitExceeded = false;
+
+		$storage = $folder->getStorage();
+
+		if ($storage)
+		{
+			if (ZipNginx\Archive::isFileLimitExceededByFolder($folder, $storage->getCurrentUserSecurityContext()))
+			{
+				$isFileLimitExceeded = true;
+			}
+		}
+		else
+		{
+			$isFileLimitExceeded = true;
+		}
+
+		return [
+			'isFileLimitExceeded' => $isFileLimitExceeded,
+		];
+	}
+
 	public function downloadArchiveAction(Disk\Folder $folder): ?ZipNginx\Archive
 	{
 		if (!ZipNginx\Configuration::isEnabled())
@@ -228,8 +251,6 @@ class Folder extends BaseObject
 			return null;
 		}
 
-		$securityContext = $storage->getSecurityContext($this->getCurrentUser()?->getId());
-
-		return ZipNginx\Archive::createFromFolder($folder, $securityContext);
+		return ZipNginx\Archive::createFromFolder($folder, $storage->getCurrentUserSecurityContext());
 	}
 }

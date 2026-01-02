@@ -1,0 +1,75 @@
+.booking-crm-forms-field.booking--crm-forms--resource-slots {
+	--slots-shown-delay: 300ms;
+
+	opacity: 0;
+	animation: visible var(--slots-shown-delay) forwards;
+}
+
+.booking-crm-forms-field.booking--crm-forms--resource-slots.--fade {
+	animation: fadeOut var(--slots-shown-delay) ease-in-out;
+	animation-fill-mode: forwards;
+}
+
+@keyframes visible {
+	0% { opacity: 0 }
+	100% { opacity: 1 }
+}
+
+@keyframes fadeOut {
+	0% {
+		opacity: 1;
+	}
+	100% {
+		opacity: 0;
+	}
+}
+
+.booking--crm-forms--resource-slots__slot-list-wrapper {
+	min-height: 110px;
+}
+
+.booking--crm-forms--resource-slots__slot-list {
+	display: flex;
+	gap: 7px;
+	flex-wrap: wrap;
+	padding-top: 10px;
+}
+
+.booking--crm-forms--resource-slots__slot {
+	display: flex;
+	justify-content: center;
+	align-items: center;
+	height: 3em;
+	border: 1px solid rgb(var(--booking--crm-forms--border-color-rgb));
+	padding: 14px 12px;
+	cursor: pointer;
+	border-radius: 8px;
+	width: 70px;
+	transition: background-color 200ms;
+}
+
+.booking--crm-forms--resource-slots__slot.--selected {
+	border-radius: 8px;
+	border: 1px solid #11A9D9;
+	background: linear-gradient(180deg, #2FC6F6 0%, #67D3F5 100%);
+	color: var(--b24-background-color, #FFF);
+}
+
+.booking--crm-forms--resource-slots__slot > span {
+	color: var(--booking--crm-forms--resource-slot-text-color);
+}
+
+.booking--crm-forms--resource-slots__slot.--selected > span {
+	color: var(--booking--crm-forms--resource-slot-selected-text-color);
+}
+
+.booking--crm-forms--resource-slots__empty-slots {
+	width: 100%;
+	display: flex;
+	align-items: center;
+	justify-content: center;
+}
+
+.booking--crm-forms--time-selector-block-header__button {
+	flex-shrink: 0;
+}

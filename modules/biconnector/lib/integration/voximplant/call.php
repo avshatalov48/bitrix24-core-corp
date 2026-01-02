@@ -27,6 +27,12 @@ class Call
 		$result = &$params[1];
 		$languageId = $params[2];
 
+		$eventTableName = $params[3];
+		if (!empty($eventTableName) && $eventTableName !== 'telephony_call')
+		{
+			return;
+		}
+
 		$connection = $manager->getDatabaseConnection();
 		$helper = $connection->getSqlHelper();
 

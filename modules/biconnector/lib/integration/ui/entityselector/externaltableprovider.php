@@ -6,8 +6,10 @@ use Bitrix\BIConnector\ExternalSource;
 use Bitrix\BIConnector\ExternalSource\Internal\EO_ExternalSource;
 use Bitrix\BIConnector\ExternalSource\Internal\ExternalSourceTable;
 use Bitrix\Main\Application;
+use Bitrix\Main\Localization\Loc;
 use Bitrix\UI\EntitySelector\BaseProvider;
 use Bitrix\UI\EntitySelector\Dialog;
+use Bitrix\UI\EntitySelector\EntityError;
 use Bitrix\UI\EntitySelector\Item;
 use Bitrix\UI\EntitySelector\SearchQuery;
 
@@ -46,24 +48,38 @@ class ExternalTableProvider extends BaseProvider
 		$filter = [
 			'searchString' => $query,
 		];
-		$items = $this->getElements($filter);
+		$items = $this->getElements($filter, $dialog);
 
 		$dialog->addItems($items);
 	}
 
-	private function getElements(array $filter): array
+	private function getElements(array $filter, Dialog $dialog): array
 	{
 		$result = [];
 		$searchString = $filter['searchString'];
 
 		if (!$this->externalSource)
 		{
+			$dialog->addError(
+				new EntityError(
+					self::ENTITY_ID,
+					Loc::getMessage('EXTERNAL_TABLE_PROVIDER_EMPTY_EXTERNAL_SOURCE')
+				)
+			);
+
 			return [];
 		}
 
 		$type = ExternalSource\Type::tryFrom($this->externalSource->getType());
 		if (!$type)
 		{
+			$dialog->addError(
+				new EntityError(
+					self::ENTITY_ID,
+					Loc::getMessage('EXTERNAL_TABLE_PROVIDER_UNKNOWN_TYPE_EXTERNAL_SOURCE')
+				)
+			);
+
 			return [];
 		}
 
@@ -77,8 +93,21 @@ class ExternalTableProvider extends BaseProvider
 		else
 		{
 			$source = ExternalSource\Source\Factory::getSource($type, $this->externalSource->getId());
-			$tables = $source->getEntityList($searchString);
-			$cacheManager->set($cacheKey, $tables);
+			$queryResult = $source->getEntityList($searchString);
+			$tables = [];
+			if ($queryResult->isSuccess())
+			{
+				$tables = $queryResult->getData();
+
+				$cacheManager->set($cacheKey, $tables);
+			}
+			else
+			{
+				foreach ($queryResult->getErrors() as $error)
+				{
+					$dialog->addError(new EntityError(self::ENTITY_ID, $error->getMessage(), $error->getCode()));
+				}
+			}
 		}
 
 		foreach ($tables as $table)

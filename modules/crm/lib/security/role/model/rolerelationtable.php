@@ -2,6 +2,7 @@
 
 namespace Bitrix\Crm\Security\Role\Model;
 
+use Bitrix\Crm\Service\UserPermissions;
 use Bitrix\Main\ArgumentException;
 use Bitrix\Main\Entity\ReferenceField;
 use Bitrix\Main\ORM\Data\DataManager;
@@ -157,5 +158,49 @@ class RoleRelationTable extends DataManager
 			"Deleted relation in role #{ROLE_ID}",
 			RolePermissionLogContext::getInstance()->appendTo($fields)
 		);
+	}
+
+	public static function getRelationsWithPermissionsOfType(string $permissionEntity, string $permissionType): array
+	{
+		$roleIds = [];
+
+		$permissionsIterator = RolePermissionTable::getList([
+			'select' => [
+				'ROLE_ID',
+			],
+			'filter' => [
+				'=ENTITY' => $permissionEntity,
+				'=PERM_TYPE' => $permissionType,
+				'@ATTR' => [
+					UserPermissions::PERMISSION_SELF,
+					UserPermissions::PERMISSION_DEPARTMENT,
+					UserPermissions::PERMISSION_SUBDEPARTMENT,
+					UserPermissions::PERMISSION_OPENED,
+					UserPermissions::PERMISSION_ALL,
+				],
+			],
+			'cache' => [
+				'ttl' => 84600,
+			],
+		]);
+
+		while ($row = $permissionsIterator->fetch())
+		{
+			$roleIds[] = $row['ROLE_ID'];
+		}
+		if (!empty($roleIds))
+		{
+			$roleIds = array_unique($roleIds);
+
+			return RoleRelationTable::query()
+				->setSelect(['RELATION'])
+				->whereIn('ROLE_ID', $roleIds)
+				->setCacheTtl(84600)
+				->fetchCollection()
+				->getRelationList()
+			;
+		}
+
+		return [];
 	}
 }

@@ -1,0 +1,23 @@
+<?php
+$MESS["M_CRM_TL_PAYMENT_DETAILS_BACK_TO_PAYMENT_METHOD"] = "Төлем әдістеріне оралу";
+$MESS["M_CRM_TL_PAYMENT_PAY_DEFAULT_ERROR_BUTTON_CONFIRM_TITLE"] = "Түсінікті";
+$MESS["M_CRM_TL_PAYMENT_PAY_DEFAULT_ERROR_BUTTON_HELP_TITLE"] = "Толығырақ";
+$MESS["M_CRM_TL_PAYMENT_PAY_DEFAULT_ERROR_MESSAGE"] = "Интернетке қолжетімділікті тексеріп, қайталап көріңіз. Егер қате қайталанса, Битрикс24 әкімшісіне хабарласыңыз.";
+$MESS["M_CRM_TL_PAYMENT_PAY_DEFAULT_ERROR_TITLE"] = "Әрекетті орындау мүмкін емес";
+$MESS["M_CRM_TL_PAYMENT_PAY_FAILURE_CHOOSE_OTHER_PAYMENT_METHOD"] = "Басқа төлем әдісін таңдау";
+$MESS["M_CRM_TL_PAYMENT_PAY_FAILURE_ERROR_TEXT"] = "Төлемді қабылдау мүмкін болмады";
+$MESS["M_CRM_TL_PAYMENT_PAY_FAILURE_GET_NEW_QR_GET_NEW_QR"] = "Жаңа QR кодын алу";
+$MESS["M_CRM_TL_PAYMENT_PAY_NO_PAY_METHODS"] = "Терминал төлемдерді қабылдауға дайын емес. Терминал баптауларында кем дегенде бір төлем әдісін қосыңыз немесе басшыңызға хабарласыңыз";
+$MESS["M_CRM_TL_PAYMENT_PAY_PAYMENT_LINK_NOT_CONNECTED"] = "Сілтеме бойынша төлем жасау қосылмаған";
+$MESS["M_CRM_TL_PAYMENT_PAY_PAYMENT_SYSTEM_CREATION_ERROR_MESSAGE"] = "Төлем жүйесін жасау қатесі";
+$MESS["M_CRM_TL_PAYMENT_PAY_PHONE_CONFIRMATION_TITLE"] = "Телефон нөмірін растау";
+$MESS["M_CRM_TL_PAYMENT_PAY_PHONE_CONFIRMATION_WARNING_DESCRIPTION"] = "Төлемді сілтеме арқылы қабылдау үшін телефон нөмірін растаңыз. Мұны Битрикс24 веб-нұсқасында жасауға болады";
+$MESS["M_CRM_TL_PAYMENT_PAY_PHONE_CONFIRMATION_WARNING_TITLE"] = "Телефон нөмірін растаңыз";
+$MESS["M_CRM_TL_PAYMENT_PAY_PLEASE_WAIT"] = "Күте тұруыңызды өтінеміз";
+$MESS["M_CRM_TL_PAYMENT_PAY_PRODUCTS_CNT"] = "Тауарлар: #CNT#";
+$MESS["M_CRM_TL_PAYMENT_PAY_SCAN_QR"] = "Клиенттен телефон камерасын QR кодына бағыттауын сұраңыз ";
+$MESS["M_CRM_TL_PAYMENT_PAY_SUCCESS_BACK_TO_LIST"] = "Төлемдер тізіміне оралу";
+$MESS["M_CRM_TL_PAYMENT_PAY_SUCCESS_PAYMENT_PAID"] = "Төлем №#NUMBER# орындалды";
+$MESS["M_CRM_TL_PAYMENT_PAY_VIA_QR_FAST_MONEY_TRANSFER"] = "СБП QR-коды бойынша төлем";
+$MESS["M_CRM_TL_PAYMENT_PAY_VIA_QR_PAYMENT_LINK"] = "Сілтеме бойынша төлеу";
+$MESS["M_CRM_TL_PAYMENT_PAY_VIA_QR_SBERBANK"] = "Сбербанк QR-коды бойынша төлем";

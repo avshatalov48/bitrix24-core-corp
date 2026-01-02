@@ -1,4 +1,6 @@
 <?php
+$MESS["TASKS_CLUE_FLASH_COMMENT_COUNTER_TEXT"] = "Task counters will give you a hint about overdue tasks and new comments.";
+$MESS["TASKS_CLUE_FLASH_COMMENT_COUNTER_TITLE"] = "Task counters";
 $MESS["TASKS_CLUE_FLASH_COPILOT_ADVICE_TEXT"] = "Look at what the team excels at,<br>and at the things that need improvement.";
 $MESS["TASKS_CLUE_FLASH_COPILOT_ADVICE_TITLE"] = "CoPilot will come up with helpful hints";
 $MESS["TASKS_CLUE_FLASH_MY_TASKS_TEXT"] = "Remember to track their deadline and progress.";

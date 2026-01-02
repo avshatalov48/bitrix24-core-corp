@@ -4,7 +4,6 @@ $MESS["CRM_TOP_LINKS_ITEM_NAME"] = "CRM";
 $MESS["CRM_INSTALL_DESCRIPTION"] = "Модуль дает возможность создания CRM";
 $MESS["CRM_INSTALL_TITLE"] = "Установка модуля crm";
 $MESS["CRM_UNINSTALL_TITLE"] = "Удаление модуля crm";
-$MESS["CRM_PAGE_FUNNEL"] = "Воронка продаж";
 $MESS["CRM_GADGET_MY_LEAD_TITLE"] = "Мои лиды";
 $MESS["CRM_GADGET_NEW_LEAD_TITLE"] = "Новые лиды";
 $MESS["CRM_GADGET_CLOSED_DEAL_TITLE"] = "Завершенные сделки";

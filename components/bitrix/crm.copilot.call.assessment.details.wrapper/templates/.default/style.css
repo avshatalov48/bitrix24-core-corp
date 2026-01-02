@@ -16,9 +16,11 @@
 
 .ui-page-slider-wrapper.copilot-call-assessment-details .ui-side-panel-toolbar {
 	padding-left: 17px;
+	padding-right: 9px;
+	margin-bottom: 16px;
 }
 
-.ui-page-slider-wrapper.copilot-call-assessment-details .pagetitle {
+.ui-page-slider-wrapper.copilot-call-assessment-details .ui-toolbar-title-item-box {
 	padding-top: 16px;
 	padding-bottom: 0;
 	overflow: hidden;
@@ -26,24 +28,23 @@
 	line-height: 36px;
 }
 
-.ui-page-slider-wrapper.copilot-call-assessment-details .pagetitle-item {
+.template-air.ui-page-slider-wrapper.copilot-call-assessment-details .ui-toolbar-title-item-box {
+	padding-top: 0;
+}
+
+.ui-page-slider-wrapper.copilot-call-assessment-details .ui-toolbar-title-item {
 	white-space: nowrap;
 	text-overflow: ellipsis;
 	overflow: hidden;
 	display: inline-block;
 	color: var(--ui-color-palette-white-base);
+	padding-right: 0;
+	line-height: 36px;
+	height: 38px;
 }
 
 .copilot-call-assessment-pagetitle-description {
-	padding-bottom: 21px;
 	font-size: var(--ui-font-size-sm);
 	color: var(--ui-color-palette-white-base);
-}
-
-.copilot-call-assessment-pagetitle-description.--title-edit{
 	margin-top: -2px;
-}
-
-.ui-page-slider-wrapper.copilot-call-assessment-details .pagetitle-edit-button::before {
-	background-color: var(--ui-color-palette-white-base);
 }

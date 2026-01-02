@@ -21,4 +21,11 @@ final class Im extends Type
 	public const VALUE_TYPE_MSN = 'MSN';
 	public const VALUE_TYPE_JABBER = 'JABBER';
 	public const VALUE_TYPE_OTHER = 'OTHER';
+
+	public const DEPRECATED_MESSENGERS = [
+		self::VALUE_TYPE_MSN,
+		self::VALUE_TYPE_ICQ,
+		self::VALUE_TYPE_JABBER,
+		self::VALUE_TYPE_SKYPE,
+	];
 }

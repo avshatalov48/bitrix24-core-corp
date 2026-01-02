@@ -109,7 +109,8 @@ this.BX.Humanresources = this.BX.Humanresources || {};
 	            options: {
 	              '!userId': this.mappedUserIds,
 	              inviteEmployeeLink: false,
-	              intranetUsersOnly: true
+	              intranetUsersOnly: true,
+	              nameTemplate: '#LAST_NAME# #NAME# #SECOND_NAME#'
 	            }
 	          }],
 	          preselectedItems: [preselectedItem],
@@ -165,11 +166,19 @@ this.BX.Humanresources = this.BX.Humanresources || {};
 	            id: 'hcmlink-person-data',
 	            options: {
 	              companyId: this.config.companyId,
-	              inviteEmployeeLink: false
+	              inviteEmployeeLink: false,
+	              nameTemplate: '#LAST_NAME# #FIRST_NAME# #PATRONYMIC_NAME#'
 	            },
 	            dynamicLoad: true,
 	            dynamicSearch: true,
-	            enableSearch: true
+	            enableSearch: true,
+	            searchFields: [{
+	              name: 'snils'
+	            }, {
+	              name: 'subtitle',
+	              searchable: false,
+	              system: true
+	            }]
 	          }],
 	          preselectedItems: [preselectedItem],
 	          tabs: [{
@@ -230,6 +239,12 @@ this.BX.Humanresources = this.BX.Humanresources || {};
 	      });
 	    }
 	  },
+	  computed: {
+	    displayName() {
+	      var _this$item$fullName;
+	      return (_this$item$fullName = this.item.fullName) != null ? _this$item$fullName : this.item.name;
+	    }
+	  },
 	  template: `
 		<div 
 			class="hr-hcmlink-item-user__container"
@@ -238,8 +253,8 @@ this.BX.Humanresources = this.BX.Humanresources || {};
 		>
 			<div v-if="this.mode === 'direct'" class="hr-hcmlink-item-user__avatar" ref="avatarContainer"></div>
 			<div class="hr-hcmlink-item-user_info">
-				<div class="hr-hcmlink-item-user__info-name">{{ item.name }}</div>
-				<div class="hr-hcmlink-item-user__info-position">{{ item.position }}</div>
+				<div class="hr-hcmlink-item-user__info-name" :title="displayName">{{ displayName }}</div>
+				<div class="hr-hcmlink-item-user__info-position" :title="item.position">{{ item.position }}</div>
 			</div>
 		</div>
 	`
@@ -402,7 +417,8 @@ this.BX.Humanresources = this.BX.Humanresources || {};
 	  HR_DATA_MAPPER_FOOTER_DISPLAY: 'hr-data-mapper-footer-display',
 	  HR_DATA_MAPPER_FORCE_SYNC: 'hr-data-mapper-force-sync',
 	  HR_DATA_MAPPER_DATA_WAS_SAVED: 'hr-data-mapper-data-was-saved',
-	  HR_DATA_MAPPER_CLEAR_SEARCH_INPUT: 'hr-data-mapper-clear-search-input'
+	  HR_DATA_MAPPER_CLEAR_SEARCH_INPUT: 'hr-data-mapper-clear-search-input',
+	  HR_DATA_MAPPER_DONE: 'hr-data-mapper-done'
 	});
 	const Status = Object.freeze({
 	  done: 'done',
@@ -926,7 +942,7 @@ this.BX.Humanresources = this.BX.Humanresources || {};
 	  },
 	  emits: ['search'],
 	  props: {
-	    isMappingReady: {
+	    showCounters: {
 	      required: true,
 	      type: Boolean
 	    },
@@ -976,7 +992,7 @@ this.BX.Humanresources = this.BX.Humanresources || {};
 				</div>
 			</div>
 			<div class="hr-hcmlink-sync__search-container">
-				<div v-if="isMappingReady"
+				<div v-if="showCounters"
 					class="hr-hcmlink-sync__toolbar-bubble hr-hcmlink-sync__toolbar-bubble-right"
 					:class="[isDone ? '--done' : '--not-done']"
 				>
@@ -989,7 +1005,7 @@ this.BX.Humanresources = this.BX.Humanresources || {};
 				</div>
 			</div>
 		</div>
-		<div v-if="isMappingReady" class="hr-hcmlink-sync__toolbar-row hr-hcmlink-sync__toolbar-row-counter">
+		<div v-if="showCounters" class="hr-hcmlink-sync__toolbar-row hr-hcmlink-sync__toolbar-row-counter">
 			<Counter
 				:countAllPersonsForMap=countAllPersonsForMap
 				:countMappedPersons=countMappedPersons
@@ -1088,6 +1104,7 @@ this.BX.Humanresources = this.BX.Humanresources || {};
 	    isMappingDone(value) {
 	      if (value) {
 	        this.footerDisplay(false);
+	        this.$Bitrix.eventEmitter.emit(EventList.HR_DATA_MAPPER_DONE);
 	      }
 	    },
 	    isSearchEmpty(value) {
@@ -1179,6 +1196,7 @@ this.BX.Humanresources = this.BX.Humanresources || {};
 	      this.searchName = null;
 	      this.footerDisplay(false);
 	      this.isJobResolved = false;
+	      this.isDone = false;
 	      await this.api.cancelJob({
 	        jobId: this.jobId,
 	        companyId: this.companyId
@@ -1253,7 +1271,7 @@ this.BX.Humanresources = this.BX.Humanresources || {};
 	  template: `
 		<Teleport v-if="isReadyToolbar" :to="toolbarContainer">
 			<Toolbar
-				:isMappingReady="isMappingReady"
+				:showCounters="isJobResolved"
 				:countAllPersonsForMap=countAllPersonsForMap
 				:countMappedPersons=countMappedPersons
 				:countUnmappedPersons=countUnmappedPersons
@@ -1292,13 +1310,16 @@ this.BX.Humanresources = this.BX.Humanresources || {};
 	`
 	};
 
-	var _container = /*#__PURE__*/babelHelpers.classPrivateFieldLooseKey("container");
-	var _application = /*#__PURE__*/babelHelpers.classPrivateFieldLooseKey("application");
+	const closeOnDoneDelay = 1000;
+
 	/**
 	 * An entry point of data-mapper
 	 */
-	class Mapper {
+	var _container = /*#__PURE__*/babelHelpers.classPrivateFieldLooseKey("container");
+	var _application = /*#__PURE__*/babelHelpers.classPrivateFieldLooseKey("application");
+	class Mapper extends main_core_events.EventEmitter {
 	  constructor(options) {
+	    super();
 	    Object.defineProperty(this, _container, {
 	      writable: true,
 	      value: void 0
@@ -1307,6 +1328,7 @@ this.BX.Humanresources = this.BX.Humanresources || {};
 	      writable: true,
 	      value: null
 	    });
+	    this.setEventNamespace('Humanresources.HcmLink.DataMapper.Mapper');
 	    this.api = new humanresources_hcmlink_api.Api();
 	    this.options = options;
 	    this.footerDisplayPointer = this.footerDisplay.bind(this); // for correct sub/unsub
@@ -1332,7 +1354,15 @@ this.BX.Humanresources = this.BX.Humanresources || {};
 	          sliderOptions == null ? void 0 : sliderOptions.onCloseHandler();
 	          closure.unmount();
 	        },
-	        onLoad: () => {
+	        onLoad: event => {
+	          if (options.mode === 'direct' && event.slider && closure) {
+	            closure.subscribe(EventList.HR_DATA_MAPPER_DONE, () => {
+	              setTimeout(() => {
+	                var _event$slider;
+	                return event == null ? void 0 : (_event$slider = event.slider) == null ? void 0 : _event$slider.close();
+	              }, closeOnDoneDelay);
+	            });
+	          }
 	          // Here we need to get rid of title to replace the entire toolbar with our own markup
 	          // Why we just don't pass the title at all? If we don't pass it, then toolbar will not render too
 	          main_core.Dom.remove(closure.layout.getContainer().querySelector('.ui-sidepanel-layout-title'));
@@ -1358,6 +1388,9 @@ this.BX.Humanresources = this.BX.Humanresources || {};
 	      main_core_events.EventEmitter.subscribe(EventList.HR_DATA_MAPPER_FOOTER_DISPLAY, this.footerDisplayPointer);
 	      main_core.Dom.style(babelHelpers.classPrivateFieldLooseBase(this, _container)[_container], 'height', '100%');
 	      this.component = babelHelpers.classPrivateFieldLooseBase(this, _application)[_application].mount(babelHelpers.classPrivateFieldLooseBase(this, _container)[_container]);
+	      this.component.$Bitrix.eventEmitter.subscribe(EventList.HR_DATA_MAPPER_DONE, () => {
+	        this.emit(EventList.HR_DATA_MAPPER_DONE);
+	      });
 	    }
 	    return babelHelpers.classPrivateFieldLooseBase(this, _container)[_container];
 	  }

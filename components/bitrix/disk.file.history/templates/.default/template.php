@@ -26,6 +26,7 @@ CJSCore::Init([
 	'ui.buttons',
 	'disk.viewer.document-item',
 	'disk.viewer.board-item',
+	'disk.viewer.actions',
 ]);
 ?>
 

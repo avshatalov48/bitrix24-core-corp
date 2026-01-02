@@ -48,7 +48,7 @@ if ($hideFilter != 'Y')
 	);
 }
 
-$isBitrix24Template = SITE_TEMPLATE_ID === "bitrix24";
+$isBitrix24Template = SITE_TEMPLATE_ID === "bitrix24" || SITE_TEMPLATE_ID === 'air';
 
 $templateAddUrl = CComponentEngine::MakePathFromTemplate(
 	$arParams["PATH_TO_USER_TASKS_TEMPLATE"],

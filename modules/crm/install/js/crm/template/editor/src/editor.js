@@ -1,6 +1,6 @@
 import { Dialog } from 'crm.entity-selector';
 import { ajax as Ajax, Dom, Event, Loc, Runtime, Tag, Text, Type } from 'main.core';
-import { BaseEvent } from 'main.core.events';
+import { BaseEvent, EventEmitter } from 'main.core.events';
 import { Menu, Popup } from 'main.popup';
 
 import 'ui.design-tokens';
@@ -390,6 +390,8 @@ export class Editor
 			);
 			this.#isUsePreviewRequestRunning = false;
 		});
+
+		EventEmitter.emit('BX.Crm.Template.Editor:shown');
 	}
 
 	#getInputContainer(input: string, position: string): ?HTMLElement

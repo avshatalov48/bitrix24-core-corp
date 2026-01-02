@@ -108,6 +108,7 @@ jn.define('sign/master/steps/fields-input-step/fields-layout', (require, exports
 										size: InputSize.L,
 										design: InputDesign.GREY,
 										mode: InputMode.STROKE,
+										testId: `stringInput-${field.uid}-field`,
 										style: {
 											marginTop: 10,
 										},
@@ -135,6 +136,7 @@ jn.define('sign/master/steps/fields-input-step/fields-layout', (require, exports
 										mode: InputMode.STROKE,
 										onContentClick: useCallback(() => this.#onFocus(field.uid), [field.uid]),
 										onChange: useCallback((value) => this.#onChange(value, field.uid), [field.uid]),
+										testId: `selectInput-${field.uid}-field`,
 										erase: false,
 										withFocused: true,
 										config: {
@@ -179,6 +181,7 @@ jn.define('sign/master/steps/fields-input-step/fields-layout', (require, exports
 										checkTimezoneOffset: false,
 										onContentClick: useCallback(() => this.#onFocus(field.uid), [field.uid]),
 										onChange: useCallback((value) => this.#onChange(value, field.uid), [field.uid]),
+										testId: `dateTimeInput-${field.uid}-field`,
 										style: {
 											marginTop: 10,
 										},
@@ -229,6 +232,7 @@ jn.define('sign/master/steps/fields-input-step/fields-layout', (require, exports
 					onClick: this.#closeKeyboard,
 					design: CardDesign.PRIMARY,
 					border: true,
+					testId: `fieldsLayout-card`,
 					excludePaddingSide: {
 						left: true,
 						bottom: true,
@@ -271,6 +275,7 @@ jn.define('sign/master/steps/fields-input-step/fields-layout', (require, exports
 								),
 							hideCross: true,
 							design: CardDesign.PRIMARY,
+							testId: `documentInfo-cardBanner`,
 						},
 					),
 				),

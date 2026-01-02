@@ -22,7 +22,6 @@ export const Description = {
 				:message="description"
 				:code="helpDesk.code"
 				:anchor="helpDesk.anchorCode"
-				class="resource-creation-wizard__form-notification-text"
 			/>
 		</ResourceNotificationTextRow>
 	`,

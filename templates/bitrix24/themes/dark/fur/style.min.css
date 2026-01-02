@@ -1,2 +1,1 @@
-body {
-	background: #F9F6F1 url(fur.jpg) fixed 0 0 no-repeat; background-size:cover}
+:root{--air-theme-bg-color:#f9f6f1;--air-theme-bg-size:cover;--air-theme-bg-repeat:no-repeat;--air-theme-bg-position:0 0;--air-theme-bg-attachment:fixed;--air-theme-bg-image:url(/bitrix/templates/bitrix24/themes/dark/fur/fur.jpg);--air-theme-bg-image-blurred:url(/bitrix/templates/bitrix24/themes/dark/fur/fur-blurred.webp)}

@@ -1,5 +1,3 @@
-import { mapGetters } from 'ui.vue3.vuex';
-import { Model } from 'booking.const';
 import type { PopupOptions } from 'main.popup';
 import { BIcon as Icon, Set as IconSet } from 'ui.icon-set.api.vue';
 import 'ui.icon-set.main';
@@ -10,7 +8,16 @@ import { Button, ButtonColor, ButtonSize } from 'booking.component.button';
 import './promo-banner.css';
 
 export const PromoBanner = {
-	emits: ['setShown', 'close'],
+	emits: ['setShown', 'close', 'buttonClick'],
+	props: {
+		canTurnOnDemo: {
+			type: Boolean,
+			default: false,
+		},
+		type: {
+			type: String,
+		},
+	},
 	data(): Object
 	{
 		return {
@@ -21,9 +28,6 @@ export const PromoBanner = {
 		};
 	},
 	computed: {
-		...mapGetters({
-			canTurnOnDemo: `${Model.Interface}/canTurnOnDemo`,
-		}),
 		popupId(): string
 		{
 			return 'booking-promo-banner-popup';
@@ -43,8 +47,34 @@ export const PromoBanner = {
 		{
 			return '/bitrix/js/booking/component/promo-banner/videos/booking.webm';
 		},
+		title(): string
+		{
+			if (this.type === 'crm')
+			{
+				return this.loc('BOOKING_PROMO_BANNER_TITLE_CRM');
+			}
+
+			return this.loc('BOOKING_PROMO_BANNER_TITLE');
+		},
+		intro(): string
+		{
+			if (this.type === 'crm')
+			{
+				return this.loc('BOOKING_PROMO_BANNER_SUBTITLE_CRM');
+			}
+
+			return this.loc('BOOKING_PROMO_BANNER_SUBTITLE');
+		},
 		listItems(): string[]
 		{
+			if (this.type === 'crm')
+			{
+				return [
+					this.loc('BOOKING_PROMO_BANNER_ITEM_1_CRM'),
+					this.loc('BOOKING_PROMO_BANNER_ITEM_2_CRM'),
+				];
+			}
+
 			return [
 				this.loc('BOOKING_PROMO_BANNER_ITEM_1'),
 				this.loc('BOOKING_PROMO_BANNER_ITEM_2'),
@@ -53,21 +83,27 @@ export const PromoBanner = {
 				this.loc('BOOKING_PROMO_BANNER_ITEM_5'),
 			];
 		},
+		callText(): string
+		{
+			if (this.type === 'crm')
+			{
+				return this.loc('BOOKING_PROMO_BANNER_CALL_TEXT_CRM');
+			}
+
+			return null;
+		},
 		startBtnText(): string
 		{
+			if (this.type === 'crm')
+			{
+				return this.loc('BOOKING_PROMO_BANNER_BUTTON_START_CRM');
+			}
+
 			return (
 				this.canTurnOnDemo
 					? this.loc('BOOKING_PROMO_BANNER_BUTTON_START_DEMO').replace('#days#', 15)
 					: this.loc('BOOKING_PROMO_BANNER_BUTTON_START')
 			);
-		},
-		buttonClickHandler(): Function
-		{
-			return this.canTurnOnDemo ? this.activateDemo : this.close;
-		},
-		iconClickHandler(): Function
-		{
-			return this.canTurnOnDemo ? this.closeDemo : this.close;
 		},
 	},
 	methods: {
@@ -92,6 +128,16 @@ export const PromoBanner = {
 		{
 			this.$emit('close');
 		},
+		buttonClickHandler(): Function
+		{
+			this.$emit('buttonClick');
+
+			return this.canTurnOnDemo ? this.activateDemo() : this.close();
+		},
+		iconClickHandler(): Function
+		{
+			return this.canTurnOnDemo ? this.closeDemo() : this.close();
+		},
 	},
 	components: {
 		Popup,
@@ -106,19 +152,21 @@ export const PromoBanner = {
 		>
 			<div class="booking-promo-banner-popup">
 				<div class="booking-promo-banner-popup-title">
-					{{ loc('BOOKING_PROMO_BANNER_TITLE') }}
+					{{ title }}
 				</div>
 				<div class="booking-promo-banner-popup-body">
 					<div class="booking-promo-banner-popup-info">
-						<div class="booking-promo-banner-popup-subtitle">
-							{{ loc('BOOKING_PROMO_BANNER_SUBTITLE') }}
+						<div class="booking-promo-banner-popup-subtitle" v-html="intro">
 						</div>
 						<template v-for="(item, index) of listItems" :key="index">
 							<div class="booking-promo-banner-popup-item">
 								<Icon :name="IconSet.CIRCLE_CHECK"/>
-								<span>{{ item }}</span>
+								<span v-html="item"></span>
 							</div>
 						</template>
+						<div class="booking-promo-banner-popup-item --without-bullet" :if="callText" style="margin-top: 20px;">
+							<span>{{ callText }}</span>
+						</div>
 					</div>
 					<div class="booking-promo-banner-popup-video-container">
 						<video

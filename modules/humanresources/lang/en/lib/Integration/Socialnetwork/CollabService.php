@@ -1,0 +1,4 @@
+<?php
+$MESS["HUMANRESOURCES_COLLAB_SERVICE_COLLAB_SUBTITLE"] = "Collab";
+$MESS["HUMANRESOURCES_COLLAB_SERVICE_NAME_SEPARATOR"] = "#COLLAB_NAME# #";
+$MESS["HUMANRESOURCES_COLLAB_SERVICE_NOT_AVAILABLE_MSGVER_1"] = "The <b>Social network</b> module is not installed. Please contact your Bitrix24 administrator.";

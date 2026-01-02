@@ -1,3 +1,4 @@
+/* eslint-disable */
 this.BX = this.BX || {};
 this.BX.Tasks = this.BX.Tasks || {};
 (function (exports,main_core,pull_client,main_core_events) {
@@ -113,6 +114,9 @@ this.BX.Tasks = this.BX.Tasks || {};
 	      _this.onApplyFilter(filterId, values, filterInstance, promise, params);
 	    });
 	    main_core_events.EventEmitter.subscribe('onTasksGroupSelectorChange', this.onChangeSprint.bind(this));
+	    main_core_events.EventEmitter.subscribe('tasks-kanban-settings-fields-view', function () {
+	      return _this.kanban.showFieldsSelectPopup();
+	    });
 	    pull_client.PULL.subscribe(this.pullItem);
 	  }
 	  babelHelpers.createClass(KanbanManager, [{
@@ -323,7 +327,8 @@ this.BX.Tasks = this.BX.Tasks || {};
 	            canAddItem: this.isActiveSprint,
 	            canSortItem: this.isActiveSprint
 	          },
-	          admins: params.admins
+	          admins: params.admins,
+	          customSectionsFields: params.customSectionsFields ? params.customSectionsFields : {}
 	        },
 	        messages: {
 	          ITEM_TITLE_PLACEHOLDER: main_core.Loc.getMessage('KANBAN_ITEM_TITLE_PLACEHOLDER'),

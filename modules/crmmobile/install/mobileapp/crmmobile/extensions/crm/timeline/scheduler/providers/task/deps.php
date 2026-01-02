@@ -10,9 +10,8 @@ return [
 		'assets/icons',
 		'statemanager/redux/store',
 		'tariff-plan-restriction',
+		'tasks:entry',
 		'tasks:enum',
-		'tasks:layout/task/create',
-		'tasks:layout/task/create/opener',
 		'utils/object',
 	],
 ];

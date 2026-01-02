@@ -7,12 +7,9 @@ use Bitrix\Intranet\Entity\Collection\InvitationCollection;
 use Bitrix\Intranet\Entity\User;
 use Bitrix\Intranet\Enum\InvitationType;
 use Bitrix\Intranet\Exception\CreationFailedException;
-use Bitrix\Intranet\Invitation\Register;
 use Bitrix\Main\Error;
 use Bitrix\Main\ErrorCollection;
 use Bitrix\Main\Event;
-use Bitrix\Main\Localization\Loc;
-use Bitrix\Main\Result;
 use Bitrix\Main\Security\Random;
 
 class RegistrationService
@@ -21,7 +18,7 @@ class RegistrationService
 	{
 		$siteIdByDepartmentId = \CIntranetInviteDialog::getUserSiteId([
 			"UF_DEPARTMENT" => $user->getDepartmetnsIds() ? $user->getDepartmetnsIds()[0] : "",
-			"SITE_ID" => SITE_ID
+			"SITE_ID" => SITE_ID,
 		]);
 		$groupsIds = \CIntranetInviteDialog::getUserGroups($siteIdByDepartmentId, $user->isExtranet());
 		$user->setConfirmCode(Random::getString(8, true));
@@ -37,7 +34,7 @@ class RegistrationService
 			'LAST_NAME' => $user->getLastName() ?? null,
 			'GROUP_ID' => $user->getGroupIds(),
 			'LID' => $siteIdByDepartmentId,
-			'UF_DEPARTMENT' => empty($user->getDepartmetnsIds()) ? [] : $user->getDepartmetnsIds(),
+			'UF_DEPARTMENT' => $user->getDepartmetnsIds(),
 			'LANGUAGE_ID' => ($site = \CSite::GetArrayByID($siteIdByDepartmentId)) ? $site['LANGUAGE_ID'] : LANGUAGE_ID,
 		];
 
@@ -57,7 +54,7 @@ class RegistrationService
 			$userData['XML_ID'] = $user->getXmlId();
 		}
 
-		$oldUserApi = new \CUser;
+		$oldUserApi = new \CUser();
 		$result = $oldUserApi->Add($userData);
 		$errorCollection = new ErrorCollection();
 		if ($result === false)
@@ -75,7 +72,7 @@ class RegistrationService
 		$user->setId((int)$result);
 		foreach (GetModuleEvents('intranet', 'OnRegisterUser', true) as $event)
 		{
-			ExecuteModuleEventEx($event, [ $userFields ]);
+			ExecuteModuleEventEx($event, [$userFields]);
 		}
 
 		return $user;
@@ -93,8 +90,8 @@ class RegistrationService
 				'onAfterUserRegistration',
 				[
 					'user' => $user,
-					'invitation' => $invitation
-				]
+					'invitation' => $invitation,
+				],
 			))
 				->send()
 			;
@@ -119,8 +116,8 @@ class RegistrationService
 				[
 					'originatorId' => $invitation->getOriginatorId(),
 					'userId' => [$invitation->getUserId()],
-					'type' => $type->value
-				]
+					'type' => $type->value,
+				],
 			);
 			$event->send();
 		}
@@ -148,8 +145,8 @@ class RegistrationService
 				[
 					'originatorId' => CurrentUser::get()->getId(),
 					'userId' => $processedUserIdList,
-					'type' => $type->value
-				]
+					'type' => $type->value,
+				],
 			);
 			$event->send();
 		}

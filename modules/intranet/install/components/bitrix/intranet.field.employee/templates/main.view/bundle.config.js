@@ -5,4 +5,5 @@ module.exports = {
 	},
 	namespace: 'BX.Mobile.Field.SelectUser',
 	//adjustConfigPhp: false,
+	browserslist: true,
 };

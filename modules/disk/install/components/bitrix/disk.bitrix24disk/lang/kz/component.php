@@ -1,7 +1,9 @@
 <?php
 $MESS["DISK_BDISK_FILE_CONFLICT_BETWEEN_VERSIONS"] = "Өкінішті, \"#FILE#\" құжат өзгерістерін біріктіру мүмкін болмады. Енді сізде файлдың екі көшірмесі бар (#FILE# және #FORKED_FILE#). Сіз оларды қолмен біріктіре аласыз немесе жаңартылған нұсқасқалардың бірін қалдыра аласыз. <br><br> #A#Толығырақ#A_END#";
+$MESS["DISK_BDISK_FILE_CONFLICT_BETWEEN_VERSIONS_HELPDESK"] = "https://helpdesk.bitrix24.ru/open/6257157/";
 $MESS["DISK_BDISK_FILE_CONFLICT_BETWEEN_VERSIONS_TITLE"] = "Файлдың екі нұсқасы";
 $MESS["DISK_BDISK_FILE_CONFLICT_LOCKED_BY_APP"] = "Компьютердегі файлды (#FILE#) жаңарту мүмкін болмады, себебі ол \"#PROGRAM#\" бағдарламасымен бұғатталған. Кейінірек қайталап көріңіз немесе бағдарламаны аяқтап, іске қосып көріңіз \"#PROGRAM#\" қайтадан. <br><br> #A#Толығырақ#A_END#";
+$MESS["DISK_BDISK_FILE_CONFLICT_LOCKED_BY_APP_HELPDESK"] = "https://helpdesk.bitrix24.ru/open/6257157/";
 $MESS["DISK_BDISK_FILE_CONFLICT_LOCKED_BY_APP_TITLE"] = "Файл бұғатталған";
 $MESS["DISK_BDISK_FILE_ERROR_SIZE_RESTRICTION"] = "Файлды сақтау мүмкін болмады, себебі рұқсат етілген шектен асып кетті.";
 $MESS["DISK_BDISK_STORAGE_CONTROLLER_DOCUMENT_WAS_LOCKED"] = "Редакциялау кезінде құжат бұғатталды. Сіз енгізген барлық өзгерістер жаңа құжатта, дискіде, Сақталғандар бумасында сақталады.";

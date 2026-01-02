@@ -34,6 +34,7 @@ use Bitrix\Crm\Settings\HistorySettings;
 use Bitrix\Crm\Tracking;
 use Bitrix\Crm\WebForm\Manager as WebFormManager;
 use Bitrix\Main;
+use Bitrix\Main\Config\Option;
 use Bitrix\Main\Localization\Loc;
 
 $isErrorOccurred = false;
@@ -85,8 +86,9 @@ if (!$isErrorOccurred && !CModule::IncludeModule('sale'))
 }
 
 
-$userPermissions = CCrmPerms::GetCurrentUserPermissions();
-if (!$isErrorOccurred && !CCrmLead::CheckReadPermission(0, $userPermissions))
+$userPermissionsService = \Bitrix\Crm\Service\Container::getInstance()->getUserPermissions();
+
+if (!$isErrorOccurred && !$userPermissionsService->entityType()->canReadItems(CCrmOwnerType::Lead))
 {
 	$errorMessage = GetMessage('CRM_PERMISSION_DENIED');
 	$isErrorOccurred = true;
@@ -125,7 +127,7 @@ $arResult['STEXPORT_TOTAL_ITEMS'] = isset($arParams['STEXPORT_TOTAL_ITEMS']) ?
 	(int)$arParams['STEXPORT_TOTAL_ITEMS'] : 0;
 //endregion
 
-if (!$isErrorOccurred && $isInExportMode && $userPermissions->HavePerm('LEAD', BX_CRM_PERM_NONE, 'EXPORT'))
+if (!$isErrorOccurred && $isInExportMode && !$userPermissionsService->entityType()->canExportItems(CCrmOwnerType::Lead))
 {
 	$errorMessage = GetMessage('CRM_PERMISSION_DENIED');
 	$isErrorOccurred = true;
@@ -154,8 +156,8 @@ $fieldRestrictionManager = new FieldRestrictionManager(
 	CCrmOwnerType::Lead
 );
 
-$userID = CCrmSecurityHelper::GetCurrentUserID();
-$isAdmin = CCrmPerms::IsAdmin();
+$userID = \Bitrix\Crm\Service\Container::getInstance()->getContext()->getUserId();
+$isAdmin = $userPermissionsService->isAdmin();
 
 $currentPage = $APPLICATION->GetCurPage();
 
@@ -429,9 +431,9 @@ $arResult['BOOLEAN_VALUES_LIST'] = array(
 $arResult['FILTER'] = array();
 $arResult['FILTER2LOGIC'] = array();
 $arResult['FILTER_PRESETS'] = array();
-$arResult['PERMS']['ADD'] = !$userPermissions->HavePerm('LEAD', BX_CRM_PERM_NONE, 'ADD');
-$arResult['PERMS']['WRITE'] = !$userPermissions->HavePerm('LEAD', BX_CRM_PERM_NONE, 'WRITE');
-$arResult['PERMS']['DELETE'] = !$userPermissions->HavePerm('LEAD', BX_CRM_PERM_NONE, 'DELETE');
+$arResult['PERMS']['ADD'] = $userPermissionsService->entityType()->canAddItems(CCrmOwnerType::Lead);
+$arResult['PERMS']['WRITE'] = $userPermissionsService->entityType()->canUpdateItems(CCrmOwnerType::Lead);
+$arResult['PERMS']['DELETE'] = $userPermissionsService->entityType()->canDeleteItems(CCrmOwnerType::Lead);
 
 [$callListId, $callListContext] = \CCrmViewHelper::getCallListIdAndContextFromRequest();
 $arResult['CALL_LIST_ID'] = $callListId;
@@ -443,15 +445,17 @@ if (\CCrmViewHelper::isCallListUpdateMode(\CCrmOwnerType::Lead))
 	AddEventHandler('crm', 'onCrmLeadListItemBuildMenu', array('\Bitrix\Crm\CallList\CallList', 'handleOnCrmLeadListItemBuildMenu'));
 }
 
-CCrmLead::PrepareConversionPermissionFlags(0, $arResult, $userPermissions);
+CCrmLead::PrepareConversionPermissionFlags(0, $arResult);
 
 $arResult['~STATUS_LIST_WRITE']= CCrmStatus::GetStatusList('STATUS');
 $arResult['STATUS_LIST_WRITE'] = array();
 unset($arResult['~STATUS_LIST_WRITE']['CONVERTED'], $arResult['~STATUS_LIST_EX']['CONVERTED']);
 foreach ($arResult['~STATUS_LIST_WRITE'] as $sStatusId => $sStatusTitle)
 {
-	if ($userPermissions->GetPermType('LEAD', 'WRITE', array('STATUS_ID'.$sStatusId)) > BX_CRM_PERM_NONE)
+	if ($userPermissionsService->stage()->canUpdateInStage(CCrmOwnerType::Lead, null, $sStatusId))
+	{
 		$arResult['STATUS_LIST_WRITE'][$sStatusId] = $sStatusTitle;
+	}
 }
 
 //region Filter Presets Initialization
@@ -720,7 +724,10 @@ $arResult['HEADERS'] = array_merge($arResult['HEADERS'], array(
 	array('id' => 'PRODUCT_ID', 'name' => GetMessage('CRM_COLUMN_PRODUCT_ID'), 'sort' => false, 'default' => $isInExportMode, 'editable' => false, 'type' => 'list'),
 	array('id' => 'WEBFORM_ID', 'name' => GetMessage('CRM_COLUMN_WEBFORM'), 'sort' => 'webform_id', 'default' => false, 'type' => 'list'),
 	array('id' => 'IS_RETURN_CUSTOMER', 'name' => GetMessage('CRM_COLUMN_IS_RETURN_CUSTOMER1'), 'sort' => 'is_return_customer', 'default' => false, 'type' => 'list'),
-	array('id' => 'LEAD_CLIENT', 'name' => GetMessage('CRM_COLUMN_CLIENT'), 'sort' => 'lead_client', 'default' => false, 'editable' => false)
+	array('id' => 'LEAD_CLIENT', 'name' => GetMessage('CRM_COLUMN_CLIENT'), 'sort' => 'lead_client', 'default' => false, 'editable' => false),
+	array('id' => 'MOVED_BY', 'name' => Loc::getMessage('CRM_COLUMN_MOVED_BY'), 'sort' => 'moved_by', 'editable' => false, 'class' => 'username'),
+	// array('id' => 'MOVED_TIME', 'name' => Loc::getMessage('CRM_COLUMN_MOVED_TIME'), 'sort' => 'moved_time', 'editable' => false, 'class' => 'date'),
+	array('id' => 'MOVED_TIME', 'name' => GetMessage('CRM_COLUMN_MOVED_TIME'), 'sort' => 'date_modify', 'first_order' => 'desc', 'default' => false, 'class' => 'date'),
 ));
 
 Tracking\UI\Grid::appendColumns($arResult['HEADERS']);
@@ -752,7 +759,10 @@ if (
 	$arResult['HEADERS'][] = ['id' => Crm\Item::FIELD_NAME_LAST_ACTIVITY_TIME, 'name' => $factory->getFieldCaption(Crm\Item::FIELD_NAME_LAST_ACTIVITY_TIME), 'sort' => mb_strtolower(Crm\Item::FIELD_NAME_LAST_ACTIVITY_TIME), 'first_order' => 'desc', 'class' => 'datetime'];
 }
 
+(new Crm\Filter\Field\LastCommunicationField())->addLastCommunicationGridHeader($arResult['HEADERS']);
+
 $observersDataProvider = new \Bitrix\Crm\Component\EntityList\UserDataProvider\Observers(CCrmOwnerType::Lead);
+$userDataProvider = new \Bitrix\Crm\Component\EntityList\UserDataProvider\RelatedUsers(CCrmOwnerType::Lead);
 
 $arResult['HEADERS_SECTIONS'] = \Bitrix\Crm\Filter\HeaderSections::getInstance()
 	->sections($factory);
@@ -1033,12 +1043,11 @@ if($actionData['ACTIVE'])
 		if ($actionData['NAME'] == 'delete' && isset($actionData['ID']))
 		{
 			$ID = intval($actionData['ID']);
-			$arEntityAttr = $userPermissions->GetEntityAttr('LEAD', array($ID));
-			if(CCrmAuthorizationHelper::CheckDeletePermission(CCrmOwnerType::LeadName, $ID, $userPermissions, $arEntityAttr))
+			if ($userPermissionsService->item()->canDelete(CCrmOwnerType::Lead, $ID))
 			{
 				$DB->StartTransaction();
 
-				if($CCrmBizProc->Delete($ID, $arEntityAttr)
+				if($CCrmBizProc->Delete($ID)
 					&& $CCrmLead->Delete($ID, array('CHECK_DEPENDENCIES' => true, 'PROCESS_BIZPROC' => false)))
 				{
 					$DB->Commit();
@@ -1059,12 +1068,7 @@ if($actionData['ACTIVE'])
 
 				try
 				{
-					\Bitrix\Crm\Exclusion\Manager::excludeEntity(
-						\CCrmOwnerType::Lead,
-						$ID,
-						true,
-						['PERMISSIONS' => $userPermissions],
-					);
+					\Bitrix\Crm\Exclusion\Manager::excludeEntity(\CCrmOwnerType::Lead, $ID);
 
 					$isSuccess = true;
 				}
@@ -1228,6 +1232,14 @@ else
 			$arSelectMap['MODIFY_BY_NAME'] =
 			$arSelectMap['MODIFY_BY_LAST_NAME'] =
 			$arSelectMap['MODIFY_BY_SECOND_NAME'] = true;
+	}
+
+	if(isset($arSelectMap['MOVED_BY']))
+	{
+		$arSelectMap['MOVED_BY_LOGIN'] =
+		$arSelectMap['MOVED_BY_NAME'] =
+		$arSelectMap['MOVED_BY_LAST_NAME'] =
+		$arSelectMap['MOVED_BY_SECOND_NAME'] = true;
 	}
 
 	// Always need to remove the menu items
@@ -1419,6 +1431,7 @@ if (in_array('ACTIVITY_ID', $arSelect, true)) // Remove ACTIVITY_ID from $arSele
 }
 
 $observersDataProvider->prepareSelect($arSelect);
+$userDataProvider->prepareSelect($arSelect);
 
 // For calendar view
 if (isset($arParams['CALENDAR_MODE_LIST']) && !in_array('DATE_CREATE', $arSelect))
@@ -1805,7 +1818,7 @@ $arResult['PAGINATION']['URL'] = $APPLICATION->GetCurPageParam('', array('apply_
 $enableExportEvent = $isInExportMode && HistorySettings::getCurrent()->isExportEventEnabled();
 
 $now = time() + CTimeZone::GetOffset();
-$entityAttrs = CCrmLead::GetPermissionAttributes(array_keys($arResult['LEAD']));
+$userPermissionsService->item()->preloadPermissionAttributes(CCrmOwnerType::Lead, array_keys($arResult['LEAD']));
 
 // check adding to exclusion list
 $arResult['CAN_EXCLUDE'] = \Bitrix\Crm\Exclusion\Access::current()->canWrite();
@@ -1839,6 +1852,7 @@ if ($arResult['ENABLE_BIZPROC'] && !empty($arResult['LEAD']))
 }
 
 $observersDataProvider->appendResult($arResult['LEAD']);
+$userDataProvider->appendResult($arResult['LEAD']);
 
 $parentFieldValues = Crm\Service\Container::getInstance()->getParentFieldManager()->loadParentElementsByChildren(
 	\CCrmOwnerType::Lead,
@@ -1875,17 +1889,8 @@ foreach($arResult['LEAD'] as &$arLead)
 	}
 	else
 	{
-		$arLead['EDIT'] = CCrmLead::CheckUpdatePermission(
-			$entityID,
-			$userPermissions,
-			array('ENTITY_ATTRS' => $entityAttrs)
-		);
-
-		$arLead['DELETE'] = CCrmLead::CheckDeletePermission(
-			$entityID,
-			$userPermissions,
-			array('ENTITY_ATTRS' => $entityAttrs)
-		);
+		$arLead['EDIT'] = $userPermissionsService->item()->canUpdate(CCrmOwnerType::Lead, $entityID);
+		$arLead['DELETE'] = $userPermissionsService->item()->canDelete(CCrmOwnerType::Lead, $entityID);;
 	}
 
 	$arLead['PATH_TO_LEAD_DETAILS'] = CComponentEngine::MakePathFromTemplate(
@@ -1983,6 +1988,11 @@ foreach($arResult['LEAD'] as &$arLead)
 		array('user_id' => $arLead['MODIFY_BY'] ?? null)
 	);
 
+	$arLead['PATH_TO_USER_MOVED'] = CComponentEngine::MakePathFromTemplate(
+		$arParams['PATH_TO_USER_PROFILE'] ?? '',
+		['user_id' => $arLead['MOVED_BY'] ?? null]
+	);
+
 	$arLead['~CREATED_BY_FORMATTED_NAME'] = CUser::FormatName(
 		$arParams['NAME_TEMPLATE'],
 		array(
@@ -2044,7 +2054,7 @@ foreach($arResult['LEAD'] as &$arLead)
 			'ENTITY_ID' => $contactID
 		);
 
-		if(!CCrmContact::CheckReadPermission($contactID, $userPermissions))
+		if (!$userPermissionsService->item()->canRead(CCrmOwnerType::Contact, $contactID))
 		{
 			$arLead['CONTACT_INFO']['IS_HIDDEN'] = true;
 		}
@@ -2070,7 +2080,7 @@ foreach($arResult['LEAD'] as &$arLead)
 			'ENTITY_ID' => $companyID
 		);
 
-		if(!CCrmCompany::CheckReadPermission($companyID, $userPermissions))
+		if (!$userPermissionsService->item()->canRead(CCrmOwnerType::Company, $companyID))
 		{
 			$arLead['COMPANY_INFO']['IS_HIDDEN'] = true;
 		}
@@ -2321,13 +2331,17 @@ if (isset($arResult['LEAD_ID']) && !empty($arResult['LEAD_ID']))
 	}
 
 	// checking access for operation
-	$arLeadAttr = CCrmPerms::GetEntityAttr('LEAD', $arResult['LEAD_ID']);
+	$userPermissionsService->item()->preloadPermissionAttributes(CCrmOwnerType::Lead, $arResult['LEAD_ID']);
 	foreach ($arResult['LEAD_ID'] as $iLeadId)
 	{
 		if ($arResult['LEAD'][$iLeadId]['EDIT'])
-			$arResult['LEAD'][$iLeadId]['EDIT'] = $userPermissions->CheckEnityAccess('LEAD', 'WRITE', $arLeadAttr[$iLeadId]);
+		{
+			$arResult['LEAD'][$iLeadId]['EDIT'] = $userPermissionsService->item()->canUpdate(CCrmOwnerType::Lead, $iLeadId);
+		}
 		if ($arResult['LEAD'][$iLeadId]['DELETE'])
-			$arResult['LEAD'][$iLeadId]['DELETE'] = $userPermissions->CheckEnityAccess('LEAD', 'DELETE', $arLeadAttr[$iLeadId]);
+		{
+			$arResult['LEAD'][$iLeadId]['DELETE'] = $userPermissionsService->item()->canDelete(CCrmOwnerType::Lead, $iLeadId);
+		}
 
 		$arResult['LEAD'][$iLeadId]['BIZPROC_LIST'] = [];
 
@@ -2437,7 +2451,7 @@ if (!$isInExportMode)
 			&& ($attributeRebuildAgent->getProgressData()['TOTAL_ITEMS'] > 0)
 		;
 
-		if(CCrmPerms::IsAdmin())
+		if($userPermissionsService->isAdmin())
 		{
 			if(COption::GetOptionString('crm', '~CRM_REBUILD_LEAD_DUP_INDEX', 'N') === 'Y')
 			{

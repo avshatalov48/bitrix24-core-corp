@@ -10,8 +10,10 @@ final class User
 		public string $email,
 		public string $firstName,
 		public string $lastName,
+		public bool $active,
 		public ?string $clientId = null,
 		public ?string $permissionHash = null,
+		public ?bool $updated = null,
 	)
 	{}
 }

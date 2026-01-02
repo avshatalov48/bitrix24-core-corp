@@ -1,0 +1,4 @@
+<?php
+$MESS["CRM_ACTIVITY_SETTINGS_VIEW_LIST"] = "Қалыпты істер тізімі";
+$MESS["CRM_ACTIVITY_SETTINGS_VIEW_WIDGET"] = "Істер бойынша аналитика";
+$MESS["CRM_BADGE_TTL_SETTINGS_QUANTITY_DAYS_REMOVE"] = "#DAYS# күн";

@@ -9,6 +9,8 @@ interface HasInitiator extends Message
 {
 	// who did the action
 	public function getInitiatorName(): string;
+
 	public function getInitiatorUserId(): int;
+
 	public function getInitiatorGender(): Gender;
 }

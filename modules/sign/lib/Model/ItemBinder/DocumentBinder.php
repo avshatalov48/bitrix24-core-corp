@@ -31,9 +31,12 @@ class DocumentBinder extends BaseItemToModelBinder
 	{
 		return match ($itemPropertyName)
 		{
+			'hcmLinkCompanyId',
+			'hcmLinkDocumentTypeSettingId',
+			'hcmLinkExternalIdSettingId',
+			'hcmLinkDateSettingId' => empty($value) ? null : $value,
 			'scenario' => $this->documentRepository->getScenarioIdByName($value),
 			'scheme' => $this->documentRepository->getSchemeIdByType($value),
-			'hcmLinkCompanyId' => empty($value) ? null : $value,
 			'initiator' => $this->documentRepository->getModelMetaByItem($this->item),
 			default => parent::convertItemValueToModelValue($value, $itemPropertyName),
 		};
@@ -43,6 +46,9 @@ class DocumentBinder extends BaseItemToModelBinder
 	{
 		return match ($itemProperty)
 		{
+			'hcmLinkDocumentTypeSettingId' => 'HCMLINK_DOCUMENT_TYPE_SETTING_ID',
+			'hcmLinkExternalIdSettingId' => 'HCMLINK_EXTERNAL_ID_SETTING_ID',
+			'hcmLinkDateSettingId' => 'HCMLINK_DATE_SETTING_ID',
 			'hcmLinkCompanyId' => 'HCMLINK_COMPANY_ID',
 			'initiator' => 'META',
 			default => parent::getModelFieldByItemProperty($itemProperty),
@@ -53,6 +59,8 @@ class DocumentBinder extends BaseItemToModelBinder
 	{
 		$properties = [
 			'groupId',
+			'externalId',
+			'externalDateCreate',
 		];
 
 		return in_array($name, $properties, true);

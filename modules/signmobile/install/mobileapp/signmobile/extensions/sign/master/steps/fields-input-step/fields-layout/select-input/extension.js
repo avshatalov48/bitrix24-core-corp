@@ -32,6 +32,7 @@ jn.define('sign/master/steps/fields-input-step/fields-layout/select-input', (req
 				mode,
 				style,
 				erase,
+				testId
 			} = this.props;
 
 			this.field = SelectField({
@@ -59,6 +60,7 @@ jn.define('sign/master/steps/fields-input-step/fields-layout/select-input', (req
 				size,
 				mode,
 				style,
+				testId
 			});
 		}
 

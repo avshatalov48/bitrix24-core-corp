@@ -12,11 +12,11 @@ export default class EntityCounterFilterManager
 
 	static FILTER_OTHER_USERS = 'other-users';
 
-	#filterManager: BX.Main.Filter;
-	#fields: Object;
-	#isActive = true;
+	#filterManager: ?BX.Main.Filter;
+	#fields: ?Object;
+	#isActive = false;
 
-	constructor()
+	bindToFilter(): void
 	{
 		const filters = Type.isObject(BX.Main.filterManager) && BX.Main.filterManager.hasOwnProperty('getList')
 			? BX.Main.filterManager.getList()
@@ -24,11 +24,12 @@ export default class EntityCounterFilterManager
 
 		if (filters.length === 0)
 		{
-			console.warn('BX.Crm.EntityCounterFilter: Unable to define filter.');
 			this.#isActive = false;
+			console.warn('BX.Crm.EntityCounterFilter: Unable to define filter.');
 		}
 		else
 		{
+			this.#isActive = true;
 			this.#filterManager = filters[0]; // use first filter to work
 			this.#bindEvents();
 			this.updateFields();
@@ -105,7 +106,7 @@ export default class EntityCounterFilterManager
 		}
 		return this.#isFilteredByField(field);
 	}
-	
+
 	isFiltered(
 		userId: number,
 		typeId: number,

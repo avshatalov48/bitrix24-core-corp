@@ -1,8 +1,9 @@
 <?
 
+use Bitrix\Intranet\Integration\Socialnetwork\Collab\CollabProviderData;
+use Bitrix\Intranet\Settings\Tools\ToolsManager;
 use Bitrix\Main\Loader;
 use Bitrix\Main\Localization\Loc;
-use Bitrix\Socialnetwork\Collab;
 
 if(!defined("B_PROLOG_INCLUDED") || B_PROLOG_INCLUDED!==true)die();
 IncludeModuleLangFile($_SERVER["DOCUMENT_ROOT"]."/bitrix/modules/intranet/public_bitrix24/extranet/.superleft.menu_ext.php");
@@ -72,20 +73,18 @@ else
 }
 
 if (
-	Loader::includeModule('socialnetwork')
-	&& Collab\CollabFeature::isOn()
-	&& Collab\CollabFeature::isFeatureEnabled()
+	ToolsManager::getInstance()->checkAvailabilityByToolId('collab')
+	&& (new CollabProviderData())->isAvailable()
 )
 {
 	$arMenu[] = [
 		Loc::getMessage('MENU_IM_MESSENGER_COLLAB'),
-		$isCollaber ? '/extranet/?IM_COLLAB=0' : '/extranet/online/?IM_COLLAB=0',
+		'/extranet/online/?IM_COLLAB',
 		[],
 		[
 			'menu_item_id' => 'menu_im_collab',
-			'can_be_first_item' => false
 		],
-		''
+		'',
 	];
 }
 

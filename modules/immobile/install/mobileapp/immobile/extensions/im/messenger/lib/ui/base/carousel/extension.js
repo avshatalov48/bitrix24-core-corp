@@ -33,7 +33,7 @@ jn.define('im/messenger/lib/ui/base/carousel', (require, exports, module) => {
 			return GridView({
 				style: {
 					height: this.state.isVisible === true ? 100 : 0,
-					backgroundColor: Theme.isDesignSystemSupported ? Theme.colors.bgContentPrimary : Theme.colors.bgContentTertiary,
+					backgroundColor: Theme.colors.bgContentPrimary,
 					paddingLeft: 12,
 				},
 				params: {
@@ -102,14 +102,6 @@ jn.define('im/messenger/lib/ui/base/carousel', (require, exports, module) => {
 			};
 			item = this.prepareItemForRender(item);
 			this.state.itemList = [...this.state.itemList, item];
-
-			if (Application.getPlatform() === 'ios' && Application.getApiVersion() < 49)
-			{
-				this.gridViewRef.appendRows([item], 'fade');
-				this.gridViewRef.scrollTo(0, (this.state.itemList.length - 1), true);
-
-				return;
-			}
 
 			this.gridViewRef
 				.appendRows([item], 'fade')

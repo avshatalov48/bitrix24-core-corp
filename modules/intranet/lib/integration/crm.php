@@ -49,30 +49,8 @@ final class Crm
 			return null;
 		}
 
-		if (!$this->isCrmServiceApiAvailable())
-		{
-			return null;
-		}
-
 		return Container::getInstance()->getRouter()->getItemListUrlInCurrentView($entityTypeId, $categoryId);
 	}
-
-	//region Permissions
-	public function checkReadPermissions(int $entityTypeId, int $id = 0, ?int $categoryId = null, ?int $userId = null): bool
-	{
-		if (!$this->includeCrm())
-		{
-			return false;
-		}
-
-		if (!$this->isCrmServiceApiAvailable())
-		{
-			return false;
-		}
-
-		return Container::getInstance()->getUserPermissions($userId)->checkReadPermissions($entityTypeId, $id, $categoryId);
-	}
-	//endregion
 
 	//region Get rid of dependency on crm module updates
 	public function isOldInvoicesEnabled(): bool
@@ -115,10 +93,15 @@ final class Crm
 		LocalRedirect($this->getDefaultRedirectUrl());
 	}
 
+	public function canReadSomeItemsInCrm(): bool
+	{
+		return $this->includeCrm() && Container::getInstance()->getUserPermissions()->entityType()->canReadSomeItemsInCrm();
+	}
+
 	private function getDefaultRedirectUrl(): string
 	{
 		$mainPageUrl = '/';
-		if (!$this->includeCrm() || !$this->isCrmServiceApiAvailable())
+		if (!$this->includeCrm())
 		{
 			return $mainPageUrl;
 		}
@@ -137,7 +120,7 @@ final class Crm
 		$container = Container::getInstance();
 
 		$userPermissions = $container->getUserPermissions();
-		if (\Bitrix\Crm\Settings\LeadSettings::isEnabled() && $userPermissions->canReadType(\CCrmOwnerType::Lead))
+		if (\Bitrix\Crm\Settings\LeadSettings::isEnabled() && $userPermissions->entityType()->canReadItems(\CCrmOwnerType::Lead))
 		{
 			return \CCrmOwnerType::Lead;
 		}
@@ -150,7 +133,7 @@ final class Crm
 		];
 		foreach ($availableEntityTypeIds as $availableEntityTypeId)
 		{
-			if ($userPermissions->canReadType($availableEntityTypeId))
+			if ($userPermissions->entityType()->canReadItems($availableEntityTypeId))
 			{
 				return $availableEntityTypeId;
 			}
@@ -163,18 +146,13 @@ final class Crm
 		]);
 		foreach ($dynamicTypesMap->getTypes() as $type)
 		{
-			if ($userPermissions->canReadType($type->getEntityTypeId()))
+			if ($userPermissions->entityType()->canReadItems($type->getEntityTypeId()))
 			{
 				return $type->getEntityTypeId();
 			}
 		}
 
 		return null;
-	}
-
-	private function isCrmServiceApiAvailable(): bool
-	{
-		return class_exists('\Bitrix\Crm\Service\Container');
 	}
 	//endregion
 }

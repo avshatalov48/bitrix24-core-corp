@@ -2,12 +2,11 @@
 
 return [
 	'extensions' => [
-		'loc',
-		'notify',
-		'feature',
 		'event-emitter',
 		'layout/ui/context-menu',
-		'tasks:layout/task/create',
+		'loc',
+		'notify',
+		'selector/widget/factory',
 		'tasks:layout/task/create-new',
 	],
 	'bundle' => [

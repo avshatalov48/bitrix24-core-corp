@@ -94,7 +94,7 @@ $MESS["TASKS_FILTER_DECLINED"] = "Отклонены";
 $MESS["TASKS_FILTER_CLOSED"] = "Завершены";
 $MESS["TASKS_FILTER_NOT_ACCEPTED"] = "Не принятые";
 $MESS["TASKS_FILTER_IN_CONTROL"] = "Ждут контроля";
-$MESS["TASKS_MULTITASK"] = "Задача нескольким ответственным";
+$MESS["TASKS_MULTITASK_MSGVER_1"] = "Задача нескольким исполнителям";
 $MESS["TASKS_IN_PROGRESS"] = "Задача выполняется";
 $MESS["TASKS_START"] = "Начать выполнение";
 $MESS["TASKS_DELETE_TASK"] = "Удалить";
@@ -128,4 +128,3 @@ $MESS["TASKS_ADD_DEADLINE"] = "Добавить крайний срок";
 $MESS["TASKS_REMOVE_DEADLINE"] = "Удалить крайний срок";
 $MESS["ACTION_ADD_FAVORITE"] = "Добавить в избранное";
 $MESS["ACTION_DELETE_FAVORITE"] = "Удалить из избранного";
-?>

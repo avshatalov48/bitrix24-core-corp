@@ -6,6 +6,12 @@
 	text-align: left;
 	text-decoration: underline dashed;
 	text-underline-offset: 3px;
+	text-decoration-color: var(--ui-color-palette-gray-40);
+	transition: .2s;
+}
+
+.booking-actions-popup__item-waitlist-label:hover {
+	text-decoration-color: var(--ui-color-palette-gray-80);
 }
 
 .booking-actions-popup__item-waitlist-row {
@@ -13,11 +19,18 @@
 	align-items: center;
 }
 
-.booking-actions-popup__item-waitlist-icon {
+.booking--booking-actions-popup__item-waitlist-btn {
 	display: flex;
 	align-items: center;
+	cursor: pointer;
 }
 
-.booking-actions-popup__item-waitlist-icon.--end {
+.booking--booking-actions-popup__item-waitlist-btn.--end {
 	margin-left: 12px;
+}
+
+.booking--booking-actions-popup__item-waitlist-btn.--disabled {
+	opacity: 0.5;
+	cursor: unset;
+	user-select: none;
 }

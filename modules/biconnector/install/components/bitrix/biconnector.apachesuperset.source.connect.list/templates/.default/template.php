@@ -17,6 +17,7 @@ $APPLICATION->SetTitle(Loc::getMessage('BICONNECTOR_SUPERSET_SOURCE_CONNECT_LIST
 
 \Bitrix\Main\UI\Extension::load([
 	'ui.icons',
+	'biconnector.apache-superset-analytics',
 ]);
 
 /** @var \Bitrix\BIConnector\Superset\ExternalSource\Source[] $sourceList */
@@ -31,10 +32,15 @@ $sourceList = $arResult['SOURCE_LIST'];
 	<div class="biconnector-superset-source-list-card">
 		<div class="biconnector-superset-source-list-card__content">
 			<div class="biconnector-superset-source-list-card__icon">
-				<div style="background: url(images/<?= mb_strtolower($source->getCode()) ?>.svg) no-repeat center; width: 120px; height: 120px"></div>
+
+				<?php
+				$sourceCode = mb_strtolower($source->getCode());
+				$image = htmlspecialcharsbx($source->getLogo() ?? "images/{$sourceCode}.svg");
+				?>
+				<div style="background: url('<?=$image?>'); width: 120px; height: 120px" class="biconnector-superset-source-list-card__icon_image"></div>
 			</div>
 			<div class="biconnector-superset-source-list-card__desc">
-				<div class="biconnector-superset-source-list-card__desc-title"><?= htmlspecialcharsbx($source->getTitle()) ?></div>
+				<div class="biconnector-superset-source-list-card__desc-title" title="<?= htmlspecialcharsbx($source->getTitle()) ?>"><?= htmlspecialcharsbx($source->getTitle()) ?></div>
 				<div class="biconnector-superset-source-list-card__desc-text"><?= htmlspecialcharsbx($source->getDescription()) ?></div>
 			</div>
 		</div>
@@ -51,7 +57,7 @@ $sourceList = $arResult['SOURCE_LIST'];
 				class="biconnector-superset-source-list-card__second-connect-button ui-btn-icon-add ui-btn ui-btn-light-border ui-btn-no-caps ui-btn-round ui-btn-sm"
 			>
 				<span class="biconnector-superset-source-list-card__second-connect-button-text">
-					<?= Loc::getMessage('BICONNECTOR_SUPERSET_SOURCE_CONNECT_LIST_ADD_CONNECTION_BUTTON') ?>
+					<?= Loc::getMessage('BICONNECTOR_SUPERSET_SOURCE_CONNECT_LIST_ADD_CONNECTION_BUTTON_MSGVER_1') ?>
 				</span>
 			</button>
 		</div>
@@ -78,5 +84,6 @@ $sourceList = $arResult['SOURCE_LIST'];
 <script>
 	BX.ready(() => {
 		BX.BIConnector.SourceConnectList.Instance = new BX.BIConnector.SourceConnectList();
+		BX.BIConnector.TrackingAnalyticsHandler.init();
 	});
 </script>

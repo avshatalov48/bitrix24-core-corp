@@ -21,7 +21,11 @@ enum Permission: string
 	case ButtonConfig = 'buttonConfig';
 	case SaleTarget = 'saleTarget';
 	case Exclusion = 'exclusion';
+	case ContractorConfig = 'contractorConfig';
+	case ContractorContact = 'contractorContact';
+	case ContractorCompany = 'contractorCompany';
 	case CopilotCallAssessment = 'copilotCallAssessment';
+	case RepeatSale = 'repeatSale';
 	case AutomatedSolutionConfig = 'automatedSolutionConfig';
 	case AutomatedSolutionList = 'automatedSolutionList';
 	case CrmConfig = 'crmConfig';

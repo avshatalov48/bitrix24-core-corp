@@ -28,6 +28,7 @@ jn.define('layout/ui/collapsible-text', (require, exports, module) => {
 		 * @param {Function} [props.onLinkClick]
 		 * @param {onClick} [props.onClick]
 		 * @param {string} [props.testId]
+		 * @props {function} [props.onAfterExpand]
 		 */
 		constructor(props)
 		{
@@ -63,6 +64,11 @@ jn.define('layout/ui/collapsible-text', (require, exports, module) => {
 			return false;
 		}
 
+		get canExpand()
+		{
+			return this.props.canExpand ?? true;
+		}
+
 		render()
 		{
 			const {
@@ -72,7 +78,6 @@ jn.define('layout/ui/collapsible-text', (require, exports, module) => {
 				onLinkClick,
 				testId,
 				useBBCodeEditor = false,
-				canExpand = true,
 			} = this.props;
 
 			return View(
@@ -83,16 +88,16 @@ jn.define('layout/ui/collapsible-text', (require, exports, module) => {
 						flexGrow: 1,
 						...containerStyle,
 					},
-					onClick: () => {
-						if (onClick && (useBBCodeEditor || !canExpand || !this.isExpandable()))
+					onClick: this.isClickable() && (() => {
+						if (useBBCodeEditor || !this.canExpand || !this.isExpandable())
 						{
 							onClick();
 						}
-						else if (canExpand)
+						else if (this.canExpand)
 						{
 							this.toggleExpand();
 						}
-					},
+					}),
 					onLongClick: () => this.handleContentLongClick(),
 				},
 				BBCodeText({
@@ -102,6 +107,18 @@ jn.define('layout/ui/collapsible-text', (require, exports, module) => {
 					testId,
 				}),
 			);
+		}
+
+		isClickable()
+		{
+			const {
+				onClick,
+				useBBCodeEditor,
+			} = this.props;
+
+			const canClick = onClick && (useBBCodeEditor || !this.isExpandable());
+
+			return Boolean(this.canExpand || canClick);
 		}
 
 		handleContentLongClick()
@@ -216,7 +233,20 @@ jn.define('layout/ui/collapsible-text', (require, exports, module) => {
 		{
 			if (this.isExpandable())
 			{
-				this.setState({ expanded: !this.state.expanded });
+				this.setState({ expanded: !this.state.expanded }, () => {
+					this.onAfterExpand(this.state.expanded);
+				});
+			}
+		}
+
+		/**
+		 * @param {boolean} expanded
+		 */
+		onAfterExpand(expanded)
+		{
+			if (this.props.onAfterExpand)
+			{
+				this.props.onAfterExpand(expanded);
 			}
 		}
 	}

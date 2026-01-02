@@ -3,8 +3,11 @@
 namespace Bitrix\Sign\Factory;
 
 use Bitrix\Fileman\UserField\Types\AddressType;
+use Bitrix\HumanResources\Type\HcmLink\FieldEntityType;
 use Bitrix\Location\Entity\Address;
 use Bitrix\Location\Service\FormatService;
+use Bitrix\Main\Application;
+use Bitrix\Main\Type\Date;
 use Bitrix\Sign\Helper\Field\NameHelper;
 use Bitrix\Sign\Integration\CRM;
 use Bitrix\Sign\Service\Container;
@@ -13,6 +16,8 @@ use Bitrix\Sign\Service\Providers\MemberDynamicFieldInfoProvider;
 use Bitrix\Sign\Service\Providers\ProfileProvider;
 use Bitrix\Sign\Type\BlockCode;
 use Bitrix\Sign\Item;
+use Bitrix\Sign\Type\Document\ExternalDateCreateSourceType;
+use Bitrix\Sign\Type\Document\ExternalIdSourceType;
 use Bitrix\Sign\Type\FieldType;
 use Bitrix\Main;
 use Bitrix\Sign\Type\Member\Role;
@@ -70,6 +75,7 @@ class FieldValue
 			BlockCode::isB2eReference($block->code) => $this->getB2eReferenceFieldValue($block, $field, $member, $document),
 			BlockCode::isMemberDynamic($block->code) => $this->getMemberDynamicFieldValue($field, $member),
 			BlockCode::isHcmLinkReference($block->code) => $this->getHcmLinkFieldValue($field, $member, $document),
+			BlockCode::isB2eRegional($block->code) => $this->getB2eRegionalFieldValue($field, $member, $document),
 			default => null,
 		};
 	}
@@ -394,6 +400,7 @@ class FieldValue
 		}
 
 		$valueId = new Item\Field\HcmLink\HcmLinkFieldValueId(
+			entityType: FieldEntityType::EMPLOYEE->value,
 			fieldId: $parsedName->id,
 			employeeId: $member->employeeId,
 		);
@@ -403,6 +410,97 @@ class FieldValue
 			text: '',
 			trusted: true,
 			hcmLinkFieldValueId: $valueId,
+		);
+	}
+
+	private function getB2eRegionalFieldValue(
+		Item\Field $field,
+		Item\Member $member,
+		Item\Document $document,
+	): ?Item\Field\Value
+	{
+		if ($field->type === FieldType::EXTERNAL_ID)
+		{
+			return match ($document->externalIdSourceType)
+			{
+				ExternalIdSourceType::MANUAL => new Item\Field\Value(
+					fieldId: 0,
+					text: $document->externalId ?? '',
+					trusted: true,
+				),
+				ExternalIdSourceType::HCMLINK => $this->getB2eRegionalFieldValueByHcmLink(
+					$field,
+					$member,
+					$document,
+					$document->hcmLinkExternalIdSettingId
+				),
+				default => null,
+			};
+		}
+
+		if ($field->type === FieldType::EXTERNAL_DATE)
+		{
+			$cultureDateFormat = $document->configuredDateFormat
+				?? Application::getInstance()->getContext()->getCulture()?->getDateFormat()
+			;
+
+			$dateFormat = $cultureDateFormat ? Date::convertFormatToPhp($cultureDateFormat) : 'Y-m-d';
+
+			return match ($document->externalDateCreateSourceType)
+			{
+				ExternalDateCreateSourceType::MANUAL => new Item\Field\Value(
+					fieldId: 0,
+					text: $document->externalDateCreate?->format($dateFormat) ?? '',
+					trusted: true,
+				),
+				ExternalDateCreateSourceType::HCMLINK => $this->getB2eRegionalFieldValueByHcmLink(
+					$field,
+					$member,
+					$document,
+					$document->hcmLinkDateSettingId
+				),
+				default => null,
+			};
+		}
+
+		return null;
+	}
+
+	private function getB2eRegionalFieldValueByHcmLink(
+		Item\Field $field,
+		Item\Member $member,
+		Item\Document $document,
+		?int $hcmLinkFieldId,
+	): ?Item\Field\Value
+	{
+		if (
+			$member->employeeId === null
+			|| !$hcmLinkFieldId
+			|| !$this->hcmLinkFieldService->isAvailable()
+		)
+		{
+			return null;
+		}
+
+		$field = $this->hcmLinkFieldService->getFieldById($hcmLinkFieldId);
+		if (
+			!$field
+			|| $field->companyId !== $document->hcmLinkCompanyId
+		)
+		{
+			return null;
+		}
+
+		return new Item\Field\Value(
+			fieldId: 0,
+			text: '',
+			trusted: true,
+			hcmLinkFieldValueId: new Item\Field\HcmLink\HcmLinkFieldValueId(
+				entityType: FieldEntityType::DOCUMENT->value,
+				fieldId: $field->id,
+				employeeId: $member->employeeId,
+				signerId: $member->id,
+			),
 		);
 	}
 }

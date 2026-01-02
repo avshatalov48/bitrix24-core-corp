@@ -2,17 +2,20 @@
 
 namespace Bitrix\HumanResources\Service\HcmLink;
 
+use Bitrix\HumanResources\Contract;
+use Bitrix\HumanResources\Item\Collection\HcmLink\EmployeeCollection;
 use Bitrix\HumanResources\Item\Collection\HcmLink\MappingEntityCollection;
 use Bitrix\HumanResources\Item\Collection\HcmLink\PersonCollection;
 use Bitrix\HumanResources\Item\HcmLink\MappingEntity;
 use Bitrix\HumanResources\Result\Service\HcmLink\FilterNotMappedUserIdsResult;
-use Bitrix\HumanResources\Contract;
 use Bitrix\HumanResources\Result\Service\HcmLink\GetMappingEntityCollectionResult;
 use Bitrix\HumanResources\Result\Service\HcmLink\GetMatchesForMappingResult;
-use Bitrix\HumanResources\Service\Container;
 use Bitrix\HumanResources\Result\Service\HcmLink\GetMultipleVacancyEmployeesResult;
-use Bitrix\HumanResources\Type\HcmLink\FieldType;
+use Bitrix\HumanResources\Service\Container;
+use Bitrix\HumanResources\Type\HcmLink\EmployeeDataType;
+use Bitrix\HumanResources\Util\PersonUtil;
 use Bitrix\Main;
+use Bitrix\Main\Localization\Loc;
 use Bitrix\Main\Result;
 
 class MapperService implements Contract\Service\HcmLink\MapperService
@@ -35,7 +38,10 @@ class MapperService implements Contract\Service\HcmLink\MapperService
 		if (!$company)
 		{
 			return (new Main\Result())->addError(
-				new Main\Error('Integration not found', 'HR_HCMLINK_INTEGRATION_NOT_FOUND'),
+				new Main\Error(
+					Loc::getMessage('HUMANRESOURCES_HCMLINK_INTEGRATION_NOT_FOUND') ?? '',
+					'HR_HCMLINK_INTEGRATION_NOT_FOUND',
+				),
 			);
 		}
 
@@ -66,34 +72,33 @@ class MapperService implements Contract\Service\HcmLink\MapperService
 
 		$personIds = $personCollection->getKeys();
 		$employees = $this->employeeRepository->getCollectionByPersonIds($personIds);
+
+		/** @var $employeeListByPersonIdMap array<int, EmployeeCollection> */
+		$employeeListByPersonIdMap = [];
 		foreach ($employees as $employee)
 		{
-			$person = $personCollection->getItemById($employee->personId);
-			if ($person === null)
+			$employeeListByPersonIdMap[$employee->personId] ??= new EmployeeCollection();
+			$employeeListByPersonIdMap[$employee->personId]->add($employee);
+		}
+
+		foreach ($personCollection as $person)
+		{
+			// if no employee for the person, we don't include this person in result
+			if (!array_key_exists($person->id, $employeeListByPersonIdMap))
 			{
 				continue;
 			}
 
-			$position = '';
-			if (!empty($employee->data[FieldType::POSITION->name]))
-			{
-				$position = (string)$employee->data[FieldType::POSITION->name];
-			}
-
-			if (isset($items[$person->id]))
-			{
-				/** @var MappingEntity $entity */
-				$entity = $items[$person->id];
-				$additionalPosition = !empty($entity->position) ? ", {$position}" : $position;
-				$position = $entity->position . $additionalPosition;
-			}
+			$subTitle = PersonUtil::formatPersonSubtitle($employeeListByPersonIdMap[$person->id]);
+			$fullName = PersonUtil::formatFullName($employeeListByPersonIdMap[$person->id]);
 
 			$collection->add(
 				new MappingEntity(
 					id: $person->id,
 					name: $person->title,
 					avatarLink: '',
-					position: $position,
+					position: $subTitle,
+					fullName: $fullName,
 				)
 			);
 		}

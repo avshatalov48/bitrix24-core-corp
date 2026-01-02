@@ -12,6 +12,7 @@ return [
 		'main.popup',
 		'sign.v2.api',
 		'main.loader',
+		'sign.type',
 		'main.polyfill.intersectionobserver',
 	],
 	'skip_core' => false,

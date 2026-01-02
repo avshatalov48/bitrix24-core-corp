@@ -12,14 +12,12 @@ use Bitrix\Socialnetwork\Collab\CollabFeature;
 
 final class AirDiskFeature extends FeatureFlag
 {
-	public const MINIMAL_API_VERSION = 55;
 
 	public function isEnabled(): bool
 	{
 		return $this->featureGenerallyEnabled()
 			&& $this->diskConverted()
-			&& $this->featureEnabledForCurrentUser()
-			&& $this->clientHasApiVersion(self::MINIMAL_API_VERSION);
+			&& $this->featureEnabledForCurrentUser();
 	}
 
 	private function featureGenerallyEnabled(): bool

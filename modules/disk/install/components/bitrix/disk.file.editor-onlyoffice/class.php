@@ -3,13 +3,13 @@
 use Bitrix\Disk;
 use Bitrix\Disk\Document\LocalDocumentController;
 use Bitrix\Disk\Document\Models\DocumentSessionTable;
+use Bitrix\Disk\document\SharingControlType;
 use Bitrix\Disk\Driver;
 use Bitrix\Disk\Integration\Bitrix24Manager;
+use Bitrix\Disk\Internal\Service\UnifiedLink\UnifiedLinkAccessService;
 use Bitrix\Disk\Internals\BaseComponent;
-use Bitrix\Disk\Internals\Engine\Contract\SidePanelWrappable;
 use Bitrix\Disk\User;
 use Bitrix\Disk\Document\OnlyOffice;
-use Bitrix\Main\Application;
 use Bitrix\Main\DI\ServiceLocator;
 use Bitrix\Main\Engine\Contract\Controllerable;
 use Bitrix\Main\Engine\CurrentUser;
@@ -32,6 +32,8 @@ class CDiskFileEditorOnlyOfficeComponent extends BaseComponent implements Contro
 	protected User $currentUser;
 	protected OnlyOffice\Configuration $onlyOfficeConfiguration;
 	protected OnlyOffice\RestrictionManager $restrictionManager;
+	private bool $unifiedLinkAccessOnly = false;
+	private bool $unifiedLinkMode = false;
 
 	protected function processBeforeAction($actionName)
 	{
@@ -63,6 +65,9 @@ class CDiskFileEditorOnlyOfficeComponent extends BaseComponent implements Contro
 		{
 			$this->currentUser = Disk\Document\Models\GuestUser::create();
 		}
+
+		$this->unifiedLinkAccessOnly = (bool)($this->arParams['UNIFIED_LINK_ACCESS_ONLY'] ?? false);
+		$this->unifiedLinkMode = (bool)($this->arParams['UNIFIED_LINK_MODE'] ?? false);
 	}
 
 	public function configureActions()
@@ -72,6 +77,10 @@ class CDiskFileEditorOnlyOfficeComponent extends BaseComponent implements Contro
 
 	protected function processActionDefault()
 	{
+		$this->arResult['UNIFIED_LINK_ACCESS_ONLY'] = $this->unifiedLinkAccessOnly;
+		$this->arResult['UNIFIED_LINK_MODE'] = $this->unifiedLinkMode;
+		$this->arResult['FILE_UNIQUE_CODE'] = $this->arParams['FILE_UNIQUE_CODE'] ?? '';
+
 		if (isset($this->arParams['TEMPLATE']) && $this->arParams['TEMPLATE'] === 'not-found')
 		{
 			$this->includeComponentTemplate('not-found');
@@ -187,11 +196,7 @@ class CDiskFileEditorOnlyOfficeComponent extends BaseComponent implements Contro
 		$this->arResult['ATTACHED_OBJECT'] = [
 			'ID' => $documentSession->getContext()->getAttachedObjectId(),
 		];
-		/** @see \Bitrix\Disk\Controller\DocumentService::viewDocumentAction */
-		$this->arResult['LINK_OPEN_NEW_WINDOW'] = (new Disk\Controller\DocumentService())->getActionUri(
-			'viewDocument',
-			['documentSessionId' => $documentSession->getId()]
-		);
+		$this->arResult['LINK_OPEN_NEW_WINDOW'] = $this->getLinkToView($documentSession);
 
 		$this->arResult['LINK_TO_EDIT'] = $this->getLinkToEdit($documentSession);
 		$this->arResult['LINK_TO_DOWNLOAD'] = $this->getLinkToDownload($documentSession);
@@ -301,7 +306,7 @@ class CDiskFileEditorOnlyOfficeComponent extends BaseComponent implements Contro
 
 		$this->arResult['EDITOR_JSON'] = Json::encode($editorConfigData);
 
-		$this->arResult['SHARING_CONTROL_TYPE'] = $this->getSharingControlType($documentSession);
+		$this->arResult['SHARING_CONTROL_TYPE'] = $this->getSharingControlType($documentSession)?->value;
 		$this->arResult['PULL_CONFIG'] = null;
 		$publicPullConfigurator = new Disk\Document\Online\PublicPullConfigurator();
 		if ($publicPullConfigurator->getErrors())
@@ -362,8 +367,41 @@ class CDiskFileEditorOnlyOfficeComponent extends BaseComponent implements Contro
 		$this->restrictionManager->unlock();
 	}
 
+	protected function getLinkToView(Disk\Document\Models\DocumentSession $documentSession)
+	{
+		if ($this->unifiedLinkMode)
+		{
+			$unifiedLinkOptions = [];
+			$attachedObjectId = (int)$documentSession->getContext()?->getAttachedObjectId();
+			if ($attachedObjectId > 0)
+			{
+				$unifiedLinkOptions['attachedId'] = $attachedObjectId;
+			}
+
+			return $this->getUrlManager()->getUnifiedLink($documentSession->getFile(), $unifiedLinkOptions);
+		}
+
+		/** @see \Bitrix\Disk\Controller\DocumentService::viewDocumentAction */
+		return (new Disk\Controller\DocumentService())->getActionUri(
+			'viewDocument',
+			['documentSessionId' => $documentSession->getId()]
+		);
+	}
+
 	protected function getLinkToEdit(Disk\Document\Models\DocumentSession $documentSession)
 	{
+		if ($this->unifiedLinkMode)
+		{
+			$unifiedLinkOptions = [];
+			$attachedObjectId = (int)$documentSession->getContext()?->getAttachedObjectId();
+			if ($attachedObjectId > 0)
+			{
+				$unifiedLinkOptions['attachedId'] = $attachedObjectId;
+			}
+
+			return $this->getUrlManager()->getUnifiedEditLink($documentSession->getFile(), $unifiedLinkOptions);
+		}
+
 		if (isset($this->arParams['LINK_TO_EDIT']))
 		{
 			return $this->arParams['LINK_TO_EDIT'];
@@ -396,7 +434,7 @@ class CDiskFileEditorOnlyOfficeComponent extends BaseComponent implements Contro
 		);
 	}
 
-	protected function getSharingControlType(Disk\Document\Models\DocumentSession $documentSession): ?string
+	protected function getSharingControlType(Disk\Document\Models\DocumentSession $documentSession): ?SharingControlType
 	{
 		if ($this->arResult['EXTERNAL_LINK_MODE'] || !$documentSession->getObject())
 		{
@@ -408,24 +446,24 @@ class CDiskFileEditorOnlyOfficeComponent extends BaseComponent implements Contro
 			&& !Bitrix24Manager::isFeatureEnabled('disk_onlyoffice_edit')
 		)
 		{
-			return 'blocked-by-feature';
+			return SharingControlType::BlockedByFeature;
 		}
 
 		$currentUser = CurrentUser::get();
 		if (!$documentSession->canUserChangeRights($currentUser) && !$documentSession->canUserShare($currentUser))
 		{
-			return 'without-edit';
+			return SharingControlType::WithoutEdit;
 		}
 		if ($documentSession->canUserChangeRights($currentUser))
 		{
-			return 'with-change-rights';
+			return SharingControlType::WithChangeRights;
 		}
 		if ($documentSession->canUserShare($currentUser))
 		{
-			return 'with-sharing';
+			return SharingControlType::WithSharing;
 		}
 
-		return 'without-edit';
+		return SharingControlType::WithoutEdit;
 	}
 
 	protected function processSavingTemplate(Disk\Document\Models\DocumentSession $documentSession): void
@@ -574,6 +612,16 @@ class CDiskFileEditorOnlyOfficeComponent extends BaseComponent implements Contro
 			&& OnlyOffice\OnlyOfficeHandler::isEditable($documentSession->getObject()->getExtension())
 		)
 		{
+			if ($this->unifiedLinkMode)
+			{
+				$unifiedLinkAccessService = ServiceLocator::getInstance()->get(UnifiedLinkAccessService::class);
+
+				$attachedObject = $documentSession->getContext()?->getAttachedObject();
+				$accessLevel = $unifiedLinkAccessService->check($documentSession->getObject(), $attachedObject);
+
+				return $accessLevel->canEdit();
+			}
+
 			$allowEdit = $documentSession->canTransformUserToEdit(CurrentUser::get());
 			if ($allowEdit && $this->arResult['EXTERNAL_LINK_MODE'])
 			{

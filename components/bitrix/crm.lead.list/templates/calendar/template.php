@@ -21,11 +21,7 @@ use Bitrix\Main\Localization\Loc;
 use Bitrix\Main\Text\HtmlFilter;
 
 $APPLICATION->SetAdditionalCSS("/bitrix/themes/.default/crm-entity-show.css");
-
-if (SITE_TEMPLATE_ID === 'bitrix24')
-{
-	$APPLICATION->SetAdditionalCSS("/bitrix/themes/.default/bitrix24/crm-entity-show.css");
-}
+$APPLICATION->SetAdditionalCSS('/bitrix/themes/.default/bitrix24/crm-entity-show.css');
 
 if (CModule::IncludeModule('bitrix24') && !\Bitrix\Crm\CallList\CallList::isAvailable())
 {
@@ -248,6 +244,10 @@ if(!Bitrix\Main\Grid\Context::isInternalRequest()
 			'FILTER_ID' => $arResult['GRID_ID'],
 			'FILTER' => $arResult['FILTER'],
 			'FILTER_PRESETS' => $arResult['FILTER_PRESETS'],
+			'COUNTER_PANEL' => [
+				'ENTITY_TYPE_NAME' => CCrmOwnerType::LeadName,
+				'EXTRAS' => [],
+			],
 			'NAVIGATION_BAR' => (new NavigationBarPanel(CCrmOwnerType::Lead))
 				->setItems([
 					NavigationBarPanel::ID_KANBAN,

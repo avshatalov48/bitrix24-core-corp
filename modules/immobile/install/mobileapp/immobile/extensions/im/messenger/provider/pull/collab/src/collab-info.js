@@ -18,7 +18,7 @@ jn.define('im/messenger/provider/pull/collab/collab-info', (require, exports, mo
 		 */
 		handleUpdateCollabEntityCounter(params, extra, command)
 		{
-			if (this.interceptEvent(params, extra, command))
+			if (this.interceptEvent(extra))
 			{
 				return;
 			}
@@ -35,7 +35,7 @@ jn.define('im/messenger/provider/pull/collab/collab-info', (require, exports, mo
 
 		handleUpdateCollabGuestCount(params, extra, command)
 		{
-			if (this.interceptEvent(params, extra, command))
+			if (this.interceptEvent(extra))
 			{
 				return;
 			}

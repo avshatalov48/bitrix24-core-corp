@@ -186,4 +186,25 @@ class Variants
 
 		return $result;
 	}
+
+	/**
+	 * Return variants that allow something to do
+	 *
+	 * @return string[]
+	 */
+	public function getPermissiveValues(): array
+	{
+		$result = [];
+		foreach ($this->values as $value)
+		{
+			if (
+				!($value['useAsEmptyInSection'] ?? false)
+				&& !($value['useAsEmptyInSubsection'] ?? false)
+			)
+			{
+				$result[] = $value['id'];
+			}
+		}
+		return $result;
+	}
 }

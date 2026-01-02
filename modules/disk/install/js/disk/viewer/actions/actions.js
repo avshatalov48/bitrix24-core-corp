@@ -67,6 +67,23 @@
 		BX.Disk.Viewer.Actions.runActionEdit(paramsToEdit);
 	};
 
+	BX.Disk.Viewer.Actions.openUnifiedLink = function(item, params)
+	{
+		if (item instanceof BX.Disk.Viewer.UnifiedLinkItem)
+		{
+			if (params && params.unifiedLinkToOpen)
+			{
+				item.setUnifiedLink(params.unifiedLinkToOpen);
+			}
+			const index = BX.UI.Viewer.Instance.getIndexByNode(item.sourceNode);
+			BX.UI.Viewer.Instance.openSeparate(index);
+		}
+		else
+		{
+			console.error('Try to open unified link for non UnifiedLinkItem item.');
+		}
+	};
+
 	BX.Disk.Viewer.Actions.openInNewTab = function (item, params, additionalParams)
 	{
 		window.open(params.url, '_blank').focus();

@@ -13,9 +13,12 @@ $MESS['TASKSMOBILE_FLOW_CONTENT_DISABLED_TOAST'] = 'Этот поток выкл
 $MESS['TASKSMOBILE_FLOWS_INFO_HEADER_TEXT'] = 'Потоки';
 $MESS['TASKSMOBILE_FLOWS_INFO_DESCRIPTION_TEXT'] = 'Распределяйте задачи между исполнителями, отслеживайте загруженность сотрудников и скорость выполнения задач';
 
+$MESS['TASKSMOBILE_FLOW_CONTENT_AI_ADVICE_FOOTER_TITLE'] = "Рекомендации CoPilot";
 $MESS['TASKSMOBILE_FLOW_CONTENT_AI_ADVICE_FOOTER_NO_DATA'] = "CoPilot собирает данные об эффективности";
 $MESS['TASKSMOBILE_FLOW_CONTENT_AI_ADVICE_FOOTER_LOW'] = "Эффективность работы в потоке снизилась. Узнайте, как #ANCHOR_START#повысить эффективность#ANCHOR_END#";
+$MESS['TASKSMOBILE_FLOW_CONTENT_AI_ADVICE_FOOTER_LOW_V2'] = "CoPilot подготовил #ANCHOR_START#рекомендации#ANCHOR_END#, как увеличить эффективность работы";
 $MESS['TASKSMOBILE_FLOW_CONTENT_AI_ADVICE_FOOTER_HIGH'] = "Команда работает эффективно";
+$MESS['TASKSMOBILE_FLOW_CONTENT_AI_ADVICE_FOOTER_HIGH_V2'] = "CoPilot отметил #ANCHOR_START#несколько моментов#ANCHOR_END#, которые помогли команде работать эффективно";
 $MESS['TASKSMOBILE_FLOW_CONTENT_AI_ADVICE_FOOTER_TOAST'] = "CoPilot ещё готовит рекомендации, подождите немного";
 
 $MESS['TASKSMOBILE_FLOW_AI_ADVICE_WIDGET_TITLE'] = "Рекомендации CoPilot";

@@ -1,16 +1,17 @@
-import { limit } from 'booking.lib.limit';
+import { Event } from 'main.core';
+import { MenuManager, Menu } from 'main.popup';
 import { mapGetters } from 'ui.vue3.vuex';
-import { Event, Loc } from 'main.core';
-import { MenuManager, Menu, Popup } from 'main.popup';
-import { MessageBox, MessageBoxButtons } from 'ui.dialogs.messagebox';
 import 'ui.hint';
+
 import { Model } from 'booking.const';
+import { limit } from 'booking.lib.limit';
 import { hideResources } from 'booking.lib.resources';
 import { ResourceCreationWizard } from 'booking.resource-creation-wizard';
-import { resourceService } from 'booking.provider.service.resources-service';
+import { RemoveResource } from 'booking.lib.remove-resource';
 
 import './resource-menu.css';
 
+// @vue/component
 export const ResourceMenu = {
 	name: 'ResourceMenu',
 	props: {
@@ -30,6 +31,7 @@ export const ResourceMenu = {
 			favoritesIds: `${Model.Favorites}/get`,
 			isEditingBookingMode: `${Model.Interface}/isEditingBookingMode`,
 			isFeatureEnabled: `${Model.Interface}/isFeatureEnabled`,
+			isFilterMode: `${Model.Filter}/isFilterMode`,
 		}),
 		popupId(): string
 		{
@@ -56,6 +58,11 @@ export const ResourceMenu = {
 			{
 				this.destroy();
 
+				return;
+			}
+
+			if (this.isFilterMode)
+			{
 				return;
 			}
 
@@ -130,7 +137,7 @@ export const ResourceMenu = {
 					html: `<span class="alert-text">${this.loc('BOOKING_RESOURCE_MENU_DELETE')}</span>`,
 					onclick: async () => {
 						this.destroy();
-						await this.deleteResource(this.resourceId);
+						await this.removeResource(this.resourceId);
 					},
 				},
 			];
@@ -156,6 +163,10 @@ export const ResourceMenu = {
 		{
 			wizard.open(resourceId);
 		},
+		async removeResource(resourceId: number): Promise<void>
+		{
+			await (new RemoveResource(resourceId)).run();
+		},
 		async hideResource(resourceId: number): Promise<void>
 		{
 			const ids = [...this.favoritesIds];
@@ -168,59 +179,6 @@ export const ResourceMenu = {
 			ids.splice(index, 1);
 
 			await hideResources(ids);
-		},
-		async deleteResource(resourceId: number): Promise<void>
-		{
-			const confirmed = await this.confirmDelete(resourceId);
-
-			if (confirmed)
-			{
-				await resourceService.delete(resourceId);
-			}
-		},
-		async confirmDelete(resourceId: number): Promise<boolean>
-		{
-			const disabled = await resourceService.hasBookings(resourceId);
-
-			return new Promise((resolve) => {
-				const messageBox = MessageBox.create({
-					message: Loc.getMessage('BOOKING_RESOURCE_CONFIRM_DELETE'),
-					yesCaption: Loc.getMessage('BOOKING_RESOURCE_CONFIRM_DELETE_YES'),
-					modal: true,
-					buttons: MessageBoxButtons.YES_CANCEL,
-					onYes: () => {
-						messageBox.close();
-						resolve(true);
-					},
-					onCancel: () => {
-						messageBox.close();
-						resolve(false);
-					},
-				});
-
-				if (disabled)
-				{
-					const popup: Popup = messageBox.getPopupWindow();
-					popup.subscribe('onAfterShow', () => {
-						const yesButton = messageBox.getYesButton();
-						yesButton.setDisabled(true);
-
-						Event.bind(yesButton.getContainer(), 'mouseenter', () => {
-							this.hint.show(
-								yesButton.getContainer(),
-								Loc.getMessage('BOOKING_RESOURCE_CONFIRM_DELETE_HINT'),
-								true,
-							);
-						});
-
-						Event.bind(yesButton.getContainer(), 'mouseleave', () => {
-							this.hint.hide(yesButton.getContainer());
-						});
-					});
-				}
-
-				messageBox.show();
-			});
 		},
 	},
 	template: `

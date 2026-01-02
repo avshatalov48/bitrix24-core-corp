@@ -13,9 +13,19 @@ type Payment = {
 };
 
 type Captcha = {
-	use: boolean;
-	key: ?string;
-	secret: ?string;
+	service: string;
+	recaptcha: {
+		use: boolean;
+		key: ?string;
+		secret: ?string;
+		hasDefaults: boolean;
+	},
+	yandexCaptcha: {
+		use: boolean;
+		key: ?string;
+		secret: ?string;
+		hasDefaults: boolean;
+	},
 };
 
 type Deal = {

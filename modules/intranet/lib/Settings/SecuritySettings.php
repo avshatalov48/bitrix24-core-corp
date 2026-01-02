@@ -16,6 +16,7 @@ use Bitrix\Main\Error;
 use Bitrix\Main\ErrorCollection;
 use Bitrix\Main\Loader;
 use Bitrix\Main\Localization\Loc;
+use Bitrix\Main\ModuleManager;
 use Bitrix\Main\Result;
 use Bitrix\Security;
 
@@ -116,6 +117,7 @@ class SecuritySettings extends AbstractSettings
 		$this->saveOtpSettings();
 		$this->saveIpAccessRights();
 		$this->saveDeviceHistorySettings();
+		$this->saveDataLeakProtectionSettings();
 
 		return new Result();
 	}
@@ -229,35 +231,80 @@ class SecuritySettings extends AbstractSettings
 			);
 		}
 
+		$data['sectionDataLeakProtection'] = new Section(
+			'settings-security-section-data-leak-protection',
+			Loc::getMessage('INTRANET_SETTINGS_SECTION_TITLE_DATA_LEAK_PROTECTION'),
+			'ui-icon-set --shield-2-checked',
+			false
+		);
+
 		if ($this->mobileAppService->isReady())
 		{
-			$data['sectionMobileApp'] = new Section(
-				'settings-security-section-mobile_app',
-				Loc::getMessage('INTRANET_SETTINGS_SECTION_TITLE_MOBILE_APP'),
-				'ui-icon-set --mobile-2',
-				false
+			$data['switcherDisableCopy'] = new Switcher(
+				id: 'settings-employee-field-allow_register',
+				name: 'disable_copy_text',
+				label: Loc::getMessage('INTRANET_SETTINGS_FIELD_LABEL_DISABLE_COPY_MSGVER_1'),
+				value: $this->mobileAppService->isCopyTextDisabled() ? 'Y' : 'N',
+				hints: [
+					'on' => Loc::getMessage('INTRANET_SETTINGS_FIELD_HINT_DISABLE_COPY_MSGVER_1')
+				],
+				helpDesk: 'redirect=detail&code=25559182'
 			);
 
-			$data['switcherDisableCopy'] = new Switcher(
-				'settings-employee-field-allow_register',
-				'disable_copy_text',
-				Loc::getMessage('INTRANET_SETTINGS_FIELD_LABEL_DISABLE_COPY'),
-				$this->mobileAppService->canCopyText() ? 'N' : 'Y',
-				[
-					'on' => Loc::getMessage('INTRANET_SETTINGS_FIELD_HINT_DISABLE_COPY'),
-				]
+			$data['selectorDisableCopy'] = new Selector(
+				id: 'settings-employee-field-allow_register_rights',
+				name: 'disable_copy_text_rights[]',
+				label: Loc::getMessage('INTRANET_SETTINGS_SECTION_SECURITY_DESCRIPTION_USER_SELECT'),
+				items: $this->mobileAppService->getCopyTextRightsList(),
 			);
 
 			$data['switcherDisableScreenshot'] = new Switcher(
-				'settings-employee-field-allow_screenshot',
-				'disable_copy_screenshot',
-				Loc::getMessage('INTRANET_SETTINGS_FIELD_LABEL_DISABLE_SCREENSHOT'),
-				$this->mobileAppService->canTakeScreenshot() ? 'N' : 'Y',
-				[
-					'on' => Loc::getMessage('INTRANET_SETTINGS_FIELD_HINT_DISABLE_SCREENSHOT'),
-				]
+				id: 'settings-employee-field-allow_screenshot',
+				name: 'disable_copy_screenshot',
+				label: Loc::getMessage('INTRANET_SETTINGS_FIELD_LABEL_DISABLE_SCREENSHOT_MSGVER_1'),
+				value: $this->mobileAppService->isTakeScreenshotDisabled() ? 'Y' : 'N',
+				hints: [
+					'on' => Loc::getMessage('INTRANET_SETTINGS_FIELD_HINT_DISABLE_SCREENSHOT_MSGVER_1')
+				],
+				helpDesk: 'redirect=detail&code=25559182'
+			);
+
+			$data['selectorDisableScreenshot'] = new Selector(
+				id: 'settings-employee-field-allow_rights',
+				name: 'disable_copy_screenshot_rights[]',
+				label: Loc::getMessage('INTRANET_SETTINGS_SECTION_SECURITY_DESCRIPTION_USER_SELECT'),
+				items: $this->mobileAppService->getTakeScreenshotRightsList(),
 			);
 		}
+
+		if (ModuleManager::isModuleInstalled('im'))
+		{
+			if (Option::get('im', 'auto_delete_messages_activated', 'N') === 'Y')
+			{
+				$data['isAutoDeleteMessagesEnabled'] = new Switcher(
+					id: 'settings-communication-field-isAutoDeleteMessagesEnabled',
+					name: 'isAutoDeleteMessagesEnabled',
+					label: Loc::getMessage('INTRANET_SETTINGS_FIELD_LABEL_ALLOW_AUTO_DELETE_TO_BE_ENABLED'),
+					value: Option::get('im', 'isAutoDeleteMessagesEnabled', 'Y'),
+					hints: [
+						'on' => Loc::getMessage('INTRANET_SETTINGS_FIELD_HINT_ALLOW_AUTO_DELETE_TO_BE_ENABLED')
+					],
+					helpDesk: 'redirect=detail&code=24402288'
+				);
+			}
+		}
+
+		$data['isWaterMarksEnabled'] = new Switcher(
+			id: 'settings-communication-field-isWaterMarksEnabled',
+			name: 'isWaterMarksEnabled',
+			label: Loc::getMessage('INTRANET_SETTINGS_FIELD_LABEL_WATER_MARKS_ENABLED'),
+			value: 'N',
+			hints: [
+				'on' => Loc::getMessage('INTRANET_SETTINGS_FIELD_HINT_WATER_MARKS_ENABLED')
+			],
+			isEnable: false,
+			badge: Loc::getMessage('INTRANET_SETTINGS_FIELD_BADGE_WATER_MARKS_SOON'),
+		);
 
 		return new static($data);
 	}
@@ -306,6 +353,50 @@ class SecuritySettings extends AbstractSettings
 					return;
 				}
 				Option::set('main', 'device_history_cleanup_days', $days);
+			}
+		}
+	}
+
+	private function saveDataLeakProtectionSettings(): void
+	{
+		if (isset($this->data['disable_copy_screenshot']))
+		{
+			$this->mobileAppService->setAllowScreenshot(!($this->data['disable_copy_screenshot'] === 'Y'));
+		}
+
+		if (
+			is_array($this->data['disable_copy_screenshot_rights'])
+			&& count($this->data['disable_copy_screenshot_rights']) > 0
+		)
+		{
+			$this->mobileAppService->setTakeScreenshotRights($this->data['disable_copy_screenshot_rights']);
+		}
+
+		if (isset($this->data['disable_copy_text']))
+		{
+			$this->mobileAppService->setAllowCopyText(!($this->data['disable_copy_text'] === 'Y'));
+		}
+
+		if (
+			is_array($this->data['disable_copy_text_rights'])
+			&& count($this->data['disable_copy_text_rights']) > 0
+		)
+		{
+			$this->mobileAppService->setCopyTextRights($this->data['disable_copy_text_rights']);
+		}
+
+		if (
+			isset($this->data['isAutoDeleteMessagesEnabled'])
+			&& Option::get('im', 'isAutoDeleteMessagesEnabled', null) !== $this->data['isAutoDeleteMessagesEnabled']
+		)
+		{
+			if ($this->data['isAutoDeleteMessagesEnabled'] !== 'N')
+			{
+				Option::set('im', 'isAutoDeleteMessagesEnabled', 'Y');
+			}
+			else
+			{
+				Option::set('im', 'isAutoDeleteMessagesEnabled', 'N');
 			}
 		}
 	}
@@ -400,16 +491,6 @@ class SecuritySettings extends AbstractSettings
 		{
 			Option::set('intranet', 'send_otp_push', 'N');
 		}
-
-		if (isset($this->data['disable_copy_text']))
-		{
-			$this->mobileAppService->setAllowCopyText(!($this->data['disable_copy_text'] === 'Y'));
-		}
-
-		if (isset($this->data['disable_copy_screenshot']))
-		{
-			$this->mobileAppService->setAllowScreenshot(!($this->data['disable_copy_screenshot'] === 'Y'));
-		}
 	}
 
 	private function getIpAccessRights(): array
@@ -502,19 +583,26 @@ class SecuritySettings extends AbstractSettings
 			'SECURITY_IP_ACCESS_1_IP' => Loc::getMessage('INTRANET_SETTINGS_FIELD_LABEL_SELECT_ACCEPTED_IP'),
 			'settings-security-section-history' => Loc::getMessage('INTRANET_SETTINGS_SECTION_TITLE_DEVICES_HISTORY'),
 			'settings-security-section-event_log' => Loc::getMessage('INTRANET_SETTINGS_SECTION_TITLE_EVENT_LOG'),
-			'settings-security-section-mobile_app' => Loc::getMessage('INTRANET_SETTINGS_SECTION_TITLE_MOBILE_APP'),
-			'disable_copy_screenshot' => Loc::getMessage('INTRANET_SETTINGS_FIELD_LABEL_DISABLE_SCREENSHOT'),
-			'disable_copy_text' => Loc::getMessage('INTRANET_SETTINGS_FIELD_LABEL_DISABLE_COPY'),
+			'settings-security-section-data-leak-protection' => Loc::getMessage('INTRANET_SETTINGS_SECTION_TITLE_DATA_LEAK_PROTECTION'),
+			'disable_copy_screenshot' => Loc::getMessage('INTRANET_SETTINGS_FIELD_LABEL_DISABLE_SCREENSHOT_MSGVER_1'),
+			'disable_copy_text' => Loc::getMessage('INTRANET_SETTINGS_FIELD_LABEL_DISABLE_COPY_MSGVER_1'),
 		];
 		$otpData = $this->getOtpSettings();
+
 		if ($otpData['SECURITY_OTP_ENABLED'] ?? false)
 		{
 			$searchIndex['settings-security-section-otp'] = Loc::getMessage('INTRANET_SETTINGS_SECTION_TITLE_OTP');
 		}
+
 		if ($this->isCloud)
 		{
 			$searchIndex['settings-security-section-access_ip'] = Loc::getMessage('INTRANET_SETTINGS_SECTION_TITLE_ACCESS_IP');
 			$searchIndex['settings-security-section-black_list'] = Loc::getMessage('INTRANET_SETTINGS_SECTION_TITLE_BLACK_LIST');
+		}
+
+		if (IsModuleInstalled('im') && Option::get('im', 'auto_delete_messages_activated', 'N') === 'Y')
+		{
+			$searchIndex['isAutoDeleteMessagesEnabled'] = Loc::getMessage('INTRANET_SETTINGS_FIELD_LABEL_ALLOW_AUTO_DELETE_TO_BE_ENABLED');
 		}
 
 		$searchEngine = SearchEngine::initWithDefaultFormatter($searchIndex);

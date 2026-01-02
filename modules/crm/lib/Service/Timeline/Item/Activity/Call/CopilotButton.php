@@ -3,29 +3,29 @@
 namespace Bitrix\Crm\Service\Timeline\Item\Activity\Call;
 
 use Bitrix\AI\Config;
-use Bitrix\Crm\Integration\AI\AIManager;
 use Bitrix\Crm\Integration\AI\Operation\OperationState;
 use Bitrix\Crm\Integration\AI\Operation\Scenario;
 use Bitrix\Crm\Integration\AI\SuitableAudiosChecker;
 use Bitrix\Crm\Service\Timeline\Context;
 use Bitrix\Crm\Service\Timeline\Item\AssociatedEntityModel;
+use Bitrix\Crm\Service\Timeline\Item\Mixin\CopilotButtonTrait;
 use Bitrix\Crm\Service\Timeline\Layout;
 use Bitrix\Crm\Service\Timeline\Layout\Action\JsEvent;
 use Bitrix\Crm\Service\Timeline\Layout\Footer\Button;
 use Bitrix\Crm\Service\Timeline\Layout\Menu\MenuItem;
-use Bitrix\Crm\Settings\Crm;
 use Bitrix\Main\Localization\Loc;
 
 final class CopilotButton extends Button
 {
+	use CopilotButtonTrait;
+
 	private readonly OperationState $operationState;
 	private ?JsEvent $jsEventAction;
 
 	public function __construct(
 		private readonly Context $context,
 		private readonly ?AssociatedEntityModel $model,
-		private readonly int $activityId,
-		private readonly bool $isMultiScenario
+		private readonly int $activityId
 	)
 	{
 		parent::__construct(
@@ -43,7 +43,7 @@ final class CopilotButton extends Button
 			->addActionParamInt('activityId', $this->activityId)
 			->addActionParamInt('ownerTypeId', $this->context->getEntityTypeId())
 			->addActionParamInt('ownerId', $this->context->getEntityId())
-			->addActionParamString('scenario', $this->isMultiScenario ? Scenario::FULL_SCENARIO : Scenario::FILL_FIELDS_SCENARIO)
+			->addActionParamString('scenario', Scenario::FULL_SCENARIO)
 			->addActionParamBoolean('isCopilotBannerNeedShow', $this->isCopilotBannerNeedShow())
 		;
 
@@ -70,36 +70,8 @@ final class CopilotButton extends Button
 		;
 	}
 
-	private function fillAILicenceAttributes(): self
-	{
-		$this->props = [
-			'data-activity-id' => $this->activityId,
-		];
-
-		if (!AIManager::isAILicenceAccepted($this->context->getUserId()))
-		{
-			if (Crm::isBox())
-			{
-				$this->jsEventAction->addActionParamBoolean('isCopilotAgreementNeedShow', true);
-			}
-			else if (!$this->context->getUserPermissions()->isAdmin())
-			{
-				$this->props = [
-					'data-bitrix24-license-feature' => AIManager::AI_LICENCE_FEATURE_NAME,
-				];
-			}
-		}
-
-		return $this;
-	}
-
 	private function buildMenu(): array
 	{
-		if (!$this->isMultiScenario)
-		{
-			return [];
-		}
-
 		$fillFieldsScenarioState = Layout\Button::STATE_DEFAULT;
 		$callScoringScenarioState = Layout\Button::STATE_DEFAULT;
 		$fillFieldsScenarioAction = (clone $this->jsEventAction)
@@ -203,10 +175,7 @@ final class CopilotButton extends Button
 
 		$isFillFieldsScenarioSuccess = $this->operationState->isFillFieldsScenarioSuccess();
 		$isCallScoringScenarioSuccess = $this->operationState->isCallScoringScenarioSuccess();
-		$isAllSuccess = $this->isMultiScenario
-			? $isFillFieldsScenarioSuccess && $isCallScoringScenarioSuccess
-			: $isFillFieldsScenarioSuccess;
-		if ($isAllSuccess)
+		if ($isFillFieldsScenarioSuccess && $isCallScoringScenarioSuccess)
 		{
 			return true;
 		}
@@ -234,11 +203,7 @@ final class CopilotButton extends Button
 
 		$isFillFieldsScenarioError = $this->operationState->isFillFieldsScenarioErrorsLimitExceeded();
 		$isCallScoringScenarioError = $this->operationState->isCallScoringScenarioErrorsLimitExceeded();
-		$isAllError = $this->isMultiScenario
-			? $isFillFieldsScenarioError && $isCallScoringScenarioError
-			: $isFillFieldsScenarioError
-		;
-		if ($isAllError)
+		if ($isFillFieldsScenarioError && $isCallScoringScenarioError)
 		{
 			return true;
 		}

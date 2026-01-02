@@ -1,0 +1,4 @@
+<?php
+$MESS["VOX_DOCUMENT_STATUS_DECLINED"] = "Қабылданбады";
+$MESS["VOX_DOCUMENT_STATUS_IN_PROGRESS"] = "Тексеруде";
+$MESS["VOX_DOCUMENT_STATUS_VERIFIED"] = "Расталды";

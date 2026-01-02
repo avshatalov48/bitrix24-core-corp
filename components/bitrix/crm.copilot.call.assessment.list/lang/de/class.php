@@ -1,6 +1,12 @@
 <?php
+$MESS["CRM_COPILOT_CALL_ASSESSMENT_LIST_COLUMN_ACTIVITY"] = "Aktiv";
+$MESS["CRM_COPILOT_CALL_ASSESSMENT_LIST_COLUMN_ACTIVITY_CONFIRM_DIALOG_OK_BTN"] = "Ja";
+$MESS["CRM_COPILOT_CALL_ASSESSMENT_LIST_COLUMN_ACTIVITY_CONFIRM_DIALOG_TITLE"] = "Skript deaktivieren";
 $MESS["CRM_COPILOT_CALL_ASSESSMENT_LIST_COLUMN_ASSESSMENT_AVG"] = "Bewertung der Übereinstimmung mit dem Skript";
 $MESS["CRM_COPILOT_CALL_ASSESSMENT_LIST_COLUMN_ASSESSMENT_AVG_TOOLTIP"] = "Dieser Wert zeigt die durchschnittliche Bewertung aller Mitarbeiter an. Standardmäßig werden Werte unter #LOW_BORDER#% als schlecht und Werte über #HIGH_BORDER#% als gut eingestuft. Die Schwellenwerte können in den Skripteinstellungen geändert werden.";
+$MESS["CRM_COPILOT_CALL_ASSESSMENT_LIST_COLUMN_AVAILABILITY_CUSTOM"] = "#WEEKDAY_TYPE#, #FROM# bis #TO#";
+$MESS["CRM_COPILOT_CALL_ASSESSMENT_LIST_COLUMN_AVAILABILITY_HINT"] = "Dieses Skript ist derzeit nicht aktiv. Sie können den Aktivitätszeitraum in den Skripteinstellungen ändern.";
+$MESS["CRM_COPILOT_CALL_ASSESSMENT_LIST_COLUMN_AVAILABILITY_PERIOD"] = "#FROM# bis #TO#";
 $MESS["CRM_COPILOT_CALL_ASSESSMENT_LIST_COLUMN_CALL_TYPE"] = "Anruftyp";
 $MESS["CRM_COPILOT_CALL_ASSESSMENT_LIST_COLUMN_CLIENT"] = "Kundengruppe";
 $MESS["CRM_COPILOT_CALL_ASSESSMENT_LIST_COLUMN_GIST"] = "Kriterien";

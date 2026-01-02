@@ -3,6 +3,7 @@
 namespace Bitrix\BIConnector\ExternalSource;
 
 use Bitrix\Main;
+use Bitrix\BIConnector;
 use Bitrix\BIConnector\Integration\Superset\Integrator\Integrator;
 use Bitrix\BIConnector\Integration\Superset\Integrator\Request\IntegratorResponse;
 
@@ -36,7 +37,11 @@ final class SupersetIntegration
 		}
 
 		$responseData = $response->getData();
-		DatasetManager::update($dataset->getId(), ['EXTERNAL_ID' => $responseData['id']]);
+		$updateResult = Internal\ExternalDatasetTable::update($dataset->getId(), ['EXTERNAL_ID' => $responseData['id']]);
+		if (!$updateResult->isSuccess())
+		{
+			$result->addErrors($updateResult->getErrors());
+		}
 
 		return $result;
 	}
@@ -171,7 +176,47 @@ final class SupersetIntegration
 
 			return $result;
 		}
-		
+
+		$result->setData($response->getData());
+
+		return $result;
+	}
+
+	public function updateDataset(Internal\ExternalDataset $dataset): Main\Result
+	{
+		$result = new Main\Result();
+
+		$id = $dataset->getExternalId();
+		if (!$id)
+		{
+			$result->addError(new Main\Error(
+				Main\Localization\Loc::getMessage('SUPERSET_INTEGRATION_DATASET_NOT_FOUND_ERROR')
+			));
+
+			return $result;
+		}
+
+		$manager = BIConnector\Manager::getInstance();
+		$service = new BIConnector\Services\ApacheSuperset($manager);
+		$tableFields = $service->getTableFields($dataset->getName());
+
+		$columns = [];
+		foreach ($tableFields as $tableField)
+		{
+			$columns[] = [
+				'name' => $tableField['ID'],
+				'type' => $tableField['TYPE'],
+			];
+		}
+
+		$response = $this->integrator->updateDataset($id, ['columns' => $columns]);
+		if ($response->hasErrors())
+		{
+			$result->addErrors($response->getErrors());
+
+			return $result;
+		}
+
 		$result->setData($response->getData());
 
 		return $result;
@@ -185,7 +230,7 @@ final class SupersetIntegration
 	 */
 	public static function onAfterAddDataset(Main\Event $event): Main\EventResult
 	{
-		/** @var \Bitrix\BIConnector\ExternalSource\Internal\ExternalDataset $dataset */
+		/** @var Internal\ExternalDataset $dataset */
 		$dataset = $event->getParameter('dataset');
 
 		$supersetIntegration = new SupersetIntegration();
@@ -193,6 +238,27 @@ final class SupersetIntegration
 		if (!$createDatasetResult->isSuccess())
 		{
 			return new Main\EventResult(Main\EventResult::ERROR, new Main\Error($createDatasetResult->getError()));
+		}
+
+		return new Main\EventResult(Main\EventResult::SUCCESS);
+	}
+
+	/**
+	 * @see DatasetManager::EVENT_ON_AFTER_UPDATE_DATASET
+	 *
+	 * @param Main\Event $event
+	 * @return Main\EventResult
+	 */
+	public static function onAfterUpdateDataset(Main\Event $event): Main\EventResult
+	{
+		/** @var Internal\ExternalDataset $dataset */
+		$dataset = $event->getParameter('dataset');
+
+		$supersetIntegration = new SupersetIntegration();
+		$updateDatasetResult = $supersetIntegration->updateDataset($dataset);
+		if (!$updateDatasetResult->isSuccess())
+		{
+			return new Main\EventResult(Main\EventResult::ERROR, new Main\Error($updateDatasetResult->getError()));
 		}
 
 		return new Main\EventResult(Main\EventResult::SUCCESS);

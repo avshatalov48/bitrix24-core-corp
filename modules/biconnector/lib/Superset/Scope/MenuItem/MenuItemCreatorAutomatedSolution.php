@@ -22,11 +22,7 @@ final class MenuItemCreatorAutomatedSolution extends BaseMenuItemCreator
 			$items[] = [
 				'ID' => 'DASHBOARD_' . $dashboard->getId(),
 				'TEXT' => $dashboard->getTitle(),
-				'URL' => $this->getDetailUrl(
-					$dashboard,
-					$params,
-					['openFrom' => 'menu']
-				),
+				'ON_CLICK' => $this->createDashboardOpenEventFromMenu($dashboard, $params),
 			];
 		}
 

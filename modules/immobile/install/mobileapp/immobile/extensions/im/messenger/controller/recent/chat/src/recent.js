@@ -2,17 +2,20 @@
  * @module im/messenger/controller/recent/chat/recent
  */
 jn.define('im/messenger/controller/recent/chat/recent', (require, exports, module) => {
+	const { Type } = require('type');
 	const { clone } = require('utils/object');
-	const { Counters } = require('im/messenger/lib/counters');
-	const { Calls } = require('im/messenger/lib/integration/immobile/calls');
+	const { CallManager } = require('im/messenger/lib/integration/callmobile/call-manager');
 	const { MessengerEmitter } = require('im/messenger/lib/emitter');
 	const { BaseRecent } = require('im/messenger/controller/recent/lib');
-	const { RecentConverter } = require('im/messenger/lib/converter');
+	const { RecentUiConverter } = require('im/messenger/lib/converter/ui/recent');
 	const { EventType, ComponentCode } = require('im/messenger/const');
 	const { DialogRest } = require('im/messenger/provider/rest');
-	const { LoggerManager } = require('im/messenger/lib/logger');
 	const { ShareDialogCache } = require('im/messenger/cache/share-dialog');
-	const logger = LoggerManager.getInstance().getLogger('recent--chat-recent');
+	const { MessengerCounterSender } = require('im/messenger/lib/counters/counter-manager/messenger/sender');
+	const { readAllCountersOnClient } = require('im/messenger/lib/counters/counter-manager/messenger/actions');
+	const { serviceLocator } = require('im/messenger/lib/di/service-locator');
+	const { getLogger } = require('im/messenger/lib/logger');
+	const logger = getLogger('recent--chat-recent');
 
 	/**
 	 * @class ChatRecent
@@ -22,6 +25,8 @@ jn.define('im/messenger/controller/recent/chat/recent', (require, exports, modul
 		constructor(options = {})
 		{
 			super({ ...options, logger });
+
+			this.initShareDialogCache();
 		}
 
 		bindMethods()
@@ -29,6 +34,7 @@ jn.define('im/messenger/controller/recent/chat/recent', (require, exports, modul
 			super.bindMethods();
 
 			this.commentCountersDeleteHandler = this.commentCountersDeleteHandler.bind(this);
+			this.setCommentsHandler = this.setCommentsHandler.bind(this);
 			this.departmentColleaguesGetHandler = this.departmentColleaguesGetHandler.bind(this);
 		}
 
@@ -51,7 +57,13 @@ jn.define('im/messenger/controller/recent/chat/recent', (require, exports, modul
 
 			this.storeManager
 				.on('commentModel/deleteChannelCounters', this.commentCountersDeleteHandler)
+				.on('commentModel/setCounters', this.setCommentsHandler)
 			;
+		}
+
+		initShareDialogCache()
+		{
+			this.shareDialogCache = new ShareDialogCache();
 		}
 
 		/* region Events */
@@ -67,7 +79,11 @@ jn.define('im/messenger/controller/recent/chat/recent', (require, exports, modul
 			{
 				if (recentItem.params.canJoin)
 				{
-					this.joinCall(recentItem.params.call.id);
+					this.joinCall(
+						recentItem.params.call.id,
+						recentItem.params.call.uuid,
+						recentItem.params.call.associatedEntity,
+					);
 				}
 				else
 				{
@@ -97,17 +113,8 @@ jn.define('im/messenger/controller/recent/chat/recent', (require, exports, modul
 
 		onReadAll()
 		{
-			this.store.dispatch('dialoguesModel/clearAllCounters')
-				.then(() => {
-					return this.store.dispatch('recentModel/clearAllCounters');
-				})
-				.then(() => {
-					this.renderer.render();
-
-					Counters.update();
-
-					return DialogRest.readAllMessages();
-				})
+			readAllCountersOnClient()
+				.then(() => DialogRest.readAllMessages())
 				.then((result) => {
 					this.logger.info(`${this.constructor.name}.readAllMessages result:`, result);
 				})
@@ -117,11 +124,15 @@ jn.define('im/messenger/controller/recent/chat/recent', (require, exports, modul
 			;
 		}
 
-		joinCall(callId)
+		joinCall(callId, callUuid, associatedEntity)
 		{
-			Calls.joinCall(callId);
+			CallManager.getInstance().joinCall(callId, callUuid, associatedEntity);
 		}
 
+		/**
+		 * @param {RecentCallData} call
+		 * @param {RecentCallStatus} callStatus
+		 */
 		addCall(call, callStatus)
 		{
 			let status = callStatus;
@@ -133,7 +144,7 @@ jn.define('im/messenger/controller/recent/chat/recent', (require, exports, modul
 				status = 'remote';
 			}
 
-			const callItem = RecentConverter.toCallItem(status, call);
+			const callItem = RecentUiConverter.toCallItem(status, call);
 
 			this.saveCall(callItem);
 			this.drawCall(callItem);
@@ -159,21 +170,12 @@ jn.define('im/messenger/controller/recent/chat/recent', (require, exports, modul
 
 		drawCall(callItem)
 		{
-			this.view.findItem({ id: callItem.id }, (item) => {
-				if (item)
-				{
-					this.view.updateItem({ id: callItem.id }, callItem);
-
-					return;
-				}
-
-				this.view.addItems([callItem]);
-			});
+			this.upsert(callItem, false);
 		}
 
-		removeCallById(id)
+		removeCall(call)
 		{
-			this.view.removeItem({ id: `call${id}` });
+			this.removeItem(call, true);
 		}
 
 		/* endregion Events */
@@ -182,12 +184,57 @@ jn.define('im/messenger/controller/recent/chat/recent', (require, exports, modul
 		{
 			const { channelId } = mutation.payload.data;
 			const dialog = this.store.getters['dialoguesModel/getByChatId'](channelId);
-			const recentItem = clone(this.store.getters['recentModel/getById'](dialog.dialogId));
+			if (!dialog)
+			{
+				return;
+			}
 
+			const recentItem = clone(this.store.getters['recentModel/getById'](dialog.dialogId));
 			if (recentItem)
 			{
 				this.updateItems([recentItem]);
-				Counters.update();
+				serviceLocator.get('tab-counters').update();
+			}
+		}
+
+		/**
+		 * @param {MutationPayload<CommentsSetCountersData, CommentsSetCountersActions>} mutation.payload
+		 */
+		setCommentsHandler(mutation)
+		{
+			const { data, actionName } = mutation.payload;
+
+			if (actionName !== 'clearAllCounters')
+			{
+				return;
+			}
+
+			const { affectedChannels } = data;
+
+			if (!Type.isArrayFilled(affectedChannels))
+			{
+				return;
+			}
+			const recentItemList = [];
+
+			affectedChannels.forEach((channelId) => {
+				const dialog = this.store.getters['dialoguesModel/getByChatId'](channelId);
+				if (!dialog)
+				{
+					return;
+				}
+
+				const recentItem = this.store.getters['recentModel/getById'](dialog.dialogId);
+				if (recentItem)
+				{
+					recentItemList.push(clone(recentItem));
+				}
+			});
+
+			if (Type.isArrayFilled(recentItemList))
+			{
+				this.updateItems(recentItemList);
+				serviceLocator.get('tab-counters').update();
 			}
 		}
 
@@ -212,48 +259,32 @@ jn.define('im/messenger/controller/recent/chat/recent', (require, exports, modul
 		}
 
 		/**
-		 * @param {Array<object>} recentItems
+		 * @param {Array<object>} recentData
 		 * @return {Promise<any>}
 		 */
-		async saveRecentData(recentItems)
+		async saveRecentData(recentData)
 		{
-			const modelData = this.prepareDataForModels(recentItems);
+			const modelData = this.prepareDataForModels(recentData);
 
-			const usersPromise = await this.store.dispatch('usersModel/set', modelData.users);
-			const dialoguesPromise = await this.store.dispatch('dialoguesModel/set', modelData.dialogues);
-			const recentPromise = await this.store.dispatch('recentModel/set', modelData.recent);
-
-			if (this.recentService.pageNavigation.currentPage === 1)
+			void await this.store.dispatch('usersModel/set', modelData.users);
+			void await this.store.dispatch('dialoguesModel/set', modelData.dialogues);
+			void await this.store.dispatch('dialoguesModel/copilotModel/setCollection', modelData.copilot);
+			void await this.store.dispatch('recentModel/set', modelData.recent);
+			if (this.recentService.pageNavigation.currentPage === 2)
 			{
-				const recentIndex = [];
-				modelData.recent.forEach((item) => recentIndex.push(item.id.toString()));
+				this.deleteItemsFromStore(modelData.recent);
 
-				const idListForDeleteFromCache = [];
-				this.store.getters['recentModel/getCollection']()
-					.forEach((item) => {
-						if (!recentIndex.includes(item.id.toString()))
-						{
-							idListForDeleteFromCache.push(item.id);
-						}
-					});
-
-				idListForDeleteFromCache.forEach((id) => {
-					this.store.dispatch('recentModel/deleteFromModel', { id });
-				});
-
-				await this.saveShareDialogCache(modelData.recent);
+				await this.saveShareDialogCache();
 			}
-
-			return Promise.all([usersPromise, dialoguesPromise, recentPromise]);
+			MessengerCounterSender.getInstance().sendRecentPageLoaded(modelData.counterState);
 		}
 
 		/**
-		 * @param {Array} recentItems
 		 * @return {Promise}
 		 */
-		saveShareDialogCache(recentItems)
+		saveShareDialogCache()
 		{
-			return ShareDialogCache.saveRecentItemList(recentItems);
+			return this.shareDialogCache.saveRecentItemListThrottled();
 		}
 	}
 

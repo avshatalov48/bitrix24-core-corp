@@ -5,9 +5,9 @@
  */
 jn.define('im/messenger/db/model-writer/vuex/reaction', (require, exports, module) => {
 	const { Type } = require('type');
-	const { LoggerManager } = require('im/messenger/lib/logger');
+	const { getLogger } = require('im/messenger/lib/logger');
 	const { DialogHelper } = require('im/messenger/lib/helper');
-	const logger = LoggerManager.getInstance().getLogger('repository--reaction');
+	const logger = getLogger('repository--reaction');
 	const { Writer } = require('im/messenger/db/model-writer/vuex/writer');
 
 	class ReactionWriter extends Writer
@@ -62,8 +62,7 @@ jn.define('im/messenger/db/model-writer/vuex/reaction', (require, exports, modul
 				return;
 			}
 
-			const modelMessage = this.store.getters['messagesModel/getById'](reaction.messageId);
-			const dialogHelper = DialogHelper.createByChatId(modelMessage.chatId);
+			const dialogHelper = DialogHelper.createByDialogId(reaction.dialogId);
 			if (!dialogHelper?.isLocalStorageSupported)
 			{
 				return;
@@ -107,8 +106,7 @@ jn.define('im/messenger/db/model-writer/vuex/reaction', (require, exports, modul
 
 			const reactionList = [];
 			data.reactionList.forEach((reaction) => {
-				const modelMessage = this.store.getters['messagesModel/getById'](reaction.messageId);
-				const dialogHelper = DialogHelper.createByChatId(modelMessage.chatId);
+				const dialogHelper = DialogHelper.createByDialogId(reaction.dialogId);
 				if (!dialogHelper?.isLocalStorageSupported)
 				{
 					return;
@@ -159,8 +157,7 @@ jn.define('im/messenger/db/model-writer/vuex/reaction', (require, exports, modul
 				return;
 			}
 
-			const modelMessage = this.store.getters['messagesModel/getById'](reaction.messageId);
-			const dialogHelper = DialogHelper.createByChatId(modelMessage.chatId);
+			const dialogHelper = DialogHelper.createByDialogId(reaction.dialogId);
 			if (!dialogHelper?.isLocalStorageSupported)
 			{
 				return;

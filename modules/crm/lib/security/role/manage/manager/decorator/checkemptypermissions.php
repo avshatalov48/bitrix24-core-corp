@@ -13,6 +13,9 @@ use Bitrix\Main\Localization\Loc;
 use Bitrix\Main\Result;
 use Bitrix\Main\Web\Uri;
 
+/**
+ * Forbids save of roles that don't have at least one allowing permission.
+ */
 class CheckEmptyPermissions implements RoleSelectionManager
 {
 	public function __construct(
@@ -49,7 +52,7 @@ class CheckEmptyPermissions implements RoleSelectionManager
 				{
 					$identifier = PermCodeTransformer::getInstance()->decodeAccessRightCode($accessRight->id);
 				}
-				catch (ArgumentException $e)
+				catch (ArgumentException)
 				{
 					continue;
 				}
@@ -67,14 +70,14 @@ class CheckEmptyPermissions implements RoleSelectionManager
 				$control = $permission->getControlMapper();
 				$value = is_array($accessRight->value) ? $accessRight->value : [$accessRight->value];
 
-				if ($value === [\Bitrix\Crm\Security\Role\Manage\AttrPreset\UserRoleAndHierarchy::INHERIT])
+				if ($value === [\Bitrix\Crm\Security\Role\Manage\AttrPreset\UserDepartmentAndOpened::INHERIT])
 				{
 					continue;
 				}
 				$attr = $control->getAttrFromUiValue($value);
 				$settings = $control->getSettingsFromUiValue($value);
 
-				if (!\Bitrix\Crm\Security\Role\Utils\RolePermissionChecker::isPermissionEmpty(new PermissionModel(
+				if (\Bitrix\Crm\Security\Role\Utils\RolePermissionChecker::isPermissionAllowsAnything(new PermissionModel(
 					$identifier->entityCode,
 					$identifier->permCode,
 					(string)$identifier->field,

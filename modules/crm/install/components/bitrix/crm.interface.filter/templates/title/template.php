@@ -1,12 +1,13 @@
 <?php
 
-if (!defined("B_PROLOG_INCLUDED") || B_PROLOG_INCLUDED !== true)
+if (!defined('B_PROLOG_INCLUDED') || B_PROLOG_INCLUDED !== true)
 {
 	die();
 }
 
 use Bitrix\Crm\Component\EntityList\GridId;
 use Bitrix\Crm\Integration\Intranet\BindingMenu\SectionCode;
+use Bitrix\Crm\RepeatSale\Widget\WidgetManager;
 use Bitrix\Crm\UI\Tools\NavigationBar;
 use Bitrix\Main\Loader;
 use Bitrix\Main\Page\Asset;
@@ -112,82 +113,99 @@ if (isset($arParams['~FILTER']) && is_array($arParams['~FILTER']))
 $APPLICATION->includeComponent('bitrix:crm.filterdependent.wrapper', '');
 
 //region Filter Navigation Bar
-$isBitrix24Template = SITE_TEMPLATE_ID === 'bitrix24';
 $navigationBarId = htmlspecialcharsbx("{$filterIDLc}_nav_bar");
 $navigationBar = new NavigationBar($arParams);
 $viewList = $navigationBar->getSwitchViewList();
 
-Extension::load(['crm.toolbar-component', 'ui.fonts.opensans']);
+Extension::load(['crm.toolbar-component', 'ui.fonts.opensans', 'ui.actions-bar']);
 
+$shouldRenderNavigation = !empty($viewList['items']);
+$shouldRenderCounters = !empty($arParams['COUNTER_PANEL']) && is_array($arParams['COUNTER_PANEL']);
+$bindingMenuMatches = [];
+$shouldRenderIntranetBindingsMenu = Loader::includeModule('intranet')
+	&& $navigationBar->isEnabled()
+	&& preg_match(NavigationBar::BINDING_MENU_MASK, $arParams['GRID_ID'], $bindingMenuMatches)
+	&& mb_stripos($arParams['GRID_ID'], GridId::DEFAULT_GRID_MY_COMPANY_SUFFIX) === false
+;
+$shouldRenderAutomationButton = $arResult['SHOW_AUTOMATION_VIEW'] && !empty($navigationBar->getAutomationView());
+$shouldRenderRepeatSaleButton = $arResult['SHOW_REPEAT_SALE_VIEW'] && !empty($navigationBar->getRepeatSaleView());
+
+$shouldRenderActionsBar = $shouldRenderNavigation || $shouldRenderCounters || $shouldRenderIntranetBindingsMenu || $shouldRenderAutomationButton || $shouldRenderRepeatSaleButton;
 
 $belowPageTitleFilled = false;
 
-// switch view panel region
-if($isBitrix24Template)
+if ($shouldRenderActionsBar)
 {
+	// switch view panel region
 	$this->SetViewTarget('below_pagetitle', 100);
-}
-?>
+	?>
+	<div class="ui-actions-bar">
+		<?php if ($shouldRenderNavigation):
+			$belowPageTitleFilled = true;
+		?>
+			<div id="<?=$navigationBarId?>" class="ui-actions-bar__panel"></div>
+			<script>
+				// init navigation bar panel
+				(new BX.Crm.NavigationBar({
+					id: "<?= $navigationBarId ?>",
+					items: <?= CUtil::PhpToJSObject($viewList['items']) ?>,
+					binding: <?= CUtil::PhpToJSObject($viewList['binding']) ?>,
+				})).init();
+			</script>
+		<?php endif; ?>
 
-<?php if (!empty($viewList['items'])):
-	$belowPageTitleFilled = true;
-?>
-	<div id="<?=$navigationBarId?>" class="crm-view-switcher"></div>
-	<script>
-		BX.ready(function() {
-			// init navigation bar panel
-			(new BX.Crm.NavigationBar({
-				id: "<?= $navigationBarId ?>",
-				items: <?= CUtil::PhpToJSObject($viewList['items']) ?>,
-				binding: <?= CUtil::PhpToJSObject($viewList['binding']) ?>,
-			})).init();
-		});
-	</script>
-<?php endif; ?>
+		<?php
 
-<?php
-//  binding menu/automation region
-if($isBitrix24Template)
-{
-	$this->EndViewTarget();
-	$this->SetViewTarget('below_pagetitle', 10000);
-}
+		if ($shouldRenderCounters)
+		{
+			$APPLICATION->IncludeComponent(
+				'bitrix:crm.entity.counter.panel',
+				'',
+				$arParams['COUNTER_PANEL'],
+			);
+		}
 
-?>
-<div class="crm-view-switcher-buttons pagetitle-align-right-container">
-<?php
-	if (
-		Loader::includeModule('intranet')
-		&& $navigationBar->isEnabled()
-		&& preg_match(NavigationBar::BINDING_MENU_MASK, $arParams['GRID_ID'], $bindingMenuMatches)
-		&& mb_stripos($arParams['GRID_ID'], GridId::DEFAULT_GRID_MY_COMPANY_SUFFIX) === false
-	)
-	{
-		Extension::load('bizproc.script');
+		if ($shouldRenderIntranetBindingsMenu || $shouldRenderAutomationButton || $shouldRenderRepeatSaleButton):
+			?>
+			<div id="crm-view-switcher-buttons-right" class="ui-actions-bar__buttons crm-view-switcher-buttons">
+			<?php
+				if ($shouldRenderRepeatSaleButton)
+				{
+					echo $navigationBar->getRepeatSaleView();
+					WidgetManager::getInstance()->showBanner();
+				}
 
-		$belowPageTitleFilled = true;
+				if ($shouldRenderAutomationButton)
+				{
+					echo $navigationBar->getAutomationView();
+				}
 
-		$APPLICATION->includeComponent(
-			'bitrix:intranet.binding.menu',
-			'',
-			[
-				'SECTION_CODE' => SectionCode::SWITCHER,
-				'MENU_CODE' => $bindingMenuMatches[0],
-			]
-		);
-	}
+				if ($shouldRenderIntranetBindingsMenu)
+				{
+					Extension::load('bizproc.script');
 
-	if ($arResult['SHOW_AUTOMATION_VIEW'])
-	{
-		echo $navigationBar->getAutomationView();
-	}
-?>
-</div>
+					$belowPageTitleFilled = true;
 
-<?php
-
-if($isBitrix24Template)
-{
+					$APPLICATION->includeComponent(
+						'bitrix:intranet.binding.menu',
+						'',
+						[
+							'SECTION_CODE' => SectionCode::SWITCHER,
+							'MENU_CODE' => $bindingMenuMatches[0],
+						]
+					);
+				}
+			?>
+			</div>
+			<script>
+				(new BX.UI.ActionsBar.RightButtons({
+					buttonsContainer: document.getElementById('crm-view-switcher-buttons-right'),
+					collapsable: true,
+				})).init();
+			</script>
+		<?php endif; ?>
+	</div>
+	<?php
 	$this->EndViewTarget();
 }
 //endregion
@@ -200,6 +218,7 @@ if ($belowPageTitleFilled)
 
 if (empty($arParams['~RENDER_INTO_VIEW']))
 {
+	Bitrix\UI\Toolbar\Facade\Toolbar::setTitleNoShrink();
 	Bitrix\UI\Toolbar\Facade\Toolbar::addFilter([
 		'GRID_ID' => $gridID,
 		'FILTER_ID' => $filterID,
@@ -246,7 +265,7 @@ else
 			'ENABLE_LABEL' => true,
 			'ENABLE_ADDITIONAL_FILTERS' => true,
 			'CONFIG' => $arParams['~CONFIG'] ?? null,
-			'THEME' => Bitrix\Main\UI\Filter\Theme::LIGHT,
+			'THEME' => Bitrix\Main\UI\Filter\Theme::AIR,
 			'USE_CHECKBOX_LIST_FOR_SETTINGS_POPUP' => (bool)($arParams['USE_CHECKBOX_LIST_FOR_SETTINGS_POPUP'] ?? false),
 			'RESTRICTED_FIELDS' => ($arParams['RESTRICTED_FIELDS'] ?? []),
 		],

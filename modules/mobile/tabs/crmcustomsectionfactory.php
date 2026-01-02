@@ -9,8 +9,6 @@ use Bitrix\Mobile\Tab\FactoryTabable;
 
 final class CrmCustomSectionFactory implements FactoryTabable
 {
-	private const MINIMAL_API_VERSION = 45;
-
 	private Context $context;
 
 	private ?array $customSections = [];

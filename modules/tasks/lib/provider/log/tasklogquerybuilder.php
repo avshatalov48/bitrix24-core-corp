@@ -6,8 +6,8 @@ use Bitrix\Main\ArgumentException;
 use Bitrix\Main\ORM\Query\Query;
 use Bitrix\Main\SystemException;
 use Bitrix\Tasks\Internals\Task\LogTable;
-use Bitrix\Tasks\Provider\QueryBuilderInterface;
-use Bitrix\Tasks\Provider\TaskQueryInterface;
+use Bitrix\Tasks\Provider\Query\QueryBuilderInterface;
+use Bitrix\Tasks\Provider\Query\TaskQueryInterface;
 
 class TaskLogQueryBuilder implements QueryBuilderInterface
 {

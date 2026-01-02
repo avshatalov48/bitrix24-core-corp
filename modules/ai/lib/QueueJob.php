@@ -28,7 +28,7 @@ final class QueueJob
 	private const EVENT_SUCCESS = 'onQueueJobExecute';
 	private const EVENT_FAIL = 'onQueueJobFail';
 
-	private const TTL_SECONDS = 840;
+	private const TTL_SECONDS = 14400;
 	private const CALLBACK_PATH = '/bitrix/services/main/ajax.php?action=ai.api.queue.callbackBody&hash={hash}';
 	private const CLOUD_CALLBACK_PATH = '/bitrix/services/main/ajax.php?action=ai.controller.integration.b24cloudai.callbackSuccess&hash={hash}';
 	private const THIRDPARTY_CALLBACK_PATH = '/bitrix/services/main/ajax.php?action=ai.controller.integration.thirdparty.callbackSuccess&hash={hash}';

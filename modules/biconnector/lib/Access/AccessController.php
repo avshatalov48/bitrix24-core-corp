@@ -119,6 +119,40 @@ final class AccessController extends BaseAccessController
 			$ruleObject instanceof VariableRule
 				? $ruleObject->getPermissionMultiValues($params)
 				: $ruleObject->getPermissionValue($params)
-			;
+		;
+	}
+
+	/**
+	 * @param string $action
+	 * @return array|null
+	 */
+	public function getAllowedDashboardValue(string $action): ?array
+	{
+		$ruleObject = $this->ruleFactory->createFromAction($action, $this);
+		if (!$ruleObject instanceof VariableRule)
+		{
+			return null;
+		}
+
+		$params = ['action' => $action];
+
+		return $ruleObject->getPermissionAllowedDashboardIds($params);
+	}
+
+	/**
+	 * @param string $action
+	 * @return array|null
+	 */
+	public function getAllowedGroupValue(string $action): ?array
+	{
+		$ruleObject = $this->ruleFactory->createFromAction($action, $this);
+		if (!$ruleObject instanceof VariableRule)
+		{
+			return null;
+		}
+
+		$params = ['action' => $action];
+
+		return $ruleObject->getPermissionAllowedGroupIds($params);
 	}
 }

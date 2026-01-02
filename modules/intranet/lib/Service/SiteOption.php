@@ -9,7 +9,7 @@ class SiteOption implements OptionContract
 {
 	public function __construct(
 		protected readonly string $siteId,
-		protected readonly string $moduleName = 'intranet'
+		protected readonly string $moduleName = 'intranet',
 	)
 	{}
 

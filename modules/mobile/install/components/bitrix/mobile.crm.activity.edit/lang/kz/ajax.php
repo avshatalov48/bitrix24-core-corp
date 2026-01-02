@@ -1,0 +1,20 @@
+<?php
+$MESS["CRM_ACCESS_DENIED"] = "Қолжетімділікке тыйым салынған.";
+$MESS["CRM_ACTIVITY_COULD_NOT_DELETE"] = "Істі жою мүмкін болмады.";
+$MESS["CRM_ACTIVITY_EDIT_ACTION_DEFAULT_SUBJECT"] = "Жаңа іс (#DATE#)";
+$MESS["CRM_ACTIVITY_EDIT_EMAIL_ACTION_DEFAULT_SUBJECT"] = "Жаңа хат (#DATE#)";
+$MESS["CRM_ACTIVITY_EDIT_EMAIL_EMPTY_FROM_FIELD"] = "Жіберушіні көрсетіңіз.";
+$MESS["CRM_ACTIVITY_EDIT_EMAIL_EMPTY_TO_FIELD"] = "Алушыны көрсетіңіз.";
+$MESS["CRM_ACTIVITY_EDIT_INCOMING_CALL_ACTION_DEFAULT_SUBJECT_EXT"] = "#TITLE# кіріс қоңырау";
+$MESS["CRM_ACTIVITY_EDIT_INVALID_EMAIL"] = "#VALUE#' қателер бар, дұрыс e-mail енгізіңіз";
+$MESS["CRM_ACTIVITY_EDIT_MEETING_ACTION_DEFAULT_SUBJECT_EXT"] = "#TITLE# кездесу";
+$MESS["CRM_ACTIVITY_EDIT_OUTGOING_CALL_ACTION_DEFAULT_SUBJECT_EXT"] = "#TITLE# шығыс қоңырау";
+$MESS["CRM_ACTIVITY_EDIT_TITLE_EMAIL_FROM"] = "Кімнен";
+$MESS["CRM_ACTIVITY_EDIT_TITLE_EMAIL_SUBJECT"] = "Тақырып";
+$MESS["CRM_ACTIVITY_EDIT_TITLE_EMAIL_TO"] = "Кімге";
+$MESS["CRM_ACTIVITY_NOT_FOUND"] = "#ID#' идентификаторы бар істі табу мүмкін болмады.";
+$MESS["CRM_ACTIVITY_OWNER_ID_NOT_FOUND"] = "Иесінің идентификаторы табылмады.";
+$MESS["CRM_ACTIVITY_OWNER_NOT_FOUND"] = "Иесін анықтау мүмкін болмады.";
+$MESS["CRM_ACTIVITY_OWNER_TYPE_NOT_FOUND"] = "Иесінің түрі табылмады.";
+$MESS["CRM_ACTIVITY_SELECT_COMMUNICATION"] = "Қатысушыны таңдаңыз.";
+$MESS["CRM_ENTITY_TYPE_NOT_SUPPORTED"] = "TYPE_NOT_SUPPORTED: '#ENTITY_TYPE#' түріне ағымдағы контексте қолдау көрсетілмейді.";

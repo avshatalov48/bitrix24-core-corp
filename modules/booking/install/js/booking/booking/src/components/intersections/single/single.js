@@ -49,11 +49,10 @@ export const Single = {
 		{
 			return new TagSelector({
 				multiple: true,
-				addButtonCaption: this.loc('BOOKING_BOOKING_ADD_INTERSECTION'),
+				addButtonCaption: this.loc('BOOKING_BOOKING_ADD_INTERSECTION_MSGVER_1'),
 				showCreateButton: false,
 				maxHeight: 50,
 				dialogOptions: {
-					header: this.loc('BOOKING_BOOKING_ADD_INTERSECTION_DIALOG_HEADER'),
 					context: 'bookingResourceIntersection',
 					width: 290,
 					height: 340,
@@ -170,10 +169,10 @@ export const Single = {
 				return;
 			}
 
-			const deletedIds = previousResourcesIds.filter((id: number) => !resourcesIds.includes(id));
+			const removedIds = previousResourcesIds.filter((id: number) => !resourcesIds.includes(id));
 			const newIds = resourcesIds.filter((id: number) => !previousResourcesIds.includes(id));
 
-			deletedIds.forEach((id: number) => {
+			removedIds.forEach((id: number) => {
 				const item: Item = this.selector.getDialog().getItem([EntitySelectorEntity.Resource, id]);
 				this.selector.getDialog().removeItem(item);
 
@@ -183,6 +182,11 @@ export const Single = {
 
 			newIds.forEach((id: number) => {
 				const resource: ResourceModel = this.$store.getters[`${Model.Resources}/getById`](id);
+				if (!resource || resource.isDeleted)
+				{
+					return;
+				}
+
 				const resourceType: ResourceTypeModel = this.$store.getters[`${Model.ResourceTypes}/getById`](resource.typeId);
 
 				this.selector.getDialog().addItem({

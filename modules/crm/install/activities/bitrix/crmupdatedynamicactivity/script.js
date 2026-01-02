@@ -1,11 +1,17 @@
+/* eslint-disable */
 (function (exports,main_core,main_popup,bizproc_automation) {
 	'use strict';
 
+	function _classPrivateMethodInitSpec(obj, privateSet) { _checkPrivateRedeclaration(obj, privateSet); privateSet.add(obj); }
+	function _checkPrivateRedeclaration(obj, privateCollection) { if (privateCollection.has(obj)) { throw new TypeError("Cannot initialize the same private elements twice on an object"); } }
+	function _classPrivateMethodGet(receiver, privateSet, fn) { if (!privateSet.has(receiver)) { throw new TypeError("attempted to get private field on non-instance"); } return fn; }
 	var namespace = main_core.Reflection.namespace('BX.Crm.Activity');
+	var _initOnOpenFilterFieldsMenu = /*#__PURE__*/new WeakSet();
 	var CrmUpdateDynamicActivity = /*#__PURE__*/function () {
 	  function CrmUpdateDynamicActivity(options) {
 	    var _this = this;
 	    babelHelpers.classCallCheck(this, CrmUpdateDynamicActivity);
+	    _classPrivateMethodInitSpec(this, _initOnOpenFilterFieldsMenu);
 	    if (main_core.Type.isPlainObject(options)) {
 	      this.documentType = options.documentType;
 	      this.isRobot = options.isRobot;
@@ -58,30 +64,17 @@
 	        main_core.Event.bind(this.addConditionButton, 'click', this.onAddConditionButtonClick.bind(this));
 	      }
 	      this.initAutomationContext();
+	      _classPrivateMethodGet(this, _initOnOpenFilterFieldsMenu, _initOnOpenFilterFieldsMenu2).call(this);
 	    }
 	  }, {
 	    key: "initAutomationContext",
 	    value: function initAutomationContext() {
-	      var _this2 = this;
 	      try {
 	        bizproc_automation.getGlobalContext();
-	        if (this.isRobot) {
-	          this.onOpenFilterFieldsMenu = function (event) {
-	            var dialog = bizproc_automation.Designer.getInstance().getRobotSettingsDialog();
-	            var template = dialog.template;
-	            var robot = dialog.robot;
-	            if (template && robot) {
-	              template.onOpenMenu(event, robot);
-	            }
-	          };
-	        }
-	      } catch (error) {
+	      } catch (_unused) {
 	        bizproc_automation.setGlobalContext(new bizproc_automation.Context({
 	          document: this.document
 	        }));
-	        this.onOpenFilterFieldsMenu = function (event) {
-	          return _this2.addBPFields(event.getData().selector);
-	        };
 	      }
 	    }
 	  }, {
@@ -246,9 +239,9 @@
 	  }, {
 	    key: "renderEntityFields",
 	    value: function renderEntityFields() {
-	      var _this3 = this;
+	      var _this2 = this;
 	      Object.keys(this.currentValues.get(this.currentEntityTypeId)).forEach(function (fieldId) {
-	        return _this3.addCondition(fieldId);
+	        return _this2.addCondition(fieldId);
 	      });
 	    }
 	  }, {
@@ -418,6 +411,23 @@
 	  }]);
 	  return CrmUpdateDynamicActivity;
 	}();
+	function _initOnOpenFilterFieldsMenu2() {
+	  var _this3 = this;
+	  if (this.isRobot) {
+	    this.onOpenFilterFieldsMenu = function (event) {
+	      var dialog = bizproc_automation.Designer.getInstance().getRobotSettingsDialog();
+	      var template = dialog.template;
+	      var robot = dialog.robot;
+	      if (template && robot) {
+	        template.onOpenMenu(event, robot);
+	      }
+	    };
+	  } else {
+	    this.onOpenFilterFieldsMenu = function (event) {
+	      return _this3.addBPFields(event.getData().selector);
+	    };
+	  }
+	}
 	namespace.CrmUpdateDynamicActivity = CrmUpdateDynamicActivity;
 
 }((this.window = this.window || {}),BX,BX.Main,BX.Bizproc.Automation));

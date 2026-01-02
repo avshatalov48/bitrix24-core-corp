@@ -2459,4 +2459,13 @@ abstract class Base
 
 		return true;
 	}
+
+	protected function canDeleteItem(int $entityTypeId, int $itemId): bool
+	{
+		return Crm\Service\Container::getInstance()
+			->getUserPermissions($this->getOwner())
+			->item()
+			->canDelete($entityTypeId, $itemId)
+		;
+	}
 }

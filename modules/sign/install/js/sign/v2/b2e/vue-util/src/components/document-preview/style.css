@@ -1,0 +1,30 @@
+.sign-b2e_document_preview_icon {
+	background-image: url("data:image/svg+xml;charset=utf-8,%3Csvg width='40' height='40' fill='none' xmlns='http://www.w3.org/2000/svg'%3E%3Crect width='40' height='40' rx='4' fill='%23000' fill-opacity='.4'/%3E%3Cpath fill-rule='evenodd' clip-rule='evenodd' d='M22.3 23.714a6.369 6.369 0 111.414-1.414l3.625 3.625a.5.5 0 010 .707l-.707.707a.5.5 0 01-.707 0L22.3 23.714zm.92-5.156a4.661 4.661 0 11-9.323 0 4.661 4.661 0 019.323 0z' fill='%23fff'/%3E%3Cpath fill-rule='evenodd' clip-rule='evenodd' d='M18.299 15.523a.5.5 0 00-.5.5v1.775h-1.775a.5.5 0 00-.5.5v.516a.5.5 0 00.5.5H17.8v1.775a.5.5 0 00.5.5h.516a.5.5 0 00.5-.5v-1.775h1.775a.5.5 0 00.5-.5v-.516a.5.5 0 00-.5-.5h-1.775v-1.775a.5.5 0 00-.5-.5H18.3z' fill='%23fff'/%3E%3C/svg%3E");
+	position: absolute;
+	width: 40px;
+	height: 40px;
+	cursor: pointer;
+	right: 5px;
+	bottom: 8px;
+	display: none;
+}
+
+.sign-b2e_document_preview_container:hover .sign-b2e_document_preview_icon {
+	display: block;
+}
+
+.sign-b2e_document_preview_image {
+	width: 98%;
+	cursor: pointer;
+	border-radius: 6px;
+	margin-right: 3px;
+	border-style: solid;
+	border-width: 1px;
+	display: inline-block;
+	border-color: var(--ui-color-palette-gray-10);
+}
+
+.sign-b2e_document_preview_container {
+	position: relative;
+	width: 85%;
+}

@@ -3,7 +3,7 @@
  */
 jn.define('elements-stack', (require, exports, module) => {
 	const { Type } = require('type');
-	const { Color, Indent, Component } = require('tokens');
+	const { Color, Indent } = require('tokens');
 	const { mergeImmutable } = require('utils/object');
 	const { PropTypes } = require('utils/validation');
 	const { Text } = require('ui-system/typography/text');
@@ -51,7 +51,7 @@ jn.define('elements-stack', (require, exports, module) => {
 			indent,
 			externalIndent,
 			maxElements = 999,
-			radius = Component.elementAccentCorner,
+			radius,
 			backgroundColor = Color.bgContentPrimary,
 			restView,
 			...restProps

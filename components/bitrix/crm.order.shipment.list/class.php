@@ -16,7 +16,6 @@ Loc::loadMessages(__FILE__);
 class CCrmOrderShipmentListComponent extends \CBitrixComponent
 {
 	protected $userId = 0;
-	protected $userPermissions;
 	protected $errors = array();
 	protected $isInternal = false;
 
@@ -80,9 +79,9 @@ class CCrmOrderShipmentListComponent extends \CBitrixComponent
 			return false;
 		}
 
-		$this->userPermissions = CCrmPerms::GetCurrentUserPermissions();
+		$this->userPermissionsService = Container::getInstance()->getUserPermissions();
 
-		if (!\Bitrix\Crm\Order\Permissions\Order::checkReadPermission(0, $this->userPermissions))
+		if (!$this->userPermissionsService->entityType()->canReadItems(CCrmOwnerType::Order))
 		{
 			$this->errors[] = new Main\Error(Loc::getMessage('CRM_PERMISSION_DENIED'));
 
@@ -169,7 +168,7 @@ class CCrmOrderShipmentListComponent extends \CBitrixComponent
 							continue;
 
 
-						$hasDelPerm = \Bitrix\Crm\Order\Permissions\Order::checkDeletePermission($id, $this->userPermissions);
+						$hasDelPerm = $this->userPermissionsService->item()->canDelete(CCrmOwnerType::Order, $id);
 
 						if(!$hasDelPerm)
 							continue;
@@ -218,7 +217,7 @@ class CCrmOrderShipmentListComponent extends \CBitrixComponent
 					{
 						if($shipment = \Bitrix\Crm\Order\Manager::getShipmentObject($id))
 						{
-							if($hasDelPerm = \Bitrix\Crm\Order\Permissions\Order::checkDeletePermission($id, $this->userPermissions))
+							if($hasDelPerm = $this->userPermissionsService->item()->canDelete(CCrmOwnerType::Order, $id))
 							{
 								$order = $shipment->getCollection()->getOrder();
 								$res = $shipment->delete();
@@ -406,9 +405,9 @@ class CCrmOrderShipmentListComponent extends \CBitrixComponent
 
 		$this->arResult['IS_EXTERNAL_FILTER'] = false;
 		$this->arResult['GRID_ID'] = 'CRM_ORDER_SHIPMENT_SHIPMENT_LIST_V12'.($this->isInternal && !empty($this->arParams['GRID_ID_SUFFIX']) ? '_'.$this->arParams['GRID_ID_SUFFIX'] : '');
-		$this->arResult['PERMS']['ADD'] = \Bitrix\Crm\Order\Permissions\Shipment::checkCreatePermission($this->userPermissions);
-		$this->arResult['PERMS']['WRITE'] = \Bitrix\Crm\Order\Permissions\Shipment::checkUpdatePermission(0, $this->userPermissions);
-		$this->arResult['PERMS']['DELETE'] = \Bitrix\Crm\Order\Permissions\Shipment::checkDeletePermission(0, $this->userPermissions);
+		$this->arResult['PERMS']['ADD'] = $this->userPermissionsService->entityType()->canAddItems(CCrmOwnerType::Order);
+		$this->arResult['PERMS']['WRITE'] = $this->userPermissionsService->entityType()->canUpdateItems(CCrmOwnerType::Order);
+		$this->arResult['PERMS']['DELETE'] = $this->userPermissionsService->entityType()->canDeleteItems(CCrmOwnerType::Order);
 		$this->arResult['AJAX_MODE'] = isset($this->arParams['AJAX_MODE']) ? $this->arParams['AJAX_MODE'] : ($this->arResult['INTERNAL'] ? 'N' : 'Y');
 		$this->arResult['AJAX_ID'] = isset($this->arParams['AJAX_ID']) ? $this->arParams['AJAX_ID'] : '';
 		$this->arResult['AJAX_OPTION_JUMP'] = isset($this->arParams['AJAX_OPTION_JUMP']) ? $this->arParams['AJAX_OPTION_JUMP'] : 'N';
@@ -770,21 +769,12 @@ class CCrmOrderShipmentListComponent extends \CBitrixComponent
 
 		if (!empty($orderIds) && !(is_object($USER) && $USER->IsAdmin()))
 		{
-			$orderAttrs = \Bitrix\Crm\Order\Permissions\Order::getPermissionAttributes($orderIds);
+			$this->userPermissionsService->item()->preloadPermissionAttributes(CCrmOwnerType::Order, $orderIds);
 
 			foreach ($orderIds as $orderId)
 			{
-				$orderPermissions[$orderId]['EDIT'] = \Bitrix\Crm\Order\Permissions\Order::checkUpdatePermission(
-					$orderId,
-					$this->userPermissions,
-					array('ENTITY_ATTRS' => $orderAttrs)
-				);
-
-				$orderPermissions[$orderId]['DELETE'] = \Bitrix\Crm\Order\Permissions\Order::checkDeletePermission(
-					$orderId,
-					$this->userPermissions,
-					array('ENTITY_ATTRS' => $orderAttrs)
-				);
+				$orderPermissions[$orderId]['EDIT'] = $this->userPermissionsService->item()->canUpdate(CCrmOwnerType::Order, $orderId);
+				$orderPermissions[$orderId]['DELETE'] = $this->userPermissionsService->item()->canDelete(CCrmOwnerType::Order, $orderId);
 			}
 		}
 

@@ -14,18 +14,7 @@ if(!Bitrix\Crm\Integration\Bitrix24Manager::isAccessEnabled(CCrmOwnerType::Lead)
 }
 else
 {
-	$isBitrix24Template = SITE_TEMPLATE_ID === 'bitrix24';
-	if($isBitrix24Template)
-	{
-		$this->SetViewTarget('below_pagetitle', 0);
-	}
-
 	$applyFilter = \Bitrix\Main\Application::getInstance()->getContext()->getRequest()->getQuery('apply_filter') === 'Y';
-
-	if($isBitrix24Template)
-	{
-		$this->EndViewTarget();
-	}
 
 	$APPLICATION->ShowViewContent('crm-grid-filter');
 

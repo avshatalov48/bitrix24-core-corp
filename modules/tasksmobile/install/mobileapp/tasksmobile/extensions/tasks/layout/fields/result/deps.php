@@ -20,11 +20,13 @@ return [
 		'ui-system/blocks/avatar',
 		'ui-system/layout/card',
 		'ui-system/typography/text',
+		'ui-system/blocks/chips/chip-button',
 		'utils/date',
 
 		'tasks:layout/action-menu/actions',
 		'tasks:statemanager/redux/slices/tasks',
 		'tasks:statemanager/redux/slices/tasks-results',
+		'layout/ui/friendly-date/formatter-factory',
 	],
 	'bundle' => [
 		'./src/date',

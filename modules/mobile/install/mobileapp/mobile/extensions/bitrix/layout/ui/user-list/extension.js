@@ -3,39 +3,80 @@
  */
 jn.define('layout/ui/user-list', (require, exports, module) => {
 	const { Loc } = require('loc');
+	const { BottomSheet } = require('bottom-sheet');
 	const { UserList } = require('layout/ui/user-list/src/list');
+	const { ListItem } = require('layout/ui/user-list/src/list-item');
 
+	const DEFAULT_HEIGHT = 50;
+	/**
+	 * @typedef {UserListProps} UserListManagerProps
+	 * @property {string} [title]
+	 * @property {PageManager} [layoutWidget]
+	 *
+	 * @class UserListManager
+	 */
 	class UserListManager
 	{
-		static open(data)
+		/**
+		 * @public
+		 * @param {Object} props
+		 * @param {Array} props.users
+		 * @param {Function} [props.renderCustomDescription]
+		 * @param {Object} [props.layoutWidget]
+		 * @param {string} [props.title]
+		 * @param {string} [props.testId]
+		 */
+		static open(props)
 		{
-			const userList = new UserList({
-				users: data.users,
-				testId: (data.testId || ''),
-			});
-			const parentWidget = (data.layoutWidget || PageManager);
+			const title = UserListManager.#getTitle(props.title);
 
-			parentWidget.openWidget('layout', {
-				backdrop: {
-					bounceEnable: true,
-					swipeAllowed: true,
-					showOnTop: false,
-					hideNavigationBar: false,
-					horizontalSwipeAllowed: false,
-					shouldResizeContent: true,
-					mediumPositionPercent: 70,
-				},
-			}).then((layoutWidget) => {
-				layoutWidget.setTitle({
-					text: (data.title || Loc.getMessage('MOBILE_LAYOUT_UI_USER_LIST_DEFAULT_TITLE')),
+			UserListManager.openBottomSheet({ ...props, title });
+		}
+
+		/**
+		 * @param {Object} props
+		 * @param {number} [props.backdropMediumPositionPercent]
+		 * @param {Array} props.users
+		 * @param {string} [props.testId]
+		 * @param {string} [props.title]
+		 * @param {Object} [props.parentWidget=PageManager]
+		 * @param {Function} [props.renderCustomDescription]
+		 */
+		static openBottomSheet(props)
+		{
+			const mediumPositionPercent = props.backdropMediumPositionPercent ?? DEFAULT_HEIGHT;
+			const bottomSheet = new BottomSheet({
+				titleParams: {
+					text: props.title || Loc.getMessage('MOBILE_LAYOUT_UI_USER_LIST_DEFAULT_TITLE'),
 					type: 'dialog',
-				});
-				layoutWidget.showComponent(userList);
+				},
+				component: (layout) => {
+					return new UserList({
+						users: props.users,
+						testId: (props.testId || ''),
+						parentWidget: layout,
+						renderCustomDescription: props.renderCustomDescription || null,
+					});
+				},
+			});
 
-				userList.layoutWidget = layoutWidget;
-			}).catch(console.error);
+			void bottomSheet
+				.setParentWidget(props.parentWidget || PageManager)
+				.enableSwipe()
+				.enableBounce()
+				.disableShowOnTop()
+				.enableResizeContent()
+				.disableHorizontalSwipe()
+				.setMediumPositionPercent(mediumPositionPercent)
+				.disableOnlyMediumPosition()
+				.open();
+		}
+
+		static #getTitle(title)
+		{
+			return title || Loc.getMessage('MOBILE_LAYOUT_UI_USER_LIST_DEFAULT_TITLE');
 		}
 	}
 
-	module.exports = { UserListManager };
+	module.exports = { UserListManager, ListItem };
 });

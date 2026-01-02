@@ -10,6 +10,8 @@ final class FeatureResolver
 		'sendByEmployee',
 		'mobileSendByEmployee',
 		'mobileMyDocumentsGrid',
+		'memberServiceCached',
+		'signUntilDate',
 	];
 	private static self $instance;
 

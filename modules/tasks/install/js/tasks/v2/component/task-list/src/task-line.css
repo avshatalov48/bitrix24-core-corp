@@ -1,0 +1,70 @@
+.tasks-task-line-container {
+	display: flex;
+	border-top: 1px solid var(--ui-color-divider-default, #F0F0F0);
+	background: var(--ui-color-base-8);
+}
+
+.tasks-task-line-container.--last {
+	border-bottom-left-radius: var(--ui-border-radius-md);
+	border-bottom-right-radius: var(--ui-border-radius-md);
+}
+
+.tasks-task-line-wrapper {
+	display: flex;
+	flex: 1;
+	flex-direction: row;
+	justify-content: space-between;
+	align-items: center;
+	gap: var(--ui-space-inline-sm);
+	padding: var(--ui-space-inset-sm) var(--ui-space-inset-md2);
+}
+
+.tasks-task-line-title-container {
+	min-width: 200px;
+	max-width: 200px;
+	cursor: pointer;
+}
+
+.tasks-task-line-title {
+	display: block;
+	color: var(--ui-color-accent-main-link);
+	overflow: hidden;
+	text-overflow: ellipsis;
+	white-space: nowrap;
+}
+
+.tasks-task-line-fields-container {
+	display: flex;
+	flex-direction: row;
+	align-items: center;
+}
+
+.tasks-task-line-deadline-text {
+	padding-left: var(--ui-space-inline-2xs);
+}
+
+.tasks-task-line-deadline.--expired .tasks-task-line-deadline-text {
+	color: var(--ui-color-accent-main-alert);
+}
+
+.tasks-task-line-cross {
+	margin-left: auto;
+	cursor: pointer;
+	--ui-icon-set__icon-size: 20px;
+	--ui-icon-set__icon-color: var(--ui-color-base-4);
+	transition: opacity .2s;
+	opacity: 0;
+}
+
+.tasks-task-line-cross.--readonly {
+	pointer-events: none;
+	cursor: default;
+}
+
+.tasks-task-line-container:hover .tasks-task-line-cross:not(.--readonly) {
+	opacity: 1;
+}
+
+.tasks-task-line-skeleton-avatar {
+	margin-right: 12px;
+}

@@ -4,30 +4,9 @@
 /*#tasks_panel_menu_view_role_accomplice .main-buttons-item-counter*/
 /*{background: #ccc}*/
 
-[data-mib-counter-id="tasks_efficiency_counter"] {
-	background: #4fc3f7 !important;
+.main-buttons-item-super-title.tasks-counter-wrapper {
+	font-size: var(--ui-font-size-4xs);
 }
-
-[data-mib-counter-id="tasks_efficiency_counter"]::after {
-	content: '%';
-}
-
-#tasks_panel_menu_bic_efficiency_dashboards .main-buttons-item-counter {
-	background: #4fc3f7;
-}
-
-#tasks_panel_menu_bic_efficiency_dashboards .main-buttons-item-counter::after {
-	content: '%';
-}
-
-#tasks_panel_menu_group_view_effective .main-buttons-item-counter {
-    background: #4fc3f7;
-}
-
-#tasks_panel_menu_group_view_effective .main-buttons-item-counter::after {
-    content: '%';
-}
-
 .tasks-tariff-lock {
 	display: flex !important;
 	align-items: center;

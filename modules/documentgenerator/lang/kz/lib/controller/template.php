@@ -1,0 +1,5 @@
+<?php
+$MESS["DOCGEN_CONTROLLER_MODULE_INVALID"] = "#MODULE# модулін қосу мүмкін болмады";
+$MESS["DOCGEN_CONTROLLER_TEMPLATE_DOWNLOAD_ERROR"] = "Қалып файлын жүктеу мүмкін болмады";
+$MESS["DOCGEN_CONTROLLER_TEMPLATE_FILE_PREFIX"] = "Қалып";
+$MESS["DOCGEN_CONTROLLER_TEMPLATE_NOT_FOUND"] = "Қалып табылмады";

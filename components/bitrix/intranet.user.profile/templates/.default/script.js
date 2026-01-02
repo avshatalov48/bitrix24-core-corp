@@ -1,6 +1,6 @@
-;(function ()
+(function()
 {
-	var namespace = BX.namespace('BX.Intranet.UserProfile');
+	const namespace = BX.namespace('BX.Intranet.UserProfile');
 	if (namespace.Manager)
 	{
 		return;
@@ -12,58 +12,63 @@
 	};
 
 	namespace.Manager.prototype = {
-		init: function(params)
+		init(params)
 		{
 			this.signedParameters = params.signedParameters;
 			this.componentName = params.componentName;
-			this.canEditProfile = params.canEditProfile === "Y";
-			this.userId = params.userId || "";
-			this.userStatus = params.userStatus || "";
-			this.isIntegratorUser = params.isIntegratorUser === "Y";
-			this.isOwnProfile = params.isOwnProfile === "Y";
-			this.isSessionAdmin = params.isSessionAdmin === "Y";
+			this.canEditProfile = params.canEditProfile === 'Y';
+			this.userId = params.userId || '';
+			this.userStatus = params.userStatus || '';
+			this.isCollaber = params.isCollaber === 'Y';
+			this.userFullName = params.userFullName || '';
+			this.userPhoto = params.userPhoto || '';
+			this.isIntegratorUser = params.isIntegratorUser === 'Y';
+			this.isOwnProfile = params.isOwnProfile === 'Y';
+			this.isSessionAdmin = params.isSessionAdmin === 'Y';
 			this.urls = params.urls;
-			this.isExtranetUser = params.isExtranetUser === "Y";
-			this.adminRightsRestricted = params.adminRightsRestricted === "Y";
-			this.delegateAdminRightsRestricted = params.delegateAdminRightsRestricted === "Y";
-			this.isFireUserEnabled = params.isFireUserEnabled === "Y";
-			this.showSonetAdmin = params.showSonetAdmin === "Y";
+			this.isExtranetUser = params.isExtranetUser === 'Y';
+			this.adminRightsRestricted = params.adminRightsRestricted === 'Y';
+			this.delegateAdminRightsRestricted = params.delegateAdminRightsRestricted === 'Y';
+			this.isFireUserEnabled = params.isFireUserEnabled === 'Y';
+			this.showSonetAdmin = params.showSonetAdmin === 'Y';
 			this.languageId = params.languageId;
-			this.initialFields = params.initialFields;
 			this.siteId = params.siteId;
-			this.isCloud = params.isCloud === "Y";
-			this.isRusCloud = params.isRusCloud === "Y";
-			this.isCurrentUserIntegrator = params.isCurrentUserIntegrator === "Y";
-			this.personalMobile = this.initialFields["PERSONAL_MOBILE"];
+			this.isCloud = params.isCloud === 'Y';
+			this.isRusCloud = params.isRusCloud === 'Y';
+			this.isCurrentUserIntegrator = params.isCurrentUserIntegrator === 'Y';
+			this.personalMobile = params.personalMobile;
+			this.personalPhoto = params.personalPhoto;
 			this.isCurrentUserAdmin = params.isCurrentUserAdmin;
-			this.avatarUri = BX.type.isNotEmptyString(this.initialFields.PHOTO) ? this.initialFields.PHOTO : null;
+			this.avatarUri = BX.type.isNotEmptyString(params.photo) ? params.photo : null;
 			this.userpicUploadAttribute = params.userpicUploadAttribute ?? '';
+			this.actionsAvailability = params.actionsAvailability;
+			this.rootDepartment = params.rootDepartment;
 
 			this.entityEditorInstance = new namespace.EntityEditor({
 				managerInstance: this,
-				params: params
+				params,
 			});
 
-			BX.ready(function () {
+			BX.ready(() => {
 				this.tagsManagerInstance = new namespace.Tags({
 					managerInstance: this,
 					inputNode: document.getElementById('intranet-user-profile-tags-input'),
-					tagsNode: document.getElementById('intranet-user-profile-tags')
+					tagsNode: document.getElementById('intranet-user-profile-tags'),
 				});
 
 				this.stressLevelManagerInstance = new namespace.StressLevel({
 					managerInstance: this,
-					options: params
+					options: params,
 				});
 
 				this.gratsManagerInstance = new namespace.Grats({
 					managerInstance: this,
-					options: params
+					options: params,
 				});
 
 				this.profilePostManagerInstance = new namespace.ProfilePost({
 					managerInstance: this,
-					options: params
+					options: params,
 				});
 
 				this.initAvatar();
@@ -75,40 +80,44 @@
 					this.initGdpr();
 				}
 
-				var subordinateMoreButton = BX("intranet-user-profile-subordinate-more");
+				const subordinateMoreButton = BX('intranet-user-profile-subordinate-more');
 				if (BX.type.isDomNode(subordinateMoreButton))
 				{
-					BX.bind(subordinateMoreButton, "click", function () {
+					BX.bind(subordinateMoreButton, 'click', () => {
 						this.loadMoreUsers(subordinateMoreButton);
-					}.bind(this));
+					});
 				}
 
-				var managerMoreButton = BX("intranet-user-profile-manages-more");
+				const managerMoreButton = BX('intranet-user-profile-manages-more');
 				if (BX.type.isDomNode(subordinateMoreButton))
 				{
-					BX.bind(managerMoreButton, "click", function () {
+					BX.bind(managerMoreButton, 'click', () => {
 						this.loadMoreUsers(managerMoreButton);
-					}.bind(this));
+					});
 				}
 
-				//hack for form view button
-				var bottomContainer = document.querySelector('.intranet-user-profile-bottom-controls');
-				var cardButton = document.getElementById('intranet-user-profile_buttons');
+				// hack for form view button
+				const bottomContainer = document.querySelector('.intranet-user-profile-bottom-controls');
+				const cardButton = document.getElementById('intranet-user-profile_buttons');
 				if (BX.type.isDomNode(bottomContainer) && BX.type.isDomNode(cardButton))
 				{
-					var cardButtonLink = cardButton.querySelector('.ui-entity-settings-link');
+					const cardButtonLink = cardButton.querySelector('.ui-entity-settings-link');
 					cardButtonLink.setAttribute('class', 'ui-btn ui-btn-sm ui-btn-light-border ui-btn-themes');
 					cardButton.parentNode.removeChild(cardButton);
 					bottomContainer.appendChild(cardButtonLink);
 				}
-			}.bind(this));
+
+				BX.addCustomEvent("BX.UI.EntityEditorAjax:onSubmit", BX.proxy((fields) => {
+					this.userFullName = fields.FULL_NAME;
+				}, this));
+			});
 		},
 
 		initAvatar()
 		{
 			const avatarOptions = {
 				size: 212,
-				userpicPath: this.avatarUri,
+				userpicPath: this.avatarUri ? encodeURI(this.avatarUri) : null,
 			};
 
 			if (this.userStatus === 'collaber')
@@ -154,74 +163,76 @@
 		{
 			return BX.Tag.render`
 				<div class="intranet-user-profile-userpic-remove" id="intranet-user-profile-photo-remove"
-					${this.initialFields.PERSONAL_PHOTO ? '' : 'hidden'}>
+					${this.personalPhoto ? '' : 'hidden'}>
 				</div>
 			`;
 		},
 
-		initAvailableActions: function()
+		initAvailableActions()
 		{
-			if (!this.canEditProfile)
-			{
-				return;
-			}
-
-			var actionElement = document.querySelector("[data-role='user-profile-actions-button']");
+			const actionElement = document.querySelector("[data-role='user-profile-actions-button']");
 			if (BX.type.isDomNode(actionElement))
 			{
-				BX.bind(actionElement, "click", BX.proxy(function () {
+				BX.bind(actionElement, 'click', BX.proxy(function() {
 					this.showActionPopup(BX.proxy_context);
 				}, this));
 			}
 		},
 
-		initGdpr: function ()
+		initGdpr()
 		{
-			var gdprInputs = document.querySelectorAll("[data-role='gdpr-input']");
+			const gdprInputs = document.querySelectorAll("[data-role='gdpr-input']");
 			gdprInputs.forEach(
-				function(currentValue, currentIndex, listObj) {
-					BX.bind(currentValue, "change", function () {
+				(currentValue, currentIndex, listObj) => {
+					BX.bind(currentValue, 'change', () => {
 						this.changeGdpr(currentValue);
-					}.bind(this));
-				}.bind(this)
+					});
+				},
 			);
 
-			var dropdownTarget = document.querySelector('.intranet-user-profile-column-block-title-dropdown');
-			BX.bind(dropdownTarget, "click", function () {
+			const dropdownTarget = document.querySelector('.intranet-user-profile-column-block-title-dropdown');
+			BX.bind(dropdownTarget, 'click', () => {
 				this.animateGdprBlock(dropdownTarget);
-			}.bind(this));
+			});
 		},
 
-		initAvatarLoader: function()
+		initAvatarLoader()
 		{
 			if (BX('intranet-user-profile-photo-camera')
 				&& BX('intranet-user-profile-photo-file'))
 			{
 				if (BX.AvatarEditor)
 				{
-					setTimeout(function() {
+					setTimeout(() => {
 						if (BX.AvatarEditor.isCameraAvailable() !== true)
 						{
 							BX.hide(BX('intranet-user-profile-photo-camera'));
 						}
 					}, 0);
 
-					var getEditor = function() {
-						var editor = BX.AvatarEditor.getInstanceById('intranet-user-profile-photo-file');
+					const getEditor = function() {
+						let editor = BX.AvatarEditor.getInstanceById('intranet-user-profile-photo-file');
 						if (editor === null)
 						{
 							editor = BX.AvatarEditor.createInstance('intranet-user-profile-photo-file', {
 								enableCamera: true,
-								enableMask: true
+								enableMask: true,
 							});
 							editor.subscribeOnFormIsReady('newPhoto', this.changePhoto.bind(this));
 						}
+
 						return editor;
 					}.bind(this);
 
-					BX.bind(BX('intranet-user-profile-photo-camera'), 'click', function() { getEditor().show('camera'); });
-					BX.bind(BX('intranet-user-profile-photo-file'), 'click', function(){ getEditor().show('file'); });
-					BX.bind(BX('intranet-user-profile-photo-mask'), 'click', function(){ getEditor().show('mask'); });
+					BX.bind(BX('intranet-user-profile-photo-camera'), 'click', () =>
+					{ getEditor().show('camera');
+					});
+					BX.bind(BX('intranet-user-profile-photo-file'), 'click', () =>
+                                                                      { getEditor().show('file');
+					});
+					BX.bind(BX('intranet-user-profile-photo-mask'), 'click', () =>
+                                                                      { getEditor().show('mask');
+					});
 				}
 				else
 				{
@@ -239,44 +250,44 @@
 			}));
 		},
 
-		showActionPopup: function(bindElement)
+		showActionPopup(bindElement)
 		{
-			var menuItems = [];
+			const menuItems = [];
 
 			if (this.showSonetAdmin)
 			{
 				menuItems.push({
-					text: BX.message(this.isSessionAdmin ? "INTRANET_USER_PROFILE_QUIT_ADMIN_MODE" : "INTRANET_USER_PROFILE_ADMIN_MODE"),
-					className: "menu-popup-no-icon",
-					onclick: function () {
+					text: BX.message(this.isSessionAdmin ? 'INTRANET_USER_PROFILE_QUIT_ADMIN_MODE' : 'INTRANET_USER_PROFILE_ADMIN_MODE'),
+					className: 'menu-popup-no-icon',
+					onclick() {
 						this.popupWindow.close();
 						__SASSetAdmin();
-					}
+					},
 				});
 			}
 
-			if (this.userStatus === "admin" && this.canEditProfile && !this.isOwnProfile)
+			if (this.userStatus === 'admin' && this.canEditProfile && !this.isOwnProfile)
 			{
 				menuItems.push({
-					text: BX.message("INTRANET_USER_PROFILE_REMOVE_ADMIN_RIGHTS"),
-					className: "menu-popup-no-icon",
-					onclick: BX.proxy(function () {
+					text: BX.message('INTRANET_USER_PROFILE_REMOVE_ADMIN_RIGHTS'),
+					className: 'menu-popup-no-icon',
+					onclick: BX.proxy(function() {
 						BX.proxy_context.popupWindow.close();
 						this.removeAdminRights();
-					}, this)
+					}, this),
 				});
 			}
 
-			if (this.userStatus === "employee" && this.canEditProfile && !this.isOwnProfile && !this.isCurrentUserIntegrator)
+			if (this.userStatus === 'employee' && this.canEditProfile && !this.isOwnProfile && !this.isCurrentUserIntegrator)
 			{
-				var itemText = BX.message("INTRANET_USER_PROFILE_SET_ADMIN_RIGHTS");
+				var itemText = BX.message('INTRANET_USER_PROFILE_SET_ADMIN_RIGHTS');
 				if (this.delegateAdminRightsRestricted)
 				{
-					itemText+= "<span class='intranet-user-profile-lock-icon'></span>";
+					itemText += "<span class='intranet-user-profile-lock-icon'></span>";
 				}
 				menuItems.push({
 					html: itemText,
-					onclick: BX.proxy(function () {
+					onclick: BX.proxy(function() {
 						BX.proxy_context.popupWindow.close();
 						if (this.adminRightsRestricted)
 						{
@@ -286,7 +297,7 @@
 							}
 							else
 							{
-								this.showConfirmPopup(BX.message("INTRANET_USER_PROFILE_MOVE_ADMIN_RIGHTS_CONFIRM"), this.setAdminRights.bind(this));
+								this.showConfirmPopup(BX.message('INTRANET_USER_PROFILE_MOVE_ADMIN_RIGHTS_CONFIRM'), this.setAdminRights.bind(this));
 							}
 						}
 						else if (this.isCloud)
@@ -302,23 +313,20 @@
 			}
 
 			if (
-				this.isCurrentUserAdmin === 'Y'
-				&& this.userStatus !== "fired"
-				&& this.userStatus !== "waiting"
-				&& !this.isOwnProfile
-				&& !BX.util.in_array(this.userStatus, ['email', 'shop' ])
+				this.actionsAvailability.fire
+				&& !BX.util.in_array(this.userStatus, ['email', 'shop', 'visitor', 'fired'])
 			)
 			{
-				itemText = BX.message("INTRANET_USER_PROFILE_FIRE");
+				itemText = BX.message('INTRANET_USER_PROFILE_FIRE');
 				if (!this.isFireUserEnabled && !this.isIntegratorUser)
 				{
-					itemText+= "<span class='intranet-user-profile-lock-icon'></span>";
+					itemText += "<span class='intranet-user-profile-lock-icon'></span>";
 				}
 
 				menuItems.push({
 					text: itemText,
-					className: "menu-popup-no-icon",
-					onclick: BX.proxy(function () {
+					className: 'menu-popup-no-icon',
+					onclick: BX.proxy(function() {
 						BX.proxy_context.popupWindow.close();
 						if (!this.isFireUserEnabled && !this.isIntegratorUser)
 						{
@@ -326,75 +334,95 @@
 						}
 						else
 						{
-							this.showConfirmPopup(BX.message("INTRANET_USER_PROFILE_FIRE_CONFIRM"), this.fireUser.bind(this));
+							this.showConfirmPopup(BX.message('INTRANET_USER_PROFILE_FIRE_CONFIRM'), this.fireUser.bind(this));
 						}
-					}, this)
+					}, this),
 				});
 			}
 
-			if (this.isCurrentUserAdmin === 'Y' && this.userStatus === "fired" && !this.isOwnProfile)
+			if (this.actionsAvailability.restore)
 			{
 				menuItems.push({
-					text: BX.message("INTRANET_USER_PROFILE_HIRE"),
-					className: "menu-popup-no-icon",
-					onclick: BX.proxy(function () {
+					text: BX.message('INTRANET_USER_PROFILE_HIRE'),
+					className: 'menu-popup-no-icon',
+					onclick: BX.proxy(function() {
 						BX.proxy_context.popupWindow.close();
-						this.showConfirmPopup(BX.message("INTRANET_USER_PROFILE_HIRE_CONFIRM"), this.hireUser.bind(this));
-					}, this)
+						this.showConfirmPopup(BX.message('INTRANET_USER_PROFILE_HIRE_CONFIRM'), this.hireUser.bind(this));
+					}, this),
 				});
 			}
 
-			if (this.isCurrentUserAdmin === 'Y' && this.userStatus === "waiting" && !this.isOwnProfile)
+			if (this.actionsAvailability.confirm)
 			{
 				menuItems.push({
-					text: BX.message("INTRANET_USER_PROFILE_ACTION_CONFIRM"),
-					className: "menu-popup-no-icon",
-					onclick: BX.proxy(function () {
+					text: BX.message('INTRANET_USER_PROFILE_ACTION_CONFIRM'),
+					className: 'menu-popup-no-icon',
+					onclick: BX.proxy(function() {
 						BX.proxy_context.popupWindow.close();
 						this.confirmUserRequest('Y');
-					}, this)
-				});
-
-				menuItems.push({
-					text: BX.message("INTRANET_USERPROFILE_ACTION_REFUSE"),
-					className: "menu-popup-no-icon",
-					onclick: BX.proxy(function () {
-						BX.proxy_context.popupWindow.close();
-						this.confirmUserRequest('N');
-					}, this)
+					}, this),
 				});
 			}
 
-			if (this.userStatus === "invited" && this.canEditProfile && !this.isOwnProfile)
+			if (this.actionsAvailability.decline)
 			{
 				menuItems.push({
-					text: BX.message("INTRANET_USER_PROFILE_REINVITE"),
-					className: "menu-popup-no-icon",
-					onclick: BX.proxy(function () {
+					text: BX.message('INTRANET_USERPROFILE_ACTION_REFUSE'),
+					className: 'menu-popup-no-icon',
+					onclick: BX.proxy(function() {
+						BX.proxy_context.popupWindow.close();
+						this.confirmUserRequest('N');
+					}, this),
+				});
+			}
+
+			if (this.userStatus === 'invited' && this.canEditProfile && !this.isOwnProfile)
+			{
+				menuItems.push({
+					text: BX.message('INTRANET_USER_PROFILE_REINVITE'),
+					className: 'menu-popup-no-icon',
+					onclick: BX.proxy(function() {
 						BX.proxy_context.popupWindow.close();
 						this.reinviteUser();
-					}, this)
+					}, this),
 				});
+			}
 
+			if (this.actionsAvailability.delete)
+			{
 				menuItems.push({
-					text: BX.message("INTRANET_USER_PROFILE_DELETE"),
-					className: "menu-popup-no-icon",
-					onclick: BX.proxy(function () {
+					text: BX.message('INTRANET_USER_PROFILE_DELETE'),
+					className: 'menu-popup-no-icon',
+					onclick: BX.proxy(function() {
 						BX.proxy_context.popupWindow.close();
-						this.showConfirmPopup(BX.message("INTRANET_USER_PROFILE_DELETE_CONFIRM"), this.deleteUser.bind(this));
-					}, this)
+						this.showConfirmPopup(BX.message('INTRANET_USER_PROFILE_DELETE_CONFIRM'), this.deleteUser.bind(this));
+					}, this),
 				});
 			}
 
 			if (this.isExtranetUser && this.canEditProfile && !this.isOwnProfile && this.isCloud)
 			{
 				menuItems.push({
-					text: BX.message("INTRANET_USER_PROFILE_MOVE_TO_INTRANET"),
-					className: "menu-popup-no-icon",
-					onclick: BX.proxy(function () {
+					text: BX.message('INTRANET_USER_PROFILE_MOVE_TO_INTRANET_MSGVER_1'),
+					className: 'menu-popup-no-icon',
+					onclick: BX.proxy(function() {
 						BX.proxy_context.popupWindow.close();
-						this.moveToIntranet();
-					}, this)
+						if (this.transferToIntranet)
+						{
+							this.transferToIntranet.destroy();
+							this.transferToIntranet = null;
+						}
+						const data = {
+							userType: this.isCollaber ? 'collaber' : 'extranet',
+							userName: this.userFullName,
+							userPhoto: this.userPhoto,
+							componentName: this.componentName,
+							signedParameters: this.signedParameters,
+							rootDepartment: this.rootDepartment,
+						};
+						this.transferToIntranet = new BX.Intranet.TransferToIntranetPopup(data);
+						this.transferToIntranet.show();
+					}, this),
 				});
 			}
 
@@ -402,94 +430,97 @@
 				this.isCloud
 				&& this.canEditProfile && !this.isOwnProfile
 				&& !this.isIntegratorUser
-				&& this.userStatus !== "fired"
-				&& this.userStatus !== "waiting"
+				&& !BX.util.in_array(this.userStatus, ['email', 'shop', 'waiting', 'fired', 'visitor'])
 			)
 			{
 				menuItems.push({
-					text: BX.message("INTRANET_USER_PROFILE_SET_INEGRATOR_RIGHTS"),
-					className: "menu-popup-no-icon",
-					onclick: BX.proxy(function () {
+					text: BX.message('INTRANET_USER_PROFILE_SET_INEGRATOR_RIGHTS'),
+					className: 'menu-popup-no-icon',
+					onclick: BX.proxy(function() {
 						BX.proxy_context.popupWindow.close();
-						this.showConfirmPopup(BX.message("INTRANET_USER_PROFILE_SET_INTEGRATOR_RIGHTS_CONFIRM"), this.setIntegratorRights.bind(this));
-					}, this)
+						this.showConfirmPopup(BX.message('INTRANET_USER_PROFILE_SET_INTEGRATOR_RIGHTS_CONFIRM'), this.setIntegratorRights.bind(this));
+					}, this),
 				});
 			}
 
-			BX.PopupMenu.show("user-profile-action-popup", bindElement, menuItems,
-			{
-				offsetTop: 0,
-				offsetLeft: 10,
-				angle: true,
-				events: {
-					onPopupClose: function ()
-					{
-						BX.PopupMenu.destroy();
-					}
-				}
-			});
+			BX.PopupMenu.show(
+				'user-profile-action-popup',
+				bindElement,
+				menuItems,
+				{
+					offsetTop: 0,
+					offsetLeft: 10,
+					angle: true,
+					events: {
+						onPopupClose()
+						{
+							BX.PopupMenu.destroy();
+						},
+					},
+				},
+			);
 		},
 
-		showConfirmPopup: function(text, confirmCallback)
+		showConfirmPopup(text, confirmCallback)
 		{
 			BX.PopupWindowManager.create({
-				id: "intranet-user-profile-confirm-popup",
+				id: 'intranet-user-profile-confirm-popup',
 				content:
-					BX.create("div", {
-						props : {
-							style : "max-width: 450px"
+					BX.create('div', {
+						props: {
+							style: 'max-width: 450px',
 						},
-						html: text
+						html: text,
 					}),
-				closeIcon : false,
-				lightShadow : true,
-				offsetLeft : 100,
-				overlay : true,
+				closeIcon: false,
+				lightShadow: true,
+				offsetLeft: 100,
+				overlay: true,
 				contentPadding: 10,
 				buttons: [
 					new BX.UI.CreateButton({
-						text: BX.message("INTRANET_USER_PROFILE_YES"),
+						text: BX.message('INTRANET_USER_PROFILE_YES'),
 						events: {
-							click: function (button, event) {
+							click(button, event) {
 								confirmCallback();
 								event.stopPropagation();
 								this.context.close();
-							}
-						}
+							},
+						},
 					}),
 					new BX.UI.CancelButton({
-						text : BX.message("INTRANET_USER_PROFILE_NO"),
-						events : {
-							click: function () {
+						text: BX.message('INTRANET_USER_PROFILE_NO'),
+						events: {
+							click() {
 								this.context.close();
-							}
-						}
-					})
+							},
+						},
+					}),
 				],
-				events : {
-					onPopupClose: function ()
+				events: {
+					onPopupClose()
 					{
 						this.destroy();
-					}
-				}
+					},
+				},
 			}).show();
 		},
 
-		getAdminConfirmPopup: function()
+		getAdminConfirmPopup()
 		{
 			const popup = BX.PopupWindowManager.create({
-				id: "intranet-user-profile-admin-confirm-popup",
+				id: 'intranet-user-profile-admin-confirm-popup',
 				content:
-					BX.create("div", {
-						props : {
-							style : "max-width: 450px"
+					BX.create('div', {
+						props: {
+							style: 'max-width: 450px',
 						},
 						html: BX.message('INTRANET_USER_PROFILE_MOVE_ADMIN_RIGHTS_SECURITY_CONFIRM_DESCRIPTION_MSGVER_1'),
 					}),
-				closeIcon : false,
-				lightShadow : true,
-				offsetLeft : 100,
-				overlay : true,
+				closeIcon: false,
+				lightShadow: true,
+				offsetLeft: 100,
+				overlay: true,
 				titleBar: BX.message('INTRANET_USER_PROFILE_MOVE_ADMIN_RIGHTS_SECURITY_CONFIRM_TITLE'),
 				contentPadding: 10,
 				buttons: [
@@ -497,15 +528,15 @@
 						text: BX.message('INTRANET_USER_PROFILE_CONFIRM_YES_MSGVER_1'),
 						events: {
 							click: (button, event) => {
-								this.setAdminRights()
+								this.setAdminRights();
 								event.stopPropagation();
 								popup.close();
-							}
-						}
+							},
+						},
 					}),
 					new BX.UI.CreateButton({
-						text : BX.message('INTRANET_USER_PROFILE_CONFIRM_YES_INTEGRATOR'),
-						events : {
+						text: BX.message('INTRANET_USER_PROFILE_CONFIRM_YES_INTEGRATOR'),
+						events: {
 							click: () => {
 								this.setIntegratorRights();
 								popup.close();
@@ -513,15 +544,15 @@
 						},
 					}),
 					new BX.UI.CancelButton({
-						text : BX.message('INTRANET_USER_PROFILE_CONFIRM_NO_MSGVER_1'),
-						events : {
+						text: BX.message('INTRANET_USER_PROFILE_CONFIRM_NO_MSGVER_1'),
+						events: {
 							click: () => {
 								popup.close();
 							},
 						},
 					}),
 				],
-				events : {
+				events: {
 					onPopupClose: () => {
 						popup.destroy();
 					},
@@ -531,47 +562,47 @@
 			return popup;
 		},
 
-		showFireInvitedUserPopup: function(callback)
+		showFireInvitedUserPopup(callback)
 		{
 			BX.PopupWindowManager.create({
-				id: "intranet-user-profile-fire-invited-popup",
+				id: 'intranet-user-profile-fire-invited-popup',
 				content:
-					BX.create("div", {
-						props : {
-							style : "max-width: 450px"
+					BX.create('div', {
+						props: {
+							style: 'max-width: 450px',
 						},
-						html: BX.message('INTRANET_USER_PROFILE_FIRE_INVITED_USER')
+						html: BX.message('INTRANET_USER_PROFILE_FIRE_INVITED_USER'),
 					}),
-				closeIcon : true,
-				lightShadow : true,
-				offsetLeft : 100,
-				overlay : false,
+				closeIcon: true,
+				lightShadow: true,
+				offsetLeft: 100,
+				overlay: false,
 				contentPadding: 10,
 				buttons: [
 					new BX.UI.CreateButton({
-						text: BX.message("INTRANET_USER_PROFILE_YES"),
+						text: BX.message('INTRANET_USER_PROFILE_YES'),
 						events: {
-							click: function (button) {
+							click(button) {
 								button.setWaiting();
 								this.context.close();
 								callback();
-							}
-						}
+							},
+						},
 					}),
 
 					new BX.UI.CancelButton({
-						text : BX.message("INTRANET_USER_PROFILE_NO"),
-						events : {
-							click: function () {
+						text: BX.message('INTRANET_USER_PROFILE_NO'),
+						events: {
+							click() {
 								this.context.close();
-							}
-						}
-					})
-				]
+							},
+						},
+					}),
+				],
 			}).show();
 		},
 
-		showIntegratorPartnerErrorPopup: function()
+		showIntegratorPartnerErrorPopup()
 		{
 			const popup = BX.PopupWindowManager.create('popup-message', null, {
 				id: 'intranet-user-profile-error-popup',
@@ -602,7 +633,7 @@
 			popup.show();
 		},
 
-		showErrorPopup: function(error)
+		showErrorPopup(error)
 		{
 			if (!error)
 			{
@@ -610,42 +641,42 @@
 			}
 
 			BX.PopupWindowManager.create({
-				id: "intranet-user-profile-error-popup",
+				id: 'intranet-user-profile-error-popup',
 				content:
-					BX.create("div", {
-						props : {
-							style : "max-width: 450px"
+					BX.create('div', {
+						props: {
+							style: 'max-width: 450px',
 						},
-						html: error
+						html: error,
 					}),
-				closeIcon : true,
-				lightShadow : true,
-				offsetLeft : 100,
-				overlay : false,
-				contentPadding: 10
+				closeIcon: true,
+				lightShadow: true,
+				offsetLeft: 100,
+				overlay: false,
+				contentPadding: 10,
 			}).show();
 		},
 
-		loadMoreUsers: function(button)
+		loadMoreUsers(button)
 		{
 			if (!BX.type.isDomNode(button))
 			{
 				return;
 			}
 
-			var block = button.parentNode;
+			const block = button.parentNode;
 
-			var items = block.querySelectorAll("[data-role='user-profile-item']");
-			var itemsLength = items.length;
-			for (var i = 0; i < 4 && i < itemsLength; i++)
+			const items = block.querySelectorAll("[data-role='user-profile-item']");
+			const itemsLength = items.length;
+			for (let i = 0; i < 4 && i < itemsLength; i++)
 			{
-				items[i].style.display = "inline-block";
-				items[i].setAttribute("data-role", "");
+				items[i].style.display = 'inline-block';
+				items[i].setAttribute('data-role', '');
 			}
 
 			if (itemsLength - 4 <= 0)
 			{
-				button.style.display = "none";
+				button.style.display = 'none';
 			}
 			else
 			{
@@ -666,12 +697,11 @@
 				.then((response) => {
 					if (response.data)
 					{
+						this.avatar.setUserPic(encodeURI(response.data));
 						(top || window).BX.onCustomEvent('BX.Intranet.UserProfile:Avatar:changed', [{
 							userId: this.userId,
 							url: response.data,
 						}]);
-
-						this.avatar.setUserPic(encodeURI(response.data));
 					}
 
 					this.hideLoader({ loader });
@@ -704,15 +734,15 @@
 				});
 		},
 
-		setAdminRights: function()
+		setAdminRights()
 		{
-			var loader = this.showLoader({node: BX("intranet-user-profile-wrap"), loader: null, size: 100});
+			const loader = this.showLoader({ node: BX('intranet-user-profile-wrap'), loader: null, size: 100 });
 
-			BX.ajax.runComponentAction(this.componentName, "setAdminRights", {
+			BX.ajax.runComponentAction(this.componentName, 'setAdminRights', {
 				signedParameters: this.signedParameters,
 				mode: 'ajax',
-				data: {}
-			}).then(function (response) {
+				data: {},
+			}).then((response) => {
 				if (response.data === true)
 				{
 					BX.SidePanel.Instance.postMessageTop(window, 'userProfileSlider::reloadList', {});
@@ -720,65 +750,65 @@
 				}
 				else
 				{
-					this.hideLoader({loader: loader});
+					this.hideLoader({ loader });
 					BX.UI.Notification.Center.notify({
-						content: "Error",
-						position: "top-right",
+						content: 'Error',
+						position: 'top-right',
 						autoHideDelay: 10000,
 					});
 					BX.PopupWindowManager.getPopupById('intranet-user-profile-confirm-popup').close();
 				}
-			}.bind(this)).catch(function (response) {
-				this.hideLoader({loader: loader});
+			}).catch((response) => {
+				this.hideLoader({ loader });
 				BX.UI.Notification.Center.notify({
-					content: response["errors"][0].message,
-					position: "top-right",
+					content: response.errors[0].message,
+					position: 'top-right',
 					autoHideDelay: 10000,
 				});
 				BX.PopupWindowManager.getPopupById('intranet-user-profile-confirm-popup').close();
-			}.bind(this));
+			});
 		},
 
-		setIntegratorRights: function()
+		setIntegratorRights()
 		{
-			var loader = this.showLoader({node: BX("intranet-user-profile-wrap"), loader: null, size: 100});
+			const loader = this.showLoader({ node: BX('intranet-user-profile-wrap'), loader: null, size: 100 });
 
-			BX.ajax.runComponentAction(this.componentName, "setIntegratorRights", {
+			BX.ajax.runComponentAction(this.componentName, 'setIntegratorRights', {
 				signedParameters: this.signedParameters,
 				mode: 'ajax',
-				data: {}
-			}).then(function (response) {
+				data: {},
+			}).then(function(response) {
 				if (response.data === true)
 				{
 					location.reload();
 				}
 				else
 				{
-					this.hideLoader({loader: loader});
-					this.showErrorPopup("Error");
+					this.hideLoader({ loader });
+					this.showErrorPopup('Error');
 				}
-			}, function (response) {
-				this.hideLoader({loader: loader});
-				if (response["errors"][0].code === 'INTEGRATOR_ERROR_NOT_PARTNER')
+			}, (response) => {
+				this.hideLoader({ loader });
+				if (response.errors[0].code === 'INTEGRATOR_ERROR_NOT_PARTNER')
 				{
 					this.showIntegratorPartnerErrorPopup();
 				}
 				else
 				{
-					this.showErrorPopup(response["errors"][0].message);
+					this.showErrorPopup(response.errors[0].message);
 				}
-			}.bind(this));
+			});
 		},
 
-		removeAdminRights: function()
+		removeAdminRights()
 		{
-			var loader = this.showLoader({node: BX("intranet-user-profile-wrap"), loader: null, size: 100});
+			const loader = this.showLoader({ node: BX('intranet-user-profile-wrap'), loader: null, size: 100 });
 
-			BX.ajax.runComponentAction(this.componentName, "removeAdminRights", {
+			BX.ajax.runComponentAction(this.componentName, 'removeAdminRights', {
 				signedParameters: this.signedParameters,
 				mode: 'ajax',
-				data: {}
-			}).then(function (response) {
+				data: {},
+			}).then(function(response) {
 				if (response.data === true)
 				{
 					BX.SidePanel.Instance.postMessageTop(window, 'userProfileSlider::reloadList', {});
@@ -786,24 +816,24 @@
 				}
 				else
 				{
-					this.hideLoader({loader: loader});
-					this.showErrorPopup("Error");
+					this.hideLoader({ loader });
+					this.showErrorPopup('Error');
 				}
-			}, function (response) {
-				this.hideLoader({loader: loader});
-				this.showErrorPopup(response["errors"][0].message);
-			}.bind(this));
+			}, (response) => {
+				this.hideLoader({ loader });
+				this.showErrorPopup(response.errors[0].message);
+			});
 		},
 
-		fireUser: function()
+		fireUser()
 		{
-			var loader = this.showLoader({node: BX("intranet-user-profile-wrap"), loader: null, size: 100});
+			const loader = this.showLoader({ node: BX('intranet-user-profile-wrap'), loader: null, size: 100 });
 
-			BX.ajax.runComponentAction(this.componentName, "fireUser", {
-				signedParameters: this.signedParameters,
-				mode: 'ajax',
-				data: {}
-			}).then(function (response) {
+			BX.ajax.runAction('intranet.v2.User.fire', {
+				data: {
+					userId: this.userId,
+				},
+			}).then((response) => {
 				if (response.data === true)
 				{
 					BX.SidePanel.Instance.postMessageTop(window, 'userProfileSlider::reloadList', {});
@@ -811,81 +841,79 @@
 				}
 				else
 				{
-					this.hideLoader({loader: loader});
-					this.showErrorPopup("Error");
+					this.hideLoader({ loader });
+					this.showErrorPopup('Error');
 				}
-			}, function (response) {
-				this.hideLoader({loader: loader});
-				this.showErrorPopup(response["errors"][0].message);
-			}.bind(this));
+			}).catch((response) => {
+				this.hideLoader({ loader });
+				this.showErrorPopup(response.errors[0].message);
+			});
 		},
 
-		hireUser: function()
+		hireUser()
 		{
-			var loader = this.showLoader({node: BX("intranet-user-profile-wrap"), loader: null, size: 100});
+			const loader = this.showLoader({ node: BX('intranet-user-profile-wrap'), loader: null, size: 100 });
 
-			BX.ajax.runComponentAction(this.componentName, "hireUser", {
-				signedParameters: this.signedParameters,
-				mode: 'ajax',
-				data: {}
-			}).then(function (response) {
+			BX.ajax.runAction('intranet.v2.User.restore', {
+				data: {
+					userId: this.userId,
+				},
+			}).then((response) => {
 				if (response.data === true)
 				{
 					location.reload();
 				}
 				else
 				{
-					this.hideLoader({loader: loader});
-					this.showErrorPopup("Error");
+					this.hideLoader({ loader });
+					this.showErrorPopup('Error');
 				}
-			}, function (response) {
-
-				this.hideLoader({loader: loader});
-			}.bind(this));
+			}).catch((response) => {
+				this.hideLoader({ loader });
+			});
 		},
 
-		confirmUserRequest: function(confirm)
+		confirmUserRequest(confirm)
 		{
-			const loader = this.showLoader({node: BX("intranet-user-profile-wrap"), loader: null, size: 100});
+			const loader = this.showLoader({ node: BX('intranet-user-profile-wrap'), loader: null, size: 100 });
 			BX.ajax.runAction('intranet.controller.invite.confirmUserRequest', {
 				signedParameters: this.signedParameters,
 				data: {
 					userId: this.userId,
-					isAccept: confirm
-				}
-			}).then(function (response) {
+					isAccept: confirm,
+				},
+			}).then(function(response) {
 				if (response.data === true)
 				{
-					if (confirm !== 'Y')
+					if (confirm === 'Y')
+					{
+						location.reload();
+					}
+					else
 					{
 						BX.SidePanel.Instance.postMessageTop(window, 'userProfileSlider::reloadList', {});
 						BX.SidePanel.Instance.close();
 					}
-					else
-					{
-						location.reload();
-					}
 				}
 				else
 				{
-					this.hideLoader({loader: loader});
-					this.showErrorPopup("Error");
+					this.hideLoader({ loader });
+					this.showErrorPopup('Error');
 				}
-			}, function (response) {
-
-				this.hideLoader({loader: loader});
-			}.bind(this));
+			}, (response) => {
+				this.hideLoader({ loader });
+			});
 		},
 
-		deleteUser: function()
+		deleteUser()
 		{
-			var loader = this.showLoader({node: BX("intranet-user-profile-wrap"), loader: null, size: 100});
+			const loader = this.showLoader({ node: BX('intranet-user-profile-wrap'), loader: null, size: 100 });
 
-			BX.ajax.runComponentAction(this.componentName, "deleteUser", {
-				signedParameters: this.signedParameters,
-				mode: 'ajax',
-				data: {}
-			}).then(function (response) {
+			BX.ajax.runAction('intranet.v2.User.delete', {
+				data: {
+					userId: this.userId,
+				},
+			}).then((response) => {
 				if (response.data === true)
 				{
 					BX.SidePanel.Instance.postMessageTop(window, 'userProfileSlider::reloadList', {});
@@ -893,155 +921,46 @@
 				}
 				else
 				{
-					this.hideLoader({loader: loader});
-					this.showErrorPopup("Error");
+					this.hideLoader({ loader });
+					this.showErrorPopup('Error');
 				}
-			}, function (response) {
-				this.hideLoader({loader: loader});
-				//this.showErrorPopup(response["errors"][0].message);
+			}).catch((response) => {
+				this.hideLoader({ loader });
 				this.showFireInvitedUserPopup(this.fireUser.bind(this));
-			}.bind(this));
+			});
 		},
 
-		reinviteUser: function()
+		reinviteUser()
 		{
-			var loader = this.showLoader({node: BX("intranet-user-profile-wrap"), loader: null, size: 100});
+			const loader = this.showLoader({ node: BX('intranet-user-profile-wrap'), loader: null, size: 100 });
 
 			BX.ajax.runAction('intranet.controller.invite.reinvite', {
 				data: {
 					params: {
 						userId: this.userId,
-						extranet: (this.isExtranetUser == "Y" ? 'Y' : 'N')
-					}
-				}
-			}).then(function (response) {
-				this.hideLoader({loader: loader});
+						extranet: (this.isExtranetUser == 'Y' ? 'Y' : 'N'),
+					},
+				},
+			}).then((response) => {
+				this.hideLoader({ loader });
 				if (response.data.result)
 				{
 					BX.PopupWindowManager.create('intranet-user-profile-invited-popup', null, {
-						content: '<p>'+BX.message("INTRANET_USER_PROFILE_REINVITE_SUCCESS")+'</p>',
-						offsetLeft:27,
-						offsetTop:7,
-						autoHide:true
+						content: `<p>${BX.message('INTRANET_USER_PROFILE_REINVITE_SUCCESS')}</p>`,
+						offsetLeft: 27,
+						offsetTop: 7,
+						autoHide: true,
 					}).show();
 					BX.SidePanel.Instance.postMessageTop(window, 'BX.Bitrix24.EmailConfirmation:showPopup');
 				}
-			}.bind(this), function (response) {
-				this.hideLoader({loader: loader});
-			}.bind(this));
+			}, (response) => {
+				this.hideLoader({ loader });
+			});
 		},
 
-		moveToIntranet: function(isEmail)
+		showLoader(params)
 		{
-			if (isEmail !== true)
-				isEmail = false;
-
-			BX.PopupWindowManager.create("BXExtranet2Intranet", null, {
-				autoHide: false,
-				zIndex: 0,
-				offsetLeft: 0,
-				offsetTop: 0,
-				overlay : true,
-				draggable: {restrict:true},
-				closeByEsc: true,
-				titleBar: BX.message("INTRANET_USER_PROFILE_MOVE_TO_INTRANET_TITLE"),
-				closeIcon: false,
-				width: 'auto',
-				buttons: [
-					new BX.UI.CreateButton({
-						text: BX.message("INTRANET_USER_PROFILE_MOVE"),
-						events: {
-							click: BX.proxy(function () {
-								var button = BX.proxy_context;
-								BX.addClass(button.button, "ui-btn-wait");
-
-								var form = BX('moveToIntranetForm');
-								if(BX.type.isDomNode(form))
-								{
-									BX.ajax.runComponentAction(this.componentName, "moveToIntranet", {
-										signedParameters: this.signedParameters,
-										mode: 'ajax',
-										data: {
-											departmentId: BX("toIntranetDepartment").value,
-											isEmail: isEmail ? "Y" : "N"
-										}
-									}).then(function (response) {
-										if (response.data)
-										{
-											button.context.setContent(response.data);
-											button.context.setButtons([
-												new BX.UI.CloseButton({
-													events : {
-														click: function () {
-															location.reload();
-														}
-													}
-												})
-											]);
-										}
-									}, function (response) {
-										BX.removeClass(button.button, "ui-btn-wait");
-
-										var form = BX('moveToIntranetForm');
-										if(BX.type.isDomNode(form) && !BX("moveToIntranetError"))
-										{
-											var errorBlock = BX.create("div", {
-												attrs: {
-													id: "moveToIntranetError",
-													class: "ui-alert ui-alert-danger ui-alert-icon-danger"
-												},
-												children: [
-													BX.create("span", {
-														attrs: {class: "ui-alert-message"},
-														html: response["errors"][0].message
-													})
-												]
-											});
-											form.insertBefore(errorBlock, BX.findChild(form));
-										}
-
-									}.bind(this));
-								}
-							}, this)
-						}
-					}),
-
-					new BX.UI.CancelButton({
-						events : {
-							click: function () {
-								this.context.close();
-							}
-						}
-					})
-				],
-				events: {
-					onAfterPopupShow: BX.proxy(function()
-					{
-						var popup = BX.proxy_context;
-						popup.setContent('<div style="width:450px;height:230px"></div>');
-
-						var loader = this.showLoader({node: popup.contentContainer, loader: null, size: 100});
-
-						BX.ajax.post(
-							'/bitrix/tools/b24_extranet2intranet.php',
-							{
-								USER_ID: this.userId,
-								IS_EMAIL: isEmail ? 'Y' : 'N'
-							},
-							BX.proxy(function(result)
-							{
-								this.hideLoader({loader: loader});
-								popup.setContent(result);
-							}, this)
-						);
-					}, this)
-				}
-			}).show();
-		},
-
-		showLoader: function(params)
-		{
-			var loader = null;
+			let loader = null;
 
 			if (params.node)
 			{
@@ -1049,7 +968,7 @@
 				{
 					loader = new BX.Loader({
 						target: params.node,
-						size: params.hasOwnProperty("size") ? params.size : 40
+						size: params.hasOwnProperty('size') ? params.size : 40,
 					});
 				}
 				else
@@ -1063,7 +982,7 @@
 			return loader;
 		},
 
-		hideLoader: function(params)
+		hideLoader(params)
 		{
 			if (params.loader !== null)
 			{
@@ -1081,10 +1000,9 @@
 			}
 		},
 
-		processSliderCloseEvent: function(params)
+		processSliderCloseEvent(params)
 		{
-			BX.addCustomEvent('SidePanel.Slider:onMessage', function(event) {
-
+			BX.addCustomEvent('SidePanel.Slider:onMessage', (event) => {
 				if (event.getSlider() != BX.SidePanel.Instance.getSliderByWindow(window))
 				{
 					return;
@@ -1095,16 +1013,16 @@
 					return;
 				}
 
-				var data = event.getData();
+				const data = event.getData();
 
 				if (!BX.type.isNotEmptyObject(data.sliderData))
 				{
 					return;
 				}
 
-				var
-					entityType = data.sliderData.get('entityType'),
-					entityId = data.sliderData.get('entityId');
+				const
+					entityType = data.sliderData.get('entityType');
+				const entityId = data.sliderData.get('entityId');
 
 				if (
 					BX.type.isNotEmptyString(entityType)
@@ -1114,32 +1032,28 @@
 				{
 					params.callback();
 				}
-			}.bind(this));
+			});
 		},
 
-		changeGdpr: function (inputNode)
+		changeGdpr(inputNode)
 		{
-			var requestData = {
+			const requestData = {
 				type: inputNode.name,
-				value: inputNode.checked ? "Y" : "N"
+				value: inputNode.checked ? 'Y' : 'N',
 			};
 
-			BX.ajax.runComponentAction(this.componentName, "changeGdpr", {
+			BX.ajax.runComponentAction(this.componentName, 'changeGdpr', {
 				signedParameters: this.signedParameters,
 				mode: 'class',
-				data: requestData
-			}).then(function (response) {
-
-			}, function (response) {
-
-			}.bind(this));
+				data: requestData,
+			}).then((response) => {}, (response) => {});
 		},
 
-		animateGdprBlock: function (element)
+		animateGdprBlock(element)
 		{
-			var sliderTarget = document.querySelector('[data-role="' + element.getAttribute('for') + '"]');
+			const sliderTarget = document.querySelector(`[data-role="${element.getAttribute('for')}"]`);
 
-			if(element.classList.contains('intranet-user-profile-column-block-title-dropdown--open'))
+			if (element.classList.contains('intranet-user-profile-column-block-title-dropdown--open'))
 			{
 				element.classList.remove('intranet-user-profile-column-block-title-dropdown--open');
 				sliderTarget.style.height = null;
@@ -1147,8 +1061,8 @@
 			else
 			{
 				element.classList.add('intranet-user-profile-column-block-title-dropdown--open');
-				sliderTarget.style.height = sliderTarget.firstElementChild.offsetHeight + 'px';
+				sliderTarget.style.height = `${sliderTarget.firstElementChild.offsetHeight}px`;
 			}
-		}
-	}
+		},
+	};
 })();

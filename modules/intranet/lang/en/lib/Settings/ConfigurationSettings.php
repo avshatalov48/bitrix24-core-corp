@@ -1,5 +1,6 @@
 <?php
 $MESS["INTRANET_SETTINGS_FIELD_HINT_ALLOW_ALL_USER_INSTALL_APPLICATION_CLICK_ON"] = "Any employee can install applications from Market if allowed by the app developer. If this option is disabled, only the administrator can install applications.";
+$MESS["INTRANET_SETTINGS_FIELD_HINT_ALLOW_ALL_USER_INSTALL_APPLICATION_CLICK_ON_MSGVER_1"] = "Any employee can install applications from Market if allowed by the app developer. If this option is disabled, only the administrator can install applications.";
 $MESS["INTRANET_SETTINGS_FIELD_HINT_ALLOW_MEASURE_STRESS_LEVEL_CLICK_ON_MSGVER_1"] = "Stress level gauge is visible in everyone's profile. #MORE_DETAILS#";
 $MESS["INTRANET_SETTINGS_FIELD_HINT_ALL_CAN_BUY_TARIFF_CLICK_ON"] = "Any employee can pay for your Bitrix24 subscription. If this option is disabled, only the administrator can pay for your Bitrix24 subscription.";
 $MESS["INTRANET_SETTINGS_FIELD_HINT_COLLECT_GEO_DATA_CLICK_ON_MSGVER_1"] = "User geolocation data is collected. #MORE_DETAILS#";
@@ -10,6 +11,7 @@ $MESS["INTRANET_SETTINGS_FIELD_HINT_TITLE_TIME_FORMAT24"] = "Time sample:";
 $MESS["INTRANET_SETTINGS_FIELD_HINT_TRACK_OUT_MAILS_CLICK_ON_MSGVER_1"] = "All link clicks are tracked. You can use it to automate sales.<br>For example, a sales representative can be notified when a customer clicks a payment link. #MORE_DETAILS#";
 $MESS["INTRANET_SETTINGS_FIELD_HINT_TRACK_OUT_MAILS_ON"] = "When a read receipt is received, the sent message is marked as read.";
 $MESS["INTRANET_SETTINGS_FIELD_LABEL_ALLOW_ALL_USER_INSTALL_APPLICATION"] = "All employees can install apps from Market";
+$MESS["INTRANET_SETTINGS_FIELD_LABEL_ALLOW_ALL_USER_INSTALL_APPLICATION_MSGVER_1"] = "All employees can install apps from Market";
 $MESS["INTRANET_SETTINGS_FIELD_LABEL_ALLOW_MEASURE_STRESS_LEVEL"] = "Allow to measure user stress level and show it in user profile";
 $MESS["INTRANET_SETTINGS_FIELD_LABEL_ALL_CAN_BUY_TARIFF"] = "All users can buy Bitrix24 subscription";
 $MESS["INTRANET_SETTINGS_FIELD_LABEL_CHOOSE_REGION_CRM_MAPS"] = "Map provider:";
@@ -23,7 +25,6 @@ $MESS["INTRANET_SETTINGS_FIELD_PLACEHOLDER_NOTIFICATION_EMAIL"] = "example@inbox
 $MESS["INTRANET_SETTINGS_SECTION_TITLE_ADDITIONAL_SETTINGS"] = "Miscellaneous";
 $MESS["INTRANET_SETTINGS_SECTION_TITLE_CONFIGURATION_DATETIME"] = "Date and time format";
 $MESS["INTRANET_SETTINGS_SECTION_TITLE_CONFIGURATION_MAILS"] = "Mail";
-$MESS["INTRANET_SETTINGS_SECTION_TITLE_CONFIGURATION_MAPS"] = "Maps and routes";
 $MESS["INTRANET_SETTINGS_SECTION_TITLE_CONFIGURATION_MAPS_LIST"] = "Maps";
 $MESS["INTRANET_SETTINGS_SECTION_TITLE_CONFIGURATION_MAPS_PRODUCT"] = "Maps in product properties";
 $MESS["INTRANET_SETTINGS_SECTION_TITLE_DELETE_PORTAL"] = "Delete this Bitrix24";

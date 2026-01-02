@@ -2,7 +2,7 @@ import { Cache, Loc, Tag, Text as TextFormat, Type, Dom } from 'main.core';
 import { BaseEvent } from 'main.core.events';
 import type { FieldSelectEvent, FieldSelectEventData } from '../types/events/fieldSelectEvent';
 import Dummy from './dummy';
-import { Selector } from "crm.form.fields.selector";
+import { Selector } from 'crm.form.fields.selector';
 
 export default class Reference extends Dummy
 {
@@ -128,16 +128,14 @@ export default class Reference extends Dummy
 				</div>
 			`;
 		}
-		else
-		{
-			const className = !this.data.text ? 'sign-document__block-content_member-nodata' : '';
 
-			return Tag.render`
-				<div class="${className}">
-					${TextFormat.encode(this.data.text || Loc.getMessage('SIGN_JS_DOCUMENT_MEMBER_NO_DATA'))}
-				</div>
-			`;
-		}
+		const className = this.data.text ? '' : 'sign-document__block-content_member-nodata';
+
+		return Tag.render`
+			<div class="${className}">
+				${TextFormat.encode(this.data.text || Loc.getMessage('SIGN_JS_DOCUMENT_MEMBER_NO_DATA'))}
+			</div>
+		`;
 	}
 
 	#getCrmFieldSelectorPanel(): Selector

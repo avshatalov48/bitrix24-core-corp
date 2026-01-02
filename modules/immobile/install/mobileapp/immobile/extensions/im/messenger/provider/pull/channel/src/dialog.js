@@ -23,7 +23,7 @@ jn.define('im/messenger/provider/pull/channel/dialog', (require, exports, module
 
 		async handleChatUserLeave(params, extra, command)
 		{
-			if (this.interceptEvent(params, extra, command))
+			if (this.interceptEvent(extra))
 			{
 				return;
 			}
@@ -45,7 +45,7 @@ jn.define('im/messenger/provider/pull/channel/dialog', (require, exports, module
 				const chatData = chatDataResult.getData();
 				const chatHelper = DialogHelper.createByModel(chatData);
 
-				if (!chatHelper.isOpenChannel)
+				if (!chatHelper?.isOpenChannel)
 				{
 					return;
 				}
@@ -98,6 +98,11 @@ jn.define('im/messenger/provider/pull/channel/dialog', (require, exports, module
 					);
 				})
 			;
+		}
+
+		handleChatPin(params, extra, command)
+		{
+			this.logger.warn(`${this.constructor.name}.handleChatPin override. do nothing`);
 		}
 
 		/**

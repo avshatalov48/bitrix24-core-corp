@@ -1,0 +1,11 @@
+<?php
+$MESS["CRM_KANBAN_FIELD_DELIVERY_STAGE"] = "Жеткізу мәртебесі";
+$MESS["CRM_KANBAN_FIELD_OBSERVER"] = "Бақылаушылар";
+$MESS["CRM_KANBAN_FIELD_OPPORTUNITY_WITH_CURRENCY"] = "Сома және валюта";
+$MESS["CRM_KANBAN_FIELD_ORDER_PAYMENTS"] = "Төлемдер";
+$MESS["CRM_KANBAN_FIELD_ORDER_PROBLEM_NOTIFICATION"] = "Тапсырыс мәселелері";
+$MESS["CRM_KANBAN_FIELD_ORDER_SHIPMENTS"] = "Жөнелтулер";
+$MESS["CRM_KANBAN_FIELD_ORDER_TITLE"] = "Тапсырыс атауы";
+$MESS["CRM_KANBAN_FIELD_PAYMENT_STAGE"] = "Төлем мәртебесі";
+$MESS["CRM_KANBAN_FIELD_RECURRING"] = "Тұрақты мәміле";
+$MESS["CRM_KANBAN_FIELD_SOURCE_DESCRIPTION"] = "Дереккөз туралы қосымша";

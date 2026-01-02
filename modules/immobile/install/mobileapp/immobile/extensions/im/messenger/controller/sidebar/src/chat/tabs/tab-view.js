@@ -6,7 +6,7 @@ jn.define('im/messenger/controller/sidebar/chat/tabs/tab-view', (require, export
 	const { SidebarParticipantsView } = require('im/messenger/controller/sidebar/chat/tabs/participants/participants-view');
 	const { SidebarFilesView } = require('im/messenger/controller/sidebar/chat/tabs/files/view');
 	const { SidebarLinksView } = require('im/messenger/controller/sidebar/chat/tabs/links/view');
-	const { Loc } = require('loc');
+	const { Loc } = require('im/messenger/loc');
 	const { Theme } = require('im/lib/theme');
 	const { Feature } = require('im/messenger/lib/feature');
 	const { SidebarTab } = require('im/messenger/const');

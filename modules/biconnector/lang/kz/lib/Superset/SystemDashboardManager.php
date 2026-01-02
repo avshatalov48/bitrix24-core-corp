@@ -1,0 +1,32 @@
+<?php
+
+$MESS["BX_DASHBOARD_BIC_DEALS_TITLE"] = "Мәміле аналитикасы";
+$MESS["BX_DASHBOARD_BIC_SUM_EFF_EMP_NO_CRM"] = "CRM жоқ қызметкердің жалпы тиімділігі";
+$MESS["BX_DASHBOARD_BIC_SEASONSALES_TRENDS"] = "Маусымдық сату трендтері";
+$MESS["BX_DASHBOARD_BIC_EMP_SEASON_PATTERNS"] = "Қызметкерлердің тиімділігінің үлгілері";
+$MESS["BX_DASHBOARD_BIC_THROUGHPUT_FLOW_CAPACITY"] = "Ағынның өткізу қабілеті";
+$MESS["BX_DASHBOARD_BIC_FLOW_EFFICIENCY_DASHBOARD_PARAM"] = "Ағындар: нақты бір ағынның жүктелуін және тиімділігін талдау";
+$MESS["BX_DASHBOARD_BIC_SOURCEPERF_EFFICIENCY"] = "Жарнамалық дереккөздер тиімділігі";
+$MESS["BX_DASHBOARD_BIC_FLOW_EFFICIENCY_DASHBOARD"] = "Ағындар: жүктеме және тиімділікті талдау";
+$MESS["BX_DASHBOARD_BIC_COMBINATION_ANALYTICS"] = "Тауар жұптарын талдау";
+$MESS["BX_DASHBOARD_BIC_BIZPROC_PARAM_PROC_DYNAMIC"] = "Бизнес-процестің орындалу динамикасы";
+$MESS["BX_DASHBOARD_BIC_TASKEFF_MGMT_LOAD_EFF2"] = "Менің жүктемем және тиімділігім";
+$MESS["BX_DASHBOARD_BIC_PERKPI_MY_PERF_METRICS"] = "Менің жеке көрсеткіштерім";
+$MESS["BX_DASHBOARD_BIC_TASKEFF_MGMT_LOAD_EFF"] = "Жүктеме мен тиімділікті басқару";
+$MESS["BX_DASHBOARD_BIC_ACTUAL_EXECUTION_TIME_TASKS"] = "Міндеттер: нақты жұмыс уақыты";
+$MESS["BX_DASHBOARD_BIC_TASKDEADLINE_SPEED"] = "Міндеттер: аяқтау жылдамдығы";
+$MESS["BX_DASHBOARD_BIC_TASKLOAD_TASKS_LOAD"] = "Міндеттер: орындаушылар мен бөлімшелерді жүктеу";
+$MESS["BX_DASHBOARD_BIC_BIZPROCEFF_ORG_PROC_EFF"] = "Ұйымдастырушылық процестердің тиімділігі";
+$MESS["BX_DASHBOARD_BIC_SMARTPROC_TITLE"] = "Смарт-процестерді талдау";
+$MESS["BX_DASHBOARD_BIC_COMPSALES_COMP_ANALYTICS"] = "Тауарларды сатудың салыстырмалы талдауы";
+$MESS["BX_DASHBOARD_BIC_CATDEAL_TITLE"] = "Мәмілелердің тауарлық талдауы";
+$MESS["BX_DASHBOARD_BIC_BIZPROC_ANALYTICS"] = "Бизнес-процестер талдауы";
+$MESS["BX_DASHBOARD_BIC_COHORT_TITLE"] = "Клиенттерді когорттық талдау";
+$MESS["BX_DASHBOARD_BIC_ABCSKU_ABC_ANALYSIS"] = "Тауарлардың ABC-талдауы";
+$MESS["BX_DASHBOARD_BIC_TELEPHONY_CALL_ANALYTICS"] = "Қоңырау аналитикасы";
+$MESS["BX_DASHBOARD_RETENTION_TITLE"] = "Клиенттердің сақталуы және кетуі";
+$MESS["BX_DASHBOARD_BIC_ABCANALYSIS_TITLE"] = "Клиенттерді ABC-талдау";
+$MESS["BX_DASHBOARD_GENERAL_STAT_TITLE"] = "Бизнестің негізгі көрсеткіштері";
+$MESS["BX_DASHBOARD_LEAD_GENERATION_TITLE"] = "Лидогенерациясының аналитикасы";
+$MESS["BX_DASHBOARD_DEALS_COMPLEX_TITLE"] = "Мәмілелердің кешенді аналитикасы";
+$MESS["BX_DASHBOARD_BIC_SUM_EFF_CRM_EMP_EFF_CRM"] = "CRM-дегі қызметкердің жалпы тиімділігі";

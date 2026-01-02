@@ -6,9 +6,10 @@ require($_SERVER['DOCUMENT_ROOT'].'/bitrix/modules/main/include/prolog_before.ph
 if (!CModule::IncludeModule('crm'))
 	die();
 
-$CrmPerms = new CCrmPerms($USER->GetID());
-if (!$CrmPerms->HavePerm('CONFIG', BX_CRM_PERM_CONFIG, 'WRITE')
-	&& !CCrmDeal::CheckReadPermission(0, $CrmPerms, 0))
+if (
+	!\Bitrix\Crm\Service\Container::getInstance()->getUserPermissions()->isCrmAdmin()
+	&& !\Bitrix\Crm\Service\Container::getInstance()->getUserPermissions()->entityType()->canReadItemsInCategory(CCrmOwnerType::Deal, 0)
+)
 {
 	die("Permission denied");
 }

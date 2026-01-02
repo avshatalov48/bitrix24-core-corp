@@ -14,7 +14,6 @@ return [
 		'ui.avatar',
 		'ui.label',
 		'ui.form-elements.field',
-		'main.popup',
 		'ui.cnt',
 		'intranet.reinvite',
 		'ui.icon-set.main',

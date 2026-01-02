@@ -1,0 +1,28 @@
+<?php
+$MESS["IMBOT_NETWORK_BOT_DIALOG_FORWARD"] = "Диалог операторға аударылды";
+$MESS["IMBOT_NETWORK_BOT_NEW_MULTIDIALOG"] = "Бұл диалогтан жаңа [CHAT=#LINK#]диалог[/CHAT] құрылды";
+$MESS["IMBOT_NETWORK_BOT_WORK_POSITION"] = "Ашық желі";
+$MESS["IMBOT_NETWORK_DIALOG_GREETING"] = "Осы диалогта сіздің сұрағыңызды талқылайық";
+$MESS["IMBOT_NETWORK_DIALOG_TITLE"] = "#LINE_NAME#: қосымша сұрақ - #NUMBER#";
+$MESS["IMBOT_NETWORK_ERROR_ANSWER_MALFORMED"] = "Серверден жауап JSON пішімінде емес алынды";
+$MESS["IMBOT_NETWORK_ERROR_BOT_NOT_FOUND"] = "Ашық желі қазіргі уақытта қолжетімсіз";
+$MESS["IMBOT_NETWORK_ERROR_CANT_OPEN_NEW_DIALOG"] = "Сіз диалогтардың максималды санын аштыңыз. Жаңа диалогты бастау үшін алдыңғы диалогтардың аяқталуын күтіңіз";
+$MESS["IMBOT_NETWORK_ERROR_CONVERTING_PUNYCODE"] = "#HOST# хост атауын Punycode-та түрлендіру қатесі: #ERROR#";
+$MESS["IMBOT_NETWORK_ERROR_LICENCE_ERROR"] = "Көрсетілген сайттың лицензиясы жарамсыз";
+$MESS["IMBOT_NETWORK_ERROR_LINE_DISABLED"] = "Хабарлама жіберілмеді![br]Берілген ашық желіге хабарламалар жіберу бұғатталған";
+$MESS["IMBOT_NETWORK_ERROR_LINE_NOT_FOUND"] = "Ашық желі қазіргі уақытта қолжетімсіз";
+$MESS["IMBOT_NETWORK_ERROR_NETWORK_ERROR"] = "Желілік байланыс қатесі";
+$MESS["IMBOT_NETWORK_ERROR_NOT_FOUND"] = "Хабарлама жіберілмеді![br]Ашық желі қазіргі уақытта қолжетімсіз";
+$MESS["IMBOT_NETWORK_ERROR_NOT_FOUND_MSGVER_1"] = "Хабарлама жіберілмеді[br]Ашық желі қазір қолжетімсіз. [helpdesklink]Толығырақ[/helpdesklink]";
+$MESS["IMBOT_NETWORK_ERROR_PUBLIC_URL_ANSWER_MALFORMED"] = "Сайттың жалпы мекенжайын тексеру қатесі: сервердің танылмайтын жауабы";
+$MESS["IMBOT_NETWORK_ERROR_PUBLIC_URL_CONNECT_ERROR"] = "Сайттың көпшілікке арналған мекенжайын тексеру қатесі: байланыс орнатылмаған";
+$MESS["IMBOT_NETWORK_ERROR_PUBLIC_URL_EMPTY"] = "\"Битрикс24 чат-боттары\" модулінің баптауларында сайттың көпшілікке арналған мекенжайын көрсету қажет";
+$MESS["IMBOT_NETWORK_ERROR_PUBLIC_URL_FAIL"] = "Көрсетілген сайттың жария мекенжайы қолжетімсіз (код: #ERROR#)";
+$MESS["IMBOT_NETWORK_ERROR_PUBLIC_URL_HANDLER_PATH"] = "Файл өңдеуші сайттың жария бөлігінде табылмады. Болуы керек: #PATH#";
+$MESS["IMBOT_NETWORK_ERROR_PUBLIC_URL_LOCALHOST"] = "Сайттың жария мекенжайы жергілікті хостты көрсетеді: #HOST#";
+$MESS["IMBOT_NETWORK_ERROR_PUBLIC_URL_MALFORMED"] = "Сайттың дұрыс емес жария мекенжайы көрсетілген";
+$MESS["IMBOT_NETWORK_ERROR_PUBLIC_URL_WRONG_ANSWER"] = "Сайттың жалпы мекенжайын тексеру қатесі: сервердің қате жауабы";
+$MESS["IMBOT_NETWORK_ERROR_PUBLIC_URL_WRONG_ANSWER_CODE"] = "Сайттың жалпы мекенжайын тексеру қатесі: сервер жауабының қате http коды";
+$MESS["IMBOT_NETWORK_ERROR_SETTINGS_FAIL"] = "Баптауларды алу мүмкін болмады (код: #ERROR#)";
+$MESS["IMBOT_NETWORK_ERROR_TARIFF_NOT_FOUND"] = "Бұл тариф үшін баптауларды алу мүмкін болмады";
+$MESS["IMBOT_NETWORK_ERROR_UNKNOWN_COMMAND"] = "Қате пәрмен немесе нұсқалардың сәйкес келмеуі";

@@ -471,75 +471,6 @@ class CCrmSaleHelper
 		return self::$userIdsWithShopAccess[$userId][$role];
 	}
 
-	/**
-	 * @deprecated
-	 *
-	 * @param CUser $user
-	 * @param string $role
-	 * @return bool
-	 * @throws ArgumentException
-	 * @throws ObjectPropertyException
-	 * @throws SqlQueryException
-	 * @throws SystemException
-	 */
-	private static function isCrmAccess(CUser $user, $role = ""): bool
-	{
-		$userId = $user->getID();
-		if ($user->isAdmin() || (Loader::includeModule('bitrix24') && CBitrix24::IsPortalAdmin($userId)))
-		{
-			return true;
-		}
-		else
-		{
-			if ($role === "admin")
-			{
-				return self::checkAdminAccess($userId);
-			}
-			else
-			{
-				return self::checkManagerAccess($userId);
-			}
-		}
-	}
-
-	/**
-	 * @param int $userId
-	 * @return bool
-	 * @throws ArgumentException
-	 * @throws SqlQueryException
-	 * @throws ObjectPropertyException
-	 * @throws SystemException
-	 */
-	private static function checkAdminAccess(int $userId): bool
-	{
-		$listUserId = self::getListUserIdFromCrmRoles();
-		if (in_array($userId, $listUserId))
-		{
-			$CrmPerms = new CCrmPerms($userId);
-			if ($CrmPerms->havePerm("CONFIG", BX_CRM_PERM_CONFIG, "WRITE"))
-			{
-				return true;
-			}
-		}
-
-		return false;
-	}
-
-	/**
-	 * @param int $userId
-	 * @return bool
-	 * @throws ArgumentException
-	 * @throws SqlQueryException
-	 * @throws ObjectPropertyException
-	 * @throws SystemException
-	 */
-	private static function checkManagerAccess(int $userId): bool
-	{
-		$listUserId = self::getListUserIdFromCrmRoles();
-
-		return (in_array($userId, $listUserId));
-	}
-
 	private static function isDbAccess($role): bool
 	{
 		global $USER;
@@ -556,32 +487,6 @@ class CCrmSaleHelper
 		}
 
 		return !empty(array_intersect($USER->GetUserGroupArray(), $shopGroupIds));
-	}
-
-	private static function getShopRole($userId): string
-	{
-		$user = new CUser();
-		$groups = $user->getUserGroup($userId);
-		if (in_array(1, $groups) || (Loader::includeModule('bitrix24') && CBitrix24::isPortalAdmin($userId)))
-		{
-			return "admin";
-		}
-
-		$listUserId = self::getListUserIdFromCrmRoles();
-		if (in_array($userId, $listUserId))
-		{
-			$CrmPerms = new CCrmPerms($userId);
-			if ($CrmPerms->havePerm("CONFIG", BX_CRM_PERM_CONFIG, "WRITE"))
-			{
-				return "admin";
-			}
-			else
-			{
-				return "manager";
-			}
-		}
-
-		return "";
 	}
 
 	private static function addToDbAccess($userId, $shopRole): void
@@ -725,24 +630,61 @@ class CCrmSaleHelper
 	{
 		if (Loader::includeModule("catalog"))
 		{
-			$emptyDepartmentTypeFirst = serialize([]);
-			$emptyDepartmentTypeSecond = serialize([0]);
-			$externalTypes = UserTable::getExternalUserTypes();
-			$externalTypes[] = null;
-			$filter = [
-				'=ID' => $userId,
-				'!=UF_DEPARTMENT' => [null, $emptyDepartmentTypeFirst, $emptyDepartmentTypeSecond],
-				'!=EXTERNAL_AUTH_ID' => $externalTypes,
-			];
+			global $USER;
 
-			$userData = UserTable::getRow([
-				'filter' => $filter,
-				'select' => ['ID'],
-			]);
-
-			if (!$userData)
+			$currentUserId = 0;
+			if (isset($USER) && $USER instanceof \CUser)
 			{
-				return;
+				$currentUserId = (int)$USER->GetID();
+			}
+
+			$externalTypes = UserTable::getExternalUserTypes();
+			$userId = (int)$userId;
+			if ($userId === $currentUserId)
+			{
+				$externalTypes[] = '';
+				$userData = CUser::GetByID($userId)->Fetch();
+				if (!$userData)
+				{
+					return;
+				}
+
+				if (in_array($userData['EXTERNAL_AUTH_ID'], $externalTypes, true))
+				{
+					return;
+				}
+
+				if (
+					empty($userData['UF_DEPARTMENT'])
+					|| (
+						is_array($userData['UF_DEPARTMENT'])
+						&& empty(array_diff($userData['UF_DEPARTMENT'], [0]))
+					)
+				)
+				{
+					return;
+				}
+			}
+			else
+			{
+				$externalTypes[] = null;
+				$emptyDepartmentTypeFirst = serialize([]);
+				$emptyDepartmentTypeSecond = serialize([0]);
+				$filter = [
+					'=ID' => $userId,
+					'!=UF_DEPARTMENT' => [null, $emptyDepartmentTypeFirst, $emptyDepartmentTypeSecond],
+					'!=EXTERNAL_AUTH_ID' => $externalTypes,
+				];
+
+				$userData = UserTable::getRow([
+					'filter' => $filter,
+					'select' => ['ID'],
+				]);
+
+				if (!$userData)
+				{
+					return;
+				}
 			}
 
 			ShopGroupAssistant::addShopAccess($userId);
@@ -955,8 +897,7 @@ class CCrmSaleHelper
 	 */
 	private static function getShopGroupIdByUserId($userId): ?int
 	{
-		$CrmPerms = new CCrmPerms($userId);
-		if ($CrmPerms->havePerm("CONFIG", BX_CRM_PERM_CONFIG, "WRITE"))
+		if (\Bitrix\Crm\Service\Container::getInstance()->getUserPermissions()->isCrmAdmin())
 		{
 			return self::getShopGroupIdByType("admin");
 		}
@@ -1000,68 +941,28 @@ class CCrmSaleHelper
 			return;
 		}
 
-		$connection = Bitrix\Main\Application::getConnection();
-		if ($connection->isTableExists("b_user_group"))
+		if (!$shopGroupIds)
 		{
+			$shopGroupIds = [
+				self::getShopGroupIdByType("admin"),
+				self::getShopGroupIdByType("manager")
+			];
+			$shopGroupIds = array_filter($shopGroupIds);
+
 			if (!$shopGroupIds)
 			{
-				$shopGroupIds = [
-					self::getShopGroupIdByType("admin"),
-					self::getShopGroupIdByType("manager")
-				];
-				$shopGroupIds = array_filter($shopGroupIds);
-
-				if (!$shopGroupIds)
-				{
-					return;
-				}
-			}
-
-			$result = array_search(1, $currentUserIds);
-			if ($result !== false)
-			{
-				unset($currentUserIds[$result]);
-			}
-			if ($currentUserIds)
-			{
-				$strSql = "DELETE FROM b_user_group WHERE GROUP_ID IN (".
-					implode(',', $shopGroupIds).") and USER_ID IN (" .implode(',', $currentUserIds) . ")";
-				$connection->queryExecute($strSql);
+				return;
 			}
 		}
-	}
 
-	/**
-	 * @throws SqlQueryException
-	 * @deprecated
-	 */
-	public static function deleteUserFromShopGroup(): void
-	{
-		if (IsModuleInstalled("bitrix24"))
+		$result = array_search(1, $currentUserIds);
+		if ($result !== false)
 		{
-			$listGroupId = array(self::getShopGroupIdByType("admin"), self::getShopGroupIdByType("manager"));
-			$connection = Bitrix\Main\Application::getConnection();
-			if ($connection->isTableExists("b_user_group"))
-			{
-				foreach ($listGroupId as $groupId)
-				{
-					$groupId = (int)$groupId;
-					if ($groupId)
-					{
-						$listUserId = array();
-						foreach (CGroup::getGroupUser($groupId) as $userId)
-						{
-							$listUserId[] = $userId;
-						}
-						if ($listUserId)
-						{
-							$strSql = "DELETE FROM b_user_group WHERE GROUP_ID = $groupId and USER_ID IN (" .
-								implode(',', $listUserId) . ")";
-							$connection->queryExecute($strSql);
-						}
-					}
-				}
-			}
+			unset($currentUserIds[$result]);
+		}
+		foreach ($currentUserIds as $userId)
+		{
+			CUser::RemoveUserGroup($userId, $shopGroupIds);
 		}
 	}
 

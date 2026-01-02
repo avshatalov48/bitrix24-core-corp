@@ -3,7 +3,7 @@
  */
 jn.define('layout/ui/setting-selector-list/src/item', (require, exports, module) => {
 	const { Color, Indent } = require('tokens');
-	const { Text3, Text5 } = require('ui-system/typography/text');
+	const { Text3, Text4, Text5 } = require('ui-system/typography/text');
 	const { IconView, Icon } = require('ui-system/blocks/icon');
 	const { PureComponent } = require('layout/pure-component');
 	const { Switcher, SwitcherSize } = require('ui-system/blocks/switcher');
@@ -70,8 +70,25 @@ jn.define('layout/ui/setting-selector-list/src/item', (require, exports, module)
 					onClick: this.#onItemClick,
 				},
 				this.#renderContent(),
+				this.#renderOptionPreview(),
 				this.#isIconOrSwitcherPlacementRoot() && this.#renderRootIconOrSwitcher(),
 			);
+		}
+
+		#renderOptionPreview()
+		{
+			const { useOptionPreview, optionPreviewValue, optionColor } = this.item;
+
+			if (!useOptionPreview || !optionPreviewValue)
+			{
+				return null;
+			}
+
+			return Text4({
+				text: String(optionPreviewValue),
+				color: optionColor ?? Color.base4,
+				marginRight: Indent.XS2.toNumber(),
+			});
 		}
 
 		#renderContent = () => {
@@ -127,7 +144,7 @@ jn.define('layout/ui/setting-selector-list/src/item', (require, exports, module)
 		};
 
 		#renderTitle = () => {
-			const { title } = this.item;
+			const { title, disabled = false } = this.item;
 
 			return View(
 				{
@@ -142,7 +159,7 @@ jn.define('layout/ui/setting-selector-list/src/item', (require, exports, module)
 				Text3({
 					testId: `${this.testId}-title-text`,
 					text: title,
-					color: Color.base1,
+					color: disabled ? Color.base5 : Color.base1,
 					style: {
 						flex: 1,
 						marginRight: Indent.XL4.toNumber(),
@@ -190,12 +207,12 @@ jn.define('layout/ui/setting-selector-list/src/item', (require, exports, module)
 		};
 
 		#renderSubTitle = () => {
-			const { subtitle, testId } = this.item;
+			const { subtitle, testId, disabled } = this.item;
 
 			return Text5({
 				testId: `${testId}-subtitle`,
 				text: subtitle,
-				color: Color.base3,
+				color: disabled ? Color.base5 : Color.base3,
 				style: {
 					marginVertical: Indent.XS.toNumber(),
 				},

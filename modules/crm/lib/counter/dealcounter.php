@@ -2,6 +2,7 @@
 
 namespace Bitrix\Crm\Counter;
 
+use Bitrix\Crm\Service\Container;
 use Bitrix\Main;
 
 class DealCounter extends EntityCounter
@@ -32,8 +33,20 @@ class DealCounter extends EntityCounter
 
 		if ($url === '')
 		{
-			$url = self::getEntityListPath();
+			$url = $this->getEntityListPath();
 		}
+
 		return \CHTTP::urlAddParams($url, $urlParams);
+	}
+
+	protected function getEntityListPath()
+	{
+		if ($this->getCategoryId() === -1)
+		{
+			// all categories view
+			return Container::getInstance()->getRouter()->getItemListUrlInCurrentView(\CCrmOwnerType::Deal)->getUri();
+		}
+
+		return parent::getEntityListPath();
 	}
 }

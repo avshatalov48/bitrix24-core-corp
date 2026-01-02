@@ -15,9 +15,14 @@ if (!CModule::IncludeModule('crm'))
 }
 
 CModule::IncludeModule('fileman');
+
+$userPermissionsService = \Bitrix\Crm\Service\Container::getInstance()->getUserPermissions();
+
 $CCrmQuote = new CCrmQuote();
-if ($CCrmQuote->cPerms->HavePerm('QUOTE', BX_CRM_PERM_NONE, 'WRITE')
-	&& $CCrmQuote->cPerms->HavePerm('QUOTE', BX_CRM_PERM_NONE, 'ADD'))
+if (
+	!$userPermissionsService->entityType()->canReadItems(CCrmOwnerType::Quote)
+	&& !$userPermissionsService->entityType()->canAddItems(CCrmOwnerType::Quote)
+)
 {
 	ShowError(GetMessage('CRM_PERMISSION_DENIED'));
 	return;
@@ -61,7 +66,6 @@ $arResult['EXTERNAL_CONTEXT'] = isset($_REQUEST['external_context']) ? $_REQUEST
 global $USER_FIELD_MANAGER, $DB, $USER;
 
 $CCrmUserType = new CCrmUserType($USER_FIELD_MANAGER, CCrmQuote::$sUFEntityID);
-$userPermissions = CCrmPerms::GetCurrentUserPermissions();
 
 $isNew = $arParams['ELEMENT_ID'] <= 0;
 $bEdit = false;
@@ -83,7 +87,7 @@ $arResult['TAX_MODE'] = $bTaxMode ? 'Y' : 'N';
 
 if ($bEdit)
 {
-	CCrmQuote::PrepareConversionPermissionFlags($arParams['ELEMENT_ID'], $arResult, $CCrmQuote->cPerms);
+	CCrmQuote::PrepareConversionPermissionFlags($arParams['ELEMENT_ID'], $arResult);
 	if ($arResult['CAN_CONVERT'])
 	{
 		$config = \Bitrix\Crm\Conversion\QuoteConversionConfig::load();
@@ -128,8 +132,7 @@ elseif ($bEdit || $bCopy)
 		$bEdit = false;
 		$bCopy = false;
 	}
-	else
-		$arEntityAttr = $CCrmQuote->cPerms->GetEntityAttr('QUOTE', array($arParams['ELEMENT_ID']));
+
 	if ($bCopy)
 	{
 		if (isset($arFields['QUOTE_NUMBER']))
@@ -527,8 +530,10 @@ $arResult['ENABLE_WEBDAV'] = $storageTypeId === StorageType::WebDav;
 // storage elements
 CCrmQuote::PrepareStorageElementIDs($arFields);
 
-if (($bEdit && !$CCrmQuote->cPerms->CheckEnityAccess('QUOTE', 'WRITE', $arEntityAttr[$arParams['ELEMENT_ID']]) ||
-	(!$bEdit && $CCrmQuote->cPerms->HavePerm('QUOTE', BX_CRM_PERM_NONE, 'ADD'))))
+if (
+	($bEdit && !$userPermissionsService->item()->canUpdate(CCrmOwnerType::Quote, $arParams['ELEMENT_ID']))
+	|| (!$bEdit && !$userPermissionsService->entityType()->canAddItems(CCrmOwnerType::Quote))
+)
 {
 	ShowError(GetMessage('CRM_PERMISSION_DENIED'));
 	return;
@@ -810,8 +815,11 @@ if ($bPostChecked)
 			if(isset($_REQUEST['company_id']))
 			{
 				$companyID = (int)$_REQUEST['company_id'];
-				$arFields['COMPANY_ID'] = $companyID > 0 && CCrmCompany::CheckReadPermission($companyID, $userPermissions)
-					? $companyID : 0;
+				$arFields['COMPANY_ID'] =
+					($companyID > 0 && $userPermissionsService->item()->canRead(CCrmOwnerType::Company, $companyID))
+						? $companyID
+						: 0
+				;
 			}
 
 			if(isset($_REQUEST['contact_id']))
@@ -821,7 +829,7 @@ if ($bPostChecked)
 				foreach($contactIDs as $contactID)
 				{
 					$contactID = (int)$contactID;
-					if($contactID > 0 && CCrmContact::CheckReadPermission($contactID, $userPermissions))
+					if($contactID > 0 && $userPermissionsService->item()->canRead(CCrmOwnerType::Contact, $contactID))
 					{
 						$effectiveContactIDs[] = $contactID;
 					}
@@ -838,7 +846,7 @@ if ($bPostChecked)
 		if (isset($_POST['MYCOMPANY_ID']))
 		{
 			$myCompanyId = (int)$_POST['MYCOMPANY_ID'];
-			if ($myCompanyId > 0 && CCrmCompany::CheckReadPermission($myCompanyId))
+			if ($myCompanyId > 0 && $userPermissionsService->item()->canRead(CCrmOwnerType::Company, $myCompanyId))
 			{
 				$arFields['MYCOMPANY_ID'] = $myCompanyId;
 			}
@@ -866,7 +874,7 @@ if ($bPostChecked)
 		{
 			$leadID = (int)$arResult['ELEMENT']['LEAD_ID'];
 		}
-		if ($leadID <= 0 || !CCrmLead::CheckReadPermission($leadID))
+		if ($leadID <= 0 || !$userPermissionsService->item()->canRead(CCrmOwnerType::Lead, $leadID))
 		{
 			$leadID = 0;
 		}
@@ -882,7 +890,7 @@ if ($bPostChecked)
 		{
 			$dealID = (int)$arResult['ELEMENT']['DEAL_ID'];
 		}
-		if ($dealID <= 0 || !CCrmDeal::CheckReadPermission($dealID))
+		if ($dealID <= 0 || !$userPermissionsService->item()->canRead(CCrmOwnerType::Deal, $dealID))
 		{
 			$dealID = 0;
 		}
@@ -1130,7 +1138,7 @@ if ($bPostChecked)
 		{
 			if (isset($_POST['apply']))
 			{
-				if (CCrmQuote::CheckUpdatePermission($ID))
+				if ($userPermissionsService->item()->canUpdate(CCrmOwnerType::Quote, $ID))
 				{
 					LocalRedirect(
 						CComponentEngine::MakePathFromTemplate(
@@ -1151,7 +1159,7 @@ if ($bPostChecked)
 			}
 			elseif (isset($_POST['saveAndView']))
 			{
-				if (CCrmQuote::CheckReadPermission($ID))
+				if ($userPermissionsService->item()->canRead(CCrmOwnerType::Quote, $ID))
 				{
 					LocalRedirect(
 						empty($arResult['QUOTE_REFERER']) ?
@@ -1213,8 +1221,10 @@ elseif (isset($_GET['delete']) && check_bitrix_sessid())
 	if ($bEdit)
 	{
 		$arResult['ERROR_MESSAGE'] = '';
-		if (!$CCrmQuote->cPerms->CheckEnityAccess('QUOTE', 'DELETE', $arEntityAttr[$arParams['ELEMENT_ID']]))
-			$arResult['ERROR_MESSAGE'] .= GetMessage('CRM_PERMISSION_DENIED').'<br />';
+		if (!$userPermissionsService->item()->canDelete(CCrmOwnerType::Lead, $arParams['ELEMENT_ID']))
+		{
+			$arResult['ERROR_MESSAGE'] .= GetMessage('CRM_PERMISSION_DENIED') . '<br />';
+		}
 
 		if (empty($arResult['ERROR_MESSAGE']) && !$CCrmQuote->Delete($arResult['ELEMENT']['ID']))
 		{
@@ -1248,11 +1258,19 @@ else
 
 $arResult['STATUS_LIST'] = array();
 $arResult['~STATUS_LIST'] = CCrmStatus::GetStatusList('QUOTE_STATUS');
+
+$stagePermissions = $userPermissionsService->stage();
 foreach ($arResult['~STATUS_LIST'] as $sStatusId => $sStatusTitle)
 {
-	if ($CCrmQuote->cPerms->GetPermType('QUOTE', $bEdit ? 'WRITE' : 'ADD', array('STATUS_ID'.$sStatusId)) > BX_CRM_PERM_NONE)
+	if (
+		($bEdit && $stagePermissions->canUpdateInStage(CCrmOwnerType::Quote, null, $sStatusId))
+		|| (!$bEdit && $stagePermissions->canAddInStage(CCrmOwnerType::Quote, null, $sStatusId))
+	)
+	{
 		$arResult['STATUS_LIST'][$sStatusId] = $sStatusTitle;
+	}
 }
+
 $arResult['CURRENCY_LIST'] = CCrmCurrencyHelper::PrepareListItems();
 $arResult['EDIT'] = $bEdit;
 
@@ -1566,7 +1584,7 @@ $arResult['FIELDS']['tab_1'][] = array(
 		'ENTITY_SELECTOR_SEARCH_OPTIONS' => array(
 			'ONLY_MY_COMPANIES' => 'Y'
 		),
-		'ENABLE_ENTITY_CREATION'=> $userPermissions->HavePerm('CONFIG', BX_CRM_PERM_CONFIG, 'WRITE'),
+		'ENABLE_ENTITY_CREATION'=> $userPermissionsService->isAdminForEntity(CCrmOwnerType::Quote),
 		'ENTITY_CREATE_URL'=> CCrmOwnerType::GetEditUrl(CCrmOwnerType::Company, 0, false),
 		'READ_ONLY' => false,
 		'FORM_NAME' => $arResult['FORM_ID'],

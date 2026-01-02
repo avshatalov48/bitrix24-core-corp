@@ -11,7 +11,7 @@ class Transition extends Permission
 	public const CODE = 'TRANSITION';
 
 	public const TRANSITION_ANY = 'ANY';
-	public const TRANSITION_INHERIT = 'INHERIT';
+	public const TRANSITION_INHERIT = \Bitrix\Crm\Service\UserPermissions::SETTINGS_INHERIT;
 	public const TRANSITION_BLOCKED = 'BLOCKED';
 
 	public function code(): string

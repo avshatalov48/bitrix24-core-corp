@@ -65,7 +65,14 @@ if ($_SERVER["REQUEST_METHOD"] == "POST" && check_bitrix_sessid())
 
 			case "restore":
 				$http = new CHTTP;
-				if (!$http->Download('https://www.1c-bitrix.ru/download/files/scripts/restore.php', $_SERVER["DOCUMENT_ROOT"].'/restore.php'))
+
+				$region = \Bitrix\Main\Application::getInstance()->getLicense()->getRegion();
+				$restoreUrl = in_array($region, ['ru', 'by', 'kz'])
+					? "https://www.1c-bitrix.$region/download/files/scripts/restore.php"
+					: 'https://www.bitrixsoft.com/download/files/scripts/restore.php';
+
+
+				if (!$http->Download($restoreUrl, $_SERVER["DOCUMENT_ROOT"].'/restore.php'))
 				{
 					echo \Bitrix\Main\Web\Json::encode(array("error" => GetMessage('MAIN_DUMP_ERR_COPY_FILE', array('#FILE#' => "restore.php"))));
 				}

@@ -2,8 +2,8 @@
 
 return [
 	'extensions' => [
+		'assets/icons',
 		'loc',
-		'feature',
-		'apptheme',
+		'toast',
 	],
 ];

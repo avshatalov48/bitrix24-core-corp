@@ -408,7 +408,8 @@ class Giphy extends Base
 
 	public static function getIframeUrl()
 	{
-		$controllerUrl = 'https://marta.bitrix.info/iframe/giphy.php';
+		$domain = (new \Bitrix\Main\License\UrlProvider())->getTechDomain();
+		$controllerUrl = 'https://marta.' . $domain . '/iframe/giphy.php';
 
 		if (defined('BOT_IFRAME_URL'))
 		{

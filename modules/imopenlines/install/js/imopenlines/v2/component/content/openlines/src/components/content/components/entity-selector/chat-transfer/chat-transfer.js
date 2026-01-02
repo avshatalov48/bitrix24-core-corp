@@ -1,5 +1,6 @@
 import { PopupOptions } from 'main.popup';
-import { MessengerPopup } from 'im.v2.component.elements';
+
+import { MessengerPopup } from 'im.v2.component.elements.popup';
 
 import { ChatTransferContent } from './chat-transfer-content';
 

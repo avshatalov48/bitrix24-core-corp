@@ -60,18 +60,22 @@ class CBPDiskCopyMoveActivity
 
 		$rootActivity = $this->GetRootActivity();
 		$documentId = $rootActivity->GetDocumentId();
+		$moduleId = null;
 
 		switch ($entityType)
 		{
 			case 'user':
 				$entityType = \Bitrix\Disk\ProxyType\User::className();
+				$moduleId = 'disk';
 				$entityId = CBPHelper::ExtractUsers($entityId, $documentId, true);
 				break;
 			case 'sg':
 				$entityType = \Bitrix\Disk\ProxyType\Group::className();
+				$moduleId = 'disk';
 				break;
 			case 'common':
 				$entityType = \Bitrix\Disk\ProxyType\Common::className();
+				$moduleId = 'disk';
 				break;
 			default:
 				$entityType = null;
@@ -79,10 +83,11 @@ class CBPDiskCopyMoveActivity
 
 		if ($entityType)
 		{
-			$storage = \Bitrix\Disk\Storage::load(array(
+			$storage = \Bitrix\Disk\Storage::load(array_filter([
+				'=MODULE_ID' => $moduleId,
 				'=ENTITY_ID' => $entityId,
 				'=ENTITY_TYPE' => $entityType,
-			));
+			]));
 			if ($storage)
 				return $storage->getRootObject();
 		}

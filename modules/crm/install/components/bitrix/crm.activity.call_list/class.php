@@ -65,7 +65,7 @@ class CrmActivityCallListComponent extends \CBitrixComponent
 		try{
 			if(count($entityIds) == 0)
 			{
-				$hasAccess = $userPermissions->canReadType($entityTypeId);
+				$hasAccess = $userPermissions->entityType()->canReadItems($entityTypeId);
 				if ($hasAccess)
 				{
 					$callList = \Bitrix\Crm\CallList\CallList::createWithGridId($entityType, $gridId);
@@ -76,7 +76,7 @@ class CrmActivityCallListComponent extends \CBitrixComponent
 				$availableItemsIds = [];
 				foreach ($entityIds as $entityId)
 				{
-					if ($userPermissions->checkReadPermissions($entityTypeId, (int)$entityId))
+					if ($userPermissions->item()->canRead($entityTypeId, (int)$entityId))
 					{
 						$availableItemsIds[] = (int)$entityId;
 					}
@@ -243,7 +243,7 @@ class CrmActivityCallListComponent extends \CBitrixComponent
 		while ($row = $cursor->fetch())
 		{
 			$entityId = $row['ELEMENT_ID'];
-			if (!$userPermissions->checkReadPermissions($callList->getEntityTypeId(), (int)$entityId))
+			if (!$userPermissions->item()->canRead($callList->getEntityTypeId(), (int)$entityId))
 			{
 				continue;
 			}

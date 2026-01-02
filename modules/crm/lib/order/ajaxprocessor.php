@@ -2,6 +2,7 @@
 
 namespace Bitrix\Crm\Order;
 
+use Bitrix\Crm\Service\Container;
 use Bitrix\Main\ArgumentOutOfRangeException;
 use Bitrix\Main\Error;
 use Bitrix\Main\Loader;
@@ -21,8 +22,6 @@ class AjaxProcessor
 {
 	/** @var int  */
 	protected $userId = 0;
-	/** @var \CCrmPerms */
-	protected $userPermissions = null;
 	/** @var array  */
 	protected $request = [];
 	/** @var Result */
@@ -79,8 +78,7 @@ class AjaxProcessor
 	 */
 	public function processRequest()
 	{
-		$this->userId = \CCrmSecurityHelper::GetCurrentUserID();
-		$this->userPermissions =  \CCrmPerms::GetCurrentUserPermissions();
+		$this->userId = Container::getInstance()->getContext()->getUserId();
 
 		$action = '';
 

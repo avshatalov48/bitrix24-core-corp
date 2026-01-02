@@ -1,6 +1,7 @@
 <?php
 
 use Bitrix\Bitrix24\Sso\Scim;
+use Bitrix\Disk\Controller\UnifiedLinkController;
 use Bitrix\Main\Routing\Controllers\PublicPageController;
 use Bitrix\Main\Routing\RoutingConfigurator;
 
@@ -29,8 +30,12 @@ return function (RoutingConfigurator $routes) {
 	// disk
 	$routes->prefix('disk/boards')
 		->where('fileId', '[0-9]+')
+		->where('attachedObjectId', '[0-9]+')
 		->group(function (RoutingConfigurator $routes) {
 			$routes->any('{fileId}/openDocument', [\Bitrix\Disk\Controller\Integration\Flipchart::class, 'openDocument']);
+			$routes->any('{attachedObjectId}/openAttachedDocument', [\Bitrix\Disk\Controller\Integration\Flipchart::class, 'openAttachedDocument']);
+			$routes->any('{fileId}/open', [\Bitrix\Disk\Controller\Integration\Flipchart::class, 'openDocument']);
+			$routes->any('{attachedObjectId}/openAttached', [\Bitrix\Disk\Controller\Integration\Flipchart::class, 'openAttachedDocument']);
 		});
 
 	$routes->any('/disk/{action}/{fileId}/{any}', new PublicPageController('/bitrix/services/disk/index.php'))
@@ -41,6 +46,13 @@ return function (RoutingConfigurator $routes) {
 	$routes->any('/mobile/disk/{objectId}/download', new PublicPageController('/mobile/disk/index.php'))
 		->where('objectId', '[0-9]+')
 		->default('download', '1');
+
+	$routes->prefix('disk/file')
+		->where('uniqueCode', '[0-9a-zA-Z]{20}')
+		->group(function (RoutingConfigurator $routes) {
+			 $routes->get('{uniqueCode}', [UnifiedLinkController::class, 'view']);
+			 $routes->get('{uniqueCode}/edit', [UnifiedLinkController::class, 'edit']);
+		});
 
 	// pub
 	$routes->prefix('pub')->group(function (RoutingConfigurator $routes) {
@@ -107,6 +119,7 @@ return function (RoutingConfigurator $routes) {
 			$routes->any('/extranet/knowledge/group/{any}', new PublicPageController('/extranet/knowledge/group/index.php'));
 			$routes->any('/extranet/marketplace/app/{any}', new PublicPageController('/extranet/marketplace/app/index.php'));
 			$routes->any('/extranet/marketplace/{any}', new PublicPageController('/extranet/marketplace/index.php'));
+			$routes->any('/extranet/call/detail/{any}', new PublicPageController('/extranet/call/index.php'));
 		}
 	);
 
@@ -247,6 +260,10 @@ return function (RoutingConfigurator $routes) {
 		->where('alias', '[\.\-0-9a-zA-Z]+')
 		->default('videoconf', 1);
 
+	$routes->any('/extranet/video/{alias}(/?)([^/]*)', new PublicPageController('/desktop_app/router.php'))
+		->where('alias', '[\.\-0-9a-zA-Z]+')
+		->default('videoconf', 1);
+
 	$routes->any('/tasks/getfile/{taskid}/{fileid}/{filename}', new PublicPageController('/tasks/getfile.php'))
 		->where('taskid', '\d+')
 		->where('fileid', '\d+');
@@ -343,7 +360,12 @@ return function (RoutingConfigurator $routes) {
 		->any('/_analytics/', fn() => '42')
 	;
 
-//scim azure
+	// call
+	$routes
+		->any('/call/detail/{callId}', new PublicPageController('/call/index.php'))
+		->where('callId', '[0-9]+');
+
+	//scim azure
 	$routes
 		->prefix('integration/scim/v2.0')
 		->group(function (RoutingConfigurator $routes) {

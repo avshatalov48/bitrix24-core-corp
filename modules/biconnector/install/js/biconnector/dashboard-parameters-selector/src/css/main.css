@@ -21,21 +21,18 @@
 	cursor: pointer;
 }
 
+.dashboard-params-groups-selector {
+	margin-bottom: 16px;
+}
+
 .dashboard-params-scope-selector {
 	margin-bottom: 16px;
 }
 
-.compatibility-params-title {
-	font-weight: bold;
-	font-size: 15px;
-	color: var(--ui-color-palette-gray-90);
-	margin-bottom: 18px;
+.biconnector-settings-entity-selector .ui-selector-tab-labels {
+	display: none;
 }
 
-.compatibility-params-content {
-	line-height: 19px;
-}
-
-.compatibility-params-content ul {
-	padding-left: 20px;
+.dashboard-params-container .ui-tag-selector-tag {
+	max-width: 230px;
 }

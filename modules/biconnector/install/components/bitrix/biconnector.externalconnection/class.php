@@ -10,6 +10,7 @@ if (!defined('B_PROLOG_INCLUDED') || B_PROLOG_INCLUDED !== true)
 use Bitrix\BIConnector\Access\AccessController;
 use Bitrix\BIConnector\Access\ActionDictionary;
 use Bitrix\BIConnector\ExternalSource;
+use Bitrix\BIConnector\ExternalSource\Internal\ExternalSourceRestConnectorTable;
 use Bitrix\BIConnector\ExternalSource\Internal\ExternalSourceSettingsTable;
 use Bitrix\BIConnector\ExternalSource\Internal\ExternalSourceTable;
 use Bitrix\BiConnector\Settings;
@@ -28,6 +29,13 @@ class ExternalConnectionComponent extends CBitrixComponent implements Controller
 	{
 		parent::__construct($component);
 		$this->errorCollection = new \Bitrix\Main\ErrorCollection();
+	}
+
+	public function onPrepareComponentParams($arParams)
+	{
+		$arParams['CLOSE_AFTER_CREATE'] = $arParams['CLOSE_AFTER_CREATE'] === 'Y' ? 'Y' : 'N';
+
+		return parent::onPrepareComponentParams($arParams);
 	}
 
 	public function executeComponent($component = null)
@@ -50,7 +58,10 @@ class ExternalConnectionComponent extends CBitrixComponent implements Controller
 					'id' => $source->getId(),
 					'title' => htmlspecialcharsbx($source->getTitle()),
 					'type' => $source->getType(),
+					'code' => $source->getCode() ?? $source->getType(),
+					'active' => $source->getActive(),
 				];
+
 				$settings = ExternalSourceSettingsTable::getList([
 					'filter' => [
 						'SOURCE_ID' => $source->getId(),
@@ -65,6 +76,18 @@ class ExternalConnectionComponent extends CBitrixComponent implements Controller
 				}
 			}
 		}
+		else
+		{
+			if (!empty($this->arParams['CONNECTOR_CODE']))
+			{
+				$this->arResult['SOURCE_FIELDS']['code'] = htmlspecialcharsbx($this->arParams['CONNECTOR_CODE']);
+			}
+
+			if (!empty($this->arParams['CONNECTOR_TYPE']))
+			{
+				$this->arResult['SOURCE_FIELDS']['type'] = htmlspecialcharsbx($this->arParams['CONNECTOR_TYPE']);
+			}
+		}
 		$this->arResult['SIGNED_PARAMETERS'] = $this->getSignedParameters();
 
 		$supportedDatabases = ExternalSource\SourceManager::getSupportedDatabases();
@@ -77,51 +100,6 @@ class ExternalConnectionComponent extends CBitrixComponent implements Controller
 		$this->arResult['SUPPORTED_DATABASES'] = $supportedDatabases;
 		$this->arResult['FIELDS_CONFIG'] = ExternalSource\SourceManager::getFieldsConfig();
 		$this->includeComponentTemplate();
-	}
-
-	public function checkConnectionAction(array $data): ?bool
-	{
-		$checkAccessResult = $this->checkAccess();
-		if (!$checkAccessResult->isSuccess())
-		{
-			$this->errorCollection[] = $checkAccessResult->getError();
-
-			return null;
-		}
-
-		if (
-			!isset($data['type'], $data['host'], $data['username'], $data['password'])
-			|| !$data['type']
-			|| !$data['host']
-			|| !$data['username']
-			|| !$data['password']
-		)
-		{
-			$this->errorCollection[] = new Error(Loc::getMessage('EXTERNAL_CONNECTION_ERROR_FIELDS_INCOMPLETE'));
-
-			return null;
-		}
-
-		$type = ExternalSource\Type::tryFrom($data['type']);
-		if (!$type)
-		{
-			$this->errorCollection[] = new Error(Loc::getMessage('EXTERNAL_CONNECTION_ERROR_UNKNOWN_TYPE', [
-				'#CONNECTION_TYPE#' => htmlspecialcharsbx($data['type']),
-			]));
-
-			return null;
-		}
-
-		$source = ExternalSource\Source\Factory::getSource($type, 0);
-		$connectionResult = $source->connect(trim($data['host']), $data['username'], $data['password']);
-		if (!$connectionResult->isSuccess())
-		{
-			$this->errorCollection[] = $connectionResult->getError();
-
-			return null;
-		}
-
-		return true;
 	}
 
 	private function checkAccess(): Result

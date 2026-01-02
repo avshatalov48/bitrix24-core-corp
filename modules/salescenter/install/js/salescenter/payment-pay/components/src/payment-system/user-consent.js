@@ -1,12 +1,12 @@
-import {ajax, Tag, Type} from 'main.core';
-import {EventEmitter} from 'main.core.events';
-import {EventType} from 'sale.payment-pay.const';
-import {BitrixVue} from "ui.vue";
+import { ajax, Tag, Type } from 'main.core';
+import { EventEmitter } from 'main.core.events';
+import { EventType } from 'sale.payment-pay.const';
+import { BitrixVue } from 'ui.vue';
 
 BitrixVue.component('salescenter-payment_pay-components-payment_system-user_consent', {
 	props: {
-		id: {
-			type: Number|String,
+		items: {
+			type: Array,
 			required: true,
 		},
 		title: {
@@ -17,57 +17,78 @@ BitrixVue.component('salescenter-payment_pay-components-payment_system-user_cons
 			type: String,
 			required: true,
 		},
-		checked: {
+		autoSave: {
 			type: Boolean,
 			default: false,
 			required: false,
 		},
+		originatorId: {
+			type: String,
+			default: '',
+			required: false,
+		},
+		originId: {
+			type: String,
+			default: '',
+			required: false,
+		},
+	},
+	mounted() {
+		this.loadBlockHtml();
 	},
 	methods: {
 		loadBlockHtml() {
+			if (this.items.length === 0)
+			{
+				return;
+			}
+
 			const data = {
 				fields: {
+					items: this.items,
 					id: this.id,
 					title: this.title,
 					isChecked: this.checked ? 'Y' : 'N',
 					submitEventName: this.submitEventName,
-				}
+					autoSave: this.autoSave ? 'Y' : 'N',
+					originatorId: this.originatorId,
+					originId: this.originId,
+				},
 			};
 
-			ajax.runComponentAction('bitrix:salescenter.payment.pay', 'userConsentRequest', {
-				mode: 'ajax',
-				data: data,
-			}).then((response) => {
-
+			ajax.runComponentAction(
+				'bitrix:salescenter.payment.pay',
+				'userConsentRequest',
+				{
+					mode: 'ajax',
+					data,
+				},
+			).then((response) => {
 				if (!Type.isPlainObject(response.data) || !Type.isStringFilled(response.data.html) || !BX.UserConsent)
 				{
 					return;
 				}
 
-				let html, wrapper, control;
-
-				html = response.data.html;
-				wrapper = this.$refs.consentDiv;
+				const html = response.data.html;
+				const wrapper = this.$refs.consentDiv;
 				wrapper.appendChild(Tag.render`<div>${html}</div>`);
-				control = BX.UserConsent.load(wrapper);
-
-				EventEmitter.subscribe(control, BX.UserConsent.events.accepted, (event) => {
-					EventEmitter.emit(EventType.consent.accepted);
+				BX.UserConsent.loadAll(wrapper);
+				const controls = BX.UserConsent.getItems();
+				controls.forEach((control) => {
+					EventEmitter.subscribe(control, BX.UserConsent.events.afterAccepted, (event) => {
+						EventEmitter.emit(EventType.consent.accepted, event);
+					});
+					EventEmitter.subscribe(control, BX.UserConsent.events.refused, (event) => {
+						EventEmitter.emit(EventType.consent.refused, event);
+					});
 				});
-				EventEmitter.subscribe(control, BX.UserConsent.events.refused, (event) => {
-					EventEmitter.emit(EventType.consent.refused);
-				});
-
 			});
-		}
-	},
-	mounted() {
-		this.loadBlockHtml();
+		},
 	},
 	// language=Vue
 	template: `
-		<div>
-        	<div ref="consentDiv"/>
+		<div class="salescenter-user-consent-list">
+			<div ref="consentDiv"/>
 		</div>
 	`,
 });

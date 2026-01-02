@@ -9,6 +9,7 @@ use Bitrix\Main\UI\Extension;
 use Bitrix\Main\Web\Json;
 use Bitrix\Tasks\Helper\RestrictionUrl;
 use Bitrix\Tasks\Integration\Bitrix24\FeatureDictionary;
+use Bitrix\UI\Toolbar\Facade\Toolbar;
 
 Extension::load(['ui.icons', 'ui.fonts.opensans']);
 
@@ -34,7 +35,6 @@ if (($arResult['IS_TOOL_AVAILABLE'] ?? null) === false)
 	return;
 }
 
-$isBitrix24Template = (SITE_TEMPLATE_ID === "bitrix24");
 $taskLimitExceeded = $arResult['TASK_LIMIT_EXCEEDED'];
 
 if ($taskLimitExceeded)
@@ -156,29 +156,16 @@ if (isset($arResult['FILTER']['FIELDS']) && is_array($arResult['FILTER']['FIELDS
 
 <?php
 	//region FILTER
-	$this->SetViewTarget('inside_pagetitle');
-?>
-<div class="pagetitle-container pagetitle-flexible-space">
-	<? $APPLICATION->IncludeComponent(
-	"bitrix:main.ui.filter",
-	"",
-	array(
-		"FILTER_ID" => $arParams['FILTER_ID'],
-		"GRID_ID" => $arParams["GRID_ID"],
+	Toolbar::addFilter([
+		'GRID_ID' => $arParams['GRID_ID'],
+		'FILTER_ID' => $arParams['FILTER_ID'],
+		'FILTER' => $arResult['FILTER']['FIELDS'],
+		'FILTER_PRESETS' => $arResult['FILTER']['PRESETS'],
 
-		"FILTER" => $arResult['FILTER']['FIELDS'],
-		"FILTER_PRESETS" => $arResult['FILTER']['PRESETS'],
-
-		"ENABLE_LABEL"          => true,
-		'ENABLE_LIVE_SEARCH'    => ($arParams['USE_LIVE_SEARCH'] ?? null) != 'N',
+		'ENABLE_LABEL' => true,
+		'ENABLE_LIVE_SEARCH' => ($arParams['USE_LIVE_SEARCH'] ?? null) != 'N',
 		'RESET_TO_DEFAULT_MODE' => true,
-	),
-	$component,
-	array("HIDE_ICONS" => true)
-	); ?>
-</div>
-<?php
-$this->EndViewTarget();
+	]);
 //endregion
 ?>
 

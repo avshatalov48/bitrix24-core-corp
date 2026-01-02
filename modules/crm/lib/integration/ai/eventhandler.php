@@ -7,20 +7,28 @@ use Bitrix\AI\Engine;
 use Bitrix\AI\Quality;
 use Bitrix\AI\Tuning;
 use Bitrix\Crm\Activity\Provider\Call;
-use Bitrix\Crm\Feature;
+use Bitrix\Crm\Activity\Provider\RepeatSale;
+use Bitrix\Crm\Copilot\AiQueueBuffer\Controller\AiQueueBufferController;
+use Bitrix\Crm\Copilot\AiQueueBuffer\Entity\AiQueueBufferItem;
+use Bitrix\Crm\Copilot\AiQueueBuffer\Provider\FillRepeatSaleTipsProvider;
+use Bitrix\Crm\Integration\AI\Enum\GlobalSetting;
 use Bitrix\Crm\Integration\AI\Model\EO_Queue;
 use Bitrix\Crm\Integration\AI\Model\QueueTable;
 use Bitrix\Crm\Integration\AI\Operation\Autostart\AutoLauncher;
 use Bitrix\Crm\Integration\AI\Operation\ExtractScoringCriteria;
 use Bitrix\Crm\Integration\AI\Operation\FillItemFieldsFromCallTranscription;
+use Bitrix\Crm\Integration\AI\Operation\FillRepeatSaleTips;
 use Bitrix\Crm\Integration\AI\Operation\Orchestrator;
 use Bitrix\Crm\Integration\AI\Operation\ScoreCall;
 use Bitrix\Crm\Integration\AI\Operation\SummarizeCallTranscription;
 use Bitrix\Crm\Integration\AI\Operation\TranscribeCallRecording;
 use Bitrix\Crm\Integration\Analytics\Builder\AI\CallActivityWithAudioRecordingEvent;
 use Bitrix\Crm\Integration\Analytics\Dictionary;
+use Bitrix\Crm\Integration\VoxImplant;
 use Bitrix\Crm\Integration\VoxImplantManager;
 use Bitrix\Crm\ItemIdentifier;
+use Bitrix\Crm\RepeatSale\CostManager;
+use Bitrix\Crm\Service\Container;
 use Bitrix\Main\Event;
 use Bitrix\Main\Localization\Loc;
 use Bitrix\Main\ORM\EventResult;
@@ -35,6 +43,8 @@ final class EventHandler
 	public const SETTINGS_FILL_CRM_TEXT_ENABLED_CODE = 'crm_copilot_fill_crm_text_enabled';
 	public const SETTINGS_CALL_ASSESSMENT_ENABLED_CODE = 'crm_copilot_call_assessment_enabled';
 	public const SETTINGS_CALL_ASSESSMENT_ENGINE_CODE = 'crm_copilot_call_assessment_engine_code';
+	public const SETTINGS_REPEAT_SALE_ENABLED_CODE = 'crm_copilot_repeat_sale_enabled';
+	public const SETTINGS_REPEAT_SALE_ENGINE_CODE = 'crm_copilot_repeat_sale_engine_code';
 
 	public const ENGINE_CATEGORY = 'text';
 
@@ -65,7 +75,7 @@ final class EventHandler
 			$groups[self::SETTINGS_GROUP_CODE] = [
 				'title' => Loc::getMessage('CRM_INTEGRATION_AI_EVENTHANDLER_SETTINGS_GROUP_TITLE'),
 				'description' => Loc::getMessage('CRM_INTEGRATION_AI_EVENTHANDLER_SETTINGS_GROUP_DESCRIPTION'),
-				'helpdesk' => 18799442
+				'helpdesk' => 18799442,
 			];
 
 			$items[self::SETTINGS_FILL_ITEM_FROM_CALL_ENABLED_CODE] = [
@@ -78,7 +88,7 @@ final class EventHandler
 			];
 
 			$quality = new Quality([
-				Quality::QUALITIES['transcribe']
+				Quality::QUALITIES['transcribe'],
 			]);
 			$items[self::SETTINGS_FILL_ITEM_FROM_CALL_ENGINE_AUDIO_CODE] = array_merge(
 				Tuning\Defaults::getProviderSelectFieldParams(Engine::CATEGORIES['audio'], $quality),
@@ -112,14 +122,39 @@ final class EventHandler
 			];
 
 			$quality = new Quality([
-				Quality::QUALITIES['translate'],
+				Quality::QUALITIES['scoring'] ?? Quality::QUALITIES['translate'],
 			]);
+
 			$items[self::SETTINGS_CALL_ASSESSMENT_ENGINE_CODE] = [
 				...Tuning\Defaults::getProviderSelectFieldParams(Engine::CATEGORIES['text'], $quality),
 				'group' => self::SETTINGS_GROUP_CODE,
 				'title' => Loc::getMessage('CRM_INTEGRATION_AI_EVENTHANDLER_SETTINGS_CALL_ASSESSMENT_ENGINE_TITLE'),
-				'sort' => 50,
+				'sort' => 20,
 			];
+
+			$availabilityChecker = Container::getInstance()->getRepeatSaleAvailabilityChecker();
+			if ($availabilityChecker->isAvailable())
+			{
+				$items[self::SETTINGS_REPEAT_SALE_ENABLED_CODE] = [
+					'group' => self::SETTINGS_GROUP_CODE,
+					'title' => Loc::getMessage('CRM_INTEGRATION_AI_EVENTHANDLER_SETTING_REPEAT_SALE_TITLE'),
+					'header' => Loc::getMessage('CRM_INTEGRATION_AI_EVENTHANDLER_SETTINGS_REPEAT_SALE_HEADER'),
+					'type' => Tuning\Type::BOOLEAN,
+					'default' => true,
+					'sort' => 16,
+				];
+
+				$quality = new Quality([
+					Quality::QUALITIES['scoring'] ?? Quality::QUALITIES['translate'],
+				]);
+
+				$items[self::SETTINGS_REPEAT_SALE_ENGINE_CODE] = [
+					...Tuning\Defaults::getProviderSelectFieldParams(Engine::CATEGORIES['text'], $quality),
+					'group' => self::SETTINGS_GROUP_CODE,
+					'title' => Loc::getMessage('CRM_INTEGRATION_AI_EVENTHANDLER_SETTINGS_REPEAT_SALE_ENGINE_TITLE'),
+					'sort' => 31,
+				];
+			}
 		}
 
 		$result->modifyFields([
@@ -210,7 +245,7 @@ final class EventHandler
 			[
 				'eventName' => __FUNCTION__,
 				'result' => $result,
-			]
+			],
 		);
 	}
 
@@ -273,6 +308,10 @@ final class EventHandler
 		{
 			ExtractScoringCriteria::onQueueJobFail($event, $job);
 		}
+		elseif ((int)$job->requireTypeId() === FillRepeatSaleTips::TYPE_ID)
+		{
+			FillRepeatSaleTips::onQueueJobFail($event, $job);
+		}
 	}
 	//endregion
 
@@ -310,7 +349,55 @@ final class EventHandler
 			(new AutoLauncher(AutoLauncher::OPERATION_UPDATE, $newFields))->run($changedFields);
 		}
 	}
-	//endregion
+
+	public static function onAfterRepeatSaleActivityAdd(array $activityFields): void
+	{
+		$activityId = (int)($activityFields['ID'] ?? 0);
+		if ($activityId <= 0)
+		{
+			return;
+		}
+
+		$providerId = (string)($activityFields['PROVIDER_ID'] ?? '');
+		if ($providerId !== RepeatSale::getId())
+		{
+			return;
+		}
+
+		$isAiEnabled = AIManager::isAiCallProcessingEnabled()
+			&& AIManager::isEnabledInGlobalSettings(GlobalSetting::RepeatSale)
+		;
+		if (!$isAiEnabled)
+		{
+			return; // AI is disabled in global settings
+		}
+
+		$isAutoStartPossible = CostManager::isSponsoredOperation() || AIManager::isBaasServiceHasPackage();
+		if (!$isAutoStartPossible)
+		{
+			return;
+		}
+
+		$isAiAutoStartEnabled = (bool)($activityFields['PROVIDER_PARAMS']['IS_AI_AUTO_START_ENABLED'] ?? false);
+		if ($isAiAutoStartEnabled)
+		{
+			$job = JobRepository::getInstance()->getFillRepeatSaleTipsByActivity($activityId);
+			if ($job)
+			{
+				return; // job already exists in 'b_crm_ai_queue' table
+			}
+
+			AiQueueBufferController::getInstance()->add(
+				AiQueueBufferItem::createFromEntityFields([
+					'PROVIDER_ID' => FillRepeatSaleTipsProvider::getId(),
+					'PROVIDER_DATA' => [
+						'activityId' => $activityId,
+					]
+				])
+			);
+		}
+	}
+	// endregion
 
 	//region Recycle bin
 	public static function onItemMoveToBin(ItemIdentifier $target, ItemIdentifier $recycleBinItem): void
@@ -335,10 +422,7 @@ final class EventHandler
 	{
 		$hash = $event->getParameter('queue');
 
-		return is_string($hash) && !empty($hash)
-			? $hash
-			: null
-		;
+		return is_string($hash) && !empty($hash) ? $hash : null;
 	}
 
 	private static function getQueueJobExecuteResult(Event $event, EO_Queue $job): ?Result
@@ -368,6 +452,11 @@ final class EventHandler
 			return ExtractScoringCriteria::onQueueJobExecute($event, $job);
 		}
 
+		if ((int)$job->requireTypeId() === FillRepeatSaleTips::TYPE_ID)
+		{
+			return FillRepeatSaleTips::onQueueJobExecute($event, $job);
+		}
+
 		return null;
 	}
 
@@ -383,6 +472,7 @@ final class EventHandler
 			->setActivityId($nullSafeInt($activityFields, 'ID'))
 			->setActivityDirection($nullSafeInt($activityFields, 'DIRECTION'))
 			->setCallDuration(VoxImplantManager::getCallDuration($callId) ?? 0)
+			->setTelephonyType(((new VoxImplant\Call($callId))->getTelephonyType()))
 		;
 		$builder->buildEvent()->send();
 		// send the same analytics only with different TOOL and CATEGORY

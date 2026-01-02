@@ -295,6 +295,7 @@ class User extends \IRestService
             'SECOND_NAME',
             'LAST_NAME',
             'EMAIL',
+			'LOGIN',
             'PERSONAL_BIRTHDAY',
             'PERSONAL_WWW',
             'PERSONAL_GENDER',

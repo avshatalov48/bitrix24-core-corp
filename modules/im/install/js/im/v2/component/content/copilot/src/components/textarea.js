@@ -1,5 +1,4 @@
 import { ChatTextarea } from 'im.v2.component.textarea';
-import { CopilotDraftManager } from 'im.v2.lib.draft';
 
 // @vue/component
 export const CopilotTextarea = {
@@ -11,10 +10,6 @@ export const CopilotTextarea = {
 			default: '',
 		},
 	},
-	computed:
-	{
-		CopilotDraftManager: () => CopilotDraftManager,
-	},
 	methods:
 	{
 		loc(phraseCode: string): string
@@ -25,13 +20,11 @@ export const CopilotTextarea = {
 	template: `
 		<ChatTextarea
 			:dialogId="dialogId"
-			:placeholder="this.loc('IM_CONTENT_COPILOT_TEXTAREA_PLACEHOLDER')"
-			:withCreateMenu="false"
+			:placeholder="loc('IM_CONTENT_COPILOT_TEXTAREA_PLACEHOLDER')"
 			:withMarket="false"
 			:withEdit="false"
 			:withUploadMenu="false"
 			:withSmileSelector="false"
-			:draftManagerClass="CopilotDraftManager"
 		/>
 	`,
 };

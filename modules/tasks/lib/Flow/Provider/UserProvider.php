@@ -11,6 +11,9 @@ use Bitrix\Tasks\Flow\User\Tool;
 
 final class UserProvider
 {
+	private const ADMIN_GROUP_ID = 1;
+
+	private static int $defaultAdminId;
 	private static array $users = [];
 
 	private Tool $userTool;
@@ -18,6 +21,34 @@ final class UserProvider
 	public function __construct()
 	{
 		$this->userTool = new Tool();
+	}
+
+	public static function getDefaultAdminId(): int
+	{
+		if (!isset(self::$defaultAdminId))
+		{
+			self::$defaultAdminId = self::calculateDefaultAdminId();
+		}
+
+		return self::$defaultAdminId;
+	}
+
+	private static function calculateDefaultAdminId(): int
+	{
+		$adminId = (int)\Bitrix\Tasks\Util\User::getAdminId();
+		if ($adminId !== 0)
+		{
+			return $adminId;
+		}
+
+		$query = UserTable::query()
+			->setSelect(['ID'])
+			->where('GROUPS.GROUP_ID', self::ADMIN_GROUP_ID)
+			->setOrder(['ID' => 'ASC'])
+			->setLimit(1)
+		;
+
+		return (int)$query->fetchObject()?->getId();
 	}
 
 	/**

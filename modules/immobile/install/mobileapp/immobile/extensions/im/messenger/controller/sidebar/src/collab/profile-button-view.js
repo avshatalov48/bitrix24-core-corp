@@ -4,9 +4,9 @@
 
 jn.define('im/messenger/controller/sidebar/collab/profile-button-view', (require, exports, module) => {
 	const { Indent } = require('tokens');
-	const { Feature: MobileFeature } = require('feature');
 	const { withPressed } = require('utils/color');
 
+	const { BadgeCounter, BadgeCounterDesign } = require('ui-system/blocks/badges/counter');
 	const { IconView } = require('ui-system/blocks/icon');
 	const { Card } = require('ui-system/layout/card');
 
@@ -21,7 +21,9 @@ jn.define('im/messenger/controller/sidebar/collab/profile-button-view', (require
 		 * @constructor
 		 * @param {Object} props
 		 * @param {string} props.testId
-		 * @param {string | Icon} props.icon
+		 * @param {Object} props.buttonIcon
+		 * @param {string | Icon} props.buttonIcon.icon
+		 * @param {?string} props.buttonIcon.testId
 		 * @param {string} props.text
 		 * @param {Function} props.callback
 		 * @param {?number} props.counter
@@ -36,7 +38,7 @@ jn.define('im/messenger/controller/sidebar/collab/profile-button-view', (require
 		{
 			const {
 				testId,
-				icon,
+				buttonIcon,
 				text,
 				callback,
 				disable = false,
@@ -60,7 +62,8 @@ jn.define('im/messenger/controller/sidebar/collab/profile-button-view', (require
 					},
 					IconView({
 						size: 32,
-						icon,
+						icon: buttonIcon.icon,
+						testId: buttonIcon?.testId,
 						color: disable ? Theme.color.base7 : Theme.color.base0,
 					}),
 					Text({
@@ -77,31 +80,6 @@ jn.define('im/messenger/controller/sidebar/collab/profile-button-view', (require
 					counter ? this.renderBadge(counter) : null,
 				),
 			];
-
-			if (!MobileFeature.isAirStyleSupported())
-			{
-				return View(
-					{
-						style: {
-							paddingVertical: 12,
-							borderWidth: 1,
-							width: 86,
-							maxWidth: 86,
-							paddingHorizontal: 10,
-							borderRadius: 12,
-							borderColor: Theme.colors.bgSeparatorPrimary,
-							flexDirection: 'column',
-							alignItems: 'center',
-							justifyContent: 'space-between',
-							marginRight: 8,
-						},
-						testId,
-						clickable: !disable,
-						onClick: () => callback(),
-					},
-					...cardChildrenList,
-				);
-			}
 
 			return Card(
 				{
@@ -129,25 +107,16 @@ jn.define('im/messenger/controller/sidebar/collab/profile-button-view', (require
 			return View(
 				{
 					style: {
-						backgroundColor: Theme.colors.accentMainAlert,
-						borderRadius: 512,
-						paddingHorizontal: Indent.S.toNumber(),
 						position: 'absolute',
 						top: 10,
 						left: 48,
 						justifyContent: 'center',
 						alignItems: 'center',
-						borderColor: Theme.colors.baseWhiteFixed,
-						borderWidth: 1,
 					},
 				},
-				Text({
-					text: counter > 99 ? '99+' : String(counter),
-					style: {
-						color: Theme.colors.baseWhiteFixed,
-						fontSize: 10,
-						fontWeight: '500',
-					},
+				BadgeCounter({
+					value: counter > 99 ? '99+' : String(counter),
+					design: BadgeCounterDesign.ALERT,
 				}),
 			);
 		}

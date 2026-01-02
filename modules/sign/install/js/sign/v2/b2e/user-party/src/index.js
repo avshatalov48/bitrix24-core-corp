@@ -7,6 +7,9 @@ import type { CardItem } from './types/card-item';
 import { UserPartyCounters } from 'sign.v2.b2e.user-party-counters';
 import { UserPartyPopup } from 'sign.v2.b2e.user-party-popup';
 import { Api, CountMember } from 'sign.v2.api';
+import { FeatureStorage } from 'sign.feature-storage';
+import { MemberRole, type MemberRoleType, EntityType } from 'sign.type';
+import { UserPartyRefused } from 'sign.v2.b2e.user-party-refused';
 import 'ui.icon-set.main';
 
 import './style.css';
@@ -23,8 +26,12 @@ const Mode = Object.freeze({
 	edit: 'edit',
 });
 
-const defaultAvatarLink = '/bitrix/js/sign/v2/b2e/user-party/images/user.svg';
-const departmentAvatarLink = '/bitrix/js/sign/v2/b2e/user-party/images/department.svg';
+const avatarLinks = {
+	user: '/bitrix/js/sign/v2/b2e/user-party/images/user.svg',
+	department: '/bitrix/js/sign/v2/b2e/user-party/images/department.svg',
+	document: '/bitrix/js/sign/v2/b2e/user-party/images/sign-document.svg',
+	signersList: '/bitrix/js/sign/v2/b2e/user-party/images/signers-list.svg',
+};
 
 const HelpdeskCodes = Object.freeze({
 	SignEdmWithEmployees: '19740792',
@@ -43,8 +50,9 @@ export class UserParty
 		showMoreSignersContainer: HTMLDivElement = null,
 	};
 
-	#items: Map<number, CardItem> = new Map();
+	#items: Map<String, CardItem> = new Map();
 	#preselectedUserData: Array<Object> = [];
+	#userCount: Number = 0;
 
 	#viewMode = Mode.edit;
 
@@ -57,11 +65,15 @@ export class UserParty
 	#userPartyPopup: UserPartyPopup = null;
 
 	#counterDelayTimeout: ?number = null;
+	#role: MemberRoleType = MemberRole.signer;
+
+	#userPartyRefused: UserPartyRefused;
 
 	constructor(options: UserPartyOptions)
 	{
 		this.#api = new Api();
 		this.#viewMode = options.mode;
+		this.#role = options.role ?? MemberRole.signer;
 		this.#init(options);
 	}
 
@@ -78,7 +90,38 @@ export class UserParty
 		this.#userPartyCounters = new UserPartyCounters({
 			userCountersLimit: b2eSignersLimitCount,
 		});
+
+		this.#userPartyRefused = new UserPartyRefused();
+		this.#userPartyRefused.subscribe('onChange', (event) => {
+			this.#updateEditModeCounter();
+		});
+
 		this.#ui.container = this.getLayout(region);
+
+		const tabs = [];
+		const entities = [
+			{
+				id: 'user',
+				options: { intranetUsersOnly: true },
+			},
+			{
+				id: 'structure-node',
+				options: {
+					selectMode: 'usersAndDepartments',
+					fillRecentTab: true,
+					allowFlatDepartments: true,
+				},
+			},
+			{
+				id: 'signers-list',
+			},
+		];
+
+		if (FeatureStorage.isDocumentsInSignersSelectorEnabled())
+		{
+			entities.push({ id: 'sign-document' });
+		}
+
 		this.#tagSelector = new TagSelector({
 			events: {
 				onTagRemove: (event) => {
@@ -96,20 +139,8 @@ export class UserParty
 				multiple: true,
 				targetNode: this.#ui.itemContainer,
 				context: 'sign_b2e_user_party',
-				entities: [
-					{
-						id: 'user',
-						options: { intranetUsersOnly: true },
-					},
-					{
-						id: 'department',
-						options: {
-							selectMode: 'usersAndDepartments',
-							fillRecentTab: true,
-							allowFlatDepartments: true,
-						},
-					},
-				],
+				tabs,
+				entities,
 				dropdownMode: false,
 				hideOnDeselect: false,
 			},
@@ -155,37 +186,55 @@ export class UserParty
 			return this.#ui.itemContainer;
 		}
 
-		const descriptionMessage = region === 'ru'
-			? Helpdesk.replaceLink(Loc.getMessage('SIGN_USER_PARTY_DESCRIPTION'), HelpdeskCodes.SignEdmWithEmployees)
-			: Loc.getMessage('SIGN_CMP_MASTER_TPL_TOUR_STEP_CHOOSE_MEMBER_USER_PARTY_DESCRIPTION')
-		;
-		this.#ui.description = Tag.render`
-			<p class="sign-document-b2e-user-party__description">
-				${descriptionMessage}
-			</p>
-		`;
+		this.#ui.description = this.#renderDescription(region);
 
 		return Tag.render`
 			<div>
 				<div class="sign-b2e-settings__header-wrapper">
 					<h1 class="sign-b2e-settings__header">${Loc.getMessage('SIGN_USER_PARTY_HEADER')}</h1>
-					${this.#userPartyCounters.getLayout()}
+					${this.userPartyCounters.getLayout()}
 				</div>
 				<div class="sign-b2e-settings__item">
-					<p class="sign-b2e-settings__item_title">
-						${Loc.getMessage('SIGN_USER_PARTY_ITEM_TITLE')}
-					</p>
+					${this.#renderTitle()}
 					${this.#ui.itemContainer}
 					${this.#ui.description}
+					${this.userPartyRefused.render() ?? ''}
 				</div>
 			</div>
 		`;
 	}
 
+	#renderTitle(): HTMLElement
+	{
+		return Tag.render`
+			<p class="sign-b2e-settings__item_title">
+				${Loc.getMessage('SIGN_USER_PARTY_ITEM_TITLE')}
+			</p>
+		`;
+	}
+
+	#renderDescription(region: string): HTMLElement
+	{
+		const descriptionMessage = region === 'ru'
+			? Helpdesk.replaceLink(Loc.getMessage('SIGN_USER_PARTY_DESCRIPTION'), HelpdeskCodes.SignEdmWithEmployees)
+			: Loc.getMessage('SIGN_USER_PARTY_DESCRIPTION_WITHOUT_LINK')
+		;
+
+		return Tag.render`
+			<p class="sign-document-b2e-user-party__description">
+				${descriptionMessage}
+			</p>
+		`;
+	}
+
 	#createUserPartyPopup(bindElement: HTMLElement): UserPartyPopup
 	{
+		const isDepartmentsVisible = this.#role === MemberRole.signer;
+
 		return new UserPartyPopup({
 			bindElement,
+			isDepartmentsVisible,
+			role: this.#role,
 		});
 	}
 
@@ -200,28 +249,44 @@ export class UserParty
 		await promise;
 	}
 
-	async setSignersIds(usersData: [Object]): void
+	async setUserIds(usersData: [Object]): void
 	{
 		this.#clean();
 
 		const maxShownItems = this.#getViewModeItemsCount();
 
+		this.#userCount = usersData.length;
 		this.#preselectedUserData = usersData
-			.sort((a, b) => (a.entityType === 'department' ? -1 : 1))
+			.sort((a, b) => (a.entityType === 'structure-node' ? -1 : 1))
 			.slice(0, maxShownItems)
 		;
 
+		const membersResponse = await this.#api.getMembersForDocument(
+			this.#documentUid,
+			1,
+			maxShownItems,
+			this.#role,
+		);
+
+		// filter out refused signers
+		if (this.#role === MemberRole.signer)
+		{
+			const knownUsers = new Set(membersResponse.members.map((member) => member.userId));
+			this.#preselectedUserData = this.#preselectedUserData.filter((item) => {
+				return item.entityType === EntityType.USER
+					? knownUsers.has(item.entityId)
+					: true
+				;
+			});
+		}
+
+		// add signers from lists, departments, etc.
 		if (this.#preselectedUserData.length < maxShownItems)
 		{
-			const membersResponse = await this.#api.getMembersForDocument(
-				this.#documentUid,
-				1,
-				maxShownItems,
-			);
 			const preselectedIds = new Set(
 				usersData
-					.filter((item) => item.entityType === 'user')
-					.map((item) => item.entityId)
+					.filter((item) => item.entityType === EntityType.USER)
+					.map((item) => item.entityId),
 			);
 			const addMembers = membersResponse.members
 				.filter((member) => !preselectedIds.has(member.userId))
@@ -241,12 +306,28 @@ export class UserParty
 
 	async #displayShowMoreBtn(): void
 	{
+		let isShowMoreBtn = false;
+		let showMoreCount = 0;
 		const shownUsers = this.#preselectedUserData
 			.reduce((count, item) => (item.entityType === 'user' ? count + 1 : count), 0)
 		;
-		const signersCountResponse = await this.#api.getUniqUserCountForDocument(this.#documentUid);
-		const showMoreCount = signersCountResponse.count - shownUsers;
-		if (showMoreCount > 0)
+
+		if (this.#role === MemberRole.signer)
+		{
+			const signersCountResponse = await this.#api.getUniqUserCountForDocument(
+				this.#documentUid,
+				false,
+			);
+			showMoreCount = signersCountResponse.count - shownUsers;
+			isShowMoreBtn = showMoreCount > 0;
+		}
+		else if (this.#userCount > this.#getViewModeItemsCount())
+		{
+			isShowMoreBtn = true;
+			showMoreCount = this.#userCount - this.#getViewModeItemsCount();
+		}
+
+		if (isShowMoreBtn)
 		{
 			this.#ui.showMoreSignersContainer.querySelector('.--count-placeholder').textContent = showMoreCount;
 			Dom.show(this.#ui.showMoreSignersContainer);
@@ -315,14 +396,14 @@ export class UserParty
 
 	#removeItem(tag: TagItem): void
 	{
-		const userId = tag.id;
-		const item = this.#items.get(userId);
+		const itemKey = this.#makeItemMapKeyByTag(tag);
+		const item = this.#items.get(itemKey);
 		if (item?.container)
 		{
 			Dom.remove(item.container);
 		}
 
-		this.#items.delete(userId);
+		this.#items.delete(itemKey);
 
 		this.#updateEditModeCounter();
 	}
@@ -343,14 +424,13 @@ export class UserParty
 			? this.#createItemLayout(item)
 			: null
 		;
-
 		if (container)
 		{
 			Dom.prepend(container, this.#ui.itemContainer);
 		}
 
 		item.container = container;
-		this.#items.set(item.id, item);
+		this.#items.set(this.#makeItemMapKeyByTag(tag), item);
 
 		this.#updateEditModeCounter();
 	}
@@ -373,13 +453,17 @@ export class UserParty
 		clearTimeout(this.#counterDelayTimeout);
 
 		this.#counterDelayTimeout = setTimeout(async () => {
-			const response = await this.#api.getUniqUserCountForMembers(selectedMembers);
+			const response = await this.#api.getUniqUserCountForMembers(
+				selectedMembers,
+				this.isRejectExcludedEnabled(),
+			);
 			this.#userPartyCounters?.update(response.count);
 		}, 100);
 	}
 
 	validate(): boolean
 	{
+		this.closeCounterGuide();
 		const isValid = this.#items.size > 0 && this.#userPartyCounters.getCount() > 0;
 		const tagSelectorContainer = this.#tagSelector.getOuterContainer();
 		if (isValid)
@@ -394,9 +478,9 @@ export class UserParty
 		return isValid;
 	}
 
-	getUserIds(): Array<number>
+	isRejectExcludedEnabled(): boolean
 	{
-		return [...this.#items.keys()];
+		return this.#userPartyRefused.shouldRemoveRefused();
 	}
 
 	getEntities(): Array<CardItem>
@@ -414,12 +498,24 @@ export class UserParty
 		this.#documentUid = uid;
 	}
 
+	getPreselectedUserData(): Object[]
+	{
+		return this.#preselectedUserData;
+	}
+
 	#createItemLayout(item: CardItem): HTMLElement
 	{
-		return item.entityType === 'department'
-			? this.#createDepartmentItemLayout(item)
-			: this.#createUserItemLayout(item)
-		;
+		switch (item.entityType)
+		{
+			case 'structure-node':
+				return this.#createDepartmentItemLayout(item);
+			case 'sign-document':
+				return this.#createDocumentItemLayout(item);
+			case 'signers-list':
+				return this.#createSignersListItemLayout(item);
+			default:
+				return this.#createUserItemLayout(item);
+		}
 	}
 
 	#createDepartmentItemLayout(item: CardItem): HTMLElement
@@ -431,7 +527,45 @@ export class UserParty
 				<div>
 					<img
 						class="sign-document-b2e-user-party__item-list_item-avatar"
-						title="${title}" src='${departmentAvatarLink}' alt="avatar"
+						title="${title}" src='${avatarLinks.department}' alt="avatar"
+					/>
+				</div>
+				<div title="${title}" class="sign-document-b2e-user-party__item-list_item-text">
+					${title}
+				</div>
+			</div>
+		`;
+	}
+
+	#createDocumentItemLayout(item: CardItem): HTMLElement
+	{
+		const title = TextFormat.encode(item.title);
+
+		return Tag.render`
+			<div class="sign-document-b2e-user-party__item-list_item --document">
+				<div>
+					<img
+						class="sign-document-b2e-user-party__item-list_item-avatar"
+						title="${title}" src='${avatarLinks.document}' alt="avatar"
+					/>
+				</div>
+				<div title="${title}" class="sign-document-b2e-user-party__item-list_item-text">
+					${title}
+				</div>
+			</div>
+		`;
+	}
+
+	#createSignersListItemLayout(item: CardItem): HTMLElement
+	{
+		const title = TextFormat.encode(item.title);
+
+		return Tag.render`
+			<div class="sign-document-b2e-user-party__item-list_item --signers-list">
+				<div>
+					<img
+						class="sign-document-b2e-user-party__item-list_item-avatar"
+						title="${title}" src='${avatarLinks.signersList}' alt="avatar"
 					/>
 				</div>
 				<div title="${title}" class="sign-document-b2e-user-party__item-list_item-text">
@@ -444,12 +578,12 @@ export class UserParty
 	#createUserItemLayout(item: CardItem): HTMLElement
 	{
 		const title = TextFormat.encode(item.title);
-		const itemAvatar = item.avatar || defaultAvatarLink;
-		const profileLink = `/company/personal/user/${TextFormat.encode(item.entityId)}/`;
+		const itemAvatar = item.avatar || avatarLinks.user;
+		const profileLink = `/company/personal/user/${item.entityId}/`;
 
 		return Tag.render`
 			<div class="sign-document-b2e-user-party__item-list_item --user">
-				<a href="${profileLink}">
+				<a href="${TextFormat.encode(profileLink)}">
 					<img
 						class="sign-document-b2e-user-party__item-list_item-avatar"
 						title="${title}" src='${TextFormat.encode(itemAvatar)}' alt="avatar"
@@ -464,6 +598,7 @@ export class UserParty
 
 	#clean(): void
 	{
+		this.closeCounterGuide();
 		[...this.#items.values()].forEach((item) => Dom.remove(item.container));
 		this.#items.clear();
 		this.#userPartyCounters?.update(this.#items.size);
@@ -472,5 +607,46 @@ export class UserParty
 	#getViewModeItemsCount(): number
 	{
 		return 7; // for fixed slider width
+	}
+
+	getUniqueUsersCount(): number
+	{
+		return this.#userPartyCounters?.getCount() ?? 0;
+	}
+
+	closeCounterGuide(): void
+	{
+		this.#userPartyCounters?.closeGuide();
+	}
+
+	#makeItemMapKeyByTag(tag: { id: number | string, entityId: string }): string
+	{
+		const { id, entityId } = tag;
+
+		return `${entityId}_${id}`;
+	}
+
+	/**
+	 * @protected
+	 */
+	get userPartyCounters(): UserPartyCounters
+	{
+		return this.#userPartyCounters;
+	}
+
+	/**
+	 * @protected
+	 */
+	get userPartyRefused(): UserPartyRefused
+	{
+		return this.#userPartyRefused;
+	}
+
+	/**
+	 * @protected
+	 */
+	get ui(): HTMLDivElement
+	{
+		return this.#ui;
 	}
 }

@@ -9,6 +9,7 @@ return [
 	'css' => 'dist/apache-superset-dashboard-selector.bundle.css',
 	'js' => 'dist/apache-superset-dashboard-selector.bundle.js',
 	'rel' => [
+		'biconnector.apache-superset-dashboard-manager',
 		'main.core',
 		'main.core.events',
 		'ui.entity-selector',

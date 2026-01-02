@@ -4,6 +4,11 @@
 
 (function()
 {
+	const require = jn.require;
+
+	const { RestMethod } = require('im/messenger/const');
+	const { runAction } = require('im/messenger/lib/rest');
+
 	class SettingsChat
 	{
 		constructor()
@@ -38,13 +43,13 @@
 		loadSettings()
 		{
 			return new Promise((resolve) => {
-				BX.ajax.runAction('immobile.api.Settings.get')
+				BX.ajax.runAction(RestMethod.immobileSettingsGet)
 					.then((result) => {
-						console.log('immobile.api.Settings.get');
+						console.log(RestMethod.immobileSettingsGet);
 						resolve(result.data);
 					})
 					.catch((error) => {
-						console.error('immobile.api.Settings.get', error);
+						console.error(RestMethod.immobileSettingsGet, error);
 						resolve({});
 					})
 				;
@@ -55,17 +60,20 @@
 		{
 			this.values = Application.storage.getObject('settings.chat', {
 				quoteEnable: true,
-				quoteFromRight: Application.getApiVersion() < 31,
+				quoteFromRight: false,
 				historyShow: true,
 				autoplayVideo: true,
 				backgroundType: SettingsChat.BackgroundType.lightGray,
 				chatBetaEnable: false,
+				chatDevModeEnable: false,
 				localStorageEnable: true,
+				messengerV2Enabled: false,
 			});
 
 			const settings = await this.loadSettingsPromise;
 
 			const isBetaAvailable = settings.IS_BETA_AVAILABLE === true;
+			const isMessengerV2Enabled = settings.IS_MESSENGER_V2_ENABLED === true;
 
 			let chatBetaOption = null;
 			if (isBetaAvailable)
@@ -75,12 +83,37 @@
 					.create('chatBetaEnable', FormItemType.SWITCH, BX.message('SE_CHAT_BETA_ENABLE_TITLE_V2'))
 					.setValue(this.values.chatBetaEnable)
 				;
-				items.push(chatBetaEnableSwitch);
 
 				if (typeof chatBetaEnableSwitch.setTestId === 'function')
 				{
 					chatBetaEnableSwitch.setTestId('CHAT_SETTINGS_CHAT_BETA_ENABLE');
 				}
+
+				items.push(chatBetaEnableSwitch);
+
+				const chatDevModeEnableSwitch = FormItem
+					.create('chatDevModeEnable', FormItemType.SWITCH, BX.message('SE_CHAT_DEV_MODE_ENABLE_TITLE'))
+					.setValue(this.values.chatDevModeEnable)
+				;
+
+				if (typeof chatDevModeEnableSwitch.setTestId === 'function')
+				{
+					chatDevModeEnableSwitch.setTestId('CHAT_SETTINGS_CHAT_DEV_ENABLE');
+				}
+
+				items.push(chatDevModeEnableSwitch);
+
+				const messengerV2EnabledSwitch = FormItem
+					.create('messengerV2Enabled', FormItemType.SWITCH, 'MessengerV2')
+					.setValue(isMessengerV2Enabled)
+				;
+
+				if (typeof messengerV2EnabledSwitch.setTestId === 'function')
+				{
+					messengerV2EnabledSwitch.setTestId('CHAT_SETTINGS_MESSENGER_V2_ENABLED');
+				}
+
+				items.push(messengerV2EnabledSwitch);
 
 				// // TODO this setting may need to be reverted
 				// const bitrixCallDevEnableSwitch = FormItem.create(
@@ -101,7 +134,7 @@
 				;
 			}
 
-			const localStorageEnableSwitch = FormItem.create('localStorageEnable', FormItemType.SWITCH, BX.message('SE_CHAT_LOCAL_STORAGE_ENABLE_TITLE'))
+			const localStorageEnableSwitch = FormItem.create('localStorageEnable', FormItemType.SWITCH, BX.message('SE_CHAT_LOCAL_STORAGE_ENABLE_TITLE_MSGVER_1'))
 				.setValue(this.values.localStorageEnable)
 			;
 
@@ -121,13 +154,12 @@
 			const isLocalStorageSupported = isSupportedAndroid || isSupportedIos;
 
 			if (
-				Application.getApiVersion() >= 52
-				&& isLocalStorageSupported
+				isLocalStorageSupported
 				&& settings.IS_CHAT_LOCAL_STORAGE_AVAILABLE === true
 			)
 			{
 				localStorageSection = FormSection
-					.create('localStorage', '', BX.message('SE_CHAT_LOCAL_STORAGE_ENABLE_DESCRIPTION'))
+					.create('localStorage', '', BX.message('SE_CHAT_LOCAL_STORAGE_ENABLE_DESCRIPTION_MSGVER_1'))
 					.addItems([localStorageEnableSwitch])
 				;
 			}
@@ -143,7 +175,7 @@
 
 			return Form.create(this.providerId, this.providerTitle).addSections([
 				FormSection.create('history', BX.message('SE_CHAT_HISTORY_TITLE')).addItems([
-					FormItem.create('historyShow', FormItemType.SWITCH, BX.message('SE_CHAT_HISTORY_SHOW_TITLE_V2')).setValue(this.values.historyShow),
+					FormItem.create('historyShow', FormItemType.SWITCH, BX.message('SE_CHAT_HISTORY_SHOW_TITLE_V2_MSGVER_1')).setValue(this.values.historyShow),
 				]),
 				localStorageSection,
 				autoplayVideoSection,
@@ -190,7 +222,7 @@
 			return true;
 		}
 
-		onSettingsProviderValueChanged(item)
+		async onSettingsProviderValueChanged(item)
 		{
 			this.setFormItemValue({
 				sectionId: item.sectionCode,
@@ -198,7 +230,25 @@
 				value: item.value,
 			});
 
-			if (item && item.id === 'localStorageEnable')
+			if (item && item.id === 'messengerV2Enabled')
+			{
+				try
+				{
+					const result = await runAction(RestMethod.immobileSettingsToggleMessengerV2);
+					console.log(RestMethod.immobileSettingsToggleMessengerV2, result);
+				}
+				catch (error)
+				{
+					console.error(RestMethod.immobileSettingsToggleMessengerV2, error);
+				}
+			}
+
+			const restartRequiringItems = [
+				'localStorageEnable',
+				'chatDevModeEnable',
+				'messengerV2Enabled',
+			];
+			if (item && restartRequiringItems.includes(item.id))
 			{
 				Application.relogin();
 			}
@@ -226,10 +276,7 @@
 	 */
 
 	BX.addCustomEvent('onRegisterProvider', (provider) => {
-		if (
-			Application.getApiVersion() < 29
-			|| !Application.isWebComponentSupported()
-		)
+		if (!Application.isWebComponentSupported())
 		{
 			return false;
 		}
@@ -242,11 +289,11 @@
 				SettingsChatManager.onSettingsProviderButtonTap(data);
 			}
 
-			onValueChanged(item)
+			async onValueChanged(item)
 			{
 				super.onValueChanged(item);
 				SettingsChatManager.setSettingsProvider(this);
-				SettingsChatManager.onSettingsProviderValueChanged(item);
+				await SettingsChatManager.onSettingsProviderValueChanged(item);
 			}
 		}
 

@@ -9,10 +9,12 @@ namespace Bitrix\Crm;
 
 use Bitrix\Crm\Binding\QuoteContactTable;
 use Bitrix\Crm\Integration\StorageType;
+use Bitrix\Crm\Model\LastCommunicationTable;
 use Bitrix\Crm\Service\Container;
 use Bitrix\Crm\Service\Factory;
 use Bitrix\Crm\Settings\QuoteSettings;
 use Bitrix\Main\DI\ServiceLocator;
+use Bitrix\Main\Entity\ReferenceField;
 use Bitrix\Main\Localization\Loc;
 use Bitrix\Main\ORM\Data\DataManager;
 use Bitrix\Main\ORM\Event;
@@ -86,7 +88,7 @@ class QuoteTable extends DataManager
 
 		$fieldRepository = ServiceLocator::getInstance()->get('crm.model.fieldRepository');
 
-		return [
+		$map = [
 			$fieldRepository->getId(),
 
 			$fieldRepository->getCreatedTime('DATE_CREATE'),
@@ -291,6 +293,11 @@ class QuoteTable extends DataManager
 				->configureTitle(Loc::getMessage('CRM_TYPE_ITEM_FIELD_ACTUAL_DATE'))
 			,
 		];
+
+		return array_merge(
+			$map,
+			$fieldRepository->getLastCommunications(\CCrmOwnerType::Quote),
+		);
 	}
 
 	public static function getDefaultStorageTypeId(): int

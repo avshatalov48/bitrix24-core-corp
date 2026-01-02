@@ -4,6 +4,7 @@
 jn.define('crm/timeline/item/ui/header/info-helper', (require, exports, module) => {
 	include('InAppNotifier');
 	const AppTheme = require('apptheme');
+	const { Random } = require('utils/random');
 
 	class InfoHelper extends LayoutComponent
 	{

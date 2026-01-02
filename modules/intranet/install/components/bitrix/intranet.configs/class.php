@@ -1,6 +1,6 @@
 <?php if (!defined("B_PROLOG_INCLUDED") || B_PROLOG_INCLUDED!==true)die();
 
-use Bitrix\Main\Localization\CultureTable;
+use Bitrix\Bitrix24\Integration\Network\RegisterSettingsSynchronizer;
 use Bitrix\Main\Localization\Loc;
 use Bitrix\Main\Loader;
 use Bitrix\Bitrix24\Feature;
@@ -310,9 +310,9 @@ final class IntranetConfigsComponent extends CBitrixComponent
 				$activateError = GetMessage("CONFIG_EMAIL_ERROR");
 
 			//self register
-			if (Loader::includeModule("socialservices"))
+			if ($this->arResult["IS_BITRIX24"])
 			{
-				\Bitrix\Socialservices\Network::setRegisterSettings(array(
+				\Bitrix\Bitrix24\Integration\Network\RegisterSettingsSynchronizer::setRegisterSettings(array(
 					"REGISTER" => isset($_POST["allow_register"]) ? "Y" : "N",
 				));
 			}
@@ -1006,7 +1006,7 @@ final class IntranetConfigsComponent extends CBitrixComponent
 		$this->arParams["CONFIG_PATH_TO_POST"] = SITE_DIR."company/personal/user/".$USER->getId()."/blog/edit/new/";
 
 		$this->arResult["ERROR"] = "";
-		$this->arResult["IS_BITRIX24"] = IsModuleInstalled("bitrix24");
+		$this->arResult["IS_BITRIX24"] = Loader::includeModule("bitrix24");
 		$this->arResult['IS_LOCATION_MODULE_INCLUDED'] = Loader::includeModule('location');
 		$this->arResult['SHOW_ADDRESS_FORMAT'] = $this->arResult['IS_LOCATION_MODULE_INCLUDED'];
 
@@ -1167,9 +1167,9 @@ final class IntranetConfigsComponent extends CBitrixComponent
 			}
 
 			$this->arResult["ALLOW_SELF_REGISTER"] = "N";
-			if(Loader::includeModule("socialservices"))
+			if(Loader::includeModule("bitrix24"))
 			{
-				$registerSettings = \Bitrix\Socialservices\Network::getRegisterSettings();
+				$registerSettings = RegisterSettingsSynchronizer::getRegisterSettings();
 				$this->arResult["ALLOW_SELF_REGISTER"] = $registerSettings["REGISTER"] == "Y" ? "Y" : "N";
 			}
 

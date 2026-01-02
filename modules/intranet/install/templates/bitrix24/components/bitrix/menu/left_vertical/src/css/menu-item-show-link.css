@@ -1,0 +1,51 @@
+.menu-item-show-link {
+	display: none;
+	align-items: center;
+	position: absolute;
+	overflow: hidden;
+	top: 0;
+	right: 0;
+	height: 100%;
+	padding: 0 8px 0 15px;
+	color: rgba(255,255,255,.8);
+	font-size: var(--ui-font-size-5xs);
+	line-height: 1;
+	font-weight: var(--ui-font-weight-bold, 700);
+	text-transform: uppercase;
+	cursor: pointer;
+}
+
+.menu-item-block:hover .menu-item-show-link {
+	display: flex;
+}
+
+.menu-item-show-link:hover {
+	color: rgba(255,255,255,1)
+}
+
+.bitrix24-dark-theme .menu-item-show-link {
+	color: rgba(0, 0, 0, 0.4);
+}
+
+.bitrix24-dark-theme .menu-item-show-link:hover {
+	color: rgba(0, 0, 0, 0.7);
+}
+
+.menu-items-edit-mode .menu-item-block .menu-item-show-link,
+.menu-items-edit-mode .menu-item-block:hover .menu-item-show-link {
+	display: none;
+}
+
+.menu-item-block:hover .menu-item-show-link,
+.menu-item-block-hover .menu-item-show-link {
+	display: flex;
+}
+
+.menu-collapsed-mode .menu-item-block .menu-item-show-link,
+.menu-sliding-mode.menu-sliding-opening-mode .menu-item-block .menu-item-show-link {
+	visibility: hidden;
+}
+
+.menu-sliding-mode .menu-item-block .menu-item-show-link {
+	visibility: visible;
+}

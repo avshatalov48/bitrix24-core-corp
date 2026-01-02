@@ -2,11 +2,15 @@
 
 namespace Bitrix\Crm\Conversion;
 
+use Bitrix\Crm\Integration\Analytics\ConvertEventsContainer;
+use Bitrix\Crm\Integration\Analytics\Dictionary;
 use Bitrix\Crm\ItemIdentifier;
 use Bitrix\Crm\Merger\EntityMerger;
 
 class LeadConversionWizard extends EntityConversionWizard
 {
+	private ?ConvertEventsContainer $convertEventsContainer = null;
+
 	public function isNewApi(): bool
 	{
 		//lead doesn't support factories yet
@@ -17,9 +21,10 @@ class LeadConversionWizard extends EntityConversionWizard
 	 * @param int $entityID Entity ID.
 	 * @param LeadConversionConfig|null $config Configuration parameters.
 	 */
-	public function __construct($entityID = 0, EntityConversionConfig $config = null)
+	public function __construct($entityID = 0, EntityConversionConfig $config = null, ?ConvertEventsContainer $convertEventsContainer = null)
 	{
-		$converter = new LeadConverter($config);
+		$this->convertEventsContainer = $convertEventsContainer;
+		$converter = new LeadConverter($config, $this->convertEventsContainer);
 		$converter->setEntityID($entityID);
 
 		parent::__construct($converter);
@@ -73,6 +78,7 @@ class LeadConversionWizard extends EntityConversionWizard
 			do
 			{
 				$converter->executePhase();
+				$this->convertEventsContainer?->addEvent($converter->getAnalytics());
 			}
 			while($converter->moveToNextPhase());
 
@@ -111,10 +117,19 @@ class LeadConversionWizard extends EntityConversionWizard
 			]);
 
 			$this->redirectUrl = (string)$uri;
+
+			$this->convertEventsContainer?->addEvent($converter->getAnalytics());
 		}
 		catch(\Exception $e)
 		{
 			$this->errorText = $e->getMessage();
+
+			$this->convertEventsContainer?->addEvent($converter->getAnalytics());
+		}
+
+		if ($this->convertEventsContainer && ($this->errorText || $this->exception))
+		{
+			$this->convertEventsContainer->setErrorStatus();
 		}
 
 		$this->save();

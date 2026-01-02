@@ -2,7 +2,7 @@
 	color: var(--ui-color-base-default, #333333);
 	font-size: var(--ui-size-xl);
 	font-weight: var(--ui-font-weight-normal, 400);
-	font-family: var(--ui-font-family-system);
+	font-family: var(--ui-font-family-primary, var(--ui-font-family-system));
 }
 
 .hr-hcmlink-sync__page_toolbar_container {
@@ -14,7 +14,7 @@
 .hr-hcmlink-sync__column-title-container {
 	font-weight: var(--ui-font-weight-normal);
 	font-size: var(--ui-font-size-2xl);
-	font-family: var(--ui-font-family-system);
+	font-family: var(--ui-font-family-primary, var(--ui-font-family-system));
 	color: var(--ui-color-palette-black-base);
 	display: flex;
 }

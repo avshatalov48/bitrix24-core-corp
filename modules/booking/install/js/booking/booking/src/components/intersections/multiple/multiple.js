@@ -123,16 +123,21 @@ export const Multiple = {
 				return;
 			}
 
-			const deletedIds = previousResourcesIds.filter((id: number) => !resourcesIds.includes(id));
+			const removedIds = previousResourcesIds.filter((id: number) => !resourcesIds.includes(id));
 			const newIds = resourcesIds.filter((id: number) => !previousResourcesIds.includes(id));
 
-			deletedIds.forEach((id: number) => {
+			removedIds.forEach((id: number) => {
 				const item: Item = this.selector.getItem([EntitySelectorEntity.Resource, id]);
 				this.selector.removeItem(item);
 			});
 
 			newIds.forEach((id: number) => {
 				const resource: ResourceModel = this.$store.getters[`${Model.Resources}/getById`](id);
+				if (!resource || resource.isDeleted)
+				{
+					return;
+				}
+
 				const resourceType: ResourceTypeModel = this.$store.getters[`${Model.ResourceTypes}/getById`](resource.typeId);
 
 				this.selector.addItem({
@@ -233,7 +238,7 @@ export const Multiple = {
 					:data-id="'bbi-resource-selector-add-button' + resourceId"
 				>
 					<span class="bbi-resource-selector-add-button-caption">
-						{{ loc('BOOKING_BOOKING_INTERSECTION_BUTTON') }}
+						{{ loc('BOOKING_BOOKING_INTERSECTION_BUTTON_MSGVER_1') }}
 					</span>
 				</span>
 			</template>

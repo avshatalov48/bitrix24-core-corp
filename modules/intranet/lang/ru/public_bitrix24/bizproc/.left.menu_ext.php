@@ -13,3 +13,4 @@ $MESS["MENU_BIZPROC_ACTIVE_1"] = "Все процессы";
 $MESS["MENU_BIZPROC_DISK"] = "Процессы в Общем диске";
 $MESS["MENU_BIZPROC_CRM"] = "Процессы в CRM";
 $MESS['MENU_USER_PROCESSES'] = 'Процессы';
+$MESS["MENU_START_PROCESS"] = "Запуск процессов";

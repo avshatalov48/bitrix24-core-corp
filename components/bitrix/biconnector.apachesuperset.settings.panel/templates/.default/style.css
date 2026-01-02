@@ -147,10 +147,6 @@
 	border-radius: var(--ui-border-radius-3xs);
 }
 
-.biconnector-settings-scope-selector .ui-selector-tab-labels {
-	display: none;
-}
-
 .ui-ctl-dropdown-range-group .ui-ctl-bottom {
 	margin-top: 0;
 }
@@ -158,4 +154,14 @@
 .ui-tag-selector-outer-container.ui-ctl-element,
 .ui-entity-editor-content-block .ui-tag-selector-outer-container {
 	border-radius: var(--ui-border-radius-2xs);
+}
+
+.ui-page-slider-workarea,.ui-side-panel-header {
+	width: 740px;
+}
+
+@media (max-width: 789px) {
+	.ui-page-slider-workarea,.ui-side-panel-header {
+		width: auto;
+	}
 }

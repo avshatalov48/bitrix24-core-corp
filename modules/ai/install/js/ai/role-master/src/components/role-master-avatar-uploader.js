@@ -67,6 +67,7 @@ export const RoleMasterAvatarUploader = {
 				toRaw(this.uploader).removeFiles();
 				this.$emit('removeAvatarFile');
 			}
+			this.$refs.uploaderContainer.click();
 		},
 	},
 	mounted() {
@@ -99,11 +100,6 @@ export const RoleMasterAvatarUploader = {
 			},
 		});
 
-		if (this.avatarUrl)
-		{
-			this.uploader.addFile(0);
-			this.$emit('loadAvatarFile', toRaw(this.uploader.getFiles()[0]));
-		}
 		bind(document, 'dragenter', this.handleDragElementEnterDocument);
 		bind(document, 'dragleave', this.handleDragElementLeaveDocument);
 		bind(document, 'drop', this.handleDropFile);
@@ -136,14 +132,9 @@ export const RoleMasterAvatarUploader = {
 				</div>
 				<div class="ai__role-master_avatar-uploader-hover">
 					<BIcon
-						v-if="isDraggingFile === false && !avatarUrl"
+						v-if="isDraggingFile === false"
 						:size="24"
 						:name="IconSet.EDIT_PENCIL"
-					></BIcon>
-					<BIcon
-						v-else-if="isDraggingFile === false && avatarUrl"
-						:size="24"
-						:name="IconSet.TRASH_BIN"
 					></BIcon>
 				</div>
 				<teleport to=".ai__role-master-app-container main">
@@ -175,7 +166,7 @@ export const RoleMasterAvatarUploader = {
 				<div class="ai__role-master_avatar-uploader-hover">
 					<BIcon
 						:size="24"
-						:name="IconSet.TRASH_BIN"
+						:name="IconSet.EDIT_PENCIL"
 					></BIcon>
 				</div>
 			</div>

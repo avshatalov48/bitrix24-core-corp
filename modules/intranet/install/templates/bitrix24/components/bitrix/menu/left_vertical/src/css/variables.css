@@ -1,0 +1,82 @@
+.menu-items-block,
+.menu-items-block__scope {
+	--menu-width-expanded: 240px;
+	--menu-width-collapsed: 66px;
+	--menu-items-block-padding-x: 14px;
+	--menu-item-border-radius: var(--ui-border-radius-md);
+	--menu-item-block-stack-space: 4px;
+}
+
+.menu-items-block,
+.menu-items-block__scope {
+	--menu-width-expanded: 240px;
+	--menu-width-collapsed: 66px;
+	--menu-items-block-padding-x: 14px;
+	--menu-item-border-radius: var(--ui-border-radius-md);
+	--leftmenu-bg: var(--ui-color-bg-content-secondary);
+	--leftmenu-bg-expanded: var(--ui-color-bg-content-secondary);
+	--leftmenu-bg-stroke: #fff;
+	--leftmenu-bg-stroke-expanded: #fff;
+	--leftmenu-bg-overlayed: rgb(33 51 76 / 94%);
+	--leftmenu-bg-blur: 0px;
+	--leftmenu-bg-blur-expanded: 0px;
+	--leftmenu-width: 66px;
+	--leftmenu-width-expanded: 240px;
+	--leftmenu-bg-divider: var(--ui-color-divider-default);
+
+	--leftmenu-group-bg: transparent;
+	--leftmenu-group-stroke: var(--ui-color-divider-default);
+	--leftmenu-group-stroke-weight: var(--ui-border-width-thin);
+}
+
+.--ui-context-content-dark .menu-items-block,
+.--ui-context-content-dark .menu-items-block__scope {
+	--leftmenu-bg: #262626;
+	--leftmenu-bg-expanded: #262626;
+	--leftmenu-bg-stroke: #3B3B3B;
+	--leftmenu-bg-stroke-expanded: #3B3B3B;
+	--leftmenu-bg-overlayed: rgb(52 74 103 / 94%);
+	--leftmenu-bg-blur: 0px;
+	--leftmenu-bg-blur-expanded: 0px;
+	--leftmenu-bg-divider: var(--ui-color-divider-default);
+
+	--leftmenu-group-bg: transparent;
+	--leftmenu-group-stroke: var(--ui-color-divider-default);
+	--leftmenu-group-stroke-weight: var(--ui-border-width-thin);
+}
+
+.--ui-context-edge-light .menu-items-block,
+.--ui-context-edge-light .menu-items-block__scope {
+	--leftmenu-bg: rgb(0 0 0 / 3%);
+	--leftmenu-bg-expanded: rgb(0 0 0 / 2%);
+	--leftmenu-bg-stroke: transparent;
+	--leftmenu-bg-stroke-expanded: rgb(0 0 0 / 4%);
+	--leftmenu-bg-overlayed: rgb(33 51 76 / 94%);
+	--leftmenu-bg-blur: var(--ui-bg-blur-less);
+	--leftmenu-bg-blur-expanded: var(--ui-bg-blur-less);
+	--leftmenu-width: 66px;
+	--leftmenu-width-expanded: 240px;
+	--leftmenu-bg-divider: rgb(0 0 0 / 10%);
+
+	--leftmenu-group-bg: var(--ui-color-bg-content-tertiary, rgb(0 0 0 / 3%));
+	--leftmenu-group-stroke: var(--ui-color-divider-less);
+	--leftmenu-group-stroke-weight: var(--ui-border-width-thin);
+}
+
+.--ui-context-edge-dark .menu-items-block,
+.--ui-context-edge-dark .menu-items-block__scope {
+	--leftmenu-bg: rgb(255 255 255 / 6%);
+	--leftmenu-bg-expanded: rgb(255 255 255 / 3%);
+	--leftmenu-bg-stroke: transparent;
+	--leftmenu-bg-stroke-expanded: rgb(255 255 255 / 6%);
+	--leftmenu-bg-overlayed: rgb(33 51 76 / 94%);
+	--leftmenu-bg-blur: var(--ui-bg-blur-less);
+	--leftmenu-bg-blur-expanded: var(--ui-bg-blur-less);
+	--leftmenu-width: 66px;
+	--leftmenu-width-expanded: 240px;
+	--leftmenu-bg-divider: rgb(255 255 255 / 10%);
+
+	--leftmenu-group-bg: var(--ui-color-bg-content-tertiary, rgb(255 255 255 / 8%));
+	--leftmenu-group-stroke: var(--ui-color-divider-less);
+	--leftmenu-group-stroke-weight: var(--ui-border-width-thin);
+}

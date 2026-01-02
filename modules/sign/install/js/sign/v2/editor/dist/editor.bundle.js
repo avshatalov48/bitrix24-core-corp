@@ -1,7 +1,7 @@
 /* eslint-disable */
 this.BX = this.BX || {};
 this.BX.Sign = this.BX.Sign || {};
-(function (exports,sign_v2_analytics,sign_v2_helper,main_popup,sign_tour,spotlight,ui_buttons,ui_dialogs_messagebox,ui_infoHelper,sign_backend,date,ui_notification,ui_stamp_uploader,sign_v2_api,crm_form_fields_selector,crm_requisite_fieldsetViewer,sign_type,sign_v2_b2e_fieldSelector,sign_ui,color_picker,sign_document,main_core,ui_draganddrop_draggable,main_core_events) {
+(function (exports,sign_v2_analytics,sign_v2_helper,main_popup,sign_tour,spotlight,ui_buttons,ui_dialogs_messagebox,ui_infoHelper,sign_backend,date,ui_notification,ui_stamp_uploader,crm_form_fields_selector,crm_requisite_fieldsetViewer,sign_type,sign_v2_b2e_fieldSelector,sign_ui,color_picker,sign_document,main_core,ui_draganddrop_draggable,main_core_events,sign_v2_api) {
 	'use strict';
 
 	let _ = t => t,
@@ -1147,14 +1147,13 @@ this.BX.Sign = this.BX.Sign || {};
 				<div style="width: ${0}px; height: ${0}px; background: url(${0}) no-repeat top; background-size: cover;">
 				</div>
 			`), width - 14, height - 14, this.data.src);
-	    } else {
-	      const className = !this.data.text ? 'sign-document__block-content_member-nodata' : '';
-	      return main_core.Tag.render(_t3$3 || (_t3$3 = _$7`
-				<div class="${0}">
-					${0}
-				</div>
-			`), className, main_core.Text.encode(this.data.text || main_core.Loc.getMessage('SIGN_JS_DOCUMENT_MEMBER_NO_DATA')));
 	    }
+	    const className = this.data.text ? '' : 'sign-document__block-content_member-nodata';
+	    return main_core.Tag.render(_t3$3 || (_t3$3 = _$7`
+			<div class="${0}">
+				${0}
+			</div>
+		`), className, main_core.Text.encode(this.data.text || main_core.Loc.getMessage('SIGN_JS_DOCUMENT_MEMBER_NO_DATA')));
 	  }
 	  getStyles() {
 	    return {
@@ -2128,7 +2127,7 @@ this.BX.Sign = this.BX.Sign || {};
 	      },
 	      title: main_core.Loc.getMessage('SIGN_EDITOR_BLOCK_B2E_REFERENCE_MSG_VER_1'),
 	      categoryCaptions: {
-	        'PROFILE': main_core.Loc.getMessage('SIGN_EDITOR_BLOCKS_EMPLOYEE_B2E')
+	        PROFILE: main_core.Loc.getMessage('SIGN_EDITOR_BLOCKS_EMPLOYEE_B2E')
 	      },
 	      fieldsFactory: babelHelpers.classPrivateFieldLooseBase(this, _getSelectorFieldsFactory)[_getSelectorFieldsFactory]()
 	    });
@@ -2379,7 +2378,7 @@ this.BX.Sign = this.BX.Sign || {};
 	  } = member;
 	  return babelHelpers.classPrivateFieldLooseBase(this, _cache$6)[_cache$6].remember('fieldSelector', () => {
 	    const categories = ['COMPANY', 'PROFILE'];
-	    if (this.block.blocksManager.documentInitiatedByType !== sign_type.DocumentInitiated.employee) {
+	    if (!blocksManager.isTemplateMode) {
 	      categories.push('SMART_B2E_DOC');
 	    }
 	    const selector = new sign_v2_b2e_fieldSelector.FieldSelector({
@@ -3131,7 +3130,84 @@ this.BX.Sign = this.BX.Sign || {};
 
 	let _$h = t => t,
 	  _t$h,
-	  _t2$d,
+	  _t2$d;
+	var _content$4 = /*#__PURE__*/babelHelpers.classPrivateFieldLooseKey("content");
+	class DocumentDate extends Dummy {
+	  constructor(...args) {
+	    super(...args);
+	    Object.defineProperty(this, _content$4, {
+	      writable: true,
+	      value: void 0
+	    });
+	  }
+	  /**
+	   * Returns type's content in view mode.
+	   * @return {HTMLElement | string}
+	   */
+	  getViewContent() {
+	    var _this$data;
+	    if (main_core.Type.isStringFilled((_this$data = this.data) == null ? void 0 : _this$data.text)) {
+	      const dateString = main_core.Text.encode(this.data.text || '');
+	      babelHelpers.classPrivateFieldLooseBase(this, _content$4)[_content$4] = main_core.Tag.render(_t$h || (_t$h = _$h`
+				<div class="sign-document__block-b2e-document-date">
+					${0}
+				</div>
+			`), dateString);
+	    } else {
+	      const text = main_core.Loc.getMessage('SIGN_EDITOR_BLOCK_B2E_DOCUMENT_PLACEHOLDER', {
+	        '#PLACEHOLDER#': main_core.Loc.getMessage('SIGN_EDITOR_BLOCK_B2E_DOCUMENT_DATE_TITLE')
+	      });
+	      babelHelpers.classPrivateFieldLooseBase(this, _content$4)[_content$4] = main_core.Tag.render(_t2$d || (_t2$d = _$h`
+				<div class="sign-document__block-content_member-nodata">
+					${0}
+				</div>
+			`), text);
+	    }
+	    return babelHelpers.classPrivateFieldLooseBase(this, _content$4)[_content$4];
+	  }
+	}
+
+	let _$i = t => t,
+	  _t$i,
+	  _t2$e;
+	var _content$5 = /*#__PURE__*/babelHelpers.classPrivateFieldLooseKey("content");
+	class ExternalId extends Dummy {
+	  constructor(...args) {
+	    super(...args);
+	    Object.defineProperty(this, _content$5, {
+	      writable: true,
+	      value: void 0
+	    });
+	  }
+	  /**
+	   * Returns type's content in view mode.
+	   * @return {HTMLElement | string}
+	   */
+	  getViewContent() {
+	    var _this$data;
+	    if (main_core.Type.isStringFilled((_this$data = this.data) == null ? void 0 : _this$data.text)) {
+	      babelHelpers.classPrivateFieldLooseBase(this, _content$5)[_content$5] = main_core.Tag.render(_t$i || (_t$i = _$i`
+				<div class="sign-document__block-b2e-external-id">
+					${0}
+				</div>
+			`), main_core.Text.encode(this.data.text || ''));
+	    } else {
+	      const text = main_core.Loc.getMessage('SIGN_EDITOR_BLOCK_B2E_DOCUMENT_PLACEHOLDER', {
+	        '#PLACEHOLDER#': main_core.Loc.getMessage('SIGN_EDITOR_BLOCK_B2E_EXTERNAL_ID_TITLE')
+	      });
+	      babelHelpers.classPrivateFieldLooseBase(this, _content$5)[_content$5] = main_core.Tag.render(_t2$e || (_t2$e = _$i`
+				<div class="sign-document__block-content_member-nodata">
+					${0}
+				</div>
+			`), text);
+	    }
+	    return babelHelpers.classPrivateFieldLooseBase(this, _content$5)[_content$5];
+	  }
+	}
+
+	let _$j = t => t,
+	  _t$j,
+	  _t2$f,
 	  _t3$9,
 	  _t4$1,
 	  _t5$1,
@@ -3159,7 +3235,7 @@ this.BX.Sign = this.BX.Sign || {};
 	   * @return {HTMLElement}
 	   */
 	  static getBlockLayout(options) {
-	    return main_core.Tag.render(_t$h || (_t$h = _$h`
+	    return main_core.Tag.render(_t$j || (_t$j = _$j`
 			<div class="sign-document__block-wrapper">
 				<div class="sign-document__block-panel--wrapper" data-role="sign-block__actions">
 				</div>
@@ -3192,7 +3268,7 @@ this.BX.Sign = this.BX.Sign || {};
 	        selectedName = member.name;
 	      }
 	    });
-	    const memberSelector = members.length > 1 ? main_core.Tag.render(_t2$d || (_t2$d = _$h`<span>${0}</span>`), main_core.Text.encode(selectedName)) : main_core.Tag.render(_t3$9 || (_t3$9 = _$h`<i>${0}</i>`), main_core.Text.encode(selectedName));
+	    const memberSelector = members.length > 1 ? main_core.Tag.render(_t2$f || (_t2$f = _$j`<span>${0}</span>`), main_core.Text.encode(selectedName)) : main_core.Tag.render(_t3$9 || (_t3$9 = _$j`<i>${0}</i>`), main_core.Text.encode(selectedName));
 	    if (members.length > 1) {
 	      sign_ui.UI.bindSimpleMenu({
 	        bindElement: memberSelector,
@@ -3203,7 +3279,7 @@ this.BX.Sign = this.BX.Sign || {};
 	        }
 	      });
 	    }
-	    return main_core.Tag.render(_t4$1 || (_t4$1 = _$h`
+	    return main_core.Tag.render(_t4$1 || (_t4$1 = _$j`
 			<div class="sign-document-block-member-wrapper">
 				${0}
 			</div>
@@ -3215,7 +3291,7 @@ this.BX.Sign = this.BX.Sign || {};
 	   * @return {HTMLElement}
 	   */
 	  static getResizeArea() {
-	    return main_core.Tag.render(_t5$1 || (_t5$1 = _$h`
+	    return main_core.Tag.render(_t5$1 || (_t5$1 = _$j`
 			<div class="sign-document__resize-area">
 				<div class="sign-area-resizable-controls">
 					<span class="sign-document__move-control"></span>
@@ -3248,7 +3324,7 @@ this.BX.Sign = this.BX.Sign || {};
 	      'Georgia, serif': '<span style="font-family: Georgia, serif">Georgia</span>',
 	      'monospace': '<span style="font-family: monospace">monospace</span>'
 	    };
-	    const fontFamily = main_core.Tag.render(_t6$1 || (_t6$1 = _$h`<div class="sign-document__block-style-btn --btn-font-family">${0}</div>`), fonts[collectStyles['fontFamily']] || 'Font');
+	    const fontFamily = main_core.Tag.render(_t6$1 || (_t6$1 = _$j`<div class="sign-document__block-style-btn --btn-font-family">${0}</div>`), fonts[collectStyles['fontFamily']] || 'Font');
 	    sign_ui.UI.bindSimpleMenu({
 	      bindElement: fontFamily,
 	      items: fonts,
@@ -3265,7 +3341,7 @@ this.BX.Sign = this.BX.Sign || {};
 	    if (fontSizereal) {
 	      fontSizeValue = fontSizereal;
 	    }
-	    const fontSize = main_core.Tag.render(_t7$1 || (_t7$1 = _$h`<div class="sign-document__block-style-btn --btn-fontsize">${0}</div>`), fontSizeValue + 'px' || '<i></i>');
+	    const fontSize = main_core.Tag.render(_t7$1 || (_t7$1 = _$j`<div class="sign-document__block-style-btn --btn-fontsize">${0}</div>`), fontSizeValue + 'px' || '<i></i>');
 	    sign_ui.UI.bindSimpleMenu({
 	      bindElement: fontSize,
 	      items: ['6px', '7px', '8px', '9px', '10px', '11px', '12px', '13px', '14px', '15px', '16px', '18px', '20px', '22px', '24px', '26px', '28px', '36px', '48px', '72px'],
@@ -3278,7 +3354,7 @@ this.BX.Sign = this.BX.Sign || {};
 	    const {
 	      layout: fontColor
 	    } = UI$1.getColorSelectorBtn((_collectStyles$color = collectStyles.color) != null ? _collectStyles$color : '#000', color => actionHandler('color', color));
-	    return main_core.Tag.render(_t8$1 || (_t8$1 = _$h`
+	    return main_core.Tag.render(_t8$1 || (_t8$1 = _$j`
 			<div class="sign-document__block-style--panel">
 <!--				<div class="sign-document__block-style&#45;&#45;move-control"></div>-->
 				${0}
@@ -3297,7 +3373,7 @@ this.BX.Sign = this.BX.Sign || {};
 		`), fontFamily, fontSize, fontColor);
 	  }
 	  static getColorSelectorBtn(defaultColorPickerColor, onColorSelect, colorPickerOptions = {}) {
-	    const layout = main_core.Tag.render(_t9$1 || (_t9$1 = _$h`<div class="sign-document__block-style-btn --btn-color">
+	    const layout = main_core.Tag.render(_t9$1 || (_t9$1 = _$j`<div class="sign-document__block-style-btn --btn-color">
 				<span class="sign-document__block-style-btn--color-block"></span> 
 				<span>${0}</span>
 			</div>`), main_core.Loc.getMessage('SIGN_JS_DOCUMENT_STYLE_COLOR'));
@@ -3531,11 +3607,12 @@ this.BX.Sign = this.BX.Sign || {};
 	  });
 	}
 
+	const resizibleFontBlocks = new Set(['requisites', 'myrequisites', 'reference', 'myreference', 'text']);
 	var _id = /*#__PURE__*/babelHelpers.classPrivateFieldLooseKey("id");
 	var _code = /*#__PURE__*/babelHelpers.classPrivateFieldLooseKey("code");
 	var _layout = /*#__PURE__*/babelHelpers.classPrivateFieldLooseKey("layout");
 	var _stylePanel = /*#__PURE__*/babelHelpers.classPrivateFieldLooseKey("stylePanel");
-	var _content$4 = /*#__PURE__*/babelHelpers.classPrivateFieldLooseKey("content");
+	var _content$6 = /*#__PURE__*/babelHelpers.classPrivateFieldLooseKey("content");
 	var _memberPart = /*#__PURE__*/babelHelpers.classPrivateFieldLooseKey("memberPart");
 	var _panelCreated = /*#__PURE__*/babelHelpers.classPrivateFieldLooseKey("panelCreated");
 	var _allowMembers = /*#__PURE__*/babelHelpers.classPrivateFieldLooseKey("allowMembers");
@@ -3597,7 +3674,7 @@ this.BX.Sign = this.BX.Sign || {};
 	      writable: true,
 	      value: void 0
 	    });
-	    Object.defineProperty(this, _content$4, {
+	    Object.defineProperty(this, _content$6, {
 	      writable: true,
 	      value: null
 	    });
@@ -3638,7 +3715,9 @@ this.BX.Sign = this.BX.Sign || {};
 	        b2ereference: B2eReference,
 	        myb2ereference: MyB2eReference,
 	        employeedynamic: EmployeeDynamic,
-	        hcmlinkreference: HcmLinkReference
+	        hcmlinkreference: HcmLinkReference,
+	        b2edocumentdate: DocumentDate,
+	        b2eexternalid: ExternalId
 	      }
 	    });
 	    Object.defineProperty(this, _currentFontSize, {
@@ -3678,17 +3757,17 @@ this.BX.Sign = this.BX.Sign || {};
 	    if (!babelHelpers.classPrivateFieldLooseBase(this, _contentProviders)[_contentProviders][babelHelpers.classPrivateFieldLooseBase(this, _code)[_code]]) {
 	      throw new Error(`Content provider for '${babelHelpers.classPrivateFieldLooseBase(this, _code)[_code]}' not found.`);
 	    }
-	    babelHelpers.classPrivateFieldLooseBase(this, _content$4)[_content$4] = new (babelHelpers.classPrivateFieldLooseBase(this, _contentProviders)[_contentProviders][babelHelpers.classPrivateFieldLooseBase(this, _code)[_code]])(this);
+	    babelHelpers.classPrivateFieldLooseBase(this, _content$6)[_content$6] = new (babelHelpers.classPrivateFieldLooseBase(this, _contentProviders)[_contentProviders][babelHelpers.classPrivateFieldLooseBase(this, _code)[_code]])(this);
 	    if (['sign', 'mysign'].includes(babelHelpers.classPrivateFieldLooseBase(this, _code)[_code]) && main_core.Type.isString((_options$style = options.style) == null ? void 0 : _options$style.color)) {
-	      babelHelpers.classPrivateFieldLooseBase(this, _content$4)[_content$4].changeStyleColor(options.style.color, false);
+	      babelHelpers.classPrivateFieldLooseBase(this, _content$6)[_content$6].changeStyleColor(options.style.color, false);
 	    }
 	    babelHelpers.classPrivateFieldLooseBase(this, _createLayout)[_createLayout]();
 	    main_core.Event.bind(babelHelpers.classPrivateFieldLooseBase(this, _layout)[_layout], 'click', babelHelpers.classPrivateFieldLooseBase(this, _onClick)[_onClick].bind(this));
-	    if (options.party > 1 && !['b2ereference', 'employeedynamic', 'hcmlinkreference'].includes(babelHelpers.classPrivateFieldLooseBase(this, _code)[_code].toLowerCase())) {
+	    if (options.party > 1 && !['b2ereference', 'employeedynamic', 'hcmlinkreference', 'b2eexternalid', 'b2edocumentdate'].includes(babelHelpers.classPrivateFieldLooseBase(this, _code)[_code].toLowerCase())) {
 	      babelHelpers.classPrivateFieldLooseBase(this, _allowMembers)[_allowMembers] = true;
 	    }
 	    this.renderStyle();
-	    this.setPosition((_options$position = options.position) != null ? _options$position : babelHelpers.classPrivateFieldLooseBase(this, _content$4)[_content$4].getInitDimension());
+	    this.setPosition((_options$position = options.position) != null ? _options$position : babelHelpers.classPrivateFieldLooseBase(this, _content$6)[_content$6].getInitDimension());
 	    if (options.data) {
 	      setTimeout(() => {
 	        this.setData(options.data);
@@ -3710,7 +3789,7 @@ this.BX.Sign = this.BX.Sign || {};
 	   * @param {any} data
 	   */
 	  setData(data) {
-	    babelHelpers.classPrivateFieldLooseBase(this, _content$4)[_content$4].setData(data);
+	    babelHelpers.classPrivateFieldLooseBase(this, _content$6)[_content$6].setData(data);
 	    this.renderView();
 	  }
 
@@ -3727,7 +3806,7 @@ this.BX.Sign = this.BX.Sign || {};
 	   * @return {any}
 	   */
 	  getData() {
-	    return babelHelpers.classPrivateFieldLooseBase(this, _content$4)[_content$4].getData();
+	    return babelHelpers.classPrivateFieldLooseBase(this, _content$6)[_content$6].getData();
 	  }
 
 	  /**
@@ -3763,7 +3842,7 @@ this.BX.Sign = this.BX.Sign || {};
 	   */
 	  getStyle() {
 	    return {
-	      ...babelHelpers.classPrivateFieldLooseBase(this, _content$4)[_content$4].getStyles(),
+	      ...babelHelpers.classPrivateFieldLooseBase(this, _content$6)[_content$6].getStyles(),
 	      ...babelHelpers.classPrivateFieldLooseBase(this, _stylePanel)[_stylePanel].collectStyles()
 	    };
 	  }
@@ -3819,11 +3898,11 @@ this.BX.Sign = this.BX.Sign || {};
 	   * Calls block's action.
 	   */
 	  fireAction() {
-	    if (babelHelpers.classPrivateFieldLooseBase(this, _content$4)[_content$4]['onActionClick']) {
+	    if (babelHelpers.classPrivateFieldLooseBase(this, _content$6)[_content$6]['onActionClick']) {
 	      if (babelHelpers.classPrivateFieldLooseBase(this, _code)[_code] === 'text') {
 	        main_core.Dom.addClass(babelHelpers.classPrivateFieldLooseBase(this, _layout)[_layout], babelHelpers.classPrivateFieldLooseBase(this, _style$1)[_style$1].blockEditing);
 	      }
-	      babelHelpers.classPrivateFieldLooseBase(this, _content$4)[_content$4]['onActionClick']();
+	      babelHelpers.classPrivateFieldLooseBase(this, _content$6)[_content$6]['onActionClick']();
 	    }
 	  }
 
@@ -3842,7 +3921,7 @@ this.BX.Sign = this.BX.Sign || {};
 	   */
 	  await(flag) {
 	    const blockLayouts = [];
-	    if (!babelHelpers.classPrivateFieldLooseBase(this, _content$4)[_content$4].isSingleton()) {
+	    if (!babelHelpers.classPrivateFieldLooseBase(this, _content$6)[_content$6].isSingleton()) {
 	      blockLayouts.push(this.getLayout());
 	    } else {
 	      const currentCode = this.getCode();
@@ -3871,7 +3950,7 @@ this.BX.Sign = this.BX.Sign || {};
 	    const blocksData = [];
 	    const blocksInstance = [];
 	    this.await(true);
-	    if (!babelHelpers.classPrivateFieldLooseBase(this, _content$4)[_content$4].isSingleton()) {
+	    if (!babelHelpers.classPrivateFieldLooseBase(this, _content$6)[_content$6].isSingleton()) {
 	      blocksData.push({
 	        code: babelHelpers.classPrivateFieldLooseBase(this, _code)[_code],
 	        part: babelHelpers.classPrivateFieldLooseBase(this, _memberPart)[_memberPart],
@@ -3920,19 +3999,19 @@ this.BX.Sign = this.BX.Sign || {};
 	      case 'mysign':
 	        main_core.Dom.addClass(contentTag, '--image');
 	    }
-	    const resizeNode = babelHelpers.classPrivateFieldLooseBase(this, _content$4)[_content$4].getViewContent();
+	    const resizeNode = babelHelpers.classPrivateFieldLooseBase(this, _content$6)[_content$6].getViewContent();
 	    main_core.Dom.append(resizeNode, contentTag);
 	    main_core.Dom.addClass(resizeNode, '--' + babelHelpers.classPrivateFieldLooseBase(this, _code)[_code].toLowerCase());
-	    if (babelHelpers.classPrivateFieldLooseBase(this, _code)[_code].toLowerCase() === 'requisites' || babelHelpers.classPrivateFieldLooseBase(this, _code)[_code].toLowerCase() === 'myrequisites' || babelHelpers.classPrivateFieldLooseBase(this, _code)[_code].toLowerCase() === 'date' || babelHelpers.classPrivateFieldLooseBase(this, _code)[_code].toLowerCase() === 'number' || babelHelpers.classPrivateFieldLooseBase(this, _code)[_code].toLowerCase() === 'stamp' || babelHelpers.classPrivateFieldLooseBase(this, _code)[_code].toLowerCase() === 'mystamp' || babelHelpers.classPrivateFieldLooseBase(this, _code)[_code].toLowerCase() === 'sign' || babelHelpers.classPrivateFieldLooseBase(this, _code)[_code].toLowerCase() === 'mysign' || babelHelpers.classPrivateFieldLooseBase(this, _code)[_code].toLowerCase() === 'reference' || babelHelpers.classPrivateFieldLooseBase(this, _code)[_code].toLowerCase() === 'myreference' || babelHelpers.classPrivateFieldLooseBase(this, _code)[_code].toLowerCase() === 'text' || babelHelpers.classPrivateFieldLooseBase(this, _code)[_code].toLowerCase() === 'b2ereference' || babelHelpers.classPrivateFieldLooseBase(this, _code)[_code].toLowerCase() === 'myb2ereference' || babelHelpers.classPrivateFieldLooseBase(this, _code)[_code].toLowerCase() === 'employeedynamic' || babelHelpers.classPrivateFieldLooseBase(this, _code)[_code].toLowerCase() === 'hcmlinkreference') {
+	    if (['requisites', 'myrequisites', 'date', 'number', 'stamp', 'mystamp', 'sign', 'mysign', 'reference', 'myreference', 'text', 'b2ereference', 'myb2ereference', 'employeedynamic', 'hcmlinkreference', 'b2eexternalid', 'b2edocumentdate'].includes(babelHelpers.classPrivateFieldLooseBase(this, _code)[_code].toLowerCase())) {
 	      resizeNode.style.setProperty('display', 'block');
 	      resizeNode.style.setProperty('overflow', 'hidden');
 	      if (!this.observerReady) {
-	        if (this.getStyle()['fontSize']) {
-	          this.maxTextSize = parseFloat(this.getStyle()['fontSize']);
+	        if (this.getStyle().fontSize) {
+	          this.maxTextSize = parseFloat(this.getStyle().fontSize);
 	        } else {
 	          this.maxTextSize = 14;
 	        }
-	        this.isOverflownX = ({
+	        this.isOverflownY = ({
 	          clientHeight,
 	          scrollHeight
 	        }) => {
@@ -3961,7 +4040,7 @@ this.BX.Sign = this.BX.Sign || {};
 	          const parent = element.parentNode;
 	          while (!overflow && i <= this.maxTextSize) {
 	            element.style.fontSize = `${i}${unit}`;
-	            overflow = this.isOverflownX(parent);
+	            overflow = this.isOverflownY(parent);
 	            i += step;
 	          }
 	          babelHelpers.classPrivateFieldLooseBase(this, _currentFontSize)[_currentFontSize] = `${i - step}${unit}`;
@@ -3969,7 +4048,9 @@ this.BX.Sign = this.BX.Sign || {};
 	          this.intervalTextResize = setTimeout(() => {
 	            element.parentNode.style.setProperty('font-size', element.style.fontSize);
 	            element.style.removeProperty('font-size', element.style.fontSize);
-	            babelHelpers.classPrivateFieldLooseBase(this, _stylePanel)[_stylePanel].updateFontSize(babelHelpers.classPrivateFieldLooseBase(this, _currentFontSize)[_currentFontSize]);
+	            if (resizibleFontBlocks.has(babelHelpers.classPrivateFieldLooseBase(this, _code)[_code].toLowerCase())) {
+	              babelHelpers.classPrivateFieldLooseBase(this, _stylePanel)[_stylePanel].updateFontSize(babelHelpers.classPrivateFieldLooseBase(this, _currentFontSize)[_currentFontSize]);
+	            }
 	          }, 1000);
 	        };
 	        if (babelHelpers.classPrivateFieldLooseBase(this, _code)[_code].toLowerCase() === 'requisites' || babelHelpers.classPrivateFieldLooseBase(this, _code)[_code].toLowerCase() === 'myrequisites' || babelHelpers.classPrivateFieldLooseBase(this, _code)[_code].toLowerCase() === 'reference' || babelHelpers.classPrivateFieldLooseBase(this, _code)[_code].toLowerCase() === 'myreference' || babelHelpers.classPrivateFieldLooseBase(this, _code)[_code].toLowerCase() === 'text') {
@@ -3978,9 +4059,9 @@ this.BX.Sign = this.BX.Sign || {};
 	            step: 0.5
 	          });
 	        }
-	        babelHelpers.classPrivateFieldLooseBase(this, _content$4)[_content$4].subscribe(babelHelpers.classPrivateFieldLooseBase(this, _content$4)[_content$4].events.onChange, babelHelpers.classPrivateFieldLooseBase(this, _onContentChange)[_onContentChange].bind(this));
-	        babelHelpers.classPrivateFieldLooseBase(this, _content$4)[_content$4].subscribe(babelHelpers.classPrivateFieldLooseBase(this, _content$4)[_content$4].events.onColorStyleChange, babelHelpers.classPrivateFieldLooseBase(this, _onContentColorStyleChange)[_onContentColorStyleChange].bind(this));
-	        babelHelpers.classPrivateFieldLooseBase(this, _content$4)[_content$4].subscribe('onFieldSelect', babelHelpers.classPrivateFieldLooseBase(this, _onFieldSelect)[_onFieldSelect].bind(this));
+	        babelHelpers.classPrivateFieldLooseBase(this, _content$6)[_content$6].subscribe(babelHelpers.classPrivateFieldLooseBase(this, _content$6)[_content$6].events.onChange, babelHelpers.classPrivateFieldLooseBase(this, _onContentChange)[_onContentChange].bind(this));
+	        babelHelpers.classPrivateFieldLooseBase(this, _content$6)[_content$6].subscribe(babelHelpers.classPrivateFieldLooseBase(this, _content$6)[_content$6].events.onColorStyleChange, babelHelpers.classPrivateFieldLooseBase(this, _onContentColorStyleChange)[_onContentColorStyleChange].bind(this));
+	        babelHelpers.classPrivateFieldLooseBase(this, _content$6)[_content$6].subscribe('onFieldSelect', babelHelpers.classPrivateFieldLooseBase(this, _onFieldSelect)[_onFieldSelect].bind(this));
 	        this.observerReady = true;
 	      }
 	      if (babelHelpers.classPrivateFieldLooseBase(this, _firstRenderReady)[_firstRenderReady]) {
@@ -4000,19 +4081,19 @@ this.BX.Sign = this.BX.Sign || {};
 	    main_core.Dom.clean(panelTag);
 
 	    // style
-	    if (babelHelpers.classPrivateFieldLooseBase(this, _content$4)[_content$4].isStyleAllowed()) {
+	    if (babelHelpers.classPrivateFieldLooseBase(this, _content$6)[_content$6].isStyleAllowed()) {
 	      main_core.Dom.append(babelHelpers.classPrivateFieldLooseBase(this, _stylePanel)[_stylePanel].getLayout(), panelTag);
 	    }
 
 	    // action
-	    main_core.Dom.append(babelHelpers.classPrivateFieldLooseBase(this, _content$4)[_content$4].getActionButton(), panelTag);
+	    main_core.Dom.append(babelHelpers.classPrivateFieldLooseBase(this, _content$6)[_content$6].getActionButton(), panelTag);
 
 	    // block caption
-	    main_core.Dom.append(babelHelpers.classPrivateFieldLooseBase(this, _content$4)[_content$4].getBlockCaption(), panelTag);
+	    main_core.Dom.append(babelHelpers.classPrivateFieldLooseBase(this, _content$6)[_content$6].getBlockCaption(), panelTag);
 
 	    // member selector
 	    if (babelHelpers.classPrivateFieldLooseBase(this, _allowMembers)[_allowMembers]) {
-	      if (['hcmlinkreference', 'b2ereference'].includes(babelHelpers.classPrivateFieldLooseBase(this, _code)[_code].toLowerCase())) {
+	      if (['hcmlinkreference', 'b2ereference', 'b2edocumentdate', 'b2eexternalid'].includes(babelHelpers.classPrivateFieldLooseBase(this, _code)[_code].toLowerCase())) {
 	        return;
 	      }
 	      const allMembers = this.blocksManager.getMembers();
@@ -4031,17 +4112,17 @@ this.BX.Sign = this.BX.Sign || {};
 	   * Calls when block starts being resized or moved.
 	   */
 	  onStartChangePosition() {
-	    babelHelpers.classPrivateFieldLooseBase(this, _content$4)[_content$4].onStartChangePosition();
+	    babelHelpers.classPrivateFieldLooseBase(this, _content$6)[_content$6].onStartChangePosition();
 	  }
 
 	  /**
 	   * Calls when block has placed on document.
 	   */
 	  onPlaced() {
-	    babelHelpers.classPrivateFieldLooseBase(this, _content$4)[_content$4].onPlaced();
+	    babelHelpers.classPrivateFieldLooseBase(this, _content$6)[_content$6].onPlaced();
 	  }
 	  updateColor(color, emitEvent = true) {
-	    babelHelpers.classPrivateFieldLooseBase(this, _content$4)[_content$4].changeStyleColor(color, emitEvent);
+	    babelHelpers.classPrivateFieldLooseBase(this, _content$6)[_content$6].changeStyleColor(color, emitEvent);
 	    babelHelpers.classPrivateFieldLooseBase(this, _stylePanel)[_stylePanel].updateColor(color);
 	  }
 
@@ -4049,21 +4130,21 @@ this.BX.Sign = this.BX.Sign || {};
 	   * Calls when block saved.
 	   */
 	  onSave() {
-	    babelHelpers.classPrivateFieldLooseBase(this, _content$4)[_content$4].onSave();
+	    babelHelpers.classPrivateFieldLooseBase(this, _content$6)[_content$6].onSave();
 	  }
 
 	  /**
 	   * Calls when block removed.
 	   */
 	  onRemove() {
-	    babelHelpers.classPrivateFieldLooseBase(this, _content$4)[_content$4].onRemove();
+	    babelHelpers.classPrivateFieldLooseBase(this, _content$6)[_content$6].onRemove();
 	  }
 
 	  /**
 	   * Calls when click was out the block.
 	   */
 	  onClickOut() {
-	    babelHelpers.classPrivateFieldLooseBase(this, _content$4)[_content$4].onClickOut();
+	    babelHelpers.classPrivateFieldLooseBase(this, _content$6)[_content$6].onClickOut();
 	  }
 
 	  /**
@@ -4142,7 +4223,7 @@ this.BX.Sign = this.BX.Sign || {};
 	  const nodeForPosition = document.body.querySelector('.sign-editor__content');
 	  const documentLayout = this.blocksManager.getLayout();
 	  const documentLayoutRect = documentLayout.getBoundingClientRect();
-	  const blockInitDim = babelHelpers.classPrivateFieldLooseBase(this, _content$4)[_content$4].getInitDimension();
+	  const blockInitDim = babelHelpers.classPrivateFieldLooseBase(this, _content$6)[_content$6].getInitDimension();
 	  const position = {
 	    top: Math.min(nodeForPosition.scrollTop + nodeForPosition.offsetHeight / 2, documentLayoutRect.height - blockInitDim.height),
 	    left: documentLayoutRect.width / 2 - 100
@@ -4157,7 +4238,7 @@ this.BX.Sign = this.BX.Sign || {};
 	  event.stopPropagation();
 	}
 	function _onContentChange2() {
-	  const content = babelHelpers.classPrivateFieldLooseBase(this, _content$4)[_content$4];
+	  const content = babelHelpers.classPrivateFieldLooseBase(this, _content$6)[_content$6];
 	  if (!(content instanceof Text)) {
 	    return;
 	  }
@@ -4169,9 +4250,9 @@ this.BX.Sign = this.BX.Sign || {};
 	function _onContentColorStyleChange2(event) {
 	  var _babelHelpers$classPr2, _babelHelpers$classPr3, _babelHelpers$classPr4, _babelHelpers$classPr5;
 	  this.emit(this.events.onColorStyleChange, {
-	    color: (_babelHelpers$classPr2 = (_babelHelpers$classPr3 = babelHelpers.classPrivateFieldLooseBase(this, _content$4)[_content$4].getStyles()) == null ? void 0 : _babelHelpers$classPr3.color) != null ? _babelHelpers$classPr2 : null
+	    color: (_babelHelpers$classPr2 = (_babelHelpers$classPr3 = babelHelpers.classPrivateFieldLooseBase(this, _content$6)[_content$6].getStyles()) == null ? void 0 : _babelHelpers$classPr3.color) != null ? _babelHelpers$classPr2 : null
 	  });
-	  const color = (_babelHelpers$classPr4 = (_babelHelpers$classPr5 = babelHelpers.classPrivateFieldLooseBase(this, _content$4)[_content$4].getStyles()) == null ? void 0 : _babelHelpers$classPr5.color) != null ? _babelHelpers$classPr4 : null;
+	  const color = (_babelHelpers$classPr4 = (_babelHelpers$classPr5 = babelHelpers.classPrivateFieldLooseBase(this, _content$6)[_content$6].getStyles()) == null ? void 0 : _babelHelpers$classPr5.color) != null ? _babelHelpers$classPr4 : null;
 	  if (main_core.Type.isString(color)) {
 	    babelHelpers.classPrivateFieldLooseBase(this, _stylePanel)[_stylePanel].updateColor(color);
 	  }
@@ -5067,6 +5148,9 @@ this.BX.Sign = this.BX.Sign || {};
 	        case 'sign':
 	        case 'mysign':
 	          type = 'image';
+	          break;
+	        default:
+	          type = 'text';
 	      }
 	      postData.push({
 	        id: block.getId(),
@@ -5513,9 +5597,9 @@ this.BX.Sign = this.BX.Sign || {};
 	  Object.values(babelHelpers.classPrivateFieldLooseBase(this, _eventListeners)[_eventListeners]).forEach(eventListenerCache => eventListenerCache.clear());
 	}
 
-	let _$i = t => t,
-	  _t$i,
-	  _t2$e,
+	let _$k = t => t,
+	  _t$k,
+	  _t2$g,
 	  _t3$a,
 	  _t4$2,
 	  _t5$2,
@@ -5523,7 +5607,8 @@ this.BX.Sign = this.BX.Sign || {};
 	  _t7$2,
 	  _t8$2,
 	  _t9$2,
-	  _t10;
+	  _t10,
+	  _t11;
 	const buttonClassList = ['ui-btn', 'ui-btn-sm', 'ui-btn-round', 'ui-btn-light-border'];
 	const SectionType = Object.freeze({
 	  General: 0,
@@ -5541,15 +5626,20 @@ this.BX.Sign = this.BX.Sign || {};
 	var _documentData = /*#__PURE__*/babelHelpers.classPrivateFieldLooseKey("documentData");
 	var _urls = /*#__PURE__*/babelHelpers.classPrivateFieldLooseKey("urls");
 	var _totalPages = /*#__PURE__*/babelHelpers.classPrivateFieldLooseKey("totalPages");
+	var _api$3 = /*#__PURE__*/babelHelpers.classPrivateFieldLooseKey("api");
 	var _sectionElementByType = /*#__PURE__*/babelHelpers.classPrivateFieldLooseKey("sectionElementByType");
 	var _disabledSections = /*#__PURE__*/babelHelpers.classPrivateFieldLooseKey("disabledSections");
 	var _needSaveBlocksOnSidePanelClose = /*#__PURE__*/babelHelpers.classPrivateFieldLooseKey("needSaveBlocksOnSidePanelClose");
 	var _needToLockSidePanelClose = /*#__PURE__*/babelHelpers.classPrivateFieldLooseKey("needToLockSidePanelClose");
+	var _needSkipEditorStep = /*#__PURE__*/babelHelpers.classPrivateFieldLooseKey("needSkipEditorStep");
 	var _analytics = /*#__PURE__*/babelHelpers.classPrivateFieldLooseKey("analytics");
 	var _isTemplateMode = /*#__PURE__*/babelHelpers.classPrivateFieldLooseKey("isTemplateMode");
+	var _disableB2eDocumentSection = /*#__PURE__*/babelHelpers.classPrivateFieldLooseKey("disableB2eDocumentSection");
+	var _onSliderOpenCompleteHandler = /*#__PURE__*/babelHelpers.classPrivateFieldLooseKey("onSliderOpenCompleteHandler");
 	var _isB2e = /*#__PURE__*/babelHelpers.classPrivateFieldLooseKey("isB2e");
 	var _getArticleCode = /*#__PURE__*/babelHelpers.classPrivateFieldLooseKey("getArticleCode");
 	var _covertRoleToBlockParty = /*#__PURE__*/babelHelpers.classPrivateFieldLooseKey("covertRoleToBlockParty");
+	var _handleSliderOnOpenComplete = /*#__PURE__*/babelHelpers.classPrivateFieldLooseKey("handleSliderOnOpenComplete");
 	var _render = /*#__PURE__*/babelHelpers.classPrivateFieldLooseKey("render");
 	var _createHeader = /*#__PURE__*/babelHelpers.classPrivateFieldLooseKey("createHeader");
 	var _onSaveBtnClick = /*#__PURE__*/babelHelpers.classPrivateFieldLooseKey("onSaveBtnClick");
@@ -5562,10 +5652,18 @@ this.BX.Sign = this.BX.Sign || {};
 	var _onSidePanelCloseStart = /*#__PURE__*/babelHelpers.classPrivateFieldLooseKey("onSidePanelCloseStart");
 	var _isDynamicEmployeeFieldAvailable = /*#__PURE__*/babelHelpers.classPrivateFieldLooseKey("isDynamicEmployeeFieldAvailable");
 	var _isBlockCanBeInitialized = /*#__PURE__*/babelHelpers.classPrivateFieldLooseKey("isBlockCanBeInitialized");
+	var _renderEyeIcon = /*#__PURE__*/babelHelpers.classPrivateFieldLooseKey("renderEyeIcon");
+	var _toggleEditStepVisibility = /*#__PURE__*/babelHelpers.classPrivateFieldLooseKey("toggleEditStepVisibility");
 	class Editor extends main_core_events.EventEmitter {
 	  constructor(wizardType, options) {
 	    var _options$documentInit;
 	    super();
+	    Object.defineProperty(this, _toggleEditStepVisibility, {
+	      value: _toggleEditStepVisibility2
+	    });
+	    Object.defineProperty(this, _renderEyeIcon, {
+	      value: _renderEyeIcon2
+	    });
 	    Object.defineProperty(this, _isBlockCanBeInitialized, {
 	      value: _isBlockCanBeInitialized2
 	    });
@@ -5601,6 +5699,9 @@ this.BX.Sign = this.BX.Sign || {};
 	    });
 	    Object.defineProperty(this, _render, {
 	      value: _render2
+	    });
+	    Object.defineProperty(this, _handleSliderOnOpenComplete, {
+	      value: _handleSliderOnOpenComplete2
 	    });
 	    Object.defineProperty(this, _covertRoleToBlockParty, {
 	      value: _covertRoleToBlockParty2
@@ -5651,6 +5752,10 @@ this.BX.Sign = this.BX.Sign || {};
 	      writable: true,
 	      value: void 0
 	    });
+	    Object.defineProperty(this, _api$3, {
+	      writable: true,
+	      value: new sign_v2_api.Api()
+	    });
 	    Object.defineProperty(this, _sectionElementByType, {
 	      writable: true,
 	      value: new Map()
@@ -5667,6 +5772,10 @@ this.BX.Sign = this.BX.Sign || {};
 	      writable: true,
 	      value: true
 	    });
+	    Object.defineProperty(this, _needSkipEditorStep, {
+	      writable: true,
+	      value: false
+	    });
 	    Object.defineProperty(this, _analytics, {
 	      writable: true,
 	      value: null
@@ -5675,13 +5784,21 @@ this.BX.Sign = this.BX.Sign || {};
 	      writable: true,
 	      value: void 0
 	    });
+	    Object.defineProperty(this, _disableB2eDocumentSection, {
+	      writable: true,
+	      value: true
+	    });
+	    Object.defineProperty(this, _onSliderOpenCompleteHandler, {
+	      writable: true,
+	      value: babelHelpers.classPrivateFieldLooseBase(this, _handleSliderOnOpenComplete)[_handleSliderOnOpenComplete].bind(this)
+	    });
 	    this.setEventNamespace('BX.Sign.V2.Editor');
 	    const {
 	      Instance
 	    } = main_core.Reflection.getClass('BX.SidePanel');
 	    babelHelpers.classPrivateFieldLooseBase(this, _sidePanel)[_sidePanel] = Instance;
-	    babelHelpers.classPrivateFieldLooseBase(this, _dom)[_dom] = main_core.Tag.render(_t$i || (_t$i = _$i`<div class="sign-wizard__scope sign-editor"></div>`));
-	    babelHelpers.classPrivateFieldLooseBase(this, _documentLayout$1)[_documentLayout$1] = main_core.Tag.render(_t2$e || (_t2$e = _$i`
+	    babelHelpers.classPrivateFieldLooseBase(this, _dom)[_dom] = main_core.Tag.render(_t$k || (_t$k = _$k`<div class="sign-wizard__scope sign-editor"></div>`));
+	    babelHelpers.classPrivateFieldLooseBase(this, _documentLayout$1)[_documentLayout$1] = main_core.Tag.render(_t2$g || (_t2$g = _$k`
 			<div class="sign-editor__document"></div>
 		`));
 	    babelHelpers.classPrivateFieldLooseBase(this, _blocksManager)[_blocksManager] = new BlocksManager({
@@ -5695,6 +5812,7 @@ this.BX.Sign = this.BX.Sign || {};
 	    babelHelpers.classPrivateFieldLooseBase(this, _wizardType)[_wizardType] = wizardType;
 	    babelHelpers.classPrivateFieldLooseBase(this, _urls)[_urls] = [];
 	    babelHelpers.classPrivateFieldLooseBase(this, _totalPages)[_totalPages] = 0;
+	    babelHelpers.classPrivateFieldLooseBase(this, _needSkipEditorStep)[_needSkipEditorStep] = options.needSkipEditorStep;
 	  }
 	  setUrls(urls, totalPages) {
 	    if (urls.length === 0) {
@@ -5762,7 +5880,7 @@ this.BX.Sign = this.BX.Sign || {};
 	        promises
 	      } = acc;
 	      const promise = new Promise(resolve => {
-	        const page = main_core.Tag.render(_t3$a || (_t3$a = _$i`
+	        const page = main_core.Tag.render(_t3$a || (_t3$a = _$k`
 					<div class="sign-editor__document_page">
 						<img src="${0}" onload="${0}"  alt=""/>
 					</div>
@@ -5781,16 +5899,14 @@ this.BX.Sign = this.BX.Sign || {};
 	    } = babelHelpers.classPrivateFieldLooseBase(this, _blocksManager)[_blocksManager];
 	    main_core.Dom.append(resizeArea.getLayout(), babelHelpers.classPrivateFieldLooseBase(this, _documentLayout$1)[_documentLayout$1]);
 	    await Promise.all(promises);
-	    main_core_events.EventEmitter.unsubscribeAll('SidePanel.Slider:onOpenComplete');
-	    main_core_events.EventEmitter.subscribeOnce('SidePanel.Slider:onOpenComplete', () => {
-	      babelHelpers.classPrivateFieldLooseBase(this, _blocksManager)[_blocksManager].initPagesRect();
-	      babelHelpers.classPrivateFieldLooseBase(this, _blocksManager)[_blocksManager].initBlocks(babelHelpers.classPrivateFieldLooseBase(this, _documentData)[_documentData].blocks.filter(block => babelHelpers.classPrivateFieldLooseBase(this, _isBlockCanBeInitialized)[_isBlockCanBeInitialized](block)));
-	    });
+	    main_core_events.EventEmitter.unsubscribe('SidePanel.Slider:onOpenComplete', babelHelpers.classPrivateFieldLooseBase(this, _onSliderOpenCompleteHandler)[_onSliderOpenCompleteHandler]);
+	    main_core_events.EventEmitter.subscribeOnce('SidePanel.Slider:onOpenComplete', babelHelpers.classPrivateFieldLooseBase(this, _onSliderOpenCompleteHandler)[_onSliderOpenCompleteHandler]);
 	  }
 	  show() {
 	    return new Promise(resolve => {
 	      babelHelpers.classPrivateFieldLooseBase(this, _closeSidePanel)[_closeSidePanel] = resolve;
 	      babelHelpers.classPrivateFieldLooseBase(this, _sidePanel)[_sidePanel].open('editor', {
+	        cacheable: false,
 	        contentCallback: () => {
 	          babelHelpers.classPrivateFieldLooseBase(this, _render)[_render]();
 	          return babelHelpers.classPrivateFieldLooseBase(this, _dom)[_dom];
@@ -5823,6 +5939,9 @@ this.BX.Sign = this.BX.Sign || {};
 	      babelHelpers.classPrivateFieldLooseBase(this, _disabledSections)[_disabledSections].add(type);
 	    }
 	  }
+	  setIsB2eDocumentSectionDisabled(value) {
+	    babelHelpers.classPrivateFieldLooseBase(this, _disableB2eDocumentSection)[_disableB2eDocumentSection] = value;
+	  }
 	  setAnalytics(analytic) {
 	    babelHelpers.classPrivateFieldLooseBase(this, _analytics)[_analytics] = analytic;
 	  }
@@ -5843,6 +5962,10 @@ this.BX.Sign = this.BX.Sign || {};
 	      return part;
 	  }
 	}
+	function _handleSliderOnOpenComplete2() {
+	  babelHelpers.classPrivateFieldLooseBase(this, _blocksManager)[_blocksManager].initPagesRect();
+	  babelHelpers.classPrivateFieldLooseBase(this, _blocksManager)[_blocksManager].initBlocks(babelHelpers.classPrivateFieldLooseBase(this, _documentData)[_documentData].blocks.filter(block => babelHelpers.classPrivateFieldLooseBase(this, _isBlockCanBeInitialized)[_isBlockCanBeInitialized](block)));
+	}
 	function _render2() {
 	  main_core.Dom.clean(babelHelpers.classPrivateFieldLooseBase(this, _dom)[_dom]);
 	  main_core.Dom.append(babelHelpers.classPrivateFieldLooseBase(this, _createHeader)[_createHeader](), babelHelpers.classPrivateFieldLooseBase(this, _dom)[_dom]);
@@ -5855,7 +5978,7 @@ this.BX.Sign = this.BX.Sign || {};
 	  const saveButtonTitle = main_core.Loc.getMessage('SIGN_EDITOR_SAVE');
 	  let helpArticleElement = '';
 	  if (babelHelpers.classPrivateFieldLooseBase(this, _getArticleCode)[_getArticleCode]()) {
-	    helpArticleElement = main_core.Tag.render(_t4$2 || (_t4$2 = _$i`
+	    helpArticleElement = main_core.Tag.render(_t4$2 || (_t4$2 = _$k`
 				<span
 								onclick="${0}"
 								class="sign-editor__header_help"
@@ -5865,7 +5988,7 @@ this.BX.Sign = this.BX.Sign || {};
 	      Helper.show(`redirect=detail&code=${babelHelpers.classPrivateFieldLooseBase(this, _getArticleCode)[_getArticleCode]()}`);
 	    });
 	  }
-	  const headTitleNode = main_core.Tag.render(_t5$2 || (_t5$2 = _$i`
+	  const headTitleNode = main_core.Tag.render(_t5$2 || (_t5$2 = _$k`
 			<p class="sign-editor__header_title">
 				<span>${0}</span>
 				<span
@@ -5874,10 +5997,13 @@ this.BX.Sign = this.BX.Sign || {};
 			</p>
 		`), main_core.Loc.getMessage('SIGN_EDITOR_EDITING'), main_core.Loc.getMessage('SIGN_EDITOR_EDITING_HINT_MSGVER_1'));
 	  sign_v2_helper.Hint.create(headTitleNode);
-	  return main_core.Tag.render(_t6$2 || (_t6$2 = _$i`
+	  const eyeIconType = babelHelpers.classPrivateFieldLooseBase(this, _needSkipEditorStep)[_needSkipEditorStep] ? 'hide' : 'show';
+	  const eyeIconElement = babelHelpers.classPrivateFieldLooseBase(this, _renderEyeIcon)[_renderEyeIcon](eyeIconType);
+	  return main_core.Tag.render(_t6$2 || (_t6$2 = _$k`
 			<div class="sign-editor__header">
 				${0}
 				<div class="sign-editor__header_right">
+					${0}
 					${0}
 					<span
 						class="${0}"
@@ -5895,7 +6021,7 @@ this.BX.Sign = this.BX.Sign || {};
 					</span>
 				</div>
 			</div>
-		`), headTitleNode, helpArticleElement, editButtonClassName, editButtonTitle, () => babelHelpers.classPrivateFieldLooseBase(this, _onEditBtnClick)[_onEditBtnClick](), editButtonTitle, saveButtonClassName, saveButtonTitle, e => babelHelpers.classPrivateFieldLooseBase(this, _onSaveBtnClick)[_onSaveBtnClick](e), saveButtonTitle);
+		`), headTitleNode, helpArticleElement, babelHelpers.classPrivateFieldLooseBase(this, _isTemplateMode)[_isTemplateMode] || !babelHelpers.classPrivateFieldLooseBase(this, _isB2e)[_isB2e]() ? '' : eyeIconElement, editButtonClassName, editButtonTitle, () => babelHelpers.classPrivateFieldLooseBase(this, _onEditBtnClick)[_onEditBtnClick](), editButtonTitle, saveButtonClassName, saveButtonTitle, e => babelHelpers.classPrivateFieldLooseBase(this, _onSaveBtnClick)[_onSaveBtnClick](e), saveButtonTitle);
 	}
 	async function _onSaveBtnClick2({
 	  target
@@ -5935,7 +6061,7 @@ this.BX.Sign = this.BX.Sign || {};
 	}
 	function _createContent2() {
 	  const sections = babelHelpers.classPrivateFieldLooseBase(this, _createSections)[_createSections]();
-	  const editorContent = main_core.Tag.render(_t7$2 || (_t7$2 = _$i`
+	  const editorContent = main_core.Tag.render(_t7$2 || (_t7$2 = _$k`
 			<div class="sign-editor__content">
 				<div class="sign-editor__document-container">
 					${0}
@@ -5966,7 +6092,7 @@ this.BX.Sign = this.BX.Sign || {};
 	        title,
 	        hint
 	      } = block;
-	      return main_core.Tag.render(_t8$2 || (_t8$2 = _$i`
+	      return main_core.Tag.render(_t8$2 || (_t8$2 = _$k`
 					<div
 						class="sign-editor__section_block"
 						data-code="${0}"
@@ -5983,7 +6109,7 @@ this.BX.Sign = this.BX.Sign || {};
 				`), code, section.part, main_core.Loc.getMessage(title), main_core.Text.encode(main_core.Loc.getMessage(hint)), main_core.Loc.getMessage('SIGN_EDITOR_BLOCK_ADD_TO_DOCUMENT'));
 	    });
 	    babelHelpers.classPrivateFieldLooseBase(this, _blocksManager)[_blocksManager].initRepository(blocks);
-	    const sectionElement = main_core.Tag.render(_t9$2 || (_t9$2 = _$i`
+	    const sectionElement = main_core.Tag.render(_t9$2 || (_t9$2 = _$k`
 				<div class="sign-editor__section">
 					<p class="sign-editor__section_title"
 						style="display: ${0}"
@@ -6000,7 +6126,7 @@ this.BX.Sign = this.BX.Sign || {};
 	    }
 	    return sectionElement;
 	  });
-	  return main_core.Tag.render(_t10 || (_t10 = _$i`
+	  return main_core.Tag.render(_t10 || (_t10 = _$k`
 			<div class="sign-editor__sections">
 				${0}
 			</div>
@@ -6061,6 +6187,16 @@ this.BX.Sign = this.BX.Sign || {};
 	        hint: personalDataMessageCode
 	      }
 	    });
+	    const documentBlocks = {
+	      b2eexternalid: {
+	        title: 'SIGN_EDITOR_BLOCK_B2E_EXTERNAL_ID_TITLE',
+	        hint: 'SIGN_EDITOR_BLOCK_B2E_EXTERNAL_ID_HINT'
+	      },
+	      b2edocumentdate: {
+	        title: 'SIGN_EDITOR_BLOCK_B2E_DOCUMENT_DATE_TITLE',
+	        hint: 'SIGN_EDITOR_BLOCK_B2E_DOCUMENT_DATE_HINT'
+	      }
+	    };
 	    if (babelHelpers.classPrivateFieldLooseBase(this, _isDynamicEmployeeFieldAvailable)[_isDynamicEmployeeFieldAvailable]()) {
 	      Object.assign(partnerBlocks, {
 	        employeedynamic: {
@@ -6071,9 +6207,10 @@ this.BX.Sign = this.BX.Sign || {};
 	    }
 	    titles = {
 	      firstParty: 'SIGN_EDITOR_BLOCKS_FIRST_PARTY_B2E',
-	      partner: 'SIGN_EDITOR_BLOCKS_EMPLOYEE_B2E'
+	      partner: 'SIGN_EDITOR_BLOCKS_EMPLOYEE_B2E',
+	      document: 'SIGN_EDITOR_BLOCK_B2E_DOCUMENT_SECTION'
 	    };
-	    return [{
+	    const blocks = [{
 	      title: titles.firstParty,
 	      blocks: firstPartyBlocks,
 	      part: 1
@@ -6081,7 +6218,15 @@ this.BX.Sign = this.BX.Sign || {};
 	      title: titles.partner,
 	      blocks: partnerBlocks,
 	      part: 2
-	    }, {
+	    }];
+	    if (!babelHelpers.classPrivateFieldLooseBase(this, _disableB2eDocumentSection)[_disableB2eDocumentSection]) {
+	      blocks.push({
+	        title: titles.document,
+	        blocks: documentBlocks,
+	        part: 2
+	      });
+	    }
+	    blocks.push({
 	      title: 'SIGN_EDITOR_BLOCKS_GENERAL',
 	      blocks: generalBlocks,
 	      part: 0
@@ -6094,7 +6239,8 @@ this.BX.Sign = this.BX.Sign || {};
 	        }
 	      },
 	      part: 3
-	    }];
+	    });
+	    return blocks;
 	  } else {
 	    Object.assign(firstPartyBlocks, {
 	      myreference: {
@@ -6192,9 +6338,35 @@ this.BX.Sign = this.BX.Sign || {};
 	  }
 	  return !babelHelpers.classPrivateFieldLooseBase(this, _blocksManager)[_blocksManager].isTemplateMode || !String(block.data.field).startsWith('SMART_B2E_DOC');
 	}
+	function _renderEyeIcon2(eyeIconType) {
+	  const eyeIconTitleMessageId = babelHelpers.classPrivateFieldLooseBase(this, _needSkipEditorStep)[_needSkipEditorStep] ? 'SIGN_EDITOR_SHOW_IN_MASTER' : 'SIGN_EDITOR_HIDE_IN_MASTER';
+	  return main_core.Tag.render(_t11 || (_t11 = _$k`
+			<span
+				class="sign-editor__header_eye-icon ${0}"
+				title="${0}"
+				onclick="${0}"
+			>
+			</span>
+			<span class="sign-editor__header_vertical-line"></span>
+		`), eyeIconType, main_core.Loc.getMessage(eyeIconTitleMessageId), babelHelpers.classPrivateFieldLooseBase(this, _toggleEditStepVisibility)[_toggleEditStepVisibility].bind(this));
+	}
+	async function _toggleEditStepVisibility2(event) {
+	  const eyeIcon = event.currentTarget;
+	  const isShow = main_core.Dom.hasClass(eyeIcon, 'show');
+	  main_core.Dom.toggleClass(eyeIcon, ['show', 'hide']);
+	  const title = isShow ? main_core.Loc.getMessage('SIGN_EDITOR_SHOW_IN_MASTER') : main_core.Loc.getMessage('SIGN_EDITOR_HIDE_IN_MASTER');
+	  main_core.Dom.attr(eyeIcon, {
+	    title
+	  });
+	  try {
+	    await babelHelpers.classPrivateFieldLooseBase(this, _api$3)[_api$3].changeEditorStepVisibility(isShow);
+	  } catch (error) {
+	    console.error(error);
+	  }
+	}
 
 	exports.SectionType = SectionType;
 	exports.Editor = Editor;
 
-}((this.BX.Sign.V2 = this.BX.Sign.V2 || {}),BX.Sign.V2,BX.Sign.V2,BX.Main,BX.Sign.Tour,BX,BX.UI,BX.UI.Dialogs,BX.UI,BX.Sign,BX,BX,BX.UI.Stamp,BX.Sign.V2,BX.Crm.Form.Fields,BX.Crm.Requisite,BX.Sign,BX.Sign.B2e,BX.Sign,BX,BX.Sign,BX,BX.UI.DragAndDrop,BX.Event));
+}((this.BX.Sign.V2 = this.BX.Sign.V2 || {}),BX.Sign.V2,BX.Sign.V2,BX.Main,BX.Sign.Tour,BX,BX.UI,BX.UI.Dialogs,BX.UI,BX.Sign,BX,BX,BX.UI.Stamp,BX.Crm.Form.Fields,BX.Crm.Requisite,BX.Sign,BX.Sign.B2e,BX.Sign,BX,BX.Sign,BX,BX.UI.DragAndDrop,BX.Event,BX.Sign.V2));
 //# sourceMappingURL=editor.bundle.js.map

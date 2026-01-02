@@ -2,6 +2,7 @@
 
 return [
 	'extensions' => [
+		'analytics',
 		'utils',
 		'recipient',
 		'helpers/component',

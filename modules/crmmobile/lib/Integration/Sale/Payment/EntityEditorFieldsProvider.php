@@ -9,6 +9,7 @@ use Bitrix\Main\Localization\Loc;
 use Bitrix\Sale\PaySystem\Manager;
 use Bitrix\Crm\Service\Display\Field\UserField;
 use Bitrix\Crm\Service\Display\Field;
+use Bitrix\Crm\Service\Container;
 
 LocHelper::loadMessages();
 
@@ -77,11 +78,9 @@ class EntityEditorFieldsProvider
 			'contact' => [],
 		];
 
-		$userPermissions = \CCrmPerms::GetCurrentUserPermissions();;
-
 		if ($this->itemData->companyId > 0)
 		{
-			$isEntityReadPermitted = \CCrmCompany::CheckReadPermission($this->itemData->companyId, $userPermissions);
+			$isEntityReadPermitted = Container::getInstance()->getUserPermissions()->item()->canRead(\CCrmOwnerType::Company, $this->itemData->companyId);
 			$companyInfo = \CCrmEntitySelectorHelper::PrepareEntityInfo(
 				\CCrmOwnerType::CompanyName,
 				$this->itemData->companyId,

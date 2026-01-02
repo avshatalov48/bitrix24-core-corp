@@ -6,6 +6,7 @@ use Bitrix\Main;
 use Bitrix\Tasks\Helper\Analytics;
 use Bitrix\Tasks\Slider\Path\TaskPathMaker;
 use Bitrix\Tasks\Util\User;
+use Bitrix\Tasks\V2\Internal\DI\Container;
 use CExtranet;
 use CTaskPlannerMaintance;
 
@@ -55,14 +56,17 @@ class Action
 
 		$taskRowActions = [
 			[
+				'id' => 'mute',
 				'text' => GetMessageJS("TASKS_GRID_TASK_ROW_ACTION_{$muteAction}"),
 				'onclick' => 'BX.Tasks.GridActions.action("'.strtolower($muteAction).'", '.$taskId.');',
 			],
 			[
+				'id' => 'ping',
 				'text' => GetMessageJS('TASKS_GRID_TASK_ROW_ACTION_PING'),
 				'onclick' => "BX.Tasks.GridActions.action('ping', {$taskId});",
 			],
 			[
+				'id' => 'view',
 				'text' => GetMessageJS('TASKS_GRID_TASK_ROW_ACTION_VIEW'),
 				'href' => $taskViewPath->getUri(),
 			],
@@ -70,6 +74,7 @@ class Action
 		if ($this->parameters['CAN_USE_PIN'])
 		{
 			array_splice($taskRowActions, 0, 0, [[
+				'id' => 'pin',
 				'text' => GetMessageJS("TASKS_GRID_TASK_ROW_ACTION_{$pinAction}"),
 				'onclick' => 'BX.Tasks.GridActions.action("'.strtolower($pinAction).'", '.$taskId.');',
 			]]);
@@ -77,6 +82,7 @@ class Action
 		if ($actions['EDIT'])
 		{
 			$taskRowActions[] = [
+				'id' => 'edit',
 				'text' => GetMessageJS('TASKS_GRID_TASK_ROW_ACTION_EDIT'),
 				'href' => TaskPathMaker::getPath([
 					'user_id' => $userId,
@@ -105,6 +111,7 @@ class Action
 				'ta_el' => Analytics::ELEMENT['context_menu'],
 			]);
 			$taskRowActions[] = [
+				'id' => 'create',
 				'text' => GetMessageJS('TASKS_GRID_TASK_ROW_ACTION_ADD_SUB_TASK'),
 				'href' => $subTaskPath->getUri(),
 			];
@@ -113,6 +120,7 @@ class Action
 		if ($actions['ADD_FAVORITE'])
 		{
 			$taskRowActions[] = [
+				'id' => 'addFavorite',
 				'text' => GetMessageJS('TASKS_GRID_TASK_ROW_ACTION_ADD_TO_FAVORITES'),
 				'onclick' => 'BX.Tasks.GridActions.action("addFavorite", '.$taskId.');',
 			];
@@ -120,6 +128,7 @@ class Action
 		if ($actions['DELETE_FAVORITE'])
 		{
 			$taskRowActions[] = [
+				'id' => 'deleteFavorite',
 				'text' => GetMessageJS('TASKS_GRID_TASK_ROW_ACTION_REMOVE_FROM_FAVORITES'),
 				'onclick' => 'BX.Tasks.GridActions.action("deleteFavorite", '.$taskId.');',
 			];
@@ -127,6 +136,7 @@ class Action
 		if ($actions['COMPLETE'])
 		{
 			$taskRowActions[] = [
+				'id' => 'complete',
 				'text' => GetMessageJS('TASKS_GRID_TASK_ROW_ACTION_COMPLETE'),
 				'onclick' => 'BX.Tasks.GridActions.action("complete", '.$taskId.');',
 			];
@@ -134,6 +144,7 @@ class Action
 		if ($actions['RENEW'])
 		{
 			$taskRowActions[] = [
+				'id' => 'renew',
 				'text' => GetMessageJS('TASKS_GRID_TASK_ROW_ACTION_RENEW'),
 				'onclick' => 'BX.Tasks.GridActions.action("renew", '.$taskId.');',
 			];
@@ -141,6 +152,7 @@ class Action
 		if ($actions['APPROVE'])
 		{
 			$taskRowActions[] = [
+				'id' => 'approve',
 				'text' => GetMessageJS('TASKS_GRID_TASK_ROW_ACTION_APPROVE'),
 				'onclick' => 'BX.Tasks.GridActions.action("approve", '.$taskId.');',
 			];
@@ -149,6 +161,7 @@ class Action
 		{
 			$allowTimeTracking = $this->rowData['ALLOW_TIME_TRACKING'] === 'Y';
 			$taskRowActions[] = [
+				'id' => 'take',
 				'text' => GetMessageJS('TASKS_GRID_TASK_ROW_ACTION_TAKE'),
 				'onclick' => 'BX.Tasks.GridActions.action("take", '.$taskId.', { allowTimeTracking: ' . ($allowTimeTracking ? 'true' : 'false') . ' });',
 			];
@@ -156,6 +169,7 @@ class Action
 		else if ($actions['START'])
 		{
 			$taskRowActions[] = [
+				'id' => 'start',
 				'text' => GetMessageJS('TASKS_GRID_TASK_ROW_ACTION_START'),
 				'onclick' => 'BX.Tasks.GridActions.action("start", '.$taskId.');',
 			];
@@ -163,6 +177,7 @@ class Action
 		if ($actions['PAUSE'])
 		{
 			$taskRowActions[] = [
+				'id' => 'pause',
 				'text' => GetMessageJS('TASKS_GRID_TASK_ROW_ACTION_PAUSE'),
 				'onclick' => 'BX.Tasks.GridActions.action("pause", '.$taskId.');',
 			];
@@ -170,6 +185,7 @@ class Action
 		if ($actions['DEFER'])
 		{
 			$taskRowActions[] = [
+				'id' => 'defer',
 				'text' => GetMessageJS('TASKS_GRID_TASK_ROW_ACTION_DEFER'),
 				'onclick' => 'BX.Tasks.GridActions.action("defer", '.$taskId.');',
 			];
@@ -194,18 +210,21 @@ class Action
 		if ($actions['CREATE'])
 		{
 			$taskRowActions[] = [
+				'id' => 'copy',
 				'text' => GetMessageJS('TASKS_GRID_TASK_ROW_ACTION_COPY'),
 				'href' => $copyTaskPath->getUri(),
 			];
 		}
 
-		$copyLink = tasksServerName() . TaskPathMaker::getPath([
+		$hostUrl = Container::getInstance()->getUrlService()->getHostUrl();
+		$copyLink = $hostUrl . TaskPathMaker::getPath([
 			'user_id' => $userId,
 			'task_id' => $taskId,
 			'action' => 'view',
 			'group_id' => $groupId,
 		]);
 		$taskRowActions[] = [
+			'id' => 'copyLink',
 			'text' => GetMessageJS('TASKS_GRID_TASK_ROW_ACTION_COPY_LINK'),
 			'onclick' => 'BX.Tasks.GridActions.action("copyLink", '.$taskId.', {copyLink: "'.$copyLink.'"});',
 		];
@@ -213,13 +232,31 @@ class Action
 		if ($this->checkCanUpdatePlan() === 'Y')
 		{
 			$taskRowActions[] = [
+				'id' => 'addToTimeman',
 				'text' => GetMessageJS('TASKS_GRID_TASK_ROW_ACTION_ADD_TO_TIMEMAN'),
 				'onclick' => 'BX.Tasks.GridActions.action("add2Timeman", '.$taskId.');',
 			];
 		}
+		if (!empty($this->parameters['relationToId']) && $actions['EDIT'])
+		{
+			$relationToId = (int)$this->parameters['relationToId'];
+			$taskRowActions[] = match ($this->parameters['relationType'] ?? null) {
+				default => [
+					'id' => 'unlinkSubTask',
+					'text' => GetMessageJS('TASKS_GRID_TASK_ROW_ACTION_UNLINK'),
+					'onclick' => "BX.Tasks.GridActions.action('unlinkSubTask', $taskId, { parentId: $relationToId })",
+				],
+				'relatedTasks' => [
+					'id' => 'unlinkRelatedTask',
+					'text' => GetMessageJS('TASKS_GRID_TASK_ROW_ACTION_UNLINK'),
+					'onclick' => "BX.Tasks.GridActions.action('unlinkRelatedTask', $taskId, { relatedToTaskId: $relationToId })",
+				],
+			};
+		}
 		if ($actions['REMOVE'])
 		{
 			$taskRowActions[] = [
+				'id' => 'remove',
 				'text' => GetMessageJS('TASKS_GRID_TASK_ROW_ACTION_REMOVE'),
 				'onclick' => 'BX.Tasks.GridActions.action("delete", '.$taskId.');',
 			];
@@ -228,6 +265,15 @@ class Action
 		foreach (GetModuleEvents('tasks', 'onTasksBuildContextMenu', true) as $event)
 		{
 			ExecuteModuleEventEx($event, ['TASK_LIST_CONTEXT_MENU', ['ID' => $taskId], &$taskRowActions]);
+		}
+
+		if (!empty($this->parameters['relationToId']))
+		{
+			$allowedActions = ['view', 'complete', 'renew', 'approve', 'start', 'pause', 'defer', 'copy', 'unlinkSubTask', 'unlinkRelatedTask', 'remove'];
+			$taskRowActions = array_values(array_filter(
+				$taskRowActions,
+				fn ($action) => in_array($action['id'] ?? null, $allowedActions, true),
+			));
 		}
 
 		return $taskRowActions;

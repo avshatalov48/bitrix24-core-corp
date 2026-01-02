@@ -7,6 +7,7 @@ jn.define('bizproc/workflow/starter/catalog-step', (require, exports, module) =>
 	const { WizardStep } = require('layout/ui/wizard/step');
 	const { ProgressBarNumber } = require('bizproc/wizard/progress-bar-number');
 	const { CatalogStepComponent } = require('bizproc/workflow/starter/catalog-step/component');
+	const { Random } = require('utils/random');
 
 	class CatalogStep extends WizardStep
 	{
@@ -16,7 +17,6 @@ jn.define('bizproc/workflow/starter/catalog-step', (require, exports, module) =>
 
 			this.selectedTemplate = null;
 
-			// eslint-disable-next-line no-undef
 			this.uid = props.uid || Random.getString();
 			this.customEventEmitter = EventEmitter.createWithUid(this.uid);
 

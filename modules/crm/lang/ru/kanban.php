@@ -70,8 +70,6 @@ $MESS['CRM_KANBAN_PANEL_SENDER'] = 'Создать рассылку';
 $MESS['CRM_KANBAN_PANEL_MERGE'] = 'Объединить';
 $MESS['CRM_KANBAN_NOTIFY_LEAD_IGNORE'] = 'Лиды добавлены в список исключений';
 $MESS['CRM_KANBAN_NOTIFY_DEAL_IGNORE'] = 'Сделки добавлены в список исключений';
-$MESS['CRM_KANBAN_NOTIFY_DEAL_CHANGECATEGORY'] = 'Сделки перенесены в воронку: #categoryName#';
-$MESS['CRM_KANBAN_NOTIFY_DYNAMIC_CHANGECATEGORY'] = 'Элементы перенесены в воронку: #categoryName#';
 $MESS['CRM_KANBAN_NOTIFY_DEAL_CHANGECATEGORY_LINK2'] = 'Сделки перенесены в воронку: <a href="#categoryLink#">#categoryName#</a>';
 $MESS['CRM_KANBAN_NOTIFY_DYNAMIC_CHANGECATEGORY_LINK2'] = 'Элементы перенесены в воронку: <a href="#categoryLink#">#categoryName#</a>';
 $MESS['CRM_KANBAN_NOTIFY_LEAD_SETASSIGNED'] = 'Лиды назначены ответственному: #assignedName#';
@@ -102,8 +100,6 @@ $MESS['CRM_KANBAN_SET_STATUS_NOT_COMPLETED_TEXT_DYNAMIC_MSGVER_1'] = 'Некот
 $MESS['CRM_KANBAN_SET_STATUS_NOT_COMPLETED_TEXT_QUOTE_MSGVER_2'] = 'Некоторые предложения не удалось перенести на выбранную стадию. Заполните обязательные поля и перенесите предложения снова.';
 $MESS['CRM_KANBAN_MASS_CONVERT_SOON'] = 'Массовая конвертация лидов пока не доступна для канбана. Но мы работаем над этой задачей и уже скоро это будет реализовано.';
 $MESS['CRM_KANBAN_MASS_CONVERT_DISABLE_MSGVER_1'] = 'Массовый перенос на эту стадию не доступен';
-$MESS['CRM_EDITOR_SAVE'] = 'Сохранить';
-$MESS['CRM_EDITOR_CANCEL'] = 'Отменить';
 $MESS['CRM_EDITOR_FIELD_CLIENT'] = 'Клиент';
 $MESS['CRM_EDITOR_FIELD_COMPANY'] = 'Компания';
 $MESS['CRM_EDITOR_FIELD_OPPORTUNITY_WITH_CURRENCY'] = 'Сумма и валюта';

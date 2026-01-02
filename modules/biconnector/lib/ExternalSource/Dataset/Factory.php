@@ -19,6 +19,7 @@ final class Factory
 		{
 			BIConnector\ExternalSource\Type::Csv => Csv::createDataset($dataset, $dataConnection, $languageId),
 			BIConnector\ExternalSource\Type::Source1C => Source1C::createDataset($dataset, $dataConnection, $languageId),
+			BIConnector\ExternalSource\Type::Rest => Rest::createDataset($dataset, $dataConnection, $languageId),
 			default => throw new Main\SystemException("Unknown type {$type->value}"),
 		};
 	}

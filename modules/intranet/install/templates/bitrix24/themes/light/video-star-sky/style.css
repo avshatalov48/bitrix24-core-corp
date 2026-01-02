@@ -1,4 +1,8 @@
-body {
-	background: #27374E url(star-sky-poster.jpg) fixed 0 0 no-repeat;
-	background-size: cover;
+:root {
+  --air-theme-bg-color: #27374E;
+  --air-theme-bg-size: cover;
+  --air-theme-bg-repeat: no-repeat;
+  --air-theme-bg-position: 0 0;
+  --air-theme-bg-attachment: fixed;
+  --air-theme-bg-image: url(/bitrix/templates/bitrix24/themes/light/video-star-sky/star-sky-poster.jpg);
 }

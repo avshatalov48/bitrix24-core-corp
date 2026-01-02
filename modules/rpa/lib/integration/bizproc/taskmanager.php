@@ -125,8 +125,12 @@ class TaskManager
 		$itemId = $item->getId() ?: 0;
 		$documentId = Document\Item::makeComplexId($item->getType()->getId(), $itemId);
 		$instanceIds = WorkflowInstanceTable::getIdsByDocument($documentId);
-		$workflowId = reset($instanceIds);
+		if (empty($instanceIds))
+		{
+			return [];
+		}
 
+		$workflowId = reset($instanceIds);
 		$filter = [
 			'WORKFLOW_ID' => $workflowId,
 			'USER_STATUS' => \CBPTaskUserStatus::Waiting,
@@ -324,9 +328,26 @@ class TaskManager
 			$userId = Main\Engine\CurrentUser::get()->getId();
 		}
 
-		//TODO: optimization
-		$tasks = $this->getIncompleteItemTasks($item, $userId);
-		return count($tasks);
+		$itemId = $item->getId() ?: 0;
+		$documentId = Document\Item::makeComplexId($item->getType()->getId(), $itemId);
+		$instanceIds = WorkflowInstanceTable::getIdsByDocument($documentId);
+		if (empty($instanceIds))
+		{
+			return 0;
+		}
+		$workflowId = $instanceIds[0];
+
+		return
+			Bizproc\Workflow\Task\TaskTable::query()
+				->setSelect(['COUNT_TASK'])
+				->where([
+					['WORKFLOW_ID', $workflowId],
+					['TASK_USERS.STATUS', \CBPTaskUserStatus::Waiting],
+					['TASK_USERS.USER_ID', $userId]
+				])
+				->registerRuntimeField(new Main\Entity\ExpressionField('COUNT_TASK', 'COUNT(*)'))
+				->fetch()['COUNT_TASK']
+			;
 	}
 
 	public function onTaskPropertiesChanged(array $documentType, int $templateId, array $robotData): void

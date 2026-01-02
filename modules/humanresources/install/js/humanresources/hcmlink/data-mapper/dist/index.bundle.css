@@ -16,7 +16,7 @@
 	color: var(--ui-color-base-default, #333333);
 	font-size: var(--ui-size-xl);
 	font-weight: var(--ui-font-weight-normal, 400);
-	font-family: var(--ui-font-family-system);
+	font-family: var(--ui-font-family-primary, var(--ui-font-family-system));
 }
 
 .hr-hcmlink-sync__page_toolbar_container {
@@ -28,7 +28,7 @@
 .hr-hcmlink-sync__column-title-container {
 	font-weight: var(--ui-font-weight-normal);
 	font-size: var(--ui-font-size-2xl);
-	font-family: var(--ui-font-family-system);
+	font-family: var(--ui-font-family-primary, var(--ui-font-family-system));
 	color: var(--ui-color-palette-black-base);
 	display: flex;
 }
@@ -181,7 +181,7 @@
 .hr-hcmlink-mapping-person__state-screen_title {
 	display: block;
 	margin-bottom: 16px;
-	font: var(--ui-font-weight-medium) var(--ui-font-size-4xl) var(--ui-font-family-system);
+	font: var(--ui-font-weight-medium) var(--ui-font-size-4xl) var(--ui-font-family-primary, var(--ui-font-family-system));
 	color: var(--ui-color-base-90);
 	text-align: center;
 	max-width: 407px;
@@ -191,10 +191,11 @@
 	display: block;
 	margin-bottom: 30px;
 	max-width: 407px;
-	font: var(--ui-font-size-xl) var(--ui-font-family-system);
+	font: var(--ui-font-size-xl) var(--ui-font-family-primary, var(--ui-font-family-system));
 	color: var(--ui-color-base-60);
 	text-align: center;
 }
+
 .hr-hcmlink-sync__search-container {
 	flex-grow: 1;
 	flex-shrink: 1;
@@ -248,7 +249,7 @@
 	 border-radius: 20px;
 	 padding: 10px 15px;
 	 font-size: var(--ui-font-size-md);
-	 font-family: var(--ui-font-family-system);
+	 font-family: var(--ui-font-family-primary, var(--ui-font-family-system));
  }
 
 .hr-hcmlink-sync__toolbar-bubble-right {
@@ -264,6 +265,7 @@
 	color: rgba(159, 106, 0, 1);
 	background-color: rgba(255, 241, 214, 1);
 }
+
 .hr-hcmlink-sync__line-container {
 	display: flex;
 	justify-content: space-between;
@@ -381,7 +383,7 @@
 	height: 30px;
 	background-color: inherit;
 	border: none;
-	font: var(--ui-font-size-md) var(--ui-font-family-system);
+	font: var(--ui-font-size-md) var(--ui-font-family-primary, var(--ui-font-family-system));
 	color: var(--ui-color-base-90);
 	outline: none;
 	padding-left: 10px;
@@ -408,7 +410,7 @@
 }
 
 .hr-hcmlink-sync__content-search-block__search-input::placeholder {
-	font: var(--ui-font-size-md) var(--ui-font-family-system);
+	font: var(--ui-font-size-md) var(--ui-font-family-primary, var(--ui-font-family-system));
 	color: var(--ui-color-base-60);
 }
 
@@ -423,6 +425,7 @@
 .ui-selector-item-box-open > .ui-selector-item > .ui-selector-item-indicator {
 	transform: rotate(360deg);
 }
+
 .hr-hcmlink-separator__container {
 	flex: 1;
 	display: flex;
@@ -474,13 +477,13 @@
 .hr-hcmlink-item-employee_info-name {
 	font-size: var(--ui-font-size-xl);
 	color: var(--ui-color-palette-gray-90);
-	font-family: var(--ui-font-family-system);
+	font-family: var(--ui-font-family-primary, var(--ui-font-family-system));
 }
 
 .hr-hcmlink-item-employee_info-position {
 	font-size: var(--ui-font-size-xs);
 	color: var(--ui-color-palette-gray-60);
-	font-family: var(--ui-font-family-system);
+	font-family: var(--ui-font-family-primary, var(--ui-font-family-system));
 }
 
 .hr-hcmlink-item-employee_close-icon {
@@ -504,6 +507,7 @@
 	border-radius: 6px;
 	padding: 13px 11px;
 	background-color: var(--ui-color-palette-white-base);
+	max-width: 264px;
 }
 
 .hr-hcmlink-item-user_info {
@@ -528,16 +532,19 @@
 
 .hr-hcmlink-item-user__info-name {
 	font-size: var(--ui-font-size-xl);
-	font-family: var(--ui-font-family-system);
+	font-family: var(--ui-font-family-primary, var(--ui-font-family-system));
 	color: var(--ui-color-palette-gray-90);
 	margin-bottom: 4px;
+	overflow: hidden;
+	text-overflow: ellipsis;
+	white-space: nowrap;
 }
 
 .hr-hcmlink-item-user__info-position {
 	font-size: var(--ui-font-size-xs);
-	font-family: var(--ui-font-family-system);
+	font-family: var(--ui-font-family-primary, var(--ui-font-family-system));
 	color: var(--ui-color-palette-gray-60);
+	overflow: hidden;
+	text-overflow: ellipsis;
+	white-space: nowrap;
 }
-
-
-

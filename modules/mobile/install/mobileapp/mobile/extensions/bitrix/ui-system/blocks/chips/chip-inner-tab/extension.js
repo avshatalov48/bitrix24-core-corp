@@ -8,6 +8,8 @@ jn.define('ui-system/blocks/chips/chip-inner-tab', (require, exports, module) =>
 	const { mergeImmutable } = require('utils/object');
 	const { Text4, Text6 } = require('ui-system/typography/text');
 	const { BadgeCounter, BadgeCounterDesign } = require('ui-system/blocks/badges/counter');
+	const { ReactionIconView, ReactionIcon } = require('ui-system/blocks/reaction/icon');
+	const { IconView } = require('ui-system/blocks/icon');
 
 	/**
 	 * @function ChipInnerTab
@@ -35,11 +37,19 @@ jn.define('ui-system/blocks/chips/chip-inner-tab', (require, exports, module) =>
 				forwardRef,
 				testId,
 				onClick,
+				icon,
+				iconSize,
+				accentBorderColor,
+				accentTextColor,
 				style = {},
 			} = this.props;
 
 			const viewProps = mergeImmutable({
 				testId,
+				icon,
+				iconSize,
+				accentBorderColor,
+				accentTextColor,
 				onClick,
 				ref: forwardRef,
 				style: {
@@ -54,10 +64,40 @@ jn.define('ui-system/blocks/chips/chip-inner-tab', (require, exports, module) =>
 			);
 		}
 
+		renderIcon()
+		{
+			const { icon, text, iconSize } = this.props;
+
+			if (!icon)
+			{
+				return null;
+			}
+
+			const iconStyle = {
+				marginRight: text ? Indent.XS.toNumber() : 0,
+			};
+
+			if (icon instanceof ReactionIcon)
+			{
+				return ReactionIconView({
+					icon,
+					size: iconSize,
+					style: iconStyle,
+				});
+			}
+
+			return IconView({
+				icon,
+				size: iconSize,
+				style: iconStyle,
+			});
+		}
+
 		renderContent()
 		{
 			return this.renderContentWrapper(
 				[
+					this.renderIcon(),
 					this.renderText(),
 					...this.renderBadge(),
 					this.renderAdditionalContent(),
@@ -127,7 +167,7 @@ jn.define('ui-system/blocks/chips/chip-inner-tab', (require, exports, module) =>
 
 		renderText()
 		{
-			const { text, textStyles } = this.props;
+			const { text, textStyles = {} } = this.props;
 
 			return Text4({
 				text,
@@ -187,11 +227,25 @@ jn.define('ui-system/blocks/chips/chip-inner-tab', (require, exports, module) =>
 
 		getBorderColor()
 		{
+			const { accentBorderColor } = this.props;
+
+			if (accentBorderColor)
+			{
+				return this.selected ? accentBorderColor : Color.bgSeparatorPrimary;
+			}
+
 			return this.selected ? Color.base4 : Color.bgSeparatorPrimary;
 		}
 
 		getTextColor()
 		{
+			const { accentTextColor } = this.props;
+
+			if (accentTextColor)
+			{
+				return this.selected ? accentTextColor : Color.base3;
+			}
+
 			return this.selected ? Color.base1 : Color.base3;
 		}
 	}

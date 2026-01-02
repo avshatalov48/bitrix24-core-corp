@@ -1,21 +1,68 @@
 <?php
-if (!defined('B_PROLOG_INCLUDED') || B_PROLOG_INCLUDED !== true) die();
+if (!defined('B_PROLOG_INCLUDED') || B_PROLOG_INCLUDED !== true)
+{
+	die();
+}
 
-\Bitrix\Main\UI\Extension::load(['salescenter.manager', 'ui.hint']);
+use Bitrix\Main\Loader;
+use Bitrix\Main\Localization\Loc;
+use Bitrix\Main\UI\Extension;
+use Bitrix\Main\Web\Json;
+use Bitrix\UI\Buttons;
+use Bitrix\UI\Toolbar\Facade\Toolbar;
 
-$this->SetViewTarget('inside_pagetitle', 10000);
-?>
-<?php if (!$arResult['hideSendButton']): ?>
-<button class="ui-btn ui-btn-md ui-btn-light-border <?=(!$arResult['isSitePublished'] || !$arResult['isOrderPublicUrlAvailable'] || $arResult['disableSendButton'] || $arResult['isPaymentsLimitReached']) ? ' ui-btn-disabled' : ''?>" onclick="BX.Salescenter.Orders.sendGridOrders();"><?=\Bitrix\Main\Localization\Loc::getMessage('SALESCENTER_SEND_ORDER');?></button>
-<?php endif; ?>
-<button class="ui-btn ui-btn-md ui-btn-primary" onclick="<?= $arResult['addOrderOnClick'] ?>"><?=\Bitrix\Main\Localization\Loc::getMessage('SALESCENTER_ADD_ORDER');?></button>
-<?
-$this->EndViewTarget();
+/**
+ * @global \CMain $APPLICATION
+ * @var \SalesCenterOrderListComponent $component
+ * @var array $arResult
+ */
+
+Loader::includeModule('ui');
+
+Extension::load([
+	'salescenter.manager',
+	'ui.hint',
+]);
+
+if (!$arResult['hideSendButton'])
+{
+	$lock = (
+		!$arResult['isSitePublished']
+		|| !$arResult['isOrderPublicUrlAvailable']
+		|| $arResult['disableSendButton']
+		|| $arResult['isPaymentsLimitReached']
+	);
+
+	$buttonConfig = [
+		'text' => Loc::getMessage('SALESCENTER_SEND_ORDER'),
+		'click' => new Buttons\JsCode("BX.Salescenter.Orders.sendGridOrders();"),
+		'dataset' => [
+			'toolbar-collapsed-icon' => Buttons\Icon::INFO,
+		],
+	];
+	$button = new Buttons\Button($buttonConfig);
+	$button->addClass(Buttons\Color::LIGHT_BORDER);
+	if ($lock)
+	{
+		$button->setDisabled(true);
+	}
+	Toolbar::addButton($button);
+	unset($button);
+}
+Toolbar::addButton(new Buttons\AddButton([
+	'text' => Loc::getMessage('SALESCENTER_ADD_ORDER'),
+	'click' => new Buttons\JsCode(
+		$arResult['addOrderOnClick']
+	),
+	'dataset' => [
+		'toolbar-collapsed-icon' => Buttons\Icon::ADD,
+	],
+]));
 
 $APPLICATION->IncludeComponent(
 	'bitrix:crm.order.list',
 	'',
-	array(
+	[
 		'ORDER_COUNT' => '20',
 		'PATH_TO_ORDER_LIST' => '/saleshub/orders/?sessionId='.intval($arResult['sessionId']),
 		'PATH_TO_CURRENT_LIST' => '/saleshub/orders/?sessionId='.intval($arResult['sessionId']),
@@ -26,32 +73,41 @@ $APPLICATION->IncludeComponent(
 		'EXTERNAL_FILTER' => $arResult['externalFilter'],
 		'SALESCENTER_MODE' => true,
 		'GRID_ID' => $arResult['gridId'],
-	),
+	],
 	$component
 );
+Toolbar::setFilter('');
+
 ?>
 <script>
 	BX.ready(function()
 	{
-		<?php if ($arResult['context'] === 'sms'): ?>
+		<?php
+		if ($arResult['context'] === 'sms'):
+		?>
 		BX.hide(document.getElementById('send_to_chat'));
-		<?php endif; ?>
-		<?='BX.message('.\CUtil::PhpToJSObject(\Bitrix\Main\Localization\Loc::loadLanguageFile(__FILE__)).');'?>
-		<?='BX.message('.\CUtil::PhpToJSObject($arResult['messages']).');'?>
+		<?php
+		endif;
+		?>
+		BX.message(<?= Json::encode(Loc::loadLanguageFile(__FILE__)) ?>);
+		BX.message(<?= Json::encode($arResult['messages']) ?>);
+
 		BX.Salescenter.Manager.init(<?=\CUtil::PhpToJSObject($arResult);?>);
 
 		BX.Salescenter.Orders.init(<?=\CUtil::PhpToJSObject($arResult);?>);
 
-		<?if($arResult['orderId'] > 0)
+		<?php
+		// $arResult['orderId'] have type integer
+		if ($arResult['orderId'] > 0)
 		{
-			?>BX.Salescenter.Orders.highlightOrder(<?=intval($arResult['orderId']);?>);<?
-		}?>
+			?>BX.Salescenter.Orders.highlightOrder(<?= $arResult['orderId'] ;?>);<?php
+		}
+		?>
 	});
 </script>
 <?php
 
-if($arResult['isPaymentsLimitReached'] === true)
+if ($arResult['isPaymentsLimitReached'] === true)
 {
 	CBitrix24::initLicenseInfoPopupJS('salescenterPaymentsLimit');
 }
-?>

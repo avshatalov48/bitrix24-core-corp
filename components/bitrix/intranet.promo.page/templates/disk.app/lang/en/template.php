@@ -3,6 +3,7 @@ $MESS["INTRANET_DISK_PROMO_DESC_MSGVER_1"] = "Today we can access the Internet a
 $MESS["INTRANET_DISK_PROMO_DESC_SUB"] = "Install the application to your computer and continue your work anywhere anytime!";
 $MESS["INTRANET_DISK_PROMO_HEADER"] = "Power your Bitrix24 with even more file management features.";
 $MESS["INTRANET_DISK_PROMO_STEP1_TITLE"] = "Download and install #LINK_START#Bitrix24#LINK_END# application";
+$MESS["INTRANET_DISK_PROMO_STEP1_TITLE_MACOS"] = "Download and install Bitrix24 for macOS: #INTEL_LINK_START#Intel#INTEL_LINK_END# or #ARM64_LINK_START#ARM64#ARM64_LINK_END#";
 $MESS["INTRANET_DISK_PROMO_STEP2_DESC"] = "Run the application to synchronize your files in an unattended fashion. You can specifically select the folders that will be available either locally or in the browser.";
 $MESS["INTRANET_DISK_PROMO_STEP2_TITLE_MSGVER_1"] = "Connect Bitrix24 Drive";
 $MESS["INTRANET_DISK_PROMO_TITLE_MACOS"] = "Bitrix24 Desktop App for MacOS";

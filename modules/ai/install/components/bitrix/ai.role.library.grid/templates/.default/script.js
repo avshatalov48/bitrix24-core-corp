@@ -423,7 +423,6 @@ this.BX.AI.ShareRole = this.BX.AI.ShareRole || {};
 	                  id: role.code,
 	                  text: role.instruction,
 	                  name: role.nameTranslate,
-	                  avatar: role.avatar,
 	                  avatarUrl: role.avatarUrl,
 	                  itemsWithAccess: role.accessCodes,
 	                  authorId: role.authorId,

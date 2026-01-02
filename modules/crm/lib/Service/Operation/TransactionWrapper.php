@@ -4,13 +4,18 @@ namespace Bitrix\Crm\Service\Operation;
 
 use Bitrix\Crm\Automation\Helper;
 use Bitrix\Crm\Automation\Starter;
+use Bitrix\Crm\Integration\BizProc\Starter\CrmStarter;
+use Bitrix\Crm\Integration\BizProc\Starter\Dto\DocumentDto;
+use Bitrix\Crm\Integration\BizProc\Starter\Dto\RunDataDto;
 use Bitrix\Crm\Service\Context;
 use Bitrix\Crm\Service\Operation;
 use Bitrix\Main\Application;
+use Bitrix\Main\ArgumentException;
 use Bitrix\Main\DB\Connection;
 use Bitrix\Main\EventManager;
 use Bitrix\Main\ORM\Objectify\Values;
 use Bitrix\Main\Result;
+use CCrmBizProcEventType;
 
 final class TransactionWrapper
 {
@@ -111,20 +116,60 @@ final class TransactionWrapper
 
 		$request = Application::getInstance()->getContext()->getRequest();
 		$data = $request->getPost('data');
-		$workflowParameters = [];
-		if (is_array($data) && isset($data['bizproc_parameters']))
-		{
-			$workflowParameters = $data['bizproc_parameters'];
-		}
+		$workflowParameters = $data['bizproc_parameters'] ?? null;
 
-		$errors = [];
-		\CCrmBizProcHelper::AutoStartWorkflows(
-			$this->operation->getItem()->getEntityTypeId(),
-			$this->operation->getItem()->getId(),
-			$bizProcEventType,
-			$errors,
-			$workflowParameters,
-		);
+		$starter = null;
+		try
+		{
+			$starter = new CrmStarter(new DocumentDto(
+				$this->operation->getItem()->getEntityTypeId(),
+				$this->operation->getItem()->getId()
+			));
+		}
+		catch (ArgumentException $exception)
+		{}
+
+		if ($starter)
+		{
+			$scope = (
+				$this->operation->getContext()->getScope() === Context::SCOPE_AUTOMATION
+					? CrmStarter::AUTOMATION_SCOPE
+					: '')
+			;
+			if ($this->operation->getContext()->getScope() === Context::SCOPE_REST)
+			{
+				$scope = CrmStarter::REST_SCOPE;
+			}
+
+			$actualFields = null;
+			$previousFields = null;
+			if ($this->operation->getItemBeforeSave())
+			{
+				$actualFields = Helper::prepareCompatibleData(
+					$this->operation->getItemBeforeSave()->getEntityTypeId(),
+					$this->operation->getItemBeforeSave()->getCompatibleData(Values::CURRENT)
+				);
+				$previousFields = Helper::prepareCompatibleData(
+					$this->operation->getItemBeforeSave()->getEntityTypeId(),
+					$this->operation->getItemBeforeSave()->getCompatibleData(Values::ACTUAL)
+				);
+			}
+
+			$starter->runProcess(
+				new RunDataDto(
+					actualFields: $actualFields,
+					previousFields: $previousFields,
+					userId: (
+						$this->operation->getContext()->getScope() === Context::SCOPE_AUTOMATION
+							? 0
+							: $this->operation->getContext()->getUserId()
+					),
+					parameters: is_array($workflowParameters) || is_string($workflowParameters) ? $workflowParameters : null,
+					scope: $scope,
+				),
+				$bizProcEventType,
+			);
+		}
 	}
 
 	/**
@@ -132,20 +177,33 @@ final class TransactionWrapper
 	 */
 	private function runAutomation(): void
 	{
-		$starter = new Starter($this->operation->getItem()->getEntityTypeId(), $this->operation->getItem()->getId());
-
-		switch ($this->operation->getContext()->getScope())
+		try
 		{
-			case Context::SCOPE_AUTOMATION:
-				$starter->setContextToBizproc();
-				break;
-			case Context::SCOPE_REST:
-				$starter->setContextToRest();
-				break;
-			default:
-				$starter->setUserId($this->operation->getContext()->getUserId());
-				break;
+			$starter = new CrmStarter(new DocumentDto(
+				$this->operation->getItem()->getEntityTypeId(),
+				$this->operation->getItem()->getId()
+			));
 		}
+		catch (ArgumentException $exception)
+		{
+			return;
+		}
+
+		$scope = (
+			$this->operation->getContext()->getScope() === Context::SCOPE_AUTOMATION
+				? CrmStarter::AUTOMATION_SCOPE
+				: ''
+		);
+		if ($this->operation->getContext()->getScope() === Context::SCOPE_REST)
+		{
+			$scope = CrmStarter::REST_SCOPE;
+		}
+
+		$userId = (
+			in_array($this->operation->getContext()->getScope(), [Context::SCOPE_AUTOMATION, Context::SCOPE_REST], true)
+				? 0
+				: $this->operation->getContext()->getUserId()
+		);
 
 		$eventType = $this->operation->getItem()->getEntityEventName('OnAfterUpdate');
 		$eventId = EventManager::getInstance()->addEventHandler(
@@ -156,7 +214,7 @@ final class TransactionWrapper
 
 		if ($this->operation instanceof Operation\Add)
 		{
-			$starter->runOnAdd();
+			$starter->runAutomation(new RunDataDto(userId: $userId, scope: $scope), CCrmBizProcEventType::Create);
 		}
 		elseif (
 			$this->operation instanceof Operation\Update
@@ -164,15 +222,20 @@ final class TransactionWrapper
 			&& $this->operation->getItemBeforeSave()
 		)
 		{
-			$starter->runOnUpdate(
-				Helper::prepareCompatibleData(
-					$this->operation->getItemBeforeSave()->getEntityTypeId(),
-					$this->operation->getItemBeforeSave()->getCompatibleData(Values::CURRENT)
+			$starter->runAutomation(
+				new RunDataDto(
+					actualFields: Helper::prepareCompatibleData(
+						$this->operation->getItemBeforeSave()->getEntityTypeId(),
+						$this->operation->getItemBeforeSave()->getCompatibleData(Values::CURRENT)
+					),
+					previousFields: Helper::prepareCompatibleData(
+						$this->operation->getItemBeforeSave()->getEntityTypeId(),
+						$this->operation->getItemBeforeSave()->getCompatibleData(Values::ACTUAL)
+					),
+					userId: $userId,
+					scope: $scope
 				),
-				Helper::prepareCompatibleData(
-					$this->operation->getItemBeforeSave()->getEntityTypeId(),
-					$this->operation->getItemBeforeSave()->getCompatibleData(Values::ACTUAL)
-				)
+				CCrmBizProcEventType::Edit
 			);
 		}
 

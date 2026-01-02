@@ -22,52 +22,6 @@ BX.namespace('Tasks.Component');
             {
                 // special event binding, that may come from inside iframe content
                 BX.addCustomEvent(window, 'tasksTaskEvent', this.onTaskGlobalEvent.bind(this));
-
-                BX.bindDelegate(this.scope(), 'click', {
-                    className: 'js-id-copy-page-url'
-                }, this.onCopyUrl.bind(this));
-            },
-
-            onCopyUrl: function(e)
-            {
-                e = e || window.event;
-
-                this.onCopyUrlByNode(e.target, this.getWindowHref());
-            },
-
-            onCopyUrlByNode: function(node, text)
-            {
-                this.timeoutIds = this.timeoutIds || [];
-
-                if(!BX.clipboard.copy(text))
-                {
-                    return;
-                }
-
-                var popupParams = {
-                    content: BX.message('TASKS_TIP_TEMPLATE_LINK_COPIED'),
-                    darkMode: true,
-                    autoHide: true,
-                    zIndex: 1000,
-                    angle: true,
-                    offsetLeft: 20,
-                    bindOptions: {
-                        position: 'top'
-                    }
-                };
-                var popup = new BX.PopupWindow(
-                    'tasks_clipboard_copy',
-                    node,
-                    popupParams
-                );
-                popup.show();
-
-                var timeoutId;
-                while(timeoutId = this.timeoutIds.pop()) clearTimeout(timeoutId);
-                timeoutId = setTimeout(function(){
-                    popup.close();
-                }, 1500);
-                this.timeoutIds.push(timeoutId);
             },
 
             getWindowHref: function()

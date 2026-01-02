@@ -1,0 +1,7 @@
+/* Firefox */
+@supports not selector(::-webkit-scrollbar) {
+	html {
+		scrollbar-color: #c2c2c2 #fafafa;
+		scrollbar-width: auto;
+	}
+}

@@ -64,16 +64,13 @@ class CCrmWebFormDesignComponent extends \CBitrixComponent
 	{
 		$this->arResult['FORM'] = [];
 
-		/**@var $USER \CUser*/
-		global $USER;
-		$CrmPerms = new CCrmPerms($USER->GetID());
-		$hasAccess = !$CrmPerms->HavePerm('WEBFORM', BX_CRM_PERM_NONE);
+		$hasAccess = \Bitrix\Crm\Service\Container::getInstance()->getUserPermissions()->webForm()->canRead();
 		if(!$hasAccess || !WebForm\Manager::isEmbeddingAvailable())
 		{
 			ShowError(Loc::getMessage('CRM_PERMISSION_DENIED'));
 			return;
 		}
-		$this->arResult['PERM_CAN_EDIT'] = !$CrmPerms->HavePerm('WEBFORM', BX_CRM_PERM_NONE, 'WRITE');
+		$this->arResult['PERM_CAN_EDIT'] = \Bitrix\Crm\Service\Container::getInstance()->getUserPermissions()->webForm()->canEdit();
 
 		$id = $this->arParams['ELEMENT_ID'];
 		$this->crmWebForm = new WebForm\Form($id);

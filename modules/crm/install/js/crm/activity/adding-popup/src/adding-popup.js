@@ -98,7 +98,11 @@ export class AddingPopup
 					size: ButtonSize.EXTRA_SMALL,
 					round: true,
 					events: {
-						click: () => popup.close(),
+						click: () => {
+							this.#todoEditor?.sendAnalyticsCancelEvent(this.#context?.analytics ?? {});
+
+							popup.close();
+						},
 					},
 				}),
 			]);

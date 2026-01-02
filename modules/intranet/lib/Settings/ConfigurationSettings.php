@@ -3,14 +3,17 @@
 namespace Bitrix\Intranet\Settings;
 
 use Bitrix\Bitrix24\Integration\Network\ProfileService;
+use Bitrix\Bitrix24\License;
 use Bitrix\Bitrix24\Portal\Remove\Verification\VerificationFactory;
 use Bitrix\Intranet\CurrentUser;
+use Bitrix\Intranet\Integration\Market\Label;
 use Bitrix\Intranet\Settings\Controls\Section;
 use Bitrix\Intranet\Settings\Controls\Selector;
 use Bitrix\Intranet\Settings\Controls\Switcher;
 use Bitrix\Intranet\Settings\Controls\Text;
 use Bitrix\Intranet\Settings\Search\SearchEngine;
 use Bitrix\Bitrix24\Portal;
+use Bitrix\Main\Application;
 use Bitrix\Main\Error;
 use Bitrix\Main\ErrorCollection;
 use Bitrix\Main\Loader;
@@ -366,12 +369,19 @@ class ConfigurationSettings extends AbstractSettings
 		$data["googleKeyProductProperties"] = $this->getGoogleKeyProductProperties();
 
 		//region additional settings section
+		$messageLabel = Loc::getMessage('INTRANET_SETTINGS_FIELD_LABEL_ALLOW_ALL_USER_INSTALL_APPLICATION');
+		$messageOn =  Loc::getMessage('INTRANET_SETTINGS_FIELD_HINT_ALLOW_ALL_USER_INSTALL_APPLICATION_CLICK_ON');
+		if (Label::isRenamedMarket())
+		{
+			$messageLabel = Loc::getMessage('INTRANET_SETTINGS_FIELD_LABEL_ALLOW_ALL_USER_INSTALL_APPLICATION_MSGVER_1');
+			$messageOn =  Loc::getMessage('INTRANET_SETTINGS_FIELD_HINT_ALLOW_ALL_USER_INSTALL_APPLICATION_CLICK_ON_MSGVER_1');
+		}
 		$data["allowUserInstallApplication"] = new Switcher(
 			'settings-configuration-field-allowUserInstallApplication',
 			'allowUserInstallApplication',
-			Loc::getMessage('INTRANET_SETTINGS_FIELD_LABEL_ALLOW_ALL_USER_INSTALL_APPLICATION'),
+			$messageLabel,
 			$this->getUserInstallApplicationRight(),
-			['on' => Loc::getMessage('INTRANET_SETTINGS_FIELD_HINT_ALLOW_ALL_USER_INSTALL_APPLICATION_CLICK_ON'),]
+			['on' => $messageOn,]
 		);
 		if ($this->isBitrix24)
 		{
@@ -458,19 +468,26 @@ class ConfigurationSettings extends AbstractSettings
 			$isEmployeesLeft = \Bitrix\Bitrix24\License\UserActive::getInstance()->getCount() > 1;
 			$isFreeLicense = \CBitrix24::isLicenseNeverPayed();
 			$verificationOptions = null;
+			$isBound = \Bitrix\Bitrix24\Holding\CurrentPortal::getInstance()->isBound();
 
-			if ($isFreeLicense)
+			if ($isFreeLicense && !$isBound)
 			{
 				$verificationOptions = $this->getVerificationOptions();
 			}
 
+			$networkUrl = Loader::includeModule('socialservices')
+				? rtrim(\CSocServBitrix24Net::NETWORK_URL, '/') . '/passport/view/'
+				: null;
+
 			$data['deletePortalOptions'] = [
+				'isBound' => $isBound,
 				'isEmployeesLeft' => $isEmployeesLeft,
 				'portalUrl' => \Bitrix\Bitrix24\PortalSettings::getInstance()->getDomain()->getHostname(),
 				'isFreeLicense' => $isFreeLicense,
 				'mailForRequest' => Portal\Remove\RemoveValidator::getMailToRequest(),
 				'verificationOptions' => $verificationOptions,
-				'isAdmin' => \Bitrix\Bitrix24\CurrentUser::get()->isAdmin() && !\Bitrix\Bitrix24\CurrentUser::get()->isIntegrator()
+				'isAdmin' => \Bitrix\Bitrix24\CurrentUser::get()->isAdmin() && !\Bitrix\Bitrix24\CurrentUser::get()->isIntegrator(),
+				'networkUrl' => $networkUrl,
 			];
 		}
 
@@ -790,7 +807,9 @@ class ConfigurationSettings extends AbstractSettings
 				'defaultEmailFrom' => Loc::getMessage('INTRANET_SETTINGS_FIELD_LABEL_DEFAULT_EMAIL'),
 				'cardsProviderCRM' => Loc::getMessage('INTRANET_SETTINGS_FIELD_LABEL_CHOOSE_REGION_CRM_MAPS'),
 				'cardsProviderProductProperties' => Loc::getMessage('INTRANET_SETTINGS_FIELD_LABEL_CHOOSE_REGION_CRM_MAPS'),
-				'allowUserInstallApplication' => Loc::getMessage('INTRANET_SETTINGS_FIELD_LABEL_ALLOW_ALL_USER_INSTALL_APPLICATION'),
+				'allowUserInstallApplication' => Label::isRenamedMarket()
+					? Loc::getMessage('INTRANET_SETTINGS_FIELD_LABEL_ALLOW_ALL_USER_INSTALL_APPLICATION_MSGVER_1')
+					: Loc::getMessage('INTRANET_SETTINGS_FIELD_LABEL_ALLOW_ALL_USER_INSTALL_APPLICATION'),
 				'allCanBuyTariff' => Loc::getMessage('INTRANET_SETTINGS_FIELD_LABEL_ALL_CAN_BUY_TARIFF'),
 				'allowMeasureStressLevel' => Loc::getMessage('INTRANET_SETTINGS_FIELD_LABEL_ALLOW_MEASURE_STRESS_LEVEL'),
 				//TODO: commented on issue task#488392

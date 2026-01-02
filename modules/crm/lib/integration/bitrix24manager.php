@@ -357,8 +357,6 @@ JS;
 				);
 			}
 
-			$serviceUrl = \CUtil::JSEscape(\CBitrix24::PATH_COUNTER);
-			$hostName = \CUtil::JSEscape(BX24_HOST_NAME);
 			return "{$content}
 				<script>
 					BX.ready(
@@ -367,8 +365,7 @@ JS;
 							BX.CrmRemoteAction.create(
 								'{$popupID}',
 								{
-									serviceUrl: '{$serviceUrl}',
-									data: { host: '{$hostName}', action: 'tariff', popupId: '{$popupID}' }
+									data: { popupId: '{$popupID}' }
 								}
 							);
 						}

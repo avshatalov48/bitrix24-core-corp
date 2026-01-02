@@ -2,13 +2,14 @@
 
 namespace Bitrix\Intranet\User\Grid\Row\Action;
 
+use Bitrix\Intranet\User\Access\UserActionDictionary;
 use Bitrix\Main\Localization\Loc;
 
 class FireAction extends JsGridAction
 {
-	public static function getId(): ?string
+	protected static function getActionType(): UserActionDictionary
 	{
-		return 'fire';
+		return UserActionDictionary::FIRE;
 	}
 
 	public function processRequest(\Bitrix\Main\HttpRequest $request): ?\Bitrix\Main\Result
@@ -21,19 +22,6 @@ class FireAction extends JsGridAction
 		return Loc::getMessage('INTRANET_USER_GRID_ROW_ACTIONS_FIRE') ?? '';
 	}
 
-	public function isAvailable(array $rawFields): bool
-	{
-		return $this->isCurrentUserAdmin()
-			&& (int)$rawFields['ID'] !== $this->getSettings()->getCurrentUserId()
-			&& $rawFields['ACTIVE'] === 'Y'
-			&& empty($rawFields['CONFIRM_CODE'])
-			&& !(
-				$this->getSettings()->isUserIntegrator($this->getSettings()->getCurrentUserId())
-				&& $this->getSettings()->isUserAdmin($rawFields['ID'])
-				&& !$this->getSettings()->isUserIntegrator($rawFields['ID'])
-			);
-	}
-
 	public function getExtensionMethod(): string
 	{
 		return 'activityAction';
@@ -42,7 +30,7 @@ class FireAction extends JsGridAction
 	protected function getActionParams(array $rawFields): array
 	{
 		return [
-			'action' => 'deactivate',
+			'action' => 'fire',
 			'userId' => $rawFields['ID'],
 		];
 	}

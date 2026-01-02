@@ -250,21 +250,31 @@ if(typeof(BX.Crm.DealCategoryChanger) === "undefined")
 		{
 			if (this.getEntityId() <= 0)
 			{
-				BX.UI.Dialogs.MessageBox.show({
-					modal: true,
-					title: this.getMessage('changeFunnelConfirmDialogTitle'),
-					message: this.getMessage('changeFunnelConfirmDialogMessage'),
-					minHeight: 100,
-					buttons: BX.UI.Dialogs.MessageBoxButtons.OK_CANCEL,
-					okCaption: this.getMessage('changeFunnelConfirmDialogOkBtn'),
-					onOk: (messageBox) => {
-						messageBox.close();
-						this.reloadPageWhenCategoryChanged(categoryId);
-					},
-					onCancel: (messageBox) => messageBox.close(),
-				});
-
-				return;
+				const editorGuid = BX.prop.getString(this._settings, 'editorGuid', '');
+				const editor = this.getEditor(editorGuid);
+				if (
+					editor?.hasChangedControls()
+					|| editor?.hasChangedControllers()
+				)
+				{
+					BX.UI.Dialogs.MessageBox.show({
+						modal: true,
+						title: this.getMessage('changeFunnelConfirmDialogTitle'),
+						message: this.getMessage('changeFunnelConfirmDialogMessage'),
+						minHeight: 100,
+						buttons: BX.UI.Dialogs.MessageBoxButtons.OK_CANCEL,
+						okCaption: this.getMessage('changeFunnelConfirmDialogOkBtn'),
+						onOk: (messageBox) => {
+							messageBox.close();
+							this.reloadPageWhenCategoryChanged(categoryId);
+						},
+						onCancel: (messageBox) => messageBox.close(),
+					});
+				}
+				else
+				{
+					this.reloadPageWhenCategoryChanged(categoryId);
+				}
 			}
 
 			BX.ajax({
@@ -299,14 +309,28 @@ if(typeof(BX.Crm.DealCategoryChanger) === "undefined")
 				this.openErrorDialog(error);
 			}
 		},
+
+		getEditor(editorGuid)
+		{
+			if (BX.Crm.EntityEditor)
+			{
+				return editorGuid
+					? BX.Crm.EntityEditor.get(editorGuid)
+					: BX.Crm.EntityEditor.getDefault()
+				;
+			}
+
+			return null;
+		},
 	};
 
-	if(typeof(BX.Crm.DealCategoryChanger.messages) === "undefined")
+	if (typeof(BX.Crm.DealCategoryChanger.messages) === 'undefined')
 	{
 		BX.Crm.DealCategoryChanger.messages = {};
 	}
 
 	BX.Crm.DealCategoryChanger.items = {};
+
 	BX.Crm.DealCategoryChanger.getByEntityId = function(entityId)
 	{
 		for(var key in this.items)

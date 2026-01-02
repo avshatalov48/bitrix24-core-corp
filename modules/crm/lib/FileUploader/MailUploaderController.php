@@ -36,7 +36,7 @@ final class MailUploaderController extends UploaderController
 			'entityId' => $entityId,
 		] = $this->getOptions();
 
-		return $this->userPermissions->checkReadPermissions($entityTypeId, $entityId);
+		return $this->userPermissions->item()->canRead($entityTypeId, $entityId);
 	}
 
 	public function getConfiguration(): \Bitrix\UI\FileUploader\Configuration
@@ -64,17 +64,17 @@ final class MailUploaderController extends UploaderController
 
 		if ($entityId)
 		{
-			return $this->userPermissions->checkUpdatePermissions($entityTypeId, (int) $entityId);
+			return $this->userPermissions->item()->canUpdate($entityTypeId, (int) $entityId);
 		}
 
-		return $this->userPermissions->checkAddPermissions($entityTypeId);
+		return $this->userPermissions->entityType()->canAddItems($entityTypeId);
 	}
 
 	public function canView(): bool
 	{
 		['entityTypeId' => $entityTypeId, 'entityId' => $entityId] = $this->getOptions();
 
-		return $this->userPermissions->checkReadPermissions($entityTypeId, (int) $entityId);
+		return $this->userPermissions->item()->canRead($entityTypeId, (int) $entityId);
 	}
 
 	public function verifyFileOwner(FileOwnershipCollection $files): void

@@ -12,10 +12,13 @@ use Bitrix\Crm\MessageSender\SendFacilitator\Notifications;
 use Bitrix\Crm\MessageSender\SendFacilitator\Sms;
 use Bitrix\Crm\Order\BindingsMaker\ActivityBindingsMaker;
 use Bitrix\Crm\Service\Container;
+use Bitrix\Main\Engine\UrlManager;
 use Bitrix\Main\Error;
 use Bitrix\Main\Loader;
 use Bitrix\Main\Localization\Loc;
 use Bitrix\Main\Result;
+use Bitrix\Main\Validation\Validator\UrlValidator;
+use Bitrix\Main\Web\Uri;
 use Bitrix\Sale\Repository\PaymentRepository;
 use Bitrix\Sale\Repository\ShipmentRepository;
 
@@ -70,7 +73,7 @@ final class Sender
 
 		if (
 			$checkUserPermissions
-			&& !Container::getInstance()->getUserPermissions()->checkUpdatePermissions($ownerTypeId, $ownerId)
+			&& !Container::getInstance()->getUserPermissions()->item()->canUpdate($ownerTypeId, $ownerId)
 		)
 		{
 			$result->addError(new Error('CRM_PERMISSION_DENIED'));
@@ -94,6 +97,17 @@ final class Sender
 
 			return $result;
 		}
+
+		if (
+			$channel->getSender()::getSenderCode() === NotificationsManager::getSenderCode()
+			&& !$this->validateBitrix24Message($message)
+		)
+		{
+			$result->addError(new Error('Invalid message'));
+
+			return $result;
+		}
+
 
 		$facilitator = $this->createFacilitator($channel, $message);
 
@@ -135,7 +149,7 @@ final class Sender
 	private function getToCorrespondent(
 		Channel $channel,
 		MessageDto $message,
-		array $additionalFields
+		array $additionalFields,
 	): ?Channel\Correspondents\To
 	{
 		foreach ($channel->getToList() as $toListItem)
@@ -213,7 +227,7 @@ final class Sender
 		{
 			$bindings[] = [
 				'OWNER_TYPE_ID' => $comEntityTypeId,
-				'OWNER_ID' => $comEntityId
+				'OWNER_ID' => $comEntityId,
 			];
 		}
 
@@ -341,5 +355,40 @@ final class Sender
 	private function getComEntityItemIdentifier(): ItemIdentifier
 	{
 		return ($this->toEntity ?: $this->owner);
+	}
+
+	private function validateBitrix24Message(MessageDto $message): bool
+	{
+		static $templateWhitelist = [
+			'CRM_DOCUMENT_SHARING',
+		];
+
+		if (!in_array(mb_strtoupper($message->template), $templateWhitelist, true))
+		{
+			return false;
+		}
+
+
+		/** @var TemplatePlaceholderDto $placeholder */
+		foreach ($message->placeholders as $placeholder)
+		{
+			if (mb_strtoupper($placeholder->name) !== 'DOCUMENT_URL')
+			{
+				return false;
+			}
+
+			$validator = new UrlValidator();
+			if (!$validator->validate($placeholder->value)->isSuccess())
+			{
+				return false;
+			}
+
+			$uri = new Uri($placeholder->value);
+			$hostUri = new Uri(UrlManager::getInstance()->getHostUrl());
+
+			return $uri->getHost() === $hostUri->getHost();
+		}
+
+		return true;
 	}
 }

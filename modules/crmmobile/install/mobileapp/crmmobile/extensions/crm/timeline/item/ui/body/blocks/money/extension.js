@@ -3,7 +3,8 @@
  */
 jn.define('crm/timeline/item/ui/body/blocks/money', (require, exports, module) => {
 	const { TimelineItemBodyBlock } = require('crm/timeline/item/ui/body/blocks/base');
-	const { TimelineFontSize, TimelineFontColor, TimelineFontWeight } = require('crm/timeline/item/ui/styles');
+	const { TimelineFontColor } = require('crm/timeline/item/ui/styles');
+	const { Money } = require('money');
 
 	/**
 	 * @class TimelineItemBodyMoney

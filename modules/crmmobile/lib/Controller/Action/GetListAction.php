@@ -79,9 +79,9 @@ class GetListAction extends Action
 		$userPermissions = Container::getInstance()->getUserPermissions();
 
 		return [
-			'read' => $userPermissions->checkReadPermissions($entityTypeId, 0, $categoryId),
-			'write' => $userPermissions->checkUpdatePermissions($entityTypeId, 0, $categoryId),
-			'add' => $userPermissions->checkAddPermissions($entityTypeId, $categoryId),
+			'read' => $userPermissions->entityType()->canReadItemsInCategory($entityTypeId, $categoryId),
+			'write' =>$userPermissions->entityType()->canUpdateItemsInCategory($entityTypeId, $categoryId),
+			'add' => $userPermissions->entityType()->canAddItemsInCategory($entityTypeId, $categoryId),
 		];
 	}
 

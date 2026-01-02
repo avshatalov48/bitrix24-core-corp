@@ -36,6 +36,10 @@ export const WorkTime = {
 			type: Boolean,
 			required: true,
 		},
+		companyScheduleUrl: {
+			type: String,
+			required: true,
+		},
 	},
 	components: {
 		TitleLayout,
@@ -59,7 +63,7 @@ export const WorkTime = {
 	computed: {
 		title(): string
 		{
-			return this.loc('BRCW_SETTINGS_CARD_WORK_TIME_TITLE');
+			return this.loc('BRCW_SETTINGS_CARD_WORK_TIME_TITLE_MSGVER_1');
 		},
 		titleIconType(): string
 		{
@@ -74,7 +78,7 @@ export const WorkTime = {
 			/>
 			<TextLayout
 				type="WorkTime"
-				:text="loc('BRCW_SETTINGS_CARD_WORK_TIME_TEXT_MSGVER_1')"
+				:text="loc('BRCW_SETTINGS_CARD_WORK_TIME_TEXT_MSGVER_2')"
 			/>
 			<WorkTimeSelector
 				:initialSlotRanges="initialSlotRanges"
@@ -83,6 +87,7 @@ export const WorkTime = {
 				:initialTimezone="initialTimezone"
 				:currentTimezone="currentTimezone"
 				:isCompanyScheduleAccess="isCompanyScheduleAccess"
+				:companyScheduleUrl="companyScheduleUrl"
 				@update="update"
 				@updateGlobalSchedule="updateGlobalSchedule"
 				@getGlobalSchedule="getGlobalSchedule"

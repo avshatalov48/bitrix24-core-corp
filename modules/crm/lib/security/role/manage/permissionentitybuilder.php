@@ -2,8 +2,9 @@
 
 namespace Bitrix\Crm\Security\Role\Manage;
 
-use Bitrix\Crm\Feature;
-use Bitrix\Crm\Integration\AI\AIManager;
+use Bitrix\Crm\Integration\Catalog\Contractor\CategoryRepository;
+use Bitrix\Crm\Security\Role\Manage\Entity\ContractorConfig;
+use Bitrix\Crm\Security\Role\Manage\Entity\Contractor;
 use Bitrix\Crm\Security\Role\Manage\Entity\AutomatedSolutionConfig;
 use Bitrix\Crm\Security\Role\Manage\Entity\AutomatedSolutionList;
 use Bitrix\Crm\Security\Role\Manage\Entity\Button;
@@ -23,13 +24,15 @@ use Bitrix\Crm\Security\Role\Manage\Entity\OldInvoice;
 use Bitrix\Crm\Security\Role\Manage\Entity\Order;
 use Bitrix\Crm\Security\Role\Manage\Entity\PermissionEntity;
 use Bitrix\Crm\Security\Role\Manage\Entity\Quote;
+use Bitrix\Crm\Security\Role\Manage\Entity\RepeatSale;
 use Bitrix\Crm\Security\Role\Manage\Entity\SaleTarget;
 use Bitrix\Crm\Security\Role\Manage\Entity\SmartInvoice;
 use Bitrix\Crm\Security\Role\Manage\Entity\WebForm;
 use Bitrix\Crm\Security\Role\Manage\Entity\WebFormConfig;
 use Bitrix\Crm\Security\Role\Manage\Enum\Permission;
-use CCrmSaleHelper;
 use Bitrix\Main\Loader;
+use CCrmOwnerType;
+use CCrmSaleHelper;
 
 final class PermissionEntityBuilder
 {
@@ -78,7 +81,11 @@ final class PermissionEntityBuilder
 			Permission::ButtonConfig => new ButtonConfig(),
 			Permission::SaleTarget => new SaleTarget(),
 			Permission::Exclusion => new Exclusion(),
+			Permission::ContractorConfig => new ContractorConfig(),
+			Permission::ContractorContact => new Contractor(CCrmOwnerType::Contact),
+			Permission::ContractorCompany => new Contractor(CCrmOwnerType::Company),
 			Permission::CopilotCallAssessment => new CopilotCallAssessment(),
+			Permission::RepeatSale => new RepeatSale(),
 			Permission::AutomatedSolutionConfig => new AutomatedSolutionConfig(),
 			Permission::AutomatedSolutionList => new AutomatedSolutionList(),
 			Permission::CrmConfig => new CrmConfig(),
@@ -101,6 +108,9 @@ final class PermissionEntityBuilder
 	{
 		return match ($permission) {
 			Permission::Order => Loader::includeModule('sale') && CCrmSaleHelper::isWithOrdersMode(),
+			Permission::ContractorConfig => CategoryRepository::isAtLeastOneContractorExists(),
+			Permission::ContractorContact => CategoryRepository::getByEntityTypeId(CCrmOwnerType::Contact) !== null,
+			Permission::ContractorCompany => CategoryRepository::getByEntityTypeId(CCrmOwnerType::Company) !== null,
 			default => true,
 		};
 	}

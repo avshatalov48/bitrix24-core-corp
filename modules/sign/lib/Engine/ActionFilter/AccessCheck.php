@@ -4,13 +4,18 @@ namespace Bitrix\Sign\Engine\ActionFilter;
 
 use Bitrix\Main;
 use Bitrix\Sign\Access\AccessController;
-use Bitrix\Sign\Access\ActionDictionary;
 use Bitrix\Sign\Attribute\Access\LogicAnd;
 use Bitrix\Sign\Attribute\Access\LogicOr;
 use Bitrix\Sign\Attribute\ActionAccess;
+use Bitrix\Sign\Item\Document\TemplateCollection;
+use Bitrix\Sign\Item\Document\TemplateFolderCollection;
+use Bitrix\Sign\Item\DocumentCollection;
+use Bitrix\Sign\Item\SignersListCollection;
+use Bitrix\Sign\Repository\Document\TemplateFolderRepository;
 use Bitrix\Sign\Repository\Document\TemplateRepository;
 use Bitrix\Sign\Repository\DocumentRepository;
 use Bitrix\Sign\Service\Container;
+use Bitrix\Sign\Service\SignersListService;
 use BItrix\Sign\Type\Access\AccessibleItemType;
 
 final class AccessCheck extends Main\Engine\ActionFilter\Base
@@ -25,6 +30,8 @@ final class AccessCheck extends Main\Engine\ActionFilter\Base
 	/** @var list<LogicRule>  */
 	private array $logicRules = [];
 	private readonly TemplateRepository $templateRepository;
+	private readonly TemplateFolderRepository $templateFolderRepository;
+	private readonly SignersListService $signersListService;
 
 	public function __construct()
 	{
@@ -33,6 +40,8 @@ final class AccessCheck extends Main\Engine\ActionFilter\Base
 
 		$this->documentRepository = Container::instance()->getDocumentRepository();
 		$this->templateRepository = Container::instance()->getDocumentTemplateRepository();
+		$this->templateFolderRepository = Container::instance()->getTemplateFolderRepository();
+		$this->signersListService = Container::instance()->getSignersListService();
 	}
 
 	public function addRuleFromAttribute(ActionAccess|LogicOr|LogicAnd $attribute): self
@@ -141,55 +150,55 @@ final class AccessCheck extends Main\Engine\ActionFilter\Base
 	{
 		if (!isset($rule->passes))
 		{
-			$rule->passes = $this->accessController->check($rule->accessPermission,  $this->createAccessibleItem($rule));
+			$rule->passes = $this->checkPermission($rule->accessPermission,	$this->createAccessibleItems($rule));
 		}
 
 		return $rule->passes;
 	}
 
-	private function createAccessibleItem(RuleWithPayload $rule): ?Main\Access\AccessibleItem
+
+	/**
+	 * @param RuleWithPayload $rule
+	 *
+	 * @return list<Main\Access\AccessibleItem>
+	 */
+	private function createAccessibleItems(RuleWithPayload $rule): array
 	{
 		if (empty($rule->itemType) || empty($rule->itemIdOrUidRequestKey))
 		{
-			return null;
+			return [];
 		}
 
 		$idOrUid = $this->getRequestJson()->get($rule->itemIdOrUidRequestKey);
 		if ($idOrUid === null)
 		{
-			return null;
+			return [];
 		}
 
-		$item = null;
-		if ($rule->itemType === AccessibleItemType::DOCUMENT)
+		$idsOrUids = $this->convertIdOrUidToArray($idOrUid);
+		$items = match ($rule->itemType)
 		{
-			if (is_numeric($idOrUid))
+			AccessibleItemType::DOCUMENT => $this->getDocumentByIds($idsOrUids),
+			AccessibleItemType::TEMPLATE => $this->getTemplatesByIds($idsOrUids),
+			AccessibleItemType::TEMPLATE_FOLDER => $this->getTemplateFoldersByIds($idsOrUids),
+			AccessibleItemType::SIGNERS_LIST => $this->getSignersListsByIds($idsOrUids),
+			default => null,
+		};
+
+		$accessItems = [];
+		if ($items instanceof \Traversable)
+		{
+			foreach ($items as $item)
 			{
-				$item = $this->documentRepository->getById((int)$idOrUid);
-			}
-			elseif (is_string($idOrUid))
-			{
-				$item = $this->documentRepository->getByUid($idOrUid);
+				$accessItem = Container::instance()->getAccessibleItemFactory()->createFromItem($item);
+				if ($accessItem instanceof Main\Access\AccessibleItem)
+				{
+					$accessItems[] = $accessItem;
+				}
 			}
 		}
 
-		if ($rule->itemType === AccessibleItemType::TEMPLATE)
-		{
-			if (is_numeric($idOrUid))
-			{
-				$item = $this->templateRepository->getById((int)$idOrUid);
-			}
-			elseif (is_string($idOrUid))
-			{
-				$item = $this->templateRepository->getByUid($idOrUid);
-			}
-		}
-		if ($item === null)
-		{
-			return null;
-		}
-
-		return Container::instance()->getAccessibleItemFactory()->createFromItem($item);
+		return $accessItems;
 	}
 
 	private function createRuleWithPayload(string $accessPermission, ?string $itemType, ?string $itemIdOrUidRequestKey): RuleWithPayload
@@ -209,5 +218,130 @@ final class AccessCheck extends Main\Engine\ActionFilter\Base
 	private function getRequestJson(): Main\Type\ParameterDictionary
 	{
 		return $this->getAction()->getController()->getRequest()->getJsonList();
+	}
+
+
+	private function convertIdOrUidToArray(mixed $idOrUid): array
+	{
+		if (is_array($idOrUid))
+		{
+			return $idOrUid;
+		}
+
+		if (is_scalar($idOrUid) && !empty($idOrUid))
+		{
+			return [$idOrUid];
+		}
+
+		return [];
+	}
+
+	private function getDocumentByIds(array $idsOrUids): DocumentCollection
+	{
+		$firstIdOrUid = $idsOrUids[array_key_first($idsOrUids)] ?? null;
+		if (empty($firstIdOrUid))
+		{
+			return new DocumentCollection();
+		}
+
+		if (is_numeric($firstIdOrUid))
+		{
+			$ids = array_map(static fn(mixed $value) => (int)$value, $idsOrUids);
+
+			return $this->documentRepository->listByIds($ids);
+		}
+		elseif (is_string($firstIdOrUid))
+		{
+			$uids = array_map(static fn(mixed $value) => (string)$value, $idsOrUids);
+
+			return $this->documentRepository->listByUids($uids);
+		}
+
+		return new DocumentCollection();
+	}
+
+	private function getTemplatesByIds(array $idsOrUids): TemplateCollection
+	{
+		$firstIdOrUid = $idsOrUids[array_key_first($idsOrUids)] ?? null;
+		if (empty($firstIdOrUid))
+		{
+			return new TemplateCollection();
+		}
+
+		if (is_numeric($firstIdOrUid))
+		{
+			$ids = array_map(static fn(mixed $value) => (int)$value, $idsOrUids);
+
+			return $this->templateRepository->getByIds($ids);
+		}
+		elseif (is_string($firstIdOrUid))
+		{
+			$uids = array_map(static fn(mixed $value) => (string)$value, $idsOrUids);
+
+			return $this->templateRepository->listByUids($uids);
+		}
+
+		return new TemplateCollection();
+	}
+
+	private function getTemplateFoldersByIds(array $idsOrUids): TemplateFolderCollection
+	{
+		$firstIdOrUid = $idsOrUids[array_key_first($idsOrUids)] ?? null;
+		if (empty($firstIdOrUid))
+		{
+			return new TemplateFolderCollection();
+		}
+
+		if (is_numeric($firstIdOrUid))
+		{
+			$ids = array_map(static fn(mixed $value) => (int)$value, $idsOrUids);
+
+			return $this->templateFolderRepository->getByIds($ids);
+		}
+
+		return new TemplateFolderCollection();
+	}
+
+	private function getSignersListsByIds(array $idsOrUids): SignersListCollection
+	{
+		$firstIdOrUid = $idsOrUids[array_key_first($idsOrUids)] ?? null;
+
+		if (empty($firstIdOrUid))
+		{
+			return new SignersListCollection();
+		}
+
+		if (is_numeric($firstIdOrUid))
+		{
+			$ids = array_map(static fn(mixed $value) => (int)$value, $idsOrUids);
+
+			return $this->signersListService->listByIds($ids);
+		}
+
+		return new SignersListCollection();
+	}
+
+	/**
+	 * @param string $accessPermission
+	 * @param list<Main\Access\AccessibleItem> $accessibleItems
+	 *
+	 * @return bool
+	 */
+	private function checkPermission(string $accessPermission, array $accessibleItems): bool
+	{
+		if (empty($accessibleItems))
+		{
+			return $this->accessController->check($accessPermission);
+		}
+
+		foreach ($accessibleItems as $accessibleItem)
+		{
+			if (!$this->accessController->check($accessPermission, $accessibleItem))
+			{
+				return false;
+			}
+		}
+
+		return true;
 	}
 }

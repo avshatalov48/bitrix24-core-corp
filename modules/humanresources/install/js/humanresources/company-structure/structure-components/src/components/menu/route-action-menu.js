@@ -14,6 +14,7 @@ export const RouteActionMenu = {
 			:id="id"
 			:items="items"
 			:bindElement="bindElement"
+			:containerDataTestId="containerDataTestId"
 			:width="260"
 			v-slot="{item}"
 			@close="this.$emit('close')"
@@ -22,7 +23,9 @@ export const RouteActionMenu = {
 				:id="item.id"
 				:title="item.title"
 				:description="item.description"
+				:itemClass="item.itemClass"
 				:imageClass="item.imageClass"
+				:dataTestId="item.dataTestId"
 				:bIcon="item.bIcon"
 			/>
 		</BaseActionMenu>

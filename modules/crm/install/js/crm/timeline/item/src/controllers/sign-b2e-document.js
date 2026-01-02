@@ -102,6 +102,10 @@ export class SignB2eDocument extends Base
 				},
 			});
 		}
+		else if (action === 'SignB2eDocument:ModifyDateSignUntil')
+		{
+			this.#modifyDateSignUntil(item, actionData, animationCallbacks);
+		}
 	}
 
 	#cancelWithConfirm(documentUid: string): void
@@ -185,7 +189,12 @@ export class SignB2eDocument extends Base
 
 	#modifyDocument({ documentId }): Promise
 	{
-		return Router.openSlider(`/sign/b2e/doc/0/?docId=${documentId}&stepId=changePartner&noRedirect=Y`);
+		return Router.openSlider(
+			`/sign/b2e/doc/0/?docId=${documentId}&stepId=changePartner&noRedirect=Y`,
+			{
+				width: 1250,
+			},
+		);
 	}
 
 	#previewDocument({ documentId }): Promise
@@ -263,6 +272,35 @@ export class SignB2eDocument extends Base
 		Dom.document.body.appendChild(link);
 		link.click();
 		document.body.removeChild(link);
+
+		if (animationCallbacks.onStop)
+		{
+			animationCallbacks.onStop();
+		}
+	}
+
+	async #modifyDateSignUntil(item: ConfigurableItem, actionData, animationCallbacks): void
+	{
+		if (!actionData.uid || !actionData.valueTs)
+		{
+			return;
+		}
+
+		if (animationCallbacks.onStart)
+		{
+			animationCallbacks.onStart();
+		}
+
+		const { uid, valueTs } = actionData;
+
+		try
+		{
+			await api.modifyDateSignUntil(uid, valueTs);
+		}
+		catch
+		{
+			item.forceRefreshLayout();
+		}
 
 		if (animationCallbacks.onStop)
 		{

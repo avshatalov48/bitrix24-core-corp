@@ -1,6 +1,7 @@
 <?
 IncludeModuleLangFile(__FILE__);
 
+use Bitrix\Main\Application;
 use Bitrix\Main\Type as FieldType;
 use Bitrix\Voximplant as VI;
 use Bitrix\Im as IM;
@@ -595,6 +596,73 @@ class CVoxImplantMain
 		throw new \Bitrix\Main\ArgumentException('Unknown trial popup id', 'popupId');
 	}
 
+	/**
+	 * Get account language/region
+	 *
+	 * @return string
+	 */
+	public static function getRegion(): string
+	{
+		$accountLang = Application::getInstance()->getLicense()->getRegion();
+		if (empty($accountLang))
+		{
+			$account = new CVoxImplantAccount();
+			$accountLang = $account->GetAccountLang(false);
+		}
+		return strtolower($accountLang);
+	}
+
+	/**
+	 * Get link based on account language/region
+	 *
+	 * @param array<string,string> $rules An associative array where keys are region codes (comma-separated)
+	 * and values are URLs.
+	 * Exnample:
+	 * [
+	 *  'de' => 'https://www.bitrix24.de/pro/trial.php',
+	 *  'ru,ge,by,kz' => 'https://www.bitrix24.ru/pro/trial.php',
+	 *  'default' => 'https://www.bitrix24.com/pro/trial.php',
+	 * ]
+	 *
+	 * @return string
+	 */
+	public static function getRegionLink(array $rules): string
+	{
+		$region = static::getRegion();
+
+		foreach ($rules as $key => $url) {
+			$regions = array_map('strtolower', array_map('trim', explode(',', $key)));
+
+			if (in_array($region, $regions, true)) {
+				return $url;
+			}
+		}
+
+		return $rules['default'] ?: '';
+	}
+
+	public static function getTrialLink(): string
+	{
+		return static::getRegionLink([
+			'de' => 'https://www.bitrix24.de/pro/trial.php',
+			'kz' => 'https://www.bitrix24.kz/pro/trial.php',
+			'ru' => 'https://www.bitrix24.ru/pro/trial.php',
+			'en' => 'https://www.bitrix24.com/pro/trial.php',
+			'default' => 'https://www.bitrix24.com/pro/trial.php',
+		]);
+	}
+
+	public static function getTelephonyTariffsLink(): string
+	{
+		return static::getRegionLink([
+			'de' => 'https://www.bitrix24.de/prices/tariffs.php',
+			'kz' => 'https://www.bitrix24.kz/prices/tariffs.php',
+			'ru' => 'https://www.bitrix24.ru/prices/tariffs.php',
+			'en' => 'https://www.bitrix24.com/prices/tariffs.php',
+			'default' => 'https://www.bitrix24.com/prices/tariffs.php',
+		]);
+	}
+
 	public static function GetTrialTextMain()
 	{
 		if(\Bitrix\Main\Loader::includeModule('bitrix24'))
@@ -617,7 +685,7 @@ class CVoxImplantMain
 		}
 		$text .= '
 			</ul>
-			<a href="'.GetMessage('VI_TRIAL_LINK').'" target="_blank" class="hide-features-more">'.GetMessage('VI_TRIAL_LINK_TEXT').'</a>
+			<a href="'.static::getTrialLink().'" target="_blank" class="hide-features-more">'.GetMessage('VI_TRIAL_LINK_TEXT').'</a>
 			<strong>
 				'.GetMessage('VI_TRIAL_TARIFF').'
 			</strong>';
@@ -647,7 +715,7 @@ class CVoxImplantMain
 			 	<li class="hide-features-list-item">'.GetMessage("VI_TRIAL_G_F1").'</li>
 				<li class="hide-features-list-item">'.GetMessage("VI_TRIAL_G_F2").'</li>
 			</ul>
-			<a href="'.GetMessage('VI_TRIAL_LINK').'" target="_blank" class="hide-features-more">'.GetMessage('VI_TRIAL_LINK_TEXT').'</a>
+			<a href="'.static::getTrialLink().'" target="_blank" class="hide-features-more">'.GetMessage('VI_TRIAL_LINK_TEXT').'</a>
 			<strong>
 				'.GetMessage('VI_TRIAL_G_P2').'
 			</strong>';
@@ -757,7 +825,7 @@ class CVoxImplantMain
 		{
 			if ($accountLang == "ua")
 			{
-				return 'https://www.bitrix24.ua/prices/telephony.php';
+				return 'https://www.bitrix24.com/prices/telephony.php';
 			}
 			else if ($accountLang != "kz")
 			{
@@ -769,10 +837,6 @@ class CVoxImplantMain
 			if ($accountLang == 'ru')
 			{
 				return 'https://www.1c-bitrix.ru/buy/intranet.php#tab-call-link';
-			}
-			else if ($accountLang == 'ua')
-			{
-				return 'https://www.bitrix24.ua/prices/telephony.php';
 			}
 			else if ($accountLang == 'kz')
 			{
@@ -795,8 +859,6 @@ class CVoxImplantMain
 			return "https://www.bitrix24.ru/pro/call.php";
 		else if(LANGUAGE_ID == "de")
 			return "https://www.bitrix24.de/pro/call.php";
-		else if(LANGUAGE_ID == "ua")
-			return "https://www.bitrix24.ua/pro/call.php";
 		else
 			return "https://www.bitrix24.com/pro/call.php";
 	}
@@ -807,8 +869,6 @@ class CVoxImplantMain
 			return "https://www.bitrix24.ru/prices/calls.php";
 		else if(LANGUAGE_ID == "de")
 			return "https://www.bitrix24.de/prices/self-hosted-telephony.php";
-		else if(LANGUAGE_ID == "ua")
-			return "https://www.bitrix24.ua/prices/calls.php";
 		else
 			return "https://www.bitrix24.com/prices/self-hosted-telephony.php";
 	}
@@ -822,8 +882,6 @@ class CVoxImplantMain
 		{
 			case "ru":
 				return "https://www.bitrix24.ru/prices/tariffs.php";
-			case "ua":
-				return "https://www.bitrix24.ua/prices/tariffs.php";
 			case "de":
 				return "https://www.bitrix24.de/prices/calls.php";
 			default:

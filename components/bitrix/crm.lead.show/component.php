@@ -27,7 +27,7 @@ if ($arResult['ELEMENT_ID'] <= 0 || !CCrmLead::CheckReadPermission($arResult['EL
 }
 
 $arResult['CAN_EDIT'] = CCrmLead::CheckUpdatePermission($arResult['ELEMENT_ID'], $userPermissions);
-CCrmLead::PrepareConversionPermissionFlags($arResult['ELEMENT_ID'], $arResult, $userPermissions);
+CCrmLead::PrepareConversionPermissionFlags($arResult['ELEMENT_ID'], $arResult);
 
 $arResult['EDITABLE_FIELDS'] = array();
 
@@ -579,7 +579,7 @@ $arResult['FIELDS']['tab_1'][] = array(
 
 if ($arResult['ELEMENT']['STATUS_ID'] == 'CONVERTED')
 {
-	if (!$userPermissions->HavePerm('CONTACT', BX_CRM_PERM_NONE, 'READ'))
+	if (\Bitrix\Crm\Service\Container::getInstance()->getUserPermissions()->entityType()->canReadItems(CCrmOwnerType::Contact))
 	{
 		$internalFilter = array();
 		$contactID = isset($arResult['ELEMENT']['CONTACT_ID']) ? $arResult['ELEMENT']['CONTACT_ID'] : 0;
@@ -615,7 +615,7 @@ if ($arResult['ELEMENT']['STATUS_ID'] == 'CONVERTED')
 			)
 		);
 	}
-	if (!$userPermissions->HavePerm('COMPANY', BX_CRM_PERM_NONE, 'READ'))
+	if (\Bitrix\Crm\Service\Container::getInstance()->getUserPermissions()->entityType()->canReadItems(CCrmOwnerType::Company))
 	{
 		$internalFilter = array();
 		$companyID = isset($arResult['ELEMENT']['COMPANY_ID']) ? $arResult['ELEMENT']['COMPANY_ID'] : 0;
@@ -681,7 +681,7 @@ if ($arResult['ELEMENT']['STATUS_ID'] == 'CONVERTED')
 	}
 }
 
-if (!$userPermissions->HavePerm('QUOTE', BX_CRM_PERM_NONE, 'READ'))
+if (\Bitrix\Crm\Service\Container::getInstance()->getUserPermissions()->entityType()->canReadItems(CCrmOwnerType::Quote))
 {
 	$arResult['FIELDS']['tab_quote'][] = array(
 		'id' => 'LEAD_QUOTE',

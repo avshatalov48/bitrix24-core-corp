@@ -87,13 +87,13 @@ $path = $arResult['AUX_DATA']["ENTITY_URL"];
 					<?endif?>
 					<?if((string) $data['START_DATE_PLAN'] != ''):?>
 						<div style="color:#4c4b44;font-size:13px;">
-							<?=Loc::getMessage('TASKS_FIELD_START_DATE_PLAN')?>: <b style="font-weight:normal;color:#000;margin-right:10px"><?=htmlspecialcharsbx($data['START_DATE_PLAN'])?></b>
+							<?=Loc::getMessage('TASKS_FIELD_START_DATE_PLAN_MSGVER_1')?>: <b style="font-weight:normal;color:#000;margin-right:10px"><?=htmlspecialcharsbx($data['START_DATE_PLAN'])?></b>
 						</div>
 						<br />
 					<?endif?>
 					<?if((string) $data['END_DATE_PLAN'] != ''):?>
 						<div style="color:#4c4b44;font-size:13px;">
-							<?=Loc::getMessage('TASKS_FIELD_END_DATE_PLAN')?>: <b style="font-weight:normal;color:#000;margin-right:10px"><?=htmlspecialcharsbx($data['END_DATE_PLAN'])?></b>
+							<?=Loc::getMessage('TASKS_FIELD_END_DATE_PLAN_MSGVER_1')?>: <b style="font-weight:normal;color:#000;margin-right:10px"><?=htmlspecialcharsbx($data['END_DATE_PLAN'])?></b>
 						</div>
 						<br />
 					<?endif?>
@@ -158,7 +158,11 @@ $path = $arResult['AUX_DATA']["ENTITY_URL"];
 					<div>
 
 						<?foreach($arResult['AUX_DATA']['CHANGES'] as $key => $change):?>
-							<?$title = Loc::getMessage('TASKS_FIELD_'.$key);?>
+							<?php
+							$title =
+								Loc::getMessage('TASKS_FIELD_' . $key . '_MSGVER_1')
+								?? Loc::getMessage('TASKS_FIELD_' . $key);
+							?>
 							<?if($title == ''):?>
 								<?continue;?>
 							<?endif?>

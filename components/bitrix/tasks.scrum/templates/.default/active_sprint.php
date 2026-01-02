@@ -73,6 +73,8 @@ $pathToTask = str_replace('#group_id#', $arParams['GROUP_ID'], $pathToTask);
 <script>
 	BX.ready(function()
 	{
+		const blockRenderNav = document.getElementById('tasks-scrum-switcher');
+
 		BX.message(<?= Json::encode($messages) ?>);
 		BX.Tasks.Scrum.Entry = new BX.Tasks.Scrum.Entry({
 			viewName: 'activeSprint',
@@ -88,13 +90,18 @@ $pathToTask = str_replace('#group_id#', $arParams['GROUP_ID'], $pathToTask);
 			taskLimitExceeded: '<?= ($arResult['taskLimitExceeded'] ? 'Y' : 'N') ?>',
 			canUseAutomation: '<?= ($arResult['canUseAutomation'] ? 'Y' : 'N') ?>',
 			isAutomationEnabled: '<?= ($arResult['isAutomationEnabled'] ? 'Y' : 'N') ?>',
-			canCompleteSprint: '<?= ($arResult['canCompleteSprint'] ? 'Y' : 'N') ?>'
+			canCompleteSprint: '<?= ($arResult['canCompleteSprint'] ? 'Y' : 'N') ?>',
+			target: blockRenderNav,
 		});
 
 		<?php if ($arParams['CONTEXT'] === 'group'): ?>
-			BX.Tasks.Scrum.Entry.renderTabsTo(document.getElementById('tasks-scrum-switcher'));
-			BX.Tasks.Scrum.Entry.renderSprintStatsTo(document.getElementById('tasks-scrum-sprint-stats'));
+			BX.Tasks.Scrum.Entry.renderTabsTo(blockRenderNav);
 			BX.Tasks.Scrum.Entry.renderRightElementsTo(document.getElementById('tasks-scrum-right-container'));
 		<?php endif; ?>
+
+		(new BX.UI.ActionsBar.RightButtons({
+			buttonsContainer: BX('tasks-scrum-right-container'),
+			collapsable: true,
+		})).init();
 	});
 </script>

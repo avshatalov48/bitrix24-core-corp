@@ -1,6 +1,6 @@
 <?php
 $MESS["BICONNECTOR_APP_NOT_FOUND"] = "Source ID is not specified.";
-$MESS["BICONNECTOR_CONNECTION_NOT_ACTIVE"] = "Connection is not active.";
+$MESS["BICONNECTOR_CONNECTION_NOT_ACTIVE"] = "Connection is not active";
 $MESS["BICONNECTOR_CONNECTION_NOT_ACTIVE_DESC"] = "Activate connection to edit this dataset.";
 $MESS["BICONNECTOR_CSV_IMPORT_ACCESS_ERROR"] = "Insufficient permission to access Analytics Hub.";
 $MESS["BICONNECTOR_CSV_IMPORT_SEPARATOR_COLON"] = "Colon";

@@ -1,7 +1,7 @@
 import { EventEmitter, type BaseEvent } from 'main.core.events';
 import { Confetti } from 'ui.confetti';
 import { mapState } from 'ui.vue3.pinia';
-import { TransformCanvas } from 'humanresources.company-structure.canvas';
+import { TransformCanvas } from 'ui.canvas';
 import { AnalyticsSourceType } from 'humanresources.company-structure.api';
 import { TitlePanel } from './components/title-panel/title-panel';
 import { Tree } from './components/tree/tree';
@@ -10,16 +10,18 @@ import { DetailPanel } from './components/detail-panel/detail-panel';
 import { FirstPopup } from './components/first-popup/first-popup';
 import { useChartStore } from 'humanresources.company-structure.chart-store';
 import { ChartWizard } from 'humanresources.company-structure.chart-wizard';
-import { getInvitedUserData } from 'humanresources.company-structure.utils';
+import { EntityTypes, getInvitedUserData } from 'humanresources.company-structure.utils';
 import { chartAPI } from './api';
-import { events } from './events';
+import { events, detailPanelWidth } from './consts';
 import { OrgChartActions } from './actions';
 import { sendData as analyticsSendData } from 'ui.analytics';
+import { addCustomEvent, removeCustomEvent } from 'main.core';
 
 import type { ChartData } from './types';
 import './style.css';
 import 'ui.design-tokens';
 
+// @vue/component
 export const Chart = {
 	components: {
 		TransformCanvas,
@@ -36,7 +38,7 @@ export const Chart = {
 		return {
 			canvas: {
 				shown: false,
-				moving: false,
+				moved: false,
 				modelTransform: {
 					x: 0,
 					y: 0,
@@ -55,31 +57,11 @@ export const Chart = {
 				collapsed: true,
 				preventSwitch: false,
 			},
+			// so we block all controls until transition isn't completed
+			isTransitionCompleted: false,
+			analyticsQueue: [],
+			isAnalyticsBusy: false,
 		};
-	},
-
-	async created(): Promise<void>
-	{
-		const slider = BX.SidePanel.Instance.getTopSlider();
-		slider?.showLoader();
-		const [departments, currentDepartments, userId] = await Promise.all([
-			chartAPI.getDepartmentsData(),
-			chartAPI.getCurrentDepartments(),
-			chartAPI.getUserId(),
-		]);
-		slider?.closeLoader();
-		const parsedDepartments = chartAPI.createTreeDataStore(departments);
-		OrgChartActions.applyData(parsedDepartments, currentDepartments, userId);
-		this.rootOffset = 100;
-		this.transformCanvas();
-		this.canvas.shown = true;
-		this.showConfetti = false;
-		EventEmitter.subscribe(events.HR_DEPARTMENT_SLIDER_ON_MESSAGE, this.handleInviteSliderMessage);
-	},
-
-	unmounted(): void
-	{
-		EventEmitter.unsubscribe(events.HR_DEPARTMENT_SLIDER_ON_MESSAGE, this.handleInviteSliderMessage);
 	},
 
 	computed:
@@ -95,41 +77,126 @@ export const Chart = {
 		...mapState(useChartStore, ['departments', 'currentDepartments']),
 	},
 
+	async created(): Promise<void>
+	{
+		const slider = BX.SidePanel.Instance.getTopSlider();
+		slider?.showLoader();
+		const [departmentsData, currentDepartments, userId] = await Promise.all([
+			chartAPI.getDepartmentsData(),
+			chartAPI.getCurrentDepartments(),
+			chartAPI.getUserId(),
+		]);
+		slider?.closeLoader();
+		const departments = departmentsData.structure;
+		const structureMap = Object.entries(departmentsData.map).reduce((map, [id, value]) => {
+			map.set(Number(id), { id: Number(id), ...value });
+
+			return map;
+		}, new Map());
+		const multipleUsers = departmentsData.multipleMembers ?? [];
+		const parsedDepartments = chartAPI.createTreeDataStore(departments);
+		const availableDepartments = currentDepartments.filter((item) => parsedDepartments.has(item));
+		OrgChartActions.applyData(parsedDepartments, availableDepartments, userId, structureMap, multipleUsers);
+		this.rootOffset = 100;
+		this.transformCanvas();
+		this.canvas.shown = true;
+		this.showConfetti = false;
+		EventEmitter.subscribe(events.HR_DEPARTMENT_SLIDER_ON_MESSAGE, this.handleInviteSliderMessage);
+		BX.PULL.subscribe({
+			type: BX.PullClient.SubscriptionType.Server,
+			moduleId: 'humanresources',
+			command: 'linkChatsToNodes',
+			callback: (data) => this.clearChatLists(data),
+		});
+		EventEmitter.subscribe(events.HR_ENTITY_SHOW_WIZARD, this.showWizardEventHandler);
+		EventEmitter.subscribe(events.HR_ENTITY_REMOVE, this.removeDepartmentEventHandler);
+		EventEmitter.subscribe(events.HR_ORG_CHART_TRANSFORM_CANVAS, this.onCanvasTransformWhenDragging);
+		EventEmitter.subscribe(events.HR_ORG_CHART_LOCATE_TO_DEPARTMENT, this.onLocate);
+
+		this.handleAnalyticsAjaxSuccess = this.handleAnalyticsAjaxSuccess.bind(this);
+		addCustomEvent('OnAjaxSuccess', this.handleAnalyticsAjaxSuccess);
+	},
+
+	unmounted(): void
+	{
+		EventEmitter.unsubscribe(events.HR_DEPARTMENT_SLIDER_ON_MESSAGE, this.handleInviteSliderMessage);
+		EventEmitter.unsubscribe(events.HR_ENTITY_SHOW_WIZARD, this.showWizardEventHandler);
+		EventEmitter.unsubscribe(events.HR_ENTITY_REMOVE, this.removeDepartmentEventHandler);
+		EventEmitter.unsubscribe(events.HR_ORG_CHART_TRANSFORM_CANVAS, this.onCanvasTransformWhenDragging);
+		EventEmitter.unsubscribe(events.HR_ORG_CHART_LOCATE_TO_DEPARTMENT, this.onLocate);
+
+		removeCustomEvent('OnAjaxSuccess', this.handleAnalyticsAjaxSuccess);
+	},
+
 	methods:
 	{
 		onMoveTo({ x, y, nodeId }: { x: Number; y: Number; nodeId: Number; }): void
 		{
 			const { x: prevX, y: prevY, zoom } = this.canvas.modelTransform;
-			const detailPanelWidth = 364 * zoom;
-			const newX = x - detailPanelWidth / 2;
+			const detailPanelWidthZoomed = detailPanelWidth * zoom;
+			const newX = x - detailPanelWidthZoomed / 2;
 			const newY = nodeId === this.rootId ? this.rootOffset : y / zoom;
-			const notSamePoint = Math.round(newX) !== Math.round(prevX) || Math.round(y) !== Math.round(prevY);
-			const shouldMove = notSamePoint && !this.canvas.moving;
+			const samePoint = Math.round(newX) === Math.round(prevX) && Math.round(y) === Math.round(prevY);
 			this.detailPanel = {
 				...this.detailPanel,
 				collapsed: false,
 			};
-			if (!shouldMove)
+			if (samePoint)
 			{
 				return;
 			}
 
 			this.canvas = {
 				...this.canvas,
-				moving: true,
+				moved: true,
 				modelTransform: { ...this.canvas.modelTransform, x: newX / zoom, y: newY, zoom: 1 },
 			};
+			this.onUpdateTransform();
 		},
-		onLocate(nodeId: ?number): void
+		onLocate({ data }: BaseEvent): void
 		{
-			if (nodeId)
+			if (data.nodeId)
 			{
-				this.$refs.tree.locateToDepartment(nodeId);
+				this.$refs.tree.locateToDepartment(data.nodeId);
 
 				return;
 			}
 
 			this.$refs.tree.locateToCurrentDepartment();
+		},
+		showWizardEventHandler({ data }: BaseEvent): void
+		{
+			this.onShowWizard(data);
+		},
+		sendAnalyticsSequentially(data)
+		{
+			this.analyticsQueue.push(data);
+			this.processAnalyticsQueue();
+		},
+		processAnalyticsQueue()
+		{
+			if (this.isAnalyticsBusy || this.analyticsQueue.length === 0)
+			{
+				return;
+			}
+
+			this.isAnalyticsBusy = true;
+			const dataToSend = this.analyticsQueue[0];
+
+			analyticsSendData(dataToSend);
+		},
+
+		handleAnalyticsAjaxSuccess()
+		{
+			if (!this.isAnalyticsBusy)
+			{
+				return;
+			}
+
+			this.analyticsQueue.shift();
+			this.isAnalyticsBusy = false;
+
+			this.processAnalyticsQueue();
 		},
 		onShowWizard({
 			nodeId = 0,
@@ -137,8 +204,28 @@ export const Chart = {
 			type,
 			showEntitySelector = true,
 			source = '',
-		}: { nodeId: number; isEditMode: boolean, showEntitySelector: boolean, source: string } = {}): void
+			entityType,
+			refToFocus,
+		}: {
+			nodeId: number;
+			isEditMode: boolean,
+			type: string,
+			showEntitySelector: boolean,
+			source: string,
+			entityType: string,
+			refToFocus: any
+		} = {}): void
 		{
+			let analyticsType = null;
+			if (entityType === EntityTypes.team)
+			{
+				analyticsType = 'team';
+			}
+			else if (entityType === EntityTypes.department || entityType === EntityTypes.company)
+			{
+				analyticsType = 'dept';
+			}
+
 			this.wizard = {
 				...this.wizard,
 				shown: true,
@@ -147,14 +234,38 @@ export const Chart = {
 				entity: type,
 				nodeId,
 				source,
+				entityType,
+				refToFocus,
 			};
 
 			if (!isEditMode && source !== AnalyticsSourceType.HEADER)
 			{
+				this.sendAnalyticsSequentially({
+					tool: 'structure',
+					category: 'structure',
+					event: 'create_wizard',
+					type: analyticsType,
+					c_element: source,
+				});
+
+				if (entityType === EntityTypes.team)
+				{
+					this.sendAnalyticsSequentially({
+						tool: 'structure',
+						category: 'structure',
+						event: 'create_team_step1',
+						type: analyticsType,
+						c_element: source,
+					});
+				}
+			}
+
+			if (isEditMode)
+			{
 				analyticsSendData({
 					tool: 'structure',
 					category: 'structure',
-					event: 'create_dept_step1',
+					event: `edit_${analyticsType}`,
 					c_element: source,
 				});
 			}
@@ -166,7 +277,8 @@ export const Chart = {
 					analyticsSendData({
 						tool: 'structure',
 						category: 'structure',
-						event: 'create_dept_step1',
+						event: `create_${analyticsType}_step1`,
+						type: analyticsType,
 						c_element: source,
 					});
 					break;
@@ -174,7 +286,8 @@ export const Chart = {
 					analyticsSendData({
 						tool: 'structure',
 						category: 'structure',
-						event: 'create_dept_step2',
+						event: `create_${analyticsType}_step2`,
+						type: analyticsType,
 						c_element: source,
 					});
 					break;
@@ -182,44 +295,65 @@ export const Chart = {
 					analyticsSendData({
 						tool: 'structure',
 						category: 'structure',
-						event: 'create_dept_step3',
+						event: `create_${analyticsType}_step3`,
+						type: analyticsType,
+						c_element: source,
+					});
+					break;
+				case 'teamRights':
+					analyticsSendData({
+						tool: 'structure',
+						category: 'structure',
+						event: `create_${analyticsType}_step4`,
+						type: analyticsType,
 						c_element: source,
 					});
 					break;
 			}
 		},
-		async onModifyTree({ id, parentId, showConfetti }): Promise<void>
+		onModifyTree({ id, showConfetti }): void
 		{
 			this.showConfetti = showConfetti ?? false;
 			const { tree } = this.$refs;
-			tree.expandDepartmentParents(id);
-			tree.focus(id, { expandAfterFocus: true });
-			await this.$nextTick();
-			tree.moveTo(id);
+			tree.locateToDepartment(id);
 		},
 		onWizardClose(): void
 		{
 			this.wizard.shown = false;
 		},
-		onRemoveDepartment(nodeId: number): void
+		removeDepartmentEventHandler({ data }: BaseEvent): void
+		{
+			this.onRemoveDepartment(data.nodeId, data.entityType);
+		},
+		onRemoveDepartment(nodeId: number, entityType: string): void
 		{
 			const { tree } = this.$refs;
-			tree.tryRemoveDepartment(nodeId);
+			tree.tryRemoveDepartment(nodeId, entityType);
 		},
-		onTransitionEnd(): void
+		async onTransitionEnd(): Promise<void>
 		{
-			this.canvas.moving = false;
-			if (this.showConfetti)
+			if (this.canvas.moved)
 			{
-				Confetti.fire({
-					particleCount: 300,
-					startVelocity: 10,
-					spread: 400,
-					ticks: 100,
-					origin: { y: 0.4, x: 0.37 },
-				});
-				this.showConfetti = false;
+				this.isTransitionCompleted = true;
 			}
+
+			this.canvas.moved = false;
+			if (!this.showConfetti)
+			{
+				return;
+			}
+
+			this.isTransitionCompleted = false;
+			const promise = Confetti.fire({
+				particleCount: 300,
+				startVelocity: 10,
+				spread: 400,
+				ticks: 100,
+				origin: { y: 0.4, x: 0.37 },
+			});
+			this.showConfetti = false;
+			await promise;
+			this.isTransitionCompleted = true;
 		},
 		onControlDetail({ showEmployees, preventSwitch }): void
 		{
@@ -251,6 +385,7 @@ export const Chart = {
 		},
 		onUpdateTransform(): void
 		{
+			EventEmitter.emit(events.INTRANET_USER_MINIPROFILE_CLOSE);
 			EventEmitter.emit(events.HR_DEPARTMENT_MENU_CLOSE);
 		},
 		handleInviteSliderMessage(event: BaseEvent): void
@@ -268,26 +403,55 @@ export const Chart = {
 				OrgChartActions.inviteUser(invitedUserData);
 			});
 		},
+		clearChatLists(data): void
+		{
+			const nodeIds = Object.keys(data).map((key) => Number(key));
+			OrgChartActions.clearNodesChatLists(nodeIds);
+		},
+		onKeyDown(event: KeyboardEvent): void
+		{
+			if (!this.isTransitionCompleted)
+			{
+				event.preventDefault();
+			}
+		},
+		onCanvasTransformWhenDragging({ data }: BaseEvent): void
+		{
+			const { directionX, directionY, speed } = data;
+			if (directionX !== 0)
+			{
+				this.canvas.modelTransform.x += -directionX * speed;
+			}
+
+			if (directionY !== 0)
+			{
+				this.canvas.modelTransform.y += -directionY * speed;
+			}
+		},
 	},
 
 	template: `
-		<div class="humanresources-chart">
-			<TitlePanel @showWizard="onShowWizard" @locate="onLocate"></TitlePanel>
+		<div
+			class="humanresources-chart"
+			:class="{ '--locked': !isTransitionCompleted }"
+			@keydown="onKeyDown"
+		>
+			<TitlePanel @showWizard="onShowWizard"></TitlePanel>
 			<TransformCanvas
 				v-if="canvas.shown"
 				v-slot="{transform}"
 				v-model="canvas.modelTransform"
 				@update:modelValue="onUpdateTransform"
-				:class="{ '--moving': canvas.moving }"
+				:class="{ '--moved': canvas.moved }"
 				@transitionend="onTransitionEnd"
 			>
 				<Tree
-					:zoom="transform.zoom"
+					:canvasTransform="transform"
 					ref="tree"
 					@moveTo="onMoveTo"
 					@showWizard="onShowWizard"
 					@controlDetail="onControlDetail"
-				/>
+				></Tree>
 			</TransformCanvas>
 			<DetailPanel
 				@showWizard="onShowWizard"
@@ -297,7 +461,6 @@ export const Chart = {
 			></DetailPanel>
 			<TransformPanel
 				v-model="canvas.modelTransform"
-				@locate="onLocate"
 			></TransformPanel>
 			<ChartWizard
 				v-if="wizard.shown"
@@ -305,11 +468,13 @@ export const Chart = {
 				:isEditMode="wizard.isEditMode"
 				:showEntitySelector="wizard.showEntitySelector"
 				:entity="wizard.entity"
+				:entityType="wizard.entityType"
 				:source="wizard.source"
+				:refToFocus="wizard.refToFocus"
 				@modifyTree="onModifyTree"
 				@close="onWizardClose"
 			></ChartWizard>
-			<FirstPopup/>
+			<FirstPopup></FirstPopup>
 			<div class="humanresources-chart__back"></div>
 		</div>
 	`,

@@ -3,7 +3,6 @@
 namespace Bitrix\DocumentGenerator\Integration\Disk;
 
 use Bitrix\DocumentGenerator\Driver;
-use Bitrix\DocumentGenerator\Model\DocumentTable;
 use Bitrix\DocumentGenerator\Model\FileTable;
 use Bitrix\DocumentGenerator\Model\TemplateTable;
 use Bitrix\DocumentGenerator\Storage\Disk;
@@ -119,35 +118,18 @@ final class SecurityContext extends \Bitrix\Disk\Security\SecurityContext
 
 	private function canReadFile(int $fileId): bool
 	{
-		// document should be the most common (if not single) case
-		if ($this->isDocument($fileId))
+		$templateId = $this->getTemplateId($fileId);
+		if ($templateId === null)
 		{
+			// perf hack: since b_documentgenerator_file stores either template or documents,
+			// we assume that this file is a document
+			/** @see \Bitrix\DocumentGenerator\Model\FileModel */
 			return $this->userPermissions->canViewDocuments();
 		}
-
-		$templateId = $this->getTemplateId($fileId);
-		if ($templateId !== null)
+		else
 		{
 			return $this->userPermissions->canModifyTemplate($templateId);
 		}
-
-		return false;
-	}
-
-	private function isDocument(int $fileId): bool
-	{
-		return (bool)DocumentTable::query()
-			->setSelect(['ID'])
-			->where(
-				DocumentTable::query()::filter()
-					->logic('or')
-					->where('FILE_ID', $fileId)
-					->where('PDF_ID', $fileId)
-					->where('IMAGE_ID', $fileId)
-			)
-			->setLimit(1)
-			->fetch()
-		;
 	}
 
 	private function getTemplateId(int $fileId): ?int

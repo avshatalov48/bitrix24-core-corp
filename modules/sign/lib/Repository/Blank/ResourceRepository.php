@@ -63,9 +63,32 @@ class ResourceRepository
 		return $result->setData(['resource' => $item]);
 	}
 
+	public function listFileIdsByBlankId(int $blankId): array
+	{
+		$query = Internal\Blank\ResourceTable
+			::query()
+			->setSelect(['FILE_ID'])
+			->where('BLANK_ID', $blankId)
+		;
+
+		return array_map(
+			static fn(array $model) => $model['FILE_ID'],
+			$query->fetchAll(),
+		);
+	}
+
 	public function deleteById(int $id): Main\Entity\DeleteResult
 	{
 		return Internal\Blank\ResourceTable::delete($id);
+	}
+
+	public function deleteByBlankId(int $blankId): Main\Result
+	{
+		Internal\Blank\ResourceTable::deleteByFilter([
+			'=BLANK_ID' => $blankId,
+		]);
+
+		return new Main\Result();
 	}
 
 	private function extractItemFromModel(Internal\Blank\Resource $model): Item\Blank\Resource
@@ -90,5 +113,12 @@ class ResourceRepository
 		}
 
 		return $model;
+	}
+
+	public function countByBlankId(int $id): int
+	{
+		return Internal\Blank\ResourceTable::getCount([
+			'BLANK_ID' => $id,
+		]);
 	}
 }

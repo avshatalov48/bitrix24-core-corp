@@ -5,10 +5,12 @@ namespace Bitrix\Crm;
 use Bitrix\Crm\Binding\EntityBinding;
 use Bitrix\Crm\Item\DisabledField;
 use Bitrix\Crm\Item\FieldImplementation;
+use Bitrix\Crm\Model\LastCommunicationTable;
 use Bitrix\Crm\Observer\Entity\EO_Observer;
 use Bitrix\Crm\Observer\Entity\EO_Observer_Collection;
 use Bitrix\Crm\Observer\Entity\ObserverTable;
 use Bitrix\Crm\Service\Container;
+use Bitrix\Crm\Service\Factory;
 use Bitrix\Crm\Service\ParentFieldManager;
 use Bitrix\Crm\UserField\UserFieldFilterable;
 use Bitrix\Main\ArgumentException;
@@ -25,10 +27,12 @@ use Bitrix\Main\ORM\Fields\UserTypeField;
 use Bitrix\Main\ORM\Fields\UserTypeUtsMultipleField;
 use Bitrix\Main\ORM\Objectify\Collection;
 use Bitrix\Main\ORM\Objectify\EntityObject;
+use Bitrix\Main\ORM\Objectify\State;
 use Bitrix\Main\ORM\Objectify\Values;
 use Bitrix\Main\Result;
 use Bitrix\Main\SystemException;
 use Bitrix\Main\Text\StringHelper;
+use Bitrix\Main\Type\ArrayHelper;
 use Bitrix\Main\Type\Contract\Arrayable;
 use Bitrix\Main\Type\Date;
 use Bitrix\Main\Type\DateTime;
@@ -210,9 +214,19 @@ abstract class Item implements \JsonSerializable, \ArrayAccess, Arrayable
 	public const FIELD_NAME_TYPE_ID = 'TYPE_ID';
 	public const FIELD_NAME_STAGE_SEMANTIC_ID = 'STAGE_SEMANTIC_ID';
 	public const FIELD_NAME_IS_RECURRING = 'IS_RECURRING';
+	public const FIELD_NAME_RECURRING = 'RECURRING';
 	public const FIELD_NAME_IS_RETURN_CUSTOMER = 'IS_RETURN_CUSTOMER';
 	public const FIELD_NAME_LEAD_ID = 'LEAD_ID';
 	public const FIELD_NAME_FM = 'FM';
+	public const FIELD_LAST_COMMUNICATION_TIME = 'LAST_COMMUNICATION_TIME';
+	public const FIELD_NAME_REPEAT_SALE_SEGMENT_ID = 'REPEAT_SALE_SEGMENT_ID';
+
+	public const FIELD_NAME_RECURRING_ACTIVE = 'RECURRING_ACTIVE';
+	public const FIELD_NAME_RECURRING_COUNTER_REPEAT = 'RECURRING_COUNTER_REPEAT';
+	public const FIELD_NAME_RECURRING_NEXT_EXECUTION = 'RECURRING_NEXT_EXECUTION';
+	public const FIELD_NAME_RECURRING_START_DATE = 'RECURRING_START_DATE';
+	public const FIELD_NAME_RECURRING_LIMIT_DATE = 'RECURRING_LIMIT_DATE';
+	public const FIELD_NAME_RECURRING_LIMIT_REPEAT = 'RECURRING_LIMIT_REPEAT';
 
 	protected const SORT_OFFSET = 10;
 
@@ -240,6 +254,8 @@ abstract class Item implements \JsonSerializable, \ArrayAccess, Arrayable
 	/** @var FieldImplementation[]|null */
 	private $allImplementationsCache;
 	private array $badges = [];
+	private LastCommunicationTable|string $lastCommunicationDataClass = LastCommunicationTable::class;
+	private bool $isLastCommunicationDataLoaded = false;
 
 	public function __construct(
 		int $entityTypeId,
@@ -753,6 +769,7 @@ abstract class Item implements \JsonSerializable, \ArrayAccess, Arrayable
 		$entityFieldNames = array_merge(
 			$this->getEntityFieldNames($fieldTypeMask),
 			$this->utmTableClassName::getCodeList(),
+			$this->lastCommunicationDataClass::getCodeList(),
 		);
 
 		if ($this->hasField(static::FIELD_NAME_OBSERVERS))
@@ -775,14 +792,19 @@ abstract class Item implements \JsonSerializable, \ArrayAccess, Arrayable
 		return array_combine($commonFieldNames, array_values($data));
 	}
 
-	public function getCompatibleData(int $valuesType = Values::ALL): array
+	public function getCompatibleData(int $valuesType = Values::ALL, bool $useServerTime = false): array
 	{
 		$data = $this->collectValues($this->getExternalizableFieldNames(), $valuesType);
 
 		$externalData = [];
 		foreach ($data as $entityFieldName => $value)
 		{
-			$externalData[$entityFieldName] = $this->transformToExternalValue($entityFieldName, $value, $valuesType);
+			$externalData[$entityFieldName] = $this->transformToExternalValue(
+				$entityFieldName,
+				$value,
+				$valuesType,
+				['useServerTime' => $useServerTime],
+			);
 		}
 
 		return $externalData;
@@ -847,6 +869,15 @@ abstract class Item implements \JsonSerializable, \ArrayAccess, Arrayable
 		return null;
 	}
 
+	/**
+	 * @internal DON'T CALL THIS METHOD DIRECTLY!!! Use Operations!
+	 * @see Factory::getAddOperation()
+	 * @see Factory::getUpdateOperation()
+	 * @see Factory::getImportOperation()
+	 * ... and maybe other depending on your use case
+	 *
+	 * This method should only be used by crm module internals. Calling it directly leads to inconsistent state of the system.
+	 */
 	public function save(bool $isCheckUserFields = true): Result
 	{
 		$isNew = $this->isNew();
@@ -932,6 +963,12 @@ abstract class Item implements \JsonSerializable, \ArrayAccess, Arrayable
 		$this->setFromCompatibleData($changedValues);
 	}
 
+	/**
+	 * @internal DON'T CALL THIS METHOD DIRECTLY!!! Use Operations!
+	 * @see Factory::getDeleteOperation()
+	 *
+	 * This method should only be used by crm module internals. Calling it directly leads to inconsistent state of the system.
+	 */
 	public function delete(): Result
 	{
 		return $this->entityObject->delete();
@@ -1107,9 +1144,10 @@ abstract class Item implements \JsonSerializable, \ArrayAccess, Arrayable
 	protected function normalizeObserverIds($observerIds): array
 	{
 		$array = (array)$observerIds;
-		$arrayOfIntegers = array_map('intval', $array);
 
-		return array_filter($arrayOfIntegers);
+		ArrayHelper::normalizeArrayValuesByInt($array);
+
+		return $array;
 	}
 
 	protected function remindActualObservers(): array
@@ -1191,6 +1229,8 @@ abstract class Item implements \JsonSerializable, \ArrayAccess, Arrayable
 	 */
 	public function addToProductRows(ProductRow $product): Result
 	{
+		$this->fillProducts();
+
 		$normalizationResult = $this->normalizeProduct($product);
 
 		if ($normalizationResult->isSuccess())
@@ -1213,6 +1253,8 @@ abstract class Item implements \JsonSerializable, \ArrayAccess, Arrayable
 	 */
 	public function updateProductRow(int $productRowId, array $productRowArray): Result
 	{
+		$this->fillProducts();
+
 		$originalProduct = $this->getProductRows() ? $this->getProductRows()->getByPrimary($productRowId) : null;
 		if (!$originalProduct)
 		{
@@ -1245,6 +1287,8 @@ abstract class Item implements \JsonSerializable, \ArrayAccess, Arrayable
 	 */
 	public function removeFromProductRows(ProductRow $product): void
 	{
+		$this->fillProducts();
+
 		$entityFieldName = $this->getEntityFieldNameByMap(static::FIELD_NAME_PRODUCTS);
 		$this->entityObject->removeFrom($entityFieldName, $product);
 	}
@@ -1278,6 +1322,8 @@ abstract class Item implements \JsonSerializable, \ArrayAccess, Arrayable
 	 */
 	public function setProductRows($products): Result
 	{
+		$this->fillProducts();
+
 		$results = [];
 		foreach ($products as $product)
 		{
@@ -1390,6 +1436,39 @@ abstract class Item implements \JsonSerializable, \ArrayAccess, Arrayable
 		}
 		else
 		{
+			$logger = Container::getInstance()->getLogger('Default');
+
+			if ($product->state !== State::RAW)
+			{
+				$logger->critical(
+					'{method}: refuse to add new product row that is already saved to DB or deleted. Product row state: {productRowState}',
+					[
+						'method' => __METHOD__,
+						'productRowState' => $product->state,
+						'productRow' => $product->toArray(),
+						'id' => $this->getId(),
+						'entityTypeId' => $this->getEntityTypeId(),
+					]
+				);
+
+				return;
+			}
+
+			if ((int)$product->getId() > 0)
+			{
+				$logger->critical(
+					'{method}: attempt to add new product row that already has an ID. ID will be reset',
+					[
+						'method' => __METHOD__,
+						'productRow' => $product->toArray(),
+						'id' => $this->getId(),
+						'entityTypeId' => $this->getEntityTypeId(),
+					]
+				);
+
+				$product->unset('ID');
+			}
+
 			$this->addToProductsCollection($product);
 		}
 	}
@@ -1481,6 +1560,14 @@ abstract class Item implements \JsonSerializable, \ArrayAccess, Arrayable
 		}
 
 		return false;
+	}
+
+	private function fillProducts(): void
+	{
+		if (!$this->isNew() && $this->hasField(self::FIELD_NAME_PRODUCTS))
+		{
+			$this->entityObject->fill($this->getEntityFieldNameByMap(self::FIELD_NAME_PRODUCTS));
+		}
 	}
 	//endregion
 
@@ -1653,7 +1740,12 @@ abstract class Item implements \JsonSerializable, \ArrayAccess, Arrayable
 		return $data;
 	}
 
-	protected function transformToExternalValue(string $entityFieldName, $fieldValue, int $valuesType = Values::ALL)
+	protected function transformToExternalValue(
+		string $entityFieldName,
+		$fieldValue,
+		int $valuesType = Values::ALL,
+		array $params = [],
+	)
 	{
 		$commonFieldName = $this->getCommonFieldNameByMap($entityFieldName);
 		$implementation = $this->getImplementation($commonFieldName);
@@ -1662,12 +1754,17 @@ abstract class Item implements \JsonSerializable, \ArrayAccess, Arrayable
 			return $implementation->transformToExternalValue($commonFieldName, $fieldValue, $valuesType);
 		}
 
+		$useServerTime = (bool) ($params['useServerTime'] ?? false);
 		if (is_array($fieldValue))
 		{
 			$result = [];
 			foreach ($fieldValue as $key => $singleValue)
 			{
-				if ($singleValue instanceof Date)
+				if ($singleValue instanceof DateTime)
+				{
+					$result[$key] = $this->getStringValueFromDateTime($singleValue, $useServerTime);
+				}
+				elseif ($singleValue instanceof Date)
 				{
 					$result[$key] = $singleValue->toString();
 				}
@@ -1679,6 +1776,12 @@ abstract class Item implements \JsonSerializable, \ArrayAccess, Arrayable
 
 			return $result;
 		}
+
+		if ($fieldValue instanceof DateTime)
+		{
+			return $this->getStringValueFromDateTime($fieldValue, $useServerTime);
+		}
+
 		if ($fieldValue instanceof Date)
 		{
 			return $fieldValue->toString();
@@ -1707,6 +1810,25 @@ abstract class Item implements \JsonSerializable, \ArrayAccess, Arrayable
 		}
 
 		return $fieldValue;
+	}
+
+	private function getStringValueFromDateTime(DateTime $fieldValue, bool $useServerTime = false): string
+	{
+		$enableUserTime = false;
+		if ($useServerTime && $fieldValue->isUserTimeEnabled())
+		{
+			$enableUserTime = true;
+			$fieldValue->disableUserTime();
+		}
+
+		$value = $fieldValue->toString();
+
+		if ($enableUserTime)
+		{
+			$fieldValue->enableUserTime();
+		}
+
+		return $value;
 	}
 
 	protected function setFromExternalValue(string $commonFieldName, $value): self
@@ -1921,6 +2043,7 @@ abstract class Item implements \JsonSerializable, \ArrayAccess, Arrayable
 				| FieldTypeMask::USERTYPE
 				| FieldTypeMask::EXPRESSION
 			),
+			$this->lastCommunicationDataClass::getCodeList(true),
 		);
 	}
 
@@ -2150,11 +2273,16 @@ abstract class Item implements \JsonSerializable, \ArrayAccess, Arrayable
 		{
 			$this->loadUtm();
 		}
+
+		if ($this->isLastCommunicationField($commonFieldName))
+		{
+			$this->loadLastCommunication();
+		}
 	}
 
 	protected function isExpressionField(string $commonFieldName): bool
 	{
-		if ($this->isUtmField($commonFieldName))
+		if ($this->isUtmField($commonFieldName) || $this->isLastCommunicationField($commonFieldName))
 		{
 			return true;
 		}
@@ -2293,5 +2421,30 @@ abstract class Item implements \JsonSerializable, \ArrayAccess, Arrayable
 	public function addBadge(array $badge): void
 	{
 		$this->badges[] = $badge;
+	}
+
+	private function isLastCommunicationField(string $commonFieldName): bool
+	{
+		return in_array($commonFieldName, $this->lastCommunicationDataClass::getCodeList(true), true);
+	}
+
+	private function loadLastCommunication(): void
+	{
+		if (!$this->isLastCommunicationDataLoaded)
+		{
+			$this->isLastCommunicationDataLoaded = true;
+			if($this->isNew())
+			{
+				$commValues = array_fill_keys($this->lastCommunicationDataClass::getCodeList(true), null);
+			}
+			else
+			{
+				$commValues = $this->lastCommunicationDataClass::getEntityLastCommunication(
+					new ItemIdentifier($this->getEntityTypeId(), $this->getId())
+				);
+			}
+
+			$this->actualValues = array_merge($this->actualValues, $commValues);
+		}
 	}
 }

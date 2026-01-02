@@ -60,11 +60,10 @@ class Epic extends Base
 	 * @param int $id Epic id.
 	 * @return array|null
 	 */
-	public function getAction(int $id)
+	public function getAction(int $id, bool $withFiles = true)
 	{
 		global $USER_FIELD_MANAGER;
 
-		$id = (int) $id;
 		if (!$id)
 		{
 			$this->errorCollection->add([new Error('Epic not found')]);
@@ -86,6 +85,12 @@ class Epic extends Base
 			return null;
 		}
 
+		$result = $epic->toArray();
+		if (!$withFiles)
+		{
+			return $result;
+		}
+
 		$userFields = $epicService->getFilesUserField($USER_FIELD_MANAGER, $epic->getId());
 		if ($epicService->getErrors())
 		{
@@ -94,7 +99,6 @@ class Epic extends Base
 			return null;
 		}
 
-		$result = $epic->toArray();
 		$result['files'] = $userFields['UF_SCRUM_EPIC_FILES'];
 
 		return $result;

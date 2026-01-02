@@ -14,13 +14,19 @@ export class CallHint
 		this.bindElement = BX.prop.getElementNode(options, "bindElement", null);
 		this.targetContainer = BX.prop.getElementNode(options, "targetContainer", null);
 		this.callFolded = BX.prop.getBoolean(options, "callFolded", false);
+		this.showAngle = BX.prop.getBoolean(options, "showAngle", false);
 		this.autoCloseDelay = BX.prop.getInteger(options, "autoCloseDelay", 5000);
+		this.maxWidth = BX.prop.getInteger(options, "maxWidth", 600);
+		this.customClassName = BX.prop.getString(options, "customClassName", "");
+		this.initiatorName = BX.prop.getString(options, "initiatorName", "");
+		this.customRender = BX.prop.getFunction(options, "customRender", false);
 
 		this.buttonsLayout = BX.prop.getString(options, "buttonsLayout", "right");
 		this.buttons = BX.prop.getArray(options, "buttons", []);
 
 		this.callbacks = {
 			onClose: BX.prop.getFunction(options, "onClose", BX.DoNothing),
+			onAskSpeakButtonClicked: BX.prop.getFunction(options, "onAskSpeakButtonClicked", BX.DoNothing),
 		}
 		this.autoCloseTimeout = 0;
 	};
@@ -46,11 +52,10 @@ export class CallHint
 			padding: 0,
 			contentPadding: 14,
 			// height: this.getPopupHeight(),
-			className: 'bx-call-view-popup-call-hint',
+			className: ('bx-call-view-popup-call-hint ' + this.customClassName),
 			contentBackground: 'unset',
-			maxWidth: 600,
-
-			angle: false,
+			//maxWidth: this.maxWidth,
+			angle: (this.showAngle && this.bindElement),
 			events: {
 				onClose: () => this.popup.destroy(),
 				onDestroy: () => this.popup = null,
@@ -67,19 +72,9 @@ export class CallHint
 			children: [
 				Dom.create("div", {
 					props: {className: "bx-call-view-popup-call-hint-icon " + this.icon},
-				}),
-				Dom.create("div", {
-					props: {className: "bx-call-view-popup-call-hint-middle-block"},
-					children: [
-						Dom.create("div", {
-							props: {className: "bx-call-view-popup-call-hint-text"},
-							html: this.getPopupMessage()
-						}),
-						(this.buttonsLayout == "bottom" ? this.renderButtons() : null),
-					]
-				}),
-
-				(this.buttonsLayout == "right" ? this.renderButtons() : null),
+				}),				
+				(this.customRender ? this.customRender() : this.renderPopupMessage()),
+				(this.buttonsLayout === 'right' ? this.renderButtons() : null),
 				Dom.create("div", {
 					props: {className: "bx-call-view-popup-call-hint-close"},
 					events: {
@@ -94,15 +89,54 @@ export class CallHint
 					},
 				})
 			]
+		});
+	}
+	
+	createAskSpeakButton()
+	{
+		return new BX.UI.Button({
+			baseClass: "ui-btn",
+			text: BX.message("CALL_RISE_YOU_HAND_IN_HINT"),
+			size: BX.UI.Button.Size.EXTRA_SMALL,
+			color: BX.UI.Button.Color.LIGHT_BORDER,
+			noCaps: true,
+			round: true,
+			events: {
+				click: () =>
+				{
+					this.callbacks.onAskSpeakButtonClicked();
+				}
+			}
 		})
 	}
+	
+	/*renderHandRaiseIcon()
+	{
+		return Dom.create("div", {
+			props: {className: "bx-call-view-popup-call-hint-hand-raise-icon"},
+		});
+	}*/
 
 	renderButtons()
 	{
 		return Dom.create("div", {
 			props: {className: "bx-call-view-popup-call-hint-buttons-container"},
-			children: this.buttons.map(button => button.render())
+			children: this.buttons.map(button => button.render()),
 		})
+	}
+
+	renderPopupMessage()
+	{
+		return Dom.create("div", {
+			props: {className: "bx-call-view-popup-call-hint-middle-block"},
+			children: [
+				Dom.create("div", {
+					props: {className: "bx-call-view-popup-call-hint-text"},
+					html: this.getPopupMessage()
+				}),
+				(this.buttonsLayout === 'bottom' ? this.renderButtons() : null),
+			]
+		});
 	}
 
 	getPopupMessage()
@@ -111,6 +145,7 @@ export class CallHint
 		{
 			return this.title;
 		}
+		
 		let hotKeyMessage = BX.message("IM_CALL_MIC_MUTED_WHILE_TALKING_HOTKEY");
 		if (this.callFolded)
 		{

@@ -1,0 +1,4 @@
+<?php
+$MESS["HUMANRESOURCES_COLLAB_SERVICE_COLLAB_SUBTITLE"] = "Коллаб";
+$MESS["HUMANRESOURCES_COLLAB_SERVICE_NAME_SEPARATOR"] = "№ #COLLAB_NAME#";
+$MESS["HUMANRESOURCES_COLLAB_SERVICE_NOT_AVAILABLE_MSGVER_1"] = "<b>Социальная сеть</b> модулі қолжетімсіз. Битрикс24 әкімшісіне хабарласыңыз";

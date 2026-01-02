@@ -1,6 +1,17 @@
 import { EntitySelectorDialog } from './dialog/entity-selector-dialog';
-import { Tag, Text, Loc, Dom, Event, Type, ajax } from 'main.core';
+import { Loc, Event, Type, ajax } from 'main.core';
 import { EmptyStub } from './dialog/element/empty-stub';
+import { Footer } from './dialog/element/footer';
+import {
+	Button,
+	ButtonIcon,
+	ButtonState,
+	ButtonColor,
+	ButtonManager,
+	AirButtonStyle,
+	ButtonCounterColor,
+	ButtonCounterStyle,
+} from 'ui.buttons';
 
 import type { TaskEditToggleFlowParams } from './dialog/toggle-flow/type/task-edit-toggle-flow';
 import type { TaskViewToggleFlowParams } from './dialog/toggle-flow/type/task-view-toggle-flow';
@@ -13,7 +24,7 @@ type FlowData = {
 	efficiency: ?number,
 }
 
-type FlowParams = {
+export type FlowParams = {
 	id: number,
 	name: ?string,
 	efficiency: ?number,
@@ -21,28 +32,31 @@ type FlowParams = {
 	limitCode: string,
 	isFeatureEnabled: boolean,
 	isFeatureTrialable: boolean,
+
+	context?: string,
 }
 
 type Params = {
 	taskId: Number,
 	canEditTask: boolean,
-	isExtranet: boolean,
 
 	toggleFlowParams: TaskViewToggleFlowParams | TaskEditToggleFlowParams,
 	flowParams: FlowParams,
+	canCreateFlow: boolean,
 };
 
 export {
 	EmptyStub,
+	Footer,
 };
 
 export class EntitySelector
 {
-	#flowSelectorContainer: ?HTMLElement;
+	#flowSelectorBtn: ?Button;
 
 	#taskId: Number;
-	#isExtranet: boolean;
 	#canEditTask: boolean;
+	#canCreateFlow: boolean;
 
 	#toggleFlowParams: TaskViewToggleFlowParams | TaskEditToggleFlowParams;
 	#flowParams: FlowParams;
@@ -51,13 +65,14 @@ export class EntitySelector
 	constructor(params: Params)
 	{
 		this.#taskId = params.taskId;
-		this.#isExtranet = params.isExtranet;
 		this.#canEditTask = params.canEditTask;
+
+		this.#canCreateFlow = params.canCreateFlow;
 
 		this.#toggleFlowParams = params.toggleFlowParams;
 		this.#flowParams = params.flowParams;
 
-		this.#flowSelectorContainer = document.getElementById('tasks-flow-selector-container');
+		this.#flowSelectorBtn = ButtonManager.createFromNode(document.getElementById('tasks-flow-selector-container'));
 
 		this.#subscribeEvents();
 	}
@@ -116,7 +131,7 @@ export class EntitySelector
 		this.#flowParams.name = flowData.name;
 		this.#flowParams.efficiency = flowData.efficiency;
 
-		this.show(this.#flowSelectorContainer);
+		this.show(this.#flowSelectorBtn.getContainer());
 	}
 
 	show(target: HTMLElement): void
@@ -126,85 +141,83 @@ export class EntitySelector
 			throw new TypeError('HTMLElement for render flow entity selector not found');
 		}
 
-		Dom.clean(target);
-		Dom.append(this.#render(), target);
+		this.#updateFlowBtn();
 	}
 
-	#render(): HTMLElement
+	#updateFlowBtn(): void
 	{
-		const flowFeatureEnabledClass = this.#flowParams.isFeatureEnabled ? '' : '--tariff-lock';
-		const flowCanChangeClass = this.#canEditTask ? 'ui-btn-dropdown' : '--disable';
-		const flowBtnClasses = 'ui-btn ui-btn-round ui-btn-xs ui-btn-no-caps';
-
-		const container = Tag.render`
-			<button 
-				class="tasks-flow__selector ${flowBtnClasses} ${flowFeatureEnabledClass} ${flowCanChangeClass}" 
-				id="tasks-flow-selector"
-			>		
-			</button>
-		`;
-
-		if (this.#canEditTask)
-		{
-			Event.bind(container, 'click', () => {
-				this.#dialog = this.#dialog ?? this.#createDialog();
-				this.#dialog.show(this.#flowSelectorContainer);
-			});
-		}
+		this.#flowSelectorBtn.addClass('tasks-flow__selector');
+		this.#flowSelectorBtn.setDropdown(true);
+		this.#flowSelectorBtn.setState(this.#canEditTask ? '' : ButtonState.DISABLED);
+		this.#flowSelectorBtn.setIcon(this.#flowParams.isFeatureEnabled ? '' : ButtonIcon.LOCK, 'right');
 
 		if (this.#flowParams.id)
 		{
-			Dom.addClass(container, 'ui-btn-secondary-light');
-			container.append(this.#renderFlowName(this.#flowParams.name));
-			container.append(this.#renderEfficiency(this.#flowParams.efficiency));
+			this.#flowSelectorBtn.setText(this.#flowParams.name);
+
+			if (this.#flowSelectorBtn.hasAirDesign())
+			{
+				this.#flowSelectorBtn.setStyle(AirButtonStyle.SELECTION);
+				this.#flowSelectorBtn.setRightCounter(null);
+				this.#flowSelectorBtn.setRightCounter({
+					color: ButtonCounterColor.PRIMARY,
+					style: ButtonCounterStyle.FILLED_INVERTED,
+					value: this.#flowParams.efficiency,
+					useSymbolPercent: true,
+					maxValue: 100,
+				});
+			}
+			else
+			{
+				this.#flowSelectorBtn.setColor(ButtonColor.SECONDARY_LIGHT);
+				this.#flowSelectorBtn.setCounter(this.#prepareEfficiency(this.#flowParams.efficiency));
+			}
+			this.#flowSelectorBtn.setMaxWidth(350);
 		}
 		else
 		{
-			Dom.addClass(container, 'ui-btn-base-light');
-			container.append(
-				this.#renderFlowName(Loc.getMessage('TASKS_FLOW_ENTITY_SELECTOR_FLOW_EMPTY')),
-			);
+			this.#flowSelectorBtn.setText(Loc.getMessage('TASKS_FLOW_ENTITY_SELECTOR_FLOW_EMPTY'));
 
-			if (!this.#canEditTask)
+			if (this.#flowSelectorBtn.hasAirDesign())
 			{
-				Dom.addClass(container, '--hide');
+				this.#flowSelectorBtn.setStyle(AirButtonStyle.OUTLINE);
+				this.#flowSelectorBtn.setRightCounter(null);
+			}
+			else
+			{
+				this.#flowSelectorBtn.setColor(ButtonColor.BASE_LIGHT);
+				this.#flowSelectorBtn.setCounter(null);
+			}
+			this.#flowSelectorBtn.setMaxWidth(null);
+
+			if (this.#canEditTask === false)
+			{
+				this.#flowSelectorBtn.addClass('--hide');
+			}
+			else
+			{
+				this.#flowSelectorBtn.removeClass('--hide');
 			}
 		}
 
-		return container;
+		if (this.#canEditTask)
+		{
+			Event.bind(this.#flowSelectorBtn.getContainer(), 'click', () => {
+				this.#dialog = this.#dialog ?? this.#createDialog();
+				this.#dialog.show(this.#flowSelectorBtn.getContainer());
+			});
+		}
 	}
 
 	#createDialog(): Dialog
 	{
 		this.#dialog = new EntitySelectorDialog({
-			isExtranet: this.#isExtranet,
 			toggleFlowParams: this.#toggleFlowParams,
-
-			flowId: this.#flowParams.id,
-			flowLimitCode: this.#flowParams.limitCode,
-			isFeatureEnabled: this.#flowParams.isFeatureEnabled,
-			isFeatureTrialable: this.#flowParams.isFeatureTrialable,
+			flowParams: this.#flowParams,
+			canCreateFlow: this.#canCreateFlow,
 		});
 
 		return this.#dialog;
-	}
-
-	#renderFlowName(name: string): HTMLElement
-	{
-		return Tag.render`
-			<span class="tasks-flow__selector-text">
-				${Text.encode(name)}
-			</span>
-		`;
-	}
-
-	#renderEfficiency(efficiency: number): HTMLElement
-	{
-		return Tag.render`
-			<span class="tasks-flow__selector-efficiency">
-				${this.#prepareEfficiency(efficiency)}
-			</span>
-		`;
 	}
 
 	#prepareEfficiency(efficiency: number): string

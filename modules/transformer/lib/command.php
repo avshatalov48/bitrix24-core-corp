@@ -15,6 +15,7 @@ use Bitrix\Main\Localization\Loc;
 use Bitrix\Main\ORM\Data\UpdateResult;
 use Bitrix\Main\Result;
 use Bitrix\Main\Type\DateTime;
+use Bitrix\Transformer\Command\Deadline;
 use Bitrix\Transformer\Entity\CommandTable;
 
 /**
@@ -29,10 +30,12 @@ class Command
 	public const STATUS_SUCCESS = 400;
 	public const STATUS_ERROR = 1000;
 
+	public const ERROR_CORRUPTED_FILE = 30;
 	public const ERROR_EMPTY_CONTROLLER_URL = 40;
 	public const ERROR_CONNECTION = 50;
 	public const ERROR_CONNECTION_COUNT = 51;
 	public const ERROR_CONNECTION_RESPONSE = 60;
+	public const ERROR_DEADLINE_EXCEEDED = 70;
 	public const ERROR_CONTROLLER_DOWNLOAD_STATUS = 100;
 	public const ERROR_CONTROLLER_DOWNLOAD_TYPE = 101;
 	public const ERROR_CONTROLLER_DOWNLOAD_SIZE = 102;
@@ -45,6 +48,7 @@ class Command
 	public const ERROR_CONTROLLER_LIMIT_EXCEED = 155;
 	public const ERROR_CONTROLLER_BACK_URL_HOST_MISMATCH = 156;
 	public const ERROR_CONTROLLER_DOMAIN_IS_PRIVATE = 157;
+	public const ERROR_CONTROLLER_URL_INVALID = 158;
 	public const ERROR_CONTROLLER_STATUS_AFTER_DOWNLOAD = 200;
 	public const ERROR_CONTROLLER_DOWNLOAD = 201;
 	public const ERROR_CONTROLLER_AFTER_DOWNLOAD_SIZE = 202;
@@ -63,7 +67,9 @@ class Command
 	protected $command;
 	protected $params;
 	protected $status;
+	/** @var array */
 	protected $module;
+	/** @var array */
 	protected $callback;
 	protected $guid;
 	protected $id;
@@ -72,6 +78,7 @@ class Command
 	protected $error;
 	protected $errorCode;
 
+	private ?DateTime $deadline = null;
 	private ?DateTime $sendTime = null;
 	private ?string $controllerUrl = null;
 
@@ -86,31 +93,42 @@ class Command
 	 * @param string $guid Unique key of the command.
 	 * @throws ArgumentNullException
 	 */
-	public function __construct($command, $params, $module, $callback, $status = self::STATUS_CREATE, $id = '', $guid = '', $time = null, $error = '', $errorCode = 0)
+	public function __construct(
+		$command,
+		$params,
+		$module,
+		$callback,
+		$status = self::STATUS_CREATE,
+		$id = '',
+		$guid = '',
+		$time = null,
+		$error = '',
+		$errorCode = 0,
+	)
 	{
-		if(empty($command))
+		if (empty($command))
 		{
 			throw new ArgumentNullException('command');
 		}
-		if(empty($module))
+		if (empty($module))
 		{
 			throw new ArgumentNullException('module');
 		}
-		if(empty($callback))
+		if (empty($callback))
 		{
 			throw new ArgumentNullException('callback');
 		}
 		$this->command = $command;
 		$this->params = $params;
-		$this->module = $module;
-		$this->callback = $callback;
+		$this->module = (array)$module;
+		$this->callback = (array)$callback;
 		$this->status = intval($status);
 		$this->id = $id;
 		$this->guid = $guid;
 		$this->time = $time;
 		$this->error = $error;
 		$this->errorCode = $errorCode;
-		if(isset($params['file']))
+		if (isset($params['file']))
 		{
 			$this->file = $params['file'];
 		}
@@ -137,7 +155,9 @@ class Command
 	{
 		if($this->status != self::STATUS_CREATE)
 		{
-			throw new InvalidOperationException('command should be in status '.self::getStatusText(self::STATUS_CREATE));
+			throw new InvalidOperationException(
+				'command should be in status ' . self::getStatusText(self::STATUS_CREATE),
+			);
 		}
 		if(empty($this->guid))
 		{
@@ -155,15 +175,28 @@ class Command
 
 		if ($queryResult['success'] !== false)
 		{
+			$updateData['DEADLINE'] = Deadline::createByCommand($this)->getDeadline();
+
 			$this->updateStatusInner(self::STATUS_SEND, '', 0, $updateData);
 			$result->setData(['commandId' => $this->id]);
 		}
 		else
 		{
+			Log::logger()->error(
+				'{error}',
+				[
+					'error' => $queryResult['result']['msg'],
+					'errorCode' => $queryResult['result']['code'],
+					'guid' => $this->guid,
+				],
+			);
+
 			$result = $this->processError($queryResult['result']['code'], $queryResult['result']['msg'], $updateData);
 		}
 
-		ServiceLocator::getInstance()->get('transformer.integration.analytics.registrar')->registerCommandSend($this);
+		ServiceLocator::getInstance()->get('transformer.service.integration.analytics.registrar')->registerCommandSend(
+			$this,
+		);
 
 		return $result;
 	}
@@ -175,18 +208,8 @@ class Command
 	 * @param array $result Result from the controller.
 	 * @return bool
 	 */
-	public function callback($result = array())
+	public function callback($result = [])
 	{
-		if(!is_array($this->module))
-		{
-			$this->module = array($this->module);
-		}
-
-		if(!is_array($this->callback))
-		{
-			$this->callback = array($this->callback);
-		}
-
 		foreach($this->module as $module)
 		{
 			if(!Loader::includeModule($module))
@@ -248,6 +271,59 @@ class Command
 			}
 		}
 		return ($count == $success);
+	}
+
+	/**
+	 * @internal
+	 */
+	final public function appendCallback(array $module, array $callback): Result
+	{
+		if ($this->id <= 0)
+		{
+			return (new Result())->addError(new Error("Cant update command that's not saved to DB"));
+		}
+
+		if (!in_array($this->status, [self::STATUS_CREATE, self::STATUS_SEND, self::STATUS_UPLOAD]))
+		{
+			return (new Result())->addError(new Error('Cant update finished command'));
+		}
+
+		if ($this->isSubset($module, $this->module) && $this->isSubset($callback, $this->callback))
+		{
+			// callback already added, nothing to do
+
+			return new Result();
+		}
+
+		$newModule = array_unique(array_merge($this->module, $module));
+		$newCallback = array_unique(array_merge($this->callback, $callback));
+
+		$updateResult = CommandTable::update($this->id, [
+			'MODULE' => CommandTable::encode($newModule),
+			'CALLBACK' => CommandTable::encode($newCallback),
+		]);
+		if (!$updateResult->isSuccess())
+		{
+			return $updateResult;
+		}
+
+		$this->module = $newModule;
+		$this->callback = $newCallback;
+
+		return new Result();
+	}
+
+	private function isSubset(array $needle, array $haystack): bool
+	{
+		foreach ($needle as $item)
+		{
+			if (!in_array($item, $haystack, true))
+			{
+				return false;
+			}
+		}
+
+		return true;
 	}
 
 	/**
@@ -324,7 +400,32 @@ class Command
 	}
 
 	/**
-	 * Write error message to log, update status of the command, call callback with error status.
+	 * @internal
+	 */
+	final public function onDeadlineExceeded(): void
+	{
+		static $message = 'Controller did not sent command result in the given deadline';
+
+		Log::logger()->error(
+			$message,
+			[
+				'error' => $message,
+				'errorCode' => self::ERROR_DEADLINE_EXCEEDED,
+				'guid' => $this->guid,
+				'params' => $this->params,
+				'command' => $this->command,
+				'module' => $this->module,
+			],
+		);
+
+		$this->processError(
+			self::ERROR_DEADLINE_EXCEEDED,
+			$message
+		);
+	}
+
+	/**
+	 * Update status of the command, call callback with error status.
 	 *
 	 * @param int $errorCode
 	 * @param string $message
@@ -336,8 +437,6 @@ class Command
 		$error = $this->constructError($errorCode, $message);
 
 		$newMessage = $error->getCustomData()['originalMessage'] ?: $error->getMessage();
-
-		Log::logger()->error('{error}', ['error' => $message, 'errorCode' => $errorCode]);
 
 		if($this->id > 0)
 		{
@@ -359,13 +458,13 @@ class Command
 	 */
 	public static function getStatusText($status)
 	{
-		$statusList = array(
+		$statusList = [
 			self::STATUS_CREATE => 'create',
 			self::STATUS_SEND => 'send',
 			self::STATUS_UPLOAD => 'upload',
 			self::STATUS_SUCCESS => 'success',
 			self::STATUS_ERROR => 'error',
-		);
+		];
 		if(isset($statusList[$status]))
 		{
 			return $statusList[$status];
@@ -390,16 +489,16 @@ class Command
 		$time = new DateTime();
 		$time->setTime($time->format('H'), $time->format('i'), $time->format('s'));
 		$this->time = $time;
-		$commandItem = array(
+		$commandItem = [
 			'GUID' => $this->guid,
 			'STATUS' => $this->status,
 			'COMMAND' => $this->command,
-			'MODULE' => base64_encode(serialize($this->module)),
-			'CALLBACK' => base64_encode(serialize($this->callback)),
-			'PARAMS' => base64_encode(serialize($this->params)),
+			'MODULE' => CommandTable::encode($this->module),
+			'CALLBACK' => CommandTable::encode($this->callback),
+			'PARAMS' => CommandTable::encode($this->params),
 			'FILE' => $this->file,
 			'UPDATE_TIME' => $this->time,
-		);
+		];
 		$addResult = CommandTable::add($commandItem);
 		if($addResult->isSuccess())
 		{
@@ -421,7 +520,7 @@ class Command
 		{
 			throw new ArgumentNullException('guid');
 		}
-		$commandItem = CommandTable::getRow(array('filter' => array('=GUID' => $guid), 'order' => array('ID' => 'desc')));
+		$commandItem = CommandTable::getRow(['filter' => ['=GUID' => $guid], 'order' => ['ID' => 'desc']]);
 		if($commandItem && $commandItem['ID'] > 0)
 		{
 			return self::initFromArray($commandItem);
@@ -442,7 +541,7 @@ class Command
 		{
 			throw new ArgumentNullException('file');
 		}
-		$commandItem = CommandTable::getRow(array('filter' => array('=FILE' => $file), 'order' => array('ID' => 'desc')));
+		$commandItem = CommandTable::getRow(['filter' => ['=FILE' => $file], 'order' => ['ID' => 'desc']]);
 		if($commandItem && $commandItem['ID'] > 0)
 		{
 			return self::initFromArray($commandItem);
@@ -453,16 +552,16 @@ class Command
 	/**
 	 * Create new object from array.
 	 *
+	 * @internal
+	 *
 	 * @param array $commandItem
 	 * @return Command
 	 */
-	protected static function initFromArray($commandItem)
+	public static function initFromArray($commandItem)
 	{
 		foreach (['PARAMS', 'MODULE', 'CALLBACK'] as $keyToUnserialize)
 		{
-			$decoded = base64_decode($commandItem[$keyToUnserialize]);
-
-			$commandItem[$keyToUnserialize] = unserialize($decoded, ['allowed_classes' => false]);
+			$commandItem[$keyToUnserialize] = CommandTable::decode($commandItem[$keyToUnserialize]);
 		}
 
 		$self = new self(
@@ -497,6 +596,11 @@ class Command
 		if (isset($commandItem['UPDATE_TIME']) && $commandItem['UPDATE_TIME'] instanceof DateTime)
 		{
 			$this->time = $commandItem['UPDATE_TIME'];
+		}
+
+		if (isset($commandItem['DEADLINE']) && $commandItem['DEADLINE'] instanceof DateTime)
+		{
+			$this->deadline = $commandItem['DEADLINE'];
 		}
 
 		if (isset($commandItem['SEND_TIME']) && $commandItem['SEND_TIME'] instanceof DateTime)
@@ -616,6 +720,11 @@ class Command
 		return null;
 	}
 
+	final public function getDeadline(): ?DateTime
+	{
+		return $this->deadline;
+	}
+
 	private function constructError($errorCode = 0, $message = ''): Error
 	{
 		$errorMessages = $this->getErrorMessages();
@@ -642,6 +751,7 @@ class Command
 	 * Returns a map of error code to a UI-friendly description of the error
 	 *
 	 * @return array
+	 * @noinspection LongLine
 	 */
 	protected function getErrorMessages()
 	{
@@ -654,6 +764,7 @@ class Command
 				static::ERROR_CONNECTION => Loc::getMessage('TRANSFORMER_COMMAND_REFRESH_AND_TRY_LATER'),
 				static::ERROR_CONNECTION_COUNT => $tryLater,
 				static::ERROR_CONNECTION_RESPONSE => $tryLater,
+				static::ERROR_DEADLINE_EXCEEDED => $tryLater,
 				static::ERROR_CONTROLLER_DOWNLOAD_STATUS => Loc::getMessage('TRANSFORMER_COMMAND_CANT_DOWNLOAD_FILE'),
 				static::ERROR_CONTROLLER_DOWNLOAD_TYPE => Loc::getMessage('TRANSFORMER_COMMAND_CANT_DOWNLOAD_FILE'),
 				static::ERROR_CONTROLLER_DOWNLOAD_SIZE => Loc::getMessage('TRANSFORMER_COMMAND_FILE_TOO_BIG'),
@@ -665,6 +776,7 @@ class Command
 				static::ERROR_CONTROLLER_LIMIT_EXCEED => $tryLater,
 				static::ERROR_CONTROLLER_BACK_URL_HOST_MISMATCH => Loc::getMessage('TRANSFORMER_COMMAND_ASK_SUPPORT'),
 				static::ERROR_CONTROLLER_DOMAIN_IS_PRIVATE => Loc::getMessage('TRANSFORMER_COMMAND_DOMAIN_IS_PRIVATE'),
+				static::ERROR_CONTROLLER_URL_INVALID => Loc::getMessage('TRANSFORMER_COMMAND_DOMAIN_IS_PRIVATE'),
 				static::ERROR_CONTROLLER_STATUS_AFTER_DOWNLOAD => Loc::getMessage('TRANSFORMER_COMMAND_CANT_DOWNLOAD_FILE'),
 				static::ERROR_CONTROLLER_DOWNLOAD => Loc::getMessage('TRANSFORMER_COMMAND_CANT_DOWNLOAD_FILE'),
 				static::ERROR_CONTROLLER_AFTER_DOWNLOAD_SIZE => Loc::getMessage('TRANSFORMER_COMMAND_FILE_TOO_BIG'),
@@ -681,7 +793,7 @@ class Command
 			{
 				self::$errorMessagesCache[static::ERROR_CONTROLLER_RIGHT_CHECK_FAILED] = $tryLater;
 			}
-			elseif (ServiceLocator::getInstance()->get('transformer.http.controllerResolver')->isDefaultCloudControllerUsed())
+			elseif (ServiceLocator::getInstance()->get('transformer.service.http.controllerResolver')->isDefaultCloudControllerUsed())
 			{
 				self::$errorMessagesCache[static::ERROR_CONTROLLER_RIGHT_CHECK_FAILED] = Loc::getMessage('TRANSFORMER_COMMAND_CHECK_LICENSE');
 			}

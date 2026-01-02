@@ -3,12 +3,12 @@
  */
 jn.define('layout/ui/fields/project', (require, exports, module) => {
 	const { EntitySelectorFieldClass } = require('layout/ui/fields/entity-selector');
+	const { WorkgroupUtil } = require('project/utils');
 	const { checkDisabledToolById } = require('settings/disabled-tools');
 	const { InfoHelper } = require('layout/ui/info-helper');
 	const { Icon } = require('assets/icons');
 	const AppTheme = require('apptheme');
 	const { dispatch } = require('statemanager/redux/store');
-	const { groupsUpsertedFromEntitySelector } = require('tasks/statemanager/redux/slices/groups');
 	const DEFAULT_AVATAR = '/bitrix/mobileapp/mobile/extensions/bitrix/layout/ui/fields/project/images/default-avatar.png';
 	const DEFAULT_SELECTOR_AVATAR = '/bitrix/mobileapp/mobile/extensions/bitrix/selector/providers/common/images/project.png';
 
@@ -137,7 +137,18 @@ jn.define('layout/ui/fields/project', (require, exports, module) => {
 
 		openEntity(projectId, isCollab = false, dialogId = '')
 		{
-			ProjectViewManager.open(env.userId, projectId, this.getParentWidget(), isCollab, dialogId);
+			if (isCollab)
+			{
+				ProjectViewManager.open(env.userId, projectId, this.getParentWidget(), isCollab, dialogId);
+
+				return;
+			}
+
+			void WorkgroupUtil.openProject(null, {
+				projectId,
+				siteId: env.siteId,
+				siteDir: env.siteDir,
+			});
 		}
 
 		async handleAdditionalFocusActions()
@@ -240,7 +251,11 @@ jn.define('layout/ui/fields/project', (require, exports, module) => {
 
 		setReduxState(projectsList)
 		{
-			dispatch(groupsUpsertedFromEntitySelector(projectsList));
+			requireLazy('tasks:statemanager/redux/slices/groups')
+				.then(({ groupsUpsertedFromEntitySelector }) => {
+					dispatch(groupsUpsertedFromEntitySelector(projectsList));
+				})
+				.catch(console.error);
 		}
 	}
 

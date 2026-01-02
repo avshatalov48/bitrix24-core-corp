@@ -1,0 +1,3 @@
+.ui-draggable--type-move .booking--wait-list-item-actions {
+	pointer-events: none;
+}

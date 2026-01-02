@@ -1,0 +1,97 @@
+.intranet-mobile-popup {
+	padding: 20px;
+	font-family: var(--ui-font-face-montserrat);
+}
+
+@media (min-width: 768px) {
+	.intranet-mobile-popup {
+		padding: 28px;
+	}
+}
+
+.intranet-mobile-popup__content-wrapper {
+	min-height: 562px;
+	display: flex;
+	flex-direction: column;
+	justify-content: space-between;
+}
+
+.intranet-mobile-popup__main {
+	display: flex;
+	flex-direction: column;
+	justify-content: center;
+
+}
+
+.intranet-mobile-popup__title {
+	padding-top: 10px;
+	width: 280px;
+	font-size: 20px;
+	font-weight: var(--ui-font-weight-semi-bold);
+	line-height: 24px;
+	letter-spacing: -0.1px;
+}
+
+@media (min-width: 768px) {
+	.intranet-mobile-popup__title {
+		padding-top: 5px;
+		width: 319px;
+		font-size: var(--ui-font-size-3xl);
+		font-weight: var(--ui-font-weight-semi-bold);
+		line-height: var(--ui-font-line-height-3xs);
+	}
+}
+
+.intranet-mobile-popup__image {
+	background: url("../images/phone.svg") no-repeat bottom -15px center;
+	height: 226px;
+}
+
+.intranet-mobile-popup__description {
+	font-size: var(--ui-font-size-xl);
+	font-weight: var(--ui-font-weight-normal);
+	line-height: 20px;
+	color: rgba(106, 115, 127, 1);
+	padding-top: 37px;
+	width: 281px;
+}
+
+@media (min-width: 768px) {
+	.intranet-mobile-popup__description {
+		width: 319px;
+		padding-top: 20px;
+	}
+}
+
+.intranet-mobile-popup__button--continue {
+	color: white;
+	font-size: var(--ui-font-size-lg);
+	font-weight: var(--ui-font-weight-medium);
+}
+
+.intranet-mobile-popup__footer {
+	display: flex;
+	flex-direction: column;
+	justify-content: center;
+}
+
+.intranet-mobile-popup__button--hide {
+	color: rgba(189, 193, 198, 1);
+	font-size: var(--ui-font-size-xs);
+	font-weight: var(--ui-font-weight-medium);
+	font-family: var(--ui-font-face-montserrat);
+}
+
+.intranet-mobile-popup__button--continue.ui-btn-success
+{
+	--ui-btn-background: #9DCE02;
+	--ui-btn-background-hover: #d2f95f;
+	--ui-btn-background-active: #b2e232;
+	--ui-btn-border-color: #9DCE02;
+	--ui-btn-border-color-hover: #d2f95f;
+	--ui-btn-border-color-active: #b2e232;
+}
+
+.popup-window-overlay {
+	opacity: 0.95;
+}

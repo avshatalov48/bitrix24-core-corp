@@ -1,3 +1,4 @@
+import { toRaw } from 'ui.vue3';
 import { ajax as Ajax } from 'main.core';
 import { EventEmitter } from 'main.core.events';
 import { AppLayout } from '../layout/app-layout';
@@ -6,10 +7,11 @@ import { GenericPopup } from '../popups/generic-popup';
 import { ImportFailurePopup } from '../popups/saving/import-failure-popup';
 import { ImportProgressPopup } from '../popups/saving/import-progress-popup';
 import { ImportSuccessPopup } from '../popups/saving/import-success-popup';
+import { SyncFieldsPopup } from '../popups/sync/sync-fields-popup';
 import { ConnectionStep } from '../steps/connection';
+import { DatasetPropertiesStep } from '../steps/dataset-properties';
 import { FieldsSettingsStep } from '../steps/fields-settings';
 import { ImportPreview } from '../steps/import-preview';
-import { DatasetPropertiesStep } from '../steps/dataset-properties';
 import { BaseApp } from './base-app';
 
 export const ExternalConnectionApp = {
@@ -29,6 +31,7 @@ export const ExternalConnectionApp = {
 				fields: {
 					disabled: !this.$store.getters.isEditMode,
 					valid: true,
+					disabledElements: null,
 				},
 			},
 			shownPopups: {
@@ -36,6 +39,8 @@ export const ExternalConnectionApp = {
 				savingSuccess: false,
 				savingFailure: false,
 				loadFailure: false,
+				syncFields: false,
+				fieldsSettingsChanges: false,
 			},
 			isValidationComplete: true,
 			popupParams: {
@@ -43,13 +48,25 @@ export const ExternalConnectionApp = {
 				loadFailure: {
 					messages: [],
 				},
+				syncFields: {
+					isChange: false,
+				},
 			},
 			isLoading: false,
 			previewError: '',
 			previewDataLoaded: false,
+			pendingSavePromise: null,
+			initialFieldsSettings: null,
 		};
 	},
+	created() {
+		this.initialFieldsSettings = structuredClone(toRaw(this.$store.state.config.fieldsSettings));
+	},
 	computed: {
+		isRestEntity(): boolean
+		{
+			return this.sourceCode === 'rest';
+		},
 		sourceCode(): string
 		{
 			return this.$store.state.config.connectionProperties?.connectionType ?? '';
@@ -81,12 +98,22 @@ export const ExternalConnectionApp = {
 		{
 			return this.steps.fields.valid && this.steps.properties.valid && this.steps.connection.valid;
 		},
+		importFailurePopupTitle()
+		{
+			return this.isEditMode ? this.$Bitrix.Loc.getMessage('DATASET_IMPORT_FAILURE_POPUP_HEADER_EDIT') : this.$Bitrix.Loc.getMessage('DATASET_IMPORT_FAILURE_POPUP_HEADER');
+		},
 		importSuccessPopupTitle(): string
 		{
 			return this.isEditMode
 				? this.$Bitrix.Loc.getMessage('DATASET_IMPORT_SUCCESS_POPUP_HEADER_EDIT').replace('#DATASET_TITLE#', this.popupParams.savingSuccess.title)
 				: this.$Bitrix.Loc.getMessage('DATASET_IMPORT_SUCCESS_POPUP_HEADER').replace('#DATASET_TITLE#', this.popupParams.savingSuccess.title)
 			;
+		},
+		importProgressPopupDescription()
+		{
+			return this.isEditMode
+				? this.$Bitrix.Loc.getMessage('DATASET_IMPORT_PROGRESS_POPUP_DESCRIPTION_EDIT')
+				: this.$Bitrix.Loc.getMessage('DATASET_IMPORT_PROGRESS_POPUP_DESCRIPTION');
 		},
 		loadFailurePopupTitle(): string
 		{
@@ -97,11 +124,27 @@ export const ExternalConnectionApp = {
 		},
 		fieldsSettingsStepHint(): string
 		{
-			return this.isEditMode
-				? this.$Bitrix.Loc.getMessage('DATASET_IMPORT_FIELDS_SETTINGS_HINT_EDIT')
-				: this.$Bitrix.Loc.getMessage('DATASET_IMPORT_FIELDS_SETTINGS_HINT_EXTERNAL')
-					.replace('[link]', '<a onclick="top.BX.Helper.show(`redirect=detail&code=23508958`)">')
-					.replace('[/link]', '</a>')
+			if (this.isEditMode)
+			{
+				if (this.isRestEntity)
+				{
+					return this.$Bitrix.Loc.getMessage('DATASET_IMPORT_FIELDS_SETTINGS_HINT_EDIT');
+				}
+
+				return '';
+			}
+
+			let articleCode = '23508958';
+			let hintCode = 'DATASET_IMPORT_FIELDS_SETTINGS_HINT_EXTERNAL_MSGVER_1';
+			if (this.isRestEntity)
+			{
+				articleCode = '24486426';
+				hintCode = 'DATASET_IMPORT_FIELDS_SETTINGS_HINT_EXTERNAL_REST';
+			}
+
+			return this.$Bitrix.Loc.getMessage(hintCode)
+				.replace('[link]', '<a onclick="top.BX.Helper.show(`redirect=detail&code=' + articleCode + '`)">')
+				.replace('[/link]', '</a>')
 			;
 		},
 		unsavedChangesPopupTitle(): string
@@ -125,12 +168,24 @@ export const ExternalConnectionApp = {
 				: this.$Bitrix.Loc.getMessage('DATASET_IMPORT_PREVIEW_EMPTY_STATE_EXTERNAL')
 			;
 		},
+		syncFieldsProps(): Object
+		{
+			return {
+				supported: this.isEditMode,
+				disabled: this.isLoading,
+			};
+		},
+		sourceType(): string
+		{
+			return 'external';
+		},
 	},
 	mounted()
 	{
 		if (
 			!this.$store.getters.hasData
 			&& this.$store.state.config.connectionProperties?.connectionId
+			&& this.$store.state.config.connectionProperties?.tableName
 		)
 		{
 			this.loadDataset();
@@ -146,7 +201,7 @@ export const ExternalConnectionApp = {
 		onSliderEvent(event)
 		{
 			const [messageEvent] = event.getData();
-			if (messageEvent.getEventId() === 'BIConnector:ExternalConnection:onConnectionCreated')
+			if (messageEvent.getEventId() === 'BIConnector:ExternalConnection:onConnectionSave')
 			{
 				this.onConnectionCreated();
 			}
@@ -187,6 +242,7 @@ export const ExternalConnectionApp = {
 			this.$store.commit('setFieldsSettings', []);
 			this.$refs.propertiesStep.validate();
 			this.previewError = '';
+			this.previewDataLoaded = false;
 		},
 		sendConnectionSelectorAnalytics()
 		{
@@ -258,6 +314,13 @@ export const ExternalConnectionApp = {
 			this.$refs.propertiesStep.open();
 			this.$refs.fieldsStep.open();
 			this.toggleStepState('properties', false);
+			if (this.isRestEntity)
+			{
+				this.steps.fields.disabledElements = {
+					name: true,
+					type: true,
+				};
+			}
 			this.toggleStepState('fields', false);
 			this.$refs.propertiesStep.validate();
 			this.$refs.fieldsStep.validate();
@@ -272,18 +335,52 @@ export const ExternalConnectionApp = {
 			}
 
 			this.previewDataLoaded = true;
-			const headers = [];
-			responseData.headers.forEach((header, index) => {
-				headers.push(this.prepareHeader(header, index));
-			});
+			if (this.lastChangedStep === 'connection')
+			{
+				const headers = [];
+				responseData.headers.forEach((header, index) => {
+					headers.push(this.prepareHeader(header, index));
+				});
 
-			this.$store.commit('setFieldsSettings', headers);
+				this.$store.commit('setFieldsSettings', headers);
+			}
+
 			this.$store.commit('setPreviewData', responseData.data);
+		},
+		onSyncSuccess(response)
+		{
+			this.processSyncResponse(response);
+
+			this.$refs.propertiesStep.open();
+			this.$refs.fieldsStep.open();
+			this.toggleStepState('properties', false);
+			this.toggleStepState('fields', false);
+			this.$refs.propertiesStep.validate();
+			this.$refs.fieldsStep.validate();
+		},
+		processSyncResponse(response)
+		{
+			const responseData = response.data;
+			if (responseData)
+			{
+				this.previewDataLoaded = true;
+				const headers = [];
+				responseData.headers.forEach((header, index) => {
+					headers.push(this.prepareHeader(header, index));
+				});
+
+				this.$store.commit('setFieldsSettings', headers);
+				this.$store.commit('setPreviewData', responseData.data);
+			}
+
+			this.sendAnalytics({
+				event: 'sync_fields',
+				status: response.status,
+			});
 		},
 		prepareHeader(header, index)
 		{
-			return {
-				id: header.id,
+			const result = {
 				visible: header.visible,
 				type: header.type,
 				name: header.name && header.name.length > 0 ? header.name : `FIELD_${index}`,
@@ -291,27 +388,44 @@ export const ExternalConnectionApp = {
 				originalName: header.externalCode,
 				externalCode: header.externalCode,
 			};
+
+			if (header.id)
+			{
+				result.id = header.id;
+			}
+
+			return result;
 		},
-		onSaveStart(): boolean
+		onSaveStart(): Promise
 		{
 			if (!this.isValidatedForSave)
 			{
 				this.$refs.fieldsStep.showValidationErrors();
 				this.$refs.propertiesStep.showValidationErrors();
 
-				return false;
+				return Promise.reject();
+			}
+
+			if (this.isEditMode && this.hasFieldsSettingsChanges())
+			{
+				this.togglePopup('fieldsSettingsChanges', true);
+
+				return new Promise((resolve, reject) => {
+					this.pendingSavePromise = { resolve, reject };
+				});
 			}
 
 			this.togglePopup('savingProgress', true);
 
-			return true;
+			return Promise.resolve();
 		},
 		onSaveEnd(response)
 		{
 			const datasetName = response.data.name ?? this.$store.state.config.datasetProperties.name;
+			const datasetId = response.data.id ?? this.$store.state.config.datasetProperties.id;
 			this.popupParams.savingSuccess = {
 				title: datasetName,
-				datasetId: response.data.id,
+				datasetId,
 				link: response.data.url,
 			};
 
@@ -344,6 +458,61 @@ export const ExternalConnectionApp = {
 		{
 			this.togglePopup('savingFailure', false);
 		},
+		onSyncFields()
+		{
+			this.isLoading = true;
+			Ajax.runAction('biconnector.externalsource.dataset.syncField', {
+				data: {
+					id: this.datasetId,
+				},
+			})
+				.then((response) => {
+					this.isLoading = false;
+					this.onSyncSuccess(response);
+					this.popupParams.syncFields.isChange = response.data.isChanged;
+					this.togglePopup('syncFields', true);
+				})
+				.catch((response) => {
+					this.isLoading = false;
+					this.processSyncResponse(response);
+					this.previewError = response.errors[0]?.message ?? this.$Bitrix.Loc.getMessage('DATASET_IMPORT_PREVIEW_ERROR_EXTERNAL');
+				});
+		},
+		hasFieldsSettingsChanges(): boolean
+		{
+			const fieldsToCompare = ['id', 'visible', 'type', 'name'];
+
+			let currentFields = toRaw(this.$store.state.config.fieldsSettings);
+			let initialFields = toRaw(this.initialFieldsSettings);
+
+			// eslint-disable-next-line max-len
+			currentFields = currentFields.map(obj => fieldsToCompare.reduce((result, field) => (Object.prototype.hasOwnProperty.call(obj, field) ? { ...result, [field]: obj[field] } : result), {}));
+			// eslint-disable-next-line max-len
+			initialFields = initialFields.map(obj => fieldsToCompare.reduce((result, field) => (Object.prototype.hasOwnProperty.call(obj, field) ? { ...result, [field]: obj[field] } : result), {}));
+
+			return JSON.stringify(currentFields) !== JSON.stringify(initialFields);
+		},
+		onConfirmFieldsSettingsChangesPopup()
+		{
+			this.togglePopup('fieldsSettingsChanges', false);
+			this.togglePopup('savingProgress', true);
+
+			if (this.pendingSavePromise)
+			{
+				this.pendingSavePromise.resolve();
+				this.pendingSavePromise = null;
+			}
+		},
+		onCancelFieldsSettingsChangesPopup()
+		{
+			this.togglePopup('fieldsSettingsChanges', false);
+
+			if (this.pendingSavePromise)
+			{
+				this.pendingSavePromise.reject();
+				this.pendingSavePromise = null;
+			}
+		},
 	},
 	components: {
 		AppLayout,
@@ -355,6 +524,7 @@ export const ExternalConnectionApp = {
 		ImportProgressPopup,
 		ImportSuccessPopup,
 		ImportFailurePopup,
+		SyncFieldsPopup,
 		GenericPopup,
 	},
 	// language=Vue
@@ -378,19 +548,24 @@ export const ExternalConnectionApp = {
 						:is-open-initially="isEditMode"
 						:disabled="steps.properties.disabled"
 						:reserved-names="appParams.reservedNames"
+						:name-max-length=230
 						ref="propertiesStep"
 						@validation="onStepValidation('properties', $event)"
 						@properties-changed="onDatasetPropertiesChanged"
-						dataset-source-code="external"
+						:dataset-source-code="'external_' + sourceCode"
 					/>
 					<FieldsSettingsStep
 						:is-open-initially="isEditMode"
 						:disabled="steps.fields.disabled"
+						:disabled-elements="steps.fields.disabledElements"
+						:source-type="sourceType"
 						ref="fieldsStep"
 						@validation="onStepValidation('fields', $event)"
 						@parsing-options-changed="onParsingOptionsChanged"
 						@settings-changed="onFieldsChanged"
 						:hint="fieldsSettingsStepHint"
+						:sync-fields-props="syncFieldsProps"
+						@sync-fields="onSyncFields"
 					/>
 				</ImportConfig>
 			</template>
@@ -399,13 +574,14 @@ export const ExternalConnectionApp = {
 					:empty-state-text="emptyStateText"
 					:is-loading="isLoading"
 					:error="previewError"
+					:needShowHeadersWithEmptyRows="true"
 				/>
 			</template>
 		</AppLayout>
 
 		<ImportProgressPopup
 			v-if="shownPopups.savingProgress"
-			:description="$Bitrix.Loc.getMessage('DATASET_IMPORT_PROGRESS_POPUP_DESCRIPTION')"
+			:description="importProgressPopupDescription"
 		/>
 
 		<ImportSuccessPopup
@@ -424,7 +600,7 @@ export const ExternalConnectionApp = {
 			v-if="shownPopups.savingFailure"
 			@close="closeFailurePopup"
 			@click="closeFailurePopup"
-			:title="$Bitrix.Loc.getMessage('DATASET_IMPORT_FAILURE_POPUP_HEADER')"
+			:title="importFailurePopupTitle"
 			:description="$Bitrix.Loc.getMessage('DATASET_IMPORT_EXTERNAL_FAILURE_POPUP_DESCRIPTION').replace('[link]', '<a>').replace('[/link]', '</a>')"
 		/>
 
@@ -440,6 +616,31 @@ export const ExternalConnectionApp = {
 			</template>
 			<template v-slot:buttons>
 				<button @click="togglePopup('loadFailure')" class="ui-btn ui-btn-md ui-btn-primary">{{ $Bitrix.Loc.getMessage('DATASET_IMPORT_FILE_ERROR_POPUP_CLOSE') }}</button>
+			</template>
+		</GenericPopup>
+
+		<SyncFieldsPopup
+			v-if="shownPopups.syncFields"
+			:is-change="popupParams.syncFields.isChange"
+			@close="togglePopup('syncFields', false)"
+		>
+		</SyncFieldsPopup>
+
+		<GenericPopup
+			v-if="shownPopups.fieldsSettingsChanges"
+			:title="$Bitrix.Loc.getMessage('DATASET_IMPORT_HAS_CHANGES_POPUP_HEADER')"
+			@close="togglePopup('fieldsSettingsChanges', false)"
+		>
+			<template v-slot:content>
+				<p>{{ $Bitrix.Loc.getMessage('DATASET_IMPORT_HAS_CHANGES_POPUP_MESSAGE_MSGVER_1') }}</p>
+			</template>
+			<template v-slot:buttons>
+				<button @click="onConfirmFieldsSettingsChangesPopup" class="ui-btn ui-btn-md ui-btn-success">
+					{{ $Bitrix.Loc.getMessage('DATASET_IMPORT_HAS_CHANGES_POPUP_BUTTON_SAVE') }}
+				</button>
+				<button @click="onCancelFieldsSettingsChangesPopup" class="ui-btn ui-btn-md ui-btn-link">
+					{{ $Bitrix.Loc.getMessage('DATASET_IMPORT_HAS_CHANGES_POPUP_BUTTON_CANCEL') }}
+				</button>
 			</template>
 		</GenericPopup>
 	`,

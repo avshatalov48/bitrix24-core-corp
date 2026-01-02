@@ -13,6 +13,7 @@
 	const { handleErrors } = require('crm/error');
 	const { Loc } = require('loc');
 	const { AnalyticsLabel } = require('analytics-label');
+	const { Random } = require('utils/random');
 
 	const Status = {
 		LOADING: 1,

@@ -12,30 +12,39 @@
 	 */
 	async function requireLazy(extensionNameWithColon, showLoader = true)
 	{
-		if (showLoader)
-		{
-			NotifyManager.showLoadingIndicator();
-		}
-
-		try
-		{
-			await jn.import(extensionNameWithColon);
-		}
-		catch (error)
-		{
-			console.error(`${extensionNameWithColon}, extension not found`, error);
-		}
-		finally
-		{
+		return new Promise((resolve, reject) => {
 			if (showLoader)
 			{
-				NotifyManager.hideLoadingIndicatorWithoutFallback();
+				NotifyManager.showLoadingIndicator(true, {
+					onTap: () => {
+						reject(new Error('Request aborted'));
+					},
+				});
 			}
-		}
 
-		const extensionWithoutNamespace = extensionNameWithColon.replace(':', '/');
+			jn.import(extensionNameWithColon)
+				.then(() => {
+					const extensionWithoutNamespace = extensionNameWithColon.replace(':', '/');
+					resolve(require(extensionWithoutNamespace));
+				})
+				.catch((error) => {
+					console.error(`${extensionNameWithColon}, extension not found`, error);
 
-		return require(extensionWithoutNamespace);
+					reject(error);
+				});
+		})
+			.catch((error) => {
+				if (error.message === 'Request aborted')
+				{
+					console.log('Request aborted');
+				}
+			})
+			.finally(() => {
+				if (showLoader)
+				{
+					NotifyManager.hideLoadingIndicatorWithoutFallback();
+				}
+			});
 	}
 
 	jnexport(requireLazy);

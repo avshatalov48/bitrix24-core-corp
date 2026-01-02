@@ -167,6 +167,16 @@ class CrmActivityPlannerComponent extends \Bitrix\Crm\Component\Base
 		$activity['FILES'] = $activity['WEBDAV_ELEMENTS'] = $activity['DISK_FILES'] = array();
 
 		CCrmActivity::PrepareStorageElementIDs($activity);
+		if ((int)$activity['TYPE_ID'] === CCrmActivityType::Email)
+		{
+			$result = (new \Bitrix\Crm\Activity\Mail\Attachment\MailActivityAttachmentLoader())
+				->loadByActivityArray($activity)
+			;
+			if ($result instanceof \Bitrix\Crm\Activity\Mail\Attachment\Result\MailActivityUpdatedResult)
+			{
+				$activity = array_merge($activity, $result->activityUpdatedFields);
+			}
+		}
 		CCrmActivity::PrepareStorageElementInfo($activity);
 
 		//other

@@ -11,18 +11,23 @@ use Bitrix\AI\Payload\Prompt;
 use Bitrix\AI\Payload\Text;
 use Bitrix\AI\QueueJob;
 use Bitrix\AI\Result;
+use Bitrix\Main\ArgumentException;
+use Bitrix\Main\DI\ServiceLocator;
 use Bitrix\Main\Error;
+use Bitrix\Main\LoaderException;
 use Bitrix\Main\Localization\Loc;
 use Bitrix\Main\SystemException;
+use Bitrix\AI\Engine\Cloud\EngineCloudError\Service\ExceededLimitService;
 use function call_user_func;
 use function is_callable;
 
 abstract class CloudEngine extends Engine\Engine implements IEngine
 {
-
 	public const CLOUD_REGISTRATION_NOT_FOUND = 'CLOUD_REGISTRATION_DATA_NOT_FOUND';
 
 	protected const AGREEMENT_CODE = 'AI_BOX_AGREEMENT';
+
+	abstract protected function getDefaultModel(): string;
 
 	public function checkLimits(): bool
 	{
@@ -60,12 +65,18 @@ abstract class CloudEngine extends Engine\Engine implements IEngine
 		return $data;
 	}
 
+	/**
+	 * @throws LoaderException
+	 * @throws SystemException
+	 * @throws ArgumentException
+	 */
 	final public function completionsInQueue(): void
 	{
 		if ($this->payload->shouldUseCache())
 		{
 			$this->setCache(true);
 		}
+		$params = $this->makeRequestParams();
 		$this->queueJob = QueueJob::createWithinFromEngine($this)->register();
 
 		$cacheManager = new EngineResultCache($this->queueJob->getCacheHash());
@@ -103,8 +114,9 @@ abstract class CloudEngine extends Engine\Engine implements IEngine
 			'callbackUrl' => $this->queueJob->getCallbackUrl(),
 			'errorCallbackUrl' => $this->queueJob->getErrorCallbackUrl(),
 			'url' => $this->getCompletionsUrl(),
-			'params' => $this->makeRequestParams(),
+			'params' => $params,
 		]);
+
 		if ($responseResult->isSuccess())
 		{
 			if (is_callable($this->onSuccessCallback))
@@ -125,28 +137,15 @@ abstract class CloudEngine extends Engine\Engine implements IEngine
 
 		$errorCollection = $responseResult->getErrorCollection();
 		/** @see \Bitrix\AiProxy\Controller\Query::ERROR_CODE_EXCEEDED_LIMIT */
-		if ($errorCollection->getErrorByCode('exceeded_limit'))
+		$errorLimit = $errorCollection->getErrorByCode('exceeded_limit');
+		if ($errorLimit !== null)
 		{
-			$this->queueJob->cancel();
-
-			$error = new Error(
-				Loc::getMessage('AI_ENGINE_ERROR_LIMIT_IS_EXCEEDED'),
-				'LIMIT_IS_EXCEEDED_MONTHLY',
-				[
-					'sliderCode' => 'limit_copilot_requests_box',
-				]
-			);
-
-			call_user_func(
-				$this->onErrorCallback,
-				$error
-			);
+			$this->initErrorLimit($errorLimit);
+			return;
 		}
-		else
-		{
-			$error = $errorCollection[0];
-			$this->onResponseError($error->getMessage(), (string)$error->getCode());
-		}
+
+		$error = $errorCollection[0];
+		$this->onResponseError($error->getMessage(), (string)$error->getCode());
 	}
 
 	final public function completions(): void
@@ -175,5 +174,21 @@ abstract class CloudEngine extends Engine\Engine implements IEngine
 		return $name->getValue() ?? $this->getDefaultModel();
 	}
 
-	abstract protected function getDefaultModel(): string;
+	/**
+	 * @throws LoaderException
+	 */
+	protected function initErrorLimit(Error $errorLimit): void
+	{
+		$this->queueJob->cancel();
+
+		call_user_func(
+			$this->onErrorCallback,
+			$this->getExceededLimitService()->mapExceededLimitError($errorLimit)
+		);
+	}
+
+	protected function getExceededLimitService()
+	{
+		return ServiceLocator::getInstance()->get(ExceededLimitService::class);
+	}
 }

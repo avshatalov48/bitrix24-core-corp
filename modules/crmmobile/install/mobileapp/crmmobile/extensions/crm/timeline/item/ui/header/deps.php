@@ -3,6 +3,7 @@
 return [
 	'extensions' => [
 		'apptheme',
+		'utils/random',
 	],
 	'bundle' => [
 		'./vertical-separator',

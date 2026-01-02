@@ -24,7 +24,9 @@ jn.define('text-editor', (require, exports, module) => {
 	const { Haptics } = require('haptics');
 	const { inAppUrl } = require('in-app-url');
 	const { BBCodeNode } = require('bbcode/model');
+	const { LinebreaksWrapper } = require('bbcode/formatter/shared');
 	const { copyToClipboard } = require('utils/copy');
+	const { mimeTypes } = require('utils/file');
 
 	const fileFieldPromise = Symbol('fileFieldPromise');
 	const fileFieldPromiseResolver = Symbol('fileFieldPromiseResolver');
@@ -378,6 +380,17 @@ jn.define('text-editor', (require, exports, module) => {
 						const entry = this.getAdapterBySourceNode(node);
 						if (entry)
 						{
+							if (
+								node.getName() === 'table'
+								|| entry.previewNode.getName() === 'img'
+							)
+							{
+								return LinebreaksWrapper.wrapNode({
+									sourceNode: node,
+									targetNode: entry.previewNode,
+								});
+							}
+
 							return entry.previewNode;
 						}
 
@@ -786,9 +799,12 @@ jn.define('text-editor', (require, exports, module) => {
 			return url;
 		}
 
-		static openFileViewer({ path, name, type = 'file' })
+		static async openFileViewer(file)
 		{
-			const filePath = TextEditor.getAbsolutePath(path);
+			const name = file.name;
+			const type = file.fileType ?? 'file';
+			const fileMimeType = file.type;
+			const filePath = TextEditor.getAbsolutePath(file.url);
 
 			if (type === 'image')
 			{
@@ -797,6 +813,31 @@ jn.define('text-editor', (require, exports, module) => {
 			else if (type === 'video')
 			{
 				viewer.openVideo(filePath, name);
+			}
+			else if (fileMimeType === mimeTypes.board)
+			{
+				try
+				{
+					const opener = await requireLazy('disk:opener/board');
+					if (opener)
+					{
+						const { boardOpener } = opener;
+
+						boardOpener?.({
+							id: file.id,
+							title: name,
+							isAttached: true,
+							analytics: {
+								moduleId: 'mobile',
+							},
+						});
+					}
+				}
+				catch (e)
+				{
+					viewer.openDocument(filePath, name);
+					console.error(e);
+				}
 			}
 			else
 			{
@@ -824,7 +865,7 @@ jn.define('text-editor', (require, exports, module) => {
 						id: 'show-file',
 						title: Loc.getMessage('MOBILEAPP_TEXT_EDITOR_FILE_SHOW'),
 						onClickCallback: () => {
-							TextEditor.openFileViewer({
+							void TextEditor.openFileViewer({
 								path: file.url,
 								name: file.name,
 								type: file.fileType,
@@ -982,11 +1023,7 @@ jn.define('text-editor', (require, exports, module) => {
 
 				if (file)
 				{
-					TextEditor.openFileViewer({
-						path: file.url,
-						name: file.name,
-						type: file.fileType,
-					});
+					void TextEditor.openFileViewer(file);
 				}
 				else
 				{

@@ -12,6 +12,7 @@ use Bitrix\Crm\Security\Role\Manage\Manager\Decorator;
 use Bitrix\Crm\Security\Role\Manage\Manager\EntitySelection;
 use Bitrix\Crm\Security\Role\Manage\Manager\EntitySelection\CrmEntitySelection;
 use Bitrix\Crm\Security\Role\Manage\Manager\EntitySelection\CustomSectionEntitySelection;
+use Bitrix\Crm\Security\Role\Manage\Manager\ContractorSelection;
 use Bitrix\Crm\Security\Role\Manage\Manager\WebFormSelection;
 use Bitrix\Crm\Service\Container;
 
@@ -72,6 +73,7 @@ final class RoleManagerSelectionFactory
 		}
 
 		return [
+			ContractorSelection::class,
 			CrmEntitySelection::class,
 			ButtonSelection::class,
 			WebFormSelection::class,

@@ -13,11 +13,9 @@
 				}).then(function(response)
 				{
 					var termsPopup = new BX.PopupWindow({
-						titleBar: response.data.title,
 						content: response.data.html,
-						closeIcon: true,
-						width: 600,
-						height: 700,
+						width: 400,
+						className: 'imconnector-notifications-agreement-popup-window',
 						buttons: [
 							new BX.PopupWindowButton({
 								text: response.data.okButton,

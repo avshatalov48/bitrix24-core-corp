@@ -866,7 +866,7 @@
 			{
 				return this.extractProtobufMessages(pullEvent);
 			}
-			else if (Utils.isNotEmptyString(pullEvent))
+			else if (BX.type.isNotEmptyString(pullEvent))
 			{
 				return this.extractPlainTextMessages(pullEvent)
 			}

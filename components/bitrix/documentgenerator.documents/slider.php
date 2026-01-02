@@ -27,7 +27,8 @@ $APPLICATION->IncludeComponent(
 			'provider' => $request->get('provider'),
 			'viewUrl' => $request->get('viewUrl'),
 			'loaderPath' => $request->get('loaderPath'),
-		]
+		],
+		'USE_UI_TOOLBAR' => 'Y',
 	]
 );
 

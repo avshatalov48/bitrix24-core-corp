@@ -6,7 +6,10 @@ use Bitrix\Crm\Copilot\AiQualityAssessment\Controller\AiQualityAssessmentControl
 use Bitrix\Crm\Copilot\CallAssessment\CallAssessmentItem;
 use Bitrix\Crm\Copilot\CallAssessment\Entity\CopilotCallAssessment;
 use Bitrix\Crm\Copilot\CallAssessment\Entity\CopilotCallAssessmentTable;
+use Bitrix\Crm\Copilot\CallAssessment\EntitySelector\PullManager as ScriptSelectorPullManager;
+use Bitrix\Crm\Copilot\CallAssessment\Enum\AvailabilityType;
 use Bitrix\Crm\Copilot\PullManager;
+use Bitrix\Crm\Feature;
 use Bitrix\Crm\Integration\AI\Model\QueueTable;
 use Bitrix\Crm\ItemIdentifier;
 use Bitrix\Crm\Service\Container;
@@ -26,20 +29,39 @@ final class CopilotCallAssessmentController
 {
 	use Singleton;
 
+	private const DEFAULT_SELECT = [
+		'*',
+		'CLIENT_TYPES.CLIENT_TYPE_ID',
+		'AVAILABILITY_DATA.START_POINT',
+		'AVAILABILITY_DATA.END_POINT',
+		'AVAILABILITY_DATA.WEEKDAY_TYPE',
+	];
+	
 	public function add(CallAssessmentItem $callAssessmentItem): AddResult
 	{
 		$result = CopilotCallAssessmentTable::add($this->getFields($callAssessmentItem));
 		if ($result->isSuccess())
 		{
-			$modifyResult = $this->modifyClientTypeIds(
+			$modifyClientResult = $this->modifyClientTypeIds(
 				$result->getId(),
 				$callAssessmentItem->getClientTypeIds(),
 				false
 			);
-
-			if (!$modifyResult->isSuccess())
+			if (!$modifyClientResult->isSuccess())
 			{
-				$result->addErrors($modifyResult->getErrors());
+				$result->addErrors($modifyClientResult->getErrors());
+			}
+
+			
+			$modifyAvailabilityResult = $this->modifyAvailability(
+				$result->getId(),
+				$callAssessmentItem->getAvailabilityType(),
+				$callAssessmentItem->getAvailabilityData(),
+				false
+			);
+			if (!$modifyAvailabilityResult->isSuccess())
+			{
+				$result->addErrors($modifyAvailabilityResult->getErrors());
 			}
 		}
 
@@ -52,10 +74,23 @@ final class CopilotCallAssessmentController
 
 		if ($result->isSuccess())
 		{
-			$modifyResult = $this->modifyClientTypeIds($id, $callAssessmentItem->getClientTypeIds());
-			if (!$modifyResult->isSuccess())
+			$modifyClientResult = $this->modifyClientTypeIds(
+				$id,
+				$callAssessmentItem->getClientTypeIds()
+			);
+			if (!$modifyClientResult->isSuccess())
 			{
-				$result->addErrors($modifyResult->getErrors());
+				$result->addErrors($modifyClientResult->getErrors());
+			}
+
+			$modifyAvailabilityResult = $this->modifyAvailability(
+				$id,
+				$callAssessmentItem->getAvailabilityType(),
+				$callAssessmentItem->getAvailabilityData()
+			);
+			if (!$modifyAvailabilityResult->isSuccess())
+			{
+				$result->addErrors($modifyAvailabilityResult->getErrors());
 			}
 
 			if ($context)
@@ -64,55 +99,16 @@ final class CopilotCallAssessmentController
 					'eventId' => $context->getEventId(),
 				]);
 			}
+
+			(new ScriptSelectorPullManager())->dispatchUpdateById($id);
 		}
 
 		return $result;
 	}
 
-	private function getFields(CallAssessmentItem $callAssessmentItem): array
-	{
-		return [
-			'TITLE' => $callAssessmentItem->getTitle(),
-			'PROMPT' => $callAssessmentItem->getPrompt(),
-			'GIST' => $callAssessmentItem->getGist(),
-			'CALL_TYPE' => $callAssessmentItem->getCallTypeId(),
-			'AUTO_CHECK_TYPE' => $callAssessmentItem->getAutoCheckTypeId(),
-			'IS_ENABLED' => $callAssessmentItem->isEnabled(),
-			'IS_DEFAULT' => $callAssessmentItem->isDefault(),
-			'JOB_ID' => $callAssessmentItem->getJobId(),
-			'STATUS' => $callAssessmentItem->getStatus(),
-			'CODE' => $callAssessmentItem->getCode(),
-			'LOW_BORDER' => $callAssessmentItem->getLowBorder(),
-			'HIGH_BORDER' => $callAssessmentItem->getHighBorder(),
-			'UPDATED_AT' => new DateTime(),
-			'UPDATED_BY_ID' => Container::getInstance()->getContext()->getUserId(),
-		];
-	}
-
-	private function modifyClientTypeIds(int $assessmentId, array $clientTypeIds, bool $deleteOldRecords = true): Result
-	{
-		$clientTypeController = CopilotCallAssessmentClientTypeController::getInstance();
-
-		if ($deleteOldRecords)
-		{
-			$clientTypeController->deleteByAssessmentId($assessmentId);
-		}
-
-		foreach ($clientTypeIds as $clientTypeId)
-		{
-			$addResult = $clientTypeController->add($assessmentId, $clientTypeId);
-			if (!$addResult->isSuccess())
-			{
-				return $addResult;
-			}
-		}
-
-		return new Result();
-	}
-
 	public function getList(array $params = []): Collection
 	{
-		$select = $params['select'] ?? ['*', 'CLIENT_TYPES.CLIENT_TYPE_ID'];
+		$select = $params['select'] ?? self::DEFAULT_SELECT;
 		$filter = $params['filter'] ?? [];
 		$order = $params['order'] ?? [
 			'ID' => 'DESC',
@@ -129,6 +125,69 @@ final class CopilotCallAssessmentController
 		;
 
 		return $this->decompose($query);
+	}
+
+	public function getById(int $id): ?CopilotCallAssessment
+	{
+		if ($id <=0)
+		{
+			return null;
+		}
+		
+		return CopilotCallAssessmentTable::query()
+			->setSelect(self::DEFAULT_SELECT)
+			->setFilter(['=ID' => $id])
+			->exec()
+			->fetchObject()
+		;
+	}
+
+	public function getTotalCount(array $filter = []): int
+	{
+		return CopilotCallAssessmentTable::query()->setFilter($filter)->queryCountTotal();
+	}
+
+	public function delete(int $id): ?Result
+	{
+		if ($id <= 0)
+		{
+			return null;
+		}
+		
+		if ($this->hasAssessmentCalls($id))
+		{
+			return (new Result())->addError(
+				new Error(Loc::getMessage('COPILOT_CALL_ASSESSMENT_CONTROLLER_HAS_ASSESSMENTED_CALLS'))
+			);
+		}
+
+		CopilotCallAssessmentClientTypeController::getInstance()->deleteByAssessmentId($id);
+		CopilotCallAssessmentAvailabilityController::getInstance()->deleteByAssessmentId($id);
+
+		// clean jobs if needed
+		QueueTable::deleteByItem(
+			new ItemIdentifier(CCrmOwnerType::CopilotCallAssessment, $id),
+		);
+
+		return CopilotCallAssessmentTable::delete($id);
+	}
+	
+	public function getCurrentAvailableAssessmentFilter(): array
+	{
+		if (!Feature::enabled(Feature\CopilotCallAssessmentAvailability::class))
+		{
+			return [];
+		}
+
+		$assessmentIds = CopilotCallAssessmentAvailabilityController::getInstance()->getCurrentAvailableAssessmentIds();
+
+		return empty($assessmentIds)
+			? []
+			: [
+				'LOGIC' => 'OR',
+				'=AVAILABILITY_TYPE' => AvailabilityType::ALWAYS_ACTIVE->value,
+				'@ID' => $assessmentIds,
+			];
 	}
 
 	/*
@@ -169,47 +228,90 @@ final class CopilotCallAssessmentController
 		$collection = $query->fetchCollection();
 
 		$sortedCollection = $query->getEntity()->createCollection();
-
 		foreach ($rows as $row)
 		{
-			$sortedCollection->add($collection->getByPrimary($row));
+			$sortedCollection?->add($collection->getByPrimary($row));
 		}
 
 		return $sortedCollection;
 	}
 
-	public function getById(int $id): ?CopilotCallAssessment
+	private function getFields(CallAssessmentItem $callAssessmentItem): array
 	{
-		return CopilotCallAssessmentTable::query()
-			->setSelect(['*', 'CLIENT_TYPES.CLIENT_TYPE_ID'])
-			->setFilter(['ID' => $id])
-			->exec()
-			->fetchObject()
-		;
+		return [
+			'TITLE' => $callAssessmentItem->getTitle(),
+			'PROMPT' => $callAssessmentItem->getPrompt(),
+			'GIST' => $callAssessmentItem->getGist(),
+			'CALL_TYPE' => $callAssessmentItem->getCallTypeId(),
+			'AUTO_CHECK_TYPE' => $callAssessmentItem->getAutoCheckTypeId(),
+			'IS_ENABLED' => $callAssessmentItem->isEnabled(),
+			'IS_DEFAULT' => $callAssessmentItem->isDefault(),
+			'JOB_ID' => $callAssessmentItem->getJobId(),
+			'STATUS' => $callAssessmentItem->getStatus(),
+			'CODE' => $callAssessmentItem->getCode(),
+			'LOW_BORDER' => $callAssessmentItem->getLowBorder(),
+			'HIGH_BORDER' => $callAssessmentItem->getHighBorder(),
+			'AVAILABILITY_TYPE' => $callAssessmentItem->getAvailabilityType(),
+			'UPDATED_AT' => new DateTime(),
+			'UPDATED_BY_ID' => Container::getInstance()->getContext()->getUserId(),
+		];
 	}
 
-	public function getTotalCount(array $filter = []): int
+	private function modifyClientTypeIds(int $assessmentId, array $clientTypeIds, bool $deleteOldRecords = true): Result
 	{
-		return CopilotCallAssessmentTable::query()->setFilter($filter)->queryCountTotal();
-	}
+		$controller = CopilotCallAssessmentClientTypeController::getInstance();
 
-	public function delete(int $id): Result
-	{
-		if ($this->hasAssessmentCalls($id))
+		if ($deleteOldRecords)
 		{
-			return (new Result())->addError(
-				new Error(Loc::getMessage('COPILOT_CALL_ASSESSMENT_CONTROLLER_HAS_ASSESSMENTED_CALLS'))
-			);
+			$controller->deleteByAssessmentId($assessmentId);
 		}
 
-		CopilotCallAssessmentClientTypeController::getInstance()->deleteByAssessmentId($id);
+		foreach ($clientTypeIds as $clientTypeId)
+		{
+			$addResult = $controller->add($assessmentId, $clientTypeId);
+			if (!$addResult->isSuccess())
+			{
+				return $addResult;
+			}
+		}
 
-		// clean jobs if needed
-		QueueTable::deleteByItem(
-			new ItemIdentifier(CCrmOwnerType::CopilotCallAssessment, $id),
-		);
+		return new Result();
+	}
 
-		return CopilotCallAssessmentTable::delete($id);
+	private function modifyAvailability(
+		int $assessmentId,
+		string $availabilityType,
+		array $availabilityData,
+		bool $deleteOldRecords = true
+	): Result
+	{
+		if (!Feature::enabled(Feature\CopilotCallAssessmentAvailability::class))
+		{
+			return new Result();
+		}
+		
+		$controller = CopilotCallAssessmentAvailabilityController::getInstance();
+
+		if ($deleteOldRecords)
+		{
+			$controller->deleteByAssessmentId($assessmentId);
+		}
+
+		if (!AvailabilityType::isExtendedAvailabilityType($availabilityType))
+		{
+			return new Result();
+		}
+
+		foreach ($availabilityData as $row)
+		{
+			$addResult = $controller->add($assessmentId, $row);
+			if (!$addResult->isSuccess())
+			{
+				return $addResult;
+			}
+		}
+
+		return new Result();
 	}
 
 	private function hasAssessmentCalls(int $assessmentId): bool

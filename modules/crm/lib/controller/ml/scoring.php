@@ -23,16 +23,11 @@ class Scoring extends Controller
 	public function tryCreateFirstPredictionAction($entityType, $entityId)
 	{
 		$entityTypeId = CCrmOwnerType::ResolveID($entityType);
-		$categoryId = Container::getInstance()
-			->getFactory($entityTypeId)
-			?->getItemCategoryId($entityId)
-		;
 
 		if (
-			!Container::getInstance()->getUserPermissions()->checkReadPermissions(
+			!Container::getInstance()->getUserPermissions()->item()->canRead(
 				$entityTypeId,
-				$entityId,
-				$categoryId
+				$entityId
 			)
 		)
 		{

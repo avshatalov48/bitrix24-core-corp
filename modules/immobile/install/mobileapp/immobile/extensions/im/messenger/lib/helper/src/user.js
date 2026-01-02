@@ -6,7 +6,7 @@ jn.define('im/messenger/lib/helper/user', (require, exports, module) => {
 	const { Type } = require('type');
 	const { serviceLocator } = require('im/messenger/lib/di/service-locator');
 	const { LoggerManager } = require('im/messenger/lib/logger');
-	const { UserType } = require('im/messenger/const');
+	const { UserType, BotCode } = require('im/messenger/const');
 
 	const logger = LoggerManager.getInstance().getLogger('helpers--user');
 
@@ -59,11 +59,27 @@ jn.define('im/messenger/lib/helper/user', (require, exports, module) => {
 		}
 
 		/**
+		 * @param {number} userId
+		 * @return {boolean}
+		 */
+		static isCurrentUser(userId)
+		{
+			const currentUserId = serviceLocator.get('core').getUserId();
+
+			return currentUserId === Number(userId);
+		}
+
+		/**
 		 * @param {UsersModelState} userModel
 		 */
 		constructor(userModel)
 		{
 			this.userModel = userModel;
+		}
+
+		get id()
+		{
+			return this.userModel.id;
 		}
 
 		get isCollaber()
@@ -79,6 +95,21 @@ jn.define('im/messenger/lib/helper/user', (require, exports, module) => {
 		get isExtranetOrCollaber()
 		{
 			return [UserType.collaber, UserType.extranet].includes(this.userModel.type);
+		}
+
+		get isBot()
+		{
+			return this.userModel.bot;
+		}
+
+		get isCopilotBot()
+		{
+			return this.userModel.bot && this.userModel.botData && this.userModel.botData.code === BotCode.copilot;
+		}
+
+		get isAiAssistant()
+		{
+			return this.userModel.bot && this.userModel.botData && this.userModel.botData.code === BotCode.aiAssistant;
 		}
 	}
 

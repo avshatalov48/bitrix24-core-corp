@@ -22,6 +22,7 @@ $APPLICATION->IncludeComponent(
 			'TEMPLATE_CODE' => $request->getPost('templateCode'),
 			'TEMPLATE_PLACEHOLDERS' => $request->getPost('templatePlaceholders'),
 		],
+		'USE_UI_TOOLBAR' => 'Y',
 	]
 );
 

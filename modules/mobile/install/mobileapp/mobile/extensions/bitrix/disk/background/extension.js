@@ -8,14 +8,14 @@
 
 		if (isModuleInstalled('disk'))
 		{
-			inAppUrl.open(params.url);
+			inAppUrl.open(params.url, { canOpenInDefault: true });
 
 			return;
 		}
 
 		if (params.objectId)
 		{
-			openNativeViewerByFileId(params.objectId);
+			void openNativeViewerByFileId(params.objectId);
 		}
 		else
 		{

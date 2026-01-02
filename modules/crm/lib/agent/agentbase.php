@@ -11,4 +11,11 @@ class AgentBase
 	{
 		return false;
 	}
+
+	protected function setExecutionPeriod(int $period): void
+	{
+		global $pPERIOD;
+
+		$pPERIOD = $period; // some magic to run the agent next time in $periodInSeconds seconds
+	}
 }

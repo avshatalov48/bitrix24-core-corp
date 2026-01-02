@@ -3,6 +3,7 @@
 namespace Bitrix\Sign\Callback;
 
 use Bitrix\Main;
+use Bitrix\Pull\Event;
 use Bitrix\Sign\Callback\Messages\Member\InviteToSign;
 use Bitrix\Sign\Callback\Messages\Member\MemberStatusChanged;
 use Bitrix\Sign\Controllers;
@@ -23,10 +24,8 @@ use Bitrix\Sign\Service\B2e\MyDocumentsGrid;
 use Bitrix\Sign\Service\Sign\LegalLogService;
 use Bitrix\Sign\Service\Sign\MemberService;
 use Bitrix\Sign\Type;
-use Bitrix\Main\Grid\Cell;
 use Bitrix\Sign\Operation\ChangeDocumentStatus;
 use Bitrix\Sign\Service\PullService;
-use Bitrix\Sign\Ui\Member\Stage;
 
 class Handler
 {
@@ -85,16 +84,19 @@ class Handler
 				if ($document === null)
 				{
 					$result->addError(new Main\Error('Document doesnt exist'));
+
 					break;
 				}
 				$member = $this->memberRepository->getByUid($message->getMemberUid());
 				if ($member === null || $member->documentId !== $document->id)
 				{
 					$result->addError(new Main\Error('Member doesnt exist'));
+
 					break;
 				}
 
 				$this->processInviteToSign($document, $member, $message, $result);
+
 				break;
 			}
 			case Messages\Mobile\SigningConfirm::Type:
@@ -104,12 +106,14 @@ class Handler
 				if ($document === null)
 				{
 					$result->addError(new Main\Error('Document doesnt exist'));
+
 					break;
 				}
 				$member = $this->memberRepository->getByUid($message->getMemberUid());
 				if ($member === null || $member->documentId !== $document->id)
 				{
 					$result->addError(new Main\Error('Member doesnt exist'));
+
 					break;
 				}
 
@@ -118,12 +122,14 @@ class Handler
 					->sendSignConfirmationEvent($member)
 				;
 				$result->addErrors($sendSignConfirmationEventResult->getErrors());
+
 				break;
 			}
 			case Messages\Member\MemberStatusChanged::Type:
 			{
 				/** @var Messages\Member\MemberStatusChanged $message */
 				$result = $this->processMemberStatusChanged($message);
+
 				break;
 			}
 			case Messages\TimelineEvent::Type:
@@ -133,44 +139,52 @@ class Handler
 					->get('sign.service.integration.crm.events')
 					->handleTimelineEvent(
 						$message->toArray(),
-						$message->getSecurityCode()
-					);
+						$message->getSecurityCode(),
+					)
+				;
+
 				break;
 			}
 			case Messages\Member\MemberResultFile::Type:
 			{
 				/** @var Messages\Member\MemberResultFile $message */
 				$this->processSaveResultFileForMember($message, $result);
+
 				break;
 			}
 			case Messages\Member\MemberPrintVersionFile::Type:
 			{
 				/** @var Messages\Member\MemberPrintVersionFile $message */
 				$this->processSavePrintVersionFileForMember($message, $result);
+
 				break;
 			}
 			case Messages\ResultFile::Type:
 			{
 				/** @var Messages\ResultFile $message */
 				$this->processSaveResultFile($message, $result);
+
 				break;
 			}
 			case Messages\ReadyLayoutCommand::Type:
 			{
 				/** @var Messages\ReadyLayoutCommand $message */
 				$this->processHandleReadyLayoutCommand($message, $result);
+
 				break;
 			}
 			case Messages\DocumentOperation::Type:
 			{
 				/** @var Messages\DocumentOperation $message */
 				$this->processDocumentOperation($message, $result);
+
 				break;
 			}
 			case Messages\FieldSet::Type:
 			{
 				/** @var Messages\FieldSet $message */
 				$this->processFieldSet($message, $result);
+
 				break;
 			}
 			default:
@@ -199,7 +213,7 @@ class Handler
 
 		$result = (new FillFields(
 			$message->getData()['fields'],
-			Container::instance()->getMemberService()->getByUid($message->getMemberCode())
+			Container::instance()->getMemberService()->getByUid($message->getMemberCode()),
 		))->launch();
 
 		if (!$result->isSuccess())
@@ -235,7 +249,7 @@ class Handler
 
 	private function processSaveResultFileForMember(
 		Messages\Member\MemberResultFile $message,
-		Main\Result $result
+		Main\Result $result,
 	): void
 	{
 		$document = Container::instance()->getDocumentRepository()->getByUid($message->getDocumentUid());
@@ -271,7 +285,7 @@ class Handler
 
 	private function processSavePrintVersionFileForMember(
 		Messages\Member\MemberPrintVersionFile $message,
-		Main\Result $result
+		Main\Result $result,
 	): void
 	{
 		$member = $this->memberRepository->getByUid($message->getMemberUid());
@@ -397,18 +411,10 @@ class Handler
 
 	private function processHandleReadyLayoutCommand(
 		Messages\ReadyLayoutCommand $message,
-		Main\Result $result
+		Main\Result $result,
 	): void
 	{
 		//todo refactoring
-		$document = DocumentCore::getByHash($message->getDocumentCode());
-		if (!$document)
-		{
-			$result->addError(new Main\Error('Invalid callback token.'));
-
-			return;
-		}
-
 		if (!\Bitrix\Main\Loader::includeModule('pull'))
 		{
 			$result->addError(new Main\Error('Does not include module pull'));
@@ -416,20 +422,36 @@ class Handler
 			return;
 		}
 		$version = (int)($message->getData()['version'] ?? self::OLD_API_VERSION);
+		$document = DocumentCore::getByHash($message->getDocumentCode());
 
 		if ($version === self::OLD_API_VERSION)
 		{
+			if (!$document)
+			{
+				$result->addError(new Main\Error('Invalid callback token.'));
+
+				return;
+			}
+
 			$command = 'layoutIsReady';
 			$params = $document->getLayout();
 		}
 		else
 		{
+			$documentItem = Container::instance()->getDocumentRepository()->getByHash($message->getDocumentCode());
+			if (!$documentItem)
+			{
+				$result->addError(new Main\Error('Invalid callback token.'));
+
+				return;
+			}
+
 			$command = 'blankIsReady';
 			$params = (new Controllers\V1\Document\Pages())->listAction($message->getDocumentCode());
-			$params += ['uid' => $document->getUid()];
+			$params += ['uid' => $documentItem->uid];
 		}
 
-		\Bitrix\Pull\Event::add($document->getModifiedUserId(), [
+		Event::add($document->getModifiedUserId(), [
 			'module_id' => 'sign',
 			'command' => $command,
 			'params' => $params,

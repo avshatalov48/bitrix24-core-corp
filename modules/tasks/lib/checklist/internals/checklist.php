@@ -629,7 +629,7 @@ class CheckList extends CompositeTreeItem
 
 		foreach ($toCreate as $userId => $type)
 		{
-			$memberDataController::add(['ITEM_ID' => $id, 'USER_ID' => $userId, 'TYPE' => $type]);
+			$memberDataController::addInsertIgnore(['ITEM_ID' => $id, 'USER_ID' => $userId, 'TYPE' => $type]);
 		}
 
 		foreach ($toChange as $userId => $type)

@@ -5,6 +5,8 @@ if (!defined('B_PROLOG_INCLUDED') || B_PROLOG_INCLUDED !== true)
 	die();
 }
 
+use Bitrix\Crm\Integration\Analytics\Dictionary;
+
 $runtime = CBPRuntime::GetRuntime();
 $runtime->IncludeActivityFile('SetFieldActivity');
 
@@ -53,6 +55,13 @@ class CBPCrmSetContactField extends CBPSetFieldActivity
 			}
 
 			$documentService->UpdateDocument($documentId, $fieldValue, $this->ModifiedBy);
+
+			$documentTypeForAnalytics = $this->getDocumentType();
+			\CCrmBizProcHelper::sendOperationsAnalytics(
+				Dictionary::EVENT_ENTITY_EDIT,
+				$this,
+				$documentTypeForAnalytics[2] ?? '',
+			);
 		}
 		catch (Exception $e)
 		{
@@ -173,7 +182,7 @@ class CBPCrmSetContactField extends CBPSetFieldActivity
 		return $id ? CCrmBizProcHelper::ResolveDocumentId(\CCrmOwnerType::Contact, $id) : null;
 	}
 
-	public function collectUsages()
+	public function collectUsages(): array
 	{
 		$usages = [];
 		$this->collectUsagesRecursive($this->arProperties, $usages);

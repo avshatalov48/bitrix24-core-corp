@@ -11,6 +11,26 @@
 	border-radius: var(--intranet-ustat-online-box-border-radius, var(--ui-border-radius-md, 0));
 }
 
+.template-air .intranet-ustat-online-box {
+		position: relative;
+		width: 100%;
+		margin-bottom: 0;
+		padding: 16px 14px;
+		height: auto;
+		display: flex;
+		align-items: center;
+		background-color: rgba(var(--ui-color-background-primary-rgb), 0.92);
+		border-radius: var(--ui-border-radius-lg);
+}
+
+.intranet-ustat-online-box.--inline {
+	width: 100%;
+	padding: 0;
+	margin: 0;
+	background-color: transparent;
+	border-radius: unset;
+}
+
 .intranet-ustat-online-badge {
 	position: absolute;
 	top: 7px;
@@ -29,6 +49,10 @@
 	z-index: 1;
 }
 
+.template-air .intranet-ustat-online-badge {
+	display: none;
+}
+
 .intranet-ustat-online-counter {
 	display: flex;
 	align-items: center;
@@ -40,13 +64,27 @@
 	overflow: hidden;
 }
 
+.template-air .intranet-ustat-online-counter {
+	min-width: 48px;
+	height: 48px;
+	margin-right: 8px;
+}
+
 .intranet-ustat-online-counter .ui-graph-circle-wrapper {
 	display: flex;
 	top: 1px;
 	width: 52px;
 	height: 52px;
-	background-image: url(images/intranet-ustat-online-circle.gif);
+	background-image: url(images/intranet-ustat-online-circle.gif?2);
 	background-size: cover;
+}
+
+.template-air .intranet-ustat-online-counter .ui-graph-circle-wrapper {
+	top: 0;
+	width: 48px;
+	height: 48px;
+	border-radius: var(--ui-border-radius-circle, 50%);
+	overflow: hidden;
 }
 
 @keyframes intranet-ustat-online-counter-show {
@@ -76,7 +114,7 @@
 	align-self: center;
 	width: 52px;
 	line-height: unset;
-	font-size: 21px;
+	font-size: 18px;
 	text-align: center;
 	transform: unset;
 }
@@ -108,6 +146,12 @@
 	overflow: hidden;
 }
 
+.template-air .intranet-ustat-online-icon-box {
+	height: 24px;
+	width: 100%;
+	margin-bottom: 6px;
+}
+
 .intranet-ustat-online-icon-inner {
 	display: flex;
 	align-items: center;
@@ -133,7 +177,25 @@
 	overflow: hidden;
 }
 
-.intranet-ustat-online-icon:first-child {
+.template-air .intranet-ustat-online-icon {
+	display: inline-block;
+	margin-left: -2px;
+	width: 24px;
+	height: 24px;
+	min-width: 24px;
+	min-height: 24px;
+	border: none;
+	border-radius: 100%;
+	transition: opacity .3s;
+	overflow: hidden;
+	mask-image: radial-gradient(circle 12px at -8px 12px, transparent 12px, #ccc 13px);
+}
+
+.template-air .intranet-ustat-online-icon:last-child {
+	mask-image: none;
+}
+
+.intranet-ustat-online-icon:last-child {
 	animation: none;
 	opacity: 1;
 }
@@ -187,6 +249,12 @@
 	max-width: 177px;
 }
 
+.template-air .intranet-ustat-online-info {
+	padding: 0;
+	justify-content: flex-start;
+	gap: 0 14px;
+}
+
 .intranet-ustat-online-info-item {
 	display: flex;
 	align-items: center;
@@ -217,12 +285,33 @@
 	overflow: hidden;
 }
 
+.template-air .intranet-ustat-online-text {
+	display: inline-block;
+	margin-right: 4px;
+	font: inherit;
+	font-size: var(--ui-font-size-4xs);
+	line-height: var(--ui-font-line-height-2xs);
+	font-weight: var(--ui-font-weight-normal);
+	color: var(--ui-color-text-secondary);
+	text-overflow: ellipsis;
+	text-transform: none;
+}
+
 .intranet-ustat-online-value {
 	display: inline-block;
 	margin: 0 3px;
 	font: 10px var(--ui-font-family-secondary, var(--ui-font-family-open-sans));
 	font-weight: var(--ui-font-weight-semi-bold, 600);
 	color: #525c69;
+}
+
+.template-air .intranet-ustat-online-value {
+	font: inherit;
+	margin: 0;
+	font-size: var(--ui-font-size-4xs);
+	line-height: var(--ui-font-line-height-2xs);
+	font-weight: var(--ui-font-weight-medium, 500);
+	color: var(--ui-color-text-primary);
 }
 
 .intranet-ustat-online-info-text-resize .intranet-ustat-online-text,
@@ -390,6 +479,10 @@
 	position: absolute;
 	top: 0;
 	right: 0;
+}
+
+.template-air .intranet-ustat-online-hint {
+	top: 1px;
 }
 
 .intranet-ustat-online-hint-item {

@@ -1,0 +1,14 @@
+.intranet-user-mini-profile__role {
+	border-top-right-radius: var(--popup-window-border-radius);
+	border-bottom-left-radius: 14px;
+	background-color: var(--ui-color-bg-content-tertiary);
+	display: flex;
+}
+
+.intranet-user-mini-profile__role-inner-text {
+	padding: 4px 14px 6px;
+	color: var(--ui-color-base-2);
+	font-size: var(--ui-font-size-4xs);
+	font-weight: var(--ui-font-weight-normal);
+	white-space: nowrap;
+}

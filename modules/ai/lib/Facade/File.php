@@ -2,6 +2,7 @@
 
 namespace Bitrix\AI\Facade;
 
+use Bitrix\Main\Context;
 use Bitrix\Main\IO\File as FileCore;
 use Bitrix\Main\Security\Random;
 use CFile;
@@ -93,5 +94,18 @@ class File
 	public static function getContents(string $path): string
 	{
 		return FileCore::getFileContents($path) ?: '';
+	}
+
+	public static function getAbsoluteUri(string $fileSrc): string
+	{
+		if (substr_count($fileSrc, '://'))
+		{
+			return $fileSrc;
+		}
+
+		$httpRequest = Context::getCurrent()->getRequest();
+		$protocol = $httpRequest->isHttps() ? 'https' : 'http';
+
+		return $protocol . '://' . $httpRequest->getHttpHost() . $fileSrc;
 	}
 }

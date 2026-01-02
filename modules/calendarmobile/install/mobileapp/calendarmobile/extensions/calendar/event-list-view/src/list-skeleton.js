@@ -43,8 +43,8 @@ jn.define('calendar/event-list-view/list-skeleton', (require, exports, module) =
 			style: {
 				flexDirection: 'row',
 				paddingVertical: Indent.XL.toNumber(),
-				borderTopWidth: 1,
-				borderTopColor: Color.bgSeparatorSecondary.toHex(),
+				borderBottomWidth: 1,
+				borderBottomColor: Color.bgSeparatorSecondary.toHex(),
 			},
 		},
 		Line(6, 36, 0, 0, Corner.S.toNumber()),

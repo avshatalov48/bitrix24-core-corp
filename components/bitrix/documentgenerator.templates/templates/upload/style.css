@@ -1,13 +1,3 @@
-.pagetitle-inner-container-load {
-	display: flex;
-	align-items: center;
-	justify-content: space-between;
-}
-
-.docs-template-load-subject .pagetitle {
-	flex: 1;
-}
-
 .docs-template-load-title-inner {
 	margin-bottom: 10px;
 }
@@ -16,6 +6,13 @@
 	font-size: 13px;
 	line-height: 19px;
 	color: #a9adb2;
+}
+
+.docs-template-field-help {
+	font-size: 13px;
+	line-height: 23px;
+	padding-left: 5px;
+	color: #5e6675;
 }
 
 .docs-template-load-drag-zone {
@@ -157,8 +154,12 @@
 	box-sizing: border-box;
 }
 
-.docs-template-load-crm, .docs-template-load-buttons, .docs-template-load-user, .docs-template-load-numerator,
-.docs-template-load-result, .template-edit-hidden {
+.docs-template-load-crm,
+.docs-template-load-buttons,
+.docs-template-load-user,
+.docs-template-load-numerator,
+.docs-template-load-result,
+.template-edit-hidden {
 	display: none;
 }
 
@@ -222,10 +223,6 @@
 	background: #fff;
 	border-radius: var(--ui-border-radius-md);
 	padding: 23px 21px 150px 23px;
-}
-
-.docs-template-load-slider {
-	padding: 0 26px;
 }
 
 .docs-template-load-buttons-slider {

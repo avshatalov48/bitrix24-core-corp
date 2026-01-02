@@ -308,19 +308,6 @@ if ($arParams['USER_ID'] != $USER->getId())
 	}
 }
 
-// if user has a right to tell about servies
-$allowTellAbout = false;
-if ($USER->IsAdmin()
-	|| CModule::IncludeModule("bitrix24") && CBitrix24::IsPortalAdmin($USER->GetID())
-	|| in_array((int)$USER->getId(), \Bitrix\Intranet\UStat\UStat::getHeadsOfDepartments(), true)
-)
-{
-	$allowTellAbout = true;
-}
-
-// forced disabling
-$allowTellAbout = false;
-
 // done!
 
 $arResult = array(
@@ -332,7 +319,6 @@ $arResult = array(
 	'TOP_POSITION' => $rawData['rating']['position'],
 	'USERS_INFO' => $usersInfo,
 	'DEPARTMENT_TITLE' => $departmentTitle,
-	'ALLOW_TELL_ABOUT' => $allowTellAbout,
 	'SECTION_DATA' => $sectionData,
 	'DATA' => array_values($data),
 	'COMPARE_WITH_MYSELF' => $compareWithMyself

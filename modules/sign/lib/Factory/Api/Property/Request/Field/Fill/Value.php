@@ -22,6 +22,8 @@ final class Value
 			return new Item\Field\HcmLink\HcmLinkDelayedValue(
 				fieldId: $value->hcmLinkFieldValueId->fieldId,
 				employeeId: $value->hcmLinkFieldValueId->employeeId,
+				entityType: $value->hcmLinkFieldValueId->entityType,
+				signerMemberId: $value->hcmLinkFieldValueId->signerId,
 			);
 		}
 		if ($value->text !== null)

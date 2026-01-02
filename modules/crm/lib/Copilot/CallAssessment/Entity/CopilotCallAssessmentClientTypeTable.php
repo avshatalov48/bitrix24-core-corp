@@ -8,6 +8,22 @@ use Bitrix\Main\DI\ServiceLocator;
 use Bitrix\Main\ORM\Fields\Relations\Reference;
 use Bitrix\Main\ORM\Query\Join;
 
+/**
+ * Class CopilotCallAssessmentClientTypeTable
+ *
+ * DO NOT WRITE ANYTHING BELOW THIS
+ *
+ * <<< ORMENTITYANNOTATION
+ * @method static EO_CopilotCallAssessmentClientType_Query query()
+ * @method static EO_CopilotCallAssessmentClientType_Result getByPrimary($primary, array $parameters = [])
+ * @method static EO_CopilotCallAssessmentClientType_Result getById($id)
+ * @method static EO_CopilotCallAssessmentClientType_Result getList(array $parameters = [])
+ * @method static EO_CopilotCallAssessmentClientType_Entity getEntity()
+ * @method static \Bitrix\Crm\Copilot\CallAssessment\Entity\EO_CopilotCallAssessmentClientType createObject($setDefaultValues = true)
+ * @method static \Bitrix\Crm\Copilot\CallAssessment\Entity\EO_CopilotCallAssessmentClientType_Collection createCollection()
+ * @method static \Bitrix\Crm\Copilot\CallAssessment\Entity\EO_CopilotCallAssessmentClientType wakeUpObject($row)
+ * @method static \Bitrix\Crm\Copilot\CallAssessment\Entity\EO_CopilotCallAssessmentClientType_Collection wakeUpCollection($rows)
+ */
 class CopilotCallAssessmentClientTypeTable extends Main\ORM\Data\DataManager
 {
 	public static function getTableName(): string
@@ -31,12 +47,11 @@ class CopilotCallAssessmentClientTypeTable extends Main\ORM\Data\DataManager
 				->configureSize(1)
 				->configureRequired()
 			,
-			(new Reference(
+			new Reference(
 				'ASSESSMENT',
 				CopilotCallAssessmentTable::class,
 				Join::on('this.ASSESSMENT_ID', 'ref.ID')
-			))
-			,
+			),
 		];
 	}
 }

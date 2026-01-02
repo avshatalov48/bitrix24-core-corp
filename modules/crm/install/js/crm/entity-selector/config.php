@@ -8,6 +8,7 @@ if (!defined('B_PROLOG_INCLUDED') || B_PROLOG_INCLUDED !== true)
 use Bitrix\Crm\Integration\UI\EntitySelector\CopilotLanguageProvider;
 use Bitrix\Crm\Integration\UI\EntitySelector\CountryProvider;
 use Bitrix\Crm\Integration\UI\EntitySelector\MessageTemplateProvider;
+use Bitrix\Crm\Integration\UI\EntitySelector\MultiplePlaceholderProvider;
 use Bitrix\Crm\Integration\UI\EntitySelector\PlaceholderProvider;
 use Bitrix\Main\Loader;
 
@@ -55,6 +56,12 @@ return [
 			],
 			[
 				'id' => PlaceholderProvider::ENTITY_ID,
+				'options' => [
+					'dynamicLoad' => true,
+				],
+			],
+			[
+				'id' => MultiplePlaceholderProvider::ENTITY_ID,
 				'options' => [
 					'dynamicLoad' => true,
 				],

@@ -26,7 +26,13 @@ export const CalendarIcon = {
 		},
 		dayWeek(): string
 		{
-			return this.formatUserTime('D');
+			const dayShortName = this.formatUserTime('D');
+			if (this.time.length > 5) // "12:34".length === 5, if +" PM" than > 5
+			{
+				return dayShortName.slice(0, 2);
+			}
+
+			return dayShortName;
 		},
 		time(): string
 		{

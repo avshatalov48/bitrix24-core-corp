@@ -24,11 +24,7 @@ jn.define('calendar/base-menu', (require, exports, module) => {
 
 		show(bindElement)
 		{
-			if (!this.menu)
-			{
-				this.menu = dialogs.createPopupMenu();
-			}
-
+			this.menu ??= dialogs.createPopupMenu();
 			this.menu.setData(this.getItems(), this.getSections(), (event, item) => {
 				if (event === 'onItemSelected')
 				{

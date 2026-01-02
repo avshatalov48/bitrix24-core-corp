@@ -567,7 +567,7 @@ class Message
 
 		foreach ($contactIDs as $id)
 		{
-			if(Container::getInstance()->getUserPermissions()->checkReadPermissions(\CCrmOwnerType::Contact, $id))
+			if(Container::getInstance()->getUserPermissions()->item()->canRead(\CCrmOwnerType::Contact, $id))
 			{
 				$contactIdsPermissions[] = $id;
 			};
@@ -707,11 +707,27 @@ class Message
 		$contactCategoryId = 0;
 		$companyCategoryId = 0;
 
+		if ($ownerId > 0)
+		{
+			if ($ownerTypeName === \CCrmOwnerType::ContactName)
+			{
+				$contactCategoryId = self::getRecipientCategoryId(\CCrmOwnerType::Contact, $ownerId);
+			}
+			else if ($ownerTypeName === \CCrmOwnerType::CompanyName)
+			{
+				$companyCategoryId = self::getRecipientCategoryId(\CCrmOwnerType::Company, $ownerId);
+			}
+		}
+
 		if (isset($recipients['company']))
 		{
 			if (is_array($recipients['company']) && count($recipients['company']) > 0)
 			{
-				$companyCategoryId = self::getRecipientCategoryId(\CCrmOwnerType::Company, (int)$recipients['company'][0]);
+				if ($companyCategoryId === 0)
+				{
+					$companyCategoryId = self::getRecipientCategoryId(\CCrmOwnerType::Company, (int)$recipients['company'][0]);
+				}
+
 				$companies = self::prepareRecipientsForConversionToJson($recipients['company'], 'company');
 			}
 
@@ -722,7 +738,11 @@ class Message
 		{
 			if (is_array($recipients['contacts']) && count($recipients['contacts']) > 0)
 			{
-				$contactCategoryId = self::getRecipientCategoryId(\CCrmOwnerType::Contact, (int)$recipients['contacts'][0]);
+				if ($contactCategoryId === 0)
+				{
+					$contactCategoryId = self::getRecipientCategoryId(\CCrmOwnerType::Contact, (int)$recipients['contacts'][0]);
+				}
+
 				$contacts = self::prepareRecipientsForConversionToJson($recipients['contacts'], 'contact');
 			}
 
@@ -767,11 +787,11 @@ class Message
 		return Dialog::getItems($items, $options);
 	}
 
-	private static function getRecipientCategoryId(int $typeId, int $id): ?int
+	public static function getRecipientCategoryId(int $typeId, int $id): int
 	{
 		if ($typeId !== \CCrmOwnerType::Contact && $typeId !== \CCrmOwnerType::Company)
 		{
-			return null;
+			return 0;
 		}
 
 		return (int)Container::getInstance()->getFactory($typeId)->getItemCategoryId($id);
@@ -956,7 +976,7 @@ class Message
 	{
 		$result = new Result();
 
-		if(!Container::getInstance()->getUserPermissions()->checkReadPermissions($typeId, $id))
+		if(!Container::getInstance()->getUserPermissions()->item()->canRead($typeId, $id))
 		{
 			$result->addError(new Error(Loc::getMessage('CRM_LIB_ACTIVITY_PERMISSION_DENIED'), 'owner_data_not_specified'));
 		}
@@ -1106,7 +1126,7 @@ class Message
 				}
 			}
 
-			if (isset($activityEmailMeta['__email']))
+			if (isset($activityEmailMeta['__email']) && !empty($foundContacts))
 			{
 				$ownerEmail = trim($activityEmailMeta['__email']);
 

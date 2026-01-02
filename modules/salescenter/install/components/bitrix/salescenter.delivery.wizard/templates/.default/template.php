@@ -1,12 +1,24 @@
 <?php
 
-use \Bitrix\Main\Localization\Loc;
+if (!defined('B_PROLOG_INCLUDED') || B_PROLOG_INCLUDED !== true)
+{
+	die();
+}
 
-if(!defined('B_PROLOG_INCLUDED') || B_PROLOG_INCLUDED !== true) die();
+use Bitrix\Main\Loader;
+use Bitrix\Main\Localization\Loc;
+use Bitrix\Main\UI\Extension;
+use Bitrix\Main\Web\Json;
+use Bitrix\UI\Toolbar\Facade\Toolbar;
+
+/**
+ * @global CMain $APPLICATION
+ * @var array $arResult
+ */
 
 Loc::loadLanguageFile(__FILE__);
 
-\Bitrix\Main\UI\Extension::load([
+Extension::load([
 	'ui.design-tokens',
 	'ui.fonts.opensans',
 	'ui',
@@ -24,33 +36,40 @@ $saveButtonId = 'sc-deliveryservice-installation-save-button';
 
 $bodyClass = $APPLICATION->GetPageProperty('BodyClass');
 $APPLICATION->SetPageProperty('BodyClass', ($bodyClass ? $bodyClass . ' ' : '') . ' no-all-paddings no-background');
-$this->setViewTarget('inside_pagetitle_below', 100);
-?>
 
-<div class="salescenter-main-header-feedback-container">
-	<?Bitrix\SalesCenter\Integration\Bitrix24Manager::getInstance()->renderFeedbackDeliveryOfferButton();?>
-</div>
+Bitrix\SalesCenter\Integration\Bitrix24Manager::getInstance()->addFeedbackDeliveryOfferButtonToToolbar();
+if (Loader::includeModule('ui'))
+{
+	Toolbar::deleteFavoriteStar();
+}
 
-<?if ($arResult['edit']):?>
+if ($arResult['edit']):
+	?>
 	<div style="margin-left: 20px;" class="salescenter-main-header-switcher-container">
 		<span id="salescenter-delivery-wizard-active"></span>
 	</div>
-<?endif;?>
+	<?php
+endif;
 
-<?php $this->endViewTarget(); ?>
+$this->endViewTarget();
 
-<?
 $dirPath = __DIR__ . '/' . strtolower($arResult['code']);
 
 if (in_array($arResult['code'], $arResult['knownHandlerCodes']) && Bitrix\Main\IO\Directory::isDirectoryExists($dirPath)):?>
 	<form id="<?=$formId?>">
 		<input type="hidden" name="code" value="<?=htmlspecialcharsbx($arResult['code'])?>" />
 		<input type="hidden" id="delivery_service_activity" name="ACTIVE" value="<?=$arResult['edit'] ? $arResult['service']['ACTIVE'] : 'Y'?>" />
-		<?if ($arResult['edit']):?>
+		<?php
+		if ($arResult['edit']):
+			?>
 			<input type="hidden" name="id" value="<?=(int)$arResult['service']['ID']?>" />
-		<?endif;?>
+			<?php
+		endif;
+		?>
 		<div class="salescenter-delivery-installation-wrap">
-			<?include($dirPath . '/header.php');?>
+			<?php
+			include($dirPath . '/header.php');
+			?>
 		</div>
 
 		<div class="ui-alert ui-alert-danger" style="display: none;">
@@ -58,7 +77,9 @@ if (in_array($arResult['code'], $arResult['knownHandlerCodes']) && Bitrix\Main\I
 		</div>
 
 		<div class="salescenter-delivery-installation-wrap">
-			<?include($dirPath . '/fields.php');?>
+			<?php
+			include($dirPath . '/fields.php');
+			?>
 			<div class="salescenter-delivery-install-section" style="padding-bottom: 68px">
 				<div class="salescenter-delivery-install-content-block">
 					<label for="" class="ui-ctl-label-text">
@@ -71,7 +92,7 @@ if (in_array($arResult['code'], $arResult['knownHandlerCodes']) && Bitrix\Main\I
 			</div>
 		</div>
 
-		<?
+		<?php
 		$buttons = [
 			[
 				'TYPE' => 'save',
@@ -94,11 +115,13 @@ if (in_array($arResult['code'], $arResult['knownHandlerCodes']) && Bitrix\Main\I
 			'ALIGN' => 'center'
 		]);?>
 	</form>
-<?endif;?>
+	<?php
+endif;
+?>
 
 <script>
 	BX.ready(function () {
-		BX.Salescenter.DeliveryInstallation.Wizard.init(<?=\Bitrix\Main\Web\Json::encode(
+		BX.Salescenter.DeliveryInstallation.Wizard.init(<?=Json::encode(
 			[
 				'id' => $arResult['edit'] ? (int)$arResult['service']['ID'] : null,
 				'code' => $arResult['code'],
@@ -109,7 +132,9 @@ if (in_array($arResult['code'], $arResult['knownHandlerCodes']) && Bitrix\Main\I
 			]
 		)?>);
 
-		<?if ($arResult['edit']):?>
+		<?php
+		if ($arResult['edit']):
+			?>
 			let inputNode = document.getElementById('delivery_service_activity');
 
 			new BX.UI.Switcher({
@@ -121,6 +146,8 @@ if (in_array($arResult['code'], $arResult['knownHandlerCodes']) && Bitrix\Main\I
 					checked: () => {inputNode.value = 'N';},
 				}
 			});
-		<?endif;?>
+			<?php
+		endif;
+		?>
 	});
 </script>

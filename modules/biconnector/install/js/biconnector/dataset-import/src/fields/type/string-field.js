@@ -1,5 +1,4 @@
-import { Dom, Tag } from 'main.core';
-import { Popup, PopupOptions } from 'main.popup';
+import { Dom } from 'main.core';
 import { ErrorPopup } from '../../layout/error-popup';
 import { BaseField } from './base-field';
 import '../../css/dataset-import-field.css';
@@ -39,7 +38,7 @@ export const StringField = {
 				clearTimeout(this.errorPopupTimeout);
 				this.errorPopupTimeout = null;
 			}
-			else
+			else if (!this.errorPopup || this.errorPopup.isDestroyed())
 			{
 				this.errorPopup = this.createErrorPopup();
 				this.errorPopup.show();
@@ -51,6 +50,8 @@ export const StringField = {
 			{
 				this.errorPopup.close();
 			}
+			clearTimeout(this.errorPopupTimeout);
+			this.errorPopupTimeout = null;
 		},
 		createErrorPopup()
 		{

@@ -1,0 +1,126 @@
+.app {
+	--content-area-left-shift: 22px;
+	--air-header-min-height: 58px;
+	--air-footer-min-height: 76px;
+	--topbar-height: 58px;
+}
+
+.app {
+	box-sizing: border-box;
+	min-height: calc(100vh - var(--air-fixed-layout-top-shift));
+	display: flex;
+	flex-direction: row;
+	align-items: flex-start;
+	justify-content: space-between;
+	padding-right: 0;
+}
+
+.app__left-menu {
+	position: sticky;
+	top: var(--air-fixed-layout-top-shift);
+	left: -9999px;
+	height: calc(100vh - var(--air-fixed-layout-top-shift));
+	max-height: calc(100vh - var(--air-fixed-layout-top-shift));
+	display: flex;
+	flex-direction: column;
+	z-index: 990;
+}
+
+.app__right-bar {
+	box-sizing: border-box;
+	position: sticky;
+	top: var(--air-fixed-layout-top-shift);
+	right: 0;
+	height: calc(100vh - var(--air-fixed-layout-top-shift));
+	z-index: 400;
+	min-width: var(--air-right-bar-width);
+	width: var(--air-right-bar-width);
+	bottom: 0;
+	display: flex;
+	flex-direction: column;
+	align-items: stretch;
+	justify-content: flex-start;
+	order: 1;
+	overflow: hidden;
+	padding-bottom: calc(80px * var(--side-panel-toolbar-shifted, 0));
+}
+
+.im-bar-mode-off .app__right-bar {
+	display: none;
+}
+
+body:not(.side-panel-disable-scrollbar) .app__right-bar.--show-scroll-btn {
+	padding-bottom: 64px;
+}
+
+.app__header {
+	margin-right: calc(var(--air-right-bar-width) * -1);
+}
+
+.im-bar-mode-off .app__header {
+	margin-right: calc(var(--content-area-left-shift) * -1);
+}
+
+.app__main {
+	min-height: 100vh;
+	width: 100%;
+	padding-right: var(--air-right-bar-width);
+	margin-right: calc(var(--air-right-bar-width) * -1);
+	overflow: auto;
+	position: relative;
+}
+
+.im-bar-mode-off .app__main {
+	padding-right: var(--content-area-left-shift);
+	margin-right: 0;
+}
+
+.app__page {
+	padding-left: var(--content-area-left-shift);
+	display: flex;
+	flex-direction: column;
+	min-height: calc(100vh - var(--topbar-height) - var(--air-footer-min-height));
+}
+
+.app:has(.no-footer) .app__page {
+	padding-bottom: 22px;
+}
+
+.app__footer {
+	min-height: var(--air-footer-min-height);
+	padding-left: var(--content-area-left-shift);
+}
+
+.app:has(.no-footer) {
+	--air-footer-min-height: 22px;
+}
+
+.app:has(.no-footer-endless) {
+	--air-footer-min-height: 0px;
+}
+
+.app:has(.no-footer) .app__footer,
+.app:has(.no-footer-endless) .app__footer {
+	display: none;
+}
+
+.app__footer.hidden {
+	display: none;
+}
+
+.app__go-top-button {
+	display: none;
+	position: fixed;
+	right: 18px;
+	bottom: 18px;
+	z-index: 2;
+}
+
+.app__go-top-button.--show {
+	display: block;
+	z-index: 990;
+}
+
+.side-panel-disable-scrollbar .app__go-top-button {
+	display: none;
+}

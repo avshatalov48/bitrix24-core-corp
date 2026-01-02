@@ -6,6 +6,7 @@ use Bitrix\Main\ArgumentException;
 use Bitrix\Main\ObjectPropertyException;
 use Bitrix\Main\SystemException;
 use Bitrix\Tasks\Flow\Internal\FlowUserOptionTable;
+use Bitrix\Tasks\Integration\Pull\PushService;
 
 class FlowUserOptionService
 {
@@ -29,24 +30,26 @@ class FlowUserOptionService
 		$this->flowUserOptionRepository = FlowUserOptionRepository::getInstance();
 	}
 
-	public function save(int $flowId, string $code, int $userId, string $value): void
+	public function save(FlowUserOption $option): void
 	{
-		$this->validateCode($code);
+		$this->validateName($option->getName());
 
 		$insertFields = [
-			'FLOW_ID' => $flowId,
-			'USER_ID' => $userId,
-			'NAME' => $code,
-			'VALUE' => $value,
+			'FLOW_ID' => $option->getFlowId(),
+			'USER_ID' => $option->getUserId(),
+			'NAME' => $option->getName(),
+			'VALUE' => $option->getValue(),
 		];
 
 		$updateFields = [
-			'VALUE' => $value,
+			'VALUE' => $option->getValue(),
 		];
 
 		$uniqueFields = ['FLOW_ID', 'NAME', 'USER_ID'];
 
 		FlowUserOptionTable::merge($insertFields, $updateFields, $uniqueFields);
+
+		$this->onOptionChanged($option);
 	}
 
 	/**
@@ -84,8 +87,46 @@ class FlowUserOptionService
 			$value = $option->getValue() === 'Y' ? 'N' : 'Y';
 		}
 
-		$this->save($flowId, FlowUserOptionDictionary::FLOW_PINNED_FOR_USER->value, $userId, $value);
+		$newOption = new FlowUserOption(
+			$flowId,
+			$userId,
+			FlowUserOptionDictionary::FLOW_PINNED_FOR_USER->value,
+			$value,
+		);
+		$this->save($newOption);
 
-		return new FlowUserOption($flowId, $userId, FlowUserOptionDictionary::FLOW_PINNED_FOR_USER->value, $value);
+		return $newOption;
+	}
+
+	private function onOptionChanged(FlowUserOption $option): void
+	{
+		if ($this->isSendPushNeeded($option))
+		{
+			$this->addPushEvent($option);
+		}
+	}
+
+	private function addPushEvent(FlowUserOption $option): void
+	{
+		$command = $option->getName();
+		$userId = $option->getUserId();
+
+		$params = [
+			'FLOW_ID' => $option->getFlowId(),
+			'VALUE' => $option->getValue(),
+		];
+
+		PushService::addEvent([$userId], [
+			'module_id' => 'tasks',
+			'command' => $command,
+			'params' => $params,
+		]);
+	}
+
+	private function isSendPushNeeded(FlowUserOption $option): bool
+	{
+		$name = FlowUserOptionDictionary::tryFrom($option->getName());
+
+		return in_array($name, FlowUserOptionDictionary::NOTIFIABLE_OPTIONS, true);
 	}
 }

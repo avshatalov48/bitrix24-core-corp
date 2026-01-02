@@ -1,0 +1,6 @@
+<?php
+$MESS["CRM_INVOICE_OVERDUE_CATEGORY"] = "Мерзімі өткен шоттар";
+$MESS["CRM_INVOICE_OVERDUE_PRESET_OVERALL_COUNT"] = "Мерзімі өткен шоттар саны";
+$MESS["CRM_INVOICE_OVERDUE_PRESET_OVERALL_COUNT_SHORT"] = "Шоттар саны";
+$MESS["CRM_INVOICE_OVERDUE_PRESET_OVERALL_SUM"] = "Мерзімі өткен шоттар сомасы";
+$MESS["CRM_INVOICE_OVERDUE_PRESET_OVERALL_SUM_SHORT"] = "Шоттар сомасы";

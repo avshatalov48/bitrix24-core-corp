@@ -172,9 +172,7 @@ class ExtranetUserDataProvider extends EntityDataProvider
 			&& $filterValue[ExtranetUserSettings::EXTRANET_FIELD] === 'Y'
 		)
 		{
-			$filterValue['UF_DEPARTMENT'] = false;
-			$filterValue['!=EXTRANET.ROLE'] = 'collaber';
-			$filterValue['!INTRANET_USER_EXTRANET_GROUP_GROUP_ID'] = false;
+			$filterValue['=EXTRANET.ROLE'] = 'extranet';
 		}
 		elseif (
 			!$this->getSettings()->isFilterAvailable(ExtranetUserSettings::EXTRANET_FIELD)
@@ -184,18 +182,7 @@ class ExtranetUserDataProvider extends EntityDataProvider
 			)
 		)
 		{
-			$filterValue[] =  [
-				'LOGIC' => 'OR',
-				[
-					'!UF_DEPARTMENT' => false,
-				],
-				[
-					'INTRANET_USER_EXTRANET_GROUP_GROUP_ID' => false,
-				],
-				[
-					'=EXTRANET.ROLE' => 'collaber'
-				],
-			];
+			$filterValue['!=EXTRANET.ROLE'] = 'extranet';
 		}
 	}
 

@@ -5,9 +5,10 @@ use Bitrix\Catalog;
 use Bitrix\Crm\EntityPreset;
 use Bitrix\Crm\EntityRequisite;
 use Bitrix\Crm\RequisiteAddress;
-
 use Bitrix\Main\Loader;
 use Bitrix\Main\Localization\Loc;
+use Bitrix\Sale\Cashbox\Internals\CashboxTable;
+use Bitrix\Sale\Internals\PaySystemActionTable;
 
 Loc::loadMessages(__FILE__);
 class SaleManager
@@ -280,5 +281,34 @@ class SaleManager
 				\Bitrix\Main\Config\Option::set('crm', 'check_vat_zero', $vatID, '');
 			}
 		}
+	}
+
+	public static function hasPaymentSystemConfigured(): bool
+	{
+		if (!Loader::includeModule('sale'))
+		{
+			return false;
+		}
+
+		$filter = \Bitrix\SalesCenter\Integration\SaleManager::getInstance()->getPaySystemFilter();
+
+		return PaySystemActionTable::getCount($filter) > 0;
+	}
+
+	public static function hasCashboxConfigured(): bool
+	{
+		if (!Loader::includeModule('sale'))
+		{
+			return false;
+		}
+
+		if (\Bitrix\SalesCenter\Integration\SaleManager::getInstance()->isEnabled())
+		{
+			$filter = \Bitrix\SalesCenter\Integration\SaleManager::getInstance()->getCashboxFilter();
+
+			return CashboxTable::getCount($filter) > 0;
+		}
+
+		return false;
 	}
 }

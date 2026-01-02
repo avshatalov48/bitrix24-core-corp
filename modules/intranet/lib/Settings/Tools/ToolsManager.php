@@ -44,6 +44,7 @@ class ToolsManager
 			'menu_crm_store' => new Inventory(),
 			'menu_bi_constructor' => new BIConstructor(),
 			'menu_company' => new Company(),
+			'menu_booking' => new Booking(),
 		];
 
 		$this->sorter = new Sorter($toolsByMenuId);

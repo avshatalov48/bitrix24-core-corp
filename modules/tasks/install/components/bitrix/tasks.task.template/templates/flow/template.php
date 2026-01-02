@@ -16,6 +16,9 @@ use Bitrix\Tasks\UI\Editor;
 use Bitrix\Tasks\Update\TemplateConverter;
 use Bitrix\Tasks\Util\Type;
 use Bitrix\Tasks\Util;
+use Bitrix\UI\Buttons;
+use Bitrix\UI\Toolbar\ButtonLocation;
+use Bitrix\UI\Toolbar\Facade\Toolbar;
 
 /**
  * @var CMain $APPLICATION
@@ -40,8 +43,10 @@ $arParams =& $helper->getComponent()->arParams; // make $arParams the same varia
 $bodyClass = $APPLICATION->GetPageProperty('BodyClass');
 $APPLICATION->SetPageProperty(
 	'BodyClass',
-	($bodyClass ? $bodyClass.' ' : '').'no-all-paddings'
+	($bodyClass ? $bodyClass.' ' : '')
 );
+
+Toolbar::deleteFavoriteStar();
 
 /** intranet-settings-support */
 if (($arResult['IS_TOOL_AVAILABLE'] ?? null) === false)
@@ -94,17 +99,15 @@ if ($arParams['ENABLE_MENU_TOOLBAR'])
 	return;
 }
 
-$this->SetViewTarget('pagetitle', 100);
-?>
+$settingButton = new Buttons\Button([
+	'color' => Buttons\Color::LIGHT_BORDER,
+	'icon' => Buttons\Icon::SETTING,
+]);
+$settingButton->addClass('ui-btn-themes webform-cogwheel');
+$settingButton->addAttribute('id', 'templateEditPopupMenuOptions');
 
-	<div class="task-list-toolbar">
-		<div class="task-list-toolbar-actions">
-			<button class="ui-btn ui-btn-light-border ui-btn-themes ui-btn-icon-setting webform-cogwheel" id="templateEditPopupMenuOptions"></button>
-		</div>
-	</div>
+Toolbar::addButton($settingButton, ButtonLocation::RIGHT);
 
-<?php
-$this->EndViewTarget();
 $helper->displayFatals();
 
 if($helper->checkHasFatals())

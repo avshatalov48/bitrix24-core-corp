@@ -34,6 +34,7 @@ class CheckListItemFields
 		this.fields = [
 			'id',
 			'copiedId',
+			'nodeId',
 			'parentId',
 			'title',
 			'sortIndex',
@@ -49,6 +50,7 @@ class CheckListItemFields
 		];
 
 		this.id = null;
+		this.nodeId = null;
 		this.parentId = null;
 		this.title = '';
 		this.sortIndex = 0;
@@ -92,6 +94,16 @@ class CheckListItemFields
 	setId(id)
 	{
 		this.id = id;
+	}
+
+	getNodeId()
+	{
+		return this.nodeId;
+	}
+
+	setNodeId(nodeId)
+	{
+		this.nodeId = nodeId;
 	}
 
 	getCopiedId()

@@ -302,7 +302,7 @@
 					},
 					onprogress: function(p)
 					{
-						
+
 					}
 				});
 			});
@@ -685,7 +685,7 @@
 			}
 		});
 	};
-	
+
 	BX.CrmActivityVisit.prototype._updateTimer = function()
 	{
 		var lengthElement = this.getNode('record-length');
@@ -743,7 +743,7 @@
 			entityId: 0
 		};
 		var found = false;
-		
+
 		if(params.lead && params.lead.hasOwnProperty('0') && BX.type.isNotEmptyString(params.lead['0'].id))
 		{
 			entity.entityType = 'LEAD';
@@ -1137,7 +1137,7 @@
 
 				stopMediaStream(self.mediaStream);
 				self.mediaStream = null;
-				
+
 				BX.addClass(videoContainer, 'crm-activity-visit-hidden');
 				BX.removeClass(pictureContainer, 'crm-activity-visit-hidden');
 				BX.removeClass(self.elements.social, 'crm-activity-visit-block-disable');
@@ -1318,7 +1318,7 @@
 	{
 		var self = this;
 		var formData = new FormData();
-		
+
 		formData.append('IMAGE', imageBlob);
 		formData.append('sessid', BX.bitrix_sessid());
 		formData.append('ajax_action', 'RECOGNIZE');
@@ -1341,8 +1341,7 @@
 		var profileLink = this.getNode('faceid-vk-profile-link');
 		var searchButton = this.getNode('faceid-button-search-social');
 
-		profileLink.innerText = 'VK.com/' + BX.util.htmlspecialchars(profile);
-		profileLink.href = 'https://vk.com/' + BX.util.htmlspecialchars(profile);
+		profileLink.innerText = BX.util.htmlspecialchars(profile);
 		BX.addClass(searchButton, 'crm-activity-visit-hidden');
 		BX.removeClass(profileContainer, 'crm-activity-visit-hidden');
 	};
@@ -1473,7 +1472,7 @@
 			}
 		});
 	};
-	
+
 	SocialSelector.prototype._onSelectButtonClick = function(e)
 	{
 		var profile = e.target.dataset.profile;

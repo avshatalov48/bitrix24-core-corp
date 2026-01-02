@@ -6,7 +6,6 @@ if (!defined('B_PROLOG_INCLUDED') || B_PROLOG_INCLUDED !== true)
 }
 
 return [
-	'css' => 'dist/calendar-service.bundle.css',
 	'js' => 'dist/calendar-service.bundle.js',
 	'rel' => [
 		'main.core',

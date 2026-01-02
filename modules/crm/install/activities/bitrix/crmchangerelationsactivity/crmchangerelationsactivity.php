@@ -53,7 +53,16 @@ class CBPCrmChangeRelationsActivity extends CBPCrmGetRelationsInfoActivity
 		}
 
 		$parentDocumentId = CCrmBizProcHelper::ResolveDocumentId($this->ParentTypeId, $this->ParentId);
-		$parentDocument = static::getDocumentService()->GetDocument($parentDocumentId);
+
+		if (defined('\CBPDocument::PARAM_USED_DOCUMENT_FIELDS'))
+		{
+			$parentDocument = static::getDocumentService()->GetDocument($parentDocumentId, select: ['ID']);
+		}
+		else
+		{
+			$parentDocument = static::getDocumentService()->GetDocument($parentDocumentId);
+		}
+
 		if ($this->Action === self::REPLACE_RELATION_ACTION && is_null($parentDocument))
 		{
 			$errors->setError(new Error(Loc::getMessage('CRM_CRA_ELEMENT_EXISTENCE_ERROR')));

@@ -12,7 +12,6 @@ export type ApplicationState = {
 		prompt: ?string,
 	},
 	hasAvailableSelectorItems: boolean,
-	isAttachCallAssessment: boolean,
 };
 
 export default () => {
@@ -26,7 +25,6 @@ export default () => {
 				prompt: null,
 			},
 			hasAvailableSelectorItems: false,
-			isAttachCallAssessment: true,
 		},
 		mutations,
 		getters,

@@ -11,7 +11,10 @@ jn.define('im/messenger/controller/recent/collab/recent', (require, exports, mod
 		ComponentCode,
 		DialogType,
 	} = require('im/messenger/const');
+	const { MessengerCounterSender } = require('im/messenger/lib/counters/counter-manager/messenger/sender');
+
 	const { LoggerManager } = require('im/messenger/lib/logger');
+	const { CounterHelper } = require('im/messenger/lib/helper');
 	const logger = LoggerManager.getInstance().getLogger('recent--collab-recent');
 
 	/**
@@ -89,28 +92,14 @@ jn.define('im/messenger/controller/recent/collab/recent', (require, exports, mod
 			void await this.store.dispatch('dialoguesModel/set', modelData.dialogues);
 			void await this.store.dispatch('filesModel/set', modelData.files);
 			void await this.store.dispatch('messagesModel/store', modelData.messages);
-
 			void await this.store.dispatch('recentModel/set', modelData.recent);
 
 			if (this.recentService.pageNavigation.currentPage === 1)
 			{
-				const recentIndex = [];
-				modelData.recent.forEach((item) => recentIndex.push(item.id.toString()));
-
-				const idListForDeleteFromCache = [];
-				this.store.getters['recentModel/getCollection']()
-					.forEach((item) => {
-						if (!recentIndex.includes(item.id.toString()))
-						{
-							idListForDeleteFromCache.push(item.id);
-						}
-					});
-
-				for await (const id of idListForDeleteFromCache)
-				{
-					this.store.dispatch('recentModel/deleteFromModel', { id });
-				}
+				this.deleteItemsFromStore(modelData.recent);
 			}
+
+			MessengerCounterSender.getInstance().sendRecentPageLoaded(modelData.counterState);
 		}
 
 		/**
@@ -125,6 +114,7 @@ jn.define('im/messenger/controller/recent/collab/recent', (require, exports, mod
 				files: recentData.files,
 				recent: [],
 				messages: [...recentData.messages, ...recentData.additionalMessages],
+				counterState: [],
 			};
 
 			recentData.recentItems.forEach((recentItem) => {
@@ -152,6 +142,11 @@ jn.define('im/messenger/controller/recent/collab/recent', (require, exports, mod
 				dialogCounters[recentItem.dialogId] = recentItem.counter;
 			});
 
+			const messagesAutoDeleteConfigs = {};
+			recentData.messagesAutoDeleteConfigs.forEach((item) => {
+				messagesAutoDeleteConfigs[item.chatId] = item;
+			});
+
 			recentData.chats.forEach((chatItem) => {
 				const chat = chatItem;
 				const counter = dialogCounters[chatItem.dialogId];
@@ -160,7 +155,19 @@ jn.define('im/messenger/controller/recent/collab/recent', (require, exports, mod
 					chat.counter = counter;
 				}
 
+				if (messagesAutoDeleteConfigs[chatItem.id])
+				{
+					chat.messagesAutoDeleteDelay = messagesAutoDeleteConfigs[chatItem.id].delay;
+				}
+
 				result.dialogues.push(chat);
+
+				result.counterState.push({
+					chatId: chat.id,
+					parentChatId: chat.parentChatId,
+					type: CounterHelper.getCounterTypeByDialogType(chat.type),
+					counter: chat.counter ?? 0,
+				});
 			});
 
 			return result;
@@ -168,15 +175,7 @@ jn.define('im/messenger/controller/recent/collab/recent', (require, exports, mod
 
 		onCreateChat()
 		{
-			MessengerEmitter.emit(
-				EventType.navigation.broadCastEventWithTabChange,
-				{
-					broadCastEvent: EventType.messenger.createCollab,
-					toTab: ComponentCode.imMessenger,
-					data: {},
-				},
-				ComponentCode.imNavigation,
-			);
+			MessengerEmitter.emit(EventType.messenger.createChat, {}, ComponentCode.imCollabMessenger);
 		}
 
 		/**

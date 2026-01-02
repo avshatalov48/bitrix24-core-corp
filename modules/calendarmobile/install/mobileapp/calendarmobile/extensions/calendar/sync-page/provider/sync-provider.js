@@ -27,21 +27,10 @@ jn.define('calendar/sync-page/provider/sync-provider', (require, exports, module
 
 			this.connectionModel = new SyncConnection({
 				type: this.type,
-				onAuthComplete: () => {
-					this.handleStartWizardWaiting();
-					this.openSyncWizard();
-				},
-				onConnectionCreated: () => {
-					this.setWizardConnectionCreatedState();
-					this.handleEndWizardWaiting();
-				},
-				onConnectionError: () => {
-					this.setWizardErrorState();
-					this.handleEndWizardWaiting();
-				},
-				openIcloudDialog: () => {
-					this.openIcloudDialog();
-				},
+				onAuthComplete: this.onAuthComplete,
+				onConnectionCreated: this.onConnectionCreated,
+				onConnectionError: this.onConnectionError,
+				openIcloudDialog: this.openIcloudDialog,
 			});
 
 			this.syncWizardFactory = new SyncWizardFactory({
@@ -53,12 +42,6 @@ jn.define('calendar/sync-page/provider/sync-provider', (require, exports, module
 			});
 
 			this.syncLottieRef = null;
-
-			this.openSettingsMenu = this.openSettingsMenu.bind(this);
-			this.updateConnection = this.updateConnection.bind(this);
-			this.connectProvider = this.connectProvider.bind(this);
-			this.reconnectProvider = this.reconnectProvider.bind(this);
-			this.onIcloudConnectionCreated = this.onIcloudConnectionCreated.bind(this);
 		}
 
 		get customEventEmitter()
@@ -84,6 +67,11 @@ jn.define('calendar/sync-page/provider/sync-provider', (require, exports, module
 		get type()
 		{
 			return this.props.type;
+		}
+
+		get reconnecting()
+		{
+			return this.props.reconnecting;
 		}
 
 		render()
@@ -115,7 +103,7 @@ jn.define('calendar/sync-page/provider/sync-provider', (require, exports, module
 					style: {
 						flexDirection: 'row',
 					},
-					testId: `sync_page_provider_content`,
+					testId: 'sync_page_provider_content',
 				},
 				this.renderIcon(),
 				View(
@@ -133,7 +121,7 @@ jn.define('calendar/sync-page/provider/sync-provider', (require, exports, module
 								fontSize: 18,
 								fontWeight: '500',
 							},
-							testId: `sync_page_provider_title`,
+							testId: 'sync_page_provider_title',
 						},
 					),
 					this.renderSyncDate(),
@@ -160,7 +148,7 @@ jn.define('calendar/sync-page/provider/sync-provider', (require, exports, module
 						backgroundPosition: 'center',
 						backgroundResizeMode: 'cover',
 					},
-					testId: `sync_page_provider_icon`,
+					testId: 'sync_page_provider_icon',
 				},
 				Image(
 					{
@@ -199,6 +187,21 @@ jn.define('calendar/sync-page/provider/sync-provider', (require, exports, module
 
 		renderButtons()
 		{
+			if (this.reconnecting)
+			{
+				return View(
+					{
+						style: {
+							marginTop: 10,
+							flexDirection: 'row',
+							alignItems: 'center',
+						},
+					},
+					this.renderReconnectButton(),
+					this.renderSettingsButton(),
+				);
+			}
+
 			if (this.props.connected === false)
 			{
 				return View(
@@ -250,7 +253,7 @@ jn.define('calendar/sync-page/provider/sync-provider', (require, exports, module
 						opacity: this.state.connectionWaiting ? 0.5 : 1,
 					},
 					onClick: this.connectProvider,
-					testId: `sync_page_provider_connect_button`,
+					testId: 'sync_page_provider_connect_button',
 				},
 				Text(
 					{
@@ -279,7 +282,7 @@ jn.define('calendar/sync-page/provider/sync-provider', (require, exports, module
 						borderColor: AppTheme.colors.accentBrandGreen,
 					},
 					onClick: this.updateConnection,
-					testId: `sync_page_provider_update_button`,
+					testId: 'sync_page_provider_update_button',
 				},
 				Text(
 					{
@@ -303,9 +306,10 @@ jn.define('calendar/sync-page/provider/sync-provider', (require, exports, module
 						flexDirection: 'row',
 						flexGrow: 1,
 						backgroundColor: AppTheme.colors.accentMainPrimaryalt,
+						opacity: this.reconnecting ? 0.5 : 1,
 					},
 					onClick: this.reconnectProvider,
-					testId: `sync_page_provider_reconnect_button`,
+					testId: 'sync_page_provider_reconnect_button',
 				},
 				Text(
 					{
@@ -358,7 +362,7 @@ jn.define('calendar/sync-page/provider/sync-provider', (require, exports, module
 						marginLeft: 10,
 					},
 					onClick: this.openSettingsMenu,
-					testId: `sync_page_provider_settings_button`,
+					testId: 'sync_page_provider_settings_button',
 				},
 				Image(
 					{
@@ -376,7 +380,7 @@ jn.define('calendar/sync-page/provider/sync-provider', (require, exports, module
 
 		renderSyncDate()
 		{
-			if (this.isErrorConnection())
+			if (this.isErrorConnection() || this.reconnecting)
 			{
 				return null;
 			}
@@ -403,7 +407,7 @@ jn.define('calendar/sync-page/provider/sync-provider', (require, exports, module
 						flexDirection: 'row',
 						alignItems: 'center',
 					},
-					testId: `sync_page_provider_sync_date_container`,
+					testId: 'sync_page_provider_sync_date_container',
 				},
 				LottieView(
 					{
@@ -429,36 +433,54 @@ jn.define('calendar/sync-page/provider/sync-provider', (require, exports, module
 							marginLeft: 3,
 							color: AppTheme.colors.base3,
 						},
-						testId: `sync_page_provider_sync_date`,
+						testId: 'sync_page_provider_sync_date',
 					},
 				),
 			);
 		}
 
-		openIcloudDialog()
-		{
+		onAuthComplete = () => {
+			this.handleStartWizardWaiting();
+
+			if (!this.reconnecting)
+			{
+				this.openSyncWizard();
+			}
+		};
+
+		onConnectionCreated = () => {
+			this.setWizardConnectionCreatedState();
+			this.handleEndWizardWaiting();
+		};
+
+		onConnectionError = () => {
+			this.setWizardErrorState();
+			this.handleEndWizardWaiting();
+		};
+
+		openIcloudDialog = () => {
 			const icloudDialog = new IcloudDialog({
 				connectionModel: this.connectionModel,
 				onIcloudConnectionCreated: this.onIcloudConnectionCreated,
 			});
 
 			return icloudDialog.show();
-		}
+		};
 
-		onIcloudConnectionCreated(connectionId, appleId)
-		{
+		onIcloudConnectionCreated = (connectionId, appleId) => {
 			this.connectionModel.syncIcloudConnection(connectionId);
 
 			setTimeout(() => {
 				this.handleStartWizardWaiting();
-				this.openSyncWizard({
-					accountName: appleId,
-				});
-			}, 500);
-		}
 
-		openSettingsMenu()
-		{
+				if (!this.reconnecting)
+				{
+					this.openSyncWizard({ accountName: appleId });
+				}
+			}, 500);
+		};
+
+		openSettingsMenu = () => {
 			const settingsMenu = new SyncSettings({
 				connectionId: this.props.id,
 				type: this.type,
@@ -469,10 +491,9 @@ jn.define('calendar/sync-page/provider/sync-provider', (require, exports, module
 			});
 
 			return settingsMenu.show();
-		}
+		};
 
-		updateConnection()
-		{
+		updateConnection = () => {
 			if (this.state.connectionUpdated)
 			{
 				return;
@@ -494,33 +515,26 @@ jn.define('calendar/sync-page/provider/sync-provider', (require, exports, module
 					}
 				});
 			});
-		}
+		};
 
-		connectProvider()
-		{
+		connectProvider = () => {
 			if (this.state.connectionWaiting)
 			{
 				return;
 			}
 
 			this.connectionModel.connect();
-		}
+		};
 
-		reconnectProvider()
-		{
-			// eslint-disable-next-line promise/catch-or-return
-			this.connectionModel.deactivateConnection(this.props.id).then((response) => {
-				if (response.errors && response.errors.length > 0)
-				{
-					console.error('error deactivate');
-				}
-				else
-				{
-					this.customEventEmitter.emit('Calendar.Sync::onConnectionDisabled', [{ type: this.type }]);
-					this.connectionModel.connect();
-				}
-			});
-		}
+		reconnectProvider = () => {
+			if (this.reconnecting)
+			{
+				return;
+			}
+
+			this.customEventEmitter.emit('Calendar.Sync::onReconnection', [{ type: this.type }]);
+			this.connectionModel.connect();
+		};
 
 		openSyncWizard(additionalProps = {})
 		{
@@ -554,6 +568,11 @@ jn.define('calendar/sync-page/provider/sync-provider', (require, exports, module
 
 		isErrorConnection()
 		{
+			if (this.reconnecting)
+			{
+				return false;
+			}
+
 			return this.connected === true && this.status === false;
 		}
 	}

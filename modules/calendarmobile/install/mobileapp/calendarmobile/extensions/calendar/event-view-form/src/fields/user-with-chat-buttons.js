@@ -6,18 +6,17 @@ jn.define('calendar/event-view-form/fields/user-with-chat-buttons', (require, ex
 	const { Color, Indent } = require('tokens');
 	const { NotifyManager } = require('notify-manager');
 	const { confirmDefaultAction } = require('alert');
+	const { Type } = require('type');
 
 	const { UserFieldClass } = require('layout/ui/fields/user');
 	const { Icon, IconView } = require('ui-system/blocks/icon');
 	const { withTheme } = require('layout/ui/fields/theme');
-	const { FieldWrapper } = require('layout/ui/fields/theme/air/elements/field-wrapper');
 
-	const { EmptyContent } = require('layout/ui/fields/user/theme/air/src/empty-content');
-	const { EntityList } = require('layout/ui/fields/user/theme/air/src/entity-list');
-
+	const { UserFieldAirTheme } = require('calendar/layout/user-field-air-theme');
 	const { EventAjax } = require('calendar/ajax');
 	const { CollabManager } = require('calendar/data-managers/collab-manager');
 	const { CollabChatMenu, collabChatItemTypes } = require('calendar/event-view-form/collab-chat-menu');
+	const { CollabAccessService } = require('collab/service/access');
 
 	/**
 	 * @class UserWithChatButtonsField
@@ -54,9 +53,46 @@ jn.define('calendar/event-view-form/fields/user-with-chat-buttons', (require, ex
 			return this.props.collabId;
 		}
 
+		get ownerId()
+		{
+			return this.props.ownerId;
+		}
+
+		get meetingHost()
+		{
+			return this.props.meetingHost;
+		}
+
+		hasCustomTitle()
+		{
+			return false;
+		}
+
 		hasPermissions()
 		{
-			return this.props.permissions?.view_full;
+			return this.props.permissions?.view_full && this.userHasMeetingStatus();
+		}
+
+		userHasMeetingStatus()
+		{
+			const userId = Number(env.userId);
+
+			if (userId === this.ownerId || userId === this.meetingHost)
+			{
+				return true;
+			}
+
+			if (Type.isArrayFilled(this.attendees))
+			{
+				const userStatus = this.attendees.find((attendee) => attendee.id === userId);
+
+				if (userStatus)
+				{
+					return true;
+				}
+			}
+
+			return false;
 		}
 
 		renderRightIcons()
@@ -97,7 +133,13 @@ jn.define('calendar/event-view-form/fields/user-with-chat-buttons', (require, ex
 		}
 
 		handleChatIconClick = async () => {
-			if (this.collabId > 0 && CollabManager.getCollab(this.collabId))
+			const isCollabToolEnabled = await CollabAccessService.checkAccess();
+
+			if (
+				this.collabId > 0
+				&& CollabManager.getCollab(this.collabId)
+				&& isCollabToolEnabled
+			)
 			{
 				this.openCollabChatMenu();
 
@@ -142,11 +184,6 @@ jn.define('calendar/event-view-form/fields/user-with-chat-buttons', (require, ex
 		async openNormalChat()
 		{
 			void NotifyManager.showLoadingIndicator();
-
-			if (this.chatId > 0)
-			{
-				return this.openChat(this.chatId);
-			}
 
 			const { data } = await EventAjax.getEventChatId(this.parentId);
 
@@ -194,34 +231,7 @@ jn.define('calendar/event-view-form/fields/user-with-chat-buttons', (require, ex
 		}
 	}
 
-	const AirTheme = ({ field }) => FieldWrapper(
-		{ field },
-		View(
-			{
-				style: {
-					paddingVertical: field.isMultiple() ? 0 : Indent.L.toNumber(),
-					flexDirection: 'row',
-					alignItems: 'center',
-					...field.getStyles().airContainer,
-				},
-			},
-			field.isEmpty()
-				? View(
-					{
-						testId: `${field.testId}_CONTENT`,
-					},
-					EmptyContent({
-						testId: `${field.testId}_EMPTY_VIEW`,
-						icon: field.getDefaultLeftIcon(),
-						text: field.getEmptyText(),
-					}),
-				)
-				: EntityList({ field }),
-			!field.isEmpty() && field.hasPermissions() && field.renderRightIcons(),
-		),
-	);
-
 	module.exports = {
-		UserWithChatButtonsField: withTheme(UserWithChatButtonsField, AirTheme),
+		UserWithChatButtonsField: withTheme(UserWithChatButtonsField, UserFieldAirTheme),
 	};
 });

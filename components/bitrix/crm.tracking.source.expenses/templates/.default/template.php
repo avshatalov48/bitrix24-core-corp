@@ -4,12 +4,15 @@ if (!defined("B_PROLOG_INCLUDED") || B_PROLOG_INCLUDED!==true)die();
 use Bitrix\Main\Web\Json;
 use Bitrix\Main\Localization\Loc;
 use Bitrix\Main\UI\Extension;
+use Bitrix\UI\Buttons\Color;
+use Bitrix\UI\Toolbar\Facade\Toolbar;
 
 /** @var CMain $APPLICATION */
 /** @var array $arParams */
 /** @var array $arResult */
 
 Extension::load(["ui.forms", "ui.buttons", "popup", "date"]);
+\Bitrix\Main\Loader::includeModule('ui');
 
 foreach ($arResult['ERRORS'] as $error)
 {
@@ -66,16 +69,16 @@ $APPLICATION->IncludeComponent(
 );
 $filterLayout = ob_get_clean();
 */
+Toolbar::deleteFavoriteStar();
 
 if ($arResult['SOURCE_NAME'])
 {
-	$this->SetViewTarget('pagetitle');
-	?>
-		<button id="crm-tracking-expenses-add" type="button" class="ui-btn ui-btn-primary">
-			<?=Loc::getMessage('CRM_TRACKING_EXPENSES_BTN_ADD')?>
-		</button>
-	<?
-	$this->EndViewTarget();
+	$button = new Bitrix\UI\Buttons\Button([
+		'text' => Loc::getMessage('CRM_TRACKING_EXPENSES_BTN_ADD'),
+		'color' => Color::PRIMARY,
+	]);
+	$button->addAttribute('id', 'crm-tracking-expenses-add');
+	Toolbar::addButton($button);
 }
 
 $snippet = new \Bitrix\Main\Grid\Panel\Snippet();

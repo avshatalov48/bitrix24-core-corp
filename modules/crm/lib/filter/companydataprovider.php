@@ -397,6 +397,8 @@ class CompanyDataProvider extends EntityDataProvider implements FactoryOptionabl
 			}
 		}
 
+		(new Crm\Filter\Field\LastCommunicationField())->addLastCommunicationField($this, $result);
+
 		return $result;
 	}
 
@@ -454,6 +456,7 @@ class CompanyDataProvider extends EntityDataProvider implements FactoryOptionabl
 					'referenceClass' => $referenceClass,
 					'isEnableAllUsers' => $isEnableAllUsers,
 					'isEnableOtherUsers' => $isEnableOtherUsers,
+					'isEnableStructureNode' => true,
 				]
 			);
 		}

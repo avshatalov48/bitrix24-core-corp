@@ -1,0 +1,71 @@
+.bx-call-action-popup-scope {
+	--call-action-popup-primary-btn-color: #0075FF;
+	--call-action-popup-primary-btn-color__active: #006CEB;
+}
+
+.bx-call-action-popup__container {
+	display: flex;
+	flex-direction: column;
+	gap: 12px;
+	padding: 14px 20px 24px 24px;
+	box-shadow: 0 8px 17px 0 rgba(var(--ui-color-palette-black-solid-rgb), 0.21);
+}
+
+.bx-call-action-popup__body {
+	display: flex;
+	flex-direction: column;
+	gap: 12px;
+}
+
+.bx-call-action-popup__buttons-wrapper {
+	display: flex;
+	justify-content: center;
+	align-items: center;
+	gap: 12px;
+}
+
+.bx-call-action-popup__description {
+	padding: 9px 32px 10px 33px;
+	font: var(--ui-font-size-lg, 15px)/var(--ui-font-line-height-sm, 20px) var(--ui-font-family-primary);
+	font-weight: var(--ui-font-weight-normal, 400);
+	color: var(--ui-color-palette-gray-90);
+	letter-spacing: -0.05px;
+	text-align: center;
+}
+
+.bx-call-action-popup__title {
+	font: 19px/var(--ui-font-line-height-sm, 26px) var(--ui-font-family-primary);
+	font-weight: var(--ui-font-weight-semi-bold, 600);
+	color: var(--ui-color-palette-black-base);
+	letter-spacing: -0.2px;
+}
+
+.bx-call-action-popup__button {
+	padding: 5px 18px;
+	border-radius: 10px;
+	font: var(--ui-font-size-lg, 15px)/var(--ui-font-line-height-sm, 20px) var(--ui-font-family-primary);
+	font-weight: var(--ui-font-weight-medium, 500);
+	letter-spacing: -0.05px;
+	cursor: pointer;
+	transition: 250ms linear background-color;
+	box-sizing: border-box;
+}
+
+.bx-call-action-popup__button.--cancel {
+	background: var(--call-action-popup-primary-btn-color);
+	border: 2px solid var(--call-action-popup-primary-btn-color);
+	color: var(--ui-color-palette-white-base);
+}
+
+.bx-call-action-popup__button.--ok {
+	border: 2px solid var(--ui-color-palette-gray-35);
+	color: var(--ui-color-palette-gray-90);
+}
+
+.bx-call-action-popup__button:hover.--cancel {
+	background: var(--call-action-popup-primary-btn-color__active);
+}
+
+.bx-call-action-popup__button:hover.--ok {
+	background: rgba(var(--ui-color-palette-black-solid-rgb), 0.05);
+}

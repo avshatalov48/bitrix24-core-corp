@@ -7,8 +7,8 @@ jn.define('crm/timeline/controllers/todo', (require, exports, module) => {
 	const { FileSelector } = require('layout/ui/file/selector');
 	const { NotifyManager } = require('notify-manager');
 	const { ResponsibleSelector } = require('crm/timeline/services/responsible-selector');
-	const { ProfileView } = require('user/profile');
 	const { AnalyticsEvent } = require('analytics');
+	const { UserProfile } = require('user-profile');
 
 	const SupportedActions = {
 		ADD_FILE: 'Activity:ToDo:AddFile',
@@ -31,17 +31,18 @@ jn.define('crm/timeline/controllers/todo', (require, exports, module) => {
 		 * @public
 		 * @param {string} action
 		 * @param {object} actionParams
+		 * @param {AnalyticsEvent|null} analyticsEvent
 		 */
 		// eslint-disable-next-line consistent-return
-		onItemAction({ action, actionParams = {} })
+		onItemAction({ action, actionParams = {}, analyticsEvent = null })
 		{
 			// eslint-disable-next-line default-case
 			switch (action)
 			{
 				case SupportedActions.ADD_FILE:
-					return this.openFileManager(actionParams);
+					return this.openFileManager(actionParams, analyticsEvent);
 				case SupportedActions.CHANGE_RESPONSIBLE:
-					return this.openUserSelector(actionParams);
+					return this.openUserSelector(actionParams, analyticsEvent);
 				case SupportedActions.USER_CLICK:
 					return this.openUserProfile(actionParams);
 				case SupportedActions.CLIENT_CLICK:
@@ -64,15 +65,18 @@ jn.define('crm/timeline/controllers/todo', (require, exports, module) => {
 			};
 			const { EntityDetailOpener } = await requireLazy('crm:entity-detail/opener');
 
-			const analytics = new AnalyticsEvent(BX.componentParameters.get('analytics', {}))
+			const analytics = new AnalyticsEvent(
+				BX.componentParameters.get('analytics', {}),
+			)
 				.setSection('text_link');
+
 			EntityDetailOpener.open({
 				payload,
 				analytics,
 			});
 		}
 
-		openFileManager(actionParams)
+		openFileManager(actionParams, analyticsEvent)
 		{
 			if (actionParams.files && actionParams.files !== '')
 			{
@@ -85,16 +89,19 @@ jn.define('crm/timeline/controllers/todo', (require, exports, module) => {
 					entityTypeId: actionParams.ownerTypeId,
 					entityId: actionParams.ownerId,
 					activityId: actionParams.entityId,
+					analyticsEvent: analyticsEvent
+						?.setEvent('activity_edit')
+						.setElement('edit_button'),
 				}));
 			}
 		}
 
-		openUserSelector(actionParams)
+		openUserSelector(actionParams, analyticsEvent)
 		{
 			const { responsibleId } = actionParams;
 
 			ResponsibleSelector.show({
-				onSelectedUsers: this.updateResponsibleUser.bind(this, actionParams),
+				onSelectedUsers: this.updateResponsibleUser.bind(this, actionParams, analyticsEvent),
 				responsibleId,
 				layout,
 			});
@@ -104,32 +111,17 @@ jn.define('crm/timeline/controllers/todo', (require, exports, module) => {
 		{
 			const { userId } = actionParams || {};
 
-			if (!userId)
-			{
-				return;
-			}
-
-			const widgetParams = {
-				groupStyle: true,
-				backdrop: {
-					bounceEnable: false,
-					swipeAllowed: true,
-					showOnTop: true,
-					hideNavigationBar: false,
-					horizontalSwipeAllowed: false,
-				},
-			};
-
-			PageManager.openWidget('list', widgetParams)
-				.then((list) => ProfileView.open({ userId }, list))
-				.catch(console.error);
+			void UserProfile.open({
+				ownerId: userId,
+			});
 		}
 
 		/**
 		 * @param {object} actionParams
+		 * @param {AnalyticsEvent|null} analyticsEvent
 		 * @param {array} selectedUsers
 		 */
-		updateResponsibleUser(actionParams, selectedUsers)
+		updateResponsibleUser(actionParams, analyticsEvent, selectedUsers)
 		{
 			const selectedUserId = selectedUsers[0].id;
 			if (selectedUserId === actionParams.responsibleId)
@@ -142,7 +134,13 @@ jn.define('crm/timeline/controllers/todo', (require, exports, module) => {
 				responsibleId: selectedUserId,
 			};
 
-			BX.ajax.runAction('crm.activity.todo.updateResponsibleUser', { data })
+			BX.ajax.runAction('crm.activity.todo.updateResponsibleUser', {
+				data,
+				analyticsLabel: analyticsEvent
+					?.setEvent('activity_edit')
+					.setElement('edit_button')
+					.exportToObject(),
+			})
 				.catch((response) => {
 					NotifyManager.showErrors(response.errors);
 				});

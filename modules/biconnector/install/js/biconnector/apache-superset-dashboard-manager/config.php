@@ -15,6 +15,7 @@ return [
 		'main.core.events',
 		'sidepanel',
 		'biconnector.dashboard-export-master',
+		'biconnector.dashboard-group',
 	],
 	'skip_core' => false,
 ];

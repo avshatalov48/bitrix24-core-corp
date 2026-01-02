@@ -26,5 +26,6 @@ $APPLICATION->IncludeComponent(
 			'PATH_TO_CHANNEL' => $arResult['PATH_TO_CHANNEL'] ?? null,
 		],
 		'USE_PADDING' => false,
+		'USE_UI_TOOLBAR' => 'Y',
 	)
 );

@@ -2,7 +2,7 @@
 this.BX = this.BX || {};
 this.BX.Booking = this.BX.Booking || {};
 this.BX.Booking.Provider = this.BX.Booking.Provider || {};
-(function (exports,main_core,booking_core,booking_const,booking_lib_apiClient,booking_lib_bookingFilter,booking_provider_service_mainPageService,booking_provider_service_clientService,booking_provider_service_resourcesService) {
+(function (exports,main_core,booking_core,booking_const,booking_lib_apiClient,booking_lib_bookingFilter,booking_lib_deepToRaw,booking_provider_service_mainPageService,booking_provider_service_clientService,booking_provider_service_resourcesService) {
 	'use strict';
 
 	function mapModelToDto(booking) {
@@ -48,17 +48,17 @@ this.BX.Booking.Provider = this.BX.Booking.Provider || {};
 	  }, {});
 	}
 	function mapDtoToModel(bookingDto) {
+	  var _bookingDto$messages;
 	  const clients = bookingDto.clients.filter(client => main_core.Type.isArrayFilled(Object.values(client.data)));
-	  return {
+	  const booking = {
 	    id: bookingDto.id,
 	    updatedAt: bookingDto.updatedAt,
-	    resourcesIds: bookingDto.resources.map(({
-	      id
-	    }) => id),
+	    resourcesIds: getSortedResourcesByPrimary(bookingDto),
 	    primaryClient: clients == null ? void 0 : clients[0],
 	    clients,
 	    counter: bookingDto.counter,
 	    counters: bookingDto.counters,
+	    createdAt: bookingDto.createdAt,
 	    name: bookingDto.name,
 	    dateFromTs: bookingDto.datePeriod.from.timestamp * 1000,
 	    timezoneFrom: bookingDto.datePeriod.from.timezone,
@@ -68,7 +68,34 @@ this.BX.Booking.Provider = this.BX.Booking.Provider || {};
 	    rrule: bookingDto.rrule,
 	    note: bookingDto.note,
 	    visitStatus: bookingDto.visitStatus,
-	    externalData: bookingDto.externalData
+	    externalData: bookingDto.externalData,
+	    messages: (_bookingDto$messages = bookingDto.messages) != null && _bookingDto$messages.length ? bookingDto.messages : undefined
+	  };
+	  return Object.fromEntries(Object.entries(booking).filter(([, value]) => !main_core.Type.isUndefined(value)));
+	}
+	function getSortedResourcesByPrimary({
+	  resources
+	}) {
+	  return [resources.find(resource => resource.isPrimary), ...resources.filter(resource => !resource.isPrimary)].map(({
+	    id
+	  }) => id);
+	}
+	function mapModelToCreateFromWaitListItemDto(waitListItemId, booking) {
+	  return {
+	    waitListItemId,
+	    resources: booking.resourcesIds.map(id => ({
+	      id
+	    })),
+	    datePeriod: {
+	      from: {
+	        timestamp: booking.dateFromTs / 1000,
+	        timezone: booking.timezoneFrom
+	      },
+	      to: {
+	        timestamp: booking.dateToTs / 1000,
+	        timezone: booking.timezoneTo
+	      }
+	    }
 	  };
 	}
 
@@ -132,34 +159,61 @@ this.BX.Booking.Provider = this.BX.Booking.Provider || {};
 	  }
 	  async add(booking) {
 	    const id = booking.id;
+	    const $store = booking_core.Core.getStore();
 	    try {
-	      await booking_core.Core.getStore().dispatch(`${booking_const.Model.Interface}/addQuickFilterIgnoredBookingId`, id);
-	      await booking_core.Core.getStore().dispatch(`${booking_const.Model.Bookings}/add`, booking);
+	      await $store.dispatch(`${booking_const.Model.Interface}/addCreatedFromEmbedBooking`, id);
+	      await $store.dispatch(`${booking_const.Model.Filter}/addQuickFilterIgnoredBookingId`, id);
+	      await $store.dispatch(`${booking_const.Model.Bookings}/add`, booking);
 	      const bookingDto = mapModelToDto(booking);
 	      const data = await new booking_lib_apiClient.ApiClient().post('Booking.add', {
 	        booking: bookingDto
 	      });
 	      const createdBooking = mapDtoToModel(data);
-	      await booking_core.Core.getStore().dispatch(`${booking_const.Model.Interface}/addQuickFilterIgnoredBookingId`, createdBooking.id);
-	      void booking_core.Core.getStore().dispatch(`${booking_const.Model.Bookings}/update`, {
+	      const clients = new BookingDataExtractor([data]).getClients();
+	      void $store.dispatch(`${booking_const.Model.Clients}/upsertMany`, clients);
+	      await $store.dispatch(`${booking_const.Model.Interface}/setAnimationPause`, true);
+	      await $store.dispatch(`${booking_const.Model.Interface}/addCreatedFromEmbedBooking`, createdBooking.id);
+	      await $store.dispatch(`${booking_const.Model.Filter}/addQuickFilterIgnoredBookingId`, createdBooking.id);
+	      await $store.dispatch(`${booking_const.Model.Bookings}/update`, {
 	        id,
 	        booking: createdBooking
 	      });
+	      main_core.Event.EventEmitter.emit(booking_const.EventName.CreateBookings, {
+	        bookings: [createdBooking]
+	      });
 	      void booking_provider_service_mainPageService.mainPageService.fetchCounters();
+	      return {
+	        success: true,
+	        booking: createdBooking
+	      };
 	    } catch (error) {
-	      void booking_core.Core.getStore().dispatch(`${booking_const.Model.Bookings}/delete`, id);
+	      void $store.dispatch(`${booking_const.Model.Bookings}/delete`, id);
 	      console.error('BookingService: add error', error);
+	      return {
+	        success: false
+	      };
+	    } finally {
+	      await $store.dispatch(`${booking_const.Model.Interface}/setAnimationPause`, false);
 	    }
 	  }
 	  async addList(bookings) {
+	    const $store = booking_core.Core.getStore();
 	    try {
+	      await $store.dispatch(`${booking_const.Model.Interface}/addCreatedFromEmbedBooking`, bookings.map(({
+	        id
+	      }) => id));
 	      const bookingList = bookings.map(booking => mapModelToDto(booking));
 	      const api = new booking_lib_apiClient.ApiClient();
 	      const data = await api.post('Booking.addList', {
 	        bookingList
 	      });
 	      const createdBookings = data.map(d => mapDtoToModel(d));
-	      await booking_core.Core.getStore().dispatch(`${booking_const.Model.Bookings}/upsertMany`, createdBookings);
+	      await Promise.all([$store.dispatch(`${booking_const.Model.Interface}/addCreatedFromEmbedBooking`, createdBookings.map(({
+	        id
+	      }) => id)), $store.dispatch(`${booking_const.Model.Bookings}/upsertMany`, createdBookings)]);
+	      main_core.Event.EventEmitter.emit(booking_const.EventName.CreateBookings, {
+	        bookings: createdBookings
+	      });
 	      void booking_provider_service_mainPageService.mainPageService.fetchCounters();
 	      return createdBookings;
 	    } catch (error) {
@@ -175,6 +229,7 @@ this.BX.Booking.Provider = this.BX.Booking.Provider || {};
 	    try {
 	      if (booking.clients) {
 	        var _booking$primaryClien;
+	        // eslint-disable-next-line no-param-reassign
 	        (_booking$primaryClien = booking.primaryClient) != null ? _booking$primaryClien : booking.primaryClient = booking.clients[0];
 	      }
 	      await booking_core.Core.getStore().dispatch(`${booking_const.Model.Bookings}/update`, {
@@ -191,7 +246,11 @@ this.BX.Booking.Provider = this.BX.Booking.Provider || {};
 	        booking: updatedBooking
 	      });
 	      const clients = new BookingDataExtractor([data]).getClients();
-	      void booking_core.Core.getStore().dispatch('clients/upsertMany', clients);
+	      void booking_core.Core.getStore().dispatch(`${booking_const.Model.Clients}/upsertMany`, clients);
+	      main_core.Event.EventEmitter.emit(booking_const.EventName.UpdateBooking, {
+	        oldBooking: booking_lib_deepToRaw.deepToRaw(bookingBeforeUpdate),
+	        newBooking: booking_lib_deepToRaw.deepToRaw(updatedBooking)
+	      });
 	      void booking_provider_service_mainPageService.mainPageService.fetchCounters();
 	    } catch (error) {
 	      void booking_core.Core.getStore().dispatch(`${booking_const.Model.Bookings}/update`, {
@@ -210,6 +269,9 @@ this.BX.Booking.Provider = this.BX.Booking.Provider || {};
 	      await new booking_lib_apiClient.ApiClient().post('Booking.delete', {
 	        id
 	      });
+	      main_core.Event.EventEmitter.emit(booking_const.EventName.DeleteBooking, {
+	        booking: booking_lib_deepToRaw.deepToRaw(bookingBeforeDelete)
+	      });
 	      await babelHelpers.classPrivateFieldLooseBase(this, _onAfterDelete)[_onAfterDelete](id);
 	    } catch (error) {
 	      void booking_core.Core.getStore().dispatch(`${booking_const.Model.Bookings}/upsert`, bookingBeforeDelete);
@@ -225,6 +287,46 @@ this.BX.Booking.Provider = this.BX.Booking.Provider || {};
 	      await Promise.all(ids.map(id => babelHelpers.classPrivateFieldLooseBase(this, _onAfterDelete)[_onAfterDelete](id)));
 	    } catch (error) {
 	      console.error('BookingService: delete list error', error);
+	    }
+	  }
+	  async createFromWaitListItem(waitListItemId, booking) {
+	    const $store = booking_core.Core.getStore();
+	    const id = booking.id;
+	    const waitListItem = {
+	      ...$store.getters[`${booking_const.Model.WaitList}/getById`](waitListItemId)
+	    };
+	    try {
+	      if ($store.getters[`${booking_const.Model.Interface}/isWaitListItemCreatedFromEmbed`](waitListItemId)) {
+	        await $store.dispatch(`${booking_const.Model.Interface}/addCreatedFromEmbedBooking`, id);
+	      }
+	      await $store.dispatch(`${booking_const.Model.WaitList}/delete`, waitListItemId);
+	      await $store.dispatch(`${booking_const.Model.Bookings}/add`, booking);
+	      const createFromWaitListItemDto = mapModelToCreateFromWaitListItemDto(waitListItemId, booking);
+	      const data = await new booking_lib_apiClient.ApiClient().post('Booking.createFromWaitListItem', createFromWaitListItemDto);
+	      const createdBooking = mapDtoToModel(data);
+	      await $store.dispatch(`${booking_const.Model.Interface}/setAnimationPause`, true);
+	      const clients = new BookingDataExtractor([data]).getClients();
+	      await Promise.all([$store.dispatch(`${booking_const.Model.Clients}/upsertMany`, clients), $store.dispatch(`${booking_const.Model.Filter}/addQuickFilterIgnoredBookingId`, createdBooking.id), $store.dispatch(`${booking_const.Model.Bookings}/update`, {
+	        id,
+	        booking: createdBooking
+	      }), $store.dispatch(`${booking_const.Model.Interface}/addCreatedFromEmbedBooking`, createdBooking.id)]);
+	      main_core.Event.EventEmitter.emit(booking_const.EventName.CreateBookings, {
+	        bookings: [createdBooking]
+	      });
+	      void booking_provider_service_mainPageService.mainPageService.fetchCounters();
+	      return {
+	        success: true,
+	        booking: createdBooking
+	      };
+	    } catch (error) {
+	      await $store.dispatch(`${booking_const.Model.Bookings}/delete`, id);
+	      await $store.dispatch(`${booking_const.Model.WaitList}/upsert`, waitListItem);
+	      console.error('BookingService: add from wait list item error', error);
+	      return {
+	        success: false
+	      };
+	    } finally {
+	      await $store.dispatch(`${booking_const.Model.Interface}/setAnimationPause`, false);
 	    }
 	  }
 	  clearFilterCache() {
@@ -278,7 +380,7 @@ this.BX.Booking.Provider = this.BX.Booking.Provider || {};
 	  if (babelHelpers.classPrivateFieldLooseBase(this, _filterRequests)[_filterRequests][key] !== babelHelpers.classPrivateFieldLooseBase(this, _lastFilterRequest)[_lastFilterRequest]) {
 	    return;
 	  }
-	  void booking_core.Core.getStore().dispatch(`${booking_const.Model.Interface}/setFilteredBookingsIds`, extractor.getBookingsIds());
+	  void booking_core.Core.getStore().dispatch(`${booking_const.Model.Filter}/setFilteredBookingsIds`, extractor.getBookingsIds());
 	}
 	async function _requestFilter2(filter) {
 	  return new booking_lib_apiClient.ApiClient().post('Booking.list', {
@@ -299,5 +401,5 @@ this.BX.Booking.Provider = this.BX.Booking.Provider || {};
 	exports.BookingMappers = BookingMappers;
 	exports.bookingService = bookingService;
 
-}((this.BX.Booking.Provider.Service = this.BX.Booking.Provider.Service || {}),BX,BX.Booking,BX.Booking.Const,BX.Booking.Lib,BX.Booking.Lib,BX.Booking.Provider.Service,BX.Booking.Provider.Service,BX.Booking.Provider.Service));
+}((this.BX.Booking.Provider.Service = this.BX.Booking.Provider.Service || {}),BX,BX.Booking,BX.Booking.Const,BX.Booking.Lib,BX.Booking.Lib,BX.Booking.Lib,BX.Booking.Provider.Service,BX.Booking.Provider.Service,BX.Booking.Provider.Service));
 //# sourceMappingURL=booking-service.bundle.js.map

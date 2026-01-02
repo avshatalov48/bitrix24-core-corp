@@ -12,6 +12,7 @@ jn.define('crm/product-grid/components/sku-selector', (require, exports, module)
 	} = require('crm/product-grid/components/sku-selector/elements');
 	const BaseSkuSelector = require('layout/ui/product-grid/components/sku-selector').SkuSelector;
 	const AppTheme = require('apptheme');
+	const { Money } = require('money');
 
 	class SkuSelector extends BaseSkuSelector
 	{

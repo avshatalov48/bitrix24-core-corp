@@ -13,7 +13,8 @@ class Options
 	private $restrictedFieldsToShow = [];
 	private $restrictedValueTextReplacer;
 	private $restrictedValueHtmlReplacer;
-	private $showOnlyText = false;
+	private bool $showOnlyText = false;
+	private bool $useRawValue = false;
 
 	public static function createFromArray(array $options)
 	{
@@ -132,21 +133,27 @@ class Options
 		return $this;
 	}
 
-	/**
-	 * @return bool
-	 */
 	public function isShowOnlyText(): bool
 	{
 		return $this->showOnlyText;
 	}
 
-	/**
-	 * @param bool $showOnlyText
-	 * @return Options
-	 */
 	public function setShowOnlyText(bool $showOnlyText): Options
 	{
 		$this->showOnlyText = $showOnlyText;
+
+		return $this;
+	}
+
+	public function isUseRawValue(): bool
+	{
+		return $this->useRawValue;
+	}
+
+	public function useRawValue(bool $useRawValue): Options
+	{
+		$this->useRawValue = $useRawValue;
+
 		return $this;
 	}
 }

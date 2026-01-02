@@ -106,6 +106,17 @@ class Outcome extends EO_CallOutcome
 		return $this->propertyCollection;
 	}
 
+	public function drop(): ORM\Data\Result
+	{
+		$props = $this->getProps();
+		foreach ($props as $prop)
+		{
+			$prop->delete();
+		}
+
+		return parent::delete();
+	}
+
 	public function fillProps(EO_CallOutcomeProperty_Collection $propertyCollection): self
 	{
 		$this->propertyCollection = $propertyCollection;

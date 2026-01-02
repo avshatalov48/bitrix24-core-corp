@@ -44,6 +44,8 @@ use Bitrix\Main\UserField;
  * @method Type setIsSetOpenPermissions(bool $isSetOpenPermissions)
  * @method bool|null getIsPaymentsEnabled()
  * @method Type setIsPaymentsEnabled(bool $isPaymentsEnabled)
+ * @method bool|null getIsRecurringEnabled()
+ * @method Type setIsRecurringEnabled(bool $isRecurringEnabled)
  * @method int|null getEntityTypeId()
  * @method Type setEntityTypeId(int $entityTypeId)
  * @method int|null getCustomSectionId()

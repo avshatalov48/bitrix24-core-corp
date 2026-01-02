@@ -1,0 +1,14 @@
+<?php
+$MESS["TASKS_SCRUM_ADD_EPIC_FORM_TITLE"] = "Жаңа эпик";
+$MESS["TASKS_SCRUM_ADD_EPIC_NOTIFY"] = "Эпик құрылды";
+$MESS["TASKS_SCRUM_EDIT_EPIC_FORM_TITLE"] = "Эпикті өзгерту";
+$MESS["TASKS_SCRUM_EPICS_EMPTY_FIRST_TITLE"] = "Мында сіздің барлық эпиктеріңіз болады";
+$MESS["TASKS_SCRUM_EPICS_EMPTY_SECOND_TITLE"] = "Бірінші эпикті құрыңыз";
+$MESS["TASKS_SCRUM_EPIC_EDIT_BUTTON"] = "Өзгерту";
+$MESS["TASKS_SCRUM_SPRINT_ADD_EPIC_COMPLETED_TASKS_LIST_TITLE"] = "Орындалған міндеттер тізімі";
+$MESS["TASKS_SCRUM_SPRINT_ADD_EPIC_LIST_TITLE"] = "Эпиктер";
+$MESS["TASKS_SCRUM_SPRINT_ADD_EPIC_LIST_TOOLBAR_BUTTON"] = "Эпик құру";
+$MESS["TASKS_SCRUM_SPRINT_ADD_EPIC_NAME_PLACEHOLDER"] = "Эпиктің атауын енгізіңіз";
+$MESS["TASKS_SCRUM_SPRINT_ADD_EPIC_TASKS_LIST_TITLE"] = "Міндеттер тізімі";
+$MESS["TASKS_SCRUM_VIEW_EPIC_FORM_TITLE"] = "Эпикті қарау";
+$MESS["TSE_ERROR_POPUP_TITLE"] = "Қате орын алды";

@@ -10,4 +10,7 @@ $MESS['SIGN_PARTIES_ITEM_VALIDATION_REVIEWER'] = 'Кто будет соглас
 $MESS['SIGN_PARTIES_ITEM_VALIDATION_EDITOR'] = 'Кто будет заполнять';
 $MESS['SIGN_PARTIES_HEADER'] = 'Выберите компанию и представителей';
 $MESS['SIGN_PARTIES_ITEM_COMPANY_HINT'] = 'Компания, от имени которой будет отправлен документ. Вы можете выбрать компанию из списка или добавить новую';
+$MESS['SIGN_PARTIES_ADD_REVIEWER_BUTTON_TITLE'] = 'Добавить согласующего';
+$MESS['SIGN_PARTIES_ADD_REVIEWER_BUTTON_HINT'] = 'Документ поступит тем, кто будет согласовывать в том же порядке, в котором они были добавлены в маршрут. В одном документе может быть не более #LIMIT# согласующих. [helpdesklink]Подробнее[/helpdesklink]';
+$MESS['SIGN_PARTIES_ADD_REVIEWER_BUTTON_DISABLED_HINT'] = 'Можно добавить не более #LIMIT# согласующих';
 

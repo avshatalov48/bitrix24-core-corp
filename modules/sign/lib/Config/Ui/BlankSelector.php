@@ -12,7 +12,7 @@ final class BlankSelector
 		string $scenario,
 		?string $regionCode = null,
 		array $regionDocumentTypes = [],
-		?bool $isEdoRegion = null
+		?bool $isEdoRegion = null,
 	): array
 	{
 		$storage = Storage::instance();
@@ -35,7 +35,6 @@ final class BlankSelector
 			'regionDocumentTypes' => $regionDocumentTypes,
 		];
 	}
-
 
 	private function isUnsecuredScheme(): bool
 	{

@@ -2,10 +2,11 @@ import 'ui.buttons';
 import 'ui.forms';
 import './style.css';
 import { chartAPI } from '../../api';
-import { events } from '../../events';
+import { events } from '../../consts';
 import { BIcon, Set } from 'ui.icon-set.api.vue';
 import type { FirstPopupData } from '../../types';
 
+// @vue/component
 export const FirstPopup = {
 	name: 'FirstPopup',
 	components: {
@@ -22,6 +23,15 @@ export const FirstPopup = {
 			features: [],
 		};
 	},
+
+	computed:
+	{
+		set(): Set
+		{
+			return Set;
+		},
+	},
+
 	async mounted(): Promise<void>
 	{
 		this.title = this.loc('HUMANRESOURCES_COMPANY_STRUCTURE_FIRST_OPEN_TITLE');
@@ -53,12 +63,7 @@ export const FirstPopup = {
 			return this.$Bitrix.Loc.getMessage(phraseCode, replacements);
 		},
 	},
-	computed: {
-		set(): Set
-		{
-			return Set;
-		},
-	},
+
 	template: `
 		<div v-if="show" class="first-popup">
 			<div class="first-popup-overlay" @click="closePopup"></div>

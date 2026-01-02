@@ -57,17 +57,13 @@ if($authToken !== '')
 	}
 }
 
-if(!CCrmPerms::IsAdmin())
+if (!\Bitrix\Crm\Service\Container::getInstance()->getUserPermissions()->product()->canRead())
 {
-	$userPermissions = CCrmPerms::GetCurrentUserPermissions();
-	if (!(CCrmPerms::IsAccessEnabled($userPermissions) && $userPermissions->HavePerm('CONFIG', BX_CRM_PERM_CONFIG, 'READ')))
-	{
-		$errMsg = GetMessage('CRM_PRODUCT_FILE_PERMISSION_DENIED');
-		$arResult['ERRORS'][] = $errMsg;
-		if ($showErrors)
-			ShowError($errMsg);
-		return array('ERRORS' => $arResult['ERRORS']);
-	}
+	$errMsg = GetMessage('CRM_PRODUCT_FILE_PERMISSION_DENIED');
+	$arResult['ERRORS'][] = $errMsg;
+	if ($showErrors)
+		ShowError($errMsg);
+	return array('ERRORS' => $arResult['ERRORS']);
 }
 
 if (!CCrmProductFile::CheckFieldId($IBLOCK_ID, $arParams["FIELD_ID"]))

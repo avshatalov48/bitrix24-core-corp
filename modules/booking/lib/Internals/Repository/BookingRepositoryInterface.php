@@ -10,7 +10,7 @@ use Bitrix\Main\ORM\Query\Query;
 
 interface BookingRepositoryInterface
 {
-	public function getQuery(): Query;
+	public function getQuery(FilterInterface|null $filter = null): Query;
 	public function getList(
 		int|null $limit = null,
 		int|null $offset = null,
@@ -23,10 +23,16 @@ interface BookingRepositoryInterface
 	public function getIntersectionsList(
 		Entity\Booking\Booking $booking,
 		int|null $userId = null,
-		int $limit = 1
+		int|null $limit = null
 	): Entity\Booking\BookingCollection;
 
-	public function getById(int $id, int $userId = 0): Entity\Booking\Booking|null;
+	public function getById(
+		int $id,
+		int $userId = 0,
+		bool $withCounters = true,
+		bool $withClientsData = true,
+		bool $withExternalData = true,
+	): Entity\Booking\Booking|null;
 
 	public function getByIdForManager(int $id): Entity\Booking\Booking|null;
 

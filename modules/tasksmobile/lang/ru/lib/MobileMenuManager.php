@@ -1,0 +1,4 @@
+<?php
+
+$MESS['MENU_TASKS_SECTION_PROJECTS'] = 'Проекты';
+$MESS['MENU_TASKS_SECTION_FLOW'] = 'Потоки';

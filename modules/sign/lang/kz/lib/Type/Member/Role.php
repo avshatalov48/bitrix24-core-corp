@@ -1,0 +1,5 @@
+<?php
+$MESS["SIGN_ROLE_CAPTION_ASSIGNEE"] = "Өкіл";
+$MESS["SIGN_ROLE_CAPTION_EDITOR"] = "Толтырып жатыр";
+$MESS["SIGN_ROLE_CAPTION_REVIEWER"] = "Келіседі";
+$MESS["SIGN_ROLE_CAPTION_SIGNER"] = "Қызметкер";

@@ -1,5 +1,5 @@
 import { Messenger } from 'im.public';
-import { Button as ButtonPanel, ButtonColor, ButtonSize } from 'im.v2.component.elements';
+import { ChatButton, ButtonColor, ButtonSize } from 'im.v2.component.elements.button';
 import { Layout } from 'im.v2.const';
 import { LayoutManager } from 'im.v2.lib.layout';
 import { JoinService, StartService } from 'imopenlines.v2.provider.service';
@@ -7,7 +7,7 @@ import { JoinService, StartService } from 'imopenlines.v2.provider.service';
 // @vue/component
 export const JoinPanel = {
 	name: 'JoinPanel',
-	components: { ButtonPanel },
+	components: { ChatButton },
 	props:
 	{
 		dialogId: {
@@ -48,7 +48,7 @@ export const JoinPanel = {
 		closeDialog()
 		{
 			void Messenger.openLines();
-			LayoutManager.getInstance().setLastOpenedElement(Layout.openlinesV2.name, '');
+			LayoutManager.getInstance().setLastOpenedElement(Layout.openlinesV2, '');
 		},
 		getStartService(): StartService
 		{
@@ -76,7 +76,7 @@ export const JoinPanel = {
 	template: `
 		<ul class="bx-imol-textarea_join-panel-list-button">
 			<li v-if="!isNewSession" class="bx-imol-textarea_join-panel-item-button">
-				<ButtonPanel
+				<ChatButton
 					:size="ButtonSize.L"
 					:color="ButtonColor.Success"
 					:text=textStartJoinButtons
@@ -84,7 +84,7 @@ export const JoinPanel = {
 				/>
 			</li>
 			<li class="bx-imol-textarea_join-panel-item-button">
-				<ButtonPanel
+				<ChatButton
 					:size="ButtonSize.L"
 					:color="ButtonColor.Danger"
 					:text="loc('IMOL_CONTENT_TEXTAREA_JOIN_PANEL_CLOSE')"

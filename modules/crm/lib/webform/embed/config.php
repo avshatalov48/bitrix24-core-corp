@@ -8,8 +8,11 @@
 
 namespace Bitrix\Crm\WebForm\Embed;
 
+use Bitrix\Crm\WebForm\ReCaptcha;
+use Bitrix\Crm\WebForm\YandexCaptcha;
 use Bitrix\Main;
 use Bitrix\Crm\WebForm;
+use Bitrix\Main\Config\Option;
 
 /**
  * Class Config
@@ -99,8 +102,14 @@ class Config
 				'fields' => $this->getFields(),
 				'agreements' => $this->getAgreements(),
 				'dependencies' => $this->getDependencies(),
-				'recaptcha' => [
-					'use' => $this->form->isUsedCaptcha()
+				'captcha' => [
+					'service' => Option::get('crm', 'crm_form_captcha_service', 'google'),
+					'recaptcha' => [
+						'use' => $this->form->isUsedCaptcha(),
+					],
+					'yandexCaptcha' => [
+						'use' => $this->form->isUsedCaptcha(),
+					],
 				],
 			]
 		];
@@ -114,7 +123,9 @@ class Config
 			'CAPTION' => $data['title'],
 			'DESCRIPTION' => $data['desc'],
 			'BUTTON_CAPTION' => $data['buttonCaption'],
-			'USE_CAPTCHA' => $data['recaptcha']['use'] ? 'Y' : 'N',
+			'USE_CAPTCHA' => (($data['captcha']['service'] === 'google' && $data['captcha']['recaptcha']['use'])
+				|| ($data['captcha']['service'] === 'yandex' && $data['captcha']['yandexCaptcha']['use'])
+			) ? 'Y' : 'N',
 
 			//'FIELDS' => [],
 			//'DEPENDENCIES' => [],

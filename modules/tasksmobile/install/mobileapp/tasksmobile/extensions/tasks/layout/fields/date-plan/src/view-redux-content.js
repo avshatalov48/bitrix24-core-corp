@@ -302,7 +302,10 @@ jn.define('tasks/layout/fields/date-plan/view-redux-content', (require, exports,
 			const disabled = (
 				!this.isDateInGroupRange(this.state.startDatePlan)
 				|| !this.isDateInGroupRange(this.state.endDatePlan)
-				|| (!this.state.startDatePlan && !this.state.endDatePlan)
+				|| (
+					this.state.startDatePlan === this.props.startDatePlan
+					&& this.state.endDatePlan === this.props.endDatePlan
+				)
 			);
 
 			return View(

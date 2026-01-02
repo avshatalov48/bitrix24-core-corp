@@ -3,6 +3,7 @@
 namespace Bitrix\Crm\Controller\Copilot\CallAssessment;
 
 use Bitrix\Crm\Controller\ErrorCode;
+use Bitrix\Crm\Copilot\CallAssessment\EntitySelector\PullManager;
 use Bitrix\Crm\Integration\AI\AIManager;
 use Bitrix\Crm\Integration\AI\Enum\GlobalSetting;
 use \Bitrix\Crm\Integration\AI\ErrorCode as AIErrorCode;
@@ -10,7 +11,6 @@ use Bitrix\Crm\Copilot\CallAssessment\CallAssessmentItem;
 use Bitrix\Crm\Copilot\CallAssessment\Controller\CopilotCallAssessmentController;
 use Bitrix\Crm\Copilot\CallAssessment\Entity\CopilotCallAssessmentTable;
 use Bitrix\Crm\Copilot\CallAssessment\ItemFactory;
-use Bitrix\Crm\Feature;
 use Bitrix\Crm\Integration\VoxImplantManager;
 use Bitrix\Crm\MultiValueStoreService;
 use Bitrix\Crm\Service\Container;
@@ -27,18 +27,14 @@ use Bitrix\Voximplant\StatisticTable;
 final class CallCardPlacement extends Controller
 {
 	private readonly MultiValueStoreService $valueStoreService;
-	private ?\CPullWatch $pullWatch = null;
+	private readonly PullManager $pull;
 
 	public function __construct(Request $request = null)
 	{
 		parent::__construct($request);
 
 		$this->valueStoreService = MultiValueStoreService::getInstance();
-
-		if (Loader::includeModule('pull'))
-		{
-			$this->pullWatch = new \CPullWatch();
-		}
+		$this->pull = new PullManager();
 	}
 
 	protected function getDefaultPreFilters(): array
@@ -53,7 +49,7 @@ final class CallCardPlacement extends Controller
 	 * @throws LoaderException
 	 * @throws ArgumentOutOfRangeException
 	 */
-	public function attachCallAssessmentAction(string $callId, int $id, string $guid): ?bool
+	public function attachCallAssessmentAction(string $callId, int $id): ?bool
 	{
 		if (!$this->isCallAssessmentEnabled())
 		{
@@ -87,54 +83,10 @@ final class CallCardPlacement extends Controller
 		$callOriginId = VoxImplantManager::insertPrefix($callId);
 		$this->valueStoreService->set($callOriginId, $id);
 
-		$callAssessment = CallAssessmentItem::createFromEntity($entity)->toArray();
-		$this->sendUpdateAttachedCallAssessmentEvent($callId, $callAssessment, $guid);
+		$callAssessment = CallAssessmentItem::createFromEntity($entity);
+		$this->pull->dispatchSelect($callId, $callAssessment);
 
 		return true;
-	}
-
-	public function detachCallAssessmentAction(string $callId): ?bool
-	{
-		if (!$this->canEditCallAssessment())
-		{
-			$this->addError(ErrorCode::getAccessDeniedError());
-
-			return null;
-		}
-
-		$callOriginId = VoxImplantManager::insertPrefix($callId);
-		$this->valueStoreService->deleteAll($callOriginId);
-
-		$this->sendUpdateAttachedCallAssessmentEvent($callId, null);
-
-		return true;
-	}
-
-	public function getAttachedCallAssessmentAction(string $callId): ?array
-	{
-		if (!$this->canReadCallAssessment())
-		{
-			$this->addError(ErrorCode::getAccessDeniedError());
-
-			return null;
-		}
-
-		$callOriginId = VoxImplantManager::insertPrefix($callId);
-		$assessmentId = $this->valueStoreService->getFirstValue($callOriginId);
-		if ($assessmentId === null)
-		{
-			return [];
-		}
-
-		$assessmentEntity = CopilotCallAssessmentController::getInstance()->getById($assessmentId);
-		if ($assessmentEntity === null)
-		{
-			$this->addAssessmentNotFoundError();
-
-			return null;
-		}
-
-		return CallAssessmentItem::createFromEntity($assessmentEntity)->toArray();
 	}
 
 	/**
@@ -156,10 +108,14 @@ final class CallCardPlacement extends Controller
 			return null;
 		}
 
-		$this->subscribePullEvent($callId);
 
 		$hasAvailableSelectorItems = $this->hasAvailableSelectorItems();
 		$assessment = ItemFactory::getByCallId($callId);
+
+		if ($hasAvailableSelectorItems)
+		{
+			$this->pull->subscribe($this->getCurrentUser()?->getId());
+		}
 
 		return [
 			'callAssessment' => $assessment?->toArray() ?? [],
@@ -169,12 +125,12 @@ final class CallCardPlacement extends Controller
 
 	private function canEditCallAssessment(): bool
 	{
-		return Container::getInstance()->getUserPermissions()->canEditCopilotCallAssessmentSettings();
+		return Container::getInstance()->getUserPermissions()->copilotCallAssessment()->canEdit();
 	}
 
 	private function canReadCallAssessment(): bool
 	{
-		return Container::getInstance()->getUserPermissions()->canReadCopilotCallAssessmentSettings();
+		return Container::getInstance()->getUserPermissions()->copilotCallAssessment()->canRead();
 	}
 
 	/**
@@ -216,52 +172,6 @@ final class CallCardPlacement extends Controller
 	private function addCopilotCallAssessmentNotAvailableError(): void
 	{
 		$this->addError(new Error('Copilot call assessment is not available', AIErrorCode::AI_NOT_AVAILABLE));
-	}
-
-	private function subscribePullEvent(string $callId): void
-	{
-		if ($this->pullWatch === null)
-		{
-			return;
-		}
-
-		$userId = $this->getCurrentUser()?->getId();
-		if ($userId === null)
-		{
-			return;
-		}
-
-		$this->pullWatch::Add($userId, $this->generateStackTag($callId));
-	}
-
-	private function sendUpdateAttachedCallAssessmentEvent(
-		string $callId,
-		?array $callAssessment,
-		?string $guid = null,
-	): void
-	{
-		if ($this->pullWatch === null)
-		{
-			return;
-		}
-
-		$this->pullWatch::AddToStack(
-			$this->generateStackTag($callId),
-			[
-				'module_id' => 'crm',
-				'command' => 'update_attached_call_assessment_id',
-				'params' => [
-					'guid' => $guid,
-					'callId' => $callId,
-					'callAssessment' => $callAssessment,
-				],
-			]
-		);
-	}
-
-	private function generateStackTag(string $callId): string
-	{
-		return "CRM_COPILOT_CALL_CARD_REPLACEMENT_{$callId}";
 	}
 
 	private function hasAvailableSelectorItems(): bool

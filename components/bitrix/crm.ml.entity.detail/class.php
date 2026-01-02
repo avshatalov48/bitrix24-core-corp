@@ -9,14 +9,11 @@ use Bitrix\Crm\Ml\Controller\Details;
 use Bitrix\Crm\Ml\Internals\ModelTrainingTable;
 use Bitrix\Crm\Ml\Internals\PredictionHistoryTable;
 use Bitrix\Crm\Ml\Model\Base;
-use Bitrix\Crm\Ml\Model\DealScoring;
-use Bitrix\Crm\Ml\Model\LeadScoring;
 use Bitrix\Crm\Ml\Scoring;
 use Bitrix\Crm\Ml\TrainingState;
 use Bitrix\Crm\Ml\ViewHelper;
 use Bitrix\Crm\Service\Container;
 use Bitrix\Main\Context;
-use Bitrix\Main\Engine\CurrentUser;
 use Bitrix\Main\Error;
 use Bitrix\Main\ErrorCollection;
 use Bitrix\Main\Loader;
@@ -28,7 +25,6 @@ Loc::loadMessages(__FILE__);
 
 class CCrmMlEntityDetailComponent extends CBitrixComponent
 {
-	private const FEEDBACK_PORTAL = 'https://product-feedback.bitrix24.com';
 	const ALLOWED_TYPES = [CCrmOwnerType::DealName, CCrmOwnerType::LeadName]; // TODO: not used?
 
 	protected ?string $entityType;
@@ -43,7 +39,7 @@ class CCrmMlEntityDetailComponent extends CBitrixComponent
 		parent::__construct($component);
 
 		Loader::includeModule('ui');
-		
+
 		$this->errorCollection = new ErrorCollection();
 	}
 
@@ -51,16 +47,10 @@ class CCrmMlEntityDetailComponent extends CBitrixComponent
 	{
 		$this->setEntity($this->arParams['TYPE'], $this->arParams['ID']);
 
-		$categoryId = Container::getInstance()
-			->getFactory($this->entityTypeId)
-			?->getItemCategoryId($this->entityId)
-		;
-		
 		if (
-			!Container::getInstance()->getUserPermissions()->checkReadPermissions(
+			!Container::getInstance()->getUserPermissions()->item()->canRead(
 				$this->entityTypeId,
-				$this->entityId,
-				$categoryId
+				$this->entityId
 			)
 		)
 		{
@@ -159,7 +149,6 @@ class CCrmMlEntityDetailComponent extends CBitrixComponent
 		$result['PREDICTION_HISTORY'] = $this->getPredictionHistory();
 		$result['ASSOCIATED_EVENTS'] = $this->prepareAssociatedEvents($result['PREDICTION_HISTORY']);
 		$result['TRAINING_HISTORY'] = $this->getTrainingHistory();
-		$result['FEEDBACK_PARAMS'] = $this->getFeedbackParams();
 
 		return $result;
 	}
@@ -327,85 +316,5 @@ class CCrmMlEntityDetailComponent extends CBitrixComponent
 		}
 
 		return $result;
-	}
-
-	public function getFeedbackParams(): array
-	{
-		$auc = '';
-		if ($this->currentTraining)
-		{
-			$auc = round($this->currentTraining['AREA_UNDER_CURVE'] * 100);
-		}
-
-		return [
-			'ID' => 'crm-scoring',
-			'FORM' => $this->getFeedbackForm(),
-			'PORTAL' => self::FEEDBACK_PORTAL,
-			'PRESETS' => [
-				'c_name' => CurrentUser::get()->getFullName(),
-				'b24_plan' => Loader::includeModule('bitrix24') ? CBitrix24::getLicenseType() : '',
-				'percent_lead' => $this->model instanceof LeadScoring ? $auc : '',
-				'percent_deal' => $this->model instanceof DealScoring ? $auc : ''
-			]
-		];
-	}
-
-	public function getFeedbackForm(): array
-	{
-		$forms = [
-			['zones' => ['com.br'], 'id' => '122','lang' => 'br', 'sec' => '8f7j4h'],
-			['zones' => ['es'], 'id' => '120','lang' => 'la', 'sec' => '1y5u12'],
-			['zones' => ['de'], 'id' => '118','lang' => 'de', 'sec' => 'glv0sq'],
-			['zones' => ['ua'], 'id' => '124','lang' => 'ua', 'sec' => '3whqvr'],
-			['zones' => ['ru', 'by', 'kz'], 'id' => '114','lang' => 'ru', 'sec' => '9iboyg'],
-			['zones' => ['en'], 'id' => '116','lang' => 'en', 'sec' => 'h4pdb1'],
-		];
-
-		if (Loader::includeModule('bitrix24'))
-		{
-			$zone = CBitrix24::getPortalZone();
-			$defaultForm = null;
-			foreach ($forms as $form)
-			{
-				if (!isset($form['zones']) || !is_array($form['zones']))
-				{
-					continue;
-				}
-
-				if (in_array($zone, $form['zones'], true))
-				{
-					return $form;
-				}
-
-				if (in_array('en', $form['zones'], true))
-				{
-					$defaultForm = $form;
-				}
-			}
-
-			return $defaultForm;
-		}
-
-		$lang = LANGUAGE_ID;
-		$defaultForm = null;
-		foreach ($forms as $form)
-		{
-			if (!isset($form['lang']))
-			{
-				continue;
-			}
-
-			if ($lang === $form['lang'])
-			{
-				return $form;
-			}
-
-			if ($form['lang'] === 'en')
-			{
-				$defaultForm = $form;
-			}
-		}
-
-		return $defaultForm;
 	}
 }

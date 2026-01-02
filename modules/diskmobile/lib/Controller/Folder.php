@@ -3,10 +3,19 @@
 namespace Bitrix\DiskMobile\Controller;
 
 use Bitrix\Disk\BaseObject;
+use Bitrix\Disk\Controller\DataProviders\ChildrenDataProvider;
 use Bitrix\DiskMobile\SearchEntity;
 use Bitrix\DiskMobile\SearchType;
 use Bitrix\Main\Engine\ActionFilter\CloseSession;
+use Bitrix\Main\Engine\CurrentUser;
 use Bitrix\Main\Engine\Response\DataType\Page;
+use Bitrix\Main\NotImplementedException;
+use Bitrix\Main\SystemException;
+use Bitrix\Main\UI\PageNavigation;
+
+use Bitrix\Disk;
+use Bitrix\Disk\Controller\Types;
+use Bitrix\Main\Engine\Response;
 
 class Folder extends BaseFileList
 {
@@ -25,11 +34,12 @@ class Folder extends BaseFileList
 	public function getChildrenAction(
 		int $id,
 		array $order = [],
-		bool $showRights = true,
+		string $showRights = 'Y',
 		array $context = [],
 		string $search = null,
 		array $searchContext = null,
 		array $extra = [],
+		PageNavigation $pageNavigation = null,
 	): ?array
 	{
 		$onlyIds = $this->getRequestedIds($extra);
@@ -44,7 +54,45 @@ class Folder extends BaseFileList
 			return $this->respondWithGlobalSearchResults((string)$search, $searchContext);
 		}
 
-		return $this->respondAll($id, $order, $showRights, $context, $search, $searchContext);
+		return $this->respondAll($id, $order, $showRights === 'Y', $context, $search, $searchContext, $pageNavigation);
+	}
+
+	/**
+	 * Returns children of folder.
+	 * @param string|null $search Search string.
+	 * @param bool $showRights Should be true if you want to show rights for each element.
+	 * @param array $context Additional context for recognizing folderType. Necessary when user deep in folder tree.
+	 * @param array $order How to sort elements. For example: ['NAME' => 'ASC']
+	 * @return Page|null
+	 * @see \Bitrix\Disk\Controller\Folder::getChildrenAction()
+	 */
+	protected function getChildren(
+		int $id,
+		array $order = [],
+		bool $showRights = true,
+		array $context = [],
+		string $search = null,
+		?array $searchContext = null,
+		PageNavigation $pageNavigation = null,
+	): ?Response\DataType\Page
+	{
+
+		$searchScope = (string)$search !== '' ? 'subfolders' : 'currentFolder';
+		$searchOrder = (string)$search !== '' ? ['UPDATE_TIME' => 'DESC'] : null;
+		$searchFolderId = $this->getRequestedSearchFolderId($search, $searchContext);
+
+		return $this->forward(
+			\Bitrix\Disk\Controller\Folder::class,
+			'getChildren',
+			[
+				'id' => $searchFolderId ?? $id,
+				'search' => $search,
+				'searchScope' => $searchScope,
+				'showRights' => $showRights,
+				'context' => $context,
+				'order' => $searchOrder ?? $order,
+			]
+		);
 	}
 
 	private function getRequestedSearchType(?string $search = null, ?array $searchContext = null): ?SearchType
@@ -91,11 +139,7 @@ class Folder extends BaseFileList
 		);
 		$items = $storageFileFinder->findModelsByText($search);
 
-		$response = [
-			'items' => [],
-			'users' => [],
-			'storages' => [],
-		];
+		$response = $this->getDefaultResponse();;
 
 		if (!empty($items))
 		{
@@ -123,11 +167,7 @@ class Folder extends BaseFileList
 			return null;
 		}
 
-		$response = [
-			'items' => [],
-			'users' => [],
-			'storages' => [],
-		];
+		$response = $this->getDefaultResponse();
 
 		if (isset($page['items']))
 		{
@@ -146,24 +186,18 @@ class Folder extends BaseFileList
 		array $context = [],
 		string $search = null,
 		?array $searchContext = null,
+		PageNavigation $pageNavigation = null,
 	): ?array
 	{
-		$searchScope = mb_strlen((string)$search) > 0 ? 'subfolders' : 'currentFolder';
-		$searchOrder = mb_strlen((string)$search) > 0 ? ['UPDATE_TIME' => 'DESC'] : null;
-		$searchFolderId = $this->getRequestedSearchFolderId($search, $searchContext);
-
 		/** @var Page|null $page */
-		$page = $this->forward(
-			\Bitrix\Disk\Controller\Folder::class,
-			'getChildren',
-			[
-				'id' => $searchFolderId ?? $id,
-				'search' => $search,
-				'searchScope' => $searchScope,
-				'showRights' => $showRights,
-				'context' => $context,
-				'order' => $searchOrder ?? $order,
-			]
+		$page = $this->getChildren(
+			$id,
+			$order,
+			$showRights,
+			$context,
+			$search,
+			$searchContext,
+			$pageNavigation,
 		);
 
 		if (!$this->errorCollection->isEmpty())
@@ -172,9 +206,7 @@ class Folder extends BaseFileList
 		}
 
 		$response = [
-			'items' => [],
-			'users' => [],
-			'storages' => [],
+			...$this->getDefaultResponse(),
 			'currentFolderRights' => [],
 		];
 
@@ -184,27 +216,33 @@ class Folder extends BaseFileList
 			$response = $this->withUsers($response);
 			$response = $this->withRealStorageIds($response);
 			$response = $this->withStorages($response);
+			$response['items'] = $this->withExternalLink($response['items']);
 
 			$tag = "object_$id";
 			$this->subscribeToPullEvents($response['items'], [ $tag ]);
 
 			if ($showRights)
 			{
-				$rightsResult = $this->forward(
-					\Bitrix\Disk\Controller\CommonActions::class,
-					'getRights',
-					['objectId' => $id],
-				);
-
-				if (!$this->errorCollection->isEmpty())
-				{
-					return null;
-				}
-
-				$response['currentFolderRights'] = $rightsResult['rights'] ?? [];
+				$response['currentFolderRights'] = $this->getRights($id);
 			}
 		}
 
 		return $response;
+	}
+
+	protected function getRights(int $id): ?array
+	{
+		$rightsResult = $this->forward(
+			\Bitrix\Disk\Controller\CommonActions::class,
+			'getRights',
+			['objectId' => $id],
+		);
+
+		if (!$this->errorCollection->isEmpty())
+		{
+			return null;
+		}
+
+		return $rightsResult['rights'] ?? [];
 	}
 }

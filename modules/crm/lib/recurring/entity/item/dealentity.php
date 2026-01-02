@@ -104,7 +104,7 @@ abstract class DealEntity extends BaseEntity
 			return new ParameterMapper\FirstFormDeal();
 		}
 
-		return new ParameterMapper\SecondFormDeal();
+		return new ParameterMapper\EntityForm();
 	}
 
 	/**

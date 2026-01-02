@@ -146,9 +146,127 @@
 .hr-structure-components-base-popup {
 	transition: all;
 }
+.hr-dnd-confirmation_block {
+	display: flex;
+	flex-direction: column;
+	gap: 5px;
+	font-weight: var(--ui-font-weight-normal);
+	font-size: var(--ui-font-size-md);
+	color: var(--ui-color-palette-gray-90);
+	padding-bottom: 10px;
+	line-height: var(--ui-font-line-height-2xs);
+}
+
+.ui-ctl.hr-dnd-confirmation_select {
+	margin-top: 10px;
+}
+
+.ui-ctl.hr-dnd-confirmation_checkbox {
+	margin-bottom: 0;
+	margin-top: 10px;
+	min-height: 0;
+}
+
+.ui-ctl + .ui-ctl.hr-dnd-confirmation_checkbox {
+	margin-left: 1px;
+}
+
+.hr-dnd-confirmation_notice {
+	max-width: 305px;
+}
+.hr-management-dialog__footer_container {
+	padding: 15px 0;
+	width: 100%;
+	display: flex;
+	justify-content: center;
+	box-shadow: 0 -1px 4px 0 rgba(0, 0, 0, 0.05);
+}
+
+.hr-management-dialog__header_container {
+	position: relative;
+	padding: 20px 38px 0 16px;
+	font-family: var(--ui-font-family-primary, var(--ui-font-family-system));
+	margin-bottom: -5px;
+}
+
+.hr-management-dialog__header_close-button {
+	position: absolute;
+	top: 20px;
+	right: 14px;
+	cursor: pointer;
+	--ui-icon-set__icon-color: var(--ui-color-palette-gray-35);
+}
+
+.hr-management-dialog__header_close-button:hover {
+	--ui-icon-set__icon-color: var(--ui-color-palette-gray-60);
+}
+
+.hr-management-dialog__header_title {
+	font-weight: var(--ui-font-weight-semi-bold);
+	font-size: var(--ui-font-size-md);
+	line-height: var(--ui-font-line-height-sm);
+	color: var(--ui-color-palette-black-base);
+	margin-bottom: 4px;
+}
+
+.hr-management-dialog__header_subtitle {
+	font-weight: var(--ui-font-weight-normal);
+	font-size: var(--ui-font-size-sm);
+	line-height: var(--ui-font-line-height-sm);
+	color: var(--ui-color-palette-gray-70);
+	margin-bottom: 4px;
+}
+
+.hr-management-dialog__footer_button-container {
+	width: 100%;
+}
+
+.hr-department-detail-content__user-action-text-container {
+	display: flex;
+	flex-direction: column;
+	gap: 5px;
+	padding-bottom: 14px;
+
+	font-weight: var(--ui-font-weight-normal);
+	font-size: var(--ui-font-size-md);
+	line-height: var(--ui-font-line-height-3xs);
+	color: var(--ui-color-palette-gray-90);
+}
+
+.hr-department-detail-content__user-belongs-to-department-text-container {
+	text-align: center;
+}
+
+.hr-department-detail-content__move-user-department-user-link {
+	text-decoration: none;
+	border-bottom: 1px dashed;
+	cursor: pointer;
+}
+
+.hr-department-detail-content__move-user-department_item-error,
+.hr-department-detail-content__move-user-department_item-warning {
+	display: flex;
+	align-items: center;
+	font: 13px/16px var(--ui-font-family-primary, var(--ui-font-family-system));
+	margin-top: 3px;
+}
+
+.hr-department-detail-content__move-user-department_item-warning {
+	color: var(--ui-color-palette-gray-90);
+}
+
+.hr-department-detail-content__move-user-department_item-error {
+	color: var(--ui-field-color-warning);
+}
+
+.hr-department-detail-content__move-user-department_item-error .ui-icon-set.--warning {
+	--ui-icon-set__icon-size: 20px;
+	--ui-icon-set__icon-color: var(--ui-field-color-warning);
+}
+
 .hr-structure-route-action-popup-menu-item {
 	display: flex;
-	font-family: var(--ui-font-family-system);
+	font-family: var(--ui-font-family-primary, var(--ui-font-family-system));
 	font-weight: var(--ui-font-weight-regular);
 	font-size: var(--ui-font-size-sm);
 	line-height: var(--ui-font-line-height-lg);
@@ -187,6 +305,10 @@
 	line-height: var(--ui-font-line-height-3xs);
 }
 
+.hr-structure-route-action-popup-menu-item__content-title::first-letter {
+	text-transform: capitalize;
+}
+
 .hr-structure-route-action-popup-menu-item__content-description {
 	margin-top: 4px;
 	font-size: var(--ui-font-size-3xs);
@@ -194,9 +316,10 @@
 	font-weight: var(--ui-font-weight-normal);
 	line-height: var(--ui-font-line-height-2xs);
 }
+
 .hr-structure-action-popup-menu-item {
 	display: flex;
-	font-family: var(--ui-font-family-system);
+	font-family: var(--ui-font-family-primary, var(--ui-font-family-system));
 	font-weight: var(--ui-font-weight-regular);
 	font-size: var(--ui-font-size-sm);
 	line-height: var(--ui-font-line-height-lg);
@@ -233,6 +356,7 @@
 .hr-structure-action-popup-menu-item__content-title.--red {
 	color: var(--ui-color-palette-red-60);
 }
+
 .hr-default-popup-layout__content {
 	background-color: var(--ui-color-palette-white-base);
 }

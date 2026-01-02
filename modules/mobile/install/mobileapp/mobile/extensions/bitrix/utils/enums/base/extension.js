@@ -5,16 +5,19 @@ jn.define('utils/enums/base', (require, exports, module) => {
 	const { isNil } = require('utils/type');
 	const { isEqual } = require('utils/object');
 
+	const cache = new WeakMap();
+	const Cacheable = Object.freeze({
+		ENUMS: 'enums',
+		KEYS: 'keys',
+		VALUES: 'values',
+	});
+
 	/**
 	 * @class BaseEnum
 	 * @template TEnumType
 	 */
 	class BaseEnum
 	{
-		static enums = null;
-		static enumKeys = null;
-		static enumValues = null;
-
 		/**
 		 * @param {String} name
 		 * @param {any} value
@@ -23,6 +26,33 @@ jn.define('utils/enums/base', (require, exports, module) => {
 		{
 			this.name = name;
 			this.value = value;
+		}
+
+		/**
+		 * @param {string} property
+		 * @param {function(): any} factory
+		 * @private
+		 */
+		static getCached(property, factory)
+		{
+			if (!Object.values(Cacheable).includes(property))
+			{
+				throw new Error(`The ${property} property is not cacheable`);
+			}
+
+			const cached = cache.get(this);
+			if (cached && cached[property])
+			{
+				return cached[property];
+			}
+
+			const value = factory();
+			const cacheEntry = cached || {};
+
+			cacheEntry[property] = value;
+			cache.set(this, cacheEntry);
+
+			return value;
 		}
 
 		/**
@@ -41,21 +71,19 @@ jn.define('utils/enums/base', (require, exports, module) => {
 		 */
 		static getEnums()
 		{
-			if (!this.enums)
-			{
-				this.enums = [];
-
+			return this.getCached(Cacheable.ENUMS, () => {
+				const enums = [];
 				// eslint-disable-next-line no-restricted-syntax
 				for (const key in this)
 				{
 					if (this[key] instanceof BaseEnum)
 					{
-						this.enums.push(this[key]);
+						enums.push(this[key]);
 					}
 				}
-			}
 
-			return this.enums;
+				return Object.freeze(enums);
+			});
 		}
 
 		/**
@@ -64,12 +92,9 @@ jn.define('utils/enums/base', (require, exports, module) => {
 		 */
 		static getKeys()
 		{
-			if (!this.enumKeys)
-			{
-				this.enumKeys = this.getEnums().map((enumType) => enumType.getName());
-			}
-
-			return this.enumKeys;
+			return this.getCached(Cacheable.KEYS, () => {
+				return this.getEnums().map((enumType) => enumType.getName());
+			});
 		}
 
 		/**
@@ -78,12 +103,9 @@ jn.define('utils/enums/base', (require, exports, module) => {
 		 */
 		static getValues()
 		{
-			if (!this.enumValues)
-			{
-				this.enumValues = this.getEnums().map((enumType) => enumType.getValue());
-			}
-
-			return this.enumValues;
+			return this.getCached(Cacheable.VALUES, () => {
+				return this.getEnums().map((enumType) => enumType.getValue());
+			});
 		}
 
 		/**
@@ -150,6 +172,16 @@ jn.define('utils/enums/base', (require, exports, module) => {
 		static has(enumType)
 		{
 			return enumType instanceof this;
+		}
+
+		/**
+		 * @public
+		 * @description Use this method while exporting enum, to make it immutable
+		 * @returns {this}
+		 */
+		static export()
+		{
+			return Object.freeze(this);
 		}
 
 		/**

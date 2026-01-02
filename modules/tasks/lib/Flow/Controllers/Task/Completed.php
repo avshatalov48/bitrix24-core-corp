@@ -70,6 +70,7 @@ class Completed extends Controller
 
 		$select = [
 			'ID',
+			'TITLE',
 			'CREATED_BY',
 			'RESPONSIBLE_ID',
 			'CLOSED_DATE',

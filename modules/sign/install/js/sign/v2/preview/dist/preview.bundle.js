@@ -217,9 +217,9 @@ this.BX.Sign = this.BX.Sign || {};
 	    width: pageWidth,
 	    height: pageHeight
 	  } = babelHelpers.classPrivateFieldLooseBase(this, _page)[_page].getBoundingClientRect();
-	  const widthRatio = widthPx / (width / 100 * pageWidth);
-	  const heightRatio = heightPx / (height / 100 * pageHeight);
-	  const fontSize = (parseFloat(style['fontSize']) || 14) / widthRatio;
+	  const widthRatio = widthPx / (width / 100 * (pageWidth > 0 ? pageWidth : 446));
+	  const heightRatio = heightPx / (height / 100 * (pageHeight > 0 ? pageHeight : 630));
+	  const fontSize = (parseFloat(style.fontSize) || 14) / widthRatio;
 	  const padding = `${5 / heightRatio}px ${8 / widthRatio}px`;
 	  Object.assign(inlineStyles, {
 	    padding,
@@ -232,6 +232,7 @@ this.BX.Sign = this.BX.Sign || {};
 	  if (!isLoaded) {
 	    await new Promise(resolve => main_core.Event.bindOnce(babelHelpers.classPrivateFieldLooseBase(this, _page)[_page], 'load', resolve));
 	  }
+	  main_core.Dom.clean(babelHelpers.classPrivateFieldLooseBase(this, _blocksContainer)[_blocksContainer]);
 	  const {
 	    blocksTemplate,
 	    blocks

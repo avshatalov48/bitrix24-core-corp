@@ -7,7 +7,7 @@ use Bitrix\Main\Localization\Loc;
 
 class Restoration extends Presenter
 {
-	protected function getHistoryTitle(string $fieldName = null): string
+	protected function getHistoryTitle(?string $fieldName = null, array $settings = []): string
 	{
 		return (string)Loc::getMessage('CRM_TIMELINE_PRESENTER_RESTORATION_TITLE');
 	}

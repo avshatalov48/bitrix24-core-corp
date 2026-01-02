@@ -183,7 +183,7 @@ export class CompanyEditor
 		BX.Crm.EntityEditor.getDefault().save();
 		const entityData = await promise;
 		entityEditorEvents.forEach((event) => EventEmitter.unsubscribeAll(event));
-		if (entityData)
+		if (entityData?.MYCOMPANY_ID_INFO?.COMPANY_DATA)
 		{
 			const {
 				MYCOMPANY_ID_INFO: { COMPANY_DATA: [companyData] },

@@ -16,7 +16,6 @@ use Bitrix\Tasks\Copy\Template as TemplateCopier;
 use Bitrix\Tasks\Integration\Forum\Task\Comment;
 use Bitrix\Tasks\Internals\Task\ParameterTable;
 use Bitrix\Tasks\Internals\TaskTable;
-use Bitrix\Tasks\TemplateTable;
 use Bitrix\Tasks\Util\Type\DateTime as TasksDateTime;
 
 Loc::loadMessages(__FILE__);
@@ -563,7 +562,7 @@ class Task extends Base
 			$dictionary->set('GROUP_ID', $this->targetGroupId);
 		}
 
-		$queryObject = TemplateTable::getList([
+		$queryObject = \Bitrix\Tasks\Internals\Task\TemplateTable::getList([
 			'select' => ['ID'],
 			'filter' => [
 				'TASK_ID' => $taskId,

@@ -29,7 +29,7 @@ class Deal extends Entity
 			'type' => TypeDictionary::OPTION,
 			'default' => true,
 			'sort' => 300,
-			'disabled' => true,
+			'disabled' => false,
 			'description' => Loc::getMessage('CRM_SALE_RESERVATION_CONFIG_DEAL_AUTO_WRITE_OFF_ON_FINALIZE_DESCRIPTION'),
 		];
 

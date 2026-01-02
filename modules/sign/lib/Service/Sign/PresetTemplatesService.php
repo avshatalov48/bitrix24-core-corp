@@ -31,6 +31,44 @@ class PresetTemplatesService
 		return $directory->getChildren();
 	}
 
+	public function getSerializedTemplatePathByName(string $templateName): ?Main\IO\FileSystemEntry
+	{
+		$region = Main\Application::getInstance()->getLicense()->getRegion();
+		if (empty($region))
+		{
+			return null;
+		}
+
+		$directory = $this->getRegionSerializedTemplatesDirectory($region);
+		if (!$directory->isExists())
+		{
+			return null;
+		}
+
+		$documentRoot = Main\Application::getDocumentRoot();
+		if ($documentRoot === null)
+		{
+			return null;
+		}
+
+		$directoryPath = $directory->getPath();
+		$serializedPath = $documentRoot . self::SERIALIZED_FILES_PATH . $region;
+		if (!str_starts_with($directoryPath, $serializedPath))
+		{
+			return null;
+		}
+
+		$normalizedTemplatePath = Path::normalize($directoryPath . Path::DIRECTORY_SEPARATOR . $templateName);
+		if (Path::getName($normalizedTemplatePath) !== $templateName)
+		{
+			return null;
+		}
+
+		$fileSystemEntry = new Main\IO\File($normalizedTemplatePath);
+
+		return $fileSystemEntry->isExists() ? $fileSystemEntry : null;
+	}
+
 	private function getRegionSerializedTemplatesDirectory(string $region): Directory
 	{
 		$documentRoot = Main\Application::getDocumentRoot();

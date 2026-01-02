@@ -1,0 +1,11 @@
+<?php
+$MESS["CONFERENCE_LIST_BUTTON_CREATE"] = "Жасау";
+$MESS["CONFERENCE_LIST_CONTEXT_MENU_CHAT"] = "Чат";
+$MESS["CONFERENCE_LIST_CONTEXT_MENU_DELETE"] = "Жою";
+$MESS["CONFERENCE_LIST_CONTEXT_MENU_EDIT"] = "Редакциялау";
+$MESS["CONFERENCE_LIST_EMPTY_BUTTON_CREATE"] = "Бейнеконференцияны құру";
+$MESS["CONFERENCE_LIST_EMPTY_TITLE"] = "24 адамға дейін #HD# бейнеконференция";
+$MESS["CONFERENCE_LIST_EMPTY_TITLE_HD"] = "HD";
+$MESS["CONFERENCE_LIST_EMPTY_TITLE_NEW"] = "#LIMIT# адамға дейін #HD# бейнеконференция";
+$MESS["CONFERENCE_LIST_NOTIFICATION_LINK_COPIED"] = "Бейнеконференцияға сілтеме көшірілді";
+$MESS["CONFERENCE_LIST_TITLE"] = "Бейнеконференция";

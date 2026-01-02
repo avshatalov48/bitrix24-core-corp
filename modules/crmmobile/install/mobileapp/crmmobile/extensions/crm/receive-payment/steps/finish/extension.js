@@ -9,6 +9,7 @@ jn.define('crm/receive-payment/steps/finish', (require, exports, module) => {
 	const { Statuses } = require('crm/receive-payment/steps/finish/statuses');
 	const { AnalyticsLabel } = require('analytics-label');
 	const { EventEmitter } = require('event-emitter');
+	const { Random } = require('utils/random');
 
 	/**
 	 * @class FinishStep

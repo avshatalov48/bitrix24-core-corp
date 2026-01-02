@@ -3,9 +3,10 @@
  */
 jn.define('lists/element-creation-guide/catalog-step', (require, exports, module) => {
 	const { Loc } = require('loc');
+	const { EventEmitter } = require('event-emitter');
+	const { Random } = require('utils/random');
 	const { WizardStep } = require('layout/ui/wizard/step');
 	const { ProgressBarNumber } = require('lists/wizard/progress-bar-number');
-	const { EventEmitter } = require('event-emitter');
 	const { CatalogStepComponent } = require('lists/element-creation-guide/catalog-step/component');
 
 	class CatalogStep extends WizardStep
@@ -22,7 +23,6 @@ jn.define('lists/element-creation-guide/catalog-step', (require, exports, module
 		{
 			super(props);
 
-			// eslint-disable-next-line no-undef
 			this.uid = props.uid || Random.getString();
 			this.customEventEmitter = EventEmitter.createWithUid(this.uid);
 

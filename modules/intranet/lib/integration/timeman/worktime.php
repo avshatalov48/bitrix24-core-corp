@@ -170,6 +170,8 @@ class Worktime
 			"workDayStatus" => self::STATUS_OPENED
 		];
 
+
+		self::deleteCompositeCacheByParams($params);
 		self::addTMDayInfoToOption($fields);
 	}
 
@@ -185,6 +187,7 @@ class Worktime
 			"workDayStatus" => self::STATUS_CLOSED
 		];
 
+		self::deleteCompositeCacheByParams($params);
 		self::addTMDayInfoToOption($fields);
 	}
 
@@ -211,6 +214,12 @@ class Worktime
 			'command' => 'timemanDayInfo',
 			'params' => $params
 		));
+		self::deleteCompositeCacheByParams($params);
+	}
+
+	public static function OnAfterTMDayPause($params): void
+	{
+		self::deleteCompositeCacheByParams($params);
 	}
 
 	public static function OnGetDependentModule(/*\Bitrix\Main\Event $event*/)
@@ -226,10 +235,18 @@ class Worktime
 		$eventManager = \Bitrix\Main\EventManager::getInstance();
 		$eventManager->registerEventHandler('timeman', 'OnAfterTMDayStart', 'intranet', self::class, 'OnAfterTMDayStart');
 		$eventManager->registerEventHandler('timeman', 'OnAfterTMDayEnd', 'intranet', self::class, 'OnAfterTMDayEnd');
+		$eventManager->registerEventHandler('timeman', 'OnAfterTMDayPause', 'intranet', self::class, 'OnAfterTMDayPause');
 		$eventManager->registerEventHandler('timeman', 'OnAfterTMDayContinue', 'intranet', self::class, 'OnAfterTMDayContinue');
 		$eventManager->registerEventHandler("pull", "OnGetDependentModule", "intranet", self::class, "OnGetDependentModule" );
 	}
+
+	private static function deleteCompositeCacheByParams($params): void
+	{
+		$userId = (int)($params['USER_ID'] ?? 0);
+
+		if ($userId > 0)
+		{
+			\Bitrix\Intranet\Composite\CacheProvider::deleteUserCache($userId);
+		}
+	}
 }
-
-
-

@@ -9,15 +9,18 @@ use Bitrix\Call\Model\EO_CallOutcome_Collection;
 
 class OutcomeCollection extends EO_CallOutcome_Collection
 {
-	public static function getOutcomesByCallId(int $callId): ?static
+	public static function getOutcomesByCallId(int $callId, array $outcomeTypes = []): ?static
 	{
-		$outcomeCollection = CallOutcomeTable::query()
+		$outcomeQuery = CallOutcomeTable::query()
 			->setSelect(['*'])
 			->where('CALL_ID', $callId)
 			->setOrder(['ID' => 'DESC'])
-			->exec()
-			?->fetchCollection()
 		;
+		if ($outcomeTypes)
+		{
+			$outcomeQuery->whereIn('TYPE', $outcomeTypes);
+		}
+		$outcomeCollection = $outcomeQuery->exec()->fetchCollection();
 		if ($outcomeIds = $outcomeCollection->getIdList())
 		{
 			$properties = CallOutcomePropertyTable::query()
@@ -28,13 +31,7 @@ class OutcomeCollection extends EO_CallOutcome_Collection
 			;
 			while ($property = $properties->fetchObject())
 			{
-				foreach ($outcomeCollection as $outcome)
-				{
-					if ($outcome->getId() == $property->getOutcomeId())
-					{
-						$outcome->appendProps($property);
-					}
-				}
+				$outcomeCollection->getByPrimary($property->getOutcomeId())->appendProps($property);
 			}
 		}
 

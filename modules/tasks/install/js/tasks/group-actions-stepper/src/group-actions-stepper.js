@@ -190,6 +190,7 @@ export class GroupActionsStepper extends EventEmitter
 							if (result.PROCESSED_ITEMS)
 							{
 								data.processedItems = parseInt(result.PROCESSED_ITEMS, 10);
+								data.lastProcessedId = parseInt(result.LAST_PROCESSED_ID, 10);
 							}
 
 							this.setParam('data', data);
@@ -264,6 +265,9 @@ export class GroupActionsStepper extends EventEmitter
 				break;
 			case 'setgroup':
 				title = Loc.getMessage('TASKS_GRID_GROUP_ACTION_NAME_SETGROUP');
+				break;
+			case 'setcollab':
+				title = Loc.getMessage('TASKS_GRID_GROUP_ACTION_NAME_SETCOLLAB');
 				break;
 			case 'setflow':
 				title = Loc.getMessage('TASKS_GRID_GROUP_ACTION_NAME_SETFLOW');

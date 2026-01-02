@@ -1,7 +1,7 @@
 type Event = {
 	id: number,
 	parentId: number,
-	isFullDay: boolean,
+	fullDay: boolean,
 	calType: string,
 	ownerId: number,
 	dateFromFormatted: string,
@@ -9,6 +9,7 @@ type Event = {
 	dateToTs: number,
 	timezone: string,
 	timezoneOffset: number,
+	isDaylightSavingTimezone: string,
 	sectionId: number,
 	name: string,
 	description: string,
@@ -31,4 +32,17 @@ type Event = {
 	files: object[],
 	collabId: number,
 	chatId: number,
+	entityRelation: EntityRelation | null,
+};
+
+type EntityRelation = {
+	eventId: number,
+	entity: {
+		id: number,
+		type: string,
+	},
+	owner: {
+		id: number,
+		name: string,
+	},
 };

@@ -22,6 +22,7 @@ use Bitrix\Crm\Integrity\DuplicateIndexMismatch;
 use Bitrix\Crm\Integrity\DuplicateManager;
 use Bitrix\Crm\Integrity\DuplicateRequisiteCriterion;
 use Bitrix\Crm\Item;
+use Bitrix\Crm\Model\LastCommunicationTable;
 use Bitrix\Crm\Security\QueryBuilder\OptionsBuilder;
 use Bitrix\Crm\Security\QueryBuilder\Result\JoinWithUnionSpecification;
 use Bitrix\Crm\Service\Container;
@@ -50,23 +51,26 @@ class CAllCrmContact
 	public $LAST_ERROR = '';
 	protected $checkExceptions = array();
 
-	public $cPerms = null;
 	protected $bCheckPermission = true;
 	const TABLE_ALIAS = 'L';
 	protected static $TYPE_NAME = 'CONTACT';
 	private static $FIELD_INFOS = null;
 	const DEFAULT_FORM_ID = 'CRM_CONTACT_SHOW_V12';
 
-	private static ?\Bitrix\Crm\Entity\Compatibility\Adapter $lastActivityAdapter = null;
+	/**
+	 * @var \Bitrix\Crm\Entity\Compatibility\Adapter[]
+	 */
+	private static array $lastActivityAdapter = [];
 	private static ?Crm\Entity\Compatibility\Adapter $commentsAdapter = null;
 
 	/** @var Crm\Entity\Compatibility\Adapter */
 	private $compatibilityAdapter;
 
+	private static ?Crm\Entity\Compatibility\Adapter\Permissions $permissionsAdapter = null;
+
 	function __construct($bCheckPermission = true)
 	{
 		$this->bCheckPermission = $bCheckPermission;
-		$this->cPerms = CCrmPerms::GetCurrentUserPermissions();
 	}
 
 	/**
@@ -142,16 +146,16 @@ class CAllCrmContact
 		return $compatibilityAdapter;
 	}
 
-	private static function getLastActivityAdapter(): Crm\Entity\Compatibility\Adapter
+	private static function getLastActivityAdapter(string $tableAlias = self::TABLE_ALIAS): Crm\Entity\Compatibility\Adapter
 	{
-		if (!self::$lastActivityAdapter)
+		if (!isset(self::$lastActivityAdapter[$tableAlias]))
 		{
 			$factory = Crm\Service\Container::getInstance()->getFactory(\CCrmOwnerType::Contact);
-			self::$lastActivityAdapter = new Crm\Entity\Compatibility\Adapter\LastActivity($factory);
-			self::$lastActivityAdapter->setTableAlias(self::TABLE_ALIAS);
+			self::$lastActivityAdapter[$tableAlias] = new Crm\Entity\Compatibility\Adapter\LastActivity($factory);
+			self::$lastActivityAdapter[$tableAlias]->setTableAlias($tableAlias);
 		}
 
-		return self::$lastActivityAdapter;
+		return self::$lastActivityAdapter[$tableAlias];
 	}
 
 	private static function getCommentsAdapter(): Crm\Entity\Compatibility\Adapter\Comments
@@ -162,6 +166,16 @@ class CAllCrmContact
 		}
 
 		return self::$commentsAdapter;
+	}
+
+	private static function getPermissionsAdapter(): Crm\Entity\Compatibility\Adapter\Permissions
+	{
+		if (!self::$permissionsAdapter)
+		{
+			self::$permissionsAdapter = new Crm\Entity\Compatibility\Adapter\Permissions(\CCrmOwnerType::Contact);
+		}
+
+		return self::$permissionsAdapter;
 	}
 
 	// Service -->
@@ -367,6 +381,8 @@ class CAllCrmContact
 
 		self::$FIELD_INFOS += self::getLastActivityAdapter()->getFieldsInfo();
 
+		self::$FIELD_INFOS += LastCommunicationTable::getLastStateFieldInfo();
+
 		return self::$FIELD_INFOS;
 	}
 
@@ -375,7 +391,8 @@ class CAllCrmContact
 		$tableAliasName =
 			(isset($arOptions['TABLE_ALIAS']) && is_string($arOptions['TABLE_ALIAS']) && $arOptions['TABLE_ALIAS'] !== '')
 				? $arOptions['TABLE_ALIAS']
-				: 'L';
+				: self::TABLE_ALIAS
+		;
 
 		$assignedByJoin = 'LEFT JOIN b_user U ON ' . $tableAliasName . '.ASSIGNED_BY_ID = U.ID';
 		$createdByJoin = 'LEFT JOIN b_user U2 ON ' . $tableAliasName . '.CREATED_BY_ID = U2.ID';
@@ -447,7 +464,6 @@ class CAllCrmContact
 			'ORIGIN_ID' => ['FIELD' => $tableAliasName . '.ORIGIN_ID', 'TYPE' => 'string'], //ITEM ID IN EXTERNAL SYSTEM
 			'ORIGIN_VERSION' => ['FIELD' => $tableAliasName . '.ORIGIN_VERSION', 'TYPE' => 'string'], //ITEM VERSION IN EXTERNAL SYSTEM
 			'FACE_ID' => ['FIELD' => $tableAliasName . '.FACE_ID', 'TYPE' => 'int'],
-			'LAST_ACTIVITY_TIME' => ['FIELD' => $tableAliasName . '.LAST_ACTIVITY_TIME', 'TYPE' => 'datetime'],
 
 			'CATEGORY_ID' => ['FIELD' => $tableAliasName . '.CATEGORY_ID', 'TYPE' => 'int'],
 		];
@@ -509,7 +525,7 @@ class CAllCrmContact
 				$result['C_ACTIVITY_TYPE_ID'] = ['FIELD' => 'AC.TYPE_ID', 'TYPE' => 'int', 'FROM' => $commonActivityJoin];
 				$result['C_ACTIVITY_PROVIDER_ID'] = ['FIELD' => 'AC.PROVIDER_ID', 'TYPE' => 'string', 'FROM' => $commonActivityJoin];
 
-				$userID = CCrmPerms::GetCurrentUserID();
+				$userID = self::getPermissionsAdapter()->getCurrentUserFromOptions();
 				if($userID > 0)
 				{
 					$activityJoin = CCrmActivity::PrepareJoin($userID, CCrmOwnerType::Contact, $tableAliasName, 'A', 'UA', '');
@@ -530,10 +546,11 @@ class CAllCrmContact
 			Crm\Service\Container::getInstance()->getParentFieldManager()->getParentFieldsSqlInfo(
 				CCrmOwnerType::Contact,
 				$tableAliasName
-			)
+			),
+			LastCommunicationTable::getFieldsByEntityTypeId(CCrmOwnerType::Contact, true),
 		);
 
-		$result += self::getLastActivityAdapter()->getFields();
+		$result += self::getLastActivityAdapter($tableAliasName)->getFields();
 
 		return $result;
 	}
@@ -619,7 +636,7 @@ class CAllCrmContact
 		return is_array($dbRes->Fetch());
 	}
 
-	public static function GetTopIDs($top, $sortType = 'ASC', $userPermissions = null)
+	public static function GetTopIDs($top, $sortType = 'ASC')
 	{
 		$top = (int)$top;
 		if ($top <= 0)
@@ -632,11 +649,10 @@ class CAllCrmContact
 		return \Bitrix\Crm\Entity\Contact::getInstance()->getTopIDs([
 			'order' => ['ID' => $sortType],
 			'limit' => $top,
-			'userPermissions' => $userPermissions
 		]);
 	}
 
-	public static function GetTopIDsInCategory($categoryId, $top, $sortType = 'ASC', $userPermissions = null)
+	public static function GetTopIDsInCategory($categoryId, $top, $sortType = 'ASC')
 	{
 		$top = (int)$top;
 		if ($top <= 0)
@@ -650,7 +666,6 @@ class CAllCrmContact
 			'order' => ['ID' => $sortType],
 			'limit' => $top,
 			'filter' => ['@CATEGORY_ID' => $categoryId],
-			'userPermissions' => $userPermissions
 		]);
 	}
 
@@ -891,7 +906,8 @@ class CAllCrmContact
 		// check permissions
 		$sSqlPerm = '';
 
-		if (!CCrmPerms::IsAdmin()
+		if (
+			!self::getPermissionsAdapter()->isAdmin()
 			&& (!array_key_exists('CHECK_PERMISSIONS', $arFilter) || $arFilter['CHECK_PERMISSIONS'] !== 'N')
 		)
 		{
@@ -1203,7 +1219,8 @@ class CAllCrmContact
 
 		$queryBuilder = Crm\Service\Container::getInstance()
 			->getUserPermissions($userId)
-			->createListQueryBuilder($permissionEntityTypes, $builderOptions)
+			->itemsList()
+			->createQueryBuilder($permissionEntityTypes, $builderOptions)
 		;
 
 		return $queryBuilder->buildCompatible();
@@ -1343,8 +1360,7 @@ class CAllCrmContact
 		// ALLOW_SET_SYSTEM_FIELDS is deprecated temporary option. It will be removed soon! Do not use it!
 		$allowSetSystemFields = $options['ALLOW_SET_SYSTEM_FIELDS'] ?? $isRestoration;
 
-		$userID = isset($options['CURRENT_USER'])
-			? (int)$options['CURRENT_USER'] : CCrmSecurityHelper::GetCurrentUserID();
+		$userID = self::getPermissionsAdapter()->getCurrentUserFromOptions($options);
 
 		if($userID <= 0 && $this->bCheckPermission)
 		{
@@ -1354,16 +1370,27 @@ class CAllCrmContact
 
 		unset($arFields['ID']);
 
+		$movedToBinDateTime = $options['MOVED_TO_BIN_DATETIME'] ?? null;
+		$recyclebinDateTimeConverter = new Crm\Integration\Recyclebin\DateTimeConverter($movedToBinDateTime);
+
 		if(!($allowSetSystemFields && isset($arFields['DATE_CREATE'])))
 		{
 			unset($arFields['DATE_CREATE']);
 			$arFields['~DATE_CREATE'] = $DB->CurrentTimeFunction();
+		}
+		elseif ($isRestoration)
+		{
+			$arFields['DATE_CREATE'] = $recyclebinDateTimeConverter->convert($arFields['DATE_CREATE']);
 		}
 
 		if(!($allowSetSystemFields && isset($arFields['DATE_MODIFY'])))
 		{
 			unset($arFields['DATE_MODIFY']);
 			$arFields['~DATE_MODIFY'] = $DB->CurrentTimeFunction();
+		}
+		elseif ($isRestoration)
+		{
+			$arFields['DATE_MODIFY'] = $recyclebinDateTimeConverter->convert($arFields['DATE_MODIFY']);
 		}
 
 		if($userID > 0)
@@ -1430,50 +1457,35 @@ class CAllCrmContact
 			;
 			unset($arFields['OBSERVER_IDS']);
 
-			$arAttr = array();
-			if (!empty($arFields['OPENED']))
-				$arAttr['OPENED'] = $arFields['OPENED'];
-			if(!empty($observerIDs))
-			{
-				$arAttr['CONCERNED_USER_IDS'] = $observerIDs;
-			}
-
-			$permissionEntityType = (new PermissionEntityTypeHelper(CCrmOwnerType::Contact))
-				->getPermissionEntityTypeForCategory((int)$arFields['CATEGORY_ID'])
-			;
-
-			$sPermission = 'ADD';
+			$sPermission = Crm\Service\UserPermissions::OPERATION_ADD;
 			if (isset($arFields['PERMISSION']))
 			{
-				if ($arFields['PERMISSION'] == 'IMPORT')
-					$sPermission = 'IMPORT';
+				if ($arFields['PERMISSION'] == Crm\Service\UserPermissions::OPERATION_IMPORT)
+				{
+					$sPermission = Crm\Service\UserPermissions::OPERATION_IMPORT;
+				}
 				unset($arFields['PERMISSION']);
 			}
 
+			$permissionAttributesHelper = self::getPermissionsAdapter()->getAttributesHelper($userID, $sPermission);
+			$permissionAttributesHelper
+				->setCategoryId((int)$arFields['CATEGORY_ID'])
+				->setAssignedById($arFields['ASSIGNED_BY_ID'])
+				->setOpened($arFields['OPENED'] ?? null)
+				->setConcernedUserIds($observerIDs)
+			;
+
 			if($this->bCheckPermission)
 			{
-				$arEntityAttr = self::BuildEntityAttr($userID, $arAttr);
-				$userPerms =  $userID == CCrmPerms::GetCurrentUserID() ? $this->cPerms : CCrmPerms::GetUserPermissions($userID);
-				$sEntityPerm = $userPerms->GetPermType($permissionEntityType, $sPermission, $arEntityAttr);
-				if ($sEntityPerm == BX_CRM_PERM_NONE)
+				if (!$permissionAttributesHelper->hasAccess())
 				{
 					$this->LAST_ERROR = GetMessage('CRM_PERMISSION_DENIED');
 					$arFields['RESULT_MESSAGE'] = &$this->LAST_ERROR;
+
 					return false;
 				}
-
-				$assignedByID = intval($arFields['ASSIGNED_BY_ID']);
-				if ($sEntityPerm == BX_CRM_PERM_SELF && $assignedByID != $userID)
-				{
-					$arFields['ASSIGNED_BY_ID'] = $userID;
-				}
+				$permissionAttributesHelper->prepareFields($arFields);
 			}
-
-			$assignedByID = intval($arFields['ASSIGNED_BY_ID']);
-			$arEntityAttr = self::BuildEntityAttr($assignedByID, $arAttr);
-			$userPerms =  $assignedByID == CCrmPerms::GetCurrentUserID() ? $this->cPerms : CCrmPerms::GetUserPermissions($assignedByID);
-			$sEntityPerm = $userPerms->GetPermType($permissionEntityType, $sPermission, $arEntityAttr);
-			$this->PrepareEntityAttrs($arEntityAttr, $sEntityPerm);
 
 			if(isset($arFields['PHOTO'])
 				&& is_array($arFields['PHOTO'])
@@ -1589,6 +1601,18 @@ class CAllCrmContact
 			}
 			//endregion
 
+			if ($this->bCheckPermission)
+			{
+				$relatedEntitiesPermissionsCheckResult = self::getPermissionsAdapter()->checkRelatedEntitiesPermissions($arFields, $userID);
+				if (!$relatedEntitiesPermissionsCheckResult->isSuccess())
+				{
+					$this->LAST_ERROR = implode(',', $relatedEntitiesPermissionsCheckResult->getErrorMessages());
+					$arFields['RESULT_MESSAGE'] = &$this->LAST_ERROR;
+
+					return false;
+				}
+			}
+
 			unset($arFields['ID']);
 
 			$this->normalizeEntityFields($arFields);
@@ -1614,12 +1638,7 @@ class CAllCrmContact
 				$GLOBALS['CACHE_MANAGER']->CleanDir('b_crm_contact');
 			}
 
-			$securityRegisterOptions = (new \Bitrix\Crm\Security\Controller\RegisterOptions())
-				->setEntityAttributes($arEntityAttr)
-			;
-			Crm\Security\Manager::getEntityController(CCrmOwnerType::Contact)
-				->register($permissionEntityType, $ID, $securityRegisterOptions)
-			;
+			$permissionAttributesHelper->registerEntityAttributes($ID);
 
 			//Statistics & History -->
 			Bitrix\Crm\Statistics\ContactGrowthStatisticEntry::register($ID, $arFields);
@@ -1891,37 +1910,16 @@ class CAllCrmContact
 				continue;
 			}
 
-			$attrs = [];
-			if(isset($fields['OPENED']))
-			{
-				$attrs['OPENED'] = $fields['OPENED'];
-			}
-
-			$permissionEntityType = (new PermissionEntityTypeHelper(CCrmOwnerType::Contact))
-				->getPermissionEntityTypeForCategory((int)$fields['CATEGORY_ID'])
-			;
-
-			$entityAttrs = self::BuildEntityAttr($assignedByID, $attrs);
-			$securityRegisterOptions = (new \Bitrix\Crm\Security\Controller\RegisterOptions())
-				->setEntityAttributes($entityAttrs)
-				->setEntityFields($fields)
-			;
-			Crm\Security\Manager::getEntityController(CCrmOwnerType::Contact)
-				->register(
-					$permissionEntityType,
-					$ID,
-					$securityRegisterOptions
+			self::getPermissionsAdapter()
+				->getAttributesHelper(
+					self::getPermissionsAdapter()->getCurrentUserFromOptions(),
+					Crm\Service\UserPermissions::OPERATION_READ
 				)
+				->setAssignedById($assignedByID)
+				->setOpened($fields['OPENED'])
+				->setCategoryId($fields['CATEGORY_ID'])
+				->registerEntityAttributes($ID, $fields)
 			;
-		}
-	}
-
-	private function PrepareEntityAttrs(&$arEntityAttr, $entityPermType)
-	{
-		// Ensure that entity accessable for user restricted by BX_CRM_PERM_OPEN
-		if($entityPermType === BX_CRM_PERM_OPEN && !in_array('O', $arEntityAttr, true))
-		{
-			$arEntityAttr[] = 'O';
 		}
 	}
 
@@ -1959,14 +1957,7 @@ class CAllCrmContact
 			return false;
 		}
 
-		if(isset($arOptions['CURRENT_USER']))
-		{
-			$iUserId = intval($arOptions['CURRENT_USER']);
-		}
-		else
-		{
-			$iUserId = CCrmSecurityHelper::GetCurrentUserID();
-		}
+		$iUserId = self::getPermissionsAdapter()->getCurrentUserFromOptions($arOptions);
 
 		unset(
 			$arFields['DATE_CREATE'],
@@ -2001,14 +1992,11 @@ class CAllCrmContact
 		}
 		else
 		{
-			$permissionEntityType = (new PermissionEntityTypeHelper(CCrmOwnerType::Contact))
-				->getPermissionEntityTypeForCategory($categoryId)
-			;
-
-			if($this->bCheckPermission && !CCrmAuthorizationHelper::CheckUpdatePermission($permissionEntityType, $ID, $this->cPerms))
+			if ($this->bCheckPermission && !self::getPermissionsAdapter()->canUpdateInCategory($ID, $categoryId, $iUserId))
 			{
 				$this->LAST_ERROR = GetMessage('CRM_PERMISSION_DENIED');
 				$arFields['RESULT_MESSAGE'] = &$this->LAST_ERROR;
+
 				return false;
 			}
 
@@ -2035,34 +2023,28 @@ class CAllCrmContact
 				}
 			}
 
-			$arAttr = array();
-			$arAttr['OPENED'] = !empty($arFields['OPENED']) ? $arFields['OPENED'] : $arRow['OPENED'];
-
 			$originalObserverIDs = Crm\Observer\ObserverManager::getEntityObserverIDs(CCrmOwnerType::Contact, $ID);
 			$observerIDs = isset($arFields['OBSERVER_IDS']) && is_array($arFields['OBSERVER_IDS'])
 				? $arFields['OBSERVER_IDS']
 				: null
 			;
+
+			$permissionAttributesHelper = self::getPermissionsAdapter()
+				->getAttributesHelper($iUserId, Crm\Service\UserPermissions::OPERATION_UPDATE)
+			;
+			$permissionAttributesHelper
+				->setCategoryId($categoryId)
+				->setOpened(!empty($arFields['OPENED']) ? $arFields['OPENED'] : $arRow['OPENED'])
+				->setAssignedById($assignedByID)
+			;
+
 			if ($observerIDs !== null && count($observerIDs) > 0)
 			{
-				$arAttr['CONCERNED_USER_IDS'] = $observerIDs;
+				$permissionAttributesHelper->setConcernedUserIds($observerIDs);
 			}
 			elseif ($observerIDs === null && count($originalObserverIDs) > 0)
 			{
-				$arAttr['CONCERNED_USER_IDS'] = $originalObserverIDs;
-			}
-
-			$arEntityAttr = self::BuildEntityAttr($assignedByID, $arAttr);
-			if($this->bCheckPermission)
-			{
-				$sEntityPerm = $this->cPerms->GetPermType($permissionEntityType, 'WRITE', $arEntityAttr);
-				//HACK: Ensure that entity accessible for user restricted by BX_CRM_PERM_OPEN
-				$this->PrepareEntityAttrs($arEntityAttr, $sEntityPerm);
-				//HACK: Prevent 'OPENED' field change by user restricted by BX_CRM_PERM_OPEN permission
-				if($sEntityPerm === BX_CRM_PERM_OPEN && isset($arFields['OPENED']) && $arFields['OPENED'] !== 'Y' && $assignedByID !== $iUserId)
-				{
-					$arFields['OPENED'] = 'Y';
-				}
+				$permissionAttributesHelper->setConcernedUserIds($originalObserverIDs);
 			}
 
 			if(isset($arFields['PHOTO']))
@@ -2348,11 +2330,26 @@ class CAllCrmContact
 			}
 			//endregion
 
-			self::getLastActivityAdapter()->performUpdate((int)$ID, $arFields, $arOptions);
+			self::getLastActivityAdapter()
+				->setPreviousFields((int)$ID, $arRow)
+				->performUpdate((int)$ID, $arFields, $arOptions)
+			;
 			self::getCommentsAdapter()
 				->setPreviousFields((int)$ID, $arRow)
 				->normalizeFields((int)$ID, $arFields)
 			;
+
+			if ($this->bCheckPermission)
+			{
+				$relatedEntitiesPermissionsCheckResult = self::getPermissionsAdapter()->checkRelatedEntitiesPermissions($arFields, $iUserId);
+				if (!$relatedEntitiesPermissionsCheckResult->isSuccess())
+				{
+					$this->LAST_ERROR = implode(',', $relatedEntitiesPermissionsCheckResult->getErrorMessages());
+					$arFields['RESULT_MESSAGE'] = &$this->LAST_ERROR;
+
+					return false;
+				}
+			}
 
 			unset($arFields['ID']);
 
@@ -2387,12 +2384,7 @@ class CAllCrmContact
 			}
 			//endregion
 
-			$securityRegisterOptions = (new \Bitrix\Crm\Security\Controller\RegisterOptions())
-				->setEntityAttributes($arEntityAttr)
-			;
-			Crm\Security\Manager::getEntityController(CCrmOwnerType::Contact)
-				->register($permissionEntityType, $ID, $securityRegisterOptions)
-			;
+			$permissionAttributesHelper->registerEntityAttributes($ID);
 
 			//region Save companies
 			if(!empty($removedCompanyBindings))
@@ -2730,14 +2722,15 @@ class CAllCrmContact
 				$filler->fill($arOptions['CURRENT_FIELDS'], $arFields);
 
 				$item = $this->createPullItem(array_merge($arRow, $arFields));
-				Crm\Integration\PullManager::getInstance()->sendItemUpdatedEvent(
+				Container::getInstance()->getPullEventsQueue()->scheduleItemUpdatedEvent(
+					new Crm\ItemIdentifier(\CCrmOwnerType::Contact, (int)$ID),
 					$item,
 					[
 						'TYPE' => self::$TYPE_NAME,
 						'SKIP_CURRENT_USER' => ($iUserId !== 0),
 						'CATEGORY_ID' => ($arFields['CATEGORY_ID'] ?? 0),
 						'EVENT_ID' => ($arOptions['eventId'] ?? null),
-					]
+					],
 				);
 			}
 		}
@@ -2771,14 +2764,7 @@ class CAllCrmContact
 			return $this->getCompatibilityAdapter()->performDelete($ID, $arOptions);
 		}
 
-		if(isset($arOptions['CURRENT_USER']))
-		{
-			$iUserId = intval($arOptions['CURRENT_USER']);
-		}
-		else
-		{
-			$iUserId = CCrmSecurityHelper::GetCurrentUserID();
-		}
+		$iUserId = self::getPermissionsAdapter()->getCurrentUserFromOptions($arOptions);
 
 		$dbResult = \CCrmContact::GetListEx(
 			array(),
@@ -2790,24 +2776,14 @@ class CAllCrmContact
 			return false;
 		}
 
-		$assignedByID = isset($arFields['ASSIGNED_BY_ID']) ? (int)$arFields['ASSIGNED_BY_ID'] : 0;
 		$categoryId = (int)($arFields['CATEGORY_ID'] ?? 0);
 
-		$permissionEntityType = (new PermissionEntityTypeHelper(CCrmOwnerType::Contact))
-			->getPermissionEntityTypeForCategory($categoryId)
-		;
-
-		$sWherePerm = '';
-		if ($this->bCheckPermission)
+		if($this->bCheckPermission && !self::getPermissionsAdapter()->canDeleteInCategory($ID, $categoryId, $iUserId))
 		{
-			$arEntityAttr = $this->cPerms->GetEntityAttr($permissionEntityType, $ID);
-			$sEntityPerm = $this->cPerms->GetPermType($permissionEntityType, 'DELETE', $arEntityAttr[$ID]);
-			if ($sEntityPerm == BX_CRM_PERM_NONE)
-				return false;
-			else if ($sEntityPerm == BX_CRM_PERM_SELF)
-				$sWherePerm = " AND ASSIGNED_BY_ID = {$iUserId}";
-			else if ($sEntityPerm == BX_CRM_PERM_OPEN)
-				$sWherePerm = " AND (OPENED = 'Y' OR ASSIGNED_BY_ID = {$iUserId})";
+			$this->LAST_ERROR = GetMessage('CRM_PERMISSION_DENIED');
+			$arFields['RESULT_MESSAGE'] = &$this->LAST_ERROR;
+
+			return false;
 		}
 
 		$APPLICATION->ResetException();
@@ -2831,17 +2807,21 @@ class CAllCrmContact
 		if($processBizproc)
 		{
 			$bizproc = new CCrmBizProc('CONTACT');
-			$bizproc->ProcessDeletion($ID);
+			$bizproc->processDeletion($ID);
 		}
 
 		$enableRecycleBin = \Bitrix\Crm\Recycling\ContactController::isEnabled()
 			&& \Bitrix\Crm\Settings\ContactSettings::getCurrent()->isRecycleBinEnabled();
-		if($enableRecycleBin)
+
+		if ($enableRecycleBin)
 		{
+			$arFields['DATE_CREATE'] = (Main\Type\DateTime::createFromUserTime($arFields['DATE_CREATE']))->disableUserTime()->toString();
+			$arFields['DATE_MODIFY'] = (Main\Type\DateTime::createFromUserTime($arFields['DATE_MODIFY']))->disableUserTime()->toString();
+
 			\Bitrix\Crm\Recycling\ContactController::getInstance()->moveToBin($ID, array('FIELDS' => $arFields));
 		}
 
-		$obRes = $DB->Query("DELETE FROM b_crm_contact WHERE ID = {$ID}{$sWherePerm}");
+		$obRes = $DB->Query("DELETE FROM b_crm_contact WHERE ID = {$ID}");
 		if (is_object($obRes) && $obRes->AffectedRowsCount() > 0)
 		{
 			if(defined('BX_COMP_MANAGED_CACHE'))
@@ -2862,8 +2842,9 @@ class CAllCrmContact
 				CCrmOwnerType::Contact
 			)->removeShortIndex($ID);
 
-			Crm\Security\Manager::getEntityController(CCrmOwnerType::Contact)
-				->unregister($permissionEntityType, $ID)
+			self::getPermissionsAdapter()
+				->getAttributesHelper($iUserId, Crm\Service\UserPermissions::OPERATION_DELETE)
+				->unregisterEntityAttributes($ID)
 			;
 
 			$GLOBALS['USER_FIELD_MANAGER']->Delete(self::$sUFEntityID, $ID);
@@ -3169,10 +3150,7 @@ class CAllCrmContact
 		$allowSetSystemFields = $options['ALLOW_SET_SYSTEM_FIELDS'] ?? false;
 		if ($allowSetSystemFields)
 		{
-			$currentUserId =  isset($options['CURRENT_USER'])
-				? (int)$options['CURRENT_USER']
-				: CCrmSecurityHelper::GetCurrentUserID()
-			;
+			$currentUserId = self::getPermissionsAdapter()->getCurrentUserFromOptions($options);
 
 			$checkSystemFieldsResult = (new \Bitrix\Crm\Service\Operation\Import(
 				$factory->createItem(),
@@ -3494,79 +3472,58 @@ class CAllCrmContact
 		return $arMsg;
 	}
 
-	public static function GetPermissionAttributes(array $IDs)
-	{
-		return
-			\Bitrix\Crm\Security\Manager::resolveController(self::$TYPE_NAME)
-				->getPermissionAttributes(self::$TYPE_NAME, $IDs)
-		;
-	}
-
-	public static function IsAccessEnabled(CCrmPerms $userPermissions = null)
-	{
-		return self::CheckReadPermission(0, $userPermissions);
-	}
-
-	public static function getPermissionEntityType(int $id, ?int $categoryId = null): string
-	{
-		$categoryId =
-			$categoryId
-			?? Container::getInstance()->getFactory(CCrmOwnerType::Contact)->getItemCategoryId($id)
-			?? 0
-		;
-
-		return (new PermissionEntityTypeHelper(CCrmOwnerType::Contact))->getPermissionEntityTypeForCategory($categoryId);
-	}
-
+	/**
+	 * @deprecated
+	 * @see \Bitrix\Crm\Service\Container::getInstance()->getUserPermissions()->entityType()->canAddItems()
+	 */
 	public static function CheckCreatePermission($userPermissions = null, int $categoryId = 0)
 	{
-		return CCrmAuthorizationHelper::CheckCreatePermission(
-			(new PermissionEntityTypeHelper(CCrmOwnerType::Contact))->getPermissionEntityTypeForCategory($categoryId),
-			$userPermissions
-		);
+		return self::getPermissionsAdapter()->canAddInCategory($categoryId, $userPermissions?->GetUserId());
 	}
 
+	/**
+	 * @deprecated
+	 * @see \Bitrix\Crm\Service\Container::getInstance()->getUserPermissions()->item()->canUpdate()
+	 */
 	public static function CheckUpdatePermission($id, $userPermissions = null, ?int $categoryId = null)
 	{
-		return CCrmAuthorizationHelper::CheckUpdatePermission(
-			self::getPermissionEntityType((int)$id, $categoryId),
-			$id,
-			$userPermissions
-		);
+		return self::getPermissionsAdapter()->canUpdateInCategory((int)$id, $categoryId, $userPermissions?->GetUserId());
 	}
 
+	/**
+	 * @deprecated
+	 * @see \Bitrix\Crm\Service\Container::getInstance()->getUserPermissions()->item()->canDelete()
+	 */
 	public static function CheckDeletePermission($id, $userPermissions = null, ?int $categoryId = null)
 	{
-		return CCrmAuthorizationHelper::CheckDeletePermission(
-			self::getPermissionEntityType((int)$id, $categoryId),
-			$id,
-			$userPermissions
-		);
+		return self::getPermissionsAdapter()->canDeleteInCategory((int)$id, $categoryId, $userPermissions?->GetUserId());
 	}
 
+	/**
+	 * @deprecated
+	 * @see \Bitrix\Crm\Service\Container::getInstance()->getUserPermissions()->item()->canRead()
+	 */
 	public static function CheckReadPermission($id = 0, $userPermissions = null, ?int $categoryId = null)
 	{
-		return CCrmAuthorizationHelper::CheckReadPermission(
-			self::getPermissionEntityType((int)$id, $categoryId),
-			$id,
-			$userPermissions
-		);
+		return self::getPermissionsAdapter()->canReadInCategory((int)$id, $categoryId, $userPermissions?->GetUserId());
 	}
 
+	/**
+	 * @deprecated
+	 * @see \Bitrix\Crm\Service\Container::getInstance()->getUserPermissions()->entityType()->canImportItems()
+	 */
 	public static function CheckImportPermission($userPermissions = null, int $categoryId = 0)
 	{
-		return CCrmAuthorizationHelper::CheckImportPermission(
-			(new PermissionEntityTypeHelper(CCrmOwnerType::Contact))->getPermissionEntityTypeForCategory($categoryId),
-			$userPermissions
-		);
+		return self::getPermissionsAdapter()->canImportInCategory($categoryId, $userPermissions?->GetUserId());
 	}
 
+	/**
+	 * @deprecated
+	 * @see \Bitrix\Crm\Service\Container::getInstance()->getUserPermissions()->entityType()->canExportItems()
+	 */
 	public static function CheckExportPermission($userPermissions = null, int $categoryId = 0)
 	{
-		return CCrmAuthorizationHelper::CheckExportPermission(
-			(new PermissionEntityTypeHelper(CCrmOwnerType::Contact))->getPermissionEntityTypeForCategory($categoryId),
-			$userPermissions
-		);
+		return self::getPermissionsAdapter()->canExportInCategory($categoryId, $userPermissions?->GetUserId());
 	}
 
 	public static function PrepareFilter(&$arFilter, $arFilter2Logic = null)

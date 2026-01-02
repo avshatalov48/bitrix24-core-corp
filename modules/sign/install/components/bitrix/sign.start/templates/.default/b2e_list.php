@@ -42,7 +42,7 @@ if ($isRestrictedInCurrentTariff)
 		if ($button instanceof Button && str_contains($button->getLink(), 'sign/b2e/doc/'))
 		{
 			$button
-				->addClass('ui-btn-icon-lock')
+				->setIcon(\Bitrix\UI\Buttons\Icon::LOCK)
 				->addClass('sign-b2e-js-tarriff-slider-trigger')
 				->setTag('button')
 			;

@@ -106,7 +106,10 @@
 
 			if (tab.id === WorkgroupUtil.tabNames.calendar)
 			{
-				WorkgroupUtil.onTabSelectedCalendar(this.calendarWebPathTemplate.replace('#group_id#', groupId));
+				void WorkgroupUtil.onTabSelectedCalendar(
+					groupId,
+					this.calendarWebPathTemplate.replace('#group_id#', groupId),
+				);
 			}
 		}
 	}

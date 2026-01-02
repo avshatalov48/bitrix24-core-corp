@@ -6,12 +6,27 @@ export type NotificationsState = {
 export type NotificationsModel = {
 	type: string,
 	templates: NotificationsTemplateModel[],
+	managerNotification: string,
+	isExpanded: boolean,
+	settings: {
+		counter: {
+			delayValues: SettingsValue[],
+		},
+		notification: {
+			delayValues: SettingsValue[],
+			repeatValues: SettingsValue[],
+			repeatIntervalValues: SettingsValue[],
+		},
+	},
 };
 
-export type NotificationTemplateType = string;
+export type SettingsValue = {
+	name: string,
+	value: number,
+};
 
 export type NotificationsTemplateModel = {
-	type: NotificationTemplateType,
+	type: string,
 	text: string,
 	textSms: string,
 };

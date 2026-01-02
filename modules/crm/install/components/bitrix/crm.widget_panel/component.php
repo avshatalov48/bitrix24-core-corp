@@ -28,7 +28,6 @@ $arParams['IS_SUPERVISOR'] = isset($arParams['IS_SUPERVISOR']) && $arParams['IS_
 $arResult['DEMO_TITLE'] = isset($arParams['~DEMO_TITLE']) ? $arParams['~DEMO_TITLE'] : '';
 $arResult['DEMO_CONTENT'] = isset($arParams['~DEMO_CONTENT']) ? $arParams['~DEMO_CONTENT'] : '';
 $arResult['CONTEXT_DATA'] = isset($arParams['CONTEXT_DATA']) && is_array($arParams['CONTEXT_DATA']) ? $arParams['CONTEXT_DATA'] : [];
-$arResult['ENABLE_TOOLBAR'] = true;
 
 $counterID = isset($arParams['~NAVIGATION_COUNTER_ID']) ? (int)$arParams['~NAVIGATION_COUNTER_ID'] : CCrmUserCounter::Undefined;
 if(CCrmUserCounter::IsTypeDefined($counterID))

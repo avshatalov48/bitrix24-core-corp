@@ -1,5 +1,7 @@
 (() => {
 	const SITE_ID = BX.componentParameters.get('SITE_ID', 's1');
+	const require = (ext) => jn.require(ext);
+	const { qrauth } = require('qrauth/utils');
 
 	class StreamTabs
 	{
@@ -43,8 +45,6 @@
 		{
 			BX.addCustomEvent('onAppActive', () => this.onAppActive());
 			BX.addCustomEvent('onAppPaused', () => this.onAppPaused());
-			BX.addCustomEvent('project.background::showLoadingIndicator', dialogs.showLoadingIndicator);
-			BX.addCustomEvent('project.background::hideLoadingIndicator', dialogs.hideLoadingIndicator);
 
 			this.tabs.on('onTabSelected', (tab, changed) => this.onTabSelected(tab, changed));
 
@@ -113,7 +113,7 @@
 							type: 'plus',
 							eventName: 'onStreamTabsCalendarEventAddButtonPushed',
 						},
-					}
+					},
 				});
 			}
 			else if (tabId === StreamTabs.tabNames.bp)
@@ -124,7 +124,7 @@
 			else if (tabId === StreamTabs.tabNames.video)
 			{
 				qrauth.open({
-					redirectUrl: BX.componentParameters.get('VIDEO_WEB_PATH', `/conference/`),
+					redirectUrl: BX.componentParameters.get('VIDEO_WEB_PATH', '/conference/'),
 					showHint: true,
 					title: BX.message('MOBILE_STREAM_TABS_VIDEO_TITLE'),
 					analyticsSection: 'conference',
@@ -133,7 +133,7 @@
 			else if (tabId === StreamTabs.tabNames.mail)
 			{
 				qrauth.open({
-					redirectUrl: BX.componentParameters.get('MAIL_WEB_PATH', `/mail/`),
+					redirectUrl: BX.componentParameters.get('MAIL_WEB_PATH', '/mail/'),
 					showHint: true,
 					title: BX.message('MOBILE_STREAM_TABS_MAIL_TITLE'),
 					analyticsSection: 'mail',
@@ -168,9 +168,9 @@
 						this.processCounters(counters);
 					}
 				}
-				catch (e)
+				catch (error)
 				{
-					//do nothing
+					console.error(error);
 				}
 			}
 		}

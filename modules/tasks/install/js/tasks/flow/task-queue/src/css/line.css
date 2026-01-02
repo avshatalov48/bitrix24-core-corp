@@ -3,23 +3,53 @@
 	display: flex;
 	align-items: center;
 	gap: 3px;
-	padding: 7px 0;
+	padding: 4px 0;
 	font-size: var(--ui-font-size-md);
 	color: var(--ui-color-base-35);
 	line-height: var(--ui-font-line-height-sm);
 }
 
 .tasks-flow__task-queue-line_time {
-	overflow: hidden;
-	margin-left: auto;
-	padding-left: 10px;
+	display: inline-block;
+	margin-left: 8px;
 	font-size: var(--ui-font-size-sm);
 	white-space: nowrap;
-	text-overflow: ellipsis;
 	color: var(--ui-color-text-secondary);
 }
 
 .tasks-flow__task-queue-line_number {
-	min-width: 16px;
 	margin-right: 2px;
+	line-height: 19px;
+	height: 19px;
+}
+
+.tasks-flow__task-queue-line_title,
+.tasks-flow__task-queue-line_title-access {
+	/*display: flex;*/
+	overflow: hidden;
+	white-space: nowrap;
+	color: #333;
+	text-overflow: ellipsis;
+	font-size: var(--ui-font-size-md);
+	font-weight: var(--ui-font-weight-normal);
+	line-height: 19px;
+	height: 19px;
+	width: 100%;
+	/*flex-wrap: nowrap;*/
+}
+
+.tasks-flow__task-queue-line-avatars {
+	display: flex;
+	padding-left: 20px;
+	align-items: center;
+	gap: 4px;
+	align-self: stretch;
+}
+
+.tasks-flow__task-queue-line_title-access {
+	cursor: pointer;
+}
+
+.tasks-flow__task-queue-line_title-access:hover {
+	text-decoration: underline;
 }

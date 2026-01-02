@@ -1,0 +1,5 @@
+<?php
+$MESS["CRM_ORDER_BUYER_GROUP_LIST_BTN_ADD"] = "Топты қосу";
+$MESS["CRM_ORDER_BUYER_GROUP_LIST_DELETE"] = "Жою";
+$MESS["CRM_ORDER_BUYER_GROUP_LIST_DELETE_CONFIRM"] = "Жойғыңыз келетініне сенімдісіз бе?";
+$MESS["CRM_ORDER_BUYER_GROUP_LIST_DELETE_GROUP_TITLE"] = "Топты жою";

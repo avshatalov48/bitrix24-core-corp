@@ -9,6 +9,7 @@ return [
 		'utils/date/formats',
 		'utils/url',
 		'utils/string',
+		'utils/random',
 		'calendar:sharing/analytics',
 	],
 	'bundle' => [

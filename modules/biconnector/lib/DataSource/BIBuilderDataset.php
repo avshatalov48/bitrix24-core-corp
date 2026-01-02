@@ -38,6 +38,12 @@ abstract class BIBuilderDataset extends Dataset
 
 		$result = &$params[1];
 		$tableName = $dataset->getResultTableName();
+		$eventTableName = $params[3];
+		if (!empty($eventTableName) && $tableName !== $eventTableName)
+		{
+			return;
+		}
+
 		/** Hack for loading localization messages for child dataset */
 		$dataset->getTableDescription();
 
@@ -65,7 +71,8 @@ abstract class BIBuilderDataset extends Dataset
 			$fieldInfo['AGGREGATION_TYPE'] ?? null,
 			$fieldInfo['GROUP_KEY'] ?? null,
 			$fieldInfo['GROUP_CONCAT'] ?? null,
-			$fieldInfo['GROUP_COUNT'] ?? null
+			$fieldInfo['GROUP_COUNT'] ?? null,
+			$fieldInfo['IS_VALUE_SPLITABLE'] ?? null,
 		);
 	}
 

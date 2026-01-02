@@ -45,6 +45,7 @@ return [
 		'utils/url',
 		'utils/file',
 		'event-emitter',
+		'require-lazy',
 		'rest',
 		'haptics',
 		'qrauth/utils',

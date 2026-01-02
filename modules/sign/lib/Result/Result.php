@@ -7,18 +7,9 @@ use Bitrix\Main\Error;
 
 class Result extends Main\Result
 {
-	public function getData(): array
+	final public static function createByData(array $data): self
 	{
-		$result = [];
-
-		$class = new \ReflectionClass(static::class);
-		$properties = $class->getProperties(\ReflectionProperty::IS_PUBLIC);
-		foreach ($properties as $property)
-		{
-			$result[$property->getName()] = $property->getValue($this);
-		}
-
-		return $result;
+		return (new self())->setData($data);
 	}
 
 	public function getLastError(): ?\Bitrix\Main\Error

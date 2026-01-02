@@ -9,7 +9,7 @@ $settings = [];
 if (\Bitrix\Main\Loader::includeModule('crm'))
 {
 	$settings = [
-		'crmMode' => \Bitrix\Crm\Settings\Mode::getCurrentName()
+		'crmMode' => \Bitrix\Crm\Settings\Mode::getCurrentName(),
 	];
 }
 

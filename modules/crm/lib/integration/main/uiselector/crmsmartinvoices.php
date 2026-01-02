@@ -215,7 +215,9 @@ class CrmSmartInvoices extends CrmDynamics
 
 	protected function getSearchFilter(string $search, array $options)
 	{
-		$filter = [];
+		$filter = [
+			'?TITLE' => $search,
+		];
 
 		$entityTypeId = static::getOwnerType();
 		$settings = new ItemSettings(

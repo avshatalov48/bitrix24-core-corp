@@ -4,9 +4,12 @@ namespace Bitrix\AI\ShareRole\Service;
 
 use Bitrix\AI\Container;
 use Bitrix\AI\Controller\ShareRole;
-use Bitrix\AI\Facade\File;
+use Bitrix\AI\Enum\RoleAvatarSize;
 use Bitrix\AI\Facade\User;
 use Bitrix\AI\Helper;
+use Bitrix\AI\Integration\Intranet\DepartmentService;
+use Bitrix\AI\Integration\Socialnetwork\GroupService;
+use Bitrix\AI\Role\RoleManager;
 use Bitrix\AI\SharePrompt\Service\PromptService;
 use Bitrix\AI\ShareRole\Dto\CreateDto;
 use Bitrix\AI\ShareRole\Dto\RoleForUpdateDto;
@@ -15,11 +18,13 @@ use Bitrix\AI\ShareRole\Repository\RoleRepository;
 use Bitrix\AI\ShareRole\Repository\TranslateDescriptionRepository;
 use Bitrix\AI\ShareRole\Repository\TranslateNameRepository;
 use Bitrix\AI\Synchronization\RoleSync;
+use Bitrix\Main\Access\AccessCode;
 use Bitrix\Main\Engine\Response\BFile;
 use Bitrix\Main\Engine\UrlManager;
 use Bitrix\Main\Entity\AddResult;
 use Bitrix\Main\ORM\Data\UpdateResult;
 use Bitrix\Main\Result;
+use CFile;
 
 class RoleService
 {
@@ -28,12 +33,20 @@ class RoleService
 		'universal_ideas_on_how_to_make_meetings_more_concise_and_substantive',
 		'universal_ideas_for_short_breaks_for_physical_exercises',
 	];
+	private const IMAGE_SIZES = [
+		'large' => 256,
+		'medium' => 128,
+		'small' => 64,
+	];
+	private const DEFAULT_AVATAR_PATH = '/bitrix/js/ai/role-master/images/role-master-default-avatar.png';
 
 	public function __construct(
 		protected RoleRepository $roleRepository,
 		protected RolePromptRepository $rolePromptRepository,
 		protected TranslateNameRepository $translateNameRepository,
-		protected TranslateDescriptionRepository $translateDescriptionRepository
+		protected TranslateDescriptionRepository $translateDescriptionRepository,
+		protected GroupService $groupService,
+		protected DepartmentService $departmentService,
 	)
 	{
 	}
@@ -47,41 +60,48 @@ class RoleService
 
 	public function saveRole(CreateDto $createDto): AddResult|UpdateResult|Result
 	{
-		if(empty($createDto->roleAvatarPaths)){
-			$newAvatarFileId = \CFile::SaveFile($createDto->roleAvatarFile, 'ai', true);
-			$createDto->roleAvatarPaths = $this->getImagePath($newAvatarFileId);
-		}
-
 		$roleData = [
 			'code' => $createDto->roleCode,
 			'hash' => $createDto->getHash(),
 			'name_translates' => [User::getUserLanguage() => $createDto->roleTitle],
 			'description_translates' => [User::getUserLanguage() => $createDto->roleDescription],
 			'instruction' => $createDto->roleText,
-			'avatar' => $createDto->roleAvatarPaths,
 			'industry_code' => $createDto->industryCode,
 			'is_system' => 'N',
+			'avatar' => [
+				'fileIds' =>
+					[
+						'large' => null,
+						'medium' => null,
+						'small' => null,
+					]
+			],
 		];
 
-		return (new RoleSync())->updateRoleByFields($roleData, $createDto->userCreatorId);
-	}
+		$needToResetAvatarCache = false;
+		if (!empty($createDto->roleAvatarFile) && is_null(CFile::CheckImageFile($createDto->roleAvatarFile)))
+		{
+			$fileIds = $this->resizeAndSaveAvatar($createDto->roleAvatarFile);
+			$createDto->roleAvatar = ['fileIds' => $fileIds];
+			$roleData['avatar'] = $createDto->roleAvatar;
+			$needToResetAvatarCache = true;
+		}
 
-	private function getImagePath(int $imageId): array
-	{
-		$imagePath = \CFile::GetPath($imageId);
+		$result = (new RoleSync())->updateRoleByFields($roleData, $createDto->userCreatorId);
 
-		return [
-			'small' => $imagePath,
-			'medium' => $imagePath,
-			'large' => $imagePath,
-		];
+		if ($needToResetAvatarCache && $result->isSuccess())
+		{
+			RoleManager::resetRolesWithAvatarsCache();
+		}
+
+		return $result;
 	}
 
 	public function addCreationActions(int $roleId): void
 	{
-			$promptIds = self::getPromptService()->getPromptIdsByCodes(self::INITIAL_CHAT_ACTIONS);
+		$promptIds = self::getPromptService()->getPromptIdsByCodes(self::INITIAL_CHAT_ACTIONS);
 
-			$this->rolePromptRepository->addPromptsToRole($roleId, $promptIds);
+		$this->rolePromptRepository->addPromptsToRole($roleId, $promptIds);
 	}
 
 	public function getRoleByCode(array $data): ?array
@@ -130,32 +150,109 @@ class RoleService
 		{
 			return null;
 		}
+		$roleData['ACCESS_CODES'] = $this->removeDeletedAccessCodes($roleData['ACCESS_CODES']);
+		$roleData['AVATAR_URL'] = $this->getAvatarLink($roleId, RoleAvatarSize::Medium, $roleData['HASH']);
 
+		return new RoleForUpdateDto($roleData);
+	}
+
+	private function removeDeletedAccessCodes(string $accessCodes): string
+	{
+		$accessCodesArray = explode(',', $accessCodes);
+		$groupCodes = $this->groupService->getAllGroupCodes();
+		$departmentCodes = $this->departmentService->getDepartments();
+
+		$result = [];
+		foreach ($accessCodesArray as $code)
+		{
+			$accessCode = new AccessCode($code);
+			$codeType = $accessCode->getEntityType();
+			$codeId = $accessCode->getEntityId();
+
+			if ($codeType === AccessCode::TYPE_USER || $code === 'UA')
+			{
+				$result[] = $code;
+				continue;
+			}
+
+			if ($codeType !== AccessCode::TYPE_SOCNETGROUP && $codeType !== AccessCode::TYPE_DEPARTMENT)
+			{
+				continue;
+			}
+
+			if (!in_array($codeId, $departmentCodes, true) && !in_array($codeId, $groupCodes, true))
+			{
+				continue;
+			}
+
+			$result[] = $code;
+		}
+
+		return implode(',', $result);
+	}
+
+	public function getAvatarIdByRoleId(int $roleId, string $imageSize): ?int
+	{
+		$roleData = $this->roleRepository->getAvatarByRoleId($roleId);
+
+		if (isset($roleData['AVATAR']['fileIds']))
+		{
+			return $roleData['AVATAR']['fileIds'][$imageSize];
+		}
+
+		if (isset($roleData['AVATAR']['small']))
+		{
+			$paths = explode('/', $roleData['AVATAR']['small']);
+			$fileName = $paths[array_key_last($paths)];
+
+			return (int)CFile::GetList([],
+				[
+					'MODULE_ID' => 'ai',
+					'FILE_NAME' => $fileName,
+				])
+				->Fetch()['ID'];
+		}
+
+		return null;
+	}
+
+	public function getAvatarByRoleId(int $roleId, string $avatarSize): BFile
+	{
+		if ($fileId = $this->getAvatarIdByRoleId($roleId, $avatarSize))
+		{
+			return BFile::createByFileId($fileId)->showInline(true);
+		}
+
+		return BFile::createByFileData(CFile::MakeFileArray(static::DEFAULT_AVATAR_PATH))->showInline(true);
+	}
+
+	public function getAvatarLink(int $roleId, RoleAvatarSize $imageSize, string $hash): string
+	{
 		$urlManager = UrlManager::getInstance();
 		$avatarUrl = $urlManager->createByController(
 			new ShareRole(), 'showAvatar',
 			[
 				'roleId' => $roleId,
-			]
+				'avatarSize' => $imageSize->value,
+				'cb' => $hash,
+			],
+			true
 		);
-		$roleData['AVATAR_URL'] = $roleData['AVATAR']['small'];
-		$roleData['AVATAR'] = (string)$avatarUrl;
 
-		return new RoleForUpdateDto($roleData);
+		return (string)$avatarUrl;
 	}
 
-	public function getAvatarIdByRoleId(int $roleId): int
+	private function resizeAndSaveAvatar(array $file): array
 	{
-		$roleData = $this->roleRepository->getAvatarByRoleId($roleId);
-		$paths = explode('/',$roleData['AVATAR']['small']);
-		$fileName = $paths[array_key_last($paths)];
+		$fileIds = [];
 
-		return (int)\CFile::GetList([],
-			[
-				'MODULE_ID' => 'ai',
-				'FILE_NAME' => $fileName,
-			])
-			->Fetch()['ID'];
+		foreach (self::IMAGE_SIZES as $sizeName => $dimension)
+		{
+			CFile::ResizeImage($file, ['width' => $dimension, 'height' => $dimension], BX_RESIZE_IMAGE_EXACT);
+			$fileIds[$sizeName] = CFile::SaveFile($file, 'ai', true);
+		}
+
+		return $fileIds;
 	}
 
 	public function changeActivateRole(int $roleId, bool $needActivate, int $userId): void

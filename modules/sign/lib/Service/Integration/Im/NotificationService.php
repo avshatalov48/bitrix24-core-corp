@@ -5,6 +5,7 @@ namespace Bitrix\Sign\Service\Integration\Im;
 use Bitrix\Main;
 use Bitrix\Main\Loader;
 use Bitrix\Main\Result;
+use Bitrix\Sign\Integration\im\NotificationEventHandler;
 use Bitrix\Sign\Item;
 
 class NotificationService
@@ -29,6 +30,8 @@ class NotificationService
 				'NOTIFY_MODULE' => 'sign',
 				'NOTIFY_TITLE' =>  $message->title,
 				'NOTIFY_MESSAGE' => $message->message,
+				'NOTIFY_EVENT' => NotificationEventHandler::REMIND_EVENT,
+				'NOTIFY_TAG' => $message->notifyTag,
 			]
 		);
 		if ($addResult === false)

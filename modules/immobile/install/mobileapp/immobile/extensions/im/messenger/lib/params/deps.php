@@ -2,6 +2,10 @@
 
 return [
 	'extensions' => [
-		'loc',
+		'type',
+		'entity-ready',
+		'native/memorystore',
+		'im:messenger/loc',
+		'im:messenger/const',
 	],
 ];

@@ -1,0 +1,10 @@
+.booking-actions-popup-info {
+	display: flex;
+	padding: 7px 11px;
+	cursor: pointer;
+}
+
+.booking-actions-popup-info .ui-icon-set {
+	--ui-icon-set__icon-size: 22px;
+	--ui-icon-set__icon-color: var(--ui-color-primary);
+}

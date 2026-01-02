@@ -1,0 +1,23 @@
+<?php
+$MESS["IMBOT_PROPERTIES_ADDRESS"] = "Мекенжай";
+$MESS["IMBOT_PROPERTIES_BOT_COLOR"] = "AZURE";
+$MESS["IMBOT_PROPERTIES_BOT_EMAIL"] = "support@bitrix24.kz";
+$MESS["IMBOT_PROPERTIES_BOT_NAME"] = "Контрагенттің деректемелері";
+$MESS["IMBOT_PROPERTIES_BOT_WORK_POSITION"] = "Бұл бот сізге СТН/НМТН бойынша ұйымның немесе ЖК деректемелерін табуға көмектеседі";
+$MESS["IMBOT_PROPERTIES_INN"] = "СТН";
+$MESS["IMBOT_PROPERTIES_INN_KPP"] = "СТН/КПП";
+$MESS["IMBOT_PROPERTIES_IP"] = "Жеке кәсіпкер";
+$MESS["IMBOT_PROPERTIES_MANAGER"] = "Басшы";
+$MESS["IMBOT_PROPERTIES_NAME"] = "Толық атауы";
+$MESS["IMBOT_PROPERTIES_NOT_FOUND_MESSAGE"] = "Өкінішті, сіздің сұранысыңыз бойынша ештеңе табылған жоқ";
+$MESS["IMBOT_PROPERTIES_OGRN"] = "НМТН";
+$MESS["IMBOT_PROPERTIES_OGRNIP"] = "ОГРНЖК";
+$MESS["IMBOT_PROPERTIES_OKVED"] = "Экономикалық қызмет түрлерінің бүкілресейлік жіктеуіші";
+$MESS["IMBOT_PROPERTIES_SEARCH_RESULTS"] = "Сіздің сұранысыңыз бойынша келесі ұйымдар мен ЖК табылды:";
+$MESS["IMBOT_PROPERTIES_SHOW_MORE"] = "Тағы";
+$MESS["IMBOT_PROPERTIES_STATUS"] = "Мәртебе";
+$MESS["IMBOT_PROPERTIES_TERMINATION_DATE"] = "Қызметін тоқтату күні";
+$MESS["IMBOT_PROPERTIES_TERMITATION_METHOD_NAME"] = "Қызметті тоқтату тәсілі";
+$MESS["IMBOT_PROPERTIES_WELCOME_MESSAGE"] = "Мен ұйымның немесе ЖК-дің деректемелерін табуға көмектесемін. Жай ғана СТН немесе НМТН көрсетіңіз және мен қажетті ақпаратты көрсетемін. Мысалы, 7717586110.";
+$MESS["IMBOT_PROPERTIES_WELCOME_MESSAGE_CHAT"] = "Мен ұйымның немесе ЖК-дің деректемелерін табуға көмектесемін. Жай ғана СТН немесе НМТН көрсетіңіз, ал мен қажетті ақпаратты көрсетемін. [br] Іздеуді бастау үшін мені хабарламада атап өтіңіз немесе аватарды басыңыз.";
+$MESS["IMBOT_REQUEST_INVALID"] = "Ұйымның немесе ЖК деректемелерін іздеу үшін оның СТН немесе НМТН көрсетіңіз, мысалы 7717586110";

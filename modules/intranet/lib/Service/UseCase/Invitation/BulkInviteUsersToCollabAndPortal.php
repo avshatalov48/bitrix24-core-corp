@@ -11,11 +11,11 @@ use Bitrix\Intranet\Command;
 use Bitrix\Intranet\Entity\Collection\UserCollection;
 use Bitrix\Intranet\Entity\Type;
 use Bitrix\Intranet\Entity\Type\Email;
-use Bitrix\Intranet\Entity\Type\EmailInvitation;
+use Bitrix\Intranet\Public\Type\EmailInvitation;
 use Bitrix\Intranet\Entity\Type\InvitationsContainer;
 use Bitrix\Intranet\Service;
 use Bitrix\Intranet\Entity\Type\Phone;
-use Bitrix\Intranet\Entity\Type\PhoneInvitation;
+use Bitrix\Intranet\Public\Type\PhoneInvitation;
 use Bitrix\Intranet\Entity\User;
 use Bitrix\Intranet\Enum\InvitationStatus;
 use Bitrix\Intranet\Service\ServiceContainer;
@@ -32,7 +32,7 @@ use Bitrix\Main\UserTable;
 class BulkInviteUsersToCollabAndPortal
 {
 	private Contract\Repository\UserRepository $userRepository;
-	private Service\InviteService $inviteService;
+//	private Service\InviteService $inviteService;
 	private bool $currentUserIsIntranet;
 
 	/**
@@ -41,7 +41,6 @@ class BulkInviteUsersToCollabAndPortal
 	public function __construct()
 	{
 		$this->userRepository = ServiceContainer::getInstance()->userRepository();
-		$this->inviteService = ServiceContainer::getInstance()->inviteService();
 		$this->currentUserIsIntranet = (new Intranet\User((int)CurrentUser::get()->getId()))->isIntranet();
 	}
 
@@ -53,41 +52,41 @@ class BulkInviteUsersToCollabAndPortal
 	 */
 	public function execute(
 		int $collabId,
-		Dto\Invitation\UserInvitationDtoCollection $userInvitationDtoCollection
+		Dto\Invitation\UserInvitationDtoCollection $userInvitationDtoCollection,
 	): Result
 	{
 		[
 			$userInvitationDtoCollectionByEmail,
-			$userInvitationDtoCollectionByPhone
+			$userInvitationDtoCollectionByPhone,
 		] = $this->splitUserInvitationDtoCollection($userInvitationDtoCollection);
 
 		$userCollectionRegisteredByEmail = $this->getRegisteredUserCollectionByEmails(
-			$userInvitationDtoCollectionByEmail->getEmails()
+			$userInvitationDtoCollectionByEmail->getEmails(),
 		);
 		$userCollectionRegisteredByPhone = $this->getRegisteredUserCollectionByPhones(
-			$userInvitationDtoCollectionByPhone->getPhones()
+			$userInvitationDtoCollectionByPhone->getPhones(),
 		);
 
-		$invitationToPortalAndGroupCollection = new Type\Collection\InvitationCollection();
+		$invitationToPortalAndGroupCollection = new Intranet\Public\Type\Collection\InvitationCollection();
 		$userCollectionForInviteOnlyToGroup = new UserCollection();
 
 		$this->distributeEmailDtoCollection(
 			$userInvitationDtoCollectionByEmail,
 			$userCollectionRegisteredByEmail,
 			$invitationToPortalAndGroupCollection,
-			$userCollectionForInviteOnlyToGroup
+			$userCollectionForInviteOnlyToGroup,
 		);
 		$this->distributePhoneDtoCollection(
 			$userInvitationDtoCollectionByPhone,
 			$userCollectionRegisteredByPhone,
 			$invitationToPortalAndGroupCollection,
-			$userCollectionForInviteOnlyToGroup
+			$userCollectionForInviteOnlyToGroup,
 		);
 
 		return $this->executeInvite(
 			$collabId,
 			$invitationToPortalAndGroupCollection,
-			$userCollectionForInviteOnlyToGroup
+			$userCollectionForInviteOnlyToGroup,
 		);
 	}
 
@@ -103,7 +102,7 @@ class BulkInviteUsersToCollabAndPortal
 
 		$collection->forEach(
 			function (
-				Dto\Invitation\UserInvitationDto $dto
+				Dto\Invitation\UserInvitationDto $dto,
 			) use ($collectionForEmailInvitation, $collectionForPhoneInvitation) {
 				if ($dto->email instanceof Email)
 				{
@@ -113,22 +112,22 @@ class BulkInviteUsersToCollabAndPortal
 				{
 					$collectionForPhoneInvitation->add($dto);
 				}
-			}
+			},
 		);
 
 		return [$collectionForEmailInvitation, $collectionForPhoneInvitation];
 	}
 
 	private function distributeEmailDtoCollection(
-		Dto\Invitation\UserInvitationDtoCollection $userInvitationDtoCollectionByEmail,
-		UserCollection $userCollectionRegisteredByEmail,
-		Type\Collection\InvitationCollection $invitationToPortalAndGroupCollection,
-		UserCollection $userCollectionForInviteOnlyToGroup,
+		Dto\Invitation\UserInvitationDtoCollection           $userInvitationDtoCollectionByEmail,
+		UserCollection                                       $userCollectionRegisteredByEmail,
+		Intranet\Public\Type\Collection\InvitationCollection $invitationToPortalAndGroupCollection,
+		UserCollection                                       $userCollectionForInviteOnlyToGroup,
 	): void
 	{
 		$userInvitationDtoCollectionByEmail->forEach(
 			function (
-				Dto\Invitation\UserInvitationDto $userInvitationDto
+				Dto\Invitation\UserInvitationDto $userInvitationDto,
 			) use ($userCollectionRegisteredByEmail, $invitationToPortalAndGroupCollection, $userCollectionForInviteOnlyToGroup) {
 				$foundUser = null;
 
@@ -139,7 +138,7 @@ class BulkInviteUsersToCollabAndPortal
 							$userInvitationDto->invitationStatus = $user->getInviteStatus();
 							$foundUser = $user;
 						}
-					}
+					},
 				);
 
 				if (!$foundUser || $this->shouldInviteByUser($foundUser))
@@ -147,27 +146,29 @@ class BulkInviteUsersToCollabAndPortal
 					$invitationToPortalAndGroupCollection->add(new EmailInvitation(
 						$userInvitationDto->email->toLogin(),
 						$userInvitationDto->name,
-						$userInvitationDto->lastName
+						$userInvitationDto->lastName,
+						null,
+						$userInvitationDto->languageId,
 					));
 				}
 				else
 				{
 					$userCollectionForInviteOnlyToGroup->add($foundUser);
 				}
-			}
+			},
 		);
 	}
 
 	private function distributePhoneDtoCollection(
-		Dto\Invitation\UserInvitationDtoCollection $userInvitationDtoCollectionByPhone,
-		UserCollection $userCollectionRegisteredByPhone,
-		Type\Collection\InvitationCollection $invitationToPortalAndGroupCollection,
-		UserCollection $userCollectionForInviteOnlyToGroup,
+		Dto\Invitation\UserInvitationDtoCollection           $userInvitationDtoCollectionByPhone,
+		UserCollection                                       $userCollectionRegisteredByPhone,
+		Intranet\Public\Type\Collection\InvitationCollection $invitationToPortalAndGroupCollection,
+		UserCollection                                       $userCollectionForInviteOnlyToGroup,
 	): void
 	{
 		$userInvitationDtoCollectionByPhone->forEach(
 			function (
-				Dto\Invitation\UserInvitationDto $userInvitationDto
+				Dto\Invitation\UserInvitationDto $userInvitationDto,
 			) use ($userCollectionRegisteredByPhone, $invitationToPortalAndGroupCollection, $userCollectionForInviteOnlyToGroup) {
 				$foundUser = null;
 
@@ -178,7 +179,7 @@ class BulkInviteUsersToCollabAndPortal
 							$userInvitationDto->invitationStatus = $user->getInviteStatus();
 							$foundUser = $user;
 						}
-					}
+					},
 				);
 
 				if (!$foundUser || $this->shouldInviteByUser($foundUser))
@@ -186,14 +187,14 @@ class BulkInviteUsersToCollabAndPortal
 					$invitationToPortalAndGroupCollection->add(new PhoneInvitation(
 						$userInvitationDto->phone->defaultFormat(),
 						$userInvitationDto->name,
-						$userInvitationDto->lastName
+						$userInvitationDto->lastName,
 					));
 				}
 				else
 				{
 					$userCollectionForInviteOnlyToGroup->add($foundUser);
 				}
-			}
+			},
 		);
 	}
 
@@ -231,9 +232,9 @@ class BulkInviteUsersToCollabAndPortal
 	 * @throws SystemException
 	 */
 	private function executeInvite(
-		int $collabId,
-		Type\Collection\InvitationCollection $invitationToPortalAndGroupCollection,
-		UserCollection $userCollectionForInviteOnlyToGroup,
+		int                                                  $collabId,
+		Intranet\Public\Type\Collection\InvitationCollection $invitationToPortalAndGroupCollection,
+		UserCollection                                       $userCollectionForInviteOnlyToGroup,
 	): Result
 	{
 		$usersInvitedPortalAndGroup = [];
@@ -242,7 +243,10 @@ class BulkInviteUsersToCollabAndPortal
 		if (!$invitationToPortalAndGroupCollection->empty())
 		{
 			$invitationContainer = new InvitationsContainer($invitationToPortalAndGroupCollection);
-			$inviteToPortalAndGroupResult = $this->inviteService->inviteUsersToGroup($collabId, $invitationContainer);
+			$inviteToPortalAndGroupResult = Intranet\Public\Service\InvitationService::inviteUsersToGroup(
+				$collabId,
+				$invitationContainer,
+			);
 
 			if (!$inviteToPortalAndGroupResult->isSuccess())
 			{
@@ -326,9 +330,9 @@ class BulkInviteUsersToCollabAndPortal
 				return !in_array(
 					$user->getExternalAuthId(),
 					array_diff(UserTable::getExternalUserTypes(), ['email', 'shop']),
-					true
+					true,
 				);
-			}
+			},
 		);
 	}
 }

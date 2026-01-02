@@ -147,7 +147,7 @@ class Factory
 		return 0;
 	}
 
-	private static function isOverLimited($entityTypeId): bool
+	public static function isOverLimited($entityTypeId): bool
 	{
 		$limit = static::getRobotsLimit($entityTypeId);
 
@@ -328,59 +328,68 @@ class Factory
 		{
 			return new Target\DealTarget();
 		}
-		elseif ($entityTypeId === \CCrmOwnerType::Lead)
+
+		if ($entityTypeId === \CCrmOwnerType::Lead)
 		{
 			return new Target\LeadTarget();
 		}
-		elseif ($entityTypeId === \CCrmOwnerType::Order)
+
+		if ($entityTypeId === \CCrmOwnerType::Order)
 		{
 			return new Target\OrderTarget();
 		}
-		elseif ($entityTypeId === \CCrmOwnerType::Invoice)
+
+		if ($entityTypeId === \CCrmOwnerType::Invoice)
 		{
 			return new Target\InvoiceTarget();
 		}
-		elseif ($entityTypeId === \CCrmOwnerType::Quote)
+
+		if ($entityTypeId === \CCrmOwnerType::Quote)
 		{
 			return new Target\ItemTarget($entityTypeId);
 		}
-		elseif ($entityTypeId === \CCrmOwnerType::SmartInvoice)
+
+		if ($entityTypeId === \CCrmOwnerType::SmartInvoice)
 		{
 			return new Target\ItemTarget($entityTypeId);
 		}
-		elseif ($entityTypeId === \CCrmOwnerType::SmartDocument)
+
+		if ($entityTypeId === \CCrmOwnerType::SmartDocument)
 		{
 			return new Target\ItemTarget($entityTypeId);
 		}
-		elseif ($entityTypeId === \CCrmOwnerType::SmartB2eDocument)
+
+		if ($entityTypeId === \CCrmOwnerType::SmartB2eDocument)
 		{
 			return new Target\ItemTarget($entityTypeId);
 		}
-		elseif ($entityTypeId === \CCrmOwnerType::Contact)
+
+		if ($entityTypeId === \CCrmOwnerType::Contact)
 		{
 			return new Target\ContactTarget($entityTypeId);
 		}
-		elseif ($entityTypeId === \CCrmOwnerType::Company)
+
+		if ($entityTypeId === \CCrmOwnerType::Company)
 		{
 			return new Target\CompanyTarget($entityTypeId);
 		}
-		elseif (\CCrmOwnerType::isPossibleDynamicTypeId($entityTypeId))
+
+		if (\CCrmOwnerType::isPossibleDynamicTypeId($entityTypeId))
 		{
 			return new Target\ItemTarget($entityTypeId);
 		}
-		else
-		{
-			$entityTypeName = \CCrmOwnerType::ResolveName($entityTypeId);
-			throw new NotSupportedException("Entity '{$entityTypeName}' not supported in current context.");
-		}
+
+		$entityTypeName = \CCrmOwnerType::ResolveName($entityTypeId);
+		throw new NotSupportedException("Entity '{$entityTypeName}' not supported in current context.");
 	}
 
 	public static function getTarget($entityTypeId, $entityId)
 	{
-		if (isset(self::$targets[$entityTypeId]) && isset(self::$targets[$entityTypeId][$entityId]))
+		if (isset(self::$targets[$entityTypeId][$entityId]))
 		{
 			return self::$targets[$entityTypeId][$entityId];
 		}
+
 		$target = self::createTarget($entityTypeId);
 		$target->setEntityId($entityId);
 		$target->setDocumentId(\CCrmOwnerType::ResolveName($target->getEntityTypeId()) . "_" . $entityId);

@@ -3,20 +3,20 @@
  */
 jn.define('im/messenger/controller/dialog/lib/mention/manager', (require, exports, module) => {
 	const { MentionProvider } = require('im/messenger/controller/dialog/lib/mention/provider');
-	const { ChatAvatar } = require('im/messenger/lib/element');
-	const { ChatTitle } = require('im/messenger/lib/element');
+	const { ChatAvatar } = require('im/messenger/lib/element/chat-avatar');
+	const { ChatTitle } = require('im/messenger/lib/element/chat-title');
 	const { EventType, BBCode } = require('im/messenger/const');
 	const { DialogHelper } = require('im/messenger/lib/helper');
 	const { serviceLocator } = require('im/messenger/lib/di/service-locator');
 	const { DateFormatter } = require('im/messenger/lib/date-formatter');
-	const { LoggerManager } = require('im/messenger/lib/logger');
+	const { getLogger } = require('im/messenger/lib/logger');
 	const { Type } = require('type');
 
 	const MENTION_SYMBOL = new Set(['@', '+']);
 	const CLOSE_MENTION_SYMBOLS = new Set([' ', '\n']);
 	const MENTION_PREFIX = new Set([' ', '\n']);
 
-	const logger = LoggerManager.getInstance().getLogger('mention');
+	const logger = getLogger('mention');
 
 	class MentionManager
 	{
@@ -117,7 +117,7 @@ jn.define('im/messenger/controller/dialog/lib/mention/manager', (require, export
 				return;
 			}
 			this.view.textField.on(EventType.dialog.textField.changeState, this.changeTextStateHandler);
-			this.view.mentionPanel.on('itemTap', this.mentionItemSelectedHandler);
+			this.view.mentionPanel.on(EventType.dialog.mentionPanel.itemTap, this.mentionItemSelectedHandler);
 		}
 
 		/**
@@ -132,7 +132,7 @@ jn.define('im/messenger/controller/dialog/lib/mention/manager', (require, export
 				return;
 			}
 			this.view.textField.off(EventType.dialog.textField.changeState, this.changeTextStateHandler);
-			this.view.mentionPanel.off('itemTap', this.mentionItemSelectedHandler);
+			this.view.mentionPanel.off(EventType.dialog.mentionPanel.itemTap, this.mentionItemSelectedHandler);
 		}
 
 		/**
@@ -155,12 +155,11 @@ jn.define('im/messenger/controller/dialog/lib/mention/manager', (require, export
 		}
 
 		/**
-		 * @private
 		 * @return {boolean}
 		 */
 		canUse()
 		{
-			return Boolean(this.view.textField && this.view.mentionPanel);
+			return Boolean(this.view.textField.isUiAvailable() && this.view.mentionPanel.isUiAvailable());
 		}
 
 		/**
@@ -474,7 +473,7 @@ jn.define('im/messenger/controller/dialog/lib/mention/manager', (require, export
 				bbCodeText = ` ${bbCodeText}`;
 			}
 
-			this.view.textField.showKeyboard?.();
+			this.view.textField.showKeyboard();
 			this.view.textField.replaceText(text.length, text.length, bbCodeText);
 		}
 
@@ -550,6 +549,7 @@ jn.define('im/messenger/controller/dialog/lib/mention/manager', (require, export
 
 			itemIds.forEach((itemId) => {
 				const item = this.prepareItemForDrawing(itemId);
+
 				const recentItem = serviceLocator.get('core').getStore().getters['recentModel/getById'](item.id)
 					?? serviceLocator.get('core').getStore().getters['recentModel/searchModel/getById'](item.id)
 				;

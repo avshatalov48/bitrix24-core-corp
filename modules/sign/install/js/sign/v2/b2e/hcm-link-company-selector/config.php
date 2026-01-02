@@ -9,6 +9,7 @@ return [
 	'js' => 'dist/hcm-link-company-selector.bundle.js',
 	'rel' => [
 		'main.core',
+		'main.core.events',
 		'ui.entity-selector',
 		'sign.v2.api',
 		'main.loader',

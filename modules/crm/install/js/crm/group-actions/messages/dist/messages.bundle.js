@@ -1,7 +1,7 @@
 /* eslint-disable */
 this.BX = this.BX || {};
 this.BX.Crm = this.BX.Crm || {};
-(function (exports,crm_autorun,ui_notification,main_popup,ui_entityCatalog,main_core,main_core_events) {
+(function (exports,crm_autorun,ui_notification,main_popup,crm_integration_analytics,ui_entityCatalog,main_core,main_core_events) {
 	'use strict';
 
 	async function fetchTemplates(entityTypeId, entityCategoryId) {
@@ -180,9 +180,11 @@ this.BX.Crm = this.BX.Crm || {};
 	        text = this.templateParam.PREVIEW;
 	      }
 	      const templateId = this.templateParam.ID;
+	      const originalTemplateId = this.templateParam.ORIGINAL_ID;
 	      main_core_events.EventEmitter.emit('BX.Crm.SmsEditorWrapper:click', {
 	        text,
-	        templateId
+	        templateId,
+	        originalTemplateId
 	      });
 	    }
 	  },
@@ -225,12 +227,17 @@ this.BX.Crm = this.BX.Crm || {};
 	};
 
 	var _messages = /*#__PURE__*/babelHelpers.classPrivateFieldLooseKey("messages");
+	var _entityTypeId = /*#__PURE__*/babelHelpers.classPrivateFieldLooseKey("entityTypeId");
 	var _itemSlot = /*#__PURE__*/babelHelpers.classPrivateFieldLooseKey("itemSlot");
 	var _getTemplateItems = /*#__PURE__*/babelHelpers.classPrivateFieldLooseKey("getTemplateItems");
 	var _catalogHeader = /*#__PURE__*/babelHelpers.classPrivateFieldLooseKey("catalogHeader");
 	var _catalogFooter = /*#__PURE__*/babelHelpers.classPrivateFieldLooseKey("catalogFooter");
+	var _submitAnalytics = /*#__PURE__*/babelHelpers.classPrivateFieldLooseKey("submitAnalytics");
 	class TemplateCatalogCreator {
 	  constructor() {
+	    Object.defineProperty(this, _submitAnalytics, {
+	      value: _submitAnalytics2
+	    });
 	    Object.defineProperty(this, _catalogFooter, {
 	      value: _catalogFooter2
 	    });
@@ -253,8 +260,13 @@ this.BX.Crm = this.BX.Crm || {};
 	        learnMore: main_core.Loc.getMessage('CRM_GROUP_ACTIONS_WHATSAPP_MESSAGE_POPUP_MORE')
 	      }
 	    });
+	    Object.defineProperty(this, _entityTypeId, {
+	      writable: true,
+	      value: void 0
+	    });
 	  }
 	  async create(entityTypeId, categoryId) {
+	    babelHelpers.classPrivateFieldLooseBase(this, _entityTypeId)[_entityTypeId] = entityTypeId;
 	    const rawTemplates = await fetchTemplates(entityTypeId, categoryId);
 	    const itemsData = babelHelpers.classPrivateFieldLooseBase(this, _getTemplateItems)[_getTemplateItems](entityTypeId, categoryId, rawTemplates);
 	    const itemSlot = babelHelpers.classPrivateFieldLooseBase(this, _itemSlot)[_itemSlot]();
@@ -273,7 +285,12 @@ this.BX.Crm = this.BX.Crm || {};
 	      items: itemsData.templateItems,
 	      title: main_core.Loc.getMessage('CRM_GROUP_ACTIONS_WHATSAPP_MESSAGE_POPUP_TITLE'),
 	      popupOptions: {
-	        overlay: true
+	        overlay: true,
+	        events: {
+	          onPopupClose: () => {
+	            babelHelpers.classPrivateFieldLooseBase(this, _submitAnalytics)[_submitAnalytics]();
+	          }
+	        }
 	      }
 	    });
 	  }
@@ -351,6 +368,10 @@ this.BX.Crm = this.BX.Crm || {};
 			</div>
 		`;
 	}
+	function _submitAnalytics2() {
+	  const analyticsData = crm_integration_analytics.Builder.Communication.FormEvent.createDefault(babelHelpers.classPrivateFieldLooseBase(this, _entityTypeId)[_entityTypeId]).setEvent(crm_integration_analytics.Dictionary.EVENT_WA_POPUP).setSubSection(crm_integration_analytics.Dictionary.SUB_SECTION_LIST).setElement(crm_integration_analytics.Dictionary.ELEMENT_WA_POPUP_CLOSE).buildData();
+	  BX.UI.Analytics.sendData(analyticsData);
+	}
 
 	const DEFAULT_PROVIDER = 'ednaru';
 	const SELECTED_FROM_NUMBER_LOCALSTORE_KEY = 'bx.crm.group_actions.messages.selected_from_number';
@@ -361,6 +382,7 @@ this.BX.Crm = this.BX.Crm || {};
 	var _settingsMenu = /*#__PURE__*/babelHelpers.classPrivateFieldLooseKey("settingsMenu");
 	var _selectedFromNumber = /*#__PURE__*/babelHelpers.classPrivateFieldLooseKey("selectedFromNumber");
 	var _messages$1 = /*#__PURE__*/babelHelpers.classPrivateFieldLooseKey("messages");
+	var _isHelpShown = /*#__PURE__*/babelHelpers.classPrivateFieldLooseKey("isHelpShown");
 	var _showSettingsMenu = /*#__PURE__*/babelHelpers.classPrivateFieldLooseKey("showSettingsMenu");
 	var _showHelpArticle = /*#__PURE__*/babelHelpers.classPrivateFieldLooseKey("showHelpArticle");
 	var _destroy = /*#__PURE__*/babelHelpers.classPrivateFieldLooseKey("destroy");
@@ -372,6 +394,7 @@ this.BX.Crm = this.BX.Crm || {};
 	var _getGridLoader = /*#__PURE__*/babelHelpers.classPrivateFieldLooseKey("getGridLoader");
 	var _restoreLastSelectedFromNumber = /*#__PURE__*/babelHelpers.classPrivateFieldLooseKey("restoreLastSelectedFromNumber");
 	var _storeLastSelectedFromNumber = /*#__PURE__*/babelHelpers.classPrivateFieldLooseKey("storeLastSelectedFromNumber");
+	var _submitAnalytics$1 = /*#__PURE__*/babelHelpers.classPrivateFieldLooseKey("submitAnalytics");
 	class Messages {
 	  static getInstance(progressBarRepo, options) {
 	    if (babelHelpers.classPrivateFieldLooseBase(Messages, _instance$1)[_instance$1]) {
@@ -382,6 +405,9 @@ this.BX.Crm = this.BX.Crm || {};
 	    return babelHelpers.classPrivateFieldLooseBase(Messages, _instance$1)[_instance$1];
 	  }
 	  constructor(progressBarRepo, options) {
+	    Object.defineProperty(this, _submitAnalytics$1, {
+	      value: _submitAnalytics2$1
+	    });
 	    Object.defineProperty(this, _storeLastSelectedFromNumber, {
 	      value: _storeLastSelectedFromNumber2
 	    });
@@ -441,6 +467,10 @@ this.BX.Crm = this.BX.Crm || {};
 	        inProgress: main_core.Loc.getMessage('CRM_GROUP_ACTIONS_WHATSAPP_MESSAGE_IN_PROGRESS')
 	      }
 	    });
+	    Object.defineProperty(this, _isHelpShown, {
+	      writable: true,
+	      value: false
+	    });
 	    babelHelpers.classPrivateFieldLooseBase(this, _progressBarRepo)[_progressBarRepo] = progressBarRepo;
 	    babelHelpers.classPrivateFieldLooseBase(this, _options)[_options] = options;
 	    babelHelpers.classPrivateFieldLooseBase(this, _selectedFromNumber)[_selectedFromNumber] = babelHelpers.classPrivateFieldLooseBase(this, _restoreLastSelectedFromNumber)[_restoreLastSelectedFromNumber]();
@@ -479,6 +509,7 @@ this.BX.Crm = this.BX.Crm || {};
 	  if (Helper) {
 	    Helper.show(`redirect=detail&code=${articleCode}`);
 	  }
+	  babelHelpers.classPrivateFieldLooseBase(this, _submitAnalytics$1)[_submitAnalytics$1]('showHelp');
 	}
 	function _destroy2() {
 	  main_core_events.EventEmitter.unsubscribeAll('BX.Crm.SmsEditorWrapper:click');
@@ -502,11 +533,12 @@ this.BX.Crm = this.BX.Crm || {};
 	  babelHelpers.classPrivateFieldLooseBase(this, _selectedFromNumber)[_selectedFromNumber] = fromNumber;
 	}
 	async function _sendMessages2(event) {
-	  var _event$getData, _event$getData2;
+	  var _event$getData, _event$getData2, _event$getData3;
 	  const gridId = babelHelpers.classPrivateFieldLooseBase(this, _options)[_options].gridId;
 	  const entityTypeId = babelHelpers.classPrivateFieldLooseBase(this, _options)[_options].entityTypeId;
 	  const messageBody = ((_event$getData = event.getData()) == null ? void 0 : _event$getData.text) || '';
 	  const messageTemplate = ((_event$getData2 = event.getData()) == null ? void 0 : _event$getData2.templateId) || null;
+	  const originalTempalteId = ((_event$getData3 = event.getData()) == null ? void 0 : _event$getData3.originalTemplateId) || null;
 	  const container = babelHelpers.classPrivateFieldLooseBase(this, _progressBarRepo)[_progressBarRepo].getOrCreateProgressBarContainer('whatsapp-message').id;
 	  const settings = {
 	    gridId,
@@ -532,6 +564,7 @@ this.BX.Crm = this.BX.Crm || {};
 	    bwmManager.setEntityIds(babelHelpers.classPrivateFieldLooseBase(this, _options)[_options].selectedIds);
 	  }
 	  bwmManager.execute();
+	  babelHelpers.classPrivateFieldLooseBase(this, _submitAnalytics$1)[_submitAnalytics$1]('sendMessage', originalTempalteId);
 	  babelHelpers.classPrivateFieldLooseBase(this, _destroy)[_destroy]();
 	}
 	function _showAnotherProcessRunningNotification2() {
@@ -563,6 +596,19 @@ this.BX.Crm = this.BX.Crm || {};
 	function _storeLastSelectedFromNumber2(fromNumber) {
 	  localStorage.setItem(SELECTED_FROM_NUMBER_LOCALSTORE_KEY, fromNumber);
 	}
+	function _submitAnalytics2$1(eventElement, templateId = null) {
+	  let analyticsData = null;
+	  if (eventElement === 'showHelp' && !babelHelpers.classPrivateFieldLooseBase(this, _isHelpShown)[_isHelpShown]) {
+	    analyticsData = crm_integration_analytics.Builder.Communication.FormEvent.createDefault(babelHelpers.classPrivateFieldLooseBase(this, _options)[_options].entityTypeId).setEvent(crm_integration_analytics.Dictionary.EVENT_WA_POPUP).setSubSection(crm_integration_analytics.Dictionary.SUB_SECTION_LIST).setElement(crm_integration_analytics.Dictionary.ELEMENT_WA_HELP);
+	    babelHelpers.classPrivateFieldLooseBase(this, _isHelpShown)[_isHelpShown] = true;
+	  }
+	  if (eventElement === 'sendMessage') {
+	    analyticsData = crm_integration_analytics.Builder.Communication.SendEvent.createDefault(babelHelpers.classPrivateFieldLooseBase(this, _options)[_options].entityTypeId).setEvent(crm_integration_analytics.Dictionary.EVENT_WA_SEND).setSubSection(crm_integration_analytics.Dictionary.SUB_SECTION_LIST).setElement(crm_integration_analytics.Dictionary.ELEMENT_WA_SEND).setContactsCount(babelHelpers.classPrivateFieldLooseBase(this, _options)[_options].forAll ? 'all' : babelHelpers.classPrivateFieldLooseBase(this, _options)[_options].selectedIds.length).setTemplateId(templateId);
+	  }
+	  if (analyticsData) {
+	    BX.UI.Analytics.sendData(analyticsData.buildData());
+	  }
+	}
 	Object.defineProperty(Messages, _instance$1, {
 	  writable: true,
 	  value: null
@@ -571,5 +617,5 @@ this.BX.Crm = this.BX.Crm || {};
 	exports.DEFAULT_PROVIDER = DEFAULT_PROVIDER;
 	exports.Messages = Messages;
 
-}((this.BX.Crm.GroupActions = this.BX.Crm.GroupActions || {}),BX.Crm.Autorun,BX,BX.Main,BX.UI,BX,BX.Event));
+}((this.BX.Crm.GroupActions = this.BX.Crm.GroupActions || {}),BX.Crm.Autorun,BX,BX.Main,BX.Crm.Integration.Analytics,BX.UI,BX,BX.Event));
 //# sourceMappingURL=messages.bundle.js.map

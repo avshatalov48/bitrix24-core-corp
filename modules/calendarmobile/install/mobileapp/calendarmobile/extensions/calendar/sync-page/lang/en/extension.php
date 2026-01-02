@@ -9,7 +9,6 @@ $MESS["M_CALENDAR_SYNC_ICLOUD_DIALOG_INCORRECT_FORM_DATA_TITLE"] = "Incorrect au
 $MESS["M_CALENDAR_SYNC_ICLOUD_DIALOG_LOGIN_BUTTON"] = "Log in to Apple ID";
 $MESS["M_CALENDAR_SYNC_ICLOUD_DIALOG_STEPPER_INSTRUCTION"] = "Instructions";
 $MESS["M_CALENDAR_SYNC_ICLOUD_DIALOG_STEPPER_ITEM_1"] = "Log in to your Apple ID";
-$MESS["M_CALENDAR_SYNC_ICLOUD_DIALOG_STEPPER_ITEM_2"] = "In the \"App passwords\" area, create and copy a password";
 $MESS["M_CALENDAR_SYNC_ICLOUD_DIALOG_STEPPER_ITEM_2_MSGVER_1"] = "In the \"Application passwords\" area, create and copy a password";
 $MESS["M_CALENDAR_SYNC_ICLOUD_DIALOG_STEPPER_ITEM_3"] = "Get back to the sync settings screen and paste this app password";
 $MESS["M_CALENDAR_SYNC_ICLOUD_DIALOG_STEPPER_TITLE"] = "To connect iCloud calendar, you have to get app password from Apple";

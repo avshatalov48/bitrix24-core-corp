@@ -14,4 +14,7 @@ enum GlobalSetting: string
 
 	/** @see EventHandler::SETTINGS_CALL_ASSESSMENT_ENABLED_CODE */
 	case CallAssessment = 'crm_copilot_call_assessment_enabled';
+	
+	/** @see EventHandler::SETTINGS_REPEAT_SALE_ENABLED_CODE */
+	case RepeatSale = 'crm_copilot_repeat_sale_enabled';
 }

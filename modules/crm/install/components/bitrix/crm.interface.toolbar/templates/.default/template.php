@@ -112,6 +112,11 @@ foreach($arParams["BUTTONS"] as $item):
 	else
 	{
 		$iconClassName = 'ui-btn ui-btn-xs ui-btn-round';
+		if ($item['SQUARE'] ?? false)
+		{
+			$iconClassName = 'ui-btn';
+		}
+
 		if ($type === 'disabled')
 		{
 			$iconClassName .= ' ui-btn ui-btn-icon-lock ui-btn-disabled';

@@ -12,7 +12,7 @@ class Callback extends Controller
 	public function getDefaultPreFilters(): array
 	{
 		return [
-			new Engine\ActionFilter\ClientAuth()
+			new Engine\ActionFilter\ClientAuth(),
 		];
 	}
 

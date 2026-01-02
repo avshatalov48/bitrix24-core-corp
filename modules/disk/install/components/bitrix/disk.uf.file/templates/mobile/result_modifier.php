@@ -255,6 +255,16 @@ foreach ($arResult['FILES'] as $id => $file)
 			$file["DOWNLOAD_URL"] = $file["DOWNLOAD_URL"].(mb_strpos($file["DOWNLOAD_URL"], "?") === false ? "?" : "&")."mobile_action=disk_uf_view&filename=".$file['NAME'];
 		}
 
+		if (Bitrix\Main\Loader::includeModule('disk'))
+		{
+			$fileObject = Bitrix\Disk\File::loadById($file['FILE_ID']);
+			if (Bitrix\Disk\TypeFile::isBoard($fileObject))
+			{
+				$file['VIEW_URL'] = Bitrix\Disk\Driver::getInstance()->getUrlManager()->getUrlForViewAttachedBoard($fileObject, $file['ID']);
+				$file['IS_BOARD'] = 'Y';
+			}
+		}
+
 		$arResult["FILES"][$id] = $files[$id] = $file;
 	}
 }
@@ -268,10 +278,7 @@ if ($this->__page === "show")
 	$arResult['IMAGES_COUNT'] = 0;
 	foreach ($images as $image)
 	{
-		if (
-			empty($file['HIDDEN'])
-			|| $file['HIDDEN'] !== 'Y'
-		)
+		if (empty($file['HIDDEN']) || $file['HIDDEN'] !== 'Y')
 		{
 			$arResult['IMAGES_COUNT']++;
 		}

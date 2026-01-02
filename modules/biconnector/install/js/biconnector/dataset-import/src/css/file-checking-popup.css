@@ -1,0 +1,52 @@
+.file-check {
+	display: flex;
+	flex-direction: column;
+	align-items: center;
+	padding-top: 50px;
+	padding-bottom: 80px;
+}
+
+.file-check-success,
+.file-check-failed {
+	padding-bottom: 20px;
+}
+
+.file-check-progress {
+	background: transparent;
+}
+
+.popup-window:has(.file-check-progress) {
+	box-shadow: none;
+}
+
+.file-check-loader {
+	display: flex;
+	height: 105px;
+	width: 105px;
+	align-items: center;
+	justify-content: center;
+	margin-bottom: 20px;
+}
+
+.file-check-icon-success {
+	margin-bottom: 20px;
+}
+
+.file-check-icon-failed {
+	margin-bottom: 20px;
+}
+
+.file-check-title {
+	font-size: var(--ui-font-size-2xl);
+	font-weight: var(--ui-font-weight-medium);
+	margin-bottom: 6px;
+}
+
+.file-check-subtitle {
+	font-size: var(--ui-font-size-lg);
+	font-weight: var(--ui-font-weight-normal);
+}
+
+.file-check-button {
+	margin-top: 20px;
+}

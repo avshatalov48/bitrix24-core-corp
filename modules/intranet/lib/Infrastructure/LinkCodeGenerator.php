@@ -11,11 +11,11 @@ use Bitrix\Main\Type\DateTime;
 
 class LinkCodeGenerator
 {
-	const LENGTH_СODE = 15;
+	const LENGTH_CODE = 15;
 	private InvitationLinkRepositoryContract $invitationLinkRepository;
 
 	public function __construct(
-		private int            $entityId,
+		private int $entityId,
 		private LinkEntityType $entityType,
 	)
 	{
@@ -25,6 +25,11 @@ class LinkCodeGenerator
 	public static function createByCollabId(int $collabId): self
 	{
 		return new self($collabId, LinkEntityType::COLLAB);
+	}
+
+	public static function createByUserId(int $userId): self
+	{
+		return new self($userId, LinkEntityType::USER);
 	}
 
 	/**
@@ -48,7 +53,7 @@ class LinkCodeGenerator
 		$entity = new InvitationLink(
 			$this->entityId,
 			$this->entityType,
-			Random::getString(self::LENGTH_СODE),
+			Random::getString(self::LENGTH_CODE),
 			expiredAt: $expiredDate
 		);
 

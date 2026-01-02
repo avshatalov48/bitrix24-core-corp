@@ -17,12 +17,12 @@ use Bitrix\Tasks\CheckList\CheckListFacade;
 use Bitrix\Tasks\CheckList\Internals\CheckList;
 use Bitrix\Tasks\Comments\Task\CommentPoster;
 use Bitrix\Tasks\Integration\CRM\TimeLineManager;
-use Bitrix\Tasks\Internals\Task\ScenarioTable;
 use Bitrix\Tasks\Replication\Replicator\RegularTemplateTaskReplicator;
 use Bitrix\Tasks\Util\Error;
 use Bitrix\Tasks\Util;
 use Bitrix\Tasks\Item;
 use Bitrix\Main\NotImplementedException;
+use Bitrix\Tasks\V2\Internal\DI\Container;
 
 Loc::loadMessages(__FILE__);
 
@@ -286,7 +286,7 @@ abstract class Task
 			$taskModel = TaskModel::createFromTaskItem($dstInstance);
 			if (!TaskAccessController::can($userId, ActionDictionary::ACTION_TASK_SAVE, null, $taskModel))
 			{
-				$creationResult->getErrors()->add('ACCESS_DENIED.RESPONSIBLE_AND_ORIGINATOR_NOT_ALLOWED', Loc::getMessage('TASKS_REPLICATOR_ACCESS_DENIED'));
+				$creationResult->getErrors()->add('ACCESS_DENIED.RESPONSIBLE_AND_ORIGINATOR_NOT_ALLOWED', Loc::getMessage('TASKS_REPLICATOR_ACCESS_DENIED_MSGVER_1'));
 				return $creationResult;
 			}
 
@@ -299,8 +299,7 @@ abstract class Task
 			{
 				$resultId = $dstInstance->getId();
 
-				// save scenario
-				ScenarioTable::insertIgnore($resultId, [ScenarioTable::SCENARIO_DEFAULT]);
+				Container::getInstance()->getScenarioService()->saveDefault($resultId);
 
 				$commentPoster = CommentPoster::getInstance($resultId, $userId);
 				$commentPoster->enableDeferredPostMode();

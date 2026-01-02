@@ -34,6 +34,7 @@ class FixDismissalPresetTemplate implements Operation
 	private readonly PresetTemplatesService $presetTemplatesService;
 
 	public function __construct(
+		private readonly int $createdById,
 		private readonly bool $isOptionsReloaded = false,
 		?TemplateRepository $templateRepository = null,
 		?DocumentRepository $documentRepository = null,
@@ -157,7 +158,7 @@ class FixDismissalPresetTemplate implements Operation
 			return $result;
 		}
 
-		return (new ImportTemplate($portableBlank))->launch();
+		return (new ImportTemplate($portableBlank, $this->createdById))->launch();
 	}
 
 	private function getInstalledTemplate(PortableBlank $portableBlank): ?Template

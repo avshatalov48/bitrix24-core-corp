@@ -120,13 +120,14 @@ export class Duration
 		return Duration.getUnitDurations()[unitStr];
 	}
 
-	static getUnitDurations(): { s: number, i: number, H: number, d: number, m: number, Y: number }
+	static getUnitDurations(): { s: number, i: number, H: number, d: number, w: number, m: number, Y: number }
 	{
 		return {
 			s: 1000,
 			i: 60000,
 			H: 3_600_000,
 			d: 86_400_000,
+			w: 604_800_000,
 			m: 2_678_400_000,
 			Y: 31_536_000_000,
 		};

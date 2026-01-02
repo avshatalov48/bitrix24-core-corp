@@ -93,6 +93,7 @@ class Dictionary
 			'scenarios' => Main\DI\ServiceLocator::getInstance()->get('crm.service.webform.scenario')->getScenarioList(),
 			'scenarioCategories' => Main\DI\ServiceLocator::getInstance()->get('crm.service.webform.scenario')->getScenarioCategoryList(),
 			'sidebarButtons' => Main\DI\ServiceLocator::getInstance()->get('crm.service.webform.scenario')->getSidebarMenuItems(),
+			'region' => Main\Application::getInstance()->getLicense()->getRegion() ?: 'en',
 		];
 	}
 
@@ -351,10 +352,18 @@ class Dictionary
 	 */
 	public function getCaptcha(): array
 	{
-		$hasOwn = WebForm\ReCaptcha::getKey(2) && WebForm\ReCaptcha::getSecret(2);
-		$hasDefaults = WebForm\ReCaptcha::getDefaultKey(2) && WebForm\ReCaptcha::getDefaultSecret(2);
+		$hasOwnRecaptcha = WebForm\ReCaptcha::getKey(2) && WebForm\ReCaptcha::getSecret(2);
+		$hasDefaultRecaptcha = WebForm\ReCaptcha::getDefaultKey(2) && WebForm\ReCaptcha::getDefaultSecret(2);
+
+		$hasOwnYandex = WebForm\YandexCaptcha::getKey() && WebForm\YandexCaptcha::getSecret();
+		$hasDefaultYandex = WebForm\YandexCaptcha::getDefaultKey() && WebForm\YandexCaptcha::getDefaultSecret();
 		return [
-			'hasKeys' => $hasDefaults || $hasOwn,
+			'recaptcha' => [
+				'hasKeys' => $hasDefaultRecaptcha || $hasOwnRecaptcha,
+			],
+			'yandexCaptcha' => [
+				'hasKeys' => $hasOwnYandex || $hasDefaultYandex,
+			],
 		];
 	}
 

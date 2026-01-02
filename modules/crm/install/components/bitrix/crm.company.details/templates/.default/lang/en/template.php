@@ -1,5 +1,4 @@
 <?php
-$MESS["CRM_COMPANY_DETAIL_ATTR_GR_TYPE_GENERAL"] = "All stages and funnels";
 $MESS["CRM_COMPANY_DETAIL_ATTR_GR_TYPE_JUNK"] = "Lost";
 $MESS["CRM_COMPANY_DETAIL_ATTR_GR_TYPE_PIPELINE"] = "In progress + won";
 $MESS["CRM_COMPANY_DETAIL_ATTR_REQUIRED_FULL"] = "Required starting with stage";

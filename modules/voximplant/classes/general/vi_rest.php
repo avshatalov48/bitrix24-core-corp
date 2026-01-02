@@ -518,7 +518,6 @@ class CVoxImplantRestService extends IRestService
 			unset($arData['ACCOUNT_ID']);
 			unset($arData['APPLICATION_ID']);
 			unset($arData['APPLICATION_NAME']);
-			unset($arData['CALL_LOG']);
 			unset($arData['CALL_RECORD_ID']);
 			unset($arData['CALL_WEBDAV_ID']);
 			unset($arData['CALL_STATUS']);
@@ -526,6 +525,7 @@ class CVoxImplantRestService extends IRestService
 			$arData['CALL_TYPE'] = $arData['INCOMING'];
 			unset($arData['INCOMING']);
 			$arData['CALL_START_DATE'] = CRestUtil::ConvertDateTime($arData['CALL_START_DATE']);
+
 			$result[] = $arData;
 		}
 
@@ -785,7 +785,7 @@ class CVoxImplantRestService extends IRestService
 		else
 		{
 			$admins = [];
-			$cursor = \CAllGroup::GetGroupUserEx(1);
+			$cursor = \CGroup::GetGroupUserEx(1);
 			while ($row = $cursor->fetch())
 			{
 				$admins[] = (int)$row['USER_ID'];
@@ -802,7 +802,8 @@ class CVoxImplantRestService extends IRestService
 			GetMessage(
 				'VI_REST_GET_USERS_CONFIRM',
 				array('#APPLICATION_NAME#' => \Bitrix\Voximplant\Rest\Helper::getRestAppName($server->getClientId()))
-			)
+			),
+			'vi_user_data_request',
 		);
 
 		$arExtParams = [

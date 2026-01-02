@@ -1,0 +1,64 @@
+.booking--booking--crm-forms-popup--item {
+	display: flex;
+	flex-direction: row;
+	align-items: center;
+	padding: 8px;
+	gap: 6px;
+}
+
+.booking--booking--crm-forms-popup--item__icon {
+	--ui-icon-set__icon-size: 20px;
+	--ui-icon-set__icon-color: var(--ui-color-g-content-blue-2, #0075FF);
+}
+
+.booking--booking--crm-forms-popup--item__name {
+	flex-grow: 1;
+}
+
+.booking--booking--crm-forms-popup--item__name span {
+	max-width: 15em;
+	white-space: nowrap;
+	overflow: hidden;
+	text-overflow: ellipsis;
+	display: inline-block;
+	color: var(--ui-color-palette-black-base);
+	font-size: 14px;
+	font-weight: var(--ui-font-weight-normal);
+	line-height: 19px;
+	letter-spacing: -0.05px;
+}
+
+.booking--booking--crm-forms-popup--item__copy-btn {
+	--ui-icon-set__icon-color: var(--ui-color-palette-gray-70);
+	--ui-btn-border-color: var(--ui-color-design-outline-na-stroke);
+
+	display: flex;
+	align-items: center;
+	gap: 2px;
+	color: var(--ui-color-palette-gray-70);
+	font-size: 10px;
+	font-weight: var(--ui-font-weight-normal);
+	line-height: 12px;
+	cursor: pointer;
+	padding: 2px 8px;
+	border: var(--ui-btn-border);
+	border-color: var(--ui-btn-border-color);
+	border-radius: var(--ui-border-radius-2xs, 5px);
+}
+
+.booking--booking--crm-forms-popup--item__copy-btn:hover {
+	--ui-btn-background: var(--ui-color-design-outline-na-bg);
+	--ui-btn-border-color: var(--ui-color-design-outline-na-stroke);
+	--ui-icon-set__icon-color: var(--ui-color-palette-gray-80);
+	--ui-btn-border-color-hover: color-mix(in srgb, var(--ui-btn-border-color) 100%, var(--ui-color-bg-state-hover-default-hex) var(--ui-color-bg-state-hover-default-opacity));
+	--ui-btn-background-hover: color-mix(in srgb, var(--ui-btn-background) 100%, var(--ui-color-bg-state-hover-default-hex) var(--ui-color-bg-state-hover-default-opacity) 3%
+	);
+
+	color: var(--ui-color-palette-gray-80);
+	border-color: var(--ui-btn-border-color-hover);
+	background-color: var(--ui-btn-background-hover);
+}
+
+.booking--booking--crm-forms-popup--item__copy-btn-icon {
+	--ui-icon-set__icon-size: 14px;
+}

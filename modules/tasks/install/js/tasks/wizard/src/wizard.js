@@ -64,7 +64,7 @@ export class Wizard
 
 	getCurrentStep(): Step
 	{
-		return this.#steps[this.#getCurrentStepIndex()];
+		return this.#steps[this.getCurrentStepIndex()];
 	}
 
 	update(): void
@@ -95,7 +95,7 @@ export class Wizard
 
 	#getPreviousStep(): Step
 	{
-		return this.#steps[this.#getCurrentStepIndex() - 1];
+		return this.#steps[this.getCurrentStepIndex() - 1];
 	}
 
 	#updateStepsAvailability(): void
@@ -130,7 +130,7 @@ export class Wizard
 		}
 	}
 
-	#getCurrentStepIndex(): number
+	getCurrentStepIndex(): number
 	{
 		for (const [index, step] of this.#steps.entries())
 		{
@@ -376,7 +376,7 @@ export class Wizard
 			}
 		}
 
-		const currentStep = this.#getCurrentStepIndex();
+		const currentStep = this.getCurrentStepIndex();
 		const nextStep = currentStep + 1;
 
 		this.#openStep(this.#steps[nextStep]);

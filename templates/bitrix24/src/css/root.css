@@ -1,0 +1,31 @@
+body {
+	--air-fixed-layout-top-shift: 0px;
+	--air-admin-panel-height: 0px;
+	--air-header-height: 58px;
+	--air-right-bar-width: 70px;
+	--air-app-min-width: 1260px;
+
+	margin: 0;
+	overflow-y: scroll;
+}
+
+body:has(#bx-panel.bx-panel-fixed),
+body:has(#bx-panel.bx-panel-fixed) {
+	--air-fixed-layout-top-shift: 147px;
+}
+
+body:has(#bx-panel.bx-panel-fixed.bx-panel-folded),
+body:has(#bx-panel.bx-panel-fixed.bx-panel-folded) {
+	--air-fixed-layout-top-shift: 39px;
+}
+
+.root {
+	min-width: var(--air-app-min-width);
+}
+
+.connection-status {
+	position: fixed;
+	left: 0;
+	top: 0;
+	right: 0;
+}

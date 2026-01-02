@@ -16,6 +16,8 @@ class Controller
 	private static $entityList = [
 		Entity\Lead::ENTITY_CODE => 200,
 		Entity\Deal::ENTITY_CODE => 200,
+		Entity\AutomatedSolution::ENTITY_CODE => 200,
+		Entity\DynamicTypes::ENTITY_CODE => 200,
 		Entity\Status::ENTITY_CODE => 300,
 		Entity\Field::ENTITY_CODE => 400,
 		Entity\DetailConfiguration::ENTITY_CODE => 500,
@@ -39,13 +41,7 @@ class Controller
 	 */
 	protected static function check(Event $event)
 	{
-		$code = $event->getParameter('CODE');
-		if(!static::$entityList[$code])
-		{
-			return false;
-		}
-
-		return true;
+		return (bool)static::getEntityList()[$event->getParameter('CODE')];
 	}
 
 	/**
@@ -78,6 +74,12 @@ class Controller
 						break;
 					case Entity\WebForm::ENTITY_CODE:
 						$result = Entity\WebForm::getInstance()->export($data);
+						break;
+					case Entity\DynamicTypes::ENTITY_CODE:
+						$result = Entity\DynamicTypes::getInstance()->export($data);
+						break;
+					case Entity\AutomatedSolution::ENTITY_CODE:
+						$result = Entity\AutomatedSolution::getInstance()->export($data);
 						break;
 				}
 			}
@@ -131,6 +133,9 @@ class Controller
 					case Entity\WebForm::ENTITY_CODE:
 						$result = Entity\WebForm::getInstance()->clear($data);
 						break;
+					case Entity\DynamicTypes::ENTITY_CODE:
+						$result = Entity\DynamicTypes::getInstance()->clear($data);
+						break;
 				}
 			}
 			catch (Exception $e)
@@ -179,6 +184,12 @@ class Controller
 						break;
 					case Entity\WebForm::ENTITY_CODE:
 						$result = Entity\WebForm::getInstance()->import($data);
+						break;
+					case Entity\DynamicTypes::ENTITY_CODE:
+						$result = Entity\DynamicTypes::getInstance()->import($data);
+						break;
+					case Entity\AutomatedSolution::ENTITY_CODE:
+						$result = Entity\AutomatedSolution::getInstance()->import($data);
 						break;
 				}
 			}

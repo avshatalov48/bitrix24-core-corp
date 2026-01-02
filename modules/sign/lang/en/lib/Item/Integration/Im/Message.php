@@ -1,5 +1,6 @@
 <?php
 $MESS["SIGN_CALLBACK_CHAT_DOCUMENT_CANCELLED"] = "[b]Signing canceled[/b][br][br]The document #DOC_NAME# is no longer available for signing.[br][br][url=#GRID_URL#]View signing progress[/url]";
+$MESS["SIGN_CALLBACK_CHAT_DOCUMENT_EXPIRED_TO_COMPANY"] = "[b]Document has expired.[/b][br][br]Document \"#DOC_NAME#\" is no longer available. You can start the signing process again.[br][br][url=#GRID_URL#]View signing progress[/url]";
 $MESS["SIGN_CALLBACK_CHAT_DOCUMENT_STOPPEDF_MSGVER_2"] = "[b]Signing canceled[/b][br][br]#INITIATOR_NAME# stopped the signing of #DOC_NAME#. The document is no longer available for signing.[br][br][url=#GRID_URL#]View signing progress[/url]";
 $MESS["SIGN_CALLBACK_CHAT_DOCUMENT_STOPPEDM_MSGVER_2"] = "[b]Signing canceled[/b][br][br]#INITIATOR_NAME# stopped the signing of #DOC_NAME#. The document is no longer available for signing.[br][br][url=#GRID_URL#]View signing progress[/url]";
 $MESS["SIGN_CALLBACK_CHAT_DOCUMENT_STOPPED_MSGVER_2"] = "[b]Signing canceled[/b][br][br]#INITIATOR_NAME# stopped the signing of #DOC_NAME#. The document is no longer available for signing.[br][br][url=#GRID_URL#]View signing progress[/url]";

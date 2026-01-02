@@ -3,11 +3,13 @@
 namespace Bitrix\Tasks\Access\Model;
 
 use Bitrix\Main\Access\AccessibleItem;
+use Bitrix\Main\Type\Contract\Arrayable;
 use Bitrix\Tasks\Internals\Task\Result\ResultTable;
 
 class ResultModel implements AccessibleItem
 {
 	private int $id;
+	private ?int $taskId = null;
 	private int $createdBy = 0;
 	private static array $cache = [];
 
@@ -37,6 +39,11 @@ class ResultModel implements AccessibleItem
 		return $this->id;
 	}
 
+	public function getTaskId(): ?int
+	{
+		return $this->taskId;
+	}
+
 	public function setId(int $id): void
 	{
 		$this->id = $id;
@@ -55,5 +62,27 @@ class ResultModel implements AccessibleItem
 	public static function invalidate(): void
 	{
 		static::$cache = [];
+	}
+
+	public static function createFromArray(array|Arrayable $data): static
+	{
+		if ($data instanceof Arrayable)
+		{
+			$data = $data->toArray();
+		}
+
+		$model = new static();
+
+		$reflection = new \ReflectionClass($model);
+
+		foreach ($data as $key => $value)
+		{
+			if ($reflection->hasProperty($key))
+			{
+				$model->{$key} = $value;
+			}
+		}
+
+		return $model;
 	}
 }

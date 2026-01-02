@@ -149,6 +149,9 @@ final class Registrar
 			]);
 
 			$result->addErrors($response->getErrors());
+			$result->setData([
+				'STATUS_CODE' => $response->getStatus(),
+			]);
 		}
 
 		return $result;

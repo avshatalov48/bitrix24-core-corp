@@ -29,16 +29,66 @@
 }
 
 .sign-template-title {
+	display: flex;
+	align-items: center;
 	color: var(--ui-color-link-primary-base);
 	text-decoration: none !important;
 }
 
-.sign-template-title:hover {
-	border-bottom: 1px solid var(--ui-color-link-primary-base);
-	padding-bottom: 2px;
-	text-decoration: none;
+.sign-template-title-text {
+	position: relative;
+}
+
+.sign-template-title-text-no-access {
+	display: inline-block;
+}
+
+.sign-template-title-text::after {
+	content: '';
+	position: absolute;
+	left: 0;
+	right: 0;
+	bottom: -3px;
+	height: 1px;
+	background-color: var(--ui-color-link-primary-base);
+	transform: scaleY(0);
+	transition: transform 0.1s ease;
+}
+
+.sign-template-title-text:hover::after {
+	transform: scaleX(1);
 }
 
 .sign-template-title-without-link {
+	display: flex;
+	align-items: center;
 	margin: 0;
+}
+
+.sign-template-folder-icon {
+	width: 24px;
+	height: 24px;
+	background-image: url('image/template-folder.svg');
+	background-size: cover;
+	display: inline-block;
+	margin-right: 13px;
+	vertical-align: middle;
+	flex-shrink: 0;
+}
+
+.sign-template-icon {
+	width: 24px;
+	height: 24px;
+	background-image: url('image/document-template.svg');
+	background-size: cover;
+	display: inline-block;
+	margin-right: 13px;
+	vertical-align: middle;
+	flex-shrink: 0;
+}
+
+.ui-action-panel.ui-action-panel-show {
+	height: 5% !important;
+	min-height: 50px;
+	margin-top: -65px;
 }

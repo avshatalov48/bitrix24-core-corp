@@ -16,10 +16,11 @@ class Switcher extends Field
 		?array $hints = null,
 		?SettingsPermission $permission = null,
 		bool $isEnable = true,
-		?string $helpDesk = null
+		?string $helpDesk = null,
+		?string $badge = null,
 	)
 	{
-		parent::__construct($id, $name, $label, self::TYPE, $permission, $isEnable, $value, $hints, $helpDesk);
+		parent::__construct($id, $name, $label, self::TYPE, $permission, $isEnable, $value, $hints, $helpDesk, $badge);
 	}
 
 	public function jsonSerialize(): array
@@ -35,6 +36,7 @@ class Switcher extends Field
 			'hints' => $this->getHints(),
 			'helpDesk' => $this->getHelpDesk(),
 			'checked' => $this->getValue() === 'Y',
+			'badge' => $this->getBadge(),
 		];
 		if (isset($this->getHints()['on']) && is_string($this->getHints()['on']))
 		{

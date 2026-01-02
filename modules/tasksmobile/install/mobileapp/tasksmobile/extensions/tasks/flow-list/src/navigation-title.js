@@ -31,9 +31,10 @@ jn.define('tasks/flow-list/src/navigation-title', (require, exports, module) => 
 			});
 		}
 
-		constructor({ layout })
+		constructor({ layout, title })
 		{
 			this.layout = layout;
+			this.title = title;
 
 			this.titleParams = null;
 
@@ -103,7 +104,7 @@ jn.define('tasks/flow-list/src/navigation-title', (require, exports, module) => 
 
 				case NavigationTitle.ConnectionStatus.NONE:
 				default:
-					headerTitle = Loc.getMessage('TASKSMOBILE_FLOW_LIST_HEADER');
+					headerTitle = this.title || Loc.getMessage('TASKSMOBILE_FLOW_LIST_HEADER');
 					useProgress = false;
 					break;
 			}

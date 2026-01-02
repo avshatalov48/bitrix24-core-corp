@@ -1,17 +1,33 @@
 BX.namespace("BX.Crm");
 
-import {Type, Uri} from "main.core";
+import { Runtime, Type } from 'main.core';
 
 export default class Slider
 {
-	static openFeedbackForm()
+	static openFeedbackForm(): void
 	{
-		const url = new Uri('/bitrix/components/bitrix/crm.feedback/slider.php');
-		url.setQueryParams({
-			sender_page: 'terminal',
-		});
+		void Runtime.loadExtension(['ui.feedback.form'])
+			.then(() => {
+				const settings = Runtime.getSettings('crm.terminal-detail');
+				const hasPayment = settings.get('hasPaymentSystemConfigured');
+				const hasCashbox = settings.get('hasCashboxConfigured');
 
-		return Slider.open(url.toString(), {width: 735});
+				const formIdNumber = Math.round(Math.random() * 1000);
+				BX.UI.Feedback.Form.open({
+					id: `crm.feedback-${formIdNumber}`,
+					forms: [
+						{ zones: ['en'], id: 630, lang: 'en', sec: 'ypq6nz' },
+						{ zones: ['com.br'], id: 632, lang: 'com.br', sec: 'ama2ql' },
+						{ zones: ['ru', 'by', 'kz'], id: 628, lang: 'ru', sec: 'rgyboj' },
+					],
+					presets: {
+						sender_page: 'terminal',
+						is_payment_system: hasPayment ? 'yes' : 'no',
+						is_cashbox: hasCashbox ? 'yes' : 'no',
+					},
+				});
+			})
+		;
 	}
 
 	static open(url, options)

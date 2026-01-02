@@ -1,0 +1,18 @@
+<svg width="81" height="80" viewBox="0 0 81 80" fill="none" xmlns="http://www.w3.org/2000/svg">
+	<path d="M65.5 22C65.5 19.2386 63.2614 17 60.5 17H20.5C17.7386 17 15.5 19.2386 15.5 22V60C15.5 62.7614 17.7386 65 20.5 65H60.5C63.2614 65 65.5 62.7614 65.5 60L65.5 22Z" fill="#87BACA"/>
+	<rect x="64.5" y="64" width="48" height="47" rx="4" transform="rotate(180 64.5 64)" fill="white"/>
+	<path d="M65.5 20.3298C65.5 16.8339 62.6661 14 59.1702 14H21.8298C18.3339 14 15.5 16.8339 15.5 20.3298V23H65.5V20.3298Z" fill="#87BACA"/>
+	<ellipse opacity="0.5" cx="1.89235" cy="1.90268" rx="1.89235" ry="1.90268" transform="matrix(-1 0 0 1 51.9846 17)" fill="#F9FAFB"/>
+	<ellipse opacity="0.5" cx="1.89235" cy="1.90268" rx="1.89235" ry="1.90268" transform="matrix(-1 0 0 1 32.2 17)" fill="#F9FAFB"/>
+	<rect opacity="0.161457" width="50" height="1" transform="matrix(-1 0 0 1 65.5 23)" fill="#00789E"/>
+	<rect opacity="0.6" x="23.5" y="29" width="7" height="7" rx="2" fill="#87BACA"/>
+	<rect opacity="0.6" x="23.5" y="38" width="7" height="7" rx="2" fill="#87BACA"/>
+	<rect opacity="0.6" x="23.5" y="47" width="7" height="7" rx="2" fill="#87BACA"/>
+	<rect opacity="0.6" x="32.5" y="29" width="7" height="7" rx="2" fill="#87BACA"/>
+	<rect opacity="0.6" x="32.5" y="38" width="7" height="7" rx="2" fill="#87BACA"/>
+	<rect opacity="0.6" x="32.5" y="47" width="7" height="7" rx="2" fill="#87BACA"/>
+	<rect opacity="0.6" x="41.5" y="29" width="7" height="7" rx="2" fill="#87BACA"/>
+	<rect opacity="0.6" x="41.5" y="38" width="7" height="7" rx="2" fill="#87BACA"/>
+	<rect x="50.5" y="29" width="7" height="7" rx="2" fill="#DFE0E3"/>
+	<rect x="50.5" y="38" width="7" height="7" rx="2" fill="#DFE0E3"/>
+</svg>

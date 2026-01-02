@@ -44,10 +44,8 @@ jn.define('calendar/model/sync/connection', (require, exports, module) => {
 		{
 			SyncAjax.getConnectionLink('google')
 				.then((response) => {
-					const connectionLink = response.data.connectionLink;
-					const oauth = new Oauth({
-						connectionLink,
-					});
+					const { connectionLink } = response.data;
+					const oauth = new Oauth({ connectionLink });
 
 					// eslint-disable-next-line promise/catch-or-return
 					oauth.run().then(({ url }) => {
@@ -73,10 +71,8 @@ jn.define('calendar/model/sync/connection', (require, exports, module) => {
 		{
 			SyncAjax.getConnectionLink('office365')
 				.then((response) => {
-					const connectionLink = response.data.connectionLink;
-					const oauth = new Oauth({
-						connectionLink,
-					});
+					const { connectionLink } = response.data;
+					const oauth = new Oauth({ connectionLink });
 
 					// eslint-disable-next-line promise/catch-or-return
 					oauth.run().then(({ url }) => {
@@ -156,10 +152,8 @@ jn.define('calendar/model/sync/connection', (require, exports, module) => {
 							connectionId: null,
 						};
 					}
-					else
-					{
-						return response.data;
-					}
+
+					return response.data;
 				})
 				.catch((response) => {
 					return {

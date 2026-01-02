@@ -14,9 +14,9 @@ export class ChooseResourceStep extends Step
 		return Loc.getMessage('BRCW_BUTTON_CANCEL');
 	}
 
-	next(): Promise<void>
+	async next(): Promise<void>
 	{
-		return super.next();
+		await super.next();
 	}
 
 	back()

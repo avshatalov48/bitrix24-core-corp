@@ -20,12 +20,14 @@ class Money extends Value implements Nameable
 	 */
 	public function toString($modifier = null): string
 	{
-		if($this->value === null)
-		{
-			return '';
-		}
 		$options = $this->getOptions($modifier);
-		if(isset($options['WORDS']) && $options['WORDS'] === true && function_exists('Number2Word_Rus'))
+
+		if ($this->value === null)
+		{
+			return $options['SHOW_DASH_IF_NULL'] ? '-' : '';
+		}
+
+		if (isset($options['WORDS']) && $options['WORDS'] === true && function_exists('Number2Word_Rus'))
 		{
 			$isMoney = 'Y';
 			if(isset($options['NO_SIGN']) && $options['NO_SIGN'] === true)
@@ -128,6 +130,7 @@ class Money extends Value implements Nameable
 	{
 		return [
 			'CURRENCY_ID' => static::getDefaultCurrencyId(),
+			'SHOW_DASH_IF_NULL' => false,
 		];
 	}
 

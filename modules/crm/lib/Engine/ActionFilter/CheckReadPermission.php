@@ -8,6 +8,15 @@ class CheckReadPermission extends BaseCheckPermission
 {
 	protected function checkItemPermission(int $entityTypeId, int $entityId = 0, ?int $categoryId = null): bool
 	{
-		return $this->userPermissions->checkReadPermissions($entityTypeId, $entityId, $categoryId);
+		if ($entityId > 0)
+		{
+			return $this->userPermissions->item()->canRead($entityTypeId, $entityId);
+		}
+		if (!is_null($categoryId))
+		{
+			return $this->userPermissions->entityType()->canReadItemsInCategory($entityTypeId, $categoryId);
+		}
+
+		return $this->userPermissions->entityType()->canReadItems($entityTypeId);
 	}
 }

@@ -1,0 +1,23 @@
+<?php
+$MESS["CRM_MODULE_NOT_INSTALLED"] = "Crm модулі орнатылмаған.";
+$MESS["CRM_MODULE_NOT_INSTALLED_CATALOG"] = "Catalog модулі орнатылмаған.";
+$MESS["CRM_MODULE_NOT_INSTALLED_CURRENCY"] = "Currency модулі орнатылмаған.";
+$MESS["CRM_MODULE_NOT_INSTALLED_SALE"] = "Sale модулі орнатылмаған.";
+$MESS["CRM_PAYMENT_DELETE_ERROR"] = "Төлемді жою қатесі";
+$MESS["CRM_PAYMENT_HEADER_ACCOUNT_NUMBER"] = "Төлем нөмірі";
+$MESS["CRM_PAYMENT_HEADER_CURRENCY"] = "Валюта";
+$MESS["CRM_PAYMENT_HEADER_DATE_BILL"] = "Жасалған күні";
+$MESS["CRM_PAYMENT_HEADER_DATE_PAID"] = "Төлем күні";
+$MESS["CRM_PAYMENT_HEADER_DATE_PAY_BEFORE"] = "Дейін төлеу";
+$MESS["CRM_PAYMENT_HEADER_ID"] = "Төлем ID-і";
+$MESS["CRM_PAYMENT_HEADER_ORDER_ID"] = "Тапсырыс ID-і";
+$MESS["CRM_PAYMENT_HEADER_PAID"] = "Мәртебе";
+$MESS["CRM_PAYMENT_HEADER_PAYMENT_SUMMARY"] = "Төлем құжаты";
+$MESS["CRM_PAYMENT_HEADER_PAY_SYSTEM_FULL"] = "Төлеу тәсілі";
+$MESS["CRM_PAYMENT_HEADER_PAY_SYSTEM_NAME"] = "Төлем жүйесі";
+$MESS["CRM_PAYMENT_HEADER_PAY_VOUCHER_NUM"] = "Төлем құжатының нөмірі";
+$MESS["CRM_PAYMENT_HEADER_RESPONSIBLE"] = "Жауапты";
+$MESS["CRM_PAYMENT_HEADER_SUM"] = "Сома";
+$MESS["CRM_PAYMENT_HEADER_USER_ID"] = "Сатып алушы";
+$MESS["CRM_PAYMENT_NAME"] = "№#ACCOUNT_NUMBER# от #DATE_BILL# жөнелтімі";
+$MESS["CRM_PERMISSION_DENIED"] = "Қолжетімділікке тыйым салынған";

@@ -1821,26 +1821,30 @@ this.BX = this.BX || {};
 	        if (_classPrivateMethodGet$8(_this3, _isAgreementError, _isAgreementError2).call(_this3, firstError)) {
 	          _classPrivateMethodGet$8(_this3, _handleAgreementError, _handleAgreementError2).call(_this3, firstError, prompt);
 	        } else if ((firstError === null || firstError === void 0 ? void 0 : firstError.code) === 'LIMIT_IS_EXCEEDED_MONTHLY' || (firstError === null || firstError === void 0 ? void 0 : firstError.code) === 'LIMIT_IS_EXCEEDED_DAILY' || (firstError === null || firstError === void 0 ? void 0 : firstError.code) === 'LIMIT_IS_EXCEEDED_BAAS' || (firstError === null || firstError === void 0 ? void 0 : firstError.code) === 'SERVICE_IS_NOT_AVAILABLE_BY_TARIFF') {
+	          var _firstError$customDat, _firstError$customDat2, _firstError$customDat3, _firstError$customDat4;
 	          ai_ajaxErrorHandler.AjaxErrorHandler.handleImageGenerateError({
 	            errorCode: firstError === null || firstError === void 0 ? void 0 : firstError.code,
+	            showSliderWithMsg: firstError === null || firstError === void 0 ? void 0 : (_firstError$customDat = firstError.customData) === null || _firstError$customDat === void 0 ? void 0 : _firstError$customDat.showSliderWithMsg,
+	            sliderCode: firstError === null || firstError === void 0 ? void 0 : (_firstError$customDat2 = firstError.customData) === null || _firstError$customDat2 === void 0 ? void 0 : _firstError$customDat2.sliderCode,
 	            baasOptions: {
-	              bindElement: null,
-	              useSlider: true,
+	              bindElement: _this3.context.querySelector('.ai__picker_submit-btn'),
+	              useSlider: (_firstError$customDat3 = firstError === null || firstError === void 0 ? void 0 : (_firstError$customDat4 = firstError.customData) === null || _firstError$customDat4 === void 0 ? void 0 : _firstError$customDat4.showSliderWithMsg) !== null && _firstError$customDat3 !== void 0 ? _firstError$customDat3 : true,
 	              context: 'notSet'
 	            }
 	          });
 	          _this3.textMessage.finishLoading();
 	        } else {
-	          _this3.handleGenerateFail();
+	          _this3.handleGenerateFail(firstError);
 	        }
 	      });
 	    }
 	  }, {
 	    key: "handleGenerateFail",
-	    value: function handleGenerateFail() {
+	    value: function handleGenerateFail(err) {
+	      var _err$message;
 	      BX.UI.Notification.Center.notify({
 	        id: 'AI_JS_PICKER_TEXT_GENERATE_FAILED',
-	        content: main_core.Loc.getMessage('AI_JS_PICKER_TEXT_GENERATE_FAILED'),
+	        content: (_err$message = err === null || err === void 0 ? void 0 : err.message) !== null && _err$message !== void 0 ? _err$message : main_core.Loc.getMessage('AI_JS_PICKER_TEXT_GENERATE_FAILED'),
 	        showOnTopWindow: true
 	      });
 	      this.textMessage.finishLoading();
@@ -1977,7 +1981,7 @@ this.BX = this.BX || {};
 	  babelHelpers.createClass(PickerImage, [{
 	    key: "render",
 	    value: function render() {
-	      return main_core.Tag.render(_templateObject$e || (_templateObject$e = babelHelpers.taggedTemplateLiteral(["\n\t\t\t<div class=\"ai__picker-image\">\n\t\t\t\t", "\n\t\t\t\t", "\n\t\t\t</div>\n\t\t"])), this.renderTextMessage(), _classPrivateMethodGet$a(this, _renderHistory$1, _renderHistory2$1).call(this));
+	      return main_core.Tag.render(_templateObject$e || (_templateObject$e = babelHelpers.taggedTemplateLiteral(["\n\t\t\t<div class=\"ai__picker-image\">\n\t\t\t\t<div class=\"ai__picker-image_input-field-baas-point\"></div>\n\t\t\t\t", "\n\t\t\t\t", "\n\t\t\t</div>\n\t\t"])), this.renderTextMessage(), _classPrivateMethodGet$a(this, _renderHistory$1, _renderHistory2$1).call(this));
 	    }
 	  }, {
 	    key: "getTextMessageSubmitButtonIcon",
@@ -2572,7 +2576,7 @@ this.BX = this.BX || {};
 	    babelHelpers.classPrivateFieldGet(this, _popups).set(popupId, new main_popup.Popup({
 	      bindElement: _classPrivateMethodGet$c(this, _getPopupPosition, _getPopupPosition2).call(this, popupWidth),
 	      className: 'ai__picker-popup',
-	      autoHide: true,
+	      autoHide: false,
 	      closeByEsc: false,
 	      width: popupWidth,
 	      height: _classPrivateMethodGet$c(this, _getPopupMaxHeight, _getPopupMaxHeight2).call(this),
@@ -2595,8 +2599,9 @@ this.BX = this.BX || {};
 	          _classPrivateMethodGet$c(_this, _fixOverlayFreez, _fixOverlayFreez2).call(_this, popupId);
 	          main_core.Dom.style(document.body, 'overflow-x', 'hidden');
 	        },
-	        onPopupAfterClose: function onPopupAfterClose() {
+	        onPopupAfterClose: function onPopupAfterClose(popup) {
 	          main_core.Dom.style(document.body, 'overflow-x', null);
+	          popup.destroy();
 	        },
 	        onAfterShow: function onAfterShow() {
 	          main_core.bind(window, 'resize', adjustPosition);

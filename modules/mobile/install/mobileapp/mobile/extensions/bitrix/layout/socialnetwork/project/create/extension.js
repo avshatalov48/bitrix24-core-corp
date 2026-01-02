@@ -2,8 +2,12 @@
 	const require = (ext) => jn.require(ext);
 	const AppTheme = require('apptheme');
 	const { LoadingScreenComponent } = require('layout/ui/loading-screen');
+	const { RequestExecutor } = require('rest');
 	const { RunActionExecutor } = require('rest/run-action-executor');
 	const { TrialFeatureActivation } = require('layout/socialnetwork/project/create/trial-feature-activation');
+	const { Notify } = require('notify');
+	const { RecipientSelector } = require('selector/recipient');
+	const { ProjectNameField } = require('layout/socialnetwork/project/fields/name');
 
 	class ProjectCreate extends LayoutComponent
 	{
@@ -57,6 +61,9 @@
 				initiatePerms: ProjectCreate.initiatePerms.members,
 			};
 
+			/** @var {StringField} */
+			this.nameFieldRef = null;
+
 			BX.addCustomEvent('onFileUploadStatusChanged', this.onFileUploadStatusChanged.bind(this));
 		}
 
@@ -76,65 +83,78 @@
 				this.getUploadedFilesFolder(),
 				this.getSubjects(),
 				this.getOwnerData(),
-			]).then(() => this.setState({ showLoading: false })).catch(console.error);
+			])
+				.then(() => this.setState({ showLoading: false }, () => this.nameFieldRef?.focus()))
+				.catch(console.error)
+			;
 		}
 
 		getAvatarDefaultTypes()
 		{
+			if (Object.keys(this.state.avatarDefaultTypes).length > 0)
+			{
+				return Promise.resolve();
+			}
+
 			return new Promise((resolve) => {
-				if (Object.keys(this.state.avatarDefaultTypes).length > 0)
-				{
-					return resolve();
-				}
-				(new RequestExecutor('socialnetwork.api.workgroup.getAvatarTypes'))
+				new RequestExecutor('socialnetwork.api.workgroup.getAvatarTypes')
 					.call()
 					.then((response) => {
 						this.setState({ avatarDefaultTypes: response.result });
 						resolve();
-					}).catch(console.error);
+					})
+					.catch(console.error)
+				;
 			});
 		}
 
 		getUploadedFilesFolder()
 		{
+			if (this.state.userUploadedFilesFolder)
+			{
+				return Promise.resolve();
+			}
+
 			return new Promise((resolve) => {
-				if (this.state.userUploadedFilesFolder)
-				{
-					return resolve();
-				}
-				(new RequestExecutor('mobile.disk.getUploadedFilesFolder'))
+				new RequestExecutor('mobile.disk.getUploadedFilesFolder')
 					.call()
 					.then((response) => {
 						this.setState({ userUploadedFilesFolder: response.result });
 						resolve();
-					}).catch(console.error);
+					})
+					.catch(console.error)
+				;
 			});
 		}
 
 		getSubjects()
 		{
+			if (this.state.subjects.length > 0)
+			{
+				return Promise.resolve();
+			}
+
 			return new Promise((resolve) => {
-				if (this.state.subjects.length > 0)
-				{
-					return resolve();
-				}
-				(new RequestExecutor('sonet_group_subject.get'))
+				new RequestExecutor('sonet_group_subject.get')
 					.call()
 					.then((response) => {
 						this.setState({ subjects: response.result });
 						resolve();
-					}).catch(console.error);
+					})
+					.catch(console.error)
+				;
 			});
 		}
 
 		getOwnerData()
 		{
+			if (this.state.ownerData.id)
+			{
+				return Promise.resolve();
+			}
+
 			return new Promise((resolve) => {
-				if (this.state.ownerData.id)
-				{
-					return resolve();
-				}
-				(new RequestExecutor('mobile.user.get', { filter: { ID: this.state.userId } }))
+				new RequestExecutor('mobile.user.get', { filter: { ID: this.state.userId } })
 					.call()
 					.then((response) => {
 						const user = response.result[0];
@@ -146,7 +166,9 @@
 							},
 						});
 						resolve();
-					}).catch(console.error);
+					})
+					.catch(console.error)
+				;
 			});
 		}
 
@@ -190,7 +212,9 @@
 								fields: [
 									new ProjectNameField({
 										value: this.state.name,
-										focus: true,
+										bindRef: (ref) => {
+											this.nameFieldRef = ref;
+										},
 										onChange: (text) => this.setState({ name: text }),
 									}),
 									new ProjectAvatarField({
@@ -208,6 +232,7 @@
 												avatarIsLoading: (typeof isLoading === 'boolean' ? isLoading : this.state.avatarIsLoading),
 												avatarFileId: diskFileId,
 											});
+											this.nameFieldRef?.removeFocus();
 										},
 									}),
 									new ProjectTypeField({
@@ -329,8 +354,7 @@
 			);
 		}
 
-		close(callback = () => {
-		})
+		close(callback = () => {})
 		{
 			if (this.layoutWidget)
 			{
@@ -356,7 +380,7 @@
 
 			if (!this.state.name || this.state.name.trim() === '')
 			{
-				Notify.showIndicatorError({
+				void Notify.showIndicatorError({
 					text: BX.message('MOBILE_LAYOUT_PROJECT_CREATE_ERROR_NO_TITLE'),
 					hideAfter: 3000,
 				});
@@ -366,7 +390,7 @@
 
 			if (this.state.avatarSelected === 'loaded' && this.state.avatarIsLoading)
 			{
-				Notify.showIndicatorError({
+				void Notify.showIndicatorError({
 					text: BX.message('MOBILE_LAYOUT_PROJECT_CREATE_ERROR_AVATAR_IS_UPLOADING'),
 					hideAfter: 3000,
 				});
@@ -391,20 +415,20 @@
 								return;
 							}
 							this.isCreating = true;
-							Notify.showIndicatorLoading();
+							void Notify.showIndicatorLoading();
 
-							Action.create(this.state).then(
+							void Action.create(this.state).then(
 								(response) => {
 									const projectId = response.result;
-									Action.inviteMembers(this.state.moderatorsData, items, projectId).then(() => {
+									void Action.inviteMembers(this.state.moderatorsData, items, projectId).then(() => {
 										void Action.setOwner(this.state, projectId);
 									});
-									Action.turnOnTrial().then((isTrialTurnedOn) => {
+									void Action.turnOnTrial().then((isTrialTurnedOn) => {
 										this.close(isTrialTurnedOn ? TrialFeatureActivation.open : undefined);
 									});
 								},
 								(response) => {
-									Notify.showIndicatorError({
+									void Notify.showIndicatorError({
 										text: response.error.description,
 										hideAfter: 3000,
 									});
@@ -457,10 +481,12 @@
 					{
 						break;
 					}
+
 					this.setState({
 						avatarFileId: eventData.result.data.file.id,
 						avatarIsLoading: false,
 					});
+
 					break;
 				}
 
@@ -469,16 +495,14 @@
 				case BX.FileUploadEvents.ALL_TASK_COMPLETED:
 				case BX.FileUploadEvents.TASK_TOKEN_DEFINED:
 				case BX.FileUploadEvents.TASK_CREATED:
-				default:
-					// do nothing
-					break;
-
 				case BX.FileUploadEvents.TASK_STARTED_FAILED:
 				case BX.FileUploadEvents.FILE_CREATED_FAILED:
 				case BX.FileUploadEvents.FILE_UPLOAD_FAILED:
 				case BX.FileUploadEvents.TASK_CANCELLED:
 				case BX.FileUploadEvents.TASK_NOT_FOUND:
 				case BX.FileUploadEvents.FILE_READ_ERROR:
+				default:
+					// do nothing
 					break;
 			}
 
@@ -491,8 +515,7 @@
 		static create(fields)
 		{
 			return new Promise((resolve, reject) => {
-				(new RequestExecutor('sonet_group.create', {
-
+				new RequestExecutor('sonet_group.create', {
 					NAME: fields.name,
 					DESCRIPTION: fields.description,
 					IMAGE_FILE_ID: (fields.avatarSelected === 'loaded' ? fields.avatarFileId : null),
@@ -505,12 +528,13 @@
 					INITIATE_PERMS: fields.initiatePerms,
 					KEYWORDS: fields.tags.join(','),
 					...Action.typeToFields(fields.type),
-				}))
+				})
 					.call()
 					.then(
 						(response) => resolve(response),
 						(response) => reject(response),
 					)
+					.catch(console.error)
 				;
 			});
 		}
@@ -531,31 +555,34 @@
 		static inviteModerators(moderators, projectId)
 		{
 			return new Promise((resolve, reject) => {
-				(new RequestExecutor('socialnetwork.api.usertogroup.setModerators', {
+				new RequestExecutor('socialnetwork.api.usertogroup.setModerators', {
 					groupId: projectId,
 					userIds: moderators,
-				}))
+				})
 					.call()
 					.then(
 						(response) => resolve(response),
 						(response) => reject(response),
-					).catch(console.error);
+					)
+					.catch(console.error)
+				;
 			});
 		}
 
 		static inviteUsers(users, projectId)
 		{
 			return new Promise((resolve, reject) => {
-				(new RequestExecutor('sonet_group.user.invite', {
+				new RequestExecutor('sonet_group.user.invite', {
 					GROUP_ID: projectId,
 					USER_ID: users,
 					MESSAGE: '',
-				}))
+				})
 					.call()
 					.then(
 						(response) => resolve(response),
 						(response) => reject(response),
 					)
+					.catch(console.error)
 				;
 			});
 		}
@@ -563,62 +590,65 @@
 		static inviteDepartments(departments, projectId)
 		{
 			return new Promise((resolve, reject) => {
-				(new RequestExecutor('sonet_group.update', {
+				new RequestExecutor('sonet_group.update', {
 					GROUP_ID: projectId,
 					UF_SG_DEPT: departments,
-				}))
+				})
 					.call()
 					.then(
 						(response) => resolve(response),
 						(response) => reject(response),
-					).catch(console.error);
+					)
+					.catch(console.error)
+				;
 			});
 		}
 
 		static setOwner(fields, projectId)
 		{
-			return new Promise((resolve, reject) => {
-				if (Number(fields.userId) === Number(fields.ownerData.id))
-				{
-					return resolve();
-				}
+			if (Number(fields.userId) === Number(fields.ownerData.id))
+			{
+				return Promise.resolve();
+			}
 
-				(new RequestExecutor('socialnetwork.api.usertogroup.setowner', {
+			return new Promise((resolve, reject) => {
+				new RequestExecutor('socialnetwork.api.usertogroup.setowner', {
 					userId: fields.ownerData.id,
 					groupId: projectId,
-				}))
+				})
 					.call()
 					.then(
 						(response) => resolve(response),
 						(response) => reject(response),
-					).catch(console.error);
+					)
+					.catch(console.error)
+				;
 			});
 		}
 
 		static typeToFields(type)
 		{
-			if (!Object.keys(ProjectCreate.projectTypes).includes(type))
+			switch (type)
 			{
-				type = ProjectCreate.projectTypes.public;
-			}
+				case ProjectCreate.projectTypes.secret:
+					return {
+						OPENED: 'N',
+						VISIBLE: 'N',
+					};
 
-			let isOpened = 'N';
-			let isVisible = 'N';
+				case ProjectCreate.projectTypes.private:
+					return {
+						OPENED: 'N',
+						VISIBLE: 'Y',
+					};
 
-			if (type === ProjectCreate.projectTypes.private)
-			{
-				isVisible = 'Y';
+				case ProjectCreate.projectTypes.public:
+				default:
+					return {
+						OPENED: 'Y',
+						VISIBLE: 'Y',
+					};
 			}
-			else if (type === ProjectCreate.projectTypes.public)
-			{
-				isOpened = 'Y';
-				isVisible = 'Y';
-			}
-
-			return {
-				OPENED: isOpened,
-				VISIBLE: isVisible,
-			};
 		}
 
 		static turnOnTrial()
@@ -638,7 +668,7 @@
 		{
 			const projectCreate = new ProjectCreate({ userId });
 
-			PageManager.openWidget('layout', {
+			void PageManager.openWidget('layout', {
 				backgroundColor: AppTheme.colors.bgSecondary,
 				backdrop: {
 					bounceEnable: true,

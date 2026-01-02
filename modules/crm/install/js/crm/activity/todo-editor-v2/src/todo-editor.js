@@ -924,12 +924,25 @@ export class TodoEditorV2
 			return this.#clearValue();
 		}
 
-		const analytics = this.#getAnalyticsInstance();
+		const data = this.#analytics?.getData();
+
+		this.sendAnalyticsCancelEvent({
+			...data,
+			...params?.analytics,
+		});
+
+		this.getTextEditor().collapse(animateCollapse);
+
+		return this.#clearValue();
+	}
+
+	sendAnalyticsCancelEvent(params: ?Object): void
+	{
+		const analytics = this.#getAnalyticsInstance(params);
+
 		if (analytics === null)
 		{
-			this.getTextEditor().collapse(animateCollapse);
-
-			return this.#clearValue();
+			return;
 		}
 
 		analytics
@@ -937,34 +950,31 @@ export class TodoEditorV2
 			.setElement(ElementIds.cancelButton)
 		;
 
-		const subSection = params?.analytics?.subSection;
+		const subSection = params?.subSection;
 		if (Type.isStringFilled(subSection))
 		{
 			analytics.setSubSection(subSection);
 		}
 
-		const element = params?.analytics?.element;
+		const element = params?.element;
 		if (Type.isStringFilled(element))
 		{
 			analytics.setElement(element);
 		}
 
-		const notificationSkipPeriod = params?.analytics?.notificationSkipPeriod;
+		const notificationSkipPeriod = params?.notificationSkipPeriod;
 		if (Type.isStringFilled(notificationSkipPeriod))
 		{
 			analytics.setNotificationSkipPeriod(notificationSkipPeriod);
 		}
 
 		analytics.send();
-
-		this.getTextEditor().collapse(animateCollapse);
-
-		return this.#clearValue();
 	}
 
-	#getAnalyticsInstance(): ?Analytics
+	#getAnalyticsInstance(data: ?Object = null): ?Analytics
 	{
-		const data = this.#analytics?.getData();
+		// eslint-disable-next-line no-param-reassign
+		data = data ?? this.#analytics?.getData();
 
 		if (!data)
 		{

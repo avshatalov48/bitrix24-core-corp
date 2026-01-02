@@ -9,8 +9,10 @@ namespace Bitrix\Crm;
 
 use Bitrix\Crm\History\Entity\LeadStatusHistoryTable;
 use Bitrix\Crm\History\Entity\LeadStatusHistoryWithSupposedTable;
+use Bitrix\Crm\Model\LastCommunicationTable;
 use Bitrix\Crm\Settings\LeadSettings;
 use Bitrix\Main;
+use Bitrix\Main\Entity\ReferenceField;
 use Bitrix\Main\Localization\Loc;
 use Bitrix\Main\ORM\Event;
 use Bitrix\Main\ORM\EventResult;
@@ -401,7 +403,11 @@ class LeadTable extends Main\ORM\Data\DataManager
 			$fieldRepository->getObservers('LEAD', 'OBSERVER_IDS'),
 		];
 
-		return array_merge($map, $fieldRepository->getUtm(\CCrmOwnerType::Lead));
+		return array_merge(
+			$map,
+			$fieldRepository->getUtm(\CCrmOwnerType::Lead),
+			$fieldRepository->getLastCommunications(\CCrmOwnerType::Lead),
+		);
 	}
 
 	private static function ensureStatusesLoaded()

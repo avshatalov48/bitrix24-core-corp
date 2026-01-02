@@ -29,7 +29,7 @@ export const RecommendationBlock = {
 	computed: {
 		disclaimer(): string
 		{
-			return Loc.getMessage('CRM_COPILOT_CALL_QUALITY_EXPLANATION_DISCLAIMER', {
+			return Loc.getMessage('CRM_COPILOT_CALL_QUALITY_EXPLANATION_DISCLAIMER_MSGVER_1', {
 				'#LINK_START#': `<a onclick='window.top.BX?.Helper?.show(\`redirect=detail&code=${DISCLAIMER_ARTICLE_CODE}\`)' href="#">`,
 				'#LINK_END#': '</a>',
 			});

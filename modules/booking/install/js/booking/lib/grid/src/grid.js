@@ -34,6 +34,11 @@ class Grid
 		return Math.max((to - from) / Duration.getUnitDurations().H * hourHeight, minHeight);
 	}
 
+	calculateWidth(width: number): number
+	{
+		return width * this.#zoom;
+	}
+
 	calculateRealHeight(fromTs: number, toTs: number): number
 	{
 		const hourHeight = 50 * this.#zoom;

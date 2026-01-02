@@ -1,7 +1,10 @@
 import { ApacheSupersetAnalytics } from './apache-superset-analytics';
-import type { DashboardAnalyticInfo } from './types';
+import { TrackingAnalyticsHandler } from './tracking-analytics-handler';
+import { PermissionsAnalytics, PermissionsAnalyticsSource } from './permissions-analytics';
 
 export {
 	ApacheSupersetAnalytics,
-	DashboardAnalyticInfo,
+	TrackingAnalyticsHandler,
+	PermissionsAnalytics,
+	PermissionsAnalyticsSource,
 };

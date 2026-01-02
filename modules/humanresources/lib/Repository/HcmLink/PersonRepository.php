@@ -9,8 +9,7 @@ use Bitrix\HumanResources\Item;
 use Bitrix\HumanResources\Item\Collection\HcmLink\PersonCollection;
 use Bitrix\HumanResources\Model;
 use Bitrix\HumanResources\Model\HcmLink\PersonTable;
-use Bitrix\HumanResources\Result\Result;
-use Bitrix\HumanResources\Result\SuccessResult;
+use Bitrix\Main\Result;
 use Bitrix\Main\ArgumentException;
 use Bitrix\Main\DB\SqlExpression;
 use Bitrix\Main\Entity\ReferenceField;
@@ -379,7 +378,7 @@ class PersonRepository implements Contract\Repository\HcmLink\PersonRepository
 		return new Item\Collection\HcmLink\PersonCollection(...$result);
 	}
 
-	public function deleteSearchIndexByPersonId(int $personId): Result|SuccessResult
+	public function deleteSearchIndexByPersonId(int $personId): Result
 	{
 		$result = Model\HcmLink\Index\PersonTable::delete($personId);
 
@@ -388,10 +387,10 @@ class PersonRepository implements Contract\Repository\HcmLink\PersonRepository
 			return (new Result())->addError(new Error('Do not delete search index'));
 		}
 
-		return new SuccessResult();
+		return new Result();
 	}
 
-	public function updateSearchIndexByPersonId(int $personId, string $searchContent): Result|SuccessResult
+	public function updateSearchIndexByPersonId(int $personId, string $searchContent): Result
 	{
 		$result = Model\HcmLink\Index\PersonTable::update($personId, ['SEARCH_CONTENT' => $searchContent]);
 
@@ -400,10 +399,10 @@ class PersonRepository implements Contract\Repository\HcmLink\PersonRepository
 			return (new Result())->addError(new Error('Do not update search index'));
 		}
 
-		return new SuccessResult();
+		return new Result();
 	}
 
-	public function addSearchIndexByPersonId(int $personId, string $searchContent): \Bitrix\Main\Result|SuccessResult
+	public function addSearchIndexByPersonId(int $personId, string $searchContent): Result
 	{
 		$result = Model\HcmLink\Index\PersonTable::add([
 			'PERSON_ID' => $personId,
@@ -415,7 +414,7 @@ class PersonRepository implements Contract\Repository\HcmLink\PersonRepository
 			return (new Result())->addError(new Error('Do not add search index'));
 		}
 
-		return new SuccessResult();
+		return new Result();
 	}
 
 	public function hasPersonSearchIndex(int $personId): bool
@@ -540,7 +539,7 @@ class PersonRepository implements Contract\Repository\HcmLink\PersonRepository
 		return $this->toItemCollection($models);
 	}
 
-	public function updateCounter(int $personId): Result|SuccessResult
+	public function updateCounter(int $personId): Result
 	{
 		$result = PersonTable::update($personId, [
 			'MATCH_COUNTER' => new SqlExpression('?# + 1', 'MATCH_COUNTER')
@@ -551,6 +550,6 @@ class PersonRepository implements Contract\Repository\HcmLink\PersonRepository
 			return (new Result())->addError(new Error('Do not update counter'));
 		}
 
-		return new SuccessResult();
+		return new Result();
 	}
 }

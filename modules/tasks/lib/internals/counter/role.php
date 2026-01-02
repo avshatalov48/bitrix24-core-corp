@@ -32,39 +32,32 @@ class Role
 		self::ORIGINATOR_STATE => self::ORIGINATOR,
 	];
 
+	private const KNOWN_ROLES = [
+		\CTaskListState::VIEW_ROLE_RESPONSIBLE => self::RESPONSIBLE,
+		\CTaskListState::VIEW_ROLE_ACCOMPLICE => self::ACCOMPLICE,
+		\CTaskListState::VIEW_ROLE_ORIGINATOR => self::ORIGINATOR,
+		\CTaskListState::VIEW_ROLE_AUDITOR => self::AUDITOR,
+	];
+
 	public static function getRoles()
 	{
-		static $roles = array();
+		static $roles = [];
 
 		if (!$roles)
 		{
-			foreach (self::getKnownRoles() as $roleId => $roleCode)
+			foreach (self::KNOWN_ROLES as $roleId => $roleCode)
 			{
-				$roles[$roleCode] = array(
+				$roles[$roleCode] = [
 					'ID' => $roleId,
 					'CODE' => $roleCode,
 					'TITLE' => self::getRoleName($roleId),
-				);
+				];
 			}
 		}
 
 		return $roles;
 	}
 
-	/**
-	 * @return string[]
-	 */
-	private static function getKnownRoles(): array
-	{
-		return [
-			\CTaskListState::VIEW_ROLE_RESPONSIBLE => self::RESPONSIBLE,
-			\CTaskListState::VIEW_ROLE_ACCOMPLICE => self::ACCOMPLICE,
-			\CTaskListState::VIEW_ROLE_ORIGINATOR => self::ORIGINATOR,
-			\CTaskListState::VIEW_ROLE_AUDITOR => self::AUDITOR
-		];
-	}
-
-	// \CTaskListState::getKnownRoles
 	public static function getRoleName($roleId)
 	{
 		/** @noinspection PhpDeprecationInspection */

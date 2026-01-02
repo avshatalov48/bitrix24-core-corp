@@ -1,5 +1,6 @@
-import { Loc, Runtime, Type } from 'main.core';
+import { Runtime, Type } from 'main.core';
 import { UI } from 'ui.notification';
+
 import { AiDisabledInSettings } from '../common/ai-disabled-in-settings';
 import { Breadcrumbs } from '../navigation/breadcrumbs';
 
@@ -43,29 +44,34 @@ export const BasePage = {
 		{
 			return this.id;
 		},
+
 		getData(): Object
 		{
 			// must be implement in child class
 
 			return {};
 		},
+
 		isReadyToMoveOn(): boolean
 		{
 			return this.validate();
 		},
+
 		validate(): boolean
 		{
 			// must be implement in child class
 
 			return true;
 		},
+
 		onValidationFailed(): void
 		{
 			UI.Notification.Center.notify({
-				content: Loc.getMessage('CRM_COPILOT_CALL_ASSESSMENT_PAGE_VALIDATION_ERROR'),
+				content: this.$Bitrix.Loc.getMessage('CRM_COPILOT_CALL_ASSESSMENT_PAGE_VALIDATION_ERROR'),
 				autoHideDelay: 3000,
 			});
 		},
+
 		emitChangeData(): void
 		{
 			if (!Type.isFunction(this.onChangeDebounce))
@@ -75,6 +81,7 @@ export const BasePage = {
 
 			this.onChangeDebounce();
 		},
+
 		onChange(): void
 		{
 			this.$emit('onChange', {
@@ -82,6 +89,7 @@ export const BasePage = {
 				data: this.getData(),
 			});
 		},
+
 		getBodyFieldClassList(additionalClasses: string[] = []): Array
 		{
 			return [

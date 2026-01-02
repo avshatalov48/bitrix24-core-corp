@@ -526,6 +526,7 @@ class CCrmAdminPageController extends \CBitrixComponent implements Controllerabl
 						'PARENT_ID' => null,
 						'SORT' => 350,
 						'TEXT' => Loc::getMessage('SHOP_MENU_PAY_SYSTEMS_DELIVERY'),
+						'URL' => '',
 					]
 				);
 
@@ -1003,7 +1004,7 @@ class CCrmAdminPageController extends \CBitrixComponent implements Controllerabl
 			];
 		}
 
-		if ($isAdmin || !$userPermissions->havePerm('WEBFORM', BX_CRM_PERM_NONE, 'READ'))
+		if ($isAdmin ||	\Bitrix\Crm\Service\Container::getInstance()->getUserPermissions()->webForm()->canRead())
 		{
 			$webformsUrl = SITE_DIR . 'crm/webform/';
 
@@ -1056,21 +1057,22 @@ class CCrmAdminPageController extends \CBitrixComponent implements Controllerabl
 			$pageId = (!empty($item["items_id"]) ? $item["items_id"] : "");
 			if ($pageId)
 			{
-				$menuItem = array(
+				$menuItem = [
 					"ID" => $pageId,
 					"PARENT_ID" => $parentPageId,
 					"TEXT" => $item["text"],
-					"CLASS" => "",
-					"CLASS_SUBMENU_ITEM" => "",
-					"SUB_LINK" => array(),
+					"CLASS" => '',
+					"CLASS_SUBMENU_ITEM" => '',
+					"SUB_LINK" => [],
 					"COUNTER" => 0,
-					"COUNTER_ID" => "",
+					"COUNTER_ID" => '',
 					"IS_ACTIVE" => false,
 					"IS_LOCKED" => $item['is_locked'] ?? false,
 					"IS_DISABLED" => false,
-					"ON_CLICK" => $item["on_click"] ?? null,
-					"SORT" => (int)($item["sort"] ?? 0)
-				);
+					"ON_CLICK" => $item['on_click'] ?? null,
+					"SORT" => (int)($item['sort'] ?? 0),
+					"IS_DELIMITER" => $item['is_delimiter'] ?? false,
+				];
 
 				if (!empty($item["ajax_options"]))
 				{

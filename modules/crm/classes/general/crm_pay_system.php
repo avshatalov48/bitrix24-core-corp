@@ -1816,15 +1816,19 @@ class CCrmPaySystem
 	public static function isUserMustFillPSProps()
 	{
 		if(CUserOptions::GetOption('crm', 'crmInvoicePSPropsFillDialogViewedByUser', 'N') === 'Y')
+		{
 			return false;
+		}
 
-		$CrmPerms = new CCrmPerms($GLOBALS['USER']->GetID());
-
-		if (!$CrmPerms->HavePerm('CONFIG', BX_CRM_PERM_CONFIG, 'WRITE'))
+		if (!\Bitrix\Crm\Service\Container::getInstance()->getUserPermissions()->isCrmAdmin())
+		{
 			return false;
+		}
 
 		if(self::isNameFilled())
+		{
 			return false;
+		}
 
 		return true;
 	}

@@ -86,12 +86,13 @@
 	font-size: 18px;
 	font-family: var(--ui-font-family-secondary, var(--ui-font-family-open-sans));
 	font-weight: var(--ui-font-weight-regular, 400);
-	color: var(--base2);
 	resize: none;
 	-webkit-appearance: none;
 	-webkit-border-radius: 0;
 	-moz-border-radius: 0;
 	border-radius: 0;
+	background-color: var(--bg-content-primary);
+	color: var(--base1);
 }
 
 .mobile-timeman-control-info {

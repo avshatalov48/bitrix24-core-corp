@@ -117,7 +117,7 @@ final class CopilotLauncher
 		if (!$this->transcriptionResult?->isSuccess())
 		{
 			$result = AIManager::launchCallRecordingTranscription($this->activityId, $this->scenario);
-			if ($assessmentSettingsId !== null)
+			if ($assessmentSettingsId !== null && $result->getJobId() !== null)
 			{
 				$key = ScoreCall::generateJobCallAssessmentBindKey($result->getJobId(), $this->activityId);
 				MultiValueStoreService::getInstance()->set($key, $assessmentSettingsId);

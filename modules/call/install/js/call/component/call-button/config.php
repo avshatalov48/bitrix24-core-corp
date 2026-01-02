@@ -11,6 +11,7 @@ return [
 		'main.core.events',
 		'im.v2.lib.local-storage',
 		'im.v2.lib.promo',
+		'ui.system.menu',
 		'im.public',
 		'im.v2.application.core',
 		'im.v2.const',

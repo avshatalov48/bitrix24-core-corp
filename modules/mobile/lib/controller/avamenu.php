@@ -4,13 +4,29 @@ namespace Bitrix\Mobile\Controller;
 
 use Bitrix\Main\Engine\ActionFilter\CloseSession;
 use Bitrix\Main\Engine\Controller;
+use Bitrix\Mobile\AvaMenu\Items\GoToWeb;
 
 class AvaMenu extends Controller
 {
 	public function configureActions(): array
 	{
 		return [
-			'sendLabel' => [
+			'setAhaMomentStatus' => [
+				'+prefilters' => [
+					new CloseSession(),
+				],
+			],
+			'getAhaMomentStatus' => [
+				'+prefilters' => [
+					new CloseSession(),
+				],
+			],
+			'getUserInfo' => [
+				'+prefilters' => [
+					new CloseSession(),
+				],
+			],
+			'setShouldShowGoToWebCounter' => [
 				'+prefilters' => [
 					new CloseSession(),
 				],
@@ -31,5 +47,10 @@ class AvaMenu extends Controller
 	public function getUserInfoAction($reloadFromDb = false)
 	{
 		return (new \Bitrix\Mobile\AvaMenu\Profile\Profile())->getMainData($reloadFromDb);
+	}
+
+	public function setShouldShowGoToWebCounterAction(string $option): void
+	{
+		GoToWeb::setShouldShowGoToWebCounter($option === 'Y');
 	}
 }

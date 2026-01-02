@@ -367,7 +367,7 @@ class DepartmentProvider extends BaseProvider
 						'title' => $department->getName(),
 						'entityId' => 'department',
 						'nodeOptions' => [
-							'title' => Loc::getMessage('INTRANET_ENTITY_SELECTOR_ALL_EMPLOYEES_SUBDIVISIONS'),
+							'title' => Loc::getMessage('INTRANET_ENTITY_SELECTOR_ALL_EMPLOYEES_SUBDIVISIONS_MSGVER_2'),
 							'avatar' => '/bitrix/js/intranet/entity-selector/src/images/department-option.svg',
 							'renderMode' => 'override',
 						],
@@ -379,12 +379,11 @@ class DepartmentProvider extends BaseProvider
 					$item->addChild(new Item([
 						'id' => $department->getId() . ':F',
 						'entityId' => 'department',
-						'title' =>
-							$department->getName() . ' '
-							. Loc::getMessage('INTRANET_ENTITY_SELECTOR_ONLY_EMPLOYEES')
-						,
+						'title' => Loc::getMessage('INTRANET_ENTITY_SELECTOR_ONLY_EMPLOYEES_MSGVER_1', [
+							'#DEPARTMENT_NAME#' => $department->getName(),
+						]),
 						'nodeOptions' => [
-							'title' => Loc::getMessage('INTRANET_ENTITY_SELECTOR_ONLY_DEPARTMENT_EMPLOYEES'),
+							'title' => Loc::getMessage('INTRANET_ENTITY_SELECTOR_ONLY_DEPARTMENT_EMPLOYEES_MSGVER_1'),
 							'avatar' => '/bitrix/js/intranet/entity-selector/src/images/department-option.svg',
 							'renderMode' => 'override',
 						],
@@ -546,7 +545,9 @@ class DepartmentProvider extends BaseProvider
 				$dialog->addItem(new Item([
 					'id' => $department->getId().':F',
 					'entityId' => 'department',
-					'title' => $department->getName() . ' ' . Loc::getMessage('INTRANET_ENTITY_SELECTOR_ONLY_EMPLOYEES'),
+					'title' => Loc::getMessage('INTRANET_ENTITY_SELECTOR_ONLY_EMPLOYEES_MSGVER_1', [
+						'#DEPARTMENT_NAME#' => $department->getName(),
+					]),
 				]));
 			}
 		}
@@ -615,10 +616,10 @@ class DepartmentProvider extends BaseProvider
 		}
 
 		return SectionTable::getList([
-				'select' => ['ID', 'NAME', 'DEPTH_LEVEL', 'IBLOCK_SECTION_ID', 'LEFT_MARGIN', 'RIGHT_MARGIN'],
-				'filter' => $filter,
-				'order' => ['LEFT_MARGIN' => 'asc'],
-				'limit' => $limit,
+			'select' => ['ID', 'NAME', 'DEPTH_LEVEL', 'IBLOCK_SECTION_ID', 'LEFT_MARGIN', 'RIGHT_MARGIN'],
+			'filter' => $filter,
+			'order' => ['LEFT_MARGIN' => 'asc'],
+			'limit' => $limit,
 		])->fetchCollection();
 	}
 
@@ -703,16 +704,17 @@ class DepartmentProvider extends BaseProvider
 					}
 				}
 
-				$titlePostfix =
-					$isFlatDepartment
-						? ' ' . Loc::getMessage('INTRANET_ENTITY_SELECTOR_ONLY_EMPLOYEES')
-						: ''
-				;
+				$title = $isFlatDepartment
+					? Loc::getMessage(
+						'INTRANET_ENTITY_SELECTOR_ONLY_EMPLOYEES_MSGVER_1',
+						['#DEPARTMENT_NAME#' => $department->getName()]
+					)
+					: $department->getName();
 
 				$items[] = new Item([
 					'id' => $id,
 					'entityId' => 'department',
-					'title' => $department->getName() . $titlePostfix,
+					'title' => $title,
 					'availableInRecentTab' => $availableInRecentTab,
 					'searchable' => $availableInRecentTab,
 				]);

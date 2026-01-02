@@ -3,7 +3,7 @@
 namespace Bitrix\Tasks\Flow\Control\Middleware\Implementation;
 
 use Bitrix\Main\Localization\Loc;
-use Bitrix\Tasks\AbstractCommand;
+use Bitrix\Tasks\Flow\AbstractCommand;
 use Bitrix\Tasks\Flow\Control\Command\AddCommand;
 use Bitrix\Tasks\Flow\Control\Command\UpdateCommand;
 use Bitrix\Tasks\Flow\Control\Exception\MiddlewareException;

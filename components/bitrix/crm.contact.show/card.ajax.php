@@ -1,6 +1,10 @@
-<?
-define('NO_KEEP_STATISTIC', 'Y');
-define('NO_AGENT_STATISTIC','Y');
+<?php
+
+use Bitrix\Crm\Service\Container;
+use \Bitrix\Main\Localization\Loc;
+
+const NO_KEEP_STATISTIC = 'Y';
+const NO_AGENT_STATISTIC = 'Y';
 
 require($_SERVER['DOCUMENT_ROOT'].'/bitrix/modules/main/include/prolog_before.php');
 
@@ -119,11 +123,21 @@ if ($iContactId > 0)
 				<span class="bx-ui-tooltip-field-name">'.GetMessage('CRM_COLUMN_EMAIL').'</span>: <span class="bx-ui-tooltip-field-value">'.$multiFieldHtml['EMAIL'].'</span>
 			</span>';
 		}
-		if (!empty($arContact['COMPANY_TITLE']))
+
+		if (($arContact['COMPANY_ID'] ?? 0) > 0)
 		{
-			$fields .= '<span class="bx-ui-tooltip-field-row">
-				<span class="bx-ui-tooltip-field-name">'.GetMessage('CRM_COLUMN_COMPANY_TITLE').'</span>: <span class="bx-ui-tooltip-field-value"><a href="'.$arContact['PATH_TO_COMPANY_SHOW'].'" target="_blank">'.htmlspecialcharsbx($arContact['COMPANY_TITLE']).'</a></span>
-			</span>';
+			if (Container::getInstance()->getUserPermissions()->item()->canRead(CCrmOwnerType::Company, $arContact['COMPANY_ID']))
+			{
+				$fields .= '<span class="bx-ui-tooltip-field-row">
+					<span class="bx-ui-tooltip-field-name">'.Loc::getMessage('CRM_COLUMN_COMPANY_TITLE').'</span>: <span class="bx-ui-tooltip-field-value"><a href="'.$arContact['PATH_TO_COMPANY_SHOW'].'" target="_blank">'.htmlspecialcharsbx($arContact['COMPANY_TITLE']).'</a></span>
+				</span>';
+			}
+			else
+			{
+				$fields .= '<span class="bx-ui-tooltip-field-row">
+					<span class="bx-ui-tooltip-field-name">'.Loc::getMessage('CRM_COLUMN_COMPANY_TITLE').'</span>: <span class="bx-ui-tooltip-field-value">'.htmlspecialcharsbx(CCrmViewHelper::GetHiddenEntityCaption(CCrmOwnerType::Company)).'</span>
+				</span>';
+			}
 		}
 
 		$strCard = '<div class="bx-ui-tooltip-info-data-cont" id="bx_user_info_data_cont_'.htmlspecialcharsbx($entityId).'"><div class="bx-ui-tooltip-info-data-info crm-tooltip-info">'.$fields.'</div></div>';
@@ -164,12 +178,23 @@ if ($iContactId > 0)
 		<br />';
 		}
 		$strCard .= '<br />';
-		if (!empty($arContact['COMPANY_TITLE']))
+
+		if (($arContact['COMPANY_ID'] ?? 0) > 0)
 		{
-			$strCard .= '<span class="field-name">'.GetMessage('CRM_COLUMN_COMPANY_TITLE').'</span>:
-		<a href="'.$arContact['PATH_TO_COMPANY_SHOW'].'" target="_blank">'.htmlspecialcharsbx($arContact['COMPANY_TITLE']).'</a>
-		<br /> ';
+			if (Container::getInstance()->getUserPermissions()->item()->canRead(CCrmOwnerType::Company, $arContact['COMPANY_ID']))
+			{
+				$strCard .= '<span class="field-name">' . Loc::getMessage('CRM_COLUMN_COMPANY_TITLE') . '</span>:
+					<a href="'.$arContact['PATH_TO_COMPANY_SHOW'].'" target="_blank">' . htmlspecialcharsbx($arContact['COMPANY_TITLE']) . '</a>
+				<br />';
+			}
+			else
+			{
+				$strCard .= '<span class="field-name">' . Loc::getMessage('CRM_COLUMN_COMPANY_TITLE') . '</span>:'
+					. htmlspecialcharsbx(CCrmViewHelper::GetHiddenEntityCaption(CCrmOwnerType::Company)) .
+				'<br />';
+			}
 		}
+
 		$strCard .= '</div>
 </div>';
 	}

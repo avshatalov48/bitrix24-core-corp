@@ -103,6 +103,7 @@ jn.define('sign/dialog/banners/template', (require, exports, module) => {
 			),
 			Card(
 				{
+					testId: `bannerTemplate-card`,
 					style:
 					{
 						paddingBottom: IS_IOS ? device.screen.safeArea.bottom : Indent.L.toNumber(),

@@ -1,0 +1,23 @@
+<?php
+$MESS["BAAS_WIDGET_AI_PURCHASE_LEFT_STATUS"] = 'Queries left: #left# out of #total#, valid till #date#';
+$MESS["BAAS_WIDGET_ALL_DESCRIPTION"] = "All credits";
+$MESS["BAAS_WIDGET_BUY_BUTTON_TITLE"] = "Buy";
+$MESS["BAAS_WIDGET_DESCRIPTION"] = "Your Bitrix24 can do so much more! Add more features without changing the plan.";
+$MESS["BAAS_WIDGET_DFT_PURCHASE_LEFT"] = "Valid till:";
+$MESS["BAAS_WIDGET_MORE_LINK_TITLE"] = "Learn more";
+$MESS["BAAS_WIDGET_ONLY_ADMIN_CAN_PURCHASE_BAAS"] = "Only your Bitrix24 administrator can purchase credits.";
+$MESS["BAAS_WIDGET_PURCHASES_ARE_ACTIVE"] = "Active";
+$MESS["BAAS_WIDGET_PURCHASES_ARE_PAID"] = "Paid";
+$MESS["BAAS_WIDGET_PURCHASES_TITLE"] = "Credits";
+$MESS["BAAS_WIDGET_PURCHASE_ADD"] = "Add";
+$MESS["BAAS_WIDGET_PURCHASE_ANNUAL_LIFETIME"] = "Valid till: #date#";
+$MESS["BAAS_WIDGET_PURCHASE_DISK_LEFT_STATUS"] = 'Credits available: #total#, valid till #date#';
+$MESS["BAAS_WIDGET_PURCHASE_IS_ACTIVE"] = "Active";
+$MESS["BAAS_WIDGET_PURCHASE_LEFT_STATUS"] = "Credits left: #left# out of #total#, valid till #date#";
+$MESS["BAAS_WIDGET_PURCHASE_LIMIT_IS_ALMOST_EXCEEDED"] = "Only a few left";
+$MESS["BAAS_WIDGET_PURCHASE_LIMIT_IS_EXCEEDED"] = "Out of credits";
+$MESS["BAAS_WIDGET_PURCHASE_LIMIT_IS_EXCEEDED_THIS_MONTH"] = "Out of credits this month";
+$MESS["BAAS_WIDGET_PURCHASE_TITLE"] = "Credit";
+$MESS["BAAS_WIDGET_PURCHASE_WILL_BE_AVAILABLE_STATUS"] = "You will have #left# credits out of #total# starting from #date#";
+$MESS["BAAS_WIDGET_RELOAD_PACKAGES"] = "Reload credits list";
+$MESS["BAAS_WIDGET_TITLE"] = "Credits";

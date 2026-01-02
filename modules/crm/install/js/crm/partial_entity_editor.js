@@ -11,6 +11,7 @@ if(typeof BX.Crm.PartialEditorDialog === "undefined")
 		this._entityTypeName = "";
 		this._entityId = 0;
 		this._stageId = '';
+		this._categoryId = '';
 		this._fieldNames = null;
 		this._html = null;
 		this._presetValues = {};
@@ -58,6 +59,7 @@ if(typeof BX.Crm.PartialEditorDialog === "undefined")
 			this._isAccepted = false;
 			this._isController = BX.prop.getBoolean(this._settings, 'isController', false);
 			this._stageId = BX.prop.getString(this._settings, 'stageId', '');
+			this._categoryId = BX.prop.getString(this._settings, 'categoryId', '');
 		},
 		getSetting: function(name, defaultValue)
 		{
@@ -82,23 +84,28 @@ if(typeof BX.Crm.PartialEditorDialog === "undefined")
 		},
 		load: function()
 		{
-			if(this._isController)
+			if (this._isController)
 			{
-				BX.ajax.runAction('crm.api.item.getEditor', {
-					data: {
-						entityTypeId: this._entityTypeId,
-						id: this._entityId,
-						stageId: this._stageId,
-						guid: this.getEditorId(),
-						configId: this.getEditorId(),
-						params: {
-							forceDefaultConfig: 'Y',
-							requiredFields: this._fieldNames,
-							title: BX.prop.getString(this._settings, "title", ""),
-							ANALYTICS_CONFIG: BX.prop.getObject(this._settings, 'analyticsConfig', null),
-						},
+				const data = {
+					entityTypeId: this._entityTypeId,
+					id: this._entityId,
+					stageId: this._stageId,
+					guid: this.getEditorId(),
+					configId: this.getEditorId(),
+					params: {
+						forceDefaultConfig: 'Y',
+						requiredFields: this._fieldNames,
+						title: BX.prop.getString(this._settings, "title", ""),
+						ANALYTICS_CONFIG: BX.prop.getObject(this._settings, 'analyticsConfig', null),
 					},
-				})
+				};
+
+				if (this._categoryId !== '')
+				{
+					data.categoryId = this._categoryId;
+				}
+
+				BX.ajax.runAction('crm.api.item.getEditor', { data })
 				.then(
 					function(response) {
 

@@ -1,0 +1,19 @@
+.menu-item-icon-box {
+	width: 26px;
+	min-width: 26px;
+	height: 26px;
+	display: flex;
+	justify-content: center;
+	align-items: center;
+	border-radius: var(--ui-border-radius-circle);
+}
+
+.menu-settings-icon-box,
+.menu-invite-icon-box,
+.menu-item-icon-box,
+.menu-sitemap-icon-box,
+.menu-help-icon-box {
+	display: flex;
+	justify-content: center;
+	align-items: center;
+}

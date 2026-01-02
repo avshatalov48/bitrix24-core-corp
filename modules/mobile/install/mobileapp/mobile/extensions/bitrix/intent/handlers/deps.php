@@ -3,7 +3,6 @@ return [
 	'extensions' => [
 		'intent',
 		'rest',
-		'feature',
 		'require-lazy',
 	],
 	'bundle' => [

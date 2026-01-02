@@ -40,8 +40,8 @@ final class Role
 	public static function getAll(): array
 	{
 		return [
-			self::EDITOR,
 			self::REVIEWER,
+			self::EDITOR,
 			self::ASSIGNEE,
 			self::SIGNER,
 		];

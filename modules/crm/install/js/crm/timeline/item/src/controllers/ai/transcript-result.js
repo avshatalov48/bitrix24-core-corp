@@ -21,7 +21,7 @@ export class TranscriptResult extends Base
 		}
 	}
 
-	#open(actionData): void
+	async #open(actionData): void
 	{
 		if (
 			!Type.isInteger(actionData.activityId)
@@ -32,7 +32,9 @@ export class TranscriptResult extends Base
 			return;
 		}
 
-		const transcription = new Call.Transcription({
+		await top.BX.Runtime.loadExtension('crm.ai.call');
+
+		const transcription = new top.BX.Crm.AI.Call.Transcription({
 			activityId: actionData.activityId,
 			ownerTypeId: actionData.ownerTypeId,
 			ownerId: actionData.ownerId,

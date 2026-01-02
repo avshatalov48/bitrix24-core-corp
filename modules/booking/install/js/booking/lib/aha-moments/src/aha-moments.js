@@ -1,4 +1,4 @@
-import { Event } from 'main.core';
+import { Dom, Event } from 'main.core';
 import { PopupManager } from 'main.popup';
 import 'spotlight';
 
@@ -12,19 +12,23 @@ import { optionService } from 'booking.provider.service.option-service';
 
 type Params = {
 	id: string,
+	ahaMoment: string,
 	title: string,
 	text: string,
-	article: {
+	target: HTMLElement,
+	article?: {
 		code: string,
 		anchorCode?: string,
+		title?: string,
 	},
-	target: HTMLElement,
 	targetContainer?: HTMLElement,
 	top?: boolean,
+	isPulsarTransparent?: boolean,
 };
 
 class AhaMoments
 {
+	#ahaPopupWidth: number = 380;
 	#bookingForAhaMoment: number;
 	#shownPopups: { [name: string]: boolean } = {};
 
@@ -37,6 +41,13 @@ class AhaMoments
 
 		return new Promise((resolve) => {
 			BannerDispatcher.critical.toQueue(async (onDone) => {
+				if (!params.target?.offsetWidth)
+				{
+					onDone();
+
+					return;
+				}
+
 				await this.showGuide(params);
 
 				onDone();
@@ -47,6 +58,11 @@ class AhaMoments
 
 	showGuide(params: Params): Promise<void>
 	{
+		if (params.ahaMoment && this.#wasShown(params.ahaMoment))
+		{
+			return;
+		}
+
 		const guide = new Guide({
 			id: params.id,
 			overlay: false,
@@ -63,12 +79,19 @@ class AhaMoments
 						bottom: Boolean(params.top),
 						color: 'primary',
 					},
-					article: params.article.code,
-					articleAnchor: params.article.anchorCode,
+					article: params.article?.code,
+					articleAnchor: params.article?.anchorCode,
+					linkTitle: params.article?.title,
 				},
 			],
 			targetContainer: params.targetContainer,
 		});
+
+		// default is 280
+		if (this.#ahaPopupWidth)
+		{
+			guide.getPopup().setWidth(this.#ahaPopupWidth);
+		}
 
 		const pulsar = new BX.SpotLight(
 			{
@@ -105,6 +128,11 @@ class AhaMoments
 				forceBindPosition: true,
 			});
 
+			if (params.isPulsarTransparent)
+			{
+				Dom.style(pulsar.container, 'pointer-events', 'none');
+			}
+
 			Event.bind(document, 'scroll', adjustPosition, true);
 		});
 	}
@@ -121,6 +149,8 @@ class AhaMoments
 			[AhaMoment.ResourceIntersection]: this.#shouldShowResourceIntersection(),
 			[AhaMoment.ExpandGrid]: this.#shouldShowExpandGrid(),
 			[AhaMoment.SelectResources]: this.#shouldShowSelectResources(),
+			[AhaMoment.CyclePopup]: this.#shouldShowCyclePopup(),
+			[AhaMoment.SearchNavigation]: this.#shouldShowSearchNavigation(),
 		}[ahaMoment];
 	}
 
@@ -147,14 +177,7 @@ class AhaMoments
 	{
 		const canTurnOnDemo = Core.getStore().getters[`${Model.Interface}/canTurnOnDemo`];
 
-		if (canTurnOnDemo)
-		{
-			return true;
-		}
-		else
-		{
-			return this.#wasNotShown(ahaMoment);
-		}
+		return canTurnOnDemo || this.#wasNotShown(ahaMoment);
 	}
 
 	#shouldShowAddResource(): boolean
@@ -187,7 +210,7 @@ class AhaMoments
 	{
 		const wasNotShown = this.#wasNotShown(AhaMoment.ExpandGrid);
 		const previousAhaMomentsShown = [AhaMoment.ResourceWorkload, AhaMoment.ResourceWorkload]
-			.every((ahaMoment) => !this.#wasNotShown(ahaMoment))
+			.every((ahaMoment) => this.#wasShown(ahaMoment))
 		;
 
 		return wasNotShown && previousAhaMomentsShown && !PopupManager.isAnyPopupShown();
@@ -196,16 +219,34 @@ class AhaMoments
 	#shouldShowSelectResources(): boolean
 	{
 		const wasNotShown = this.#wasNotShown(AhaMoment.SelectResources);
-		const previousAhaMomentShown = !this.#wasNotShown(AhaMoment.ExpandGrid);
+		const previousAhaMomentShown = this.#wasShown(AhaMoment.ExpandGrid);
 
 		return wasNotShown && previousAhaMomentShown && !PopupManager.isAnyPopupShown();
 	}
 
+	#shouldShowCyclePopup(): boolean
+	{
+		const wasNotShown = this.#wasNotShown(AhaMoment.CyclePopup);
+		const previousAhaMomentShown = this.#wasShown(AhaMoment.SelectResources);
+
+		return wasNotShown && previousAhaMomentShown;
+	}
+
+	#shouldShowSearchNavigation(): boolean
+	{
+		return this.#wasNotShown(AhaMoment.SearchNavigation);
+	}
+
 	#wasNotShown(ahaMoment: $Values<typeof AhaMoment>): boolean
+	{
+		return !this.#wasShown(ahaMoment);
+	}
+
+	#wasShown(ahaMoment: $Values<typeof AhaMoment>): boolean
 	{
 		const { ahaMoments } = Core.getParams();
 
-		return ahaMoments[ahaMoment] && !this.#shownPopups[ahaMoment];
+		return !ahaMoments[ahaMoment] || this.#shownPopups[ahaMoment];
 	}
 
 	#getOptionName(ahaMoment: $Values<typeof AhaMoment>): $Values<typeof Option>
@@ -220,6 +261,8 @@ class AhaMoments
 			[AhaMoment.ResourceIntersection]: Option.AhaResourceIntersection,
 			[AhaMoment.ExpandGrid]: Option.AhaExpandGrid,
 			[AhaMoment.SelectResources]: Option.AhaSelectResources,
+			[AhaMoment.CyclePopup]: Option.AhaCyclePopup,
+			[AhaMoment.SearchNavigation]: Option.AhaSearchNavigation,
 		}[ahaMoment];
 	}
 }

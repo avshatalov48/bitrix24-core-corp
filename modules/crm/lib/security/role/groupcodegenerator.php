@@ -31,7 +31,9 @@ class GroupCodeGenerator
 
 	public static function isAutomatedSolutionGroupCode(string $groupCode): bool
 	{
-		return str_starts_with($groupCode, self::AUTOMATED_SOLUTION_GROUP_CODE_PREFIX);
+		return str_starts_with($groupCode, self::AUTOMATED_SOLUTION_GROUP_CODE_PREFIX)
+			&& $groupCode !== self::AUTOMATED_SOLUTION_LIST_GROUP_CODE
+		;
 	}
 
 	public static function getCrmFormGroupCode(): string
@@ -42,6 +44,11 @@ class GroupCodeGenerator
 	public static function getWidgetGroupCode(): string
 	{
 		return 'CRM_BUTTON';
+	}
+
+	public static function getContractorGroupCode(): string
+	{
+		return 'CONTRACTOR';
 	}
 
 	public static function getAutomatedSolutionListCode(): string

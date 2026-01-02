@@ -4,6 +4,8 @@ namespace Bitrix\BIConnector\Access\Install\Role;
 
 use Bitrix\BIConnector\Access\Permission\PermissionDictionary;
 use Bitrix\BIConnector\Integration\Superset\Model\SupersetDashboardTable;
+use Bitrix\BIConnector\Superset\MarketDashboardManager;
+use Bitrix\BIConnector\Superset\Scope\ScopeService;
 use Bitrix\Main\Access\AccessCode;
 use Bitrix\Main\Loader;
 
@@ -17,12 +19,31 @@ class Analyst extends Base
 			PermissionDictionary::BIC_DASHBOARD_CREATE,
 			PermissionDictionary::BIC_DASHBOARD_TAG_MODIFY,
 			PermissionDictionary::BIC_EXTERNAL_DASHBOARD_CONFIG,
-			PermissionDictionary::BIC_DASHBOARD_VIEW,
-			PermissionDictionary::BIC_DASHBOARD_EDIT,
-			PermissionDictionary::BIC_DASHBOARD_COPY,
-			PermissionDictionary::BIC_DASHBOARD_DELETE,
-			PermissionDictionary::BIC_DASHBOARD_EXPORT,
+			PermissionDictionary::BIC_GROUP_MODIFY,
 		];
+	}
+
+	public function getDefaultGroupPermissions(): array
+	{
+		$result = [];
+		foreach (ScopeService::getSystemGroupCode() as $groupCode)
+		{
+			$groupPermissions = [
+				PermissionDictionary::BIC_DASHBOARD_VIEW,
+				PermissionDictionary::BIC_DASHBOARD_EDIT,
+				PermissionDictionary::BIC_DASHBOARD_DELETE,
+				PermissionDictionary::BIC_DASHBOARD_COPY,
+			];
+
+			if (MarketDashboardManager::getInstance()->isExportEnabled())
+			{
+				$groupPermissions[] = PermissionDictionary::BIC_DASHBOARD_EXPORT;
+			}
+
+			$result[$groupCode] = $groupPermissions;
+		}
+
+		return $result;
 	}
 
 	protected function getRelationUserGroups(): array

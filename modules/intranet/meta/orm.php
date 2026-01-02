@@ -2985,69 +2985,69 @@ namespace Bitrix\Intranet\Table {
 	 * ---------------
 	 *
 	 * @method \int getId()
-	 * @method \Bitrix\Intranet\Model\InvitationLink setId(\int|\Bitrix\Main\DB\SqlExpression $id)
+	 * @method \Bitrix\Intranet\Internal\Model\InvitationLink setId(\int|\Bitrix\Main\DB\SqlExpression $id)
 	 * @method bool hasId()
 	 * @method bool isIdFilled()
 	 * @method bool isIdChanged()
 	 * @method \string getEntityType()
-	 * @method \Bitrix\Intranet\Model\InvitationLink setEntityType(\string|\Bitrix\Main\DB\SqlExpression $entityType)
+	 * @method \Bitrix\Intranet\Internal\Model\InvitationLink setEntityType(\string|\Bitrix\Main\DB\SqlExpression $entityType)
 	 * @method bool hasEntityType()
 	 * @method bool isEntityTypeFilled()
 	 * @method bool isEntityTypeChanged()
 	 * @method \string remindActualEntityType()
 	 * @method \string requireEntityType()
-	 * @method \Bitrix\Intranet\Model\InvitationLink resetEntityType()
-	 * @method \Bitrix\Intranet\Model\InvitationLink unsetEntityType()
+	 * @method \Bitrix\Intranet\Internal\Model\InvitationLink resetEntityType()
+	 * @method \Bitrix\Intranet\Internal\Model\InvitationLink unsetEntityType()
 	 * @method \string fillEntityType()
 	 * @method \int getEntityId()
-	 * @method \Bitrix\Intranet\Model\InvitationLink setEntityId(\int|\Bitrix\Main\DB\SqlExpression $entityId)
+	 * @method \Bitrix\Intranet\Internal\Model\InvitationLink setEntityId(\int|\Bitrix\Main\DB\SqlExpression $entityId)
 	 * @method bool hasEntityId()
 	 * @method bool isEntityIdFilled()
 	 * @method bool isEntityIdChanged()
 	 * @method \int remindActualEntityId()
 	 * @method \int requireEntityId()
-	 * @method \Bitrix\Intranet\Model\InvitationLink resetEntityId()
-	 * @method \Bitrix\Intranet\Model\InvitationLink unsetEntityId()
+	 * @method \Bitrix\Intranet\Internal\Model\InvitationLink resetEntityId()
+	 * @method \Bitrix\Intranet\Internal\Model\InvitationLink unsetEntityId()
 	 * @method \int fillEntityId()
 	 * @method \string getCode()
-	 * @method \Bitrix\Intranet\Model\InvitationLink setCode(\string|\Bitrix\Main\DB\SqlExpression $code)
+	 * @method \Bitrix\Intranet\Internal\Model\InvitationLink setCode(\string|\Bitrix\Main\DB\SqlExpression $code)
 	 * @method bool hasCode()
 	 * @method bool isCodeFilled()
 	 * @method bool isCodeChanged()
 	 * @method \string remindActualCode()
 	 * @method \string requireCode()
-	 * @method \Bitrix\Intranet\Model\InvitationLink resetCode()
-	 * @method \Bitrix\Intranet\Model\InvitationLink unsetCode()
+	 * @method \Bitrix\Intranet\Internal\Model\InvitationLink resetCode()
+	 * @method \Bitrix\Intranet\Internal\Model\InvitationLink unsetCode()
 	 * @method \string fillCode()
 	 * @method null|\int getCreatedBy()
-	 * @method \Bitrix\Intranet\Model\InvitationLink setCreatedBy(null|\int|\Bitrix\Main\DB\SqlExpression $createdBy)
+	 * @method \Bitrix\Intranet\Internal\Model\InvitationLink setCreatedBy(null|\int|\Bitrix\Main\DB\SqlExpression $createdBy)
 	 * @method bool hasCreatedBy()
 	 * @method bool isCreatedByFilled()
 	 * @method bool isCreatedByChanged()
 	 * @method null|\int remindActualCreatedBy()
 	 * @method null|\int requireCreatedBy()
-	 * @method \Bitrix\Intranet\Model\InvitationLink resetCreatedBy()
-	 * @method \Bitrix\Intranet\Model\InvitationLink unsetCreatedBy()
+	 * @method \Bitrix\Intranet\Internal\Model\InvitationLink resetCreatedBy()
+	 * @method \Bitrix\Intranet\Internal\Model\InvitationLink unsetCreatedBy()
 	 * @method null|\int fillCreatedBy()
 	 * @method null|\Bitrix\Main\Type\DateTime getCreatedAt()
-	 * @method \Bitrix\Intranet\Model\InvitationLink setCreatedAt(null|\Bitrix\Main\Type\DateTime|\Bitrix\Main\DB\SqlExpression $createdAt)
+	 * @method \Bitrix\Intranet\Internal\Model\InvitationLink setCreatedAt(null|\Bitrix\Main\Type\DateTime|\Bitrix\Main\DB\SqlExpression $createdAt)
 	 * @method bool hasCreatedAt()
 	 * @method bool isCreatedAtFilled()
 	 * @method bool isCreatedAtChanged()
 	 * @method null|\Bitrix\Main\Type\DateTime remindActualCreatedAt()
 	 * @method null|\Bitrix\Main\Type\DateTime requireCreatedAt()
-	 * @method \Bitrix\Intranet\Model\InvitationLink resetCreatedAt()
-	 * @method \Bitrix\Intranet\Model\InvitationLink unsetCreatedAt()
+	 * @method \Bitrix\Intranet\Internal\Model\InvitationLink resetCreatedAt()
+	 * @method \Bitrix\Intranet\Internal\Model\InvitationLink unsetCreatedAt()
 	 * @method null|\Bitrix\Main\Type\DateTime fillCreatedAt()
 	 * @method null|\Bitrix\Main\Type\DateTime getExpiredAt()
-	 * @method \Bitrix\Intranet\Model\InvitationLink setExpiredAt(null|\Bitrix\Main\Type\DateTime|\Bitrix\Main\DB\SqlExpression $expiredAt)
+	 * @method \Bitrix\Intranet\Internal\Model\InvitationLink setExpiredAt(null|\Bitrix\Main\Type\DateTime|\Bitrix\Main\DB\SqlExpression $expiredAt)
 	 * @method bool hasExpiredAt()
 	 * @method bool isExpiredAtFilled()
 	 * @method bool isExpiredAtChanged()
 	 * @method null|\Bitrix\Main\Type\DateTime remindActualExpiredAt()
 	 * @method null|\Bitrix\Main\Type\DateTime requireExpiredAt()
-	 * @method \Bitrix\Intranet\Model\InvitationLink resetExpiredAt()
-	 * @method \Bitrix\Intranet\Model\InvitationLink unsetExpiredAt()
+	 * @method \Bitrix\Intranet\Internal\Model\InvitationLink resetExpiredAt()
+	 * @method \Bitrix\Intranet\Internal\Model\InvitationLink unsetExpiredAt()
 	 * @method null|\Bitrix\Main\Type\DateTime fillExpiredAt()
 	 *
 	 * Common methods:
@@ -3064,9 +3064,9 @@ namespace Bitrix\Intranet\Table {
 	 * @method bool has($fieldName)
 	 * @method bool isFilled($fieldName)
 	 * @method bool isChanged($fieldName)
-	 * @method \Bitrix\Intranet\Model\InvitationLink set($fieldName, $value)
-	 * @method \Bitrix\Intranet\Model\InvitationLink reset($fieldName)
-	 * @method \Bitrix\Intranet\Model\InvitationLink unset($fieldName)
+	 * @method \Bitrix\Intranet\Internal\Model\InvitationLink set($fieldName, $value)
+	 * @method \Bitrix\Intranet\Internal\Model\InvitationLink reset($fieldName)
+	 * @method \Bitrix\Intranet\Internal\Model\InvitationLink unset($fieldName)
 	 * @method void addTo($fieldName, $value)
 	 * @method void removeFrom($fieldName, $value)
 	 * @method void removeAll($fieldName)
@@ -3074,7 +3074,7 @@ namespace Bitrix\Intranet\Table {
 	 * @method mixed fill($fields = \Bitrix\Main\ORM\Fields\FieldTypeMask::ALL) flag or array of field names
 	 * @method mixed[] collectValues($valuesType = \Bitrix\Main\ORM\Objectify\Values::ALL, $fieldsMask = \Bitrix\Main\ORM\Fields\FieldTypeMask::ALL)
 	 * @method \Bitrix\Main\ORM\Data\AddResult|\Bitrix\Main\ORM\Data\UpdateResult|\Bitrix\Main\ORM\Data\Result save()
-	 * @method static \Bitrix\Intranet\Model\InvitationLink wakeUp($data)
+	 * @method static \Bitrix\Intranet\Internal\Model\InvitationLink wakeUp($data)
 	 */
 	class EO_InvitationLink {
 		/* @var \Bitrix\Intranet\Table\InvitationLinkTable */
@@ -3110,12 +3110,12 @@ namespace Bitrix\Intranet\Table {
 	 * ---------------
 	 *
 	 * @property-read \Bitrix\Main\ORM\Entity $entity
-	 * @method void add(\Bitrix\Intranet\Model\InvitationLink $object)
-	 * @method bool has(\Bitrix\Intranet\Model\InvitationLink $object)
+	 * @method void add(\Bitrix\Intranet\Internal\Model\InvitationLink $object)
+	 * @method bool has(\Bitrix\Intranet\Internal\Model\InvitationLink $object)
 	 * @method bool hasByPrimary($primary)
-	 * @method \Bitrix\Intranet\Model\InvitationLink getByPrimary($primary)
-	 * @method \Bitrix\Intranet\Model\InvitationLink[] getAll()
-	 * @method bool remove(\Bitrix\Intranet\Model\InvitationLink $object)
+	 * @method \Bitrix\Intranet\Internal\Model\InvitationLink getByPrimary($primary)
+	 * @method \Bitrix\Intranet\Internal\Model\InvitationLink[] getAll()
+	 * @method bool remove(\Bitrix\Intranet\Internal\Model\InvitationLink $object)
 	 * @method void removeByPrimary($primary)
 	 * @method array|\Bitrix\Main\ORM\Objectify\Collection|null fill($fields = \Bitrix\Main\ORM\Fields\FieldTypeMask::ALL) flag or array of field names
 	 * @method static \Bitrix\Intranet\Table\EO_InvitationLink_Collection wakeUp($data)
@@ -3125,7 +3125,7 @@ namespace Bitrix\Intranet\Table {
 	 * @method void offsetUnset() ArrayAccess
 	 * @method void offsetGet() ArrayAccess
 	 * @method void rewind() Iterator
-	 * @method \Bitrix\Intranet\Model\InvitationLink current() Iterator
+	 * @method \Bitrix\Intranet\Internal\Model\InvitationLink current() Iterator
 	 * @method mixed key() Iterator
 	 * @method void next() Iterator
 	 * @method bool valid() Iterator
@@ -3145,19 +3145,19 @@ namespace Bitrix\Intranet\Table {
 	 * ---------------
 	 *
 	 * @method EO_InvitationLink_Result exec()
-	 * @method \Bitrix\Intranet\Model\InvitationLink fetchObject()
+	 * @method \Bitrix\Intranet\Internal\Model\InvitationLink fetchObject()
 	 * @method \Bitrix\Intranet\Table\EO_InvitationLink_Collection fetchCollection()
 	 */
 	class EO_InvitationLink_Query extends \Bitrix\Main\ORM\Query\Query {}
 	/**
-	 * @method \Bitrix\Intranet\Model\InvitationLink fetchObject()
+	 * @method \Bitrix\Intranet\Internal\Model\InvitationLink fetchObject()
 	 * @method \Bitrix\Intranet\Table\EO_InvitationLink_Collection fetchCollection()
 	 */
 	class EO_InvitationLink_Result extends \Bitrix\Main\ORM\Query\Result {}
 	/**
-	 * @method \Bitrix\Intranet\Model\InvitationLink createObject($setDefaultValues = true)
+	 * @method \Bitrix\Intranet\Internal\Model\InvitationLink createObject($setDefaultValues = true)
 	 * @method \Bitrix\Intranet\Table\EO_InvitationLink_Collection createCollection()
-	 * @method \Bitrix\Intranet\Model\InvitationLink wakeUpObject($row)
+	 * @method \Bitrix\Intranet\Internal\Model\InvitationLink wakeUpObject($row)
 	 * @method \Bitrix\Intranet\Table\EO_InvitationLink_Collection wakeUpCollection($rows)
 	 */
 	class EO_InvitationLink_Entity extends \Bitrix\Main\ORM\Entity {}

@@ -154,6 +154,7 @@ class DocumentAgentService
 			}
 		}
 	}
+
 	private function addAgent(string $agentName, int $interval = 1, string $nextDateExec = '')
 	{
 		$agent = new \CAgent();
@@ -162,7 +163,8 @@ class DocumentAgentService
 				module: "sign",
 				period: "Y",
 				interval: $interval,
-				next_exec: $nextDateExec ?: \ConvertTimeStamp(time()+\CTimeZone::GetOffset()+$interval, "FULL")
+				next_exec: $nextDateExec ?: \ConvertTimeStamp(time()+\CTimeZone::GetOffset()+$interval, "FULL"),
+				sort: 300,
 			);
 	}
 

@@ -2,20 +2,22 @@
  * @module layout/ui/kanban/stage-settings
  */
 jn.define('layout/ui/kanban/stage-settings', (require, exports, module) => {
-	const { EntityName } = require('layout/ui/entity-name');
 	const { mergeImmutable } = require('utils/object');
 	const { stringify } = require('utils/string');
-	const { getStageNavigationIcon } = require('assets/stages');
 	const { throttle } = require('utils/function');
 	const { confirmDestructiveAction } = require('alert');
 	const { Loc } = require('loc');
-	const AppTheme = require('apptheme');
+	const { ColorPicker } = require('layout/ui/color-picker');
+	const { StringInput, InputSize, InputMode, InputDesign } = require('ui-system/form/inputs/string');
+	const { Area } = require('ui-system/layout/area');
+	const { Color } = require('tokens');
+	const { Type } = require('type');
+	const { BoxFooter } = require('ui-system/layout/dialog-footer');
+	const { ButtonSize, ButtonDesign, Button } = require('ui-system/form/buttons/button');
+	const { Box } = require('ui-system/layout/box');
+	const { Icon } = require('ui-system/blocks/icon');
 
 	const SUCCESS_SEMANTICS = 'S';
-
-	const svgImages = {
-		deleteIcon: '<svg width="16" height="21" viewBox="0 0 16 21" fill="none" xmlns="http://www.w3.org/2000/svg"><path d="M9.22602 0H6.15062V1.54677H1.43631C0.64306 1.54677 0 2.18983 0 2.98309V4.64037H15.377V2.98309C15.377 2.18983 14.7339 1.54677 13.9407 1.54677H9.22602V0Z" fill="#828B95"/><path d="M1.53777 6.18721H13.8394L12.6864 19.2351C12.6427 19.7294 12.2287 20.1084 11.7326 20.1084H3.64459C3.14842 20.1084 2.73444 19.7294 2.69077 19.2351L1.53777 6.18721Z" fill="#828B95"/></svg>',
-	};
 
 	/**
 	 * @class KanbanStageSettings
@@ -26,13 +28,16 @@ jn.define('layout/ui/kanban/stage-settings', (require, exports, module) => {
 		{
 			return {
 				modal: true,
-				backgroundColor: AppTheme.colors.bgSecondary,
+				backgroundColor: Color.bgSecondary.toHex(),
 				backdrop: {
 					showOnTop: true,
 					forceDismissOnSwipeDown: true,
 					horizontalSwipeAllowed: false,
 					swipeContentAllowed: false,
-					navigationBarColor: AppTheme.colors.bgSecondary,
+					navigationBarColor: Color.bgSecondary.toHex(),
+				},
+				titleParams: {
+					type: 'dialog',
 				},
 			};
 		}
@@ -53,6 +58,18 @@ jn.define('layout/ui/kanban/stage-settings', (require, exports, module) => {
 		}
 
 		/**
+		 * @typedef {Object} StageDetailProps
+		 * @property {Object} layout
+		 * @property {Object} stage
+		 * @property {string} stage.name
+		 * @property {string} stage.color
+		 * @property {string} stage.id
+		 * @property {string} stage.statusId
+		 * @property {string} stage.semantics
+		 * @property {Function} updateCrmStage
+		 * @property {Function} deleteCrmStage
+		 */
+		/**
 		 * @param {StageDetailProps} props
 		 */
 		constructor(props)
@@ -64,6 +81,9 @@ jn.define('layout/ui/kanban/stage-settings', (require, exports, module) => {
 
 			this.deleteStageHandler = throttle(this.deleteStage, 500, this);
 			this.updateStageHandler = throttle(this.updateStage, 500, this);
+			this.state = {
+				error: false,
+			};
 		}
 
 		get layout()
@@ -91,15 +111,19 @@ jn.define('layout/ui/kanban/stage-settings', (require, exports, module) => {
 			if (this.layout)
 			{
 				this.layout.enableNavigationBarBorder(false);
-				this.updateNavigationTitleAndIcon();
-				this.layout.setRightButtons([
-					{
-						name: Loc.getMessage('STAGE_DETAIL_SAVE'),
-						type: 'text',
-						color: AppTheme.colors.accentMainLinks,
-						callback: () => this.saveAndClose(),
-					},
-				]);
+				this.updateNavigationTitle();
+				const { id, semantics } = this.stage;
+				if (semantics !== SUCCESS_SEMANTICS)
+				{
+					this.layout.setRightButtons([
+						{
+							testId: `stage-${Icon.TRASHCAN.getIconName()}`,
+							type: Icon.TRASHCAN.getIconName(),
+							color: Color.base4.toHex(),
+							callback: () => this.openAlertOnDelete(id),
+						},
+					]);
+				}
 			}
 		}
 
@@ -142,29 +166,14 @@ jn.define('layout/ui/kanban/stage-settings', (require, exports, module) => {
 
 		render()
 		{
-			return View(
+			return Box(
 				{
-					style: {
-						flex: 1,
-					},
+					resizableByKeyboard: true,
+					safeArea: { bottom: true },
+					footer: this.renderFooter(),
+					withScroll: true,
 				},
-				ScrollView(
-					{
-						resizableByKeyboard: true,
-						safeArea: {
-							bottom: true,
-							top: true,
-							left: true,
-							right: true,
-						},
-						style: {
-							backgroundColor: AppTheme.colors.bgSecondary,
-							flexDirection: 'column',
-							flex: 1,
-						},
-					},
-					this.renderContent(),
-				),
+				this.renderContent(),
 			);
 		}
 
@@ -180,45 +189,44 @@ jn.define('layout/ui/kanban/stage-settings', (require, exports, module) => {
 				},
 				this.renderStageName(),
 				this.renderColorPicker(),
-				this.renderDeleteButton(),
 			);
 		}
 
 		renderStageName()
 		{
-			return View(
+			return Area(
 				{
+					divider: true,
 					style: {
-						marginBottom: 8,
+						backgroundColor: Color.bgContentPrimary.toHex(),
 					},
 				},
-				new EntityName({
+				StringInput({
+					testId: 'EntityNameField',
 					focus: this.hasDefaultName(),
-					iconColor: AppTheme.colors.base3,
-					title: Loc.getMessage('STAGE_DETAIL_NAME'),
-					showTitle: true,
-					name: this.stageName || this.changedFields.name,
+					readOnly: false,
+					mode: InputMode.STROKE,
+					design: InputDesign.GREY,
+					size: InputSize.L,
+					label: Loc.getMessage('STAGE_DETAIL_NAME'),
 					placeholder: Loc.getMessage('STAGE_DETAIL_DEFAULT_STAGE_NAME'),
-					required: true,
-					showRequired: false,
+					value: Object.prototype.hasOwnProperty.call(this.changedFields, 'name')
+						? this.changedFields.name
+						: this.stageName,
 					onChange: (value) => {
+						const preparedValue = stringify(value).trim();
+						const error = Type.isString(preparedValue) && preparedValue.length === 0;
 						this.isChanged = true;
-						this.changedFields.name = value;
+						this.changedFields.name = preparedValue;
+						if (error !== this.state.error)
+						{
+							this.setState({ error });
+						}
+
 						this.updateNavigationTitle();
 					},
-					config: {
-						selectionOnFocus: this.hasDefaultName(),
-						enableKeyboardHide: true,
-						deepMergeStyles: {
-							wrapper: {
-								paddingTop: 0,
-								paddingBottom: 0,
-							},
-							title: {
-								marginBottom: 0,
-							},
-						},
-					},
+					error: this.state.error || false,
+					errorText: Loc.getMessage('STAGE_DETAIL_NAME_ERROR'),
 				}),
 			);
 		}
@@ -230,18 +238,12 @@ jn.define('layout/ui/kanban/stage-settings', (require, exports, module) => {
 
 		renderColorPicker()
 		{
-			return View(
-				{
-					style: {
-						marginBottom: 18,
-					},
-				},
-				new UI.ColorPicker({
-					currentColor: this.changedFields.color || this.stage.color,
-					onChangeColor: (color) => this.onChangeColor(color),
-					layout: this.layout,
-				}),
-			);
+			return new ColorPicker({
+				title: Loc.getMessage('STAGE_DETAIL_COLOR_PICKER_TITLE'),
+				currentColor: this.changedFields.color || this.stage.color,
+				onChangeColor: (color) => this.onChangeColor(color),
+				layout: this.layout,
+			});
 		}
 
 		onChangeColor(color)
@@ -250,19 +252,7 @@ jn.define('layout/ui/kanban/stage-settings', (require, exports, module) => {
 			{
 				this.isChanged = true;
 				this.changedFields.color = color;
-				this.updateNavigationTitleAndIcon();
 			}
-		}
-
-		updateNavigationTitleAndIcon()
-		{
-			const color = this.changedFields.color || this.stage.color;
-			this.layout.setTitle({
-				text: this.getTitleForNavigation(),
-				svg: {
-					content: getStageNavigationIcon(color),
-				},
-			});
 		}
 
 		updateNavigationTitle()
@@ -274,47 +264,7 @@ jn.define('layout/ui/kanban/stage-settings', (require, exports, module) => {
 
 			const text = this.getTitleForNavigation();
 
-			this.layout.setTitle({ text }, true);
-		}
-
-		renderDeleteButton()
-		{
-			const { id, semantics } = this.stage;
-
-			if (semantics === SUCCESS_SEMANTICS)
-			{
-				return null;
-			}
-
-			return new BaseButton({
-				style: {
-					button: {
-						padding: 20,
-						borderRadius: 12,
-						backgroundColor: AppTheme.colors.bgContentPrimary,
-						flexDirection: 'row',
-						alignItems: 'center',
-						height: 'auto',
-						justifyContent: 'flex-start',
-						marginBottom: 8,
-					},
-					icon: {
-						tintColor: AppTheme.colors.base3,
-						width: 15,
-						height: 20,
-						marginRight: 16,
-
-					},
-					text: {
-						color: AppTheme.colors.base1,
-						fontSize: 18,
-						fontWeight: 'normal',
-					},
-				},
-				icon: svgImages.deleteIcon,
-				text: Loc.getMessage('STAGE_DETAIL_DELETE'),
-				onClick: () => this.openAlertOnDelete(id),
-			});
+			this.layout.setTitle({ text, type: 'dialog' }, true);
 		}
 
 		openAlertOnDelete(stageId)
@@ -332,6 +282,32 @@ jn.define('layout/ui/kanban/stage-settings', (require, exports, module) => {
 						});
 				},
 			});
+		}
+
+		renderFooter()
+		{
+			return BoxFooter(
+				{
+					safeArea: Application.getPlatform() !== 'android',
+					keyboardButton: {
+						text: Loc.getMessage('STAGE_DETAIL_SAVE'),
+						onClick: () => this.saveAndClose(),
+						testId: 'stage-detail-save-button',
+						disabled: this.state.error,
+					},
+				},
+				Button(
+					{
+						design: ButtonDesign.FILLED,
+						size: ButtonSize.L,
+						text: Loc.getMessage('STAGE_DETAIL_SAVE'),
+						stretched: true,
+						onClick: () => this.saveAndClose(),
+						testId: 'stage-detail-save-button',
+						disabled: this.state.error,
+					},
+				),
+			);
 		}
 
 		/**

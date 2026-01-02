@@ -1,5 +1,5 @@
-import {Tag, Text, Loc, Event, Cache, Runtime, Dom} from 'main.core';
-import {EventEmitter, BaseEvent} from 'main.core.events';
+import { Tag, Text, Loc, Event, Cache, Runtime, Dom } from 'main.core';
+import { EventEmitter, BaseEvent } from 'main.core.events';
 import { Row } from './product.list.row';
 import { ModeList } from 'catalog.store-enable-wizard';
 
@@ -75,7 +75,7 @@ export default class ReserveControl
 		}
 	}
 
-	getReservedQuantity()
+	getReservedQuantity(): number
 	{
 		return Text.toNumber(this.#row.getField(this.inputFieldName));
 	}
@@ -85,17 +85,17 @@ export default class ReserveControl
 		return this.#row.getField(this.dateFieldName) || '';
 	}
 
-	getQuantity()
+	getQuantity(): number
 	{
 		return Text.toNumber(this.#row.getField(this.quantityFieldName));
 	}
 
-	getDeductedQuantity()
+	getDeductedQuantity(): number
 	{
 		return Text.toNumber(this.#row.getField(this.deductedQuantityFieldName));
 	}
 
-	getAvailableQuantity()
+	getAvailableQuantity(): number
 	{
 		return this.getQuantity() - this.getDeductedQuantity();
 	}
@@ -107,27 +107,21 @@ export default class ReserveControl
 		this.changeInputValue(value);
 	}
 
-	changeInputValue(value): void
+	changeInputValue(rawValue): void
 	{
+		let value = rawValue;
 		if (value > this.getAvailableQuantity())
 		{
-			const errorNotifyId = 'reserveCountError';
-			let notify = BX.UI.Notification.Center.getBalloonById(errorNotifyId);
-			if (!notify)
-			{
-				const notificationOptions = {
-					id: errorNotifyId,
-					closeButton: true,
-					autoHideDelay: 3000,
-					content: Tag.render`<div>${Loc.getMessage('CRM_ENTITY_PL_IS_LESS_QUANTITY_WITH_DEDUCTED_THEN_RESERVED')}</div>`,
-				};
-
-				notify = BX.UI.Notification.Center.notify(notificationOptions);
-			}
-
-			notify.show();
+			this.#showNotify('reserveCountError', 'CRM_ENTITY_PL_IS_LESS_QUANTITY_WITH_DEDUCTED_THEN_RESERVED');
 
 			value = this.getAvailableQuantity();
+			this.setReservedQuantity(value);
+		}
+		else if (value < 0)
+		{
+			this.#showNotify('reserveNegativeCountError', 'CRM_ENTITY_PL_IS_NEGATIVE_INPUT_RESERVE');
+
+			value = 0;
 			this.setReservedQuantity(value);
 		}
 
@@ -179,7 +173,11 @@ export default class ReserveControl
 
 	static #onDateInputClick(event: BaseEvent)
 	{
-		BX.calendar({node: event.target, field: event.target.parentNode.querySelector('input'), bTime: false});
+		BX.calendar({
+			node: event.target,
+			field: event.target.parentNode.querySelector('input'),
+			bTime: false,
+		});
 	}
 
 	onDateChange(event: BaseEvent)
@@ -187,28 +185,15 @@ export default class ReserveControl
 		const value = event.target.value;
 		const newDate = BX.parseDate(value);
 		const current = new Date();
-		current.setHours(0,0,0,0);
+		current.setHours(0, 0, 0, 0);
 		if (newDate >= current)
 		{
 			this.changeDateReservation(value);
 		}
 		else
 		{
-			const errorNotifyId = 'reserveDateError';
-			let notify = BX.UI.Notification.Center.getBalloonById(errorNotifyId);
-			if (!notify)
-			{
-				const notificationOptions = {
-					id: errorNotifyId,
-					closeButton: true,
-					autoHideDelay: 3000,
-					content: Tag.render`<div>${Loc.getMessage('CRM_ENTITY_PL_DATE_IN_PAST')}</div>`,
-				};
+			this.#showNotify('reserveDateError', 'CRM_ENTITY_PL_DATE_IN_PAST');
 
-				notify = BX.UI.Notification.Center.notify(notificationOptions);
-			}
-
-			notify.show();
 			this.changeDateReservation(this.defaultDateReservation);
 		}
 	}
@@ -289,8 +274,8 @@ export default class ReserveControl
 				: Loc.getMessage(
 					'CRM_ENTITY_PL_RESERVED_DATE',
 					{
-						'#FINAL_RESERVATION_DATE#': date
-					}
+						'#FINAL_RESERVATION_DATE#': date,
+					},
 				)
 		;
 		const link = this.#getDateNode().querySelector('a');
@@ -306,7 +291,7 @@ export default class ReserveControl
 		}
 	}
 
-	disable(wrapper: Element|null): void
+	disable(wrapper: Element | null): void
 	{
 		const node = wrapper || this.wrapper;
 		if (node)
@@ -318,5 +303,23 @@ export default class ReserveControl
 	#isInventoryManagementMode1C(): boolean
 	{
 		return this.inventoryManagementMode === ModeList.MODE_1C;
+	}
+
+	#showNotify(notifyId: string, messageId: string): void
+	{
+		let notify = BX.UI.Notification.Center.getBalloonById(notifyId);
+		if (!notify)
+		{
+			const notificationOptions = {
+				id: notifyId,
+				closeButton: true,
+				autoHideDelay: 3000,
+				content: Tag.render`<div>${Loc.getMessage(messageId)}</div>`,
+			};
+
+			notify = BX.UI.Notification.Center.notify(notificationOptions);
+		}
+
+		notify.show();
 	}
 }

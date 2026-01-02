@@ -7,6 +7,7 @@ jn.define('calendar/model/section', (require, exports, module) => {
 		BooleanParams,
 		SectionPermissionActions,
 		SectionExternalTypes,
+		CalendarType,
 	} = require('calendar/enums');
 
 	/**
@@ -31,7 +32,10 @@ jn.define('calendar/model/section', (require, exports, module) => {
 			this.permissions = BX.prop.getObject(props, 'PERM', {});
 			this.calDavCalendar = BX.prop.getString(props, 'CAL_DAV_CAL', '');
 			this.calDavConnection = BX.prop.getString(props, 'CAL_DAV_CON', '');
+			this.exchange = BX.prop.getBoolean(props, 'IS_EXCHANGE', false);
+			this.collab = BX.prop.getBoolean(props, 'IS_COLLAB', false);
 			this.connectionLinks = props?.connectionLinks ?? [];
+			this.categoryId = 0;
 		}
 
 		getId()
@@ -61,12 +65,17 @@ jn.define('calendar/model/section', (require, exports, module) => {
 
 		getExternalType()
 		{
-			return this.externalType;
+			return this.externalType ?? (this.isCalDav() ? SectionExternalTypes.CALDAV : '');
 		}
 
 		getPermissions()
 		{
 			return this.permissions;
+		}
+
+		getCategoryId()
+		{
+			return this.categoryId;
 		}
 
 		isActive()
@@ -79,6 +88,11 @@ jn.define('calendar/model/section', (require, exports, module) => {
 			this.active = status ? BooleanParams.YES : BooleanParams.NO;
 		}
 
+		setCategoryId(categoryId)
+		{
+			this.categoryId = categoryId;
+		}
+
 		canDo(action)
 		{
 			if (action === SectionPermissionActions.EDIT_SECTION && env.isCollaber)
@@ -89,9 +103,59 @@ jn.define('calendar/model/section', (require, exports, module) => {
 			return Boolean(this.permissions?.[action]);
 		}
 
+		isUserCalendar(userId)
+		{
+			return this.getType() === CalendarType.USER && this.getOwnerId() === userId;
+		}
+
+		isCompanyCalendar()
+		{
+			return this.getType() === CalendarType.COMPANY_CALENDAR && !this.getOwnerId();
+		}
+
+		isGroupCalendar()
+		{
+			return this.getType() === CalendarType.GROUP;
+		}
+
+		isCollab()
+		{
+			return this.collab;
+		}
+
+		isLocal()
+		{
+			return this.getExternalType() === SectionExternalTypes.LOCAL
+				|| this.isCompanyCalendar()
+				|| this.isGroupCalendar()
+			;
+		}
+
+		isGoogle()
+		{
+			const googleTypes = [
+				SectionExternalTypes.GOOGLE,
+				SectionExternalTypes.GOOGLE_READONLY,
+				SectionExternalTypes.GOOGLE_WRITE_READ,
+				SectionExternalTypes.GOOGLE_FREEBUSY,
+			];
+
+			return googleTypes.includes(this.getExternalType());
+		}
+
+		isIcloud()
+		{
+			return this.getExternalType() === SectionExternalTypes.ICLOUD;
+		}
+
+		isOffice365()
+		{
+			return this.getExternalType() === SectionExternalTypes.OFFICE365;
+		}
+
 		isSyncSection()
 		{
-			if (this.externalType === SectionExternalTypes.LOCAL)
+			if (this.isLocal())
 			{
 				return this.hasConnection();
 			}
@@ -110,6 +174,16 @@ jn.define('calendar/model/section', (require, exports, module) => {
 		isCalDav()
 		{
 			return Type.isStringFilled(this.calDavCalendar) && Type.isStringFilled(this.calDavConnection);
+		}
+
+		isExchange()
+		{
+			return this.exchange;
+		}
+
+		isExternal()
+		{
+			return !this.isLocal() && !this.isGoogle() && !this.isIcloud() && !this.isOffice365() && !this.isExchange();
 		}
 	}
 

@@ -1,8 +1,14 @@
 <?php
-if (!defined('B_PROLOG_INCLUDED') || B_PROLOG_INCLUDED!==true)die();
-global $APPLICATION;
 
-$formId = 'crm_mail_template_edit_form_'.intval($arResult['ELEMENT']['ID']);
+use Bitrix\UI\Toolbar\Facade\Toolbar;
+
+if (!defined('B_PROLOG_INCLUDED') || B_PROLOG_INCLUDED!==true)die();
+
+/** @global CMain $APPLICATION */
+/** @var array $arResult */
+/** @var array $arParams */
+
+$formId = 'crm_mail_template_edit_form_'. (int)$arResult['ELEMENT']['ID'];
 
 if (!empty($arResult['ELEMENT']['BODY']) && \CCrmContentType::Html != $arResult['ELEMENT']['BODY_TYPE'])
 {
@@ -10,38 +16,14 @@ if (!empty($arResult['ELEMENT']['BODY']) && \CCrmContentType::Html != $arResult[
 	$arResult['ELEMENT']['BODY'] = $bbcodeParser->convertText($arResult['ELEMENT']['BODY']);
 }
 
-if ('Y' != $arResult['ELEMENT']['IS_ACTIVE'])
+if ('Y' !== $arResult['ELEMENT']['IS_ACTIVE'])
+{
 	$arResult['ELEMENT']['IS_ACTIVE'] = 'N';
-
-if ($_REQUEST['IFRAME'] == 'Y' && $_REQUEST['IFRAME_TYPE'] == 'SIDE_SLIDER')
-{
-	$APPLICATION->restartBuffer();
-
-	?><!DOCTYPE html>
-	<html>
-		<head><? $APPLICATION->showHead(); ?></head>
-		<body style="background: #eef2f4 !important; ">
-			<div style="padding: 0 20px 20px 20px; ">
-				<div class="pagetitle-wrap">
-					<div class="pagetitle-inner-container">
-						<div class="pagetitle-menu" id="pagetitle-menu"><?
-							$APPLICATION->showViewContent('pagetitle');
-							$APPLICATION->showViewContent('inside_pagetitle');
-						?></div>
-						<div class="pagetitle">
-							<span id="pagetitle" class="pagetitle-item"><? $APPLICATION->showTitle() ?></span>
-						</div>
-					</div>
-				</div>
-	<?
-
-	if (!empty($arResult['ERRORS']))
-		showError(implode("\n", $arResult['ERRORS']));
 }
-else
+
+if ($_REQUEST['IFRAME'] === 'Y')
 {
-	$bodyClass = $APPLICATION->getPageProperty('BodyClass', false);
-	$APPLICATION->setPageProperty('BodyClass', trim(sprintf('%s %s', $bodyClass, 'pagetitle-toolbar-field-view')));
+	Toolbar::deleteFavoriteStar();
 }
 
 \Bitrix\Main\UI\Extension::load([
@@ -61,51 +43,29 @@ else
 	<span class="crm-mail-template-edit-form-switches-wrapper">
 		<span class="crm-mail-template-edit-form-switch">
 			<input class="crm-mail-template-edit-form-switch-checkbox" form="<?=htmlspecialcharsbx($formId) ?>"
-				id="crm_mail_template_<?=intval($arResult['ELEMENT']['ID']) ?>_active"
+				id="crm_mail_template_<?=(int)$arResult['ELEMENT']['ID'] ?>_active"
 				name="IS_ACTIVE" value="Y" type="checkbox"
-				<? if ('Y' == $arResult['ELEMENT']['IS_ACTIVE']): ?> checked<? endif ?>
+				<?php if ('Y' === $arResult['ELEMENT']['IS_ACTIVE']): ?> checked<?php endif ?>
 				onchange="BX(this.id+'_alt').value = this.checked ? this.value : '';">
 			<label class="crm-mail-template-edit-form-switch-label"
-				for="crm_mail_template_<?=intval($arResult['ELEMENT']['ID']) ?>_active"><?=getMessage('CRM_MAIL_TEMPLATE_IS_ACTIVE') ?></label>
+				for="crm_mail_template_<?=(int)$arResult['ELEMENT']['ID'] ?>_active"><?=getMessage('CRM_MAIL_TEMPLATE_IS_ACTIVE') ?></label>
 		</span>
-		<? if (false && $arResult['ELEMENT']['ID'] > 0 && (\CCrmPerms::isAdmin() || $arResult['USER_ID'] == $arResult['ELEMENT']['OWNER_ID'])): ?>
-			<? $deleteHref = \CHTTP::urlAddParams(
+		<?php if (false && $arResult['ELEMENT']['ID'] > 0 && (\CCrmPerms::isAdmin() || $arResult['USER_ID'] == $arResult['ELEMENT']['OWNER_ID'])):
+			$deleteHref = \CHTTP::urlAddParams(
 				\CComponentEngine::makePathFromTemplate(
 					$arParams['PATH_TO_MAIL_TEMPLATE_EDIT'],
-					array('element_id' => $arResult['ELEMENT']['ID'])
+					['element_id' => $arResult['ELEMENT']['ID']]
 				),
-				array('delete' => '', 'sessid' => bitrix_sessid())
-			); ?>
+				['delete' => '', 'sessid' => bitrix_sessid()]
+			);?>
 			<span class="crm-mail-template-edit-form-switch">
 				<label class="crm-mail-template-edit-form-switch-label">
 					<a href="#" onclick="confirm('<?=\CUtil::jsEscape(getMessage('CRM_MAIL_TEMPLATE_DELETE_DLG_MESSAGE')) ?>') && (window.location = '<?=\CUtil::jsEscape($deleteHref); ?>'); return false; "><?=getMessage('CRM_MAIL_TEMPLATE_DELETE_BTN') ?></a>
 				</label>
 			</span>
-		<? endif ?>
+		<?php endif ?>
 	</span>
-	<?
-
-	$controls = ob_get_clean();
-
-	if ($_REQUEST['IFRAME'] == 'Y' && $_REQUEST['IFRAME_TYPE'] == 'SIDE_SLIDER')
-	{
-		$this->setViewTarget('inside_pagetitle');
-		echo $controls;
-		$this->endViewTarget();
-	}
-	else if (SITE_TEMPLATE_ID == 'bitrix24')
-	{
-		$this->setViewTarget('inside_pagetitle');
-		?><div class="pagetitle-container pagetitle-flexible-space"></div>
-		<span class="pagetitle-container pagetitle-align-right-container"><?=$controls ?></span><?
-		$this->endViewTarget();
-	}
-	else
-	{
-		echo $controls;
-	}
-
-	?>
+	<?php Toolbar::addRightCustomHtml(ob_get_clean(), ['align' => 'right']) ?>
 
 	<input id="crm_mail_template_<?=intval($arResult['ELEMENT']['ID']) ?>_active_alt"
 		type="hidden" name="IS_ACTIVE" value="<?=htmlspecialcharsbx($arResult['ELEMENT']['IS_ACTIVE']) ?>">
@@ -113,7 +73,7 @@ else
 		   type="hidden" name="ACCESS" value="<?=htmlspecialcharsbx(\Bitrix\Main\Web\Json::encode($arResult['ACCESS']))?>">
 	<div id="my_container"></div>
 
-	<? $APPLICATION->includeComponent(
+	<?php $APPLICATION->includeComponent(
 		'bitrix:main.mail.form', '',
 		array(
 			'VERSION' => 2,
@@ -351,16 +311,6 @@ BX.ready(function()
 });
 </script>
 
-<?
-
-if ($_REQUEST['IFRAME'] == 'Y' && $_REQUEST['IFRAME_TYPE'] == 'SIDE_SLIDER')
-{
-	?>
-			</div>
-		</body>
-	</html>
-<?
-
+<?php
 	require_once($_SERVER['DOCUMENT_ROOT'].'/bitrix/modules/main/include/epilog_after.php');
 	die;
-}

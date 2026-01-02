@@ -1069,6 +1069,18 @@ class Base
 	{
 		$result = false;
 
+		if (!empty($paramsError['params']))
+		{
+			$errCode = $paramsError['params']['errorCode'] ?? '';
+			if ($errCode === 'CONNECTOR_HAS_EXPIRED_ACCESS_TOKEN_USER')
+			{
+				$paramsError['messageConnector'] = '';
+
+				$url = \Bitrix\ImOpenLines\Common::getContactCenterPublicFolder();
+				$message = Loc::getMessage('IMCONNECTOR_ERROR_EXPIRED_ACCESS_TOKEN', ['#LINK#' => $url]);
+			}
+		}
+
 		if (
 			!empty($paramsError['chatId'])
 			&& (int)$paramsError['chatId'] > 0

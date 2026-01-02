@@ -12,5 +12,6 @@ return [
 		'tasks:layout/stage-selector/item',
 		'tasks:statemanager/redux/slices/kanban-settings',
 		'toast',
+		'tasks:enum',
 	],
 ];

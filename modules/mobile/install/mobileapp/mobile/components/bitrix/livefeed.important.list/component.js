@@ -44,15 +44,16 @@ class LivefeedImportantList
 		livefeedImportantListWidget.setListener((eventName, user) => {
 			if (eventName === 'onItemSelected')
 			{
-				const { ProfileView } = jn.require("user/profile");
-				ProfileView.open(
-					{
-						userId: user.id,
+				const { UserProfile } = jn.require('user-profile');
+
+				void UserProfile.open({
+					ownerId: user.id,
+					widgetParams: {
 						name: user.title,
-					}
-				);
+					},
+				});
 			}
-		})
+		});
 	}
 
 	getPage({

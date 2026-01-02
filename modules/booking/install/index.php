@@ -1,10 +1,8 @@
 <?php
 
-use Bitrix\Booking\Entity\ResourceType\ResourceType;
-use Bitrix\Booking\Internals\Container;
-use Bitrix\Main\Loader;
 use Bitrix\Main\Localization\Loc;
 use Bitrix\Main\EventManager;
+use Bitrix\Main\Config\Option;
 
 Loc::loadMessages(__FILE__);
 
@@ -56,7 +54,7 @@ class booking extends CModule
 
 	/**
 	 * Calls all install methods.
-	 * @returm void
+	 * @return void
 	 */
 	public function doInstall()
 	{
@@ -97,7 +95,7 @@ class booking extends CModule
 			$this->UninstallDB($params);
 			$this->UninstallFiles();
 			$APPLICATION->includeAdminFile(
-				Loc::getMessage('BOOKIN_UNINSTALL_TITLE'),
+				Loc::getMessage('BOOKING_UNINSTALL_TITLE'),
 				$this->getDocumentRoot() . '/bitrix/modules/booking/install/unstep2.php'
 			);
 		}
@@ -112,6 +110,11 @@ class booking extends CModule
 		global $DB, $APPLICATION;
 
 		$connection = \Bitrix\Main\Application::getConnection();
+
+		if (!$DB->Query('SELECT 1 FROM b_booking_scorer WHERE 1=0', true))
+		{
+			$this->cleanCounters();
+		}
 
 		// db
 		$errors = $DB->runSQLBatch(
@@ -129,7 +132,6 @@ class booking extends CModule
 		$this->InstallEvents();
 		$this->InstallAgents();
 		$this->installTemplateRules();
-		$this->installResourceTypes();
 
 		return true;
 	}
@@ -187,9 +189,13 @@ class booking extends CModule
 		// db
 		if (isset($arParams['savedata']) && !$arParams['savedata'])
 		{
+			$this->cleanCounters();
+
 			$errors = $DB->runSQLBatch(
 				$this->getDocumentRoot().'/bitrix/modules/booking/install/db/' . $connection->getType() . '/uninstall.sql'
 			);
+
+			Option::delete($this->MODULE_ID);
 		}
 		if ($errors !== false)
 		{
@@ -238,39 +244,79 @@ class booking extends CModule
 			'\Bitrix\Booking\Internals\Integration\Crm\EventsHandler',
 			'onDealDelete'
 		);
+
+		EventManager::getInstance()->registerEventHandler(
+			'crm',
+			'OnCrmBookingFormSubmitted',
+			'booking',
+			'\Bitrix\Booking\Internals\Integration\Crm\EventsHandler',
+			'onCrmBookingFormFilled'
+		);
+
+		EventManager::getInstance()->registerEventHandler(
+			'crm',
+			'onCrmDynamicItemDelete',
+			'booking',
+			'\Bitrix\Booking\Internals\Integration\Crm\EventsHandler',
+			'onDynamicItemDelete'
+		);
+
+		EventManager::getInstance()->registerEventHandler(
+			'rest',
+			'OnRestServiceBuildDescription',
+			'booking',
+			'\Bitrix\Booking\Rest\V1\Event\RestEventHandler',
+			'onRestServiceBuildDescription',
+		);
 	}
 
 	public function InstallAgents(): void
 	{
 		\CAgent::AddAgent(
-			name: '\\Bitrix\\Booking\\Internals\\Service\\Notifications\\Agent\\InfoNotificationAgent::execute();',
+			name: '\\Bitrix\\Booking\\Internals\\Service\\Notifications\\Agent\\NotificationAgent::execute();',
 			module: 'booking',
-			interval: 300,
+			interval: 60,
 			next_exec: ConvertTimeStamp(time() + \CTimeZone::GetOffset() + 60, 'FULL'),
 			existError: false
 		);
 
 		\CAgent::AddAgent(
-			name: '\\Bitrix\\Booking\\Internals\\Service\\Notifications\\Agent\\ConfirmationNotificationAgent::execute();',
+			name: '\\Bitrix\\Booking\\Internals\\Service\\Notifications\\Agent\\ConfirmationCounterAgent::execute();',
 			module: 'booking',
-			interval: 300,
-			next_exec: ConvertTimeStamp(time() + \CTimeZone::GetOffset() + 120, 'FULL'),
+			interval: 60,
+			next_exec: ConvertTimeStamp(time() + \CTimeZone::GetOffset() + 60, 'FULL'),
 			existError: false
 		);
 
 		\CAgent::AddAgent(
-			name: '\\Bitrix\\Booking\\Internals\\Service\\Notifications\\Agent\\ReminderNotificationAgent::execute();',
+			name: '\\Bitrix\\Booking\\Internals\\Service\\Notifications\\Agent\\DelayedCounterAgent::execute();',
 			module: 'booking',
-			interval: 300,
-			next_exec: ConvertTimeStamp(time() + \CTimeZone::GetOffset() + 180, 'FULL'),
+			interval: 60,
+			next_exec: ConvertTimeStamp(time() + \CTimeZone::GetOffset() + 60, 'FULL'),
 			existError: false
 		);
 
 		\CAgent::AddAgent(
-			name: '\\Bitrix\\Booking\\Internals\\Service\\Notifications\\Agent\\DelayedNotificationAgent::execute();',
+			name: '\\Bitrix\\Booking\\Internals\\Service\\Agent\\ClearOldCountersAgent::execute();',
 			module: 'booking',
-			interval: 300,
-			next_exec: ConvertTimeStamp(time() + \CTimeZone::GetOffset() + 240, 'FULL'),
+			interval: 60 * 60, // 1 hour
+			next_exec: ConvertTimeStamp(time() + \CTimeZone::GetOffset() + 12 * 60 * 60, 'FULL'),
+			existError: false
+		);
+
+		\CAgent::AddAgent(
+			name: '\\Bitrix\\Booking\\Internals\\Service\\InstallAgent::execute();',
+			module: 'booking',
+			interval: 60,
+			next_exec: ConvertTimeStamp(time() + \CTimeZone::GetOffset() + 60, 'FULL'),
+			existError: false
+		);
+
+		\CAgent::AddAgent(
+			name: '\\Bitrix\\Booking\\Internals\\Service\\Agent\\ProcessDelayedTaskAgent::execute();',
+			module: 'booking',
+			interval: 60,
+			next_exec: ConvertTimeStamp(time() + \CTimeZone::GetOffset() + 600, 'FULL'),
 			existError: false
 		);
 	}
@@ -300,28 +346,37 @@ class booking extends CModule
 			'\Bitrix\Booking\Internals\Integration\Crm\EventsHandler',
 			'onDealDelete'
 		);
+
+		EventManager::getInstance()->unRegisterEventHandler(
+			'crm',
+			'OnCrmBookingFormSubmitted',
+			'booking',
+			'\Bitrix\Booking\Internals\Integration\Crm\EventsHandler',
+			'onCrmBookingFormFilled'
+		);
+
+		EventManager::getInstance()->unRegisterEventHandler(
+			'crm',
+			'onCrmDynamicItemDelete',
+			'booking',
+			'\Bitrix\Booking\Internals\Integration\Crm\EventsHandler',
+			'onDynamicItemDelete'
+		);
+
+		EventManager::getInstance()->unRegisterEventHandler(
+			'rest',
+			'OnRestServiceBuildDescription',
+			'booking',
+			'\Bitrix\Booking\Rest\V1\Event\RestEventHandler',
+			'onRestServiceBuildDescription',
+		);
 	}
 
-	private function installResourceTypes(): void
+	private function cleanCounters(): void
 	{
-		Loader::includeModule($this->MODULE_ID);
+		global $DB, $CACHE_MANAGER;
 
-		$resourceTypeRepository = Container::getResourceTypeRepository();
-		if (!$resourceTypeRepository->getList(limit: 1)->isEmpty())
-		{
-			return;
-		}
-
-		$advTypes = Container::getAdvertisingTypeRepository()->getList();
-		foreach ($advTypes as $advType)
-		{
-			$resourceTypeRepository->save(
-				ResourceType::mapFromArray([
-					...$advType['resourceType'],
-					'moduleId' => ResourceType::INTERNAL_MODULE_ID,
-				])
-			);
-
-		}
+		$DB->Query("DELETE FROM b_user_counter WHERE CODE = 'booking_total'");
+		$CACHE_MANAGER->CleanDir('user_counter');
 	}
 }

@@ -6,8 +6,6 @@ use Bitrix\Crm\Integration\Bitrix24Manager;
 use Bitrix\Crm\Service\Container;
 use Bitrix\Crm\Service\Factory;
 use Bitrix\Main\NotSupportedException;
-use CCrmDeal;
-use CCrmLead;
 use CCrmOwnerType;
 
 class ObserversFieldRestriction extends Bitrix24QuantityRestriction
@@ -29,24 +27,25 @@ class ObserversFieldRestriction extends Bitrix24QuantityRestriction
 	protected bool $isFeatureEnabled;
 	protected ?Factory $factory;
 
+	private int $limit = 0;
+
 	public function __construct(int $entityTypeId)
 	{
 		$this->entityTypeId = $entityTypeId;
 		$this->isFeatureEnabled = false;
 		$this->factory = Container::getInstance()->getFactory($entityTypeId);
 
-		$limit = 0;
 		$sliderId = static::FEATURE_SLIDER_CODE;
 
 		if (Bitrix24Manager::isFeatureEnabled(static::FEATURE_NAME))
 		{
 			$this->isFeatureEnabled = true;
 
-			$limit = max(0, (int)Bitrix24Manager::getVariable(static::LIMIT_VAR_NAME));
+			$this->limit = max(0, (int)Bitrix24Manager::getVariable(static::LIMIT_VAR_NAME));
 			$sliderId = static::LIMIT_SLIDER_CODE;
 		}
 
-		parent::__construct(static::FEATURE_NAME, $limit, null, ['ID'=> $sliderId]);
+		parent::__construct(static::FEATURE_NAME, $this->limit, null, ['ID'=> $sliderId]);
 
 		$this->load(); // load actual $limit from options
 	}
@@ -58,13 +57,13 @@ class ObserversFieldRestriction extends Bitrix24QuantityRestriction
 			return true;
 		}
 
-		$limit = $this->getQuantityLimit();
-		if ($limit <= 0)
+		$this->limit = $this->getQuantityLimit();
+		if ($this->limit <= 0)
 		{
 			return false;
 		}
-		
-		return $this->getCount($this->entityTypeId) > $limit;
+
+		return $this->getCount($this->entityTypeId) > $this->limit;
 	}
 
 	public function getCount(int $entityTypeId): int
@@ -78,17 +77,10 @@ class ObserversFieldRestriction extends Bitrix24QuantityRestriction
 
 		$this->cache->startDataCache();
 
-		if ($entityTypeId === CCrmOwnerType::Deal)
+		if ($this->factory)
 		{
-			$count = CCrmDeal::GetTotalCount();
-		}
-		elseif ($entityTypeId === CCrmOwnerType::Lead)
-		{
-			$count = CCrmLead::GetTotalCount();
-		}
-		elseif ($this->factory)
-		{
-			$count = $this->factory->getItemsCount();
+			$isTotalItemsCountExceeded = $this->factory->checkIfTotalItemsCountExceeded($this->limit);
+			$count = $isTotalItemsCountExceeded ? $this->limit + 1 : $this->limit - 1;
 		}
 		elseif (CCrmOwnerType::isUseDynamicTypeBasedApproach($entityTypeId))
 		{

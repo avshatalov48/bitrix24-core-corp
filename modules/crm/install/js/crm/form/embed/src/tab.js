@@ -6,7 +6,7 @@ import 'main.loader';
 
 // fallback values
 export const HELP_CENTER_ID = 13003062;
-export const HELP_CENTER_URL = 'https://helpdesk.bitrix24.ru/open/' + HELP_CENTER_ID;
+export const HELP_CENTER_URL = `BX.Helper?.show('redirect=detail&code=${HELP_CENTER_ID}')`;
 
 export class Tab {
 

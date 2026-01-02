@@ -2,6 +2,7 @@
 
 namespace Bitrix\Tasks\Integration\UI\EntitySelector;
 
+use Bitrix\Main\Localization\Loc;
 use Bitrix\Main\Text\Emoji;
 use Bitrix\Tasks\Internals\SearchIndex;
 use Bitrix\UI\EntitySelector\BaseProvider;
@@ -155,7 +156,7 @@ class TaskProvider extends BaseProvider
 		];
 		$select = ['ID', 'TITLE'];
 
-		$tasksResult = \CTasks::GetList($order, $filter, $select, $parameters);
+		$tasksResult = (new \Bitrix\Tasks\Provider\TaskProvider())->getList($order, $filter, $select, $parameters);
 		while ($task = $tasksResult->Fetch())
 		{
 			$tasks[$task['ID']] = $task;
@@ -253,8 +254,8 @@ class TaskProvider extends BaseProvider
 			$supertitle = static::getSupertitleByStatus($status);
 
 			$result[] = new Item([
-				'entityId' => static::$entityId,
 				'id' => $id,
+				'entityId' => static::$entityId,
 				'title' => Emoji::decode($title),
 				'supertitle' => $supertitle,
 				'tabs' => 'recents',
@@ -268,7 +269,8 @@ class TaskProvider extends BaseProvider
 	{
 		$parentId = null;
 		$entity = $dialog->getEntity(static::$entityId);
-		if (!empty($entity))
+
+		if ($entity !== null)
 		{
 			$taskOptions = $entity->getOptions();
 
@@ -285,7 +287,8 @@ class TaskProvider extends BaseProvider
 	{
 		$excludeIds = [];
 		$entity = $dialog->getEntity(static::$entityId);
-		if (!empty($entity))
+
+		if ($entity !== null)
 		{
 			$taskOptions = $entity->getOptions();
 
@@ -298,8 +301,8 @@ class TaskProvider extends BaseProvider
 		return $excludeIds;
 	}
 
-	protected static function getSupertitleByStatus(int $status): string
+	protected static function getSupertitleByStatus(int $status): ?string
 	{
-		return '';
+		return Loc::getMessage('TASKS_UI_ENTITY_SELECTOR_TASK_PROVIDER_TASK');
 	}
 }

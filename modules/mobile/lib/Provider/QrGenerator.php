@@ -54,15 +54,18 @@ final class QrGenerator
 	 */
 	private function generateQr(): void
 	{
-		$colorScheme = $this->darkMode ? '#171717' : '#F6F8FA';
+		$bgColor = $this->darkMode ? '#171717' : '#FFFFFF';
+		$qrColor = $this->darkMode ? '#FFFFFF' : '#171717';
 
 		$this->qrContent = (new Barcode())
 			->format('svg')
-			->option('p', 0)
-			->option('bc', '')
-			->option('mc', 's')
+			->option('w', 300)
+			->option('h', 300)
+			->option('p', 18)
 			->option('wq', 0)
-			->option('cs', $colorScheme)
+			->option('bc', $bgColor)
+			->option('wq', 0)
+			->option('cm', $qrColor)
 			->render($this->url);
 	}
 

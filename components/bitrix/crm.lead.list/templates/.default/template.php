@@ -15,6 +15,7 @@ if (!defined('B_PROLOG_INCLUDED') || B_PROLOG_INCLUDED !== true)
  * @var CBitrixComponent $component
  */
 
+use Bitrix\Crm\Activity\LastCommunication\LastCommunicationTimeFormatter;
 use Bitrix\Crm\Activity\ToDo\CalendarSettings\CalendarSettingsProvider;
 use Bitrix\Crm\Activity\ToDo\ColorSettings\ColorSettingsProvider;
 use Bitrix\Crm\Activity\TodoPingSettingsProvider;
@@ -24,12 +25,12 @@ use Bitrix\Crm\Service\Container;
 use Bitrix\Crm\Tracking;
 use Bitrix\Crm\UI\NavigationBarPanel;
 use Bitrix\Main\Localization\Loc;
+use Bitrix\Main\Web\Json;
+use Bitrix\Main\Web\Uri;
+use Bitrix\UI\Buttons\AirButtonStyle;
 
 $APPLICATION->SetAdditionalCSS("/bitrix/themes/.default/crm-entity-show.css");
-if (SITE_TEMPLATE_ID === 'bitrix24')
-{
-	$APPLICATION->SetAdditionalCSS("/bitrix/themes/.default/bitrix24/crm-entity-show.css");
-}
+$APPLICATION->SetAdditionalCSS('/bitrix/themes/.default/bitrix24/crm-entity-show.css');
 
 if (CModule::IncludeModule('bitrix24') && !\Bitrix\Crm\CallList\CallList::isAvailable())
 {
@@ -45,6 +46,7 @@ Bitrix\Main\UI\Extension::load(
 		'crm.entity-list.panel',
 		'crm.badge',
 		'ui.design-tokens',
+		'crm.entity-list.binder',
 	]
 );
 
@@ -321,7 +323,6 @@ js,
 					];
 				}
 
-				$arActions[] = ['SEPARATOR' => true];
 				$arActions[] = [
 					'TITLE' => Loc::getMessage('CRM_LEAD_CREATE_ON_BASIS_TITLE'),
 					'TEXT' => Loc::getMessage('CRM_LEAD_CREATE_ON_BASIS'),
@@ -545,6 +546,7 @@ js,
 
 	$dateCreate = $arLead['DATE_CREATE'] ?? '';
 	$dateModify = $arLead['DATE_MODIFY'] ?? '';
+	$movedTime = $arLead['MOVED_TIME'] ?? '';
 	$webformId = null;
 	if (isset($arLead['WEBFORM_ID']))
 	{
@@ -595,6 +597,7 @@ js,
 			'SOURCE_DESCRIPTION' => nl2br($arLead['SOURCE_DESCRIPTION'] ?? ''),
 			'DATE_CREATE' => FormatDate($arResult['TIME_FORMAT'], MakeTimeStamp($dateCreate), $now),
 			'DATE_MODIFY' => FormatDate($arResult['TIME_FORMAT'], MakeTimeStamp($dateModify), $now),
+			'MOVED_TIME' => FormatDate($arResult['TIME_FORMAT'], MakeTimeStamp($movedTime), $now),
 			'SUM' => $arLead['FORMATTED_OPPORTUNITY'],
 			'OPPORTUNITY' => $arLead['~OPPORTUNITY'] ?? 0.0,
 			'CURRENCY_ID' => CCrmCurrency::GetEncodedCurrencyName($arLead['~CURRENCY_ID'] ?? null),
@@ -624,7 +627,7 @@ js,
 			),
 			'SOURCE_ID' => $arLead['LEAD_SOURCE_NAME'] ?? null,
 			'WEBFORM_ID' => $webformId,
-			'CREATED_BY' => isset($arLead['~CREATED_BY']) && $arLead['~CREATED_BY'] > 0
+			'CREATED_BY' => isset($arLead['~CREATED_BY']) && isset($arLead['CREATED_BY_FORMATTED_NAME']) && $arLead['~CREATED_BY'] > 0
 				? CCrmViewHelper::PrepareUserBaloonHtml(
 					array(
 						'PREFIX' => "LEAD_{$arLead['~ID']}_CREATOR",
@@ -634,7 +637,15 @@ js,
 					)
 				)
 				: '',
-			'MODIFY_BY' => isset($arLead['~MODIFY_BY']) && $arLead['~MODIFY_BY'] > 0
+			'MOVED_BY' => isset($arLead['~MOVED_BY']) && isset($arLead['MOVED_BY_FORMATTED_NAME']) && $arLead['~MOVED_BY'] > 0
+				? CCrmViewHelper::PrepareUserBaloonHtml([
+					'PREFIX' => "DEAL_{$arLead['~ID']}_MOVED",
+					'USER_ID' => $arLead['~MOVED_BY'],
+					'USER_NAME' => $arLead['MOVED_BY_FORMATTED_NAME'],
+					'USER_PROFILE_URL' => $arLead['PATH_TO_USER_MOVED'],
+				])
+				: '',
+			'MODIFY_BY' => isset($arLead['~MODIFY_BY']) && isset($arLead['MODIFY_BY_FORMATTED_NAME']) && $arLead['~MODIFY_BY'] > 0
 				? CCrmViewHelper::PrepareUserBaloonHtml(
 					array(
 						'PREFIX' => "LEAD_{$arLead['~ID']}_MODIFIER",
@@ -680,34 +691,83 @@ js,
 		$resultItem['columns']['LEAD_SUMMARY'] .= Bitrix\Crm\Component\EntityList\BadgeBuilder::render($arLead['badges']);
 	}
 
+	(new LastCommunicationTimeFormatter())->formatListDate($arLead, $resultItem['columns']);
+
 	$arResult['GRID_DATA'][] = &$resultItem;
 	unset($resultItem);
 }
 
-if ($arResult['ENABLE_TOOLBAR'])
+if ($arResult['ENABLE_TOOLBAR'] && !\Bitrix\Main\Grid\Context::isInternalRequest())
 {
-	$addButton =array(
-		'TEXT' => \CCrmOwnerType::GetDescription(\CCrmOwnerType::Lead),
-		'TITLE' => \CCrmOwnerType::GetDescription(\CCrmOwnerType::Lead),
-		'LINK' => $arResult['PATH_TO_LEAD_ADD'],
-		'ICON' => 'btn-new'
-	);
+	$pathToLeadAdd = $arResult['PATH_TO_LEAD_ADD'] ?? null;
+
+	$addButtonParams = [
+		'text' => Loc::getMessage('CRM_LEAD_LIST_NEW_DEAL'),
+		'style' => AirButtonStyle::FILLED,
+		'icon' => \Bitrix\UI\Buttons\Icon::ADD,
+		'link' => $pathToLeadAdd instanceof Uri ? $pathToLeadAdd->getUri() : $pathToLeadAdd,
+	];
 
 	if (!empty($arResult['ADD_EVENT_NAME']))
 	{
-		$addButton['ONCLICK'] = "BX.onCustomEvent(window, '{$arResult['ADD_EVENT_NAME']}')";
+		unset($addButtonParams['link']);
+
+		$eventName = $arResult['ADD_EVENT_NAME'];
+		$jsCode = "BX.onCustomEvent(window, '{$eventName}', " . Json::encode($data) . ");";
+		$addButtonParams['onclick'] = new \Bitrix\UI\Buttons\JsCode($jsCode);
 	}
 
-	$APPLICATION->IncludeComponent(
-		'bitrix:crm.interface.toolbar',
-		'',
-		array(
-			'TOOLBAR_ID' => mb_strtolower($arResult['GRID_ID']).'_toolbar',
-			'BUTTONS' => array($addButton)
-		),
-		$component,
-		array('HIDE_ICONS' => 'Y')
-	);
+	$buttons = [$addButtonParams];
+
+	if ($arParams['PARENT_ENTITY_TYPE_ID'] && $arParams['PARENT_ENTITY_ID'])
+	{
+		$relationCode = (int)$arParams['PARENT_ENTITY_TYPE_ID'] . '-' . (int)$arParams['PARENT_ENTITY_ID'] . '-' . \CCrmOwnerType::Lead;
+		$targetId = 'relation-button-' . $relationCode;
+		$jsCode = sprintf(
+			<<<js
+				(function() {
+					void BX.Crm.Binder.Manager.Instance.createRelatedSelector('%s', '%s')?.show();
+				})()
+			js,
+			\CUtil::JSEscape('relation-' . $relationCode),
+			\CUtil::JSEscape($targetId),
+		);
+
+		$linkButton = new \Bitrix\UI\Buttons\Button([
+			'id' => $targetId,
+			'text' =>  Loc::getMessage('CRM_LEAD_LIST_LINK_LEAD'),
+			'style' => AirButtonStyle::OUTLINE,
+			'icon' => \Bitrix\UI\Buttons\Icon::ADD,
+			'onclick' => new \Bitrix\UI\Buttons\JsCode($jsCode),
+		]);
+
+		$linkButton->addAttribute('id', $targetId);
+		$buttons[] = $linkButton;
+
+	}
+
+	$toolbarId = mb_strtolower($arResult['GRID_ID']) . '_toolbar';
+	$toolbar = \Bitrix\UI\Toolbar\Manager::getInstance()->createToolbar($toolbarId, []);
+
+	foreach ($buttons as $button)
+	{
+		$toolbar->addButton($button, \Bitrix\UI\Toolbar\ButtonLocation::AFTER_TITLE);
+	}
+
+	$toolbar->hideTitle();
+	?>
+	<div class="crm-list-top-toolbar">
+		<?php
+		$GLOBALS["APPLICATION"]->IncludeComponent(
+			'bitrix:ui.toolbar',
+			'',
+			[
+				'TOOLBAR_ID' => $toolbarId,
+			],
+		);
+		?>
+		</div>
+	<?php
 }
 
 $messages = [];
@@ -801,6 +861,10 @@ $APPLICATION->IncludeComponent(
 		'PRESERVE_HISTORY' => $arResult['PRESERVE_HISTORY'],
 		'MESSAGES' => $messages,
 		'DISABLE_NAVIGATION_BAR' => $arResult['DISABLE_NAVIGATION_BAR'],
+		'COUNTER_PANEL' => [
+			'ENTITY_TYPE_NAME' => CCrmOwnerType::LeadName,
+			'EXTRAS' => [],
+		],
 		'NAVIGATION_BAR' => (new NavigationBarPanel(CCrmOwnerType::Lead))
 			->setItems([
 				NavigationBarPanel::ID_KANBAN,
@@ -863,6 +927,15 @@ $APPLICATION->IncludeComponent(
 				'gridId' => $arResult['GRID_ID'],
 				'progressBarContainerId' => 'crm-lead-list-progress-bar-container',
 			]) ?>);
+
+			<?php if (isset($arParams['PARENT_ENTITY_TYPE_ID'])):?>
+			BX.Crm.Binder.Manager.Instance.initializeBinder(
+				<?=$arParams['PARENT_ENTITY_TYPE_ID']?>,
+				<?=$arParams['PARENT_ENTITY_ID']?>,
+				<?=\CCrmOwnerType::Lead?>,
+				'<?= CUtil::JSEscape($arResult['GRID_ID'])?>'
+			);
+			<?php endif;?>
 		}
 	);
 </script>

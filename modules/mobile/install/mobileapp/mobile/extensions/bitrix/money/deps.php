@@ -1,3 +1,9 @@
 <?php
 
-return ['utils', 'cache'];
+return [
+	'extensions' => [
+		'utils/string',
+		'utils/object',
+		'cache',
+	],
+];

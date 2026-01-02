@@ -49,55 +49,33 @@ class UpdateObserver implements UpdateObserverInterface
 	/**
 	 * @throws ArgumentException
 	 */
-	//TODO refactor by distributionType
-	private function cleanUpByChanges(FlowEntity $flowEntityBeforeUpdate): void
+	private function cleanUpByChanges(): void
 	{
+		$deleteRoles = [];
+
+		if (isset($this->command->responsibleList))
+		{
+			$deleteRoles = array_merge($deleteRoles, Role::getResponsibleRoles());
+		}
+
 		if (isset($this->command->taskCreators))
 		{
-			FlowMemberTable::deleteByRole($this->command->id, Role::TASK_CREATOR->value);
+			$deleteRoles[] = Role::TASK_CREATOR->value;
 		}
 
 		if (isset($this->command->ownerId))
 		{
-			FlowMemberTable::deleteByRole($this->command->id, Role::OWNER->value);
+			$deleteRoles[] = Role::OWNER->value;
 		}
 
 		if (isset($this->command->creatorId))
 		{
-			FlowMemberTable::deleteByRole($this->command->id, Role::CREATOR->value);
+			$deleteRoles[] = Role::CREATOR->value;
 		}
 
-		$flowEntityBeforeUpdateDistributionType = $flowEntityBeforeUpdate->getDistributionType();
-		$flowEntityDistributionType = $this->flowEntity->getDistributionType();
-
-		$isSwitchedFromQueue =
-			$flowEntityBeforeUpdateDistributionType === FlowDistributionType::QUEUE->value
-			&& $flowEntityDistributionType !== FlowDistributionType::QUEUE->value
-		;
-
-		if ($this->hasResponsibleQueue() || $isSwitchedFromQueue)
+		if (!empty($deleteRoles))
 		{
-			FlowMemberTable::deleteByRole($this->command->id, Role::QUEUE_ASSIGNEE->value);
-		}
-
-		$isSwitchedFromManual =
-			$flowEntityBeforeUpdateDistributionType === FlowDistributionType::MANUALLY->value
-			&& $flowEntityDistributionType !== FlowDistributionType::MANUALLY->value
-		;
-
-		if ($this->hasManualDistributor() || $isSwitchedFromManual)
-		{
-			FlowMemberTable::deleteByRole($this->command->id, Role::MANUAL_DISTRIBUTOR->value);
-		}
-
-		$isSwitchedFromHimself =
-			$flowEntityBeforeUpdateDistributionType === FlowDistributionType::HIMSELF->value
-			&& $flowEntityDistributionType !== FlowDistributionType::HIMSELF->value
-		;
-
-		if ($this->hasResponsibleHimself() || $isSwitchedFromHimself)
-		{
-			FlowMemberTable::deleteByRole($this->command->id, Role::HIMSELF_ASSIGNED->value);
+			FlowMemberTable::deleteByRoles($this->command->id, $deleteRoles);
 		}
 	}
 
@@ -110,6 +88,7 @@ class UpdateObserver implements UpdateObserverInterface
 			|| $this->hasResponsibleQueue()
 			|| $this->hasManualDistributor()
 			|| $this->hasResponsibleHimself()
+			|| $this->hasResponsibleImmutable()
 		;
 	}
 }

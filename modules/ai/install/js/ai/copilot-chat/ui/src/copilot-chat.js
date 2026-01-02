@@ -31,6 +31,9 @@ export const CopilotChatEvents = Object.freeze({
 	SHOW_ERROR_SCREEN: 'showErrorScreen',
 	HIDE_ERROR_SCREEN: 'hideErrorScreen',
 	MESSAGES_SCROLL_TOP: 'messagesListScrollTop',
+	RETRY_SEND_MESSAGE: 'retrySendMessage',
+	REMOVE_MESSAGE: 'removeMessage',
+	RETRY_LOAD_HISTORY: 'retryLoadHistory',
 });
 
 export const CopilotChatMessageStatus = {
@@ -64,6 +67,7 @@ export class CopilotChat extends EventEmitter
 	#app;
 	#messages: VueRefValue<CopilotChatMessage[]>;
 	#isShowLoader: VueRefValue<boolean>;
+	#isOldMessagesLoading: VueRefValue<boolean>;
 	#isInputDisabled: VueRefValue<boolean>;
 	#chatStatus: VueRefValue<string>;
 	#useChatStatus: VueRefValue<boolean>;
@@ -75,6 +79,7 @@ export class CopilotChat extends EventEmitter
 	#userAvatar: VueRefValue<string>;
 	#inputPlaceholder: string;
 	#loaderText: ?string;
+	#isShowLoadHistoryError: VueRefValue<boolean>;
 
 	constructor(options: CopilotChatOptions = {})
 	{
@@ -99,7 +104,9 @@ export class CopilotChat extends EventEmitter
 				? options.scrollToTheEndAfterFirstShow
 				: true,
 		);
+		this.#isOldMessagesLoading = ref(false);
 		this.#showCopilotWarningMessage = ref(options.showCopilotWarningMessage === true);
+		this.#isShowLoadHistoryError = ref(false);
 		this.#userAvatar = ref(options.userAvatar ?? '');
 		this.#inputPlaceholder = options.inputPlaceholder ?? Loc.getMessage('AI_COPILOT_CHAT_INPUT_PLACEHOLDER');
 		this.#loaderText = options.loaderText;
@@ -115,11 +122,54 @@ export class CopilotChat extends EventEmitter
 		return 669;
 	}
 
+	startLoadingOldMessages(): void
+	{
+		this.#isOldMessagesLoading.value = true;
+	}
+
+	finishLoadingOldMessages(): void
+	{
+		this.#isOldMessagesLoading.value = false;
+	}
+
+	isOldMessagesLoading(): boolean
+	{
+		return this.#isOldMessagesLoading.value;
+	}
+
 	isMessageInList(messageId: number): boolean
 	{
 		return this.#messages.value.findLast((message) => {
 			return message.id === messageId;
 		});
+	}
+
+	getFirstMessageId(): ?number
+	{
+		return this.#messages.value[0]?.id;
+	}
+
+	getMessageById(messageId: number): ?CopilotChatMessage
+	{
+		return this.#messages.value.find((message) => message.id === messageId);
+	}
+
+	removeMessage(messageId: number): void
+	{
+		const removedMessageIndex = this.#messages.value.findIndex((message) => message.id === messageId);
+		this.#messages.value.splice(removedMessageIndex, 1);
+	}
+
+	unshiftMessages(messages: CopilotChatMessage[]): void
+	{
+		const messagesWithStatus = messages.map((message) => {
+			return {
+				...message,
+				status: CopilotChatMessageStatus.DELIVERED,
+			};
+		});
+
+		this.#messages.value.unshift(...messagesWithStatus);
 	}
 
 	addUserMessage(message: CopilotChatMessage, emitEvent: boolean = true): void
@@ -200,6 +250,11 @@ export class CopilotChat extends EventEmitter
 		this.#setMessageStatus(messageId, CopilotChatMessageStatus.SENT);
 	}
 
+	setMessageStatusError(messageId: string): void
+	{
+		this.#setMessageStatus(messageId, CopilotChatMessageStatus.ERROR);
+	}
+
 	setCopilotWritingStatus(value: boolean): void
 	{
 		if (value === true)
@@ -242,7 +297,7 @@ export class CopilotChat extends EventEmitter
 			return;
 		}
 
-		message.dateCreated = date;
+		message.dateCreate = date;
 	}
 
 	emitClickOnMessageButton(data: { buttonId: number, messageId: number }): void
@@ -257,6 +312,11 @@ export class CopilotChat extends EventEmitter
 			messageId,
 			button: { ...clickedMessageButton },
 		});
+	}
+
+	emitRetryLoadHistory(): void
+	{
+		this.emit(CopilotChatEvents.RETRY_LOAD_HISTORY);
 	}
 
 	#findMessageButton(messageId: number, buttonId: number): ?CopilotChatMessageButton
@@ -296,7 +356,7 @@ export class CopilotChat extends EventEmitter
 
 		const newMessage: CopilotChatMessage = {
 			id: newMessageId,
-			dateCreated: (new Date()).toISOString(),
+			dateCreate: (new Date()).toISOString(),
 			status: CopilotChatMessageStatus.DEPART,
 			authorId: 0,
 			...message,
@@ -356,6 +416,16 @@ export class CopilotChat extends EventEmitter
 		this.#userAvatar.value = avatar;
 	}
 
+	showLoadHistoryError(): void
+	{
+		this.#isShowLoadHistoryError.value = true;
+	}
+
+	hideLoadHistoryError(): void
+	{
+		this.#isShowLoadHistoryError.value = false;
+	}
+
 	#initPopup(): Popup
 	{
 		const adjustPopupPosition = this.adjustPosition.bind(this);
@@ -383,6 +453,7 @@ export class CopilotChat extends EventEmitter
 
 					unbind(window, 'resize', adjustPopupPosition);
 				},
+				...this.#popupOptions.events,
 			},
 		});
 
@@ -424,6 +495,8 @@ export class CopilotChat extends EventEmitter
 			userAvatar: this.#userAvatar,
 			inputPlaceholder: this.#inputPlaceholder,
 			loaderText: this.#loaderText,
+			isOldMessagesLoading: this.#isOldMessagesLoading,
+			isShowLoadHistoryError: this.#isShowLoadHistoryError,
 		});
 
 		this.#app.mount(appContainer);

@@ -45,6 +45,8 @@ $APPLICATION->IncludeComponent(
 	$component,
 	['HIDE_ICONS' => true]
 );
+
+\Bitrix\Main\UI\Extension::load('intranet.old-interface.sidebar-filter');
 ?>
 
 <?php $this->SetViewTarget("report_view_prefilter", 100);?>

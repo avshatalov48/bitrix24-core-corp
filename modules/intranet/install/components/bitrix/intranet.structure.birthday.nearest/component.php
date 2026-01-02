@@ -13,20 +13,20 @@ if (!CModule::IncludeModule('intranet'))
 	return;
 }
 
-$arParams['NUM_USERS'] = intval($arParams['NUM_USERS']);
+$arParams['NUM_USERS'] = intval($arParams['NUM_USERS'] ?? 5);
 
-if (trim($arParams["NAME_TEMPLATE"]) == '')
+if (trim($arParams["NAME_TEMPLATE"] ?? '') === '')
 {
 	$arParams["NAME_TEMPLATE"] = CSite::GetNameFormat();
 }
-$arParams['SHOW_LOGIN'] = $arParams['SHOW_LOGIN'] != "N" ? "Y" : "N";
+$arParams['SHOW_LOGIN'] = !isset($arParams['SHOW_LOGIN']) || $arParams['SHOW_LOGIN'] != "N" ? "Y" : "N";
 
 if (!array_key_exists("PM_URL", $arParams))
 	$arParams["~PM_URL"] = $arParams["PM_URL"] = "/company/personal/messages/chat/#USER_ID#/";
 if (!array_key_exists("PATH_TO_CONPANY_DEPARTMENT", $arParams))
 	$arParams["~PATH_TO_CONPANY_DEPARTMENT"] = $arParams["PATH_TO_CONPANY_DEPARTMENT"] = "/company/structure.php?set_filter_structure=Y&structure_UF_DEPARTMENT=#ID#";
 
-$arParams['SHOW_YEAR'] = $arParams['SHOW_YEAR'] == 'Y' ? 'Y' : ($arParams['SHOW_YEAR'] == 'M' ? 'M' : 'N');
+$arParams['SHOW_YEAR'] = isset($arParams['SHOW_YEAR']) && $arParams['SHOW_YEAR'] == 'Y' ? 'Y' : (isset($arParams['SHOW_YEAR']) && $arParams['SHOW_YEAR'] == 'M' ? 'M' : 'N');
 
 if (!isset($arParams['DATE_FORMAT']))
 {
@@ -38,11 +38,11 @@ if (!isset($arParams['DATE_FORMAT_NO_YEAR']))
 	$arParams['DATE_FORMAT_NO_YEAR'] = \Bitrix\Main\Context::getCurrent()->getCulture()->getDayMonthFormat();
 }
 
-$arParams['DETAIL_URL'] = trim($arParams['DETAIL_URL']);
+$arParams['DETAIL_URL'] = trim($arParams['DETAIL_URL'] ?? '');
 if (!$arParams['DETAIL_URL'])
 	$arParams['~DETAIL_URL'] = $arParams['DETAIL_URL'] = COption::GetOptionString('intranet', 'search_user_url', '/user/#ID#/');
 
-$arParams['DEPARTMENT'] = intval($arParams['DEPARTMENT']);
+$arParams['DEPARTMENT'] = intval($arParams['DEPARTMENT'] ?? 0);
 $arParams['bShowFilter'] = $arParams['DEPARTMENT'] <= 0;
 
 // for bitrix:main.user.link

@@ -1,0 +1,25 @@
+<?php
+$MESS["TRACKING_SOURCE_EXPENSES_FIELD_ACTIONS"] = "Әрекеттер";
+$MESS["TRACKING_SOURCE_EXPENSES_FIELD_AD_ID"] = "Жарнамалық хабарландырудың ID-і";
+$MESS["TRACKING_SOURCE_EXPENSES_FIELD_AD_NAME"] = "Жарнаманың атауы";
+$MESS["TRACKING_SOURCE_EXPENSES_FIELD_CAMPAIGN_ID"] = "Жарнама науқанының ID-і";
+$MESS["TRACKING_SOURCE_EXPENSES_FIELD_CAMPAIGN_NAME"] = "Жарнамалық науқанның атауы";
+$MESS["TRACKING_SOURCE_EXPENSES_FIELD_CLICKS"] = "Шертулер";
+$MESS["TRACKING_SOURCE_EXPENSES_FIELD_CPC"] = "Әр шетудің бағасы";
+$MESS["TRACKING_SOURCE_EXPENSES_FIELD_CPM"] = "Мың көрсетілім бағасы";
+$MESS["TRACKING_SOURCE_EXPENSES_FIELD_CURRENCY"] = "Валюта";
+$MESS["TRACKING_SOURCE_EXPENSES_FIELD_DATE"] = "Күні";
+$MESS["TRACKING_SOURCE_EXPENSES_FIELD_EXPENSES"] = "Бір күндік шығындар";
+$MESS["TRACKING_SOURCE_EXPENSES_FIELD_GROUP_ID"] = "Жарнама тобының ID-і";
+$MESS["TRACKING_SOURCE_EXPENSES_FIELD_GROUP_NAME"] = "Жарнама тобының атауы";
+$MESS["TRACKING_SOURCE_EXPENSES_FIELD_IMPRESSIONS"] = "Көрсетілімдер";
+$MESS["TRACKING_SOURCE_EXPENSES_FIELD_SOURCE_ID"] = "Дереккөз ID-і";
+$MESS["TRACKING_SOURCE_EXPENSES_FIELD_UTM_CAMPAIGN"] = "Жарнама науқанының ID-і";
+$MESS["TRACKING_SOURCE_EXPENSES_FIELD_UTM_CAMPAIGN_FULL"] = "Жарнамалық науқан идентификаторы. Бұл параметр белгілі бір маркетингтік науқанға сілтеме жасау үшін қолданылады";
+$MESS["TRACKING_SOURCE_EXPENSES_FIELD_UTM_CONTENT"] = "Мазмұн элементінің ID-і";
+$MESS["TRACKING_SOURCE_EXPENSES_FIELD_UTM_CONTENT_FULL"] = "Мазмұн элементінің идентификаторы. Бұл опция бір науқан ішіндегі мазмұнның немесе жарнаманың әртүрлі нұсқаларын ажыратуға мүмкіндік береді ";
+$MESS["TRACKING_SOURCE_EXPENSES_FIELD_UTM_MEDIUM"] = "Трафик түрінің ID-і";
+$MESS["TRACKING_SOURCE_EXPENSES_FIELD_UTM_MEDIUM_FULL"] = "Трафик түрінің идентификаторы. Бұл опция пайдаланушы сайтқа кірген трафик түрін немесе арнаны білдіреді";
+$MESS["TRACKING_SOURCE_EXPENSES_FIELD_UTM_SOURCE"] = "Трафик көзінің ID-і";
+$MESS["TRACKING_SOURCE_EXPENSES_FIELD_UTM_SOURCE_FULL"] = "Трафик көзінің идентификаторы. Мысалы, Бұл пайдаланушы келген сайттың, платформаның немесе арнаның атауы болуы мүмкін";
+$MESS["TRACKING_SOURCE_EXPENSES_TABLE"] = "Жарнама шығындары";

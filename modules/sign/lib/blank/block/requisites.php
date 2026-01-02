@@ -1,4 +1,5 @@
 <?php
+
 namespace Bitrix\Sign\Blank\Block;
 
 use Bitrix\Main\Localization\Loc;
@@ -63,7 +64,7 @@ class Requisites extends Dummy
 			}
 
 			$data['data'] = [
-				'text' => implode('[br]', $textLines)
+				'text' => implode('[br]', $textLines),
 			];
 			
 			if ($requisites)
@@ -73,7 +74,7 @@ class Requisites extends Dummy
 			else
 			{
 				$fieldSet = \Bitrix\Crm\Integration\Sign\Form::getFieldSet(
-					\CCrmOwnerType::Contact, CRM::getOtherSidePresetId($document->getEntityId())
+					\CCrmOwnerType::Contact, CRM::getOtherSidePresetId($document->getEntityId()),
 				);
 				
 				if ($fieldSet && !empty($fieldSet->getFields()))
@@ -129,8 +130,8 @@ class Requisites extends Dummy
 					[
 						'field' => 'requisites',
 						'code' => $block->getCode(),
-						'presetId' => CRM::getOtherSidePresetId($block->getDocument()->getEntityId())
-					]
+						'presetId' => CRM::getOtherSidePresetId($block->getDocument()->getEntityId()),
+					],
 				));
 		}
 

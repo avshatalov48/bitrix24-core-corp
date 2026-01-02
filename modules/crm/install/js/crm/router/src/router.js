@@ -73,7 +73,7 @@ class Router
 
 	getCurrentListView(entityTypeId: number): string
 	{
-		return this.currentViews[entityTypeId] || ListViewTypes.LIST;
+		return this.currentViews[entityTypeId] || ListViewTypes.KANBAN;
 	}
 
 	static openSlider(url: string | Uri, options: ?Object = null): Promise<?BX.SidePanel.Slider>
@@ -212,7 +212,7 @@ class Router
 		let template = null;
 		if (currentListView === ListViewTypes.KANBAN)
 		{
-			template = this.getTemplate('bitrix:crm.kanban', entityTypeId);
+			template = this.getTemplate('bitrix:crm.item.kanban', entityTypeId);
 		}
 		else
 		{
@@ -308,6 +308,26 @@ class Router
 		}).show();
 	}
 
+	openRepeatSaleSegmentSlider(
+		segmentId: number,
+		readOnly: boolean = true,
+		analytics: Object = {},
+	): Promise<?BX.SidePanel.Slider>
+	{
+		return Router.openSlider(
+			`/crm/repeat-sale-segment/details/${segmentId}/`,
+			{
+				width: 922,
+				cacheable: false,
+				requestMethod: 'post',
+				requestParams: {
+					readOnly,
+					analytics,
+				},
+			},
+		);
+	}
+
 	closeSettingsMenu(event, item)
 	{
 		if (item && Type.isFunction(item.getMenuWindow))
@@ -374,6 +394,14 @@ class Router
 		normalizedId = normalizedId > 0 ? normalizedId : 0;
 
 		return new Uri(`/automation/type/automated_solution/details/${normalizedId}/`);
+	}
+
+	getDealKanbanUrl(categoryId: number): ?Uri
+	{
+		let normalizedId = Text.toInteger(categoryId);
+		normalizedId = normalizedId > 0 ? normalizedId : 0;
+
+		return new Uri(`/crm/deal/kanban/category/${normalizedId}/`);
 	}
 }
 

@@ -3,14 +3,14 @@
  */
 
 jn.define('im/messenger/controller/search/experimental/service/server-search-service', (require, exports, module) => {
-	const { LoggerManager } = require('im/messenger/lib/logger');
+	const { getLogger } = require('im/messenger/lib/logger');
 	const { runAction } = require('im/messenger/lib/rest');
 	const { RecentSearchItem } = require('im/messenger/controller/search/experimental/search-item');
 	const { StoreUpdater } = require('im/messenger/controller/search/experimental/store-updater');
 
 	const ENTITY_ID = 'im-recent-v2';
 
-	const logger = LoggerManager.getInstance().getLogger('recent-search');
+	const logger = getLogger('recent-search');
 
 	class RecentServerSearchService
 	{

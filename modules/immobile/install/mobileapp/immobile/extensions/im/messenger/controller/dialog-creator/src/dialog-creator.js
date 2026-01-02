@@ -2,14 +2,18 @@
  * @module im/messenger/controller/dialog-creator/dialog-creator
  */
 jn.define('im/messenger/controller/dialog-creator/dialog-creator', (require, exports, module) => {
-	/* global ChatUtils */
 	const { Type } = require('type');
+	const { clone } = require('utils/object');
+
 	const { serviceLocator } = require('im/messenger/lib/di/service-locator');
 	const { NavigationSelector } = require('im/messenger/controller/dialog-creator/navigation-selector');
-	const { ChatTitle, ChatAvatar } = require('im/messenger/lib/element');
+	const { ChatTitle } = require('im/messenger/lib/element/chat-title');
+	const { ChatAvatar } = require('im/messenger/lib/element/chat-avatar');
 	const { MessengerParams } = require('im/messenger/lib/params');
 	const { MessengerEmitter } = require('im/messenger/lib/emitter');
-	const { restManager } = require('im/messenger/lib/rest-manager');
+	const { AnalyticsService } = require('im/messenger/provider/services/analytics');
+	const { Feature } = require('im/messenger/lib/feature');
+
 	const {
 		RestMethod,
 		DialogType,
@@ -18,19 +22,22 @@ jn.define('im/messenger/controller/dialog-creator/dialog-creator', (require, exp
 		BotCode,
 		Analytics,
 		OpenDialogContextType,
+		NavigationTab,
+		NavigationTabByComponent,
 	} = require('im/messenger/const');
 	const { Logger } = require('im/messenger/lib/logger');
 	const { AnalyticsEvent } = require('analytics');
 	const { CopilotRoleSelector } = require('layout/ui/copilot-role-selector');
-	const { ChannelCreator } = require('im/messenger/controller/channel-creator');
-	const { Feature } = require('im/messenger/lib/feature');
 
+	/**
+	 * @class DialogCreator
+	 */
 	class DialogCreator
 	{
 		constructor(options = {})
 		{
 			this.store = serviceLocator.get('core').getStore();
-			this.messagerInitService = serviceLocator.get('messenger-init-service');
+			this.messengerInitService = serviceLocator.get('messenger-init-service');
 			this.selector = () => {};
 			this.bindMethods();
 			this.subscribeInitMessengerEvent();
@@ -38,7 +45,7 @@ jn.define('im/messenger/controller/dialog-creator/dialog-creator', (require, exp
 
 		subscribeInitMessengerEvent()
 		{
-			this.messagerInitService.onInit(this.handleUserGet);
+			this.messengerInitService.onInit(this.handleUserGet);
 		}
 
 		bindMethods()
@@ -57,30 +64,19 @@ jn.define('im/messenger/controller/dialog-creator/dialog-creator', (require, exp
 			);
 		}
 
-		createChannelDialog()
-		{
-			ChannelCreator.open({
-				userList: this.prepareItems(this.getUserList()),
-				analytics: new AnalyticsEvent().setSection(Analytics.Section.channelTab),
-			});
-		}
-
 		async createCollab()
 		{
-			if (!Feature.isCollabSupported)
-			{
-				Feature.showUnsupportedWidget();
-
-				return;
-			}
-
 			try
 			{
 				const { openCollabCreate } = await requireLazy('collab/create');
 
-				await openCollabCreate({
-					// todo provide some analytics here
-				});
+				const openCollabCreateOptions = {};
+				if (!Feature.isMessengerV2Enabled)
+				{
+					openCollabCreateOptions.navigationTab = NavigationTab.imCollabMessenger;
+				}
+
+				await openCollabCreate(openCollabCreateOptions);
 			}
 			catch (error)
 			{
@@ -96,7 +92,7 @@ jn.define('im/messenger/controller/dialog-creator/dialog-creator', (require, exp
 				showOpenFeedbackItem: true,
 				openWidgetConfig: {
 					backdrop: {
-						mediumPositionPercent: 75,
+						mediumPositionPercent: 85,
 						horizontalSwipeAllowed: false,
 						onlyMediumPosition: false,
 					},
@@ -120,21 +116,13 @@ jn.define('im/messenger/controller/dialog-creator/dialog-creator', (require, exp
 
 		sendAnalyticsStartCreateCopilotDialog()
 		{
-			try
-			{
-				const analytics = new AnalyticsEvent()
-					.setTool(Analytics.Tool.im)
-					.setCategory(Analytics.Category.copilot)
-					.setEvent(Analytics.Event.clickCreateNew)
-					.setType(Analytics.Type.copilot)
-					.setSection(Analytics.Section.copilotTab);
-
-				analytics.send();
-			}
-			catch (e)
-			{
-				console.error(`${this.constructor.name}.sendAnalyticsStartCreateCopilotDialog.catch:`, e);
-			}
+			AnalyticsService.getInstance()
+				.sendStartCreation({
+					category: Analytics.Category.copilot,
+					type: Analytics.Type.copilot,
+					section: Analytics.Section.copilotTab,
+				})
+			;
 		}
 
 		callRestCreateCopilotDialog(fields)
@@ -148,14 +136,27 @@ jn.define('im/messenger/controller/dialog-creator/dialog-creator', (require, exp
 				{
 					setTimeout(
 						() => {
-							MessengerEmitter.emit(
-								EventType.messenger.openDialog,
-								{
-									dialogId: `chat${chatId}`,
-									context: OpenDialogContextType.chatCreation,
-								},
-								ComponentCode.imCopilotMessenger,
-							);
+							const openDialogParams = {
+								dialogId: `chat${chatId}`,
+								context: OpenDialogContextType.chatCreation,
+							};
+
+							if (Feature.isMessengerV2Enabled)
+							{
+								void serviceLocator.get('dialog-manager').openDialog(openDialogParams);
+							}
+							else
+							{
+								MessengerEmitter.emit(
+									EventType.navigation.broadCastEventCheckTabPreload,
+									{
+										broadCastEvent: EventType.messenger.openDialog,
+										toTab: NavigationTabByComponent[ComponentCode.imCopilotMessenger],
+										data: openDialogParams,
+									},
+									ComponentCode.imNavigation,
+								);
+							}
 
 							const analytics = new AnalyticsEvent()
 								.setTool(Analytics.Tool.ai)
@@ -191,7 +192,7 @@ jn.define('im/messenger/controller/dialog-creator/dialog-creator', (require, exp
 			 */
 			const userItems = [];
 
-			const recentUserList = ChatUtils.objectClone(this.store.getters['recentModel/getUserList']());
+			const recentUserList = clone(this.store.getters['recentModel/getUserList']());
 			const recentUserListIndex = {};
 			if (Type.isArrayFilled(recentUserList))
 			{
@@ -206,7 +207,7 @@ jn.define('im/messenger/controller/dialog-creator/dialog-creator', (require, exp
 				});
 			}
 
-			const colleaguesList = ChatUtils.objectClone(this.store.getters['usersModel/getList']());
+			const colleaguesList = clone(this.store.getters['usersModel/getList']());
 			if (Type.isArrayFilled(colleaguesList))
 			{
 				colleaguesList.forEach((user) => {

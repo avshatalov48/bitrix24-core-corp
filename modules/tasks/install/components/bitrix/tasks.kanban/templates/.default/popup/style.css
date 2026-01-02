@@ -80,17 +80,6 @@
 	margin-right: 12px;
 }
 
-.sn-collab-icon__wrapper {
-	grid-area: icon;
-	position: relative;
-	top: -1px;
-	width: var(--hexagon-width);
-	height: var(--hexagon-height);
-	display: flex;
-	align-items: center;
-	margin: auto;
-}
-
 .sn-collab-tasks__wrapper .pagetitle-item {
 	grid-area: title;
 	font-size: var(--ui-font-size-3xl);
@@ -98,7 +87,7 @@
 }
 
 .sn-collab__subtitle {
-	grid-area: subtitle;
+	white-space: nowrap;
 	max-width: 200px;
 	overflow: hidden;
 	text-overflow: ellipsis;

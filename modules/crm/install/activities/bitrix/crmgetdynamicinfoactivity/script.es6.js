@@ -57,6 +57,7 @@ class CrmGetDynamicInfoActivity
 			});
 
 			this.initAutomationContext();
+			this.#initOnOpenFilterFieldsMenu();
 			this.initFilterFields(options);
 			this.initReturnFields(options);
 
@@ -99,26 +100,32 @@ class CrmGetDynamicInfoActivity
 		try
 		{
 			getGlobalContext();
-			if (this.isRobot)
-			{
-				this.onOpenFilterFieldsMenu = (event) => {
-					const dialog = Designer.getInstance().getRobotSettingsDialog();
-					const template = dialog.template;
-					const robot = dialog.robot;
-					if (template && robot)
-					{
-						template.onOpenMenu(event, robot);
-					}
-				}
-			}
 		}
-		catch(error)
+		catch
 		{
-			setGlobalContext(new Context({document: this.document}));
-			this.onOpenFilterFieldsMenu = (event) => this.addBPFields(event.getData().selector);
+			setGlobalContext(new Context({ document: this.document }));
 		}
 	}
 
+	#initOnOpenFilterFieldsMenu()
+	{
+		if (this.isRobot)
+		{
+			this.onOpenFilterFieldsMenu = (event) => {
+				const dialog = Designer.getInstance().getRobotSettingsDialog();
+				const template = dialog.template;
+				const robot = dialog.robot;
+				if (template && robot)
+				{
+					template.onOpenMenu(event, robot);
+				}
+			};
+		}
+		else
+		{
+			this.onOpenFilterFieldsMenu = (event) => this.addBPFields(event.getData().selector);
+		}
+	}
 	addBPFields(selector: InlineSelector): void
 	{
 		const getSelectorProperties = ({properties, objectName, expressionPrefix}) => {

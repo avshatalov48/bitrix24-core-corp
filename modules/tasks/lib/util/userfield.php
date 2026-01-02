@@ -11,9 +11,20 @@
 namespace Bitrix\Tasks\Util;
 
 use Bitrix\Tasks\Util;
+use Bitrix\Tasks\Integration\CRM;
+use Bitrix\Tasks\Integration\Disk;
+use Bitrix\Tasks\Integration\Mail;
 
 abstract class UserField // todo: extends Dictionary, to iterate over user field scheme
 {
+	public static function getSystemFields(): array
+	{
+		return [
+			CRM\UserField::getMainSysUFCode(),
+			Disk\UserField::getMainSysUFCode(),
+			Mail\UserField::getMainSysUFCode(),
+		];
+	}
 	public static function getEntityCode()
 	{
 		return false;

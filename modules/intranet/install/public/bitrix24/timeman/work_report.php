@@ -22,7 +22,8 @@ if (IsModuleInstalled("timeman"))
 		array(
 			"POPUP_COMPONENT_NAME" => "bitrix:timeman.report.weekly",
 			"POPUP_COMPONENT_TEMPLATE_NAME" => "",
-			"POPUP_COMPONENT_PARAMS" => array()
+			"POPUP_COMPONENT_PARAMS" => array(),
+			'USE_UI_TOOLBAR' => 'Y',
 		)
 	);
 }

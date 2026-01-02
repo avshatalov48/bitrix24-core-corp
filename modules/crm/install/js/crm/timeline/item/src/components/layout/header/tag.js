@@ -148,6 +148,7 @@ export const Tag = {
 			@mouseover="showTooltip"
 			@mouseleave="hideTooltip"
 			@click="executeAction"
+			data-hint-interactivity
 		></div>
 	`,
 };

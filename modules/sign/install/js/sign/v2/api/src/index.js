@@ -1,5 +1,8 @@
+import type { DocumentInitiatedType } from 'sign.type';
 import { post } from './request';
 import { TemplateApi } from './template/template-api';
+import { TemplateFolderApi } from './template/template-folder-api';
+import { SignersListApi } from './signers-list-api';
 import type {
 	B2eCompanyList,
 	BlockData,
@@ -7,10 +10,10 @@ import type {
 	LoadedBlock,
 	LoadedDocumentData,
 	HcmLinkMultipleVacancyEmployeesLoadData,
-	EmployeeSaveData,
+	EmployeeSaveData, HcmLinkNotMappedUsersData,
 } from './type';
-import { CountMember, SetupMember } from './type';
-import type { MemberStatusType } from 'sign.type';
+import { CountMember, DocumentPreview, SetupMember } from './type';
+import { type MemberStatusType, MemberRole, type MemberRoleType } from 'sign.type';
 
 export * from './type';
 export * from './template/type';
@@ -18,6 +21,8 @@ export * from './template/type';
 export class Api
 {
 	template: TemplateApi = new TemplateApi();
+	templateFolder: TemplateFolderApi = new TemplateFolderApi();
+	signersList: SignersListApi = new SignersListApi();
 
 	#post(endpoint: string, data: Object | null = null, notifyError: boolean = true): $Call<typeof post>
 	{
@@ -29,6 +34,8 @@ export class Api
 		scenarioType: string | null = null,
 		asTemplate: boolean = false,
 		chatId: number = 0,
+		templateFolderId: number = 0,
+		initiatedByType: ?DocumentInitiatedType = null,
 	): Promise<{
 		uid: string,
 		templateUid: string | null,
@@ -36,7 +43,7 @@ export class Api
 		chatId: number,
 	}>
 	{
-		return this.#post('sign.api_v1.document.register', { blankId, scenarioType, asTemplate, chatId });
+		return this.#post('sign.api_v1.document.register', { blankId, scenarioType, asTemplate, chatId, templateFolderId, initiatedByType });
 	}
 
 	upload(uid: string): Promise<[]>
@@ -55,7 +62,9 @@ export class Api
 	}
 
 	createBlank(files: Array<string>, scenario: string | null = null, forTemplate: boolean = false): Promise<{
-		id: number;
+		id: number,
+		userAvatarUrl: null | string,
+		userName: null | string,
 	}>
 	{
 		return this.#post('sign.api_v1.document.blank.create', { files, scenario, forTemplate });
@@ -71,9 +80,9 @@ export class Api
 		return this.#post('sign.api_v1.document.blank.block.loadData', { documentUid, blocks });
 	}
 
-	changeDocument(uid: string, blankId: number): Promise<{ uid: string; }>
+	changeBlank(uid: string, blankId: number, copyBlocksFromPreviousBlank: boolean = false): Promise<{ uid: string; }>
 	{
-		return this.#post('sign.api_v1.document.changeBlank', { uid, blankId });
+		return this.#post('sign.api_v1.document.changeBlank', { uid, blankId, copyBlocksFromPreviousBlank });
 	}
 
 	changeDocumentLanguages(uid: string, lang: string): Promise
@@ -92,14 +101,24 @@ export class Api
 		return this.#post('sign.api_v1.document.modifyInitiatedByType', { uid, initiatedByType });
 	}
 
-	changeExternalId(uid: string, id: string): Promise<{ status: string; data: []; errors: string[]; }>
+	changeExternalId(
+		uid: string,
+		id: string,
+		sourceType: ?string,
+		hcmLinkSettingId: ?number,
+	): Promise<{ status: string; data: []; errors: string[]; }>
 	{
-		return this.#post('sign.api_v1.document.modifyExternalId', { uid, id });
+		return this.#post('sign.api_v1.document.modifyExternalId', { uid, id, sourceType, hcmLinkSettingId });
 	}
 
-	changeExternalDate(uid: string, externalDate: string): Promise<{ status: string; data: []; errors: string[]; }>
+	changeExternalDate(
+		uid: string,
+		externalDate: string,
+		sourceType: ?string,
+		hcmLinkSettingId: ?number,
+	): Promise<{ status: string; data: []; errors: string[]; }>
 	{
-		return this.#post('sign.api_v1.document.modifyExternalDate', { uid, externalDate });
+		return this.#post('sign.api_v1.document.modifyExternalDate', { uid, externalDate, sourceType, hcmLinkSettingId });
 	}
 
 	changeIntegrationId(uid: string, integrationId: number | null = null): Promise<{
@@ -114,6 +133,16 @@ export class Api
 	loadDocument(uid: string): Promise<LoadedDocumentData>
 	{
 		return this.#post('sign.api_v1.document.load', { uid });
+	}
+
+	loadDocumentsByTemplateIds(templateIds: number[]): Promise<LoadedDocumentData[]>
+	{
+		return this.#post('sign.api_v1.document.loadByTemplateIds', { templateIds });
+	}
+
+	getDocumentPreviewUrl(uid: string): Promise<{url: string;}>
+	{
+		return this.#post('sign.api_v1.document.getDocumentPreviewUrl', { uid });
 	}
 
 	loadDocumentById(id: number): Promise<LoadedDocumentData>
@@ -212,6 +241,14 @@ export class Api
 		});
 	}
 
+	modifyDateSignUntil(uid: string, timestamp: number): Promise<{ uid: string; dateSignUntil: string; }>
+	{
+		return this.#post('sign.api_v1.document.modifyDateSignUntil', {
+			uid,
+			dateSignUntilTs: timestamp,
+		});
+	}
+
 	modifyReminderTypeForMemberRole(documentUid: string, memberRole: string, reminderType: string): Promise
 	{
 		return this.#post('sign.api_v1.b2e.member.reminder.set', {
@@ -254,38 +291,42 @@ export class Api
 		documentUid: string,
 		representativeId: number,
 		members: Array<SetupMember>,
+		excludeRejected: boolean = true,
 	): Promise
 	{
 		return this.#post('sign.api_v1.document.member.setupB2eParties', {
-			documentUid, representativeId, members,
+			documentUid, representativeId, members, excludeRejected,
 		});
 	}
 
 	syncB2eMembersWithDepartments(
 		documentUid: string,
 		currentParty: number,
+		excludeRejected: boolean = true,
 	): Promise<{ syncFinished: boolean }>
 	{
 		return this.#post('sign.api_v1.document.member.syncB2eMembersWithDepartments', {
-			documentUid, currentParty,
+			documentUid, currentParty, excludeRejected,
 		});
 	}
 
 	getUniqUserCountForMembers(
 		members: Array<CountMember>,
+		excludeRejected: boolean = true,
 	): Promise<{ count: number }>
 	{
 		return this.#post('sign.api_v1.document.member.getUniqSignersCount', {
-			members,
+			members, excludeRejected,
 		});
 	}
 
 	getUniqUserCountForDocument(
 		documentUid: string,
+		excludeRejected: boolean = true,
 	): Promise<{ count: number }>
 	{
 		return this.#post('sign.api_v1.document.member.getUniqSignersCountForDocument', {
-			documentUid,
+			documentUid, excludeRejected,
 		});
 	}
 
@@ -304,10 +345,11 @@ export class Api
 		documentUid: string,
 		page: number,
 		pageSize: number,
+		role: MemberRoleType = MemberRole.signer,
 	): Promise<{ members: [{ memberId: number, userId: number, name: string, avatar: ?string, profileUrl: string }] }>
 	{
 		return this.#post('sign.api_v1.document.member.getMembersForDocument', {
-			documentUid, page, pageSize,
+			documentUid, role, page, pageSize,
 		});
 	}
 
@@ -329,10 +371,10 @@ export class Api
 		return this.#post('sign.api_v1.integration.crm.b2ecompany.list', { forDocumentInitiatedByType });
 	}
 
-	modifyB2eCompany(documentUid: string, companyUid: string): Promise
+	modifyB2eCompany(documentUid: string, companyUid: string, companyEntityId: number): Promise
 	{
 		return this.#post('sign.api_v1.document.modifyCompany', {
-			documentUid, companyUid,
+			documentUid, companyUid, companyEntityId,
 		});
 	}
 
@@ -462,14 +504,14 @@ export class Api
 		return this.#post('sign.api_v1.b2e.document.template.copy', { templateId });
 	}
 
-	checkCompanyHrIntegration(id: number): Promise<Array<{ id: number, title: string }>>
+	checkCompanyHrIntegration(id: number): Promise<Array<{ id: number, title: string, availableSettings: { documentType: [], externalId: [], date: [] } }>>
 	{
 		return this.#post('sign.api_v1.integration.humanresources.hcmLink.checkCompany', { id });
 	}
 
 	checkNotMappedMembersHrIntegration(
 		documentUid: string,
-	): Promise<{ integrationId: number, userIds: Array<number>, allUserIds: Array<number> }>
+	): Promise<HcmLinkNotMappedUsersData>
 	{
 		return this.#post('sign.api_v1.integration.humanresources.hcmLink.loadNotMappedMembers', { documentUid });
 	}
@@ -482,5 +524,42 @@ export class Api
 	saveEmployeesForSignProcess(data: EmployeeSaveData): Promise<[]>
 	{
 		return this.#post('sign.api_v1.integration.humanresources.hcmLink.saveSelectedEmployees', data);
+	}
+
+	changeEditorStepVisibility(isSkipEditStep: boolean): Promise<Array<{ isSkipEditStep: boolean }>>
+	{
+		return this.#post('sign.api_v1.b2e.wizardOptions.changeEditorStepVisibility', { isSkipEditStep });
+	}
+
+	changeHcmLinkDocumentType(uid: string, hcmLinkSettingId: number | null): Promise<[]>
+	{
+		return this.#post('sign.api_v1.document.modifyHcmLinkDocumentType', { uid, hcmLinkSettingId });
+	}
+
+	getManyDocumentFillAndStartProgress(ids: number[]): Promise<{ completed: boolean, progress: Number }>
+	{
+		return this.#post('sign.api_v1.document.getManyFillAndStartProgress', { ids });
+	}
+
+	checkNotMappedMembersHrIntegrationByDocuments(documentUids: string[]): Promise<HcmLinkNotMappedUsersData[]>
+	{
+		return this.#post('sign.api_v1.integration.humanresources.hcmLink.loadBulkNotMappedMembers', { documentUids });
+	}
+
+	loadBulkMultipleVacancyMemberHrIntegrations(
+		documentUids: string[],
+	): Promise<HcmLinkMultipleVacancyEmployeesLoadData[]>
+	{
+		return this.#post('sign.api_v1.integration.humanresources.hcmLink.loadBulkMultipleVacancyEmployee', { documentUids });
+	}
+
+	hasSignedDocuments(): Promise<{ hasSignedDocuments: boolean }>
+	{
+		return this.#post('sign.api_v1.b2e.onboarding.hasSignedDocuments', {});
+	}
+
+	hideOnboardingSigningBanner(): Promise<void>
+	{
+		return this.#post('sign.api_v1.b2e.onboarding.hideOnboardingSigningBanner', {});
 	}
 }

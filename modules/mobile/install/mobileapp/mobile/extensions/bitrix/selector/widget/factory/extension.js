@@ -38,9 +38,11 @@ jn.define('selector/widget/factory', (require, exports, module) => {
 	}
 
 	let TaskSelector = null;
+	let EditableTaskSelector = null;
 	try
 	{
 		TaskSelector = require('tasks/selector/task').TaskSelector;
+		EditableTaskSelector = require('tasks/selector/editable-task').EditableTaskSelector;
 	}
 	catch (e)
 	{
@@ -68,6 +70,7 @@ jn.define('selector/widget/factory', (require, exports, module) => {
 		IBLOCK_SECTION_USER_FIELD: 'iblock-section-user-field',
 		DEPARTMENT: 'department',
 		TASK: 'task',
+		EDITABLE_TASK: 'editable_task',
 	};
 
 	/**
@@ -145,6 +148,11 @@ jn.define('selector/widget/factory', (require, exports, module) => {
 			if (type === Type.TASK_FLOW && TaskFlowSelector)
 			{
 				return TaskFlowSelector.make(data);
+			}
+
+			if (type === Type.EDITABLE_TASK)
+			{
+				return EditableTaskSelector.make(data);
 			}
 
 			if (type === Type.DEPARTMENT)

@@ -14,7 +14,10 @@ enum EngineSetting: string
 
 	/** @see EventHandler::SETTINGS_CALL_ASSESSMENT_ENGINE_CODE */
 	case CallAssessment = 'crm_copilot_call_assessment_engine_code';
-
+	
+	/** @see EventHandler::SETTINGS_REPEAT_SALE_ENGINE_CODE */
+	case RepeatSale = 'crm_copilot_repeat_sale_engine_code';
+	
 	public function getCode(): string
 	{
 		return $this->value;
@@ -22,8 +25,9 @@ enum EngineSetting: string
 
 	public function getCategory(): string
 	{
-		return match ($this) {
-			self::FillItemFromCallText, self::CallAssessment => 'text',
+		return match ($this)
+		{
+			self::FillItemFromCallText, self::CallAssessment, self::RepeatSale => 'text',
 			self::FillItemFromCallAudio => 'audio',
 		};
 	}

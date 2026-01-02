@@ -1,0 +1,15 @@
+<?php
+$MESS["MB_TASKS_GENERAL_TITLE"] = "Міндеттер";
+$MESS["MB_TASKS_TASKS_FILTER_PULLDOWN_DOWN"] = "Жаңарту үшін жіберіңіз";
+$MESS["MB_TASKS_TASKS_FILTER_PULLDOWN_LOADING"] = "Деректерді жаңарту...";
+$MESS["MB_TASKS_TASKS_FILTER_PULLDOWN_PULL"] = "Жаңарту үшін тартыңыз";
+$MESS["MB_TASKS_TASK_FILTER_BTN_AND"] = "ЖӘНЕ";
+$MESS["MB_TASKS_TASK_FILTER_BTN_CREATE"] = "Жасау";
+$MESS["MB_TASKS_TASK_FILTER_BTN_OR"] = "немесе";
+$MESS["MB_TASKS_TASK_FILTER_CREATE_NEW_FILTER"] = "Өзіндік сүзгіні жасау";
+$MESS["MB_TASKS_TASK_FILTER_NEW_FILTER_NAME"] = "Жаңа сүзгінің атауы...";
+$MESS["MB_TASKS_TASK_FILTER_TEXT_AND"] = "ЖӘНЕ";
+$MESS["MB_TASKS_TASK_FILTER_TEXT_OR"] = "НЕМЕСЕ";
+$MESS["MB_TASKS_TASK_FILTER_TITLE"] = "Міндеттер бойынша сүзгі";
+$MESS["MB_TASKS_TASK_FILTER_USER_SELECTOR_BTN_CANCEL"] = "Болдырмау";
+$MESS["MB_TASKS_TASK_FILTER_USER_SELECTOR_BTN_SELECT"] = "Таңдау";

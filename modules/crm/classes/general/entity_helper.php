@@ -423,16 +423,6 @@ class CCrmEntityHelper
 				$operation->disableActivitiesAutocompletion();
 			}
 		}
-
-		$processBizProc = (bool)($options['PROCESS_BIZPROC'] ?? true);
-		if ($processBizProc)
-		{
-			$operation->enableBizProc();
-		}
-		else
-		{
-			$operation->disableBizProc();
-		}
 	}
 
 	/**

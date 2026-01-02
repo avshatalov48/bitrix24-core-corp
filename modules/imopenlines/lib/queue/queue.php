@@ -401,7 +401,7 @@ abstract class Queue
 					'TO_USER_ID' => $userId,
 					'NOTIFY_TYPE' => IM_NOTIFY_SYSTEM,
 					'NOTIFY_MODULE' => 'imopenlines',
-					'NOTIFY_EVENT' => 'default',
+					'NOTIFY_EVENT' => 'admin_notification',
 					'NOTIFY_MESSAGE' => $message,
 					'RECENT_ADD' => 'Y'
 				];

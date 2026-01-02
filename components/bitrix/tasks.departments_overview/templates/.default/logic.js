@@ -121,6 +121,23 @@ if (typeof(BX.FilterEntitySelector) === "undefined")
 			construct: function()
 			{
 				this.callConstruct(BX.Tasks.Component);
+				this.clearAnalyticsParams();
+			},
+
+			clearAnalyticsParams: function()
+			{
+				BX.Runtime.loadExtension('main.core')
+					.then(({ Uri }) => {
+						const uri = new Uri(window.location.href);
+
+						const section = uri.getQueryParam('ta_sec');
+						if (section)
+						{
+							uri.removeQueryParam('ta_cat', 'ta_sec', 'ta_sub', 'ta_el', 'p1', 'p2', 'p3', 'p4', 'p5');
+
+							window.history.replaceState(null, null, uri.toString());
+						}
+					});
 			},
 
 			bindEvents: function()

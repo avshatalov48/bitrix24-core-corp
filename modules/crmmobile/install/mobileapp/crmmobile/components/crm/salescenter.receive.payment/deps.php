@@ -3,7 +3,6 @@
 return [
 	'extensions' => [
 		'apptheme',
-		'utils/error-notifier',
 		'layout/ui/wizard',
 		'layout/ui/detail-card/tabs/shimmer/crm-product',
 		'crm:error',
@@ -13,6 +12,7 @@ return [
 		'crm:receive-payment/steps/send-message',
 		'crm:receive-payment/steps/finish',
 		'utils/error-notifier',
+		'utils/random',
 		'loc',
 		'analytics-label',
 	],

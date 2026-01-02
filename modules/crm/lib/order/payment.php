@@ -42,7 +42,7 @@ class Payment extends Sale\Payment
 
 		if ($this->fields->isChanged('PAID'))
 		{
-			if ($this->isPaid() && Crm\Automation\Factory::isAutomationAvailable(\CCrmOwnerType::Order))
+			if ($this->isPaid())
 			{
 				Crm\Automation\Trigger\PaymentTrigger::execute(
 					[['OWNER_TYPE_ID' => \CCrmOwnerType::Order, 'OWNER_ID' => $this->getOrderId()]],
@@ -196,25 +196,29 @@ class Payment extends Sale\Payment
 			&& $phoneTo
 		)
 		{
-			Crm\MessageSender\MessageSender::send(
-				[
-					Crm\Integration\NotificationsManager::getSenderCode() => [
-						'ACTIVITY_PROVIDER_TYPE_ID' => BaseMessage::PROVIDER_TYPE_CRM_ORDER_PAID,
-						'TEMPLATE_CODE' => 'ORDER_PAID',
-						'PLACEHOLDERS' => [
-							'NAME' => $entityCommunication->getCustomerName(),
-						],
+			$senders = [];
+			if (Main\Application::getInstance()->getLicense()->getRegion() === 'ru')
+			{
+				$senders[Crm\Integration\NotificationsManager::getSenderCode()] = [
+					'ACTIVITY_PROVIDER_TYPE_ID' => BaseMessage::PROVIDER_TYPE_CRM_ORDER_PAID,
+					'TEMPLATE_CODE' => 'ORDER_PAID',
+					'PLACEHOLDERS' => [
+						'NAME' => $entityCommunication->getCustomerName(),
 					],
-					Crm\Integration\SmsManager::getSenderCode() => [
-						'ACTIVITY_PROVIDER_TYPE_ID' => BaseMessage::PROVIDER_TYPE_CRM_ORDER_PAID,
-						'MESSAGE_BODY' => Main\Localization\Loc::getMessage(
-							'CRM_PAYMENT_ORDER_PAID',
-							[
-								'#CUSTOMER_NAME#' => $entityCommunication->getCustomerName()
-							]
-						),
+				];
+			}
+			$senders[Crm\Integration\SmsManager::getSenderCode()] = [
+				'ACTIVITY_PROVIDER_TYPE_ID' => BaseMessage::PROVIDER_TYPE_CRM_ORDER_PAID,
+				'MESSAGE_BODY' => Main\Localization\Loc::getMessage(
+					'CRM_PAYMENT_ORDER_PAID',
+					[
+						'#CUSTOMER_NAME#' => $entityCommunication->getCustomerName()
 					]
-				],
+				),
+			];
+
+			Crm\MessageSender\MessageSender::send(
+				$senders,
 				[
 					'COMMON_OPTIONS' => [
 						'PHONE_NUMBER' => $phoneTo,

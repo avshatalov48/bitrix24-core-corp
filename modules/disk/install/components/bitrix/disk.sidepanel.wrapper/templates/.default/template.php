@@ -21,18 +21,10 @@ CJSCore::Init(['sidepanel', 'ui.fonts.opensans']);
 	<?$APPLICATION->ShowHead();?>
 	<title><?$APPLICATION->ShowTitle()?></title>
 </head>
-<body class="disk-slider-frame-popup template-<?= SITE_TEMPLATE_ID ?> <? $APPLICATION->ShowProperty('BodyClass'); ?>">
-	<div class="disk-pagetitle-wrap">
-		<div class="disk-pagetitle-inner-container">
-			<div class="disk-pagetitle-menu" id="pagetitle-menu">
-				<? $APPLICATION->ShowViewContent("pagetitle"); ?>
-			</div>
-			<div class="disk-pagetitle">
-				<span id="pagetitle"><? $APPLICATION->ShowTitle(); ?></span>
-			</div>
-			<?$APPLICATION->ShowViewContent("inside_pagetitle")?>
-		</div>
-	</div>
+<body class="disk-slider-frame-popup bitrix24-default-theme template-<?= SITE_TEMPLATE_ID ?> <? $APPLICATION->ShowProperty('BodyClass'); ?>">
+	<?php
+	$APPLICATION->IncludeComponent('bitrix:ui.toolbar', '', []);
+	?>
 
 	<div id="disk-frame-popup-workarea">
 		<div id="sidebar"><? $APPLICATION->ShowViewContent("sidebar"); ?></div>

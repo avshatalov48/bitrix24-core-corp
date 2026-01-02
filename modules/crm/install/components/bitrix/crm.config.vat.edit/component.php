@@ -1,4 +1,9 @@
-<?if (!defined('B_PROLOG_INCLUDED') || B_PROLOG_INCLUDED !== true) die();
+<?php
+if (!defined('B_PROLOG_INCLUDED') || B_PROLOG_INCLUDED !== true)
+{
+	die();
+}
+
 /** @var array $arParams */
 
 use Bitrix\Main\Loader,
@@ -16,10 +21,7 @@ if (!Loader::includeModule('catalog'))
 	return;
 }
 
-global $USER, $APPLICATION;
-
-$CrmPerms = new CCrmPerms($USER->GetID());
-if (!$CrmPerms->HavePerm('CONFIG', BX_CRM_PERM_CONFIG, 'WRITE'))
+if (!\Bitrix\Crm\Service\Container::getInstance()->getUserPermissions()->isCrmAdmin())
 {
 	ShowError(GetMessage('CRM_PERMISSION_DENIED'));
 	return;

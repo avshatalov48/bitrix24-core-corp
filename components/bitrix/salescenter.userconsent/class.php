@@ -8,15 +8,26 @@ use Bitrix\Main\Localization\Loc;
 use Bitrix\Main\Config\Option;
 use Bitrix\Main\Engine\Contract\Controllerable;
 use Bitrix\Crm\Integration\UserConsent;
+use Bitrix\Main\Web\Json;
 
 /**
  * Class SalesCenterUserConsent
  */
 class SalesCenterUserConsent extends CBitrixComponent implements Controllerable
 {
+	/**
+	 * @deprecated
+	 * @see SALESCENTER_USER_CONSENTS
+	 */
 	const SALESCENTER_USER_CONSENT_ID = "~SALESCENTER_USER_CONSENT_ID";
+	/**
+	 * @deprecated
+	 * @see SALESCENTER_USER_CONSENTS
+	 */
 	const SALESCENTER_USER_CONSENT_CHECKED = "~SALESCENTER_USER_CONSENT_CHECKED";
+
 	const SALESCENTER_USER_CONSENT_ACTIVE = "~SALESCENTER_USER_CONSENT_ACTIVE";
+	const SALESCENTER_USER_CONSENTS = '~SALESCENTER_USER_CONSENTS';
 
 	/**
 	 * @return mixed|void
@@ -42,15 +53,61 @@ class SalesCenterUserConsent extends CBitrixComponent implements Controllerable
 	 */
 	private function prepareResult()
 	{
-		$userConsent = $this->getUserConsentId();
-		if ($userConsent === false)
+		$userConsents = $this->getUserConsents();
+		if (!$userConsents)
 		{
-			$userConsent = $this->getDefaultUserConsent();
+			$userConsents = $this->getDefaultUserConsents();
 		}
 
-		$this->arResult['ID'] = (int)$userConsent;
-		$this->arResult['CHECK'] = $this->getUserConsentCheckStatus();
+		$this->arResult['USER_CONSENTS'] = $userConsents;
 		$this->arResult['ACTIVE'] = $this->getUserConsentActive();
+	}
+
+	public function getUserConsents(): array
+	{
+		$userConsents = $this->getUserConsentsFromMultipleOption();
+		if (is_array($userConsents))
+		{
+			return $userConsents;
+		}
+
+		$userConsentId = $this->getUserConsentId();
+		if ($userConsentId)
+		{
+			return [
+				[
+					'ID' => (int)$userConsentId,
+					'CHECKED' => $this->getUserConsentCheckStatus(),
+					'REQUIRED' => 'Y',
+				]
+			];
+		}
+
+		return [];
+	}
+
+	private function getUserConsentsFromMultipleOption(): ?array
+	{
+		$option = Option::get('salescenter', self::SALESCENTER_USER_CONSENTS, null);
+		if (!$option)
+		{
+			return null;
+		}
+
+		try
+		{
+			$decodedOption = Json::decode($option);
+			if (!is_array($decodedOption))
+			{
+				return null;
+			}
+		}
+		catch (\Exception $e)
+		{
+			return null;
+		}
+
+		return $decodedOption;
 	}
 
 	/**
@@ -64,13 +121,14 @@ class SalesCenterUserConsent extends CBitrixComponent implements Controllerable
 	}
 
 	/**
-	 * @return int
+	 * @return array
 	 * @throws \Bitrix\Main\ArgumentOutOfRangeException
 	 * @throws \Bitrix\Main\LoaderException
 	 */
-	private function getDefaultUserConsent()
+	private function getDefaultUserConsents(): array
 	{
-		$agreementId = false;
+		$agreementId = null;
+
 		if (Loader::includeModule('imopenlines'))
 		{
 			$configManager = new \Bitrix\ImOpenLines\Config();
@@ -82,15 +140,27 @@ class SalesCenterUserConsent extends CBitrixComponent implements Controllerable
 					'limit' => 1
 				]
 			);
-			foreach ($result as $id => $config)
+			foreach ($result as $config)
 			{
 				$agreementId = $config['AGREEMENT_ID'];
 			}
 
 			if ($agreementId)
 			{
-				Option::set('salescenter', self::SALESCENTER_USER_CONSENT_ID, $agreementId);
-				Option::set('salescenter', self::SALESCENTER_USER_CONSENT_CHECKED, 'Y');
+				$agreements = [
+					[
+						'ID' => (int)$agreementId,
+						'CHECKED' => 'Y',
+						'REQUIRED' => 'Y',
+					]
+				];
+				Option::set(
+					'salescenter',
+					self::SALESCENTER_USER_CONSENTS,
+					Json::encode($agreements),
+				);
+
+				return $agreements;
 			}
 		}
 
@@ -101,9 +171,21 @@ class SalesCenterUserConsent extends CBitrixComponent implements Controllerable
 		)
 		{
 			$agreementId = UserConsent::getDefaultAgreementId();
+			if (!$agreementId)
+			{
+				return [];
+			}
+
+			return [
+				[
+					'ID' => (int)$agreementId,
+					'CHECKED' => 'Y',
+					'REQUIRED' => 'Y',
+				]
+			];
 		}
 
-		return $agreementId;
+		return [];
 	}
 
 	/**
@@ -131,33 +213,59 @@ class SalesCenterUserConsent extends CBitrixComponent implements Controllerable
 	 * @throws \Bitrix\Main\ArgumentNullException
 	 * @throws \Bitrix\Main\ArgumentOutOfRangeException
 	 */
-	public function saveUserConsentAction($formData)
+	public function saveUserConsentAction($formData): void
 	{
 		if (isset($formData['USERCONSENT']['ACTIVE']) && $formData['USERCONSENT']['ACTIVE'] == 'Y')
 		{
 			Option::set('salescenter', self::SALESCENTER_USER_CONSENT_ACTIVE, 'Y');
 
-			if (isset($formData['USERCONSENT']['AGREEMENT_ID']) && !empty($formData['USERCONSENT']['AGREEMENT_ID']))
+			if (!empty($formData['USERCONSENT']['AGREEMENTS']))
 			{
-				$agreementId = $formData['USERCONSENT']['AGREEMENT_ID'];
-				Option::set('salescenter', self::SALESCENTER_USER_CONSENT_ID, $agreementId);
-
-				$check = 'N';
-				if (isset($formData['USERCONSENT']['CHECK']))
-				{
-					$check = $formData['USERCONSENT']['CHECK'];
-				}
-				Option::set('salescenter', self::SALESCENTER_USER_CONSENT_CHECKED, $check);
+				$agreements = $this->parseAgreementsFromForm($formData['USERCONSENT']['AGREEMENTS']);
+				Option::set(
+					'salescenter',
+					self::SALESCENTER_USER_CONSENTS,
+					Json::encode($agreements),
+				);
 			}
 			else
 			{
-				Option::set('salescenter', self::SALESCENTER_USER_CONSENT_ID, 0);
+				Option::set('salescenter', self::SALESCENTER_USER_CONSENTS, []);
 			}
 		}
 		else
 		{
 			Option::set('salescenter', self::SALESCENTER_USER_CONSENT_ACTIVE, 'N');
 		}
+	}
+
+	private function parseAgreementsFromForm(mixed $agreements): array
+	{
+		if (!is_array($agreements))
+		{
+			return [];
+		}
+
+		$parsedAgreements = [];
+		foreach ($agreements as $agreement)
+		{
+			if (
+				!isset($agreement['ID'])
+				|| (int)$agreement['ID'] <= 0
+				|| !isset($agreement['CHECKED'])
+				|| !isset($agreement['REQUIRED'])
+			)
+			{
+				continue;
+			}
+			$parsedAgreements[] = [
+				'ID' => (int)$agreement['ID'],
+				'CHECKED' => $agreement['CHECKED'] === 'Y' ? 'Y' : 'N',
+				'REQUIRED' => $agreement['REQUIRED'] === 'Y' ? 'Y' : 'N',
+			];
+		}
+
+		return $parsedAgreements;
 	}
 
 	/**

@@ -6,6 +6,7 @@ if (!defined('B_PROLOG_INCLUDED') || B_PROLOG_INCLUDED !== true)
 }
 
 use Bitrix\Bizproc\FieldType;
+use Bitrix\Crm\Integration\Analytics\Dictionary;
 use Bitrix\Main;
 use Bitrix\Salescenter\Integration;
 use Bitrix\Salescenter\Builder;
@@ -67,6 +68,12 @@ class CBPCrmGetPaymentUrlActivity extends CBPActivity
 		}
 
 		$this->logUrl();
+
+		\CCrmBizProcHelper::sendOperationsAnalytics(
+			Dictionary::EVENT_ENTITY_CREATE,
+			$this,
+			'payment_link',
+		);
 
 		return CBPActivityExecutionStatus::Closed;
 	}

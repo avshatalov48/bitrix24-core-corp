@@ -31,9 +31,7 @@ $arResult['BUTTONS'] = array();
 
 $locID = isset($arParams['LOC_ID']) ? strval($arParams['LOC_ID']) : '';
 
-$CrmPerms = new CCrmPerms($USER->GetID());
-
-$locAdd = $locEdit = $locDelete = $locImport = $CrmPerms->HavePerm('CONFIG', BX_CRM_PERM_CONFIG, 'WRITE');
+$locAdd = $locEdit = $locDelete = $locImport = \Bitrix\Crm\Service\Container::getInstance()->getUserPermissions()->isCrmAdmin();
 
 if(CSaleLocation::isLocationProMigrated())
 	$exists = intval($locID > 0) && CCrmLocations::CheckLocationExists($locID);

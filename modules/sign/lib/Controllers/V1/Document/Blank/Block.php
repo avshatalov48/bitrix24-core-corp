@@ -285,6 +285,10 @@ class Block extends \Bitrix\Sign\Engine\Controller
 
 			return $document->hcmLinkCompanyId === $hcmLinkCompanyId;
 		}
+		elseif (Type\BlockCode::isB2eRegional($block->code) && $document->isInitiatedByEmployee())
+		{
+			return false;
+		}
 
 		return true;
 	}

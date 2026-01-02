@@ -92,6 +92,7 @@ final class Calendar
 		if (
 			$entryFields['ID'] !== $entryFields['PARENT_ID']
 			|| !isset($entryFields['ATTENDEES'])
+			|| !is_array($entryFields['ATTENDEES'])
 		)
 		{
 			return;

@@ -10,5 +10,7 @@ jn.define('tasks/flow-list/simple-list/items/type', (require, exports, module) =
 		FLOWS_INFO: 'flows-info',
 	};
 
-	module.exports = { ListItemType };
+	const FLOWS_INFO_ITEM_ID = 'flows-info-item';
+
+	module.exports = { ListItemType, FLOWS_INFO_ITEM_ID };
 });

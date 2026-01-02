@@ -50,8 +50,21 @@ jn.define('calendar/statemanager/redux/slices/events', (require, exports, module
 			},
 			eventDeleted: (state, { payload }) => {
 				const { eventId } = payload;
+				const parentId = state.entities[eventId]?.parentId;
 
-				eventsAdapter.removeOne(state, eventId);
+				if (parentId)
+				{
+					const eventsByParentIds = Object.values(state.entities)
+						.filter((item) => item.parentId === parentId)
+						.map((item) => item.id)
+					;
+
+					eventsAdapter.removeMany(state, eventsByParentIds);
+				}
+				else
+				{
+					eventsAdapter.removeOne(state, eventId);
+				}
 			},
 			eventMeetingStatusChanged: (state, { payload }) => {
 				const { eventId, userMeetingStatus, userId } = payload;

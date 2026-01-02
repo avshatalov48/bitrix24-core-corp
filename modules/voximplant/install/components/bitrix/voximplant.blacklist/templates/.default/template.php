@@ -1,25 +1,30 @@
-<?
+<?php
+
 if(!defined("B_PROLOG_INCLUDED") || B_PROLOG_INCLUDED!==true)die();
 use Bitrix\Main\Localization\Loc;
 
 CJSCore::Init(['sidepanel', 'voximplant.common', 'ui.buttons', 'ui.buttons.icons']);
 
-$isBitrix24Template = (SITE_TEMPLATE_ID == "bitrix24");
-if($isBitrix24Template)
-{
-	$this->SetViewTarget("pagetitle", 100);
-}
-?>
-<div class="pagetitle-container pagetitle-align-right-container">
-	<button id="vox-blacklist-settings" class="ui-btn ui-btn-light-border ui-btn-themes ui-btn-icon-setting"></button>
-	<button id="vox-blacklist-add" class="ui-btn ui-btn-md ui-btn-primary ui-btn-icon-add"><?= Loc::getMessage("VOX_BLACKLIST_ADD_TO_LIST") ?></button>
-</div>
-<?
+$buttonSettings = new \Bitrix\UI\Buttons\Button([
+	'icon' => \Bitrix\UI\Buttons\Icon::SETTING,
+	'color' => \Bitrix\UI\Buttons\Color::LIGHT_BORDER,
+	'dataset' => [
+		'toolbar-collapsed-icon' => Bitrix\UI\Buttons\Icon::SETTING,
+	]
+]);
+$buttonSettings->addAttribute('id', 'vox-blacklist-settings');
+\Bitrix\UI\Toolbar\Facade\Toolbar::addButton($buttonSettings);
 
-if($isBitrix24Template)
-{
-	$this->EndViewTarget();
-}
+$buttonAdd = new \Bitrix\UI\Buttons\Button([
+	'text' => Loc::getMessage('VOX_BLACKLIST_ADD_TO_LIST'),
+	'icon' => \Bitrix\UI\Buttons\Icon::ADD,
+	'color' => \Bitrix\UI\Buttons\Color::PRIMARY,
+	'dataset' => [
+		'toolbar-collapsed-icon' => Bitrix\UI\Buttons\Icon::ADD,
+	]
+]);
+$buttonAdd->addAttribute('id', 'vox-blacklist-add');
+\Bitrix\UI\Toolbar\Facade\Toolbar::addButton($buttonAdd);
 
 $APPLICATION->IncludeComponent(
 	"bitrix:main.ui.grid",

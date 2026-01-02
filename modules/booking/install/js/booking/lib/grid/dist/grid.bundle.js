@@ -61,6 +61,9 @@ this.BX.Booking = this.BX.Booking || {};
 	    const to = Math.min(new Date(babelHelpers.classPrivateFieldLooseBase(this, _selectedDateTs)[_selectedDateTs]).setHours(24), toTs + babelHelpers.classPrivateFieldLooseBase(this, _offset)[_offset]);
 	    return Math.max((to - from) / booking_lib_duration.Duration.getUnitDurations().H * hourHeight, minHeight);
 	  }
+	  calculateWidth(width) {
+	    return width * babelHelpers.classPrivateFieldLooseBase(this, _zoom)[_zoom];
+	  }
 	  calculateRealHeight(fromTs, toTs) {
 	    const hourHeight = 50 * babelHelpers.classPrivateFieldLooseBase(this, _zoom)[_zoom];
 	    const minHeight = hourHeight / 4;

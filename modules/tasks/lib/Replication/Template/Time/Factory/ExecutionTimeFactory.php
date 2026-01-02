@@ -87,15 +87,16 @@ final class ExecutionTimeFactory
 
 	private function getTemplateDailyExecutionDate(): int
 	{
-		$num =
-			(int)$this->parsedReplicateParameter['EVERY_DAY']
-			+ (int)($this->parsedReplicateParameter['DAILY_MONTH_INTERVAL'] ?? 0);
+		$everyDay = (int)$this->parsedReplicateParameter['EVERY_DAY'];
+		$monthInterval = (int)($this->parsedReplicateParameter['DAILY_MONTH_INTERVAL'] ?? 0);
+
+		$numberOfDays = $everyDay + $monthInterval * (self::DAYS_IN_MONTH - 1); // -1 to keep old logic
 
 		$date = $this->stripTime($this->baseExecutionTimeTS) + $this->creatorPreferredTimeTS;
 
 		if ($date <= $this->baseExecutionTimeTS)
 		{
-			$date += self::SECONDS_IN_DAY * $num;
+			$date += self::SECONDS_IN_DAY * $numberOfDays;
 		}
 
 		if ($this->parsedReplicateParameter['WORKDAY_ONLY'] === 'Y')

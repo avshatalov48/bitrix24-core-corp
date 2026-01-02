@@ -1,0 +1,25 @@
+<?php
+$MESS["CRM_SCENARIO_SELECTION_ACTIVE_ORDERS"] = "Белсенді тапсырыстар: #ORDER_COUNT#";
+$MESS["CRM_SCENARIO_SELECTION_CONVERT_ACTIVE_ORDERS"] = "Режимді ауыстыру кезінде белсенді активтерді түрлендіру";
+$MESS["CRM_SCENARIO_SELECTION_DEALS"] = "Мәмілелер";
+$MESS["CRM_SCENARIO_SELECTION_DEALS_DESCRIPTION"] = "Жеке сату үшін тамаша нұсқа";
+$MESS["CRM_SCENARIO_SELECTION_DEALS_DESCRIPTION_ITEM_1"] = "Кез келген өтінім (қоңыраулар, чаттар, CRM нысандары, интернет-дүкеннен тапсырыстар және т. б.) CRM мәмілелеріне түседі";
+$MESS["CRM_SCENARIO_SELECTION_DEALS_DESCRIPTION_ITEM_2"] = "Клиентпен барлық қарым-қатынас, төлем мәртебесі және жеткізу, мәміле картасында таймлайнда көрсетіледі";
+$MESS["CRM_SCENARIO_SELECTION_DEALS_DESCRIPTION_ITEM_3"] = "Менеджер мәміледен әрбір клиентпен жеке байланысады";
+$MESS["CRM_SCENARIO_SELECTION_DEALS_ONLY_WARNING"] = "Тек мәмілелермен жұмыс істегенде, тапсырыстарды өңдеу мүмкін болмайды.";
+$MESS["CRM_SCENARIO_SELECTION_DEALS_PLUS_ORDERS"] = "Мәмілелер + Тапсырыстар";
+$MESS["CRM_SCENARIO_SELECTION_DEALS_PLUS_ORDERS_DESCRIPTION"] = "Интернет-дүкеннен тапсырыстарды автоматтандырылған өңдеуге жарамды";
+$MESS["CRM_SCENARIO_SELECTION_DEALS_PLUS_ORDERS_DESCRIPTION_ITEM_1"] = "Интернет - дүкеннен тапсырыстар тек CRM тапсырыстарында сақталады және мәмілелерге кірмейді";
+$MESS["CRM_SCENARIO_SELECTION_DEALS_PLUS_ORDERS_DESCRIPTION_ITEM_2"] = "мәмілелер бөлек жасалады (мысалы, клиенттерге қызмет көрсету немесе бизнестің басқа бағыты үшін)";
+$MESS["CRM_SCENARIO_SELECTION_DEALS_PLUS_ORDERS_DESCRIPTION_ITEM_3"] = "Менеджерлердің бір бөлігі мәмілелермен, бір бөлігі интернет – дүкеннен тапсырыстармен жұмыс істейді";
+$MESS["CRM_SCENARIO_SELECTION_SAVE_ERROR"] = "Режимдерді ауыстыру кезінде қате пайда болды";
+$MESS["CRM_SCENARIO_SELECTION_SELECT"] = "Таңдау";
+$MESS["CRM_SCENARIO_SELECTION_SELECTED"] = "Таңдалды";
+$MESS["CRM_SCENARIO_SELECTION_TITLE"] = "Тапсырыстармен жұмыс режимі";
+$MESS["CRM_SCENARIO_SELECTION_TO_DEAL_MODE_CANCEL_BUTTON"] = "«Мәмілелер» режиміне өту";
+$MESS["CRM_SCENARIO_SELECTION_TO_DEAL_MODE_OK_BUTTON"] = "«Мәмілелер+Тапсырыстар» режимінде қалу";
+$MESS["CRM_SCENARIO_SELECTION_TO_DEAL_MODE_TEXT_1"] = "Сіздің интернет-дүкеннен тапсырыстар мәмілеге айналады, оның ішінде сіз төлемді қабылдай аласыз, жеткізуді рәсімдей аласыз және тауарларды қоймаларда сақтай аласыз. Бөлек «Тапсырыстар» бөлімі болмайды.";
+$MESS["CRM_SCENARIO_SELECTION_TO_DEAL_MODE_TEXT_2"] = "«Мәмілелер+тапсырыстар» режиміне оралу мүмкін емес, өйткені бұдан былай Битрикс24-те қолдау көрсетілмейді.";
+$MESS["CRM_SCENARIO_SELECTION_TO_DEAL_MODE_TEXT_3_PART_1"] = "Өтуді орындамас бұрын";
+$MESS["CRM_SCENARIO_SELECTION_TO_DEAL_MODE_TEXT_3_PART_2"] = "екі режим туралы толығырақ оқыңыз.";
+$MESS["CRM_SCENARIO_SELECTION_TO_DEAL_MODE_TITLE"] = "Сіз «Мәмілелер» режиміне өтіп жатырсыз";

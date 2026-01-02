@@ -1,18 +1,20 @@
 <?php
 
-use Bitrix\Main\Localization\Loc;
-use Bitrix\Main\Web\Json;
-
 if (!defined('B_PROLOG_INCLUDED') || B_PROLOG_INCLUDED !== true)
 {
 	die();
 }
 
+use Bitrix\Main;
+use Bitrix\Main\Localization\Loc;
+use Bitrix\Main\UI\Extension;
+use Bitrix\Main\Web\Json;
+
 /** @var array $arParams */
 /** @var array $arResult */
 /** @global \CMain $APPLICATION */
 
-\Bitrix\Main\UI\Extension::load([
+Extension::load([
 	'ui.design-tokens',
 	'ui.fonts.opensans',
 	'popup',
@@ -43,7 +45,7 @@ if ($isIframe)
 				// Prevent loading page without header and footer
 				if (window === window.top)
 				{
-					window.location = "<?=CUtil::JSEscape((new \Bitrix\Main\Web\Uri(\Bitrix\Main\Application::getInstance()->getContext()->getRequest()->getRequestUri()))->deleteParams(['IFRAME', 'IFRAME_TYPE']));?>" + window.location.hash;
+					window.location = "<?=CUtil::JSEscape((new Main\Web\Uri(Main\Application::getInstance()->getContext()->getRequest()->getRequestUri()))->deleteParams(['IFRAME', 'IFRAME_TYPE']));?>" + window.location.hash;
 				}
 			</script>
 			<script id="bx24_form_inline" data-skip-moving="true">
@@ -54,7 +56,9 @@ if ($isIframe)
 					var h=d.getElementsByTagName('script')[0];h.parentNode.insertBefore(s,h);
 				})(window,document,'<?= $arResult['domain'] ?>/bitrix/js/crm/form_loader.js','B24SalesCenterFeedback');
 			</script>
-			<?php $APPLICATION->ShowHead(); ?>
+			<?php
+			$APPLICATION->ShowHead();
+			?>
 		</head>
 		<body class="document-limit-slider">
 			<div class="pagetitle-wrap">
@@ -100,6 +104,7 @@ if ($isIframe)
 {
 	?>
 		</body>
-	</html><?php
-	\Bitrix\Main\Application::getInstance()->terminate();
+	</html>
+	<?php
+	Main\Application::getInstance()->terminate();
 }

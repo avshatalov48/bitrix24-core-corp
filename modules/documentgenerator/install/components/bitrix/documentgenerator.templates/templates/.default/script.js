@@ -201,11 +201,10 @@ BX.DocumentGenerator.TemplateList.initSettingsMenu = function(menuItems)
 
 BX.DocumentGenerator.TemplateList.openMoreLink = function(event)
 {
-	if(top.BX.Helper)
+	if (top.BX.Helper)
 	{
-		top.BX.Helper.show("redirect=detail&code=7622241");
+		top.BX.Helper.show('redirect=detail&code=18089278');
 		event.preventDefault();
 	}
-}
-
+};
 })(window);

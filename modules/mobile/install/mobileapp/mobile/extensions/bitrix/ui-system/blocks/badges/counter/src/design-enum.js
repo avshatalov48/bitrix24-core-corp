@@ -6,9 +6,9 @@ jn.define('ui-system/blocks/badges/counter/src/design-enum', (require, exports, 
 	const { BaseEnum } = require('utils/enums/base');
 
 	/**
-	 * @class BadgeCounterDesignType
-	 * @template TBadgeModeType
-	 * @extends {BaseEnum<BadgeCounterDesignType>}
+	 * @class BadgeCounterDesign
+	 * @template TBadgeCounterDesign
+	 * @extends {BaseEnum<BadgeCounterDesign>}
 	 */
 	class BadgeCounterDesign extends BaseEnum
 	{
@@ -61,6 +61,11 @@ jn.define('ui-system/blocks/badges/counter/src/design-enum', (require, exports, 
 		static WHITE = new BadgeCounterDesign('WHITE', {
 			color: Color.base3,
 			backgroundColor: Color.baseWhiteFixed,
+		});
+
+		static COPILOT = new BadgeCounterDesign('COPILOT', {
+			color: Color.baseWhiteFixed,
+			backgroundColor: Color.accentMainCopilot,
 		});
 
 		getColor()

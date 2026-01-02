@@ -1,4 +1,9 @@
-body {
-	background: #F8F1E9 url(table.jpg) fixed 0 0 no-repeat;
-	background-size: cover;
+:root {
+  --air-theme-bg-color: #F8F1E9;
+  --air-theme-bg-size: cover;
+  --air-theme-bg-repeat: no-repeat;
+  --air-theme-bg-position: 0 0;
+  --air-theme-bg-attachment: fixed;
+  --air-theme-bg-image: url(/bitrix/templates/bitrix24/themes/dark/table/table.jpg);
+  --air-theme-bg-image-blurred: url(/bitrix/templates/bitrix24/themes/dark/table/table-blurred.webp);
 }

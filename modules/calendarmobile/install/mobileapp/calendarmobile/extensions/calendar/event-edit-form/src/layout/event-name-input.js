@@ -33,8 +33,6 @@ jn.define('calendar/event-edit-form/layout/event-name-input', (require, exports,
 			{
 				this.refs.input?.focus();
 			}
-
-			this.changeLayoutTitle(this.props.eventNameValue);
 		}
 
 		render()
@@ -47,6 +45,7 @@ jn.define('calendar/event-edit-form/layout/event-name-input', (require, exports,
 				design: InputDesign.GREY,
 				mode: InputMode.STROKE,
 				value: this.props.eventNameValue,
+				onBlur: this.onBlurHandler,
 				onChange: this.onChangeHandler,
 				onSubmit: this.onSubmitHandler,
 				onErase: this.onEraseHandler,
@@ -61,7 +60,10 @@ jn.define('calendar/event-edit-form/layout/event-name-input', (require, exports,
 
 		onChangeHandler = (eventNameValue) => {
 			State.setEventNameValue(eventNameValue);
-			this.changeLayoutTitle(eventNameValue);
+		};
+
+		onBlurHandler = () => {
+			this.changeLayoutTitle(this.props.eventNameValue);
 		};
 
 		onSubmitHandler = () => {
@@ -70,11 +72,12 @@ jn.define('calendar/event-edit-form/layout/event-name-input', (require, exports,
 
 		onEraseHandler = () => {
 			this.refs.input?.clear();
+			this.changeLayoutTitle(Loc.getMessage('M_CALENDAR_EVENT_EDIT_FORM_DEFAULT_EVENT_NAME'));
 		};
 
 		changeLayoutTitle(eventNameValue)
 		{
-			const text = Type.isString(eventNameValue) && eventNameValue.trim()
+			const text = Type.isStringFilled(eventNameValue) && eventNameValue.trim()
 				? eventNameValue
 				: Loc.getMessage('M_CALENDAR_EVENT_EDIT_FORM_DEFAULT_EVENT_NAME')
 			;

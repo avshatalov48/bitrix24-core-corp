@@ -65,33 +65,44 @@ class WorkflowCompleted extends Base
 			$mobileResult = \CBPViewHelper::getWorkflowResult($workflowId, $userId, $mobileContext) ?? [];
 		}
 
-		if (empty($workflowAuthor))
+		$helperHasMethod = method_exists(\CBPViewHelper::class, 'getUserFullNameById');
+		if (empty($workflowAuthor) && !$helperHasMethod)
 		{
 			$authorId = $this->getModel()->getAuthorId();
 			$workflowAuthor = $this->getUser($authorId);
 		}
 
-		$result['workflowEfficiencyBlockWeb'] =
+		$webBlock =
 			(new Layout\Body\ContentBlock\WorkflowEfficiency())
 				->setAverageDuration($averageDuration)
 				->setEfficiency($efficiency)
 				->setExecutionTime($executionTime)
 				->setWorkflowResult($webResult)
-				->setAuthor($workflowAuthor)
 				->setScopeWeb()
 		;
+		if (!$helperHasMethod)
+		{
+			$webBlock->setAuthor($workflowAuthor);
+		}
+
+		$result['workflowEfficiencyBlockWeb'] = $webBlock;
 
 		if ($mobileContext)
 		{
-			$result['workflowEfficiencyBlockMobile'] =
+			$mobileBlock =
 				(new Layout\Body\ContentBlock\WorkflowEfficiency())
 					->setAverageDuration($averageDuration)
 					->setEfficiency($efficiency)
 					->setExecutionTime($executionTime)
 					->setWorkflowResult($mobileResult)
-					->setAuthor($workflowAuthor)
 					->setScopeMobile()
 			;
+			if (!$helperHasMethod)
+			{
+				$mobileBlock->setAuthor($workflowAuthor);
+			}
+
+			$result['workflowEfficiencyBlockMobile'] = $mobileBlock;
 		}
 
 		return $result;

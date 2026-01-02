@@ -241,11 +241,10 @@ class Smart extends Dummy
 		$userId = User::getInstance()->getId();
 		$stages = $factory->getStages($categoryId);
 
-		return $container->getUserPermissions($userId)->getStartStageId(
+		return $container->getUserPermissions($userId)->stage()->getFirstAvailableForAddStageId(
 			$entityTypeId,
-			$stages,
 			$categoryId,
-			Service\UserPermissions::OPERATION_READ
+			$stages
 		);
 	}
 
@@ -411,7 +410,7 @@ class Smart extends Dummy
 		if ($entityTypeId)
 		{
 			$userPermissions = Container::getInstance()->getUserPermissions();
-			if ($checkPermission && !$userPermissions->checkAddPermissions(\CCrmOwnerType::SmartDocument))
+			if ($checkPermission && !$userPermissions->entityType()->canAddItems(\CCrmOwnerType::SmartDocument))
 			{
 				Error::getInstance()->addError(
 					'ERROR_CREATING_NEW',

@@ -1,0 +1,10 @@
+<?php
+$MESS["CRM_TIMELINE_ACTIVITY_DELETE_TAG_CONFIRM"] = "Мәртебені жою керек пе?";
+$MESS["CRM_TIMELINE_ACTIVITY_DELETION_CONFIRM"] = "Осы оқиғаны шынымен жойғыңыз келеді ме?";
+$MESS["CRM_TIMELINE_POSTPONE"] = "Кейінге қалдыру";
+$MESS["CRM_TIMELINE_POSTPONE_1D"] = "1 күн";
+$MESS["CRM_TIMELINE_POSTPONE_1H"] = "1 сағат";
+$MESS["CRM_TIMELINE_POSTPONE_2D"] = "2 күн";
+$MESS["CRM_TIMELINE_POSTPONE_2H"] = "2 сағат";
+$MESS["CRM_TIMELINE_POSTPONE_3D"] = "3 күн";
+$MESS["CRM_TIMELINE_POSTPONE_3H"] = "3 сағат";

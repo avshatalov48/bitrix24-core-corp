@@ -437,6 +437,7 @@ class Sprint extends Base
 			else
 			{
 				$itemService->moveItemsToEntity(
+					$backlog->getGroupId(),
 					$itemService->getItemIdsByEntityId($sprint->getId()),
 					$backlog->getId()
 				);

@@ -1,0 +1,65 @@
+/* Firefox */
+@supports not selector(::-webkit-scrollbar) {
+	html {
+		scrollbar-color: rgba(0, 0, 0, 0.20) transparent;
+		scrollbar-width: thin;
+	}
+
+	html:has(body.--ui-context-edge-dark) {
+		scrollbar-color: rgba(255, 255, 255, 0.32) transparent;
+		scrollbar-width: thin;
+	}
+}
+
+body {
+	--scrollbar-thumb-color: rgba(0, 0, 0, 0.20);
+	--scrollbar-thumb-color-active: rgba(0, 0, 0, 0.35);
+	--scrollbar-background: rgba(0, 0, 0, 0);
+}
+
+body.--ui-context-edge-dark {
+	--scrollbar-thumb-color: rgba(255, 255, 255, 0.32);
+	--scrollbar-thumb-color-active: rgba(255, 255, 255, 0.55);
+	--scrollbar-background: rgba(0, 0, 0, 0);
+}
+
+body.--ui-context-content-light {
+	--scrollbar-background: #eef2f4;
+}
+
+body::-webkit-scrollbar {
+	width: 14px;
+	appearance: none;
+	background-color: var(--scrollbar-background);
+}
+
+body::-webkit-scrollbar:horizontal {
+	height: 8px;
+}
+
+body::-webkit-scrollbar-thumb {
+	background-clip: padding-box;
+	background-color: var(--scrollbar-thumb-color);
+	border-radius: 0;
+	border-top-width: 15px;
+	border-bottom-width: 5px;
+	border-left-width: 4px;
+	border-right-width: 4px;
+	border-style: solid;
+	border-color: rgba(0, 0, 0, 0);
+}
+
+body::-webkit-scrollbar-thumb:horizontal {
+	border-radius: 0;
+	border: none;
+}
+
+body::-webkit-scrollbar-thumb:hover {
+	background-color: var(--scrollbar-thumb-color-active);
+	border-left-width: 3px;
+	border-right-width: 3px;
+}
+
+body::-webkit-scrollbar-corner  {
+	background-color: var(--scrollbar-background);
+}

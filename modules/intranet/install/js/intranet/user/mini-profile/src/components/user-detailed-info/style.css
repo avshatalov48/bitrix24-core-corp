@@ -1,0 +1,40 @@
+.intranet-user-mini-profile__detailed-info {
+	display: flex;
+	flex-flow: column;
+	gap: 10px;
+	width: 100%;
+}
+
+.intranet-user-mini-profile__detailed-info-item__parent-department {
+	display: flex;
+	align-items: center;
+	overflow: hidden;
+}
+
+.intranet-user-mini-profile__detailed-info-item__parent-department-text {
+	font-size: var(--ui-font-size-md);
+	color: var(--ui-color-base-2);
+	font-weight: var(--ui-font-weight-normal);
+	white-space: nowrap;
+	text-overflow: ellipsis;
+	overflow: hidden;
+}
+
+.intranet-user-mini-profile__detailed-info-item__parent-department-arrow {
+	display: flex;
+	margin-left: 4px;
+	margin-right: 4px;
+	width: 12px;
+	height: 17px;
+	position: relative;
+}
+
+.intranet-user-mini-profile__detailed-info-item__parent-department-arrow-icon {
+	position: absolute;
+	width: 16px;
+	height: 16px;
+	top: 0;
+	left: 50%;
+	transform: translate(-50%, 1px);
+	--ui-icon-set__icon-color: var(--ui-color-base-2);
+}

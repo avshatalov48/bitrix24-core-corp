@@ -25,13 +25,15 @@ jn.define('crm/timeline/controllers/activity', (require, exports, module) => {
 		 * @public
 		 * @param {string} action
 		 * @param {object} actionParams
+		 * @param {AnalyticsEvent|null} analyticsEvent
 		 */
-		onItemAction({ action, actionParams = {} })
+		// eslint-disable-next-line consistent-return
+		onItemAction({ action, actionParams = {}, analyticsEvent = null })
 		{
 			switch (action)
 			{
 				case SupportedActions.DELETE:
-					return this.deleteActivity(actionParams);
+					return this.deleteActivity(actionParams, analyticsEvent);
 
 				case SupportedActions.VIEW:
 					return this.viewActivity(actionParams);
@@ -46,8 +48,14 @@ jn.define('crm/timeline/controllers/activity', (require, exports, module) => {
 		 * @param {number} ownerId
 		 * @param {number} ownerTypeId
 		 * @param {string|null} confirmationText
+		 * @param {AnalyticsEvent|null} analyticsEvent
 		 */
-		deleteActivity({ activityId, ownerId, ownerTypeId, confirmationText })
+		deleteActivity({
+			activityId,
+			ownerId,
+			ownerTypeId,
+			confirmationText,
+		}, analyticsEvent = null)
 		{
 			if (!activityId)
 			{
@@ -61,12 +69,12 @@ jn.define('crm/timeline/controllers/activity', (require, exports, module) => {
 				confirmDestructiveAction({
 					title: '',
 					description: confirmationText,
-					onDestruct: () => this.executeDeleteAction(data),
+					onDestruct: () => this.executeDeleteAction(data, analyticsEvent),
 				});
 			}
 			else
 			{
-				this.executeDeleteAction(data);
+				this.executeDeleteAction(data, analyticsEvent);
 			}
 		}
 
@@ -91,14 +99,21 @@ jn.define('crm/timeline/controllers/activity', (require, exports, module) => {
 		 *   ownerTypeId: number,
 		 *   ownerId: number,
 		 * }} data
+		 * @param {AnalyticsEvent|null} analyticsEvent
 		 */
-		executeDeleteAction(data = {})
+		executeDeleteAction(data = {}, analyticsEvent = null)
 		{
 			const action = 'crm.timeline.activity.delete';
 
 			this.item.showLoader();
 
-			BX.ajax.runAction(action, { data })
+			BX.ajax.runAction(action, {
+				data,
+				analyticsLabel: analyticsEvent
+					?.setEvent('activity_delete')
+					.setElement('delete_button')
+					.exportToObject(),
+			})
 				.catch((response) => {
 					this.item.hideLoader();
 					void ErrorNotifier.showError(response.errors[0].message);

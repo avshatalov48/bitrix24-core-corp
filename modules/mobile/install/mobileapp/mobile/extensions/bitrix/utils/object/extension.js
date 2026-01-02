@@ -1,6 +1,9 @@
-(() => {
-	const { md5 } = jn.require('utils/hash');
-	const { useCallback } = jn.require('utils/function');
+/**
+ * @module utils/object
+ */
+jn.define('utils/object', (require, exports, module) => {
+	const { md5 } = require('utils/hash');
+	const { useCallback } = require('utils/function');
 
 	/**
 	 * Creates recursive clone of source object
@@ -570,92 +573,35 @@
 	}
 
 	/**
-	 * @class ObjectUtils
-	 * @deprecated Please import specific utilities directly, using jn.require()
+	 * @param {object} value
+	 * @return {string|null}
 	 */
-	class ObjectUtils
+	function toMD5(value)
 	{
-		static clone(source)
-		{
-			return clone(source);
-		}
-
-		static merge(object, ...sources)
-		{
-			return merge(object, ...sources);
-		}
-
-		static mergeImmutable(...sources)
-		{
-			return merge({}, ...sources);
-		}
-
-		static set(object, path, value)
-		{
-			return set(object, path, value);
-		}
-
-		static has(object, path)
-		{
-			return has(object, path);
-		}
-
-		static get(object, path, defaultValue)
-		{
-			return get(object, path, defaultValue);
-		}
-
-		static isEqual(value, other)
-		{
-			return isEqual(value, other);
-		}
-
-		static isObjectLike(value)
-		{
-			return isObjectLike(value);
-		}
-
-		static isArray(value)
-		{
-			return isArray(value);
-		}
-
-		static isMap(value)
-		{
-			return isMap(value);
-		}
-
-		static isSet(value)
-		{
-			return isSet(value);
-		}
-
-		static isEmpty(value)
-		{
-			return isEmpty(value);
-		}
-	}
-
-	Object.toMD5 = function(object) {
 		let result = null;
 		try
 		{
-			const string = JSON.stringify(object);
+			const string = JSON.stringify(value);
 			result = md5(string);
 		}
 		catch
 		{}
 
 		return result;
-	};
+	}
 
-	Object.tryJSONParse = function(object) {
+	/**
+	 * @param {string} value
+	 * @return {object|null}
+	 */
+	function tryJSONParse(value)
+	{
 		let result = null;
-		if (typeof object === 'string')
+		if (typeof value === 'string')
 		{
 			try
 			{
-				result = JSON.parse(object);
+				result = JSON.parse(value);
 			}
 			catch (e)
 			{
@@ -664,28 +610,23 @@
 		}
 
 		return result;
+	}
+
+	module.exports = {
+		clone,
+		merge,
+		mergeImmutable,
+		set,
+		has,
+		get,
+		isEqual,
+		isObjectLike,
+		isArray,
+		isMap,
+		isSet,
+		isEmpty,
+		isFunction,
+		toMD5,
+		tryJSONParse,
 	};
-
-	jnexport(ObjectUtils);
-
-	/**
-	 * @module utils/object
-	 */
-	jn.define('utils/object', (require, exports, module) => {
-		module.exports = {
-			clone,
-			merge,
-			mergeImmutable,
-			set,
-			has,
-			get,
-			isEqual,
-			isObjectLike,
-			isArray,
-			isMap,
-			isSet,
-			isEmpty,
-			isFunction,
-		};
-	});
-})();
+});

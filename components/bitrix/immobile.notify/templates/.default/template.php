@@ -69,13 +69,11 @@ if(empty($arResult['NOTIFY'])):?>
 <?else:?>
 	<div class="notif-block-wrap" id="notif-block-wrap">
 		<?
-		$jsIds = "";
 		$maxId = 0;
 		$newFlag = false;
 		$firstNewFlag = true;
 		foreach ($arResult['NOTIFY'] as $data):
 			$avatarId = "notif-avatar-".randString(5);
-			$jsIds .= $jsIds !== "" ? ', "'.$avatarId.'"' : '"'.$avatarId.'"';
 			$moreUsersCount = 0;
 			if (isset($data['params']['USERS']))
 			{
@@ -237,7 +235,18 @@ if(empty($arResult['NOTIFY'])):?>
 					});
 				</script>
 				<div>
-					<div class="notif-avatar ml-avatar"><div class="ml-avatar-sub" id="<?=$avatarId?>" data-src="<?=$data['userAvatar']?>" style="background-size:cover;"></div></div>
+					<div class="notif-avatar ml-avatar">
+						<div class="ml-avatar-sub" id="<?=$avatarId?>"></div>
+					</div>
+					<script>
+						BX.ready(() => {
+							BX.ImMobileNotify.renderAvatar({
+								containerId: '<?=$avatarId?>',
+								userType: '<?=($sender['type'])?>',
+								url: '<?=CUtil::JSUrlEscape(CUtil::JSEscape($data['userAvatar']))?>'
+							})
+						})
+					</script>
 				</div>
 				<div class="notif-cont">
 					<div class="notif-header">
@@ -274,9 +283,6 @@ if(empty($arResult['NOTIFY'])):?>
 			</div>
 		<?endforeach;?>
 	</div>
-	<script>
-		BitrixMobile.LazyLoad.registerImages([<?=$jsIds?>]);
-	</script>
 
 	<script>
 

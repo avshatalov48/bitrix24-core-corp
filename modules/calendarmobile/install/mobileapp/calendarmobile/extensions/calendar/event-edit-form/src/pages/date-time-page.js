@@ -6,9 +6,9 @@ jn.define('calendar/event-edit-form/pages/date-time-page', (require, exports, mo
 	const { Box } = require('ui-system/layout/box');
 	const { Area } = require('ui-system/layout/area');
 
-	const { SlotCalendar } = require('calendar/event-edit-form/layout/slot-calendar');
-	const { SlotSizeSelector } = require('calendar/event-edit-form/layout/slot-size-selector');
-	const { SlotList } = require('calendar/event-edit-form/layout/slot-list');
+	const { SlotCalendar } = require('calendar/event-edit-form/layout/slot/calendar');
+	const { SlotSizeSelector } = require('calendar/event-edit-form/layout/slot/size-selector');
+	const { SlotList } = require('calendar/event-edit-form/layout/slot/list');
 	const { SaveEventContainer } = require('calendar/event-edit-form/layout/save-event-container');
 
 	/**
@@ -73,7 +73,9 @@ jn.define('calendar/event-edit-form/pages/date-time-page', (require, exports, mo
 					},
 				},
 				new SlotSizeSelector(),
-				new SlotList(),
+				new SlotList({
+					layout: this.props.parentLayout,
+				}),
 			);
 		}
 

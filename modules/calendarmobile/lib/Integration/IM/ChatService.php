@@ -39,7 +39,9 @@ class ChatService
 			return $result->addError(new Error('Event not found'));
 		}
 
-		$event['NOT_DECLINED_IDS'] = $this->prepareChatUsers($event['NOT_DECLINED_IDS']);
+		$event['NOT_DECLINED_IDS'] = $this->prepareChatUsers(
+			is_array($event['NOT_DECLINED_IDS']) ? $event['NOT_DECLINED_IDS'] : []
+		);
 		if (empty($event['NOT_DECLINED_IDS']))
 		{
 			return $result->addError(new Error('No chat users found'));
@@ -146,6 +148,12 @@ class ChatService
 	private function prepareChatUsers(array $users): array
 	{
 		$result = [];
+
+		if (empty($users))
+		{
+			return $result;
+		}
+
 		$externalUserTypes = UserTable::getExternalUserTypes();
 
 		$queryResult = UserTable::query()

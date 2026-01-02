@@ -2,6 +2,7 @@
 if(!defined('B_PROLOG_INCLUDED') || B_PROLOG_INCLUDED!==true)
 	die();
 
+use Bitrix\Crm\Service\Container;
 use Bitrix\Main\Localization\Loc;
 use Bitrix\Crm\Component\ComponentError;
 
@@ -25,9 +26,28 @@ class CCrmOrderProductDetailsComponent extends \CBitrixComponent
 		$this->arResult['ENTITY_ID'] = isset($this->arParams['~ENTITY_ID']) ? (int)$this->arParams['~ENTITY_ID'] : 0;
 		$this->arResult['ENTITY_TYPE'] = isset($this->arParams['~ENTITY_TYPE']) ? (int)$this->arParams['~ENTITY_TYPE'] : CCrmOwnerType::Order;
 
-		if (!\Bitrix\Crm\Order\Permissions\Order::checkUpdatePermission($this->arResult['ENTITY_ID']))
+		$serviceContainer = Container::getInstance();
+		if ($this->arResult['ENTITY_ID'] > 0)
+		{
+			$accessAllow = $serviceContainer
+				->getUserPermissions()
+				->item()
+				->canUpdate(\CCrmOwnerType::Order, $this->arResult['ENTITY_ID'])
+			;
+		}
+		else
+		{
+			$accessAllow = $serviceContainer
+				->getUserPermissions()
+				->entityType()
+				->canAddItems(\CCrmOwnerType::Order)
+			;
+		}
+
+		if (!$accessAllow)
 		{
 			ShowError($this->getErrorMessage(ComponentError::PERMISSION_DENIED));
+
 			return;
 		}
 
@@ -57,8 +77,7 @@ class CCrmOrderProductDetailsComponent extends \CBitrixComponent
 		$this->arResult['IS_PRODUCT_CREATION'] = $isProductCreation;
 		$APPLICATION->SetTitle($title);
 
-		$this->guid = $this->arResult['GUID'] = isset($this->arParams['GUID'])
-			? $this->arParams['GUID'] : "order_order_product_detail_{$this->arResult['ENTITY_ID']}";
+		$this->arResult['GUID'] = $this->arParams['GUID'] ?? "order_order_product_detail_{$this->arResult['ENTITY_ID']}";
 
 		$this->arResult['EDITOR_CONFIG_ID'] = isset($this->arParams['EDITOR_CONFIG_ID'])
 			? $this->arParams['EDITOR_CONFIG_ID'] : 'order_order_product_detail';
@@ -199,7 +218,11 @@ class CCrmOrderProductDetailsComponent extends \CBitrixComponent
 		else
 		{
 			$orderId = (int)$this->arParams['ORDER_ID'];
-			if ($orderId ===0 || !\Bitrix\Crm\Order\Permissions\Order::checkUpdatePermission($orderId, CCrmPerms::GetCurrentUserPermissions()))
+			if ($orderId === 0 || !\Bitrix\Crm\Service\Container::getInstance()
+					->getUserPermissions()
+					->item()
+					->canUpdate(\CCrmOwnerType::Order, $orderId)
+			)
 			{
 				return $entityData;
 			}

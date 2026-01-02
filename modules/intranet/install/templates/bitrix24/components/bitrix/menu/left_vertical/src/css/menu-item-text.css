@@ -1,0 +1,113 @@
+.menu-item-link-text {
+	flex-grow: 0;
+	flex-shrink: 1;
+	box-sizing: border-box;
+	position: relative;
+	max-width: 175px;
+	display: inline-block;
+	padding: 0;
+	margin-left: 9px;
+	font-family: var(--ui-font-family-primary);
+	line-height: 20px;
+	font-weight: var(--ui-font-weight-regular, 400);
+	color: inherit;
+	overflow: hidden;
+	text-overflow: ellipsis;
+	vertical-align: middle;
+	white-space: nowrap;
+	transition: 0.2s ease-in-out font-size;
+}
+
+.menu-item-group.menu-item-group-expanding .menu-item-link-text,
+.menu-item-group[data-collapse-mode="expanded"] .menu-item-link-text {
+	font-size: var(--ui-font-size-sm);
+}
+
+.menu-item-group.menu-item-group-expanding .menu-item-link-text {
+	font-size: var(--ui-font-size-sm);
+}
+
+.menu-item-link-text,
+.menu-item-group[data-collapse-mode="expanded"].menu-item-group-collapsing .menu-item-link-text{
+	font-size: var(--ui-font-size-lg);
+}
+
+.menu-item-link-arrow ~ .menu-item-link-text {
+	padding-right: 18px;
+}
+
+.menu-animation-closing-mode .menu-item-link-text,
+.menu-animation-closing-mode .menu-item-group .menu-item-link-text {
+	opacity: 0;
+}
+
+.menu-collapsed-mode .menu-item-link-text {
+	display: none
+}
+
+.menu-collapsed-mode.menu-sliding-mode .menu-item-link-text {
+	display: inline-block;
+}
+
+.menu-collapsed-mode.menu-sliding-mode .menu-active .menu-item-link-beta.menu-item-link-text,
+.menu-collapsed-mode.menu-sliding-mode .menu-item-link-beta.menu-item-link-text,
+.menu-item-active .menu-item-link-beta.menu-item-link-text,
+.menu-item-link-beta.menu-item-link-text {
+	padding-right: 30px;
+}
+
+.menu-collapsed-mode.menu-sliding-mode .menu-item-link-beta.menu-item-link-text,
+.menu-item-link-beta.menu-item-link-text {
+	max-width: 170px;
+}
+
+.menu-item-link-beta.menu-item-link-text:after {
+	content: "beta";
+	position: absolute;
+	top: -4px;
+	right: 4px;
+	display: block;
+	font-size: 12px;
+	color: #fff;
+	opacity: .5;
+}
+
+.menu-items-view-mode .menu-item-active .menu-item-link-beta.menu-item-link-text:after {
+	display: none;
+	color: #e2e2e2;
+}
+
+.menu-item-with-index.menu-item-active .menu-item-link-text.menu-item-link-beta {
+	max-width: 140px;
+	box-sizing: border-box;
+}
+
+.bitrix24-dark-theme .menu-item-link-beta.menu-item-link-text:after {
+	color: #a6a6a6;
+}
+
+.menu-animation-closing-mode .menu-item-group[data-collapse-mode="expanded"] .menu-item-link-text {
+	opacity: 0;
+}
+
+.menu-item-group[data-collapse-mode="expanded"] .menu-item-link-text,
+.menu-item-group[data-collapse-mode="expanded"] .menu-item-icon {
+	opacity: .7;
+}
+
+.menu-item-group.menu-item-block[data-collapse-mode="expanded"]:hover .menu-item-link-text,
+.menu-item-group.menu-item-block[data-collapse-mode="expanded"]:hover .menu-item-icon,
+.menu-item-group-collapsing.menu-item-group.menu-item-block[data-collapse-mode="expanded"] .menu-item-link-text,
+.menu-item-group-collapsing.menu-item-group.menu-item-block[data-collapse-mode="expanded"] .menu-item-icon {
+	opacity: 1;
+}
+
+.menu-item-group-more-ul .menu-item-link-text,
+.menu-collapsed-mode.menu-sliding-mode .menu-item-group-more-ul .menu-item-link-text {
+	max-width: 155px;
+}
+
+.menu-item-group.menu-item-group-expanding.menu-item-active .menu-item-link-text {
+	background-color: transparent;
+	color: inherit;
+}

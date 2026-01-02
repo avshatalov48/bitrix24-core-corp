@@ -1,5 +1,7 @@
 <?php
 
+use Bitrix\Crm\Integration\Analytics\Dictionary;
+
 if (!defined("B_PROLOG_INCLUDED") || B_PROLOG_INCLUDED !== true)
 {
 	die();
@@ -123,6 +125,17 @@ class CBPImOpenLinesMessageActivity extends CBPActivity
 		else
 		{
 			$this->sendAttachments($chat['ID'], $fromUserId);
+		}
+
+		if (method_exists(\CCrmBizProcHelper::class, 'sendOperationsAnalytics'))
+		{
+			// Send Operations Analytics
+			$documentType = $this->getDocumentType();
+			\CCrmBizProcHelper::sendOperationsAnalytics(
+				Dictionary::EVENT_ENTITY_SOCIAL,
+				$this,
+				$documentType[2] ?? '',
+			);
 		}
 
 		return CBPActivityExecutionStatus::Closed;

@@ -4,13 +4,12 @@ namespace Bitrix\Tasks\Flow\Grid\Column;
 
 use Bitrix\Main\Localization\Loc;
 use Bitrix\Tasks\Flow\Flow;
-use Bitrix\Tasks\Flow\Grid\Preload\TotalTasksCountPreloader;
-use Bitrix\Tasks\Flow\Integration\AI\Configuration;
+use Bitrix\Tasks\Flow\Grid\Preload\CopilotAdviceInfoPreloader;
 use Bitrix\Tasks\Flow\Provider\FlowProvider;
 
 final class Efficiency extends Column
 {
-	protected TotalTasksCountPreloader $totalTasksCount;
+	protected CopilotAdviceInfoPreloader $copilotAdviceInfoPreloader;
 
 	public function __construct()
 	{
@@ -19,13 +18,10 @@ final class Efficiency extends Column
 
 	public function prepareData(Flow $flow, array $params = []): array
 	{
-		$totalTasksCount = $this->totalTasksCount->get($flow->getId());
-		$isEnoughTasksForCopilot = $totalTasksCount >= Configuration::getMinFlowTasksCount();
-
 		return [
 			'flow' => $flow,
 			'efficiency' => (new FlowProvider())->getEfficiency($flow),
-			'isEnoughTasksForCopilot' => $isEnoughTasksForCopilot,
+			'adviceInfo' => $this->copilotAdviceInfoPreloader->get($flow->getId()),
 		];
 	}
 
@@ -40,6 +36,6 @@ final class Efficiency extends Column
 		$this->width = null;
 		$this->align = 'center';
 		$this->class = 'tasks-flow__grid-column-center';
-		$this->totalTasksCount = new TotalTasksCountPreloader();
+		$this->copilotAdviceInfoPreloader = new CopilotAdviceInfoPreloader();
 	}
 }

@@ -179,7 +179,6 @@
 }
 
 .crm-agreement-terms-popup{
-	height: 700px;
 }
 
 .crm-agreement-terms-popup .popup-window-titlebar{
@@ -195,7 +194,8 @@
 }
 
 .crm-agreement-terms-popup .popup-window-content{
-	padding-top: 0;
+	font-size: 15px;
+	margin: 22px;
 }
 
 .crm-agreement-terms-popup .popup-window-buttons{

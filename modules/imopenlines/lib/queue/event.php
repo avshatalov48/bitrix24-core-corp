@@ -403,7 +403,7 @@ class Event
 
 	/**
 	 * Event handler on department update.
-	 * @see \Bitrix\HumanResources\Enum\EventName::NODE_UPDATED
+	 * @see \Bitrix\HumanResources\Enum\EventName::OnNodeUpdated
 	 * @param \Bitrix\Main\Event $event
 	 * @return void
 	 */
@@ -438,7 +438,7 @@ class Event
 	}
 
 	/**
-	 * @see \Bitrix\HumanResources\Enum\EventName::NODE_DELETED
+	 * @see \Bitrix\HumanResources\Enum\EventName::OnNodeDeleted
 	 * @param \Bitrix\Main\Event $event
 	 * @return void
 	 */
@@ -476,7 +476,7 @@ class Event
 	}
 
 	/**
-	 * @see \Bitrix\HumanResources\Enum\EventName::MEMBER_UPDATED
+	 * @see \Bitrix\HumanResources\Enum\EventName::OnMemberUpdated
 	 * @param \Bitrix\Main\Event $event
 	 * @return void
 	 */

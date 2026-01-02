@@ -38,7 +38,7 @@ this.BX.Booking = this.BX.Booking || {};
 	    loading: Boolean,
 	    hiddenText: Boolean
 	  },
-	  beforeCreate() {
+	  created() {
 	    this.switcher = new ui_switcher.Switcher({
 	      id: this.id,
 	      inputName: this.inputName,
@@ -58,6 +58,10 @@ this.BX.Booking = this.BX.Booking || {};
 	  },
 	  mounted() {
 	    this.switcher.renderTo(this.$refs.switcherWrapper);
+	    if (this.modelValue !== this.switcher.checked) {
+	      this.switcher.check(this.modelValue);
+	    }
+	    this.toggleTextVisibility(this.hiddenText);
 	  },
 	  methods: {
 	    checked() {
@@ -78,7 +82,11 @@ this.BX.Booking = this.BX.Booking || {};
 	      this.$emit('toggle', checked);
 	    },
 	    toggleTextVisibility(hidden) {
-	      const node = this.switcher.getNode();
+	      var _this$switcher;
+	      const node = ((_this$switcher = this.switcher) == null ? void 0 : _this$switcher.getNode == null ? void 0 : _this$switcher.getNode()) || null;
+	      if (node === null) {
+	        return;
+	      }
 	      const elOn = node.querySelector('.ui-switcher-enabled');
 	      const elOff = node.querySelector('.ui-switcher-disabled');
 	      if (hidden) {

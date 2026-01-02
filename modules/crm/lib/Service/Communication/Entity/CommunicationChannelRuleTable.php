@@ -7,6 +7,22 @@ use Bitrix\Main\ORM\Fields\ArrayField;
 use Bitrix\Main\ORM\Fields\IntegerField;
 use Bitrix\Main\ORM\Fields\StringField;
 
+/**
+ * Class CommunicationChannelRuleTable
+ *
+ * DO NOT WRITE ANYTHING BELOW THIS
+ *
+ * <<< ORMENTITYANNOTATION
+ * @method static EO_CommunicationChannelRule_Query query()
+ * @method static EO_CommunicationChannelRule_Result getByPrimary($primary, array $parameters = [])
+ * @method static EO_CommunicationChannelRule_Result getById($id)
+ * @method static EO_CommunicationChannelRule_Result getList(array $parameters = [])
+ * @method static EO_CommunicationChannelRule_Entity getEntity()
+ * @method static \Bitrix\Crm\Service\Communication\Entity\EO_CommunicationChannelRule createObject($setDefaultValues = true)
+ * @method static \Bitrix\Crm\Service\Communication\Entity\EO_CommunicationChannelRule_Collection createCollection()
+ * @method static \Bitrix\Crm\Service\Communication\Entity\EO_CommunicationChannelRule wakeUpObject($row)
+ * @method static \Bitrix\Crm\Service\Communication\Entity\EO_CommunicationChannelRule_Collection wakeUpCollection($rows)
+ */
 class CommunicationChannelRuleTable extends \Bitrix\Main\ORM\Data\DataManager
 {
 	public static function getTableName(): string

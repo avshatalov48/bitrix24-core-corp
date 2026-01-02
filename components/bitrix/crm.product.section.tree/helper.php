@@ -7,11 +7,7 @@ class CCrmProductSectionTreeHelper
 {
 	public function checkRights()
 	{
-		$permissions = CCrmPerms::GetCurrentUserPermissions();
-		if (!(CCrmPerms::IsAccessEnabled($permissions) && $permissions->HavePerm('CONFIG', BX_CRM_PERM_CONFIG, 'READ')))
-			return false;
-
-		return true;
+		return \Bitrix\Crm\Service\Container::getInstance()->getUserPermissions()->entityType()->canReadSomeItemsInCrm();
 	}
 
 	public function getInitialTree($catalogId, $sectionId)

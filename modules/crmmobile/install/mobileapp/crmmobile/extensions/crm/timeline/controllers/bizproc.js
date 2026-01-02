@@ -55,15 +55,29 @@ jn.define('crm/timeline/controllers/bizproc', (require, exports, module) => {
 				return;
 			}
 
-			let url = `/company/personal/bizproc/${taskId}/`;
-
 			const userId = BX.prop.getInteger(data, 'userId', 0);
-			if (userId > 0)
-			{
-				url += `?USER_ID=${userId}`;
-			}
 
-			inAppUrl.open(url);
+			void requireLazy('bizproc:workflow/info')
+				.then((result) => {
+					if (result?.WorkflowInfo)
+					{
+						result.WorkflowInfo.open({ taskId, targetUserId: userId > 0 ? userId : null });
+
+						return;
+					}
+
+					let url = `/company/personal/bizproc/${taskId}/`;
+					if (userId > 0)
+					{
+						url += `?USER_ID=${userId}`;
+					}
+
+					inAppUrl.open(url);
+				})
+				.catch((error) => {
+					console.error(error);
+				})
+			;
 		}
 
 		#doTask(data)
@@ -128,12 +142,23 @@ jn.define('crm/timeline/controllers/bizproc', (require, exports, module) => {
 				return;
 			}
 
-			void requireLazy('bizproc:workflow/details')
-				.then(({ WorkflowDetails }) => {
+			void requireLazy('bizproc:workflow/info')
+				.then((result) => {
+					if (result?.WorkflowInfo)
+					{
+						result.WorkflowInfo.open({ workflowId });
+
+						return;
+					}
+
+					const { WorkflowDetails } = requireLazy('bizproc:workflow/details');
 					if (WorkflowDetails)
 					{
 						WorkflowDetails.open({ workflowId });
 					}
+				})
+				.catch((error) => {
+					console.error(error);
 				})
 			;
 		}

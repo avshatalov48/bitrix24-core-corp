@@ -1,8 +1,11 @@
 <?php
 namespace Bitrix\Tasks\Kanban;
 
+use Bitrix\Main\Engine\CurrentUser;
 use \Bitrix\Main\Type\DateTime;
+use Bitrix\Tasks\Internals\Log\Logger;
 use \Bitrix\Tasks\Util\Calendar;
+use Bitrix\Tasks\Internals\Task\Status;
 
 class TimeLineTable// *Table for unity structure
 {
@@ -108,7 +111,11 @@ class TimeLineTable// *Table for unity structure
 			'PERIOD1' => [
 				'COLOR' => 'FF5752',
 				'FILTER' => [
-					'<=DEADLINE' => date($format, $timeClientTS)
+					'<=DEADLINE' => date($format, $timeClientTS),
+					'!STATUS' => [
+						Status::SUPPOSEDLY_COMPLETED,
+						Status::COMPLETED,
+					],
 				],
 				'UPDATE' => [],
 				'UPDATE_ACCESS' => false
@@ -118,7 +125,11 @@ class TimeLineTable// *Table for unity structure
 				'COLOR' => '9DCF00',
 				'FILTER' => [
 					'>DEADLINE' => date($format, $timeClientTS),
-					'<=DEADLINE' => date($format, $dateClient2TS)
+					'<=DEADLINE' => date($format, $dateClient2TS),
+					'!STATUS' => [
+						Status::SUPPOSEDLY_COMPLETED,
+						Status::COMPLETED,
+					],
 				],
 				'UPDATE' => [
 					'DEADLINE' => self::getClosestWorkHour($dateClient2TS)
@@ -130,7 +141,11 @@ class TimeLineTable// *Table for unity structure
 				'COLOR' => '2FC6F6',
 				'FILTER' => [
 					'>DEADLINE' => date($format, $dateClient2TS),
-					'<=DEADLINE' => date($format, ($endTimeWeek = $dateClient2TS + (7 - $currentWeekDay) * 86400))
+					'<=DEADLINE' => date($format, ($endTimeWeek = $dateClient2TS + (7 - $currentWeekDay) * 86400)),
+					'!STATUS' => [
+						Status::SUPPOSEDLY_COMPLETED,
+						Status::COMPLETED,
+					]
 				],
 				'UPDATE' => [
 					'DEADLINE' => self::getClosestWorkHour($endTimeWeek)
@@ -142,7 +157,11 @@ class TimeLineTable// *Table for unity structure
 				'COLOR' => '55D0E0',
 				'FILTER' => [
 					'>DEADLINE' => date($format, $endTimeWeek),
-					'<=DEADLINE' => date($format, ($endTimeNextWeek = $endTimeWeek + 7 * 86400))
+					'<=DEADLINE' => date($format, ($endTimeNextWeek = $endTimeWeek + 7 * 86400)),
+					'!STATUS' => [
+						Status::SUPPOSEDLY_COMPLETED,
+						Status::COMPLETED,
+					],
 				],
 				'UPDATE' => [
 					'DEADLINE' => self::getClosestWorkHour($endTimeNextWeek)
@@ -153,7 +172,11 @@ class TimeLineTable// *Table for unity structure
 			'PERIOD5' => [
 				'COLOR' => 'A8ADB4',
 				'FILTER' => [
-					'DEADLINE' => false
+					'DEADLINE' => false,
+					'!STATUS' => [
+						Status::SUPPOSEDLY_COMPLETED,
+						Status::COMPLETED,
+					],
 				],
 				'UPDATE' => [
 					'DEADLINE' => false
@@ -165,11 +188,28 @@ class TimeLineTable// *Table for unity structure
 				'COLOR' => '468EE5',
 				'FILTER' => [
 					'>DEADLINE' => date($format, $endTimeNextWeek),
+					'!STATUS' => [
+						Status::SUPPOSEDLY_COMPLETED,
+						Status::COMPLETED,
+					],
 				],
 				'UPDATE' => [
 					'DEADLINE' => self::getClosestWorkHour($endTimeNextWeek + 7 * 86400)
 				],
 				'UPDATE_ACCESS' => \CTaskItem::ACTION_CHANGE_DEADLINE
+			],
+			// completed
+			'PERIOD7' => [
+				'COLOR' => '6F768F',
+				'FILTER' => [
+					'STATUS' => [
+						Status::SUPPOSEDLY_COMPLETED,
+						Status::COMPLETED,
+					]
+				],
+				'UPDATE' => [],
+				'UPDATE_ACCESS' => false,
+				'CAN_SORT_ITEMS' => false,
 			],
 		];
 
@@ -216,14 +256,31 @@ class TimeLineTable// *Table for unity structure
 			$dateTime->setTime($calendarSettings['HOURS']['END']['H'], $calendarSettings['HOURS']['END']['M']);
 		}
 
+		$count = 0;
+		$start = clone $dateTime;
 		$result = date(self::getDatePhpFormat(), $dateTime->getTimestamp());
 		while (
 			$dateTime->checkLT($now)
 			|| !$calendar->isWorkTime(\Bitrix\Tasks\Util\Type\DateTime::createFromUserTimeGmt($result))
 		)
 		{
+			$count++;
 			$dateTime->addDay(1);
 			$result = date(self::getDatePhpFormat(), $dateTime->getTimestamp());
+
+			if ($count >= 30)
+			{
+				// prevent infinite loop
+				$log = [
+					'message' => 'Infinity loop prevented',
+					'ts' => $timeStamp,
+					'tz' => \CTimeZone::GetOffset(),
+					'id' => CurrentUser::get()->getId(),
+				];
+				Logger::log($log, 'TASKS_TIMELINE_LOOP');
+
+				return date(self::getDatePhpFormat(), $start->getTimestamp());
+			}
 		}
 
 		return $result;

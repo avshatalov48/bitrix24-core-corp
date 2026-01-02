@@ -4,9 +4,8 @@ namespace Bitrix\BizprocMobile\Controller\Action\Workflow;
 
 use Bitrix\Bizproc;
 use Bitrix\Bizproc\Api\Data\WorkflowStateService\WorkflowStateToGet;
-use Bitrix\Bizproc\Api\Data\WorkflowStateService\WorkflowStateFilter;
 use Bitrix\Bizproc\Api\Service\WorkflowStateService;
-use Bitrix\BizprocMobile\UI\WorkflowView;
+use Bitrix\BizprocMobile\UI\WorkflowUserGridView;
 use Bitrix\Main\UI\PageNavigation;
 use Bitrix\Mobile\Provider\UserRepository;
 use Bitrix\Mobile\UI\StatefulList\BaseAction;
@@ -49,8 +48,9 @@ class LoadListAction extends BaseAction
 
 		$toGet->setLimit($pageNavigation->getLimit());
 		$toGet->setOffset($pageNavigation->getOffset());
+		$toGet->setAdditionalSelectFields(['STARTED_BY', 'STATE_TITLE', 'TEMPLATE.NAME']);
 
-		$result = $service->getFullFilledList($toGet);
+		$result = $service->getList($toGet);
 
 		if (!$result->isSuccess())
 		{
@@ -61,26 +61,20 @@ class LoadListAction extends BaseAction
 
 		$userIds = [];
 		$items = [];
-		foreach ($result->getWorkflowStatesList() as $workflow)
+		foreach ($result->getWorkflowStatesCollection() as $workflowState)
 		{
-			$workflowView = new WorkflowView($workflow, $currentUserId);
+			$workflowView = new WorkflowUserGridView($workflowState, $currentUserId);
+			$workflowView->setModified($result->getUserModified($workflowState->getId()));
+
 			$items[] = $workflowView;
 
-			if (isset($workflow['STARTED_USER_INFO']['ID']))
-			{
-				$userIds[(int)($workflow['STARTED_USER_INFO']['ID'])] = true;
-			}
-
-			$facesIds = $workflowView->getFacesIds();
-			foreach ($facesIds as $userId)
-			{
-				$userIds[(int)$userId] = true;
-			}
+			$faces = $workflowView->getFaces();
+			$userIds[] = $faces->getUniqueUserIds();
 		}
 
 		return [
 			'items' => $items,
-			'users' => UserRepository::getByIds(array_keys($userIds)),
+			'users' => UserRepository::getByIds(array_merge(...$userIds)),
 			'permissions' => [],
 		];
 	}

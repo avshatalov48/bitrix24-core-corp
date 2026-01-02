@@ -66,12 +66,12 @@
 }
 
 .sign-blank-selector__list_item-title {
-	font: 12px/14.32px var(--ui-font-family-system);
+	font: 12px/14.32px var(--ui-font-family-primary, var(--ui-font-family-system));
 	color: var(--ui-color-palette-gray-90);
 }
 
 .sign-blank-selector__list_item-info {
-	font: 11px/13.5px var(--ui-font-family-system);
+	font: 11px/13.5px var(--ui-font-family-primary, var(--ui-font-family-system));
 	color: var(--ui-color-palette-gray-60);
 }
 
@@ -105,12 +105,12 @@
 }
 
 .sign-blank-selector__list_item.--blank .sign-blank-selector__list_item-title {
-	font: 14px/16.71px var(--ui-font-family-system);
+	font: 14px/16.71px var(--ui-font-family-primary, var(--ui-font-family-system));
 	margin-bottom: 5px;
 }
 
 .sign-blank-selector__list_item.--blank .sign-blank-selector__list_item-info {
-	font: 13px/15.51px var(--ui-font-family-system);
+	font: 13px/15.51px var(--ui-font-family-primary, var(--ui-font-family-system));
 }
 
 .sign-blank-selector__list_item.--blank.--loaded {
@@ -218,7 +218,7 @@
 }
 
 .sign-blank-selector__load-more {
-	font: 15px/17.9px var(--ui-font-family-system);
+	font: 15px/17.9px var(--ui-font-family-primary, var(--ui-font-family-system));
 	color: var(--ui-color-link-primary-base);
 	text-align: center;
 }

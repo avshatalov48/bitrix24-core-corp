@@ -1,5 +1,8 @@
-<?
+<?php
 if (!defined("B_PROLOG_INCLUDED") || B_PROLOG_INCLUDED!==true)die();
+
+use Bitrix\Main\ArgumentException;
+use Bitrix\Main\Localization\Loc;
 
 class CBPDiskAddFolderActivity
 	extends CBPActivity
@@ -51,18 +54,22 @@ class CBPDiskAddFolderActivity
 
 		$rootActivity = $this->GetRootActivity();
 		$documentId = $rootActivity->GetDocumentId();
+		$moduleId = null;
 
 		switch ($entityType)
 		{
 			case 'user':
 				$entityType = \Bitrix\Disk\ProxyType\User::className();
+				$moduleId = 'disk';
 				$entityId = CBPHelper::ExtractUsers($entityId, $documentId, true);
 				break;
 			case 'sg':
 				$entityType = \Bitrix\Disk\ProxyType\Group::className();
+				$moduleId = 'disk';
 				break;
 			case 'common':
 				$entityType = \Bitrix\Disk\ProxyType\Common::className();
+				$moduleId = 'disk';
 				break;
 			default:
 				$entityType = null;
@@ -70,10 +77,11 @@ class CBPDiskAddFolderActivity
 
 		if ($entityType)
 		{
-			$storage = \Bitrix\Disk\Storage::load(array(
+			$storage = \Bitrix\Disk\Storage::load(array_filter([
+				'=MODULE_ID' => $moduleId,
 				'=ENTITY_ID' => $entityId,
 				'=ENTITY_TYPE' => $entityType,
-			));
+			]));
 			if ($storage)
 				return $storage->getRootObject();
 		}
@@ -100,13 +108,25 @@ class CBPDiskAddFolderActivity
 		if (!$createdBy)
 			$createdBy = \Bitrix\Disk\SystemUser::SYSTEM_USER_ID;
 
-		$newFolder = $folder->addSubFolder(array('NAME' => $folderName, 'CREATED_BY' => $createdBy));
+		try
+		{
+			$newFolder = $folder->addSubFolder([
+				'NAME' => $folderName,
+				'CREATED_BY' => $createdBy,
+			]);
+		}
+		catch (ArgumentException $exception)
+		{
+			$errorMessage = Loc::getMessage('DISK_FOLDER_ERROR_FOLDER_NAME_CAN_NOT_BE_EMPTY') ?? $exception->getMessage();
+			throw new ArgumentException($errorMessage);
+		}
+
 		if(!$newFolder && $folder->getErrorByCode(\Bitrix\Disk\BaseObject::ERROR_NON_UNIQUE_NAME))
 		{
-			$newFolder = \Bitrix\Disk\Folder::load(array(
+			$newFolder = \Bitrix\Disk\Folder::load([
 				'=NAME' => $folderName,
 				'PARENT_ID' => $folder->getId()
-			));
+			]);
 		}
 		if ($newFolder)
 		{

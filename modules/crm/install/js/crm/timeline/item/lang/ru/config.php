@@ -64,3 +64,9 @@ $MESS['CRM_TIMELINE_ITEM_BIZPROC_TASK_DO_ACTION_ACCESS_DENIED'] = 'Выполн�
 $MESS['CRM_TIMELINE_ITEM_CALL_SCORING_RESPONSIBLE_TITLE'] = 'Ответственный';
 $MESS['CRM_TIMELINE_ITEM_CALL_SCORING_SCRIPT_TITLE'] = 'Соответствие скрипту';
 $MESS['CRM_TIMELINE_ITEM_CALL_SCORING_EDIT_PROMPT_HINT'] = 'Эта возможность скоро будет доступна. Вы можете отредактировать скрипт в разделе Скрипты и Речевая аналитика с AI';
+
+$MESS["CRM_TIMELINE_ITEM_EDITABLE_DESCRIPTION_COPILOT_HEADER_PENDING"] = 'CoPilot готовит рекомендации';
+$MESS["CRM_TIMELINE_ITEM_EDITABLE_DESCRIPTION_COPILOT_HEADER"] = 'Рекомендации от CoPilot';
+
+$MESS["CRM_TIMELINE_ITEM_TEXT_EXPAND"] = "ещё";
+$MESS["CRM_TIMELINE_ITEM_TEXT_COLLAPSE"] = "свернуть";

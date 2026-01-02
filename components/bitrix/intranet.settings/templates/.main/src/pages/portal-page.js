@@ -125,6 +125,7 @@ export class PortalPage extends BaseSettingsPage
 			parent: this,
 			section: sectionView,
 		});
+
 		// 1. This is a description on blue box
 		sectionView.append(
 			(new Row({
@@ -137,7 +138,17 @@ export class PortalPage extends BaseSettingsPage
 			})).render())
 		;
 
-		//region 2. Tabs
+		// 2.0 Widget
+		const previewWidget = new SiteTitlePreviewWidget(portalSettings, portalThemeSettings);
+		new SettingsRow({
+			row: new Row({
+				content: previewWidget.render(),
+				className: 'intranet-settings__site-logo_subrow',
+			}),
+			parent: sectionField,
+		});
+
+		//region 2.1 Tabs
 		const siteLogoRow = new SettingsRow({
 			row: new Row({
 				className: 'intranet-settings__grid_box',
@@ -145,16 +156,16 @@ export class PortalPage extends BaseSettingsPage
 			parent: sectionField,
 		});
 
-		const previewWidget = new SiteTitlePreviewWidget(portalSettings, portalThemeSettings);
 		const tabsRow = new SettingsRow({
 			row: new Row({
-				className: 'intranet-settings__site-logo_subrow --no-padding --bottom-separator --block',
+				className: 'intranet-settings__site-logo_subrow --bottom-separator --block',
 			}),
-			parent: siteLogoRow,
+			parent: sectionField,
 		});
 
 		const tabsField = new TabsField({parent: tabsRow});
-		// 2.1 Tab Site name
+
+		// 2.2 Tab Site name
 		const siteTitleTab = new TabField({
 			parent: tabsField,
 			tabsOptions: this.getValue('tabCompanyTitle')
@@ -199,15 +210,6 @@ export class PortalPage extends BaseSettingsPage
 		});
 
 		tabsField.activateTab(siteTitleTab);
-		// 2.2 Widget
-
-		new SettingsRow({
-			row: new Row({
-				content: previewWidget.render(),
-				className: 'intranet-settings__site-logo_subrow --no-padding',
-			}),
-			parent: siteLogoRow,
-		});
 
 		// 2.3 site_name
 

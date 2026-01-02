@@ -267,7 +267,8 @@ final class Task extends \Bitrix\Tasks\Integration\Socialnetwork
 				}
 				elseif ($arFields["PARAMS"]["TYPE"] == "status")
 				{
-					$message = Loc::getMessage("TASKS_SONET_GL_TASKS2_TASK_STATUS_MESSAGE_".$arTask["STATUS"]);
+					$message = Loc::getMessage("TASKS_SONET_GL_TASKS2_TASK_STATUS_MESSAGE_".$arTask["STATUS"].'_MSGVER_1')
+						?? Loc::getMessage("TASKS_SONET_GL_TASKS2_TASK_STATUS_MESSAGE_".$arTask["STATUS"]);
 
 					$message_24_1 = $eventTitle;
 

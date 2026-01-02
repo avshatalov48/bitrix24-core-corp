@@ -3,6 +3,7 @@
 namespace Bitrix\BIConnector\Integration\Superset\Model;
 
 use Bitrix\Main\ORM\Data\DataManager;
+use Bitrix\Main\ORM\Data\Internal\DeleteByFilterTrait;
 use Bitrix\Main\ORM\Fields;
 
 /**
@@ -33,6 +34,7 @@ use Bitrix\Main\ORM\Fields;
 
 final class SupersetTagTable extends DataManager
 {
+	use DeleteByFilterTrait;
 	/**
 	 * Returns DB table name for entity.
 	 *

@@ -6,6 +6,9 @@ if (!defined('B_PROLOG_INCLUDED') || B_PROLOG_INCLUDED !== true)
 }
 
 use Bitrix\Tasks\Flow\Control\Task\Field\FlowFieldHandler;
+use Bitrix\Tasks\Flow\Distribution\FlowDistributionServicesFactory;
+use Bitrix\Tasks\Flow\Distribution\FlowDistributionType;
+use Bitrix\Main\Web\Json;
 
 \Bitrix\Main\Page\Asset::getInstance()->addJs(getLocalPath('activities/bitrix/task2activity/script.js'));
 
@@ -256,6 +259,17 @@ if (isset($documentValues['FLOW_ID']))
 
 $runtimeData = $dialog->getRuntimeData();
 
+$flowId = (int)($arCurrentValues['Fields']['FLOW_ID'] ?? 0);
+$flowFieldHandler = new FlowFieldHandler($flowId);
+
+// Preloading fields for all types of distribution
+$fieldsMap = [];
+foreach (FlowDistributionType::cases() as $distributionType)
+{
+	$provider = (new FlowDistributionServicesFactory($distributionType))->getFieldsProvider();
+	$fieldsMap[$distributionType->value] = $provider->getModifiedFields();
+}
+
 ?>
 <script>
 	BX.message({
@@ -266,12 +280,13 @@ $runtimeData = $dialog->getRuntimeData();
 	{
 		const script = new BX.Tasks.Automation.Activity.Task2Activity({
 			isRobot: true,
-			controlledByFlowFields: <?=\Bitrix\Main\Web\Json::encode((new FlowFieldHandler(0))->getModifiedFields())?>,
+			controlledByFlowFields: <?= Json::encode($flowFieldHandler->getModifiedFields())?>,
+			flowModifiedFieldsMap: <?= Json::encode($fieldsMap)?>,
 			formName: '<?= CUtil::JSEscape($dialog->getFormName()) ?>',
 			selectedGroupId: <?= $selectedGroupId ?? 'undefined' ?>,
 			selectedFlowId: <?= $selectedFlowId ?? 'undefined' ?>,
-			selectedTags: <?= \Bitrix\Main\Web\Json::encode($runtimeData['tags']) ?>,
-			dependsOn: <?= \Bitrix\Main\Web\Json::encode($runtimeData['dependsOn']) ?>,
+			selectedTags: <?= Json::encode($runtimeData['tags']) ?>,
+			dependsOn: <?= Json::encode($runtimeData['dependsOn']) ?>,
 		});
 		script.render();
 	});

@@ -16,6 +16,7 @@ final class UserRepository
 		'SECOND_NAME',
 		'PERSONAL_PHOTO',
 		'NOTIFICATION_LANGUAGE_ID',
+		'ACTIVE',
 	];
 
 	public function getById(int $userId): ?User
@@ -32,12 +33,13 @@ final class UserRepository
 	private function extractItemFromModel(EO_User $model): User
 	{
 		return new User(
-			$model->getId(),
-			$model->getName(),
-			$model->getLastName(),
-			$model->getSecondName(),
-			$model->getPersonalPhoto(),
-			$model->getNotificationLanguageId(),
+			id: $model->getId(),
+			name: $model->getName(),
+			lastName: $model->getLastName(),
+			secondName: $model->getSecondName(),
+			personalPhotoId: $model->getPersonalPhoto(),
+			notificationLanguageId: $model->getNotificationLanguageId(),
+			isActive: $model->getActive(),
 		);
 	}
 

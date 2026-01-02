@@ -2,9 +2,7 @@
 
 use Bitrix\Crm\FieldMultiTable;
 use Bitrix\Crm\UI\Toolbar\ToolbarGuide;
-use Bitrix\Main\IO\Path;
 use Bitrix\Main\Loader;
-use Bitrix\Main\Localization\Loc;
 use Bitrix\Main\Security\Random;
 use Bitrix\Main\UI\Extension;
 use Bitrix\UI\Buttons\Button;
@@ -21,24 +19,18 @@ class CrmToolbarComponent extends Bitrix\Crm\Component\Base
 	{
 		return [
 			'IM' => [
-				'idSuffix' => '_im',
-				'className' => 'ui-btn-icon-chat',
-				'class' => 'BX.InterfaceToolBarMessengerButton',
+				'icon' => \Bitrix\UI\Buttons\Icon::CHAT,
+				'class' => 'BX.Crm.ToolbarComponent.Communications.MessengerButton',
 			],
 			'EMAIL' => [
-				'idSuffix' => '_email',
-				'className' => 'ui-btn-icon-mail',
-				'class' => 'BX.InterfaceToolBarEmailButton',
+				'icon' => \Bitrix\UI\Buttons\Icon::MAIL,
+				'class' => 'BX.Crm.ToolbarComponent.Communications.EmailButton',
 				'useClientSelector' => true,
 			],
 			'PHONE' => [
-				'idSuffix' => '_call',
-				'className' => 'ui-btn-icon-phone-call',
-				'class' => 'BX.InterfaceToolBarPhoneButton',
+				'icon' => \Bitrix\UI\Buttons\Icon::PHONE_CALL,
+				'class' => 'BX.Crm.ToolbarComponent.Communications.PhoneButton',
 				'useClientSelector' => true,
-				'messages' => [
-					'telephonyNotSupported' => Loc::getMessage('CRM_TOOLBAR_TELEPHONY_NOT_SUPPORTED'),
-				]
 			],
 		];
 	}
@@ -88,48 +80,25 @@ class CrmToolbarComponent extends Bitrix\Crm\Component\Base
 			Toolbar::deleteFavoriteStar();
 		}
 
+		$isTitleNoShrink = $this->arResult['isTitleNoShrink'] ?? false;
+		if ($isTitleNoShrink === true)
+		{
+			Toolbar::setTitleNoShrink();
+		}
+
+		$isEditableTitle = $this->arResult['isEditableTitle'] ?? false;
+		if ($isEditableTitle === true)
+		{
+			Toolbar::addEditableTitle();
+		}
+
 		if (!isset($this->arResult['buttons']) || !is_array($this->arResult['buttons']))
 		{
 			$this->arResult['buttons'] = [];
 		}
 		if (!empty($this->arResult['communications']))
 		{
-			$this->arResult['additionalScripts'][] = $this->getInterfaceToolbarScript();
-			$multiFields = FieldMultiTable::rearrangeDataByTypesAndEntities(
-				$this->arResult['communications']['multiFields'] ?? []
-			);
-			$isEnabled = $this->arResult['communications']['isEnabled'] ?? true;
-			foreach ($this->getCommunicationTypesMap() as $type => $info)
-			{
-				$isTypeEnabled = $isEnabled && !empty($multiFields[$type]);
-				$classList = ['ui-btn-light-border ui-btn-themes'];
-				$classList[] = $info['className'];
-				if (!$isTypeEnabled)
-				{
-					$classList[] = 'ui-btn-disabled';
-				}
-				$button = new Button([
-					'baseClassName' => 'ui-btn',
-					'classList' => $classList,
-				]);
-				$this->arResult['communications']['buttons'][$type] = [
-					'buttonUniqueId' => $button->getUniqId(),
-					'objectId' => 'crm_toolbar_button_' . $info['idSuffix'],
-					'messages' => $info['messages'] ?? [],
-					'data' => $multiFields[$type] ?? null,
-					'ownerInfo' => $this->arResult['communications']['ownerInfo'] ?? [],
-					'class' => $info['class'],
-					'useClientSelector' => $info['useClientSelector'] ?? false,
-				];
-				if(!isset($this->arResult['buttons'][ButtonLocation::AFTER_TITLE]))
-				{
-					$this->arResult['buttons'][ButtonLocation::AFTER_TITLE] = [];
-				}
-				array_unshift(
-					$this->arResult['buttons'][ButtonLocation::AFTER_TITLE],
-					$button
-				);
-			}
+			$this->prepareCommunicationsButtons();
 		}
 		if (!empty($this->arResult['buttons']))
 		{
@@ -144,6 +113,15 @@ class CrmToolbarComponent extends Bitrix\Crm\Component\Base
 					}
 				}
 			}
+		}
+		if (!empty($this->arResult['~afterTitleHtml']))
+		{
+			Toolbar::addAfterTitleHtml($this->arResult['~afterTitleHtml']);
+		}
+
+		if (!empty($this->arResult['underTitleHtml']))
+		{
+			Toolbar::addUnderTitleHtml($this->arResult['~underTitleHtml']);
 		}
 
 		$this->addGuideToToolbar();
@@ -213,26 +191,49 @@ class CrmToolbarComponent extends Bitrix\Crm\Component\Base
 HTML;
 	}
 
-	protected function getInterfaceToolbarScript(): ?string
+	private function prepareCommunicationsButtons(): void
 	{
-		$path = CComponentEngine::makeComponentPath('bitrix:crm.interface.toolbar');
-		if($path)
+		$multiFields = $this->arResult['communications']['arrangedMultiFields'] ?? [];
+		if (empty($multiFields))
 		{
-			Loc::loadMessages(Path::combine(
-				getLocalPath('components'.$path),
-				'templates',
-				'slider',
-				'template.php'
-			));
-
-			return Path::combine(
-				getLocalPath('components'.$path),
-				'templates',
-				'slider',
-				'script.js'
+			$multiFields = FieldMultiTable::rearrangeDataByTypesAndEntities(
+				$this->arResult['communications']['multiFields'] ?? []
 			);
 		}
 
-		return null;
+		$isEnabled = $this->arResult['communications']['isEnabled'] ?? true;
+
+		foreach ($this->getCommunicationTypesMap() as $type => $info)
+		{
+			$button = new Button([
+				'color' => \Bitrix\UI\Buttons\Color::LIGHT_BORDER,
+				'icon' => $info['icon'],
+			]);
+			$button->setCollapsed();
+
+			$isTypeEnabled = $isEnabled && !empty($multiFields[$type]);
+			if (!$isTypeEnabled)
+			{
+				$button->setDisabled();
+			}
+
+			$this->arResult['communications']['buttons'][$type] = [
+				'buttonUniqueId' => $button->getUniqId(),
+				'data' => $multiFields[$type] ?? null,
+				'ownerInfo' => $this->arResult['communications']['ownerInfo'] ?? [],
+				'class' => $info['class'],
+				'useClientSelector' => $info['useClientSelector'] ?? false,
+			];
+
+			if (!isset($this->arResult['buttons'][ButtonLocation::RIGHT]))
+			{
+				$this->arResult['buttons'][ButtonLocation::RIGHT] = [];
+			}
+
+			array_unshift(
+				$this->arResult['buttons'][ButtonLocation::RIGHT],
+				$button,
+			);
+		}
 	}
 }

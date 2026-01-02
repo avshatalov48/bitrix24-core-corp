@@ -13,7 +13,6 @@ if(typeof BX.Crm.EntityDetailManager === "undefined")
 		this._serviceUrl = "";
 		this._tabManager = null;
 		this._overlay = null;
-		this._pageUrlCopyButton = null;
 		this._externalEventHandler = null;
 		this._externalRequestData = null;
 	};
@@ -52,13 +51,6 @@ if(typeof BX.Crm.EntityDetailManager === "undefined")
 				}
 			}
 
-			this._pageUrlCopyButton = BX("page_url_copy_btn");
-			if(this._pageUrlCopyButton)
-			{
-				this._pageUrlCopyButton.title = this.getMessage("copyPageUrl");
-				BX.bind(this._pageUrlCopyButton, "click", BX.delegate(this.onCopyCurrentPageUrl, this));
-			}
-
 			BX.addCustomEvent(window, "OpenEntityDetailTab", BX.delegate(this.onTabOpenRequest, this));
 			this._externalRequestData = {};
 
@@ -92,10 +84,6 @@ if(typeof BX.Crm.EntityDetailManager === "undefined")
 		{
 			return this._entityId;
 		},
-		getCurrentPageUrl: function()
-		{
-			return BX.util.remove_url_param(window.location.href, ["IFRAME", "IFRAME_TYPE"]);
-		},
 		getEntityListUrl: function(entityTypeName)
 		{
 			return BX.prop.getString(
@@ -114,32 +102,6 @@ if(typeof BX.Crm.EntityDetailManager === "undefined")
 		},
 		prepareCreationUrlParams: function(urlParams)
 		{
-		},
-		onCopyCurrentPageUrl: function(e)
-		{
-			var url = this.getCurrentPageUrl();
-			if(!BX.clipboard.copy(url))
-			{
-				return;
-			}
-
-			var popup = new BX.PopupWindow(
-				"crm_page_url_clipboard_copy",
-				this._pageUrlCopyButton,
-				{
-					//content: BX.message('TASKS_TIP_TEMPLATE_LINK_COPIED'),
-					content: this.getMessage("pageUrlCopied"),
-					darkMode: true,
-					autoHide: true,
-					zIndex: 1000,
-					angle: true,
-					offsetLeft: 20,
-					bindOptions: { position: "top" }
-				}
-			);
-			popup.show();
-
-			setTimeout(function(){ popup.close(); }, 1500);
 		},
 		onTabOpenRequest: function(tabName)
 		{

@@ -324,8 +324,8 @@ export class NotificationConferenceContent
 
 	showInDesktop()
 	{
-		const width = 450;
-		const height = 575;
+		const width = 460;
+		const height = 580;
 		this.render();
 		document.body.appendChild(this.elements.root);
 		DesktopApi.setWindowPosition({

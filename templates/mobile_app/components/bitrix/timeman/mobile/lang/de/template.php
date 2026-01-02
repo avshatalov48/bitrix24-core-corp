@@ -30,7 +30,6 @@ $MESS["TM_RESUME"] = "Fortsetzen";
 $MESS["TM_SAVE"] = "Speichern";
 $MESS["TM_START"] = "Starten";
 $MESS["TM_STATUS_COMPLETED"] = "Beendet";
-$MESS["TM_STATUS_EXPIRED"] = "Sie haben den vorherigen<br/>Arbeitstag <strong>nicht beendet</strong>.";
 $MESS["TM_STATUS_EXPIRED_MSGVER_1"] = "Sie haben <strong>den vorherigen Arbeitstag nicht beendet</strong><br/>.";
 $MESS["TM_STATUS_PAUSED"] = "Pause";
 $MESS["TM_STATUS_START"] = "Starten";

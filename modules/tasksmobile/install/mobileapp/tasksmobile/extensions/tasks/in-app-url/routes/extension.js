@@ -36,6 +36,56 @@ jn.define('tasks/in-app-url/routes', (require, exports, module) => {
 				Entry.openEfficiency({ userId, groupId: 0 });
 			},
 		).name('tasks:efficiency:open');
+
+		inAppUrl.register('/projects/', (params, { context }) => {
+			const { title } = context;
+
+			PageManager.openComponent('JSStackComponent', {
+				componentCode: 'tasks:tasks.project.list',
+				// eslint-disable-next-line no-undef
+				scriptPath: availableComponents['tasks:tasks.project.list'].publicUrl,
+				params: {
+					SITE_ID: env.siteId,
+					SITE_DIR: env.siteDir,
+					USER_ID: env.userId,
+					MODE: 'tasks_project',
+					NAVIGATION_TITLE: title,
+				},
+				rootWidget: {
+					name: 'tasks.list',
+					settings: {
+						objectName: 'list',
+						title,
+						useSearch: true,
+						useLargeTitleMode: true,
+						emptyListMode: true,
+					},
+				},
+			});
+		}).name('tasks:projects');
+
+		inAppUrl.register('/flow/', (params, { context }) => {
+			const { title } = context;
+
+			PageManager.openComponent('JSStackComponent', {
+				componentCode: 'tasks:tasks.flow.list',
+				// eslint-disable-next-line no-undef
+				scriptPath: availableComponents['tasks:tasks.flow.list'].publicUrl,
+				params: {
+					NAVIGATION_TITLE: title,
+				},
+				rootWidget: {
+					name: 'layout',
+					settings: {
+						objectName: 'layout',
+						title,
+						useSearch: true,
+						useLargeTitleMode: true,
+						emptyListMode: true,
+					},
+				},
+			});
+		}).name('tasks:flow');
 	};
 
 	function getAnalyticsData()

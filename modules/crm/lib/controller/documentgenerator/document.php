@@ -6,6 +6,8 @@ use Bitrix\Crm\Controller\ErrorCode;
 use Bitrix\Crm\Integration\DocumentGenerator\DataProvider\CrmEntityDataProvider;
 use Bitrix\Crm\Integration\DocumentGeneratorManager;
 use Bitrix\Crm\Service\Container;
+use Bitrix\DocumentGenerator\Context;
+use Bitrix\DocumentGenerator\DataProviderManager;
 use Bitrix\Main\Engine\ActionFilter\Csrf;
 use Bitrix\Main\Engine\Response;
 use Bitrix\Main\Engine\Response\DataType\ContentUri;
@@ -118,7 +120,7 @@ class Document extends Base
 		}
 		if (
 			(isset($filter['entityTypeId']) && is_scalar($filter['entityTypeId']))
-			&& !Container::getInstance()->getUserPermissions()->checkReadPermissions($filter['entityTypeId'])
+			&& !Container::getInstance()->getUserPermissions()->entityType()->canReadItems($filter['entityTypeId'])
 		)
 		{
 			$this->addError(ErrorCode::getAccessDeniedError());
@@ -427,10 +429,15 @@ class Document extends Base
 
 	public function showQrCodeAction(\Bitrix\DocumentGenerator\Document $document): ?Response\File
 	{
+		DataProviderManager::getInstance()->setContext(Context::createFromDocument($document));
+
 		$provider = $document->getProvider();
 		if (!$provider instanceof CrmEntityDataProvider)
 		{
 			$this->addError(new Error('Data provider not supports QR-codes'));
+
+			DataProviderManager::getInstance()->resetContext();
+
 			return null;
 		}
 
@@ -438,10 +445,18 @@ class Document extends Base
 		if (!$path)
 		{
 			$this->addError(new Error('No QR-code found for this document'));
+
+			DataProviderManager::getInstance()->resetContext();
+
 			return null;
 		}
 
 		$file = new IO\File($path);
-		return new Response\File($path, null, $file->getContentType());
+
+		$result = new Response\File($path, null, $file->getContentType());
+
+		DataProviderManager::getInstance()->resetContext();
+
+		return $result;
 	}
 }

@@ -111,6 +111,23 @@
 	background-color: var(--ui-color-palette-orange-20, #fff1d6);
 }
 
+.crm-timeline__card-logo.--pale-blue {
+	background-color: rgba(135, 186, 202, 0.3);
+}
+
+.crm-timeline__card-logo.--orange-stripe {
+	background-color: transparent;
+	background-image: url('../../../images/timeline-card-logos/booking/crm-timeline__booking-orange-stripe.svg');
+}
+
+.crm-timeline__card-logo.--green {
+	background-color: rgba(157, 207, 0, 0.3)
+}
+
+.crm-timeline__card-logo.--dark-orange {
+	background-color: rgba(207, 172, 1, 0.4);
+}
+
 .crm-timeline__card-logo_icon.--custom-bg > i{
 	mask-image: none;
 	background-color: transparent;
@@ -407,6 +424,7 @@
 
 .crm-timeline__card-logo_add-icon.--icon-cross > i {
 	mask-image: url('../../../images/timeline-card-logos/call/additions/crm-timeline__cross.svg');
+	background-position: center;
 }
 
 .crm-timeline__card-logo_add-icon.--icon-sign > i {
@@ -426,6 +444,11 @@
 .crm-timeline__card-logo_add-icon.--icon-unavailable > i {
 	background-color: var(--ui-color-text-warning, #ffa900);
 	mask-image: url('../../../images/timeline-card-logos/document/additions/crm-timeline__unavailable.svg');
+}
+
+.crm-timeline__card-logo_add-icon.--icon-cross> i {
+	background-color: transparent;
+	background-image: url('../../../images/timeline-card-logos/document/additions/crm-timeline__cross.svg');
 }
 
 .crm-timeline__card-logo_add-icon.--icon-a-letter > i {
@@ -473,6 +496,12 @@
 	background-image: url('../../../images/timeline-card-logos/notification/crm-timeline__notification.svg');
 }
 
+.crm-timeline__card-logo_icon.--repeat-sale > i {
+	background-color: transparent;
+	mask-image: none;
+	background-image: url('../../../images/timeline-card-logos/repeat-sale/crm-timeline__repeat-sale.svg');
+}
+
 .crm-timeline__card-logo_icon.--empty > i {
 	background-color: transparent;
 	mask-image: none;
@@ -508,4 +537,10 @@
 
 .crm-timeline__card-logo_add-icon.--icon-comment > i {
 	mask-image: url('../../../images/timeline-card-logos/document/additions/crm-timeline__comment.svg');
+}
+
+.crm-timeline__card-logo_icon.--booking-wait-list-item > i {
+	background-color: transparent;
+	mask-image: none;
+	background-image: url('../../../images/timeline-card-logos/booking/crm-timeline__booking-wait-list-item-calendar.svg');
 }

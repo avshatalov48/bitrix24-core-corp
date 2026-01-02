@@ -24,12 +24,19 @@ this.BX.Booking = this.BX.Booking || {};
 	    color: String,
 	    round: Boolean,
 	    icon: String,
+	    iconPosition: {
+	      type: String,
+	      validator(position) {
+	        return !position || ['left', 'right'].includes(position);
+	      }
+	    },
+	    useAirDesign: Boolean,
 	    noCaps: Boolean,
 	    disabled: Boolean,
 	    clocking: Boolean,
 	    waiting: Boolean,
 	    dataset: Object,
-	    buttonClass: String
+	    buttonClass: [String, Array]
 	  },
 	  created() {
 	    this.button = new ui_buttons.Button({
@@ -39,14 +46,18 @@ this.BX.Booking = this.BX.Booking || {};
 	      color: this.color,
 	      round: this.round,
 	      icon: this.icon,
+	      iconPosition: this.iconPosition,
+	      useAirDesign: Boolean(this.useAirDesign),
 	      noCaps: this.noCaps,
 	      onclick: () => {
 	        this.$emit('click');
 	      },
 	      dataset: this.dataset,
-	      className: this.buttonClass,
-	      disabled: this.disabled
+	      className: main_core.Type.isArray(this.buttonClass) ? this.buttonClass.join(' ') : this.buttonClass
 	    });
+	    if (this.useAirDesign) {
+	      this.button.setAirDesign(true);
+	    }
 	  },
 	  mounted() {
 	    var _this$button;
@@ -56,6 +67,9 @@ this.BX.Booking = this.BX.Booking || {};
 	      button.append(slot);
 	    }
 	    this.$refs.button.replaceWith(button);
+	    if (this.disabled) {
+	      this.button.setDisabled(this.disabled);
+	    }
 	  },
 	  watch: {
 	    text: {
@@ -85,17 +99,16 @@ this.BX.Booking = this.BX.Booking || {};
 	    icon: {
 	      handler(icon) {
 	        var _this$button6;
-	        (_this$button6 = this.button) == null ? void 0 : _this$button6.setIcon(icon);
+	        (_this$button6 = this.button) == null ? void 0 : _this$button6.setIcon(icon, this.iconPosition);
 	      }
 	    },
 	    disabled: {
-	      async handler(disabled) {
-	        await this.$nextTick(() => {
-	          var _this$button7;
-	          (_this$button7 = this.button) == null ? void 0 : _this$button7.setDisabled(Boolean(disabled));
-	        });
+	      handler(disabled) {
+	        var _this$button7;
+	        (_this$button7 = this.button) == null ? void 0 : _this$button7.setDisabled(Boolean(disabled));
 	      },
-	      immediate: true
+	      immediate: true,
+	      flush: 'sync'
 	    },
 	    waiting: {
 	      handler(waiting) {
@@ -127,8 +140,10 @@ this.BX.Booking = this.BX.Booking || {};
 	`
 	};
 
+	exports.AirButtonStyle = ui_buttons.AirButtonStyle;
 	exports.ButtonColor = ui_buttons.ButtonColor;
 	exports.ButtonSize = ui_buttons.ButtonSize;
+	exports.ButtonStyle = ui_buttons.ButtonStyle;
 	exports.ButtonIcon = ui_buttons.ButtonIcon;
 	exports.Button = Button;
 

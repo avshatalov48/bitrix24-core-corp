@@ -274,15 +274,13 @@ class CrmBuyerGroupsEdit extends \CBitrixComponent
 
 	protected function checkPermissions()
 	{
-		$crmPerms = new CCrmPerms(\Bitrix\Main\Engine\CurrentUser::get()->getId());
-
-		if (!$crmPerms->HavePerm('CONFIG', BX_CRM_PERM_CONFIG, 'READ'))
+		if (!\Bitrix\Crm\Service\Container::getInstance()->getUserPermissions()->entityType()->canReadSomeItemsInCrm())
 		{
 			$this->errorCollection[] = new \Bitrix\Main\Error(Loc::getMessage('CRM_PERMISSION_DENIED'));
 			return false;
 		}
 
-		$this->arResult['PERM_CAN_EDIT'] = $crmPerms->HavePerm('CONFIG', BX_CRM_PERM_CONFIG, 'WRITE');
+		$this->arResult['PERM_CAN_EDIT'] = \Bitrix\Crm\Service\Container::getInstance()->getUserPermissions()->isCrmAdmin();
 
 		return true;
 	}

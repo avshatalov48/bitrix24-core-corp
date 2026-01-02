@@ -1,0 +1,33 @@
+.menu-item-favorites-more {
+	height: 0;
+	margin: 0;
+	overflow: hidden;
+	padding: 0;
+}
+
+.menu-items-edit-mode .menu-item-favorites-more {
+	margin-right: 0;
+	padding-left: 0;
+	height: auto;
+	overflow: visible;
+	opacity: 1;
+}
+
+.menu-item-favorites-more-open {
+	height: auto;
+	overflow: visible;
+}
+
+.menu-items-fav-more-block {
+	margin: 0;
+	padding: 0;
+}
+
+.menu-items-edit-mode .menu-favorites-more-btn,
+.menu-items-edit-mode .menu-expand {
+	display: none;
+}
+
+.menu-favorites-more-btn-hidden {
+	display: none !important;
+}

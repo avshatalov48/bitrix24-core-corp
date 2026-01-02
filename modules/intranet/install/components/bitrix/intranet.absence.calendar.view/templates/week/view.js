@@ -379,6 +379,7 @@ JCCalendarViewWeek.prototype.__drawData = function()
 				if (isNaN(width) || width < 5)
 					width = 5;
 
+				this.ENTRIES[i]['DATA'][j].VISUAL.dataset.dateFrom = this.ENTRIES[i]['DATA'][j]['DATE_FROM'];
 				this.ENTRIES[i]['DATA'][j].VISUAL.style.left = parseInt(start_pos) + 'px';
 				this.ENTRIES[i]['DATA'][j].VISUAL.style.width = width + 'px';
 				this.ENTRIES[i]['DATA'][j].VISUAL.style.height = parseInt(obPos.height - 2*padding) + 'px';

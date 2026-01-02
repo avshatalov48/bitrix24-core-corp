@@ -2,14 +2,16 @@ import { ajax as Ajax, Loc, Text, Type } from 'main.core';
 import { QueueManager } from 'pull.queuemanager';
 import { UI } from 'ui.notification';
 import { TextEditor } from 'ui.text-editor';
+
 import { BreadcrumbsEvents } from './navigation/breadcrumbs';
 import { ButtonEvents } from './navigation/button';
 import { Navigation } from './navigation/navigation';
 import { AboutPage } from './page/about-page';
-import type { BasePage } from './page/base-page';
+import { BasePage } from './page/base-page';
 import { ClientPage } from './page/client-page';
 import { ControlPage } from './page/control-page';
 import { SettingsPage } from './page/settings-page';
+import { availabilityType } from './enum/availability-type';
 
 /**
  * @see BasePage
@@ -90,6 +92,8 @@ export const CallAssessment = {
 					data: {
 						callTypeId: data?.callTypeId,
 						autoCheckTypeId: data?.autoCheckTypeId,
+						availabilityType: data?.availabilityType ?? availabilityType.always_active,
+						availabilityData: data?.availabilityData ?? [],
 					},
 				},
 				control: {

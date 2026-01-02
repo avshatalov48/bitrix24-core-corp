@@ -26,6 +26,12 @@ class Lead
 		$result = &$params[1];
 		$languageId = $params[2];
 
+		$eventTableName = $params[3];
+		if (!empty($eventTableName) && $eventTableName !== 'crm_lead')
+		{
+			return;
+		}
+
 		$connection = $manager->getDatabaseConnection();
 		$helper = $connection->getSqlHelper();
 
@@ -555,6 +561,16 @@ class Lead
 					'TABLE_ALIAS' => 'FM_IM',
 					'JOIN' => 'INNER JOIN b_crm_field_multi FM_IM  ON FM_IM.ENTITY_ID = \'LEAD\' and FM_IM.TYPE_ID = \'' . \CCrmFieldMulti::IM . '\' AND FM_IM.ELEMENT_ID = L.ID',
 					'LEFT_JOIN' => 'LEFT JOIN b_crm_field_multi FM_IM  ON FM_IM.ENTITY_ID = \'LEAD\' and FM_IM.TYPE_ID = \'' . \CCrmFieldMulti::IM . '\' AND FM_IM.ELEMENT_ID = L.ID',
+				],
+				'CONTACT_IDS' => [
+					'GROUP_CONCAT' => ', ',  // delimiter for an array represented by a string
+					'GROUP_KEY' => 'CONTACT_IDS',
+					'IS_METRIC' => 'N',
+					'FIELD_NAME' => 'CLC.CONTACT_ID',
+					'FIELD_TYPE' => 'array_string',
+					'TABLE_ALIAS' => 'CLC',
+					'JOIN' => 'INNER JOIN b_crm_lead_contact CLC ON CLC.LEAD_ID = L.ID',
+					'LEFT_JOIN' => 'LEFT JOIN b_crm_lead_contact CLC ON CLC.LEAD_ID = L.ID',
 				],
 			],
 		];

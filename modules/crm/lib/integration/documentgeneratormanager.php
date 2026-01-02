@@ -2,6 +2,7 @@
 
 namespace Bitrix\Crm\Integration;
 
+use Bitrix\Crm\Integration\DocumentGenerator\CustomField\FieldController;
 use Bitrix\Crm\Integration\DocumentGenerator\DataProvider;
 use Bitrix\Crm\Integration\DocumentGenerator\ProductLoader;
 use Bitrix\Crm\Integration\DocumentGenerator\Template;
@@ -245,6 +246,35 @@ class DocumentGeneratorManager
 		}
 
 		return $result;
+	}
+
+	public static function onModifyCustomFields(Event $event): void
+	{
+		if (!self::getInstance()->isEnabled())
+		{
+			return;
+		}
+
+		$templateId = (int)($event->getParameter('templateId') ?? 0);
+		$values = $event->getParameter('customFields') ?? [];
+		if ($templateId > 0 && is_array($values))
+		{
+			(new FieldController($templateId))->save($values);
+		}
+	}
+
+	public static function onDeleteTemplate(Event $event): void
+	{
+		if (!self::getInstance()->isEnabled())
+		{
+			return;
+		}
+
+		$templateId = (int)($event->getParameter('templateId') ?? 0);
+		if ($templateId > 0)
+		{
+			(new FieldController($templateId))->clear();
+		}
 	}
 
 	/**
@@ -692,7 +722,9 @@ class DocumentGeneratorManager
 		{
 			return $result->addError(new Error('Could not create document'));
 		}
+
 		CreationMethod::markDocumentAsCreatedByPublic($document);
+
 		if ($paymentId > 0)
 		{
 			$document->setValues([
@@ -926,7 +958,8 @@ class DocumentGeneratorManager
 		int $entityTypeId,
 		int $entityId,
 		string $text,
-		?string $placeholderForEmptyValue = null
+		?string $placeholderForEmptyValue = null,
+		bool $isCheckFields = true
 	): ?string
 	{
 		if (!static::getInstance()->isEnabled())
@@ -968,7 +1001,10 @@ class DocumentGeneratorManager
 				$document->setPlaceholderForFieldEmptyValue($placeholderForEmptyValue);
 			}
 
-			$result = $document->getProcessedResult();
+			$result = $document
+				->setCheckFields($isCheckFields)
+				->getProcessedResult()
+			;
 			if ($result->isSuccess())
 			{
 				$content = $result->getData()['BODY']->getContent();

@@ -36,6 +36,36 @@ foreach ($items as $item)
 		'IS_NEW' => $item->isNew(),
 	];
 
+	if (
+		\Bitrix\Main\Loader::includeModule('tasks')
+		&& $item instanceof \Bitrix\Crm\Component\EntityDetails\TimelineMenuBar\Item\Task
+	)
+	{
+		$analytics = \Bitrix\Tasks\Helper\Analytics::getInstance($USER->getId());
+
+		$subSection = str_replace('_section', '', $arResult["extras"]["analytics"]["c_section"]);
+
+		$analyticsData = [
+			'tool' => $analytics::TOOL,
+			'category' => $analytics::TASK_CATEGORY,
+			'event' => $analytics::EVENT['click_create'],
+			'type' => $analytics::TASK_TYPE,
+			'section' => $analytics::SECTION['crm'],
+			'subSection' => $subSection,
+			'element' => $analytics::ELEMENT['create_button'],
+			'p2' => $analytics->getUserTypeParameter(),
+		];
+
+		if (method_exists($analytics, 'getIsDemoParameter'))
+		{
+			$analyticsData['p1'] = $analytics->getIsDemoParameter();
+		}
+
+		$menuItem['ON_CLICK'] .= "; BX.Runtime.loadExtension('ui.analytics').then(() => {
+			BX.UI.Analytics.sendData(" . \Bitrix\Main\Web\Json::encode($analyticsData) .");
+		});";
+	}
+
 	if ($item->hasTariffRestrictions())
 	{
 		$menuItem['IS_LOCKED'] = true;

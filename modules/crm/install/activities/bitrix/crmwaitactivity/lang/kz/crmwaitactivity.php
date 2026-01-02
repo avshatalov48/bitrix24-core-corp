@@ -1,0 +1,21 @@
+<?php
+$MESS["CRM_WAIT_ACTIVITY_DAY_PLURAL_0"] = "күн";
+$MESS["CRM_WAIT_ACTIVITY_DAY_PLURAL_1"] = "күн";
+$MESS["CRM_WAIT_ACTIVITY_DAY_PLURAL_2"] = "күн";
+$MESS["CRM_WAIT_ACTIVITY_DESCRIPTION_TYPE_AFTER"] = "#DURATION# немесе клиенттің кез келген белсенділігін күту";
+$MESS["CRM_WAIT_ACTIVITY_DESCRIPTION_TYPE_BEFORE"] = "#DURATION#-ды \"# TARGET_DATE#\" күніне дейін немесе клиенттің кез келген белсенділігін күту";
+$MESS["CRM_WAIT_ACTIVITY_ERROR_WAIT_DURATION"] = "Күту аралығы көрсетілмеген";
+$MESS["CRM_WAIT_ACTIVITY_ERROR_WAIT_TARGET"] = "Күту күні көрсетілмеген";
+$MESS["CRM_WAIT_ACTIVITY_ERROR_WAIT_TYPE"] = "Күту түрі көрсетілмеген";
+$MESS["CRM_WAIT_ACTIVITY_EXECUTE_ERROR_WAIT_BEFORE"] = "Күтудің аяқталу күні ағымдағы күннен үлкен болуы керек. Мүмкін таңдалған күн өтіп кеткен болар немесе оған дейінгі күндер саны тым көп.";
+$MESS["CRM_WAIT_ACTIVITY_EXECUTE_ERROR_WAIT_TARGET_1"] = "Құжаттың мақсатты өрісі табылған жоқ";
+$MESS["CRM_WAIT_ACTIVITY_EXECUTE_ERROR_WAIT_TARGET_TIME_1"] = "Құжат өрісінен күн мәнін алу мүмкін болмады";
+$MESS["CRM_WAIT_ACTIVITY_WAIT_AFTER"] = "Көрсетілген күндер санын күту";
+$MESS["CRM_WAIT_ACTIVITY_WAIT_BEFORE"] = "Таңдалған күнге дейін көрсетілген күндер санын күту";
+$MESS["CRM_WAIT_ACTIVITY_WAIT_DESCRIPTION"] = "Пікір немесе нұсқаулық";
+$MESS["CRM_WAIT_ACTIVITY_WAIT_DURATION"] = "Аралық, күндер";
+$MESS["CRM_WAIT_ACTIVITY_WAIT_TARGET"] = "Күнге дейін";
+$MESS["CRM_WAIT_ACTIVITY_WAIT_TYPE"] = "Күту түрі";
+$MESS["CRM_WAIT_ACTIVITY_WEEK_PLURAL_0"] = "апта";
+$MESS["CRM_WAIT_ACTIVITY_WEEK_PLURAL_1"] = "апта";
+$MESS["CRM_WAIT_ACTIVITY_WEEK_PLURAL_2"] = "апта";

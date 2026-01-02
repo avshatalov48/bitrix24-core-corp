@@ -1,0 +1,5 @@
+.crm-mini-card__avatar.--image img {
+	width: 100%;
+	height: 100%;
+	object-fit: contain;
+}

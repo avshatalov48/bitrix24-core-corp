@@ -32,6 +32,11 @@ class MessageStatus
 		$this->code = $code;
 	}
 
+	public function getCode(): string
+	{
+		return $this->code;
+	}
+
 	public static function sending(): self
 	{
 		return new self(self::CODE_SENDING);

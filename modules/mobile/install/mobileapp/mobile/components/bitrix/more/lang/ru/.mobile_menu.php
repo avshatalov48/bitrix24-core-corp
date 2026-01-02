@@ -35,7 +35,7 @@ $MESS["MENU_CHANGE_ACCOUNT"] = "Сменить аккаунт";
 $MESS["MENU_SETTINGS"] = "Настройки";
 $MESS["MENU_SETTINGS_TABS"] = "Нижнее меню";
 $MESS["MENU_PRESET_TAB"] = "Главный инструмент";
-$MESS["MENU_AI"] = "Лаборатория AI";
+$MESS["MENU_AI_MSGVER_1"] = "Ваш AI-помощник";
 $MESS["MENU_CATALOG"] = "Торговый каталог";
 $MESS["MENU_CATALOG_STORE"] = "Складской учёт";
 $MESS['TASKS_ROLE_VIEW_ALL'] = 'Все задачи';
@@ -61,3 +61,8 @@ $MESS["MENU_MY_DOCUMENTS"] = "Мои документы";
 
 $MESS['MENU_BITRIX24_INVITE'] = 'Пригласить';
 $MESS['MENU_BITRIX24_MENU_BOTTOM'] = 'Нижнее меню';
+$MESS['MENU_BITRIX24_SUPPORT24'] = 'Поддержка';
+$MESS['MENU_BITRIX24_SUPPORT24_ERROR_TEXT'] = 'Не удалось открыть чат с поддержкой, попробуйте ещё раз';
+$MESS['MENU_COPILOT'] = "CoPilot";
+
+$MESS['MENU_TAG_NEW'] = 'Новое';

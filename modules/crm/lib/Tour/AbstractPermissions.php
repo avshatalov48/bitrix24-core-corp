@@ -23,8 +23,7 @@ abstract class AbstractPermissions extends Base
 	protected function canShow(): bool
 	{
 		return
-			Feature::enabled(Feature\PermissionsLayoutV2::class)
-			&& !$this->isUserSeenTour()
+			!$this->isUserSeenTour()
 			&& $this->hasPermissions()
 		;
 	}

@@ -8,6 +8,7 @@ jn.define('crm/document/edit', (require, exports, module) => {
 	const { StringField } = require('layout/ui/fields/string');
 	const { DateTimeField } = require('layout/ui/fields/datetime');
 	const { SelectField } = require('layout/ui/fields/select');
+	const { LoadingScreenComponent } = require('layout/ui/loading-screen');
 	const { get, set, clone } = require('utils/object');
 	const { hashCode } = require('utils/hash');
 	const { debounce } = require('utils/function');

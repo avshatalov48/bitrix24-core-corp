@@ -4,6 +4,7 @@ if (!defined("B_PROLOG_INCLUDED") || B_PROLOG_INCLUDED!==true)die();
 use Bitrix\Main\Localization\Loc;
 use Bitrix\Main\UI\Extension;
 use Bitrix\Main\Web\Json;
+use Bitrix\UI\Toolbar\Facade\Toolbar;
 
 /** @var CMain $APPLICATION */
 /** @var array $arParams */
@@ -17,7 +18,10 @@ foreach ($arResult['ERRORS'] as $error)
 {
 	ShowError($error);
 }
-
+if (isset($_REQUEST['IFRAME']) && $_REQUEST['IFRAME'] === 'Y')
+{
+	Toolbar::deleteFavoriteStar();
+}
 
 $sourceTileManagerId = 'crm-analytics-sources';
 $channelTileManagerId = 'crm-analytics-channels';
@@ -96,28 +100,24 @@ $channelTileManagerId = 'crm-analytics-channels';
     <div class="ui-tile-list-block">
         <div class="ui-tile-list-wrap">
             <div data-role="tile/items" class="ui-tile-list-list">
-                <div
-                        class="ui-tile-list-item crm-tracking-ui-tile-custom-list-item"
-                        style=""
-                        onclick="BX.UI.Feedback.Form.open(
-                                {
-                                title:'<?= CUtil::addslashes(Loc::getMessage('CRM_TRACKING_START_CONFIGURATION_NEED_HELP'))?>',
-                                forms: [
-                                {zones: ['en', 'eu', 'in', 'uk'], id: 986, lang: 'en', sec: 'bb83fq'},
-                                {zones: ['de'], id: 988, lang: 'de', sec: 'c59qtl'},
-                                {zones: ['la', 'co', 'mx'], id: 990, lang: 'es', sec: 'kqcqnn'},
-                                {zones: ['com.br'], id: 992, lang: 'br', sec: '74yrxg'},
-                                {zones: ['pl'], id: 994, lang: 'pl', sec: 'qtxmku'},
-                                {zones: ['ua'], id: 978, lang: 'ua', sec: 'u509o5'},
-                                {zones: ['by'], id: 979, lang: 'by', sec: '0k2fke'},
-                                {zones: ['kz'], id: 976, lang: 'kz', sec: 'ht2w4d'},
-                                {zones: ['ru'], id: 973, lang: 'ru', sec: 'w6vllg'},
-                                ],
-                                id:'crm-tracking-configuration-help',
-                                portalUri: 'https://bitrix24.team'
-                                }
-                                );"
-                >
+				<div
+					class="ui-tile-list-item crm-tracking-ui-tile-custom-list-item"
+					data-forms='<?= \Bitrix\Main\Web\Json::encode($arResult['FEEDBACK_FORMS_DATA']) ?>'
+					style=""
+					onclick="BX.UI.Feedback.Form.open(
+						{
+						title:'<?= htmlspecialcharsbx(CUtil::JSescape(
+						Loc::getMessage('CRM_TRACKING_START_CONFIGURATION_NEED_HELP')
+						)) ?>',
+						forms: JSON.parse(this.dataset.forms),
+						id:'crm-tracking-configuration-help',
+						portalUri: '<?= htmlspecialcharsbx(CUtil::JSescape($arResult['FEEDBACK_FORM_URI'])) ?>',
+						presets: {
+						source: 'crm',
+						},
+						},
+						);"
+				>
                     <span class="crm-tracking-ui-tile-custom-list-item-subtitle">
                         <?=Loc::getMessage('CRM_TRACKING_START_CONFIGURATION_HELP_ORDER')?>
                     </span>
@@ -126,7 +126,6 @@ $channelTileManagerId = 'crm-analytics-channels';
             </div>
         </div>
     </div>
-	</div>
 
 	<script>
 		BX.ready(function () {

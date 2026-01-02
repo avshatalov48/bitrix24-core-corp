@@ -40,7 +40,7 @@ class Contact extends Base implements Contract\RequisiteConnector
 		$fieldSetValues = CRM::getRequisitesEntityFieldSetValues(
 			CCrmOwnerType::Contact,
 			$this->entityId,
-			$fetchModifier?->presetId
+			$fetchModifier?->presetId,
 		);
 		foreach ($fieldSetValues as $fieldSetCode => $fieldSetValue)
 		{
@@ -52,7 +52,7 @@ class Contact extends Base implements Contract\RequisiteConnector
 						$fieldSetCode,
 						$fieldSetValue['label'] ?? '',
 						$value,
-					)
+					),
 				);
 			}
 		}

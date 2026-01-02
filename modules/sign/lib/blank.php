@@ -10,7 +10,6 @@ use Bitrix\Sign\Access\Model\UserModel;
 use Bitrix\Sign\Access\Permission\SignPermissionDictionary;
 use Bitrix\Sign\Access\Service\RolePermissionService;
 use Bitrix\Sign\Blank\Block;
-use CCrmPerms;
 
 Loc::loadMessages(__FILE__);
 
@@ -727,21 +726,21 @@ class Blank extends \Bitrix\Sign\Internal\BaseTable
 		$filter = [];
 		$filter['=CREATED_BY_ID'] = null;
 
-		if($permission === CCrmPerms::PERM_ALL || $user->isAdmin())
+		if($permission === \Bitrix\Crm\Service\UserPermissions::PERMISSION_ALL || $user->isAdmin())
 		{
 			unset($filter['=CREATED_BY_ID']);
 		}
-		elseif ($permission === CCrmPerms::PERM_SUBDEPARTMENT)
+		elseif ($permission === \Bitrix\Crm\Service\UserPermissions::PERMISSION_SUBDEPARTMENT)
 		{
 			unset($filter['=CREATED_BY_ID']);
 			$filter['@CREATED_BY_ID'] = $user->getUserDepartmentMembers(true);
 		}
-		elseif ($permission === CCrmPerms::PERM_DEPARTMENT)
+		elseif ($permission === \Bitrix\Crm\Service\UserPermissions::PERMISSION_DEPARTMENT)
 		{
 			unset($filter['=CREATED_BY_ID']);
 			$filter['@CREATED_BY_ID'] = $user->getUserDepartmentMembers();
 		}
-		elseif ($permission === CCrmPerms::PERM_SELF)
+		elseif ($permission === \Bitrix\Crm\Service\UserPermissions::PERMISSION_SELF)
 		{
 			$filter['=CREATED_BY_ID'] = $user->getUserId();
 		}

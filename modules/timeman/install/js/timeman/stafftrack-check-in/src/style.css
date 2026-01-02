@@ -1,7 +1,7 @@
 .timeman-stafftrack-check-in {
 	display: flex;
 	align-items: center;
-	margin: 0 12px 12px;
+	margin: 12px 0;
 	padding: 13px 34px 13px 15px;
 	border-radius: var(--ui-border-radius-md);
 	background: var(--ui-color-background-info);
@@ -11,9 +11,12 @@
 }
 
 .timeman-stafftrack-check-in .ui-icon-set {
+	margin-right: 7px;
+}
+
+.timeman-stafftrack-check-in .ui-icon-set.--play {
 	--ui-icon-set__icon-size: 24px;
 	--ui-icon-set__icon-color: var(--ui-color-primary);
-	margin-right: 7px;
 }
 
 .timeman-stafftrack-check-in-counter {

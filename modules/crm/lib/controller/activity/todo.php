@@ -28,6 +28,7 @@ use Bitrix\Main\Error;
 use Bitrix\Main\Loader;
 use Bitrix\Main\Localization\Loc;
 use Bitrix\Main\PhoneNumber\Parser;
+use CCrmActivity;
 use CCrmOwnerType;
 
 class ToDo extends Base
@@ -41,10 +42,7 @@ class ToDo extends Base
 			return null;
 		}
 
-		if (!Container::getInstance()->getUserPermissions()->checkReadPermissions(
-			$itemIdentifier->getEntityTypeId(),
-			$itemIdentifier->getEntityId())
-		)
+		if (!Container::getInstance()->getUserPermissions()->item()->canReadItemIdentifier($itemIdentifier))
 		{
 			$this->setAccessDenied();
 
@@ -53,10 +51,11 @@ class ToDo extends Base
 
 		$userId = $this->getCurrentUserId();
 		$calendarOwnerId = null;
+		$crmSectionId = null;
+
 		if ($activityId)
 		{
-			$activity = \CCrmActivity::GetByID($activityId);
-
+			$activity = CCrmActivity::GetByID($activityId);
 			if (!$activity)
 			{
 				$this->addError(ErrorCode::getNotFoundError());
@@ -66,21 +65,48 @@ class ToDo extends Base
 
 			$authorId = $activity['AUTHOR_ID'];
 			$readOnly = $userId !== (int)$authorId;
-			$crmSectionId = \Bitrix\Crm\Integration\Calendar::getCrmSectionId($authorId);
 			$availableSections = \Bitrix\Crm\Integration\Calendar::getSectionListAvailableForUser($authorId);
 
 			$calendarOwnerId = $authorId;
+
+			$calendarEventId = (int)($activity['CALENDAR_EVENT_ID'] ?? 0);
+			if ($readOnly && $calendarEventId > 0)
+			{
+				$childEvents = \Bitrix\Crm\Integration\Calendar::getChildEvents($calendarEventId, $userId, ['SECTION_ID']);
+				if (is_array($childEvents) && isset($childEvents[0]))
+				{
+					$crmSectionId = (int)$childEvents[0]['SECTION_ID'];
+				}
+			}
 		}
 		else
 		{
 			$readOnly = false;
-			$crmSectionId = \Bitrix\Crm\Integration\Calendar::getCrmSectionId($userId);
 			$availableSections = \Bitrix\Crm\Integration\Calendar::getSectionListAvailableForUser($userId);
 
 			$calendarOwnerId = $userId;
 		}
 
-		if (empty($availableSections))
+		if ($crmSectionId === null)
+		{
+			$crmSectionId = \Bitrix\Crm\Integration\Calendar::getCrmSectionId($userId);
+		}
+
+		$hasDefaultSection = false;
+		if (!empty($availableSections) && $crmSectionId > 0)
+		{
+			foreach ($availableSections as $section)
+			{
+				if ((int)$section['ID'] === $crmSectionId)
+				{
+					$hasDefaultSection = true;
+
+					break;
+				}
+			}
+		}
+
+		if (!$hasDefaultSection)
 		{
 			$defaultUserCalendar = \Bitrix\Crm\Integration\Calendar::createDefault([
 				'type' => 'user',
@@ -99,6 +125,11 @@ class ToDo extends Base
 		$sections = [];
 		foreach ($availableSections as $section)
 		{
+			if (!$readOnly && $section['PERM']['add'] === false && $section['PERM']['edit'] === false)
+			{
+				continue;
+			}
+
 			$sections[] = [
 				'ID' => (int)$section['ID'],
 				'NAME' => $section['NAME'],
@@ -136,7 +167,7 @@ class ToDo extends Base
 	// @todo refactor this
 	public function getClientConfigAction(Item $entity): ?array
 	{
-		if (!Container::getInstance()->getUserPermissions()->canReadItem($entity))
+		if (!Container::getInstance()->getUserPermissions()->item()->canReadItem($entity))
 		{
 			$this->addError(new Error(Loc::getMessage('CRM_ACCESS_DENIED')));
 
@@ -166,7 +197,7 @@ class ToDo extends Base
 		{
 			$clientEntityTypeId = \CCrmOwnerType::Contact;
 			$clientEntityId = $contact->getId();
-			$canReadClient = Container::getInstance()->getUserPermissions()->checkReadPermissions($clientEntityTypeId, $clientEntityId);
+			$canReadClient = Container::getInstance()->getUserPermissions()->item()->canRead($clientEntityTypeId, $clientEntityId);
 
 			if (!$canReadClient)
 			{
@@ -193,7 +224,7 @@ class ToDo extends Base
 		{
 			$clientEntityTypeId = \CCrmOwnerType::Company;
 			$clientEntityId = $company->getId();
-			$canReadClient = Container::getInstance()->getUserPermissions()->checkReadPermissions($clientEntityTypeId, $clientEntityId);
+			$canReadClient = Container::getInstance()->getUserPermissions()->item()->canRead($clientEntityTypeId, $clientEntityId);
 
 			if (!$canReadClient)
 			{
@@ -218,7 +249,8 @@ class ToDo extends Base
 			$clientEntityId = $companyId;
 			$canReadCompany = Container::getInstance()
 				->getUserPermissions()
-				->checkReadPermissions($clientEntityTypeId, $clientEntityId)
+				->item()
+				->canRead($clientEntityTypeId, $clientEntityId)
 			;
 
 			if ($canReadCompany)
@@ -336,6 +368,8 @@ class ToDo extends Base
 		{
 			return null;
 		}
+
+		$todo->setAuthorId(Container::getInstance()->getContext()->getUserId() ?? $responsibleId);
 
 		$blocksManager = BlocksManager::createFromEntity($todo);
 		$saveConfig = $blocksManager->preEnrichEntity($settings);
@@ -479,6 +513,12 @@ class ToDo extends Base
 		{
 			return null;
 		}
+
+		if (isset($parentActivityId) && !CCrmActivity::GetByID($parentActivityId))
+		{
+			$parentActivityId = null;
+		}
+
 		$todo
 			->setDeadline($deadline)
 			->setParentActivityId($parentActivityId)

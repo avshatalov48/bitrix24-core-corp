@@ -37,3 +37,5 @@ if($theme <> '')
 {
 	$APPLICATION->SetAdditionalCSS($templateFolder.'/themes/'.$theme.'/style.css');
 }
+
+\Bitrix\Main\UI\Extension::load('intranet.old-interface.grid');

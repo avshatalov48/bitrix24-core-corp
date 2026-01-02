@@ -1,0 +1,7 @@
+<?php
+$MESS["TIMEMAN_DURATION_TITLE"] = "Ұзақтығы";
+$MESS["TIMEMAN_EDIT_BREAK_LENGTH_TITLE"] = "Үзіліс ұзақтығы";
+$MESS["TIMEMAN_EDIT_CLOCK_SET_CUSTOM_DATE"] = "Күнді өзгерту";
+$MESS["TIMEMAN_EDIT_REASON_TITLE"] = "Өзгерістің себебі";
+$MESS["TIMEMAN_POPUP_WORK_TIME_END_TITLE"] = "Аяқталуы";
+$MESS["TIMEMAN_POPUP_WORK_TIME_START_TITLE"] = "Басталуы";

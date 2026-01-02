@@ -2,39 +2,47 @@
 
 namespace Bitrix\HumanResources\Service\Access;
 
+use Bitrix\HumanResources\Access\Permission\Mapper\TeamPermissionMapper;
+use Bitrix\HumanResources\Access\Permission\PermissionDictionary;
+use Bitrix\HumanResources\Access\Permission\PermissionVariablesDictionary;
+use Bitrix\HumanResources\Access\Role;
 use Bitrix\HumanResources\Access\Role\RoleDictionary;
+use Bitrix\HumanResources\Access\SectionDictionary;
+use Bitrix\HumanResources\Contract;
+use Bitrix\HumanResources\Exception\WrongStructureItemException;
+use Bitrix\HumanResources\Item;
+use Bitrix\HumanResources\Item\Collection\Access\PermissionCollection;
+use Bitrix\HumanResources\Model\Access\AccessPermissionTable;
+use Bitrix\HumanResources\Model\Access\AccessRoleRelationTable;
+use Bitrix\HumanResources\Model\Access\AccessRoleTable;
+use Bitrix\HumanResources\Repository\Access\PermissionRepository;
+use Bitrix\HumanResources\Repository\Access\RoleRepository;
+use Bitrix\HumanResources\Service\Container;
 use Bitrix\Main\Access\AccessCode;
 use Bitrix\Main\Access\Permission\PermissionDictionary as PermissionDictionaryAlias;
 use Bitrix\Main\DB\SqlQueryException;
-use Bitrix\Main\Localization\Loc;
 use Bitrix\Main\Text\Encoding;
 use Bitrix\Main\UI\AccessRights\DataProvider;
 
-use Bitrix\HumanResources\Service\Container;
-use Bitrix\HumanResources\Access\SectionDictionary;
-use Bitrix\HumanResources\Access\Permission\PermissionDictionary;
-use Bitrix\HumanResources\Access\Role;
-use Bitrix\HumanResources\Item\Collection\Access\PermissionCollection;
-use Bitrix\HumanResources\Contract;
-use Bitrix\HumanResources\Item;
-
-class RolePermissionService implements \Bitrix\HumanResources\Contract\Service\Access\RolePermissionService
+class RolePermissionService
 {
 	private const DB_ERROR_KEY = "HUMAN_RESOURCES_CONFIG_PERMISSIONS_DB_ERROR";
 
-	private ?Contract\Service\Access\RoleRelationService $roleRelationService;
-	private ?Contract\Repository\Access\PermissionRepository $permissionRepository;
-	private ?Contract\Repository\Access\RoleRepository $roleRepository;
+	private ?RoleRelationService $roleRelationService;
+	private ?PermissionRepository $permissionRepository;
+	private ?RoleRepository $roleRepository;
+	private \Bitrix\HumanResources\Enum\Access\RoleCategory $category;
 
 	public function __construct(
-		?Contract\Service\Access\RoleRelationService $roleRelationService = null,
-		?Contract\Repository\Access\PermissionRepository $permissionRepository = null,
-		?Contract\Repository\Access\RoleRepository $roleRepository = null,
+		?RoleRelationService $roleRelationService = null,
+		?PermissionRepository $permissionRepository = null,
+		?RoleRepository $roleRepository = null,
 	)
 	{
 		$this->roleRelationService = $roleRelationService ?? Container::getAccessRoleRelationService();
 		$this->permissionRepository = $permissionRepository ?? Container::getAccessPermissionRepository();
 		$this->roleRepository =  $roleRepository ?? Container::getAccessRoleRepository();
+		$this->category = \Bitrix\HumanResources\Enum\Access\RoleCategory::Department;
 	}
 
 	/**
@@ -43,8 +51,9 @@ class RolePermissionService implements \Bitrix\HumanResources\Contract\Service\A
 	 *     title: string,
 	 *     type: string,
 	 *     accessRights: array<array{id: string, value: string}> }> $permissionSettings
+	 *
 	 * @return void
-	 * @throws SqlQueryException
+	 * @throws SqlQueryException|WrongStructureItemException
 	 */
 	public function saveRolePermissions(array &$permissionSettings): void
 	{
@@ -57,6 +66,11 @@ class RolePermissionService implements \Bitrix\HumanResources\Contract\Service\A
 			$roleTitle = $setting['title'];
 
 			$roleId = $this->saveRole($roleTitle, $roleId);
+			if (!$roleId)
+			{
+				throw new SqlQueryException(self::DB_ERROR_KEY);
+			}
+
 			$setting['id'] = $roleId;
 			$roleIds[] = $roleId;
 
@@ -65,8 +79,16 @@ class RolePermissionService implements \Bitrix\HumanResources\Contract\Service\A
 				continue;
 			}
 
+			$teamPermissions = [];
 			foreach ($setting['accessRights'] as $permission)
 			{
+				if (PermissionDictionary::isTeamDependentVariablesPermission($permission['id']))
+				{
+					$teamPermissions[$permission['id']][] = $permission;
+
+					continue;
+				}
+
 				$permissionCollection->add(
 					new Item\Access\Permission(
 						roleId: $roleId,
@@ -74,6 +96,31 @@ class RolePermissionService implements \Bitrix\HumanResources\Contract\Service\A
 						value: (int)$permission['value'],
 					)
 				);
+			}
+
+			if (!empty($teamPermissions))
+			{
+				foreach ($teamPermissions as $permissionValues)
+				{
+					$teamPermissionMapper = TeamPermissionMapper::createFromArray($permissionValues);
+
+					$permissionCollection->add(
+						new Item\Access\Permission(
+							roleId: $roleId,
+							permissionId: $teamPermissionMapper->getTeamPermissionId(),
+							value: $teamPermissionMapper->getTeamPermissionValue(),
+						)
+					);
+
+					$permissionCollection->add(
+						new Item\Access\Permission(
+							roleId: $roleId,
+							permissionId: $teamPermissionMapper->getDepartmentPermissionId(),
+							value: $teamPermissionMapper->getDepartmentPermissionValue(),
+						)
+					);
+				}
+
 			}
 		}
 
@@ -96,34 +143,40 @@ class RolePermissionService implements \Bitrix\HumanResources\Contract\Service\A
 		Container::getCacheManager()->clean(Contract\Repository\NodeRepository::NODE_ENTITY_RESTRICTION_CACHE);
 	}
 
-	public function deleteRole(int $roleId): void
+	/**
+	 * @param array<int> $roleIds
+	 */
+	public function deleteRoles(array $roleIds): void
 	{
 		try
 		{
-			$this->permissionRepository->deleteByRoleIds([$roleId]);
-			$this->roleRelationService->deleteRelationsByRoleId($roleId);
+			$this->permissionRepository->deleteByRoleIds($roleIds);
+			$this->roleRelationService->deleteRelationsByRoleIds($roleIds);
+			$this->roleRepository->deleteByIds($roleIds);
 		}
 		catch (\Exception $e)
 		{
 			throw new SqlQueryException(self::DB_ERROR_KEY);
 		}
 
-		$result = $this->roleRepository->delete($roleId);
+		AccessPermissionTable::cleanCache();
+		AccessRoleRelationTable::cleanCache();
+		AccessRoleTable::cleanCache();
+	}
 
-		if (!$result->isSuccess())
-		{
-			throw new SqlQueryException(Loc::getMessage(self::DB_ERROR_KEY) ?? '');
-		}
+	public function deleteRole(int $roleId): void
+	{
+		$this->deleteRoles([$roleId]);
 	}
 
 	/**
 	 * @param string $name
-	 * @param int|null $roleId
+	 * @param int $roleId
 	 *
 	 * @return int
 	 * @throws SqlQueryException
 	 */
-	public function saveRole(string $name, int $roleId = null): int
+	public function saveRole(string $name, int $roleId = 0): int
 	{
 		$name = Encoding::convertEncodingToCurrent($name);
 		try
@@ -143,24 +196,27 @@ class RolePermissionService implements \Bitrix\HumanResources\Contract\Service\A
 				return $roleId;
 			}
 
-			$role = $this->roleRepository->getRoleObjectByName($name);
+			$role = $this->roleRepository->create($name, $this->category);
 
-			if(!$role)
-			{
-				$role = $this->roleRepository->create($name);
-			}
-
-			return $role->getId();
+			return (int)$role->getId();
 		}
 		catch (\Exception $e)
 		{
 			throw new SqlQueryException(self::DB_ERROR_KEY);
 		}
+		finally
+		{
+			AccessPermissionTable::cleanCache();
+			AccessRoleRelationTable::cleanCache();
+			AccessRoleTable::cleanCache();
+		}
 	}
 
 	public function getRoleList(): array
 	{
-		return $this->roleRepository->getRoleList();
+		return $this->roleRepository->getRoleList(
+			$this->category
+		);
 	}
 
 	public function getUserGroups(): array
@@ -189,6 +245,15 @@ class RolePermissionService implements \Bitrix\HumanResources\Contract\Service\A
 		{
 			foreach ($settings[$roleId] as $permissionId => $permissionValue)
 			{
+				$defaultPermissionId = explode('_', $permissionId, 2)[0];
+				if (PermissionDictionary::isTeamDependentVariablesPermission($defaultPermissionId))
+				{
+					$teamAccessRights = TeamPermissionMapper::transformPermissionToAccessRights($permissionId, $permissionValue);
+					$accessRights = array_merge($accessRights, $teamAccessRights);
+
+					continue;
+				}
+
 				$accessRights[] = [
 					'id' => $permissionId,
 					'value' => $permissionValue,
@@ -201,32 +266,53 @@ class RolePermissionService implements \Bitrix\HumanResources\Contract\Service\A
 
 	public function getAccessRights(): array
 	{
-		$sections = SectionDictionary::getMap();
+		$sections = SectionDictionary::getMap($this->category);
 
 		$res = [];
 
 		foreach ($sections as $sectionId => $permissions)
 		{
-
 			$rights = [];
 			foreach ($permissions as $permissionId)
 			{
 				$permissionType = PermissionDictionary::getType($permissionId);
-				$rights[] = [
+				$right = [
 					'id' => $permissionId,
 					'type' => $permissionType,
 					'title' => PermissionDictionary::getTitle($permissionId),
 					'hint' => PermissionDictionary::getHint($permissionId),
-					'variables' => $permissionType === PermissionDictionaryAlias::TYPE_VARIABLES
-						? PermissionDictionary::getVariables()
+					'variables' => $permissionType !== PermissionDictionaryAlias::TYPE_TOGGLER
+						? PermissionDictionary::getVariables($permissionId)
 						: []
 					,
 				];
+				$minValue = PermissionDictionary::getMinValueByTypeOrNull($permissionType);
+				$maxValue = PermissionDictionary::getMaxValueByTypeOrNull($permissionType);
+				$right += PermissionVariablesDictionary::getTeamPermissionSelectedVariablesAliases();
+				if ($minValue !== null)
+				{
+					$right['minValue'] = $minValue;
+					$right['emptyValue'] = $minValue;
+				}
+				if ($maxValue !== null)
+				{
+					$right['maxValue'] = $maxValue;
+				}
+
+				$rights[] = $right;
 			}
-			$res[] = [
+			$section = [
 				'sectionTitle' => SectionDictionary::getTitle($sectionId),
-				'rights' => $rights
+				'rights' => $rights,
+				'sectionCode' => "code.$sectionId",
 			];
+			$sectionIcon = SectionDictionary::getIcon($sectionId);
+			if ($sectionIcon)
+			{
+				$section['sectionIcon'] = $sectionIcon;
+			}
+
+			$res[] = $section;
 		}
 
 		return $res;
@@ -267,5 +353,12 @@ class RolePermissionService implements \Bitrix\HumanResources\Contract\Service\A
 			$settings[$permission->roleId][$permission->permissionId] = $permission->value;
 		}
 		return $settings;
+	}
+
+	public function setCategory(\Bitrix\HumanResources\Enum\Access\RoleCategory $category): static
+	{
+		$this->category = $category;
+
+		return $this;
 	}
 }

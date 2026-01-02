@@ -16,6 +16,7 @@ class CounterDictionary
 	public const META_PROP_ALL = 'all';
 	public const META_PROP_GROUP = 'group';
 	public const META_PROP_PROJECT = 'project';
+	public const META_PROP_COLLAB = 'collab';
 	public const META_PROP_SONET = 'sonet';
 	public const META_PROP_SCRUM = 'scrum';
 	public const META_PROP_FLOW = 'flow';

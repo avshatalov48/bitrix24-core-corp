@@ -1,0 +1,9 @@
+<?php
+$MESS["CRM_DOCGEN_DATAPROVIDER_SD_FLD_CURRENT_TIME"] = "Ағымдағы күн және уақыт";
+$MESS["CRM_DOCGEN_DATAPROVIDER_SD_FLD_DOCUMENT_CREATE_TIME"] = "Жасалған күні";
+$MESS["CRM_DOCGEN_DATAPROVIDER_SD_FLD_DOCUMENT_NUMBER"] = "Нөмір";
+$MESS["CRM_DOCGEN_DATAPROVIDER_SD_FLD_DOCUMENT_RESPONSIBLE"] = "Жауапты";
+$MESS["CRM_DOCGEN_DATAPROVIDER_SD_FLD_DOCUMENT_STORE_FROM_TITLE"] = "Жіберуші қоймасы";
+$MESS["CRM_DOCGEN_DATAPROVIDER_SD_FLD_DOCUMENT_STORE_TO_TITLE"] = "Алушының қоймасы";
+$MESS["CRM_DOCGEN_DATAPROVIDER_SD_MULTI_STORE_PRINT_NOT_AVAILABLE"] = "Құжатта бірнеше қойма көрсетілген. Мұндай құжаттарды басып шығару мүмкіндігі кейінірек пайда болады.";
+$MESS["CRM_DOCGEN_DATAPROVIDER_SD_TITLE"] = "Қойма есебінің құжаты";

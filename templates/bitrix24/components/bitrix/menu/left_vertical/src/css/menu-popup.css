@@ -1,0 +1,61 @@
+.menu-popup .menu-popup-items .menu-buttons-submenu-separator {
+	margin-top: 4px;
+	margin-bottom: 4px;
+	height: 0;
+	border-top: none;
+	border-bottom: 1px rgba(0,0,0,.1) solid;
+}
+.menu-popup .menu-popup-items .menu-buttons-submenu-separator.menu-buttons-hidden-label {
+	margin-top: 8px;
+	margin-bottom: 8px;
+	height: 0;
+	border-top: none;
+	border-bottom: 1px rgba(0,0,0,.1) solid;
+	z-index: 2;
+}
+.menu-popup .menu-popup-items .menu-buttons-submenu-separator.menu-buttons-hidden-label .menu-popup-item-icon {
+	display: none;
+}
+.menu-popup .menu-popup-items .menu-buttons-submenu-separator:hover {
+	background: none;
+	box-shadow: none;
+	border-bottom: 1px rgba(0,0,0,.1) solid;
+	cursor: default;
+}
+
+.menu-popup .menu-popup-items .menu-buttons-submenu-separator {
+	padding: 0;
+}
+
+.menu-popup .menu-popup-items .menu-buttons-submenu-separator .menu-popup-item-text {
+	width: 100%;
+	padding-left: 0;
+	box-sizing: border-box;
+	text-align: center;
+	padding-right: 0;
+	height: 1px;
+	position: relative;
+	top: -8px;
+}
+
+.menu-popup .menu-popup-items .menu-buttons-submenu-separator .menu-popup-item-text span {
+	position: relative;
+	display: inline-block;
+	padding: 0 12px;
+	border-radius: 30px;
+	/*background: #eef2f4;*/
+	background: #ffffff;
+	color: #b1b6bc;
+	font-size: 10px;
+	font-weight: var(--ui-font-weight-bold);
+	text-transform: uppercase;
+	vertical-align: middle;
+	height: 16px;
+	line-height: 16px;
+	top: -19px;
+}
+
+.menu-popup-disable-text .menu-popup-item-text {
+	color: #b6bbb5 !important;
+	cursor: default;
+}

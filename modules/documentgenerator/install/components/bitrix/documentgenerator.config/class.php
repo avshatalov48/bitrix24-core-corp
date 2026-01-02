@@ -22,21 +22,12 @@ class DocumentGeneratorConfigComponent extends CBitrixComponent implements \Bitr
 			return;
 		}
 
-		$this->arResult = [];
-
-		$this->arResult['TOP_VIEW_TARGET_ID'] = false;
-		$isIframe = $this->request->get('IFRAME') == 'Y' ? true : false;
-		if(SITE_TEMPLATE_ID == "bitrix24")
+		if (Loader::includeModule('ui'))
 		{
-			if($isIframe)
-			{
-				$this->arResult['TOP_VIEW_TARGET_ID'] = 'inside_pagetitle';
-			}
-			else
-			{
-				$this->arResult['TOP_VIEW_TARGET_ID'] = 'pagetitle';
-			}
+			\Bitrix\UI\Toolbar\Facade\Toolbar::deleteFavoriteStar();
 		}
+
+		$this->arResult = [];
 
 		$this->arResult['TITLE'] = Loc::getMessage('DOCGEN_CONFIG_TITLE');
 		$this->arResult['enablePublicSign'] = (Option::get('documentgenerator', 'document_enable_public_b24_sign', 'Y') == 'Y');

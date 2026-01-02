@@ -1,0 +1,104 @@
+.task-skeleton.--full {
+	display: flex;
+	height: 100%;
+}
+
+.task-skeleton .--row {
+	display: flex;
+	align-items: center;
+}
+
+.task-skeleton .--chips {
+	margin: 21px 0 20px;
+	padding-top: 18px;
+	border-top: 1px solid #F0F0F0;
+}
+
+.task-skeleton .--title {
+	padding: 7px 4px 7px 0;
+}
+
+.task-skeleton .--fire {
+	margin: 0 14px 0 auto;
+}
+
+.task-skeleton .--description {
+	margin: 17px 0 21px;
+}
+
+.task-skeleton .--buttons {
+	margin-right: 6px;
+}
+
+.task-skeleton .--cancel {
+	margin: 0 auto 0 8px;
+}
+
+
+
+.task-skeleton .--main {
+	display: grid;
+	width: 40%;
+	min-width: 512px;
+	max-width: 660px;
+}
+
+@media (min-width: 1600px) {
+	.task-skeleton .--main {
+		width: 42%;
+	}
+}
+
+.task-skeleton .--full-title {
+	justify-content: space-between;
+}
+
+.task-skeleton .--full-description {
+	margin: 18px 0 20px;
+}
+
+.task-skeleton .--full-chips {
+	margin: 18px 0;
+	gap: 10px;
+}
+
+.task-skeleton .--footer {
+	margin-top: auto;
+	padding: 24px 22px;
+	background: #fff;
+	box-shadow: 0 -2px 6px #0001;
+}
+
+.task-skeleton .--more {
+	margin: 0 auto 0 12px;
+}
+
+.task-skeleton .--chat {
+	flex: 1;
+	display: flex;
+	flex-direction: column;
+	border-left: 1px solid #0001;
+}
+
+.task-skeleton .--chat-title {
+	padding: 12px 16px;
+	gap: 10px;
+}
+
+.task-skeleton .--chat-info {
+	display: grid;
+	gap: 8px;
+	margin-right: auto;
+}
+
+.task-skeleton .--textarea {
+	margin-top: auto;
+	padding: 0 40px 12px 33px;
+	gap: 12px;
+}
+
+.task-skeleton .--chat-bg {
+	flex: 1;
+	display: grid;
+	background: #9fcfff url(/bitrix/js/im/images/chat-v2-background/1.png) 50%/cover no-repeat;
+}

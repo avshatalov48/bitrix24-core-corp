@@ -11,7 +11,7 @@ export const StickyPopup = {
 		},
 		config: {
 			type: Object,
-			default: {},
+			default: () => ({}),
 		},
 	},
 	mounted(): void

@@ -19,7 +19,7 @@ html, body {
 .booking-template-pub-footer {
 	padding: 14px 0 17px;
 	text-align: center;
-	font-family: var(--ui-font-family-system);
+	font-family: var(--ui-font-family-primary, var(--ui-font-family-system));
 	font-weight: 400;
 	font-size: 15px;
 	line-height: 20px;

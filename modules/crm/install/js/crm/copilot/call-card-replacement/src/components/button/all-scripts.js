@@ -7,12 +7,12 @@ export const AllScripts = {
 
 	computed: {
 		classname(): Object {
-			return {
-				'crm-copilot__call-card-replacement-footer-btn': true,
-				[Button.BASE_CLASS]: true,
-				[ButtonSize.EXTRA_SMALL]: true,
-				[ButtonColor.LIGHT]: true,
-			};
+			return [
+				'crm-copilot__call-card-replacement-footer-btn',
+				Button.BASE_CLASS,
+				ButtonSize.EXTRA_SMALL,
+				ButtonColor.LIGHT,
+			];
 		},
 	},
 

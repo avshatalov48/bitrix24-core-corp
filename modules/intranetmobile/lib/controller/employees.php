@@ -1,11 +1,13 @@
 <?php
 namespace Bitrix\IntranetMobile\Controller;
 
+use Bitrix\HumanResources\Compatibility\Utils\DepartmentBackwardAccessCode;
 use Bitrix\Intranet\Controller\Invite;
 use Bitrix\IntranetMobile\Dto\SortingDto;
 use Bitrix\IntranetMobile\Dto\FilterDto;
 use Bitrix\Main\Engine\ActionFilter\CloseSession;
 use Bitrix\Intranet\ActionFilter\IntranetUser;
+use Bitrix\Main\Loader;
 use Bitrix\Main\UI\PageNavigation;
 use Bitrix\IntranetMobile\Provider\UserProvider;
 
@@ -95,6 +97,8 @@ class Employees extends Base
 			return false;
 		}
 
+		$oldStructureIds = $this->convertNewStructureIdsToOldStructureIds($newDepartmentsIds);
+
 		$allDepartments = \CIntranetRestService::departmentGet([]);
 
 		foreach ($allDepartments as $department)
@@ -104,7 +108,7 @@ class Employees extends Base
 				continue;
 			}
 
-			if ((int)$department['UF_HEAD'] === $userId && !in_array($department['ID'], $newDepartmentsIds))
+			if ((int)$department['UF_HEAD'] === $userId && !in_array($department['ID'], $oldStructureIds, true))
 			{
 				\CIntranetRestService::departmentUpdate([
 					'ID' => $department['ID'],
@@ -115,7 +119,28 @@ class Employees extends Base
 
 		return \Bitrix\Rest\Api\User::userUpdate([
 			'id' => $userId,
-			'UF_DEPARTMENT' => $newDepartmentsIds,
+			'UF_DEPARTMENT' => $oldStructureIds,
 		]);
+	}
+
+	private function convertNewStructureIdsToOldStructureIds(array $newStructureDepartmentsIds): array
+	{
+		if (!Loader::includeModule('humanresources'))
+		{
+			return $newStructureDepartmentsIds;
+		}
+
+		$oldStructureDepartmentsIds = [];
+		$nodeRepository = \Bitrix\HumanResources\Service\Container::getNodeRepository();
+		foreach ($newStructureDepartmentsIds as $departmentId)
+		{
+			$accessCode = $nodeRepository->getById($departmentId)?->accessCode;
+			if (!empty($accessCode))
+			{
+				$oldStructureDepartmentsIds[] = DepartmentBackwardAccessCode::extractIdFromCode($accessCode);
+			}
+		}
+
+		return $oldStructureDepartmentsIds;
 	}
 }

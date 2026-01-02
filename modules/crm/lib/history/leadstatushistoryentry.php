@@ -112,6 +112,10 @@ class LeadStatusHistoryEntry
 		$fields = $dbResult->fetch();
 		return is_array($fields) && isset($fields['ID']);
 	}
+
+	/**
+	 * @deprecated
+	 */
 	public static function register($ownerID, array $entityFields = null, array $options = null)
 	{
 		if(!is_int($ownerID))
@@ -299,7 +303,7 @@ class LeadStatusHistoryEntry
 			return [];
 		}
 
-		$parameters['filter'] = $userPermissions->applyAvailableItemsFilter(
+		$parameters['filter'] = $userPermissions->itemsList()->applyAvailableItemsFilter(
 			$parameters['filter'] ?? [],
 			[\CCrmOwnerType::LeadName],
 			$operation,
@@ -322,7 +326,7 @@ class LeadStatusHistoryEntry
 			return 0;
 		}
 
-		$filter = $userPermissions->applyAvailableItemsFilter(
+		$filter = $userPermissions->itemsList()->applyAvailableItemsFilter(
 			$filter,
 			[\CCrmOwnerType::LeadName],
 			$operation,

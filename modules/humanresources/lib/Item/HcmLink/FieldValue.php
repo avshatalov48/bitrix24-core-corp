@@ -9,7 +9,7 @@ use Bitrix\Main\Type\DateTime;
 class FieldValue implements Item, Arrayable, \JsonSerializable
 {
 	public function __construct(
-		public int $employeeId,
+		public int $entityId,
 		public int $fieldId,
 		public string $value,
 		public ?DateTime $createdAt = null,
@@ -23,7 +23,7 @@ class FieldValue implements Item, Arrayable, \JsonSerializable
 	{
 		return [
 			'id' => $this->id,
-			'employeeId' => $this->employeeId,
+			'entityId' => $this->entityId,
 			'fieldId' => $this->fieldId,
 			'value' => $this->value,
 			'createdAt' => ($this->createdAt ?? new DateTime())->format(\DateTimeInterface::ATOM),

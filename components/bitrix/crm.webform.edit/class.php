@@ -868,7 +868,7 @@ class CCrmWebFormEditComponent extends \CBitrixComponent
 
 			return false;
 		}
-		if ($CrmPerms->HavePerm('WEBFORM', BX_CRM_PERM_NONE))
+		if (!\Bitrix\Crm\Service\Container::getInstance()->getUserPermissions()->webForm()->canRead())
 		{
 			$this->errors[] = Loc::getMessage('CRM_PERMISSION_DENIED');
 			$this->showErrors();
@@ -877,7 +877,7 @@ class CCrmWebFormEditComponent extends \CBitrixComponent
 		}
 
 		$id = $this->arParams['ELEMENT_ID'];
-		$this->arResult['PERM_CAN_EDIT'] = !$CrmPerms->HavePerm('WEBFORM', BX_CRM_PERM_NONE, 'WRITE');
+		$this->arResult['PERM_CAN_EDIT'] = \Bitrix\Crm\Service\Container::getInstance()->getUserPermissions()->webForm()->canEdit();
 		if (!$this->arResult['PERM_CAN_EDIT'])
 		{
 			$this->errors[] = Loc::getMessage('CRM_PERMISSION_DENIED');
@@ -938,17 +938,21 @@ class CCrmWebFormEditComponent extends \CBitrixComponent
 				]];
 			}
 
-			if(!$formData['BUTTON_CAPTION'])
+			$scenarioId = $this->request->get('SCENARIO_ID') ?? 'crm_preset_cd';
+			$preset = $scenarioId ? WebForm\Preset::getById($scenarioId) : null;
+
+			$formData = $formData + ($this->arResult['FORM']['IS_CALLBACK_FORM']
+				? WebForm\Preset::getCallback('', '')
+				: $preset
+			);
+
+			if (!$formData['BUTTON_CAPTION'])
 			{
 				$formData['BUTTON_CAPTION'] = $this->crmWebForm->getButtonCaption();
 			}
 
-			$formData = $formData + ($this->arResult['FORM']['IS_CALLBACK_FORM']
-				? WebForm\Preset::getCallback('', '')
-				: WebForm\Preset::getById('crm_preset_cd')
-			);
 			$formData['TEMPLATE_ID'] = !$this->arResult['FORM']['IS_CALLBACK_FORM']
-				? 'contacts'
+				? $formData['TEMPLATE_ID'] ?? 'contacts'
 				: 'callback';
 
 			// add date to form name

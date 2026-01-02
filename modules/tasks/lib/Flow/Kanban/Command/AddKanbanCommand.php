@@ -2,7 +2,7 @@
 
 namespace Bitrix\Tasks\Flow\Kanban\Command;
 
-use Bitrix\Tasks\AbstractCommand;
+use Bitrix\Tasks\Flow\AbstractCommand;
 use Bitrix\Tasks\Internals\Attribute\PositiveNumber;
 
 /**

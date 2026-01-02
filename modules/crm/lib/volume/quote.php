@@ -119,15 +119,16 @@ class Quote
 	 */
 	public function canClearEntity()
 	{
-		$userPermissions = \CCrmPerms::GetUserPermissions($this->getOwner());
-		if ($userPermissions->HavePerm('QUOTE', BX_CRM_PERM_NONE, 'READ'))
+		$userPermissions = Crm\Service\Container::getInstance()->getUserPermissions($this->getOwner());
+
+		if (!$userPermissions->entityType()->canReadItems(\CCrmOwnerType::Quote))
 		{
 			$this->collectError(new Main\Error('', self::ERROR_PERMISSION_DENIED));
 
 			return false;
 		}
 
-		if ($userPermissions->HavePerm('QUOTE', BX_CRM_PERM_NONE, 'DELETE'))
+		if (!$userPermissions->entityType()->canDeleteItems(\CCrmOwnerType::Quote))
 		{
 			$this->collectError(new Main\Error('', self::ERROR_PERMISSION_DENIED));
 
@@ -840,10 +841,7 @@ class Quote
 			{
 				$this->setProcessOffset($quote['QUOTE_ID']);
 
-				$entityAttr = $userPermissions->GetEntityAttr('QUOTE', array($quote['QUOTE_ID']));
-				$attr = $entityAttr[$quote['QUOTE_ID']];
-
-				if($userPermissions->CheckEnityAccess('QUOTE', 'DELETE', $attr))
+				if ($this->canDeleteItem(\CCrmOwnerType::Quote, $quote['QUOTE_ID']))
 				{
 					$connection->startTransaction();
 

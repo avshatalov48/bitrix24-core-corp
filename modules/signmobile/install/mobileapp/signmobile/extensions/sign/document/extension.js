@@ -9,15 +9,15 @@ jn.define('sign/document', (require, exports, module) => {
 		Button,
 	} = require('ui-system/form/buttons/button');
 	const { Indent, Color } = require('tokens');
+	const { Icon } = require('assets/icons');
 	const { Loc } = require('loc');
 	const { ResponseMobile } = require('sign/dialog/banners/responsemobile');
-	const { ResponseReviewMobile } = require('sign/dialog/banners/responsereviewmobile');
-	const { RefusedJustNow } = require('sign/dialog/banners/refusedjustnow');
 	const { InitiatedByType } = require('sign/type/initiated-by-type');
 	const { External } = require('sign/dialog/banners/external');
 	const { NotifyManager } = require('notify-manager');
 	const { showConfirm } = require('sign/dialog/banners/template');
-	const { rejectConfirmation } = require('sign/connector');
+	const { rejectConfirmation, reviewAccept } = require('sign/connector');
+	const { showToast, showErrorToast, Position } = require('toast');
 	const { MemberRole } = require('sign/type/member-role');
 	const IS_IOS = Application.getPlatform() === 'ios';
 	const URL_GOSKEY_APP_INSTALL = 'https://www.gosuslugi.ru/select-app-goskey';
@@ -97,8 +97,11 @@ jn.define('sign/document', (require, exports, module) => {
 		renderSignButtons()
 		{
 			return Card(
-				{},
+				{
+					testId: `signButtons-card`,
+				},
 				Button({
+					testId: `signDocument-button-confirm`,
 					text: Loc.getMessage('SIGN_MOBILE_DOCUMENT_CONFIRM_SIGNING_BUTTON_TITLE'),
 					size: ButtonSize.XL,
 					design: ButtonDesign.FILLED,
@@ -117,15 +120,18 @@ jn.define('sign/document', (require, exports, module) => {
 		renderReviewButtons()
 		{
 			return Card(
-				{},
+				{
+					testId: `reviewButtons-card`,
+				},
 				Button({
+					testId: `signDocument-button-review`,
 					text: Loc.getMessage('SIGN_MOBILE_DOCUMENT_CONFIRM_REVIEW_BUTTON_TITLE'),
 					size: ButtonSize.XL,
 					design: ButtonDesign.FILLED,
 					disabled: false,
 					badge: false,
 					stretched: true,
-					onClick: this.#onReviewButtonClickHandler,
+					onClick: this.#onAcceptReviewButtonClickHandler,
 					style: {
 						marginBottom: Indent.L.toNumber(),
 					},
@@ -139,6 +145,7 @@ jn.define('sign/document', (require, exports, module) => {
 			const { titleCode } = this.#getRejectButtonConfig();
 
 			return Button({
+				testId: `signDocument-button-Reject`,
 				text: Loc.getMessage(titleCode),
 				size: ButtonSize.XL,
 				design: ButtonDesign.PLAN_ACCENT,
@@ -184,15 +191,28 @@ jn.define('sign/document', (require, exports, module) => {
 			}));
 		};
 
-		#onReviewButtonClickHandler = () => {
-			this.clearHeader();
+		#onAcceptReviewButtonClickHandler = () => {
+			NotifyManager.showLoadingIndicator();
 
-			this.layout.showComponent(new ResponseReviewMobile({
-				documentTitle: this.title,
-				memberId: this.memberId,
-				layoutWidget: this.layout,
-				initiatedByType: this.initiatedByType,
-			}));
+			reviewAccept(this.memberId).then(() => {
+				NotifyManager.hideLoadingIndicatorWithoutFallback();
+				this.layout.close();
+				showToast(
+					{
+						message: Loc.getMessage('SIGN_MOBILE_DOCUMENT_CONFIRM_REVIEW_SUCCESS_TITLE'),
+						icon: Icon.CHECK,
+						position: Position.BOTTOM,
+						offset: 120,
+					},
+				);
+			}).catch(() => {
+				this.layout.close();
+				showErrorToast({
+					message: Loc.getMessage('SIGN_MOBILE_DOCUMENT_UNKNOWN_ERROR_TEXT'),
+					position: Position.BOTTOM,
+					offset: 120,
+				});
+			});
 		};
 
 		#onRejectButtonClickHandler = () => {
@@ -224,20 +244,22 @@ jn.define('sign/document', (require, exports, module) => {
 			NotifyManager.showLoadingIndicator();
 			rejectConfirmation(this.memberId).then(() => {
 				NotifyManager.hideLoadingIndicatorWithoutFallback();
-				this.clearHeader();
-				this.layout.showComponent(new RefusedJustNow({
-					role: this.role,
-					documentTitle: this.title,
-					memberId: this.memberId,
-					layoutWidget: this.layout,
-					initiatedByType: this.initiatedByType,
-				}));
-			}).catch(() => {
-				NotifyManager.showErrors([
+				this.layout.close();
+				showToast(
 					{
-						message: Loc.getMessage('SIGN_MOBILE_DOCUMENT_UNKNOWN_ERROR_TEXT'),
+						message: Loc.getMessage('SIGN_MOBILE_DOCUMENT_REFUSED_REVIEW_TITLE'),
+						icon: Icon.CROSS,
+						position: Position.BOTTOM,
+						offset: 120,
 					},
-				]);
+				);
+			}).catch(() => {
+				this.layout.close();
+				showErrorToast({
+					message: Loc.getMessage('SIGN_MOBILE_DOCUMENT_UNKNOWN_ERROR_TEXT'),
+					position: Position.BOTTOM,
+					offset: 120,
+				});
 			});
 		};
 

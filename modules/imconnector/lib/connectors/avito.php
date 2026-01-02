@@ -3,13 +3,9 @@ namespace Bitrix\ImConnector\Connectors;
 
 use Bitrix\Main\Localization\Loc;
 
-/**
- * Class Avito
- * @package Bitrix\ImConnector\Connectors
- */
+
 class Avito extends Base
 {
-	//Input
 	/**
 	 * @param array $chat
 	 * @return array
@@ -30,5 +26,4 @@ class Avito extends Base
 
 		return $chat;
 	}
-	//END Input
 }

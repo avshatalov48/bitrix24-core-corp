@@ -3,8 +3,8 @@
 namespace Bitrix\Crm\Tour;
 
 use Bitrix\Crm\Copilot\CallAssessment\FillPreliminaryCallAssessments;
+use Bitrix\Crm\Integration\AI\AIManager;
 use Bitrix\Crm\Service\Container;
-use Bitrix\Crm\Settings\Crm;
 use Bitrix\Main\Localization\Loc;
 use Bitrix\Main\ModuleManager;
 use Bitrix\Main\Type\DateTime;
@@ -15,6 +15,11 @@ class CopilotCallAssessment extends Base
 
 	protected function canShow(): bool
 	{
+		if (!AIManager::isAvailableRegion())
+		{
+			return false;
+		}
+
 		if ($this->isUserSeenTour())
 		{
 			return false;
@@ -31,7 +36,7 @@ class CopilotCallAssessment extends Base
 		return (
 			!FillPreliminaryCallAssessments::isWaiting()
 			&& $isAiModuleInstalled
-			&& Container::getInstance()->getUserPermissions()->canReadCopilotCallAssessmentSettings()
+			&& Container::getInstance()->getUserPermissions()->copilotCallAssessment()->canRead()
 			&& $bitrixPaid
 		);
 	}

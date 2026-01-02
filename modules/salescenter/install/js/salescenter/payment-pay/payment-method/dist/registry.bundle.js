@@ -1,3 +1,4 @@
+/* eslint-disable */
 this.BX = this.BX || {};
 this.BX.SalesCenter = this.BX.SalesCenter || {};
 this.BX.SalesCenter['Payment-Pay'] = this.BX.SalesCenter['Payment-Pay'] || {};

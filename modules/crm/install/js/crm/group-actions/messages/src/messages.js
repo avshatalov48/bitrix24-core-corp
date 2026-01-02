@@ -1,4 +1,5 @@
 import './css/messages.css';
+import { Builder, Dictionary } from 'crm.integration.analytics';
 import { Loc, Reflection } from 'main.core';
 import { BaseEvent, EventEmitter } from 'main.core.events';
 import { Menu } from 'main.popup';
@@ -39,6 +40,8 @@ export class Messages
 		inProgress: Loc.getMessage('CRM_GROUP_ACTIONS_WHATSAPP_MESSAGE_IN_PROGRESS'),
 	};
 
+	#isHelpShown: boolean = false;
+
 	static getInstance(progressBarRepo: ProgressBarRepository, options: Options): Messages
 	{
 		if (Messages.#instance)
@@ -67,7 +70,7 @@ export class Messages
 
 	async execute()
 	{
-		EventEmitter.subscribeOnce('BX.Crm.SmsEditorWrapper:click', this.#sendMessages.bind(this));
+		EventEmitter.subscribeOnce('BX.Crm.SmsEditorWrapperOnSend:click', this.#sendMessages.bind(this));
 		EventEmitter.subscribe('BX.Crm.GroupActionsWhatsApp.FromPhoneSelected', this.#fromPhoneSelected.bind(this));
 
 		this.#showGridLoader();
@@ -122,11 +125,13 @@ export class Messages
 		{
 			Helper.show(`redirect=detail&code=${articleCode}`);
 		}
+
+		this.#submitAnalytics('showHelp');
 	}
 
 	#destroy()
 	{
-		EventEmitter.unsubscribeAll('BX.Crm.SmsEditorWrapper:click');
+		EventEmitter.unsubscribeAll('BX.Crm.SmsEditorWrapperOnSend:click');
 		EventEmitter.unsubscribeAll('BX.Crm.GroupActionsWhatsApp.Settings:click');
 		EventEmitter.unsubscribeAll('BX.Crm.GroupActionsWhatsApp.Settings:help');
 		EventEmitter.unsubscribeAll('BX.Crm.GroupActionsWhatsApp.FromPhoneSelected');
@@ -159,6 +164,7 @@ export class Messages
 
 		const messageBody = event.getData()?.text || '';
 		const messageTemplate = event.getData()?.templateId || null;
+		const originalTempalteId = event.getData()?.originalTemplateId || null;
 
 		const container = this.#progressBarRepo
 			.getOrCreateProgressBarContainer('whatsapp-message').id;
@@ -198,6 +204,8 @@ export class Messages
 		}
 
 		bwmManager.execute();
+
+		this.#submitAnalytics('sendMessage', originalTempalteId);
 
 		this.#destroy();
 	}
@@ -243,5 +251,41 @@ export class Messages
 	#storeLastSelectedFromNumber(fromNumber: string): void
 	{
 		localStorage.setItem(SELECTED_FROM_NUMBER_LOCALSTORE_KEY, fromNumber);
+	}
+
+	#submitAnalytics(eventElement: string, templateId: ?string = null)
+	{
+		let analyticsData = null;
+
+		if (eventElement === 'showHelp' && !this.#isHelpShown)
+		{
+			analyticsData = Builder.Communication.FormEvent.createDefault(
+				this.#options.entityTypeId,
+			)
+				.setEvent(Dictionary.EVENT_WA_POPUP)
+				.setSubSection(Dictionary.SUB_SECTION_LIST)
+				.setElement(Dictionary.ELEMENT_WA_HELP)
+			;
+
+			this.#isHelpShown = true;
+		}
+
+		if (eventElement === 'sendMessage')
+		{
+			analyticsData = Builder.Communication.SendEvent.createDefault(
+				this.#options.entityTypeId,
+			)
+				.setEvent(Dictionary.EVENT_WA_SEND)
+				.setSubSection(Dictionary.SUB_SECTION_LIST)
+				.setElement(Dictionary.ELEMENT_WA_SEND)
+				.setContactsCount(this.#options.forAll ? 'all' : this.#options.selectedIds.length)
+				.setTemplateId(templateId)
+			;
+		}
+
+		if (analyticsData)
+		{
+			BX.UI.Analytics.sendData(analyticsData.buildData());
+		}
 	}
 }

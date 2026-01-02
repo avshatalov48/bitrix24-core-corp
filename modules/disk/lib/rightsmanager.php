@@ -670,6 +670,15 @@ class RightsManager implements IErrorable
 		$this->appendChildCrRightsForChildren($parentId, $userId, $restrictIds, $rightsByObjectId);
 		$this->appendChildAuRightsForChildren($parentId, $userId, $restrictIds, $rightsByObjectId);
 
+		$event = new Event('disk', 'OnPreloadUserRights', ['userId' => $userId, 'rightsByObjectId' => $rightsByObjectId]);
+		$event->send();
+
+		$eventResults = $event->getResults();
+		foreach ($eventResults as $eventResult)
+		{
+			$rightsByObjectId = $eventResult->getParameters();
+		}
+
 		$operations = [];
 		foreach ($rightsByObjectId as $objectId => $rights)
 		{
@@ -1205,33 +1214,30 @@ class RightsManager implements IErrorable
 
 	/**
 	 * Add to parameters rights check by security context for use in getList.
+	 *
 	 * @param Security\SecurityContext $securityContext
 	 * @param array                    $parameters
 	 * @param array                    $specificColumns List of columns to use in $securityContext->getSqlExpressionForList.
-	 * @return array
+	 * @return array<string, mixed>
 	 */
-	public function addRightsCheck(Security\SecurityContext $securityContext, array $parameters, array $specificColumns)
-	{
-		if(!isset($parameters['filter']))
-		{
-			$parameters['filter'] = array();
-		}
-		if(!isset($parameters['runtime']))
-		{
-			$parameters['runtime'] = array();
-		}
-		$parameters['runtime'][] = new ExpressionField('RIGHTS_CHECK',
-			'CASE WHEN ' . $securityContext->getSqlExpressionForList('%1$s', '%2$s') . ' THEN 1 ELSE 0 END', $specificColumns, array('data_type' => 'boolean',)
+	public function addRightsCheck(
+		Security\SecurityContext $securityContext,
+		array $parameters,
+		array $specificColumns
+	): array {
+		$parameters['filter'] ??= [];
+		$parameters['runtime'] ??= [];
+
+		$parameters['runtime'][] = new ExpressionField(
+			'RIGHTS_CHECK',
+			'CASE WHEN ' . $securityContext->getSqlExpressionForList('%1$s', '%2$s') . ' THEN 1 ELSE 0 END',
+			$specificColumns,
+			['data_type' => 'boolean']
 		);
 
-		if ($parameters['filter'] instanceof ConditionTree)
-		{
-			$parameters['filter']->addCondition(Query::filter()->where('RIGHTS_CHECK', true));
-		}
-		else
-		{
-			$parameters['filter']['=RIGHTS_CHECK'] = true;
-		}
+		$parameters['filter'] instanceof ConditionTree
+			? $parameters['filter']->addCondition(Query::filter()->where('RIGHTS_CHECK', true))
+			: $parameters['filter']['=RIGHTS_CHECK'] = true;
 
 		return $parameters;
 	}

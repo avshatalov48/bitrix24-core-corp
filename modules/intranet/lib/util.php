@@ -11,6 +11,7 @@ namespace Bitrix\Intranet;
 use Bitrix\Bitrix24\Integrator;
 use Bitrix\Bitrix24\Feature;
 use Bitrix\Intranet\Internals\InvitationTable;
+use Bitrix\Intranet\Service\ServiceContainer;
 use Bitrix\Main\ArgumentNullException;
 use Bitrix\Main\ArgumentOutOfRangeException;
 use Bitrix\Main\Event;
@@ -509,6 +510,8 @@ class Util
 			$user->Update($currentUserId, ['GROUP_ID' => $currentAdminGroups]);
 		}
 
+		ServiceContainer::getInstance()->getUserService()->clearCache();
+
 		return true;
 	}
 
@@ -575,6 +578,8 @@ class Util
 			]
 		);
 		$event->send();
+
+		ServiceContainer::getInstance()->getUserService()->clearCache();
 
 		return true;
 	}
@@ -664,28 +669,15 @@ class Util
 
 	public static function getGroupsId()
 	{
-		$employeesGroupId = "";
-		$portalAdminGroupId = "";
-
 		if (ModuleManager::isModuleInstalled("bitrix24"))
 		{
-			$employeesGroupId = "11";
-			$portalAdminGroupId = "12";
+			$employeesGroupId = 11;
+			$portalAdminGroupId = 12;
 		}
 		else
 		{
-			$res = \CGroup::GetList('', '', ["STRING_ID" => implode("|", ["EMPLOYEES_".SITE_ID, "PORTAL_ADMINISTRATION_".SITE_ID])]);
-			while ($group = $res->fetch())
-			{
-				if ($group["STRING_ID"] === "EMPLOYEES_".SITE_ID)
-				{
-					$employeesGroupId = $group["ID"];
-				}
-				elseif ($group["STRING_ID"] === "PORTAL_ADMINISTRATION_".SITE_ID)
-				{
-					$portalAdminGroupId = $group["ID"];
-				}
-			}
+			$employeesGroupId =	\CGroup::GetIDByCode("EMPLOYEES_" . SITE_ID);
+			$portalAdminGroupId = \CGroup::GetIDByCode("PORTAL_ADMINISTRATION_" . SITE_ID);
 		}
 
 		return [ $employeesGroupId, $portalAdminGroupId ];
@@ -747,7 +739,8 @@ class Util
 					$status = 'employee';
 				}
 				elseif (
-					Extranet\Service\ServiceContainer::getInstance()->getCollaberService()->isCollaberById((int)$userId)
+					Loader::includeModule('extranet')
+					&& Extranet\Service\ServiceContainer::getInstance()->getCollaberService()->isCollaberById((int)$userId)
 				)
 				{
 					$status = 'collaber';

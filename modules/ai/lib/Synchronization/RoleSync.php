@@ -13,6 +13,7 @@ use Bitrix\AI\Model\RoleTranslateNameTable;
 use Bitrix\AI\ShareRole\Service\RoleDisplayRuleService;
 use Bitrix\AI\ShareRole\Service\RoleService;
 use Bitrix\AI\Synchronization\Dto\RuleDto;
+use Bitrix\AI\Synchronization\Enum\SyncMode;
 use Bitrix\AI\Synchronization\Repository\RoleDisplayRuleRepository;
 use Bitrix\Main\Entity\AddResult;
 use Bitrix\Main\Entity\UpdateResult;
@@ -48,6 +49,13 @@ class RoleSync extends BaseSync
 	protected function addOrUpdate(array $fields, ?array $rules = null, int $editorId = 0): AddResult|UpdateResult
 	{
 		return $this->updateRoleByFields($fields, $editorId, $rules);
+	}
+
+	public function sync(array $items, array $filter = [], SyncMode $mode = SyncMode::Standard): void
+	{
+		parent::sync($items, $filter, $mode);
+
+		RoleManager::resetRolesWithAvatarsCache();
 	}
 
 	/**
@@ -111,6 +119,11 @@ class RoleSync extends BaseSync
 		$roleService->addTranslateDescriptions((int)$roleInDB['ID'], $translateDescriptions, true);
 		$roleDisplayRuleService->updateRulesForRole((int)$roleInDB['ID'], $rules, true);
 		unset($fields['DEFAULT_NAME'], $fields['DEFAULT_DESCRIPTION']);
+
+		if(empty($fields['AVATAR']['fileIds']['medium']) && isset($fields['AVATAR']))
+		{
+			unset($fields['AVATAR']);
+		}
 
 		return $this->update($roleInDB['ID'], $fields);
 	}

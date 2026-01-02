@@ -8,7 +8,21 @@ use Bitrix\Main\Result;
 
 interface FieldValueService
 {
-	public function requestFieldValue(int $companyId, array $employeeIds, array $fieldIds): Result|JobServiceResult;
+	/**
+	 *
+	 * @param int $companyId
+	 * @param list<int> $employeeIds
+	 * @param list<int> $fieldIds
+	 * @param array<int, int> $documentIdByEmployeeIdMap
+	 *
+	 * @return Result|JobServiceResult
+	 */
+	public function requestFieldValue(
+		int $companyId,
+		array $employeeIds,
+		array $fieldIds,
+		array $documentIdByEmployeeIdMap = [],
+	): Result|JobServiceResult;
 
-	public function getFieldValue(array $employeeIds, array $fieldIds): Result|GetFieldValueResult;
+	public function getFieldValue(array $entityIds, array $fieldIds): Result|GetFieldValueResult;
 }

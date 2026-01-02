@@ -297,7 +297,7 @@ class DiskFileViewAjaxController extends \Bitrix\Disk\Internals\Controller
 					$data['DOCUMENT_ID'])
 				)
 				{
-					CBPDocument::killWorkflow($workflowId);
+					CBPDocument::killWorkflow($workflowId, false);
 				}
 			}
 		}

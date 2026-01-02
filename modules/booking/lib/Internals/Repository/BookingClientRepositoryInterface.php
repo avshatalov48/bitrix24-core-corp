@@ -5,16 +5,22 @@ declare(strict_types=1);
 namespace Bitrix\Booking\Internals\Repository;
 
 use Bitrix\Booking\Entity;
-use Bitrix\Booking\Entity\Booking\Booking;
+use Bitrix\Booking\Internals\Model\Enum\EntityType;
+use Bitrix\Booking\Provider\Params\FilterInterface;
 
 interface BookingClientRepositoryInterface
 {
 	public function getTotalClients(): int;
-	public function getTotalNewClientsToday(array $bookingIds): int;
 
-	public function link(Booking $booking, Entity\Booking\ClientCollection $clientCollection): void;
+	public function getTotalNewClientsToday(FilterInterface $filter): int;
 
-	public function unLink(Booking $booking, Entity\Booking\ClientCollection $clientCollection): void;
+	public function link(int $entityId, EntityType $entityType, Entity\Client\ClientCollection $clientCollection): void;
+
+	public function unLink(
+		int $entityId,
+		EntityType $entityType,
+		Entity\Client\ClientCollection $clientCollection,
+	): void;
 
 	public function unLinkByFilter(array $filter): void;
 }

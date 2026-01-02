@@ -8,14 +8,17 @@
 
 namespace Bitrix\Tasks\Access;
 
+use Bitrix\Main\Access\AccessibleController;
 use Bitrix\Main\Access\BaseAccessController;
 use Bitrix\Tasks\Access\Model\TaskModel;
 use Bitrix\Main\Access\AccessibleItem;
+use Bitrix\Tasks\V2\Internal\Access\UserErrorInterface;
+use Bitrix\Tasks\V2\Internal\Access\UserErrorTrait;
+use Bitrix\Tasks\V2\Internal\DI\Container;
 
-class TaskAccessController extends BaseAccessController
-	implements AccessErrorable
+class TaskAccessController extends BaseAccessController implements AccessErrorable, UserErrorInterface
 {
-
+	use UserErrorTrait;
 	use AccessUserTrait;
 	use AccessErrorTrait;
 
@@ -34,6 +37,36 @@ class TaskAccessController extends BaseAccessController
 		}
 
 		return parent::check($action, $item, $params);
+	}
+
+
+	public function forward(AccessibleController|string $controllerOrClass, string $action, AccessibleItem $item, mixed $parameters = null): bool
+	{
+		if (!is_string($controllerOrClass))
+		{
+			$controller = $controllerOrClass;
+		}
+		else
+		{
+			$factory =  Container::getInstance()->getAccessControllerFactory();
+			$controller = $factory->createByClass($controllerOrClass, $this->user->getUserId());
+		}
+
+		if (!$controller)
+		{
+			$this->addError(static::class, 'Forward failed');
+
+			return false;
+		}
+
+		$isAccess = $controller->check($action, $item, $parameters);
+
+		if (!$isAccess && $controller instanceof static)
+		{
+			$this->addErrors(...$controller->getErrorCollection());
+		}
+
+		return $isAccess;
 	}
 
 	public static function dropItemCache(int $itemId)

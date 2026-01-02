@@ -5,6 +5,6 @@ return [
 		'utils/string',
 	],
 	'bundle' => [
-		'./punycode.js',
+		'./punycode',
 	],
 ];

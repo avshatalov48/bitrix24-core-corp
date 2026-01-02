@@ -742,8 +742,8 @@ BX.namespace('Tasks.Component');
 					{
 						menu.push({
 							code: '',
-							text: BX.message('TASKS_REST_BUTTON_TITLE_2'),
-							title: BX.message('TASKS_REST_BUTTON_TITLE_2'),
+							text: BX.message('TASKS_REST_BUTTON_TITLE_MSGVER_1'),
+							title: BX.message('TASKS_REST_BUTTON_TITLE_MSGVER_1'),
 							className: 'menu-popup-item-',
 							items: items
 						});

@@ -115,7 +115,7 @@ class RestManager extends Base
 		}
 		else
 		{
-			$categoryItems = Rest\Marketplace\Client::getCategory($category, 0, 1);
+			$categoryItems = Rest\Marketplace\Client::getCategory($category, 0, 1, true);
 			if (is_array($categoryItems))
 			{
 				$cache->startDataCache();
@@ -123,7 +123,7 @@ class RestManager extends Base
 			}
 		}
 
-		return $categoryItems['PAGES'] ?? 0;
+		return !empty($categoryItems['RESULT_COUNT']) ? (int)$categoryItems['RESULT_COUNT'] : 0;
 	}
 
 	/**
@@ -147,7 +147,7 @@ class RestManager extends Base
 			$page = 1;
 			do
 			{
-				$categoryItems = Rest\Marketplace\Client::getCategory($category, $page, 100);
+				$categoryItems = Rest\Marketplace\Client::getCategory($category, $page, 100, true);
 				if (!is_array($categoryItems)
 					|| isset($categoryItems['ERROR'])
 					|| empty($categoryItems['ITEMS'])

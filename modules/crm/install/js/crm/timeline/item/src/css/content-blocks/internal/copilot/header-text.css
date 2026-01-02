@@ -1,0 +1,88 @@
+.crm-timeline-block-internal-copilot-header {
+	font-weight: var(--ui-font-weight-medium);
+	color: var(--ui-color-copilot-primary);
+	display: flex;
+	flex-direction: row;
+	justify-content: flex-start;
+	align-items: center;
+	padding-bottom: 8px;
+}
+
+.crm-timeline-block-internal-copilot-header_text {
+	font-size: var(--ui-font-size-md);
+	font-weight: var(--ui-font-weight-medium);
+	color: var(--ui-color-copilot-primary);
+	line-height: var(--ui-font-line-height-lg);
+	letter-spacing: var(--ui-text-letter-spacing-1);
+}
+
+.crm-timeline-block-internal-copilot-header-icon {
+	background: transparent url('../../../../images/common/crm-timeline__copilot.svg') no-repeat center;
+	width: 26px;
+	height: 26px;
+	margin-right: 8px;
+}
+
+.crm-timeline-block-internal-copilot-loader__lottie {
+	max-width: 16px;
+	padding-top: 5px;
+	margin: 0 auto;
+}
+
+.crm-timeline-block-internal-copilot-header_stage {
+	display: flex;
+	justify-content: center;
+	align-items: center;
+	position: relative;
+	padding-top: 2px;
+	padding-left: 25px;
+}
+
+.crm-timeline-block-internal-copilot-header_dot-flashing {
+	background-color: var(--ui-color-copilot-primary);
+	color: var(--ui-color-copilot-primary);
+	position: relative;
+	width: 8px;
+	height: 8px;
+	border-radius: 4px;
+	animation: dot-flashing 1s infinite linear alternate;
+	animation-delay: 0.5s;
+}
+
+.crm-timeline-block-internal-copilot-header_dot-flashing::before,
+.crm-timeline-block-internal-copilot-header_dot-flashing::after {
+	content: '';
+	display: inline-block;
+	position: absolute;
+	top: 0;
+}
+
+.crm-timeline-block-internal-copilot-header_dot-flashing::before {
+	background-color: var(--ui-color-copilot-primary);
+	color: var(--ui-color-copilot-primary);
+	left: -15px;
+	width: 8px;
+	height: 8px;
+	border-radius: 4px;
+	animation: dot-flashing 1s infinite alternate;
+}
+
+.crm-timeline-block-internal-copilot-header_dot-flashing::after {
+	background-color: var(--ui-color-copilot-primary);
+	color: var(--ui-color-copilot-primary);
+	left: 15px;
+	width: 8px;
+	height: 8px;
+	border-radius: 4px;
+	animation: dot-flashing 1s infinite alternate;
+	animation-delay: 1s;
+}
+
+@keyframes dot-flashing {
+	0% {
+		background-color: var(--ui-color-copilot-primary);
+	}
+	50%, 100% {
+		background-color: rgba(152, 128, 255, 0.2);
+	}
+}

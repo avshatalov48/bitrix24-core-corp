@@ -13,6 +13,7 @@ use Bitrix\Main\Localization\Loc;
 use Bitrix\Main\Loader;
 use Bitrix\Crm\Integration\UserConsent;
 use Bitrix\Crm\Service\WebForm\Scenario\BaseScenario;
+use Bitrix\Main\ModuleManager;
 
 Loc::loadMessages(__FILE__);
 
@@ -203,6 +204,24 @@ class Preset
 		return null;
 	}
 
+	public static function getByIds(array $xmlIds): array
+	{
+		$result = [];
+
+		$presets = static::getList();
+		foreach ($presets as $preset)
+		{
+			if (!in_array($preset['XML_ID'], $xmlIds, true))
+			{
+				continue;
+			}
+
+			$result[] = $preset;
+		}
+
+		return $result;
+	}
+
 	private static function isLeadEnabled(): bool
 	{
 		return LeadSettings::getCurrent()->isEnabled();
@@ -331,6 +350,13 @@ class Preset
 				]
 			]
 		];
+
+		if (ModuleManager::isModuleInstalled('booking'))
+		{
+			$list[] = self::getBookingPresetItem(BaseScenario::SCENARIO_BOOKING_AUTO_SELECTION);
+			$list[] = self::getBookingPresetItem(BaseScenario::SCENARIO_BOOKING_ANY_RESOURCE);
+			$list[] = self::getBookingPresetItem(BaseScenario::SCENARIO_BOOKING_MANUAL_SETTINGS);
+		}
 
 		$list[] = [
 			'XML_ID' => 'imol_reg',
@@ -503,5 +529,85 @@ class Preset
 		}
 
 		$instance->addForm($formData);
+	}
+
+	private static function getBookingPresetItem(string $templateId): array
+	{
+		$template2Name = [
+			BaseScenario::SCENARIO_BOOKING_AUTO_SELECTION => Loc::getMessage('CRM_WEBFORM_PRESET_ITEM_BOOKING_AUTO_SELECTION_NAME'),
+			BaseScenario::SCENARIO_BOOKING_ANY_RESOURCE => Loc::getMessage('CRM_WEBFORM_PRESET_ITEM_BOOKING_ANY_RESOURCE_NAME'),
+			BaseScenario::SCENARIO_BOOKING_MANUAL_SETTINGS => Loc::getMessage('CRM_WEBFORM_PRESET_ITEM_BOOKING_MANUAL_SETTING_NAME'),
+		];
+
+		return [
+			'XML_ID' => $templateId,
+			'TEMPLATE_ID' => $templateId,
+			'NAME' => $template2Name[$templateId] ?? '',
+			'RESULT_SUCCESS_TEXT' => Loc::getMessage('CRM_WEBFORM_PRESET_ITEM_BOOKING_SUCCESS_TEXT'),
+			'RESULT_FAILURE_TEXT' => Loc::getMessage('CRM_WEBFORM_PRESET_ITEM_BOOKING_FAILURE_TEXT'),
+			'ENTITY_SCHEME' => Entity::ENUM_ENTITY_SCHEME_DEAL,
+			'COPYRIGHT_REMOVED' => 'N',
+			'IS_PAY' => 'N',
+			'DUPLICATE_MODE' => ResultEntity::DUPLICATE_CONTROL_MODE_MERGE,
+			'FORM_SETTINGS' => [
+				'DEAL_DC_ENABLED' => 'Y',
+				'REDIRECT_DELAY' => 2,
+				'BOOKING_RESOURCE_AUTO_SELECTION' => $templateId === BaseScenario::SCENARIO_BOOKING_AUTO_SELECTION ? 'Y' : 'N',
+			],
+			'BUTTON_CAPTION' => Loc::getMessage('CRM_WEBFORM_PRESET_ITEM_BOOKING_BUTTON_CAPTION'),
+			'FIELDS' => [
+				[
+					'TYPE' => Booking::RESOURCE_FIELD_TYPE,
+					'CODE' => 'BOOKING_BOOKING',
+					'CAPTION' => Loc::getMessage('CRM_WEBFORM_PRESET_ITEM_DEF_FIELD_BOOKING_RESOURCE'),
+					'SORT' => 100,
+					'REQUIRED' => 'Y',
+					'MULTIPLE' => 'N',
+					'PLACEHOLDER' => '',
+					'SETTINGS_DATA' => [
+						'settingsData' => [
+						],
+					],
+				],
+				[
+					'TYPE' => 'section',
+					'CODE' => 'section_booking_' . mt_rand(1000000, 9999999),
+					'CAPTION' => Loc::getMessage('CRM_WEBFORM_PRESET_ITEM_BOOKING_CONTACT_SECTION_CAPTION'),
+					'SORT' => 200,
+					'REQUIRED' => 'N',
+					'MULTIPLE' => 'N',
+					'PLACEHOLDER' => '',
+				],
+				[
+					'TYPE' => 'string',
+					'CODE' => self::isLeadEnabled() ? 'LEAD_NAME' : 'CONTACT_NAME',
+					'CAPTION' => Loc::getMessage('CRM_WEBFORM_PRESET_ITEM_DEF_FIELD_NAME'),
+					'SORT' => 300,
+					'REQUIRED' => 'Y',
+					'MULTIPLE' => 'N',
+					'PLACEHOLDER' => '',
+				],
+				[
+					'TYPE' => 'string',
+					'CODE' => self::isLeadEnabled() ? 'LEAD_LAST_NAME' : 'CONTACT_LAST_NAME',
+					'CAPTION' => Loc::getMessage('CRM_WEBFORM_PRESET_ITEM_DEF_FIELD_LAST_NAME'),
+					'SORT' => 400,
+					'REQUIRED' => 'N',
+					'MULTIPLE' => 'N',
+					'PLACEHOLDER' => '',
+				],
+				[
+					'TYPE' => 'phone',
+					'CODE' => self::isLeadEnabled() ? 'LEAD_PHONE' : 'CONTACT_PHONE',
+					'CAPTION' => Loc::getMessage('CRM_WEBFORM_PRESET_ITEM_DEF_FIELD_PHONE'),
+					'SORT' => 500,
+					'REQUIRED' => 'Y',
+					'MULTIPLE' => 'N',
+					'PLACEHOLDER' => '',
+					'VALUE_TYPE' => 'WORK',
+				],
+			],
+			'IS_BOOKING_FORM' => 'Y',
+		];
 	}
 }

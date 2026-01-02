@@ -6,6 +6,8 @@ use Bitrix\Im\V2\Chat;
 use Bitrix\Im\Call\Registry;
 use Bitrix\Call\NotifyService;
 use Bitrix\Call\Integration\AI\Outcome\OutcomeCollection;
+use Bitrix\Im\V2\Message\Send\SendingConfig;
+use Bitrix\Call\Analytics\FollowUpAnalytics;
 
 
 class EventService
@@ -27,8 +29,6 @@ class EventService
 			&& $call->isAiAnalyzeEnabled()
 		)
 		{
-			$chat = Chat::getInstance($call->getChatId());
-
 			$minDuration = CallAISettings::getRecordMinDuration();
 			if ($call->getDuration() < $minDuration)
 			{
@@ -37,21 +37,34 @@ class EventService
 					->disableAiAnalyze()
 					->save();
 
+				(new FollowUpAnalytics($call))->addErrorRecording(CallAIError::AI_RECORD_TOO_SHORT);
+
 				return;
 			}
 
-			$message = ChatMessage::generateCallFinishedMessage($call, $chat);
-			if ($message)
+			// Setup result waiting agent
+			CallAIService::getInstance()->setupExpectation($call->getId());
+
+			$chat = Chat::getInstance($call->getChatId());
+			if ($chat->getId() == $call->getChatId())
 			{
-				$message->setAuthorId($call->getInitiatorId());
-				$notifyService = \Bitrix\Call\NotifyService::getInstance();
-				$notifyService->sendMessageDeferred($chat, $message);
+				$message = ChatMessage::generateCallFinishedMessage($call, $chat);
+				if ($message)
+				{
+					$sendingConfig = (new SendingConfig())
+						->enableSkipCounterIncrements()
+						->enableSkipUrlIndex()
+					;
+					NotifyService::getInstance()->sendMessageDeferred($chat, $message, $sendingConfig);
+				}
 			}
+
+			(new FollowUpAnalytics($call))->addStopRecording();
 		}
 	}
 
 	/**
-	 * @see \Bitrix\Call\Integration\AI\CallAIService::fireCallAiTaskEvent
+	 * @see CallAIService::fireCallAiTaskEvent
 	 */
 	public static function onCallAiTaskStart(\Bitrix\Main\Event $event): void
 	{
@@ -60,26 +73,26 @@ class EventService
 			return;
 		}
 
+		/*
 		$task = $event->getParameters()['task'] ?? null;
 
 		if ($task instanceof \Bitrix\Call\Integration\AI\Task\TranscribeCallRecord)
 		{
-			/*
 			$chat = Chat::getInstance($task->fillCall()->getChatId());
 
-			$message = ChatMessage::generateTaskStartMessage($task, $chat);
+			$message = ChatMessage::generateTaskStartMessage($task->getCallId(), $chat);
 			if ($message)
 			{
 				//$chat->sendMessage($message);
 				$notifyService = \Bitrix\Call\NotifyService::getInstance();
 				$notifyService->sendMessageDeferred($chat, $message);
 			}
-			*/
 		}
+		*/
 	}
 
 	/**
-	 * @see \Bitrix\Call\Integration\AI\CallAIService::fireCallOutcomeEvent
+	 * @see CallAIService::fireCallOutcomeEvent
 	 */
 	public static function onCallAiTaskComplete(\Bitrix\Main\Event $event): void
 	{
@@ -88,40 +101,38 @@ class EventService
 			return;
 		}
 
+		$waitForTasks = [SenseType::OVERVIEW->value, SenseType::INSIGHTS->value, SenseType::SUMMARY->value];
 		$outcome = $event->getParameters()['outcome'] ?? null;
 		if (
-			$outcome instanceof \Bitrix\Call\Integration\AI\Outcome
-			&& $outcome->getType() == SenseType::OVERVIEW->value
+			$outcome instanceof Outcome
+			&& in_array($outcome->getType(), $waitForTasks, true)
 		)
 		{
-			$call = $outcome->fillCall();
-			$chat = Chat::getInstance($call->getChatId());
-
-			/*
-			$messageTaskComplete = ChatMessage::generateTaskCompleteMessage($outcome, $chat);
-			if ($messageTaskComplete)
+			$outcomeCollection = OutcomeCollection::getOutcomesByCallId($outcome->getCallId(), $waitForTasks);
+			if ($outcomeCollection->count() >= count($waitForTasks))
 			{
-				$chat->sendMessage($messageTaskComplete);
-			}
-			*/
+				$call = $outcome->fillCall();
+				$chat = Chat::getInstance($call->getChatId());
+				if ($chat->getId() == $call->getChatId())
+				{
+					$messageOutcome = ChatMessage::generateOverviewMessage($outcome->getCallId(), $outcomeCollection, $chat);
+					if ($messageOutcome)
+					{
+						$sendingConfig = (new SendingConfig())->enableSkipUrlIndex();
+						NotifyService::getInstance()->sendMessageDeferred($chat, $messageOutcome, $sendingConfig);
 
-			$outcomeCollection = OutcomeCollection::getOutcomesByCallId($outcome->getCallId());
+						CallAIService::getInstance()->removeExpectation($call->getId());
 
-			$messageOutcome = ChatMessage::generateOverviewMessage($outcome->getCallId(), $outcomeCollection, $chat);
-			if ($messageOutcome)
-			{
-				$messageOutcome->setAuthorId($call->getInitiatorId());
-				$notifyService = \Bitrix\Call\NotifyService::getInstance();
-				$notifyService->sendMessageDeferred($chat, $messageOutcome);
-
-				$callInstance = \Bitrix\Im\Call\Registry::getCallWithId($outcome->getCallId());
-				(new \Bitrix\Call\Analytics\FollowUpAnalytics($callInstance))->addFollowUpResultMessage();
+						$callInstance = \Bitrix\Im\Call\Registry::getCallWithId($call->getId());
+						(new FollowUpAnalytics($callInstance))->addFollowUpResultMessage();
+					}
+				}
 			}
 		}
 	}
 
 	/**
-	 * @see \Bitrix\Call\Integration\AI\CallAIService::fireCallAiFailedEvent
+	 * @see CallAIService::fireCallAiFailedEvent
 	 */
 	public static function onCallAiTaskFailed(\Bitrix\Main\Event $event): void
 	{
@@ -136,10 +147,16 @@ class EventService
 		if (
 			$task instanceof \Bitrix\Call\Integration\AI\Task\AITask
 			&& $error instanceof \Bitrix\Main\Error
+			&& $task->allowNotifyTaskFailed()
 		)
 		{
 			$call = Registry::getCallWithId($task->getCallId());
-			NotifyService::getInstance()->sendTaskFailedMessage($error, $call);
+			if ($call)
+			{
+				CallAIService::getInstance()->removeExpectation($call->getId());
+
+				NotifyService::getInstance()->sendTaskFailedMessage($error, $call);
+			}
 		}
 	}
 }

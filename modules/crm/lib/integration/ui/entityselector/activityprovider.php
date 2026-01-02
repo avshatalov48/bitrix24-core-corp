@@ -18,7 +18,8 @@ use CAllCrmActivity;
 
 class ActivityProvider extends EntityProvider
 {
-	private ?int $ownerTypeId;
+	private ?int $entityId;
+	private ?int $entityTypeId;
 
 	protected static ActivityTable|string $dataClass = ActivityTable::class;
 
@@ -28,12 +29,12 @@ class ActivityProvider extends EntityProvider
 	{
 		parent::__construct($options);
 
-		$this->ownerTypeId = (int)($options['entityTypeId'] ?? 0);
-		$this->ownerId = (int)($options['entityId'] ?? 0);
+		$this->entityTypeId = (int)($options['entityTypeId'] ?? 0);
+		$this->entityId = (int)($options['entityId'] ?? 0);
 
 		$this->hasAccess =
-			\CCrmOwnerType::IsDefined($this->ownerTypeId) && $this->ownerId > 0
-			&& $this->userPermissions->checkReadPermissions($this->ownerTypeId, $this->ownerId);
+			\CCrmOwnerType::IsDefined($this->entityTypeId) && $this->entityId > 0
+			&& $this->userPermissions->item()->canRead($this->entityTypeId, $this->entityId);
 	}
 
 	protected function getEntityTypeId(): int
@@ -58,8 +59,8 @@ class ActivityProvider extends EntityProvider
 				'select' => ['ID'],
 				'filter' => array_merge($filter, [
 					'@PROVIDER_ID' => ProviderManager::getRelatedFilterProviders(),
-					'=BINDINGS.OWNER_ID' => $this->ownerId,
-					'=BINDINGS.OWNER_TYPE_ID' => $this->ownerTypeId,
+					'=BINDINGS.OWNER_ID' => $this->entityId,
+					'=BINDINGS.OWNER_TYPE_ID' => $this->entityTypeId,
 				]),
 			]
 		)->fetchCollection()
@@ -78,8 +79,8 @@ class ActivityProvider extends EntityProvider
 				'select' => ['ID'],
 				'filter' => [
 					'@PROVIDER_ID' => ProviderManager::getRelatedFilterProviders(),
-					'=BINDINGS.OWNER_ID' => $this->ownerId,
-					'=BINDINGS.OWNER_TYPE_ID' => $this->ownerTypeId,
+					'=BINDINGS.OWNER_ID' => $this->entityId,
+					'=BINDINGS.OWNER_TYPE_ID' => $this->entityTypeId,
 				],
 				'order' => [
 					'ID' => 'ASC',
@@ -111,8 +112,8 @@ class ActivityProvider extends EntityProvider
 
 		$filter['BINDINGS'] = [
 			[
-				'OWNER_ID' => $this->ownerId,
-				'OWNER_TYPE_ID' => $this->ownerTypeId,
+				'OWNER_ID' => $this->entityId,
+				'OWNER_TYPE_ID' => $this->entityTypeId,
 			]
 		];
 		$filter['CHECK_PERMISSIONS'] = 'N';

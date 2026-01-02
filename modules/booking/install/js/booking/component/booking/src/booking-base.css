@@ -1,0 +1,66 @@
+.booking--booking-base {
+	--booking-padding: 3px;
+
+	display: flex;
+	overflow: hidden;
+	white-space: nowrap;
+	pointer-events: all;
+	box-shadow: none !important;
+}
+
+.booking--booking-base-padding {
+	box-sizing: border-box;
+	max-width: 100%;
+	flex: 1;
+	display: flex;
+}
+
+.booking--booking-base .booking--booking-base-inner {
+	display: flex;
+	flex: 1;
+	border-radius: 6px;
+	box-sizing: border-box;
+	outline-offset: -1px;
+	max-width: 100%;
+	cursor: default;
+	user-select: none;
+}
+
+.booking--booking-base-content {
+	overflow: hidden;
+	flex: 1;
+	display: flex;
+	flex-direction: column;
+	justify-content: center;
+	color: var(--ui-color-palette-white-base);
+	padding: 4px 8px;
+}
+
+.booking--booking-base-content-row {
+	display: flex;
+	align-items: center;
+}
+
+.booking--booking-base-content-row.--lower {
+	flex: 1;
+}
+
+.booking--booking-base.--compact-mode .booking--booking-base-content-row.--lower {
+	display: none;
+}
+
+.booking--booking-base-buttons {
+	align-self: flex-end;
+	display: flex;
+	align-items: center;
+}
+
+.ui-draggable--draggable div.booking--booking-base.booking-wait-list-item {
+	cursor: grabbing;
+	pointer-events: none;
+}
+
+.booking--booking-base.--disabled {
+	opacity: 0.5;
+	filter: grayscale(1);
+}

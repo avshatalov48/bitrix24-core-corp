@@ -70,21 +70,6 @@ if (!Bitrix\Crm\Integration\Bitrix24Manager::isAccessEnabled(CCrmOwnerType::Comp
 }
 else
 {
-	if (!$isMyCompanyMode)
-	{
-		$APPLICATION->IncludeComponent(
-			'bitrix:crm.entity.counter.panel',
-			'',
-			[
-				'ENTITY_TYPE_NAME' => CCrmOwnerType::CompanyName,
-				'EXTRAS' => [
-					'CATEGORY_ID' => $categoryId,
-				],
-				'PATH_TO_ENTITY_LIST' => $pathToList,
-			]
-		);
-	}
-
 	$APPLICATION->ShowViewContent('crm-grid-filter');
 
 	if (!$isSlider)

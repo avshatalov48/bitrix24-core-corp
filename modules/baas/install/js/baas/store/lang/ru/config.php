@@ -1,0 +1,23 @@
+<?php
+$MESS['BAAS_WIDGET_AI_PURCHASE_LEFT_STATUS'] = 'Осталось запросов: #left# из #total# до #date#';
+$MESS['BAAS_WIDGET_ALL_DESCRIPTION'] = 'Все бусты';
+$MESS['BAAS_WIDGET_BUY_BUTTON_TITLE'] = 'Купить';
+$MESS['BAAS_WIDGET_DFT_PURCHASE_LEFT'] = 'Действует до:';
+$MESS['BAAS_WIDGET_ONLY_ADMIN_CAN_PURCHASE_BAAS'] = 'Купить буст может только кто-то из администраторов вашего Битрикс24';
+$MESS['BAAS_WIDGET_PURCHASE_ADD'] = 'Добавить';
+$MESS['BAAS_WIDGET_PURCHASE_ANNUAL_LIFETIME'] = 'Буст действует до: #date#';
+$MESS['BAAS_WIDGET_PURCHASE_DISK_LEFT_STATUS'] = 'Доступно #total# до #date#';
+$MESS['BAAS_WIDGET_PURCHASE_IS_ACTIVE'] = 'Активен';
+$MESS['BAAS_WIDGET_PURCHASE_LEFT_STATUS'] = 'Осталось #left# из #total# до #date#';
+$MESS['BAAS_WIDGET_PURCHASE_LIMIT_IS_ALMOST_EXCEEDED'] = 'Почти закончился';
+$MESS['BAAS_WIDGET_PURCHASE_LIMIT_IS_EXCEEDED'] = 'Закончился';
+$MESS['BAAS_WIDGET_PURCHASE_LIMIT_IS_EXCEEDED_THIS_MONTH'] = 'Не осталось в этом месяце';
+$MESS['BAAS_WIDGET_PURCHASE_TITLE'] = 'Буст';
+$MESS['BAAS_WIDGET_PURCHASE_WILL_BE_AVAILABLE_STATUS'] = 'Будет доступно: #left# из #total# с #date#';
+$MESS['BAAS_WIDGET_PURCHASES_ARE_ACTIVE'] = 'Активны';
+$MESS['BAAS_WIDGET_PURCHASES_ARE_PAID'] = 'Оплачены';
+$MESS['BAAS_WIDGET_PURCHASES_TITLE'] = 'Бусты';
+$MESS['BAAS_WIDGET_RELOAD_PACKAGES'] = 'Обновить список бустов';
+$MESS['BAAS_WIDGET_TITLE'] = 'Бусты';
+$MESS['BAAS_WIDGET_DESCRIPTION'] = 'Ваш Битрикс24 может больше. Добавьте полезные возможности, не меняя тариф';
+$MESS['BAAS_WIDGET_MORE_LINK_TITLE'] = 'Подробнее';

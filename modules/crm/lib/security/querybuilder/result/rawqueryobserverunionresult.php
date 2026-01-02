@@ -36,7 +36,6 @@ use Bitrix\Main\ORM\Query\Join;
  * LIMIT 0, 10;
  *```
  *
- * @link http://jabber.bx/view.php?id=181402
  */
 final class RawQueryObserverUnionResult implements ResultOption
 {

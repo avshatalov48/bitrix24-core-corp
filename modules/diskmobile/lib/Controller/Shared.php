@@ -36,11 +36,7 @@ class Shared extends BaseFileList
 			return null;
 		}
 
-		$response = [
-			'items' => [],
-			'users' => [],
-			'storages' => [],
-		];
+		$response = $this->getDefaultResponse();
 
 		if (count($page->getItems()) > 0)
 		{

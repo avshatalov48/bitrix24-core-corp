@@ -100,13 +100,11 @@ if (CModule::IncludeModule('crm'))
 		$arResult['VARIABLES']['entity_type'] = \Bitrix\Crm\EntityPreset::Requisite;
 }
 
-$permissions = new \CCrmPerms(\CCrmSecurityHelper::GetCurrentUserID());
-if (!$permissions->HavePerm('CONFIG', BX_CRM_PERM_CONFIG, 'WRITE'))
+if (!\Bitrix\Crm\Service\Container::getInstance()->getUserPermissions()->isCrmAdmin())
 {
 	$arResult['IS_ERROR'] = 'Y';
 	$arResult['ERROR_TEXT'] = GetMessage('CRM_PERMISSION_DENIED');
 }
-
 
 $this->IncludeComponentTemplate($componentPage);
 ?>

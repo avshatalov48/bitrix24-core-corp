@@ -117,7 +117,7 @@ jn.define('bizproc/task/tasks-performer/rules/rule', (require, exports, module) 
 			}
 		}
 
-		async showTask(task)
+		async showTask(task, isNeedFastClose = true)
 		{
 			return new Promise((resolve, reject) => {
 				const taskOpener = new TaskOpener({
@@ -125,6 +125,7 @@ jn.define('bizproc/task/tasks-performer/rules/rule', (require, exports, module) 
 					widgetTitle: task.typeName,
 					uid: this.uid,
 					taskId: task.id,
+					isNeedFastClose,
 					generateExitButton: this.generateExitButton,
 				});
 

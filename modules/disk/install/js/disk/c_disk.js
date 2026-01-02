@@ -1,42 +1,42 @@
-BX.namespace("BX.Disk");
-if(!BX.Disk.pathToUser)
+BX.namespace('BX.Disk');
+if (!BX.Disk.pathToUser)
 {
-	(function () {
-		var firstButtonInModalWindow = null;
-		var entityToNewShared = {};
-		var moduleTasks = {};
+	(function() {
+		let firstButtonInModalWindow = null;
+		const entityToNewShared = {};
+		let moduleTasks = {};
 
-		var windowsWithoutManager = {};
+		const windowsWithoutManager = {};
 
-		var insertInTooltipLockedInfo = function(tooltip){
-			if(!tooltip.RealAnchor ||  !BX.hasClass(tooltip.RealAnchor, 'js-disk-locked-document-tooltip'))
+		const insertInTooltipLockedInfo = function(tooltip) {
+			if (!tooltip.RealAnchor || !BX.hasClass(tooltip.RealAnchor, 'js-disk-locked-document-tooltip'))
 			{
 				return;
 			}
 
-			var info = BX.findChildByClassName(tooltip.ROOT_DIV, 'bx-user-info-data-info', true);
-			if(!info)
+			const info = BX.findChildByClassName(tooltip.ROOT_DIV, 'bx-user-info-data-info', true);
+			if (!info)
 			{
 				return;
 			}
 
-			if(BX.findChildByClassName(info, 'js-disk-locked-status', true))
+			if (BX.findChildByClassName(info, 'js-disk-locked-status', true))
 			{
 				return;
 			}
 
 			BX.prepend(
 				BX.create('div', {
-					html: '<span class="field-name">' + BX.message('DISK_JS_USER_LOCKED_DOCUMENT') + '</span>',
+					html: `<span class="field-name">${BX.message('DISK_JS_USER_LOCKED_DOCUMENT')}</span>`,
 					props: {
-						className: 'js-disk-locked-status'
-					}
+						className: 'js-disk-locked-status',
+					},
 				}),
-				info
+				info,
 			);
 		};
 
-		var onPullDiskEvent = function(command, params)
+		const onPullDiskEvent = function(command, params)
 		{
 			params = params || {};
 
@@ -47,11 +47,11 @@ if(!BX.Disk.pathToUser)
 					BX.onCustomEvent('Disk.OnlyOffice:onSaved', [params.object, params.documentSession]);
 				}
 
-				var notify = BX.UI.Notification.Center.getBalloonById('session-' + params.documentSession.hash);
+				const notify = BX.UI.Notification.Center.getBalloonById(`session-${params.documentSession.hash}`);
 				if (notify)
 				{
 					BX.UI.Notification.Center.notify({
-						content: BX.message('DISK_JS_DOCUMENT_ONLYOFFICE_SAVED').replace('#name#', notify.getData().file.name)
+						content: BX.message('DISK_JS_DOCUMENT_ONLYOFFICE_SAVED').replace('#name#', notify.getData().file.name),
 					});
 					notify.close();
 
@@ -72,8 +72,8 @@ if(!BX.Disk.pathToUser)
 						break;
 					}
 
-					var reloadItem = function (id) {
-						viewer.items.forEach(function (item) {
+					var reloadItem = function(id) {
+						viewer.items.forEach((item) => {
 							if (item.sourceNode.dataset.objectId === id)
 							{
 								viewer.reloadItem(item, {});
@@ -105,7 +105,7 @@ if(!BX.Disk.pathToUser)
 						message = BX.message('DISK_FOLDER_LIST_LABEL_LIVE_UPDATE_FILE').replace('#NAME#', currentItem.getTitle());
 					}
 					BX.Disk.showModalWithStatusAction({
-						message: message
+						message,
 					});
 
 					viewer.reloadCurrentItem();
@@ -118,22 +118,23 @@ if(!BX.Disk.pathToUser)
 		BX.addCustomEvent('onTooltipShow', insertInTooltipLockedInfo);
 		BX.addCustomEvent('onTooltipInsertData', insertInTooltipLockedInfo);
 
-		BX.addCustomEvent('BX.UI.Viewer.Controller:onBeforeShow', function(viewer, index){
-			var item = viewer.getItemByIndex(index);
+		BX.addCustomEvent('BX.UI.Viewer.Controller:onBeforeShow', (viewer, index) => {
+			const item = viewer.getItemByIndex(index);
 			if (!item)
 			{
 				return;
 			}
-			var actions = item.getActions().filter(function(action){
+			const actions = item.getActions().filter((action) => {
 				if (action.id !== 'edit')
 				{
 					return true;
 				}
+
 				if (!action.buttonIconClass)
 				{
 					action.buttonIconClass = '';
 				}
-				action.buttonIconClass += ' disk-viewer-panel-icon-' + BX.Disk.getDocumentService();
+				action.buttonIconClass += ` disk-viewer-panel-icon-${BX.Disk.getDocumentService()}`;
 
 				if (!action.params || !action.params.dependsOnService)
 				{
@@ -146,14 +147,14 @@ if(!BX.Disk.pathToUser)
 			item.setActions(actions);
 		});
 
-		BX.addCustomEvent('onTooltipHide', function(tooltip){
-			if(!tooltip.RealAnchor ||  !BX.hasClass(tooltip.RealAnchor, 'js-disk-locked-document-tooltip'))
+		BX.addCustomEvent('onTooltipHide', (tooltip) => {
+			if (!tooltip.RealAnchor || !BX.hasClass(tooltip.RealAnchor, 'js-disk-locked-document-tooltip'))
 			{
 				return;
 			}
 
-			var info = BX.findChildByClassName(tooltip.ROOT_DIV, 'js-disk-locked-status', true);
-			if(!info)
+			const info = BX.findChildByClassName(tooltip.ROOT_DIV, 'js-disk-locked-status', true);
+			if (!info)
 			{
 				return;
 			}
@@ -164,8 +165,8 @@ if(!BX.Disk.pathToUser)
 		function modifyAjaxConfig(config)
 		{
 			config.data = config.data || {};
-			config.data['SITE_ID'] = BX.message('SITE_ID');
-			config.data['sessid'] = BX.bitrix_sessid();
+			config.data.SITE_ID = BX.message('SITE_ID');
+			config.data.sessid = BX.bitrix_sessid();
 
 			return config;
 		}
@@ -173,14 +174,14 @@ if(!BX.Disk.pathToUser)
 		Object.assign(BX.Disk, {
 			apiVersion: 22,
 			pathToUser: '/company/personal/user/#user_id#/',
-			endEditSession: function(session)
+			endEditSession(session)
 			{
 				BX.ajax.runAction('disk.api.onlyoffice.endSession', {
 					json: {
 						sessionId: session.id,
 						documentSessionHash: session.hash,
-					}
-				}).then(function(response){
+					},
+				}).then((response) => {
 					if (!response || response.data.mode !== 'edit')
 					{
 						return;
@@ -202,16 +203,16 @@ if(!BX.Disk.pathToUser)
 					}
 
 					BX.UI.Notification.Center.notify({
-						id: 'session-' + session.hash,
+						id: `session-${session.hash}`,
 						autoHide: false,
 						content: BX.message('DISK_JS_DOCUMENT_ONLYOFFICE_SAVE_PROCESS').replace('#name#', response.data.file.name),
 						data: {
-							file: response.data.file
-						}
+							file: response.data.file,
+						},
 					});
 				});
 			},
-			hideLoader: function()
+			hideLoader()
 			{
 				BX.removeClass(document.body, 'disk-body-overlay');
 				if (this.loaderWrapper)
@@ -222,77 +223,77 @@ if(!BX.Disk.pathToUser)
 					this.loader = null;
 				}
 			},
-			showLoader: function(params)
+			showLoader(params)
 			{
 				params = params || {};
 				BX.addClass(document.body, 'disk-body-overlay');
-				var div = document.body.appendChild(this.getLoaderWrapper(params));
+				const div = document.body.appendChild(this.getLoaderWrapper(params));
 
 				BX.ZIndexManager.register(div);
 
 				this.getLoader(this.loaderNode).show();
 			},
-			getLoaderWrapper: function (params)
+			getLoaderWrapper(params)
 			{
 				if (!this.loaderWrapper)
 				{
 					this.loaderWrapper = BX.create('div', {
 						props: {
-							className: 'disk-body-overlay-wrapper'
+							className: 'disk-body-overlay-wrapper',
 						},
 						style: {
-							zIndex: params.zIndex
+							zIndex: params.zIndex,
 						},
 						children: [
 							BX.create('div', {
 								props: {
-									className: 'disk-body-overlay-container'
+									className: 'disk-body-overlay-container',
 								},
 								children: [
 									this.loaderNode = BX.create('div', {
 										props: {
-											className: 'disk-body-overlay-container-loader'
-										}
+											className: 'disk-body-overlay-container-loader',
+										},
 									}),
 									BX.create('div', {
 										props: {
-											className: 'disk-body-overlay-container-text'
+											className: 'disk-body-overlay-container-text',
 										},
-										text: params.text || ''
-									})
-								]
+										text: params.text || '',
+									}),
+								],
 
-							})
-						]
-					})
+							}),
+						],
+					});
 				}
 
 				return this.loaderWrapper;
 			},
-			getLoader: function(targetNode)
+			getLoader(targetNode)
 			{
-				if(!this.loader)
+				if (!this.loader)
 				{
 					this.loader = new BX.Loader({
 						target: targetNode,
-						size: 130
+						size: 130,
 					});
 				}
 
 				return this.loader;
 			},
-			ajax: function (config)
+			ajax(config)
 			{
 				return BX.ajax(modifyAjaxConfig(config));
 			},
-			ajaxPromise: function (config)
+			ajaxPromise(config)
 			{
-				return BX.ajax.promise(modifyAjaxConfig(config)).then(function (response) {
+				return BX.ajax.promise(modifyAjaxConfig(config)).then((response) => {
 					if (!response || response.status != 'success')
 					{
 						BX.Disk.showModalWithStatusAction(response);
 
-						var p = new BX.Promise();
+						const p = new BX.Promise();
 						p.reject(response);
 
 						return p;
@@ -301,99 +302,124 @@ if(!BX.Disk.pathToUser)
 					return response;
 				});
 			},
-			isEmptyObject: function (obj)
+			isEmptyObject(obj)
 			{
-				if (obj == null) return true;
-				if (obj.length && obj.length > 0)
-					return false;
-				if (obj.length === 0)
-					return true;
+				if (obj == null)
 
-				for (var key in obj) {
+				
+      { return true;
+				}
+
+				if (obj.length > 0 && obj.length > 0)
+
+				
+      { return false;
+				}
+
+				if (obj.length === 0)
+
+				
+      { return true;
+				}
+
+				for (const key in obj)
+				{
 					if (hasOwnProperty.call(obj, key))
-						return false;
+
+					
+       { return false;
+					}
 				}
 
 				return true;
 			},
-			_keyPress: function (e)
+			_keyPress(e)
 			{
-				var destDialog = BX.SocNetLogDestination && (BX.SocNetLogDestination.isOpenDialog() || BX.SocNetLogDestination.isOpenSearch());
-				var key = (e || window.event).keyCode || (e || window.event).charCode;
-				//enter
-				if (key == 13 && firstButtonInModalWindow && !destDialog) {
+				const destDialog = BX.SocNetLogDestination && (BX.SocNetLogDestination.isOpenDialog() || BX.SocNetLogDestination.isOpenSearch());
+				const key = (e || window.event).keyCode || (e || window.event).charCode;
+				// enter
+				if (key == 13 && firstButtonInModalWindow && !destDialog)
+				{
 					BX.fireEvent(firstButtonInModalWindow.buttonNode, 'click');
+
 					return BX.PreventDefault(e);
 				}
 			},
-			modalWindow: function (params)
+			modalWindow(params)
 			{
 				params = params || {};
 				params.title = params.title || false;
 				params.bindElement = params.bindElement || null;
 				params.bindOptions = params.bindOptions || {};
-				params.overlay = typeof params.overlay == "undefined" ? true : params.overlay;
+				params.overlay = typeof params.overlay === 'undefined' ? true : params.overlay;
 				params.autoHide = params.autoHide || false;
-				params.closeIcon = typeof params.closeIcon == "undefined"? true : params.closeIcon;
-				params.modalId = params.modalId || 'disk_modal_window_' + (Math.random() * (200000 - 100) + 100);
-				params.withoutContentWrap = typeof params.withoutContentWrap == "undefined" ? false : params.withoutContentWrap;
+				params.closeIcon = typeof params.closeIcon === 'undefined' ? true : params.closeIcon;
+				params.modalId = params.modalId || `disk_modal_window_${Math.random() * (200_000 - 100) + 100}`;
+				params.withoutContentWrap = typeof params.withoutContentWrap === 'undefined' ? false : params.withoutContentWrap;
 				params.contentClassName = params.contentClassName || '';
 				params.contentStyle = params.contentStyle || {};
 				params.content = params.content || [];
 				params.buttons = params.buttons || false;
 				params.events = params.events || {};
-				params.withoutWindowManager = !!params.withoutWindowManager || false;
+				params.withoutWindowManager = Boolean(params.withoutWindowManager) || false;
 
 				if (!BX.type.isArray(params.content))
 				{
 					params.content = [params.content];
 				}
 
-				var contentDialogChildren = [];
-				if (params.withoutContentWrap) {
+				let contentDialogChildren = [];
+				if (params.withoutContentWrap)
+				{
 					contentDialogChildren = contentDialogChildren.concat(params.content);
 				}
-				else {
+				else
+				{
 					contentDialogChildren.push(BX.create('div', {
 						props: {
-							className: 'bx-disk-popup-content' + params.contentClassName
+							className: `bx-disk-popup-content${params.contentClassName}`,
 						},
 						style: params.contentStyle,
-						children: params.content
+						children: params.content,
 					}));
 				}
-				var buttons = params.buttons;
-				if (params.htmlButtons) {
-					//support old style of buttons
-					var htmlButtons = [];
-					for (var i in params.htmlButtons) {
-						if (!params.htmlButtons.hasOwnProperty(i)) {
+				const buttons = params.buttons;
+				if (params.htmlButtons)
+				{
+					// support old style of buttons
+					const htmlButtons = [];
+					for (const i in params.htmlButtons)
+					{
+						if (!params.htmlButtons.hasOwnProperty(i))
+						{
 							continue;
 						}
-						if (i > 0) {
-							htmlButtons.push(BX.create('SPAN', {html: '&nbsp;'}));
+
+						if (i > 0)
+						{
+							htmlButtons.push(BX.create('SPAN', { html: '&nbsp;' }));
 						}
 						htmlButtons.push(params.htmlButtons[i]);
 					}
 
 					contentDialogChildren.push(BX.create('div', {
 						props: {
-							className: 'bx-disk-popup-buttons'
+							className: 'bx-disk-popup-buttons',
 						},
-						children: htmlButtons
+						children: htmlButtons,
 					}));
 				}
 
-				var contentDialog = BX.create('div', {
+				const contentDialog = BX.create('div', {
 					props: {
-						className: 'bx-disk-popup-container'
+						className: 'bx-disk-popup-container',
 					},
-					children: contentDialogChildren
+					children: contentDialogChildren,
 				});
 
-				var afterPopupShow = params.events.onAfterPopupShow;
-				params.events.onAfterPopupShow = BX.delegate(function () {
-					if (buttons.length)
+				const afterPopupShow = params.events.onAfterPopupShow;
+				params.events.onAfterPopupShow = BX.delegate(function() {
+					if (buttons.length > 0)
 					{
 						firstButtonInModalWindow = buttons[0];
 						BX.bind(document, 'keydown', BX.proxy(this._keyPress, this));
@@ -405,22 +431,22 @@ if(!BX.Disk.pathToUser)
 					}
 				}, this);
 
-				var closePopup = params.events.onPopupClose;
-				params.events.onPopupClose = BX.delegate(function () {
-
+				const closePopup = params.events.onPopupClose;
+				params.events.onPopupClose = BX.delegate(function() {
 					firstButtonInModalWindow = null;
 					try
 					{
 						BX.unbind(document, 'keydown', BX.proxy(this._keypress, this));
 					}
-					catch (e) { }
+					catch
+					{}
 
-					if(closePopup)
+					if (closePopup)
 					{
 						BX.delegate(closePopup, BX.proxy_context)();
 					}
 
-					if(params.withoutWindowManager)
+					if (params.withoutWindowManager)
 					{
 						delete windowsWithoutManager[params.modalId];
 					}
@@ -428,30 +454,31 @@ if(!BX.Disk.pathToUser)
 					BX.proxy_context.destroy();
 				}, this);
 
-				var destroyPopup = params.events.onPopupDestroy;
-				params.events.onPopupDestroy = BX.delegate(function () {
+				const destroyPopup = params.events.onPopupDestroy;
+				params.events.onPopupDestroy = BX.delegate(function() {
 					try
 					{
 						BX.unbind(document, 'keydown', BX.proxy(this._keypress, this));
 					}
-					catch (e) { }
+					catch
+					{}
 
-					if(destroyPopup)
+					if (destroyPopup)
 					{
 						BX.delegate(destroyPopup, BX.proxy_context)();
 					}
-
 				}, this);
 
-				var modalWindow;
-				if(params.withoutWindowManager)
+				let modalWindow;
+				if (params.withoutWindowManager)
 				{
-					if(!!windowsWithoutManager[params.modalId])
+					if (windowsWithoutManager[params.modalId])
 					{
-						return windowsWithoutManager[params.modalId]
+						return windowsWithoutManager[params.modalId];
 					}
 					modalWindow = new BX.PopupWindow(params.modalId, params.bindElement, {
 						titleBar: params.title,
+						className: params.className,
 						content: contentDialog,
 						bindOptions: params.bindOptions,
 						closeByEsc: true,
@@ -461,14 +488,16 @@ if(!BX.Disk.pathToUser)
 						overlay: params.overlay,
 						events: params.events,
 						buttons: params.buttons,
-						zIndex : isNaN(params["zIndex"]) ? 0 : params.zIndex
+						zIndex: isNaN(params.zIndex) ? 0 : params.zIndex,
 					});
 					windowsWithoutManager[params.modalId] = modalWindow;
 				}
 				else
 				{
+					console.log('params', params);
 					modalWindow = BX.PopupWindowManager.create(params.modalId, params.bindElement, {
 						titleBar: params.title,
+						className: params.className,
 						content: contentDialog,
 						bindOptions: params.bindOptions,
 						closeByEsc: true,
@@ -478,9 +507,8 @@ if(!BX.Disk.pathToUser)
 						overlay: params.overlay,
 						events: params.events,
 						buttons: params.buttons,
-						zIndex : isNaN(params["zIndex"]) ? 0 : params.zIndex
+						zIndex: isNaN(params.zIndex) ? 0 : params.zIndex,
 					});
-
 				}
 
 				modalWindow.show();
@@ -488,18 +516,18 @@ if(!BX.Disk.pathToUser)
 				return modalWindow;
 			},
 
-			modalWindowLoader: function (queryUrl, params, bindElement)
+			modalWindowLoader(queryUrl, params, bindElement)
 			{
 				bindElement = bindElement || null;
 				params = params || {};
-				var modalId = params.id;
-				var expectResponseType = params.responseType || 'html';
-				var afterSuccessLoad = params.afterSuccessLoad || null;
-				var onPopupClose = params.onPopupClose || null;
-				var postData = params.postData || {};
+				const modalId = params.id;
+				const expectResponseType = params.responseType || 'html';
+				const afterSuccessLoad = params.afterSuccessLoad || null;
+				const onPopupClose = params.onPopupClose || null;
+				const postData = params.postData || {};
 
-				var popup = BX.PopupWindowManager.create(
-					'bx-disk-' + modalId,
+				const popup = BX.PopupWindowManager.create(
+					`bx-disk-${modalId}`,
 					bindElement,
 					{
 						closeIcon: true,
@@ -510,88 +538,86 @@ if(!BX.Disk.pathToUser)
 						content: BX.create('div', {
 							children: [
 								BX.create('div', {
-										style: {
-											display: 'table',
-											width: '30px',
-											height: '30px'
-										},
-										children: [
-											BX.create('div', {
-												style: {
-													display: 'table-cell',
-													verticalAlign: 'middle',
-													textAlign: 'center'
-												},
-												children: [
-													BX.create('div', {
-														props: {
-															className: 'bx-disk-wrap-loading-modal'
-														}
-													}),
-													BX.create('span', {
-														text: ''
-													})
-												]
-											})
-										]
-									}
-								)
-							]
+									style: {
+										display: 'table',
+										width: '30px',
+										height: '30px',
+									},
+									children: [
+										BX.create('div', {
+											style: {
+												display: 'table-cell',
+												verticalAlign: 'middle',
+												textAlign: 'center',
+											},
+											children: [
+												BX.create('div', {
+													props: {
+														className: 'bx-disk-wrap-loading-modal',
+													},
+												}),
+												BX.create('span', {
+													text: '',
+												}),
+											],
+										}),
+									],
+								}),
+							],
 						}),
 						closeByEsc: true,
 						events: {
-							onPopupClose: function ()
+							onPopupClose()
 							{
-								if (onPopupClose) {
+								if (onPopupClose)
+								{
 									BX.delegate(onPopupClose, this)();
 								}
 
 								this.destroy();
-							}
-						}
-					}
+							},
+						},
+					},
 				);
 				popup.show();
 
-				postData['sessid'] = BX.bitrix_sessid();
-				postData['SITE_ID'] = BX.message('SITE_ID');
+				postData.sessid = BX.bitrix_sessid();
+				postData.SITE_ID = BX.message('SITE_ID');
 
 				BX.ajax({
 					url: queryUrl,
 					method: 'POST',
 					dataType: expectResponseType,
 					data: postData,
-					onsuccess: BX.delegate(function (data)
-					{
-
-						if (expectResponseType == 'html') {
-							popup.setContent(BX.create('DIV', {html: data}));
+					onsuccess: BX.delegate((data) => {
+						if (expectResponseType == 'html')
+						{
+							popup.setContent(BX.create('DIV', { html: data }));
 							popup.adjustPosition();
 						}
-						else if(expectResponseType == 'json')
+						else if (expectResponseType == 'json')
 						{
 							data = data || {};
 						}
 
 						afterSuccessLoad && afterSuccessLoad(data, popup);
 					}, this),
-					onfailure: function (data)
-					{
-					}
+					onfailure(data)
+					{},
 				});
 			},
 
-			modalWindowActionLoader: function (action, params, bindElement)
+			modalWindowActionLoader(action, params, bindElement)
 			{
 				bindElement = bindElement || null;
 				params = params || {};
-				var modalId = params.id;
-				var afterSuccessLoad = params.afterSuccessLoad || null;
-				var onPopupClose = params.onPopupClose || null;
-				var postData = params.postData || {};
+				const modalId = params.id;
+				const afterSuccessLoad = params.afterSuccessLoad || null;
+				const onPopupClose = params.onPopupClose || null;
+				const postData = params.postData || {};
 
-				var popup = BX.PopupWindowManager.create(
-					'bx-disk-' + modalId,
+				const popup = BX.PopupWindowManager.create(
+					`bx-disk-${modalId}`,
 					bindElement,
 					{
 						closeIcon: true,
@@ -602,109 +628,98 @@ if(!BX.Disk.pathToUser)
 						content: BX.create('div', {
 							children: [
 								BX.create('div', {
-										style: {
-											display: 'table',
-											width: '30px',
-											height: '30px'
-										},
-										children: [
-											BX.create('div', {
-												style: {
-													display: 'table-cell',
-													verticalAlign: 'middle',
-													textAlign: 'center'
-												},
-												children: [
-													BX.create('div', {
-														props: {
-															className: 'bx-disk-wrap-loading-modal'
-														}
-													}),
-													BX.create('span', {
-														text: ''
-													})
-												]
-											})
-										]
-									}
-								)
-							]
+									style: {
+										display: 'table',
+										width: '30px',
+										height: '30px',
+									},
+									children: [
+										BX.create('div', {
+											style: {
+												display: 'table-cell',
+												verticalAlign: 'middle',
+												textAlign: 'center',
+											},
+											children: [
+												BX.create('div', {
+													props: {
+														className: 'bx-disk-wrap-loading-modal',
+													},
+												}),
+												BX.create('span', {
+													text: '',
+												}),
+											],
+										}),
+									],
+								}),
+							],
 						}),
 						closeByEsc: true,
 						events: {
-							onPopupClose: function ()
+							onPopupClose()
 							{
-								if (onPopupClose) {
+								if (onPopupClose)
+								{
 									BX.delegate(onPopupClose, this)();
 								}
 
 								this.destroy();
-							}
-						}
-					}
+							},
+						},
+					},
 				);
 				popup.show();
 
 				BX.ajax.runAction(action, {
-					data: postData
-				}).then(function (response) {
+					data: postData,
+				}).then((response) => {
 					afterSuccessLoad && afterSuccessLoad(response, popup);
 				});
 			},
 
-			addToLinkParam: function (link, name, value)
+			addToLinkParam(link, name, value)
 			{
-				if (!link.length) {
-					return '?' + name + '=' + value;
+				if (link.length === 0)
+				{
+					return `?${name}=${value}`;
 				}
 				link = BX.util.remove_url_param(link, name);
-				if (link.indexOf('?') != -1) {
-					return link + '&' + name + '=' + value;
-				}
-				return link + '?' + name + '=' + value;
-			},
-
-			getUrlParameter: function (name)
-			{
-				name = name.replace(/[\[]/, '\\[').replace(/[\]]/, '\\]');
-				var regex = new RegExp('[\\?&]' + name + '=([^&#]*)');
-				var results = regex.exec(location.search);
-
-				return results === null ? '' : decodeURIComponent(results[1].replace(/\+/g, ' '));
-			},
-
-			sendTelemetryEvent: function(options)
-			{
-				if (!BX.Disk.isAvailableOnlyOffice())
+				if (link.includes('?'))
 				{
-					return;
+					return `${link}&${name}=${value}`;
 				}
 
-				var url = (document.location.protocol === "https:" ? "https://" : "http://") + "bitrix.info/bx_stat";
-				var request =  new XMLHttpRequest();
-				request.open("POST", url, true);
-				request.setRequestHeader("Content-Type", "application/x-www-form-urlencoded");
-				request.withCredentials = true;
-				options.op = "doc";
-				options.u = BX.message.USER_ID;
-				options.t = Date.now();
-				options.d = document.location.host;
-				var query = BX.util.buildQueryString(options);
-				request.send(query);
+				return `${link}?${name}=${value}`;
 			},
 
-			getFirstErrorFromResponse: function(reponse)
+			getUrlParameter(name)
+			{
+				name = name.replace(/\[/, '\\[').replace(/]/, '\\]');
+				const regex = new RegExp(`[\\?&]${name}=([^&#]*)`);
+				const results = regex.exec(location.search);
+
+				return results === null ? '' : decodeURIComponent(results[1].replaceAll('+', ' '));
+			},
+
+			sendTelemetryEvent(options)
+			{},
+
+			getFirstErrorFromResponse(reponse)
 			{
 				reponse = reponse || {};
-				if(!reponse.errors)
-					return '';
+				if (!reponse.errors)
+
+				
+      { return '';
+				}
 
 				return reponse.errors.shift().message;
 			},
 
-			showModalWithStatusAction: function (response, action)
+			showModalWithStatusAction(response, action)
 			{
-				response = response || {status: 'success'};
+				response = response || { status: 'success' };
 				if (!response.message)
 				{
 					if (response.status == 'success')
@@ -713,118 +728,120 @@ if(!BX.Disk.pathToUser)
 					}
 					else
 					{
-						response.message = BX.message('DISK_JS_STATUS_ACTION_ERROR') + '. ' + this.getFirstErrorFromResponse(response);
+						response.message = `${BX.message('DISK_JS_STATUS_ACTION_ERROR')}. ${this.getFirstErrorFromResponse(response)}`;
 					}
 				}
 
 				BX.UI.Notification.Center.notify({
-					content: response.message
+					content: response.message,
 				});
 			},
-			showActionModal: function (params)
+			showActionModal(params)
 			{
-				var text = params.text;
-				var html = params.html;
-				var autoHide = params.autoHide;
-				var iconSrc;
-				if(params.showLoaderIcon) {
+				const text = params.text;
+				const html = params.html;
+				const autoHide = params.autoHide;
+				let iconSrc;
+				if (params.showLoaderIcon)
+				{
 					iconSrc = '/bitrix/js/main/core/images/yell-waiter.gif';
 				}
-				else if(params.showSuccessIcon) {
+				else if (params.showSuccessIcon)
+				{
 					iconSrc = '/bitrix/js/main/core/images/viewer-tick.png';
 				}
-				else if(!!params.icon)
+				else if (params.icon)
 				{
 					iconSrc = params.icon;
 				}
 
-				var messageBox = BX.create('div', {
+				const messageBox = BX.create('div', {
 					props: {
-						className: 'bx-disk-alert'
+						className: 'bx-disk-alert',
 					},
 					children: [
 						BX.create('span', {
 							props: {
-								className: 'bx-disk-alert-icon'
+								className: 'bx-disk-alert-icon',
 							},
 							children: [
-								iconSrc? BX.create('img', {
+								iconSrc ? BX.create('img', {
 									props: {
-										src: iconSrc
-									}
-								}) : null
-							]
+										src: iconSrc,
+									},
+								}) : null,
+							],
 						}),
 
 						BX.create('span', {
 							props: {
-								className: 'bx-disk-aligner'
-							}
+								className: 'bx-disk-aligner',
+							},
 						}),
 						BX.create('span', {
 							props: {
-								className: 'bx-disk-alert-text'
+								className: 'bx-disk-alert-text',
 							},
-							text: text,
-							html: html
+							text,
+							html,
 						}),
 						BX.create('div', {
 							props: {
-								className: 'bx-disk-alert-footer'
-							}
-						})
-					]
+								className: 'bx-disk-alert-footer',
+							},
+						}),
+					],
 				});
 
-				var currentPopup = BX.PopupWindowManager.getCurrentPopup();
-				if(currentPopup)
+				const currentPopup = BX.PopupWindowManager.getCurrentPopup();
+				if (currentPopup)
 				{
 					currentPopup.destroy();
 				}
 
-				var idTimeout = setTimeout(function ()
-				{
-					if(!autoHide)
+				let idTimeout = setTimeout(() => {
+					if (!autoHide)
 					{
 						return;
 					}
 
-					var w = BX.PopupWindowManager.getCurrentPopup();
-					if (!w || w.uniquePopupId != 'bx-disk-status-action') {
+					const w = BX.PopupWindowManager.getCurrentPopup();
+					if (!w || w.uniquePopupId != 'bx-disk-status-action')
+					{
 						return;
 					}
 					w.close();
 					w.destroy();
 				}, 3000);
-				var popupConfirm = BX.PopupWindowManager.create('bx-disk-status-action', null, {
+				const popupConfirm = BX.PopupWindowManager.create('bx-disk-status-action', null, {
 					content: messageBox,
-					onPopupClose: function ()
+					onPopupClose()
 					{
 						this.destroy();
 						clearTimeout(idTimeout);
 					},
-					autoHide: autoHide,
-					zIndex: 999999 + 1,
-					className: 'bx-disk-alert-popup'
+					autoHide,
+					zIndex: 999_999 + 1,
+					className: 'bx-disk-alert-popup',
 				});
 				popupConfirm.show();
 
-				BX('bx-disk-status-action').onmouseover = function (e)
+				BX('bx-disk-status-action').onmouseover = function(e)
 				{
 					clearTimeout(idTimeout);
 				};
 
-				if(!autoHide)
+				if (!autoHide)
 				{
 					return popupConfirm;
 				}
 
-				BX('bx-disk-status-action').onmouseout = function (e)
+				BX('bx-disk-status-action').onmouseout = function(e)
 				{
-					idTimeout = setTimeout(function ()
-					{
-						var w = BX.PopupWindowManager.getCurrentPopup();
-						if (!w || w.uniquePopupId != 'bx-disk-status-action') {
+					idTimeout = setTimeout(() => {
+						const w = BX.PopupWindowManager.getCurrentPopup();
+						if (!w || w.uniquePopupId != 'bx-disk-status-action')
+						{
 							return;
 						}
 						w.close();
@@ -835,14 +852,15 @@ if(!BX.Disk.pathToUser)
 				return popupConfirm;
 			},
 
-			storePathToUser: function (link)
+			storePathToUser(link)
 			{
-				if (link) {
+				if (link)
+				{
 					this.pathToUser = link;
 				}
 			},
 
-			getUrlToShowObjectInGrid: function (objectId, params)
+			getUrlToShowObjectInGrid(objectId, params)
 			{
 				params = params || {};
 
@@ -852,7 +870,7 @@ if(!BX.Disk.pathToUser)
 				return BX.util.add_url_param('/bitrix/tools/disk/focus.php?ncc=1&action=showObjectInGrid', params);
 			},
 
-			getUrlToShowFileDetail: function (fileId, params)
+			getUrlToShowFileDetail(fileId, params)
 			{
 				params = params || {};
 
@@ -862,17 +880,17 @@ if(!BX.Disk.pathToUser)
 				return BX.util.add_url_param('/bitrix/tools/disk/focus.php?ncc=1&action=openFileDetail', params);
 			},
 
-			isAvailableOnlyOffice: function ()
+			isAvailableOnlyOffice()
 			{
 				return BX.message('disk_onlyoffice_available');
 			},
 
-			getDocumentService: function ()
+			getDocumentService()
 			{
 				return BX.message('disk_document_service');
 			},
 
-			openBlankDocumentPopup: function ()
+			openBlankDocumentPopup()
 			{
 				if ((!BX.Disk.getDocumentService() || (BX.Disk.getDocumentService() === 'l' || BX.Disk.getDocumentService() === 'onlyoffice')))
 				{
@@ -882,9 +900,9 @@ if(!BX.Disk.pathToUser)
 				return BX.util.popup('/bitrix/services/main/ajax.php?action=disk.documentService.love', 1030, 700);
 			},
 
-			saveDocumentService: function (serviceCode)
+			saveDocumentService(serviceCode)
 			{
-				var changed = serviceCode !== BX.Disk.getDocumentService();
+				const changed = serviceCode !== BX.Disk.getDocumentService();
 				if (BX.Disk.isAvailableOnlyOffice())
 				{
 					BX.userOptions.save('disk', 'doc_service', 'primary', serviceCode);
@@ -894,7 +912,7 @@ if(!BX.Disk.pathToUser)
 					BX.userOptions.save('disk', 'doc_service', 'default', serviceCode);
 				}
 
-				BX.message({disk_document_service: serviceCode});
+				BX.message({ disk_document_service: serviceCode });
 
 				if (changed)
 				{
@@ -904,46 +922,51 @@ if(!BX.Disk.pathToUser)
 				BX.userOptions.send(null);
 			},
 
-			deactiveBanner: function (name)
+			deactiveBanner(name)
 			{
 				BX.userOptions.save('disk', '~banner-offer', name, true);
 				BX.userOptions.send(null);
 			},
 
-			getPathToUser: function (userId)
+			getPathToUser(userId)
 			{
 				return this.pathToUser.replace('#USER_ID#', userId).replace('#user_id#', userId);
 			},
 
-			getNumericCase: function (number, once, multi_21, multi_2_4, multi_5_20)
+			getNumericCase(number, once, multi_21, multi_2_4, multi_5_20)
 			{
-				if (number == 1) {
+				if (number == 1)
+				{
 					return once;
 				}
 
-				if (number < 0) {
+				if (number < 0)
+				{
 					number = -number;
 				}
 
 				number %= 100;
-				if (number >= 5 && number <= 20) {
+				if (number >= 5 && number <= 20)
+				{
 					return multi_5_20;
 				}
 
 				number %= 10;
-				if (number == 1) {
+				if (number == 1)
+				{
 					return multi_21;
 				}
 
-				if (number >= 2 && number <= 4) {
+				if (number >= 2 && number <= 4)
+				{
 					return multi_2_4;
 				}
 
 				return multi_5_20;
 			},
 
-			getRightLabelByTaskName: function(name){
-				switch(name.toLowerCase())
+			getRightLabelByTaskName(name) {
+				switch (name.toLowerCase())
 				{
 					case 'disk_access_read':
 						return BX.message('DISK_JS_SHARING_LABEL_RIGHT_READ');
@@ -958,29 +981,28 @@ if(!BX.Disk.pathToUser)
 				}
 			},
 
-			appendNewShared: function (params) {
+			appendNewShared(params) {
+				const readOnly = params.readOnly;
+				const maxTaskName = params.maxTaskName || 'disk_access_full';
+				const destFormName = params.destFormName;
 
-				var readOnly = params.readOnly;
-				var maxTaskName = params.maxTaskName || 'disk_access_full';
-				var destFormName = params.destFormName;
-
-				var entityId = params.item.id;
-				var entityName = params.item.name;
-				var entityAvatar = params.item.avatar;
-				var type = params.type;
-				var right = params.right || 'disk_access_read';
+				const entityId = params.item.id;
+				const entityName = params.item.name;
+				const entityAvatar = params.item.avatar;
+				const type = params.type;
+				const right = params.right || 'disk_access_read';
 
 				entityToNewShared[entityId] = {
 					item: params.item,
 					type: params.type,
-					right: right
+					right,
 				};
 
 				function pseudoCompareTaskName(taskName1, taskName2)
 				{
-					var taskName1Pos;
-					var taskName2Pos;
-					switch(taskName1)
+					let taskName1Pos;
+					let taskName2Pos;
+					switch (taskName1)
 					{
 						case 'disk_access_read':
 							taskName1Pos = 2;
@@ -995,10 +1017,11 @@ if(!BX.Disk.pathToUser)
 							taskName1Pos = 5;
 							break;
 						default:
-							//unknown task names
+							// unknown task names
 							return 0;
 					}
-					switch(taskName2)
+
+					switch (taskName2)
 					{
 						case 'disk_access_read':
 							taskName2Pos = 2;
@@ -1013,231 +1036,237 @@ if(!BX.Disk.pathToUser)
 							taskName2Pos = 5;
 							break;
 						default:
-							//unknown task names
+							// unknown task names
 							return 0;
 					}
-					if(taskName1Pos == taskName2Pos)
+
+					if (taskName1Pos == taskName2Pos)
 					{
 						return 0;
 					}
 
-					return taskName1Pos > taskName2Pos? 1 : -1;
+					return taskName1Pos > taskName2Pos ? 1 : -1;
 				}
 
 				BX('bx-disk-popup-shared-people-list').appendChild(
 					BX.create('tr', {
 						attrs: {
-							'data-dest-id': entityId
+							'data-dest-id': entityId,
 						},
 						children: [
 							BX.create('td', {
 								props: {
-									className: 'bx-disk-popup-shared-people-list-col1'
+									className: 'bx-disk-popup-shared-people-list-col1',
 								},
 								children: [
 									BX.create('a', {
 										props: {
-											className: 'bx-disk-filepage-used-people-link'
+											className: 'bx-disk-filepage-used-people-link',
 										},
 										children: [
 											BX.create('span', {
 												props: {
-													className: 'bx-disk-filepage-used-people-avatar ' + (type != 'users'? ' group' : '')
+													className: `bx-disk-filepage-used-people-avatar ${type == 'users' ? '' : ' group'}`,
 												},
 												style: {
-													backgroundImage: entityAvatar? 'url("' + encodeURI(entityAvatar) + '")' : null
-												}
+													backgroundImage: entityAvatar ? `url("${encodeURI(entityAvatar)}")` : null,
+												},
 											}),
-											BX.util.htmlspecialchars(entityName)
-										]
-									})
-								]
+											BX.util.htmlspecialchars(entityName),
+										],
+									}),
+								],
 							}),
 							BX.create('td', {
 								props: {
-									className: 'bx-disk-popup-shared-people-list-col2'
+									className: 'bx-disk-popup-shared-people-list-col2',
 								},
 								children: [
-									BX.create('a', {
+									BX.create(readOnly ? 'span' : 'a', {
 										props: {
-											className: 'bx-disk-filepage-used-people-permission'
+											className: readOnly ? 'bx-disk-filepage-used-people-permission-read-only' : 'bx-disk-filepage-used-people-permission',
 										},
 										style: {
-											cursor: 'pointer'
+											cursor: readOnly ? '' : 'pointer',
 										},
 										text: this.getRightLabelByTaskName(right),
 										events: {
-											click: BX.delegate(function(e){
-												if(readOnly)
+											click: BX.delegate(function(e) {
+												if (readOnly)
 												{
 													return BX.PreventDefault(e);
 												}
-												var targetElement = e.target || e.srcElement;
-												BX.PopupMenu.show('disk_open_menu_with_rights', BX(targetElement), [
-														(pseudoCompareTaskName(maxTaskName, 'disk_access_read') >= 0? {
+												const targetElement = e.target || e.srcElement;
+												BX.PopupMenu.show(
+													'disk_open_menu_with_rights',
+													BX(targetElement),
+													[
+														(pseudoCompareTaskName(maxTaskName, 'disk_access_read') >= 0 ? {
 															text: BX.message('DISK_JS_SHARING_LABEL_RIGHT_READ'),
-															href: "#",
-															onclick: BX.delegate(function (e) {
+															href: '#',
+															onclick: BX.delegate(function(e) {
 																BX.PopupMenu.destroy('disk_open_menu_with_rights');
-																BX.adjust(targetElement, {text: this.getRightLabelByTaskName('disk_access_read')});
+																BX.adjust(targetElement, { text: this.getRightLabelByTaskName('disk_access_read') });
 
 																BX.onCustomEvent('onChangeRightOfSharing', [entityId, 'disk_access_read']);
 
-																entityToNewShared[entityId]['right'] = 'disk_access_read';
+																entityToNewShared[entityId].right = 'disk_access_read';
 
 																return BX.PreventDefault(e);
-															}, this)
+															}, this),
 														} : null),
-														(pseudoCompareTaskName(maxTaskName, 'disk_access_add') >= 0? {
+														(pseudoCompareTaskName(maxTaskName, 'disk_access_add') >= 0 ? {
 															text: BX.message('DISK_JS_SHARING_LABEL_RIGHT_ADD'),
-															href: "#",
-															onclick: BX.delegate(function (e) {
+															href: '#',
+															onclick: BX.delegate(function(e) {
 																BX.PopupMenu.destroy('disk_open_menu_with_rights');
-																BX.adjust(targetElement, {text: this.getRightLabelByTaskName('disk_access_add')});
+																BX.adjust(targetElement, { text: this.getRightLabelByTaskName('disk_access_add') });
 
 																BX.onCustomEvent('onChangeRightOfSharing', [entityId, 'disk_access_add']);
 
-																entityToNewShared[entityId]['right'] = 'disk_access_add';
+																entityToNewShared[entityId].right = 'disk_access_add';
 
 																return BX.PreventDefault(e);
-															}, this)
+															}, this),
 														} : null),
-														(pseudoCompareTaskName(maxTaskName, 'disk_access_edit') >= 0? {
+														(pseudoCompareTaskName(maxTaskName, 'disk_access_edit') >= 0 ? {
 															text: BX.message('DISK_JS_SHARING_LABEL_RIGHT_EDIT'),
-															href: "#",
-															onclick: BX.delegate(function (e) {
+															href: '#',
+															onclick: BX.delegate(function(e) {
 																BX.PopupMenu.destroy('disk_open_menu_with_rights');
-																BX.adjust(targetElement, {text: this.getRightLabelByTaskName('disk_access_edit')});
+																BX.adjust(targetElement, { text: this.getRightLabelByTaskName('disk_access_edit') });
 
 																BX.onCustomEvent('onChangeRightOfSharing', [entityId, 'disk_access_edit']);
 
-																entityToNewShared[entityId]['right'] = 'disk_access_edit';
+																entityToNewShared[entityId].right = 'disk_access_edit';
 
 																return BX.PreventDefault(e);
-															}, this)
+															}, this),
 														} : null),
-														(pseudoCompareTaskName(maxTaskName, 'disk_access_full') >= 0? {
+														(pseudoCompareTaskName(maxTaskName, 'disk_access_full') >= 0 ? {
 															text: BX.message('DISK_JS_SHARING_LABEL_RIGHT_FULL'),
-															href: "#",
-															onclick: BX.delegate(function (e) {
+															href: '#',
+															onclick: BX.delegate(function(e) {
 																BX.PopupMenu.destroy('disk_open_menu_with_rights');
-																BX.adjust(targetElement, {text: this.getRightLabelByTaskName('disk_access_full')});
+																BX.adjust(targetElement, { text: this.getRightLabelByTaskName('disk_access_full') });
 
 																BX.onCustomEvent('onChangeRightOfSharing', [entityId, 'disk_access_full']);
 
-																entityToNewShared[entityId]['right'] = 'disk_access_full';
+																entityToNewShared[entityId].right = 'disk_access_full';
 
 																return BX.PreventDefault(e);
-															}, this)
-														} : null)
+															}, this),
+														} : null),
 													],
 													{
 														angle: {
 															position: 'top',
-															offset: 45
+															offset: 45,
 														},
 														autoHide: true,
 														overlay: {
-															opacity: 0.01
+															opacity: 0.01,
 														},
 														events: {
-															onPopupClose: function() {BX.PopupMenu.destroy('disk_open_menu_with_rights');}
-														}
-													}
+															onPopupClose() { BX.PopupMenu.destroy('disk_open_menu_with_rights'); },
+														},
+													},
 												);
-
-											}, this)
-										}
-									})
-								]
+											}, this),
+										},
+									}),
+								],
 							}),
 							BX.create('td', {
 								props: {
-									className: 'bx-disk-popup-shared-people-list-col3 tar'
+									className: 'bx-disk-popup-shared-people-list-col3 tar',
 								},
 								children: [
-									(!readOnly? BX.create('span', {
+									(readOnly ? null : BX.create('span', {
 										props: {
-											className: 'bx-disk-filepage-used-people-del'
+											className: 'bx-disk-filepage-used-people-del',
 										},
 										events: {
-											click: BX.delegate(function(e){
+											click: BX.delegate((e) => {
 												BX.SocNetLogDestination.deleteItem(entityId, type, destFormName);
-												var src = e.target || e.srcElement;
+												const src = e.target || e.srcElement;
 												BX.remove(src.parentNode.parentNode);
-											}, this)
-										}
-									}) : null)
-								]
-							})
-						]
-					})
+											}, this),
+										},
+									})),
+								],
+							}),
+						],
+					}),
 				);
 			},
 
-			openPopupMenuWithRights: function (e, entityId)
+			openPopupMenuWithRights(e, entityId)
 			{
-				var items = [];
-				var task;
-				var targetElement = e.target || e.srcElement;
+				const items = [];
+				let task;
+				const targetElement = e.target || e.srcElement;
 
-				for (var i in moduleTasks)
+				for (const i in moduleTasks)
 				{
-					if(!moduleTasks.hasOwnProperty(i))
+					if (!moduleTasks.hasOwnProperty(i))
 					{
 						continue;
 					}
 					task = BX.clone(moduleTasks[i], true);
 					items.push({
-							task: task,
-							text: task.TITLE,
-							href: "#",
-							onclick: function (e, item)
-							{
-								BX.adjust(targetElement, {text: item.task.TITLE});
+						task,
+						text: task.TITLE,
+						href: '#',
+						onclick(e, item)
+						{
+							BX.adjust(targetElement, { text: item.task.TITLE });
 
-								BX.onCustomEvent('onChangeRight', [entityId, item.task]);
-								BX.onCustomEvent('onChangeSystemRight', [entityId, item.task]);
+							BX.onCustomEvent('onChangeRight', [entityId, item.task]);
+							BX.onCustomEvent('onChangeSystemRight', [entityId, item.task]);
 
-								BX.PopupMenu.destroy('disk_open_menu_with_rights');
-								return BX.PreventDefault(e);
-							}
-						}
-					);
+							BX.PopupMenu.destroy('disk_open_menu_with_rights');
+
+							return BX.PreventDefault(e);
+						},
+					});
 				}
 
-				BX.PopupMenu.show('disk_open_menu_with_rights', BX(targetElement), items,
+				BX.PopupMenu.show(
+					'disk_open_menu_with_rights',
+					BX(targetElement),
+					items,
 					{
 						angle: {
 							position: 'top',
-							offset: 45
+							offset: 45,
 						},
 						autoHide: true,
 						overlay: {
-							opacity: 0.01
+							opacity: 0.01,
 						},
 						events: {
-							onPopupClose: function() {BX.PopupMenu.destroy('disk_open_menu_with_rights');}
-						}
-					}
+							onPopupClose() { BX.PopupMenu.destroy('disk_open_menu_with_rights'); },
+						},
+					},
 				);
-
 			},
 
-			setModuleTasks: function (newModuleTasks)
+			setModuleTasks(newModuleTasks)
 			{
 				moduleTasks = newModuleTasks;
 			},
 
-			getFirstModuleTask: function ()
+			getFirstModuleTask()
 			{
-				if(this.isEmptyObject(moduleTasks))
+				if (this.isEmptyObject(moduleTasks))
 				{
 					return {};
 				}
-				for (var i in moduleTasks)
+
+				for (const i in moduleTasks)
 				{
-					if (moduleTasks.hasOwnProperty(i) && typeof(i) !== 'function')
+					if (moduleTasks.hasOwnProperty(i) && typeof (i) !== 'function')
 					{
 						return moduleTasks[i];
 						break;
@@ -1247,273 +1276,344 @@ if(!BX.Disk.pathToUser)
 				return {};
 			},
 
-			appendRight: function (params) {
+			appendRight(params) {
+				const readOnly = params.readOnly;
+				const detachOnly = params.detachOnly || false;
+				const destFormName = params.destFormName;
 
-				var readOnly = params.readOnly;
-				var detachOnly = params.detachOnly || false;
-				var destFormName = params.destFormName;
+				const entityId = params.item.id;
+				const entityName = params.item.name;
+				const entityAvatar = params.item.avatar;
+				const type = params.type;
+				let right = params.right || {};
 
-				var entityId = params.item.id;
-				var entityName = params.item.name;
-				var entityAvatar = params.item.avatar;
-				var type = params.type;
-				var right = params.right || {};
-
-				if(!right.title && right.id)
+				if (!right.title && right.id)
 				{
 					right.title = moduleTasks[right.id].TITLE;
 				}
-				else if(!right.title)
+				else if (!right.title)
 				{
-					var first = this.getFirstModuleTask();
+					const first = this.getFirstModuleTask();
 					right = {
 						id: first.ID,
-						title: first.TITLE
+						title: first.TITLE,
 					};
 					BX.onCustomEvent('onChangeRight', [entityId, first]);
 				}
 
-				var rightLabel = right.title;
+				const rightLabel = right.title;
 
 				BX('bx-disk-popup-shared-people-list').appendChild(
 					BX.create('tr', {
 						attrs: {
-							'data-dest-id': entityId
+							'data-dest-id': entityId,
 						},
 						children: [
 							BX.create('td', {
 								props: {
-									className: 'bx-disk-popup-shared-people-list-col1'
+									className: 'bx-disk-popup-shared-people-list-col1',
 								},
 								children: [
 									BX.create('a', {
 										props: {
-											className: 'bx-disk-filepage-used-people-link'
+											className: 'bx-disk-filepage-used-people-link',
 										},
 										children: [
 											BX.create('span', {
 												props: {
-													className: 'bx-disk-filepage-used-people-avatar ' + (type != 'users'? ' group' : '')
+													className: `bx-disk-filepage-used-people-avatar ${type == 'users' ? '' : ' group'}`,
 												},
 												style: {
-													backgroundImage: entityAvatar? 'url("' + encodeURI(entityAvatar) + '")' : null
-												}
+													backgroundImage: entityAvatar ? `url("${encodeURI(entityAvatar)}")` : null,
+												},
 											}),
-											BX.util.htmlspecialchars(entityName)
-										]
-									})
-								]
+											BX.util.htmlspecialchars(entityName),
+										],
+									}),
+								],
 							}),
 							BX.create('td', {
 								props: {
-									className: 'bx-disk-popup-shared-people-list-col2'
+									className: 'bx-disk-popup-shared-people-list-col2',
 								},
 								children: [
 									BX.create('a', {
 										props: {
-											className: 'bx-disk-filepage-used-people-permission'
+											className: 'bx-disk-filepage-used-people-permission',
 										},
 										style: {
-											cursor: 'pointer'
+											cursor: 'pointer',
 										},
 										text: rightLabel,
 										events: {
-											click: BX.delegate(function(e){
+											click: BX.delegate(function(e) {
 												BX.PreventDefault(e);
-												if(detachOnly)
+												if (detachOnly)
 												{
 													return;
 												}
 												this.openPopupMenuWithRights(e, entityId);
-											}, this)
-										}
-									})
-								]
+											}, this),
+										},
+									}),
+								],
 							}),
 							BX.create('td', {
 								props: {
-									className: 'bx-disk-popup-shared-people-list-col3 tar'
+									className: 'bx-disk-popup-shared-people-list-col3 tar',
 								},
 								children: [
-									(!readOnly || detachOnly? BX.create('span', {
+									(!readOnly || detachOnly ? BX.create('span', {
 										props: {
-											className: 'bx-disk-filepage-used-people-del'
+											className: 'bx-disk-filepage-used-people-del',
 										},
 										events: {
-											click: BX.delegate(function(e){
+											click: BX.delegate((e) => {
 												BX.onCustomEvent('onDetachRight', [entityId]);
-												if(!detachOnly)
+												if (!detachOnly)
 												{
 													BX.SocNetLogDestination.deleteItem(entityId, type, destFormName);
 												}
-												var src = e.target || e.srcElement;
+												const src = e.target || e.srcElement;
 												BX.remove(src.parentNode.parentNode);
-											}, this)
-										}
-									}) : null)
-								]
-							})
-						]
-					})
+											}, this),
+										},
+									}) : null),
+								],
+							}),
+						],
+					}),
 				);
 			},
-			//system right. Todo refactor
-			appendSystemRight: function (params) {
-				var destFormName = params.destFormName;
+			// system right. Todo refactor
+			appendSystemRight(params) {
+				const destFormName = params.destFormName;
 
-				var isBitrix24 = params.isBitrix24 || false;
-				var entityId = params.item.id;
-				var entityName = params.item.name;
-				var entityAvatar = params.item.avatar;
-				var type = params.type;
-				var right = params.right || {};
+				const isBitrix24 = params.isBitrix24 || false;
+				const entityId = params.item.id;
+				const entityName = params.item.name;
+				const entityAvatar = params.item.avatar;
+				const type = params.type;
+				let right = params.right || {};
 
-				var readOnly = params.readOnly;
+				const readOnly = params.readOnly;
 
-				//todo for B24 only. Don't show user groups
-				if(isBitrix24 && entityId && entityId != "G2" && entityId.search('G') == 0)
+				// todo for B24 only. Don't show user groups
+				if (isBitrix24 && entityId && entityId != 'G2' && entityId.search('G') == 0)
 				{
 					return;
 				}
 
-				if(!right.title && right.id)
+				if (!right.title && right.id)
 				{
 					right.title = moduleTasks[right.id].TITLE;
 				}
-				else if(!right.title)
+				else if (!right.title)
 				{
-					var first = this.getFirstModuleTask();
+					const first = this.getFirstModuleTask();
 					right = {
 						id: first.ID,
-						title: first.TITLE
+						title: first.TITLE,
 					};
 					BX.onCustomEvent('onChangeSystemRight', [entityId, first]);
 				}
 
-				var rightLabel = right.title;
+				const rightLabel = right.title;
 
 				BX('bx-disk-popup-shared-people-list').appendChild(
 					BX.create('tr', {
 						attrs: {
-							'data-dest-id': entityId
+							'data-dest-id': entityId,
 						},
 						children: [
 							BX.create('td', {
 								props: {
-									className: 'bx-disk-popup-shared-people-list-col1'
+									className: 'bx-disk-popup-shared-people-list-col1',
 								},
 								children: [
 									BX.create('a', {
 										props: {
-											className: 'bx-disk-filepage-used-people-link'
+											className: 'bx-disk-filepage-used-people-link',
 										},
 										children: [
 											BX.create('span', {
 												props: {
-													className: 'bx-disk-filepage-used-people-avatar ' + (type != 'users'? ' group' : '')
+													className: `bx-disk-filepage-used-people-avatar ${type == 'users' ? '' : ' group'}`,
 												},
 												style: {
-													backgroundImage: entityAvatar? 'url("' + encodeURI(entityAvatar) + '")' : null
-												}
+													backgroundImage: entityAvatar ? `url("${encodeURI(entityAvatar)}")` : null,
+												},
 											}),
-											BX.util.htmlspecialchars(entityName)
-										]
-									})
-								]
+											BX.util.htmlspecialchars(entityName),
+										],
+									}),
+								],
 							}),
 							BX.create('td', {
 								props: {
-									className: 'bx-disk-popup-shared-people-list-col2'
+									className: 'bx-disk-popup-shared-people-list-col2',
 								},
 								children: [
-									(readOnly? BX.create('span', {
+									(readOnly ? BX.create('span', {
 										props: {
-											className: 'bx-disk-filepage-used-people-permission-read-only'
-										},
-										text: rightLabel
-									}) :
-									BX.create('a', {
-										props: {
-											className: 'bx-disk-filepage-used-people-permission'
+											className: 'bx-disk-filepage-used-people-permission-read-only',
 										},
 										text: rightLabel,
-										events: {
-											click: BX.delegate(function(e){
-												BX.PreventDefault(e);
-												this.openPopupMenuWithRights(e, entityId);
-											}, this)
-										}
-									}))
-								]
+									})
+										: BX.create('a', {
+											props: {
+												className: 'bx-disk-filepage-used-people-permission',
+											},
+											text: rightLabel,
+											events: {
+												click: BX.delegate(function(e) {
+													BX.PreventDefault(e);
+													this.openPopupMenuWithRights(e, entityId);
+												}, this),
+											},
+										})),
+								],
 							}),
 							BX.create('td', {
 								props: {
-									className: 'bx-disk-popup-shared-people-list-col3 tar'
+									className: 'bx-disk-popup-shared-people-list-col3 tar',
 								},
 								children: [
-									(!readOnly? BX.create('span', {
+									(readOnly ? null : BX.create('span', {
 										props: {
-											className: 'bx-disk-filepage-used-people-del'
+											className: 'bx-disk-filepage-used-people-del',
 										},
 										events: {
-											click: BX.delegate(function(e){
+											click: BX.delegate((e) => {
 												BX.onCustomEvent('onDetachSystemRight', [entityId]);
-												var src = e.target || e.srcElement;
+												const src = e.target || e.srcElement;
 												BX.remove(src.parentNode.parentNode);
-											}, this)
-										}
-									}) : null)
-								]
-							})
-						]
-					})
+											}, this),
+										},
+									})),
+								],
+							}),
+						],
+					}),
 				);
 			},
 
-			showSharingDetailWithoutEdit: function (params) {
-
+			showSharingDetailWithoutEdit(params) {
 				params = params || {};
-				var objectId = params.object.id;
-				var ajaxUrl = params.ajaxUrl;
+
+				const objectId = params.object.id;
+				const ajaxUrl = params.ajaxUrl;
 
 				BX.Disk.modalWindowLoader(
 					BX.Disk.addToLinkParam(ajaxUrl, 'action', 'showSharingDetail'),
 					{
-						id: 'folder_list_sharing_detail_object_' + objectId,
+						id: `folder_list_sharing_detail_object_${objectId}`,
 						responseType: 'json',
 						postData: {
-							objectId: objectId
+							objectId,
 						},
 						afterSuccessLoad: BX.delegate(function(response)
 						{
-							if(response.status != 'success')
+							if (response.status != 'success')
 							{
 								response.errors = response.errors || [{}];
 								BX.Disk.showModalWithStatusAction({
 									status: 'error',
-									message: response.errors.pop().message
-								})
+									message: response.errors.pop().message,
+								});
 							}
 
-							var objectOwner = {
+							const objectOwner = {
 								name: response.owner.name,
 								avatar: response.owner.avatar,
-								link: response.owner.link
+								link: response.owner.link,
 							};
+
+							if (response.unifiedLink)
+							{
+								const accessLevel = response.unifiedLink.availableAccessLevels.find((accessLevel) => { // eslint-disable-next-line no-mixed-spaces-and-tabs
+									return accessLevel.value === response.unifiedLink.currentAccessLevel;
+								});
+
+								const accessLevelNode = BX.create('span', {
+									props: {
+										className: 'bx-disk-filepage-used-people-permission-read-only',
+									},
+									text: accessLevel.name,
+								});
+
+								var unifiedLinkElement = BX.create('table', {
+									props: {
+										id: 'bx-disk-popup-shared-universal-list',
+										className: 'bx-disk-popup-shared-people-list',
+									},
+									children: [
+										BX.create('thead', {
+											children: [
+												BX.create('tr', {
+													children: [
+														BX.create('td', {
+															props: { className: 'bx-disk-popup-shared-people-list-head-col1' },
+														}),
+														BX.create('td', {
+															props: { className: 'bx-disk-popup-shared-people-list-head-col2' },
+															text: BX.message('DISK_JS_SHARING_LABEL_NAME_RIGHTS'),
+														}),
+														BX.create('td', {
+															props: { className: 'bx-disk-popup-shared-people-list-head-col3' },
+														}),
+													],
+												}),
+												BX.create('tr', {
+													children: [
+														BX.create('td', {
+															props: { className: 'bx-disk-popup-shared-people-list-head-col1' },
+															children: [
+																BX.create('span', {
+																	props: { className: 'bx-disk-filepage-used-people-link' },
+																	children: [
+																		BX.create('span', {
+																			props: {
+																				className: 'bx-disk-filepage-used-people-avatar link',
+																				style: '--ui-icon-set__icon-size: 15px;',
+																			},
+																		}),
+																		BX.create('span', {
+																			text: BX.message('DISK_JS_SHARING_UNIFIED_RIGHT_USERS'),
+																		}),
+																	],
+																}),
+															],
+														}),
+														BX.create('td', {
+															props: { className: 'bx-disk-popup-shared-people-list-head-col2' },
+															children: [accessLevelNode],
+														}),
+														BX.create('td', {
+															props: { className: 'bx-disk-popup-shared-people-list-head-col3' },
+														}),
+													],
+												}),
+											],
+										}),
+									],
+								});
+							}
 
 							BX.Disk.modalWindow({
 								modalId: 'bx-disk-detail-sharing-folder',
 								title: BX.message('DISK_JS_SHARING_LABEL_TITLE_MODAL_3'),
 								contentClassName: '',
 								contentStyle: {
-									//paddingTop: '30px',
-									//paddingBottom: '70px'
+									// paddingTop: '30px',
+									// paddingBottom: '70px'
 								},
 								events: {
-									onAfterPopupShow: BX.delegate(function () {
-
-										for (var i in response.members) {
-											if (!response.members.hasOwnProperty(i)) {
+									onAfterPopupShow: BX.delegate(function() {
+										for (const i in response.members)
+										{
+											if (!response.members.hasOwnProperty(i))
+											{
 												continue;
 											}
 											BX.Disk.appendNewShared({
@@ -1522,80 +1622,80 @@ if(!BX.Disk.pathToUser)
 												item: {
 													id: response.members[i].entityId,
 													name: response.members[i].name,
-													avatar: response.members[i].avatar
+													avatar: response.members[i].avatar,
 												},
 												type: response.members[i].type,
-												right: response.members[i].right
-											})
-
+												right: response.members[i].right,
+											});
 										}
 									}, this),
-									onPopupClose: function () {
+									onPopupClose() {
 										this.destroy();
-									}
+									},
 								},
 								content: [
 									BX.create('div', {
 										props: {
-											className: 'bx-disk-popup-content'
+											className: 'bx-disk-popup-content',
 										},
 										children: [
 											BX.create('table', {
 												props: {
-													className: 'bx-disk-popup-shared-people-list'
+													className: 'bx-disk-popup-shared-people-list',
 												},
 												children: [
 													BX.create('thead', {
-														html: '<tr>' +
-															'<td class="bx-disk-popup-shared-people-list-head-col1">' + BX.message('DISK_JS_SHARING_LABEL_OWNER') + '</td>' +
-														'</tr>'
+														html: '<tr>'
+															+ `<td class="bx-disk-popup-shared-people-list-head-col1">${BX.message('DISK_JS_SHARING_LABEL_OWNER')}</td>`
+														+ '</tr>',
 													}),
 													BX.create('tr', {
-														html: '<tr>' +
-															'<td class="bx-disk-popup-shared-people-list-col1" style="border-bottom: none;"><a class="bx-disk-filepage-used-people-link" href="' + objectOwner.link + '"><span class="bx-disk-filepage-used-people-avatar" style="background-image: url(\'' + encodeURI(objectOwner.avatar) + '\');"></span>' + BX.util.htmlspecialchars(objectOwner.name) + '</a></td>' +
-														'</tr>'
-													})
-												]
+														html: '<tr>'
+															+ `<td class="bx-disk-popup-shared-people-list-col1" style="border-bottom: none;"><a class="bx-disk-filepage-used-people-link" href="${objectOwner.link}"><span class="bx-disk-filepage-used-people-avatar" style="background-image: url('${encodeURI(objectOwner.avatar)}');"></span>${BX.util.htmlspecialchars(objectOwner.name)}</a></td>`
+														+ '</tr>',
+													}),
+												],
 											}),
+											unifiedLinkElement,
 											BX.create('table', {
 												props: {
 													id: 'bx-disk-popup-shared-people-list',
-													className: 'bx-disk-popup-shared-people-list'
+													className: 'bx-disk-popup-shared-people-list',
 												},
 												children: [
 													BX.create('thead', {
-														html: '<tr>' +
-															'<td class="bx-disk-popup-shared-people-list-head-col1">' + BX.message('DISK_JS_SHARING_LABEL_NAME_RIGHTS_USER') + '</td>' +
-															'<td class="bx-disk-popup-shared-people-list-head-col2">' + BX.message('DISK_JS_SHARING_LABEL_NAME_RIGHTS') + '</td>' +
-															'<td class="bx-disk-popup-shared-people-list-head-col3"></td>' +
-														'</tr>'
-													})
-												]
+														html: '<tr>'
+															+ `<td class="bx-disk-popup-shared-people-list-head-col1">${BX.message('DISK_JS_SHARING_LABEL_NAME_RIGHTS_USER')}</td>`
+															+ `<td class="bx-disk-popup-shared-people-list-head-col2">${BX.message('DISK_JS_SHARING_LABEL_NAME_RIGHTS')}</td>`
+															+ '<td class="bx-disk-popup-shared-people-list-head-col3"></td>'
+														+ '</tr>',
+													}),
+												],
 											}),
 											BX.create('div', {
 												html:
-														'<span class="feed-add-destination-input-box" id="feed-add-post-destination-input-box">' +
-															'<input autocomplete="off" type="text" value="" class="feed-add-destination-inp" id="feed-add-post-destination-input"/>' +
-														'</span>'
-											})
-										]
-									})
+														'<span class="feed-add-destination-input-box" id="feed-add-post-destination-input-box">'
+															+ '<input autocomplete="off" type="text" value="" class="feed-add-destination-inp" id="feed-add-post-destination-input"/>'
+														+ '</span>',
+											}),
+										],
+									}),
 								],
 								buttons: [
 									new BX.PopupWindowButton({
 										text: BX.message('DISK_JS_BTN_CLOSE'),
 										events: {
-											click: function () {
+											click() {
 												BX.PopupWindowManager.getCurrentPopup().close();
-											}
-										}
-									})
-								]
+											},
+										},
+									}),
+								],
 							});
-						}, this)
-					}
+						}, this),
+					},
 				);
-			}
+			},
 		});
 	})();
 }

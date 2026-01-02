@@ -11,6 +11,7 @@ return [
 		'rest',
 		'apptheme',
 		'utils/object',
+		'utils/random',
 		'loc',
 		'crm:error',
 		'layout/ui/info-helper',

@@ -1,0 +1,11 @@
+.intranet-user-mini-profile-loader {
+	background-image: url('./images/skeleton.svg');
+	width: 595px;
+	height: 449px;
+
+	animation: infinite;
+}
+
+.intranet-user-mini-profile-loader.--short {
+	width: 300px;
+}

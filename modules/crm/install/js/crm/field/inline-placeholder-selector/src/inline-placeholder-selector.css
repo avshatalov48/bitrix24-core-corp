@@ -1,0 +1,33 @@
+.crm-inline-placeholder-selector-dotted {
+	flex: 1;
+	padding: 5px 0;
+	display: flex;
+	align-items: center;
+	min-width: 30px;
+	max-width: 30px;
+	cursor: pointer;
+}
+
+.crm-inline-placeholder-selector-dotted:before {
+	content: ' ';
+	display: inline-block;
+	margin: 0 0 0 8px;
+	width: 4px;
+	height: 4px;
+	background: #82868c;
+	opacity: var(--ui-opacity-60);
+	box-shadow: 6px 0 0 #82868c, 12px 0 0 #82868c;
+	border-radius:50%;
+	transition: .1s;
+}
+
+.crm-inline-placeholder-selector-dotted:hover:before {
+	opacity: var(--ui-opacity-full);
+}
+
+.crm-inline-placeholder-selector {
+	width: 100%;
+	display: flex;
+	overflow: hidden;
+	margin: 0 0 11px 0;
+}

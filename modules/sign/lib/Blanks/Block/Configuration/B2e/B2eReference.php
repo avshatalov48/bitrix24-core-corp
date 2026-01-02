@@ -33,14 +33,14 @@ class B2eReference extends Configuration
 				new Main\Error(
 					Main\Localization\Loc::getMessage('SIGN_BLANKS_BLOCK_CONFIGURATION_B2E_REFERENCE_ERROR_FIELD_NOT_SELECTED'),
 					'REFERENCE_ERROR_FIELD_NOT_SELECTED',
-				)
+				),
 			);
 		}
 
 		return $result;
 	}
 
-	function loadData(Item\Block $block, Item\Document $document, ?Item\Member $member = null): array
+	public function loadData(Item\Block $block, Item\Document $document, ?Item\Member $member = null): array
 	{
 		$data = $block->data;
 		if (($data['field'] ?? null) === null)

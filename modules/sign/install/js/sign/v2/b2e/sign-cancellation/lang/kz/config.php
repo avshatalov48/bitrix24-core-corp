@@ -1,0 +1,6 @@
+<?php
+$MESS["SIGN_CANCELLATION_ITEM_SIGNING_CANCEL_DIALOG_NO_BUTTON_TEXT"] = "Бас тартпау";
+$MESS["SIGN_CANCELLATION_ITEM_SIGNING_CANCEL_DIALOG_TEXT"] = "Құжатқа әлі қол қоймаған қызметкерлер үшін қол қою тоқтатылады.";
+$MESS["SIGN_CANCELLATION_ITEM_SIGNING_CANCEL_DIALOG_TITLE"] = "Қол қоюдан бас тартасыз ба?";
+$MESS["SIGN_CANCELLATION_ITEM_SIGNING_CANCEL_DIALOG_YES_BUTTON_TEXT"] = "Қол қоюдан бас тарту";
+$MESS["SIGN_CANCELLATION_ITEM_SIGNING_CANCEL_SUCCESS"] = "Қол қою процесі сәтті жойылды";

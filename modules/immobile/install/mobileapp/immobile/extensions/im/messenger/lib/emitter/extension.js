@@ -3,6 +3,8 @@
  */
 jn.define('im/messenger/lib/emitter', (require, exports, module) => {
 	const { Type } = require('type');
+	const { ComponentCode } = require('im/messenger/const');
+	const { Feature } = require('im/messenger/lib/feature');
 	const { MessengerParams } = require('im/messenger/lib/params');
 
 	class MessengerEmitter
@@ -21,7 +23,12 @@ jn.define('im/messenger/lib/emitter', (require, exports, module) => {
 				throw new Error(`MessengerEvent: ${eventName}is not a filled string`);
 			}
 
-			const component = componentCode || MessengerParams.get('COMPONENT_CODE');
+			let component = componentCode || MessengerParams.get('COMPONENT_CODE');
+			if (Feature.isMessengerV2Enabled)
+			{
+				component = ComponentCode.imMessenger;
+			}
+
 			BX.postComponentEvent(eventName, [eventData], component);
 		}
 

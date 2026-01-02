@@ -1,0 +1,14 @@
+.sign-wizard__notice {
+	border-radius: 8px;
+	background: var(--ui-color-palette-blue-15);
+	color: var(--ui-color-base-90);
+	font-size: var(--ui-font-size-sm);
+	line-height: var(--ui-font-line-height-2xs);
+	padding: 12px;
+	margin: 16px 0 0;
+}
+
+.sign-wizard__notice.--warning {
+	background: var(--ui-color-palette-orange-15);
+	color: var(--ui-color-base-60);
+}

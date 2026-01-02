@@ -12,8 +12,9 @@ enum JournalType: string
 	case BookingDeleted = 'bookingDeleted';
 	case BookingCanceled = 'bookingCanceled';
 	case BookingConfirmed = 'bookingConfirmed';
-	case BookingDelayedNotificationInitialized = 'bookingDelayedNotificationInitialized';
-	case BookingManagerConfirmNotificationSent = 'bookingManagerConfirmNotificationSent';
+	case BookingDelayedCounterActivated = 'bookingDelayedCounterActivated';
+	case BookingConfirmCounterActivated = 'bookingConfirmCounterActivated';
+	case BookingComingSoonNotificationSent = 'bookingComingSoonNotificationSent';
 
 	case ResourceAdded = 'resourceAdded';
 	case ResourceUpdated = 'resourceUpdated';
@@ -22,4 +23,9 @@ enum JournalType: string
 	case ResourceTypeAdded = 'resourceTypeAdded';
 	case ResourceTypeUpdated = 'resourceTypeUpdated';
 	case ResourceTypeDeleted = 'resourceTypeDeleted';
+
+	case WaitListItemAdded = 'waitListItemAdded';
+	case WaitListItemUpdated = 'waitListItemUpdated';
+	case WaitListItemDeleted = 'waitListItemDeleted';
+	case WaitListItemClientUpdated = 'waitListItemClientUpdated';
 }

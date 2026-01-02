@@ -2,7 +2,6 @@
 
 return [
 	'bundle' => [
-		'./skeleton',
 		'./content',
 	],
 	'extensions' => [
@@ -13,9 +12,9 @@ return [
 		'haptics',
 		'loc',
 		'notify-manager',
+		'tokens',
 
 		'utils/random',
-		'utils/skeleton',
 
 		'layout/pure-component',
 		'layout/ui/fields/focus-manager',
@@ -23,5 +22,6 @@ return [
 		'layout/ui/collapsible-text',
 
 		'bizproc:workflow/comments',
+		'bizproc:skeleton',
 	],
 ];

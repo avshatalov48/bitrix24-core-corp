@@ -11,23 +11,33 @@ if(!defined('B_PROLOG_INCLUDED') || B_PROLOG_INCLUDED!==true) die();
 /** @var string $templateFolder */
 /** @var string $componentPath */
 /** @var \Bitrix\Disk\Internals\BaseComponent $component */
+
 use Bitrix\Main\Localization\Loc;
 use Bitrix\Main\Loader;
+use Bitrix\UI\Buttons\Button;
+use Bitrix\UI\Buttons\Color;
+use Bitrix\UI\Toolbar\Facade\Toolbar;
+
 CJSCore::Init([
 	'disk',
 	'ui.buttons'
 ]);
 
+Loader::includeModule('ui');
+
+$createButton = new Button([
+	"color" => Color::PRIMARY,
+	"text" => Loc::getMessage('DISK_BIZPROC_LIST_CREATE_BP'),
+	"dropdown" => true,
+]);
+
+$createButton->addAttribute('id','bx-disk-create-bp');
+Toolbar::deleteFavoriteStar();
+Toolbar::addButton($createButton);
+
 $patternToEditTemplate = $arParams['EDIT_URL'];
 $patternToEditTemplate = mb_substr($patternToEditTemplate, 0, mb_strpos($patternToEditTemplate, '#'));
 ?>
-<? $this->setViewTarget("inside_pagetitle", 10); ?>
-	<div class="pagetitle-container pagetitle-flexible-space" style="overflow: hidden;">
-		<div class="pagetitle-container pagetitle-align-right-container">
-			<span id="bx-disk-create-bp" class="ui-btn ui-btn-primary ui-btn-dropdown"><?= Loc::getMessage('DISK_BIZPROC_LIST_CREATE_BP') ?></span>
-		</div>
-	</div>
-<? $this->endViewTarget(); ?>
 
 
 <? if (empty($arResult['GRID_TEMPLATES'])): ?>

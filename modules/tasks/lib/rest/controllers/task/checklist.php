@@ -7,6 +7,7 @@ use Bitrix\Main\Db\SqlQueryException;
 use Bitrix\Main\Engine\AutoWire\ExactParameter;
 use Bitrix\Main\Engine\CurrentUser;
 use Bitrix\Main\Error;
+use Bitrix\Main\Loader;
 use Bitrix\Main\Localization\Loc;
 use Bitrix\Main\NotImplementedException;
 use Bitrix\Main\ObjectException;
@@ -17,6 +18,7 @@ use Bitrix\Tasks\Access\TaskAccessController;
 use Bitrix\Tasks\Exception;
 use Bitrix\Tasks\CheckList\Internals\CheckList as CheckListItem;
 use Bitrix\Tasks\CheckList\Task\TaskCheckListFacade;
+use Bitrix\Tasks\Helper\Analytics;
 use Bitrix\Tasks\Rest\Controllers\Base;
 use Bitrix\Tasks\Util\Result;
 
@@ -45,7 +47,7 @@ class Checklist extends Base
 				static function ($className, $checkListItemId)
 				{
 					$userId = CurrentUser::get()->getId();
-					$fields = TaskCheckListFacade::getList([], ['ID' => $checkListItemId])[$checkListItemId];
+					$fields = TaskCheckListFacade::getList([], ['ID' => $checkListItemId])[$checkListItemId] ?? [];
 
 					/** @var ChecklistItem $className */
 					return new $className(0, $userId, TaskCheckListFacade::class, $fields);
@@ -235,6 +237,18 @@ class Checklist extends Base
 	public function completeAction($taskId, CheckListItem $checkListItem)
 	{
 		$completeResult = TaskCheckListFacade::complete($taskId, CurrentUser::get()->getId(), $checkListItem);
+
+		// "CHECKLIST_ITEM_CHECK" analytics label
+		$isDemo = (Loader::includeModule('bitrix24') && \CBitrix24::IsDemoLicense()) ? 'Y' : 'N';
+
+		Analytics::getInstance(CurrentUser::get()->getId())->onTaskUpdate(
+			event: Analytics::EVENT['task_update'],
+			subSection: Analytics::SUB_SECTION['task_card'],
+			params: [
+				'p1' => 'isDemo_' . $isDemo,
+			],
+		);
+
 		return $this->getReturn($completeResult);
 	}
 

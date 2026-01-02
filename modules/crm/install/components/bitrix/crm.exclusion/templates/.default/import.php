@@ -7,25 +7,27 @@ if (!defined("B_PROLOG_INCLUDED") || B_PROLOG_INCLUDED!==true)die();
 
 global $APPLICATION;
 
-$componentParameters = array(
+$componentParameters = [
 	'ID' => $arResult['ID'],
 	'NAME_TEMPLATE' => $arResult['NAME_TEMPLATE'],
 	'PATH_TO_USER_PROFILE' => $arResult['PATH_TO_USER_PROFILE'],
 	'PATH_TO_LIST' => $arResult['PATH_TO_LIST'],
 	'PATH_TO_IMPORT' => $arResult['PATH_TO_IMPORT'],
 	'CAN_EDIT' => $arResult['CAN_EDIT'],
-);
-if ($_REQUEST['IFRAME'] == 'Y')
+	'USE_UI_TOOLBAR' => 'Y',
+];
+if ($_REQUEST['IFRAME'] === 'Y')
 {
-	$componentParameters['IFRAME'] = $_REQUEST['IFRAME'] == 'Y' ? 'Y' : 'N';
+	$componentParameters['IFRAME'] = $_REQUEST['IFRAME'] === 'Y' ? 'Y' : 'N';
 	$APPLICATION->IncludeComponent(
-		"bitrix:crm.webform.popup",
+		"bitrix:ui.sidepanel.wrapper",
 		"",
-		array(
+		[
 			'POPUP_COMPONENT_NAME' => "bitrix:crm.exclusion.import",
 			"POPUP_COMPONENT_TEMPLATE_NAME" => "",
 			"POPUP_COMPONENT_PARAMS" => $componentParameters,
-		)
+			"USE_UI_TOOLBAR" => "Y",
+		]
 	);
 }
 else
@@ -33,7 +35,7 @@ else
 	$APPLICATION->IncludeComponent(
 		'bitrix:crm.control_panel',
 		'',
-		array(
+		[
 			'ID' => 'EXCLUSION_IMPORT',
 			'ACTIVE_ITEM_ID' => 'CONFIGS',
 			'PATH_TO_COMPANY_LIST' => isset($arResult['PATH_TO_COMPANY_LIST']) ? $arResult['PATH_TO_COMPANY_LIST'] : '',
@@ -53,7 +55,7 @@ else
 			'PATH_TO_DEAL_FUNNEL' => isset($arResult['PATH_TO_DEAL_FUNNEL']) ? $arResult['PATH_TO_DEAL_FUNNEL'] : '',
 			'PATH_TO_EVENT_LIST' => isset($arResult['PATH_TO_EVENT_LIST']) ? $arResult['PATH_TO_EVENT_LIST'] : '',
 			'PATH_TO_PRODUCT_LIST' => isset($arResult['PATH_TO_PRODUCT_LIST']) ? $arResult['PATH_TO_PRODUCT_LIST'] : ''
-		),
+		],
 		$component
 	);
 

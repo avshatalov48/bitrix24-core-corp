@@ -35,10 +35,10 @@ Extension::load([
 	'ui.form-elements.field',
 	'ui.switcher-nested',
 	'main.qrcode',
-	'intranet_theme_picker',
 	'bitrix24.license',
 	'ui.analytics',
-	'main.loader'
+	'main.loader',
+	'intranet.theme-picker.dialog',
 ]);
 $APPLICATION->SetPageProperty('BodyClass', 'intranet-settings-iframe-popup');
 // TODO delete after release train 30.08.2023

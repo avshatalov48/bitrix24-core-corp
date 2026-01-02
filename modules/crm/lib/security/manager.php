@@ -3,7 +3,6 @@ namespace Bitrix\Crm\Security;
 
 use Bitrix\Crm\Agent\Security\DynamicTypes\AttrConvertOptions;
 use Bitrix\Crm\Security\Controller\DynamicItem;
-use Bitrix\Crm\Service\UserPermissions;
 use Bitrix\Main;
 use Bitrix\Crm\Security\Controller\Contact;
 use Bitrix\Crm\Security\Controller\Company;
@@ -60,13 +59,27 @@ class Manager
 
 	private static function tryResolveControllerForDynamicType(string $permissionEntityType): ?Controller
 	{
-		$entityTypeName = UserPermissions::getEntityNameByPermissionEntityType($permissionEntityType);
+		$entityTypeId = \CCrmOwnerType::ResolveID($permissionEntityType);
+		if (\CCrmOwnerType::IsDefined($entityTypeId))
+		{
+			$entityTypeName = $permissionEntityType;
+		}
+		else
+		{
+			$categoryIdentifier = \Bitrix\Crm\Category\PermissionEntityTypeHelper::extractEntityAndCategoryFromPermissionEntityType($permissionEntityType);
+			$entityTypeId = $categoryIdentifier?->getEntityTypeId();
+			$entityTypeName = \CCrmOwnerType::ResolveName($entityTypeId);
+		}
+		if (is_null($entityTypeId))
+		{
+			return null;
+		}
+
 		if (isset(self::$controllers[$entityTypeName]))
 		{
 			return self::$controllers[$entityTypeName];
 		}
 
-		$entityTypeId = \CCrmOwnerType::ResolveID($entityTypeName);
 		if (!DynamicItem::isSupportedType($entityTypeId))
 		{
 			return null;

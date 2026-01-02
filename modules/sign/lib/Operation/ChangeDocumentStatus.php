@@ -66,6 +66,11 @@ final class ChangeDocumentStatus implements Contract\Operation
 			return $result->addError(new Main\Error('Empty document ID.'));
 		}
 
+		if ($this->document->isTemplated())
+		{
+			return $result->addError(new Main\Error('Can not change status of templated document.'));
+		}
+
 		// status may be changed asynchronously
 		$this->document = $this->documentRepository->getById($this->document->id);
 
@@ -96,16 +101,24 @@ final class ChangeDocumentStatus implements Contract\Operation
 
 		if (Type\DocumentScenario::isB2EScenario($this->document->scenario ?? ''))
 		{
+			$initiatorUserId = $this->initiatorMember
+				? $this->memberService->getUserIdForMember($this->initiatorMember, $this->document)
+				: $this->document->stoppedById
+			;
+
 			$this->legalLogService->registerDocumentChangedStatus($this->document, $this->initiatorMember);
 
 			$sendMessageResult = $this->hrBotMessageService->handleDocumentStatusChangedMessage(
 				$this->document,
 				$this->status,
-				$this->initiatorMember,
+				$initiatorUserId,
 			);
 			$result->addErrors($sendMessageResult->getErrors());
 
-			$this->eventHandlerService->handleCurrentDocumentStatus($this->document, $this->initiatorMember);
+			$this->eventHandlerService->handleCurrentDocumentStatus(
+				$this->document,
+				$initiatorUserId,
+			);
 
 			$members = $this->memberRepository->listByDocumentId($this->document->id);
 
@@ -133,13 +146,10 @@ final class ChangeDocumentStatus implements Contract\Operation
 					return $updateMyDocumentsCounterResult;
 				}
 
-				if ($this->initiatorMember)
+				$setDocumentStoppedByResult = $this->updateDocumentStoppedByValue($initiatorUserId);
+				if (!$setDocumentStoppedByResult->isSuccess())
 				{
-					$setDocumentStoppedByResult = $this->setDocumentStoppedBy();
-					if (!$setDocumentStoppedByResult->isSuccess())
-					{
-						return $setDocumentStoppedByResult;
-					}
+					return $setDocumentStoppedByResult;
 				}
 
 				$kanbanPullEventOperation = new Operation\Kanban\B2e\SendDeleteEntityPullEvent($this->document);
@@ -247,26 +257,21 @@ final class ChangeDocumentStatus implements Contract\Operation
 		return new Main\Result();
 	}
 
-	private function setDocumentStoppedBy(): Main\Result
+	private function updateDocumentStoppedByValue(?int $initiatorUserId): Main\Result
 	{
 		$result = new Main\Result();
 
-		if ($this->initiatorMember === null)
+		if ($initiatorUserId === null)
 		{
-			return $result->addError(new Main\Error('Empty member'));
+			return $result;
 		}
 
-		$userId = $this->memberService->getUserIdForMember(
-			$this->initiatorMember,
-			$this->document,
-		);
-
-		if ($userId === null)
+		if ($this->document->stoppedById === $initiatorUserId)
 		{
-			return $result->addError(new Main\Error('Can not find user'));
+			return $result;
 		}
 
-		$this->document->stoppedById = $userId;
+		$this->document->stoppedById = $initiatorUserId;
 		$updateResult = $this->documentRepository->update($this->document);
 		if (!$updateResult->isSuccess())
 		{

@@ -6,6 +6,7 @@ if (!defined('B_PROLOG_INCLUDED') || B_PROLOG_INCLUDED !== true)
 }
 
 use Bitrix\Crm;
+use Bitrix\Crm\Integration\Analytics\Dictionary;
 
 class CBPCrmConvertDocumentActivity extends CBPActivity
 {
@@ -117,6 +118,12 @@ class CBPCrmConvertDocumentActivity extends CBPActivity
 
 		if ($conversionResult->isSuccess())
 		{
+			\CCrmBizProcHelper::sendOperationsAnalytics(
+				Dictionary::EVENT_ENTITY_CREATE,
+				$this,
+				CCrmOwnerType::ResolveName($entityTypeId),
+			);
+
 			$this->setReturnIds($conversionResult);
 			$this->onSuccessConversion($entityTypeId, $entityId);
 		}

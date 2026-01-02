@@ -6,10 +6,10 @@ use Bitrix\Main\Type\DateTime;
 use Bitrix\Tasks\Flow\Attribute\AccessCodes;
 use Bitrix\Tasks\Flow\Attribute\DistributionType;
 use Bitrix\Tasks\Flow\Attribute\Instantiable;
-use Bitrix\Tasks\AbstractCommand;
+use Bitrix\Tasks\Flow\AbstractCommand;
 use Bitrix\Tasks\Flow\Configuration;
 use Bitrix\Tasks\Internals\Attribute\NotEmpty;
-use Bitrix\Tasks\InvalidCommandException;
+use Bitrix\Tasks\Flow\Control\Exception\InvalidCommandException;
 use Bitrix\Tasks\Flow\Flow;
 use Bitrix\Tasks\Internals\Attribute\Department;
 use Bitrix\Tasks\Internals\Attribute\ExpectedNumeric;
@@ -101,10 +101,9 @@ final class UpdateCommand extends AbstractCommand
 	#[DistributionType]
 	public ?string $distributionType = null;
 
-	#[Required]
+	#[Nullable]
 	#[AccessCodes]
-	#[NotEmpty]
-	public array $responsibleList;
+	public ?array $responsibleList = null;
 
 	#[Nullable]
 	#[User]

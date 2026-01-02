@@ -25,8 +25,7 @@ use Bitrix\Crm\Requisite;
 use Bitrix\Crm\RequisiteAddress;
 use Bitrix\Crm\Settings\CompanySettings;
 
-$CrmPerms = CCrmPerms::GetCurrentUserPermissions();
-if ($CrmPerms->HavePerm('COMPANY', BX_CRM_PERM_NONE, 'IMPORT'))
+if (!\Bitrix\Crm\Service\Container::getInstance()->getUserPermissions()->entityType()->canImportItems(CCrmOwnerType::Company))
 {
 	ShowError(GetMessage('CRM_PERMISSION_DENIED'));
 	return;
@@ -36,6 +35,10 @@ if(!function_exists('__CrmImportPrepareFieldBindingTab'))
 {
 	function __CrmImportPrepareFieldBindingTab(&$arResult, &$arRequireFields, $requisiteOptions)
 	{
+		if (!file_exists($_SESSION['CRM_IMPORT_FILE'] ?? ''))
+		{
+			return GetMessage('CRM_CSV_READ_ERROR');
+		}
 		$resultMessages = array();
 		$arFields = Array(''=>'');
 		$arFieldsUpper = Array();
@@ -852,7 +855,7 @@ if(isset($_REQUEST['getSample']) && $_REQUEST['getSample'] == 'csv')
 	}
 	die();
 }
-else if (isset($_REQUEST['import']) && isset($_SESSION['CRM_IMPORT_FILE']))
+else if (isset($_REQUEST['import']) && file_exists($_SESSION['CRM_IMPORT_FILE'] ?? ''))
 {
 	$APPLICATION->RestartBuffer();
 

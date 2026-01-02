@@ -169,12 +169,13 @@ abstract class BaseComponent extends \CBitrixComponent implements Errorable
 
 			global $APPLICATION;
 			$APPLICATION->IncludeComponent(
-				'bitrix:disk.sidepanel.wrapper',
+				'bitrix:ui.sidepanel.wrapper',
 				"",
 				array(
 					'POPUP_COMPONENT_NAME' => $this->getName(),
 					'POPUP_COMPONENT_TEMPLATE_NAME' => "",
 					'POPUP_COMPONENT_PARAMS' => $this->arParams,
+					'USE_UI_TOOLBAR' => 'Y',
 				)
 			);
 

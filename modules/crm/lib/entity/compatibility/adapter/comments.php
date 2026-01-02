@@ -12,12 +12,11 @@ use Bitrix\Main\Result;
 
 final class Comments extends Adapter
 {
+	use Adapter\Traits\PreviousFields;
+	
 	private int $entityTypeId;
 
 	private array $flexibleFields;
-
-	/** @var Array<int, array> */
-	private array $previousEntities = [];
 
 	public function __construct(int $entityTypeId)
 	{
@@ -26,19 +25,12 @@ final class Comments extends Adapter
 		$this->flexibleFields = CommentsHelper::getFieldsWithFlexibleContentType($entityTypeId);
 	}
 
-	public function setPreviousFields(int $id, array $previousFields): self
-	{
-		$this->previousEntities[$id] = $previousFields;
-
-		return $this;
-	}
-
 	public function normalizeFields(?int $id, array &$fields): void
 	{
 		$previousFields = [];
 		if ($id > 0)
 		{
-			$previousFields = $this->previousEntities[$id] ?? [];
+			$previousFields = $this->getPreviousFields($id) ?? [];
 		}
 
 		$diff = ComparerBase::compareEntityFields($previousFields, $fields);
@@ -68,7 +60,7 @@ final class Comments extends Adapter
 		$this->normalizeFields($id, $fields);
 
 		$contentTypes = FieldContentTypeTable::loadForItem(new ItemIdentifier($this->entityTypeId, $id));
-		$diff = ComparerBase::compareEntityFields($this->previousEntities[$id] ?? [], $fields);
+		$diff = ComparerBase::compareEntityFields($this->getPreviousFields($id) ?? [], $fields);
 
 		foreach ($this->flexibleFields as $fieldName)
 		{

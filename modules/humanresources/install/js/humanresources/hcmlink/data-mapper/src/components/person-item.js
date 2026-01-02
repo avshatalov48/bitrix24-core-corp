@@ -85,6 +85,7 @@ export const PersonItem = {
 								'!userId': this.mappedUserIds,
 								inviteEmployeeLink: false,
 								intranetUsersOnly: true,
+								nameTemplate: '#LAST_NAME# #NAME# #SECOND_NAME#',
 							},
 						},
 					],
@@ -145,10 +146,15 @@ export const PersonItem = {
 							options: {
 								companyId: this.config.companyId,
 								inviteEmployeeLink: false,
+								nameTemplate: '#LAST_NAME# #FIRST_NAME# #PATRONYMIC_NAME#',
 							},
 							dynamicLoad: true,
 							dynamicSearch: true,
 							enableSearch: true,
+							searchFields: [
+								{ name: 'snils' },
+								{ name: 'subtitle', searchable: false, system: true },
+							],
 						},
 					],
 					preselectedItems: [preselectedItem],

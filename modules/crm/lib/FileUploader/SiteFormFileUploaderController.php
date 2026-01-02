@@ -13,8 +13,19 @@ use Bitrix\Main;
 
 class SiteFormFileUploaderController extends UploaderController implements CustomFingerprint
 {
+	/** @var array<string, int> */
+	private array $fieldsSizeMap;
+	private string $fieldId;
 	public function __construct(array $options)
 	{
+		$this->fieldsSizeMap = $options['fieldsSize'] ?? [];
+		$this->fieldId = $options['fieldId'] ?? '';
+
+		unset(
+			$options['fieldsSize'],
+			$options['fieldId'],
+		);
+
 		parent::__construct($options);
 	}
 
@@ -40,17 +51,16 @@ class SiteFormFileUploaderController extends UploaderController implements Custo
 		if (
 			empty($this->options['formId'])
 			|| empty($this->options['secCode'])
-			|| empty($this->options['fieldId'])
+			|| empty($this->fieldId)
 			|| empty($this->getFingerprint())
-			|| !is_array($this->options['fieldsSize'])
+			|| empty($this->fieldsSizeMap)
 		)
 		{
 			return false;
 		}
 
-		$fieldsSize = $this->options['fieldsSize'];
 		$formId = intval($this->options['formId']);
-		$fieldId = $this->options['fieldId'];
+		$fieldId = $this->fieldId;
 
 		$form = new WebForm\Form($formId);
 		if (
@@ -64,8 +74,8 @@ class SiteFormFileUploaderController extends UploaderController implements Custo
 
 		$fileFields = $form->getFieldsByType('file');
 		if (
-			!$this->checkFieldsSize($fileFields, $fieldsSize)
-			|| !$this->checkDailyLimit($fieldsSize)
+			!$this->checkFieldsSize($fileFields, $this->fieldsSizeMap)
+			|| !$this->checkDailyLimit($this->fieldsSizeMap)
 		)
 		{
 			return false;
@@ -145,7 +155,7 @@ class SiteFormFileUploaderController extends UploaderController implements Custo
 	{
 		$request = Main\Application::getInstance()->getContext()->getRequest();
 
-		return ($request->getUserAgent() ?? "") . Main\Service\GeoIp\Manager::getRealIp();
+		return ($request->getUserAgent() ?? "");
 	}
 
 	public static function getSettings(): array

@@ -1,6 +1,7 @@
 <?php
 
 $MESS['CRM_SERVICE_FORM_CATEGORY_CRM'] = 'Коммуникации с клиентами';
+$MESS['CRM_SERVICE_FORM_CATEGORY_BOOKING'] = 'Онлайн-запись';
 $MESS['CRM_SERVICE_FORM_CATEGORY_PRODUCTS'] = 'Продажа';
 $MESS['CRM_SERVICE_FORM_CATEGORY_SOCIAL'] = 'Заявки из социальных сетей';
 $MESS['CRM_SERVICE_FORM_CATEGORY_CRM_AUTOMATION'] = 'Автозаполнение полей';

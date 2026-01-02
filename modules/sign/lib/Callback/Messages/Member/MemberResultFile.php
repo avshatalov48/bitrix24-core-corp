@@ -27,6 +27,7 @@ class MemberResultFile extends Callback\Message
 	public function setDocumentUid(string $documentUid): self
 	{
 		$this->data['documentUid'] = $documentUid;
+
 		return $this;
 	}
 
@@ -38,6 +39,7 @@ class MemberResultFile extends Callback\Message
 	public function setMemberUid(string $memberUid): self
 	{
 		$this->data['memberUid'] = $memberUid;
+
 		return $this;
 	}
 
@@ -49,6 +51,7 @@ class MemberResultFile extends Callback\Message
 	public function setSecurityCode(string $securityCode): self
 	{
 		$this->data['securityCode'] = $securityCode;
+
 		return $this;
 	}
 }

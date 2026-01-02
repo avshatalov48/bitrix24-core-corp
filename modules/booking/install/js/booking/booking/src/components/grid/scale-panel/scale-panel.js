@@ -135,9 +135,8 @@ export const ScalePanel = {
 
 			await ahaMoments.show({
 				id: 'booking-expand-grid',
-				title: this.loc('BOOKING_AHA_EXPAND_GRID_TITLE'),
-				text: this.loc('BOOKING_AHA_EXPAND_GRID_TEXT'),
-				article: HelpDesk.AhaExpandGrid,
+				title: this.loc('BOOKING_AHA_EXPAND_GRID_TITLE_MSGVER_1'),
+				text: this.loc('BOOKING_AHA_EXPAND_GRID_TEXT_MSGVER_1'),
 				target: this.$refs.expand,
 				top: true,
 			});

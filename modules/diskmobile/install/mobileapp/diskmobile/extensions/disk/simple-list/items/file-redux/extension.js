@@ -18,6 +18,7 @@ jn.define('disk/simple-list/items/file-redux', (require, exports, module) => {
 				parentWidget: this.props.parentWidget,
 				showStorageName: this.props.item.showStorageName,
 				context: this.props.item.context,
+				relativeFolderId: this.props.item.relativeFolderId,
 			});
 		}
 	}

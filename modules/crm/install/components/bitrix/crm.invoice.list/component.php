@@ -36,8 +36,8 @@ if (!$isErrorOccured && !CModule::IncludeModule('sale'))
 	$isErrorOccured = true;
 }
 
-$CCrmPerms = CCrmPerms::GetCurrentUserPermissions();
-if (!$isErrorOccured && $CCrmPerms->HavePerm('INVOICE', BX_CRM_PERM_NONE, 'READ'))
+$userPermissionsService = Crm\Service\Container::getInstance()->getUserPermissions();
+if (!$isErrorOccured && !$userPermissionsService->entityType()->canReadItems(CCrmOwnerType::Invoice))
 {
 	$errorMessage = GetMessage('CRM_PERMISSION_DENIED');
 	$isErrorOccured = true;
@@ -72,7 +72,7 @@ $arResult['STEXPORT_TOTAL_ITEMS'] = isset($arParams['STEXPORT_TOTAL_ITEMS']) ?
 	(int)$arParams['STEXPORT_TOTAL_ITEMS'] : 0;
 //endregion
 
-if (!$isErrorOccured && $isInExportMode && $CCrmPerms->HavePerm('INVOICE', BX_CRM_PERM_NONE, 'EXPORT'))
+if (!$isErrorOccured && $isInExportMode && !$userPermissionsService->entityType()->canExportItems(CCrmOwnerType::Invoice))
 {
 	$errorMessage = GetMessage('CRM_PERMISSION_DENIED');
 	$isErrorOccured = true;
@@ -96,11 +96,7 @@ $APPLICATION->AddHeadScript('/bitrix/js/crm/instant_editor.js');
 \Bitrix\Main\UI\Extension::load('ui.fonts.opensans');
 $APPLICATION->SetAdditionalCSS('/bitrix/js/crm/css/crm.css');
 $APPLICATION->SetAdditionalCSS("/bitrix/themes/.default/crm-entity-show.css");
-
-if(SITE_TEMPLATE_ID === 'bitrix24')
-{
-	$APPLICATION->SetAdditionalCSS("/bitrix/themes/.default/bitrix24/crm-entity-show.css");
-}
+$APPLICATION->SetAdditionalCSS('/bitrix/themes/.default/bitrix24/crm-entity-show.css');
 
 $CCrmInvoice = new CCrmInvoice(false);
 
@@ -249,9 +245,9 @@ $arResult['CLOSED_LIST'] = array('Y' => GetMessage('MAIN_YES'), 'N' => GetMessag
 $arResult['FILTER'] = array();
 $arResult['FILTER2LOGIC'] = [];
 $arResult['FILTER_PRESETS'] = array();
-$arResult['PERMS']['ADD']    = !$CCrmPerms->HavePerm('INVOICE', BX_CRM_PERM_NONE, 'ADD');
-$arResult['PERMS']['WRITE']  = !$CCrmPerms->HavePerm('INVOICE', BX_CRM_PERM_NONE, 'WRITE');
-$arResult['PERMS']['DELETE'] = !$CCrmPerms->HavePerm('INVOICE', BX_CRM_PERM_NONE, 'DELETE');
+$arResult['PERMS']['ADD'] = $userPermissionsService->entityType()->canAddItems(CCrmOwnerType::Invoice);
+$arResult['PERMS']['WRITE']  = $userPermissionsService->entityType()->canUpdateItems(CCrmOwnerType::Invoice);
+$arResult['PERMS']['DELETE'] = $userPermissionsService->entityType()->canDeleteItems(CCrmOwnerType::Invoice);
 
 $arResult['AJAX_MODE'] = isset($arParams['AJAX_MODE']) ? $arParams['AJAX_MODE'] : ($arResult['INTERNAL'] ? 'N' : 'Y');
 $arResult['AJAX_ID'] = isset($arParams['AJAX_ID']) ? $arParams['AJAX_ID'] : '';
@@ -680,7 +676,7 @@ if($actionData['ACTIVE'])
 				while($arInvoice = $dbRes->Fetch())
 				{
 					$ID = (int)$arInvoice['ID'];
-					if(CCrmInvoice::CheckUpdatePermission($ID, $CCrmPerms))
+					if($userPermissionsService->item()->canUpdate(CCrmOwnerType::Invoice, $ID))
 					{
 						$arIDs[] = $ID;
 					}
@@ -711,8 +707,7 @@ if($actionData['ACTIVE'])
 				while($arInvoice = $obRes->Fetch())
 				{
 					$ID = $arInvoice['ID'];
-					$arEntityAttr = $CCrmPerms->GetEntityAttr('INVOICE', array($ID));
-					if (!$CCrmPerms->CheckEnityAccess('INVOICE', 'DELETE', $arEntityAttr[$ID]))
+					if (!$userPermissionsService->item()->canDelete(CCrmOwnerType::Invoice, $ID))
 					{
 						continue ;
 					}
@@ -736,8 +731,7 @@ if($actionData['ACTIVE'])
 			{
 				foreach($actionData['FIELDS'] as $ID => $arSrcData)
 				{
-					$arEntityAttr = $CCrmPerms->GetEntityAttr('INVOICE', array($ID));
-					if (!$CCrmPerms->CheckEnityAccess('INVOICE', 'WRITE', $arEntityAttr[$ID]))
+					if (!$userPermissionsService->item()->canUpdate(CCrmOwnerType::Invoice, $ID))
 					{
 						continue ;
 					}
@@ -792,7 +786,7 @@ if($actionData['ACTIVE'])
 
 				foreach($arIDs as $ID)
 				{
-					if (!CCrmInvoice::CheckUpdatePermission($ID, $CCrmPerms))
+					if (!$userPermissionsService->item()->canUpdate(CCrmOwnerType::Invoice, $ID))
 					{
 						continue;
 					}
@@ -832,11 +826,7 @@ if($actionData['ACTIVE'])
 		if ($actionData['NAME'] == 'delete' && isset($actionData['ID']))
 		{
 			$ID = intval($actionData['ID']);
-
-			$arEntityAttr = $CCrmPerms->GetEntityAttr('INVOICE', array($ID));
-			$attr = $arEntityAttr[$ID];
-
-			if($CCrmPerms->CheckEnityAccess('INVOICE', 'DELETE', $attr))
+			if ($userPermissionsService->item()->canDelete(CCrmOwnerType::Invoice, $ID))
 			{
 				$DB->StartTransaction();
 
@@ -1716,12 +1706,11 @@ if (isset($arResult['INVOICE_ID']) && !empty($arResult['INVOICE_ID']))
 	// try to load product rows
 	$arProductRows = array();
 
-	// checkig access for operation
-	$arInvoiceAttr = CCrmPerms::GetEntityAttr('INVOICE', $arResult['INVOICE_ID']);
+	$userPermissionsService->item()->preloadPermissionAttributes(CCrmOwnerType::Invoice, $arResult['INVOICE_ID']);
 	foreach ($arResult['INVOICE_ID'] as $iInvoiceId)
 	{
-		$arResult['INVOICE'][$iInvoiceId]['EDIT'] = $CCrmPerms->CheckEnityAccess('INVOICE', 'WRITE', $arInvoiceAttr[$iInvoiceId]);
-		$arResult['INVOICE'][$iInvoiceId]['DELETE'] = $CCrmPerms->CheckEnityAccess('INVOICE', 'DELETE', $arInvoiceAttr[$iInvoiceId]);
+		$arResult['INVOICE'][$iInvoiceId]['EDIT'] = $userPermissionsService->item()->canUpdate(CCrmOwnerType::Invoice, $iInvoiceId);
+		$arResult['INVOICE'][$iInvoiceId]['DELETE'] = $userPermissionsService->item()->canDelete(CCrmOwnerType::Invoice, $iInvoiceId);
 	}
 }
 

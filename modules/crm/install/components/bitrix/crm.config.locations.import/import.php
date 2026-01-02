@@ -8,9 +8,7 @@ IncludeModuleLangFile(__FILE__);
 if (!CModule::IncludeModule('crm'))
 	return;
 
-$CrmPerms = new CCrmPerms($USER->GetID());
-
-if (!$CrmPerms->HavePerm('CONFIG', BX_CRM_PERM_CONFIG, 'WRITE'))
+if (!\Bitrix\Crm\Service\Container::getInstance()->getUserPermissions()->isCrmAdmin())
 {
 	echo GetMessage('CRM_LOC_IMP_ERROR_ACCESS_DENIED');
 	require_once($_SERVER["DOCUMENT_ROOT"].BX_ROOT."/modules/main/include/epilog_after.php");

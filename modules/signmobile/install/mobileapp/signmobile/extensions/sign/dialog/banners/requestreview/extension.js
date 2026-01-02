@@ -72,6 +72,7 @@ jn.define('sign/dialog/banners/requestreview', (require, exports, module) => {
 				buttonsView: View(
 					{},
 					Button({
+						testId: 'requestReviewBanner-button-close',
 						text: Loc.getMessage('SIGN_MOBILE_DIALOG_REQUEST_REVIEW_BUTTON_START_SIGNING'),
 						size: ButtonSize.XL,
 						design: ButtonDesign.FILLED,
@@ -95,6 +96,7 @@ jn.define('sign/dialog/banners/requestreview', (require, exports, module) => {
 						},
 					}),
 					Button({
+						testId: 'requestReviewBanner-button-close',
 						text: Loc.getMessage('SIGN_MOBILE_DIALOG_REQUEST_REVIEW_BUTTON_CLOSE'),
 						size: ButtonSize.XL,
 						design: ButtonDesign.PLAN_ACCENT,

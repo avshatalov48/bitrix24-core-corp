@@ -6,6 +6,7 @@ $MESS["IMCONNECTOR_COMPONENT_NOTIFICATIONS_INDEX_DETAILS_MSGVER_2"] = "Learn mor
 $MESS["IMCONNECTOR_COMPONENT_NOTIFICATIONS_INDEX_LIST_ITEM_1"] = "Send payment links via WhatsApp or SMS";
 $MESS["IMCONNECTOR_COMPONENT_NOTIFICATIONS_INDEX_LIST_ITEM_2"] = "Offer banking card, Apple Pay, Google Pay and other payment methods";
 $MESS["IMCONNECTOR_COMPONENT_NOTIFICATIONS_INDEX_LIST_ITEM_3"] = "No external providers or WhatsApp checks";
+$MESS["IMCONNECTOR_COMPONENT_NOTIFICATIONS_INDEX_LIST_ITEM_3_MSGVER_1"] = "No third-party providers or WhatsApp verification";
 $MESS["IMCONNECTOR_COMPONENT_NOTIFICATIONS_INDEX_SECOND_DESCRIPTION"] = "The customer may opt to respond to your automated message, in which case you can continue communicating with them: you will receive customer's messages to the live chat, while the customer will see your replies in their WhatsApp.";
 $MESS["IMCONNECTOR_COMPONENT_NOTIFICATIONS_INDEX_SECOND_TITLE"] = "Continue communicating with the customer in WhatsApp";
 $MESS["IMCONNECTOR_COMPONENT_NOTIFICATIONS_INDEX_SUBTITLE"] = "Indulge your customers with a hassle-free service.";

@@ -2,10 +2,10 @@
 	const require = jn.require;
 	const { RunActionExecutor } = require('rest/run-action-executor');
 	const { isValidAnalyticsData } = require('analytics/validator');
+	const { toMD5 } = require('utils/object');
 
 	/**
 	 * @class RequestExecutor
-	 * @alias RestExecutor
 	 */
 	class RequestExecutor
 	{
@@ -36,7 +36,7 @@
 				{
 					if (!this.cacheId)
 					{
-						this.cacheId = `${Object.toMD5(this.options)}/${this.method}`;
+						this.cacheId = `${toMD5(this.options)}/${this.method}`;
 					}
 
 					const cache = Application.storage.getObject(this.cacheId, null);
@@ -483,45 +483,18 @@
 		return getParameters;
 	};
 
+	// todo remove after all global usages in other modules will be cleaned
+	jnexport(RunActionExecutor);
+	jnexport(RequestExecutor);
+
 	/**
-	 * @class RunActionDelayedExecutor
+	 * @module rest
 	 */
-	class RunActionDelayedExecutor extends RunActionExecutor
-	{
-		constructor(action, options)
-		{
-			super(action, options);
-			this.timeoutId = null;
-			this.timeout = 300;
-		}
-
-		abortCurrentRequest()
-		{
-			clearTimeout(this.timeoutId);
-			super.abortCurrentRequest();
-		}
-
-		call()
-		{
-			clearTimeout(this.timeoutId);
-			this.timeoutId = setTimeout(() => super.call(), this.timeout);
-		}
-	}
-
-	jnexport(
-		RunActionDelayedExecutor,
-		RequestExecutor,
-		RunActionExecutor,
-		DelayedRestRequest,
-		[RequestExecutor, 'RestExecutor'],
-	);
+	jn.define('rest', (_, exports, module) => {
+		module.exports = {
+			RequestExecutor,
+			DelayedRestRequest,
+			RunActionExecutor,
+		};
+	});
 })();
-
-/**
- * @module rest
- */
-jn.define('rest', (require, exports, module) => {
-	module.exports = {
-		RequestExecutor: this.RequestExecutor,
-	};
-});

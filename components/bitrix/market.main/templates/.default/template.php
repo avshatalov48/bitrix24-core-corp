@@ -3,6 +3,8 @@
 use Bitrix\Main\UI\Extension;
 use Bitrix\Main\Web\Json;
 use Bitrix\Market\Content;
+use Bitrix\Rest\Notification\MarketExpired\Curtain\CurtainPageType;
+use Bitrix\Rest\Notification\MarketExpired\MarketExpiredNotification;
 
 if (!defined("B_PROLOG_INCLUDED") || B_PROLOG_INCLUDED !== true) {
 	die();
@@ -38,15 +40,17 @@ Content::showAdditional($arResult);
 		new BX.Market.Market(marketMainData);
 
 		<?php
-		$marketExpiredCurtain = \Bitrix\Rest\Notification\MarketExpiredCurtain::getByDefault();
-		if ($marketExpiredCurtain->isReadyToShow("Application"))
+		$marketExpiredCurtain = MarketExpiredNotification::createByDefault()->getCurtain();
+
+		if ($marketExpiredCurtain->isReadyToShow(CurtainPageType::APPLICATION))
 		{
-			\Bitrix\Main\UI\Extension::load([
-				'rest.market-expired-curtain'
-			]);
 		?>
-			const curtain = new BX.Rest.MarketExpiredCurtain("Application");
-			curtain.show();
+			BX.loadExt('rest.market-expired')
+				.then((exports) => {
+					const { MarketExpired, CurtainPage } = exports;
+					const curtain = MarketExpired.getCurtain(CurtainPage.APPLICATION);
+					curtain.show();
+				});
 		<?php
 		}
 		?>

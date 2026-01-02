@@ -32,6 +32,7 @@ if (isset($arResult['OPEN_LOGIN_POPUP']) && $arResult['OPEN_LOGIN_POPUP'])
 	$analyticSource = 'copy';
 }
 
+$analyticScope = Context::getCurrent()->getRequest()->get('scope');
 
 if (!empty($arResult['ERROR_MESSAGES']))
 {
@@ -72,6 +73,7 @@ Extension::load([
 	'ui.hint',
 	'loc',
 	'sidepanel',
+	'main.date',
 ]);
 
 $dashboardTitle = htmlspecialcharsbx($arResult['DASHBOARD_TITLE']);
@@ -97,6 +99,7 @@ if (!$limitManager->checkLimitWarning())
 }
 
 ?>
+
 <style>
 	.dashboard-header {
 		--forward-icon: url("<?= $templateFolder . '/images/forward.svg' ?>");
@@ -123,23 +126,33 @@ if (!$limitManager->checkLimitWarning())
 				<div class="dashboard-header-logo-svg dashboard-header-logo-svg-url"></div>
 			</div>
 			<div class="dashboard-header-selector-container" id="dashboard-selector">
-				<div class="dashboard-header-selector-text" id="dashboard-selector-text"><?= $dashboardTitle ?></div>
+				<div class="dashboard-header-selector-text" id="dashboard-selector-text" title="<?= $dashboardTitle ?>"><?= $dashboardTitle ?></div>
 				<div class="ui-icon-set --chevron-down dashboard-header-selector-icon"></div>
 			</div>
 		</div>
 		<div class="dashboard-header-buttons">
 			<button id="edit-btn" class="ui-btn ui-btn-primary ui-btn-round dashboard-header-buttons-edit"><?= Loc::getMessage('SUPERSET_DASHBOARD_DETAIL_HEADER_EDIT') ?></button>
 			<button id="download-btn" class="ui-btn ui-btn-primary ui-btn-round dashboard-header-buttons-download"><?= Loc::getMessage('SUPERSET_DASHBOARD_DETAIL_HEADER_DOWNLOAD') ?></button>
+			<button id="share-btn" class="ui-btn ui-btn-primary ui-btn-round dashboard-header-buttons-share"><?= Loc::getMessage('SUPERSET_DASHBOARD_DETAIL_HEADER_SHARE') ?></button>
 			<div id="more-btn" class="ui-icon ui-icon-service-light-other icon-more dashboard-header-buttons-more"><i></i></div>
 		</div>
 	</div>
 	<div class='dashboard-iframe'></div>
 </div>
 
-
 <script>
 	BX.message(<?= Json::encode(Loc::loadLanguageFile(__FILE__)) ?>);
+	BX.message(<?= Json::encode(Loc::loadLanguageFile($_SERVER['DOCUMENT_ROOT'] . $templateFolder . '/startup.php')) ?>);
 	BX.ready(() => {
+
+		<?php if ($arResult['CAN_SEND_STARTUP_METRIC']): ?>
+		BX.BIConnector.ApacheSupersetAnalytics.sendAnalytics('infrastructure', 'start', {
+			c_element: 'system',
+			status: 'success',
+		});
+		BX.ajax.runAction('biconnector.superset.onStartupMetricSend');
+		<?php endif; ?>
+
 		new BX.BIConnector.ApacheSuperset.Dashboard.Detail.create(
 			<?= Json::encode([
 				'appNodeId' => 'dashboard',
@@ -147,6 +160,7 @@ if (!$limitManager->checkLimitWarning())
 				'canExport' => $arResult['CAN_EXPORT'],
 				'canEdit' => $arResult['CAN_EDIT'],
 				'analyticSource' => $analyticSource,
+				'analyticScope' => $analyticScope,
 				'dashboardEmbeddedParams' => [
 					'guestToken' => $arResult['GUEST_TOKEN'],
 					'uuid' => $arResult['DASHBOARD_UUID'],
@@ -158,7 +172,7 @@ if (!$limitManager->checkLimitWarning())
 					'supersetDomain' => \CUtil::JSEscape($arResult['SUPERSET_DOMAIN']),
 					'type' => $arResult['DASHBOARD_TYPE'],
 					'appId' => $arResult['DASHBOARD_APP_ID'],
-					'paramsCompatible' => $arResult['PARAMS_COMPATIBLE'],
+					'isUseExternalDatasets' => $arResult['IS_USE_EXTERNAL_DATASETS'],
 				],
 				'embeddedDebugMode' => $arResult['EMBEDDED_DEBUG_MODE'],
 			]) ?>

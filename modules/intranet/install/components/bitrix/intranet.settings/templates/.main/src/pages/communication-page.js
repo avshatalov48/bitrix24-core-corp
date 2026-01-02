@@ -1,4 +1,4 @@
-import {TextInputInline, Checker, Selector, UserSelector} from 'ui.form-elements.view';
+import {TextInputInline, Checker, Selector, UserSelector, FieldFactory} from 'ui.form-elements.view';
 import {Loc, Event, Tag, Type} from 'main.core';
 import { EventEmitter } from 'main.core.events';
 import 'ui.icon-set.main';
@@ -6,7 +6,6 @@ import 'ui.icon-set.actions';
 import {Section, Row, SeparatorRow} from 'ui.section';
 import 'ui.forms';
 import { SettingsSection, SettingsField, SettingsRow, BaseSettingsPage } from 'ui.form-elements.field';
-import { AnalyticSettingsEvent } from '../analytic';
 
 export class CommunicationPage extends BaseSettingsPage
 {
@@ -55,84 +54,15 @@ export class CommunicationPage extends BaseSettingsPage
 
 		if (this.hasValue('allow_livefeed_toall'))
 		{
-			let allowPostFeedField = new Checker(this.getValue('allow_livefeed_toall'));
-			allowPostFeedField.hideSeparator = true;
-
-			let settingsField = new SettingsField({
-				fieldView: allowPostFeedField,
-			});
-			const settingsRow = new SettingsRow({
-				parent: settingsSection,
-				child: settingsField,
-			});
-
-			let userSelectorField = new UserSelector({
+			const allowPostFeedChecker =  new Checker(this.getValue('allow_livefeed_toall'));
+			const allowPostFeedSelector = FieldFactory.createUserSelector({
 				inputName: 'livefeed_toall_rights[]',
 				label: Loc.getMessage('INTRANET_SETTINGS_FIELD_LABEL_SELECT_USER_PUBLIC_MESS'),
 				values: Object.values(this.getValue('arToAllRights')),
 				enableDepartments: true,
-				encodeValue: (value) => {
-					if (!Type.isNil(value.id))
-					{
-						return value.id === 'all-users' ? 'AU' : value.type + value.id.toString().split(':')[0];
-					}
+			})
 
-					return null;
-				},
-				decodeValue: (value: string) => {
-					if (value === 'UA')
-					{
-						return {
-							type: 'AU',
-							id: '',
-						}
-					}
-
-					const arr = value.match(/^(U|DR|D)(\d+)/);
-
-					if (!Type.isArray(arr))
-					{
-						return {
-							type: null,
-							id: null,
-						};
-					}
-
-					return {
-						type: arr[1],
-						id: arr[2],
-					}
-				},
-			});
-			settingsField = new SettingsField({
-				fieldView: userSelectorField,
-			});
-
-			const userSelectorRow = new Row({
-				isHidden: !allowPostFeedField.isChecked(),
-				className: 'ui-section__subrow',
-			});
-
-			new SettingsRow({
-				row: userSelectorRow,
-				parent: settingsRow,
-				child: settingsField,
-			});
-
-			EventEmitter.subscribe(
-				allowPostFeedField.switcher,
-				'toggled',
-				() => {
-					if (allowPostFeedField.isChecked())
-					{
-						userSelectorRow.show();
-					}
-					else
-					{
-						userSelectorRow.hide();
-					}
-				},
-			);
+			CommunicationPage.addToSectionCheckerHelper(allowPostFeedChecker, [allowPostFeedSelector], settingsSection);
 		}
 
 		if (this.hasValue('default_livefeed_toall'))
@@ -196,43 +126,11 @@ export class CommunicationPage extends BaseSettingsPage
 
 			CommunicationPage.addToSectionHelper(canPostGeneralChatListField, settingsRow, canPostGeneralChatListRow);
 
-			let managerSelectorField = new UserSelector({
+			let managerSelectorField = FieldFactory.createUserSelector({
 				inputName: 'imchat_toall_rights[]',
 				label: Loc.getMessage('INTRANET_SETTINGS_FIELD_LABEL_SELECT_USER_PUBLIC_MESS'),
 				enableAll: false,
 				values: Object.values(this.getValue('generalChatManagersList') ?? []),
-				encodeValue: (value) => {
-					if (!Type.isNil(value.id))
-					{
-						return value.id === 'all-users' ? 'AU' : 'U' + value.id;
-					}
-
-					return null;
-				},
-				decodeValue: (value) => {
-					if (value === 'UA')
-					{
-						return {
-							type: 'AU',
-							id: '',
-						}
-					}
-
-					const arr = value.match(/^(U)(\d+)/);
-
-					if (!Type.isArray(arr))
-					{
-						return {
-							type: null,
-							id: null,
-						};
-					}
-
-					return {
-						type: arr[1],
-						id: arr[2],
-					}
-				},
 			});
 
 			let managerSelectorRow = new Row({
@@ -351,43 +249,11 @@ export class CommunicationPage extends BaseSettingsPage
 
 			CommunicationPage.addToSectionHelper(canPostGeneralChannelListField, settingsRow, canPostGeneralChannelListRow);
 
-			let managerSelectorField = new UserSelector({
+			let managerSelectorField = FieldFactory.createUserSelector({
 				inputName: 'imchannel_toall_rights[]',
 				label: Loc.getMessage('INTRANET_SETTINGS_FIELD_LABEL_SELECT_USER_PUBLIC_MESS_CHANNEL') ?? '',
 				enableAll: false,
 				values: Object.values(this.getValue('generalChannelManagersList') ?? []),
-				encodeValue: (value) => {
-					if (!Type.isNil(value.id))
-					{
-						return value.id === 'all-users' ? 'AU' : 'U' + value.id;
-					}
-
-					return null;
-				},
-				decodeValue: (value) => {
-					if (value === 'UA')
-					{
-						return {
-							type: 'AU',
-							id: '',
-						}
-					}
-
-					const arr = value.match(/^(U)(\d+)/);
-
-					if (!Type.isArray(arr))
-					{
-						return {
-							type: null,
-							id: null,
-						};
-					}
-
-					return {
-						type: arr[1],
-						id: arr[2],
-					}
-				},
 			});
 
 			let managerSelectorRow = new Row({
@@ -462,6 +328,12 @@ export class CommunicationPage extends BaseSettingsPage
 		{
 			let fileViewerField = new Selector(this.getValue('DISK_VIEWER_SERVICE'));
 			CommunicationPage.addToSectionHelper(fileViewerField, settingsSection);
+		}
+
+		if (this.hasValue('DISK_UNIFIED_LINK_DEFAULT_ACCESS_LEVEL'))
+		{
+			let unifiedLinkDefaultAccessLevelSelector = new Selector(this.getValue('DISK_UNIFIED_LINK_DEFAULT_ACCESS_LEVEL'));
+			CommunicationPage.addToSectionHelper(unifiedLinkDefaultAccessLevelSelector, settingsSection);
 		}
 
 		if (this.hasValue('DISK_LIMIT_PER_FILE'))

@@ -21,7 +21,16 @@ while (ob_get_length() !== false)
 header('Content-Type:application/json; charset=UTF-8');
 
 $inputJSON = file_get_contents('php://input');
-$input = $inputJSON ? Bitrix\Main\Web\Json::decode($inputJSON) : [];
+try
+{
+	$input = $inputJSON ? \Bitrix\Main\Web\Json::decode($inputJSON) : [];
+}
+catch (\Bitrix\Main\ArgumentException $e)
+{
+	echo \Bitrix\Main\Web\Json::encode(['error' => 'BAD_REQUEST']);
+	echo "\n";
+	\Bitrix\Main\Application::getInstance()->terminate();
+}
 
 if (\Bitrix\Main\Loader::includeModule('biconnector'))
 {
@@ -47,7 +56,7 @@ if (\Bitrix\Main\Loader::includeModule('biconnector'))
 
 	$manager = Bitrix\BIConnector\Manager::getInstance();
 
-	$consumer = 'pbi';
+	$consumer = \Bitrix\BIConnector\Services\MicrosoftPowerBI::getServiceId();
 	if (isset($_GET['consumer']) && in_array($_GET['consumer'], ['datalens'], true))
 	{
 		$consumer = $_GET['consumer'];
@@ -153,6 +162,11 @@ if (\Bitrix\Main\Loader::includeModule('biconnector'))
 		}
 		else
 		{
+			if (isset($_GET['breakLimit']))
+			{
+				$service->enableBreakingLimitPrinting();
+			}
+
 			$resultQuery = $service->printQuery(
 				$tableName,
 				$input,

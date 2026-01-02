@@ -1,13 +1,27 @@
 <?php
-if(!defined('B_PROLOG_INCLUDED') || B_PROLOG_INCLUDED !== true) die();
 
-use \Bitrix\Main,
-	\Bitrix\Main\Localization\Loc;
+if (!defined('B_PROLOG_INCLUDED') || B_PROLOG_INCLUDED !== true)
+{
+	die();
+}
 
-\CJSCore::init("sidepanel");
+use Bitrix\Main;
+use Bitrix\Main\Localization\Loc;
+use Bitrix\Main\UI\Extension;
+
+/** @var array $arParams */
+/** @var array $arResult */
+/** @global \CMain $APPLICATION */
+
+Extension::load([
+	'sidepanel',
+]);
 
 Loc::loadLanguageFile(__FILE__);
-if(isset($_REQUEST["IFRAME"]) && $_REQUEST["IFRAME"] === "Y")
+
+$isIframe = ($_REQUEST['IFRAME'] ?? null) === 'Y';
+
+if ($isIframe)
 {
 	$APPLICATION->RestartBuffer();
 	?>
@@ -21,7 +35,9 @@ if(isset($_REQUEST["IFRAME"]) && $_REQUEST["IFRAME"] === "Y")
 					window.location = "<?=CUtil::JSEscape((new Main\Web\Uri(Main\Application::getInstance()->getContext()->getRequest()->getRequestUri()))->deleteParams(['IFRAME', 'IFRAME_TYPE']));?>" + window.location.hash;
 				}
 			</script>
-			<?$APPLICATION->ShowHead(); ?>
+			<?php
+			$APPLICATION->ShowHead();
+			?>
 		</head>
 		<body class="document-limit-slider">
 			<div class="pagetitle-wrap">
@@ -32,13 +48,14 @@ if(isset($_REQUEST["IFRAME"]) && $_REQUEST["IFRAME"] === "Y")
 				</div>
 			</div>
 			<div class="document-limit-container">
-<?php
+	<?php
 }
 else
 {
 	$APPLICATION->SetTitle(Loc::getMessage('SALESCENTER_FEEDBACK_TITLE'));
-?>
-			<div class="document-limit-container"><?
+	?>
+			<div class="document-limit-container">
+	<?php
 }
 ?>
 				<script data-b24-form="inline/<?=$arResult["id"]?>/<?=$arResult["sec"]?>" data-skip-moving="true">
@@ -49,11 +66,11 @@ else
 				</script>
 			</div>
 <?php
-if(isset($_REQUEST["IFRAME"]) && $_REQUEST["IFRAME"] === "Y")
+if ($isIframe)
 {
-?>
+	?>
 		</body>
 	</html>
-<?php
+	<?php
 	Main\Application::getInstance()->terminate();
 }

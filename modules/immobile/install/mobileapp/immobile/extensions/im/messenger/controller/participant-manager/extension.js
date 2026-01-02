@@ -2,7 +2,6 @@
  * @module im/messenger/controller/participant-manager
  */
 jn.define('im/messenger/controller/participant-manager', (require, exports, module) => {
-	const { Loc } = require('loc');
 	const { Logger } = require('im/messenger/lib/logger');
 	const { UIMenu } = require('layout/ui/menu');
 
@@ -58,15 +57,17 @@ jn.define('im/messenger/controller/participant-manager', (require, exports, modu
 		 * @desc Prepare actions objects data by name
 		 * @return void
 		 */
-		prepareActionsData() {
+		prepareActionsData()
+		{
 			this.actionsItems.forEach((action) => {
 				this.actionsData.push({
 					id: action.id,
 					title: action.title,
-					onItemSelected: action.callback,
+					onItemSelected: action.callback ?? action.onItemSelected,
 					showIcon: Boolean(action.icon),
 					iconName: action.icon,
 					testId: action.testId,
+					style: action.style,
 				});
 			});
 		}

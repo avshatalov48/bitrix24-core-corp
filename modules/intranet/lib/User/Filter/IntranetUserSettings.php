@@ -3,11 +3,11 @@
 namespace Bitrix\Intranet\User\Filter;
 
 use Bitrix\Intranet\CurrentUser;
+use Bitrix\Intranet\User;
 use Bitrix\Main\Config\Option;
 use Bitrix\Main\Filter\UserSettings;
 use Bitrix\Main\Loader;
 use Bitrix\Main\ModuleManager;
-use Bitrix\Socialnetwork\UserToGroupTable;
 
 class IntranetUserSettings extends UserSettings
 {
@@ -50,6 +50,7 @@ class IntranetUserSettings extends UserSettings
 	{
 		$isExtranetSite = Loader::includeModule('extranet') && \CExtranet::isExtranetSite();
 		$canEditAllUsers = CurrentUser::get()->canDoOperation('edit_all_users');
+		$user = new User();
 
 		$this->filterAvailability[self::ADMIN_FIELD] =
 			$canEditAllUsers
@@ -60,10 +61,10 @@ class IntranetUserSettings extends UserSettings
 			);
 
 		$this->filterAvailability[self::FIRED_FIELD] =
-			(
+			!$isExtranetSite
+			&& (
 				$canEditAllUsers || Option::get('bitrix24', 'show_fired_employees', 'Y') === 'Y'
-			)
-			&& !$isExtranetSite;
+			);
 
 		$this->filterAvailability[self::INVITED_FIELD] =
 			!ModuleManager::isModuleInstalled('extranet')

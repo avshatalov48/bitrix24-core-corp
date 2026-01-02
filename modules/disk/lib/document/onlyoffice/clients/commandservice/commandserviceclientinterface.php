@@ -10,7 +10,7 @@ interface CommandServiceClientInterface
 {
 	/**
 	 * Renames the document
-	 * @link https://api1.onlyoffice.com/editors/command/meta
+	 * @link https://api.onlyoffice.com/docs/docs-api/additional-api/command-service/meta/
 	 * @param string $documentKey Document identifier
 	 * @param string $newName New document name
 	 * @return Result
@@ -19,7 +19,7 @@ interface CommandServiceClientInterface
 
 	/**
 	 * Disconnects the users with the identifiers specified in the $userIds parameter from the document editing service.
-	 * @link https://api1.onlyoffice.com/editors/command/drop
+	 * @link https://api.onlyoffice.com/docs/docs-api/additional-api/command-service/drop/
 	 * @param string $documentKey Document identifier
 	 * @param string[] $userIds Array of user identifiers
 	 * @return Result

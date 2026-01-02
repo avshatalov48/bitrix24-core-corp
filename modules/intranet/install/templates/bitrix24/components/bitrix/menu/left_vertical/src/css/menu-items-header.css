@@ -1,0 +1,91 @@
+.menu-items-header {
+	display: flex;
+	align-items: center;
+	margin-bottom: 15px;
+	padding: 13px var(--menu-items-block-padding-x) 13px;
+	position: relative;
+	white-space: nowrap;
+}
+
+.menu-collapsed-mode:not(.menu-animation-opening-mode) .menu-items-header__logo,
+.menu-animation-closing-mode .menu-items-header__logo {
+	display: none;
+}
+
+.menu-items-header__logo {
+	--menu-items-header__logo-color: var(--ui-color-base-1);
+
+	display: flex;
+	margin-left: 4px;
+	text-decoration: none;
+	font-size: var(--ui-font-size-2xl);
+	font-weight: var(--ui-font-weight-medium);
+	line-height: var(--ui-font-line-height-3xs);
+	color: var(--menu-items-header__logo-color);
+}
+
+.menu-items-header__logo-number {
+	margin-left: 1px;
+}
+
+.menu-items-header__logo::after {
+	content: '';
+	width: 9px;
+	height: 9px;
+	position: relative;
+	top: 4px;
+	left: 3px;
+	mask-image: url("../images/icons/clock.svg");
+	mask-repeat: no-repeat;
+	mask-size: contain;
+	background-color: var(--menu-items-header__logo-color);
+}
+
+.menu-items-header:after {
+	content: "";
+	position: absolute;
+	left: var(--menu-items-block-padding-x);
+	right: var(--menu-items-block-padding-x);
+	bottom: 0;
+	height: 1px;
+	transition-property: width, left, right, background;
+	transition-duration: 0.2s;
+	transition-timing-function: ease-in-out;
+	background-color: var(--leftmenu-bg-divider);
+}
+
+.menu-items-header:after,
+.menu-collapsed-mode.menu-animation-opening-mode:not(.menu-sliding-mode) .menu-items-header::after {
+	left: var(--menu-items-block-padding-x);
+	right: var(--menu-items-block-padding-x);
+	background-color: var(--leftmenu-bg-divider);
+}
+
+
+.menu-collapsed-mode:not(.menu-sliding-mode) .menu-items-header:after,
+.menu-animation-closing-mode .menu-items-header:after {
+	left: 21px;
+	right: 21px;
+}
+
+.menu-items-header-title {
+	display: none;
+	color: var(--ui-color-design-plain-na-content);
+	font-size: var(--ui-font-size-lg);
+	line-height: var(--ui-font-line-height-reset);
+	font-weight: var(--ui-font-weight-regular, 400);
+	white-space: nowrap;
+	overflow: hidden;
+	text-overflow: ellipsis;
+	max-width: 200px;
+	transition: opacity .3s;
+	cursor: pointer;
+}
+
+.menu-collapsed-mode.menu-sliding-mode .menu-items-header-title {
+	display: block;
+}
+
+.menu-items-header:hover .menu-items-header-title {
+	color: color-mix(in srgb, var(--ui-color-design-plain-na-content) 100%, var(--ui-color-bg-state-hover-default-hex) var(--ui-color-bg-state-hover-default-opacity));
+}

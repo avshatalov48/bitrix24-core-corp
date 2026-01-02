@@ -1,69 +1,43 @@
-import {Event, Tag, Text} from 'main.core';
+import { Type } from 'main.core';
 
-import {SidePanel} from '../../service/side.panel';
-
-import type {Views} from '../view';
+import { SidePanel } from '../../service/side.panel';
+import type { Views } from '../view';
+import { NavigationPanel } from 'ui.navigationpanel';
 
 type Params = {
 	sidePanel: SidePanel,
-	views: Views
+	views: Views,
+	target: HTMLElement,
 }
 
-export class Tabs
+export class Tabs extends NavigationPanel
 {
-	constructor(params: Params)
+	constructor(params: Params): void
 	{
-		this.sidePanel = params.sidePanel;
-		this.views = params.views;
-
-		this.node = null;
-	}
-
-	render(): HTMLElement
-	{
-		const planTabActiveClass = (
-			this.views['plan'].active
-			? 'tasks-view-switcher--item --active'
-			: ''
-		);
-		const activeTabActiveClass = (
-			this.views['activeSprint'].active
-			? 'tasks-view-switcher--item --active'
-			: ''
-		);
-		const completedTabActiveClass = (
-			this.views['completedSprint'].active
-			? 'tasks-view-switcher--item --active'
-			: ''
-		);
-
-		this.node = Tag.render`
-			<div class="tasks-view-switcher">
-				<a
-					href="${this.views['plan'].url}"
-					class="tasks-view-switcher--item ${planTabActiveClass}"
-				>${Text.encode(this.views['plan'].name)}</a>
-				<a
-					href="${this.views['activeSprint'].url}"
-					class="tasks-view-switcher--item ${activeTabActiveClass}"
-				>${Text.encode(this.views['activeSprint'].name)}</a>
-				<a
-					href="${this.views['completedSprint'].url}"
-					class="tasks-view-switcher--item ${completedTabActiveClass}"
-				>${Text.encode(this.views['completedSprint'].name)}</a>
-			</div>
-		`;
-
-		this.node.querySelectorAll('a').forEach((tab: HTMLElement) => {
-			Event.bind(tab, 'click', () => {
-				const topSidePanel = this.sidePanel.getTopSidePanel()
-				if (topSidePanel !== null)
-				{
-					topSidePanel.showLoader();
-				}
-			});
+		params.views.forEach((view) => {
+			if (Type.isStringFilled(view.url))
+			{
+				view.events = {
+					click: () => this.openUrl(),
+				};
+			}
 		});
 
-		return this.node;
+		super({
+			target: params.target,
+			items: params.views,
+		});
+
+		this.sidePanel = params.sidePanel;
+	}
+
+	openUrl(): void
+	{
+		const topSidePanel = this.sidePanel.getTopSidePanel();
+
+		if (topSidePanel !== null)
+		{
+			topSidePanel.showLoader();
+		}
 	}
 }

@@ -4,6 +4,7 @@ this.BX.Booking = this.BX.Booking || {};
 (function (exports,main_core,main_popup,spotlight,ui_tour,ui_autoLaunch,ui_bannerDispatcher,booking_core,booking_const,booking_provider_service_optionService) {
 	'use strict';
 
+	var _ahaPopupWidth = /*#__PURE__*/babelHelpers.classPrivateFieldLooseKey("ahaPopupWidth");
 	var _bookingForAhaMoment = /*#__PURE__*/babelHelpers.classPrivateFieldLooseKey("bookingForAhaMoment");
 	var _shownPopups = /*#__PURE__*/babelHelpers.classPrivateFieldLooseKey("shownPopups");
 	var _shouldShowBanner = /*#__PURE__*/babelHelpers.classPrivateFieldLooseKey("shouldShowBanner");
@@ -12,15 +13,27 @@ this.BX.Booking = this.BX.Booking || {};
 	var _shouldShowResourceIntersection = /*#__PURE__*/babelHelpers.classPrivateFieldLooseKey("shouldShowResourceIntersection");
 	var _shouldShowExpandGrid = /*#__PURE__*/babelHelpers.classPrivateFieldLooseKey("shouldShowExpandGrid");
 	var _shouldShowSelectResources = /*#__PURE__*/babelHelpers.classPrivateFieldLooseKey("shouldShowSelectResources");
+	var _shouldShowCyclePopup = /*#__PURE__*/babelHelpers.classPrivateFieldLooseKey("shouldShowCyclePopup");
+	var _shouldShowSearchNavigation = /*#__PURE__*/babelHelpers.classPrivateFieldLooseKey("shouldShowSearchNavigation");
 	var _wasNotShown = /*#__PURE__*/babelHelpers.classPrivateFieldLooseKey("wasNotShown");
+	var _wasShown = /*#__PURE__*/babelHelpers.classPrivateFieldLooseKey("wasShown");
 	var _getOptionName = /*#__PURE__*/babelHelpers.classPrivateFieldLooseKey("getOptionName");
 	class AhaMoments {
 	  constructor() {
 	    Object.defineProperty(this, _getOptionName, {
 	      value: _getOptionName2
 	    });
+	    Object.defineProperty(this, _wasShown, {
+	      value: _wasShown2
+	    });
 	    Object.defineProperty(this, _wasNotShown, {
 	      value: _wasNotShown2
+	    });
+	    Object.defineProperty(this, _shouldShowSearchNavigation, {
+	      value: _shouldShowSearchNavigation2
+	    });
+	    Object.defineProperty(this, _shouldShowCyclePopup, {
+	      value: _shouldShowCyclePopup2
 	    });
 	    Object.defineProperty(this, _shouldShowSelectResources, {
 	      value: _shouldShowSelectResources2
@@ -40,6 +53,10 @@ this.BX.Booking = this.BX.Booking || {};
 	    Object.defineProperty(this, _shouldShowBanner, {
 	      value: _shouldShowBanner2
 	    });
+	    Object.defineProperty(this, _ahaPopupWidth, {
+	      writable: true,
+	      value: 380
+	    });
 	    Object.defineProperty(this, _bookingForAhaMoment, {
 	      writable: true,
 	      value: void 0
@@ -55,6 +72,11 @@ this.BX.Booking = this.BX.Booking || {};
 	    }
 	    return new Promise(resolve => {
 	      ui_bannerDispatcher.BannerDispatcher.critical.toQueue(async onDone => {
+	        var _params$target;
+	        if (!((_params$target = params.target) != null && _params$target.offsetWidth)) {
+	          onDone();
+	          return;
+	        }
 	        await this.showGuide(params);
 	        onDone();
 	        resolve();
@@ -62,6 +84,10 @@ this.BX.Booking = this.BX.Booking || {};
 	    });
 	  }
 	  showGuide(params) {
+	    var _params$article, _params$article2, _params$article3;
+	    if (params.ahaMoment && babelHelpers.classPrivateFieldLooseBase(this, _wasShown)[_wasShown](params.ahaMoment)) {
+	      return;
+	    }
 	    const guide = new ui_tour.Guide({
 	      id: params.id,
 	      overlay: false,
@@ -77,11 +103,17 @@ this.BX.Booking = this.BX.Booking || {};
 	          bottom: Boolean(params.top),
 	          color: 'primary'
 	        },
-	        article: params.article.code,
-	        articleAnchor: params.article.anchorCode
+	        article: (_params$article = params.article) == null ? void 0 : _params$article.code,
+	        articleAnchor: (_params$article2 = params.article) == null ? void 0 : _params$article2.anchorCode,
+	        linkTitle: (_params$article3 = params.article) == null ? void 0 : _params$article3.title
 	      }],
 	      targetContainer: params.targetContainer
 	    });
+
+	    // default is 280
+	    if (babelHelpers.classPrivateFieldLooseBase(this, _ahaPopupWidth)[_ahaPopupWidth]) {
+	      guide.getPopup().setWidth(babelHelpers.classPrivateFieldLooseBase(this, _ahaPopupWidth)[_ahaPopupWidth]);
+	    }
 	    const pulsar = new BX.SpotLight({
 	      targetElement: params.target,
 	      targetVertex: 'middle-center',
@@ -109,6 +141,9 @@ this.BX.Booking = this.BX.Booking || {};
 	        forceTop: !params.top,
 	        forceBindPosition: true
 	      });
+	      if (params.isPulsarTransparent) {
+	        main_core.Dom.style(pulsar.container, 'pointer-events', 'none');
+	      }
 	      main_core.Event.bind(document, 'scroll', adjustPosition, true);
 	    });
 	  }
@@ -122,7 +157,9 @@ this.BX.Booking = this.BX.Booking || {};
 	      [booking_const.AhaMoment.ResourceWorkload]: babelHelpers.classPrivateFieldLooseBase(this, _wasNotShown)[_wasNotShown](ahaMoment),
 	      [booking_const.AhaMoment.ResourceIntersection]: babelHelpers.classPrivateFieldLooseBase(this, _shouldShowResourceIntersection)[_shouldShowResourceIntersection](),
 	      [booking_const.AhaMoment.ExpandGrid]: babelHelpers.classPrivateFieldLooseBase(this, _shouldShowExpandGrid)[_shouldShowExpandGrid](),
-	      [booking_const.AhaMoment.SelectResources]: babelHelpers.classPrivateFieldLooseBase(this, _shouldShowSelectResources)[_shouldShowSelectResources]()
+	      [booking_const.AhaMoment.SelectResources]: babelHelpers.classPrivateFieldLooseBase(this, _shouldShowSelectResources)[_shouldShowSelectResources](),
+	      [booking_const.AhaMoment.CyclePopup]: babelHelpers.classPrivateFieldLooseBase(this, _shouldShowCyclePopup)[_shouldShowCyclePopup](),
+	      [booking_const.AhaMoment.SearchNavigation]: babelHelpers.classPrivateFieldLooseBase(this, _shouldShowSearchNavigation)[_shouldShowSearchNavigation]()
 	    }[ahaMoment];
 	  }
 	  setShown(ahaMoment) {
@@ -140,11 +177,7 @@ this.BX.Booking = this.BX.Booking || {};
 	}
 	function _shouldShowBanner2(ahaMoment) {
 	  const canTurnOnDemo = booking_core.Core.getStore().getters[`${booking_const.Model.Interface}/canTurnOnDemo`];
-	  if (canTurnOnDemo) {
-	    return true;
-	  } else {
-	    return babelHelpers.classPrivateFieldLooseBase(this, _wasNotShown)[_wasNotShown](ahaMoment);
-	  }
+	  return canTurnOnDemo || babelHelpers.classPrivateFieldLooseBase(this, _wasNotShown)[_wasNotShown](ahaMoment);
 	}
 	function _shouldShowAddResource2() {
 	  const wasNotShown = babelHelpers.classPrivateFieldLooseBase(this, _wasNotShown)[_wasNotShown](booking_const.AhaMoment.AddResource);
@@ -165,19 +198,30 @@ this.BX.Booking = this.BX.Booking || {};
 	}
 	function _shouldShowExpandGrid2() {
 	  const wasNotShown = babelHelpers.classPrivateFieldLooseBase(this, _wasNotShown)[_wasNotShown](booking_const.AhaMoment.ExpandGrid);
-	  const previousAhaMomentsShown = [booking_const.AhaMoment.ResourceWorkload, booking_const.AhaMoment.ResourceWorkload].every(ahaMoment => !babelHelpers.classPrivateFieldLooseBase(this, _wasNotShown)[_wasNotShown](ahaMoment));
+	  const previousAhaMomentsShown = [booking_const.AhaMoment.ResourceWorkload, booking_const.AhaMoment.ResourceWorkload].every(ahaMoment => babelHelpers.classPrivateFieldLooseBase(this, _wasShown)[_wasShown](ahaMoment));
 	  return wasNotShown && previousAhaMomentsShown && !main_popup.PopupManager.isAnyPopupShown();
 	}
 	function _shouldShowSelectResources2() {
 	  const wasNotShown = babelHelpers.classPrivateFieldLooseBase(this, _wasNotShown)[_wasNotShown](booking_const.AhaMoment.SelectResources);
-	  const previousAhaMomentShown = !babelHelpers.classPrivateFieldLooseBase(this, _wasNotShown)[_wasNotShown](booking_const.AhaMoment.ExpandGrid);
+	  const previousAhaMomentShown = babelHelpers.classPrivateFieldLooseBase(this, _wasShown)[_wasShown](booking_const.AhaMoment.ExpandGrid);
 	  return wasNotShown && previousAhaMomentShown && !main_popup.PopupManager.isAnyPopupShown();
 	}
+	function _shouldShowCyclePopup2() {
+	  const wasNotShown = babelHelpers.classPrivateFieldLooseBase(this, _wasNotShown)[_wasNotShown](booking_const.AhaMoment.CyclePopup);
+	  const previousAhaMomentShown = babelHelpers.classPrivateFieldLooseBase(this, _wasShown)[_wasShown](booking_const.AhaMoment.SelectResources);
+	  return wasNotShown && previousAhaMomentShown;
+	}
+	function _shouldShowSearchNavigation2() {
+	  return babelHelpers.classPrivateFieldLooseBase(this, _wasNotShown)[_wasNotShown](booking_const.AhaMoment.SearchNavigation);
+	}
 	function _wasNotShown2(ahaMoment) {
+	  return !babelHelpers.classPrivateFieldLooseBase(this, _wasShown)[_wasShown](ahaMoment);
+	}
+	function _wasShown2(ahaMoment) {
 	  const {
 	    ahaMoments
 	  } = booking_core.Core.getParams();
-	  return ahaMoments[ahaMoment] && !babelHelpers.classPrivateFieldLooseBase(this, _shownPopups)[_shownPopups][ahaMoment];
+	  return !ahaMoments[ahaMoment] || babelHelpers.classPrivateFieldLooseBase(this, _shownPopups)[_shownPopups][ahaMoment];
 	}
 	function _getOptionName2(ahaMoment) {
 	  return {
@@ -189,7 +233,9 @@ this.BX.Booking = this.BX.Booking || {};
 	    [booking_const.AhaMoment.ResourceWorkload]: booking_const.Option.AhaResourceWorkload,
 	    [booking_const.AhaMoment.ResourceIntersection]: booking_const.Option.AhaResourceIntersection,
 	    [booking_const.AhaMoment.ExpandGrid]: booking_const.Option.AhaExpandGrid,
-	    [booking_const.AhaMoment.SelectResources]: booking_const.Option.AhaSelectResources
+	    [booking_const.AhaMoment.SelectResources]: booking_const.Option.AhaSelectResources,
+	    [booking_const.AhaMoment.CyclePopup]: booking_const.Option.AhaCyclePopup,
+	    [booking_const.AhaMoment.SearchNavigation]: booking_const.Option.AhaSearchNavigation
 	  }[ahaMoment];
 	}
 	const ahaMoments = new AhaMoments();

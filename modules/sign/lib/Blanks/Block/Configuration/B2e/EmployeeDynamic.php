@@ -17,8 +17,7 @@ class EmployeeDynamic extends Configuration
 	)
 	{
 		$this->memberDynamicFieldInfoProvider = $memberDynamicFieldInfoProvider
-			?? Container::instance()->getMemberDynamicFieldProvider()
-		;
+			?? Container::instance()->getMemberDynamicFieldProvider();
 	}
 
 	public function validate(Item\Block $block): Main\Result
@@ -31,7 +30,7 @@ class EmployeeDynamic extends Configuration
 				new Main\Error(
 					Main\Localization\Loc::getMessage('SIGN_BLANKS_BLOCK_CONFIGURATION_EMPLOYEE_DYNAMIC_ERROR_FIELD_NOT_SELECTED'),
 					'REFERENCE_ERROR_FIELD_NOT_SELECTED',
-				)
+				),
 			);
 		}
 

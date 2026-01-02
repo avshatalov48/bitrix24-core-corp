@@ -37,7 +37,7 @@ class Permissions
 	{
 		$availableUserIds = array_merge([$this->userId], User::getSubordinateEmployees($this->userId));
 
-		$teams = Configuration::getValue('timeman_pwt')['teams'];
+		$teams = Configuration::getValue('timeman_pwt')['teams'] ?? null;
 		if (is_array($teams))
 		{
 			$availableUserIdsByTeams = [];

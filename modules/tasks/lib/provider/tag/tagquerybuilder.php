@@ -4,11 +4,11 @@ namespace Bitrix\Tasks\Provider\Tag;
 
 use Bitrix\Main\ORM\Query\Query;
 use Bitrix\Tasks\Internals\Task\LabelTable;
-use Bitrix\Tasks\Provider\QueryBuilderInterface;
+use Bitrix\Tasks\Provider\Query\QueryBuilderInterface;
 use Bitrix\Tasks\Provider\Tag\Builders\TagFilterBuilder;
 use Bitrix\Tasks\Provider\Tag\Builders\TagOrderBuilder;
 use Bitrix\Tasks\Provider\Tag\Builders\TagSelectBuilder;
-use Bitrix\Tasks\Provider\TaskQueryInterface;
+use Bitrix\Tasks\Provider\Query\TaskQueryInterface;
 
 class TagQueryBuilder implements QueryBuilderInterface
 {

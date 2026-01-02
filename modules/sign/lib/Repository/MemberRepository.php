@@ -389,6 +389,7 @@ class MemberRepository
 			->addSelect('*')
 			->where('DOCUMENT_ID', $documentId)
 			->where('ROLE', $this->convertRoleToInt($role))
+			->setOrder(['ID' => 'ASC'])
 		;
 
 		if ($limit)
@@ -409,6 +410,38 @@ class MemberRepository
 		return $this->listByDocumentIdWithRole($documentId, $role, 1)->getFirst();
 	}
 
+	public function isUserMemberOrInitiatorWithDoneStatus(int $userId): bool
+	{
+		$filter =
+			(new ConditionTree())
+				->where('SIGNED', MemberStatus::DONE)
+				->where('DOCUMENT.ENTITY_TYPE', \Bitrix\Sign\Type\Document\EntityType::SMART_B2E)
+				->where(
+					(new ConditionTree())
+						->logic(ConditionTree::LOGIC_OR)
+						->where(
+							(new ConditionTree())
+								->where('ENTITY_TYPE', EntityType::USER)
+								->where('ENTITY_ID', $userId)
+						)
+						->where(
+							(new ConditionTree())
+								->logic(ConditionTree::LOGIC_OR)
+								->where('DOCUMENT.CREATED_BY_ID', $userId)
+								->where('DOCUMENT.REPRESENTATIVE_ID', $userId)
+						)
+				)
+		;
+
+		$query = Internal\MemberTable
+			::query()
+			->setSelect(['ID'])
+			->where($filter)
+		;
+
+		return (int)$query->queryCountTotal() > 0;
+	}
+
 	public function isDocumentHasReviewer(int $documentId): bool
 	{
 		return $this->isDocumentHasMemberWithRoles($documentId, [Role::REVIEWER]);
@@ -417,6 +450,20 @@ class MemberRepository
 	public function isDocumentHasEditor(int $documentId): bool
 	{
 		return $this->isDocumentHasMemberWithRoles($documentId, [Role::EDITOR]);
+	}
+
+	public function isDocumentHasWaitReviewer(int $documentId): bool
+	{
+		$model = Internal\MemberTable
+			::query()
+			->addSelect('*')
+			->where('DOCUMENT_ID', $documentId)
+			->where('ROLE', $this->convertRoleToInt(Role::REVIEWER))
+			->where('SIGNED', MemberStatus::WAIT)
+			->setLimit(1)
+		;
+
+		return !!$model->fetch();
 	}
 
 	public function isDocumentHasMemberWithRoles(int $documentId, array $roles): bool
@@ -2075,6 +2122,20 @@ class MemberRepository
 		return $model !== null ? $this->extractItemFromModel($model) : null;
 	}
 
+	public function getCompanyMemberByDocument(int $id): ?Item\Member
+	{
+		$model = Internal\MemberTable::query()
+			->addSelect('*')
+			->where('DOCUMENT_ID', $id)
+			->whereIn('ENTITY_TYPE', [EntityType::ROLE, EntityType::COMPANY])
+			->where('ROLE', $this->convertRoleToInt(Role::ASSIGNEE))
+			->setLimit(1)
+			->fetchObject()
+		;
+
+		return $model !== null ? $this->extractItemFromModel($model) : null;
+	}
+
 	/**
 	 * @param int $documentId
 	 *
@@ -2082,21 +2143,7 @@ class MemberRepository
 	 */
 	public function listUserIdsByDocumentId(int $documentId): array
 	{
-		$flatArray = [];
-		$result = Internal\MemberTable::query()
-			->setSelect(['ENTITY_ID'])
-			->setDistinct()
-			->where('DOCUMENT_ID', $documentId)
-			->where('ENTITY_TYPE', EntityType::USER)
-			->exec()
-		;
-
-		while ($row = $result->fetch())
-		{
-			$flatArray[] = (int)$row['ENTITY_ID'];
-		}
-
-		return $flatArray;
+		return $this->listUniqueUserIdsByDocumentIds([$documentId]);
 	}
 
 	/**
@@ -2142,5 +2189,75 @@ class MemberRepository
 			->whereNotIn('SIGNED', [MemberStatus::STOPPABLE_READY, MemberStatus::WAIT, MemberStatus::STOPPED, MemberStatus::REFUSED])
 			->setLimit(1)
 		;
+	}
+
+	/**
+	 * @param list<int> $documentIds
+	 *
+	 * @return list<int>
+	 */
+	public function listUniqueUserIdsByDocumentIds(array $documentIds): array
+	{
+		if (empty($documentIds))
+		{
+			return [];
+		}
+
+		$result = Internal\MemberTable::query()
+			->setSelect(['ENTITY_ID'])
+			->setDistinct()
+			->whereIn('DOCUMENT_ID', $documentIds)
+			->where('ENTITY_TYPE', EntityType::USER)
+			->exec()
+		;
+
+		$flatArray = [];
+		while ($row = $result->fetch())
+		{
+			$flatArray[] = (int)$row['ENTITY_ID'];
+		}
+
+		return $flatArray;
+	}
+
+	/**
+	 * @param Item\DocumentCollection $documents
+	 *
+	 * @return array<int, list<int>>
+	 */
+	public function listUserIdsWithEmployeeIdIsNotSetByDocumentIds(Item\DocumentCollection $documents): array
+	{
+		$result = Internal\MemberTable::query()
+			  ->setSelect(['ENTITY_ID', 'ENTITY_TYPE', 'DOCUMENT_ID'])
+			  ->setDistinct()
+			  ->whereIn('DOCUMENT_ID', $documents->listIdsWithoutNull())
+			  ->whereNull('EMPLOYEE_ID')
+			  ->exec()
+		;
+		$representativesMap = [];
+		foreach ($documents as $document)
+		{
+			$representativesMap[$document->id] = $document->representativeId;
+		}
+
+		$userIdsByDocumentIds = [];
+		while ($row = $result->fetch())
+		{
+			$entityId = (int)$row['ENTITY_ID'];
+			$documentId = (int)$row['DOCUMENT_ID'];
+			if ($row['ENTITY_TYPE'] === EntityType::COMPANY)
+			{
+				$entityId = $representativesMap[$documentId] ?? 0;
+			}
+
+			$userIdsByDocumentIds[$documentId][] = $entityId;
+		}
+
+		foreach ($userIdsByDocumentIds as $documentId => $userIds)
+		{
+			$userIdsByDocumentIds[$documentId] = array_values(array_unique(array_filter($userIds)));
+		}
+
+		return $userIdsByDocumentIds;
 	}
 }

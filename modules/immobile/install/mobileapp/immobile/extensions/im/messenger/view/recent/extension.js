@@ -2,32 +2,38 @@
  * @module im/messenger/view/recent
  */
 jn.define('im/messenger/view/recent', (require, exports, module) => {
+	/* global dialogList */
 	const { AnalyticsEvent } = require('analytics');
 	const AppTheme = require('apptheme');
 	const { Runtime } = require('runtime');
-	const { Loc } = require('loc');
+	const { Loc } = require('im/messenger/loc');
+	const { Icon } = require('assets/icons');
+	const { RecentItem } = require('im/messenger/lib/element/recent');
 
-	const { openIntranetInviteWidget } = require('intranet/invite-opener-new');
+	const { getTopMenuNotificationsButton } = require('im/messenger/api/notifications-opener');
 
 	const {
 		EventType,
-		FeatureFlag,
 		ComponentCode,
 		ActionByUserType,
 	} = require('im/messenger/const');
 	const { Feature } = require('im/messenger/lib/feature');
 	const { MessengerParams } = require('im/messenger/lib/params');
 	const { UserPermission } = require('im/messenger/lib/permission-manager');
+	const { QuickRecentLoader } = require('im/messenger/lib/quick-recent-load');
 	const { LoggerManager } = require('im/messenger/lib/logger');
 	const logger = LoggerManager.getInstance().getLogger('recent--view');
 
 	const { View } = require('im/messenger/view/base');
+	const { StateManager } = require('im/messenger/view/lib/state-manager');
 
 	class RecentView extends View
 	{
 		constructor(options = {})
 		{
 			super(options);
+
+			this.initStateManager();
 
 			this.setCustomEvents([
 				EventType.recent.createChat,
@@ -50,6 +56,7 @@ jn.define('im/messenger/view/recent', (require, exports, module) => {
 			this.initTopMenu();
 			this.initSections();
 			this.renderChatCreateButton();
+			this.initQuickRecentLoader();
 		}
 
 		bindMethods()
@@ -68,14 +75,18 @@ jn.define('im/messenger/view/recent', (require, exports, module) => {
 		{
 			this.ui.on(EventType.recent.scroll, Runtime.throttle(this.onScroll, 50, this));
 
-			if (FeatureFlag.list.itemWillDisplaySupported)
-			{
-				this.ui.on(EventType.recent.itemWillDisplay, this.itemWillDisplayHandler);
-			}
-			else
-			{
-				this.ui.on(EventType.recent.scroll, Runtime.debounce(this.onScroll, 50, this));
-			}
+			this.ui.on(EventType.recent.itemWillDisplay, this.itemWillDisplayHandler);
+		}
+
+		initStateManager()
+		{
+			const state = {
+				floatingButton: false,
+				rightButtons: null,
+				isWelcomeScreenVisible: false,
+			};
+
+			this.stateManager = new StateManager(state);
 		}
 
 		initTopMenu()
@@ -90,12 +101,24 @@ jn.define('im/messenger/view/recent', (require, exports, module) => {
 						id: 'readAll',
 						title: Loc.getMessage('IMMOBILE_RECENT_VIEW_READ_ALL'),
 						sectionCode: 'general',
-						iconName: 'read',
+						iconName: Icon.CHATS_WITH_CHECK.getIconName(),
 					},
 				);
 			}
 
-			if (FeatureFlag.isDevelopmentEnvironment)
+			if (Feature.isDevModeEnabled)
+			{
+				topMenuButtons.push(
+					{
+						id: 'developer-console',
+						title: 'Developer console',
+						sectionCode: 'general',
+						iconName: 'edit',
+					},
+				);
+			}
+
+			if (Feature.isDevelopmentEnvironment)
 			{
 				topMenuButtons.push(
 					{
@@ -112,7 +135,7 @@ jn.define('im/messenger/view/recent', (require, exports, module) => {
 				);
 			}
 
-			const topMenuButtonHandler = (event, item) => {
+			const topMenuButtonHandler = async (event, item) => {
 				if (event === 'onItemSelected' && item.id === 'readAll')
 				{
 					this.emitCustomEvent(EventType.recent.readAll);
@@ -120,21 +143,31 @@ jn.define('im/messenger/view/recent', (require, exports, module) => {
 					return;
 				}
 
-				if (FeatureFlag.isDevelopmentEnvironment && event === 'onItemSelected')
+				if (Feature.isDevelopmentEnvironment && event === 'onItemSelected')
 				{
 					if (item.id === 'developer-menu')
 					{
-						showMessengerDeveloperMenu();
+						window.showMessengerDeveloperMenu();
 					}
 
 					if (item.id === 'developer-reload')
 					{
+						// eslint-disable-next-line no-undef
 						reload();
 					}
 				}
+
+				if (Feature.isDevModeEnabled && event === 'onItemSelected' && item.id === 'developer-console')
+				{
+					const { Console } = await requireLazy('im:messenger/lib/dev/tools');
+					Console.open();
+				}
 			};
 
-			const buttons = [];
+			const buttons = [
+				getTopMenuNotificationsButton(),
+			];
+
 			if (topMenuButtons.length > 0)
 			{
 				topMenuPopup.setData(topMenuButtons, [{ id: 'general' }], topMenuButtonHandler);
@@ -157,9 +190,12 @@ jn.define('im/messenger/view/recent', (require, exports, module) => {
 			this.setRightButtons(buttons);
 		}
 
-		initSections()
+		/**
+		 * @return {Array<JNListWidgetSectionItem>}
+		 */
+		getSections()
 		{
-			this.setSections([
+			return [
 				{
 					title: '',
 					id: 'call',
@@ -178,7 +214,12 @@ jn.define('im/messenger/view/recent', (require, exports, module) => {
 					backgroundColor: '#ffffff',
 					sortItemParams: { order: 'desc' },
 				},
-			]);
+			];
+		}
+
+		initSections()
+		{
+			this.setSections(this.getSections());
 		}
 
 		renderChatCreateButton()
@@ -189,6 +230,11 @@ jn.define('im/messenger/view/recent', (require, exports, module) => {
 			}
 
 			this.setFloatingButton(this.getChatCreateButtonOption());
+		}
+
+		initQuickRecentLoader()
+		{
+			this.quickRecentLoader = new QuickRecentLoader(dialogList);
 		}
 
 		renderChatCreateButtonForWelcomeScreen()
@@ -227,12 +273,8 @@ jn.define('im/messenger/view/recent', (require, exports, module) => {
 				&& !UserPermission.canPerformActionByUserType(ActionByUserType.createChannel)
 				&& !UserPermission.canPerformActionByUserType(ActionByUserType.createCollab)
 			);
-			if (this.isMessengerComponent() && userCanNotCreateChats)
-			{
-				return false;
-			}
 
-			return true;
+			return !(this.isMessengerComponent() && userCanNotCreateChats);
 		}
 
 		isCopilotComponent()
@@ -302,14 +344,31 @@ jn.define('im/messenger/view/recent', (require, exports, module) => {
 
 		setFloatingButton(floatingButton)
 		{
-			this.ui.setFloatingButton(floatingButton);
+			const newState = { floatingButton };
+			const hasChanges = this.stateManager.hasChanges(newState);
+
+			if (hasChanges)
+			{
+				this.ui.setFloatingButton(floatingButton);
+				this.stateManager.updateState(newState);
+			}
 		}
 
 		setRightButtons(buttonList)
 		{
-			this.ui.setRightButtons(buttonList);
+			const newState = { rightButtons: buttonList };
+			const hasChanges = this.stateManager.hasChanges(newState);
+
+			if (hasChanges)
+			{
+				this.ui.setRightButtons(buttonList);
+				this.stateManager.updateState(newState);
+			}
 		}
 
+		/**
+		 * @param {Array<JNListWidgetSectionItem>} sectionList
+		 */
 		setSections(sectionList)
 		{
 			this.ui.setSections(sectionList);
@@ -320,31 +379,49 @@ jn.define('im/messenger/view/recent', (require, exports, module) => {
 			this.ui.showSearchBar();
 		}
 
+		/**
+		 * @param {Array<RecentWidgetItem>} items
+		 */
 		setItems(items)
 		{
 			logger.log(`${this.constructor.name}.setItems`, items);
 
-			this.ui.setItems(items);
+			this.ui.setItems(this.#prepareElementsToRecentWidgetItem(items));
 			items.forEach((item) => {
 				this.itemCollection[item.id] = item;
 			});
+
+			this.updateSharedStorageRecentCache();
 		}
 
-		addItems(items)
+		/**
+		 * @param {Array<RecentWidgetItem>} items
+		 * @param {boolean} [isAnimated=false]
+		 */
+		addItems(items, isAnimated = false)
 		{
 			logger.log(`${this.constructor.name}.addItems`, items);
 
-			this.ui.addItems(items, true);
+			this.ui.addItems(this.#prepareElementsToRecentWidgetItem(items), isAnimated);
 			items.forEach((item) => {
 				this.itemCollection[item.id] = item;
 			});
+
+			this.updateSharedStorageRecentCache();
 		}
 
 		updateItems(items)
 		{
 			logger.log(`${this.constructor.name}.updateItems`, items);
 
-			this.ui.updateItems(items);
+			const preparedItems = items.map((item) => {
+				return {
+					element: this.#prepareElementToRecentWidgetItem(item.element),
+					filter: item.filter,
+				};
+			});
+
+			this.ui.updateItems(preparedItems);
 			items.forEach((item) => {
 				if (!this.itemCollection[item.element.id])
 				{
@@ -354,13 +431,19 @@ jn.define('im/messenger/view/recent', (require, exports, module) => {
 				}
 				this.itemCollection[item.element.id] = item.element;
 			});
+
+			this.updateSharedStorageRecentCache();
 		}
 
+		/**
+		 * @param {object} filter
+		 * @param {object} fields
+		 */
 		updateItem(filter, fields)
 		{
 			logger.log(`${this.constructor.name}.updateItem`, filter, fields);
 
-			this.ui.updateItem(filter, fields);
+			this.ui.updateItem(filter, this.#prepareElementToRecentWidgetItem(fields));
 			if (!this.itemCollection[fields.id])
 			{
 				logger.error(`${this.constructor.name}.updateItem: updating item not found`, fields.id);
@@ -368,16 +451,97 @@ jn.define('im/messenger/view/recent', (require, exports, module) => {
 				return;
 			}
 			this.itemCollection[fields.id] = fields;
+
+			this.updateSharedStorageRecentCache();
 		}
 
 		removeItem(itemFilter)
 		{
 			logger.log(`${this.constructor.name}.removeItem`, itemFilter);
-
 			this.ui.removeItem(itemFilter);
 			if (itemFilter.id)
 			{
 				delete this.itemCollection[itemFilter.id];
+
+				this.updateSharedStorageRecentCache();
+			}
+		}
+
+		/**
+		 * @param {Array<string>} ids
+		 */
+		async removeItemsByIds(ids)
+		{
+			try
+			{
+				logger.log(`${this.constructor.name}.removeItemsByIds`, ids);
+
+				await this.ui.removeItemsByIds(ids);
+				ids.forEach((id) => delete this.itemCollection[id]);
+				this.updateSharedStorageRecentCache();
+			}
+			catch (error)
+			{
+				logger.error(`${this.constructor.name}.removeItemsByIds error`, error);
+			}
+		}
+
+		/**
+		 * @param {Array<object>} itemFilter
+		 */
+		async removeCallItems(itemFilter)
+		{
+			logger.log(`${this.constructor.name}.removeCallItem`, itemFilter);
+
+			const idsToRemove = [];
+			itemFilter.forEach((item) => {
+				const entityId = item?.associatedEntity?.id;
+				if (!entityId)
+				{
+					return;
+				}
+
+				const id = `call${entityId}`;
+				const collectionItem = this.itemCollection[id];
+
+				if (collectionItem?.params.call.uuid === item.uuid)
+				{
+					idsToRemove.push(id);
+				}
+			});
+
+			if (idsToRemove.length === 0)
+			{
+				return;
+			}
+
+			try
+			{
+				await this.ui.removeItemsByIds(idsToRemove);
+				idsToRemove.forEach((id) => delete this.itemCollection[id]);
+			}
+			catch (error)
+			{
+				logger.error(`${this.constructor.name}.removeCallItems`, error);
+			}
+		}
+
+		removeCallItem(itemFilter)
+		{
+			logger.log(`${this.constructor.name}.removeCallItem`, itemFilter);
+			const entityId = itemFilter?.associatedEntity?.id;
+			if (!entityId)
+			{
+				return;
+			}
+
+			const id = `call${entityId}`;
+			const item = this.itemCollection[id];
+
+			if (item?.params.call.uuid === itemFilter.uuid)
+			{
+				this.ui.removeItem({ id });
+				delete this.itemCollection[id];
 			}
 		}
 
@@ -386,9 +550,33 @@ jn.define('im/messenger/view/recent', (require, exports, module) => {
 			this.ui.findItem(filter, callback);
 		}
 
+		/**
+		 * @param {string} id
+		 * @return {Promise<object | null>}
+		 */
+		findItemById(id)
+		{
+			return this.ui.findItemById(id);
+		}
+
 		getItem(id)
 		{
 			return this.itemCollection[id];
+		}
+
+		getItems()
+		{
+			return this.itemCollection;
+		}
+
+		getItemList()
+		{
+			return Object.values(this.itemCollection);
+		}
+
+		updateSharedStorageRecentCache()
+		{
+			void this.quickRecentLoader.saveCache(this.getSections(), this.getItemList());
 		}
 
 		stopRefreshing()
@@ -424,17 +612,27 @@ jn.define('im/messenger/view/recent', (require, exports, module) => {
 
 		showWelcomeScreen()
 		{
-			let options;
+			const newState = { isWelcomeScreenVisible: true };
+			const hasChanges = this.stateManager.hasChanges(newState);
+			if (!hasChanges)
+			{
+				return;
+			}
 
-			if (MessengerParams.get('INTRANET_INVITATION_CAN_INVITE', false))
+			let options = {};
+
+			if (Feature.isIntranetInvitationAvailable)
 			{
 				options = {
 					upperText: Loc.getMessage('IMMOBILE_RECENT_VIEW_EMPTY_TEXT_1'),
 					lowerText: Loc.getMessage('IMMOBILE_RECENT_VIEW_EMPTY_TEXT_INVITE'),
 					iconName: 'ws_employees',
-					listener: () => openIntranetInviteWidget({
-						analytics: new AnalyticsEvent().setSection('chat'),
-					}),
+					listener: () => {
+						const { openIntranetInviteWidget } = require('intranet/invite-opener-new');
+						openIntranetInviteWidget?.({
+							analytics: new AnalyticsEvent().setSection('chat'),
+						});
+					},
 				};
 			}
 			else
@@ -481,17 +679,48 @@ jn.define('im/messenger/view/recent', (require, exports, module) => {
 
 			this.ui.welcomeScreen.show(options);
 			this.renderChatCreateButtonForWelcomeScreen();
+			this.stateManager.updateState(newState);
 		}
 
 		hideWelcomeScreen()
 		{
-			this.ui.welcomeScreen.hide();
-			this.renderChatCreateButton();
+			const newState = { isWelcomeScreenVisible: false };
+			const hasChanges = this.stateManager.hasChanges(newState);
+
+			if (hasChanges)
+			{
+				this.ui.welcomeScreen.hide();
+				this.renderChatCreateButton();
+				this.stateManager.updateState(newState);
+			}
 		}
 
 		createChatButtonTapHandler()
 		{
 			this.emitCustomEvent(EventType.recent.createChat);
+		}
+
+		/**
+		 * @param {Array<RecentItem>|RecentItem|Object} recentElementData
+		 * @return {Array<RecentWidgetItem>|RecentWidgetItem|Object}
+		 */
+		#prepareElementsToRecentWidgetItem(recentElementData)
+		{
+			return recentElementData.map((recentElement) => this.#prepareElementToRecentWidgetItem(recentElement));
+		}
+
+		/**
+		 * @param {RecentItem|Object} recentElementData
+		 * @return {DialogWidgetItem|Object}
+		 */
+		#prepareElementToRecentWidgetItem(recentElementData)
+		{
+			if (recentElementData.id === this.loadNextPageItemId)
+			{
+				return recentElementData;
+			}
+
+			return recentElementData.toRecentWidgetItem();
 		}
 	}
 
@@ -507,6 +736,22 @@ jn.define('im/messenger/view/recent', (require, exports, module) => {
 			})
 		;
 	};
+
+	window.openMessengerDeveloperConsole = async (componentCode = MessengerParams.getComponentCode()) => {
+		if (componentCode === MessengerParams.getComponentCode())
+		{
+			const { Console } = await requireLazy('im:messenger/lib/dev/tools');
+			Console.open();
+
+			return;
+		}
+
+		BX.postComponentEvent(EventType.messenger.dev.openConsole, [], componentCode);
+	};
+
+	BX.addCustomEvent(EventType.messenger.dev.openConsole, () => {
+		window.openMessengerDeveloperConsole();
+	});
 
 	module.exports = {
 		RecentView,

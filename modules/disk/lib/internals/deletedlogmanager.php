@@ -100,13 +100,13 @@ final class DeletedLogManager
 			$subscribers = Driver::getInstance()->collectSubscribers($object);
 			foreach($subscribers as $storageId => $userId)
 			{
-				$this->logData[] = array(
+				$this->addLogDataEntry([
 					'STORAGE_ID' => $storageId,
 					'OBJECT_ID' => $object->getId(),
 					'TYPE' => ObjectTable::TYPE_FOLDER,
 					'USER_ID' => $deletedBy,
 					'CREATE_TIME' => $dateTime,
-				);
+				]);
 			}
 
 			$this->subscribedStorages = array_merge($this->subscribedStorages, array_keys($subscribers));
@@ -119,13 +119,13 @@ final class DeletedLogManager
 			$subscribers = Driver::getInstance()->collectSubscribers($object);
 			foreach($subscribers as $storageId => $userId)
 			{
-				$this->logData[] = array(
+				$this->addLogDataEntry([
 					'STORAGE_ID' => $storageId,
 					'OBJECT_ID' => $object->getId(),
 					'TYPE' => ObjectTable::TYPE_FILE,
 					'USER_ID' => $deletedBy,
 					'CREATE_TIME' => $dateTime,
-				);
+				]);
 			}
 
 			$this->subscribedUsers = array_merge($this->subscribedUsers, $subscribers);
@@ -138,13 +138,13 @@ final class DeletedLogManager
 		$isFolder = $object instanceof Folder;
 		foreach ($subscribersLostAccess as $storageId => $userId)
 		{
-			$this->logData[] = [
+			$this->addLogDataEntry([
 				'STORAGE_ID' => $storageId,
 				'OBJECT_ID' => $object->getId(),
 				'TYPE' => $isFolder? ObjectTable::TYPE_FOLDER : ObjectTable::TYPE_FILE,
 				'USER_ID' => $updatedBy,
 				'CREATE_TIME' => $dateTime,
-			];
+			]);
 		}
 
 		if ($isFolder)
@@ -155,14 +155,20 @@ final class DeletedLogManager
 		Driver::getInstance()->sendChangeStatus($subscribersLostAccess);
 	}
 
+	private function addLogDataEntry(array $entry): void
+	{
+		$this->logData["{$entry['STORAGE_ID']}-{$entry['OBJECT_ID']}"] = $entry;
+	}
+
 	private function insertLogData()
 	{
+		$dataToInsert = array_values($this->logData);
 		if (!$this->isMigrated())
 		{
-			DeletedLogTable::insertBatch($this->logData);
+			DeletedLogTable::insertBatch($dataToInsert);
 		}
 
-		DeletedLogV2Table::upsertBatch($this->logData);
+		DeletedLogV2Table::upsertBatch($dataToInsert);
 
 		$this->logData = array();
 	}

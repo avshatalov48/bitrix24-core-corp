@@ -28,6 +28,8 @@ export class Footer extends DefaultFooter
 				.then(async (exports) => {
 					const editForm = await exports.EditForm.createInstance({
 						flowName: '',
+						isFeatureTrialable: this.getOption('isFeatureTrialable'),
+						context: this.getOption('context', ''),
 					});
 					editForm.subscribe('afterSave', (baseEvent) => {
 						resolve(baseEvent.getData());

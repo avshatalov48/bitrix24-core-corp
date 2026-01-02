@@ -14,6 +14,7 @@ export class Analytics
 	static IS_ADMIN_N = 'isAdmin_N';
 
 	static EVENT_TAB_VIEW = 'tab_view';
+	static EVENT_LOCAL_MAIL = 'invitation_local_mail';
 	static TAB_EMAIL = 'tab_by_email';
 	static TAB_MASS = 'tab_mass';
 	static TAB_DEPARTMENT = 'tab_department';
@@ -22,6 +23,8 @@ export class Analytics
 	static TAB_REGISTRATION = 'registration';
 	static TAB_EXTRANET = 'extranet';
 	static TAB_AD = 'AD';
+	static TAB_LOCAL_EMAIL = 'tab_by_local_email';
+	static TAB_PHONE = 'tab_by_phone';
 
 	#cSection: Object;
 	#isAdmin: boolean;
@@ -34,7 +37,7 @@ export class Analytics
 
 	#getAdminAllowMode(): string
 	{
-		return document.querySelector('#allow_register_confirm').checked
+		return document.querySelector('#allow_register_confirm')?.checked
 			? Analytics.ADMIN_ALLOW_MODE_Y
 			: Analytics.ADMIN_ALLOW_MODE_N;
 	}
@@ -73,7 +76,7 @@ export class Analytics
 			category: Analytics.CATEGORY_INVITATION,
 			event: Analytics.EVENT_TAB_VIEW,
 			c_section: section,
-			c_sub_section: subSection
+			c_sub_section: subSection,
 		});
 	}
 
@@ -84,6 +87,25 @@ export class Analytics
 			category: Analytics.CATEGORY_INVITATION,
 			event: Analytics.EVENT_OPEN_SLIDER_INVITATION,
 			c_section: section,
+		});
+	}
+
+	sendOpenLocalEmailPopup(): void
+	{
+		sendData({
+			tool: Analytics.TOOLS,
+			category: Analytics.CATEGORY_INVITATION,
+			event: Analytics.EVENT_TAB_VIEW,
+			c_sub_section: Analytics.TAB_EMAIL,
+		});
+	}
+
+	sendLocalEmailProgram(): void
+	{
+		sendData({
+			tool: Analytics.TOOLS,
+			category: Analytics.CATEGORY_INVITATION,
+			event: Analytics.EVENT_LOCAL_MAIL,
 		});
 	}
 }

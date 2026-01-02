@@ -4,7 +4,6 @@ namespace Bitrix\HumanResources\Contract\Repository\HcmLink;
 
 use Bitrix\HumanResources\Item\Collection\HcmLink\PersonCollection;
 use Bitrix\HumanResources\Item\HcmLink\Person;
-use Bitrix\HumanResources\Result\SuccessResult;
 use Bitrix\Main\ORM\Query\Filter\ConditionTree;
 use Bitrix\Main\Result;
 use Bitrix\Main\Type\DateTime;
@@ -48,11 +47,11 @@ interface PersonRepository
 
 	public function searchByIndexAndCompanyId(string $search, int $companyId, int $limit): PersonCollection;
 
-	public function deleteSearchIndexByPersonId(int $personId): Result|SuccessResult;
+	public function deleteSearchIndexByPersonId(int $personId): Result;
 
-	public function updateSearchIndexByPersonId(int $personId, string $searchContent): Result|SuccessResult;
+	public function updateSearchIndexByPersonId(int $personId, string $searchContent): Result;
 
-	public function addSearchIndexByPersonId(int $personId, string $searchContent): Result|SuccessResult;
+	public function addSearchIndexByPersonId(int $personId, string $searchContent): Result;
 
 	public function hasPersonSearchIndex(int $personId): bool;
 
@@ -66,5 +65,5 @@ interface PersonRepository
 
 	public function getByUserIdsAndGroupByCompanyId(int $userId): array;
 
-	public function updateCounter(int $personId): Result|SuccessResult;
+	public function updateCounter(int $personId): Result;
 }

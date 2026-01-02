@@ -299,11 +299,6 @@ class OnecStartComponent extends CBitrixComponent
 					]
 				];
 
-				$this->arResult['FORM_PORTAL_URI'] = Loader::includeModule('intranet')
-					? \Bitrix\Intranet\Util::CP_BITRIX_PATH
-					: ''
-				;
-
 				break;
 
 		}

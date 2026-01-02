@@ -8,6 +8,7 @@
 	max-width: 30px;
 	min-width: 30px;
 	float:none;
+	border-radius: 50%;
 }
 .ol-stat-rating { display: inline-block; width: 20px; height: 20px; background: url(./images/rating.png); }
 .ol-stat-rating.ol-stat-rating-1 { background-position: -39px -57px; }

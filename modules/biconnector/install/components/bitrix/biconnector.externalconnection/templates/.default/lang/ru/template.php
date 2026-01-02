@@ -10,3 +10,7 @@ $MESS['EXTERNAL_CONNECTION_CHECK_SUCCESS'] = 'Подключение прове�
 $MESS['EXTERNAL_CONNECTION_CHECK_FAILED'] = 'Ошибка подключения';
 $MESS['EXTERNAL_CONNECTION_SAVE_ERROR'] = 'Не удалось сохранить подключение. Проверьте введённые поля и попробуйте ещё раз';
 $MESS['EXTERNAL_CONNECTION_SAVE'] = 'Создать';
+$MESS['EXTERNAL_CONNECTION_SAVE_SUCCESS'] = 'Подключение #CONNECTION_TITLE# создано';
+$MESS['EXTERNAL_CONNECTION_EDIT_SUCCESS'] = 'Подключение #CONNECTION_TITLE# изменено';
+$MESS['EXTERNAL_CONNECTION_CREATE_DATASET'] = 'Создать датасет';
+$MESS['EXTERNAL_CONNECTION_CLOSE'] = 'Закрыть';

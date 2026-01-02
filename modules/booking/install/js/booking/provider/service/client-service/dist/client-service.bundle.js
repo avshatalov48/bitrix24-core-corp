@@ -32,7 +32,8 @@ this.BX.Booking.Provider = this.BX.Booking.Provider || {};
 	  ContactGet: 'crm.contact.get',
 	  GetCompanyContacts: 'crm.company.contact.items.get',
 	  CompanyUpdate: 'crm.company.update',
-	  ContactUpdate: 'crm.contact.update'
+	  ContactUpdate: 'crm.contact.update',
+	  DealContactGet: 'crm.deal.contact.items.get'
 	});
 	const RequestKey = Object.freeze({
 	  AddFormattedName: 'add_formatted_name',
@@ -43,9 +44,14 @@ this.BX.Booking.Provider = this.BX.Booking.Provider || {};
 	  ContactGet: 'contact_get_#id#',
 	  GetCompanyContacts: 'get_company_contacts',
 	  CompanyUpdate: 'company_update_#id#',
-	  ContactUpdate: 'contact_update_#id#'
+	  ContactUpdate: 'contact_update_#id#',
+	  DealContactGet: 'deal_contact_get_#id#'
 	});
 	var _requestSaveMany = /*#__PURE__*/babelHelpers.classPrivateFieldLooseKey("requestSaveMany");
+	var _categorizeClients = /*#__PURE__*/babelHelpers.classPrivateFieldLooseKey("categorizeClients");
+	var _executeBatchRequest = /*#__PURE__*/babelHelpers.classPrivateFieldLooseKey("executeBatchRequest");
+	var _handleErrors = /*#__PURE__*/babelHelpers.classPrivateFieldLooseKey("handleErrors");
+	var _updateClientIds = /*#__PURE__*/babelHelpers.classPrivateFieldLooseKey("updateClientIds");
 	var _isClientToUpdate = /*#__PURE__*/babelHelpers.classPrivateFieldLooseKey("isClientToUpdate");
 	var _getParseNameMethods = /*#__PURE__*/babelHelpers.classPrivateFieldLooseKey("getParseNameMethods");
 	var _getCompanyAddMethods = /*#__PURE__*/babelHelpers.classPrivateFieldLooseKey("getCompanyAddMethods");
@@ -57,11 +63,19 @@ this.BX.Booking.Provider = this.BX.Booking.Provider || {};
 	var _prepareContactNameFields = /*#__PURE__*/babelHelpers.classPrivateFieldLooseKey("prepareContactNameFields");
 	var _prepareCommunicationsForUpdate = /*#__PURE__*/babelHelpers.classPrivateFieldLooseKey("prepareCommunicationsForUpdate");
 	var _requestLinkedContactId = /*#__PURE__*/babelHelpers.classPrivateFieldLooseKey("requestLinkedContactId");
+	var _getEntityById = /*#__PURE__*/babelHelpers.classPrivateFieldLooseKey("getEntityById");
+	var _getPrimaryContactIdByDeal = /*#__PURE__*/babelHelpers.classPrivateFieldLooseKey("getPrimaryContactIdByDeal");
 	var _getRequestKey = /*#__PURE__*/babelHelpers.classPrivateFieldLooseKey("getRequestKey");
 	class ClientService {
 	  constructor() {
 	    Object.defineProperty(this, _getRequestKey, {
 	      value: _getRequestKey2
+	    });
+	    Object.defineProperty(this, _getPrimaryContactIdByDeal, {
+	      value: _getPrimaryContactIdByDeal2
+	    });
+	    Object.defineProperty(this, _getEntityById, {
+	      value: _getEntityById2
 	    });
 	    Object.defineProperty(this, _requestLinkedContactId, {
 	      value: _requestLinkedContactId2
@@ -96,6 +110,18 @@ this.BX.Booking.Provider = this.BX.Booking.Provider || {};
 	    Object.defineProperty(this, _isClientToUpdate, {
 	      value: _isClientToUpdate2
 	    });
+	    Object.defineProperty(this, _updateClientIds, {
+	      value: _updateClientIds2
+	    });
+	    Object.defineProperty(this, _handleErrors, {
+	      value: _handleErrors2
+	    });
+	    Object.defineProperty(this, _executeBatchRequest, {
+	      value: _executeBatchRequest2
+	    });
+	    Object.defineProperty(this, _categorizeClients, {
+	      value: _categorizeClients2
+	    });
 	    Object.defineProperty(this, _requestSaveMany, {
 	      value: _requestSaveMany2
 	    });
@@ -128,22 +154,49 @@ this.BX.Booking.Provider = this.BX.Booking.Provider || {};
 	      id: company.id,
 	      client: company
 	    });
-	    return booking_core.Core.getStore().getters['clients/getByClientData']({
-	      id: company.contactId,
+	    return this.getContactById(company.contactId);
+	  }
+	  async getContactById(id) {
+	    const contact = booking_core.Core.getStore().getters['clients/getByClientData']({
+	      id,
 	      type: {
 	        module: booking_const.Module.Crm,
 	        code: booking_const.CrmEntity.Contact
 	      }
 	    });
+	    return contact || babelHelpers.classPrivateFieldLooseBase(this, _getEntityById)[_getEntityById]({
+	      id,
+	      methodName: MethodName.ContactGet,
+	      requestKey: RequestKey.ContactGet,
+	      entityCode: booking_const.CrmEntity.Contact
+	    });
+	  }
+	  async getCompanyById(id) {
+	    return babelHelpers.classPrivateFieldLooseBase(this, _getEntityById)[_getEntityById]({
+	      id,
+	      methodName: MethodName.CompanyGet,
+	      requestKey: RequestKey.CompanyGet,
+	      entityCode: booking_const.CrmEntity.Company
+	    });
+	  }
+	  async getLinkedContactByDeal(id) {
+	    try {
+	      const primaryContactId = await babelHelpers.classPrivateFieldLooseBase(this, _getPrimaryContactIdByDeal)[_getPrimaryContactIdByDeal](id);
+	      return primaryContactId ? this.getContactById(primaryContactId) : undefined;
+	    } catch (error) {
+	      console.error('ClientService: getLinkedContactByDeal error', error);
+	      return undefined;
+	    }
 	  }
 	}
 	async function _requestSaveMany2(clients) {
-	  const companies = clients.filter(client => client.type.code === booking_const.CrmEntity.Company);
-	  const contacts = clients.filter(client => client.type.code === booking_const.CrmEntity.Contact);
-	  const companiesToAdd = companies.filter(client => !client.id);
-	  const companiesToUpdate = companies.filter(client => babelHelpers.classPrivateFieldLooseBase(this, _isClientToUpdate)[_isClientToUpdate](client));
-	  const contactsToAdd = contacts.filter(client => !client.id);
-	  const contactsToUpdate = contacts.filter(client => babelHelpers.classPrivateFieldLooseBase(this, _isClientToUpdate)[_isClientToUpdate](client));
+	  const {
+	    companies,
+	    companiesToAdd,
+	    companiesToUpdate,
+	    contactsToAdd,
+	    contactsToUpdate
+	  } = babelHelpers.classPrivateFieldLooseBase(this, _categorizeClients)[_categorizeClients](clients);
 	  const clientsToRequest = [...companiesToAdd, ...companiesToUpdate, ...contactsToAdd, ...contactsToUpdate];
 	  clientsToRequest.forEach((client, index) => {
 	    client.index = index;
@@ -157,12 +210,32 @@ this.BX.Booking.Provider = this.BX.Booking.Provider || {};
 	    ...babelHelpers.classPrivateFieldLooseBase(this, _getContactGetMethods)[_getContactGetMethods](contactsToUpdate),
 	    ...babelHelpers.classPrivateFieldLooseBase(this, _getContactUpdateMethods)[_getContactUpdateMethods](contactsToUpdate)
 	  };
-	  const result = await new Promise(resolve => {
+	  const result = await babelHelpers.classPrivateFieldLooseBase(this, _executeBatchRequest)[_executeBatchRequest](restMethods);
+	  babelHelpers.classPrivateFieldLooseBase(this, _handleErrors)[_handleErrors](result);
+	  babelHelpers.classPrivateFieldLooseBase(this, _updateClientIds)[_updateClientIds](companiesToAdd, contactsToAdd, result);
+	  return clients;
+	}
+	function _categorizeClients2(clients) {
+	  const companies = clients.filter(client => client.type.code === booking_const.CrmEntity.Company);
+	  const contacts = clients.filter(client => client.type.code === booking_const.CrmEntity.Contact);
+	  return {
+	    companies,
+	    contacts,
+	    companiesToAdd: companies.filter(client => !client.id),
+	    companiesToUpdate: companies.filter(babelHelpers.classPrivateFieldLooseBase(this, _isClientToUpdate)[_isClientToUpdate].bind(this)),
+	    contactsToAdd: contacts.filter(client => !client.id),
+	    contactsToUpdate: contacts.filter(babelHelpers.classPrivateFieldLooseBase(this, _isClientToUpdate)[_isClientToUpdate].bind(this))
+	  };
+	}
+	async function _executeBatchRequest2(restMethods) {
+	  return new Promise(resolve => {
 	    if (Object.keys(restMethods).length === 0) {
 	      resolve([]);
 	    }
 	    BX.rest.callBatch(restMethods, batchResult => resolve(batchResult));
 	  });
+	}
+	function _handleErrors2(result) {
 	  const errors = Object.values(result).map(ajaxResult => {
 	    var _ajaxResult$answer$er;
 	    return (_ajaxResult$answer$er = ajaxResult.answer.error) == null ? void 0 : _ajaxResult$answer$er.error_description;
@@ -170,13 +243,14 @@ this.BX.Booking.Provider = this.BX.Booking.Provider || {};
 	  if (main_core.Type.isArrayFilled(errors)) {
 	    throw new Error(main_core.Tag.render(_t || (_t = _`<span>${0}</span>`), errors[0]).textContent);
 	  }
+	}
+	function _updateClientIds2(companiesToAdd, contactsToAdd, result) {
 	  companiesToAdd.forEach(client => {
 	    client.id = result[babelHelpers.classPrivateFieldLooseBase(this, _getRequestKey)[_getRequestKey](RequestKey.CompanyAdd, client.index)].data();
 	  });
 	  contactsToAdd.forEach(client => {
 	    client.id = result[babelHelpers.classPrivateFieldLooseBase(this, _getRequestKey)[_getRequestKey](RequestKey.ContactAdd, client.index)].data();
 	  });
-	  return clients;
 	}
 	function _isClientToUpdate2(client) {
 	  if (!client.id) {
@@ -186,41 +260,45 @@ this.BX.Booking.Provider = this.BX.Booking.Provider || {};
 	  return client.name !== currentClient.name || client.phones[0] !== currentClient.phones[0] || client.emails[0] !== currentClient.emails[0];
 	}
 	function _getParseNameMethods2(contacts) {
-	  return contacts.reduce((methods, client) => ({
-	    ...methods,
-	    [babelHelpers.classPrivateFieldLooseBase(this, _getRequestKey)[_getRequestKey](RequestKey.ParseName, client.index)]: {
-	      method: MethodName.ParseFormattedName,
-	      params: {
-	        fields: {
-	          FORMATTED_NAME: client.name
+	  return contacts.reduce((methods, client) => {
+	    return {
+	      ...methods,
+	      [babelHelpers.classPrivateFieldLooseBase(this, _getRequestKey)[_getRequestKey](RequestKey.ParseName, client.index)]: {
+	        method: MethodName.ParseFormattedName,
+	        params: {
+	          fields: {
+	            FORMATTED_NAME: client.name
+	          }
 	        }
 	      }
-	    }
-	  }), {});
+	    };
+	  }, {});
 	}
 	function _getCompanyAddMethods2(companiesToAdd) {
-	  return companiesToAdd.reduce((methods, client) => ({
-	    ...methods,
-	    [babelHelpers.classPrivateFieldLooseBase(this, _getRequestKey)[_getRequestKey](RequestKey.CompanyAdd, client.index)]: {
-	      method: MethodName.CompanyAdd,
-	      params: {
-	        fields: {
-	          TITLE: client.name,
-	          PHONE: client.phones.map(VALUE => ({
-	            VALUE,
-	            VALUE_TYPE
-	          })),
-	          EMAIL: client.emails.map(VALUE => ({
-	            VALUE,
-	            VALUE_TYPE
-	          }))
-	        },
+	  return companiesToAdd.reduce((methods, client) => {
+	    return {
+	      ...methods,
+	      [babelHelpers.classPrivateFieldLooseBase(this, _getRequestKey)[_getRequestKey](RequestKey.CompanyAdd, client.index)]: {
+	        method: MethodName.CompanyAdd,
 	        params: {
-	          REGISTER_SONET_EVENT: 'Y'
+	          fields: {
+	            TITLE: client.name,
+	            PHONE: client.phones.map(VALUE => ({
+	              VALUE,
+	              VALUE_TYPE
+	            })),
+	            EMAIL: client.emails.map(VALUE => ({
+	              VALUE,
+	              VALUE_TYPE
+	            }))
+	          },
+	          params: {
+	            REGISTER_SONET_EVENT: 'Y'
+	          }
 	        }
 	      }
-	    }
-	  }), {});
+	    };
+	  }, {});
 	}
 	function _getContactAddMethods2(contactsToAdd, companies) {
 	  return contactsToAdd.reduce((methods, client) => {
@@ -384,6 +462,80 @@ this.BX.Booking.Provider = this.BX.Booking.Provider || {};
 	    console.error('ClientService: loadLinkedContactByCompany error', error);
 	    return 0;
 	  }
+	}
+	async function _getEntityById2(params = {}) {
+	  try {
+	    const {
+	      id,
+	      methodName,
+	      requestKey,
+	      entityCode
+	    } = params;
+	    const entity = await new Promise(resolve => {
+	      BX.rest.callBatch({
+	        [babelHelpers.classPrivateFieldLooseBase(this, _getRequestKey)[_getRequestKey](requestKey, id)]: {
+	          method: methodName,
+	          params: {
+	            id
+	          }
+	        },
+	        [babelHelpers.classPrivateFieldLooseBase(this, _getRequestKey)[_getRequestKey](RequestKey.AddFormattedName)]: {
+	          method: MethodName.AddFormattedName,
+	          params: {
+	            fields: `$result[${babelHelpers.classPrivateFieldLooseBase(this, _getRequestKey)[_getRequestKey](requestKey, id)}]`
+	          }
+	        }
+	      }, result => {
+	        var _data$LOGO, _data$PHOTO2, _data$PHONE$map2, _data$PHONE2, _data$EMAIL$map2, _data$EMAIL2;
+	        const data = result[babelHelpers.classPrivateFieldLooseBase(this, _getRequestKey)[_getRequestKey](RequestKey.AddFormattedName)].data();
+	        if (!(data != null && data.ID)) {
+	          resolve(null);
+	        }
+	        resolve({
+	          id: Number(data.ID),
+	          name: entityCode === booking_const.CrmEntity.Company ? data.TITLE : data.FORMATTED_NAME,
+	          image: entityCode === booking_const.CrmEntity.Company ? (_data$LOGO = data.LOGO) == null ? void 0 : _data$LOGO.showUrl : (_data$PHOTO2 = data.PHOTO) == null ? void 0 : _data$PHOTO2.showUrl,
+	          type: {
+	            module: booking_const.Module.Crm,
+	            code: entityCode
+	          },
+	          phones: (_data$PHONE$map2 = (_data$PHONE2 = data.PHONE) == null ? void 0 : _data$PHONE2.map(({
+	            VALUE
+	          }) => VALUE)) != null ? _data$PHONE$map2 : [],
+	          emails: (_data$EMAIL$map2 = (_data$EMAIL2 = data.EMAIL) == null ? void 0 : _data$EMAIL2.map(({
+	            VALUE
+	          }) => VALUE)) != null ? _data$EMAIL$map2 : []
+	        });
+	      });
+	    });
+	    if (entity === null) {
+	      return undefined;
+	    }
+	    await booking_core.Core.getStore().dispatch('clients/upsert', entity);
+	    return entity;
+	  } catch (error) {
+	    console.error(`ClientService: getEntityById error for ${entityCode}`, error);
+	    return undefined;
+	  }
+	}
+	async function _getPrimaryContactIdByDeal2(dealId) {
+	  return new Promise(resolve => {
+	    BX.rest.callBatch({
+	      [babelHelpers.classPrivateFieldLooseBase(this, _getRequestKey)[_getRequestKey](RequestKey.DealContactGet, dealId)]: {
+	        method: MethodName.DealContactGet,
+	        params: {
+	          id: dealId
+	        }
+	      }
+	    }, result => {
+	      const data = result[babelHelpers.classPrivateFieldLooseBase(this, _getRequestKey)[_getRequestKey](RequestKey.DealContactGet, dealId)].data();
+	      if (!data) {
+	        resolve(null);
+	      }
+	      const primaryContact = data.find(item => item.IS_PRIMARY === 'Y');
+	      resolve(primaryContact ? primaryContact.CONTACT_ID : null);
+	    });
+	  });
 	}
 	function _getRequestKey2(template, id = 0) {
 	  return template.replace('#id#', id);

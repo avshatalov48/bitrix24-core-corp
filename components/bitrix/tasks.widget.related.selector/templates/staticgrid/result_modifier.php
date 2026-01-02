@@ -21,7 +21,9 @@ foreach($arParams["COLUMNS"] as $i => $column)
 	{
 		$column = (string)$column;
 		$columns[] = array(
-			'TITLE' => Loc::getMessage('TASKS_TWRS_SGRID_FIELD_'.$column),
+			'TITLE' =>
+				Loc::getMessage('TASKS_TWRS_SGRID_FIELD_' . $column . '_MSGVER_1')
+				?? Loc::getMessage('TASKS_TWRS_SGRID_FIELD_' . $column),
 			'SOURCE' => $column,
 		);
 	}

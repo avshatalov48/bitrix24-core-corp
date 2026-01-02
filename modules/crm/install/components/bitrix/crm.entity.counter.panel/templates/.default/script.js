@@ -50,19 +50,24 @@ this.BX = this.BX || {};
 	    });
 	    _classPrivateFieldInitSpec(this, _isActive, {
 	      writable: true,
-	      value: true
+	      value: false
 	    });
-	    var filters = main_core.Type.isObject(BX.Main.filterManager) && BX.Main.filterManager.hasOwnProperty('getList') ? BX.Main.filterManager.getList() : Object.values(BX.Main.filterManager.data);
-	    if (filters.length === 0) {
-	      console.warn('BX.Crm.EntityCounterFilter: Unable to define filter.');
-	      babelHelpers.classPrivateFieldSet(this, _isActive, false);
-	    } else {
-	      babelHelpers.classPrivateFieldSet(this, _filterManager, filters[0]); // use first filter to work
-	      _classPrivateMethodGet(this, _bindEvents, _bindEvents2).call(this);
-	      this.updateFields();
-	    }
 	  }
 	  babelHelpers.createClass(EntityCounterFilterManager, [{
+	    key: "bindToFilter",
+	    value: function bindToFilter() {
+	      var filters = main_core.Type.isObject(BX.Main.filterManager) && BX.Main.filterManager.hasOwnProperty('getList') ? BX.Main.filterManager.getList() : Object.values(BX.Main.filterManager.data);
+	      if (filters.length === 0) {
+	        babelHelpers.classPrivateFieldSet(this, _isActive, false);
+	        console.warn('BX.Crm.EntityCounterFilter: Unable to define filter.');
+	      } else {
+	        babelHelpers.classPrivateFieldSet(this, _isActive, true);
+	        babelHelpers.classPrivateFieldSet(this, _filterManager, filters[0]); // use first filter to work
+	        _classPrivateMethodGet(this, _bindEvents, _bindEvents2).call(this);
+	        this.updateFields();
+	      }
+	    }
+	  }, {
 	    key: "getManager",
 	    value: function getManager() {
 	      return babelHelpers.classPrivateFieldGet(this, _filterManager);
@@ -167,7 +172,6 @@ this.BX = this.BX || {};
 	var _lastPullEventData = /*#__PURE__*/new WeakMap();
 	var _isTabActive = /*#__PURE__*/new WeakMap();
 	var _openedSlidersCount = /*#__PURE__*/new WeakMap();
-	var _bindEvents$1 = /*#__PURE__*/new WeakSet();
 	var _onPullEvent = /*#__PURE__*/new WeakSet();
 	var _tryRecalculate = /*#__PURE__*/new WeakSet();
 	var _startRecalculationRequest = /*#__PURE__*/new WeakSet();
@@ -183,7 +187,6 @@ this.BX = this.BX || {};
 	    _classPrivateMethodInitSpec$1(this, _startRecalculationRequest);
 	    _classPrivateMethodInitSpec$1(this, _tryRecalculate);
 	    _classPrivateMethodInitSpec$1(this, _onPullEvent);
-	    _classPrivateMethodInitSpec$1(this, _bindEvents$1);
 	    _classPrivateFieldInitSpec$1(this, _id, {
 	      writable: true,
 	      value: void 0
@@ -238,10 +241,39 @@ this.BX = this.BX || {};
 	    babelHelpers.classPrivateFieldSet(this, _counterData, {});
 	    babelHelpers.classPrivateFieldSet(this, _isTabActive, true);
 	    babelHelpers.classPrivateFieldSet(this, _openedSlidersCount, 0);
-	    _classPrivateMethodGet$1(this, _bindEvents$1, _bindEvents2$1).call(this);
 	    this.constructor.lastInstance = this;
 	  }
 	  babelHelpers.createClass(EntityCounterManager, [{
+	    key: "bindEvents",
+	    value: function bindEvents() {
+	      var _this = this;
+	      main_core_events.EventEmitter.subscribe('onPullEvent-main', main_core.Runtime.debounce(_classPrivateMethodGet$1(this, _onPullEvent, _onPullEvent2), 3000, this));
+	      main_core.Event.ready(function () {
+	        main_core.Event.bind(document, 'visibilitychange', function () {
+	          babelHelpers.classPrivateFieldSet(_this, _isTabActive, document.visibilityState === 'visible');
+	          if (babelHelpers.classPrivateFieldGet(_this, _isTabActive) && _classPrivateMethodGet$1(_this, _isRecalculationRequired, _isRecalculationRequired2).call(_this)) {
+	            _classPrivateMethodGet$1(_this, _tryRecalculate, _tryRecalculate2).call(_this, babelHelpers.classPrivateFieldGet(_this, _lastPullEventData));
+	          }
+	        });
+	      });
+	      main_core_events.EventEmitter.subscribe('SidePanel.Slider:onOpen', function () {
+	        var _this$openedSlidersCo, _this$openedSlidersCo2;
+	        babelHelpers.classPrivateFieldSet(_this, _openedSlidersCount, (_this$openedSlidersCo = babelHelpers.classPrivateFieldGet(_this, _openedSlidersCount), _this$openedSlidersCo2 = _this$openedSlidersCo++, _this$openedSlidersCo)), _this$openedSlidersCo2;
+	        babelHelpers.classPrivateFieldSet(_this, _isTabActive, false);
+	      });
+	      main_core_events.EventEmitter.subscribe('SidePanel.Slider:onClose', function () {
+	        var _this$openedSlidersCo3, _this$openedSlidersCo4;
+	        babelHelpers.classPrivateFieldSet(_this, _openedSlidersCount, (_this$openedSlidersCo3 = babelHelpers.classPrivateFieldGet(_this, _openedSlidersCount), _this$openedSlidersCo4 = _this$openedSlidersCo3--, _this$openedSlidersCo3)), _this$openedSlidersCo4;
+	        if (babelHelpers.classPrivateFieldGet(_this, _openedSlidersCount) <= 0) {
+	          babelHelpers.classPrivateFieldSet(_this, _openedSlidersCount, 0);
+	          babelHelpers.classPrivateFieldSet(_this, _isTabActive, true);
+	          if (_classPrivateMethodGet$1(_this, _isRecalculationRequired, _isRecalculationRequired2).call(_this)) {
+	            _classPrivateMethodGet$1(_this, _tryRecalculate, _tryRecalculate2).call(_this, babelHelpers.classPrivateFieldGet(_this, _lastPullEventData));
+	          }
+	        }
+	      });
+	    }
+	  }, {
 	    key: "getId",
 	    value: function getId() {
 	      return babelHelpers.classPrivateFieldGet(this, _id);
@@ -264,34 +296,6 @@ this.BX = this.BX || {};
 	  }]);
 	  return EntityCounterManager;
 	}();
-	function _bindEvents2$1() {
-	  var _this = this;
-	  main_core_events.EventEmitter.subscribe('onPullEvent-main', main_core.Runtime.debounce(_classPrivateMethodGet$1(this, _onPullEvent, _onPullEvent2), 3000, this));
-	  main_core.Event.ready(function () {
-	    main_core.Event.bind(document, 'visibilitychange', function () {
-	      babelHelpers.classPrivateFieldSet(_this, _isTabActive, document.visibilityState === 'visible');
-	      if (babelHelpers.classPrivateFieldGet(_this, _isTabActive) && _classPrivateMethodGet$1(_this, _isRecalculationRequired, _isRecalculationRequired2).call(_this)) {
-	        _classPrivateMethodGet$1(_this, _tryRecalculate, _tryRecalculate2).call(_this, babelHelpers.classPrivateFieldGet(_this, _lastPullEventData));
-	      }
-	    });
-	  });
-	  main_core_events.EventEmitter.subscribe('SidePanel.Slider:onOpen', function () {
-	    var _this$openedSlidersCo, _this$openedSlidersCo2;
-	    babelHelpers.classPrivateFieldSet(_this, _openedSlidersCount, (_this$openedSlidersCo = babelHelpers.classPrivateFieldGet(_this, _openedSlidersCount), _this$openedSlidersCo2 = _this$openedSlidersCo++, _this$openedSlidersCo)), _this$openedSlidersCo2;
-	    babelHelpers.classPrivateFieldSet(_this, _isTabActive, false);
-	  });
-	  main_core_events.EventEmitter.subscribe('SidePanel.Slider:onClose', function () {
-	    var _this$openedSlidersCo3, _this$openedSlidersCo4;
-	    babelHelpers.classPrivateFieldSet(_this, _openedSlidersCount, (_this$openedSlidersCo3 = babelHelpers.classPrivateFieldGet(_this, _openedSlidersCount), _this$openedSlidersCo4 = _this$openedSlidersCo3--, _this$openedSlidersCo3)), _this$openedSlidersCo4;
-	    if (babelHelpers.classPrivateFieldGet(_this, _openedSlidersCount) <= 0) {
-	      babelHelpers.classPrivateFieldSet(_this, _openedSlidersCount, 0);
-	      babelHelpers.classPrivateFieldSet(_this, _isTabActive, true);
-	      if (_classPrivateMethodGet$1(_this, _isRecalculationRequired, _isRecalculationRequired2).call(_this)) {
-	        _classPrivateMethodGet$1(_this, _tryRecalculate, _tryRecalculate2).call(_this, babelHelpers.classPrivateFieldGet(_this, _lastPullEventData));
-	      }
-	    }
-	  });
-	}
 	function _onPullEvent2(event) {
 	  var _event$getData = event.getData(),
 	    _event$getData2 = babelHelpers.slicedToArray(_event$getData, 2),
@@ -394,7 +398,7 @@ this.BX = this.BX || {};
 	var _filterLastPresetId = /*#__PURE__*/new WeakMap();
 	var _filterLastPreset = /*#__PURE__*/new WeakMap();
 	var _filterResponsibleFiledName = /*#__PURE__*/new WeakMap();
-	var _bindEvents$2 = /*#__PURE__*/new WeakSet();
+	var _lockedCallback = /*#__PURE__*/new WeakMap();
 	var _onActivateItem = /*#__PURE__*/new WeakSet();
 	var _onDeactivateItem = /*#__PURE__*/new WeakSet();
 	var _onFilterApply$1 = /*#__PURE__*/new WeakSet();
@@ -408,17 +412,17 @@ this.BX = this.BX || {};
 	var _getParentItemTotalValue = /*#__PURE__*/new WeakSet();
 	var EntityCounterPanel = /*#__PURE__*/function (_CounterPanel) {
 	  babelHelpers.inherits(EntityCounterPanel, _CounterPanel);
-	  function EntityCounterPanel(_options) {
+	  function EntityCounterPanel(options) {
 	    var _this;
 	    babelHelpers.classCallCheck(this, EntityCounterPanel);
-	    if (!main_core.Type.isPlainObject(_options)) {
+	    if (!main_core.Type.isPlainObject(options)) {
 	      throw 'BX.Crm.EntityCounterPanel: The "options" argument must be object.';
 	    }
-	    var _data2 = main_core.Type.isPlainObject(_options.data) ? _options.data : {};
-	    var withExcludeUsers = main_core.Type.isBoolean(_options.withExcludeUsers) ? _options.withExcludeUsers : false;
+	    var _data2 = main_core.Type.isPlainObject(options.data) ? options.data : {};
+	    var withExcludeUsers = main_core.Type.isBoolean(options.withExcludeUsers) ? options.withExcludeUsers : false;
 	    _this = babelHelpers.possibleConstructorReturn(this, babelHelpers.getPrototypeOf(EntityCounterPanel).call(this, {
-	      target: BX(_options.id),
-	      items: EntityCounterPanel.getCounterItems(_data2, _options),
+	      target: BX(options.id),
+	      items: EntityCounterPanel.getCounterItems(_data2, options),
 	      multiselect: false,
 	      // disable multiselect for CRM counters
 	      title: main_core.Loc.getMessage('NEW_CRM_COUNTER_TITLE_MY')
@@ -434,7 +438,6 @@ this.BX = this.BX || {};
 	    _classPrivateMethodInitSpec$2(babelHelpers.assertThisInitialized(_this), _onFilterApply$1);
 	    _classPrivateMethodInitSpec$2(babelHelpers.assertThisInitialized(_this), _onDeactivateItem);
 	    _classPrivateMethodInitSpec$2(babelHelpers.assertThisInitialized(_this), _onActivateItem);
-	    _classPrivateMethodInitSpec$2(babelHelpers.assertThisInitialized(_this), _bindEvents$2);
 	    _classPrivateFieldInitSpec$2(babelHelpers.assertThisInitialized(_this), _id$1, {
 	      writable: true,
 	      value: void 0
@@ -483,32 +486,61 @@ this.BX = this.BX || {};
 	      writable: true,
 	      value: void 0
 	    });
-	    babelHelpers.classPrivateFieldSet(babelHelpers.assertThisInitialized(_this), _id$1, _options.id);
-	    babelHelpers.classPrivateFieldSet(babelHelpers.assertThisInitialized(_this), _entityTypeId$1, _options.entityTypeId ? main_core.Text.toInteger(_options.entityTypeId) : 0);
-	    babelHelpers.classPrivateFieldSet(babelHelpers.assertThisInitialized(_this), _entityTypeName, _options.entityTypeName);
-	    babelHelpers.classPrivateFieldSet(babelHelpers.assertThisInitialized(_this), _userId, _options.userId ? main_core.Text.toInteger(_options.userId) : 0);
-	    babelHelpers.classPrivateFieldSet(babelHelpers.assertThisInitialized(_this), _userName, main_core.Type.isStringFilled(_options.userName) ? _options.userName : babelHelpers.classPrivateFieldGet(babelHelpers.assertThisInitialized(_this), _userId));
-	    babelHelpers.classPrivateFieldSet(babelHelpers.assertThisInitialized(_this), _codes$1, main_core.Type.isArray(_options.codes) ? _options.codes : []);
+	    _classPrivateFieldInitSpec$2(babelHelpers.assertThisInitialized(_this), _lockedCallback, {
+	      writable: true,
+	      value: void 0
+	    });
+	    babelHelpers.classPrivateFieldSet(babelHelpers.assertThisInitialized(_this), _id$1, options.id);
+	    babelHelpers.classPrivateFieldSet(babelHelpers.assertThisInitialized(_this), _entityTypeId$1, options.entityTypeId ? main_core.Text.toInteger(options.entityTypeId) : 0);
+	    babelHelpers.classPrivateFieldSet(babelHelpers.assertThisInitialized(_this), _entityTypeName, options.entityTypeName);
+	    babelHelpers.classPrivateFieldSet(babelHelpers.assertThisInitialized(_this), _userId, options.userId ? main_core.Text.toInteger(options.userId) : 0);
+	    babelHelpers.classPrivateFieldSet(babelHelpers.assertThisInitialized(_this), _userName, main_core.Type.isStringFilled(options.userName) ? options.userName : babelHelpers.classPrivateFieldGet(babelHelpers.assertThisInitialized(_this), _userId));
+	    babelHelpers.classPrivateFieldSet(babelHelpers.assertThisInitialized(_this), _codes$1, main_core.Type.isArray(options.codes) ? options.codes : []);
 	    babelHelpers.classPrivateFieldSet(babelHelpers.assertThisInitialized(_this), _data, _data2);
-	    babelHelpers.classPrivateFieldSet(babelHelpers.assertThisInitialized(_this), _filterResponsibleFiledName, _options.filterResponsibleFiledName);
+	    babelHelpers.classPrivateFieldSet(babelHelpers.assertThisInitialized(_this), _filterResponsibleFiledName, options.filterResponsibleFiledName);
 	    if (BX.CrmEntityType.isDefined(babelHelpers.classPrivateFieldGet(babelHelpers.assertThisInitialized(_this), _entityTypeId$1))) {
 	      babelHelpers.classPrivateFieldSet(babelHelpers.assertThisInitialized(_this), _counterManager, new EntityCounterManager({
 	        id: babelHelpers.classPrivateFieldGet(babelHelpers.assertThisInitialized(_this), _id$1),
 	        entityTypeId: babelHelpers.classPrivateFieldGet(babelHelpers.assertThisInitialized(_this), _entityTypeId$1),
 	        codes: babelHelpers.classPrivateFieldGet(babelHelpers.assertThisInitialized(_this), _codes$1),
-	        extras: main_core.Type.isObject(_options.extras) ? _options.extras : {},
+	        extras: main_core.Type.isObject(options.extras) ? options.extras : {},
 	        withExcludeUsers: withExcludeUsers
 	      }));
 	    }
 	    babelHelpers.classPrivateFieldSet(babelHelpers.assertThisInitialized(_this), _filterManager$1, new EntityCounterFilterManager());
-	    babelHelpers.classPrivateFieldSet(babelHelpers.assertThisInitialized(_this), _filterLastPresetId, _options.filterLastPresetId);
-	    babelHelpers.classPrivateFieldSet(babelHelpers.assertThisInitialized(_this), _filterLastPreset, main_core.Type.isArray(_options.filterLastPresetData) ? JSON.parse(_options.filterLastPresetData[0]) : {
+	    babelHelpers.classPrivateFieldSet(babelHelpers.assertThisInitialized(_this), _filterLastPresetId, options.filterLastPresetId);
+	    babelHelpers.classPrivateFieldSet(babelHelpers.assertThisInitialized(_this), _filterLastPreset, main_core.Type.isArray(options.filterLastPresetData) ? JSON.parse(options.filterLastPresetData[0]) : {
 	      presetId: null
 	    });
-	    _classPrivateMethodGet$2(babelHelpers.assertThisInitialized(_this), _bindEvents$2, _bindEvents2$2).call(babelHelpers.assertThisInitialized(_this), _options);
+	    babelHelpers.classPrivateFieldSet(babelHelpers.assertThisInitialized(_this), _lockedCallback, main_core.Type.isStringFilled(options.lockedCallback) ? options.lockedCallback : null);
 	    return _this;
 	  }
 	  babelHelpers.createClass(EntityCounterPanel, [{
+	    key: "bindToFilter",
+	    value: function bindToFilter() {
+	      babelHelpers.classPrivateFieldGet(this, _filterManager$1).bindToFilter();
+	      _classPrivateMethodGet$2(this, _markCounters, _markCounters2).call(this);
+	    }
+	  }, {
+	    key: "bindEvents",
+	    value: function bindEvents() {
+	      var _babelHelpers$classPr,
+	        _this2 = this;
+	      (_babelHelpers$classPr = babelHelpers.classPrivateFieldGet(this, _counterManager)) === null || _babelHelpers$classPr === void 0 ? void 0 : _babelHelpers$classPr.bindEvents();
+	      if (main_core.Type.isStringFilled(babelHelpers.classPrivateFieldGet(this, _lockedCallback))) {
+	        var elem = document.getElementById(babelHelpers.classPrivateFieldGet(this, _id$1));
+	        main_core.Event.bind(elem, 'click', function () {
+	          // eslint-disable-next-line no-eval
+	          eval(babelHelpers.classPrivateFieldGet(_this2, _lockedCallback));
+	        });
+	        return;
+	      }
+	      main_core_events.EventEmitter.subscribe('BX.UI.CounterPanel.Item:activate', _classPrivateMethodGet$2(this, _onActivateItem, _onActivateItem2).bind(this));
+	      main_core_events.EventEmitter.subscribe('BX.UI.CounterPanel.Item:deactivate', _classPrivateMethodGet$2(this, _onDeactivateItem, _onDeactivateItem2).bind(this));
+	      main_core_events.EventEmitter.subscribe('BX.Main.Filter:apply', _classPrivateMethodGet$2(this, _onFilterApply$1, _onFilterApply2$1).bind(this));
+	      main_core_events.EventEmitter.subscribe('BX.Crm.EntityCounterManager:onRecalculate', _classPrivateMethodGet$2(this, _onRecalculate, _onRecalculate2).bind(this));
+	    }
+	  }, {
 	    key: "init",
 	    value: function init() {
 	      babelHelpers.get(babelHelpers.getPrototypeOf(EntityCounterPanel.prototype), "init", this).call(this);
@@ -598,22 +630,10 @@ this.BX = this.BX || {};
 	  }]);
 	  return EntityCounterPanel;
 	}(ui_counterpanel.CounterPanel);
-	function _bindEvents2$2(options) {
-	  if (main_core.Type.isStringFilled(options.lockedCallback)) {
-	    BX.bind(BX(options.id), 'click', function () {
-	      eval(options.lockedCallback);
-	    });
-	  } else {
-	    main_core_events.EventEmitter.subscribe('BX.UI.CounterPanel.Item:activate', _classPrivateMethodGet$2(this, _onActivateItem, _onActivateItem2).bind(this));
-	    main_core_events.EventEmitter.subscribe('BX.UI.CounterPanel.Item:deactivate', _classPrivateMethodGet$2(this, _onDeactivateItem, _onDeactivateItem2).bind(this));
-	    main_core_events.EventEmitter.subscribe('BX.Main.Filter:apply', _classPrivateMethodGet$2(this, _onFilterApply$1, _onFilterApply2$1).bind(this));
-	    main_core_events.EventEmitter.subscribe('BX.Crm.EntityCounterManager:onRecalculate', _classPrivateMethodGet$2(this, _onRecalculate, _onRecalculate2).bind(this));
-	  }
-	}
 	function _onActivateItem2(event) {
 	  var item = event.getData();
 	  if (!_classPrivateMethodGet$2(this, _processItemSelection, _processItemSelection2).call(this, item)) {
-	    return event.preventDefault();
+	    event.preventDefault();
 	  }
 	}
 	function _onDeactivateItem2(event) {
@@ -706,7 +726,7 @@ this.BX = this.BX || {};
 	  return typeId.toString();
 	}
 	function _markCounters2() {
-	  var _this2 = this;
+	  var _this3 = this;
 	  if (!babelHelpers.classPrivateFieldGet(this, _filterManager$1).isActive()) {
 	    return;
 	  }
@@ -716,9 +736,9 @@ this.BX = this.BX || {};
 	    var _ref6 = babelHelpers.slicedToArray(_ref5, 2),
 	      code = _ref6[0],
 	      record = _ref6[1];
-	    var item = _this2.getItemById(code);
+	    var item = _this3.getItemById(code);
 	    var isOtherUsersFilter = item.id.endsWith(EntityCounterPanel.EXCLUDE_USERS_CODE_SUFFIX);
-	    var isFiltered = babelHelpers.classPrivateFieldGet(_this2, _filterManager$1).isFiltered(babelHelpers.classPrivateFieldGet(_this2, _userId), parseInt(record.TYPE_ID, 10), babelHelpers.classPrivateFieldGet(_this2, _entityTypeId$1), isOtherUsersFilter, babelHelpers.classPrivateFieldGet(_this2, _filterResponsibleFiledName));
+	    var isFiltered = babelHelpers.classPrivateFieldGet(_this3, _filterManager$1).isFiltered(babelHelpers.classPrivateFieldGet(_this3, _userId), parseInt(record.TYPE_ID, 10), babelHelpers.classPrivateFieldGet(_this3, _entityTypeId$1), isOtherUsersFilter, babelHelpers.classPrivateFieldGet(_this3, _filterResponsibleFiledName));
 	    if (isFiltered) {
 	      item.activate(false);
 	      if (isOtherUsersFilter) {
@@ -743,7 +763,7 @@ this.BX = this.BX || {};
 	  });
 	}
 	function _deactivateLinkedMenuItem2(item) {
-	  var _this3 = this;
+	  var _this4 = this;
 	  if (item.hasParentId()) {
 	    var parentItem = this.getItemById(EntityCounterPanel.getMenuParentItemId(babelHelpers.classPrivateFieldGet(this, _codes$1)));
 	    parentItem.deactivate(false);
@@ -751,7 +771,7 @@ this.BX = this.BX || {};
 	  }
 	  if (item.parent) {
 	    item.getItems().forEach(function (childItemId) {
-	      var childItem = _this3.getItemById(childItemId);
+	      var childItem = _this4.getItemById(childItemId);
 	      if (childItem.isActive) {
 	        childItem.deactivate(false);
 	      }

@@ -1,15 +1,16 @@
-import * as Type from "./types";
-import * as Field from "../field/registry";
-import * as Pager from "./pager";
-import * as Messages from "./messages";
-import * as Design from "./design";
-import Dependence from "./dependence";
-import Analytics from "./analytics";
-import ReCaptcha from "./recaptcha";
-import {Basket} from "./basket";
-import * as Components from "./components/registry";
-import * as Util from "../util/registry";
-import Event from "../util/event";
+import * as Type from './types';
+import * as Field from '../field/registry';
+import * as Pager from './pager';
+import * as Messages from './messages';
+import * as Design from './design';
+import Dependence from './dependence';
+import Analytics from './analytics';
+import ReCaptcha from './recaptcha';
+import YandexCaptcha from './yandexcaptcha';
+import { Basket } from './basket';
+import * as Components from './components/registry';
+import * as Util from '../util/registry';
+import Event from '../util/event';
 import Uploader from './uploader';
 
 const DefaultOptions: Type.Options = {
@@ -20,7 +21,7 @@ class Controller extends Event
 {
 	#id: string;
 	identification: Type.Identification = {};
-	view: Type.View = {type: 'inline'};
+	view: Type.View = { type: 'inline' };
 	provider: Object = {};
 	analyticsHandler: Object = {};
 	languages: Array = [];
@@ -36,6 +37,7 @@ class Controller extends Event
 	basket: Basket;
 	analytics: Analytics;
 	recaptcha: ReCaptcha;
+	yandexCaptcha: YandexCaptcha;
 	abuse: Type.Abuse;
 	uploader: Uploader;
 
@@ -49,6 +51,7 @@ class Controller extends Event
 		dateTimeFormat: 'DD.MM.YYYY HH:mm:ss',
 		sundayFirstly: false,
 	};
+
 	currency: Type.Currency = {
 		code: 'USD',
 		title: '$',
@@ -72,8 +75,9 @@ class Controller extends Event
 	stateText: String = '';
 	stateButton: Object = {
 		text: '',
-		handler: null
+		handler: null,
 	};
+
 	node: Element;
 	#vue: Object;
 
@@ -87,10 +91,12 @@ class Controller extends Event
 		this.#dependence = new Dependence(this);
 		this.analytics = new Analytics(this);
 		this.recaptcha = new ReCaptcha();
+		this.yandexCaptcha = new YandexCaptcha();
 		this.abuse = options.abuse;
 
 		this.emit(Type.EventTypes.initBefore, options);
 
+		// eslint-disable-next-line no-param-reassign
 		options = this.adjust(options);
 
 		this.uploader = new Uploader(this);
@@ -170,7 +176,7 @@ class Controller extends Event
 			document.querySelector('#b24-' + this.getId() + ' .b24-form-wrapper'),
 			() => {
 				this.emit(Type.EventTypes.view);
-			}
+			},
 		);
 	}
 
@@ -184,12 +190,12 @@ class Controller extends Event
 
 	reset()
 	{
-		this.#fields.forEach(field =>  {
+		this.#fields.forEach((field) => {
 			field.reset();
 
 			if (this.#dependence)
 			{
-				this.#dependence.trigger(field, 'change')
+				this.#dependence.trigger(field, 'change');
 			}
 		});
 
@@ -221,16 +227,24 @@ class Controller extends Event
 
 		Field.Storage.storeFieldValues(this.getFields());
 
-		if (!this.recaptcha.isVerified())
+		if (this.recaptcha.canUse() && !this.recaptcha.isVerified())
 		{
 			this.recaptcha.verify(() => this.submit());
+
+			return false;
+		}
+
+		if (this.yandexCaptcha.canUse() && !this.yandexCaptcha.isVerified())
+		{
+			this.yandexCaptcha.verify(() => this.submit());
+
 			return false;
 		}
 
 		this.loading = true;
 		let promise = Promise.resolve();
 		const eventData = {
-			promise
+			promise,
 		};
 		this.emit(Type.EventTypes.submit, eventData);
 		promise = eventData.promise || promise;
@@ -238,6 +252,7 @@ class Controller extends Event
 		if (!this.provider.submit)
 		{
 			this.loading = false;
+
 			return true;
 		}
 
@@ -248,20 +263,23 @@ class Controller extends Event
 			});
 		}
 
-		let consents = this.agreements.reduce((acc, field) => {
+		const consents = this.agreements.reduce((acc, field) => {
 			acc[field.name] = field.value();
+
 			return acc;
 		}, {});
 
-		let formData = new FormData();
+		const formData = new FormData();
 		formData.set('properties', JSON.stringify(this.#properties));
 		formData.set('consents', JSON.stringify(consents));
 		formData.set('recaptcha', this.recaptcha.getResponse());
+		formData.set('yandexSmartCaptcha', this.yandexCaptcha.getResponse());
 		formData.set('timeZoneOffset', new Date().getTimezoneOffset());
 
+		// eslint-disable-next-line promise/catch-or-return
 		promise.then(() => {
 			formData.set('values', JSON.stringify(this.values()));
-		})
+		});
 
 		if (typeof this.provider.submit === 'string')
 		{
@@ -272,15 +290,14 @@ class Controller extends Event
 				headers: {
 					'Origin': window.location.origin,
 				},
-				body: formData
+				body: formData,
 			}));
-
-
 		}
 		else if (typeof this.provider.submit === 'function')
 		{
 			promise = promise.then(() => {
 				formData.set('properties', JSON.stringify(this.#properties));
+
 				return this.provider.submit(this, formData);
 			});
 		}
@@ -294,6 +311,7 @@ class Controller extends Event
 			if (!data.resultId)
 			{
 				this.error = true;
+
 				return;
 			}
 			this.emit(Type.EventTypes.sendSuccess, data);
@@ -302,7 +320,11 @@ class Controller extends Event
 			if (redirect.url)
 			{
 				const handler = () => {
-					try { top.location = redirect.url; } catch (e) {}
+					try
+					{
+						top.location = redirect.url;
+					}
+					catch (e) {}
 					window.location = redirect.url;
 				};
 
@@ -313,15 +335,15 @@ class Controller extends Event
 				}
 
 				setTimeout(handler, (redirect.delay || 0) * 1000);
-			} else if (data.refill.active)
+			}
+			else if (data.refill.active)
 			{
 				this.stateButton.text = data.refill.caption;
 				this.stateButton.handler = () => {
 					this.sent = false;
 					this.reset();
-				}
+				};
 			}
-
 		}).catch(e => {
 			this.error = true;
 			this.loading = false;
@@ -430,32 +452,48 @@ class Controller extends Event
 		}
 
 		this.setView(options.view);
+
 		if (typeof options.buttonCaption !== 'undefined')
 		{
 			this.buttonCaption = options.buttonCaption;
 		}
+
 		if (typeof options.visible !== 'undefined')
 		{
 			this.visible = !!options.visible;
 		}
+
 		if (typeof options.design !== 'undefined')
 		{
 			this.design.adjust({proxy: options.proxy, ...options.design});
 		}
-		if (typeof options.recaptcha !== 'undefined')
+
+		if (typeof options.captcha !== 'undefined'
+			&& options.captcha.service === 'google'
+			&& typeof options.captcha.recaptcha !== 'undefined'
+		)
 		{
-			this.recaptcha.adjust(options.recaptcha);
+			this.recaptcha.adjust(options.captcha.recaptcha);
 		}
+
+		if (typeof options.captcha !== 'undefined'
+			&& options.captcha.service === 'yandex'
+			&& typeof options.captcha.yandexCaptcha !== 'undefined'
+		)
+		{
+			this.yandexCaptcha.adjust(options.captcha.yandexCaptcha);
+		}
+
 		if (Array.isArray(options.dependencies))
 		{
 			this.#dependence.setDependencies(options.dependencies);
 		}
 
-
 		if (options.node)
 		{
 			this.node = options.node;
 		}
+
 		if (!this.node)
 		{
 			this.node = document.createElement('div');

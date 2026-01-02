@@ -3,7 +3,14 @@
  */
 jn.define('calendar/date-helper', (require, exports, module) => {
 	const { Moment } = require('utils/date');
-	const { dayOfWeekMonth, fullDate, date: shortDate, shortTime } = require('utils/date/formats');
+	const {
+		dayOfWeekMonth,
+		fullDate,
+		date: shortDate,
+		shortTime,
+		dayShortMonth,
+		mediumDate,
+	} = require('utils/date/formats');
 	const { capitalize } = require('utils/string');
 
 	class DateHelper
@@ -110,30 +117,22 @@ jn.define('calendar/date-helper', (require, exports, module) => {
 
 		static getMonthName(date)
 		{
-			const moment = Moment.createFromTimestamp(date.getTime() / 1000);
-
-			return moment.format('LLLL');
+			return this.formatTimestamp(date.getTime() / 1000, 'LLLL');
 		}
 
 		static getShortMonthName(date)
 		{
-			const moment = Moment.createFromTimestamp(date.getTime() / 1000);
-
-			return moment.format('LLL');
+			return this.formatTimestamp(date.getTime() / 1000, 'LLL');
 		}
 
 		static formatDate(date)
 		{
-			const moment = Moment.createFromTimestamp(date.getTime() / 1000);
-
-			return moment.format(shortDate());
+			return this.formatTimestamp(date.getTime() / 1000, shortDate());
 		}
 
 		static formatTime(date)
 		{
-			const moment = Moment.createFromTimestamp(date.getTime() / 1000);
-
-			return moment.format(shortTime());
+			return this.formatTimestamp(date.getTime() / 1000, shortTime());
 		}
 
 		static getDateHeaderString(timestamp)
@@ -143,6 +142,32 @@ jn.define('calendar/date-helper', (require, exports, module) => {
 			const dateString = moment.format(format);
 
 			return dateString.at(0).toUpperCase() + dateString.slice(1);
+		}
+
+		static getDatetimeFormat(timestamp)
+		{
+			const moment = Moment.createFromTimestamp(timestamp);
+
+			return `${moment.inThisYear ? dayShortMonth() : mediumDate()}, ${shortTime()}`;
+		}
+
+		static getDateFormat(timestamp)
+		{
+			const moment = Moment.createFromTimestamp(timestamp);
+
+			return moment.inThisYear ? dayShortMonth() : mediumDate();
+		}
+
+		static getTimeFormat()
+		{
+			return shortTime();
+		}
+
+		static formatTimestamp(timestamp, format)
+		{
+			const moment = Moment.createFromTimestamp(timestamp);
+
+			return moment.format(format);
 		}
 	}
 

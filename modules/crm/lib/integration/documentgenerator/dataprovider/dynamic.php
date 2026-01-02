@@ -6,6 +6,7 @@ use Bitrix\Crm\Binding\EntityContactTable;
 use Bitrix\Crm\Category\Entity\Category;
 use Bitrix\Crm\Integration\DocumentGenerator\Value\Money;
 use Bitrix\Crm\Item;
+use Bitrix\Crm\ItemIdentifier;
 use Bitrix\Crm\Model\Dynamic\Type;
 use Bitrix\Crm\Service\Container;
 use Bitrix\Crm\Service\Factory;
@@ -161,7 +162,7 @@ abstract class Dynamic extends ProductsDataProvider implements Filterable
 
 		$this->getFields();
 
-		if ($this->data['TITLE'] === '')
+		if (isset($this->data['TITLE']) && $this->data['TITLE'] === '')
 		{
 			unset($this->data['TITLE']);
 		}
@@ -290,11 +291,11 @@ abstract class Dynamic extends ProductsDataProvider implements Filterable
 	{
 		if($this->isLoaded())
 		{
-			return Container::getInstance()->getUserPermissions($userId)->checkReadPermissions(
+			return Container::getInstance()->getUserPermissions($userId)->item()->canReadItemIdentifier(new ItemIdentifier(
 				$this->getCrmOwnerType(),
 				(int) $this->source,
 				(int) $this->data['CATEGORY_ID']
-			);
+			));
 		}
 
 		return false;

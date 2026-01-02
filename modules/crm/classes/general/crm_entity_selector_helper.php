@@ -83,8 +83,8 @@ class CCrmEntitySelectorHelper
 			if ($entityTypeId > 0)
 			{
 				$isHidden = $isMyCompany
-					? !$serviceUserPermissions->getMyCompanyPermissions()->canReadBaseFields((int)$entityID)
-					: !$serviceUserPermissions->checkReadPermissions($entityTypeId, $entityID)
+					? !$serviceUserPermissions->myCompany()->canReadBaseFields((int)$entityID)
+					: !$serviceUserPermissions->item()->canRead($entityTypeId, $entityID)
 				;
 			}
 		}
@@ -166,11 +166,11 @@ class CCrmEntitySelectorHelper
 		}
 		$result[$permissionsKey] = [
 			$canUpdateKey => $isMyCompany
-				? $serviceUserPermissions->getMyCompanyPermissions()->canUpdateByOwnerEntity(
+				? $serviceUserPermissions->myCompany()->canUpdateByOwnerEntity(
 					(int)($options['ownerEntityTypeId'] ?? $entityTypeId),
 					(int)($options['ownerEntityId'] ?? $entityID)
 				)
-				: $serviceUserPermissions->checkUpdatePermissions($entityTypeId, $entityID),
+				: $serviceUserPermissions->item()->canUpdate($entityTypeId, $entityID),
 		];
 		if($entityTypeName === 'CONTACT')
 		{
@@ -729,7 +729,6 @@ class CCrmEntitySelectorHelper
 			}
 		}
 
-		$userPermissions = CCrmPerms::GetCurrentUserPermissions();
 		$arItems = array();
 		$i = 0;
 		foreach($entityTypeNames as $typeName)
@@ -738,7 +737,7 @@ class CCrmEntitySelectorHelper
 
 			if($typeName === 'CONTACT')
 			{
-				$entityIDs = CCrmContact::GetTopIDsInCategory(0, $count, 'DESC', $userPermissions);
+				$entityIDs = CCrmContact::GetTopIDsInCategory(0, $count, 'DESC');
 				if(!empty($entityIDs))
 				{
 					$contactTypes = CCrmStatus::GetStatusList('CONTACT_TYPE');
@@ -838,7 +837,7 @@ class CCrmEntitySelectorHelper
 			{
 				if(empty($companiesFilter))
 				{
-					$entityIDs = CCrmCompany::GetTopIDsInCategory(0, $count, 'DESC', $userPermissions);
+					$entityIDs = CCrmCompany::GetTopIDsInCategory(0, $count, 'DESC');
 				}
 				else
 				{
@@ -941,7 +940,7 @@ class CCrmEntitySelectorHelper
 			}
 			elseif($typeName === 'LEAD')
 			{
-				$entityIDs = CCrmLead::GetTopIDs($count, 'DESC', $userPermissions);
+				$entityIDs = CCrmLead::GetTopIDs($count, 'DESC');
 				if(!empty($entityIDs))
 				{
 					$leadIndex = array();
@@ -1007,7 +1006,7 @@ class CCrmEntitySelectorHelper
 			}
 			elseif($typeName === 'DEAL')
 			{
-				$entityIDs = CCrmDeal::GetTopIDs($count, 'DESC', $userPermissions);
+				$entityIDs = CCrmDeal::GetTopIDs($count, 'DESC');
 				if(!empty($entityIDs))
 				{
 					$dbResult = CCrmDeal::GetListEx(
@@ -1042,7 +1041,7 @@ class CCrmEntitySelectorHelper
 			}
 			elseif($typeName === 'QUOTE')
 			{
-				$entityIDs = CCrmQuote::GetTopIDs($count, 'DESC', $userPermissions);
+				$entityIDs = CCrmQuote::GetTopIDs($count, 'DESC');
 				if(!empty($entityIDs))
 				{
 					$dbResult = CCrmQuote::GetList(

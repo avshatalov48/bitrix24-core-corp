@@ -1,0 +1,9 @@
+.tasks-field-participant-cant-change span {
+	border-bottom: var(--ui-border-width-thin) dashed rgba(var(--ui-color-palette-white-base-rgb), 0.5);
+	cursor: pointer;
+	transition: border-color 180ms;
+}
+
+.tasks-field-participant-cant-change span:hover {
+	border-color: rgba(var(--ui-color-palette-white-base-rgb), 0.8);
+}

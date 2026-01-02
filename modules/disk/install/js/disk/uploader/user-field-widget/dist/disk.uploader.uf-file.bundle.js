@@ -1,7 +1,7 @@
 /* eslint-disable */
 this.BX = this.BX || {};
 this.BX.Disk = this.BX.Disk || {};
-(function (exports,ui_uploader_vue,ui_uploader_tileWidget,main_core_events,ui_buttons,ui_uploader_core,ui_infoHelper,main_core,main_popup) {
+(function (exports,ui_uploader_vue,ui_uploader_tileWidget,main_core_events,ui_buttons,ui_infoHelper,disk_document,ui_vue3_components_richLoc,main_core,ui_system_menu,ui_uploader_core,ui_icons_generator,ui_iconSet_api_core) {
 	'use strict';
 
 	var _form = /*#__PURE__*/babelHelpers.classPrivateFieldLooseKey("form");
@@ -691,6 +691,52 @@ this.BX.Disk = this.BX.Disk || {};
 	  }
 	}
 
+	const DocumentService = Object.freeze({
+	  Google: 'gdrive',
+	  Office: 'office365',
+	  Dropbox: 'dropbox',
+	  Onedrive: 'onedrive',
+	  OnlyOffice: 'onlyoffice',
+	  Local: 'l'
+	});
+	const DocumentType = Object.freeze({
+	  Docx: 'docx',
+	  Xlsx: 'xlsx',
+	  Pptx: 'pptx',
+	  Board: 'board'
+	});
+
+	const settings = main_core.Extension.getSettings('disk.uploader.user-field-widget');
+	class UserFieldSettings {
+	  canCreateDocuments() {
+	    return settings.get('canCreateDocuments', false);
+	  }
+	  getDocumentServices() {
+	    const documentHandlers = settings.get('documentHandlers', {});
+	    if (main_core.Type.isPlainObject(documentHandlers)) {
+	      return documentHandlers;
+	    }
+	    return {};
+	  }
+	  getImportServices() {
+	    const importHandlers = settings.get('importHandlers', {});
+	    if (main_core.Type.isPlainObject(importHandlers)) {
+	      return importHandlers;
+	    }
+	    return {};
+	  }
+	  canUseImportService() {
+	    return settings.get('canUseImport', true);
+	  }
+	  getImportFeatureId() {
+	    return settings.get('importFeatureId', '');
+	  }
+	  isBoardsEnabled() {
+	    return settings.get('isBoardsEnabled', false);
+	  }
+	}
+	const userFieldSettings = new UserFieldSettings();
+
 	let _$1 = t => t,
 	  _t$1,
 	  _t2;
@@ -703,9 +749,20 @@ this.BX.Disk = this.BX.Disk || {};
 	var _photoTemplateInput = /*#__PURE__*/babelHelpers.classPrivateFieldLooseKey("photoTemplateInput");
 	var _photoTemplateMode = /*#__PURE__*/babelHelpers.classPrivateFieldLooseKey("photoTemplateMode");
 	var _widgetComponent = /*#__PURE__*/babelHelpers.classPrivateFieldLooseKey("widgetComponent");
+	var _bindHandlers = /*#__PURE__*/babelHelpers.classPrivateFieldLooseKey("bindHandlers");
+	var _unbindHandlers = /*#__PURE__*/babelHelpers.classPrivateFieldLooseKey("unbindHandlers");
+	var _handleItemAdd = /*#__PURE__*/babelHelpers.classPrivateFieldLooseKey("handleItemAdd");
+	var _handleItemComplete = /*#__PURE__*/babelHelpers.classPrivateFieldLooseKey("handleItemComplete");
+	var _handleItemRemove = /*#__PURE__*/babelHelpers.classPrivateFieldLooseKey("handleItemRemove");
 	class UserFieldControl extends main_core_events.EventEmitter {
 	  constructor(widgetComponent) {
 	    super();
+	    Object.defineProperty(this, _unbindHandlers, {
+	      value: _unbindHandlers2
+	    });
+	    Object.defineProperty(this, _bindHandlers, {
+	      value: _bindHandlers2
+	    });
 	    Object.defineProperty(this, _id, {
 	      writable: true,
 	      value: null
@@ -738,32 +795,42 @@ this.BX.Disk = this.BX.Disk || {};
 	      writable: true,
 	      value: null
 	    });
+	    Object.defineProperty(this, _handleItemAdd, {
+	      writable: true,
+	      value: event => {
+	        const item = event.getData().item;
+	        this.emit('Item:onAdd', {
+	          item
+	        });
+	      }
+	    });
+	    Object.defineProperty(this, _handleItemComplete, {
+	      writable: true,
+	      value: event => {
+	        const item = event.getData().item;
+	        this.setDocumentEdit(item);
+	        this.emit('Item:onComplete', {
+	          item
+	        });
+	      }
+	    });
+	    Object.defineProperty(this, _handleItemRemove, {
+	      writable: true,
+	      value: event => {
+	        const item = event.getData().item;
+	        this.removeAllowDocumentEditInput(item);
+	        this.emit('Item:onRemove', {
+	          item
+	        });
+	      }
+	    });
 	    this.setEventNamespace('BX.Disk.Uploader.Integration');
 	    babelHelpers.classPrivateFieldLooseBase(this, _widgetComponent)[_widgetComponent] = widgetComponent;
 	    babelHelpers.classPrivateFieldLooseBase(this, _adapter)[_adapter] = widgetComponent.adapter;
 	    const options = main_core.Type.isPlainObject(widgetComponent.widgetOptions) ? widgetComponent.widgetOptions : {};
 	    babelHelpers.classPrivateFieldLooseBase(this, _photoTemplateFieldName)[_photoTemplateFieldName] = main_core.Type.isStringFilled(options.photoTemplateFieldName) ? options.photoTemplateFieldName : null;
 	    babelHelpers.classPrivateFieldLooseBase(this, _allowDocumentFieldName)[_allowDocumentFieldName] = main_core.Type.isStringFilled(options.allowDocumentFieldName) ? options.allowDocumentFieldName : null;
-	    babelHelpers.classPrivateFieldLooseBase(this, _adapter)[_adapter].subscribe('Item:onAdd', event => {
-	      const item = event.getData().item;
-	      this.emit('Item:onAdd', {
-	        item
-	      });
-	    });
-	    babelHelpers.classPrivateFieldLooseBase(this, _adapter)[_adapter].subscribe('Item:onComplete', event => {
-	      const item = event.getData().item;
-	      this.setDocumentEdit(item);
-	      this.emit('Item:onComplete', {
-	        item
-	      });
-	    });
-	    babelHelpers.classPrivateFieldLooseBase(this, _adapter)[_adapter].subscribe('Item:onRemove', event => {
-	      const item = event.getData().item;
-	      this.removeAllowDocumentEditInput(item);
-	      this.emit('Item:onRemove', {
-	        item
-	      });
-	    });
+	    babelHelpers.classPrivateFieldLooseBase(this, _bindHandlers)[_bindHandlers]();
 	    if (options.disableLocalEdit) {
 	      // it would be better to load disk.document on demand
 	      BX.Disk.Document.Local.Instance.disable();
@@ -804,6 +871,9 @@ this.BX.Disk = this.BX.Disk || {};
 	    babelHelpers.classPrivateFieldLooseBase(this, _id)[_id] = main_core.Type.isStringFilled(options.mainPostFormId) ? options.mainPostFormId : `user-field-control-${main_core.Text.getRandom().toLowerCase()}`;
 	    instances.set(babelHelpers.classPrivateFieldLooseBase(this, _id)[_id], this);
 	  }
+	  destroy() {
+	    babelHelpers.classPrivateFieldLooseBase(this, _unbindHandlers)[_unbindHandlers]();
+	  }
 	  static getById(id) {
 	    return instances.get(id) || null;
 	  }
@@ -811,8 +881,7 @@ this.BX.Disk = this.BX.Disk || {};
 	    return [...instances.values()];
 	  }
 	  canCreateDocuments() {
-	    const settings = main_core.Extension.getSettings('disk.uploader.user-field-widget');
-	    const canCreateDocuments = settings.get('canCreateDocuments', false);
+	    const canCreateDocuments = userFieldSettings.canCreateDocuments();
 	    return canCreateDocuments && babelHelpers.classPrivateFieldLooseBase(this, _widgetComponent)[_widgetComponent].widgetOptions.canCreateDocuments !== false;
 	  }
 	  getAdapter() {
@@ -930,42 +999,27 @@ this.BX.Disk = this.BX.Disk || {};
 	    return babelHelpers.classPrivateFieldLooseBase(this, _photoTemplateMode)[_photoTemplateMode];
 	  }
 	  getDocumentServices() {
-	    const settings = main_core.Extension.getSettings('disk.uploader.user-field-widget');
-	    const documentHandlers = settings.get('documentHandlers', {});
-	    if (main_core.Type.isPlainObject(documentHandlers)) {
-	      return documentHandlers;
-	    }
-	    return {};
+	    return userFieldSettings.getDocumentServices();
 	  }
 	  getCurrentDocumentService() {
 	    let currentServiceCode = BX.Disk.getDocumentService();
 	    if (!currentServiceCode && BX.Disk.isAvailableOnlyOffice()) {
-	      currentServiceCode = 'onlyoffice';
+	      currentServiceCode = DocumentService.OnlyOffice;
 	    } else if (!currentServiceCode) {
-	      currentServiceCode = 'l';
+	      currentServiceCode = DocumentService.Local;
 	    }
 	    return this.getDocumentServices()[currentServiceCode] || null;
 	  }
-	  getImportServices() {
-	    const settings = main_core.Extension.getSettings('disk.uploader.user-field-widget');
-	    const importHandlers = settings.get('importHandlers', {});
-	    if (main_core.Type.isPlainObject(importHandlers)) {
-	      return importHandlers;
-	    }
-	    return {};
-	  }
-	  canUseImportService() {
-	    const settings = main_core.Extension.getSettings('disk.uploader.user-field-widget');
-	    return settings.get('canUseImport', true);
-	  }
-	  getImportFeatureId() {
-	    const settings = main_core.Extension.getSettings('disk.uploader.user-field-widget');
-	    return settings.get('importFeatureId', '');
-	  }
-	  isBoardsEnabled() {
-	    const settings = main_core.Extension.getSettings('disk.uploader.user-field-widget');
-	    return settings.get('isBoardsEnabled', '');
-	  }
+	}
+	function _bindHandlers2() {
+	  babelHelpers.classPrivateFieldLooseBase(this, _adapter)[_adapter].subscribe('Item:onAdd', babelHelpers.classPrivateFieldLooseBase(this, _handleItemAdd)[_handleItemAdd]);
+	  babelHelpers.classPrivateFieldLooseBase(this, _adapter)[_adapter].subscribe('Item:onComplete', babelHelpers.classPrivateFieldLooseBase(this, _handleItemComplete)[_handleItemComplete]);
+	  babelHelpers.classPrivateFieldLooseBase(this, _adapter)[_adapter].subscribe('Item:onRemove', babelHelpers.classPrivateFieldLooseBase(this, _handleItemRemove)[_handleItemRemove]);
+	}
+	function _unbindHandlers2() {
+	  babelHelpers.classPrivateFieldLooseBase(this, _adapter)[_adapter].unsubscribe('Item:onAdd', babelHelpers.classPrivateFieldLooseBase(this, _handleItemAdd)[_handleItemAdd]);
+	  babelHelpers.classPrivateFieldLooseBase(this, _adapter)[_adapter].unsubscribe('Item:onComplete', babelHelpers.classPrivateFieldLooseBase(this, _handleItemComplete)[_handleItemComplete]);
+	  babelHelpers.classPrivateFieldLooseBase(this, _adapter)[_adapter].unsubscribe('Item:onRemove', babelHelpers.classPrivateFieldLooseBase(this, _handleItemRemove)[_handleItemRemove]);
 	}
 
 	const loadDiskFileDialog = (dialogName, params = {}) => {
@@ -1026,6 +1080,15 @@ this.BX.Disk = this.BX.Disk || {};
 	  }
 	  build() {
 	    babelHelpers.classPrivateFieldLooseBase(this, _menu)[_menu].getPopupWindow().setMaxWidth(500);
+	    if (main_core.Type.isStringFilled(babelHelpers.classPrivateFieldLooseBase(this, _item)[_item].customData.viewLink)) {
+	      babelHelpers.classPrivateFieldLooseBase(this, _menu)[_menu].addMenuItem({
+	        id: 'view',
+	        text: main_core.Loc.getMessage('DISK_UF_WIDGET_OPEN_FILE_MENU_TITLE'),
+	        href: babelHelpers.classPrivateFieldLooseBase(this, _item)[_item].customData.viewLink,
+	        target: '_blank',
+	        onclick: (event, menuItem) => menuItem.getMenuWindow().close()
+	      }, 'download');
+	    }
 	    if (babelHelpers.classPrivateFieldLooseBase(this, _userFieldControl$1)[_userFieldControl$1].canItemAllowEdit(babelHelpers.classPrivateFieldLooseBase(this, _item)[_item])) {
 	      babelHelpers.classPrivateFieldLooseBase(this, _menu)[_menu].addMenuItem({
 	        delimiter: true
@@ -1230,25 +1293,16 @@ this.BX.Disk = this.BX.Disk || {};
 	    babelHelpers.classPrivateFieldLooseBase(this, _userFieldControl$2)[_userFieldControl$2] = userFieldControl;
 	  }
 	  getMenu(button) {
-	    if (babelHelpers.classPrivateFieldLooseBase(this, _menu$1)[_menu$1] !== null) {
-	      return babelHelpers.classPrivateFieldLooseBase(this, _menu$1)[_menu$1];
-	    }
-	    babelHelpers.classPrivateFieldLooseBase(this, _menu$1)[_menu$1] = new main_popup.Menu({
+	    var _babelHelpers$classPr, _babelHelpers$classPr2;
+	    (_babelHelpers$classPr2 = (_babelHelpers$classPr = babelHelpers.classPrivateFieldLooseBase(this, _menu$1))[_menu$1]) != null ? _babelHelpers$classPr2 : _babelHelpers$classPr[_menu$1] = new ui_system_menu.Menu({
 	      bindElement: button.getContainer(),
-	      className: 'disk-user-field-settings-popup',
 	      angle: true,
 	      autoHide: true,
 	      offsetLeft: 16,
-	      cacheable: false,
 	      items: babelHelpers.classPrivateFieldLooseBase(this, _getItems)[_getItems](),
 	      events: {
-	        onShow: () => {
-	          button.select();
-	        },
-	        onDestroy: () => {
-	          button.deselect();
-	          babelHelpers.classPrivateFieldLooseBase(this, _menu$1)[_menu$1] = null;
-	        }
+	        onShow: () => button.select(),
+	        onClose: () => button.deselect()
 	      }
 	    });
 	    return babelHelpers.classPrivateFieldLooseBase(this, _menu$1)[_menu$1];
@@ -1257,16 +1311,16 @@ this.BX.Disk = this.BX.Disk || {};
 	    this.getMenu(button).show();
 	  }
 	  toggle(button) {
-	    if (babelHelpers.classPrivateFieldLooseBase(this, _menu$1)[_menu$1] !== null && babelHelpers.classPrivateFieldLooseBase(this, _menu$1)[_menu$1].getPopupWindow().isShown()) {
+	    var _babelHelpers$classPr3, _babelHelpers$classPr4;
+	    if ((_babelHelpers$classPr3 = babelHelpers.classPrivateFieldLooseBase(this, _menu$1)[_menu$1]) != null && (_babelHelpers$classPr4 = _babelHelpers$classPr3.getPopup()) != null && _babelHelpers$classPr4.isShown()) {
 	      babelHelpers.classPrivateFieldLooseBase(this, _menu$1)[_menu$1].close();
 	    } else {
 	      this.show(button);
 	    }
 	  }
 	  hide() {
-	    if (babelHelpers.classPrivateFieldLooseBase(this, _menu$1)[_menu$1] !== null) {
-	      babelHelpers.classPrivateFieldLooseBase(this, _menu$1)[_menu$1].close();
-	    }
+	    var _babelHelpers$classPr5;
+	    (_babelHelpers$classPr5 = babelHelpers.classPrivateFieldLooseBase(this, _menu$1)[_menu$1]) == null ? void 0 : _babelHelpers$classPr5.close();
 	  }
 	  hasItems() {
 	    return babelHelpers.classPrivateFieldLooseBase(this, _getItems)[_getItems]().length > 0;
@@ -1277,16 +1331,16 @@ this.BX.Disk = this.BX.Disk || {};
 	    return [];
 	  }
 	  return [{
-	    className: babelHelpers.classPrivateFieldLooseBase(this, _userFieldControl$2)[_userFieldControl$2].getPhotoTemplate() === 'grid' ? 'disk-user-field-item-checked' : '',
-	    text: main_core.Loc.getMessage('DISK_UF_WIDGET_ALLOW_PHOTO_COLLAGE'),
-	    onclick: (event, menuItem) => {
+	    isSelected: babelHelpers.classPrivateFieldLooseBase(this, _userFieldControl$2)[_userFieldControl$2].getPhotoTemplate() === 'grid',
+	    title: main_core.Loc.getMessage('DISK_UF_WIDGET_ALLOW_PHOTO_COLLAGE'),
+	    onClick: () => {
 	      babelHelpers.classPrivateFieldLooseBase(this, _userFieldControl$2)[_userFieldControl$2].setPhotoTemplateMode('manual');
 	      if (babelHelpers.classPrivateFieldLooseBase(this, _userFieldControl$2)[_userFieldControl$2].getPhotoTemplate() === 'grid') {
 	        babelHelpers.classPrivateFieldLooseBase(this, _userFieldControl$2)[_userFieldControl$2].setPhotoTemplate('gallery');
 	      } else {
 	        babelHelpers.classPrivateFieldLooseBase(this, _userFieldControl$2)[_userFieldControl$2].setPhotoTemplate('grid');
 	      }
-	      menuItem.getMenuWindow().close();
+	      babelHelpers.classPrivateFieldLooseBase(this, _menu$1)[_menu$1].updateItems(babelHelpers.classPrivateFieldLooseBase(this, _getItems)[_getItems]());
 	    }
 	  }];
 	}
@@ -1392,9 +1446,15 @@ this.BX.Disk = this.BX.Disk || {};
 
 	const loadingDialogs$1 = new Set();
 	const openCloudFileDialog = options => {
+	  if (!userFieldSettings.canUseImportService()) {
+	    ui_infoHelper.FeaturePromotersRegistry.getPromoter({
+	      featureId: userFieldSettings.getImportFeatureId()
+	    }).show();
+	    return;
+	  }
 	  options = main_core.Type.isPlainObject(options) ? options : {};
 	  const dialogId = main_core.Type.isStringFilled(options.dialogId) ? options.dialogId : `cloud-dialog-${main_core.Text.getRandom(5)}`;
-	  const serviceId = main_core.Type.isStringFilled(options.serviceId) ? options.serviceId : 'gdrive';
+	  const serviceId = main_core.Type.isStringFilled(options.serviceId) ? options.serviceId : DocumentService.Google;
 	  const onLoad = main_core.Type.isFunction(options.onLoad) ? options.onLoad : null;
 	  const onSelect = main_core.Type.isFunction(options.onSelect) ? options.onSelect : null;
 	  const onClose = main_core.Type.isFunction(options.onClose) ? options.onClose : null;
@@ -1444,7 +1504,7 @@ this.BX.Disk = this.BX.Disk || {};
 	        }
 	      }
 	    };
-	    if (serviceId === 'gdrive') {
+	    if (serviceId === DocumentService.Google) {
 	      main_core.ajax({
 	        url: '/bitrix/tools/disk/uf.php?action=getGoogleAppData',
 	        dataType: 'json',
@@ -1487,6 +1547,71 @@ this.BX.Disk = this.BX.Disk || {};
 	  }) => {
 	    return new GoogleDrivePicker(data.clientId, data.appId, data.apiKey, data.accessToken, BX.DiskFileDialog.obCallback[dialogId]);
 	  });
+	};
+
+	const createDocumentDialog = (options = {}) => {
+	  const uploader = options.uploader instanceof ui_uploader_core.Uploader ? options.uploader : null;
+	  const documentType = main_core.Type.isStringFilled(options.documentType) ? options.documentType : null;
+	  const onAddFile = main_core.Type.isFunction(options.onAddFile) ? options.onAddFile : null;
+
+	  // TODO: load disk and disk.document extensions on demand
+	  if (!BX.Disk.getDocumentService()) {
+	    const service = BX.Disk.isAvailableOnlyOffice() ? DocumentService.OnlyOffice : DocumentService.Local;
+	    BX.Disk.saveDocumentService(service);
+	  }
+	  let newTab = null;
+	  if (documentType === DocumentType.Board) {
+	    newTab = window.open('', '_blank');
+	  }
+	  if (BX.Disk.Document.Local.Instance.isSetWorkWithLocalBDisk() || documentType === 'board') {
+	    BX.Disk.Document.Local.Instance.createFile({
+	      type: documentType
+	    }).then(response => {
+	      if (response.status === 'success') {
+	        if (documentType === 'board') {
+	          BX.UI.Analytics.sendData({
+	            event: 'create',
+	            tool: 'boards',
+	            category: 'boards',
+	            c_element: 'docs_attach_uploader_widget'
+	          });
+	        }
+	        uploader.addFile(`n${response.object.id}`, {
+	          name: response.object.name,
+	          preload: true
+	        });
+	        onAddFile == null ? void 0 : onAddFile();
+	        if (newTab !== null && response.openUrl) {
+	          newTab.location.href = response.openUrl;
+	        }
+	      }
+	    });
+	  } else {
+	    const documentService = BX.Disk.getDocumentService();
+	    const byUnifiedLink = options.documentHandlers.some(handler => handler.supportsUnifiedLink && handler.code === documentService);
+	    const saveCallback = response => {
+	      if (response.status !== 'success') {
+	        return;
+	      }
+	      const key = response.object ? 'object' : 'data';
+	      if (response[key]) {
+	        uploader.addFile(`n${response[key].id}`, {
+	          name: response[key].name,
+	          size: response[key].size,
+	          preload: true
+	        });
+	        onAddFile == null ? void 0 : onAddFile();
+	      }
+	    };
+	    const createProcess = new BX.Disk.Document.CreateProcess({
+	      typeFile: documentType,
+	      serviceCode: documentService,
+	      byUnifiedLink,
+	      onAfterSave: saveCallback,
+	      onAfterCreateFile: saveCallback
+	    });
+	    createProcess.start();
+	  }
 	};
 
 	const Loader = {
@@ -1536,11 +1661,18 @@ this.BX.Disk = this.BX.Disk || {};
 	  template: '<span ref="container"></span>'
 	};
 
+	// @vue/component
 	const ControlPanel = {
 	  name: 'ControlPanel',
-	  inject: ['userFieldControl', 'uploader', 'getMessage'],
 	  components: {
 	    Loader
+	  },
+	  inject: ['userFieldControl', 'uploader', 'getMessage'],
+	  setup() {
+	    return {
+	      DocumentService,
+	      importServices: userFieldSettings.getImportServices()
+	    };
 	  },
 	  data: () => ({
 	    showDialogLoader: false,
@@ -1550,9 +1682,6 @@ this.BX.Disk = this.BX.Disk || {};
 	  created() {
 	    this.fileDialogId = `file-dialog-${main_core.Text.getRandom(5)}`;
 	    this.cloudDialogId = `cloud-dialog-${main_core.Text.getRandom(5)}`;
-	    this.importServices = this.userFieldControl.getImportServices();
-	    this.canUseImportService = this.userFieldControl.canUseImportService();
-	    this.importFeatureId = this.userFieldControl.getImportFeatureId();
 	  },
 	  mounted() {
 	    this.uploader.assignBrowse(this.$refs.upload);
@@ -1575,12 +1704,6 @@ this.BX.Disk = this.BX.Disk || {};
 	      });
 	    },
 	    openCloudFileDialog(serviceId) {
-	      if (!this.canUseImportService) {
-	        ui_infoHelper.FeaturePromotersRegistry.getPromoter({
-	          featureId: this.importFeatureId
-	        }).show();
-	        return;
-	      }
 	      if (this.showCloudDialogLoader) {
 	        return;
 	      }
@@ -1599,7 +1722,6 @@ this.BX.Disk = this.BX.Disk || {};
 	      });
 	    }
 	  },
-	  // language=Vue
 	  template: `
 		<div class="disk-user-field-panel">
 			<div class="disk-user-field-panel-file-wrap">
@@ -1625,43 +1747,43 @@ this.BX.Disk = this.BX.Disk || {};
 				<div class="disk-user-field-panel-card-divider"></div>
 				<div 
 					class="disk-user-field-panel-card-box disk-user-field-panel-card-file"
-					v-if="importServices['gdrive']"
-					@click="openCloudFileDialog('gdrive')"
+					v-if="importServices[DocumentService.Google]"
+					@click="openCloudFileDialog(DocumentService.Google)"
 				>
 					<div class="disk-user-field-panel-card disk-user-field-panel-card-icon--google-docs">
 						<div class="disk-user-field-panel-card-content">
-							<Loader v-if="showCloudDialogLoader && currentServiceId === 'gdrive'" :offset="{ top: '-7px' }" />
+							<Loader v-if="showCloudDialogLoader && currentServiceId === DocumentService.Google" :offset="{ top: '-7px' }" />
 							<div class="disk-user-field-panel-card-icon"></div>
 							<div class="disk-user-field-panel-card-btn"></div>
-							<div class="disk-user-field-panel-card-name">{{ importServices['gdrive']['name'] }}</div>
+							<div class="disk-user-field-panel-card-name">{{ importServices[DocumentService.Google]['name'] }}</div>
 						</div>
 					</div>
 				</div>
 				<div 
 					class="disk-user-field-panel-card-box disk-user-field-panel-card-file"
-					v-if="importServices['office365']"
-					@click="openCloudFileDialog('office365')"
+					v-if="importServices[DocumentService.Office]"
+					@click="openCloudFileDialog(DocumentService.Office)"
 				>
 					<div class="disk-user-field-panel-card disk-user-field-panel-card-icon--office365">
 						<div class="disk-user-field-panel-card-content">
-							<Loader v-if="showCloudDialogLoader && currentServiceId === 'office365'" :offset="{ top: '-7px' }" />
+							<Loader v-if="showCloudDialogLoader && currentServiceId === DocumentService.Office" :offset="{ top: '-7px' }" />
 							<div class="disk-user-field-panel-card-icon"></div>
 							<div class="disk-user-field-panel-card-btn"></div>
-							<div class="disk-user-field-panel-card-name">{{ importServices['office365']['name'] }}</div>
+							<div class="disk-user-field-panel-card-name">{{ importServices[DocumentService.Office].name }}</div>
 						</div>
 					</div>
 				</div>
 				<div 
 					class="disk-user-field-panel-card-box disk-user-field-panel-card-file"
-					v-if="importServices['dropbox']"
-					@click="openCloudFileDialog('dropbox')"
+					v-if="importServices[DocumentService.Dropbox]"
+					@click="openCloudFileDialog(DocumentService.Dropbox)"
 				>
 					<div class="disk-user-field-panel-card disk-user-field-panel-card-icon--dropbox">
 						<div class="disk-user-field-panel-card-content">
-							<Loader v-if="showCloudDialogLoader && currentServiceId === 'dropbox'" :offset="{ top: '-7px' }" />
+							<Loader v-if="showCloudDialogLoader && currentServiceId === DocumentService.Dropbox" :offset="{ top: '-7px' }" />
 							<div class="disk-user-field-panel-card-icon"></div>
 							<div class="disk-user-field-panel-card-btn"></div>
-							<div class="disk-user-field-panel-card-name">{{ importServices['dropbox']['name'] }}</div>
+							<div class="disk-user-field-panel-card-name">{{ importServices[DocumentService.Dropbox].name }}</div>
 						</div>
 					</div>
 				</div>
@@ -1670,162 +1792,101 @@ this.BX.Disk = this.BX.Disk || {};
 	`
 	};
 
-	let _$3 = t => t,
-	  _t$3,
-	  _t2$2;
+	// @vue/component
 	const DocumentPanel = {
 	  name: 'DocumentPanel',
-	  inject: ['uploader', 'userFieldControl', 'getMessage'],
-	  props: {
-	    item: {
-	      type: Object,
-	      default: {}
-	    }
+	  components: {
+	    RichLoc: ui_vue3_components_richLoc.RichLoc
 	  },
-	  data() {
+	  inject: ['uploader', 'userFieldControl', 'getMessage'],
+	  setup() {
 	    return {
-	      isBoardsEnabled: this.userFieldControl.isBoardsEnabled()
+	      DocumentType,
+	      isBoardsEnabled: userFieldSettings.isBoardsEnabled()
 	    };
 	  },
-	  created() {
-	    this.menu = null;
-	    this.currentServiceNode = null;
+	  data() {
+	    var _this$userFieldContro;
+	    return {
+	      currentServiceName: (_this$userFieldContro = this.userFieldControl.getCurrentDocumentService()) == null ? void 0 : _this$userFieldContro.name
+	    };
 	  },
-	  mounted() {
-	    const labelText = main_core.Loc.getMessage('DISK_UF_WIDGET_EDIT_SERVICE_LABEL') || '';
-	    const macros = '#NAME#';
-	    const position = labelText.indexOf(macros);
-	    if (position !== -1) {
-	      var _this$userFieldContro;
-	      const preText = labelText.substring(0, position);
-	      const postText = labelText.substring(position + macros.length);
-	      this.currentServiceNode = main_core.Tag.render(_t$3 || (_t$3 = _$3`
-				<span class="disk-user-field-document-current-service">${0}</span>
-			`), (_this$userFieldContro = this.userFieldControl.getCurrentDocumentService()) == null ? void 0 : _this$userFieldContro.name);
-	      const label = main_core.Tag.render(_t2$2 || (_t2$2 = _$3`
-				<span>
-					<span>${0}</span>
-					${0}
-					<span>${0}</span>
-				</span>
-			`), preText, this.currentServiceNode, postText);
-	      main_core.Dom.append(label, this.$refs['document-services']);
+	  computed: {
+	    createServiceFormatted() {
+	      const labelText = main_core.Loc.getMessage('DISK_UF_WIDGET_EDIT_SERVICE_LABEL');
+	      const macros = '#NAME#';
+	      const position = labelText.indexOf(macros);
+	      const preText = labelText.slice(0, position);
+	      const postText = labelText.slice(position + macros.length);
+	      return `${preText}[link]${this.currentServiceName}[/link]${postText}`;
 	    }
 	  },
 	  methods: {
+	    renderSvg(documentType) {
+	      return new ui_icons_generator.FileIcon({
+	        name: documentType,
+	        size: 36,
+	        align: 'center'
+	      }).generate().outerHTML;
+	    },
 	    createDocument(documentType) {
-	      // TODO: load disk and disk.document extensions on demand
-	      if (!BX.Disk.getDocumentService() && BX.Disk.isAvailableOnlyOffice()) {
-	        BX.Disk.saveDocumentService('onlyoffice');
-	      } else if (!BX.Disk.getDocumentService()) {
-	        BX.Disk.saveDocumentService('l');
-	      }
-	      let newTab = null;
-	      if (documentType === 'board') {
-	        newTab = window.open('', '_blank');
-	      }
-	      if (BX.Disk.Document.Local.Instance.isSetWorkWithLocalBDisk() || documentType === 'board') {
-	        BX.Disk.Document.Local.Instance.createFile({
-	          type: documentType
-	        }).then(response => {
-	          if (response.status === 'success') {
-	            this.uploader.addFile(`n${response.object.id}`, {
-	              name: response.object.name,
-	              preload: true
-	            });
-	            this.userFieldControl.showUploaderPanel();
-	            if (newTab !== null && response.openUrl) {
-	              newTab.location.href = response.openUrl;
-	            }
-	          }
-	        });
-	      } else {
-	        const createProcess = new BX.Disk.Document.CreateProcess({
-	          typeFile: documentType,
-	          serviceCode: BX.Disk.getDocumentService(),
-	          onAfterSave: (response, fileData) => {
-	            if (response.status !== 'success') {
-	              return;
-	            }
-	            if (response.object) {
-	              this.uploader.addFile(`n${response.object.id}`, {
-	                name: response.object.name,
-	                size: response.object.size,
-	                preload: true
-	              });
-	              this.userFieldControl.showUploaderPanel();
-	            }
-	          }
-	        });
-	        createProcess.start();
-	      }
+	      createDocumentDialog({
+	        uploader: this.uploader,
+	        documentType,
+	        documentHandlers: Object.values(userFieldSettings.getDocumentServices()),
+	        onAddFile: () => this.userFieldControl.showUploaderPanel()
+	      });
 	    },
 	    openMenu() {
-	      if (this.menu !== null) {
-	        this.menu.destroy();
-	        return;
-	      }
-	      this.menu = new main_popup.Menu({
-	        bindElement: this.currentServiceNode,
-	        className: 'disk-user-field-settings-popup',
-	        angle: true,
+	      var _this$menu;
+	      (_this$menu = this.menu) != null ? _this$menu : this.menu = new ui_system_menu.Menu({
+	        bindElement: this.$refs.service,
 	        autoHide: true,
 	        offsetTop: 5,
-	        cacheable: false,
-	        items: this.getMenuItems(),
-	        events: {
-	          onDestroy: () => {
-	            this.menu = null;
-	          }
-	        }
+	        items: this.getMenuItems()
 	      });
 	      this.menu.show();
 	    },
 	    getMenuItems() {
 	      var _this$userFieldContro2;
-	      const items = [];
+	      const services = Object.values(userFieldSettings.getDocumentServices());
 	      const currentServiceCode = (_this$userFieldContro2 = this.userFieldControl.getCurrentDocumentService()) == null ? void 0 : _this$userFieldContro2.code;
-	      const services = Object.values(this.userFieldControl.getDocumentServices());
-	      services.forEach(service => {
-	        items.push({
-	          text: service.name,
-	          className: currentServiceCode === service.code ? 'disk-user-field-item-checked' : 'disk-user-field-item-stub',
-	          onclick: (event, item) => {
-	            BX.Disk.saveDocumentService(service.code);
-	            this.currentServiceNode.textContent = service.name;
-	            this.menu.close();
-	          }
-	        });
-	      });
-	      return items;
+	      return services.map(service => ({
+	        title: service.name,
+	        isSelected: currentServiceCode === service.code,
+	        onClick: () => {
+	          BX.Disk.saveDocumentService(service.code);
+	          this.currentServiceName = service.name;
+	          this.menu.updateItems(this.getMenuItems());
+	        }
+	      }));
 	    }
 	  },
-	  // language=Vue
 	  template: `
 		<div class="disk-user-field-panel">
 			<div class="disk-user-field-panel-doc-wrap">
-				<div class="disk-user-field-panel-card-box" @click="createDocument('docx')">
+				<div class="disk-user-field-panel-card-box" @click="createDocument(DocumentType.Docx)">
 					<div class="disk-user-field-panel-card disk-user-field-panel-card--doc">
-						<div class="disk-user-field-panel-card-icon"></div>
+						<div class="disk-user-field-panel-card-icon" v-html="renderSvg(DocumentType.Docx)"></div>
 						<div class="disk-user-field-panel-card-btn"></div>
 						<div class="disk-user-field-panel-card-name">{{ getMessage('DISK_UF_WIDGET_CREATE_DOCX') }}</div>
 					</div>
 				</div>
-				<div class="disk-user-field-panel-card-box" @click="createDocument('xlsx')">
+				<div class="disk-user-field-panel-card-box" @click="createDocument(DocumentType.Xlsx)">
 					<div class="disk-user-field-panel-card disk-user-field-panel-card--xls">
-						<div class="disk-user-field-panel-card-icon"></div>
+						<div class="disk-user-field-panel-card-icon" v-html="renderSvg(DocumentType.Xlsx)"></div>
 						<div class="disk-user-field-panel-card-btn"></div>
 						<div class="disk-user-field-panel-card-name">{{ getMessage('DISK_UF_WIDGET_CREATE_XLSX') }}</div>
 					</div>
 				</div>
-				<div class="disk-user-field-panel-card-box" @click="createDocument('pptx')">
+				<div class="disk-user-field-panel-card-box" @click="createDocument(DocumentType.Pptx)">
 					<div class="disk-user-field-panel-card disk-user-field-panel-card--ppt">
-						<div class="disk-user-field-panel-card-icon"></div>
+						<div class="disk-user-field-panel-card-icon" v-html="renderSvg(DocumentType.Pptx)"></div>
 						<div class="disk-user-field-panel-card-btn"></div>
 						<div class="disk-user-field-panel-card-name">{{ getMessage('DISK_UF_WIDGET_CREATE_PPTX') }}</div>
 					</div>
 				</div>
-				<div class="disk-user-field-panel-card-box" @click="createDocument('board')" v-if="isBoardsEnabled">
+				<div class="disk-user-field-panel-card-box" @click="createDocument(DocumentType.Board)" v-if="isBoardsEnabled">
 					<div class="disk-user-field-panel-card disk-user-field-panel-card--board">
 						<div class="disk-user-field-panel-card-icon"></div>
 						<div class="disk-user-field-panel-card-btn"></div>
@@ -1833,41 +1894,28 @@ this.BX.Disk = this.BX.Disk || {};
 					</div>
 				</div>
 			</div>
-			<div class="disk-user-field-create-document-by-service" @click="openMenu" ref="document-services"></div>
+			<div class="disk-user-field-create-document-by-service" @click="openMenu">
+				<RichLoc :text="createServiceFormatted" placeholder="[link]">
+					<template #link="{ text }">
+						<span class="disk-user-field-document-current-service" ref="service">{{ text }}</span>
+					</template>
+				</RichLoc>
+			</div>
 		</div>
 	`
 	};
 
 	/**
 	 * @memberof BX.Disk.Uploader
+	 * @vue/component
 	 */
 	const UserFieldWidgetComponent = {
 	  name: 'UserFieldWidget',
-	  extends: ui_uploader_vue.VueUploaderComponent,
 	  components: {
 	    TileWidgetComponent: ui_uploader_tileWidget.TileWidgetComponent,
 	    DocumentPanel
 	  },
-	  setup() {
-	    return {
-	      customUploaderOptions: UserFieldWidget.getDefaultUploaderOptions()
-	    };
-	  },
-	  props: {
-	    visibility: {
-	      type: String,
-	      default(rawProps) {
-	        const mainPostFormContext = main_core.Type.isElementNode(rawProps.widgetOptions.eventObject);
-	        return mainPostFormContext ? 'hidden' : 'both';
-	      }
-	    }
-	  },
-	  data() {
-	    return {
-	      documentsCollapsed: this.visibility === 'both',
-	      priorityVisibility: null
-	    };
-	  },
+	  extends: ui_uploader_vue.VueUploaderComponent,
 	  provide() {
 	    return {
 	      userFieldControl: this.userFieldControl,
@@ -1875,22 +1923,25 @@ this.BX.Disk = this.BX.Disk || {};
 	      getMessage: this.getMessage
 	    };
 	  },
-	  beforeCreate() {
-	    this.userFieldControl = new UserFieldControl(this);
-	  },
-	  methods: {
-	    getMessage(code, replacements) {
-	      return main_core.Loc.getMessage(code, replacements);
-	    },
-	    enableAutoCollapse() {
-	      this.$refs.tileWidget.enableAutoCollapse();
-	    },
-	    getUploaderOptions() {
-	      return UserFieldWidget.prepareUploaderOptions(this.uploaderOptions);
-	    },
-	    getUserFieldControl() {
-	      return this.userFieldControl;
+	  props: {
+	    visibility: {
+	      type: String,
+	      default(props) {
+	        const mainPostFormContext = main_core.Type.isElementNode(props.widgetOptions.eventObject);
+	        return mainPostFormContext ? 'hidden' : 'both';
+	      }
 	    }
+	  },
+	  setup() {
+	    return {
+	      customUploaderOptions: UserFieldWidget.getDefaultUploaderOptions()
+	    };
+	  },
+	  data() {
+	    return {
+	      documentsCollapsed: this.visibility === 'both',
+	      priorityVisibility: null
+	    };
 	  },
 	  computed: {
 	    tileWidgetOptions() {
@@ -1899,7 +1950,9 @@ this.BX.Disk = this.BX.Disk || {};
 	        ...widgetOptions.tileWidgetOptions
 	      } : {};
 	      tileWidgetOptions.slots = main_core.Type.isPlainObject(tileWidgetOptions.slots) ? tileWidgetOptions.slots : {};
-	      tileWidgetOptions.slots[ui_uploader_tileWidget.TileWidgetSlot.AFTER_TILE_LIST] = ControlPanel;
+	      if (widgetOptions.withControlPanel !== false) {
+	        tileWidgetOptions.slots[ui_uploader_tileWidget.TileWidgetSlot.AFTER_TILE_LIST] = ControlPanel;
+	      }
 	      tileWidgetOptions.insertIntoText = main_core.Type.isBoolean(widgetOptions.insertIntoText) ? widgetOptions.insertIntoText : this.userFieldControl.getMainPostForm() !== null;
 	      tileWidgetOptions.showItemMenuButton = true;
 	      tileWidgetOptions.events = tileWidgetOptions.events || {};
@@ -1945,11 +1998,30 @@ this.BX.Disk = this.BX.Disk || {};
 	      return this.visibility;
 	    }
 	  },
-	  // language=Vue
+	  beforeCreate() {
+	    this.userFieldControl = new UserFieldControl(this);
+	  },
+	  beforeUnmount() {
+	    this.userFieldControl.destroy();
+	  },
+	  methods: {
+	    getMessage(code, replacements) {
+	      return main_core.Loc.getMessage(code, replacements);
+	    },
+	    enableAutoCollapse() {
+	      this.$refs.tileWidget.enableAutoCollapse();
+	    },
+	    getUploaderOptions() {
+	      return UserFieldWidget.prepareUploaderOptions(this.uploaderOptions);
+	    },
+	    getUserFieldControl() {
+	      return this.userFieldControl;
+	    }
+	  },
 	  template: `
-		<div 
-			class="disk-user-field-control" 
-			:class="[{ '--has-files': this.items.length > 0 }]"
+		<div
+			class="disk-user-field-control"
+			:class="{ '--has-files': items.length > 0, '--embedded': widgetOptions.isEmbedded }"
 			:style="{ display: finalVisibility === 'hidden' ? 'none' : 'block' }"
 			ref="container"
 		>
@@ -1959,19 +2031,17 @@ this.BX.Disk = this.BX.Disk || {};
 				ref="uploader-container"
 			>
 				<TileWidgetComponent
-					:widgetOptions="tileWidgetOptions" 
+					:widgetOptions="tileWidgetOptions"
 					:uploader-adapter="adapter"
 					ref="tileWidget"
 				/>
 			</div>
-
-			<div 
+			<div
 				class="disk-user-field-create-document"
 				v-if="shouldShowCreateDocumentLink"
 				@click="documentsCollapsed = false"
 			>{{ getMessage('DISK_UF_WIDGET_CREATE_DOCUMENT') }}</div>
-
-			<div 
+			<div
 				class="disk-user-field-document-panel"
 				:class="{ '--single': finalVisibility !== 'both' }"
 				ref="document-container"
@@ -2011,12 +2081,215 @@ this.BX.Disk = this.BX.Disk || {};
 	  }
 	}
 
+	const sectionCreateDocument = 'create-document';
+	const sectionCreateDocumentService = 'create-document-service';
+	const importServices = userFieldSettings.getImportServices();
+	const createServices = userFieldSettings.getDocumentServices();
+	var _params = /*#__PURE__*/babelHelpers.classPrivateFieldLooseKey("params");
+	var _menu$2 = /*#__PURE__*/babelHelpers.classPrivateFieldLooseKey("menu");
+	var _browseElement = /*#__PURE__*/babelHelpers.classPrivateFieldLooseKey("browseElement");
+	var _getSections = /*#__PURE__*/babelHelpers.classPrivateFieldLooseKey("getSections");
+	var _getItems$1 = /*#__PURE__*/babelHelpers.classPrivateFieldLooseKey("getItems");
+	var _browse = /*#__PURE__*/babelHelpers.classPrivateFieldLooseKey("browse");
+	var _getSelectImportServiceItem = /*#__PURE__*/babelHelpers.classPrivateFieldLooseKey("getSelectImportServiceItem");
+	var _getImportDocumentItem = /*#__PURE__*/babelHelpers.classPrivateFieldLooseKey("getImportDocumentItem");
+	var _getCreateDocumentItem = /*#__PURE__*/babelHelpers.classPrivateFieldLooseKey("getCreateDocumentItem");
+	var _getCreateDocumentTitle = /*#__PURE__*/babelHelpers.classPrivateFieldLooseKey("getCreateDocumentTitle");
+	var _getDocumentSvg = /*#__PURE__*/babelHelpers.classPrivateFieldLooseKey("getDocumentSvg");
+	var _getSelectCreateServiceItem = /*#__PURE__*/babelHelpers.classPrivateFieldLooseKey("getSelectCreateServiceItem");
+	var _canCreateDocument = /*#__PURE__*/babelHelpers.classPrivateFieldLooseKey("canCreateDocument");
+	class UserFieldMenu {
+	  constructor(params) {
+	    Object.defineProperty(this, _canCreateDocument, {
+	      value: _canCreateDocument2
+	    });
+	    Object.defineProperty(this, _getSelectCreateServiceItem, {
+	      value: _getSelectCreateServiceItem2
+	    });
+	    Object.defineProperty(this, _getDocumentSvg, {
+	      value: _getDocumentSvg2
+	    });
+	    Object.defineProperty(this, _getCreateDocumentTitle, {
+	      value: _getCreateDocumentTitle2
+	    });
+	    Object.defineProperty(this, _getCreateDocumentItem, {
+	      value: _getCreateDocumentItem2
+	    });
+	    Object.defineProperty(this, _getImportDocumentItem, {
+	      value: _getImportDocumentItem2
+	    });
+	    Object.defineProperty(this, _getSelectImportServiceItem, {
+	      value: _getSelectImportServiceItem2
+	    });
+	    Object.defineProperty(this, _browse, {
+	      value: _browse2
+	    });
+	    Object.defineProperty(this, _getItems$1, {
+	      value: _getItems2$1
+	    });
+	    Object.defineProperty(this, _getSections, {
+	      value: _getSections2
+	    });
+	    Object.defineProperty(this, _params, {
+	      writable: true,
+	      value: void 0
+	    });
+	    Object.defineProperty(this, _menu$2, {
+	      writable: true,
+	      value: void 0
+	    });
+	    Object.defineProperty(this, _browseElement, {
+	      writable: true,
+	      value: void 0
+	    });
+	    babelHelpers.classPrivateFieldLooseBase(this, _params)[_params] = params;
+	    if (!BX.Disk.getDocumentService()) {
+	      const service = BX.Disk.isAvailableOnlyOffice() ? DocumentService.OnlyOffice : DocumentService.Local;
+	      BX.Disk.saveDocumentService(service);
+	    }
+	  }
+	  getMenu() {
+	    return babelHelpers.classPrivateFieldLooseBase(this, _menu$2)[_menu$2];
+	  }
+	  show(bindElement) {
+	    var _babelHelpers$classPr, _babelHelpers$classPr2;
+	    (_babelHelpers$classPr2 = (_babelHelpers$classPr = babelHelpers.classPrivateFieldLooseBase(this, _menu$2))[_menu$2]) != null ? _babelHelpers$classPr2 : _babelHelpers$classPr[_menu$2] = new ui_system_menu.Menu({
+	      id: `disk-user-field-menu-${Date.now()}`,
+	      minWidth: 250,
+	      sections: babelHelpers.classPrivateFieldLooseBase(this, _getSections)[_getSections](),
+	      items: babelHelpers.classPrivateFieldLooseBase(this, _getItems$1)[_getItems$1](),
+	      ...babelHelpers.classPrivateFieldLooseBase(this, _params)[_params].menuOptions
+	    });
+	    babelHelpers.classPrivateFieldLooseBase(this, _menu$2)[_menu$2].show(bindElement);
+	  }
+	}
+	function _getSections2() {
+	  return [{
+	    code: sectionCreateDocument,
+	    title: main_core.Loc.getMessage('DISK_UF_WIDGET_CREATE')
+	  }, {
+	    code: sectionCreateDocumentService
+	  }];
+	}
+	function _getItems2$1() {
+	  const items = [{
+	    title: main_core.Loc.getMessage('DISK_UF_WIDGET_UPLOAD_FILES'),
+	    icon: ui_iconSet_api_core.Outline.DOWNLOAD,
+	    onClick: () => babelHelpers.classPrivateFieldLooseBase(this, _browse)[_browse]()
+	  }, {
+	    title: main_core.Loc.getMessage('DISK_UF_WIDGET_MY_DRIVE'),
+	    icon: ui_iconSet_api_core.Outline.UPLOAD,
+	    onClick: () => openDiskFileDialog({
+	      dialogId: babelHelpers.classPrivateFieldLooseBase(this, _params)[_params].dialogId,
+	      uploader: babelHelpers.classPrivateFieldLooseBase(this, _params)[_params].uploader
+	    })
+	  }];
+	  if (babelHelpers.classPrivateFieldLooseBase(this, _params)[_params].compact === true) {
+	    return items;
+	  }
+	  items.push(babelHelpers.classPrivateFieldLooseBase(this, _getSelectImportServiceItem)[_getSelectImportServiceItem](), babelHelpers.classPrivateFieldLooseBase(this, _getCreateDocumentItem)[_getCreateDocumentItem](DocumentType.Docx), babelHelpers.classPrivateFieldLooseBase(this, _getCreateDocumentItem)[_getCreateDocumentItem](DocumentType.Xlsx), babelHelpers.classPrivateFieldLooseBase(this, _getCreateDocumentItem)[_getCreateDocumentItem](DocumentType.Pptx), babelHelpers.classPrivateFieldLooseBase(this, _getCreateDocumentItem)[_getCreateDocumentItem](DocumentType.Board), babelHelpers.classPrivateFieldLooseBase(this, _getSelectCreateServiceItem)[_getSelectCreateServiceItem]());
+	  return items;
+	}
+	function _browse2() {
+	  if (!babelHelpers.classPrivateFieldLooseBase(this, _browseElement)[_browseElement]) {
+	    babelHelpers.classPrivateFieldLooseBase(this, _browseElement)[_browseElement] = document.createElement('div');
+	    babelHelpers.classPrivateFieldLooseBase(this, _params)[_params].uploader.assignBrowse(babelHelpers.classPrivateFieldLooseBase(this, _browseElement)[_browseElement]);
+	  }
+	  babelHelpers.classPrivateFieldLooseBase(this, _browseElement)[_browseElement].click();
+	}
+	function _getSelectImportServiceItem2() {
+	  const items = [babelHelpers.classPrivateFieldLooseBase(this, _getImportDocumentItem)[_getImportDocumentItem](DocumentService.Google), babelHelpers.classPrivateFieldLooseBase(this, _getImportDocumentItem)[_getImportDocumentItem](DocumentService.Office), babelHelpers.classPrivateFieldLooseBase(this, _getImportDocumentItem)[_getImportDocumentItem](DocumentService.Dropbox)].filter(it => it);
+	  if (items.length === 0) {
+	    return null;
+	  }
+	  return {
+	    title: main_core.Loc.getMessage('DISK_UF_WIDGET_EXTERNAL_DRIVES'),
+	    subMenu: {
+	      items
+	    }
+	  };
+	}
+	function _getImportDocumentItem2(documentService) {
+	  if (!importServices[documentService]) {
+	    return null;
+	  }
+	  return {
+	    title: importServices[documentService].name,
+	    onClick: () => openCloudFileDialog({
+	      dialogId: babelHelpers.classPrivateFieldLooseBase(this, _params)[_params].dialogId,
+	      uploader: babelHelpers.classPrivateFieldLooseBase(this, _params)[_params].uploader,
+	      serviceId: documentService
+	    })
+	  };
+	}
+	function _getCreateDocumentItem2(documentType) {
+	  const cantCreateDocuments = !babelHelpers.classPrivateFieldLooseBase(this, _canCreateDocument)[_canCreateDocument]();
+	  const boardsDisabled = documentType === DocumentType.Board && !userFieldSettings.isBoardsEnabled();
+	  if (cantCreateDocuments || boardsDisabled) {
+	    return null;
+	  }
+	  return {
+	    sectionCode: sectionCreateDocument,
+	    title: babelHelpers.classPrivateFieldLooseBase(this, _getCreateDocumentTitle)[_getCreateDocumentTitle](documentType),
+	    svg: babelHelpers.classPrivateFieldLooseBase(this, _getDocumentSvg)[_getDocumentSvg](documentType),
+	    onClick: () => createDocumentDialog({
+	      uploader: babelHelpers.classPrivateFieldLooseBase(this, _params)[_params].uploader,
+	      documentType,
+	      documentHandlers: Object.values(userFieldSettings.getDocumentServices())
+	    })
+	  };
+	}
+	function _getCreateDocumentTitle2(documentType) {
+	  return {
+	    [DocumentType.Docx]: main_core.Loc.getMessage('DISK_UF_WIDGET_CREATE_DOCX'),
+	    [DocumentType.Xlsx]: main_core.Loc.getMessage('DISK_UF_WIDGET_CREATE_XLSX'),
+	    [DocumentType.Pptx]: main_core.Loc.getMessage('DISK_UF_WIDGET_CREATE_PPTX'),
+	    [DocumentType.Board]: main_core.Loc.getMessage('DISK_UF_WIDGET_CREATE_BOARD')
+	  }[documentType];
+	}
+	function _getDocumentSvg2(name) {
+	  const size = 20;
+	  const svg = new ui_icons_generator.FileIcon({
+	    name,
+	    size
+	  }).generate();
+	  main_core.Dom.style(svg, 'width', `${size}px`);
+	  main_core.Dom.style(svg, 'height', `${size}px`);
+	  return svg;
+	}
+	function _getSelectCreateServiceItem2() {
+	  if (!babelHelpers.classPrivateFieldLooseBase(this, _canCreateDocument)[_canCreateDocument]()) {
+	    return null;
+	  }
+	  return {
+	    sectionCode: sectionCreateDocumentService,
+	    title: main_core.Loc.getMessage('DISK_UF_WIDGET_CREATE_WITH'),
+	    subtitle: createServices[BX.Disk.getDocumentService()].name,
+	    closeOnSubItemClick: false,
+	    subMenu: {
+	      items: Object.keys(createServices).map(documentService => ({
+	        title: createServices[documentService].name,
+	        isSelected: BX.Disk.getDocumentService() === documentService,
+	        onClick: () => {
+	          BX.Disk.saveDocumentService(documentService);
+	          babelHelpers.classPrivateFieldLooseBase(this, _menu$2)[_menu$2].updateItems(babelHelpers.classPrivateFieldLooseBase(this, _getItems$1)[_getItems$1]());
+	        }
+	      }))
+	    }
+	  };
+	}
+	function _canCreateDocument2() {
+	  return userFieldSettings.canCreateDocuments() && Object.keys(createServices).length > 0;
+	}
+
 	exports.UserFieldWidget = UserFieldWidget;
 	exports.UserFieldWidgetComponent = UserFieldWidgetComponent;
 	exports.UserFieldControl = UserFieldControl;
+	exports.UserFieldMenu = UserFieldMenu;
 	exports.loadDiskFileDialog = loadDiskFileDialog;
 	exports.openDiskFileDialog = openDiskFileDialog;
 	exports.openCloudFileDialog = openCloudFileDialog;
+	exports.createDocumentDialog = createDocumentDialog;
 
-}((this.BX.Disk.Uploader = this.BX.Disk.Uploader || {}),BX.UI.Uploader,BX.UI.Uploader,BX.Event,BX.UI,BX.UI.Uploader,BX.UI,BX,BX.Main));
+}((this.BX.Disk.Uploader = this.BX.Disk.Uploader || {}),BX.UI.Uploader,BX.UI.Uploader,BX.Event,BX.UI,BX.UI,BX,BX.UI.Vue3.Components,BX,BX.UI.System,BX.UI.Uploader,BX.UI.Icons.Generator,BX.UI.IconSet));
 //# sourceMappingURL=disk.uploader.uf-file.bundle.js.map

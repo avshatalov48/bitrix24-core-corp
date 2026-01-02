@@ -16,11 +16,13 @@ return [
 		'im:chat/dialogcache',
 		'im:chat/const/background',
 		'im:chat/selector/adapter/dialog-list',
-		'user/profile',
+		'im:messenger/lib/feature',
 		'pull/client/events',
 		'analytics',
 		'im:chat/selector/chat',
 		'list/selector',
 		'desktop',
+		'im:messenger/api/notifications-opener',
+		'user-profile',
 	]
 ];

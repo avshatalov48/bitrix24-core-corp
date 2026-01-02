@@ -1,0 +1,58 @@
+.booking-cycle-popup {
+	display: flex;
+	flex-direction: column;
+	height: 100%;
+}
+
+.booking-cycle-popup-header {
+	margin-bottom: var(--ui-space-stack-xs2);
+}
+
+.booking-cycle-popup-title {
+	margin-bottom: var(--ui-space-stack-2xs2);
+	color: var(--ui-color-base-2);
+	font-size: var(--ui-font-size-md);
+	font-weight: var(--ui-font-weight-bold);
+}
+
+.booking-cycle-popup-description {
+	margin-bottom: var(--ui-space-stack-md);
+	color: var(--ui-color-palette-gray-60);
+	font-size: var(--ui-font-size-xs);
+	line-height: var(--ui-font-line-height-md);
+}
+
+.booking-cycle-popup-main {
+	position: relative;
+	overflow: scroll;
+	display: flex;
+	flex-direction: column;
+	gap: var(--ui-space-stack-3xl);
+
+	--scrollbar-width: 5px;
+	padding-right: var(--scrollbar-width);
+	margin-right: calc(-1 * var(--scrollbar-width));
+}
+
+@supports not selector(::-webkit-scrollbar) {
+	.booking-cycle-popup-main {
+		scrollbar-color: rgba(0, 0, 0, 0.11) transparent;
+		scrollbar-width: thin;
+	}
+}
+
+.booking-cycle-popup-main::-webkit-scrollbar {
+	background-color: rgba(0, 0, 0, 0);
+	width: var(--scrollbar-width);
+}
+
+.booking-cycle-popup-main::-webkit-scrollbar-track {
+	background: transparent;
+}
+
+.booking-cycle-popup-main::-webkit-scrollbar-thumb {
+	background: rgba(0, 0, 0, 0.11);
+	border-radius: 5px;
+	cursor: pointer;
+	transition: .2s;
+}

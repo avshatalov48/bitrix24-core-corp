@@ -4,24 +4,29 @@ if (!defined("B_PROLOG_INCLUDED") || B_PROLOG_INCLUDED !== true)
 	die();
 }
 
+/** @var CMain $APPLICATION */
+
 use Bitrix\Main\Localization\Loc;
 use Bitrix\Main\UI\Extension;
 use Bitrix\Tasks\Helper\RestrictionUrl;
 use Bitrix\Tasks\Integration;
+use Bitrix\UI\Toolbar\Facade\Toolbar;
+use Bitrix\Main\Web\Json;
+use Bitrix\UI\Buttons;
 
 $APPLICATION->SetTitle(GetMessage('TASKS_CONFIG_PERMISSIONS'));
 $bodyClass = $APPLICATION->GetPageProperty('BodyClass');
 $APPLICATION->SetPageProperty('BodyClass', ($bodyClass ? $bodyClass.' ' : '').'no-background no-all-paddings');
 
 \Bitrix\Main\Loader::includeModule('ui');
-Extension::load(['ui.buttons', 'ui.icons', 'ui.notification', 'ui.accessrights']);
+Extension::load(['ui.buttons', 'ui.icons', 'ui.notification', 'ui.accessrights', 'ui.feedback.form']);
 
 Loc::loadMessages(__FILE__);
 
 $componentId = 'bx-access-group';
 $initPopupEvent = 'tasks:onComponentLoad';
 $openPopupEvent = 'tasks:onComponentOpen';
-\Bitrix\UI\Toolbar\Facade\Toolbar::deleteFavoriteStar();
+Toolbar::deleteFavoriteStar();
 
 $hasFatals = false;
 
@@ -69,37 +74,29 @@ if (($arResult['IS_TOOL_AVAILABLE'] ?? null) === false)
 	return;
 }
 
-$isBitrix24Template = SITE_TEMPLATE_ID === 'bitrix24';
-if ($isBitrix24Template)
-{
-	$this->SetViewTarget("pagetitle", 100);
-}
-?>
-
-<a href="<?= \Bitrix\UI\Util::getArticleUrlByCode('11705476'); ?>" class="tasks-permission-header-link"><?= Loc::getMessage('TASKS_CONFIG_PERMISSIONS_HELP_LINK'); ?></a>
-
-<?php
-if($isBitrix24Template)
-{
-	$this->EndViewTarget();
-}
-
-$APPLICATION->IncludeComponent(
-	'bitrix:ui.feedback.form',
-	'',
-	[
-		'ID' => 'tasks-permissions',
-		'VIEW_TARGET' => 'pagetitle',
-		'FORMS' => [
-			['zones' => ['com.br'], 'id' => '160','lang' => 'br', 'sec' => 'c20k6f'],
-			['zones' => ['es'], 'id' => '158','lang' => 'la', 'sec' => 'fwr2pn'],
-			['zones' => ['de'], 'id' => '156','lang' => 'de', 'sec' => '2lx0w0'],
-			['zones' => ['ua'], 'id' => '152','lang' => 'ua', 'sec' => 'edxnql'],
-			['zones' => ['ru', 'kz', 'by'], 'id' => '150','lang' => 'ru', 'sec' => '01beqf'],
-			['zones' => ['en'], 'id' => '154','lang' => 'en', 'sec' => 'f4dk6p'],
-		],
-	]
+Toolbar::addAfterTitleHtml(
+	'<div class="tasks-permission-header-container"><a href="' . \Bitrix\UI\Util::getArticleUrlByCode("11705476") . '" class="tasks-permission-header-link ">' .
+	Loc::getMessage('TASKS_CONFIG_PERMISSIONS_HELP_LINK') .
+	'</a></div>'
 );
+
+$formParams = Json::encode([
+	'id' => 'tasks-permissions',
+	'forms' => [
+		['zones' => ['com.br'], 'id' => '160','lang' => 'br', 'sec' => 'c20k6f'],
+		['zones' => ['es'], 'id' => '158','lang' => 'la', 'sec' => 'fwr2pn'],
+		['zones' => ['de'], 'id' => '156','lang' => 'de', 'sec' => '2lx0w0'],
+		['zones' => ['ua'], 'id' => '152','lang' => 'ua', 'sec' => 'edxnql'],
+		['zones' => ['ru', 'kz', 'by'], 'id' => '150','lang' => 'ru', 'sec' => '01beqf'],
+		['zones' => ['en'], 'id' => '154','lang' => 'en', 'sec' => 'f4dk6p'],
+	],
+]);
+
+$feedBackButton = new Buttons\FeedbackButton([
+	'click' => new Buttons\JsCode("BX.UI.Feedback.Form.open({$formParams});"),
+]);
+
+Toolbar::addButton($feedBackButton);
 ?>
 
 <?if(!empty($arResult['ERROR'])):?>

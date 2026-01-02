@@ -45,8 +45,7 @@ if (!CModule::IncludeModule('sale'))
 	return;
 }
 
-$CrmPerms = CCrmPerms::GetCurrentUserPermissions();
-if (!$CrmPerms->HavePerm('CONFIG', BX_CRM_PERM_CONFIG, 'WRITE'))
+if (!\Bitrix\Crm\Service\Container::getInstance()->getUserPermissions()->isCrmAdmin())
 {
 	ShowError(GetMessage('CRM_PERMISSION_DENIED'));
 
@@ -145,8 +144,7 @@ else
 
 $request = \Bitrix\Main\Application::getInstance()->getContext()->getRequest();
 if (
-	Feature::enabled(Feature\PermissionsLayoutV2::class)
-	&& $request->getRequestMethod() === 'GET'
+	$request->getRequestMethod() === 'GET'
 	&& !isset($_GET['nr'])
 )
 {

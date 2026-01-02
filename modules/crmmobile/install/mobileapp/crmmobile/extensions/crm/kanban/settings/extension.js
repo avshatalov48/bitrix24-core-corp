@@ -181,8 +181,6 @@ jn.define('crm/kanban/settings', (require, exports, module) => {
 
 		onLayoutClose()
 		{
-			// todo remove after refactoring entity-tab
-			// BX.postComponentEvent('Crm.CategoryDetail::onClose', [{ ...this.state }]);
 			super.onLayoutClose();
 		}
 
@@ -197,7 +195,6 @@ jn.define('crm/kanban/settings', (require, exports, module) => {
 				this.renderPermissions(),
 				this.renderStageList(),
 				this.renderStageButtons(),
-				!this.isDefault && this.renderDeleteButton(),
 			);
 		}
 

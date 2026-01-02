@@ -82,6 +82,7 @@ class CrmKanbanFilterComponent extends \CBitrixComponent
 		$filterParams['FILTER_FIELDS'] = $entity->getFilterOptions()->getFilter($filter);
 		$filterParams['FILTER_PRESETS'] = $entity->getFilterPresets();
 		$filterParams['ENABLE_LIVE_SEARCH'] = true;
+		$filterParams['COUNTER_PANEL'] = $this->arParams['COUNTER_PANEL'] ?: [];
 		$filterParams['NAVIGATION_BAR'] = $this->arParams['NAVIGATION_BAR'] ?: [];
 		$filterParams['LAZY_LOAD'] = $entity->getFilterLazyLoadParams() ?: false;
 

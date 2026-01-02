@@ -9,6 +9,7 @@ jn.define('layout/ui/detail-card/tabs', (require, exports, module) => {
 	const { NotifyManager } = require('notify-manager');
 	const { throttle } = require('utils/function');
 	const { mergeImmutable } = require('utils/object');
+	const { Random } = require('utils/random');
 
 	const Status = {
 		INITIAL: 'INITIAL',

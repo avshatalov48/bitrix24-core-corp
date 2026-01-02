@@ -34,7 +34,7 @@ class BIConstructor extends Tool
 
 	public function getLeftMenuPath(): ?string
 	{
-		return '/bi/dashboard/';
+		return SITE_DIR . 'bi/dashboard/';
 	}
 
 	public function getSettingsPath(): ?string

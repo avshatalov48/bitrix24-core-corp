@@ -4,15 +4,18 @@ declare(strict_types=1);
 
 namespace Bitrix\Disk\Promo\Boards;
 
+use Bitrix\Bitrix24\License;
 use Bitrix\Disk\Document\Flipchart\Configuration;
+use Bitrix\Main\Loader;
 use Bitrix\Main\Type\DateTime;
+use CBitrix24;
 use CUserOptions;
 
 class BoardsPopup
 {
 	private const USER_OPTION_CATEGORY = 'promo-boards-popup';
 	private const REPEAT_SHOW_AFTER_DAYS = 4;
-	private const TERMINATION_DATE = '15.05.2025';
+	private const TERMINATION_DATE = '31.08.2025';
 
 	public function __construct(private int $userId)
 	{
@@ -32,10 +35,15 @@ class BoardsPopup
 
 		$state = $this->getState();
 
+		if ($state === BoardsPopupState::New)
+		{
+			$this->setAcknowledged(); // side effect
+		}
+
 		return match ($state) {
-			BoardsPopupState::New => true,
+			BoardsPopupState::New, BoardsPopupState::Completed => false,
+			BoardsPopupState::Acknowledged => $this->isTimeForFirstShow(),
 			BoardsPopupState::Viewed => $this->isTimeForSecondShow(),
-			BoardsPopupState::Completed => false,
 		};
 	}
 
@@ -64,6 +72,11 @@ class BoardsPopup
 		return $now > $terminationDate;
 	}
 
+	private function setAcknowledged(): void
+	{
+		$this->setDate(BoardsPopupState::Acknowledged);
+	}
+
 	private function setViewed(): void
 	{
 		$this->setDate(BoardsPopupState::Viewed);
@@ -81,26 +94,50 @@ class BoardsPopup
 			return BoardsPopupState::Viewed;
 		}
 
+		if ($this->getDate(BoardsPopupState::Acknowledged) !== null)
+		{
+			return BoardsPopupState::Acknowledged;
+		}
+
 		return BoardsPopupState::New;
 	}
 
-	/**
-	 * Unused method, left just in case
-	 * @return bool
-	 */
 	private function isTimeForFirstShow(): bool
 	{
-		$releaseDate = new DateTime('17.02.2025'); // fixme: hardcoded
+		$dateAcknowledging = $this->getDate(BoardsPopupState::Acknowledged);
 
-		$now = new DateTime();
-		$releaseThreshold = (clone $releaseDate)->setTime(14, 0); // todo: make time a constant
-
-		if ($releaseDate >= $releaseThreshold)
+		if (isset($dateAcknowledging))
 		{
-			$releaseThreshold->add('+1 day');
+			$now = new DateTime();
+			$interval = $now->getDiff($dateAcknowledging);
+
+			$delayInDaysForFirstShow = $this->getDelayInDaysForFirstShow();
+			if ($interval->days >= $delayInDaysForFirstShow)
+			{
+				return true;
+			}
 		}
 
-		return $now >= $releaseThreshold;
+		return false;
+	}
+
+	private function getDelayInDaysForFirstShow(): int
+	{
+		if (Loader::includeModule('bitrix24'))
+		{
+			$license = License::getCurrent();
+
+			$isWestRegion = !in_array($license->getRegion(), ['ru', 'kz', 'by'], true);
+
+			if ($isWestRegion && CBitrix24::IsLicensePaid())
+			{
+				return 1;
+			}
+
+			return 7;
+		}
+
+		return PHP_INT_MAX; // for the on-premise version
 	}
 
 	private function isTimeForSecondShow(): bool

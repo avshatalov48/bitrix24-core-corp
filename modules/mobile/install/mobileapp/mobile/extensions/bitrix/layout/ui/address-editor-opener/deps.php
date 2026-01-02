@@ -3,7 +3,7 @@ return [
 	'extensions' => [
 		'loc',
 		'utils/url',
-		'feature',
+		'utils/random',
 		'apptheme',
 	],
 ];

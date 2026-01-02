@@ -11,7 +11,6 @@ $MESS["IM_NAVIGATION_TIMEMANAGER"] = "Время";
 $MESS["IM_NAVIGATION_MARKET"] = "Приложения";
 $MESS["IM_NAVIGATION_MARKET_TITLE"] = "Маркет";
 $MESS["IM_NAVIGATION_MAIN_PAGE"] = "Битрикс24";
-$MESS["IM_NAVIGATION_ACTIVE_CALL_CONFIRM"] = "Вы уверены, что хотите закрыть страницу? В этом случае вы отключитесь от звонка";
 $MESS["IM_USER_SETTINGS_OPEN_PROFILE"] = "Профиль";
 $MESS["IM_USER_SETTINGS_LOGOUT"] = "Выйти";
 $MESS["IM_USER_SETTINGS_CHAT_SETTINGS"] = "Настройки чата";

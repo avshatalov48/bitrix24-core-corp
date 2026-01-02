@@ -33,4 +33,4 @@ $MESS["TM_IN"] = "через";
 $MESS["TM_TILL"] = "#today# до #time#";
 $MESS["TM_CLOCK_SELECT_DATE_LINK"] = "Изменить день";
 $MESS["TM_DAY_CLOSED_ADMIN"] = "Рабочий день закрыт руководителем";
-?>
+$MESS["TM_ERROR_UNKNOWN"] = "Произошла неизвестная ошибка, попробуйте обновить страницу";

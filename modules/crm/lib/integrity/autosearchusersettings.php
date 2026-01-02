@@ -48,12 +48,12 @@ class AutoSearchUserSettings extends Entity\EO_AutosearchUserSettings
 
 	public static function hasAccess(int $entityTypeId, int $userId = null): bool
 	{
-		$userId = $userId ?: \CCrmSecurityHelper::GetCurrentUser()->GetID();
-		$entityTypeName = \CCrmOwnerType::ResolveName($entityTypeId);
+		$entityTypePermissions = Container::getInstance()->getUserPermissions($userId)->entityType();
 
-		$permissions = \CCrmPerms::GetUserPermissions($userId);
-		return !$permissions->HavePerm($entityTypeName, BX_CRM_PERM_NONE, 'WRITE')
-			&& !$permissions->HavePerm($entityTypeName, BX_CRM_PERM_NONE, 'DELETE');
+		return
+			$entityTypePermissions->canUpdateItemsInCategory($entityTypeId, 0)
+			&& $entityTypePermissions->canDeleteItemsInCategory($entityTypeId, 0)
+		;
 	}
 
 	public function createIfNotExists(int $execInterval = self::DEFAULT_EXEC_INTERVAL): void

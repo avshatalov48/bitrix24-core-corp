@@ -4,7 +4,7 @@ export type CopilotChatMessage = {
 	authorId: number;
 	status?: 'sending' | 'delivered' | '';
 	params?: CopilotChatMessageParams;
-	dateCreated?: string;
+	dateCreate?: string;
 	type?: 'Default' | 'GreetingFlows' | 'GreetingSiteWithAi' | 'System' | 'ButtonClicked';
 	viewed: boolean;
 };
@@ -18,7 +18,7 @@ type CopilotChatMessageParams = {
 export type CopilotChatMessageButton = {
 	id: number;
 	text: string;
-	isSelected: boolean;
+	selected: boolean;
 	title: string;
 }
 

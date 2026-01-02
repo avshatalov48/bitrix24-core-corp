@@ -1,7 +1,102 @@
-div.bx-auth {max-width:600px; margin-top:16px; margin-bottom:24px;}
-div.bx-auth form {padding:0; margin:0;}
-div.bx-auth-note {margin:18px 0px 6px 0px;}
-td.bx-auth-label {text-align:right; font-weight:bold;}
-table.bx-auth-table {margin-top:8px; }
-table.bx-auth-table td {padding:3px;}
-div.bx-auth input.bx-auth-input {vertical-align:middle;}
+.intranet-island__otp {
+	background-color: #fff;
+	padding: 44px;
+	max-width: 600px;
+	align-items: center;
+	height: 100%;
+	scrollbar-arrow-color: #ccc;
+	scrollbar-track-color: transparent;
+	scrollbar-base-color: #ccc;
+	scrollbar-shadow-color: #fff;
+	scrollbar-highlight-color: #fff;
+	overflow-y: auto;
+	/*Firefox fix */
+	scrollbar-width: thin;
+	scrollbar-color: #ccc transparent;
+	overflow-y: auto;
+	box-sizing: border-box;
+}
+
+.intranet-island__otp::-webkit-scrollbar {
+	cursor: pointer;
+	width: 6px;
+}
+
+.intranet-island__otp::-webkit-scrollbar-track {
+	background: transparent;
+}
+
+.intranet-island__otp::-webkit-scrollbar-thumb {
+	background: #dde2e6;
+	border-radius: 5px;
+	cursor: pointer;
+	opacity: .4;
+	transition: .2s;
+}
+
+.intranet-island__otp:hover::-webkit-scrollbar-thumb {
+	background: #d1d6da;
+}
+
+.intranet-otp-help-header {
+	font-size: 27px;
+	line-height: 33px;
+	color: #333;
+	font-family: var(--intranet-pub-font-family-primary);
+	font-weight: 500;
+	text-align: left;
+	display: inline-block;
+	width:75%;
+}
+
+.intranet-otp-help-additional-wrap {
+	display: inline-block;
+	text-align: right;
+	width:24%;
+}
+
+.intranet-otp-help-additional-text {
+	border-bottom: 2px solid #cdf0ff;
+	color: #2fc6f7;
+	vertical-align: bottom;
+	text-decoration: none;
+	font-family: var(--intranet-pub-font-family-primary);
+	font-weight: 500;
+	line-height: 20px;
+	position: relative;
+	bottom: 3px;
+	transition: border-color ease-in-out .1s;
+	font-size: 14px;
+	text-transform: uppercase;
+}
+
+.intranet-otp-help-text {
+	white-space: normal;
+	color: #727a87;
+	font-size: 14px;
+	line-height: 22px;
+}
+
+.intranet-otp-help-footer {
+	height: 45px;
+	padding-top: 17px;
+	position: relative;
+	text-align: center;
+}
+
+.intranet-otp-help-btn {
+	color: #2fc6f7;
+	border: 2px solid #2fc6f7;
+	display: inline-block;
+	outline: none !important;
+	vertical-align: middle;
+	text-decoration: none;
+	cursor: pointer;
+	font-family: var(--intranet-pub-font-family-primary);
+	font-weight: 500;
+	border-radius: 20px;
+	padding: 0 30px;
+	height: 40px;
+	line-height: 40px;
+	font-size: 21px !important;
+}

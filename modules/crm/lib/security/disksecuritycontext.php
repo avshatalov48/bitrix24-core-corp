@@ -2,6 +2,7 @@
 
 namespace Bitrix\Crm\Security;
 
+use Bitrix\Crm\ItemIdentifier;
 use Bitrix\Crm\Service\Container;
 use Bitrix\Crm\Service\UserPermissions;
 use Bitrix\Disk\Security\SecurityContext;
@@ -53,7 +54,11 @@ class DiskSecurityContext extends SecurityContext
 			return false;
 		}
 
-		return $this->userPermissions->checkAddPermissions($this->entityTypeId, $this->categoryId);
+		return
+			is_null($this->categoryId)
+			? $this->userPermissions->entityType()->canAddItems($this->entityTypeId)
+			: $this->userPermissions->entityType()->canAddItemsInCategory($this->entityTypeId, $this->categoryId)
+		;
 	}
 
 	final public function canChangeRights($objectId): bool
@@ -78,7 +83,11 @@ class DiskSecurityContext extends SecurityContext
 			return false;
 		}
 
-		return $this->userPermissions->checkDeletePermissions($this->entityTypeId, 0, $this->categoryId);
+		return
+			is_null($this->categoryId)
+			? $this->userPermissions->entityType()->canDeleteItems($this->entityTypeId)
+			: $this->userPermissions->entityType()->canDeleteItemsInCategory($this->entityTypeId, $this->categoryId)
+		;
 	}
 
 	final public function canMarkDeleted($objectId): bool
@@ -98,7 +107,7 @@ class DiskSecurityContext extends SecurityContext
 			return false;
 		}
 
-		return $this->userPermissions->checkReadPermissions($this->entityTypeId, $this->entityId, $this->categoryId);
+		return $this->userPermissions->item()->canReadItemIdentifier(new ItemIdentifier($this->entityTypeId, $this->entityId, $this->categoryId));
 	}
 
 	final public function canRename($objectId): bool

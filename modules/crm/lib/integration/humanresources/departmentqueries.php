@@ -96,4 +96,57 @@ class DepartmentQueries
 
 		return $result;
 	}
+
+	/**
+	 * Get users from the same departments as $userId
+	 * @param int $userId
+	 * @param bool $withSubDepartments
+	 * @return array
+	 */
+	public function getUserColleagues(int $userId, bool $withSubDepartments): array
+	{
+		$departments = $this->getUserDepartments($userId);
+		$allDepartments = $departments;
+		if ($withSubDepartments)
+		{
+			foreach ($departments as $departmentId)
+			{
+				$allDepartments = array_merge(
+					$allDepartments,
+					$this->getSubDepartmentsAccessCodesIds($departmentId)
+				);
+			}
+		}
+
+		return $this->queryUserIdsByDepartments($allDepartments);
+	}
+
+	private function getUserDepartments(int $userId): array
+	{
+		$result = [];
+		$nodes = $this->hrServiceLocator::getNodeRepository()->findAllByUserId($userId);
+		foreach ($nodes as $node)
+		{
+			$ac = $node->accessCode;
+			if (!str_starts_with($ac, 'D'))
+			{
+				continue;
+			}
+
+			$depId = (int)substr($ac, 1);
+			$result[] = $depId;
+		}
+
+		return $result;
+	}
+
+	public function getDepartments(array $ids): array
+	{
+		return $this->hrServiceLocator::getNodeRepository()->findAllByIds($ids)->getValues();
+	}
+
+	public function getDepartmentByAccessCode(string $accessCode): ?HumanResources\Item\Node
+	{
+		return $this->hrServiceLocator::getNodeRepository()->getByAccessCode($accessCode);
+	}
 }

@@ -25,7 +25,8 @@ global $USER_FIELD_MANAGER, $DB, $USER, $APPLICATION;
 $CCrmLead = new CCrmLead();
 $CCrmUserType = new CCrmUserType($USER_FIELD_MANAGER, CCrmLead::$sUFEntityID);
 $CCrmBizProc = new CCrmBizProc('LEAD');
-$userPermissions = CCrmPerms::GetCurrentUserPermissions();
+
+$userPermissionsService = \Bitrix\Crm\Service\Container::getInstance()->getUserPermissions();
 
 $arParams['PATH_TO_LEAD_LIST'] = CrmCheckPath('PATH_TO_LEAD_LIST', $arParams['PATH_TO_LEAD_LIST'], $APPLICATION->GetCurPage());
 $arParams['PATH_TO_LEAD_EDIT'] = CrmCheckPath('PATH_TO_LEAD_EDIT', $arParams['PATH_TO_LEAD_EDIT'], $APPLICATION->GetCurPage().'?lead_id=#lead_id#&edit');
@@ -53,15 +54,15 @@ if (!empty($_REQUEST['copy']))
 
 if($bEdit)
 {
-	$isPermitted = CCrmLead::CheckUpdatePermission($arParams['ELEMENT_ID'], $userPermissions);
+	$isPermitted = $userPermissionsService->item()->canUpdate(CCrmOwnerType::Lead, $arParams['ELEMENT_ID']);
 }
 elseif($bCopy)
 {
-	$isPermitted = CCrmLead::CheckReadPermission($arParams['ELEMENT_ID'], $userPermissions);
+	$isPermitted = $userPermissionsService->item()->canRead(CCrmOwnerType::Lead, $arParams['ELEMENT_ID']);
 }
 else
 {
-	$isPermitted = CCrmLead::CheckCreatePermission($userPermissions);
+	$isPermitted = $userPermissionsService->entityType()->canAddItems(CCrmOwnerType::Lead);
 }
 
 if(!$isPermitted)
@@ -69,10 +70,6 @@ if(!$isPermitted)
 	ShowError(GetMessage('CRM_PERMISSION_DENIED'));
 	return;
 }
-
-$arEntityAttr = $arParams['ELEMENT_ID'] > 0
-	? $userPermissions->GetEntityAttr('LEAD', array($arParams['ELEMENT_ID']))
-	: array();
 
 // external context ID
 $arResult['EXTERNAL_CONTEXT'] = isset($_REQUEST['external_context']) ? $_REQUEST['external_context'] : '';
@@ -105,7 +102,7 @@ if($_SERVER['REQUEST_METHOD'] === 'GET' && isset($_GET['error']))
 
 if($bEdit)
 {
-	CCrmLead::PrepareConversionPermissionFlags($arParams['ELEMENT_ID'], $arResult, $userPermissions);
+	CCrmLead::PrepareConversionPermissionFlags($arParams['ELEMENT_ID'], $arResult);
 }
 
 if ($bEdit || $bCopy)
@@ -569,8 +566,7 @@ if($_SERVER['REQUEST_METHOD'] == 'POST' && check_bitrix_sessid())
 		$arBizProcParametersValues = $CCrmBizProc->CheckFields(
 			$bEdit ? $arResult['ELEMENT']['ID'] : false,
 			false,
-			$arResult['ELEMENT']['ASSIGNED_BY'],
-			$bEdit ? $arEntityAttr : null
+			$arResult['ELEMENT']['ASSIGNED_BY']
 		);
 
 		if ($arBizProcParametersValues === false)
@@ -694,7 +690,7 @@ if($_SERVER['REQUEST_METHOD'] == 'POST' && check_bitrix_sessid())
 		{
 			if (isset($_POST['apply']))
 			{
-				if (CCrmLead::CheckUpdatePermission($ID))
+				if ($userPermissionsService->item()->canUpdate(CCrmOwnerType::Lead, $ID))
 				{
 					LocalRedirect(
 						CComponentEngine::MakePathFromTemplate(
@@ -715,7 +711,7 @@ if($_SERVER['REQUEST_METHOD'] == 'POST' && check_bitrix_sessid())
 			}
 			elseif (isset($_POST['saveAndView']))
 			{
-				if(CCrmLead::CheckReadPermission($ID))
+				if ($userPermissionsService->item()->canRead(CCrmOwnerType::Lead, $ID))
 				{
 					LocalRedirect(
 						CComponentEngine::MakePathFromTemplate(
@@ -770,11 +766,11 @@ elseif(isset($_GET['delete']) && check_bitrix_sessid())
 		$entityID = $arParams['ELEMENT_ID'];
 		$arResult['ERROR_MESSAGE'] = '';
 
-		if (!CCrmAuthorizationHelper::CheckDeletePermission(CCrmOwnerType::LeadName, $entityID, $userPermissions, $arEntityAttr))
+		if (!$userPermissionsService->item()->canDelete(CCrmOwnerType::Lead, $entityID))
 		{
 			$arResult['ERROR_MESSAGE'] .= GetMessage('CRM_PERMISSION_DENIED').'<br />';
 		}
-		elseif (!$CCrmBizProc->Delete($entityID, $arEntityAttr))
+		elseif (!$CCrmBizProc->Delete($entityID))
 		{
 			$arResult['ERROR_MESSAGE'] .= $CCrmBizProc->LAST_ERROR;
 		}
@@ -835,15 +831,12 @@ $enableDupControl = $arResult['DUPLICATE_CONTROL']['ENABLED'] =
 	DuplicateControl::isControlEnabledFor(CCrmOwnerType::Lead)
 ;
 
+$stagePermissions = $userPermissionsService->stage();
 foreach ($arResult['~STATUS_LIST'] as $sStatusId => $sStatusTitle)
 {
 	if (
-		$userPermissions->GetPermType(
-			'LEAD', $bEdit
-				? 'WRITE'
-				: 'ADD', array('STATUS_ID'.$sStatusId)
-		)
-		> BX_CRM_PERM_NONE
+		($bEdit && $stagePermissions->canUpdateInStage(CCrmOwnerType::Lead, null, $sStatusId))
+		|| (!$bEdit && $stagePermissions->canAddInStage(CCrmOwnerType::Lead, null, $sStatusId))
 	)
 	{
 		$arResult['STATUS_LIST'][$sStatusId] = $sStatusTitle;
@@ -1285,7 +1278,7 @@ else
 			'ENTITY_ID' => !empty($arResult['ELEMENT']['CONTACT_ID'])? $arResult['ELEMENT']['CONTACT_ID'] : 0,
 			'ENTITY_INPUT_NAME' => 'CONTACT_ID',
 			'ENABLE_REQUISITES'=> false,
-			'ENABLE_ENTITY_CREATION'=> CCrmContact::CheckCreatePermission($userPermissions),
+			'ENABLE_ENTITY_CREATION'=> $userPermissionsService->entityType()->canAddItems(CCrmOwnerType::Contact),
 			'FORM_NAME' => $arResult['FORM_ID'],
 			'NAME_TEMPLATE' => \Bitrix\Crm\Format\PersonNameFormatter::getFormat()
 		)
@@ -1301,7 +1294,7 @@ else
 			'ENTITY_ID' => !empty($arResult['ELEMENT']['COMPANY_ID'])? $arResult['ELEMENT']['COMPANY_ID'] : 0,
 			'ENTITY_INPUT_NAME' => 'COMPANY_ID',
 			'ENABLE_REQUISITES'=> false,
-			'ENABLE_ENTITY_CREATION'=> CCrmCompany::CheckCreatePermission($userPermissions),
+			'ENABLE_ENTITY_CREATION'=>  $userPermissionsService->entityType()->canAddItems(CCrmOwnerType::Company),
 			'FORM_NAME' => $arResult['FORM_ID'],
 			'NAME_TEMPLATE' => \Bitrix\Crm\Format\PersonNameFormatter::getFormat()
 		)

@@ -10,6 +10,7 @@ require_once($_SERVER['DOCUMENT_ROOT'] . '/bitrix/modules/main/include/prolog_be
 use Bitrix\Crm;
 use Bitrix\Crm\Conversion\DealConversionConfig;
 use Bitrix\Crm\Conversion\DealConversionWizard;
+use Bitrix\Crm\Integration\BizProc\Starter\Dto\RunDataDto;
 use Bitrix\Crm\Order\OrderDealSynchronizer;
 use Bitrix\Crm\Recurring;
 use Bitrix\Crm\Security\EntityAuthorization;
@@ -142,13 +143,6 @@ elseif($action === 'MOVE_TO_CATEGORY')
 			);
 		}
 
-		\CCrmBizProcHelper::AutoStartWorkflows(
-			\CCrmOwnerType::Deal,
-			$ID,
-			\CCrmBizProcEventType::Edit,
-			$errors
-		);
-
 		$dbResult = \CCrmDeal::GetListEx(
 			array(),
 			array('=ID' => $ID, 'CHECK_PERMISSIONS' => 'N'),
@@ -158,8 +152,17 @@ elseif($action === 'MOVE_TO_CATEGORY')
 		);
 		$newFields = $dbResult->Fetch();
 
-		$starter = new Bitrix\Crm\Automation\Starter(CCrmOwnerType::Deal, $ID);
-		$starter->setUserIdFromCurrent()->runOnUpdate($newFields, []);
+		$starter = new Crm\Integration\BizProc\Starter\CrmStarter(
+			new Crm\Integration\BizProc\Starter\Dto\DocumentDto(\CCrmOwnerType::Deal, $ID)
+		);
+		if ($newFields)
+		{
+			$starter->runOnDocumentUpdate(new RunDataDto(
+				actualFields: $newFields,
+				previousFields: [],
+				userId: max($currentUserID, 0),
+			));
+		}
 
 		$DB->Commit();
 	}
@@ -646,12 +649,12 @@ elseif($action === 'SAVE')
 			if ((int)$fields['RECURRING']['MODE'] === Recurring\Manager::SINGLE_EXECUTION)
 			{
 				$singleCalculationFields = [
-					Recurring\Entity\ParameterMapper\SecondFormDeal::FIELD_MODE_NAME,
-					Recurring\Entity\ParameterMapper\SecondFormDeal::FIELD_SINGLE_TYPE_NAME,
-					Recurring\Entity\ParameterMapper\SecondFormDeal::FIELD_SINGLE_INTERVAL_NAME,
+					Recurring\Entity\ParameterMapper\EntityForm::FIELD_MODE_NAME,
+					Recurring\Entity\ParameterMapper\EntityForm::FIELD_SINGLE_TYPE_NAME,
+					Recurring\Entity\ParameterMapper\EntityForm::FIELD_SINGLE_INTERVAL_NAME,
 				];
 				$limitParams = array_intersect_key($fields['RECURRING'], array_flip($singleCalculationFields));
-				$limitMapper = Recurring\Entity\ParameterMapper\SecondFormDeal::getInstance();
+				$limitMapper = Recurring\Entity\ParameterMapper\EntityForm::getInstance();
 				$limitMapper->fillMap($limitParams);
 				$startDateValue = null;
 				if (CheckDateTime($_POST['RECURRING']['SINGLE_DATE_BEFORE']))
@@ -910,7 +913,7 @@ elseif($action === 'SAVE')
 					'STAGE_ID' => $fields['STAGE_ID'],
 				];
 				$ID = $entity->Add($fields, true, $saveOptions);
-				if($ID <= 0)
+				if ($ID <= 0)
 				{
 					$checkExceptions = $entity->GetCheckExceptions();
 					$errorMessage = $entity->LAST_ERROR;
@@ -982,21 +985,19 @@ elseif($action === 'SAVE')
 					$saveOptions['REGISTER_STATISTICS'] = false;
 				}
 
-				// region InventoryManagement
+				// region Contractor
 				if (!$isFactoryEnabled)
 				{
 					$factory = Crm\Service\Container::getInstance()->getFactory(\CCrmOwnerType::Deal);
 					if ($factory)
 					{
-						$itemBeforeSave = $factory->getItem($ID);
-						if (!$itemBeforeSave)
+						$itemBeforeSave = $factory->createItem();
+						$itemBeforeSave->set('ID', $previousFields['ID']);
+						$itemBeforeSave->setFromCompatibleData($previousFields);
+
+						if (!empty($originalProductRows))
 						{
-							$itemBeforeSave = $factory->createItem();
-							$oldFields = CCrmDeal::GetByID($ID);
-							if ($oldFields)
-							{
-								$itemBeforeSave->setFromCompatibleData($oldFields);
-							}
+							$itemBeforeSave->setFromCompatibleData([Crm\Item::FIELD_NAME_PRODUCTS => $originalProductRows]);
 						}
 
 						$inventoryManagementChecker = new Crm\Reservation\Component\InventoryManagementChecker($itemBeforeSave);
@@ -1080,7 +1081,6 @@ elseif($action === 'SAVE')
 		if (!$isFactoryEnabled)
 		{
 			$factory = Crm\Service\Container::getInstance()->getFactory(\CCrmOwnerType::Deal);
-
 			if (!$isExternal && $enableProductRows && (!$isNew || !empty($productRows)))
 			{
 				$saveProductRowsResult = \CCrmDeal::SaveProductRows($ID, $productRows, true, true, false);
@@ -1100,7 +1100,18 @@ elseif($action === 'SAVE')
 				&& $factory
 			)
 			{
-				$itemAfterSave = $factory->getItem($ID);
+				$itemAfterSave = $factory->getItem(
+					$ID,
+					[
+						Crm\Item::FIELD_NAME_ID,
+						Crm\Item::FIELD_NAME_CATEGORY_ID,
+						Crm\Item::FIELD_NAME_STAGE_ID,
+						Crm\Item::FIELD_NAME_STAGE_SEMANTIC_ID,
+						Crm\Item::FIELD_NAME_PRODUCTS . '.ID',
+						Crm\Item::FIELD_NAME_PRODUCTS . '.QUANTITY',
+						Crm\Item::FIELD_NAME_PRODUCTS . '.' . Crm\Item::FIELD_NAME_PRODUCT_RESERVATION . '.STORE_ID',
+					],
+				);
 				if ($itemAfterSave)
 				{
 					if (
@@ -1208,25 +1219,30 @@ elseif($action === 'SAVE')
 		$arErrors = array();
 		if (!isset($isRecurringSaving) && (($previousFields['IS_RECURRING'] ?? null) !== 'Y'))
 		{
-			\CCrmBizProcHelper::AutoStartWorkflows(
-				\CCrmOwnerType::Deal,
-				$ID,
-				$isNew ? \CCrmBizProcEventType::Create : \CCrmBizProcEventType::Edit,
-				$arErrors,
-				isset($_POST['bizproc_parameters']) ? $_POST['bizproc_parameters'] : null
+			$starter = new Crm\Integration\BizProc\Starter\CrmStarter(
+				new Crm\Integration\BizProc\Starter\Dto\DocumentDto(
+					\CCrmOwnerType::Deal,
+					$ID
+				)
 			);
 
-			$starter = new \Bitrix\Crm\Automation\Starter(\CCrmOwnerType::Deal, $ID);
-			$starter->setUserIdFromCurrent();
+			$parameters = $_POST['bizproc_parameters'] ?? null;
+			$runData = new RunDataDto(
+				actualFields: $fields,
+				previousFields: is_array($previousFields) ? $previousFields : [],
+				userId: max($currentUserID, 0),
+				parameters: is_string($parameters) || is_array($parameters) ? $parameters : null,
+			);
 
 			if($isNew)
 			{
-				$starter->runOnAdd();
+				$starter->runOnDocumentAdd($runData);
 			}
 			elseif(is_array($previousFields))
 			{
-				$starter->runOnUpdate($fields, $previousFields);
+				$starter->runOnDocumentUpdate($runData);
 			}
+
 			(new OrderDealSynchronizer())->updateOrderFromDeal($ID);
 		}
 
@@ -1471,20 +1487,18 @@ elseif($action === 'DELETE')
 	}
 
 	$categoryID = CCrmDeal::GetCategoryID($ID);
-	$permissionAttrs = \CCrmDeal::GetPermissionAttributes(array($ID), $categoryID);
 
 	if(!\CCrmDeal::CheckDeletePermission(
 		$ID,
 		$currentUserPermissions,
-		$categoryID,
-		array('ENTITY_ATTRS' => $permissionAttrs))
-	)
+		$categoryID
+	))
 	{
 		__CrmDealDetailsEndJsonResonse(['ERROR'=> \Bitrix\Main\Localization\Loc::getMessage('CRM_COMMON_ERROR_ACCESS_DENIED')]);
 	}
 
 	$bizProc = new CCrmBizProc('DEAL');
-	if (!$bizProc->Delete($ID, $permissionAttrs, array('DealCategoryId' => $categoryID)))
+	if (!$bizProc->Delete($ID, null, array('DealCategoryId' => $categoryID)))
 	{
 		__CrmDealDetailsEndJsonResonse(array('ERROR' => $bizProc->LAST_ERROR));
 	}

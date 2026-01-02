@@ -6,21 +6,20 @@ import {Filter} from '../service/filter';
 
 import {RequestSender} from '../utility/request.sender';
 
-import {Tabs} from './header/tabs';
+import { Tabs } from './header/tabs';
 
 import '../css/base.css';
 
 export type ViewInfo = {
-	name: string,
+	id: string,
+	title: string,
+	active: boolean,
 	url: string,
-	active: boolean
+	link: Array,
+	events?: { [eventName: string]: () => void },
 }
 
-export type Views = {
-	plan: ViewInfo,
-	activeSprint: ViewInfo,
-	completedSprint: ViewInfo
-}
+export type Views = ViewInfo[];
 
 type Params = {
 	signedParameters: string,
@@ -29,7 +28,8 @@ type Params = {
 	userId: number,
 	groupId: number,
 	filterId: string,
-	pathToTask: string
+	pathToTask: string,
+	target: HTMLElement,
 }
 
 export class View extends EventEmitter
@@ -41,6 +41,7 @@ export class View extends EventEmitter
 		this.setEventNamespace('BX.Tasks.Scrum.View');
 
 		this.isOwnerCurrentUser = (params.isOwnerCurrentUser === 'Y');
+		this.target = params.target;
 
 		this.loadItemsRepeatCounter = new Map();
 
@@ -84,12 +85,11 @@ export class View extends EventEmitter
 			throw new Error('Scrum: HTMLElement for tabs not found');
 		}
 
-		const tabs = new Tabs({
+		new Tabs({
 			sidePanel: this.sidePanel,
-			views: this.views
-		});
-
-		Dom.append(tabs.render(), container);
+			views: this.views,
+			target: this.target,
+		}).init();
 	}
 
 	renderSprintStatsTo(container: HTMLElement)

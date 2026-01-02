@@ -1,4 +1,5 @@
 import { Loc, Tag, Type, Dom } from 'main.core';
+import { EventEmitter } from 'main.core.events';
 import { Dialog } from 'ui.entity-selector';
 import { Api } from 'sign.v2.api';
 import { Loader } from 'main.loader';
@@ -6,7 +7,7 @@ import { CompanyConnectPage } from 'humanresources.hcmlink.company-connect-page'
 
 import './style.css';
 
-export class HcmLinkCompanySelector
+export class HcmLinkCompanySelector extends EventEmitter
 {
 	#isAvailable: boolean = false;
 	#companyId: number | null = null;
@@ -32,11 +33,14 @@ export class HcmLinkCompanySelector
 		},
 	};
 
-	#integrationList: Array<{ id: number, title: string, subtitle: string }> = [];
+	#integrationList: Array<{ id: number, title: string, subtitle: string, availableSettings: Object }> = [];
 
 	constructor()
 	{
+		super();
 		this.#api = new Api();
+
+		this.setEventNamespace('sign.v2.b2e.hcm-link-company-selector');
 	}
 
 	setAvailability(value: boolean): void
@@ -46,7 +50,7 @@ export class HcmLinkCompanySelector
 
 	setCompanyId(id: number | null): void
 	{
-		if (!this.#isAvailable)
+		if (!this.#isAvailable && !this.isLayoutExisted)
 		{
 			return;
 		}
@@ -110,17 +114,12 @@ export class HcmLinkCompanySelector
 
 	getSelectedId(): number | null
 	{
-		if (!this.#selectedId)
-		{
-			return null;
-		}
-
 		return this.#selectedId;
 	}
 
 	hide(): void
 	{
-		if (!this.#isAvailable && !this.isLayoutExisted)
+		if (!this.#isAvailable || !this.#ui.container)
 		{
 			return;
 		}
@@ -225,6 +224,11 @@ export class HcmLinkCompanySelector
 		this.#ui.active.style.display = 'flex';
 		this.#setIntegrationTitle(this.#selectedId);
 		Dom.addClass(this.#ui.icon, '--active');
+
+		this.emit('selected', {
+			id: this.#selectedId,
+			availableSettings: this.#getCompanyById(this.#selectedId)?.availableSettings ?? {},
+		});
 	}
 
 	#deselect(item: { id: number } | null): void
@@ -234,6 +238,16 @@ export class HcmLinkCompanySelector
 		BX.hide(this.#ui.active);
 		BX.hide(this.#ui.inactive);
 		this.#ui.unselect.style.display = 'flex';
+
+		this.emit('selected', {
+			id: this.#selectedId,
+			availableSettings:  {},
+		});
+	}
+
+	#getCompanyById(id: number): { id: number, title: string, subtitle: string, availableSettings: Object }
+	{
+		return this.#integrationList.find((company) => company.id === id);
 	}
 
 	#showDialog(): void

@@ -1,0 +1,5 @@
+<?php
+$MESS["CRM_DEAL_SECTION_ADDITIONAL"] = "More";
+$MESS["CRM_DEAL_SECTION_MAIN"] = "About deal";
+$MESS["CRM_DEAL_SECTION_PRODUCTS"] = "Products";
+$MESS["CRM_DEAL_SECTION_RECURRING"] = "Recurring deal";

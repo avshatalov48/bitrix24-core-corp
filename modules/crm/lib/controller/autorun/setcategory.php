@@ -72,16 +72,6 @@ final class SetCategory extends Base
 			throw new ArgumentTypeException('data', SetCategoryPreparedData::class);
 		}
 
-		$permissions = Container::getInstance()->getUserPermissions();
-
-		if (!(
-			!$item->isNew() && $permissions->checkAddPermissions($item->getEntityTypeId(), $data->categoryId)
-			)
-		)
-		{
-			return (new Result())->addError(new Error(Loc::getMessage('CRM_COMMON_ERROR_ACCESS_DENIED')));
-		}
-
 		$item->setCategoryId($data->categoryId);
 
 		$operation = $factory->getUpdateOperation($item);

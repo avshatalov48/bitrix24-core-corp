@@ -81,6 +81,28 @@ class FieldRepository implements Contract\Repository\HcmLink\FieldRepository
 		return $this->getAllBy([['=COMPANY_ID' => $companyId]]);
 	}
 
+	public function getByCompanyIdAndEntityType(
+		int $companyId,
+		FieldEntityType $entityType,
+	): Item\Collection\HcmLink\FieldCollection
+	{
+		return $this->getAllBy([[
+			'=COMPANY_ID' => $companyId,
+			'=ENTITY_TYPE' => $entityType->value,
+		]]);
+	}
+
+	public function getByCompanyIdAndType(
+		int $companyId,
+		FieldType $type,
+	): Item\Collection\HcmLink\FieldCollection
+	{
+		return $this->getAllBy([[
+			'=COMPANY_ID' => $companyId,
+			'=TYPE' => $type->value,
+		]]);
+	}
+
 	protected function getModelByUnique(
 		int $companyId,
 		string $code
@@ -170,7 +192,7 @@ class FieldRepository implements Contract\Repository\HcmLink\FieldRepository
 			field: $model->getCode(),
 			title: $model->getTitle(),
 			type: FieldType::tryFrom($model->getType()) ?? FieldType::UNKNOWN,
-			entityType: FieldEntityType::tryFrom($model->getType()) ?? FieldEntityType::UNKNOWN,
+			entityType: FieldEntityType::tryFrom($model->getEntityType()) ?? FieldEntityType::UNKNOWN,
 			ttl: $model->getTtl(),
 			id: $model->getId(),
 		);

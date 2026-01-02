@@ -18,7 +18,7 @@
 }
 
 .sign-document-b2e-user-party__item-list.--view .sign-document-b2e-user-party__item-show_more > a {
-	font: 15px/18px var(--ui-font-family-system);
+	font: 15px/18px var(--ui-font-family-primary, var(--ui-font-family-system));
 	color: var(--ui-color-link-primary-base);
 	position: relative;
 }
@@ -53,8 +53,16 @@
 	background-image: none;
 }
 
+.sign-document-b2e-user-party__item-list_item.--document .sign-document-b2e-user-party__item-list_item-avatar {
+	background-image: none;
+}
+
+.sign-document-b2e-user-party__item-list_item.--signers-list .sign-document-b2e-user-party__item-list_item-avatar {
+	background-image: none;
+}
+
 .sign-document-b2e-user-party__description {
-	font: 13px/15.51px var(--ui-font-family-system);
+	font: 13px/15.51px var(--ui-font-family-primary, var(--ui-font-family-system));
 	color: var(--ui-color-palette-gray-60);
 	margin: 5px 0 0 0;
 }

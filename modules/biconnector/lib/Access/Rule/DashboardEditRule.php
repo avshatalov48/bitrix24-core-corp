@@ -37,19 +37,4 @@ final class DashboardEditRule extends DashboardRule
 	{
 		return false;
 	}
-
-	protected function loadAvailableValues(): array
-	{
-		$dashboardList = SupersetDashboardTable::getList([
-			'select' => ['ID'],
-			'filter' => [
-				'!@TYPE' => [
-					SupersetDashboardTable::DASHBOARD_TYPE_SYSTEM,
-					SupersetDashboardTable::DASHBOARD_TYPE_MARKET,
-				],
-			],
-		])->fetchAll();
-
-		return array_column($dashboardList, 'ID');
-	}
 }

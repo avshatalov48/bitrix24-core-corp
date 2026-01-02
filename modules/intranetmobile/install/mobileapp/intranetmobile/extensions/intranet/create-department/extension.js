@@ -12,11 +12,22 @@ jn.define('intranet/create-department', (require, exports, module) => {
 	const { IconView, Icon } = require('ui-system/blocks/icon');
 	const { InputSize, InputDesign, InputMode, StringInput } = require('ui-system/form/inputs/string');
 	const { ButtonSize, ButtonDesign, Button } = require('ui-system/form/buttons/button');
-	const { UserSelectorCard } = require('intranet/layout/user-selector-card');
-	const { DepartmentSelectorCard } = require('intranet/layout/department-selector-card');
 	const { showToast, showErrorToast } = require('toast');
 	const { BottomSheet } = require('bottom-sheet');
+	const {
+		showAccessRestrictionBox,
+	} = require('intranet/create-department/src/permissions-box');
+	const { DepartmentSelectorCard } = require('intranet/create-department/src/selector-card/department');
+	const { UserSelectorCard } = require('intranet/create-department/src/selector-card/user');
+	const { Line } = require('utils/skeleton');
+	const { usersSelector, usersUpserted } = require('statemanager/redux/slices/users');
+	const { usersUpserted: intranetUsersUpserted } = require('intranet/statemanager/redux/slices/employees');
+	const { batchActions } = require('statemanager/redux/batched-actions');
+	const { dispatch, getState } = require('statemanager/redux/store');
 	const isAndroid = Application.getPlatform() === 'android';
+	const { fetchDepartmentPermissions } = require('intranet/create-department/src/api');
+
+	const NO_CREATE_PERMISSIONS_CODE = 1;
 
 	/**
 	 * @class CreateDepartment
@@ -27,9 +38,14 @@ jn.define('intranet/create-department', (require, exports, module) => {
 		 * @param {Object} data
 		 * @param {Object} [data.parentWidget]
 		 * @param {string} [data.title]
-		 * @param {boolean} [data.showToastAfterCreation]
+		 * @param {boolean} [data.shouldCheckNeedToBeMemberOfNewDepartment = false]
+		 * @param {boolean} [data.showToastAfterCreation = true]
+		 * @param {boolean} [data.showToastAfterCreationError = true]
+		 * @param {Function} [data.onSave]
+		 * @param {Function} [data.onError]
+		 * @param {Function} [data.onClose]
 		 */
-		static open(data)
+		static async open(data)
 		{
 			const parentWidget = data.parentWidget || PageManager;
 			const createDepartment = new CreateDepartment(data);
@@ -56,9 +72,76 @@ jn.define('intranet/create-department', (require, exports, module) => {
 				.enableAdoptHeightByKeyboard()
 				.open()
 				.then((layoutWidget) => {
-					createDepartment.layoutWidget = layoutWidget;
+					createDepartment.setLayout(layoutWidget);
 				})
 				.catch(() => {});
+		}
+
+		async fetchCreateDepartmentSettings()
+		{
+			const results = await Promise.allSettled([
+				fetchDepartmentPermissions(),
+				this.fetchDefaultHeadOfDepartment(),
+			]);
+
+			const settings = {};
+
+			if (results[0]?.status === 'fulfilled')
+			{
+				const response = results[0].value;
+				if (response.status === 'success')
+				{
+					const { data } = response;
+					settings.canInviteUsers = data.canInviteUsers ?? false;
+					settings.needToBeMemberOfNewDepartment = data.needToBeMemberOfNewDepartment ?? true;
+					settings.canCreateNewDepartment = data.canCreateNewDepartment ?? false;
+					settings.defaultParentDepartment = data.firstPossibleParentForNewDepartment ?? null;
+				}
+			}
+
+			if (results[1]?.status === 'fulfilled')
+			{
+				settings.defaultHeadOfDepartment = results[1].value;
+			}
+
+			return settings;
+		}
+
+		async fetchDefaultHeadOfDepartment(userId = env.userId)
+		{
+			const defaultUser = usersSelector.selectById(getState(), userId);
+			if (defaultUser)
+			{
+				return {
+					id: defaultUser.id,
+					name: defaultUser.fullName,
+				};
+			}
+
+			const result = await BX.ajax.runAction('intranetmobile.employees.getUsersByIds', {
+				data: {
+					ids: [userId],
+				},
+			})
+				.catch(console.error);
+			if (result.status !== 'success')
+			{
+				return null;
+			}
+
+			const { items: mainInfo, users: intranetInfo } = result.data;
+			this.saveUserToRedux(mainInfo, intranetInfo);
+
+			return {
+				id: mainInfo[0].id,
+				name: mainInfo[0].fullName,
+			};
+		}
+
+		saveUserToRedux(mainInfo, intranetInfo)
+		{
+			const actions = [usersUpserted(mainInfo), intranetUsersUpserted(intranetInfo)];
+			dispatch(batchActions(actions));
 		}
 
 		static getStartingLayoutHeight()
@@ -84,11 +167,14 @@ jn.define('intranet/create-department', (require, exports, module) => {
 			this.nameInputRef = null;
 			this.layoutWidget = null;
 			this.state = {
-				parentDepartmentId: null,
-				headOfDepartmentId: env.userId,
+				needToBeMemberOfNewDepartment: true,
+				parentDepartment: null,
 				departmentName: '',
+				headOfDepartment: {
+					id: env.userId,
+				},
 				error: null,
-				loading: false,
+				loading: true,
 			};
 		}
 
@@ -97,15 +183,62 @@ jn.define('intranet/create-department', (require, exports, module) => {
 			return this.props.showToastAfterCreation ?? true;
 		}
 
-		componentDidMount()
+		get showToastAfterCreationError()
+		{
+			return this.props.showToastAfterCreationError ?? true;
+		}
+
+		async componentDidMount()
 		{
 			Keyboard.on(Keyboard.Event.WillHide, () => {
 				this.layoutWidget.setBottomSheetHeight(CreateDepartment.getStartingLayoutHeight());
+			});
+			this.focusOnNameInput();
+
+			const {
+				canCreateNewDepartment,
+				needToBeMemberOfNewDepartment,
+				defaultParentDepartment,
+				defaultHeadOfDepartment,
+			} = await this.fetchCreateDepartmentSettings();
+
+			if (!canCreateNewDepartment)
+			{
+				showAccessRestrictionBox({
+					parentWidget: this.layoutWidget,
+					onClose: this.close,
+				});
+
+				return;
+			}
+
+			this.setState({
+				needToBeMemberOfNewDepartment,
+				parentDepartment: defaultParentDepartment,
+				headOfDepartment: defaultHeadOfDepartment,
+				loading: false,
+			});
+		}
+
+		#getTestId = (suffix) => {
+			const prefix = 'create-department';
+
+			return suffix ? `${prefix}-${suffix}` : prefix;
+		};
+
+		setLayout(layout)
+		{
+			this.layoutWidget = layout;
+
+			this.layoutWidget.on('onViewHidden', () => {
+				this.props.onClose?.(this);
 			});
 		}
 
 		render()
 		{
+			const { loading } = this.state;
+
 			return Box(
 				{
 					resizableByKeyboard: true,
@@ -126,7 +259,8 @@ jn.define('intranet/create-department', (require, exports, module) => {
 						this.renderDepartmentIcon(),
 						this.renderDepartmentNameInput(),
 					),
-					View(
+					loading && this.renderSkeletonForSelectorCards(),
+					!loading && View(
 						{
 							style: {
 								flexDirection: 'row',
@@ -140,24 +274,46 @@ jn.define('intranet/create-department', (require, exports, module) => {
 			);
 		}
 
+		renderSkeletonForSelectorCards()
+		{
+			return View(
+				{
+					style: {
+						flexDirection: 'row',
+						flexWrap: 'wrap',
+					},
+				},
+				Line(100, 14, 16, 7, 4),
+				Line('100%', 16, 0, 14, 4),
+				Line('100%', 1, 0, 0, 0),
+				Line(100, 14, 17, 7, 4),
+				Line('100%', 16, 0, 0, 4),
+			);
+		}
+
 		renderFooter()
 		{
+			const { departmentName, loading } = this.state;
+
 			return BoxFooter(
 				{
 					safeArea: !isAndroid,
 					keyboardButton: {
 						text: Loc.getMessage('M_INTRANET_CREATE_DEPARTMENT_CREATE_BUTTON_TEXT'),
-						loading: this.state.loading,
+						loading,
 						onClick: this.save,
+						disabled: departmentName === '',
 					},
 				},
 				Button({
+					testId: this.#getTestId('create-button'),
 					design: ButtonDesign.FILLED,
 					size: ButtonSize.L,
 					text: Loc.getMessage('M_INTRANET_CREATE_DEPARTMENT_CREATE_BUTTON_TEXT'),
 					stretched: true,
 					onClick: this.save,
-					loading: this.state.loading,
+					loading,
+					disabled: departmentName === '',
 				}),
 			);
 		}
@@ -187,6 +343,8 @@ jn.define('intranet/create-department', (require, exports, module) => {
 
 		renderDepartmentNameInput()
 		{
+			const { error } = this.state;
+
 			return View(
 				{
 					style: {
@@ -195,17 +353,17 @@ jn.define('intranet/create-department', (require, exports, module) => {
 					},
 				},
 				StringInput({
+					testId: this.#getTestId('name-input'),
 					placeholder: Loc.getMessage('M_INTRANET_CREATE_DEPARTMENT_NAME_INPUT_TITLE'),
 					size: InputSize.L,
 					design: InputDesign.PRIMARY,
 					mode: InputMode.STROKE,
 					align: 'left',
-					focus: true,
-					error: this.state.error || false,
-					errorText: this.state.error,
+					error: error || false,
+					errorText: error,
 					onChange: (departmentName) => {
-						const error = Type.isStringFilled(departmentName) ? null : Loc.getMessage('M_INTRANET_CREATE_DEPARTMENT_NAME_INPUT_ERROR');
-						this.setState({ departmentName, error });
+						const errorText = Type.isStringFilled(departmentName) ? null : Loc.getMessage('M_INTRANET_CREATE_DEPARTMENT_NAME_INPUT_ERROR');
+						this.setState({ departmentName, error: errorText });
 					},
 					forwardRef: this.handleInputRef,
 				}),
@@ -214,46 +372,67 @@ jn.define('intranet/create-department', (require, exports, module) => {
 
 		handleInputRef = (ref) => {
 			this.nameInputRef = ref;
-			this.nameInputRef.focus();
+			this.focusOnNameInput();
 		};
 
 		renderParentDepartmentSelector()
 		{
-			return View(
-				{
-					style: {
-						width: '100%',
-						marginTop: Indent.XL2.toNumber(),
-						borderBottomWidth: 1,
-						borderBottomColor: Color.bgSeparatorSecondary.toHex(),
-					},
+			const { parentDepartment } = this.state;
+
+			return DepartmentSelectorCard({
+				testId: 'parent-department',
+				parentWidget: this.layoutWidget,
+				title: Loc.getMessage('M_INTRANET_CREATE_DEPARTMENT_PARENT_DEPARTMENT_SELECTOR_TITLE'),
+				text: parentDepartment?.name ?? '',
+				selectedId: parentDepartment?.id ?? null,
+				showBottomBorder: true,
+				onViewHidden: this.focusOnNameInput,
+				onSelected: (selectedDepartments) => {
+					if (Array.isArray(selectedDepartments) && selectedDepartments.length > 0)
+					{
+						this.setState({
+							parentDepartment: {
+								id: selectedDepartments[0].id,
+								name: selectedDepartments[0].title,
+							},
+						});
+					}
 				},
-				new DepartmentSelectorCard({
-					title: Loc.getMessage('M_INTRANET_CREATE_DEPARTMENT_PARENT_DEPARTMENT_SELECTOR_TITLE'),
-					parentWidget: this.layoutWidget || PageManager,
-					onViewHidden: () => this.nameInputRef.focus(),
-					onChange: (departmentId) => this.setState({ parentDepartmentId: departmentId }),
-					onLoadRootDepartment: (departmentId) => this.setState({ parentDepartmentId: departmentId }),
-				}),
-			);
+			});
 		}
 
 		renderHeadOfDepartmentSelector()
 		{
-			return View(
-				{
-					style: {
-						width: '100%',
-						marginTop: Indent.XL2.toNumber(),
-					},
+			const { headOfDepartment } = this.state;
+
+			return UserSelectorCard({
+				testId: 'head-of-department',
+				parentWidget: this.layoutWidget,
+				title: Loc.getMessage('M_INTRANET_CREATE_DEPARTMENT_HEAD_OF_DEPARTMENT_SELECTOR_TITLE'),
+				text: headOfDepartment?.name ?? '',
+				selectedId: headOfDepartment?.id ?? null,
+				onViewHidden: this.focusOnNameInput,
+				editable: this.isHeadOfDepartmentEditable(),
+				onSelected: (selectedUsers) => {
+					if (Array.isArray(selectedUsers) && selectedUsers.length > 0)
+					{
+						this.setState({
+							headOfDepartment: {
+								id: selectedUsers[0].id,
+								name: selectedUsers[0].title,
+							},
+						});
+					}
 				},
-				new UserSelectorCard({
-					title: Loc.getMessage('M_INTRANET_CREATE_DEPARTMENT_HEAD_OF_DEPARTMENT_SELECTOR_TITLE'),
-					parentWidget: this.layoutWidget || PageManager,
-					onViewHidden: () => this.nameInputRef.focus(),
-					onChange: (userId) => this.setState({ headOfDepartmentId: userId }),
-				}),
-			);
+			});
+		}
+
+		isHeadOfDepartmentEditable()
+		{
+			const { needToBeMemberOfNewDepartment } = this.state;
+			const { shouldCheckNeedToBeMemberOfNewDepartment = false } = this.props;
+
+			return !shouldCheckNeedToBeMemberOfNewDepartment || !needToBeMemberOfNewDepartment;
 		}
 
 		save = () => {
@@ -271,12 +450,14 @@ jn.define('intranet/create-department', (require, exports, module) => {
 
 			const departmentData = {
 				name: this.state.departmentName,
-				parentDepartmentId: this.state.parentDepartmentId,
-				headOfDepartmentId: this.state.headOfDepartmentId,
+				parentId: this.state.parentDepartment?.id,
+				userIds: {
+					MEMBER_HEAD: [this.state.headOfDepartment?.id],
+				},
 			};
 
 			this.setState({ loading: true }, () => {
-				BX.ajax.runAction('intranetmobile.departments.createDepartment', { data: departmentData })
+				BX.ajax.runAction('humanresources.api.Structure.Department.create', { data: departmentData })
 					.then((result) => {
 						if (result.status === 'success')
 						{
@@ -287,31 +468,64 @@ jn.define('intranet/create-department', (require, exports, module) => {
 								}, this.props.parentWidget);
 							}
 
-							if (this.props.onSave)
-							{
-								this.props.onSave({
-									id: result.data.id,
-									title: this.state.departmentName,
-								});
-							}
+							const { id, name: title } = result.data.node;
+							this.props.onSave?.({
+								id,
+								title,
+							});
 
 							this.setState({ loading: false }, () => {
-								this.layoutWidget.close();
+								this.close();
 							});
 						}
 						else
 						{
-							showErrorToast({
-								message: Loc.getMessage('M_INTRANET_CREATE_DEPARTMENT_SAVE_TOAST_ERROR_MESSAGE'),
-							}, this.props.parentWidget);
-
-							this.setState({ loading: false });
+							this.#handlerCreationErrorResult(result);
 						}
+					}, (result) => {
+						this.#handlerCreationErrorResult(result);
 					})
 					.catch((error) => console.error(error));
 			});
 		};
+
+		focusOnNameInput = () => {
+			this.nameInputRef?.focus();
+		};
+
+		close = () => {
+			this.layoutWidget.close();
+		};
+
+		#handlerCreationErrorResult(result)
+		{
+			this.setState({
+				loading: false,
+			}, () => {
+				if (result.errors?.length > 0)
+				{
+					if (result.errors[0].code === NO_CREATE_PERMISSIONS_CODE)
+					{
+						showAccessRestrictionBox({
+							parentWidget: this.layoutWidget,
+							subdepartmentCreationCase: true,
+							onClose: this.focusOnNameInput,
+						});
+					}
+					else
+					{
+						if (this.showToastAfterCreationError)
+						{
+							showErrorToast({
+								message: Loc.getMessage('M_INTRANET_CREATE_DEPARTMENT_SAVE_TOAST_ERROR_MESSAGE'),
+							}, this.layoutWidget);
+						}
+						this.props.onError?.(result, this.layoutWidget, this);
+					}
+				}
+			});
+		}
 	}
 
-	module.exports = { CreateDepartment };
+	module.exports = { CreateDepartment, showAccessRestrictionBox, fetchDepartmentPermissions };
 });

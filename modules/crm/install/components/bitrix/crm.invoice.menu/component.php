@@ -18,9 +18,11 @@ if (!CModule::IncludeModule('crm'))
 
 \Bitrix\Crm\Service\Container::getInstance()->getLocalization()->loadMessages();
 
-$CrmPerms = new CCrmPerms($USER->GetID());
-if ($CrmPerms->HavePerm('INVOICE', BX_CRM_PERM_NONE))
+$userPermissionsService = \Bitrix\Crm\Service\Container::getInstance()->getUserPermissions();
+if (!$userPermissionsService->entityType()->canReadItems(CCrmOwnerType::Invoice))
+{
 	return;
+}
 
 $arParams['PATH_TO_INVOICE_LIST'] = CrmCheckPath('PATH_TO_INVOICE_LIST', $arParams['PATH_TO_INVOICE_LIST'], $APPLICATION->GetCurPage());
 $arParams['PATH_TO_INVOICE_RECUR'] = CrmCheckPath('PATH_TO_INVOICE_RECUR', $arParams['PATH_TO_INVOICE_RECUR'], $APPLICATION->GetCurPage());
@@ -48,28 +50,24 @@ $arParams['ELEMENT_ID'] = intval($arParams['ELEMENT_ID']);
 
 if ($arParams['TYPE'] == 'list')
 {
-	$bRead   = !$CrmPerms->HavePerm('INVOICE', BX_CRM_PERM_NONE, 'READ');
-	$bExport = !$CrmPerms->HavePerm('INVOICE', BX_CRM_PERM_NONE, 'EXPORT');
-	$bImport = !$CrmPerms->HavePerm('INVOICE', BX_CRM_PERM_NONE, 'IMPORT') && $arParams['IS_RECURRING'] !== 'Y';
-	$bAdd    = !$CrmPerms->HavePerm('INVOICE', BX_CRM_PERM_NONE, 'ADD');
-	$bWrite  = !$CrmPerms->HavePerm('INVOICE', BX_CRM_PERM_NONE, 'WRITE');
+	$bRead = $userPermissionsService->entityType()->canReadItems(CCrmOwnerType::Invoice);
+	$bExport = $userPermissionsService->entityType()->canExportItems(CCrmOwnerType::Invoice);
+	$bImport = $userPermissionsService->entityType()->canImportItems(CCrmOwnerType::Invoice) && $arParams['IS_RECURRING'] !== 'Y';
+	$bWrite = $userPermissionsService->entityType()->canUpdateItems(CCrmOwnerType::Invoice);
 	$bDelete = false;
 }
 else
 {
 	$arFields = CCrmInvoice::GetByID($arParams['ELEMENT_ID']);
 
-	$arEntityAttr[$arParams['ELEMENT_ID']] = array();
-	if ($arFields !== false)
-		$arEntityAttr = $CrmPerms->GetEntityAttr('INVOICE', array($arParams['ELEMENT_ID']));
+	$bRead = $userPermissionsService->item()->canRead(CCrmOwnerType::Invoice, $arParams['ELEMENT_ID']);
+	$bWrite = $userPermissionsService->item()->canUpdate(CCrmOwnerType::Invoice, $arParams['ELEMENT_ID']);
+	$bDelete = $userPermissionsService->item()->canDelete(CCrmOwnerType::Invoice, $arParams['ELEMENT_ID']);
 
-	$bRead   = $arFields !== false;
 	$bExport = false;
 	$bImport = false;
-	$bAdd    = !$CrmPerms->HavePerm('INVOICE', BX_CRM_PERM_NONE, 'ADD');
-	$bWrite  = $CrmPerms->CheckEnityAccess('INVOICE', 'WRITE', $arEntityAttr[$arParams['ELEMENT_ID']]);
-	$bDelete = $CrmPerms->CheckEnityAccess('INVOICE', 'DELETE', $arEntityAttr[$arParams['ELEMENT_ID']]);
 }
+$bAdd = $userPermissionsService->entityType()->canAddItems(CCrmOwnerType::Invoice);
 
 if (isset($arParams['DISABLE_EXPORT']) && $arParams['DISABLE_EXPORT'] == 'Y')
 {

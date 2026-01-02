@@ -31,29 +31,38 @@ final class Calendar extends Base
 			return $result;
 		}
 
-		$eventData = \Bitrix\Crm\Integration\Calendar::getEvent($calendarEventId);
+		$eventData = \Bitrix\Crm\Integration\Calendar::getEvent($calendarEventId, true);
 		if (is_array($eventData))
 		{
-			$from = (new DateTime(
-				$eventData['DATE_FROM'],
-				null,
-				new DateTimeZone($eventData['TZ_FROM'])
-			))->getTimestamp();
+			$tzFrom = empty($eventData['TZ_FROM']) ? null : $eventData['TZ_FROM'];
+			if ($tzFrom)
+			{
+				$from = (new DateTime($eventData['DATE_FROM'], null, new DateTimeZone($tzFrom)))->getTimestamp();
+			}
+			else
+			{
+				$from = DateTime::createFromUserTime($eventData['DATE_FROM'])->getTimestamp();
+			}
 
-			$to = (new DateTime(
-				$eventData['DATE_TO'],
-				null,
-				new DateTimeZone($eventData['TZ_TO'])
-			))->getTimestamp() ;
+			$tzTo = empty($eventData['TZ_TO']) ? null : $eventData['TZ_TO'];
+			if ($tzTo)
+			{
+				$to = (new DateTime($eventData['DATE_TO'], null, new DateTimeZone($tzTo)))->getTimestamp();
+			}
+			else
+			{
+				$to = DateTime::createFromUserTime($eventData['DATE_TO'])->getTimestamp();
+			}
 
 			$milliseconds = 1000;
 
+			$userTimeZone = \Bitrix\Crm\Integration\Calendar::getUserTimeZone($this->getResponsibleId());
 			$result = [
 				'attendeesEntityList' => $eventData['attendeesEntityList'] ?? [],
 				'meeting' => $eventData['MEETING'] ?? [],
 				'location' => $eventData['LOCATION'] ?? [],
-				'timezoneFrom' => $eventData['TZ_FROM'],
-				'timezoneTo' => $eventData['TZ_TO'],
+				'timezoneFrom' => $tzFrom ?? $userTimeZone,
+				'timezoneTo' => $tzTo ?? $userTimeZone,
 				'from' => $from * $milliseconds,
 				'to' => $to * $milliseconds,
 				'duration' => $eventData['DT_LENGTH'] * $milliseconds,

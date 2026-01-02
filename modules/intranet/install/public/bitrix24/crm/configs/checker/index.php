@@ -7,6 +7,7 @@ $APPLICATION->IncludeComponent("bitrix:ui.sidepanel.wrapper", "", [
 			"DISABLE_TOP_MENU" => "Y"
 		],
 		'USE_PADDING' => false,
+		'USE_UI_TOOLBAR' => 'Y',
 	]);
 
 

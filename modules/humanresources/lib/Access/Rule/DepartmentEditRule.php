@@ -6,12 +6,33 @@ use Bitrix\HumanResources\Access\Model\NodeModel;
 use Bitrix\HumanResources\Access\Permission\PermissionDictionary;
 use Bitrix\HumanResources\Access\Permission\PermissionVariablesDictionary;
 use Bitrix\HumanResources\Service\Container;
+use Bitrix\HumanResources\Type\NodeEntityType;
 use Bitrix\Main\Access\Rule\AbstractRule;
 
 final class DepartmentEditRule extends AbstractRule
 {
 	public function execute(\Bitrix\Main\Access\AccessibleItem $item = null, $params = null): bool
 	{
+		if (
+			!($item instanceof NodeModel)
+			|| !$item->getId()
+			|| !$item->getNode()
+		)
+		{
+			return false;
+		}
+
+		$node = $item->getNode();
+		if ($node->type !== NodeEntityType::DEPARTMENT)
+		{
+			return false;
+		}
+
+		if ($this->user->isAdmin())
+		{
+			return true;
+		}
+
 		$permissionValue = $this->user->getPermission(PermissionDictionary::HUMAN_RESOURCES_DEPARTMENT_EDIT);
 		if ($permissionValue === PermissionVariablesDictionary::VARIABLE_NONE)
 		{
@@ -21,16 +42,6 @@ final class DepartmentEditRule extends AbstractRule
 		if ($permissionValue === PermissionVariablesDictionary::VARIABLE_ALL)
 		{
 			return true;
-		}
-
-		if (!($item instanceof NodeModel))
-		{
-			return false;
-		}
-
-		if (!$item->getId())
-		{
-			return false;
 		}
 
 		$accessNodeRepository = Container::getAccessNodeRepository();

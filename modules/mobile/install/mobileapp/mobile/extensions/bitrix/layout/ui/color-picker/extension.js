@@ -1,4 +1,10 @@
-(() => {
+jn.define('layout/ui/color-picker', (require, exports, module) => {
+	const { ColorPicker: ColorPickerPopup, ColorPickerPalette } = require('ui-system/popups/color-picker');
+	const { Loc } = require('loc');
+	const { Color, Indent } = require('tokens');
+	const { IconView, Icon } = require('ui-system/blocks/icon');
+	const { Text4 } = require('ui-system/typography/text');
+
 	const ColorPalette = [
 		'#2fc6f6',
 		'#9dcf00',
@@ -17,8 +23,10 @@
 		'#ffe600',
 		'#5d5f74',
 	];
-	const require = (ext) => jn.require(ext);
-	const AppTheme = require('apptheme');
+
+	const ITEM_SIZE = 42;
+	const COLOR_PALETTE_SIZE = 54;
+
 	/**
 	 * @class UI.ColorPicker
 	 */
@@ -32,6 +40,11 @@
 				currentColor: this.getCurrentColor(),
 				colors: this.getColors(),
 			};
+		}
+
+		get title()
+		{
+			return BX.prop.getString(this.props, 'title', null);
 		}
 
 		getCurrentColor()
@@ -67,7 +80,7 @@
 		{
 			return [
 				...ColorPalette,
-				...UI.ColorMenu.Colors,
+				...ColorPickerPalette.SECOND.getValue(),
 				...this.getColorsFromProps(),
 			].includes(this.getCurrentColor());
 		}
@@ -86,25 +99,37 @@
 		{
 			return View(
 				{
-					style: styles.colorPickerContainer,
-				},
-				Text(
-					{
-						style: styles.colorPickerTitle,
-						text: BX.message('COLOR_PICKER_TITLE'),
+					style: {
+						paddingTop: Indent.S.toNumber(),
+						paddingBottom: Indent.XL3.toNumber(),
+						borderColor: Color.bgSeparatorPrimary.toHex(),
+						borderBottomWidth: 1,
 					},
-				),
+				},
+				Text4({
+					text: this.title || Loc.getMessage('COLOR_PICKER_TITLE'),
+					style: {
+						marginHorizontal: Indent.XL3.toNumber(),
+						marginVertical: Indent.L.toNumber(),
+					},
+					color: Color.base4,
+				}),
 				View(
 					{},
 					ScrollView(
 						{
-							style: styles.colorPickerWrapper,
+							style: {
+								minHeight: COLOR_PALETTE_SIZE,
+							},
 							horizontal: true,
 							showsHorizontalScrollIndicator: false,
 						},
 						View(
 							{
-								style: styles.colorPickerList,
+								style: {
+									flexDirection: 'row',
+									alignItems: 'center',
+								},
 							},
 							...this.state.colors.map((color, index) => this.renderColorPalette(color, index)),
 							this.renderMenuButton(),
@@ -121,7 +146,18 @@
 			return View(
 				{
 					testId: `ColorContainer-${color}-${isSelected}`,
-					style: styles.colorPaletteContainer(this.state.currentColor, color, index),
+					style: {
+						height: COLOR_PALETTE_SIZE,
+						width: COLOR_PALETTE_SIZE,
+						alignItems: 'center',
+						justifyContent: 'center',
+						marginRight: Indent.XS.toNumber(),
+						backgroundColor: Color.bgContentPrimary.toHex(),
+						borderWidth: 2,
+						borderColor: isSelected ? Color.base1.toHex() : Color.bgContentPrimary.toHex(),
+						borderRadius: COLOR_PALETTE_SIZE / 2,
+						marginLeft: index === 0 ? Indent.XL.toNumber() : 0,
+					},
 					onClick: () => {
 						this.setState({
 							currentColor: color,
@@ -132,7 +168,12 @@
 				},
 				View(
 					{
-						style: styles.colorPalette(color),
+						style: {
+							width: ITEM_SIZE,
+							height: ITEM_SIZE,
+							borderRadius: ITEM_SIZE / 2,
+							backgroundColor: color,
+						},
 					},
 				),
 			);
@@ -150,115 +191,61 @@
 		{
 			return View(
 				{
-					style: styles.menuButton(this.isMenuColor()),
+					style: {
+						height: COLOR_PALETTE_SIZE,
+						width: COLOR_PALETTE_SIZE,
+						alignItems: 'center',
+						justifyContent: 'center',
+						backgroundColor: Color.bgContentPrimary.toHex(),
+						borderColor: this.isMenuColor() ? this.state.currentColor : Color.bgContentPrimary.toHex(),
+						borderWidth: 2,
+						borderRadius: COLOR_PALETTE_SIZE / 2,
+						marginRight: Indent.XL.toNumber(),
+					},
 					onClick: () => {
-						UI.ColorMenu.open(
-							{
-								currentColor: this.state.currentColor,
-								onChangeColor: (color) => {
-									this.setState({
-										currentColor: color,
-									}, () => {
-										this.onChangeColor();
-									});
-								},
+						ColorPickerPopup.show({
+							palette: ColorPickerPalette.SECOND,
+							testId: 'mobile-color-picker',
+							parentWidget: this.props.layout,
+							title: Loc.getMessage('COLOR_PICKER_POPUP_TITLE'),
+							buttonText: Loc.getMessage('COLOR_PICKER_POPUP_BUTTON'),
+							inputLabel: Loc.getMessage('COLOR_PICKER_POPUP_INPUT_TITLE'),
+							currentColor: this.state.currentColor,
+							onChange: (color) => {
+								this.setState({
+									currentColor: color,
+								}, () => {
+									this.onChangeColor();
+								});
 							},
-							this.props.layout,
-						);
+						});
 					},
 				},
 				View(
 					{
-						style: styles.menuButtonIconContainer,
-					},
-					Image(
-						{
-							style: styles.menuButtonIcon,
-							svg: {
-								content: svgImages.menuIcon,
-							},
+						style: {
+							width: ITEM_SIZE,
+							height: ITEM_SIZE,
+							justifyContent: 'center',
+							alignItems: 'center',
 						},
-					),
+					},
+					IconView({
+						size: 32,
+						icon: Icon.PALETTE,
+						color: Color.base3,
+					}),
 				),
 			);
 		}
 
 		isMenuColor()
 		{
-			return UI.ColorMenu.Colors.includes(this.state.currentColor);
+			return ColorPickerPalette.SECOND.getValue().includes(this.state.currentColor);
 		}
 	}
 
-	const styles = {
-		colorPickerContainer: {
-			flexDirection: 'column',
-			borderRadius: 12,
-			backgroundColor: AppTheme.colors.bgContentPrimary,
-			paddingTop: 10,
-			paddingBottom: 16,
-		},
-		colorPickerTitle: {
-			color: AppTheme.colors.base1,
-			fontSize: 15,
-			fontWeight: '500',
-			marginBottom: 9,
-			marginLeft: 20,
-			marginRight: 20,
-		},
-		colorPickerWrapper: {
-			height: 50,
-		},
-		colorPickerList: {
-			flexDirection: 'row',
-			alignItems: 'center',
-		},
-		colorPaletteContainer: (currentColor, color, index) => ({
-			marginRight: 2,
-			marginLeft: index === 0 ? 20 : 0,
-			backgroundColor: AppTheme.colors.bgContentPrimary,
-			borderWidth: 3,
-			borderColor: currentColor === color ? AppTheme.colors.accentBrandBlue : AppTheme.colors.bgContentPrimary,
-			borderRadius: 25,
-			justifyContent: 'center',
-			alignItems: 'center',
-			width: 50,
-			height: 50,
-		}),
-		colorPalette: (color) => ({
-			width: 38,
-			height: 38,
-			borderRadius: 19,
-			backgroundColor: color,
-		}),
-		menuButton: (isDefaultColor) => ({
-			marginRight: 20,
-			backgroundColor: AppTheme.colors.bgContentPrimary,
-			borderWidth: 3,
-			borderColor: isDefaultColor ? AppTheme.colors.accentBrandBlue : AppTheme.colors.bgContentPrimary,
-			borderRadius: 25,
-			justifyContent: 'center',
-			alignItems: 'center',
-			width: 50,
-			height: 50,
-		}),
-		menuButtonIconContainer: {
-			width: 30,
-			height: 30,
-			borderRadius: 15,
-			backgroundColor: AppTheme.colors.accentBrandGreen,
-			justifyContent: 'center',
-			alignItems: 'center',
-		},
-		menuButtonIcon: {
-			width: 20,
-			height: 5,
-		},
+	module.exports = {
+		ColorPicker,
 	};
-
-	const svgImages = {
-		menuIcon: '<svg width="20" height="5" viewBox="0 0 20 5" fill="none" xmlns="http://www.w3.org/2000/svg"><path d="M2.5 5C3.88071 5 5 3.88071 5 2.5C5 1.11929 3.88071 0 2.5 0C1.11929 0 0 1.11929 0 2.5C0 3.88071 1.11929 5 2.5 5Z" fill="white"/><path d="M10 5C11.3807 5 12.5 3.88071 12.5 2.5C12.5 1.11929 11.3807 0 10 0C8.61929 0 7.5 1.11929 7.5 2.5C7.5 3.88071 8.61929 5 10 5Z" fill="white"/><path d="M20 2.5C20 3.88071 18.8807 5 17.5 5C16.1193 5 15 3.88071 15 2.5C15 1.11929 16.1193 0 17.5 0C18.8807 0 20 1.11929 20 2.5Z" fill="white"/></svg>',
-	};
-
-	this.UI = this.UI || {};
-	this.UI.ColorPicker = ColorPicker;
-})();
+});

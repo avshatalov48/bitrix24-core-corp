@@ -6,7 +6,7 @@ $MESS["DISK_EXT_LINK_B24_ADV_3"] = "Бизнес-чат";
 $MESS["DISK_EXT_LINK_B24_ADV_4"] = "Құжаттар";
 $MESS["DISK_EXT_LINK_B24_ADV_5"] = "Диск";
 $MESS["DISK_EXT_LINK_B24_ADV_6"] = "Күнтізбе";
-$MESS["DISK_EXT_LINK_B24_ADV_CREATE_LINK_HREF"] = "http://www.bitrix24.kz/?utm_source=fileshare_button&utm_medium=referral&utm_campaign=fileshare_button";
+$MESS["DISK_EXT_LINK_B24_ADV_CREATE_LINK_HREF"] = "https://www.bitrix24.kz/?utm_source=fileshare_button&utm_medium=referral&utm_campaign=fileshare_button";
 $MESS["DISK_EXT_LINK_B24_ADV_CREATE_LINK_TEXT"] = "өз Битрикс24 құрыңыз:";
 $MESS["DISK_EXT_LINK_B24_ADV_TEXT"] = "Компанияның жұмысын ұйымдастыруға арналған құралдардың толық жиынтығы";
 $MESS["DISK_EXT_LINK_FILE_COPY_LINK"] = "Сілтемемен бөлісу";

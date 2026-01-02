@@ -1,0 +1,44 @@
+.crm-inline-placeholder-selector-dotted {
+	-webkit-box-flex: 1;
+	    -ms-flex: 1;
+	        flex: 1;
+	padding: 5px 0;
+	display: -webkit-box;
+	display: -ms-flexbox;
+	display: flex;
+	-webkit-box-align: center;
+	    -ms-flex-align: center;
+	        align-items: center;
+	min-width: 30px;
+	max-width: 30px;
+	cursor: pointer;
+}
+
+.crm-inline-placeholder-selector-dotted:before {
+	content: ' ';
+	display: inline-block;
+	margin: 0 0 0 8px;
+	width: 4px;
+	height: 4px;
+	background: #82868c;
+	opacity: var(--ui-opacity-60);
+	-webkit-box-shadow: 6px 0 0 #82868c, 12px 0 0 #82868c;
+	        box-shadow: 6px 0 0 #82868c, 12px 0 0 #82868c;
+	border-radius:50%;
+	-webkit-transition: .1s;
+	-o-transition: .1s;
+	transition: .1s;
+}
+
+.crm-inline-placeholder-selector-dotted:hover:before {
+	opacity: var(--ui-opacity-full);
+}
+
+.crm-inline-placeholder-selector {
+	width: 100%;
+	display: -webkit-box;
+	display: -ms-flexbox;
+	display: flex;
+	overflow: hidden;
+	margin: 0 0 11px 0;
+}

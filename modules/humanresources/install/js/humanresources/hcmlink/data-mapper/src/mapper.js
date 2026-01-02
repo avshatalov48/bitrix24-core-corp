@@ -12,10 +12,12 @@ type MapperOptions = {
 	mode: 'direct' | 'reverse',
 };
 
+const closeOnDoneDelay = 1000;
+
 /**
  * An entry point of data-mapper
  */
-export class Mapper
+export class Mapper extends EventEmitter
 {
 	#container: HTMLElement;
 	layout: Layout;
@@ -29,6 +31,8 @@ export class Mapper
 
 	constructor(options: MapperOptions)
 	{
+		super();
+		this.setEventNamespace('Humanresources.HcmLink.DataMapper.Mapper');
 		this.api = new Api();
 		this.options = options;
 		this.footerDisplayPointer = this.footerDisplay.bind(this); // for correct sub/unsub
@@ -61,7 +65,13 @@ export class Mapper
 					sliderOptions?.onCloseHandler();
 					closure.unmount();
 				},
-				onLoad: () => {
+				onLoad: (event) => {
+					if (options.mode === 'direct' && event.slider && closure)
+					{
+						closure.subscribe(EventList.HR_DATA_MAPPER_DONE, () => {
+							setTimeout((): void => event?.slider?.close(), closeOnDoneDelay);
+						});
+					}
 					// Here we need to get rid of title to replace the entire toolbar with our own markup
 					// Why we just don't pass the title at all? If we don't pass it, then toolbar will not render too
 					Dom.remove(closure.layout.getContainer().querySelector('.ui-sidepanel-layout-title'));
@@ -92,6 +102,9 @@ export class Mapper
 			EventEmitter.subscribe(EventList.HR_DATA_MAPPER_FOOTER_DISPLAY, this.footerDisplayPointer);
 			Dom.style(this.#container, 'height', '100%');
 			this.component = this.#application.mount(this.#container);
+			this.component.$Bitrix.eventEmitter.subscribe(EventList.HR_DATA_MAPPER_DONE, (): void => {
+				this.emit(EventList.HR_DATA_MAPPER_DONE);
+			});
 		}
 
 		return this.#container;

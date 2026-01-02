@@ -640,9 +640,15 @@ this.BX.Booking = this.BX.Booking || {};
 	`
 	};
 
+	const CLIENT_POPUP_ID = 'booking-booking-client-popup';
+
+	// @vue/component
 	const ClientPopup = {
 	  name: 'ClientPopup',
-	  emits: ['create', 'close'],
+	  components: {
+	    StickyPopup: booking_component_popup.StickyPopup,
+	    ClientPopupContent
+	  },
 	  props: {
 	    bindElement: {
 	      type: HTMLElement,
@@ -661,9 +667,10 @@ this.BX.Booking = this.BX.Booking || {};
 	      default: null
 	    }
 	  },
+	  emits: ['create', 'close'],
 	  computed: {
 	    popupId() {
-	      return 'booking-booking-client-popup';
+	      return CLIENT_POPUP_ID;
 	    },
 	    config() {
 	      var _this$offsetLeft, _this$offsetTop;
@@ -697,10 +704,6 @@ this.BX.Booking = this.BX.Booking || {};
 	      this.$emit('close');
 	    }
 	  },
-	  components: {
-	    StickyPopup: booking_component_popup.StickyPopup,
-	    ClientPopupContent
-	  },
 	  template: `
 		<StickyPopup
 			v-slot="{adjustPosition}"
@@ -721,6 +724,7 @@ this.BX.Booking = this.BX.Booking || {};
 	`
 	};
 
+	exports.CLIENT_POPUP_ID = CLIENT_POPUP_ID;
 	exports.ClientPopup = ClientPopup;
 
 }((this.BX.Booking.Component = this.BX.Booking.Component || {}),BX.Booking.Component,BX.UI.NotificationManager,BX.Booking.Provider.Service,BX.Booking.Component,BX.Event,BX.Main,BX.UI.IconSet,BX,BX,BX,BX,BX,BX.Vue3,BX.Booking.Const,BX,BX.Crm));

@@ -5,11 +5,8 @@ declare(strict_types=1);
 namespace Bitrix\Booking\Service;
 
 use Bitrix\Bitrix24\Feature;
-use Bitrix\Bitrix24\License;
-use Bitrix\Booking\Provider\NotificationsAvailabilityProvider;
-use Bitrix\Crm\Integration\NotificationsManager;
+
 use Bitrix\Main\Loader;
-use Bitrix\Main\ModuleManager;
 use Bitrix\Main\Config\Option;
 
 final class BookingFeature
@@ -18,9 +15,16 @@ final class BookingFeature
 	private const FEATURE_ID = 'booking';
 	private const TRIAL_DAYS = 30;
 
+	/**
+	 * @return bool
+	 *
+	 * @deprecated
+	 *
+	 * Keep the method to avoid dependency on intranet 25.1300.0
+	 */
 	public static function isOn(): bool
 	{
-		return self::isOptionEnabled();
+		return true;
 	}
 
 	public static function isFeatureEnabled(): bool
@@ -48,52 +52,38 @@ final class BookingFeature
 
 	public static function canTurnOnTrial(): bool
 	{
-		$canTurnOnTrial = false;
-
-		if (
+		return (
 			Loader::includeModule('bitrix24')
-			&& in_array(\CBitrix24::getLicenseType(), \CBitrix24::PAID_EDITIONS, true)
-		)
-		{
-			$canTurnOnTrial = (
-				(!self::isFeatureEnabled() && !self::isTrialFeatureWasEnabled())
-				&& NotificationsAvailabilityProvider::isAvailable()
-				&& (Loader::includeModule('crm') && NotificationsManager::canUse())
-			);
-		}
-
-		return $canTurnOnTrial;
+			&& (
+				!self::isFeatureEnabled()
+				&& !self::isTrialFeatureWasEnabled()
+			)
+		);
 	}
 
 	public static function canTurnOnDemo(): bool
 	{
-		return (
-			!self::canTurnOnTrial()
-			&& Loader::includeModule('bitrix24')
-			&& License::getCurrent()->getDemo()->isAvailable()
-			&& in_array(\CBitrix24::getLicenseType(), \CBitrix24::BASE_EDITIONS, true)
-		);
+		return false;
 	}
 
-	public static function turnOnTrial(): void
+	public static function turnOnTrialIfPossible(): void
+	{
+		if (!self::canTurnOnTrial())
+		{
+			return;
+		}
+
+		self::turnOnTrial();
+	}
+
+	private static function turnOnTrial(): void
 	{
 		Feature::setFeatureTrialable(self::FEATURE_ID, [
 			'days' => self::TRIAL_DAYS,
 		]);
-
 		Feature::trialFeature(self::FEATURE_ID);
 
 		self::setTrialOption();
-	}
-
-	private static function isOptionEnabled(): bool
-	{
-		if (!ModuleManager::isModuleInstalled('bitrix24'))
-		{
-			return true;
-		}
-
-		return (bool)Option::get(self::MODULE_ID, 'feature_booking_enabled', false);
 	}
 
 	private static function setTrialOption(): void

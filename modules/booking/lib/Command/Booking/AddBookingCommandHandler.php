@@ -4,113 +4,81 @@ declare(strict_types=1);
 
 namespace Bitrix\Booking\Command\Booking;
 
+use Bitrix\Booking\Command\Booking\Trait\BookingChangesTrait;
 use Bitrix\Booking\Entity;
-use Bitrix\Booking\Entity\Resource\ResourceCollection;
 use Bitrix\Booking\Internals\Exception\Booking\CreateBookingException;
-use Bitrix\Booking\Internals\Exception\Exception;
 use Bitrix\Booking\Internals\Container;
+use Bitrix\Booking\Internals\Exception\Booking\UpdateBookingException;
+use Bitrix\Booking\Internals\Repository\BookingRepositoryInterface;
+use Bitrix\Booking\Internals\Repository\TransactionHandlerInterface;
+use Bitrix\Booking\Internals\Service\BookingService;
+use Bitrix\Booking\Internals\Service\EventForBookingService;
 use Bitrix\Booking\Internals\Service\Journal\JournalEvent;
 use Bitrix\Booking\Internals\Service\Journal\JournalServiceInterface;
 use Bitrix\Booking\Internals\Service\Journal\JournalType;
-use Bitrix\Booking\Internals\Repository\BookingClientRepositoryInterface;
-use Bitrix\Booking\Internals\Repository\BookingRepositoryInterface;
-use Bitrix\Booking\Internals\Repository\ORM\BookingExternalDataRepository;
-use Bitrix\Booking\Internals\Repository\ORM\BookingResourceRepository;
-use Bitrix\Booking\Internals\Repository\ResourceRepositoryInterface;
-use Bitrix\Booking\Internals\Repository\ResourceTypeRepositoryInterface;
-use Bitrix\Booking\Internals\Repository\TransactionHandlerInterface;
-use Bitrix\Booking\Provider\Params\Resource\ResourceFilter;
+use Bitrix\Booking\Internals\Service\Overbooking\OverbookingService;
+use Bitrix\Booking\Internals\Service\ResourceService;
 
 class AddBookingCommandHandler
 {
-	private ResourceRepositoryInterface $resourceRepository;
-	private ResourceTypeRepositoryInterface $resourceTypeRepository;
-	private BookingRepositoryInterface $bookingRepository;
-	private BookingClientRepositoryInterface $bookingClientRepository;
-	private BookingExternalDataRepository $bookingExternalDataRepository;
-	private BookingResourceRepository $bookingResourceRepository;
-	private TransactionHandlerInterface $transactionHandler;
+	use BookingChangesTrait;
+
 	private JournalServiceInterface $journalService;
+	private TransactionHandlerInterface $transactionHandler;
+	private ResourceService $resourceService;
+	private BookingService $bookingService;
+	private OverbookingService $overbookingService;
+	private BookingRepositoryInterface $bookingRepository;
+	private EventForBookingService $eventForBookingService;
 
 	public function __construct()
 	{
-		$this->bookingRepository = Container::getBookingRepository();
-		$this->bookingClientRepository = Container::getBookingClientRepository();
-		$this->bookingExternalDataRepository = Container::getBookingExternalDataRepository();
-		$this->resourceRepository = Container::getResourceRepository();
-		$this->resourceTypeRepository = Container::getResourceTypeRepository();
-		$this->bookingResourceRepository = Container::getBookingResourceRepository();
-		$this->transactionHandler = Container::getTransactionHandler();
 		$this->journalService = Container::getJournalService();
+		$this->transactionHandler = Container::getTransactionHandler();
+		$this->resourceService = Container::getResourceService();
+		$this->bookingService = Container::getBookingService();
+		$this->overbookingService = Container::getOverbookingService();
+		$this->bookingRepository = Container::getBookingRepository();
+		$this->eventForBookingService = Container::getEventForBookingService();
 	}
 
 	public function __invoke(AddBookingCommand $command): Entity\Booking\Booking
 	{
-		$this->loadResourceCollection($command->booking);
+		$this->transactionHandler->handle(
+			fn: function () use ($command) {
+				$commandResources = clone $command->booking->getResourceCollection();
+				$loadedResources = $this->resourceService->loadResourceCollection($commandResources)->getNotDeleted();
 
-		if ($command->booking->getResourceCollection()->isEmpty())
+				$notFoundIds = array_diff($commandResources->getEntityIds(), $loadedResources->getEntityIds());
+				if (!empty($notFoundIds))
+				{
+					throw new UpdateBookingException(
+						'Some resources were not found: ' . implode(', ', $notFoundIds)
+					);
+				}
+
+				$command->booking->setResourceCollection($loadedResources);
+			},
+			errType: CreateBookingException::class,
+		);
+
+		try
 		{
-			throw new CreateBookingException('Empty resource collection');
-		}
-
-		if ($command->booking->getDatePeriod() === null)
-		{
-			throw new CreateBookingException('Date period is not specified');
-		}
-
-		$intersectingBookings = $this->bookingRepository->getIntersectionsList($command->booking);
-
-		if (!$intersectingBookings->isEmpty())
-		{
-			throw new CreateBookingException(
-				'Some resources are unavailable for the requested time range: '
-				. implode(',', $intersectingBookings->getEntityIds()),
-				Exception::CODE_BOOKING_INTERSECTION
+			$this->bookingService->checkBookingBeforeCreating($command->booking);
+			$intersectionResult = $this->bookingService->checkIntersection(
+				booking: $command->booking,
+				allowOverbooking: $command->allowOverbooking,
 			);
 		}
-
-		if ($command->booking->isAutoConfirmed())
+		catch (\Throwable $exception)
 		{
-			$command->booking->setConfirmed(true);
+			throw new CreateBookingException($exception->getMessage());
 		}
 
-		return $this->transactionHandler->handle(
-			fn: function() use ($command) {
-				// save booking
-				$command->booking->setCreatedBy($command->createdBy);
-				$bookingId = $this->bookingRepository->save($command->booking);
-				$booking = $this->bookingRepository->getById($bookingId);
-				if (!$booking)
-				{
-					throw new CreateBookingException();
-				}
+		$booking = $this->transactionHandler->handle(
+			fn: function () use ($command, $intersectionResult) {
+				$booking = $this->bookingService->create($command->booking, $command->createdBy);
 
-				// handle booking resources
-				$resourceCollection = $command->booking->getResourceCollection();
-				$this->bookingResourceRepository->link($booking, $resourceCollection);
-				$booking->setResourceCollection($resourceCollection);
-
-				// handle booking clients
-				$clientCollection = $command->booking->getClientCollection();
-				if (!$clientCollection->isEmpty())
-				{
-					$this->bookingClientRepository->link($booking, $clientCollection);
-					$booking->setClientCollection($clientCollection);
-
-					Container::getProviderManager()::getCurrentProvider()
-						?->getClientProvider()
-						?->loadClientDataForCollection($booking->getClientCollection());
-				}
-
-				// handle booking external data
-				$externalDataCollection = $command->booking->getExternalDataCollection();
-				if (!$externalDataCollection->isEmpty())
-				{
-					$this->bookingExternalDataRepository->link($booking, $externalDataCollection);
-					$booking->setExternalDataCollection($externalDataCollection);
-				}
-
-				// fire new BookingAdded event
 				$this->journalService->append(
 					new JournalEvent(
 						entityId: $booking->getId(),
@@ -120,99 +88,51 @@ class AddBookingCommandHandler
 							[
 								'booking' => $booking->toArray(),
 								'currentUserId' => $command->createdBy,
+								'isOverbooking' => $intersectionResult->hasIntersections(),
 							],
 						),
 					),
 				);
 
+				if ($intersectionResult->hasIntersections())
+				{
+					$events = $this->prepareOverbookingUpdateEvents(
+						intersectionBookings: $intersectionResult->getBookingCollection(),
+						updatedBy: $command->createdBy,
+						isOverbooking: true,
+					);
+					array_map(fn(JournalEvent $event) => $this->journalService->append($event), $events);
+				}
+
 				return $booking;
 			},
 			errType: CreateBookingException::class,
 		);
+
+		try
+		{
+			$this->eventForBookingService->onBookingCreated($booking);
+		}
+		catch (\Throwable $e)
+		{
+			// TODO: add error handling
+		}
+
+		return $booking;
 	}
 
-	private function loadResourceCollection(Entity\Booking\Booking $booking): void
+	protected function getOverbookingService(): OverbookingService
 	{
-		$resourceIds = $this->handleExternalResources($booking) ?? [];
-		/** @var Resource $resource */
-		foreach ($booking->getResourceCollection() as $resource)
-		{
-			$resourceIds[] = $resource->getId();
-		}
-
-		$result = new ResourceCollection();
-		/**
-		 * Resource order matters here!
-		 * Primary resource always goes first
-		 */
-		foreach ($resourceIds as $resourceId)
-		{
-			$resource = $this->resourceRepository->getById($resourceId);
-			if ($resource)
-			{
-				$result->add($resource);
-			}
-		}
-
-		$booking->setResourceCollection($result);
+		return $this->overbookingService;
 	}
 
-	//@todo we have duplicates method in Bitrix\Booking\Command\Booking\UpdateCommandHandler
-	private function handleExternalResources(Entity\Booking\Booking $booking): array
+	protected function getBookingRepository(): BookingRepositoryInterface
 	{
-		$externalResourceIds = [];
+		return $this->bookingRepository;
+	}
 
-		/** @var Entity\Resource\Resource $resource */
-		foreach ($booking->getResourceCollection() as $resource)
-		{
-			if (!$resource->isExternal())
-			{
-				continue;
-			}
-
-			$externalResourceId = $this->transactionHandler->handle(
-				fn: function() use ($resource) {
-					if (!$resource?->getType()?->getModuleId())
-					{
-						throw new CreateBookingException('ModuleId of resource type is not specified');
-					}
-
-					if (!$resource?->getType()?->getCode())
-					{
-						throw new CreateBookingException('Code of resource type is not specified');
-					}
-
-					$externalType = $this->resourceTypeRepository->getByModuleIdAndCode(
-						$resource->getType()?->getModuleId(),
-						$resource->getType()?->getCode(),
-					);
-
-					if ($externalType === null)
-					{
-						$externalTypeId = $this->resourceTypeRepository->save($resource->getType());
-						$externalType = $this->resourceTypeRepository->getById($externalTypeId);
-					}
-
-					$externalResource = $this->resourceRepository->getList(
-						filter: (new ResourceFilter([
-							'TYPE_ID' => $externalType->getId(),
-							'EXTERNAL_ID' => $resource->getExternalId(),
-						]))->prepareFilter(),
-					)->getFirstCollectionItem();
-
-					if ($externalResource === null)
-					{
-						$resource->setType($externalType);
-						$externalResource = $this->resourceRepository->save($resource);
-					}
-
-					return $externalResource->getId();
-				},
-				errType: CreateBookingException::class,
-			);
-			$externalResourceIds[] = $externalResourceId;
-		}
-
-		return $externalResourceIds;
+	protected function getJournalService(): JournalServiceInterface
+	{
+		return $this->journalService;
 	}
 }

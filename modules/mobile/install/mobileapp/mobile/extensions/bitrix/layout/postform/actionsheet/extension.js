@@ -24,6 +24,7 @@
 		backgroundAvailable,
 		onHide,
 		animation,
+		isDefaultTemplate = true,
 	}) => {
 		const config = {
 			destinationPrefixColor: AppTheme.colors.base4,
@@ -85,7 +86,7 @@
 					onClick: onClickMentionMenuItem,
 					config,
 				}),
-				ActionSheetItem({
+				isDefaultTemplate && ActionSheetItem({
 					title: BX.message('MOBILE_EXT_LAYOUT_POSTFORM_ACTIONSHEET_ITEM_BACKGROUND'),
 					onClick: onClickBackgroundMenuItem,
 					style: {
@@ -104,7 +105,7 @@
 						})
 						: null
 				),
-				ActionSheetItem({
+				isDefaultTemplate && ActionSheetItem({
 					iconName: 'post_thanks',
 					title: BX.message('MOBILE_EXT_LAYOUT_POSTFORM_ACTIONSHEET_ITEM_GRATITUDE'),
 					onClick: onClickGratitudeMenuItem,

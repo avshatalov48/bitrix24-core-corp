@@ -112,6 +112,7 @@ class CrmUpdateDynamicActivity
 		}
 
 		this.initAutomationContext();
+		this.#initOnOpenFilterFieldsMenu();
 	}
 
 	initAutomationContext()
@@ -119,22 +120,29 @@ class CrmUpdateDynamicActivity
 		try
 		{
 			getGlobalContext();
-			if (this.isRobot)
-			{
-				this.onOpenFilterFieldsMenu = (event) => {
-					const dialog = Designer.getInstance().getRobotSettingsDialog();
-					const template = dialog.template;
-					const robot = dialog.robot;
-					if (template && robot)
-					{
-						template.onOpenMenu(event, robot);
-					}
-				};
-			}
 		}
-		catch(error)
+		catch
 		{
-			setGlobalContext(new Context({document: this.document}));
+			setGlobalContext(new Context({ document: this.document }));
+		}
+	}
+
+	#initOnOpenFilterFieldsMenu()
+	{
+		if (this.isRobot)
+		{
+			this.onOpenFilterFieldsMenu = (event) => {
+				const dialog = Designer.getInstance().getRobotSettingsDialog();
+				const template = dialog.template;
+				const robot = dialog.robot;
+				if (template && robot)
+				{
+					template.onOpenMenu(event, robot);
+				}
+			};
+		}
+		else
+		{
 			this.onOpenFilterFieldsMenu = (event) => this.addBPFields(event.getData().selector);
 		}
 	}

@@ -1,0 +1,26 @@
+<?php
+$MESS["CALL_COMPONENT_ABOUT"] = "Кездесу не туралы";
+$MESS["CALL_COMPONENT_AGREEMENTS"] = "Қорытынды";
+$MESS["CALL_COMPONENT_AGREEMENTS_COMMON"] = "Олар не шешті";
+$MESS["CALL_COMPONENT_AGREEMENTS_MEETINGS"] = "Кездесулер";
+$MESS["CALL_COMPONENT_AGREEMENTS_TASKS"] = "Міндеттер";
+$MESS["CALL_COMPONENT_EFFICIENCY"] = "Тиімділік";
+$MESS["CALL_COMPONENT_EFFICIENCY_0"] = "Айқындық жеткіліксіз болды";
+$MESS["CALL_COMPONENT_EFFICIENCY_50"] = "Кемшіліктер бар";
+$MESS["CALL_COMPONENT_EFFICIENCY_75"] = "Жарайды, бірақ жақсартуға болатын көп нәрсе бар";
+$MESS["CALL_COMPONENT_EFFICIENCY_100"] = "Керемет";
+$MESS["CALL_COMPONENT_EFFICIENCY_AGENDA_CLEARLY"] = "Күн тәртібі айтылды";
+$MESS["CALL_COMPONENT_EFFICIENCY_AGENDA_CONCLUSIONS"] = "Қорытындылады";
+$MESS["CALL_COMPONENT_EFFICIENCY_AGENDA_COVERED"] = "Барлығы нәтижелі талқыланды";
+$MESS["CALL_COMPONENT_EFFICIENCY_AGENDA_TIME_EXCEED"] = "Уақытында жасалды";
+$MESS["CALL_COMPONENT_EFFICIENCY_RECOMMENDATIONS"] = "CoPilot бағалауы";
+$MESS["CALL_COMPONENT_EFFICIENCY_RECOMMENDATIONS_0"] = "Кездесулерді тиімді өткізу үшін барлық ұсыныстарды орындауға тырысыңыз";
+$MESS["CALL_COMPONENT_EFFICIENCY_RECOMMENDATIONS_75"] = "Сіз жақсы жұмыс істедіңіз, бірақ тағы бір нәрсені жақсартуға болады:";
+$MESS["CALL_COMPONENT_EFFICIENCY_RECOMMENDATIONS_100"] = "Сіз жақсы жұмыс істедіңіз!";
+$MESS["CALL_COMPONENT_GRADE"] = "Бағалау";
+$MESS["CALL_COMPONENT_INSIGHTS"] = "Талдау";
+$MESS["CALL_COMPONENT_MEETING_CREATE"] = "Кездесу жасау";
+$MESS["CALL_COMPONENT_MEETING_TYPE"] = "Кездесу түрі";
+$MESS["CALL_COMPONENT_SUMMARY"] = "Түйіндеме";
+$MESS["CALL_COMPONENT_TASK_CREATE"] = "Міндет жасаңыз";
+$MESS["CALL_COMPONENT_TRANSCRIPTIONS"] = "Кездесуді мәтінге айналдыру";

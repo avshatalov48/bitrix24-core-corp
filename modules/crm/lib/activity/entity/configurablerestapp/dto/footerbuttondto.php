@@ -13,6 +13,11 @@ final class FooterButtonDto extends \Bitrix\Crm\Dto\Dto
 	public ?string $scope = null;
 	public ?bool $hideIfReadonly = null;
 
+	public const ALLOWED_TYPES = [
+		Button::TYPE_PRIMARY,
+		Button::TYPE_SECONDARY,
+	];
+
 	protected function getValidators(array $fields): array
 	{
 		return [
@@ -20,10 +25,7 @@ final class FooterButtonDto extends \Bitrix\Crm\Dto\Dto
 			new Dto\Validator\TextWithTranslationField($this, 'title'),
 			new \Bitrix\Crm\Dto\Validator\RequiredField($this, 'type'),
 			new \Bitrix\Crm\Dto\Validator\RequiredField($this, 'action'),
-			new \Bitrix\Crm\Dto\Validator\EnumField($this, 'type', [
-				Button::TYPE_PRIMARY,
-				Button::TYPE_SECONDARY,
-			]),
+			new \Bitrix\Crm\Dto\Validator\EnumField($this, 'type', self::ALLOWED_TYPES),
 			new \Bitrix\Crm\Dto\Validator\ObjectField($this, 'action'),
 			new Dto\Validator\ScopeField($this, 'scope'),
 		];

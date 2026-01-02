@@ -2,7 +2,6 @@
  * @module crm/stage-list/item
  */
 jn.define('crm/stage-list/item', (require, exports, module) => {
-	const AppTheme = require('apptheme');
 	const { StageListItem, MIN_STAGE_HEIGHT } = require('layout/ui/stage-list/item');
 	const { connect } = require('statemanager/redux/connect');
 	const {
@@ -12,8 +11,10 @@ jn.define('crm/stage-list/item', (require, exports, module) => {
 		selectById: selectStageCounterById,
 	} = require('crm/statemanager/redux/slices/stage-counters');
 	const { selectItemsByIds } = require('crm/statemanager/redux/slices/tunnels');
+	const { Tunnel } = require('crm/tunnel');
+	const { Color } = require('tokens');
 
-	const FIRST_TUNNEL_ADDITIONAL_HEIGHT = 5;
+	const FIRST_TUNNEL_ADDITIONAL_HEIGHT = 7;
 	const TUNNEL_HEIGHT = 22;
 	const TUNNEL_MARGIN_TOP = 9;
 
@@ -71,7 +72,7 @@ jn.define('crm/stage-list/item', (require, exports, module) => {
 
 		renderTunnels(stage)
 		{
-			if (stage.tunnels === 0)
+			if (Array.isArray(stage.tunnels) && stage.tunnels.length === 0)
 			{
 				return null;
 			}
@@ -81,8 +82,8 @@ jn.define('crm/stage-list/item', (require, exports, module) => {
 			return View(
 				{
 					style: {
-						marginLeft: 6,
-						marginTop: -8,
+						marginLeft: 16,
+						marginTop: -5,
 					},
 				},
 				...tunnels,
@@ -103,7 +104,7 @@ jn.define('crm/stage-list/item', (require, exports, module) => {
 					{
 						style: {
 							paddingBottom: 6,
-							paddingLeft: index === 0 ? 0 : 4,
+							paddingLeft: index === 0 ? 0 : 3.5,
 						},
 					},
 					Image(
@@ -112,9 +113,8 @@ jn.define('crm/stage-list/item', (require, exports, module) => {
 								width: index === 0 ? 12 : 8,
 								height: index === 0 ? 21 : 23,
 							},
-							tintColor: AppTheme.colors.base3,
 							svg: {
-								content: index === 0 ? svgImages.tunnelFirstVector : svgImages.tunnelVector,
+								content: index === 0 ? firstVector : secondVector,
 							},
 						},
 					),
@@ -122,12 +122,12 @@ jn.define('crm/stage-list/item', (require, exports, module) => {
 				View(
 					{
 						style: {
-							marginLeft: 6,
+							marginLeft: 5,
 							flex: 1,
 							alignSelf: 'flex-end',
 						},
 					},
-					Crm.Tunnel({
+					Tunnel({
 						tunnelId,
 						entityTypeId: this.props.entityTypeId,
 					}),
@@ -136,14 +136,12 @@ jn.define('crm/stage-list/item', (require, exports, module) => {
 		}
 	}
 
-	const svgImages = {
-		tunnelFirstVector: `<svg width="12" height="21" viewBox="0 0 12 21" fill="none" xmlns="http://www.w3.org/2000/svg"><rect width="12" height="21"/><circle cx="5" cy="5" r="3.75" fill="#c9ccd0" stroke="white" stroke-width="1.5"/><path d="M5 5V11.5625V17C5 18.6569 6.34315 20 8 20H11" stroke="${AppTheme.colors.base5}" stroke-width="1.5" stroke-linecap="round"/></svg>`,
-		tunnelVector: `<svg width="8" height="23" viewBox="0 0 8 23" fill="none" xmlns="http://www.w3.org/2000/svg"><rect width="8" height="23" fill="none"/><path d="M1 -7V20C1 21.1046 1.89543 22 3 22H7" stroke="${AppTheme.colors.base5}" stroke-width="1.5" stroke-linecap="round"/></svg>`,
-	};
+	const firstVector = `<svg width="11" height="20" viewBox="0 0 11 20" fill="none" xmlns="http://www.w3.org/2000/svg"><circle cx="4" cy="4" r="3" fill="${Color.base5.toHex()}" stroke="${Color.bgContentPrimary.toHex()}" stroke-width="2"/><path d="M4 5V17C4 18.1046 4.89543 19 6 19H10" stroke="${Color.base5.toHex()}" stroke-width="1.5" stroke-linecap="round"/></svg>`;
+	const secondVector = `<svg width="8" height="23" viewBox="0 0 8 23" fill="none" xmlns="http://www.w3.org/2000/svg"><path fill-rule="evenodd" clip-rule="evenodd" d="M1.75 0V20C1.75 20.6904 2.30963 21.25 3 21.25H7C7.41418 21.25 7.75 21.5858 7.75 22C7.75 22.4142 7.41418 22.75 7 22.75H3C1.4812 22.75 0.25 21.5188 0.25 20V0H1.75Z" fill="${Color.base5.toHex()}"/></svg>`;
 
 	const mapStateToProps = (state, ownProps) => {
 		const stage = ownProps.stage ?? selectStageById(state, ownProps.id);
-		const tunnelIds = stage.tunnels ?? [];
+		const tunnelIds = stage?.tunnels ?? [];
 
 		return {
 			stage,

@@ -23,7 +23,7 @@ $tabs['automation'] = GetMessage("CRM_CONFIGS_TAB_AUTOMATION");
 $tabs['work_with_mail'] = GetMessage("CRM_CONFIGS_TAB_WORK_WITH_MAIL");
 $tabs['integration'] = GetMessage("CRM_CONFIGS_TAB_INTEGRATION");
 if($arResult['BITRIX24'])
-	$tabs['apps'] = GetMessage("CRM_CONFIGS_TAB_APPS_2");
+	$tabs['apps'] = \Bitrix\Crm\Integration\Market\Label::isRenamedMarket() ? GetMessage("CRM_CONFIGS_TAB_APPS_2_MSGVER_1") : GetMessage("CRM_CONFIGS_TAB_APPS_2");
 $tabs['numerator'] = GetMessage("CRM_CONFIGS_TAB_NUMERATOR");
 $tabs['other'] = GetMessage("CRM_CONFIGS_TAB_OTHER");
 
@@ -99,7 +99,7 @@ if($arResult['PERM_CONFIG'])
 	$items['tab_content_printed_forms_of_documents']['PS']['NAME'] = GetMessage("CRM_CONFIGS_PS");
 	$items['tab_content_printed_forms_of_documents']['PS_MARKETPLACE']['URL'] = \Bitrix\Crm\Integration\Market\Router::getCategoryPath('payment');
 	$items['tab_content_printed_forms_of_documents']['PS_MARKETPLACE']['ICON_CLASS'] = 'img-app';
-	$items['tab_content_printed_forms_of_documents']['PS_MARKETPLACE']['NAME'] = GetMessage("CRM_CONFIGS_TAB_APPS_2");
+	$items['tab_content_printed_forms_of_documents']['PS_MARKETPLACE']['NAME'] = \Bitrix\Crm\Integration\Market\Label::isRenamedMarket() ? GetMessage("CRM_CONFIGS_TAB_APPS_2_MSGVER_1") : GetMessage("CRM_CONFIGS_TAB_APPS_2");
 
 	$crmPermsViewEventBuilder = (new \Bitrix\Crm\Integration\Analytics\Builder\Security\ViewEvent())
 		->setSection(\Bitrix\Crm\Integration\Analytics\Dictionary::SECTION_CRM_SETTINGS)

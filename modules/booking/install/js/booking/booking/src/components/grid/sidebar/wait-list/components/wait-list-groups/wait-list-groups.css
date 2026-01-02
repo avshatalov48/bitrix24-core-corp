@@ -1,0 +1,40 @@
+.booking-wait-list-groups {
+	overflow-y: auto;
+	overflow-x: hidden;
+}
+
+.booking-wait-list-groups::-webkit-scrollbar {
+	display: none;
+}
+
+.booking-wait-list-group {
+	margin-bottom: 10px;
+	padding-top: 8px;
+	border-top: 1px solid var(--ui-color-base-10);
+}
+
+.booking-wait-list-group-header {
+	display: flex;
+	align-items: center;
+	justify-content: space-between;
+}
+
+.booking-wait-list-group-title {
+	color: var(--ui-color-base-60);
+	font-size: var(--ui-font-size-xs);
+}
+
+.wait-list-move,
+.wait-list-enter-active,
+.wait-list-leave-active {
+	transition: all 0.5s ease;
+}
+.wait-list-enter-from,
+.wait-list-leave-to {
+	opacity: 0;
+	transform: translateX(30px);
+}
+
+.wait-list-leave-active {
+	position: absolute;
+}

@@ -1,3 +1,4 @@
+/* eslint-disable */
 this.BX = this.BX || {};
 this.BX.Default = this.BX.Default || {};
 this.BX.Default.Field = this.BX.Default.Field || {};
@@ -7,9 +8,8 @@ this.BX.Default.Field = this.BX.Default.Field || {};
 	BX.Default.Field.Employee = function (params) {
 	  this.init(params);
 	};
-
 	BX.Default.Field.Employee.prototype = {
-	  init: function init(params) {
+	  init: function (params) {
 	    this.selectorName = params['selectorName'] || '';
 	    this.isMultiple = params['isMultiple'] || '';
 	    this.fieldNameJs = params['fieldNameJs'] || '';
@@ -18,28 +18,26 @@ this.BX.Default.Field = this.BX.Default.Field || {};
 	    BX.addCustomEvent(this.selectControl, 'onUpdateValue', BX.delegate(this.updateHandler, this));
 	    BX.addCustomEvent(this.entity, 'BX.Intranet.UserFieldEmployeeEntity:remove', BX.delegate(this.removeHandler, this));
 	  },
-	  createSelectControl: function createSelectControl() {
+	  createSelectControl: function () {
 	    return new BX.Intranet.UserFieldEmployee(this.selectorName, {
 	      multiple: this.isMultiple
 	    });
 	  },
-	  createEntity: function createEntity() {
+	  createEntity: function () {
 	    return new BX.Intranet.UserFieldEmployeeEntity({
-	      field: "field_".concat(this.selectorName),
+	      field: `field_${this.selectorName}`,
 	      multiple: this.isMultiple
 	    });
 	  },
-	  updateHandler: function updateHandler(value, userStack) {
+	  updateHandler: function (value, userStack) {
 	    if (this.isMultiple) {
-	      var result = [];
-
-	      for (var i = 0; i < value.length; i++) {
+	      let result = [];
+	      for (let i = 0; i < value.length; i++) {
 	        result.push({
 	          name: userStack[value[i]].name,
 	          value: value[i]
 	        });
 	      }
-
 	      this.setData(result);
 	    } else {
 	      if (value === null) {
@@ -52,16 +50,14 @@ this.BX.Default.Field = this.BX.Default.Field || {};
 	      }
 	    }
 	  },
-	  removeHandler: function removeHandler(value) {
-	    var result = this.isMultiple ? [] : null;
-	    var selectControlValue = this.isMultiple ? [] : null;
-
-	    for (var i = 0; i < value.length; i++) {
-	      var item = {
+	  removeHandler: function (value) {
+	    let result = this.isMultiple ? [] : null;
+	    let selectControlValue = this.isMultiple ? [] : null;
+	    for (let i = 0; i < value.length; i++) {
+	      let item = {
 	        name: value[i].label,
 	        value: value[i].value
 	      };
-
 	      if (!this.isMultiple) {
 	        selectControlValue = item.value;
 	        result = item;
@@ -71,26 +67,22 @@ this.BX.Default.Field = this.BX.Default.Field || {};
 	        result.push(item);
 	      }
 	    }
-
 	    this.selectControl.setValue(selectControlValue);
 	    this.setData(result);
 	  },
-	  setData: function setData(value) {
-	    var valueContainer = BX("value_".concat(this.selectorName));
-	    var html = '';
-
+	  setData: function (value) {
+	    let valueContainer = BX(`value_${this.selectorName}`);
+	    let html = '';
 	    if (this.isMultiple) {
 	      if (value.length > 0) {
-	        var entityValue = [];
-
-	        for (var i = 0; i < value.length; i++) {
+	        let entityValue = [];
+	        for (let i = 0; i < value.length; i++) {
 	          entityValue.push({
 	            value: value[i].value,
 	            label: value[i].name
 	          });
-	          html += "<input type=\"hidden\" name=\"".concat(this.fieldNameJs, "\" value=\"").concat(BX.util.htmlspecialchars(value[i].value), "\">");
+	          html += `<input type="hidden" name="${this.fieldNameJs}" value="${BX.util.htmlspecialchars(value[i].value)}">`;
 	        }
-
 	        this.entity.setData(entityValue);
 	      } else {
 	        this.entity.removeSquares();
@@ -98,16 +90,14 @@ this.BX.Default.Field = this.BX.Default.Field || {};
 	    } else {
 	      if (value !== null) {
 	        this.entity.setData(value.name, value.value);
-	        html += "<input type=\"hidden\" name=\"".concat(this.fieldNameJs, "\" value=\"").concat(BX.util.htmlspecialchars(value.value), "\">");
+	        html += `<input type="hidden" name="${this.fieldNameJs}" value="${BX.util.htmlspecialchars(value.value)}">`;
 	      } else {
 	        this.entity.removeSquares();
 	      }
 	    }
-
 	    if (html.length <= 0) {
-	      html = "<input type=\"hidden\" name=\"".concat(this.fieldNameJs, "\" value=\"\">");
+	      html = `<input type="hidden" name="${this.fieldNameJs}" value="">`;
 	    }
-
 	    valueContainer.innerHTML = html;
 	    BX.defer(function () {
 	      BX.fireEvent(valueContainer.firstChild, 'change');

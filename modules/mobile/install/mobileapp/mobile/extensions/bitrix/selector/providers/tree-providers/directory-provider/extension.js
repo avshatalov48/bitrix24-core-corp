@@ -6,9 +6,10 @@ jn.define('selector/providers/tree-providers/directory-provider', (require, expo
 	const { BaseSelectorProvider } = require('selector/providers/base');
 	const { debounce } = require('utils/function');
 
-	const { resolveFileIconUrl, resolveFolderIconUrl } = require('selector/providers/tree-providers/directory-provider/icons');
+	const { resolveFileIcon, resolveFolderIcon } = require('assets/icons');
 	const { filesUpsertedFromServer } = require('disk/statemanager/redux/slices/files');
 	const store = require('statemanager/redux/store');
+	const { getExtension } = require('utils/file');
 
 	/**
 	 * @class DirectoryProvider
@@ -152,8 +153,10 @@ jn.define('selector/providers/tree-providers/directory-provider', (require, expo
 		runSearchAction = (query) => {
 			this.setQuery(query);
 
-			let nodeId = this.options.getCurrentNode?.()?.id;
-			if (!nodeId)
+			const currentNode = this.options.getCurrentNode?.();
+			let nodeId = currentNode?.id;
+
+			if (!nodeId || !currentNode?.parentId)
 			{
 				nodeId = this.getRootId();
 			}
@@ -204,21 +207,24 @@ jn.define('selector/providers/tree-providers/directory-provider', (require, expo
 
 			if (entity.entityId === 'folder')
 			{
-				preparedEntity.imageUrl = resolveFolderIconUrl(entity.folderContextType);
+				preparedEntity.imageUrl = resolveFolderIcon(entity.folderContextType || '').getPath();
 			}
 			else if (entity.entityId === 'file')
 			{
-				preparedEntity.imageUrl = resolveFileIconUrl(entity.typeFile, entity.name);
+				const extension = getExtension(entity.name);
+
+				preparedEntity.imageUrl = resolveFileIcon(extension, entity.typeFile).getPath();
 
 				if (!this.options.canSelectFiles)
 				{
 					preparedEntity.type = 'info';
+					preparedEntity.unselectable = true;
 				}
 			}
 
 			if (preparedEntity.type === 'button')
 			{
-				preparedEntity.type = Application.getApiVersion() < 56 ? 'info' : 'department';
+				preparedEntity.type = 'department';
 				preparedEntity.id += '/button';
 			}
 			else if (preparedEntity.type === 'selectable')

@@ -77,5 +77,7 @@ jn.define('ui-system/form/inputs/input/src/enums/size-enum', (require, exports, 
 		}
 	}
 
-	module.exports = { InputSize };
+	module.exports = {
+		InputSize: InputSize.export(),
+	};
 });

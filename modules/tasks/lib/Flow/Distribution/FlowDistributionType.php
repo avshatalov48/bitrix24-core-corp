@@ -7,6 +7,7 @@ enum FlowDistributionType: string
 	case MANUALLY = 'manually';
 	case QUEUE = 'queue';
 	case HIMSELF = 'himself';
+	case IMMUTABLE = 'immutable';
 
 	/**
 	 * @return string[]

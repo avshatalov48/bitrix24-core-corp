@@ -34,11 +34,12 @@
 	float: right;
 }
 
-.task-iframe-content {
-	overflow: hidden;
-	height: 100%;
-	padding: 0;
-	min-height: 450px;
+.task-iframe-content .ui-page-slider-workarea {
+	margin-bottom: 70px;
+}
+
+.task-iframe-content .ui-page-slider-workarea-content-padding {
+	box-sizing: border-box;
 }
 
 .task-iframe-popup-side-slider .task-form.tasks {
@@ -56,22 +57,6 @@
 	padding: 15px;
 }
 
-.task-page-link-btn {
-	width: 35px;
-	display: inline-block;
-	height: 32px;
-	cursor: pointer;
-	opacity: .5;
-	transition: 250ms opacity linear;
-	vertical-align: middle;
-	line-height: 36px;
-	background: url(data:image/svg+xml;base64,PHN2ZyB4bWxucz0iaHR0cDovL3d3dy53My5vcmcvMjAwMC9zdmciIHdpZHRoPSIxMyIgaGVpZ2h0PSIxMyIgdmlld0JveD0iMCAwIDEzIDEzIj48cGF0aCBmaWxsPSIjODA4NjhFIiBmaWxsLXJ1bGU9ImV2ZW5vZGQiIGQ9Ik0xMS45OSA1Ljg5TDkuNTUgOC4zM2EzLjQ1IDMuNDUgMCAwIDEtNC44OCAwIDMuNDQ3IDMuNDQ3IDAgMCAxLS41MjQtLjY5Nkw1LjI4IDYuNWMuMDU0LS4wNTQuMTItLjA4NS4xODQtLjEyMi4wNzkuMjY4LjIxNS41MjEuNDI2LjczMmExLjcyNyAxLjcyNyAwIDAgMCAyLjQ0IDBsMi40NC0yLjQ0YTEuNzI2IDEuNzI2IDAgMCAwIDAtMi40NCAxLjcyNyAxLjcyNyAwIDAgMC0yLjQ0IDBsLS44NjguODY5YTQuMzI5IDQuMzI5IDAgMCAwLTIuMi0uMjRMNy4xMSAxLjAxMWEzLjQ1IDMuNDUgMCAwIDEgNC44OCA0Ljg4ek01LjUzOCA5LjkwMmwtLjg2OC44NjhhMS43MjggMS43MjggMCAwIDEtMi40NCAwIDEuNzI4IDEuNzI4IDAgMCAxIDAtMi40NGwyLjQ0LTIuNDRhMS43MjYgMS43MjYgMCAwIDEgMi40NCAwYy4yMS4yMS4zNDcuNDY0LjQyNi43MzEuMDY0LS4wMzcuMTMtLjA2Ny4xODQtLjEyMWwxLjEzMy0xLjEzM2EzLjM5IDMuMzkgMCAwIDAtLjUyMy0uNjk3IDMuNDUgMy40NSAwIDAgMC00Ljg4IDBMMS4wMSA3LjExYTMuNDUgMy40NSAwIDAgMCA0Ljg4IDQuODhsMS44NS0xLjg1YTQuMzI2IDQuMzI2IDAgMCAxLTIuMjAyLS4yMzh6Ii8+PC9zdmc+) no-repeat center;
-}
-
-.task-page-link-btn:hover {
-	opacity: 1;
-}
-
 .pagetitle-item__additional-actions-container {
 	display: inline-flex;
 	flex-direction: row;
@@ -84,15 +69,6 @@
 .pagetitle-item__additional-actions-container.--edit {
 	margin-right: 0;
 	margin-bottom: 5px;
-}
-
-.tasks-flow__selector-container {
-	display: flex;
-	padding: 0 5px 0 5px;
-}
-
-.pagetitle-item__copy-link-container {
-	display: flex;
 }
 
 .task-popup-pagetitle-item {

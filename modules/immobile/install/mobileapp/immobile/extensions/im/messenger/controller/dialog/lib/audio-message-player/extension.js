@@ -19,12 +19,12 @@ jn.define('im/messenger/controller/dialog/lib/audio-player', (require, exports, 
 			this.playingMessageId = null;
 		}
 
-		play(messageId, playingTime = 0)
+		play({ messageId, playingTime = 0 })
 		{
 			Logger.log('AudioMessagePlayer.play: messageId: ', messageId, ' playingTime:', playingTime);
 			if (this.playingMessageId)
 			{
-				this.stop();
+				this.pause();
 			}
 
 			this.playingMessageId = messageId;
@@ -55,13 +55,17 @@ jn.define('im/messenger/controller/dialog/lib/audio-player', (require, exports, 
 			let newRate = currentAudioRate;
 			switch (currentAudioRate)
 			{
-				case 1: newRate = 1.5;
+				case 1:
+					newRate = 1.5;
 					break;
-				case 1.5: newRate = 2;
+				case 1.5:
+					newRate = 2;
 					break;
-				case 2: newRate = 1;
+				case 2:
+					newRate = 1;
 					break;
-				default: newRate = 1;
+				default:
+					newRate = 1;
 			}
 
 			return this.setApplicationAudioRate(newRate);
@@ -71,7 +75,7 @@ jn.define('im/messenger/controller/dialog/lib/audio-player', (require, exports, 
 		{
 			const previousMessageId = this.playingMessageId;
 
-			this.stop();
+			this.pause();
 
 			const nextMessageToPlay = this.getNextMessageToPlay(previousMessageId);
 			if (!nextMessageToPlay)
@@ -84,10 +88,10 @@ jn.define('im/messenger/controller/dialog/lib/audio-player', (require, exports, 
 				audioPlaying: true,
 			});
 
-			this.play(nextMessageToPlay.id);
+			this.play({ messageId: nextMessageToPlay.id });
 		}
 
-		stop(playingTime = 0)
+		pause(playingTime = 0)
 		{
 			if (!this.playingMessageId)
 			{
@@ -96,6 +100,11 @@ jn.define('im/messenger/controller/dialog/lib/audio-player', (require, exports, 
 
 			this.setMessageIsPlaying(false, playingTime);
 			this.playingMessageId = null;
+		}
+
+		stopPlayingMessage()
+		{
+			this.pause();
 		}
 
 		/**
@@ -124,7 +133,10 @@ jn.define('im/messenger/controller/dialog/lib/audio-player', (require, exports, 
 		setApplicationAudioRate(rate)
 		{
 			return this.store.dispatch('applicationModel/setAudioRateSetting', rate)
-				.catch((error) => Logger.error('setApplicationAudioRate.applicationModel/setAudioRateSetting.catch:', error));
+				.catch((error) => Logger.error(
+					'setApplicationAudioRate.applicationModel/setAudioRateSetting.catch:',
+					error,
+				));
 		}
 
 		/**

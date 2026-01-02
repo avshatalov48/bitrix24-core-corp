@@ -9,6 +9,15 @@ $isMyCompanyMode = (isset($arResult['MYCOMPANY_MODE']) && $arResult['MYCOMPANY_M
 
 /** @var CMain $APPLICATION */
 $APPLICATION->IncludeComponent(
+	'bitrix:crm.entity.disable_alert',
+	'',
+	[
+		'ENTITY_TYPE_ID' => \CCrmOwnerType::Company,
+		'ENTITY_ID' => $arResult['VARIABLES']['company_id'],
+	],
+);
+
+$APPLICATION->IncludeComponent(
 	'bitrix:crm.control_panel',
 	'',
 	array(

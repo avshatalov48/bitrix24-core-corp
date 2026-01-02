@@ -5,6 +5,7 @@ this.BX.AI.Integration = this.BX.AI.Integration || {};
 (function (exports,main_core,main_core_events,ui_alerts,ui_section,ai_ui_field_selectorfield,ui_formElements_view,ui_formElements_field) {
 	'use strict';
 
+	var _templateObject;
 	function _classPrivateMethodInitSpec(obj, privateSet) { _checkPrivateRedeclaration(obj, privateSet); privateSet.add(obj); }
 	function _classPrivateFieldInitSpec(obj, privateMap, value) { _checkPrivateRedeclaration(obj, privateMap); privateMap.set(obj, value); }
 	function _checkPrivateRedeclaration(obj, privateCollection) { if (privateCollection.has(obj)) { throw new TypeError("Cannot initialize the same private elements twice on an object"); } }
@@ -129,15 +130,17 @@ this.BX.AI.Integration = this.BX.AI.Integration || {};
 	  });
 	  return section;
 	}
-	function _buildItem2(item) {
-	  var code = item.code,
-	    type = item.type,
-	    title = item.title,
-	    header = item.header,
-	    value = item.value,
-	    options = item.options,
-	    recommended = item.recommended;
-	  var withOnSave = item.onSave && item.onSave.switcher;
+	function _buildItem2(_ref) {
+	  var code = _ref.code,
+	    header = _ref.header,
+	    onSave = _ref.onSave,
+	    options = _ref.options,
+	    recommended = _ref.recommended,
+	    restriction = _ref.restriction,
+	    title = _ref.title,
+	    type = _ref.type,
+	    value = _ref.value;
+	  var withOnSave = onSave && onSave.switcher;
 	  var row = new ui_formElements_field.SettingsRow({
 	    row: {
 	      className: withOnSave ? '--with-on-save' : ''
@@ -145,13 +148,21 @@ this.BX.AI.Integration = this.BX.AI.Integration || {};
 	  });
 	  var field = null;
 	  if (type === 'boolean') {
-	    field = new ui_formElements_view.Checker({
-	      inputName: code,
+	    var checkerOptions = {
 	      title: title,
+	      inputName: code,
 	      checked: value,
 	      hintOn: header,
 	      hintOff: header
-	    });
+	    };
+	    if (restriction) {
+	      checkerOptions.isEnable = false;
+	      checkerOptions.checked = false;
+	      var messageNode = main_core.Tag.render(_templateObject || (_templateObject = babelHelpers.taggedTemplateLiteral(["<span>", "</span>"])), restriction.helpMessage);
+	      checkerOptions.helpMessageProvider = this.helpMessageProviderFactory(messageNode);
+	      checkerOptions.bannerCode = restriction.bannerCode;
+	    }
+	    field = new ui_formElements_view.Checker(checkerOptions);
 	  } else if (type === 'list') {
 	    if (options && value) {
 	      var items = [];
@@ -186,7 +197,7 @@ this.BX.AI.Integration = this.BX.AI.Integration || {};
 	  if (withOnSave) {
 	    var onSaveField = new ui_formElements_view.Checker({
 	      inputName: code + '_onsave',
-	      title: item.onSave.switcher,
+	      title: onSave.switcher,
 	      checked: false,
 	      size: 'extra-small',
 	      noMarginBottom: true
@@ -220,11 +231,18 @@ this.BX.AI.Integration = this.BX.AI.Integration || {};
 	    babelHelpers.classPrivateFieldGet(this, _itemRelations).forEach(function (relation) {
 	      var parent = babelHelpers.classPrivateFieldGet(_this4, _itemFields)[relation.parent];
 	      if (parent && parent.field && parent.field instanceof ui_formElements_view.Checker) {
-	        main_core_events.EventEmitter.subscribe(parent.field, 'change', function (event) {
-	          var isActive = event.getData();
+	        if (!parent.field.isChecked()) {
 	          relation.children.forEach(function (child) {
 	            var _babelHelpers$classPr, _babelHelpers$classPr2;
 	            var node = (_babelHelpers$classPr = babelHelpers.classPrivateFieldGet(_this4, _itemFields)[child]) === null || _babelHelpers$classPr === void 0 ? void 0 : (_babelHelpers$classPr2 = _babelHelpers$classPr.row) === null || _babelHelpers$classPr2 === void 0 ? void 0 : _babelHelpers$classPr2.getRowView();
+	            node.hide();
+	          });
+	        }
+	        main_core_events.EventEmitter.subscribe(parent.field, 'change', function (event) {
+	          var isActive = event.getData();
+	          relation.children.forEach(function (child) {
+	            var _babelHelpers$classPr3, _babelHelpers$classPr4;
+	            var node = (_babelHelpers$classPr3 = babelHelpers.classPrivateFieldGet(_this4, _itemFields)[child]) === null || _babelHelpers$classPr3 === void 0 ? void 0 : (_babelHelpers$classPr4 = _babelHelpers$classPr3.row) === null || _babelHelpers$classPr4 === void 0 ? void 0 : _babelHelpers$classPr4.getRowView();
 	            if (node) {
 	              isActive ? node.show() : node.hide();
 	            }

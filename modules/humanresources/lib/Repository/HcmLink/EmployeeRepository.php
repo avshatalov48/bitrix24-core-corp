@@ -413,4 +413,40 @@ class EmployeeRepository implements Contract\Repository\HcmLink\EmployeeReposito
 
 		return $result;
 	}
+
+	public function listByUniqueList(int $companyId,
+		array $uniqueList,
+		int $limit = 100,
+		int $offset = 0,
+	): EmployeeCollection
+	{
+		if (empty($uniqueList))
+		{
+			return new EmployeeCollection();
+		}
+
+		$query = EmployeeTable::query()
+			->setSelect(['*'])
+			->setOrder(['ID' => 'ASC'])
+			->where('PERSON.COMPANY_ID', $companyId)
+			->whereIn('CODE', $uniqueList)
+		;
+
+		if ($limit > 0)
+		{
+			$query->setLimit($limit);
+		}
+		if ($offset > 0)
+		{
+			$query->setOffset($offset);
+		}
+
+		$modelCollection = $query
+			->fetchCollection()
+			->getAll()
+		;
+		$result = array_map([$this, 'getItemFromModel'], $modelCollection);
+
+		return new EmployeeCollection(...$result);
+	}
 }

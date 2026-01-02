@@ -26,7 +26,6 @@ use Bitrix\Tasks\Internals\Task\FavoriteTable;
 use Bitrix\Tasks\Internals\Task\LogTable;
 use Bitrix\Tasks\Internals\Helper\Task\Dependence;
 use Bitrix\Tasks\Kanban\StagesTable;
-use Bitrix\Tasks\Member\AbstractMemberService;
 use Bitrix\Tasks\Member\Service\TaskMemberService;
 use Bitrix\Tasks\UI;
 use Bitrix\Tasks\Util;
@@ -37,6 +36,8 @@ use Bitrix\Tasks\Item\Converter\Task\ToTemplate as TaskToTemplate;
 use Bitrix\Tasks\Item\Converter\Task\ToTask as TaskToTask;
 
 use \Bitrix\Tasks\Integration\Bizproc;
+use Bitrix\Tasks\V2\Internal\Entity\Task\Scenario;
+use Bitrix\Tasks\V2\Internal\DI\Container;
 
 Loc::loadMessages(__FILE__);
 
@@ -82,7 +83,7 @@ final class Task extends \Bitrix\Tasks\Item
 					],
 					'select' => ['SCENARIO']
 				])->fetchCollection();
-				$scenarios = [ScenarioTable::SCENARIO_DEFAULT];
+				$scenarios = [Scenario::Default->value];
 				if ($parentTaskScenarios && $parentTaskScenarios->count())
 				{
 					$scenarios = [];
@@ -91,7 +92,7 @@ final class Task extends \Bitrix\Tasks\Item
 						$scenarios[] = $parent->getScenario();
 					}
 				}
-				ScenarioTable::insertIgnore($id, $scenarios);
+				Container::getInstance()->getScenarioService()->save($id, $scenarios);
 			}
 			TaskAccessController::dropItemCache($id);
 			TaskMemberService::invalidate();

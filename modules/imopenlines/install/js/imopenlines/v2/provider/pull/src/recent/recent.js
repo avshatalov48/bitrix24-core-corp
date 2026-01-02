@@ -122,7 +122,7 @@ export class LinesPullHandler
 		if (chatIsOpened && params.userId === userId)
 		{
 			void Messenger.openLines();
-			LayoutManager.getInstance().setLastOpenedElement(Layout.openlinesV2.name, '');
+			LayoutManager.getInstance().setLastOpenedElement(Layout.openlinesV2, '');
 		}
 
 		if (!recentItem || params.userId !== Core.getUserId())

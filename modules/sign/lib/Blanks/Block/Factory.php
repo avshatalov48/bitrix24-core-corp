@@ -2,8 +2,11 @@
 
 namespace Bitrix\Sign\Blanks\Block;
 
+use Bitrix\Main\Localization\Loc;
 use Bitrix\Sign\Compatibility\Role;
 use Bitrix\Sign\Exception\SignException;
+use Bitrix\Sign\Factory\Field;
+use Bitrix\Sign\Helper\Field\NameHelper;
 use Bitrix\Sign\Repository\MemberRepository;
 use Bitrix\Sign\Service\Container;
 use Bitrix\Sign\Service\Integration\HumanResources\HcmLinkFieldService;
@@ -62,6 +65,8 @@ class Factory
 			Type\BlockCode::B2E_REFERENCE => new Configuration\B2e\B2eReference($skipSecurity),
 			Type\BlockCode::EMPLOYEE_DYNAMIC => new Configuration\B2e\EmployeeDynamic(),
 			Type\BlockCode::B2E_HCMLINK_REFERENCE => new Configuration\B2e\HcmLinkReference(),
+			Type\BlockCode::B2E_EXTERNAL_ID => new Configuration\B2e\ExternalId(),
+			Type\BlockCode::B2E_EXTERNAL_DATE_CREATE => new Configuration\B2e\ExternalDateCreate(),
 		};
 	}
 
@@ -107,6 +112,7 @@ class Factory
 			Type\DocumentScenario::isB2EScenario($document->scenario)
 			&& $party === $document->parties
 			&& $membersByParty->count() > 1
+			&& ($item->data['show'] ?? '') !== true
 		)
 		{
 			$item->data['text'] = '';
@@ -129,9 +135,8 @@ class Factory
 			Type\BlockCode::STAMP,
 			Type\BlockCode::MY_STAMP,
 			Type\BlockCode::MY_SIGN => Type\BlockType::IMAGE,
-
 			Type\BlockCode::MY_REQUISITES, Type\BlockCode::REQUISITES => Type\BlockType::MULTILINE_TEXT,
-			default => Type\BlockType::TEXT
+			default => Type\BlockType::TEXT,
 		};
 	}
 
@@ -159,6 +164,12 @@ class Factory
 			$code = Type\BlockCode::getB2eReferenceCodeByRole($requiredField->role);
 		}
 
+		if (Type\FieldType::isRegional($requiredField->type) && !$document->isInitiatedByEmployee())
+		{
+			$code = static::getB2eRegionalBlockCodeByFieldType($requiredField->type);
+			$name = NameHelper::create($code, $requiredField->type, $party);
+		}
+
 		if (!$name)
 		{
 			return null;
@@ -172,5 +183,25 @@ class Factory
 			skipSecurity: true,
 			role: $requiredField->role,
 		);
+	}
+
+	public static function getStaticLabelByBlockCode(string $blockCode): ?string
+	{
+		return match($blockCode)
+		{
+			Type\BlockCode::B2E_EXTERNAL_DATE_CREATE => Loc::getMessage('SIGN_BLANKS_BLOCK_FACTORY_B2E_EXTERNAL_DOCUMENT_DATE'),
+			Type\BlockCode::B2E_EXTERNAL_ID => Loc::getMessage('SIGN_BLANKS_BLOCK_FACTORY_B2E_EXTERNAL_ID'),
+			default => null,
+		};
+	}
+
+	private static function getB2eRegionalBlockCodeByFieldType(string $type): string
+	{
+		return match($type)
+		{
+			Type\FieldType::EXTERNAL_ID => Type\BlockCode::B2E_EXTERNAL_ID,
+			Type\FieldType::EXTERNAL_DATE => Type\BlockCode::B2E_EXTERNAL_DATE_CREATE,
+			default => null,
+		};
 	}
 }

@@ -9,6 +9,7 @@ export const AnalyticsSourceType = Object.freeze({
 	HEADER: 'header',
 	CARD: 'card',
 	DETAIL: 'dept_menu',
+	NODE_DETAIL: 'details',
 	PLUS: 'plus',
 });
 

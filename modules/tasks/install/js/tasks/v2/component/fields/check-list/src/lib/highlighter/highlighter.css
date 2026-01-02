@@ -1,0 +1,59 @@
+.element-highlight {
+	--highlight-offset-y: 0px;
+	--highlight-offset-x: 0px;
+	--highlight-background: var(--ui-color-base-8);
+	--border-width: var(--ui-border-width-thick);
+	--border-radius: var(--ui-border-radius-md);
+	transform-style: preserve-3d;
+}
+
+.element-highlight:before {
+	content: '';
+	position: absolute;
+	inset: var(--highlight-offset-y) var(--highlight-offset-x);
+	background: var(--highlight-background);
+	border-radius: var(--border-radius);
+}
+
+.element-highlight:after {
+	content: '';
+	position: absolute;
+	inset: calc(var(--highlight-offset-y) - var(--border-width)) calc(var(--highlight-offset-x) - var(--border-width));
+	background: conic-gradient(
+		from 0deg at 50% 51.19%,
+		var(--ui-color-accent-main-primary) 0deg,
+		var(--ui-color-green-25) 180deg,
+		var(--ui-color-accent-main-primary) 360deg
+	);
+	transform: translateZ(-2px);
+	border-radius: calc(var(--border-radius) + var(--border-width));
+	animation: 200ms element-highlight-transition forwards;
+}
+
+@keyframes element-highlight-transition {
+	from {
+		opacity: 0;
+	}
+	to {
+		opacity: 1;
+	}
+}
+
+.element-highlight.--animate:after {
+	animation: 1500ms element-highlight forwards;
+}
+
+@keyframes element-highlight {
+	from {
+		opacity: 0;
+	}
+	25% {
+		opacity: 1;
+	}
+	75% {
+		opacity: 1;
+	}
+	to {
+		opacity: 0;
+	}
+}

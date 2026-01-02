@@ -545,22 +545,21 @@ final class MailManager implements ICanSendMessage
 		);
 
 		(new \CCrmEvent())->Add([
+			'EVENT_TYPE' => \CCrmEvent::TYPE_EMAIL,
 			'ENTITY' => array_unique($eventBindings, SORT_REGULAR),
 			'EVENT_ID' => 'MESSAGE',
 			'EVENT_TEXT_1' => str_replace(
 				'<br/>',
 				"\r\n",
 				Loc::getMessage(
-					'CRM_INTEGRATION_MAIL_MANAGER_HISTORY_EVENT_TEXT',
+					'CRM_INTEGRATION_MAIL_MANAGER_HISTORY_EVENT_TEXT_MSGVER_1',
 					[
 						'#SUBJECT#' => $subject,
 						'#FROM#' => $fromAddress->getEmail(),
 						'#TO#' => $toEmail,
-						'#MESSAGE_BODY#' => $bodyHtml,
 					]
 				)
 			),
-			'FILES' => $attachmentsFileArrays,
 		]);
 
 		return new Result();

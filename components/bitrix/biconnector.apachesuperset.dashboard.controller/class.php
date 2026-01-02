@@ -3,6 +3,7 @@
 use Bitrix\BIConnector\Access\AccessController;
 use Bitrix\BIConnector\Access\ActionDictionary;
 use Bitrix\BIConnector\Access\Superset\Synchronizer;
+use Bitrix\BIConnector\Configuration\Feature;
 use Bitrix\BIConnector\Integration\Superset\SupersetInitializer;
 use Bitrix\BIConnector\Integration\Superset\Stepper\DashboardOwner;
 use Bitrix\BIConnector\Superset;
@@ -14,6 +15,7 @@ use Bitrix\Main\Loader;
 use Bitrix\Main\Localization\Loc;
 use Bitrix\BIConnector\Integration\Superset\Integrator\Integrator;
 use Bitrix\BIConnector\Integration\Superset\SupersetController;
+use Bitrix\Main\Web\Uri;
 use Bitrix\UI\Buttons;
 use Bitrix\UI\Toolbar\Facade\Toolbar;
 use Bitrix\BIConnector;
@@ -56,6 +58,13 @@ class ApacheSupersetDashboardController extends CBitrixComponent
 			[$template, $variables] = $this->processSefMode($templateUrls);
 		}
 
+		if ($template === self::URL_TEMPLATE_DETAIL)
+		{
+			$listUri = (new Uri('/' . $templateUrls[self::URL_TEMPLATE_LIST]))->toAbsolute()->getLocator();
+
+			LocalRedirect($listUri);
+		}
+
 		$this->arResult['VARIABLES'] = $variables;
 
 		$this->arResult['CAN_SEND_STARTUP_METRIC'] = self::canSendStartupSupersetMetric();
@@ -85,7 +94,7 @@ class ApacheSupersetDashboardController extends CBitrixComponent
 			return;
 		}
 
-		if (Loader::includeModule('bitrix24') && !\Bitrix\Bitrix24\Feature::isFeatureEnabled('bi_constructor'))
+		if (!Feature::isBuilderEnabled())
 		{
 			if (SupersetInitializer::isSupersetExist())
 			{
@@ -103,13 +112,13 @@ class ApacheSupersetDashboardController extends CBitrixComponent
 		}
 
 		if (
-			class_exists('Bitrix\Intranet\Settings\Tools\ToolsManager')
-			&& !ToolsManager::getInstance()->checkAvailabilityByMenuId('crm_bi')
+			Loader::includeModule('intranet')
+			&& !ToolsManager::getInstance()->checkAvailabilityByToolId('crm_bi')
 		)
 		{
-			$this->arResult['ERROR_MESSAGES'][] = Loc::getMessage('BICONNECTOR_SUPERSET_DASHBOARD_CONTROLLER_PERMISSION_ERROR');
-			$this->arResult['TOOLS_AVAILABLE'] = false;
-			$this->arResult['HELPER_CODE'] = 'limit_BI_off';
+			$this->includeComponentTemplate('tool_disabled');
+
+			return;
 		}
 
 		if (SupersetInitializer::isSupersetReady())
@@ -125,12 +134,6 @@ class ApacheSupersetDashboardController extends CBitrixComponent
 
 		$superset = new SupersetController(Integrator::getInstance());
 		$superset->initializeOrCheckSupersetStatus();
-
-		$this->arResult['URL_PARAMS'] =
-			$this->request->get('params') && is_string($this->request->get('params'))
-				? Superset\Dashboard\UrlParameter\Service::decode($this->request->get('params'))
-				: null
-		;
 
 		$this->includeComponentTemplate($template);
 	}
@@ -164,8 +167,8 @@ class ApacheSupersetDashboardController extends CBitrixComponent
 	private static function getTemplateUrls(): array
 	{
 		return [
-			self::URL_TEMPLATE_LIST => 'bi/dashboard/',
 			self::URL_TEMPLATE_DETAIL => 'bi/dashboard/detail/',
+			self::URL_TEMPLATE_LIST => 'bi/dashboard/',
 		];
 	}
 

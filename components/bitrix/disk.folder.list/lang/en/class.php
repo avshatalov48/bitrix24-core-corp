@@ -8,6 +8,7 @@ $MESS["DISK_FOLDER_LIST_ACT_COPY"] = "Copy";
 $MESS["DISK_FOLDER_LIST_ACT_COPY_INTERNAL_LINK"] = "Copy internal link";
 $MESS["DISK_FOLDER_LIST_ACT_DETAILS"] = "Details";
 $MESS["DISK_FOLDER_LIST_ACT_DOWNLOAD"] = "Download";
+$MESS["DISK_FOLDER_LIST_ACT_DOWNLOAD_ERROR"] = "Error creating archive for download. The folder may be too big or you've selected too many files. Please reduce the size and try again.";
 $MESS["DISK_FOLDER_LIST_ACT_EDIT"] = "Edit";
 $MESS["DISK_FOLDER_LIST_ACT_GET_EXT_LINK"] = "Get public link";
 $MESS["DISK_FOLDER_LIST_ACT_LOCK"] = "Lock";

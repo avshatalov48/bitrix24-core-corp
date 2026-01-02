@@ -18,6 +18,7 @@ $MESS['CRM_TIMELINE_ACTIVITY_SIGN_NOT_EXISTS'] = 'Запись недоступ�
 
 $MESS["CRM_SIGN_B2E_ACTIVITY_DOCUMENT_TITLE"] = "Название документа";
 $MESS["CRM_SIGN_B2E_ACTIVITY_DOCUMENT_NUMBER"] = "Номер документа";
+$MESS["CRM_SIGN_B2E_ACTIVITY_DOCUMENT_SIGN_UNTIL"] = "Крайний срок";
 $MESS["CRM_SIGN_B2E_ACTIVITY_STATUS_DRAFT"] = "Черновик";
 $MESS["CRM_SIGN_B2E_ACTIVITY_STATUS_FILL"] = "Заполнение данных";
 $MESS["CRM_SIGN_B2E_ACTIVITY_STATUS_REVIEW"] = "Согласование";

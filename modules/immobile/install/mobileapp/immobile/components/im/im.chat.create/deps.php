@@ -11,6 +11,7 @@ return [
 		'im:chat/timer',
 		'im:chat/searchscopes',
 		'im:messenger/const',
+		'im:messenger/lib/feature',
 		'intranet:invite-opener-new',
 		'analytics',
 	],

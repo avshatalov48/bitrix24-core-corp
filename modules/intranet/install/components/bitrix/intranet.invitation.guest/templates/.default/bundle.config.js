@@ -6,4 +6,5 @@ module.exports = {
 	},
 	namespace: 'BX.Intranet.Invitation.Guest',
 	adjustConfigPhp: false,
+	browserslist: true,
 };

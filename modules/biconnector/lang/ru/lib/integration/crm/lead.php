@@ -81,3 +81,4 @@ $MESS['CRM_BIC_LEAD_FIELD_PHONE'] = "Телефон (множ.)";
 $MESS['CRM_BIC_LEAD_FIELD_WEB'] = "URL (множ.)";
 $MESS['CRM_BIC_LEAD_FIELD_EMAIL'] = "E-mail (множ.)";
 $MESS['CRM_BIC_LEAD_FIELD_IM'] = "Мессенджеры (множ.)";
+$MESS['CRM_BIC_LEAD_FIELD_CONTACT_IDS'] = "Идентификаторы контактов (множ.)";

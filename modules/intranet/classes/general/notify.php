@@ -10,6 +10,23 @@ IncludeModuleLangFile(__FILE__);
 
 class CIntranetNotify
 {
+	protected static function checkNewUserPostOption($siteId = '')
+	{
+		$blockNewUserLF = \COption::GetOptionString('intranet', 'BLOCK_NEW_USER_LF_SITE', false, $siteId);
+
+		if (!$blockNewUserLF)
+		{
+			$blockNewUserLF = \COption::GetOptionString('intranet', 'BLOCK_NEW_USER_LF', 'N');
+		}
+
+		if ($blockNewUserLF === 'Y')
+		{
+			return false;
+		}
+
+		return true;
+	}
+
 	public static function NewUserMessage($USER_ID): void
 	{
 		if (!CModule::IncludeModule('socialnetwork'))
@@ -29,15 +46,13 @@ class CIntranetNotify
 			return;
 		}
 
-		$blockNewUserLF = COption::GetOptionString("intranet", "BLOCK_NEW_USER_LF_SITE", false);
-		if (!$blockNewUserLF)
+		//new user added not from admin panel
+		if (!(defined("ADMIN_SECTION") && ADMIN_SECTION === true))
 		{
-			$blockNewUserLF = COption::GetOptionString("intranet", "BLOCK_NEW_USER_LF", "N");
-		}
-
-		if ($blockNewUserLF === 'Y')
-		{
-			return;
+			if (!self::checkNewUserPostOption(SITE_ID))
+			{
+				return;
+			}
 		}
 
 		$dbRes = CUser::GetList(
@@ -82,6 +97,37 @@ class CIntranetNotify
 			$bExtranetUser = true;
 		}
 
+		$siteIds = [SITE_ID];
+
+		if (
+			$bExtranetUser
+			&& Loader::includeModule("extranet")
+		)
+		{
+			$siteIds = CExtranet::getSitesByLogDestinations($arRights);
+		}
+		elseif (defined("ADMIN_SECTION") && ADMIN_SECTION === true)
+		{
+			$site = CSocNetLogComponent::getSiteByDepartmentId($arUser["UF_DEPARTMENT"]);
+			if ($site)
+			{
+				$siteIds = array($site['LID']);
+			}
+		}
+
+		foreach ($siteIds as $key => $siteId)
+		{
+			if (!self::checkNewUserPostOption($siteId))
+			{
+				unset($siteIds[$key]);
+			}
+		}
+
+		if (empty($siteIds))
+		{
+			return;
+		}
+
 		$randomGenerator = new RandomSequence('INTRANET_NEW_USER' . $USER_ID);
 
 		$arSoFields = array(
@@ -97,7 +143,7 @@ class CIntranetNotify
 			"MESSAGE" => '',
 			"TEXT_MESSAGE" => '',
 			"CALLBACK_FUNC" => false,
-			"SITE_ID" => SITE_ID,
+			"SITE_ID" => $siteIds,
 			"ENABLE_COMMENTS" => "Y", //!!!
 			"RATING_TYPE_ID" => "INTRANET_NEW_USER",
 			"RATING_ENTITY_ID" => $randomGenerator->rand(1, 2147483647),
@@ -128,27 +174,6 @@ class CIntranetNotify
 			return;
 		}
 
-		$arFields = array(
-			"TMP_ID" => $logID
-		);
-
-		if (
-			$bExtranetUser
-			&& Loader::includeModule("extranet")
-		)
-		{
-			$arFields["SITE_ID"] = CExtranet::getSitesByLogDestinations($arRights);
-		}
-		elseif (defined("ADMIN_SECTION") && ADMIN_SECTION === true)
-		{
-			$site = CSocNetLogComponent::getSiteByDepartmentId($arUser["UF_DEPARTMENT"]);
-			if ($site)
-			{
-				$arFields["SITE_ID"] = array($site['LID']);
-			}
-		}
-
-		CSocNetLog::Update($logID, $arFields);
 		CSocNetLogRights::Add($logID, $arRights);
 		CSocNetLog::SendEvent($logID, "SONET_NEW_EVENT", $logID);
 	}
@@ -379,7 +404,7 @@ class CIntranetNotify
 
 				if (
 					$arParams["MOBILE"] !== "Y"
-					&& $arParams["NEW_TEMPLATE"] !== "Y"
+					&& (!isset($arParams["NEW_TEMPLATE"]) || $arParams["NEW_TEMPLATE"] !== "Y")
 				)
 				{
 					$arResult['EVENT_FORMATTED']['IS_MESSAGE_SHORT'] = CSocNetLogTools::FormatEvent_IsMessageShort($arFields['MESSAGE']);

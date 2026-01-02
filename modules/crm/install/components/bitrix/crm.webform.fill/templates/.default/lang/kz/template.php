@@ -1,0 +1,23 @@
+<?php
+$MESS["CRM_WEBFORM_FILL_BUTTON_DEFAULT"] = "Жіберу";
+$MESS["CRM_WEBFORM_FILL_CALLBACK_FREE"] = "Қоңырау тегін";
+$MESS["CRM_WEBFORM_FILL_COPYRIGHT_BITRIX"] = "Битрикс";
+$MESS["CRM_WEBFORM_FILL_COPYRIGHT_CHARGED_BY"] = "Зарядталған";
+$MESS["CRM_WEBFORM_FILL_ERROR_FIELD_EMPTY"] = "Міндетті өрісті толтырыңыз";
+$MESS["CRM_WEBFORM_FILL_ERROR_TITLE"] = "Назар аударыңыз!";
+$MESS["CRM_WEBFORM_FILL_FIELD_ADD_OTHER"] = "Тағы да өріа";
+$MESS["CRM_WEBFORM_FILL_FILE_NOT_SELECTED"] = "Файл таңдалмаған";
+$MESS["CRM_WEBFORM_FILL_FILE_SELECT"] = "Таңдау";
+$MESS["CRM_WEBFORM_FILL_FILL_AGAIN"] = "Нысанды тағы бір рет толтыру";
+$MESS["CRM_WEBFORM_FILL_LICENCE_ACCEPT"] = "Қабылдаймын";
+$MESS["CRM_WEBFORM_FILL_LICENCE_DECLINE"] = "Қабылдамаймын";
+$MESS["CRM_WEBFORM_FILL_LICENCE_PROMPT"] = "Лицензиялық келісім шарттары:";
+$MESS["CRM_WEBFORM_FILL_LICENCE_PROMPT1"] = "Дербес деректерді өңдеуге келісім:";
+$MESS["CRM_WEBFORM_FILL_NOT_SELECTED"] = "Таңдалмаған";
+$MESS["CRM_WEBFORM_FILL_PRODUCT_SUMMARY"] = "Барлығы";
+$MESS["CRM_WEBFORM_FILL_PRODUCT_TITLE"] = "Тауарлар таңдалды";
+$MESS["CRM_WEBFORM_FILL_REDIRECT_DESC"] = "Сіз ... кейін қайта бағытталатын боласыз";
+$MESS["CRM_WEBFORM_FILL_REDIRECT_GO_NOW"] = "Қазір өту";
+$MESS["CRM_WEBFORM_FILL_REDIRECT_SECONDS"] = "сек.";
+$MESS["CRM_WEBFORM_FILL_RESULT_ERROR"] = "Нысанды жіберу мүмкін болмады.";
+$MESS["CRM_WEBFORM_FILL_RESULT_SENT"] = "Нысан сәтті толтырылды.";

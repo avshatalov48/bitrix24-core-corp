@@ -2,22 +2,22 @@
  * @module im/messenger/controller/chat-composer/update/group-chat
  */
 jn.define('im/messenger/controller/chat-composer/update/group-chat', (require, exports, module) => {
-	const { Loc } = require('loc');
+	const { Loc } = require('im/messenger/loc');
 	const { Type } = require('type');
 	const { Haptics } = require('haptics');
 	const { unique } = require('utils/array');
 	const { confirmClosing } = require('alert');
 	const { Icon } = require('ui-system/blocks/icon');
 	const { NestedDepartmentSelector } = require('selector/widget/entity/tree-selectors/nested-department-selector');
-	const { SocialNetworkUserSelector } = require('selector/widget/entity/socialnetwork/user');
+	const { MemberSelector } = require('im/messenger/controller/selector/member');
 
 	const { DialogType, WidgetTitleParamsType } = require('im/messenger/const');
-	const { AnalyticsService } = require('im/messenger/provider/service/analytics');
+	const { AnalyticsService } = require('im/messenger/provider/services/analytics');
 	const { Notification } = require('im/messenger/lib/ui/notification');
 	const { ChatPermission } = require('im/messenger/lib/permission-manager');
 	const { EntitySelectorHelper } = require('im/messenger/lib/helper');
 	const { serviceLocator } = require('im/messenger/lib/di/service-locator');
-	const { ChatService } = require('im/messenger/provider/service');
+	const { ChatService } = require('im/messenger/provider/services/chat');
 	const { LoggerManager } = require('im/messenger/lib/logger');
 	const logger = LoggerManager.getInstance().getLogger('chat-composer--group-chat');
 
@@ -38,8 +38,9 @@ jn.define('im/messenger/controller/chat-composer/update/group-chat', (require, e
 		/**
 		 * @constructor
 		 * @param {DialogId} dialogId
+		 * @param {PageManager} parentWidget
 		 */
-		constructor({ dialogId })
+		constructor({ dialogId, parentWidget = PageManager })
 		{
 			/** @type {DialogTypeView | null} */
 			this.dialogTypeView = null;
@@ -53,6 +54,7 @@ jn.define('im/messenger/controller/chat-composer/update/group-chat', (require, e
 			this.permissions = null;
 			this.storeManager = serviceLocator.get('core').getStoreManager();
 			this.isMainWidgetClosing = false;
+			this.parentWidget = parentWidget;
 
 			this.bindMethods();
 			this.subscribeStoreEvents();
@@ -105,13 +107,13 @@ jn.define('im/messenger/controller/chat-composer/update/group-chat', (require, e
 		setPermissions()
 		{
 			this.permissions = {
-				update: ChatPermission.iaCanUpdateDialogByRole(this.dialogModel),
+				update: ChatPermission.canUpdateDialogByRole(this.dialogModel),
 			};
 		}
 
 		openGroupChatView({ titleType = WidgetTitleParamsType.entity } = {})
 		{
-			PageManager.openWidget('layout', {
+			this.parentWidget.openWidget('layout', {
 				titleParams: {
 					text: Loc.getMessage('IMMOBILE_CHAT_COMPOSER_UPDATE_GROUP_CHAT_TITLE'),
 					type: titleType,
@@ -230,20 +232,17 @@ jn.define('im/messenger/controller/chat-composer/update/group-chat', (require, e
 		}
 
 		/**
-		 * @param {Array<Object>} selectedUsers
+		 * @param {Array<Number>} addManagersIds
 		 * @void
 		 */
-		onCloseSocialNetworkUserSelector(selectedUsers)
-		{
-			logger.log(`${this.constructor.name}.onCloseSelector:`, selectedUsers);
-			const addManagersIds = selectedUsers.map((user) => user.id);
+		onSelectManagers = (addManagersIds) => {
 			const currentManagersIdsList = new Set(this.managersView.state.users.map((user) => user.id));
 			const uniqueId = addManagersIds.filter((id) => !currentManagersIdsList.has(id));
 			if (uniqueId.length > 0)
 			{
 				this.onClickManagersSelectorDoneButton(uniqueId);
 			}
-		}
+		};
 
 		/**
 		 * @param {LayoutWidget} widget
@@ -252,34 +251,11 @@ jn.define('im/messenger/controller/chat-composer/update/group-chat', (require, e
 		{
 			logger.log(`${this.constructor.name}.onClickBtnAdd`);
 
-			SocialNetworkUserSelector.make({
-				initSelectedIds: [],
-				createOptions: {
-					enableCreation: false,
-				},
-				allowMultipleSelection: true,
-				closeOnSelect: true,
-				provider: {
-					context: 'IMMOBILE_UPDATE_GROUP_CHAT_MANAGERS',
-					options: {
-						recentItemsLimit: 20,
-						maxUsersInRecentTab: 20,
-					},
-				},
-				events: {
-					onClose: this.onCloseSocialNetworkUserSelector.bind(this),
-				},
-				widgetParams: {
-					title: Loc.getMessage('IMMOBILE_CHAT_COMPOSER_MANAGERS_SELECTOR_TITLE'),
-					backdrop: {
-						mediumPositionPercent: 70,
-						horizontalSwipeAllowed: false,
-					},
-					sendButtonName: Loc.getMessage('IMMOBILE_CHAT_COMPOSER_USER_SELECTOR_DONE_BUTTON'),
-				},
-			})
-				.show({}, widget)
-				.catch(logger.error);
+			const memberSelector = new MemberSelector({
+				onSelectMembers: this.onSelectManagers,
+			});
+
+			memberSelector.open(widget);
 		}
 
 		async onClickParticipantAction({ titleType = WidgetTitleParamsType.entity } = {})
@@ -429,7 +405,7 @@ jn.define('im/messenger/controller/chat-composer/update/group-chat', (require, e
 						this.showSuccessfullyToast();
 						this.sendAnalyticsByClickDialogInfoDone(event);
 
-						return this.updateDialogModel({ name: event.title });
+						return this.updateDialogModel({ name: event.title, description: event.description });
 					})
 					.catch((error) => logger.log(`${this.constructor.name}.onClickDoneButton.catch:`, error));
 			}
@@ -523,7 +499,13 @@ jn.define('im/messenger/controller/chat-composer/update/group-chat', (require, e
 		onChangeDialogType(isSetOpenEntityType)
 		{
 			const searchable = isSetOpenEntityType ? 'Y' : 'N';
-			this.restChatUpdate({ searchable })
+			const { permissions } = this.dialogModel;
+			this.restChatUpdate({
+				searchable,
+				manageUsersAdd: permissions.manageUsersAdd,
+				manageUsersDelete: permissions.manageUsersDelete,
+				manageMessages: permissions.manageMessages,
+			})
 				.then(async (result) => {
 					if (result !== true)
 					{

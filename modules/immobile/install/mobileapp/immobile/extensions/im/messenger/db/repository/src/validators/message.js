@@ -1,15 +1,17 @@
+/* eslint-disable no-param-reassign */
 /**
  * @module im/messenger/db/repository/validators/message
  */
 jn.define('im/messenger/db/repository/validators/message', (require, exports, module) => {
 	const { Type } = require('type');
 	const { DateHelper } = require('im/messenger/lib/helper');
-	const { ObjectUtils } = require('im/messenger/lib/utils');
+	const { ObjectUtils, Normalizer } = require('im/messenger/lib/utils');
 	const { clone } = require('utils/object');
 
-	function validate(message)
+	function validate(messageData)
 	{
 		const result = {};
+		const message = clone(messageData);
 
 		if (Type.isNumber(message.id))
 		{
@@ -118,7 +120,7 @@ jn.define('im/messenger/db/repository/validators/message', (require, exports, mo
 
 		if (Type.isArray(message.attach))
 		{
-			result.attach = message.attach;
+			result.attach = Normalizer.normalizeMessageAttach(message.attach);
 		}
 
 		if (Type.isArray(message.keyboard))
@@ -131,7 +133,7 @@ jn.define('im/messenger/db/repository/validators/message', (require, exports, mo
 			result.richLinkId = message.richLinkId;
 		}
 
-		if (Type.isPlainObject(message.params))
+		if (Type.isPlainObject(message.params) || Type.isArray(message.params))
 		{
 			const { params, fileIds, attach, richLinkId, keyboard } = validateParams(message.params);
 			result.params = params;
@@ -162,6 +164,81 @@ jn.define('im/messenger/db/repository/validators/message', (require, exports, mo
 		return result;
 	}
 
+	function validatePush(message)
+	{
+		const result = {};
+
+		if (Type.isNumber(message.id))
+		{
+			result.id = message.id;
+		}
+
+		if (Type.isNumber(message.chatId))
+		{
+			result.chatId = message.chatId;
+		}
+
+		if (Type.isNumber(message.senderId) || Type.isStringFilled(message.senderId))
+		{
+			result.authorId = Number(message.senderId);
+		}
+
+		if (Type.isStringFilled(message.date))
+		{
+			result.date = DateHelper.cast(message.date);
+		}
+		else if (Type.isDate(message.date))
+		{
+			result.date = message.date;
+		}
+
+		if (Type.isNumber(message.text) || Type.isStringFilled(message.text))
+		{
+			result.text = message.text.toString();
+		}
+
+		if (Type.isPlainObject(message.params))
+		{
+			const { params, fileIds, attach, richLinkId } = validateParams(message.params);
+			result.params = params;
+			result.files = fileIds;
+
+			if (Type.isUndefined(result.attach))
+			{
+				result.attach = attach;
+			}
+
+			if (Type.isUndefined(result.richLinkId))
+			{
+				result.richLinkId = richLinkId;
+			}
+		}
+
+		if (Type.isNumber(message.prevId))
+		{
+			result.previousId = message.prevId;
+		}
+
+		if (Type.isNumber(message.recipientId) || Type.isStringFilled(message.recipientId))
+		{
+			result.dialogId = message.recipientId;
+		}
+
+		if (Type.isNumber(message.textOriginal) || Type.isStringFilled(message.textOriginal))
+		{
+			result.textOriginal = message.textOriginal.toString();
+		}
+
+		result.system = message.system === 'Y';
+
+		if (Type.isBoolean(message.push))
+		{
+			result.push = message.push;
+		}
+
+		return result;
+	}
+
 	function validateParams(rawParams)
 	{
 		const params = {};
@@ -178,11 +255,12 @@ jn.define('im/messenger/db/repository/validators/message', (require, exports, mo
 			else if (key === 'FILE_ID' && Type.isArray(value))
 			{
 				fileIds = value;
+				params.FILE_ID = value;
 			}
 			else if (key === 'ATTACH')
 			{
-				attach = ObjectUtils.convertKeysToCamelCase(clone(value), true);
-				params.ATTACH = value;
+				attach = Normalizer.normalizeMessageAttach(value);
+				params.ATTACH = attach;
 			}
 			else if (key === 'KEYBOARD')
 			{
@@ -220,5 +298,8 @@ jn.define('im/messenger/db/repository/validators/message', (require, exports, mo
 		return { params, fileIds, attach, richLinkId, keyboard };
 	}
 
-	module.exports = { validate };
+	module.exports = {
+		validate,
+		validatePush,
+	};
 });

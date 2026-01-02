@@ -7,6 +7,7 @@ if (!defined('B_PROLOG_INCLUDED') || B_PROLOG_INCLUDED !== true)
 
 use Bitrix\HumanResources\Access\StructureAccessController;
 use Bitrix\HumanResources\Access\StructureActionDictionary;
+use Bitrix\HumanResources\Config\Storage;
 use Bitrix\Main\Engine\CurrentUser;
 use Bitrix\Main\Localization\Loc;
 use Bitrix\HumanResources\Internals\HumanResourcesBaseComponent;
@@ -67,6 +68,13 @@ class HumanResourcesStartComponent extends HumanResourcesBaseComponent
 
 		if ($componentPage === 'main_page' || $componentPage === 'structure')
 		{
+			if (!Storage::instance()->isCompanyStructureConverted())
+			{
+				$this->setTemplatePage('non_converted_state');
+
+				return;
+			}
+
 			if (
 				!StructureAccessController::can(
 					CurrentUser::get()->getId(),

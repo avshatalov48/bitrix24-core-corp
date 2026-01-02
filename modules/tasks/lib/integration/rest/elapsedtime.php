@@ -1,7 +1,7 @@
 <?php
 /**
  * Class implements all further interactions with "rest" module considering "elapsed item" entity.
- * This class is for REST-only purposes. When working with API directly, use \Bitrix\Tasks\ElapsedTimeTable or CTaskElapsedItem instead.
+ * This class is for REST-only purposes. When working with API directly, use \Bitrix\Tasks\Internals\Task\ElapsedTimeTable or CTaskElapsedItem instead.
  *
  * This class is for internal use only, not a part of public API.
  * It can be changed at any time without notification.
@@ -35,7 +35,7 @@ Loc::loadMessages(__FILE__);
  * @method static \Bitrix\Tasks\Integration\Rest\EO_ElapsedTime wakeUpObject($row)
  * @method static \Bitrix\Tasks\Integration\Rest\EO_ElapsedTime_Collection wakeUpCollection($rows)
  */
-final class ElapsedTimeTable extends \Bitrix\Tasks\ElapsedTimeTable
+final class ElapsedTimeTable extends \Bitrix\Tasks\Internals\Task\ElapsedTimeTable
 {
 	/**
 	 * Prepares "parameters" argument for self::getList() according to the purposes of a REST interface

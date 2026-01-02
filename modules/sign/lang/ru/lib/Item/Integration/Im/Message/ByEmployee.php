@@ -11,6 +11,8 @@ $MESS['SIGN_CALLBACK_CHAT_BY_EMPLOYEE_DONE_EMPLOYEEF'] = '[b]Документ у
 
 $MESS['SIGN_CALLBACK_CHAT_BY_EMPLOYEE_DONE_COMPANY'] = '[b]Документ утверждён[/b][br][br]Документ #DOC_NAME# от сотрудника #INITIATOR_NAME# утверждён и находится в Сейфе компании';
 
+$MESS['SIGN_CALLBACK_BY_EMPLOYEE_CHAT_EXPIRED_TO_EMPLOYEE'] = '[b]Истёк срок рассмотрения документа[/b][br][br]Документ #DOC_NAME# больше недоступен для рассмотрения. Вы можете запустить процесс заново[br][br][url=#SIGN_URL#]Открыть документ[/url]';
+
 $MESS['SIGN_CALLBACK_BY_EMPLOYEE_CHAT_STOPPED_TO_EMPLOYEE'] = '[b]Документ отклонён[/b][br][br]#INITIATOR_NAME# отклонил(а) документ #DOC_NAME#. Уточните причины и отправьте документ заново';
 $MESS['SIGN_CALLBACK_BY_EMPLOYEE_CHAT_STOPPED_TO_EMPLOYEEM'] = '[b]Документ отклонён[/b][br][br]#INITIATOR_NAME# отклонил документ #DOC_NAME#. Уточните причины и отправьте документ заново';
 $MESS['SIGN_CALLBACK_BY_EMPLOYEE_CHAT_STOPPED_TO_EMPLOYEEF'] = '[b]Документ отклонён[/b][br][br]#INITIATOR_NAME# отклонила документ #DOC_NAME#. Уточните причины и отправьте документ заново';

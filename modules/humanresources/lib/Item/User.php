@@ -8,6 +8,7 @@ class User implements Contract\Item
 {
 	public function __construct(
 		public int $id,
+		public ?string $login = null,
 		public ?string $firstName = null,
 		public ?string $lastName = null,
 		public ?string $secondName = null,

@@ -5,6 +5,8 @@ namespace Bitrix\Intranet\User\Grid\Settings;
 use Bitrix\Intranet\Component\UserList;
 use Bitrix\Intranet\CurrentUser;
 use Bitrix\Intranet\Entity\Collection\UserCollection;
+use Bitrix\Intranet\User;
+use Bitrix\Intranet\Invitation;
 use Bitrix\Main\Config\Option;
 use Bitrix\Main\Loader;
 use Bitrix\Main\ModuleManager;
@@ -21,6 +23,7 @@ class UserSettings extends \Bitrix\Main\Grid\Settings
 	private ?bool $isInvitationAvailable = null;
 	private int $userId;
 	private ?UserCollection $userCollection = null;
+	private User $currentUser;
 
 	public function __construct(array $params)
 	{
@@ -28,6 +31,7 @@ class UserSettings extends \Bitrix\Main\Grid\Settings
 
 		global $USER_FIELD_MANAGER;
 
+		$this->currentUser = new User();
 		$this->userId = CurrentUser::get()->getId();
 		$this->userFields = $USER_FIELD_MANAGER->getUserFields(\Bitrix\Main\UserTable::getUfId(), 0, LANGUAGE_ID, false);
 		$this->initViewFields();
@@ -76,6 +80,11 @@ class UserSettings extends \Bitrix\Main\Grid\Settings
 		return $this->userId;
 	}
 
+	public function getCurrentUser(): User
+	{
+		return $this->currentUser;
+	}
+
 	public function getViewFields(): array
 	{
 		return $this->viewFields;
@@ -100,13 +109,7 @@ class UserSettings extends \Bitrix\Main\Grid\Settings
 	{
 		if (!isset($this->isInvitationAvailable))
 		{
-			$this->isInvitationAvailable = (
-				CurrentUser::get()->canDoOperation('edit_all_users')
-				|| (
-					ModuleManager::isModuleInstalled('bitrix24')
-					&& Option::get('bitrix24', 'allow_invite_users', 'N') === 'Y'
-				)
-			);
+			$this->isInvitationAvailable = Invitation::canCurrentUserInvite();
 		}
 
 		return $this->isInvitationAvailable;
@@ -152,7 +155,7 @@ class UserSettings extends \Bitrix\Main\Grid\Settings
 	{
 		if (empty($this->adminIdList))
 		{
-			$dbAdminList = \CAllGroup::GetGroupUserEx(1);
+			$dbAdminList = \CGroup::GetGroupUserEx(1);
 
 			while($admin = $dbAdminList->fetch())
 			{

@@ -9,6 +9,7 @@ use Bitrix\Main\Localization\Loc;
 use Bitrix\Main\UI\Extension;
 use Bitrix\Main\Web\Json;
 use Bitrix\Tasks\Helper\RestrictionUrl;
+use Bitrix\Tasks\Onboarding\DI\OnboardingContainer;
 use Bitrix\Tasks\Scrum\Service\TaskService;
 
 if (!defined('B_PROLOG_INCLUDED') || B_PROLOG_INCLUDED !== true)
@@ -52,7 +53,7 @@ Extension::load([
 	'pull.queuemanager',
 ]);
 
-$isBitrix24Template = (SITE_TEMPLATE_ID === 'bitrix24');
+$isBitrix24Template = (SITE_TEMPLATE_ID === 'bitrix24' || SITE_TEMPLATE_ID === 'air');
 
 $data = $arResult['DATA'];
 ?>
@@ -82,11 +83,28 @@ $data = $arResult['DATA'];
 			PERSONAL: '<?=$arParams['PERSONAL']?>',
 			TIMELINE_MODE: '<?=$arParams['TIMELINE_MODE']?>',
 		},
-		siteTemplateId: <?=(SITE_TEMPLATE_ID === 'bitrix24' ? '"transparent"' : 'null')?>,
+		siteTemplateId: <?=(SITE_TEMPLATE_ID === 'bitrix24' || SITE_TEMPLATE_ID === 'air' ? '"transparent"' : 'null')?>,
 		sprintSelected: <?=($arParams['SPRINT_SELECTED'] == 'Y' && $arParams['SPRINT_ID'] ? 'true' : 'false')?>,
 		isActiveSprint: <?=($arParams['IS_ACTIVE_SPRINT'] == 'Y' ? 'true' : 'false')?>,
-		parentTasks: <?=CUtil::PhpToJSObject($data['parentTasks'], false, false, true)?>
+		parentTasks: <?=CUtil::PhpToJSObject($data['parentTasks'], false, false, true)?>,
+		customSectionsFields: <?= CUtil::phpToJSObject($arResult['POPUP_FIELDS_SECTIONS']);?>
 	});
+
+	<?php if ($arResult['needToShowInviteToMobile']) : ?>
+		BX.ready(function() {
+			BX.Runtime.loadExtension('tasks.promo.invite-to-mobile').then(() => {
+				const inviteToMobile = new BX.Tasks.Promo.InviteToMobile({
+					appLink: <?= Json::encode($arResult['inviteToMobileLink']) ?>,
+				});
+
+				inviteToMobile.show();
+				<?php
+					$inviteToMobileService = OnboardingContainer::getInstance()->getInviteToMobileService();
+					$inviteToMobileService->setShown($arParams['USER_ID']);
+				?>
+			});
+		});
+	<?php endif; ?>
 
 	BX.ready(function() {
 		BX.Tasks.KanbanAjaxComponent.Parameters = new BX.Tasks.KanbanAjaxComponent({
@@ -117,7 +135,8 @@ $data = $arResult['DATA'];
 			setClientDate: <?= $arResult['NEED_SET_CLIENT_DATE'] ? 'true' : 'false'?>,
 			admins: <?= CUtil::PhpToJSObject(array_values($arResult['ADMINS']))?>,
 			ownerId: <?= (int) $arParams['USER_ID'] ?>,
-			groupId: <?= (int) $arParams['GROUP_ID'] ?>
+			groupId: <?= (int) $arParams['GROUP_ID'] ?>,
+			customSectionsFields: <?= CUtil::phpToJSObject($arResult['POPUP_FIELDS_SECTIONS']);?>
 		};
 
 		BX.Tasks.Scrum.Kanban.drawKanban(document.getElementById('scrum_kanban'), kanbanParams);

@@ -68,7 +68,8 @@ final class Csv implements Provider
 			return;
 		}
 
-		if (!self::isDataValid($rows))
+		$headers = $reader->getHeaders() ?? [];
+		if (!self::isRowsValid(array_merge($headers ? [$headers] : [], $rows)))
 		{
 			return;
 		}
@@ -100,29 +101,23 @@ final class Csv implements Provider
 			}
 		}
 
-		$data = [];
-		foreach ($rows as $row)
-		{
-			$data[] = array_values($row);
-		}
-
-		$this->data = $data;
+		$this->data = $rows;
 
 		$this->types = array_fill(0, count($this->names), FieldType::String);
 	}
 
-	private static function isDataValid(array $data): bool
+	private static function isRowsValid(array $rows): bool
 	{
-		if (empty($data))
+		if (empty($rows))
 		{
 			return true;
 		}
 
-		$firstSize = count($data[0]);
+		$firstRowSize = count($rows[0]);
 
-		foreach ($data as $subArray)
+		foreach ($rows as $row)
 		{
-			if (count($subArray) !== $firstSize)
+			if (count($row) !== $firstRowSize)
 			{
 				return false;
 			}

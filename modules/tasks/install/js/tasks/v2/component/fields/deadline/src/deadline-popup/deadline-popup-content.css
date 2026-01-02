@@ -1,0 +1,64 @@
+.tasks-field-deadline-popup {
+	display: flex;
+	gap: var(--ui-space-inline-md2);
+}
+
+.tasks-field-deadline-presets {
+	display: flex;
+	flex-direction: column;
+	gap: var(--ui-space-stack-xs);
+}
+
+.tasks-field-deadline-preset {
+	box-sizing: border-box;
+	min-width: 160px;
+	padding: var(--ui-space-stack-2xs2) var(--ui-space-inline-sm) var(--ui-space-stack-xs);
+	border-radius: var(--ui-border-radius-lg);
+	border: var(--ui-border-width-thin) solid var(--ui-color-design-outline-a2-content-divider);
+	cursor: pointer;
+}
+
+.tasks-field-deadline-preset:hover {
+	background: var(--ui-color-accent-soft-blue-3);
+	color: var(--ui-color-accent-main-primary);
+	border-color: var(--ui-color-accent-main-primary-alt-2);
+}
+
+.tasks-field-deadline-preset-title {
+	font-size: var(--ui-font-size-sm);
+}
+
+.tasks-field-deadline-preset-date {
+	margin-top: var(--ui-space-stack-3xs);
+	color: var(--ui-color-base-4);
+	font-size: var(--ui-font-size-4xs);
+}
+
+.tasks-field-deadline-picker-container {
+	--picker-width: 252px;
+	--picker-height: 311px;
+	--picker-scale: 0.85;
+	width: calc(var(--picker-width) * var(--picker-scale));
+	height: calc(var(--picker-height) * var(--picker-scale));
+	margin-bottom: var(--ui-space-stack-xs-neg);
+}
+
+.tasks-field-deadline-picker {
+	margin-top: -5px;
+	transform: scale(var(--picker-scale));
+	transform-origin: 0 0;
+}
+
+.tasks-field-deadline-picker-settings {
+	z-index: 2;
+	position: absolute;
+	right: 6px;
+	bottom: 4px;
+	--ui-icon-set__icon-size: 22px;
+	--ui-icon-set__icon-color: var(--ui-color-base-4);
+	cursor: pointer;
+}
+
+.tasks-field-deadline-picker-settings:hover {
+	--ui-icon-set__icon-color: var(--ui-color-base-3);
+}

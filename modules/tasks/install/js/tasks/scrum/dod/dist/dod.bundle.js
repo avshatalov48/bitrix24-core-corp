@@ -426,7 +426,7 @@ this.BX.Tasks = this.BX.Tasks || {};
 	            id: 'user',
 	            options: {
 	              inviteEmployeeLink: false,
-	              analyticsSource: 'task'
+	              analyticsSource: 'tasks'
 	            }
 	          }, {
 	            id: 'project-roles',

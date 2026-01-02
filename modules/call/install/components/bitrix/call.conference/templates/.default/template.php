@@ -3,11 +3,16 @@ if (!defined("B_PROLOG_INCLUDED") || B_PROLOG_INCLUDED!==true)
 {
 	die();
 }
+/**
+ * @global \CMain $APPLICATION
+ * @var array $arResult
+ * @var array $arParams
+ */
 
 \Bitrix\Main\UI\Extension::load("call.application.conference");
 
 $darkClass = \CIMSettings::GetSetting(CIMSettings::SETTINGS, 'isCurrentThemeDark')? 'bx-messenger-dark': '';
-$GLOBALS["APPLICATION"]->SetPageProperty("BodyClass", "im-desktop $darkClass");
+$APPLICATION->SetPageProperty("BodyClass", "im-desktop $darkClass");
 
 $APPLICATION->IncludeComponent("bitrix:ui.info.helper", "", array());
 ?>
@@ -16,6 +21,7 @@ $APPLICATION->IncludeComponent("bitrix:ui.info.helper", "", array());
 	BX.Messenger.Application.Launch('conference', {
 		node: '#placeholder',
 		chatId: '<?=$arResult['CHAT_ID']?>',
+		callToken: '<?=$arResult['CALL_TOKEN']?>',
 		alias: '<?=CUtil::JSEscape($arResult['ALIAS'])?>',
 		userId: '<?=$arResult['USER_ID']?>',
 		siteId: '<?=CUtil::JSEscape($arResult['SITE_ID'])?>',
@@ -34,6 +40,9 @@ $APPLICATION->IncludeComponent("bitrix:ui.info.helper", "", array());
 	});
 
 	window.addEventListener('load', () => {
-		BXDesktopWindow?.ExecuteCommand('show')
+		BX.Runtime.loadExtension('im.v2.lib.desktop-api').then(exports => {
+			const { DesktopApi } = exports;
+			DesktopApi.showWindow();
+		})
 	});
 </script>

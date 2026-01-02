@@ -8,7 +8,6 @@ jn.define('tasks/layout/checklist/list/src/menu/actions-menu', (require, exports
 	const { PureComponent } = require('layout/pure-component');
 	const { directions } = require('tasks/layout/checklist/list/src/constants');
 	const { IconView, Icon } = require('ui-system/blocks/icon');
-	const { Random } = require('utils/random');
 	const { ScrollView } = require('layout/ui/scroll-view');
 	const {
 		MEMBER_TYPE,
@@ -43,7 +42,6 @@ jn.define('tasks/layout/checklist/list/src/menu/actions-menu', (require, exports
 			this.menuRef = null;
 
 			this.initialItem(props);
-			this.handleOnToggleImportant = this.handleOnToggleImportant.bind(this);
 		}
 
 		componentWillReceiveProps(props)
@@ -60,37 +58,42 @@ jn.define('tasks/layout/checklist/list/src/menu/actions-menu', (require, exports
 				itemId = this.item.getId();
 			}
 
-			this.state = {
-				itemId,
-				random: Random.getString(),
-			};
+			this.state = this.getStateParams(itemId);
 		}
 
-		handleOnToggleImportant()
-		{
+		handleOnToggleImportant = () => {
 			const { onToggleImportant } = this.props;
 			Haptics.impactLight();
 			onToggleImportant();
-			this.refreshExtension();
-		}
 
-		refreshExtension()
-		{
 			this.setState({
-				random: Random.getString(),
+				[BUTTON_TYPES.important]: this.item?.getIsImportant(),
 			});
-		}
+		};
 
 		setItem(item)
 		{
 			this.item = item;
 			const itemId = item.getId();
-			const { itemId: stateItemId } = this.state;
 
-			if (stateItemId !== itemId)
+			this.setState(this.getStateParams(itemId));
+		}
+
+		getStateParams(itemId)
+		{
+			const params = {
+				itemId,
+			};
+
+			if (this.item)
 			{
-				this.setState({ itemId });
+				params[BUTTON_TYPES.important] = this.item.getIsImportant();
+				params[BUTTON_TYPES.attach] = Boolean(this.item.getAttachmentsCount() > 0);
+				params[MEMBER_TYPE.auditor] = this.item.hasAuditor();
+				params[MEMBER_TYPE.accomplice] = this.item.hasAccomplice();
 			}
+
+			return params;
 		}
 
 		show()
@@ -139,20 +142,13 @@ jn.define('tasks/layout/checklist/list/src/menu/actions-menu', (require, exports
 		 */
 		isActiveIconByType(type)
 		{
-			const activeMap = {
-				[BUTTON_TYPES.important]: this.item.getIsImportant(),
-				[BUTTON_TYPES.attach]: Boolean(this.item.getAttachmentsCount() > 0),
-				[MEMBER_TYPE.auditor]: this.item.hasAuditor(),
-				[MEMBER_TYPE.accomplice]: this.item.hasAccomplice(),
-			};
-
-			return Boolean(activeMap[type]);
+			return Boolean(this.state[type]);
 		}
 
 		/**
 		 * @private
 		 * @param {BUTTON_TYPES} type
-		 * @return string
+		 * @return Color
 		 */
 		getIconColor(type = null)
 		{
@@ -167,7 +163,14 @@ jn.define('tasks/layout/checklist/list/src/menu/actions-menu', (require, exports
 			}
 
 			const { onAddFile, onBlur } = this.props;
-			const { canUpdate, canAdd, canTabOut, canTabIn, hasAnotherCheckLists } = this.getPermissions();
+			const {
+				canUpdate,
+				canAdd,
+				canTabOut,
+				canTabIn,
+				hasAnotherCheckLists,
+				canAddAccomplice,
+			} = this.getPermissions();
 
 			return View(
 				{
@@ -204,7 +207,7 @@ jn.define('tasks/layout/checklist/list/src/menu/actions-menu', (require, exports
 						icon: MEMBER_TYPE_ICONS[MEMBER_TYPE.auditor],
 						size: ICON_SIZE,
 						disabled: (
-							!canUpdate || MEMBER_TYPE_RESTRICTION_FEATURE_META[MEMBER_TYPE.auditor].isRestricted()
+							!canAddAccomplice || MEMBER_TYPE_RESTRICTION_FEATURE_META[MEMBER_TYPE.auditor].isRestricted()
 						),
 						style: {
 							marginRight: ICON_MARGIN,
@@ -217,7 +220,7 @@ jn.define('tasks/layout/checklist/list/src/menu/actions-menu', (require, exports
 						icon: MEMBER_TYPE_ICONS[MEMBER_TYPE.accomplice],
 						size: ICON_SIZE,
 						disabled: (
-							!canUpdate || MEMBER_TYPE_RESTRICTION_FEATURE_META[MEMBER_TYPE.accomplice].isRestricted()
+							!canAddAccomplice || MEMBER_TYPE_RESTRICTION_FEATURE_META[MEMBER_TYPE.accomplice].isRestricted()
 						),
 						style: {
 							marginRight: ICON_MARGIN,
@@ -277,7 +280,7 @@ jn.define('tasks/layout/checklist/list/src/menu/actions-menu', (require, exports
 						disabled: (canUpdate && !canAdd && !hasAnotherCheckLists) || !canUpdate,
 						size: ICON_SIZE,
 						onClick: this.handleOnMoveToCheckList,
-					}, true),
+					}),
 				),
 				View({
 					style: {
@@ -304,7 +307,8 @@ jn.define('tasks/layout/checklist/list/src/menu/actions-menu', (require, exports
 
 		renderIconView(iconProps)
 		{
-			const { useRef, onClick, id, ...restProps } = iconProps;
+			const { useRef, onClick, id, disabled, ...restProps } = iconProps;
+			const isRestricted = MEMBER_TYPE_RESTRICTION_FEATURE_META[id]?.isRestricted?.();
 
 			return IconView({
 				testId: this.getTestId(id),
@@ -315,11 +319,12 @@ jn.define('tasks/layout/checklist/list/src/menu/actions-menu', (require, exports
 					}
 				},
 				onClick: () => {
-					if (this.isShown)
+					if (this.isShown && (!disabled || isRestricted))
 					{
 						onClick?.(this.targetRefMap.get(id));
 					}
 				},
+				disabled,
 				...restProps,
 			});
 		}

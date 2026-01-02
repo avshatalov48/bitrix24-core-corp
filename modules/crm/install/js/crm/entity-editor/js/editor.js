@@ -605,7 +605,7 @@ if(typeof BX.Crm.EntityEditor === "undefined")
 			this.showToolPanel();
 		}
 
-		if(this._model.isCaptionEditable())
+		if (this._enablePageTitleControls && !this._enablePageTitleControlsViaToolbar && this._model.isCaptionEditable())
 		{
 			BX.bind(
 				this._pageTitle,
@@ -662,6 +662,10 @@ if(typeof BX.Crm.EntityEditor === "undefined")
 	{
 		BX.Crm.EntityEditor.superclass.adjustSize.apply(this);
 		if(!this._enablePageTitleControls || !this._pageTitle)
+		{
+			return;
+		}
+		if (this._enablePageTitleControlsViaToolbar)
 		{
 			return;
 		}

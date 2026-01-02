@@ -67,9 +67,10 @@ class ListFilter
 	 */
 	public function prepareListFilter(array &$filter, array $requestFilter): void
 	{
-		if (isset($requestFilter['FIND']) && !empty($requestFilter['FIND']))
+		if (!empty($requestFilter['FIND']))
 		{
 			$filter['SEARCH_CONTENT'] = $requestFilter['FIND'];
+
 			SearchEnvironment::prepareSearchFilter($this->getEntityTypeId(), $filter, [
 				'ENABLE_PHONE_DETECTION' => false,
 			]);
@@ -83,25 +84,37 @@ class ListFilter
 
 		foreach ($this->getFieldNamesByType(static::TYPE_NUMBER) as $fieldName)
 		{
-			if (isset($requestFilter[$fieldName]) && $requestFilter[$fieldName] === false)
+			$fltType = $requestFilter[$fieldName . '_numsel'] ?? 'exact';
+			$fromFieldName = $fieldName . '_from';
+			$toFieldName = $fieldName . '_to';
+			$invFieldName = '!' . $fieldName;
+			if (
+				isset($requestFilter[$fromFieldName], $requestFilter[$toFieldName])
+				&& in_array($fltType, ['exact', 'range'])
+			)
+			{
+				$filter['>=' . $fieldName] = $requestFilter[$fromFieldName];
+				$filter['<=' . $fieldName] = $requestFilter[$toFieldName];
+			}
+			elseif ($fltType === 'exact' && isset($requestFilter[$fromFieldName]))
+			{
+				$filter[$fieldName] = $requestFilter[$fromFieldName];
+			}
+			elseif ($fltType === 'more' && isset($requestFilter[$fromFieldName]))
+			{
+				$filter['>' . $fieldName] = $requestFilter[$fromFieldName];
+			}
+			elseif ($fltType === 'less' && isset($requestFilter[$toFieldName]))
+			{
+				$filter['<' . $fieldName] = $requestFilter[$toFieldName];
+			}
+			elseif (isset($requestFilter[$fieldName]) && $requestFilter[$fieldName] === false)
 			{
 				$filter[$fieldName] = $requestFilter[$fieldName];
 			}
-			elseif (isset($requestFilter['!' . $fieldName]) && $requestFilter['!' . $fieldName] === false)
+			elseif (isset($requestFilter[$invFieldName]) && $requestFilter[$invFieldName] === false)
 			{
-				$filter['!' . $fieldName] = $requestFilter['!' . $fieldName];
-			}
-			if (isset($requestFilter[$fieldName . '_from']) && $requestFilter[$fieldName . '_from'] > 0)
-			{
-				$filter['>=' . $fieldName] = $requestFilter[$fieldName . '_from'];
-			}
-			if (isset($requestFilter[$fieldName . '_to']) && $requestFilter[$fieldName . '_to'] > 0)
-			{
-				$filter['<=' . $fieldName] = $requestFilter[$fieldName . '_to'];
-			}
-			if (isset($requestFilter[$fieldName]) && $requestFilter[$fieldName] > 0)
-			{
-				$filter['=' . $fieldName] = $requestFilter[$fieldName];
+				$filter[$invFieldName] = $requestFilter[$invFieldName];
 			}
 		}
 
@@ -224,7 +237,7 @@ class ListFilter
 				{
 					Filter::applyStageSemanticFilter($filter, $requestFilter, $fieldStageSemantic);
 				}
-				else if (in_array($fieldName, $filtersToSpecialCalculate))
+				elseif (in_array($fieldName, $filtersToSpecialCalculate))
 				{
 					$filter[$fieldName] = $requestFilter[$fieldName];
 				}

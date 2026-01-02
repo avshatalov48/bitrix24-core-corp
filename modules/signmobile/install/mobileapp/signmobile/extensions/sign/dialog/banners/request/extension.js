@@ -70,6 +70,7 @@ jn.define('sign/dialog/banners/request', (require, exports, module) => {
 				buttonsView: View(
 					{},
 					Button({
+						testId: 'requestBanner-button-start',
 						text: Loc.getMessage('SIGN_MOBILE_DIALOG_REQUEST_BUTTON_START_SIGNING'),
 						size: ButtonSize.XL,
 						design: ButtonDesign.FILLED,
@@ -95,6 +96,7 @@ jn.define('sign/dialog/banners/request', (require, exports, module) => {
 						},
 					}),
 					Button({
+						testId: 'requestBanner-button-close',
 						text: Loc.getMessage('SIGN_MOBILE_DIALOG_REQUEST_BUTTON_CLOSE'),
 						size: ButtonSize.XL,
 						design: ButtonDesign.PLAN_ACCENT,

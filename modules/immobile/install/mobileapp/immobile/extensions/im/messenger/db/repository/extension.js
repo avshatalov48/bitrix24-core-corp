@@ -7,6 +7,7 @@ jn.define('im/messenger/db/repository', (require, exports, module) => {
 	const { CounterRepository } = require('im/messenger/db/repository/counter');
 	const { DialogRepository } = require('im/messenger/db/repository/dialog');
 	const { DialogInternalRepository } = require('im/messenger/db/repository/internal/dialog');
+	const { CommentRepository } = require('im/messenger/db/repository/comment');
 	const { UserRepository } = require('im/messenger/db/repository/user');
 	const { FileRepository } = require('im/messenger/db/repository/file');
 	const { MessageRepository } = require('im/messenger/db/repository/message');
@@ -17,6 +18,10 @@ jn.define('im/messenger/db/repository', (require, exports, module) => {
 	const { PinMessageRepository } = require('im/messenger/db/repository/pin-message');
 	const { CopilotRepository } = require('im/messenger/db/repository/copilot');
 	const { SidebarFileRepository } = require('im/messenger/db/repository/sidebar/file');
+	const { DraftRepository } = require('im/messenger/db/repository/src/draft');
+	const { VoteRepository } = require('im/messenger/db/repository/vote');
+	const { ReadMessageQueueRepository } = require('im/messenger/db/repository/read-message-queue');
+	const { TranscriptRepository } = require('im/messenger/db/repository/transcript');
 
 	module.exports = {
 		OptionRepository,
@@ -24,6 +29,7 @@ jn.define('im/messenger/db/repository', (require, exports, module) => {
 		CounterRepository,
 		DialogRepository,
 		DialogInternalRepository,
+		CommentRepository,
 		UserRepository,
 		FileRepository,
 		MessageRepository,
@@ -34,5 +40,9 @@ jn.define('im/messenger/db/repository', (require, exports, module) => {
 		PinMessageRepository,
 		CopilotRepository,
 		SidebarFileRepository,
+		DraftRepository,
+		VoteRepository,
+		ReadMessageQueueRepository,
+		TranscriptRepository,
 	};
 });

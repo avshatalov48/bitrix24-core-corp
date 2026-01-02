@@ -14,6 +14,10 @@ jn.define('im/messenger/const/error', (require, exports, module) => {
 		planLimit: {
 			MESSAGE_ACCESS_DENIED_BY_TARIFF: 'MESSAGE_ACCESS_DENIED_BY_TARIFF',
 		},
+		recent: {
+			maxPin: 'MAX_PINNED_CHATS_ERROR',
+		},
+		networkError: 'NETWORK_ERROR',
 	};
 
 	const ErrorCode = {

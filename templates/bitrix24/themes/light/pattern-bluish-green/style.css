@@ -1,3 +1,9 @@
-body {
-	background: #62b7c0 url(pattern-bluish-green.svg) 0 0 repeat;
+:root {
+	--air-theme-bg-color: #62b7c0;
+	--air-theme-bg-size: auto;
+	--air-theme-bg-repeat: repeat;
+	--air-theme-bg-position: 0 0;
+	--air-theme-bg-attachment: fixed;
+	--air-theme-bg-image: url(/bitrix/templates/bitrix24/themes/light/pattern-bluish-green/pattern-bluish-green.svg);
+	--air-theme-bg-image-blurred: url(/bitrix/templates/bitrix24/themes/light/pattern-bluish-green/pattern-bluish-green-blurred.webp);
 }

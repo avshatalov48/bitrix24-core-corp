@@ -51,9 +51,14 @@ class Quote extends Item
 		return 'QUOTE_OWNER';
 	}
 
-	protected function transformToExternalValue(string $entityFieldName, $fieldValue, int $valuesType = Values::ALL)
+	protected function transformToExternalValue(
+		string $entityFieldName,
+		$fieldValue,
+		int $valuesType = Values::ALL,
+		array $params = [],
+	)
 	{
-		$value = parent::transformToExternalValue($entityFieldName, $fieldValue, $valuesType);
+		$value = parent::transformToExternalValue($entityFieldName, $fieldValue, $valuesType, $params);
 
 		$commonFieldName = $this->getCommonFieldNameByMap($entityFieldName);
 		if($commonFieldName === static::FIELD_NAME_STORAGE_ELEMENTS && is_array($value))

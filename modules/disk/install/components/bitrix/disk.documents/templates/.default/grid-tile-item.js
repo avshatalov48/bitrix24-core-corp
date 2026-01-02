@@ -1,4 +1,5 @@
 "use strict";
+
 BX.namespace("BX.Disk.TileGrid");
 
 /**
@@ -507,8 +508,24 @@ BX.Disk.TileGrid.Item.prototype =
 					fileExtension = 'board';
 					break;
 
+				case 'odf':
+					fileExtension = 'odf';
+					break;
+
+				case 'odt':
+					fileExtension = 'odt';
+					break;
+
+				case 'ods':
+					fileExtension = 'ods';
+					break;
+
+				case 'odp':
+					fileExtension = 'odp';
+					break;
+
 				default:
-					fileExtension = 'empty'
+					fileExtension = 'empty';
 			}
 
 			this.isFolder ? fileExtension = 'folder' : null;

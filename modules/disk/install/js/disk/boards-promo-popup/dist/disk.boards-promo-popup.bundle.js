@@ -74,6 +74,11 @@ this.BX.Disk = this.BX.Disk || {};
 	    value: function show() {
 	      this.getPopup().show();
 	      document.body.style.overflowY = 'hidden';
+	      BX.UI.Analytics.sendData({
+	        event: 'show_promo',
+	        tool: 'boards',
+	        category: 'boards'
+	      });
 	    }
 	  }, {
 	    key: "setViewed",

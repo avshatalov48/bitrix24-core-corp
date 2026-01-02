@@ -1,0 +1,27 @@
+<?php
+$MESS["REPORT_TASKS_COLUMN_TREE_STATUS_SUB"] = "Мәртебеде";
+$MESS["REPORT_TASKS_DURATION_FOR_PERIOD"] = "Жұмсалған уақыт (есеп кезеңі, ескірген)";
+$MESS["REPORT_TASKS_Member:TASK_COWORKED.USER"] = "Бірлесіп орындаушылар";
+$MESS["REPORT_TASKS_TAGS"] = "Тегтер";
+$MESS["TASKS_REPORT_DEFAULT_2"] = "Жобалар бойынша қамтылу";
+$MESS["TASKS_REPORT_DEFAULT_3"] = "Айға міндеттер";
+$MESS["TASKS_REPORT_DEFAULT_4"] = "Тиімділік бойынша есеп";
+$MESS["TASKS_REPORT_DEFAULT_5"] = "Өткен айлар үшін міндеттер";
+$MESS["TASKS_REPORT_DEFAULT_6"] = "Міндеттер бойынша ресурстық есеп";
+$MESS["TASKS_REPORT_DEFAULT_6_DESCR"] = "Есеп жоба, бөлім немесе компания ішіндегі есепті кезеңдегі міндеттер тізімін және олар бойынша уақыт жұмсалуын көрсетеді.";
+$MESS["TASKS_REPORT_DEFAULT_7"] = "Орындаушылар бойынша ресурстық есеп";
+$MESS["TASKS_REPORT_DEFAULT_7_ALIAS_4"] = "Міндеттер саны";
+$MESS["TASKS_REPORT_DEFAULT_7_ALIAS_6"] = "Барлығы жұмсалды";
+$MESS["TASKS_REPORT_DEFAULT_7_ALIAS_8"] = "Есепті кезең ішінде жұмсалған";
+$MESS["TASKS_REPORT_DEFAULT_7_ALIAS_10"] = "Жоспарланған еңбек шығындары";
+$MESS["TASKS_REPORT_DEFAULT_7_DESCR"] = "Есеп әр орындаушының ресурстық есеппен міндеттерді орындауға қанша уақыт жұмсағанын көрсетеді. Есепті жобалар бойынша құруға болады.";
+$MESS["TASKS_REPORT_DURATION_DAYS"] = "к.";
+$MESS["TASKS_REPORT_DURATION_HOURS"] = "сағ.";
+$MESS["TASKS_REPORT_EFF_CLOSED"] = "Орындалды";
+$MESS["TASKS_REPORT_EFF_EFFICIENCY"] = "Тиімділік";
+$MESS["TASKS_REPORT_EFF_EMPLOYEE"] = "Қызметкер";
+$MESS["TASKS_REPORT_EFF_MARKED"] = "Бағаланды";
+$MESS["TASKS_REPORT_EFF_NEW"] = "Жаңа";
+$MESS["TASKS_REPORT_EFF_OPEN"] = "Жұмыс үстінде";
+$MESS["TASKS_REPORT_EFF_OVERDUE"] = "Мерзімі өтіп кетті";
+$MESS["TASKS_REPORT_UF_TASK_WEBDAV_FILES"] = "Құжаттар";

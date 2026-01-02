@@ -155,8 +155,7 @@ elseif ($action === 'SAVE_PROGRESS' && check_bitrix_sessid())
 		__CrmQuoteListEndResponse(array('ERROR' => 'Invalid data!'));
 	}
 
-	$entityAttrs = $userPerms->GetEntityAttr($targetTypeName, array($ID));
-	if (!$userPerms->CheckEnityAccess($targetTypeName, 'WRITE', $entityAttrs[$ID]))
+	if (!\Bitrix\Crm\Service\Container::getInstance()->getUserPermissions()->item()->canUpdate(CCrmOwnerType::Quote, $ID))
 	{
 		__CrmQuoteListEndResponse(array('ERROR' => 'Access denied!'));
 	}
@@ -167,7 +166,7 @@ elseif ($action === 'SAVE_PROGRESS' && check_bitrix_sessid())
 	}
 
 	$arFields = array('STATUS_ID' => $statusID);
-	$CCrmQuote = new CCrmQuote(false);
+	$CCrmQuote = new CCrmQuote();
 	$result = $CCrmQuote->Update($ID, $arFields, true, true);
 
 	$response = [

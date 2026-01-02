@@ -12,17 +12,16 @@ if (!CModule::IncludeModule('sale'))
 	return;
 }
 
-global $USER, $APPLICATION;
+global $APPLICATION;
 
-$CrmPerms = new CCrmPerms($USER->GetID());
-if (!$CrmPerms->HavePerm('CONFIG', BX_CRM_PERM_CONFIG, 'READ'))
+if (!\Bitrix\Crm\Service\Container::getInstance()->getUserPermissions()->entityType()->canReadSomeItemsInCrm())
 {
 	ShowError(GetMessage('CRM_PERMISSION_DENIED'));
 	return;
 }
 
 $arResult['EDIT_MODE'] = isset($arParams['EDIT_MODE']) && $arParams['EDIT_MODE'] == 'Y' ? true : false;
-$arResult['CAN_DELETE'] = $arResult['CAN_EDIT'] = $CrmPerms->HavePerm('CONFIG', BX_CRM_PERM_CONFIG, 'WRITE') && $arResult['EDIT_MODE'];
+$arResult['CAN_DELETE'] = $arResult['CAN_EDIT'] = \Bitrix\Crm\Service\Container::getInstance()->getUserPermissions()->isCrmAdmin() && $arResult['EDIT_MODE'];
 
 $arParams['PATH_TO_TAXRATE_LIST'] = CrmCheckPath('PATH_TO_TAXRATE_LIST', $arParams['PATH_TO_TAXRATE_LIST'], '');
 $arParams['PATH_TO_TAXRATE_SHOW'] = CrmCheckPath('PATH_TO_TAXRATE_SHOW', $arParams['PATH_TO_TAXRATE_SHOW'], '?taxrate_id=#taxrate_id#&show');

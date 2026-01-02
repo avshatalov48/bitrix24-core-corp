@@ -27,8 +27,8 @@ if (!CModule::IncludeModule('crm'))
 
 Container::getInstance()->getLocalization()->loadMessages();
 
-$currentUserID = CCrmSecurityHelper::GetCurrentUserID();
-$CrmPerms = CCrmPerms::GetCurrentUserPermissions();
+$userPermissionsService = \Bitrix\Crm\Service\Container::getInstance()->getUserPermissions();
+$currentUserID = \Bitrix\Crm\Service\Container::getInstance()->getContext()->getUserId();
 
 $arParams['PATH_TO_COMPANY_LIST'] = CrmCheckPath(
 	'PATH_TO_COMPANY_LIST',
@@ -92,11 +92,7 @@ else
 	$arResult['CATEGORY_ID'] = (int)($arParams['CATEGORY_ID'] ?? 0);
 }
 
-if ($CrmPerms->HavePerm(
-	(new \Bitrix\Crm\Category\PermissionEntityTypeHelper(CCrmOwnerType::Company))
-		->getPermissionEntityTypeForCategory($arResult['CATEGORY_ID']),
-	BX_CRM_PERM_NONE)
-)
+if (!$userPermissionsService->entityType()->canReadItemsInCategory(CCrmOwnerType::Company, $arResult['CATEGORY_ID']))
 {
 	return;
 }
@@ -133,13 +129,12 @@ $isInSlider = (isset($arParams['IN_SLIDER']) && $arParams['IN_SLIDER'] === 'Y');
 
 if ($arParams['TYPE'] === 'list')
 {
-	$bRead = CCrmCompany::CheckReadPermission(0, $CrmPerms, $arResult['CATEGORY_ID']);
-	$bExport = CCrmCompany::CheckExportPermission($CrmPerms, $arResult['CATEGORY_ID']);
-	$bImport = CCrmCompany::CheckImportPermission($CrmPerms, $arResult['CATEGORY_ID']);
-	$bAdd = CCrmCompany::CheckCreatePermission($CrmPerms, $arResult['CATEGORY_ID']);
-	$bWrite = CCrmCompany::CheckUpdatePermission(0, $CrmPerms, $arResult['CATEGORY_ID']);
+	$bRead = $userPermissionsService->entityType()->canReadItemsInCategory(CCrmOwnerType::Company, $arResult['CATEGORY_ID']);
+	$bExport = $userPermissionsService->entityType()->canExportItemsInCategory(CCrmOwnerType::Company, $arResult['CATEGORY_ID']);
+	$bImport = $userPermissionsService->entityType()->canImportItemsInCategory(CCrmOwnerType::Company, $arResult['CATEGORY_ID']);
+	$bWrite = $userPermissionsService->entityType()->canUpdateItemsInCategory(CCrmOwnerType::Company, $arResult['CATEGORY_ID']);
 	$bDelete = false;
-	$bDedupe = $bRead && $bWrite && CCrmCompany::CheckDeletePermission(0, $CrmPerms, $arResult['CATEGORY_ID']);
+	$bDedupe = $bRead && $bWrite && $userPermissionsService->entityType()->canDeleteItemsInCategory(CCrmOwnerType::Company, $arResult['CATEGORY_ID']);
 }
 else
 {
@@ -147,11 +142,12 @@ else
 	$bImport = false;
 	$bDedupe = false;
 
-	$bRead = CCrmCompany::CheckReadPermission($arParams['ELEMENT_ID'], $CrmPerms, $arResult['CATEGORY_ID']);
-	$bAdd = CCrmCompany::CheckCreatePermission($CrmPerms, $arResult['CATEGORY_ID']);
-	$bWrite = CCrmCompany::CheckUpdatePermission($arParams['ELEMENT_ID'], $CrmPerms, $arResult['CATEGORY_ID']);
-	$bDelete = CCrmCompany::CheckDeletePermission($arParams['ELEMENT_ID'], $CrmPerms, $arResult['CATEGORY_ID']);
+	$bRead = $userPermissionsService->item()->canRead(CCrmOwnerType::Company, $arParams['ELEMENT_ID']);
+	$bWrite = $userPermissionsService->item()->canUpdate(CCrmOwnerType::Company, $arParams['ELEMENT_ID']);
+	$bDelete = $userPermissionsService->item()->canDelete(CCrmOwnerType::Company, $arParams['ELEMENT_ID']);
+
 }
+$bAdd = $userPermissionsService->entityType()->canAddItemsInCategory(CCrmOwnerType::Company, $arResult['CATEGORY_ID']);
 
 $isSliderEnabled = \CCrmOwnerType::IsSliderEnabled(\CCrmOwnerType::Company);
 
@@ -228,7 +224,7 @@ if ($arParams['TYPE'] === 'details')
 		;
 		if ($category && $category->getCode())
 		{
-			$analyticsEventBuilder->setP2WithValueNormalization('category', $category->getCode());
+			$analyticsEventBuilder->setP3WithValueNormalization('category', $category->getCode());
 		}
 
 		$copyUrl = $analyticsEventBuilder
@@ -296,7 +292,7 @@ if($arParams['TYPE'] === 'list')
 	;
 	if ($category && $category->getCode())
 	{
-		$analyticsEventBuilder->setP2WithValueNormalization('category', $category->getCode());
+		$analyticsEventBuilder->setP3WithValueNormalization('category', $category->getCode());
 	}
 
 	if ($isMyCompanyMode)
@@ -304,7 +300,7 @@ if($arParams['TYPE'] === 'list')
 		$analyticsEventBuilder
 			->setSection(\Bitrix\Crm\Integration\Analytics\Dictionary::SECTION_MYCOMPANY)
 			->setSubSection(\Bitrix\Crm\Integration\Analytics\Dictionary::SUB_SECTION_LIST)
-			->setP3WithBooleanValue('myCompany', true)
+			->setP4WithBooleanValue('myCompany', true)
 		;
 	}
 	else
@@ -447,9 +443,6 @@ if($arParams['TYPE'] === 'list')
 			'ONCLICK' => "BX.UI.StepProcessing.ProcessManager.get('{$stExportId}_EXCEL').showDialog()",
 			'ICON' => 'btn-export'
 		);
-
-		$arResult['BUTTONS'][] = array('SEPARATOR' => true);
-
 
 		unset($entityType, $stExportId, $randomSequence, $stExportManagerId);
 	}
@@ -693,7 +686,7 @@ if ($bAdd && $arParams['TYPE'] != 'list' && $arParams['TYPE'] !== 'portrait')
 
 if ($arParams['TYPE'] == 'show')
 {
-	if (!$isMyCompanyMode && CCrmDeal::CheckCreatePermission($CrmPerms))
+	if (!$isMyCompanyMode && $userPermissionsService->entityType()->canAddItems(CCrmOwnerType::Deal))
 	{
 		$arResult['BUTTONS'][] = array(
 			'TEXT' => GetMessage('COMPANY_ADD_DEAL'),
@@ -706,7 +699,7 @@ if ($arParams['TYPE'] == 'show')
 		);
 	}
 
-	if (!$isMyCompanyMode && !$CrmPerms->HavePerm('CONTACT', BX_CRM_PERM_NONE, 'ADD'))
+	if (!$isMyCompanyMode && $userPermissionsService->entityType()->canAddItems(CCrmOwnerType::Contact))
 	{
 		$arResult['BUTTONS'][] = array(
 			'TEXT' => GetMessage('COMPANY_ADD_CONTACT'),

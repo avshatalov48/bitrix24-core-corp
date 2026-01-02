@@ -10,22 +10,19 @@
 
 use Bitrix\Main\Loader;
 use Bitrix\Main\Localization\Loc;
-
 use Bitrix\Socialnetwork\Item\Workgroup;
 use Bitrix\Tasks\Access\TaskAccessController;
 use Bitrix\Tasks\CheckList\Task\TaskCheckListFacade;
 use Bitrix\Tasks\CheckList\Template\TemplateCheckListFacade;
 use Bitrix\Tasks\CheckList\Internals\CheckList;
 use Bitrix\Tasks\Comments\Task\CommentPoster;
-use Bitrix\Tasks\Flow\Access\FlowAccessController;
-use Bitrix\Tasks\Flow\Access\FlowAction;
 use Bitrix\Tasks\Helper\Analytics;
 use Bitrix\Tasks\Internals\Log\Logger;
 use \Bitrix\Tasks\Internals\Task\FavoriteTable;
 use Bitrix\Tasks\Internals\Task\MetaStatus;
+use Bitrix\Tasks\Internals\Task\ProjectDependenceTable;
 use Bitrix\Tasks\Internals\Task\Status;
 use Bitrix\Tasks\Internals\Task\TimeUnitType;
-use \Bitrix\Tasks\Task\DependenceTable;
 use \Bitrix\Tasks\Integration;
 use \Bitrix\Tasks\Integration\Rest\Task\UserField;
 use \Bitrix\Tasks\Integration\Disk\Rest\Attachment;
@@ -36,6 +33,14 @@ use \Bitrix\Tasks\ActionFailedException;
 use \Bitrix\Tasks\ActionNotAllowedException;
 use \Bitrix\Tasks\ActionRestrictedException;
 use \Bitrix\Tasks\Access\ActionDictionary;
+use Bitrix\Tasks\V2\FormV2Feature;
+use Bitrix\Tasks\V2\Internal\DI\Container;
+use Bitrix\Tasks\V2\Internal\Repository\Mapper\Task\Gantt\LinkTypeMapper;
+use Bitrix\Tasks\V2\Internal\Service\Task\Action\Update\Config\UpdateConfig;
+use Bitrix\Tasks\V2\Internal\Entity\Task\Gantt\LinkType;
+use Bitrix\Tasks\V2\Public\Command\Gantt\AddDependenceCommand;
+use Bitrix\Tasks\V2\Public\Command\Gantt\DeleteDependenceCommand;
+use Bitrix\Tasks\V2\Public\Command\Gantt\UpdateDependenceCommand;
 
 Loc::loadMessages(__FILE__);
 
@@ -46,17 +51,75 @@ interface CTaskItemInterface
 	public function getFiles();
 	public function getDependsOn();
 	public function getAllowedActions();
+
+	/**
+	 * @deprecated
+	 * @TasksV2
+	 * @use \Bitrix\Tasks\V2\Public\Command\Task\Status\StartTaskCommand
+	 */
 	public function startExecution();
+
+	/**
+	 * @deprecated
+	 * @TasksV2
+	 * @use \Bitrix\Tasks\V2\Public\Command\Task\Status\PauseTaskCommand
+	 */
 	public function pauseExecution();
+
+	/**
+	 * @deprecated
+	 * @TasksV2
+	 * @use \Bitrix\Tasks\V2\Public\Command\Task\Status\DeferTaskCommand
+	 */
 	public function defer();
+
+	/**
+	 * @deprecated
+	 * @TasksV2
+	 * @use \Bitrix\Tasks\V2\Public\Command\Task\Status\CompleteTaskCommand
+	 */
 	public function complete();
 	public function delete();
 	public function update($arNewTaskData);
+
+	/**
+	 * @deprecated
+	 * @TasksV2
+	 */
 	public function accept();
+
+	/**
+	 * @deprecated
+	 * @TasksV2
+	 * @use \Bitrix\Tasks\V2\Public\Command\Task\Stakeholder\DelegateCommand
+	 */
 	public function delegate($newResponsibleId);
+
+	/**
+	 * @deprecated
+	 * @TasksV2
+	 */
 	public function decline($reason = '');
+
+	/**
+	 * @deprecated
+	 * @TasksV2
+	 * @use \Bitrix\Tasks\V2\Public\Command\Task\Status\RenewTaskCommand
+	 */
 	public function renew();
+
+	/**
+	 * @deprecated
+	 * @TasksV2
+	 * @use \Bitrix\Tasks\V2\Public\Command\Task\Status\ApproveTaskCommand
+	 */
 	public function approve();
+
+	/**
+	 * @deprecated
+	 * @TasksV2
+	 * @use \Bitrix\Tasks\V2\Public\Command\Task\Status\DisapproveTaskCommand
+	 */
 	public function disapprove();
 	public function getId();		// returns tasks id
 	public function getExecutiveUserId();	// returns user id used for rights check
@@ -67,19 +130,19 @@ interface CTaskItemInterface
 	 * @deprecated
 	 */
 	public function isActionAllowed($actionId);
+	/**
+	 * @deprecated
+	 * @use \Bitrix\Tasks\V2\Public\Command\Task\Audit\UnwatchTaskCommand
+	 */
 	public function stopWatch();		// exclude itself from auditors
-	public function startWatch();		// include itself to auditors
-	public function isUserRole($roleId);
-	public function checkAccess($actionId); // see the full list of actions in ActionDictionary
 
 	/**
-	 * Remove file attached to task
-	 *
-	 * @param integer $fileId
-	 * @throws TasksException
-	 * @throws CTaskAssertException
+	 * @deprecated
+	 * @use \Bitrix\Tasks\V2\Public\Command\Task\Audit\WatchTaskCommand
 	 */
-	public function removeAttachedFile($fileId);
+	public function startWatch();		// include itself to auditors
+
+	public function checkAccess($actionId); // see the full list of actions in ActionDictionary
 
 	/**
 	 * @param integer $format one of constants:
@@ -351,7 +414,7 @@ final class CTaskItem implements CTaskItemInterface, ArrayAccess
 
 		$arParams = array_merge($parameters, array(
 			'USER_ID'			   => $executiveUserId,
-			'CHECK_RIGHTS_ON_FILES' => true
+			'CHECK_RIGHTS_ON_FILES' => true,
 		));
 
 		$o = new CTasks();
@@ -365,6 +428,7 @@ final class CTaskItem implements CTaskItemInterface, ArrayAccess
 		try
 		{
 			$newTaskItem = new CTaskItem( (int) $rc, $executiveUserId);
+			static::sendTaskCreateAnalytics($arNewTaskData, (int)$executiveUserId, true, $newTaskItem->getId());
 		}
 		catch (TasksException | CTaskAssertException $e)
 		{
@@ -401,7 +465,7 @@ final class CTaskItem implements CTaskItemInterface, ArrayAccess
 		'CLONE_TAGS' => true,
 		'CLONE_REMINDERS' => true,
 		'CLONE_TASK_DEPENDENCY' => true,
-		'CLONE_FILES' => true
+		'CLONE_FILES' => true,
 	))
 	{
 		if(!is_array($overrideTaskData))
@@ -490,7 +554,7 @@ final class CTaskItem implements CTaskItemInterface, ArrayAccess
 					$cliCloneData = array(
 						'TITLE' => 				$cliData['TITLE'],
 						'IS_COMPLETE' => 		$cliData['IS_COMPLETE'],
-						'SORT_INDEX' => 			$cliData['SORT_INDEX']
+						'SORT_INDEX' => 			$cliData['SORT_INDEX'],
 					);
 
 					CTaskCheckListItem::add($clone, $cliCloneData);
@@ -509,7 +573,7 @@ final class CTaskItem implements CTaskItemInterface, ArrayAccess
 							$oTag = new CTaskTags();
 							$oTag->Add(array(
 								'TASK_ID' => 	$taskDupId,
-								'NAME' => 		$tag
+								'NAME' => 		$tag,
 							), $this->getExecutiveUserId());
 						}
 					}
@@ -539,7 +603,7 @@ final class CTaskItem implements CTaskItemInterface, ArrayAccess
 					{
 						$depInstance->Add(array(
 							'TASK_ID' => $taskDupId,
-							'DEPENDS_ON_ID' => $item['DEPENDS_ON_ID']
+							'DEPENDS_ON_ID' => $item['DEPENDS_ON_ID'],
 						));
 					}
 				}
@@ -637,9 +701,9 @@ final class CTaskItem implements CTaskItemInterface, ArrayAccess
 				$data = $taskInstance->getData();
 
 				$cloneInstances = $taskInstance->duplicate(array(
-					'PARENT_ID' => isset($idMap[$data['PARENT_ID']]) ? $idMap[$data['PARENT_ID']] : $cloneTaskInstance->getId()
+					'PARENT_ID' => isset($idMap[$data['PARENT_ID']]) ? $idMap[$data['PARENT_ID']] : $cloneTaskInstance->getId(),
 				), array(
-					'CLONE_CHILD_TASKS' => false
+					'CLONE_CHILD_TASKS' => false,
 				));
 				if(is_array($cloneInstances) && !empty($cloneInstances))
 				{
@@ -700,7 +764,7 @@ final class CTaskItem implements CTaskItemInterface, ArrayAccess
 		'CREATE_MULTITASK' => true,
 
 		'BEFORE_ADD_CALLBACK' => null,
-		'SPAWNED_BY_AGENT' => false
+		'SPAWNED_BY_AGENT' => false,
 	))
 	{
 		CTaskAssert::assertLaxIntegers($executiveUserId);
@@ -768,11 +832,11 @@ final class CTaskItem implements CTaskItemInterface, ArrayAccess
 		$arFields = $arTemplate;
 
 		$arFields['CREATED_DATE'] = \Bitrix\Tasks\UI::formatDateTime($userTime);
-		$arFields['ACCOMPLICES'] = unserialize($arFields['ACCOMPLICES'], ['allowed_classes' => false]);
-		$arFields['AUDITORS'] = unserialize($arFields['AUDITORS'], ['allowed_classes' => false]);
-		$arFields['TAGS'] = unserialize($arFields['TAGS'], ['allowed_classes' => false]);
-		$arFields['FILES'] = unserialize($arFields['FILES'], ['allowed_classes' => false]);
-		$arFields['DEPENDS_ON'] = unserialize($arFields['DEPENDS_ON'], ['allowed_classes' => false]);
+		$arFields['ACCOMPLICES'] = unserialize($arFields['ACCOMPLICES'] ?? '', ['allowed_classes' => false]);
+		$arFields['AUDITORS'] = unserialize($arFields['AUDITORS'] ?? '', ['allowed_classes' => false]);
+		$arFields['TAGS'] = unserialize($arFields['TAGS'] ?? '', ['allowed_classes' => false]);
+		$arFields['FILES'] = unserialize($arFields['FILES'] ?? '', ['allowed_classes' => false]);
+		$arFields['DEPENDS_ON'] = unserialize($arFields['DEPENDS_ON'] ?? '', ['allowed_classes' => false]);
 		$arFields['REPLICATE'] = 'N';
 		$arFields['CHANGED_BY'] = $arFields['CREATED_BY'];
 		$arFields['CHANGED_DATE'] = $arFields['CREATED_DATE'];
@@ -790,7 +854,7 @@ final class CTaskItem implements CTaskItemInterface, ArrayAccess
 
 		unset($arFields['ID'], $arFields['REPLICATE'], $arFields['REPLICATE_PARAMS']);
 
-		$datePlanValues = array('DEADLINE', 'START_DATE_PLAN', 'END_DATE_PLAN');
+		$datePlanValues = array('START_DATE_PLAN', 'END_DATE_PLAN');
 		foreach ($datePlanValues as $value)
 		{
 			if ($arTemplate[$value.'_AFTER'])
@@ -798,6 +862,19 @@ final class CTaskItem implements CTaskItemInterface, ArrayAccess
 				$newValue = $userTime + $arTemplate[$value.'_AFTER'];
 				$arFields[$value] = \Bitrix\Tasks\UI::formatDateTime($newValue);
 			}
+		}
+
+		if ($arTemplate['DEADLINE_AFTER'])
+		{
+			$calendar = \Bitrix\Tasks\Integration\Calendar\Calendar::createFromPortalSchedule();
+
+			$arFields['DEADLINE'] = $calendar->getClosestDate(
+				new \Bitrix\Main\Type\DateTime(),
+				$arTemplate['DEADLINE_AFTER'],
+				$arTemplate['MATCH_WORK_TIME'] === 'Y',
+			);
+
+			unset($arFields['MATCH_WORK_TIME']);
 		}
 
 		$multitaskMode = false;
@@ -826,7 +903,7 @@ final class CTaskItem implements CTaskItemInterface, ArrayAccess
 
 		// add main task to the create list
 		$tasksToCreate = array(
-			$arFields
+			$arFields,
 		);
 
 		// if MULTITASK where set to Y, create a duplicate task for each of RESPONSIBLES
@@ -885,7 +962,7 @@ final class CTaskItem implements CTaskItemInterface, ArrayAccess
 				{
 					$task = static::add($arFields, $executiveUserId, array(
 						'SPAWNED_BY_AGENT' => !!$parameters['SPAWNED_BY_AGENT'],
-						'CLONE_DISK_FILE_ATTACHMENT' => true
+						'CLONE_DISK_FILE_ATTACHMENT' => true,
 					));
 					$taskId = $task->getId();
 				}
@@ -984,7 +1061,7 @@ final class CTaskItem implements CTaskItemInterface, ArrayAccess
 		'CHILD_TEMPLATE_DATA' =>	array(),
 
 		'BEFORE_ADD_CALLBACK' =>	null,
-		'SPAWNED_BY_AGENT' =>		false
+		'SPAWNED_BY_AGENT' =>		false,
 	))
 	{
 		$templateId = (int) $templateId;
@@ -1127,7 +1204,7 @@ final class CTaskItem implements CTaskItemInterface, ArrayAccess
 		// get check lists
 		$res = \Bitrix\Tasks\Internals\Task\Template\CheckListTable::getListByTemplateDependency($templateId, array(
 			'order' => array('SORT' => 'ASC'),
-			'select' => array('ID', 'TEMPLATE_ID', 'IS_COMPLETE', 'SORT_INDEX', 'TITLE')
+			'select' => array('ID', 'TEMPLATE_ID', 'IS_COMPLETE', 'SORT_INDEX', 'TITLE'),
 		));
 		while($item = $res->fetch())
 		{
@@ -1155,7 +1232,7 @@ final class CTaskItem implements CTaskItemInterface, ArrayAccess
 		$this->markCacheAsDirty();
 		return (array('taskId', 'executiveUserId', 'arTaskData',
 			'arTaskAllowedActions', 'arTaskUserRoles', 'arTaskTags',
-			'arTaskFiles', 'arTaskDependsOn'
+			'arTaskFiles', 'arTaskDependsOn',
 		));
 	}
 
@@ -1576,50 +1653,85 @@ final class CTaskItem implements CTaskItemInterface, ArrayAccess
 
 
 	/**
-	 * Delegate task to some responsible person (only subordinate users allowed)
-	 *
-	 * @param integer $newResponsibleId user id of new responsible person
-	 * @throws TasksException, including codes TE_TRYED_DELEGATE_TO_WRONG_PERSON,
-	 * TE_ACTION_NOT_ALLOWED, TE_ACTION_FAILED_TO_BE_PROCESSED,
-	 * TE_TASK_NOT_FOUND_OR_NOT_ACCESSIBLE
+	 * @deprecated
+	 * @TasksV2
+	 * @use \Bitrix\Tasks\V2\Public\Command\Task\Stakeholder\DelegateCommand
 	 */
 	public function delegate($newResponsibleId, array $params=array())
 	{
+		if (FormV2Feature::isOn('status'))
+		{
+			try
+			{
+				$arTaskData = $this->getData();
+			}
+			catch (TasksException $e)
+			{
+				throw new TasksException(Loc::getMessage('TASKS_ACTION_NOT_ALLOWED'), TasksException::TE_ACTION_NOT_ALLOWED | TasksException::TE_ACCESS_DENIED);
+			}
+
+			$model = \Bitrix\Tasks\Access\Model\TaskModel::createFromArray(
+				['RESPONSIBLE_ID' => (int)$newResponsibleId],
+				$arTaskData,
+			);
+
+			$this->checkAccessIfRequired(ActionDictionary::ACTION_TASK_DELEGATE, $params, $model);
+
+			$config = $this->createConfig($params);
+
+			(new \Bitrix\Tasks\V2\Public\Command\Task\Stakeholder\DelegateCommand(
+				taskId: $this->getId(),
+				responsibleId: (int)$newResponsibleId,
+				config: $config,
+			))->run();
+
+			$this->markCacheAsDirty();
+
+			return;
+		}
+
 		$this->proceedAction(
 			self::ACTION_DELEGATE,
 			[
 				'RESPONSIBLE_ID' => $newResponsibleId,
-				'PARAMETERS' => $params
+				'PARAMETERS' => $params,
 			]
 		);
 	}
 
 
 	/**
-	 * Decline task
-	 *
-	 * @param string $reason reason by which task declined
-	 * @throws TasksException, including codes TE_ACTION_NOT_ALLOWED,
-	 * TE_ACTION_FAILED_TO_BE_PROCESSED,
-	 * TE_TASK_NOT_FOUND_OR_NOT_ACCESSIBLE
-	 *
 	 * @deprecated
+	 * @TasksV2
 	 */
 	public function decline($reason = '')
 	{
-		$this->proceedAction(
-			self::ACTION_DECLINE,
-			array('DECLINE_REASON' => $reason)
-		);
+		throw new TasksException(Loc::getMessage('TASKS_ACTION_NOT_ALLOWED'), TasksException::TE_ACTION_NOT_ALLOWED | TasksException::TE_ACCESS_DENIED);
 	}
 
 	/**
-	 * @param array $params
-	 *
-	 * @throws TasksException
+	 * @deprecated
+	 * @TasksV2
+	 * @use \Bitrix\Tasks\V2\Public\Command\Task\Status\StartTaskCommand
 	 */
 	public function startExecution(array $params=array())
 	{
+		if (FormV2Feature::isOn('status'))
+		{
+			$this->checkAccessIfRequired(ActionDictionary::ACTION_TASK_START, $params);
+
+			$config = $this->createConfig($params);
+
+			(new \Bitrix\Tasks\V2\Public\Command\Task\Status\StartTaskCommand(
+				taskId: $this->getId(),
+				config: $config,
+			))->run();
+
+			$this->markCacheAsDirty();
+
+			return;
+		}
+
 		$this->proceedAction(self::ACTION_START, ['PARAMETERS' => $params]);
 	}
 
@@ -1641,32 +1753,108 @@ final class CTaskItem implements CTaskItemInterface, ArrayAccess
 	}
 
 	/**
-	 * @param array $params
-	 *
-	 * @throws TasksException
+	 * @deprecated
+	 * @TasksV2
+	 * @use \Bitrix\Tasks\V2\Public\Command\Task\Status\PauseTaskCommand
 	 */
 	public function pauseExecution(array $params=array())
 	{
+		if (FormV2Feature::isOn('status'))
+		{
+			$this->checkAccessIfRequired(ActionDictionary::ACTION_TASK_PAUSE, $params);
+
+			$config = $this->createConfig($params);
+
+			(new \Bitrix\Tasks\V2\Public\Command\Task\Status\PauseTaskCommand(
+				taskId: $this->getId(),
+				config: $config,
+			))->run();
+
+			$this->markCacheAsDirty();
+
+			return;
+		}
+
 		$this->proceedAction(self::ACTION_PAUSE, ['PARAMETERS' => $params]);
 	}
 
 	/**
-	 * @param array $params
-	 *
-	 * @throws TasksException
+	 * @deprecated
+	 * @TasksV2
+	 * @use \Bitrix\Tasks\V2\Public\Command\Task\Status\DeferTaskCommand
 	 */
 	public function defer(array $params=array())
 	{
+		if (FormV2Feature::isOn('status'))
+		{
+			$this->checkAccessIfRequired(ActionDictionary::ACTION_TASK_DEFER, $params);
+
+			$config = $this->createConfig($params);
+
+			(new \Bitrix\Tasks\V2\Public\Command\Task\Status\DeferTaskCommand(
+				taskId: $this->getId(),
+				config: $config,
+			))->run();
+
+			$this->markCacheAsDirty();
+
+			return;
+		}
+
 		$this->proceedAction(self::ACTION_DEFER, ['PARAMETERS' => $params]);
 	}
 
 	/**
-	 * @param array $params
-	 *
-	 * @throws TasksException
+	 * @deprecated
+	 * @TasksV2
+	 * @use \Bitrix\Tasks\V2\Public\Command\Task\Status\CompleteTaskCommand
 	 */
 	public function complete(array $params=array())
 	{
+		if (FormV2Feature::isOn('status'))
+		{
+			try
+			{
+				$arTaskData = $this->getData();
+			}
+			catch (TasksException $e)
+			{
+				throw new TasksException(Loc::getMessage('TASKS_ACTION_NOT_ALLOWED'), TasksException::TE_ACTION_NOT_ALLOWED | TasksException::TE_ACCESS_DENIED);
+			}
+
+			$skipAccess = false;
+
+			$isAdmin = User::isSuper($this->executiveUserId);
+			$isCreator = (int)$arTaskData['CREATED_BY'] === $this->executiveUserId;
+			$isCreatorDirector = User::isBoss($arTaskData['CREATED_BY'], $this->executiveUserId);
+
+			if (
+				($isAdmin || $isCreator || $isCreatorDirector)
+				&& $arTaskData['TASK_CONTROL'] === 'Y'
+				&& $this->checkAccess(ActionDictionary::ACTION_TASK_APPROVE)
+			)
+			{
+				$skipAccess = true;
+			}
+
+			if (!$skipAccess)
+			{
+				$this->checkAccessIfRequired(ActionDictionary::ACTION_TASK_COMPLETE, $params);
+			}
+
+			$config = $this->createConfig($params);
+
+			(new \Bitrix\Tasks\V2\Public\Command\Task\Status\CompleteTaskCommand(
+				taskId: $this->getId(),
+				config: $config
+			))->run();
+
+			$this->markCacheAsDirty();
+
+
+			return;
+		}
+
 		$this->proceedAction(self::ACTION_COMPLETE, ['PARAMETERS' => $params]);
 	}
 
@@ -1678,6 +1866,39 @@ final class CTaskItem implements CTaskItemInterface, ArrayAccess
 		if (empty($arNewTaskData))
 		{
 			return;
+		}
+
+		$request = \Bitrix\Main\Context::getCurrent()->getRequest();
+
+		if (
+			$request->get('deadline')
+			|| (isset($arNewTaskData['DEADLINE']) && !empty($arNewTaskData['DEADLINE']))
+		)
+		{
+			$subSection = 'list';
+			if ($request->get('viewType') === 'VIEW_MODE_LIST')
+			{
+				$subSection = 'list';
+			}
+			else if ($request->get('personal') === 'Y')
+			{
+				$subSection = 'planner';
+			}
+			else if ($request->get('personal') === 'N')
+			{
+				$subSection = 'kanban';
+			}
+			else if ($request->get('timeline') === 'Y')
+			{
+				$subSection = 'deadline';
+			}
+
+			Analytics::getInstance($this->executiveUserId)->onTaskUpdate(
+				event: Analytics::EVENT['deadline_set'],
+				section: Analytics::SECTION['tasks'],
+				subSection: Analytics::SUB_SECTION[$subSection],
+				element: Analytics::ELEMENT['context_menu'],
+			);
 		}
 
 		$this->proceedAction(
@@ -1692,15 +1913,39 @@ final class CTaskItem implements CTaskItemInterface, ArrayAccess
 
 
 	/**
+	 * @param integer $userId
+	 *
+	 * @throws TasksException
+	 * @deprecated
+	 * @use \Bitrix\Tasks\V2\Public\Command\Task\Audit\UnwatchTaskCommand
 	 * Remove $userId (or executive user) from the auditor list for the task
 	 *
-	 * @param integer $userId
-	 * @throws TasksException
 	 */
 	public function stopWatch($userId = 0)
 	{
 		// Force reload cache
 		$this->markCacheAsDirty();
+
+		if (FormV2Feature::isOn('watch'))
+		{
+			if (!TaskAccessController::can($this->executiveUserId, ActionDictionary::ACTION_TASK_READ, $this->getId()))
+			{
+				static::throwExceptionVerbose();
+			}
+
+			$result = (new \Bitrix\Tasks\V2\Public\Command\Task\Audit\UnwatchTaskCommand(
+				taskId: $this->getId(),
+				userId: $this->executiveUserId,
+				auditorId: $userId ?: $this->executiveUserId
+			))->run();
+
+			if (!$result->isSuccess())
+			{
+				static::throwExceptionVerbose($result->getErrorMessages());
+			}
+
+			return;
+		}
 
 		try
 		{
@@ -1727,7 +1972,7 @@ final class CTaskItem implements CTaskItemInterface, ArrayAccess
 			$o = new CTasks();
 			$arParams = array(
 				'USER_ID'               => $this->executiveUserId,
-				'CHECK_RIGHTS_ON_FILES' => true
+				'CHECK_RIGHTS_ON_FILES' => true,
 			);
 
 			/** @noinspection PhpDeprecationInspection */
@@ -1739,15 +1984,41 @@ final class CTaskItem implements CTaskItemInterface, ArrayAccess
 	}
 
 	/**
+	 * @param integer $userId
+	 *
+	 * @throws TasksException
+	 * @deprecated
+	 * @use \Bitrix\Tasks\V2\Public\Command\Task\Audit\WatchTaskCommand
+	 *
 	 * Add $userId (or executive user) to the auditor list for the task
 	 *
-	 * @param integer $userId
-	 * @throws TasksException
 	 */
 	public function startWatch($userId = 0, $bSkipNotification = false)
 	{
 		// Force reload cache
 		$this->markCacheAsDirty();
+
+		if (FormV2Feature::isOn('watch'))
+		{
+			if (!TaskAccessController::can($this->executiveUserId, ActionDictionary::ACTION_TASK_READ, $this->getId()))
+			{
+				static::throwExceptionVerbose();
+			}
+
+			$result = (new \Bitrix\Tasks\V2\Public\Command\Task\Audit\WatchTaskCommand(
+				taskId: $this->getId(),
+				userId: $this->executiveUserId,
+				auditorId: $userId ?: $this->executiveUserId,
+				skipNotification: (bool)$bSkipNotification,
+			))->run();
+
+			if (!$result->isSuccess())
+			{
+				static::throwExceptionVerbose($result->getErrorMessages());
+			}
+
+			return;
+		}
 
 		try
 		{
@@ -1773,7 +2044,7 @@ final class CTaskItem implements CTaskItemInterface, ArrayAccess
 			$arParams = array(
 				'USER_ID'               => $this->executiveUserId,
 				'CHECK_RIGHTS_ON_FILES' => true,
-				'SKIP_NOTIFICATION' => $bSkipNotification
+				'SKIP_NOTIFICATION' => $bSkipNotification,
 			);
 
 			/** @noinspection PhpDeprecationInspection */
@@ -1787,39 +2058,88 @@ final class CTaskItem implements CTaskItemInterface, ArrayAccess
 
 	/**
 	 * @deprecated
+	 * @TasksV2
 	 */
 	public function accept()
 	{
-		$this->proceedAction(self::ACTION_ACCEPT);
+		throw new TasksException(Loc::getMessage('TASKS_ACTION_NOT_ALLOWED'), TasksException::TE_ACTION_NOT_ALLOWED | TasksException::TE_ACCESS_DENIED);
 	}
 
 	/**
-	 * @param array $params
-	 *
-	 * @throws TasksException
+	 * @deprecated
+	 * @TasksV2
+	 * @use \Bitrix\Tasks\V2\Public\Command\Task\Status\RenewTaskCommand
 	 */
 	public function renew(array $params = array())
 	{
+		if (FormV2Feature::isOn('status'))
+		{
+			$this->checkAccessIfRequired(ActionDictionary::ACTION_TASK_RENEW, $params);
+
+			$config = $this->createConfig($params);
+
+			(new \Bitrix\Tasks\V2\Public\Command\Task\Status\RenewTaskCommand(
+				taskId: $this->getId(),
+				config: $config,
+			))->run();
+
+			$this->markCacheAsDirty();
+
+			return;
+		}
+
 		$this->proceedAction(self::ACTION_RENEW, ['PARAMETERS' => $params]);
 	}
 
 	/**
-	 * @param array $params
-	 *
-	 * @throws TasksException
+	 * @deprecated
+	 * @TasksV2
+	 * @use \Bitrix\Tasks\V2\Public\Command\Task\Status\ApproveTaskCommand
 	 */
 	public function approve(array $params = array())
 	{
+		if (FormV2Feature::isOn('status'))
+		{
+			$this->checkAccessIfRequired(ActionDictionary::ACTION_TASK_APPROVE, $params);
+
+			$config = $this->createConfig($params);
+
+			(new \Bitrix\Tasks\V2\Public\Command\Task\Status\ApproveTaskCommand(
+				taskId: $this->getId(),
+				config: $config,
+			))->run();
+
+			$this->markCacheAsDirty();
+
+			return;
+		}
+
 		$this->proceedAction(self::ACTION_APPROVE, ['PARAMETERS' => $params]);
 	}
 
 	/**
-	 * @param array $params
-	 *
-	 * @throws TasksException
+	 * @deprecated
+	 * @TasksV2
+	 * @use \Bitrix\Tasks\V2\Public\Command\Task\Status\DisapproveTaskCommand
 	 */
 	public function disapprove(array $params = array())
 	{
+		if (FormV2Feature::isOn('status'))
+		{
+			$this->checkAccessIfRequired(ActionDictionary::ACTION_TASK_DISAPPROVE, $params);
+
+			$config = $this->createConfig($params);
+
+			(new \Bitrix\Tasks\V2\Public\Command\Task\Status\DisapproveTaskCommand(
+				taskId: $this->getId(),
+				config: $config,
+			))->run();
+
+			$this->markCacheAsDirty();
+
+			return;
+		}
+
 		$this->proceedAction(self::ACTION_DISAPPROVE, ['PARAMETERS' => $params]);
 	}
 
@@ -2106,7 +2426,7 @@ final class CTaskItem implements CTaskItemInterface, ArrayAccess
 				if (isset($arParams['LOAD_PARAMETERS']))
 				{
 					$res = \Bitrix\Tasks\Internals\Task\ParameterTable::getList(array('filter' => array(
-						'TASK_ID' => $arTasksIDs
+						'TASK_ID' => $arTasksIDs,
 					)));
 					while($paramItem = $res->fetch())
 					{
@@ -2180,8 +2500,9 @@ final class CTaskItem implements CTaskItemInterface, ArrayAccess
 	}
 
 	/**
-	 * @throws CTaskAssertException
-	 * @throws TasksException
+	 * @deprecated
+	 * @TasksV2
+	 * @use \Bitrix\Tasks\V2\Public\Command\Task\UpdateTaskCommand
 	 */
 	private function proceedActionEdit($arActionArguments, $arTaskData)
 	{
@@ -2236,7 +2557,7 @@ final class CTaskItem implements CTaskItemInterface, ArrayAccess
 
 		$arParams = array_merge($arParams, array(
 			'USER_ID'               => $this->executiveUserId,
-			'CHECK_RIGHTS_ON_FILES' => true
+			'CHECK_RIGHTS_ON_FILES' => true,
 		));
 
 		$prevGroupId = (int) $arTaskData['GROUP_ID'];
@@ -2244,6 +2565,36 @@ final class CTaskItem implements CTaskItemInterface, ArrayAccess
 		$this->checkProjectDates($arTaskData, $arFields); //
 
 		$this->markCacheAsDirty();
+
+		if (isset($arActionArguments['FIELDS']['CHECKLIST']))
+		{
+			$analytics = Analytics::getInstance($this->executiveUserId);
+
+			$checklistParents = [];
+			foreach ($arActionArguments['FIELDS']['CHECKLIST'] as $item)
+			{
+				if (isset($item["PARENT_NODE_ID"]) && $item["PARENT_NODE_ID"] !== "0")
+				{
+					$checklistParents[$item["PARENT_NODE_ID"]] = true;
+				}
+			}
+
+			$checkListPointsCount = array_reduce($arTaskData['CHECKLIST'], static fn($carry, $item) => $carry + ($item['IS_COMPLETE'] === 'Y' ? 1 : 0), 0);
+
+			$analytics->onTaskUpdate(
+				event: Analytics::EVENT['add_checklist'],
+				section: Analytics::SECTION[$analytics->getTaskContext($this->taskId)],
+				element: Analytics::ELEMENT['checklist_button'],
+				subSection: Analytics::SUB_SECTION['existing'],
+				params: [
+					'p1' => $analytics->getIsDemoParameter(),
+					'p2' => 'checklistCount_' . (string)count($checklistParents),
+					'p3' => 'viewersCount_' . (string)count($arTaskData['AUDITORS']),
+					'p4' => 'checklistpointsCount_' . (string)$checkListPointsCount,
+					'p5' => 'coexecutorsCount_' . (string)count($arTaskData['ACCOMPLICES']),
+				],
+			);
+		}
 
 		$o = new CTasks();
 		/** @noinspection PhpDeprecationInspection */
@@ -2267,6 +2618,10 @@ final class CTaskItem implements CTaskItemInterface, ArrayAccess
 		return;
 	}
 
+	/**
+	 * @deprecated
+	 * @use \Bitrix\Tasks\V2\Public\Command\Task\Favorite\ToggleFavoriteCommand
+	 */
 	private function proceedActionFavorite($arActionArguments)
 	{
 		if(!is_array($arActionArguments))
@@ -2283,23 +2638,37 @@ final class CTaskItem implements CTaskItemInterface, ArrayAccess
 			$tellSocnet = $arActionArguments['TELL_SOCNET'] == 'Y' || $arActionArguments['TELL_SOCNET'] === true;
 		}
 
-		$f = 'toggle';
+		// drop cache
+		$this->markCacheAsDirty();
 
 		// ensure we have access to the task
 		$this->checkCanReadThrowException();
 
-		// drop cache
-		$this->markCacheAsDirty();
+		if (FormV2Feature::isOn('favorite'))
+		{
+			$result = (new \Bitrix\Tasks\V2\Public\Command\Task\Favorite\ToggleFavoriteCommand(
+				taskId: $this->getId(),
+				userId: $this->executiveUserId,
+				notifyLivefeed: $tellSocnet
+			))->run();
+
+			if ($result->isSuccess())
+			{
+				return $result->getDataByKey('isFavorite');
+			}
+
+			return false;
+		}
 
 		// here could be trouble: socnet doesn`t know anything aboult child tasks
 		// in case of a ticket came, get all child tasks IDs here, pass ID list to \Bitrix\Tasks\Integration\Socialnetwork\Task::toggleFavorites()
 		// and also pass ID list as a cache to FavoriteTable::$f to avoid calling same query twice
 
-		$res = FavoriteTable::$f(array(
+		$res = FavoriteTable::toggle(array(
 			'TASK_ID' => $this->getId(),
-			'USER_ID' => $this->executiveUserId
+			'USER_ID' => $this->executiveUserId,
 		), array(
-			'AFFECT_CHILDREN' => $addChildren
+			'AFFECT_CHILDREN' => $addChildren,
 		));
 
 		if(!$res->isSuccess())
@@ -2320,7 +2689,7 @@ final class CTaskItem implements CTaskItemInterface, ArrayAccess
 			\Bitrix\Tasks\Integration\Socialnetwork\Task::toggleFavorites(array(
 				'TASK_ID' => $this->getId(),
 				'USER_ID' => $this->executiveUserId,
-				'OPERATION' => $add ? 'ADD' : 'DELETE'
+				'OPERATION' => $add ? 'ADD' : 'DELETE',
 			));
 		}
 
@@ -2405,7 +2774,7 @@ final class CTaskItem implements CTaskItemInterface, ArrayAccess
 			in_array($actionId, [
 				ActionDictionary::ACTION_TASK_FAVORITE,
 				ActionDictionary::ACTION_TASK_FAVORITE_ADD,
-				ActionDictionary::ACTION_TASK_FAVORITE_DELETE
+				ActionDictionary::ACTION_TASK_FAVORITE_DELETE,
 			])
 		)
 		{
@@ -2437,6 +2806,10 @@ final class CTaskItem implements CTaskItemInterface, ArrayAccess
 
 		switch ($actionId)
 		{
+			/**
+			 * @deprecated
+			 * @TasksV2
+			 */
 			case ActionDictionary::ACTION_TASK_ACCEPT:
 				$arNewFields['STATUS'] = Status::PENDING;
 			break;
@@ -2445,6 +2818,10 @@ final class CTaskItem implements CTaskItemInterface, ArrayAccess
 				$arNewFields['STATUS'] = $arActionArguments['FIELDS']['STATUS'];
 			break;
 
+			/**
+			 * @deprecated
+			 * @TasksV2
+			 */
 			case ActionDictionary::ACTION_TASK_DECLINE:
 				$arNewFields['STATUS'] = Status::DECLINED;
 
@@ -2454,6 +2831,11 @@ final class CTaskItem implements CTaskItemInterface, ArrayAccess
 					$arNewFields['DECLINE_REASON'] = '';
 			break;
 
+			/**
+			 * @deprecated
+			 * @TasksV2
+			 * @use \Bitrix\Tasks\V2\Public\Command\Task\Status\CompleteTaskCommand
+			 */
 			case ActionDictionary::ACTION_TASK_COMPLETE:
 				$isAdmin = User::isSuper($this->executiveUserId);
 				$isCreator = $arTaskData['CREATED_BY'] == $this->executiveUserId;
@@ -2485,19 +2867,34 @@ final class CTaskItem implements CTaskItemInterface, ArrayAccess
 
 				break;
 
+			/**
+			 * @deprecated
+			 * @TasksV2
+			 * @use \Bitrix\Tasks\V2\Public\Command\Task\Status\ApproveTaskCommand
+			 */
 			case ActionDictionary::ACTION_TASK_APPROVE:
 				$arNewFields['STATUS'] = Status::COMPLETED;
 			break;
 
+			/**
+			 * @deprecated
+			 * @TasksV2
+			 * @use \Bitrix\Tasks\V2\Public\Command\Task\Status\StartTaskCommand
+			 */
 			case ActionDictionary::ACTION_TASK_START:
 				$arNewFields['STATUS'] = Status::IN_PROGRESS;
 			break;
 
 			case ActionDictionary::ACTION_TASK_TAKE:
 				$arNewFields['STATUS'] = Status::IN_PROGRESS;
-				$arNewFields['HIMSELF_FLOW_TAKE_USER_ID'] = $this->getExecutiveUserId();
+				$arNewFields['RESPONSIBLE_ID'] = $this->getExecutiveUserId();
 			break;
 
+			/**
+			 * @deprecated
+			 * @TasksV2
+			 * @use \Bitrix\Tasks\V2\Public\Command\Task\Status\PauseTaskCommand
+			 */
 			case ActionDictionary::ACTION_TASK_PAUSE:
 				$arNewFields['STATUS'] = Status::PENDING;
 			break;
@@ -2549,6 +2946,11 @@ final class CTaskItem implements CTaskItemInterface, ArrayAccess
 
 			break;
 
+			/**
+			 * @deprecated
+			 * @TasksV2
+			 * @use \Bitrix\Tasks\V2\Public\Command\Task\Stakeholder\SetAccomplicesCommand
+			 */
 			case ActionDictionary::ACTION_TASK_CHANGE_ACCOMPLICES:
 				if (!$arNewFields || !array_key_exists('ACCOMPLICES', $arNewFields))
 				{
@@ -2568,10 +2970,21 @@ final class CTaskItem implements CTaskItemInterface, ArrayAccess
 				$arNewFields['MARK'] = $arActionArguments['FIELDS']['MARK'];
 			break;
 
+			/**
+			 * @deprecated
+			 * @TasksV2
+			 * @use \Bitrix\Tasks\V2\Public\Command\Task\Status\DeferTaskCommand
+			 */
 			case ActionDictionary::ACTION_TASK_DEFER:
 				$arNewFields['STATUS'] = Status::DEFERRED;
 			break;
 
+			/**
+			 * @deprecated
+			 * @TasksV2
+			 * @use \Bitrix\Tasks\V2\Public\Command\Task\Status\DisapproveTaskCommand
+			 * @use \Bitrix\Tasks\V2\Public\Command\Task\Status\RenewTaskCommand
+			 */
 			case ActionDictionary::ACTION_TASK_DISAPPROVE:
 			case ActionDictionary::ACTION_TASK_RENEW:
 				$arNewFields['STATUS'] = Status::PENDING;
@@ -2861,28 +3274,6 @@ final class CTaskItem implements CTaskItemInterface, ArrayAccess
 		return $userRole;
 	}
 
-	private function getUserRoles()
-	{
-		try
-		{
-			$arTask = $this->getData($bEscaped = false);
-		}
-		catch (TasksException $e)
-		{
-			return [];
-		}
-
-		$userId = $this->executiveUserId;
-
-		// Is there precached data?
-		if ($this->arTaskUserRoles === null)
-		{
-			$this->arTaskUserRoles = self::getUserRolesArray($userId, $arTask);
-		}
-
-		return ($this->arTaskUserRoles);
-	}
-
 	private function throwExceptionNotAccessible()
 	{
 		throw new TasksException('Task not found or not accessible', TasksException::TE_TASK_NOT_FOUND_OR_NOT_ACCESSIBLE);
@@ -2928,25 +3319,31 @@ final class CTaskItem implements CTaskItemInterface, ArrayAccess
 		return ($this->arTaskDependsOn);
 	}
 
-	public function addProjectDependence($parentId, $linkType = DependenceTable::LINK_TYPE_FINISH_START)
+	/**
+	 * @deprecated
+	 *
+	 * @use AddDependenceCommand
+	 */
+	public function addProjectDependence($parentId, $linkType = ProjectDependenceTable::LINK_TYPE_FINISH_START)
 	{
 		$exceptionInfo = array(
 			'AUX' => array(
 				'MESSAGE' => array(
 					'FROM_TASK_ID' => $parentId,
 					'TASK_ID' => $this->getId(),
-					'LINK_TYPE' => $linkType
-				)
-			)
+					'LINK_TYPE' => $linkType,
+				),
+			),
 		);
 
-		if(!\Bitrix\Tasks\Util\Restriction::checkCanCreateDependence())
+		$tariffService = Container::getInstance()->getTariffService();
+		if(!$tariffService->canCreateDependence($this->executiveUserId))
 		{
 			$exceptionInfo['ERROR'] = array(
 				array(
 					'CODE' => 'TRIAL_EXPIRED',
-					'MESSAGE' => Loc::getMessage('TASKS_TRIAL_PERIOD_EXPIRED')
-				)
+					'MESSAGE' => Loc::getMessage('TASKS_TRIAL_PERIOD_EXPIRED'),
+				),
 			);
 
 			throw new ActionRestrictedException(Loc::getMessage('TASK_CANT_ADD_LINK'), $exceptionInfo);
@@ -2957,10 +3354,28 @@ final class CTaskItem implements CTaskItemInterface, ArrayAccess
 			$parentTask = CTaskItem::getInstanceFromPool($parentId, $this->executiveUserId);
 			if($parentTask->checkAccess(ActionDictionary::ACTION_TASK_DEADLINE))
 			{
+				if (FormV2Feature::isOn('gantt'))
+				{
+					$mapper = new LinkTypeMapper();
+
+					$result = (new AddDependenceCommand(
+						taskId: $this->taskId,
+						dependentId: (int)$parentId,
+						userId: $this->executiveUserId,
+						linkType: $mapper->mapToEnum($linkType) ?? LinkType::FinishStart,
+					))->run();
+
+					if (!$result->isSuccess())
+					{
+						throw new ActionFailedException($result->getError()?->getMessage(), $exceptionInfo);
+					}
+
+					return;
+				}
+
 				// DependenceTable does not care about PARENT_ID relations and other restrictions except
 				// those which may compromise dependence mechanism logic
 				// so PARENT_ID check and DATE assignment are placed outside
-
 				$errors = array();
 				if($this->checkIsSubtaskOf($parentId) || $parentTask->checkIsSubtaskOf($this->getId()))
 				{
@@ -2980,11 +3395,11 @@ final class CTaskItem implements CTaskItemInterface, ArrayAccess
 						throw new ActionFailedException(Loc::getMessage('TASK_CANT_ADD_LINK'), $exceptionInfo);
 					}
 
-					$result = DependenceTable::createLink($this->getId(), $parentId, array(
+					$result = ProjectDependenceTable::createLink($this->getId(), $parentId, array(
 						//'TASK_DATA' => 			$this->getData(false),
 						//'PARENT_TASK_DATA' => 	$parentTask->getData(false),
 						'LINK_TYPE' => $linkType,
-						'CREATOR_ID' => $this->executiveUserId
+						'CREATOR_ID' => $this->executiveUserId,
 					));
 					if(!$result->isSuccess())
 					{
@@ -3005,64 +3420,31 @@ final class CTaskItem implements CTaskItemInterface, ArrayAccess
 		throw new ActionNotAllowedException(Loc::getMessage('TASK_CANT_ADD_LINK'), $exceptionInfo);
 	}
 
+	/**
+	 * @deprecated
+	 *
+	 * @use \Bitrix\Tasks\V2\Internal\Service\Task\ParentService::isDescendantOf
+	 */
 	public function checkIsSubtaskOf($taskId)
 	{
-		$met = array();
-		$exitLimit = 1000;
-
-		// recursive queries, no tree structure here
-
-		$task = $this->getId();
-		$met[$task] = true;
-		$i = 0;
-		while(true)
-		{
-			if($i === 0)
-			{
-				$parent = $this['PARENT_ID'];
-			}
-			else
-			{
-				$parent = CTasks::getParentOfTask($task);
-			}
-
-			if(isset($met[$parent])) // chain is loopy
-			{
-				return false;
-			}
-			if($i > $exitLimit) // smth is too wrong
-			{
-				return false;
-			}
-
-			if($parent === false || !intval($parent)) // no parent anymore
-			{
-				return false;
-			}
-
-			if($parent == $taskId) // found
-			{
-				return true;
-			}
-
-			$met[$parent] = true;
-			$task = $parent;
-			$i++;
-		}
-
-		return false;
+		return Container::getInstance()->getParentService()->isDescendantOf($this->getId(), (int)$taskId);
 	}
 
-	public function updateProjectDependence($parentId, $linkType = DependenceTable::LINK_TYPE_FINISH_START)
+	/**
+	 * @deprecated
+	 *
+	 * @use UpdateDependenceCommand
+	 */
+	public function updateProjectDependence($parentId, $linkType = ProjectDependenceTable::LINK_TYPE_FINISH_START)
 	{
 		$exceptionInfo = array(
 			'AUX' => array(
 				'MESSAGE' => array(
 					'FROM_TASK_ID' => $parentId,
 					'TASK_ID' => $this->getId(),
-					'LINK_TYPE' => $linkType
-				)
-			)
+					'LINK_TYPE' => $linkType,
+				),
+			),
 		);
 
 		if($this->checkAccess(ActionDictionary::ACTION_TASK_DEADLINE))
@@ -3070,11 +3452,29 @@ final class CTaskItem implements CTaskItemInterface, ArrayAccess
 			$parentTask = CTaskItem::getInstanceFromPool($parentId, $this->executiveUserId);
 			if($parentTask->checkAccess(ActionDictionary::ACTION_TASK_DEADLINE))
 			{
-				$result = DependenceTable::update(array(
+				if (FormV2Feature::isOn('gantt'))
+				{
+					$mapper = new LinkTypeMapper();
+
+					$result = (new UpdateDependenceCommand(
+						taskId: $this->taskId,
+						dependentId: (int)$parentId,
+						linkType: $mapper->mapToEnum($linkType) ?? LinkType::FinishStart,
+					))->run();
+
+					if (!$result->isSuccess())
+					{
+						throw new ActionFailedException($result->getError()?->getMessage(), $exceptionInfo);
+					}
+
+					return;
+				}
+
+				$result = ProjectDependenceTable::update(array(
 					'TASK_ID' => $this->getId(),
 					'DEPENDS_ON_ID' => $parentId,
 				), array(
-					'TYPE' => $linkType
+					'TYPE' => $linkType,
 				));
 				if(!$result->isSuccess())
 				{
@@ -3088,6 +3488,11 @@ final class CTaskItem implements CTaskItemInterface, ArrayAccess
 		throw new ActionNotAllowedException(Loc::getMessage('TASK_CANT_UPDATE_LINK'), $exceptionInfo);
 	}
 
+	/**
+	 * @deprecated
+	 *
+	 * @use DeleteDependenceCommand
+	 */
 	public function deleteProjectDependence($parentId)
 	{
 		$exceptionInfo = array(
@@ -3096,8 +3501,8 @@ final class CTaskItem implements CTaskItemInterface, ArrayAccess
 					'FROM_TASK_ID' => $parentId,
 					'TASK_ID' => $this->getId(),
 					//'LINK_TYPE' => $linkType
-				)
-			)
+				),
+			),
 		);
 
 		if($this->checkAccess(ActionDictionary::ACTION_TASK_DEADLINE))
@@ -3105,7 +3510,22 @@ final class CTaskItem implements CTaskItemInterface, ArrayAccess
 			$parentTask = CTaskItem::getInstanceFromPool($parentId, $this->executiveUserId);
 			if($parentTask->checkAccess(ActionDictionary::ACTION_TASK_DEADLINE))
 			{
-				$result = DependenceTable::deleteLink($this->getId(), $parentId);
+				if (FormV2Feature::isOn('gantt'))
+				{
+					$result = (new DeleteDependenceCommand(
+						taskId: $this->taskId,
+						dependentId: (int)$parentId,
+					))->run();
+
+					if (!$result->isSuccess())
+					{
+						throw new ActionFailedException($result->getError()?->getMessage(), $exceptionInfo);
+					}
+
+					return;
+				}
+
+				$result = ProjectDependenceTable::deleteLink($this->getId(), $parentId);
 				if(!$result->isSuccess())
 				{
 					$exceptionInfo['ERROR'] = $result->getErrorMessages();
@@ -3144,7 +3564,7 @@ final class CTaskItem implements CTaskItemInterface, ArrayAccess
 			// translate file UF values
 			$result = UserField::postProcessValues($result, array(
 				'FIELDS' => static::getEntityUserFields(),
-				'SERVER' => $parameters['SERVER']
+				'SERVER' => $parameters['SERVER'],
 			));
 			$result = $result['UF_TASK_WEBDAV_FILES'];
 		}
@@ -3158,7 +3578,7 @@ final class CTaskItem implements CTaskItemInterface, ArrayAccess
 				// translate file UF values
 				$result = UserField::postProcessValues($result, array(
 					'FIELDS' => static::getEntityUserFields(),
-					'SERVER' => $parameters['SERVER']
+					'SERVER' => $parameters['SERVER'],
 				));
 				if(isset($result['UF_TASK_WEBDAV_FILES'][0]))
 				{
@@ -3188,7 +3608,7 @@ final class CTaskItem implements CTaskItemInterface, ArrayAccess
 			// translate file UF values
 			$result = UserField::postProcessValues($result, array(
 				'FIELDS' => static::getEntityUserFields(),
-				'SERVER' => $parameters['SERVER']
+				'SERVER' => $parameters['SERVER'],
 			));
 		}
 
@@ -3411,7 +3831,7 @@ final class CTaskItem implements CTaskItemInterface, ArrayAccess
 		$attachmentId = (int) Attachment::add($this->getId(), $fileParameters, array(
 			'USER_ID' => $GLOBALS['USER']->GetId(),
 			'ENTITY_ID' => UserField::getTargetEntityId(),
-			'FIELD_NAME' => 'UF_TASK_WEBDAV_FILES'
+			'FIELD_NAME' => 'UF_TASK_WEBDAV_FILES',
 		));
 
 		// drop cache
@@ -3428,7 +3848,7 @@ final class CTaskItem implements CTaskItemInterface, ArrayAccess
 		Attachment::delete($this->getId(), $attachmentId, array(
 			'USER_ID' => $GLOBALS['USER']->GetId(),
 			'ENTITY_ID' => UserField::getTargetEntityId(),
-			'FIELD_NAME' => 'UF_TASK_WEBDAV_FILES'
+			'FIELD_NAME' => 'UF_TASK_WEBDAV_FILES',
 		));
 
 		// drop cache
@@ -3451,21 +3871,63 @@ final class CTaskItem implements CTaskItemInterface, ArrayAccess
 		return $entityUserFields;
 	}
 
-	protected static function sendTaskCreateAnalytics(array $fields, int $userId, bool $status = false): void
+	protected static function sendTaskCreateAnalytics(array $fields, int $userId, bool $status = false, int $taskId = 0): void
 	{
 		if (!empty($fields['TASKS_ANALYTICS_SECTION']))
 		{
 			$parentId = (int)($fields['PARENT_ID'] ?? null);
-			$event = $parentId ? Analytics::EVENT['subtask_add'] : Analytics::EVENT['task_create'];
 
-			Analytics::getInstance($userId)->onTaskCreate(
+			$analytics = Analytics::getInstance($userId);
+
+			$params = [
+				'p1' => $analytics->getIsDemoParameter(),
+				'p2' => $analytics->getUserTypeParameter(),
+				'p3' => 'viewersCount_' . count($fields['AUDITORS'] ?? []),
+			];
+
+			if (
+				$taskId > 0
+				&& $analytics->getCollabIdFromTask($taskId) > 0
+			)
+			{
+				$params['p4'] = $analytics->getCollabParameter($analytics->getCollabIdFromTask($taskId));
+			}
+
+			$event = Analytics::EVENT['task_create'];
+			if (
+				$parentId
+				&& $parentId > 0
+			)
+			{
+				$event = Analytics::EVENT['subtask_add'];
+			}
+			else if (
+				isset($fields['CHECKLIST'])
+				&& is_array($fields['CHECKLIST'])
+				&& count($fields['CHECKLIST']) > 0
+			)
+			{
+				$event = Analytics::EVENT['task_create_with_checklist'];
+
+				$checklistParents = array_filter(
+					$fields['CHECKLIST'],
+					static function($item)
+					{
+						return is_array($item) && $item['PARENT_NODE_ID'] === '0';
+					}
+				);
+
+				$params['p5'] = 'checklistCount_' . (string)(count($checklistParents));
+			}
+
+			$analytics->onTaskCreate(
 				$fields['TASKS_ANALYTICS_CATEGORY'] ?: Analytics::TASK_CATEGORY,
 				$event,
 				$fields['TASKS_ANALYTICS_SECTION'],
 				$fields['TASKS_ANALYTICS_ELEMENT'] ?? null,
 				$fields['TASKS_ANALYTICS_SUB_SECTION'] ?? null,
 				$status,
-				$fields['TASKS_ANALYTICS_PARAMS'] ?? [],
+				$params,
 			);
 		}
 	}
@@ -3517,24 +3979,24 @@ final class CTaskItem implements CTaskItemInterface, ArrayAccess
 					'allowedKeys' =>  $arFilterableTaskDataKeys,
 					'allowedKeyPrefixes' => array(
 						'=', '!=', '%', '!%', '?', '><',
-						'!><', '>=', '>', '<', '<=', '!'
-					)
+						'!><', '>=', '>', '<', '<=', '!',
+					),
 				),
 				array(
 					'description' => 'arParams',
 					'type'        => 'array',
-					'allowedKeys' =>  array('NAV_PARAMS', 'LOAD_TAGS')
+					'allowedKeys' =>  array('NAV_PARAMS', 'LOAD_TAGS'),
 				),
 				array(
 					'description' => 'arSelect',
 					'type'        => 'array',
-				)
+				),
 			),
 			'allowedKeysInReturnValue' => array_merge(
 				$arReadableTaskDataKeys,
 				array('ALLOWED_ACTIONS', 'TAGS')
 			),
-			'collectionInReturnValue'  => true
+			'collectionInReturnValue'  => true,
 		);
 
 		$favoriteParameters = array('AFFECT_CHILDREN');
@@ -3550,7 +4012,7 @@ final class CTaskItem implements CTaskItemInterface, ArrayAccess
 			'REST: available methods' => array(
 				'getmanifest' => array(
 					'staticMethod' => true,
-					'params'       => array()
+					'params'       => array(),
 				),
 
 				'getlist' => $listMethodData, // temporal fix: implement method aliasing later
@@ -3562,69 +4024,69 @@ final class CTaskItem implements CTaskItemInterface, ArrayAccess
 						array(
 							'description' => 'arNewTaskData',
 							'type'        => 'array',
-							'allowedKeys' => $arWritableTaskDataKeys
-						)
-					)
+							'allowedKeys' => $arWritableTaskDataKeys,
+						),
+					),
 				),
 				'getexecutiveuserid' => array(
 					'mandatoryParamsCount' => 1,
 					'params' => array(
 						array(
 							'description' => 'taskId',
-							'type'        => 'integer'
-						)
-					)
+							'type'        => 'integer',
+						),
+					),
 				),
 				'getdata' => array(
 					'mandatoryParamsCount' => 1,
 					'params' => array(
 						array(
 							'description' => 'taskId',
-							'type'        => 'integer'
+							'type'        => 'integer',
 						),
 						array(
 							'description'  => 'isReturnEscapedData',
 							'type'         => 'boolean',
-							'defaultValue' =>  false
-						)
+							'defaultValue' =>  false,
+						),
 					),
-					'allowedKeysInReturnValue' => $arReadableTaskDataKeys
+					'allowedKeysInReturnValue' => $arReadableTaskDataKeys,
 				),
 				'getdescription' => array(
 					'mandatoryParamsCount' => 1,
 					'params' => array(
 						array(
 							'description' => 'taskId',
-							'type'        => 'integer'
+							'type'        => 'integer',
 						),
 						array(
 							'description' => 'format',
-							'type'        => 'integer'
-						)
-					)
+							'type'        => 'integer',
+						),
+					),
 				),
 				'getfiles' => array(
 					'mandatoryParamsCount' => 1,
 					'params' => array(
 						array(
 							'description' => 'taskId',
-							'type'        => 'integer'
-						)
+							'type'        => 'integer',
+						),
 					),
-					'runAs' => 'getattachmentids'
+					'runAs' => 'getattachmentids',
 				),
 				'addfile' => array(
 					'mandatoryParamsCount' => 3,
 					'params' => array(
 						array(
 							'description' => 'taskId',
-							'type'        => 'integer'
+							'type'        => 'integer',
 						),
 						array(
 							'description' => 'fileParameters',
 							'type'        => 'array',
-							'allowedKeys' => array('NAME', 'CONTENT')
-						)
+							'allowedKeys' => array('NAME', 'CONTENT'),
+						),
 					),
 				),
 				'deletefile' => array(
@@ -3632,11 +4094,11 @@ final class CTaskItem implements CTaskItemInterface, ArrayAccess
 					'params' => array(
 						array(
 							'description' => 'taskId',
-							'type'        => 'integer'
+							'type'        => 'integer',
 						),
 						array(
 							'description' => 'fileId',
-							'type'        => 'integer'
+							'type'        => 'integer',
 						),
 					),
 				),
@@ -3645,18 +4107,18 @@ final class CTaskItem implements CTaskItemInterface, ArrayAccess
 					'params' => array(
 						array(
 							'description' => 'taskId',
-							'type'        => 'integer'
-						)
-					)
+							'type'        => 'integer',
+						),
+					),
 				),
 				'getdependson' => array(
 					'mandatoryParamsCount' => 1,
 					'params' => array(
 						array(
 							'description' => 'taskId',
-							'type'        => 'integer'
-						)
-					)
+							'type'        => 'integer',
+						),
+					),
 				),
 				'getallowedtaskactions' => array(
 					'alias'                => 'getallowedactions',
@@ -3664,163 +4126,163 @@ final class CTaskItem implements CTaskItemInterface, ArrayAccess
 					'params' => array(
 						array(
 							'description' => 'taskId',
-							'type'        => 'integer'
-						)
-					)
+							'type'        => 'integer',
+						),
+					),
 				),
 				'getallowedtaskactionsasstrings' => array(
 					'mandatoryParamsCount' => 1,
 					'params' => array(
 						array(
 							'description' => 'taskId',
-							'type'        => 'integer'
-						)
-					)
+							'type'        => 'integer',
+						),
+					),
 				),
 				'isactionallowed' => array(
 					'mandatoryParamsCount' => 2,
 					'params' => array(
 						array(
 							'description' => 'taskId',
-							'type'        => 'integer'
+							'type'        => 'integer',
 						),
 						array(
 							'description' => 'actionId',
-							'type'        => 'integer'
+							'type'        => 'integer',
 						),
 						array(
 							'description' => 'userId',
-							'type'        => 'integer'
-						)
-					)
+							'type'        => 'integer',
+						),
+					),
 				),
 				'delete' => array(
 					'mandatoryParamsCount' => 1,
 					'params' => array(
 						array(
 							'description' => 'taskId',
-							'type'        => 'integer'
-						)
-					)
+							'type'        => 'integer',
+						),
+					),
 				),
 				'delegate' => array(
 					'mandatoryParamsCount' => 2,
 					'params' => array(
 						array(
 							'description' => 'taskId',
-							'type'        => 'integer'
+							'type'        => 'integer',
 						),
 						array(
 							'description' => 'userId',
-							'type'        => 'integer'
-						)
-					)
+							'type'        => 'integer',
+						),
+					),
 				),
 				'startexecution' => array(
 					'mandatoryParamsCount' => 1,
 					'params' => array(
 						array(
 							'description' => 'taskId',
-							'type'        => 'integer'
-						)
-					)
+							'type'        => 'integer',
+						),
+					),
 				),
 				'pauseexecution' => array(
 					'mandatoryParamsCount' => 1,
 					'params' => array(
 						array(
 							'description' => 'taskId',
-							'type'        => 'integer'
-						)
-					)
+							'type'        => 'integer',
+						),
+					),
 				),
 				'defer' => array(
 					'mandatoryParamsCount' => 1,
 					'params' => array(
 						array(
 							'description' => 'taskId',
-							'type'        => 'integer'
-						)
-					)
+							'type'        => 'integer',
+						),
+					),
 				),
 				'complete' => array(
 					'mandatoryParamsCount' => 1,
 					'params' => array(
 						array(
 							'description' => 'taskId',
-							'type'        => 'integer'
-						)
-					)
+							'type'        => 'integer',
+						),
+					),
 				),
 				'update' => array(
 					'mandatoryParamsCount' => 1,
 					'params' => array(
 						array(
 							'description' => 'taskId',
-							'type'        => 'integer'
+							'type'        => 'integer',
 						),
 						array(
 							'description' => 'arNewTaskData',
 							'type'        => 'array',
-							'allowedKeys' => $arWritableTaskDataKeys
-						)
-					)
+							'allowedKeys' => $arWritableTaskDataKeys,
+						),
+					),
 				),
 				'renew' => array(
 					'mandatoryParamsCount' => 1,
 					'params' => array(
 						array(
 							'description' => 'taskId',
-							'type'        => 'integer'
-						)
-					)
+							'type'        => 'integer',
+						),
+					),
 				),
 				'approve' => array(
 					'mandatoryParamsCount' => 1,
 					'params' => array(
 						array(
 							'description' => 'taskId',
-							'type'        => 'integer'
-						)
-					)
+							'type'        => 'integer',
+						),
+					),
 				),
 				'disapprove' => array(
 					'mandatoryParamsCount' => 1,
 					'params' => array(
 						array(
 							'description' => 'taskId',
-							'type'        => 'integer'
-						)
-					)
+							'type'        => 'integer',
+						),
+					),
 				),
 				'addtofavorite' => array(
 					'mandatoryParamsCount' => 1,
 					'params' => array(
 						array(
 							'description' => 'taskId',
-							'type'        => 'integer'
+							'type'        => 'integer',
 						),
 						array(
 							'description' => 'parameters',
 							'type'        => 'array',
-							'allowedKeys' => $favoriteParameters
-						)
-					)
+							'allowedKeys' => $favoriteParameters,
+						),
+					),
 				),
 				'deletefromfavorite' => array(
 					'mandatoryParamsCount' => 1,
 					'params' => array(
 						array(
 							'description' => 'taskId',
-							'type'        => 'integer'
+							'type'        => 'integer',
 						),
 						array(
 							'description' => 'parameters',
 							'type'        => 'array',
-							'allowedKeys' => $favoriteParameters
-						)
-					)
-				)
+							'allowedKeys' => $favoriteParameters,
+						),
+					),
+				),
 			),
 		));
 	}
@@ -4160,7 +4622,7 @@ final class CTaskItem implements CTaskItemInterface, ArrayAccess
 		if((string)$this->arTaskData['DURATION_TYPE'] === '' || !in_array((string)$this->arTaskData['DURATION_TYPE'], [
 			TimeUnitType::DAY,
 			TimeUnitType::HOUR,
-			TimeUnitType::MINUTE
+			TimeUnitType::MINUTE,
 		], true))
 		{
 			return TimeUnitType::HOUR;
@@ -4266,22 +4728,25 @@ final class CTaskItem implements CTaskItemInterface, ArrayAccess
 		throw new \Bitrix\Main\NotAllowedException('Manual managing of task data is not allowed');
 	}
 
-	############################################################################################
-	### Deprecated
-	############################################################################################
-
-	/**
-	 * @deprecated
-	 */
-	public function addDependOn($parentId, $linkType = DependenceTable::LINK_TYPE_FINISH_START)
+	private function createConfig(array $parameters = []): UpdateConfig
 	{
-		$this->addProjectDependence($parentId, $linkType);
+		return UpdateConfig::createFromArray(
+			userId: $this->executiveUserId,
+			parameters: $parameters,
+		);
 	}
-	/**
-	 * @deprecated
-	 */
-	public function deleteDependOn($parentId)
+
+	private function checkAccessIfRequired(string $actionId, array $parameters = [], ?\Bitrix\Tasks\Access\Model\TaskModel $model = null): void
 	{
-		$this->deleteProjectDependence($parentId);
+		if (
+			!isset($parameters['SKIP_ACCESS_CONTROL'])
+			|| !$parameters['SKIP_ACCESS_CONTROL']
+		)
+		{
+			if (!TaskAccessController::can($this->executiveUserId, $actionId, $this->getId(), $model))
+			{
+				throw new TasksException(Loc::getMessage('TASKS_ACTION_NOT_ALLOWED'), TasksException::TE_ACTION_NOT_ALLOWED | TasksException::TE_ACCESS_DENIED);
+			}
+		}
 	}
 }

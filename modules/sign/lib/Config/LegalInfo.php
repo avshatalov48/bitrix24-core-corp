@@ -21,7 +21,8 @@ class LegalInfo
 	public static function unsetConfigForProfileEntityEditor(): void
 	{
 		(new EntityEditorConfiguration(self::EDITOR_CONFIG_CATEGORY_NAME))
-			->reset(self::EDITOR_CONFIG_CONFIG_ID, ['scope' => EntityEditorConfigScope::COMMON]);
+			->reset(self::EDITOR_CONFIG_CONFIG_ID, ['scope' => EntityEditorConfigScope::COMMON])
+		;
 	}
 
 	public static function onProfileConfigAdditionalBlocks(Event $event): EventResult
@@ -54,7 +55,7 @@ class LegalInfo
 					'COMPONENT_PARAMS' => $componentParams,
 				],
 			],
-			'sign'
+			'sign',
 		);
 	}
 
@@ -65,7 +66,7 @@ class LegalInfo
 				'name' => $property['FIELD_NAME'],
 				'optionFlags' => 0,
 			],
-			$userFields
+			$userFields,
 		);
 	}
 

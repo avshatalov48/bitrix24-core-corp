@@ -1,0 +1,19 @@
+<?php
+$MESS["COPILOT_FEATURE_ADVANTAGE_BUTTON_TEXT"] = "Толығырақ";
+$MESS["COPILOT_FEATURE_CHAT_DESCRIPTION"] = "Сарапшы рөлінде сұрақтарға жауап береді, идеялар ұсынады, сіз үшін мәтін жазады";
+$MESS["COPILOT_FEATURE_CHAT_TITLE"] = "CoPilot көмегімен сөйлесу";
+$MESS["COPILOT_FEATURE_CRM_ADVANTAGE_1"] = "Қоңырау жазбасын мәтінге айналдырып, мәміле өрістерін өзі толтырады";
+$MESS["COPILOT_FEATURE_CRM_ADVANTAGE_2"] = "Қоңыраудың скриптіге сәйкестігін талдайды және менеджерге ұсыныстар береді";
+$MESS["COPILOT_FEATURE_CRM_ADVANTAGE_3"] = "Әңгіменің қысқаша мазмұнын дайындайды және маңызды мәселелерді көрсетеді";
+$MESS["COPILOT_FEATURE_CRM_DESCRIPTION"] = "Сөйлесудің сату скриптіне сәйкестігін тексереді, талдап, мәтінге айналдырады, CRM өрістерін өзі толтырады";
+$MESS["COPILOT_FEATURE_CRM_TITLE"] = "CRM-дегі CoPilot";
+$MESS["COPILOT_FEATURE_DESCRIPTION"] = "Жасанды интеллект сіздің жұмысыңызды жеңілдетіп, тиімділігін арттырады";
+$MESS["COPILOT_FEATURE_FLOW_DESCRIPTION"] = "Ағынның тиімділігін бағалаңыз және процестерді қалай жақсартуға болатынын ұсыныңыз";
+$MESS["COPILOT_FEATURE_FLOW_TITLE"] = "Ағындардағы ұсыныстар";
+$MESS["COPILOT_FEATURE_FLOW_UP_ADVANTAGE_1"] = "Команданы регламент бойынша кездесулер өткізуге үйретеді";
+$MESS["COPILOT_FEATURE_FLOW_UP_ADVANTAGE_2"] = "Әр қатысушының үлесін талдайды және негізгі ойларды жазып береді";
+$MESS["COPILOT_FEATURE_FLOW_UP_ADVANTAGE_3"] = "Келісімдерді тіркейді, түйіндемесін жасап, мәтінге айналдырады ";
+$MESS["COPILOT_FEATURE_FLOW_UP_DESCRIPTION"] = "Кездесулердің тиімділігін артырады. Кездесудің түйіндемесі мен талдауын дайындап, қорытындылайды";
+$MESS["COPILOT_FEATURE_FLOW_UP_TITLE"] = "Қоңыраулардағы follow-up";
+$MESS["COPILOT_FEATURE_NEW_STATUS_TEXT"] = "Жаңа";
+$MESS["COPILOT_FEATURE_TITLE"] = "CoPilot";

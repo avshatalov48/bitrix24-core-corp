@@ -1,12 +1,17 @@
 <?php
 namespace Bitrix\Crm\Service;
 
-use Bitrix\Crm\Feature;
 use Bitrix\Crm\Integration\Intranet\SystemPageProvider\ActivityPage;
 use Bitrix\Crm\Integration\IntranetManager;
 use Bitrix\Crm\ItemIdentifier;
 use Bitrix\Crm\Security\Role\Manage\Manager\AllSelection;
 use Bitrix\Crm\Security\Role\Manage\RoleManagerSelectionFactory;
+use Bitrix\Crm\Service\Router\Component\Component;
+use Bitrix\Crm\Service\Router\Contract\PageFactory;
+use Bitrix\Crm\Service\Router\Contract\PageResolver;
+use Bitrix\Crm\Service\Router\Dto\RouterAnchor;
+use Bitrix\Crm\Service\Router\Enum\Scope;
+use Bitrix\Crm\Service\Router\Page;
 use Bitrix\Crm\Service\Router\ParseResult;
 use Bitrix\Crm\Settings\EntityViewSettings;
 use Bitrix\Intranet\Util;
@@ -23,6 +28,7 @@ use Bitrix\Main\SiteTable;
 use Bitrix\Main\Type\Date;
 use Bitrix\Main\Web\Json;
 use Bitrix\Main\Web\Uri;
+use CComponentEngine;
 
 class Router
 {
@@ -57,14 +63,18 @@ class Router
 	protected $siteData;
 	protected $customRoots = [];
 	protected array $customRootsWithoutPages = [];
-	protected string $defaultComponent = 'bitrix:crm.router.default.root';
-	protected array $defaultComponentParameters = [];
+
+	protected Router\Contract\Page $defaultPage;
+
+	protected ?PageResolver $pageResolver = null;
+	protected ?PageFactory $pageFactory = null;
 
 	public function __construct()
 	{
 		$this->root = $this->getDefaultRoot();
 		$this->isSefMode = true;
 		$this->siteId = Application::getInstance()->getContext()->getSite();
+		$this->defaultPage = new Page\ComponentPage(new Component('bitrix:crm.router.default.root'));
 
 		$this->initCustomRoots();
 	}
@@ -134,6 +144,11 @@ class Router
 		return Option::get(static::MODULE_ID, static::OPTION_DEFAULT_ROOT, static::DEFAULT_ROOT);
 	}
 
+	public function getAutomationRoot(): string
+	{
+		return '/automation/';
+	}
+
 	protected function getSiteData(): ?array
 	{
 		if ($this->siteData === null || (is_array($this->siteData) && $this->siteData['LID'] !== $this->siteId))
@@ -157,7 +172,7 @@ class Router
 		return $this->siteData;
 	}
 
-	protected function getSiteFolder(): string
+	public function getSiteFolder(): string
 	{
 		$dir = '/';
 
@@ -172,26 +187,53 @@ class Router
 
 	public function getDefaultUrlTemplates(): array
 	{
-		return [
-			'bitrix:crm.quote.details' => 'type/' . \CCrmOwnerType::Quote . '/details/#ENTITY_ID#/',
-			'bitrix:crm.invoice.details' => 'type/' . \CCrmOwnerType::SmartInvoice . '/details/#ENTITY_ID#/',
-			'bitrix:crm.document.details' => 'type/#ENTITY_TYPE_ID#/details/#ENTITY_ID#/',
-			'bitrix:crm.item.details' => 'type/#ENTITY_TYPE_ID#/details/#ENTITY_ID#/',
-			'bitrix:crm.item.kanban' => 'type/#entityTypeId#/kanban/category/#categoryId#/',
-			'bitrix:crm.type.detail' => 'type/detail/#entityTypeId#/',
-			'bitrix:crm.type.merge.resolver' => 'type/#entityTypeId#/merge/',
-			'bitrix:crm.config.perms.wrapper' => 'perms/#criterion#/',
-			'bitrix:crm.type.list' => 'type/',
-			'bitrix:crm.item.list' => 'type/#entityTypeId#/list/category/#categoryId#/',
-			'bitrix:crm.sales.tunnels' => 'type/#entityTypeId#/categories/',
-			'bitrix:crm.item.automation' => 'type/#entityTypeId#/automation/#categoryId#/',
-			'bitrix:crm.item.deadlines' => 'type/#entityTypeId#/deadlines/category/#categoryId#/',
-			'bitrix:crm.automated_solution.list' => 'type/automated_solution/list/',
-			'bitrix:crm.automated_solution.details' => 'type/automated_solution/details/#id#/',
-			'bitrix:crm.automated_solution.permissions' => 'type/automated_solution/permissions/',
-			'bitrix:crm.copilot.call.assessment.list' => 'copilot-call-assessment/',
-			'bitrix:crm.copilot.call.assessment.details.wrapper' => 'copilot-call-assessment/details/#callAssessmentId#/',
-		];
+		return $this->getPageFactory()->getStaticPagesComponentUrlMap();
+	}
+
+	public function matchPage(HttpRequest $request): Router\Contract\Page
+	{
+		return $this->getPageResolver()->resolve($request)
+			?? $this->getDefaultPage();
+	}
+
+	protected function getPageResolver(): PageResolver
+	{
+		if ($this->pageResolver === null)
+		{
+			$this->pageResolver = new Router\PageResolver($this, $this->getPageFactory());
+		}
+
+		return $this->pageResolver;
+	}
+
+	protected function getPageFactory(): PageFactory
+	{
+		if ($this->pageFactory === null)
+		{
+			$this->pageFactory = new Router\PageFactory($this);
+		}
+
+		return $this->pageFactory;
+	}
+
+	/**
+	 * @return RouterAnchor[]
+	 */
+	public function getSidePanelAnchors(): array
+	{
+		$anchors = [];
+		foreach ($this->getPageFactory()->getStaticPages() as $page)
+		{
+			foreach ($page::getSidePanelAnchorRules() as $rule)
+			{
+				$roots = array_map(static fn (Scope $scope) => $scope->roots(), $rule->getScopes());
+				$roots = array_merge(...$roots);
+
+				$anchors[] = new RouterAnchor($rule, $roots);
+			}
+		}
+
+		return $anchors;
 	}
 
 	public function getEntityTypeByComponent(string $componentName, array $componentParams): int
@@ -254,9 +296,9 @@ class Router
 
 	protected function getUrlTemplates(): array
 	{
-		return \CComponentEngine::makeComponentUrlTemplates(
+		return CComponentEngine::makeComponentUrlTemplates(
 			$this->getDefaultUrlTemplates(),
-			$this->getCustomUrlTemplates()
+			$this->getCustomUrlTemplates(),
 		);
 	}
 
@@ -326,7 +368,7 @@ class Router
 		}
 		$componentParameters = [];
 
-		$engine = new \CComponentEngine();
+		$engine = new CComponentEngine();
 		$engine->addGreedyPart('#ENTITY_TYPE_ID#');
 		$engine->setResolveCallback([self::class, 'resolveComponentEngineCallback']);
 
@@ -356,7 +398,7 @@ class Router
 		return $result;
 	}
 
-	protected function parseRequestParameters(HttpRequest $httpRequest = null): ParseResult
+	public function parseRequestParameters(HttpRequest $httpRequest = null): ParseResult
 	{
 		if (!$httpRequest)
 		{
@@ -436,7 +478,7 @@ class Router
 		{
 			if ($this->isSefMode())
 			{
-				$path = \CComponentEngine::makePathFromTemplate($template, $parameters);
+				$path = CComponentEngine::makePathFromTemplate($template, $parameters);
 				if ($path)
 				{
 					$url = new Uri($this->getFullPath($path, $entityTypeId));
@@ -504,6 +546,17 @@ class Router
 		return new Uri("/automation/type/automated_solution/details/{$automatedSolutionId}/");
 	}
 
+	public function getItemRecurringListUrl(int $entityTypeId, int $categoryId = null): ?Uri
+	{
+		return $this->getUrlForTemplate(
+			'bitrix:crm.item.recurlist',
+			[
+				'entityTypeId' => $entityTypeId,
+				'categoryId' => $categoryId ?? 0,
+			],
+		);
+	}
+
 	public function getItemListUrl(int $entityTypeId, int $categoryId = null): ?Uri
 	{
 		if ($this->isNewRoutingForListEnabled($entityTypeId))
@@ -544,12 +597,7 @@ class Router
 	 */
 	public function getPermissionsUrl(): ?Uri
 	{
-		if (Feature::enabled(Feature\PermissionsLayoutV2::class))
-		{
-			return (new AllSelection())->getUrl();
-		}
-
-		return new Uri('/crm/configs/perms/');
+		return (new AllSelection())->getUrl();
 	}
 
 	/**
@@ -595,7 +643,7 @@ class Router
 		{
 			$template = Option::get(self::MODULE_ID, 'path_to_deal_category');
 
-			return new Uri(\CComponentEngine::makePathFromTemplate($template, ['category_id' => $categoryId]));
+			return new Uri(CComponentEngine::makePathFromTemplate($template, ['category_id' => $categoryId]));
 		}
 
 		$entityName = mb_strtolower(\CCrmOwnerType::ResolveName($entityTypeId));
@@ -607,7 +655,7 @@ class Router
 		{
 			$template = Option::get(self::MODULE_ID, "path_to_{$entityName}_category");
 
-			return new Uri(\CComponentEngine::makePathFromTemplate($template, ['category_id' => $categoryId]));
+			return new Uri(CComponentEngine::makePathFromTemplate($template, ['category_id' => $categoryId]));
 		}
 
 		$template = Option::get(static::MODULE_ID, "path_to_{$entityName}_list");
@@ -616,7 +664,7 @@ class Router
 			return null;
 		}
 
-		return new Uri(\CComponentEngine::makePathFromTemplate($template));
+		return new Uri(CComponentEngine::makePathFromTemplate($template));
 	}
 
 	public function getKanbanUrl(int $entityTypeId, int $categoryId = null): ?Uri
@@ -667,7 +715,7 @@ class Router
 		{
 			$template = Option::get(self::MODULE_ID, 'path_to_deal_category_kanban');
 
-			return new Uri(\CComponentEngine::makePathFromTemplate($template, ['category_id' => $categoryId ?? 0]));
+			return new Uri(CComponentEngine::makePathFromTemplate($template, ['category_id' => $categoryId ?? 0]));
 		}
 
 		$entityName = mb_strtolower(\CCrmOwnerType::ResolveName($entityTypeId));
@@ -677,7 +725,7 @@ class Router
 			return null;
 		}
 
-		return new Uri(\CComponentEngine::makePathFromTemplate($template));
+		return new Uri(CComponentEngine::makePathFromTemplate($template));
 	}
 
 	public function getActivityUrl(int $entityTypeId, int $categoryId = null): ?Uri
@@ -700,7 +748,7 @@ class Router
 		if ($entityTypeId === \CCrmOwnerType::Quote)
 		{
 			$template = Option::get(self::MODULE_ID, 'path_to_quote_deadlines');
-			return new Uri(\CComponentEngine::makePathFromTemplate($template));
+			return new Uri(CComponentEngine::makePathFromTemplate($template));
 		}
 
 		return null;
@@ -712,7 +760,7 @@ class Router
 		{
 			$template = Option::get(self::MODULE_ID, 'path_to_activity_report');
 
-			return new Uri(\CComponentEngine::makePathFromTemplate($template));
+			return new Uri(CComponentEngine::makePathFromTemplate($template));
 		}
 
 		return null;
@@ -731,11 +779,11 @@ class Router
 			return null;
 		}
 
-		if ($entityTypeId === \CCrmOwnerType::Deal)
+		if ($entityTypeId === \CCrmOwnerType::Deal && !is_null($categoryId))
 		{
 			$template = Option::get(self::MODULE_ID, 'path_to_deal_category_activity');
 
-			return new Uri(\CComponentEngine::makePathFromTemplate($template, ['category_id' => $categoryId ?? 0]));
+			return new Uri(CComponentEngine::makePathFromTemplate($template, ['category_id' => $categoryId ?? 0]));
 		}
 
 		$entityName = mb_strtolower(\CCrmOwnerType::ResolveName($entityTypeId));
@@ -745,7 +793,7 @@ class Router
 			return null;
 		}
 
-		return new Uri(\CComponentEngine::makePathFromTemplate($template));
+		return new Uri(CComponentEngine::makePathFromTemplate($template));
 	}
 
 	protected function getKanbanUrlViaViewModeWithNewRouting(
@@ -793,7 +841,7 @@ class Router
 		{
 			$template = Option::get(self::MODULE_ID, 'path_to_deal_category_calendar');
 
-			return new Uri(\CComponentEngine::makePathFromTemplate($template, ['category_id' => $categoryId]));
+			return new Uri(CComponentEngine::makePathFromTemplate($template, ['category_id' => $categoryId]));
 		}
 
 		// to Deal/Lead
@@ -804,7 +852,7 @@ class Router
 			return null;
 		}
 
-		return new Uri(\CComponentEngine::makePathFromTemplate($template));
+		return new Uri(CComponentEngine::makePathFromTemplate($template));
 	}
 
 	public function getItemDetailUrlCompatibleTemplate(int $entityTypeId): ?string
@@ -958,7 +1006,7 @@ class Router
 			return null;
 		}
 
-		$url = new Uri(\CComponentEngine::makePathFromTemplate(
+		$url = new Uri(CComponentEngine::makePathFromTemplate(
 			$template,
 			[
 				$this->getCompatiblePlaceholder($entityTypeId) => $id,
@@ -1417,28 +1465,16 @@ class Router
 		return $this;
 	}
 
-	public function getDefaultComponent(): string
+	public function setDefaultPage(Router\Contract\Page $page): self
 	{
-		return $this->defaultComponent;
-	}
-
-	public function setDefaultComponent(string $defaultComponent): self
-	{
-		$this->defaultComponent = $defaultComponent;
+		$this->defaultPage = $page;
 
 		return $this;
 	}
 
-	public function getDefaultComponentParameters(): array
+	public function getDefaultPage(): Router\Contract\Page
 	{
-		return $this->defaultComponentParameters;
-	}
-
-	public function setDefaultComponentParameters(array $defaultComponentParameters): self
-	{
-		$this->defaultComponentParameters = $defaultComponentParameters;
-
-		return $this;
+		return $this->defaultPage;
 	}
 
 	protected function initCustomRoots(): void
@@ -1527,7 +1563,7 @@ class Router
 		{
 			return null;
 		}
-		$componentPath = \CComponentEngine::makeComponentPath($componentName);
+		$componentPath = CComponentEngine::makeComponentPath($componentName);
 		$componentPath = getLocalPath('components'.$componentPath.'/lazyload.ajax.php');
 		$url = new Uri($componentPath);
 		$url->addParams([
@@ -1549,7 +1585,7 @@ class Router
 			return null;
 		}
 
-		$componentPath = \CComponentEngine::makeComponentPath($componentName);
+		$componentPath = CComponentEngine::makeComponentPath($componentName);
 		$sliderPath = getLocalPath('components' . $componentPath . '/slider.php');
 		if (!$sliderPath)
 		{
@@ -1655,7 +1691,7 @@ class Router
 
 	public function getNumeratorSettingsUrl(int $numeratorId, string $numeratorType): ?Uri
 	{
-		$componentPath = \CComponentEngine::makeComponentPath('bitrix:main.numerator.edit');
+		$componentPath = CComponentEngine::makeComponentPath('bitrix:main.numerator.edit');
 		$componentPath = getLocalPath('components'.$componentPath.'/slider.php');
 		if (!$componentPath)
 		{
@@ -1689,7 +1725,7 @@ class Router
 	/**
 	 * @return false|string
 	 */
-	public static function resolveComponentEngineCallback(\CComponentEngine $engine, array $pageCandidates, array &$pageVariables)
+	public static function resolveComponentEngineCallback(CComponentEngine $engine, array $pageCandidates, array &$pageVariables)
 	{
 		$candidatesCount = count($pageCandidates);
 

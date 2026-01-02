@@ -1,0 +1,98 @@
+.tasks-field-date-plan {
+	cursor: pointer;
+}
+
+.tasks-field-date-plan.--readonly {
+	cursor: default;
+}
+
+.tasks-field-date-plan-date-container {
+	margin-left: var(--ui-space-inline-xs2-neg);
+}
+
+.tasks-field-date-plan-date {
+	padding-left: var(--ui-space-inline-xs);
+}
+
+.tasks-field-date-plan-content {
+	display: flex;
+	align-items: center;
+	gap: var(--ui-space-inline-xs);
+}
+
+.tasks-field-date-plan-sheet {
+	height: 100%;
+	display: flex;
+	flex-direction: column;
+}
+
+.tasks-field-date-plan-header {
+	display: flex;
+	align-items: center;
+	justify-content: space-between;
+}
+
+.tasks-field-date-plan-close {
+	--ui-icon-set__icon-color: var(--ui-color-base-4);
+	cursor: pointer;
+}
+
+.tasks-field-date-plan-description {
+	margin: var(--ui-space-stack-md2) 0;
+	color: var(--ui-color-base-3);
+}
+
+.tasks-field-date-plan-fields {
+	display: flex;
+	flex-direction: column;
+	gap: var(--ui-space-stack-md);
+	max-width: 350px;
+}
+
+.tasks-field-date-plan-duration {
+	display: flex;
+	align-items: flex-end;
+	gap: var(--ui-space-stack-sm);
+}
+
+.tasks-field-date-plan-switchers {
+	display: flex;
+	flex-direction: column;
+	gap: var(--ui-space-inset-md2);
+	margin-top: var(--ui-space-stack-5xl);
+	color: var(--ui-color-base-2);
+}
+
+.tasks-field-date-plan-switcher {
+	display: flex;
+	align-items: center;
+	gap: var(--ui-space-stack-xs2);
+	max-width: max-content;
+	cursor: pointer;
+}
+
+.tasks-field-date-plan-switcher a {
+	display: flex;
+}
+
+.tasks-hint-badge {
+	width: 14px;
+	height: 14px;
+	line-height: 14px;
+	border-radius: var(--ui-border-radius-pill);
+	border: 1px solid var(--ui-color-base-7);
+	color: var(--ui-color-base-4);
+	text-align: center;
+	font-weight: var(--ui-font-weight-medium);
+	font-size: var(--ui-font-size-sm);
+	user-select: none;
+}
+
+.tasks-field-date-plan-footer {
+	display: flex;
+	justify-content: flex-end;
+	margin-top: auto;
+	padding-right: 4px;
+	padding-top: var(--ui-space-inline-xl);
+	border-top: var(--ui-border-width-thin) solid var(--ui-color-divider-default);
+}

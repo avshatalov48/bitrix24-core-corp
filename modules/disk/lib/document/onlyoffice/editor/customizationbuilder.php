@@ -3,6 +3,7 @@
 namespace Bitrix\Disk\Document\OnlyOffice\Editor;
 
 
+use Bitrix\Main\Application;
 use Bitrix\Main\Context;
 use Bitrix\Main\Loader;
 use Bitrix\Main\Web\Uri;
@@ -111,9 +112,10 @@ final class CustomizationBuilder
 			return $mapPortalZoneToLink['com'];
 		}
 
+		$region = Application::getInstance()->getLicense()->getRegion();
 		$portalZone = \CBitrix24::getPortalZone();
 
-		return $mapPortalZoneToLink[$portalZone] ?? $mapPortalZoneToLink['com'];
+		return $mapPortalZoneToLink[$portalZone] ?? $mapPortalZoneToLink[$region] ?? $mapPortalZoneToLink['com'];
 	}
 
 	protected function getLogoForCustomerSection(): string

@@ -1,0 +1,4 @@
+<?php
+$MESS['CRM_REPEAT_SALE_SEGMENT_RESULT_LIST_ALL_DEALS_TITLE'] = 'Сделки по сценарию повторных продаж';
+$MESS['CRM_REPEAT_SALE_SEGMENT_RESULT_LIST_WIN_DEALS_TITLE'] = 'Выигранные сделки';
+$MESS['CRM_REPEAT_SALE_SEGMENT_RESULT_LIST_LOSE_DEALS_TITLE'] = 'Проигранные сделки';

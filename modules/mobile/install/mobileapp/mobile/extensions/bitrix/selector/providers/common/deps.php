@@ -9,6 +9,7 @@ return [
 		'utils/array',
 		'utils/object',
 		'utils/function',
+		'utils/hash',
 		'utils/enums/base',
 		'selector/providers/base',
 		'selector/utils/picker-cache',

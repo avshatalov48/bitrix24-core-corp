@@ -8,6 +8,8 @@ if (!defined('B_PROLOG_INCLUDED') || B_PROLOG_INCLUDED !== true)
 use Bitrix\BIConnector\Access\AccessController;
 use Bitrix\BIConnector\Access\ActionDictionary;
 use Bitrix\BIConnector\Access\Component\PermissionConfig;
+use Bitrix\BIConnector\Access\Permission\PermissionDictionary;
+use Bitrix\BIConnector\Integration\Superset\Model\SupersetDashboardGroupTable;
 use Bitrix\Main;
 use Bitrix\Main\Error;
 use Bitrix\Main\Localization\Loc;
@@ -74,6 +76,83 @@ class ApacheSupersetConfigPermissionsComponent
 
 		$this->arResult['USER_GROUPS'] = $configPermissions->getUserGroups();
 		$this->arResult['ACCESS_RIGHTS'] = $configPermissions->getAccessRights();
+		$this->arResult['NEW_GROUP_PERMISSIONS'] = PermissionDictionary::getNewGroupPermissions();
+		$this->initDashboardGroups();
+	}
+
+	private function initDashboardGroups(): void
+	{
+		$resultGroups = [];
+		$resultDashboards = [];
+		$accessibleGroupIds = [];
+
+		$allowedGroups = array_flip(
+			AccessController::getCurrent()->getAllowedGroupValue(ActionDictionary::ACTION_BIC_DASHBOARD_VIEW),
+		);
+
+		$groups = SupersetDashboardGroupTable::getList([
+			'select' => ['ID', 'NAME', 'TYPE', 'DASHBOARDS', 'SCOPE', 'DASHBOARD_SCOPES' => 'DASHBOARDS.SCOPE'],
+			'cache' => ['ttl' => 3600],
+		]);
+		while ($group = $groups->fetchObject())
+		{
+			$groupScopes = [];
+			foreach ($group->getScope() as $scope)
+			{
+				$groupScopes[] = [
+					'code' => $scope->getScopeCode(),
+					'name' => $scope->getName(),
+				];
+			}
+
+			foreach ($group->getDashboards() as $dashboard)
+			{
+				$dashboardId = $dashboard->getId();
+				if (isset($resultDashboards[$dashboardId]))
+				{
+					continue;
+				}
+
+				$resultDashboards[$dashboardId] = [
+					'id' => $dashboardId,
+					'name' => $dashboard->getTitle(),
+					'type' => $dashboard->getType(),
+					'createdById' => $dashboard->getCreatedById(),
+					'scopes' => [],
+				];
+				foreach ($dashboard->getScope() as $scope)
+				{
+					$resultDashboards[$dashboardId]['scopes'][] = [
+						'code' => $scope->getScopeCode(),
+						'name' => $scope->getName(),
+					];
+				}
+			}
+
+			$groupId = PermissionDictionary::getDashboardGroupPermissionId($group->getId());
+
+			if (isset($allowedGroups[$group->getId()]))
+			{
+				$accessibleGroupIds[] = $groupId;
+			}
+
+			$resultGroups[] = [
+				'id' => $groupId,
+				'name' => $group->getName(),
+				'type' => $group->getType(),
+				'dashboardIds' => $group->getDashboards()->getIdList(),
+				'scopes' => $groupScopes,
+			];
+		}
+
+		$this->arResult['DASHBOARD_GROUPS'] = $resultGroups;
+		$this->arResult['DASHBOARDS'] = $resultDashboards;
+		$this->arResult['USER_DATA'] = [
+			'id' => AccessController::getCurrent()->getUser()->getUserId(),
+			'isAdmin' => AccessController::getCurrent()->getUser()->isAdmin(),
+			'hasAccessToPermission' => AccessController::getCurrent()->check(ActionDictionary::ACTION_BIC_SETTINGS_EDIT_RIGHTS),
+			'accessibleGroupIds' => $accessibleGroupIds,
+		];
 	}
 
 	/**

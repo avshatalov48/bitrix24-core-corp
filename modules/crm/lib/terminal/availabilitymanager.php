@@ -2,7 +2,7 @@
 
 namespace Bitrix\Crm\Terminal;
 
-use Bitrix\Crm\Order\Permissions\Payment;
+use Bitrix\Crm\Service\Container;
 use Bitrix\Main\Application;
 
 final class AvailabilityManager
@@ -22,7 +22,10 @@ final class AvailabilityManager
 				],
 				true
 			)
-			&& Payment::checkReadPermission()
+			&&  Container::getInstance()
+				->getUserPermissions()
+				->entityType()
+				->canReadItems(\CCrmOwnerType::OrderPayment)
 		);
 	}
 

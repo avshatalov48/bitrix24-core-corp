@@ -1,0 +1,22 @@
+.sign-v2-b2e-vue-util-sign-selector__selected-item-view {
+	display: flex;
+	flex-flow: row;
+	align-items: center;
+	height: 39px;
+	border-radius: 4px;
+	border: 1px solid var(--ui-color-palette-gray-50);
+	cursor: pointer;
+	user-select: none;
+}
+.sign-v2-b2e-vue-util-sign-selector__selected-item-view.--error {
+	border: 1px solid var(--ui-color-palette-red-50);
+}
+.sign-b2e-vue-util-sign-selector__selected-item-view__text {
+	margin-left: 12px;
+	color: var(--ui-color-palette-black-base);
+	font-size: var(--ui-font-size-md);
+	font-weight: var(--ui-font-weight-normal);
+	text-overflow: ellipsis;
+	overflow: hidden;
+	text-wrap: nowrap;
+}

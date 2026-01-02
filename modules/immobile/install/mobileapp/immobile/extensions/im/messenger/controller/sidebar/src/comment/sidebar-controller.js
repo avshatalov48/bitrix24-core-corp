@@ -13,7 +13,7 @@ jn.define('im/messenger/controller/sidebar/comment/sidebar-controller', (require
 	const { LoggerManager } = require('im/messenger/lib/logger');
 	const logger = LoggerManager.getInstance().getLogger('sidebar--comment-sidebar-controller');
 	const { EventType } = require('im/messenger/const');
-	const { Loc } = require('loc');
+	const { Loc } = require('im/messenger/loc');
 	const { isOnline } = require('device/connection');
 	const { Notification, ToastType } = require('im/messenger/lib/ui/notification');
 	const { Theme } = require('im/lib/theme');

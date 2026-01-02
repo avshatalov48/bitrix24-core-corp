@@ -243,6 +243,7 @@ export class AnalyticSettingsEvent
 	static OPEN_ADD_COMPANY = 'open_add_company';
 	static CHANGE_QUICK_REG = 'change_quick_reg';
 	static CHANGE_REG_ALL = 'change_reg_all';
+	static CHANGE_COLLABERS_INVITATION = 'change_collabers_invitation';
 	static CHANGE_EXTRANET_INVITE = 'change_extranet_invite';
 }
 

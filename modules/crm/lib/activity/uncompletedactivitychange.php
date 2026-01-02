@@ -274,4 +274,8 @@ class UncompletedActivityChange
 		return $this->getOldIsCompleted() && $this->getNewIsCompleted();
 	}
 
+	public function isChangedAlreadyDeletedCompletedActivity(): bool
+	{
+		return $this->getOldIsCompleted() && $this->wasActivityJustDeleted();
+	}
 }

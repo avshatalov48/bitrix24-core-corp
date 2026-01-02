@@ -2,7 +2,6 @@
 
 return [
 	'bundle' => [
-		'./skeleton',
 		'./buttons',
 	],
 	'extensions' => [
@@ -15,10 +14,11 @@ return [
 		'event-emitter',
 		'notify-manager',
 		'toast',
+		'tokens',
+		'qrauth',
 
 		'utils/file',
 		'utils/function',
-		'utils/skeleton',
 		'utils/random',
 
 		'layout/ui/context-menu',
@@ -30,5 +30,7 @@ return [
 		'bizproc:task/task-constants',
 		'bizproc:task/buttons',
 		'bizproc:task/fields',
+		'bizproc:skeleton',
+		'bizproc:app-rating-client',
 	],
 ];

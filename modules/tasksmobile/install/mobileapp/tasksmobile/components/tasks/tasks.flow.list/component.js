@@ -10,6 +10,7 @@
 					new TasksFlowList({
 						currentUserId: Number(env.userId),
 						listType: ListType.FLOWS,
+						navigationTitle: BX.componentParameters.get('NAVIGATION_TITLE', null),
 					}),
 				);
 			});

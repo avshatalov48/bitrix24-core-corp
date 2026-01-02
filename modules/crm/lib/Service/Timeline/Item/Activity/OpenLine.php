@@ -185,7 +185,7 @@ class OpenLine extends Activity
 		// the tag will not be removed until the responsible user reads all messages
 		if (
 			$this->isScheduled()
-			&& OpenLineManager::getChatUnReadMessages($userCode, $responsibleId) > 0
+			&& OpenLineManager::getChatUnReadMessagesCount($userCode, $responsibleId) > 0
 		)
 		{
 			$tags['notReadChat'] = new Tag(

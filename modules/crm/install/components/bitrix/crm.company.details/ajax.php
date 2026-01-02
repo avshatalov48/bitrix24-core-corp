@@ -667,7 +667,7 @@ elseif($action === 'DELETE')
 	}
 
 	$bizProc = new CCrmBizProc('COMPANY');
-	if (!$bizProc->Delete($ID, \CCrmCompany::GetPermissionAttributes(array($ID))))
+	if (!$bizProc->Delete($ID))
 	{
 		__CrmCompanyDetailsEndJsonResonse(array('ERROR' => $bizProc->LAST_ERROR));
 	}

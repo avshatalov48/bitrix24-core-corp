@@ -1,16 +1,22 @@
 <?php
-$MESS["INTRANET_SETTINGS_FIELD_HINT_DISABLE_COPY"] = "Prevent users from copying text in the mobile app.";
-$MESS["INTRANET_SETTINGS_FIELD_HINT_DISABLE_SCREENSHOT"] = "Prevent users from making screenshots of the mobile app.";
+$MESS["INTRANET_SETTINGS_FIELD_BADGE_WATER_MARKS_SOON"] = "Coming soon";
+$MESS["INTRANET_SETTINGS_FIELD_HINT_ALLOW_AUTO_DELETE_TO_BE_ENABLED"] = "Chat members can manage the message auto delete preferences. This function will delete the chat messages after a specified period of time.";
+$MESS["INTRANET_SETTINGS_FIELD_HINT_DISABLE_COPY_MSGVER_1"] = "With this option selected, users can forward messages to each other inside the mobile app, but copying text or sending it outside your Bitrix24 will not be possible.";
+$MESS["INTRANET_SETTINGS_FIELD_HINT_DISABLE_SCREENSHOT_MSGVER_1"] = "An attempt to create a screenshot will be blocked, and a warning message will show up.";
+$MESS["INTRANET_SETTINGS_FIELD_HINT_WATER_MARKS_ENABLED"] = "Adds user-specific watermarks to the information displayed on the screen. A screenshot or photo taken with a camera will include this data to identify the user.";
+$MESS["INTRANET_SETTINGS_FIELD_LABEL_ALLOW_AUTO_DELETE_TO_BE_ENABLED"] = "Enable \"Auto delete messages\" option in the chats";
 $MESS["INTRANET_SETTINGS_FIELD_LABEL_DEVISE_HISTORY_CLEANUP_DAYS"] = "Days to keep login history:";
-$MESS["INTRANET_SETTINGS_FIELD_LABEL_DISABLE_COPY"] = "Disable text copy";
-$MESS["INTRANET_SETTINGS_FIELD_LABEL_DISABLE_SCREENSHOT"] = "Disable screenshots";
+$MESS["INTRANET_SETTINGS_FIELD_LABEL_DISABLE_COPY_MSGVER_1"] = "Disable copy functionality in the mobile app";
+$MESS["INTRANET_SETTINGS_FIELD_LABEL_DISABLE_SCREENSHOT_MSGVER_1"] = "Disable screenshots in the mobile app";
 $MESS["INTRANET_SETTINGS_FIELD_LABEL_SECURITY_OTP"] = "Mandatory for all employees";
 $MESS["INTRANET_SETTINGS_FIELD_LABEL_SELECT_ACCEPTED_IP"] = "Allowed IP addresses (multiple addresses and ranges are possible; example: 123.45.67.89, 176.98.34.122, 0.0.0.0-255.255.255.255):";
+$MESS["INTRANET_SETTINGS_FIELD_LABEL_WATER_MARKS_ENABLED"] = "Enable watermarks";
+$MESS["INTRANET_SETTINGS_SECTION_SECURITY_DESCRIPTION_USER_SELECT"] = "Disable for these users:";
 $MESS["INTRANET_SETTINGS_SECTION_TITLE_ACCESS_IP"] = "Restrict access by IP address";
 $MESS["INTRANET_SETTINGS_SECTION_TITLE_BLACK_LIST"] = "Blacklist";
+$MESS["INTRANET_SETTINGS_SECTION_TITLE_DATA_LEAK_PROTECTION"] = "Data leak prevention";
 $MESS["INTRANET_SETTINGS_SECTION_TITLE_DEVICES_HISTORY"] = "Login history";
 $MESS["INTRANET_SETTINGS_SECTION_TITLE_EVENT_LOG"] = "Event log";
-$MESS["INTRANET_SETTINGS_SECTION_TITLE_MOBILE_APP"] = "Mobile app";
 $MESS["INTRANET_SETTINGS_SECTION_TITLE_OTP"] = "Two-factor authentication";
 $MESS["INTRANET_SETTINGS_SECTION_TITLE_PASSWORD_RECOVERY"] = "Password recovery";
 $MESS["INTRANET_SETTINGS_SECURITY_MODULE_ERROR"] = "The Proactive Protection module is not installed.";

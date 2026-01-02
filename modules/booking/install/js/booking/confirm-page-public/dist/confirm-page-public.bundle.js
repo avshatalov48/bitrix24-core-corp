@@ -1,6 +1,6 @@
 /* eslint-disable */
 this.BX = this.BX || {};
-(function (exports,ui_vue3,booking_model_bookings,booking_component_mixin_locMixin,ui_iconSet_main,main_date,ui_iconSet_api_vue,main_core,main_popup,booking_component_button,booking_component_popup) {
+(function (exports,ui_vue3,booking_component_mixin_locMixin,ui_iconSet_main,main_date,ui_iconSet_api_vue,main_core,main_popup,booking_component_popup,ui_iconSet_actions,booking_component_button,booking_model_bookings) {
 	'use strict';
 
 	const Mixin = {
@@ -59,6 +59,9 @@ this.BX = this.BX || {};
 	    title() {
 	      if (this.context === 'delayed.pub.page') {
 	        return this.loc('BOOKING_CONFIRM_PAGE_BOOKING_CONFIRMATION_WAITING');
+	      }
+	      if (this.context === 'info.pub.page') {
+	        return this.loc('BOOKING_CONFIRM_PAGE_BOOKING_INFO');
 	      }
 	      return this.isBookingCanceled ? this.loc('BOOKING_CONFIRM_PAGE_BOOKING_CANCELED') : this.loc('BOOKING_CONFIRM_PAGE_BOOKING_CONFIRMED');
 	    }
@@ -340,7 +343,9 @@ this.BX = this.BX || {};
 		>
 			<div class="cancel-booking-popup-content">
 				<div class="cancel-booking-popup-content-title">{{ loc('BOOKING_CONFIRM_PAGE_MESSAGEBOX_CONFIRM_TILE') }}</div>
-				<div class="cancel-booking-popup-content-text">{{ loc('BOOKING_CONFIRM_PAGE_MESSAGEBOX_CONFIRM_TEXT') }}</div>
+				<div class="cancel-booking-popup-content-text">
+					{{ loc('BOOKING_CONFIRM_PAGE_MESSAGEBOX_CONFIRM_TEXT_MSGVER_1') }}
+				</div>
 				<div class="cancel-booking-popup-content-buttons">
 					<Button
 						:text="loc('BOOKING_CONFIRM_PAGE_MESSAGEBOX_BTN_NOT_CONFIRM')"
@@ -523,6 +528,12 @@ this.BX = this.BX || {};
 	    },
 	    showCancelBtn() {
 	      return this.context !== 'manager.view.details';
+	    },
+	    showCancelPopup() {
+	      return this.context === 'cancel.pub.page' || this.context === 'info.pub.page';
+	    },
+	    showConfirmPopup() {
+	      return this.context === 'delayed.pub.page';
 	    }
 	  },
 	  watch: {
@@ -549,14 +560,14 @@ this.BX = this.BX || {};
 			</a>
 		</div>
 		<CancelPopup 
-			v-if="context === 'cancel.pub.page'"
+			v-if="showCancelPopup"
 			:showPopup="showPopup" 
 			:booking="booking"
 			@bookingCanceled="cancelBookingHandler"
 			@popupClosed="closePopup"
 		/>
 		<ConfirmPopup
-			v-if="context === 'delayed.pub.page'"
+			v-if="showConfirmPopup"
 			:showPopup="showPopup"
 			:booking="booking"
 			@bookingCanceled="cancelBookingHandler"
@@ -566,11 +577,53 @@ this.BX = this.BX || {};
 	`
 	};
 
+	// @vue/component
+	const AddToCalendar = {
+	  name: 'AddToCalendar',
+	  components: {
+	    // eslint-disable-next-line vue/no-reserved-component-names
+	    Button: booking_component_button.Button
+	  },
+	  props: {
+	    /**
+	     * @type {BookingModel}
+	     */
+	    booking: {
+	      type: Object,
+	      required: true
+	    },
+	    icsDownloadRequested: {
+	      type: Boolean,
+	      required: true
+	    }
+	  },
+	  emits: ['downloadIcs'],
+	  setup() {
+	    return {
+	      ButtonSize: booking_component_button.ButtonSize,
+	      ButtonColor: booking_component_button.ButtonColor
+	    };
+	  },
+	  template: `
+		<div v-if="!booking.isDeleted" class="add-to-calendar__container">
+			<Button
+				:text="loc('BOOKING_CONFIRM_PAGE_ADD_TO_CALENDAR_BTN')"
+				:buttonClass="'add-to-calendar__btn'"
+				:size="ButtonSize.SMALL"
+				:color="ButtonColor.LIGHT_BORDER"
+				:waiting="icsDownloadRequested"
+				@click="$emit('downloadIcs')"
+			/>
+		</div>
+	`
+	};
+
 	const Footer = {
 	  name: 'Footer',
-	  emits: ['bookingCanceled', 'bookingConfirmed'],
+	  emits: ['bookingCanceled', 'bookingConfirmed', 'downloadIcs'],
 	  components: {
-	    Cancel
+	    Cancel,
+	    AddToCalendar
 	  },
 	  props: {
 	    booking: {
@@ -580,18 +633,27 @@ this.BX = this.BX || {};
 	    context: {
 	      type: String,
 	      required: true
+	    },
+	    icsDownloadRequested: {
+	      type: Boolean,
+	      required: true
 	    }
 	  },
 	  data() {
 	    return {};
 	  },
 	  template: `
-		<div>
-			<Cancel 
+		<div class="confirm-page__footer">
+			<Cancel
 				:booking="booking"
 				:context="context"
 				@bookingCanceled="$emit('bookingCanceled')"
 				@bookingConfirmed="$emit('bookingConfirmed')"
+			/>
+			<AddToCalendar
+				:booking="booking"
+				:icsDownloadRequested="icsDownloadRequested"
+				@downloadIcs="$emit('downloadIcs')"
 			/>
 		</div>
 	`
@@ -625,7 +687,8 @@ this.BX = this.BX || {};
 	  data() {
 	    return {
 	      confirmedBooking: this.booking,
-	      confirmedContext: this.context
+	      confirmedContext: this.context,
+	      icsDownloadRequested: false
 	    };
 	  },
 	  methods: {
@@ -638,7 +701,7 @@ this.BX = this.BX || {};
 	          }
 	        });
 	        this.confirmedBooking.isDeleted = true;
-	        if (this.confirmedContext === 'delayed.pub.page') {
+	        if (this.confirmedContext === 'delayed.pub.page' || this.confirmedContext === 'info.pub.page') {
 	          this.confirmedContext = 'cancel.pub.page';
 	        }
 	      } catch (error) {
@@ -661,6 +724,33 @@ this.BX = this.BX || {};
 	      } catch (error) {
 	        console.error('Confirm page: confirm error', error);
 	      }
+	    },
+	    async downloadIcsHandler() {
+	      try {
+	        this.icsDownloadRequested = true;
+	        const {
+	          data
+	        } = await main_core.ajax.runComponentAction('bitrix:booking.pub.confirm', 'getIcsContent', {
+	          mode: 'class',
+	          data: {
+	            hash: this.hash
+	          }
+	        });
+	        const fileContent = data == null ? void 0 : data.ics;
+	        if (!fileContent) {
+	          console.error('Receive empty ics file');
+	          return;
+	        }
+	        const fileName = 'booking.ics';
+	        const link = document.createElement('a');
+	        link.href = `data:text/calendar,${encodeURI(fileContent)}`;
+	        link.download = fileName;
+	        link.click();
+	      } catch (error) {
+	        console.error('Confirm page: can not receive ics file', error);
+	      } finally {
+	        this.icsDownloadRequested = false;
+	      }
 	    }
 	  },
 	  template: `
@@ -675,8 +765,10 @@ this.BX = this.BX || {};
 				<Footer 
 					:booking="confirmedBooking"
 					:context="confirmedContext"
+					:icsDownloadRequested="icsDownloadRequested"
 					@bookingCanceled="bookingCancelHandler"
 					@bookingConfirmed="bookingConfirmHandler"
+					@downloadIcs="downloadIcsHandler"
 				/>
 			</div>
 		</div>
@@ -693,5 +785,5 @@ this.BX = this.BX || {};
 
 	exports.ConfirmPagePublic = ConfirmPagePublic;
 
-}((this.BX.Booking = this.BX.Booking || {}),BX.Vue3,BX.Booking.Model,BX.Booking.Component.Mixin,BX,BX.Main,BX.UI.IconSet,BX,BX.Main,BX.Booking.Component,BX.Booking.Component));
+}((this.BX.Booking = this.BX.Booking || {}),BX.Vue3,BX.Booking.Component.Mixin,BX,BX.Main,BX.UI.IconSet,BX,BX.Main,BX.Booking.Component,BX,BX.Booking.Component,BX.Booking.Model));
 //# sourceMappingURL=confirm-page-public.bundle.js.map

@@ -1,24 +1,24 @@
 <?
 if(!defined("B_PROLOG_INCLUDED") || B_PROLOG_INCLUDED!==true)die();
 
-$this->SetViewTarget('pagetitle', 100);
-?>
-<?
+$APPLICATION->SetAdditionalCSS('/bitrix/js/intranet/intranet-common.css');
+
 if ($arResult['FROM_MEETING'] > 0):
-?>
-	<a href="<?echo str_replace('#MEETING_ID#', $arResult['FROM_MEETING'], $arParams['MEETING_URL_TPL'])?>" class="webform-small-button webform-small-button-blue webform-small-button-back">
-		<span class="webform-small-button-icon"></span>
-		<span class="webform-small-button-text"><?=GetMessage('ME_BACK')?></span>
-	</a>
-<?
+	\Bitrix\UI\Toolbar\Facade\Toolbar::addButton(
+		new \Bitrix\UI\Buttons\Button([
+			'link' => str_replace('#MEETING_ID#', $arResult['FROM_MEETING'], $arParams['MEETING_URL_TPL']),
+			'text' => GetMessage('ME_BACK')
+		]),
+	);
 endif;
-?>
-	<a href="<?=$arParams['LIST_URL']?>" class="webform-small-button webform-small-button-blue webform-small-button-back">
-		<span class="webform-small-button-icon"></span>
-		<span class="webform-small-button-text"><?=GetMessage('ME_LIST_TITLE')?></span>
-	</a>
-<?
-$this->EndViewTarget();
+
+\Bitrix\UI\Toolbar\Facade\Toolbar::addButton(
+	new \Bitrix\UI\Buttons\Button([
+		'link' => $arParams['LIST_URL'],
+		'text' => GetMessage('ME_LIST_TITLE')
+	]),
+);
+
 ?>
 <form name="meeting_item_edit" method="POST" enctype="multipart/form-data" action="<?=POST_FORM_ACTION_URI?>">
 	<input type="hidden" name="ITEM_ID" value="<?=$arParams['ITEM_ID']?>">

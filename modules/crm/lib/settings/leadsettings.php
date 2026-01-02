@@ -4,6 +4,7 @@ use Bitrix\Crm\Service\Container;
 use Bitrix\Main;
 use Bitrix\Crm\Activity;
 use Bitrix\Crm\Restriction\RestrictionManager;
+use Bitrix\Crm\DbHelper;
 
 class LeadSettings
 {
@@ -51,7 +52,7 @@ class LeadSettings
 		$this->enableAutoUsingFinishedLead = new BooleanSetting('enable_auto_using_finished_lead', false);
 		$this->enableDeferredCleaning = new BooleanSetting('enable_lead_deferred_cleaning', true);
 		$this->enableRecycleBin = new BooleanSetting('enable_lead_recycle_bin', true);
-		$this->initIsFactoryEnabledSetting(\CCrmOwnerType::Lead, false);
+		$this->initIsFactoryEnabledSetting(\CCrmOwnerType::Lead, !DbHelper::isPgSqlDb());
 
 		$completionConfig = array();
 		foreach(Activity\Provider\ProviderManager::getCompletableProviderList() as $providerInfo)
@@ -327,8 +328,7 @@ class LeadSettings
 		\CJSCore::Init(array('popup', 'sidepanel'));
 
 		$isCrmAdmin = "N";
-		$crmPerms = \CCrmPerms::GetCurrentUserPermissions();
-		if ($crmPerms->HavePerm('CONFIG', BX_CRM_PERM_CONFIG, 'WRITE'))
+		if (Container::getInstance()->getUserPermissions()->isCrmAdmin())
 		{
 			$isCrmAdmin = "Y";
 		}

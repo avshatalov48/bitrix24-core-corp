@@ -88,7 +88,7 @@ if(!empty($arResult['TOOLBAR_BUTTONS']))
 }
 
 if (
-	SITE_TEMPLATE_ID == "bitrix24"
+	(SITE_TEMPLATE_ID == "bitrix24" || SITE_TEMPLATE_ID === 'air')
 	&& (
 		(
 			ModuleManager::isModuleInstalled('bitrix24')
@@ -122,7 +122,9 @@ $APPLICATION->SetPageProperty('BodyClass', ($bodyClass ? $bodyClass.' ' : '').'c
 
 $this->SetViewTarget('below_pagetitle', 1000);
 ?>
-	<div id="invitation-employee-counter_panel" class="intranet-user-list-counter-panel"></div>
+	<div class="ui-actions-bar">
+		<div id="invitation-employee-counter_panel" class="ui-actions-bar"></div>
+	</div>
 <?php
 $this->EndViewTarget();
 endif;
@@ -271,7 +273,7 @@ $APPLICATION->IncludeComponent(
 	});
 </script><?php
 if (
-	SITE_TEMPLATE_ID == 'bitrix24'
+	(SITE_TEMPLATE_ID == 'bitrix24' || SITE_TEMPLATE_ID === 'air')
 	&& !empty($arParams['SLIDER_PROFILE_USER_ID'])
 	&& intval($arParams['SLIDER_PROFILE_USER_ID']) > 0
 )

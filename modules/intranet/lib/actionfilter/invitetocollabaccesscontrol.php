@@ -2,6 +2,7 @@
 
 namespace Bitrix\Intranet\ActionFilter;
 
+use Bitrix\Extranet;
 use Bitrix\Main\Error;
 use Bitrix\Main\Event;
 use Bitrix\Main\Engine\ActionFilter;
@@ -10,6 +11,7 @@ use Bitrix\Main\Loader;
 use Bitrix\Main\Localization\Loc;
 use Bitrix\Socialnetwork\Collab;
 use Bitrix\Socialnetwork\Internals\Registry\GroupRegistry;
+use Bitrix\Intranet\Integration\Socialnetwork\Collab\CollabProviderData;
 
 class InviteToCollabAccessControl extends ActionFilter\Base
 {
@@ -29,6 +31,18 @@ class InviteToCollabAccessControl extends ActionFilter\Base
 			return new EventResult(EventResult::ERROR, null, null, $this);
 		}
 
+		if (
+			Loader::includeModule('extranet')
+			&& !Extranet\PortalSettings::getInstance()->isEnabledCollabersInvitation()
+		)
+		{
+			$this->addError(new Error(
+				Loc::getMessage('INTRANET_COLLAB_ACCESS_CONTROL_PORTAL_INVITATION_COLLABERS_DISABLED')
+			));
+
+			return new EventResult(EventResult::ERROR, null, null, $this);
+		}
+
 		$collabId = $this->getAction()->getArguments()['collabId']
 			?? $this->getAction()->getBinder()->getMethodParams()['collabId']
 			?? null;
@@ -41,6 +55,15 @@ class InviteToCollabAccessControl extends ActionFilter\Base
 			{
 				$this->addError(new Error(
 					Loc::getMessage('INTRANET_COLLAB_ACCESS_CONTROL_COLLAB_NOT_FOUND')
+				));
+
+				return new EventResult(EventResult::ERROR, null, null, $this);
+			}
+
+			if (!(new CollabProviderData())->isAllowedGuestsInvitation($collabId))
+			{
+				$this->addError(new Error(
+					Loc::getMessage('INTRANET_COLLAB_ACCESS_CONTROL_GUEST_INVITATION_FORBIDDEN')
 				));
 
 				return new EventResult(EventResult::ERROR, null, null, $this);

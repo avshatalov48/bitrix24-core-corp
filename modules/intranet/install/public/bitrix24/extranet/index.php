@@ -24,6 +24,8 @@ if ($collaberService->isCollaberById($userId))
 IncludeModuleLangFile($_SERVER["DOCUMENT_ROOT"]."/bitrix/modules/intranet/public_bitrix24/extranet/index.php");
 
 $APPLICATION->SetTitle(GetMessage("TITLE"));
+$bodyClass = $APPLICATION->getPageProperty('BodyClass');
+$APPLICATION->SetPageProperty('BodyClass', ($bodyClass ? $bodyClass.' ' : '').'start-page');
 
 if (!\Bitrix\Intranet\Settings\Tools\ToolsManager::getInstance()->checkAvailabilityByToolId('news'))
 {

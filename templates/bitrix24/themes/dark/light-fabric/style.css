@@ -1,4 +1,9 @@
-body {
-	background: #F1E7F2 url(light-fabric.jpg) fixed 0 0 no-repeat;
-	background-size: cover;
+:root {
+  --air-theme-bg-color: #F1E7F2;
+  --air-theme-bg-size: cover;
+  --air-theme-bg-repeat: no-repeat;
+  --air-theme-bg-position: 0 0;
+  --air-theme-bg-attachment: fixed;
+  --air-theme-bg-image: url(/bitrix/templates/bitrix24/themes/dark/light-fabric/light-fabric.jpg);
+  --air-theme-bg-image-blurred: url(/bitrix/templates/bitrix24/themes/dark/light-fabric/light-fabric-blurred.webp);
 }

@@ -1,8 +1,9 @@
 import { Event } from 'main.core';
 import { MenuManager, Menu } from 'main.popup';
 import { BIcon as Icon } from 'ui.icon-set.api.vue';
-import { NotificationChannel } from 'booking.const';
+import { Model, NotificationChannel } from 'booking.const';
 import { ButtonSize, ButtonColor, ButtonIcon } from 'booking.component.button';
+import { mapGetters } from 'ui.vue3.vuex';
 
 import './channel-menu.css';
 
@@ -26,6 +27,9 @@ export const ChannelMenu = {
 		};
 	},
 	computed: {
+		...mapGetters({
+			isChannelChoiceAvailable: `${Model.ResourceCreationWizard}/isChannelChoiceAvailable`,
+		}),
 		popupId(): string
 		{
 			return 'booking-choose-channel-menu';
@@ -38,7 +42,7 @@ export const ChannelMenu = {
 					value: NotificationChannel.WhatsApp,
 				},
 				{
-					label: this.loc('BRCW_NOTIFICATION_CARD_TEMPLATE_POPUP_SELECT_SMS'),
+					label: this.loc('BRCW_NOTIFICATION_CARD_TEMPLATE_POPUP_SELECT_SMS_MSGVER_1'),
 					value: NotificationChannel.Sms,
 				},
 			];
@@ -103,9 +107,9 @@ export const ChannelMenu = {
 					},
 				},
 				{
-					text: this.loc('BRCW_NOTIFICATION_CARD_TEMPLATE_POPUP_SELECT_SMS'),
+					text: this.loc('BRCW_NOTIFICATION_CARD_TEMPLATE_POPUP_SELECT_SMS_MSGVER_1'),
 					onclick: () => {
-						this.channel = this.loc('BRCW_NOTIFICATION_CARD_TEMPLATE_POPUP_SELECT_SMS');
+						this.channel = this.loc('BRCW_NOTIFICATION_CARD_TEMPLATE_POPUP_SELECT_SMS_MSGVER_1');
 						this.$emit('updateChannel', NotificationChannel.Sms);
 						this.destroy();
 					},
@@ -137,8 +141,9 @@ export const ChannelMenu = {
 	template: `
 		<span
 			class="booking-resource-creation-wizard-channel-menu-button"
+			:class="{'--disabled': !isChannelChoiceAvailable}"
 			ref="menu-button"
-			@click="openMenu"
+			@click="isChannelChoiceAvailable && openMenu()"
 		>
 			{{ channel }}
 		</span>

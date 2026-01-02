@@ -24,17 +24,21 @@ final class Tourist
 		return $events;
 	}
 
-	public static function remember(string $eventId): array
+	public static function remember(string $eventId, ?string $context = null, ?int $count = null, ?int $timestamp = null): array
 	{
 		$event = [
-			'ts' => time(),
+			'ts' => $timestamp ?? time(),
 		];
 
 		if (!self::isFakeMode())
 		{
 			$events = self::getEvents();
 			$cnt = intval($events[$eventId]['cnt'] ?? 0);
-			$event['cnt'] = min($cnt + 1, self::MAX_TIMES_TO_REMEMBER);
+			$event['cnt'] = $count ?? min($cnt + 1, self::MAX_TIMES_TO_REMEMBER);
+			if ($context)
+			{
+				$event['context'] = $context;
+			}
 			$events[$eventId] = $event;
 			\CUserOptions::SetOption('mobile', 'tourist_events', $events);
 		}

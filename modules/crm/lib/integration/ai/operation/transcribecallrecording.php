@@ -19,6 +19,8 @@ use Bitrix\Crm\Service\Container;
 use Bitrix\Crm\Timeline\Ai\Call\Controller;
 use Bitrix\Main\Error;
 use Bitrix\Main\Web\Uri;
+use CCrmActivity;
+use CCrmOwnerType;
 
 final class TranscribeCallRecording extends AbstractOperation
 {
@@ -26,7 +28,7 @@ final class TranscribeCallRecording extends AbstractOperation
 	public const CONTEXT_ID = 'transcribe_call_recording';
 
 	public const SUPPORTED_TARGET_ENTITY_TYPE_IDS = [
-		\CCrmOwnerType::Activity,
+		CCrmOwnerType::Activity,
 	];
 
 	public const SUPPORTED_AUDIO_EXTENSIONS = \Bitrix\Crm\Service\Timeline\Config::ALLOWED_AUDIO_EXTENSIONS;
@@ -46,9 +48,19 @@ final class TranscribeCallRecording extends AbstractOperation
 		parent::__construct($target, $userId, $parentJobId);
 	}
 
+	public static function isAccessGranted(int $userId, ItemIdentifier $target): bool
+	{
+		return parent::isAccessGranted($userId, $target)
+			&& CCrmActivity::CheckItemUpdatePermission(
+				['ID' => $target->getEntityId()],
+				Container::getInstance()->getUserPermissions($userId)->getCrmPermissions(),
+			)
+		;
+	}
+
 	public static function isSuitableTarget(ItemIdentifier $target): bool
 	{
-		if ($target->getEntityTypeId() === \CCrmOwnerType::Activity)
+		if ($target->getEntityTypeId() === CCrmOwnerType::Activity)
 		{
 			$activity = Container::getInstance()->getActivityBroker()->getById($target->getEntityId());
 			if (
@@ -76,10 +88,9 @@ final class TranscribeCallRecording extends AbstractOperation
 			return $result->addError(ErrorCode::getFileNotFoundError());
 		}
 
-		if (
-			!empty($originalFileName)
-			&& !in_array(GetFileExtension($originalFileName), self::SUPPORTED_AUDIO_EXTENSIONS, true)
-		)
+		$fileExtension = $this->getSupportedFileExtension($originalFileName);
+
+		if ($fileExtension === '')
 		{
 			return $result->addError(new Error(
 				'File is not a supported as a call recording.'
@@ -91,10 +102,26 @@ final class TranscribeCallRecording extends AbstractOperation
 
 		return $result->setData([
 			'payload' =>
-				(new \Bitrix\AI\Payload\Audio($fileUrl))
-					->setMarkers(['type' => $contentType])
-			,
+				(new \Bitrix\AI\Payload\Audio($fileUrl, $fileExtension ?? ''))
+					->setMarkers(['type' => $contentType]),
 		]);
+	}
+
+	private function getSupportedFileExtension(string $originalFileName): ?string
+	{
+		if (empty($originalFileName))
+		{
+			return null;
+		}
+
+		$fileExtension = GetFileExtension($originalFileName);
+
+		if (!in_array($fileExtension, self::SUPPORTED_AUDIO_EXTENSIONS, true))
+		{
+			return '';
+		}
+
+		return $fileExtension;
 	}
 
 	private function getFileInfo(int $storageTypeId, int $fileId): array
@@ -143,12 +170,6 @@ final class TranscribeCallRecording extends AbstractOperation
 			(string)$file['CONTENT_TYPE'],
 			(string)($file['ORIGINAL_NAME'] ?? null),
 		];
-	}
-
-
-	protected function getStubPayload(): string
-	{
-		return 'This is stub call transcription';
 	}
 
 	protected function getJobAddFields(): array
@@ -227,7 +248,7 @@ final class TranscribeCallRecording extends AbstractOperation
 					[
 						'OPERATION_TYPE_ID' => self::TYPE_ID,
 						'ENGINE_ID' => self::$engineId,
-						'ERRORS' => $result->getErrorMessages(),
+						'ERRORS' => array_unique($result->getErrorMessages()),
 					],
 					$result->getUserId(),
 				);

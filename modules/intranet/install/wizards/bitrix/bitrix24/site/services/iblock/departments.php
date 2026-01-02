@@ -54,27 +54,6 @@ if($iblockID == false)
 		$department = $departmentRepository->save(new \Bitrix\Intranet\Entity\Department(
 			COption::GetOptionString("main", "site_name", GetMessage("iblock_dep_name1"))
 		));
-
-		$departments = [
-			new \Bitrix\Intranet\Entity\Department(
-				GetMessage("iblock_dep_name2"),
-				parentId: $department->getId()
-			),
-			new \Bitrix\Intranet\Entity\Department(
-				GetMessage("iblock_dep_name3"),
-				parentId: $department->getId()
-			),
-			new \Bitrix\Intranet\Entity\Department(
-				GetMessage("iblock_dep_name5"),
-				parentId: $department->getId()
-			),
-		];
-
-		foreach($departments as $department)
-		{
-			$departmentRepository->save($department);
-		}
-
 	}
 	catch (\Exception)
 	{}

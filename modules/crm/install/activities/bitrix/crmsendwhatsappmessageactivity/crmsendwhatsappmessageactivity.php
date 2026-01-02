@@ -5,7 +5,9 @@ if (!defined('B_PROLOG_INCLUDED') || B_PROLOG_INCLUDED !== true)
 	die();
 }
 
+use Bitrix\Crm\Activity\Analytics\EventName;
 use Bitrix\Crm\Automation\ClientCommunications\ClientCommunications;
+use Bitrix\Crm\Integration\Analytics\Dictionary;
 use Bitrix\Main\ArgumentException;
 use Bitrix\Main\Localization\Loc;
 use Bitrix\Main\Web\Json;
@@ -116,6 +118,13 @@ class CBPCrmSendWhatsAppMessageActivity extends CBPActivity
 		{
 			return $this->closeWithError($result->getErrorMessages()[0] ?? '');
 		}
+
+		$documentType = $this->getDocumentType();
+		\CCrmBizProcHelper::sendOperationsAnalytics(
+			Dictionary::EVENT_ENTITY_SOCIAL,
+			$this,
+			$documentType[2] ?? '',
+		);
 
 		return CBPActivityExecutionStatus::Closed;
 	}

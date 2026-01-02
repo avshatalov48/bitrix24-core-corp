@@ -5,6 +5,7 @@ return [
 		'loc',
 		'apptheme',
 		'event-emitter',
+		'utils/random',
 
 		'crm:duplicates/panel',
 	],

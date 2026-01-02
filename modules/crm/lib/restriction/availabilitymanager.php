@@ -90,6 +90,20 @@ class AvailabilityManager
 		]);
 	}
 
+	public function getRepeatSaleInaccessibilityContent(): string
+	{
+		return $this->getInaccessibilityComponentContent([
+			'sliderCode' => ToolsManager::REPEAT_SALE_SLIDER_CODE,
+		]);
+	}
+
+	public function getInventoryInaccessibilityContent(): string
+	{
+		return $this->getInaccessibilityComponentContent([
+			'sliderCode' => ToolsManager::INVENTORY_SLIDER_CODE,
+		]);
+	}
+
 	/**
 	 * @param array{entityTypeId: int, sliderCode: string} $data
 	 * @return string
@@ -220,6 +234,11 @@ class AvailabilityManager
 	public function getExternalDynamicAvailabilityLock(): string
 	{
 		return $this->getJs(ToolsManager::EXTERNAL_DYNAMIC_SLIDER_CODE);
+	}
+
+	public function getInventoryAvailabilityLock(): string
+	{
+		return $this->getJs(ToolsManager::INVENTORY_SLIDER_CODE);
 	}
 
 	private function getJs(string $id): string

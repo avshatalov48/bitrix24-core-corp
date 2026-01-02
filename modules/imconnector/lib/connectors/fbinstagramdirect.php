@@ -331,7 +331,7 @@ class FbInstagramDirect extends InstagramBase
 			])?->fetch();
 		}
 
-		return $message;
+		return $message ?: null;
 	}
 
 	private function clearLastExtMessage(int $chatId): ?string

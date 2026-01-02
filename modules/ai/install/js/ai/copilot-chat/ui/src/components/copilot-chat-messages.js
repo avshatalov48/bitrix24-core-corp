@@ -1,4 +1,5 @@
 import { Dom } from 'main.core';
+import { CopilotChatMessageStatus } from '../copilot-chat';
 import { isMessageFromCopilot } from '../helpers/is-message-from-copilot';
 import { CopilotChatMessage } from './copilot-chat-message';
 import { CopilotChatWelcomeMessage } from './copilot-chat-welcome-message';
@@ -26,7 +27,7 @@ export const CopilotChatMessages = {
 		CopilotChatMessagesDateGroup,
 		CopilotChatMessagesAuthorGroup,
 	},
-	emits: ['clickMessageButton'],
+	emits: ['clickMessageButton', 'retry', 'remove'],
 	props: {
 		messages: {
 			type: Array,
@@ -80,7 +81,7 @@ export const CopilotChatMessages = {
 			let isMessagesContainsUnread = false;
 
 			return messages.reduce((groupedMessages, message) => {
-				const messageDeliveryDate = new Date(message.dateCreated);
+				const messageDeliveryDate = new Date(message.dateCreate);
 				const messageIsoDate = this.formatISODate(messageDeliveryDate);
 
 				if (groupedMessages[messageIsoDate] === undefined)
@@ -151,6 +152,16 @@ export const CopilotChatMessages = {
 			return `${year}-${month}-${day}`;
 		},
 		getMessageColor(message: CopilotChatMessageData): string {
+			if (message.status === CopilotChatMessageStatus.ERROR)
+			{
+				return CopilotChatMessageColor.ERROR;
+			}
+
+			if (message.type === CopilotChatMessageType.SYSTEM)
+			{
+				return CopilotChatMessageColor.ERROR;
+			}
+
 			if (message.type === CopilotChatMessageType.BUTTON_CLICK_MESSAGE)
 			{
 				return CopilotChatMessageColor.USER_WITH_HIGHLIGHT_TEXT;
@@ -167,6 +178,7 @@ export const CopilotChatMessages = {
 			switch (message.type)
 			{
 				case CopilotChatMessageType.DEFAULT: return CopilotChatMessageDefault;
+				case CopilotChatMessageType.SYSTEM: return CopilotChatMessageDefault;
 				case CopilotChatMessageType.WELCOME_FLOWS: return CopilotChatMessageWelcomeFlows;
 				case CopilotChatMessageType.WELCOME_SITE_WITH_AI: return CopilotChatMessageSiteWithAi;
 				default: return CopilotChatMessageDefault;
@@ -187,7 +199,10 @@ export const CopilotChatMessages = {
 		getAuthorMessagesGroupAvatar(authorId: number, messages: CopilotChatMessageData[]): string
 		{
 			const lastMessage = messages.at(-1);
-			const isLastMessageIsWelcome = lastMessage.type !== 'Default' && lastMessage.type !== 'ButtonClicked';
+			const isLastMessageIsWelcome = lastMessage.type !== 'Default'
+				&& lastMessage.type !== 'ButtonClicked'
+				&& lastMessage.type !== 'System'
+			;
 
 			if (authorId === null || authorId === undefined || isLastMessageIsWelcome)
 			{
@@ -202,49 +217,59 @@ export const CopilotChatMessages = {
 		isMessageHaveButtons(message: CopilotChatMessageData): boolean {
 			return message?.params?.buttons?.length > 0;
 		},
-		handleMessageButtonClick(messageId, buttonId): void {
+		handleMessageButtonClick(messageId: number, buttonId: number): void {
 			this.$emit('clickMessageButton', {
 				messageId,
 				buttonId,
 			});
 		},
-		isLastMessage(dateGroupIndex: number, authorGroupIndex: number, messageIndexAtAuthorGroup: number): boolean {
-			return (dateGroupIndex + 1) * (authorGroupIndex + 1) + messageIndexAtAuthorGroup === this.messages.length;
+		isLastMessage(message: CopilotChatMessageData): boolean {
+			return message.id === this.messages.at(-1).id;
+		},
+		handleMessageRetry(messageId: number): void {
+			this.$emit('retry', messageId);
+		},
+		handleMessageRemove(messageId: number): void {
+			this.$emit('remove', messageId);
 		},
 	},
 	mounted() {
 		Dom.append(this.welcomeMessageHtmlElement, this.$refs.welcomeMessage);
 	},
 	template: `
-		<CopilotChatMessagesDateGroup
+		<div class="ai__copilot-chat-messages-wrapper">
+			<CopilotChatMessagesDateGroup
 			v-for="(date, dateGroupIndex) of sortedByDateMessagesGroups"
 			:date="date"
-		>
-			<CopilotChatMessagesAuthorGroup
-				v-for="([authorId, messagesFromCurrentAuthor, showNewMessagesLabel], authorGroupIndex) in messagesGroupedByDayAndAuthor[date]"
-				:avatar="getAuthorMessagesGroupAvatar(authorId, messagesFromCurrentAuthor)"
-				:show-new-messages-label="showNewMessagesLabel"
 			>
-				<ul class="ai__copilot-chat-messages">
-					<li
-						v-for="(message, index) of messagesFromCurrentAuthor"
-						class="ai__copilot-chat-messages_message-wrapper"
-					>
-						<component :is="getMessageComponent(message)" 
-								v-copilot-chat-new-message-visibility-observer="message.viewed"
-								@buttonClick="handleMessageButtonClick(message.id, $event)"
-								:message="message"
-								:title="getMessageTitle(message.authorId)"
-								:color="getMessageColor(message)"
-								:avatar="getMessageAvatarByAuthorId(message.authorId)"
-								:useAvatarTail="index === messagesFromCurrentAuthor.length - 1 && isMessageHaveButtons(message) === false"
-								:disable-all-actions="isLastMessage(dateGroupIndex, authorGroupIndex, index) === false"
-								:menu-items="getMessageMenuItems(message)"
-						></component>
-					</li>
-				</ul>
-			</CopilotChatMessagesAuthorGroup>
-	
-		</CopilotChatMessagesDateGroup>
+				<CopilotChatMessagesAuthorGroup
+					v-for="([authorId, messagesFromCurrentAuthor, showNewMessagesLabel], authorGroupIndex) in messagesGroupedByDayAndAuthor[date]"
+					:avatar="getAuthorMessagesGroupAvatar(authorId, messagesFromCurrentAuthor)"
+					:show-new-messages-label="showNewMessagesLabel"
+				>
+					<ul class="ai__copilot-chat-messages">
+						<li
+							v-for="(message, index) of messagesFromCurrentAuthor"
+							:key="message.id"
+							class="ai__copilot-chat-messages_message-wrapper"
+						>
+							<component :is="getMessageComponent(message)" 
+									v-copilot-chat-new-message-visibility-observer="message.viewed"
+									@buttonClick="handleMessageButtonClick(message.id, $event)"
+									@retry="handleMessageRetry" 
+									@remove="handleMessageRemove"
+									:message="message"
+									:title="getMessageTitle(message.authorId)"
+									:color="getMessageColor(message)"
+									:avatar="getMessageAvatarByAuthorId(message.authorId)"
+									:useAvatarTail="index === messagesFromCurrentAuthor.length - 1 && isMessageHaveButtons(message) === false"
+									:disable-all-actions="isLastMessage(message) === false"
+									:menu-items="getMessageMenuItems(message)"
+							></component>
+						</li>
+					</ul>
+				</CopilotChatMessagesAuthorGroup>
+			</CopilotChatMessagesDateGroup>
+		</div>
 	`,
 };

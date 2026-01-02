@@ -12,7 +12,11 @@
 IncludeModuleLangFile(__FILE__); // todo: relocate translations from here
 
 use \Bitrix\Main\Localization\Loc;
+use Bitrix\Main\ORM\Data\DeleteResult;
 use \Bitrix\Tasks\Integration\Mail;
+use Bitrix\Tasks\V2\Infrastructure\Agent\Reminder;
+use Bitrix\Tasks\V2\Internal\DI\Container;
+use Bitrix\Tasks\V2\Internal\Repository\ReminderRepositoryInterface;
 
 Loc::loadMessages(__FILE__);
 
@@ -243,169 +247,95 @@ class CTaskReminders
 		return $DB->Query($strSql);
 	}
 
-
+	/**
+	 * @deprecated
+	 * @TasksV2
+	 * @use ReminderRepositoryInterface
+	 */
 	public static function DeleteByDate($REMIND_DATE)
 	{
-		return self::Delete(array("=REMIND_DATE" => new \Bitrix\Main\Type\DateTime($REMIND_DATE)));
-	}
-
-
-	public static function DeleteByTaskID($TASK_ID)
-	{
-		return self::Delete(array("=TASK_ID" => (int) $TASK_ID));
-	}
-
-
-	public static function DeleteByUserID($USER_ID)
-	{
-		return self::Delete(array("=USER_ID" => (int) $USER_ID));
-	}
-
-
-	public static function Delete($arFilter)
-	{
-		$result = false;
-		$list = \Bitrix\Tasks\Internals\Task\ReminderTable::getList(array(
-			"select" => array("ID"),
-			"filter" => $arFilter,
-		));
-		while ($item = $list->fetch())
+		$result = new DeleteResult();
+		try
 		{
-			$result = \Bitrix\Tasks\Internals\Task\ReminderTable::delete($item);
+			Container::getInstance()->getReminderRepository()->deleteByFilter(['=REMIND_DATE' => new \Bitrix\Main\Type\DateTime($REMIND_DATE)]);
 		}
+		catch (Exception $e)
+		{
+			$result->addError(\Bitrix\Main\Error::createFromThrowable($e));
+		}
+
 		return $result;
 	}
 
+	/**
+	 * @deprecated
+	 * @TasksV2
+	 * @use ReminderRepositoryInterface
+	 */
+	public static function DeleteByTaskID($TASK_ID)
+	{
+		$result = new DeleteResult();
+		try
+		{
+			Container::getInstance()->getReminderRepository()->deleteByFilter(['=TASK_ID' => (int)$TASK_ID]);
+		}
+		catch (Exception $e)
+		{
+			$result->addError(\Bitrix\Main\Error::createFromThrowable($e));
+		}
 
+		return $result;
+	}
+
+	/**
+	 * @deprecated
+	 * @TasksV2
+	 * @use ReminderRepositoryInterface
+	 */
+	public static function DeleteByUserID($USER_ID)
+	{
+		$result = new DeleteResult();
+		try
+		{
+			Container::getInstance()->getReminderRepository()->deleteByFilter(['=USER_ID' => (int)$USER_ID]);
+		}
+		catch (Exception $e)
+		{
+			$result->addError(\Bitrix\Main\Error::createFromThrowable($e));
+		}
+
+		return $result;
+	}
+
+	/**
+	 * @deprecated
+	 * @TasksV2
+	 * @use ReminderRepositoryInterface
+	 */
+	public static function Delete($arFilter)
+	{
+		$result = new DeleteResult();
+		try
+		{
+			Container::getInstance()->getReminderRepository()->deleteByFilter($arFilter);
+		}
+		catch (Exception $e)
+		{
+			$result->addError(\Bitrix\Main\Error::createFromThrowable($e));
+		}
+
+		return $result;
+	}
+
+	/**
+	 * @deprecated
+	 * @TasksV2
+	 * @use Reminder
+	 *
+	 *  Don't remove it because agent with this name may be already registered in the system.
+	 */
 	public static function SendAgent()
 	{
-
-		$arFilter = array(
-			// although DateTime created with 'new', here we get user time, because toString() always returns time in user offset
-			"<=REMIND_DATE" => ((string) new \Bitrix\Main\Type\DateTime())
-		);
-
-		$rsReminders = CTaskReminders::GetList(array("date" => "asc"), $arFilter);
-
-		while ($arReminder = $rsReminders->Fetch())
-		{
-			$rsTask = CTasks::GetByID($arReminder["TASK_ID"], false);
-
-			if ($arTask = $rsTask->Fetch())
-			{
-				// remind about not closed tasks only
-				if ($arTask['CLOSED_DATE'] === NULL)
-				{
-					if($arReminder['RECEPIENT_TYPE'] == self::RECEPIENT_TYPE_RESPONSIBLE)
-					{
-						$userTo = $arTask['RESPONSIBLE_ID']; // has access by definition
-					}
-					elseif($arReminder['RECEPIENT_TYPE'] == self::RECEPIENT_TYPE_ORIGINATOR)
-					{
-						$userTo = $arTask['CREATED_BY']; // has access by definition
-					}
-					else
-					{
-						$userTo = $arReminder["USER_ID"];
-
-						// need to check access
-						try
-						{
-							$task = new CTaskItem($arReminder["TASK_ID"], $userTo);
-							if(!$task->checkCanRead()) // no access at this moment, drop reminder
-							{
-								$userTo = false;
-							}
-						}
-						catch (CTaskAssertException $e)
-						{
-							$userTo = false;
-						}
-					}
-
-					if(intval($userTo))
-					{
-
-						$rsUser = CUser::GetByID($userTo);
-						if ($arUser = $rsUser->Fetch())
-						{
-							if (Mail\User::isEmail($arUser))
-							{
-								// public link
-								$arTask['PATH_TO_TASK'] = tasksServerName() . Mail\Task::getDefaultPublicPath($arTask['ID']);
-							}
-							else
-							{
-								$arTask["PATH_TO_TASK"] = CTaskNotifications::GetNotificationPath($arUser, $arTask["ID"]);
-							}
-
-							$arFilterForSendedRemind = array_merge(
-								$arFilter,
-								array(
-									'TASK_ID'   => $arReminder['TASK_ID'],
-									'USER_ID'   => $arReminder['USER_ID'],
-									'TRANSPORT' => $arReminder['TRANSPORT'],
-									'TYPE'      => $arReminder['TYPE']
-								)
-							);
-
-							CTaskReminders::Delete($arFilterForSendedRemind);
-
-							if (
-								$arReminder["TRANSPORT"] == self::REMINDER_TRANSPORT_EMAIL
-								|| !CModule::IncludeModule("socialnetwork")
-								|| !CTaskReminders::__SendJabberReminder($arUser["ID"], $arTask)
-							)
-							{
-								CTaskReminders::__SendEmailReminder($arUser["EMAIL"], $arTask);
-							}
-						}
-					}
-				}
-			}
-		}
-
-		// Some older items can still exists (for removed users, etc.)
-		CTaskReminders::Delete($arFilter);
-
-		return "CTaskReminders::SendAgent();";
-	}
-
-
-	private static function __SendJabberReminder($USER_ID, $arTask)
-	{
-		if (!IsModuleInstalled('im') || !CModule::IncludeModule('im'))
-		{
-			return false;
-		}
-
-		$reminderMessage = str_replace(['#TASK_TITLE#'], [$arTask['TITLE']], GetMessage('TASKS_REMINDER'));
-
-		return CTaskNotifications::sendMessageEx(
-			$arTask['ID'],
-			$arTask['CREATED_BY'],
-			[$USER_ID],
-			[
-				'INSTANT' => $reminderMessage,
-				'EMAIL' => $reminderMessage,
-				'PUSH' => $reminderMessage,
-			],
-			[
-				'NOTIFY_EVENT' => 'reminder',
-				'EXCLUDE_USERS_WITH_MUTE' => 'N',
-			]
-		);
-	}
-
-
-	private static function __SendEmailReminder($USER_EMAIL, $arTask)
-	{
-		$arEventFields = array(
-			"PATH_TO_TASK" => $arTask["PATH_TO_TASK"],
-			"TASK_TITLE" => $arTask["TITLE"],
-			"EMAIL_TO" => $USER_EMAIL,
-		);
-
-		CEvent::Send("TASK_REMINDER", $arTask["SITE_ID"], $arEventFields, "N");
+		return \Bitrix\Tasks\V2\Infrastructure\Agent\Reminder::execute();
 	}
 }

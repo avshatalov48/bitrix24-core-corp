@@ -179,7 +179,7 @@ function getRestoreDisablingOptions($entityTypes, $entityAdditionalData)
 				$sliderCode = $entityLimitData['RESTORE']['SLIDER_CODE'];
 				$module = $entityAdditionalData[$typeId]['MODULE_ID'];
 				$featureId = $entityLimitData['RESTORE']['FEATURE_ID'] ?? null;
-				
+
 				break;
 			}
 		}
@@ -219,7 +219,7 @@ function getGroupRestoreAction(array $restoreDisablingOptions = [], bool $useDel
 			$code = $restoreDisablingOptions['SLIDER_CODE'];
 			$source = $restoreDisablingOptions['MODULE'];
 			$params = "{isLimit: true, limitAnalyticsLabels: {module: 'recyclebin', source: '{$source}'}}";
-			
+
 			if ($featureId)
 			{
 				return "BX.Recyclebin.List.showLimit('{$featureId}');";
@@ -316,7 +316,7 @@ if (!empty($arResult['GRID']['DATA']))
 			'columns' => [
 				'ID' => $row['ID'],
 				'ENTITY_ID' => $row['ENTITY_ID'],
-				'ENTITY_TYPE' => $arResult['ENTITY_TYPES'][$row['ENTITY_TYPE']] ?? null,
+				'ENTITY_TYPE' => htmlspecialcharsbx($arResult['ENTITY_TYPES'][$row['ENTITY_TYPE']] ?? null),
 				'NAME' => htmlspecialcharsbx($row['NAME']),
 				'MODULE_ID' => isset($row['MODULE_ID']) ? $arResult['MODULES_LIST'][$row['MODULE_ID']] : null,
 				'TIMESTAMP' => formatDateRecycle($row['TIMESTAMP']),

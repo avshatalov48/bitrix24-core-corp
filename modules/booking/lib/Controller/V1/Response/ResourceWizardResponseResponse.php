@@ -11,7 +11,9 @@ class ResourceWizardResponseResponse implements \JsonSerializable
 		public readonly array $notificationsSettings,
 		public readonly array $companyScheduleSlots,
 		public readonly bool $isCompanyScheduleAccess,
+		public readonly string $companyScheduleUrl,
 		public readonly string $weekStart,
+		public readonly bool $isChannelChoiceAvailable,
 	)
 	{
 	}
@@ -23,7 +25,9 @@ class ResourceWizardResponseResponse implements \JsonSerializable
 			'notificationsSettings' => $this->notificationsSettings,
 			'companyScheduleSlots' => $this->companyScheduleSlots,
 			'isCompanyScheduleAccess' => $this->isCompanyScheduleAccess,
+			'companyScheduleUrl' => $this->companyScheduleUrl,
 			'weekStart' => $this->weekStart,
+			'isChannelChoiceAvailable' => $this->isChannelChoiceAvailable,
 		];
 	}
 }

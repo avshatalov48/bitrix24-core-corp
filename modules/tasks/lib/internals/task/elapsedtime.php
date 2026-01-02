@@ -1,15 +1,15 @@
-<?
-/**
- * Class ElapsedTimeTable
- *
- * @package Bitrix\Tasks
- **/
+<?php
 
 namespace Bitrix\Tasks\Internals\Task;
 
-use Bitrix\Main,
-	Bitrix\Main\Localization\Loc;
-//Loc::loadMessages(__FILE__);
+use Bitrix\Main\ORM\Data\DataManager;
+use Bitrix\Main\ORM\Fields\DatetimeField;
+use Bitrix\Main\ORM\Fields\IntegerField;
+use Bitrix\Main\ORM\Fields\Relations\Reference;
+use Bitrix\Main\ORM\Fields\TextField;
+use Bitrix\Main\ORM\Query\Join;
+use Bitrix\Main\UserTable;
+use Bitrix\Tasks\Internals\TaskTable;
 
 /**
  * Class ElapsedTimeTable
@@ -27,81 +27,51 @@ use Bitrix\Main,
  * @method static \Bitrix\Tasks\Internals\Task\EO_ElapsedTime wakeUpObject($row)
  * @method static \Bitrix\Tasks\Internals\Task\EO_ElapsedTime_Collection wakeUpCollection($rows)
  */
-class ElapsedTimeTable extends Main\Entity\DataManager
+class ElapsedTimeTable extends DataManager
 {
-	/**
-	 * Returns DB table name for entity.
-	 *
-	 * @return string
-	 */
-	public static function getTableName()
+	public static function getTableName(): string
 	{
 		return 'b_tasks_elapsed_time';
 	}
 
-	/**
-	 * @return static
-	 */
-	public static function getClass()
+	public static function getClass(): string
 	{
-		return get_called_class();
+		return static::class;
 	}
 
-	/**
-	 * Returns entity map definition.
-	 *
-	 * @return array
-	 */
-	public static function getMap()
+	public static function getMap(): array
 	{
-		return array(
-			'ID' => array(
-				'data_type' => 'integer',
-				'primary' => true,
-				'autocomplete' => true,
-			),
-			'CREATED_DATE' => array(
-				'data_type' => 'datetime',
-				'required' => true,
-			),
-			'DATE_START' => array(
-				'data_type' => 'datetime',
-			),
-			'DATE_STOP' => array(
-				'data_type' => 'datetime',
-			),
-			'USER_ID' => array(
-				'data_type' => 'integer',
-				'required' => true,
-			),
-			'TASK_ID' => array(
-				'data_type' => 'integer',
-				'required' => true,
-			),
-			'MINUTES' => array(
-				'data_type' => 'integer',
-				'required' => true,
-			),
-			'SECONDS' => array(
-				'data_type' => 'integer',
-				'required' => true,
-			),
-			'SOURCE' => array(
-				'data_type' => 'integer',
-			),
-			'COMMENT_TEXT' => array(
-				'data_type' => 'text',
-			),
+		return [
+			(new IntegerField('ID'))
+				->configurePrimary()
+				->configureAutocomplete(),
 
-			// references
-			'USER' => array(
-				'data_type' => 'Bitrix\Main\UserTable',
-				'reference' => array('=this.USER_ID' => 'ref.ID')
-			),
-			'TASK' => array(
-				'data_type' => 'Bitrix\Tasks\Internals\TaskTable',
-				'reference' => array('=this.TASK_ID' => 'ref.ID')
-			),
-		);
+			(new DatetimeField('CREATED_DATE'))
+				->configureRequired(),
+
+			(new DatetimeField('DATE_START')),
+
+			(new DatetimeField('DATE_STOP')),
+
+			(new IntegerField('USER_ID'))
+				->configureRequired(),
+
+			(new IntegerField('TASK_ID'))
+				->configureRequired(),
+
+			(new IntegerField('MINUTES'))
+				->configureRequired(),
+
+			(new IntegerField('SECONDS'))
+				->configureRequired(),
+
+			(new IntegerField('SOURCE')),
+
+			(new TextField('COMMENT_TEXT')),
+
+			(new Reference('USER', UserTable::getEntity(), Join::on('this.USER_ID', 'ref.ID'))),
+
+			(new Reference('TASK', TaskTable::getEntity(), Join::on('this.TASK_ID', 'ref.ID'))),
+		];
 	}
 }

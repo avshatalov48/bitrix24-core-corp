@@ -15,7 +15,9 @@ jn.define('calendar/event-view-form/data-loader', (require, exports, module) => 
 	const store = require('statemanager/redux/store');
 	const {
 		selectByIdAndDate,
+		selectByParentId,
 		eventsAdded,
+		eventDeleted,
 		eventFilesChanged,
 	} = require('calendar/statemanager/redux/slices/events');
 
@@ -29,9 +31,23 @@ jn.define('calendar/event-view-form/data-loader', (require, exports, module) => 
 			this.isFilesLoading = false;
 		}
 
-		getEvent({ eventId, dateFromTs })
+		getEvent({ eventId, parentId, dateFromTs })
 		{
-			return selectByIdAndDate(store.getState(), { eventId, dateFromTs });
+			let eventIdForUser = eventId;
+
+			if (parentId !== eventId)
+			{
+				const eventForUser = selectByParentId(store.getState(), { parentId, userId: Number(env.userId) });
+				if (eventForUser)
+				{
+					eventIdForUser = eventForUser.id;
+				}
+			}
+
+			return {
+				eventIdForUser,
+				event: selectByIdAndDate(store.getState(), { eventId: eventIdForUser, dateFromTs }),
+			};
 		}
 
 		async loadEvent({
@@ -60,18 +76,24 @@ jn.define('calendar/event-view-form/data-loader', (require, exports, module) => 
 
 			if (!data.event)
 			{
+				store.dispatch(
+					eventDeleted({ eventId }),
+				);
+
 				return {
 					eventId: null,
 					dateFromTs: null,
 				};
 			}
 
-			this.addUsersToRedux(event, data.users);
+			this.addUsersToRedux(data.users);
+			this.addUsersToRedux(data.entityRelation?.users || []);
 
 			const eventData = {
 				...data.event,
 				permissions: data.permissions,
 				files: data.files,
+				entityRelation: data?.entityRelation,
 			};
 
 			if (requestCollabs && Type.isArrayFilled(data.sections))
@@ -166,7 +188,7 @@ jn.define('calendar/event-view-form/data-loader', (require, exports, module) => 
 			return result;
 		}
 
-		addUsersToRedux(event, users)
+		addUsersToRedux(users)
 		{
 			if (users && users.length > 0)
 			{

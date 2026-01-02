@@ -8,4 +8,9 @@
 	-webkit-font-smoothing: antialiased;
 	-moz-osx-font-smoothing: grayscale;
 }
+
+.bx-messenger-call-overlay.--fixed {
+	position: fixed !important;
+}
+
 .bx-messenger-call-overlay.bx-messenger-call-overlay-folded {height: 60px; top: 67px; opacity: 0.85}

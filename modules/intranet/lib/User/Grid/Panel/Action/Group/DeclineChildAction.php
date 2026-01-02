@@ -2,18 +2,17 @@
 
 namespace Bitrix\Intranet\User\Grid\Panel\Action\Group;
 
+use Bitrix\Intranet\User\Access\UserActionDictionary;
 use Bitrix\Main\Filter\Filter;
-use Bitrix\Main\Grid\Panel\Action\Group\GroupChildAction;
-use Bitrix\Main\Grid\Panel\Snippet\Onchange;
 use Bitrix\Main\HttpRequest;
 use Bitrix\Main\Localization\Loc;
 use Bitrix\Main\Result;
 
-class DeclineChildAction extends UserGroupChildAction
+class DeclineChildAction extends UserAccessChildAction
 {
-	public static function getId(): string
+	public static function getActionType(): UserActionDictionary
 	{
-		return 'decline';
+		return UserActionDictionary::DECLINE;
 	}
 
 	public function getName(): string

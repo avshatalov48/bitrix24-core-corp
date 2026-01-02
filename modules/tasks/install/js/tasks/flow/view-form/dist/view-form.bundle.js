@@ -99,7 +99,9 @@ this.BX.Tasks = this.BX.Tasks || {};
 	      teamCount: data.teamCount,
 	      owner: babelHelpers.classPrivateFieldLooseBase(this, _convertUserToEntity)[_convertUserToEntity](data.owner),
 	      creator: babelHelpers.classPrivateFieldLooseBase(this, _convertUserToEntity)[_convertUserToEntity](data.creator),
-	      project: data.project
+	      project: data.project,
+	      link: data.link,
+	      isFeatureEnabled: data.isFeatureEnabled
 	    };
 	  }
 	  async getSimilarFlows() {
@@ -425,8 +427,7 @@ this.BX.Tasks = this.BX.Tasks || {};
 	    babelHelpers.classPrivateFieldLooseBase(this, _params$1)[_params$1] = params;
 	    babelHelpers.classPrivateFieldLooseBase(this, _layout$1)[_layout$1] = {};
 	    babelHelpers.classPrivateFieldLooseBase(this, _viewAjax$1)[_viewAjax$1] = new ViewAjax(babelHelpers.classPrivateFieldLooseBase(this, _params$1)[_params$1].flowId);
-	    this.isFeatureEnabled = params.isFeatureEnabled === 'Y';
-	    this.flowUrl = params.flowUrl;
+	    this.overlay = main_core.Type.isBoolean(params.overlay) ? params.overlay : true;
 	    void babelHelpers.classPrivateFieldLooseBase(this, _load$1)[_load$1]();
 	    babelHelpers.classPrivateFieldLooseBase(this, _subscribeEvents)[_subscribeEvents]();
 	  }
@@ -444,38 +445,49 @@ this.BX.Tasks = this.BX.Tasks || {};
 	    }
 	  }
 	  show(bindElement) {
-	    babelHelpers.classPrivateFieldLooseBase(this, _layout$1)[_layout$1].popup = this.getPopup();
-	    babelHelpers.classPrivateFieldLooseBase(this, _layout$1)[_layout$1].popup.setContent(babelHelpers.classPrivateFieldLooseBase(this, _render)[_render]());
-	    babelHelpers.classPrivateFieldLooseBase(this, _layout$1)[_layout$1].popup.setBindElement(bindElement);
-	    babelHelpers.classPrivateFieldLooseBase(this, _layout$1)[_layout$1].popup.show();
+	    const popup = this.getPopup();
+	    popup.setContent(babelHelpers.classPrivateFieldLooseBase(this, _render)[_render]());
+	    popup.setBindElement(bindElement);
+	    popup.show();
+	  }
+	  isShown() {
+	    var _this$getPopup$isShow, _this$getPopup;
+	    return (_this$getPopup$isShow = (_this$getPopup = this.getPopup()) == null ? void 0 : _this$getPopup.isShown()) != null ? _this$getPopup$isShow : false;
 	  }
 	  getPopup() {
 	    const id = `tasks-flow-view-popup-${babelHelpers.classPrivateFieldLooseBase(this, _params$1)[_params$1].flowId}`;
 	    if (main_popup.PopupManager.getPopupById(id)) {
 	      return main_popup.PopupManager.getPopupById(id);
 	    }
-	    const popup = new main_popup.Popup({
-	      id,
-	      className: 'tasks-flow__view-popup',
-	      animation: 'fading-slide',
-	      minWidth: 347,
-	      maxWidth: 347,
-	      padding: 0,
-	      borderRadius: 12,
-	      autoHide: true,
-	      overlay: true,
-	      closeByEsc: true,
-	      autoHideHandler: ({
-	        target
-	      }) => {
-	        var _babelHelpers$classPr;
-	        const isSelf = popup.getPopupContainer().contains(target);
-	        const isTeam = (_babelHelpers$classPr = babelHelpers.classPrivateFieldLooseBase(this, _layout$1)[_layout$1].teamPopup) == null ? void 0 : _babelHelpers$classPr.getPopup().getPopupContainer().contains(target);
-	        return !isSelf && !isTeam;
+	    if (!babelHelpers.classPrivateFieldLooseBase(this, _layout$1)[_layout$1].popup) {
+	      let className = 'tasks-flow__view-popup';
+	      if (main_core.Type.isStringFilled(babelHelpers.classPrivateFieldLooseBase(this, _params$1)[_params$1].popupClassname)) {
+	        className += ` ${babelHelpers.classPrivateFieldLooseBase(this, _params$1)[_params$1].popupClassname}`;
 	      }
-	    });
-	    new tasks_sidePanelIntegration.SidePanelIntegration(popup);
-	    return popup;
+	      const popup = new main_popup.Popup({
+	        id,
+	        className,
+	        animation: 'fading-slide',
+	        minWidth: 347,
+	        maxWidth: 347,
+	        padding: 0,
+	        borderRadius: 12,
+	        autoHide: true,
+	        overlay: this.overlay,
+	        closeByEsc: true,
+	        autoHideHandler: ({
+	          target
+	        }) => {
+	          var _babelHelpers$classPr;
+	          const isSelf = popup.getPopupContainer().contains(target);
+	          const isTeam = (_babelHelpers$classPr = babelHelpers.classPrivateFieldLooseBase(this, _layout$1)[_layout$1].teamPopup) == null ? void 0 : _babelHelpers$classPr.getPopup().getPopupContainer().contains(target);
+	          return !isSelf && !isTeam;
+	        }
+	      });
+	      new tasks_sidePanelIntegration.SidePanelIntegration(popup);
+	      babelHelpers.classPrivateFieldLooseBase(this, _layout$1)[_layout$1].popup = popup;
+	    }
+	    return babelHelpers.classPrivateFieldLooseBase(this, _layout$1)[_layout$1].popup;
 	  }
 	}
 	function _subscribeEvents2() {
@@ -487,7 +499,7 @@ this.BX.Tasks = this.BX.Tasks || {};
 	}
 	async function _load2$1() {
 	  babelHelpers.classPrivateFieldLooseBase(this, _viewFormData)[_viewFormData] = await babelHelpers.classPrivateFieldLooseBase(this, _viewAjax$1)[_viewAjax$1].getViewFormData();
-	  babelHelpers.classPrivateFieldLooseBase(this, _layout$1)[_layout$1].popup.setContent(babelHelpers.classPrivateFieldLooseBase(this, _render)[_render]());
+	  this.getPopup().setContent(babelHelpers.classPrivateFieldLooseBase(this, _render)[_render]());
 	}
 	function _render2() {
 	  if (!babelHelpers.classPrivateFieldLooseBase(this, _viewFormData)[_viewFormData]) {
@@ -562,7 +574,7 @@ this.BX.Tasks = this.BX.Tasks || {};
 	  main_core.Event.bind(title, 'click', () => {
 	    const notificationId = 'copy-link';
 	    if (!babelHelpers.classPrivateFieldLooseBase(this, _notificationList)[_notificationList].has(notificationId)) {
-	      const flowURL = window.location.protocol + this.flowUrl;
+	      const flowURL = window.location.protocol + babelHelpers.classPrivateFieldLooseBase(this, _viewFormData)[_viewFormData].link;
 	      BX.clipboard.copy(flowURL);
 	      BX.UI.Notification.Center.notify({
 	        id: notificationId,
@@ -719,7 +731,7 @@ this.BX.Tasks = this.BX.Tasks || {};
 	  var _babelHelpers$classPr6, _babelHelpers$classPr7;
 	  (_babelHelpers$classPr7 = (_babelHelpers$classPr6 = babelHelpers.classPrivateFieldLooseBase(this, _layout$1)[_layout$1]).similarFlows) != null ? _babelHelpers$classPr7 : _babelHelpers$classPr6.similarFlows = new SimilarFlows({
 	    flowId: babelHelpers.classPrivateFieldLooseBase(this, _params$1)[_params$1].flowId,
-	    isFeatureEnabled: this.isFeatureEnabled,
+	    isFeatureEnabled: babelHelpers.classPrivateFieldLooseBase(this, _viewFormData)[_viewFormData].isFeatureEnabled,
 	    createTaskButtonClickHandler: () => {
 	      var _babelHelpers$classPr8;
 	      return (_babelHelpers$classPr8 = babelHelpers.classPrivateFieldLooseBase(this, _layout$1)[_layout$1].popup) == null ? void 0 : _babelHelpers$classPr8.destroy();

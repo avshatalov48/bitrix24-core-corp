@@ -5,13 +5,12 @@ namespace Bitrix\BIConnector\Integration\Superset\Repository;
 use Bitrix\BIConnector\Integration\Superset\Integrator\Integrator;
 use Bitrix\BIConnector\Integration\Superset\Model\Dashboard;
 use Bitrix\BIConnector\Integration\Superset\Model\SupersetDashboard;
-use Bitrix\BIConnector\Integration\Superset\Model\EO_SupersetDashboard_Collection;
 use Bitrix\BIConnector\Integration\Superset\Model\SupersetDashboardTable;
 use Bitrix\BIConnector\Integration\Superset\Integrator\Dto;
 use Bitrix\BIConnector\Integration\Superset\SupersetInitializer;
 use Bitrix\Main\Type\Collection;
 
-final class DashboardRepository
+class DashboardRepository
 {
 	public function __construct(private Integrator $integrator)
 	{}
@@ -32,6 +31,9 @@ final class DashboardRepository
 		$dashboardList = SupersetDashboardTable::getList($ormParams)->fetchCollection();
 		$dashboardList->fillUrlParams();
 		$dashboardList->fillSource();
+		$dashboardList->fillScope();
+		$dashboardList->fillTags();
+		$dashboardList->fillGroups();
 		$dashboardExternalIds = $dashboardList->getExternalIdList();
 		Collection::normalizeArrayValuesByInt($dashboardExternalIds);
 
@@ -45,7 +47,10 @@ final class DashboardRepository
 		foreach ($dashboardList as $dashboard)
 		{
 			$externalId = $dashboard->getExternalId();
-			if (isset($additionalData[$externalId]) && $additionalData[$externalId] instanceof Dto\Dashboard)
+			if (
+				isset($additionalData[$externalId])
+				&& $additionalData[$externalId] instanceof Dto\Dashboard
+			)
 			{
 				$dashboardData = $additionalData[$externalId];
 				$this->synchronizeDashboard($dashboard, $dashboardData);

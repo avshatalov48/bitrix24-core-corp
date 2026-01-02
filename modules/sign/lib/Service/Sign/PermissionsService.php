@@ -9,7 +9,6 @@ use Bitrix\Sign\Access\Permission\SignPermissionDictionary;
 use Bitrix\Sign\Access\Service\RolePermissionService;
 use Bitrix\Sign\Result\Result;
 use Bitrix\Sign\Service\Container;
-use CCrmPerms;
 
 final class PermissionsService
 {
@@ -21,7 +20,7 @@ final class PermissionsService
 	}
 
 	/**
-	 * @param array<SignPermissionDictionary::*|CrmPermissionDictionary::*, array<RolePermissionService::DEFAULT_ROLE_*, int|CCrmPerms::*>> $permissions
+	 * @param array<SignPermissionDictionary::*|CrmPermissionDictionary::*, array<RolePermissionService::DEFAULT_ROLE_*, int>> $permissions
 	 * @example \Bitrix\Sign\Agent\Permission\UpdateDefaultTemplatePermissionAgent::run
 	 */
 	public function updatePermissionsToDefaultRolesIfItsHasEmptyValue(array $permissions): Main\Result
@@ -170,7 +169,7 @@ final class PermissionsService
 			return false;
 		}
 
-		$previousDefaultPermissionValues = [CCrmPerms::PERM_NONE, '0'];
+		$previousDefaultPermissionValues = [\Bitrix\Crm\Service\UserPermissions::PERMISSION_NONE, '0'];
 		$flatAccessRightsFromAllRoles = $this->rolePermissionService->getFlatAccessRightsFromAllRoles();
 		foreach ($flatAccessRightsFromAllRoles as $accessRight) {
 			$permissionId = $accessRight['id'];

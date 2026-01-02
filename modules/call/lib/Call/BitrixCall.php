@@ -20,6 +20,11 @@ class BitrixCall extends Call
 	 */
 	protected function initCall(): void
 	{
+		if ($this->scheme === self::SCHEME_JWT)
+		{
+			return;
+		}
+
 		if (!$this->endpoint)
 		{
 			$this->uuid = Util::generateUUID();
@@ -51,15 +56,20 @@ class BitrixCall extends Call
 			$this->setEndpoint($callData['endpoint']);
 			$this->save();
 		}
+
 		parent::initCall();
 	}
 
 	public function finish(): void
 	{
-		if ($this->getState() != static::STATE_FINISHED)
+		if (
+			$this->scheme !== self::SCHEME_JWT
+			&& $this->getState() != static::STATE_FINISHED
+		)
 		{
 			(new ControllerClient())->finishCall($this);
 		}
+
 		parent::finish();
 	}
 

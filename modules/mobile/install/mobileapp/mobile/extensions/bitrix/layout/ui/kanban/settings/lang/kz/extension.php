@@ -1,0 +1,15 @@
+<?php
+$MESS["CATEGORY_DETAIL_CREATE_FAILED_STAGE"] = "Сәтсіздік сатысын жасау";
+$MESS["CATEGORY_DETAIL_CREATE_PROCESS_STAGE"] = "Сатыны құру";
+$MESS["CATEGORY_DETAIL_DEFAULT_CATEGORY_NAME2"] = "Жаңа иірім";
+$MESS["CATEGORY_DETAIL_DEFAULT_STAGE_NAME2"] = "Жаңа саты";
+$MESS["CATEGORY_DETAIL_DELETE2"] = "Иірімді жою";
+$MESS["CATEGORY_DETAIL_DELETE_CATEGORY2"] = "Иірімді жою керек пе?";
+$MESS["CATEGORY_DETAIL_FUNNEL_NOT_LOADED2"] = "Иірім";
+$MESS["CATEGORY_DETAIL_IS_DEFAULT_TEXT"] = "Оны редакциялауға болады, бірақ оны жою мүмкін емес";
+$MESS["CATEGORY_DETAIL_IS_DEFAULT_TITLE2_MSGVER_1"] = "Бұл әдепкі иірім";
+$MESS["CATEGORY_DETAIL_NAME_ERROR"] = "Иірімнің атын енгізіңіз";
+$MESS["CATEGORY_DETAIL_NAME_TITLE"] = "Атауы";
+$MESS["CATEGORY_DETAIL_SAVE"] = "Сақтау";
+$MESS["CATEGORY_DETAIL_SUCCESS_CREATION"] = "Саты құрылды";
+$MESS["CATEGORY_DETAIL_SUCCESS_UPDATE"] = "Саты өзгертілді";

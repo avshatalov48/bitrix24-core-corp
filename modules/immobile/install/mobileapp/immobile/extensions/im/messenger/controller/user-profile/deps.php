@@ -2,6 +2,6 @@
 
 return [
 	'extensions' => [
-		'user/profile',
+		'user-profile',
 	],
 ];

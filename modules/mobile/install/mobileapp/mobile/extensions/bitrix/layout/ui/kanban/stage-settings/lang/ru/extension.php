@@ -9,3 +9,6 @@ $MESS['STAGE_DETAIL_DEFAULT_STAGE_DEFAULT_NAME'] = 'Новая стадия';
 
 $MESS['STAGE_DETAIL_DELETE'] = 'Удалить стадию';
 $MESS['STAGE_DETAIL_DELETE_TEXT'] = 'Удалить стадию?';
+$MESS['STAGE_DETAIL_NAME_ERROR'] = 'Введите название стадии';
+
+$MESS['STAGE_DETAIL_COLOR_PICKER_TITLE'] = 'Цвет стадии';

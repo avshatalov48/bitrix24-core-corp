@@ -10,7 +10,7 @@
 }
 
 .chart-wizard-tree-preview__header {
-	font: 13px/16px var(--ui-font-family-system);
+	font: 13px/16px var(--ui-font-family-primary, var(--ui-font-family-system));
 	color: var(--ui-color-palette-gray-90);
 	margin-bottom: 15px;
 }
@@ -23,7 +23,7 @@
 .chart-wizard-tree-preview__header_name {
 	display: inline-block;
 	font-weight: var(--ui-font-weight-semi-bold);
-	color: var(--ui-color-palette-green-70);
+	color: var(--ui-color-palette-black-base);
 }
 
 .chart-wizard-tree-preview__header_name:before {
@@ -39,10 +39,25 @@
 .chart-wizard-tree-preview__node_summary {
 	background: var(--ui-color-palette-white-base);
 	border: 1px solid var(--ui-color-palette-gray-15);
-	border-radius: 8px;
-	padding: 10px 12px 10px 12px;
+	border-radius: 12px;
 	position: relative;
-	width: 278px;
+}
+
+.chart-wizard-tree-preview__node_summary.--old {
+	border-radius: 8px;
+}
+
+.chart-wizard-tree-preview__node_summary.--old.--team {
+	border-color: rgba(0, 117, 255, 0.2);
+}
+
+.chart-wizard-tree-preview__node {
+	--team-border-color: rgba(0, 117, 255, 0.5);
+}
+
+.chart-wizard-tree-preview__node.--old .chart-wizard-tree-preview__node_summary.--old.--team:after {
+	border-color: rgba(0, 117, 255, 0.18);;
+	background: var(--ui-color-palette-white-base);
 }
 
 .chart-wizard-tree-preview__node .chart-wizard-tree-preview__node > .chart-wizard-tree-preview__node_summary:before,
@@ -62,6 +77,10 @@
 	border-image-source: linear-gradient(178.81deg, rgba(230, 231, 233, 0.6) 1.02%, var(--ui-color-palette-gray-15) 100%);
 }
 
+.chart-wizard-tree-preview__node .chart-wizard-tree-preview__node > .chart-wizard-tree-preview__node_summary.--team:before {
+	border-image-source: linear-gradient(179.21deg, rgba(237, 238, 240, 0.26) 0%, rgba(0, 117, 255, 0.18) 58.28%);
+}
+
 .chart-wizard-tree-preview__node .chart-wizard-tree-preview__node > .chart-wizard-tree-preview__node_summary:after {
 	top: calc(50% - 10px);
 	border: 1px solid var(--ui-color-palette-gray-15);
@@ -75,22 +94,53 @@
 .chart-wizard-tree-preview__node.--new .chart-wizard-tree-preview__node_summary,
 .chart-wizard-tree-preview__node.--new .chart-wizard-tree-preview__node_summary:after {
 	border-color: var(--ui-color-palette-blue-50);
+	background: var(--ui-color-palette-white-base);
+}
+
+.chart-wizard-tree-preview__node.--new.--team .chart-wizard-tree-preview__node_summary,
+.chart-wizard-tree-preview__node.--new.--team .chart-wizard-tree-preview__node_summary:after {
+	border-color: var(--team-border-color);
 }
 
 .chart-wizard-tree-preview__node.--new .chart-wizard-tree-preview__node_summary:before {
 	border-image-source: linear-gradient(179.21deg, var(--ui-color-palette-gray-10) 0%, var(--ui-color-palette-blue-50) 58.28%);
 }
 
+.chart-wizard-tree-preview__node.--new.--team .chart-wizard-tree-preview__node_summary:before {
+	border-image-source: linear-gradient(179.21deg, var(--ui-color-palette-gray-10) 0%, var(--team-border-color) 58.28%);
+}
+
 .chart-wizard-tree-preview__node_name {
-	font: var(--ui-font-weight-medium) 12px/14.32px var(--ui-font-family-system);
-	margin: 5px 0;
+	font: var(--ui-font-weight-medium) 12px/14px var(--ui-font-family-primary, var(--ui-font-family-system));
+	color: rgba(51, 51, 51, 1);
+	padding: 10px 12px 0 12px;
+}
+
+.chart-wizard-tree-preview__node.--new .chart-wizard-tree-preview__node_summary .chart-wizard-tree-preview__node_name {
+	font: var(--ui-font-weight-medium) 14px/17px var(--ui-font-family-primary, var(--ui-font-family-system));
+	padding: 7px 10px 7px 10px;
+	margin: 6px 6px 0 6px;
+	height: 17px;
+	border-radius: 8px;
+}
+
+.chart-wizard-tree-preview__node.--new.--team .chart-wizard-tree-preview__node_summary .chart-wizard-tree-preview__node_name {
+	background-color: rgba(0, 117, 255, 0.23);
+}
+
+.chart-wizard-tree-preview__node.--new .chart-wizard-tree-preview__node_summary .chart-wizard-tree-preview__node_content {
+	padding: 0 16px 16px 16px;
+}
+
+.chart-wizard-tree-preview__node_content {
+	padding: 0 12px 10px 12px;
 }
 
 .chart-wizard-tree-preview__node_head {
 	display: flex;
 	align-items: center;
-	margin-top: 10px;
-	gap: 7px;
+	margin-top: 6px;
+	gap: 6px;
 }
 
 .chart-wizard-tree-preview__node_head-avatar {
@@ -102,6 +152,11 @@
 .chart-wizard-tree-preview__node_head-avatar.--placeholder {
 	width: 28px;
 	height: 28px;
+}
+
+.chart-wizard-tree-preview__node_head-avatar.--old {
+	width: 24px;
+	height: 24px;
 }
 
 .chart-wizard-tree-preview__node_head-avatar.--deputy,
@@ -120,13 +175,18 @@
 }
 
 .chart-wizard-tree-preview__node_head-name {
-	font: 13px/15.51px var(--ui-font-family-system);
+	font: 12px/14.32px var(--ui-font-family-primary, var(--ui-font-family-system));
 	color: var(--ui-color-palette-black-base);
 	margin-bottom: 3px;
 }
 
+.chart-wizard-tree-preview__node_head-name.--old {
+	font: 11px/16px var(--ui-font-family-primary, var(--ui-font-family-system));
+	margin-bottom: 0;
+}
+
 .chart-wizard-tree-preview__node_head-position {
-	font: 11px/13px var(--ui-font-family-system);
+	font: 10px/12px var(--ui-font-family-primary, var(--ui-font-family-system));
 	color: var(--ui-color-palette-gray-60);
 }
 
@@ -135,7 +195,7 @@
 	border-radius: 32px;
 	padding: 2px 8px 3px 8px;
 	color: var(--ui-color-palette-gray-90);
-	font: var(--ui-font-weight-semi-bold) 10px/10px var(--ui-font-family-system);
+	font: var(--ui-font-weight-semi-bold) 10px/10px var(--ui-font-family-primary, var(--ui-font-family-system));
 	cursor: pointer;
 }
 
@@ -150,16 +210,16 @@
 }
 
 .chart-wizard-tree-preview__node_employees-title {
-	font: 11px/13px var(--ui-font-family-system);
+	font: 11px/13px var(--ui-font-family-primary, var(--ui-font-family-system));
 	color: var(--ui-color-palette-gray-60);
-	margin: 10px 0 5px 0;
+	margin: 12px 0 5px 0;
 }
 
 .chart-wizard-tree-preview__node_employees_count {
 	display: inline-block;
 	border: 1px solid #e9e9e9;
 	border-radius: 30px;
-	font: 11px/16px var(--ui-font-family-system);
+	font: 11px/16px var(--ui-font-family-primary, var(--ui-font-family-system));
 	color: var(--ui-color-palette-gray-90);
 	padding: 2px 7px;
 	white-space: nowrap;
@@ -186,4 +246,27 @@
 	border-radius: 16px;
 	display: block;
 	margin-bottom: 5px;
+	margin-top: 5px;
+}
+
+.chart-wizard-tree-preview__placeholder_name.--deputy {
+	margin-bottom: 0;
+	margin-top: 0;
+}
+
+.chart-wizard-tree-preview__placeholder_name.--team {
+	background: rgba(0, 117, 255, 0.15);
+}
+
+.chart-wizard-tree-preview__placeholder_node_name {
+	width: 95px;
+	height: 13px;
+	background: rgba(168, 231, 251, 0.53);
+	border-radius: 16px;
+	display: block;
+	margin-top: 2px;
+}
+
+.chart-wizard-tree-preview__placeholder_node_name.--team {
+	background: rgba(0, 117, 255, 0.12);
 }

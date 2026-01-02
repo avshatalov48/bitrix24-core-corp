@@ -10,8 +10,13 @@ const MenuOption = Object.freeze({
 	addEmployee: 'add-employee',
 });
 
+// @vue/component
 export const AddButton = {
 	name: 'AddButton',
+
+	components: {
+		RouteActionMenu,
+	},
 
 	emits: ['addDepartment'],
 
@@ -23,8 +28,12 @@ export const AddButton = {
 			},
 		};
 	},
-	components: {
-		RouteActionMenu,
+
+	computed: {
+		MenuOption(): typeof MenuOption
+		{
+			return MenuOption;
+		},
 	},
 
 	mounted(): void
@@ -74,12 +83,6 @@ export const AddButton = {
 		});
 	},
 
-	computed: {
-		MenuOption(): typeof MenuOption
-		{
-			return MenuOption;
-		},
-	},
 	methods: {
 		loc(phraseCode: string, replacements: { [p: string]: string } = {}): string
 		{
@@ -98,7 +101,11 @@ export const AddButton = {
 		},
 	},
 	template: `
-		<div class="ui-btn ui-btn-success ui-btn-round ui-btn-sm" @click="addDepartment">
+		<div
+			class="ui-btn ui-btn-success ui-btn-round ui-btn-sm humanresources-title-panel__add-button"
+			data-test-id="hr-org-chart_title-panel__add-button"
+			@click="addDepartment"
+		>
 			{{ loc('HUMANRESOURCES_COMPANY_STRUCTURE_ADD_BUTTON') }}
 		</div>
 	`,

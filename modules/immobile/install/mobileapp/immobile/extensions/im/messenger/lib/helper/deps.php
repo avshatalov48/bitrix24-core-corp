@@ -13,6 +13,8 @@ return [
 		'im:messenger/lib/utils',
 		'im:messenger/lib/di/service-locator',
 		'im:messenger/lib/permission-manager',
+		'utils/type',
+		'im:messenger/lib/feature',
 	],
 	'bundle' => [
 		'./src/dialog',
@@ -24,5 +26,6 @@ return [
 		'./src/file',
 		'./src/url',
 		'./src/entity-selector',
+		'./src/counter',
 	],
 ];

@@ -1,0 +1,49 @@
+.b24-growing-text-area {
+	display: flex;
+	width: 100%;
+}
+
+.b24-growing-text-area-edit {
+	width: 100%;
+	margin: 0;
+	padding: 0;
+	resize: none;
+	overflow-x: hidden;
+	overflow-y: auto;
+	outline: none;
+	border: none;
+	background: transparent;
+	color: var(--ui-color-base-1);
+	font-weight: inherit;
+	font-family: inherit;
+	scrollbar-width: none;
+}
+
+.b24-growing-text-area-edit::-webkit-scrollbar {
+	display: none;
+}
+
+.b24-growing-text-area-edit::placeholder {
+	color: var(--ui-color-base-4);
+}
+
+.b24-growing-text-area-display {
+	font-family: inherit;
+	overflow: hidden;
+	display: -webkit-box;
+	-webkit-line-clamp: 3;
+	-webkit-box-orient: vertical;
+	text-overflow: ellipsis;
+	cursor: text;
+	white-space: pre-wrap;
+	word-break: break-word;
+}
+
+.b24-growing-text-area.--readonly .b24-growing-text-area-edit,
+.b24-growing-text-area.--readonly .b24-growing-text-area-display {
+	cursor: default;
+}
+
+.b24-growing-text-area-popup {
+	word-break: break-word;
+}

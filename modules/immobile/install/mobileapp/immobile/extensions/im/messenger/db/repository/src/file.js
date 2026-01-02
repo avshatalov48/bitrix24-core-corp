@@ -35,7 +35,6 @@ jn.define('im/messenger/db/repository/file', (require, exports, module) => {
 		async saveFromModel(fileList)
 		{
 			const fileListToAdd = [];
-
 			fileList.forEach((file) => {
 				const fileToAdd = this.fileTable.validate(file);
 
@@ -48,14 +47,31 @@ jn.define('im/messenger/db/repository/file', (require, exports, module) => {
 		async saveFromRest(fileList)
 		{
 			const fileListToAdd = [];
-
 			fileList.forEach((file) => {
-				const fileToAdd = this.validateRestFile(file);
+				const fileToAdd = this.fileTable.validate(this.validateRestFile(file));
 
 				fileListToAdd.push(fileToAdd);
 			});
 
 			return this.fileTable.add(fileListToAdd, true);
+		}
+
+		async saveFromPush(fileList)
+		{
+			const fileListMergePromiseList = [];
+			fileList.forEach((file) => {
+				const fileToAdd = this.fileTable.validate(this.validatePushFile(file));
+				const mergePromise = this.fileTable.merge(fileToAdd.id, (existingFile) => {
+					return {
+						...existingFile,
+						...fileToAdd,
+					};
+				});
+
+				fileListMergePromiseList.push(mergePromise);
+			});
+
+			return Promise.all(fileListMergePromiseList);
 		}
 
 		validateRestFile(file)
@@ -70,6 +86,11 @@ jn.define('im/messenger/db/repository/file', (require, exports, module) => {
 			if (Type.isNumber(file.chatId) || Type.isString(file.chatId))
 			{
 				result.chatId = Number(file.chatId);
+			}
+
+			if (Type.isStringFilled(file.dialogId))
+			{
+				result.dialogId = file.dialogId;
 			}
 
 			if (Type.isStringFilled(file.date))
@@ -126,8 +147,6 @@ jn.define('im/messenger/db/repository/file', (require, exports, module) => {
 				{
 					result.image = false;
 				}
-
-				result.image = JSON.stringify(result.image);
 			}
 
 			if (Type.isString(file.status) && !Type.isUndefined(FileStatus[file.status]))
@@ -165,7 +184,22 @@ jn.define('im/messenger/db/repository/file', (require, exports, module) => {
 				result.urlShow = file.urlShow;
 			}
 
+			if (Type.isObject(file.mediaUrl))
+			{
+				result.mediaUrl = file.mediaUrl;
+			}
+
+			if (Type.isBoolean(file.isTranscribable))
+			{
+				result.isTranscribable = file.isTranscribable;
+			}
+
 			return result;
+		}
+
+		validatePushFile(file)
+		{
+			return this.validateRestFile(file);
 		}
 	}
 

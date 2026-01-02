@@ -155,31 +155,12 @@ class Bitrix24Manager
 	 */
 	public function getFeedbackFormInfo($region = null): array
 	{
-		$region = $region ?? $this->getPortalZone();
-
-		switch ($region)
-		{
-			case 'br':
-				$info = ['id' => 164, 'lang' => 'br', 'sec' => 'j1t95n'];
-				break;
-			case 'la':
-				$info = ['id' => 166, 'lang' => 'la', 'sec' => 'nh1t7p'];
-				break;
-			case 'de':
-				$info = ['id' => 168, 'lang' => 'de', 'sec' => 'uphcj0'];
-				break;
-			case 'ua':
-				$info = ['id' => 172, 'lang' => 'ua', 'sec' => 'k0l4cl'];
-				break;
-			case 'ru':
-			case 'kz':
-			case 'by':
-				$info = ['id' => 162, 'lang' => 'ru', 'sec' => 'x24l3h'];
-				break;
-			default:
-				$info = ['id' => 170, 'lang' => 'en', 'sec' => '0c6pnp'];
-		}
-
-		return $info;
+		return [
+			['zones' => ['br'], 'id' => 164, 'lang' => 'br', 'sec' => 'j1t95n'],
+			['zones' => ['la'], 'id' => 166, 'lang' => 'la', 'sec' => 'nh1t7p'],
+			['zones' => ['de'], 'id' => 168, 'lang' => 'de', 'sec' => 'uphcj0'],
+			['zones' => ['ru', 'kz', 'by'], 'id' => 162, 'lang' => 'ru', 'sec' => 'x24l3h'],
+			['id' => 170, 'lang' => 'en', 'sec' => '0c6pnp'],
+		];
 	}
 }

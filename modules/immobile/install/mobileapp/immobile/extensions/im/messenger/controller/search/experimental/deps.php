@@ -2,15 +2,16 @@
 
 return [
 	'extensions' => [
-		'loc',
 		'utils/string',
 		'selector/entity',
 		'selector/providers/base',
+		'im:messenger/loc',
 		'im:messenger/lib/helper',
 		'im:messenger/lib/logger',
 		'im:messenger/lib/params',
 		'im:messenger/lib/rest',
-		'im:messenger/lib/converter/search',
+		'im/messenger/lib/feature',
+		'im:messenger/lib/converter/ui/recent-search',
 		'im:messenger/lib/element/chat-avatar',
 		'im:messenger/lib/element/chat-avatar',
 		'im:messenger/lib/emitter',

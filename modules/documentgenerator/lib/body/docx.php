@@ -4,8 +4,11 @@ namespace Bitrix\DocumentGenerator\Body;
 
 use Bitrix\DocumentGenerator\Value;
 use Bitrix\Main\Application;
+use Bitrix\Main\Config\Option;
 use Bitrix\Main\Error;
 use Bitrix\Main\IO\File;
+use Bitrix\Main\IO\InvalidPathException;
+use Bitrix\Main\IO\Path;
 use Bitrix\Main\Localization\Loc;
 use Bitrix\Main\Result;
 use Bitrix\Main\Security\Random;
@@ -413,23 +416,62 @@ class Docx extends ZipDocument
 	 */
 	protected function getImage($path): ?File
 	{
-		if(!is_string($path) || empty($path))
+		$normalizedPath = $this->getNormalizedImagePath((string)$path);
+		if (!$normalizedPath)
 		{
 			return null;
 		}
-		$localPath = false;
-		$fileArray = \CFile::MakeFileArray($path);
-		if($fileArray && $fileArray['tmp_name'])
+
+		$fileArray = \CFile::MakeFileArray($normalizedPath, false, true);
+		if (!is_array($fileArray) || empty($fileArray['tmp_name']))
 		{
-			$localPath = \CBXVirtualIo::getInstance()->getLogicalName($fileArray['tmp_name']);
+			return null;
 		}
-		if($localPath)
+
+		$localPath = \CBXVirtualIo::GetInstance()->GetLogicalName($fileArray['tmp_name']);
+		if (!$localPath)
 		{
-			$file = new File($localPath);
-			if($this->getMimeType($file))
-			{
-				return $file;
-			}
+			return null;
+		}
+
+		$file = new File($localPath);
+		if (!$this->getMimeType($file))
+		{
+			return null;
+		}
+
+		return $file;
+	}
+
+	private function getNormalizedImagePath(string $path): ?string
+	{
+		if (str_starts_with($path, 'http://') || str_starts_with($path, 'https://'))
+		{
+			return $path;
+		}
+
+		try
+		{
+			$normalizedPath = Path::normalize($path);
+		}
+		catch (InvalidPathException)
+		{
+			return null;
+		}
+
+		// compatibility
+		/** @see \CFile::MakeFileArray() */
+		if (!file_exists($path) && file_exists($_SERVER['DOCUMENT_ROOT'] . $path))
+		{
+			$normalizedPath = $_SERVER['DOCUMENT_ROOT'] . $path;
+		}
+
+		$absoluteUpload = Path::convertRelativeToAbsolute(Option::get('main', 'upload_dir', 'upload'));
+		$absoluteTmp = \CTempFile::GetAbsoluteRoot();
+
+		if (str_starts_with($normalizedPath, $absoluteUpload) || str_starts_with($normalizedPath, $absoluteTmp))
+		{
+			return $normalizedPath;
 		}
 
 		return null;
@@ -480,16 +522,6 @@ class Docx extends ZipDocument
 		if(isset($types[$mimeType]))
 		{
 			return $mimeType;
-		}
-
-		$extension = $file->getExtension();
-		if(!empty($extension))
-		{
-			$types = array_flip($types);
-			if(isset($types[$extension]))
-			{
-				return $types[$extension];
-			}
 		}
 
 		return null;

@@ -1,0 +1,6 @@
+.intranet-text-input__lock-icon {
+	position: absolute;
+	z-index: 10;
+	top: 36px;
+	left: 8px;
+}

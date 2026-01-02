@@ -1,11 +1,12 @@
 .booking-booking-selected-cell {
 	position: absolute;
-	z-index: 2;
-	width: calc(280px * var(--zoom));
+	z-index: 3;
+	width: calc(var(--width) * var(--zoom) - 1px);
 
 	--left: 0px;
 	--top: 0px;
 	--height: 0px;
+	--width: 280px;
 	left: var(--left);
 	top: max(var(--top), calc(-1 * var(--top-cells-height)));
 	bottom: max(calc(100% - var(--top) - var(--height)), 1px);

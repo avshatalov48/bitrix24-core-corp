@@ -26,7 +26,7 @@ jn.define('im/messenger/provider/data/recent', (require, exports, module) => {
 		}
 
 		/**
-		 * @param {?DialogId} dialogId
+		 * @param {?DialogId|string} dialogId
 		 * @param {?number} chatId
 		 */
 		async delete({ dialogId = null, chatId = null })
@@ -54,7 +54,7 @@ jn.define('im/messenger/provider/data/recent', (require, exports, module) => {
 
 		/**
 		 * @param {'model' | 'database'} source
-		 * @param {?DialogId} dialogId
+		 * @param {?DialogId|string} dialogId
 		 * @param {?number } chatId
 		 */
 		async deleteFromSource(source, { dialogId = null, chatId = null })

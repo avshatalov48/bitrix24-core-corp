@@ -1,8 +1,9 @@
-<?
+<?php
 $MESS["TM_CALENDAR_CHOOSE"] = "Select Calendar";
 $MESS["TM_CLOCK_SELECT_DATE_LINK"] = "Change day";
 $MESS["TM_CONFIRM_LATE_OPEN"] = "Are you sure you want to clock in at #TIME#?";
 $MESS["TM_DAY_CLOSED_ADMIN"] = "Working day has been closed by the supervisor.";
+$MESS["TM_ERROR_UNKNOWN"] = "Unknown error. Try refreshing the page.";
 $MESS["TM_IN"] = "in";
 $MESS["TM_TASK_ACCOMPLICES"] = "Participant";
 $MESS["TM_TASK_ACCOMPLICES_PL"] = "Participants";
@@ -33,4 +34,3 @@ $MESS["TM_TASK_STATUS_5"] = "Closed";
 $MESS["TM_TASK_STATUS_6"] = "Deferred";
 $MESS["TM_TASK_STATUS_7"] = "Declined";
 $MESS["TM_TILL"] = "#today# until #time#";
-?>

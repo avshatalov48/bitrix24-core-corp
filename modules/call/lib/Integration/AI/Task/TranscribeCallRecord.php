@@ -61,7 +61,7 @@ class TranscribeCallRecord extends AITask
 		}
 
 		if (
-			$track->hasDownloadUrl()
+			$track->getDownloaded() === false
 			&& !empty($track->getDownloadUrl())
 		)
 		{
@@ -91,6 +91,11 @@ class TranscribeCallRecord extends AITask
 	public function getCost(): int
 	{
 		return 7;
+	}
+
+	public function allowNotifyTaskFailed(): bool
+	{
+		return true;
 	}
 
 	public function getAIEngineCode(): string

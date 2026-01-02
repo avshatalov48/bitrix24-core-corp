@@ -29,7 +29,7 @@
 	margin-left: 5px;
 	text-transform: uppercase;
 	font-size: var(--ui-font-size-3xs, 11px);
-	color: #525C69;
+	color: var(--ui-color-palette-gray-90);
 	padding-left: 5px;
 }
 
@@ -86,7 +86,7 @@
 	overflow: hidden;
 	white-space: nowrap;
 	text-overflow: ellipsis;
-	color: #525C69;
+	color: var(--ui-color-gray-90);
 	text-decoration: none;
 	border-bottom: none;
 	padding-left: 11px;
@@ -96,12 +96,15 @@
 	position: relative;
 	display: flex;
 	align-items: center;
-	margin-block: 20px;
 	padding: 14px 34px 14px 0px;
 	min-height: 143px;
 	border-radius: var(--ui-border-radius-md);
 	background: var(--ui-color-base-02);
 	box-sizing: border-box;
+}
+
+.pagetitle-below{
+	margin-block: 20px;
 }
 
 .sign-document-list__banner-icon {
@@ -123,13 +126,13 @@
 .sign-document-list__banner-title {
 	display: block;
 	margin-bottom: 16px;
-	font: var(--ui-font-weight-medium) 24px var(--ui-font-family-system);
+	font: var(--ui-font-weight-medium) 24px var(--ui-font-family-primary, var(--ui-font-family-system));
 	color: var(--ui-color-base-90);
 }
 
 .sign-document-list__banner-desc {
 	display: block;
-	font: 16px var(--ui-font-family-system);
+	font: 16px var(--ui-font-family-primary, var(--ui-font-family-system));
 	color: var(--ui-color-base-60);
 	letter-spacing: .2px;
 }

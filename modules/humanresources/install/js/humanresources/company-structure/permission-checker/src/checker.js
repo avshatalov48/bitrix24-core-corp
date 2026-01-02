@@ -1,36 +1,24 @@
 /* eslint-disable no-constructor-return */
 import { chartAPI } from '../../org-chart/src/api';
+import { TeamPermissionChecker } from './entity-permission-checkers/team-checker';
+import { DepartmentPermissionChecker } from './entity-permission-checkers/department-checker';
 import { useChartStore } from 'humanresources.company-structure.chart-store';
+import { EntityTypes } from 'humanresources.company-structure.utils';
+import { PermissionLevels, PermissionActions } from './consts';
 
-export const PermissionActions = Object.freeze({
-	structureView: 'ACTION_STRUCTURE_VIEW',
-	chanelBindToStructure: 'ACTION_CHANEL_BIND_TO_STRUCTURE',
-	chanelUnbindToStructure: 'ACTION_CHANEL_UNBIND_TO_STRUCTURE',
-	chatBindToStructure: 'ACTION_CHAT_BIND_TO_STRUCTURE',
-	chatUnbindToStructure: 'ACTION_CHAT_UNBIND_TO_STRUCTURE',
-	departmentCreate: 'ACTION_DEPARTMENT_CREATE',
-	departmentDelete: 'ACTION_DEPARTMENT_DELETE',
-	departmentEdit: 'ACTION_DEPARTMENT_EDIT',
-	employeeAddToDepartment: 'ACTION_EMPLOYEE_ADD_TO_DEPARTMENT',
-	employeeRemoveFromDepartment: 'ACTION_EMPLOYEE_REMOVE_FROM_DEPARTMENT',
-	accessEdit: 'ACTION_USERS_ACCESS_EDIT',
-	inviteToDepartment: 'ACTION_USER_INVITE',
-});
-
-class PermissionCheckerClass
+export class PermissionCheckerClass
 {
-	static FULL_COMPANY = 30;
-	static SELF_AND_SUB = 20;
-	static SELF = 10;
-	static NONE = 0;
-
 	constructor(): PermissionCheckerClass
 	{
 		if (!PermissionCheckerClass.instance)
 		{
 			this.currentUserPermissions = {};
-			this.permissionVariablesDictionary = [];
+			this.isTeamsAvailable = false;
+			this.isCollabsAvailable = false;
+			this.isDeputyApprovesBPAvailable = false;
 			this.isInitialized = false;
+			this.departmentChecker = new DepartmentPermissionChecker();
+			this.teamChecker = new TeamPermissionChecker(this.departmentChecker, this.currentUserPermissions);
 			PermissionCheckerClass.instance = this;
 		}
 
@@ -49,15 +37,69 @@ class PermissionCheckerClass
 			return;
 		}
 
-		const { currentUserPermissions, permissionVariablesDictionary } = await chartAPI.getDictionary();
-		this.currentUserPermissions = currentUserPermissions;
+		const {
+			currentUserPermissions,
+			teamsAvailable,
+			collabsAvailable,
+			deputyApprovesBP,
+			departmentSettingsAvailable,
+		} = await chartAPI.getDictionary();
 
-		this.permissionVariablesDictionary = permissionVariablesDictionary;
+		this.currentUserPermissions = currentUserPermissions;
+		this.isTeamsAvailable = teamsAvailable;
+		this.isCollabsAvailable = collabsAvailable;
+		this.isDeputyApprovesBPAvailable = deputyApprovesBP;
+		this.isDepartmentSettingsAvailable = departmentSettingsAvailable;
 
 		this.isInitialized = true;
 	}
 
-	hasPermission(action: string, departmentId: number): boolean
+	hasPermission(action: string, entityId: number, minLevel: any = null): boolean
+	{
+		const permissionLevel = this.currentUserPermissions[action];
+
+		if (!permissionLevel || !entityId)
+		{
+			return false;
+		}
+
+		if (this.departmentChecker.isCheckerAction(action))
+		{
+			return this.departmentChecker.hasPermission(
+				action,
+				entityId,
+				permissionLevel,
+				minLevel,
+			);
+		}
+
+		if (
+			this.isTeamsAvailable
+			&& this.teamChecker.isCheckerAction(action)
+		)
+		{
+			return this.teamChecker.hasPermission(
+				action,
+				entityId,
+				permissionLevel,
+				minLevel,
+			);
+		}
+
+		return false;
+	}
+
+	checkDeputyApprovalBPAvailable(): boolean
+	{
+		return this.isDeputyApprovesBPAvailable;
+	}
+
+	checkDepartmentSettingsAvailable(): boolean
+	{
+		return this.isDepartmentSettingsAvailable;
+	}
+
+	hasPermissionOfAction(action: string): boolean
 	{
 		const permissionLevel = this.currentUserPermissions[action];
 
@@ -66,65 +108,62 @@ class PermissionCheckerClass
 			return false;
 		}
 
-		const permissionObject = this.permissionVariablesDictionary.find((item) => item.id === permissionLevel);
+		if (this.teamChecker.isCheckerAction(action))
+		{
+			if (!this.isTeamsAvailable)
+			{
+				return false;
+			}
 
-		if (!permissionObject)
+			return permissionLevel.TEAM > PermissionLevels.none || permissionLevel.DEPARTMENT > PermissionLevels.none;
+		}
+
+		return permissionLevel > PermissionLevels.none;
+	}
+
+	canSortEntitiesByParentId(entityId: number): boolean
+	{
+		const entities = useChartStore().departments;
+		const entity = entities.get(entityId);
+		if (!entity)
 		{
 			return false;
 		}
 
-		const departments = useChartStore().departments;
-		if (action === PermissionActions.departmentDelete)
+		const teamTeamMinValue = { TEAM: PermissionLevels.selfAndSub };
+		const teamDepartmentMinValue = { DEPARTMENT: PermissionLevels.selfAndSub };
+
+		const teamAction = PermissionActions.teamEdit;
+		if (entity.entityType === EntityTypes.team)
 		{
-			const rootId = [...departments.values()].find((department) => department.parentId === 0).id;
-			if (departmentId === rootId)
-			{
-				return false;
-			}
+			return this.hasPermission(teamAction, entityId, teamTeamMinValue)
+				|| this.hasPermission(teamAction, entityId, teamDepartmentMinValue)
+			;
 		}
 
-		const userDepartments = useChartStore().currentDepartments;
-		switch (permissionObject.id)
+		if (entity.entityType === EntityTypes.department)
 		{
-			case PermissionCheckerClass.FULL_COMPANY:
-				return true;
+			const departmentAction = PermissionActions.departmentEdit;
 
-			case PermissionCheckerClass.SELF_AND_SUB:
-			{
-				if (userDepartments.includes(departmentId))
-				{
-					return true;
-				}
-
-				let currentDepartment = departments.get(departmentId);
-
-				while (currentDepartment)
-				{
-					if (userDepartments.includes(currentDepartment.id))
-					{
-						return true;
-					}
-
-					currentDepartment = departments.get(currentDepartment.parentId);
-				}
-
-				return false;
-			}
-			case PermissionCheckerClass.SELF:
-				return userDepartments.includes(departmentId);
-
-			case PermissionCheckerClass.NONE:
-			default:
-				return false;
+			return this.hasPermission(departmentAction, entityId, PermissionLevels.selfAndSub);
 		}
+
+		return false;
 	}
 
-	hasPermissionOfAction(action: string): boolean
+	canBeParentForEntity(entityId: number, type: EntityTypes): boolean
 	{
-		return this.currentUserPermissions[action] !== undefined
-			&& this.currentUserPermissions[action] !== null
-			&& this.currentUserPermissions[action] !== PermissionCheckerClass.NONE
-		;
+		if (type === EntityTypes.department)
+		{
+			return this.hasPermission(PermissionActions.departmentEdit, entityId);
+		}
+
+		if (type === EntityTypes.team)
+		{
+			return this.hasPermission(PermissionActions.teamEdit, entityId);
+		}
+
+		return false;
 	}
 }
 

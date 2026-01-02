@@ -2,7 +2,7 @@
  * @module im/messenger/controller/chat-composer/create/group-chat
  */
 jn.define('im/messenger/controller/chat-composer/create/group-chat', (require, exports, module) => {
-	const { Loc } = require('loc');
+	const { Loc } = require('im/messenger/loc');
 	const { Color } = require('tokens');
 	const { NotifyManager } = require('notify-manager');
 	const { isEqual } = require('utils/object');
@@ -19,7 +19,7 @@ jn.define('im/messenger/controller/chat-composer/create/group-chat', (require, e
 	const { MessengerEmitter } = require('im/messenger/lib/emitter');
 	const { EntitySelectorHelper } = require('im/messenger/lib/helper');
 
-	const { ChatService } = require('im/messenger/provider/service');
+	const { ChatService } = require('im/messenger/provider/services/chat');
 
 	const { GroupChatView } = require('im/messenger/controller/chat-composer/lib/view/group-chat');
 	const { showClosingSelectorAlert } = require('im/messenger/controller/chat-composer/lib/confirm');
@@ -244,6 +244,7 @@ jn.define('im/messenger/controller/chat-composer/create/group-chat', (require, e
 				callbacks: {
 					onClickCreateButton: this.onClickCreate.bind(this),
 					onChangeAvatar: this.onChangeAvatar.bind(this),
+					onChangeMessagesAutoDeleteDelay: this.onChangeMessagesAutoDeleteDelay.bind(this),
 					onDestroy: () => {
 						this.mainView = null;
 					},
@@ -274,7 +275,7 @@ jn.define('im/messenger/controller/chat-composer/create/group-chat', (require, e
 				})
 				.catch((error) => {
 					NotifyManager.hideLoadingIndicator(false);
-					logger.error(`${this.constructor.name}.create channel error`, error);
+					logger.error(`${this.constructor.name}.create group chat error`, error);
 				})
 			;
 		}
@@ -282,6 +283,11 @@ jn.define('im/messenger/controller/chat-composer/create/group-chat', (require, e
 		onChangeAvatar(avatar)
 		{
 			this.dialogInfo.avatar = avatar;
+		}
+
+		onChangeMessagesAutoDeleteDelay(delay)
+		{
+			this.dialogInfo.messagesAutoDeleteDelay = delay;
 		}
 
 		async create()
@@ -298,6 +304,11 @@ jn.define('im/messenger/controller/chat-composer/create/group-chat', (require, e
 			if (this.dialogInfo.avatar)
 			{
 				config.avatar = this.dialogInfo.avatar;
+			}
+
+			if (this.dialogInfo.messagesAutoDeleteDelay)
+			{
+				config.messagesAutoDeleteDelay = this.dialogInfo.messagesAutoDeleteDelay;
 			}
 
 			const chatService = new ChatService();

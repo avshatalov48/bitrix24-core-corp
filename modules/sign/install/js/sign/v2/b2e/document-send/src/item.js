@@ -18,7 +18,8 @@ type ItemViewData = {
 
 export const EntityTypes = Object.freeze({
 	User: 'user',
-	Company: 'company'
+	Company: 'company',
+	Role: 'structure-node-role',
 });
 
 export class Item
@@ -31,10 +32,10 @@ export class Item
 			container: HTMLDivElement = null,
 			header: HTMLDivElement = null,
 			footer: HTMLDivElement = null,
-		}
+		},
 	};
 
-	#userDialog: ?Dialog = null;
+	#dataDialog: ?Dialog = null;
 	#loader: ?Loader = null;
 
 	#data: ?ItemData = null;
@@ -93,7 +94,42 @@ export class Item
 		return this.#ui.container;
 	}
 
-	#loadCompany(): Promise
+	async #load(): Promise<void>
+	{
+		this.#showLoader();
+		switch (this.#data.entityType)
+		{
+			case EntityTypes.Company:
+			{
+				await this.#loadCompany();
+
+				break;
+			}
+
+			case EntityTypes.User:
+			{
+				await this.#loadUser();
+
+				break;
+			}
+
+			case EntityTypes.Role:
+			{
+				await this.#loadRole();
+
+				break;
+			}
+
+			default:
+			{
+				break;
+			}
+		}
+		this.#refreshView();
+		this.#hideLoader();
+	}
+
+	#loadCompany(): Promise<void>
 	{
 		return this.#api.loadB2eCompanyList()
 			.then(data => {
@@ -107,7 +143,7 @@ export class Item
 
 					const footer = Type.isBoolean(data?.showTaxId) && data?.showTaxId && company?.rqInn
 						? Loc.getMessage('SIGN_DOCUMENT_SUMMARY_COMPANY_INN',
-							{ '%innValue%' : TextFormat.encode(company?.rqInn) }
+							{ '%innValue%': TextFormat.encode(company?.rqInn) },
 						)
 						: null
 					;
@@ -115,7 +151,7 @@ export class Item
 					this.#viewData = {
 						header: company?.title,
 						footer: footer,
-						avatar: null
+						avatar: null,
 					};
 
 					this.#refreshView();
@@ -128,16 +164,16 @@ export class Item
 		;
 	}
 
-	#loadUser(): Promise
+	#loadUser(): Promise<void>
 	{
-		 return new Promise((resolve) => {
-			this.#userDialog = new Dialog({
+		return new Promise((resolve) => {
+			this.#dataDialog = new Dialog({
 				entities: [
-					{ id: EntityTypes.User }
+					{ id: EntityTypes.User },
 				],
 				events: {
 					'onLoad': (event) => {
-						const user = this.#userDialog.getSelectedItems()[0] ?? null;
+						const user = this.#dataDialog.getSelectedItems()[0] ?? null;
 						if (Type.isObject(user))
 						{
 							const lastName = user?.customData?.get('lastName') ?? '';
@@ -153,31 +189,50 @@ export class Item
 						resolve();
 					},
 				},
-				preselectedItems: [[EntityTypes.User, this.#data.entityId]]
+				preselectedItems: [[EntityTypes.User, this.#data.entityId]],
 			});
 
-			this.#userDialog.load();
+			this.#dataDialog.load();
 		});
 	}
 
-	async #load(): Promise<void>
+	#loadRole(): Promise<void>
 	{
-		this.#showLoader();
-		if (this.#data.entityType === EntityTypes.Company)
-		{
-			await this.#loadCompany();
-		}
-		else if (this.#data.entityType === EntityTypes.User)
-		{
-			await this.#loadUser();
-		}
-		this.#refreshView();
-		this.#hideLoader();
+		return new Promise((resolve) => {
+			this.#dataDialog = new Dialog({
+				entities: [
+					{
+						id: EntityTypes.Role,
+						dynamicLoad: true,
+					},
+				],
+				events: {
+					'onLoad': (event) => {
+						const data = this.#dataDialog.getSelectedItems()[0] ?? null;
+						if (Type.isObject(data))
+						{
+							this.#viewData = {
+								header: data.title ?? '',
+								footer: '',
+								avatar: data?.avatar ?? null,
+							};
+							this.#refreshView();
+						}
+
+						this.#hideLoader();
+						resolve();
+					},
+				},
+				preselectedItems: [[EntityTypes.Role, this.#data.entityId]],
+			});
+
+			this.#dataDialog.load();
+		});
 	}
 
 	#refreshView(): void
 	{
-		if (this.#viewData?.avatar !== null)
+		if (this.#viewData?.avatar)
 		{
 			this.#ui.avatar.style.backgroundImage = `url("${this.#viewData.avatar}")`;
 		}
@@ -198,7 +253,7 @@ export class Item
 		this.#loader = new BX.Loader({
 			target: this.#ui.container,
 			mode: 'inline',
-			size: 40
+			size: 40,
 		});
 
 		return this.#loader;

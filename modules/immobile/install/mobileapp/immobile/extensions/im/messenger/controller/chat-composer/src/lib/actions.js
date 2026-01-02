@@ -2,7 +2,7 @@
  * @module im/messenger/controller/chat-composer/lib/actions
  */
 jn.define('im/messenger/controller/chat-composer/lib/actions', (require, exports, module) => {
-	const { Loc } = require('loc');
+	const { Loc } = require('im/messenger/loc');
 
 	/**
 	 * @param {Omit<SettingsPanelAction, 'testId'>} props

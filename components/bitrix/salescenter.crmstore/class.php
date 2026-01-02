@@ -26,7 +26,7 @@ class SalesCenterCrmStore extends CBitrixComponent implements Controllerable
 	{
 		if(in_array($this->getZone(), ['ru','by','kz']))
 		{
-			$this->arResult['URL'] = 'https://www.youtube.com/embed/NoNRcCsWmjw?feature=oembed';
+			$this->arResult['URL'] = 'https://rutube.ru/play/embed/348d39eb37ca02768fc3242e701e50eb';
 		}
 		else
 		{

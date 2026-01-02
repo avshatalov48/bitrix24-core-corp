@@ -15,7 +15,6 @@ Loc::loadMessages(__FILE__);
 final class CCrmOrderShipmentProductListComponent extends \CBitrixComponent
 {
 	private $userId = 0;
-	private $userPermissions;
 	private $errors = [];
 
 	/** @var Bitrix\Crm\Order\Order */
@@ -52,9 +51,11 @@ final class CCrmOrderShipmentProductListComponent extends \CBitrixComponent
 			return false;
 		}
 
-		$this->userPermissions = CCrmPerms::GetCurrentUserPermissions();
-
-		if (!\Bitrix\Crm\Order\Permissions\Order::checkReadPermission(0, $this->userPermissions))
+		if (!\Bitrix\Crm\Service\Container::getInstance()
+			->getUserPermissions()
+			->entityType()
+			->canReadItems(\CCrmOwnerType::Order)
+		)
 		{
 			$this->errors[] = new Main\Error(Loc::getMessage('CRM_PERMISSION_DENIED'));
 			return false;
@@ -83,7 +84,7 @@ final class CCrmOrderShipmentProductListComponent extends \CBitrixComponent
 			return false;
 		}
 
-		$this->userId = CCrmSecurityHelper::GetCurrentUserID();
+		$this->userId = \Bitrix\Crm\Service\Container::getInstance()->getContext()->getUserId();
 		CUtil::InitJSCore(['ajax', 'tooltip', 'sidepanel']);
 		return true;
 	}
@@ -688,7 +689,12 @@ final class CCrmOrderShipmentProductListComponent extends \CBitrixComponent
 		$this->arResult['ORDER_SITE_ID'] = $this->order->getSiteId();
 		$this->arResult['ORDER_ID'] =$this->order->getId();
 		$this->arResult['LOADING_SET_ITEMS'] = isset($_REQUEST['action']) && $_REQUEST['action'] === \Bitrix\Main\Grid\Actions::GRID_GET_CHILD_ROWS;
-		$this->arResult['CAN_UPDATE_ORDER'] = \Bitrix\Crm\Order\Permissions\Order::checkUpdatePermission(intval($this->arResult['ORDER_ID']), $this->userPermissions);
+		$this->arResult['CAN_UPDATE_ORDER'] = \Bitrix\Crm\Service\Container::getInstance()
+			->getUserPermissions()
+			->item()
+			->canUpdate(\CCrmOwnerType::Order, (int)$this->arResult['ORDER_ID'])
+		;
+
 		if ($this->shipment->getField('DEDUCTED') === 'Y')
 		{
 			$this->arResult['CAN_UPDATE_ORDER'] = false;

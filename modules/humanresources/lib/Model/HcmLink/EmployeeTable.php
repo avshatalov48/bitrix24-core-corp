@@ -3,6 +3,7 @@
 namespace Bitrix\HumanResources\Model\HcmLink;
 
 use Bitrix\HumanResources\Service\Container;
+use Bitrix\HumanResources\Type\HcmLink\EmployeeDataType;
 use Bitrix\Main\ORM;
 use Bitrix\Main\ORM\Data\Internal\DeleteByFilterTrait;
 use Bitrix\Main\ORM\Event;
@@ -117,13 +118,10 @@ class EmployeeTable extends ORM\Data\DataManager
 	private static function getAvailableFieldsForSearch(): array
 	{
 		return [
-			'firstName',
-			'lastName',
-			'patronymicName',
-			'snils',
-			'birthDate',
-			'position',
-			'employeeNumber',
+			EmployeeDataType::FIRST_NAME->value,
+			EmployeeDataType::LAST_NAME->value,
+			EmployeeDataType::PATRONYMIC_NAME->value,
+			EmployeeDataType::SNILS->value
 		];
 	}
 
@@ -155,4 +153,5 @@ class EmployeeTable extends ORM\Data\DataManager
 			Container::getHcmLinkPersonRepository()->addSearchIndexByPersonId($personId, $result);
 		}
 	}
+
 }

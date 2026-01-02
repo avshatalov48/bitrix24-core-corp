@@ -4,8 +4,8 @@
 jn.define('crm/timeline/item/ui/body/blocks/comment-content', (require, exports, module) => {
 	const { inAppUrl } = require('in-app-url');
 	const { Loc } = require('loc');
-	const { ProfileView } = require('user/profile');
 	const { TimelineItemBodyBaseEditableBlock } = require('crm/timeline/item/ui/body/blocks/base-editable-block');
+	const { UserProfile } = require('user-profile');
 
 	/**
 	 * @class TimelineItemBodyCommentContentBlock
@@ -38,19 +38,9 @@ jn.define('crm/timeline/item/ui/body/blocks/comment-content', (require, exports,
 
 		openUserProfile(userId)
 		{
-			const widgetParams = { groupStyle: true };
-
-			widgetParams.backdrop = {
-				bounceEnable: false,
-				swipeAllowed: true,
-				showOnTop: true,
-				hideNavigationBar: false,
-				horizontalSwipeAllowed: false,
-			};
-
-			PageManager.openWidget('list', widgetParams)
-				.then((list) => ProfileView.open({ userId, backdrop: true }, list))
-			;
+			void UserProfile.open({
+				ownerId: userId,
+			});
 		}
 
 		getTextParams()

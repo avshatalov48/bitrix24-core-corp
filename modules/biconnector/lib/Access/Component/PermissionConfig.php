@@ -2,25 +2,23 @@
 
 namespace Bitrix\BIConnector\Access\Component;
 
-use Bitrix\BIconnector\Access\Component\PermissionConfig\RoleMembersInfo;
-use Bitrix\BIconnector\Access\Permission\PermissionDictionary;
-use Bitrix\BIconnector\Access\Permission\PermissionTable;
+use Bitrix\BIConnector\Access\Component\PermissionConfig\RoleMembersInfo;
+use Bitrix\BIConnector\Access\Permission\PermissionDictionary;
+use Bitrix\BIConnector\Access\Permission\PermissionTable;
+use Bitrix\BIConnector\Access\Role\RoleDictionary;
+use Bitrix\BIConnector\Access\Role\RoleUtil;
 use Bitrix\BIConnector\Configuration\Feature;
-use Bitrix\BIConnector\Superset\MarketDashboardManager;
 use Bitrix\Main\Localization\Loc;
-use Bitrix\BIconnector\Access\Role\RoleUtil;
-use Bitrix\BIconnector\Access\Role\RoleDictionary;
 
 final class PermissionConfig
 {
-	public const SECTION_BIC_ACCESS = 'SECTION_BIC_ACCESS';
 	public const SECTION_MAIN_RIGHTS = 'SECTION_RIGHTS_MAIN';
-	public const SECTION_DASHBOARD_RIGHTS = 'SECTION_RIGHTS_DASHBOARD';
+	public const SECTION_DASHBOARD_GROUP_RIGHTS = 'SECTION_RIGHTS_GROUP';
 
 	/**
 	 * Access rights.
 	 *
-	 * @return array in format for `BX.UI.AccessRights.Section` js class.
+	 * @return array in format of ExternalAccessRightSection type of BX.UI.AccessRights.V2.App.
 	 */
 	public function getAccessRights(): array
 	{
@@ -36,12 +34,21 @@ final class PermissionConfig
 				$rights[] = PermissionDictionary::getPermission($permissionId);
 			}
 
-			$result[] = [
+			$section = [
 				'sectionCode' => $sectionCode,
 				'sectionTitle' => Loc::getMessage("BICONNECTOR_CONFIG_PERMISSION_{$sectionCode}"),
 				'sectionHint' => Loc::getMessage("HINT_BICONNECTOR_CONFIG_PERMISSION_{$sectionCode}"),
-				'rights' => $rights
+				'rights' => $rights,
 			];
+
+			if ($sectionCode === self::SECTION_DASHBOARD_GROUP_RIGHTS)
+			{
+				$section['action'] = [
+					'buttonText' => Loc::getMessage('BICONNECTOR_CONFIG_PERMISSION_SECTION_BUTTON_ADD_GROUP'),
+				];
+			}
+
+			$result[] = $section;
 		}
 
 		return $result;
@@ -50,7 +57,7 @@ final class PermissionConfig
 	/**
 	 * Get saved user roles.
 	 *
-	 * @return array in format for `BX.UI.AccessRights.Grid.userGroups` js property.
+	 * @return array in format of ExternalUserGroup type of BX.UI.AccessRights.V2.App.
 	 */
 	public function getUserGroups(): array
 	{
@@ -80,36 +87,26 @@ final class PermissionConfig
 	 */
 	private function getSections(): array
 	{
-		$dashboardRights = [
-			PermissionDictionary::BIC_DASHBOARD_VIEW,
-			PermissionDictionary::BIC_DASHBOARD_COPY,
-			PermissionDictionary::BIC_DASHBOARD_EDIT,
-			PermissionDictionary::BIC_DASHBOARD_DELETE,
-		];
-		if (MarketDashboardManager::getInstance()->isExportEnabled())
-		{
-			$dashboardRights[] = PermissionDictionary::BIC_DASHBOARD_EXPORT;
-		}
+		$dashboardPermissions = PermissionDictionary::getDashboardGroupPermissions();
 
 		$mainRights = [
+			PermissionDictionary::BIC_ACCESS,
 			PermissionDictionary::BIC_DASHBOARD_CREATE,
 			PermissionDictionary::BIC_DASHBOARD_TAG_MODIFY,
 			PermissionDictionary::BIC_SETTINGS_ACCESS,
 			PermissionDictionary::BIC_SETTINGS_EDIT_RIGHTS,
-			PermissionDictionary::BIC_DASHBOARD_EDIT_SCOPE,
+			PermissionDictionary::BIC_GROUP_MODIFY,
 		];
 
 		if (Feature::isExternalEntitiesEnabled())
 		{
 			$mainRights[] = PermissionDictionary::BIC_EXTERNAL_DASHBOARD_CONFIG;
+			$mainRights[] = PermissionDictionary::BIC_DELETE_ALL_UNUSED_ELEMENTS;
 		}
 
 		return [
-			self::SECTION_BIC_ACCESS => [
-				PermissionDictionary::BIC_ACCESS,
-			],
 			self::SECTION_MAIN_RIGHTS => $mainRights,
-			self::SECTION_DASHBOARD_RIGHTS => $dashboardRights,
+			self::SECTION_DASHBOARD_GROUP_RIGHTS => array_keys($dashboardPermissions),
 		];
 	}
 

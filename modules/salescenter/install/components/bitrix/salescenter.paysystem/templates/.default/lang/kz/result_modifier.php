@@ -1,0 +1,7 @@
+<?php
+$MESS["SALESCENTER_SP_PAYSYSTEM_PLATON_LINK_CONNECT"] = "Platon-ға қосылу";
+$MESS["SALESCENTER_SP_PAYSYSTEM_PLATON_LINK_CONNECT_SPECIAL_PLAN"] = "Platon-ға қосылу және арнайы тарифті алу";
+$MESS["SALESCENTER_SP_PAYSYSTEM_WOOPKASSA_LINK_CONNECT"] = "Woopkassa-ға қосылу";
+$MESS["SALESCENTER_SP_ROBOKASSA_SETTINGS_FORM_EXIST"] = "Robokassa баптауларын өзгерту";
+$MESS["SALESCENTER_SP_ROBOKASSA_SETTINGS_FORM_NEW"] = "Robokassa-да аккаунт бұрыннан бар";
+$MESS["SALESCENTER_SP_SETTINGS_FORM"] = "Дүкен баптаулары";

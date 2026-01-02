@@ -10,7 +10,7 @@ $MESS["TASKS_SONET_GL_TASKS2_TASK_STATUS_MESSAGE_2"] = "Задача ждёт в
 $MESS["TASKS_SONET_GL_TASKS2_TASK_STATUS_MESSAGE_2_24"] = "Задача ждёт выполнения";
 $MESS["TASKS_SONET_GL_TASKS2_TASK_STATUS_MESSAGE_3"] = "Статус задачи изменился на \"Выполняется\"";
 $MESS["TASKS_SONET_GL_TASKS2_TASK_STATUS_MESSAGE_3_24"] = "Задача выполняется";
-$MESS["TASKS_SONET_GL_TASKS2_TASK_STATUS_MESSAGE_4"] = "Задача закрыта (требуется контроль постановщика)";
+$MESS["TASKS_SONET_GL_TASKS2_TASK_STATUS_MESSAGE_4_MSGVER_1"] = "Задача закрыта (требуется контроль постановщика)";
 $MESS["TASKS_SONET_GL_TASKS2_TASK_STATUS_MESSAGE_4_24"] = "Задача закрыта и ожидает контроля";
 $MESS["TASKS_SONET_GL_TASKS2_TASK_STATUS_MESSAGE_4_24_CHANGES"] = "требуется контроль постановщика";
 $MESS["TASKS_SONET_GL_TASKS2_TASK_STATUS_MESSAGE_5"] = "Задача закрыта";
@@ -40,4 +40,3 @@ $MESS["TASKS_SONET_GL_EVENT_TITLE_TASK_DEFAULT_24_F"] = "#USER_NAME# созда�
 $MESS["TASKS_SONET_GL_EVENT_TITLE_TASK_DEFAULT_24"] = "#USER_NAME# создал(а) или изменил(а) задачу #TITLE#";
 $MESS["TASKS_SONET_GL_EVENT_TITLE_TASK_COMMENT_MESSAGE_ADD"] = "Добавил комментарий к задаче #TASK_URL_BEGIN##TASK_TITLE##URL_END# cо следующим текстом: \"#TASK_COMMENT_TEXT#\"";
 $MESS["TASKS_SONET_GL_EVENT_TITLE_TASK_COMMENT_MESSAGE_EDIT"] = "Изменил комментарий к задаче #TASK_URL_BEGIN##TASK_TITLE##URL_END# на текст: \"#TASK_COMMENT_TEXT#\"";
-?>

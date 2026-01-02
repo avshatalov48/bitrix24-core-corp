@@ -26,7 +26,6 @@
 			scrollbar.series.push(this.chart.series._values[0]);
 
 			// remove default "desaturate" filter,
-			// @see https://www.amcharts.com/docs/v4/tutorials/customizing-chart-scrollbar/ :Re-enabling colors
 			scrollbar.scrollbarChart.series.getIndex(0).filters.clear();
 			scrollbar.scrollbarChart.xAxes.getIndex(0).renderer.grid.template.disabled = true;
 			scrollbar.scrollbarChart.xAxes.getIndex(0).renderer.labels.template.disabled = true;

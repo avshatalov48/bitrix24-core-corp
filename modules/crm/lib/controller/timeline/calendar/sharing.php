@@ -22,7 +22,7 @@ class Sharing extends Controller
 		array $memberIds = [],
 	): bool
 	{
-		if (!\Bitrix\Crm\Service\Container::getInstance()->getUserPermissions()->checkUpdatePermissions($ownerTypeId, $ownerId))
+		if (!\Bitrix\Crm\Service\Container::getInstance()->getUserPermissions()->item()->canUpdate($ownerTypeId, $ownerId))
 		{
 			$this->addError(\Bitrix\Crm\Controller\ErrorCode::getAccessDeniedError());
 
@@ -55,7 +55,7 @@ class Sharing extends Controller
 		array $memberIds,
 	): array
 	{
-		if (!\Bitrix\Crm\Service\Container::getInstance()->getUserPermissions()->checkUpdatePermissions($entityTypeId, $entityId))
+		if (!\Bitrix\Crm\Service\Container::getInstance()->getUserPermissions()->item()->canUpdate($entityTypeId, $entityId))
 		{
 			$this->addError(\Bitrix\Crm\Controller\ErrorCode::getAccessDeniedError());
 
@@ -89,7 +89,7 @@ class Sharing extends Controller
 
 	public function onLinkCopiedAction(string $linkHash, int $ownerId, int $ownerTypeId): bool
 	{
-		if (!\Bitrix\Crm\Service\Container::getInstance()->getUserPermissions()->checkUpdatePermissions($ownerTypeId, $ownerId))
+		if (!\Bitrix\Crm\Service\Container::getInstance()->getUserPermissions()->item()->canUpdate($ownerTypeId, $ownerId))
 		{
 			$this->addError(\Bitrix\Crm\Controller\ErrorCode::getAccessDeniedError());
 
@@ -107,7 +107,7 @@ class Sharing extends Controller
 
 	public function onRuleUpdatedAction(string $linkHash, int $ownerId, int $ownerTypeId): bool
 	{
-		if (!\Bitrix\Crm\Service\Container::getInstance()->getUserPermissions()->checkUpdatePermissions($ownerTypeId, $ownerId))
+		if (!\Bitrix\Crm\Service\Container::getInstance()->getUserPermissions()->item()->canUpdate($ownerTypeId, $ownerId))
 		{
 			$this->addError(\Bitrix\Crm\Controller\ErrorCode::getAccessDeniedError());
 
@@ -125,7 +125,7 @@ class Sharing extends Controller
 
 	public function getConferenceChatIdAction(int $eventId, int $ownerId, int $ownerTypeId)
 	{
-		if (!\Bitrix\Crm\Service\Container::getInstance()->getUserPermissions()->checkUpdatePermissions($ownerTypeId, $ownerId))
+		if (!\Bitrix\Crm\Service\Container::getInstance()->getUserPermissions()->item()->canUpdate($ownerTypeId, $ownerId))
 		{
 			$this->addError(\Bitrix\Crm\Controller\ErrorCode::getAccessDeniedError());
 
@@ -143,7 +143,7 @@ class Sharing extends Controller
 
 	public function completeWithStatusAction(int $activityId, int $ownerTypeId, int $ownerId, string $status)
 	{
-		if (!\Bitrix\Crm\Service\Container::getInstance()->getUserPermissions()->checkUpdatePermissions($ownerTypeId, $ownerId))
+		if (!\Bitrix\Crm\Service\Container::getInstance()->getUserPermissions()->item()->canUpdate($ownerTypeId, $ownerId))
 		{
 			$this->addError(\Bitrix\Crm\Controller\ErrorCode::getAccessDeniedError());
 
@@ -161,7 +161,7 @@ class Sharing extends Controller
 
 	public function cancelMeetingAction(int $eventId, int $ownerId, int $ownerTypeId)
 	{
-		if (!\Bitrix\Crm\Service\Container::getInstance()->getUserPermissions()->checkUpdatePermissions($ownerTypeId, $ownerId))
+		if (!\Bitrix\Crm\Service\Container::getInstance()->getUserPermissions()->item()->canUpdate($ownerTypeId, $ownerId))
 		{
 			$this->addError(\Bitrix\Crm\Controller\ErrorCode::getAccessDeniedError());
 
@@ -180,7 +180,7 @@ class Sharing extends Controller
 	public function getConfigAction(int $entityTypeId, int $entityId): array
 	{
 		$result = [];
-		if (!\Bitrix\Crm\Service\Container::getInstance()->getUserPermissions()->checkUpdatePermissions($entityTypeId, $entityId))
+		if (!\Bitrix\Crm\Service\Container::getInstance()->getUserPermissions()->item()->canUpdate($entityTypeId, $entityId))
 		{
 			$this->addError(\Bitrix\Crm\Controller\ErrorCode::getAccessDeniedError());
 

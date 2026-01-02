@@ -1,0 +1,20 @@
+<?php
+$MESS["LFP_CLASS_SCHEME_DELETE_ERROR"] = "Қосылу схемасын жою қатесі: #error_msg#.";
+$MESS["LFP_CLASS_SCHEME_ERR_DAYS_MISSING"] = "Автоматты жариялау кестесі айдың және/немесе аптаның күндерін көрсету керек.";
+$MESS["LFP_CLASS_SCHEME_ERR_DOM"] = "Кесте үшін ай күндерінің дұрыс емес пішімі.";
+$MESS["LFP_CLASS_SCHEME_ERR_DOM2"] = "Кесте үшін ай күндерінің дұрыс емес пішімі.";
+$MESS["LFP_CLASS_SCHEME_ERR_DOW"] = "Кесте үшін апта күндерінің дұрыс емес пішімі.";
+$MESS["LFP_CLASS_SCHEME_ERR_DOW2"] = "Кесте үшін апта күндерінің дұрыс емес пішімі.";
+$MESS["LFP_CLASS_SCHEME_ERR_ENTITY_TYPE"] = "Мән түрі міндетті өріс болып табылады.";
+$MESS["LFP_CLASS_SCHEME_ERR_EVENT_ID"] = "Оқиға міндетті өріс болып табылады.";
+$MESS["LFP_CLASS_SCHEME_ERR_LE_MISSING"] = "Автоматты түрде жариялау үшін соңғы жариялау уақыты көрсетілуі керек.";
+$MESS["LFP_CLASS_SCHEME_ERR_LE_WRONG"] = "Соңғы жарияланымның дұрыс емес уақыт пішімі.";
+$MESS["LFP_CLASS_SCHEME_ERR_NAME"] = "Схема атауы міндетті өріс болып табылады.";
+$MESS["LFP_CLASS_SCHEME_ERR_SITE"] = "Сайт дұрыс көрсетілмеген.";
+$MESS["LFP_CLASS_SCHEME_ERR_SITE2"] = "Сайтты көрсетіңіз.";
+$MESS["LFP_CLASS_SCHEME_ERR_TIMES_MISSING"] = "Автоматты жариялау кестесі үшін уақыт көрсетілуі керек.";
+$MESS["LFP_CLASS_SCHEME_ERR_TOD"] = "Кесте үшін дұрыс емес уақыт форматы.";
+$MESS["LFP_CLASS_SCHEME_ERR_TOD2"] = "Кесте үшін дұрыс емес уақыт форматы.";
+$MESS["LFP_CLASS_SCHEME_ERR_TYPE"] = "Схема түрі міндетті өріс болып табылады.";
+$MESS["LFP_CLASS_SCHEME_ERR_URI_HOST"] = "Қосылудың бұл түрі үшін серверді көрсету керек";
+$MESS["LFP_CLASS_SCHEME_IM_ADD"] = "#group_name# тобына \"#title#\" сыртқы дереккөзден хабарлама қосылды.";

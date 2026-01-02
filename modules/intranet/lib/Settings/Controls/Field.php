@@ -15,7 +15,8 @@ class Field extends Control
 		private bool $isEnable = true,
 		private ?string $value = null,
 		private ?array $hints = null,
-		private ?string $helpDesk = null
+		private ?string $helpDesk = null,
+		private ?string $badge = null,
 	)
 	{
 		parent::__construct($id);
@@ -112,6 +113,17 @@ class Field extends Control
 			'current' => $this->value,
 			'hints' => $this->hints,
 			'helpDesk' => $this->helpDesk,
+			'badge' => $this->getBadge(),
 		];
+	}
+
+	public function getBadge(): ?string
+	{
+		return $this->badge;
+	}
+
+	public function setBadge(?string $badge): void
+	{
+		$this->badge = $badge;
 	}
 }

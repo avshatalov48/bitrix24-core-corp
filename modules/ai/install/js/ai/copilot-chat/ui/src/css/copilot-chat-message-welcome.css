@@ -7,6 +7,10 @@
 	color: var(--ui-color-background-primary);
 }
 
+.ai__copilot-chat-message-welcome * {
+	color: var(--ui-color-background-primary);
+}
+
 .ai__copilot-chat-message-welcome_header {
 	display: flex;
 	align-items: center;

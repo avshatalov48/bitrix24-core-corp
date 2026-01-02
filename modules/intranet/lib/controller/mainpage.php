@@ -2,6 +2,7 @@
 
 namespace Bitrix\Intranet\Controller;
 
+use Bitrix\Intranet\CurrentUser;
 use Bitrix\Intranet\MainPage\Access;
 use Bitrix\Intranet\MainPage\Publisher;
 use Bitrix\Main\Engine\Controller;
@@ -31,7 +32,10 @@ class MainPage extends Controller
 	{
 		$errorCollection = new ErrorCollection();
 
-		if ((new Access)->canEdit())
+		if (
+			CurrentUser::get()->isAdmin()
+			&& (new Access)->canView()
+		)
 		{
 			(new Publisher)->withdraw();
 

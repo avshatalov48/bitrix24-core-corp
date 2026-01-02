@@ -14,7 +14,6 @@
 	bottom: 0;
 	margin-right: 8px;
 	margin-bottom: -2px;
-	animation: ease-in copilot-chat-message-fade-in 0.15s;
 }
 
 .ai__copilot-chat_messages-author-group__avatar img {

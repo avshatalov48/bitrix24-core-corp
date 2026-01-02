@@ -1,0 +1,24 @@
+<?php
+$MESS["IMOL_MESSAGE_CRM_CARD_COMPANY_TITLE"] = "Компания";
+$MESS["IMOL_MESSAGE_CRM_CARD_EMAIL"] = "Email";
+$MESS["IMOL_MESSAGE_CRM_CARD_FULL_NAME"] = "Аты";
+$MESS["IMOL_MESSAGE_CRM_CARD_PHONE"] = "Телефон";
+$MESS["IMOL_MESSAGE_CRM_CARD_POST"] = "Лауазымы";
+$MESS["IMOL_MESSAGE_CRM_COMPANY_ADD_NEW"] = "Жаңа компания құрылды";
+$MESS["IMOL_MESSAGE_CRM_COMPANY_EXTEND"] = "Байланыс ақпараты компанияға сақталды";
+$MESS["IMOL_MESSAGE_CRM_COMPANY_UPDATE"] = "Компания диалогқа бекітілген";
+$MESS["IMOL_MESSAGE_CRM_CONTACT_ADD_NEW"] = "Жаңа байланыс құрылды";
+$MESS["IMOL_MESSAGE_CRM_CONTACT_EXTEND"] = "Байланыс ақпараты контактіге сақталды";
+$MESS["IMOL_MESSAGE_CRM_CONTACT_UPDATE"] = "Байланыс диалогқа бекітілген";
+$MESS["IMOL_MESSAGE_CRM_DEAL_ADD_NEW"] = "Жаңа мәміле құрылды";
+$MESS["IMOL_MESSAGE_CRM_DEAL_EXTEND"] = "Байланыс ақпараты мәмілеге сақталды";
+$MESS["IMOL_MESSAGE_CRM_DEAL_UPDATE"] = "Мәміле диалогқа бекітілген";
+$MESS["IMOL_MESSAGE_CRM_LEAD_ADD_NEW"] = "Жаңа лид құрылды";
+$MESS["IMOL_MESSAGE_CRM_LEAD_EXTEND"] = "Байланыс ақпараты лидте сақталады";
+$MESS["IMOL_MESSAGE_CRM_LEAD_UPDATE"] = "Лид диалогқа бекітілген";
+$MESS["IMOL_MESSAGE_CRM_ORDER_ADD_NEW"] = "Жаңа тапсырыс құрылды";
+$MESS["IMOL_MESSAGE_CRM_ORDER_EXTEND"] = "Байланыс ақпараты тапсырысқа сақталды";
+$MESS["IMOL_MESSAGE_CRM_ORDER_UPDATE"] = "Тапсырыс диалогқа бекітілген";
+$MESS["IMOL_MESSAGE_CRM_OTHER_ADD_NEW"] = "Жаңа CRM нысаны құрылды";
+$MESS["IMOL_MESSAGE_CRM_OTHER_EXTEND"] = "Байланыс ақпараты CRM нысанына сақталды";
+$MESS["IMOL_MESSAGE_CRM_OTHER_UPDATE"] = "CRM нысаны диалогқа бекітілген";

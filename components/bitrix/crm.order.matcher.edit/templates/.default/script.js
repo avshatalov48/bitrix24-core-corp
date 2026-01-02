@@ -8,6 +8,7 @@ var CrmFormEditor = function(params)
 		this.id = params.id;
 
 		this.userBlockController = new CrmFormEditorUserBlockController(params.userBlocks);
+		this.assignedBy = params.assignedBy;
 
 		params.fields = params.fields || [];
 		this.actionRequestUrl = params.actionRequestUrl;
@@ -76,10 +77,24 @@ var CrmFormEditor = function(params)
 		// 	fields: params.presetFields
 		// });
 
-		this.destination = new CrmFormEditorDestination({
-			'caller': this,
-			'container': BX('crm-orderform-edit-responsible')
+		this.assignedBySelector = new BX.UI.EntitySelector.TagSelector({
+			multiple: this.assignedBy.isMultiple ?? true,
+			dialogOptions: {
+				dropdownMode: true,
+				hideOnDeselect: false,
+				preselectedItems: this.assignedBy.selected.map((element) => ['user', element]),
+				entities: [
+					{
+						id: 'structure-node',
+						options: {
+							selectMode: 'usersOnly',
+						},
+					},
+				],
+			},
 		});
+
+		this.assignedBySelector.renderTo(BX('crm-orderform-edit-responsible'));
 
 		this.adsForm = new CrmFormAdsForm({
 			'caller': this,
@@ -227,7 +242,8 @@ var CrmFormEditor = function(params)
 				data: {
 					action: 'saveFormAjax',
 					checkFields: fieldCodes,
-					signedParamsString: this.signedParamsString
+					assignedBy: this.assignedBySelector.getDialog().getSelectedItems().map((item) => item.getId()),
+					signedParamsString: this.signedParamsString,
 				},
 				onsuccess: function(result){
 					BX.removeClass(BX('CRM_ORDERFORM_SUBMIT_BUTTON'), 'ui-btn-clock');
@@ -3743,400 +3759,6 @@ if (typeof(BX.Crm.PageEventsManagerClass) === "undefined")
 		return self;
 	};
 }
-
-function CrmFormEditorDestination (params)
-{
-	var me = this;
-
-	this.caller = params.caller;
-	var container = params.container;
-
-	var config, configString = container.getAttribute('data-config');
-	if (configString)
-	{
-		config = BX.parseJSON(configString);
-	}
-
-	if (!BX.type.isPlainObject(config))
-		config = {};
-
-	this.container = container;
-	this.itemsNode = BX.create('span');
-	this.inputBoxNode = BX.create('span', {
-		attrs: {
-			className: 'feed-add-destination-input-box',
-			style: 'display: none;'
-		}
-	});
-	this.inputNode = BX.create('input', {
-		props: {
-			type: 'text'
-		},
-		attrs: {
-			className: 'feed-add-destination-inp'
-		}
-	});
-
-	this.inputBoxNode.appendChild(this.inputNode);
-
-	this.tagNode = BX.create('a', {
-		attrs: {
-			className: 'feed-add-destination-link'
-		}
-	});
-
-	BX.addClass(container, 'crm-orderform-popup-autocomplete');
-
-	container.appendChild(this.itemsNode);
-	container.appendChild(this.inputBoxNode);
-	container.appendChild(this.tagNode);
-
-	this.itemTpl = config.itemTpl;
-
-	this.data = null;
-	this.dialogId = 'crm_orderform_edit_responsible_';
-	this.createValueNode(config.valueInputName || '');
-	this.selected = config.selected ? BX.clone(config.selected) : [];
-	this.selectOne = !config.multiple;
-	this.required = config.required || false;
-	this.additionalFields = BX.type.isArray(config.additionalFields) ? config.additionalFields : [];
-
-	BX.bind(this.tagNode, 'focus', function(e) {
-		me.openDialog({bByFocusEvent: true});
-		return BX.PreventDefault(e);
-	});
-	BX.bind(this.container, 'click', function(e) {
-		me.openDialog();
-		return BX.PreventDefault(e);
-	});
-
-	this.addItems(this.selected);
-
-	this.tagNode.innerHTML = (
-		this.selected.length <= 0
-			? this.caller.mess.dlgChoose
-			: this.caller.mess.dlgChange
-	);
-}
-CrmFormEditorDestination.prototype = {
-	getData: function(next)
-	{
-		var me = this;
-
-		if (me.ajaxProgress)
-			return;
-
-		me.ajaxProgress = true;
-
-		this.caller.sendActionRequest('getDestinationDataAjax', {}, function (response) {
-			me.data = response.DATA || {};
-			me.ajaxProgress = false;
-			me.initDialog(next);
-		}, function () {
-
-		});
-	},
-	initDialog: function(next)
-	{
-		var i, me = this, data = this.data;
-
-		if (!data)
-		{
-			me.getData(next);
-			return;
-		}
-
-		var itemsSelected = {};
-		for (i = 0; i < me.selected.length; ++i)
-		{
-			itemsSelected[me.selected[i].id] = me.selected[i].entityType
-		}
-
-		var items = {
-			users : data.USERS || {},
-			department : data.DEPARTMENT || {},
-			departmentRelation : data.DEPARTMENT_RELATION || {},
-			bpuserroles : data.ROLES || {}
-		};
-		var itemsLast =  {
-			users: data.LAST.USERS || {},
-			bpuserroles : data.LAST.ROLES || {}
-		};
-
-		for (i = 0; i < this.additionalFields.length; ++i)
-		{
-			items.bpuserroles[this.additionalFields[i]['id']] = this.additionalFields[i];
-		}
-
-		if (!items["departmentRelation"])
-		{
-			items["departmentRelation"] = BX.SocNetLogDestination.buildDepartmentRelation(items["department"]);
-		}
-
-		if (!me.inited)
-		{
-			me.inited = true;
-			var destinationInput = me.inputNode;
-			destinationInput.id = me.dialogId + 'input';
-
-			var destinationInputBox = me.inputBoxNode;
-			destinationInputBox.id = me.dialogId + 'input-box';
-
-			var tagNode = this.tagNode;
-			tagNode.id = this.dialogId + 'tag';
-
-			var itemsNode = me.itemsNode;
-
-			BX.SocNetLogDestination.init({
-				name : me.dialogId,
-				searchInput : destinationInput,
-				extranetUser :  false,
-				bindMainPopup : {node: me.container, offsetTop: '5px', offsetLeft: '15px'},
-				bindSearchPopup : {node: me.container, offsetTop : '5px', offsetLeft: '15px'},
-				departmentSelectDisable: true,
-				sendAjaxSearch: true,
-				callback : {
-					select : function(item, type, search, bUndeleted)
-					{
-						me.addItem(item, type);
-						if (me.selectOne)
-							BX.SocNetLogDestination.closeDialog();
-					},
-					unSelect : function (item)
-					{
-						if (me.selectOne)
-							return;
-						me.unsetValue(item.entityId);
-						BX.SocNetLogDestination.BXfpUnSelectCallback.call({
-							formName: me.dialogId,
-							inputContainerName: itemsNode,
-							inputName: destinationInput.id,
-							tagInputName: tagNode.id,
-							tagLink1: me.caller.mess.dlgChoose,
-							tagLink2: me.caller.mess.dlgChange
-						}, item)
-					},
-					openDialog : BX.delegate(BX.SocNetLogDestination.BXfpOpenDialogCallback, {
-						inputBoxName: destinationInputBox.id,
-						inputName: destinationInput.id,
-						tagInputName: tagNode.id
-					}),
-					closeDialog : BX.delegate(
-						BX.SocNetLogDestination.BXfpCloseDialogCallback,
-						{
-							inputBoxName: destinationInputBox.id,
-							inputName: destinationInput.id,
-							tagInputName: tagNode.id
-						}
-					),
-					openSearch : BX.delegate(BX.SocNetLogDestination.BXfpOpenDialogCallback, {
-						inputBoxName: destinationInputBox.id,
-						inputName: destinationInput.id,
-						tagInputName: tagNode.id
-					}),
-					closeSearch : BX.delegate(BX.SocNetLogDestination.BXfpCloseSearchCallback, {
-						inputBoxName: destinationInputBox.id,
-						inputName: destinationInput.id,
-						tagInputName: tagNode.id
-					})
-				},
-				items : items,
-				itemsLast : itemsLast,
-				itemsSelected : itemsSelected,
-				useClientDatabase: false,
-				destSort: data.DEST_SORT || {},
-				allowAddUser: false
-			});
-
-			BX.bind(destinationInput, 'keyup', BX.delegate(BX.SocNetLogDestination.BXfpSearch, {
-				formName: me.dialogId,
-				inputName: destinationInput.id,
-				tagInputName: tagNode.id
-			}));
-			BX.bind(destinationInput, 'keydown', BX.delegate(BX.SocNetLogDestination.BXfpSearchBefore, {
-				formName: me.dialogId,
-				inputName: destinationInput.id
-			}));
-
-			BX.SocNetLogDestination.BXfpSetLinkName({
-				formName: me.dialogId,
-				tagInputName: tagNode.id,
-				tagLink1: me.caller.mess.dlgChoose,
-				tagLink2: me.caller.mess.dlgChange
-			});
-		}
-		next();
-	},
-	addItem: function(item, type)
-	{
-		var me = this;
-		var destinationInput = this.inputNode;
-		var tagNode = this.tagNode;
-		var items = this.itemsNode;
-
-		if (!BX.findChild(items, { attr : { 'data-id' : item.id }}, false, false))
-		{
-			if (me.selectOne && me.inited)
-			{
-				var toRemove = [];
-				for (var i = 0; i < items.childNodes.length; ++i)
-				{
-					toRemove.push({
-						itemId: items.childNodes[i].getAttribute('data-id'),
-						itemType: items.childNodes[i].getAttribute('data-type')
-					})
-				}
-
-				me.initDialog(function() {
-					for (var i = 0; i < toRemove.length; ++i)
-					{
-						BX.SocNetLogDestination.deleteItem(toRemove[i].itemId, toRemove[i].itemType, me.dialogId);
-					}
-				});
-
-				BX.cleanNode(items);
-				me.cleanValue();
-			}
-
-			var container = this.createItemNode({
-				text: item.name,
-				deleteEvents: {
-					click: function(e) {
-						if (me.selectOne && me.required)
-						{
-							me.openDialog();
-						}
-						else
-						{
-							me.initDialog(function() {
-								BX.SocNetLogDestination.deleteItem(item.id, type, me.dialogId);
-								BX.remove(container);
-								me.unsetValue(item.entityId);
-							});
-						}
-						BX.PreventDefault(e);
-					}
-				}
-			});
-
-			this.setValue(item.entityId);
-
-			container.setAttribute('data-id', item.id);
-			container.setAttribute('data-type', type);
-
-			items.appendChild(container);
-
-			if (!item.entityType)
-				item.entityType = type;
-		}
-
-		destinationInput.value = '';
-		tagNode.innerHTML = this.caller.mess.dlgChange;
-	},
-	addItems: function(items)
-	{
-		for(var i = 0; i < items.length; ++i)
-		{
-			this.addItem(items[i], items[i].entityType)
-		}
-	},
-	openDialog: function(params)
-	{
-		var me = this;
-		this.initDialog(function()
-		{
-			BX.SocNetLogDestination.openDialog(me.dialogId, params);
-		})
-	},
-	destroy: function()
-	{
-		if (this.inited)
-		{
-			if (BX.SocNetLogDestination.isOpenDialog())
-			{
-				BX.SocNetLogDestination.closeDialog();
-			}
-			BX.SocNetLogDestination.closeSearch();
-		}
-	},
-	createItemNode: function(options)
-	{
-		return BX.create('span', {
-			attrs: {
-				className: 'crm-orderform-popup-autocomplete-item'
-			},
-			children: [
-				BX.create('span', {
-					attrs: {
-						className: 'crm-orderform-popup-autocomplete-name'
-					},
-					html: options.text || ''
-				}),
-				BX.create('span', {
-					attrs: {
-						className: 'crm-orderform-popup-autocomplete-delete'
-					},
-					events: options.deleteEvents
-				})
-			]
-		});
-	},
-	createValueNode: function(valueInputName)
-	{
-		this.valueNode = BX.create('input', {
-			props: {
-				type: 'hidden',
-				name: valueInputName
-			}
-		});
-
-		this.container.appendChild(this.valueNode);
-	},
-	setValue: function(value)
-	{
-		if (/^\d+$/.test(value) !== true)
-			return;
-
-		if (this.selectOne)
-			this.valueNode.value = value;
-		else
-		{
-			var i, newVal = [], pairs = this.valueNode.value.split(',');
-			for (i = 0; i < pairs.length; ++i)
-			{
-				if (!pairs[i] || value == pairs[i])
-					continue;
-				newVal.push(pairs[i]);
-			}
-			newVal.push(value);
-			this.valueNode.value = newVal.join(',');
-		}
-
-	},
-	unsetValue: function(value)
-	{
-		if (/^\d+$/.test(value) !== true)
-			return;
-
-		if (this.selectOne)
-			this.valueNode.value = '';
-		else
-		{
-			var i, newVal = [], pairs = this.valueNode.value.split(',');
-			for (i = 0; i < pairs.length; ++i)
-			{
-				if (!pairs[i] || value == pairs[i])
-					continue;
-				newVal.push(pairs[i]);
-			}
-			this.valueNode.value = newVal.join(',');
-		}
-	},
-	cleanValue: function()
-	{
-		this.valueNode.value = '';
-	}
-};
 
 function CrmFormAdsForm (params)
 {

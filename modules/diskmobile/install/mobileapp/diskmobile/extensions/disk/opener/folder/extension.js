@@ -4,7 +4,7 @@
 jn.define('disk/opener/folder', (require, exports, module) => {
 	const { fetchObjectWithRights } = require('disk/rights');
 
-	async function openFolder(folderId, context = null, parentWidget = PageManager)
+	async function openFolder(folderId, context = null, parentWidget = PageManager, scrollToItemId = null)
 	{
 		const folder = await fetchObjectWithRights(folderId);
 
@@ -12,6 +12,7 @@ jn.define('disk/opener/folder', (require, exports, module) => {
 			'JSStackComponent',
 			{
 				componentCode: 'disk.disk.folder',
+				// eslint-disable-next-line no-undef
 				scriptPath: availableComponents['disk:disk.folder'].publicUrl,
 				canOpenInDefault: true,
 				rootWidget: {
@@ -27,6 +28,7 @@ jn.define('disk/opener/folder', (require, exports, module) => {
 				params: {
 					folderId,
 					context,
+					scrollToItemId,
 				},
 			},
 		);

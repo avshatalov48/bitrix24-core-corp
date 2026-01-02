@@ -12,7 +12,6 @@ $MESS["TASKS_PRIORITY"] = "Priority";
 $MESS["TASKS_PRIORITY_0"] = "Low";
 $MESS["TASKS_PRIORITY_1"] = "Normal";
 $MESS["TASKS_PRIORITY_2"] = "High";
-$MESS["TASKS_RESPONSIBLE"] = "Responsible person";
 $MESS["TASKS_SIDEBAR_START_DATE"] = "from";
 $MESS["TASKS_START_DATE_PLAN"] = "Start date";
 $MESS["TASKS_STATUS"] = "Status";

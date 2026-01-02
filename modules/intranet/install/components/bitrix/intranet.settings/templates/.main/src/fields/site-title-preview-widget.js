@@ -45,56 +45,96 @@ export class SiteTitlePreviewWidget extends EventEmitter
 		if (!this.#container)
 		{
 			this.#container = Tag.render`
-			<section class="intranet-settings__main-widget_section">
-				<div class="intranet-settings__main-widget__bang"></div>
-					<div class="intranet-settings__main-widget_bg"></div>
-					<div class="intranet-settings__main-widget_pos-box">
-						<aside class="intranet-settings__main-widget__aside">
-							<div class="intranet-settings__main-widget__aside_item --active"></div>
-							<div class="intranet-settings__main-widget__aside_item"></div>
-							<div class="intranet-settings__main-widget__aside_item"></div>
-							<div class="intranet-settings__main-widget__aside_item"></div>
-							<div class="intranet-settings__main-widget__aside_item"></div>
-							<div class="intranet-settings__main-widget__aside_item"></div>
-							<div class="intranet-settings__main-widget__aside_item"></div>
-							<div class="intranet-settings__main-widget__aside_item"></div>
-							<div class="intranet-settings__main-widget__aside_item"></div>
-							<div class="intranet-settings__main-widget__aside_item"></div>
-							<div class="intranet-settings__main-widget__aside_item"></div>
-							<div class="intranet-settings__main-widget__aside_item"></div>
-							<div class="intranet-settings__main-widget__aside_item"></div>
-						</aside>
-						<main class="intranet-settings__main-widget_main">
-						<div class="intranet-settings__main-widget_header"> 
-						<!-- statement class. depends of content --with-logo -->
-							<div class="intranet-settings__main-widget_logo" data-role="logo"></div>
-							<div class="intranet-settings__main-widget_name" data-role="title">Bitrix</div>
-							<div class="intranet-settings__main-widget_logo24" data-role="logo24">24</div>
-						</div>
-						<div class="intranet-settings__main-widget_lane_box">
-							<div class="intranet-settings__main-widget_lane_item"></div>
-							<div class="intranet-settings__main-widget_lane_inline">
-								<div class="intranet-settings__main-widget_lane_item --sm"></div>
-								<div class="intranet-settings__main-widget_lane_item --bg-30"></div>
+			<section class="intranet-settings__preview --preview" data-role="preview">
+				<div class="preview__header">
+					<div class="preview__header-box">
+						<div class="preview__header-left-box">
+							<div class="preview__menu-switcher">
+								<span class="preview__menu-switcher__icon"></span>
 							</div>
-							<div class="intranet-settings__main-widget_lane_inner">
-								<div class="intranet-settings__main-widget_lane_item"></div>
-								<div class="intranet-settings__main-widget_lane_item --bg-30"></div>
-								<div class="intranet-settings__main-widget_lane_item --bg-30"></div>
-								<div class="intranet-settings__main-widget_lane_item --bg-30"></div>
-								<div class="intranet-settings__main-widget_lane_item --bg-30"></div>
-								<div class="intranet-settings__main-widget_lane_item --bg-30"></div>
-								<div class="intranet-settings__main-widget_lane_item --bg-30"></div>
-								<div class="intranet-settings__main-widget_lane_item --bg-30"></div>
-								<div class="intranet-settings__main-widget_lane_item --bg-30"></div>
-								<div class="intranet-settings__main-widget_lane_item --bg-30"></div>
-								<div class="intranet-settings__main-widget_lane_item --bg-30"></div>
-								<div class="intranet-settings__main-widget_lane_item --bg-30"></div>
+							<div class="preview__block-item"></div>
+							<div class="preview__block-item"></div>
+							<div class="preview__block-item"></div>
+						</div>
+						<div class="preview__header-right-box">
+							<div class="intranet-settings__logo-box">
+								<div class="intranet-settings__main-widget_logo" data-role="logo"></div>
+								<div class="intranet-settings__main-widget_name" data-role="title">Bitrix</div>
+								<div class="intranet-settings__logo24" data-role="logo24">
+									24
+								</div>
+							</div>	
+							<div class="preview__circle_container">	
+								<div class="preview__circle_item"></div>
+							</div>				
+						</div>
+					</div>
+				</div>
+				<div class="preview__main">
+					<div class="preview__main-left">
+						<div class="preview__circle_container">
+							<div class="preview__circle_item-outline">
+								<div class="preview__circle_item --active"></div>
+							</div>
+						</div>	
+						<div class="preview__circle_container">	
+							<div class="preview__circle_item"></div>
+						</div>	
+						<div class="preview__circle_container">	
+							<div class="preview__circle_item"></div>
+						</div>	
+						<div class="preview__circle_container">	
+							<div class="preview__circle_item"></div>
+						</div>	
+						<div class="preview__circle_container">	
+							<div class="preview__circle_item"></div>
+						</div>	
+						<div class="preview__circle_container">	
+							<div class="preview__circle_item"></div>
+						</div>	
+					</div>
+					<div class="preview__main-center">
+						<div class="preview__main-row">
+							<div class="preview__main-row-left">
+								<div class="preview__block-item --w145"></div>
+								<div class="preview__block-item --opacity80 --w47"></div>
+								<div class="preview__block-item --w90"></div>
+							</div>
+							<div class="preview__main-row-right">
+								<div class="preview__block-item --w50"></div>
 							</div>
 						</div>
-					</main>
-					</div>				
-			</section>`;
+						<div class="preview__main-row">
+							<div class="preview__main-row-left">
+								<div class="preview__block-item --w80"></div>
+								<div class="preview__block-item --w50"></div>
+							</div>
+							<div class="preview__main-row-right">
+								<div class="preview__block-item --w90"></div>
+							</div>
+						</div>
+						<div class="preview__main-column">
+							<div class="preview__main-header"></div>
+							<div class="preview__main-table"></div>
+						</div>
+					</div>
+					<div class="preview__main-right">
+						<div class="preview__circle_container">	
+							<div class="preview__circle_item --light"></div>
+						</div>	
+						<div class="preview__circle_container">	
+							<div class="preview__circle_item --light"></div>
+						</div>	
+						<div class="preview__circle_container">	
+							<div class="preview__circle_item --light"></div>
+						</div>	
+						<div class="preview__circle_container">	
+							<div class="preview__circle_item --light"></div>
+						</div>	
+					</div>
+				</div>
+			</section>
+			`;
 		}
 
 		return this.#container;

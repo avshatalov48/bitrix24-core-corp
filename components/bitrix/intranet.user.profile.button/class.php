@@ -194,7 +194,7 @@ class IntranetUserProfileButton extends \CBitrixComponent implements Controllera
 	protected function isUserSocialnetworkAdmin(): bool
 	{
 		return Loader::includeModule("socialnetwork")
-			&& \CSocNetUser::IsCurrentUserModuleAdmin(SITE_ID, false);
+			&& \CSocNetUser::IsCurrentUserModuleAdmin();
 	}
 
 	protected function isB24NetPanelAvailable(): bool

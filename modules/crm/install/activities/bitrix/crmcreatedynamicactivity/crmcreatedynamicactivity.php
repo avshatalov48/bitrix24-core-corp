@@ -4,6 +4,7 @@ use Bitrix\Bizproc\Activity\PropertiesDialog;
 use Bitrix\Bizproc\FieldType;
 use Bitrix\Bizproc\Result\ResultDto;
 use Bitrix\Crm;
+use Bitrix\Crm\Integration\Analytics\Dictionary;
 use Bitrix\Main\Error;
 use Bitrix\Main\Localization\Loc;
 use Bitrix\Main\Result;
@@ -130,6 +131,12 @@ class CBPCrmCreateDynamicActivity extends \Bitrix\Bizproc\Activity\BaseActivity
 
 		if ($this->ItemId)
 		{
+			\CCrmBizProcHelper::sendOperationsAnalytics(
+				Dictionary::EVENT_ENTITY_CREATE,
+				$this,
+				$documentType[2] ?? '',
+			);
+
 			$this->fixResult($this->makeResultFromId($this->ItemId));
 		}
 

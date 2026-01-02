@@ -12,7 +12,10 @@ import { Resources } from 'booking.model.resources';
 import { Favorites } from 'booking.model.favorites';
 import { Dictionary } from 'booking.model.dictionary';
 import { MainResources } from 'booking.model.main-resources';
+import { WaitList } from 'booking.model.wait-list';
 import { BookingPullManager } from 'booking.provider.pull.booking-pull-manager';
+import { Filter } from 'booking.model.filter';
+import { FormsMenu } from 'booking.model.forms-menu';
 import type { MoneyStatistics } from 'booking.model.interface';
 
 export type BookingParams = {
@@ -31,7 +34,19 @@ export type BookingParams = {
 	totalClients: number,
 	totalClientsToday: number,
 	moneyStatistics: MoneyStatistics,
+	isCalendarExpanded: boolean,
+	isWaitListExpanded: boolean,
+	embedItems: {
+		id: number,
+		code: string,
+		module: string,
+	}[],
 };
+
+type InitCoreOptions = {
+	skipBookingCore: ?boolean;
+	skipPull: ?boolean;
+}
 
 class CoreApplication
 {
@@ -57,43 +72,70 @@ class CoreApplication
 		return this.#store;
 	}
 
-	async init(): Promise<void>
+	async init(options: InitCoreOptions = {}): Promise<void>
 	{
 		this.#initPromise ??= new Promise(async (resolve) => {
-			this.#store = await this.#initStore();
-			this.#initPull();
+			this.#store = await this.#initStore(options);
+
+			if (!options.skipPull)
+			{
+				this.#initPull();
+			}
+
 			resolve();
 		});
 
 		return this.#initPromise;
 	}
 
-	async #initStore(): Promise<Store>
+	async #initStore(options: InitCoreOptions): Promise<Store>
 	{
 		const settings = Extension.getSettings('booking.core');
 
-		this.#builder = Builder.init()
-			.addModel(Bookings.create())
-			.addModel(MessageStatus.create())
-			.addModel(Clients.create())
-			.addModel(Counters.create())
-			.addModel(Interface.create().setVariables({
-				schedule: settings.schedule,
-				editingBookingId: this.#params.editingBookingId,
-				timezone: this.#params.timezone,
-				totalClients: this.#params.totalClients,
-				totalNewClientsToday: this.#params.totalClientsToday,
-				moneyStatistics: this.#params.moneyStatistics,
-				isFeatureEnabled: this.#params.isFeatureEnabled,
-				canTurnOnTrial: this.#params.canTurnOnTrial,
-				canTurnOnDemo: this.#params.canTurnOnDemo,
-			}))
-			.addModel(ResourceTypes.create())
-			.addModel(Resources.create())
-			.addModel(Favorites.create())
-			.addModel(Dictionary.create())
-			.addModel(MainResources.create())
-		;
+		this.#builder = Builder.init();
+
+		if (!options.skipBookingCore)
+		{
+			this.#builder.addModel(Bookings.create())
+				.addModel(MessageStatus.create())
+				.addModel(Clients.create())
+				.addModel(Counters.create())
+				.addModel(Interface.create().setVariables({
+					schedule: settings.schedule,
+					editingBookingId: this.#params.editingBookingId,
+					editingWaitListItemId: this.#params.editingWaitListItemId,
+					timezone: this.#params.timezone,
+					totalClients: this.#params.totalClients,
+					totalNewClientsToday: this.#params.totalClientsToday,
+					moneyStatistics: this.#params.moneyStatistics,
+					isFeatureEnabled: this.#params.isFeatureEnabled,
+					canTurnOnTrial: this.#params.canTurnOnTrial,
+					canTurnOnDemo: this.#params.canTurnOnDemo,
+					embedItems: this.#params.embedItems.map((item: { id: number, code: string, module: string }) => {
+						return {
+							value: item.id,
+							entityTypeId: item.code,
+							moduleId: item.module,
+							data: {
+								opportunity: 0,
+								currencyId: '',
+								createdTimestamp: 0,
+								formattedOpportunity: '',
+							},
+						};
+					}),
+					calendarExpanded: this.#params.isCalendarExpanded,
+					waitListExpanded: this.#params.isWaitListExpanded,
+				}))
+				.addModel(ResourceTypes.create())
+				.addModel(Resources.create())
+				.addModel(Favorites.create())
+				.addModel(Dictionary.create())
+				.addModel(MainResources.create())
+				.addModel(WaitList.create())
+				.addModel(Filter.create())
+				.addModel(FormsMenu.create());
+		}
 
 		const builderResult = await this.#builder.build();
 

@@ -6,6 +6,11 @@ use CCrmOwnerType;
 
 class SmartInvoice extends DynamicProvider
 {
+	protected function getTabIcon(): string
+	{
+		return 'o-invoice';
+	}
+
 	protected function getEntityTypeName(): string
 	{
 		return 'smart_invoice';

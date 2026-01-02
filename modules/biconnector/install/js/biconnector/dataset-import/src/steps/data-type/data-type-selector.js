@@ -8,7 +8,12 @@ export const DataTypeSelector = {
 			required: false,
 			default: 'text',
 		},
-		isEditMode: {
+		canEdit: {
+			type: Boolean,
+			required: false,
+			default: false,
+		},
+		disabled: {
 			type: Boolean,
 			required: false,
 			default: false,
@@ -33,11 +38,15 @@ export const DataTypeSelector = {
 		{
 			return DataTypeDescriptions[this.selectedType].title;
 		},
+		isEditable()
+		{
+			return this.canEdit;
+		},
 	},
 	methods: {
 		onClick(event)
 		{
-			if (this.isEditMode)
+			if (!this.isEditable)
 			{
 				return;
 			}
@@ -54,7 +63,7 @@ export const DataTypeSelector = {
 		},
 		createMenu()
 		{
-			if (!this.isEditMode)
+			if (this.isEditable)
 			{
 				this.typeMenu = (new DataTypeMenu({
 					selectedType: this.selectedType,
@@ -87,6 +96,18 @@ export const DataTypeSelector = {
 			this.destroyMenu();
 			this.createMenu();
 		},
+		isEditable(newValue)
+		{
+			if (newValue && !this.typeMenu)
+			{
+				this.createMenu();
+			}
+
+			if (!newValue)
+			{
+				this.destroyMenu();
+			}
+		}
 	},
 	// language=Vue
 	template: `
@@ -95,13 +116,13 @@ export const DataTypeSelector = {
 			ref="formatButton"
 			@click="onClick"
 			:class="{
-				'format-table__type-control--disabled': isEditMode,
+				'format-table__type-control--disabled': !isEditable,
 				'ui-ctl-hover': isFocused,
 			}"
 		>
-			<div class="ui-ctl-after ui-ctl-icon-angle" v-if="!isEditMode"></div>
+			<div class="ui-ctl-after ui-ctl-icon-angle" v-if="isEditable"></div>
 			<div class="ui-ctl-before">
-				<div class="format-table__type-button" :class="{ 'format-table__type-button--disabled': isEditMode }">
+				<div class="format-table__type-button" :class="{ 'format-table__type-button--disabled': !isEditable }">
 					<div class="ui-icon-set" :class="iconClass"></div>
 				</div>
 			</div>

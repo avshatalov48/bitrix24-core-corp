@@ -7,6 +7,8 @@ if (!defined('B_PROLOG_INCLUDED') || B_PROLOG_INCLUDED !== true)
 
 use Bitrix\Main\Localization\Loc;
 
+use Bitrix\Crm\Integration\Analytics\Dictionary;
+
 $runtime = CBPRuntime::GetRuntime();
 $runtime->IncludeActivityFile('SetFieldActivity');
 
@@ -61,6 +63,13 @@ class CBPCrmSetCompanyField extends CBPSetFieldActivity
 			}
 
 			$documentService->UpdateDocument($documentId, $fieldValue, $this->ModifiedBy);
+
+			$documentTypeForAnalytics = $this->getDocumentType();
+			\CCrmBizProcHelper::sendOperationsAnalytics(
+				Dictionary::EVENT_ENTITY_EDIT,
+				$this,
+				$documentTypeForAnalytics[2] ?? '',
+			);
 		}
 		catch (Exception $e)
 		{
@@ -188,7 +197,7 @@ class CBPCrmSetCompanyField extends CBPSetFieldActivity
 		return $id ? CCrmBizProcHelper::ResolveDocumentId(\CCrmOwnerType::Company, $id) : null;
 	}
 
-	public function collectUsages()
+	public function collectUsages(): array
 	{
 		$usages = [];
 		$this->collectUsagesRecursive($this->arProperties, $usages);

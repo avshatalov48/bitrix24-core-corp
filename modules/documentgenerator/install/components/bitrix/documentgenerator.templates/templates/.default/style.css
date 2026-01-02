@@ -1,26 +1,4 @@
-#workarea-content {
-	background: #ebf1f4 !important;
-}
-
-#workarea-content .workarea-content-paddings {
-	height: 100%;
-}
-
-.docs-template-wrap-slider {
-	padding: 0 25px;
-}
-
-.docs-template-pagetitle-inner {
-	display: flex;
-	box-sizing: border-box;
-	align-items: center;
-	-webkit-box-pack: start;
-	justify-content: flex-start;
-	-webkit-box-align: center;
-}
-
 .docs-template-info-message {
-	margin: 12px 0 3px;
 	padding: 14px 20px 14px 19px;
 	border-radius: var(--ui-border-radius-xs, 3px);
 	background-color: #f8f4bc;
@@ -49,7 +27,6 @@
 
 .docs-template-grid {
 	width: 100%;
-	height: 621px;
 }
 
 .docs-template-grid-img {
@@ -60,17 +37,4 @@
 
 .ui-btn-primary-docs-template {
 	min-width: 123px;
-}
-
-.pagetitle-container-docs-template .main-ui-filter-search {
-	max-width: 285px;
-	min-width: 260px;
-	margin-right: 12px;
-}
-
-.docs-template-pagetitle-inner .pagetitle {
-	margin-right: 12px;
-	white-space: nowrap;
-	overflow: hidden;
-	text-overflow: ellipsis;
 }

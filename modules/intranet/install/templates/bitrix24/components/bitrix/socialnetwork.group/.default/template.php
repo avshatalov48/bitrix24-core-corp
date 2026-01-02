@@ -136,8 +136,8 @@ elseif ($arResult["bUserCanRequestGroup"])
 						<td class="socialnetwork-group-description-left-col"><nobr><?= Loc::getMessage($arResult['Group']['PROJECT'] === 'Y' ? "SONET_C6_TYPE_PROJECT" : "SONET_C6_TYPE") ?>:</nobr></td>
 						<td class="socialnetwork-group-description"><?
 
-							?><?= $arResult['Group']['Type']['NAME'] ?><br /><?;
-							?><?= ($arResult['Group']['Type']['DESCRIPTION']) ?><br /><?
+							?><?= ($arResult['Group']['Type']['NAME'] ?? '') ?><br /><?;
+							?><?= ($arResult['Group']['Type']['DESCRIPTION'] ?? '') ?><br /><?
 
 							$joinButtonTitle = (
 								$arResult['Group']['OPENED'] === 'Y'

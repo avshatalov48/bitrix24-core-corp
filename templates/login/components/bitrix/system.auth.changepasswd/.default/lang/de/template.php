@@ -1,0 +1,9 @@
+<?php
+$MESS["INTRANET_CHANGE_PASS_AUTH_LINK"] = "Einloggen";
+$MESS["INTRANET_CHANGE_PASS_BUTTON"] = "Weiter";
+$MESS["INTRANET_CHANGE_PASS_CAPTCHA_PROMT"] = "Geben Sie den Text ein";
+$MESS["INTRANET_CHANGE_PASS_CONFIRM"] = "Passwort bestätigen";
+$MESS["INTRANET_CHANGE_PASS_CREATE_TITLE"] = "Passwort erstellen";
+$MESS["INTRANET_CHANGE_PASS_CURRENT_PASS"] = "Aktuelles Passwort";
+$MESS["INTRANET_CHANGE_PASS_NEW_PASS"] = "Neues Passwort";
+$MESS["INTRANET_CHANGE_PASS_TITLE"] = "Passwort wiederherstellen";

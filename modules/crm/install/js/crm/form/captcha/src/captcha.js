@@ -1,23 +1,26 @@
-import {Tag, Type, Loc, ajax} from 'main.core';
-import {Layout} from "ui.sidepanel.layout";
-import "ui.notification";
+import { Tag, Type, Loc, ajax } from 'main.core';
+import { Layout } from 'ui.sidepanel.layout';
+import 'ui.notification';
+
+const YANDEX_CAPTCHA_SERVICE = 'yandex';
+const GOOGLE_CAPTCHA_SERVICE = 'google';
 
 export class Captcha
 {
-	static open(): Promise
+	static open(type: string = GOOGLE_CAPTCHA_SERVICE): Promise
 	{
-		let resolver;
-		const promise = new Promise(resolve => {
+		let resolver = null;
+		const promise = new Promise((resolve): void => {
 			resolver = resolve;
 		});
 
-		const instance = new Captcha;
-		BX.SidePanel.Instance.open("crm.webform:captcha", {
+		const instance = new Captcha(type);
+		BX.SidePanel.Instance.open('crm.webform:captcha', {
 			width: 700,
 			cacheable: false,
 			events: {
 				onCloseComplete: () => {
-					resolver({...instance.getValue()});
+					resolver({ ...instance.getValue() });
 				},
 			},
 			contentCallback: () => {
@@ -27,22 +30,22 @@ export class Captcha
 					design: {
 						section: false,
 					},
-					content ()
+					content(): Promise
 					{
 						return instance.load();
 					},
-					buttons ({SaveButton, closeButton})
+					buttons({ SaveButton, closeButton }): [any, any]
 					{
 						return [
 							new SaveButton({
-								onclick: btn => {
-
+								onclick: (btn) => {
 									if (!instance.canChange())
 									{
 										btn.setDisabled(true);
 										BX.UI.Notification.Center.notify({
 											content: Loc.getMessage('CRM_FORM_CAPTCHA_JS_ACCESS_DENIED'),
 										});
+
 										return;
 									}
 
@@ -56,9 +59,9 @@ export class Captcha
 											btn.setWaiting(false);
 										})
 									;
-								}
+								},
 							}),
-							closeButton
+							closeButton,
 						];
 					},
 				});
@@ -68,19 +71,27 @@ export class Captcha
 		return promise;
 	}
 
+	constructor(type: string = GOOGLE_CAPTCHA_SERVICE)
+	{
+		this.#type = type;
+	}
+
 	#data: Object = {
 		key: null,
 		secret: null,
 		canChange: false,
 		hasDefaults: false,
 	};
+
+	#type: string;
+
 	#container: HTMLElement;
 
 	#render(): HTMLElement
 	{
 		const key = Tag.safe`${this.#data.key}`;
 		const secret = Tag.safe`${this.#data.secret}`;
-		this.#container = Tag.render`				
+		this.#container = Tag.render`
 			<div>
 				<div class="ui-slider-section" ${this.#data.hasDefaults ? '' : 'hidden'}>
 					<div class="ui-slider-content-box">
@@ -90,14 +101,23 @@ export class Captcha
 						</div>
 					</div>
 				</div>
-				
 				<div class="ui-slider-section">
 					<div class="ui-slider-content-box">
-						<div class="ui-slider-heading-4">${Loc.getMessage('CRM_FORM_CAPTCHA_JS_CUSTOM_TITLE')}</div>
+						<div class="ui-slider-heading-4">
+							${
+								this.#type === YANDEX_CAPTCHA_SERVICE
+									? Loc.getMessage('CRM_FORM_CAPTCHA_JS_YANDEX_CUSTOM_TITLE')
+									: Loc.getMessage('CRM_FORM_CAPTCHA_JS_CUSTOM_TITLE_MSGVER_1')
+							}
+						</div>
 						<p class="ui-slider-paragraph-2">
 							${Loc.getMessage('CRM_FORM_CAPTCHA_JS_CUSTOM_TEXT')}
 							<br>
-							<a href="https://www.google.com/recaptcha/about/" target="_blank">${Loc.getMessage('CRM_FORM_CAPTCHA_JS_CUSTOM_HOWTO')}</a>
+							<a href="${
+								this.#type === YANDEX_CAPTCHA_SERVICE
+									? 'https://yandex.cloud/ru/docs/smartcaptcha/operations/get-keys'
+									: 'https://www.google.com/recaptcha/about/'
+							}" target="_blank">${Loc.getMessage('CRM_FORM_CAPTCHA_JS_CUSTOM_HOWTO')}</a>
 						</p>
 					</div>
 					
@@ -138,12 +158,14 @@ export class Captcha
 				</div>
 			</div>
 		`;
+
 		return this.#container;
 	}
 
 	hasKeys(): boolean
 	{
 		const data = this.#data;
+
 		return data.hasDefaults || (data.key && data.secret);
 	}
 
@@ -154,8 +176,9 @@ export class Captcha
 
 	load(): Promise
 	{
-		return ajax.runAction('crm.form.getCaptcha', {json: {}}).then(response => {
+		return ajax.runAction('crm.form.getCaptcha', { json: { type: this.#type } }).then((response) => {
 			this.#data = response.data;
+
 			return this.#render();
 		});
 	}
@@ -186,9 +209,10 @@ export class Captcha
 		}
 
 		return ajax
-			.runAction('crm.form.setCaptcha', {json: {key, secret}})
-			.then(response => {
+			.runAction('crm.form.setCaptcha', { json: { key, secret, type: this.#type } })
+			.then((response) => {
 				this.#data = response.data;
+
 				return this.#data;
 			})
 		;

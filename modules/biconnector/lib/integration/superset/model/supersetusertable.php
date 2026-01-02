@@ -8,6 +8,7 @@ use Bitrix\Main\ORM\Data\UpdateResult;
 use Bitrix\Main\ORM\Data\DataManager;
 use Bitrix\Main\ORM\Fields\IntegerField;
 use Bitrix\Main\ORM\Fields\StringField;
+use Bitrix\Main\ORM\Fields\BooleanField;
 use Bitrix\Main\ORM\Fields\Validators\LengthValidator;
 
 /**
@@ -18,6 +19,8 @@ use Bitrix\Main\ORM\Fields\Validators\LengthValidator;
  * <li> ID int mandatory
  * <li> USER_ID int mandatory
  * <li> CLIENT_ID string(32) mandatory
+ * <li> PERMISSION_HASH string(32) mandatory
+ * <li> UPDATED bool mandatory
  * </ul>
  *
  * @package Bitrix\BIConnector\Integration\Superset\Model
@@ -87,6 +90,15 @@ class SupersetUserTable extends DataManager
 					'title' => Loc::getMessage('SUPERSET_USER_ENTITY_PERMISSION_HASH_FIELD'),
 				]
 			),
+			new BooleanField(
+				'UPDATED',
+				[
+					'required' => false,
+					'values' => ['N', 'Y'],
+					'default' => 'Y',
+					'title' => Loc::getMessage('SUPERSET_USER_ENTITY_BPDATED_FIELD'),
+				]
+			),
 		];
 	}
 
@@ -117,5 +129,26 @@ class SupersetUserTable extends DataManager
 		}
 
 		return self::update($result['ID'], ['PERMISSION_HASH' => $permissionHash]);
+	}
+
+	/**
+	 * @param int $userId
+	 * @param bool $updated
+	 * @return UpdateResult
+	 * @throws ObjectNotFoundException
+	 */
+	public static function updateUpdated(int $userId, bool $updated): UpdateResult
+	{
+		$result = self::getRow([
+			'select' => ['ID'],
+			'filter' => ['=USER_ID' => $userId],
+		]);
+
+		if (!$result)
+		{
+			throw new ObjectNotFoundException("User with USER_ID: {$userId} not found");
+		}
+
+		return self::update($result['ID'], ['UPDATED' => $updated]);
 	}
 }

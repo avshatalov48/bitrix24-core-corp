@@ -31,6 +31,11 @@ class AiQualityAssessmentMapping
 					'FIELD_TYPE' => 'int',
 				],
 				//    ASSESSMENT_SETTING_ID bigint NOT NULL,
+				'ASSESSMENT_SETTING_ID' => [
+					'IS_METRIC' => 'N',
+					'FIELD_NAME' => 'AQA.ASSESSMENT_SETTING_ID',
+					'FIELD_TYPE' => 'int',
+				],
 				//    JOB_ID bigint NOT NULL,
 				//    PROMPT text NOT NULL,
 				//    ASSESSMENT int NOT NULL DEFAULT 0,

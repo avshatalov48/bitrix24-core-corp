@@ -9,12 +9,17 @@ use Bitrix\Main\Localization\Loc;
 class Collab extends BaseRecent
 {
 	use MessengerComponentTitle;
-	
+
 	public function isAvailable(): bool
 	{
 		return Settings::getImFeatures()?->collabAvailable ?? false;
 	}
-	
+
+	public function isPreload(): bool
+	{
+		return false;
+	}
+
 	protected function getParams(): array
 	{
 		return [
@@ -30,7 +35,7 @@ class Collab extends BaseRecent
 	{
 		return [
 			'useSearch' => true,
-			'preload' => false,
+			'preload' => $this->isPreload(),
 			'titleParams' => [
 				'useLargeTitleMode' => true,
 				'text' => $this->getTitle(),
@@ -48,13 +53,18 @@ class Collab extends BaseRecent
 		return Loc::getMessage('IMMOBILE_NAVIGATION_TAB_COLLAB_TAB_TITLE');
 	}
 
-	protected function getComponentCode(): string
+	public function getComponentCode(): string
 	{
 		return 'im.collab.messenger';
 	}
-	
+
 	protected function getComponentName(): string
 	{
 		return 'im:collab-messenger';
+	}
+
+	protected function isWidgetSupported(): bool
+	{
+		return true;
 	}
 }

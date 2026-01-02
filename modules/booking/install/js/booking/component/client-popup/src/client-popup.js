@@ -4,9 +4,15 @@ import { ClientPopupContent } from './client-popup-content/client-popup-content'
 
 export type { CurrentClient } from './client-popup-content/types';
 
+export const CLIENT_POPUP_ID = 'booking-booking-client-popup';
+
+// @vue/component
 export const ClientPopup = {
 	name: 'ClientPopup',
-	emits: ['create', 'close'],
+	components: {
+		StickyPopup,
+		ClientPopupContent,
+	},
 	props: {
 		bindElement: {
 			type: HTMLElement,
@@ -25,10 +31,11 @@ export const ClientPopup = {
 			default: null,
 		},
 	},
+	emits: ['create', 'close'],
 	computed: {
 		popupId(): string
 		{
-			return 'booking-booking-client-popup';
+			return CLIENT_POPUP_ID;
 		},
 		config(): PopupOptions
 		{
@@ -61,10 +68,6 @@ export const ClientPopup = {
 		{
 			this.$emit('close');
 		},
-	},
-	components: {
-		StickyPopup,
-		ClientPopupContent,
 	},
 	template: `
 		<StickyPopup

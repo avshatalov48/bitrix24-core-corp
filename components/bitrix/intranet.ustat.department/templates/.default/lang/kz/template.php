@@ -1,0 +1,21 @@
+<?php
+$MESS["INTRANET_USTAT_COMPANY_ACTIVITY_TITLE"] = "Белсенділік <br> индексі";
+$MESS["INTRANET_USTAT_COMPANY_GRAPH_ACTIVITY"] = "Белсенділік";
+$MESS["INTRANET_USTAT_COMPANY_GRAPH_INVOLVEMENT"] = "Еліктіргендік";
+$MESS["INTRANET_USTAT_COMPANY_GRAPH_TITLE"] = "Компанияның пульсі";
+$MESS["INTRANET_USTAT_COMPANY_HELP_ACTIVITY"] = "<b>Белсенділік индексі</b> - таңдалған уақыт кезеңінде кез-келген құралдарды қолдана отырып, порталда қызметкерлер жасаған әр түрлі әрекеттердің жиынтығы. <br><br> Индекс бойынша қызметкерлер сервис құралдарын қалай белсенді қолданады деген қорытынды жасауға болады.";
+$MESS["INTRANET_USTAT_COMPANY_HELP_GENERAL"] = "<b>Компания пульсі</b> - Сіздің компанияңыздың қазіргі кездегі қызметкерлерінің жалпы көрсеткіштері (компанияның барлық қызметкерлерінің соңғы сағаттағы іс-әрекеттерінің жиынтығы).";
+$MESS["INTRANET_USTAT_COMPANY_HELP_INVOLVEMENT"] = "<b>Қызметкерлерді еліктіру</b> - бұл қызметкерлердің \"Битрикс24\" мүмкіндіктерін қаншалықты толық игергенін анықтауға болатын негізгі көрсеткіш. <br><br> Ұсынылған құралдардың кем дегенде төртеуі компанияның барлық қызметкерлерінің қанша пайызын пайдаланатынын көрсетеді.";
+$MESS["INTRANET_USTAT_COMPANY_HELP_RATING"] = "<b>Рейтинг</b> таңдалған уақыт кезеңінде кем дегенде бір рет \"Битрикс24\" құралдарын пайдаланған барлық қызметкерлер арасында жеке белсенділік индексі бойынша құрылады.";
+$MESS["INTRANET_USTAT_COMPANY_INV_BAR_CRM"] = "Компанияда CRM пайдалануға <strong>еліктіру</strong>";
+$MESS["INTRANET_USTAT_COMPANY_INV_BAR_DISK"] = "Компанияда дискті пайдалануға <strong>еліктіру</strong>";
+$MESS["INTRANET_USTAT_COMPANY_INV_BAR_IM"] = "Компанияда чатты қолдануға <strong>еліктіру</strong>";
+$MESS["INTRANET_USTAT_COMPANY_INV_BAR_LIKES"] = "Компанияда лүпілдерді қолдануға <strong>еліктіру</strong>";
+$MESS["INTRANET_USTAT_COMPANY_INV_BAR_MOBILE"] = "Компанияда мобильді нұсқаны пайдалануға <strong>еліктіру</strong>";
+$MESS["INTRANET_USTAT_COMPANY_INV_BAR_SOCNET"] = "Компанияда әлеуметтік желіні пайдалануға <strong>еліктіру</strong>";
+$MESS["INTRANET_USTAT_COMPANY_INV_BAR_TASKS"] = "Компанияда міндеттерді қолдануға <strong>еліктіру</strong>";
+$MESS["INTRANET_USTAT_COMPANY_INV_BAR_TOTAL"] = "Пайдалануға <strong>еліктіру</strong>";
+$MESS["INTRANET_USTAT_COMPANY_RATING_TITLE"] = "Жалпы рейтинг";
+$MESS["INTRANET_USTAT_COMPANY_SECTION_ACTIVITY"] = "Белсенділік";
+$MESS["INTRANET_USTAT_COMPANY_SECTION_INVOLVEMENT"] = "Құлшыныс";
+$MESS["INTRANET_USTAT_COMPANY_SECTION_TELL_ABOUT"] = "Бөлісу";

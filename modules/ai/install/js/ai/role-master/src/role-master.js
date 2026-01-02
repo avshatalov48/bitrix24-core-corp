@@ -41,7 +41,6 @@ export class RoleMaster extends EventEmitter
 			name: this.#roleMasterOptions.name ?? '',
 			text: this.#roleMasterOptions.text ?? '',
 			description: this.#roleMasterOptions?.description ?? '',
-			avatar: this.#roleMasterOptions?.avatar ?? '',
 			avatarUrl: this.#roleMasterOptions?.avatarUrl ?? '',
 			itemsWithAccess: this.#roleMasterOptions?.itemsWithAccess ?? [],
 		});
@@ -78,12 +77,7 @@ export class RoleMaster extends EventEmitter
 			throw new Error('AI.RoleMaster: roleText option must be the filled string');
 		}
 
-		if (options.avatar && Type.isStringFilled(options.avatar) === false)
-		{
-			throw new Error('AI.RoleMaster: avatar option must be the url string');
-		}
-
-		if (options.avatarUrl && Type.isStringFilled(options.avatar) === false)
+		if (options.avatarUrl && Type.isStringFilled(options.avatarUrl) === false)
 		{
 			throw new Error('AI.RoleMaster: avatar option must be the url string');
 		}

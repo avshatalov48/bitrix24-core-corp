@@ -5,14 +5,11 @@ jn.define('tasks/layout/task/actionMenu', (require, exports, module) => {
 	const { Loc } = require('loc');
 	const { EventEmitter } = require('event-emitter');
 	const { ContextMenu } = require('layout/ui/context-menu');
-	const { TaskCreate } = require('tasks/layout/task/create');
 	const { CreateNew } = require('tasks/layout/task/create-new');
 	const { confirmDestructiveAction } = require('alert');
 	const { ActionMenuButton } = require('tasks/layout/task/actionMenu/src/button');
+	const { EntitySelectorFactory } = require('selector/widget/factory');
 	const { Notify } = require('notify');
-	const { Feature } = require('feature');
-
-	const TaskCreationComponent = Feature.isAirStyleSupported() ? CreateNew : TaskCreate;
 
 	class ActionMenu
 	{
@@ -94,7 +91,7 @@ jn.define('tasks/layout/task/actionMenu', (require, exports, module) => {
 						imgUri: `${imagePrefix}addTask.png`,
 					},
 					onClickCallback: () => {
-						TaskCreationComponent.open({
+						CreateNew.open({
 							layoutWidget: this.layoutWidget,
 							currentUser: this.task.currentUser,
 							diskFolderId: this.diskFolderId,
@@ -110,7 +107,7 @@ jn.define('tasks/layout/task/actionMenu', (require, exports, module) => {
 						imgUri: `${imagePrefix}addTask.png`,
 					},
 					onClickCallback: () => {
-						TaskCreationComponent.open({
+						CreateNew.open({
 							layoutWidget: this.layoutWidget,
 							currentUser: this.task.currentUser,
 							diskFolderId: this.diskFolderId,

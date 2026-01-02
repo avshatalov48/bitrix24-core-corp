@@ -9,6 +9,7 @@ return [
 		'layout/ui/detail-card/tabs/shimmer/crm-product',
 		'layout/ui/product-grid/components/inline-sku-tree',
 		'layout/ui/product-grid/components/product-card',
+		'layout/ui/money',
 
 		'crm:error',
 		'crm:product-grid',

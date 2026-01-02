@@ -1,3 +1,4 @@
+/* eslint-disable */
 (function (exports,main_polyfill_customevent,pull_component_status,im_component_dialog,im_component_textarea,im_view_quotepanel,imopenlines_component_message,imopenlines_component_form,rest_client,im_provider_rest,main_date,pull_client,ui_vue_components_crm_form,im_controller,im_lib_cookie,im_lib_localstorage,im_lib_utils,main_md5,im_lib_uploader,main_core,im_lib_logger,im_eventHandler,im_const,main_core_minimal,ui_vue_vuex,ui_vue,main_core_events) {
 	'use strict';
 

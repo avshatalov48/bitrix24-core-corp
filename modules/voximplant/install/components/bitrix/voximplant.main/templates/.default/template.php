@@ -67,7 +67,7 @@ $APPLICATION->IncludeComponent("bitrix:ui.info.helper", "", array());
 								<span class="tel-balance-update-btn-text"><?=GetMessage('TELEPHONY_TARIFFS_2')?></span>
 							</a>
 							<?elseif($arResult['LINK_TO_BUY']):?>
-							<a href="<?=GetMessage('TELEPHONY_TARIFFS_LINK')?>" target="_blank" class="tel-balance-update-btn tel-balance-update-btn2">
+							<a href="<?=$arResult['TELEPHONY_TARIFFS_LINK']?>" target="_blank" class="tel-balance-update-btn tel-balance-update-btn2">
 								<span class="tel-balance-update-btn-text"><?=GetMessage('TELEPHONY_TARIFFS_2')?></span>
 							</a>
 							<?endif;?>
@@ -91,11 +91,11 @@ $APPLICATION->IncludeComponent("bitrix:ui.info.helper", "", array());
 		if($arResult['SHOW_LINES'])
 		{
 			$APPLICATION->IncludeComponent(
-				"bitrix:voximplant.regular_payments", 
-				"", 
+				"bitrix:voximplant.regular_payments",
+				"",
 				Array(
-					'AMOUNT' => $arResult['AMOUNT'], 
-					'CURRENCY' => $arResult['CURRENCY'], 
+					'AMOUNT' => $arResult['AMOUNT'],
+					'CURRENCY' => $arResult['CURRENCY'],
 					'LANG' => $arResult['LANG']
 				)
 			);

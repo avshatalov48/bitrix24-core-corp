@@ -138,25 +138,22 @@ abstract class BaseFeature
 
 	protected function logEnabled(): void
 	{
-		$this->log($this->getId(). ' enabled');
+		$this->log($this->getId() . ' enabled');
 	}
 
 	protected function logDisabled(): void
 	{
-		$this->log($this->getId(). ' disabled');
+		$this->log($this->getId() . ' disabled');
 	}
 
-	private function log(string $message, string $level = \Psr\Log\LogLevel::INFO): void
+	private function log(string $message): void
 	{
-		$logger = (new \Bitrix\Crm\Service\Logger\DbLogger(
-			'Features',
-			(int)Option::get('crm', 'features_logger_ttl', 24*90))
-		)->setLevel(Option::get('crm', 'features_logger_level', \Psr\Log\LogLevel::INFO));
+		$logger = Container::getInstance()->getLogger('Features');
 
 		$context = [
 			'userId' => Container::getInstance()->getContext()->getUserId(),
 		];
 
-		$logger->log($level, $message, $context);
+		$logger->info($message, $context);
 	}
 }

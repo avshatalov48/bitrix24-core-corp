@@ -9,8 +9,6 @@ return [
 	'js' => 'dist/promo-banner.bundle.js',
 	'rel' => [
 		'main.polyfill.core',
-		'ui.vue3.vuex',
-		'booking.const',
 		'ui.icon-set.api.vue',
 		'ui.icon-set.main',
 		'ui.icon-set.actions',

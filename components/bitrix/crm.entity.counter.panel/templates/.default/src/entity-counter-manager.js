@@ -39,12 +39,10 @@ export default class EntityCounterManager
 		this.#isTabActive = true;
 		this.#openedSlidersCount = 0;
 
-		this.#bindEvents();
-
 		this.constructor.lastInstance = this;
 	}
 
-	#bindEvents(): void
+	bindEvents(): void
 	{
 		EventEmitter.subscribe(
 			'onPullEvent-main',

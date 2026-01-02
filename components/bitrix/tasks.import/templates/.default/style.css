@@ -17,7 +17,17 @@
 
 .tasks-main-table {
 	width: 100%;
-	padding-bottom: 60px;
+	border-spacing: 0;
+	border-collapse: collapse;
+	border: none;
+}
+
+.tasks-main-table .ui-slider-section:last-child {
+	margin-bottom: 80px;
+}
+
+.ui-page-slider-wrapper .tasks-main-table .ui-slider-section:last-child {
+	margin-bottom: 60px;
 }
 
 .tasks-import-results-panel {
@@ -96,7 +106,8 @@
 }
 
 .tasks-first-step-column {
-	vertical-align: top
+	vertical-align: top;
+	padding: 0;
 }
 
 .tasks-first-step-column-inner {
@@ -206,39 +217,9 @@
 	width: 41.6%;
 }
 
-.tasks-entity-card-widget {
-	position: relative;
-	z-index: 140;
-	box-sizing: border-box;
-	margin-bottom: 15px;
-	padding: 0 15px;
-	border-radius: 1px;
-	background-color: #f9fafb;
-	box-shadow: 0 1px 1px 0 rgba(0, 0, 0, .04);
-}
-
-.tasks-entity-card-widget .tasks-entity-widget-content-block {
+.ui-slider-section .tasks-entity-widget-content-block {
 	margin: 0 -15px 20px;
 	padding: 0 15px;
-}
-
-.tasks-entity-card-widget-title {
-	padding: 11px 0;
-}
-
-.tasks-entity-card-widget-title-text {
-	display: inline-block;
-	height: 23px;
-	color: #525c69;
-	vertical-align: middle;
-	text-transform: uppercase;
-	font: 11px/23px var(--ui-font-family-secondary, var(--ui-font-family-open-sans));
-	font-weight: var(--ui-font-weight-semi-bold, 600);
-}
-
-.tasks-entity-widget-content {
-	padding: 10px 0 15px;
-	border-top: 1px solid #e8ecee;
 }
 
 .tasks-entity-widget-content-block,

@@ -753,6 +753,10 @@ final class CCrmEntityProductListComponent
 		);
 		$this->currency['TEMPLATE'] = \CCrmCurrency::GetCurrencyFormatString($this->currency['ID']);
 		$this->currency['TEXT'] = \CCrmCurrency::getCurrencyText($this->currency['ID']);
+		if ($this->currency['TEXT'] === '?')
+		{
+			$this->currency['TEXT'] = $this->currency['ID'];
+		}
 		$format = \CCrmCurrency::GetCurrencyFormatParams($this->currency['ID']);
 		$this->currency['FORMAT'] = [
 			'TEMPLATE' => $format['TEMPLATE'],
@@ -899,8 +903,7 @@ final class CCrmEntityProductListComponent
 	protected function loadMeasures(): void
 	{
 		$this->measures['LIST'] = [];
-		// TODO: remove limit after creation new measure control
-		foreach (Crm\Measure::getMeasures(100) as $row)
+		foreach (Crm\Measure::getMeasures() as $row)
 		{
 			$this->measures['LIST'][self::PREFIX_MEASURE_INDEX . $row['CODE']] = [
 				'CODE' => (string)$row['CODE'],

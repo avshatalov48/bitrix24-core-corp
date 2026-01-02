@@ -40,6 +40,7 @@ jn.define('sign/dialog/banners/gotowebeditor', (require, exports, module) => {
 				buttonsView: View(
 					{},
 					Button({
+						testId: 'goToWebEditorBanner-button-qrAuth',
 						text: Loc.getMessage('SIGN_MOBILE_DIALOG_GO_TO_WEB_EDITOR_BUTTON_QRCODE_AUTH_TITLE'),
 						size: ButtonSize.XL,
 						design: ButtonDesign.FILLED,
@@ -61,6 +62,7 @@ jn.define('sign/dialog/banners/gotowebeditor', (require, exports, module) => {
 						},
 					}),
 					Button({
+						testId: 'goToWebEditorBanner-button-Close',
 						text: Loc.getMessage('SIGN_MOBILE_DIALOG_GO_TO_WEB_EDITOR_BUTTON_CLOSE_TITLE'),
 						size: ButtonSize.XL,
 						design: ButtonDesign.PLAN_ACCENT,

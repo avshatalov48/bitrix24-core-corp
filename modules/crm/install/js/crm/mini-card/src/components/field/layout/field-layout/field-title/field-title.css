@@ -1,0 +1,7 @@
+.crm-mini-card__field-title {
+	font-weight: var(--ui-font-weight-regular);
+	font-size: var(--ui-font-size-sm);
+	line-height: 17px;
+	letter-spacing: -0.05px;
+	color: var(--ui-color-base-4);
+}

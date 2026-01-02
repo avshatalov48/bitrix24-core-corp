@@ -2,9 +2,10 @@
 
 return [
 	'extensions' => [
-		'im:lib/theme',
 		'utils/color',
+		'assets/icons',
+		'im:lib/theme',
 		'im:messenger/assets/common',
-		'loc',
+		'im:messenger/loc',
 	],
 ];

@@ -2,7 +2,7 @@
 $MESS["TASKS_GRID_STUB_DESCRIPTION"] = "Hier werden die Aufgaben angezeigt, für die Sie und/oder Ihre Mitarbeiter verantwortlich sind.";
 $MESS["TASKS_GRID_STUB_DESCRIPTION_COLLAB"] = "Sie haben momentan keine Aufgaben.";
 $MESS["TASKS_GRID_STUB_NO_DATA_DESCRIPTION"] = "Versuchen Sie den Filter zurückzusetzen oder die Suchphrase zu ändern.";
-$MESS["TASKS_GRID_STUB_NO_DATA_TITLE"] = "Für Ihre Suchanfrage wurden keine Ergebnisse gefunden.";
+$MESS["TASKS_GRID_STUB_NO_DATA_TITLE"] = "Für Ihre Suchanfrage wurden keine Ergebnisse gefunden";
 $MESS["TASKS_GRID_STUB_PROJECT_CREATE_COLLAB"] = "Hier werden die Collab-Aufgaben angezeigt";
 $MESS["TASKS_GRID_STUB_PROJECT_CREATE_COLLAB_SUBTITLE"] = "Erstellen Sie Aufgaben hier oder aus den Chatnachrichten, fügen Sie Aufgabenteilnehmer hinzu. [helpdesklink]Mehr[/helpdesklink]";
 $MESS["TASKS_GRID_STUB_PROJECT_CREATE_TASK"] = "Aufgabe erstellen";

@@ -2142,7 +2142,7 @@ bxForm_<?=$arParams["FORM_ID"]?>.EnableSigleSubmit(true);
 					isSettingsApplied: isSettingsApplied,
 					canCreateUserField: <?=($canCreateUserField ? 'true' : 'false')?>,
 					canCreateSection: <?=($canCreateSection ? 'true' : 'false')?>,
-					canSaveSettingsForAll: <?=CCrmAuthorizationHelper::CanEditOtherSettings() ? 'true' : 'false'?>,
+					canSaveSettingsForAll: <?=\Bitrix\Crm\Service\Container::getInstance()->getUserPermissions()->entityEditor()->canEditCommonView() ? 'true' : 'false'?>,
 					userFieldEntityId: "<?=isset($arParams['USER_FIELD_ENTITY_ID']) ? $arParams['USER_FIELD_ENTITY_ID'] : ''?>",
 					userFieldServiceUrl: "<?=isset($arParams['USER_FIELD_SERVICE_URL']) ? $arParams['USER_FIELD_SERVICE_URL'] : ''?>",
 					enableInShortListOption: <?= ((isset($arParams['ENABLE_IN_SHORT_LIST_OPTION']) && $arParams['ENABLE_IN_SHORT_LIST_OPTION'] === 'Y') ? 'true' : 'false') ?>,

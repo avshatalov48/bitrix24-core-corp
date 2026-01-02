@@ -14,6 +14,12 @@ this.BX = this.BX || {};
 	  static isGroupSendingEnabled() {
 	    return settings.get('isGroupSendingEnabled', false);
 	  }
+	  static isDocumentsInSignersSelectorEnabled() {
+	    return settings.get('isDocumentsInSignersSelectorEnabled', false);
+	  }
+	  static isTemplateFolderGroupingAllowed() {
+	    return settings.get('isTemplateFolderGroupingAllowed');
+	  }
 	}
 
 	exports.FeatureStorage = FeatureStorage;

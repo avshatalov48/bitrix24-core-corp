@@ -2,12 +2,12 @@
 
 namespace Bitrix\CrmMobile\Controller\Document;
 
+use Bitrix\Crm\Service\Container;
 use Bitrix\CrmMobile\Integration\Sale\Check\GetPaymentChecksQuery;
 use Bitrix\CrmMobile\Integration\Sale\Payment\GetPaymentQuery;
 use Bitrix\Sale\Registry;
 use Bitrix\Sale\Repository\PaymentRepository;
 use Bitrix\Sale\PayableShipmentItem;
-use Bitrix\Crm\Order\Permissions;
 
 class Payment extends Base
 {
@@ -36,8 +36,7 @@ class Payment extends Base
 
 	public function getDocumentDataAction(int $documentId): array
 	{
-		$hasReadPermission = Permissions\Payment::checkReadPermission($documentId);
-		if (!$hasReadPermission)
+		if (!Container::getInstance()->getUserPermissions()->item()->canRead(\CCrmOwnerType::OrderPayment, $documentId))
 		{
 			return [];
 		}

@@ -20,6 +20,7 @@ $APPLICATION->IncludeComponent(
 		'POPUP_COMPONENT_PARAMS' => [
 			'SHOW_CONVERTER_CONFIG' => 'Y',
 		],
+		'USE_UI_TOOLBAR' => 'Y',
 		'USE_PADDING' => false,
 		'CLOSE_AFTER_SAVE' => false,
 		'RELOAD_PAGE_AFTER_SAVE' => false,

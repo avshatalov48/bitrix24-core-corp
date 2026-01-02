@@ -18,8 +18,7 @@ use Bitrix\Crm\Integration\Analytics\Dictionary;
 use Bitrix\Crm\Restriction\RestrictionManager;
 use Bitrix\Crm\Integration\Channel\LeadImportTracker;
 
-$CrmPerms = CCrmPerms::GetCurrentUserPermissions();
-if ($CrmPerms->HavePerm('LEAD', BX_CRM_PERM_NONE, 'IMPORT'))
+if (!\Bitrix\Crm\Service\Container::getInstance()->getUserPermissions()->entityType()->canImportItems(CCrmOwnerType::Lead))
 {
 	ShowError(GetMessage('CRM_PERMISSION_DENIED'));
 	return;
@@ -29,6 +28,11 @@ if(!function_exists('__CrmImportPrepareFieldBindingTab'))
 {
 	function __CrmImportPrepareFieldBindingTab(&$arResult, &$arRequireFields)
 	{
+		if (!file_exists($_SESSION['CRM_IMPORT_FILE'] ?? ''))
+		{
+			return GetMessage('CRM_CSV_READ_ERROR');
+		}
+
 		$resultMessages = array();
 		$arFields = Array(''=>'');
 		$arFieldsUpper = Array();
@@ -402,7 +406,7 @@ if(isset($_REQUEST['getSample']) && $_REQUEST['getSample'] == 'csv')
 	echo "\n";
 	die();
 }
-else if (isset($_REQUEST['import']) && isset($_SESSION['CRM_IMPORT_FILE']))
+else if (isset($_REQUEST['import']) && file_exists($_SESSION['CRM_IMPORT_FILE'] ?? ''))
 {
 	$APPLICATION->RestartBuffer();
 

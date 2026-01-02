@@ -1,23 +1,42 @@
 import { ResourceTypeModel } from 'booking.model.resource-types';
 import { ResourceTypeDto } from './types';
 
-export function mapDtoToModel(resourceDto: ResourceTypeDto): ResourceTypeModel
+export function mapDtoToModel(resourceTypeDto: ResourceTypeDto): ResourceTypeModel
 {
 	return {
-		id: resourceDto.id,
-		moduleId: resourceDto.moduleId,
-		name: resourceDto.name,
-		code: resourceDto.code,
-		isConfirmationNotificationOn: resourceDto.isConfirmationNotificationOn,
-		isFeedbackNotificationOn: resourceDto.isFeedbackNotificationOn,
-		isInfoNotificationOn: resourceDto.isInfoNotificationOn,
-		isDelayedNotificationOn: resourceDto.isDelayedNotificationOn,
-		isReminderNotificationOn: resourceDto.isReminderNotificationOn,
-		templateTypeConfirmation: resourceDto.templateTypeConfirmation,
-		templateTypeFeedback: resourceDto.templateTypeFeedback,
-		templateTypeInfo: resourceDto.templateTypeInfo,
-		templateTypeDelayed: resourceDto.templateTypeDelayed,
-		templateTypeReminder: resourceDto.templateTypeReminder,
+		id: resourceTypeDto.id,
+		moduleId: resourceTypeDto.moduleId,
+		name: resourceTypeDto.name,
+		code: resourceTypeDto.code,
+		resourcesCnt: resourceTypeDto.resourcesCnt,
+
+		// info
+		isInfoNotificationOn: resourceTypeDto.isInfoNotificationOn,
+		templateTypeInfo: resourceTypeDto.templateTypeInfo,
+		infoNotificationDelay: resourceTypeDto.infoNotificationDelay,
+
+		// confirmation
+		isConfirmationNotificationOn: resourceTypeDto.isConfirmationNotificationOn,
+		templateTypeConfirmation: resourceTypeDto.templateTypeConfirmation,
+		confirmationNotificationDelay: resourceTypeDto.confirmationNotificationDelay,
+		confirmationNotificationRepetitions: resourceTypeDto.confirmationNotificationRepetitions,
+		confirmationNotificationRepetitionsInterval: resourceTypeDto.confirmationNotificationRepetitionsInterval,
+		confirmationCounterDelay: resourceTypeDto.confirmationCounterDelay,
+
+		// reminder
+		isReminderNotificationOn: resourceTypeDto.isReminderNotificationOn,
+		templateTypeReminder: resourceTypeDto.templateTypeReminder,
+		reminderNotificationDelay: resourceTypeDto.reminderNotificationDelay,
+
+		// delayed
+		isDelayedNotificationOn: resourceTypeDto.isDelayedNotificationOn,
+		templateTypeDelayed: resourceTypeDto.templateTypeDelayed,
+		delayedNotificationDelay: resourceTypeDto.delayedNotificationDelay,
+		delayedCounterDelay: resourceTypeDto.delayedCounterDelay,
+
+		// feedback
+		isFeedbackNotificationOn: resourceTypeDto.isFeedbackNotificationOn,
+		templateTypeFeedback: resourceTypeDto.templateTypeFeedback,
 	};
 }
 
@@ -28,15 +47,34 @@ export function mapModelToDto(resourceType: ResourceTypeModel): ResourceTypeDto
 		moduleId: resourceType.moduleId,
 		name: resourceType.name,
 		code: resourceType.code,
-		isConfirmationNotificationOn: resourceType.isConfirmationNotificationOn,
-		isFeedbackNotificationOn: resourceType.isFeedbackNotificationOn,
+		resourcesCnt: resourceType.resourcesCnt,
+
+		// info
 		isInfoNotificationOn: resourceType.isInfoNotificationOn,
-		isDelayedNotificationOn: resourceType.isDelayedNotificationOn,
-		isReminderNotificationOn: resourceType.isReminderNotificationOn,
-		templateTypeConfirmation: resourceType.templateTypeConfirmation,
-		templateTypeFeedback: resourceType.templateTypeFeedback,
 		templateTypeInfo: resourceType.templateTypeInfo,
-		templateTypeDelayed: resourceType.templateTypeDelayed,
+		infoNotificationDelay: resourceType.infoNotificationDelay,
+
+		// confirmation
+		isConfirmationNotificationOn: resourceType.isConfirmationNotificationOn,
+		templateTypeConfirmation: resourceType.templateTypeConfirmation,
+		confirmationNotificationDelay: resourceType.confirmationNotificationDelay,
+		confirmationNotificationRepetitions: resourceType.confirmationNotificationRepetitions,
+		confirmationNotificationRepetitionsInterval: resourceType.confirmationNotificationRepetitionsInterval,
+		confirmationCounterDelay: resourceType.confirmationCounterDelay,
+
+		// reminder
+		isReminderNotificationOn: resourceType.isReminderNotificationOn,
 		templateTypeReminder: resourceType.templateTypeReminder,
+		reminderNotificationDelay: resourceType.reminderNotificationDelay,
+
+		// delayed
+		isDelayedNotificationOn: resourceType.isDelayedNotificationOn,
+		templateTypeDelayed: resourceType.templateTypeDelayed,
+		delayedNotificationDelay: resourceType.delayedNotificationDelay,
+		delayedCounterDelay: resourceType.delayedCounterDelay,
+
+		// feedback
+		isFeedbackNotificationOn: resourceType.isFeedbackNotificationOn,
+		templateTypeFeedback: resourceType.templateTypeFeedback,
 	};
 }

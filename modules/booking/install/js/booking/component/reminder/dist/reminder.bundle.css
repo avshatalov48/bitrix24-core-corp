@@ -1,0 +1,66 @@
+.booking--reminder-row {
+	display: flex;
+	flex-wrap: wrap;
+	gap: var(--ui-space-inline-xs2);
+	align-items: center;
+}
+
+.booking--reminder {
+	display: flex;
+}
+
+.booking--reminder.--disabled {
+	opacity: var(--ui-opacity-40);
+}
+
+.booking--reminder-item {
+	gap: var(--ui-space-inline-3xs);
+	font-size: var(--ui-font-size-sm);
+}
+
+.booking--reminder-item > * {
+	cursor: pointer;
+}
+
+.booking--reminder-item.--disabled > * {
+	cursor: not-allowed;
+}
+
+.booking--reminder-item__title {
+	border-bottom: 1px dashed rgba(var(--ui-color-link-primary-base-rgb), var(--ui-opacity-40));
+	color: var(--ui-color-link-primary-base);
+	transition: .4s;
+}
+
+.booking--reminder-item__title:hover {
+	border-color: rgba(var(--ui-color-link-primary-base-rgb), var(--ui-opacity-full));
+}
+
+.booking--reminder-add {
+	font-size: var(--ui-font-size-sm);
+	cursor: pointer;
+}
+
+.booking--reminder-add.--disabled {
+	cursor: not-allowed;
+}
+
+.booking--reminder-add__label {
+	color: var(--ui-color-base-50);
+	border-bottom: 1px dashed rgba(var(--ui-color-base-50-rgb), var(--ui-opacity-40));
+	transition: .4s;
+}
+
+.booking--reminder-add:hover .booking--reminder-add__label {
+	border-color: var(--ui-color-base-50);
+}
+
+.booking--reminder-item,
+.booking--reminder-add {
+	--ui-icon-set__icon-color: var(--ui-color-base-50);
+}
+
+.booking--reminder-item .ui-icon-set:hover,
+.booking--reminder-add:hover .ui-icon-set {
+	--ui-icon-set__icon-color: var(--ui-color-base-70);
+}

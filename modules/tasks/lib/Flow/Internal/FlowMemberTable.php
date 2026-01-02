@@ -114,11 +114,11 @@ class FlowMemberTable extends DataManager
 	/**
 	 * @throws ArgumentException
 	 */
-	public static function deleteByRole(int $flowId, string $role): void
+	public static function deleteByRoles(int $flowId, array $roles): void
 	{
 		self::deleteByFilter([
 			'=FLOW_ID' => $flowId,
-			'=ROLE' => $role,
+			'@ROLE' => $roles,
 		]);
 	}
 }

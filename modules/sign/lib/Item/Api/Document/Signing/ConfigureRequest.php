@@ -2,7 +2,6 @@
 
 namespace Bitrix\Sign\Item\Api\Document\Signing;
 
-use Bitrix\Main\Type\DateTime;
 use Bitrix\Sign\Contract;
 use Bitrix\Sign\Item\Api\Property;
 
@@ -28,6 +27,7 @@ class ConfigureRequest implements Contract\Item
 		public ?string $dateFormat = null,
 		public ?string $dateTimeFormat = null,
 		public ?int $weekStart = null,
+		public ?int $signUntilTimestamp = null,
 	)
 	{}
 

@@ -2,6 +2,7 @@
 
 return [
 	'extensions' => [
+		'apptheme',
 		'bottom-sheet',
 		'loc',
 		'haptics',
@@ -33,6 +34,9 @@ return [
 		'ui-system/blocks/avatar',
 		'ui-system/popups/color-picker',
 		'ui-system/blocks/status-block',
+		'ui-system/form/checkbox',
+		'ui-system/form/inputs/datetime',
+		'ui-system/blocks/chips/chip-inner-tab',
 
 		'statemanager/redux/slices/users',
 		'statemanager/redux/store',
@@ -48,6 +52,7 @@ return [
 		'calendar:enums',
 		'calendar:statemanager/redux/slices/events',
 		'calendar:base-menu',
+		'calendar:layout/icons',
 	],
 	'bundle' => [
 		'./src/data-managers/accessibility-manager',
@@ -58,25 +63,27 @@ return [
 
 		'./src/pages/about-page',
 		'./src/pages/date-time-page',
+		'./src/pages/custom-time-page',
 
 		'./src/layout/event-name-input',
 		'./src/layout/event-settings',
 		'./src/layout/attendees-selector',
-		'./src/layout/select-date-time-button',
 		'./src/layout/month-selector',
-		'./src/layout/slot-size-selector',
-		'./src/layout/slot-list',
-		'./src/layout/slot-item',
-		'./src/layout/slot-list-skeleton',
-		'./src/layout/slot-list-empty-state',
-		'./src/layout/slot-calendar',
 		'./src/layout/reminder-selector',
-		'./src/layout/save-event-button',
 		'./src/layout/save-event-container',
-		'./src/layout/location-input',
 		'./src/layout/section-info',
-		'./src/layout/location-info',
 		'./src/layout/description',
+
+		'./src/layout/location/input',
+		'./src/layout/location/info',
+
+		'./src/layout/slot/size-selector',
+		'./src/layout/slot/list',
+		'./src/layout/slot/item',
+		'./src/layout/slot/list-skeleton',
+		'./src/layout/slot/list-empty',
+		'./src/layout/slot/calendar',
+		'./src/layout/slot/custom',
 
 		'./src/selector/selector',
 		'./src/selector/item',
@@ -86,5 +93,8 @@ return [
 		'./src/menu/accessibility',
 		'./src/menu/importance',
 		'./src/menu/boolean',
+
+		'./src/button/save-event',
+		'./src/button/select-date-time',
 	],
 ];

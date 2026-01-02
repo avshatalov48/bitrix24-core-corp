@@ -165,6 +165,11 @@ jn.define('bbcode/formatter/plain-text-formatter', (require, exports, module) =>
 				return new NodeFormatter({
 					name: 'unknown',
 					convert: ({ node }) => {
+						if (this.isAllowedTag(node.getName()))
+						{
+							return node.clone();
+						}
+
 						const fragment = node.getScheme().createFragment({
 							children: [...node.getChildren()],
 						});

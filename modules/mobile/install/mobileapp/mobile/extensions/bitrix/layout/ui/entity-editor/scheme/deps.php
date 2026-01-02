@@ -5,5 +5,6 @@ return [
 		'layout/ui/entity-editor/control',
 		'layout/ui/entity-editor/scheme/element',
 		'type',
+		'utils/random',
 	],
 ];

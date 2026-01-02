@@ -19,6 +19,7 @@ export type MenuBarTourParams = {
 	linkTitle: ?string,
 	guideBindElement: ?HTMLElement,
 	guidePopupWidth: ?number,
+	stayShowedSpotlight?: boolean,
 };
 
 export class BaseTour implements TourInterface
@@ -125,7 +126,7 @@ export class BaseTour implements TourInterface
 
 	#getSpotlight(): BX.SpotLight
 	{
-		return new BX.SpotLight(
+		const spotlight = new BX.SpotLight(
 			{
 				id: `${SPOTLIGHT_ID_PREFIX}-${this.#params.itemCode}-guide`,
 				targetElement: this.#getGuideBindElement(),
@@ -134,6 +135,17 @@ export class BaseTour implements TourInterface
 				autoSave: 'no',
 			},
 		);
+
+		spotlight.bindEvents({
+			onTargetEnter: () => {
+				if (this.#params.stayShowedSpotlight !== true)
+				{
+					spotlight.close();
+				}
+			},
+		});
+
+		return spotlight;
 	}
 
 	#getGuideBindElement(force: boolean = false): HTMLElement

@@ -167,6 +167,17 @@ class CTimeMan
 		return $info;
 	}
 
+	public static function initRuntimeInfo(): array
+	{
+		$runtimeInfo = self::getRuntimeInfo();
+
+		CIntranetPlanner::initScripts($runtimeInfo['PLANNER']);
+
+		$runtimeInfo['PLANNER'] = $runtimeInfo['PLANNER']['DATA'];
+
+		return $runtimeInfo;
+	}
+
 	/**
 	 * DEPRECATED! Migrated to tasks module.
 	 *

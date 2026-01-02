@@ -1,12 +1,16 @@
 <?php
 
 use Bitrix\AI\Integration\Ui\EntitySelector\PromptCategoriesProvider;
+use Bitrix\Main\License\UrlProvider;
+
+$domain = (new UrlProvider())->getTechDomain();
+$serverListEndpoint = "https://ai-proxy.{$domain}/settings/config.json";
 
 return [
 	'controllers' => [
 		'value' => [
 			'namespaces' => [
-				'\\Bitrix\\AI\\Controller' => 'api'
+				'\\Bitrix\\AI\\Controller' => 'api',
 			],
 			'defaultNamespace' => '\\Bitrix\\AI\\Controller',
 		],
@@ -14,7 +18,7 @@ return [
 	],
 	'aiproxy' => [
 		'value' => [
-			'serverListEndpoint' => 'https://ai-proxy.bitrix.info/settings/config.json',
+			'serverListEndpoint' => $serverListEndpoint,
 		],
 		'readonly' => true,
 	],
@@ -28,9 +32,9 @@ return [
 						'className' => PromptCategoriesProvider::class,
 					],
 				],
-			'extensions' => ['ai.entity-selector'],
+				'extensions' => ['ai.entity-selector'],
 			],
 		],
 		'readonly' => true,
-	]
+	],
 ];

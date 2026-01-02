@@ -26,6 +26,8 @@ return [
 		'crm:timeline/item/ui/body/blocks/mail-contact-list',
 		'crm:timeline/item/ui/body/blocks/item-selector',
 		'crm:timeline/item/ui/body/blocks/address-block',
+		'crm:timeline/item/ui/body/blocks/workflow-efficiency',
+		'crm:timeline/item/ui/body/blocks/avatars-stack-steps',
 		'money',
 	],
 ];

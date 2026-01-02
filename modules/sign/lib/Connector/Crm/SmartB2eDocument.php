@@ -8,7 +8,7 @@ use CCrmOwnerType;
 final class SmartB2eDocument extends Base
 {
 	public function __construct(
-		private int $entityId
+		private int $entityId,
 	) {}
 
 	public function getCrmEntityTypeId(): int

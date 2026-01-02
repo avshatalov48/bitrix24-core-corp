@@ -1,0 +1,25 @@
+<?php
+$MESS["CRM_COLUMN_ACTIVE"] = "Белсенді";
+$MESS["CRM_COLUMN_CATALOG_ID"] = "Каталог";
+$MESS["CRM_COLUMN_CODE"] = "Символдық код";
+$MESS["CRM_COLUMN_DESCRIPTION"] = "Сипаттама";
+$MESS["CRM_COLUMN_ID"] = "ID";
+$MESS["CRM_COLUMN_MEASURE"] = "Өлшем бірлігі";
+$MESS["CRM_COLUMN_NAME"] = "Атауы";
+$MESS["CRM_COLUMN_PRICE"] = "Бағасы";
+$MESS["CRM_COLUMN_SECTION"] = "Бөлім";
+$MESS["CRM_COLUMN_SORT"] = "Сұрыптау";
+$MESS["CRM_COLUMN_VAT_ID"] = "ҚҚС мөлшерлемесі";
+$MESS["CRM_COLUMN_VAT_INCLUDED"] = "ҚҚС бағаға кіреді";
+$MESS["CRM_COLUMN_XML_ID"] = "Сыртқы код";
+$MESS["CRM_MEASURE_NOT_SELECTED"] = "[таңдалмаған]";
+$MESS["CRM_MODULE_NOT_INSTALLED"] = "Crm модулі орнатылмаған.";
+$MESS["CRM_NOT_SELECTED"] = "(жоқ)";
+$MESS["CRM_PRODUCT_FIELD_DETAIL_PICTURE"] = "Егжей-тегжейлі кескін";
+$MESS["CRM_PRODUCT_FIELD_PREVIEW_PICTURE"] = "Аңдатпаға арналған кескін";
+$MESS["CRM_PRODUCT_LIST_FILTER_CHECKBOX_NO"] = "Жоқ";
+$MESS["CRM_PRODUCT_LIST_FILTER_CHECKBOX_NOT_SELECTED"] = "Таңдалмаған";
+$MESS["CRM_PRODUCT_LIST_FILTER_CHECKBOX_YES"] = "Иә";
+$MESS["CRM_PRODUCT_LIST_FILTER_SECTION_ALL"] = "(кез келген)";
+$MESS["CRM_PRODUCT_LIST_FILTER_SECTION_ROOT"] = "Жоғарғы деңгей";
+$MESS["CRM_PRODUCT_NAV_TITLE_LIST"] = "Тауарлар";

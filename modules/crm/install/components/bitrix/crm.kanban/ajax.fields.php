@@ -45,9 +45,9 @@ elseif (!check_bitrix_sessid())
 	$result = ['ERROR' => 'Access denied'];
 }
 elseif (
-	($entityType == 'lead' && !(\CCrmLead::checkReadPermission())) ||
-	($entityType == 'deal' && !(\CCrmDeal::checkReadPermission()))||
-	($entityType == 'order' && !(\Bitrix\Crm\Order\Permissions\Order::checkReadPermission()))
+	($entityType == 'lead' && !\Bitrix\Crm\Service\Container::getInstance()->getUserPermissions()->entityType()->canReadItems(CCrmOwnerType::Lead))
+	|| ($entityType == 'deal' && !\Bitrix\Crm\Service\Container::getInstance()->getUserPermissions()->entityType()->canReadItems(CCrmOwnerType::Deal))
+	|| ($entityType == 'order' && !\Bitrix\Crm\Service\Container::getInstance()->getUserPermissions()->entityType()->canReadItems(CCrmOwnerType::Order))
 )
 {
 	$result = ['ERROR' => 'Access denied'];

@@ -19,6 +19,11 @@ final class Write extends Permission
 		return Loc::getMessage('CRM_SECURITY_ROLE_PERMS_HEAD_AUTOMATED_SOLUTION_WRITE');
 	}
 
+	public function explanation(): ?string
+	{
+		return Loc::getMessage('CRM_SECURITY_ROLE_PERMS_EXPLANATION_AUTOMATED_SOLUTION_WRITE');
+	}
+
 	public function canAssignPermissionToStages(): bool
 	{
 		return false;

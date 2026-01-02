@@ -91,8 +91,9 @@ class ImConnectorMobile extends CModule
 		ModuleManager::unRegisterModule($this->MODULE_ID);
 	}
 
-	function unInstallFiles()
+	public function uninstallFiles(): void
 	{
+		DeleteDirFilesEx('/bitrix/mobileapp/' . $this->MODULE_ID);
 	}
 
 	function unInstallEvents()

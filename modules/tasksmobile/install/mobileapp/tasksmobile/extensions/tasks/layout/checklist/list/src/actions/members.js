@@ -5,6 +5,7 @@ jn.define('tasks/layout/checklist/list/src/actions/members', (require, exports, 
 	const { Color, Indent } = require('tokens');
 	const { AvatarStack } = require('ui-system/blocks/avatar-stack');
 	const { IconView, Icon } = require('ui-system/blocks/icon');
+	const { useCallback } = require('utils/function');
 	const {
 		MEMBER_TYPE_ICONS,
 		MEMBER_TYPE_RESTRICTION_FEATURE_META,
@@ -86,7 +87,7 @@ jn.define('tasks/layout/checklist/list/src/actions/members', (require, exports, 
 					withRedux: true,
 					visibleEntityCount: 1,
 					restView: this.renderRestView,
-					onClick: this.handleOnClick(memberType),
+					onClick: useCallback(this.handleOnClick(memberType), [memberType]),
 				}),
 			));
 		}

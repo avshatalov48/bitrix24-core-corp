@@ -8,7 +8,7 @@ jn.define('tasks/layout/task/parent-task', (require, exports, module) => {
 	const { connect } = require('statemanager/redux/connect');
 	const { selectByTaskIdOrGuid } = require('tasks/statemanager/redux/slices/tasks');
 
-	const { IconView } = require('ui-system/blocks/icon');
+	const { IconView, Icon } = require('ui-system/blocks/icon');
 	const { Text5 } = require('ui-system/typography/text');
 
 	/**
@@ -31,7 +31,7 @@ jn.define('tasks/layout/task/parent-task', (require, exports, module) => {
 	}) => {
 		if (!id || !canRead)
 		{
-			return View();
+			return null;
 		}
 
 		return View(
@@ -44,25 +44,25 @@ jn.define('tasks/layout/task/parent-task', (require, exports, module) => {
 					// backgroundColor: AppTheme.colors.bgNavigation,
 
 					flexDirection: 'row',
-					paddingTop: Number(Indent.L),
-					paddingLeft: Number(Indent.XL3),
-					paddingRight: Number(Indent.XL3) + 24,
+					paddingTop: Indent.L.toNumber(),
+					paddingLeft: Indent.XL3.toNumber(),
+					paddingRight: Indent.XL3.toNumber() + 24,
 				},
 				onClick: enableToOpenTask
 					? () => Entry.openTask({ id }, { parentWidget })
 					: null,
 			},
 			IconView({
-				icon: 'relatedTasks',
+				icon: Icon.RELATED_TASKS,
 				size: 20,
 				color: Color.accentMainPrimaryalt,
 			}),
 			Text5({
 				testId: `${testId}_Value`,
 				text: name || Loc.getMessage('M_TASK_DETAILS_PARENT_TASK_DEFAULT_TITLE'),
+				color: enableToOpenTask ? Color.accentMainPrimaryalt : Color.base1,
 				style: {
 					marginLeft: Indent.XS.toNumber(),
-					color: enableToOpenTask ? Color.accentMainPrimaryalt.toHex() : Color.base1.toHex(),
 					flexShrink: 2,
 				},
 				ellipsize: 'end',

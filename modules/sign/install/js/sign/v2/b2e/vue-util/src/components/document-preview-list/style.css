@@ -1,0 +1,66 @@
+.sign-b2e-regional-settings_apply_for_all_list {
+	padding: 8px 5px 8px 5px !important;
+}
+
+.sign-b2e-regional-settings_apply_for_all_settings_preview_block {
+	display: inline-block;
+	width: 60px;
+	overflow: hidden;
+}
+
+.sign-b2e-regional-settings_apply_for_all_settings_preview_block img {
+	cursor: pointer;
+}
+
+.sign-b2e-regional-settings_apply_for_all_settings_preview {
+	width: 36px;
+	max-height: 44px;
+	margin-left: 12px;
+	margin-right: auto;
+	display: block;
+	border-radius: 6px;
+	border-style: solid;
+	border-width: 1px;
+	border-color: var(--ui-color-palette-gray-10);
+
+}
+
+.sign-b2e-regional-settings_apply_for_all_settings_preview_show_more_less {
+	display: inline-block;
+	min-width: 53px;
+	height: 60px;
+}
+
+.sign-b2e-regional-settings_apply_for_all_settings_preview_title {
+	text-align: center;
+	color: #525C69;
+	font-size: 11px;
+	margin-top: 5px;
+	white-space: nowrap;
+	overflow: hidden;
+	text-overflow: ellipsis;
+	width: 100%;
+	padding: 0 2px;
+	box-sizing: border-box;
+}
+
+.sign-b2e-regional-settings_apply_for_all_settings_more_less_button {
+	margin-left: 10px;
+	color: #2066B0;
+	cursor: pointer;
+	font-size: 15px;
+	position: absolute;
+	bottom: 34px;
+}
+
+.sign-b2e-regional-settings_apply_for_all_list .sign-b2e_document_preview_icon {
+	right: 3px;
+	bottom: 6px;
+	width: 34px;
+	height: 34px;
+	background-size: cover;
+}
+
+.sign-b2e-regional-settings_apply_for_all_list .sign-b2e_document_preview_container {
+	height: 46px;
+}

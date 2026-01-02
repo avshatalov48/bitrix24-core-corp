@@ -4,6 +4,7 @@ namespace Bitrix\Crm\Activity\Provider;
 
 use Bitrix\Crm\Badge;
 use Bitrix\Crm\Integration\NotificationsManager;
+use Bitrix\Main\DI\ServiceLocator;
 use Bitrix\Main\Event;
 use Bitrix\Main\Localization\Loc;
 use Bitrix\Notifications\MessageStatus;
@@ -73,6 +74,16 @@ class Notification extends BaseMessage
 		if (empty($history))
 		{
 			return false;
+		}
+
+		if (
+			\Bitrix\Main\Loader::includeModule('notifications')
+			&& ServiceLocator::getInstance()->has('Notifications.Services.Provider')
+		)
+		{
+			/** @var \Bitrix\Notifications\Services\Provider $notificationsService */
+			$notificationsService = ServiceLocator::getInstance()->get('Notifications.Services.Provider');
+			return $notificationsService->isWhatsappProvider($history['PROVIDER_CODE']);
 		}
 
 		return $history['PROVIDER_CODE'] === ProviderEnum::MFMS_WHATSAPP;

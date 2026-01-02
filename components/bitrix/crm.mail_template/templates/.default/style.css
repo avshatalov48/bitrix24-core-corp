@@ -16,3 +16,7 @@
 
 .crm-mail-template-edit-form-switch-checkbox,
 .crm-mail-template-edit-form-switch-label { vertical-align: middle; }
+
+.ui-toolbar-after-title {
+	margin-left: auto;
+}

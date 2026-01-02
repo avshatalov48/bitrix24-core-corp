@@ -1,5 +1,5 @@
-import {Type} from 'main.core';
-import {EventEmitter} from 'main.core.events';
+import { Type } from 'main.core';
+import { EventEmitter } from 'main.core.events';
 
 class Filter
 {
@@ -49,8 +49,8 @@ class Filter
 
 	toggleByField(field)
 	{
-		const name = Object.keys(field)[0];
-		const value = field[name];
+		const name = field.filterField;
+		const value = field.filterValue;
 
 		if (!this.isFilteredByFieldValue(name, value))
 		{

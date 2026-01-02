@@ -21,10 +21,7 @@ $sliderMode = $request->get('IFRAME') === 'Y';
 $currentMenuItem = $currentMenuItem ?? '';
 $shouldDisplayMenu = !$sliderMode || $currentMenuItem === 'list';
 
-if (SITE_TEMPLATE_ID === "bitrix24")
-{
-	$this->SetViewTarget('above_pagetitle', 100);
-}
+$this->SetViewTarget('above_pagetitle', 100);
 
 if ($shouldDisplayMenu)
 {
@@ -75,6 +72,7 @@ if ($shouldDisplayMenu)
 		array(
 			"ID" => 'crm-tracking-menu',
 			"ITEMS" => $menuItems,
+			"THEME" => defined("AIR_SITE_TEMPLATE") ? "air" : null,
 		)
 	);
 }
@@ -111,7 +109,4 @@ if (!$sliderMode)
 	<?php
 }
 
-if (SITE_TEMPLATE_ID === "bitrix24")
-{
-	$this->EndViewTarget();
-}
+$this->EndViewTarget();

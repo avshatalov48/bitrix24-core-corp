@@ -6,6 +6,8 @@ jn.define('bizproc/workflow/starter/parameters-step/component', (require, export
 	const { NotifyManager } = require('notify-manager');
 	const { PureComponent } = require('layout/pure-component');
 	const { ParametersStepView } = require('bizproc/workflow/starter/parameters-step/view');
+	const { Random } = require('utils/random');
+
 	class ParametersStepComponent extends PureComponent
 	{
 		constructor(props)

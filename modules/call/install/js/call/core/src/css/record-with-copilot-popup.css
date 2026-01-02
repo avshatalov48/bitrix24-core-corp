@@ -13,7 +13,7 @@
 	font-size: 16px;
 	line-height: 19px;
 	font-weight: var(--ui-font-weight-bold, 700);
-	margin-bottom: 12px;
+	margin-bottom: 15px;
 }
 
 .bx-messenger-videocall-record-alert-message {
@@ -23,7 +23,7 @@
 }
 
 .bx-messenger-videocall-record-alert-actions {
-	margin-top: 12px;
+	margin-top: 15px;
 	display: flex;
 	justify-content: center;
 	gap: 10px;

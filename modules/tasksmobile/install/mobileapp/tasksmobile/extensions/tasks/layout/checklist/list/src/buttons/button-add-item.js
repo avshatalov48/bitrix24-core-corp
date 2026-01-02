@@ -3,7 +3,7 @@
  */
 jn.define('tasks/layout/checklist/list/src/buttons/button-add-item', (require, exports, module) => {
 	const { Loc } = require('loc');
-	const { Color } = require('tokens');
+	const { Color, Indent } = require('tokens');
 	const { IconView, Icon } = require('ui-system/blocks/icon');
 	const { PropTypes } = require('utils/validation');
 	const { Text2 } = require('ui-system/typography/text');
@@ -24,7 +24,7 @@ jn.define('tasks/layout/checklist/list/src/buttons/button-add-item', (require, e
 	 * @function ButtonAdd
 	 * @param {Object} [props]
 	 * @param {function} [props.onClick]
-	 * @return ChecklistItemView
+	 * @return View
 	 */
 	const ButtonAdd = (props = {}) => {
 		const { onClick } = props;
@@ -33,7 +33,7 @@ jn.define('tasks/layout/checklist/list/src/buttons/button-add-item', (require, e
 			testId: buttonAddItemType.type,
 			style: {
 				justifyContent: 'center',
-				paddingBottom: IS_IOS ? 0 : 12,
+				paddingBottom: IS_IOS ? 0 : Indent.XL.toNumber(),
 			},
 			onClick,
 			children: [

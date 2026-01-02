@@ -42,6 +42,7 @@ class MemberPrintVersionFile extends Callback\Message
 	public function setFileName(string $fileName): static
 	{
 		$this->data['file']['name'] = $fileName;
+
 		return $this;
 	}
 
@@ -53,6 +54,7 @@ class MemberPrintVersionFile extends Callback\Message
 	public function setDocumentUid(string $documentUid): self
 	{
 		$this->data['documentUid'] = $documentUid;
+
 		return $this;
 	}
 
@@ -64,7 +66,7 @@ class MemberPrintVersionFile extends Callback\Message
 	public function setMemberUid(string $memberUid): self
 	{
 		$this->data['memberUid'] = $memberUid;
+
 		return $this;
 	}
 }
-

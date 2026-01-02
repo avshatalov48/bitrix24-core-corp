@@ -5,7 +5,7 @@ import { CounterColor } from 'ui.cnt';
 import './counters-panel.css';
 
 export const CounterItem = Object.freeze({
-	NotConfirmed: 'not-confirmed',
+	AwaitConfirmation: 'await-confirmation',
 	Delayed: 'delayed',
 });
 
@@ -43,8 +43,8 @@ export const CountersPanel = {
 				target: this.target,
 				items: [
 					{
-						id: CounterItem.NotConfirmed,
-						title: this.loc('BOOKING_BOOKING_COUNTER_PANEL_NOT_CONFIRMED'),
+						id: CounterItem.AwaitConfirmation,
+						title: this.loc('BOOKING_BOOKING_COUNTER_PANEL_AWAIT_CONFIRMATION'),
 						value: this.counters.unConfirmed,
 						color: getFieldName(CounterColor, CounterColor.THEME),
 					},
@@ -71,7 +71,7 @@ export const CountersPanel = {
 		counters(counters): void
 		{
 			this.counterPanel.getItems().forEach((item) => {
-				if (item.id === CounterItem.NotConfirmed)
+				if (item.id === CounterItem.AwaitConfirmation)
 				{
 					item.updateColor(getFieldName(CounterColor, CounterColor.DANGER));
 					item.updateValue(counters.unConfirmed);
@@ -86,7 +86,7 @@ export const CountersPanel = {
 		},
 	},
 	template: `
-		<div></div>
+		<div v-if="false"></div>
 	`,
 };
 

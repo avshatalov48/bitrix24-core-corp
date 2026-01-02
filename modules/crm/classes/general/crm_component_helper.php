@@ -668,9 +668,19 @@ class CCrmComponentHelper
 		$ownerTitles = self::getOwnerTitles($entityTypeId, $entityIds);
 
 		$dbResult = CCrmFieldMulti::GetListEx(['ID' => 'asc'], $filter);
+
+		$accessItem = Container::getInstance()->getUserPermissions()->item();
+		$accessItem->preloadPermissionAttributes($entityTypeId, $entityIds);
+
 		while ($fields = $dbResult->fetch())
 		{
 			$elementID = (int)$fields['ELEMENT_ID'];
+
+			if (!$accessItem->canRead($entityTypeId, $elementID))
+			{
+				continue;
+			}
+
 			$entityKey = "{$entityTypeId}_{$elementID}";
 			$typeID = $fields['TYPE_ID'];
 			$value = $fields['VALUE'] ?? '';

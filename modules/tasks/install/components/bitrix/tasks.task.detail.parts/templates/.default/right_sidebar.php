@@ -696,7 +696,7 @@ else
 										<td class="task-detail-info-layout-value"><span class="task-detail-periodicity"><?php
 											if ($arTemplate)
 											{
-												echo tasksPeriodToStr($arTemplate["REPLICATE_PARAMS"]);
+												echo \Bitrix\Tasks\UI\Task\Template::makeReplicationPeriodString($arTemplate["REPLICATE_PARAMS"]);
 												?> (<a href="<?php
 													echo CComponentEngine::MakePathFromTemplate(
 														$arParams["PATH_TO_TEMPLATES_TEMPLATE"],

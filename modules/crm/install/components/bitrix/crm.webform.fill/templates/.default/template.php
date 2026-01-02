@@ -38,7 +38,6 @@ if($arResult['FORM']['CSS_PATH'])
 if($arResult['HAS_PHONE_FIELD'])
 {
 	$this->addExternalJs($this->GetFolder() . '/masked.js');
-	$this->addExternalCss($this->GetFolder() . '/flag.css');
 }
 
 if(!$arResult['FORM']['BUTTON_CAPTION'] || !trim($arResult['FORM']['BUTTON_CAPTION']))

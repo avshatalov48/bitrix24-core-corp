@@ -144,6 +144,7 @@ class ActivityDataProvider extends EntityDataProvider implements FactoryOptionab
 					'referenceClass' => null,
 					'isEnableAllUsers' => false,
 					'isEnableOtherUsers' => false,
+					'isEnableStructureNode' => true,
 				]
 			);
 		}

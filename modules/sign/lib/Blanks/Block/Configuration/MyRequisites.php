@@ -37,15 +37,15 @@ class MyRequisites extends Configuration
 						'field' => 'requisites',
 						'code' => $block->code,
 						'presetId' => $block->data['presetId'],
-					]
-				)
+					],
+				),
 			);
 		}
 
 		return $result;
 	}
 
-	function loadData(Item\Block $block, Item\Document $document, ?Item\Member $member = null): array
+	public function loadData(Item\Block $block, Item\Document $document, ?Item\Member $member = null): array
 	{
 		$result = [];
 		$result['hasFields'] = false;
@@ -71,6 +71,7 @@ class MyRequisites extends Configuration
 			if ($fieldDescription === null || $fieldDescription['TYPE'] !== 'list')
 			{
 				$textLines[] = "{$requisite->label}: {$requisite->value}";
+
 				continue;
 			}
 
@@ -80,6 +81,7 @@ class MyRequisites extends Configuration
 				if (($item['ID'] ?? null) === $requisite->value)
 				{
 					$itemValue = $item['VALUE'] ?? '';
+
 					break;
 				}
 			}
@@ -91,6 +93,7 @@ class MyRequisites extends Configuration
 		if (!$requisites->isEmpty())
 		{
 			$result['hasFields'] = true;
+
 			return $result;
 		}
 

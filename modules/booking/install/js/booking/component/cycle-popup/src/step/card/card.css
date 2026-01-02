@@ -1,0 +1,25 @@
+.booking-cycle-popup-card {
+	overflow: hidden;
+	display: flex;
+	border-radius: var(--ui-border-radius-lg);
+	box-shadow: inset 0 0 0 var(--ui-border-width-thin) rgba(var(--ui-color-palette-black-solid-rgb), 0.05);
+}
+
+.booking-cycle-popup-card-main {
+	padding: 16px;
+}
+
+.booking-cycle-popup-card-title {
+	margin-bottom: 4px;
+	font-size: var(--ui-font-size-md);
+}
+
+.booking-cycle-popup-choose-preview {
+	margin-top: auto;
+}
+
+.booking-cycle-popup-see-how {
+	margin-bottom: 6px;
+	color: var(--ui-color-palette-gray-60);
+	font-size: var(--ui-font-size-4xs);
+}

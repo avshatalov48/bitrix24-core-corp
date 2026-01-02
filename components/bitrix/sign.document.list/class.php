@@ -146,16 +146,16 @@ class SignUserDocumentListComponent extends SignBaseComponent implements Control
 
 		$condition = match ($permission)
 		{
-			CCrmPerms::PERM_SUBDEPARTMENT => $this->preparePermissionFilterForMySafe(
+			Bitrix\Crm\Service\UserPermissions::PERMISSION_SUBDEPARTMENT => $this->preparePermissionFilterForMySafe(
 				$this->accessController->getUser()->getUserDepartmentMembers(true)
 			),
-			CCrmPerms::PERM_DEPARTMENT => $this->preparePermissionFilterForMySafe(
+			Bitrix\Crm\Service\UserPermissions::PERMISSION_DEPARTMENT => $this->preparePermissionFilterForMySafe(
 				$this->accessController->getUser()->getUserDepartmentMembers()
 			),
-			CCrmPerms::PERM_SELF => $this->preparePermissionFilterForMySafe(
+			Bitrix\Crm\Service\UserPermissions::PERMISSION_SELF => $this->preparePermissionFilterForMySafe(
 				[$this->accessController->getUser()->getUserId()]
 			),
-			CCrmPerms::PERM_ALL => Query::filter(),
+			Bitrix\Crm\Service\UserPermissions::PERMISSION_ALL => Query::filter(),
 			default => Query::filter()->where('CREATED_BY_ID', null),
 		};
 
@@ -729,6 +729,8 @@ class SignUserDocumentListComponent extends SignBaseComponent implements Control
 			$this->prepareFilterForCompanyFilterField($filter, $requestFilter);
 		}
 
+		$filter->where('ENTITY_TYPE', '!=', EntityType::ROLE);
+
 		return $filter;
 	}
 
@@ -1102,6 +1104,9 @@ class SignUserDocumentListComponent extends SignBaseComponent implements Control
 								'options' => [
 									'inviteEmployeeLink' => false,
 								],
+							],
+							[
+								'id' => 'sign-fired-user',
 							],
 						],
 					],

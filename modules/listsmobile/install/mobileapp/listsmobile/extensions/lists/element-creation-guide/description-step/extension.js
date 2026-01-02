@@ -5,10 +5,11 @@ jn.define('lists/element-creation-guide/description-step', (require, exports, mo
 	const AppTheme = require('apptheme');
 	const { Loc } = require('loc');
 	const { WizardStep } = require('layout/ui/wizard/step');
-	const { ProgressBarNumber } = require('lists/wizard/progress-bar-number');
 	const { EventEmitter } = require('event-emitter');
-	const { DescriptionStepComponent } = require('lists/element-creation-guide/description-step/component');
 	const { NotifyManager } = require('notify-manager');
+	const { Random } = require('utils/random');
+	const { DescriptionStepComponent } = require('lists/element-creation-guide/description-step/component');
+	const { ProgressBarNumber } = require('lists/wizard/progress-bar-number');
 
 	class DescriptionStep extends WizardStep
 	{
@@ -27,7 +28,6 @@ jn.define('lists/element-creation-guide/description-step', (require, exports, mo
 		{
 			super(props);
 
-			// eslint-disable-next-line no-undef
 			this.uid = props.uid || Random.getString();
 			this.customEventEmitter = EventEmitter.createWithUid(this.uid);
 

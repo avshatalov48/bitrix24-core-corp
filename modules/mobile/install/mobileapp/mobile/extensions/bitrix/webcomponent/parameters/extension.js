@@ -8,51 +8,51 @@
 
 BX.componentParameters =
 {
-    init:() => {
-    	return new Promise((resolve, reject) => {
+	init:() => {
+		return new Promise((resolve, reject) => {
 
 			BXMobileApp.UI.Page.params.get({callback: (data) => {
-				for (let name in data)
-				{
-					if (data.hasOwnProperty(name))
+					for (let name in data)
 					{
-						BX.componentParameters.set(name, data[name]);
+						if (data.hasOwnProperty(name))
+						{
+							BX.componentParameters.set(name, data[name]);
+						}
 					}
-				}
 
-				console.info("BX.componentParameters: page params inited", data);
-				resolve(data);
-			}});
+					console.info("BX.componentParameters: page params inited", data);
+					resolve(data);
+				}});
 
 		});
 	},
 
-    get:(name, defaultValue) =>
+	get:(name, defaultValue) =>
 	{
-        if(
-        	typeof window.__componentParameters !== "undefined"
+		if(
+			typeof window.__componentParameters !== "undefined"
 			&& typeof window.__componentParameters[name] !== "undefined"
 		)
 		{
-            return window.__componentParameters[name];
+			return window.__componentParameters[name];
 		}
-        else if (typeof defaultValue !== "undefined")
-        {
-        	return defaultValue;
-        }
+		else if (typeof defaultValue !== "undefined")
+		{
+			return defaultValue;
+		}
 
-        return null;
-    },
+		return null;
+	},
 
-    set: (name, value) =>
+	set: (name, value) =>
 	{
-        if(typeof window.__componentParameters === "undefined")
-        {
-            window.__componentParameters = {};
-        }
+		if(typeof window.__componentParameters === "undefined")
+		{
+			window.__componentParameters = {};
+		}
 
-        window.__componentParameters[name] = value;
+		window.__componentParameters[name] = value;
 
-        return true;
-    }
+		return true;
+	}
 };

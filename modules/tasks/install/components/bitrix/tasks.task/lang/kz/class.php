@@ -1,0 +1,22 @@
+<?php
+$MESS["TASKS_ACTION_RESULT_REQUIRED"] = "Қоюшы жұмыстың нәтижесін сұратты.<br> Міндетке пікір қалдырыңыз және оны есеп ретінде белгілеңіз.";
+$MESS["TASKS_REST_BUTTON_TITLE_2"] = "Битрикс24.Маркет";
+$MESS["TASKS_TASK_FLOW_DEADLINE_LABEL"] = "Автоматты түрде орнатылады";
+$MESS["TASKS_TASK_FLOW_SECRET_PROJECT_LABEL"] = "Жасырын жоба";
+$MESS["TASKS_TASK_TAG_ACCESS_DENIED"] = "Құқықтар жеткіліксіз";
+$MESS["TASKS_TASK_TAG_ALREADY_EXISTS"] = "Мұндай тег бар";
+$MESS["TASKS_TASK_TAG_UNKNOWN_ERROR"] = "Тегті қосу мүмкін болмады, қайталап көріңіз";
+$MESS["TASKS_TEMPLATE_CREATE_FORBIDDEN"] = "Қалыптарды жасауға қол жеткізуге тыйым салынған";
+$MESS["TASKS_TT_AUTO_CHANGE_ASSIGNEE"] = "Міндетті орындаушы автоматты түрде ауыстырылды";
+$MESS["TASKS_TT_AUTO_CHANGE_GROUP"] = "Міндет автоматты түрде ағымдағы жобамен байланыстырылды";
+$MESS["TASKS_TT_AUTO_CHANGE_ORIGINATOR"] = "Міндетті қоюшы автоматты түрде ағымдағы пайдаланушыға ауыстырылды";
+$MESS["TASKS_TT_AUTO_CHANGE_PARENT"] = "Міндет автоматты түрде базалық міндетпен байланыстырылды";
+$MESS["TASKS_TT_AUTO_CHANGE_PARENT_GROUP"] = "Міндет автоматты түрде негізгі міндеттің жобасымен байланыстырылды";
+$MESS["TASKS_TT_AUTO_CHANGE_RESPONSIBLE"] = "Міндеттің жауаптысы автоматты түрде ауыстырылды";
+$MESS["TASKS_TT_COPY_READ_ERROR"] = "Көшірілетін объектіні оқу қатесі";
+$MESS["TASKS_TT_FORUM_MODULE_NOT_INSTALLED"] = "\"Форум\" модулі орнатылмаған";
+$MESS["TASKS_TT_NOT_FOUND_OR_NOT_ACCESSIBLE"] = "Міндет табылмады немесе міндетке қол жеткізуге тыйым салынған";
+$MESS["TASKS_TT_NOT_FOUND_OR_NOT_ACCESSIBLE_COPY"] = "Көшірілетін міндет табылмады немесе міндетке қол жеткізуге тыйым салынған";
+$MESS["TASKS_TT_SAVE_AS_TEMPLATE_ERROR_MESSAGE_PREFIX"] = "Қалып құрылмады";
+$MESS["TASKS_TT_SOCIALNETWORK_MODULE_NOT_INSTALLED"] = "\"Әлеуметтік желі\" модулі орнатылмаған";
+$MESS["TASKS_TT_TASKS_MODULE_NOT_INSTALLED"] = "\"Міндеттер\" модулі орнатылмаған";

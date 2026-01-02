@@ -1,0 +1,11 @@
+.intranet-user-mini-profile-collapse-enter-active,.intranet-user-mini-profile-collapse-leave-active {
+	transition: all 0.3s ease-out;
+}
+
+.intranet-user-mini-profile-collapse-enter-from, .intranet-user-mini-profile-collapse-leave-to {
+	opacity: 0;
+}
+
+.intranet-user-mini-profile-collapse-enter-to, .intranet-user-mini-profile-collapse-leave-from {
+	opacity: 1;
+}

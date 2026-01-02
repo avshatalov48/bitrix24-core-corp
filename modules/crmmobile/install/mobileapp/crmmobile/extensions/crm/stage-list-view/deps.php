@@ -5,7 +5,6 @@ return [
 		'notify-manager',
 		'alert',
 		'loc',
-		'apptheme',
 		'layout/ui/stage-list-view',
 		'utils/string',
 		'require-lazy',

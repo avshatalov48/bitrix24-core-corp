@@ -1,0 +1,19 @@
+<?php
+$MESS["MD_COMPONENT_CALLTRACKER"] = "Қоңырау трекері";
+$MESS["MD_COMPONENT_IM_OPENLINES"] = "Ашық желілер";
+$MESS["MD_COMPONENT_IM_RECENT"] = "Чаттар";
+$MESS["MD_COMPONENT_MORE"] = "Мәзір";
+$MESS["MD_COMPONENT_NOTIFY"] = "Мәлімдемелер";
+$MESS["MD_COMPONENT_TASKS_LIST"] = "Міндеттер";
+$MESS["MD_DISK_TABLE_FOLDERS_FILES"] = "Бумалар: #folders# Файлдар: #files#";
+$MESS["MD_EMPLOYEES_ALL"] = "Барлық қызметкерге";
+$MESS["MD_EMPLOYEES_TITLE"] = "Қызметкерлер";
+$MESS["MD_EXTRANET"] = "Экстранет";
+$MESS["MD_GENERATE_BY_MOBILE"] = "Қосымша арқылы жасалған";
+$MESS["MD_GROUPS_TITLE"] = "Жұмыс топтары";
+$MESS["MD_MOBILE_APPLICATION"] = "Мобильді қосымша";
+$MESS["TASKS_ROLE_ACCOMPLICE"] = "Көмектесіп жатырмын";
+$MESS["TASKS_ROLE_AUDITOR"] = "Бақылап жатырмын";
+$MESS["TASKS_ROLE_ORIGINATOR"] = "Тапсырды";
+$MESS["TASKS_ROLE_RESPONSIBLE"] = "Істеп жатырмын";
+$MESS["TASKS_ROLE_VIEW_ALL"] = "Барлық міндеттер";

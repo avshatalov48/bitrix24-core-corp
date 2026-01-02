@@ -12,6 +12,8 @@ import { CopilotChatHistoryLoader } from './copilot-chat-history-loader';
 import { containerClassname as newMessagesLabelContainerClassname } from './copilot-chat-new-messages-label';
 import { CopilotChatStatus } from './copilot-chat-status';
 import { CopilotChatWarningMessage } from './copilot-chat-warning-message';
+import { CopilotChatLoadingBar } from './copilot-chat-loading-bar';
+import { CopilotChatLoadHistoryError } from './copilot-chat-load-history-error';
 
 import '../css/copilot-chat.css';
 export type CopilotChatHeaderProps = {
@@ -49,6 +51,8 @@ export const CopilotChat = {
 		CopilotChatHistoryLoader,
 		CopilotChatStatus,
 		CopilotChatWarningMessage,
+		CopilotChatLoadingBar,
+		CopilotChatLoadHistoryError,
 	},
 	props: {
 		header: Object,
@@ -70,6 +74,7 @@ export const CopilotChat = {
 		},
 		disableInput: Object,
 		showLoader: Object,
+		isOldMessagesLoading: Object,
 		showCopilotWritingStatus: Object,
 		status: Object,
 		useStatus: Object,
@@ -96,11 +101,15 @@ export const CopilotChat = {
 			type: String,
 			required: false,
 		},
+		isShowLoadHistoryError: {
+			type: Object,
+		},
 	},
 	data(): CopilotChatData {
 		return {
 			isCopilotWriting: false,
-			isShowErrorScreen: false,
+			scrollPosition: 0,
+			scrollHeight: 0,
 		};
 	},
 	provide(): { instance: CopilotChatInstance} {
@@ -118,6 +127,9 @@ export const CopilotChat = {
 		},
 		isLoaderShown(): boolean {
 			return this.showLoader.value === true;
+		},
+		isLoadingOldMessages(): boolean {
+			return this.isOldMessagesLoading?.value === true;
 		},
 		isWarningMessageShown(): boolean {
 			return this.isShowWarningMessage?.value === true;
@@ -203,6 +215,28 @@ export const CopilotChat = {
 				this.scrollMessagesListToTheEnd(true);
 			});
 		},
+		restoreScrollPosition(): void {
+			this.scrollPosition = this.$refs.main.scrollTop;
+			this.scrollHeight = this.$refs.main.scrollHeight;
+
+			requestAnimationFrame(() => {
+				this.$refs.main.scrollTop = this.$refs.main.scrollHeight - this.scrollHeight + this.scrollPosition;
+			});
+		},
+		handleRetryMessage(messageId: number): void {
+			this.instance.emit(CopilotChatEvents.RETRY_SEND_MESSAGE, {
+				messageId,
+			});
+		},
+		handleRemoveMessage(messageId: number): void {
+			this.instance.emit(CopilotChatEvents.REMOVE_MESSAGE, {
+				messageId,
+			});
+		},
+		handleRetryLoadHistoryButtonClick()
+		{
+			this.instance.emitRetryLoadHistory();
+		},
 	},
 	beforeCreate() {
 		this.observer = new NewMessagesVisibilityObserver();
@@ -225,7 +259,9 @@ export const CopilotChat = {
 		});
 
 		bind(this.$refs.main, 'scroll', (event: Event) => {
-			if (event.target.scrollTop < 100)
+			const scrollElement: HTMLElement = event.target;
+
+			if ((scrollElement.scrollTop / scrollElement.scrollHeight) < 0.05)
 			{
 				this.instance.emit(CopilotChatEvents.MESSAGES_SCROLL_TOP);
 			}
@@ -235,12 +271,25 @@ export const CopilotChat = {
 		this.instance.unsubscribe(CopilotChatEvents.ADD_USER_MESSAGE, this.handleAddNewUserMessage);
 	},
 	watch: {
+		isLoaderShown(newValue: boolean, oldValue: boolean) {
+			if (newValue === false && oldValue === true)
+			{
+				requestAnimationFrame(() => {
+					this.scrollMessagesListToTheEnd();
+				});
+			}
+		},
 		'messagesList.length': function(newMessagesCount, oldMessagesCount) {
 			if (newMessagesCount - oldMessagesCount === 1)
 			{
 				requestAnimationFrame(() => {
 					this.scrollMessagesListToTheEnd(true);
 				});
+			}
+
+			if (oldMessagesCount > 1 && newMessagesCount > 1)
+			{
+				this.restoreScrollPosition();
 			}
 
 			requestAnimationFrame(() => {
@@ -262,8 +311,12 @@ export const CopilotChat = {
 					:menu="headerProps.menu"
 					@clickOnCloseIcon="hideChat"
 				/>
+				<div class="ai__copilot-chat_loading-bar" v-if="isLoadingOldMessages">
+					<CopilotChatLoadingBar />
+				</div>
 			</header>
 			<main ref="main" class="ai__copilot-chat_main">
+				<TransitionGroup name="main">
 				<div
 					v-if="isLoaderShown"
 					class="ai__copilot-chat_main-loader-container"
@@ -272,22 +325,28 @@ export const CopilotChat = {
 						<CopilotChatHistoryLoader :text="loaderText" />
 					</slot>
 				</div>
-				<div v-else-if="isShowErrorScreen">
+				<div
+					v-else-if="isShowLoadHistoryError.value"
+					class="ai__copilot-chat_load-history-error"
+				>
 					<slot name="loaderError">
-						Sorry, we can't load messages, try later
+						<CopilotChatLoadHistoryError @retryButtonClick="handleRetryLoadHistoryButtonClick" />
 					</slot>
 				</div>
-				<CopilotChatMessages
-					v-else
-					@clickMessageButton="handleClickOnMessageButton"
-					:user-avatar="userPhoto"
-					:copilot-avatar="botData.avatar"
-					:messages="messagesList"
-					:welcome-message-html-element="welcomeMessageHtml"
-					:copilot-message-title="botData.messageTitle"
-					:copilot-message-menu-items="botData.messageMenuItems"
-					:user-message-menu-items="userMessageMenuItems"
-				></CopilotChatMessages>
+					<CopilotChatMessages
+						v-else
+						@clickMessageButton="handleClickOnMessageButton"
+						@retry="handleRetryMessage"
+						@remove="handleRemoveMessage"
+						:user-avatar="userPhoto"
+						:copilot-avatar="botData.avatar"
+						:messages="messagesList"
+						:welcome-message-html-element="welcomeMessageHtml"
+						:copilot-message-title="botData.messageTitle"
+						:copilot-message-menu-items="botData.messageMenuItems"
+						:user-message-menu-items="userMessageMenuItems"
+					></CopilotChatMessages>
+				</TransitionGroup>
 				<CopilotChatStatus
 					v-if="isLoaderShown === false && isChatStatusUsed"
 					:status="copilotChatStatus"

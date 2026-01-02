@@ -6,6 +6,7 @@ use Bitrix\Crm\Activity\Entity\EntityUncompletedActivityTable;
 use Bitrix\Crm\Activity\Entity\IncomingChannelTable;
 use Bitrix\Crm\ActivityTable;
 use Bitrix\Main\Config\Option;
+use Bitrix\Main\DB\DuplicateEntryException;
 use Bitrix\Main\Type\DateTime;
 use Bitrix\Main\Update\Stepper;
 
@@ -125,8 +126,14 @@ class SynchronizeUncompletedActivityDataAgent extends Stepper
 
 			$minDeadline = clone $item['REAL_DEADLINE'];
 			$minDeadline->disableUserTime();
-
-			EntityUncompletedActivityTable::update($item['ID'], ['MIN_DEADLINE' => $minDeadline]);
+			try
+			{
+				EntityUncompletedActivityTable::update($item['ID'], ['MIN_DEADLINE' => $minDeadline]);
+			}
+			catch (DuplicateEntryException $e)
+			{
+				EntityUncompletedActivityTable::delete($item['ID']);
+			}
 		}
 
 		$result['lastUncompletedActivityId'] = $lastId;

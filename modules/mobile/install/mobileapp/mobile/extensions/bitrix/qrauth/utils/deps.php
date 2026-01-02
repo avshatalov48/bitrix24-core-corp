@@ -6,6 +6,8 @@ return [
 	],
 	'extensions' => [
 		'loc',
+		'require-lazy',
+		'utils/page-manager',
 	],
 	'bundle' => [
 		'./src/manager'

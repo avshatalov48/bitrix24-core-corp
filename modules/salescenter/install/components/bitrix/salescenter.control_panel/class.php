@@ -5,6 +5,7 @@ use Bitrix\Main;
 use Bitrix\Main\Engine\Contract\Controllerable;
 use Bitrix\Main\Loader;
 use Bitrix\Main\Localization\Loc;
+use Bitrix\Main\Web\Json;
 use Bitrix\SalesCenter\Driver;
 use Bitrix\Sale;
 use Bitrix\SalesCenter\Integration\CrmManager;
@@ -1070,14 +1071,17 @@ class SalesCenterControlPanelComponent extends CBitrixComponent implements Contr
 
 		if ($this->isUserConsentActive())
 		{
-			$userConsentId = $this->getUserConsentId();
-			if(!$userConsentId)
+			CBitrixComponent::includeComponentClass('bitrix:salescenter.userconsent');
+			$userConsents = (new \SalesCenterUserConsent)->getUserConsents();
+			if(!$userConsents)
 			{
-				$userConsentId = $this->getDefaultUserConsentId();
+				$userConsents = $this->getDefaultUserConsents();
 			}
-			if($userConsentId)
+			if($userConsents)
 			{
-				$userConsentUrl = "/settings/configs/userconsent/consents/{$userConsentId}/?AGREEMENT_ID={$userConsentId}&apply_filter=Y";
+				$userConsentIds = array_column($userConsents, 'ID');
+				$userConsentIdsParams = 'AGREEMENT_ID=' . implode('&AGREEMENT_ID[]=', $userConsentIds);
+				$userConsentUrl = "/settings/configs/userconsent/consents/0/?{$userConsentIdsParams}&apply_filter=Y";
 
 				$menu = [
 					[
@@ -1111,9 +1115,9 @@ class SalesCenterControlPanelComponent extends CBitrixComponent implements Contr
 		return (int)$consent;
 	}
 
-	private function getDefaultUserConsentId(): int
+	private function getDefaultUserConsents(): array
 	{
-		$agreementId = 0;
+		$userConsents = [];
 		if (Loader::includeModule('imopenlines'))
 		{
 			$configManager = new Bitrix\ImOpenLines\Config();
@@ -1125,19 +1129,28 @@ class SalesCenterControlPanelComponent extends CBitrixComponent implements Contr
 					'limit' => 1
 				]
 			);
-			foreach ($result as $id => $config)
+			$agreementId = null;
+			foreach ($result as $config)
 			{
 				$agreementId = (int)$config['AGREEMENT_ID'];
 			}
 
 			if ($agreementId)
 			{
-				Bitrix\Main\Config\Option::set('salescenter', '~SALESCENTER_USER_CONSENT_ID', $agreementId);
-				Bitrix\Main\Config\Option::set('salescenter', '~SALESCENTER_USER_CONSENT_CHECKED', 'Y');
+				$userConsents[] = [
+					'ID' => $agreementId,
+					'CHECKED' => 'Y',
+					'REQUIRED' => 'Y',
+				];
+				Bitrix\Main\Config\Option::set(
+					'salescenter',
+					\SalesCenterUserConsent::SALESCENTER_USER_CONSENTS,
+					Json::encode($userConsents),
+				);
 			}
 		}
 
-		return $agreementId;
+		return $userConsents;
 	}
 
 	protected function getTerminalTile(): array

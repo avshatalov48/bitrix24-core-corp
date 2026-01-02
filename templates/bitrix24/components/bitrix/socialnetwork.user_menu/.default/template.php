@@ -57,9 +57,7 @@ if (
 $userId = (int)$arResult['User']['ID'];
 $isCurrentUserPage = ($userId === (int)$USER->GetID());
 
-$this->addExternalCss(SITE_TEMPLATE_PATH."/css/profile_menu.css");
-$bodyClass = $APPLICATION->GetPageProperty("BodyClass");
-$APPLICATION->SetPageProperty("BodyClass", ($bodyClass ? $bodyClass." " : "")."profile-menu-mode");
+$this->addExternalCss(SITE_TEMPLATE_PATH . "/src/css/standalone/profile-menu.css");
 
 if (!(isset($_REQUEST["IFRAME"]) && $_REQUEST["IFRAME"] === "Y"))
 {
@@ -67,21 +65,13 @@ if (!(isset($_REQUEST["IFRAME"]) && $_REQUEST["IFRAME"] === "Y"))
 }
 elseif($arParams['PAGE_ID'] === 'user')
 {
-	$this->SetViewTarget("below_pagetitle", 100);
-}
+	$bodyClass = $APPLICATION->GetPageProperty("BodyClass");
+	$APPLICATION->SetPageProperty(
+		"BodyClass",
+		($bodyClass ? $bodyClass." " : "")."--header-overlay --toolbar-under-menu"
+	);
 
-$className = '';
-if ($arResult["User"]["TYPE"] === 'extranet')
-{
-	$className = ' profile-menu-user-info-extranet';
-}
-elseif ($arResult["User"]["TYPE"] === 'email')
-{
-	$className = ' profile-menu-user-info-email';
-}
-elseif ($arResult["User"]["IS_EXTRANET"] === 'Y')
-{
-	$className = ' profile-menu-user-info-extranet';
+	$this->SetViewTarget("below_pagetitle", 100);
 }
 
 $requestUri = Application::getInstance()->getContext()->getRequest()->getRequestUri();
@@ -148,10 +138,6 @@ if (
 				'ta_el' => 'horizontal_menu',
 			]);
 		}
-		$taskItem['tasks']['SUB_LINK'] = [
-			'CLASS' => '',
-			'URL' => $sublink->getUri(),
-		];
 	}
 	$items = array_merge($items, $taskItem);
 }
@@ -303,12 +289,13 @@ if (
 		$items['effective_counter'] = [
 			'TEXT' => GetMessage('SONET_UM_EFFICIENCY'),
 			'ON_CLICK' => "BX.SidePanel.Instance.open('{$efficiencyUrl}', { width: 1000 })",
-			'COUNTER' => $efficiencyCounter,
-			'MAX_COUNTER_SIZE' => 100,
-			'COUNTER_ID' => 'effective_counter',
 			'ID' => 'effective_counter',
 			'CLASS' => 'effective_counter',
 			'IS_ACTIVE' => (mb_strpos($requestUri, $efficiencyUrl) === 0),
+			'SUPER_TITLE' => [
+				'TEXT' => $efficiencyCounter . '%',
+				'CLASS' => 'effective_counter',
+			],
 		];
 	}
 }
@@ -393,7 +380,11 @@ $APPLICATION->IncludeComponent(
 					&& CSocNetUser::isCurrentUserModuleAdmin()
 				)
 			)
-		)
+		),
+		"THEME" => "air",
+		"THEME_VARS" => [
+			'--mib-margin-bottom' => 0,
+		],
 	)
 );
 

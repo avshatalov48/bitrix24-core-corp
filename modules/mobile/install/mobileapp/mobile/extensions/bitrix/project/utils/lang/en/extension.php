@@ -1,4 +1,5 @@
 <?php
+$MESS["MOBILE_PROJECT_NO_PROJECT_ERROR"] = "Workgroup was not found or access denied";
 $MESS["MOBILE_PROJECT_TAB_CALENDAR"] = "Calendar";
 $MESS["MOBILE_PROJECT_TAB_CALENDAR_QR_TITLE"] = "Calendar";
 $MESS["MOBILE_PROJECT_TAB_DRIVE_MSGVER_1"] = "Files";

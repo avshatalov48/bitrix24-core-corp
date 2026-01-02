@@ -44,6 +44,14 @@ class TaxValue extends Field
 			$result->setNewValue(Item::FIELD_NAME_TAX_VALUE_ACCOUNT, $taxValueAccount);
 		}
 
+		if ($item->hasField(Item::FIELD_NAME_ACCOUNT_CURRENCY_ID))
+		{
+			$result->setNewValue(
+				Item::FIELD_NAME_ACCOUNT_CURRENCY_ID,
+				Currency::getAccountCurrencyId(),
+			);
+		}
+
 		return $result;
 	}
 }

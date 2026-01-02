@@ -7,6 +7,12 @@ use Bitrix\Main\Loader;
 use Bitrix\Intranet\Util;
 use Bitrix\Main\LoaderException;
 
+/**
+ * @deprecated @use
+ * 	\Bitrix\AI\Container::init()
+ * 		->getItem(\Bitrix\AI\Services\CopilotAccessCheckerService::class)
+ * 		->canShowInFrontend($userId)
+ */
 class ShowCopilotGuard
 {
 	public function hasAccess(null|int|string $userId): bool

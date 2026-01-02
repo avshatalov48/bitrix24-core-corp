@@ -3,19 +3,33 @@
 	width: 278px;
 	margin: 0 auto;
 	height: max-content;
+	border-radius: 12px;
+	--team-bubble-background: rgba(0, 117, 255, 0.7);
+	--team-focused-border-color: rgba(0, 117, 255, 0.25);
+	--node-expanded-color: var(--ui-color-palette-blue-50);
+	--min-height: 181px;
+}
+
+.humanresources-tree__node.--hidden {
+	visibility: hidden;
 }
 
 .humanresources-tree__node.--current-department:before {
 	position: absolute;
-	top: -5px;
-	right: 10px;
+	top: -11px;
+	right: 19px;
 	background: var(--ui-color-palette-blue-50);
-	font: var(--ui-font-weight-semi-bold) 10px/12px var(--ui-font-family-system);
+	font: 600 9px/12px var(--ui-font-family-primary, var(--ui-font-family-system));
 	content: attr(data-title);
 	color: var(--ui-color-palette-white-base);
-	padding: 3px 10px 3px 8px;
+	padding: 5px 10px 5px 8px;
 	border-radius: 17px;
 	text-transform: uppercase;
+	z-index: 2;
+}
+
+.humanresources-tree__node.--current-department.--team:before {
+	background: var(--team-bubble-background);
 }
 
 .humanresources-tree__node.--current-department.--with-restricted-access-rights:before {
@@ -26,26 +40,33 @@
 	background: var(--ui-color-palette-white-base);
 	box-shadow: 0px 2px 4px 0px rgba(0, 0, 0, 12%);
 	border-radius: 12px;
-	padding-top: 13px;
-	border: 2px solid transparent;
 	cursor: pointer;
+	border: 1px solid transparent;
+	min-height: var(--min-height);
+	box-sizing: border-box;
 }
 
 .humanresources-tree__node_summary:hover {
 	box-shadow: 0px 2px 18px 0px rgba(0, 0, 0, 0.16);
 }
 
-.humanresources-tree__node.--expanded > .humanresources-tree__node_summary {
-	border-color: var(--ui-color-palette-blue-50);
+.humanresources-tree__node.--expanded > .humanresources-tree__node_summary,
+.humanresources-tree__node.--focused > .humanresources-tree__node_summary {
+	border-color: var(--node-expanded-color);
+	/*
+		This is a temporary workaround to fix https://bugzilla.mozilla.org/show_bug.cgi?id=1950029
+		Should be removed later
+	*/
+	-moz-transform: rotate(0.1deg);
 }
 
 .humanresources-tree__node.--focused > .humanresources-tree__node_summary {
-	border-color: var(--ui-color-palette-blue-50);
-	box-shadow: 0px 2px 4px 0 rgba(0, 0, 0, 0.12), 0px 0px 0px 9px rgba(203, 213, 255);
+	box-shadow: 0px 2px 4px 0 rgba(0, 0, 0, 0.12), 0px 0px 0px 12px var(--team-focused-border-color);
 }
 
-.humanresources-tree__node.--expanded:not(.--focused) > .humanresources-tree__node_summary {
-	box-shadow: none;
+.humanresources-tree__node.--dragging > .humanresources-tree__node_summary {
+	border-color: var(--ui-color-palette-blue-40);
+	box-shadow: 0px 2px 4px 0px #0000001F;
 }
 
 .humanresources-tree__node > .humanresources-tree__node_summary .humanresources-tree__node_subdivisions:hover {
@@ -67,9 +88,20 @@
 	color: var(--ui-color-palette-green-70);
 }
 
+.humanresources-tree__node.--team > .humanresources-tree__node_summary .humanresources-tree__node_subdivisions:hover {
+	background: rgba(0, 117, 255, 0.05);
+}
+
+.humanresources-tree__node.--expanded.--team > .humanresources-tree__node_summary .humanresources-tree__node_subdivisions {
+	background: var(--ui-color-palette-gray-02);
+	color: var(--ui-color-palette-gray-90);
+	font-weight: var(--ui-font-weight-medium);
+}
+
 .humanresources-tree__node_description {
 	padding: 0 16px;
-	min-height: 136px;
+	min-height: 84px;
+	margin-bottom: 12px;
 }
 
 .humanresources-tree__node.--with-restricted-access-rights > .humanresources-tree__node_summary .humanresources-tree__node_description {
@@ -79,9 +111,18 @@
 .humanresources-tree__node_department {
 	display: flex;
 	justify-content: space-between;
-	font: var(--ui-font-weight-semi-bold) 14px/16.71px var(--ui-font-family-system);
+	font: var(--ui-font-weight-semi-bold) 14px/17px var(--ui-font-family-primary, var(--ui-font-family-system));
 	color: var(--ui-color-palette-black-base);
-	margin: 0 0 10px 0;
+	margin: -1px 0 3px 4px;
+	padding: 16px 12px 6px 10px;
+	border-radius: 6px;
+	height: 22px;
+}
+
+.humanresources-tree__node.--team > .humanresources-tree__node_summary .humanresources-tree__node_department {
+	background-color: rgba(0, 117, 255, 0.1);
+	padding: 5px 6px 5px 4px;
+	margin: 6px 6px 8px 6px;
 }
 
 .humanresources-tree__node.--with-restricted-access-rights > .humanresources-tree__node_summary .humanresources-tree__node_department  {
@@ -89,19 +130,45 @@
 }
 
 .humanresources-tree__node_department-title {
+	display: flex;
+	align-items: center;
 	white-space: nowrap;
 	overflow: hidden;
+}
+
+.humanresources-tree__node_dnd-icon {
+	--ui-icon-set__icon-size: 22px;
+	--ui-icon-set__icon-color: var(--ui-color-palette-gray-50);
+	position: relative;
+	left: -2px;
+}
+
+.humanresources-tree__node_dnd-icon.--team {
+	transform: translateX(-3px);
+	margin-right: -5px;
+}
+
+.humanresources-tree__node_dnd-icon:hover {
+	--ui-icon-set__icon-color: var(--ui-color-palette-gray-80);
+	cursor: grab;
+}
+
+.humanresources-tree__node_dnd-icon:active {
+	--ui-icon-set__icon-color: var(--ui-color-palette-blue-60);
 }
 
 .humanresources-tree__node_department-title_text {
 	overflow: hidden;
 	text-overflow: ellipsis;
-	display: block;
 }
 
-.humanresources-tree__node.--root > .humanresources-tree__node_summary .humanresources-tree__node_department-title {
+.humanresources-tree__node_department-title_text.--no-dnd {
+	margin-left: 8px;
+}
+
+.humanresources-tree__node_department-menu-icons {
 	display: flex;
-	align-items: center;
+	gap: 5px;
 }
 
 .humanresources-tree__node.--root > .humanresources-tree__node_summary .humanresources-tree__node_department-title::before{
@@ -116,7 +183,6 @@
 
 .humanresources-tree__node_employees {
 	display: flex;
-	margin-bottom: 15px;
 	white-space: nowrap;
 	width: 100%;
 }
@@ -131,13 +197,13 @@
 
 .humanresources-tree__node_employees > div:last-child {
 	width: 60%;
-	padding-left: 8px;
+	padding-left: 12px;
 	margin-left: 0;
 }
 
 .humanresources-tree__node_head-position,
 .humanresources-tree__node_employees-title {
-	font: 11px/13.13px var(--ui-font-family-system);
+	font: 11px/13px var(--ui-font-family-primary, var(--ui-font-family-system));
 	color: var(--ui-color-palette-gray-60);
 }
 
@@ -148,7 +214,7 @@
 .humanresources-tree__node_employees-count {
 	border: 1px solid #e9e9e9;
 	border-radius: 30px;
-	font: 11px/16px var(--ui-font-family-system);
+	font: 11px/16px var(--ui-font-family-primary, var(--ui-font-family-system));
 	color: var(--ui-color-palette-gray-90);
 	padding: 2px 7px;
 	display: inline-block;
@@ -170,7 +236,7 @@
 }
 
 .humanresources-tree__node_deputy-name {
-	font: 12px/14.32px var(--ui-font-family-system);
+	font: 12px/14px var(--ui-font-family-primary, var(--ui-font-family-system));
 	color: var(--ui-color-palette-black-base);
 }
 
@@ -178,7 +244,7 @@
 	border-top: 1px solid var(--ui-color-palette-gray-10);
 	text-align: center;
 	padding: 10px 16px 10px 16px;
-	font: 11px/16px var(--ui-font-family-system);
+	font: 11px/16px var(--ui-font-family-primary, var(--ui-font-family-system));
 	color: var(--ui-color-palette-gray-90);
 	border-bottom-left-radius: 12px;
 	border-bottom-right-radius: 12px;
@@ -223,12 +289,8 @@
 .humanresources-tree__node_children {
 	position: absolute;
 	display: flex;
-	gap: 20px;
-	top: 420px;
-}
-
-.humanresources-tree__node.--with-restricted-access-rights > .humanresources-tree__node_children {
-	top: 200px;
+	gap: 24px;
+	top: 364px;
 }
 
 .humanresources-tree__node_add-subdivision {
@@ -243,7 +305,7 @@
 	border-radius: 32px;
 	padding: 2px 8px 3px 8px;
 	color: var(--ui-color-palette-gray-90);
-	font: var(--ui-font-weight-semi-bold) 10px/10px var(--ui-font-family-system);
+	font: var(--ui-font-weight-semi-bold) 10px/10px var(--ui-font-family-primary, var(--ui-font-family-system));
 }
 
 .humanresources-tree__node_head-rest:hover,
@@ -270,6 +332,34 @@
 	white-space: nowrap;
 }
 
+.humanresources-tree__node_head-subordinates {
+	display: flex;
+	flex-direction: row;
+	align-items: center;
+
+	margin-left: 4px;
+	background-color: var(--ui-color-palette-gray-10);
+	border-radius: 32px;
+	padding: 2px 8px 3px 8px;
+	color: var(--ui-color-palette-gray-90);
+}
+
+.humanresources-tree__node_head-subordinates:hover {
+	background-color: var(--ui-color-palette-gray-20);
+}
+
+.humanresources-tree__node_head-name-container {
+	display: flex;
+	flex-direction: row;
+}
+
+.hr-company-structure_org-chart-tree__node-subordinates-text {
+	font-size: var(--ui-font-size-4xs);
+	line-height: var(--ui-font-line-height-reset);
+	font-weight: var(--ui-font-weight-semi-bold, 600);
+	color: var(--ui-color-palette-gray-80);
+}
+
 .humanresources-tree__node_head-name,
 .humanresources-tree__node_head-position {
 	display: block;
@@ -279,7 +369,7 @@
 
 .humanresources-tree__node_head-name {
 	border-bottom: 1px solid transparent;
-	font: 13px/15.51px var(--ui-font-family-system);
+	font: 13px/16px var(--ui-font-family-primary, var(--ui-font-family-system));
 	color: var(--ui-color-palette-black-base);
 	margin-bottom: 2px;
 	width: max-content;
@@ -306,17 +396,23 @@
 
 .humanresources-tree__node_department-menu-button {
 	background-size: contain;
-	--ui-icon-set__icon-size: 22px;
-	--ui-icon-set__icon-color: var(--ui-color-palette-gray-50);
+	padding-top: 2px;
+	--ui-icon-set__icon-size: 20px;
+	--ui-icon-set__icon-color: rgba(0, 0, 0, 0.3);
 }
 
 .humanresources-tree__node_department-menu-button:hover {
 	--ui-icon-set__icon-color: var(--ui-color-palette-gray-80);
 }
 
+.humanresources-tree__node.--team .humanresources-tree__node_department-menu-button.--focused {
+	background-size: contain;
+	--ui-icon-set__icon-color: var(--ui-color-palette-gray-90);
+}
+
 .humanresources-tree__node_department-menu-button.--focused {
 	background-size: contain;
-	--ui-icon-set__icon-color: var(--ui-color-palette-blue-60);
+	--ui-icon-set__icon-color: var(--ui-color-palette-gray-90);
 }
 
 .humanresources-tree__node_add-button {
@@ -361,7 +457,6 @@
 .humanresources-tree__node_load-skeleton {
 	max-width: 100%;
 	height: 40px;
-	margin-top: 5px;
 	background-size: contain;
 	background-repeat: no-repeat;
 }
@@ -372,4 +467,80 @@
 
 .humanresources-tree__node_load-skeleton.--deputies {
 	background-image: url('./images/deputies-load-skeleton.svg');
+}
+
+.humanresources-tree__node_info-popup-content_left {
+	display: inline-block;
+	vertical-align: top;
+	background-image: url('./images/description-image.svg');
+	width: 96px;
+	height: 60px;
+	margin-right: 14px;
+}
+
+.humanresources-tree__node_info-popup-content_right {
+	display: inline-block;
+	max-width: 187px;
+}
+
+.humanresources-tree__node_info-popup-content_right_title {
+	color: var(--ui-color-palette-black-base);
+	font: var(--ui-font-weight-medium) var(--ui-font-size-lg)/18px var(--ui-font-family-primary, var(--ui-font-family-system));
+	margin-bottom: 4px;
+}
+
+.humanresources-tree__node_info-popup-content_right_text {
+	color: var(--ui-color-palette-gray-90);
+	font: var(--ui-font-weight-normal) var(--ui-font-size-sm)/18px var(--ui-font-family-primary, var(--ui-font-family-system));
+	margin-bottom: 16px;
+}
+
+.humanresources-tree__node_info-popup-content_description {
+	color: var(--ui-color-palette-black-base);
+	font: var(--ui-font-weight-normal) var(--ui-font-size-md)/var(--ui-font-line-height-2xs) var(--ui-font-family-primary, var(--ui-font-family-system));
+}
+
+.humanresources-tree__node_lock {
+	position: absolute;
+	top: 50%;
+	left: 50%;
+	transform: translate(-50%, -50%);
+}
+
+.humanresources-tree__node.--drag-source > .humanresources-tree__node_summary {
+	pointer-events: none;
+	opacity: .5;
+	transition: opacity 0.2s;
+}
+
+.humanresources-tree__node_drop-overlay {
+	position: absolute;
+	top: 0;
+	bottom: 0;
+	right: 0;
+	left: 0;
+	z-index: 10;
+	border-radius: 12px;
+	display: flex;
+	flex-direction: column;
+	align-items: center;
+	justify-content: center;
+	background: rgba(var(--ui-color-background-primary-rgb), 0.85);
+	pointer-events: none;
+}
+
+.humanresources-tree__node_drop-overlay .--circle-plus {
+	--ui-icon-set__icon-color: var(--ui-color-palette-blue-50);
+}
+
+.humanresources-tree__node_drop-overlay .--cross-circle-50 {
+	--ui-icon-set__icon-color: var(--ui-color-palette-red-50);
+}
+
+.humanresources-tree__node_drop-overlay-text {
+	color: var(--ui-color-base-80);
+	font-size: var(--ui-font-size-xs);
+	line-height: var(--ui-font-line-height-2xs);
+	text-align: center;
+	max-width: 172px;
 }

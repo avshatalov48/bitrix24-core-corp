@@ -2839,7 +2839,7 @@ class EntityRequisite
 
 		if ($entityTypeID === CCrmOwnerType::Company || $entityTypeID === CCrmOwnerType::Contact)
 		{
-			return Crm\Service\Container::getInstance()->getUserPermissions()->checkAddPermissions($entityTypeID, $categoryId);
+			return Crm\Service\Container::getInstance()->getUserPermissions()->entityType()->canAddItemsInCategory($entityTypeID, $categoryId);
 		}
 
 		return false;
@@ -2853,12 +2853,15 @@ class EntityRequisite
 		$userPermissions = Crm\Service\Container::getInstance()->getUserPermissions();
 		if ($entityTypeID === CCrmOwnerType::Company && $entityID > 0 && \CCrmCompany::isMyCompany($entityID))
 		{
-			return $userPermissions->getMyCompanyPermissions()->canUpdate();
+			return $userPermissions->myCompany()->canUpdate();
 		}
 
 		if ($entityTypeID === CCrmOwnerType::Company || $entityTypeID === CCrmOwnerType::Contact)
 		{
-			return $userPermissions->checkUpdatePermissions($entityTypeID, $entityID);
+			return $entityID > 0
+				? $userPermissions->item()->canUpdate($entityTypeID, $entityID)
+				: $userPermissions->entityType()->canUpdateItems($entityTypeID)
+			;
 		}
 
 		return false;
@@ -2872,12 +2875,16 @@ class EntityRequisite
 		$userPermissions = Crm\Service\Container::getInstance()->getUserPermissions();
 		if ($entityTypeID === CCrmOwnerType::Company && $entityID > 0 && \CCrmCompany::isMyCompany($entityID))
 		{
-			return $userPermissions->getMyCompanyPermissions()->canDelete();
+			return $userPermissions->myCompany()->canDelete();
 		}
 
 		if ($entityTypeID === CCrmOwnerType::Company || $entityTypeID === CCrmOwnerType::Contact)
 		{
-			return $userPermissions->checkDeletePermissions($entityTypeID, $entityID);
+			return $entityID > 0
+				? $userPermissions->item()->canDelete($entityTypeID, $entityID)
+				: $userPermissions->entityType()->canDeleteItems($entityTypeID)
+			;
+
 		}
 
 		return false;
@@ -2892,21 +2899,21 @@ class EntityRequisite
 		if ($entityTypeID <= 0 && $entityID <= 0)
 		{
 			return
-				$userPermissions->checkReadPermissions(CCrmOwnerType::Company, 0, 0)
-				&& $userPermissions->checkReadPermissions(CCrmOwnerType::Contact, 0, 0)
+				$userPermissions->entityType()->canReadItemsInCategory(CCrmOwnerType::Company, 0)
+				&& $userPermissions->entityType()->canReadItemsInCategory(CCrmOwnerType::Contact, 0)
 			;
 		}
 
 		if ($entityTypeID === CCrmOwnerType::Company && $entityID > 0 && \CCrmCompany::isMyCompany($entityID))
 		{
-			return $userPermissions->getMyCompanyPermissions()->canReadBaseFields($entityID);
+			return $userPermissions->myCompany()->canReadBaseFields($entityID);
 		}
 
 		if ($entityTypeID === CCrmOwnerType::Company || $entityTypeID === CCrmOwnerType::Contact)
 		{
 			return $entityID > 0
-				? $userPermissions->checkReadPermissions($entityTypeID, $entityID)
-				: $userPermissions->checkReadPermissions($entityTypeID, 0, (int)$categoryId) //  $categoryId should be = 0 instead of null to check access to default category by default
+				? $userPermissions->item()->canRead($entityTypeID, $entityID)
+				: $userPermissions->entityType()->canReadItemsInCategory($entityTypeID, (int)$categoryId) //  $categoryId should be = 0 instead of null to check access to default category by default
 			;
 		}
 
@@ -2964,22 +2971,26 @@ class EntityRequisite
 		$entityId = intval($entityId);
 
 		if ($entityId <= 0)
+		{
 			return false;
+		}
 
+		$userPermissions = Crm\Service\Container::getInstance()->getUserPermissions();
 		if ($entityTypeId === CCrmOwnerType::Company)
 		{
-			$userPermissions = Crm\Service\Container::getInstance()->getUserPermissions();
 			if (\CCrmCompany::isMyCompany($entityId))
 			{
-				return $userPermissions->getMyCompanyPermissions()->canReadBaseFields($entityId);
+				return $userPermissions->myCompany()->canReadBaseFields($entityId);
 			}
 
-			return $userPermissions->checkReadPermissions($entityTypeId, $entityId);
+			return $userPermissions->item()->canRead($entityTypeId, $entityId);
 		}
 		else if ($entityTypeId === CCrmOwnerType::Contact)
 		{
-			if (!\CCrmContact::CheckReadPermission($entityId))
+			if (!$userPermissions->item()->canRead($entityTypeId, $entityId))
+			{
 				return false;
+			}
 		}
 		else
 		{
@@ -2995,17 +3006,17 @@ class EntityRequisite
 		$entityId = intval($entityId);
 
 		if ($entityId <= 0)
+		{
 			return false;
-
-		if ($entityTypeId === CCrmOwnerType::Company)
-		{
-			if (!\CCrmCompany::CheckUpdatePermission($entityId))
-				return false;
 		}
-		else if ($entityTypeId === CCrmOwnerType::Contact)
+		$userPermissions = Crm\Service\Container::getInstance()->getUserPermissions();
+
+		if ($entityTypeId === CCrmOwnerType::Company || $entityTypeId === CCrmOwnerType::Contact)
 		{
-			if (!\CCrmContact::CheckUpdatePermission($entityId))
+			if (!$userPermissions->item()->canUpdate($entityTypeId, $entityId))
+			{
 				return false;
+			}
 		}
 		else
 		{
@@ -4646,7 +4657,7 @@ class EntityRequisite
 							],
 							4 => [
 								'ID' => 5,
-								'FIELD_NAME' => 'RQ_INN',
+								'FIELD_NAME' => 'RQ_IIN',
 								'FIELD_TITLE' => '',
 								'IN_SHORT_LIST' => 'Y',
 								'SORT' => 550
@@ -4856,7 +4867,7 @@ class EntityRequisite
 							],
 							1 => [
 								'ID' => 2,
-								'FIELD_NAME' => 'RQ_INN',
+								'FIELD_NAME' => 'RQ_IIN',
 								'FIELD_TITLE' => '',
 								'IN_SHORT_LIST' => 'Y',
 								'SORT' => 520

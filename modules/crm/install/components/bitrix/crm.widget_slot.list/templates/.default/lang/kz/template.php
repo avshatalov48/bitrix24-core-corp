@@ -1,0 +1,25 @@
+<?php
+$MESS["CRM_WGT_SLST_ADD"] = "Қосу";
+$MESS["CRM_WGT_SLST_ADD_PRODUCT_SUM"] = "Тауарлар сомасын қосу";
+$MESS["CRM_WGT_SLST_BY_DEFALT"] = "Әдепкі бойынша";
+$MESS["CRM_WGT_SLST_CALCEL"] = "Болдырмау";
+$MESS["CRM_WGT_SLST_DLG_WAIT"] = "Күте тұруыңызды өтінеміз...";
+$MESS["CRM_WGT_SLST_EDIT"] = "Редакциялау";
+$MESS["CRM_WGT_SLST_ERR_FIELD_ALREADY_EXISTS"] = "Басқа өрісті таңдаңыз. \"#FIELD#\" өрісі қазірдің өзінде пайдаланылуда.";
+$MESS["CRM_WGT_SLST_ERR_FIELD_LIMT_EXCEEDED"] = "Өрісті қосу мүмкін емес-рұқсат етілген өрістердің максималды санына қол жеткізілді.";
+$MESS["CRM_WGT_SLST_ERR_NO_FREE_SLOTS"] = "Өрісті қосу мүмкін емес - бос слоттар қалмады.";
+$MESS["CRM_WGT_SLST_ERR_SELECT_FIELD"] = "Өңдеу өрісін таңдаңыз.";
+$MESS["CRM_WGT_SLST_GENERAL_INTRO"] = "Бұл бетте сіз жасаған CRM аналитикалық есептеріне қатысатын өрістерді таңдауға болады.";
+$MESS["CRM_WGT_SLST_LIMITS_INTRO"] = "Сіз 10-нан аспайтын өрістерді таңдай аласыз, олардың бір түрі үшін 5-тен аспайды.";
+$MESS["CRM_WGT_SLST_LIMITS_TOTALS"] = "Таңдалғаны: #OVERALL#-дан #TOTAL#";
+$MESS["CRM_WGT_SLST_LRP_DLG_BTN_CLOSE"] = "Жабу";
+$MESS["CRM_WGT_SLST_LRP_DLG_BTN_START"] = "Орындау";
+$MESS["CRM_WGT_SLST_LRP_DLG_BTN_STOP"] = "Тоқтату";
+$MESS["CRM_WGT_SLST_LRP_DLG_REQUEST_ERR"] = "Сұрауды орындау кезінде қате пайда болды.";
+$MESS["CRM_WGT_SLST_NODE_TOOLTIP"] = "Егер сіз өзіңіздің жеке өрісіңізді мәміленің жалпы сомасы үшін қолдансаңыз, оны осында көрсетіңіз (таңдалған өрістің мәніне мәміле тауарларының сомасын қосуға болады). Әдепкі бойынша, есептер мәміленің \"Сома\" өрісіндегі мәліметтер негізінде құрылады.";
+$MESS["CRM_WGT_SLST_NOT_SELECTED"] = "Таңдалмаған";
+$MESS["CRM_WGT_SLST_REMOVE"] = "Жою";
+$MESS["CRM_WGT_SLST_RESET"] = "Қалпына келтіру";
+$MESS["CRM_WGT_SLST_SAVE"] = "Сақтау";
+$MESS["CRM_WGT_SLST_TOTAL_SUM"] = "Қорытынды сома";
+$MESS["CRM_WGT_SLST_USER_FIELDS"] = "Пайдаланушы өрістері";

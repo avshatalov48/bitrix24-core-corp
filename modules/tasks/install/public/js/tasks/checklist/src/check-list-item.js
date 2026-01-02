@@ -150,6 +150,11 @@ class CheckListItem extends CompositeTreeItem
 				fileExtension = 'img';
 				break;
 
+			case 'flp':
+			case 'board':
+				fileExtension = 'board';
+				break;
+
 			default:
 				fileExtension = 'empty';
 				break;
@@ -801,8 +806,6 @@ class CheckListItem extends CompositeTreeItem
 
 			return;
 		}
-
-		debugger;
 
 		const inputText = this.input.value;
 		const mentioned = +this.mentioned;
@@ -2437,7 +2440,7 @@ class CheckListItem extends CompositeTreeItem
 
 	getAttachmentsLayout()
 	{
-		const searchId = this.fields.getId() || this.fields.getCopiedId();
+		const searchId = this.fields.getId() || this.fields.getCopiedId() || this.fields.getNodeId();
 		const { optionManager } = this;
 		const optionAttachments = optionManager.attachments;
 		let attachmentsLayout = '';
@@ -2462,6 +2465,18 @@ class CheckListItem extends CompositeTreeItem
 
 			Object.keys(attachmentsLayout).forEach((key) => {
 				const attachment = attachmentsLayout[key];
+				if ('serverPreviewUrl' in attachment)
+				{
+					attachmentsLayout[key] = this.getLoadedAttachmentLayout({
+						id: attachment.serverFileId,
+						name: attachment.name,
+						viewUrl: attachment.serverPreviewUrl,
+						size: attachment.size,
+						ext: attachment.name.split('.').splice(-1)[0].toLowerCase(),
+					});
+
+					return;
+				}
 				const fileId = attachment.getAttribute('data-bx-id');
 				const extension = CheckListItem.getFileExtension(attachment.getAttribute('data-bx-extension'));
 				const extensionClass = `ui-icon-file-${extension}`;
@@ -2507,7 +2522,7 @@ class CheckListItem extends CompositeTreeItem
 		const fields = item.FIELDS;
 		const id = fields.id || fields.copiedId;
 
-		if (id === this.fields.getId() || id === this.fields.getCopiedId())
+		if ((id === this.fields.getId() || id === this.fields.getCopiedId()) && (fields.nodeId === this.fields.getNodeId()))
 		{
 			return fields.attachments;
 		}

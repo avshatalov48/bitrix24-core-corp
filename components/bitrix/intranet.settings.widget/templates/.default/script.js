@@ -1,30 +1,26 @@
 /* eslint-disable */
 this.BX = this.BX || {};
-(function (exports,ui_popupcomponentsmaker,main_core) {
+(function (exports,main_core,intranet_widgetLoader) {
 	'use strict';
 
-	let _ = t => t,
-	  _t,
-	  _t2,
-	  _t3,
-	  _t4;
 	var _instance = /*#__PURE__*/babelHelpers.classPrivateFieldLooseKey("instance");
-	var _popup = /*#__PURE__*/babelHelpers.classPrivateFieldLooseKey("popup");
+	var _widgetLoader = /*#__PURE__*/babelHelpers.classPrivateFieldLooseKey("widgetLoader");
 	var _isBitrix = /*#__PURE__*/babelHelpers.classPrivateFieldLooseKey("isBitrix24");
 	var _isAdmin = /*#__PURE__*/babelHelpers.classPrivateFieldLooseKey("isAdmin");
 	var _isRequisite = /*#__PURE__*/babelHelpers.classPrivateFieldLooseKey("isRequisite");
 	var _isMainPageAvailable = /*#__PURE__*/babelHelpers.classPrivateFieldLooseKey("isMainPageAvailable");
-	var _getWidgetPopup = /*#__PURE__*/babelHelpers.classPrivateFieldLooseKey("getWidgetPopup");
+	var _node = /*#__PURE__*/babelHelpers.classPrivateFieldLooseKey("node");
+	var _getWidgetLoader = /*#__PURE__*/babelHelpers.classPrivateFieldLooseKey("getWidgetLoader");
 	var _load = /*#__PURE__*/babelHelpers.classPrivateFieldLooseKey("load");
 	class SettingsWidgetLoader {
 	  constructor(params) {
 	    Object.defineProperty(this, _load, {
 	      value: _load2
 	    });
-	    Object.defineProperty(this, _getWidgetPopup, {
-	      value: _getWidgetPopup2
+	    Object.defineProperty(this, _getWidgetLoader, {
+	      value: _getWidgetLoader2
 	    });
-	    Object.defineProperty(this, _popup, {
+	    Object.defineProperty(this, _widgetLoader, {
 	      writable: true,
 	      value: void 0
 	    });
@@ -44,14 +40,18 @@ this.BX = this.BX || {};
 	      writable: true,
 	      value: false
 	    });
+	    Object.defineProperty(this, _node, {
+	      writable: true,
+	      value: false
+	    });
 	    babelHelpers.classPrivateFieldLooseBase(this, _isBitrix)[_isBitrix] = params['isBitrix24'];
 	    babelHelpers.classPrivateFieldLooseBase(this, _isAdmin)[_isAdmin] = params['isAdmin'];
 	    babelHelpers.classPrivateFieldLooseBase(this, _isRequisite)[_isRequisite] = params['isRequisite'];
 	    babelHelpers.classPrivateFieldLooseBase(this, _isMainPageAvailable)[_isMainPageAvailable] = params['isMainPageAvailable'];
 	  }
 	  showOnce(node) {
-	    const popup = babelHelpers.classPrivateFieldLooseBase(this, _getWidgetPopup)[_getWidgetPopup]().getPopup();
-	    popup.setBindElement(node);
+	    babelHelpers.classPrivateFieldLooseBase(this, _node)[_node] = node;
+	    const popup = babelHelpers.classPrivateFieldLooseBase(this, _getWidgetLoader)[_getWidgetLoader]().getPopup();
 	    popup.show();
 	    const popupContainer = popup.getPopupContainer();
 	    if (popupContainer.getBoundingClientRect().left < 30) {
@@ -63,49 +63,6 @@ this.BX = this.BX || {};
 	      }
 	    });
 	  }
-	  getHeaderSkeleton() {
-	    return main_core.Tag.render(_t || (_t = _`
-			<div class="intranet-widget-skeleton__header">
-				<div style="max-width: 95px; height: 8px;" class="intranet-widget-skeleton__line"></div>
-			</div>
-		`));
-	  }
-	  getItemSkeleton() {
-	    return main_core.Tag.render(_t2 || (_t2 = _`
-			<div class="intranet-widget-skeleton__row">
-				<div class="intranet-widget-skeleton__item">
-					<div style="width: 26px; height: 26px; margin-right: 8px;" class="intranet-widget-skeleton__circle"></div>
-					<div style="max-width: 130px;" class="intranet-widget-skeleton__line"></div>
-					<div style="width: 12px; height: 12px; margin-left: auto;" class="intranet-widget-skeleton__circle"></div>
-				</div>
-			</div>
-		`));
-	  }
-	  getSplitItemSkeleton() {
-	    return main_core.Tag.render(_t3 || (_t3 = _`
-			<div class="intranet-widget-skeleton__row">
-				<div class="intranet-widget-skeleton__item">
-					<div style="width: 26px; height: 26px; margin-right: 8px;" class="intranet-widget-skeleton__circle"></div>
-					<div style="max-width: 75px;" class="intranet-widget-skeleton__line"></div>
-					<div style="width: 12px; height: 12px; margin-left: auto;" class="intranet-widget-skeleton__circle"></div>
-				</div>
-				<div class="intranet-widget-skeleton__item">
-					<div style="width: 26px; height: 26px; margin-right: 8px;" class="intranet-widget-skeleton__circle"></div>
-					<div style="max-width: 75px;" class="intranet-widget-skeleton__line"></div>
-					<div style="width: 12px; height: 12px; margin-left: auto;" class="intranet-widget-skeleton__circle"></div>
-				</div>
-			</div>
-		`));
-	  }
-	  getFooterSkeleton() {
-	    return main_core.Tag.render(_t4 || (_t4 = _`
-			<div class="intranet-widget-skeleton__footer">
-				<div style="max-width: 40px;" class="intranet-widget-skeleton__line"></div>
-				<div style="max-width: 40px;" class="intranet-widget-skeleton__line"></div>
-				<div style="max-width: 40px;" class="intranet-widget-skeleton__line"></div>
-			</div>
-		`));
-	  }
 	  static init(options) {
 	    if (!babelHelpers.classPrivateFieldLooseBase(this, _instance)[_instance]) {
 	      babelHelpers.classPrivateFieldLooseBase(this, _instance)[_instance] = new this(options);
@@ -113,33 +70,32 @@ this.BX = this.BX || {};
 	    return babelHelpers.classPrivateFieldLooseBase(this, _instance)[_instance];
 	  }
 	}
-	function _getWidgetPopup2() {
-	  if (babelHelpers.classPrivateFieldLooseBase(this, _popup)[_popup]) {
-	    return babelHelpers.classPrivateFieldLooseBase(this, _popup)[_popup];
+	function _getWidgetLoader2() {
+	  if (babelHelpers.classPrivateFieldLooseBase(this, _widgetLoader)[_widgetLoader]) {
+	    return babelHelpers.classPrivateFieldLooseBase(this, _widgetLoader)[_widgetLoader];
 	  }
-	  const popup = new ui_popupcomponentsmaker.PopupComponentsMaker({
+	  const widgetLoader = new intranet_widgetLoader.WidgetLoader({
+	    id: "bx-settings-header-popup",
+	    bindElement: babelHelpers.classPrivateFieldLooseBase(this, _node)[_node],
 	    width: 374
 	  });
-	  const container = popup.getPopup().getPopupContainer();
-	  main_core.Dom.clean(container);
-	  main_core.Dom.addClass(container, 'intranet-widget-skeleton__wrap');
-	  main_core.Dom.append(this.getHeaderSkeleton(), container);
+	  widgetLoader.addHeaderSkeleton();
 	  if (babelHelpers.classPrivateFieldLooseBase(this, _isRequisite)[_isRequisite]) {
-	    main_core.Dom.append(this.getItemSkeleton(), container);
+	    widgetLoader.addItemSkeleton(22);
 	  }
 	  if (babelHelpers.classPrivateFieldLooseBase(this, _isMainPageAvailable)[_isMainPageAvailable]) {
-	    main_core.Dom.append(this.getItemSkeleton(), container);
+	    widgetLoader.addItemSkeleton(22);
 	  }
 	  if (babelHelpers.classPrivateFieldLooseBase(this, _isAdmin)[_isAdmin]) {
-	    main_core.Dom.append(this.getSplitItemSkeleton(), container);
+	    widgetLoader.addSplitItemSkeleton(22);
 	  }
 	  if (babelHelpers.classPrivateFieldLooseBase(this, _isBitrix)[_isBitrix]) {
-	    main_core.Dom.append(this.getItemSkeleton(), container);
+	    widgetLoader.addItemSkeleton(22);
 	  }
-	  main_core.Dom.append(this.getItemSkeleton(), container);
-	  main_core.Dom.append(this.getFooterSkeleton(), container);
-	  babelHelpers.classPrivateFieldLooseBase(this, _popup)[_popup] = popup;
-	  return popup;
+	  widgetLoader.addItemSkeleton(22);
+	  widgetLoader.addFooterSkeleton();
+	  babelHelpers.classPrivateFieldLooseBase(this, _widgetLoader)[_widgetLoader] = widgetLoader;
+	  return babelHelpers.classPrivateFieldLooseBase(this, _widgetLoader)[_widgetLoader];
 	}
 	function _load2() {
 	  return new Promise(resolve => {
@@ -158,7 +114,7 @@ this.BX = this.BX || {};
 	    }).then(() => {
 	      if (typeof BX.Intranet.SettingsWidget !== 'undefined') {
 	        setTimeout(() => {
-	          BX.Intranet.SettingsWidget.bindWidget(babelHelpers.classPrivateFieldLooseBase(this, _getWidgetPopup)[_getWidgetPopup]());
+	          BX.Intranet.SettingsWidget.bindWidget(babelHelpers.classPrivateFieldLooseBase(this, _getWidgetLoader)[_getWidgetLoader]());
 	          resolve();
 	        }, 0);
 	      }
@@ -172,5 +128,5 @@ this.BX = this.BX || {};
 
 	exports.SettingsWidgetLoader = SettingsWidgetLoader;
 
-}((this.BX.Intranet = this.BX.Intranet || {}),BX.UI,BX));
+}((this.BX.Intranet = this.BX.Intranet || {}),BX,BX.Intranet));
 //# sourceMappingURL=script.js.map

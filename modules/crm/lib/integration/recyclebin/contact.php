@@ -1,8 +1,8 @@
 <?php
 namespace Bitrix\Crm\Integration\Recyclebin;
 
-use Bitrix\Main;
 use Bitrix\Crm;
+use Bitrix\Main;
 use Bitrix\Recyclebin;
 
 Main\Localization\Loc::loadMessages(__FILE__);
@@ -48,12 +48,13 @@ class Contact extends RecyclableEntity
 
 		return Crm\Recycling\ContactController::getInstance()->recover(
 			$entityID,
-			array(
+			[
 				'ID' => $entity->getId(),
 				'SLOTS' => self::prepareDataSlots($entity),
 				'SLOT_MAP' => self::prepareDataSlotMap($entity),
-				'FILES' => $entity->getFiles()
-			)
+				'FILES' => $entity->getFiles(),
+				'DATETIME' => method_exists($entity, 'getDateTime') ? $entity->getDateTime() : null,
+			],
 		);
 	}
 

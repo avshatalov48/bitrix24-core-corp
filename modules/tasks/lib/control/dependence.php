@@ -7,23 +7,12 @@ use Bitrix\Tasks\Internals\Task\RelatedTable;
 
 class Dependence
 {
-	use BaseControlTrait;
-
-	/**
-	 * @param array $depends
-	 * @return void
-	 * @throws Exception\TaskNotFoundException
-	 * @throws \Bitrix\Main\ArgumentException
-	 * @throws \Bitrix\Main\DB\SqlQueryException
-	 * @throws \Bitrix\Main\ObjectPropertyException
-	 * @throws \Bitrix\Main\SystemException
-	 */
-	public function setPrevious($depends = [])
+	public function __construct(private int $userId, private int $taskId)
 	{
-		$this->loadTask();
+	}
 
-		$this->deleteByTask();
-
+	public function addPrevious($depends = [])
+	{
 		if (
 			!is_array($depends)
 			|| empty($depends)
@@ -61,6 +50,22 @@ class Dependence
 	}
 
 	/**
+	 * @param array $depends
+	 * @return void
+	 * @throws Exception\TaskNotFoundException
+	 * @throws \Bitrix\Main\ArgumentException
+	 * @throws \Bitrix\Main\DB\SqlQueryException
+	 * @throws \Bitrix\Main\ObjectPropertyException
+	 * @throws \Bitrix\Main\SystemException
+	 */
+	public function setPrevious($depends = [])
+	{
+		$this->deleteByTask();
+
+		$this->addPrevious($depends);
+	}
+
+	/**
 	 * @return void
 	 * @throws \Bitrix\Main\ArgumentException
 	 * @throws \Bitrix\Main\DB\SqlQueryException
@@ -68,7 +73,7 @@ class Dependence
 	 */
 	private function deleteByTask()
 	{
-		RelatedTable::deleteList([
+		RelatedTable::deleteByFilter([
 			'TASK_ID' => $this->taskId,
 		]);
 	}

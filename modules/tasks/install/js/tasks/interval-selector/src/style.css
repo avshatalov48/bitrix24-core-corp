@@ -1,4 +1,5 @@
 .tasks-interval-selector {
+	position: relative;
 	height: max-content;
 	color: var(--ui-color-link-primary-base);
 	border-bottom: var(--ui-border-width-thin) var(--ui-text-decoration-style-dashed) rgba(var(--ui-color-link-primary-base-rgb), .4);
@@ -9,4 +10,17 @@
 
 .tasks-interval-selector:hover {
 	border-bottom-color: rgba(var(--ui-color-link-primary-base-rgb), 1);
+}
+
+.tasks-interval-selector-dropdown::before {
+	position: absolute;
+	box-sizing: border-box;
+	top: 45%;
+	right: var(--ui-space-inline-sm2-neg);
+	width: var(--ui-size-xs);
+	height: var(--ui-size-xs);
+	border-bottom: var(--ui-border-width-thick) solid var(--ui-color-link-primary-base);
+	border-left: var(--ui-border-width-thick) solid var(--ui-color-link-primary-base);
+	content: '';
+	transform: translateY(-50%) rotate(-45deg);
 }

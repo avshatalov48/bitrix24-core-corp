@@ -5,6 +5,7 @@ function load(callback)
 	if (loaded)
 	{
 		callback();
+
 		return;
 	}
 
@@ -16,9 +17,9 @@ function load(callback)
 
 	loaded = false;
 	const node = document.createElement('SCRIPT');
-	node.setAttribute("type", "text/javascript");
-	node.setAttribute("async", "");
-	node.setAttribute("src", 'https://www.google.com/recaptcha/api.js');
+	node.setAttribute('type', 'text/javascript');
+	node.setAttribute('async', '');
+	node.setAttribute('src', 'https://www.google.com/recaptcha/api.js');
 	node.onload = () => window.grecaptcha.ready(() => {
 		loaded = true;
 		callbacks.forEach(callback => callback());
@@ -27,18 +28,22 @@ function load(callback)
 }
 
 export default {
+
 	props: ['form'],
-	methods: {
-		canUse()
+
+	methods:
+	{
+		canUse(): boolean
 		{
 			return this.form.recaptcha.canUse();
 		},
-		renderCaptcha()
+		renderCaptcha(): void
 		{
 			this.form.recaptcha.render(this.$el.children[0]);
-		}
+		},
 	},
-	mounted()
+
+	mounted(): void
 	{
 		if (!this.canUse())
 		{
@@ -47,5 +52,8 @@ export default {
 
 		load(() => this.renderCaptcha());
 	},
-	template: `<div v-if="canUse()" class="b24-form-recaptcha"><div></div></div>`,
+
+	template: `
+		<div v-if="canUse()" class="b24-form-recaptcha"><div></div></div>
+	`,
 };

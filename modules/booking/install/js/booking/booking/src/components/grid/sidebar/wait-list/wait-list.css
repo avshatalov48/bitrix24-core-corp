@@ -1,0 +1,13 @@
+.booking-wait-list-drag-area {
+	padding: 8px;
+	border: 1px dashed var(--ui-color-palette-blue-40);
+	border-radius: 3px;
+	text-align: center;
+	color: var(--ui-color-base-60);
+	font-size: var(--ui-font-size-xs);
+	white-space: break-spaces;
+}
+
+.ui-draggable--type-move .booking-sidebar-button {
+	pointer-events: none;
+}

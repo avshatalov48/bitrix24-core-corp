@@ -7,7 +7,7 @@ jn.define('ui-system/blocks/avatar/src/providers/selector', (require, exports, m
 	const store = require('statemanager/redux/store');
 	const { UserSelectorEntityType } = require('layout/ui/user/enums');
 	const { usersSelector } = require('statemanager/redux/slices/users');
-	const { AvatarEntityType } = require('ui-system/blocks/avatar/src/enums/entity-type-enum');
+	const { AvatarEntityType } = require('ui-system/blocks/avatar/src/enums/entity-type');
 
 	/**
 	 * @typedef {Object} SelectorParams

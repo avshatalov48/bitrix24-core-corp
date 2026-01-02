@@ -2,8 +2,6 @@
 
 namespace Bitrix\ImOpenLines\Integrations\HumanResources;
 
-use Bitrix\HumanResources\Contract\Repository\StructureRepository;
-use Bitrix\HumanResources\Contract\Service\UserService;
 use Bitrix\HumanResources\Item\NodeMember;
 use Bitrix\Main\Loader;
 use Bitrix\Main\UserTable;
@@ -374,7 +372,7 @@ class StructureService
 		//todo: Remove this block
 		else
 		{
-			$headId = \CIntranetUtils::GetDepartmentManagerID($departmentId);
+			$headId = \CIntranetUtils::GetDepartmentManagerID($departmentId) ?? 0;
 		}
 
 		return $headId;

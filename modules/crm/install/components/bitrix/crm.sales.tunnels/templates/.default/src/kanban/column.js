@@ -336,10 +336,6 @@ export default class Column extends Kanban.Column
 			Dom.append(dot, header);
 		}
 
-		Tag.attrs(header)`
-			title: ${this.getName()};
-		`;
-
 		return header;
 	}
 

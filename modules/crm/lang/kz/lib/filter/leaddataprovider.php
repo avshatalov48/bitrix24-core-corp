@@ -1,0 +1,21 @@
+<?php
+$MESS["CRM_LEAD_FILTER_ACTIVE_TIME_PERIOD"] = "Жұмыс үстінде";
+$MESS["CRM_LEAD_FILTER_ACTIVITY_COUNTER"] = "Істер";
+$MESS["CRM_LEAD_FILTER_ACTIVITY_RESPONSIBLE_IDS"] = "Іс үшін жауапты";
+$MESS["CRM_LEAD_FILTER_COMMUNICATION_TYPE"] = "Байланыс әдісі";
+$MESS["CRM_LEAD_FILTER_COMPANY_ID"] = "Компаниялар тізімі";
+$MESS["CRM_LEAD_FILTER_CONTACT_ID"] = "Байланыстар тізімі";
+$MESS["CRM_LEAD_FILTER_EMAIL"] = "E-mail";
+$MESS["CRM_LEAD_FILTER_IM"] = "Мессенджер";
+$MESS["CRM_LEAD_FILTER_LAST_ACTIVITY_TIME"] = "Соңғы белсенділік";
+$MESS["CRM_LEAD_FILTER_MOVED_BY_ID"] = "Сатыны кім өзгертті";
+$MESS["CRM_LEAD_FILTER_MOVED_TIME"] = "Сатының өзгеру күні";
+$MESS["CRM_LEAD_FILTER_PHONE"] = "Телефон";
+$MESS["CRM_LEAD_FILTER_PRODUCT_ROW_PRODUCT_ID"] = "Тауар";
+$MESS["CRM_LEAD_FILTER_STATUS_CONVERTED"] = "Түрлендірілген";
+$MESS["CRM_LEAD_FILTER_STATUS_ID_FROM_HISTORY_MSGVER_1"] = "Тарих бойынша саты";
+$MESS["CRM_LEAD_FILTER_STATUS_ID_FROM_SUPPOSED_HISTORY_MSGVER_1"] = "Тарих бойынша саты (болжамды ауысулармен)";
+$MESS["CRM_LEAD_FILTER_STATUS_PROCESSED"] = "Жабық";
+$MESS["CRM_LEAD_FILTER_STATUS_SEMANTIC_ID"] = "Күйі";
+$MESS["CRM_LEAD_FILTER_STATUS_SEMANTIC_ID_FROM_HISTORY"] = "Тарих бойынша күйі";
+$MESS["CRM_LEAD_FILTER_WEB"] = "Сайт";

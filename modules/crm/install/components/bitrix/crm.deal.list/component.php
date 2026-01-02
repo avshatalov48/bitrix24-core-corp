@@ -20,6 +20,8 @@ use Bitrix\Crm;
 use Bitrix\Crm\Category\DealCategory;
 use Bitrix\Crm\Component\EntityList\FieldRestrictionManager;
 use Bitrix\Crm\Component\EntityList\FieldRestrictionManagerTypes;
+use Bitrix\Crm\Component\EntityList\RepeatSaleDataProvider\Segments;
+use Bitrix\Crm\ItemIdentifier;
 use Bitrix\Crm\Service\Container;
 use Bitrix\Crm\Service\Display\Field;
 use Bitrix\Crm\Settings\HistorySettings;
@@ -52,8 +54,8 @@ if (!$isErrorOccurred && $isBizProcInstalled)
 	}
 }
 
-$userPermissions = CCrmPerms::GetCurrentUserPermissions();
-if (!$isErrorOccurred && !CCrmDeal::CheckReadPermission(0, $userPermissions))
+$userPermissionsService = Container::getInstance()->getUserPermissions();
+if (!$isErrorOccurred && !$userPermissionsService->entityType()->canReadItems(CCrmOwnerType::Deal))
 {
 	$errorMessage = Loc::getMessage('CRM_PERMISSION_DENIED');
 	$isErrorOccurred = true;
@@ -129,7 +131,7 @@ $arResult['STEXPORT_TOTAL_ITEMS'] = isset($arParams['STEXPORT_TOTAL_ITEMS'])
 	: 0;
 //endregion
 
-if (!$isErrorOccurred && $isInExportMode && !CCrmDeal::CheckExportPermission($userPermissions))
+if (!$isErrorOccurred && $isInExportMode && !$userPermissionsService->entityType()->canExportItems(CCrmOwnerType::Deal))
 {
 	$errorMessage = Loc::getMessage('CRM_PERMISSION_DENIED');
 	$isErrorOccurred = true;
@@ -162,11 +164,11 @@ $fieldRestrictionManager = new FieldRestrictionManager(
 	\CCrmOwnerType::Deal
 );
 
-$userID = CCrmSecurityHelper::GetCurrentUserID();
-$isAdmin = CCrmPerms::IsAdmin();
+$userID = Container::getInstance()->getContext()->getUserId();
+$isAdmin = $userPermissionsService->isAdmin();
 $curPage = $APPLICATION->GetCurPage();
 
-$arResult['CURRENT_USER_ID'] = CCrmSecurityHelper::GetCurrentUserID();
+$arResult['CURRENT_USER_ID'] = $userID;
 $arResult['PATH_TO_DEAL_LIST'] = $arParams['PATH_TO_DEAL_LIST'] = CrmCheckPath(
 	'PATH_TO_DEAL_LIST',
 	$arParams['PATH_TO_DEAL_LIST'] ?? '',
@@ -311,9 +313,9 @@ $arResult['PRESERVE_HISTORY'] = $arParams['PRESERVE_HISTORY'] ?? false;
 $arResult['HAVE_CUSTOM_CATEGORIES'] = DealCategory::isCustomized();
 
 $arResult['CATEGORY_ACCESS'] = [
-	'CREATE' => \CCrmDeal::GetPermittedToCreateCategoryIDs($userPermissions),
-	'READ' => \CCrmDeal::GetPermittedToReadCategoryIDs($userPermissions),
-	'UPDATE' => \CCrmDeal::GetPermittedToUpdateCategoryIDs($userPermissions)
+	'CREATE' => $userPermissionsService->category()->getAvailableForAddingCategoriesIds(CCrmOwnerType::Deal),
+	'READ' =>  $userPermissionsService->category()->getAvailableForReadingCategoriesIds(CCrmOwnerType::Deal),
+	'UPDATE' =>  $userPermissionsService->category()->getAvailableForUpdatingCategoriesIds(CCrmOwnerType::Deal)
 ];
 $arResult['CATEGORY_ID'] = isset($arParams['CATEGORY_ID']) ? (int)$arParams['CATEGORY_ID'] : -1;
 $arResult['ENABLE_SLIDER'] = \Bitrix\Crm\Settings\LayoutSettings::getCurrent()->isSliderEnabled();
@@ -540,7 +542,7 @@ $arResult['GRID_ID'] =
 		)
 ;
 
-CCrmDeal::PrepareConversionPermissionFlags(0, $arResult, $userPermissions);
+CCrmDeal::PrepareConversionPermissionFlags(0, $arResult);
 if ($arResult['CAN_CONVERT'])
 {
 	$config = Crm\Conversion\ConversionManager::getConfig(\CCrmOwnerType::Deal);
@@ -560,9 +562,9 @@ $arResult['WEBFORM_LIST'] = WebFormManager::getListNamesEncoded();
 $arResult['FILTER'] = [];
 $arResult['FILTER2LOGIC'] = [];
 $arResult['FILTER_PRESETS'] = [];
-$arResult['PERMS']['ADD'] = CCrmDeal::CheckCreatePermission($userPermissions);
-$arResult['PERMS']['WRITE'] = CCrmDeal::CheckUpdatePermission(0, $userPermissions);
-$arResult['PERMS']['DELETE'] = CCrmDeal::CheckDeletePermission(0, $userPermissions);
+$arResult['PERMS']['ADD'] = $userPermissionsService->entityType()->canAddItems(CCrmOwnerType::Deal);
+$arResult['PERMS']['WRITE'] = $userPermissionsService->entityType()->canUpdateItems(CCrmOwnerType::Deal);
+$arResult['PERMS']['DELETE'] = $userPermissionsService->entityType()->canDeleteItems(CCrmOwnerType::Deal);
 
 $arResult['AJAX_MODE'] = isset($arParams['AJAX_MODE']) ? $arParams['AJAX_MODE'] : ($arResult['INTERNAL'] ? 'N' : 'Y');
 $arResult['AJAX_ID'] = isset($arParams['AJAX_ID']) ? $arParams['AJAX_ID'] : '';
@@ -608,8 +610,10 @@ if ($effectiveCategoryID >= 0)
 
 $arResult['CATEGORY_LIST'] = DealCategory::prepareSelectListItems($arResult['CATEGORY_ACCESS']['READ']);
 
+$isExtendedInternal = $arParams['EXTENDED_INTERNAL_MODE'] ?? null;
+
 //region Filter Presets Initialization
-if (!$bInternal)
+if (!$bInternal || $isExtendedInternal)
 {
 	$flags = Crm\Filter\DealSettings::FLAG_NONE | Crm\Filter\DealSettings::FLAG_ENABLE_CLIENT_FIELDS;
 	if ($arParams['IS_RECURRING'] === 'Y')
@@ -683,7 +687,7 @@ if (isset($arNavParams['nPageSize']) && $arNavParams['nPageSize'] > 100)
 $fieldRestrictionManager->removeRestrictedFields($filterOptions, $gridOptions);
 //endregion
 
-if (!$bInternal)
+if (!$bInternal || $isExtendedInternal)
 {
 	$arResult['FILTER2LOGIC'] = ['TITLE', 'COMMENTS'];
 
@@ -995,7 +999,22 @@ if ($arParams['IS_RECURRING'] === 'Y')
 				'name' => Loc::getMessage('CRM_COLUMN_COMMENTS'),
 				'sort' => false /*because of MSSQL*/,
 				'editable' => false,
-			]
+			],
+			[
+				'id' => 'MOVED_BY',
+				'name' => Loc::getMessage('CRM_COLUMN_MOVED_BY'),
+				'sort' => 'moved_by',
+				'editable' => false,
+				'class' => 'username',
+			],
+			[
+				'id' => 'MOVED_TIME',
+				'name' => Loc::getMessage('CRM_COLUMN_MOVED_TIME'),
+				'sort' => 'moved_time',
+				'editable' => false,
+				'type' => 'date',
+				'class' => 'date',
+			],
 		]
 	);
 }
@@ -1214,7 +1233,22 @@ else
 				'name' => Loc::getMessage('CRM_COLUMN_WEBFORM'),
 				'sort' => 'webform_id',
 				'type' => 'list',
-			]
+			],
+			[
+				'id' => 'MOVED_BY',
+				'name' => Loc::getMessage('CRM_COLUMN_MOVED_BY'),
+				'sort' => 'moved_by',
+				'editable' => false,
+				'class' => 'username',
+			],
+			[
+				'id' => 'MOVED_TIME',
+				'name' => Loc::getMessage('CRM_COLUMN_MOVED_TIME'),
+				'sort' => 'moved_time',
+				'editable' => false,
+				'type' => 'date',
+				'class' => 'date',
+			],
 		]
 	);
 }
@@ -1244,17 +1278,20 @@ Crm\Service\Container::getInstance()->getParentFieldManager()->prepareGridHeader
 );
 
 $factory = Container::getInstance()->getFactory(\CCrmOwnerType::Deal);
-
-if (
-	\Bitrix\Crm\Settings\Crm::isUniversalActivityScenarioEnabled()
-	&& $factory
-	&& $factory->isLastActivityEnabled()
-)
+if ($factory?->isLastActivityEnabled())
 {
 	$arResult['HEADERS'][] = ['id' => Crm\Item::FIELD_NAME_LAST_ACTIVITY_TIME, 'name' => $factory->getFieldCaption(Crm\Item::FIELD_NAME_LAST_ACTIVITY_TIME), 'sort' => mb_strtolower(Crm\Item::FIELD_NAME_LAST_ACTIVITY_TIME), 'first_order' => 'desc', 'class' => 'datetime'];
 }
 
-if ($bInternal)
+$repeatSaleHeader = (new Crm\RepeatSale\Segment\Field())->getGridHeader();
+if (!empty($repeatSaleHeader))
+{
+	$arResult['HEADERS'][] = $repeatSaleHeader;
+}
+
+(new Crm\Filter\Field\LastCommunicationField())->addLastCommunicationGridHeader($arResult['HEADERS']);
+
+if ($bInternal && $isExtendedInternal !== true)
 {
 	$arResult['HEADERS_SECTIONS'] = [
 		[
@@ -1317,7 +1354,7 @@ $observersDataProvider = new \Bitrix\Crm\Component\EntityList\UserDataProvider\O
 
 $arResult['HEADERS'] = array_values($arResult['HEADERS']);
 
-if (!$bInternal)
+if (!$bInternal || $isExtendedInternal === true)
 {
 	$clientFieldHeaders = [];
 	if (Bitrix\Crm\Component\EntityList\ClientDataProvider::getPriorityEntityTypeId() === \CCrmOwnerType::Contact)
@@ -1478,7 +1515,7 @@ if (isset($arFilter['CLOSEDATE_datesel']) && $arFilter['CLOSEDATE_datesel'] === 
 $CCrmUserType->PrepareListFilterValues($arResult['FILTER'], $arFilter, $arResult['GRID_ID']);
 $USER_FIELD_MANAGER->AdminListAddFilter(CCrmDeal::$sUFEntityID, $arFilter);
 
-if (!$bInternal)
+if (!$bInternal || $isExtendedInternal === true)
 {
 	$contactDataProvider->prepareFilter($arResult['FILTER'], $arFilter);
 	$companyDataProvider->prepareFilter($arResult['FILTER'], $arFilter);
@@ -1610,12 +1647,14 @@ if ($actionData['ACTIVE'] && $actionData['METHOD'] == 'GET')
 	{
 		$ID = (int)$actionData['ID'];
 		$categoryID = CCrmDeal::GetCategoryID($ID);
-		$entityAttrs = CCrmDeal::GetPermissionAttributes(array($ID), $categoryID);
-		if (CCrmDeal::CheckDeletePermission($ID, $userPermissions, -1, array('ENTITY_ATTRS' => $entityAttrs)))
+		if ($userPermissionsService
+			->item()
+			->canDeleteItemIdentifier(new Crm\ItemIdentifier(CCrmOwnerType::Deal, $ID, $categoryID))
+		)
 		{
 			$DB->StartTransaction();
 
-			if ($CCrmBizProc->Delete($ID, $entityAttrs, array('DealCategoryId' => $categoryID))
+			if ($CCrmBizProc->Delete($ID, null, array('DealCategoryId' => $categoryID))
 				&& $CCrmDeal->Delete($ID, array('PROCESS_BIZPROC' => false)))
 			{
 				$DB->Commit();
@@ -1632,12 +1671,7 @@ if ($actionData['ACTIVE'] && $actionData['METHOD'] == 'GET')
 		$ID = (int)$actionData['ID'];
 		if ($ID > 0 && \Bitrix\Crm\Exclusion\Manager::checkCreatePermission())
 		{
-			\Bitrix\Crm\Exclusion\Manager::excludeEntity(
-				CCrmOwnerType::Deal,
-				$ID,
-				true,
-				array('PERMISSIONS' => $userPermissions)
-			);
+			\Bitrix\Crm\Exclusion\Manager::excludeEntity(CCrmOwnerType::Deal, $ID);
 		}
 	}
 
@@ -1658,7 +1692,7 @@ if ($actionData['ACTIVE'] && $actionData['METHOD'] == 'GET')
 		}
 		else
 		{
-			LocalRedirect($arParams['PATH_TO_CURRENT_LIST']);
+			LocalRedirect($arResult['PATH_TO_CURRENT_LIST']);
 		}
 	}
 }
@@ -1759,6 +1793,14 @@ if (in_array('CREATED_BY', $arSelect, true))
 	$addictFields = array(
 		'CREATED_BY_LOGIN', 'CREATED_BY_NAME', 'CREATED_BY_LAST_NAME', 'CREATED_BY_SECOND_NAME'
 	);
+	$arSelect = array_merge($arSelect,$addictFields);
+	unset($addictFields);
+}
+
+if (in_array('MOVED_BY', $arSelect, true))
+{
+	$addictFields = ['MOVED_BY_LOGIN', 'MOVED_BY_NAME', 'MOVED_BY_LAST_NAME', 'MOVED_BY_SECOND_NAME'];
+
 	$arSelect = array_merge($arSelect,$addictFields);
 	unset($addictFields);
 }
@@ -1879,7 +1921,7 @@ if (in_array('ACTIVITY_ID', $arSelect, true)) // Remove ACTIVITY_ID from $arSele
 
 $userDataProvider->prepareSelect($arSelect);
 $observersDataProvider->prepareSelect($arSelect);
-if (!$bInternal)
+if (!$bInternal || $isExtendedInternal === true)
 {
 	$contactDataProvider->prepareSelect($arSelect);
 	$companyDataProvider->prepareSelect($arSelect);
@@ -1977,7 +2019,7 @@ if ($nTopCount > 0)
 
 if ($isInExportMode)
 {
-	$arFilter['PERMISSION'] = 'EXPORT';
+	$arFilter['PERMISSION'] = Crm\Service\UserPermissions::OPERATION_EXPORT;
 }
 
 if (!empty($arParams['ADDITIONAL_FILTER']) && is_array($arParams['ADDITIONAL_FILTER']))
@@ -2384,13 +2426,19 @@ if ($arResult['CAN_EXCLUDE'])
 	$arResult['CAN_EXCLUDE'] = !empty($excludeApplicableList);
 }
 
-if (!$bInternal)
+if (!$bInternal || $isExtendedInternal === true)
 {
 	$contactDataProvider->appendResult($arResult['DEAL']);
 	$companyDataProvider->appendResult($arResult['DEAL']);
 }
 $userDataProvider->appendResult($arResult['DEAL']);
 $observersDataProvider->appendResult($arResult['DEAL']);
+
+if ($isInExportMode)
+{
+	$segmentsDataProvider = new Segments(\CCrmOwnerType::Deal);
+	$segmentsDataProvider->prepareResult($arResult['DEAL']);
+}
 
 $parentFieldValues = Crm\Service\Container::getInstance()->getParentFieldManager()->loadParentElementsByChildren(
 	\CCrmOwnerType::Deal,
@@ -2480,7 +2528,7 @@ foreach($arResult['DEAL'] as &$arDeal)
 	else
 	{
 		$arDeal['PATH_TO_DEAL_DELETE'] =  CHTTP::urlAddParams(
-			$bInternal ? $APPLICATION->GetCurPage() : ($arParams['PATH_TO_CURRENT_LIST'] ?? ''),
+			$bInternal ? $APPLICATION->GetCurPage() : ($arResult['PATH_TO_CURRENT_LIST'] ?? ''),
 			array('action_'.$arResult['GRID_ID'] => 'delete', 'ID' => $entityID, 'sessid' => $arResult['SESSION_ID'])
 		);
 	}
@@ -2550,6 +2598,14 @@ foreach($arResult['DEAL'] as &$arDeal)
 
 	$arDeal['PATH_TO_USER_CREATOR'] = $arDeal['CREATED_BY_SHOW_URL'] ?? '';
 
+	if (!empty($arDeal['MOVED_BY_ID']))
+	{
+		$arDeal['MOVED_BY'] = $arDeal['MOVED_BY_ID'];
+		$arDeal['~MOVED_BY'] = $arDeal['MOVED_BY_ID'];
+	}
+
+	$arDeal['PATH_TO_USER_MOVED'] = $arDeal['MOVED_BY_SHOW_URL'] ?? '';
+
 	if (!empty($arDeal['MODIFY_BY_ID']))
 	{
 		$arDeal['MODIFY_BY'] = $arDeal['~MODIFY_BY'] = $arDeal['MODIFY_BY_ID'];
@@ -2577,7 +2633,7 @@ foreach($arResult['DEAL'] as &$arDeal)
 
 		$hasAccessToContact =
 			$arDeal['CONTACT_IS_ACCESSIBLE']
-			?? CCrmContact::CheckReadPermission($contactID, $userPermissions)
+			?? $userPermissionsService->item()->canRead(CCrmOwnerType::Contact, $contactID)
 		;
 
 		if (!$hasAccessToContact)
@@ -2607,7 +2663,7 @@ foreach($arResult['DEAL'] as &$arDeal)
 
 		$hasAccessToCompany =
 			$arDeal['COMPANY_IS_ACCESSIBLE']
-			?? CCrmCompany::CheckReadPermission($companyID, $userPermissions)
+			?? $userPermissionsService->item()->canRead(CCrmOwnerType::Company, $companyID)
 		;
 
 		if (!$hasAccessToCompany)
@@ -2878,7 +2934,7 @@ foreach ($CCrmUserType->GetAbstractFields() as $userFieldId => $userFieldData)
 {
 	$displayFields[$userFieldId] = Crm\Service\Display\Field::createFromUserField($userFieldId, $userFieldData);
 }
-if (!$bInternal)
+if (!$bInternal || $isExtendedInternal === true)
 {
 	$displayFields = array_merge(
 		$displayFields,
@@ -3114,29 +3170,23 @@ if ($arResult['ENABLE_TOOLBAR'])
 	}
 }
 
+$userPermissionsService->item()->preloadPermissionAttributes(CCrmOwnerType::Deal, $arResult['DEAL_ID']);
 foreach($arResult['CATEGORIES'] as $categoryID => $IDs)
 {
 	// checking access for operation
-	$entityAttrs = CCrmDeal::GetPermissionAttributes($IDs, $categoryID);
 	foreach($IDs as $ID)
 	{
 		$arResult['DEAL'][$ID]['EDIT'] =
-			(in_array($ID, $restrictedItemIds))
-				? false
-				: CCrmDeal::CheckUpdatePermission(
-				$ID,
-				$userPermissions,
-				$categoryID,
-				['ENTITY_ATTRS' => $entityAttrs]
-			)
+			!(in_array($ID, $restrictedItemIds))
+			&& $userPermissionsService
+				->item()
+				->canUpdateItemIdentifier(new ItemIdentifier(CCrmOwnerType::Deal, $ID, $categoryID))
 		;
 
-		$arResult['DEAL'][$ID]['DELETE'] = CCrmDeal::CheckDeletePermission(
-			$ID,
-			$userPermissions,
-			$categoryID,
-			array('ENTITY_ATTRS' => $entityAttrs)
-		);
+		$arResult['DEAL'][$ID]['DELETE'] = $userPermissionsService
+			->item()
+			->canDeleteItemIdentifier(new ItemIdentifier(CCrmOwnerType::Deal, $ID, $categoryID))
+		;
 
 		$arResult['DEAL'][$ID]['BIZPROC_LIST'] = [];
 		if ($isBizProcInstalled && !class_exists(\Bitrix\Bizproc\Controller\Workflow\Starter::class))
@@ -3154,7 +3204,6 @@ foreach($arResult['CATEGORIES'] as $categoryID => $IDs)
 						'CreatedBy' => $arResult['DEAL'][$ID]['~ASSIGNED_BY_ID'],
 						'UserIsAdmin' => $isAdmin,
 						'DealCategoryId' => $categoryID,
-						'CRMEntityAttr' => $entityAttrs
 					)
 				))
 				{
@@ -3225,7 +3274,7 @@ if (!$isInExportMode)
 			&& ($attributeRebuildAgent->getProgressData()['TOTAL_ITEMS'] > 0)
 		;
 
-		if (CCrmPerms::IsAdmin())
+		if ($userPermissionsService->isAdmin())
 		{
 			if (COption::GetOptionString('crm', '~CRM_REBUILD_DEAL_ATTR', 'N') === 'Y')
 			{

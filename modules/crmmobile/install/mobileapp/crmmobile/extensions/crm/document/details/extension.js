@@ -89,37 +89,12 @@ jn.define('crm/document/details', (require, exports, module) => {
 		componentDidMount()
 		{
 			this.renderWidgetTitle();
-
-			const action = 'crmmobile.DocumentGenerator.Document.get';
-			const data = { id: this.props.documentId };
-
-			BX.ajax.runAction(action, { json: data })
+			this.fetchDocument()
 				.then((response) => {
-					/** @type {CrmDocumentProps|null} */
-					const document = response.data.document;
-					if (!document)
-					{
-						throw new Error('Document loading problem');
-					}
-
-					this.subscribeToPushEvents(document.pullTag);
-
-					this.setDocumentState(document, {
-						myCompanyRequisites: response.data.myCompanyRequisites,
-						clientRequisites: response.data.clientRequisites,
-						entityId: response.data.entityId,
-						entityTypeId: response.data.entityTypeId,
-						entityDetailUrl: response.data.entityDetailUrl,
-						isSigningEnabled: response.data.isSigningEnabled,
-						isSigningEnabledInCurrentTariff: response.data.isSigningEnabledInCurrentTariff,
-						signingInfoHelperSliderCode: response.data.signingInfoHelperSliderCode,
-						channelSelector: response.data.channelSelector,
-					});
+					const pullTag = response?.data?.document?.pullTag;
+					this.subscribeToPushEvents(pullTag);
 				})
-				.catch((response) => {
-					console.error(response);
-					showInternalAlert(() => this.layoutWidget.close());
-				});
+				.catch(console.error);
 		}
 
 		componentWillUnmount()
@@ -130,8 +105,53 @@ jn.define('crm/document/details', (require, exports, module) => {
 			}
 		}
 
+		fetchDocument()
+		{
+			return new Promise((resolve, reject) => {
+				const action = 'crmmobile.DocumentGenerator.Document.get';
+				const data = { id: this.props.documentId };
+
+				BX.ajax.runAction(action, { json: data })
+					.then((response) => {
+						/** @type {CrmDocumentProps|null} */
+						const document = response.data.document;
+						if (!document)
+						{
+							throw new Error('Document loading problem');
+						}
+
+						const other = {
+							myCompanyRequisites: response.data.myCompanyRequisites,
+							clientRequisites: response.data.clientRequisites,
+							entityId: response.data.entityId,
+							entityTypeId: response.data.entityTypeId,
+							entityDetailUrl: response.data.entityDetailUrl,
+							isSigningEnabled: response.data.isSigningEnabled,
+							isSigningEnabledInCurrentTariff: response.data.isSigningEnabledInCurrentTariff,
+							signingInfoHelperSliderCode: response.data.signingInfoHelperSliderCode,
+							channelSelector: response.data.channelSelector,
+						};
+
+						this.setDocumentState(document, other, () => {
+							resolve(response);
+						});
+					})
+					.catch((err) => {
+						showInternalAlert(() => {
+							this.layoutWidget.close();
+							reject(err);
+						});
+					});
+			});
+		}
+
 		subscribeToPushEvents(listenTag)
 		{
+			if (!listenTag)
+			{
+				return;
+			}
+
 			this.pushSubscriptionCancel = BX.PULL.subscribe({
 				moduleId: 'documentgenerator',
 				callback: (pushEvent) => {
@@ -141,7 +161,7 @@ jn.define('crm/document/details', (require, exports, module) => {
 
 					if (command === 'showImage' && tag === listenTag)
 					{
-						this.setDocumentState(params);
+						this.fetchDocument().catch(console.error);
 					}
 				},
 			});
@@ -396,7 +416,7 @@ jn.define('crm/document/details', (require, exports, module) => {
 				});
 		}
 
-		setDocumentState(document, other = {})
+		setDocumentState(document, other = {}, callback = () => {})
 		{
 			const setState = (localPdfPath) => {
 				let viewStage = ViewStage.Loading;
@@ -415,7 +435,10 @@ jn.define('crm/document/details', (require, exports, module) => {
 					...other,
 				};
 
-				this.setState(nextState, () => this.renderWidgetTitle());
+				this.setState(nextState, () => {
+					this.renderWidgetTitle();
+					callback();
+				});
 			};
 
 			if (document.pdfUrl)

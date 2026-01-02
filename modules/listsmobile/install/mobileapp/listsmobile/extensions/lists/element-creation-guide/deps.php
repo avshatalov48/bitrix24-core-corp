@@ -11,6 +11,7 @@ return [
 		'event-emitter',
 		'alert',
 		'haptics',
+		'analytics',
 
 		'utils/object',
 		'utils/random',

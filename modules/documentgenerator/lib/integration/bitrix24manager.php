@@ -114,35 +114,78 @@ class Bitrix24Manager
 	}
 
 	/**
-	 * @param string $region
-	 * @return array
+	 * @deprecated
 	 */
 	public static function getFeedbackFormInfo($region)
 	{
-		if($region == 'ru')
+		static $whitelist = [
+			'id' => true,
+			'lang' => true,
+			'sec' => true,
+		];
+
+		$default = null;
+
+		$forms = self::getFeedbackForms();
+		foreach ($forms as $form)
 		{
-			return ['id' => 40, 'lang' => 'ru', 'sec' => 'b2bdce'];
+			if (in_array('en', $form['zones'], true))
+			{
+				$default = $form;
+			}
+
+			if (in_array($region, $form['zones'], true))
+			{
+				return array_intersect_key($form, $whitelist);
+			}
 		}
-		elseif($region == 'br')
+
+		return array_intersect_key($default, $whitelist);
+	}
+
+	private static function getFeedbackForms(): array
+	{
+		return [
+			['zones' => ['ru'], 'id' => 40, 'lang' => 'ru', 'sec' => 'b2bdce'],
+			['zones' => ['br'], 'id' => 30, 'lang' => 'br', 'sec' => '0j7lwo'],
+			['zones' => ['la'], 'id' => 32, 'lang' => 'la', 'sec' => '5vb40n'],
+			['zones' => ['de'], 'id' => 36, 'lang' => 'de', 'sec' => 'yrqoue'],
+			['zones' => ['ua'], 'id' => 42, 'lang' => 'ua', 'sec' => 'fyzjb2'],
+			['zones' => ['en'], 'id' => 38, 'lang' => 'en', 'sec' => 's2thdq'],
+		];
+	}
+
+	public static function addFeedbackButtonToToolbar(
+		string $provider = '',
+		string $templateName = '',
+		string $templateCode = '',
+	): void
+	{
+		if(!self::isEnabled())
 		{
-			return ['id' => 30, 'lang' => 'br', 'sec' => '0j7lwo'];
+			return;
 		}
-		elseif($region == 'la')
-		{
-			return ['id' => 32, 'lang' => 'la', 'sec' => '5vb40n'];
-		}
-		elseif($region == 'de')
-		{
-			return ['id' => 36, 'lang' => 'de', 'sec' => 'yrqoue'];
-		}
-		elseif($region == 'ua')
-		{
-			return ['id' => 42, 'lang' => 'ua', 'sec' => 'fyzjb2'];
-		}
-		else // en
-		{
-			return ['id' => 38, 'lang' => 'en', 'sec' => 's2thdq'];
-		}
+
+		global $APPLICATION;
+
+		$APPLICATION->IncludeComponent(
+			'bitrix:ui.feedback.form',
+			'',
+			[
+				'ID' => 'document-feedback-form',
+				'FORMS' => self::getFeedbackForms(),
+				'PRESETS' => [
+					'b24_zone' => self::getPortalZone(),
+					'user_status' => \CBitrix24::IsPortalAdmin(\Bitrix\Main\Engine\CurrentUser::get()->getId()),
+					'template_name' => $templateName,
+					'template_code' => $templateCode,
+					'sender_page' => $provider,
+				],
+				'air' => true,
+				'USE_UI_TOOLBAR' => 'Y',
+				'VIEW_TARGET' => null,
+			]
+		);
 	}
 
 	public static function showTariffRestrictionButtons()

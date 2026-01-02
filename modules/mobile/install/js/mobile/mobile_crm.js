@@ -784,17 +784,6 @@ BX.Mobile.Crm.EntityConverter.prototype =
 				this.startRequest();
 			}
 		}, this));
-
-		BXMobileApp.PageManager.loadPageBlank({ //should be modal page, but can't send data yet
-			url: "/mobile/crm/convert_sync/?sync_id=" + convertId,
-			bx24ModernStyle:true,
-			data: {
-				config: this._config,
-				fields: fieldNames,
-				convertId: convertId,
-				entityType: this._entityType
-			}
-		});
 	},
 	convert: function(entityId, config, contextData)
 	{

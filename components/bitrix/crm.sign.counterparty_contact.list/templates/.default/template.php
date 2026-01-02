@@ -36,7 +36,8 @@ $APPLICATION->includeComponent(
 	'',
 	array(
 		'ID' => 'sign',
-		'ITEMS' => $menuItems
+		'ITEMS' => $menuItems,
+		'THEME' => defined("AIR_SITE_TEMPLATE") ? "air" : null,
 	)
 );
 $this->endViewTarget();
@@ -47,18 +48,6 @@ if (!Bitrix\Crm\Integration\Bitrix24Manager::isAccessEnabled(CCrmOwnerType::Cont
 }
 else
 {
-	$APPLICATION->IncludeComponent(
-		'bitrix:crm.entity.counter.panel',
-		'',
-		[
-			'ENTITY_TYPE_NAME' => CCrmOwnerType::CompanyName,
-			'EXTRAS' => [
-				'CATEGORY_ID' => $arResult['CATEGORY_ID'],
-			],
-			'PATH_TO_ENTITY_LIST' => $arResult['PATH_TO_LIST'],
-		]
-	);
-
 	$APPLICATION->ShowViewContent('crm-grid-filter');
 
 	$APPLICATION->IncludeComponent(

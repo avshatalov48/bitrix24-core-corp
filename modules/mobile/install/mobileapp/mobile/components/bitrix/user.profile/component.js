@@ -1,4 +1,5 @@
 /**
+ * @deprecated Use extension UserProfile instead ('user-profile')
  * @bxjs_lang_path component.php
  * @var {BaseList} form
  */

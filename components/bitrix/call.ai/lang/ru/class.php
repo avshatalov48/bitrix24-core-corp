@@ -6,3 +6,4 @@ $MESS['CALL_COMPONENT_CALL_UNDEFINED'] = "Звонок не найден";
 $MESS['CALL_COMPONENT_ACCESS_DENIED'] = "У вас нет доступа к этому звонку";
 $MESS['CALL_COMPONENT_ERROR_TITLE'] = "Follow-up не найден или доступ запрещен";
 $MESS['CALL_COMPONENT_ERROR_DESCRIPTION'] = "Обратитесь к участникам или владельцу чата";
+$MESS['CALL_COMPONENT_COPILOT_DETAIL_TITLE'] = "CoPilot Follow-up";

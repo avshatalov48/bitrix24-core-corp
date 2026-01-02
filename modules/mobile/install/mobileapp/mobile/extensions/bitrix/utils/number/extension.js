@@ -42,33 +42,19 @@ jn.define('utils/number', (require, exports, module) => {
 	}
 
 	/**
-	 * @function parseAmount
-	 * @param {string} amount
-	 * @param {string} decimalSeparator
-	 * @param {string} thousandsSeparator
-	 * @returns {number}
+	 * Returns "99+" if the quantity exceeds the maximum.
+	 * @param {number} [quantity=0]
+	 * @param {number} [max=99]
+	 * @returns {string}
 	 */
-	function parseAmount(amount, decimalSeparator, thousandsSeparator)
+	function formatQuantityWithLimit(quantity = 0, max = 99)
 	{
-		const parts = String(amount).split(decimalSeparator);
-		let thousandPart = parts[0] ?? 0;
-		const decimalPart = parts[1] || '';
-
-		if (thousandsSeparator === '&nbsp;')
-		{
-			thousandPart = thousandPart.replaceAll('\u00A0', '');
-		}
-		else if (thousandsSeparator !== '')
-		{
-			thousandPart = thousandPart.replaceAll(thousandsSeparator, '');
-		}
-
-		return Number(`${thousandPart}.${decimalPart}`);
+		return quantity > max ? `${max}+` : quantity.toString();
 	}
 
 	module.exports = {
 		inRange,
 		toNumber,
-		parseAmount,
+		formatQuantityWithLimit,
 	};
 });

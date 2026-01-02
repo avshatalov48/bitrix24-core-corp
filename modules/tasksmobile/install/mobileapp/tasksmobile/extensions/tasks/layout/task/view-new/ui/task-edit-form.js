@@ -72,7 +72,9 @@ jn.define('tasks/layout/task/view-new/ui/task-edit-form', (require, exports, mod
 	const { TaskFlowField } = require('tasks/layout/fields/flow/theme/air');
 	const { TaskFlowField: TaskFlowFieldCompact } = require('tasks/layout/fields/flow/theme/air-compact');
 	const { TimeTrackingField } = require('tasks/layout/fields/time-tracking');
-	const { TimeTrackingField: TimeTrackingFieldCompact } = require('tasks/layout/fields/time-tracking/theme/air-compact');
+	const { TimeTrackingField: TimeTrackingFieldCompact } = require(
+		'tasks/layout/fields/time-tracking/theme/air-compact',
+	);
 	const { ActionButtonsView } = require('tasks/layout/task/view-new/ui/action-buttons');
 	const { ActionId, ActionMeta } = require('tasks/layout/action-menu/actions');
 
@@ -131,6 +133,7 @@ jn.define('tasks/layout/task/view-new/ui/task-edit-form', (require, exports, mod
 			canMoveStage,
 			kanbanOwnerId,
 			isStageSelectorInitiallyHidden,
+			isFlowToolDisabled,
 		} = props;
 
 		const taskCreateButtonAnalytics = {
@@ -320,7 +323,7 @@ jn.define('tasks/layout/task/view-new/ui/task-edit-form', (require, exports, mod
 						},
 						notifyAboutReadOnlyStatus: onFieldContentClick,
 						readOnly: view === ViewMode.DEADLINE
-							? !(canMoveStage && actions[TaskFieldActionAccess[Field.UPDATE_DEADLINE]])
+							? !(canMoveStage && actions[TaskFieldActionAccess[Field.DEADLINE]])
 							: !canMoveStage,
 						value: task.stageId,
 						view,
@@ -457,7 +460,7 @@ jn.define('tasks/layout/task/view-new/ui/task-edit-form', (require, exports, mod
 					},
 					compact: ProjectFieldCompact,
 				},
-				{
+				!isFlowToolDisabled && {
 					factory: TaskFlowField,
 					props: {
 						id: Field.FLOW,
@@ -490,6 +493,7 @@ jn.define('tasks/layout/task/view-new/ui/task-edit-form', (require, exports, mod
 						config: makeAccomplicesFieldConfig({
 							items: accomplices.filter(Boolean),
 							groupId: task.groupId,
+							readOnly: !actions[TaskFieldActionAccess[Field.ACCOMPLICES]],
 						}),
 						restrictionPolicy: getFieldRestrictionPolicy(Field.ACCOMPLICES),
 						showRestrictionCallback: getFieldShowRestrictionCallback(Field.ACCOMPLICES, parentWidget),
@@ -512,6 +516,7 @@ jn.define('tasks/layout/task/view-new/ui/task-edit-form', (require, exports, mod
 						onContentClick: onFieldContentClick,
 						config: makeAuditorsFieldConfig({
 							items: auditors.filter(Boolean),
+							readOnly: !actions[TaskFieldActionAccess[Field.AUDITORS]],
 						}),
 						restrictionPolicy: getFieldRestrictionPolicy(Field.AUDITORS),
 						showRestrictionCallback: getFieldShowRestrictionCallback(Field.AUDITORS, parentWidget),
@@ -534,6 +539,7 @@ jn.define('tasks/layout/task/view-new/ui/task-edit-form', (require, exports, mod
 						onChange: onChangeSubTaskField,
 						config: makeSubTasksFieldConfig({
 							items: task.subTasks.filter(Boolean),
+							undeselectableIds: task.subTasks.filter((item) => !item?.customData?.canUpdate).map((item) => item.id),
 							currentTaskId: task.id,
 							userId,
 							groupId: task.groupId,
@@ -774,8 +780,9 @@ jn.define('tasks/layout/task/view-new/ui/task-edit-form', (require, exports, mod
 
 	const mapStateToProps = (state, ownProps) => {
 		const taskId = ownProps.id;
-		const task = selectByTaskIdOrGuid(state, taskId);
-		const actions = selectActions(task);
+		const ownerId = ownProps.kanbanOwnerId;
+		const task = selectByTaskIdOrGuid(state, taskId, ownerId);
+		const actions = selectActions({ task });
 
 		const shouldShowCompactButtons = ActionButtonsView.hasAllowedActions(task);
 		const deadlineColor = getDeadlineColor(task);
@@ -840,6 +847,7 @@ jn.define('tasks/layout/task/view-new/ui/task-edit-form', (require, exports, mod
 			timerState: selectTimerState(task),
 			view: ownProps.view,
 			canMoveStage,
+			isFlowToolDisabled: ownProps.isFlowToolDisabled,
 		};
 	};
 

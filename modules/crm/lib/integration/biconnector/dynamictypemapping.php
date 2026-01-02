@@ -66,6 +66,7 @@ class DynamicTypeMapping
 				//  `IS_SOURCE_ENABLED` char(1) NOT NULL DEFAULT 'N',
 				//  `IS_USE_IN_USERFIELD_ENABLED` char(1) NOT NULL DEFAULT 'N',
 				//  `IS_OBSERVERS_ENABLED` char(1) NOT NULL DEFAULT 'N',
+				//  `IS_RECURRING_ENABLED` char(1) NOT NULL DEFAULT 'N',
 				//  `IS_RECYCLEBIN_ENABLED` char(1) NOT NULL DEFAULT 'N',
 				//  `IS_AUTOMATION_ENABLED` char(1) NOT NULL DEFAULT 'N',
 				//  `IS_BIZ_PROC_ENABLED` char(1) NOT NULL DEFAULT 'N',
@@ -73,6 +74,11 @@ class DynamicTypeMapping
 				//  `IS_PAYMENTS_ENABLED` char(1) NOT NULL DEFAULT 'N',
 				//  `IS_COUNTERS_ENABLED` char(1) NOT NULL DEFAULT 'N',
 				//  `CREATED_TIME` datetime NOT NULL DEFAULT CURRENT_TIMESTAMP,
+				'CREATED_AT' => [
+					'IS_METRIC' => 'N', // 'Y'
+					'FIELD_NAME' => 'DT.CREATED_TIME',
+					'FIELD_TYPE' => 'datetime',
+				],
 				//  `UPDATED_TIME` datetime NOT NULL DEFAULT CURRENT_TIMESTAMP,
 				//  `UPDATED_BY` int unsigned NOT NULL,
 				'USER_FIELDS' => [

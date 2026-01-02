@@ -102,6 +102,7 @@ class BaseDocumentService implements DocumentService
 		int $fileId,
 		Document $document,
 		int $smartDocumentId,
+		int $createdById,
 		bool $isNew = false
 	): Result
 	{
@@ -118,7 +119,7 @@ class BaseDocumentService implements DocumentService
 
 		if ($isNew && Storage::instance()->isNewSignEnabled())
 		{
-			$createBlankResult = $this->blankService->createFromFileIds([$cFile['ID']]);
+			$createBlankResult = $this->blankService->createFromFileIds([(int)$cFile['ID']]);
 			if (!$createBlankResult->isSuccess())
 			{
 				return $createBlankResult;
@@ -130,6 +131,7 @@ class BaseDocumentService implements DocumentService
 
 			$createDocumentResult = $this->signDocumentService->register(
 				blankId: $blankId,
+				createdById: $createdById,
 				title: $smartDocument->getTitle(),
 				entityId: $smartDocumentId,
 				entityType: 'SMART',
@@ -194,7 +196,8 @@ class BaseDocumentService implements DocumentService
 		int $fileId,
 		\Bitrix\Sign\Blank|int $oldBlankId,
 		Document $document,
-		int $smartDocumentId
+		int $smartDocumentId,
+		int $createdById,
 	): Result
 	{
 		$result = new Result();
@@ -209,7 +212,12 @@ class BaseDocumentService implements DocumentService
 
 		if (is_int($oldBlankId) && Storage::instance()->isNewSignEnabled())
 		{
-			return $this->createNewSigningDocumentWithCopyingToTheNew($oldBlank->getId(), $smartDocumentId, $document->TEMPLATE_ID,);
+			return $this->createNewSigningDocumentWithCopyingToTheNew(
+				$oldBlank->getId(),
+				$createdById,
+				$smartDocumentId,
+				$document->TEMPLATE_ID,
+			);
 		}
 
 		$blank = $oldBlank->copyBlank();
@@ -360,7 +368,12 @@ class BaseDocumentService implements DocumentService
 	 * @throws \Bitrix\Main\ObjectPropertyException
 	 * @throws \Bitrix\Main\SystemException
 	 */
-	private function createNewSigningDocumentWithCopyingToTheNew(int $oldBlankId, int $smartDocumentId, int $templateId): Result
+	private function createNewSigningDocumentWithCopyingToTheNew(
+		int $oldBlankId,
+		int $createdById,
+		int $smartDocumentId,
+		int $templateId
+	): Result
 	{
 		$lastDocument = $this->signDocumentService->getLastByBlankId($oldBlankId);
 		$oldSmartDocument = $lastDocument?->entityId ? Container::getInstance()
@@ -379,6 +392,7 @@ class BaseDocumentService implements DocumentService
 
 		$createDocumentResult = $this->signDocumentService->register(
 			$oldBlankId,
+			$createdById,
 			$smartDocument->getTitle(),
 			$smartDocumentId,
 			\Bitrix\Sign\Type\Document\EntityType::SMART

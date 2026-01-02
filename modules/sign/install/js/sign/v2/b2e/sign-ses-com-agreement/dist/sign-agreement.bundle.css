@@ -52,7 +52,7 @@
 
 .sign__agreement_popup.popup-window .popup-window-content {
 	border-radius: var(--ui-border-radius-sm);
-	font-family: var(--ui-font-family-system);
+	font-family: var(--ui-font-family-primary, var(--ui-font-family-system));
 	color: var(--ui-color-base-90);
 	background-color: var(--ui-color-palette-gray-02);
 }

@@ -2,17 +2,17 @@
 
 namespace Bitrix\Intranet\User\Grid\Panel\Action\Group;
 
-use Bitrix\Main\Error;
+use Bitrix\Intranet\User\Access\UserActionDictionary;
 use Bitrix\Main\Filter\Filter;
 use Bitrix\Main\HttpRequest;
 use Bitrix\Main\Localization\Loc;
 use Bitrix\Main\Result;
 
-class FireChildAction extends UserGroupChildAction
+class FireChildAction extends UserAccessChildAction
 {
-	public static function getId(): string
+	public static function getActionType(): UserActionDictionary
 	{
-		return 'fire';
+		return UserActionDictionary::FIRE;
 	}
 
 	public function getName(): string

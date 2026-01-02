@@ -129,7 +129,7 @@ export class Analytics
 			c_element: params.withVideo ? AnalyticsElement.videoButton : AnalyticsElement.audioButton,
 			status: params.status,
 			p1: params.mediaParams.video ? AnalyticsDeviceStatus.videoOn : AnalyticsDeviceStatus.videoOff,
-			p2: params.mediaParams.audio ? AnalyticsDeviceStatus.micOn : AnalyticsDeviceStatus.micOff,
+			p2: `chatUserCount_${params.userCounter}`,
 			p3: params.isCopilotActive ? AnalyticsAIStatus.aiOn : AnalyticsAIStatus.aiOff,
 			p5: `callId_${params.callId}`,
 		});
@@ -159,7 +159,7 @@ export class Analytics
 			type: params.callType,
 			status: params.status,
 			p1: params.mediaParams.video ? AnalyticsDeviceStatus.videoOn : AnalyticsDeviceStatus.videoOff,
-			p2: params.mediaParams.audio ? AnalyticsDeviceStatus.micOn : AnalyticsDeviceStatus.micOff,
+			p2: `chatUserCount_${params.associatedEntity?.userCounter}`,
 			p3: params.isCopilotActive ? AnalyticsAIStatus.aiOn : AnalyticsAIStatus.aiOff,
 			p5: `callId_${params.callId}`,
 		};
@@ -168,6 +168,21 @@ export class Analytics
 		{
 			resultData.p4 = getCollabId(this.normalizeChatId(params.associatedEntity.id));
 		}
+
+		sendData(resultData);
+	}
+
+	onStartCallError(params)
+	{
+		const resultData = {
+			tool: AnalyticsTool.im,
+			category: AnalyticsCategory.call,
+			event: AnalyticsEvent.startCall,
+			type: params.callType,
+			status: `error_${params.errorCode}`,
+			p3: params.errorMessage ? `msg_${params.errorMessage}`.slice(0, 100) : undefined,
+			p5: 'callId_0',
+		};
 
 		sendData(resultData);
 	}
@@ -209,16 +224,50 @@ export class Analytics
 		sendData(sendParams);
 	}
 
+	onJoinCallError(params)
+	{
+		const resultData = {
+			tool: AnalyticsTool.im,
+			category: AnalyticsCategory.call,
+			event: AnalyticsEvent.connect,
+			type: params.callType,
+			status: `error_${params.errorCode}`,
+			p3: params.errorMessage ? `msg_${params.errorMessage}`.slice(0, 100) : undefined,
+			p5: `callId_${params.callId}`,
+		};
+
+		sendData(resultData);
+	}
+
 	onReconnect(params)
 	{
+		const reconnectionReasonInfo = 
+			params.reconnectionReasonInfo?.replace(`Handling a remote offer failed: InvalidAccessError: `, '*')
+				.replace(/_/g, '')
+				.substring(0, 100);
+
 		sendData({
 			tool: AnalyticsTool.im,
 			category: AnalyticsCategory.call,
 			event: AnalyticsEvent.reconnect,
 			type: params.callType,
 			c_section: AnalyticsSection.callWindow,
-			status: params.status,
+			status: params.reconnectionReason || '',
+			p3: `msg_${reconnectionReasonInfo}`,
 			p4: `attemptNumber_${params.reconnectionEventCount}`,
+			p5: `callId_${params.callId}`,
+		});
+	}
+
+	onReconnectError(params)
+	{
+		sendData({
+			tool: AnalyticsTool.im,
+			category: AnalyticsCategory.call,
+			event: AnalyticsEvent.reconnect,
+			type: params.callType,
+			status: `error_${params.errorCode}`,
+			p3: params.errorMessage ? `msg_${params.errorMessage}`.slice(0, 100) : undefined,
 			p5: `callId_${params.callId}`,
 		});
 	}
@@ -628,5 +677,134 @@ export class Analytics
 		}
 
 		sendData(resultData);
+	}
+
+	onOpenCallSettings(params)
+	{
+		sendData({
+			tool: AnalyticsTool.im,
+			category: AnalyticsCategory.call,
+			event: AnalyticsEvent.openSettings,
+			type: params.callType,
+			p5: `callId_${params.callId}`,
+		});
+	}
+
+	onDeleteUser(params)
+	{
+		sendData({
+			tool: AnalyticsTool.im,
+			category: AnalyticsCategory.call,
+			event: AnalyticsEvent.deleteUser,
+			type: params.callType,
+			p5: `callId_${params.callId}`,
+		});
+	}
+
+	onCallSettingsChanged(params)
+	{
+		let event = '';
+
+		switch (params.typeOfSetting) {
+			case 'mic':
+				event = AnalyticsEvent.restrictMic;
+				break;
+			case 'cam':
+				event = AnalyticsEvent.restrictCamera;
+				break;
+			case 'screenshare':
+				event = AnalyticsEvent.restrictScreenshare;
+				break;
+		}
+
+		if (event)
+		{
+			sendData({
+				tool: AnalyticsTool.im,
+				category: AnalyticsCategory.call,
+				event: event,
+				type: params.callType,
+				/*p1: params.settingEnabled,*/
+				p5: `callId_${params.callId}`,
+			});
+		}
+	}
+
+	onTurnOffAllParticipansStream(params)
+	{
+		let event = '';
+
+		switch (params.typeOfStream) {
+			case 'mic':
+				event = AnalyticsEvent.allMicOff;
+				break;
+			case 'cam':
+				event = AnalyticsEvent.allCamerasOff;
+				break;
+			case 'screenshare':
+				event = AnalyticsEvent.allScreenshareOff;
+				break;
+		}
+
+		if (event)
+		{
+			sendData({
+				tool: AnalyticsTool.im,
+				category: AnalyticsCategory.call,
+				event: event,
+				type: params.callType,
+				p5: `callId_${params.callId}`,
+			});
+		}
+	}
+
+	onTurnOffParticipantStream(params)
+	{
+		let event = '';
+
+		switch (params.typeOfSetting) {
+			case 'mic':
+				event = AnalyticsEvent.userMicOff;
+				break;
+			case 'cam':
+				event = AnalyticsEvent.userCameraOff;
+				break;
+			case 'screenshare':
+				event = AnalyticsEvent.userScreenshareOff;
+				break;
+		}
+
+		if (event)
+		{
+			sendData({
+				tool: AnalyticsTool.im,
+				category: AnalyticsCategory.call,
+				event: event,
+				type: params.callType,
+				p5: `callId_${params.callId}`,
+			});
+		}
+	}
+
+	onAllowPermissionToSpeakResponse(params)
+	{
+		sendData({
+			tool: AnalyticsTool.im,
+			category: AnalyticsCategory.call,
+			event: AnalyticsEvent.approveRequest,
+			type: params.callType,
+			p5: `callId_${params.callId}`,
+		});
+	}
+
+	onDisallowPermissionToSpeakResponse(params)
+	{
+		sendData({
+			tool: AnalyticsTool.im,
+			category: AnalyticsCategory.call,
+			event: AnalyticsEvent.denyRequest,
+			type: params.callType,
+			p5: `callId_${params.callId}`,
+		});
 	}
 }

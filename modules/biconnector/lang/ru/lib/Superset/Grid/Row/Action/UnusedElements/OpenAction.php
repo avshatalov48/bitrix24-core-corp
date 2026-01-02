@@ -1,0 +1,3 @@
+<?php
+
+$MESS['BI_UNUSED_ELEMENTS_GRID_ROW_ACTION_OPEN'] = 'Открыть';

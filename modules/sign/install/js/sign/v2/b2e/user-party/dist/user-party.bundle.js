@@ -2,7 +2,7 @@
 this.BX = this.BX || {};
 this.BX.Sign = this.BX.Sign || {};
 this.BX.Sign.V2 = this.BX.Sign.V2 || {};
-(function (exports,main_core,sign_v2_helper,ui_entitySelector,sign_v2_b2e_userPartyCounters,sign_v2_b2e_userPartyPopup,sign_v2_api) {
+(function (exports,main_core,sign_v2_helper,ui_entitySelector,sign_v2_b2e_userPartyCounters,sign_v2_b2e_userPartyPopup,sign_v2_api,sign_featureStorage,sign_type,sign_v2_b2e_userPartyRefused) {
 	'use strict';
 
 	let _ = t => t,
@@ -12,13 +12,20 @@ this.BX.Sign.V2 = this.BX.Sign.V2 || {};
 	  _t4,
 	  _t5,
 	  _t6,
-	  _t7;
+	  _t7,
+	  _t8,
+	  _t9,
+	  _t10;
 	const Mode = Object.freeze({
 	  view: 'view',
 	  edit: 'edit'
 	});
-	const defaultAvatarLink = '/bitrix/js/sign/v2/b2e/user-party/images/user.svg';
-	const departmentAvatarLink = '/bitrix/js/sign/v2/b2e/user-party/images/department.svg';
+	const avatarLinks = {
+	  user: '/bitrix/js/sign/v2/b2e/user-party/images/user.svg',
+	  department: '/bitrix/js/sign/v2/b2e/user-party/images/department.svg',
+	  document: '/bitrix/js/sign/v2/b2e/user-party/images/sign-document.svg',
+	  signersList: '/bitrix/js/sign/v2/b2e/user-party/images/signers-list.svg'
+	};
 	const HelpdeskCodes = Object.freeze({
 	  SignEdmWithEmployees: '19740792'
 	});
@@ -26,6 +33,7 @@ this.BX.Sign.V2 = this.BX.Sign.V2 || {};
 	var _ui = /*#__PURE__*/babelHelpers.classPrivateFieldLooseKey("ui");
 	var _items = /*#__PURE__*/babelHelpers.classPrivateFieldLooseKey("items");
 	var _preselectedUserData = /*#__PURE__*/babelHelpers.classPrivateFieldLooseKey("preselectedUserData");
+	var _userCount = /*#__PURE__*/babelHelpers.classPrivateFieldLooseKey("userCount");
 	var _viewMode = /*#__PURE__*/babelHelpers.classPrivateFieldLooseKey("viewMode");
 	var _tagSelector = /*#__PURE__*/babelHelpers.classPrivateFieldLooseKey("tagSelector");
 	var _loader = /*#__PURE__*/babelHelpers.classPrivateFieldLooseKey("loader");
@@ -33,7 +41,11 @@ this.BX.Sign.V2 = this.BX.Sign.V2 || {};
 	var _documentUid = /*#__PURE__*/babelHelpers.classPrivateFieldLooseKey("documentUid");
 	var _userPartyPopup = /*#__PURE__*/babelHelpers.classPrivateFieldLooseKey("userPartyPopup");
 	var _counterDelayTimeout = /*#__PURE__*/babelHelpers.classPrivateFieldLooseKey("counterDelayTimeout");
+	var _role = /*#__PURE__*/babelHelpers.classPrivateFieldLooseKey("role");
+	var _userPartyRefused = /*#__PURE__*/babelHelpers.classPrivateFieldLooseKey("userPartyRefused");
 	var _init = /*#__PURE__*/babelHelpers.classPrivateFieldLooseKey("init");
+	var _renderTitle = /*#__PURE__*/babelHelpers.classPrivateFieldLooseKey("renderTitle");
+	var _renderDescription = /*#__PURE__*/babelHelpers.classPrivateFieldLooseKey("renderDescription");
 	var _createUserPartyPopup = /*#__PURE__*/babelHelpers.classPrivateFieldLooseKey("createUserPartyPopup");
 	var _displayShowMoreBtn = /*#__PURE__*/babelHelpers.classPrivateFieldLooseKey("displayShowMoreBtn");
 	var _loadPreselectedUsersData = /*#__PURE__*/babelHelpers.classPrivateFieldLooseKey("loadPreselectedUsersData");
@@ -46,11 +58,18 @@ this.BX.Sign.V2 = this.BX.Sign.V2 || {};
 	var _updateCounterWithDelay = /*#__PURE__*/babelHelpers.classPrivateFieldLooseKey("updateCounterWithDelay");
 	var _createItemLayout = /*#__PURE__*/babelHelpers.classPrivateFieldLooseKey("createItemLayout");
 	var _createDepartmentItemLayout = /*#__PURE__*/babelHelpers.classPrivateFieldLooseKey("createDepartmentItemLayout");
+	var _createDocumentItemLayout = /*#__PURE__*/babelHelpers.classPrivateFieldLooseKey("createDocumentItemLayout");
+	var _createSignersListItemLayout = /*#__PURE__*/babelHelpers.classPrivateFieldLooseKey("createSignersListItemLayout");
 	var _createUserItemLayout = /*#__PURE__*/babelHelpers.classPrivateFieldLooseKey("createUserItemLayout");
 	var _clean = /*#__PURE__*/babelHelpers.classPrivateFieldLooseKey("clean");
 	var _getViewModeItemsCount = /*#__PURE__*/babelHelpers.classPrivateFieldLooseKey("getViewModeItemsCount");
+	var _makeItemMapKeyByTag = /*#__PURE__*/babelHelpers.classPrivateFieldLooseKey("makeItemMapKeyByTag");
 	class UserParty {
 	  constructor(_options) {
+	    var _options$role;
+	    Object.defineProperty(this, _makeItemMapKeyByTag, {
+	      value: _makeItemMapKeyByTag2
+	    });
 	    Object.defineProperty(this, _getViewModeItemsCount, {
 	      value: _getViewModeItemsCount2
 	    });
@@ -59,6 +78,12 @@ this.BX.Sign.V2 = this.BX.Sign.V2 || {};
 	    });
 	    Object.defineProperty(this, _createUserItemLayout, {
 	      value: _createUserItemLayout2
+	    });
+	    Object.defineProperty(this, _createSignersListItemLayout, {
+	      value: _createSignersListItemLayout2
+	    });
+	    Object.defineProperty(this, _createDocumentItemLayout, {
+	      value: _createDocumentItemLayout2
 	    });
 	    Object.defineProperty(this, _createDepartmentItemLayout, {
 	      value: _createDepartmentItemLayout2
@@ -96,6 +121,12 @@ this.BX.Sign.V2 = this.BX.Sign.V2 || {};
 	    Object.defineProperty(this, _createUserPartyPopup, {
 	      value: _createUserPartyPopup2
 	    });
+	    Object.defineProperty(this, _renderDescription, {
+	      value: _renderDescription2
+	    });
+	    Object.defineProperty(this, _renderTitle, {
+	      value: _renderTitle2
+	    });
 	    Object.defineProperty(this, _init, {
 	      value: _init2
 	    });
@@ -121,6 +152,10 @@ this.BX.Sign.V2 = this.BX.Sign.V2 || {};
 	    Object.defineProperty(this, _preselectedUserData, {
 	      writable: true,
 	      value: []
+	    });
+	    Object.defineProperty(this, _userCount, {
+	      writable: true,
+	      value: 0
 	    });
 	    Object.defineProperty(this, _viewMode, {
 	      writable: true,
@@ -150,11 +185,21 @@ this.BX.Sign.V2 = this.BX.Sign.V2 || {};
 	      writable: true,
 	      value: null
 	    });
+	    Object.defineProperty(this, _role, {
+	      writable: true,
+	      value: sign_type.MemberRole.signer
+	    });
+	    Object.defineProperty(this, _userPartyRefused, {
+	      writable: true,
+	      value: void 0
+	    });
 	    babelHelpers.classPrivateFieldLooseBase(this, _api)[_api] = new sign_v2_api.Api();
 	    babelHelpers.classPrivateFieldLooseBase(this, _viewMode)[_viewMode] = _options.mode;
+	    babelHelpers.classPrivateFieldLooseBase(this, _role)[_role] = (_options$role = _options.role) != null ? _options$role : sign_type.MemberRole.signer;
 	    babelHelpers.classPrivateFieldLooseBase(this, _init)[_init](_options);
 	  }
 	  getLayout(region) {
+	    var _this$userPartyRefuse;
 	    if (babelHelpers.classPrivateFieldLooseBase(this, _ui)[_ui].container) {
 	      return babelHelpers.classPrivateFieldLooseBase(this, _ui)[_ui].container;
 	    }
@@ -182,27 +227,21 @@ this.BX.Sign.V2 = this.BX.Sign.V2 || {};
 	      main_core.Dom.append(babelHelpers.classPrivateFieldLooseBase(this, _ui)[_ui].showMoreSignersContainer, babelHelpers.classPrivateFieldLooseBase(this, _ui)[_ui].itemContainer);
 	      return babelHelpers.classPrivateFieldLooseBase(this, _ui)[_ui].itemContainer;
 	    }
-	    const descriptionMessage = region === 'ru' ? sign_v2_helper.Helpdesk.replaceLink(main_core.Loc.getMessage('SIGN_USER_PARTY_DESCRIPTION'), HelpdeskCodes.SignEdmWithEmployees) : main_core.Loc.getMessage('SIGN_CMP_MASTER_TPL_TOUR_STEP_CHOOSE_MEMBER_USER_PARTY_DESCRIPTION');
-	    babelHelpers.classPrivateFieldLooseBase(this, _ui)[_ui].description = main_core.Tag.render(_t4 || (_t4 = _`
-			<p class="sign-document-b2e-user-party__description">
-				${0}
-			</p>
-		`), descriptionMessage);
-	    return main_core.Tag.render(_t5 || (_t5 = _`
+	    babelHelpers.classPrivateFieldLooseBase(this, _ui)[_ui].description = babelHelpers.classPrivateFieldLooseBase(this, _renderDescription)[_renderDescription](region);
+	    return main_core.Tag.render(_t4 || (_t4 = _`
 			<div>
 				<div class="sign-b2e-settings__header-wrapper">
 					<h1 class="sign-b2e-settings__header">${0}</h1>
 					${0}
 				</div>
 				<div class="sign-b2e-settings__item">
-					<p class="sign-b2e-settings__item_title">
-						${0}
-					</p>
+					${0}
+					${0}
 					${0}
 					${0}
 				</div>
 			</div>
-		`), main_core.Loc.getMessage('SIGN_USER_PARTY_HEADER'), babelHelpers.classPrivateFieldLooseBase(this, _userPartyCounters)[_userPartyCounters].getLayout(), main_core.Loc.getMessage('SIGN_USER_PARTY_ITEM_TITLE'), babelHelpers.classPrivateFieldLooseBase(this, _ui)[_ui].itemContainer, babelHelpers.classPrivateFieldLooseBase(this, _ui)[_ui].description);
+		`), main_core.Loc.getMessage('SIGN_USER_PARTY_HEADER'), this.userPartyCounters.getLayout(), babelHelpers.classPrivateFieldLooseBase(this, _renderTitle)[_renderTitle](), babelHelpers.classPrivateFieldLooseBase(this, _ui)[_ui].itemContainer, babelHelpers.classPrivateFieldLooseBase(this, _ui)[_ui].description, (_this$userPartyRefuse = this.userPartyRefused.render()) != null ? _this$userPartyRefuse : '');
 	  }
 	  async load(ids) {
 	    const {
@@ -215,13 +254,24 @@ this.BX.Sign.V2 = this.BX.Sign.V2 || {};
 	    dialog.load();
 	    await promise;
 	  }
-	  async setSignersIds(usersData) {
+	  async setUserIds(usersData) {
 	    babelHelpers.classPrivateFieldLooseBase(this, _clean)[_clean]();
 	    const maxShownItems = babelHelpers.classPrivateFieldLooseBase(this, _getViewModeItemsCount)[_getViewModeItemsCount]();
-	    babelHelpers.classPrivateFieldLooseBase(this, _preselectedUserData)[_preselectedUserData] = usersData.sort((a, b) => a.entityType === 'department' ? -1 : 1).slice(0, maxShownItems);
+	    babelHelpers.classPrivateFieldLooseBase(this, _userCount)[_userCount] = usersData.length;
+	    babelHelpers.classPrivateFieldLooseBase(this, _preselectedUserData)[_preselectedUserData] = usersData.sort((a, b) => a.entityType === 'structure-node' ? -1 : 1).slice(0, maxShownItems);
+	    const membersResponse = await babelHelpers.classPrivateFieldLooseBase(this, _api)[_api].getMembersForDocument(babelHelpers.classPrivateFieldLooseBase(this, _documentUid)[_documentUid], 1, maxShownItems, babelHelpers.classPrivateFieldLooseBase(this, _role)[_role]);
+
+	    // filter out refused signers
+	    if (babelHelpers.classPrivateFieldLooseBase(this, _role)[_role] === sign_type.MemberRole.signer) {
+	      const knownUsers = new Set(membersResponse.members.map(member => member.userId));
+	      babelHelpers.classPrivateFieldLooseBase(this, _preselectedUserData)[_preselectedUserData] = babelHelpers.classPrivateFieldLooseBase(this, _preselectedUserData)[_preselectedUserData].filter(item => {
+	        return item.entityType === sign_type.EntityType.USER ? knownUsers.has(item.entityId) : true;
+	      });
+	    }
+
+	    // add signers from lists, departments, etc.
 	    if (babelHelpers.classPrivateFieldLooseBase(this, _preselectedUserData)[_preselectedUserData].length < maxShownItems) {
-	      const membersResponse = await babelHelpers.classPrivateFieldLooseBase(this, _api)[_api].getMembersForDocument(babelHelpers.classPrivateFieldLooseBase(this, _documentUid)[_documentUid], 1, maxShownItems);
-	      const preselectedIds = new Set(usersData.filter(item => item.entityType === 'user').map(item => item.entityId));
+	      const preselectedIds = new Set(usersData.filter(item => item.entityType === sign_type.EntityType.USER).map(item => item.entityId));
 	      const addMembers = membersResponse.members.filter(member => !preselectedIds.has(member.userId)).slice(0, maxShownItems - babelHelpers.classPrivateFieldLooseBase(this, _preselectedUserData)[_preselectedUserData].length);
 	      babelHelpers.classPrivateFieldLooseBase(this, _preselectedUserData)[_preselectedUserData] = [...babelHelpers.classPrivateFieldLooseBase(this, _preselectedUserData)[_preselectedUserData], ...addMembers.map(member => {
 	        return {
@@ -237,6 +287,7 @@ this.BX.Sign.V2 = this.BX.Sign.V2 || {};
 	    babelHelpers.classPrivateFieldLooseBase(this, _displayShowMoreBtn)[_displayShowMoreBtn]();
 	  }
 	  validate() {
+	    this.closeCounterGuide();
 	    const isValid = babelHelpers.classPrivateFieldLooseBase(this, _items)[_items].size > 0 && babelHelpers.classPrivateFieldLooseBase(this, _userPartyCounters)[_userPartyCounters].getCount() > 0;
 	    const tagSelectorContainer = babelHelpers.classPrivateFieldLooseBase(this, _tagSelector)[_tagSelector].getOuterContainer();
 	    if (isValid) {
@@ -246,8 +297,8 @@ this.BX.Sign.V2 = this.BX.Sign.V2 || {};
 	    }
 	    return isValid;
 	  }
-	  getUserIds() {
-	    return [...babelHelpers.classPrivateFieldLooseBase(this, _items)[_items].keys()];
+	  isRejectExcludedEnabled() {
+	    return babelHelpers.classPrivateFieldLooseBase(this, _userPartyRefused)[_userPartyRefused].shouldRemoveRefused();
 	  }
 	  getEntities() {
 	    return [...babelHelpers.classPrivateFieldLooseBase(this, _items)[_items].values()];
@@ -257,6 +308,37 @@ this.BX.Sign.V2 = this.BX.Sign.V2 || {};
 	  }
 	  setDocumentUid(uid) {
 	    babelHelpers.classPrivateFieldLooseBase(this, _documentUid)[_documentUid] = uid;
+	  }
+	  getPreselectedUserData() {
+	    return babelHelpers.classPrivateFieldLooseBase(this, _preselectedUserData)[_preselectedUserData];
+	  }
+	  getUniqueUsersCount() {
+	    var _babelHelpers$classPr, _babelHelpers$classPr2;
+	    return (_babelHelpers$classPr = (_babelHelpers$classPr2 = babelHelpers.classPrivateFieldLooseBase(this, _userPartyCounters)[_userPartyCounters]) == null ? void 0 : _babelHelpers$classPr2.getCount()) != null ? _babelHelpers$classPr : 0;
+	  }
+	  closeCounterGuide() {
+	    var _babelHelpers$classPr3;
+	    (_babelHelpers$classPr3 = babelHelpers.classPrivateFieldLooseBase(this, _userPartyCounters)[_userPartyCounters]) == null ? void 0 : _babelHelpers$classPr3.closeGuide();
+	  }
+	  /**
+	   * @protected
+	   */
+	  get userPartyCounters() {
+	    return babelHelpers.classPrivateFieldLooseBase(this, _userPartyCounters)[_userPartyCounters];
+	  }
+
+	  /**
+	   * @protected
+	   */
+	  get userPartyRefused() {
+	    return babelHelpers.classPrivateFieldLooseBase(this, _userPartyRefused)[_userPartyRefused];
+	  }
+
+	  /**
+	   * @protected
+	   */
+	  get ui() {
+	    return babelHelpers.classPrivateFieldLooseBase(this, _ui)[_ui];
 	  }
 	}
 	function _init2(options) {
@@ -271,7 +353,32 @@ this.BX.Sign.V2 = this.BX.Sign.V2 || {};
 	  babelHelpers.classPrivateFieldLooseBase(this, _userPartyCounters)[_userPartyCounters] = new sign_v2_b2e_userPartyCounters.UserPartyCounters({
 	    userCountersLimit: b2eSignersLimitCount
 	  });
+	  babelHelpers.classPrivateFieldLooseBase(this, _userPartyRefused)[_userPartyRefused] = new sign_v2_b2e_userPartyRefused.UserPartyRefused();
+	  babelHelpers.classPrivateFieldLooseBase(this, _userPartyRefused)[_userPartyRefused].subscribe('onChange', event => {
+	    babelHelpers.classPrivateFieldLooseBase(this, _updateEditModeCounter)[_updateEditModeCounter]();
+	  });
 	  babelHelpers.classPrivateFieldLooseBase(this, _ui)[_ui].container = this.getLayout(region);
+	  const tabs = [];
+	  const entities = [{
+	    id: 'user',
+	    options: {
+	      intranetUsersOnly: true
+	    }
+	  }, {
+	    id: 'structure-node',
+	    options: {
+	      selectMode: 'usersAndDepartments',
+	      fillRecentTab: true,
+	      allowFlatDepartments: true
+	    }
+	  }, {
+	    id: 'signers-list'
+	  }];
+	  if (sign_featureStorage.FeatureStorage.isDocumentsInSignersSelectorEnabled()) {
+	    entities.push({
+	      id: 'sign-document'
+	    });
+	  }
 	  babelHelpers.classPrivateFieldLooseBase(this, _tagSelector)[_tagSelector] = new ui_entitySelector.TagSelector({
 	    events: {
 	      onTagRemove: event => {
@@ -293,35 +400,50 @@ this.BX.Sign.V2 = this.BX.Sign.V2 || {};
 	      multiple: true,
 	      targetNode: babelHelpers.classPrivateFieldLooseBase(this, _ui)[_ui].itemContainer,
 	      context: 'sign_b2e_user_party',
-	      entities: [{
-	        id: 'user',
-	        options: {
-	          intranetUsersOnly: true
-	        }
-	      }, {
-	        id: 'department',
-	        options: {
-	          selectMode: 'usersAndDepartments',
-	          fillRecentTab: true,
-	          allowFlatDepartments: true
-	        }
-	      }],
+	      tabs,
+	      entities,
 	      dropdownMode: false,
 	      hideOnDeselect: false
 	    }
 	  });
 	  babelHelpers.classPrivateFieldLooseBase(this, _tagSelector)[_tagSelector].renderTo(babelHelpers.classPrivateFieldLooseBase(this, _ui)[_ui].itemContainer);
 	}
+	function _renderTitle2() {
+	  return main_core.Tag.render(_t5 || (_t5 = _`
+			<p class="sign-b2e-settings__item_title">
+				${0}
+			</p>
+		`), main_core.Loc.getMessage('SIGN_USER_PARTY_ITEM_TITLE'));
+	}
+	function _renderDescription2(region) {
+	  const descriptionMessage = region === 'ru' ? sign_v2_helper.Helpdesk.replaceLink(main_core.Loc.getMessage('SIGN_USER_PARTY_DESCRIPTION'), HelpdeskCodes.SignEdmWithEmployees) : main_core.Loc.getMessage('SIGN_USER_PARTY_DESCRIPTION_WITHOUT_LINK');
+	  return main_core.Tag.render(_t6 || (_t6 = _`
+			<p class="sign-document-b2e-user-party__description">
+				${0}
+			</p>
+		`), descriptionMessage);
+	}
 	function _createUserPartyPopup2(bindElement) {
+	  const isDepartmentsVisible = babelHelpers.classPrivateFieldLooseBase(this, _role)[_role] === sign_type.MemberRole.signer;
 	  return new sign_v2_b2e_userPartyPopup.UserPartyPopup({
-	    bindElement
+	    bindElement,
+	    isDepartmentsVisible,
+	    role: babelHelpers.classPrivateFieldLooseBase(this, _role)[_role]
 	  });
 	}
 	async function _displayShowMoreBtn2() {
+	  let isShowMoreBtn = false;
+	  let showMoreCount = 0;
 	  const shownUsers = babelHelpers.classPrivateFieldLooseBase(this, _preselectedUserData)[_preselectedUserData].reduce((count, item) => item.entityType === 'user' ? count + 1 : count, 0);
-	  const signersCountResponse = await babelHelpers.classPrivateFieldLooseBase(this, _api)[_api].getUniqUserCountForDocument(babelHelpers.classPrivateFieldLooseBase(this, _documentUid)[_documentUid]);
-	  const showMoreCount = signersCountResponse.count - shownUsers;
-	  if (showMoreCount > 0) {
+	  if (babelHelpers.classPrivateFieldLooseBase(this, _role)[_role] === sign_type.MemberRole.signer) {
+	    const signersCountResponse = await babelHelpers.classPrivateFieldLooseBase(this, _api)[_api].getUniqUserCountForDocument(babelHelpers.classPrivateFieldLooseBase(this, _documentUid)[_documentUid], false);
+	    showMoreCount = signersCountResponse.count - shownUsers;
+	    isShowMoreBtn = showMoreCount > 0;
+	  } else if (babelHelpers.classPrivateFieldLooseBase(this, _userCount)[_userCount] > babelHelpers.classPrivateFieldLooseBase(this, _getViewModeItemsCount)[_getViewModeItemsCount]()) {
+	    isShowMoreBtn = true;
+	    showMoreCount = babelHelpers.classPrivateFieldLooseBase(this, _userCount)[_userCount] - babelHelpers.classPrivateFieldLooseBase(this, _getViewModeItemsCount)[_getViewModeItemsCount]();
+	  }
+	  if (isShowMoreBtn) {
 	    babelHelpers.classPrivateFieldLooseBase(this, _ui)[_ui].showMoreSignersContainer.querySelector('.--count-placeholder').textContent = showMoreCount;
 	    main_core.Dom.show(babelHelpers.classPrivateFieldLooseBase(this, _ui)[_ui].showMoreSignersContainer);
 	  } else {
@@ -372,12 +494,12 @@ this.BX.Sign.V2 = this.BX.Sign.V2 || {};
 	  return babelHelpers.classPrivateFieldLooseBase(this, _loader)[_loader];
 	}
 	function _removeItem2(tag) {
-	  const userId = tag.id;
-	  const item = babelHelpers.classPrivateFieldLooseBase(this, _items)[_items].get(userId);
+	  const itemKey = babelHelpers.classPrivateFieldLooseBase(this, _makeItemMapKeyByTag)[_makeItemMapKeyByTag](tag);
+	  const item = babelHelpers.classPrivateFieldLooseBase(this, _items)[_items].get(itemKey);
 	  if (item != null && item.container) {
 	    main_core.Dom.remove(item.container);
 	  }
-	  babelHelpers.classPrivateFieldLooseBase(this, _items)[_items].delete(userId);
+	  babelHelpers.classPrivateFieldLooseBase(this, _items)[_items].delete(itemKey);
 	  babelHelpers.classPrivateFieldLooseBase(this, _updateEditModeCounter)[_updateEditModeCounter]();
 	}
 	function _addItem2(tag) {
@@ -396,7 +518,7 @@ this.BX.Sign.V2 = this.BX.Sign.V2 || {};
 	    main_core.Dom.prepend(container, babelHelpers.classPrivateFieldLooseBase(this, _ui)[_ui].itemContainer);
 	  }
 	  item.container = container;
-	  babelHelpers.classPrivateFieldLooseBase(this, _items)[_items].set(item.id, item);
+	  babelHelpers.classPrivateFieldLooseBase(this, _items)[_items].set(babelHelpers.classPrivateFieldLooseBase(this, _makeItemMapKeyByTag)[_makeItemMapKeyByTag](tag), item);
 	  babelHelpers.classPrivateFieldLooseBase(this, _updateEditModeCounter)[_updateEditModeCounter]();
 	}
 	function _updateEditModeCounter2() {
@@ -412,17 +534,26 @@ this.BX.Sign.V2 = this.BX.Sign.V2 || {};
 	function _updateCounterWithDelay2(selectedMembers) {
 	  clearTimeout(babelHelpers.classPrivateFieldLooseBase(this, _counterDelayTimeout)[_counterDelayTimeout]);
 	  babelHelpers.classPrivateFieldLooseBase(this, _counterDelayTimeout)[_counterDelayTimeout] = setTimeout(async () => {
-	    var _babelHelpers$classPr;
-	    const response = await babelHelpers.classPrivateFieldLooseBase(this, _api)[_api].getUniqUserCountForMembers(selectedMembers);
-	    (_babelHelpers$classPr = babelHelpers.classPrivateFieldLooseBase(this, _userPartyCounters)[_userPartyCounters]) == null ? void 0 : _babelHelpers$classPr.update(response.count);
+	    var _babelHelpers$classPr4;
+	    const response = await babelHelpers.classPrivateFieldLooseBase(this, _api)[_api].getUniqUserCountForMembers(selectedMembers, this.isRejectExcludedEnabled());
+	    (_babelHelpers$classPr4 = babelHelpers.classPrivateFieldLooseBase(this, _userPartyCounters)[_userPartyCounters]) == null ? void 0 : _babelHelpers$classPr4.update(response.count);
 	  }, 100);
 	}
 	function _createItemLayout2(item) {
-	  return item.entityType === 'department' ? babelHelpers.classPrivateFieldLooseBase(this, _createDepartmentItemLayout)[_createDepartmentItemLayout](item) : babelHelpers.classPrivateFieldLooseBase(this, _createUserItemLayout)[_createUserItemLayout](item);
+	  switch (item.entityType) {
+	    case 'structure-node':
+	      return babelHelpers.classPrivateFieldLooseBase(this, _createDepartmentItemLayout)[_createDepartmentItemLayout](item);
+	    case 'sign-document':
+	      return babelHelpers.classPrivateFieldLooseBase(this, _createDocumentItemLayout)[_createDocumentItemLayout](item);
+	    case 'signers-list':
+	      return babelHelpers.classPrivateFieldLooseBase(this, _createSignersListItemLayout)[_createSignersListItemLayout](item);
+	    default:
+	      return babelHelpers.classPrivateFieldLooseBase(this, _createUserItemLayout)[_createUserItemLayout](item);
+	  }
 	}
 	function _createDepartmentItemLayout2(item) {
 	  const title = main_core.Text.encode(item.title);
-	  return main_core.Tag.render(_t6 || (_t6 = _`
+	  return main_core.Tag.render(_t7 || (_t7 = _`
 			<div class="sign-document-b2e-user-party__item-list_item --department">
 				<div>
 					<img
@@ -434,13 +565,45 @@ this.BX.Sign.V2 = this.BX.Sign.V2 || {};
 					${0}
 				</div>
 			</div>
-		`), title, departmentAvatarLink, title, title);
+		`), title, avatarLinks.department, title, title);
+	}
+	function _createDocumentItemLayout2(item) {
+	  const title = main_core.Text.encode(item.title);
+	  return main_core.Tag.render(_t8 || (_t8 = _`
+			<div class="sign-document-b2e-user-party__item-list_item --document">
+				<div>
+					<img
+						class="sign-document-b2e-user-party__item-list_item-avatar"
+						title="${0}" src='${0}' alt="avatar"
+					/>
+				</div>
+				<div title="${0}" class="sign-document-b2e-user-party__item-list_item-text">
+					${0}
+				</div>
+			</div>
+		`), title, avatarLinks.document, title, title);
+	}
+	function _createSignersListItemLayout2(item) {
+	  const title = main_core.Text.encode(item.title);
+	  return main_core.Tag.render(_t9 || (_t9 = _`
+			<div class="sign-document-b2e-user-party__item-list_item --signers-list">
+				<div>
+					<img
+						class="sign-document-b2e-user-party__item-list_item-avatar"
+						title="${0}" src='${0}' alt="avatar"
+					/>
+				</div>
+				<div title="${0}" class="sign-document-b2e-user-party__item-list_item-text">
+					${0}
+				</div>
+			</div>
+		`), title, avatarLinks.signersList, title, title);
 	}
 	function _createUserItemLayout2(item) {
 	  const title = main_core.Text.encode(item.title);
-	  const itemAvatar = item.avatar || defaultAvatarLink;
-	  const profileLink = `/company/personal/user/${main_core.Text.encode(item.entityId)}/`;
-	  return main_core.Tag.render(_t7 || (_t7 = _`
+	  const itemAvatar = item.avatar || avatarLinks.user;
+	  const profileLink = `/company/personal/user/${item.entityId}/`;
+	  return main_core.Tag.render(_t10 || (_t10 = _`
 			<div class="sign-document-b2e-user-party__item-list_item --user">
 				<a href="${0}">
 					<img
@@ -452,19 +615,27 @@ this.BX.Sign.V2 = this.BX.Sign.V2 || {};
 					${0}
 				</div>
 			</div>
-		`), profileLink, title, main_core.Text.encode(itemAvatar), title, title);
+		`), main_core.Text.encode(profileLink), title, main_core.Text.encode(itemAvatar), title, title);
 	}
 	function _clean2() {
-	  var _babelHelpers$classPr2;
+	  var _babelHelpers$classPr5;
+	  this.closeCounterGuide();
 	  [...babelHelpers.classPrivateFieldLooseBase(this, _items)[_items].values()].forEach(item => main_core.Dom.remove(item.container));
 	  babelHelpers.classPrivateFieldLooseBase(this, _items)[_items].clear();
-	  (_babelHelpers$classPr2 = babelHelpers.classPrivateFieldLooseBase(this, _userPartyCounters)[_userPartyCounters]) == null ? void 0 : _babelHelpers$classPr2.update(babelHelpers.classPrivateFieldLooseBase(this, _items)[_items].size);
+	  (_babelHelpers$classPr5 = babelHelpers.classPrivateFieldLooseBase(this, _userPartyCounters)[_userPartyCounters]) == null ? void 0 : _babelHelpers$classPr5.update(babelHelpers.classPrivateFieldLooseBase(this, _items)[_items].size);
 	}
 	function _getViewModeItemsCount2() {
 	  return 7; // for fixed slider width
 	}
+	function _makeItemMapKeyByTag2(tag) {
+	  const {
+	    id,
+	    entityId
+	  } = tag;
+	  return `${entityId}_${id}`;
+	}
 
 	exports.UserParty = UserParty;
 
-}((this.BX.Sign.V2.B2e = this.BX.Sign.V2.B2e || {}),BX,BX.Sign.V2,BX.UI.EntitySelector,BX.Sign.V2.B2e,BX.Sign.V2.B2e,BX.Sign.V2));
+}((this.BX.Sign.V2.B2e = this.BX.Sign.V2.B2e || {}),BX,BX.Sign.V2,BX.UI.EntitySelector,BX.Sign.V2.B2e,BX.Sign.V2.B2e,BX.Sign.V2,BX.Sign,BX.Sign,BX.Sign.V2.B2e));
 //# sourceMappingURL=user-party.bundle.js.map

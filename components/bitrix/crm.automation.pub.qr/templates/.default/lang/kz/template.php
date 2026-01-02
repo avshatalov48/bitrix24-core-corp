@@ -1,0 +1,4 @@
+<?php
+$MESS["CRM_AUTOMATION_QR_DEFAULT_ACTION_LABEL"] = "Растау";
+$MESS["CRM_AUTOMATION_QR_LOGO"] = "Зарядталған";
+$MESS["CRM_AUTOMATION_QR_SUCCESS"] = "Сәтті!";

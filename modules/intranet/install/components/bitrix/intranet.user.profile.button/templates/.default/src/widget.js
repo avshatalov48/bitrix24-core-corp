@@ -240,8 +240,8 @@ export default class Widget extends EventEmitter
 				return BX.SidePanel.Instance.open(this.#profile.URL);
 			};
 
-			let avatar;
-			let avatarNode;
+			let avatar = null;
+			let avatarNode = null;
 
 			if (this.#profile.STATUS_CODE === 'collaber')
 			{
@@ -272,7 +272,11 @@ export default class Widget extends EventEmitter
 					if (this.#profile.ID > 0 && userId && this.#profile.ID.toString() === userId.toString())
 					{
 						this.#profile.PHOTO = url;
-						avatar.setUserPic(url);
+
+						if (avatar)
+						{
+							avatar.setUserPic(url);
+						}
 					}
 				})
 			;
@@ -525,7 +529,7 @@ export default class Widget extends EventEmitter
 						})).show();
 					}
 					const onclickHelp = (event: MouseEvent) => {
-						top.BX.Helper.show('redirect=detail&code=14999860');
+						top.BX.Helper.show('redirect=detail&code=22218950');
 						this.hide();
 						event.preventDefault();
 						event.stopPropagation();
@@ -878,7 +882,7 @@ export default class Widget extends EventEmitter
 	{
 		return this.#cache.remember('getLogoutContainer', () => {
 			const onclickLogout = () => {
-				if (DesktopApi.isDesktop())
+				if (!Type.isNil(DesktopApi) && DesktopApi.isDesktop())
 				{
 					DesktopApi.logout();
 				}

@@ -108,16 +108,6 @@ else
 	$entityType = \CCrmOwnerType::LeadName;
 
 	$APPLICATION->IncludeComponent(
-		'bitrix:crm.entity.counter.panel',
-		'',
-		array(
-			'ENTITY_TYPE_NAME' => $entityType,
-			'EXTRAS' => array(),
-			'PATH_TO_ENTITY_LIST' => $arResult['PATH_TO_LEAD_KANBAN']
-		)
-	);
-
-	$APPLICATION->IncludeComponent(
 		'bitrix:crm.dedupe.autosearch',
 		'',
 		array(
@@ -159,6 +149,10 @@ else
 		'',
 		[
 			'ENTITY_TYPE' => $entityType,
+			'COUNTER_PANEL' => [
+				'ENTITY_TYPE_NAME' => $entityType,
+				'EXTRAS' => [],
+			],
 			'NAVIGATION_BAR' => (new NavigationBarPanel(CCrmOwnerType::Lead))
 				->setItems([
 					NavigationBarPanel::ID_KANBAN,

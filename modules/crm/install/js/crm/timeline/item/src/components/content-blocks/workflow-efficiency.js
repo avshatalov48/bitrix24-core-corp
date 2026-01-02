@@ -37,26 +37,6 @@ export default {
 		{
 			return this.workflowResult !== undefined;
 		},
-		href(): string
-		{
-			if (this.author && this.author.link)
-			{
-				return this.author.link;
-			}
-
-			return '';
-		},
-		imageStyle(): {}
-		{
-			if (this.author && this.author.avatarSize100)
-			{
-				return {
-					backgroundImage: `url('${encodeURI(this.author.avatarSize100)}')`,
-				};
-			}
-
-			return {};
-		},
 		workflowResultHtml(): HTMLElement | string | null
 		{
 			if (this.workflowResult && this.workflowResult.status === WorkflowResultStatus.NO_RIGHTS_RESULT)
@@ -94,10 +74,15 @@ export default {
 
 			if (this.workflowResult && this.workflowResult.status === WorkflowResultStatus.USER_RESULT)
 			{
-				return Loc.getMessage(
-					'CRM_TIMELINE_WORKFLOW_NO_RESULT',
-					{ '#USER#': this.workflowResult.text ?? '' },
-				);
+				if (this.author)
+				{
+					return Loc.getMessage(
+						'CRM_TIMELINE_WORKFLOW_NO_RESULT',
+						{ '#USER#': this.workflowResult.text ?? '' },
+					);
+				}
+
+				return this.workflowResult.text ?? '';
 			}
 
 			return null;

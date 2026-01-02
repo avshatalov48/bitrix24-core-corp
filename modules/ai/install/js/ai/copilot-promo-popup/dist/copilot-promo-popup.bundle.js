@@ -21,13 +21,14 @@ this.BX = this.BX || {};
 	    title: 'CoPilot',
 	    text: getTextWithReplaceAccent('COPILOT_PROMO_POPUP_LIVEFEED_EDITOR_TEXT')
 	  },
-	  chat: {
+	  siteWithCopilot: {
 	    videoSrc: {
-	      en: '/bitrix/js/ai/copilot-promo-popup/videos/en/chat.webm',
-	      ru: '/bitrix/js/ai/copilot-promo-popup/videos/ru/chat.webm'
+	      en: '/bitrix/js/ai/copilot-promo-popup/videos/en/siteWithCopilot.webm',
+	      ru: '/bitrix/js/ai/copilot-promo-popup/videos/ru/siteWithCopilot.webm'
 	    },
+	    videoContainerMinHeight: 226,
 	    title: 'CoPilot',
-	    text: getTextWithReplaceAccent('COPILOT_PROMO_POPUP_CHATS_TEXT')
+	    text: getTextWithReplaceAccent('COPILOT_PROMO_POPUP_SITE_WITH_COPILOT_TEXT')
 	  }
 	});
 	function getTextWithReplaceAccent(messageCode) {
@@ -103,7 +104,8 @@ this.BX = this.BX || {};
 	CopilotPromoPopup.Preset = Object.freeze({
 	  TASK: 'task',
 	  LIVE_FEED_EDITOR: 'liveFeedEditor',
-	  CHAT: 'chat'
+	  CHAT: 'chat',
+	  SITE_WITH_COPILOT: 'siteWithCopilot'
 	});
 	CopilotPromoPopup.PromoVideoPopupEvents = ui_promoVideoPopup.PromoVideoPopupEvents;
 

@@ -1,4 +1,5 @@
 <?php
+
 namespace Bitrix\Sign\Blank\Block;
 
 use Bitrix\Main\Localization\Loc;
@@ -28,7 +29,7 @@ class Text extends Dummy
 	public static function getDefaultData(): array
 	{
 		return [
-			'text' => ''
+			'text' => '',
 		];
 	}
 

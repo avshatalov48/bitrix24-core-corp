@@ -5,6 +5,11 @@ use Bitrix\Extranet\PortalSettings;
 define('CONFIRM_PAGE', true);
 require($_SERVER["DOCUMENT_ROOT"]."/bitrix/header.php");
 
+if (\Bitrix\Intranet\CurrentUser::get()->isAuthorized())
+{
+	LocalRedirect(SITE_DIR);
+}
+
 IncludeModuleLangFile($_SERVER['DOCUMENT_ROOT'] . '/bitrix/modules/extranet/public/confirm/index.php');
 
 $APPLICATION->SetTitle(GetMessage("EXTRANET_CONFIRM_PAGE_TITLE"));

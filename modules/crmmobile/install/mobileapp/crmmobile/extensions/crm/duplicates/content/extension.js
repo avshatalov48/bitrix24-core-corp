@@ -6,6 +6,7 @@ jn.define('crm/duplicates/content', (require, exports, module) => {
 	const AppTheme = require('apptheme');
 	const { EventEmitter } = require('event-emitter');
 	const { DuplicatesPanel } = require('crm/duplicates/panel');
+	const { Random } = require('utils/random');
 
 	/**
 	 * @class DuplicatesContent

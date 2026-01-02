@@ -52,7 +52,7 @@ jn.define('layout/ui/fields/datetime/theme/air', (require, exports, module) => {
 					ellipsize: 'end',
 				}),
 			),
-			field.getConfig()?.renderAfter(),
+			field.getConfig()?.renderAfter?.(),
 		),
 	);
 

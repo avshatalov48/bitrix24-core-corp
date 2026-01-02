@@ -10,6 +10,7 @@ use Bitrix\Tasks\Scrum\Form\EntityForm;
 use Bitrix\Tasks\Scrum\Service\EntityService;
 use Bitrix\Tasks\Scrum\Service\KanbanService;
 use Bitrix\Tasks\Scrum\Service\SprintService;
+use Bitrix\Tasks\V2\Public\Command\Task\Kanban\AddTaskStageRelationCommand;
 
 class Kanban extends Base
 {
@@ -455,21 +456,19 @@ class Kanban extends Base
 			return false;
 		}
 
-		$result = TaskStageTable::add([
-			'TASK_ID' => $taskId,
-			'STAGE_ID' => $stageId,
-		]);
+		$result = (new AddTaskStageRelationCommand(
+			taskId: $taskId,
+			stageId: $stageId,
+		))->run();
 
 		if ($result->isSuccess())
 		{
 			return $result->getId();
 		}
-		else
-		{
-			$this->errorCollection->setError(new Error('System error'));
 
-			return false;
-		}
+		$this->errorCollection->setError(new Error('System error'));
+
+		return false;
 	}
 
 	/**

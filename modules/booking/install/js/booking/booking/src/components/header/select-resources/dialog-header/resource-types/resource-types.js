@@ -10,9 +10,19 @@ export const ResourceTypes = {
 			selectedTypes: {},
 		};
 	},
-	computed: mapGetters({
-		resourceTypes: 'resourceTypes/get',
-	}),
+	computed: {
+		...mapGetters({
+			resourceTypes: 'resourceTypes/get',
+		}),
+		visibleResourceTypes(): []
+		{
+			return this.resourceTypes.filter((item) => item.resourcesCnt > 0);
+		},
+		isResourceTypesSectionVisible(): boolean
+		{
+			return this.visibleResourceTypes.length > 0;
+		},
+	},
 	methods: {
 		selectAll(): void
 		{
@@ -43,7 +53,7 @@ export const ResourceTypes = {
 		},
 	},
 	template: `
-		<div class="booking-booking-resources-dialog-header-types">
+		<div v-if="isResourceTypesSectionVisible" class="booking-booking-resources-dialog-header-types">
 			<div class="booking-booking-resources-dialog-header-header">
 				<div class="booking-booking-resources-dialog-header-title">
 					{{ loc('BOOKING_BOOKING_RESOURCES_DIALOG_RESOURCE_TYPES') }}
@@ -64,7 +74,7 @@ export const ResourceTypes = {
 				</div>
 			</div>
 			<div class="booking-booking-resources-dialog-header-items">
-				<template v-for="resourceType of resourceTypes" :key="resourceType.id">
+				<template v-for="resourceType of visibleResourceTypes" :key="resourceType.id">
 					<label
 						class="booking-booking-resources-dialog-header-item"
 						data-element="booking-resources-dialog-type"

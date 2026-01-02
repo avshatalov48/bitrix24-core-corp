@@ -2,8 +2,6 @@ import { BaseEvent, EventEmitter } from 'main.core.events';
 import type { BookingUIFilter } from 'booking.lib.booking-filter';
 
 export const FilterPreset = Object.freeze({
-	NotConfirmed: 'booking-filter-preset-unconfirmed',
-	Delayed: 'booking-filter-preset-delayed',
 	CreatedByMe: 'booking-filter-preset-created-by-me',
 });
 
@@ -12,8 +10,14 @@ export const FilterField = Object.freeze({
 	Contact: 'CONTACT',
 	Company: 'COMPANY',
 	Resource: 'RESOURCE',
+	ResourceLabel: 'RESOURCE_label',
 	Confirmed: 'CONFIRMED',
-	Delayed: 'DELAYED',
+	RequireAttention: 'REQUIRE_ATTENTION',
+});
+
+export const RequireAttention = Object.freeze({
+	Delayed: 'D',
+	AwaitConfirmation: 'AC',
 });
 
 export const Filter = {
@@ -53,22 +57,20 @@ export const Filter = {
 				this.$emit('apply');
 			}
 		},
-		setPresetId(presetId: string): void
+		setFields(fields: BookingUIFilter): void
 		{
-			if (this.getPresetId() === presetId)
+			const preparedFields = this.filter.getFilterFieldsValues();
+
+			preparedFields[FilterField.RequireAttention] = fields.REQUIRE_ATTENTION;
+			preparedFields[FilterField.Resource] = fields.RESOURCE;
+
+			if (FilterField.ResourceLabel in fields)
 			{
-				return;
+				preparedFields[FilterField.ResourceLabel] = fields.RESOURCE_label;
 			}
 
-			this.filter.getApi().setFilter({
-				preset_id: presetId,
-			});
-		},
-		getPresetId(): string | null
-		{
-			const preset = this.filter.getPreset().getCurrentPresetId();
-
-			return preset === 'tmp_filter' ? null : preset;
+			this.filter.getApi().setFields(preparedFields);
+			this.filter.getApi().apply();
 		},
 		isFilterEmpty(): boolean
 		{
@@ -78,6 +80,7 @@ export const Filter = {
 		{
 			const booleanFields = [FilterField.Confirmed, FilterField.Delayed];
 			const arrayFields = [FilterField.Company, FilterField.Contact, FilterField.CreatedBy, FilterField.Resource];
+			const stringFields = [FilterField.RequireAttention];
 
 			const filterFields = this.filter.getFilterFieldsValues();
 			const fields = booleanFields
@@ -89,6 +92,13 @@ export const Filter = {
 			;
 
 			arrayFields.forEach((field: string) => {
+				if (filterFields[field]?.length > 0)
+				{
+					fields[field] = filterFields[field];
+				}
+			});
+
+			stringFields.forEach((field: string) => {
 				if (filterFields[field]?.length > 0)
 				{
 					fields[field] = filterFields[field];

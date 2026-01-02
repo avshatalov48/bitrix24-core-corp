@@ -5,6 +5,8 @@ namespace Bitrix\Sign\Item;
 use Bitrix\Main;
 use Bitrix\Sign\Contract;
 use Bitrix\Sign\Attribute\Copyable;
+use Bitrix\Sign\Type\Document\ExternalDateCreateSourceType;
+use Bitrix\Sign\Type\Document\ExternalIdSourceType;
 use Bitrix\Sign\Type\Document\InitiatedByType;
 
 class Document implements Contract\Item, Contract\Item\ItemWithOwner, Contract\Item\ItemWithCrmId, Contract\Item\TrackableItem
@@ -34,6 +36,8 @@ class Document implements Contract\Item, Contract\Item\ItemWithOwner, Contract\I
 		public ?int $createdById = null,
 		public ?int $groupId = null,
 		#[Copyable]
+		public ?int $companyEntityId = null,
+		#[Copyable]
 		public ?string $companyUid = null,
 		#[Copyable]
 		public ?int $representativeId = null,
@@ -56,6 +60,18 @@ class Document implements Contract\Item, Contract\Item\ItemWithOwner, Contract\I
 		#[Copyable]
 		public ?int $hcmLinkCompanyId = null,
 		public ?Main\Type\DateTime $dateStatusChanged = null,
+		#[Copyable]
+		public ?ExternalDateCreateSourceType $externalDateCreateSourceType = null,
+		#[Copyable]
+		public ?int $hcmLinkDateSettingId = null,
+		#[Copyable]
+		public ?ExternalIdSourceType $externalIdSourceType = null,
+		#[Copyable]
+		public ?int $hcmLinkExternalIdSettingId = null,
+		#[Copyable]
+		public ?int $hcmLinkDocumentTypeSettingId = null,
+		public ?Main\Type\DateTime $dateSignUntil = null,
+		public ?string $configuredDateFormat = null,
 	)
 	{
 		$this->initOriginal();

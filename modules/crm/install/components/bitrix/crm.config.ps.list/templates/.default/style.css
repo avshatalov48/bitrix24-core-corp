@@ -573,19 +573,6 @@ div.crm-config-ps-list-widget-content {
 	vertical-align: middle;
 }
 
-.crm-config-ps-list-activate-user-icon {
-	display: inline-block;
-	margin: 3px 5px 0 9px;
-	width: 24px;
-	height: 24px;
-	-webkit-border-radius: 50%;
-	-moz-border-radius: 50%;
-	border-radius: 50%;
-	background: url(http://24.avksentyev.bx/upload/resize_cache/main/d82/300_300_1/42-17948709.gif) no-repeat center;
-	background-size: cover;
-	vertical-align: top;
-}
-
 .crm-config-ps-list-activate-user-element {
 	display: inline-block;
 	width: 100%;

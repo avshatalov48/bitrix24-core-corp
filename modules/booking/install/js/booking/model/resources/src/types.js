@@ -10,19 +10,42 @@ export type ResourceModel = {
 	slotRanges: SlotRange[],
 	counter: number | null,
 	isMain: false,
-	isConfirmationNotificationOn: boolean,
-	isFeedbackNotificationOn: boolean,
-	isInfoNotificationOn: boolean,
-	isDelayedNotificationOn: boolean,
-	isReminderNotificationOn: boolean,
-	templateTypeConfirmation: string,
-	templateTypeFeedback: string,
-	templateTypeInfo: string,
-	templateTypeDelayed: string,
-	templateTypeReminder: string,
+	isDeleted: false,
 	createdBy: number,
 	createdAt: number,
 	updatedAt: number | null,
+	deletedAt: number | null,
+
+	// info
+	isInfoNotificationOn: boolean,
+	templateTypeInfo: string,
+	infoNotificationDelay: number,
+
+	// confirmation
+	isConfirmationNotificationOn: boolean,
+	templateTypeConfirmation: string,
+	confirmationNotificationDelay: number,
+	confirmationNotificationRepetitions: number,
+	confirmationNotificationRepetitionsInterval: number,
+	confirmationCounterDelay: number,
+
+	// reminder
+	isReminderNotificationOn: boolean,
+	templateTypeReminder: string,
+	reminderNotificationDelay: number,
+
+	// delayed
+	isDelayedNotificationOn: boolean,
+	templateTypeDelayed: string,
+	delayedNotificationDelay: number,
+	delayedCounterDelay: number,
+
+	// feedback
+	isFeedbackNotificationOn: boolean,
+	templateTypeFeedback: string,
+
+	// integrationCalendar
+	entities: IntegrationCalendarType[],
 };
 
 export type SlotRange = {
@@ -33,3 +56,21 @@ export type SlotRange = {
 	slotSize: number,
 	timezone: string,
 };
+
+export type IntegrationCalendarType = {
+	entityType: string;
+	entityId: number;
+	data: IntegrationCalendarDataType;
+}
+
+export type IntegrationCalendarDataType = {
+	userIds: number[];
+	locationId: number;
+	checkAvailability: boolean;
+	reminders: IntegrationCalendarReminder[];
+}
+
+export type IntegrationCalendarReminder = {
+	type: 'min';
+	count: number;
+}

@@ -198,6 +198,7 @@ class CrmEntityTreeComponent extends \CBitrixComponent
 				&& mb_strpos($status['ENTITY_ID'], 'DYNAMIC_') !== 0
 				&& mb_strpos($status['ENTITY_ID'], 'SMART_INVOICE_') !== 0
 				&& mb_strpos($status['ENTITY_ID'], 'SMART_DOCUMENT_') !== 0
+				&& mb_strpos($status['ENTITY_ID'], 'SMART_B2E_DOC_') !== 0
 			)
 			{
 				continue;
@@ -925,7 +926,7 @@ class CrmEntityTreeComponent extends \CBitrixComponent
 			return;
 		}
 
-		if (!Container::getInstance()->getUserPermissions()->checkReadPermissions($entityTypeId, $entityId))
+		if (!Container::getInstance()->getUserPermissions()->item()->canRead($entityTypeId, $entityId))
 		{
 			return;
 		}

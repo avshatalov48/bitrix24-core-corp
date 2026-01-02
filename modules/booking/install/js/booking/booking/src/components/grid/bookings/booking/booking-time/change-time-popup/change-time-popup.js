@@ -7,17 +7,25 @@ import { Popup } from 'booking.component.popup';
 import { TimeSelector } from 'booking.component.time-selector';
 import { Button, ButtonSize, ButtonColor, ButtonIcon } from 'booking.component.button';
 import { bookingService } from 'booking.provider.service.booking-service';
-import type { BookingModel } from 'booking.model.bookings';
+import type { BookingModel, OverbookingMapItem } from 'booking.model.bookings';
 import './change-time-popup.css';
 
 export const ChangeTimePopup = {
+	name: 'ChangeTimePopup',
 	emits: ['close'],
 	props: {
 		bookingId: {
 			type: [Number, String],
 			required: true,
 		},
-		targetNode: HTMLElement,
+		resourceId: {
+			type: Number,
+			required: true,
+		},
+		targetNode: {
+			type: HTMLElement,
+			required: true,
+		},
 	},
 	data(): Object
 	{
@@ -50,7 +58,7 @@ export const ChangeTimePopup = {
 		}),
 		popupId(): string
 		{
-			return `booking-change-time-popup-${this.bookingId}`;
+			return `booking-change-time-popup-${this.bookingId}-${this.resourceId}`;
 		},
 		config(): PopupOptions
 		{
@@ -69,10 +77,34 @@ export const ChangeTimePopup = {
 		},
 		isBusy(): boolean
 		{
-			return this.bookings
-				.filter(({ id }) => id !== this.bookingId)
-				.some(({ dateToTs, dateFromTs }) => dateToTs > this.fromTs && this.toTs > dateFromTs)
-			;
+			const bookingId = this.bookingId;
+			const bookings = this.bookings
+				.filter(({ id, dateToTs, dateFromTs }) => {
+					if (id !== bookingId && this.overbookingMap.has(id))
+					{
+						const overbooking: OverbookingMapItem = this.overbookingMap.get(id);
+						const resourceIntersections = overbooking.items.find((item) => item.resourceId === this.resourceId);
+						const intersections = resourceIntersections?.intersections?.filter((intersection) => {
+							return (
+								intersection.id !== bookingId
+								&& intersection.dateToTs > this.fromTs
+								&& this.toTs > intersection.dateFromTs
+							);
+						}) || [];
+						if (resourceIntersections && intersections.length === 0)
+						{
+							return false;
+						}
+					}
+
+					return (
+						id !== bookingId
+						&& dateToTs > this.fromTs
+						&& this.toTs > dateFromTs
+					);
+				});
+
+			return bookings.length > 1;
 		},
 		bookings(): BookingModel[]
 		{
@@ -84,6 +116,10 @@ export const ChangeTimePopup = {
 		booking(): BookingModel
 		{
 			return this.$store.getters['bookings/getById'](this.bookingId);
+		},
+		overbookingMap(): Map<number, OverbookingMapItem[]>
+		{
+			return this.$store.getters[`${Model.Bookings}/overbookingMap`];
 		},
 	},
 	methods: {

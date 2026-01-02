@@ -1,0 +1,6 @@
+<?php
+$MESS["CRM_WEBFORM_RECAPTCHA_ERROR_INVALID_INPUT_RESPONSE"] = "СПАМ тексеруінен өткен жоқ.";
+$MESS["CRM_WEBFORM_RECAPTCHA_ERROR_INVALID_INPUT_SECRET"] = "reCAPTCHA: дұрыс емес құпия кілт көрсетілген.";
+$MESS["CRM_WEBFORM_RECAPTCHA_ERROR_MISSING_INPUT_RESPONSE"] = "reCAPTCHA: тексеру жолы берілмеген.";
+$MESS["CRM_WEBFORM_RECAPTCHA_ERROR_MISSING_INPUT_SECRET"] = "reCAPTCHA: құпия кілт көрсетілмеген.";
+$MESS["CRM_WEBFORM_RECAPTCHA_ERROR_UNKNOWN"] = "Белгісіз қате орын алды.";

@@ -1256,7 +1256,6 @@ this.BX.Crm = this.BX.Crm || {};
 	      PARAMS: params,
 	      sessid: BX.bitrix_sessid()
 	    };
-	    babelHelpers.classPrivateFieldLooseBase(this, _sendAnalyticsData)[_sendAnalyticsData]('attempt');
 	    main_core.ajax({
 	      url: this._serviceUrl,
 	      method: 'POST',
@@ -1391,10 +1390,8 @@ this.BX.Crm = this.BX.Crm || {};
 	        this._errors = errors;
 	      }
 	      this._failedItemCount++;
-	      babelHelpers.classPrivateFieldLooseBase(this, _sendAnalyticsData)[_sendAnalyticsData]('error');
 	    }
 	    if (state === ProcessState.completed) {
-	      babelHelpers.classPrivateFieldLooseBase(this, _sendAnalyticsData)[_sendAnalyticsData]('success');
 	      SummaryPanel.create(this._id, {
 	        container: this._containerId,
 	        data: {

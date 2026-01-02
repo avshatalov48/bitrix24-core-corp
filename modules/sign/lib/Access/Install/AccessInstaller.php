@@ -8,8 +8,8 @@ use Bitrix\Main\LoaderException;
 use Bitrix\Sign\Access\Permission\PermissionTable;
 use Bitrix\Sign\Access\Permission\SignPermissionDictionary;
 use Bitrix\Sign\Access\Service\RolePermissionService as SignRolePermissionService;
-use CCrmPerms;
 use CCrmRole;
+use Bitrix\Crm\Service\UserPermissions;
 
 class AccessInstaller
 {
@@ -42,11 +42,11 @@ class AccessInstaller
 					'accessRights' => [
 						[
 							'id' => SignPermissionDictionary::SIGN_MY_SAFE_DOCUMENTS,
-							'value' => CCrmPerms::PERM_SELF,
+							'value' => UserPermissions::PERMISSION_SELF,
 						],
 						[
 							'id' => SignPermissionDictionary::SIGN_TEMPLATES,
-							'value' => CCrmPerms::PERM_ALL,
+							'value' => UserPermissions::PERMISSION_ALL,
 						],
 						[
 							'id' => SignPermissionDictionary::SIGN_MY_SAFE,
@@ -58,27 +58,35 @@ class AccessInstaller
 						],
 						[
 							'id' => SignPermissionDictionary::SIGN_B2E_MY_SAFE_DOCUMENTS,
-							'value' => CCrmPerms::PERM_SELF,
+							'value' => UserPermissions::PERMISSION_SELF,
+						],
+						[
+							'id' => SignPermissionDictionary::SIGN_B2E_MY_SAFE_FIRED,
+							'value' => UserPermissions::PERMISSION_NONE,
 						],
 						[
 							'id' => SignPermissionDictionary::SIGN_B2E_TEMPLATES,
-							'value' => CCrmPerms::PERM_SELF,
+							'value' => UserPermissions::PERMISSION_SELF,
 						],
 						[
 							'id' => SignPermissionDictionary::SIGN_B2E_TEMPLATE_WRITE,
-							'value' => CCrmPerms::PERM_SELF,
+							'value' => UserPermissions::PERMISSION_SELF,
 						],
 						[
 							'id' => SignPermissionDictionary::SIGN_B2E_TEMPLATE_CREATE,
-							'value' => CCrmPerms::PERM_SELF,
+							'value' => UserPermissions::PERMISSION_SELF,
 						],
 						[
 							'id' => SignPermissionDictionary::SIGN_B2E_TEMPLATE_READ,
-							'value' => CCrmPerms::PERM_SELF,
+							'value' => UserPermissions::PERMISSION_SELF,
 						],
 						[
 							'id' => SignPermissionDictionary::SIGN_B2E_TEMPLATE_DELETE,
-							'value' => CCrmPerms::PERM_SELF,
+							'value' => UserPermissions::PERMISSION_SELF,
+						],
+						[
+							'id' => SignPermissionDictionary::SIGN_B2E_SIGNERS_LIST_REFUSED,
+							'value' => UserPermissions::PERMISSION_NONE,
 						],
 					],
 				],
@@ -88,11 +96,11 @@ class AccessInstaller
 					'accessRights' => [
 						[
 							'id' => SignPermissionDictionary::SIGN_MY_SAFE_DOCUMENTS,
-							'value' => CCrmPerms::PERM_ALL,
+							'value' => UserPermissions::PERMISSION_ALL,
 						],
 						[
 							'id' => SignPermissionDictionary::SIGN_TEMPLATES,
-							'value' => CCrmPerms::PERM_ALL,
+							'value' => UserPermissions::PERMISSION_ALL,
 						],
 						[
 							'id' => SignPermissionDictionary::SIGN_MY_SAFE,
@@ -108,27 +116,35 @@ class AccessInstaller
 						],
 						[
 							'id' => SignPermissionDictionary::SIGN_B2E_MY_SAFE_DOCUMENTS,
-							'value' => CCrmPerms::PERM_SUBDEPARTMENT,
+							'value' => UserPermissions::PERMISSION_SUBDEPARTMENT,
+						],
+						[
+							'id' => SignPermissionDictionary::SIGN_B2E_MY_SAFE_FIRED,
+							'value' => UserPermissions::PERMISSION_NONE,
 						],
 						[
 							'id' => SignPermissionDictionary::SIGN_B2E_TEMPLATES,
-							'value' => CCrmPerms::PERM_SUBDEPARTMENT,
+							'value' => UserPermissions::PERMISSION_SUBDEPARTMENT,
 						],
 						[
 							'id' => SignPermissionDictionary::SIGN_B2E_TEMPLATE_WRITE,
-							'value' => CCrmPerms::PERM_SUBDEPARTMENT,
+							'value' => UserPermissions::PERMISSION_SUBDEPARTMENT,
 						],
 						[
 							'id' => SignPermissionDictionary::SIGN_B2E_TEMPLATE_CREATE,
-							'value' => CCrmPerms::PERM_SUBDEPARTMENT,
+							'value' => UserPermissions::PERMISSION_SUBDEPARTMENT,
 						],
 						[
 							'id' => SignPermissionDictionary::SIGN_B2E_TEMPLATE_READ,
-							'value' => CCrmPerms::PERM_SUBDEPARTMENT,
+							'value' => UserPermissions::PERMISSION_SUBDEPARTMENT,
 						],
 						[
 							'id' => SignPermissionDictionary::SIGN_B2E_TEMPLATE_DELETE,
-							'value' => CCrmPerms::PERM_SUBDEPARTMENT,
+							'value' => UserPermissions::PERMISSION_SUBDEPARTMENT,
+						],
+						[
+							'id' => SignPermissionDictionary::SIGN_B2E_SIGNERS_LIST_REFUSED,
+							'value' => UserPermissions::PERMISSION_NONE,
 						],
 					],
 				],

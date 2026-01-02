@@ -1,0 +1,3 @@
+<?php
+
+$MESS['TASKS_V2_DATE_TIME_FORMAT'] = '#DATE# #TIME#';

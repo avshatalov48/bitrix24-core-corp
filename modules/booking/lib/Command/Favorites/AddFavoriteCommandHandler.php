@@ -9,7 +9,8 @@ use Bitrix\Booking\Internals\Exception\Favorites\CreateFavoritesException;
 use Bitrix\Booking\Internals\Container;
 use Bitrix\Booking\Internals\Repository\FavoritesRepositoryInterface;
 use Bitrix\Booking\Internals\Repository\ResourceRepositoryInterface;
-use Bitrix\Main\ORM\Query\Filter\ConditionTree;
+use Bitrix\Booking\Provider\Params\Resource\ResourceFilter;
+use Bitrix\Booking\Provider\Params\Resource\ResourceSelect;
 
 class AddFavoriteCommandHandler
 {
@@ -26,9 +27,11 @@ class AddFavoriteCommandHandler
 	{
 		$primaryResourceIds = $this->resourceRepository
 			->getList(
-				filter: (new ConditionTree())
-					->whereIn('ID', $command->resourcesIds)
-					->where('IS_MAIN', '=', true),
+				filter: new ResourceFilter([
+					'ID' => $command->resourcesIds,
+					'IS_MAIN' => true,
+				]),
+				select: new ResourceSelect(),
 			)
 			->getEntityIds()
 		;

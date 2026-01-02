@@ -219,7 +219,6 @@ class LimitLockComponent extends CBitrixComponent
 			$licenseUrl = match ($region)
 			{
 				'ru' => 'https://www.1c-bitrix.ru/buy/products/b24.php',
-				'ua' => 'https://www.bitrix.ua/buy/products/b24.php',
 				'kz' => 'https://www.1c-bitrix.kz/buy/products/b24.php',
 				'by' => 'https://www.1c-bitrix.by/buy/products/b24.php',
 				'de' => 'https://store.bitrix24.de/profile/license-keys.php',

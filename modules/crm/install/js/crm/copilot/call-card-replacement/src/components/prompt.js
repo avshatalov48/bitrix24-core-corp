@@ -14,7 +14,6 @@ export const Prompt = {
 		htmlFormatter: {
 			type: HtmlFormatter,
 			default: new HtmlFormatter(),
-			required: false,
 		},
 	},
 

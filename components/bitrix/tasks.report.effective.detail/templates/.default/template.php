@@ -1,8 +1,14 @@
-<?
+<?php
 if (!defined("B_PROLOG_INCLUDED") || B_PROLOG_INCLUDED !== true)
 {
 	die();
 }
+
+/**
+ * @var CMain $APPLICATION
+ * @var array $arParams
+ * @var $arResult array
+ */
 
 use Bitrix\Main\Localization\Loc;
 use Bitrix\Main\UI\Extension;
@@ -27,33 +33,6 @@ if (($arResult['IS_TOOL_AVAILABLE'] ?? null) === false)
 	return;
 }
 
-if (isset($_REQUEST["IFRAME"]) && $isIFrame)
-{
-	$APPLICATION->RestartBuffer(); //сбрасываем весь вывод
-	?>
-	<!DOCTYPE html>
-	<html>
-	<head>
-		<?$APPLICATION->ShowHead(); ?>
-	</head>
-	<body class="template-<?=SITE_TEMPLATE_ID?> <?$APPLICATION->ShowProperty("BodyClass");?> <?if($isIFrame):?>task-iframe-popup-side-slider<?php endif?> <?if($taskLimitExceeded):?>task-report-locked<?php endif?>"
-		  onload="window.top.BX.onCustomEvent(window.top, 'tasksIframeLoad');"
-		  onunload="window.top.BX.onCustomEvent(window.top, 'tasksIframeUnload');">
-	<div class="tasks-iframe-header">
-		<div class="pagetitle-wrap">
-			<div class="pagetitle-inner-container">
-				<div class="pagetitle-menu" id="pagetitle-menu"><?
-					$APPLICATION->ShowViewContent("pagetitle")
-					?></div>
-				<div class="pagetitle" <?if($isIFrame):?>style="padding-left: 20px;padding-right:20px;"<?endif?>>
-					<span id="pagetitle" class="pagetitle-item"><?$APPLICATION->ShowTitle(false);?></span>
-				</div>
-			</div>
-		</div>
-	</div>
-<?}?>
-
-<?php
 if (isset($arResult["ERROR"]) && !empty($arResult["ERROR"]))
 {
 	foreach ($arResult["ERROR"] as $error)
@@ -62,7 +41,7 @@ if (isset($arResult["ERROR"]) && !empty($arResult["ERROR"]))
 			<div class="ui-alert ui-alert-icon-warning ui-alert-danger">
 				<span class="ui-alert-message"><?= htmlspecialcharsbx($error['MESSAGE'])?></span>
 			</div>
-		<?
+		<?php
 	}
 
 	if (isset($_REQUEST["IFRAME"]) && $_REQUEST["IFRAME"] === "Y")

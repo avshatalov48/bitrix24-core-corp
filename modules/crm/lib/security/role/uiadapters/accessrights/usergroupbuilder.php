@@ -328,11 +328,11 @@ final class UserGroupBuilder
 				continue;
 			}
 
-			$isEmpty = \Bitrix\Crm\Security\Role\Utils\RolePermissionChecker::isPermissionEmpty(
+			$isAllows = \Bitrix\Crm\Security\Role\Utils\RolePermissionChecker::isPermissionAllowsAnything(
 				\Bitrix\Crm\Security\Role\Manage\DTO\PermissionModel::createFromDbArray($permission)
 			);
 
-			if ($isEmpty)
+			if (!$isAllows)
 			{
 				if (is_null($this->includeRolesWithoutRightsForGroupCode))
 				{

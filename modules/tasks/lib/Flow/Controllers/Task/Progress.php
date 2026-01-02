@@ -36,6 +36,7 @@ class Progress extends Controller
 
 		$select = [
 			'ID',
+			'TITLE',
 			'CREATED_BY',
 			'RESPONSIBLE_ID',
 			'DATE_START',

@@ -4,6 +4,10 @@
 
 (() =>
 {
+	const require = (ext) => jn.require(ext);
+	const { reflectFunction } = require('utils/function');
+	const { RequestExecutor } = require('rest');
+
 	/**
 	 * @class StressMeasure
 	 */
@@ -20,7 +24,7 @@
 			let setCurrentData = (params["setCurrentData"] !== false);
 			BX.addCustomEvent("onDisclaimerAccepted", () =>
 			{
-				new RestExecutor("socialnetwork.api.user.stresslevel.setdisclaimer",
+				new RequestExecutor("socialnetwork.api.user.stresslevel.setdisclaimer",
 					{data: {}})
 					.setStartRequestHandler(cache => Notify.showIndicatorLoading())
 					.call()
@@ -173,7 +177,7 @@
 				this.ui.showDescription(StateUtils.stressDescription(params, result.description),
 					BX.message("STRESS_WHAT_DOES_IT_MEAN"));
 			};
-			new RestExecutor("socialnetwork.api.user.stresslevel.getvaluedescription",
+			new RequestExecutor("socialnetwork.api.user.stresslevel.getvaluedescription",
 				{value: params.value, type: params.type})
 				.setCacheHandler(result => open(result))
 				.setStartRequestHandler(cache =>
@@ -348,7 +352,7 @@
 					if (event === "onItemSelected")
 					{
 						this.createMenuWithAccess(item.id === "Y");
-						new RestExecutor("socialnetwork.api.user.stresslevel.setaccess", {
+						new RequestExecutor("socialnetwork.api.user.stresslevel.setaccess", {
 							fields: {
 								userId: env.userId,
 								value: item.id

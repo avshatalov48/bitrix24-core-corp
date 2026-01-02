@@ -9,7 +9,9 @@ if (!defined('B_PROLOG_INCLUDED') || B_PROLOG_INCLUDED !== true)
 <div class="bizproc-automation-popup-settings bizproc-automation-popup-settings-text" style="max-width: 660px">
 	<?= \Bitrix\Main\Localization\Loc::getMessage('BP_CRM_GO_TO_CHAT_HELP_1') ?>
 	<br><br>
-	<a href="https://helpdesk.bitrix24.ru/open/17545216" onclick="top.BX.Helper.show('redirect=detail&code=18114500');" class="crm-robot-gotochat-help"><?= \Bitrix\Main\Localization\Loc::getMessage('BP_CRM_GO_TO_CHAT_HELP_LINK_1') ?></a>
+	<?php if (\Bitrix\Main\Loader::includeModule('ui')):?>
+	<a href="<?=(new \Bitrix\UI\Helpdesk\Url())->getByCodeArticle('17545216')?>" onclick="top.BX.Helper.show('redirect=detail&code=18114500');" class="crm-robot-gotochat-help"><?= \Bitrix\Main\Localization\Loc::getMessage('BP_CRM_GO_TO_CHAT_HELP_LINK_1') ?></a>
+	<?php endif;?>
 </div>
 <style>
 	.crm-robot-gotochat-help {

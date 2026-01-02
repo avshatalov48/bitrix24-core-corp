@@ -25,9 +25,12 @@ use Bitrix\Crm\Format\PersonNameFormatter;
 use Bitrix\Crm\Item;
 use Bitrix\Crm\ItemIdentifier;
 use Bitrix\Crm\Order;
+use Bitrix\Crm\Recurring\RecurringFieldEditorAdapter;
 use Bitrix\Crm\Requisite\EntityLink;
 use Bitrix\Crm\Security\EntityAuthorization;
 use Bitrix\Crm\Security\PermissionToken;
+use Bitrix\Crm\Service\EditorAdapter\Normalizer\FieldValueNormalizer;
+use Bitrix\Crm\Service\EditorAdapter\Normalizer\UserFieldValueNormalizer;
 use Bitrix\Crm\StatusTable;
 use Bitrix\Crm\UI\EntitySelector;
 use Bitrix\Currency\CurrencyTable;
@@ -36,8 +39,6 @@ use Bitrix\Main\Loader;
 use Bitrix\Main\Localization\Loc;
 use Bitrix\Main\Request;
 use Bitrix\Main\Result;
-use Bitrix\Main\UserField\Dispatcher;
-use Bitrix\Main\UserField\Types\BooleanType;
 use Bitrix\Main\Web\Json;
 use CCrmComponentHelper;
 use CCrmOwnerType;
@@ -61,9 +62,8 @@ class EditorAdapter
 	public const FIELD_PARENT_PREFIX = 'PARENT_ID_';
 	public const FIELD_MY_COMPANY_DATA_NAME = 'MYCOMPANY_ID_DATA';
 	public const FIELD_MY_COMPANY_DATA_INFO = 'MYCOMPANY_ID_INFO';
-
-	public const LAST_COMPANY_INFOS = 'LAST_COMPANY_INFOS';
-	public const LAST_CONTACT_INFOS = 'LAST_CONTACT_INFOS';
+	public const FIELD_LAST_COMMUNICATION = 'LAST_COMMUNICATION_TYPE_LAST_STATE';
+	public const FIELD_REPEAT_SALE_SEGMENT_ID = 'REPEAT_SALE_SEGMENT_ID';
 	public const LAST_MYCOMPANY_INFOS = 'LAST_MYCOMPANY_INFOS';
 
 	public const CONTROLLER_PRODUCT_LIST = 'PRODUCT_LIST';
@@ -88,11 +88,14 @@ class EditorAdapter
 	protected $entityData;
 	protected $processedEntityFields;
 	protected $clientEntityData;
+
 	/** @var array[]|null */
 	protected $srcItemProductsEntityData;
 	protected $context = [];
+	protected ?array $createCategoriesList = null;
 
 	private bool $isSearchHistoryEnabled = true;
+	private RecurringFieldEditorAdapter $recurringEditorAdapter;
 
 	private Item $item;
 
@@ -100,6 +103,8 @@ class EditorAdapter
 	{
 		$this->fieldsCollection = $fieldsCollection;
 		$this->dependantFieldsMap = $dependantFieldsMap;
+
+		$this->recurringEditorAdapter = new RecurringFieldEditorAdapter($fieldsCollection);
 	}
 
 	public function enableSearchHistory(bool $state): EditorAdapter
@@ -306,6 +311,7 @@ class EditorAdapter
 		}
 
 		$this->fillMyCompanyDataForEmbeddedEditorField($item);
+		$this->fillRecurringDataForEmbeddedEditorField($item, $componentName);
 
 		return $this;
 	}
@@ -608,7 +614,7 @@ class EditorAdapter
 						if ($info['SETTINGS']['enableCreationByOwnerEntity'] ?? false)
 						{
 							$myCompanyFieldWithEditor['data']['enableCreation'] =
-								Container::getInstance()->getUserPermissions()->getMyCompanyPermissions()->canAddByOwnerEntity($ownerEntityTypeId);
+								Container::getInstance()->getUserPermissions()->myCompany()->canAddByOwnerEntity($ownerEntityTypeId);
 						}
 					}
 					if (($info['SETTINGS']['usePermissionToken'] ?? false) && $ownerEntityTypeId)
@@ -696,6 +702,10 @@ class EditorAdapter
 				);
 			}
 		}
+		elseif ($type === Field::TYPE_RECURRING && $this->recurringEditorAdapter->isUsed($this->item))
+		{
+			$field = $this->recurringEditorAdapter->prepareFieldByInfo($this->item, $field);
+		}
 
 		if ($name === Item::FIELD_NAME_TITLE)
 		{
@@ -738,7 +748,7 @@ class EditorAdapter
 			{
 				$field['placeholders']['creation'] = $number;
 			}
-			if (Container::getInstance()->getUserPermissions()->canWriteConfig())
+			if (Container::getInstance()->getUserPermissions()->isCrmAdmin())
 			{
 				$numerator = $fieldObject->getNumerator();
 				if ($numerator)
@@ -841,6 +851,7 @@ class EditorAdapter
 			Item::FIELD_NAME_OPPORTUNITY,
 			Item::FIELD_NAME_STAGE_ID,
 			Item::FIELD_NAME_OBSERVERS,
+			Item::FIELD_NAME_RECURRING,
 		];
 
 		$isDefaultlyNotMergeable = in_array($name, $defaultlyNotMergeable, true);
@@ -901,8 +912,6 @@ class EditorAdapter
 				'categoryParams' => $categoryParams,
 				'map' => ['data' => $fieldDataName],
 				'info' => $fieldName . '_INFO',
-				'lastCompanyInfos' => static::LAST_COMPANY_INFOS,
-				'lastContactInfos' => static::LAST_CONTACT_INFOS,
 				'loaders' => [
 					'primary' => [
 						CCrmOwnerType::CompanyName => [
@@ -1366,89 +1375,14 @@ class EditorAdapter
 		return $entityUserFields;
 	}
 
-	protected function normalizeFieldValue($value, string $fieldType)
+	protected function normalizeFieldValue($value, string $fieldType): mixed
 	{
-		if (is_array($value))
-		{
-			$result = [];
-			foreach ($value as $singleValue)
-			{
-				$result[] = $this->prepareSingleValue($singleValue, $fieldType);
-			}
-		}
-		else
-		{
-			$result = $this->prepareSingleValue($value, $fieldType);
-		}
-
-		return $result;
-	}
-
-	protected function prepareSingleValue($value, string $type)
-	{
-		if(is_float($value))
-		{
-			$value = sprintf('%f', $value);
-			$value = rtrim($value, '0');
-			$value = rtrim($value, '.');
-		}
-		elseif (is_numeric($value))
-		{
-			$value = (string)$value;
-		}
-		elseif(is_object($value) && method_exists($value, '__toString'))
-		{
-			$value = $value->__toString();
-		}
-		elseif ($type === Field::TYPE_BOOLEAN)
-		{
-			if ($value !== 'Y' && $value !== 'N')
-			{
-				$value = $value ? 'Y' : 'N';
-			}
-		}
-		elseif($value === false)
-		{
-			$value = '';
-		}
-
-		return $value;
+		return (new FieldValueNormalizer($fieldType))->normalize($value);
 	}
 
 	protected function normalizeUserFieldValue($fieldValue, bool $isValueEmpty, array $fieldParams): array
 	{
-		if (!$isValueEmpty)
-		{
-			if (is_array($fieldValue))
-			{
-				$fieldValue = array_values($fieldValue);
-			}
-			elseif ($fieldParams['USER_TYPE_ID'] === BooleanType::USER_TYPE_ID)
-			{
-				$fieldValue = $fieldValue ? '1' : '0';
-			}
-
-			$fieldParams['VALUE'] = $fieldValue;
-		}
-
-		$fieldSignature = Dispatcher::instance()->getSignature($fieldParams);
-		if ($isValueEmpty)
-		{
-			$result = [
-				'SIGNATURE' => $fieldSignature,
-				'IS_EMPTY' => true,
-			];
-		}
-		else
-		{
-			$result = [
-				'VALUE' => $fieldValue,
-				'SIGNATURE' => $fieldSignature,
-				'IS_EMPTY' => false,
-			];
-		}
-
-		return $result;
+		return (new UserFieldValueNormalizer($isValueEmpty, $fieldParams))->normalize($fieldValue);
 	}
 
 	protected function prepareEntityDataForFieldsWithUsers(array $entityFields, array $entityData): array
@@ -1649,7 +1583,7 @@ class EditorAdapter
 
 		if ($entityTypeId === \CCrmOwnerType::Company && \CCrmCompany::isMyCompany($entityId))
 		{
-			$canRead = Container::getInstance()->getUserPermissions()->getMyCompanyPermissions()->canReadBaseFields($entityId);
+			$canRead = Container::getInstance()->getUserPermissions()->myCompany()->canReadBaseFields($entityId);
 		}
 		else
 		{
@@ -1739,18 +1673,28 @@ class EditorAdapter
 		return $this->srcItemProductsEntityData;
 	}
 
+	public function getProductRowSummaryItemFieldsToSelect(): array
+	{
+		return [
+			Item::FIELD_NAME_ID,
+			Item::FIELD_NAME_CATEGORY_ID,
+			Item::FIELD_NAME_PRODUCTS,
+			Item::FIELD_NAME_CURRENCY_ID,
+			Item::FIELD_NAME_OPPORTUNITY,
+			Item::FIELD_NAME_COMPANY_ID,
+			Item::FIELD_NAME_LOCATION_ID,
+		];
+	}
+
 	protected function getProductsSummaryEntityData(Item $item, int $mode = ComponentMode::VIEW): array
 	{
-		$entityTypeId = $item->getEntityTypeId();
-		$entityId = $item->getId();
-
 		$isReadOnly = true;
 		if (
 			(
 				$mode === ComponentMode::MODIFICATION
-				&& EntityAuthorization::checkUpdatePermission($entityTypeId, $entityId)
+				&& Container::getInstance()->getUserPermissions()->item()->canUpdateItem($item)
 			)
-			|| EntityAuthorization::checkCreatePermission($entityTypeId)
+			|| Container::getInstance()->getUserPermissions()->item()->canAddItem($item)
 		)
 		{
 			$isReadOnly = false;
@@ -1928,18 +1872,6 @@ class EditorAdapter
 					$isFirstContact
 				);
 				$isFirstContact = false;
-			}
-		}
-
-		if ($this->isSearchHistoryEnabled)
-		{
-			$lastClientInfoMap = [
-				static::LAST_COMPANY_INFOS => CCrmOwnerType::Company,
-				static::LAST_CONTACT_INFOS => CCrmOwnerType::Contact,
-			];
-			foreach ($lastClientInfoMap as $arrayKey => $entityTypeId)
-			{
-				$clientEntityData[$arrayKey] = $this->getRecentlyUsedItems($entityTypeId, $componentName, $item->getEntityTypeId());
 			}
 		}
 
@@ -2478,7 +2410,7 @@ class EditorAdapter
 				'affectedFields' => [$infoName],
 				'enableMyCompanyOnly' => true,
 				'enableRequisiteSelection' => true,
-				'enableCreation' => Container::getInstance()->getUserPermissions()->getMyCompanyPermissions()->canAdd(),
+				'enableCreation' => Container::getInstance()->getUserPermissions()->myCompany()->canAdd(),
 				'typeId' => CCrmOwnerType::Company,
 				'compound' => [
 					[
@@ -2592,7 +2524,7 @@ class EditorAdapter
 	 */
 	public function saveMyCompanyDataFromEmbeddedEditor(Item $item, string $json): Result
 	{
-		$myCompanyPermissions = Container::getInstance()->getUserPermissions()->getMyCompanyPermissions();
+		$myCompanyPermissions = Container::getInstance()->getUserPermissions()->myCompany();
 		$canEditMyCompany = $item->isNew()
 			? $myCompanyPermissions->canAddByOwnerEntity($item->getEntityTypeId())
 			: $myCompanyPermissions->canUpdateByOwnerEntity($item->getEntityTypeId(), $item->getId())
@@ -2712,8 +2644,22 @@ class EditorAdapter
 		return $requisiteBinding;
 	}
 
+	protected function fillRecurringDataForEmbeddedEditorField(Item $item): void
+	{
+		if ($this->recurringEditorAdapter->isUsed($item))
+		{
+			$recurringEntityData = $this->recurringEditorAdapter->getEntityData($item);
+			$this->entityData = array_merge($this->entityData, $recurringEntityData);
+		}
+	}
+
 	public function getAdditionalField(string $fieldName): ?array
 	{
 		return $this->additionalFields[$fieldName] ?? null;
+	}
+
+	public function saveRecurringData(Item $item, array $recurringData): Result
+	{
+		return $this->recurringEditorAdapter->saveRecurringData($item, $recurringData);
 	}
 }

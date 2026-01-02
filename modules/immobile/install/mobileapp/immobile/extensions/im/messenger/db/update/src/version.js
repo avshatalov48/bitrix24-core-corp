@@ -6,8 +6,8 @@ jn.define('im/messenger/db/update/version', (require, exports, module) => {
 
 	const { OptionRepository } = require('im/messenger/db/repository/option');
 	const { Updater } = require('im/messenger/db/update/updater');
-	const { LoggerManager } = require('im/messenger/lib/logger');
-	const logger = LoggerManager.getInstance().getLogger('database-update--version');
+	const { getLogger } = require('im/messenger/lib/logger');
+	const logger = getLogger('database-update--version');
 
 	class Version
 	{
@@ -43,6 +43,14 @@ jn.define('im/messenger/db/update/version', (require, exports, module) => {
 			this.cachedVersion = this.version;
 
 			return this.version;
+		}
+
+		/**
+		 * @return {Promise<number>}
+		 */
+		async getWithoutCache()
+		{
+			return Number(await this.optionRepostory.get(this.optionName, 0));
 		}
 
 		async set(version)

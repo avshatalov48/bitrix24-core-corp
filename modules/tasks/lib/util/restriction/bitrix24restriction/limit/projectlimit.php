@@ -51,7 +51,22 @@ class ProjectLimit extends Limit
 
 	public static function getFeatureId(): string
 	{
+		if (!Loader::includeModule('socialnetwork'))
+		{
+			return '';
+		}
+
 		return Feature::PROJECTS_GROUPS;
+	}
+
+	public static function isFeatureEnabledByTrial(): bool
+	{
+		if (!Loader::includeModule('socialnetwork'))
+		{
+			return false;
+		}
+
+		return Feature::isFeatureEnabledByTrial(Feature::PROJECTS_GROUPS);
 	}
 
 	public static function getLimitCode(): string

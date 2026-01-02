@@ -2,24 +2,30 @@
  * @module layout/ui/user-list/src/list
  */
 jn.define('layout/ui/user-list/src/list', (require, exports, module) => {
-	const { Indent, Color } = require('tokens');
-	const { ProfileView } = require('user/profile');
-	const { Avatar } = require('ui-system/blocks/avatar');
-	const { UserName } = require('layout/ui/user/user-name');
-	const { Text2, Text5 } = require('ui-system/typography/text');
+	const { Color } = require('tokens');
+	const { ScrollView } = require('layout/ui/scroll-view');
+	const { ListItem } = require('layout/ui/user-list/src/list-item');
 
+	/**
+	 * @typedef {Object} UserListParams
+	 * @property {string} id
+	 * @property {string} name
+	 * @property {string} avatar
+	 * @property {string} workPosition
+	 *
+	 * @typedef {Object} UserListProps
+	 * @property {string} testId
+	 * @property {PageManager} [parentWidget]
+	 * @property {UserListParams[]} users
+	 *
+	 * @class UserList
+	 */
 	class UserList extends LayoutComponent
 	{
-		constructor(props)
-		{
-			super(props);
-
-			this.layoutWidget = null;
-			this.testId = (props.testId || '');
-		}
-
 		render()
 		{
+			const { users } = this.props;
+
 			return View(
 				{
 					style: {
@@ -29,7 +35,7 @@ jn.define('layout/ui/user-list/src/list', (require, exports, module) => {
 					safeArea: {
 						bottom: true,
 					},
-					testId: `${this.testId}_USER_LIST`,
+					testId: this.getTestId('USER_LIST'),
 				},
 				ScrollView(
 					{
@@ -40,87 +46,33 @@ jn.define('layout/ui/user-list/src/list', (require, exports, module) => {
 						bounces: true,
 						showsVerticalScrollIndicator: true,
 					},
-					View(
-						{},
-						...this.props.users.map((user, index) => this.renderUser(user, (index > 0))),
-					),
+					...users.map((user, index) => this.renderUser(user, (index > 0))),
 				),
 			);
 		}
 
 		renderUser(user, isWithTopBorder = true)
 		{
-			const { id, name, avatar, workPosition } = user;
-			const userTestId = `${this.testId}_USER_${id}`;
+			const testId = this.getTestId(`USER_${user.id}`);
 
-			return View(
-				{
-					style: {
-						flexDirection: 'row',
-						alignItems: 'center',
-						marginLeft: Indent.XL3.toNumber(),
-					},
-					testId: userTestId,
-					onClick: () => this.openUserProfile(id),
-				},
-				Avatar({
-					id,
-					name,
-					size: 40,
-					testId: `${userTestId}_AVATAR`,
-					image: avatar,
-					withRedux: true,
-				}),
-				View(
-					{
-						style: {
-							height: 70,
-							justifyContent: 'center',
-							flex: 1,
-							flexDirection: 'column',
-							marginHorizontal: Indent.XL.toNumber(),
-							borderTopWidth: isWithTopBorder ? 1 : 0,
-							borderTopColor: Color.bgSeparatorPrimary.toHex(),
-							paddingVertical: Indent.XL2.toNumber(),
-						},
-					},
-					UserName({
-						id,
-						testId: `${userTestId}_NAME`,
-						text: name,
-						numberOfLines: 1,
-						ellipsize: 'end',
-						textElement: Text2,
-					}),
-					(workPosition && Text5({
-						style: {
-							color: Color.base3.toHex(),
-						},
-						numberOfLines: 1,
-						ellipsize: 'end',
-						text: workPosition,
-					})),
-				),
-			);
+			return new ListItem({
+				user,
+				showBorder: isWithTopBorder ? 1 : 0,
+				testId,
+				parentWidget: this.props.parentWidget,
+				workPosition: this.props.workPosition,
+				renderCustomDescription: this.props.renderCustomDescription,
+			});
 		}
 
-		openUserProfile(userId)
+		/**
+		 * @param {string} suffix
+		 */
+		getTestId(suffix)
 		{
-			this.layoutWidget.openWidget(
-				'list',
-				{
-					groupStyle: true,
-					backdrop: {
-						bounceEnable: false,
-						swipeAllowed: true,
-						showOnTop: true,
-						hideNavigationBar: false,
-						horizontalSwipeAllowed: false,
-					},
-				},
-			).then((list) => {
-				ProfileView.open({ userId, isBackdrop: true }, list);
-			}).catch(console.error);
+			const { testId } = this.props;
+
+			return [testId, suffix].filter(Boolean).join('_');
 		}
 	}
 

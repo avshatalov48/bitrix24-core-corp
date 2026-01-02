@@ -11,6 +11,7 @@ use Bitrix\Sign\Config\Storage;
  * @var \Bitrix\Bizproc\Activity\PropertiesDialog $dialog
  */
 $blankIdValue = $dialog->getCurrentValue('blankId');
+$responsibleValue = $dialog->getCurrentValue('responsible');
 $storage = Storage::instance();
 $regionCode = \Bitrix\Main\Application::getInstance()->getLicense()->getRegion();
 
@@ -21,6 +22,7 @@ $blankSelectorConfig = (new \Bitrix\Sign\Config\Ui\BlankSelector())->create(
 
 \Bitrix\Main\UI\Extension::load([
 	'ui.forms',
+	'ui.entity-selector',
 	'sign.v2.blank-selector',
 ]);
 ?>
@@ -59,6 +61,13 @@ $blankSelectorConfig = (new \Bitrix\Sign\Config\Ui\BlankSelector())->create(
 		blankField.renderTo(blankFieldContainer);
 	});
 </script>
+
+<div class="bizproc-automation-popup-settings">
+	<div class="bizproc-automation-popup-settings-title bizproc-automation-popup-settings-title-top bizproc-automation-popup-settings-title-autocomplete">
+		<?= htmlspecialcharsbx($dialog->getMap()['responsible']['Name']) ?>:
+	</div>
+	<?= $dialog->renderFieldControl($dialog->getMap()['responsible']) ?>
+</div>
 
 <div class="bizproc-automation-popup-settings">
 	<div class="bizproc-automation-popup-settings-title bizproc-automation-popup-settings-title-top bizproc-automation-popup-settings-title-autocomplete">

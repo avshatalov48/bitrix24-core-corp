@@ -1,4 +1,8 @@
 <?php
+$MESS["CRM_MAIL_CONTROLLER_EVENT_TITLE_EMAIL_SUBJECT"] = "Тема: ";
+$MESS["CRM_MAIL_CONTROLLER_EVENT_TITLE_EMAIL_FROM"] = "От кого: ";
+$MESS["CRM_MAIL_CONTROLLER_EVENT_TITLE_EMAIL_TO"] = "Кому: ";
+
 $MESS["CRM_MAIL_CONTROLLER_CAN_NOT_DETERMINE_THE_MESSAGE_FORMAT"] = "Неподдерживаемый формат сообщения";
 $MESS["CRM_MAIL_CONTROLLER_COULD_NOT_DELETE_MESSAGE"] = "Мы не смогли удалить сообщение: #ID#";
 $MESS["CRM_MAIL_CONTROLLER_OWNER_TYPE_IS_NOT_DEFINED"] = "Неподдерживаемый тип элемента владельца. Обратитесь к администратору вашего Битрикс24";

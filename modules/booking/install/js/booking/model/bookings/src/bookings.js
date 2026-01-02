@@ -1,8 +1,9 @@
+import type { ActionTree, GetterTree, MutationTree } from 'ui.vue3.vuex';
 import { BuilderModel, Store } from 'ui.vue3.vuex';
-import type { GetterTree, ActionTree, MutationTree } from 'ui.vue3.vuex';
 
 import { Model } from 'booking.const';
-import { dateToTsRange } from './lib';
+
+import { dateToTsRange, createOverbookingMap } from './lib';
 import type { BookingModel, BookingsState } from './types';
 
 export class Bookings extends BuilderModel
@@ -34,6 +35,7 @@ export class Bookings extends BuilderModel
 			rrule: '',
 			isConfirmed: false,
 			visitStatus: 'unknown',
+			overbooking: false,
 		};
 	}
 
@@ -58,25 +60,56 @@ export class Bookings extends BuilderModel
 					return getters.getByDate(dateTs)
 						.filter((booking: BookingModel) => {
 							return resourcesIds
-								.some((resourceId: number) => booking.resourcesIds.includes(resourceId))
-							;
-						})
-					;
+								.some((resourceId: number) => booking.resourcesIds.includes(resourceId));
+						});
 				};
 			},
 			/** @function bookings/getByDateAndIds */
 			getByDateAndIds: (state: BookingsState, getters) => {
 				return (dateTs: number, ids: number[]): BookingModel[] => {
 					return getters.getByDate(dateTs)
-						.filter((booking: BookingModel) => ids.includes(booking.id))
-					;
+						.filter((booking: BookingModel) => ids.includes(booking.id));
 				};
 			},
 			/** @function bookings/getByDate */
 			getByDate: (state: BookingsState, getters) => (dateTs: number): BookingModel[] => {
 				const [dateFrom, dateTo] = dateToTsRange(dateTs);
 
-				return getters.get.filter(({ dateToTs, dateFromTs }) => dateToTs > dateFrom && dateTo > dateFromTs);
+				return getters.getByInterval(dateFrom, dateTo);
+			},
+			/** @function booking/getByInterval */
+			getByInterval: (state: BookingsState, getters) => (fromTs: number, toTs: number): BookingModel[] => {
+				return getters.get.filter(({ dateFromTs, dateToTs }: BookingModel) => {
+					return dateToTs > fromTs && dateFromTs < toTs;
+				});
+			},
+			getFutureByResourceId: (state: BookingsState, getters) => (resourceId: number): BookingModel[] => {
+				const now = Date.now();
+
+				return getters.get
+					.filter((booking) => booking.resourcesIds.includes(resourceId) && booking.dateFromTs > now)
+				;
+			},
+			overbookingMap: (state) => {
+				const resourceBookings: { [number]: BookingModel[] } = Object.values(state.collection)
+					.reduce((acc, booking) => {
+						booking.resourcesIds
+							.forEach((resourceId: number) => {
+								if (resourceId in acc)
+								{
+									const bookings = acc[resourceId];
+									bookings.push(booking);
+								}
+								else
+								{
+									acc[resourceId] = [booking];
+								}
+							});
+
+						return acc;
+					}, {});
+
+				return createOverbookingMap(resourceBookings);
 			},
 		};
 	}

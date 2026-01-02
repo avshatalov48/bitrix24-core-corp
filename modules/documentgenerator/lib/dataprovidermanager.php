@@ -25,16 +25,32 @@ class DataProviderManager
 {
 	public const MAX_DEPTH_LEVEL_ROOT_PROVIDERS = 2;
 
-	protected $providersCache = [];
-	protected $accessCache = [];
-	protected $phrases = [];
-	protected $loadedPhrasePath = [];
-	protected $context;
-	protected $substitutionProviders = [];
+	protected array $providersCache = [];
+	protected array $accessCache = [];
+	protected array $phrases = [];
+	protected array $loadedPhrasePath = [];
+	protected array $substitutionProviders = [];
+
+	/**
+	 * @deprecated
+	 * Use the methods instead
+	 * @see self::getContext()
+	 * @see self::setContext()
+	 */
+	protected Context $context;
+	protected EventManager $eventManager;
+
+	/** @var \SplStack<Context> */
+	private \SplStack $contextStack;
 
 	public function __construct()
 	{
-		$this->context = new Context();
+		$this->eventManager = EventManager::getInstance();
+
+		$this->contextStack = new \SplStack();
+		$this->contextStack->push(new Context());
+		$this->context = $this->contextStack->top();
+
 		$this->fillSubstitutionProviders();
 	}
 
@@ -52,7 +68,23 @@ class DataProviderManager
 	 */
 	public function setContext(Context $context): DataProviderManager
 	{
+		$this->contextStack->push($context);
 		$this->context = $context;
+
+		return $this;
+	}
+
+	/**
+	 * Resets global context to its previous value (before the last self::setContext call)
+	 */
+	final public function resetContext(): self
+	{
+		// don't allow resetting root context that was created on manager instantiation
+		if ($this->contextStack->count() > 1)
+		{
+			$this->contextStack->pop();
+			$this->context = $this->contextStack->top();
+		}
 
 		return $this;
 	}
@@ -62,7 +94,7 @@ class DataProviderManager
 	 */
 	public function getContext(): Context
 	{
-		return $this->context;
+		return $this->contextStack->top();
 	}
 
 	/**
@@ -116,7 +148,7 @@ class DataProviderManager
 	{
 		$event = new Event(Driver::MODULE_ID, 'onDataProviderManagerFillSubstitutionProviders');
 		$providers = [];
-		EventManager::getInstance()->send($event);
+		$this->eventManager->send($event);
 		foreach($event->getResults() as $result)
 		{
 			if($result->getType() === EventResult::SUCCESS && is_array($result->getParameters()))
@@ -953,12 +985,34 @@ class DataProviderManager
 		}
 		elseif(is_array($value))
 		{
-			$valueHash = hash('md5', serialize($value));
+			$valueHash = md5(serialize($this->sortArrayRecursive($value)));
 		}
 
-		$valueHash .= hash('md5', serialize($options));
+		$valueHash .= md5(serialize($this->sortArrayRecursive($options)));
 
 		return $valueHash;
+	}
+
+	private function sortArrayRecursive(array $array): array
+	{
+		if (array_is_list($array))
+		{
+			ksort($array);
+		}
+		else
+		{
+			sort($array);
+		}
+
+		foreach ($array as &$value)
+		{
+			if (is_array($value))
+			{
+				$value = $this->sortArrayRecursive($value);
+			}
+		}
+
+		return $array;
 	}
 
 	/**
@@ -1059,7 +1113,7 @@ class DataProviderManager
 	 */
 	public function setRegion($region): DataProviderManager
 	{
-		$this->context->setRegion($region);
+		$this->getContext()->setRegion($region);
 
 		return $this;
 	}
@@ -1069,7 +1123,7 @@ class DataProviderManager
 	 */
 	public function getRegion(): string
 	{
-		return $this->context->getRegion();
+		return $this->getContext()->getRegion();
 	}
 
 	/**
@@ -1077,7 +1131,7 @@ class DataProviderManager
 	 */
 	public function getRegionLanguageId(): string
 	{
-		return $this->context->getRegionLanguageId();
+		return $this->getContext()->getRegionLanguageId();
 	}
 
 	/**
@@ -1131,7 +1185,7 @@ class DataProviderManager
 	 */
 	public function getCulture(): Culture
 	{
-		return $this->context->getCulture();
+		return $this->getContext()->getCulture();
 	}
 
 	/**

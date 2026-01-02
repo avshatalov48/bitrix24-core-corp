@@ -1,10 +1,11 @@
 <?php
 
-use Bitrix\Main\Localization\Loc;
+use Bitrix\Main\Engine\CurrentUser;
 use Bitrix\Sign\Config\Storage;
 use Bitrix\Sign\Document\Entity\SmartB2e;
 use Bitrix\Sign\Integration\Bitrix24\B2eTariff;
 use Bitrix\Sign\Access\ActionDictionary;
+use Bitrix\Sign\Service\Container;
 use Bitrix\UI\Buttons\Button;
 use Bitrix\UI\Toolbar\Facade\Toolbar;
 
@@ -17,9 +18,6 @@ CBitrixComponent::includeComponentClass('bitrix:sign.base');
 
 final class SignB2eKanbanComponent extends SignBaseComponent
 {
-	private const TOUR_ID = 'sign-tour-guide-sign-start-kanban-b2e-by-employee';
-	private const TOUR_ID_OLD = 'sign-tour-guide-sign-start-kanban-b2e';
-
 	private const SIGN_B2E_CLASS_FOR_ONBOARDING_CREATE = 'sign-b2e-onboarding-create';
 
 	protected function exec(): void
@@ -66,7 +64,7 @@ final class SignB2eKanbanComponent extends SignBaseComponent
 			if ($button instanceof Button && str_contains($button->getLink(), 'sign/b2e/doc/'))
 			{
 				$button
-					->addClass('ui-btn-icon-lock')
+					->setIcon(\Bitrix\UI\Buttons\Icon::LOCK)
 					->addClass('sign-b2e-js-tarriff-slider-trigger')
 					->setTag('button')
 				;
@@ -78,54 +76,82 @@ final class SignB2eKanbanComponent extends SignBaseComponent
 
 	private function prepareResult(): void
 	{
+		$this->arResult['PORTAL_REGION'] = \Bitrix\Main\Application::getInstance()->getLicense()->getRegion();
+		$this->arResult['CAN_ADD_DOCUMENT'] = $this->getAccessController()->check(ActionDictionary::ACTION_B2E_DOCUMENT_ADD);
+		$this->arResult['CAN_EDIT_DOCUMENT'] = $this->getAccessController()->check(ActionDictionary::ACTION_B2E_DOCUMENT_EDIT);
 		$this->arResult['ENTITY_TYPE_ID'] = SmartB2e::getEntityTypeId();
-		$this->arResult['SHOW_TARIFF_SLIDER'] = $this->accessController->check(ActionDictionary::ACTION_B2E_DOCUMENT_READ)
-			&& B2eTariff::instance()->isB2eRestrictedInCurrentTariff();
-
+		$this->arResult['SHOW_TARIFF_SLIDER'] =
+			$this->accessController->check(ActionDictionary::ACTION_B2E_DOCUMENT_READ)
+			&& B2eTariff::instance()->isB2eRestrictedInCurrentTariff()
+		;
 		$this->arResult['SHOW_WELCOME_TOUR'] = false;
-		$this->arResult['SHOW_BY_EMPLOYEE_TOUR'] = false;
-		$this->arResult['SHOW_TOUR_BTN_CREATE'] = false;
+		$this->arResult['SHOW_WELCOME_TOUR_TEST_SIGNING'] = false;
+		$this->arResult['BY_EMPLOYEE_ENABLED'] = \Bitrix\Sign\Config\Feature::instance()->isSendDocumentByEmployeeEnabled();
+		$this->arResult['SHOW_ONBOARDING_SIGNING_BANNER'] = $this->isTestSigningBannerVisible(
+			(int)CurrentUser::get()->getId(),
+			$this->arResult['PORTAL_REGION'],
+		);
+		// TODO: move to test signing wizard
+		$this->arResult['COMPANY'] = \Bitrix\Sign\Service\Container::instance()
+			->getCrmMyCompanyService()
+			->getFirstCompanyWithTaxId(checkRequisitePermissions: false)
+		;
 
-		if (\Bitrix\Sign\Config\Feature::instance()->isSendDocumentByEmployeeEnabled())
+		if (!Storage::instance()->isToursDisabled())
 		{
-			$lastOnboardingVisitDate = \Bitrix\Sign\Service\Container::instance()
-				->getTourService()
-				->getLastVisitDate(
-					self::TOUR_ID,
-					\Bitrix\Main\Engine\CurrentUser::get()->getId(),
-				)
-			;
-
-			$this->arResult['SHOW_WELCOME_TOUR'] =
-				$lastOnboardingVisitDate === null
-				&& !Storage::instance()->isToursDisabled()
-				&& !$this->isCurrentUserCreatedB2eDocuments()
-			;
-
-			$this->arResult['SHOW_BY_EMPLOYEE_TOUR'] =
-				$this->arResult['SHOW_WELCOME_TOUR'] === false
-				&& $lastOnboardingVisitDate === null
-				&& !Storage::instance()->isToursDisabled()
-			;
-
-			$this->arResult['TOUR_ID'] = self::TOUR_ID;
-		}
-		else
-		{
-			$this->arResult['SHOW_TOUR_BTN_CREATE'] = !$this->isCurrentUserCreatedB2eDocuments();
-			$this->arResult['TOUR_ID'] = self::TOUR_ID_OLD;
+			if ($this->arResult['PORTAL_REGION'] === 'ru')
+			{
+				$this->arResult['SHOW_WELCOME_TOUR_TEST_SIGNING'] = true;
+			}
+			else
+			{
+				$this->arResult['SHOW_WELCOME_TOUR'] = true;
+			}
 		}
 	}
 
-	private function isCurrentUserCreatedB2eDocuments(): bool
+	private function isTestSigningBannerVisible(int $userId, string $portalRegion): bool
 	{
-		return (bool)\Bitrix\Sign\Service\Container::instance()
-			->getDocumentRepository()
-			->listLastB2eFromCompanyByUserCreateId(
-				\Bitrix\Main\Engine\CurrentUser::get()->getId(),
-				1,
-			)
-			->count()
+		if ($userId < 1)
+		{
+			return false;
+		}
+
+		if ($portalRegion !== 'ru')
+		{
+			return false;
+		}
+
+		if (!($this->arResult['CAN_ADD_DOCUMENT'] ?? false))
+		{
+			return false;
+		}
+
+		if (!($this->arResult['CAN_EDIT_DOCUMENT'] ?? false))
+		{
+			return false;
+		}
+
+		$onboardingService = Container::instance()->getOnboardingService();
+
+		if (!$onboardingService->isBannerSeenByUser($userId))
+		{
+			$this->initializeBannerVisibility($userId);
+		}
+
+		return $onboardingService->isBannerVisible($userId);
+	}
+
+	private function initializeBannerVisibility(int $userId): void
+	{
+		$onboardingService = Container::instance()->getOnboardingService();
+		$memberService = \Bitrix\Sign\Service\Container::instance()->getMemberService();
+		
+		$isUserMemberOrInitiatorWithDoneStatus = $memberService->isUserMemberOrInitiatorWithDoneStatus($userId);
+
+		$isUserMemberOrInitiatorWithDoneStatus 
+			? $onboardingService->setBannerHidden($userId)
+			: $onboardingService->setBannerVisible($userId)
 		;
 	}
 }

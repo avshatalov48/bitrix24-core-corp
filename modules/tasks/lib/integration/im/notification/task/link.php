@@ -4,7 +4,7 @@ namespace Bitrix\Tasks\Integration\IM\Notification\Task;
 
 use Bitrix\Main\Localization\Loc;
 use Bitrix\Main\Web\Uri;
-use Bitrix\Tasks\Helper\Analytics;
+use Bitrix\Tasks\Integration\IM\Notification\Analytics\AnalyticsData;
 use Bitrix\Tasks\Internals\Notification\User;
 use Bitrix\Tasks\Internals\TaskObject;
 
@@ -27,9 +27,9 @@ class Link
 		$this->commentId = $commentId;
 	}
 
-	public function placeLinkAnchor(string $message): string
+	public function placeLinkAnchor(string $message, AnalyticsData $analyticsData): string
 	{
-		$url = $this->getUrl();
+		$url = $this->getUrl($analyticsData);
 
 		if($this->mode === self::MODE_BBCODE && !empty($url))
 		{
@@ -67,7 +67,7 @@ class Link
 		return $message;
 	}
 
-	private function getUrl(): string
+	private function getUrl(AnalyticsData $analyticsData): string
 	{
 		$sites = \Bitrix\Tasks\Util\Site::getPair();
 		// TODO: refactor
@@ -77,10 +77,7 @@ class Link
 			)
 		);
 
-		$url->addParams([
-			'ta_sec' => Analytics::SECTION['chat'],
-			'ta_el' => Analytics::ELEMENT['title_click'],
-		]);
+		$url->addParams($analyticsData->getData());
 
 		return $url->getUri();
 	}

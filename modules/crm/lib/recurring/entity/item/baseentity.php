@@ -1,8 +1,8 @@
 <?php
 namespace Bitrix\Crm\Recurring\Entity\Item;
 
-use Bitrix\Main\Type\Date;
 use Bitrix\Crm\Recurring\Entity;
+use Bitrix\Main\Type\Date;
 
 abstract class BaseEntity
 {
@@ -95,9 +95,9 @@ abstract class BaseEntity
 		if ($this->isNeedRecalculationDate($name))
 		{
 			$startDate = $this->recurringFields['START_DATE'];
-			if (!$this->recurringFields['START_DATE'] instanceof Date)
+			if (!$startDate instanceof Date)
 			{
-				$startDate = new Date;
+				$startDate = new Date();
 			}
 			$nextExecution = $this->calculateNextExecutionDate($startDate);
 			$this->setFieldNoDemand('NEXT_EXECUTION', $nextExecution);

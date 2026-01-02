@@ -200,7 +200,7 @@ include_once(str_replace(array("\\", "//"), "/", __DIR__."/messages.php"));
 					?><script>
 						BX.namespace("BX.Disk.Files");
 						BX.Disk.Files['<?= $file['ID'] ?>'] = [
-							{text : BX.message('JS_CORE_VIEWER_VIEW_ELEMENT'), className : "bx-viewer-popup-item item-view", href : "#", onclick: function(e){
+							{text : BX.message('DISK_JS_BTN_OPEN'), className : "bx-viewer-popup-item item-view", href : "#", onclick: function(e){
 								top.BX.UI.Viewer.Instance.openByNode(BX("disk-attach-<?=$file['ID']?>"));
 								BX.PopupMenu.currentItem.popupWindow.close();
 								return e.preventDefault();

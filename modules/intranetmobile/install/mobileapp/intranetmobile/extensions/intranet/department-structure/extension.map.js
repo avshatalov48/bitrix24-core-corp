@@ -1,0 +1,1 @@
+{"version":3,"file":"extension.map.js","names":["jn","define","require","exports","module","ReduxDepartmentStructure","props"],"sources":["extension.js"],"mappings":"AAGAA,GAAGC,OAAO,iCAAiC,CAACC,EAASC,EAASC,KAC7D,MAAMC,yBAAEA,GAA6BH,EAAQ,qDAE7CE,EAAOD,QAAU,CAKhBE,yBAA2BC,GAAU,IAAID,EAAyBC,GAClE","ignoreList":[]}

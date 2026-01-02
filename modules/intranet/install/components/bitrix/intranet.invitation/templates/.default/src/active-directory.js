@@ -1,17 +1,14 @@
 export class ActiveDirectory
 {
-	constructor(parent)
-	{
-		this.parent = parent;
-	}
-
 	showForm()
 	{
 		BX.UI.Feedback.Form.open(
 			{
 				id: 'intranet-active-directory',
-				defaultForm: {id: 309, sec: 'fbc0n3'}
-			}
+				forms: [
+					{ zones: ['ru'], id: 309, lang: 'ru', sec: 'fbc0n3' },
+				],
+			},
 		);
 	}
 }

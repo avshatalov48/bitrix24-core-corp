@@ -1,9 +1,45 @@
 /* eslint-disable */
 this.BX = this.BX || {};
 this.BX.Booking = this.BX.Booking || {};
-(function (exports,main_core,ui_vue3_vuex,booking_const) {
+(function (exports,main_core,ui_vue3_vuex,booking_const,booking_lib_timezone) {
 	'use strict';
 
+	function getOverbookingOccupancy(overbookingMap, resources) {
+	  const occupancyList = [];
+	  const hashSet = new Set();
+	  for (const [, overbooking] of overbookingMap) {
+	    const {
+	      dateFromTs,
+	      dateToTs,
+	      resourcesIds
+	    } = overbooking.booking;
+	    if (resourcesIds.every(id => !resources.has(id))) {
+	      continue;
+	    }
+	    overbooking.items.filter(({
+	      resourceId
+	    }) => resources.has(resourceId)).forEach(({
+	      resourceId,
+	      intersections
+	    }) => {
+	      intersections.forEach(intersection => {
+	        const occupancy = {
+	          fromTs: dateFromTs >= intersection.dateFromTs ? dateFromTs : intersection.dateFromTs,
+	          toTs: dateToTs <= intersection.dateToTs ? dateToTs : intersection.dateToTs,
+	          resourcesIds: [resourceId]
+	        };
+	        const occupancyHash = `${occupancy.fromTs}-${occupancy.toTs}-${occupancy.resourcesIds.join('-')}`;
+	        if (!hashSet.has(occupancyHash)) {
+	          hashSet.add(occupancyHash);
+	          occupancyList.push(occupancy);
+	        }
+	      });
+	    });
+	  }
+	  return occupancyList;
+	}
+
+	/* eslint-disable no-param-reassign */
 	class Interface extends ui_vue3_vuex.BuilderModel {
 	  getName() {
 	    return booking_const.Model.Interface;
@@ -17,8 +53,14 @@ this.BX.Booking = this.BX.Booking || {};
 	      canTurnOnTrial: this.getVariable('canTurnOnTrial', false),
 	      canTurnOnDemo: this.getVariable('canTurnOnDemo', false),
 	      editingBookingId: this.getVariable('editingBookingId', 0),
+	      editingWaitListItemId: this.getVariable('editingWaitListItemId', 0),
 	      draggedBookingId: 0,
 	      draggedBookingResourceId: 0,
+	      draggedDataTransfer: {
+	        id: 0,
+	        resourceId: 0,
+	        kind: ''
+	      },
 	      resizedBookingId: 0,
 	      isLoaded: false,
 	      zoom: 1,
@@ -26,38 +68,39 @@ this.BX.Booking = this.BX.Booking || {};
 	      scroll: 0,
 	      offHoursHover: false,
 	      offHoursExpanded: false,
+	      waitListExpanded: this.getVariable('waitListExpanded', true),
+	      calendarExpanded: this.getVariable('calendarExpanded', true),
 	      fromHour: (_schedule$fromHour = schedule.fromHour) != null ? _schedule$fromHour : 9,
 	      toHour: (_schedule$toHour = schedule.toHour) != null ? _schedule$toHour : 19,
 	      selectedDateTs: new Date(today.getFullYear(), today.getMonth(), today.getDate()).getTime(),
 	      viewDateTs: new Date(today.getFullYear(), today.getMonth()).getTime(),
 	      deletingBookings: {},
+	      deletingResources: {},
+	      deletingWaitListItemIds: {},
 	      selectedCells: {},
 	      hoveredCell: null,
 	      busySlots: {},
 	      disabledBusySlots: {},
 	      resourcesIds: [],
-	      isFilterMode: false,
+	      pinnedResourceIds: [],
 	      isIntersectionForAll: true,
-	      filteredBookingsIds: [],
-	      filteredMarks: [],
 	      counterMarks: [],
 	      freeMarks: [],
 	      totalClients: this.getVariable('totalClients', 0),
 	      totalNewClientsToday: this.getVariable('totalNewClientsToday', 0),
 	      moneyStatistics: this.getVariable('moneyStatistics', null),
 	      intersections: {},
-	      quickFilter: {
-	        hovered: {},
-	        active: {},
-	        ignoredBookingIds: {}
-	      },
 	      timezone: this.getVariable('timezone', Intl.DateTimeFormat().resolvedOptions().timeZone),
 	      mousePosition: {
 	        top: 0,
 	        left: 0
 	      },
 	      isCurrentSenderAvailable: false,
-	      isShownTrialPopup: false
+	      isShownTrialPopup: false,
+	      embedItems: this.getVariable('embedItems', []),
+	      animationPause: false,
+	      createdFromEmbedBookings: {},
+	      createdFromEmbedWaitListItems: {}
 	    };
 	  }
 
@@ -76,16 +119,26 @@ this.BX.Booking = this.BX.Booking || {};
 	      isShownTrialPopup: state => state.isShownTrialPopup,
 	      /** @function interface/editingBookingId */
 	      editingBookingId: state => state.editingBookingId,
+	      /** @function interface/editingWaitListItemId */
+	      editingWaitListItemId: state => state.editingWaitListItemId,
 	      /** @function interface/isEditingBookingMode */
-	      isEditingBookingMode: state => state.editingBookingId > 0,
+	      isEditingBookingMode: state => {
+	        return state.editingBookingId > 0 || state.editingWaitListItemId > 0;
+	      },
 	      /** @function interface/draggedBookingId */
-	      draggedBookingId: state => state.draggedBookingId,
+	      draggedBookingId: state => {
+	        return state.draggedDataTransfer.kind === booking_const.DraggedElementKind.Booking ? state.draggedDataTransfer.id : 0;
+	      },
 	      /** @function interface/draggedBookingResourceId */
-	      draggedBookingResourceId: state => state.draggedBookingResourceId,
+	      draggedBookingResourceId: state => {
+	        return state.draggedDataTransfer.kind === booking_const.DraggedElementKind.Booking ? state.draggedDataTransfer.resourceId : 0;
+	      },
+	      /** @function interface/draggedDataTransfer */
+	      draggedDataTransfer: state => state.draggedDataTransfer,
 	      /** @function interface/resizedBookingId */
 	      resizedBookingId: state => state.resizedBookingId,
 	      /** @function interface/isDragMode */
-	      isDragMode: state => state.draggedBookingId || state.resizedBookingId,
+	      isDragMode: state => state.draggedDataTransfer.id > 0 || state.resizedBookingId,
 	      /** @function interface/isLoaded */
 	      isLoaded: state => state.isLoaded,
 	      /** @function interface/zoom */
@@ -98,6 +151,10 @@ this.BX.Booking = this.BX.Booking || {};
 	      offHoursHover: state => state.offHoursHover,
 	      /** @function interface/offHoursExpanded */
 	      offHoursExpanded: state => state.offHoursExpanded,
+	      /** @function interface/waitListExpanded */
+	      waitListExpanded: state => state.waitListExpanded,
+	      /** @function interface/calendarExpanded */
+	      calendarExpanded: state => state.calendarExpanded,
 	      /** @function interface/fromHour */
 	      fromHour: state => state.fromHour,
 	      /** @function interface/toHour */
@@ -108,6 +165,10 @@ this.BX.Booking = this.BX.Booking || {};
 	      viewDateTs: (state, getters) => state.viewDateTs - getters.offset,
 	      /** @function interface/deletingBookings */
 	      deletingBookings: state => state.deletingBookings,
+	      /** @function interface/deletingResources */
+	      deletingResources: state => state.deletingResources,
+	      /** @function interface/deletingWaitListItems */
+	      deletingWaitListItems: state => state.deletingWaitListItemIds,
 	      /** @function interface/selectedCells */
 	      selectedCells: state => state.selectedCells,
 	      /** @function interface/hoveredCell */
@@ -118,27 +179,22 @@ this.BX.Booking = this.BX.Booking || {};
 	      disabledBusySlots: state => state.disabledBusySlots,
 	      /** @function interface/resourcesIds */
 	      resourcesIds: (state, getters, rootState, rootGetters) => {
-	        const extraResourcesIds = rootGetters[`${booking_const.Model.Bookings}/getByDate`](state.selectedDateTs).filter(booking => booking.counter > 0).map(booking => booking.resourcesIds[0]);
-	        const resourcesIds = [...new Set([...state.resourcesIds, ...extraResourcesIds])];
-	        const excludeResources = new Set(getters.getOccupancy(resourcesIds, Object.values(state.quickFilter.ignoredBookingIds)).filter(occupancy => Object.values(state.quickFilter.active).some(hour => {
+	        const extraResourcesIds = rootGetters[`${booking_const.Model.Bookings}/getByDate`](state.selectedDateTs).filter(booking => !rootGetters[`${booking_const.Model.Filter}/isFilterMode`] && booking.counter > 0).map(booking => booking.resourcesIds[0]);
+	        const resourcesIds = [...new Set([...state.pinnedResourceIds, ...state.resourcesIds, ...extraResourcesIds])];
+	        const excludeResources = new Set(getters.getOccupancy(resourcesIds, Object.values(rootGetters[`${booking_const.Model.Filter}/quickFilter`].ignoredBookingIds)).filter(occupancy => Object.values(rootGetters[`${booking_const.Model.Filter}/quickFilter`].active).some(hour => {
 	          const fromTs = new Date(state.selectedDateTs).setHours(hour) - getters.offset;
 	          const toTs = new Date(state.selectedDateTs).setHours(hour + 1) - getters.offset;
 	          return toTs > occupancy.fromTs && fromTs < occupancy.toTs;
 	        })).flatMap(occupancy => occupancy.resourcesIds));
+	        Object.values(state.deletingResources).forEach(id => excludeResources.add(Number(id)));
 	        return resourcesIds.filter(id => !excludeResources.has(id));
 	      },
 	      extraResourcesIds: (state, getters) => {
 	        const resourcesIds = state.resourcesIds;
 	        return getters.resourcesIds.filter(id => !resourcesIds.includes(id));
 	      },
-	      /** @function interface/isFilterMode */
-	      isFilterMode: state => state.isFilterMode,
 	      /** @function interface/isIntersectionForAll */
 	      isIntersectionForAll: state => state.isIntersectionForAll,
-	      /** @function interface/filteredBookingsIds */
-	      filteredBookingsIds: state => state.filteredBookingsIds,
-	      /** @function interface/filteredMarks */
-	      filteredMarks: state => state.filteredMarks,
 	      /** @function interface/freeMarks */
 	      freeMarks: state => state.freeMarks,
 	      /** @function interface/totalClients */
@@ -155,25 +211,12 @@ this.BX.Booking = this.BX.Booking || {};
 	      },
 	      /** @function interface/intersections */
 	      intersections: state => state.intersections,
-	      /** @function interface/quickFilter */
-	      quickFilter: state => state.quickFilter,
 	      /** @function interface/timezone */
 	      timezone: state => state.timezone,
-	      /** @function interface/timezoneOffset */
-	      timezoneOffset: state => {
-	        const timeZone = state.timezone;
-	        const date = new Date(state.selectedDateTs);
-	        const dateInTimezone = new Date(date.toLocaleString('en-US', {
-	          timeZone
-	        }));
-	        const dateInUTC = new Date(date.toLocaleString('en-US', {
-	          timeZone: 'UTC'
-	        }));
-	        return (dateInTimezone.getTime() - dateInUTC.getTime()) / 1000;
-	      },
 	      /** @function interface/offset */
-	      offset: (state, getters) => {
-	        return (getters.timezoneOffset + new Date(state.selectedDateTs).getTimezoneOffset() * 60) * 1000;
+	      offset: state => {
+	        const timezoneOffset = booking_lib_timezone.Timezone.getOffset(state.selectedDateTs, state.timezone);
+	        return (timezoneOffset + new Date(state.selectedDateTs).getTimezoneOffset() * 60) * 1000;
 	      },
 	      /** @function interface/mousePosition */
 	      mousePosition: state => state.mousePosition,
@@ -181,11 +224,14 @@ this.BX.Booking = this.BX.Booking || {};
 	      isCurrentSenderAvailable: state => state.isCurrentSenderAvailable,
 	      /** @function interface/getColliding */
 	      getColliding: (state, getters) => {
-	        return (resourceId, excludedBookingIds) => [...getters.getOccupancy([resourceId], excludedBookingIds), ...Object.values(state.selectedCells).filter(cell => cell.resourceId === resourceId).map(cell => ({
-	          fromTs: cell.fromTs,
-	          toTs: cell.toTs,
-	          resourcesIds: [cell.resourceId]
-	        }))];
+	        return (resourceId, excludedBookingIds) => {
+	          const resourcesIds = Array.isArray(resourceId) ? resourceId : [resourceId];
+	          return [...getters.getOccupancy(resourcesIds, excludedBookingIds), ...Object.values(state.selectedCells).filter(cell => resourcesIds.includes(cell.resourceId)).map(cell => ({
+	            fromTs: cell.fromTs,
+	            toTs: cell.toTs,
+	            resourcesIds: [cell.resourceId]
+	          }))];
+	        };
 	      },
 	      /** @function interface/getOccupancy */
 	      getOccupancy: (state, getters, rootState, rootGetters) => {
@@ -193,7 +239,7 @@ this.BX.Booking = this.BX.Booking || {};
 	          const resources = new Set(resourcesIds);
 	          const bookings = rootGetters[`${booking_const.Model.Bookings}/get`].filter(booking => {
 	            const belongsToResources = booking.resourcesIds.some(id => resources.has(id));
-	            const isNotExcluded = !excludedBookingIds.includes(booking.id);
+	            const isNotExcluded = main_core.Type.isFunction(excludedBookingIds) ? !excludedBookingIds(booking) : !excludedBookingIds.includes(booking.id);
 	            return belongsToResources && isNotExcluded;
 	          }).map(booking => ({
 	            fromTs: booking.dateFromTs,
@@ -204,7 +250,8 @@ this.BX.Booking = this.BX.Booking || {};
 	            const isDragOffHours = getters.isDragMode && busySlot.type === booking_const.BusySlot.OffHours;
 	            const isActive = !(busySlot.id in state.disabledBusySlots) && !isDragOffHours;
 	            const belongsToResources = resources.has(busySlot.resourceId);
-	            return isActive && belongsToResources;
+	            const isIntersectionOverbooking = busySlot.type === booking_const.BusySlot.IntersectionOverbooking;
+	            return isIntersectionOverbooking && isActive && belongsToResources;
 	          }).map(({
 	            fromTs,
 	            toTs,
@@ -214,18 +261,44 @@ this.BX.Booking = this.BX.Booking || {};
 	            toTs,
 	            resourcesIds: [resourceId]
 	          }));
-	          return [...bookings, ...busySlots];
+	          const overbookingOccupancy = getOverbookingOccupancy(rootGetters[`${booking_const.Model.Bookings}/overbookingMap`], resources);
+	          return [...bookings, ...busySlots, ...overbookingOccupancy];
 	        };
+	      },
+	      /** @function interface/embedItems */
+	      embedItems: state => state.embedItems,
+	      /** @function interface/animationPause */
+	      animationPause: state => state.animationPause,
+	      /** @function interface/isBookingCreatedFromEmbed */
+	      isBookingCreatedFromEmbed: state => id => {
+	        return id in state.createdFromEmbedBookings;
+	      },
+	      /** @function interface/isWaitListItemCreatedFromEmbed */
+	      isWaitListItemCreatedFromEmbed: state => id => {
+	        return id in state.createdFromEmbedWaitListItems;
 	      }
 	    };
 	  }
 
 	  // eslint-disable-next-line max-lines-per-function
 	  getActions() {
+	    const createBatchableAction = mutationName => {
+	      return (store, payload) => {
+	        if (main_core.Type.isArray(payload)) {
+	          payload.forEach(id => store.commit(mutationName, id));
+	        } else {
+	          store.commit(mutationName, payload);
+	        }
+	      };
+	    };
 	    return {
 	      /** @function interface/setEditingBookingId */
 	      setEditingBookingId: (store, editingBookingId) => {
 	        store.commit('setEditingBookingId', editingBookingId);
+	      },
+	      /** @function interface/setEditingWaitListItemId */
+	      setEditingWaitListItemId: (store, editingWaitListItemId) => {
+	        store.commit('setEditingWaitListItemId', editingWaitListItemId);
 	      },
 	      /** @function interface/setDraggedBookingId */
 	      setDraggedBookingId: (store, draggedBookingId) => {
@@ -234,6 +307,18 @@ this.BX.Booking = this.BX.Booking || {};
 	      /** @function interface/setDraggedBookingResourceId */
 	      setDraggedBookingResourceId: (store, draggedBookingResourceId) => {
 	        store.commit('setDraggedBookingResourceId', draggedBookingResourceId);
+	      },
+	      /** @function interface/setDraggedDataTransfer */
+	      setDraggedDataTransfer: (store, draggedDataTransfer) => {
+	        store.commit('setDraggedDataTransfer', draggedDataTransfer);
+	      },
+	      /** @function interface/clearDraggedDataTransfer */
+	      clearDraggedDataTransfer: store => {
+	        store.commit('setDraggedDataTransfer', {
+	          kind: null,
+	          id: 0,
+	          resourceId: 0
+	        });
 	      },
 	      /** @function interface/setResizedBookingId */
 	      setResizedBookingId: (store, resizedBookingId) => {
@@ -263,6 +348,14 @@ this.BX.Booking = this.BX.Booking || {};
 	      setOffHoursExpanded: (store, offHoursExpanded) => {
 	        store.commit('setOffHoursExpanded', offHoursExpanded);
 	      },
+	      /** @function interface/setWaitListExpanded */
+	      setWaitListExpanded: (store, waitListExpanded) => {
+	        store.commit('setWaitListExpanded', waitListExpanded);
+	      },
+	      /** @function interface/setCalendarExpanded */
+	      setCalendarExpanded: (store, calendarExpanded) => {
+	        store.commit('setCalendarExpanded', calendarExpanded);
+	      },
 	      /** @function interface/setSelectedDateTs */
 	      setSelectedDateTs: (store, selectedDateTs) => {
 	        store.commit('setSelectedDateTs', selectedDateTs);
@@ -272,13 +365,17 @@ this.BX.Booking = this.BX.Booking || {};
 	        store.commit('setViewDateTs', viewDateTs);
 	      },
 	      /** @function interface/addDeletingBooking */
-	      addDeletingBooking: (store, bookingId) => {
-	        store.commit('addDeletingBooking', bookingId);
-	      },
+	      addDeletingBooking: createBatchableAction('addDeletingBooking'),
 	      /** @function interface/removeDeletingBooking */
-	      removeDeletingBooking: (store, bookingId) => {
-	        store.commit('removeDeletingBooking', bookingId);
-	      },
+	      removeDeletingBooking: createBatchableAction('removeDeletingBooking'),
+	      /** @function interface/addDeletingResource */
+	      addDeletingResource: createBatchableAction('addDeletingResource'),
+	      /** @function interface/removeDeletingResource */
+	      removeDeletingResource: createBatchableAction('removeDeletingResource'),
+	      /** @function interface/addDeletingWaitListItemId */
+	      addDeletingWaitListItemId: createBatchableAction('addDeletingWaitListItemId'),
+	      /** @function interface/removeDeletingWaitListItemId */
+	      removeDeletingWaitListItemId: createBatchableAction('removeDeletingWaitListItemId'),
 	      /** @function interface/addSelectedCell */
 	      addSelectedCell: (store, cell) => {
 	        store.commit('addSelectedCell', cell);
@@ -315,25 +412,18 @@ this.BX.Booking = this.BX.Booking || {};
 	      setResourcesIds: (store, resourcesIds) => {
 	        store.commit('setResourcesIds', resourcesIds);
 	      },
+	      setPinnedResourceIds: ({
+	        commit
+	      }, resourceIds) => {
+	        commit('setPinnedResourceIds', resourceIds);
+	      },
 	      /** @function interface/deleteResourceId */
 	      deleteResourceId: (store, resourceId) => {
 	        store.commit('deleteResourceId', resourceId);
 	      },
-	      /** @function interface/setFilterMode */
-	      setFilterMode: (store, isFilterMode) => {
-	        store.commit('setFilterMode', isFilterMode);
-	      },
 	      /** @function interface/setIntersectionMode */
 	      setIntersectionMode: (store, isIntersectionForAll) => {
 	        store.commit('setIntersectionMode', isIntersectionForAll);
-	      },
-	      /** @function interface/setFilteredBookingsIds */
-	      setFilteredBookingsIds: (store, filteredBookingsIds) => {
-	        store.commit('setFilteredBookingsIds', filteredBookingsIds);
-	      },
-	      /** @function interface/setFilteredMarks */
-	      setFilteredMarks: (store, dates) => {
-	        store.commit('setFilteredMarks', dates);
 	      },
 	      /** @function interface/setFreeMarks */
 	      setFreeMarks: (store, dates) => {
@@ -358,28 +448,6 @@ this.BX.Booking = this.BX.Booking || {};
 	      setIntersections: (store, intersections) => {
 	        store.commit('setIntersections', intersections);
 	      },
-	      /** @function interface/hoverQuickFilter */
-	      hoverQuickFilter: (store, hour) => {
-	        store.commit('hoverQuickFilter', hour);
-	      },
-	      /** @function interface/fleeQuickFilter */
-	      fleeQuickFilter: (store, hour) => {
-	        store.commit('fleeQuickFilter', hour);
-	      },
-	      /** @function interface/activateQuickFilter */
-	      activateQuickFilter: (store, hour) => {
-	        store.commit('activateQuickFilter', hour);
-	        store.commit('clearQuickFilterIgnoredBookingIds');
-	      },
-	      /** @function interface/deactivateQuickFilter */
-	      deactivateQuickFilter: (store, hour) => {
-	        store.commit('deactivateQuickFilter', hour);
-	        store.commit('clearQuickFilterIgnoredBookingIds');
-	      },
-	      /** @function interface/addQuickFilterIgnoredBookingId */
-	      addQuickFilterIgnoredBookingId: (store, bookingId) => {
-	        store.commit('addQuickFilterIgnoredBookingId', bookingId);
-	      },
 	      /** @function interface/setMousePosition */
 	      setMousePosition: (store, mousePosition) => {
 	        store.commit('setMousePosition', mousePosition);
@@ -399,6 +467,36 @@ this.BX.Booking = this.BX.Booking || {};
 	      /** @function interface/setIsShownTrialPopup */
 	      setIsShownTrialPopup: (store, isShownTrialPopup) => {
 	        store.commit('setIsShownTrialPopup', isShownTrialPopup);
+	      },
+	      /** @function interface/setEmbedItems */
+	      setEmbedItems: (store, embedItems) => {
+	        store.commit('setEmbedItems', embedItems);
+	      },
+	      /** @function interface/setAnimationPause */
+	      setAnimationPause: ({
+	        commit
+	      }, pause) => {
+	        commit('setAnimationPause', pause);
+	      },
+	      /** @function interface/addCreatedFromEmbedBooking */
+	      addCreatedFromEmbedBooking: ({
+	        commit,
+	        getters
+	      }, id) => {
+	        const embedItems = getters.embedItems || [];
+	        if (embedItems.length > 0) {
+	          commit('addCreatedFromEmbedBooking', id);
+	        }
+	      },
+	      /** @function interface/addCreatedFromEmbedWaitListItem */
+	      addCreatedFromEmbedWaitListItem: ({
+	        commit,
+	        getters
+	      }, id) => {
+	        const embedItems = getters.embedItems || [];
+	        if (embedItems.length > 0) {
+	          commit('addCreatedFromEmbedWaitListItem', id);
+	        }
 	      }
 	    };
 	  }
@@ -409,6 +507,9 @@ this.BX.Booking = this.BX.Booking || {};
 	      setEditingBookingId: (state, editingBookingId) => {
 	        state.editingBookingId = editingBookingId;
 	      },
+	      setEditingWaitListItemId: (state, editingWaitListItemId) => {
+	        state.editingWaitListItemId = editingWaitListItemId;
+	      },
 	      setDraggedBookingId: (state, draggedBookingId) => {
 	        state.draggedBookingId = draggedBookingId;
 	      },
@@ -417,6 +518,9 @@ this.BX.Booking = this.BX.Booking || {};
 	      },
 	      setDraggedBookingResourceId: (state, draggedBookingResourceId) => {
 	        state.draggedBookingResourceId = draggedBookingResourceId;
+	      },
+	      setDraggedDataTransfer: (state, draggedDataTransfer) => {
+	        state.draggedDataTransfer = draggedDataTransfer;
 	      },
 	      setIsLoaded: (state, isLoaded) => {
 	        state.isLoaded = isLoaded;
@@ -436,6 +540,12 @@ this.BX.Booking = this.BX.Booking || {};
 	      setOffHoursExpanded: (state, offHoursExpanded) => {
 	        state.offHoursExpanded = offHoursExpanded;
 	      },
+	      setWaitListExpanded: (state, waitListExpanded) => {
+	        state.waitListExpanded = waitListExpanded;
+	      },
+	      setCalendarExpanded: (state, calendarExpanded) => {
+	        state.calendarExpanded = calendarExpanded;
+	      },
 	      setSelectedDateTs: (state, selectedDateTs) => {
 	        state.selectedDateTs = selectedDateTs;
 	      },
@@ -447,6 +557,18 @@ this.BX.Booking = this.BX.Booking || {};
 	      },
 	      removeDeletingBooking: (state, bookingId) => {
 	        delete state.deletingBookings[bookingId];
+	      },
+	      addDeletingResource: (state, resourceId) => {
+	        state.deletingResources[resourceId] = resourceId;
+	      },
+	      removeDeletingResource: (state, resourceId) => {
+	        delete state.deletingResources[resourceId];
+	      },
+	      addDeletingWaitListItemId: (state, waitListItemId) => {
+	        state.deletingWaitListItemIds[waitListItemId] = waitListItemId;
+	      },
+	      removeDeletingWaitListItemId: (state, waitListItemId) => {
+	        delete state.deletingWaitListItemIds[waitListItemId];
 	      },
 	      addSelectedCell: (state, cell) => {
 	        state.selectedCells[cell.id] = cell;
@@ -477,20 +599,14 @@ this.BX.Booking = this.BX.Booking || {};
 	      setResourcesIds: (state, resourcesIds) => {
 	        state.resourcesIds = resourcesIds.sort((a, b) => a - b);
 	      },
+	      setPinnedResourceIds: (state, resourceIds) => {
+	        state.pinnedResourceIds = resourceIds;
+	      },
 	      deleteResourceId: (state, resourceId) => {
 	        state.resourcesIds = state.resourcesIds.filter(id => id !== resourceId);
 	      },
-	      setFilterMode: (state, isFilterMode) => {
-	        state.isFilterMode = isFilterMode;
-	      },
 	      setIntersectionMode: (state, isIntersectionForAll) => {
 	        state.isIntersectionForAll = isIntersectionForAll;
-	      },
-	      setFilteredBookingsIds: (state, filteredBookingsIds) => {
-	        state.filteredBookingsIds = [...filteredBookingsIds];
-	      },
-	      setFilteredMarks: (state, dates) => {
-	        state.filteredMarks = dates;
 	      },
 	      setFreeMarks: (state, dates) => {
 	        state.freeMarks = dates;
@@ -510,24 +626,6 @@ this.BX.Booking = this.BX.Booking || {};
 	      setIntersections: (state, intersections) => {
 	        state.intersections = intersections;
 	      },
-	      hoverQuickFilter: (state, hour) => {
-	        state.quickFilter.hovered[hour] = hour;
-	      },
-	      fleeQuickFilter: (state, hour) => {
-	        delete state.quickFilter.hovered[hour];
-	      },
-	      activateQuickFilter: (state, hour) => {
-	        state.quickFilter.active[hour] = hour;
-	      },
-	      deactivateQuickFilter: (state, hour) => {
-	        delete state.quickFilter.active[hour];
-	      },
-	      addQuickFilterIgnoredBookingId: (state, bookingId) => {
-	        state.quickFilter.ignoredBookingIds[bookingId] = bookingId;
-	      },
-	      clearQuickFilterIgnoredBookingIds: state => {
-	        state.quickFilter.ignoredBookingIds = {};
-	      },
 	      setMousePosition: (state, mousePosition) => {
 	        state.mousePosition = mousePosition;
 	      },
@@ -542,6 +640,30 @@ this.BX.Booking = this.BX.Booking || {};
 	      },
 	      setIsShownTrialPopup: (state, isShownTrialPopup) => {
 	        state.isShownTrialPopup = isShownTrialPopup;
+	      },
+	      setEmbedItems: (state, embedItems) => {
+	        state.embedItems = embedItems;
+	      },
+	      setAnimationPause: (state, pause) => {
+	        state.animationPause = pause;
+	      },
+	      addCreatedFromEmbedBooking: (state, id) => {
+	        if (main_core.Type.isArray(id)) {
+	          for (const bookingId of id) {
+	            state.createdFromEmbedBookings[bookingId] = bookingId;
+	          }
+	          return;
+	        }
+	        state.createdFromEmbedBookings[id] = id;
+	      },
+	      addCreatedFromEmbedWaitListItem: (state, id) => {
+	        if (main_core.Type.isArray(id)) {
+	          for (const waitListItemId of id) {
+	            state.createdFromEmbedWaitListItems[waitListItemId] = waitListItemId;
+	          }
+	          return;
+	        }
+	        state.createdFromEmbedWaitListItems[id] = id;
 	      }
 	    };
 	  }
@@ -549,5 +671,5 @@ this.BX.Booking = this.BX.Booking || {};
 
 	exports.Interface = Interface;
 
-}((this.BX.Booking.Model = this.BX.Booking.Model || {}),BX,BX.Vue3.Vuex,BX.Booking.Const));
+}((this.BX.Booking.Model = this.BX.Booking.Model || {}),BX,BX.Vue3.Vuex,BX.Booking.Const,BX.Booking.Lib));
 //# sourceMappingURL=interface.bundle.js.map

@@ -41,7 +41,7 @@ class TaskTable extends \Bitrix\Tasks\Internals\TaskTable
 	/**
 	 * @return array
 	 */
-	public static function getMap()
+	public static function getMap(): array
 	{
 		/**
 		 * @global CDatabase $DB
@@ -173,13 +173,6 @@ class TaskTable extends \Bitrix\Tasks\Internals\TaskTable
 					'STATUS'
 				),
 				'values' => array(0, 1)
-			),
-			'DECLINE_REASON' => array(
-				'data_type' => 'text',
-			),
-			'DEADLINE_COUNTED' => array(
-				'data_type' => 'integer',
-				'required' => true,
 			),
 		));
 	}

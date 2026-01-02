@@ -15,19 +15,22 @@ if (!defined('B_PROLOG_INCLUDED') || B_PROLOG_INCLUDED !== true)
  * @var CBitrixComponent $component
  */
 
+use Bitrix\Crm\Activity\LastCommunication\LastCommunicationTimeFormatter;
 use Bitrix\Crm\Restriction\AvailabilityManager;
 use Bitrix\Crm\Service\Container;
 use Bitrix\Crm\Tracking;
 use Bitrix\Crm\UI\NavigationBarPanel;
+use Bitrix\Main\Localization\Loc;
 use Bitrix\Main\ModuleManager;
 use Bitrix\Main\UI\Extension;
+use Bitrix\Main\Web\Json;
 use Bitrix\Main\Web\Uri;
+use Bitrix\UI\Buttons\AirButtonStyle;
+use Bitrix\UI\Buttons\Button;
+use Bitrix\UI\Toolbar\Manager;
 
 $APPLICATION->SetAdditionalCSS("/bitrix/themes/.default/crm-entity-show.css");
-if (SITE_TEMPLATE_ID === 'bitrix24')
-{
-	$APPLICATION->SetAdditionalCSS("/bitrix/themes/.default/bitrix24/crm-entity-show.css");
-}
+$APPLICATION->SetAdditionalCSS('/bitrix/themes/.default/bitrix24/crm-entity-show.css');
 
 if (CModule::IncludeModule('bitrix24') && !\Bitrix\Crm\CallList\CallList::isAvailable())
 {
@@ -43,6 +46,7 @@ Bitrix\Main\UI\Extension::load(
 		'crm.entity-list.panel',
 		'crm.badge',
 		'ui.design-tokens',
+		'crm.entity-list.binder',
 	]
 );
 
@@ -354,6 +358,8 @@ foreach($arResult['QUOTE'] as $sKey =>  $arQuote)
 		$resultItem['columns']['QUOTE_SUMMARY'] .= Bitrix\Crm\Component\EntityList\BadgeBuilder::render($arQuote['badges']);
 	}
 
+	(new LastCommunicationTimeFormatter())->formatListDate($arQuote, $resultItem['columns']);
+
 	$arResult['GRID_DATA'][] = &$resultItem;
 	unset($resultItem);
 }
@@ -366,29 +372,44 @@ $APPLICATION->IncludeComponent('bitrix:main.user.link',
 	array('HIDE_ICONS' => 'Y')
 );
 
-if ($arResult['ENABLE_TOOLBAR'])
-{
-	$addButton =array(
-		'TEXT' => GetMessage('CRM_QUOTE_LIST_ADD_SHORT_MSGVER_1'),
-		'TITLE' => GetMessage('CRM_QUOTE_LIST_ADD_MSGVER_1'),
-		'LINK' => $arResult['PATH_TO_QUOTE_ADD'],
-		'ICON' => 'btn-new'
-	);
+$filterLazyLoadUrl = '/bitrix/components/bitrix/crm.quote.list/filter.ajax.php?' . bitrix_sessid_get();
+$filterLazyLoadParams = [
+	'filter_id' => urlencode($arResult['GRID_ID']),
+	'category_id' => $arResult['CATEGORY_ID'] ?? null,
+	'siteID' => SITE_ID,
+];
+$uri = new Uri($filterLazyLoadUrl);
 
-	if ($arResult['ADD_EVENT_NAME'] !== '')
+if ($arResult['ENABLE_TOOLBAR'] && !\Bitrix\Main\Grid\Context::isInternalRequest())
+{
+	$buttonParams = [
+		'text' =>  Loc::getMessage('CRM_QUOTE_LIST_ADD_MSGVER_1'),
+		'link' => (
+			$arResult['PATH_TO_QUOTE_ADD'] instanceof Uri
+				? $arResult['PATH_TO_QUOTE_ADD']->getUri()
+				: $arResult['PATH_TO_QUOTE_ADD']
+		),
+		'style' => AirButtonStyle::FILLED,
+		'icon' => \Bitrix\UI\Buttons\Icon::ADD,
+	];
+
+	$eventName = $arResult['ADD_EVENT_NAME'] ?? '';
+	if ($eventName !== '')
 	{
 		$analyticsBuilder = \Bitrix\Crm\Integration\Analytics\Builder\Entity\AddOpenEvent::createDefault(CCrmOwnerType::Quote)
 			->setSection(
 				!empty($arParams['~ANALYTICS']['c_section']) && is_string($arParams['~ANALYTICS']['c_section'])
 					? $arParams['~ANALYTICS']['c_section']
-					: null
+					: null,
 			)
 			->setSubSection(
 				!empty($arParams['~ANALYTICS']['c_sub_section']) && is_string($arParams['~ANALYTICS']['c_sub_section'])
 					? $arParams['~ANALYTICS']['c_sub_section']
-					: null
+					: null,
 			)
-			->setElement(\Bitrix\Crm\Integration\Analytics\Dictionary::ELEMENT_CREATE_LINKED_ENTITY_BUTTON);
+			->setElement(\Bitrix\Crm\Integration\Analytics\Dictionary::ELEMENT_CREATE_LINKED_ENTITY_BUTTON)
+		;
+
 		$data = [
 			'urlParams' => $analyticsBuilder->buildData(),
 		];
@@ -397,19 +418,62 @@ if ($arResult['ENABLE_TOOLBAR'])
 			$data['urlParams']['st[' . $key . ']'] = $value;
 			unset($data['urlParams'][$key]);
 		}
-		$addButton['ONCLICK'] = "BX.onCustomEvent(window, '{$arResult['ADD_EVENT_NAME']}', " . json_encode($data) . ")";
+
+		if ($eventName !== 'CrmCreateDynamicFromDynamic')
+		{
+			unset($buttonParams['link']);
+		}
+
+		$eventName = $arResult['ADD_EVENT_NAME'];
+		$jsCode = "BX.onCustomEvent(window, '{$eventName}', " . Json::encode($data) . ");";
+		$buttonParams['onclick'] = new \Bitrix\UI\Buttons\JsCode($jsCode);
 	}
 
-	$APPLICATION->IncludeComponent(
-		'bitrix:crm.interface.toolbar',
-		'',
-		array(
-			'TOOLBAR_ID' => mb_strtolower($arResult['GRID_ID']) . '_toolbar',
-			'BUTTONS' => [$addButton]
-		),
-		$component,
-		['HIDE_ICONS' => 'Y']
-	);
+	$addButton = new Button($buttonParams);
+
+	$toolbarId = $arResult['GRID_ID'] . '_toolbar';
+	$toolbar = Manager::getInstance()->createToolbar($toolbarId, []);
+
+	$toolbar->addFilter([
+		'GRID_ID' => $arResult['GRID_ID'],
+		'FILTER_ID' => $arResult['GRID_ID'],
+		'FILTER' => $arResult['FILTER'],
+		'FILTER_PRESETS' => $arResult['FILTER_PRESETS'],
+		'ENABLE_FIELDS_SEARCH' => 'Y',
+		'ENABLE_LABEL' => true,
+		'HEADERS_SECTIONS' => $arResult['HEADERS_SECTIONS'],
+		'HEADERS' => $arResult['HEADERS'],
+		'LAZY_LOAD' => [
+			'GET_LIST' => $uri->addParams(array_merge($filterLazyLoadParams, ['action' => 'list']))->getUri(),
+			'GET_FIELD' => $uri->addParams(array_merge($filterLazyLoadParams, ['action' => 'field']))->getUri(),
+			'GET_FIELDS' => $uri->addParams(array_merge($filterLazyLoadParams, ['action' => 'fields']))->getUri(),
+		],
+		'CONFIG' => [
+			'popupColumnsCount' => 4,
+			'popupWidth' => 800,
+			'showPopupInCenter' => true,
+		],
+		'THEME' => Bitrix\Main\UI\Filter\Theme::MUTED,
+		'RESTRICTED_FIELDS' => ($arResult['RESTRICTED_FIELDS'] ?? []),
+		'USE_CHECKBOX_LIST_FOR_SETTINGS_POPUP' => true,
+	]);
+
+	$toolbar->addButton($addButton, \Bitrix\UI\Toolbar\ButtonLocation::AFTER_TITLE);
+
+	$toolbar->hideTitle();
+	?>
+	<div class="crm-list-top-toolbar">
+		<?php
+			$GLOBALS["APPLICATION"]->IncludeComponent(
+				'bitrix:ui.toolbar',
+				'',
+				[
+					'TOOLBAR_ID' => $toolbarId,
+				],
+			);
+		?>
+	</div>
+	<?php
 }
 
 //region Navigation
@@ -428,14 +492,6 @@ if (isset($arResult['PAGINATION']) && is_array($arResult['PAGINATION']))
 	ob_end_clean();
 }
 //endregion
-
-$filterLazyLoadUrl = '/bitrix/components/bitrix/crm.quote.list/filter.ajax.php?' . bitrix_sessid_get();
-$filterLazyLoadParams = [
-	'filter_id' => urlencode($arResult['GRID_ID']),
-	'category_id' => $arResult['CATEGORY_ID'] ?? null,
-	'siteID' => SITE_ID,
-];
-$uri = new Uri($filterLazyLoadUrl);
 
 $APPLICATION->IncludeComponent(
 	'bitrix:crm.interface.grid',
@@ -485,6 +541,10 @@ $APPLICATION->IncludeComponent(
 			? $arResult['PAGINATION'] : [],
 		'ENABLE_ROW_COUNT_LOADER' => true,
 		'PRESERVE_HISTORY' => $arResult['PRESERVE_HISTORY'],
+		'COUNTER_PANEL' => [
+			'ENTITY_TYPE_NAME' => CCrmOwnerType::QuoteName,
+			'EXTRAS' => [],
+		],
 		'NAVIGATION_BAR' => (new NavigationBarPanel(CCrmOwnerType::Quote))
 			->setItems([
 				NavigationBarPanel::ID_AUTOMATION,

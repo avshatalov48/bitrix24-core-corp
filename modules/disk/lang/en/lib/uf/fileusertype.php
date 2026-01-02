@@ -5,4 +5,3 @@ $MESS["DISK_FILE_USER_TYPE_ERROR_COULD_NOT_FIND_FILE"] = "File could not be foun
 $MESS["DISK_FILE_USER_TYPE_ERROR_INVALID_VALUE"] = "Invalid value: there must be a number.";
 $MESS["DISK_FILE_USER_TYPE_ERROR_USER_ID"] = "User is not logged in.";
 $MESS["DISK_FILE_USER_TYPE_NAME"] = "File (Drive)";
-$MESS["DISK_FILE_USER_TYPE_NEW_FILE_IN_COLLAB"] = "Copy of #NAME#";

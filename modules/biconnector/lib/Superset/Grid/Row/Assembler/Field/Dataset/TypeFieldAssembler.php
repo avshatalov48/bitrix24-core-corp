@@ -2,6 +2,8 @@
 
 namespace Bitrix\BIConnector\Superset\Grid\Row\Assembler\Field\Dataset;
 
+use Bitrix\BIConnector\ExternalSource\Type;
+use Bitrix\BIConnector\Superset\Grid\ExternalSourceRepository;
 use Bitrix\Main\Grid\Row\FieldAssembler;
 
 class TypeFieldAssembler extends FieldAssembler
@@ -10,7 +12,16 @@ class TypeFieldAssembler extends FieldAssembler
 	{
 		$type = $value['TYPE'];
 		$nameType = strtoupper($value['TYPE']);
-		$avatar = "/bitrix/images/biconnector/database-connections/{$type}.svg";
+
+		if (Type::tryFrom($type) === Type::Rest)
+		{
+			$connectorOfSource = ExternalSourceRepository::getRestLogoBySourceId((int)$value['SOURCE']['ID']);
+			$avatar = htmlspecialcharsbx($connectorOfSource['LOGO'] ?? '');
+		}
+		else
+		{
+			$avatar = "/bitrix/images/biconnector/database-connections/{$type}.svg";
+		}
 
 		return <<<HTML
 			<span class="biconnector-grid-username-cell biconnector-grid-source-cell">

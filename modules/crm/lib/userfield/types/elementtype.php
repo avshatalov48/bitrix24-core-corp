@@ -135,7 +135,7 @@ class ElementType extends StringType
 			}
 
 			$entityTypeId = \CCrmOwnerType::ResolveID($settingName);
-			if (\CCrmOwnerType::IsDefined($entityTypeId) && $permissions->canReadType($entityTypeId))
+			if (\CCrmOwnerType::IsDefined($entityTypeId) && $permissions->entityType()->canReadItems($entityTypeId))
 			{
 				return true;
 			}

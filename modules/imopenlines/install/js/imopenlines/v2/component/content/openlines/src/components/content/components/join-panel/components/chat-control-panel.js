@@ -1,10 +1,9 @@
-import { Button as ButtonPanel, ButtonColor, ButtonSize } from 'im.v2.component.elements';
+import { ChatButton, ButtonColor, ButtonSize, type CustomColorScheme } from 'im.v2.component.elements.button';
 import { AnswerService, SkipService } from 'imopenlines.v2.provider.service';
 
 import { ChatTransfer } from '../../entity-selector/chat-transfer/chat-transfer';
 
 import type { JsonObject } from 'main.core';
-import type { CustomColorScheme } from 'im.v2.component.elements';
 
 const BUTTON_COLOR = '#eef0f2';
 const BUTTON_COLOR_TEXT = '#535658';
@@ -13,7 +12,7 @@ const BUTTON_COLOR_HOVER = '#dfe0e3';
 // @vue/component
 export const ChatControlPanel = {
 	name: 'ChatControlPanel',
-	components: { ButtonPanel, ChatTransfer },
+	components: { ChatButton, ChatTransfer },
 	props:
 	{
 		dialogId: {
@@ -86,7 +85,7 @@ export const ChatControlPanel = {
 	template: `
 		<ul class="bx-imol-textarea_join-panel-list-button">
 			<li class="bx-imol-textarea_join-panel-item-button">
-				<ButtonPanel
+				<ChatButton
 					:size="ButtonSize.L"
 					:color="ButtonColor.Success"
 					:text="loc('IMOL_CONTENT_TEXTAREA_JOIN_PANEL_ANSWER')"
@@ -94,7 +93,7 @@ export const ChatControlPanel = {
 				/>
 			</li>
 			<li v-if="!isQueueTypeAll" class="bx-imol-textarea_join-panel-item-button">
-				<ButtonPanel
+				<ChatButton
 					:size="ButtonSize.L"
 					:color="ButtonColor.Danger"
 					:text="loc('IMOL_CONTENT_TEXTAREA_JOIN_PANEL_SKIP')"
@@ -102,7 +101,7 @@ export const ChatControlPanel = {
 				/>
 			</li>
 			<li class="bx-imol-textarea_join-panel-item-button" ref="transfer-chat">
-				<ButtonPanel
+				<ChatButton
 					:size="ButtonSize.L"
 					:customColorScheme="buttonColorScheme"
 					:text="loc('IMOL_CONTENT_BUTTON_TRANSFER')"

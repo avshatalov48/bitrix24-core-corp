@@ -2,39 +2,50 @@
 
 namespace Bitrix\Crm\Statistics\OperationFacade;
 
+use Bitrix\Crm\Comparer\ComparerBase;
 use Bitrix\Crm\Conversion\LeadConverter;
 use Bitrix\Crm\History;
 use Bitrix\Crm\Integration;
 use Bitrix\Crm\Item;
+use Bitrix\Crm\Service\Factory;
 use Bitrix\Crm\Statistics;
+use Bitrix\Main\ORM\Objectify\Values;
 use Bitrix\Main\Result;
 
 final class Lead extends Statistics\OperationFacade
 {
-	/** @var string */
-	private $successfulStageId;
+	private History\StageHistory\AbstractStageHistory $stageHistory;
+	private History\StageHistoryWithSupposed\AbstractStageHistoryWithSupposed $supposedHistory;
+	private string $successfulStageId;
 
-	public function __construct(string $successfulStageId)
+	public function __construct(Factory $factory, string $successfulStageId)
 	{
+		$this->stageHistory = new History\StageHistory\LeadStageHistory($factory);
+		$this->supposedHistory = new History\StageHistoryWithSupposed\LeadStageHistoryWithSupposed(
+			new History\StageHistoryWithSupposed\TransitionsCalculator($factory),
+		);
 		$this->successfulStageId = $successfulStageId;
 	}
 
 	public function add(Item $item): Result
 	{
-		return $this->registerStatistics($item, true);
+		return $this->registerAdd($item, true);
 	}
 
 	public function restore(Item $item): Result
 	{
-		return $this->registerStatistics($item, false);
+		return $this->registerAdd($item, false);
 	}
 
-	private function registerStatistics(Item $item, bool $isNew): Result
+	private function registerAdd(Item $item, bool $isNew): Result
 	{
 		$compatibleData = $item->getCompatibleData();
 
 		Statistics\LeadSumStatisticEntry::register($item->getId(), $compatibleData);
-		History\LeadStatusHistoryEntry::register($item->getId(), $compatibleData, ['IS_NEW' => $isNew]);
+
+		$commonDiff = ComparerBase::compareEntityFields([], $item->getData());
+		$this->stageHistory->registerItemAdd($commonDiff);
+		$this->supposedHistory->registerItemAdd($commonDiff);
 
 		if ($item->getStageId() === $this->successfulStageId)
 		{
@@ -48,8 +59,11 @@ final class Lead extends Statistics\OperationFacade
 	{
 		$compatibleData = $item->getCompatibleData();
 
+		$commonDiff = ComparerBase::compareEntityFields($itemBeforeSave->getData(Values::ACTUAL), $item->getData());
+
 		Statistics\LeadSumStatisticEntry::register($item->getId(), $compatibleData);
-		History\LeadStatusHistoryEntry::synchronize($item->getId(), $compatibleData);
+		$this->stageHistory->registerItemUpdate($commonDiff);
+		$this->supposedHistory->registerItemUpdate($commonDiff);
 		Integration\Channel\LeadChannelBinding::synchronize($item->getId(), $compatibleData);
 
 		$previousStageId = $itemBeforeSave->remindActual(Item::FIELD_NAME_STAGE_ID);
@@ -57,8 +71,6 @@ final class Lead extends Statistics\OperationFacade
 
 		if ($previousStageId !== $currentStageId)
 		{
-			History\LeadStatusHistoryEntry::register($item->getId(), $compatibleData, ['IS_NEW' => false]);
-
 			$wasMovedToSuccessfulStage =
 				$currentStageId === $this->successfulStageId
 				&& $previousStageId !== $this->successfulStageId
@@ -89,7 +101,8 @@ final class Lead extends Statistics\OperationFacade
 
 	public function delete(Item $itemBeforeDeletion): Result
 	{
-		History\LeadStatusHistoryEntry::unregister($itemBeforeDeletion->getId());
+		$this->stageHistory->registerItemDelete($itemBeforeDeletion->getId());
+		$this->supposedHistory->registerItemDelete($itemBeforeDeletion->getId());
 		Statistics\LeadSumStatisticEntry::unregister($itemBeforeDeletion->getId());
 		Statistics\LeadActivityStatisticEntry::unregister($itemBeforeDeletion->getId());
 		Integration\Channel\LeadChannelBinding::unregisterAll($itemBeforeDeletion->getId());

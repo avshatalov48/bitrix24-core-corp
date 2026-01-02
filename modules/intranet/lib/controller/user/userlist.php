@@ -3,14 +3,22 @@
 namespace Bitrix\Intranet\Controller\User;
 
 use Bitrix\Intranet\ActionFilter\AdminUser;
-use Bitrix\Intranet\ActionFilter\InviteIntranetAccessControl;
+use Bitrix\Intranet\Infrastructure\Controller\ActionFilter\InviteIntranetAccessControl;
 use Bitrix\Intranet\ActionFilter\InviteLimitControl;
 use Bitrix\Intranet\CurrentUser;
+use Bitrix\Intranet\Entity\Collection\InvitationCollection;
 use Bitrix\Intranet\Entity\Department;
+use Bitrix\Intranet\Public\Type\EmailInvitation;
+use Bitrix\Intranet\Public\Type\PhoneInvitation;
+use Bitrix\Intranet\Exception\ErrorCollectionException;
+use Bitrix\Intranet\Public\Facade\Invitation\ReInvitationFacade;
 use Bitrix\Intranet\Invitation;
 use Bitrix\Intranet\Invitation\Register;
 use Bitrix\Intranet\Service\ServiceContainer;
 use Bitrix\Intranet\User;
+use Bitrix\Intranet\User\Access\Model\TargetUserModel;
+use Bitrix\Intranet\User\Access\UserAccessController;
+use Bitrix\Intranet\User\Access\UserActionDictionary;
 use Bitrix\Intranet\Util;
 use Bitrix\Main\Engine\Controller;
 use Bitrix\Main\Engine\Response\AjaxJson;
@@ -48,7 +56,12 @@ class UserList extends Controller
 				'-prefilters' => [
 					AdminUser::class,
 				],
-			]
+			],
+			'groupFire' => [
+				'-prefilters' => [
+					AdminUser::class,
+				],
+			],
 		];
 	}
 
@@ -105,6 +118,15 @@ class UserList extends Controller
 
 	public function groupFireAction(array $fields): Response
 	{
+		$access = UserAccessController::createByDefault();
+
+		if (!$access->check(UserActionDictionary::FIRE))
+		{
+			$this->addError(new Error('no permissions', 403));
+
+			return AjaxJson::createError($this->errorCollection);
+		}
+
 		$res = $this->getUserList($fields, ['ACTIVE', 'CONFIRM_CODE']);
 		$skippedFiredUsers = [];
 		$originatorUsers = [];
@@ -229,7 +251,7 @@ class UserList extends Controller
 		{
 			return AjaxJson::createError($this->errorCollection);
 		}
-
+		$invitationCollection = new \Bitrix\Intranet\Public\Type\Collection\InvitationCollection();
 		while ($user = $res->fetch())
 		{
 			if ($user['ACTIVE'] === 'N' && !empty($user['CONFIRM_CODE']))
@@ -248,21 +270,33 @@ class UserList extends Controller
 			{
 				if (!empty($user['PERSONAL_MOBILE']))
 				{
-					$user['PHONE'] = $user['PERSONAL_MOBILE'];
+					$invitationCollection->add(
+						new PhoneInvitation($user['PERSONAL_MOBILE'], $user['NAME'], $user['LAST_NAME'], formType: 'mass')
+					);
 				}
-
-				$usersToInvite['ITEMS'][] = $user;
+				else
+				{
+					$invitationCollection->add(
+						new EmailInvitation($user['EMAIL'], $user['NAME'], $user['LAST_NAME'], formType: 'mass')
+					);
+				}
 			}
 		}
 
-		if (!empty($usersToInvite['ITEMS']))
+		if (!$invitationCollection->empty())
 		{
-			$errors = [];
-			Register::inviteNewUsers(SITE_ID, $usersToInvite, 'mass', $errors);
-
-			foreach ($errors as $errorMessage)
+			$invitationFacade = new ReInvitationFacade();
+			try
 			{
-				$this->addError(new Error($errorMessage));
+				$invitationFacade->inviteByCollection($invitationCollection);
+			}
+			catch (ErrorCollectionException $exception)
+			{
+				$this->errorCollection = $exception->getErrors();
+			}
+			catch (\Exception $exception)
+			{
+				$this->addError(new Error($exception->getMessage()));
 			}
 		}
 
@@ -387,11 +421,6 @@ class UserList extends Controller
 		else
 		{
 			$filter = $fields['filter'];
-		}
-
-		if (ModuleManager::isModuleInstalled('extranet'))
-		{
-			$select[] = 'EXTRANET_GROUP';
 		}
 
 		return \Bitrix\Intranet\UserTable::getList([

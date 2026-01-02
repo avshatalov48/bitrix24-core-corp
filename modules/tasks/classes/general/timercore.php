@@ -17,13 +17,33 @@ use Bitrix\Main\Application;
 final class CTaskTimerCore
 {
 	/**
-	 * @param $userId
-	 * @param $taskId
-	 * @return array|bool array with keys TASK_ID, USER_ID, TIMER_STARTED_AT, TIMER_ACCUMULATOR,
-	 * or false on error
+	 * @deprecated
+	 * @TasksV2
+	 * @internal
+	 * @use \Bitrix\Tasks\V2\Internal\Service\Task\TimerService
 	 */
 	public static function start($userId, $taskId)
 	{
+		if ($taskId < 1)
+		{
+			CTaskAssert::logError('[0xf119fc40] invalid taskId: ' . $taskId);
+			CTaskAssert::assert(false);
+		}
+
+		if (\Bitrix\Tasks\V2\FormV2Feature::isOn('timer'))
+		{
+			$service = \Bitrix\Tasks\V2\Internal\DI\Container::getInstance()->getTimerService();
+
+			$timer = $service->start((int)$userId, (int)$taskId);
+
+			return [
+				'TASK_ID' => $timer->taskId,
+				'USER_ID' => $timer->userId,
+				'TIMER_STARTED_AT' => $timer->startedAtTs,
+				'TIMER_ACCUMULATOR' => $timer->seconds,
+			];
+		}
+
 		global $DB;
 
 		$userId = (int) $userId;
@@ -33,12 +53,6 @@ final class CTaskTimerCore
 		if ($ts < 1)
 		{
 			CTaskAssert::logError('[0x574ed9ab] current unix timestamp is in past, check system time');
-			CTaskAssert::assert(false);
-		}
-
-		if ($taskId < 1)
-		{
-			CTaskAssert::logError('[0xf119fc40] invalid taskId: ' . $taskId);
 			CTaskAssert::assert(false);
 		}
 
@@ -95,13 +109,31 @@ final class CTaskTimerCore
 
 
 	/**
-	 * @param $userId
-	 * @param $taskId
-	 * @return array|bool array with keys TASK_ID, USER_ID, TIMER_STARTED_AT, TIMER_ACCUMULATOR,
-	 * or false on error
+	 * @deprecated
+	 * @TasksV2
+	 * @internal
+	 * @use \Bitrix\Tasks\V2\Internal\Service\Task\TimerService
 	 */
 	public static function stop($userId, $taskId = 0)
 	{
+		if (\Bitrix\Tasks\V2\FormV2Feature::isOn('timer'))
+		{
+			$service = \Bitrix\Tasks\V2\Internal\DI\Container::getInstance()->getTimerService();
+
+			$timer = $service->stop((int)$userId, (int)$taskId);
+			if ($timer === null)
+			{
+				return false;
+			}
+
+			return [
+				'TASK_ID' => $timer->taskId,
+				'USER_ID' => $timer->userId,
+				'TIMER_STARTED_AT' => $timer->startedAtTs,
+				'TIMER_ACCUMULATOR' => $timer->seconds,
+			];
+		}
+
 		global $DB;
 
 		$ts = time();
@@ -137,8 +169,32 @@ final class CTaskTimerCore
 			return (false);
 	}
 
+	/**
+	 * @deprecated
+	 * @TasksV2
+	 * @internal
+	 * @use \Bitrix\Tasks\V2\Internal\Repository\TimerRepositoryInterface
+	 */
 	public static function get($userId, $taskId = 0)
 	{
+		if (\Bitrix\Tasks\V2\FormV2Feature::isOn('timer'))
+		{
+			$repository = \Bitrix\Tasks\V2\Internal\DI\Container::getInstance()->getTimerRepository();
+
+			$timer = $repository->get((int)$userId, (int)$taskId);
+			if ($timer === null)
+			{
+				return false;
+			}
+
+			return [
+				'TASK_ID' => $timer->taskId,
+				'USER_ID' => $timer->userId,
+				'TIMER_STARTED_AT' => $timer->startedAtTs,
+				'TIMER_ACCUMULATOR' => $timer->seconds,
+			];
+		}
+
 		global $DB;
 
 		$rs = $DB->query(
@@ -153,7 +209,10 @@ final class CTaskTimerCore
 			return (false);
 	}
 
-
+	/**
+	 * @deprecated
+	 * Not in use and will be removed
+	 */
 	public static function getByTaskId($taskId)
 	{
 		global $DB;

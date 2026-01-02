@@ -12,6 +12,7 @@ use Bitrix\Crm\ItemIdentifier;
 use Bitrix\Crm\Model\ActivityPingOffsetsTable;
 use Bitrix\Crm\Service\Communication\Channel\Event\ChannelEventRegistrar;
 use Bitrix\Crm\Service\Container;
+use Bitrix\Crm\Service\Context;
 use Bitrix\Main\Loader;
 use Bitrix\Main\Localization\Loc;
 use Bitrix\Main\Result;
@@ -239,6 +240,34 @@ class ToDo extends Base implements EventRegistrarInterface
 
 	public static function skipCalendarSync(array $activityFields, array $options = []): bool
 	{
+		$context = $options['CONTEXT'] ?? null;
+		if (!($context instanceof Context) || $context->getScope() !== Context::SCOPE_AUTOMATION)
+		{
+			$sectionId = (int)($activityFields['SETTINGS']['CALENDAR_SECTION_ID'] ?? 0);
+			if ($sectionId <= 0)
+			{
+				return true;
+			}
+
+			$userId = Container::getInstance()->getContext()->getUserId();
+			$availableSections = \Bitrix\Crm\Integration\Calendar::getSectionListAvailableForUser($userId);
+			$availableSectionId = false;
+
+			foreach ($availableSections as $section)
+			{
+				if ((int)$section['ID'] === $sectionId)
+				{
+					$availableSectionId = true;
+					break;
+				}
+			}
+
+			if (!$availableSectionId)
+			{
+				return true;
+			}
+		}
+
 		if (!empty($activityFields['CALENDAR_EVENT_ID']))
 		{
 			return false;

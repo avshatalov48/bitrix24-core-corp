@@ -6,6 +6,7 @@ if (!defined('B_PROLOG_INCLUDED') || B_PROLOG_INCLUDED !== true)
 }
 
 use Bitrix\Crm\Automation\ClientCommunications\ClientCommunications;
+use Bitrix\Crm\Integration\Analytics\Dictionary;
 use Bitrix\Crm\Integration\SmsManager;
 
 class CBPCrmSendSmsActivity extends CBPActivity
@@ -82,6 +83,13 @@ class CBPCrmSendSmsActivity extends CBPActivity
 
 		if ($sendResult)
 		{
+			$documentType = $this->getDocumentType();
+			\CCrmBizProcHelper::sendOperationsAnalytics(
+				Dictionary::EVENT_ENTITY_SOCIAL,
+				$this,
+				$documentType[2] ?? '',
+			);
+
 			$messageId = is_int($sendResult) ? $sendResult : null;
 
 			$this->WriteToTrackingService(GetMessage("CRM_SSMSA_SEND_RESULT_TRUE", [

@@ -32,7 +32,7 @@ export class CountersPullHandler extends BasePullHandler
 
 	#isFilterMode(): boolean
 	{
-		return Core.getStore().getters[`${Model.Interface}/isFilterMode`];
+		return Core.getStore().getters[`${Model.Filter}/isFilterMode`];
 	}
 
 	#getViewDateTs(): number

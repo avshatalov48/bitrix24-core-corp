@@ -15,6 +15,11 @@ require($_SERVER['DOCUMENT_ROOT'].'/bitrix/header.php');
 
 $request = \Bitrix\Main\Application::getInstance()->getContext()->getRequest();
 
+if (\Bitrix\Main\Loader::includeModule('ui'))
+{
+	\Bitrix\UI\Toolbar\Facade\Toolbar::deleteFavoriteStar();
+}
+
 $APPLICATION->IncludeComponent(
 	'bitrix:ui.sidepanel.wrapper',
 	'',
@@ -25,6 +30,7 @@ $APPLICATION->IncludeComponent(
 			'SALESCENTER_DIR' => '/saleshub/',
 		],
 		'USE_PADDING' => false,
+		'USE_UI_TOOLBAR' => 'Y',
 	]
 );
 

@@ -2753,11 +2753,10 @@ class CCrmRestVat extends IRestService
 		if (!CModule::IncludeModule('catalog'))
 			throw new RestException('The Commercial Catalog module is not installed.');
 
-		global $USER;
-
-		$CrmPerms = new CCrmPerms($USER->GetID());
-		if (!$CrmPerms->HavePerm('CONFIG', BX_CRM_PERM_CONFIG, 'READ'))
+		if (!\Bitrix\Crm\Service\Container::getInstance()->getUserPermissions()->product()->canRead())
+		{
 			throw new RestException('Access denied.');
+		}
 
 		$order =  CCrmInvoiceRestUtil::getParamArray($params, 'order', array('SORT' => 'ASC'));
 		$filter = CCrmInvoiceRestUtil::getParamArray($params, 'filter', array());
@@ -2800,11 +2799,10 @@ class CCrmRestVat extends IRestService
 		if (!CModule::IncludeModule('catalog'))
 			throw new RestException('The Commercial Catalog module is not installed.');
 
-		global $USER;
-
-		$CrmPerms = new CCrmPerms($USER->GetID());
-		if (!$CrmPerms->HavePerm('CONFIG', BX_CRM_PERM_CONFIG, 'READ'))
+		if (!\Bitrix\Crm\Service\Container::getInstance()->getUserPermissions()->product()->canRead())
+		{
 			throw new RestException('Access denied.');
+		}
 
 		$ID = CCrmInvoiceRestUtil::getParamScalar($params, 'id', 0);
 		$arResult = CCrmVat::GetByID($ID);
@@ -2820,11 +2818,12 @@ class CCrmRestVat extends IRestService
 		if (!CModule::IncludeModule('catalog'))
 			throw new RestException('The Commercial Catalog module is not installed.');
 
-		global $DB, $USER;
+		global $DB;
 
-		$CrmPerms = new CCrmPerms($USER->GetID());
-		if (!$CrmPerms->HavePerm('CONFIG', BX_CRM_PERM_CONFIG, 'WRITE'))
+		if (!\Bitrix\Crm\Service\Container::getInstance()->getUserPermissions()->isCrmAdmin())
+		{
 			throw new RestException('Access denied.');
+		}
 
 		$fields = CCrmInvoiceRestUtil::getParamArray($params, 'fields');
 
@@ -2860,11 +2859,12 @@ class CCrmRestVat extends IRestService
 		if (!CModule::IncludeModule('catalog'))
 			throw new RestException('The Commercial Catalog module is not installed.');
 
-		global $DB, $USER;
+		global $DB;
 
-		$CrmPerms = new CCrmPerms($USER->GetID());
-		if (!$CrmPerms->HavePerm('CONFIG', BX_CRM_PERM_CONFIG, 'WRITE'))
+		if (!\Bitrix\Crm\Service\Container::getInstance()->getUserPermissions()->isCrmAdmin())
+		{
 			throw new RestException('Access denied.');
+		}
 
 		$ID = intval(CCrmInvoiceRestUtil::getParamScalar($params, 'id', 0));
 		if($ID <= 0)
@@ -2902,11 +2902,12 @@ class CCrmRestVat extends IRestService
 		if (!CModule::IncludeModule('catalog'))
 			throw new RestException('The Commercial Catalog module is not installed.');
 
-		global $DB, $USER;
+		global $DB;
 
-		$CrmPerms = new CCrmPerms($USER->GetID());
-		if (!$CrmPerms->HavePerm('CONFIG', BX_CRM_PERM_CONFIG, 'WRITE'))
+		if (!\Bitrix\Crm\Service\Container::getInstance()->getUserPermissions()->isCrmAdmin())
+		{
 			throw new RestException('Access denied.');
+		}
 
 		$ID = CCrmInvoiceRestUtil::getParamScalar($params, 'id', 0);
 		if($ID <= 0)

@@ -38,14 +38,14 @@ final class ExternalSourceGrid extends Grid
 				'ACTIVE',
 				'DATE_CREATE',
 				'CREATED_BY_ID',
-				'DESCRIPTION'
+				'DESCRIPTION',
 			],
 			$this->getSettings()
 		);
 
 		return new Rows(
 			$rowAssembler,
-			new \Bitrix\BIConnector\Superset\Grid\Row\Action\ExternalSourceDataProvider($this->getSettings())
+			new \Bitrix\BIConnector\Superset\Grid\Row\Action\Source\ExternalSourceActionDataProvider($this->getSettings())
 		);
 	}
 
@@ -58,5 +58,4 @@ final class ExternalSourceGrid extends Grid
 			),
 		);
 	}
-
 }

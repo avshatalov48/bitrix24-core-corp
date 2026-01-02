@@ -7,8 +7,10 @@ use Bitrix\Disk\Document;
 use Bitrix\Disk\Document\OnlyOffice\Filters\DocumentSessionCheck;
 use Bitrix\Disk\Document\OnlyOffice\OnlyOfficeHandler;
 use Bitrix\Disk\Driver;
+use Bitrix\Disk\Internal\Service\UnifiedLink\UnifiedLinkSupportService;
 use Bitrix\Disk\Internals\Engine;
 use Bitrix\Main\Context;
+use Bitrix\Main\DI\ServiceLocator;
 use Bitrix\Main\Engine\ActionFilter\CloseSession;
 use Bitrix\Main\Engine\ActionFilter\Csrf;
 use Bitrix\Main\Engine\ActionFilter\HttpMethod;
@@ -78,12 +80,14 @@ final class DocumentService extends Engine\Controller
 		}
 
 		$sessionManager = new Document\OnlyOffice\DocumentSessionManager();
+		$file = $documentSession->getFile();
+		$version = $documentSession->getVersion();
 		$sessionManager
 			->setUserId($currentUser->getId())
 			->setSessionType($documentSession->getType())
 			->setSessionContext($documentSession->getContext())
-			->setFile($documentSession->getFile())
-			->setVersion($documentSession->getVersion())
+			->setFile($file)
+			->setVersion($version)
 		;
 
 		if (!$sessionManager->lock())
@@ -102,26 +106,44 @@ final class DocumentService extends Engine\Controller
 		}
 		$sessionManager->unlock();
 
-		$content = $GLOBALS['APPLICATION']->includeComponent(
-			'bitrix:ui.sidepanel.wrapper',
-			'',
-			[
-				'RETURN_CONTENT' => true,
-				'POPUP_COMPONENT_NAME' => 'bitrix:disk.file.editor-onlyoffice',
-				'POPUP_COMPONENT_TEMPLATE_NAME' => '',
-				'POPUP_COMPONENT_PARAMS' => [
-					'DOCUMENT_SESSION' => $forkedSession,
-					'SHOW_BUTTON_OPEN_NEW_WINDOW' => false,
-				],
-				'PLAIN_VIEW' => true,
-				'IFRAME_MODE' => true,
-				'PREVENT_LOADING_WITHOUT_IFRAME' => false,
-				'USE_PADDING' => false,
-			]
-		);
-
 		$response = new HttpResponse();
-		$response->setContent($content);
+
+		if ($file && $file->supportsUnifiedLink())
+		{
+			$unifiedLinkOptions = [];
+
+			if ($version)
+			{
+				$unifiedLinkOptions['versionId'] = (int)$version->getId();
+			}
+
+			$unifiedLink = Driver::getInstance()->getUrlManager()->getUnifiedLink($file, $unifiedLinkOptions);
+
+			$response->setStatus(302);
+			$response->getHeaders()->set('Location', $unifiedLink);
+		}
+		else
+		{
+			$content = $GLOBALS['APPLICATION']->includeComponent(
+				'bitrix:ui.sidepanel.wrapper',
+				'',
+				[
+					'RETURN_CONTENT' => true,
+					'POPUP_COMPONENT_NAME' => 'bitrix:disk.file.editor-onlyoffice',
+					'POPUP_COMPONENT_TEMPLATE_NAME' => '',
+					'POPUP_COMPONENT_PARAMS' => [
+						'DOCUMENT_SESSION' => $forkedSession,
+						'SHOW_BUTTON_OPEN_NEW_WINDOW' => false,
+					],
+					'PLAIN_VIEW' => true,
+					'IFRAME_MODE' => true,
+					'PREVENT_LOADING_WITHOUT_IFRAME' => false,
+					'USE_PADDING' => false,
+				],
+			);
+
+			$response->setContent($content);
+		}
 
 		return $response;
 	}
@@ -234,10 +256,28 @@ final class DocumentService extends Engine\Controller
 		if ($attachedObjectId)
 		{
 			$attachedObject = Disk\AttachedObject::getById($attachedObjectId);
+			$file = $attachedObject?->getFile();
 			if ($attachedObject)
 			{
 				$canEdit = $canEdit || $attachedObject->canUpdate($this->getCurrentUser()->getId());
 			}
+		}
+
+		if (isset($file) && $file->supportsUnifiedLink())
+		{
+			$unifiedLinkOptions = [];
+			if ((int)$attachedObjectId > 0)
+			{
+				$unifiedLinkOptions['attachedId'] = (int)$attachedObjectId;
+			}
+			if ((int)$versionId > 0)
+			{
+				$unifiedLinkOptions['versionId'] = (int)$versionId;
+			}
+
+			$unifiedLink = Driver::getInstance()->getUrlManager()->getUnifiedLink($file, $unifiedLinkOptions);
+
+			LocalRedirect($unifiedLink);
 		}
 
 		if ($canEdit)
@@ -308,7 +348,7 @@ final class DocumentService extends Engine\Controller
 		}
 	}
 
-	public function goToCreateAction($serviceCode, $typeFile, $attachedObjectId = null, $targetFolderId = null)
+	public function goToCreateAction($serviceCode, $typeFile, $attachedObjectId = null, $targetFolderId = null, bool $createByUnifiedLink = false)
 	{
 		$driver = Driver::getInstance();
 		$handlersManager = $driver->getDocumentHandlersManager();
@@ -320,11 +360,21 @@ final class DocumentService extends Engine\Controller
 
 		if ($documentHandler instanceof OnlyOfficeHandler)
 		{
-			/** @see OnlyOffice::loadCreateDocumentEditorAction() */
-			return $this->forward(OnlyOffice::class, 'loadCreateDocumentEditor', [
+			$unifiedLinkSupportService = ServiceLocator::getInstance()->get(UnifiedLinkSupportService::class);
+
+			$parameters = [
 				'typeFile' => $typeFile,
 				'targetFolderId' => $targetFolderId,
-			]);
+			];
+
+			if ($createByUnifiedLink && $unifiedLinkSupportService->supportsDocumentHandler($documentHandler))
+			{
+				/** @see OnlyOffice::createDocumentAction() */
+				return $this->forward(OnlyOffice::class, 'createDocument', $parameters);
+			}
+
+			/** @see OnlyOffice::loadCreateDocumentEditorAction() */
+			return $this->forward(OnlyOffice::class, 'loadCreateDocumentEditor', $parameters);
 		}
 
 		$urlManager = $driver->getUrlManager();

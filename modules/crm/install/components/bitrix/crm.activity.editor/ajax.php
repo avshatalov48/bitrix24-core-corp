@@ -2824,8 +2824,6 @@ elseif($action == 'SAVE_EMAIL')
 	{
 		$eventText .= 'Bcc: ' . implode(',', $bcc) . "\n\r";
 	}
-	$eventText .= "\n\r";
-	$eventText .= $description;
 
 	$eventBindings = [];
 	foreach($arBindings as $item)
@@ -2841,10 +2839,10 @@ elseif($action == 'SAVE_EMAIL')
 	}
 	$CCrmEvent->Add(
 		[
+			'EVENT_TYPE' => \CCrmEvent::TYPE_EMAIL,
 			'ENTITY' => $eventBindings,
 			'EVENT_ID' => 'MESSAGE',
 			'EVENT_TEXT_1' => $eventText,
-			'FILES' => array_values($arRawFiles),
 		]
 	);
 	// <-- Sending Email

@@ -8,8 +8,8 @@ return [
 		'layout/ui/context-menu',
 		'loc',
 		'require-lazy',
-		'user/profile',
 		'utils/object',
 		'haptics',
+		'user-profile',
 	],
 ];

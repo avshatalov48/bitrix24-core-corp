@@ -1,7 +1,7 @@
 /* eslint-disable */
 this.BX = this.BX || {};
 this.BX.Crm = this.BX.Crm || {};
-(function (exports,crm_router,ui_dialogs_messagebox,main_core_events,main_core,crm_dataStructures) {
+(function (exports,crm_router,ui_dialogs_messagebox,main_core_events,crm_dataStructures,main_core) {
 	'use strict';
 
 	const Types = Object.freeze({
@@ -67,8 +67,6 @@ this.BX.Crm = this.BX.Crm || {};
 	}, resolve) {
 	  BX.UI.Dialogs.MessageBox.show({
 	    modal: true,
-	    minWidth: 980,
-	    title,
 	    message,
 	    buttons: babelHelpers.classPrivateFieldLooseBase(this, _getButtons)[_getButtons](resolve),
 	    popupOptions: {
@@ -840,7 +838,9 @@ this.BX.Crm = this.BX.Crm || {};
 	            typeId: String(multifieldTypeId),
 	            valueType: stringOrUndefined(singleMultifield.VALUE_TYPE),
 	            value: stringOrUndefined(singleMultifield.VALUE),
-	            valueFormatted: stringOrUndefined(singleMultifield.VALUE_FORMATTED)
+	            valueFormatted: stringOrUndefined(singleMultifield.VALUE_FORMATTED),
+	            complexId: stringOrUndefined(singleMultifield.COMPLEX_ID),
+	            complexName: stringOrUndefined(singleMultifield.COMPLEX_NAME)
 	          }, {
 	            title: addressSourceTitle
 	          }));
@@ -1116,5 +1116,5 @@ this.BX.Crm = this.BX.Crm || {};
 	exports.Receiver = Receiver;
 	exports.Types = Types;
 
-}((this.BX.Crm.MessageSender = this.BX.Crm.MessageSender || {}),BX.Crm,BX.UI.Dialogs,BX.Event,BX,BX.Crm.DataStructures));
+}((this.BX.Crm.MessageSender = this.BX.Crm.MessageSender || {}),BX.Crm,BX.UI.Dialogs,BX.Event,BX.Crm.DataStructures,BX));
 //# sourceMappingURL=messagesender.bundle.js.map

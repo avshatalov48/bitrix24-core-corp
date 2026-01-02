@@ -3,7 +3,7 @@ this.BX = this.BX || {};
 this.BX.OpenLines = this.BX.OpenLines || {};
 this.BX.OpenLines.v2 = this.BX.OpenLines.v2 || {};
 this.BX.OpenLines.v2.Component = this.BX.OpenLines.v2.Component || {};
-(function (exports,im_v2_application_core,imopenlines_v2_const,imopenlines_v2_provider_service,im_v2_component_elements,im_v2_const,im_v2_lib_dateFormatter,im_v2_lib_utils,im_v2_lib_parser) {
+(function (exports,im_v2_application_core,im_v2_component_elements_listLoadingState,imopenlines_v2_const,imopenlines_v2_provider_service,im_v2_component_elements_chatTitle,im_v2_component_elements_avatar,im_v2_const,im_v2_lib_dateFormatter,im_v2_lib_utils,im_v2_lib_parser) {
 	'use strict';
 
 	// @vue/component
@@ -129,8 +129,8 @@ this.BX.OpenLines.v2.Component = this.BX.OpenLines.v2.Component || {};
 	const RecentItem = {
 	  name: 'RecentItem',
 	  components: {
-	    ChatTitle: im_v2_component_elements.ChatTitle,
-	    ChatAvatar: im_v2_component_elements.ChatAvatar,
+	    ChatTitle: im_v2_component_elements_chatTitle.ChatTitle,
+	    ChatAvatar: im_v2_component_elements_avatar.ChatAvatar,
 	    MessageText,
 	    ItemCounter
 	  },
@@ -141,7 +141,7 @@ this.BX.OpenLines.v2.Component = this.BX.OpenLines.v2.Component || {};
 	    }
 	  },
 	  computed: {
-	    AvatarSize: () => im_v2_component_elements.AvatarSize,
+	    AvatarSize: () => im_v2_component_elements_avatar.AvatarSize,
 	    dialog() {
 	      return this.$store.getters['chats/get'](this.item.dialogId, true);
 	    },
@@ -158,7 +158,7 @@ this.BX.OpenLines.v2.Component = this.BX.OpenLines.v2.Component || {};
 	      return this.message ? this.formatDate(this.message.date) : '';
 	    },
 	    isChatSelected() {
-	      if (this.layout.name !== im_v2_const.Layout.openlinesV2.name) {
+	      if (this.layout.name !== im_v2_const.Layout.openlinesV2) {
 	        return false;
 	      }
 	      return this.layout.entityId === this.recentItem.dialogId;
@@ -259,7 +259,7 @@ this.BX.OpenLines.v2.Component = this.BX.OpenLines.v2.Component || {};
 	  components: {
 	    EmptyState,
 	    RecentGroup,
-	    LoadingState: im_v2_component_elements.ListLoadingState
+	    LoadingState: im_v2_component_elements_listLoadingState.ListLoadingState
 	  },
 	  emits: ['chatClick'],
 	  data() {
@@ -369,5 +369,5 @@ this.BX.OpenLines.v2.Component = this.BX.OpenLines.v2.Component || {};
 
 	exports.RecentList = RecentList;
 
-}((this.BX.OpenLines.v2.Component.List = this.BX.OpenLines.v2.Component.List || {}),BX.Messenger.v2.Application,BX.OpenLines.v2.Const,BX.OpenLines.v2.Provider.Service,BX.Messenger.v2.Component.Elements,BX.Messenger.v2.Const,BX.Messenger.v2.Lib,BX.Messenger.v2.Lib,BX.Messenger.v2.Lib));
+}((this.BX.OpenLines.v2.Component.List = this.BX.OpenLines.v2.Component.List || {}),BX.Messenger.v2.Application,BX.Messenger.v2.Component.Elements,BX.OpenLines.v2.Const,BX.OpenLines.v2.Provider.Service,BX.Messenger.v2.Component.Elements,BX.Messenger.v2.Component.Elements,BX.Messenger.v2.Const,BX.Messenger.v2.Lib,BX.Messenger.v2.Lib,BX.Messenger.v2.Lib));
 //# sourceMappingURL=recent-list.bundle.js.map

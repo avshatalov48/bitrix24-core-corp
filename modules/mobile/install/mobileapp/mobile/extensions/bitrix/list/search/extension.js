@@ -1,11 +1,11 @@
 /**
- * @bxjs_lang_path extension.php
+ * @module list/search
  */
-
-(() => {
-
-	const require = (ext) => jn.require(ext);
+jn.define('list/search', (require, exports, module) => {
 	const AppTheme = require('apptheme');
+	const { reflectFunction } = require('utils/function');
+	const { DelayedRestRequest } = require('rest');
+
 	/**
 	 *  @interface ListSearcherDelegate
 	 * */
@@ -367,6 +367,8 @@
 
 	};
 
-	jnexport(ListSearcher, BaseListSearchDelegate);
-
-})();
+	module.exports = {
+		ListSearcher,
+		BaseListSearchDelegate,
+	};
+});

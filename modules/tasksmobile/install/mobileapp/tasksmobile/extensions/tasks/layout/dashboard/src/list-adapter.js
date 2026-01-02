@@ -2,7 +2,6 @@
  * @module tasks/layout/dashboard/list-adapter
  */
 jn.define('tasks/layout/dashboard/list-adapter', (require, exports, module) => {
-	const { Feature } = require('feature');
 	const { SkeletonFactory } = require('layout/ui/simple-list/skeleton');
 	const { StatefulList } = require('layout/ui/stateful-list');
 	const { TypeGenerator } = require('layout/ui/stateful-list/type-generator');
@@ -47,7 +46,7 @@ jn.define('tasks/layout/dashboard/list-adapter', (require, exports, module) => {
 				},
 				new StatefulList({
 					testId: 'task-list',
-					showAirStyle: Feature.isAirStyleSupported(),
+					showAirStyle: true,
 					typeGenerator: {
 						generator: TypeGenerator.generators.bySelectedProperties,
 						properties: [
@@ -57,7 +56,7 @@ jn.define('tasks/layout/dashboard/list-adapter', (require, exports, module) => {
 							'checklist',
 							'status',
 							'isMuted',
-							'isPinned',
+							this.props.projectId ? 'isPinned' : 'isPinnedInGroup',
 							'priority',
 							'responsible',
 							'deadline',
@@ -90,6 +89,8 @@ jn.define('tasks/layout/dashboard/list-adapter', (require, exports, module) => {
 					itemFactory: ListItemsFactory,
 					itemParams: {
 						view: this.getView(),
+						projectId: this.props.projectId,
+						ownerId: this.props.ownerId,
 					},
 					// getRuntimeParams: this.getRuntimeParams,
 					// showEmptySpaceItem: this.isEnabledKanbanToolbar(),
@@ -114,6 +115,8 @@ jn.define('tasks/layout/dashboard/list-adapter', (require, exports, module) => {
 					ref: this.bindRef,
 					animationTypes: this.props.animationTypes,
 					currentView: this.props.currentView,
+					requestTimeoutInMilliseconds: this.props.requestTimeoutInMilliseconds,
+					projectId: this.props.projectId,
 				}),
 			);
 		}

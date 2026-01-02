@@ -1316,10 +1316,17 @@ BX.Disk.HintClass = (function ()
 
 	HintClass.prototype.initHints = function(node, force)
 	{
-		node = node || BX('workarea');
 		force = force || false;
 
-		var hintAnchorTags = BX.findChildrenByClassName(node, 'disk-volume-hint');
+		let hintAnchorTags = [];
+		if (node)
+		{
+			hintAnchorTags = BX.findChildrenByClassName(node, 'disk-volume-hint');
+		}
+		else
+		{
+			hintAnchorTags = [...document.getElementsByClassName('disk-volume-hint')];
+		}
 
 		if(BX.hasClass(node, 'disk-volume-hint'))
 		{
@@ -1389,26 +1396,25 @@ BX.Disk.HintClass = (function ()
 	HintClass.prototype.showHintBalloon = function (e)
 	{
 		BX.eventCancelBubble(e);
-		BX.fireEvent(document, 'click');
+		BX.fireEvent(document.body, 'click');
 
 		var node = BX(e.target);
 		var id = BX.data(node, 'id');
 		var content = hintText[id];
-
 
 		if (typeof(hintPopup[id]) !== "object" || !hintPopup[id] instanceof BX.PopupWindow)
 		{
 			hintPopup[id] = new BX.PopupWindow("disk-hint-"+id, node,
 				{
 					className: this.classNameBalloon,
-					lightShadow : true,
+					lightShadow: true,
 					//offsetTop: 0,
 					offsetLeft: 6,
 					autoHide: true,
 					closeByEsc: true,
 					angle: true,
 					bindOptions: {position: "bottom"},
-					content : content
+					content : content,
 				}
 			);
 		}

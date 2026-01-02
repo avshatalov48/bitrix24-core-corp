@@ -18,6 +18,8 @@ if (Loader::includeModule('sign'))
 $isSendDocumentByEmployeeEnabled = $featureStorage?->isSendDocumentByEmployeeEnabled() ?? false;;
 $isMultiDocumentLoadingEnabled = $featureStorage?->isMultiDocumentLoadingEnabled() ?? false;
 $isGroupSendingEnabled = $featureStorage?->isGroupSendingEnabled() ?? false;
+$isDocumentsInSignersSelectorEnabled = $featureStorage?->isDocumentsInSignersSelectorEnabled() ?? false;
+$isTemplateFolderGroupingAllowed = $featureStorage?->isTemplateFolderGroupingAllowed() ?? false;
 
 return [
 	'css' => 'dist/feature-storage.bundle.css',
@@ -29,6 +31,8 @@ return [
 		'isSendDocumentByEmployeeEnabled' => $isSendDocumentByEmployeeEnabled,
 		'isMultiDocumentLoadingEnabled' => $isMultiDocumentLoadingEnabled,
 		'isGroupSendingEnabled' => $isGroupSendingEnabled,
+		'isDocumentsInSignersSelectorEnabled' => $isDocumentsInSignersSelectorEnabled,
+		'isTemplateFolderGroupingAllowed' => $isTemplateFolderGroupingAllowed
 	],
 	'skip_core' => false,
 ];

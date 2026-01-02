@@ -161,7 +161,7 @@ class VolatileType extends \Bitrix\Main\Engine\Controller
 	protected function checkPermissions(): bool
 	{
 		$userPermissions = Container::getInstance()->getUserPermissions();
-		if ($userPermissions->isAdmin() || $userPermissions->canWriteConfig())
+		if ($userPermissions->isAdmin() || $userPermissions->isCrmAdmin())
 		{
 			return true;
 		}

@@ -49,7 +49,7 @@ export default class Widget
 			});
 		}
 
-		this.projectWidgetInstance.show(event.target);
+		this.projectWidgetInstance.show(event.currentTarget);
 		if (
 			this.projectWidgetInstance.widget
 			&& this.projectWidgetInstance.widget.getPopup()

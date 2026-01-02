@@ -3,6 +3,9 @@ return [
 	'controllers' => [
 		'value' => [
 			'defaultNamespace' => '\\Bitrix\\Intranet\\Controller',
+			'namespaces' => [
+				'\\Bitrix\\Intranet\\Infrastructure\\Controller' => 'v2',
+			],
 			'restIntegration' => [
 				'enabled' => true,
 			],
@@ -35,10 +38,18 @@ return [
 			'intranet.customSection.manager' => [
 				'className' => '\\Bitrix\\Intranet\\CustomSection\\Manager',
 			],
+			'intranet.customSection.provider.registry' => [
+				'className' => '\\Bitrix\\Intranet\\CustomSection\\Provider\\Registry',
+			],
+			'intranet.customSection.repository' => [
+				'className' => '\\Bitrix\\Intranet\\CustomSection\\Repository',
+			],
 			'intranet.option.mobile_app' => [
 				'constructor' => function () {
 					return new \Bitrix\Intranet\Service\MobileAppSettings(
-						new \Bitrix\Intranet\Service\IntranetOption()
+						new \Bitrix\Intranet\Service\IntranetOption(),
+						\Bitrix\Intranet\CurrentUser::get(),
+						new \Bitrix\Intranet\Internal\Service\EntitySelectorCodeService(),
 					);
 				},
 			],
@@ -60,7 +71,7 @@ return [
 				}
 			],
 			'intranet.repository.invitation' => [
-				'className' => \Bitrix\Intranet\Repository\InvitationRepository::class,
+				'className' => \Bitrix\Intranet\Internal\Repository\InvitationRepository::class,
 			],
 			'intranet.repository.invitation.link' => [
 				'className' => \Bitrix\Intranet\Repository\InvitationLinkRepository::class,
@@ -74,14 +85,19 @@ return [
 			'intranet.service.user' => [
 				'className' => \Bitrix\Intranet\Service\UserService::class,
 			],
-			'intranet.service.invitation' => [
-				'className' => \Bitrix\Intranet\Service\InviteService::class
+//			'intranet.service.invitation' => [
+//				'constructor' => fn () => \Bitrix\Intranet\Service\InviteService::createByDefault(),
+//			],
+			'intranet.service.user.mini-profile' => [
+				'className' => \Bitrix\Intranet\Service\User\MiniProfileService::class,
+				'constructorParams' => static fn() => [
+					'chatFacade' => new \Bitrix\Intranet\Integration\Im\ChatFacade(),
+					'departmentService' => new \Bitrix\Intranet\Integration\HumanResources\Department(),
+					'teamService' => new \Bitrix\Intranet\Internal\Integration\Humanresources\TeamRepository(),
+				],
 			],
 			'intranet.service.invite.status' => [
 				'className' => \Bitrix\Intranet\Service\InviteStatusService::class
-			],
-			'intranet.service.registration' => [
-				'className' => \Bitrix\Intranet\Service\RegistrationService::class,
 			],
 			'intranet.portal.settings.name' => [
 				'constructor' => function () {

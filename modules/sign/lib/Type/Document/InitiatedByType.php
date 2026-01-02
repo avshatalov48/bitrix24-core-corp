@@ -12,6 +12,16 @@ enum InitiatedByType: string implements IntModelValue
 	case COMPANY = 'company';
 	case EMPLOYEE = 'employee';
 
+	public function isEmployee(): bool
+	{
+		return $this === self::EMPLOYEE;
+	}
+
+	public function isCompany(): bool
+	{
+		return $this === self::COMPANY;
+	}
+
 	public function toInt(): int
 	{
 		return match ($this) {

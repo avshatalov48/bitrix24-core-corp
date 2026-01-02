@@ -54,9 +54,11 @@ class PlanTask extends Base
 			return;
 		}
 
+		$stageService = Tasks\V2\Internal\DI\Container::getInstance()->getTaskStageService();
+
 		foreach ($stages as $stage)
 		{
-			Tasks\Kanban\TaskStageTable::update($stage['ID'], ['STAGE_ID' => $statusId]);
+			$stageService->move((int)$stage['ID'], (int)$statusId);
 
 			Tasks\Integration\Bizproc\Listener::onPlanTaskStageUpdate(
 				$planId,

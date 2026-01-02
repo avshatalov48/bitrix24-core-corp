@@ -1,0 +1,19 @@
+<?php
+$MESS["WD_DAV_INSUFFICIENT_RIGHTS"] = "Сізде бұл әрекетті жасауға құқықтар жеткіліксіз.";
+$MESS["WD_DAV_UNSUPORTED_METHOD"] = "Әдіс қолданылмайды";
+$MESS["WD_GROUP"] = "Жұмыс топтары";
+$MESS["WD_GROUP_SECTION_FILES_NOT_FOUND"] = "Топ құжаттары бар бөлім табылмады.";
+$MESS["WD_IB_GROUP_IS_NOT_FOUND"] = "Жұмыс топтарының құжаттар ақпараттық блогы табылған жоқ.";
+$MESS["WD_IB_MODULE_IS_NOT_INSTALLED"] = "Ақпараттық блоктар модулі орнатылмаған.";
+$MESS["WD_IB_USER_IS_NOT_FOUND"] = "Пайдаланушылардың құжаттар ақпараттық блогы табылған жоқ.";
+$MESS["WD_NAME_TEMPLATE_DEFAULT"] = "#NOBR##LAST_NAME# #NAME##/NOBR#";
+$MESS["WD_NOT_SEF_MODE"] = "Компонент баптауларында СБЖ қолдауын қамтымайды.";
+$MESS["WD_PRIVATE"] = "Жеке құжаттар";
+$MESS["WD_ROOT"] = "Түбір";
+$MESS["WD_SHARED"] = "Жалпы құжаттар";
+$MESS["WD_SN_MODULE_IS_NOT_INSTALLED"] = "Әлеуметтік желі модулі орнатылмаған.";
+$MESS["WD_SOCNET_LANG_NOT_FOUND"] = "Әлеуметтік желі модулінің компоненттері табылған жоқ. Веб-сервердің түбірлік бума жолының баптауларын сайт баптауларынан тексеріңіз.";
+$MESS["WD_USER"] = "Қызметкерлердің құжаттары";
+$MESS["WD_USER_NOT_FOUND"] = "Пайдаланушы табылмады.";
+$MESS["WD_USER_SECTION_FILES_NOT_FOUND"] = "Пайдаланушы құжаттары бар бөлім табылмады.";
+$MESS["WD_WD_MODULE_IS_NOT_INSTALLED"] = "Құжаттар дерекханасы модулі орнатылмаған.";

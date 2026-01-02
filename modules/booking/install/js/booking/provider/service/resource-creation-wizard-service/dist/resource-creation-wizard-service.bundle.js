@@ -2,7 +2,7 @@
 this.BX = this.BX || {};
 this.BX.Booking = this.BX.Booking || {};
 this.BX.Booking.Provider = this.BX.Booking.Provider || {};
-(function (exports,booking_core,booking_lib_apiClient,booking_const) {
+(function (exports,booking_core,booking_const,booking_lib_apiClient,booking_provider_service_optionService) {
 	'use strict';
 
 	var _data = /*#__PURE__*/babelHelpers.classPrivateFieldLooseKey("data");
@@ -14,12 +14,15 @@ this.BX.Booking.Provider = this.BX.Booking.Provider || {};
 	    });
 	    babelHelpers.classPrivateFieldLooseBase(this, _data)[_data] = data;
 	  }
-	  getAdvertisingResourceTypes() {
+	  getAdvertisingTypes() {
 	    var _babelHelpers$classPr;
 	    return (_babelHelpers$classPr = babelHelpers.classPrivateFieldLooseBase(this, _data)[_data].advertisingResourceTypes) != null ? _babelHelpers$classPr : [];
 	  }
-	  getNotificationsSettings() {
-	    return babelHelpers.classPrivateFieldLooseBase(this, _data)[_data].notificationsSettings;
+	  getNotifications() {
+	    return babelHelpers.classPrivateFieldLooseBase(this, _data)[_data].notificationsSettings.notifications;
+	  }
+	  getSenders() {
+	    return babelHelpers.classPrivateFieldLooseBase(this, _data)[_data].notificationsSettings.senders;
 	  }
 	  getCompanyScheduleSlots() {
 	    return babelHelpers.classPrivateFieldLooseBase(this, _data)[_data].companyScheduleSlots;
@@ -27,8 +30,14 @@ this.BX.Booking.Provider = this.BX.Booking.Provider || {};
 	  isCompanyScheduleAccess() {
 	    return Boolean(babelHelpers.classPrivateFieldLooseBase(this, _data)[_data].isCompanyScheduleAccess);
 	  }
+	  getCompanyScheduleUrl() {
+	    return babelHelpers.classPrivateFieldLooseBase(this, _data)[_data].companyScheduleUrl;
+	  }
 	  getWeekStart() {
 	    return babelHelpers.classPrivateFieldLooseBase(this, _data)[_data].weekStart;
+	  }
+	  isChannelChoiceAvailable() {
+	    return babelHelpers.classPrivateFieldLooseBase(this, _data)[_data].isChannelChoiceAvailable;
 	  }
 	}
 
@@ -38,23 +47,37 @@ this.BX.Booking.Provider = this.BX.Booking.Provider || {};
 	  }
 	  async loadData() {
 	    try {
-	      const api = new booking_lib_apiClient.ApiClient();
-	      const data = await api.post('ResourceWizard.get', {});
+	      const data = await booking_lib_apiClient.apiClient.post('ResourceWizard.get', {});
 	      const extractor = new ResourceCreationWizardDataExtractor(data);
-	      const store = booking_core.Core.getStore();
-	      const {
-	        notifications,
-	        senders
-	      } = extractor.getNotificationsSettings();
-	      await Promise.all([store.dispatch(`${booking_const.Model.ResourceCreationWizard}/setAdvertisingResourceTypes`, extractor.getAdvertisingResourceTypes()), store.dispatch(`${booking_const.Model.Notifications}/upsertMany`, notifications), store.dispatch(`${booking_const.Model.Notifications}/upsertManySenders`, senders), store.dispatch(`${booking_const.Model.ResourceCreationWizard}/setCompanyScheduleSlots`, extractor.getCompanyScheduleSlots()), store.dispatch(`${booking_const.Model.ResourceCreationWizard}/setCompanyScheduleAccess`, extractor.isCompanyScheduleAccess()), store.dispatch(`${booking_const.Model.ResourceCreationWizard}/setWeekStart`, extractor.getWeekStart())]);
+	      const wizardModel = booking_const.Model.ResourceCreationWizard;
+	      await Promise.all([this.$store.dispatch(`${wizardModel}/setAdvertisingTypes`, extractor.getAdvertisingTypes()), this.$store.dispatch(`${wizardModel}/setCompanyScheduleSlots`, extractor.getCompanyScheduleSlots()), this.$store.dispatch(`${wizardModel}/setCompanyScheduleAccess`, extractor.isCompanyScheduleAccess()), this.$store.dispatch(`${wizardModel}/setCompanyScheduleUrl`, extractor.getCompanyScheduleUrl()), this.$store.dispatch(`${wizardModel}/setWeekStart`, extractor.getWeekStart()), this.$store.dispatch(`${wizardModel}/setIsChannelChoiceAvailable`, extractor.isChannelChoiceAvailable()), this.$store.dispatch(`${booking_const.Model.Notifications}/upsertMany`, extractor.getNotifications()), this.$store.dispatch(`${booking_const.Model.Notifications}/upsertManySenders`, extractor.getSenders())]);
 	    } catch (error) {
-	      console.error('ResourceCreationWizardService load data error', error);
+	      console.error('ResourceCreationWizardService loadData error', error);
 	    }
+	  }
+	  async updateNotificationExpanded(type, isExpanded) {
+	    await this.$store.dispatch(`${booking_const.Model.Notifications}/setIsExpanded`, {
+	      type,
+	      isExpanded
+	    });
+	    const notifications = Object.fromEntries(this.$store.getters[`${booking_const.Model.Notifications}/get`].map(notification => [notification.type, notification.isExpanded]));
+	    try {
+	      await booking_provider_service_optionService.optionService.set(booking_const.Option.NotificationsExpanded, JSON.stringify(notifications));
+	    } catch (error) {
+	      await this.$store.dispatch(`${booking_const.Model.Notifications}/setIsExpanded`, {
+	        type,
+	        isExpanded: !isExpanded
+	      });
+	      console.error('ResourceCreationWizardService updateNotificationExpanded error', error);
+	    }
+	  }
+	  get $store() {
+	    return booking_core.Core.getStore();
 	  }
 	}
 	const resourceCreationWizardService = new ResourceCreationWizardService();
 
 	exports.resourceCreationWizardService = resourceCreationWizardService;
 
-}((this.BX.Booking.Provider.Service = this.BX.Booking.Provider.Service || {}),BX.Booking,BX.Booking.Lib,BX.Booking.Const));
+}((this.BX.Booking.Provider.Service = this.BX.Booking.Provider.Service || {}),BX.Booking,BX.Booking.Const,BX.Booking.Lib,BX.Booking.Provider.Service));
 //# sourceMappingURL=resource-creation-wizard-service.bundle.js.map

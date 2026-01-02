@@ -96,7 +96,7 @@ export const App = {
 		},
 	},
 	template: `
-		<div id="booking-resource-creation-wizard">
+		<div id="booking-resource-creation-wizard" class="booking-resource-creation-wizard">
 			<ResourceCreationWizardLayout :loading="fetching" :step>
 				<template #header>
 					<ResourceCreationWizardHeader/>

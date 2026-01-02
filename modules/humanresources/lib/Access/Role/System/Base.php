@@ -12,8 +12,8 @@ abstract class Base
 		foreach ($this->getPermissions() as $permissionId => $value)
 		{
 			$result[] = [
-				'id' => $permissionId,
-				'value' => $value,
+				'id' => (string)$permissionId,
+				'value' => (int)$value,
 			];
 		}
 

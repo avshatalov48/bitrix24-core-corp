@@ -1,6 +1,7 @@
 <?php
 
 use Bitrix\BIConnector\Configuration\Feature;
+use Bitrix\Intranet\Settings\Tools\ToolsManager;
 use Bitrix\Main\Loader;
 
 require($_SERVER["DOCUMENT_ROOT"]."/bitrix/header.php");
@@ -17,20 +18,29 @@ if (
 {
 	LocalRedirect('/');
 }
+elseif (
+	Loader::includeModule('intranet')
+	&& !ToolsManager::getInstance()->checkAvailabilityByToolId('crm_bi')
+)
+{
+	LocalRedirect('/bi/dashboard/');
+}
 else
 {
 	$APPLICATION->IncludeComponent(
 		'bitrix:ui.sidepanel.wrapper',
 		'',
 		[
-			'POPUP_COMPONENT_NAME' => 'bitrix:biconnector.apachesuperset.external_dataset.controller',
+			'POPUP_COMPONENT_NAME' => 'bitrix:biconnector.apachesuperset.workspace_analytic.controller',
 			'POPUP_COMPONENT_TEMPLATE_NAME' => '',
 			'POPUP_COMPONENT_PARAMS' => [
 				'SEF_MODE' => 'Y',
 				'SEF_FOLDER' => '/',
 				'SEF_URL_TEMPLATES' => [
 					'dataset' => 'bi/dataset/',
-					'source' => 'bi/source/'
+					'source' => 'bi/source/',
+					'statistics' => 'bi/statistics/',
+					'unused_elements' => 'bi/unused_elements/',
 				],
 			],
 			'USE_UI_TOOLBAR' => 'Y',

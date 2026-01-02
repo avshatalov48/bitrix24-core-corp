@@ -7,6 +7,8 @@ use Bitrix\Main\ORM\Fields\IntegerField;
 use Bitrix\Main\Security\Random;
 use Bitrix\Sign\File;
 use Bitrix\Sign\Internal\Document\TemplateTable;
+use Bitrix\Sign\Type\Document\ExternalDateCreateSourceType;
+use Bitrix\Sign\Type\Document\ExternalIdSourceType;
 use Bitrix\Sign\Type\Document\InitiatedByType;
 use Bitrix\Sign\Type\DocumentStatus;
 
@@ -141,6 +143,9 @@ class DocumentTable extends Entity\DataManager
 			]))
 				->configureDefaultValue(1)
 			,
+			'COMPANY_ENTITY_ID' => (new Entity\IntegerField('COMPANY_ENTITY_ID'))
+				->configureNullable()
+			,
 			'COMPANY_UID' => (new Entity\StringField('COMPANY_UID'))
 				->configureNullable()
 				->addValidator(new Entity\Validator\Length(32, 32))
@@ -218,6 +223,37 @@ class DocumentTable extends Entity\DataManager
 			(new Entity\DatetimeField('DATE_STATUS_CHANGED'))
 				->configureTitle('Status changed date')
 				->configureNullable()
+			,
+			(new IntegerField('EXTERNAL_ID_SOURCE_TYPE'))
+				->configureTitle('External ID source type')
+				->configureRequired()
+				->configureDefaultValue(ExternalIdSourceType::MANUAL->toInt())
+			,
+			(new IntegerField('EXTERNAL_DATE_CREATE_SOURCE_TYPE'))
+				->configureTitle('Date source type')
+				->configureRequired()
+				->configureDefaultValue(ExternalDateCreateSourceType::MANUAL->toInt())
+			,
+			(new IntegerField('HCMLINK_EXTERNAL_ID_SETTING_ID'))
+				->configureTitle('HcmLink external ID setting ID')
+				->configureNullable()
+			,
+			(new IntegerField('HCMLINK_DATE_SETTING_ID'))
+				->configureTitle('HcmLink date setting id')
+				->configureNullable()
+			,
+			(new IntegerField('HCMLINK_DOCUMENT_TYPE_SETTING_ID'))
+				->configureTitle('HcmLink document type setting id')
+				->configureNullable()
+			,
+			(new Entity\DatetimeField('DATE_SIGN_UNTIL'))
+				->configureTitle('Sign until date')
+				->configureNullable()
+			,
+			(new Entity\StringField('CONFIGURED_DATE_FORMAT'))
+				->configureTitle('Configured date format')
+				->configureNullable()
+				->addValidator(new Entity\Validator\Length(null, 50))
 			,
 		];
 	}

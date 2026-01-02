@@ -67,7 +67,7 @@ final class SignDocument extends Base
 
 		$userPermissions = Container::getInstance()->getUserPermissions($userId);
 
-		return $userPermissions->checkReadPermissions(\CCrmOwnerType::SmartDocument, $documentId);
+		return $userPermissions->item()->canRead(\CCrmOwnerType::SmartDocument, $documentId);
 	}
 
 	public static function checkUpdatePermission(array $activityFields, $userId = null): bool

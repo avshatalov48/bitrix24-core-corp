@@ -87,3 +87,5 @@ $MESS["CRM_SET_STAGE_NOT_COMPLETED_TITLE"] = "Не удалось перенес
 $MESS["CRM_SET_STAGE_NOT_COMPLETED_TEXT"] = "Некоторые сделки не удалось перенести в выбранную стадию. Заполните обязательные поля и перенесите сделки снова.";
 $MESS['CRM_DEAL_LIST_ITEM_DEBUG_TITLE_MSGVER_1'] = 'В отладке';
 $MESS['CRM_COLUMN_OBSERVERS'] = 'Наблюдатели';
+$MESS["CRM_COLUMN_MOVED_BY"] = "Кто изменил стадию";
+$MESS["CRM_COLUMN_MOVED_TIME"] = "Дата изменения стадии";

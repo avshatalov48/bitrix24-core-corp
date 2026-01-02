@@ -46,14 +46,14 @@ class TaskAddAuditorsRule extends AbstractRule
 	 */
 	private function canAssignAuditors($auditors): bool
 	{
-		if (!is_array($auditors))
-		{
-			$auditors = [$auditors];
-		}
-
 		if (empty($auditors))
 		{
 			return true;
+		}
+
+		if (!is_array($auditors))
+		{
+			$auditors = [$auditors];
 		}
 
 		$currentUser = UserModel::createFromId($this->user->getUserId());

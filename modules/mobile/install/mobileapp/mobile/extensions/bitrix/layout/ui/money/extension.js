@@ -1,4 +1,10 @@
-(() => {
+/**
+ * @module layout/ui/money
+ */
+jn.define('layout/ui/money', (require, exports, module) => {
+	// just re-export it for handy usage.
+	const { Money } = require('money');
+
 	/**
 	 * @function MoneyView
 	 * @param {Object} props
@@ -11,7 +17,6 @@
 	 */
 	function MoneyView({ money, renderAmount, renderCurrency, renderContainer, ...options })
 	{
-		options = options || {};
 		const template = money.template || {};
 		const parts = template.PARTS || ['#'];
 		const valueIndex = template.VALUE_INDEX || 0;
@@ -21,9 +26,9 @@
 			{
 				return renderAmount(money.formattedAmount);
 			}
-			part = options.trim && part.trim ? part.trim() : part;
+			const text = (options?.trim && part.trim) ? part.trim() : part;
 
-			return renderCurrency(jnComponent.convertHtmlEntities(part));
+			return renderCurrency(jnComponent.convertHtmlEntities(text));
 		});
 
 		if (renderContainer)
@@ -31,7 +36,7 @@
 			return renderContainer(nodes);
 		}
 
-		const style = options.containerStyle || {
+		const style = options?.containerStyle || {
 			flexDirection: 'row',
 		};
 
@@ -40,6 +45,17 @@
 			...nodes,
 		);
 	}
+
+	module.exports = {
+		MoneyView,
+		Money,
+	};
+});
+
+// todo remove after all global usages in other modules will be cleaned
+(function() {
+	const require = (ext) => jn.require(ext);
+	const { MoneyView } = require('layout/ui/money');
 
 	jnexport(MoneyView);
 })();

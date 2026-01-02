@@ -9,9 +9,9 @@ jn.define('im/messenger/lib/ui/base/list', (require, exports, module) => {
 	const { LoaderItem } = require('im/messenger/lib/ui/base/loader');
 	const { Type } = require('type');
 	const { Theme } = require('im/lib/theme');
-	const { LoggerManager } = require('im/messenger/lib/logger');
+	const { getLogger } = require('im/messenger/lib/logger');
 
-	const logger = LoggerManager.getInstance().getLogger('ui--list');
+	const logger = getLogger('ui--list');
 
 	class MessengerList extends LayoutComponent
 	{

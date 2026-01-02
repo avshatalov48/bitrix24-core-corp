@@ -13,6 +13,7 @@ use Bitrix\Disk\Integration\Bitrix24Manager;
 use Bitrix\Disk\Internals;
 use Bitrix\Disk\Internals\EditSessionTable;
 use Bitrix\Disk\Internals\Error\Error;
+use Bitrix\Disk\Internals\FileHelper;
 use Bitrix\Disk\ShowSession;
 use Bitrix\Disk\TypeFile;
 use Bitrix\Disk\Ui;
@@ -446,6 +447,12 @@ class DocumentController extends Internals\Controller
 		$fileArray['type'] = $fileData->getMimeType();
 		$fileArray['MODULE_ID'] = Driver::INTERNAL_MODULE_ID;
 
+		if(!FileHelper::hasValidFileKeys($fileArray))
+		{
+			$this->errorCollection->add(array(new Error(Loc::getMessage('DISK_DOC_CONTROLLER_ERROR_COULD_NOT_SAVE_FILE'), self::ERROR_COULD_NOT_SAVE_FILE)));
+			$this->sendJsonErrorResponse();
+		}
+
 		$fileId = \CFile::saveFile($fileArray, Driver::INTERNAL_MODULE_ID, true, true);
 
 		if(!$fileId)
@@ -512,6 +519,12 @@ class DocumentController extends Internals\Controller
 				$fileArray['name'] = $fileData->getName();
 				$fileArray['type'] = $fileData->getMimeType();
 				$fileArray['MODULE_ID'] = Driver::INTERNAL_MODULE_ID;
+
+				if (!FileHelper::hasValidFileKeys($fileArray))
+				{
+					$this->errorCollection->add(array(new Error(Loc::getMessage('DISK_DOC_CONTROLLER_ERROR_COULD_NOT_SAVE_FILE'), self::ERROR_COULD_NOT_SAVE_FILE)));
+					$this->sendJsonErrorResponse();
+				}
 
 				$fileId = \CFile::saveFile($fileArray, Driver::INTERNAL_MODULE_ID, true, true);
 				if($fileId && !$newFile->addVersion(array(
@@ -885,6 +898,12 @@ class DocumentController extends Internals\Controller
 		$fileArray['type'] = $fileData->getMimeType();
 		$fileArray['MODULE_ID'] = Driver::INTERNAL_MODULE_ID;
 
+		if(!FileHelper::hasValidFileKeys($fileArray))
+		{
+			$this->errorCollection->add(array(new Error(Loc::getMessage('DISK_DOC_CONTROLLER_ERROR_COULD_NOT_SAVE_FILE'), self::ERROR_COULD_NOT_SAVE_FILE)));
+			$this->sendJsonErrorResponse();
+		}
+
 		$fileId = \CFile::saveFile($fileArray, Driver::INTERNAL_MODULE_ID, true, true);
 
 		if(!$fileId)
@@ -921,6 +940,12 @@ class DocumentController extends Internals\Controller
 				$fileArray['name'] = $this->file->getName();
 				$fileArray['type'] = $fileData->getMimeType();
 				$fileArray['MODULE_ID'] = Driver::INTERNAL_MODULE_ID;
+
+				if(!FileHelper::hasValidFileKeys($fileArray))
+				{
+					$this->errorCollection->add(array(new Error(Loc::getMessage('DISK_DOC_CONTROLLER_ERROR_COULD_NOT_SAVE_FILE'), self::ERROR_COULD_NOT_SAVE_FILE)));
+					$this->sendJsonErrorResponse();
+				}
 
 				$fileId = \CFile::saveFile($fileArray, Driver::INTERNAL_MODULE_ID, true, true);
 				if($fileId && !$this->file->addVersion(array(

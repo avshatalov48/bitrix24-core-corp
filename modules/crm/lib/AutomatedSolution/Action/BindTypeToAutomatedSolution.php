@@ -4,6 +4,7 @@ namespace Bitrix\Crm\AutomatedSolution\Action;
 
 use Bitrix\Crm\AutomatedSolution\AutomatedSolutionManager;
 use Bitrix\Crm\AutomatedSolution\Entity\AutomatedSolutionTable;
+use Bitrix\Crm\AutomatedSolution\Support\IntranetQueries;
 use Bitrix\Crm\Integration\IntranetManager;
 use Bitrix\Crm\Model\Dynamic\Type;
 use Bitrix\Intranet\CustomSection\Entity\CustomSectionPageTable;
@@ -77,7 +78,7 @@ final class BindTypeToAutomatedSolution implements Action
 			);
 		}
 
-		$page = $this->getExistingIntranetCustomSectionPage() ?? new EO_CustomSectionPage();
+		$page = IntranetQueries::getPageByEntityTypeId($this->type->getEntityTypeId()) ?? new EO_CustomSectionPage();
 
 		// actualize all data
 		$page
@@ -99,16 +100,6 @@ final class BindTypeToAutomatedSolution implements Action
 			->where('ID', $this->automatedSolutionId)
 			->fetchObject()
 			?->getIntranetCustomSectionId()
-		;
-	}
-
-	private function getExistingIntranetCustomSectionPage(): ?EO_CustomSectionPage
-	{
-		return CustomSectionPageTable::query()
-			->setSelect(['*'])
-			->where('MODULE_ID', self::MODULE_ID)
-			->where('SETTINGS', $this->getPageSettingsValue())
-			->fetchObject()
 		;
 	}
 

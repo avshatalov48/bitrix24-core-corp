@@ -5,6 +5,7 @@ if (!defined('B_PROLOG_INCLUDED') || B_PROLOG_INCLUDED !== true)
 	die();
 }
 
+use Bitrix\Crm\Integration\Analytics\Dictionary;
 use Bitrix\Main\Localization\Loc;
 
 class CBPCrmGoToChat extends CBPActivity
@@ -64,6 +65,13 @@ class CBPCrmGoToChat extends CBPActivity
 				$this->trackError($errorMessage);
 			}
 		}
+
+		$documentType = $this->getDocumentType();
+		\CCrmBizProcHelper::sendOperationsAnalytics(
+			Dictionary::EVENT_ENTITY_SOCIAL,
+			$this,
+			$documentType[2] ?? '',
+		);
 
 		return CBPActivityExecutionStatus::Closed;
 	}

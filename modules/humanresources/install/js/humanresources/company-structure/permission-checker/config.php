@@ -8,9 +8,11 @@ return [
 	'css' => 'dist/checker.bundle.css',
 	'js' => 'dist/checker.bundle.js',
 	'rel' => [
-		'main.polyfill.core',
 		'humanresources.company-structure.api',
+		'humanresources.company-structure.permission-checker',
+		'main.core',
 		'humanresources.company-structure.chart-store',
+		'humanresources.company-structure.utils',
 	],
-	'skip_core' => true,
+	'skip_core' => false,
 ];

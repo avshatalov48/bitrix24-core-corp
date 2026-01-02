@@ -4,6 +4,7 @@ namespace Bitrix\BIConnector\Superset;
 
 use Bitrix\BiConnector\Configuration\Action;
 use Bitrix\BiConnector\Configuration\Manifest;
+use Bitrix\BIConnector\Manager;
 use Bitrix\BIConnector\Superset\Logger\MarketDashboardLogger;
 use Bitrix\Main\Error;
 use Bitrix\Main\IO\Directory;
@@ -28,6 +29,11 @@ class MarketAppInstaller
 		return self::$instance ?? new self;
 	}
 
+	public static function setInstance(self $instance): void
+	{
+		self::$instance = $instance;
+	}
+
 	/**
 	 * Installs dashboard application by code and version.
 	 * Should be called only from MarketDashboardManager.
@@ -47,7 +53,7 @@ class MarketAppInstaller
 	): Result
 	{
 		$result = new Result();
-		Application::setContextUserId($this->getAdminId());
+		Application::setContextUserId(Manager::getAdminId());
 		$installResult = Application::install(
 			code: $code,
 			version: $version,
@@ -146,39 +152,13 @@ class MarketAppInstaller
 		$import->setContext($context);
 		$import->setManifestCode($manifestCode);
 		$import->doStart($app);
-		$adminId = $this->getAdminId();
 
 		$import->getSetting()->set(
 			Setting::SETTING_USER_ID,
-			$adminId
+			Manager::getAdminId(),
 		);
 
 		return $import;
-	}
-
-	private function getAdminId(): int
-	{
-		$userId = 0;
-		$admin = \CUser::GetList(
-			'ID',
-			'ASC',
-			['GROUPS_ID' => [1], 'ACTIVE' => 'Y'],
-			['FIELDS' => ['ID'], 'NAV_PARAMS' => ['nTopCount' => 1]]
-		)->fetch();
-		if ($admin)
-		{
-			$userId = $admin['ID'];
-		}
-		else
-		{
-			global $USER;
-			if ($USER->IsAuthorized())
-			{
-				$userId = $USER->GetID();
-			}
-		}
-
-		return $userId;
 	}
 
 	private function prepareArchive(array $app): Result

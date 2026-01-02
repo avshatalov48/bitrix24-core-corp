@@ -27,6 +27,7 @@ import DeadlineAndPingSelector from '../components/content-blocks/todo/deadline-
 import PingSelector from '../components/content-blocks/todo/ping-selector';
 import WithTitle from '../components/content-blocks/with-title';
 import WorkflowEfficiency from '../components/content-blocks/workflow-efficiency';
+import { ErrorBlock } from '../components/content-blocks/error-block';
 import ConfigurableItem from '../configurable-item';
 import { Base } from './base';
 
@@ -63,6 +64,7 @@ export class CommonContentBlocks extends Base
 			WorkflowEfficiency,
 			CallScoringPill,
 			CallScoring,
+			ErrorBlock,
 		};
 	}
 

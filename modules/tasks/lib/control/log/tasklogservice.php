@@ -18,7 +18,6 @@ use Bitrix\Tasks\Integration\Disk\UserField;
 use Bitrix\Tasks\Internals\Log\Logger;
 use Bitrix\Tasks\Internals\Task\EO_Log;
 use Bitrix\Tasks\Internals\Task\LogTable;
-use Bitrix\Tasks\InvalidCommandException;
 use Bitrix\Tasks\Kanban\StagesTable;
 use Bitrix\Tasks\Scrum\Service\KanbanService;
 use Bitrix\Tasks\Scrum\Service\SprintService;
@@ -133,7 +132,6 @@ class TaskLogService
 	 * @return TaskLog
 	 *
 	 * @throws TaskLogAddException
-	 * @throws InvalidCommandException
 	 * @throws Exception
 	 */
 	public function add(AddCommand $command): TaskLog
@@ -177,7 +175,6 @@ class TaskLogService
 	 * @param DeleteByTaskIdCommand $command
 	 * @return bool
 	 *
-	 * @throws InvalidCommandException
 	 * @throws Exception
 	 */
 	public function deleteByTaskId(DeleteByTaskIdCommand $command): bool
@@ -195,7 +192,6 @@ class TaskLogService
 	 * @param DeleteCommand $command
 	 * @return bool
 	 *
-	 * @throws InvalidCommandException
 	 * @throws Exception
 	 */
 	public function delete(DeleteCommand $command): bool
@@ -318,12 +314,7 @@ class TaskLogService
 
 					break;
 				case 'UF_CRM_TASK':
-					if (!array_key_exists($key, $currentFields))
-					{
-						break;
-					}
-
-					$crmTaskChanges = $this->getCrmTaskChanges($currentFields[$key], $newField);
+					$crmTaskChanges = $this->getCrmTaskChanges($currentFields[$key] ?? [], $newField);
 
 					if (array_key_exists('UF_CRM_TASK_DELETED', $crmTaskChanges))
 					{

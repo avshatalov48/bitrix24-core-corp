@@ -9,6 +9,7 @@ if (!defined('B_PROLOG_INCLUDED') || B_PROLOG_INCLUDED !== true)
 
 use Bitrix\BIConnector\Access\AccessController;
 use Bitrix\BIConnector\Access\ActionDictionary;
+use Bitrix\BIConnector\ExternalSource\Internal\ExternalSourceRestTable;
 use Bitrix\BIConnector\ExternalSource\Internal\ExternalSourceTable;
 use Bitrix\Main\Application;
 use Bitrix\Main\Localization\Loc;
@@ -35,6 +36,19 @@ class DatasetImportComponent extends CBitrixComponent
 
 		$arParams['datasetId'] = (int)($arParams['datasetId'] ?? 0);
 		$arParams['sourceId'] = (string)($arParams['sourceId'] ?? '');
+		if (!is_array($arParams['connection'] ?? null))
+		{
+			$arParams['connection'] = [];
+		}
+		elseif (!empty($arParams['connection']))
+		{
+			$connection = [
+				'connectionId' => (int)($arParams['connection']['connectionId'] ?? 0),
+				'connectionType' => (string)($arParams['connection']['connectionType'] ?? ''),
+				'tableName' => (string)($arParams['connection']['tableName'] ?? ''),
+			];
+			$arParams['connection'] = $connection;
+		}
 
 		if (empty($arParams['sourceId']))
 		{
@@ -49,6 +63,7 @@ class DatasetImportComponent extends CBitrixComponent
 	public function executeComponent()
 	{
 		$this->fillInitialData();
+		$this->fillHelpdeskCode();
 		if ($this->arParams['datasetId'] > 0)
 		{
 			$this->loadDataset();
@@ -69,13 +84,31 @@ class DatasetImportComponent extends CBitrixComponent
 					'firstLineHeader' => true,
 				],
 				'dataFormats' => [
-					FieldType::Date->value => Const\Date::Ymd_dot->value,
-					FieldType::DateTime->value => Const\DateTime::Ymd_dot_His_colon->value,
+					FieldType::Date->value => Const\Date::Ymd_dash->value,
+					FieldType::DateTime->value => Const\DateTime::Ymd_dash_His_colon->value,
 					FieldType::Double->value => Const\DoubleDelimiter::DOT->value,
 					FieldType::Money->value => Const\MoneyDelimiter::DOT->value,
 				],
 			],
 		];
+
+		if (!empty($this->arParams['connection']))
+		{
+			$this->arResult['initialData']['config']['connectionProperties'] = $this->arParams['connection'];
+		}
+	}
+
+	private function fillHelpdeskCode(): void
+	{
+		$datasetType = $this->arParams['sourceId'];
+		if ($datasetType === ExternalSource\Type::Csv->value)
+		{
+			$this->arResult['helpdeskCode'] = 23378680;
+		}
+		elseif ($datasetType === ExternalSource\Type::Source1C->value)
+		{
+			$this->arResult['helpdeskCode'] = 23508958;
+		}
 	}
 
 	private function loadDataset(): void
@@ -130,14 +163,6 @@ class DatasetImportComponent extends CBitrixComponent
 					'tableName' => $dataset->getExternalName(),
 				];
 			}
-			if ($dataset->getEnumType() === ExternalSource\Type::Source1C)
-			{
-				$this->arResult['helpdeskCode'] = 23508958;
-			}
-		}
-		else
-		{
-			$this->arResult['helpdeskCode'] = 23378680;
 		}
 
 		$this->arResult['initialData']['config'] = [
@@ -219,25 +244,11 @@ class DatasetImportComponent extends CBitrixComponent
 		$type = $dataset->getEnumType();
 
 		$dataSource = Source\Factory::getSource($type, $dataset->getSourceId() ?? 0, $dataset->getId());
-		if ($type === ExternalSource\Type::Csv)
-		{
-			$data = $dataSource->getFirstNData($dataset->getName(), self::FIRST_N_ROW);
-		}
-		else
-		{
-			$data = $dataSource->getFirstNData($dataset->getExternalCode(), self::FIRST_N_ROW);
-		}
+		$data = $dataSource->getFirstNData($dataset->getName(), self::FIRST_N_ROW);
 
 		$result = [];
 		$fields = DatasetManager::getDatasetFieldsById($dataset->getId());
-		if ($type === ExternalSource\Type::Csv)
-		{
-			$codeList = $fields->getNameList();
-		}
-		else
-		{
-			$codeList = $fields->getExternalCodeList();
-		}
+		$codeList = $fields->getNameList();
 
 		foreach ($data as $row)
 		{
@@ -259,7 +270,7 @@ class DatasetImportComponent extends CBitrixComponent
 	{
 		$result = [];
 
-		foreach ($row as $value)
+		foreach (array_values($row) as $index => $value)
 		{
 			if ($value instanceof Type\DateTime)
 			{
@@ -268,6 +279,10 @@ class DatasetImportComponent extends CBitrixComponent
 			elseif ($value instanceof Type\Date)
 			{
 				$result[] = $value->format('Y-m-d');
+			}
+			elseif ($this->arResult['initialData']['config']['fieldsSettings'][$index]['type'] === FieldType::Money->value)
+			{
+				$result[] = number_format($value, 2, '.', '');
 			}
 			else
 			{
@@ -305,6 +320,13 @@ class DatasetImportComponent extends CBitrixComponent
 				'value' => $dateTime,
 			];
 		}
+
+		$dateTimeFormat[] = [
+			'title' => 'YYYY-MM-DDThh:mm:ss (ISO 8601)',
+			'type' => 'value',
+			'value' => 'Y-m-d\TH:i:s',
+		];
+
 		$this->arResult['appParams'] = [
 			'dataFormatTemplates' => [
 				FieldType::Date->value => $dateFormat,
@@ -366,9 +388,51 @@ class DatasetImportComponent extends CBitrixComponent
 
 	private function getExternalConnections(): array
 	{
-		return ExternalSourceTable::getList([
+		$preparedSources= [];
+
+		$restIcons = $this->loadRestAvatars();
+
+		$externalSources = ExternalSourceTable::getList([
 			'select' => ['ID', 'TYPE', 'TITLE'],
 			'filter' => ['ACTIVE' => 'Y'],
-		])->fetchAll();
+		]);
+
+		while ($source = $externalSources->fetch())
+		{
+			$source['AVATAR'] = '';
+			if ($source['TYPE'] === ExternalSource\Type::Rest->value)
+			{
+				if (!empty($restIcons[$source['ID']]))
+				{
+					$source['AVATAR'] = $restIcons[$source['ID']];
+				}
+			}
+			else
+			{
+				$source['AVATAR'] = "/bitrix/images/biconnector/database-connections/{$source['TYPE']}.svg";
+			}
+
+			$preparedSources[] = $source;
+		}
+
+		return $preparedSources;
+	}
+
+	private function loadRestAvatars(): array
+	{
+		$icons = [];
+		$sources = ExternalSourceRestTable::getList([
+			'select' => [
+				'SOURCE_ID',
+				'AVATAR' => 'CONNECTOR.LOGO'
+			],
+		]);
+
+		while ($source = $sources->fetch())
+		{
+			$icons[$source['SOURCE_ID']] = $source['AVATAR'];
+		}
+
+		return $icons;
 	}
 }

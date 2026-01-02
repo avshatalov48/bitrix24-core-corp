@@ -19,50 +19,45 @@ if (!defined('B_PROLOG_INCLUDED') || B_PROLOG_INCLUDED !== true)
 	die();
 }
 
+use Bitrix\Main\Application;
 use Bitrix\Main\Localization\Loc;
+use Bitrix\Main\UI\Extension;
+use Bitrix\UI\Buttons;
+use Bitrix\UI\Toolbar\Facade\Toolbar;
 
-\Bitrix\Main\UI\Extension::load([
+$request = Application::getInstance()->getContext()->getRequest();
+
+Extension::load([
 	'sidepanel',
 	'ui.buttons',
 	'ui.fonts.opensans',
 	'biconnector.grid'
 ]);
-$this->addExternalCss('/bitrix/css/main/font-awesome.css');
 
 $bodyClass = $APPLICATION->GetPageProperty('BodyClass');
 $APPLICATION->SetPageProperty('BodyClass', ($bodyClass ? $bodyClass . ' ' : '') . 'pagetitle-toolbar-field-view');
 
-$limitManager = \Bitrix\BIConnector\LimitManager::getInstance();
-$frame = isset($_GET['IFRAME']) && $_GET['IFRAME'] === 'Y' ? '&IFRAME=Y' : '';
+$frame = $request->get('IFRAME') === 'Y' ? '&IFRAME=Y' : '';
 
-$this->SetViewTarget('inside_pagetitle');
-if (isset($_GET['over_limit']) && $_GET['over_limit'] === 'Y')
+$isViewingOverLimit = $request->get('over_limit') === 'Y';
+
+if ($isViewingOverLimit || $arResult['BICONNECTOR_LIMIT'] > 0)
 {
-	?>
-	<div class="pagetitle-container pagetitle-align-right-container">
-		<a href="?over_limit=<?php echo 'N' . $frame;?>" class="ui-btn ui-btn-light-border ui-btn-themes"><?=Loc::getMessage('CT_BBSU_SHOW_ALL')?></a>
-		<a href="javascript:void(0)" onclick="BX.Main.gridManager.getInstanceById('<?php echo $arResult['GRID_ID']?>').reloadTable('POST')" class="ui-btn ui-btn-primary" title="<?=Loc::getMessage('CT_BBSU_REFRESH')?>"><i class="fa fa-refresh"></i></a>
-	</div>
-	<?php
+	Toolbar::addButton([
+		'link' => $isViewingOverLimit ? '?over_limit=N' . $frame :  '?over_limit=Y' . $frame,
+		'text' => $isViewingOverLimit ? Loc::getMessage('CT_BBSU_SHOW_ALL') : Loc::getMessage('CT_BBSU_SHOW_OVERLIMIT'),
+		'color' => Buttons\Color::LIGHT_BORDER,
+	]);
 }
-elseif ($limitManager->getLimit() > 0)
-{
-	?>
-	<div class="pagetitle-container pagetitle-align-right-container">
-		<a href="?over_limit=<?php echo 'Y' . $frame;?>" class="ui-btn ui-btn-light-border ui-btn-themes"><?=Loc::getMessage('CT_BBSU_SHOW_OVERLIMIT')?></a>
-		<a href="javascript:void(0)" onclick="BX.Main.gridManager.getInstanceById('<?php echo $arResult['GRID_ID']?>').reloadTable('POST')" class="ui-btn ui-btn-primary" title="<?=Loc::getMessage('CT_BBSU_REFRESH')?>"><i class="fa fa-refresh"></i></a>
-	</div>
-	<?php
-}
-else
-{
-	?>
-	<div class="pagetitle-container pagetitle-align-right-container">
-		<a href="javascript:void(0)" onclick="BX.Main.gridManager.getInstanceById('<?php echo $arResult['GRID_ID']?>').reloadTable('POST')" class="ui-btn ui-btn-primary" title="<?=Loc::getMessage('CT_BBSU_REFRESH')?>"><i class="fa fa-refresh"></i></a>
-	</div>
-	<?php
-}
-$this->EndViewTarget();
+
+$refreshButton = new Buttons\Button([
+	'icon' => Buttons\Icon::RELOAD,
+	'color' => Buttons\Color::PRIMARY,
+	'click' => "reloadUsageStats",
+]);
+$refreshButton->addAttribute('title', Loc::getMessage('CT_BBSU_REFRESH'));
+
+Toolbar::addButton($refreshButton);
 
 $arResult['HEADERS'] = [
 	[
@@ -104,14 +99,14 @@ $arResult['HEADERS'] = [
 	],
 	[
 		'id' => 'DATA_SIZE',
-		'name' => Loc::getMessage('CT_BBSU_COLUMN_DATA_SIZE'),
+		'name' => Loc::getMessage('CT_BBSU_COLUMN_DATA_SIZE_MSGVER_1'),
 		'default' => true,
 		'editable' => false,
 		'align' => 'right',
 	],
 	[
 		'id' => 'REAL_TIME',
-		'name' => Loc::getMessage('CT_BBSU_COLUMN_REAL_TIME'),
+		'name' => Loc::getMessage('CT_BBSU_COLUMN_REAL_TIME_MSGVER_1'),
 		'default' => false,
 		'editable' => false,
 		'align' => 'right',
@@ -130,6 +125,13 @@ $arResult['HEADERS'] = [
 	],
 ];
 
+if (isset($arParams['BI_ANALYTIC']) && $arParams['BI_ANALYTIC'] === 'Y')
+{
+	$arResult['HEADERS'] = array_filter($arResult['HEADERS'], function($header)  {
+		return !in_array($header['id'], ['SERVICE_ID', 'KEY_ID']);
+	});
+}
+
 $APPLICATION->IncludeComponent(
 	'bitrix:main.ui.grid',
 	'',
@@ -138,7 +140,7 @@ $APPLICATION->IncludeComponent(
 		'COLUMNS' => $arResult['HEADERS'],
 		'ROWS' => $arResult['ROWS'],
 		'SORT' => $arResult['SORT'],
-		'AJAX_MODE' => 'N',
+		'AJAX_MODE' => 'Y',
 		'AJAX_OPTION_JUMP' => 'N',
 		'AJAX_OPTION_STYLE' => 'N',
 		'AJAX_OPTION_HISTORY' => 'N',
@@ -167,16 +169,22 @@ $APPLICATION->IncludeComponent(
 	['HIDE_ICONS' => 'Y']
 );
 ?>
-<script>
-	function showMore(btn, textToAdd)
-	{
-		const text = btn.previousSibling;
-		text.textContent += textToAdd;
-		btn.remove();
-		return false;
-	}
-</script>
+	<script>
+		function showMore(btn, textToAdd)
+		{
+			const text = btn.previousSibling;
+			text.textContent += textToAdd;
+			btn.remove();
+			return false;
+		}
+
+		function reloadUsageStats()
+		{
+			BX.Main.gridManager.getInstanceById('<?= $arResult['GRID_ID'] ?>').reload();
+		}
+	</script>
 <?php
+
 if (!\Bitrix\BIConnector\LimitManager::getInstance()->checkLimitWarning())
 {
 	$APPLICATION->IncludeComponent('bitrix:biconnector.limit.lock', '');

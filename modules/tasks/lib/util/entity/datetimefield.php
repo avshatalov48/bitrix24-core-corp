@@ -16,7 +16,7 @@ use Bitrix\Tasks\Util\Type\DateTime;
  * @subpackage main
  */
 
-class DateTimeField extends \Bitrix\Main\Entity\DateTimeField
+class DateTimeField extends \Bitrix\Main\ORM\Fields\DatetimeField
 {
 	public function __construct($name, $parameters = array())
 	{

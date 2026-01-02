@@ -51,8 +51,13 @@ abstract class BaseCollection implements ItemCollection
 		return $this;
 	}
 
+	final public function slice(int $offset, int $length): static
+	{
+		return new static(...array_slice($this->itemMap, $offset, $length));
+	}
+
 	/**
-	 * @param \Bitrix\HumanResources\Contract\Item $item
+	 * @param V $item
 	 *
 	 * @return static
 	 * @throws \Bitrix\HumanResources\Exception\WrongStructureItemException
@@ -69,6 +74,11 @@ abstract class BaseCollection implements ItemCollection
 		return $this;
 	}
 
+	public static function emptyList(): static
+	{
+		return new static();
+	}
+
 	protected function validate(Item $item): bool
 	{
 		$itemClass = $this->getItemClass();
@@ -81,6 +91,12 @@ abstract class BaseCollection implements ItemCollection
 		return true;
 	}
 
+	/**
+	 * @template T
+	 * @param callable(mixed...): T $closure
+	 *
+	 * @return array<int|string, T>
+	 */
 	public function map(callable $closure): array
 	{
 		return array_map($closure, $this->itemMap);
@@ -112,15 +128,15 @@ abstract class BaseCollection implements ItemCollection
 	/**
 	 * @return array<V>
 	 */
-	public function getValues()
+	public function getValues(): array
 	{
 		return array_values($this->itemMap);
 	}
 
 	/**
-	 * @return array<V>
+	 * @return array<int|string>
 	 */
-	public function getKeys()
+	public function getKeys(): array
 	{
 		return array_keys($this->itemMap);
 	}
@@ -156,7 +172,7 @@ abstract class BaseCollection implements ItemCollection
 	}
 
 	/**
-	 * @param Closure(V): bool $rule
+	 * @param Closure(V, int|string, static): bool $rule
 	 *
 	 * @return static
 	 * @throws WrongStructureItemException
@@ -167,13 +183,49 @@ abstract class BaseCollection implements ItemCollection
 
 		foreach ($this->itemMap as $id => $item)
 		{
-			if ($rule($item))
+			if ($rule($item, $id, $this))
 			{
 				$collection->add($item);
 			}
 		}
 
 		return $collection;
+	}
+
+	/**
+	 * @param Closure(V): bool $rule
+	 *
+	 * @return bool
+	 */
+	final public function exists(\Closure $rule): bool
+	{
+		foreach ($this->itemMap as $item)
+		{
+			if ($rule($item))
+			{
+				return true;
+			}
+		}
+
+		return false;
+	}
+
+	/**
+	 * @param Closure(V): bool $rule
+	 *
+	 * @return V|null
+	 */
+	public function findFirstByRule(\Closure $rule): ?Item
+	{
+		foreach ($this->itemMap as $item)
+		{
+			if ($rule($item))
+			{
+				return $item;
+			}
+		}
+
+		return null;
 	}
 
 	private function getItemClass(): ?string
@@ -196,9 +248,23 @@ abstract class BaseCollection implements ItemCollection
 	/**
 	 * @return ?V
 	 */
-	public function getFirst()
+	public function getFirst(): ?Item
 	{
 		return array_values($this->itemMap)[0] ?? null;
+	}
+
+	/**
+	 * @return ?V
+	 */
+	public function getLast(): ?Item
+	{
+		$count = $this->count();
+		if ($count < 1)
+		{
+			return null;
+		}
+
+		return array_values($this->itemMap)[$count - 1] ?? null;
 	}
 
 	/**

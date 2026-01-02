@@ -8,7 +8,7 @@ return [
 		'im:messenger/const',
 		'im:messenger/controller/dialog-list',
 		'im:messenger/lib/logger',
-		'im:messenger/lib/converter',
+		'im:messenger/lib/converter/ui/recent-search',
 		'im:messenger/lib/params',
 	],
 ];

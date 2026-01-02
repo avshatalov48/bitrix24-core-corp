@@ -2,7 +2,10 @@
 
 namespace Bitrix\Crm\Integration\Main\UISelector;
 
+use Bitrix\Catalog\Access\AccessController;
+use Bitrix\Catalog\Access\ActionDictionary;
 use Bitrix\Main\DB;
+use Bitrix\Main\Loader;
 use Bitrix\Main\Localization\Loc;
 use CCrmProduct;
 use CDBResult;
@@ -61,6 +64,11 @@ class CrmProducts extends CrmBase
 				'SORT_SELECTED' => 400,
 			],
 		];
+
+		if (!$this->checkCatalogPermissions())
+		{
+			return $result;
+		}
 
 		$entityOptions = (!empty($params['options']) ? $params['options'] : []);
 		$prefix = static::getPrefix($entityOptions);
@@ -217,6 +225,11 @@ class CrmProducts extends CrmBase
 			'ADDITIONAL_INFO' => [],
 		];
 
+		if (!$this->checkCatalogPermissions())
+		{
+			return $result;
+		}
+
 		$entityOptions = (!empty($params['options']) ? $params['options'] : []);
 		$requestFields = (!empty($params['requestFields']) ? $params['requestFields'] : []);
 		$search = $requestFields['searchString'];
@@ -356,5 +369,15 @@ class CrmProducts extends CrmBase
 		}
 
 		return $result;
+	}
+
+	protected function checkCatalogPermissions(): bool
+	{
+		if (!Loader::includeModule('catalog'))
+		{
+			return true;
+		}
+
+		return AccessController::getCurrent()->check(ActionDictionary::ACTION_CATALOG_READ);
 	}
 }

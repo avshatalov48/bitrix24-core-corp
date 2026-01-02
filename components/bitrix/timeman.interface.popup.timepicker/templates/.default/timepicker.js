@@ -173,9 +173,13 @@
 			var endSeconds = this.convertFormattedTimeToSecs(minuend.tagName === 'INPUT' ? minuend.value : minuend.textContent);
 			var delta = 0;
 
-			const startDate = new Date(this.stateStartDate.value);
-			const endDate = new Date(this.stateEndDate.value);
-			const differenceInSeconds = Math.max(0, (endDate - startDate) / 1000);
+			let differenceInSeconds = 0;
+			if (this.stateStartDate && this.stateEndDate)
+			{
+				const startDate = new Date(this.stateStartDate.value);
+				const endDate = new Date(this.stateEndDate.value);
+				differenceInSeconds = Math.max(0, (endDate - startDate) / 1000);
+			}
 
 			if (startSeconds <= endSeconds)
 			{

@@ -1,0 +1,25 @@
+<?php
+$MESS["BPATL_BEGIN"] = "Кірісу";
+$MESS["BPATL_CURRENT_TASKS"] = "Ағымдағы тапсырмалар";
+$MESS["BPATL_DESCRIPTION"] = "Сипаттама";
+$MESS["BPATL_DOCUMENT"] = "Құжат";
+$MESS["BPATL_DOCUMENT_TITLE"] = "Құжатты қарау";
+$MESS["BPATL_EMPTY"] = "Міндеттер тізімі бос.";
+$MESS["BPATL_FINISHED_TASKS"] = "Тапсырмалар мұрағаты";
+$MESS["BPATL_MODIFIED"] = "Өзгертілді";
+$MESS["BPATL_NAME"] = "Атауы";
+$MESS["BPATL_TASK_LINK_TITLE"] = "Толығырақ";
+$MESS["BPATL_TASK_TITLE"] = "Тапсырма";
+$MESS["BPATL_USER_STATUS_NO"] = "Сіз құжаттан бас тарттыңыз";
+$MESS["BPATL_USER_STATUS_OK"] = "Сіз құжатпен танысып шықтыңыз";
+$MESS["BPATL_USER_STATUS_YES"] = "Сіз құжатты бекіттіңіз";
+$MESS["BPWC_WLCT_TOTAL"] = "Барлығы";
+$MESS["MB_BP_DETAIL_ALERT"] = "Қате";
+$MESS["MB_BP_LIST_IS_EMPTY"] = "Бизнес-процестердің тізімі бос";
+$MESS["MB_BP_LIST_PULLDOWN_DOWN"] = "Жаңарту үшін жіберіңіз";
+$MESS["MB_BP_LIST_PULLDOWN_LOADING"] = "Деректерді жаңарту...";
+$MESS["MB_BP_LIST_PULLDOWN_PULL"] = "Жаңарту үшін тартыңыз";
+$MESS["MB_BP_LIST_REQUEST_ERROR"] = "Тапсырманы орындау кезінде сұрау қатесі орын алды.";
+$MESS["MB_BP_LIST_WORKFLOW_STARTED"] = "басталу күні";
+$MESS["MB_BP_LIST_WORKFLOW_STARTED_BY"] = "іске қосты";
+$MESS["MB_BP_TITLE"] = "Бизнес-процестер";

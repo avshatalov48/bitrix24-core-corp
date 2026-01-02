@@ -2,11 +2,12 @@
  * @module im/messenger/lib/helper/file
  */
 jn.define('im/messenger/lib/helper/file', (require, exports, module) => {
-	const { Loc } = require('loc');
-	const { FileType } = require('im/messenger/const');
+	const { Loc } = require('im/messenger/loc');
+	const { FileType, FileAudioType } = require('im/messenger/const');
 	const {
 		FileType: FileIconType,
 	} = require('assets/icons');
+	const { Feature } = require('im/messenger/lib/feature');
 
 	function formatFileSize(fileSize)
 	{
@@ -87,6 +88,7 @@ jn.define('im/messenger/lib/helper/file', (require, exports, module) => {
 				break;
 
 			case 'mp3':
+			case 'm4a':
 				type = FileType.audio;
 				break;
 
@@ -207,11 +209,37 @@ jn.define('im/messenger/lib/helper/file', (require, exports, module) => {
 		}
 	}
 
+	/**
+	 * @param {string} fileName
+	 * @returns {boolean}
+	 */
+	function isAudioMessageFile(fileName)
+	{
+		const fileType = getFileTypeByExtension(getFileExtension(fileName).toLowerCase());
+
+		return fileType === FileType.audio && fileName.startsWith('mobile_audio_');
+	}
+
+	/**
+	 * @returns {string}
+	 */
+	function getAudioRecordFormat()
+	{
+		if (Feature.isAudioRecordM4AEnabled)
+		{
+			return FileAudioType.m4a;
+		}
+
+		return FileAudioType.mp3;
+	}
+
 	module.exports = {
 		formatFileSize,
 		getShortFileName,
 		getFileExtension,
+		isAudioMessageFile,
 		getFileTypeByExtension,
 		getFileIconTypeByExtension,
+		getAudioRecordFormat,
 	};
 });

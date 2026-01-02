@@ -1,0 +1,27 @@
+<?php
+$MESS["CRM_ENT_SEL_HLP_HIDDEN_COMPANY"] = "Жасырын компания";
+$MESS["CRM_ENT_SEL_HLP_HIDDEN_CONTACT"] = "Жасырын байланыс";
+$MESS["CRM_ENT_SEL_HLP_HIDDEN_DEAL"] = "Жасырын мәміле";
+$MESS["CRM_ENT_SEL_HLP_HIDDEN_DYNAMIC"] = "Жасырын элемент";
+$MESS["CRM_ENT_SEL_HLP_HIDDEN_LEAD"] = "Жасырын лид";
+$MESS["CRM_ENT_SEL_HLP_HIDDEN_ORDER"] = "Жасырын тапсырыс";
+$MESS["CRM_ENT_SEL_HLP_HIDDEN_QUOTE_MSGVER_1"] = "Жасырын ұсыныс";
+$MESS["CRM_ENT_SEL_HLP_HIDDEN_SMART_INVOICE"] = "Жасырын шот";
+$MESS["CRM_ENT_SEL_HLP_ORDER_SUMMARY"] = "№ #ORDER_NUMBER# тапсырысы";
+$MESS["CRM_ENT_SEL_HLP_PREF_CONTACT_TYPE"] = "Түрі";
+$MESS["CRM_ENT_SEL_HLP_PREF_EMAIL"] = "E-mail";
+$MESS["CRM_ENT_SEL_HLP_PREF_PHONE"] = "Тел.";
+$MESS["CRM_FF_CANCEL"] = "Болдырмау";
+$MESS["CRM_FF_CHANGE"] = "Өзгерту";
+$MESS["CRM_FF_CHOISE"] = "Таңдау";
+$MESS["CRM_FF_CLOSE"] = "Жабу";
+$MESS["CRM_FF_COMPANY"] = "Компаниялар";
+$MESS["CRM_FF_CONTACT"] = "Байланыс";
+$MESS["CRM_FF_DEAL"] = "Мәмілелер";
+$MESS["CRM_FF_LAST"] = "Соңғы";
+$MESS["CRM_FF_LEAD"] = "Лидтер";
+$MESS["CRM_FF_NO_RESULT"] = "Өкінішке орай, сіздің іздеу сұрауыңыз бойынша ештеңе табылған жоқ";
+$MESS["CRM_FF_OK"] = "Таңдау";
+$MESS["CRM_FF_QUOTE_MSGVER_1"] = "Ұсыныстар";
+$MESS["CRM_FF_SEARCH"] = "Іздеу";
+$MESS["CRM_FF_WAIT"] = "Іздеу...";

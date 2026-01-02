@@ -158,8 +158,8 @@ jn.define('layout/ui/smartphone-contact-selector/src/phone-input-box', (require,
 			});
 		};
 
-		close = () => {
-			this.layoutWidget.close();
+		close = (callback) => {
+			this.layoutWidget?.close(callback ?? null);
 		};
 
 		#onContinueButtonClick = () => {

@@ -3,6 +3,7 @@
 namespace Bitrix\ImMobile;
 
 use Bitrix\Im\V2\Application\Features;
+use Bitrix\Main\Loader;
 
 class Settings
 {
@@ -11,33 +12,8 @@ class Settings
 		return \Bitrix\Main\Config\Option::get('immobile', 'beta_available', 'N') === 'Y';
 	}
 
-	public static function isChatM1Enabled(): bool
-	{
-		return !self::isLegacyChatEnabled();
-	}
-
-	public static function isLegacyChatEnabled(): bool
-	{
-		if (\Bitrix\Main\Config\Option::get('immobile', 'legacy_chat_enabled', 'N') === 'Y')
-		{
-			return true;
-		}
-
-		if (\CUserOptions::GetOption('immobile', 'legacy_chat_user_enabled', 'N') === 'Y')
-		{
-			return true;
-		}
-
-		return false;
-	}
-
 	public static function isChatLocalStorageAvailable(): bool
 	{
-		if (!self::isChatM1Enabled())
-		{
-			return false;
-		}
-
 		$isChatLocalStorageAvailable = \Bitrix\Main\Config\Option::get('immobile', 'chat_local_storage_available', 'Y') === 'Y';
 		if (!$isChatLocalStorageAvailable)
 		{
@@ -95,5 +71,56 @@ class Settings
 		}
 
 		return \Bitrix\Im\V2\Message\MessageService::getMultipleActionMessageLimit();
+	}
+
+	public static function isTasksRecentListAvailable(): bool
+	{
+		if (!Loader::includeModule('tasks'))
+		{
+			return false;
+		}
+
+		return \Bitrix\Main\Config\Option::get('im', 'is_tasks_recent_list_available', 'N') === 'Y';
+	}
+
+	public static function isMessengerV2Enabled(): bool
+	{
+		if (\Bitrix\Main\Config\Option::get('immobile', 'messenger_v2_enabled', 'N') === 'Y')
+		{
+			return true;
+		}
+
+		if (self::isMessengerV2EnabledForCurrentUser())
+		{
+			return true;
+		}
+
+		return false;
+	}
+
+	public static function isMessengerV2EnabledForCurrentUser(): bool
+	{
+		return \CUserOptions::GetOption('immobile', 'messenger_v2_enabled', 'N') === 'Y';
+	}
+
+	public static function toggleMessengerV2ForCurrentUser(): array
+	{
+		$isSuccess = self::isMessengerV2EnabledForCurrentUser() ? self::disableMessengerV2ForCurrentUser() : self::enableMessengerV2ForCurrentUser();
+
+		return [
+			'isSuccess' => $isSuccess,
+			'isMessengerV2Enabled' => self::isMessengerV2Enabled(),
+			'isMessengerV2EnabledForCurrentUser' => self::isMessengerV2EnabledForCurrentUser(),
+		];
+	}
+
+	public static function enableMessengerV2ForCurrentUser(): bool
+	{
+		return \CUserOptions::SetOption('immobile', 'messenger_v2_enabled', 'Y');
+	}
+
+	public static function disableMessengerV2ForCurrentUser(): bool
+	{
+		return \CUserOptions::SetOption('immobile', 'messenger_v2_enabled', 'N');
 	}
 }

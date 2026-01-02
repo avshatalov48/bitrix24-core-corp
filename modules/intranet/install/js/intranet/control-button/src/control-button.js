@@ -78,6 +78,7 @@ export class ControlButton
 		}
 
 		this.buttonClassName = params.buttonClassName || '';
+		this.airDesign = params.airDesign === true;
 
 		this.renderButton();
 		this.subscribeEvents();
@@ -144,18 +145,46 @@ export class ControlButton
 	{
 		const isChatButton = (!this.isVideoCallEnabled || this.mainItem === 'chat');
 		const onClickValue = (isChatButton ? this.openChat.bind(this) : this.startVideoCall.bind(this));
-		const buttonTitle = (isChatButton ? Loc.getMessage('INTRANET_JS_CONTROL_BUTTON_CHAT') : Loc.getMessage('INTRANET_JS_CONTROL_BUTTON_NAME_MSG_1'));
-		const buttonClass = `${isChatButton ? 'ui-btn-icon-chat-blue' : 'ui-btn-icon-camera-blue'} intranet-control-btn ui-btn-light-border ui-btn-icon-inline ${this.buttonClassName}`;
+		const buttonTitle = (
+			isChatButton
+				? Loc.getMessage('INTRANET_JS_CONTROL_BUTTON_CHAT')
+				: Loc.getMessage('INTRANET_JS_CONTROL_BUTTON_NAME_MSG_1')
+		);
+
+		let buttonClass = '';
+		if (this.airDesign)
+		{
+			buttonClass = '--air ui-btn-no-caps ui-btn-sm ui-icon-set__scope --style-filled';
+			if (isChatButton)
+			{
+				buttonClass += ' --with-left-icon ui-btn-icon-chat';
+			}
+			else
+			{
+				buttonClass += ' --with-left-icon ui-btn-icon-camera';
+			}
+		}
+		else
+		{
+			buttonClass = isChatButton ? 'ui-btn-icon-chat-blue' : 'ui-btn-icon-camera-blue';
+			buttonClass += ` intranet-control-btn ui-btn-light-border ui-btn-icon-inline ${this.buttonClassName}`;
+		}
 
 		this.button = (
 			this.items.length > 1
 				? Tag.render`
 					<div class="ui-btn-split ${buttonClass}">
-						<button class="ui-btn-main" onclick="${onClickValue}">${buttonTitle}</button>
+						<button class="ui-btn-main" onclick="${onClickValue}">
+							<span class="ui-btn-text">${buttonTitle}</span>
+						</button>
 						<button class="ui-btn-menu" onclick="${this.showMenu.bind(this)}"></button> 
 					</div>
 				`
-				: Tag.render`<button class="ui-btn ${buttonClass}" onclick="${onClickValue}">${buttonTitle}</button>`
+				: Tag.render`
+					<button class="ui-btn ${buttonClass}" onclick="${onClickValue}">
+						<span class="ui-btn-text">${buttonTitle}</span>
+					</button>
+				`
 		);
 
 		Dom.append(this.button, this.container);

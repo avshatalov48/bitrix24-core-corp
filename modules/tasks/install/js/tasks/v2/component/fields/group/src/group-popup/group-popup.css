@@ -1,0 +1,54 @@
+.tasks-field-group-popup-header {
+	display: flex;
+	align-items: center;
+	gap: 10px;
+}
+
+.tasks-field-group-popup-image {
+	width: 48px;
+	min-width: 48px;
+	min-height: 48px;
+	border-radius: 50%;
+}
+
+.tasks-field-group-popup-title {
+	overflow: hidden;
+	display: -webkit-box;
+	-webkit-line-clamp: 2;
+	-webkit-box-orient: vertical;
+	font-size: calc(var(--ui-font-size-xl) + 1px);
+	font-weight: var(--ui-font-weight-semi-bold);
+	word-break: break-word;
+}
+
+.tasks-field-group-popup-subtitle {
+	margin-top: 3px;
+	color: var(--ui-color-base-2);
+	font-size: var(--ui-font-size-xs);
+}
+
+.tasks-field-group-popup-button {
+	padding-bottom: 18px;
+	margin: 18px 0;
+	border-bottom: var(--ui-border-width-thin) solid var(--ui-color-divider-less);
+}
+
+.tasks-field-group-popup-info {
+	display: flex;
+	flex-direction: column;
+	gap: 10px;
+}
+
+.tasks-field-group-popup-field-title {
+	margin-bottom: 5px;
+	color: var(--ui-color-base-4);
+	font-size: var(--ui-font-size-sm);
+}
+
+.tasks-field-group-popup-field-value {
+	white-space: nowrap;
+	overflow: hidden;
+	text-overflow: ellipsis;
+	color: var(--ui-color-base-2);
+	font-size: var(--ui-font-size-md);
+}

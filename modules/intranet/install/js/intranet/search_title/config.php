@@ -5,9 +5,9 @@ if (!defined("B_PROLOG_INCLUDED") || B_PROLOG_INCLUDED !== true)
 }
 
 return array(
-	'css' => array(),
-	'js' => array(
+	'css' => 'style.css',
+	'js' => [
 		'/bitrix/js/intranet/search_title/search.title.js'
-	),
-	'rel' => array()
+	],
+	'rel' => ['finder'],
 );

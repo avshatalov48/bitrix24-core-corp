@@ -6,6 +6,7 @@ if (!defined('B_PROLOG_INCLUDED') || B_PROLOG_INCLUDED !== true)
 }
 
 use Bitrix\Crm\Automation\Starter;
+use Bitrix\Crm\Integration\Analytics\Dictionary;
 use Bitrix\Crm\Service\Container;
 use Bitrix\Main\Localization\Loc;
 
@@ -116,6 +117,12 @@ class CBPCrmCreateReturnLeadActivity extends CBPActivity
 					$CCrmBizProc->StartWorkflow($id);
 				}
 			}
+
+			\CCrmBizProcHelper::sendOperationsAnalytics(
+				Dictionary::EVENT_ENTITY_CREATE,
+				$this,
+				'lead',
+			);
 
 			//Region automation
 			$starter = new Starter(\CCrmOwnerType::Lead, $id);

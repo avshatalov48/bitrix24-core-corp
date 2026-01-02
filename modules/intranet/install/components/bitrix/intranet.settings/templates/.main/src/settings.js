@@ -252,8 +252,9 @@ export class Settings extends BaseSettingsElement
 								BX.UI.ButtonPanel.hide();
 								this.#cancelMessageBox.close();
 								this.#cancelMessageBox = null;
-								panelEvent.slider.close();
-								panelEvent.slider.destroy();
+								panelEvent.slider.close(false, () => {
+									panelEvent.slider.destroy();
+								});
 
 								if (this.#basePage.includes('/configs/')) {
 									this.#reload('/index.php');

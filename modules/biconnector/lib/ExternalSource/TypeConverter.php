@@ -52,6 +52,29 @@ final class TypeConverter
 	}
 
 	/**
+	 * Formats a double string using a given delimiter
+	 *
+	 * @param string $value
+	 * @param int|null $precision
+	 * @param string $delimiter
+	 * @return string
+	 */
+	public static function formatDoubleString(?string $value, string $delimiter = '.'): string
+	{
+		if (is_null($value))
+		{
+			return '';
+		}
+
+		if ($delimiter === '.')
+		{
+			return $value;
+		}
+
+		return str_replace('.', $delimiter, $value);
+	}
+
+	/**
 	 * Converts value to string
 	 *
 	 * @param mixed $value
@@ -69,20 +92,22 @@ final class TypeConverter
 	 *
 	 * @example '08/18/1960 15:45:20 (m/d/Y H:i:s)
 	 *
-	 * @param string $value
+	 * @param string|null $value
 	 * @param string $format
 	 * @return Main\Type\DateTime|bool
 	 */
 	public static function convertToDateTime(?string $value, string $format): Main\Type\DateTime|bool
 	{
-		if (!$value)
-		{
-			return false;
-		}
-
 		$date = \DateTime::createFromFormat($format, $value);
 		if ($date)
 		{
+			$errors = \DateTime::getLastErrors();
+
+			if ($errors['error_count'] > 0 || $errors['warning_count'] > 0)
+			{
+				return false;
+			}
+
 			return Main\Type\DateTime::createFromPhp($date);
 		}
 
@@ -90,24 +115,65 @@ final class TypeConverter
 	}
 
 	/**
+	 * Formats a DateTime object into a string with a given format
+	 *
+	 * @param Main\Type\DateTime|null $dateTime
+	 * @param string $format
+	 * @return string
+	 */
+	public static function convertDateTimeToString(?Main\Type\DateTime $dateTime, string $format): string
+	{
+		if (!$dateTime)
+		{
+			return '';
+		}
+
+		return $dateTime->format($format);
+	}
+
+	/**
 	 * Converts value to Date
 	 *
 	 * @example '08/18/1960 (m/d/Y)
 	 *
-	 * @param string $value
+	 * @param string|null $value
 	 * @param string $format
 	 * @return Main\Type\Date|bool
 	 */
-	public static function convertToDate(string $value, string $format): Main\Type\Date|bool
+	public static function convertToDate(?string $value, string $format): Main\Type\Date|bool
 	{
 		$date = \DateTime::createFromFormat($format, $value);
 		if ($date)
 		{
+			$errors = \DateTime::getLastErrors();
+
+			if ($errors['error_count'] > 0 || $errors['warning_count'] > 0)
+			{
+				return false;
+			}
+
 			$date->setTime(0, 0, 0);
 			return Main\Type\DateTime::createFromPhp($date);
 		}
 
 		return $date;
+	}
+
+	/**
+	 * Formats a Date object into a string with a given format
+	 *
+	 * @param Main\Type\DateTime|null $dateTime
+	 * @param string $format
+	 * @return string
+	 */
+	public static function convertDateToString(?Main\Type\Date $date, string $format): string
+	{
+		if (!$date)
+		{
+			return '';
+		}
+
+		return $date->format($format);
 	}
 
 	/**
@@ -132,7 +198,9 @@ final class TypeConverter
 
 	private static function prepareNumberForMoney(string $value, string $delimiter = '.'): float
 	{
-		$number = preg_replace('/[^-\d' . preg_quote($delimiter, '/') . ']/', '', $value);
+		$decodedValue = html_entity_decode($value);
+
+		$number = preg_replace('/[^-\d' . preg_quote($delimiter, '/') . ']/', '', $decodedValue);
 		if ($delimiter !== '.')
 		{
 			$number = str_replace($delimiter, '.', $number);

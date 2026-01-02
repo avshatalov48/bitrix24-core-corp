@@ -16,6 +16,7 @@ jn.define('calendar/event-edit-form/layout/attendees-selector', (require, export
 	const { usersAddedFromEntitySelector } = require('statemanager/redux/slices/users');
 
 	const { State, observeState } = require('calendar/event-edit-form/state');
+	const { CalendarType } = require('calendar/enums');
 
 	/**
 	 * @class AttendeesSelector
@@ -241,6 +242,11 @@ jn.define('calendar/event-edit-form/layout/attendees-selector', (require, export
 
 		canRemoveAttendee(userInfo)
 		{
+			if (State.calType === CalendarType.USER)
+			{
+				return State.ownerId !== Number(userInfo.id);
+			}
+
 			return Number(userInfo.id) !== Number(env.userId)
 				&& Number(userInfo.id) !== this.props.meetingHost
 			;

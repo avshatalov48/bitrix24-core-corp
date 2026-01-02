@@ -4,10 +4,20 @@ namespace Bitrix\Im\V2\Integration\Socialnetwork;
 
 use Bitrix\Im\V2\Chat;
 use Bitrix\Im\V2\Entity\User\User;
+use Bitrix\Im\V2\Result;
+use Bitrix\Main\ArgumentException;
+use Bitrix\Main\Error;
 use Bitrix\Main\Loader;
 use Bitrix\Pull\Event;
 use Bitrix\Socialnetwork\Collab\CollabFeature;
+use Bitrix\Socialnetwork\Collab\Control\CollabService;
+use Bitrix\Socialnetwork\Collab\Control\Command\CollabUpdateCommand;
+use Bitrix\Socialnetwork\Collab\Control\Option\OptionFactory;
+use Bitrix\Socialnetwork\Collab\Provider\CollabProvider;
 use Bitrix\Socialnetwork\Collab\Requirement;
+use Bitrix\Socialnetwork\Control\Decorator\AccessDecorator;
+use Bitrix\Socialnetwork\Item\Workgroup\Type;
+use Bitrix\Socialnetwork\Provider\GroupProvider;
 
 class Collab
 {
@@ -27,6 +37,42 @@ class Collab
 		return self::isAvailable() && Requirement::checkWithAccess($userId)->isSuccess();
 	}
 
+	public static function updateCollabOption(Chat\CollabChat $chat, string $name, string $value): Result
+	{
+		$result = new Result();
+
+		if (!Loader::includeModule('socialnetwork'))
+		{
+			return $result;
+		}
+
+		$collabId = (int)$chat->getEntityId();
+		$option = OptionFactory::createOption($name, $value);
+
+		try
+		{
+			$command = (new CollabUpdateCommand())
+				->setId($collabId)
+				->setInitiatorId($chat->getContext()->getUserId())
+				->addOption($option)
+			;
+		}
+		catch (ArgumentException $e)
+		{
+			return $result->addError(Error::createFromThrowable($e));
+		}
+
+		$service = new CollabService();
+		$updateResult = (new AccessDecorator($service))->update($command);
+
+		if (!$updateResult->isSuccess())
+		{
+			$result->addErrors($updateResult->getErrors());
+		}
+
+		return $result;
+	}
+
 	public static function onEntityCountersUpdate(int $collabId, array $counters, string $entityType): void
 	{
 		if (!Loader::includeModule('socialnetwork'))
@@ -34,7 +80,7 @@ class Collab
 			return;
 		}
 
-		$collab = \Bitrix\Socialnetwork\Collab\Provider\CollabProvider::getInstance()->getCollab($collabId);
+		$collab = CollabProvider::getInstance()->getCollab($collabId);
 		if ($collab === null)
 		{
 			return;
@@ -73,5 +119,16 @@ class Collab
 				'extra' => \Bitrix\Im\Common::getPullExtra(),
 			]);
 		}
+	}
+
+	public static function isCollab(int $collabId): bool
+	{
+		if (!Loader::includeModule('socialnetwork'))
+		{
+			return false;
+		}
+		$type = GroupProvider::getInstance()->getGroupType($collabId);
+
+		return $type === Type::Collab;
 	}
 }

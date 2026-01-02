@@ -11,6 +11,7 @@ final class Toolbar
 	public function __construct(
 		private readonly string $afterTitleContainerId,
 		private readonly string $counterPanelContainerId,
+		private readonly string $settingsButtonContainerId,
 	)
 	{
 	}
@@ -58,20 +59,19 @@ final class Toolbar
 		UI\Toolbar\Facade\Toolbar::addRightCustomHtml(<<<HTML
 			<div class="booking-toolbar-custom-html --margin-left">
 				<div id="{$this->counterPanelContainerId}"></div>
+				{$this->getSettingsButton()->render()}
 			</div>
 		HTML);
 	}
 
 	private function getSettingsButton(): UI\Buttons\Button
 	{
-		return (new UI\Buttons\Button([
-			'click' => new UI\Buttons\JsCode("
-				alert('settings');
-			"),
-		]))
+		return (new UI\Buttons\Button())
+			->addAttribute('id', $this->settingsButtonContainerId)
 			->setColor(UI\Buttons\Color::LIGHT_BORDER)
 			->addClass('ui-btn-themes')
-			->setIcon(UI\Buttons\Icon::SETTINGS)
+			->setIcon(UI\Buttons\Icon::DOTS)
+			->setSize(UI\Buttons\Size::SMALL)
 		;
 	}
 }

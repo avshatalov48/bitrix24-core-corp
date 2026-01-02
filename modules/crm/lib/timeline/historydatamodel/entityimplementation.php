@@ -15,10 +15,9 @@ namespace Bitrix\Crm\Timeline\HistoryDataModel;
 class EntityImplementation
 {
 	/** @var \CCrmOwnerType */
-	protected $crmOwnerType = \CCrmOwnerType::class;
+	protected string $crmOwnerType = \CCrmOwnerType::class;
 
-	/** @var int */
-	protected $entityTypeId;
+	protected int $entityTypeId;
 
 	public function __construct(int $entityTypeId)
 	{
@@ -65,5 +64,10 @@ class EntityImplementation
 	protected function getEntityTypeCaption(): string
 	{
 		return (string)$this->crmOwnerType::GetDescription($this->entityTypeId);
+	}
+
+	public function getEntityTypeId(): int
+	{
+		return $this->entityTypeId;
 	}
 }

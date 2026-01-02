@@ -60,14 +60,14 @@ class Task
 		$usersExceptAuditors = array_unique(
 			array_merge(
 				[$fields['CREATED_BY'], $fields['RESPONSIBLE_ID']],
-				(array)$fields['ACCOMPLICES']
+				(array)($fields['ACCOMPLICES'] ?? [])
 			)
 		);
 
 		$autoMuteService = Main\DI\ServiceLocator::getInstance()->get('tasks.user.option.automute.service');
 		$disabledAutoMuteUsers = $autoMuteService->getDisabledAutoMuteUsers();
 
-		foreach ($fields['AUDITORS'] as $userId)
+		foreach ($fields['AUDITORS'] ?? [] as $userId)
 		{
 			if (!in_array($userId, $usersExceptAuditors) && !in_array($userId, $disabledAutoMuteUsers))
 			{

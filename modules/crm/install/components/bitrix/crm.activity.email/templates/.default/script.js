@@ -671,16 +671,14 @@
 		}
 		else
 		{
-			top.BX.onCustomEvent(
-				'Bitrix24.Slider:postMessage',
-				[
-					window,
-					{
-						action: 'ACTIVITY_CREATE',
-						source_id: this.ctrl.options.activityId,
-						target_id: data.ACTIVITY.ID
-					}
-				]
+			BX.SidePanel.Instance.postMessage(
+				window,
+				'ACTIVITY_CREATE',
+				{
+					action: 'ACTIVITY_CREATE',
+					source_id: this.ctrl.options.activityId,
+					target_id: data.ACTIVITY.ID,
+				},
 			);
 
 			if ('edit' != this.ctrl.options.type)
@@ -787,16 +785,14 @@
 			'data': data,
 			onsuccess: function(data)
 			{
-				top.BX.onCustomEvent(
-					'Bitrix24.Slider:postMessage',
-					[
-						window,
-						{
-							action: 'ACTIVITY_DELETE',
-							source_id: self.ctrl.options.activityId,
-							target_id: self.options.activityId
-						}
-					]
+				BX.SidePanel.Instance.postMessage(
+					window,
+					'ACTIVITY_DELETE',
+					{
+						action: 'ACTIVITY_DELETE',
+						source_id: self.ctrl.options.activityId,
+						target_id: self.options.activityId,
+					},
 				);
 
 				if (self.ctrl.options.activityId != self.options.activityId)

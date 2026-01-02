@@ -2,6 +2,7 @@
 
 namespace Bitrix\ImBot\Bot;
 
+use Bitrix\Im\V2\Chat;
 use Bitrix\ImBot\Error;
 use Bitrix\Main\Config\Option;
 
@@ -92,6 +93,14 @@ abstract class Base implements ChatBot
 	 * @return bool
 	 */
 	public static function onChatStart($dialogId, $joinFields)
+	{
+		return true;
+	}
+
+	/**
+	 * Event handler when trigger restMethod im.v2.Chat.Bot.sendContext.
+	 */
+	public static function onContextGet($dialogId, array $params): bool
 	{
 		return true;
 	}
@@ -196,7 +205,7 @@ abstract class Base implements ChatBot
 	{
 		if ($iconName == '')
 			return false;
-		
+
 		$iconId = false;
 
 		$class = self::getClassName();
@@ -256,5 +265,4 @@ abstract class Base implements ChatBot
 			(self::$lastError instanceof Error)
 			&& self::$lastError->error;
 	}
-
 }

@@ -29,9 +29,9 @@
 						scanner.stopScanning();
 
 						BX.ajax.runAction(
-							'catalogmobile.BarcodeScanner.sendBarcodeScannedEvent',
-							{data: {id: this.id, barcode: barcode.value}}
-						)
+								'catalogmobile.BarcodeScanner.sendBarcodeScannedEvent',
+								{data: {id: this.id, barcode: barcode.value}}
+							)
 							.then((response) => {
 								if (response.data && closeOnSuccessfulScan)
 								{
@@ -55,11 +55,6 @@
 					},
 				})
 			);
-		}
-
-		componentWillUnmount()
-		{
-			BX.postComponentEvent('Catalog:BarcodeScannerComponent:onClose');
 		}
 	}
 

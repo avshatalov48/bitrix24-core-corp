@@ -38,4 +38,26 @@ class OptionProvider
 
 		return filter_var($enabled, FILTER_VALIDATE_BOOLEAN);
 	}
+
+	public function isWaitListExpanded(int $userId): bool
+	{
+		$enabled = $this->optionRepository->get(
+			userId: $userId,
+			option: OptionDictionary::WaitListExpanded,
+			default: 'true'
+		);
+
+		return filter_var($enabled, FILTER_VALIDATE_BOOLEAN);
+	}
+
+	public function isCalendarExpanded(int $userId): bool
+	{
+		$enabled = $this->optionRepository->get(
+			userId: $userId,
+			option: OptionDictionary::CalendarExpanded,
+			default: 'true'
+		);
+
+		return filter_var($enabled, FILTER_VALIDATE_BOOLEAN);
+	}
 }

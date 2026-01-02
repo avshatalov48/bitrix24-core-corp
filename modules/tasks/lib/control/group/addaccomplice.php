@@ -4,13 +4,10 @@ namespace Bitrix\Tasks\Control\Group;
 
 use Bitrix\Tasks\Control\Task;
 use Bitrix\Tasks\Internals\Registry\TaskRegistry;
-use Bitrix\Tasks\Member\Config\WorkConfig;
-use Bitrix\Tasks\Access\Role\RoleDictionary;
+use Bitrix\Tasks\Internals\TaskObject;
 
 class AddAccomplice
 {
-	private const ROLE = RoleDictionary::ROLE_ACCOMPLICE;
-
 	public function runBatch(int $userId, array $taskIds, int $accompliceId): array
 	{
 		$result = [];
@@ -27,26 +24,22 @@ class AddAccomplice
 				continue;
 			}
 
-			$allMembers = $task->getMemberList();
-			$oldAccomplice = [];
-
-			foreach ($allMembers as $member)
-			{
-				if ($member->getType() === self::ROLE)
-				{
-					$oldAccomplice[] = $member->getUserId();
-				}
-			}
-
-			$newAccomplice = array_merge([$accompliceId], $oldAccomplice);
-			$arAccomplice['ACCOMPLICES'] = $newAccomplice;
+			$members = $this->prepareMembers($task, $accompliceId);
 
 			$result[] = [
-				$control->update($id, $arAccomplice),
+				$control->update($id, $members),
 				'taskId' => $id,
 			];
 		}
 
 		return $result;
+	}
+
+	private function prepareMembers(TaskObject $task, int $accompliceId):array
+	{
+		$accomplices['ACCOMPLICES'] = $task->getMemberList()->getAccompliceIds();
+		$accomplices['ACCOMPLICES'][] = $accompliceId;
+
+		return $accomplices;
 	}
 }

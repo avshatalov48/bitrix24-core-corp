@@ -82,6 +82,7 @@ class PhaseSemantics
 		$semanticID = mb_strtoupper($semanticID);
 		return $semanticID === self::FAILURE;
 	}
+
 	/**
 	* @return array Array of strings
 	*/

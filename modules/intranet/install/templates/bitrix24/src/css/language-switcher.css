@@ -1,0 +1,18 @@
+.intranet__language-popup_list {
+	display: grid;
+	grid-template-columns: auto auto auto;
+	gap: 10px;
+	width: 100%;
+}
+
+.intranet__language-popup_language-item {
+	cursor: pointer;
+	padding: 10px 12px;
+	border-radius: var(--ui-border-radius-sm);
+	transition: background-color 0.1s ease-in-out;
+}
+
+.intranet__language-popup_language-item:hover {
+	background-color: var(--ui-color-base-03);
+	transition-duration: 0s;
+}

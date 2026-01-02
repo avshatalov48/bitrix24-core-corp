@@ -15,26 +15,48 @@ use Bitrix\Main\Localization\Loc;
 class StatusFieldAssembler extends FieldAssembler
 {
 	private const DASHBOARD_STATUS_COMPUTED_NOT_FOUND = 'NOT_FOUND';
+	private const DASHBOARD_STATUS_COMPUTED_NOT_AVAILABLE = 'NOT_AVAILABLE';
+	private const DASHBOARD_STATUS_COMPUTED_PROHIBITED = 'PROHIBITED';
 	private const DASHBOARD_STATUS_COMPUTED_NOT_LOAD = 'NOT_LOAD';
 
 	protected function prepareColumn($value): string
 	{
+		if (SupersetInitializer::getSupersetStatus() === SupersetInitializer::SUPERSET_STATUS_LIMIT_EXCEEDED)
+		{
+			return $this->getStatusLabelByStatusType(self::DASHBOARD_STATUS_COMPUTED_NOT_LOAD);
+		}
+
+		if ($value['STATUS'] === SupersetDashboardTable::DASHBOARD_STATUS_NOT_INSTALLED)
+		{
+			if ($value['TYPE'] === SupersetDashboardTable::DASHBOARD_TYPE_CUSTOM)
+			{
+				return $this->getStatusLabelByStatusType(SupersetDashboardTable::DASHBOARD_STATUS_DRAFT);
+			}
+
+			return $this->getStatusLabelByStatusType(SupersetDashboardTable::DASHBOARD_STATUS_NOT_INSTALLED);
+		}
+
 		if (SupersetInitializer::isSupersetLoading())
 		{
-			return self::getStatusLabelByStatusType(SupersetDashboardTable::DASHBOARD_STATUS_LOAD);
+			return $this->getStatusLabelByStatusType(SupersetDashboardTable::DASHBOARD_STATUS_LOAD);
 		}
 
 		if (!$this->getSettings()->isSupersetAvailable())
 		{
-			return self::getStatusLabelByStatusType(self::DASHBOARD_STATUS_COMPUTED_NOT_LOAD);
+			return $this->getStatusLabelByStatusType(self::DASHBOARD_STATUS_COMPUTED_NOT_AVAILABLE);
 		}
 
 		if ($value['EDIT_URL'] === '' && in_array($value['STATUS'], SupersetDashboard::getActiveDashboardStatuses(), true))
 		{
-			return self::getStatusLabelByStatusType(self::DASHBOARD_STATUS_COMPUTED_NOT_FOUND);
+			return $this->getStatusLabelByStatusType(self::DASHBOARD_STATUS_COMPUTED_NOT_FOUND);
 		}
 
-		return self::getStatusLabelByStatusType($value['STATUS'], $value['ID']);
+		if (!$value['IS_ACCESS_ALLOWED'])
+		{
+			return $this->getStatusLabelByStatusType(self::DASHBOARD_STATUS_COMPUTED_PROHIBITED);
+		}
+
+		return $this->getStatusLabelByStatusType($value['STATUS'], $value['ID']);
 	}
 
 	private function getStatusLabelByStatusType(string $status, int $dashboardId = null): string
@@ -42,37 +64,38 @@ class StatusFieldAssembler extends FieldAssembler
 		switch ($status)
 		{
 			case SupersetDashboardTable::DASHBOARD_STATUS_LOAD:
-				$status = Loc::getMessage('BICONNECTOR_SUPERSET_DASHBOARD_GRID_STATUS_LOAD');
+				$statusText = Loc::getMessage('BICONNECTOR_SUPERSET_DASHBOARD_GRID_STATUS_LOAD');
 				return <<<HTML
 				<div class="dashboard-status-label-wrapper">
 					<span class="ui-label ui-label-primary ui-label-fill dashboard-status-label">
-						<span class="ui-label-inner">$status</span>
+						<span class="ui-label-inner">$statusText</span>
 					</span>
 				</div>
 				HTML;
 
 			case SupersetDashboardTable::DASHBOARD_STATUS_READY:
-				$status = Loc::getMessage('BICONNECTOR_SUPERSET_DASHBOARD_GRID_STATUS_READY');
+			case SupersetDashboardTable::DASHBOARD_STATUS_NOT_INSTALLED:
+				$statusText = Loc::getMessage('BICONNECTOR_SUPERSET_DASHBOARD_GRID_STATUS_READY');
 				return <<<HTML
 				<div class="dashboard-status-label-wrapper">
 					<span class="ui-label ui-label-lightgreen ui-label-fill dashboard-status-label">
-						<span class="ui-label-inner">$status</span>
+						<span class="ui-label-inner">$statusText</span>
 					</span>
 				</div>
 				HTML;
 
 			case SupersetDashboardTable::DASHBOARD_STATUS_DRAFT:
-				$status = Loc::getMessage('BICONNECTOR_SUPERSET_DASHBOARD_GRID_STATUS_DRAFT');
+				$statusText = Loc::getMessage('BICONNECTOR_SUPERSET_DASHBOARD_GRID_STATUS_DRAFT');
 				return <<<HTML
 				<div class="dashboard-status-label-wrapper">
 					<span class="ui-label ui-label-default ui-label-fill dashboard-status-label">
-						<span class="ui-label-inner">$status</span>
+						<span class="ui-label-inner">$statusText</span>
 					</span>
 				</div>
 				HTML;
 
 			case SupersetDashboardTable::DASHBOARD_STATUS_FAILED:
-				$status = Loc::getMessage('BICONNECTOR_SUPERSET_DASHBOARD_GRID_STATUS_FAILED');
+				$statusText = Loc::getMessage('BICONNECTOR_SUPERSET_DASHBOARD_GRID_STATUS_FAILED');
 
 				if ($dashboardId !== null)
 				{
@@ -90,30 +113,32 @@ class StatusFieldAssembler extends FieldAssembler
 				return <<<HTML
 				<div class="dashboard-status-label-wrapper">
 					<span class="ui-label ui-label-fill dashboard-status-label dashboard-status-label-error ui-label-danger">
-						<span class="ui-label-inner">$status</span>
+						<span class="ui-label-inner">$statusText</span>
 					</span>
 					$refreshBtn
 				</div>
 				HTML;
 
-			case self::DASHBOARD_STATUS_COMPUTED_NOT_FOUND:
-				$status = Loc::getMessage('BICONNECTOR_SUPERSET_DASHBOARD_GRID_STATUS_NOT_FOUND');
+			case self::DASHBOARD_STATUS_COMPUTED_PROHIBITED:
+				$statusText = Loc::getMessage("BICONNECTOR_SUPERSET_DASHBOARD_GRID_STATUS_PROHIBITED");
 
 				return <<<HTML
 				<div class="dashboard-status-label-wrapper">
-					<span class="ui-label ui-label-fill dashboard-status-label dashboard-status-label-error ui-label-danger">
-						<span class="ui-label-inner">$status</span>
+					<span class="ui-label dashboard-status-label dashboard-status-label-error ui-label-light">
+						<span class="ui-label-inner">$statusText</span>
 					</span>
 				</div>
 				HTML;
 
+			case self::DASHBOARD_STATUS_COMPUTED_NOT_FOUND:
+			case self::DASHBOARD_STATUS_COMPUTED_NOT_AVAILABLE:
 			case self::DASHBOARD_STATUS_COMPUTED_NOT_LOAD:
-				$status = Loc::getMessage('BICONNECTOR_SUPERSET_DASHBOARD_GRID_STATUS_NOT_LOAD');
+			$statusText = Loc::getMessage("BICONNECTOR_SUPERSET_DASHBOARD_GRID_STATUS_{$status}");
 
 				return <<<HTML
 				<div class="dashboard-status-label-wrapper">
-					<span class="ui-label ui-label-fill dashboard-status-label dashboard-status-label-error ui-label-danger">
-						<span class="ui-label-inner">$status</span>
+					<span class="ui-label ui-label-fill dashboard-status-label ui-label-danger">
+						<span class="ui-label-inner">$statusText</span>
 					</span>
 				</div>
 				HTML;
@@ -139,13 +164,16 @@ class StatusFieldAssembler extends FieldAssembler
 					'STATUS' => $row['data']['STATUS'],
 					'EDIT_URL' => $row['data']['EDIT_URL'],
 					'ID' => $row['data']['ID'],
+					'IS_ACCESS_ALLOWED' => $row['data']['IS_ACCESS_ALLOWED'],
+					'TYPE' => $row['data']['TYPE'],
 				];
+
+				$row['columns'][$columnId] = $this->prepareColumn($value);
 			}
 			else
 			{
-				$value = [];
+				$row['columns'][$columnId] = '';
 			}
-			$row['columns'][$columnId] = $this->prepareColumn($value);
 		}
 
 		return $row;

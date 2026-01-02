@@ -6,12 +6,16 @@
 jn.define('im/messenger/controller/recent/copilot/recent', (require, exports, module) => {
 	const { clone } = require('utils/object');
 	const { Type } = require('type');
+
+	const { CounterHelper } = require('im/messenger/lib/helper');
 	const { MessengerEmitter } = require('im/messenger/lib/emitter');
 	const { BaseRecent } = require('im/messenger/controller/recent/lib');
 	const { EventType, ComponentCode, DialogType } = require('im/messenger/const');
-	const { LoggerManager } = require('im/messenger/lib/logger');
+	const { MessengerCounterSender } = require('im/messenger/lib/counters/counter-manager/messenger/sender');
 
-	const logger = LoggerManager.getInstance().getLogger('recent--copilot-recent');
+	const { getLogger } = require('im/messenger/lib/logger');
+
+	const logger = getLogger('recent--copilot-recent');
 
 	/**
 	 * @class CopilotRecent
@@ -111,25 +115,12 @@ jn.define('im/messenger/controller/recent/copilot/recent', (require, exports, mo
 			void await this.store.dispatch('dialoguesModel/set', modelData.dialogues);
 			void await this.store.dispatch('dialoguesModel/copilotModel/setCollection', modelData.copilot);
 			void await this.store.dispatch('recentModel/set', modelData.recent);
-
 			if (this.recentService.pageNavigation.currentPage === 1)
 			{
-				const recentIndex = [];
-				modelData.recent.forEach((item) => recentIndex.push(item.id.toString()));
-
-				const idListForDeleteFromCache = [];
-				this.store.getters['recentModel/getCollection']()
-					.forEach((item) => {
-						if (!recentIndex.includes(item.id.toString()))
-						{
-							idListForDeleteFromCache.push(item.id);
-						}
-					});
-
-				idListForDeleteFromCache.forEach((id) => {
-					this.store.dispatch('recentModel/delete', { id });
-				});
+				this.deleteItemsFromStore(modelData.recent);
 			}
+
+			MessengerCounterSender.getInstance().sendRecentPageLoaded(modelData.counterState);
 		}
 
 		/**
@@ -142,6 +133,7 @@ jn.define('im/messenger/controller/recent/copilot/recent', (require, exports, mo
 				dialogues: [],
 				recent: [],
 				copilot: [],
+				counterState: [],
 			};
 
 			recentData.items.forEach((item) => {
@@ -173,6 +165,13 @@ jn.define('im/messenger/controller/recent/copilot/recent', (require, exports, mo
 					counter: dialogItem.counter,
 				});
 
+				result.counterState.push({
+					chatId: dialogItem.id,
+					parentChatId: dialogItem.parentChatId ?? 0,
+					type: CounterHelper.getCounterTypeByDialogType(dialogItem.type),
+					counter: dialogItem.counter ?? 0,
+				});
+
 				try
 				{
 					const chats = recentData.copilot.chats.find((chat) => chat.dialogId === item.id);
@@ -197,15 +196,7 @@ jn.define('im/messenger/controller/recent/copilot/recent', (require, exports, mo
 				}
 			});
 
-			try
-			{
-				const uniqueMap = new Map(result.users.map((userObj) => [userObj.id, userObj]));
-				result.users = [...uniqueMap.values()];
-			}
-			catch (error)
-			{
-				logger.error(`${this.constructor.name}.prepareDataForModels.filter users catch:`, error);
-			}
+			result.users = this.getUniqueUsers(result.users);
 
 			return result;
 		}

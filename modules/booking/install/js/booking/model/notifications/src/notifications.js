@@ -1,5 +1,6 @@
+/* eslint-disable no-param-reassign */
 import { BuilderModel } from 'ui.vue3.vuex';
-import type { GetterTree, ActionTree, MutationTree } from 'ui.vue3.vuex';
+import type { Store, GetterTree, ActionTree, MutationTree } from 'ui.vue3.vuex';
 
 import { Model } from 'booking.const';
 import type { NotificationsModel, NotificationsSenderModel, NotificationsState } from './types';
@@ -28,6 +29,7 @@ export class Notifications extends BuilderModel
 				text: '',
 				textSms: '',
 			}],
+			isExpanded: false,
 		};
 	}
 
@@ -62,6 +64,10 @@ export class Notifications extends BuilderModel
 			upsertManySenders: (store: Store, senders: NotificationsSenderModel[]): void => {
 				senders.forEach((sender: NotificationsSenderModel) => store.commit('upsertSender', sender));
 			},
+			/** @function notifications/setIsExpanded */
+			setIsExpanded: (store: Store, payload: { type: string, isExpanded: boolean }): void => {
+				store.commit('setIsExpanded', payload);
+			},
 		};
 	}
 
@@ -75,6 +81,9 @@ export class Notifications extends BuilderModel
 			upsertSender: (state: NotificationsState, sender: NotificationsSenderModel): void => {
 				state.senders[sender.code] ??= sender;
 				Object.assign(state.senders[sender.code], sender);
+			},
+			setIsExpanded: (state: NotificationsState, { type, isExpanded }: { type: string, isExpanded: boolean }): void => {
+				state.notifications[type].isExpanded = isExpanded;
 			},
 		};
 	}

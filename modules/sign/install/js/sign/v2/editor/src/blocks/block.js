@@ -3,11 +3,19 @@ import { Backend } from 'sign.backend';
 import { EventEmitter } from 'main.core.events';
 import { Api } from 'sign.v2.api';
 import type { FieldSelectEvent } from '../types/events/fieldSelectEvent';
-import { Date, Dummy, MyRequisites, MySign, MyStamp, Number, Reference, Requisites, Sign, Stamp, Text, MyReference, B2eReference, MyB2eReference, EmployeeDynamic, HcmLinkReference } from './index';
+import { Date, Dummy, MyRequisites, MySign, MyStamp, Number, Reference, Requisites, Sign, Stamp, Text, MyReference, B2eReference, MyB2eReference, EmployeeDynamic, HcmLinkReference, DocumentDate, ExternalId } from './index';
 import { BlocksManager } from './blocksManager';
 import Style from './style';
 import { PositionType, BlockOptions } from '../types/block';
 import UI from './ui';
+
+const resizibleFontBlocks = new Set([
+	'requisites',
+	'myrequisites',
+	'reference',
+	'myreference',
+	'text',
+]);
 
 export default class Block extends EventEmitter
 {
@@ -44,6 +52,9 @@ export default class Block extends EventEmitter
 		employeedynamic: EmployeeDynamic,
 
 		hcmlinkreference: HcmLinkReference,
+
+		b2edocumentdate: DocumentDate,
+		b2eexternalid: ExternalId,
 	};
 	#currentFontSize: String;
 
@@ -76,7 +87,7 @@ export default class Block extends EventEmitter
 		this.#firstRenderReady = null;
 		this.#stylePanel = new Style({
 			block: this,
-			data: options.style
+			data: options.style,
 		});
 		if (!this.#contentProviders[this.#code])
 		{
@@ -96,7 +107,7 @@ export default class Block extends EventEmitter
 
 		if (
 			options.party > 1
-			&& !['b2ereference', 'employeedynamic', 'hcmlinkreference'].includes(this.#code.toLowerCase()))
+			&& !['b2ereference', 'employeedynamic', 'hcmlinkreference', 'b2eexternalid', 'b2edocumentdate'].includes(this.#code.toLowerCase()))
 		{
 			this.#allowMembers = true;
 		}
@@ -309,7 +320,7 @@ export default class Block extends EventEmitter
 	{
 		const blockLayout = this.getLayout();
 		const blocksData = [];
-		const blocksInstance = [];
+		const blocksInstance: Array<Block> = [];
 
 		this.await(true);
 
@@ -385,22 +396,25 @@ export default class Block extends EventEmitter
 
 		Dom.addClass(resizeNode, '--' + this.#code.toLowerCase());
 
-		if (
-			this.#code.toLowerCase() === 'requisites'
-			|| this.#code.toLowerCase() === 'myrequisites'
-			|| this.#code.toLowerCase() === 'date'
-			|| this.#code.toLowerCase() === 'number'
-			|| this.#code.toLowerCase() === 'stamp'
-			|| this.#code.toLowerCase() === 'mystamp'
-			|| this.#code.toLowerCase() === 'sign'
-			|| this.#code.toLowerCase() === 'mysign'
-			|| this.#code.toLowerCase() === 'reference'
-			|| this.#code.toLowerCase() === 'myreference'
-			|| this.#code.toLowerCase() === 'text'
-			|| this.#code.toLowerCase() === 'b2ereference'
-			|| this.#code.toLowerCase() === 'myb2ereference'
-			|| this.#code.toLowerCase() === 'employeedynamic'
-			|| this.#code.toLowerCase() === 'hcmlinkreference'
+		if ([
+			'requisites',
+			'myrequisites',
+			'date',
+			'number',
+			'stamp',
+			'mystamp',
+			'sign',
+			'mysign',
+			'reference',
+			'myreference',
+			'text',
+			'b2ereference',
+			'myb2ereference',
+			'employeedynamic',
+			'hcmlinkreference',
+			'b2eexternalid',
+			'b2edocumentdate',
+		].includes(this.#code.toLowerCase())
 		)
 		{
 			resizeNode.style.setProperty('display', 'block');
@@ -408,18 +422,18 @@ export default class Block extends EventEmitter
 
 			if (!this.observerReady)
 			{
-				if (this.getStyle()['fontSize'])
+				if (this.getStyle().fontSize)
 				{
-					this.maxTextSize = parseFloat(this.getStyle()['fontSize']);
+					this.maxTextSize = parseFloat(this.getStyle().fontSize);
 				}
 				else
 				{
 					this.maxTextSize = 14;
 				}
 
-				this.isOverflownX = ({ clientHeight, scrollHeight }) => {
+				this.isOverflownY = ({ clientHeight, scrollHeight }) => {
 					return scrollHeight > clientHeight;
-				}
+				};
 
 				EventEmitter.subscribe(resizeNode.parentNode.parentNode, 'BX.Sign:setFontSize', (param)=> {
 					if (param.data.fontSize)
@@ -442,12 +456,12 @@ export default class Block extends EventEmitter
 					let i = minSize;
 					let overflow = false;
 
-					const parent = element.parentNode
+					const parent = element.parentNode;
 
 					while (!overflow && i <= this.maxTextSize)
 					{
 						element.style.fontSize = `${i}${unit}`;
-						overflow = this.isOverflownX(parent);
+						overflow = this.isOverflownY(parent);
 						i += step;
 					}
 					this.#currentFontSize = `${i - step}${unit}`;
@@ -456,7 +470,11 @@ export default class Block extends EventEmitter
 					this.intervalTextResize = setTimeout(() => {
 						element.parentNode.style.setProperty('font-size', element.style.fontSize);
 						element.style.removeProperty('font-size', element.style.fontSize);
-						this.#stylePanel.updateFontSize(this.#currentFontSize);
+
+						if (resizibleFontBlocks.has(this.#code.toLowerCase()))
+						{
+							this.#stylePanel.updateFontSize(this.#currentFontSize);
+						}
 					}, 1000);
 				}
 
@@ -516,7 +534,7 @@ export default class Block extends EventEmitter
 		if (this.#allowMembers)
 		{
 			if (
-				['hcmlinkreference', 'b2ereference'].includes(this.#code.toLowerCase())
+				['hcmlinkreference', 'b2ereference', 'b2edocumentdate', 'b2eexternalid'].includes(this.#code.toLowerCase())
 			)
 			{
 				return;
@@ -524,13 +542,13 @@ export default class Block extends EventEmitter
 
 			const allMembers = this.blocksManager.getMembers();
 			const selectedMembers = allMembers.filter((member) => {
-				return member.part > 1
+				return member.part > 1;
 			});
 
 			Dom.append(UI.getMemberSelector(
 				selectedMembers,
 				this.#memberPart,
-				this.onMemberSelect.bind(this)
+				this.onMemberSelect.bind(this),
 			), panelTag);
 		}
 

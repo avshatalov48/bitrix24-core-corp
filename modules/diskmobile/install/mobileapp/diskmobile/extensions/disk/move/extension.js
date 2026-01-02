@@ -51,10 +51,16 @@ jn.define('disk/move', (require, exports, module) => {
 
 	async function finalizeMove(objectId, targetId, openFolderOptions)
 	{
+		if (objectId === targetId)
+		{
+			return;
+		}
+
 		const movedObject = selectById(store.getState(), objectId);
+
 		const target = await fetchObjectWithRights(targetId);
 
-		if (!target)
+		if (!target || movedObject.parentId === targetId)
 		{
 			return;
 		}

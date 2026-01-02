@@ -270,6 +270,7 @@ this.BX = this.BX || {};
 	        ui_vue3.toRaw(this.uploader).removeFiles();
 	        this.$emit('removeAvatarFile');
 	      }
+	      this.$refs.uploaderContainer.click();
 	    }
 	  },
 	  mounted() {
@@ -301,10 +302,6 @@ this.BX = this.BX || {};
 	        }
 	      }
 	    });
-	    if (this.avatarUrl) {
-	      this.uploader.addFile(0);
-	      this.$emit('loadAvatarFile', ui_vue3.toRaw(this.uploader.getFiles()[0]));
-	    }
 	    main_core.bind(document, 'dragenter', this.handleDragElementEnterDocument);
 	    main_core.bind(document, 'dragleave', this.handleDragElementLeaveDocument);
 	    main_core.bind(document, 'drop', this.handleDropFile);
@@ -337,14 +334,9 @@ this.BX = this.BX || {};
 				</div>
 				<div class="ai__role-master_avatar-uploader-hover">
 					<BIcon
-						v-if="isDraggingFile === false && !avatarUrl"
+						v-if="isDraggingFile === false"
 						:size="24"
 						:name="IconSet.EDIT_PENCIL"
-					></BIcon>
-					<BIcon
-						v-else-if="isDraggingFile === false && avatarUrl"
-						:size="24"
-						:name="IconSet.TRASH_BIN"
 					></BIcon>
 				</div>
 				<teleport to=".ai__role-master-app-container main">
@@ -376,7 +368,7 @@ this.BX = this.BX || {};
 				<div class="ai__role-master_avatar-uploader-hover">
 					<BIcon
 						:size="24"
-						:name="IconSet.TRASH_BIN"
+						:name="IconSet.EDIT_PENCIL"
 					></BIcon>
 				</div>
 			</div>
@@ -972,19 +964,6 @@ this.BX = this.BX || {};
 	`
 	};
 
-	async function loadImageAsFile(imgPath) {
-	  const fileName = imgPath.split('/').pop();
-	  const response = await fetch(imgPath);
-	  const mimeType = response.headers.get('Content-Type') || 'application/octet-stream';
-	  const data = await response.blob();
-	  const blob = new Blob([data], {
-	    type: mimeType
-	  });
-	  return new File([blob], fileName, {
-	    type: mimeType
-	  });
-	}
-
 	const currentUserId = main_core.Extension.getSettings('ai.role-master').get('currentUserId');
 	const RoleSavingStatus = Object.freeze({
 	  NONE: 'none',
@@ -1111,7 +1090,6 @@ this.BX = this.BX || {};
 	          roleText: this.roleText,
 	          roleTitle: this.roleName,
 	          roleAvatar,
-	          roleAvatarUrl: this.roleAvatarUrl,
 	          roleDescription: this.roleDescription,
 	          accessCodes: this.roleItemsWithAccess
 	        };
@@ -1133,11 +1111,7 @@ this.BX = this.BX || {};
 	    },
 	    async getAvatarFile() {
 	      if (!this.uploadedAvatarFile) {
-	        const pathToDefaultAvatar = '/bitrix/js/ai/role-master/images/role-master-default-avatar.svg';
-	        return loadImageAsFile(pathToDefaultAvatar);
-	      }
-	      if (!this.uploadedAvatarFile.getBinary()) {
-	        return this.avatarUrl;
+	        return null;
 	      }
 	      return this.uploadedAvatarFile.getBinary();
 	    },
@@ -1183,7 +1157,7 @@ this.BX = this.BX || {};
 					:step-number="2"
 					:name="roleName"
 					:description="roleDescription"
-					:avatar="uploadedAvatarFilePreview || roleAvatar"
+					:avatar="uploadedAvatarFilePreview || roleAvatarUrl"
 					:items-with-access="roleItemsWithAccess"
 					:undeselected-items-with-access="undeselectedItemsWithAccess"
 					@upload-avatar-file="handleAvatarFileUpload"
@@ -1264,7 +1238,7 @@ this.BX = this.BX || {};
 	    babelHelpers.classPrivateFieldLooseBase(this, _roleMasterOptions)[_roleMasterOptions] = options;
 	  }
 	  render() {
-	    var _babelHelpers$classPr, _babelHelpers$classPr2, _babelHelpers$classPr3, _babelHelpers$classPr4, _babelHelpers$classPr5, _babelHelpers$classPr6, _babelHelpers$classPr7, _babelHelpers$classPr8, _babelHelpers$classPr9, _babelHelpers$classPr10, _babelHelpers$classPr11, _babelHelpers$classPr12;
+	    var _babelHelpers$classPr, _babelHelpers$classPr2, _babelHelpers$classPr3, _babelHelpers$classPr4, _babelHelpers$classPr5, _babelHelpers$classPr6, _babelHelpers$classPr7, _babelHelpers$classPr8, _babelHelpers$classPr9, _babelHelpers$classPr10;
 	    main_core_events.EventEmitter.subscribe('AI.RoleMasterApp:Close', () => {
 	      this.emit(RoleMasterEvents.CLOSE);
 	    });
@@ -1278,16 +1252,15 @@ this.BX = this.BX || {};
 	      name: (_babelHelpers$classPr3 = babelHelpers.classPrivateFieldLooseBase(this, _roleMasterOptions)[_roleMasterOptions].name) != null ? _babelHelpers$classPr3 : '',
 	      text: (_babelHelpers$classPr4 = babelHelpers.classPrivateFieldLooseBase(this, _roleMasterOptions)[_roleMasterOptions].text) != null ? _babelHelpers$classPr4 : '',
 	      description: (_babelHelpers$classPr5 = (_babelHelpers$classPr6 = babelHelpers.classPrivateFieldLooseBase(this, _roleMasterOptions)[_roleMasterOptions]) == null ? void 0 : _babelHelpers$classPr6.description) != null ? _babelHelpers$classPr5 : '',
-	      avatar: (_babelHelpers$classPr7 = (_babelHelpers$classPr8 = babelHelpers.classPrivateFieldLooseBase(this, _roleMasterOptions)[_roleMasterOptions]) == null ? void 0 : _babelHelpers$classPr8.avatar) != null ? _babelHelpers$classPr7 : '',
-	      avatarUrl: (_babelHelpers$classPr9 = (_babelHelpers$classPr10 = babelHelpers.classPrivateFieldLooseBase(this, _roleMasterOptions)[_roleMasterOptions]) == null ? void 0 : _babelHelpers$classPr10.avatarUrl) != null ? _babelHelpers$classPr9 : '',
-	      itemsWithAccess: (_babelHelpers$classPr11 = (_babelHelpers$classPr12 = babelHelpers.classPrivateFieldLooseBase(this, _roleMasterOptions)[_roleMasterOptions]) == null ? void 0 : _babelHelpers$classPr12.itemsWithAccess) != null ? _babelHelpers$classPr11 : []
+	      avatarUrl: (_babelHelpers$classPr7 = (_babelHelpers$classPr8 = babelHelpers.classPrivateFieldLooseBase(this, _roleMasterOptions)[_roleMasterOptions]) == null ? void 0 : _babelHelpers$classPr8.avatarUrl) != null ? _babelHelpers$classPr7 : '',
+	      itemsWithAccess: (_babelHelpers$classPr9 = (_babelHelpers$classPr10 = babelHelpers.classPrivateFieldLooseBase(this, _roleMasterOptions)[_roleMasterOptions]) == null ? void 0 : _babelHelpers$classPr10.itemsWithAccess) != null ? _babelHelpers$classPr9 : []
 	    });
 	    babelHelpers.classPrivateFieldLooseBase(this, _app)[_app].mount(appContainer);
 	    return appContainer;
 	  }
 	  destroy() {
-	    var _babelHelpers$classPr13;
-	    (_babelHelpers$classPr13 = babelHelpers.classPrivateFieldLooseBase(this, _app)[_app]) == null ? void 0 : _babelHelpers$classPr13.unmount();
+	    var _babelHelpers$classPr11;
+	    (_babelHelpers$classPr11 = babelHelpers.classPrivateFieldLooseBase(this, _app)[_app]) == null ? void 0 : _babelHelpers$classPr11.unmount();
 	  }
 	  static validateOptions(options) {
 	    if (!options) {
@@ -1302,10 +1275,7 @@ this.BX = this.BX || {};
 	    if (options.text && main_core.Type.isStringFilled(options.text) === false) {
 	      throw new Error('AI.RoleMaster: roleText option must be the filled string');
 	    }
-	    if (options.avatar && main_core.Type.isStringFilled(options.avatar) === false) {
-	      throw new Error('AI.RoleMaster: avatar option must be the url string');
-	    }
-	    if (options.avatarUrl && main_core.Type.isStringFilled(options.avatar) === false) {
+	    if (options.avatarUrl && main_core.Type.isStringFilled(options.avatarUrl) === false) {
 	      throw new Error('AI.RoleMaster: avatar option must be the url string');
 	    }
 	    if (options.description && main_core.Type.isStringFilled(options.description) === false) {

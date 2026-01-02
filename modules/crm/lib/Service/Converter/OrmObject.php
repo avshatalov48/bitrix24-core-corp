@@ -20,8 +20,15 @@ class OrmObject extends Converter
 			throw new ArgumentException('model should be an instance of EntityObject');
 		}
 
-		$data = $this->prepareData($model->collectValues());
+		return $this->convertKeysToCamelCase($this->toArray($model));
+	}
 
-		return $this->convertKeysToCamelCase($data);
+	/**
+	 * Same as `toJson`, but without camel-casing field names
+	 * @see self::toJson()
+	 */
+	final public function toArray(EntityObject $model): array
+	{
+		return $this->prepareData($model->collectValues());
 	}
 }

@@ -11,6 +11,7 @@ use Bitrix\AI\Result;
 use Bitrix\AI\Prompt\Role;
 use Bitrix\AI\Role\RoleManager;
 use Bitrix\AI\Services\PromptService;
+use Bitrix\Main\Config\Option;
 use Bitrix\Main\Engine\ActionFilter;
 use Bitrix\Main\Error;
 
@@ -91,7 +92,7 @@ class Text extends Controller
 				$resultData = $result->getPrettifiedData();
 				$queueHash = $hash;
 			})
-			->onError(function(Error $error) {
+			->onError(function(Error $error ) {
 				$this->addError($error);
 			})
 		;
@@ -117,7 +118,7 @@ class Text extends Controller
 
 	private function shouldUseQueueMode(): bool
 	{
-		return Config::getValue('queue_mode') === 'Y';
+		return Option::get('ai', 'queue_mode', 'Y') === 'Y';
 	}
 
 	/**

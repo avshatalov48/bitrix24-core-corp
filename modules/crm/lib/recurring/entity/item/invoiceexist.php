@@ -1,15 +1,15 @@
 <?php
 namespace Bitrix\Crm\Recurring\Entity\Item;
 
-use Bitrix\Main,
-	Bitrix\Main\Result,
-	Bitrix\Main\Type\Date,
-	Bitrix\Crm\Recurring\DateType,
-	Bitrix\Crm\Recurring\Entity,
-	Bitrix\Crm\Requisite\EntityLink,
-	Bitrix\Crm\Recurring\Calculator,
-	Bitrix\Crm\Invoice\Internals\InvoiceChangeTable,
-	Bitrix\Crm\InvoiceRecurTable;
+use Bitrix\Crm\Invoice\Internals\InvoiceChangeTable;
+use Bitrix\Crm\InvoiceRecurTable;
+use Bitrix\Crm\Recurring\Calculator;
+use Bitrix\Crm\Recurring\DateType;
+use Bitrix\Crm\Recurring\Entity;
+use Bitrix\Crm\Requisite\EntityLink;
+use Bitrix\Main;
+use Bitrix\Main\Result;
+use Bitrix\Main\Type\Date;
 
 class InvoiceExist extends InvoiceEntity
 {

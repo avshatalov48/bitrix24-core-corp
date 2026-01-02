@@ -16,7 +16,7 @@ BitrixVue.component('salescenter-payment_pay-components-payment_system-payment_i
 		localize()
 		{
 			return Object.freeze(
-				BitrixVue.getFilteredPhrases('PAYMENT_PAY_PAYMENT_SYSTEM_COMPONENTS_')
+				BitrixVue.getFilteredPhrases('PAYMENT_PAY_PAYMENT_SYSTEM_COMPONENTS_'),
 			);
 		},
 		totalSum()
@@ -24,16 +24,16 @@ BitrixVue.component('salescenter-payment_pay-components-payment_system-payment_i
 			return this.localize.PAYMENT_PAY_PAYMENT_SYSTEM_COMPONENTS_11.replace('#SUM#', this.sum);
 		},
 	},
-	mixins:[MixinPaymentInfo],
+	mixins: [MixinPaymentInfo],
 	// language=Vue
 	template: `
 		<div>
 			<div class="order-payment-title" v-if="title">{{ title }}</div>
 			<div class="order-payment-inner d-flex flex-wrap align-items-center justify-content-between">
 				<salescenter-payment_pay-components-payment_system-payment_info-pay_system_small_card :name="paySystem.NAME" :logo="paySystem.LOGOTIP"/>
-            	<div class="order-payment-status d-flex align-items-center" v-if="paid">
-                	<div class="order-payment-status-ok"></div>
-                	<div>{{ localize.PAYMENT_PAY_PAYMENT_SYSTEM_COMPONENTS_5 }}</div>
+				<div class="order-payment-status d-flex align-items-center" v-if="paid">
+					<div class="order-payment-status-ok"></div>
+					<div>{{ localize.PAYMENT_PAY_PAYMENT_SYSTEM_COMPONENTS_5 }}</div>
 				</div>
 				<div class="order-payment-price" v-html="totalSum"></div>
 			</div>
@@ -44,7 +44,7 @@ BitrixVue.component('salescenter-payment_pay-components-payment_system-payment_i
 				:link="check.link" 
 				:status="check.status"/>
 			<hr v-if="!paid">
-            <slot name="user-consent" v-if="!paid"></slot>
+			<slot name="user-consent" v-if="!paid"></slot>
 			<div class="order-payment-buttons-container" v-if="!paid">
 				<salescenter-payment_pay-components-payment_system-payment_info-button
 					:loading="loading"

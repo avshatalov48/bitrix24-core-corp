@@ -6,7 +6,6 @@ namespace Bitrix\Booking\Provider;
 
 use Bitrix\Booking\Entity\ResourceType\ResourceType;
 use Bitrix\Booking\Internals\Container;
-use Bitrix\Booking\Internals\Exception\Exception;
 use Bitrix\Booking\Internals\Repository\AdvertisingResourceTypeRepository;
 use Bitrix\Booking\Internals\Repository\ResourceTypeRepositoryInterface;
 use Bitrix\Booking\Provider\Params\ResourceType\ResourceTypeFilter;
@@ -28,12 +27,12 @@ class AdsProvider
 
 		$advertisingTypes = $this->advertisingResourceTypeRepository->getList();
 		$advTypeToResourceTypeCodeMap = $this->getAdvTypeToResourceTypeCodeMap($advertisingTypes);
-		$resourceTypeFilter = (new ResourceTypeFilter([
-			'MODULE_ID' => 'booking',
-			'CODE' => array_values($advTypeToResourceTypeCodeMap)
-		]))->prepareFilter();
-
-		$resourceTypeList = $this->resourceTypeRepository->getList(filter: $resourceTypeFilter);
+		$resourceTypeList = $this->resourceTypeRepository->getList(
+			filter: new ResourceTypeFilter([
+				'MODULE_ID' => 'booking',
+				'CODE' => array_values($advTypeToResourceTypeCodeMap)
+			])
+		);
 
 		foreach ($advertisingTypes as $advertisingType)
 		{

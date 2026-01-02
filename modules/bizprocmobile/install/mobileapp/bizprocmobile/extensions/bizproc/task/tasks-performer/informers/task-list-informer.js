@@ -193,12 +193,9 @@ jn.define('bizproc/task/tasks-performer/informers/task-list-informer', (require,
 			return listItems;
 		}
 
-		onTaskTouch({ task, isInline })
+		onTaskTouch({ task })
 		{
-			if (isInline)
-			{
-				this.onTaskCompleted({ task });
-			}
+			this.onTaskCompleted({ task });
 		}
 
 		onTaskCompleted({ task })

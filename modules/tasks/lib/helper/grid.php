@@ -26,10 +26,7 @@ class Grid extends Common
 	{
 		static $instance = null;
 
-		if (!$instance)
-		{
-			return new MainGrid\Options($this->getId());
-		}
+		$instance ??= new MainGrid\Options($this->getId());
 
 		return $instance;
 	}

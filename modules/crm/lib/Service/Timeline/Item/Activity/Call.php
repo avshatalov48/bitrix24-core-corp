@@ -11,10 +11,10 @@ use Bitrix\Crm\Copilot\CallAssessment\ItemFactory;
 use Bitrix\Crm\Format\Duration;
 use Bitrix\Crm\Integration\AI\AIManager;
 use Bitrix\Crm\Integration\AI\Operation\OperationState;
-use Bitrix\Crm\Integration\AI\Operation\Orchestrator;
 use Bitrix\Crm\Integration\VoxImplantManager;
 use Bitrix\Crm\Service\Container;
 use Bitrix\Crm\Service\Timeline\Item\Activity;
+use Bitrix\Crm\Service\Timeline\Item\Mixin\CopilotButtonTrait;
 use Bitrix\Crm\Service\Timeline\Item\Payload;
 use Bitrix\Crm\Service\Timeline\Layout;
 use Bitrix\Crm\Service\Timeline\Layout\Action\JsEvent;
@@ -38,7 +38,6 @@ use Bitrix\Crm\Service\Timeline\Layout\Menu\MenuItemFactory;
 use Bitrix\Crm\Tour\CopilotInCall;
 use Bitrix\Crm\Tour\CopilotRunAutomatically;
 use Bitrix\Crm\Tour\CopilotRunManually;
-use Bitrix\Main\Config\Option;
 use Bitrix\Main\Localization\Loc;
 use Bitrix\Main\PhoneNumber;
 use Bitrix\Main\Type\DateTime;
@@ -51,6 +50,8 @@ use CFile;
 
 class Call extends Activity
 {
+	use CopilotButtonTrait;
+
 	private const BLOCK_DELIMITER = '&bull;';
 
 	final protected function getActivityTypeId(): string
@@ -709,7 +710,6 @@ class Call extends Activity
 		$isPillVisible = AIManager::isAiCallProcessingEnabled()
 			&& $this->hasUpdatePermission()
 			&& $this->isCopilotScope()
-			&& $this->isCopilotMultiScenarioEnabled()
 			&& count($this->fetchAudioRecordList()) > 0
 		;
 
@@ -832,7 +832,7 @@ class Call extends Activity
 			&& $this->hasUpdatePermission()
 			&& $this->isCopilotScope()
 			&& count($this->fetchAudioRecordList()) > 0
-			&& (new Orchestrator())->findPossibleFillFieldsTarget($activityId)?->getHash() === $this->getContext()->getIdentifier()->getHash()
+			&& $this->isItemHashValid($activityId, $this->getContext())
 		;
 
 		if (!$isButtonVisible)
@@ -844,7 +844,6 @@ class Call extends Activity
 			$this->getContext(),
 			$this->getAssociatedEntityModel(),
 			$activityId,
-			$this->isCopilotMultiScenarioEnabled()
 		);
 	}
 
@@ -956,11 +955,6 @@ class Call extends Activity
 	private function isTranscribed(array $input): bool
 	{
 		return isset($input['HAS_TRANSCRIPT']) && $input['HAS_TRANSCRIPT'];
-	}
-
-	private function isCopilotMultiScenarioEnabled(): bool
-	{
-		return ($this->getDate()?->getTimestamp() ?? 0) > (int)Option::get('crm', 'b_crm_copilot_in_cal_grading_ts', 0);
 	}
 
 	private function isCopilotScope(): bool

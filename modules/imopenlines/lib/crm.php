@@ -356,7 +356,7 @@ class Crm
 			$result = Chat::parseLinesChatEntityId($this->getCode())['connectorUserId'];
 		}
 
-		return $result;
+		return (int)$result;
 	}
 
 	/**

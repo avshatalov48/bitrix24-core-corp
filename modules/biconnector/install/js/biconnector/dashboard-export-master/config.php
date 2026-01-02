@@ -16,8 +16,10 @@ return [
 		'biconnector.apache-superset-analytics',
 		'biconnector.apache-superset-dashboard-manager',
 		'ui.buttons',
-		'ui.switcher',
+		'ui.dialogs.messagebox',
 		'ui.textcrop',
+		'ui.entity-selector',
+		'ui.forms',
 	],
 	'skip_core' => false,
 ];

@@ -25,6 +25,9 @@ final class BlockCode
 	public const EMPLOYEE_DYNAMIC = 'employeedynamic';
 	public const B2E_HCMLINK_REFERENCE = 'hcmlinkreference';
 
+	public const B2E_EXTERNAL_DATE_CREATE = 'b2edocumentdate';
+	public const B2E_EXTERNAL_ID = 'b2eexternalid';
+
 	/**
 	 * @return array<self::*>
 	 */
@@ -47,6 +50,8 @@ final class BlockCode
 			self::B2E_MY_REFERENCE,
 			self::EMPLOYEE_DYNAMIC,
 			self::B2E_HCMLINK_REFERENCE,
+			self::B2E_EXTERNAL_DATE_CREATE,
+			self::B2E_EXTERNAL_ID,
 		];
 	}
 
@@ -135,5 +140,10 @@ final class BlockCode
 	public static function isHcmLinkReference(string $code): bool
 	{
 		return $code === self::B2E_HCMLINK_REFERENCE;
+	}
+
+	public static function isB2eRegional(string $code): bool
+	{
+		return in_array($code, [self::B2E_EXTERNAL_ID, self::B2E_EXTERNAL_DATE_CREATE], true);
 	}
 }

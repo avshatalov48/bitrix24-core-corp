@@ -1,0 +1,22 @@
+<?php
+$MESS["DOCUMENT_IN_FINAL_STATUS"] = "Cannot change expiration time for this document.";
+$MESS["PERIOD_TOO_LONG_PLURAL_0"] = "Document expiration time must not exceed #MAX_PERIOD# month.";
+$MESS["PERIOD_TOO_LONG_PLURAL_1"] = "Document expiration time must not exceed #MAX_PERIOD# months.";
+$MESS["PERIOD_TOO_LONG_PLURAL_2"] = "Document expiration time must not exceed #MAX_PERIOD# months.";
+$MESS["PERIOD_TOO_SHORT_PLURAL_0"] = "Document expiration time must be at least #MIN_PERIOD# minute.";
+$MESS["PERIOD_TOO_SHORT_PLURAL_1"] = "Document expiration time must be at least #MIN_PERIOD# minutes.";
+$MESS["PERIOD_TOO_SHORT_PLURAL_2"] = "Document expiration time must be at least #MIN_PERIOD# minutes.";
+$MESS["SIGN_B2E_DOCUMENT_FILLING_APPLY_FOR_ALL_HINT"] = "Data you enter here will be applied to all empty fields of all documents.";
+$MESS["SIGN_B2E_DOCUMENT_FILLING_APPLY_FOR_ALL_TITLE"] = "Apply to all documents";
+$MESS["SIGN_B2E_DOCUMENT_FILLING_DATE_CREATE_HCMLINK"] = "From 1C";
+$MESS["SIGN_B2E_DOCUMENT_FILLING_DATE_CREATE_HCMLINK_HINT"] = "Date created will be supplied by 1C";
+$MESS["SIGN_B2E_DOCUMENT_FILLING_DATE_CREATE_LABEL"] = "Date created";
+$MESS["SIGN_B2E_DOCUMENT_FILLING_DATE_EXPIRE_LABEL"] = "To be signed before";
+$MESS["SIGN_B2E_DOCUMENT_FILLING_DOCUMENT_IN_PROCESS"] = "Documents to sign";
+$MESS["SIGN_B2E_DOCUMENT_FILLING_INPUT_REG_NUMBER_HCMLINK_HINT"] = "Doc ref will be supplied by 1C";
+$MESS["SIGN_B2E_DOCUMENT_FILLING_INPUT_REG_NUMBER_LABEL"] = "Doc ref #";
+$MESS["SIGN_B2E_DOCUMENT_FILLING_INPUT_REG_NUMBER_PLACEHOLDER"] = "none";
+$MESS["SIGN_B2E_DOCUMENT_FILLING_INPUT_REG_NUMBER_PLACEHOLDER_HCMLINK"] = "Supplied by 1C";
+$MESS["SIGN_B2E_DOCUMENT_FILLING_REMOVE_TEMPLATE"] = "Remove template from current submission";
+$MESS["SIGN_B2E_DOCUMENT_FILLING_TITLE_HEAD_LABEL"] = "Enter information";
+$MESS["SIGN_DOCUMENT_SEND_DATETIME_LIMIT_SELECTOR_GOSKEY_ALERT"] = "Documents sent to GK will not be stopped within 24 hours after signing even if the time you specified has expired.";

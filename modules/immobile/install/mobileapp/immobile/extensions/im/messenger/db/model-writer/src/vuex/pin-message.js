@@ -22,7 +22,7 @@ jn.define('im/messenger/db/model-writer/vuex/pin-message', (require, exports, mo
 				.on('messagesModel/pinModel/setChatCollection', this.addRouter)
 				.on('messagesModel/pinModel/add', this.addRouter)
 				.on('messagesModel/pinModel/updatePin', this.addRouter)
-				.on('messagesModel/pinModel/updateMessage', this.updateRouter)
+				.on('messagesModel/pinModel/updateMessages', this.updateRouter)
 				.on('messagesModel/pinModel/deleteByIdList', this.deleteRouter)
 				.on('messagesModel/pinModel/delete', this.deleteRouter)
 				.on('messagesModel/pinModel/deleteMessagesByIdList', this.deleteRouter)
@@ -35,7 +35,7 @@ jn.define('im/messenger/db/model-writer/vuex/pin-message', (require, exports, mo
 				.off('messagesModel/pinModel/setChatCollection', this.addRouter)
 				.off('messagesModel/pinModel/add', this.addRouter)
 				.off('messagesModel/pinModel/updatePin', this.addRouter)
-				.off('messagesModel/pinModel/updateMessage', this.updateRouter)
+				.off('messagesModel/pinModel/updateMessages', this.updateRouter)
 				.off('messagesModel/pinModel/deleteByIdList', this.deleteRouter)
 				.off('messagesModel/pinModel/delete', this.deleteRouter)
 				.off('messagesModel/pinModel/deleteMessagesByIdList', this.deleteRouter)
@@ -76,7 +76,7 @@ jn.define('im/messenger/db/model-writer/vuex/pin-message', (require, exports, mo
 		}
 
 		/**
-		 * @param {MutationPayload<PinUpdateMessageData, PinUpdateMessageActions>} mutation.payload
+		 * @param {MutationPayload<PinUpdateMessagesData, PinUpdateMessageActions>} mutation.payload
 		 */
 		updateRouter(mutation)
 		{
@@ -87,10 +87,7 @@ jn.define('im/messenger/db/model-writer/vuex/pin-message', (require, exports, mo
 
 			const { payload } = mutation;
 
-			if (payload.actionName === 'updateMessage')
-			{
-				this.updateMessage(payload.data);
-			}
+			this.updateMessages(payload.data);
 		}
 
 		/**
@@ -175,20 +172,17 @@ jn.define('im/messenger/db/model-writer/vuex/pin-message', (require, exports, mo
 		}
 
 		/**
-		 * @param {PinUpdateMessageData} updateMessageData
+		 * @param {PinUpdateMessagesData} updateMessageData
 		 */
-		updateMessage(updateMessageData)
+		updateMessages(updateMessageData)
 		{
-			const dialogHelper = DialogHelper.createByChatId(updateMessageData.chatId);
+			const dialogHelper = DialogHelper.createByChatId(updateMessageData.messageList[0].chatId);
 			if (!dialogHelper?.isLocalStorageSupported)
 			{
-				return;
+				return false;
 			}
 
-			this.repository.pinMessage.updateMessage({
-				id: updateMessageData.id,
-				...updateMessageData.fields,
-			});
+			return this.repository.pinMessage.updateMessages(updateMessageData.messageList);
 		}
 
 		/**

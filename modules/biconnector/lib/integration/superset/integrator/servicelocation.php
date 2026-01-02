@@ -8,7 +8,7 @@ use Bitrix\Main\Config\Option;
 
 final class ServiceLocation
 {
-	private const SERVICE_URL_RU = 'https://ss.bitrix.info';
+	private const SERVICE_URL_RU = 'https://ss.bitrix24.tech';
 	private const SERVICE_URL_DE = 'https://ss-de.bitrix.info';
 
 	public const DATACENTER_LOCATION_REGION_RU = 'ru';
@@ -40,7 +40,7 @@ final class ServiceLocation
 			return self::DATACENTER_LOCATION_REGION_RU;
 		}
 
-		if (in_array($region, ['ru', 'by', 'kz'], true))
+		if (in_array($region, ['ru', 'by', 'kz', 'uz', 'kg', 'am', 'az', 'ge'], true))
 		{
 			return self::DATACENTER_LOCATION_REGION_RU;
 		}

@@ -1,159 +1,39 @@
 <?php
 
-/* ORMENTITYANNOTATION:Bitrix\Call\Model\CallTrackTable:call/lib/model/calltracktable.php */
+/* ORMENTITYANNOTATION:Bitrix\Call\Model\CallChatEntityTable:call\lib\Model\CallChatEntityTable.php */
 namespace Bitrix\Call\Model {
 	/**
-	 * Track
-	 * @see \Bitrix\Call\Model\CallTrackTable
+	 * CallChatEntity
+	 * @see \Bitrix\Call\Model\CallChatEntityTable
 	 *
 	 * Custom methods:
 	 * ---------------
 	 *
 	 * @method \int getId()
-	 * @method \Bitrix\Call\Track setId(\int|\Bitrix\Main\DB\SqlExpression $id)
+	 * @method \Bitrix\Call\CallChatEntity setId(\int|\Bitrix\Main\DB\SqlExpression $id)
 	 * @method bool hasId()
 	 * @method bool isIdFilled()
 	 * @method bool isIdChanged()
-	 * @method \int getCallId()
-	 * @method \Bitrix\Call\Track setCallId(\int|\Bitrix\Main\DB\SqlExpression $callId)
-	 * @method bool hasCallId()
-	 * @method bool isCallIdFilled()
-	 * @method bool isCallIdChanged()
-	 * @method \int remindActualCallId()
-	 * @method \int requireCallId()
-	 * @method \Bitrix\Call\Track resetCallId()
-	 * @method \Bitrix\Call\Track unsetCallId()
-	 * @method \int fillCallId()
-	 * @method null|\int getExternalTrackId()
-	 * @method \Bitrix\Call\Track setExternalTrackId(null|\int|\Bitrix\Main\DB\SqlExpression $externalTrackId)
-	 * @method bool hasExternalTrackId()
-	 * @method bool isExternalTrackIdFilled()
-	 * @method bool isExternalTrackIdChanged()
-	 * @method null|\int remindActualExternalTrackId()
-	 * @method null|\int requireExternalTrackId()
-	 * @method \Bitrix\Call\Track resetExternalTrackId()
-	 * @method \Bitrix\Call\Track unsetExternalTrackId()
-	 * @method null|\int fillExternalTrackId()
-	 * @method null|\int getFileId()
-	 * @method \Bitrix\Call\Track setFileId(null|\int|\Bitrix\Main\DB\SqlExpression $fileId)
-	 * @method bool hasFileId()
-	 * @method bool isFileIdFilled()
-	 * @method bool isFileIdChanged()
-	 * @method null|\int remindActualFileId()
-	 * @method null|\int requireFileId()
-	 * @method \Bitrix\Call\Track resetFileId()
-	 * @method \Bitrix\Call\Track unsetFileId()
-	 * @method null|\int fillFileId()
-	 * @method null|\int getDiskFileId()
-	 * @method \Bitrix\Call\Track setDiskFileId(null|\int|\Bitrix\Main\DB\SqlExpression $diskFileId)
-	 * @method bool hasDiskFileId()
-	 * @method bool isDiskFileIdFilled()
-	 * @method bool isDiskFileIdChanged()
-	 * @method null|\int remindActualDiskFileId()
-	 * @method null|\int requireDiskFileId()
-	 * @method \Bitrix\Call\Track resetDiskFileId()
-	 * @method \Bitrix\Call\Track unsetDiskFileId()
-	 * @method null|\int fillDiskFileId()
-	 * @method \Bitrix\Main\Type\DateTime getDateCreate()
-	 * @method \Bitrix\Call\Track setDateCreate(\Bitrix\Main\Type\DateTime|\Bitrix\Main\DB\SqlExpression $dateCreate)
-	 * @method bool hasDateCreate()
-	 * @method bool isDateCreateFilled()
-	 * @method bool isDateCreateChanged()
-	 * @method \Bitrix\Main\Type\DateTime remindActualDateCreate()
-	 * @method \Bitrix\Main\Type\DateTime requireDateCreate()
-	 * @method \Bitrix\Call\Track resetDateCreate()
-	 * @method \Bitrix\Call\Track unsetDateCreate()
-	 * @method \Bitrix\Main\Type\DateTime fillDateCreate()
-	 * @method null|\string getType()
-	 * @method \Bitrix\Call\Track setType(null|\string|\Bitrix\Main\DB\SqlExpression $type)
-	 * @method bool hasType()
-	 * @method bool isTypeFilled()
-	 * @method bool isTypeChanged()
-	 * @method null|\string remindActualType()
-	 * @method null|\string requireType()
-	 * @method \Bitrix\Call\Track resetType()
-	 * @method \Bitrix\Call\Track unsetType()
-	 * @method null|\string fillType()
-	 * @method \string getDownloadUrl()
-	 * @method \Bitrix\Call\Track setDownloadUrl(\string|\Bitrix\Main\DB\SqlExpression $downloadUrl)
-	 * @method bool hasDownloadUrl()
-	 * @method bool isDownloadUrlFilled()
-	 * @method bool isDownloadUrlChanged()
-	 * @method \string remindActualDownloadUrl()
-	 * @method \string requireDownloadUrl()
-	 * @method \Bitrix\Call\Track resetDownloadUrl()
-	 * @method \Bitrix\Call\Track unsetDownloadUrl()
-	 * @method \string fillDownloadUrl()
-	 * @method null|\string getFileName()
-	 * @method \Bitrix\Call\Track setFileName(null|\string|\Bitrix\Main\DB\SqlExpression $fileName)
-	 * @method bool hasFileName()
-	 * @method bool isFileNameFilled()
-	 * @method bool isFileNameChanged()
-	 * @method null|\string remindActualFileName()
-	 * @method null|\string requireFileName()
-	 * @method \Bitrix\Call\Track resetFileName()
-	 * @method \Bitrix\Call\Track unsetFileName()
-	 * @method null|\string fillFileName()
-	 * @method null|\int getDuration()
-	 * @method \Bitrix\Call\Track setDuration(null|\int|\Bitrix\Main\DB\SqlExpression $duration)
-	 * @method bool hasDuration()
-	 * @method bool isDurationFilled()
-	 * @method bool isDurationChanged()
-	 * @method null|\int remindActualDuration()
-	 * @method null|\int requireDuration()
-	 * @method \Bitrix\Call\Track resetDuration()
-	 * @method \Bitrix\Call\Track unsetDuration()
-	 * @method null|\int fillDuration()
-	 * @method null|\int getFileSize()
-	 * @method \Bitrix\Call\Track setFileSize(null|\int|\Bitrix\Main\DB\SqlExpression $fileSize)
-	 * @method bool hasFileSize()
-	 * @method bool isFileSizeFilled()
-	 * @method bool isFileSizeChanged()
-	 * @method null|\int remindActualFileSize()
-	 * @method null|\int requireFileSize()
-	 * @method \Bitrix\Call\Track resetFileSize()
-	 * @method \Bitrix\Call\Track unsetFileSize()
-	 * @method null|\int fillFileSize()
-	 * @method null|\string getFileMimeType()
-	 * @method \Bitrix\Call\Track setFileMimeType(null|\string|\Bitrix\Main\DB\SqlExpression $fileMimeType)
-	 * @method bool hasFileMimeType()
-	 * @method bool isFileMimeTypeFilled()
-	 * @method bool isFileMimeTypeChanged()
-	 * @method null|\string remindActualFileMimeType()
-	 * @method null|\string requireFileMimeType()
-	 * @method \Bitrix\Call\Track resetFileMimeType()
-	 * @method \Bitrix\Call\Track unsetFileMimeType()
-	 * @method null|\string fillFileMimeType()
-	 * @method null|\string getTempPath()
-	 * @method \Bitrix\Call\Track setTempPath(null|\string|\Bitrix\Main\DB\SqlExpression $tempPath)
-	 * @method bool hasTempPath()
-	 * @method bool isTempPathFilled()
-	 * @method bool isTempPathChanged()
-	 * @method null|\string remindActualTempPath()
-	 * @method null|\string requireTempPath()
-	 * @method \Bitrix\Call\Track resetTempPath()
-	 * @method \Bitrix\Call\Track unsetTempPath()
-	 * @method null|\string fillTempPath()
-	 * @method \boolean getDownloaded()
-	 * @method \Bitrix\Call\Track setDownloaded(\boolean|\Bitrix\Main\DB\SqlExpression $downloaded)
-	 * @method bool hasDownloaded()
-	 * @method bool isDownloadedFilled()
-	 * @method bool isDownloadedChanged()
-	 * @method \boolean remindActualDownloaded()
-	 * @method \boolean requireDownloaded()
-	 * @method \Bitrix\Call\Track resetDownloaded()
-	 * @method \Bitrix\Call\Track unsetDownloaded()
-	 * @method \boolean fillDownloaded()
-	 * @method \Bitrix\Im\Model\EO_Call getCall()
-	 * @method \Bitrix\Im\Model\EO_Call remindActualCall()
-	 * @method \Bitrix\Im\Model\EO_Call requireCall()
-	 * @method \Bitrix\Call\Track setCall(\Bitrix\Im\Model\EO_Call $object)
-	 * @method \Bitrix\Call\Track resetCall()
-	 * @method \Bitrix\Call\Track unsetCall()
-	 * @method bool hasCall()
-	 * @method bool isCallFilled()
-	 * @method bool isCallChanged()
-	 * @method \Bitrix\Im\Model\EO_Call fillCall()
+	 * @method \int getChatId()
+	 * @method \Bitrix\Call\CallChatEntity setChatId(\int|\Bitrix\Main\DB\SqlExpression $chatId)
+	 * @method bool hasChatId()
+	 * @method bool isChatIdFilled()
+	 * @method bool isChatIdChanged()
+	 * @method \int remindActualChatId()
+	 * @method \int requireChatId()
+	 * @method \Bitrix\Call\CallChatEntity resetChatId()
+	 * @method \Bitrix\Call\CallChatEntity unsetChatId()
+	 * @method \int fillChatId()
+	 * @method \int getCallTokenVersion()
+	 * @method \Bitrix\Call\CallChatEntity setCallTokenVersion(\int|\Bitrix\Main\DB\SqlExpression $callTokenVersion)
+	 * @method bool hasCallTokenVersion()
+	 * @method bool isCallTokenVersionFilled()
+	 * @method bool isCallTokenVersionChanged()
+	 * @method \int remindActualCallTokenVersion()
+	 * @method \int requireCallTokenVersion()
+	 * @method \Bitrix\Call\CallChatEntity resetCallTokenVersion()
+	 * @method \Bitrix\Call\CallChatEntity unsetCallTokenVersion()
+	 * @method \int fillCallTokenVersion()
 	 *
 	 * Common methods:
 	 * ---------------
@@ -169,9 +49,9 @@ namespace Bitrix\Call\Model {
 	 * @method bool has($fieldName)
 	 * @method bool isFilled($fieldName)
 	 * @method bool isChanged($fieldName)
-	 * @method \Bitrix\Call\Track set($fieldName, $value)
-	 * @method \Bitrix\Call\Track reset($fieldName)
-	 * @method \Bitrix\Call\Track unset($fieldName)
+	 * @method \Bitrix\Call\CallChatEntity set($fieldName, $value)
+	 * @method \Bitrix\Call\CallChatEntity reset($fieldName)
+	 * @method \Bitrix\Call\CallChatEntity unset($fieldName)
 	 * @method void addTo($fieldName, $value)
 	 * @method void removeFrom($fieldName, $value)
 	 * @method void removeAll($fieldName)
@@ -179,11 +59,11 @@ namespace Bitrix\Call\Model {
 	 * @method mixed fill($fields = \Bitrix\Main\ORM\Fields\FieldTypeMask::ALL) flag or array of field names
 	 * @method mixed[] collectValues($valuesType = \Bitrix\Main\ORM\Objectify\Values::ALL, $fieldsMask = \Bitrix\Main\ORM\Fields\FieldTypeMask::ALL)
 	 * @method \Bitrix\Main\ORM\Data\AddResult|\Bitrix\Main\ORM\Data\UpdateResult|\Bitrix\Main\ORM\Data\Result save()
-	 * @method static \Bitrix\Call\Track wakeUp($data)
+	 * @method static \Bitrix\Call\CallChatEntity wakeUp($data)
 	 */
-	class EO_CallTrack {
-		/* @var \Bitrix\Call\Model\CallTrackTable */
-		static public $dataClass = '\Bitrix\Call\Model\CallTrackTable';
+	class EO_CallChatEntity {
+		/* @var \Bitrix\Call\Model\CallChatEntityTable */
+		static public $dataClass = '\Bitrix\Call\Model\CallChatEntityTable';
 		/**
 		 * @param bool|array $setDefaultValues
 		 */
@@ -192,73 +72,48 @@ namespace Bitrix\Call\Model {
 }
 namespace Bitrix\Call\Model {
 	/**
-	 * TrackCollection
+	 * EO_CallChatEntity_Collection
 	 *
 	 * Custom methods:
 	 * ---------------
 	 *
 	 * @method \int[] getIdList()
-	 * @method \int[] getCallIdList()
-	 * @method \int[] fillCallId()
-	 * @method null|\int[] getExternalTrackIdList()
-	 * @method null|\int[] fillExternalTrackId()
-	 * @method null|\int[] getFileIdList()
-	 * @method null|\int[] fillFileId()
-	 * @method null|\int[] getDiskFileIdList()
-	 * @method null|\int[] fillDiskFileId()
-	 * @method \Bitrix\Main\Type\DateTime[] getDateCreateList()
-	 * @method \Bitrix\Main\Type\DateTime[] fillDateCreate()
-	 * @method null|\string[] getTypeList()
-	 * @method null|\string[] fillType()
-	 * @method \string[] getDownloadUrlList()
-	 * @method \string[] fillDownloadUrl()
-	 * @method null|\string[] getFileNameList()
-	 * @method null|\string[] fillFileName()
-	 * @method null|\int[] getDurationList()
-	 * @method null|\int[] fillDuration()
-	 * @method null|\int[] getFileSizeList()
-	 * @method null|\int[] fillFileSize()
-	 * @method null|\string[] getFileMimeTypeList()
-	 * @method null|\string[] fillFileMimeType()
-	 * @method null|\string[] getTempPathList()
-	 * @method null|\string[] fillTempPath()
-	 * @method \boolean[] getDownloadedList()
-	 * @method \boolean[] fillDownloaded()
-	 * @method \Bitrix\Im\Model\EO_Call[] getCallList()
-	 * @method \Bitrix\Call\Track\TrackCollection getCallCollection()
-	 * @method \Bitrix\Im\Model\EO_Call_Collection fillCall()
+	 * @method \int[] getChatIdList()
+	 * @method \int[] fillChatId()
+	 * @method \int[] getCallTokenVersionList()
+	 * @method \int[] fillCallTokenVersion()
 	 *
 	 * Common methods:
 	 * ---------------
 	 *
 	 * @property-read \Bitrix\Main\ORM\Entity $entity
-	 * @method void add(\Bitrix\Call\Track $object)
-	 * @method bool has(\Bitrix\Call\Track $object)
+	 * @method void add(\Bitrix\Call\CallChatEntity $object)
+	 * @method bool has(\Bitrix\Call\CallChatEntity $object)
 	 * @method bool hasByPrimary($primary)
-	 * @method \Bitrix\Call\Track getByPrimary($primary)
-	 * @method \Bitrix\Call\Track[] getAll()
-	 * @method bool remove(\Bitrix\Call\Track $object)
+	 * @method \Bitrix\Call\CallChatEntity getByPrimary($primary)
+	 * @method \Bitrix\Call\CallChatEntity[] getAll()
+	 * @method bool remove(\Bitrix\Call\CallChatEntity $object)
 	 * @method void removeByPrimary($primary)
 	 * @method array|\Bitrix\Main\ORM\Objectify\Collection|null fill($fields = \Bitrix\Main\ORM\Fields\FieldTypeMask::ALL) flag or array of field names
-	 * @method static \Bitrix\Call\Track\TrackCollection wakeUp($data)
+	 * @method static \Bitrix\Call\Model\EO_CallChatEntity_Collection wakeUp($data)
 	 * @method \Bitrix\Main\ORM\Data\Result save($ignoreEvents = false)
 	 * @method void offsetSet() ArrayAccess
 	 * @method void offsetExists() ArrayAccess
 	 * @method void offsetUnset() ArrayAccess
 	 * @method void offsetGet() ArrayAccess
 	 * @method void rewind() Iterator
-	 * @method \Bitrix\Call\Track current() Iterator
+	 * @method \Bitrix\Call\CallChatEntity current() Iterator
 	 * @method mixed key() Iterator
 	 * @method void next() Iterator
 	 * @method bool valid() Iterator
 	 * @method int count() Countable
-	 * @method \Bitrix\Call\Track\TrackCollection merge(?\Bitrix\Call\Track\TrackCollection $collection)
+	 * @method \Bitrix\Call\Model\EO_CallChatEntity_Collection merge(?\Bitrix\Call\Model\EO_CallChatEntity_Collection $collection)
 	 * @method bool isEmpty()
 	 * @method array collectValues(int $valuesType = \Bitrix\Main\ORM\Objectify\Values::ALL, int $fieldsMask = \Bitrix\Main\ORM\Fields\FieldTypeMask::ALL, bool $recursive = false)
 	 */
-	class EO_CallTrack_Collection implements \ArrayAccess, \Iterator, \Countable {
-		/* @var \Bitrix\Call\Model\CallTrackTable */
-		static public $dataClass = '\Bitrix\Call\Model\CallTrackTable';
+	class EO_CallChatEntity_Collection implements \ArrayAccess, \Iterator, \Countable {
+		/* @var \Bitrix\Call\Model\CallChatEntityTable */
+		static public $dataClass = '\Bitrix\Call\Model\CallChatEntityTable';
 	}
 }
 namespace Bitrix\Call\Model {
@@ -266,25 +121,25 @@ namespace Bitrix\Call\Model {
 	 * Common methods:
 	 * ---------------
 	 *
-	 * @method EO_CallTrack_Result exec()
-	 * @method \Bitrix\Call\Track fetchObject()
-	 * @method \Bitrix\Call\Track\TrackCollection fetchCollection()
+	 * @method EO_CallChatEntity_Result exec()
+	 * @method \Bitrix\Call\CallChatEntity fetchObject()
+	 * @method \Bitrix\Call\Model\EO_CallChatEntity_Collection fetchCollection()
 	 */
-	class EO_CallTrack_Query extends \Bitrix\Main\ORM\Query\Query {}
+	class EO_CallChatEntity_Query extends \Bitrix\Main\ORM\Query\Query {}
 	/**
-	 * @method \Bitrix\Call\Track fetchObject()
-	 * @method \Bitrix\Call\Track\TrackCollection fetchCollection()
+	 * @method \Bitrix\Call\CallChatEntity fetchObject()
+	 * @method \Bitrix\Call\Model\EO_CallChatEntity_Collection fetchCollection()
 	 */
-	class EO_CallTrack_Result extends \Bitrix\Main\ORM\Query\Result {}
+	class EO_CallChatEntity_Result extends \Bitrix\Main\ORM\Query\Result {}
 	/**
-	 * @method \Bitrix\Call\Track createObject($setDefaultValues = true)
-	 * @method \Bitrix\Call\Track\TrackCollection createCollection()
-	 * @method \Bitrix\Call\Track wakeUpObject($row)
-	 * @method \Bitrix\Call\Track\TrackCollection wakeUpCollection($rows)
+	 * @method \Bitrix\Call\CallChatEntity createObject($setDefaultValues = true)
+	 * @method \Bitrix\Call\Model\EO_CallChatEntity_Collection createCollection()
+	 * @method \Bitrix\Call\CallChatEntity wakeUpObject($row)
+	 * @method \Bitrix\Call\Model\EO_CallChatEntity_Collection wakeUpCollection($rows)
 	 */
-	class EO_CallTrack_Entity extends \Bitrix\Main\ORM\Entity {}
+	class EO_CallChatEntity_Entity extends \Bitrix\Main\ORM\Entity {}
 }
-/* ORMENTITYANNOTATION:Bitrix\Call\Model\CallOutcomeTable:call/lib/model/calloutcometable.php */
+/* ORMENTITYANNOTATION:Bitrix\Call\Model\CallOutcomeTable:call\lib\Model\CallOutcomeTable.php */
 namespace Bitrix\Call\Model {
 	/**
 	 * Outcome
@@ -497,7 +352,7 @@ namespace Bitrix\Call\Model {
 	 */
 	class EO_CallOutcome_Entity extends \Bitrix\Main\ORM\Entity {}
 }
-/* ORMENTITYANNOTATION:Bitrix\Call\Model\CallOutcomePropertyTable:call/lib/model/calloutcomepropertytable.php */
+/* ORMENTITYANNOTATION:Bitrix\Call\Model\CallOutcomePropertyTable:call\lib\Model\CallOutcomePropertyTable.php */
 namespace Bitrix\Call\Model {
 	/**
 	 * Property
@@ -661,7 +516,7 @@ namespace Bitrix\Call\Model {
 	 */
 	class EO_CallOutcomeProperty_Entity extends \Bitrix\Main\ORM\Entity {}
 }
-/* ORMENTITYANNOTATION:Bitrix\Call\Model\CallAITaskTable:call/lib/model/callaitasktable.php */
+/* ORMENTITYANNOTATION:Bitrix\Call\Model\CallAITaskTable:call\lib\Model\CallAITaskTable.php */
 namespace Bitrix\Call\Model {
 	/**
 	 * EO_CallAITask
@@ -946,4 +801,288 @@ namespace Bitrix\Call\Model {
 	 * @method \Bitrix\Call\Model\EO_CallAITask_Collection wakeUpCollection($rows)
 	 */
 	class EO_CallAITask_Entity extends \Bitrix\Main\ORM\Entity {}
+}
+/* ORMENTITYANNOTATION:Bitrix\Call\Model\CallTrackTable:call\lib\Model\CallTrackTable.php */
+namespace Bitrix\Call\Model {
+	/**
+	 * Track
+	 * @see \Bitrix\Call\Model\CallTrackTable
+	 *
+	 * Custom methods:
+	 * ---------------
+	 *
+	 * @method \int getId()
+	 * @method \Bitrix\Call\Track setId(\int|\Bitrix\Main\DB\SqlExpression $id)
+	 * @method bool hasId()
+	 * @method bool isIdFilled()
+	 * @method bool isIdChanged()
+	 * @method \int getCallId()
+	 * @method \Bitrix\Call\Track setCallId(\int|\Bitrix\Main\DB\SqlExpression $callId)
+	 * @method bool hasCallId()
+	 * @method bool isCallIdFilled()
+	 * @method bool isCallIdChanged()
+	 * @method \int remindActualCallId()
+	 * @method \int requireCallId()
+	 * @method \Bitrix\Call\Track resetCallId()
+	 * @method \Bitrix\Call\Track unsetCallId()
+	 * @method \int fillCallId()
+	 * @method null|\int getExternalTrackId()
+	 * @method \Bitrix\Call\Track setExternalTrackId(null|\int|\Bitrix\Main\DB\SqlExpression $externalTrackId)
+	 * @method bool hasExternalTrackId()
+	 * @method bool isExternalTrackIdFilled()
+	 * @method bool isExternalTrackIdChanged()
+	 * @method null|\int remindActualExternalTrackId()
+	 * @method null|\int requireExternalTrackId()
+	 * @method \Bitrix\Call\Track resetExternalTrackId()
+	 * @method \Bitrix\Call\Track unsetExternalTrackId()
+	 * @method null|\int fillExternalTrackId()
+	 * @method null|\int getFileId()
+	 * @method \Bitrix\Call\Track setFileId(null|\int|\Bitrix\Main\DB\SqlExpression $fileId)
+	 * @method bool hasFileId()
+	 * @method bool isFileIdFilled()
+	 * @method bool isFileIdChanged()
+	 * @method null|\int remindActualFileId()
+	 * @method null|\int requireFileId()
+	 * @method \Bitrix\Call\Track resetFileId()
+	 * @method \Bitrix\Call\Track unsetFileId()
+	 * @method null|\int fillFileId()
+	 * @method null|\int getDiskFileId()
+	 * @method \Bitrix\Call\Track setDiskFileId(null|\int|\Bitrix\Main\DB\SqlExpression $diskFileId)
+	 * @method bool hasDiskFileId()
+	 * @method bool isDiskFileIdFilled()
+	 * @method bool isDiskFileIdChanged()
+	 * @method null|\int remindActualDiskFileId()
+	 * @method null|\int requireDiskFileId()
+	 * @method \Bitrix\Call\Track resetDiskFileId()
+	 * @method \Bitrix\Call\Track unsetDiskFileId()
+	 * @method null|\int fillDiskFileId()
+	 * @method \Bitrix\Main\Type\DateTime getDateCreate()
+	 * @method \Bitrix\Call\Track setDateCreate(\Bitrix\Main\Type\DateTime|\Bitrix\Main\DB\SqlExpression $dateCreate)
+	 * @method bool hasDateCreate()
+	 * @method bool isDateCreateFilled()
+	 * @method bool isDateCreateChanged()
+	 * @method \Bitrix\Main\Type\DateTime remindActualDateCreate()
+	 * @method \Bitrix\Main\Type\DateTime requireDateCreate()
+	 * @method \Bitrix\Call\Track resetDateCreate()
+	 * @method \Bitrix\Call\Track unsetDateCreate()
+	 * @method \Bitrix\Main\Type\DateTime fillDateCreate()
+	 * @method null|\string getType()
+	 * @method \Bitrix\Call\Track setType(null|\string|\Bitrix\Main\DB\SqlExpression $type)
+	 * @method bool hasType()
+	 * @method bool isTypeFilled()
+	 * @method bool isTypeChanged()
+	 * @method null|\string remindActualType()
+	 * @method null|\string requireType()
+	 * @method \Bitrix\Call\Track resetType()
+	 * @method \Bitrix\Call\Track unsetType()
+	 * @method null|\string fillType()
+	 * @method \string getDownloadUrl()
+	 * @method \Bitrix\Call\Track setDownloadUrl(\string|\Bitrix\Main\DB\SqlExpression $downloadUrl)
+	 * @method bool hasDownloadUrl()
+	 * @method bool isDownloadUrlFilled()
+	 * @method bool isDownloadUrlChanged()
+	 * @method \string remindActualDownloadUrl()
+	 * @method \string requireDownloadUrl()
+	 * @method \Bitrix\Call\Track resetDownloadUrl()
+	 * @method \Bitrix\Call\Track unsetDownloadUrl()
+	 * @method \string fillDownloadUrl()
+	 * @method null|\string getFileName()
+	 * @method \Bitrix\Call\Track setFileName(null|\string|\Bitrix\Main\DB\SqlExpression $fileName)
+	 * @method bool hasFileName()
+	 * @method bool isFileNameFilled()
+	 * @method bool isFileNameChanged()
+	 * @method null|\string remindActualFileName()
+	 * @method null|\string requireFileName()
+	 * @method \Bitrix\Call\Track resetFileName()
+	 * @method \Bitrix\Call\Track unsetFileName()
+	 * @method null|\string fillFileName()
+	 * @method null|\int getDuration()
+	 * @method \Bitrix\Call\Track setDuration(null|\int|\Bitrix\Main\DB\SqlExpression $duration)
+	 * @method bool hasDuration()
+	 * @method bool isDurationFilled()
+	 * @method bool isDurationChanged()
+	 * @method null|\int remindActualDuration()
+	 * @method null|\int requireDuration()
+	 * @method \Bitrix\Call\Track resetDuration()
+	 * @method \Bitrix\Call\Track unsetDuration()
+	 * @method null|\int fillDuration()
+	 * @method null|\int getFileSize()
+	 * @method \Bitrix\Call\Track setFileSize(null|\int|\Bitrix\Main\DB\SqlExpression $fileSize)
+	 * @method bool hasFileSize()
+	 * @method bool isFileSizeFilled()
+	 * @method bool isFileSizeChanged()
+	 * @method null|\int remindActualFileSize()
+	 * @method null|\int requireFileSize()
+	 * @method \Bitrix\Call\Track resetFileSize()
+	 * @method \Bitrix\Call\Track unsetFileSize()
+	 * @method null|\int fillFileSize()
+	 * @method null|\string getFileMimeType()
+	 * @method \Bitrix\Call\Track setFileMimeType(null|\string|\Bitrix\Main\DB\SqlExpression $fileMimeType)
+	 * @method bool hasFileMimeType()
+	 * @method bool isFileMimeTypeFilled()
+	 * @method bool isFileMimeTypeChanged()
+	 * @method null|\string remindActualFileMimeType()
+	 * @method null|\string requireFileMimeType()
+	 * @method \Bitrix\Call\Track resetFileMimeType()
+	 * @method \Bitrix\Call\Track unsetFileMimeType()
+	 * @method null|\string fillFileMimeType()
+	 * @method null|\string getTempPath()
+	 * @method \Bitrix\Call\Track setTempPath(null|\string|\Bitrix\Main\DB\SqlExpression $tempPath)
+	 * @method bool hasTempPath()
+	 * @method bool isTempPathFilled()
+	 * @method bool isTempPathChanged()
+	 * @method null|\string remindActualTempPath()
+	 * @method null|\string requireTempPath()
+	 * @method \Bitrix\Call\Track resetTempPath()
+	 * @method \Bitrix\Call\Track unsetTempPath()
+	 * @method null|\string fillTempPath()
+	 * @method \boolean getDownloaded()
+	 * @method \Bitrix\Call\Track setDownloaded(\boolean|\Bitrix\Main\DB\SqlExpression $downloaded)
+	 * @method bool hasDownloaded()
+	 * @method bool isDownloadedFilled()
+	 * @method bool isDownloadedChanged()
+	 * @method \boolean remindActualDownloaded()
+	 * @method \boolean requireDownloaded()
+	 * @method \Bitrix\Call\Track resetDownloaded()
+	 * @method \Bitrix\Call\Track unsetDownloaded()
+	 * @method \boolean fillDownloaded()
+	 * @method \Bitrix\Im\Model\EO_Call getCall()
+	 * @method \Bitrix\Im\Model\EO_Call remindActualCall()
+	 * @method \Bitrix\Im\Model\EO_Call requireCall()
+	 * @method \Bitrix\Call\Track setCall(\Bitrix\Im\Model\EO_Call $object)
+	 * @method \Bitrix\Call\Track resetCall()
+	 * @method \Bitrix\Call\Track unsetCall()
+	 * @method bool hasCall()
+	 * @method bool isCallFilled()
+	 * @method bool isCallChanged()
+	 * @method \Bitrix\Im\Model\EO_Call fillCall()
+	 *
+	 * Common methods:
+	 * ---------------
+	 *
+	 * @property-read \Bitrix\Main\ORM\Entity $entity
+	 * @property-read array $primary
+	 * @property-read int $state @see \Bitrix\Main\ORM\Objectify\State
+	 * @property-read \Bitrix\Main\Type\Dictionary $customData
+	 * @property \Bitrix\Main\Authentication\Context $authContext
+	 * @method mixed get($fieldName)
+	 * @method mixed remindActual($fieldName)
+	 * @method mixed require($fieldName)
+	 * @method bool has($fieldName)
+	 * @method bool isFilled($fieldName)
+	 * @method bool isChanged($fieldName)
+	 * @method \Bitrix\Call\Track set($fieldName, $value)
+	 * @method \Bitrix\Call\Track reset($fieldName)
+	 * @method \Bitrix\Call\Track unset($fieldName)
+	 * @method void addTo($fieldName, $value)
+	 * @method void removeFrom($fieldName, $value)
+	 * @method void removeAll($fieldName)
+	 * @method \Bitrix\Main\ORM\Data\Result delete()
+	 * @method mixed fill($fields = \Bitrix\Main\ORM\Fields\FieldTypeMask::ALL) flag or array of field names
+	 * @method mixed[] collectValues($valuesType = \Bitrix\Main\ORM\Objectify\Values::ALL, $fieldsMask = \Bitrix\Main\ORM\Fields\FieldTypeMask::ALL)
+	 * @method \Bitrix\Main\ORM\Data\AddResult|\Bitrix\Main\ORM\Data\UpdateResult|\Bitrix\Main\ORM\Data\Result save()
+	 * @method static \Bitrix\Call\Track wakeUp($data)
+	 */
+	class EO_CallTrack {
+		/* @var \Bitrix\Call\Model\CallTrackTable */
+		static public $dataClass = '\Bitrix\Call\Model\CallTrackTable';
+		/**
+		 * @param bool|array $setDefaultValues
+		 */
+		public function __construct($setDefaultValues = true) {}
+	}
+}
+namespace Bitrix\Call\Model {
+	/**
+	 * TrackCollection
+	 *
+	 * Custom methods:
+	 * ---------------
+	 *
+	 * @method \int[] getIdList()
+	 * @method \int[] getCallIdList()
+	 * @method \int[] fillCallId()
+	 * @method null|\int[] getExternalTrackIdList()
+	 * @method null|\int[] fillExternalTrackId()
+	 * @method null|\int[] getFileIdList()
+	 * @method null|\int[] fillFileId()
+	 * @method null|\int[] getDiskFileIdList()
+	 * @method null|\int[] fillDiskFileId()
+	 * @method \Bitrix\Main\Type\DateTime[] getDateCreateList()
+	 * @method \Bitrix\Main\Type\DateTime[] fillDateCreate()
+	 * @method null|\string[] getTypeList()
+	 * @method null|\string[] fillType()
+	 * @method \string[] getDownloadUrlList()
+	 * @method \string[] fillDownloadUrl()
+	 * @method null|\string[] getFileNameList()
+	 * @method null|\string[] fillFileName()
+	 * @method null|\int[] getDurationList()
+	 * @method null|\int[] fillDuration()
+	 * @method null|\int[] getFileSizeList()
+	 * @method null|\int[] fillFileSize()
+	 * @method null|\string[] getFileMimeTypeList()
+	 * @method null|\string[] fillFileMimeType()
+	 * @method null|\string[] getTempPathList()
+	 * @method null|\string[] fillTempPath()
+	 * @method \boolean[] getDownloadedList()
+	 * @method \boolean[] fillDownloaded()
+	 * @method \Bitrix\Im\Model\EO_Call[] getCallList()
+	 * @method \Bitrix\Call\Track\TrackCollection getCallCollection()
+	 * @method \Bitrix\Im\Model\EO_Call_Collection fillCall()
+	 *
+	 * Common methods:
+	 * ---------------
+	 *
+	 * @property-read \Bitrix\Main\ORM\Entity $entity
+	 * @method void add(\Bitrix\Call\Track $object)
+	 * @method bool has(\Bitrix\Call\Track $object)
+	 * @method bool hasByPrimary($primary)
+	 * @method \Bitrix\Call\Track getByPrimary($primary)
+	 * @method \Bitrix\Call\Track[] getAll()
+	 * @method bool remove(\Bitrix\Call\Track $object)
+	 * @method void removeByPrimary($primary)
+	 * @method array|\Bitrix\Main\ORM\Objectify\Collection|null fill($fields = \Bitrix\Main\ORM\Fields\FieldTypeMask::ALL) flag or array of field names
+	 * @method static \Bitrix\Call\Track\TrackCollection wakeUp($data)
+	 * @method \Bitrix\Main\ORM\Data\Result save($ignoreEvents = false)
+	 * @method void offsetSet() ArrayAccess
+	 * @method void offsetExists() ArrayAccess
+	 * @method void offsetUnset() ArrayAccess
+	 * @method void offsetGet() ArrayAccess
+	 * @method void rewind() Iterator
+	 * @method \Bitrix\Call\Track current() Iterator
+	 * @method mixed key() Iterator
+	 * @method void next() Iterator
+	 * @method bool valid() Iterator
+	 * @method int count() Countable
+	 * @method \Bitrix\Call\Track\TrackCollection merge(?\Bitrix\Call\Track\TrackCollection $collection)
+	 * @method bool isEmpty()
+	 * @method array collectValues(int $valuesType = \Bitrix\Main\ORM\Objectify\Values::ALL, int $fieldsMask = \Bitrix\Main\ORM\Fields\FieldTypeMask::ALL, bool $recursive = false)
+	 */
+	class EO_CallTrack_Collection implements \ArrayAccess, \Iterator, \Countable {
+		/* @var \Bitrix\Call\Model\CallTrackTable */
+		static public $dataClass = '\Bitrix\Call\Model\CallTrackTable';
+	}
+}
+namespace Bitrix\Call\Model {
+	/**
+	 * Common methods:
+	 * ---------------
+	 *
+	 * @method EO_CallTrack_Result exec()
+	 * @method \Bitrix\Call\Track fetchObject()
+	 * @method \Bitrix\Call\Track\TrackCollection fetchCollection()
+	 */
+	class EO_CallTrack_Query extends \Bitrix\Main\ORM\Query\Query {}
+	/**
+	 * @method \Bitrix\Call\Track fetchObject()
+	 * @method \Bitrix\Call\Track\TrackCollection fetchCollection()
+	 */
+	class EO_CallTrack_Result extends \Bitrix\Main\ORM\Query\Result {}
+	/**
+	 * @method \Bitrix\Call\Track createObject($setDefaultValues = true)
+	 * @method \Bitrix\Call\Track\TrackCollection createCollection()
+	 * @method \Bitrix\Call\Track wakeUpObject($row)
+	 * @method \Bitrix\Call\Track\TrackCollection wakeUpCollection($rows)
+	 */
+	class EO_CallTrack_Entity extends \Bitrix\Main\ORM\Entity {}
 }

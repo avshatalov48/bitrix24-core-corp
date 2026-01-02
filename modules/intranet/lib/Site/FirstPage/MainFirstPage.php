@@ -5,6 +5,7 @@ namespace Bitrix\Intranet\Site\FirstPage;
 use Bitrix\Intranet\MainPage\Access;
 use Bitrix\Intranet\MainPage\Publisher;
 use Bitrix\Intranet\MainPage\Url;
+use Bitrix\Intranet\PortalSettings;
 use Bitrix\Main\Localization\Loc;
 use Bitrix\Main\Web\Uri;
 
@@ -38,7 +39,13 @@ class MainFirstPage implements FirstPage
 
 	public function getSettingsPath(): string
 	{
-		return SITE_DIR . 'settings/configs/?page=mainpage';
+		$settingsUrl = PortalSettings::getInstance()->getSettingsUrl();
+		if (str_starts_with($settingsUrl, '/'))
+		{
+			$settingsUrl = substr($settingsUrl, 1);
+		}
+
+		return SITE_DIR . "{$settingsUrl}?page=mainpage";
 	}
 
 	public function getUri(): Uri

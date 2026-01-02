@@ -47,7 +47,7 @@ final class ExternalDatasetGrid extends Grid
 
 		return new Rows(
 			$rowAssembler,
-			new \Bitrix\BIConnector\Superset\Grid\Row\Action\ExternalDatasetDataProvider($this->getSettings())
+			new \Bitrix\BIConnector\Superset\Grid\Row\Action\Dataset\ExternalDatasetActionDataProvider($this->getSettings())
 		);
 	}
 

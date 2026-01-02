@@ -5,6 +5,7 @@
  * @global  \CUser $USER
  */
 
+use Bitrix\Intranet\Integration\Templates\Air\AirTemplate;
 use Bitrix\Intranet\Integration\Wizards\Portal\Ids;
 use Bitrix\Intranet\Settings\Tools\ToolsManager;
 use Bitrix\Main\Loader;
@@ -16,6 +17,9 @@ IncludeModuleLangFile($_SERVER['DOCUMENT_ROOT'] . '/bitrix/modules/intranet/publ
 $APPLICATION->SetPageProperty('NOT_SHOW_NAV_CHAIN', 'Y');
 $APPLICATION->SetPageProperty('title', htmlspecialcharsbx(COption::GetOptionString('main', 'site_name', 'Bitrix24')));
 Loader::includeModule('intranet');
+
+$bodyClass = $APPLICATION->getPageProperty('BodyClass');
+$APPLICATION->SetPageProperty('BodyClass', ($bodyClass ? $bodyClass.' ' : '').'start-page');
 
 if (!ToolsManager::getInstance()->checkAvailabilityByToolId('news'))
 {
@@ -105,7 +109,7 @@ $APPLICATION->IncludeComponent(
 if (Loader::includeModule('intranet'))
 {
 	$APPLICATION->IncludeComponent('bitrix:intranet.ustat.online', '', [], false);
-	if (\Bitrix\Intranet\UStat\UStat::checkAvailableCompanyPulseAndNotifyAdmin())
+	if (\Bitrix\Intranet\UStat\UStat::checkAvailableCompanyPulseAndNotifyAdmin() && AirTemplate::isEnabled() === false)
 	{
 		$APPLICATION->IncludeComponent('bitrix:intranet.ustat.status', '', ['CREATE_FRAME' => 'N'], false);
 	}

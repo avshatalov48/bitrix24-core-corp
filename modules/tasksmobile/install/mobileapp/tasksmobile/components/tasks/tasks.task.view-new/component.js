@@ -8,9 +8,9 @@
 	const userId = parseInt(BX.componentParameters.get('USER_ID', 0), 10);
 	const taskId = BX.componentParameters.get('TASK_ID', 0);
 	const guid = BX.componentParameters.get('GUID') || uuid();
-	const context = BX.componentParameters.get('CONTEXT');
 	const shouldOpenComments = BX.componentParameters.get('SHOULD_OPEN_COMMENTS', false);
 	const analyticsLabel = BX.componentParameters.get('analyticsLabel') || {};
+	const isFlowToolDisabled = BX.componentParameters.get('IS_FLOW_TOOL_DISABLED', false);
 
 	tariffPlanRestrictionsReady()
 		.then(() => {
@@ -21,9 +21,9 @@
 						userId,
 						taskId,
 						guid,
-						context,
 						shouldOpenComments,
 						analyticsLabel,
+						isFlowToolDisabled,
 					}),
 				);
 			});

@@ -176,6 +176,23 @@ class DocumentCollection implements ItemCollection, \Iterator, \Countable
 		return $ids;
 	}
 
+	/**
+	 * @return list<string>
+	 */
+	public function listUidsWithoutNull(): array
+	{
+		$ids = [];
+		foreach ($this->items as $item)
+		{
+			if ($item->uid !== null)
+			{
+				$ids[] = $item->uid;
+			}
+		}
+
+		return $ids;
+	}
+
 	public function getFirst(): ?Document
 	{
 		return $this->items[0] ?? null;

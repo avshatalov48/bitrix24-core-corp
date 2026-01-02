@@ -55,6 +55,21 @@ jn.define('testing/test-case', (require, exports, module) => {
 					const startTime = Date.now();
 					this.#startShutDownTimeout(resolve);
 
+					if (this.callback.length > 0)
+					{
+						const doneCallback = () => {
+							this.#checkCase(startTime, resolve);
+						};
+
+						const result = this.callback(doneCallback);
+						if (result instanceof Promise)
+						{
+							throw new Error('It is not permitted to use asynchronous functions in conjunction with the "done" callback at the same time.');
+						}
+
+						return;
+					}
+
 					const result = this.callback();
 
 					if (result instanceof Promise)
@@ -128,11 +143,6 @@ jn.define('testing/test-case', (require, exports, module) => {
 		 */
 		#reportFail(error)
 		{
-			if (this.#isKilledByTimeout)
-			{
-				return;
-			}
-
 			if (this.#shutdownTimerId)
 			{
 				clearTimeout(this.#shutdownTimerId);
@@ -142,7 +152,7 @@ jn.define('testing/test-case', (require, exports, module) => {
 
 			if (error instanceof ExpectationFailed)
 			{
-				this.report.fail(`${this.prefix} ${this.title}`, error.expectedValue, error.actualValue);
+				this.report.fail(`${this.prefix} ${this.title}`, error.expectedValue, error.actualValue, error.trace);
 			}
 			else if (error instanceof TimeoutFailed)
 			{

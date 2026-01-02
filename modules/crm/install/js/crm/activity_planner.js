@@ -342,8 +342,9 @@ BX.namespace('BX.Crm.Activity');
 				compatibleEvents: true,
 				allowChangeHistory: false,
 				events: {
-					onOpen: function(slider)
+					onLoad: function(params)
 					{
+						const slider = params.slider;
 						var BX = slider.iframe.contentWindow.BX;
 						if (!BX)
 						{
@@ -2088,9 +2089,10 @@ BX.namespace('BX.Crm.Activity');
 	if (typeof(BX.CrmActivityProvider) == 'undefined')
 	{
 		BX.addCustomEvent(
-			'Bitrix24.Slider:onMessage',
-			function (sender, data)
+			'SidePanel.Slider:onMessage',
+			function(sender)
 			{
+				const data = sender.data || null;
 				if (!BX.CrmActivityEditor || !data)
 				{
 					return;
@@ -2293,13 +2295,14 @@ BX.namespace('BX.Crm.Activity');
 						compatibleEvents: true,
 						allowChangeHistory: false,
 						events: {
-							onOpen: function(slider)
+							onLoad: function(event)
 							{
-								var wrapper = slider.iframe.contentDocument.body;
+								const slider = event.getSlider();
+								const wrapper = slider.iframe.contentDocument.body;
 
 								self._contentNode = wrapper;
 
-								var optionsNode = self._getNode('options');
+								const optionsNode = self._getNode('options');
 								if (optionsNode)
 								{
 									self._activityOptions = JSON.parse(optionsNode.getAttribute('data-options'));

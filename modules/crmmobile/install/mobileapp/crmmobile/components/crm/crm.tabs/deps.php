@@ -2,6 +2,7 @@
 
 return [
 	'extensions' => [
+		'analytics',
 		'tokens',
 		'apptheme',
 		'layout/ui/menu',
@@ -18,7 +19,7 @@ return [
 		'utils/function',
 		'alert',
 		'loc',
-		'feature',
+		'money',
 
 		'crm:type',
 		'crm:loc',

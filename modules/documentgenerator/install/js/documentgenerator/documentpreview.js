@@ -302,21 +302,20 @@
 			}
 			try
 			{
-				provider = provider.replace(/\\/g, '\\\\');
 				BX.DocumentGenerator.Document.isProcessing = true;
 				BX.ajax.runAction('documentgenerator.api.document.list', {
 					data: {
 						select: ['id', 'number'],
 						filter: {
-							provider: provider,
-							templateId: templateId,
-							value: value
+							'=provider': provider.toLowerCase(),
+							'=templateId': templateId,
+							'=value': value,
 						},
-						order: {id: 'desc'}
+						order: { id: 'desc' },
 					},
 					navigation: {
-						size: 1
-					}
+						size: 1,
+					},
 				}).then(function(response)
 				{
 					BX.DocumentGenerator.Document.isProcessing = false;
@@ -421,27 +420,6 @@
 		else
 		{
 			BX.DocumentGenerator.openUrl(viewUrl, loaderPath, sliderWidth);
-		}
-	};
-
-	BX.DocumentGenerator.Feedback =
-	{
-		open: function(provider, templateName, templateCode)
-		{
-			var url = '/bitrix/components/bitrix/documentgenerator.feedback/slider.php';
-			url = BX.util.add_url_param(url, {
-				provider: provider || '',
-				templateName: templateName || '',
-				templateCode: templateCode || ''
-			});
-			if(BX.SidePanel)
-			{
-				BX.SidePanel.Instance.open(url, {width: 735});
-			}
-			else
-			{
-				location.href = url;
-			}
 		}
 	};
 
@@ -790,7 +768,7 @@
 			}
 			result[result.length] = {
 				text: this.documentsText,
-				onclick: 'BX.DocumentGenerator.openUrl(\'' + this.links.documentList + '\', null, 930)'
+				onclick: 'BX.DocumentGenerator.openUrl(\'' + this.links.documentList + '\', null, 1060)'
 			};
 		}
 		if(this.links.templateList)
@@ -803,7 +781,7 @@
 			}
 			result[result.length] = {
 				text: this.templatesText,
-				onclick: 'BX.DocumentGenerator.openUrl(\'' + this.links.templateList + '\', null, 930)'
+				onclick: 'BX.DocumentGenerator.openUrl(\'' + this.links.templateList + '\', null, 1060)'
 			}
 		}
 

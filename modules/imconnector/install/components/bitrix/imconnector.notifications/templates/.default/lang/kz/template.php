@@ -6,6 +6,7 @@ $MESS["IMCONNECTOR_COMPONENT_NOTIFICATIONS_INDEX_DETAILS_MSGVER_2"] = "Авто�
 $MESS["IMCONNECTOR_COMPONENT_NOTIFICATIONS_INDEX_LIST_ITEM_1"] = "WhatsApp немесе СМС арқылы төлемге сілтеме";
 $MESS["IMCONNECTOR_COMPONENT_NOTIFICATIONS_INDEX_LIST_ITEM_2"] = "Картамен және басқа тәсілдермен онлайн төлеу";
 $MESS["IMCONNECTOR_COMPONENT_NOTIFICATIONS_INDEX_LIST_ITEM_3"] = "Сыртқы провайдерлер мен WhatsApp тексерулері жоқ";
+$MESS["IMCONNECTOR_COMPONENT_NOTIFICATIONS_INDEX_LIST_ITEM_3_MSGVER_1"] = "Сыртқы провайдерлерді өзіңіз қоспай және WhatsApp тексерулерінсіз";
 $MESS["IMCONNECTOR_COMPONENT_NOTIFICATIONS_INDEX_SECOND_DESCRIPTION"] = "Егер клиент сіздің автоматты хабарламаңызға жауап берсе, сіз онымен чатта тілдесуді оңай жалғастыра аласыз! Сіз Битрикс24 чатына хабарлама аласыз, клиент – өз WhatsApp-ына";
 $MESS["IMCONNECTOR_COMPONENT_NOTIFICATIONS_INDEX_SECOND_TITLE"] = "WhatsApp-та клиентпен тілдесуді жалғастырыңыз";
 $MESS["IMCONNECTOR_COMPONENT_NOTIFICATIONS_INDEX_SUBTITLE"] = "Клиенттеріңізді таң қалдырыңыз: ең жоғары деңгейдегі қызметті көрсетіңіз";

@@ -5,6 +5,7 @@ return [
 		'loc',
 		'alert',
 		'apptheme',
+		'money',
 		'assets/common',
 		'layout/ui/fields/barcode',
 		'layout/ui/fields/boolean',

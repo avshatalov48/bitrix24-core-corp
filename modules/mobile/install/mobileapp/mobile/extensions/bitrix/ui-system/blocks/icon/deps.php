@@ -3,7 +3,6 @@
 return [
 	'extensions' => [
 		'tokens',
-		'feature',
 		'utils/url',
 		'utils/object',
 		'utils/validation',

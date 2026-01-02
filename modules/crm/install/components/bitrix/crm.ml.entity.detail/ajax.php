@@ -84,16 +84,10 @@ class CrmMlEntityDetailAjaxController extends Controller
 	 */
 	public function getCurrentPredictionAction($entityTypeId, $entityId): ?array
 	{
-		$categoryId = Container::getInstance()
-			->getFactory($entityTypeId)
-			?->getItemCategoryId($entityId)
-		;
-
 		if (
-			!Container::getInstance()->getUserPermissions()->checkReadPermissions(
+			!Container::getInstance()->getUserPermissions()->item()->canRead(
 				$entityTypeId,
-				$entityId,
-				$categoryId
+				$entityId
 			)
 		)
 		{
@@ -135,16 +129,11 @@ class CrmMlEntityDetailAjaxController extends Controller
 	public function getResultAction($entityType, $entityId): ?array
 	{
 		$entityTypeId = CCrmOwnerType::ResolveID($entityType);
-		$categoryId = Container::getInstance()
-			->getFactory($entityTypeId)
-			?->getItemCategoryId($entityId)
-		;
 
 		if (
-			!Container::getInstance()->getUserPermissions()->checkReadPermissions(
+			!Container::getInstance()->getUserPermissions()->item()->canRead(
 				$entityTypeId,
-				$entityId,
-				$categoryId
+				$entityId
 			)
 		)
 		{

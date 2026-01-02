@@ -2,7 +2,6 @@
 
 namespace Bitrix\Crm\Kanban\Entity;
 
-use Bitrix\Crm\Category\PermissionEntityTypeHelper;
 use Bitrix\Crm\Component\EntityList\FieldRestrictionManager;
 use Bitrix\Crm\Component\EntityList\FieldRestrictionManagerTypes;
 use Bitrix\Crm\Filter;
@@ -10,7 +9,6 @@ use Bitrix\Crm\Filter\ItemDataProvider;
 use Bitrix\Crm\Item;
 use Bitrix\Crm\Kanban;
 use Bitrix\Crm\Merger\EntityMergerFactory;
-use Bitrix\Crm\PhaseSemantics;
 use Bitrix\Crm\Search\SearchEnvironment;
 use Bitrix\Crm\Service;
 use Bitrix\Crm\Service\Container;
@@ -19,7 +17,6 @@ use Bitrix\Main\Error;
 use Bitrix\Main\Localization\Loc;
 use Bitrix\Main\Result;
 use Bitrix\Main\UI\Filter\Options;
-use CCrmPerms;
 
 class Dynamic extends Kanban\Entity
 {
@@ -97,15 +94,18 @@ class Dynamic extends Kanban\Entity
 
 	protected function getDefaultAdditionalSelectFields(): array
 	{
-		$fields = [];
-		$fields[Item::FIELD_NAME_TITLE] = '';
+		$fields = [
+			Item::FIELD_NAME_TITLE => '',
+			'LAST_ACTIVITY_BY_TIME' => '',
+			'LAST_ACTIVITY_BY_USER_AVATAR' => '',
+		];
 
-		if($this->factory->isLinkWithProductsEnabled())
+		if ($this->factory->isLinkWithProductsEnabled())
 		{
 			$fields[Item::FIELD_NAME_OPPORTUNITY] = '';
 		}
 
-		if($this->factory->isClientEnabled())
+		if ($this->factory->isClientEnabled())
 		{
 			$fields['CLIENT'] = '';
 		}
@@ -175,9 +175,11 @@ class Dynamic extends Kanban\Entity
 		unset($filter[ItemDataProvider::FIELD_STAGE_SEMANTIC]);
 
 		$userPermissions = Container::getInstance()->getUserPermissions();
-		$filter = $userPermissions->applyAvailableItemsFilter(
+		$filter = $userPermissions->itemsList()->applyAvailableItemsFilter(
 			$filter,
-			[$userPermissions::getPermissionEntityType($this->getTypeId(), $this->getCategoryId())]
+			[
+				(new \Bitrix\Crm\Category\PermissionEntityTypeHelper($this->getTypeId()))->getPermissionEntityTypeForCategory($this->getCategoryId())
+			]
 		);
 
 		$queryParameters = [
@@ -194,6 +196,7 @@ class Dynamic extends Kanban\Entity
 		}
 		$data = [];
 
+		$this->factory->createItem();
 		$res = $this->factory->getDataClass()::getList($queryParameters);
 		while ($row = $res->fetch())
 		{
@@ -279,25 +282,6 @@ class Dynamic extends Kanban\Entity
 		return parent::prepareItemCommonFields($item);
 	}
 
-	public function getCategories(CCrmPerms $permissions): array
-	{
-		$result = [];
-		if(!$this->factory->isCategoriesSupported())
-		{
-			return $result;
-		}
-		$router = Container::getInstance()->getRouter();
-		$categories = $this->factory->getCategories();
-		foreach($categories as $category)
-		{
-			$categoryId = $category->getId();
-			$result[$categoryId] = $category->getData();
-			$result[$categoryId]['url'] = $router->getKanbanUrl($this->getTypeId(), $categoryId);
-		}
-
-		return $result;
-	}
-
 	public function getItemLastId(): int
 	{
 		if($this->itemLastId === null)
@@ -346,7 +330,7 @@ class Dynamic extends Kanban\Entity
 	{
 		$item = $this->factory->getItem($id, $fieldsToSelect);
 
-		if ($item && Container::getInstance()->getUserPermissions()->canReadItem($item))
+		if ($item && Container::getInstance()->getUserPermissions()->item()->canReadItem($item))
 		{
 			if (empty($fieldsToSelect))
 			{
@@ -364,12 +348,15 @@ class Dynamic extends Kanban\Entity
 		return false;
 	}
 
-	public function deleteItems(array $ids, bool $isIgnore = false, CCrmPerms $permissions = null, array $params = []): void
+	/**
+	 * @deprecated
+	 */
+	public function deleteItems(array $ids, bool $isIgnore = false, $permissions = null, array $params = []): void
 	{
-		$this->deleteItemsV2($ids, $isIgnore, $permissions, $params);
+		$this->deleteItemsV2($ids, $isIgnore, $params);
 	}
 
-	public function deleteItemsV2(array $ids, bool $isIgnore = false, CCrmPerms $permissions = null, array $params = []): Result
+	public function deleteItemsV2(array $ids, bool $isIgnore = false, array $params = []): Result
 	{
 		$items = $this->factory->getItemsFilteredByPermissions([
 			'filter' => [
@@ -417,7 +404,7 @@ class Dynamic extends Kanban\Entity
 		]);
 	}
 
-	public function setItemsAssigned(array $ids, int $assignedId, CCrmPerms $permissions): Result
+	public function setItemsAssigned(array $ids, int $assignedId): Result
 	{
 		$result = new Result();
 
@@ -519,7 +506,7 @@ class Dynamic extends Kanban\Entity
 		return $fields;
 	}
 
-	public function updateItemsCategory(array $ids, int $categoryId, CCrmPerms $permissions): Result
+	public function updateItemsCategory(array $ids, int $categoryId): Result
 	{
 		$result = new Result();
 
@@ -529,7 +516,6 @@ class Dynamic extends Kanban\Entity
 			return $result->addError(new Error('Category not found'));
 		}
 
-		$permissions = Container::getInstance()->getUserPermissions();
 		foreach($ids as $id)
 		{
 			$item = $this->factory->getItem($id);
@@ -538,9 +524,7 @@ class Dynamic extends Kanban\Entity
 				continue;
 			}
 
-			if (!(
-				!$item->isNew() > 0 && $permissions->checkAddPermissions($this->getTypeId(), $categoryId)
-			))
+			if (!$this->userPermissions->entityType()->canAddItemsInCategory($this->getTypeId(), $categoryId))
 			{
 				$result->addError(new Error(Loc::getMessage('CRM_COMMON_ERROR_ACCESS_DENIED')));
 				continue;
@@ -586,15 +570,6 @@ class Dynamic extends Kanban\Entity
 		);
 	}
 
-	public function canAddItemToStage(string $stageId, CCrmPerms $userPermissions, string $semantics = PhaseSemantics::UNDEFINED): bool
-	{
-		return Container::getInstance()->getUserPermissions()->checkAddPermissions(
-			$this->getTypeId(),
-			$this->getCategoryId(),
-			$stageId
-		);
-	}
-
 	public function getUrlTemplate(): string
 	{
 		return Service\Container::getInstance()->getRouter()->getItemDetailUrlCompatibleTemplate($this->getTypeId());
@@ -626,36 +601,8 @@ class Dynamic extends Kanban\Entity
 		return $fields;
 	}
 
-	protected function getHideSumForStagePermissionType(string $stageId, \CCrmPerms $userPermissions): ?string
+	public function isRecurringSupported(): bool
 	{
-		return $userPermissions->GetPermType(
-			(new PermissionEntityTypeHelper($this->getTypeId()))->getPermissionEntityTypeForCategory($this->categoryId),
-			'HIDE_SUM',
-			["STAGE_ID{$stageId}"]
-		);
-	}
-
-	public function getCategoriesWithAddPermissions(\CCrmPerms $permissions): array
-	{
-		$result = [];
-		if (!$this->factory->isCategoriesSupported())
-		{
-			return $result;
-		}
-
-		$router = Container::getInstance()->getRouter();
-		$categories = $this->factory->getCategories();
-		$permissions = Container::getInstance()->getUserPermissions();
-		foreach ($categories as $category)
-		{
-			$categoryId = $category->getId();
-			if ($permissions->checkAddPermissions($this->getTypeId(), $categoryId))
-			{
-				$result[$categoryId] = $category->getData();
-				$result[$categoryId]['url'] = $router->getKanbanUrl($this->getTypeId(), $categoryId);
-			}
-		}
-
-		return $result;
+		return $this->factory->isRecurringEnabled();
 	}
 }

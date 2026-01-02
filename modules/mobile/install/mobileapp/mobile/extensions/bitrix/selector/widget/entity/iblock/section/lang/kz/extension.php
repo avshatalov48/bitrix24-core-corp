@@ -1,0 +1,3 @@
+<?php
+$MESS["SELECTOR_COMPONENT_IBLOCK_SECTION_START_TYPING_TEXT"] = "Бөлімдер тізімі бос";
+$MESS["SELECTOR_COMPONENT_IBLOCK_SECTION_TITLE"] = "Ақпараттық блок бөлімі";

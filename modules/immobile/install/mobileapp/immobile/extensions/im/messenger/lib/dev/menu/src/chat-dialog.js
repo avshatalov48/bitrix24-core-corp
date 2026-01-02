@@ -14,7 +14,7 @@ jn.define('im/messenger/lib/dev/menu/chat-dialog', (require, exports, module) =>
 		UnsupportedMessage,
 		DateSeparatorMessage,
 		UnreadSeparatorMessage,
-	} = require('im/messenger/lib/element');
+	} = require('im/messenger/lib/element/dialog');
 	const { MessengerParams } = require('im/messenger/lib/params');
 
 	class ChatDialog

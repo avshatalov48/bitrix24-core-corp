@@ -1,4 +1,5 @@
 import type { BaseEvent } from 'main.core.events';
+import { DocumentInitiatedType } from 'sign.type';
 
 export type BlankSelectorConfig = {
 	events?: {
@@ -21,6 +22,9 @@ export type BlankSelectorConfig = {
 	regionDocumentTypes: [],
 	canUploadNewBlank?: boolean,
 	documentMode?: 'template' | 'document',
+	isOpenedFromRobot?: boolean,
+	isOpenedFromTemplateFolder?: boolean,
+	initiatedByType?: DocumentInitiatedType,
 };
 
 export type BlankData = {
@@ -42,3 +46,11 @@ export type BlankProps = {
 	...ListItemProps;
 	userAvatarUrl?: BlankData['userAvatarUrl'];
 };
+
+export type ToggleEvent = BaseEvent<{ selected: false } | {
+	id: number,
+	title: string,
+	selected: true,
+	extra: Object,
+	previousSelectedBlankId: number | null,
+}>;

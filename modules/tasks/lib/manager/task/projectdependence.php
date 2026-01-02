@@ -14,8 +14,8 @@ namespace Bitrix\Tasks\Manager\Task;
 
 use \Bitrix\Main\Loader;
 
+use Bitrix\Tasks\Internals\Task\ProjectDependenceTable;
 use \Bitrix\Tasks\Util\Error\Collection;
-use \Bitrix\Tasks\Task\DependenceTable;
 use \Bitrix\Tasks\TaskTable;
 
 final class ProjectDependence extends \Bitrix\Tasks\Manager
@@ -76,7 +76,7 @@ final class ProjectDependence extends \Bitrix\Tasks\Manager
 			$listParameters['runtime'] = $mixins;
 		}
 
-		$res = DependenceTable::getList($listParameters);
+		$res = ProjectDependenceTable::getList($listParameters);
 		while($item = $res->fetch())
 		{
 			$seDependsOn = array();
@@ -134,7 +134,7 @@ final class ProjectDependence extends \Bitrix\Tasks\Manager
 		$items = 			static::indexItemSets($items);
 		$currentItems = 	static::indexItemSets($currentItems['DATA']);
 
-		list($toAdd, $toUpdate, $toDelete) = static::makeDeltaSets($items, $currentItems);
+		[$toAdd, $toUpdate, $toDelete] = static::makeDeltaSets($items, $currentItems);
 		if(empty($toAdd) && empty($toUpdate) && empty($toDelete))
 		{
 			return $result;
@@ -163,7 +163,7 @@ final class ProjectDependence extends \Bitrix\Tasks\Manager
 				}
 			}
 		}
-		catch(\Bitrix\Tasks\DB\Tree\LinkExistsException $e)
+		catch(\Bitrix\Tasks\Internals\DataBase\Tree\LinkExistsException $e)
 		{
 			// todo: PROJECTDEPENDENCE: more clever error code here
 			$errors->add('PROJECTDEPENDENCE', $e->getMessageFriendly());

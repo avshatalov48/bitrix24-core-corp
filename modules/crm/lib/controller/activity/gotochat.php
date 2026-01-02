@@ -93,27 +93,9 @@ class GoToChat extends Base
 		return $result;
 	}
 
-	private function checkChannel(Channel $channel): Result
-	{
-		$sender = $channel->getSender();
-		if ($sender::getSenderCode() === 'bitrix24')
-		{
-			$result = new Result();
-
-			if ($sender::canUse())
-			{
-				return $result;
-			}
-
-			return $result->addError(new Error(Loc::getMessage('CRM_INVITATION_ERROR')));
-		}
-
-		return $channel->checkChannel();
-	}
-
 	public function getConfigAction(Item $entity): ?array
 	{
-		if (!Container::getInstance()->getUserPermissions()->canReadItem($entity))
+		if (!Container::getInstance()->getUserPermissions()->item()->canReadItem($entity))
 		{
 			$this->addError(new Error(Loc::getMessage('CRM_ACCESS_DENIED')));
 
@@ -206,7 +188,11 @@ class GoToChat extends Base
 			$fromList = $this->getPreparedFromList($channel);
 
 			$canUse = (
-				($senderCode === 'bitrix24' && $channel->getSender()::canUse())
+				(
+					$senderCode === 'bitrix24'
+					&& $channel->getSender()::canUse()
+					&& Application::getInstance()->getLicense()->getRegion() === 'ru'
+				)
 				|| ($senderCode !== 'bitrix24' && $channel->canSendMessage())
 			);
 
@@ -357,7 +343,7 @@ class GoToChat extends Base
 			$result->addError(ErrorCode::getNotFoundError());
 		}
 
-		if (!Container::getInstance()->getUserPermissions()->canReadItem($item))
+		if (!Container::getInstance()->getUserPermissions()->item()->canReadItem($item))
 		{
 			$result->addError(ErrorCode::getAccessDeniedError());
 		}

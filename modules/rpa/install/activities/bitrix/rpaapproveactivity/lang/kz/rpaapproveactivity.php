@@ -1,0 +1,27 @@
+<?php
+$MESS["RPA_BP_APR_ACT_NO_ACTION"] = "Әрекет көрсетілмеген";
+$MESS["RPA_BP_APR_ACT_PROP_EMPTY1"] = "Жауапты тапсырмалар көрсетілмеген";
+$MESS["RPA_BP_APR_ACT_PROP_EMPTY2"] = "Мақұлдау түрі көрсетілмеген";
+$MESS["RPA_BP_APR_ACT_PROP_EMPTY3"] = "Мақұлдаудың дұрыс емес түрі";
+$MESS["RPA_BP_APR_ACT_PROP_EMPTY4"] = "Тапсырманың атауы көрсетілмеген";
+$MESS["RPA_BP_APR_ERROR_STAGE_ID"] = "Дұрыс емес мақсатты саты";
+$MESS["RPA_BP_APR_FIELD_ACTIONS"] = "Батырмалар";
+$MESS["RPA_BP_APR_FIELD_ALTER_RESPONSIBLE"] = "Орынбасарды тағайындау";
+$MESS["RPA_BP_APR_FIELD_APPROVE_ACTION_NO"] = "Қабылдамау";
+$MESS["RPA_BP_APR_FIELD_APPROVE_ACTION_YES"] = "Бекіту";
+$MESS["RPA_BP_APR_FIELD_APPROVE_FIXED_COUNT"] = "Қаншасы бекітеді";
+$MESS["RPA_BP_APR_FIELD_APPROVE_TYPE"] = "Бекіту түрі";
+$MESS["RPA_BP_APR_FIELD_APPROVE_TYPE_ALL"] = "Барлығы бірден";
+$MESS["RPA_BP_APR_FIELD_APPROVE_TYPE_ANY"] = "Олардың кез келгені";
+$MESS["RPA_BP_APR_FIELD_APPROVE_TYPE_FIXED"] = "Кез келген";
+$MESS["RPA_BP_APR_FIELD_APPROVE_TYPE_QUEUE"] = "Барлығы кезекпен";
+$MESS["RPA_BP_APR_FIELD_DESCRIPTION"] = "Мәтін";
+$MESS["RPA_BP_APR_FIELD_EXECUTIVE_RESPONSIBLE"] = "Шешім қабылдайтын тұлғалар";
+$MESS["RPA_BP_APR_FIELD_FIELDS_TO_SHOW"] = "Көрсету керек өрістер";
+$MESS["RPA_BP_APR_FIELD_NAME"] = "Атауы";
+$MESS["RPA_BP_APR_FIELD_RESPONSIBLE_TYPE"] = "Жауаптылар түрі";
+$MESS["RPA_BP_APR_FIELD_RESPONSIBLE_TYPE_HEADS"] = "Құрылым бойынша қызметкердің жетекшілері";
+$MESS["RPA_BP_APR_FIELD_RESPONSIBLE_TYPE_PLAIN"] = "Жауаптылар кезегі";
+$MESS["RPA_BP_APR_FIELD_SKIP_ABSENT"] = "Демалыста жүргендерді өткізіп жіберу";
+$MESS["RPA_BP_APR_FIELD_USERS"] = "Тапсырмаға жауаптылардың кезегі";
+$MESS["RPA_BP_APR_RUNTIME_TERMINATED"] = "Саты өзгертілді";

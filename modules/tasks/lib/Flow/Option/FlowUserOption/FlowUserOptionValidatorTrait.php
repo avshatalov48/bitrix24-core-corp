@@ -4,11 +4,11 @@ namespace Bitrix\Tasks\Flow\Option\FlowUserOption;
 
 trait FlowUserOptionValidatorTrait
 {
-	private function validateCode(string $code): void
+	private function validateName(string $name): void
 	{
-		if (null === FlowUserOptionDictionary::tryFrom($code))
+		if (null === FlowUserOptionDictionary::tryFrom($name))
 		{
-			throw new \InvalidArgumentException("Invalid flow_user_option code: $code");
+			throw new \InvalidArgumentException("Invalid flow_user_option name: $name");
 		}
 	}
 }

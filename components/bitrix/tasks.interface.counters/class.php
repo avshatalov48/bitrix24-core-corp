@@ -408,6 +408,8 @@ class TasksInterfaceCountersComponent extends \CBitrixComponent
 		{
 			$this->arParams['ROLE'] = Counter\Role::ALL;
 		}
+
+		$this->arResult['SHOULD_SHOW_COMMENT_COUNTER_AHA'] = $this->shouldShowCommentCounterAha();
 	}
 
 	private function prepareCounters()
@@ -420,6 +422,16 @@ class TasksInterfaceCountersComponent extends \CBitrixComponent
 		}
 
 		return $counters;
+	}
+
+	private function shouldShowCommentCounterAha(): bool
+	{
+		$userId = (int)($this->arParams['USER_ID'] ?? 0);
+		$gridId = (string)($this->arParams['GRID_ID'] ?? '');
+		$groupId = (int)($this->arParams['GROUP_ID'] ?? 0);
+		$commentCounterClue = (new \Bitrix\Tasks\TourGuide\Clue\CommentCounter());
+
+		return $commentCounterClue->shouldShow($userId, $gridId, $groupId);
 	}
 
 	/**

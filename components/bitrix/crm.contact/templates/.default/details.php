@@ -34,7 +34,6 @@ if (isset($_REQUEST['IFRAME']) && $_REQUEST['IFRAME'] === 'Y')
 		[
 			'ENTITY_TYPE_ID' => CCrmOwnerType::Contact,
 			'ENTITY_ID' => $entityId,
-			'ENABLE_TITLE_EDIT' => false,
 			'EXTRAS' => [
 				'CATEGORY_ID' => $categoryId,
 				'ANALYTICS' => [

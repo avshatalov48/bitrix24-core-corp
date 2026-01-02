@@ -11,6 +11,7 @@ use Bitrix\Crm\Item;
 use Bitrix\Crm\ProductRow;
 use Bitrix\Crm\Service\Container;
 use Bitrix\Crm\Service\Sale\Reservation\ReservationService;
+use Bitrix\CrmMobile\ProductGrid\ProductItem;
 use Bitrix\CrmMobile\ProductGrid\ProductRowViewModel;
 use Bitrix\CrmMobile\ProductGrid\StoreDataProvider;
 
@@ -245,12 +246,6 @@ final class CompleteStores implements EnricherContract
 
 	private function rebuildSource(ProductRow $source, array $mutations): ProductRow
 	{
-		$result = ProductRow::createFromArray(array_merge(
-			$source->toArray(),
-			$mutations
-		));
-		$this->entity->addToProductRows($result);
-
-		return $result;
+		return ProductItem::rebuild($source, $mutations, $this->entity);
 	}
 }

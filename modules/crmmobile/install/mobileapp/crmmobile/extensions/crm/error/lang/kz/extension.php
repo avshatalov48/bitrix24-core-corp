@@ -1,0 +1,20 @@
+<?php
+$MESS["MCRM_ERROR_ACCESS_DENIED_TEXT"] = "Битрикс24 әкімшісіне немесе CRM-ге жауапты қызметкерге жүгініңіз";
+$MESS["MCRM_ERROR_ACCESS_DENIED_TITLE"] = "Элементті қарау үшін құқықтар жеткіліксіз.";
+$MESS["MCRM_ERROR_ACCESS_DENIED_TITLE_COMPANY"] = "Компанияны қарау үшін құқықтар жеткіліксіз.";
+$MESS["MCRM_ERROR_ACCESS_DENIED_TITLE_CONTACT"] = "Байланысты қарау үшін құқықтар жеткіліксіз.";
+$MESS["MCRM_ERROR_ACCESS_DENIED_TITLE_DEAL"] = "Мәмілені қарау үшін құқықтар жеткіліксіз.";
+$MESS["MCRM_ERROR_ACCESS_DENIED_TITLE_LEAD"] = "Лидті қарау үшін құқықтар жеткіліксіз.";
+$MESS["MCRM_ERROR_ACCESS_DENIED_TITLE_QUOTE_MSGVER_1"] = "Ұсынысты қарау үшін құқықтар жеткіліксіз.";
+$MESS["MCRM_ERROR_ACCESS_DENIED_TITLE_SMART_INVOICE"] = "Шотты қарау үшін құқықтар жеткіліксіз.";
+$MESS["MCRM_ERROR_ALERT_CONFIRM"] = "Түсінікті";
+$MESS["MCRM_ERROR_INTERNAL_ERROR_TEXT"] = "Біраз уақыттан кейін қайталап көріңіз. \nЕгер қате қайтадан орын алса, сіздің Битрикс24 әкімшісіне немесе CRM-ге жауапты қызметкерге хабарласыңыз.";
+$MESS["MCRM_ERROR_INTERNAL_ERROR_TITLE"] = "Ішкі қате пайда болды";
+$MESS["MCRM_ERROR_NOT_FOUND_TITLE"] = "Элемент табылмады";
+$MESS["MCRM_ERROR_NOT_FOUND_TITLE_COMPANY"] = "Компания табылмады";
+$MESS["MCRM_ERROR_NOT_FOUND_TITLE_CONTACT"] = "Байланыс табылмады";
+$MESS["MCRM_ERROR_NOT_FOUND_TITLE_DEAL"] = "Мәміле табылмады";
+$MESS["MCRM_ERROR_NOT_FOUND_TITLE_LEAD"] = "Лид табылмады";
+$MESS["MCRM_ERROR_NOT_FOUND_TITLE_QUOTE_MSGVER_1"] = "Ұсыныс табылмады";
+$MESS["MCRM_ERROR_NOT_FOUND_TITLE_SMART_INVOICE"] = "Шот табылмады";
+$MESS["MCRM_ERROR_PUBLIC_ERROR_TITLE"] = "Қате";

@@ -31,6 +31,7 @@ this.BX.Booking = this.BX.Booking || {};
 	      workLoad: null,
 	      counter: null,
 	      isMain: false,
+	      isDeleted: false,
 	      isConfirmationNotificationOn: true,
 	      isFeedbackNotificationOn: true,
 	      isInfoNotificationOn: false,
@@ -43,13 +44,20 @@ this.BX.Booking = this.BX.Booking || {};
 	      templateTypeReminder: '',
 	      createdBy: 0,
 	      createdAt: 0,
-	      updatedAt: 0
+	      updatedAt: 0,
+	      deletedAt: 0,
+	      entities: []
 	    };
 	  }
 	  getGetters() {
 	    return {
 	      /** @function resources/get */
-	      get: state => Object.values(state.collection),
+	      get: (state, getters, rootState, rootGetters) => {
+	        const deletingResources = rootGetters[`${booking_const.Model.Interface}/deletingResources`];
+	        return Object.values(state.collection).filter(({
+	          id
+	        }) => !deletingResources[id]);
+	      },
 	      /** @function resources/getById */
 	      getById: state => id => state.collection[id],
 	      /** @function resources/getByIds */

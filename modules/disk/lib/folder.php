@@ -4,6 +4,7 @@ namespace Bitrix\Disk;
 
 use Bitrix\Disk\Internals\Error\Error;
 use Bitrix\Disk\Internals\Error\ErrorCollection;
+use Bitrix\Disk\Internals\FileHelper;
 use Bitrix\Disk\Internals\FileTable;
 use Bitrix\Disk\Internals\FolderTable;
 use Bitrix\Disk\Internals\ObjectNameService;
@@ -186,6 +187,12 @@ class Folder extends BaseObject
 
 		$fileArray['type'] = TypeFile::normalizeMimeType($fileArray['type'], $data['NAME']);
 		$fileArray['name'] = $data['NAME'];
+
+		if (!FileHelper::hasValidFileKeys($fileArray))
+		{
+			$this->errorCollection->add([new Error(Loc::getMessage('DISK_FOLDER_MODEL_ERROR_COULD_NOT_SAVE_FILE'), self::ERROR_COULD_NOT_SAVE_FILE)]);
+			return null;
+		}
 
 		$fileId = CFile::saveFile($fileArray, Driver::INTERNAL_MODULE_ID, true, true);
 		if(!$fileId)
@@ -523,9 +530,9 @@ class Folder extends BaseObject
 	{
 		$this->errorCollection->clear();
 
-		static::checkRequiredInputParams($data, array(
-			'NAME'
-		));
+		static::checkRequiredInputParams($data, [
+			'NAME',
+		]);
 
 		$nameService = new ObjectNameService($data['NAME'], $this->id, ObjectTable::TYPE_FOLDER);
 		if ($generateUniqueName)

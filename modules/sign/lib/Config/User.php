@@ -31,7 +31,6 @@ final class User
 		return \Bitrix\Intranet\Util::isIntranetUser($userId);
 	}
 
-
 	public function isB2bCreateDocumentAvailableForCurrentUser(): bool
 	{
 		$userId = (int)CurrentUser::get()->getId();

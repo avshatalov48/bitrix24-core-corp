@@ -51,6 +51,7 @@ header('Pragma: public');
 
 $userCache = [];
 $groupCache = [];
+$isFirstPage = $arResult['CURRENT_PAGE'] === 1;
 $columnsToIgnore = ['FLAG_COMPLETE', 'RESPONSIBLE_ID', 'CREATED_BY', 'STAGE_ID'];
 $locMap = [
 	'PARENT_ID' => 'BASE_ID',
@@ -68,7 +69,7 @@ if (array_key_exists('EXPORT_ALL', $arResult))
 	$columns = array_unique($arResult['EXPORT_COLUMNS']);
 }
 
-if ($arResult['CURRENT_PAGE'] === 1):
+if ($isFirstPage):
 ?>
 
 <meta http-equiv="Content-type" content="text/html;charset=<?=LANG_CHARSET ?>"/>
@@ -76,6 +77,8 @@ if ($arResult['CURRENT_PAGE'] === 1):
 <table border="1">
 	<thead>
 	<tr>
+<?php endif; ?>
+
 		<?php foreach ($columns as $field):
 			if (in_array($field, $columnsToIgnore, true))
 			{
@@ -89,7 +92,9 @@ if ($arResult['CURRENT_PAGE'] === 1):
 			}
 
 			$field = $locMap[$field] ?? $field;
-			$header = Loc::getMessage("TASKS_EXCEL_{$field}");
+			$header =
+				Loc::getMessage("TASKS_EXCEL_{$field}_MSGVER_1")
+				?? Loc::getMessage("TASKS_EXCEL_{$field}");
 			if ($header === null && array_key_exists($field, $arParams['UF']))
 			{
 				$header = $arParams['UF'][$field]['EDIT_FORM_LABEL'];
@@ -101,8 +106,12 @@ if ($arResult['CURRENT_PAGE'] === 1):
 				continue;
 			}
 
-			?><th><?=$header?></th>
+			if ($isFirstPage):
+				?><th><?=$header?></th>
+			<?php endif;?>
 		<?php endforeach;?>
+
+	<?php if ($isFirstPage):?>
 	</tr>
 	</thead>
 
@@ -112,7 +121,7 @@ if ($arResult['CURRENT_PAGE'] === 1):
 	<?php foreach ($arResult['EXPORT_LIST'] as $task):?>
 		<tr>
 			<?php
-			foreach ($arParams['COLUMNS'] as $field)
+			foreach ($columns as $field)
 			{
 				if (in_array($field, $columnsToIgnore, true))
 				{
@@ -126,7 +135,7 @@ if ($arResult['CURRENT_PAGE'] === 1):
 				}
 
 				$prefix = '';
-				$rawColumnValue = $task[$field] ?? null;
+				$rawColumnValue = $task[$field] ?? '';
 				$columnValue = $rawColumnValue;
 
 				switch ($field)

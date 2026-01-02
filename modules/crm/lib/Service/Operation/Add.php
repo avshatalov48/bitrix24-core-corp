@@ -5,6 +5,8 @@ namespace Bitrix\Crm\Service\Operation;
 use Bitrix\Crm\Activity\Entity;
 use Bitrix\Crm\Activity\Provider\ToDo;
 use Bitrix\Crm\Field\Collection;
+use Bitrix\Crm\Integration\BizProc\Starter\CrmStarter;
+use Bitrix\Crm\Integration\BizProc\Starter\Dto\RunDataDto;
 use Bitrix\Crm\Integration\PullManager;
 use Bitrix\Crm\Integrity;
 use Bitrix\Crm\Item;
@@ -34,7 +36,7 @@ class Add extends Operation
 		$result = new Result();
 
 		$userPermissions = Container::getInstance()->getUserPermissions($this->getContext()->getUserId());
-		$canAddItem = $userPermissions->canAddItem($this->item);
+		$canAddItem = $userPermissions->item()->canAddItem($this->item);
 
 		if(!$canAddItem)
 		{
@@ -209,11 +211,14 @@ class Add extends Operation
 	{
 		$result = parent::runAutomation();
 
-		if($result->isSuccess())
+		if($result->isSuccess() && isset($result->getData()['runData'], $result->getData()['newStarter']))
 		{
-			/** @var \Bitrix\Crm\Automation\Starter $starter */
-			$starter = $result->getData()['starter'];
-			return $starter->runOnAdd();
+			/** @var CrmStarter $starter */
+			$starter = $result->getData()['newStarter'];
+			/** @var RunDataDto $runData */
+			$runData = $result->getData()['runData'];
+
+			return $starter->runAutomation($runData, \CCrmBizProcEventType::Create);
 		}
 
 		return $result;

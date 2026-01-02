@@ -3,7 +3,6 @@
 return [
 	'extensions' => [
 		'analytics-label',
-		'feature',
 		'layout/ui/menu',
 		'notify-manager',
 		'type',

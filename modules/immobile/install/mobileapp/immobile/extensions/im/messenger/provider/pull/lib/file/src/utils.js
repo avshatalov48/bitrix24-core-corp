@@ -5,7 +5,7 @@ jn.define('im/messenger/provider/pull/lib/file/utils', (require, exports, module
 	const { serviceLocator } = require('im/messenger/lib/di/service-locator');
 	const { Logger } = require('im/messenger/lib/logger');
 	const { Type } = require('type');
-	const { FileType } = require('im/messenger/const');
+	const { FileType, TranscriptStatus, TranscriptResponseStatus } = require('im/messenger/const');
 	const { downloadImages } = require('asset-manager');
 
 	/**
@@ -13,11 +13,13 @@ jn.define('im/messenger/provider/pull/lib/file/utils', (require, exports, module
 	 */
 	class FileUtils
 	{
-		#store;
-
-		constructor()
+		/**
+		 * @protected
+		 * @return {MessengerCoreStore|null}
+		 */
+		get #store()
 		{
-			this.#store = serviceLocator.get('core').getStore();
+			return serviceLocator.get('core')?.getStore();
 		}
 
 		/**
@@ -102,6 +104,45 @@ jn.define('im/messenger/provider/pull/lib/file/utils', (require, exports, module
 						Logger.error(`${this.constructor.name}.preloadToNativeCache: error downloading video preview image`, error);
 					});
 			}
+		}
+
+		/**
+		 * @param {FileId} fileId
+		 * @param {string} transcriptText
+		 */
+		async setTranscript({ fileId, transcriptText, status })
+		{
+			if (Type.isUndefined(fileId) || Type.isUndefined(transcriptText))
+			{
+				Logger.error(`${this.constructor.name}.setTranscript: fileId or transcriptText not defined`);
+
+				return;
+			}
+
+			const transcriptModel = this.#store.getters['filesModel/transcriptModel/getById'](fileId);
+
+			if (Type.isNull(transcriptModel))
+			{
+				Logger.log(`${this.constructor.name}.setTranscript: transcriptModel not defined`);
+
+				return;
+			}
+
+			if (status === TranscriptResponseStatus.error)
+			{
+				await this.#store.dispatch('filesModel/transcriptModel/set', {
+					...transcriptModel,
+					status: TranscriptStatus.error,
+				});
+
+				return;
+			}
+
+			await this.#store.dispatch('filesModel/transcriptModel/set', {
+				...transcriptModel,
+				text: transcriptText,
+				status: TranscriptStatus.expanded,
+			});
 		}
 	}
 

@@ -18,6 +18,8 @@ Extension::load([
 	'ui.graph.circle',
 ]);
 
+CJSCore::Init(['amcharts4_core','amcharts4','amcharts4_theme_animated']);
+
 if (isset($arResult['ERROR']) && !empty($arResult['ERROR']))
 {
 	foreach ($arResult['ERROR'] as $error)
@@ -67,9 +69,6 @@ $efficiencyData = $arResult['JS_DATA']['efficiencyData'];
 	</div>
 </div>
 
-<script src="https://cdn.amcharts.com/lib/4/core.js"></script>
-<script src="https://cdn.amcharts.com/lib/4/charts.js"></script>
-<script src="https://cdn.amcharts.com/lib/4/themes/animated.js"></script>
 <script>
 	document.body.style.overflow = 'hidden';
 	const rootElement = getComputedStyle(document.documentElement);

@@ -117,12 +117,15 @@ Class intranet extends CModule
 		RegisterModuleDependences("main", "OnGetRatingsObjects", "intranet", "CRatingsComponentsIntranet", "OnGetRatingObject", 200);
 
 		//auth provider
-		RegisterModuleDependences("main", "OnAuthProvidersBuildList", "intranet", "CIntranetAuthProvider", "GetProviders");
-		RegisterModuleDependences('main', 'OnBeforeUserUpdate', 'intranet', 'CIntranetAuthProvider', 'OnBeforeUserUpdate');
-		RegisterModuleDependences('main', 'OnAfterUserAdd', 'intranet', 'CIntranetAuthProvider', 'OnAfterUserAdd');
-		RegisterModuleDependences('iblock', 'OnBeforeIBlockSectionUpdate', 'intranet', 'CIntranetAuthProvider', 'OnBeforeIBlockSectionUpdate');
-		RegisterModuleDependences('iblock', 'OnAfterIBlockSectionDelete', 'intranet', 'CIntranetAuthProvider', 'OnAfterIBlockSectionDelete');
-		RegisterModuleDependences("search", "OnSearchCheckPermissions", "intranet", "CIntranetAuthProvider", "OnSearchCheckPermissions");
+		RegisterModuleDependences("main","OnAuthProvidersBuildList","intranet","CIntranetAuthProvider","GetProviders",);
+		RegisterModuleDependences(
+			'iblock',
+			'OnAfterIBlockSectionDelete',
+			'intranet',
+			'CIntranetAuthProvider',
+			'OnAfterIBlockSectionDelete'
+		);
+		RegisterModuleDependences("search","OnSearchCheckPermissions","intranet","CIntranetAuthProvider","OnSearchCheckPermissions",);
 
 		// activity pulse
 		RegisterModuleDependences("crm", "OnAfterCrmContactAdd", "intranet", "\\Bitrix\\Intranet\\UStat\\CrmEventHandler", "onAfterCrmContactAddEvent");
@@ -167,6 +170,13 @@ Class intranet extends CModule
 		RegisterModuleDependences("rest", "OnRestAppDelete", "intranet", 'CIntranetEventHandlers', "onRestAppDelete");
 
 		$eventManager = \Bitrix\Main\EventManager::getInstance();
+
+		$eventManager->registerEventHandler('humanresources','OnMemberAdded','intranet','\Bitrix\Intranet\Integration\HumanResources\EventHandler','onMemberChanges',);
+		$eventManager->registerEventHandler('humanresources','OnMemberUpdated','intranet','\Bitrix\Intranet\Integration\HumanResources\EventHandler','onMemberChanges',);
+		$eventManager->registerEventHandler('humanresources','OnMemberDeleted','intranet','\Bitrix\Intranet\Integration\HumanResources\EventHandler','onMemberChanges',);
+		$eventManager->registerEventHandler('humanresources','OnNodeUpdated','intranet','\Bitrix\Intranet\Integration\HumanResources\EventHandler','onNodeUpdated',);
+		$eventManager->registerEventHandler('humanresources','OnNodeDeleted','intranet','\Bitrix\Intranet\Integration\HumanResources\EventHandler','onNodeDeleted',);
+
 		$eventManager->registerEventHandler('main', 'onApplicationScopeError', 'intranet', '\Bitrix\Intranet\PublicApplication', 'onApplicationScopeError');
 		$eventManager->registerEventHandler('socialservices', '\Bitrix\Socialservices\User::'.\Bitrix\Main\Entity\DataManager::EVENT_ON_AFTER_ADD, 'intranet', 'CIntranetEventHandlers', 'OnAfterSocServUserAdd');
 		$eventManager->registerEventHandler('security', 'onOtpRequired', 'intranet', '\Bitrix\Intranet\Integration\Security', 'onOtpRequired');

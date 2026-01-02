@@ -1,0 +1,18 @@
+.sign-b2e_switcher {
+	margin-right: 8px;
+}
+
+.sign-b2e_switcher__title {
+	cursor: pointer;
+}
+
+.sign-b2e_switcher__hint {
+	width: 13px;
+	height: 13px;
+	line-height: 0;
+	margin-left: 5px;
+}
+
+.sign-b2e_switcher__hint .ui-hint-icon {
+	margin: 0;
+}

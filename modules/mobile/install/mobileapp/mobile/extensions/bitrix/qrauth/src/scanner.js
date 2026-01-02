@@ -242,7 +242,6 @@ jn.define('qrauth/src/scanner', (require, exports, module) => {
 						c_section: this.analyticsSection,
 						c_sub_section: 'qrcode',
 						p1: 'platform_web',
-						p2: `redirectUrl_${this.redirectUrl}`,
 						p3: `userId_${env.userId}`,
 					});
 					event.send();

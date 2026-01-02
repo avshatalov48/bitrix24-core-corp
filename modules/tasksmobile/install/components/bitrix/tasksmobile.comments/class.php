@@ -14,6 +14,7 @@ use Bitrix\Tasks\Util\User;
 class TasksMobileCommentsComponent extends CBitrixComponent
 {
 	private Collection $errors;
+	private float $executeComponentStart;
 
 	private function checkModules(): bool
 	{
@@ -54,7 +55,6 @@ class TasksMobileCommentsComponent extends CBitrixComponent
 		$this->arResult['DATE_TIME_FORMAT'] = $this->arParams['DATE_TIME_FORMAT'];
 		$this->arResult['GUID'] = $this->arParams['GUID'];
 		$this->arResult['PATH_TEMPLATE_TO_USER_PROFILE'] = $this->arParams['PATH_TEMPLATE_TO_USER_PROFILE'];
-		$this->arResult['IS_TABS_MODE'] = ($this->arParams['IS_TABS_MODE'] !== 'false');
 		$this->arResult['ANALYTICS_LABEL'] = [
 			...$this->arParams['ANALYTICS_LABEL'],
 			'tool' => 'tasks',
@@ -68,6 +68,7 @@ class TasksMobileCommentsComponent extends CBitrixComponent
 
 	public function getData(): void
 	{
+		$getDataStart = microtime(true);
 		try
 		{
 			$task = new CTaskItem($this->arParams['TASK_ID'], $this->arParams['USER_ID']);
@@ -89,11 +90,23 @@ class TasksMobileCommentsComponent extends CBitrixComponent
 			return;
 		}
 
+		$getDataEnd = microtime(true);
 		$taskId = (int)$taskData['ID'];
 		$this->arResult['TASK'] = $taskData;
 		$this->arResult['FORUM_ID'] = ($taskData['FORUM_ID'] ?: CTasksTools::getForumIdForIntranet());
+		$forumIdEnd = microtime(true);
 		$this->arResult['LOG_ID'] = $this->getLogId($taskId);
+		$logIdEnd = microtime(true);
 		$this->arResult['RESULT_COMMENTS'] = $this->getResultComments($taskId);
+		$resultCommentsEnd = microtime(true);
+
+		$this->arResult['DEBUG'] = [
+			'executeComponentStart' => $this->executeComponentStart,
+			'getData' => $getDataEnd - $getDataStart,
+			'forumId' => $forumIdEnd - $getDataEnd,
+			'logId' => $logIdEnd - $forumIdEnd,
+			'resultComments' => $resultCommentsEnd - $logIdEnd,
+		];
 	}
 
 	private function getLogId(int $taskId): int
@@ -164,6 +177,7 @@ class TasksMobileCommentsComponent extends CBitrixComponent
 
 	public function executeComponent()
 	{
+		$this->executeComponentStart = microtime(true);
 		$this->arResult['ERRORS'] = [];
 
 		if (Loader::includeModule('tasks'))

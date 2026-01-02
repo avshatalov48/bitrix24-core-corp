@@ -59,7 +59,7 @@ class BlogPost
 							return;
 						}
 
-						BXMobileApp.onCustomEvent('onBlogPostDelete', {}, true, true);
+						BXMobileApp.onCustomEvent('onBlogPostDelete', { post_id: postId }, true, true);
 						if (context === 'detail')
 						{
 							app.closeController({

@@ -41,7 +41,7 @@
 	height: 30px;
 	background-color: inherit;
 	border: none;
-	font: var(--ui-font-size-md) var(--ui-font-family-system);
+	font: var(--ui-font-size-md) var(--ui-font-family-primary, var(--ui-font-family-system));
 	color: var(--ui-color-base-90);
 	outline: none;
 	padding-left: 10px;
@@ -68,7 +68,7 @@
 }
 
 .hr-hcmlink-sync__content-search-block__search-input::placeholder {
-	font: var(--ui-font-size-md) var(--ui-font-family-system);
+	font: var(--ui-font-size-md) var(--ui-font-family-primary, var(--ui-font-family-system));
 	color: var(--ui-color-base-60);
 }
 

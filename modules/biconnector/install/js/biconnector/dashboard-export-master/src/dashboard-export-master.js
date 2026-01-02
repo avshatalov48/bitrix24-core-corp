@@ -1,13 +1,14 @@
-import { ajax, Loc, Dom, UI } from 'main.core';
+import { ajax, Loc, Dom, UI, Event, Text } from 'main.core';
 import { EventEmitter } from 'main.core.events';
 import { Loader } from 'main.loader';
 import { Popup } from 'main.popup';
 import { ApacheSupersetAnalytics } from 'biconnector.apache-superset-analytics';
 import { DashboardManager } from 'biconnector.apache-superset-dashboard-manager';
 import { Button } from 'ui.buttons';
-import { Switcher, SwitcherColor, SwitcherSize } from 'ui.switcher';
+import { MessageBox } from 'ui.dialogs.messagebox';
 import { TextCrop } from 'ui.textcrop';
-
+import { Dialog } from 'ui.entity-selector';
+import 'ui.forms';
 import './css/main.css';
 
 type DashboardMasterProps = {
@@ -17,12 +18,15 @@ type DashboardMasterProps = {
 
 type DashboardData = {
 	title: string,
-	period: string,
 	type: string,
 	appId: string,
-	scopesToExport: string,
-	scopesNotToExport: string,
-	urlParams: string,
+	issetScopeNotToExport: boolean,
+	group: ?DashboardSystemGroup,
+}
+
+type DashboardSystemGroup = {
+	id: number,
+	name: string,
 }
 
 /**
@@ -34,7 +38,6 @@ export class DashboardExportMaster
 	#openedFrom: string;
 	#popup: Popup;
 	#dashboardData: DashboardData;
-	#settingSwitcherState: boolean = true;
 	#exportButton: Button;
 
 	constructor(props: DashboardMasterProps)
@@ -69,27 +72,9 @@ export class DashboardExportMaster
 			cacheable: false,
 			overlay: true,
 			width: 360,
-			height: 500,
 			padding: 0,
 		});
 		this.#popup.show();
-
-		if (dashboardData.scopesNotToExport)
-		{
-			const hintNode = document.querySelector('#bic-scope-hint');
-			const hint = UI.Hint.createInstance({
-				popupParameters: {
-					darkMode: true,
-					maxWidth: 250,
-					padding: 5,
-					offsetTop: 0,
-					offsetLeft: 10,
-					angle: true,
-					animation: 'fading-slide',
-				},
-			});
-			hint.initNode(hintNode);
-		}
 
 		const dashboardTitle = new TextCrop({
 			rows: 1,
@@ -104,60 +89,94 @@ export class DashboardExportMaster
 			round: true,
 			color: Button.Color.PRIMARY,
 			className: 'bic-export-button',
-			onclick: () => this.#exportDashboard(this.#dashboardId, this.#settingSwitcherState),
+			disabled: !dashboardData.group,
+			state: dashboardData.group ? Button.State.ACTIVE : Button.State.DISABLED,
+			onclick: () => this.#exportDashboard(this.#dashboardId),
 		});
 		this.#exportButton.renderTo(this.#popup.getContentContainer().querySelector('.bic-export-footer'));
 
-		new Switcher({
-			node: this.#popup.getContentContainer().querySelector('#bic-setting-switcher'),
-			checked: true,
-			color: SwitcherColor.primary,
-			size: SwitcherSize.small,
-			handlers: {
-				toggled: this.#handleSwitcherToggled.bind(this),
-			},
-		});
+		if (!dashboardData.group)
+		{
+			const buttonNode = this.#exportButton.getContainer();
+			buttonNode.setAttribute('data-hint', Loc.getMessage('BIC_EXPORT_NO_GROUP_ERROR'));
+			buttonNode.setAttribute('data-hint-no-icon', 'Y');
+			buttonNode.setAttribute('data-hint-html', 'Y');
+			BX.UI.Hint.init(this.#popup.getContentContainer());
+		}
 
 		const settingsLink = this.#popup.getContentContainer().querySelector('.bic-settings-link');
 		settingsLink.onclick = this.#openSettingsSlider.bind(this, this.#dashboardId);
+
+		const groupSelectorButton = this.#popup.getContentContainer().querySelector('#bic-group-selector-button');
+		const preselectedItems = [];
+		if (dashboardData.group)
+		{
+			preselectedItems.push(['biconnector-superset-group', dashboardData.group.id]);
+		}
+		const groupSelector = new Dialog({
+			targetNode: groupSelectorButton,
+			width: 324,
+			height: 240,
+			autoHide: true,
+			multiple: false,
+			showAvatars: true,
+			dropdownMode: true,
+			preselectedItems,
+			events: {
+				'Item:onSelect': (event) => {
+					const item = event.getData().item;
+					groupSelectorButton.textContent = Text.encode(item.getTitle());
+
+					if (!this.#dashboardData.group)
+					{
+						const buttonNode = this.#exportButton.getContainer();
+						buttonNode.removeAttribute('data-hint');
+						buttonNode.removeAttribute('data-hint-no-icon');
+						buttonNode.removeAttribute('data-hint-html');
+						BX.UI.Hint.init(this.#popup.getContentContainer());
+
+						this.#exportButton.setState(Button.State.ACTIVE);
+						this.#exportButton.setDisabled(false);
+					}
+
+					this.#dashboardData.group = {
+						id: item.getId(),
+						name: item.getTitle(),
+					};
+				},
+				'Item:onBeforeDeselect': (event) => {
+					groupSelectorButton.innerHTML = this.#getPlaceholderForGroupSelector();
+
+					const buttonNode = this.#exportButton.getContainer();
+					buttonNode.setAttribute('data-hint', Loc.getMessage('BIC_EXPORT_NO_GROUP_ERROR'));
+					buttonNode.setAttribute('data-hint-no-icon', 'Y');
+					buttonNode.setAttribute('data-hint-html', 'Y');
+					BX.UI.Hint.init(this.#popup.getContentContainer());
+
+					this.#exportButton.setDisabled(true);
+					this.#exportButton.setState(Button.State.INIT);
+
+					this.#dashboardData.group = null;
+				},
+			},
+			entities: [{
+				id: 'biconnector-superset-group',
+				dynamicLoad: true,
+				options: {
+					onlySystemGroups: true,
+					checkAccessRights: false,
+				},
+			}],
+		});
+		Dom.addClass(groupSelector.getContainer(), 'biconnector-group-selector');
+
+		Event.bind(groupSelectorButton, 'click', () => {
+			groupSelector.show();
+		});
 	}
 
 	#getPopupContent(dashboardData: DashboardData): string
 	{
-		let scope = '';
-		if (!dashboardData.scopesToExport && !dashboardData.scopesNotToExport)
-		{
-			scope = Loc.getMessage('BIC_EXPORT_SCOPE_NONE');
-		}
-		else
-		{
-			// eslint-disable-next-line no-lonely-if
-			if (dashboardData.scopesToExport)
-			{
-				scope = `<span class="bic-scopes-to-export">${dashboardData.scopesToExport}</span>`;
-				if (dashboardData.scopesNotToExport)
-				{
-					scope += `, <span class="bic-scopes-not-to-export">${dashboardData.scopesNotToExport}</span>`;
-				}
-			}
-			else
-			{
-				scope = `<span class="bic-scopes-not-to-export">${dashboardData.scopesNotToExport}</span>`;
-			}
-		}
-
-		let scopeHintContainer = '';
-		if (dashboardData.scopesNotToExport)
-		{
-			scopeHintContainer = `
-				<span data-hint="${Loc.getMessage('BIC_EXPORT_SCOPE_HINT')}" data-hint-no-icon id="bic-scope-hint">
-					<i class="ui-icon-set --info-circle bic-scope-hint-icon"></i>
-				</span>
-			`;
-		}
-
-		const params = dashboardData.urlParams || Loc.getMessage('BIC_EXPORT_SCOPE_NONE');
-
 		return `
 			<div class="bic-export-container">
 				<div class="bic-export-header">
@@ -166,38 +185,27 @@ export class DashboardExportMaster
 				</div>
 				<div class="bic-export-separator"></div>
 				<div class="bic-export-body">
-					<div class="bic-setting-item bic-setting-item-export-with-settings">
-						<div class="bic-setting-title">${Loc.getMessage('BIC_EXPORT_EXPORT_WITH_SETTINGS')}</div>
-						<div class="bic-setting-value" id="bic-setting-switcher"></div>
-					</div>
+					<div class="bic-export-hint">${Loc.getMessage('BIC_EXPORT_HINT_MSGVER_2')}</div>
 
-					<div class="bic-export-hint">${Loc.getMessage('BIC_EXPORT_HINT')}</div>
-					<div class="bic-export-hint disabled">${Loc.getMessage('BIC_EXPORT_HINT_WITH_NO_SETTINGS')}</div>
-
-					<div class="bic-setting-item bic-setting-item-period">
-						<div class="bic-setting-title">${Loc.getMessage('BIC_EXPORT_PERIOD')}</div>
-						<div class="bic-setting-value">${dashboardData.period}</div>
-					</div>
-
-					<div class="bic-setting-item bic-setting-item-scope">
+					<div class="bic-setting-item bic-setting-item-group">
 						<div class="bic-setting-title">
-							<span>${Loc.getMessage('BIC_EXPORT_SCOPE')}</span>
-							${scopeHintContainer}
+							<span>${Loc.getMessage('BIC_EXPORT_GROUP_TITLE')}</span>
 						</div>
-						<div class="bic-setting-value">${scope}</div>
-					</div>
-					
-					<div class="bic-setting-item bic-setting-item-url-params">
-						<div class="bic-setting-title">
-							<span>${Loc.getMessage('BIC_EXPORT_URL_PARAM')}</span>
+						<div class="bic-setting-value ui-ctl ui-ctl-after-icon ui-ctl-dropdown ui-ctl-w100">
+							<div class="ui-ctl-after ui-ctl-icon-angle"></div>
+							<button 
+								class="ui-btn ui-btn-sm ui-btn-light-border bic-group-selector-button" 
+								id="bic-group-selector-button"
+							>
+								${dashboardData.group?.name ?? this.#getPlaceholderForGroupSelector()}
+							</button>
 						</div>
-						<div class="bic-setting-value">${params}</div>
 					</div>
 
 					<div class="bic-setting-item">
 						<span class="bic-settings-link">${Loc.getMessage('BIC_EXPORT_OPEN_SETTINGS')}</span>
 					</div>
-					
+
 				</div>
 				<div class="bic-export-separator"></div>
 				<div class="bic-export-footer"></div>
@@ -224,24 +232,37 @@ export class DashboardExportMaster
 		});
 	}
 
-	#handleSwitcherToggled()
+	async #exportDashboard(dashboardId: number): Promise
 	{
-		const nodes = this.#popup.getContentContainer().querySelectorAll('.bic-setting-item-period,.bic-setting-item-scope,.bic-export-hint,.bic-settings-link');
-		for (const node of nodes)
+		if (!this.#dashboardData.group)
 		{
-			Dom.toggleClass(node, 'disabled');
-		}
-		this.#settingSwitcherState = !this.#settingSwitcherState;
-	}
+			BX.UI.Notification.Center.notify({
+				content: Loc.getMessage('BIC_EXPORT_NO_GROUP_ERROR'),
+			});
 
-	#exportDashboard(dashboardId: number, withSettings: boolean): Promise
-	{
+			return Promise.resolve();
+		}
+
 		this.#exportButton.setState(Button.State.WAITING);
+
+		if (this.#dashboardData.issetScopeNotToExport)
+		{
+			await new Promise((resolve) => {
+				MessageBox.alert(
+					Loc.getMessage('BIC_EXPORT_SCOPE_HINT_MSGVER1'),
+					() => {
+						resolve();
+
+						return true;
+					},
+				);
+			});
+		}
 
 		return ajax.runAction('biconnector.dashboard.export', {
 			data: {
 				id: dashboardId,
-				withSettings: withSettings ? 1 : 0,
+				groupId: this.#dashboardData.group.id,
 			},
 		})
 			.then((response) => {
@@ -308,5 +329,10 @@ export class DashboardExportMaster
 				});
 			})
 		;
+	}
+
+	#getPlaceholderForGroupSelector(): string
+	{
+		return `<span class="bic-group-placeholder">${Loc.getMessage('BIC_EXPORT_GROUP_EMPTY')}</span>`;
 	}
 }

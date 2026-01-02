@@ -110,18 +110,20 @@ this.BX.Booking.Provider = this.BX.Booking.Provider || {};
 	      console.error('ResourceDialogFillDialogRequest: error', error);
 	    }
 	  }
-	  async doSearch(query, dateTs) {
-	    if (!main_core.Type.isStringFilled(query)) {
+	  async doSearch(query, dateTs, typeIds) {
+	    if (!main_core.Type.isStringFilled(query) && typeIds.length === 0) {
 	      return;
 	    }
-	    if (babelHelpers.classPrivateFieldLooseBase(this, _isQueryLoaded)[_isQueryLoaded](query)) {
+	    const fullQuery = `${query}-${typeIds.join('-')}`;
+	    if (babelHelpers.classPrivateFieldLooseBase(this, _isQueryLoaded)[_isQueryLoaded](fullQuery)) {
 	      return;
 	    }
-	    babelHelpers.classPrivateFieldLooseBase(this, _queryCache)[_queryCache].push(query);
+	    babelHelpers.classPrivateFieldLooseBase(this, _queryCache)[_queryCache].push(fullQuery);
 	    try {
 	      const data = await new booking_lib_apiClient.ApiClient().post('ResourceDialog.doSearch', {
 	        query,
-	        dateTs
+	        dateTs,
+	        typeIds
 	      });
 	      await babelHelpers.classPrivateFieldLooseBase(this, _upsertResponseData)[_upsertResponseData](data, dateTs);
 	    } catch (error) {

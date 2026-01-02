@@ -5,6 +5,7 @@ jn.define('layout/ui/entity-editor/control/product-summary-section', (require, e
 	const AppTheme = require('apptheme');
 	const { isEqual } = require('utils/object');
 	const { EntityEditorBaseControl } = require('layout/ui/entity-editor/control/base');
+	const { Money } = require('money');
 
 	/**
 	 * @class ProductSummarySection

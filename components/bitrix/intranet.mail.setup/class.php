@@ -161,7 +161,7 @@ class CIntranetMailSetupComponent extends CBitrixComponent
 		$this->arParams['MAILBOX']  = CIntranetMailSetupHelper::getUserMailbox($USER->GetID());
 
 		$this->arParams['CRM_AVAILABLE'] = false;
-		if (\CModule::includeModule('crm') && \CCrmPerms::isAccessEnabled())
+		if (\Bitrix\Intranet\Integration\Crm::getInstance()->canReadSomeItemsInCrm())
 		{
 			$this->arParams['CRM_AVAILABLE'] = $USER->isAdmin() || $USER->canDoOperation('bitrix24_config')
 				|| COption::getOptionString('intranet', 'allow_external_mail_crm', 'Y', SITE_ID) == 'Y';

@@ -1,0 +1,23 @@
+<?php
+$MESS["CRM_CANCEL_BUTTON"] = "Болдырмау";
+$MESS["CRM_CLOSE_BUTTON"] = "Жабу";
+$MESS["CRM_IMPORT_BUTTON"] = "Импорттау";
+$MESS["CRM_LOC_IMP_CHOOSE_FILE"] = "Орналасу файлын таңдаңыз";
+$MESS["CRM_LOC_IMP_FILE_CNTR"] = "Әлем (мемлекеттер)";
+$MESS["CRM_LOC_IMP_FILE_FFILE"] = "файлдан жүктеу";
+$MESS["CRM_LOC_IMP_FILE_NONE"] = "жүктемеу";
+$MESS["CRM_LOC_IMP_FILE_RS"] = "Ресей және ТМД (мемлекеттер мен қалалар)";
+$MESS["CRM_LOC_IMP_FILE_USA"] = "АҚШ (қалалар)";
+$MESS["CRM_LOC_IMP_JS_ERROR"] = "Қате";
+$MESS["CRM_LOC_IMP_JS_FILE_PROCESS"] = "Файлды жүктеу...";
+$MESS["CRM_LOC_IMP_JS_IMPORT_PROCESS"] = "Деректерді импорттау...";
+$MESS["CRM_LOC_IMP_JS_IMPORT_SUCESS"] = "Импорт сәтті аяқталды";
+$MESS["CRM_LOC_IMP_LOAD_ZIP"] = "ZIP кодтар базасын жүктеп алу";
+$MESS["CRM_LOC_IMP_STEP_CHECK"] = "Қадамның ұзақтығы тек оң сан болуы мүмкін";
+$MESS["CRM_LOC_IMP_STEP_LENGTH"] = "Қадамның ұзақтығы (сек)";
+$MESS["CRM_LOC_IMP_STEP_LENGTH_HINT"] = "Деректерді өңдеу қадамының қажетті ұзақтығын көрсетіңіз. Бұл параметрді парақшаның көрсетілген уақыт ішінде жұмыс істей алатындығына сенімді болсаңыз ғана өзгертіңіз.";
+$MESS["CRM_LOC_IMP_SYNC"] = "Синхрондау";
+$MESS["CRM_LOC_IMP_SYNC_N"] = "алдыңғы деректерді жою";
+$MESS["CRM_LOC_IMP_SYNC_NO_ZIP"] = "Тек Ресей үшін.<br>ZIP кодтар базасын синхрондау жүргізілмейді";
+$MESS["CRM_LOC_IMP_SYNC_Y"] = "қолда бар деректерді жаңасымен синхрондауға тырысу";
+$MESS["CRM_LOC_IMP_TITLE"] = "Орналасу импорты";

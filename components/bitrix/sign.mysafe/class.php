@@ -374,21 +374,21 @@ class SignMySafeComponent extends SignBaseComponent
 
 		$result['=CREATED_BY_ID'] = null;
 
-		if($permission === CCrmPerms::PERM_ALL || $this->accessController->getUser()->isAdmin())
+		if($permission === Bitrix\Crm\Service\UserPermissions::PERMISSION_ALL || $this->accessController->getUser()->isAdmin())
 		{
 			unset($result['=CREATED_BY_ID']);
 		}
-		elseif ($permission === CCrmPerms::PERM_SUBDEPARTMENT)
+		elseif ($permission === Bitrix\Crm\Service\UserPermissions::PERMISSION_SUBDEPARTMENT)
 		{
 			unset($result['=CREATED_BY_ID']);
 			$result['@CREATED_BY_ID'] = $this->accessController->getUser()->getUserDepartmentMembers(true);
 		}
-		elseif ($permission === CCrmPerms::PERM_DEPARTMENT)
+		elseif ($permission === Bitrix\Crm\Service\UserPermissions::PERMISSION_DEPARTMENT)
 		{
 			unset($result['=CREATED_BY_ID']);
 			$result['@CREATED_BY_ID'] = $this->accessController->getUser()->getUserDepartmentMembers();
 		}
-		elseif ($permission === CCrmPerms::PERM_SELF)
+		elseif ($permission === Bitrix\Crm\Service\UserPermissions::PERMISSION_SELF)
 		{
 			$result['=CREATED_BY_ID'] = $this->accessController->getUser()->getUserId();
 		}
@@ -723,7 +723,7 @@ class SignMySafeComponent extends SignBaseComponent
 			(string)$dateCreate
 		);
 	}
-	
+
 	public function getAction(): array
 	{
 		return [

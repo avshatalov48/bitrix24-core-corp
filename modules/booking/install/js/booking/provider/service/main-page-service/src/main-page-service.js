@@ -32,7 +32,7 @@ class MainPageService
 	{
 		try
 		{
-			if (Core.getStore().getters[`${Model.Interface}/isEditingBookingMode`])
+			if (Core.getStore().getters[`${Model.Interface}/editingBookingId`] > 0)
 			{
 				await this.#requestDataForBooking(dateTs);
 			}
@@ -62,9 +62,11 @@ class MainPageService
 			Core.getStore().dispatch(`${Model.ResourceTypes}/upsertMany`, extractor.getResourceTypes()),
 			Core.getStore().dispatch(`${Model.Counters}/set`, extractor.getCounters()),
 			Core.getStore().dispatch(`${Model.Bookings}/upsertMany`, extractor.getBookings()),
+			Core.getStore().dispatch(`${Model.WaitList}/upsertMany`, extractor.getWaitListItems()),
 			Core.getStore().dispatch(`${Model.Clients}/upsertMany`, extractor.getClients()),
 			Core.getStore().dispatch(`${Model.Clients}/setProviderModuleId`, extractor.getClientsProviderModuleId()),
 			Core.getStore().dispatch(`${Model.Interface}/setIsCurrentSenderAvailable`, extractor.getIsCurrentSenderAvailable()),
+			Core.getStore().dispatch(`${Model.FormsMenu}/setFormsMenu`, extractor.getFormsMenu()),
 		]);
 	}
 

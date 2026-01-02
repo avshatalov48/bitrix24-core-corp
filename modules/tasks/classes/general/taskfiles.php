@@ -33,8 +33,8 @@ class CTaskFiles
 
 		// Admin and B24-admin can view any file
 		if (
-			CTasksTools::IsAdmin($userId)
-			|| CTasksTools::IsPortalB24Admin($userId)
+			\Bitrix\Tasks\Util\User::isAdmin($userId)
+			|| \Bitrix\Tasks\Integration\Bitrix24\User::isAdmin($userId)
 		)
 		{
 			foreach ($arFilesIds as $fileId)

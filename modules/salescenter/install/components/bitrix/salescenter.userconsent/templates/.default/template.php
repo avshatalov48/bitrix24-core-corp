@@ -39,24 +39,11 @@ $APPLICATION->SetTitle(Loc::getMessage('SALESCENTER_USERCONSENT_TITLE'));
 				$APPLICATION->IncludeComponent(
 					"bitrix:intranet.userconsent.selector",
 					"",
-					array(
-						'ID' => $arResult['ID'],
-						'INPUT_NAME' => 'USERCONSENT[AGREEMENT_ID]'
-					)
+					[
+						'AGREEMENTS' => $arResult['USER_CONSENTS'],
+						'INPUT_NAME' => 'USERCONSENT[AGREEMENTS]'
+					],
 				);?>
-			</div>
-			<div class="salescenter-userconsent-form-settings-inner">
-				<div class="salescenter-userconsent-control-checkbox-container salescenter-userconsent-agreement-container">
-					<label class="salescenter-userconsent-control-checkbox-label">
-						<input type="checkbox"
-							class="salescenter-userconsent-control-checkbox"
-							name="USERCONSENT[CHECK]"
-							value="Y"
-							<?=($arResult['CHECK'] == 'Y' ? 'checked' : '')?>
-						>
-						<?=Loc::getMessage("SALESCENTER_USERCONSENT_CONFIG_EDIT_AGREEMENT_MESSAGE")?>
-					</label>
-				</div>
 			</div>
 		</div>
 

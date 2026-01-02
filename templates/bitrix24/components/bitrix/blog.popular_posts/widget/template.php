@@ -22,7 +22,7 @@ $this->SetViewTarget("sidebar", 250);
 	foreach($arResult as $arPost):
 	?>
 	<a href="<?=$arPost["urlToPost"]?>" class="sidebar-widget-item --row <?if(++$i == count($arResult)):?> widget-last-item<?endif?>">
-		<span class="user-avatar user-default-avatar"
+		<span class="sidebar-widget-item-user-avatar user-default-avatar"
 			<?if (isset($arPost["AVATAR_file"]["src"])):?>
 				style="background:url('<?= Uri::urnEncode($arPost["AVATAR_file"]["src"])?>') no-repeat center; background-size: cover;"
 			<?endif?>>

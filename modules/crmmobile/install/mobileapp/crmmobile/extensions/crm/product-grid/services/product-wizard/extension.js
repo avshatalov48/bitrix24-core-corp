@@ -4,6 +4,7 @@
 jn.define('crm/product-grid/services/product-wizard', (require, exports, module) => {
 	const { Loc } = require('loc');
 	const AppTheme = require('apptheme');
+	const { Random } = require('utils/random');
 
 	const WizardMode = {
 		NEW: 'new',

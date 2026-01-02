@@ -9,7 +9,6 @@ Loc::loadMessages(__FILE__);
 final class CCrmOrderShipmentProductListBarcodes extends \CBitrixComponent
 {
 	private $userId = 0;
-	private $userPermissions;
 	private $errors = [];
 
 	private function init()
@@ -38,9 +37,8 @@ final class CCrmOrderShipmentProductListBarcodes extends \CBitrixComponent
 			return false;
 		}
 
-		$this->userPermissions = CCrmPerms::GetCurrentUserPermissions();
 
-		if (!\Bitrix\Crm\Order\Permissions\Order::checkReadPermission(0, $this->userPermissions))
+		if (!\Bitrix\Crm\Service\Container::getInstance()->getUserPermissions()->entityType()->canReadItems(CCrmOwnerType::Order))
 		{
 			$this->errors[] = new Main\Error(Loc::getMessage('CRM_PERMISSION_DENIED'));
 			return false;

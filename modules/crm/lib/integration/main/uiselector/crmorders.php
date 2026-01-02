@@ -3,6 +3,7 @@
 namespace Bitrix\Crm\Integration\Main\UISelector;
 
 use Bitrix\Crm\Order\Order;
+use Bitrix\Crm\Service\Container;
 use Bitrix\Main\DB;
 use Bitrix\Main\DB\SqlExpression;
 use Bitrix\Main\Localization\Loc;
@@ -79,9 +80,7 @@ class CrmOrders extends CrmBase
 			],
 		];
 
-		$userPermissions = CCrmPerms::getCurrentUserPermissions();
-
-		if (!\Bitrix\Crm\Order\Permissions\Order::checkReadPermission(0, $userPermissions))
+		if (!Container::getInstance()->getUserPermissions()->entityType()->canReadItems(CCrmOwnerType::Order))
 		{
 			return $result;
 		}

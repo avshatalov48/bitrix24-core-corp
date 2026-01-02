@@ -1,0 +1,16 @@
+.booking--booking--non-draggable-booking-popup-content {
+	display: flex;
+	flex-direction: column;
+	align-items: start;
+	gap: var(--ui-space-inline-2xs2);
+	color: var(--ui-color-on-primary);
+	max-width: 275px;
+	margin: 0 var(--ui-space-inline-xs);
+}
+
+.booking--booking--non-draggable-booking-popup-content__text {
+	font-size: var(--ui-font-size-lg);
+	line-height: 20px;
+	opacity: .82;
+	text-align: start;
+}

@@ -24,10 +24,12 @@
 	const { SkeletonFactory } = require('layout/ui/simple-list/skeleton');
 	const { Alert } = require('alert');
 	const { Loc } = require('loc');
-	const { Feature } = require('feature');
 	const { ContextMenu } = require('layout/ui/context-menu');
 	const { CrmNavigator } = require('crm/navigator');
 	const { qrauth } = require('qrauth/utils');
+	const { Money } = require('money');
+	const { RunActionExecutor } = require('rest');
+	const { AnalyticsEvent } = require('analytics');
 
 	SkeletonFactory.alias('Kanban', ListItemType.CRM_ENTITY);
 
@@ -108,6 +110,8 @@
 			this.close = this.close.bind(this);
 
 			this.scrollOnTop = throttle(this.scrollOnTop, 500, this);
+
+			this.analyticsEvent = this.#createAnalytics();
 		}
 
 		componentDidMount()
@@ -165,7 +169,7 @@
 				{
 					BX.ajax.runAction('crm.counter.list', {
 						data: {
-							entityTypeId: this.kanbanTabRef.props.entityTypeId,
+							entityTypeId: (this.kanbanTabRef || this.listTabRef).props.entityTypeId,
 							extras: data.ex,
 							withExcludeUsers: Boolean(this.props.withExcludeUsers),
 						},
@@ -349,10 +353,8 @@
 				},
 				TabView({
 					style: {
-						height: Feature.isAirStyleSupported() ? 50 : 44,
-						backgroundColor: Feature.isAirStyleSupported()
-							? AppTheme.realColors.bgNavigation
-							: AppTheme.colors.bgNavigation,
+						height: 50,
+						backgroundColor: AppTheme.realColors.bgNavigation,
 					},
 					ref: (ref) => {
 						this.tabViewRef = ref;
@@ -660,7 +662,14 @@
 		{
 			this.listTabRef = null;
 
-			return new KanbanTab(this.getEntityTabConfig(this.bindKanbanRef));
+			return new KanbanTab({
+				...this.getEntityTabConfig(this.bindKanbanRef),
+				analyticsEvent: new AnalyticsEvent(this.analyticsEvent)
+					.setSubSection('kanban')
+					.setSection(
+						this.#prepareAnalyticsSection(),
+					),
+			});
 		}
 
 		bindKanbanRef(ref)
@@ -672,7 +681,27 @@
 		{
 			this.kanbanTabRef = null;
 
-			return new ListTab(this.getEntityTabConfig(this.bindListRef));
+			return new ListTab({
+				...this.getEntityTabConfig(this.bindListRef),
+				analyticsEvent: new AnalyticsEvent(this.analyticsEvent)
+					.setSubSection('list')
+					.setSection(
+						this.#prepareAnalyticsSection(),
+					),
+			});
+		}
+
+		#prepareAnalyticsSection()
+		{
+			const activeTab = this.getActiveTab();
+			const typeName = activeTab.typeName || '';
+			const cSection = `${typeName.toLowerCase().replace(/_\d+/, '')}_section`;
+			if (cSection === 'dynamic_section' && activeTab.isInCustomSection)
+			{
+				return 'custom_section';
+			}
+
+			return cSection;
 		}
 
 		bindListRef(ref)
@@ -783,12 +812,22 @@
 			};
 		}
 
-		onItemsLoaded(data)
+		/**
+		 * @param {object} data
+		 * @param {string} renderType
+		 * @param {object} config
+		 */
+		onItemsLoaded(data, renderType, config)
 		{
 			if (data?.event === 'refreshPresets')
 			{
 				this.searchRef?.refreshPresets();
 			}
+
+			const filterText = config?.data?.extra?.filter?.search;
+			const hasResult = Array.isArray(data?.items) && data?.items.length > 0;
+
+			this.searchRef?.updateLastSearchResultStatus?.(hasResult, filterText);
 		}
 
 		getPermissions()
@@ -946,6 +985,13 @@
 			});
 
 			void menu.show(PageManager);
+		}
+
+		#createAnalytics()
+		{
+			return new AnalyticsEvent({
+				tool: 'crm',
+			});
 		}
 	}
 

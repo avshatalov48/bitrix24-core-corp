@@ -6,19 +6,15 @@ use Bitrix\CalendarMobile\JSComponent;
 use Bitrix\Intranet\Settings\Tools\ToolsManager;
 use Bitrix\Main\Loader;
 use Bitrix\Main\Localization\Loc;
-use Bitrix\Main\ModuleManager;
-use Bitrix\Mobile\Component\SocNetFeatures;
 use Bitrix\Mobile\Context;
 use Bitrix\Mobile\Tab\Tabable;
 use Bitrix\Mobile\Tab\Utils;
 use Bitrix\MobileApp\Janative\Manager;
-use Bitrix\MobileApp\Mobile;
+use Bitrix\Mobile\Menu\Analytics;
 
 class Calendar implements Tabable
 {
 	private const INITIAL_COMPONENT = 'calendar:calendar.event.list';
-	private const OLD_COMPONENT = 'calendar:calendar.events';
-	private const MINIMAL_API_VERSION = 52;
 
 	/** @var Context $context */
 	private $context;
@@ -58,14 +54,18 @@ class Calendar implements Tabable
 	public function getMenuData(): array
 	{
 		return [
+			'id' => $this->getId(),
+			'section_code' => 'teamwork',
 			'title' => $this->getTitle(),
 			'useLetterImage' => true,
 			'color' => '#F5A200',
 			'imageUrl' => 'favorite/icon-calendar.png',
 			'imageName' => $this->getIconId(),
+			'sort' => 100,
 			'params' => [
 				'onclick' => Utils::getComponentJSCode($this->getComponentParams()),
 				'counter' => $this->getId(),
+				'analytics' => Analytics::calendar(),
 			],
 		];
 	}
@@ -112,29 +112,6 @@ class Calendar implements Tabable
 
 	public function getComponentParams(): array
 	{
-		if (Mobile::getApiVersion() < self::MINIMAL_API_VERSION)
-		{
-			return [
-				'title' => $this->getTitle(),
-				'type' => 'component',
-				'name' => 'JSStackComponent',
-				'componentCode' => $this->getId(),
-				'scriptPath' => Manager::getComponentPath(self::OLD_COMPONENT),
-				'rootWidget' => [
-					'name' => 'list',
-					'settings' => [
-						'titleParams' => [
-							'text' => $this->getTitle(),
-							'type' => 'section',
-						],
-						'useLargeTitleMode' => true,
-						'objectName' => 'list',
-					],
-				],
-				'params' => [],
-			];
-		}
-
 		return [
 			'title' => $this->getTitle(),
 			'type' => 'component',

@@ -1,3 +1,4 @@
+/* eslint-disable */
 this.BX = this.BX || {};
 (function (exports,ui_designTokens,ui_fonts_opensans,clipboard,ui_switcher,ui_layoutForm,main_core,main_core_events,main_date,ui_buttons,main_popup) {
 	'use strict';
@@ -140,8 +141,44 @@ this.BX = this.BX || {};
 	  }]);
 	  return BackendForTrackedObject;
 	}(Backend);
+	var BackendForUnifiedLink = /*#__PURE__*/function (_Backend2) {
+	  babelHelpers.inherits(BackendForUnifiedLink, _Backend2);
+	  function BackendForUnifiedLink() {
+	    babelHelpers.classCallCheck(this, BackendForUnifiedLink);
+	    return babelHelpers.possibleConstructorReturn(this, babelHelpers.getPrototypeOf(BackendForUnifiedLink).apply(this, arguments));
+	  }
+	  babelHelpers.createClass(BackendForUnifiedLink, null, [{
+	    key: "disableExternalLink",
+	    value: function disableExternalLink(objectId) {
+	      BX.ajax.runAction('disk.api.UnifiedLinkActions.disableExternalLink', {
+	        data: {
+	          uniqueCode: objectId
+	        }
+	      });
+	    }
+	  }, {
+	    key: "generateExternalLink",
+	    value: function generateExternalLink(objectId) {
+	      return main_core.ajax.runAction('disk.api.UnifiedLinkActions.generateExternalLink', {
+	        data: {
+	          uniqueCode: objectId
+	        }
+	      });
+	    }
+	  }, {
+	    key: "getExternalLink",
+	    value: function getExternalLink(objectId) {
+	      return main_core.ajax.runAction('disk.api.UnifiedLinkActions.getExternalLink', {
+	        data: {
+	          uniqueCode: objectId
+	        }
+	      });
+	    }
+	  }]);
+	  return BackendForUnifiedLink;
+	}(Backend);
 
-	var _templateObject, _templateObject2, _templateObject3;
+	var _templateObject, _templateObject2, _templateObject3, _templateObject4;
 	var Input = /*#__PURE__*/function () {
 	  function Input(objectId, data) {
 	    babelHelpers.classCallCheck(this, Input);
@@ -295,6 +332,13 @@ this.BX = this.BX || {};
 	      });
 	    }
 	  }, {
+	    key: "getCanEditTextContainer",
+	    value: function getCanEditTextContainer() {
+	      return this.cache.remember('canEditText', function () {
+	        return main_core.Tag.render(_templateObject4 || (_templateObject4 = babelHelpers.taggedTemplateLiteral(["<div class=\"ui-ctl-label-text\">", "</div>"])), main_core.Loc.getMessage('DISK_EXTENSION_EXTERNAL_LINK_ALLOW_EDITING'));
+	      });
+	    }
+	  }, {
 	    key: "toggle",
 	    value: function toggle(_ref2) {
 	      var _this5 = this;
@@ -350,7 +394,7 @@ this.BX = this.BX || {};
 	  return Input;
 	}();
 
-	var _templateObject$1, _templateObject2$1, _templateObject3$1, _templateObject4, _templateObject5;
+	var _templateObject$1, _templateObject2$1, _templateObject3$1, _templateObject4$1, _templateObject5;
 	var InputExtended = /*#__PURE__*/function (_Input) {
 	  babelHelpers.inherits(InputExtended, _Input);
 	  function InputExtended(objectId, data) {
@@ -381,6 +425,9 @@ this.BX = this.BX || {};
 	        }
 	        if (this.cache.get('popup')) {
 	          this.cache.get('popup').getPopupContainer().setAttribute('externalLinkIsSet', 'Y');
+	        }
+	        if (this.data.isBoard) {
+	          this.getCanEditTextContainer().innerHTML = main_core.Loc.getMessage('DISK_EXTENSION_EXTERNAL_LINK_ALLOW_EDITING_BOARD');
 	        }
 	      }
 	    }
@@ -478,7 +525,7 @@ this.BX = this.BX || {};
 	    value: function getPasswordSettingsContainer() {
 	      var _this3 = this;
 	      return this.cache.remember('passwordSettings', function () {
-	        var passwordSettings = main_core.Tag.render(_templateObject4 || (_templateObject4 = babelHelpers.taggedTemplateLiteral(["\n\t\t\t<div class=\"ui-form-line\">\n\t\t\t\t<input type=\"checkbox\" name=\"hasPassword\">\n\t\t\t\t<div class=\"ui-form-row\">\n\t\t\t\t\t<label class=\"ui-ctl ui-ctl-checkbox\">\n\t\t\t\t\t\t<input type=\"checkbox\" class=\"ui-ctl-element\" name=\"enablePassword\">\n\t\t\t\t\t\t<div class=\"ui-ctl-label-text\">", "</div>\n\t\t\t\t\t</label>\n\t\t\t\t</div>\n\t\t\t\t<div class=\"ui-form-row-inline\" name=\"passwordIsNotSaved\">\n\t\t\t\t\t<div class=\"ui-form-content\">\n\t\t\t\t\t\t<div class=\"ui-ctl ui-ctl-textbox ui-ctl-after-icon\">\n\t\t\t\t\t\t\t<input type=\"password\" name=\"passwordValue\" class=\"ui-ctl-element\" placeholder=\"", "\" autocomplete=\"nope\">\n\t\t\t\t\t\t\t<button class=\"ui-ctl-after ui-ctl-icon-angle disk-external-link-setting-popup-password-show\" name=\"passwordTypeSwitcher\"></button>\n\t\t\t\t\t\t</div>\n\t\t\t\t\t</div>\n\t\t\t\t</div>\n\t\t\t\t<div class=\"ui-form-row-inline\" name=\"passwordIsSaved\">\n\t\t\t\t\t<div class=\"ui-form-content\">\n\t\t\t\t\t\t<div class=\"ui-ctl ui-ctl-disabled ui-ctl-after-icon\">\n\t\t\t\t\t\t\t<input type=\"password\" class=\"ui-ctl-element\" readonly value=\"some password\">\n\t\t\t\t\t\t\t<button name=\"passwordButtonUnset\" class=\"ui-ctl-after ui-ctl-icon-clear\"></button>\n\t\t\t\t\t\t</div>\n\t\t\t\t\t</div>\n\t\t\t\t</div>\n\t\t\t</div>\n\t\t\t"])), main_core.Loc.getMessage('DISK_EXTENSION_EXTERNAL_LINK_PASSWORD_CHECKBOX'), main_core.Loc.getMessage('DISK_EXTENSION_EXTERNAL_LINK_PASSWORD_PLACEHOLDER'));
+	        var passwordSettings = main_core.Tag.render(_templateObject4$1 || (_templateObject4$1 = babelHelpers.taggedTemplateLiteral(["\n\t\t\t<div class=\"ui-form-line\">\n\t\t\t\t<input type=\"checkbox\" name=\"hasPassword\">\n\t\t\t\t<div class=\"ui-form-row\">\n\t\t\t\t\t<label class=\"ui-ctl ui-ctl-checkbox\">\n\t\t\t\t\t\t<input type=\"checkbox\" class=\"ui-ctl-element\" name=\"enablePassword\">\n\t\t\t\t\t\t<div class=\"ui-ctl-label-text\">", "</div>\n\t\t\t\t\t</label>\n\t\t\t\t</div>\n\t\t\t\t<div class=\"ui-form-row-inline\" name=\"passwordIsNotSaved\">\n\t\t\t\t\t<div class=\"ui-form-content\">\n\t\t\t\t\t\t<div class=\"ui-ctl ui-ctl-textbox ui-ctl-after-icon\">\n\t\t\t\t\t\t\t<input type=\"password\" name=\"passwordValue\" class=\"ui-ctl-element\" placeholder=\"", "\" autocomplete=\"nope\">\n\t\t\t\t\t\t\t<button class=\"ui-ctl-after ui-ctl-icon-angle disk-external-link-setting-popup-password-show\" name=\"passwordTypeSwitcher\"></button>\n\t\t\t\t\t\t</div>\n\t\t\t\t\t</div>\n\t\t\t\t</div>\n\t\t\t\t<div class=\"ui-form-row-inline\" name=\"passwordIsSaved\">\n\t\t\t\t\t<div class=\"ui-form-content\">\n\t\t\t\t\t\t<div class=\"ui-ctl ui-ctl-disabled ui-ctl-after-icon\">\n\t\t\t\t\t\t\t<input type=\"password\" class=\"ui-ctl-element\" readonly value=\"some password\">\n\t\t\t\t\t\t\t<button name=\"passwordButtonUnset\" class=\"ui-ctl-after ui-ctl-icon-clear\"></button>\n\t\t\t\t\t\t</div>\n\t\t\t\t\t</div>\n\t\t\t\t</div>\n\t\t\t</div>\n\t\t\t"])), main_core.Loc.getMessage('DISK_EXTENSION_EXTERNAL_LINK_PASSWORD_CHECKBOX'), main_core.Loc.getMessage('DISK_EXTENSION_EXTERNAL_LINK_PASSWORD_PLACEHOLDER'));
 
 	        /*region bind settings form */
 	        var passwordValue = passwordSettings.querySelector('input[name=passwordValue]');
@@ -534,7 +581,7 @@ this.BX = this.BX || {};
 	    value: function getEditSettingsContainer() {
 	      var _this4 = this;
 	      return this.cache.remember('editSettings', function () {
-	        var editSettings = main_core.Tag.render(_templateObject5 || (_templateObject5 = babelHelpers.taggedTemplateLiteral(["\n\t\t\t<div class=\"ui-form-line\">\n\t\t\t\t<div class=\"ui-form-row\">\n\t\t\t\t\t<label class=\"ui-ctl ui-ctl-checkbox\">\n\t\t\t\t\t\t<input type=\"checkbox\" class=\"ui-ctl-element\" name=\"canEditDocument\">\n\t\t\t\t\t\t<div class=\"ui-ctl-label-text\">", "</div>\n\t\t\t\t\t</label>\n\t\t\t\t</div>\n\t\t\t</div>\n\t\t\t"])), main_core.Loc.getMessage('DISK_EXTENSION_EXTERNAL_LINK_ALLOW_EDITING'));
+	        var editSettings = main_core.Tag.render(_templateObject5 || (_templateObject5 = babelHelpers.taggedTemplateLiteral(["\n\t\t\t<div class=\"ui-form-line\">\n\t\t\t\t<div class=\"ui-form-row\">\n\t\t\t\t\t<label class=\"ui-ctl ui-ctl-checkbox\">\n\t\t\t\t\t\t<input type=\"checkbox\" class=\"ui-ctl-element\" name=\"canEditDocument\">\n\t\t\t\t\t\t", "\n\t\t\t\t\t</label>\n\t\t\t\t</div>\n\t\t\t</div>\n\t\t\t"])), _this4.getCanEditTextContainer());
 	        /*region bind settings form */
 	        var canEditDocument = editSettings.querySelector('input[name=canEditDocument]');
 	        canEditDocument.addEventListener('click', function () {
@@ -787,8 +834,47 @@ this.BX = this.BX || {};
 	  return InputSimpleForTrackedObject;
 	}(InputSimple);
 
+	var InputExtendedForUnifiedLink = /*#__PURE__*/function (_InputExtended) {
+	  babelHelpers.inherits(InputExtendedForUnifiedLink, _InputExtended);
+	  function InputExtendedForUnifiedLink(objectId, data) {
+	    var _this;
+	    babelHelpers.classCallCheck(this, InputExtendedForUnifiedLink);
+	    _this = babelHelpers.possibleConstructorReturn(this, babelHelpers.getPrototypeOf(InputExtendedForUnifiedLink).call(this, objectId, data));
+	    _this.objectId = objectId; // override for unified link, since here objectId is unique code represented as a string
+	    return _this;
+	  }
+	  babelHelpers.createClass(InputExtendedForUnifiedLink, [{
+	    key: "getBackend",
+	    value: function getBackend() {
+	      return BackendForUnifiedLink;
+	    }
+	  }]);
+	  return InputExtendedForUnifiedLink;
+	}(InputExtended);
+
+	var InputSimpleForUnifiedLink = /*#__PURE__*/function (_InputSimple) {
+	  babelHelpers.inherits(InputSimpleForUnifiedLink, _InputSimple);
+	  function InputSimpleForUnifiedLink(objectId, data) {
+	    babelHelpers.classCallCheck(this, InputSimpleForUnifiedLink);
+	    return babelHelpers.possibleConstructorReturn(this, babelHelpers.getPrototypeOf(InputSimpleForUnifiedLink).call(this, objectId, data));
+	  }
+	  babelHelpers.createClass(InputSimpleForUnifiedLink, [{
+	    key: "getBackend",
+	    value: function getBackend() {
+	      return BackendForUnifiedLink;
+	    }
+	  }], [{
+	    key: "getExtendedInputClass",
+	    value: function getExtendedInputClass() {
+	      return InputExtendedForUnifiedLink;
+	    }
+	  }]);
+	  return InputSimpleForUnifiedLink;
+	}(InputSimple);
+
 	exports.ExternalLink = InputSimple;
 	exports.ExternalLinkForTrackedObject = InputSimpleForTrackedObject;
+	exports.ExternalLinkForUnifiedLink = InputSimpleForUnifiedLink;
 
 }((this.BX.Disk = this.BX.Disk || {}),BX,BX,BX,BX.UI,BX.UI,BX,BX.Event,BX.Main,BX.UI,BX.Main));
 //# sourceMappingURL=external-link.bundle.js.map

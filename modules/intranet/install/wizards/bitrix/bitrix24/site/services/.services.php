@@ -132,6 +132,9 @@ $arServices = Array(
 	),
 	"biconnector" => Array(
 		"NAME" => GetMessage("SERVICE_BICONNECTOR"),
+	),
+	"ai" => Array(
+		"NAME" => 'ai',
 	)
 );
 ?>

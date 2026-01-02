@@ -5,7 +5,6 @@ if (!defined('B_PROLOG_INCLUDED') || B_PROLOG_INCLUDED !== true)
 }
 
 return [
-	'css' => 'dist/grid.bundle.css',
 	'js' => 'dist/grid.bundle.js',
 	'rel' => [
 		'main.polyfill.core',

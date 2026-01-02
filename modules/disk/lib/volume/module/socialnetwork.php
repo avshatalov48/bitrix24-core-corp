@@ -194,11 +194,11 @@ class Socialnetwork extends Volume\Module\Module
 				'{$indicatorType}' as INDICATOR_TYPE,
 				{$ownerId} as OWNER_ID,
 				". $sqlHelper->getCurrentDateTimeFunction(). " as CREATE_TIME,
-				SUM(src.FILE_SIZE) as FILE_SIZE,
-				SUM(src.FILE_COUNT) as FILE_COUNT,
-				SUM(src.DISK_SIZE) as DISK_SIZE,
-				SUM(src.DISK_COUNT) as DISK_COUNT,
-				SUM(src.VERSION_COUNT) as VERSION_COUNT
+				COALESCE(SUM(src.FILE_SIZE), 0) as FILE_SIZE,
+				COALESCE(SUM(src.FILE_COUNT), 0) as FILE_COUNT,
+				COALESCE(SUM(src.DISK_SIZE), 0) as DISK_SIZE,
+				COALESCE(SUM(src.DISK_COUNT), 0) as DISK_COUNT,
+				COALESCE(SUM(src.VERSION_COUNT), 0) as VERSION_COUNT
 			FROM
 			(
 				({$attachedSql})

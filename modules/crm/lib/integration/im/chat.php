@@ -12,9 +12,11 @@ namespace Bitrix\Crm\Integration\Im;
 use Bitrix\Crm;
 use Bitrix\Crm\Activity\Provider\ProviderManager;
 use Bitrix\Crm\Badge\Model\BadgeTable;
+use Bitrix\Crm\ItemIdentifier;
 use Bitrix\Crm\Service\Container;
 use Bitrix\Crm\Timeline\ActivityController;
 use Bitrix\Im;
+use Bitrix\Im\V2\Chat\ChatFactory;
 use Bitrix\ImOpenLines\Session;
 use Bitrix\Main;
 use Bitrix\Main\Localization\Loc;
@@ -271,7 +273,7 @@ class Chat
 
 		if($currentOwnerID > 0 || $currentTitle !== '' || !empty($removedObserverIDs))
 		{
-			$chat = new \CIMChat(0);
+			$chat = new \CIMChat();
 			if($currentOwnerID > 0)
 			{
 				$chat->AddUser($chatID, [ $currentOwnerID ], false, false);
@@ -574,8 +576,18 @@ class Chat
 			$chatFields['AVATAR_ID'] = $crmEntityAvatarId;
 		}
 
-		$chat = new \CIMChat(0);
-		$chatId = $chat->add($chatFields);
+		$result = ChatFactory::getInstance()->addChat($chatFields);
+		if (!$result->isSuccess())
+		{
+			return false;
+		}
+
+		$chatId = $result->getResult()['CHAT_ID'];
+
+		if ($chatId <= 0)
+		{
+			return false;
+		}
 
 		$users = [];
 		foreach ($joinUserList as $uid)
@@ -817,54 +829,113 @@ class Chat
 
 	public static function getEntityData($entityType, $entityId, $withMultiFields = false)
 	{
-		if ($entityType == \CCrmOwnerType::LeadName)
-		{
-			$entity = new \CCrmLead(false);
-		}
-		elseif ($entityType == \CCrmOwnerType::CompanyName)
-		{
-			$entity = new \CCrmCompany(false);
-		}
-		elseif ($entityType == \CCrmOwnerType::ContactName)
-		{
-			$entity = new \CCrmContact(false);
-		}
-		elseif ($entityType == \CCrmOwnerType::DealName)
-		{
-			$entity = new \CCrmDeal(false);
-		}
-		else
-		{
-			$factory = Container::getInstance()->getFactory(\CCrmOwnerType::ResolveID($entityType));
-			if ($factory && $item = $factory->getItem((int) $entityId))
-			{
-				return $item->getData();
-			}
+		$entityTypeId = \CCrmOwnerType::ResolveID($entityType);
 
+		if (!\CCrmOwnerType::IsDefined($entityTypeId))
+		{
 			return false;
 		}
-		$data = $entity->GetByID($entityId, false);
 
-		if ($withMultiFields)
+		switch ($entityTypeId)
 		{
-			$multiFields = new \CCrmFieldMulti();
-			$res = $multiFields->GetList(Array(), Array(
-				'ENTITY_ID' => $entityType,
-				'ELEMENT_ID' => $entityId
-			));
-			while ($row = $res->Fetch())
+			case \CCrmOwnerType::Company:
+				$fields = [
+					'TITLE',
+					'LOGO',
+				];
+				break;
+			case \CCrmOwnerType::Contact:
+				$fields = [
+					'FULL_NAME',
+					'PHOTO',
+					'POST',
+				];
+				break;
+			case \CCrmOwnerType::Lead:
+				$fields = [
+					'TITLE',
+					'FULL_NAME',
+					'COMPANY_TITLE',
+					'POST',
+				];
+				break;
+			default:
+				$fields = ['TITLE'];
+				break;
+		}
+
+		$fields[] = 'ASSIGNED_BY_ID';
+
+		$mfTypes = [];
+
+		$factory = Container::getInstance()->getFactory($entityTypeId);
+
+		if ($factory)
+		{
+			if ($factory->isMultiFieldsEnabled())
 			{
-				$data['FM'][$row['TYPE_ID']][$row['VALUE_TYPE']][] = $row['VALUE'];
+				$fields [] = 'HAS_PHONE';
+				$fields [] = 'HAS_EMAIL';
+			}
+			$item = $factory->getItem($entityId, $fields);
+			$fields = array_fill_keys($fields, true);
+			foreach ($item->getData() as $fieldName => $value)
+			{
+				if (isset($fields[$fieldName]))
+				{
+					$entityData[$fieldName] = $value;
+				}
+			}
+			if ($entityData['HAS_PHONE'] ?? false)
+			{
+				$mfTypes[] = 'PHONE';
+			}
+			if ($entityData['HAS_EMAIL'] ?? false)
+			{
+				$mfTypes[] = 'EMAIL';
 			}
 		}
 
-		return $data;
+		if (!empty($mfTypes) && $factory->isMultiFieldsEnabled())
+		{
+			$mfCollection = Container::getInstance()->getMultifieldStorage()->get(ItemIdentifier::createByItem($item));
+			if (!empty($mfCollection))
+			{
+				foreach ($mfTypes as $type)
+				{
+					$typeItems = $mfCollection->filterByType($type);
+					if (!empty($typeItems))
+					{
+						foreach ($typeItems as $typeItem)
+						{
+							$valueType = $typeItem->getValueType();
+							$value = $typeItem->getValue();
+							if (
+								is_string($valueType)
+								&& $valueType !== ''
+								&& is_string($value)
+								&& $value !== ''
+							)
+							{
+								if (!isset($entityData['FM'][$type][$valueType]))
+								{
+									$entityData['FM'][$type][$valueType] = [];
+								}
+								$entityData['FM'][$type][$valueType][] = $value;
+							}
+						}
+					}
+				}
+			}
+		}
+
+		return $entityData;
 	}
 
 	private static function getOpenLineLastActivity(string $code): array
 	{
 		$session = new Session();
-		$sessionLoadResult = $session->getLast(['USER_CODE' => $code]);
+		$sessionLoadResult = $session->getLast(['USER_CODE' => $code], true);
 		if (!$sessionLoadResult->isSuccess())
 		{
 			return [];

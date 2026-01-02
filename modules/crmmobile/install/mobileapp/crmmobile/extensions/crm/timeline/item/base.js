@@ -164,11 +164,13 @@ jn.define('crm/timeline/item/base', (require, exports, module) => {
 					style: {
 						paddingBottom: this.getBodyBottomGap(),
 					},
+					analyticsEvent: this.props.analyticsEvent,
 				}),
 				this.layoutSchema.footer && new TimelineItemFooter({
 					...this.layoutSchema.footer,
 					onAction: this.onAction.bind(this),
 					isReadonly: this.model.isReadonly,
+					analyticsEvent: this.props.analyticsEvent,
 				}),
 				new TimelineItemLoadingOverlay({
 					ref: (ref) => this.loadingOverlayRef = ref,

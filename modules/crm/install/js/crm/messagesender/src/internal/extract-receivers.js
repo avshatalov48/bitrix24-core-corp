@@ -1,6 +1,6 @@
+import { ItemIdentifier } from 'crm.data-structures';
 import { Text, Type } from 'main.core';
 import { Receiver } from '../receiver';
-import { ItemIdentifier } from 'crm.data-structures';
 
 export function extractReceivers(item: ItemIdentifier, entityData: ?Object): Receiver[]
 {
@@ -65,6 +65,8 @@ function extractReceiversFromMultifieldData(item: ItemIdentifier, entityData: Ob
 							valueType: stringOrUndefined(singleMultifield.VALUE_TYPE),
 							value: stringOrUndefined(singleMultifield.VALUE),
 							valueFormatted: stringOrUndefined(singleMultifield.VALUE_FORMATTED),
+							complexId: stringOrUndefined(singleMultifield.COMPLEX_ID),
+							complexName: stringOrUndefined(singleMultifield.COMPLEX_NAME),
 						},
 						{
 							title: addressSourceTitle,

@@ -1,0 +1,27 @@
+<?php
+$MESS["TM_FIELD_UF_DELAY_TIME"] = "Есептің кейінге қалдырылған уақыты";
+$MESS["TM_FIELD_UF_LAST_REPORT_DATE"] = "Соңғы есеп беру күні";
+$MESS["TM_FIELD_UF_NONE"] = "Есеп қажет емес";
+$MESS["TM_FIELD_UF_REPORT_PERIOD"] = "Есеп тапсыру жиілігі";
+$MESS["TM_FIELD_UF_SETTING_DATE"] = "Баптауларды орнату күні";
+$MESS["TM_FIELD_UF_TIMEMAN"] = "Жұмыс уақытын есепке алу";
+$MESS["TM_FIELD_UF_TIMEMAN_N"] = "есеп жүргізбеу";
+$MESS["TM_FIELD_UF_TIMEMAN_Y"] = "есеп жүргізу";
+$MESS["TM_FIELD_UF_TM_ALLOWED_DELTA"] = "Уақыт өзгерісінің рұқсат етілген аралығы";
+$MESS["TM_FIELD_UF_TM_DAY"] = "Күн";
+$MESS["TM_FIELD_UF_TM_FREE"] = "Еркін күн тәртібі";
+$MESS["TM_FIELD_UF_TM_FREE_N"] = "өшірулі";
+$MESS["TM_FIELD_UF_TM_FREE_Y"] = "қосулы";
+$MESS["TM_FIELD_UF_TM_MAX_START"] = "Жұмыс күнін бастаудың максималды уақыты";
+$MESS["TM_FIELD_UF_TM_MIN_DURATION"] = "Жұмыс күнінің ең аз ұзақтығы";
+$MESS["TM_FIELD_UF_TM_MIN_FINISH"] = "Жұмыс күнін аяқтаудың минималды уақыты";
+$MESS["TM_FIELD_UF_TM_MONTH"] = "Ай";
+$MESS["TM_FIELD_UF_TM_NOVALUE"] = "(мәнді қалдыру)";
+$MESS["TM_FIELD_UF_TM_REPORT_DATE"] = "Айдың күні";
+$MESS["TM_FIELD_UF_TM_REPORT_REQ"] = "Күн бойынша есеп";
+$MESS["TM_FIELD_UF_TM_REPORT_REQ_A"] = "есеп нысанын көрсетпеу";
+$MESS["TM_FIELD_UF_TM_REPORT_REQ_N"] = "міндетті емес";
+$MESS["TM_FIELD_UF_TM_REPORT_REQ_Y"] = "міндетті";
+$MESS["TM_FIELD_UF_TM_REPORT_TPL"] = "Есеп қалыптары";
+$MESS["TM_FIELD_UF_TM_TIME"] = "Есепті тапсыру уақыты";
+$MESS["TM_FIELD_UF_TM_WEEK"] = "Апта";

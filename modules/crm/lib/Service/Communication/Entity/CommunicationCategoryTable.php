@@ -4,6 +4,22 @@ namespace Bitrix\Crm\Service\Communication\Entity;
 
 use Bitrix\Main\DI\ServiceLocator;
 
+/**
+ * Class CommunicationCategoryTable
+ *
+ * DO NOT WRITE ANYTHING BELOW THIS
+ *
+ * <<< ORMENTITYANNOTATION
+ * @method static EO_CommunicationCategory_Query query()
+ * @method static EO_CommunicationCategory_Result getByPrimary($primary, array $parameters = [])
+ * @method static EO_CommunicationCategory_Result getById($id)
+ * @method static EO_CommunicationCategory_Result getList(array $parameters = [])
+ * @method static EO_CommunicationCategory_Entity getEntity()
+ * @method static \Bitrix\Crm\Service\Communication\Entity\EO_CommunicationCategory createObject($setDefaultValues = true)
+ * @method static \Bitrix\Crm\Service\Communication\Entity\EO_CommunicationCategory_Collection createCollection()
+ * @method static \Bitrix\Crm\Service\Communication\Entity\EO_CommunicationCategory wakeUpObject($row)
+ * @method static \Bitrix\Crm\Service\Communication\Entity\EO_CommunicationCategory_Collection wakeUpCollection($rows)
+ */
 class CommunicationCategoryTable extends \Bitrix\Main\ORM\Data\DataManager
 {
 	public static function getTableName(): string

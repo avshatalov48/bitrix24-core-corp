@@ -203,7 +203,7 @@ class Grid extends \Bitrix\Tasks\Grid\Grid
 
 		$this->headers['MARK'] = [
 			'id' => 'MARK',
-			'name' => Loc::getMessage('TASKS_GRID_TASK_GRID_HEADER_MARK'),
+			'name' => Loc::getMessage('TASKS_GRID_TASK_GRID_HEADER_MARK_MSGVER_1'),
 			'sort' => 'MARK',
 			'first_order' => 'desc',
 			'editable' => false,
@@ -212,7 +212,7 @@ class Grid extends \Bitrix\Tasks\Grid\Grid
 
 		$this->headers['ALLOW_CHANGE_DEADLINE'] = [
 			'id' => 'ALLOW_CHANGE_DEADLINE',
-			'name' => Loc::getMessage('TASKS_GRID_TASK_GRID_HEADER_ALLOW_CHANGE_DEADLINE'),
+			'name' => Loc::getMessage('TASKS_GRID_TASK_GRID_HEADER_ALLOW_CHANGE_DEADLINE_MSGVER_1'),
 			'sort' => 'ALLOW_CHANGE_DEADLINE',
 			'first_order' => 'desc',
 			'default' => false,

@@ -33,7 +33,10 @@ final class Icon
 		'img' => 'icon-img',
 		'exe' => 'icon-exe',
 		'vid' => 'icon-vid',
-
+		'odf' => 'icon-odf',
+		'odt' => 'icon-odt',
+		'ods' => 'icon-ods',
+		'odp' => 'icon-odp',
 		'non' => 'icon-non',
 	);
 

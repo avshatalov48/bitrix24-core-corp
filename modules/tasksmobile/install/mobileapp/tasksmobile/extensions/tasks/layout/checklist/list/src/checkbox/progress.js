@@ -1,7 +1,7 @@
 /**
- * @module tasks/layout/checklist/list/src/checkbox/checkbox-counter/progress
+ * @module tasks/layout/checklist/list/src/checkbox/progress
  */
-jn.define('tasks/layout/checklist/list/src/checkbox/checkbox-counter/progress', (require, exports, module) => {
+jn.define('tasks/layout/checklist/list/src/checkbox/progress', (require, exports, module) => {
 	const { Color } = require('tokens');
 	const { PureComponent } = require('layout/pure-component');
 	const { CHECKBOX_SIZE } = require('tasks/layout/checklist/list/src/constants');

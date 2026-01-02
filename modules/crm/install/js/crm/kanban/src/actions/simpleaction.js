@@ -1,4 +1,4 @@
-import { EntityCloseEvent } from 'crm.integration.analytics';
+import { EntityCloseEvent, EntityStageChangeEvent, Dictionary, Builder } from 'crm.integration.analytics';
 import { Loc, Reflection, Type } from 'main.core';
 import { QueueManager } from 'pull.queuemanager';
 import { UI } from 'ui.notification';
@@ -12,7 +12,7 @@ export default class SimpleAction
 	#isShowNotify: boolean = true;
 	#isApplyFilterAfterAction: boolean = false;
 	#useIgnorePostfixForCode: boolean = false;
-	#analyticsData: ?EntityCloseEvent = null;
+	#analyticsData: ?EntityCloseEvent | ?EntityStageChangeEvent = null;
 
 	constructor(grid: BX.CRM.Kanban.Grid, params: Object)
 	{
@@ -47,11 +47,7 @@ export default class SimpleAction
 
 		if (this.#params.action === 'status')
 		{
-			this.#prepareAnalyticsData();
-			this.#grid.registerAnalyticsCloseEvent(
-				this.#analyticsData,
-				BX.Crm.Integration.Analytics.Dictionary.STATUS_ATTEMPT,
-			);
+			this.#prepareAnalyticsChangeStageEventData();
 		}
 
 		return new Promise((resolve, reject) => {
@@ -81,12 +77,12 @@ export default class SimpleAction
 	{
 		if (!data || data.error)
 		{
-			this.#grid.registerAnalyticsCloseEvent(this.#analyticsData, BX.Crm.Integration.Analytics.Dictionary.STATUS_ERROR);
+			this.#sendAnalyticsData(Dictionary.STATUS_ERROR);
 			this.#handleErrorOnSimpleAction(data, resolve);
 		}
 		else
 		{
-			this.#grid.registerAnalyticsCloseEvent(this.#analyticsData, BX.Crm.Integration.Analytics.Dictionary.STATUS_SUCCESS);
+			this.#sendAnalyticsData(Dictionary.STATUS_SUCCESS);
 			this.#handleSuccessOnSimpleAction(data, resolve);
 		}
 		this.#analyticsData = null;
@@ -253,7 +249,7 @@ export default class SimpleAction
 
 	#onFailure(error: string, callback: Function): void
 	{
-		this.#grid.registerAnalyticsCloseEvent(this.#analyticsData, BX.Crm.Integration.Analytics.Dictionary.STATUS_ERROR);
+		this.#sendAnalyticsData(Dictionary.STATUS_ERROR);
 		this.#analyticsData = null;
 
 		BX.Kanban.Utils.showErrorDialog(`Error: ${error}`, true);
@@ -261,11 +257,34 @@ export default class SimpleAction
 		callback(new Error(error));
 	}
 
-	#prepareAnalyticsData(): void
+	#prepareAnalyticsChangeStageEventData(): void
+	{
+		const targetColumn = this.#grid.getColumn(this.#params.status)
+			?? this.#grid.getDropZoneArea().getDropZone(this.#params.status);
+		const columnType = targetColumn ? targetColumn.getData().type : this.#params.type;
+
+		if (columnType === 'PROGRESS')
+		{
+			this.#analyticsData = Builder.Entity.ChangeStageEvent.createDefault(
+				this.#params.entity_type,
+				this.#params.entity_id.length,
+			)
+				.setSubSection(Dictionary.SUB_SECTION_KANBAN)
+				.setElement(Dictionary.ELEMENT_GRID_ROW_CONTEXT_MENU)
+				.buildData();
+		}
+		else
+		{
+			this.#prepareAnalyticsCloseEventData();
+		}
+	}
+
+	#prepareAnalyticsCloseEventData(): void
 	{
 		const [entityId] = this.#params.entity_id;
 		const item = this.#grid.getItem(entityId);
-		const targetColumn = this.#grid.getColumn(this.#params.status);
+		const targetColumn = this.#grid.getColumn(this.#params.status)
+			?? this.#grid.getDropZoneArea().getDropZone(this.#params.status);
 
 		const type = targetColumn ? targetColumn.getData().type : this.#params.type;
 		this.#analyticsData = this.#grid.getDefaultAnalyticsCloseEvent(
@@ -274,12 +293,25 @@ export default class SimpleAction
 			this.#params.entity_id.toString(),
 		);
 
-		this.#analyticsData.c_element = BX.Crm.Integration.Analytics.Dictionary.ELEMENT_WON_TOP_ACTIONS;
+		this.#analyticsData.c_element = Dictionary.ELEMENT_WON_TOP_ACTIONS;
 
 		if (type === 'LOOSE')
 		{
-			this.#analyticsData.c_element = BX.Crm.Integration.Analytics.Dictionary.ELEMENT_LOSE_TOP_ACTIONS;
+			this.#analyticsData.c_element = Dictionary.ELEMENT_LOSE_TOP_ACTIONS;
 		}
+	}
+
+	#sendAnalyticsData(status: string): void
+	{
+		if (!this.#analyticsData)
+		{
+			return;
+		}
+
+		BX.UI.Analytics.sendData({
+			...this.#analyticsData,
+			status,
+		});
 	}
 }
 

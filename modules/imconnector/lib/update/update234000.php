@@ -60,6 +60,7 @@ final class Update234000
 		$notificationFields = [
 			'NOTIFY_TYPE' => \IM_NOTIFY_SYSTEM,
 			'NOTIFY_MODULE' => 'imconnector',
+			'NOTIFY_EVENT' => 'admin_notification',
 			'NOTIFY_MESSAGE' => Loc::getMessage('CONNECTORS_VK_RECONNECT_NOTIFICATION', ['#HREF#' => $url])
 		];
 

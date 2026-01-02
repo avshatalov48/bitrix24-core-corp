@@ -38,7 +38,7 @@ class OpenLineAnswerControlTrigger extends OpenLineTrigger
 					{
 						$field['Id'] = $field['ReturnId'];
 						unset($field['ReturnId']);
-						return $field;
+						return array_merge($field, ['Default' => null]);
 					}
 				},
 				self::getSessionFields()

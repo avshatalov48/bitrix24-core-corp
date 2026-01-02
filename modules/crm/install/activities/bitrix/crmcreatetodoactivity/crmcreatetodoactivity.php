@@ -9,6 +9,7 @@ use Bitrix\Bizproc;
 use Bitrix\Crm;
 use Bitrix\Crm\Activity\Provider\ToDo\BlocksManager;
 use Bitrix\Crm\Entity\MessageBuilder\ProcessToDoActivityResponsible;
+use Bitrix\Crm\Integration\Analytics\Dictionary;
 use Bitrix\Crm\Integration\Disk\HiddenStorage;
 use Bitrix\Crm\Integration\Im\ProcessEntity\ToDoResponsibleNotification;
 use Bitrix\Crm\Item;
@@ -40,7 +41,7 @@ class CBPCrmCreateToDoActivity extends CBPActivity
 			'Colleagues' => [],
 			'Client' => '',
 			'Link' => '',
-			'Notification' => [],
+			'Notification' => null,
 			'Duration' => null,
 			//return
 			"Id" => null,
@@ -73,7 +74,7 @@ class CBPCrmCreateToDoActivity extends CBPActivity
 		$colleaguesIds = (array)CBPHelper::extractUsers($this->Colleagues, $this->getDocumentId());
 		$colleaguesIds[] = (string)$responsibleId;
 		$duration = $this->getNumFromProperty($this->Duration);
-		$notification = $this->getIntValuesArray($this->Notification);
+		$notification = !is_null($this->Notification) ? $this->getIntValuesArray($this->Notification) : null;
 		if (!isset(self::getDurationOptions()[$duration]))
 		{
 			$duration = null;
@@ -193,6 +194,12 @@ class CBPCrmCreateToDoActivity extends CBPActivity
 
 		$this->Id = $todo->getId();
 		$this->notifyAboutResponsible($todo);
+
+		\CCrmBizProcHelper::sendOperationsAnalytics(
+			Dictionary::EVENT_ENTITY_CREATE,
+			$this,
+			'todo',
+		);
 
 		return CBPActivityExecutionStatus::Closed;
 	}

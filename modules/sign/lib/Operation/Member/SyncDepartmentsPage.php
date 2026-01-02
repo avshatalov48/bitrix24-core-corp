@@ -12,29 +12,34 @@ use Bitrix\Sign\Repository\MemberNodeRepository;
 use Bitrix\Sign\Repository\MemberRepository;
 use Bitrix\Sign\Service\Container;
 use Bitrix\Sign\Service\Sign\MemberService;
+use Bitrix\Sign\Service\SignersListService;
 use Bitrix\Sign\Type;
 use Bitrix\Sign\Contract;
 use Bitrix\Sign\Item;
 use Bitrix\Main;
 use Bitrix\Sign\Type\Member\Role;
 
+/**
+ * @see GetMembersFromUserPartyEntities
+ */
 final class SyncDepartmentsPage implements Contract\Operation
 {
 	private const DEPT_SYNC_PAGE_SIZE = 500;
 
 	private readonly MemberService $memberService;
-	private readonly MemberRepository $memberRepository;
 	private readonly MemberNodeRepository $memberNodeRepository;
+	private readonly SignersListService $signersListService;
 
 	public function __construct(
 		private readonly Item\Document $document,
 		private readonly int $party,
 		private readonly NodeMemberService $hrNodeMemberService,
+		private readonly bool $excludeRejectedSigners = true,
 	)
 	{
 		$this->memberService = Container::instance()->getMemberService();
-		$this->memberRepository = Container::instance()->getMemberRepository();
 		$this->memberNodeRepository = Container::instance()->getMemberNodeRepository();
+		$this->signersListService = Container::instance()->getSignersListService();
 	}
 
 	public function launch(): Main\Result
@@ -63,6 +68,18 @@ final class SyncDepartmentsPage implements Contract\Operation
 				offset: $offset,
 				limit: self::DEPT_SYNC_PAGE_SIZE,
 			);
+
+			if ($this->excludeRejectedSigners)
+			{
+				$rejectedUsers = $this->signersListService->listRejectedSigners();
+				foreach ($employees as $employee)
+				{
+					if (in_array($employee->entityId, $rejectedUsers->getUserIds(), true))
+					{
+						$employees->remove($employee);
+					}
+				}
+			}
 
 			$fetchedEmployeesCount = $employees->count();
 			$syncedEmployees += $fetchedEmployeesCount;
@@ -106,7 +123,11 @@ final class SyncDepartmentsPage implements Contract\Operation
 			$usersForMapping = array_diff($pageUniqueUserIds, $alreadyMappedUsers);
 
 			// create new Members
-			$addResult = $this->createNewMembers($newUniqUsersForDocument);
+			$addResult = (new CreateMembers(
+				$this->document,
+				$this->party,
+				$newUniqUsersForDocument,
+			))->launch();
 			if (!$addResult->isSuccess())
 			{
 				$this->memberService->cleanByDocumentId($this->document->id);
@@ -163,62 +184,6 @@ final class SyncDepartmentsPage implements Contract\Operation
 		return null;
 	}
 
-	private function checkTariffLimitations(Item\Document $document, MemberCollection $memberCollection): Main\Result
-	{
-		$result = new Main\Result();
-		$currentSignersCount = $this->memberRepository->countMembersByDocumentIdAndRoleAndStatus($document->id, [], Role::SIGNER);
-		$uniqSignersCount = $currentSignersCount + $memberCollection->count();
-		if (B2eTariff::instance()->isB2eSignersCountRestricted($uniqSignersCount))
-		{
-			$result->addError(B2eTariff::instance()->getSignersCountAccessError());
-		}
-		return $result;
-	}
-
-	/**
-	 * @param int[] $userIds
-	 * @param int $documentId
-	 * @param int $party
-	 *
-	 * @return Result
-	 */
-	private function createNewMembers(array $userIds): Main\Result
-	{
-		$memberCollection = new MemberCollection();
-		foreach ($userIds as $userId)
-		{
-			$memberCollection->add(
-				new \Bitrix\Sign\Item\Member(
-					documentId: $this->document->id,
-					party: $this->party,
-					channelType: Type\Member\ChannelType::IDLE,
-					channelValue: 'stub@at.com',
-					entityType: Type\Member\EntityType::USER,
-					entityId: $userId,
-					role: Role::SIGNER,
-				),
-			);
-		}
-
-		$tariffRestrictionCheckResult = $this->checkTariffLimitations($this->document, $memberCollection);
-		if (!$tariffRestrictionCheckResult->isSuccess())
-		{
-			$this->memberService->cleanByDocumentId($this->document->id);
-			return $tariffRestrictionCheckResult;
-		}
-
-		Container::instance()
-			 ->getHcmLinkService()
-			 ->fillOneLinkedMembersWithEmployeeId(
-				 $this->document,
-				 $memberCollection,
-				 $this->document->representativeId,
-			 )
-		;
-
-		return $this->memberRepository->addMany($memberCollection);
-	}
-
 	/**
 	 * @param int $nodeId
 	 * @param int[] $userIds
@@ -262,7 +227,7 @@ final class SyncDepartmentsPage implements Contract\Operation
 	{
 		$pageUniqueUserIds = [];
 		/** @var NodeMember $employee */
-		foreach ($employees->getIterator() as $employee)
+		foreach ($employees as $employee)
 		{
 			$pageUniqueUserIds[$employee->entityId] = true;
 		}

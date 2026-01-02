@@ -1,0 +1,20 @@
+<?php
+$MESS["TASKS_TTDP_REGULAR_ANY"] = "кез келген";
+$MESS["TASKS_TTDP_REGULAR_DAILY"] = "Күн сайын";
+$MESS["TASKS_TTDP_REGULAR_DAY"] = "күн";
+$MESS["TASKS_TTDP_REGULAR_DAY_INTERVAL"] = "аралықпен күн";
+$MESS["TASKS_TTDP_REGULAR_MONTHLY"] = "Әр ай сайын";
+$MESS["TASKS_TTDP_REGULAR_MONTH_ALT"] = "ай";
+$MESS["TASKS_TTDP_REGULAR_MONTH_SHORT"] = "ай";
+$MESS["TASKS_TTDP_REGULAR_REPEATS"] = "қайталаулар";
+$MESS["TASKS_TTDP_REGULAR_REPEAT_END"] = "Дейін қайталау";
+$MESS["TASKS_TTDP_REGULAR_REPEAT_END_C_DATE"] = "аяқталу күні";
+$MESS["TASKS_TTDP_REGULAR_REPEAT_END_C_NONE"] = "аяқталу күні жоқ";
+$MESS["TASKS_TTDP_REGULAR_REPEAT_END_C_TIMES"] = "кейін аяқтау";
+$MESS["TASKS_TTDP_REGULAR_REPEAT_START"] = "Қайталауды бастау";
+$MESS["TASKS_TTDP_REGULAR_REPEAT_TYPE"] = "қайталанушылық";
+$MESS["TASKS_TTDP_REGULAR_TASK_CTIME"] = "Міндетті құру уақыты";
+$MESS["TASKS_TTDP_REGULAR_TZ_HINT"] = "Міндетті құру уақыты #TIMEZONE# уақыт аймағында көрсетілген.";
+$MESS["TASKS_TTDP_REGULAR_WEEKLY"] = "Әр апта сайын";
+$MESS["TASKS_TTDP_REGULAR_WEEK_ALT"] = "апта";
+$MESS["TASKS_TTDP_REGULAR_YEARLY"] = "Жыл сайын";

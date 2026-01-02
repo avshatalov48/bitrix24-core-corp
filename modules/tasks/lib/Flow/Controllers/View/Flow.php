@@ -2,12 +2,14 @@
 
 namespace Bitrix\Tasks\Flow\Controllers\View;
 
+use Bitrix\Main\Application;
 use Bitrix\Main\DI\ServiceLocator;
 use Bitrix\Main\Engine\ActionFilter\CloseSession;
 use Bitrix\Main\Engine\Controller;
 use Bitrix\Main\Engine\CurrentUser;
 use Bitrix\Main\Engine\Response\Converter;
 use Bitrix\Main\Loader;
+use Bitrix\Main\Web\Uri;
 use Bitrix\Socialnetwork\Helper\Workgroup;
 use Bitrix\Tasks\Flow\Access\FlowAccessController;
 use Bitrix\Tasks\Flow\Access\FlowAction;
@@ -21,6 +23,8 @@ use Bitrix\Tasks\Flow\Provider\FlowProvider;
 use Bitrix\Tasks\Helper\Analytics;
 use Bitrix\Tasks\Integration\SocialNetwork\Group;
 use Bitrix\Tasks\Internals\Registry\GroupRegistry;
+use Bitrix\Tasks\Internals\Routes\RouteDictionary;
+use CComponentEngine;
 use CFile;
 use Throwable;
 
@@ -94,6 +98,8 @@ class Flow extends Controller
 			'creator' => $this->converter->process($users[$flow->getCreatorId()]),
 			'owner' => $this->converter->process($users[$flow->getOwnerId()]),
 			'project' => $this->getProject($flow->getGroupId()),
+			'link' => $this->getLink($flow->getId()),
+			'isFeatureEnabled' => FlowFeature::isFeatureEnabled(),
 		];
 	}
 
@@ -141,6 +147,25 @@ class Flow extends Controller
 		$avatarTypes = Workgroup::getAvatarTypes();
 
 		return $avatarTypes[$project['AVATAR_TYPE']]['mobileUrl'] ?? '';
+	}
+
+	protected function getLink(int $flowId): string
+	{
+		$flowUri = new Uri(
+			CComponentEngine::makePathFromTemplate(
+				RouteDictionary::PATH_TO_FLOWS,
+				['user_id' => $this->userId],
+			)
+		);
+		$host = Application::getInstance()->getContext()->getRequest()->getServer()->getHttpHost();
+
+		$flowUri->addParams(['ID_numsel' => 'exact']);
+		$flowUri->addParams(['ID_from' => $flowId]);
+		$flowUri->addParams(['ID_to' => $flowId]);
+		$flowUri->addParams(['apply_filter' => 'Y']);
+		$flowUri->setHost($host);
+
+		return $flowUri->getUri();
 	}
 
 	private function sendAnalytics(): void

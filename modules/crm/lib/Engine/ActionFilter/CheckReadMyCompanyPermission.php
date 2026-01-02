@@ -12,7 +12,7 @@ class CheckReadMyCompanyPermission extends BaseCheckPermission
 	{
 		if ($entityTypeId === \CCrmOwnerType::Company && \CCrmCompany::isMyCompany($entityId))
 		{
-			$myCompanyPermissions = Container::getInstance()->getUserPermissions()->getMyCompanyPermissions();
+			$myCompanyPermissions = Container::getInstance()->getUserPermissions()->myCompany();
 
 			return $myCompanyPermissions->canRead();
 		}

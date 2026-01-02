@@ -1,8 +1,13 @@
 <?php
 
 use Bitrix\Main\Loader;
-use Bitrix\Tasks\Integration\Intranet\Settings;
+use Bitrix\Tasks\Control\Exception\TaskAddException;
+use Bitrix\Tasks\Control\Exception\TaskNotExistsException;
 use Bitrix\Tasks\Internals\TaskTable;
+use Bitrix\Tasks\V2\Internal\DI\Container;
+use Bitrix\Tasks\V2\Internal\Entity\Task;
+use Bitrix\Tasks\V2\Internal\Entity\Task\Status;
+use Bitrix\Tasks\V2\Internal\Service\Task\Action\Add\Config\AddConfig;
 
 class CTaskPlannerMaintance
 {
@@ -112,7 +117,7 @@ class CTaskPlannerMaintance
 		$taskAddUrl = \Bitrix\Tasks\UI\Task::makeActionUrl($pathTemplate, 0, 'edit', self::$USER_ID);
 		$taskAddUrl .= '?'.http_build_query(['ADD_TO_TIMEMAN' => 'Y']);
 
-		$isTasksEnabled = (new Settings())->isToolAvailable(Settings::TOOLS['base_tasks']);
+		$isTasksEnabled = Container::getInstance()->getToolService()->isBaseTasksAvailable();
 		$arResult = [
 			'DATA' => [
 				'TASKS_ENABLED' => $isTasksEnabled,
@@ -252,10 +257,59 @@ class CTaskPlannerMaintance
 
 	public static function plannerActions($arActions, $site_id = SITE_ID)
 	{
+		self::$SITE_ID = $site_id;
+		self::$USER_ID = \Bitrix\Tasks\Util\User::getId();
+
+		if (\Bitrix\Tasks\V2\FormV2Feature::isOn('planner'))
+		{
+			$id = null;
+			if (($arActions['name'] ?? null) <> '')
+			{
+				$user = \Bitrix\Tasks\V2\Internal\Entity\User::mapFromId(self::$USER_ID);
+
+				$task = new Task(
+					title:              $arActions['name'],
+					creator:            $user,
+					responsible:        $user,
+					status:             Status::Pending,
+					allowsTimeTracking: true,
+					siteId:             self::$SITE_ID,
+				);
+
+				$service = Container::getInstance()->getAddTaskService();
+
+				$config = new AddConfig(self::$USER_ID);
+
+				try
+				{
+					$task = $service->add($task, $config);
+
+					$id = $task->id;
+				}
+				catch (TaskAddException|TaskNotExistsException $e)
+				{
+					Container::getInstance()
+						->getLogger()
+						->logWarning($e);
+				}
+			}
+
+			$toAdd = is_array($arActions['add']) ? $arActions['add'] : [];
+			$toDelete = is_array($arActions['remove']) ? $arActions['remove'] : [];
+
+			if ($id)
+			{
+				$toAdd = array_merge($toAdd, [$id]);
+			}
+
+			$service = Container::getInstance()->getPlannerService();
+
+			return $service->merge(self::$USER_ID, $toAdd, $toDelete);
+		}
+
 		global $CACHE_MANAGER;
 
-		self::$SITE_ID = $site_id;
-		self::$USER_ID = \Bitrix\Tasks\Util\User::getId(); // todo: need to remove this, use $userId instead, to be able to manage other users planner
+		// todo: need to remove this, use $userId instead, to be able to manage other users planner
 
 		$lastTaskId = 0;
 
@@ -474,8 +528,26 @@ class CTaskPlannerMaintance
 		return $count;
 	}
 
+	/**
+	 * @deprecated
+	 * @TasksV2
+	 * @use \Bitrix\Tasks\V2\Internal\Service\Task\PlannerService
+	 */
 	public static function getCurrentTasksList()
 	{
+		if (\Bitrix\Tasks\V2\FormV2Feature::isOn('planner'))
+		{
+			global $USER;
+			if ($USER instanceof CUser)
+			{
+				$service = Container::getInstance()->getPlannerService();
+
+				return $service->syncAndGetActualUserTaskIds((int)$USER->getId());
+			}
+
+			return [];
+		}
+
 		static $checked;
 
 		$list = CUserOptions::GetOption(

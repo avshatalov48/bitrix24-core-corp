@@ -1,0 +1,20 @@
+<?php
+$MESS["GD_LOG_AVATAR_SIZE"] = "Жанды лентадағы аватар өлшемі (хабарлама)";
+$MESS["GD_LOG_AVATAR_SIZE_COMMENT"] = "Жанды лентадағы аватар өлшемі (пікір)";
+$MESS["GD_LOG_P_ENTITY_TYPE"] = "Жазылым түрі";
+$MESS["GD_LOG_P_ENTITY_TYPE_VALUE_ALL"] = "барлығы";
+$MESS["GD_LOG_P_ENTITY_TYPE_VALUE_GROUP"] = "топтар";
+$MESS["GD_LOG_P_ENTITY_TYPE_VALUE_USER"] = "пайдаланушы";
+$MESS["GD_LOG_P_EVENT_ID"] = "Хабарлама түрі";
+$MESS["GD_LOG_P_EVENT_ID_VALUE_ALL"] = "барлығы";
+$MESS["GD_LOG_P_EVENT_ID_VALUE_BLOG"] = "блогтар/есептер";
+$MESS["GD_LOG_P_EVENT_ID_VALUE_CALENDAR"] = "күнтізбелер";
+$MESS["GD_LOG_P_EVENT_ID_VALUE_FILES"] = "файлдар";
+$MESS["GD_LOG_P_EVENT_ID_VALUE_FORUM"] = "форумдар/талқылаулар";
+$MESS["GD_LOG_P_EVENT_ID_VALUE_PHOTO"] = "фото";
+$MESS["GD_LOG_P_EVENT_ID_VALUE_SYSTEM"] = "жүйелік";
+$MESS["GD_LOG_P_EVENT_ID_VALUE_SYSTEM_FRIENDS"] = "достар (тек пайдаланушылар)";
+$MESS["GD_LOG_P_EVENT_ID_VALUE_SYSTEM_GROUPS"] = "топтар (тек пайдаланушылар)";
+$MESS["GD_LOG_P_EVENT_ID_VALUE_TASKS"] = "міндеттер";
+$MESS["GD_LOG_P_LOG_CNT"] = "Көрсетілетін жазбалар саны";
+$MESS["GD_LOG_P_URL"] = "Жаңартулар тізімі бар парақшаның URL";

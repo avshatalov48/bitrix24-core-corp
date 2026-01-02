@@ -137,7 +137,7 @@ jn.define('calendar/sync-page/icloud-dialog', (require, exports, module) => {
 					ref: (ref) => {
 						this.stepperRef = ref;
 					},
-					testId: `sync_page_icloud_stepper_container`,
+					testId: 'sync_page_icloud_stepper_container',
 				},
 				View(
 					{
@@ -164,7 +164,7 @@ jn.define('calendar/sync-page/icloud-dialog', (require, exports, module) => {
 						marginBottom: 10,
 					},
 					text: Loc.getMessage('M_CALENDAR_SYNC_ICLOUD_DIALOG_STEPPER_TITLE'),
-					testId: `sync_page_icloud_stepper_title`,
+					testId: 'sync_page_icloud_stepper_title',
 				},
 			);
 		}
@@ -240,7 +240,7 @@ jn.define('calendar/sync-page/icloud-dialog', (require, exports, module) => {
 						autoPlay: true,
 					},
 				),
-			)
+			);
 		}
 
 		renderForm()
@@ -257,7 +257,7 @@ jn.define('calendar/sync-page/icloud-dialog', (require, exports, module) => {
 					ref: (ref) => {
 						this.formRef = ref;
 					},
-					testId: `sync_page_icloud_form_container`,
+					testId: 'sync_page_icloud_form_container',
 				},
 				this.renderFormTitle(),
 				this.renderAppleIdField(),
@@ -274,7 +274,7 @@ jn.define('calendar/sync-page/icloud-dialog', (require, exports, module) => {
 						alignItems: 'center',
 						justifyContent: 'center',
 					},
-					testId: `sync_page_icloud_form_title`,
+					testId: 'sync_page_icloud_form_title',
 				},
 				Image(
 					{
@@ -297,7 +297,7 @@ jn.define('calendar/sync-page/icloud-dialog', (require, exports, module) => {
 							marginLeft: 5,
 						},
 						text: Loc.getMessage('M_CALENDAR_SYNC_ICLOUD_DIALOG_FORM_TITLE'),
-						testId: `sync_page_icloud_form_title_text`,
+						testId: 'sync_page_icloud_form_title_text',
 					},
 				),
 			);
@@ -315,7 +315,7 @@ jn.define('calendar/sync-page/icloud-dialog', (require, exports, module) => {
 				ref: (ref) => {
 					this.appleIdFieldRef = ref;
 				},
-				testId: `sync_page_icloud_apple_id_field`,
+				testId: 'sync_page_icloud_apple_id_field',
 			});
 		}
 
@@ -348,7 +348,7 @@ jn.define('calendar/sync-page/icloud-dialog', (require, exports, module) => {
 				ref: (ref) => {
 					this.appPassFieldRef = ref;
 				},
-				testId: `sync_page_icloud_app_pass_field`,
+				testId: 'sync_page_icloud_app_pass_field',
 			});
 		}
 
@@ -398,7 +398,7 @@ jn.define('calendar/sync-page/icloud-dialog', (require, exports, module) => {
 						backgroundColor: AppTheme.colors.accentMainPrimaryalt,
 					},
 					onClick: this.onLoginButtonClick,
-					testId: `sync_page_icloud_login_button`,
+					testId: 'sync_page_icloud_login_button',
 				},
 				Image(
 					{
@@ -439,7 +439,7 @@ jn.define('calendar/sync-page/icloud-dialog', (require, exports, module) => {
 						backgroundColor: AppTheme.colors.accentMainPrimaryalt,
 					},
 					onClick: this.onFormSave,
-					testId: `sync_page_icloud_continue_button`,
+					testId: 'sync_page_icloud_continue_button',
 				},
 				Text(
 					{

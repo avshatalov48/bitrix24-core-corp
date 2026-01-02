@@ -15,6 +15,7 @@ use Bitrix\Main\SystemException;
 use Bitrix\Main\UI\Filter\Options;
 use Bitrix\Main\UI\PageNavigation;
 use Bitrix\Mobile\Provider\UserRepository;
+use Bitrix\Mobile\Provider\ReactionProvider;
 use Bitrix\Socialnetwork\Item\UserContentView;
 use Bitrix\Tasks\Integration\SocialNetwork\Group;
 use Bitrix\Socialnetwork\Item\Workgroup;
@@ -54,6 +55,9 @@ use Bitrix\Tasks\Scrum\Service\DefinitionOfDoneService;
 use Bitrix\Tasks\Scrum\Service\TaskService;
 use Bitrix\Tasks\UI;
 use Bitrix\Tasks\Util\Type\DateTime;
+use Bitrix\Tasks\V2\FormV2Feature;
+use Bitrix\Tasks\V2\Public\Command\Task\Kanban\MoveTaskCommand;
+use Bitrix\Tasks\V2\Internal\Entity\Task\Scenario;
 use Bitrix\TasksMobile\Dto\DiskFileDto;
 use Bitrix\TasksMobile\Dto\TaskDto;
 use Bitrix\TasksMobile\Dto\TaskRequestFilter;
@@ -84,10 +88,12 @@ final class TaskProvider
 	private array $extra;
 	private ?PageNavigation $pageNavigation;
 	private ?TaskRequestFilter $searchParams;
+	private ?bool $isASC;
 
 	/**
 	 * @param int $userId
 	 * @param string $order
+	 * @param bool|null $isASC
 	 * @param array $extra
 	 * @param TaskRequestFilter|null $searchParams
 	 * @param PageNavigation|null $pageNavigation
@@ -95,6 +101,7 @@ final class TaskProvider
 	public function __construct(
 		int $userId,
 		string $order = TaskProvider::ORDER_ACTIVITY,
+		?bool $isASC = null,
 		array $extra = [],
 		?TaskRequestFilter $searchParams = null,
 		?PageNavigation $pageNavigation = null,
@@ -103,6 +110,7 @@ final class TaskProvider
 		$this->userId = $userId;
 		$this->searchParams = ($searchParams ?? new TaskRequestFilter());
 		$this->order = $order;
+		$this->isASC = $isASC;
 		$this->extra = $extra;
 		$this->pageNavigation = $pageNavigation;
 	}
@@ -156,10 +164,13 @@ final class TaskProvider
 	{
 		$select = $this->getSelect();
 		$filter = $this->getFilter($workMode, $stageId, $projectId);
-		$order = $this->getOrder($workMode);
+		$order = $this->getOrder($workMode, $projectId);
 		$params = $this->getParams($projectId);
 
 		$tasks = $this->getTasks($select, $filter, $order, $params, $this->pageNavigation);
+		$canCreateTask = $this->pageNavigation->getCurrentPage() === 1
+			? $this->getCanCreateTaskForDashboard($projectId)
+			: null;
 
 		return [
 			'items' => $this->prepareItems($tasks),
@@ -167,7 +178,39 @@ final class TaskProvider
 			'groups' => $this->getGroupsData($tasks, $projectId),
 			'flows' => $this->getFlowsData($tasks),
 			'tasks_stages' => $this->getStagesData($tasks, $workMode, $stageId, $projectId),
+			'can_create_task' => $canCreateTask,
 		];
+	}
+
+	/**
+	 * @param int|null $projectId
+	 * @return bool
+	 */
+	private function getCanCreateTaskForDashboard(?int $projectId): bool
+	{
+		$ownerId = ($this->searchParams->ownerId ?: $this->userId);
+
+		if ($projectId || $ownerId !== $this->userId)
+		{
+			$task = TaskModel::createFromArray([
+				'CREATED_BY' => $this->userId,
+				'RESPONSIBLE_ID' => $ownerId,
+				'GROUP_ID' => $projectId,
+			]);
+
+			return TaskAccessController::can($this->userId, ActionDictionary::ACTION_TASK_SAVE, null, $task);
+		}
+
+		if ($this->searchParams->flowId > 0)
+		{
+			$flows = (new FlowProvider($this->userId))->getFlowsById([$this->searchParams->flowId]);
+			if (!empty($flows))
+			{
+				return $flows[0]->active;
+			}
+		}
+
+		return true;
 	}
 
 	private function getStagesData(
@@ -201,6 +244,7 @@ final class TaskProvider
 			'PRIORITY',
 			'IS_MUTED',
 			'IS_PINNED',
+			'IS_PINNED_IN_GROUP',
 			'FAVORITE',
 
 			'CREATED_BY',
@@ -210,6 +254,7 @@ final class TaskProvider
 
 			'DEADLINE',
 			'ACTIVITY_DATE',
+			'CHANGED_DATE',
 			'START_DATE_PLAN',
 			'END_DATE_PLAN',
 			'DATE_START',
@@ -463,25 +508,34 @@ final class TaskProvider
 		return $filter;
 	}
 
-	private function getOrder(?string $workMode): array
+	private function getOrder(?string $workMode, ?int $projectId): array
 	{
+		$ASC = $this->isASC ? 'ASC' : 'DESC';
+
 		$order = [];
 
 		if (!isset($workMode))
 		{
-			$order['IS_PINNED'] = 'DESC';
+			if ($projectId !== null && $projectId > 0)
+			{
+				$order['IS_PINNED_IN_GROUP'] = 'DESC';
+			}
+			else
+			{
+				$order['IS_PINNED'] = 'DESC';
+			}
 		}
 
 		if ($this->order === TaskProvider::ORDER_DEADLINE)
 		{
-			$order['DEADLINE'] = 'ASC,NULLS';
+			$order['DEADLINE'] = $ASC.',NULLS';
 		}
 		else
 		{
-			$order['ACTIVITY_DATE'] = 'DESC';
+			$order['ACTIVITY_DATE'] = $ASC;
 		}
 
-		$order['ID'] = 'DESC';
+		$order['ID'] = $ASC;
 
 		return $order;
 	}
@@ -522,11 +576,36 @@ final class TaskProvider
 			'NAV_PARAMS' => $this->getNavParams($pageNavigation),
 		];
 		$listResult = Manager\Task::getList($this->userId, $getListParams, $params);
-
 		$tasks = $listResult['DATA'];
-		$tasks = $this->fillDataForTasks($tasks);
 
-		return $tasks;
+		// todo: get rid of this in the future, when bug with mutes in tasks module will be fixed
+		$this->updateIsMutedStateForCurrentUser($tasks, $getListParams, $params);
+
+		return $this->fillDataForTasks($tasks);
+	}
+
+	private function updateIsMutedStateForCurrentUser(array &$tasks, array $getListParams, array $params): void
+	{
+		if ($this->userId === $params['TARGET_USER_ID'])
+		{
+			return;
+		}
+
+		$mutesList = Manager\Task::getList(
+			$this->userId,
+			[
+				...$getListParams,
+				'select' => ['IS_MUTED'],
+			],
+			[
+				...$params,
+				'TARGET_USER_ID' => $this->userId,
+			]);
+
+		foreach ($mutesList['DATA'] as $id => $taskWithMute)
+		{
+			$tasks[$id]['IS_MUTED'] = $taskWithMute['IS_MUTED'];
+		}
 	}
 
 	public function getTask(int $taskId): TaskDto
@@ -548,6 +627,7 @@ final class TaskProvider
 
 		$taskStage = [];
 		$kanban = [];
+
 		if ($kanbanOwnerId)
 		{
 			$taskStageProvider = new TasksStagesProvider($workMode, null, $projectId, $kanbanOwnerId);
@@ -567,6 +647,9 @@ final class TaskProvider
 			'users' => $this->getUsersData($allTasks),
 			'groups' => $this->getGroupsData($allTasks),
 			'flows' => $this->getFlowsData($allTasks),
+			'REACTIONS' => $this->getReactionsData($taskId),
+			'REACTIONS_VOTE_SIGN_TOKEN' => $this->getReactionsVoteSignToken($taskId),
+			'REACTIONS_TEMPLATE_SETTINGS' => $this->getReactionsTemplate(),
 			'relatedTaskIds' => $relatedTaskIds,
 			'taskStage' => $taskStage,
 			'kanban' => $kanban,
@@ -707,6 +790,7 @@ final class TaskProvider
 
 	private function fillDataForTasks(array $tasks, bool $isFullData = false, bool $shouldFillDodData = true): array
 	{
+		$tasks = $this->fillUpdateDateData($tasks);
 		$tasks = $this->fillCountersData($tasks);
 		$tasks = $this->fillResultData($tasks);
 		$tasks = $this->fillTimerData($tasks);
@@ -717,11 +801,14 @@ final class TaskProvider
 		$tasks = $this->fillFormattedDescription($tasks);
 		$tasks = $this->fillUserFieldsData($tasks);
 		$tasks = $this->fillActionData($tasks);
+		$tasks = $this->fillShouldShowStage($tasks);
 
 		if ($shouldFillDodData)
 		{
 			$tasks = $this->fillDodData($tasks);
 		}
+
+		$tasks = $this->fillViewsCount($tasks);
 
 		if ($isFullData)
 		{
@@ -745,6 +832,16 @@ final class TaskProvider
 			'iNumPageSize' => $pageNavigation->getOffset(),
 			'iNumPage' => $pageNavigation->getCurrentPage(),
 		];
+	}
+
+	private function fillUpdateDateData(array $tasks): array
+	{
+		foreach ($tasks as $id => $task)
+		{
+			$tasks[$id]['UPDATE_DATE'] = $task['CHANGED_DATE'];
+		}
+
+		return $tasks;
 	}
 
 	private function fillCountersData(array $tasks): array
@@ -1105,15 +1202,13 @@ final class TaskProvider
 				ActionDictionary::ACTION_TASK_DISAPPROVE => 'CAN_DISAPPROVE',
 				ActionDictionary::ACTION_TASK_DEFER => 'CAN_DEFER',
 				ActionDictionary::ACTION_TASK_TAKE => 'CAN_TAKE',
+				ActionDictionary::ACTION_TASK_CREATE => 'CAN_CREATE',
 			];
 			$taskModel = TaskModel::createFromId($id);
 			$accessController = new TaskAccessController($this->userId);
 			$rights = $accessController->batchCheck(array_map(fn(string $key) => $taskModel, $request), $taskModel);
 
 			$tasks[$id]['ACTION'] = array_combine($request, $rights);
-			$tasks[$id]['ACTION_OLD'] = $this->translateAllowedActionNames(
-				\CTaskItem::getAllowedActionsArray($this->userId, $data, true)
-			);
 		}
 
 		return $tasks;
@@ -1126,6 +1221,17 @@ final class TaskProvider
 			return [];
 		}
 
+		$dodService = new DefinitionOfDoneService(User::getId());
+		if (method_exists($dodService, 'areNecessary'))
+		{
+			return $this->fillMultiDodData($tasks);
+		}
+
+		return $this->fillSingleDodData($tasks);
+	}
+
+	private function fillSingleDodData(array $tasks): array
+	{
 		foreach ($tasks as $id => $task)
 		{
 			if ($task["PARENT_ID"] > 0)
@@ -1145,6 +1251,67 @@ final class TaskProvider
 		return $tasks;
 	}
 
+	private function fillMultiDodData(array $tasks): array
+	{
+		$mapIds = [];
+		foreach ($tasks as $task)
+		{
+			if ($task["PARENT_ID"] > 0)
+			{
+				continue;
+			}
+
+			$mapIds[$task['ID']] = $task['GROUP_ID'];
+		}
+
+		foreach ($this->areDodNecessary($mapIds) as $taskId => $isDodNecessary)
+		{
+			if ($isDodNecessary)
+			{
+				$tasks[$taskId]['DOD'] = $this->getDodTypes($taskId, $mapIds[$taskId]);
+			}
+
+			$tasks[$taskId]['DOD']['IS_NECESSARY'] = $isDodNecessary;
+		}
+
+		return $tasks;
+	}
+
+	private function fillShouldShowStage(array $tasks): array
+	{
+		if (empty($tasks))
+		{
+			return [];
+		}
+
+		$preparedTasks = [];
+		foreach ($tasks as $task)
+		{
+			if ($task['ID'] > 0 && $task['GROUP_ID'] > 0)
+			{
+				$preparedTasks[] = [
+					'ID' => (int)$task['ID'],
+					'GROUP_ID' => (int)$task['GROUP_ID'],
+				];
+			}
+		}
+
+		if (empty($preparedTasks))
+		{
+			return $tasks;
+		}
+
+		$scrumProvider = new ScrumProvider();
+		$tasksWithKanbanStages = $scrumProvider->filterTasksWithKanbanStages($preparedTasks);
+
+		foreach ($tasksWithKanbanStages as $taskId)
+		{
+			$tasks[$taskId]['SHOULD_SHOW_KANBAN_STAGES'] = true;
+		}
+
+		return $tasks;
+	}
+
 	private function isDodNecessary(int $taskId, int $groupId): bool
 	{
 		$userId = User::getId();
@@ -1154,6 +1321,13 @@ final class TaskProvider
 		}
 
 		return (new DefinitionOfDoneService($userId))->isNecessary($groupId, $taskId);
+	}
+
+	private function areDodNecessary(array $mapIds): array
+	{
+		$userId = User::getId();
+
+		return (new DefinitionOfDoneService($userId))->areNecessary($mapIds);
 	}
 
 	private function getDodTypes(int $taskId, int $groupId): array
@@ -1169,66 +1343,11 @@ final class TaskProvider
 		];
 	}
 
-	/**
-	 * @param array $actions
-	 * @return array
-	 */
-	private function translateAllowedActionNames(array $actions): array
-	{
-		if (empty($actions))
-		{
-			return [];
-		}
-
-		$translatedActions = [];
-
-		foreach ($actions as $name => $value)
-		{
-			$translatedActions[str_replace('ACTION_', '', $name)] = $value;
-		}
-
-		$replaces = [
-			'CHANGE_DIRECTOR' => 'EDIT.ORIGINATOR',
-			'CHECKLIST_REORDER_ITEMS' => 'CHECKLIST.REORDER',
-			'ELAPSED_TIME_ADD' => 'ELAPSEDTIME.ADD',
-			'START_TIME_TRACKING' => 'DAYPLAN.TIMER.TOGGLE',
-		];
-		foreach ($replaces as $from => $to)
-		{
-			if (array_key_exists($from, $translatedActions))
-			{
-				$translatedActions[$to] = $translatedActions[$from];
-				unset($translatedActions[$from]);
-			}
-		}
-
-		$replaces = [
-			'CHANGE_DEADLINE' => 'EDIT.PLAN',
-			'CHECKLIST_ADD_ITEMS' => 'CHECKLIST.ADD',
-			'ADD_FAVORITE' => 'FAVORITE.ADD',
-			'DELETE_FAVORITE' => 'FAVORITE.DELETE',
-		];
-		foreach ($replaces as $from => $to)
-		{
-			if (array_key_exists($from, $translatedActions))
-			{
-				$translatedActions[$to] = $translatedActions[$from];
-			}
-		}
-
-		return $translatedActions;
-	}
-
 	private function fillViewsCount(array $tasks): array
 	{
 		if (empty($tasks))
 		{
 			return [];
-		}
-
-		if (!Loader::includeModule('socialnetwork'))
-		{
-			return $tasks;
 		}
 
 		$contentIds = [];
@@ -1566,6 +1685,7 @@ final class TaskProvider
 
 					'isMuted' => ($task['IS_MUTED'] === 'Y'),
 					'isPinned' => ($task['IS_PINNED'] === 'Y'),
+					'isPinnedInGroup' => ($task['IS_PINNED_IN_GROUP'] === 'Y'),
 					'isInFavorites' => ($task['FAVORITE'] === 'Y'),
 					'isResultRequired' => ($task['TASK_REQUIRE_RESULT'] === 'Y'),
 					'isResultExists' => ($task['TASK_HAS_RESULT'] === 'Y'),
@@ -1578,6 +1698,7 @@ final class TaskProvider
 
 					'deadline' => strtotime($task['DEADLINE']) ?: null,
 					'activityDate' => strtotime($task['ACTIVITY_DATE']) ?: null,
+					'updateDate' => strtotime($task['UPDATE_DATE']) ?: null,
 					'startDatePlan' => strtotime($task['START_DATE_PLAN']) ?: null,
 					'endDatePlan' => strtotime($task['END_DATE_PLAN']) ?: null,
 					'startDate' => strtotime($task['DATE_START']) ?: null,
@@ -1588,7 +1709,6 @@ final class TaskProvider
 					'counter' => $task['COUNTER'] ?? null,
 
 					'actions' => $task['ACTION'] ?? [],
-					'actionsOld' => $task['ACTION_OLD'] ?? [],
 
 					'isDodNecessary' => $task['DOD']['IS_NECESSARY'],
 					'dodTypes' => $task['DOD']['TYPES'] ?? [],
@@ -1597,6 +1717,7 @@ final class TaskProvider
 					'areUserFieldsLoaded' => $task['ARE_USER_FIELDS_LOADED'] ?? false,
 					'userFields' => $task['USER_FIELDS'] ?? [],
 					'userFieldNames' => $task['USER_FIELD_NAMES'] ?? [],
+					'shouldShowKanbanStages' => $task['SHOULD_SHOW_KANBAN_STAGES'] ?? false,
 				])
 			),
 			$tasks,
@@ -1657,6 +1778,21 @@ final class TaskProvider
 		}
 
 		return (new FlowProvider($this->userId))->getFlowsById($flowIds);
+	}
+
+	private function getReactionsVoteSignToken(int $taskId): array
+	{
+		return ReactionProvider::getReactionsVoteSignToken('TASK', $taskId);
+	}
+
+	private function getReactionsData(int $taskId): array
+	{
+		return ReactionProvider::getReactionsData('TASK', $taskId);
+	}
+
+	private function getReactionsTemplate(): array
+	{
+		return ReactionProvider::getReactionsTemplate($this->userId);
 	}
 
 	private function filterAllowedFields(array $fields): array
@@ -1869,11 +2005,13 @@ final class TaskProvider
 
 	private function processScenario(array $fields): array
 	{
-		$fields['SCENARIO_NAME'] = [ScenarioTable::SCENARIO_MOBILE];
+		/** @see Scenario::Mobile */
+		$fields['SCENARIO_NAME'] = ['mobile'];
 
 		if (!empty($fields[CRM\UserField::getMainSysUFCode()]))
 		{
-			$fields['SCENARIO_NAME'][] = ScenarioTable::SCENARIO_CRM;
+			/** @see Scenario::Crm */
+			$fields['SCENARIO_NAME'][] = 'crm';
 		}
 
 		return $fields;
@@ -1917,7 +2055,17 @@ final class TaskProvider
 				{
 					if ((int)$row['STAGE_ID'] !== $stageId)
 					{
-						TaskStageTable::update($row['ID'], ['STAGE_ID' => $stageId]);
+						if (FormV2Feature::isOn('move'))
+						{
+							(new MoveTaskCommand(
+								relationId: (int)$row['ID'],
+								stageId: $stageId
+							))->run();
+						}
+						else
+						{
+							TaskStageTable::update($row['ID'], ['STAGE_ID' => $stageId]);
+						}
 					}
 				}
 			}
@@ -2092,7 +2240,7 @@ final class TaskProvider
 			return null;
 		}
 
-		$nextFileIds = TaskObject::wakeUpObject(['ID' => $taskId])->fillUtsData()?->getUfTaskWebdavFiles();
+		$nextFileIds = TaskObject::wakeUpObject(['ID' => $taskId])->fillUtsData()?->getUfTaskWebdavFiles() ?? [];
 		$diffFiles = array_diff($nextFileIds, $prevFileIds);
 		$newFileId = reset($diffFiles);
 
@@ -2354,9 +2502,10 @@ final class TaskProvider
 	 * @throws ObjectPropertyException
 	 * @throws SystemException
 	 */
-	public function pin(int $taskId): bool
+	public function pin(int $taskId, ?int $groupId = null): bool
 	{
-		$result = UserOption::add($taskId, $this->userId, UserOption\Option::PINNED);
+		$option = $groupId ? UserOption\Option::PINNED_IN_GROUP : UserOption\Option::PINNED;
+		$result = UserOption::add($taskId, $this->userId, $option);
 
 		return $result->isSuccess();
 	}
@@ -2368,9 +2517,10 @@ final class TaskProvider
 	 * @throws ObjectPropertyException
 	 * @throws SystemException
 	 */
-	public function unpin(int $taskId): bool
+	public function unpin(int $taskId, ?int $groupId = null): bool
 	{
-		$result = UserOption::delete($taskId, $this->userId, UserOption\Option::PINNED);
+		$option = $groupId ? UserOption\Option::PINNED_IN_GROUP : UserOption\Option::PINNED;
+		$result = UserOption::delete($taskId, $this->userId, $option);
 
 		return $result->isSuccess();
 	}

@@ -2,12 +2,18 @@
 
 namespace Bitrix\Crm\Controller;
 
-use Bitrix\Main\Engine\Controller;
-use Bitrix\Main\Error;
+use Bitrix\Crm\History\Entity\InvoiceStatusHistoryTable;
+use Bitrix\Crm\History\InvoiceStatusHistoryEntry;
+use Bitrix\Crm\History\StageHistory\AbstractStageHistory;
+use Bitrix\Crm\History\StageHistory\DealStageHistory;
+use Bitrix\Crm\History\StageHistory\EntityStageHistory;
+use Bitrix\Crm\History\StageHistory\LeadStageHistory;
+use Bitrix\Crm\Service\Container;
+use Bitrix\Main\ArgumentException;
 use Bitrix\Main\UI\PageNavigation;
 use Bitrix\Main\Engine\Response\DataType\Page;
 
-class StageHistory extends Controller
+class StageHistory extends Base
 {
 	public function listAction(
 		int $entityTypeId,
@@ -17,133 +23,75 @@ class StageHistory extends Controller
 		PageNavigation $pageNavigation = null
 	): ?Page
 	{
-		switch ($entityTypeId)
+		if ($entityTypeId === \CCrmOwnerType::Invoice)
 		{
-			case \CCrmOwnerType::Lead:
-				$dataSource = \Bitrix\Crm\History\LeadStatusHistoryEntry::class;
-				break;
-
-			case \CCrmOwnerType::Deal:
-				$dataSource = \Bitrix\Crm\History\DealStageHistoryEntry::class;
-				break;
-
-			case \CCrmOwnerType::Invoice:
-				$dataSource = \Bitrix\Crm\History\InvoiceStatusHistoryEntry::class;
-				break;
-
-			default:
-				$this->addError(new Error(\CCrmOwnerType::ResolveName($entityTypeId) . ' entity is not supported'));
-
-				return null;
+			return $this->legacyInvoiceList($order, $filter, $select, $pageNavigation);
 		}
-		$fields = $this->getFields($entityTypeId);
 
-		$preparedFilter = $this->prepareFilter($filter, $fields);
+		$entity = $this->getEntity($entityTypeId);
+		if (!$entity)
+		{
+			$this->addError(ErrorCode::getEntityTypeNotSupportedError($entityTypeId));
+
+			return null;
+		}
+
+		$allowedFields = $this->getAllowedFields($entityTypeId);
+
+		$preparedOrder = $this->prepareOrder($order, $allowedFields);
+		if (!$this->validateOrder($preparedOrder, $allowedFields))
+		{
+			return null;
+		}
+
+		if (!$this->validateFilter($filter, $allowedFields))
+		{
+			return null;
+		}
+
+		$preparedFilter = $this->prepareFilter($entityTypeId, $filter);
+		if ($preparedFilter === null)
+		{
+			return null;
+		}
 
 		return new Page(
 			'items',
-			$dataSource::getListFilteredByPermissions([
-				'order' => $this->prepareOrder($order, $fields),
-				'filter' => $preparedFilter,
-				'select' => $this->prepareSelect($select, $fields),
-				'offset' => $pageNavigation->getOffset(),
-				'limit' => $pageNavigation->getLimit(),
-			]),
-			function() use ($preparedFilter, $dataSource) {
-				return $dataSource::getItemsCountFilteredByPermissions($preparedFilter);
-			}
+			$this->externalizeItems(
+				$entity->getListFilteredByPermissions([
+					'order' => $preparedOrder,
+					'filter' => $preparedFilter,
+					'select' => $this->prepareSelect($select, $allowedFields),
+					'offset' => $pageNavigation?->getOffset(),
+					'limit' => $pageNavigation?->getLimit(),
+				]),
+			),
+			static fn() => $entity->getItemsCountFilteredByPermissions($preparedFilter),
 		);
 	}
 
-	private function prepareOrder(array $order, array $fields): array
+	private function getEntity(int $entityTypeId): ?AbstractStageHistory
 	{
-		$result = [];
-		foreach ($order as $sortField => $sortOrder)
+		$factory = Container::getInstance()->getFactory($entityTypeId);
+		if (!$factory)
 		{
-			if (in_array($sortField, $fields))
-			{
-				$result[$sortField] =
-					mb_strtolower($sortOrder) === 'desc'
-						? 'desc'
-						: 'asc';
-			}
+			return null;
 		}
 
-		return $result;
+		if (\CCrmOwnerType::isUseDynamicTypeBasedApproach($entityTypeId))
+		{
+			return new EntityStageHistory($factory);
+		}
+
+		return match ($entityTypeId)
+		{
+			\CCrmOwnerType::Lead => new LeadStageHistory($factory),
+			\CCrmOwnerType::Deal => new DealStageHistory($factory),
+			default => null,
+		};
 	}
 
-	private function prepareFilter(array $filter, array $fields): array
-	{
-		$result = [];
-
-		$sqlWhere = new \CSQLWhere();
-		foreach ($filter as $filterKey => $filterValue)
-		{
-			$filterCondition = $sqlWhere->MakeOperation($filterKey);
-			if (!in_array($filterCondition['FIELD'], $fields))
-			{
-				continue;
-			}
-			if (
-			!in_array(
-				$filterCondition['OPERATION'],
-				[
-					'NB', //not between (!><)
-					'NI', //not Identical (!=)
-					'B',  //between (><)
-					'GE', //greater or equal (>=)
-					'LE', //less or equal (<=)
-					'NIN', //not in (!@)
-					'I', //Identical (=)
-					'G', //greater (>)
-					'L', //less (<)
-					'IN', // IN (@)
-					'E' // no operation
-				],
-				true
-			)
-			)
-			{
-				continue;
-			}
-			if ($filterCondition['OPERATION'] === 'E') // if no operation, change to strong equality
-			{
-				$filterKey = '=' . $filterKey;
-			}
-			if ($filterCondition['FIELD'] === 'CREATED_TIME')
-			{
-				$filterValue = \CRestUtil::unConvertDateTime($filterValue);
-			}
-
-			$result[$filterKey] = $filterValue;
-		}
-
-		return $result;
-	}
-
-	private function prepareSelect(array $select, array $fields): array
-	{
-		$result = [];
-		foreach ($select as $field)
-		{
-			if (in_array($field, $fields))
-			{
-				$result[] = $field;
-			}
-		}
-		if (empty($result))
-		{
-			$result = $fields;
-		}
-		if (!in_array('ID', $result))
-		{
-			$result[] = 'ID';
-		}
-
-		return $result;
-	}
-
-	private function getFields(int $entityTypeId): array
+	private function getAllowedFields(int $entityTypeId): array
 	{
 		$fields = [
 			'ID',
@@ -152,25 +100,167 @@ class StageHistory extends Controller
 			'CREATED_TIME',
 		];
 
-		switch ($entityTypeId)
+		if ($entityTypeId === \CCrmOwnerType::Lead)
 		{
-			case \CCrmOwnerType::Lead:
-				$fields[] = 'STATUS_SEMANTIC_ID';
-				$fields[] = 'STATUS_ID';
-				break;
-
-			case \CCrmOwnerType::Deal:
-				$fields[] = 'CATEGORY_ID';
-				$fields[] = 'STAGE_SEMANTIC_ID';
-				$fields[] = 'STAGE_ID';
-				break;
-
-			case \CCrmOwnerType::Invoice:
-				$fields[] = 'STATUS_SEMANTIC_ID';
-				$fields[] = 'STATUS_ID';
-				break;
+			$fields[] = 'STATUS_SEMANTIC_ID';
+			$fields[] = 'STATUS_ID';
+		}
+		elseif ($entityTypeId === \CCrmOwnerType::Deal || \CCrmOwnerType::isUseDynamicTypeBasedApproach($entityTypeId))
+		{
+			$fields[] = 'CATEGORY_ID';
+			$fields[] = 'STAGE_SEMANTIC_ID';
+			$fields[] = 'STAGE_ID';
 		}
 
 		return $fields;
+	}
+
+	/**
+	 * Compatibility with the previous version. Case-insensitive, and don't error on invalid fields and values.
+	 */
+	private function prepareOrder(array $order, array $fields): array
+	{
+		$result = [];
+		foreach ($order as $sortField => $sortOrder)
+		{
+			if (in_array($sortField, $fields))
+			{
+				$result[$sortField] =
+					mb_strtoupper($sortOrder) === 'DESC'
+						? 'DESC'
+						: 'ASC';
+			}
+		}
+
+		return $result;
+	}
+
+	private function prepareFilter(int $entityTypeId, array $filter): ?array
+	{
+		try
+		{
+			$internalized = $this->internalizeFilter($filter);
+		}
+		catch (ArgumentException)
+		{
+			return null;
+		}
+
+		if (\CCrmOwnerType::isUseDynamicTypeBasedApproach($entityTypeId))
+		{
+			// force an owner type
+			$internalized['=OWNER_TYPE_ID'] = $entityTypeId;
+		}
+
+		return $internalized;
+	}
+
+	private function internalizeFilter(array $filter): array
+	{
+		$sqlWhere = new \CSQLWhere();
+
+		$result = [];
+		foreach ($filter as $filterKey => $value)
+		{
+			$filterCondition = $sqlWhere->MakeOperation($filterKey);
+
+			// if no operation, change to strong equality
+			if ($filterCondition['OPERATION'] === 'E' && !is_numeric($filterKey) && $filterKey !== 'LOGIC')
+			{
+				$filterKey = '=' . $filterKey;
+			}
+
+			if (is_array($value))
+			{
+				$value = $this->internalizeFilter($value);
+			}
+			elseif ($filterCondition['FIELD'] === 'CREATED_TIME')
+			{
+				$value = $this->prepareDatetime((string)$value);
+				if ($value === null)
+				{
+					// quickly unwind recursion
+					throw new ArgumentException('Invalid CREATED_TIME');
+				}
+			}
+
+			$result[$filterKey] = $value;
+		}
+
+		return $result;
+	}
+
+	private function prepareSelect(array $select, array $allowedFields): array
+	{
+		$result = array_intersect($select, $allowedFields);
+
+		if (empty($result))
+		{
+			$result = $allowedFields;
+		}
+
+		if (!in_array('ID', $result))
+		{
+			$result[] = 'ID';
+		}
+
+		return $result;
+	}
+
+	private function externalizeItems(array $items): array
+	{
+		$converter = Container::getInstance()->getOrmObjectConverter();
+
+		return array_map($converter->toArray(...), $items);
+	}
+
+	private function legacyInvoiceList(
+		array $order = [],
+		array $filter = [],
+		array $select = [],
+		PageNavigation $pageNavigation = null,
+	): ?Page
+	{
+		static $allowedFields = [
+			'ID',
+			'TYPE_ID',
+			'OWNER_ID',
+			'CREATED_TIME',
+			'STATUS_SEMANTIC_ID',
+			'STATUS_ID',
+		];
+
+		$preparedOrder = $this->prepareOrder($order, $allowedFields);
+		if (!$this->validateOrder($preparedOrder, $allowedFields))
+		{
+			return null;
+		}
+
+		if (!$this->validateFilter($filter, $allowedFields))
+		{
+			return null;
+		}
+
+		$preparedFilter = $this->prepareFilter(\CCrmOwnerType::Invoice, $filter);
+		if ($preparedFilter === null)
+		{
+			return null;
+		}
+
+		$itemArrays = InvoiceStatusHistoryEntry::getListFilteredByPermissions([
+			'order' => $preparedOrder,
+			'filter' => $preparedFilter,
+			'select' => $this->prepareSelect($select, $allowedFields),
+			'offset' => $pageNavigation?->getOffset(),
+			'limit' => $pageNavigation?->getLimit(),
+		]);
+		// be careful, wakeUp requires primary. but `prepareSelect` always adds 'ID', so we will be fine
+		$collection = InvoiceStatusHistoryTable::wakeUpCollection($itemArrays);
+
+		return new Page(
+			'items',
+			$this->externalizeItems($collection->getAll()),
+			static fn() => InvoiceStatusHistoryEntry::getItemsCountFilteredByPermissions($preparedFilter),
+		);
 	}
 }

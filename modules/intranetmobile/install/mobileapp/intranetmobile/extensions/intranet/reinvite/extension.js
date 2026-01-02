@@ -4,6 +4,7 @@
 jn.define('intranet/reinvite', (require, exports, module) => {
 	const { Loc } = require('loc');
 	const { Type } = require('type');
+	const { qrauth } = require('qrauth/utils');
 	const { Color, Indent, Component } = require('tokens');
 	const { isPhoneNumber } = require('utils/phone');
 	const { isValidEmail } = require('utils/email');
@@ -17,11 +18,11 @@ jn.define('intranet/reinvite', (require, exports, module) => {
 	const { ButtonSize, ButtonDesign, Button } = require('ui-system/form/buttons/button');
 	const { InputSize, InputDesign, InputMode, PhoneInput } = require('ui-system/form/inputs/phone');
 	const { EmailInput, InputDomainIconPlace } = require('ui-system/form/inputs/email');
-	const { Chip } = require('ui-system/blocks/chips/chip');
-	const { Text4 } = require('ui-system/typography/text');
+	const { ChipButton, ChipButtonDesign, ChipButtonMode } = require('ui-system/blocks/chips/chip-button');
 	const { BBCodeText } = require('ui-system/typography/bbcodetext');
 	const { Avatar } = require('ui-system/blocks/avatar');
-	const { InviteStatusBox } = require('intranet/invite-status-box');
+	const { StatusBox } = require('layout/ui/status-box');
+	const { makeLibraryImagePath } = require('asset-manager');
 
 	const store = require('statemanager/redux/store');
 	const { selectWholeUserById } = require('intranet/statemanager/redux/slices/employees/selector');
@@ -182,10 +183,10 @@ jn.define('intranet/reinvite', (require, exports, module) => {
 
 			this.inviteStatusBoxIsOpened = true;
 
-			InviteStatusBox.open({
+			StatusBox.open({
 				backdropTitle: Loc.getMessage('M_INTRANET_REINVITE_TITLE'),
 				testId: 'status-box-reinvite-in-web',
-				imageName: 'user-locked.svg',
+				imageUri: makeLibraryImagePath('user-locked.svg', 'invite-status-box', 'intranet'),
 				description: Loc.getMessage('M_INTRANET_REINVITE_ADMIN_ONLY_IN_WEB_BOX_TEXT'),
 				buttonText: Loc.getMessage('M_INTRANET_REINVITE_GO_TO_WEB_BUTTON_TEXT'),
 				parentWidget,
@@ -210,10 +211,10 @@ jn.define('intranet/reinvite', (require, exports, module) => {
 
 			this.inviteStatusBoxIsOpened = true;
 
-			InviteStatusBox.open({
+			StatusBox.open({
 				backdropTitle: Loc.getMessage('M_INTRANET_REINVITE_TITLE'),
 				testId: 'status-box-no-permission',
-				imageName: 'user-locked.svg',
+				imageUri: makeLibraryImagePath('user-locked.svg', 'invite-status-box', 'intranet'),
 				parentWidget,
 				description: Loc.getMessage('M_INTRANET_REINVITE_ADMIN_ONLY_BOX_TEXT'),
 				buttonText: Loc.getMessage('M_INTRANET_REINVITE_DISABLED_BOX_BUTTON_TEXT'),
@@ -232,8 +233,7 @@ jn.define('intranet/reinvite', (require, exports, module) => {
 		componentWillUnmount()
 		{
 			super.componentWillUnmount();
-			Keyboard.on(Keyboard.Event.WillHide, () => {
-			});
+			Keyboard.on(Keyboard.Event.WillHide, () => {});
 		}
 
 		render()
@@ -327,28 +327,19 @@ jn.define('intranet/reinvite', (require, exports, module) => {
 
 		renderUserChip()
 		{
-			return Chip({
+			return ChipButton({
+				rounded: false,
 				style: {
 					marginBottom: Indent.XL2.toNumber(),
 					marginTop: Indent.XS.toNumber(),
 				},
-				backgroundColor: Color.bgPrimary,
-				borderColor: Color.bgSeparatorPrimary,
-				compact: true,
-				children: [
-					Avatar({
-						id: this.userId,
-						withRedux: true,
-					}),
-					Text4(
-						{
-							text: this.user.fullName,
-							style: {
-								marginLeft: Indent.XS.toNumber(),
-							},
-						},
-					),
-				],
+				mode: ChipButtonMode.OUTLINE,
+				design: ChipButtonDesign.GREY,
+				avatar: Avatar({
+					id: this.userId,
+					size: 20,
+				}),
+				text: this.user.fullName,
 			});
 		}
 

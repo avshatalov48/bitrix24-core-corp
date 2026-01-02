@@ -1,16 +1,22 @@
 <?php
 
-use Bitrix\Main\Localization\Loc;
-// use Bitrix\Tasks\Integration\Socialnetwork\Context\Context;
+use Bitrix\Main\Loader;
 use Bitrix\Main\UI\Extension;
+use Bitrix\Main\Web\Json;
 
 if (!defined('B_PROLOG_INCLUDED') || B_PROLOG_INCLUDED !== true)
 {
 	die();
 }
-$isBitrix24Template = SITE_TEMPLATE_ID === "bitrix24";
 
-\Bitrix\Main\Loader::includeModule('ui');
+/** @var array $arParams */
+/** @var array $arResult */
+/** @var CMain $APPLICATION */
+
+$isBitrix24Template = SITE_TEMPLATE_ID === "bitrix24" || SITE_TEMPLATE_ID === 'air';
+$isV2Form = \Bitrix\Tasks\V2\FormV2Feature::isOn('miniform');
+
+Loader::includeModule('ui');
 Extension::load([
 	"ui.entity-selector",
 	"ui.buttons",
@@ -20,42 +26,42 @@ Extension::load([
 	"ui.dialogs.checkbox-list",
 	'ui.tour',
 	'ui.design-tokens',
+	'spotlight',
+	'ui.system.menu',
 ]);
 
+if ($isV2Form)
+{
+	Extension::load('tasks.v2.application.task-card');
+}
+
 $APPLICATION->SetAdditionalCSS("/bitrix/js/intranet/intranet-common.css");
-// $isCollab = isset($arParams['CONTEXT']) && $arParams['CONTEXT'] === Context::getCollab();
 
 if ($isBitrix24Template)
 {
-	$this->SetViewTarget('in_pagetitle');
-
 	if (array_key_exists('PROJECT_VIEW', $arParams) && $arParams['PROJECT_VIEW'] === 'Y')
 	{
 		include(__DIR__.'/project_selector.php');
 	}
-
-	$this->EndViewTarget();
-}
-
-if ($isBitrix24Template)
-{
-	$this->SetViewTarget('inside_pagetitle');
 }
 
 if (isset($arParams['FILTER']) && is_array($arParams['FILTER']))
 {
 	include(__DIR__ . '/filter_selector.php');
 }
-?>
 
-<? if (!$isBitrix24Template): ?>
-	<div class="tasks-interface-filter-container">
-<? endif ?>
+$request = \Bitrix\Main\Context::getCurrent()->getRequest();
+$relationToId = $request->get('relationToId');
 
-<?php
-if ((int)$arParams['MENU_GROUP_ID'] === 0 || $arParams['SHOW_CREATE_TASK_BUTTON'] !== 'N')
+$showCreateButton = (int)$arParams['MENU_GROUP_ID'] === 0 || $arParams['SHOW_CREATE_TASK_BUTTON'] !== 'N';
+if (!$relationToId && $showCreateButton)
 {
 	include(__DIR__ . '/create_button.php');
+}
+
+if ($relationToId)
+{
+	include(__DIR__ . '/add_relation_button.php');
 }
 
 include(__DIR__.'/filter.php');
@@ -70,61 +76,51 @@ if ($arResult['SPRINT'])
 	include(__DIR__.'/sprint_selector.php');
 }
 
-$contentClass = 'pagetitle-container pagetitle-align-right-container ';
-?>
+$showPopupMenu = $arParams['SHOW_USER_SORT'] === 'Y'
+	|| $arParams['USE_GROUP_BY_SUBTASKS'] === 'Y'
+	|| $arParams['USE_GROUP_BY_GROUPS'] === 'Y'
+	|| $arParams['USE_EXPORT'] == 'Y'
+	|| !empty($arParams['POPUP_MENU_ITEMS'])
+;
 
-<div class="<?=$contentClass?>">
-	<?php
-	// if ($isCollab)
-	// {
-	// 	include(__DIR__.'/reports.php');
-	// }
-
-	if ($arParams['SHOW_USER_SORT'] === 'Y' ||
-			  $arParams['USE_GROUP_BY_SUBTASKS'] === 'Y' ||
-			  $arParams['USE_GROUP_BY_GROUPS'] === 'Y' ||
-			  $arParams['USE_EXPORT'] == 'Y' ||
-			  !empty($arParams['POPUP_MENU_ITEMS'])
-	)
-	{
-		include(__DIR__.'/popup_menu.php');
-	}
-	if ($arParams["SHOW_QUICK_FORM_BUTTON"] !== "N")
-	{
-		include(__DIR__.'/quick_form.php');
-	}
-	?>
-
-</div>
-
-<? if (!$isBitrix24Template): ?>
-	</div>
-<? endif ?>
-
-<?php
-if ($isBitrix24Template)
+if ($showPopupMenu)
 {
-	$this->EndViewTarget();
+	include(__DIR__.'/popup_menu.php');
 }
-?>
 
-<?php CJSCore::Init("spotlight");
-if ($arResult['showPresetTourGuide'])
+if (!$relationToId && $arParams["SHOW_QUICK_FORM_BUTTON"] !== "N")
 {
+	include(__DIR__.'/quick_form.php');
+}
 ?>
 <script>
 	BX.ready(() => {
 		BX.message({
-			TASKS_INTERFACE_FILTER_PRESETS_MOVED_TITLE: '<?= Loc::getMessage('TASKS_INTERFACE_FILTER_PRESETS_MOVED_TITLE') ?>',
-			TASKS_INTERFACE_FILTER_PRESETS_MOVED_TEXT: '<?= Loc::getMessage('TASKS_INTERFACE_FILTER_PRESETS_MOVED_TEXT_V2') ?>',
+			TASKS_ALL_ROLES: '<?= GetMessageJS('TASKS_ALL_ROLES') ?>',
+			TASKS_INTERFACE_FILTER_PRESETS_MOVED_TITLE: '<?= GetMessageJS('TASKS_INTERFACE_FILTER_PRESETS_MOVED_TITLE') ?>',
+			TASKS_INTERFACE_FILTER_PRESETS_MOVED_TEXT: '<?= GetMessageJS('TASKS_INTERFACE_FILTER_PRESETS_MOVED_TEXT_V2') ?> ',
 		});
 
-		BX.Tasks.Preset.Aha = new BX.Tasks.Preset({
-			filterId: '<?= $arParams["FILTER_ID"] ?>'
-		})
-		BX.Tasks.Preset.Aha.payAttention();
+		const groupId = <?= !empty($arParams['GROUP_ID']) ? (int)$arParams['GROUP_ID'] : 'null' ?>;
+		const analytics = {
+			context: '<?= CUtil::JSEscape($arResult['CREATE_BUTTON_ANALYTICS']['sectionType']) ?>',
+			additionalContext: '<?= CUtil::JSEscape($arResult['CREATE_BUTTON_ANALYTICS']['viewState']) ?>',
+			element: '<?= \Bitrix\Tasks\Helper\Analytics::ELEMENT['create_button'] ?>',
+		};
+
+		new BX.Tasks.TasksInterfaceFilter({
+			filterId: '<?= CUtil::JSEscape($arParams['FILTER_ID']) ?>',
+			createNode: document.getElementById('tasks-buttonAdd'),
+			roles: {
+				...<?= Json::encode($arResult['roles']) ?>,
+				button: document.getElementById('tasks-buttonRoles'),
+				analytics,
+				groupId,
+			},
+			showPresetTourGuide: <?= $arResult['showPresetTourGuide'] ? 'true' : 'false' ?>,
+			isV2Form: <?= $isV2Form ? 'true' : 'false' ?>,
+			groupId,
+			analytics,
+		});
 	})
 </script>
-<?php
-}
-

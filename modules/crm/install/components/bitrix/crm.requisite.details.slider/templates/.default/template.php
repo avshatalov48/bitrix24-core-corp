@@ -3,6 +3,8 @@
 if (!defined('B_PROLOG_INCLUDED') || B_PROLOG_INCLUDED!==true)die();
 
 /* @var CBitrixComponentTemplate $this */
+/** @var \CrmRequisiteDetailsSliderComponent $component */
+
 $errors = $this->getComponent()->getErrors();
 if ($errors)
 {
@@ -13,6 +15,8 @@ if ($errors)
 
 	return;
 }
+
+$component->addToolbar($this);
 
 /** @var CMain $APPLICATION */
 /** @var array $arResult */

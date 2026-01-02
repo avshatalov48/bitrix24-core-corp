@@ -1,0 +1,4 @@
+<?php
+$MESS["CRM_DATA_CONTEXT_ENTITY"] = "Саны";
+$MESS["CRM_DATA_CONTEXT_FUND"] = "Сома";
+$MESS["CRM_DATA_CONTEXT_PERCENT"] = "Пайыз";

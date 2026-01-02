@@ -12,6 +12,18 @@ interface CounterRepositoryInterface
 	public function get(int $userId, CounterDictionary $type = CounterDictionary::Total, int $entityId = 0): int;
 	public function up(int $entityId, CounterDictionary $type, int $userId): void;
 	public function down(int $entityId, CounterDictionary $type, int|null $userId = null): void;
-	public function getUsersByCounterType(int $entityId, CounterDictionary $type): array;
+
+	/**
+	 * @param int[] $entityIds
+	 * @param CounterDictionary[] $types
+	 */
+	public function downMultiple(array $entityIds, array $types, int|null $userId = null): void;
+
+	/**
+	 * @param int[] $entityIds
+	 * @param CounterDictionary[] $types
+	 * @return array
+	 */
+	public function getUsersByCounterType(array $entityIds, array $types): array;
 	public function getList(int $userId): array;
 }

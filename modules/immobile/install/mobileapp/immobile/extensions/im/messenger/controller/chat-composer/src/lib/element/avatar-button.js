@@ -4,7 +4,7 @@
 jn.define('im/messenger/controller/chat-composer/lib/element/avatar-button', (require, exports, module) => {
 	/* globals media, include */
 	include('media');
-	const { Loc } = require('loc');
+	const { Loc } = require('im/messenger/loc');
 	const { Type } = require('type');
 	const { Corner, Color } = require('tokens');
 	const { getFile } = require('files/entry');
@@ -76,7 +76,6 @@ jn.define('im/messenger/controller/chat-composer/lib/element/avatar-button', (re
 					backgroundColor: Color.accentSoftBlue3,
 					backBorderWidth: 0,
 					...this.getContent(),
-					id: 1,
 				}),
 			);
 		}

@@ -29,6 +29,7 @@ use Bitrix\Tasks\Slider\Path\TemplatePathMaker;
 use Bitrix\Tasks\Util\User;
 use Bitrix\Tasks\Control\Tag;
 use Bitrix\Main\Error;
+use Bitrix\Tasks\Helper\Analytics;
 
 Loc::loadMessages(__FILE__);
 
@@ -124,6 +125,16 @@ class TasksTagsSelector extends \CBitrixComponent implements Errorable, Controll
 			);
 			return null;
 		}
+
+		// "TAGS" analytics label
+		$isDemo = (Loader::includeModule('bitrix24') && \CBitrix24::IsDemoLicense()) ? 'Y' : 'N';
+
+		Analytics::getInstance($this->userId)->onTaskUpdate(
+			event: \Bitrix\Tasks\Helper\Analytics::EVENT['task_update'],
+			params: [
+				'p1' => 'isDemo_' . $isDemo,
+			],
+		);
 
 		return [
 			'success' => true,

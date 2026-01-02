@@ -2,7 +2,9 @@
 
 namespace Bitrix\Crm\Service\Factory;
 
+use Bitrix\Crm\Category\PermissionEntityTypeHelper;
 use Bitrix\Crm\CategoryIdentifier;
+use Bitrix\Crm\Feature;
 use Bitrix\Crm\Field;
 use Bitrix\Crm\Integration\DocumentGenerator\DataProvider;
 use Bitrix\Crm\Integration\DocumentGeneratorManager;
@@ -20,6 +22,7 @@ use Bitrix\Crm\Service\EditorAdapter;
 use Bitrix\Crm\Service\Operation;
 use Bitrix\Crm\Settings\InvoiceSettings;
 use Bitrix\Crm\UserField\UserFieldManager;
+use Bitrix\Main\Config\Option;
 use Bitrix\Main\DI\ServiceLocator;
 use Bitrix\Main\Error;
 use Bitrix\Main\Localization\Loc;
@@ -52,12 +55,26 @@ class SmartInvoice extends Dynamic
 		return true;
 	}
 
+	public function isRecurringEnabled(): bool
+	{
+		return $this->isRecurringAvailable();
+	}
+
+	public function isRecurringAvailable(): bool
+	{
+		return
+			Feature::enabled(Feature\RecurringSmartInvoice::class)
+			&& Option::get('crm', '~is_recurring_column_alter_success_' . $this->getEntityTypeId(), 'Y') !== 'N'
+		;
+	}
+
 	protected function getFieldTitlesMap(): array
 	{
 		$map = parent::getFieldTitlesMap();
 
 		$map[Item::FIELD_NAME_BEGIN_DATE] = Loc::getMessage('CRM_TYPE_SMART_INVOICE_FIELD_BEGIN_DATE');
 		$map[Item::FIELD_NAME_CLOSE_DATE] = Loc::getMessage('CRM_TYPE_SMART_INVOICE_FIELD_CLOSE_DATE');
+		$map[Item::FIELD_NAME_RECURRING] = Loc::getMessage('CRM_TYPE_SMART_INVOICE_FIELD_RECURRING');
 
 		return $map;
 	}
@@ -160,6 +177,7 @@ class SmartInvoice extends Dynamic
 			->setIsDocumentsEnabled(true)
 			->setIsSourceEnabled(true)
 			->setIsObserversEnabled(true)
+			->setIsRecurringEnabled(true)
 			->setIsRecyclebinEnabled(true)
 			->setIsAutomationEnabled(true)
 			->setIsBizProcEnabled(true)
@@ -217,12 +235,12 @@ class SmartInvoice extends Dynamic
 			{
 				// copy permissions
 				$defaultCategoryId = $factory->createDefaultCategoryIfNotExist()->getId();
-				$userPermissions = Container::getInstance()->getUserPermissions();
-				$smartInvoicePermissionEntity = $userPermissions::getPermissionEntityType(
-					\CCrmOwnerType::SmartInvoice,
-					$defaultCategoryId
-				);
-				$oldInvoicePermissionEntity = $userPermissions::getPermissionEntityType(\CCrmOwnerType::Invoice);
+
+				$smartInvoicePermissionEntity = (new PermissionEntityTypeHelper(\CCrmOwnerType::SmartInvoice))
+					->getPermissionEntityTypeForCategory($defaultCategoryId);
+				$oldInvoicePermissionEntity = (new PermissionEntityTypeHelper(\CCrmOwnerType::Invoice))
+					->getPermissionEntityTypeForCategory(0);
+
 				$permissions = RolePermission::getByEntityId($oldInvoicePermissionEntity);
 
 				$roles = [];
@@ -373,7 +391,7 @@ class SmartInvoice extends Dynamic
 	{
 		$fieldRepo = ServiceLocator::getInstance()->get('crm.model.fieldRepository');
 
-		return [
+		$fields = [
 			$fieldRepo->getComments()
 				->configureNullable(false)
 				->configureTitle(Loc::getMessage('CRM_TYPE_ITEM_FIELD_COMMENTS'))
@@ -388,6 +406,17 @@ class SmartInvoice extends Dynamic
 				->configureDefaultValue('')
 			,
 		];
+
+		if (Option::get('crm', '~is_recurring_column_alter_success_' . $this->getEntityTypeId(), 'Y') !== 'N')
+		{
+			$fields[] = (new Fields\BooleanField(Item::FIELD_NAME_IS_RECURRING))
+				->configureTitle(Loc::getMessage('CRM_TYPE_SMART_INVOICE_FIELD_IS_RECURRING'))
+				->configureDefaultValue('N')
+				->configureStorageValues('N', 'Y')
+			;
+		}
+
+		return $fields;
 	}
 
 	public function isCountersEnabled(): bool

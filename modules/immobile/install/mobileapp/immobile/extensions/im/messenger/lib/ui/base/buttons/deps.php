@@ -7,7 +7,6 @@ return [
 	],
 	'bundle' => [
 		'./src/full-width-button',
-		'./src/invite-button',
 		'./src/icon-button',
 	],
 ];

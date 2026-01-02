@@ -4,13 +4,14 @@ declare(strict_types=1);
 
 namespace Bitrix\Booking\Controller\V1;
 
-use Bitrix\Booking\Controller\V1\Response\MessageSendResponse;
+use Bitrix\Booking\Entity\Message\BookingMessage;
 use Bitrix\Booking\Internals\Container;
 use Bitrix\Booking\Internals\Service\Notifications\MessageSender;
 use Bitrix\Booking\Internals\Service\Notifications\NotificationType;
 use Bitrix\Booking\Internals\Repository\BookingRepositoryInterface;
 use Bitrix\Booking\Provider\Params\Booking\BookingFilter;
 use Bitrix\Booking\Provider\Params\Booking\BookingSelect;
+use Bitrix\Main\Error;
 use Bitrix\Main\Localization\Loc;
 use Bitrix\Main\Request;
 
@@ -27,12 +28,14 @@ class Message extends BaseController
 		$this->messageSender = Container::getMessageSender();
 	}
 
-	public function sendAction(int $bookingId, string $notificationType): MessageSendResponse
+	public function sendAction(int $bookingId, string $notificationType): BookingMessage|null
 	{
 		$notificationType = NotificationType::tryFrom($notificationType);
 		if (!$notificationType)
 		{
-			return $this->getErrorResponse();
+			$this->addError(new Error(Loc::getMessage('BOOKING_CONTROLLER_MESSAGE_ERROR')));
+
+			return null;
 		}
 
 		$booking = $this->bookingRepository->getList(
@@ -48,25 +51,25 @@ class Message extends BaseController
 				'RESOURCES',
 			]))->prepareSelect(),
 		)->getFirstCollectionItem();
+
 		if (!$booking)
 		{
-			return $this->getErrorResponse();
+			$this->addError(new Error(Loc::getMessage('BOOKING_CONTROLLER_MESSAGE_ERROR')));
+
+			return null;
 		}
 
 		$sendResult = $this->messageSender->send($booking, $notificationType);
 		if (!$sendResult->isSuccess())
 		{
-			return $this->getErrorResponse();
+			$this->addError(new Error(Loc::getMessage('BOOKING_CONTROLLER_MESSAGE_ERROR')));
+
+			return null;
 		}
 
-		return new MessageSendResponse(isSuccess: true);
-	}
-
-	private function getErrorResponse(): MessageSendResponse
-	{
-		return new MessageSendResponse(
-			isSuccess: false,
-			errorText: Loc::getMessage('BOOKING_CONTROLLER_MESSAGE_ERROR'),
-		);
+		return (new BookingMessage())
+			->setBookingId($bookingId)
+			->setNotificationType($notificationType)
+		;
 	}
 }

@@ -206,7 +206,7 @@ class Secretary
 		\CIMChat::AddSystemMessage($chatMessageFields);
 	}
 
-	public static function updateChatUsers($chatId, $addedUsers, $deletedUsers): void
+	public static function updateChatUsers($chatId, $addedUsers, $deletedUsers, array $parameters = []): void
 	{
 		if (!self::checkAccessForIm())
 		{
@@ -225,7 +225,8 @@ class Secretary
 
 		if (!empty($addedUsers))
 		{
-			$chat->AddUser($chatId, $addedUsers);
+			$hideHistory = isset($parameters['HIDE_HISTORY']) ? (bool)$parameters['HIDE_HISTORY'] : null;
+			$chat->AddUser(chatId: $chatId, userId: $addedUsers, hideHistory: $hideHistory);
 		}
 	}
 

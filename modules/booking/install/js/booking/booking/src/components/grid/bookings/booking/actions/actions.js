@@ -1,6 +1,8 @@
 import { mapGetters } from 'ui.vue3.vuex';
 import { Model } from 'booking.const';
-import { ActionsPopup } from './actions-popup/actions-popup';
+import { BookingActionsPopup } from './actions-popup/actions-popup';
+
+export type { ActionsPopupOptions } from './actions-popup/actions-popup';
 
 export const Actions = {
 	name: 'BookingActions',
@@ -12,6 +14,10 @@ export const Actions = {
 		resourceId: {
 			type: Number,
 			required: true,
+		},
+		actionsPopupOptions: {
+			type: Object,
+			default: null,
 		},
 	},
 	data(): Object
@@ -38,7 +44,7 @@ export const Actions = {
 		},
 	},
 	components: {
-		ActionsPopup,
+		BookingActionsPopup,
 	},
 	template: `
 		<div 
@@ -53,10 +59,12 @@ export const Actions = {
 				<div class="ui-icon-set --chevron-down"></div>
 			</div>
 		</div>
-		<ActionsPopup
+		<BookingActionsPopup
 			v-if="showPopup"
-			:bookingId="bookingId"
+			:bookingId
 			:bindElement="this.$refs.node"
+			:resourceId
+			:options="actionsPopupOptions"
 			@close="showPopup = false"
 		/>
 	`,

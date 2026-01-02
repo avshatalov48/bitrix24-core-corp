@@ -5257,19 +5257,19 @@ DependencyPointer.prototype.markDroppableTask = function()
 		{
 			this.toTask = null;
 			this.toStart = null;
-			this.error = BX.message("TASKS_GANTT_CIRCULAR_DEPENDENCY");
+			this.error = BX.message('TASKS_GANTT_CIRCULAR_DEPENDENCY_V2');
 		}
 		else if (this.fromTask.isChildOf(droppableTask) || droppableTask.isChildOf(this.fromTask))
 		{
 			this.toTask = null;
 			this.toStart = null;
-			this.error = BX.message("TASKS_GANTT_RELATION_ERROR");
+			this.error = BX.message('TASKS_GANTT_RELATION_ERROR_V2');
 		}
 		else if (!this.chart.canAddDependency(this.fromTask.id, droppableTask.id))
 		{
 			this.toTask = null;
 			this.toStart = null;
-			this.error = BX.message("TASKS_GANTT_PERMISSION_ERROR");
+			this.error = BX.message('TASKS_GANTT_PERMISSION_ERROR_V2');
 		}
 		else if (droppablePoint !== null && BX.hasClass(droppablePoint, "task-gantt-point-start"))
 		{

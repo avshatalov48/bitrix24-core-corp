@@ -12,6 +12,8 @@ namespace Bitrix\Tasks\Integration\Mail;
 
 use Bitrix\Main\Loader;
 use Bitrix\Tasks\Util\Error\Collection;
+use Bitrix\Tasks\V2\Internal\DI\Container;
+use Bitrix\Tasks\V2\Internal\Service\UserService;
 
 final class User extends \Bitrix\Tasks\Integration\Mail
 {
@@ -121,18 +123,20 @@ final class User extends \Bitrix\Tasks\Integration\Mail
 	}
 
 	/**
-	 * Return true if user is email user
-	 *
-	 * @param mixed $data
-	 * @return bool
+	 * @deprecated
+	 * @use UserService
 	 */
 	public static function isEmail($data)
 	{
-		if(!static::includeModule())
+		if (!is_array($data))
 		{
 			return false;
 		}
 
-		return is_array($data) && isset($data["EXTERNAL_AUTH_ID"]) && $data["EXTERNAL_AUTH_ID"] == static::getExternalCode();
+		$user = new \Bitrix\Tasks\V2\Internal\Entity\User(
+			externalAuthId: $data['EXTERNAL_AUTH_ID'] ?? null,
+		);
+
+		return Container::getInstance()->getUserService()->isEmail($user);
 	}
 }

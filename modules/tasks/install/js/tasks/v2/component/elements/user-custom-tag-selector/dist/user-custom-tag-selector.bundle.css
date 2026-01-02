@@ -1,0 +1,56 @@
+.b24-user-selector {
+	max-width: 100%;
+	min-height: 22px;
+	font-weight: var(--ui-font-weight-medium);
+	white-space: nowrap;
+}
+
+.b24-loader-container {
+	position: relative;
+	margin-left: 20px;
+}
+
+.b24-user-selector-user {
+	--text-color: inherit;
+}
+
+.b24-user-selector-user.--collaber {
+	--text-color: var(--ui-color-collab-accent-primary);
+}
+
+.b24-user-selector-user.--email {
+	--text-color: #ca8600;
+}
+
+.b24-user-selector-user.--extranet {
+	--text-color: #ca8600;
+}
+
+.b24-user-selector-user-placeholder {
+	display: flex;
+	align-items: center;
+	gap: 6px;
+	color: var(--ui-color-accent-main-primary);
+	cursor: pointer;
+}
+
+.b24-user-selector-user-label {
+	display: flex;
+	align-items: center;
+	gap: var(--ui-space-inline-xs);
+	cursor: pointer;
+	overflow: hidden;
+}
+
+.b24-user-selector-user-image {}
+
+.b24-user-selector-user-label .b24-user-selector-user-image,
+.b24-user-selector-user-label .b24-user-selector-user-name {
+	pointer-events: none;
+}
+
+.b24-user-selector-user-name {
+	color: var(--text-color);
+	text-overflow: ellipsis;
+	overflow: hidden;
+}

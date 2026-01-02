@@ -3,9 +3,11 @@
 namespace Bitrix\Disk\Controller;
 
 use Bitrix\Disk;
+use Bitrix\Disk\Controller\Response\PreviewResponseBuilder;
 use Bitrix\Disk\Integration\Bitrix24Manager;
 use Bitrix\Disk\Internals\Engine;
 use Bitrix\Disk\Internals\Error\Error;
+use Bitrix\Disk\Security\ParameterSigner;
 use Bitrix\Main;
 use Bitrix\Main\ArgumentException;
 use Bitrix\Main\Engine\ActionFilter\Authentication;
@@ -29,6 +31,26 @@ class TrackedObject extends BaseObject
 			],
 			'+prefilters' => [
 				new Authentication(true),
+				new Main\Engine\ActionFilter\CloseSession(),
+			]
+		];
+		$configureActions['showPreview'] = [
+			'-prefilters' => [
+				Main\Engine\ActionFilter\Csrf::class,
+				Authentication::class,
+			],
+			'+prefilters' => [
+				new Authentication(true),
+				new Engine\ActionFilter\CheckImageSignature(idExtractor: function ($arguments) {
+					foreach ($arguments as $argument)
+					{
+						if ($argument instanceof Disk\Document\TrackedObject)
+						{
+							return $argument->getId();
+						}
+					}
+					return null;
+				}),
 				new Main\Engine\ActionFilter\CloseSession(),
 			]
 		];
@@ -71,6 +93,19 @@ class TrackedObject extends BaseObject
 		?array $rights = null,
 	): array
 	{
+		$links = [
+			/** @see TrackedObject::downloadAction */
+			'download' => $this->getActionUri('download', ['id' => $object->getId()]),
+			/** @see TrackedObject::showPreviewAction */
+			'preview' => $this->getActionUri('showPreview', [
+				'id' => $object->getId(),
+				'humanRE' => 1,
+				'width' => 640,
+				'height' => 640,
+				'signature' => ParameterSigner::getImageSignature($object->getId(), 640, 640),
+			]),
+		];
+
 		if ($rights !== null)
 		{
 			return [
@@ -78,6 +113,7 @@ class TrackedObject extends BaseObject
 					'id' => (int)$object->getId(),
 					'updateTime' => $object->getUpdateTime(),
 					'rights' => $rights,
+					'links' => $links,
 					'file' => [
 						...$object->getFile()->jsonSerialize(),
 					],
@@ -90,6 +126,7 @@ class TrackedObject extends BaseObject
 				'id' => (int)$object->getId(),
 				'updateTime' => $object->getUpdateTime(),
 				'file' => $object->getFile()->jsonSerialize(),
+				'links' => $links,
 			],
 		];
 	}
@@ -195,27 +232,27 @@ class TrackedObject extends BaseObject
 			/** @var Disk\File $model */
 			$model = Disk\File::buildFromRow($row);
 
+			$modelId = (int)$model->getId();
+			$trackedObjectId = $fileToTrackObjectIds[$modelId];
+			$file = $model->jsonSerialize();
+
+			$items[$modelId] = [
+				'trackedObject' => [
+					'id' => $trackedObjectId,
+					'links' => [
+						/** @see TrackedObject::downloadAction */
+						'download' => $this->getActionUri('download', ['id' => $trackedObjectId]),
+						/** @see \Bitrix\Disk\Controller\File::showPreviewAction() */
+						/** @see \Bitrix\Disk\Controller\File::showImageAction() */
+						'preview' => $file['links']['preview'] ?? null,
+					],
+					'file' => $file,
+				],
+			];
+
 			if ($showRights)
 			{
-				$rights = $rightsManager->getAvailableActions($model, $securityContext);
-				$items[(int)$model->getId()] = [
-					'trackedObject' => [
-						'id' => $fileToTrackObjectIds[(int)$model->getId()],
-						'rights' => $rights,
-						'file' => [
-							...$model->jsonSerialize(),
-						],
-					],
-				];
-			}
-			else
-			{
-				$items[(int)$model->getId()] = [
-					'trackedObject' => [
-						'id' => $fileToTrackObjectIds[(int)$model->getId()],
-						'file' => $model->jsonSerialize(),
-					],
-				];
+				$items[$modelId]['trackedObject']['rights'] = $rightsManager->getAvailableActions($model, $securityContext);
 			}
 		}
 
@@ -231,7 +268,7 @@ class TrackedObject extends BaseObject
 
 	public function generateExternalLinkAction(Disk\Document\TrackedObject $object)
 	{
-		if (!Bitrix24Manager::isFeatureEnabled('disk_manual_external_link'))
+		if (!$this->checkExternalLinkFeature($object->getFile()))
 		{
 			$this->addError(new Error('Could not generate external link. Feature is disabled by tarif.'));
 
@@ -257,5 +294,10 @@ class TrackedObject extends BaseObject
 		$response->setCacheTime(Disk\Configuration::DEFAULT_CACHE_TIME);
 
 		return $response;
+	}
+
+	public function showPreviewAction(Disk\Document\TrackedObject $object, int $width = 0, int $height = 0, string $exact = null): ?Main\Response
+	{
+		return (new PreviewResponseBuilder())->createByFile($object->getFile(), $width, $height, $exact);
 	}
 }

@@ -8,9 +8,10 @@ if (!CModule::IncludeModule('sale'))
 
 global $USER;
 
-$CCrmPerms = new CCrmPerms($USER->GetID());
-if ($CCrmPerms->HavePerm('CONFIG', BX_CRM_PERM_NONE, 'WRITE'))
+if (!\Bitrix\Crm\Service\Container::getInstance()->getUserPermissions()->isCrmAdmin())
+{
 	return;
+}
 
 CUtil::InitJSCore();
 

@@ -9,7 +9,7 @@ use Bitrix\HumanResources\Exception\WrongStructureItemException;
  * @template T
  * @template V of Item
  */
-interface ItemCollection extends \IteratorAggregate
+interface ItemCollection extends \IteratorAggregate, \Countable
 {
 	/**
 	 * @psalm-param V $item
@@ -17,4 +17,7 @@ interface ItemCollection extends \IteratorAggregate
 	 * @throws WrongStructureItemException
 	 */
 	public function add(Item $item): static;
+	public static function emptyList(): static;
+	public function getLast(): ?Item;
+	public function getFirst(): ?Item;
 }

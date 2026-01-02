@@ -42,10 +42,6 @@ jn.define('ui-system/layout/box', (require, exports, module) => {
 		};
 
 		const safeArea = restProps.safeArea || {};
-		if (withScroll)
-		{
-			safeArea.bottom = true;
-		}
 
 		if (backgroundColor && (backgroundColor.equal(Color.bgPrimary) || backgroundColor.equal(Color.bgSecondary)))
 		{

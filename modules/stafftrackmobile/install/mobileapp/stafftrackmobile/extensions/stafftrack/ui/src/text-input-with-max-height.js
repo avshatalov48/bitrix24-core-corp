@@ -17,12 +17,16 @@ jn.define('stafftrack/ui/text-input-with-max-height', (require, exports, module)
 			this.state = {
 				height: 0,
 			};
-
-			this.onChangeText = (value) => {
-				this.props.onChangeText(value);
-				setTimeout(() => this.setState({ height: 0 }), 40);
-			};
 		}
+
+		onChangeText = (value) => {
+			this.props.onChangeText(value);
+			setTimeout(() => this.setState({ height: 0 }), 40);
+		};
+
+		onLayout = ({ height }) => {
+			this.setState({ height });
+		};
 
 		render()
 		{
@@ -34,7 +38,7 @@ jn.define('stafftrack/ui/text-input-with-max-height', (require, exports, module)
 					maxHeight: this.props.style.maxHeight,
 					...this.props.style,
 				},
-				onLayout: ({ height }) => this.setState({ height }),
+				onLayout: this.onLayout,
 			});
 		}
 	}

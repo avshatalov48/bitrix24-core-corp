@@ -5,6 +5,7 @@ jn.define('crm/receive-payment/steps/contact/warning-layout', (require, exports,
 	const { Loc } = require('loc');
 	const { WarningBlock } = require('layout/ui/warning-block');
 	const { EventEmitter } = require('event-emitter');
+	const { Random } = require('utils/random');
 
 	/**
 	 * @class WarningLayout

@@ -14,11 +14,13 @@ if (defined('SITE_TEMPLATE_ID') && SITE_TEMPLATE_ID == 'bitrix24')
 {
 	if ($arResult['SHOW_ADD_SCHEDULE_BUTTON'])
 	{
-		$this->SetViewTarget('pagetitle'); ?>
-		<a href="<?= $arResult['addScheduleUrl'] ?>" class="ui-btn ui-btn-md ui-btn-primary">
-			<?= htmlspecialcharsbx(Loc::getMessage('TM_SCHEDULE_LIST_ADD')) ?>
-		</a>
-		<? $this->EndViewTarget();
+		$listAddButton = new \Bitrix\UI\Buttons\Button([
+			'text' => Loc::getMessage('TM_SCHEDULE_LIST_ADD'),
+			'link' => $arResult['addScheduleUrl'],
+		]);
+		$listAddButton->addClass('ui-btn-primary');
+		
+		\Bitrix\UI\Toolbar\Facade\Toolbar::addButton($listAddButton);
 	}
 } ?>
 <?

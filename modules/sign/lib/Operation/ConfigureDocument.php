@@ -8,7 +8,6 @@ use Bitrix\Main\PhoneNumber;
 use Bitrix\Sign\Compatibility\Document\Scheme;
 use Bitrix\Sign\Compatibility\Role;
 use Bitrix\Sign\Config\Storage;
-use Bitrix\Sign\Connector\MemberConnectorFactory;
 use Bitrix\Sign\Contract;
 use Bitrix\Sign\Debug\Logger;
 use Bitrix\Sign\Factory;
@@ -23,9 +22,10 @@ use Bitrix\Sign\Item\Api\Property\Request\Signing\Configure\FieldCollection;
 use Bitrix\Sign\Item\Api\Property\Request\Signing\Configure\Member;
 use Bitrix\Sign\Item\Api\Property\Request\Signing\Configure\MemberCollection;
 use Bitrix\Sign\Item\Api\Property\Request\Signing\Configure\Owner;
-use Bitrix\Sign\Item\Field;
+use Bitrix\Sign\Item\B2e\RequiredField;
 use Bitrix\Sign\Repository\MemberRepository;
 use Bitrix\Sign\Repository\RequiredFieldRepository;
+use Bitrix\Sign\Result\Result;
 use Bitrix\Sign\Service;
 use Bitrix\Sign\Type;
 use Bitrix\Sign\Type\BlockCode;
@@ -36,6 +36,8 @@ use Bitrix\Sign\Type\Member\ChannelType;
 
 class ConfigureDocument implements Contract\Operation
 {
+	private const DEFAULT_DATE_FORMAT = 'Y-m-d';
+
 	private Factory\Api\Property\Request\Field\Fill\Value $fieldsFillRequestValueFactory;
 	private Factory\Field $fieldFactory;
 	private Service\Providers\ProfileProvider $profileProvider;
@@ -49,6 +51,7 @@ class ConfigureDocument implements Contract\Operation
 	private readonly Service\Sign\Document\ProviderCodeService $providerCodeService;
 	private readonly Logger $logger;
 	private readonly Service\Integration\HumanResources\HcmLinkService $hcmLinkService;
+	private readonly Service\Integration\HumanResources\HcmLinkFieldService $hcmLinkFieldService;
 
 	public function __construct(
 		private readonly string $uid,
@@ -74,6 +77,7 @@ class ConfigureDocument implements Contract\Operation
 		$this->providerCodeService = $container->getProviderCodeService();
 		$this->logger = Logger::getInstance();
 		$this->hcmLinkService = $container->getHcmLinkService();
+		$this->hcmLinkFieldService = $container->getHcmLinkFieldService();
 	}
 
 	public function launch(): Main\Result
@@ -116,6 +120,12 @@ class ConfigureDocument implements Contract\Operation
 			->setUserCache($this->userCache)
 			->listByDocumentId($document->id)
 		;
+
+		$validateHcmLinkSettingResult = $this->validateHcmLinkSetting($document);
+		if (!$validateHcmLinkSettingResult->isSuccess())
+		{
+			return $validateHcmLinkSettingResult;
+		}
 
 		$validateHcmLinkResult = $this->fillAndValidateHcmLinkEmployees($document, $members);
 		if (!$validateHcmLinkResult->isSuccess())
@@ -272,6 +282,7 @@ class ConfigureDocument implements Contract\Operation
 		}
 
 		$culture = Main\Application::getInstance()->getContext()->getCulture();
+		$document->configuredDateFormat = $culture?->getDateFormat() ?? self::DEFAULT_DATE_FORMAT;
 
 		$response = $this->apiDocumentSigningService->configure(
 			new ConfigureRequest(
@@ -290,10 +301,11 @@ class ConfigureDocument implements Contract\Operation
 				externalId: $document->externalId,
 				titleWithoutNumber: $document->title,
 				scheme: $this->getDocumentScheme($document),
-				externalDateCreate: $document->externalDateCreate?->format('Y-m-d') ?? '',
-				dateFormat: $culture?->getDateFormat(),
+				externalDateCreate: $document->externalDateCreate?->format(self::DEFAULT_DATE_FORMAT) ?? '',
+				dateFormat: $document->configuredDateFormat,
 				dateTimeFormat: $culture?->getDateTimeFormat(),
 				weekStart: $culture?->getWeekStart(),
+				signUntilTimestamp: $document->dateSignUntil?->getTimestamp(),
 			),
 		);
 
@@ -309,6 +321,7 @@ class ConfigureDocument implements Contract\Operation
 		}
 
 		$document->status = DocumentStatus::READY;
+		//also saving $document->configuredDateFormat
 		Service\Container::instance()->getDocumentRepository()->update($document);
 		$this->sendStatusChangedEvent($document);
 
@@ -436,7 +449,7 @@ class ConfigureDocument implements Contract\Operation
 
 		$apiResult = Service\Container::instance()
 			->getApiB2eProviderFieldsService()
-			->loadRequiredFields($document->companyUid)
+			->loadRequiredFields($document->companyUid ?? '')
 		;
 
 		if (!$apiResult instanceof Service\Result\Sign\Block\B2eRequiredFieldsResult)
@@ -449,11 +462,17 @@ class ConfigureDocument implements Contract\Operation
 
 		foreach ($requiredFields as $requiredField)
 		{
-			$field = $this->fieldFactory->createByRequired($document, $memberCollection, $requiredField);
-			if ($field instanceof Field)
+			if (!$requiredField instanceof RequiredField)
 			{
-				$fieldsCollection->add($field);
+				continue;
 			}
+
+			$fieldsCollectionCreatedByRequired = $this->fieldFactory->createByRequired(
+				$document,
+				$memberCollection,
+				$requiredField,
+			);
+			$fieldsCollection->mergeFieldsWithNoneIncludedName($fieldsCollectionCreatedByRequired);
 		}
 
 		return $fieldsCollection;
@@ -561,7 +580,9 @@ class ConfigureDocument implements Contract\Operation
 		$someoneNotFilled = $notFilled->findFirst(static fn(Item\Member $member) => !$member->employeeId);
 		if ($someoneNotFilled)
 		{
-			return (new Main\Result())->addError(new Main\Error('Not all members mapped'));
+			return (new Main\Result())->addError(new Main\Error(
+				Main\Localization\Loc::getMessage('SIGN_OPERATION_CONFIGURE_DOCUMENT_HCMLINK_NOT_ALL_MAPPED')
+			));
 		}
 
 		foreach ($notFilled as $member)
@@ -571,6 +592,57 @@ class ConfigureDocument implements Contract\Operation
 			{
 				return $result;
 			}
+		}
+
+		return new Main\Result();
+	}
+
+	private function validateHcmLinkSetting(Item\Document $document): Main\Result
+	{
+		if (!$document->hcmLinkCompanyId || !$this->hcmLinkService->isAvailable())
+		{
+			return new Main\Result();
+		}
+
+		if (!$this->hcmLinkService->isCompanyExistWithId($document->hcmLinkCompanyId))
+		{
+			return (new Main\Result())->addError(new Main\Error('Company not found'));
+		}
+
+		if (
+			$document->externalDateCreateSourceType === Type\Document\ExternalDateCreateSourceType::HCMLINK
+			&& !$this->hcmLinkFieldService->isDateSettingFieldById($document->hcmLinkDateSettingId)
+		)
+		{
+			return (new Main\Result())->addError(
+				new Main\Error(
+					Main\Localization\Loc::getMessage('SIGN_OPERATION_CONFIGURE_DOCUMENT_HCMLINK_SETTING_INVALID_DATE')
+				)
+			);
+		}
+
+		if (
+			$document->externalIdSourceType === Type\Document\ExternalIdSourceType::HCMLINK
+			&& !$this->hcmLinkFieldService->isExternalIdSettingFieldById($document->hcmLinkExternalIdSettingId)
+		)
+		{
+			return (new Main\Result())->addError(
+				new Main\Error(
+					Main\Localization\Loc::getMessage('SIGN_OPERATION_CONFIGURE_DOCUMENT_HCMLINK_SETTING_INVALID_EXTERNAL_ID')
+				)
+			);
+		}
+
+		if (
+			$document->hcmLinkDocumentTypeSettingId > 0
+			&& !$this->hcmLinkFieldService->isDocumentTypeSettingFieldById($document->hcmLinkDocumentTypeSettingId)
+		)
+		{
+			return (new Main\Result())->addError(
+				new Main\Error(
+					Main\Localization\Loc::getMessage('SIGN_OPERATION_CONFIGURE_DOCUMENT_HCMLINK_SETTING_INVALID_DOCUMENT_TYPE')
+				)
+			);
 		}
 
 		return new Main\Result();

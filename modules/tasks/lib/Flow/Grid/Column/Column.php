@@ -52,6 +52,11 @@ abstract class Column implements Arrayable
 		return [];
 	}
 
+	public function isAvailable(): bool
+	{
+		return true;
+	}
+
 	/**
 	 * userId is always in params
 	 */

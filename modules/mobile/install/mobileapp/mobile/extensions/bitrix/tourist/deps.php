@@ -1,8 +1,12 @@
 <?php
 
 return [
-    'extensions' => [
-        'rest',
-    ],
-    'bundle' => [],
+	'extensions' => [
+		'rest',
+		'rest/run-action-executor',
+		'type',
+	],
+	'bundle' => [
+		'./src/events-fetcher',
+	],
 ];

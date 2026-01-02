@@ -17,6 +17,7 @@ use Bitrix\Im\Bot\Keyboard;
 use Bitrix\Im\Text;
 use Bitrix\Im\User;
 use Bitrix\Im\Model\ChatTable;
+use Bitrix\Im\Model\MessageTable;
 
 Loc::loadMessages(__FILE__);
 
@@ -1780,20 +1781,16 @@ class Connector
 
 			if (in_array($connectorId, self::getListShowDeliveryStatus()))
 			{
-				\CIMMessageParam::Set(
-					$messageId,
-					[
-						'SENDING' => 'Y',
-						'SENDING_TS' => time()
-					]
-				);
-				\CIMMessageParam::SendPull(
-					$messageId,
-					[
-						'SENDING',
-						'SENDING_TS'
-					]
-				);
+				$pullParams = [
+					'SENDING' => 'Y',
+					'SENDING_TS' => time()
+				];
+				\CIMMessageParam::Set($messageId, $pullParams);
+				\CIMMessageParam::SendPull($messageId, array_keys($pullParams));
+				if (Loader::includeModule('pull'))
+				{
+					\Bitrix\Pull\Event::send();
+				}
 			}
 
 			$resultSendMessage = (new self())->sendMessage($fields);
@@ -1811,6 +1808,7 @@ class Connector
 
 				return false;
 			}
+
 		}
 
 		return true;
@@ -2036,7 +2034,42 @@ class Connector
 
 		$connection = \Bitrix\Main\Application::getInstance()->getConnection();
 
-		$params['END_ID'] = (int)$params['END_ID'];
+		$startId = (int)$params['START_ID'];
+		$endId = (int)$params['END_ID'];
+
+		if ($startId === 0 || $endId === 0)
+		{
+			$session = V2\Session\Session::getInstanceByChatId((int)$params['CHAT_ID']);
+		}
+
+		if ($startId === 0)
+		{
+			if ($session && ($sessionStartId = $session->getStartId()))
+			{
+				$startId = $sessionStartId;
+			}
+			else
+			{
+				$firstMessage = MessageTable::getRow([
+					'select' => ['ID'],
+					'filter' => ['=CHAT_ID' => (int)$params['CHAT_ID']],
+					'order' => ['ID'],
+				]);
+				$startId = $firstMessage ? (int)$firstMessage['ID'] : 1;
+			}
+		}
+
+		if ($endId === 0)
+		{
+			if ($session && ($sessionEndId = $session->getEndId()))
+			{
+				$endId = $sessionEndId;
+			}
+			else
+			{
+				$endId = Im\V2\Chat::getInstance((int)$params['CHAT_ID'])->getLastMessageId();
+			}
+		}
 
 		$messages = [];
 		$query = $connection->query("
@@ -2048,8 +2081,8 @@ class Connector
 					AND MP.PARAM_NAME = 'CONNECTOR_MID'
 			WHERE
 				M.CHAT_ID = ". (int)$params['CHAT_ID'] ." 
-				AND M.ID > ". (int)$params['START_ID']
-				.($params['END_ID'] ? " AND M.ID < ".((int)$params['END_ID'] + 1) : "")."
+				AND M.ID > ". $startId
+				.($endId ? " AND M.ID < ".($endId + 1) : "")."
 		");
 		while($row = $query->fetch())
 		{
@@ -2410,13 +2443,10 @@ class Connector
 		}
 
 		$pullParams = [
-			Im\V2\Message\Params::SENDING,
-			Im\V2\Message\Params::SENDING_TS,
-		];
-		$messageParams->fill([
 			Im\V2\Message\Params::SENDING => false,
 			Im\V2\Message\Params::SENDING_TS => 0
-		]);
+		];
+		$messageParams->fill($pullParams);
 		if (!empty($params['message']['id']))
 		{
 			$pullParams[] = Imopenlines\MessageParameter::CONNECTOR_MID;
@@ -2424,7 +2454,11 @@ class Connector
 		}
 		$messageParams->save();
 
-		\CIMMessageParam::sendPull($message->getMessageId(), $pullParams);
+		\CIMMessageParam::sendPull($message->getMessageId(), array_keys($pullParams));
+		if (Loader::includeModule('pull'))
+		{
+			\Bitrix\Pull\Event::send();
+		}
 
 		return true;
 	}

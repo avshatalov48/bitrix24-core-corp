@@ -1,0 +1,17 @@
+.sign-b2e-vue-util-notice {
+	background-color: var(--ui-color-palette-blue-15);
+	border-radius: 8px;
+}
+
+.sign-b2e-vue-util-notice__content {
+	font: var(--ui-font-family-system);
+	font-size: 13px;
+	font-weight: var(--ui-font-weight-normal);
+	color: var(--ui-color-palette-gray-90);
+	line-height: 15.51px;
+	text-align: left;
+	text-underline-position: from-font;
+	text-decoration-skip-ink: none;
+
+	padding: 12px;
+}

@@ -59,7 +59,7 @@ foreach($arResult['VERSIONS'] as $version)
 					?><span class="feed-com-file-size"><?=$version['SIZE']?></span><?
 					?><script>
 						var WDpreButtons_<?= $version['ID'] . '_' . $version['GLOBAL_CONTENT_VERSION'] ?> = [
-							{text : BX.message('JS_CORE_VIEWER_VIEW_ELEMENT'), className : "bx-viewer-popup-item item-view", href : "#", onclick: function(e){
+							{text : BX.message('DISK_JS_BTN_OPEN'), className : "bx-viewer-popup-item item-view", href : "#", onclick: function(e){
 								top.BX.UI.Viewer.Instance.openByNode(BX("disk-attach-<?=$version['ID'] . '-' . $version['GLOBAL_CONTENT_VERSION'] ?>"));
 								BX.PopupMenu.currentItem.popupWindow.close();
 								return e.preventDefault();

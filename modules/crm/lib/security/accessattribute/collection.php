@@ -2,6 +2,7 @@
 
 namespace Bitrix\Crm\Security\AccessAttribute;
 
+use Bitrix\Crm\Security\Role\PermissionsManager;
 use Bitrix\Crm\Service\UserPermissions;
 
 /**
@@ -58,8 +59,7 @@ class Collection
 	{
 		$userId = $userPermissions->getUserId();
 		$userAttributes = new Collection($userId);
-
-		$attributesProvider = $userPermissions->getAttributesProvider();
+		$permissionsManager = PermissionsManager::getInstance($userId);
 
 		foreach ($requestedPermissionCheckEntityTypes as $permissionEntityType)
 		{
@@ -67,10 +67,10 @@ class Collection
 			{
 				$userAttributes->addByEntityType(
 					$permissionEntityType,
-					$attributesProvider->getEntityListAttributes(
+					$permissionsManager->getPermissionLevel(
 						$permissionEntityType,
 						$operation
-					)
+					)->getEntityAttributesToCheckInListMode()
 				);
 			}
 		}

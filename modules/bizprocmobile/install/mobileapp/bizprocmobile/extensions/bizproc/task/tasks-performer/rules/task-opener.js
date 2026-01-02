@@ -56,6 +56,7 @@ jn.define('bizproc/task/tasks-performer/rules/task-opener', (require, exports, m
 				targetUserId: null,
 
 				readOnlyTimeline: true,
+				isNeedFastClose: props.isNeedFastClose,
 				showNotifications: false,
 			};
 

@@ -33,6 +33,7 @@ if (!empty($arResult['ERROR_MESSAGES']))
 
 Extension::load([
 	'biconnector.dataset-import',
+	'biconnector.popup',
 	'ui.buttons',
 	'ui.entity-selector',
 	'ui.notification',
@@ -77,6 +78,7 @@ $APPLICATION->IncludeComponent(
 			'fieldsConfig' => $arResult['FIELDS_CONFIG'],
 			'supportedDatabases' => $arResult['SUPPORTED_DATABASES'],
 			'signedParameters' => $arResult['SIGNED_PARAMETERS'],
+			'closeAfterCreate' => $arParams['CLOSE_AFTER_CREATE'] === 'Y',
 		])?>);
 	});
 </script>

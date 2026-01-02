@@ -30,7 +30,7 @@
 .sign-ui-signing-link__empty-state_title {
 	display: block;
 	margin-bottom: 16px;
-	font: var(--ui-font-weight-medium) var(--ui-font-size-4xl) var(--ui-font-family-system);
+	font: var(--ui-font-weight-medium) var(--ui-font-size-4xl) var(--ui-font-family-primary, var(--ui-font-family-system));
 	color: var(--ui-color-base-90);
 }
 
@@ -38,7 +38,7 @@
 	display: block;
 	margin-bottom: 30px;
 	max-width: 450px;
-	font: var(--ui-font-size-xl) var(--ui-font-family-system);
+	font: var(--ui-font-size-xl) var(--ui-font-family-primary, var(--ui-font-family-system));
 	color: var(--ui-color-base-60);
 	text-align: center;
 }
@@ -63,7 +63,7 @@
 }
 
 .sign-ui-signing-link__employee-doc > p {
-	font: 18px/25px var(--ui-font-family-system);
+	font: 18px/25px var(--ui-font-family-primary, var(--ui-font-family-system));
 	color: var(--ui-color-palette-black-base);
 	margin: 0 0 10px 0;
 }
@@ -80,7 +80,7 @@
 	-ms-flex-align: center;
 	align-items: center;
 	padding: 10px 15px;
-	font-family: var(--ui-font-family-system);
+	font-family: var(--ui-font-family-primary, var(--ui-font-family-system));
 }
 
 .sign-ui-signing-link__employee-doc > div > div {
@@ -105,7 +105,7 @@
 
 .sign-ui-signing-link__employee-doc .sign-ui-signing-link__employee-doc--info {
 	margin-left: 15px;
-	font-family: var(--ui-font-family-system);
+	font-family: var(--ui-font-family-primary, var(--ui-font-family-system));
 }
 
 .sign-ui-signing-link__employee-doc .sign-ui-signing-link__employee-doc--info-title {

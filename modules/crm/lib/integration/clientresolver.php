@@ -140,6 +140,18 @@ class ClientResolver extends ResolverBase
 
 					$address1Parts = array();
 
+					$planningStrucrureElementName = $info['ADDRESS_PLST_NAME'] ?? '';
+					if($planningStrucrureElementName !== '')
+					{
+						$planningStrucrureElementType = $info['ADDRESS_PLST_TYPE'] ?? '';
+						$planningStrucrureElement =
+							$planningStrucrureElementType !== ''
+								? "$planningStrucrureElementType $planningStrucrureElementName"
+								: $planningStrucrureElementName
+						;
+						$address1Parts[] = $planningStrucrureElement;
+					}
+
 					$street = isset($info['ADDRESS_STREET_NAME']) ? $info['ADDRESS_STREET_NAME'] : '';
 					if($street !== '')
 					{
@@ -521,7 +533,7 @@ class ClientResolver extends ResolverBase
 		{
 			$map  = [
 				Requisite\Country::ID_BELARUS => 'integrations24.portal_nalog_gov_by',
-				Requisite\Country::ID_KAZAKHSTAN => 'integrations24.mns_kazakhstan_poisk_po_bin',
+				Requisite\Country::ID_KAZAKHSTAN => 'integrations24ru.poisk_po_bin_iin_kz',
 			];
 		}
 

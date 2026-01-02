@@ -11,6 +11,7 @@ return [
 		'apptheme',
 		'notify-manager',
 		'in-app-url',
+		'utils/random',
 		'utils/skeleton',
 
 		'layout/pure-component',

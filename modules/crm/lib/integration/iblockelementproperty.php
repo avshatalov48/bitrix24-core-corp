@@ -5,6 +5,7 @@ use Bitrix\Main\Config\Option;
 use Bitrix\Main\Localization\Loc;
 use Bitrix\Main\UserField\Renderer;
 use Bitrix\Main\Web\Json;
+use Bitrix\Crm\Service\Container;
 
 Loc::loadMessages(__FILE__);
 
@@ -608,23 +609,24 @@ class IBlockElementProperty
 	{
 		$result = '';
 		$usePrefix = true;
-		$tmpArray = array();
+		$entityTypeToStatus = [];
+
 		if(is_array($property['USER_TYPE_SETTINGS']))
 		{
 			if(array_key_exists('VISIBLE', $property['USER_TYPE_SETTINGS']))
 				unset($property['USER_TYPE_SETTINGS']['VISIBLE']);
-			$tmpArray = array_filter($property['USER_TYPE_SETTINGS'], function($mark)
+			$entityTypeToStatus = array_filter($property['USER_TYPE_SETTINGS'], function($mark)
 			{
 				return $mark == "Y";
 			});
-			if(count($tmpArray) == 1)
+			if(count($entityTypeToStatus) == 1)
 			{
 				$usePrefix = false;
 			}
 		}
 
-		$listEntityValue = array();
-		$preparedData = array();
+		$listEntityValue = [];
+		$preparedData = [];
 		if($usePrefix)
 		{
 			foreach($listEntityValues as $entityIdWithPrefix)
@@ -636,81 +638,64 @@ class IBlockElementProperty
 		}
 		else
 		{
-			$entityType = array_shift(array_keys($tmpArray));
+			$entityTypeList = array_keys($entityTypeToStatus);
+			$entityType = array_shift($entityTypeList);
+
 			foreach($listEntityValues as $entityId)
 			{
 				$listEntityValue[$entityType][] = $entityId;
 			}
 		}
 
-		foreach($listEntityValue as $entityType => $listEntityId)
+		$router = Container::getInstance()->getRouter();
+
+		foreach($listEntityValue as $entityTypeName => $listEntityId)
 		{
-			switch($entityType)
+			if(empty($entityTypeName) || empty($listEntityId))
 			{
-				case 'LEAD':
+				continue;
+			}
+
+			$entityTypeId = \CCrmOwnerType::ResolveID($entityTypeName);
+			if($entityTypeId === \CCrmOwnerType::Undefined)
+			{
+				continue;
+			}
+
+			foreach ($listEntityId as $entityId)
+			{
+				$itemLinkFieldValue = null;
+
+				$validatedId = filter_var($entityId, FILTER_VALIDATE_INT);
+				if ($validatedId !== false)
 				{
-					$queryObject = \CCrmLead::getListEx(array('TITLE' => 'ASC'), array('=ID' => $listEntityId), false,
-						false, array('ID', 'TITLE'));
-					while($entityData = $queryObject->fetch())
-					{
-						$preparedData[$entityType][] = array(
-							'NAME' => $entityData['TITLE'],
-							'LINK' => \CComponentEngine::makePathFromTemplate(Option::get('crm', 'path_to_lead_show'),
-								array('lead_id' => $entityData['ID']))
-						);
-					}
-					break;
+					$itemLinkFieldValue = $router->getItemDetailUrl($entityTypeId, $validatedId);
 				}
-				case 'CONTACT':
-				{
-					$queryObject = \CCrmContact::getListEx(array('TITLE' => 'ASC'), array('=ID' => $listEntityId), false,
-						false, array('ID', 'FULL_NAME'));
-					while($entityData = $queryObject->fetch())
-					{
-						$preparedData[$entityType][] = array(
-							'NAME' => $entityData['FULL_NAME'],
-							'LINK' => \CComponentEngine::makePathFromTemplate(Option::get('crm', 'path_to_contact_show'),
-								array('contact_id' => $entityData['ID']))
-						);
-					}
-					break;
-				}
-				case 'COMPANY':
-				{
-					$queryObject = \CCrmCompany::getListEx(array('TITLE' => 'ASC'), array('ID' => $listEntityId), false,
-						false, array('ID', 'TITLE'));
-					while($entityData = $queryObject->fetch())
-					{
-						$preparedData[$entityType][] = array(
-							'NAME' => $entityData['TITLE'],
-							'LINK' => \CComponentEngine::makePathFromTemplate(Option::get('crm', 'path_to_company_show'),
-								array('company_id' => $entityData['ID']))
-						);
-					}
-					break;
-				}
-				case 'DEAL':
-				{
-					$queryObject = \CCrmDeal::getListEx(array('TITLE' => 'ASC'), array('ID' => $listEntityId), false,
-						false, array('ID', 'TITLE'));
-					while($entityData = $queryObject->fetch())
-					{
-						$preparedData[$entityType][] = array(
-							'NAME' => $entityData['TITLE'],
-							'LINK' => \CComponentEngine::makePathFromTemplate(Option::get('crm', 'path_to_deal_show'),
-								array('deal_id' => $entityData['ID']))
-						);
-					}
-					break;
-				}
+
+				$info = [];
+				\CCrmOwnerType::TryGetInfo($entityTypeId, $validatedId, $info);
+
+				$preparedData[$entityTypeName][] = [
+					'NAME' => $info["CAPTION"] ?? '',
+					'LINK' => $itemLinkFieldValue ?? '',
+				];
 			}
 		}
+
 		foreach($preparedData as $entityType => $listEntityData)
 		{
-			$result .= Loc::getMessage('CRM_IBLOCK_PROPERTY_ENTITY_'.$entityType).': <br>';
+			$crmIBlockEntityType = Loc::getMessage('CRM_IBLOCK_PROPERTY_ENTITY_'.$entityType);
+			if (!empty($crmIBlockEntityType))
+			{
+				$result .= $crmIBlockEntityType.': <br>';
+			}
+
 			foreach($listEntityData as $entity)
+			{
 				$result .= '<a href="'.$entity['LINK'].'">'.htmlspecialcharsbx($entity['NAME']).'</a><br>';
+			}
 		}
+
 		return $result;
 	}
 

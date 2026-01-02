@@ -474,6 +474,12 @@ class Helper
 			'COMMENT' => $call->getComment(),
 		];
 
+		$hasRecord = !empty($fields['RECORD_URL']);
+		if ($hasRecord)
+		{
+			$statisticRecord['CALL_RECORD_URL'] = $fields['RECORD_URL'];
+		}
+
 		\CVoxImplantCrmHelper::updateCrmEntities(
 			$call->getCreatedCrmEntities(),
 			[
@@ -592,16 +598,15 @@ class Helper
 			}
 		}
 
-		$hasRecord = ($fields['RECORD_URL'] != '');
 		if ($hasRecord)
 		{
 			if (!mb_check_encoding($fields['RECORD_URL'], 'UTF-8'))
 			{
 				$result->addError(new Error('RECORD_URL contains invalid symbols for UTF-8 encoding'));
-				return $result;
+				//return $result;
 			}
-			$recordUrl = Uri::urnEncode($fields['RECORD_URL']);
-			\CVoxImplantHistory::DownloadAgent($insertResult->getId(), $recordUrl, $call->isCrmEnabled());
+
+			\CVoxImplantHistory::DownloadAgent($statisticRecord['ID'], null, $call->isCrmEnabled());
 		}
 
 		if ($fields['ADD_TO_CHAT'])

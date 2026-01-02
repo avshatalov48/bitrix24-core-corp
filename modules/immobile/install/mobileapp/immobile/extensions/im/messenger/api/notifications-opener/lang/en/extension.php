@@ -1,0 +1,2 @@
+<?php
+$MESS["IMMOBILE_NOTIFICATIONS_COMPONENT_TITLE"] = "Notifications";

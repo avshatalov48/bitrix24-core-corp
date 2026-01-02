@@ -1,0 +1,22 @@
+<?php
+$MESS["CRM_FF_CANCEL"] = "Болдырмау";
+$MESS["CRM_FF_CHANGE"] = "Өзгерту";
+$MESS["CRM_FF_CHOISE"] = "Таңдау";
+$MESS["CRM_FF_CLOSE"] = "Жабу";
+$MESS["CRM_FF_COMPANY"] = "Компаниялар";
+$MESS["CRM_FF_CONTACT"] = "Байланыс";
+$MESS["CRM_FF_DEAL"] = "Мәмілелер";
+$MESS["CRM_FF_LAST"] = "Соңғы";
+$MESS["CRM_FF_LEAD"] = "Лидтер";
+$MESS["CRM_FF_NO_RESULT"] = "Өкінішке орай, сіздің іздеу сұрауыңыз бойынша ештеңе табылған жоқ";
+$MESS["CRM_FF_OK"] = "Таңдау";
+$MESS["CRM_FF_SEARCH"] = "Іздеу";
+$MESS["CRM_REPORT_CONSTRUCT_BUTTON_CANCEL"] = "Болдырмау";
+$MESS["CRM_REPORT_CONSTRUCT_BUTTON_CONTINUE"] = "Әрі қарай...";
+$MESS["CRM_REPORT_INCLUDE_ALL"] = "Барлығы";
+$MESS["CRM_REPORT_SELECT_OWNER"] = "Жаңа есеп үшін өрістер жиынтығын таңдаңыз";
+$MESS["REPORT_CHOOSE"] = "Таңдау";
+$MESS["REPORT_IGNORE_FILTER_VALUE"] = "Ескермеу";
+$MESS["REPORT_POPUP_COLUMN_TITLE"] = "Мәміле";
+$MESS["REPORT_POPUP_COLUMN_TITLE_CRM"] = "Мәміле";
+$MESS["REPORT_POPUP_COLUMN_TITLE_CRM_PRODUCT_ROW"] = "Тауар";

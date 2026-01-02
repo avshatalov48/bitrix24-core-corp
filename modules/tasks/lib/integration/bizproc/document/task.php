@@ -17,6 +17,7 @@ use Bitrix\Tasks\Internals\Task\Status;
 use Bitrix\Tasks\Slider\Path\TaskPathMaker;
 use Bitrix\Tasks\Util\Restriction\Bitrix24Restriction\Limit\TaskLimit;
 use Bitrix\Socialnetwork;
+use Bitrix\Tasks\Util\UserField;
 
 if (!Main\Loader::includeModule('bizproc'))
 {
@@ -275,7 +276,7 @@ class Task implements \IBPWorkflowDocument
 				'Type' => 'datetime',
 			],
 			'MARK' => [
-				'Name' => Loc::getMessage('TASKS_BP_DOCUMENT_MARK'),
+				'Name' => Loc::getMessage('TASKS_BP_DOCUMENT_MARK_MSGVER_1'),
 				'Type' => 'select',
 				'Editable' => true,
 				'Options' => [
@@ -395,7 +396,7 @@ class Task implements \IBPWorkflowDocument
 			],
 			'filter' => [
 				'=ENTITY_ID' => 'TASKS_TASK',
-				'%=FIELD_NAME' => 'UF_AUTO_%'
+				'!@FIELD_NAME' => UserField::getSystemFields(),
 			],
 			'runtime' => [
 				\Bitrix\Main\UserFieldTable::getLabelsReference('LABELS', LANGUAGE_ID),
@@ -435,7 +436,39 @@ class Task implements \IBPWorkflowDocument
 	{
 		//$task = \Bitrix\Tasks\Item\Task::getInstance($documentId, 1);
 		//$fields = $task->getData();
-		$res = \CTasks::GetByID($documentId, false);
+		$args = func_get_args();
+		$select = $args[2] ?? [];
+
+		$select = array_merge(
+			...array_map(
+				static function($selectField)
+				{
+					$mapFields = [
+						'STATUS' => 'REAL_STATUS',
+						'IS_IMPORTANT' => 'PRIORITY',
+						'IS_EXPIRED' => ['DEADLINE', 'REAL_STATUS', 'CLOSED_DATE'],
+						'GROUP_ID_PRINTABLE' => 'GROUP_ID',
+						'MEMBER_ROLE' => ['CREATED_BY', 'RESPONSIBLE_ID', 'ACCOMPLICES', 'AUDITORS'],
+					];
+
+					$field = $mapFields[$selectField] ?? $selectField;
+
+					return is_array($field) ? $field : [$field];
+				},
+				$select
+			)
+		);
+
+
+		if (empty($select))
+		{
+			$res = \CTasks::GetByID($documentId, false);
+		}
+		else
+		{
+			$res = \CTasks::GetByID($documentId, false, ['select' => $select]);
+		}
+
 		$fields = $res ? $res->fetch() : null;
 
 		if (!$fields)
@@ -479,17 +512,17 @@ class Task implements \IBPWorkflowDocument
 
 	private static function getMemberRole($memberId, array $fields)
 	{
-		if ($memberId === (int)$fields['CREATED_BY'])
+		if ($memberId === (int)($fields['CREATED_BY'] ?? null))
 		{
 			return 'O';
 		}
 
-		if ($memberId === (int)$fields['RESPONSIBLE_ID'])
+		if ($memberId === (int)($fields['RESPONSIBLE_ID'] ?? null))
 		{
 			return 'R';
 		}
 
-		foreach ($fields['ACCOMPLICES'] as $accomplice)
+		foreach (($fields['ACCOMPLICES'] ?? []) as $accomplice)
 		{
 			if ($memberId === (int)$accomplice)
 			{
@@ -497,7 +530,7 @@ class Task implements \IBPWorkflowDocument
 			}
 		}
 
-		foreach ($fields['AUDITORS'] as $auditor)
+		foreach (($fields['AUDITORS'] ?? []) as $auditor)
 		{
 			if ($memberId === (int)$auditor)
 			{
@@ -856,9 +889,9 @@ class Task implements \IBPWorkflowDocument
 		return 0;
 	}
 
-	private static function convertFieldsToDocument(array &$fields)
+	public static function convertFieldsToDocument(array &$fields, array $required = []): void
 	{
-		$fields['IS_IMPORTANT'] = ($fields['PRIORITY'] > Priority::AVERAGE) ? 'Y' : 'N';
+		$fields['IS_IMPORTANT'] = (($fields['PRIORITY'] ?? null) > Priority::AVERAGE) ? 'Y' : 'N';
 
 		$documentFields = self::getDocumentFields(null);
 		foreach ($fields as $fieldName => $fieldValue)
@@ -872,19 +905,19 @@ class Task implements \IBPWorkflowDocument
 		//users
 		foreach (['RESPONSIBLE_ID', 'CREATED_BY', 'CHANGED_BY', 'CLOSED_BY'] as $userKey)
 		{
-			$fields[$userKey] = $fields[$userKey] > 0 ?sprintf('user_%d', $fields[$userKey]) : null;
+			$fields[$userKey] = ($fields[$userKey] ?? null) > 0 ?sprintf('user_%d', $fields[$userKey]) : null;
 		}
-		foreach ($fields['ACCOMPLICES'] as $i => $userId)
+		foreach (($fields['ACCOMPLICES'] ?? []) as $i => $userId)
 		{
 			$fields['ACCOMPLICES'][$i] = sprintf('user_%d', $userId);
 		}
-		foreach ($fields['AUDITORS'] as $i => $userId)
+		foreach (($fields['AUDITORS'] ?? []) as $i => $userId)
 		{
 			$fields['AUDITORS'][$i] = sprintf('user_%d', $userId);
 		}
 		//$fields['TAGS'] - nothing to do.
 
-		$fields['STATUS'] = $fields['REAL_STATUS'];
+		$fields['STATUS'] = $fields['REAL_STATUS'] ?? null;
 		$fields['IS_EXPIRED'] = 'N';
 		if (!empty($fields['DEADLINE']))
 		{
@@ -902,7 +935,7 @@ class Task implements \IBPWorkflowDocument
 		}
 
 		$fields['GROUP_ID_PRINTABLE'] = Loc::getMessage('TASKS_BP_DOCUMENT_GROUP_ID_PRINTABLE_DEFAULT');
-		if ($fields['GROUP_ID'] > 0)
+		if ((($fields['GROUP_ID'] ?? null) > 0) && (isset($required['GROUP_ID_PRINTABLE']) || empty($required)))
 		{
 			$fields['GROUP_ID_PRINTABLE'] = $fields['GROUP_ID'];
 			if (Main\Loader::includeModule('socialnetwork'))
@@ -921,18 +954,18 @@ class Task implements \IBPWorkflowDocument
 			$fields['GROUP_ID'] = null;
 		}
 
-		if (isset($fields['FLOW_ID']) && $fields['FLOW_ID'] > 0)
+		if ((isset($fields['FLOW_ID']) && $fields['FLOW_ID'] > 0) && (isset($required['FLOW_OWNER']) || empty($required)))
 		{
 			$flowOwnerId = FlowRegistry::getInstance()->get($fields['FLOW_ID'])->getOwnerId();
 			$fields['FLOW_OWNER'] =  'user_' . $flowOwnerId;
 		}
 
-		if ((int)$fields['PARENT_ID'] <= 0) // issue: 0155930
+		if ((int)($fields['PARENT_ID'] ?? null) <= 0) // issue: 0155930
 		{
 			$fields['PARENT_ID'] = null;
 		}
 
-		if (is_array($fields['COMMENT_RESULT']))
+		if (isset($fields['COMMENT_RESULT']) && (is_array($fields['COMMENT_RESULT'])))
 		{
 			$results = [];
 			/** @var \Bitrix\Tasks\Internals\Task\Result\Result $result */
@@ -945,7 +978,7 @@ class Task implements \IBPWorkflowDocument
 			unset($results, $result);
 		}
 
-		if (is_array($fields['COMMENT_RESULT_LAST']))
+		if (isset($fields['COMMENT_RESULT_LAST']) && (is_array($fields['COMMENT_RESULT_LAST'])))
 		{
 			$fields['COMMENT_RESULT_LAST'] = htmlspecialcharsback($fields['COMMENT_RESULT_LAST']['TEXT']);
 		}
@@ -981,7 +1014,12 @@ class Task implements \IBPWorkflowDocument
 			&& TaskLimit::isLimitExceeded()
 		)
 		{
-			throw new \Exception(Loc::getMessage('TASKS_BP_DOCUMENT_RESUME_RESTRICTED'));
+			$code =
+				defined('\CBPRuntime::EXCEPTION_CODE_INSTANCE_TARIFF_LIMIT_EXCEED')
+					? \CBPRuntime::EXCEPTION_CODE_INSTANCE_TARIFF_LIMIT_EXCEED
+					: 402
+			;
+			throw new \Exception(Loc::getMessage('TASKS_BP_DOCUMENT_RESUME_RESTRICTED'), $code);
 		}
 	}
 
@@ -1053,7 +1091,7 @@ class Task implements \IBPWorkflowDocument
 		return $multiple ? $result : reset($result);
 	}
 
-	private static function setFlowMessages(array $fields): array
+	public static function setFlowMessages(array $fields): array
 	{
 		$flowId = (int)($fields['FLOW_ID'] ?? 0);
 

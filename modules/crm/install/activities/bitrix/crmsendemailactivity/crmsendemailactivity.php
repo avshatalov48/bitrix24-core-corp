@@ -6,6 +6,7 @@ if (!defined('B_PROLOG_INCLUDED') || B_PROLOG_INCLUDED !== true)
 }
 
 use Bitrix\Crm;
+use Bitrix\Crm\Integration\Analytics\Dictionary;
 use Bitrix\Main;
 use Bitrix\Main\Config;
 use Bitrix\Main\Mail;
@@ -435,11 +436,9 @@ class CBPCrmSendEmailActivity extends CBPActivity
 		// Try add event to entity
 		$CCrmEvent = new CCrmEvent();
 
-		$eventText = '';
-		$eventText .= GetMessage('CRM_SEMA_EMAIL_SUBJECT').': '.$subject."\n\r";
+		$eventText = GetMessage('CRM_SEMA_EMAIL_SUBJECT').': '.$subject."\n\r";
 		$eventText .= GetMessage('CRM_SEMA_EMAIL_FROM').': '.$from."\n\r";
 		$eventText .= GetMessage('CRM_SEMA_EMAIL_TO').': '.$to."\n\r\n\r";
-		$eventText .= $messageHtml;
 
 		$eventBindings = [];
 		foreach ($bindings as $item)
@@ -456,11 +455,18 @@ class CBPCrmSendEmailActivity extends CBPActivity
 
 		$CCrmEvent->Add(
 			[
+				'EVENT_TYPE'   => CCrmEvent::TYPE_EMAIL,
 				'ENTITY' => $eventBindings,
 				'EVENT_ID' => 'MESSAGE',
 				'EVENT_TEXT_1' => $eventText,
-				'FILES' => $arRawFiles
 			]
+		);
+
+		$documentType = $this->getDocumentType();
+		\CCrmBizProcHelper::sendOperationsAnalytics(
+			Dictionary::EVENT_ENTITY_SOCIAL,
+			$this,
+			$documentType[2] ?? '',
 		);
 
 		// <-- Sending Email
@@ -816,20 +822,20 @@ class CBPCrmSendEmailActivity extends CBPActivity
 			'text',
 			function($objectName, $fieldName, $property, $result) use ($messageType)
 			{
-				if (is_array($result))
-				{
-					$result = implode(', ', CBPHelper::makeArrayFlat($result));
-				}
+				$result = CBPHelper::stringify($result);
 
-				if ($messageType === 'html' && isset($property['ValueContentType']))
+				if ($messageType === 'html')
 				{
-					if ($property['ValueContentType'] === 'bb')
+					$contentType =
+						$property['ValueContentType'] ?? (($property['Type'] ?? '') === 'S:HTML' ? 'html' : 'text')
+					;
+					if ($contentType === 'bb')
 					{
 						$result = Crm\Format\TextHelper::sanitizeHtml(
 							Crm\Format\TextHelper::convertBbCodeToHtml($result)
 						);
 					}
-					elseif ($property['ValueContentType'] !== 'html' && isset($property['Type']) && $property['Type'] !== 'S:HTML')
+					elseif ($contentType !== 'html')
 					{
 						$result = htmlspecialcharsbx($result);
 					}
@@ -838,6 +844,22 @@ class CBPCrmSendEmailActivity extends CBPActivity
 				return $result;
 			}
 		);
+	}
+
+	public function collectUsages()
+	{
+		$properties = $this->arProperties;
+		$message = $this->getRawProperty('MessageText');
+		if ($this->MessageTextEncoded)
+		{
+			$message = self::decodeMessageText($message);
+			$properties['MessageText'] = $message;
+		}
+
+		$usages = [];
+		$this->collectUsagesRecursive($properties, $usages);
+
+		return $usages;
 	}
 
 	private static function encodeMessageText($text)

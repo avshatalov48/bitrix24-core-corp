@@ -30,7 +30,7 @@ final class AiQualityAssessmentController
 	public function getList(array $params = []): Collection
 	{
 		$select = $params['select'] ?? ['*'];
-		$filter = $params['filter'] ?? null;
+		$filter = $params['filter'] ?? [];
 		$order = $params['order'] ?? [
 			'ID' => 'DESC',
 		];

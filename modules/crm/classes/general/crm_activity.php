@@ -8,6 +8,7 @@ IncludeModuleLangFile(__FILE__);
 use Bitrix\Crm;
 use Bitrix\Crm\Activity\FastSearch;
 use Bitrix\Crm\Activity\FillActLightCounter;
+use Bitrix\Crm\Activity\LastCommunication\SyncLastCommunication;
 use Bitrix\Crm\Activity\LightCounter\ActCounterLightTimeRepo;
 use Bitrix\Crm\Activity\Provider;
 use Bitrix\Crm\Activity\Provider\Eventable\PingOffset;
@@ -1291,7 +1292,7 @@ class CAllCrmActivity
 				$itemIdentifier = Crm\ItemIdentifier::createFromArray($singleBinding);
 				if ($itemIdentifier)
 				{
-					$monitor->onActivityRemoveIfSuitable($itemIdentifier, $ID);
+					$monitor->onActivityRemoveIfSuitable($itemIdentifier, (int)$ID);
 				}
 			}
 		}
@@ -2055,6 +2056,7 @@ class CAllCrmActivity
 			if (
 				!isset($fields['EDITOR_ID'])
 				&& ($fields['PROVIDER_ID'] ?? null) !== Provider\Email::getId()
+				&& ($params['PREVIOUS_FIELDS']['PROVIDER_ID'] ?? null) !== Provider\Email::getId()
 			)
 			{
 				$userID = $fields['AUTHOR_ID'] ?? 0;
@@ -2229,11 +2231,14 @@ class CAllCrmActivity
 		);
 
 		$monitor = Crm\Service\Timeline\Monitor::getInstance();
+		$lastCommunication = (new SyncLastCommunication());
 		foreach ($affectedBindings as $binding)
 		{
 			if (\CCrmOwnerType::IsDefined($binding->getOwnerTypeId()) && $binding->getOwnerId() > 0)
 			{
-				$monitor->onActivityRemoveIfSuitable(new Crm\ItemIdentifier($binding->getOwnerTypeId(), $binding->getOwnerId()), $activityID);
+				$itemIdentifier = new Crm\ItemIdentifier($binding->getOwnerTypeId(), $binding->getOwnerId());
+				$monitor->onActivityRemoveIfSuitable($itemIdentifier, $activityID, (int)$activityID);
+				$lastCommunication->onActivityRemoveIfSuitable($itemIdentifier, $activityID);
 			}
 		}
 
@@ -2638,7 +2643,7 @@ class CAllCrmActivity
 				continue;
 			}
 
-			if (!$userPermissions->canReadType($factory->getEntityTypeId()))
+			if (!$userPermissions->entityType()->canReadItems($factory->getEntityTypeId()))
 			{
 				continue;
 			}
@@ -5196,6 +5201,8 @@ class CAllCrmActivity
 			}
 		}
 		//endregion
+
+		(new SyncLastCommunication())->onEntityDelete(new Crm\ItemIdentifier($ownerTypeID, $ownerID));
 	}
 	public static function DeleteBindingsByOwner($ownerTypeID, $ownerID)
 	{
@@ -6933,9 +6940,6 @@ class CAllCrmActivity
 				"DELETE FROM {$tableName} WHERE USER_ID = {$userID} AND OWNER_TYPE_ID = {$ownerTypeID} AND OWNER_ID = {$ownerID}"
 			);
 		}
-
-		$counter = new CCrmUserCounter($userID, CCrmUserCounter::CurrentActivies);
-		$counter->Synchronize();
 	}
 	public static function MakeRawFiles($storageTypeID, array $arFileIDs)
 	{
@@ -7090,48 +7094,44 @@ class CAllCrmActivity
 
 		$arCalEventFields['SECTIONS'] = [\CCalendar::GetCrmSection($responsibleID, true)];
 
-		$calendarEventId = isset($arFields['CALENDAR_EVENT_ID']) ? (int)$arFields['CALENDAR_EVENT_ID'] : 0;
+		$calendarEventId = (int)($arFields['CALENDAR_EVENT_ID'] ?? 0);
 
 		if($calendarEventId > 0)
 		{
-			$arPresentEventFields = \Bitrix\Crm\Integration\Calendar::getEvent($calendarEventId);
+			$arPresentEventFields = \Bitrix\Crm\Integration\Calendar::getEvent($calendarEventId, true);
 			if(is_array($arPresentEventFields))
 			{
-				$presentResponsibleID = isset($arPresentEventFields['OWNER_ID']) ? (int)$arPresentEventFields['OWNER_ID'] : 0;
-				if($presentResponsibleID === $responsibleID)
-				{
-					$arCalEventFields['ID'] = $calendarEventId;
-				}
+				$arCalEventFields['ID'] = $calendarEventId;
 
 				if(!empty($arPresentEventFields['RRULE']))
 				{
 					$arCalEventFields['RRULE'] = CCalendarEvent::ParseRRULE($arPresentEventFields['RRULE']);
 				}
-			}
 
-			if (
-				!empty($prevEnrichedDescription)
-				&& trim($description) !== trim($prevEnrichedDescription)
-			)
-			{
-				$culture = \Bitrix\Main\Context::getCurrent()?->getCulture();
-				$date = new DateTime();
-				if ($culture)
+				if (
+					!empty($prevEnrichedDescription)
+					&& trim($description) !== trim($prevEnrichedDescription)
+				)
 				{
-					$date->format($culture->getShortDateFormat() . ' ' . $culture->getShortTimeFormat());
+					$culture = \Bitrix\Main\Context::getCurrent()?->getCulture();
+					$date = new DateTime();
+					if ($culture)
+					{
+						$date->format($culture->getShortDateFormat() . ' ' . $culture->getShortTimeFormat());
+					}
+					$descriptionSubtitle = Loc::getMessage(
+						'CRM_ACTIVITY_CALENDAR_SUBTITLE',
+						['#DATE#' => $date]
+					);
+					$arCalEventFields['DESCRIPTION'] =
+						$arPresentEventFields['DESCRIPTION']
+						. PHP_EOL
+						. PHP_EOL
+						. $descriptionSubtitle
+						. PHP_EOL
+						. $arCalEventFields['DESCRIPTION']
+					;
 				}
-				$descriptionSubtitle = Loc::getMessage(
-					'CRM_ACTIVITY_CALENDAR_SUBTITLE',
-					['#DATE#' => $date]
-				);
-				$arCalEventFields['DESCRIPTION'] =
-					$arPresentEventFields['DESCRIPTION']
-					. PHP_EOL
-					. PHP_EOL
-					. $descriptionSubtitle
-					. PHP_EOL
-					. $arCalEventFields['DESCRIPTION']
-				;
 			}
 		}
 		if(isset($arFields['NOTIFY_TYPE']) && (int)$arFields['NOTIFY_TYPE'] !== CCrmActivityNotifyType::None)
@@ -9246,17 +9246,15 @@ class CCrmActivityEmailSender
 			}
 		}
 
-		// Try add event to entity
+		// Try to add event to entity
 		$CCrmEvent = new CCrmEvent();
 
 		$bindings = \CCrmActivity::GetBindings($ID);
 		if(!empty($bindings))
 		{
-			$eventText  = '';
-			$eventText .= GetMessage('CRM_ACTIVITY_EMAIL_SUBJECT').': '.$subject."\n\r";
+			$eventText = GetMessage('CRM_ACTIVITY_EMAIL_SUBJECT').': '.$subject."\n\r";
 			$eventText .= GetMessage('CRM_ACTIVITY_EMAIL_FROM').': '.$from."\n\r";
 			$eventText .= GetMessage('CRM_ACTIVITY_EMAIL_TO').': '.implode(',', $to)."\n\r\n\r";
-			$eventText .= $description;
 
 			$eventBindings = array();
 			foreach($bindings as $item)
@@ -9273,10 +9271,10 @@ class CCrmActivityEmailSender
 
 			$CCrmEvent->Add(
 				array(
+					'EVENT_TYPE'   => CCrmEvent::TYPE_EMAIL,
 					'ENTITY' => $eventBindings,
 					'EVENT_ID' => 'MESSAGE',
 					'EVENT_TEXT_1' => $eventText,
-					'FILES' => $arRawFiles
 				)
 			);
 		}

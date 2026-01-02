@@ -3,6 +3,7 @@ if (!defined("B_PROLOG_INCLUDED") || B_PROLOG_INCLUDED !== true) die();
 use Bitrix\Tasks\Util;
 use Bitrix\UI\Toolbar\Facade\Toolbar;
 use Bitrix\Main\Text\HtmlFilter;
+use Bitrix\Main\Localization\Loc;
 
 \Bitrix\Main\UI\Extension::load([
 	"ui.notification",
@@ -12,7 +13,7 @@ use Bitrix\Main\Text\HtmlFilter;
 //region TITLE
 if ($arResult['IS_COLLAB'])
 {
-	$sTitle = $sTitleShort = GetMessage("TASKS_TITLE");
+	$sTitle = $sTitleShort = Loc::getMessage("TASKS_TITLE");
 }
 elseif ($arParams['PROJECT_VIEW'] === 'Y')
 {
@@ -46,12 +47,16 @@ if ($arResult['IS_COLLAB'])
 	);
 	Toolbar::deleteFavoriteStar();
 
-	$this->SetViewTarget('in_pagetitle') ?>
-	<div class="sn-collab-icon__wrapper">
-		<div id="sn-collab-icon-<?=HtmlFilter::encode($arResult["OWNER_ID"])?>" class="sn-collab-icon__hexagon-bg"></div>
-	</div>
-	<div class="sn-collab__subtitle"><?=HtmlFilter::encode($arResult["COLLAB_NAME"])?></div>
-	<?php $this->EndViewTarget();
+	$collabName = HtmlFilter::encode($arResult['COLLAB_NAME']);
+
+	Toolbar::addBeforeTitleBoxHtml(
+		'<div class="sn-collab-icon__wrapper">' .
+		'<div id="sn-collab-icon-' . HtmlFilter::encode($arResult['OWNER_ID']) . '" class="sn-collab-icon__hexagon-bg"></div>' .
+		'</div>'
+	);
+	Toolbar::addUnderTitleHtml(
+		'<div class="sn-collab__subtitle" title="' . $collabName . '">' . $collabName . '</div>'
+	);
 }
 //endregion TITLE
 

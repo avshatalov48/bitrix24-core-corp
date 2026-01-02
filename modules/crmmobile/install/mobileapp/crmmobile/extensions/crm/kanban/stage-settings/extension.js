@@ -81,7 +81,6 @@ jn.define('crm/kanban/stage-settings', (require, exports, module) => {
 				this.renderStageName(),
 				this.renderTunnelList(),
 				this.renderColorPicker(),
-				this.renderDeleteButton(),
 			);
 		}
 
@@ -93,11 +92,7 @@ jn.define('crm/kanban/stage-settings', (require, exports, module) => {
 			}
 
 			return View(
-				{
-					style: {
-						marginBottom: 18,
-					},
-				},
+				{},
 				TunnelList({
 					tunnelIds: this.changedFields.tunnels || this.stage.tunnels,
 					kanbanSettingsId: this.kanbanSettingsId,
@@ -144,10 +139,10 @@ jn.define('crm/kanban/stage-settings', (require, exports, module) => {
 						NotifyManager.hideLoadingIndicatorWithoutFallback();
 						resolve();
 					})
-					.catch(() => {
+					.catch((error) => {
 						NotifyManager.hideLoadingIndicatorWithoutFallback();
 						NotifyManager.showDefaultError();
-						reject();
+						reject(error);
 					});
 			});
 		}

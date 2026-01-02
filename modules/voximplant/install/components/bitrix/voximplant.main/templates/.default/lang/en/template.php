@@ -4,7 +4,6 @@ $MESS["TELEPHONY_TITLE_2"] = "Telephony";
 $MESS["TELEPHONY_BALANCE"] = "Account balance";
 $MESS["TELEPHONY_REFRESH"] = "Refresh";
 $MESS["TELEPHONY_PAY"] = "Add credit";
-$MESS["TELEPHONY_TARIFFS_LINK"] = "https://www.bitrix24.com/prices/calls.php";
 $MESS["TELEPHONY_HISTORY"] = "Account history";
 $MESS["TELEPHONY_RUR"] = "RUB";
 $MESS["TELEPHONY_UAH"] = "UAH";
@@ -38,4 +37,3 @@ $MESS["VI_LOCK_RECORD_LINK"] = "Additional information";
 $MESS["VI_LOCK_RECORD_TITLE"] = "Record calls";
 $MESS["VI_LOCK_RECORD_TEXT"] = "Your current plan can record #LIMIT# calls per month of which #REMAINING# remains.";
 $MESS["TELEPHONY_TARIFFS_2"] = "Plans";
-?>

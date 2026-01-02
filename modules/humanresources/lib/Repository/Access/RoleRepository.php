@@ -2,22 +2,38 @@
 
 namespace Bitrix\HumanResources\Repository\Access;
 
+use Bitrix\HumanResources\Enum\Access\RoleCategory;
 use Bitrix\HumanResources\Model\Access\AccessRoleTable;
+use Bitrix\HumanResources\Model\Access\EO_AccessRole;
+use Bitrix\Main\ArgumentException;
 use Bitrix\Main\Entity\DeleteResult;
 use Bitrix\Main\Entity\UpdateResult;
+use Bitrix\Main\ObjectPropertyException;
 use Bitrix\Main\ORM\Data\AddResult;
+use Bitrix\Main\SystemException;
 
-class RoleRepository implements \Bitrix\HumanResources\Contract\Repository\Access\RoleRepository
+class RoleRepository
 {
-	public function getRoleList(): array
+	public function getRoleList(?RoleCategory $category = null): array
 	{
-		return AccessRoleTable::getList([])->fetchAll();
+		$parameters = [
+			'select' => ['ID', 'NAME', 'CATEGORY'],
+		];
+
+		if ($category)
+		{
+			$parameters['filter'] =  [
+					'=CATEGORY' => $category->value,
+			];
+		}
+		return AccessRoleTable::getList($parameters)->fetchAll();
 	}
 
-	public function create(string $roleName): AddResult
+	public function create(string $roleName, RoleCategory $category = RoleCategory::Department): AddResult
 	{
 		return AccessRoleTable::add([
 			'NAME' => $roleName,
+			'CATEGORY' => $category->value,
 		]);
 	}
 
@@ -26,17 +42,51 @@ class RoleRepository implements \Bitrix\HumanResources\Contract\Repository\Acces
 		return AccessRoleTable::delete($roleId);
 	}
 
-	public function updateName(int $roleId, string $name): UpdateResult
+	/**
+	 * @param array<int> $roleIds
+	 */
+	public function deleteByIds(array $roleIds): void
 	{
-		return AccessRoleTable::update($roleId, ['NAME' => $name]);
+		if (empty($roleIds))
+		{
+			return;
+		}
+
+		AccessRoleTable::deleteList(['@ID' => $roleIds]);
 	}
 
-	public function getRoleObjectByName(string $name)
+	/**
+	 * @throws ArgumentException
+	 * @throws ObjectPropertyException
+	 * @throws SystemException
+	 */
+	public function getRoleObjectByNameAndCategory(string $name, RoleCategory $roleCategory): ?EO_AccessRole
 	{
 		return AccessRoleTable::query()
-			->setFilter(['=NAME' => $name])
+			->setFilter([
+				'=NAME' => $name,
+				'=CATEGORY' => $roleCategory->value,
+			])
 			->fetchObject()
 		;
+	}
+
+	public function getRoleNameById(int $roleId): ?string
+	{
+		$role = AccessRoleTable::query()
+			->setSelect(['NAME'])
+			->where('ID', $roleId)
+			->setLimit(1)
+			->exec()
+			->fetch()
+		;
+
+		if ($role && $role['NAME'])
+		{
+			return $role['NAME'];
+		}
+
+		return null;
 	}
 
 	public function areRolesDefined(): bool

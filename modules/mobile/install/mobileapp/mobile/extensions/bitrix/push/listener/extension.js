@@ -24,7 +24,8 @@
 				this.events[messageType] = [];
 			}
 
-			const emptyFn = () => {};
+			const emptyFn = () => {
+			};
 			const handler = typeof callback === 'function' ? callback : emptyFn;
 
 			this.events[messageType].push(handler);
@@ -104,7 +105,7 @@
 			InAppNotifier.setHandler(() => this.executeCallbacks(message));
 			InAppNotifier.showNotification({
 				title: message.title,
-				backgroundColor: '#E6000000',
+				backgroundColor: '#e6000000',
 				message: message.body,
 				time: SHOW_NOTIFICATION_FOR_SECONDS,
 				imageUrl: message.imageUrl,
@@ -139,12 +140,16 @@
 	/**
 	 * @class ApplicationMessage
 	 */
-	class ApplicationMessage extends Message {}
+	class ApplicationMessage extends Message
+	{
+	}
 
 	/**
 	 * @class DeviceMessage
 	 */
-	class DeviceMessage extends Message {}
+	class DeviceMessage extends Message
+	{
+	}
 
 	const pushListener = new PushListener();
 
@@ -180,11 +185,11 @@
 	 * @class PushListener
 	 */
 	this.PushListener = pushListener;
-
-	/**
-	 * @module push/listeners
-	 */
-	jn.define('push/listeners', (require, exports, module) => {
-		module.exports = { PushListener: this.PushListener };
-	});
 })();
+
+/**
+ * @module push/listeners
+ */
+jn.define('push/listeners', (require, exports, module) => {
+	module.exports = { PushListener: this.PushListener };
+});

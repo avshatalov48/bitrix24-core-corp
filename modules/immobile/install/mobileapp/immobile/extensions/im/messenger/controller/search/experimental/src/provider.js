@@ -103,8 +103,8 @@ jn.define('im/messenger/controller/search/experimental/provider', (require, expo
 
 			const wordsFromText = getWordsFromText(text);
 
-			const localSearchingIds = this.sortByDate(this.localService.search(wordsFromText));
-
+			const localSearchResult = await this.localService.search(wordsFromText);
+			const localSearchingIds = this.sortByDate(localSearchResult);
 			const needSearchFromServer = text.length >= this.minSearchSize;
 
 			this.loadSearchProcessedCallback(localSearchingIds, needSearchFromServer);
@@ -137,6 +137,7 @@ jn.define('im/messenger/controller/search/experimental/provider', (require, expo
 			 * @type {Array<string>}
 			 */
 			const recentUsers = [];
+			recentUsers.push(MessengerParams.getUserId());
 			this.store.getters['recentModel/getSortedCollection']().forEach((recentItem) => {
 				if (DialogHelper.isDialogId(recentItem.id))
 				{

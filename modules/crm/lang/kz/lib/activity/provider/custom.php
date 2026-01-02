@@ -1,0 +1,4 @@
+<?php
+$MESS["CRM_ACTIVITY_PVDR_CUST_ACTION_BUTTON"] = "Өз ісі";
+$MESS["CRM_ACTIVITY_PVDR_CUST_ACTION_BUTTON_TITLE"] = "Пайдаланушылық түрдегі істі жасау";
+$MESS["CRM_ACTIVITY_PVDR_CUST_SUBJECT_LABEL"] = "Тақырып";

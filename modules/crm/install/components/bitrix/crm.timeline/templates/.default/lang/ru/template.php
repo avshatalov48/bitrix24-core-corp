@@ -143,6 +143,7 @@ $MESS["CRM_TIMELINE_TASK_DELETION_CONFIRM"] = "Вы действительно �
 $MESS["CRM_TIMELINE_DELIVERY_DELETION_CONFIRM"] = "Вы действительно хотите удалить доставку?";
 $MESS["CRM_TIMELINE_DELIVERY_ACTIVITY_DELETION_CONFIRM"] = "Вы действительно хотите удалить дело на доставку?";
 $MESS["CRM_TIMELINE_FASTEN_LIMIT_MESSAGE"] = "Только три события можно добавить в избранное";
+$MESS['CRM_TIMELINE_FASTEN_LIMIT_MESSAGE_MSGVER_1'] = 'Можно закрепить не больше 7 дел';
 $MESS["CRM_TIMELINE_EMPTY_COMMENT_MESSAGE"] = "Не указан текст сообщения";
 $MESS["CRM_TIMELINE_SPOTLIGHT_FASTEN_MESSAGE"] = "Закрепите вверху особо важные события, чтобы легко найти их";
 $MESS["CRM_TIMELINE_DOCUMENT"] = "Документ";

@@ -1,6 +1,7 @@
 <?php
 
 use Bitrix\Main\Config\Option;
+use Bitrix\Main\DI\ServiceLocator;
 
 if(!$USER->IsAdmin())
 	return;
@@ -31,7 +32,14 @@ if($_POST['Update'] <> '' && check_bitrix_sessid())
 		Option::set("transformer", "debug", isset($_POST['DEBUG_MODE']));
 		Option::set("transformer", "connection_time", $_POST['CONNECTION_TIME']);
 		Option::set("transformer", "stream_time", $_POST['STREAM_TIME']);
-		Option::set("transformer", "transformer_controller_url", $_POST['TRANSFORMER_CONTROLLER_URL']);
+		if ($_POST['TRANSFORMER_CONTROLLER_URL'] === ServiceLocator::getInstance()->get('transformer.service.http.controllerResolver')->getDefaultCloudControllerUrl())
+		{
+			Option::delete('transformer', ['name' => 'transformer_controller_url']);
+		}
+		else
+		{
+			Option::set('transformer', 'transformer_controller_url', $_POST['TRANSFORMER_CONTROLLER_URL']);
+		}
 
 		if($Update <> '' && $_REQUEST["back_url_settings"] <> '')
 		{
@@ -64,7 +72,7 @@ if($_POST['Update'] <> '' && check_bitrix_sessid())
         <td width="60%"><input type="text" class="have-url" name="TRANSFORMER_CONTROLLER_URL" value="<?=htmlspecialcharsbx(Option::get(
 			'transformer',
 			'transformer_controller_url',
-			\Bitrix\Main\DI\ServiceLocator::getInstance()->get('transformer.http.controllerResolver')->getDefaultCloudControllerUrl(),
+			ServiceLocator::getInstance()->get('transformer.service.http.controllerResolver')->getDefaultCloudControllerUrl(),
 		));?>" /></td>
     </tr>
     <tr>
@@ -77,11 +85,11 @@ if($_POST['Update'] <> '' && check_bitrix_sessid())
 	</tr>
 	<tr>
 		<td width="40%"><?=GetMessage("TRANSFORMER_CONNECTION_TIME")?>:</td>
-		<td width="60%"><input type="text" name="CONNECTION_TIME" value="<?=COption::GetOptionInt("transformer", "connection_time", 2);?>" /></td>
+		<td width="60%"><input type="text" name="CONNECTION_TIME" value="<?=COption::GetOptionInt("transformer", "connection_time");?>" /></td>
 	</tr>
 	<tr>
 		<td width="40%"><?=GetMessage("TRANSFORMER_STREAM_TIME")?>:</td>
-		<td width="60%"><input type="text" name="STREAM_TIME" value="<?=COption::GetOptionInt("transformer", "stream_time", 2);?>" /></td>
+		<td width="60%"><input type="text" name="STREAM_TIME" value="<?=COption::GetOptionInt("transformer", "stream_time");?>" /></td>
 	</tr>
 	<?$tabControl->Buttons();?>
 	<input type="submit" name="Update" value="<?echo GetMessage('MAIN_SAVE')?>">

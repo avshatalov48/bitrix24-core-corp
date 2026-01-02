@@ -1,0 +1,24 @@
+<?php
+$MESS["VOX_LINES_ACTION_ADD_TO_GROUP"] = "Топқа қосу";
+$MESS["VOX_LINES_ACTION_CONFIGURE"] = "Баптау";
+$MESS["VOX_LINES_ACTION_DELETE"] = "Жою";
+$MESS["VOX_LINES_ACTION_PROLONG_CALLER_ID"] = "Нөмірді байланысуын ұзарту";
+$MESS["VOX_LINES_ACTION_REMOVE_FROM_GROUP"] = "Топтан шығару";
+$MESS["VOX_LINES_ACTION_UNGROUP"] = "Топты тарату";
+$MESS["VOX_LINES_ACTION_VERIFY_CALLER_ID"] = "Нөмірді растау";
+$MESS["VOX_LINES_CANCEL_NUMBER_DISCONNECT"] = "Нөмірді өшіруді болдырмау";
+$MESS["VOX_LINES_DESCRIPTION_GROUP"] = "#PRICE# жиынтық айлық төлем";
+$MESS["VOX_LINES_DISCONNECT_NUMBER"] = "Нөмірді өшіру";
+$MESS["VOX_LINES_HEADER_DESCRIPTION"] = "Сипаттама";
+$MESS["VOX_LINES_HEADER_ID"] = "ID";
+$MESS["VOX_LINES_HEADER_NAME"] = "Атауы";
+$MESS["VOX_LINES_HEADER_STATE"] = "Қосылу  мәртебесі";
+$MESS["VOX_LINES_HEADER_TYPE"] = "Түрі";
+$MESS["VOX_LINES_MODE_GROUP"] = "Нөмірлер тобы";
+$MESS["VOX_LINES_MODE_LINK"] = "Байланған";
+$MESS["VOX_LINES_MODE_RENT"] = "Жалға алынған";
+$MESS["VOX_LINES_MODE_SIP"] = "SIP қосылу";
+$MESS["VOX_LINES_REMOVE_CONNECTION"] = "Қосылуды жою";
+$MESS["VOX_LINES_SIP_STATUS_FAIL"] = "Қате";
+$MESS["VOX_LINES_SIP_STATUS_IN_PROCESS"] = "Өңделуде";
+$MESS["VOX_LINES_SIP_STATUS_RECOVERED"] = "Қосылған";

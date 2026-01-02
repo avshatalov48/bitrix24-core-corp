@@ -130,31 +130,7 @@ class DynamicTypesMap
 
 		if(!$this->isCategoriesLoaded)
 		{
-			foreach (static::$categoryDataClass::getList([
-					'filter' => [
-						'@ENTITY_TYPE_ID' => $entityTypeIds,
-					],
-					'cache' => [
-						'ttl' => self::DYNAMIC_COLLECTION_CACHE_TTL,
-					],
-				])->fetchCollection() as $category)
-			{
-				$entityTypeId = $category->getEntityTypeId();
-				$this->categoryIds[$category->getId()] = $entityTypeId;
-				$this->categories[$entityTypeId][$category->getId()] = $category;
-				if($category->getIsDefault())
-				{
-					$this->defaultCategoryIds[$entityTypeId] = $category->getId();
-				}
-				$stagesEntityId = Container::getInstance()
-					->getDynamicFactoryByType($this->types[$entityTypeId])
-					->getStagesEntityId($category->getId());
-				if($stagesEntityId)
-				{
-					$this->stageEntityIds[$stagesEntityId] = $this->combineEntityAndCategory($entityTypeId, $category->getId());
-				}
-			}
-			$this->isCategoriesLoaded = true;
+			$this->loadCategories();
 		}
 
 		if (empty($this->stageEntityIds) || !$isLoadStages)
@@ -164,24 +140,97 @@ class DynamicTypesMap
 
 		if (!$this->isStagesLoaded)
 		{
-			foreach (static::$stagesDataClass::getList([
-					'order' => [
-						'SORT' => 'ASC',
-					],
-					'filter' => [
-						'@ENTITY_ID' => array_keys($this->stageEntityIds),
-					],
-					'cache' => [
-						'ttl' => self::DYNAMIC_COLLECTION_CACHE_TTL,
-					],
-				])->fetchCollection() as $stage)
-			{
-				$this->stages[$stage->getEntityId()][$stage->getStatusId()] = $stage;
-			}
-			$this->isStagesLoaded = true;
+			$this->loadStages();
 		}
 
 		return $this;
+	}
+
+	protected function loadCategories(): void
+	{
+		$this->isCategoriesLoaded = false;
+
+		$this->categories = [];
+		$this->categoryIds = [];
+		$this->defaultCategoryIds = [];
+		$this->stageEntityIds = [];
+
+		$entityTypeIds = array_keys($this->types);
+
+		if (empty($entityTypeIds))
+		{
+			$this->isCategoriesLoaded = true;
+			return;
+		}
+
+		foreach (static::$categoryDataClass::getList([
+			'filter' => [
+				'@ENTITY_TYPE_ID' => $entityTypeIds,
+			],
+					'cache' => [
+						'ttl' => self::DYNAMIC_COLLECTION_CACHE_TTL,
+					],
+		])->fetchCollection() as $category)
+		{
+			$entityTypeId = $category->getEntityTypeId();
+			$this->categoryIds[$category->getId()] = $entityTypeId;
+			$this->categories[$entityTypeId][$category->getId()] = $category;
+			if($category->getIsDefault())
+			{
+				$this->defaultCategoryIds[$entityTypeId] = $category->getId();
+			}
+			$stagesEntityId =
+				Container::getInstance()
+					->getDynamicFactoryByType($this->types[$entityTypeId])
+					->getStagesEntityId($category->getId())
+			;
+			if($stagesEntityId)
+			{
+				$this->stageEntityIds[$stagesEntityId] =
+					$this->combineEntityAndCategory(
+						$entityTypeId,
+						$category->getId()
+					)
+				;
+			}
+		}
+
+		$this->isCategoriesLoaded = true;
+	}
+
+	protected function loadStages(): void
+	{
+		$this->isStagesLoaded = false;
+		$this->stages = [];
+
+		if (empty($this->stageEntityIds))
+		{
+			return;
+		}
+
+		foreach (static::$stagesDataClass::getList([
+			'order' => [
+				'SORT' => 'ASC',
+			],
+			'filter' => [
+				'@ENTITY_ID' => array_keys($this->stageEntityIds),
+			],
+					'cache' => [
+						'ttl' => self::DYNAMIC_COLLECTION_CACHE_TTL,
+					],
+		])->fetchCollection() as $stage)
+		{
+			$this->stages[$stage->getEntityId()][$stage->getStatusId()] = $stage;
+		}
+
+
+		$this->isStagesLoaded = true;
+	}
+
+	public function reloadCategories(): void
+	{
+		$this->loadCategories();
+		$this->loadStages();
 	}
 
 	protected function combineEntityAndCategory(int $entityTypeId, int $categoryId): string

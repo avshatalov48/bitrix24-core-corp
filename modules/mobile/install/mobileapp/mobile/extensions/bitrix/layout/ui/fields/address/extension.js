@@ -12,6 +12,7 @@ jn.define('layout/ui/fields/address', (require, exports, module) => {
 	const { ContextMenu } = require('layout/ui/context-menu');
 	const { AddressValueConverter } = require('layout/ui/fields/address/value-converter');
 	const { stringify } = require('utils/string');
+	const { Random } = require('utils/random');
 
 	/**
 	 * @class AddressField

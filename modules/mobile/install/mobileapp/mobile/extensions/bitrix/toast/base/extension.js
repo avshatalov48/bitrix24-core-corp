@@ -74,11 +74,6 @@ jn.define('toast/base', (require, exports, module) => {
 			preparedParams.iconName = icon.getIconName();
 		}
 
-		if (!Feature.isToastPositionSupported())
-		{
-			delete preparedParams.position;
-		}
-
 		const { Toast } = require('native/notify');
 		const toast = new Toast(
 			{
@@ -146,7 +141,7 @@ jn.define('toast/base', (require, exports, module) => {
 	const defaultToastParams = (position = Position.BOTTOM) => ({
 		position,
 		blur: true,
-		backgroundOpacity: Feature.isAirStyleSupported() ? 1 : 0.6,
+		backgroundOpacity: 1,
 		offset: (position === Position.BOTTOM ? 26 : 0),
 		tintColor: Color.baseWhiteFixed.toHex(),
 		backgroundColor: Color.bgContentInapp.toHex(),

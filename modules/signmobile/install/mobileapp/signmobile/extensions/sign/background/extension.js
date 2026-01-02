@@ -1,7 +1,8 @@
 (() => {
 	const require = (ext) => jn.require(ext);
-	const { SignOpener } = require('sign/opener');
 	const { Push } = require('native/app');
+	const { SignOpener } = require('sign/opener');
+	const { PushListener } = require('push/listeners');
 
 	const EVENT_NAME_FOUND_DOCUMENT_FOR_SIGNING = 'SIGN_MOBILE_FOUND_DOCUMENT_FOR_SIGNING';
 	const EVENT_NAME_REQUEST_FOR_SIGN_CONFIRMATION = 'SIGN_MOBILE_REQUEST_FOR_SIGN_CONFIRMATION';

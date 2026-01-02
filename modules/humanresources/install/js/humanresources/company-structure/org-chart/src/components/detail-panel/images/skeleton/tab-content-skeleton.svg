@@ -74,5 +74,4 @@
 	</linearGradient>
 
 	<animate xlink:href="#msk1" attributeName="x" from="-100%" to="100%" dur="1s" begin="0s" repeatCount="indefinite"/>
-
 </svg>

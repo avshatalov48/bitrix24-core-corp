@@ -6,7 +6,7 @@ import { DesktopApi } from 'im.v2.lib.desktop-api';
 import { PopupType } from 'im.v2.const';
 import { showDesktopDeleteConfirm } from 'im.v2.lib.confirm';
 
-import type { MenuItem } from 'im.v2.lib.menu';
+import type { MenuItemOptions } from 'ui.system.menu';
 import type { DesktopAccount } from 'im.v2.lib.desktop-api';
 
 export class DesktopItemContextMenu extends BaseMenu
@@ -19,7 +19,7 @@ export class DesktopItemContextMenu extends BaseMenu
 		this.id = PopupType.desktopItemMenu;
 	}
 
-	getMenuItems(): MenuItem[]
+	getMenuItems(): MenuItemOptions | null[]
 	{
 		return [
 			this.#getConnectItem(),
@@ -27,7 +27,7 @@ export class DesktopItemContextMenu extends BaseMenu
 		];
 	}
 
-	#getConnectItem(): MenuItem
+	#getConnectItem(): MenuItemOptions
 	{
 		const title = this.context.connected
 			? Loc.getMessage('IM_USER_SETTINGS_DESKTOP_CONTEXT_MENU_DISCONNECT_V2')
@@ -35,8 +35,8 @@ export class DesktopItemContextMenu extends BaseMenu
 		;
 
 		return {
-			text: title,
-			onclick: function() {
+			title,
+			onClick: function() {
 				if (this.context.connected)
 				{
 					this.#disconnect();
@@ -51,11 +51,11 @@ export class DesktopItemContextMenu extends BaseMenu
 		};
 	}
 
-	#getDeleteItem(): MenuItem
+	#getDeleteItem(): MenuItemOptions
 	{
 		return {
-			text: Loc.getMessage('IM_USER_SETTINGS_DESKTOP_CONTEXT_MENU_DELETE_V2'),
-			onclick: async function() {
+			title: Loc.getMessage('IM_USER_SETTINGS_DESKTOP_CONTEXT_MENU_DELETE_V2'),
+			onClick: async function() {
 				const userChoice = await showDesktopDeleteConfirm();
 				if (userChoice === true)
 				{

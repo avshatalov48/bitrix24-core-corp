@@ -6,7 +6,6 @@ jn.define('crm/entity-detail/component/custom-events', (require, exports, module
 	const { ModeSelectionMenu } = require('crm/receive-payment/mode-selection');
 	const { PaymentDocument } = require('crm/entity-document');
 	const { AnalyticsLabel } = require('analytics-label');
-	const { Feature } = require('feature');
 	const { PaymentCreate } = require('crm/terminal/entity/payment-create');
 	const { PaymentPayOpener } = require('crm/terminal/entity/payment-pay-opener');
 	const { DocumentCardManager } = require('catalog/store/document-card/manager');
@@ -40,13 +39,6 @@ jn.define('crm/entity-detail/component/custom-events', (require, exports, module
 			 * @param {DetailCardComponent} detailCard
 			 */
 			(detailCard) => {
-				if (!Feature.isReceivePaymentSupported())
-				{
-					Feature.showDefaultUnsupportedWidget();
-
-					return;
-				}
-
 				if (!detailCard.entityModel.IS_SALESCENTER_TOOL_ENABLED)
 				{
 					InfoHelper.openByCode('limit_crm_sales_center_off', detailCard.layout);

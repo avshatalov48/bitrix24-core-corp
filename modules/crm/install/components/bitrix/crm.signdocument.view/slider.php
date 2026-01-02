@@ -8,12 +8,19 @@ global $APPLICATION;
 
 $request = \Bitrix\Main\Application::getInstance()->getContext()->getRequest();
 
-$APPLICATION->includeComponent(
-	'bitrix:crm.signdocument.view', '',
+$APPLICATION->IncludeComponent(
+	'bitrix:ui.sidepanel.wrapper',
+	'',
 	[
-		'documentId' => $request->get('documentId'),
-		'memberHash' => $request->get('memberHash') ?? null,
-	]
+		'POPUP_COMPONENT_NAME' => 'bitrix:crm.signdocument.view',
+		[
+			'documentId' => $request->get('documentId'),
+			'memberHash' => $request->get('memberHash') ?? null,
+		],
+		'USE_UI_TOOLBAR' => 'Y',
+		'USE_PADDING' => false,
+		'USE_BACKGROUND_CONTENT' => false,
+	],
 );
 
 require($_SERVER['DOCUMENT_ROOT'].'/bitrix/footer.php');

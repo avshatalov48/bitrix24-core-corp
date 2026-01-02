@@ -6,6 +6,6 @@ return [
 		'analytics',
 		'require-lazy',
 		'layout/pure-component',
-		'user/profile',
+		'user-profile',
 	],
 ];

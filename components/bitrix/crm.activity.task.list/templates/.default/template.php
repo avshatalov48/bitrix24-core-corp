@@ -1,4 +1,8 @@
 <?php
+
+use Bitrix\Crm\ItemMiniCard\Builder\MiniCardHtmlBuilder;
+use Bitrix\Main\Localization\Loc;
+
 if (!defined('B_PROLOG_INCLUDED') || B_PROLOG_INCLUDED!==true)die();
 
 Bitrix\Main\UI\Extension::load(["ui.tooltip", "ui.fonts.opensans"]);
@@ -108,10 +112,20 @@ function crm_activity_task_delete_grid(title, message, btnTitle, path)
 		);
 		if ($arResult['ACTIVITY_ENTITY_LINK'] == 'Y')
 		{
-			$arColumns['ENTITY_TYPE'] = !empty($arTask['ENTITY_TYPE'])? GetMessage('CRM_ENTITY_TYPE_'.$arTask['ENTITY_TYPE']): '';
-			$arColumns['ENTITY_TITLE'] = !empty($arTask['ENTITY_TITLE'])?
-				'<a href="'.$arTask['ENTITY_LINK'].'" bx-tooltip-user-id="'.$arTask['ENTITY_TYPE'].'_'.$arTask['ENTITY_ID'].'" bx-tooltip-loader="'.htmlspecialcharsbx('/bitrix/components/bitrix/crm.'.mb_strtolower($arTask['ENTITY_TYPE']).'.show/card.ajax.php').'" bx-tooltip-classname="crm_balloon'.($arTask['ENTITY_TYPE'] == 'LEAD' || $arTask['ENTITY_TYPE'] == 'DEAL' || $arTask['ENTITY_TYPE'] == 'QUOTE' ? '_no_photo': '_'.mb_strtolower($arTask['ENTITY_TYPE'])).'">'.$arTask['ENTITY_TITLE'].'</a>'
-				: '';
+			$entityTypeId = CCrmOwnerType::ResolveID($arTask['ENTITY_TYPE']);
+			$entityId = (int)$arTask['ENTITY_ID'];
+
+			$arColumns['ENTITY_TYPE'] = !empty($arTask['ENTITY_TYPE'])
+				? Loc::getMessage("CRM_ENTITY_TYPE_{$arTask['ENTITY_TYPE']}")
+				: ''
+			;
+
+			$arColumns['ENTITY_TITLE'] = !empty($arTask['ENTITY_TITLE'])
+				? (new MiniCardHtmlBuilder($entityTypeId, $entityId))
+					->setTitle($arTask['ENTITY_TITLE'])
+					->build()
+				: ''
+			;
 		}
 		else
 		{

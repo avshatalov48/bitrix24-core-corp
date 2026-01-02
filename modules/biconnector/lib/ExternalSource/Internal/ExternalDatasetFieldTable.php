@@ -1,6 +1,9 @@
 <?php
 namespace Bitrix\BIConnector\ExternalSource\Internal;
 
+use Bitrix\Main\ORM\EntityError;
+use Bitrix\Main\ORM\Event;
+use Bitrix\Main\ORM\EventResult;
 use Bitrix\Main\Result;
 use Bitrix\Main\Error;
 use Bitrix\Main\Entity\ReferenceField;
@@ -10,7 +13,6 @@ use Bitrix\Main\ORM\Fields\IntegerField;
 use Bitrix\Main\ORM\Fields\StringField;
 use Bitrix\Main\ORM\Fields\BooleanField;
 use Bitrix\Main\ORM\Fields\Validators\LengthValidator;
-use Bitrix\Main\ORM\Fields\Validators\RegExpValidator;
 use Bitrix\Main\ORM\Query\Join;
 use Bitrix\Main\ORM\Data\Internal\DeleteByFilterTrait;
 
@@ -121,7 +123,6 @@ class ExternalDatasetFieldTable extends DataManager
 					{
 						return[
 							new LengthValidator(null, 512),
-							new RegExpValidator(self::FIELD_NAME_REGEXP),
 						];
 					},
 					'title' => Loc::getMessage('EXTERNAL_DATASET_FIELDS_ENTITY_NAME_FIELD'),
@@ -148,6 +149,68 @@ class ExternalDatasetFieldTable extends DataManager
 				]
 			),
 		];
+	}
+
+	/**
+	 * Checks if the field name is valid only for visible field.
+	 *
+	 * @param Event $event
+	 * @return EventResult
+	 */
+	public static function onBeforeAdd(Event $event): EventResult
+	{
+		$data = $event->getParameter('fields');
+		$result = new EventResult();
+
+		$isVisible = filter_var($data['VISIBLE'] ?? true, FILTER_VALIDATE_BOOLEAN);
+
+		if (isset($data['NAME']) && $isVisible)
+		{
+			if (!preg_match(self::FIELD_NAME_REGEXP, $data['NAME']))
+			{
+				$result->addError(
+					new EntityError(
+						Loc::getMessage(
+							'BICONNECTOR_EXTERNAL_DATASET_FIELDS_ENTITY_FIELD_NAME_ERROR',
+							[
+								'#FIELD_NAME#' => $data['NAME'],
+							]
+						)
+					)
+				);
+			}
+		}
+
+		return $result;
+	}
+
+	public static function onBeforeUpdate(Event $event): EventResult
+	{
+		/** @var ExternalDatasetField $object */
+		$object = $event->getParameter('object');
+		$result = new EventResult();
+
+		$isVisible = $object->getVisible();
+		$name = $object->getName();
+
+		if ($name && $isVisible)
+		{
+			if (!preg_match(self::FIELD_NAME_REGEXP, $name))
+			{
+				$result->addError(
+					new EntityError(
+						Loc::getMessage(
+							'BICONNECTOR_EXTERNAL_DATASET_FIELDS_ENTITY_FIELD_NAME_ERROR',
+							[
+								'#FIELD_NAME#' => $name,
+							]
+						)
+					)
+				);
+			}
+		}
+
+		return $result;
 	}
 
 	/**

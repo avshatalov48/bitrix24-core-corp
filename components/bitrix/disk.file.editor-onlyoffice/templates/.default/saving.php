@@ -16,6 +16,7 @@
 use Bitrix\Disk\Internals\BaseComponent;
 use Bitrix\Main\Localization\Loc;
 use Bitrix\Main\UI\Extension;
+use Bitrix\Main\Web\Json;
 
 if (!defined('B_PROLOG_INCLUDED') || B_PROLOG_INCLUDED !== true)
 {
@@ -53,5 +54,6 @@ $containerId = 'waiting-'.$this->randString();
 			id: <?= $arResult['OBJECT']['ID'] ?>,
 			name: '<?= \CUtil::JSEscape($arResult['OBJECT']['NAME']) ?>'
 		},
+		unifiedLinkMode: <?= Json::encode($arResult['UNIFIED_LINK_MODE']) ?>,
 	});
 </script>

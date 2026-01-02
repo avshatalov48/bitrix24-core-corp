@@ -1,0 +1,2 @@
+<?php
+$MESS['BICONNECTOR_NEW_USER_CONVERTED_GROUP_NAME'] = 'Новая группа #GROUP_ID#';

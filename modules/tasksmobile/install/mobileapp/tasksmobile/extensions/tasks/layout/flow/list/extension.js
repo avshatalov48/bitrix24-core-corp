@@ -10,27 +10,23 @@ jn.define('tasks/layout/flow/list', (require, exports, module) => {
 	const { batchActions } = require('statemanager/redux/batched-actions');
 	const store = require('statemanager/redux/store');
 	const { ListItemType, FlowListItemsFactory } = require('tasks/flow-list/simple-list/items');
-	const { upsertFlows, addFlows } = require('tasks/statemanager/redux/slices/flows');
+	const { upsertFlows, addFlows, selectById } = require('tasks/statemanager/redux/slices/flows');
 	const { groupsUpserted, groupsAdded } = require('tasks/statemanager/redux/slices/groups');
 	const { usersUpserted, usersAdded } = require('statemanager/redux/slices/users');
-	const { NavigationTitle, Pull, TasksFlowListFilter, TasksFlowListMoreMenu } = require(
-		'tasks/flow-list',
-	);
+	const { NavigationTitle, Pull, TasksFlowListFilter, TasksFlowListMoreMenu } = require('tasks/flow-list');
 	const { TasksFlowListSorting } = require('tasks/flow-list/src/sorting');
 	const { downloadImages, makeLibraryImagePath } = require('asset-manager');
 	const { ListType } = require('tasks/layout/flow/list/type');
+	const { FLOWS_INFO_ITEM_ID } = require('tasks/flow-list/simple-list/items/type');
+
 	const { SearchLayout } = require('layout/ui/search-bar');
 	const { CalendarSettings } = require('tasks/task/calendar');
 	const { Pull: TasksPull } = require('layout/ui/stateful-list/pull');
-	const {
-		selectById,
-		mapStateToTaskModel,
-	} = require('tasks/statemanager/redux/slices/tasks');
-	const { dispatch } = store;
+	const { dispatch, getState } = store;
 	const { set } = require('utils/object');
 	const { AnalyticsEvent } = require('analytics');
-
-	const FLOWS_INFO_ITEM_ID = 'flows-info-item';
+	const { observeListChange } = require('tasks/statemanager/redux/slices/flows/observers/stateful-list-observer');
+	const { openActionMenu } = require('tasks/layout/flow/action-menu');
 
 	class TasksFlowList extends LayoutComponent
 	{
@@ -41,7 +37,6 @@ jn.define('tasks/layout/flow/list', (require, exports, module) => {
 			this.showSearch = this.showSearch.bind(this);
 			this.onItemsLoaded = this.onItemsLoaded.bind(this);
 			this.onSearch = this.onSearch.bind(this);
-			this.onItemClick = this.onItemClick.bind(this);
 			this.onPanList = this.onPanList.bind(this);
 			this.onPullToRefresh = this.onPullToRefresh.bind(this);
 			this.getEmptyListComponent = this.getEmptyListComponent.bind(this);
@@ -102,7 +97,7 @@ jn.define('tasks/layout/flow/list', (require, exports, module) => {
 					onCancel: this.onSearch,
 				});
 
-				this.navigationTitle = new NavigationTitle({ layout: this.layout });
+				this.navigationTitle = new NavigationTitle({ layout: this.layout, title: props.navigationTitle });
 			}
 
 			/** @type {StatefulList} */
@@ -175,6 +170,7 @@ jn.define('tasks/layout/flow/list', (require, exports, module) => {
 		subscribe()
 		{
 			this.pull.subscribe();
+			this.unsubscribeFlowsObserver = observeListChange(store, this.onVisibleFlowsChange);
 			if (this.props.isTabsMode && this.isMyDashboard())
 			{
 				BX.addCustomEvent('tasks.tabs:onAppPaused', (eventData) => this.onAppPaused(eventData));
@@ -194,19 +190,21 @@ jn.define('tasks/layout/flow/list', (require, exports, module) => {
 		componentWillUnmount()
 		{
 			this.pull.unsubscribe();
-
-			if (this.unsubscribeTasksObserver)
-			{
-				this.unsubscribeTasksObserver();
-			}
-
-			if (this.unsubscribeCounterChangeObserver)
-			{
-				this.unsubscribeCounterChangeObserver();
-			}
+			this.unsubscribeFlowsObserver();
 
 			BX.removeCustomEvent('tasks.tabs:onTabSelected', this.onTabSelected);
 		}
+
+		onVisibleFlowsChange = ({ moved, removed, added, created }) => {
+			if (moved.length > 0)
+			{
+				this.updateFlows(moved);
+			}
+		};
+
+		updateFlows = (flows) => {
+			this.listRef?.updateItemsData(flows);
+		};
 
 		onTabSelected(eventData)
 		{
@@ -334,17 +332,46 @@ jn.define('tasks/layout/flow/list', (require, exports, module) => {
 			this.setState({}, () => this.reload());
 		}
 
-		onItemClick(id)
-		{
-			const row = selectById(store.getState(), id);
-			if (row)
+		onItemLongClick = (flowId) => {
+			const flow = selectById(getState(), flowId);
+			if (!flow)
 			{
-				// eslint-disable-next-line no-undef
-				const task = new Task({ id: this.props.currentUserId });
-				task.setData(mapStateToTaskModel(row));
-				task.open(null);
+				return;
 			}
-		}
+
+			const type = this.getItemType(flow);
+			if (type === ListItemType.SIMILAR_FLOW)
+			{
+				return;
+			}
+
+			openActionMenu({
+				testId: 'flow-list',
+				target: this.listRef?.getItemMenuViewRef(flowId),
+				flowId,
+			});
+		};
+
+		onItemClick = (flowId) => {
+			const flow = selectById(getState(), flowId);
+			if (!flow)
+			{
+				return;
+			}
+
+			const type = this.getItemType(flow);
+			if (type === ListItemType.SIMILAR_FLOW || type === ListItemType.PROMO_FLOW)
+			{
+				return;
+			}
+
+			void requireLazy('tasks:layout/flow/detail').then(({ FlowDetail }) => {
+				FlowDetail.open({
+					flowId,
+					openInBackdrop: false,
+				});
+			});
+		};
 
 		onAppPaused()
 		{
@@ -540,6 +567,7 @@ jn.define('tasks/layout/flow/list', (require, exports, module) => {
 				isShowFloatingButton: false,
 				getEmptyListComponent: this.getEmptyListComponent,
 				itemDetailOpenHandler: this.onItemClick,
+				onItemLongClick: this.onItemLongClick,
 				onBeforeItemsRender: this.onBeforeItemsRender,
 				onPanListHandler: this.onPanList,
 				showTitleLoader: this.showTitleLoader,

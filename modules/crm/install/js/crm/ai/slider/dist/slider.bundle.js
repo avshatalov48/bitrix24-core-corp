@@ -1,7 +1,7 @@
 /* eslint-disable */
 this.BX = this.BX || {};
 this.BX.Crm = this.BX.Crm || {};
-(function (exports,main_core,ui_buttons,ui_sidepanel,ui_sidepanel_layout) {
+(function (exports,main_core,ui_buttons,ui_sidepanel,ui_sidepanel_layout,crm_integration_ui_settings) {
 	'use strict';
 
 	function ownKeys(object, enumerableOnly) { var keys = Object.keys(object); if (Object.getOwnPropertySymbols) { var symbols = Object.getOwnPropertySymbols(object); enumerableOnly && (symbols = symbols.filter(function (sym) { return Object.getOwnPropertyDescriptor(object, sym).enumerable; })), keys.push.apply(keys, symbols); } return keys; }
@@ -193,14 +193,14 @@ this.BX.Crm = this.BX.Crm || {};
 	  }, {
 	    key: "getSliderContentClassName",
 	    value: function getSliderContentClassName() {
-	      var className = 'crm-copilot-wrapper';
+	      var classNames = ['crm-copilot-wrapper', '--ui-context-edge-dark'];
 	      if (this.enableLightThemeIntoSlider) {
-	        className += ' bitrix24-light-theme';
+	        classNames.push('bitrix24-light-theme');
 	      }
 	      if (this.sliderContentClass) {
-	        className += " ".concat(this.sliderContentClass);
+	        classNames.push(this.sliderContentClass);
 	      }
-	      return className;
+	      return classNames.join(' ');
 	    }
 	  }, {
 	    key: "getDefaultToolbarButtons",
@@ -228,9 +228,11 @@ this.BX.Crm = this.BX.Crm || {};
 	      var helpdeskCode = '18799442';
 	      var helpButton = new ui_buttons.Button({
 	        text: main_core.Loc.getMessage('CRM_COPILOT_WRAPPER_HELP_BUTTON_TITLE'),
-	        size: ui_buttons.Button.Size.MEDIUM,
+	        size: crm_integration_ui_settings.Settings.get(crm_integration_ui_settings.Setting.UseAirDesign) ? ui_buttons.Button.Size.SMALL : ui_buttons.Button.Size.MEDIUM,
 	        color: ui_buttons.Button.Color.LIGHT_BORDER,
 	        dependOnTheme: true,
+	        useAirDesign: crm_integration_ui_settings.Settings.get(crm_integration_ui_settings.Setting.UseAirDesign),
+	        style: ui_buttons.Button.AirStyle.OUTLINE,
 	        onclick: function onclick() {
 	          if (top.BX.Helper) {
 	            top.BX.Helper.show("redirect=detail&code=".concat(helpdeskCode));
@@ -245,5 +247,5 @@ this.BX.Crm = this.BX.Crm || {};
 
 	exports.Slider = Slider;
 
-}((this.BX.Crm.AI = this.BX.Crm.AI || {}),BX,BX.UI,BX,BX.UI.SidePanel));
+}((this.BX.Crm.AI = this.BX.Crm.AI || {}),BX,BX.UI,BX,BX.UI.SidePanel,BX.Crm.Integration.UI));
 //# sourceMappingURL=slider.bundle.js.map

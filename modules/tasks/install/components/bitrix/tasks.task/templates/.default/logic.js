@@ -27,6 +27,8 @@ BX.namespace('Tasks.Component');
 			{
 				this.callConstruct(BX.Tasks.Util.Widget);
 
+				this.setHtmlEditorCtrlEnterHandler();
+
 				this.instances.calendar = false;
 				this.instances.helpWindow = false;
 
@@ -45,6 +47,10 @@ BX.namespace('Tasks.Component');
 
 				this.isExtranetUser = (this.option('isExtranetUser') === true);
 				this.canEditTask = (this.option('canEditTask') === true);
+				this.canCreateFlow = (this.option('canCreateFlow') === true);
+
+				this.isDeadlineNotificationAvailable = (this.option('isDeadlineNotificationAvailable') === true);
+				this.deadlineNotificationSkipped = (this.option('deadlineNotificationSkipped') === true);
 
 				this.fireTaskEvent();
 
@@ -64,13 +70,31 @@ BX.namespace('Tasks.Component');
 
 				this.onTitleChange();
 				this.onResponsibleChange();
-				this.checkNoWorkDays(this.getTaskData().MATCH_WORK_TIME === 'Y');
+
+				this.matchWorkTime = this.getTaskData().MATCH_WORK_TIME === 'Y';
+				this.checkNoWorkDays(this.matchWorkTime);
 
 				this.calendarSettings = this.option('calendarSettings');
 
 				this.aiCommandExecutor = null;
 
 				this.changingFlow = false;
+
+				this.filesCount = 0;
+
+				if (this.getTaskId() > 0)
+				{
+					const taskData = this.getTaskData();
+					if (BX.type.isArray(taskData.UF_TASK_WEBDAV_FILES))
+					{
+						this.filesCount = taskData.UF_TASK_WEBDAV_FILES.length;
+					}
+				}
+			},
+
+			setHtmlEditorCtrlEnterHandler: function()
+			{
+				window.taskCtrlEnterHandler = this.onFormKeyDown.bind(this);
 			},
 
 			initFlowSelector()
@@ -87,6 +111,7 @@ BX.namespace('Tasks.Component');
 					isExtranet: this.isExtranetUser,
 					flowParams: this.flowParams,
 					toggleFlowParams: this.toggleFlowParams,
+					canCreateFlow: this.canCreateFlow,
 				};
 
 				this.flowSelector = new BX.Tasks.Flow.EntitySelector(selectorParams);
@@ -363,6 +388,28 @@ BX.namespace('Tasks.Component');
 						}
 
 					}, this));
+
+					BX.PULL.subscribe({
+						moduleId: 'tasks',
+						command: 'skip_deadline_notification_period_changed',
+						callback: function(params) {
+							const period = params.period;
+
+							if (!BX.Type.isString(period))
+							{
+								return;
+							}
+
+							if (period === '')
+							{
+								this.deadlineNotificationSkipped = false;
+							}
+							else
+							{
+								this.deadlineNotificationSkipped = true;
+							}
+						}.bind(this),
+					});
 				}
 
 				// all block togglers
@@ -415,17 +462,22 @@ BX.namespace('Tasks.Component');
 
 				BX.Event.EventEmitter.subscribe(
 					'BX.Tasks.MemberSelector:projectSelected',
-					BX.delegate(this.onProjectSelected, this)
+					BX.delegate(this.onProjectSelected, this),
 				);
 
 				BX.Event.EventEmitter.subscribe(
 					'BX.Tasks.MemberSelector:projectDeselected',
-					BX.delegate(this.onProjectDeselected, this)
+					BX.delegate(this.onProjectDeselected, this),
 				);
 
 				BX.Event.EventEmitter.subscribe(
 					'BX.Main.User.SelectorController:itemRendered',
-					BX.delegate(this.onItemRendered, this)
+					BX.delegate(this.onItemRendered, this),
+				);
+
+				BX.Event.EventEmitter.subscribe(
+					'BX.Tasks.Deadline.Notification:onBeforeSubmit',
+					BX.delegate(this.onBeforeSubmitByDeadlineNotification, this),
 				);
 
 				var instance = BX.Tasks.Component.TasksWidgetMemberSelector.getInstance(this.sys.id + '-project');
@@ -438,6 +490,59 @@ BX.namespace('Tasks.Component');
 
 					BX.Event.EventEmitter.emit('BX.Tasks.Component.Task:projectPreselected', { groupId: groupId });
 				}
+
+				// analytics label "add_project"
+				const projectInputButton = document.querySelector('[data-bx-id="task-edit-se-project-block"]')
+					.querySelector(".task-form-field-controls");
+
+				if (BX.type.isElementNode(projectInputButton))
+				{
+					BX.Event.bind(projectInputButton, 'click', () => {
+						BX.Runtime.loadExtension('ui.analytics').then(() => {
+							BX.UI.Analytics.sendData({
+								tool: 'tasks',
+								category: 'task_operations',
+								event: 'add_project',
+								type: 'task',
+								c_section: 'tasks',
+								c_element: 'project_button',
+								status: 'success',
+							});
+						});
+					});
+				}
+
+				BX.Event.EventEmitter.subscribe('BX.UI.Uploader:File:onUploadComplete', (event) => {
+					let userType = 'intranet';
+					if (this.getUser().IS_COLLABER_USER)
+					{
+						userType = 'collaber';
+					}
+					else if (this.getUser().IS_EXTRANET_USER)
+					{
+						userType = 'extranet';
+					}
+
+					BX.Runtime.loadExtension('ui.analytics').then(() => {
+						BX.UI.Analytics.sendData({
+							tool: 'tasks',
+							category: 'task_operations',
+							event: 'attach_file',
+							type: 'task',
+							c_section: 'tasks',
+							c_element: 'project_button',
+							status: 'success',
+							p1: `size_${event.data.file.size}`,
+							p2: `user_${userType}`,
+							p3: `filesCount_${++this.filesCount}`,
+							p5: `ext_${event.data.file.extension}`,
+						});
+					});
+				});
+
+				BX.Event.EventEmitter.subscribe('BX.UI.Uploader:File:onRemove', (event) => {
+					this.filesCount--;
+				});
 			},
 
 			bindAIEvents: function() {
@@ -469,8 +574,16 @@ BX.namespace('Tasks.Component');
 
 			bindSliderEvents: function()
 			{
-				BX.addCustomEvent("SidePanel.Slider:onLoad", this.setEditorBeforeUnloadEvent.bind(this, true));
-				BX.addCustomEvent("SidePanel.Slider:onClose", this.setEditorBeforeUnloadEvent.bind(this, false));
+				if (Number(this.getTaskId()) === 0)
+				{
+					BX.addCustomEvent("SidePanel.Slider:onClose", this.closeWithConfirm.bind(this));
+					BX.addCustomEvent("SidePanel.Slider:onLoad", this.setEditorBeforeUnloadEvent.bind(this, false));
+				}
+				else
+				{
+					BX.addCustomEvent("SidePanel.Slider:onLoad", this.setEditorBeforeUnloadEvent.bind(this, true));
+					BX.addCustomEvent("SidePanel.Slider:onClose", this.setEditorBeforeUnloadEvent.bind(this, false));
+				}
 				BX.addCustomEvent('SidePanel.Slider:onMessage', BX.delegate(function(event) {
 					if (event.getEventId() === 'sonetGroupEvent')
 					{
@@ -495,6 +608,184 @@ BX.namespace('Tasks.Component');
 				}, this));
 				BX.addCustomEvent('SidePanel.Slider:onCloseByEsc', function(event) {
 					event.denyAction();
+				});
+			},
+
+			closeWithConfirm: function(event)
+			{
+				if (this.exitConfirmed)
+				{
+					return;
+				}
+
+				event.denyAction();
+
+				if (this.popupIsActive)
+				{
+					return;
+				}
+
+				if (this.isDataChanged())
+				{
+					this.showConfirmPopup(event);
+				}
+				else
+				{
+					this.closeSlider(event.getSlider());
+				}
+			},
+
+			isDataChanged: function()
+			{
+				const taskData = this.getTaskData();
+				const allowedFields = this.getAllowedFields();
+				const participantFields = new Set(['SE_AUDITOR', 'SE_ACCOMPLICE']);
+
+				for (const field in allowedFields)
+				{
+					let initialFieldValue = taskData[field];
+
+					const isParticipantField = participantFields.has(field);
+
+					if (isParticipantField)
+					{
+						if (this.isParticipantSelectorChanged(field, initialFieldValue))
+						{
+							return true;
+						}
+
+						continue;
+					}
+
+					if (field === 'CHECKLIST')
+					{
+						if (this.isChecklistPresent(allowedFields[field]))
+						{
+							return true;
+						}
+
+						continue;
+					}
+
+					if (field === 'FILE')
+					{
+						if (this.isFilePresent(allowedFields[field]))
+						{
+							return true;
+						}
+
+						continue;
+					}
+
+					initialFieldValue = this.normalizeValue(initialFieldValue);
+
+					const actualFieldValue = document.querySelector(`input[name*="${allowedFields[field]}"]`).value;
+
+					if (initialFieldValue !== actualFieldValue)
+					{
+						return true;
+					}
+				}
+
+				return false;
+			},
+
+			normalizeValue: function(value)
+			{
+				if (BX.Type.isNil(value))
+				{
+					return '';
+				}
+
+				if (BX.Type.isNumber(value))
+				{
+					return value.toString();
+				}
+
+				return value;
+			},
+
+			isFilePresent: function(fileSelector)
+			{
+				const files = document.querySelectorAll(`input[type="hidden"][name*="${fileSelector}"]:not([value=""])`);
+
+				return files.length > 0;
+			},
+
+			isChecklistPresent: function(checklistSelector)
+			{
+				const checklist = document.querySelector(`div[data-block-name="${checklistSelector}"] .tasks-checklist-wrapper`);
+
+				return checklist !== null;
+			},
+
+			showConfirmPopup: function(event)
+			{
+				this.disableScroll();
+
+				this.popupIsActive = true;
+
+				const onCancelFunction = (dialog) => {
+					this.popupIsActive = false;
+					this.enableScroll();
+					dialog.close();
+				};
+
+				BX.UI.Dialogs.MessageBox.show({
+					message: BX.Loc.getMessage('TASKS_TASK_COMPONENT_TEMPLATE_ONCLOSE_POPUP_MESSAGE'),
+					buttons: BX.UI.Dialogs.MessageBoxButtons.OK_CANCEL,
+					onOk: () => this.closeSlider(event.getSlider()),
+					onCancel: onCancelFunction,
+				});
+			},
+
+			disableScroll: function()
+			{
+				BX.Dom.style(document.body, 'overflow', 'hidden');
+			},
+
+			enableScroll: function()
+			{
+				BX.Dom.style(document.body, 'overflow', '');
+			},
+
+			closeSlider: function(slider)
+			{
+				this.exitConfirmed = true;
+				slider.close();
+			},
+
+			getAllowedFields: function()
+			{
+				return {
+					TITLE: '[TITLE]',
+					DESCRIPTION: '[DESCRIPTION]',
+					CHECKLIST: 'SE_CHECKLIST',
+					FILE: '[UF_TASK_WEBDAV_FILES]',
+					PRIORITY: '[PRIORITY]',
+					DEADLINE: '[DEADLINE]',
+					START_DATE_PLAN: '[START_DATE_PLAN]',
+					END_DATE_PLAN: '[END_DATE_PLAN]',
+					REQUIRE_RESULT: '[SE_PARAMETER][3][VALUE]',
+					SE_ACCOMPLICE: '[SE_ACCOMPLICE]',
+					SE_AUDITOR: '[SE_AUDITOR]',
+				};
+			},
+
+			isParticipantSelectorChanged: function(field, fieldData)
+			{
+				const divElement = document.querySelector(`div[data-block-name="${field}"]`);
+				const userInputGroups = divElement.querySelectorAll('span[data-item-value*="U"]');
+
+				if (fieldData.length !== userInputGroups.length)
+				{
+					return true;
+				}
+
+				return [...userInputGroups].some((elem) => {
+					const userId = parseInt(elem.querySelector('input[name*="ID"]').value, 10);
+
+					return !fieldData.some(({ ID }) => ID === userId);
 				});
 			},
 
@@ -555,6 +846,19 @@ BX.namespace('Tasks.Component');
 					}
 					// fire event on reminder block, if any
 					BX.Tasks.Util.Dispatcher.fireEvent('reminder-' + this.id(), 'setTaskDeadLine', [stamp]);
+
+					BX.Runtime.loadExtension('ui.analytics').then(() => {
+						BX.UI.Analytics.sendData({
+							tool: 'tasks',
+							category: 'task_operations',
+							event: 'deadline_set',
+							type: 'task',
+							c_section: 'tasks',
+							c_sub_section: 'task_card',
+							c_element: 'calendar',
+							status: 'success',
+						});
+					});
 				}, this));
 
 				if (!this.isEditMode() && this.getTaskData().DEADLINE_ISO)
@@ -631,15 +935,91 @@ BX.namespace('Tasks.Component');
 
 			onSubmitClick: function(node, e)
 			{
-				if(this.vars.submitting)
+				if (this.vars.submitting)
 				{
 					BX.PreventDefault(e);
+
 					return;
 				}
 
 				BX.addClass(node, 'ui-btn-clock');
-
 				this.vars.submitting = true;
+
+				const deadlineNotification = this.getDeadlineNotification(e.target);
+				if (!deadlineNotification)
+				{
+					return;
+				}
+
+				BX.PreventDefault(e);
+
+				deadlineNotification.show();
+			},
+
+			getDeadlineNotification: function(targetButton)
+			{
+				const isDeadlineNotificationNeeded = (
+					this.isDeadlineNotificationAvailable
+					&& !this.deadlineNotificationSkipped
+					&& !this.isScrumProject
+					&& !this.isFlowForm
+					&& !this.isEditMode()
+				);
+
+				if (!isDeadlineNotificationNeeded)
+				{
+					return null;
+				}
+
+				const targetForm = this.control('form');
+				const projectInput = this.getProjectInput();
+				const targetInput = this.getDeadlineInput();
+
+				if (
+					!BX.Type.isElementNode(targetForm)
+					|| !BX.Type.isElementNode(projectInput)
+					|| !BX.Type.isElementNode(targetInput)
+					|| targetInput.value !== ''
+				)
+				{
+					return null;
+				}
+
+				if (!this.deadlineNotification)
+				{
+					const matchWorkTime = this.matchWorkTime ?? false;
+
+					this.deadlineNotification = new BX.Tasks.Deadline.Notification({
+						targetForm,
+						targetInput,
+						targetButton,
+						matchWorkTime,
+					});
+				}
+
+				return this.deadlineNotification;
+			},
+
+			getProjectInput: function()
+			{
+				const projectBlock = this.control('se-project-block');
+				if (!BX.Type.isElementNode(projectBlock))
+				{
+					return null;
+				}
+
+				return projectBlock.querySelector('input[name*="[SE_PROJECT]"]');
+			},
+
+			getDeadlineInput: function()
+			{
+				const datePlanManager = this.control('date-plan-manager');
+				if (!BX.Type.isElementNode(datePlanManager))
+				{
+					return null;
+				}
+
+				return datePlanManager.querySelector('input[name$="[DEADLINE]"]');
 			},
 
 			onProjectSelected: function(event)
@@ -651,6 +1031,12 @@ BX.namespace('Tasks.Component');
 			{
 				const node = document.querySelector('input.tasks-task-temporary-crm-input');
 				node && node.remove();
+			},
+
+			onBeforeSubmitByDeadlineNotification: function()
+			{
+				this.setEditorBeforeUnloadEvent(false);
+				BX.Tasks.CheckListInstance.getTreeStructure().appendRequestLayout();
 			},
 
 			onProjectDeselected: function(event)
@@ -694,7 +1080,7 @@ BX.namespace('Tasks.Component');
 					.then(
 						function(response)
 						{
-							var isScrumProject = response.data;
+							this.isScrumProject = response.data;
 
 							var unChosenContainer = this.control('unchosen-blocks');
 							if (!BX.type.isElementNode(unChosenContainer))
@@ -704,7 +1090,7 @@ BX.namespace('Tasks.Component');
 
 							var scrumFields = ['EPIC'];
 
-							if (isScrumProject)
+							if (this.isScrumProject)
 							{
 								scrumFields
 									.forEach(function (scrumField) {
@@ -744,26 +1130,37 @@ BX.namespace('Tasks.Component');
 			{
 				e = e || window.event;
 
-				var prevent = false;
-				if(BX.Tasks.Util.isEnter(e))
+				if (
+					e.type !== 'keydown'
+					|| (!e.ctrlKey && !e.metaKey)
+					|| !BX.Tasks.Util.isEnter(e)
+				)
 				{
-					if((e.ctrlKey || e.metaKey) && e.type === 'keydown')
-					{
-						var tagDialog = BX.UI.EntitySelector.Dialog.getById('tasksTagSelector');
-						if (tagDialog && tagDialog.isOpen())
-						{
-							return;
-						}
-
-						this.submit();
-						prevent = true;
-					}
+					return;
 				}
 
-				if(prevent)
+				const tagDialog = BX.UI.EntitySelector.Dialog.getById('tasksTagSelector');
+				if (tagDialog && tagDialog.isOpen())
 				{
-					BX.PreventDefault(e);
+					return;
 				}
+
+				BX.PreventDefault(e);
+
+				const deadlineNotification = this.getDeadlineNotification();
+				if (!deadlineNotification)
+				{
+					this.submit();
+
+					return;
+				}
+
+				if (document.activeElement)
+				{
+					document.activeElement.blur();
+				}
+
+				deadlineNotification.show();
 			},
 
 			onChooseBlock: function(node)
@@ -1137,8 +1534,11 @@ BX.namespace('Tasks.Component');
 
 			onWorktimeChange: function(node)
 			{
-				this.checkNoWorkDays(node.checked);
-				this.instances.projectPlan.setMatchWorkTime(node.checked);
+				const checked = node.checked;
+
+				this.checkNoWorkDays(checked);
+				this.instances.projectPlan.setMatchWorkTime(checked);
+				this.matchWorkTime = checked;
 			},
 
 			checkNoWorkDays: function(matchWorkTime)
@@ -1398,6 +1798,8 @@ BX.namespace('Tasks.Component');
 								useAngle: false,
 							},
 							errorCode: err?.errors?.[0]?.code ?? 'undefined_error',
+							showSliderWithMsg: err?.errors?.[0]?.customData?.showSliderWithMsg,
+							sliderCode: err?.errors?.[0]?.customData?.sliderCode,
 						});
 					}).finally(() => {
 						BX.Dom.removeClass(makeChecklistBtn, 'tasks-btn-ai-checklist-wait');

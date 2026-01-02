@@ -1,0 +1,23 @@
+<?php
+$MESS["INTRANET_AUTH_CAPTCHA_PROMT"] = "Суреттегі әріптерді енгізіңіз";
+$MESS["INTRANET_AUTH_CHECK_EMAIL"] = "Поштаны тексеріңіз";
+$MESS["INTRANET_AUTH_CONFIRM"] = "Құпиясөзді растау";
+$MESS["INTRANET_AUTH_CONTINUE_BUTTON"] = "Жалғастыру";
+$MESS["INTRANET_AUTH_EMAIL"] = "E-mail";
+$MESS["INTRANET_AUTH_EMAIL_PLACEHOLDER"] = "address@mail.ru";
+$MESS["INTRANET_AUTH_EMAIL_SENT"] = "E-mail нысанында көрсетілген хатқа тіркеуді растау туралы ақпарат жіберілді";
+$MESS["INTRANET_AUTH_JOIN_TEXT"] = "Командаға қосылыңыз";
+$MESS["INTRANET_AUTH_LAST_NAME"] = "Тегі";
+$MESS["INTRANET_AUTH_LAST_NAME_PLACEHOLDER"] = "Иванов";
+$MESS["INTRANET_AUTH_LINK"] = "Кіру";
+$MESS["INTRANET_AUTH_LOGIN"] = "Кіру";
+$MESS["INTRANET_AUTH_LOGIN_HINT"] = "Логиннің ұзындығы кемінде 3 таңба болуы керек";
+$MESS["INTRANET_AUTH_LOGIN_PLACEHOLDER"] = "ivan";
+$MESS["INTRANET_AUTH_NAME"] = "Аты";
+$MESS["INTRANET_AUTH_NAME_PLACEHOLDER"] = "Иван";
+$MESS["INTRANET_AUTH_PASSWORD"] = "Құпиясөз";
+$MESS["INTRANET_AUTH_PASSWORD_TITLE"] = "Құпиясөзді ойлап табыңыз";
+$MESS["INTRANET_AUTH_REGISTER_BUTTON"] = "Тіркелу";
+$MESS["INTRANET_AUTH_REQUIRED_FIELD"] = "(міндетті өріс)";
+$MESS["INTRANET_AUTH_USER_DATA_TITLE"] = "Деректеріңізді толтырыңыз";
+$MESS["INTRANET_USER_PROPERTIES_TITLE"] = "Қосымша өрістер";

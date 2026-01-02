@@ -10,7 +10,7 @@ jn.define('calendar/sync-page/title', (require, exports, module) => {
 		Loc.getMessage('M_CALENDAR_SYNC_PAGE_TITLE_2'),
 	];
 
-	const Title = () => View(
+	const SyncPageTitle = () => View(
 		{
 			style: {
 				justifyContent: 'center',
@@ -20,7 +20,7 @@ jn.define('calendar/sync-page/title', (require, exports, module) => {
 				marginTop: 32,
 				paddingTop: 10,
 			},
-			testId: `sync_page_title`,
+			testId: 'sync_page_title',
 		},
 		View(
 			{
@@ -92,5 +92,5 @@ jn.define('calendar/sync-page/title', (require, exports, module) => {
 		check: '<svg width="20" height="20" viewBox="0 0 20 20" fill="none" xmlns="http://www.w3.org/2000/svg"><path d="M20 10C20 15.5228 15.5228 20 10 20C4.47715 20 0 15.5228 0 10C0 4.47715 4.47715 0 10 0C15.5228 0 20 4.47715 20 10Z" fill="#E1F3F9"/><path fill-rule="evenodd" clip-rule="evenodd" d="M8.54786 11.0331L6.46936 8.9336L5 10.4178L8.4679 13.9207L8.46933 13.9192L8.5493 14L15 7.48419L13.5306 6L8.54786 11.0331Z" fill="#2FC6F6"/></svg>',
 	};
 
-	module.exports = { Title };
+	module.exports = { SyncPageTitle };
 });

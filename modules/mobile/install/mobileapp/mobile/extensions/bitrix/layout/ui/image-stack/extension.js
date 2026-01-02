@@ -1,4 +1,7 @@
-(() => {
+/**
+ * @module layout/ui/image-stack
+ */
+jn.define('layout/ui/image-stack', (require, exports, module) => {
 	/**
 	 * @class ImageStack
 	 */
@@ -192,5 +195,5 @@
 		},
 	};
 
-	jnexport(ImageStack);
-})();
+	module.exports = { ImageStack };
+});

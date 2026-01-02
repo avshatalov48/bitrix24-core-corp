@@ -2,7 +2,6 @@
 
 namespace Bitrix\Sign\Connector\Crm;
 
-use Bitrix\Crm\Field;
 use Bitrix\Crm\Service\Container;
 use Bitrix\Main\Loader;
 use Bitrix\Sign\Contract;
@@ -16,6 +15,7 @@ abstract class Base implements Contract\FilterableConnector, Contract\Connector
 	protected ?Closure $includeFieldsRule = null;
 
 	abstract public function getCrmEntityTypeId(): int;
+
 	abstract public function getEntityId(): int;
 
 	public function fetchFields(): FieldCollection
@@ -26,10 +26,11 @@ abstract class Base implements Contract\FilterableConnector, Contract\Connector
 			return $result;
 		}
 
-		$crmEntityFields =
-			Container::getInstance()->getFactory($this->getCrmEntityTypeId())
-			?->getItem($this->getEntityId())
-			?->getCompatibleData();
+		$crmEntityFields
+			= Container::getInstance()->getFactory($this->getCrmEntityTypeId())
+				?->getItem($this->getEntityId())
+				?->getCompatibleData()
+		;
 
 		$crmEntityFields ??= [];
 
@@ -52,7 +53,7 @@ abstract class Base implements Contract\FilterableConnector, Contract\Connector
 			}
 
 			$result->add(
-				new Item\Connector\Field($fieldName, $value)
+				new Item\Connector\Field($fieldName, $value),
 			);
 		}
 
@@ -62,12 +63,14 @@ abstract class Base implements Contract\FilterableConnector, Contract\Connector
 	public function setExcludeFilterRule(?Closure $rule): static
 	{
 		$this->excludeFieldsRule = $rule;
+
 		return $this;
 	}
 
 	public function setIncludeFilterRule(?Closure $rule): static
 	{
 		$this->includeFieldsRule = $rule;
+
 		return $this;
 	}
 }

@@ -24,13 +24,21 @@ this.BX.Call.Component = this.BX.Call.Component || {};
 	      }
 	    }
 	  },
-	  emits: ['close'],
+	  emits: ['close', 'popup-instance-created'],
+	  data() {
+	    return {
+	      instance: null
+	    };
+	  },
 	  computed: {
 	    popupContainer() {
 	      return `${POPUP_CONTAINER_PREFIX}${this.id}`;
 	    }
 	  },
 	  created() {
+	    if (this.instance) {
+	      this.closePopup();
+	    }
 	    this.instance = this.getPopupInstance();
 	    this.instance.show();
 	  },
@@ -39,6 +47,7 @@ this.BX.Call.Component = this.BX.Call.Component || {};
 	      forceBindPosition: true,
 	      position: this.getPopupConfig().bindOptions.position
 	    });
+	    this.$emit('popup-instance-created', this.instance);
 	  },
 	  beforeUnmount() {
 	    if (!this.instance) {
@@ -416,9 +425,105 @@ this.BX.Call.Component = this.BX.Call.Component || {};
 	`
 	});
 
+	// @vue/component
+	const CallActionPopup = {
+	  name: 'CallActionPopup',
+	  components: {
+	    CallPopupContainer
+	  },
+	  props: {
+	    titleText: {
+	      type: String,
+	      required: true
+	    },
+	    descriptionText: {
+	      type: String,
+	      required: true
+	    },
+	    okText: {
+	      type: String,
+	      required: true
+	    },
+	    cancelText: {
+	      type: String,
+	      required: false,
+	      default: main_core.Loc.getMessage('CALL_ACTION_POPUP_CANCEL_BUTTON')
+	    },
+	    okAction: {
+	      type: Function,
+	      required: true
+	    }
+	  },
+	  emits: ['close'],
+	  data() {
+	    return {
+	      popupInstance: null
+	    };
+	  },
+	  computed: {
+	    getId() {
+	      return 'call-action-popup';
+	    },
+	    config() {
+	      return {
+	        width: 470,
+	        padding: 0,
+	        overlay: false,
+	        autoHide: false,
+	        closeByEsc: false,
+	        angle: false,
+	        closeIcon: true,
+	        contentBorderRadius: '18px'
+	      };
+	    }
+	  },
+	  methods: {
+	    loc(phraseCode, replacements = {}) {
+	      return main_core.Loc.getMessage(phraseCode, replacements);
+	    },
+	    onOkButtonClick() {
+	      if (!this.okAction || !main_core.Type.isFunction(this.okAction)) {
+	        return;
+	      }
+	      this.okAction();
+	      this.popupInstance.destroy();
+	      this.$emit('close');
+	    },
+	    onCancelBtnClick() {
+	      this.popupInstance.destroy();
+	      this.$emit('close');
+	    },
+	    popupCreated(popupInstance) {
+	      this.popupInstance = popupInstance;
+	    }
+	  },
+	  template: `
+		<CallPopupContainer
+			:config="config"
+			@close="$emit('close')"
+			:id="getId"
+			@popup-instance-created="popupCreated($event)"
+		>
+			<div class='bx-call-action-popup__container bx-call-action-popup-scope'>
+				<div class='bx-call-action-popup__title'>
+					{{ titleText }}
+				</div>
+				<div class='bx-call-action-popup__body'>
+					<div class='bx-call-action-popup__description'>{{ descriptionText }}</div>
+					<div class='bx-call-action-popup__buttons-wrapper'>
+						<div class='bx-call-action-popup__button --cancel' @click="onCancelBtnClick">{{ cancelText }}</div>
+						<div class='bx-call-action-popup__button --ok' @click="onOkButtonClick">{{ okText }}</div>
+					</div>
+				</div>
+			</div>
+		</CallPopupContainer>
+	`
+	};
+
 	exports.CallPopupContainer = CallPopupContainer;
 	exports.CallLoader = CallLoader;
 	exports.AudioPlayer = AudioPlayer;
+	exports.CallActionPopup = CallActionPopup;
 
 }((this.BX.Call.Component.Elements = this.BX.Call.Component.Elements || {}),BX.Main,BX.UI,BX.Vue3,BX.Vue3.Components,BX));
 //# sourceMappingURL=registry.bundle.js.map

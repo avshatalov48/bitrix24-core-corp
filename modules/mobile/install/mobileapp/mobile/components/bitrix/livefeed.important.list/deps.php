@@ -3,6 +3,6 @@ return [
 	'extensions' => [
 		'helpers/holder',
 		'list',
-		'user/profile',
+		'user-profile',
 	],
 ];

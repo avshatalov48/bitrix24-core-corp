@@ -80,6 +80,14 @@ final class CrmEventViewComponent extends \Bitrix\Crm\Component\Base
 		return $events;
 	}
 
+	protected function isHideEventAddButton(): bool
+	{
+		$refererUri = new \Bitrix\Main\Web\Uri($this->request->getHeader('referer'));
+		$query = $refererUri->getQuery();
+
+		return str_contains($query, 'FORCE_READONLY=Y');
+	}
+
 	private function prepareBoundItemsInfo(array $events): array
 	{
 		$eventRelationIdToBoundItem = [];
@@ -199,7 +207,7 @@ final class CrmEventViewComponent extends \Bitrix\Crm\Component\Base
 				}
 			}
 
-			$singleEvent['EVENT_TEXT_1'] = $boundItemInfo['ENTITY_TYPE_CAPTION'] ?? '';
+			$singleEvent['EVENT_TEXT_1'] = htmlspecialcharsbx($boundItemInfo['ENTITY_TYPE_CAPTION'] ?? '');
 			$isMyCompany = $boundItemInfo['IS_MY_COMPANY'] ?? false;
 			if ($isMyCompany)
 			{

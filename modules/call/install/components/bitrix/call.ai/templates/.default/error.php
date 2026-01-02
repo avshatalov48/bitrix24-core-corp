@@ -23,16 +23,11 @@ $APPLICATION->SetPageProperty(
 
 Toolbar::deleteFavoriteStar();
 
-
-$arResult['ERROR_DESC']
-
-
 ?>
-
 <div class="bx-call-component-call-ai-error">
 	<div class="bx-call-component-call-ai-error__text">
 		<span class="bx-call-component-call-ai-error__title"><?= $arResult['ERROR'] ?></span>
-		<span class="bx-call-component-call-ai-error__description"><?= Loc::getMessage('CALL_COMPONENT_ERROR_DESCRIPTION') ?></span>
+		<span class="bx-call-component-call-ai-error__description"><?= $arResult['ERROR_DESC'] ?? Loc::getMessage('CALL_COMPONENT_ERROR_DESCRIPTION') ?></span>
 	</div>
 	<div class="bx-call-component-call-ai-error__icon"></div>
 </div>

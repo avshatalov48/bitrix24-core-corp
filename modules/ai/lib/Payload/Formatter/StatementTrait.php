@@ -3,6 +3,7 @@
 namespace Bitrix\AI\Payload\Formatter;
 
 use Bitrix\AI\Engine\ThirdParty;
+use Bitrix\AI\Facade\Bitrix24;
 
 trait StatementTrait
 {
@@ -36,6 +37,7 @@ trait StatementTrait
 			'engine.category' => $this->engine->getCategory(),
 			'context.id' => $this->engine->getContext()->getContextId(),
 			'context.module' => $this->engine->getContext()->getModuleId(),
+			'portal.zone' => Bitrix24::getPortalZone(),
 		];
 
 		foreach ($additionalMarkers as $key => $value)

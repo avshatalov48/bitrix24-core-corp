@@ -29,7 +29,10 @@ class ObserversChildAction extends GroupChildAction
 
 	public static function isChangeObserverPermitted(int $entityTypeId, UserPermissions $userPermissions, ?int $categoryId = 0): bool
 	{
-		return $userPermissions->checkUpdatePermissions($entityTypeId, 0, $categoryId);
+		return is_null($categoryId)
+			? $userPermissions->entityType()->canUpdateItems($entityTypeId)
+			: $userPermissions->entityType()->canUpdateItemsInCategory($entityTypeId, $categoryId)
+		;
 	}
 
 	public static function getId(): string

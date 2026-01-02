@@ -1,6 +1,6 @@
 /* eslint-disable */
 this.BX = this.BX || {};
-(function (exports,ui_label,main_popup,ui_analytics,main_core_events,main_core,ui_popupcomponentsmaker) {
+(function (exports,ui_label,main_core_events,main_core,ui_popupcomponentsmaker,intranet_widgetLoader) {
 	'use strict';
 
 	let _ = t => t,
@@ -122,7 +122,7 @@ this.BX = this.BX || {};
 	  getElement() {
 	    if (!babelHelpers.classPrivateFieldLooseBase(this, _requisiteElement)[_requisiteElement]) {
 	      babelHelpers.classPrivateFieldLooseBase(this, _requisiteElement)[_requisiteElement] = main_core.Tag.render(_t || (_t = _`
-				<div class="intranet-settings-widget__business-card intranet-settings-widget_box">
+				<div class="intranet-settings-widget__business-card intranet-settings-widget_box" data-testid="settings-widget-block-requisite">
 					<div class="intranet-settings-widget__business-card_head intranet-settings-widget_inner">
 						<div class="intranet-settings-widget_icon-box --gray">
 							<div class="ui-icon-set --customer-card-1"></div>
@@ -544,20 +544,25 @@ this.BX = this.BX || {};
 	    babelHelpers.classPrivateFieldLooseBase(this, _target)[_target] = target;
 	    return this;
 	  }
-	  setWidgetPopup(widgetPopup) {
-	    babelHelpers.classPrivateFieldLooseBase(this, _widgetPopup)[_widgetPopup] = widgetPopup;
+	  setWidgetLoader(widgetLoader) {
+	    babelHelpers.classPrivateFieldLooseBase(this, _widgetPopup)[_widgetPopup] = new ui_popupcomponentsmaker.PopupComponentsMaker({
+	      width: 374,
+	      popupLoader: widgetLoader.getPopup(),
+	      useAngle: false
+	    });
 	    babelHelpers.classPrivateFieldLooseBase(this, _widgetPopup)[_widgetPopup].getPopup().subscribe('onClose', () => {
 	      main_core.Event.unbindAll(this.getWidget().getPopup().getPopupContainer(), 'click');
 	    });
+	    widgetLoader.clearBeforeInsertContent();
 	    babelHelpers.classPrivateFieldLooseBase(this, _getItemsList)[_getItemsList]().then(() => {
 	      babelHelpers.classPrivateFieldLooseBase(this, _drawItemsList)[_drawItemsList]();
 	    });
 	    return this;
 	  }
-	  static bindWidget(popup) {
+	  static bindWidget(widgetLoader) {
 	    const instance = this.getInstance();
 	    if (instance) {
-	      instance.setWidgetPopup(popup);
+	      instance.setWidgetLoader(widgetLoader);
 	    }
 	    return instance;
 	  }
@@ -649,7 +654,6 @@ this.BX = this.BX || {};
 	}
 	function _drawItemsList2() {
 	  const container = this.getWidget().getPopup().getPopupContainer();
-	  main_core.Dom.clean(container);
 	  main_core.Dom.append(babelHelpers.classPrivateFieldLooseBase(this, _getHeader)[_getHeader](), container);
 	  const content = [babelHelpers.classPrivateFieldLooseBase(this, _requisite)[_requisite] && babelHelpers.classPrivateFieldLooseBase(this, _isAdmin)[_isAdmin] ? babelHelpers.classPrivateFieldLooseBase(this, _getRequisitesElement)[_getRequisitesElement]() : null, babelHelpers.classPrivateFieldLooseBase(this, _mainPage)[_mainPage].isAvailable ? babelHelpers.classPrivateFieldLooseBase(this, _getMainPageElement)[_getMainPageElement]() : null, babelHelpers.classPrivateFieldLooseBase(this, _isAdmin)[_isAdmin] ? babelHelpers.classPrivateFieldLooseBase(this, _getSecurityAndSettingsElement)[_getSecurityAndSettingsElement]() : null, babelHelpers.classPrivateFieldLooseBase(this, _isBitrix)[_isBitrix] ? babelHelpers.classPrivateFieldLooseBase(this, _getHoldingsElement)[_getHoldingsElement]() : null, babelHelpers.classPrivateFieldLooseBase(this, _getMigrateElement)[_getMigrateElement]()];
 	  content.forEach(element => {
@@ -776,7 +780,7 @@ this.BX = this.BX || {};
 			</div>
 		`), label.render());
 	  const element = main_core.Tag.render(_t7 || (_t7 = _$1`
-			<div onclick="${0}" class="intranet-settings-widget_box --clickable">
+			<div onclick="${0}" class="intranet-settings-widget_box --clickable" data-testid="settings-widget-block-main-page">
 				<div class="intranet-settings-widget_inner">
 					<div class="intranet-settings-widget_icon-box --green">
 						<div class="ui-icon-set --home-page"></div>
@@ -806,7 +810,6 @@ this.BX = this.BX || {};
 	    this.getWidget().close();
 	    babelHelpers.classPrivateFieldLooseBase(this, _getHoldingWidget)[_getHoldingWidget]().show(babelHelpers.classPrivateFieldLooseBase(this, _target)[_target]);
 	  };
-	  const profilePhotoStyle = affiliate.profilePhoto ? `background: url('${encodeURI(main_core.Text.encode(affiliate.profilePhoto))}') no-repeat center; background-size: cover;` : '';
 	  const element = main_core.Tag.render(_t8 || (_t8 = _$1`
 		<div class="intranet-settings-widget__branch" onclick="${0}">
 			<div class="intranet-settings-widget__branch-icon_box">
@@ -866,7 +869,7 @@ this.BX = this.BX || {};
 			</div>
 		`));
 	  const element = main_core.Tag.render(_t11 || (_t11 = _$1`
-			<div class="intranet-settings-widget__branch" onclick="${0}">
+			<div class="intranet-settings-widget__branch" onclick="${0}" data-testid="settings-widget-block-filial-network">
 				<div class="intranet-settings-widget__branch-icon_box">
 					<div class="ui-icon-set intranet-settings-widget__branch-icon --filial-network"></div>
 					${0}
@@ -895,7 +898,7 @@ this.BX = this.BX || {};
 	    BX.SidePanel.Instance.open(babelHelpers.classPrivateFieldLooseBase(this, _settingsUrl)[_settingsUrl] + '?page=security&analyticContext=widget_settings_settings');
 	  };
 	  const element = main_core.Tag.render(_t13 || (_t13 = _$1`
-			<span onclick="${0}" class="intranet-settings-widget_box --clickable">
+			<span onclick="${0}" class="intranet-settings-widget_box --clickable" data-testid="settings-widget-block-security">
 				<div class="intranet-settings-widget_inner">
 					<div class="intranet-settings-widget_icon-box ${0}">
 						<div class="ui-icon-set --shield"></div>
@@ -915,7 +918,7 @@ this.BX = this.BX || {};
 	    BX.SidePanel.Instance.open(babelHelpers.classPrivateFieldLooseBase(this, _settingsUrl)[_settingsUrl] + '?analyticContext=widget_settings_settings');
 	  };
 	  const element = main_core.Tag.render(_t14 || (_t14 = _$1`
-			<span onclick="${0}" class="intranet-settings-widget_box --clickable">
+			<span onclick="${0}" class="intranet-settings-widget_box --clickable" data-testid="settings-widget-block-general-settings">
 				<div class="intranet-settings-widget_inner">
 					<div class="intranet-settings-widget_icon-box --gray">
 						<div class="ui-icon-set --settings-2"></div>
@@ -935,7 +938,7 @@ this.BX = this.BX || {};
 	    BX.SidePanel.Instance.open(`${babelHelpers.classPrivateFieldLooseBase(this, _marketUrl)[_marketUrl]}category/migration/`);
 	  };
 	  const element = main_core.Tag.render(_t15 || (_t15 = _$1`
-			<div onclick="${0}" class="intranet-settings-widget_box --clickable">
+			<div onclick="${0}" class="intranet-settings-widget_box --clickable" data-testid="settings-widget-block-migrate">
 				<div class="intranet-settings-widget_inner">
 					<div class="intranet-settings-widget_icon-box --gray">
 						<div class="ui-icon-set --market-1"></div>
@@ -956,5 +959,5 @@ this.BX = this.BX || {};
 
 	exports.SettingsWidget = SettingsWidget;
 
-}((this.BX.Intranet = this.BX.Intranet || {}),BX.UI,BX.Main,BX.UI.Analytics,BX.Event,BX,BX.UI));
+}((this.BX.Intranet = this.BX.Intranet || {}),BX.UI,BX.Event,BX,BX.UI,BX.Intranet));
 //# sourceMappingURL=script.js.map

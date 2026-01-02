@@ -8,7 +8,6 @@ if(!defined('B_PROLOG_INCLUDED') || B_PROLOG_INCLUDED !== true)
 use Bitrix\Crm\Integration\Analytics\Dictionary;
 use Bitrix\Crm\Kanban\ViewMode;
 use Bitrix\Crm\UI\NavigationBarPanel;
-use Bitrix\Main\Config\Option;
 use Bitrix\Main\Localization\Loc;
 
 // js/css
@@ -121,30 +120,6 @@ if (!Bitrix\Crm\Integration\Bitrix24Manager::isAccessEnabled(\CCrmOwnerType::Dea
 else
 {
 	$entityType = \CCrmOwnerType::DealName;
-	$isBitrix24Template = SITE_TEMPLATE_ID === 'bitrix24';
-
-	// counters
-	$APPLICATION->IncludeComponent(
-		'bitrix:crm.entity.counter.panel',
-		'',
-		array(
-			'ENTITY_TYPE_NAME' => $entityType,
-			'EXTRAS' => array('DEAL_CATEGORY_ID' => $categoryID),
-			'PATH_TO_ENTITY_LIST' =>
-				$categoryID < 1
-					? $arResult['PATH_TO_DEAL_KANBAN']
-					: CComponentEngine::makePathFromTemplate(
-							$arResult['PATH_TO_DEAL_KANBANCATEGORY'],
-							array('category_id' => $categoryID)
-				)
-		)
-	);
-
-	// filter
-	if (!$isBitrix24Template)
-	{
-		$APPLICATION->ShowViewContent('crm-grid-filter');
-	}
 
 	$APPLICATION->IncludeComponent(
 		'bitrix:crm.dedupe.autosearch',
@@ -190,10 +165,6 @@ else
 	);
 
 	// category selector
-	if ($isBitrix24Template)
-	{
-		$this->SetViewTarget('inside_pagetitle', 100);
-	}
 	$userPermissions = CCrmPerms::GetCurrentUserPermissions();
 	$map = array_fill_keys(CCrmDeal::GetPermittedToReadCategoryIDs($userPermissions), true);
 	if ($canUseAllCategories)
@@ -212,7 +183,7 @@ else
 
 	$APPLICATION->IncludeComponent(
 		'bitrix:crm.deal_category.panel',
-		$isBitrix24Template ? 'tiny' : '',
+		'tiny',
 		[
 			'PATH_TO_DEAL_LIST' => ($kanbanViewMode === ViewMode::MODE_ACTIVITIES
 				? $arResult['PATH_TO_DEAL_ACTIVITY'] : $arResult['PATH_TO_DEAL_KANBAN']),
@@ -225,11 +196,6 @@ else
 		],
 		$component
 	);
-
-	if ($isBitrix24Template)
-	{
-		$this->EndViewTarget();
-	}
 
 	\Bitrix\Crm\Kanban\Helper::setCategoryId($categoryID);
 
@@ -245,13 +211,18 @@ else
 		[
 			'ENTITY_TYPE' => $entityType,
 			'VIEW_MODE' => $arResult['KANBAN_VIEW_MODE'] ?? null,
+			'COUNTER_PANEL' => [
+				'ENTITY_TYPE_NAME' => $entityType,
+				'EXTRAS' => ['DEAL_CATEGORY_ID' => $categoryID],
+			],
 			'NAVIGATION_BAR' => (new NavigationBarPanel(CCrmOwnerType::Deal, $categoryID))
 				->setItems([
 					NavigationBarPanel::ID_KANBAN,
 					NavigationBarPanel::ID_LIST,
 					NavigationBarPanel::ID_ACTIVITY,
 					NavigationBarPanel::ID_CALENDAR,
-					NavigationBarPanel::ID_AUTOMATION
+					NavigationBarPanel::ID_REPEAT_SALE,
+					NavigationBarPanel::ID_AUTOMATION,
 				], $activeItemId)
 				->setBinding($arResult['NAVIGATION_CONTEXT_ID'])
 				->get()
@@ -265,7 +236,7 @@ else
 	$APPLICATION->IncludeComponent(
 		'bitrix:crm.kanban',
 		'',
-		array(
+		[
 			'ENTITY_TYPE' => $entityType,
 			'VIEW_MODE' => $kanbanViewMode ?? ViewMode::MODE_STAGES,
 			'USE_ITEM_PLANNER' => ($kanbanViewMode === ViewMode::MODE_ACTIVITIES ? 'Y' : 'N'),
@@ -306,7 +277,7 @@ else
 					],
 				],
 			],
-		),
+		],
 		$component
 	);
 
@@ -320,3 +291,5 @@ else
 }
 
 echo (\Bitrix\Crm\Tour\AiPreset::getInstance()->build());
+echo (\Bitrix\Crm\Tour\MobilePromoter\MobilePromoterDeal::getInstance()->build());
+echo (\Bitrix\Crm\Tour\Vat22::getInstance()->build());

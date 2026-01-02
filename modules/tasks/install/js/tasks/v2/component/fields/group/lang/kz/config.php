@@ -1,0 +1,22 @@
+<?php
+$MESS["TASKS_V2_GROUP_ABOUT"] = "Жобаны ашу";
+$MESS["TASKS_V2_GROUP_ABOUT_COLLAB"] = "Коллабты ашу";
+$MESS["TASKS_V2_GROUP_ABOUT_SCRUM"] = "Скрамды ашу";
+$MESS["TASKS_V2_GROUP_CANT_CHANGE_FLOW"] = "Ағындағы міндеттерде жобаны өзгерту мүмкін емес. Егер сіз өзгерткіңіз келсе, ағынды алып тастаңыз";
+$MESS["TASKS_V2_GROUP_CHANGE"] = "Өзгерту";
+$MESS["TASKS_V2_GROUP_CLEAR"] = "Ажырату";
+$MESS["TASKS_V2_GROUP_COUNT_MEMBERS_PLURAL_0"] = "#COUNT# қатысушы";
+$MESS["TASKS_V2_GROUP_COUNT_MEMBERS_PLURAL_1"] = "#COUNT# қатысушы";
+$MESS["TASKS_V2_GROUP_COUNT_MEMBERS_PLURAL_2"] = "#COUNT# қатысушы";
+$MESS["TASKS_V2_GROUP_DATE_CREATE"] = "Құрылған күні";
+$MESS["TASKS_V2_GROUP_EPIC_EMPTY"] = "Таңдалмаған";
+$MESS["TASKS_V2_GROUP_EPIC_HINT"] = "Эпик";
+$MESS["TASKS_V2_GROUP_HIDDEN"] = "Жасырын жоба";
+$MESS["TASKS_V2_GROUP_OWNER"] = "Басшы";
+$MESS["TASKS_V2_GROUP_STAGE_HINT"] = "Сатыны таңдау";
+$MESS["TASKS_V2_GROUP_STORY_POINTS_HINT"] = "Стори поинттар";
+$MESS["TASKS_V2_GROUP_SUBJECT"] = "Тақырып";
+$MESS["TASKS_V2_GROUP_TITLE"] = "Жоба";
+$MESS["TASKS_V2_GROUP_TITLE_CHIP"] = "Жоба";
+$MESS["TASKS_V2_GROUP_TITLE_COLLAB"] = "Коллаб";
+$MESS["TASKS_V2_GROUP_TITLE_SCRUM"] = "Скрам";

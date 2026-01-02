@@ -16,7 +16,8 @@ $componentParameters = array(
 	'PATH_TO_CONSENT_LIST' => $arResult['PATH_TO_CONSENTS'],
 	'CAN_EDIT' => $arResult['CAN_EDIT']
 );
-if ($_REQUEST['IFRAME'] == 'Y')
+
+if ($_REQUEST['IFRAME'] === 'Y')
 {
 	$APPLICATION->IncludeComponent(
 		"bitrix:ui.sidepanel.wrapper",
@@ -27,7 +28,8 @@ if ($_REQUEST['IFRAME'] == 'Y')
 			"POPUP_COMPONENT_PARAMS" => $componentParameters,
 			'RELOAD_GRID_AFTER_SAVE' => true,
 			'CLOSE_AFTER_SAVE' => true,
-		]
+			'USE_UI_TOOLBAR' => 'Y',
+		],
 	);
 }
 else

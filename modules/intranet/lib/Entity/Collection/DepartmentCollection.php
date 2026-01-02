@@ -7,7 +7,7 @@ use Bitrix\Intranet\Entity\Department;
 /**
  * @extends BaseCollection<Department>
  */
-class DepartmentCollection extends BaseCollection
+class DepartmentCollection extends IdentifiableCollection
 {
 	protected static function getItemClassName(): string
 	{

@@ -2,89 +2,79 @@
 
 namespace Bitrix\Crm\Order\Permissions;
 
+use Bitrix\Crm\Service\Container;
+
 /**
- * Class Payment
- * @package Bitrix\Crm\Order\Permissions
+ * @deprecated
+ * @see \Bitrix\Crm\Service\Container::getInstance()->getUserPermissions()
  */
 class Payment
 {
 	/**
 	 * @param $id
-	 * @param null $userPermissions
 	 * @return bool
 	 */
-	public static function checkUpdatePermission($id = 0, $userPermissions = null)
+	public static function checkUpdatePermission($id = 0)
 	{
 		$id = (int)$id;
-		$orderId = 0;
-
 		if ($id > 0)
 		{
-			$result = \Bitrix\Crm\Order\Payment::getList(array(
-				'filter' => [
-					'=ID' => $id,
-				],
-				'limit' => 1
-			));
-
-			$paymentData = $result->fetch();
-			$orderId = $paymentData['ORDER_ID'];
-			if ($orderId <= 0)
-			{
-				return false;
-			}
+			return Container::getInstance()
+				->getUserPermissions()
+				->item()
+				->canUpdate(\CCrmOwnerType::OrderPayment, $id)
+			;
 		}
 
-		return Order::checkUpdatePermission($orderId, $userPermissions);
+		return Container::getInstance()
+			->getUserPermissions()
+			->entityType()
+			->canUpdateItems(\CCrmOwnerType::OrderPayment)
+		;
 	}
 
 	/**
-	 * @param null $userPermissions
 	 * @return bool
 	 */
-	public static function checkCreatePermission($userPermissions = null)
+	public static function checkCreatePermission()
 	{
-		return Order::checkCreatePermission($userPermissions);
+		return Container::getInstance()
+			->getUserPermissions()
+			->entityType()
+			->canAddItems(\CCrmOwnerType::OrderPayment)
+		;
 	}
 
 	/**
 	 * @param $id
-	 * @param null $userPermissions
 	 * @return bool
 	 * @throws \Bitrix\Main\ArgumentException
 	 */
-	public static function checkDeletePermission($id, $userPermissions = null)
+	public static function checkDeletePermission($id)
 	{
-		return self::checkUpdatePermission($id, $userPermissions);
+		return self::checkUpdatePermission($id);
 	}
 
 	/**
 	 * @param int $id
-	 * @param null $userPermissions
 	 * @return bool
 	 */
-	public static function checkReadPermission($id = 0, $userPermissions = null)
+	public static function checkReadPermission($id = 0)
 	{
 		$id = (int)$id;
-		$orderId = 0;
-
 		if ($id > 0)
 		{
-			$result = \Bitrix\Crm\Order\Payment::getList(array(
-				'filter' => [
-					'=ID' => $id,
-				],
-				'limit' => 1
-			));
-
-			$paymentData = $result->fetch();
-			$orderId = (int)$paymentData['ORDER_ID'];
-			if ($orderId <= 0)
-			{
-				return false;
-			}
+			return Container::getInstance()
+				->getUserPermissions()
+				->item()
+				->canRead(\CCrmOwnerType::OrderPayment, $id)
+			;
 		}
 
-		return Order::checkReadPermission($orderId, $userPermissions);
+		return Container::getInstance()
+			->getUserPermissions()
+			->entityType()
+			->canReadItems(\CCrmOwnerType::OrderPayment)
+		;
 	}
 }

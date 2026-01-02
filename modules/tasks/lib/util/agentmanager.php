@@ -11,6 +11,7 @@
 namespace Bitrix\Tasks\Util;
 
 use Bitrix\Tasks\Item\SystemLog;
+use Bitrix\Tasks\V2\Infrastructure\Agent\Reminder;
 
 final class AgentManager
 {
@@ -24,11 +25,16 @@ final class AgentManager
 		return '\\'.__CLASS__."::notificationThrottleRelease();";
 	}
 
+	/**
+	 * @deprecated
+	 * @TasksV2
+	 * @use Reminder
+	 *
+	 * Don't remove it because agent with this name may be already registered in the system.
+	 */
 	public static function sendReminder()
 	{
-		\CTaskReminders::SendAgent();
-
-		return '\\'.__CLASS__."::sendReminder();";
+		return Reminder::execute();
 	}
 
 	public static function rotateSystemLog()

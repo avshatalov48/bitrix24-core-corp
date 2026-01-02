@@ -1,0 +1,2 @@
+<?php
+$MESS['INTRANET_LICENSE_WIDGET_CONTENT_PURCHASE_HISTORY_TEXT'] = 'Покупки и документы';

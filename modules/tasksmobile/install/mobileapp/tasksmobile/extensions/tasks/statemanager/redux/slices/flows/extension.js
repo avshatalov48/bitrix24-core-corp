@@ -23,12 +23,27 @@ jn.define('tasks/statemanager/redux/slices/flows', (require, exports, module) =>
 		flowsAdded,
 	} = require('tasks/statemanager/redux/slices/flows/src/reducer');
 
+	const {
+		flowTogglePin,
+	} = require('tasks/statemanager/redux/slices/flows/src/thunk');
+
+	const {
+		flowTogglePinPending,
+		flowTogglePinRejected,
+	} = require('tasks/statemanager/redux/slices/flows/src/extra-reducer');
+
 	const slice = createSlice({
 		name: sliceName,
 		initialState,
 		reducers: {
 			flowsAdded,
 			flowsUpserted,
+		},
+		extraReducers: (builder) => {
+			builder
+				.addCase(flowTogglePin.pending, flowTogglePinPending)
+				.addCase(flowTogglePin.rejected, flowTogglePinRejected)
+			;
 		},
 	});
 	ReducerRegistry.register(sliceName, slice.reducer);
@@ -44,5 +59,8 @@ jn.define('tasks/statemanager/redux/slices/flows', (require, exports, module) =>
 		selectEntities,
 		selectIds,
 		selectTotal,
+
+		// thunks
+		flowTogglePin,
 	};
 });

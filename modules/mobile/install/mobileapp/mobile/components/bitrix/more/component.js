@@ -75,13 +75,16 @@
 					const counter = item.params.counter;
 					this.currentCounters[counter] = siteCounters[counter];
 
-					const isNewStyles = item.imageName && this.enableNewStyle();
+					const isNewStyles = item.imageName;
 
 					return {
 						filter: { 'params.counter': counter },
 						element: {
+							version: item.isNew ? 2 : 1,
 							messageCount: siteCounters[counter],
-							styles: isNewStyles ? this.getItemStyles(this.showHighlighted(item, siteCounters[counter])) : item.styles,
+							styles: isNewStyles
+								? this.getItemStyles(this.showHighlighted(item, siteCounters[counter]), (item.isNew && item.tag))
+								: item.styles,
 						},
 					};
 				});
@@ -92,10 +95,6 @@
 				menu.updateItems(preparedItems);
 				Application.setBadges({ more: this.getTotalCounter(siteCounters) });
 			}
-		},
-		enableNewStyle()
-		{
-			return Application.getApiVersion() > 55;
 		},
 		initCache: function ()
 		{
@@ -177,17 +176,19 @@
 		prepareItemsBeforeRedraw(counters = {})
 		{
 			return items.map((item) => {
-				const isNewStyles = item.imageName && this.enableNewStyle();
+				const isNewStyles = item.imageName;
 				const counter = counters[item?.params?.counter];
+				const isNewItemWithTag = (item.isNew && item.tag);
 
 				return {
 					...item,
+					version: item.isNew ? 2 : 1,
 					messageCount: counters[item?.params?.counter],
-					styles: isNewStyles ? this.getItemStyles(this.showHighlighted(item, counter)) : item.styles,
+					styles: isNewStyles ? this.getItemStyles(this.showHighlighted(item, counter), isNewItemWithTag) : item.styles,
 				};
 			});
 		},
-		getItemStyles(showHighlighted = false)
+		getItemStyles(showHighlighted = false, isNew = false)
 		{
 			return {
 				title: {
@@ -204,6 +205,13 @@
 					border: {
 						color: showHighlighted ? Color.accentSoftBlue1.toHex() : Color.bgSeparatorPrimary.toHex(),
 						width: 1,
+					},
+				},
+				tag: {
+					backgroundColor: isNew ? '#00000000' : Color.accentMainPrimary.toHex(),
+					font: {
+						useColor: true,
+						color: isNew ? Color.accentMainSuccess.toHex() : Color.base3.toHex(),
 					},
 				},
 			};
@@ -292,17 +300,12 @@
 
 										if (item.imageName)
 										{
-											if (this.enableNewStyle())
-											{
-												item.color = null;
-												item.styles = this.getItemStyles(
-													this.showHighlighted(item, this.currentCounters[item.params.counter]),
-												);
-											}
-											else
-											{
-												item.imageName = null;
-											}
+											item.color = null;
+											item.version = item.isNew ? 2 : 1;
+											item.styles = this.getItemStyles(
+												this.showHighlighted(item, this.currentCounters[item.params.counter]),
+												(item.isNew && item.tag),
+											);
 										}
 
 										return item;
@@ -486,8 +489,8 @@
 		},
 	};
 
-	moreTabNavigator.unsubscribeFromPushNotifications();
-	moreTabNavigator.subscribeToPushNotifications(More);
+	moreTabNavigator.unsubscribeFromEvents();
+	moreTabNavigator.subscribeToEvents(More);
 	More.init();
 	// eslint-disable-next-line no-undef
 	qrauth.listenUniversalLink();

@@ -7,6 +7,7 @@ namespace Bitrix\Booking\Internals\Service\Journal\EventProcessor\Counter;
 use Bitrix\Booking\Command\Booking\UpdateBookingCommand;
 use Bitrix\Booking\Command\Counter\DropCounterCommand;
 use Bitrix\Booking\Command\Counter\UpCounterCommand;
+use Bitrix\Booking\Entity\Booking\Booking;
 use Bitrix\Booking\Internals\Container;
 use Bitrix\Booking\Internals\Service\CounterDictionary;
 use Bitrix\Booking\Internals\Service\Journal\EventProcessor\EventProcessor;
@@ -26,8 +27,8 @@ class CounterEventProcessor implements EventProcessor
 				JournalType::BookingConfirmed => $this->processBookingConfirmed($event),
 				JournalType::BookingUpdated => $this->processBookingUpdated($event),
 				JournalType::BookingDeleted => $this->processBookingDeleted($event),
-				JournalType::BookingDelayedNotificationInitialized => $this->processDelayedMessageInitialized($event),
-				JournalType::BookingManagerConfirmNotificationSent => $this->processManagerConfirmMessageSent($event),
+				JournalType::BookingDelayedCounterActivated => $this->processBookingDelayedCounterActivated($event),
+				JournalType::BookingConfirmCounterActivated => $this->processBookingConfirmCounterActivated($event),
 				default	=> '',
 			};
 		}
@@ -71,7 +72,7 @@ class CounterEventProcessor implements EventProcessor
 		$this->runDropCounterCommand($event->entityId, CounterDictionary::BookingUnConfirmed);
 	}
 
-	private function processDelayedMessageInitialized(JournalEvent $event): void
+	private function processBookingDelayedCounterActivated(JournalEvent $event): void
 	{
 		$booking = Container::getBookingRepository()->getById($event->entityId);
 
@@ -91,14 +92,9 @@ class CounterEventProcessor implements EventProcessor
 		$this->runUpCounterCommand($booking->getId(), CounterDictionary::BookingDelayed);
 	}
 
-	private function processManagerConfirmMessageSent(JournalEvent $event): void
+	private function processBookingConfirmCounterActivated(JournalEvent $event): void
 	{
-		$booking = Container::getBookingRepository()->getById($event->entityId);
-
-		if ($booking === null)
-		{
-			return;
-		}
+		$booking = Booking::mapFromArray($event->data['booking']);
 
 		if ($booking->isConfirmed() || $booking->isVisitStatusKnown())
 		{

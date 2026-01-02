@@ -10,6 +10,7 @@ use Bitrix\Crm\Format\TextHelper;
 use Bitrix\Crm\Item;
 use Bitrix\Crm\Observer\Entity\ObserverTable;
 use Bitrix\Crm\ProductRowTable;
+use Bitrix\Crm\RepeatSale\Log\Entity\RepeatSaleLogTable;
 use Bitrix\Crm\Requisite\EntityLink;
 use Bitrix\Crm\Reservation;
 use Bitrix\Crm\Service\Container;
@@ -102,7 +103,7 @@ final class FieldRepository
 		bool $feminine = false
 	): ScalarField
 	{
-		$messageCode = 'CRM_TYPE_ITEM_FIELD_MOVED_TIME';
+		$messageCode = 'CRM_TYPE_ITEM_FIELD_MOVED_TIME_V2';
 		$this->prepareMessageCode($messageCode, $feminine);
 
 		return
@@ -163,7 +164,7 @@ final class FieldRepository
 		bool $feminine = false
 	): ScalarField
 	{
-		$messageCode = 'CRM_TYPE_ITEM_FIELD_MOVED_BY';
+		$messageCode = 'CRM_TYPE_ITEM_FIELD_MOVED_BY_V2';
 		$this->prepareMessageCode($messageCode, $feminine);
 
 		return
@@ -190,7 +191,7 @@ final class FieldRepository
 				->configureDefaultValue(static function () {
 					return Container::getInstance()->getContext()->getUserId();
 				})
-				->configureTitle(Loc::getMessage('CRM_TYPE_ITEM_FIELD_LAST_ACTIVITY_BY'))
+				->configureTitle(Loc::getMessage('CRM_TYPE_ITEM_FIELD_LAST_ACTIVITY_BY_MSGVER_1'))
 		;
 	}
 
@@ -975,6 +976,47 @@ final class FieldRepository
 				Reservation\Internals\ProductRowReservationTable::class,
 				Join::on('this.ID', 'ref.ROW_ID')
 			)
+		);
+	}
+
+	/**
+	 * @param int $entityTypeId
+	 * @return Relation[]
+	 */
+	public function getLastCommunications(int $entityTypeId): array
+	{
+		$communications = [];
+
+		foreach (LastCommunicationTable::getCodeNames() as $fieldName => $fieldTitle)
+		{
+			$fmTableName = $this->sqlHelper->quote(LastCommunicationTable::getTableName());
+			$typeId = $this->sqlHelper->convertToDbString($entityTypeId);
+			$type = $this->sqlHelper->convertToDbString($fieldName);
+
+			$sql = "SELECT LCT.LAST_COMMUNICATION_TIME FROM {$fmTableName} LCT WHERE LCT.ENTITY_TYPE_ID = {$typeId}"
+				. " AND LCT.ENTITY_ID = %s AND LCT.TYPE = {$type}";
+			;
+
+			$communications[] =
+				(new ExpressionField(
+					LastCommunicationTable::FIELD_PREFIX . $fieldName,
+					'(' . $this->sqlHelper->getTopSql($sql, 1) . ')',
+					['ID']
+				))
+				->configureTitle($fieldTitle)
+				->configureValueType(DatetimeField::class);
+		}
+
+		return $communications;
+	}
+
+	public function getRepeatSaleSegmentId(int $entityTypeId): Relation
+	{
+		return new Reference(
+			RepeatSaleLogTable::REPEAT_SALE_SEGMENT_ID_NAME,
+			RepeatSaleLogTable::class,
+			Join::on('this.ID', 'ref.ENTITY_ID')
+				->where('ref.ENTITY_TYPE_ID', \CCrmOwnerType::Deal),
 		);
 	}
 }

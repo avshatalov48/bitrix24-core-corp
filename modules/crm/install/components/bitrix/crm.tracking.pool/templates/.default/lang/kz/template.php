@@ -1,0 +1,21 @@
+<?php
+$MESS["CRM_TRACKING_CHANNEL_POOL_AV"] = "Қолжетімді";
+$MESS["CRM_TRACKING_CHANNEL_POOL_AV_ITEMS_EMAIL"] = "Қолжетімді email мекенжайлары";
+$MESS["CRM_TRACKING_CHANNEL_POOL_AV_ITEMS_PHONE"] = "Қолжетімді нөмірлер";
+$MESS["CRM_TRACKING_CHANNEL_POOL_BTN_ADD"] = "Қосу";
+$MESS["CRM_TRACKING_CHANNEL_POOL_BTN_ADD_EMAIL"] = "email-ды қосу";
+$MESS["CRM_TRACKING_CHANNEL_POOL_BTN_ADD_PHONE"] = "нөмірді қосу";
+$MESS["CRM_TRACKING_CHANNEL_POOL_BTN_ALLOCATE"] = "Автоматты түрде тарату";
+$MESS["CRM_TRACKING_CHANNEL_POOL_BTN_CANCEL"] = "Болдырмау";
+$MESS["CRM_TRACKING_CHANNEL_POOL_DELETE_CONFIRM"] = "`%code%`-ты жою керек пе? Бұл операция қайтымсыз.";
+$MESS["CRM_TRACKING_CHANNEL_POOL_DESC_EMAIL"] = "Email мекенжайларын бапталған жарнама көздеріне таратыңыз";
+$MESS["CRM_TRACKING_CHANNEL_POOL_DESC_PHONE"] = "Телефон нөмірлерін бапталған жарнама көздеріне таратыңыз";
+$MESS["CRM_TRACKING_CHANNEL_POOL_FORMAT_PHONE"] = "Телефон нөмірлерінің пішімі";
+$MESS["CRM_TRACKING_CHANNEL_POOL_HEAD_EMAIL"] = "Email мекенжайларын тарату";
+$MESS["CRM_TRACKING_CHANNEL_POOL_HEAD_PHONE"] = "Телефон нөмірлерін тарату";
+$MESS["CRM_TRACKING_CHANNEL_POOL_ITEMS_EMAIL"] = "Email мекенжайлары";
+$MESS["CRM_TRACKING_CHANNEL_POOL_ITEMS_PHONE"] = "Телефон нөмірлері";
+$MESS["CRM_TRACKING_CHANNEL_POOL_ITEM_DEMO_EMAIL"] = "Email енгізіңіз";
+$MESS["CRM_TRACKING_CHANNEL_POOL_ITEM_DEMO_PHONE"] = "Нөмірді енгізіңіз";
+$MESS["CRM_TRACKING_CHANNEL_POOL_PHONE_STATUS_SUCCESS"] = "Нөмір коллтрекингті қолдайды";
+$MESS["CRM_TRACKING_CHANNEL_POOL_PHONE_STATUS_UNKNOWN"] = "Нөмір коллтрекингті қолдамауы мүмкін. Тексеру үшін басыңыз";

@@ -13,33 +13,26 @@ export class TimelineSummaryDocuments extends EntityEditorPaymentDocuments
 		this._rootNode.innerHTML = '';
 		this._setupCurrencyFormat();
 
-		if (this.hasContent())
+		this._filterSuccessfulDocuments();
+		this._rootNode.classList.remove('is-hidden');
+
+		if (this._isWithOrdersMode)
 		{
-			this._filterSuccessfulDocuments();
-			this._rootNode.classList.remove('is-hidden');
+			this._renderDocumentWithOrdersMode();
+		}
+		else
+		{
+			this._renderDocumentWithoutOrdersMode();
+		}
 
-			if (this._isWithOrdersMode)
-			{
-				this._renderDocumentWithOrdersMode();
-			}
-			else
-			{
-				this._renderDocumentWithoutOrdersMode();
-			}
-
-			let checkExists = this._isCheckExists();
-			if (checkExists)
-			{
-				this._rootNode.append(Tag.render`
+		let checkExists = this._isCheckExists();
+		if (checkExists)
+		{
+			this._rootNode.append(Tag.render`
 					<div class="crm-entity-stream-content-document-table-group">
 						${this._renderChecksDocument()}
 					</div>
 				`);
-			}
-		}
-		else
-		{
-			this._rootNode.classList.add('is-hidden');
 		}
 
 		EventEmitter.emit('PaymentDocuments:render', [this]);
@@ -372,7 +365,7 @@ export class TimelineSummaryDocuments extends EntityEditorPaymentDocuments
 
 	_filterSuccessfulDocuments()
 	{
-		this._options.DOCUMENTS = this._options.DOCUMENTS.filter((item) => {
+		this._options.DOCUMENTS = this._docs().filter((item) => {
 			return (
 				(item.TYPE === 'PAYMENT' && item.PAID === 'Y')
 				|| (item.TYPE === 'SHIPMENT' && item.DEDUCTED === 'Y')
@@ -384,7 +377,7 @@ export class TimelineSummaryDocuments extends EntityEditorPaymentDocuments
 
 	_isCheckExists()
 	{
-		let checks = this._options.DOCUMENTS.filter((item) => {
+		let checks = this._docs().filter((item) => {
 			return item.TYPE === 'CHECK' && item.STATUS === 'Y';
 		});
 

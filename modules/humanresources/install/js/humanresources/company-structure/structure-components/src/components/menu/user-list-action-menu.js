@@ -1,6 +1,5 @@
 import { BaseActionMenu, BaseActionMenuPropsMixin } from './base-action-menu';
 import { UserActionMenuItem } from './items/user-action-menu-item';
-import { SidePanel } from 'main.sidepanel';
 
 export const UserListActionMenu = {
 	name: 'UserListActionMenu',
@@ -18,7 +17,7 @@ export const UserListActionMenu = {
 				return;
 			}
 
-			SidePanel.Instance.open(url, {
+			BX.SidePanel.Instance.open(url, {
 				cacheable: false,
 			});
 		},
@@ -33,6 +32,7 @@ export const UserListActionMenu = {
 			:width="260"
 			:delimiter="false"
 			:titleBar="titleBar"
+			:containerDataTestId="containerDataTestId"
 			:angleOffset="35"
 			v-slot="{item}"
 			@close="this.$emit('close')"
@@ -43,6 +43,7 @@ export const UserListActionMenu = {
 				:avatar="item.avatar"
 				:workPosition="item.workPosition"
 				:color="item.color"
+				:dataTestId="item.dataTestId"
 				@click="this.openUserUrl(item.url)"
 			/>
 		</BaseActionMenu>

@@ -1,11 +1,6 @@
 .cancel-booking{
-	margin-top: 10px;
 	display: flex;
 	align-items: center;
-}
-
-.cancel-booking-icon{
-
 }
 
 .cancel-booking-link{

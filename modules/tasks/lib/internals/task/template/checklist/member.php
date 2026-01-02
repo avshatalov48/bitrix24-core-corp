@@ -2,6 +2,7 @@
 namespace Bitrix\Tasks\Internals\Task\Template\CheckList;
 
 use Bitrix\Main\Entity\DataManager;
+use Bitrix\Main\ORM\Data\AddStrategy\Trait\AddInsertIgnoreTrait;
 
 /**
  * Class MemberTable
@@ -21,6 +22,8 @@ use Bitrix\Main\Entity\DataManager;
  */
 class MemberTable extends DataManager
 {
+	use AddInsertIgnoreTrait;
+
 	/**
 	 * @return string
 	 */

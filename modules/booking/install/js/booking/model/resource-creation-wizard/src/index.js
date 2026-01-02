@@ -1,2 +1,2 @@
 export { ResourceCreationWizardModel } from './resource-creation-wizard';
-export type { ResourceCreationType } from './types';
+export type { ResourceCreationType, SlotLengthId } from './types';

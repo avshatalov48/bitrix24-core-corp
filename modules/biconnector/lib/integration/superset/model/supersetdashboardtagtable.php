@@ -4,6 +4,7 @@ namespace Bitrix\BIConnector\Integration\Superset\Model;
 
 use Bitrix\Main\Entity\ReferenceField;
 use Bitrix\Main\ORM\Data\DataManager;
+use Bitrix\Main\ORM\Data\Internal\DeleteByFilterTrait;
 use Bitrix\Main\ORM\Fields;
 use Bitrix\Main\ORM\Query\Join;
 
@@ -35,6 +36,7 @@ use Bitrix\Main\ORM\Query\Join;
 
 final class SupersetDashboardTagTable extends DataManager
 {
+	use DeleteByFilterTrait;
 	/**
 	 * Returns DB table name for entity.
 	 *

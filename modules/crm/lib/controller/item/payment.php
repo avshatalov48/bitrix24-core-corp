@@ -27,7 +27,7 @@ final class Payment extends Crm\Controller\Base
 		/** @var Crm\Entity\PaymentDocumentsRepository $repository */
 		$repository = Main\DI\ServiceLocator::getInstance()->get('crm.entity.paymentDocumentsRepository');
 
-		$hasEntityPermission = Container::getInstance()->getUserPermissions()->checkReadPermissions(
+		$hasEntityPermission = Container::getInstance()->getUserPermissions()->item()->canRead(
 			$entityTypeId,
 			$entityId
 		);
@@ -72,7 +72,7 @@ final class Payment extends Crm\Controller\Base
 			return null;
 		}
 
-		$hasPermission = Container::getInstance()->getUserPermissions()->checkReadPermissions(
+		$hasPermission = Container::getInstance()->getUserPermissions()->item()->canRead(
 			\CCrmOwnerType::Order,
 			$payment->getOrderId()
 		);
@@ -205,7 +205,7 @@ final class Payment extends Crm\Controller\Base
 			return null;
 		}
 
-		$hasPermission = Container::getInstance()->getUserPermissions()->checkUpdatePermissions(
+		$hasPermission = Container::getInstance()->getUserPermissions()->item()->canUpdate(
 			\CCrmOwnerType::Order,
 			$payment->getOrderId()
 		);
@@ -259,7 +259,7 @@ final class Payment extends Crm\Controller\Base
 			return null;
 		}
 
-		$hasPermission = Container::getInstance()->getUserPermissions()->checkUpdatePermissions(
+		$hasPermission = Container::getInstance()->getUserPermissions()->item()->canUpdate(
 			\CCrmOwnerType::Order,
 			$payment->getOrderId()
 		);
@@ -310,7 +310,7 @@ final class Payment extends Crm\Controller\Base
 			return false;
 		}
 
-		$hasPermission = Container::getInstance()->getUserPermissions()->checkUpdatePermissions(
+		$hasPermission = Container::getInstance()->getUserPermissions()->item()->canUpdate(
 			$entityTypeId,
 			$entityId
 		);

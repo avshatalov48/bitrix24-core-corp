@@ -7,6 +7,9 @@ if (!defined('B_PROLOG_INCLUDED') || B_PROLOG_INCLUDED !== true)
 /** @var \CMain $APPLICATION */
 /** @var SignStartComponent $component */
 
+$request = \Bitrix\Main\Application::getInstance()->getContext()->getRequest();
+$folderId = (int)$request->get('folderId');
+$isOpenedAsFolder = $request->get('isOpenedAsFolder') === 'Y';
 $urlAfterClose = ($component->getRequest('inlineCrm') === 'Y' || $component->getRequest('noRedirect') === 'Y')
 	? '' : \Bitrix\Sign\Document\Entity\SmartB2e::getEntityDetailUrlId()
 ;
@@ -23,6 +26,8 @@ $APPLICATION->IncludeComponent(
 			'PAGE_URL_EDIT' => $arParams['PAGE_URL_EDIT'],
 			'VAR_DOC_ID' => 'docId',
 			'VAR_STEP_ID' => 'stepId',
+			'TEMPLATE_FOLDER_ID' => $folderId,
+			'IS_OPENED_AS_FOLDER' => $isOpenedAsFolder,
 			'CRM_ENTITY_TYPE_ID' => \Bitrix\Sign\Document\Entity\SmartB2e::getEntityTypeId(),
 			'ENTITY_TYPE_ID' => \Bitrix\Sign\Type\Document\EntityType::SMART_B2E,
 			'OPEN_URL_AFTER_CLOSE' => $urlAfterClose,

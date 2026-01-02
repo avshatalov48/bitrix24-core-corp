@@ -1,5 +1,6 @@
 .right-fixed-button {
-	margin-left: auto;
+	position: absolute;
+	right: 20px;
 }
 
 .crm-timeline__line_of_text_blocks_button {

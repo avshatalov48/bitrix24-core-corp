@@ -8,6 +8,9 @@ use Bitrix\Main\Type\DateTime;
 
 class Configuration
 {
+	public const RECOMMENDATIONS_PROMPT_CODE = 'flows_recommendations';
+	public const RECOMMENDATIONS_AI_ACT_PROMPT_CODE = 'flows_recommendations_ai_act';
+
 	public static function getCopilotTasksLimit(): int
 	{
 		return 1000;
@@ -45,7 +48,7 @@ class Configuration
 
 	public static function getMaxValueForLowEfficiency(): int
 	{
-		return 80;
+		return 79;
 	}
 
 	public static function getPrecisionOfValues(): int

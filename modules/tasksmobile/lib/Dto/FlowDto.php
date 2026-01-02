@@ -17,6 +17,7 @@ class FlowDto extends Dto
 		public readonly int $efficiency,
 		public readonly bool $active,
 		public readonly bool $demo,
+		public readonly bool $isPinned,
 		public readonly int $plannedCompletionTime,
 		public readonly string $name,
 		public readonly ?FlowDistributionType $distributionType,

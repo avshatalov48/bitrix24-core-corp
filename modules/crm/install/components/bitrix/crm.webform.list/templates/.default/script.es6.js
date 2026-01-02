@@ -21,26 +21,6 @@ class WebFormList
 		this.gridId = params.gridId;
 		this.gridNode = document.getElementById(this.gridId);
 
-		const hideDescBtnNode = BX('CRM_LIST_DESC_BTN_HIDE');
-		if (hideDescBtnNode)
-		{
-			BX.bind(hideDescBtnNode, 'click', function () {
-				BX.addClass(BX('CRM_LIST_DESC_CONT'), 'crm-webform-list-info-hide');
-				BX.userOptions.delay = 0;
-				BX.userOptions.save('crm', 'webform_list_view', 'hide-desc', 'Y');
-			});
-		}
-
-		const notifyBtnNode = BX('CRM_LIST_WEBFORM_NOTIFY_BTN_HIDE');
-		if (notifyBtnNode)
-		{
-			BX.bind(notifyBtnNode, 'click', function () {
-				BX.addClass(BX('CRM_LIST_DESC_CONT'), 'crm-webform-list-info-hide');
-				BX.userOptions.delay = 0;
-				BX.userOptions.save('crm', 'notify_webform', 'ru_fz_152', 'Y');
-			});
-		}
-
 		this.#renderGridRows();
 		BX.addCustomEvent('Grid::updated', () => {
 			this.#renderGridRows();

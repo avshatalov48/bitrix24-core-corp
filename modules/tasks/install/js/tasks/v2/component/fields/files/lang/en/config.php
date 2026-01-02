@@ -1,0 +1,11 @@
+<?php
+$MESS["TASKS_V2_FILES_ADD"] = "Add";
+$MESS["TASKS_V2_FILES_CLEAR"] = "Delete all";
+$MESS["TASKS_V2_FILES_COUNT"] = "Files: #COUNT#";
+$MESS["TASKS_V2_FILES_DOWNLOAD_ARCHIVE"] = "Download all (#FILES_SIZE#)";
+$MESS["TASKS_V2_FILES_LOADING"] = "Loading files";
+$MESS["TASKS_V2_FILES_MORE"] = "more";
+$MESS["TASKS_V2_FILES_MY_DRIVE"] = "My Drive";
+$MESS["TASKS_V2_FILES_TITLE"] = "Files";
+$MESS["TASKS_V2_FILES_UPLOAD"] = "Upload files";
+$MESS["TASKS_V2_FILES_UPLOAD_BUTTON"] = "Upload";

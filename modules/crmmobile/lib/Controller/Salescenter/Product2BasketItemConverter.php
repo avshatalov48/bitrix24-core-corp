@@ -40,6 +40,8 @@ class Product2BasketItemConverter
 				}
 			}
 
+			$product['TAX_RATE'] = isset($product['TAX_RATE']) ? (float)$product['TAX_RATE'] : null;
+
 			$item = [
 				'innerId' => $product['BASKET_ITEM_FIELDS']['XML_ID'] ?? '',
 				'module' => $product['BASKET_ITEM_FIELDS']['MODULE'] ?? '',
@@ -59,7 +61,7 @@ class Product2BasketItemConverter
 					'originProductId' => $product['BASKET_ITEM_FIELDS']['ADDITIONAL_FIELDS']['ORIGIN_PRODUCT_ID'] ?? '',
 				],
 				'taxIncluded' => $taxIncluded,
-				'taxId' => VatTable::getActiveVatIdByRate((float)$product['TAX_RATE']),
+				'taxId' => VatTable::getActiveVatIdByRate($product['TAX_RATE']),
 				'type' => $product['TYPE'],
 			];
 

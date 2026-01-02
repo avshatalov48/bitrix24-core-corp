@@ -2,10 +2,13 @@
 
 use Bitrix\Main\Config\Option;
 use Bitrix\Main\Loader;
+use Bitrix\Main\Localization\Loc;
 use Bitrix\Main\ModuleManager;
+use Bitrix\Mobile\Menu\Analytics;
 use Bitrix\Mobile\Tab\Manager;
 use Bitrix\MobileApp\Janative\Entity\Component;
 use Bitrix\MobileApp\Janative\Entity\Extension;
+use Bitrix\Mobile\Context;
 
 IncludeModuleLangFile(__FILE__);
 
@@ -68,7 +71,7 @@ class CMobileEvent
 	{
 		return [
 			"install/mobileapp/mobile/components/bitrix" => "/bitrix/mobileapp/mobile/components/bitrix/",
-			"install/mobileapp/mobile/extensions/bitrix" => "/bitrix/mobileapp/mobile/erxtensions/bitrix/",
+			"install/mobileapp/mobile/extensions/bitrix" => "/bitrix/mobileapp/mobile/extensions/bitrix/",
 		];
 	}
 
@@ -98,15 +101,97 @@ class CMobileEvent
 		/**
 		 * Tabs are not supported with web-version of menu
 		 */
-		if (!($eventProvider instanceof Component))
+		if (!($eventProvider instanceof Component) && !($eventProvider instanceof Context))
 		{
 			return $data;
 		}
 
-		/**
-		 * @var  $eventProvider Component
-		 */
-		$imageDir = $eventProvider->getPath() . "/images/";
+		if ($eventProvider instanceof Context)
+		{
+			$data = self::addDevelopmentItems($data);
+
+			if (
+				Loader::includeModule('voximplant')
+				&& \Bitrix\Voximplant\Security\Helper::canCurrentUserPerformCalls()
+			)
+			{
+				$sectionIndex = self::getSectionIndexByCode($data, 'crm');
+				if ($sectionIndex !== null)
+				{
+					$data[$sectionIndex]['items'] = array_merge(
+						$menu[$sectionIndex]['items'] ?? [],
+							[
+								[
+									'id' => 'voximplant',
+									'sort' => 200,
+									'title' => Loc::getMessage('MENU_CRM_SECTION_CALL'),
+									'imageName' => 'phone_up',
+									'counter' => 'voximplant',
+									'params' => [
+										'onclick' => <<<JS
+										BX.postComponentEvent("onNumpadRequestShow");
+									JS,
+										'analytics' => Analytics::telephony(),
+									],
+								],
+							],
+					);
+				}
+			}
+
+			if (
+				Loader::includeModule('landing')
+				&& Loader::includeModule('intranet')
+				&& !$eventProvider->extranet
+				&& !$eventProvider->isCollaber
+			)
+			{
+				$isKnowledgeAvailable = \Bitrix\Intranet\Settings\Tools\ToolsManager::getInstance()->checkAvailabilityByToolId('knowledge_base');
+				if ($isKnowledgeAvailable && \Bitrix\Landing\Site\Type::isEnabled('knowledge'))
+				{
+					$sectionIndex = self::getSectionIndexByCode($data, 'teamwork');
+					if ($sectionIndex !== null)
+					{
+						$componentId = 'knowledge.list';
+						$componentVersion = \Bitrix\MobileApp\Janative\Manager::getComponentVersion(
+							$componentId
+						);
+						$data[$sectionIndex]['items'] = array_merge(
+							$data[$sectionIndex]['items'] ?? [],
+							[
+								[
+									'id' => 'knowledge',
+									'sectionCode' => 'teamwork',
+									'sort' => 400,
+									'title' => Loc::getMessage('MENU_TEAMWORK_KNOWLEDGE'),
+									'imageUrl' => '/bitrix/images/landing/mobile/knowledge.png?4',
+									'imageName' => 'knowledge_base',
+									'color' => '#e597ba',
+									'params' => [
+										'onclick' => <<<JS
+										ComponentHelper.openList({
+											name: '{$componentId}',
+											object: 'list',
+											version: '{$componentVersion}',
+											widgetParams: {titleParams: { text: this.title, type: 'section' } , useSearch:true}
+										});
+									JS,
+										'analytics' => Analytics::knowledge(),
+									],
+								],
+							],
+						);
+					}
+				}
+			}
+		}
+
+		$imageDir = '';
+		if ($eventProvider instanceof Component)
+		{
+			$imageDir = $eventProvider->getPath() . "/images/";
+		}
+
 		$manager = new Manager();
 		$active = array_keys($manager->getActiveTabs());
 		$all = $manager->getAllTabIDs(true);
@@ -123,13 +208,15 @@ class CMobileEvent
 				{
 					$item["imageUrl"] = $imageDir . $item["imageUrl"];
 				}
-				if (isset($item["sectionCode"]))
+				$sectionCodeKey = $eventProvider instanceof Component ? 'sectionCode' : 'section_code';
+				if (isset($item[$sectionCodeKey]))
 				{
 					$count = count($data);
 					for ($i = 0; $i < $count; $i++)
 					{
 						$section = &$data[$i];
-						if (isset($section["code"]) && $section['code'] === $item['sectionCode'])
+
+						if (isset($section["code"]) && $section['code'] === $item[$sectionCodeKey])
 						{
 							if (!isset($section["items"]))
 							{
@@ -162,6 +249,111 @@ class CMobileEvent
 
 		return $data;
 	}
+
+	private static function addDevelopmentItems(array $menu): array
+	{
+		if (\Bitrix\Main\Config\Option::get('mobile', 'developers_menu_section', 'N') !== 'Y')
+		{
+			return $menu;
+		}
+
+		$sectionId = CMobileEvent::getSectionIndexByCode($menu, 'development');
+		if ($sectionId === null)
+		{
+			return $menu;
+		}
+
+
+		$developerMenuItems = [];
+		$isEnableStoryBook = false;
+
+		foreach (\Bitrix\Main\EventManager::getInstance()->findEventHandlers("mobileapp", "onJNComponentWorkspaceGet", ['mobile']) as $event)
+		{
+			if ($event['TO_METHOD'] === 'getJNDevWorkspace')
+			{
+				$isEnableStoryBook = true;
+			}
+		}
+
+		if ($isEnableStoryBook)
+		{
+			$developerMenuItems[] = [
+				'id' => 'storybook',
+				'title' => 'StoryBook',
+				'imageName' => 'form',
+				'path' => '/development/storybook',
+			];
+		}
+
+		$developerMenuItems[] = [
+			'id' => 'unit.tests',
+			'title' => "Frontend Unit Tests",
+			'highlighted' => true,
+			'imageName' => 'form',
+			'path' => '/development/unit.tests',
+		];
+
+		$developerMenuItems[] = [
+			'id' => 'playground',
+			'title' => 'Developer playground',
+			'imageName' => 'form',
+			'path' => '/development/playground',
+		];
+
+		$developerMenuItems[] = [
+			'id' => 'fields.component',
+			'title' => "Fields Test",
+			'imageName' => 'form',
+			'path' => '/development/fields.test',
+		];
+
+		$developerMenuItems[] = [
+			'id' => 'listview.benchmark',
+			'title' => 'ListView benchmark',
+			'imageName' => 'form',
+			'path' => '/development/listview.benchmark',
+		];
+
+		$developerMenuItems[] = [
+			'id' => 'text-editor-demo',
+			'title' => 'Rich-text editor sandbox',
+			'imageName' => 'form',
+			'path' => '/development/text-editor.demo',
+		];
+
+		$developerMenuItems[] = [
+			'id' => 'formatter-sandbox',
+			'title' => 'Formatter sandbox',
+			'imageName' => 'form',
+			'path' => '/development/formatter.sandbox',
+		];
+
+		$menu[$sectionId]['items'] = array_merge(
+			$menu[$sectionId]['items'] ?? [],
+				$developerMenuItems,
+		);
+
+		return $menu;
+	}
+
+	private static function getSectionIndexByCode(array $menu, string $code): ?int
+	{
+		foreach ($menu as $index => $section)
+		{
+			if (!is_array($section))
+			{
+				continue;
+			}
+
+			if (isset($section['code']) && $section['code'] === $code)
+			{
+				return $index;
+			}
+		}
+
+		return null;
+	}
+
 }
 
 class MobileApplication extends Bitrix\Main\Authentication\Application

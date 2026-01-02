@@ -57,6 +57,11 @@ class CCrmDedupeWizardComponentAjaxController extends Main\Engine\Controller
 
 	public function getSettingsSliderContentAction(string $entityTypeId, string $guid): HttpResponse
 	{
+		if (Main\Loader::includeModule('ui'))
+		{
+			\Bitrix\UI\Toolbar\Facade\Toolbar::deleteFavoriteStar();
+		}
+
 		$content = $GLOBALS['APPLICATION']->includeComponent(
 			'bitrix:ui.sidepanel.wrapper',
 			'',
@@ -70,7 +75,8 @@ class CCrmDedupeWizardComponentAjaxController extends Main\Engine\Controller
 				],
 				'BUTTONS' => ['save', 'cancel'],
 				'USE_PADDING' =>false,
-				'IFRAME_MODE' => true
+				'IFRAME_MODE' => true,
+				'USE_UI_TOOLBAR' => 'Y',
 			]
 		);
 

@@ -16,7 +16,6 @@ if (isset($_REQUEST['IFRAME']) && $_REQUEST['IFRAME'] === 'Y')
 		[
 			'ENTITY_TYPE_ID' => CCrmOwnerType::Deal,
 			'ENTITY_ID' => $arResult['VARIABLES']['deal_id'],
-			'ENABLE_TITLE_EDIT' => true,
 			'EXTRAS' => [
 				'DEAL_CATEGORY_ID' => $arResult['VARIABLES']['category_id'] ?? -1,
 				'ANALYTICS' => [

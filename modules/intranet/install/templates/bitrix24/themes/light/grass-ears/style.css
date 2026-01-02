@@ -1,4 +1,9 @@
-body {
-	background: #A1474C url(grass-ears.jpg) fixed 0 0 no-repeat;
-	background-size: cover;
+:root {
+  --air-theme-bg-color: #A1474C;
+  --air-theme-bg-size: cover;
+  --air-theme-bg-repeat: no-repeat;
+  --air-theme-bg-position: 0 0;
+  --air-theme-bg-attachment: fixed;
+  --air-theme-bg-image: url(/bitrix/templates/bitrix24/themes/light/grass-ears/grass-ears.jpg);
+  --air-theme-bg-image-blurred: url(/bitrix/templates/bitrix24/themes/light/grass-ears/grass-ears-blurred.webp);
 }

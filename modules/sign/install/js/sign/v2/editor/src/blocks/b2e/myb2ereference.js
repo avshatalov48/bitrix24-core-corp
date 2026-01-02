@@ -135,7 +135,7 @@ export default class MyB2eReference extends Dummy
 				'COMPANY',
 				'PROFILE',
 			];
-			if (this.block.blocksManager.documentInitiatedByType !== DocumentInitiated.employee)
+			if (!blocksManager.isTemplateMode)
 			{
 				categories.push('SMART_B2E_DOC');
 			}

@@ -4,10 +4,13 @@ if (!defined('B_PROLOG_INCLUDED') || B_PROLOG_INCLUDED !== true)
 {
 	die();
 }
+
+use Bitrix\Crm\Restriction\RestrictionManager;
+
 ?>
 <script>
 	BX.ready(function() {
-		<?=\Bitrix\Crm\Restriction\RestrictionManager::getQuotesRestriction()->prepareInfoHelperScript();?>;
+		<?= RestrictionManager::getQuotesRestriction()->prepareFeaturePromoterScript() ?>
 		var slider = top.BX && top.BX.SidePanel && top.BX.SidePanel.Instance.getSliderByWindow(window);
 		if(slider)
 		{

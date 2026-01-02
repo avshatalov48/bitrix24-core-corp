@@ -5,6 +5,7 @@ namespace Bitrix\Sign\Service;
 use Bitrix\Main\Error;
 use Bitrix\Main\ObjectNotFoundException;
 use Bitrix\Main\Result;
+use Bitrix\Main\Type\DateTime;
 use Bitrix\Sign\Config;
 use Bitrix\Sign\Contract\Chat\Message;
 use Bitrix\Sign\Item\Document;
@@ -64,14 +65,14 @@ class HrBotMessageService
 		return new Result();
 	}
 
-	public function handleDocumentStatusChangedMessage(Document $document, string $newStatus, ?Member $initiatorMember = null): Result
+	public function handleDocumentStatusChangedMessage(Document $document, string $newStatus, ?int $initiatorUserId = null): Result
 	{
 		if ($this->isByEmployee($document))
 		{
 			switch ($newStatus)
 			{
 				case Type\DocumentStatus::STOPPED:
-					return $this->handleByEmployeeDocumentStoppedStatus($document, $initiatorMember);
+					return $this->handleByEmployeeDocumentStoppedStatus($document, $initiatorUserId);
 				case Type\DocumentStatus::DONE:
 					$result = $this->byEmployeeSendDoneMessageToEmployee($document);
 					$result->addErrors(
@@ -86,7 +87,7 @@ class HrBotMessageService
 		switch ($newStatus)
 		{
 			case Type\DocumentStatus::STOPPED:
-				return $this->handleByCompanyDocumentStoppedStatus($document, $initiatorMember);
+				return $this->handleByCompanyDocumentStoppedStatus($document, $initiatorUserId);
 
 			case Type\DocumentStatus::DONE:
 				$signedDone = $this->memberService->countSuccessfulSigners($document->id);
@@ -228,35 +229,49 @@ class HrBotMessageService
 		};
 	}
 
-	private function handleByEmployeeDocumentStoppedStatus(Document $document, ?Member $stopInitiatorMember = null): Result
+	private function handleByEmployeeDocumentStoppedStatus(Document $document, ?int $stopInitiatorUserId): Result
 	{
 		$result = new Result();
 
-		$stopInitiatorMemberUserId = $stopInitiatorMember
-			? $this->memberService->getUserIdForMember($stopInitiatorMember)
-			: $document->stoppedById
-		;
+		$assigneeUserId = $this->getAssigneeUserId($document);
 
 		$userFrom =
 			$this->getBotUserId()
-			?? $stopInitiatorMemberUserId
-			?? $document->representativeId
-			?? $this->memberService->getUserIdForMember($this->memberService->getAssignee($document))
+			?? $stopInitiatorUserId
+			?? $assigneeUserId
 		;
 
-		if ($stopInitiatorMemberUserId !== $document->createdById)
+		if (!$userFrom)
 		{
-			$userTo =
-				$document->createdById
-				?? $this->memberService->getUserIdForMember($this->memberService->getSigner($document))
-			;
+			return (new Result())->addError(new Error('Sender of the document stop message not found'));
+		}
 
-			// message to employee
+		$employeeUser = $this->getEmployeeUserIdFromDocumentByEmployee($document);
+
+		if (!$employeeUser)
+		{
+			return (new Result())->addError(new Error('Employee user ID not found'));
+		}
+
+		$isExpired = $this->isDocumentExpired($document);
+
+		// message to employee
+		if ($isExpired)
+		{
+			$result->addErrors($this->sendByEmployeeDocumentExpiredToEmployeeMessage(
+				$userFrom,
+				$employeeUser,
+				$document,
+				$assigneeUserId ?? $userFrom,
+			)->getErrors());
+		}
+		elseif ($stopInitiatorUserId !== $document->createdById)
+		{
 			$result->addErrors($this->sendByEmployeeStoppedToEmployeeMessage(
 				$userFrom,
-				$userTo,
+				$employeeUser,
 				$document,
-				$stopInitiatorMemberUserId,
+				$stopInitiatorUserId ?? $assigneeUserId ?? $userFrom,
 			)->getErrors());
 		}
 
@@ -265,42 +280,47 @@ class HrBotMessageService
 		if ($memberFromCompanySide && $this->isMemberStillDoingHisJob($memberFromCompanySide, $document))
 		{
 			$userTo = $this->getActiveReviewerOrAssigneeUserId($document, $memberFromCompanySide);
-			if ($userTo && $userTo !== $stopInitiatorMemberUserId && $userTo !== $document->createdById)
+			if ($userTo && $userTo !== $employeeUser)
 			{
-				$result->addErrors(
-					$this->sendStoppedMessageToCompany($userFrom, $userTo, $document, $stopInitiatorMemberUserId, $memberFromCompanySide?->role)->getErrors(),
-				);
+				if ($isExpired)
+				{
+					$result->addErrors($this->sendExpiredMessageToCompany($userFrom, $userTo, $document)->getErrors());
+				}
+				elseif ($userTo !== $stopInitiatorUserId)
+				{
+					$result->addErrors(
+						$this->sendStoppedMessageToCompany($userFrom, $userTo, $document, $stopInitiatorUserId, $memberFromCompanySide?->role)->getErrors(),
+					);
+				}
 			}
 		}
 
 		return $result;
 	}
 
-	private function handleByCompanyDocumentStoppedStatus(Document $document, ?Member $stopInitiatorMember = null): Result
+	private function handleByCompanyDocumentStoppedStatus(Document $document, ?int $stopInitiatorUserId = null): Result
 	{
 		$result = new Result();
 
-		// $stopInitiatorMember always known when stopped on portal side (by initiator)
-		$stopInitiatorMemberUserId = $stopInitiatorMember
-			? $this->memberService->getUserIdForMember($stopInitiatorMember)
-			: ($document->stoppedById ?? $this->getActiveReviewerOrAssigneeUserId($document))
-		;
-
 		$userFrom =
 			$this->getBotUserId()
-			?? $stopInitiatorMemberUserId
+			?? $stopInitiatorUserId
 			?? $document->createdById
 		;
 
 		// message to initiator
-		if ($document->createdById !== $stopInitiatorMemberUserId)
+		if ($this->isDocumentExpired($document))
+		{
+			$result->addErrors($this->sendExpiredMessageToCompany($userFrom, $document->createdById, $document)->getErrors());
+		}
+		elseif ($document->createdById !== $stopInitiatorUserId)
 		{
 			$result->addErrors(
 				$this->sendStoppedMessageToCompany(
 					$userFrom,
 					$document->createdById,
 					$document,
-					$stopInitiatorMemberUserId,
+					$stopInitiatorUserId,
 					null
 				)->getErrors()
 			);
@@ -311,10 +331,10 @@ class HrBotMessageService
 		if ($memberFromCompanySide && $this->isMemberStillDoingHisJob($memberFromCompanySide, $document))
 		{
 			$userTo = $this->getActiveReviewerOrAssigneeUserId($document, $memberFromCompanySide);
-			if ($userTo && $userTo !== $stopInitiatorMemberUserId && $userTo !== $document->createdById)
+			if ($userTo && $userTo !== $stopInitiatorUserId && $userTo !== $document->createdById)
 			{
 				$result->addErrors(
-					$this->sendStoppedMessageToCompany($userFrom, $userTo, $document, $stopInitiatorMemberUserId, $memberFromCompanySide?->role)->getErrors(),
+					$this->sendStoppedMessageToCompany($userFrom, $userTo, $document, $stopInitiatorUserId, $memberFromCompanySide?->role)->getErrors(),
 				);
 			}
 		}
@@ -330,7 +350,7 @@ class HrBotMessageService
 		{
 			$userTo = $this->memberService->getUserIdForMember($member);
 
-			if ($userTo === $stopInitiatorMemberUserId)
+			if ($userTo === $stopInitiatorUserId)
 			{
 				continue;
 			}
@@ -340,7 +360,7 @@ class HrBotMessageService
 					$userFrom,
 					$userTo,
 					$document,
-					$stopInitiatorMemberUserId,
+					$stopInitiatorUserId,
 				)->getErrors()
 			);
 		}
@@ -392,6 +412,20 @@ class HrBotMessageService
 				document: $document,
 				link: $this->urlGenerator->makeSigningUrl($assignee),
 			))->setLang($this->userService->getUserLanguage($userIdTo))
+		);
+	}
+
+	private function sendExpiredMessageToCompany(int $userIdFrom, int $userIdTo, Document $document): Result
+	{
+		$message = new Im\Messages\Failure\DocumentExpiredToCompany(
+			fromUser: $userIdFrom,
+			toUser: $userIdTo,
+			document: $document,
+			link: $this->urlGenerator->getSigningProcessLink($document),
+		);
+
+		return $this->imService->sendMessage(
+			$message->setLang($this->userService->getUserLanguage($userIdTo))
 		);
 	}
 
@@ -520,7 +554,6 @@ class HrBotMessageService
 	{
 		if ($whoStoppedUserId === null)
 		{
-			// no need to notify if signing finished
 			return new Result();
 		}
 
@@ -538,6 +571,13 @@ class HrBotMessageService
 
 	private function sendByEmployeeStoppedToEmployeeMessage(int $userIdFrom, int $userIdTo, Document $document, int $whoStoppedUserId): Result
 	{
+		$signer = $this->memberService->getSigner($document);
+
+		if (!$signer)
+		{
+			return (new Result())->addError(new Error('Signer not found'));
+		}
+
 		return $this->imService->sendMessage(
 			(new Im\Messages\ByEmployee\StoppedToEmployee(
 				fromUser: $userIdFrom,
@@ -545,6 +585,21 @@ class HrBotMessageService
 				initiatorUserId: $whoStoppedUserId,
 				initiatorName: $this->memberService->getUserRepresentedName($whoStoppedUserId),
 				initiatorGender: $this->userService->getGender($whoStoppedUserId),
+				document: $document,
+				link: $this->urlGenerator->makeSigningUrl($signer),
+			))->setLang($this->userService->getUserLanguage($userIdTo))
+		);
+	}
+
+	private function sendByEmployeeDocumentExpiredToEmployeeMessage(int $userIdFrom, int $userIdTo, Document $document, int $assigneeUserId): Result
+	{
+		return $this->imService->sendMessage(
+			(new Im\Messages\ByEmployee\ExpiredToEmployee(
+				fromUser: $userIdFrom,
+				toUser: $userIdTo,
+				initiatorUserId: $assigneeUserId,
+				initiatorName: $this->memberService->getUserRepresentedName($assigneeUserId),
+				initiatorGender: $this->userService->getGender($assigneeUserId),
 				document: $document,
 				link: $this->urlGenerator->makeSigningUrl($this->memberService->getSigner($document)),
 			))->setLang($this->userService->getUserLanguage($userIdTo))
@@ -632,5 +687,45 @@ class HrBotMessageService
 	private function isByEmployee(Document $document): bool
 	{
 		return $document->initiatedByType === Type\Document\InitiatedByType::EMPLOYEE;
+	}
+
+	/**
+	 * @todo move to callback
+	 */
+	private function isDocumentExpired(Document $document): bool
+	{
+		return
+			$document->dateSignUntil !== null
+			&& $document->dateSignUntil->getTimestamp() <= (new DateTime())->getTimestamp()
+		;
+	}
+
+	private function getEmployeeUserIdFromDocumentByEmployee(Document $document): ?int
+	{
+		if ($document->createdById)
+		{
+			return $document->createdById;
+		}
+
+		$signer = $this->memberService->getSigner($document);
+
+		if ($signer)
+		{
+			return $this->memberService->getUserIdForMember($signer);
+		}
+
+		return null;
+	}
+
+	private function getAssigneeUserId(Document $document): ?int
+	{
+		$assignee = $this->memberService->getAssignee($document);
+
+		if ($assignee)
+		{
+			return $this->memberService->getUserIdForMember($assignee);
+		}
+
+		return $document->representativeId;
 	}
 }

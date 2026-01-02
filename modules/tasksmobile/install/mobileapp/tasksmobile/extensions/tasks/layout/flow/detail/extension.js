@@ -158,31 +158,21 @@ jn.define('tasks/layout/flow/detail', (require, exports, module) => {
 		 * @params {layout} params.flowId
 		 * @params {layout} [params.parentLayout = null]
 		 * @params {object} [params.openWidgetConfig = {}]
+		 * @params {openInBackdrop} [params.openInBackdrop=true]
 		 * @return void
 		 */
 		static open({
 			flowId,
 			parentLayout = null,
 			openWidgetConfig = {},
+			openInBackdrop = true,
 		})
 		{
 			const config = {
 				enableNavigationBarBorder: false,
-				modal: true,
 				titleParams: {
 					text: Loc.getMessage('TASKSMOBILE_FLOW_DETAIL_TITLE'),
 					type: 'entity',
-				},
-				backdrop: {
-					// showOnTop: true,
-					onlyMediumPosition: true,
-					mediumPositionPercent: 85,
-					bounceEnable: false,
-					swipeAllowed: true,
-					swipeContentAllowed: true,
-					horizontalSwipeAllowed: false,
-					shouldResizeContent: true,
-					adoptHeightByKeyboard: true,
 				},
 				...openWidgetConfig,
 				onReady: (readyLayout) => {
@@ -194,6 +184,23 @@ jn.define('tasks/layout/flow/detail', (require, exports, module) => {
 					readyLayout.showComponent(detailInstance);
 				},
 			};
+
+			if (openInBackdrop)
+			{
+				config.modal = true;
+
+				config.backdrop = {
+					// showOnTop: true,
+					onlyMediumPosition: true,
+					mediumPositionPercent: 85,
+					bounceEnable: false,
+					swipeAllowed: true,
+					swipeContentAllowed: true,
+					horizontalSwipeAllowed: false,
+					shouldResizeContent: true,
+					adoptHeightByKeyboard: true,
+				};
+			}
 
 			if (parentLayout)
 			{

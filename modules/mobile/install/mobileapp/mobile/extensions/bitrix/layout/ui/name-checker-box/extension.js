@@ -134,6 +134,7 @@ jn.define('layout/ui/name-checker-box', (require, exports, module) => {
 					{
 						testId: this.#getTestId('area-list'),
 						ref: this.#bindScrollViewRef,
+						withScroll: true,
 						style: {
 							flex: 1,
 							borderBottomWidth: 1,
@@ -205,13 +206,22 @@ jn.define('layout/ui/name-checker-box', (require, exports, module) => {
 		#renderExistingUsersSubTitle = () => {
 			return Text5({
 				testId: this.#getTestId('existing-users-subtitle'),
-				text: Loc.getMessage('NAME_CHECKER_EXISTING_USERS_SUBTITLE', {
-					'#users#': this.#getAlreadyExistingUsersString(),
-				}),
+				text: this.#getAlreadyInvitedUsersLabelTextForSubtitle(),
 				color: Color.base2,
 				style: {
 					marginTop: Indent.XS.toNumber(),
 				},
+			});
+		};
+
+		#getAlreadyInvitedUsersLabelTextForSubtitle = () => {
+			if (this.props.getAlreadyInvitedUsersLabelTextForSubtitle)
+			{
+				return this.props.getAlreadyInvitedUsersLabelTextForSubtitle(this.#getAlreadyExistingUsersString());
+			}
+
+			return Loc.getMessage('NAME_CHECKER_EXISTING_USERS_SUBTITLE', {
+				'#users#': this.#getAlreadyExistingUsersString(),
 			});
 		};
 
@@ -364,7 +374,14 @@ jn.define('layout/ui/name-checker-box', (require, exports, module) => {
 
 			if (this.labelText)
 			{
-				renderedItems.unshift(this.renderLabelCard());
+				if (typeof this.labelText === 'function')
+				{
+					renderedItems.unshift(this.labelText(this.props.layout));
+				}
+				else
+				{
+					renderedItems.unshift(this.renderLabelCard());
+				}
 			}
 
 			return renderedItems;
@@ -480,6 +497,7 @@ jn.define('layout/ui/name-checker-box', (require, exports, module) => {
 	 * @param {String} [params.subdescription]
 	 * @param {Function} [params.onSendInviteButtonClick]
 	 * @param {Function} [params.getItemFormattedSubDescription]
+	 * @param {Function} [params.getAlreadyInvitedUsersLabelTextForSubtitle]
 	 * @param {Function} [params.getAlreadyInvitedUsersStringForSubtitle]
 	 * @param {String} [params.infoAreaGraphicsUri]
 	 * @param {Object} [params.dismissAlert]
@@ -502,6 +520,7 @@ jn.define('layout/ui/name-checker-box', (require, exports, module) => {
 		subdescription = null,
 		onSendInviteButtonClick = null,
 		getItemFormattedSubDescription = null,
+		getAlreadyInvitedUsersLabelTextForSubtitle = null,
 		getAlreadyInvitedUsersStringForSubtitle = null,
 		infoAreaGraphicsUri = null,
 		dismissAlert = null,
@@ -540,6 +559,7 @@ jn.define('layout/ui/name-checker-box', (require, exports, module) => {
 						subdescription,
 						onSendInviteButtonClick,
 						getItemFormattedSubDescription,
+						getAlreadyInvitedUsersLabelTextForSubtitle,
 						getAlreadyInvitedUsersStringForSubtitle,
 						infoAreaGraphicsUri,
 						dismissAlert,

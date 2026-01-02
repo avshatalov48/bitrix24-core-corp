@@ -1,11 +1,18 @@
-import { memberRoles } from 'humanresources.company-structure.api';
-import type { UserData } from 'humanresources.company-structure.utils';
+import { memberRoles, teamMemberRoles } from 'humanresources.company-structure.api';
+import { type DepartmentData } from 'humanresources.company-structure.chart-store';
+import { NodeSettingsTypes } from 'humanresources.company-structure.utils';
 
 type WizardData = {
 	stepIndex: number;
 	waiting: boolean;
 	isValidStep: boolean;
-	departmentData: DepartmentData;
+	departmentData: {
+		...DepartmentData,
+		settings: {
+			[NodeSettingsTypes.businessProcAuthority]: Set,
+			[NodeSettingsTypes.reportsAuthority]: Set,
+		},
+	};
 	removedUsers: UserData[];
 	employeesIds: number[];
 	shouldErrorHighlight: boolean;
@@ -13,25 +20,29 @@ type WizardData = {
 	saveMode: 'moveUsers' | 'addUsers';
 };
 
-type DepartmentData = {
-	id: number;
-	name: string;
-	description: string;
-	parentId: number;
-	heads: Array<UserData>;
-	employees: Array<UserData>;
-	userCount: number;
-};
+export type StepIdType = 'entities' | 'department' | 'employees' | 'bindChat' | 'settings';
 
 type Step = {
-	id: string;
-	title: string;
+	id: StepIdType;
+	title?: string;
+	breadcrumbsTitle?: string;
+	breadcrumbsTitleDepartment: string;
+	breadcrumbsTitleTeam: string;
+	hasBreadcrumbs: boolean;
+	hasTreePreview: boolean;
+	isEditPermitted?: boolean;
+	isPermitted?: boolean;
+	dataTestIdPart: string,
 };
 
 type DepartmentUserIds = {
 	[memberRoles.head]: number[],
 	[memberRoles.deputyHead]: number[],
 	[memberRoles.employee]: number[],
+} | {
+	[teamMemberRoles.head]: number[],
+	[teamMemberRoles.deputyHead]: number[],
+	[teamMemberRoles.employee]: number[],
 };
 
-export type { WizardData, DepartmentData, Step, DepartmentUserIds };
+export type { WizardData, Step, DepartmentUserIds };

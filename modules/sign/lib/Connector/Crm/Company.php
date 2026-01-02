@@ -31,7 +31,7 @@ class Company extends Base implements Contract\RequisiteConnector
 
 	public function fetchRequisite(?Item\Connector\FetchRequisiteModifier $fetchModifier = null): Item\Connector\RequisiteFieldCollection
 	{
-		$result = new Item\Connector\RequisiteFieldCollection;
+		$result = new Item\Connector\RequisiteFieldCollection();
 		if (!Loader::includeModule('crm'))
 		{
 			return $result;
@@ -40,7 +40,7 @@ class Company extends Base implements Contract\RequisiteConnector
 		$fieldSetValues = CRM::getRequisitesEntityFieldSetValues(
 			CCrmOwnerType::Company,
 			$this->entityId,
-			$fetchModifier?->presetId
+			$fetchModifier?->presetId,
 		);
 		foreach ($fieldSetValues as $fieldSetCode => $fieldSetValue)
 		{
@@ -52,7 +52,7 @@ class Company extends Base implements Contract\RequisiteConnector
 						$fieldSetCode,
 						$fieldSetValue['label'] ?? '',
 						$value,
-					)
+					),
 				);
 			}
 		}

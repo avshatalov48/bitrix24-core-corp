@@ -10,3 +10,4 @@ $MESS['IMCONNECTOR_WARNING_LARGE_FILE'] = "[b]Внимание![/b]\n[i]Поль
 $MESS['IMCONNECTOR_LINK_TO_ORIGINAL_POST'] = 'Ссылка на исходный пост: #LINK#';
 $MESS['IMCONNECTOR_WALL_TEXT'] = 'Запись на стене пользователя';
 $MESS['IMCONNECTOR_WALL_DATE_TEXT'] = 'от';
+$MESS['IMCONNECTOR_ERROR_EXPIRED_ACCESS_TOKEN'] = "Истёк срок действия авторизационного токена. Чтобы восстановить работу открытой линии, отключите и снова подключите этот канал в [url=#LINK#]Контакт-центре[/url]";

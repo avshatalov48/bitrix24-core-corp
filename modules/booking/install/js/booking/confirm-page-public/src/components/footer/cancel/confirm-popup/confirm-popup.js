@@ -83,7 +83,9 @@ export const ConfirmPopup = {
 		>
 			<div class="cancel-booking-popup-content">
 				<div class="cancel-booking-popup-content-title">{{ loc('BOOKING_CONFIRM_PAGE_MESSAGEBOX_CONFIRM_TILE') }}</div>
-				<div class="cancel-booking-popup-content-text">{{ loc('BOOKING_CONFIRM_PAGE_MESSAGEBOX_CONFIRM_TEXT') }}</div>
+				<div class="cancel-booking-popup-content-text">
+					{{ loc('BOOKING_CONFIRM_PAGE_MESSAGEBOX_CONFIRM_TEXT_MSGVER_1') }}
+				</div>
 				<div class="cancel-booking-popup-content-buttons">
 					<Button
 						:text="loc('BOOKING_CONFIRM_PAGE_MESSAGEBOX_BTN_NOT_CONFIRM')"

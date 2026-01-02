@@ -1,6 +1,6 @@
 /* eslint-disable */
 this.BX = this.BX || {};
-(function (exports,main_core,ui_vue3_vuex,booking_const,booking_model_bookings,booking_model_messageStatus,booking_model_clients,booking_model_counters,booking_model_interface,booking_model_resourceTypes,booking_model_resources,booking_model_favorites,booking_model_dictionary,booking_model_mainResources,booking_provider_pull_bookingPullManager) {
+(function (exports,main_core,ui_vue3_vuex,booking_const,booking_model_bookings,booking_model_messageStatus,booking_model_clients,booking_model_counters,booking_model_interface,booking_model_resourceTypes,booking_model_resources,booking_model_favorites,booking_model_dictionary,booking_model_mainResources,booking_model_waitList,booking_provider_pull_bookingPullManager,booking_model_filter,booking_model_formsMenu) {
 	'use strict';
 
 	var _params = /*#__PURE__*/babelHelpers.classPrivateFieldLooseKey("params");
@@ -48,11 +48,13 @@ this.BX = this.BX || {};
 	  getStore() {
 	    return babelHelpers.classPrivateFieldLooseBase(this, _store)[_store];
 	  }
-	  async init() {
+	  async init(options = {}) {
 	    var _babelHelpers$classPr, _babelHelpers$classPr2;
 	    (_babelHelpers$classPr2 = (_babelHelpers$classPr = babelHelpers.classPrivateFieldLooseBase(this, _initPromise))[_initPromise]) != null ? _babelHelpers$classPr2 : _babelHelpers$classPr[_initPromise] = new Promise(async resolve => {
-	      babelHelpers.classPrivateFieldLooseBase(this, _store)[_store] = await babelHelpers.classPrivateFieldLooseBase(this, _initStore)[_initStore]();
-	      babelHelpers.classPrivateFieldLooseBase(this, _initPull)[_initPull]();
+	      babelHelpers.classPrivateFieldLooseBase(this, _store)[_store] = await babelHelpers.classPrivateFieldLooseBase(this, _initStore)[_initStore](options);
+	      if (!options.skipPull) {
+	        babelHelpers.classPrivateFieldLooseBase(this, _initPull)[_initPull]();
+	      }
 	      resolve();
 	    });
 	    return babelHelpers.classPrivateFieldLooseBase(this, _initPromise)[_initPromise];
@@ -72,19 +74,38 @@ this.BX = this.BX || {};
 	    }
 	  }
 	}
-	async function _initStore2() {
+	async function _initStore2(options) {
 	  const settings = main_core.Extension.getSettings('booking.core');
-	  babelHelpers.classPrivateFieldLooseBase(this, _builder)[_builder] = ui_vue3_vuex.Builder.init().addModel(booking_model_bookings.Bookings.create()).addModel(booking_model_messageStatus.MessageStatus.create()).addModel(booking_model_clients.Clients.create()).addModel(booking_model_counters.Counters.create()).addModel(booking_model_interface.Interface.create().setVariables({
-	    schedule: settings.schedule,
-	    editingBookingId: babelHelpers.classPrivateFieldLooseBase(this, _params)[_params].editingBookingId,
-	    timezone: babelHelpers.classPrivateFieldLooseBase(this, _params)[_params].timezone,
-	    totalClients: babelHelpers.classPrivateFieldLooseBase(this, _params)[_params].totalClients,
-	    totalNewClientsToday: babelHelpers.classPrivateFieldLooseBase(this, _params)[_params].totalClientsToday,
-	    moneyStatistics: babelHelpers.classPrivateFieldLooseBase(this, _params)[_params].moneyStatistics,
-	    isFeatureEnabled: babelHelpers.classPrivateFieldLooseBase(this, _params)[_params].isFeatureEnabled,
-	    canTurnOnTrial: babelHelpers.classPrivateFieldLooseBase(this, _params)[_params].canTurnOnTrial,
-	    canTurnOnDemo: babelHelpers.classPrivateFieldLooseBase(this, _params)[_params].canTurnOnDemo
-	  })).addModel(booking_model_resourceTypes.ResourceTypes.create()).addModel(booking_model_resources.Resources.create()).addModel(booking_model_favorites.Favorites.create()).addModel(booking_model_dictionary.Dictionary.create()).addModel(booking_model_mainResources.MainResources.create());
+	  babelHelpers.classPrivateFieldLooseBase(this, _builder)[_builder] = ui_vue3_vuex.Builder.init();
+	  if (!options.skipBookingCore) {
+	    babelHelpers.classPrivateFieldLooseBase(this, _builder)[_builder].addModel(booking_model_bookings.Bookings.create()).addModel(booking_model_messageStatus.MessageStatus.create()).addModel(booking_model_clients.Clients.create()).addModel(booking_model_counters.Counters.create()).addModel(booking_model_interface.Interface.create().setVariables({
+	      schedule: settings.schedule,
+	      editingBookingId: babelHelpers.classPrivateFieldLooseBase(this, _params)[_params].editingBookingId,
+	      editingWaitListItemId: babelHelpers.classPrivateFieldLooseBase(this, _params)[_params].editingWaitListItemId,
+	      timezone: babelHelpers.classPrivateFieldLooseBase(this, _params)[_params].timezone,
+	      totalClients: babelHelpers.classPrivateFieldLooseBase(this, _params)[_params].totalClients,
+	      totalNewClientsToday: babelHelpers.classPrivateFieldLooseBase(this, _params)[_params].totalClientsToday,
+	      moneyStatistics: babelHelpers.classPrivateFieldLooseBase(this, _params)[_params].moneyStatistics,
+	      isFeatureEnabled: babelHelpers.classPrivateFieldLooseBase(this, _params)[_params].isFeatureEnabled,
+	      canTurnOnTrial: babelHelpers.classPrivateFieldLooseBase(this, _params)[_params].canTurnOnTrial,
+	      canTurnOnDemo: babelHelpers.classPrivateFieldLooseBase(this, _params)[_params].canTurnOnDemo,
+	      embedItems: babelHelpers.classPrivateFieldLooseBase(this, _params)[_params].embedItems.map(item => {
+	        return {
+	          value: item.id,
+	          entityTypeId: item.code,
+	          moduleId: item.module,
+	          data: {
+	            opportunity: 0,
+	            currencyId: '',
+	            createdTimestamp: 0,
+	            formattedOpportunity: ''
+	          }
+	        };
+	      }),
+	      calendarExpanded: babelHelpers.classPrivateFieldLooseBase(this, _params)[_params].isCalendarExpanded,
+	      waitListExpanded: babelHelpers.classPrivateFieldLooseBase(this, _params)[_params].isWaitListExpanded
+	    })).addModel(booking_model_resourceTypes.ResourceTypes.create()).addModel(booking_model_resources.Resources.create()).addModel(booking_model_favorites.Favorites.create()).addModel(booking_model_dictionary.Dictionary.create()).addModel(booking_model_mainResources.MainResources.create()).addModel(booking_model_waitList.WaitList.create()).addModel(booking_model_filter.Filter.create()).addModel(booking_model_formsMenu.FormsMenu.create());
+	  }
 	  const builderResult = await babelHelpers.classPrivateFieldLooseBase(this, _builder)[_builder].build();
 	  return builderResult.store;
 	}
@@ -98,5 +119,5 @@ this.BX = this.BX || {};
 
 	exports.Core = Core;
 
-}((this.BX.Booking = this.BX.Booking || {}),BX,BX.Vue3.Vuex,BX.Booking.Const,BX.Booking.Model,BX.Booking.Model,BX.Booking.Model,BX.Booking.Model,BX.Booking.Model,BX.Booking.Model,BX.Booking.Model,BX.Booking.Model,BX.Booking.Model,BX.Booking.Model,BX.Booking.Provider.Pull));
+}((this.BX.Booking = this.BX.Booking || {}),BX,BX.Vue3.Vuex,BX.Booking.Const,BX.Booking.Model,BX.Booking.Model,BX.Booking.Model,BX.Booking.Model,BX.Booking.Model,BX.Booking.Model,BX.Booking.Model,BX.Booking.Model,BX.Booking.Model,BX.Booking.Model,BX.Booking.Model,BX.Booking.Provider.Pull,BX.Booking.Model,BX.Booking.Model));
 //# sourceMappingURL=core.bundle.js.map

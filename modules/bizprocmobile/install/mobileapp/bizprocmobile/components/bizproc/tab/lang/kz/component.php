@@ -1,0 +1,5 @@
+<?php
+$MESS["BPMOBILE_TAB_WORKFLOW_LIST"] = "Бизнес-процесстер";
+$MESS["BPMOBILE_TAB_WORKFLOW_LIST_ALERT_CONFIRM"] = "Түсінікті";
+$MESS["BPMOBILE_TAB_WORKFLOW_LIST_ALERT_EXTRANET_ACCESS_DENIED_TEXT"] = "Сізде бизнес-процестерді көруге рұқсат жоқ";
+$MESS["BPMOBILE_TAB_WORKFLOW_LIST_ALERT_EXTRANET_ACCESS_DENIED_TITLE"] = "Құқықтар жеткіліксіз";

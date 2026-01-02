@@ -10,8 +10,15 @@ class RecognizeLinks
 
 	analyze(): void
 	{
+		const isDesktop = typeof BXDesktopSystem !== 'undefined';
 		const referrer = document.referrer;
-		if (referrer !== '' && !referrer.includes(this.serverName) && (this.netUrl === '' || !referrer.includes(this.netUrl)))
+		if (
+			!isDesktop
+			&& !BX.browser.IsMobile()
+			&& referrer !== ''
+			&& !referrer.includes(this.serverName)
+			&& (this.netUrl === '' || !referrer.includes(this.netUrl))
+		)
 		{
 			Runtime.loadExtension('im.public').then((exports) => {
 				const { Messenger } = exports;

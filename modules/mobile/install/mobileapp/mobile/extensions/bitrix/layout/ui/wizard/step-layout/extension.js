@@ -51,6 +51,7 @@ jn.define('layout/ui/wizard/step-layout', (require, exports, module) => {
 					layoutWidget.setTitle({
 						text: this.step.getTitle(),
 						detailText: this.step.getSubTitle(),
+						type: this.step.getTitleType(),
 					});
 
 					if (!this.showNextStepButtonAtBottom)

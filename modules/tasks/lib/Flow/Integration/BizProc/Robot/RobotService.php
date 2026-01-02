@@ -6,7 +6,7 @@ use Bitrix\Main\Loader;
 use Bitrix\Tasks\Flow\Integration\BizProc\DocumentTrait;
 use Bitrix\Tasks\Flow\Internal\Entity\FlowRobot;
 use Bitrix\Tasks\Flow\Internal\Entity\FlowRobotCollection;
-use Bitrix\Tasks\Util\User;
+use Bitrix\Tasks\Flow\Provider\UserProvider;
 
 class RobotService
 {
@@ -64,7 +64,7 @@ class RobotService
 
 		if ([] !== $robots)
 		{
-			$template->save($robots, User::getAdminId());
+			$template->save($robots, UserProvider::getDefaultAdminId());
 		}
 
 		$this->saveLinks();

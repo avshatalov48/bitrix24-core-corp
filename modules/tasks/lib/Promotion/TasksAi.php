@@ -3,7 +3,6 @@
 namespace Bitrix\Tasks\Promotion;
 
 use Bitrix\Main\Application;
-use Bitrix\Main\Config\Option;
 use Bitrix\Main\Loader;
 use Bitrix\Main\Type\DateTime;
 use Bitrix\Tasks\Integration\Bitrix24\LeftMenuPreset;
@@ -23,10 +22,9 @@ class TasksAi extends AbstractPromotion
 			return false;
 		}
 
-		$tasksAiPresetCode = (new LeftMenuPreset())->getTasksAiCode();
-		$currentPresetCode = Option::get('intranet', 'left_menu_preset');
+		$preset = new LeftMenuPreset();
 
-		if (is_null($tasksAiPresetCode) || $currentPresetCode !== $tasksAiPresetCode)
+		if (!$preset->isCurrentPresetIsTasksAi())
 		{
 			return false;
 		}

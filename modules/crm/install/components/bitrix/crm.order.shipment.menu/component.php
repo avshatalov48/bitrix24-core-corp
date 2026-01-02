@@ -5,10 +5,10 @@ if (!defined('B_PROLOG_INCLUDED') || B_PROLOG_INCLUDED!==true)die();
 if (!CModule::IncludeModule('crm'))
 	return;
 
-$currentUserID = CCrmSecurityHelper::GetCurrentUserID();
-$CrmPerms = CCrmPerms::GetCurrentUserPermissions();
-if ($CrmPerms->HavePerm('ORDER', BX_CRM_PERM_NONE))
+if (\Bitrix\Crm\Service\Container::getInstance()->getUserPermissions()->entityType()->canReadItems(CCrmOwnerType::Order))
+{
 	return;
+}
 
 $arParams['PATH_TO_ORDER_SHIPMENT_LIST'] = CrmCheckPath('PATH_TO_ORDER_SHIPMENT_LIST', $arParams['PATH_TO_ORDER_SHIPMENT_LIST'], $APPLICATION->GetCurPage());
 $arParams['PATH_TO_ORDER_SHIPMENT_SHOW'] = CrmCheckPath('PATH_TO_ORDER_SHIPMENT_SHOW', $arParams['PATH_TO_ORDER_SHIPMENT_SHOW'], $APPLICATION->GetCurPage().'?order_id=#order_id#&show');
@@ -28,20 +28,21 @@ $arResult['TOOLBAR_ID'] = $toolbarID;
 
 $arResult['BUTTONS'] = array();
 
+$userPermissions = \Bitrix\Crm\Service\Container::getInstance()->getUserPermissions();
 if ($arParams['TYPE'] == 'list')
 {
-	$bRead   = \Bitrix\Crm\Order\Permissions\Shipment::checkReadPermission(0, $CrmPerms);
-	$bAdd    = \Bitrix\Crm\Order\Permissions\Shipment::checkCreatePermission($CrmPerms);
-	$bWrite  = \Bitrix\Crm\Order\Permissions\Shipment::checkUpdatePermission(0, $CrmPerms);
+	$bRead = $userPermissions->entityType()->canReadItems(CCrmOwnerType::OrderShipment);
+	$bAdd = $userPermissions->entityType()->canAddItems(CCrmOwnerType::OrderShipment);
+	$bWrite = $userPermissions->entityType()->canUpdateItems(CCrmOwnerType::OrderShipment);
 	$bDelete = false;
-	$bConfig = $CrmPerms->HavePerm('CONFIG', BX_CRM_PERM_CONFIG, 'WRITE');
+	$bConfig = $userPermissions->isCrmAdmin();
 }
 else
 {
-	$bRead   = \Bitrix\Crm\Order\Permissions\Shipment::checkReadPermission($arParams['ELEMENT_ID'], $CrmPerms);
-	$bAdd    = \Bitrix\Crm\Order\Permissions\Shipment::checkCreatePermission($CrmPerms);
-	$bWrite  = \Bitrix\Crm\Order\Permissions\Shipment::checkUpdatePermission($arParams['ELEMENT_ID'], $CrmPerms);
-	$bDelete = \Bitrix\Crm\Order\Permissions\Shipment::checkDeletePermission($arParams['ELEMENT_ID'], $CrmPerms);
+	$bRead = $userPermissions->item()->canRead(CCrmOwnerType::OrderShipment, $arParams['ELEMENT_ID']);
+	$bAdd = $userPermissions->entityType()->canAddItems(CCrmOwnerType::OrderShipment);
+	$bWrite = $userPermissions->item()->canUpdate(CCrmOwnerType::OrderShipment, $arParams['ELEMENT_ID']);
+	$bDelete = $userPermissions->item()->canDelete(CCrmOwnerType::OrderShipment, $arParams['ELEMENT_ID']);
 }
 
 if (!$bRead && !$bAdd && !$bWrite)

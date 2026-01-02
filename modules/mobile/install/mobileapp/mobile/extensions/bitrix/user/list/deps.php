@@ -9,5 +9,6 @@ return [
 		'recipient',
 		'user/utils',
 		'utils/string',
+		'utils/function',
 	],
 ];

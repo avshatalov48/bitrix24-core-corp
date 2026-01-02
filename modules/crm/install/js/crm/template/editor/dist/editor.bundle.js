@@ -851,6 +851,7 @@ this.BX.Crm = this.BX.Crm || {};
 	    babelHelpers.classPrivateFieldGet(_this4, _previewPopup).apply(PREVIEW_POPUP_CONTENT_STATUS.FAILED, (_response$errors$0$me = response.errors[0].message) !== null && _response$errors$0$me !== void 0 ? _response$errors$0$me : 'Unknown error');
 	    babelHelpers.classPrivateFieldSet(_this4, _isUsePreviewRequestRunning, false);
 	  });
+	  main_core_events.EventEmitter.emit('BX.Crm.Template.Editor:shown');
 	}
 	function _getInputContainer2(input, position) {
 	  var _this5 = this;

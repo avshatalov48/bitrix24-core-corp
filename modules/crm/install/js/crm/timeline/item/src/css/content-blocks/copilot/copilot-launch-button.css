@@ -1,0 +1,34 @@
+.crm-timeline__copilot-launch-button {
+	font-size: var(--ui-font-size-sm);
+	font-weight: var(--ui-font-weight-normal);
+	line-height: var(--ui-font-line-height-xl);
+	border: var(--ui-border-width-thin) var(--ui-text-decoration-style-solid) #88c8f8;
+	border-radius: var(--ui-border-radius-sm);
+	padding: 1px 10px 1px 3px;
+	color: #0075ff;
+	position: relative;
+	display: inline-flex;
+	flex-direction: row;
+	box-sizing: border-box;
+	box-shadow: 0 1px 2px rgba(0, 0, 0, 0.08);
+	transition: box-shadow 0.2s linear;
+	align-items: center;
+	min-height: 24px;
+	background-color: transparent;
+	cursor: pointer;
+}
+
+.crm-timeline__copilot-launch-button:hover,
+.crm-timeline__copilot-launch-button:focus {
+	transition-duration: unset;
+	opacity: var(--ui-opacity-90);
+	transition: box-shadow 0.2s linear;
+	filter: brightness(110%);
+}
+
+.crm-timeline__copilot-launch-button-icon {
+	background: transparent url('../../../images/common/crm-timeline__copilot-v2.svg') no-repeat center;
+	width: 20px;
+	height: 20px;
+	margin-right: 4px;
+}

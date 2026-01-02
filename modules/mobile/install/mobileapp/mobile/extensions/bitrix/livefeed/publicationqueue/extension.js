@@ -375,6 +375,14 @@
 						warningText: (response.data.warnings ? response.data.warnings : []).join("\n"),
 					});
 					analytics.send("addLogEntry", {}, ["fbonly"]);
+
+					const mobileEvent = {
+						...fields,
+						params,
+						post_id: response.data.id,
+						postFields: response.data.postFields,
+					};
+					BX.postComponentEvent('Livefeed.PublicationQueue::afterPostAdd', [mobileEvent], 'background');
 				}
 			}).catch(response => {
 				let errors = response.errors;
@@ -441,6 +449,16 @@
 						key: key,
 						pinned: (!!params.pinned)
 					});
+
+					const mobileEvent = {
+						...fields,
+						params,
+						postId,
+						postFields: response.data.updatedFields,
+					};
+
+					BX.postComponentEvent('Livefeed.PublicationQueue::afterPostUpdate', [mobileEvent], 'background');
+
 					analytics.send("editLogEntry", {}, ["fbonly"]);
 				}
 

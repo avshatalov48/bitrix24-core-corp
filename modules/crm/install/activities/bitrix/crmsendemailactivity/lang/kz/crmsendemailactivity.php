@@ -1,0 +1,26 @@
+<?php
+$MESS["CRM_SEMA_ACTIVITY_EMAIL_MAX_SIZE_EXCEED"] = "Тіркемелердің ең жоғарғы шегі асып кетті (#SIZE#)";
+$MESS["CRM_SEMA_ACTIVITY_LINK_LABEL"] = "Хатты ашу";
+$MESS["CRM_SEMA_ATTACHMENT_1"] = "Файлдар";
+$MESS["CRM_SEMA_ATTACHMENT_DISK"] = "Диск";
+$MESS["CRM_SEMA_ATTACHMENT_FILE_2"] = "Элемент өрістері";
+$MESS["CRM_SEMA_ATTACHMENT_TYPE_1"] = "Орналасқан жері";
+$MESS["CRM_SEMA_DEFAULT_BODY"] = "[мәтін жоқ]";
+$MESS["CRM_SEMA_DEFAULT_SUBJECT"] = "Жаңа хат (#DATE#)";
+$MESS["CRM_SEMA_EMAIL_CREATION_CANCELED"] = "Хат жасау операциясы тоқтатылды";
+$MESS["CRM_SEMA_EMAIL_FROM"] = "Кімнен";
+$MESS["CRM_SEMA_EMAIL_SELECT_RULE"] = "Мекенжайды пайдалану";
+$MESS["CRM_SEMA_EMAIL_SELECT_RULE_FIRST"] = "Бірінші қосылған";
+$MESS["CRM_SEMA_EMAIL_SELECT_RULE_LAST"] = "Соңғы қосылған";
+$MESS["CRM_SEMA_EMAIL_SUBJECT"] = "Тақырып";
+$MESS["CRM_SEMA_EMAIL_TO"] = "Кімге";
+$MESS["CRM_SEMA_EMAIL_TYPE"] = "Клиенттің мекенжай түрі";
+$MESS["CRM_SEMA_EMAIL_TYPE_EMPTY_OPTION"] = "Автоматты түрде таңдау";
+$MESS["CRM_SEMA_EMPTY_PROP"] = "Хаттың мәтіні көрсетілмеген";
+$MESS["CRM_SEMA_MESSAGE_TEXT"] = "Хаттың мәтіні";
+$MESS["CRM_SEMA_MESSAGE_TEXT_TYPE"] = "Мәтін түрі";
+$MESS["CRM_SEMA_NO_ADDRESSER"] = "Клиенттің e-mail көрсетілмеген";
+$MESS["CRM_SEMA_NO_FROM"] = "Хабарлама жіберуші көрсетілмеген немесе дұрыс көрсетілмеген";
+$MESS["CRM_SEMA_NO_RESPONSIBLE"] = "Жауапты адам табылмады";
+$MESS["CRM_SEMA_TIMELINE_ERROR"] = "Хат жіберілмеді. #ERROR_TEXT#";
+$MESS["CRM_SEMA_USE_LINK_TRACKER"] = "Сілтемелер бойынша өтулерді қадағалау";

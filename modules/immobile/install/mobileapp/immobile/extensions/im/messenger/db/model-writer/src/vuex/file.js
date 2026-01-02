@@ -6,8 +6,8 @@
 jn.define('im/messenger/db/model-writer/vuex/file', (require, exports, module) => {
 	const { Type } = require('type');
 	const { DialogHelper } = require('im/messenger/lib/helper');
-	const { LoggerManager } = require('im/messenger/lib/logger');
-	const logger = LoggerManager.getInstance().getLogger('repository--file');
+	const { getLogger } = require('im/messenger/lib/logger');
+	const logger = getLogger('repository--file');
 	const { Writer } = require('im/messenger/db/model-writer/vuex/writer');
 
 	class FileWriter extends Writer

@@ -4,9 +4,11 @@ namespace Bitrix\Crm\Service\Operation;
 
 use Bitrix\Crm\Item;
 use Bitrix\Crm\Service\Operation;
+use Bitrix\Crm\Service\Operation\Action\RestoreFromBin;
 use Bitrix\Crm\Statistics;
 use Bitrix\Crm\Timeline\TimelineManager;
 use Bitrix\Main\Result;
+use Bitrix\Main\Type\DateTime;
 
 class Restore extends Operation\Add
 {
@@ -93,5 +95,10 @@ class Restore extends Operation\Add
 				],
 			);
 		}
+	}
+
+	public function registerConvertDateTimesAction(DateTime $movedToBin): void
+	{
+		$this->addAction(Operation::ACTION_BEFORE_SAVE, new RestoreFromBin($movedToBin), 0);
 	}
 }

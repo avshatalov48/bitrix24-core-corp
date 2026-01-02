@@ -1,8 +1,7 @@
-import {Cache, Type, Loc} from 'main.core';
+import {Cache } from 'main.core';
 import { Account } from './account/account';
-import Theme from './api/theme';
 import Counters from './api/counters';
-import ItemsController from './controllers/items-controller'
+import ItemsController from './controllers/items-controller';
 import { BrowserHistory } from './history/browser-history';
 
 export default class DesktopMenu
@@ -13,25 +12,18 @@ export default class DesktopMenu
 	theme = null;
 	#specialLiveFeedDecrement = 0;
 
-	constructor(allCounters)
+	constructor(allCounters: Object)
 	{
 		this.menuContainer = document.getElementById("menu-items-block");
 		if (!this.menuContainer)
 		{
-			return false;
+			return;
 		}
 
-		this.initTheme();
 		this.getItemsController();
 		this.getHistoryItems();
 		this.showAccount(allCounters);
 		this.runAPICounters();
-	}
-
-	initTheme(): void
-	{
-		this.theme = new Theme();
-		this.theme.init();
 	}
 
 	getItemsController(): ItemsController
@@ -81,34 +73,6 @@ export default class DesktopMenu
 		{
 			counters['live-feed'] = counters['**'];
 			delete counters['**'];
-		}
-		let workgroupsCounterUpdated = false;
-		if (!Type.isUndefined(counters['**SG0']))
-		{
-			this.workgroupsCounterData['livefeed'] = counters['**SG0'];
-			delete counters['**SG0'];
-			workgroupsCounterUpdated = true;
-		}
-
-		if (!Type.isUndefined(counters[Loc.getMessage('COUNTER_PROJECTS_MAJOR')]))
-		{
-			this.workgroupsCounterData[Loc.getMessage('COUNTER_PROJECTS_MAJOR')] = counters[Loc.getMessage('COUNTER_PROJECTS_MAJOR')];
-			delete counters[Loc.getMessage('COUNTER_PROJECTS_MAJOR')];
-			workgroupsCounterUpdated = true;
-		}
-
-		if (!Type.isUndefined(counters[Loc.getMessage('COUNTER_SCRUM_TOTAL_COMMENTS')]))
-		{
-			this.workgroupsCounterData[Loc.getMessage('COUNTER_SCRUM_TOTAL_COMMENTS')] = counters[Loc.getMessage('COUNTER_SCRUM_TOTAL_COMMENTS')];
-			delete counters[Loc.getMessage('COUNTER_SCRUM_TOTAL_COMMENTS')];
-			workgroupsCounterUpdated = true;
-		}
-
-		if (workgroupsCounterUpdated)
-		{
-			counters['workgroups'] = Object.entries(this.workgroupsCounterData).reduce((prevValue, [, curValue]) => {
-				return prevValue + Number(curValue);
-			}, 0);
 		}
 
 		if (counters['live-feed'])

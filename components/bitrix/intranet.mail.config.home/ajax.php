@@ -39,7 +39,7 @@ class CIntranetMailConfigHomeAjax
 		if ($error === false)
 		{
 			$site = \CSite::getById($_REQUEST['siteid'])->fetch();
-			
+
 			if (empty($site))
 				$error = getMessage('INTR_MAIL_AJAX_ERROR');
 
@@ -49,7 +49,7 @@ class CIntranetMailConfigHomeAjax
 
 		if ($error === false)
 		{
-			if (\CModule::includeModule('crm') && \CCrmPerms::isAccessEnabled())
+			if (\Bitrix\Intranet\Integration\Crm::getInstance()->canReadSomeItemsInCrm())
 			{
 				self::$crmAvailable = $USER->isAdmin() || $USER->canDoOperation('bitrix24_config')
 					|| COption::getOptionString('intranet', 'allow_external_mail_crm', 'Y', self::$siteId) == 'Y';

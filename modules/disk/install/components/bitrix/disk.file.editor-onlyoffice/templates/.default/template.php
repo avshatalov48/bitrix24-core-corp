@@ -24,6 +24,7 @@ use Bitrix\Main\Localization\Loc;
 use Bitrix\Main;
 use Bitrix\Main\Page\Asset;
 use Bitrix\Main\UI\Extension;
+use Bitrix\Main\Web\Json;
 use Bitrix\UI\Buttons\Button;
 use Bitrix\UI\Buttons\Color;
 use Bitrix\UI\Buttons\Icon;
@@ -128,7 +129,7 @@ $wayToSharing = [
 		'id' => 'ext-link',
 		'html' => '<div class="disk-fe-office-access-setting-popup-icon-box">'
 			. '<div class="ui-icon-set --share-1"></div>'
-			. '<div> ' . Loc::getMessage("DISK_FILE_EDITOR_ONLYOFFICE_HEADER_BTN_SHARING_EXT_LINK") .' </div>'
+			. '<div> ' . Loc::getMessage("DISK_FILE_EDITOR_ONLYOFFICE_HEADER_BTN_SHARING_EXT_LINK_MSGVER_1") .' </div>'
 			.'</div>',
 		'dataset' => [
 			'shouldBlockExternalLinkFeature' => (int)$arResult['SHOULD_BLOCK_EXTERNAL_LINK_FEATURE'],
@@ -139,7 +140,7 @@ $wayToSharing = [
 		'id' => 'sharing',
 		'html' => '<div class="disk-fe-office-access-setting-popup-icon-box">'
 			. '<div class="ui-icon-set --person-plus-3"></div>'
-			. '<div> ' . Loc::getMessage('DISK_FILE_EDITOR_ONLYOFFICE_HEADER_BTN_SHARING_SHARE_MSGVER_1') .' </div>'
+			. '<div> ' . Loc::getMessage('DISK_FILE_EDITOR_ONLYOFFICE_HEADER_BTN_SHARING_SHARE_MSGVER_2') .' </div>'
 			.'</div>',
 	],
 ];
@@ -149,7 +150,7 @@ if (empty($arResult['SHARING_CONTROL_TYPE']))
 }
 
 $setupSharingButton
-	->setText(Loc::getMessage('DISK_FILE_EDITOR_ONLYOFFICE_HEADER_BTN_SHARING'))
+	->setText(Loc::getMessage('DISK_FILE_EDITOR_ONLYOFFICE_HEADER_BTN_SHARING_MSGVER_1'))
 	->addClass('disk-fe-office-header-btn-access-setting')
 	->setSize(Size::SMALL)
 	->setColor(Color::LIGHT_BORDER)
@@ -232,9 +233,9 @@ $GLOBALS['APPLICATION']->SetTitle($arResult['OBJECT']['NAME']);
 			edit: '<?= ($arResult['EDITOR']['ALLOW_EDIT'] && $editButton) ? $editButton->getUniqId() : '' ?>',
 			setupSharing: '<?= $setupSharingButton ? $setupSharingButton->getUniqId() : '' ?>'
 		},
-        pullConfig: <?=CUtil::PhpToJsObject($arResult['PULL_CONFIG'])?>,
+        pullConfig: <?= Json::encode($arResult['PULL_CONFIG']) ?>,
 		publicChannel: '<?= $arResult['PUBLIC_CHANNEL'] ?>',
-        linkToEdit: '<?= $arResult['EDITOR']['ALLOW_EDIT']? $arResult['LINK_TO_EDIT'] : '' ?>',
+        linkToEdit: '<?= $arResult['EDITOR']['ALLOW_EDIT'] ? $arResult['LINK_TO_EDIT'] : '' ?>',
         linkToView: '<?= $arResult['LINK_OPEN_NEW_WINDOW'] ?>',
         linkToDownload: '<?= $arResult['LINK_TO_DOWNLOAD'] ?>',
 		documentSession: {
@@ -245,11 +246,13 @@ $GLOBALS['APPLICATION']->SetTitle($arResult['OBJECT']['NAME']);
 			id: <?= $arResult['OBJECT']['ID'] ?>,
 			name: '<?= \CUtil::JSEscape($arResult['OBJECT']['NAME']) ?>',
 			size: <?= (int)$arResult['OBJECT']['SIZE'] ?>,
+			uniqueCode: '<?= \CUtil::JSEscape($arResult['FILE_UNIQUE_CODE']) ?>',
 		},
 		attachedObject: {
 			id: <?= $arResult['ATTACHED_OBJECT']['ID'] ?: 'null' ?>,
 		},
         sharingControlType: '<?= $arResult['SHARING_CONTROL_TYPE'] ?>',
-		currentUser: <?= $arResult['CURRENT_USER'] ?>
+		currentUser: <?= $arResult['CURRENT_USER'] ?>,
+		unifiedLinkAccessOnly: <?= Json::encode($arResult['UNIFIED_LINK_ACCESS_ONLY']) ?>,
 	});
 </script>

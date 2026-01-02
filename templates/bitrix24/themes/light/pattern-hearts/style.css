@@ -1,3 +1,9 @@
-body {
-	background: #d47689 url(pattern-hearts.svg) 0 0 repeat;
+:root {
+	--air-theme-bg-color: #d47689;
+	--air-theme-bg-size: auto;
+	--air-theme-bg-repeat: repeat;
+	--air-theme-bg-position: 0 0;
+	--air-theme-bg-attachment: fixed;
+	--air-theme-bg-image: url(/bitrix/templates/bitrix24/themes/light/pattern-hearts/pattern-hearts.svg);
+	--air-theme-bg-image-blurred: url(/bitrix/templates/bitrix24/themes/light/pattern-hearts/pattern-hearts-blurred.webp);
 }

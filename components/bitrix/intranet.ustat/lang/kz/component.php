@@ -1,0 +1,22 @@
+<?php
+$MESS["INTRANET_USTAT_PERIOD_BUTTON_MONTH"] = "Ай";
+$MESS["INTRANET_USTAT_PERIOD_BUTTON_TODAY"] = "Бүгін";
+$MESS["INTRANET_USTAT_PERIOD_BUTTON_WEEK"] = "Апта";
+$MESS["INTRANET_USTAT_PERIOD_BUTTON_YEAR"] = "Жыл";
+$MESS["INTRANET_USTAT_PERIOD_TITLE"] = "Уақыт кезеңі:";
+$MESS["INTRANET_USTAT_SECTION_CRM_HELP_GENERAL"] = "Таңдалған уақыт кезеңіндегі CRM-дегі әрекеттердің жалпы саны (істер, мәмілелер, жетекшілер және т. б. бойынша өзгерістер).";
+$MESS["INTRANET_USTAT_SECTION_CRM_HELP_INVOLVEMENT"] = "Таңдалған кезеңдегі CRM компанияның барлық қызметкерлерінің қанша пайызы пайдаланатынын көрсетеді.";
+$MESS["INTRANET_USTAT_SECTION_DISK_HELP_GENERAL_MSGVER_1"] = "Таңдалған уақыт аралығында Битрикс24.Дискте жүктелген немесе өзгертілген файлдардың жалпы саны.";
+$MESS["INTRANET_USTAT_SECTION_DISK_HELP_INVOLVEMENT_MSGVER_1"] = "Компанияның барлық қызметкерлерінің қанша пайызы файлдар мен Битрикс24.Диск пайдаланатынын көрсетеді.";
+$MESS["INTRANET_USTAT_SECTION_IM_HELP_GENERAL"] = "Таңдалған уақыт кезеңінде жіберілген хабарламалар мен қоңыраулардың жалпы саны.";
+$MESS["INTRANET_USTAT_SECTION_IM_HELP_INVOLVEMENT"] = "Таңдалған кезеңде компанияның барлық қызметкерлерінің қанша пайызы жедел хабар алмасу мен бейнеқоңырауларды пайдаланатынын көрсетеді.";
+$MESS["INTRANET_USTAT_SECTION_LIKES_HELP_GENERAL"] = "Таңдалған уақыт кезеңіндегі жазбалардағы, пікірлердегі, міндеттердегі және басқа элементтердегі \"Маған ұнайды\" белгілерінің жалпы саны.";
+$MESS["INTRANET_USTAT_SECTION_LIKES_HELP_INVOLVEMENT"] = "Таңдалған кезеңде Компанияның барлық қызметкерлерінің қанша пайызы \"Маған ұнайды\" деп белгілейтінін көрсетеді.";
+$MESS["INTRANET_USTAT_SECTION_MOBILE_HELP_GENERAL"] = "Таңдалған уақыт кезеңінде \"Битрикс24\" мобильді қосымшасындағы әрекеттердің жалпы саны (барлығы ескеріледі: хабарламалар, міндеттердегі өзгерістер, CRM және т. б.)";
+$MESS["INTRANET_USTAT_SECTION_MOBILE_HELP_INVOLVEMENT"] = "Таңдалған кезеңде компанияның барлық қызметкерлерінің қанша пайызы мобильді қосымшаны пайдаланатынын көрсетеді.";
+$MESS["INTRANET_USTAT_SECTION_SOCNET_HELP_GENERAL"] = "Таңдалған уақыт кезеңінде жарияланған хабарламалар мен пікірлердің жалпы саны.";
+$MESS["INTRANET_USTAT_SECTION_SOCNET_HELP_INVOLVEMENT"] = "Таңдалған кезеңде компанияның барлық қызметкерлерінің қанша пайызы әлеуметтік желіні пайдаланатынын көрсетеді.";
+$MESS["INTRANET_USTAT_SECTION_TASKS_HELP_GENERAL"] = "Таңдалған уақыт кезеңінде міндеттердегі өзгерістердің жалпы саны (жаңа міндет құру, пікірлер, мерзімдерді өзгерту және т. б.).";
+$MESS["INTRANET_USTAT_SECTION_TASKS_HELP_INVOLVEMENT"] = "Таңдалған кезеңдегі міндеттерді компанияның барлық қызметкерлерінің қанша пайызы пайдаланатынын көрсетеді.";
+$MESS["INTRANET_USTAT_TOGGLE_COMPANY"] = "Компания";
+$MESS["INTRANET_USTAT_TOGGLE_PEOPLE"] = "Адамдар";

@@ -1,0 +1,8 @@
+.ui-draggable--draggable .booking--booking-base--add-client-button,
+.ui-draggable--type-move .booking-wait-list-item.--drag-source .booking--booking-base--add-client-button {
+	display: none;
+}
+
+.ui-draggable--type-move .booking--booking-base--add-client-button {
+	pointer-events: none;
+}

@@ -136,3 +136,30 @@
 	opacity: .6;
 	pointer-events: none;
 }
+
+.sign-preview-document-dropdown {
+	min-height: 50px;
+	max-height: 350px;
+	height: 100% !important;
+}
+
+.sign-preview-document-dropdown .ui-selector-tab-labels {
+	display: none;
+}
+
+.sing-settings-preview-block {
+	display: flex;
+	flex-direction: column;
+}
+
+.sing-settings-preview-block .sign-b2e-dropdown {
+	background: var(--ui-color-palette-white-base);
+	border-radius: 20px;
+	box-shadow: rgba(0, 0, 0, 0.1) 0 2px 4px;
+	padding: 7px 9px 7px 15px;
+	font: var(--ui-font-weight-semi-bold) var(--ui-size-sm) var(--ui-font-family-open-sans);
+	color: var(--ui-color-palette-gray-90);
+	border: 0;
+	margin-bottom: 16px;
+	max-width: 422px;
+}

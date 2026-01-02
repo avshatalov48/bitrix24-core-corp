@@ -14,6 +14,7 @@ $MESS["TASKS_GRID_GROUP_ACTION_NAME_ADDACCOMPLICE"] = "Добавляем сои
 $MESS["TASKS_GRID_GROUP_ACTION_NAME_ADDTOFAVORITE"] = "Добавляем задачи в избранное. Процесс остановится, если вы закроете это окно";
 $MESS["TASKS_GRID_GROUP_ACTION_NAME_REMOVEFROMFAVORITE"] = "Убираем задачи из избранного. Процесс остановится, если вы закроете это окно";
 $MESS["TASKS_GRID_GROUP_ACTION_NAME_SETGROUP"] = "Добавляем задачи в группу. Процесс остановится, если вы закроете это окно";
+$MESS["TASKS_GRID_GROUP_ACTION_NAME_SETCOLLAB"] = "Добавляем задачи в коллабу. Процесс остановится, если вы закроете это окно";
 $MESS["TASKS_GRID_GROUP_ACTION_NAME_SETFLOW"] = "Добавляем задачи в поток. Процесс остановится, если вы закроете это окно";
 $MESS["TASKS_GRID_GROUP_ACTION_NAME_DELETE"] = "Удаляем выбранные задачи. Процесс остановится, если вы закроете это окно";
 $MESS["TASKS_GRID_GROUP_ACTION_NONE"] = "Действие не определено";

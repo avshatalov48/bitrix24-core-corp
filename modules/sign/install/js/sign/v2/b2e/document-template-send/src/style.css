@@ -1,0 +1,87 @@
+
+.send-b2e-overlay {
+	background: var(--ui-color-white-base);
+	text-align: center;
+	z-index: 2;
+	display: flex;
+	flex-direction: column;
+	height: 100%;
+	border-radius: var(--ui-border-radius-lg);
+}
+
+.sign-b2e-overlay-content {
+	flex-grow: 1;
+	display: flex;
+	flex-direction: column;
+	align-items: center;
+	justify-content: center;
+}
+
+.sign-b2e-overlay-close-description {
+	margin: 20px auto 30px;
+	font-size: 17px;
+	line-height: 20px;
+	max-width: 410px;
+	color: var(--ui-color-palette-gray-70);
+}
+
+.send-b2e-progress-container {
+	padding: 40px;
+}
+.sign-b2e-overlay-progress-title {
+	font-size: 25px;
+	line-height: 30px;
+	margin-top: 30px;
+	color: var(--ui-color-palette-gray-90);
+}
+
+.sign-b2e-overlay__animate-layout {
+	background: url('./images/sign_send_progress_empty.svg') no-repeat center;
+	min-width: 219px;
+	height: 178px;
+}
+
+.sign-b2e-overlay__overlap-docs {
+	position: relative;
+	display: inline-block;
+	width: 103px;
+	height: 136px;
+	top: 20px;
+	left: -30px;
+}
+
+.sign-b2e-overlay__overlap-docs:last-of-type {
+	left: 65px;
+}
+
+.sign-b2e-overlay__overlap-doc {
+	background: url('./images/sign_send_overlap_doc.svg') no-repeat center;
+	position: absolute;
+	width: 100%;
+	height: 100%;
+	top: -10px;
+}
+
+.sign-b2e-overlay__overlap-doc:nth-child(1) {
+	left: -15px;
+	top: 10px;
+}
+
+.sign-b2e-overlay__overlap-doc:nth-child(2) {
+	left: -7px;
+	top: auto;
+}
+
+.sign-b2e-overlay__overlap-doc:nth-child(4) {
+	animation: doc-sheet-movement 1.3s infinite cubic-bezier(0.42, 0, 0.14, 1.35);
+	z-index: 1;
+}
+
+@keyframes doc-sheet-movement {
+	0%, 30% {
+		transform: translateX(0);
+	}
+	100% {
+		transform: translateX(198px);
+	}
+}

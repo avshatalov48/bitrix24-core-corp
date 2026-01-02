@@ -13,3 +13,37 @@
 .ui-page-slider-wrapper-hr.--premissions {
 	overflow: visible;
 }
+
+.ui-icon-set.--administrator {
+	--ui-icon-set__icon-path: url("/bitrix/components/bitrix/humanresources.config.permissions/templates/.default/images/administrator.svg");
+}
+
+.hr-permission-config-role-main-wrapper {
+	gap: 10px;
+	display: flex;
+	flex-direction: column;
+}
+
+.hr-permission-config-role-main-content {
+	width: calc(100% - 240px);
+}
+
+#bx-hr-permission-config-action-search-container {
+	margin-top: 6px;
+}
+
+.hr-permission-config-role-main-left-menu .ui-page-slider-left-panel {
+	width: 240px;
+	padding-left: 20px;
+}
+
+.hr-permission-config-role-main-left-menu .ui-sidepanel-title {
+	max-width: 100%;
+	color: var(--ui-color-base-80);
+	font-size: 26px;
+	font-weight: 300;
+	line-height: 31.03px;
+	text-align: left;
+	text-underline-position: from-font;
+	text-decoration-skip-ink: none;
+}

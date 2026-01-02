@@ -46,6 +46,12 @@ class Workflow extends BaseController
 					new ActionFilter\CloseSession(),
 				],
 			],
+			'loadWorkflowInfo' => [
+				'class' => Action\Workflow\LoadWorkflowInfoAction::class,
+				'+prefilters' => [
+					new ActionFilter\CloseSession(),
+				],
+			],
 		];
 	}
 
@@ -301,8 +307,18 @@ class Workflow extends BaseController
 		return false;
 	}
 
-	private function getWorkflowResult(string $workflowId): ?BbCodeView
+	private function getWorkflowResult(string $workflowId)
 	{
+		//TODO has a dependency on bizproc, delete after update
+		$mobileConstant = \CBPViewHelper::class . '::MOBILE_CONTEXT';
+		$mobileContext = defined($mobileConstant) ? \CBPViewHelper::MOBILE_CONTEXT : null;
+		$userId = (int)$this->getCurrentUser()?->getId();
+
+		if ($mobileContext && method_exists(\CBPViewHelper::class, 'getUserFullNameById'))
+		{
+			return \CBPViewHelper::getWorkflowResult($workflowId, $userId, $mobileContext);
+		}
+
 		$currentUserId = (int)$this->getCurrentUser()->getId();
 		$result = ResultTable::getList([
 			'filter' => [

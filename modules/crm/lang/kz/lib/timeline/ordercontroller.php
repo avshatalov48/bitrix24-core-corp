@@ -1,0 +1,19 @@
+<?php
+$MESS["CRM_DEAL_CREATION_BASED_ON"] = "Негізінде құрылды";
+$MESS["CRM_ORDER_ACTIVE"] = "Жұмыс үстінде";
+$MESS["CRM_ORDER_CANCELLED"] = "Болдырылмады";
+$MESS["CRM_ORDER_CONVERSION"] = "Негізінде жасау";
+$MESS["CRM_ORDER_CREATION"] = "Тапсырыс құрылды";
+$MESS["CRM_ORDER_CREATION_MESSAGE_SUM"] = "(#PRICE_WITH_CURRENCY# сомаға)";
+$MESS["CRM_ORDER_CREATION_TITLE"] = "#DATE_INSERT# күнгі #TITLE#";
+$MESS["CRM_ORDER_DESTINATION_TITLE_BITRIX24"] = "Битрикс24 арқылы";
+$MESS["CRM_ORDER_DESTINATION_TITLE_CHAT"] = "чатқа";
+$MESS["CRM_ORDER_DESTINATION_TITLE_CONTROL_CENTER"] = "Бірыңғай Басқару Орталығы арқылы";
+$MESS["CRM_ORDER_DESTINATION_TITLE_SMS"] = "СМС арқылы";
+$MESS["CRM_ORDER_MODIFICATION_CANCELED"] = "Тапсырыс жойылды";
+$MESS["CRM_ORDER_MODIFICATION_REASON_CANCELED"] = "Тапсырысты болдырмау себебі";
+$MESS["CRM_ORDER_MODIFICATION_RESTORED"] = "Тапсырыс қалпына келтірілді";
+$MESS["CRM_ORDER_MODIFICATION_STATUS"] = "Тапсырыс мәртебесі өзгертілді";
+$MESS["CRM_ORDER_VIEWED_HTML_TITLE"] = "тапсырыс №#TITLE#";
+$MESS["CRM_ORDER_VIEWED_HTML_TITLE_2"] = "(#DATE# күнгі #SUM# сомаға №#ORDER_ID#)";
+$MESS["CRM_PAYMENT_VIEWED_TITLE"] = "Клиент төлем бетіне өтті";

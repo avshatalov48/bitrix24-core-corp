@@ -15,7 +15,7 @@ jn.define('im/messenger/provider/pull/collab/user', (require, exports, module) =
 	{
 		handleUserUpdate(params, extra, command)
 		{
-			if (this.interceptEvent(params, extra, command))
+			if (this.interceptEvent(extra))
 			{
 				return;
 			}
@@ -27,7 +27,7 @@ jn.define('im/messenger/provider/pull/collab/user', (require, exports, module) =
 
 		handleBotUpdate(params, extra, command)
 		{
-			if (this.interceptEvent(params, extra, command))
+			if (this.interceptEvent(extra))
 			{
 				return;
 			}

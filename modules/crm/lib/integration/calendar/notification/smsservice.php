@@ -100,6 +100,11 @@ class SmsService extends AbstractService
 	 */
 	public function sendCrmSharingCancelled(): bool
 	{
+		if ($this->initiatorId === $this->eventLink->getHostId())
+		{
+			return false;
+		}
+
 		$message = Loc::getMessage('CRM_CALENDAR_SHARING_EVENT_CANCELLED', [
 			'#EVENT_URL#' => Sharing\Helper::getShortUrl($this->eventLink->getUrl()),
 		]);

@@ -15,7 +15,7 @@ jn.define('ui-system/blocks/chips/chip-button/src/design-enum', (require, export
 	{
 		static PRIMARY = new ChipButtonDesign('PRIMARY', {
 			[ChipButtonMode.SOLID]: {
-				backgroundColor: Color.accentMainPrimary.withPressed(),
+				backgroundColor: Color.accentMainPrimary,
 				color: Color.baseWhiteFixed,
 			},
 			[ChipButtonMode.OUTLINE]: {
@@ -27,7 +27,7 @@ jn.define('ui-system/blocks/chips/chip-button/src/design-enum', (require, export
 
 		static SUCCESS = new ChipButtonDesign('SUCCESS', {
 			[ChipButtonMode.SOLID]: {
-				backgroundColor: Color.accentMainSuccess.withPressed(),
+				backgroundColor: Color.accentMainSuccess,
 				color: Color.baseWhiteFixed,
 			},
 			[ChipButtonMode.OUTLINE]: {
@@ -39,7 +39,7 @@ jn.define('ui-system/blocks/chips/chip-button/src/design-enum', (require, export
 
 		static ALERT = new ChipButtonDesign('ALERT', {
 			[ChipButtonMode.SOLID]: {
-				backgroundColor: Color.accentMainAlert.withPressed(),
+				backgroundColor: Color.accentMainAlert,
 				color: Color.baseWhiteFixed,
 			},
 			[ChipButtonMode.OUTLINE]: {
@@ -51,7 +51,7 @@ jn.define('ui-system/blocks/chips/chip-button/src/design-enum', (require, export
 
 		static BLACK = new ChipButtonDesign('BLACK', {
 			[ChipButtonMode.SOLID]: {
-				backgroundColor: Color.base2.withPressed(),
+				backgroundColor: Color.base2,
 				color: Color.baseWhiteFixed,
 			},
 			[ChipButtonMode.OUTLINE]: {
@@ -63,7 +63,7 @@ jn.define('ui-system/blocks/chips/chip-button/src/design-enum', (require, export
 
 		static GREY = new ChipButtonDesign('GREY', {
 			[ChipButtonMode.SOLID]: {
-				backgroundColor: Color.base4.withPressed(),
+				backgroundColor: Color.base4,
 				color: Color.baseWhiteFixed,
 			},
 			[ChipButtonMode.OUTLINE]: {
@@ -75,7 +75,7 @@ jn.define('ui-system/blocks/chips/chip-button/src/design-enum', (require, export
 
 		static #DISABLED = new ChipButtonDesign('GREY', {
 			[ChipButtonMode.SOLID]: {
-				backgroundColor: Color.base7.withPressed(),
+				backgroundColor: Color.base7,
 				color: Color.baseWhiteFixed,
 			},
 			[ChipButtonMode.OUTLINE]: {

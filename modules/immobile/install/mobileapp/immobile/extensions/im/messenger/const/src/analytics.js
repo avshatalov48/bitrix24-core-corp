@@ -11,10 +11,14 @@ jn.define('im/messenger/const/analytics', (require, exports, module) => {
 		openChat: 'open_chat',
 		openExisting: 'open_existing',
 		openComments: 'open_comments',
+		openCreateMenu: 'open_create_menu',
 		createNewChat: 'create_new_chat',
 		clickCreateNew: 'click_create_new',
 		submitCreateNew: 'submit_create_new',
 		audioUse: 'audio_use',
+		play: 'play',
+		pause: 'pause',
+		changeSpeed: 'change_speed',
 		openTab: 'open_tab',
 		openMessenger: 'open_messenger',
 		sendMessage: 'send_message',
@@ -28,6 +32,7 @@ jn.define('im/messenger/const/analytics', (require, exports, module) => {
 		clickCallButton: 'click_call_button',
 		saveToDisk: 'save_to_disk',
 		downloadFile: 'download_file',
+		downloadError: 'download_error',
 		clickAddUser: 'click_add_user',
 		openCalendar: 'open_calendar',
 		openTasks: 'open_tasks',
@@ -37,6 +42,27 @@ jn.define('im/messenger/const/analytics', (require, exports, module) => {
 		clickAttach: 'click_attach',
 		galleryLimitException: 'gallery_limit_exception',
 		cancelFileUpload: 'cancel_file_upload',
+		pinMessage: 'pin_message',
+		unpinMessage: 'unpin_message',
+		openPinList: 'open_pinned_list',
+		pinnedMessageLimitException: 'pinned_message_limit_exception',
+		openSearch: 'open_search',
+		startSearch: 'start_search',
+		searchResult: 'search_result',
+		cancelSearch: 'cancel_search',
+		selectSearchResult: 'select_search_result',
+		backToSearch: 'back_to_search',
+		clickCreatePoll: 'click_create_poll',
+		publishPoll: 'publish_poll',
+		finishPoll: 'finish_poll',
+		vote: 'vote',
+		cancelVote: 'cancel_vote',
+		copyPollLink: 'copy_poll_link',
+		setOptions: 'set_options',
+		isMultipleChoice: 'is_multiple_choice',
+		setCancelVote: 'set_cancel_vote',
+		pinChat: 'pin_chat',
+		typeMessage: 'type_message',
 	});
 
 	const Tool = Object.freeze({
@@ -55,6 +81,8 @@ jn.define('im/messenger/const/analytics', (require, exports, module) => {
 		message: 'message',
 		chatPopup: 'chat_popup',
 		limitBanner: 'limit_banner',
+		audiomessage: 'audiomessage',
+		audioplayer: 'audioplayer',
 	});
 
 	const Type = Object.freeze({
@@ -90,6 +118,7 @@ jn.define('im/messenger/const/analytics', (require, exports, module) => {
 		custom: 'custom', // case for custom dialog type
 		limitOfficeChatingHistory: 'limit_office_chating_history',
 		collab: 'collab',
+		notes: 'notes',
 
 		/* region call type */
 		privateCall: 'private',
@@ -104,6 +133,31 @@ jn.define('im/messenger/const/analytics', (require, exports, module) => {
 		/* region media type */
 		media: 'media',
 		files: 'files',
+
+		/* region pins type */
+		singlePin: 'single',
+		multiplePins: 'multiple',
+		selectedPin: 'selected',
+		allPins: 'all',
+
+		/* region vote type */
+		votePublic: 'public',
+		voteAnonymous: 'anonymous',
+
+		/* region vote finisher type */
+		voteFinisherUser: 'user',
+		voteFinisherAutoTimer: 'autotimer',
+
+		/* region vote answers type */
+		voteAnswersTwo: 'two',
+		voteAnswersMultiple: 'multiple',
+
+		/* region vote link copy source type */
+		voteLinkCopySourceMessage: 'message_link',
+		voteLinkCopySourceResult: 'poll_results',
+
+		/* region message type */
+		deletedMessage: 'deleted_message',
 	});
 
 	const Section = Object.freeze({
@@ -132,6 +186,8 @@ jn.define('im/messenger/const/analytics', (require, exports, module) => {
 	const SubSection = Object.freeze({
 		window: 'window',
 		contextMenu: 'context_menu',
+		chatList: 'chat_list',
+		chat: 'chat',
 	});
 
 	const Element = Object.freeze({
@@ -165,6 +221,7 @@ jn.define('im/messenger/const/analytics', (require, exports, module) => {
 		mail: 'chatType_mail',
 		sonetGroup: 'chatType_sonetGroup',
 		copilot: 'chatType_copilot',
+		notes: 'chatType_notes',
 	});
 
 	/**
@@ -176,6 +233,18 @@ jn.define('im/messenger/const/analytics', (require, exports, module) => {
 		extranet: 'user_extranet',
 		collaber: 'user_collaber',
 	});
+
+	const Status = Object.freeze({
+		notFound: 'not_found',
+		success: 'success',
+	});
+
+	const DownloadErrorStatus = {
+		toDisk: 'download_to_disk_error',
+		toGallery: 'download_to_gallery_error',
+		multipleFiles: 'multiple_files_download_error',
+		toDevice: 'download_to_device_error',
+	};
 
 	const Analytics = Object.freeze({
 		CopilotChatType,
@@ -189,6 +258,8 @@ jn.define('im/messenger/const/analytics', (require, exports, module) => {
 		P1,
 		P2,
 		P3,
+		Status,
+		DownloadErrorStatus,
 	});
 
 	module.exports = { Analytics };

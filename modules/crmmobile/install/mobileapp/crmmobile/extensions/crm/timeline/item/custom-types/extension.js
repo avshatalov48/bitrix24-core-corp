@@ -7,6 +7,7 @@ jn.define('crm/timeline/item/custom-types', (require, exports, module) => {
 	const { OpenlineChat } = require('crm/timeline/item/custom-types/openline-chat');
 	const { VisitActivity } = require('crm/timeline/item/custom-types/visit-activity');
 	const { TaskActivity } = require('crm/timeline/item/custom-types/task-activity');
+	const { Todo } = require('crm/timeline/item/custom-types/todo');
 
 	module.exports = {
 		CallActivity,
@@ -14,5 +15,6 @@ jn.define('crm/timeline/item/custom-types', (require, exports, module) => {
 		OpenlineChat,
 		VisitActivity,
 		TaskActivity,
+		Todo,
 	};
 });

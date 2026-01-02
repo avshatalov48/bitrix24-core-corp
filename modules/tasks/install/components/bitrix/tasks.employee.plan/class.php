@@ -10,7 +10,6 @@ use Bitrix\Main\Localization\Loc;
 use Bitrix\Main\UserTable;
 use Bitrix\Tasks\Access\ActionDictionary;
 use Bitrix\Tasks\Access\TaskAccessController;
-use Bitrix\Tasks\Integration\Intranet\Settings;
 use Bitrix\Tasks\Util\Result;
 use Bitrix\Tasks\Util\Error\Collection;
 use Bitrix\Tasks\Util\Error;
@@ -21,6 +20,7 @@ use Bitrix\Tasks\Integration\Report\Internals\TaskTable;
 use Bitrix\Tasks\Integration\Intranet\Department;
 use Bitrix\Tasks\Integration\Extranet;
 use Bitrix\Tasks\Internals\RunTime;
+use Bitrix\Tasks\V2\Internal\DI\Container;
 
 Loc::loadMessages(__FILE__);
 
@@ -219,7 +219,7 @@ class TasksEmployeePlanComponent extends TasksBaseComponent
 			return;
 		}
 
-		$arResult['IS_TOOL_AVAILABLE'] = (new Settings())->isToolAvailable(Settings::TOOLS['employee_plan']);
+		$arResult['IS_TOOL_AVAILABLE'] = Container::getInstance()->getToolService()->isEmployeePlanAvailable();
 	}
 
 	protected function getData()

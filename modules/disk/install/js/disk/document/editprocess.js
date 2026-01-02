@@ -22,6 +22,7 @@
 		this.onAfterSave = null;
 		this.modalWindow = parameters.modalWindow;
 		this.handlerOnSliderMessage = null;
+		this.byUnifiedLink = parameters.byUnifiedLink || false;
 
 		if(BX.type.isFunction(parameters.onAfterSave))
 		{
@@ -52,7 +53,14 @@
 					}
 				}
 
-				this.openSlider();
+				if (this.byUnifiedLink)
+				{
+					this.openInNewTab();
+				}
+				else
+				{
+					this.openSlider();
+				}
 
 				return;
 			}
@@ -85,6 +93,23 @@
 			return {
 				process: 'edit',
 			}
+		},
+
+		openInNewTab: function ()
+		{
+			const newTab = window.open('', '_blank');
+
+			BX.ajax.runAction('disk.api.documentService.goToEdit', {
+				data: {
+					serviceCode: this.serviceCode,
+					objectId: this.objectId || 0,
+					attachedObjectId: this.attachedObjectId || 0,
+				},
+			}).then((response) => {
+				newTab.location.href = response.data.openUrl;
+			}).catch((error) => {
+				console.error(error);
+			});
 		},
 
 		openSlider: function ()

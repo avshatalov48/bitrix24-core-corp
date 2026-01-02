@@ -1,8 +1,16 @@
 <?php
+
 if (!defined('B_PROLOG_INCLUDED') || B_PROLOG_INCLUDED !== true)
 {
 	die();
 }
+
+use Bitrix\Crm\Integration\SaleManager;
+
+$settings = [
+	'hasPaymentSystemConfigured' => SaleManager::hasPaymentSystemConfigured(),
+	'hasCashboxConfigured' => SaleManager::hasCashboxConfigured(),
+];
 
 return [
 	'css' => 'dist/terminal.bundle.css',
@@ -12,4 +20,5 @@ return [
 		'main.core',
 	],
 	'skip_core' => false,
+	'settings' => $settings,
 ];

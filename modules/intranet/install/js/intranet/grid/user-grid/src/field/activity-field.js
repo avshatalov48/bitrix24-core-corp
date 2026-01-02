@@ -1,5 +1,5 @@
 import { BaseField } from './base-field';
-import { Loc, Tag, Dom } from 'main.core';
+import { Loc, Tag, Dom, Type } from 'main.core';
 import { GridManager } from '../grid-manager';
 import 'ui.cnt';
 import { ReinvitePopup, FormType } from 'intranet.reinvite';
@@ -60,6 +60,11 @@ export class ActivityField extends BaseField
 
 	#updateData(data): void
 	{
+		if (!Type.isStringFilled(data.get('newEmail')) && !Type.isBoolean(data.get('newPhone'))) {
+			top.console.error('Empty new email or phone');
+			return;
+		}
+
 		const row = GridManager.getInstance(this.gridId).getGrid()?.getRows().getById(this.userId);
 		row?.stateLoad();
 		GridManager.reinviteCloudAction(data).then((response) => {
@@ -116,10 +121,10 @@ export class ActivityField extends BaseField
 		{
 			const reinvitePopup = new ReinvitePopup({
 				userId: params.userId,
-				transport: this.#updateData.bind(params), //callback,
 				formType: params.email ? FormType.EMAIL : FormType.PHONE,
 				bindElement: button.getContainer(),
 				inputValue: params.email ?? params.phoneNumber ?? '',
+				transport: this.#updateData.bind(params),
 			});
 			//This is a hack. When the row is updated, a new button is created.
 			reinvitePopup.getPopup().setBindElement(button.getContainer());

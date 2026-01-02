@@ -6,10 +6,7 @@ if (!CModule::IncludeModule('crm'))
 if (!CModule::IncludeModule('sale'))
 	return;
 
-global $USER;
-
-$CCrmPerms = new CCrmPerms($USER->GetID());
-if ($CCrmPerms->HavePerm('CONFIG', BX_CRM_PERM_NONE, 'WRITE'))
+if (!\Bitrix\Crm\Service\Container::getInstance()->getUserPermissions()->isCrmAdmin())
 {
 	ShowError(GetMessage('CRM_LOC_IMP_ERROR_ACCESS_DENIED'));
 	return;

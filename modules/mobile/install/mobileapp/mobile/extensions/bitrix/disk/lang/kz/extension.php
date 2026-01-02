@@ -1,0 +1,27 @@
+<?php
+$MESS["RECENT_SEARCH"] = "Жуырдағы іздеу";
+$MESS["USER_DISK_ACCESS_DENIED"] = "Бұл пайдаланушының кез келген файлын көруге құқығыңыз жоқ";
+$MESS["USER_DISK_CONFIRM_NO"] = "Жоқ";
+$MESS["USER_DISK_CONFIRM_YES"] = "Иә";
+$MESS["USER_DISK_EMPTY_FOLDER"] = "Бума бос";
+$MESS["USER_DISK_ERROR"] = "Файлдар тізімін алу мүмкін болмады, бірдеңе дұрыс емес...";
+$MESS["USER_DISK_FILE_NOT_SEND"] = "Файл жіберу қатесі";
+$MESS["USER_DISK_FILE_SENT"] = "Файл пайдаланушыға жіберілді";
+$MESS["USER_DISK_GET_PUBLIC_LINK"] = "Жария сілтеме";
+$MESS["USER_DISK_LINK_COPIED"] = "Жария сілтеме айырбастау буферіне көшірілді";
+$MESS["USER_DISK_LINK_COPIED_FAIL"] = "Өкінішке орай жария сілтемені жасау мүмкін болмады. Өтінеміз, кейінірек қайталап көріңіз.";
+$MESS["USER_DISK_MENU_SORT"] = "Сұрыптау";
+$MESS["USER_DISK_MENU_SORT_DATE_CREATE"] = "Жаңарту күні бойынша";
+$MESS["USER_DISK_MENU_SORT_DATE_UPDATE"] = "Құрылған күні бойынша";
+$MESS["USER_DISK_MENU_SORT_MIX"] = "Аралас сұрыптау";
+$MESS["USER_DISK_MENU_SORT_NAME"] = "Аты бойынша";
+$MESS["USER_DISK_MENU_SORT_TYPE"] = "Түрі бойынша";
+$MESS["USER_DISK_MENU_UPLOAD"] = "Файлды жүктеу...";
+$MESS["USER_DISK_OPEN"] = "Ашу";
+$MESS["USER_DISK_PUBLIC_LINK_GETTING"] = "Жария сілтеме жасалуда...";
+$MESS["USER_DISK_REMOVE"] = "Жою";
+$MESS["USER_DISK_REMOVE_FILE_CONFIRM"] = "\"%@\" файлын себетке орналастыру керек пе?";
+$MESS["USER_DISK_REMOVE_FOLDER_CONFIRM"] = "\"%@\" бумасын себетке орналастыру керек пе?";
+$MESS["USER_DISK_ROLLBACK"] = "\"%@\" жойылуын болдыртпау керек пе?";
+$MESS["USER_DISK_SEND_TO_USER"] = "Пайдаланушыға жіберу";
+$MESS["USER_DISK_SHARE"] = "Бөлісу";

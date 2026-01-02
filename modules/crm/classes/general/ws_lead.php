@@ -9,9 +9,11 @@ class CCrmLeadWS extends IWebService
 {
 	public static function CheckAuth()
 	{
-		$CCrmPerms = new CCrmPerms($GLOBALS['USER']->GetID());
-		if ($CCrmPerms->HavePerm('LEAD', BX_CRM_PERM_NONE))
+		if (!\Bitrix\Crm\Service\Container::getInstance()->getUserPermissions()->entityType()->canReadItems(CCrmOwnerType::Lead))
+		{
 			return new CSOAPFault('Server Error', 'Unable to authorize user.');
+		}
+
 		return false;
 	}
 

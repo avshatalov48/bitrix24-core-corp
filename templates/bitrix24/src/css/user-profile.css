@@ -1,0 +1,254 @@
+.air-user-profile {
+	display: flex;
+	align-items: center;
+	justify-content: flex-end;
+	min-height: var(--air-header-height);
+	cursor: pointer;
+	position: absolute;
+	right: calc(var(--air-right-bar-width) / 2 - 14px);
+	max-width: 120px;
+	--wrapper-color: var(--ui-color-base-8);
+	--border-color: var(--ui-color-base-8);
+	--avatar-border-color: var(--ui-color-base-8);
+	--status-icon-color: var(--ui-color-base-5);
+}
+
+.air-header__user-profile .air-user-profile {
+	position: relative;
+	right: 0;
+}
+
+.air-user-profile.--worktime-not-started {
+	--wrapper-color: var(--ui-color-accent-main-primary);
+	--status-icon-color: var(--ui-color-base-4);
+}
+
+.air-user-profile.--worktime-paused {
+	--wrapper-color: var(--ui-color-accent-main-link-underline);
+	--status-icon-color: var(--ui-color-base-3);
+}
+
+.air-user-profile.--worktime-finished {
+	--status-icon-color: var(--ui-color-base-3);
+}
+
+.air-user-profile.--worktime-not-finished {
+	--wrapper-color: var(--ui-color-red-50);
+	--status-icon-color: var(--ui-color-base-3);
+}
+
+.air-user-profile__wrapper {
+	opacity: 1;
+	overflow: hidden;
+	display: flex;
+	align-items: center;
+	background-color: var(--wrapper-color);
+	max-width: 120px;
+	height: 27px;
+	border-radius: 48px;
+	position: relative;
+	padding-left: 8px;
+	padding-right: 28px;
+	border: 1.4px solid var(--border-color);
+	transition:
+			max-width 0s ease-in-out,
+			visibility 0s linear,
+			opacity 0.3s ease-in-out;
+}
+
+.air-user-profile.--no-transition .air-user-profile__wrapper {
+	transition: none;
+}
+
+.app__right-bar:is(.--transparent, .--overlay-mode) .air-user-profile__wrapper,
+.air-user-profile.--collapsed .air-user-profile__wrapper {
+	opacity: 0;
+	visibility: hidden;
+	max-width: 0;
+	transition:
+			opacity 0.3s ease-in-out,
+			visibility 0s linear 0.3s,
+			max-width 0s ease-in-out 0.3s;
+}
+
+.app__right-bar:is(.--transparent, .--overlay-mode) .air-user-profile-avatar__work-time-state-short,
+.air-user-profile.--collapsed .air-user-profile-avatar__work-time-state-short {
+	opacity: 1;
+}
+
+.air-user-profile .air-user-profile__avatar::before {
+	content: "";
+	position: absolute;
+	width: 29px;
+	height: 29px;
+	border-radius: 50%;
+	top: 50%;
+	left: 50%;
+	transform: translate(-50%, -50%);
+	background: var(--ui-color-bg-state-hover-alt);
+	opacity: 0;
+	transition: opacity 0.2s ease-in-out;
+}
+
+.air-user-profile:hover .air-user-profile__avatar::before {
+	opacity: 1;
+}
+
+.app__right-bar .air-user-profile::after {
+	content: "";
+	position: absolute;
+	width: 24px;
+	height: 1px;
+	bottom: 0;
+	left: 50%;
+	transform: translateX(-50%);
+	background: var(--ui-color-divider-accent);
+
+	opacity: 0;
+	animation-name: air-user-profile-divider-appear;
+	animation-duration: 1ms;
+	animation-timeline: scroll(y);
+}
+
+.app__right-bar:is(.--transparent, .--overlay-mode) .air-user-profile::after {
+	animation-name: none;
+	opacity: 1;
+}
+
+@keyframes air-user-profile-divider-appear {
+	0% {
+		opacity: 0;
+	}
+	1% {
+		opacity: 1;
+	}
+	100% {
+		opacity: 1;
+	}
+}
+
+.air-user-profile .air-user-profile__avatar {
+	display: flex;
+	align-items: center;
+	justify-content: center;
+	position: absolute;
+	width: 29px;
+	height: 29px;
+	border-radius: 50%;
+	transition: border 0.2s ease-in-out;
+	outline: solid 1px rgba(255, 255, 255, 0.2);
+	outline-offset: -1px;
+	box-shadow: -2px 0 3px 0 rgba(0, 0, 0, 0.08);
+}
+
+.air-user-profile__avatar.--collaber,
+.air-user-profile__avatar.--extranet {
+	--avatar-border-color: var(--ui-icon-service-bg-color);
+}
+
+.air-user-profile .air-user-profile__avatar i {
+	width: 100%;
+	height: 100%;
+	border-radius: 50%;
+	background-position: center;
+	background-size: 100% auto;
+	background-repeat: no-repeat;
+	background-color: var(--ui-icon-service-bg-color);
+	background-image: var(--ui-icon-service-bg-image);
+}
+
+.air-user-profile-avatar__counter {
+	position: absolute;
+	top: -5px;
+	left: 17px;
+}
+
+.air-user-profile-avatar__work-time-state {
+	width: 16px;
+	height: 16px;
+	margin-right: 4px;
+}
+
+.air-user-profile .air-user-profile-avatar__work-time-icon {
+	--ui-icon-set__icon-color: var(--status-icon-color);
+	--ui-icon-set__icon-path: var(--ui-icon-set-solid__path_clock);
+	--ui-icon-set__icon-size: 16px;
+	background-position: center;
+	background-size: 100% auto;
+	background-repeat: no-repeat;
+}
+
+.air-user-profile.--worktime-not-started .air-user-profile-avatar__work-time-icon {
+	--ui-icon-set__icon-path: var(--ui-icon-set-solid__path_play);
+}
+
+.air-user-profile.--worktime-paused .air-user-profile-avatar__work-time-icon {
+	--ui-icon-set__icon-path: var(--ui-icon-set-solid__path_pause);
+}
+
+.air-user-profile.--worktime-finished .air-user-profile-avatar__work-time-icon {
+	--ui-icon-set__icon-path: var(--ui-icon-set-solid__path_check);
+}
+
+.air-user-profile.--worktime-not-finished .air-user-profile-avatar__work-time-icon {
+	--ui-icon-set__icon-path: var(--ui-icon-set-solid__path_alert);
+}
+
+.air-user-profile-avatar__time {
+	margin-right: 4px;
+	font-size: var(--ui-font-size-md);
+	font-weight: var(--ui-font-weight-medium);
+	line-height: 19px;
+	color: var(--ui-color-base-white-fixed);
+	white-space: nowrap;
+	min-width: 40px;
+}
+
+.air-user-profile-avatar__time:has(.air-user-profile-avatar__time-meridiem) {
+	min-width: 50px;
+}
+
+.--ui-context-edge-light .air-user-profile-avatar__time {
+	color: var(--ui-color-base-1);
+}
+
+.--ui-context-edge-light .air-user-profile.--worktime-not-started .air-user-profile-avatar__time,
+.--ui-context-edge-light .air-user-profile.--worktime-not-finished .air-user-profile-avatar__time {
+	color: var(--ui-color-base-white-fixed);
+}
+
+.air-user-profile.--worktime-not-started .air-user-profile-avatar__work-time-icon {
+	--status-icon-color: var(--ui-color-base-white-fixed);
+	opacity: .5;
+}
+
+.air-user-profile.--worktime-not-finished .air-user-profile-avatar__work-time-icon {
+	--status-icon-color: var(--ui-color-base-white-fixed);
+	opacity: .5;
+}
+
+.air-user-profile-avatar__time span {
+	font-size: var(--ui-font-size-4xs);
+	margin: 0;
+}
+
+.intranet-avatar-widget-base-popup {
+	overflow-y: auto;
+	overflow-x: hidden;
+	scrollbar-width: none;
+	-ms-overflow-style: none;
+	max-height: 97vh;
+}
+
+.intranet-avatar-widget-popup-base::-webkit-scrollbar {
+	width: 0;
+	height: 0;
+}
+
+.air-user-profile-avatar__work-time-state-short {
+	opacity: 0;
+	position: absolute;
+	top: 57%;
+	left: 57%;
+	transition: opacity 0.3s ease-in-out, visibility 0.3s ease-in-out;
+}

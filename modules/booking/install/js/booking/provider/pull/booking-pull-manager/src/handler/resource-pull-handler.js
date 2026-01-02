@@ -28,7 +28,7 @@ export class ResourcePullHandler extends BasePullHandler
 			await Core.getStore().dispatch(`${Model.Favorites}/addMany`, [resource.id]);
 		}
 
-		const isFilterMode = Core.getStore().getters[`${Model.Interface}/isFilterMode`];
+		const isFilterMode = Core.getStore().getters[`${Model.Filter}/isFilterMode`];
 		if (isFilterMode)
 		{
 			return;

@@ -21,14 +21,14 @@ if(typeof(BX.Crm.EntityRequisiteSelector) === "undefined")
 			this.bindEvents();
 
 			//Prevent caching of requisite selector slider
-			if(typeof(top.BX.Bitrix24.Slider) !== "undefined")
+			if(typeof(top.BX.SidePanel.Instance) !== "undefined")
 			{
-				var sliderPage = top.BX.Bitrix24.Slider.getCurrentPage();
+				var sliderPage = top.BX.SidePanel.Instance.getSlider();
 				if(sliderPage)
 				{
 					BX.addCustomEvent(
 						sliderPage.getWindow(),
-						"BX.Bitrix24.PageSlider:onClose",
+						"SidePanel.Slider:onClose",
 						this._sliderCloseHandler
 					);
 				}
@@ -120,10 +120,10 @@ if(typeof(BX.Crm.EntityRequisiteSelector) === "undefined")
 		},
 		closeSlider: function()
 		{
-			if(typeof(top.BX.Bitrix24.Slider) !== "undefined")
+			if(typeof(top.BX.SidePanel.Instance) !== "undefined")
 			{
 				setTimeout(
-					function(){ top.BX.Bitrix24.Slider.close(false) },
+					function(){ top.BX.SidePanel.Instance.close(false) },
 					250
 				);
 			}
@@ -131,7 +131,7 @@ if(typeof(BX.Crm.EntityRequisiteSelector) === "undefined")
 		onSliderClose: function(slider)
 		{
 			setTimeout(
-				function(){ top.BX.Bitrix24.Slider.destroy(slider.getUrl()) },
+				function(){ top.BX.SidePanel.Instance.destroy(slider.getUrl()) },
 				1000
 			);
 		}

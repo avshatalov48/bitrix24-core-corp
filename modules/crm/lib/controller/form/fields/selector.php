@@ -20,7 +20,7 @@ class Selector extends Main\Engine\JsonController
 				'isLeadEnabled' => LeadSettings::getCurrent()->isEnabled(),
 				'permissions' => [
 					'userField' => [
-						'add' => Container::getInstance()->getUserPermissions()->canWriteConfig(),
+						'add' => Container::getInstance()->getUserPermissions()->isCrmAdmin(),
 					],
 				],
 			],

@@ -77,8 +77,6 @@ class WorkTime
 	}
 
 	/**
-	 * @see http://docs.bx/R&D/bitrix_dev/modules/crm/utils/worktime
-	 *
 	 * @param int 			$days
 	 * @param int 			$hours
 	 * @param DateTime|null $baseDateInServerTimezone

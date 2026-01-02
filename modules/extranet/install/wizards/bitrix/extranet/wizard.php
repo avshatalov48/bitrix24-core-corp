@@ -471,9 +471,27 @@ class DataInstallStep extends CWizardStep
 		$this->SetSubTitle(GetMessage("wiz_install_data"));
 	}
 
+	protected function refreshExtranetSiteOption(): void
+	{
+		$extranetSiteId = CExtranet::GetExtranetSiteID();
+		$rsSite = CSite::GetList();
+		$existsExtranetSite = false;
+		while ($arSite = $rsSite->Fetch())
+		{
+			if (CExtranet::IsExtranetSite($arSite["LID"]))
+			{
+				$existsExtranetSite = true;
+				break;
+			}
+		}
+		\Bitrix\Main\Config\Option::set('extranet', 'extranet_site', ($existsExtranetSite ? $extranetSiteId : ''));
+	}
+
 	function OnPostForm()
 	{
 		$wizard = $this->GetWizard();
+		$this->refreshExtranetSiteOption();
+
 		$serviceID = $wizard->GetVar("nextStep");
 		$serviceStage = $wizard->GetVar("nextStepStage");
 

@@ -442,7 +442,8 @@ elseif ($action === 'FIND_DUPLICATES')
 
 				$isReadable = Container::getInstance()
 					->getUserPermissions()
-					->checkReadPermissions(
+					->item()
+					->canRead(
 						$entityTypeID,
 						$entityID
 					)
@@ -455,7 +456,7 @@ elseif ($action === 'FIND_DUPLICATES')
 					&& CCrmCompany::isMyCompany((int)$entityID)
 				)
 				{
-					$isReadable = $userPermissions->HavePerm('CONFIG', BX_CRM_PERM_CONFIG, 'WRITE');
+					$isReadable = \Bitrix\Crm\Service\Container::getInstance()->getUserPermissions()->myCompany()->canRead();
 				}
 
 				if ($isReadable)

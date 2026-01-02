@@ -7,6 +7,7 @@ export type DetailConfig = {
 	canExport: 'Y' | 'N',
 	canEdit: 'Y' | 'N',
 	analyticSource: string,
+	analyticScope: ?string,
 	embeddedDebugMode: boolean,
 	pdfExportEnabled: boolean,
 }

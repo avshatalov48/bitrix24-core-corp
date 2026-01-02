@@ -3,12 +3,13 @@
  */
 jn.define('layout/ui/fields/crm-element', (require, exports, module) => {
 	const { EntitySelectorFieldClass, EntitySelectorField, CastType } = require('layout/ui/fields/entity-selector');
-	const { get, clone } = require('utils/object');
+	const { get, clone, isEmpty } = require('utils/object');
 	const { stringify } = require('utils/string');
 	const { Loc } = require('loc');
 	const AppTheme = require('apptheme');
 	const { EntitySelectorFactory } = require('selector/widget/factory');
 	const { Icon } = require('assets/icons');
+	const { isNil } = require('utils/type');
 
 	const DEFAULT_AVATAR = '/bitrix/mobileapp/mobile/extensions/bitrix/layout/ui/fields/crm-element/images/default-avatar.png';
 
@@ -242,6 +243,33 @@ jn.define('layout/ui/fields/crm-element', (require, exports, module) => {
 			}
 
 			return Type.isEntitySupportedById(this.getEntityTypeId(entity));
+		}
+
+		prepareEntityList(entityList)
+		{
+			const list = clone(entityList).filter((entity) => BX.type.isPlainObject(entity) && !isNil(entity.id));
+
+			return (
+				list
+					.filter((entity) => !isEmpty(entity) && !isNil(entity?.id))
+					.map((entity) => {
+						const id = entity?.type === 'dynamic_multiple' ? String(entity?.id) : Number(entity?.id);
+
+						return { ...entity, id };
+					})
+			);
+		}
+
+		getEntitiesIds()
+		{
+			const values = this.getValuesArray();
+
+			if (Array.isArray(values))
+			{
+				return values.filter((value) => !isNil(value)).flat();
+			}
+
+			return [];
 		}
 
 		getDefaultStyles()

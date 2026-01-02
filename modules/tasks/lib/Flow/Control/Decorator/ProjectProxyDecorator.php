@@ -2,45 +2,21 @@
 
 namespace Bitrix\Tasks\Flow\Control\Decorator;
 
-use Bitrix\Main\ArgumentException;
-use Bitrix\Main\DB\SqlQueryException;
 use Bitrix\Main\DI\ServiceLocator;
-use Bitrix\Main\LoaderException;
 use Bitrix\Main\ObjectNotFoundException;
-use Bitrix\Main\ObjectPropertyException;
-use Bitrix\Main\SystemException;
 use Bitrix\Tasks\Flow\Control\Command\AddCommand;
 use Bitrix\Tasks\Flow\Control\Command\UpdateCommand;
-use Bitrix\Tasks\Flow\Control\Exception\CommandNotFoundException;
-use Bitrix\Tasks\Flow\Control\Exception\FlowNotAddedException;
-use Bitrix\Tasks\Flow\Control\Exception\FlowNotFoundException;
-use Bitrix\Tasks\Flow\Control\Exception\FlowNotUpdatedException;
 use Bitrix\Tasks\Flow\Integration\Socialnetwork\AddGroupCommand;
 use Bitrix\Tasks\Flow\Integration\HumanResources\AccessCodeConverter;
-use Bitrix\Tasks\InvalidCommandException;
+use Bitrix\Tasks\Flow\Control\Exception\InvalidCommandException;
 use Bitrix\Tasks\Flow\Flow;
-use Bitrix\Tasks\Flow\Integration\Socialnetwork\Exception\AutoCreationException;
 use Bitrix\Tasks\Flow\Integration\Socialnetwork\GroupService;
 use Bitrix\Tasks\Flow\Kanban\Command\AddKanbanCommand;
-use Bitrix\Tasks\Flow\Kanban\KanbanService;
 use Psr\Container\NotFoundExceptionInterface;
+use Bitrix\Tasks\Flow\Internal\DI\Container;
 
 class ProjectProxyDecorator extends AbstractFlowServiceDecorator
 {
-	/**
-	 * @throws ObjectNotFoundException
-	 * @throws AutoCreationException
-	 * @throws CommandNotFoundException
-	 * @throws FlowNotFoundException
-	 * @throws LoaderException
-	 * @throws FlowNotAddedException
-	 * @throws SystemException
-	 * @throws NotFoundExceptionInterface
-	 * @throws SqlQueryException
-	 * @throws ObjectPropertyException
-	 * @throws InvalidCommandException
-	 * @throws ArgumentException
-	 */
 	public function add(AddCommand $command): Flow
 	{
 		if ($command->hasValidGroupId())
@@ -59,20 +35,6 @@ class ProjectProxyDecorator extends AbstractFlowServiceDecorator
 		return $flow;
 	}
 
-	/**
-	 * @throws AutoCreationException
-	 * @throws ObjectNotFoundException
-	 * @throws CommandNotFoundException
-	 * @throws FlowNotFoundException
-	 * @throws LoaderException
-	 * @throws SystemException
-	 * @throws NotFoundExceptionInterface
-	 * @throws FlowNotUpdatedException
-	 * @throws SqlQueryException
-	 * @throws ObjectPropertyException
-	 * @throws InvalidCommandException
-	 * @throws ArgumentException
-	 */
 	public function update(UpdateCommand $command): Flow
 	{
 		if ($command->hasValidGroupId())
@@ -91,20 +53,19 @@ class ProjectProxyDecorator extends AbstractFlowServiceDecorator
 		return $flow;
 	}
 
-	/**
-	 * @throws AutoCreationException
-	 * @throws ObjectNotFoundException
-	 * @throws NotFoundExceptionInterface
-	 * @throws LoaderException
-	 * @throws InvalidCommandException
-	 * @throws ArgumentException
-	 * @throws SystemException
-	 */
 	protected function createProject(AddCommand|UpdateCommand $command): int
 	{
-		$memberIds = (new AccessCodeConverter(...$command->responsibleList))
-			->getUserIds()
-		;
+		$memberIds = [];
+
+		if (!empty($command->responsibleList))
+		{
+			$memberIds = (new AccessCodeConverter(...$command->responsibleList))->getUserIds();
+		}
+
+		if (empty($memberIds))
+		{
+			$memberIds = [$command->creatorId];
+		}
 
 		$groupCommand =
 			(new AddGroupCommand())
@@ -131,7 +92,7 @@ class ProjectProxyDecorator extends AbstractFlowServiceDecorator
 			->setOwnerId($flow->getOwnerId())
 			->setFlowId($flow->getId());
 
-		$service = ServiceLocator::getInstance()->get('tasks.flow.kanban.service');
+		$service = Container::getInstance()->getKanbanService();
 
 		$service->add($kanbanCommand);
 	}

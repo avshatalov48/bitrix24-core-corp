@@ -1,0 +1,4 @@
+<?php
+$MESS["DISK_UNIFIED_LINK_ACCESS_LEVEL_DENIED"] = "Кіруге тыйым салынады";
+$MESS["DISK_UNIFIED_LINK_ACCESS_LEVEL_EDIT"] = "Редакциялау";
+$MESS["DISK_UNIFIED_LINK_ACCESS_LEVEL_READ"] = "Оқу";

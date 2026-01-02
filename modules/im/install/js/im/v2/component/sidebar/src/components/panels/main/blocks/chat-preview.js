@@ -1,4 +1,5 @@
-import { ChatAvatar, AvatarSize, ChatTitle } from 'im.v2.component.elements';
+import { ChatTitle } from 'im.v2.component.elements.chat-title';
+import { ChatAvatar, AvatarSize } from 'im.v2.component.elements.avatar';
 
 import { MuteChat } from '../../../elements/mute-chat/mute-chat';
 import { AutoDelete } from '../../../elements/auto-delete/auto-delete';
@@ -37,7 +38,7 @@ export const ChatPreview = {
 			</div>
 			<div class="bx-im-sidebar-main-preview-group-chat__settings">
 				<MuteChat :dialogId="dialogId" />
-				<AutoDelete />
+				<AutoDelete :dialogId="dialogId" />
 			</div>
 		</div>
 	`,

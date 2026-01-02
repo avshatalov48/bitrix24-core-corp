@@ -544,9 +544,12 @@ jn.define('crm/statemanager/redux/slices/kanban-settings', (require, exports, mo
 						const stageIds = kanbanSettings[stageSemantics];
 						const filteredStageIds = stageIds.filter((stageId) => stageId !== id);
 
+						const tunnels = kanbanSettings.tunnels.filter((tunnel) => !tunnel.startsWith(`${kanbanSettings.categoryId}_${id}`));
+
 						adapter.upsertOne(state, {
 							id: kanbanSettingsId,
 							[stageSemantics]: filteredStageIds,
+							tunnels,
 						});
 					}
 				})
@@ -565,9 +568,11 @@ jn.define('crm/statemanager/redux/slices/kanban-settings', (require, exports, mo
 					const kanbanSettings = state.entities[kanbanSettingsId];
 					if (kanbanSettings)
 					{
+						const preparedTunnels = [...new Set([...kanbanSettings.tunnels, ...tunnelsIds])];
+
 						adapter.upsertOne(state, {
 							id: kanbanSettingsId,
-							tunnels: tunnelsIds || kanbanSettings.tunnels,
+							tunnels: preparedTunnels,
 						});
 					}
 				})

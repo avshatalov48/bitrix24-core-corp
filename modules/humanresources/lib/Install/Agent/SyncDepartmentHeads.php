@@ -4,18 +4,14 @@ namespace Bitrix\HumanResources\Install\Agent;
 
 use Bitrix\HumanResources\Compatibility\Utils\DepartmentBackwardAccessCode;
 use Bitrix\HumanResources\Compatibility\Utils\OldStructureUtils;
-use Bitrix\HumanResources\Enum\LoggerEntityType;
 use Bitrix\HumanResources\Exception\UpdateFailedException;
 use Bitrix\HumanResources\Item\NodeMember;
 use Bitrix\HumanResources\Item\Structure;
-use Bitrix\HumanResources\Model\NodeMemberRole;
 use Bitrix\HumanResources\Model\NodeMemberRoleTable;
-use Bitrix\HumanResources\Model\NodeMemberTable;
 use Bitrix\HumanResources\Service\Container;
 use Bitrix\HumanResources\Type\MemberEntityType;
 use Bitrix\HumanResources\Item;
 use Bitrix\HumanResources\Config;
-use Bitrix\Main\Engine\CurrentUser;
 
 class SyncDepartmentHeads
 {

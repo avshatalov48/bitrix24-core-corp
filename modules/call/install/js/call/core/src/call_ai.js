@@ -12,9 +12,11 @@ export type CallAiOptions = {
 	feedBackLink?: string;
 	baasPromoSlider?: string;
 	helpSlider?: string;
+	disclaimerArticleCode?: string;
 };
 
 export const CallAiError = {
+	AI_MODULE_ERROR: 'AI_MODULE_ERROR',
 	AI_UNAVAILABLE_ERROR: 'AI_UNAVAILABLE_ERROR',
 	AI_SETTINGS_ERROR: 'AI_SETTINGS_ERROR',
 	AI_AGREEMENT_ERROR: 'AI_AGREEMENT_ERROR',
@@ -34,6 +36,7 @@ class CallAi
 		this.feedBackLink = '';
 		this.baasPromoSlider = '';
 		this.helpSlider = '';
+		this.disclaimerArticleCode = '';
 
 		if (Extension.getSettings('call.core').ai)
 		{
@@ -78,6 +81,10 @@ class CallAi
 		if (options.helpSlider)
 		{
 			this.helpSlider = options.helpSlider;
+		}
+		if (options.disclaimerArticleCode)
+		{
+			this.disclaimerArticleCode = options.disclaimerArticleCode;
 		}
 	}
 
@@ -162,6 +169,15 @@ class CallAi
 		this._helpSlider = value;
 	}
 
+	get disclaimerArticleCode(): string
+	{
+		return this._disclaimerArticleCode;
+	}
+	set disclaimerArticleCode(value: string)
+	{
+		this._disclaimerArticleCode = value;
+	}
+
 	handleCopilotError(errorType: string)
 	{
 		switch (errorType)
@@ -169,6 +185,7 @@ class CallAi
 			case CallAiError.AI_UNAVAILABLE_ERROR:
 				this.tariffAvailable = false;
 				break;
+			case CallAiError.AI_MODULE_ERROR:
 			case CallAiError.AI_SETTINGS_ERROR:
 				this.settingsEnabled = false;
 				break;

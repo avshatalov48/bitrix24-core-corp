@@ -346,7 +346,7 @@ final class Storage extends Internals\Model implements \JsonSerializable
 	 */
 	public function isPossibleToUpload($fileSize)
 	{
-		if(!$this->isEnabledSizeLimitRestriction())
+		if (!$this->isEnabledSizeLimitRestriction())
 		{
 			return true;
 		}

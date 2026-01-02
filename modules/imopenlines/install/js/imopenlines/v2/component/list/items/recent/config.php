@@ -10,9 +10,11 @@ return [
 	'rel' => [
 		'main.polyfill.core',
 		'im.v2.application.core',
+		'im.v2.component.elements.list-loading-state',
 		'imopenlines.v2.const',
 		'imopenlines.v2.provider.service',
-		'im.v2.component.elements',
+		'im.v2.component.elements.chat-title',
+		'im.v2.component.elements.avatar',
 		'im.v2.const',
 		'im.v2.lib.date-formatter',
 		'im.v2.lib.utils',

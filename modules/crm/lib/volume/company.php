@@ -140,14 +140,16 @@ class Company
 	 */
 	public function canClearEntity()
 	{
-		$userPermissions = \CCrmPerms::GetUserPermissions($this->getOwner());
-		if (!\CCrmCompany::CheckReadPermission(0, $userPermissions))
+		$userPermissions = Crm\Service\Container::getInstance()->getUserPermissions($this->getOwner());
+
+		if (!$userPermissions->entityType()->canReadItemsInCategory(\CCrmOwnerType::Company, 0)) // check read permissions for default company category
 		{
 			$this->collectError(new Main\Error('', self::ERROR_PERMISSION_DENIED));
 
 			return false;
 		}
-		if ($userPermissions->HavePerm('COMPANY', BX_CRM_PERM_NONE, 'DELETE'))
+
+		if (!$userPermissions->entityType()->canDeleteItemsInCategory(\CCrmOwnerType::Company, 0)) // check delete permissions for default company category
 		{
 			$this->collectError(new Main\Error('', self::ERROR_PERMISSION_DENIED));
 
@@ -681,8 +683,7 @@ class Company
 			{
 				$this->setProcessOffset($company['COMPANY_ID']);
 
-				$entityAttr = $userPermissions->GetEntityAttr('COMPANY', array($company['COMPANY_ID']));
-				if ($userPermissions->CheckEnityAccess('COMPANY', 'DELETE', $entityAttr[$company['COMPANY_ID']]))
+				if ($this->canDeleteItem(\CCrmOwnerType::Company, $company['COMPANY_ID']))
 				{
 					$connection->startTransaction();
 

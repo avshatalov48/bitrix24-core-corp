@@ -21,7 +21,7 @@ class TextHelper
 
 	public static function convertHtmlToBbCode($html)
 	{
-		$html = strval($html);
+		$html = (string)$html;
 		if($html === '')
 		{
 			return '';
@@ -44,7 +44,7 @@ class TextHelper
 			'CUT_ANCHOR' => 'Y',
 		];
 
-		$result = (new \CTextParser())->convertHTMLToBB($html, $allow);
+		$result = (new CTextParser())->convertHTMLToBB($html, $allow);
 
 		// \CTextParser leaves some html tags, escaping them instead of removing/transforming them
 		// remove those remaining tags, and escape the result for backwards compatibility
@@ -53,7 +53,7 @@ class TextHelper
 
 	public static function convertBbCodeToHtml($bb, $useTypography = false): string
 	{
-		$parser = new \CTextParser();
+		$parser = new CTextParser();
 
 		$parser->allow = [
 			'ANCHOR' => 'Y',
@@ -100,7 +100,7 @@ class TextHelper
 
 	public static function sanitizeHtml($html)
 	{
-		$html = strval($html);
+		$html = (string)$html;
 		if($html === '' || mb_strpos($html, '<') === false)
 		{
 			return $html;
@@ -213,7 +213,7 @@ class TextHelper
 		{
 			$text = preg_replace_callback(
 				"/\\[p](.*?)\\[\\/p](([ \r\t]*)\n?)/isu",
-				function($matches) use (&$doubleLF) {
+				static function($matches) use (&$doubleLF) {
 					$result = preg_replace("/^\r?\n|\r?\n$/", '', $matches[1]);
 					if ($doubleLF)
 					{
@@ -267,15 +267,69 @@ class TextHelper
 		{
 			$cleanedText = strip_tags($text);
 		}
-		else if ($contentType === CCrmContentType::BBCode)
+		elseif ($contentType === CCrmContentType::BBCode)
 		{
 			$cleanedText = strip_tags((new CTextParser())->convertText($text));
 		}
-		else if ($contentType === CCrmContentType::PlainText)
+		elseif ($contentType === CCrmContentType::PlainText)
 		{
 			$cleanedText = $text;
 		}
 
 		return $cleanedText;
+	}
+
+	/**
+	 * Recursively counts the total number of characters in the elements of a
+	 * multidimensional associative array with additional options.
+	 *
+	 * - Strings: count the length of the string (UTF-8).
+	 * - Numbers (int, float): convert to string, count the length.
+	 * - Booleans: true -> "1" (1 character), false -> "" (0 characters).
+	 * - Arrays: recursively processed.
+	 * - null, objects: ignored.
+	 * - Array keys: optionally count characters in string keys.
+	 *
+	 * @param array $data The array to parse.
+	 * @param bool $countKeys If true, also count characters in STRING keys of the array. Defaults to false.
+	 * @param string $encoding The character encoding. Defaults to 'UTF-8'.
+	 * 
+	 * @return int Total number of characters.
+	 */
+	final public static function countCharactersInArrayFlexible(
+		array $data,
+		bool $countKeys = false,
+		string $encoding = 'UTF-8'
+	): int
+	{
+		$totalChars = 0;
+
+		foreach ($data as $key => $value)
+		{
+			if ($countKeys && is_string($key))
+			{
+				$totalChars += mb_strlen($key, $encoding);
+			}
+
+			if (is_string($value))
+			{
+				$totalChars += mb_strlen($value, $encoding);
+			}
+			elseif (is_int($value) || is_float($value))
+			{
+				$totalChars += mb_strlen((string)$value, $encoding);
+			}
+			elseif (is_bool($value))
+			{
+				$totalChars += mb_strlen((string)$value, $encoding);
+			}
+			elseif (is_array($value))
+			{
+				$totalChars += self::countCharactersInArrayFlexible($value, $countKeys, $encoding);
+			}
+			// null, objects and other types are ignored in current version
+		}
+
+		return $totalChars;
 	}
 }

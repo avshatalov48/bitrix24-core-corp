@@ -239,7 +239,7 @@ jn.define('tasks/layout/deadline-pill', (require, exports, module) => {
 			deadline: task.deadline,
 			isExpired: task.isExpired,
 			isCompleted: selectIsCompleted(task),
-			canChange: selectActions(task).updateDeadline,
+			canChange: selectActions({ task }).updateDeadline,
 			status: task.status,
 		};
 	};

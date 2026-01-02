@@ -2,7 +2,11 @@
  * @module in-app-url/url
  */
 jn.define('in-app-url/url', (require, exports, module) => {
+	const { schemes } = require('in-app-url/const');
 
+	/**
+	 * @class Url
+	 */
 	class Url
 	{
 		/**
@@ -29,15 +33,16 @@ jn.define('in-app-url/url', (require, exports, module) => {
 		 */
 		get isLocal()
 		{
+			const localSchemes = Object.values(schemes);
 			const startingPoints = [
-				'bitrix24://',
 				'/',
+				...localSchemes,
 				currentDomain,
 				this.withHttp(currentDomain),
 				this.withHttps(currentDomain),
 			];
 
-			return startingPoints.some(item => this.value.startsWith(item));
+			return startingPoints.some((item) => this.value.startsWith(item));
 		}
 
 		/**
@@ -49,6 +54,7 @@ jn.define('in-app-url/url', (require, exports, module) => {
 		}
 
 		/**
+		 * @deprecated use b24 or bitrix24 deeplink instead
 		 * @return {boolean}
 		 */
 		get isMobileView()
@@ -77,7 +83,7 @@ jn.define('in-app-url/url', (require, exports, module) => {
 		 */
 		get isBitrix24()
 		{
-			return this.value.startsWith('bitrix24://');
+			return this.value.startsWith(schemes.bitrix24) || this.value.startsWith(schemes.b24);
 		}
 
 		/**
@@ -85,7 +91,7 @@ jn.define('in-app-url/url', (require, exports, module) => {
 		 */
 		get queryParams()
 		{
-			const cutHash = url => url.split('#')[0];
+			const cutHash = (url) => url.split('#')[0];
 			const queryString = cutHash(this.value).split('?')[1];
 
 			if (queryString)
@@ -94,6 +100,7 @@ jn.define('in-app-url/url', (require, exports, module) => {
 					(params, param) => {
 						const [key, value] = param.split('=');
 						params[key] = value ? decodeURIComponent(value.replace(/\+/g, ' ')) : '';
+
 						return params;
 					},
 					{},
@@ -113,5 +120,4 @@ jn.define('in-app-url/url', (require, exports, module) => {
 	}
 
 	module.exports = { Url };
-
 });

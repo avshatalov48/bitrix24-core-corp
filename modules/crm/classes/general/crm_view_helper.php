@@ -9,12 +9,14 @@ use Bitrix\Crm\Category\DealCategory;
 use Bitrix\Crm\Color\PhaseColorScheme;
 use Bitrix\Crm\Conversion\LeadConversionType;
 use Bitrix\Crm\Integration\OpenLineManager;
+use Bitrix\Crm\ItemMiniCard\Builder\MiniCardHtmlBuilder;
 use Bitrix\Crm\Order;
+use Bitrix\Crm\RepeatSale\Segment\DataFormatter;
 use Bitrix\Crm\Security\StagePermissions;
 use Bitrix\Crm\Service\Container;
 use Bitrix\Crm\Service\Timeline;
-use Bitrix\Crm\Service\UserPermissions;
 use Bitrix\Crm\Workflow\PaymentStage;
+use Bitrix\Main\Localization\Loc;
 use Bitrix\Main\UI\Extension;
 
 class CCrmViewHelper
@@ -36,121 +38,52 @@ class CCrmViewHelper
 	{
 		return self::PrepareEntityBaloonHtml($arParams);
 	}
+
 	public static function PrepareEntityBaloonHtml($arParams)
 	{
-		if(!is_array($arParams))
+		if (!is_array($arParams))
 		{
 			return '';
 		}
 
-		$entityTypeID = isset($arParams['ENTITY_TYPE_ID']) ? intval($arParams['ENTITY_TYPE_ID']) : 0;
-		$entityID = isset($arParams['ENTITY_ID']) ? intval($arParams['ENTITY_ID']) : 0;
-		$prefix = isset($arParams['PREFIX']) ? $arParams['PREFIX'] : '';
-		$className = isset($arParams['CLASS_NAME']) ? $arParams['CLASS_NAME'] : '';
+		$entityTypeID = isset($arParams['ENTITY_TYPE_ID']) ? (int)$arParams['ENTITY_TYPE_ID'] : 0;
+		$entityID = isset($arParams['ENTITY_ID']) ? (int)$arParams['ENTITY_ID'] : 0;
+		$className = $arParams['CLASS_NAME'] ?? '';
+		$isCheckPermissions = ($arParams['CHECK_PERMISSIONS'] ?? null) === 'N';
 
 		if($entityTypeID <= 0 || $entityID <= 0)
 		{
 			return '';
 		}
 
-		$showPath = isset($arParams['SHOW_URL']) ? $arParams['SHOW_URL'] : '';
-
-		if($entityTypeID === CCrmOwnerType::Company)
-		{
-			if($showPath === '')
-			{
-				$showPath = CCrmOwnerType::GetEntityShowPath(CCrmOwnerType::Company, $entityID, false);
-			}
-
-			$title = isset($arParams['TITLE']) ? $arParams['TITLE'] : '';
-			if($title === '')
-			{
-				$title = CCrmOwnerType::GetCaption(CCrmOwnerType::Company, $entityID, (isset($arParams['CHECK_PERMISSIONS']) && $arParams['CHECK_PERMISSIONS'] == 'N' ? false : true));
-			}
-
-			return '<a href="'.htmlspecialcharsbx($showPath).'"'.($className !== '' ? ' class="'.htmlspecialcharsbx($className).'"' : '').' bx-tooltip-user-id="COMPANY_'.$entityID.'" bx-tooltip-loader="'.htmlspecialcharsbx('/bitrix/components/bitrix/crm.company.show/card.ajax.php').'" bx-tooltip-classname="crm_balloon_company">'.htmlspecialcharsbx($title).'</a>';
-		}
-		elseif($entityTypeID === CCrmOwnerType::Contact)
-		{
-			if($showPath === '')
-			{
-				$showPath = CCrmOwnerType::GetEntityShowPath(CCrmOwnerType::Contact, $entityID, false);
-			}
-
-			$title = isset($arParams['TITLE']) ? $arParams['TITLE'] : '';
-			if($title === '')
-			{
-				$title = CCrmOwnerType::GetCaption(CCrmOwnerType::Contact, $entityID, (isset($arParams['CHECK_PERMISSIONS']) && $arParams['CHECK_PERMISSIONS'] == 'N' ? false : true));
-			}
-
-			return '<a href="'.htmlspecialcharsbx($showPath).'"'.($className !== '' ? ' class="'.htmlspecialcharsbx($className).'"' : '').' bx-tooltip-user-id="CONTACT_'.$entityID.'" bx-tooltip-loader="'.htmlspecialcharsbx('/bitrix/components/bitrix/crm.contact.show/card.ajax.php').'" bx-tooltip-classname="crm_balloon_contact">'.htmlspecialcharsbx($title).'</a>';
-		}
-		elseif($entityTypeID === CCrmOwnerType::Lead)
-		{
-			if($showPath === '')
-			{
-				$showPath = CCrmOwnerType::GetEntityShowPath(CCrmOwnerType::Lead, $entityID, false);
-			}
-
-			$title = isset($arParams['TITLE']) ? $arParams['TITLE'] : '';
-			if($title === '')
-			{
-				$title = CCrmOwnerType::GetCaption(CCrmOwnerType::Lead, $entityID, (isset($arParams['CHECK_PERMISSIONS']) && $arParams['CHECK_PERMISSIONS'] == 'N' ? false : true));
-			}
-
-			return '<a href="'.htmlspecialcharsbx($showPath).'" '.($className !== '' ? ' class="'.htmlspecialcharsbx($className).'"' : '').' bx-tooltip-user-id="LEAD_'.$entityID.'" bx-tooltip-loader="'.htmlspecialcharsbx('/bitrix/components/bitrix/crm.lead.show/card.ajax.php').'" bx-tooltip-classname="crm_balloon_no_photo">'.htmlspecialcharsbx($title).'</a>';
-		}
-		elseif($entityTypeID === CCrmOwnerType::Deal)
-		{
-			if($showPath === '')
-			{
-				$showPath = CCrmOwnerType::GetEntityShowPath(CCrmOwnerType::Deal, $entityID, false);
-			}
-
-			$title = isset($arParams['TITLE']) ? $arParams['TITLE'] : '';
-			if($title === '')
-			{
-				$title = CCrmOwnerType::GetCaption(CCrmOwnerType::Deal, $entityID, (isset($arParams['CHECK_PERMISSIONS']) && $arParams['CHECK_PERMISSIONS'] == 'N' ? false : true));
-			}
-
-			return '<a href="'.htmlspecialcharsbx($showPath).'" '.($className !== '' ? ' class="'.htmlspecialcharsbx($className).'"' : '').' bx-tooltip-user-id="DEAL_'.$entityID.'" bx-tooltip-loader="'.htmlspecialcharsbx('/bitrix/components/bitrix/crm.deal.show/card.ajax.php').'" bx-tooltip-classname="crm_balloon_no_photo">'.htmlspecialcharsbx($title).'</a>';
-
-		}
-		elseif($entityTypeID === CCrmOwnerType::Quote)
-		{
-			if($showPath === '')
-			{
-				$showPath = CCrmOwnerType::GetEntityShowPath(CCrmOwnerType::Quote, $entityID, false);
-			}
-
-			$title = isset($arParams['TITLE']) ? $arParams['TITLE'] : '';
-			if($title === '')
-			{
-				$title = CCrmOwnerType::GetCaption(CCrmOwnerType::Quote, $entityID, (isset($arParams['CHECK_PERMISSIONS']) && $arParams['CHECK_PERMISSIONS'] == 'N' ? false : true));
-			}
-
-			return '<a href="'.htmlspecialcharsbx($showPath).'" '.($className !== '' ? ' class="'.htmlspecialcharsbx($className).'"' : '').' bx-tooltip-user-id="QUOTE_'.$entityID.'" bx-tooltip-loader="'.htmlspecialcharsbx('/bitrix/components/bitrix/crm.quote.show/card.ajax.php').'" bx-tooltip-classname="crm_balloon_no_photo">'.htmlspecialcharsbx($title).'</a>';
-		}
-		return '';
+		return (new MiniCardHtmlBuilder($entityTypeID, $entityID))
+			->setTitle($arParams['TITLE'] ?? '')
+			->setLinkClassName($className)
+			->setIsRenderScript($arParams['IS_RENDER_SCRIPT'] ?? true)
+			->build()
+		;
 	}
+
 	public static function PrepareUserBaloonHtml($arParams)
 	{
-		if(!is_array($arParams))
+		if (!is_array($arParams))
 		{
 			return '';
 		}
 
-		$prefix = isset($arParams['PREFIX']) ? $arParams['PREFIX'] : '';
-		$userID = isset($arParams['USER_ID']) ? (int)$arParams['USER_ID'] : 0;
-		$userName = isset($arParams['USER_NAME']) ? $arParams['USER_NAME'] : "[{$userID}]";
+		$prefix = $arParams['PREFIX'] ?? '';
+		$userId = (int)($arParams['USER_ID'] ?? 0);
+		$userName = $arParams['USER_NAME'] ?? "[{$userId}]";
 		if(isset($arParams['ENCODE_USER_NAME']) && $arParams['ENCODE_USER_NAME'])
 		{
 			$userName = htmlspecialcharsbx($userName);
 		}
-		$profilePath = isset($arParams['USER_PROFILE_URL']) ? $arParams['USER_PROFILE_URL'] : '';
-		$baloonID = $prefix !== '' ? "BALLOON_{$prefix}_U_{$userID}" : "BALLOON_U_{$userID}";
-		return '<a href="'.htmlspecialcharsbx($profilePath).'" id="'.$baloonID.'" target="_blank" bx-tooltip-user-id="'.$userID.'">'.$userName.'</a>';
+		$profilePath = htmlspecialcharsbx($arParams['USER_PROFILE_URL'] ?? '');
+		$balloonId = $prefix !== '' ? "BALLOON_{$prefix}_U_{$userId}" : "BALLOON_U_{$userId}";
+
+		return '<a href="' . $profilePath . '" id="' . $balloonId . '" target="_blank" bx-tooltip-user-id="' . $userId . '" bx-tooltip-context="b24">' . $userName . '</a>';
 	}
+
 	public static function GetFormattedUserName($userID, $format = '', $htmlEncode = false)
 	{
 		$userID = intval($userID);
@@ -1990,7 +1923,6 @@ class CCrmViewHelper
 
 		$isTresholdPassed = false;
 
-		$canWriteConfig = Container::getInstance()->getUserPermissions()->canWriteConfig();
 		$successStageID = CCrmDeal::GetSuccessStageID($categoryId);
 		$failureStageID = CCrmDeal::GetFailureStageID($categoryId);
 		$preparedDealStages = self::PrepareDealStages($categoryId);
@@ -2006,7 +1938,7 @@ class CCrmViewHelper
 				'sort' => intval($stage['SORT']),
 				'color' => isset($stage['COLOR']) ? $stage['COLOR'] : '',
 				'stagesToMove' => $stage['STAGES_TO_MOVE'] ?? [],
-				'allowMoveToAnyStage' => $canWriteConfig,
+				'allowMoveToAnyStage' => Container::getInstance()->getUserPermissions()->item()->canChangeStageToAny(CCrmOwnerType::Deal),
 			);
 
 			if($stage['STATUS_ID'] === $successStageID)
@@ -2109,7 +2041,6 @@ class CCrmViewHelper
 	{
 		$result = array();
 		$isThresholdPassed = false;
-		$canWriteConfig = Container::getInstance()->getUserPermissions()->canWriteConfig();
 
 		$preparedLeadStatuses = self::PrepareLeadStatuses();
 		(new StagePermissions(CCrmOwnerType::Lead, null))
@@ -2124,7 +2055,7 @@ class CCrmViewHelper
 				'sort' => intval($status['SORT']),
 				'color' => isset($status['COLOR']) ? $status['COLOR'] : '',
 				'stagesToMove' => $status['STAGES_TO_MOVE'] ?? [],
-				'allowMoveToAnyStage' => $canWriteConfig,
+				'allowMoveToAnyStage' => Container::getInstance()->getUserPermissions()->item()->canChangeStageToAny(CCrmOwnerType::Lead),
 			);
 
 			if($status['STATUS_ID'] === 'CONVERTED')
@@ -2185,7 +2116,6 @@ class CCrmViewHelper
 	{
 		$result = array();
 		$isTresholdPassed = false;
-		$canWriteConfig = Container::getInstance()->getUserPermissions()->canWriteConfig();
 
 		foreach(self::PrepareInvoiceStatuses() as $status)
 		{
@@ -2217,7 +2147,7 @@ class CCrmViewHelper
 			}
 
 			$info['stagesToMove'] = ($status['STAGES_TO_MOVE'] ?? []);
-			$info['allowMoveToAnyStage'] = $canWriteConfig;
+			$info['allowMoveToAnyStage'] = Container::getInstance()->getUserPermissions()->item()->canChangeStageToAny(CCrmOwnerType::Invoice);
 
 			$result[] = $info;
 		}
@@ -2678,6 +2608,8 @@ class CCrmViewHelper
 			$converterId = $arParams['CONVERTER_ID'];
 		}
 
+		$loadingMessage = Loc::getMessage('CRM_STAGE_UPDATE_LOADING_NOTIFICATION_MESSAGE');
+
 		return $registrationScript.'<div class="crm-list-stage-bar'.$wrapperClass.'" '.$wrapperStyle.' id="'.htmlspecialcharsbx($controlID).'"><table class="crm-list-stage-bar-table"><tr>'
 			.$stepHtml
 			.'</tr></table>'
@@ -2700,6 +2632,7 @@ class CCrmViewHelper
 			.', "readOnly":'.($isReadOnly ? 'true' : 'false')
 			.', "enableCustomColors":'.($enableCustomColors ? 'true' : 'false')
 			.', "converterId":"' . CUtil::JSEscape($converterId) . '"'
+			.', "loadingNotificationMessage":"' . CUtil::JSEscape($loadingMessage) . '"'
 			.' }));})})</script>'
 			.'</div>'.$legendHtml;
 	}
@@ -2997,7 +2930,7 @@ class CCrmViewHelper
 	{
 		$result = array();
 		$isTresholdPassed = false;
-		$canWriteConfig = Container::getInstance()->getUserPermissions()->canWriteConfig();
+		$isAdmin = Container::getInstance()->getUserPermissions()->isCrmAdmin();
 
 		$preparedOrderShipmentStatuses = self::PrepareOrderShipmentStatuses();
 		StagePermissions::fillAllPermissionsByStages($preparedOrderShipmentStatuses);
@@ -3010,7 +2943,7 @@ class CCrmViewHelper
 				'sort' => intval($status['SORT']),
 				'color' => isset($status['COLOR']) ? $status['COLOR'] : '',
 				'stagesToMove' => $status['STAGES_TO_MOVE'] ?? [],
-				'allowMoveToAnyStage' => $canWriteConfig,
+				'allowMoveToAnyStage' => $isAdmin,
 			);
 
 			if($status['STATUS_ID'] === 'DF')
@@ -3052,7 +2985,7 @@ class CCrmViewHelper
 	{
 		$result = array();
 		$isTresholdPassed = false;
-		$canWriteConfig = Container::getInstance()->getUserPermissions()->canWriteConfig();
+		$isAdmin = Container::getInstance()->getUserPermissions()->isCrmAdmin();
 
 		$preparedOrderStatuses = self::PrepareOrderStatuses();
 		StagePermissions::fillAllPermissionsByStages($preparedOrderStatuses);
@@ -3065,7 +2998,7 @@ class CCrmViewHelper
 				'sort' => intval($status['SORT']),
 				'color' => isset($status['COLOR']) ? $status['COLOR'] : '',
 				'stagesToMove' => $status['STAGES_TO_MOVE'] ?? [],
-				'allowMoveToAnyStage' => $canWriteConfig,
+				'allowMoveToAnyStage' => $isAdmin,
 			);
 
 			if($status['STATUS_ID'] === 'F')
@@ -3118,7 +3051,6 @@ class CCrmViewHelper
 	{
 		$result = array();
 		$isTresholdPassed = false;
-		$canWriteConfig = Container::getInstance()->getUserPermissions()->canWriteConfig();
 
 		$preparedQuoteStatuses = self::PrepareQuoteStatuses();
 		(new StagePermissions(CCrmOwnerType::Quote, null))
@@ -3133,7 +3065,7 @@ class CCrmViewHelper
 				'sort' => intval($status['SORT']),
 				'color' => isset($status['COLOR']) ? $status['COLOR'] : '',
 				'stagesToMove' => $status['STAGES_TO_MOVE'] ?? [],
-				'allowMoveToAnyStage' => $canWriteConfig,
+				'allowMoveToAnyStage' => Container::getInstance()->getUserPermissions()->item()->canChangeStageToAny(CCrmOwnerType::Quote),
 			);
 
 			if($status['STATUS_ID'] === 'APPROVED')
@@ -3171,17 +3103,18 @@ class CCrmViewHelper
 			.'</script>';
 	}
 
-	private static function PrepareItemStatusesByCategoryId($entityTypeId, $categoryId): array
+	private static function prepareItemStatusesByCategoryId($entityTypeId, $categoryId): array
 	{
 		$result = [];
 
 		$isFinalFailurePassed = false;
-		$canWriteConfig = Container::getInstance()->getUserPermissions()->canWriteConfig();
 
 		$preparedItemsStatuses = self::PrepareItemsStatuses($entityTypeId, $categoryId);
 		(new StagePermissions($entityTypeId, $categoryId))
 			->fill($preparedItemsStatuses)
 		;
+
+		$allowMoveToAnyStage = Container::getInstance()->getUserPermissions()->item()->canChangeStageToAny($entityTypeId);
 
 		foreach ($preparedItemsStatuses as $status)
 		{
@@ -3192,7 +3125,7 @@ class CCrmViewHelper
 				'color' => $status['COLOR'] ?? '',
 				'semantics' => $status['SEMANTICS'],
 				'stagesToMove' => $status['STAGES_TO_MOVE'] ?? [],
-				'allowMoveToAnyStage' => $canWriteConfig || UserPermissions::isAlwaysAllowedEntity($entityTypeId),
+				'allowMoveToAnyStage' => $allowMoveToAnyStage,
 			];
 
 			if ($status['SEMANTICS'] === 'F')
@@ -3211,28 +3144,23 @@ class CCrmViewHelper
 		}
 		return $result;
 	}
-	public static function RenderItemStatusSettings($entityTypeId, $categoryId): string
+	public static function RenderItemStatusSettings(int $entityTypeId, ?int $categoryId): string
 	{
-		if (!isset($categoryId))
-		{
-			$categoryId = '0';
-		}
-
 		$result = [];
 		$factory = Container::getInstance()->getFactory($entityTypeId);
-		if ($categoryId === '0')
+		if (is_null($categoryId))
 		{
 			foreach ($factory->getCategories() as $category)
 			{
 				$categoryId = $category->getId();
 				$typeId = 'category_'.$categoryId;
-				$result[$typeId] = self::PrepareItemStatusesByCategoryId($entityTypeId, $categoryId);
+				$result[$typeId] = self::prepareItemStatusesByCategoryId($entityTypeId, $categoryId);
 			}
 		}
 		else
 		{
 			$typeId = 'category_'.$categoryId;
-			$result[$typeId] = self::PrepareItemStatusesByCategoryId($entityTypeId, $categoryId);
+			$result[$typeId] = self::prepareItemStatusesByCategoryId($entityTypeId, $categoryId);
 		}
 
 		$messages = [
@@ -3418,7 +3346,7 @@ class CCrmViewHelper
 		int $viewCategoryId = null
 	): string
 	{
-		Extension::load(['crm_common', 'sidepanel']);
+		Extension::load(['crm_common', 'sidepanel', 'loader']);
 
 		$router = Container::getInstance()->getRouter();
 		$url = $router->getItemDetailUrl($entityTypeId, $entityId, $entityCategoryId);
@@ -3457,12 +3385,14 @@ class CCrmViewHelper
 			. '                width: detectCrmSliderWidth(),' . PHP_EOL
 			. '                events: {' . PHP_EOL
 			. '                    onCloseComplete: function () {' . PHP_EOL
-			. '                        let themePicker = '. PHP_EOL
-			. '                            BX.getClass("BX.Intranet.Bitrix24.ThemePicker.Singleton")' . PHP_EOL
-			. '                        ;' . PHP_EOL
-			. '                        if (themePicker)' . PHP_EOL
-			. '                        {' . PHP_EOL
-			. '                            themePicker.showLoader(BX("workarea-content"));' . PHP_EOL
+			. '                        const targetElement = document.body.querySelector("main");'. PHP_EOL
+			. '                        if (targetElement)'. PHP_EOL
+			. '                        {'. PHP_EOL
+			. '                            let loader = new BX.Loader({target: targetElement, });'. PHP_EOL
+			. '                            if (loader)' . PHP_EOL
+			. '                            {' . PHP_EOL
+			. '                                loader.show();' . PHP_EOL
+			. '                            }' . PHP_EOL
 			. '                        }' . PHP_EOL
 			. "                        window.location = \"$viewUrl\";" . PHP_EOL
 			. '                    }' . PHP_EOL
@@ -3514,6 +3444,26 @@ class CCrmViewHelper
 		}
 
 		return implode(',<br>'."\n", $result);
+	}
+
+	public static function renderRepeatSaleSegmentTitle(int $segmentId): string
+	{
+		if ($segmentId <= 0)
+		{
+			return '';
+		}
+
+		if (!Container::getInstance()->getUserPermissions()->repeatSale()->canRead())
+		{
+			return Loc::getMessage('CRM_COMMON_HIDDEN_ITEM');
+		}
+
+		$formatter = DataFormatter::getInstance();
+
+		return '<a
+			href="' . $formatter->getUri($segmentId) . '"
+			onclick="BX.Crm.Router.Instance.openRepeatSaleSegmentSlider(' . $segmentId . '); return false;"
+		>' . htmlspecialcharsbx($formatter->getTitle($segmentId)) . '</a>';
 	}
 
 	final public static function initGridSettings(

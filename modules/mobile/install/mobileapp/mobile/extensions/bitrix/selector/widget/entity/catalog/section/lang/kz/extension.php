@@ -1,0 +1,6 @@
+<?php
+$MESS["SELECTOR_COMPONENT_CREATE_SECTION"] = "Бөлімді құру";
+$MESS["SELECTOR_COMPONENT_CREATING_SECTION"] = "Бөлім жасалуда...";
+$MESS["SELECTOR_COMPONENT_PICK_SECTION_2"] = "Бөлім";
+$MESS["SELECTOR_COMPONENT_START_TYPING_TO_CREATE_SECTION"] = "Бөлімді жасау үшін теруді бастаңыз";
+$MESS["SELECTOR_COMPONENT_START_TYPING_TO_SEARCH_SECTION"] = "Бөлімді таңдау үшін теруді бастаңыз";

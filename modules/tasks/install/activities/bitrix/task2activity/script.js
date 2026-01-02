@@ -32,6 +32,10 @@
 	var _gottenFromFlowFields = /*#__PURE__*/new WeakMap();
 	var _flowId = /*#__PURE__*/new WeakMap();
 	var _flowIdExpression = /*#__PURE__*/new WeakMap();
+	var _flowDistributionType = /*#__PURE__*/new WeakMap();
+	var _flowModifiedFieldsMap = /*#__PURE__*/new WeakMap();
+	var _flowDistributionMap = /*#__PURE__*/new WeakMap();
+	var _controlledByFlowFields = /*#__PURE__*/new WeakMap();
 	var _robotControlledByFlowFieldSelector = /*#__PURE__*/new WeakMap();
 	var _robotControlledByFlowFields = /*#__PURE__*/new WeakMap();
 	var _fakeRobotControlledByFlowFields = /*#__PURE__*/new WeakMap();
@@ -53,22 +57,26 @@
 	var _onChangedFlow = /*#__PURE__*/new WeakSet();
 	var _hideFieldsControlledByFlow = /*#__PURE__*/new WeakSet();
 	var _showFieldsControlledByFlow = /*#__PURE__*/new WeakSet();
+	var _updateFieldsControlledByFlow = /*#__PURE__*/new WeakSet();
 	var _lockFieldsControlledByFlow = /*#__PURE__*/new WeakSet();
 	var _unlockFieldsControlledByFlow = /*#__PURE__*/new WeakSet();
 	var _unlockSelector = /*#__PURE__*/new WeakSet();
 	var _setFlowValues = /*#__PURE__*/new WeakSet();
 	var _setFieldFlowValue = /*#__PURE__*/new WeakSet();
+	var _getFlowDistributionType = /*#__PURE__*/new WeakSet();
 	var _getGroupByFlow = /*#__PURE__*/new WeakSet();
 	var Task2Activity = /*#__PURE__*/function () {
 	  function Task2Activity(options) {
 	    var _this = this;
 	    babelHelpers.classCallCheck(this, Task2Activity);
 	    _classPrivateMethodInitSpec(this, _getGroupByFlow);
+	    _classPrivateMethodInitSpec(this, _getFlowDistributionType);
 	    _classPrivateMethodInitSpec(this, _setFieldFlowValue);
 	    _classPrivateMethodInitSpec(this, _setFlowValues);
 	    _classPrivateMethodInitSpec(this, _unlockSelector);
 	    _classPrivateMethodInitSpec(this, _unlockFieldsControlledByFlow);
 	    _classPrivateMethodInitSpec(this, _lockFieldsControlledByFlow);
+	    _classPrivateMethodInitSpec(this, _updateFieldsControlledByFlow);
 	    _classPrivateMethodInitSpec(this, _showFieldsControlledByFlow);
 	    _classPrivateMethodInitSpec(this, _hideFieldsControlledByFlow);
 	    _classPrivateMethodInitSpec(this, _onChangedFlow);
@@ -147,6 +155,22 @@
 	      writable: true,
 	      value: void 0
 	    });
+	    _classPrivateFieldInitSpec(this, _flowDistributionType, {
+	      writable: true,
+	      value: void 0
+	    });
+	    _classPrivateFieldInitSpec(this, _flowModifiedFieldsMap, {
+	      writable: true,
+	      value: void 0
+	    });
+	    _classPrivateFieldInitSpec(this, _flowDistributionMap, {
+	      writable: true,
+	      value: void 0
+	    });
+	    _classPrivateFieldInitSpec(this, _controlledByFlowFields, {
+	      writable: true,
+	      value: void 0
+	    });
 	    _classPrivateFieldInitSpec(this, _robotControlledByFlowFieldSelector, {
 	      writable: true,
 	      value: void 0
@@ -159,6 +183,8 @@
 	      writable: true,
 	      value: []
 	    });
+	    babelHelpers.classPrivateFieldSet(this, _flowModifiedFieldsMap, options.flowModifiedFieldsMap);
+	    babelHelpers.classPrivateFieldSet(this, _flowDistributionMap, options.flowDistributionMap);
 	    if (options.isRobot) {
 	      babelHelpers.classPrivateFieldSet(this, _form, document.forms.namedItem(options.formName));
 	      if (!main_core.Type.isDomNode(babelHelpers.classPrivateFieldGet(this, _form).GROUP_ID)) {
@@ -182,7 +208,13 @@
 	      babelHelpers.classPrivateFieldSet(this, _selectedDependentTasks, new Set(options.dependsOn));
 	    } else {
 	      babelHelpers.classPrivateFieldSet(this, _designersControlledByFlowFields, []);
-	      var _iterator = _createForOfIteratorHelper(options.controlledByFlowFields),
+	      babelHelpers.classPrivateFieldSet(this, _controlledByFlowFields, []);
+	      if (options.selectedFlowId > 0) {
+	        babelHelpers.classPrivateFieldSet(this, _selectedFlowId, options.selectedFlowId);
+	        babelHelpers.classPrivateFieldSet(this, _flowDistributionType, options.flowDistributionMap[babelHelpers.classPrivateFieldGet(this, _selectedFlowId)]);
+	        babelHelpers.classPrivateFieldSet(this, _controlledByFlowFields, options.flowModifiedFieldsMap[babelHelpers.classPrivateFieldGet(this, _flowDistributionType)]);
+	      }
+	      var _iterator = _createForOfIteratorHelper(babelHelpers.classPrivateFieldGet(this, _controlledByFlowFields)),
 	        _step;
 	      try {
 	        for (_iterator.s(); !(_step = _iterator.n()).done;) {
@@ -315,7 +347,7 @@
 	function _getControlledByFlowFields2(controlledByFlowFields) {
 	  var fieldSelectors = [];
 	  var fields = [];
-	  var _iterator2 = _createForOfIteratorHelper(controlledByFlowFields),
+	  var _iterator2 = _createForOfIteratorHelper(controlledByFlowFields !== null && controlledByFlowFields !== void 0 ? controlledByFlowFields : []),
 	    _step2;
 	  try {
 	    for (_iterator2.s(); !(_step2 = _iterator2.n()).done;) {
@@ -412,6 +444,9 @@
 	            tag = _event$getData6.tag;
 	          main_core.Dom.clean(babelHelpers.classPrivateFieldGet(_this6, _form).FLOW_ID);
 	          babelHelpers.classPrivateFieldGet(_this6, _form).FLOW_ID.append(new Option(tag.getTitle(), tag.getId(), true, true));
+	          babelHelpers.classPrivateFieldSet(_this6, _flowDistributionType, _classPrivateMethodGet(_this6, _getFlowDistributionType, _getFlowDistributionType2).call(_this6, event.target.getDialog(), tag));
+	          var newFieldsControlledByFlow = babelHelpers.classPrivateFieldGet(_this6, _flowModifiedFieldsMap)[babelHelpers.classPrivateFieldGet(_this6, _flowDistributionType)];
+	          _classPrivateMethodGet(_this6, _getControlledByFlowFields, _getControlledByFlowFields2).call(_this6, newFieldsControlledByFlow);
 	          _classPrivateMethodGet(_this6, _setFlowValues, _setFlowValues2).call(_this6, _classPrivateMethodGet(_this6, _getGroupByFlow, _getGroupByFlow2).call(_this6, event.target.getDialog(), tag));
 	          _classPrivateMethodGet(_this6, _lockFieldsControlledByFlow, _lockFieldsControlledByFlow2).call(_this6);
 	        },
@@ -580,7 +615,7 @@
 	      for (_iterator4.s(); !(_step4 = _iterator4.n()).done;) {
 	        var _tagName = _step4.value;
 	        babelHelpers.classPrivateFieldGet(_this7, _tagsSelector).addTag({
-	          id: String(Math.random()),
+	          id: _tagName,
 	          title: _tagName,
 	          entityId: 'task-tag',
 	          customData: {
@@ -622,7 +657,7 @@
 	}
 	function _updateSavedTags3() {
 	  _updateSavedTags3 = babelHelpers.asyncToGenerator( /*#__PURE__*/_regeneratorRuntime().mark(function _callee3() {
-	    var knownTags, knownTagNames, _iterator15, _step15, tag, newSelectedTags, newTags, _iterator16, _step16, _step16$value, tagId, tagName, _iterator17, _step17, _tagName3;
+	    var knownTags, knownTagNames, _iterator16, _step16, tag, newSelectedTags, newTags, _iterator17, _step17, _step17$value, tagId, tagName, _iterator18, _step18, _tagName3;
 	    return _regeneratorRuntime().wrap(function _callee3$(_context3) {
 	      while (1) switch (_context3.prev = _context3.next) {
 	        case 0:
@@ -631,24 +666,24 @@
 	        case 2:
 	          knownTags = new Set();
 	          knownTagNames = new Map();
-	          _iterator15 = _createForOfIteratorHelper(babelHelpers.classPrivateFieldGet(this, _tagsSelector).getDialog().getItems());
+	          _iterator16 = _createForOfIteratorHelper(babelHelpers.classPrivateFieldGet(this, _tagsSelector).getDialog().getItems());
 	          try {
-	            for (_iterator15.s(); !(_step15 = _iterator15.n()).done;) {
-	              tag = _step15.value;
+	            for (_iterator16.s(); !(_step16 = _iterator16.n()).done;) {
+	              tag = _step16.value;
 	              knownTags.add(tag.getId());
 	              knownTagNames.set(tag.getTitle(), tag.getId());
 	            }
 	          } catch (err) {
-	            _iterator15.e(err);
+	            _iterator16.e(err);
 	          } finally {
-	            _iterator15.f();
+	            _iterator16.f();
 	          }
 	          newSelectedTags = new Map();
 	          newTags = new Set();
-	          _iterator16 = _createForOfIteratorHelper(babelHelpers.classPrivateFieldGet(this, _selectedTags).entries());
+	          _iterator17 = _createForOfIteratorHelper(babelHelpers.classPrivateFieldGet(this, _selectedTags).entries());
 	          try {
-	            for (_iterator16.s(); !(_step16 = _iterator16.n()).done;) {
-	              _step16$value = babelHelpers.slicedToArray(_step16.value, 2), tagId = _step16$value[0], tagName = _step16$value[1];
+	            for (_iterator17.s(); !(_step17 = _iterator17.n()).done;) {
+	              _step17$value = babelHelpers.slicedToArray(_step17.value, 2), tagId = _step17$value[0], tagName = _step17$value[1];
 	              if (knownTags.has(tagId)) {
 	                newSelectedTags.set(tagId, tagName);
 	              } else {
@@ -656,14 +691,14 @@
 	              }
 	            }
 	          } catch (err) {
-	            _iterator16.e(err);
+	            _iterator17.e(err);
 	          } finally {
-	            _iterator16.f();
+	            _iterator17.f();
 	          }
-	          _iterator17 = _createForOfIteratorHelper(babelHelpers.classPrivateFieldGet(this, _newTags).values());
+	          _iterator18 = _createForOfIteratorHelper(babelHelpers.classPrivateFieldGet(this, _newTags).values());
 	          try {
-	            for (_iterator17.s(); !(_step17 = _iterator17.n()).done;) {
-	              _tagName3 = _step17.value;
+	            for (_iterator18.s(); !(_step18 = _iterator18.n()).done;) {
+	              _tagName3 = _step18.value;
 	              if (knownTagNames.has(_tagName3)) {
 	                newSelectedTags.set(knownTagNames.get(_tagName3), _tagName3);
 	              } else {
@@ -671,9 +706,9 @@
 	              }
 	            }
 	          } catch (err) {
-	            _iterator17.e(err);
+	            _iterator18.e(err);
 	          } finally {
-	            _iterator17.f();
+	            _iterator18.f();
 	          }
 	          return _context3.abrupt("return", {
 	            newSelectedTags: newSelectedTags,
@@ -834,9 +869,9 @@
 	  }
 	}
 	function _onChangedFlow2() {
-	  if (!babelHelpers.classPrivateFieldGet(this, _flowId).value && !babelHelpers.classPrivateFieldGet(this, _flowIdExpression).value) {
-	    _classPrivateMethodGet(this, _showFieldsControlledByFlow, _showFieldsControlledByFlow2).call(this);
-	  } else {
+	  _classPrivateMethodGet(this, _showFieldsControlledByFlow, _showFieldsControlledByFlow2).call(this);
+	  if (babelHelpers.classPrivateFieldGet(this, _flowId).value || babelHelpers.classPrivateFieldGet(this, _flowIdExpression).value) {
+	    _classPrivateMethodGet(this, _updateFieldsControlledByFlow, _updateFieldsControlledByFlow2).call(this);
 	    _classPrivateMethodGet(this, _hideFieldsControlledByFlow, _hideFieldsControlledByFlow2).call(this);
 	  }
 	}
@@ -886,27 +921,50 @@
 	    _iterator8.f();
 	  }
 	}
-	function _lockFieldsControlledByFlow2() {
-	  _classPrivateMethodGet(this, _getGroupIdSelector, _getGroupIdSelector2).call(this).lock();
-	  var _iterator9 = _createForOfIteratorHelper(babelHelpers.classPrivateFieldGet(this, _robotControlledByFlowFieldSelector)),
+	function _updateFieldsControlledByFlow2() {
+	  var _babelHelpers$classPr;
+	  babelHelpers.classPrivateFieldSet(this, _flowDistributionType, babelHelpers.classPrivateFieldGet(this, _flowDistributionMap)[babelHelpers.classPrivateFieldGet(this, _flowId).value]);
+	  babelHelpers.classPrivateFieldSet(this, _controlledByFlowFields, (_babelHelpers$classPr = babelHelpers.classPrivateFieldGet(this, _flowModifiedFieldsMap)[babelHelpers.classPrivateFieldGet(this, _flowDistributionType)]) !== null && _babelHelpers$classPr !== void 0 ? _babelHelpers$classPr : []);
+	  babelHelpers.classPrivateFieldSet(this, _designersControlledByFlowFields, []);
+	  babelHelpers.classPrivateFieldSet(this, _gottenFromFlowFields, []);
+	  var _iterator9 = _createForOfIteratorHelper(babelHelpers.classPrivateFieldGet(this, _controlledByFlowFields)),
 	    _step9;
 	  try {
 	    for (_iterator9.s(); !(_step9 = _iterator9.n()).done;) {
-	      var selector = _step9.value;
-	      selector.lock();
+	      var _document$querySelect2;
+	      var fieldName = _step9.value;
+	      var field = (_document$querySelect2 = document.querySelector("[name=\"".concat(fieldName, "\"]"))) === null || _document$querySelect2 === void 0 ? void 0 : _document$querySelect2.closest('td[width="60%"]');
+	      if (field) {
+	        babelHelpers.classPrivateFieldGet(this, _designersControlledByFlowFields).push(field);
+	      }
 	    }
 	  } catch (err) {
 	    _iterator9.e(err);
 	  } finally {
 	    _iterator9.f();
 	  }
-	  var _iterator10 = _createForOfIteratorHelper(babelHelpers.classPrivateFieldGet(this, _robotControlledByFlowFields).entries()),
+	}
+	function _lockFieldsControlledByFlow2() {
+	  _classPrivateMethodGet(this, _getGroupIdSelector, _getGroupIdSelector2).call(this).lock();
+	  var _iterator10 = _createForOfIteratorHelper(babelHelpers.classPrivateFieldGet(this, _robotControlledByFlowFieldSelector)),
 	    _step10;
 	  try {
 	    for (_iterator10.s(); !(_step10 = _iterator10.n()).done;) {
-	      var _step10$value = babelHelpers.slicedToArray(_step10.value, 2),
-	        index = _step10$value[0],
-	        field = _step10$value[1];
+	      var selector = _step10.value;
+	      selector.lock();
+	    }
+	  } catch (err) {
+	    _iterator10.e(err);
+	  } finally {
+	    _iterator10.f();
+	  }
+	  var _iterator11 = _createForOfIteratorHelper(babelHelpers.classPrivateFieldGet(this, _robotControlledByFlowFields).entries()),
+	    _step11;
+	  try {
+	    for (_iterator11.s(); !(_step11 = _iterator11.n()).done;) {
+	      var _step11$value = babelHelpers.slicedToArray(_step11.value, 2),
+	        index = _step11$value[0],
+	        field = _step11$value[1];
 	      field.disabled = true;
 	      var fakeField = field.cloneNode(true);
 	      fakeField.value = main_core.Loc.getMessage('TASKS_BP_RPD_FLOW_CONTROLLED_SHORT_VALUE');
@@ -914,32 +972,32 @@
 	      babelHelpers.classPrivateFieldGet(this, _fakeRobotControlledByFlowFields)[index] = fakeField;
 	    }
 	  } catch (err) {
-	    _iterator10.e(err);
-	  } finally {
-	    _iterator10.f();
-	  }
-	}
-	function _unlockFieldsControlledByFlow2() {
-	  _classPrivateMethodGet(this, _unlockSelector, _unlockSelector2).call(this, _classPrivateMethodGet(this, _getGroupIdSelector, _getGroupIdSelector2).call(this));
-	  var _iterator11 = _createForOfIteratorHelper(babelHelpers.classPrivateFieldGet(this, _robotControlledByFlowFieldSelector)),
-	    _step11;
-	  try {
-	    for (_iterator11.s(); !(_step11 = _iterator11.n()).done;) {
-	      var selector = _step11.value;
-	      _classPrivateMethodGet(this, _unlockSelector, _unlockSelector2).call(this, selector);
-	    }
-	  } catch (err) {
 	    _iterator11.e(err);
 	  } finally {
 	    _iterator11.f();
 	  }
-	  var _iterator12 = _createForOfIteratorHelper(babelHelpers.classPrivateFieldGet(this, _robotControlledByFlowFields).entries()),
+	}
+	function _unlockFieldsControlledByFlow2() {
+	  _classPrivateMethodGet(this, _unlockSelector, _unlockSelector2).call(this, _classPrivateMethodGet(this, _getGroupIdSelector, _getGroupIdSelector2).call(this));
+	  var _iterator12 = _createForOfIteratorHelper(babelHelpers.classPrivateFieldGet(this, _robotControlledByFlowFieldSelector)),
 	    _step12;
 	  try {
 	    for (_iterator12.s(); !(_step12 = _iterator12.n()).done;) {
-	      var _step12$value = babelHelpers.slicedToArray(_step12.value, 2),
-	        index = _step12$value[0],
-	        field = _step12$value[1];
+	      var selector = _step12.value;
+	      _classPrivateMethodGet(this, _unlockSelector, _unlockSelector2).call(this, selector);
+	    }
+	  } catch (err) {
+	    _iterator12.e(err);
+	  } finally {
+	    _iterator12.f();
+	  }
+	  var _iterator13 = _createForOfIteratorHelper(babelHelpers.classPrivateFieldGet(this, _robotControlledByFlowFields).entries()),
+	    _step13;
+	  try {
+	    for (_iterator13.s(); !(_step13 = _iterator13.n()).done;) {
+	      var _step13$value = babelHelpers.slicedToArray(_step13.value, 2),
+	        index = _step13$value[0],
+	        field = _step13$value[1];
 	      field.disabled = false;
 	      if (babelHelpers.classPrivateFieldGet(this, _fakeRobotControlledByFlowFields)[index]) {
 	        var fakeField = babelHelpers.classPrivateFieldGet(this, _fakeRobotControlledByFlowFields)[index];
@@ -947,9 +1005,9 @@
 	      }
 	    }
 	  } catch (err) {
-	    _iterator12.e(err);
+	    _iterator13.e(err);
 	  } finally {
-	    _iterator12.f();
+	    _iterator13.f();
 	  }
 	}
 	function _unlockSelector2(selector) {
@@ -964,11 +1022,11 @@
 	    entityId: 'project',
 	    avatar: group === null || group === void 0 ? void 0 : group.getAvatar()
 	  });
-	  var _iterator13 = _createForOfIteratorHelper(babelHelpers.classPrivateFieldGet(this, _robotControlledByFlowFieldSelector)),
-	    _step13;
+	  var _iterator14 = _createForOfIteratorHelper(babelHelpers.classPrivateFieldGet(this, _robotControlledByFlowFieldSelector)),
+	    _step14;
 	  try {
-	    for (_iterator13.s(); !(_step13 = _iterator13.n()).done;) {
-	      var selector = _step13.value;
+	    for (_iterator14.s(); !(_step14 = _iterator14.n()).done;) {
+	      var selector = _step14.value;
 	      selector.addTag({
 	        id: main_core.Text.getRandom(),
 	        title: main_core.Loc.getMessage('TASKS_BP_RPD_FLOW_CONTROLLED_VALUE'),
@@ -976,21 +1034,21 @@
 	      });
 	    }
 	  } catch (err) {
-	    _iterator13.e(err);
-	  } finally {
-	    _iterator13.f();
-	  }
-	  var _iterator14 = _createForOfIteratorHelper(babelHelpers.classPrivateFieldGet(this, _robotControlledByFlowFields)),
-	    _step14;
-	  try {
-	    for (_iterator14.s(); !(_step14 = _iterator14.n()).done;) {
-	      var field = _step14.value;
-	      _classPrivateMethodGet(this, _setFieldFlowValue, _setFieldFlowValue2).call(this, field);
-	    }
-	  } catch (err) {
 	    _iterator14.e(err);
 	  } finally {
 	    _iterator14.f();
+	  }
+	  var _iterator15 = _createForOfIteratorHelper(babelHelpers.classPrivateFieldGet(this, _robotControlledByFlowFields)),
+	    _step15;
+	  try {
+	    for (_iterator15.s(); !(_step15 = _iterator15.n()).done;) {
+	      var field = _step15.value;
+	      _classPrivateMethodGet(this, _setFieldFlowValue, _setFieldFlowValue2).call(this, field);
+	    }
+	  } catch (err) {
+	    _iterator15.e(err);
+	  } finally {
+	    _iterator15.f();
 	  }
 	}
 	function _setFieldFlowValue2(field) {
@@ -1000,9 +1058,13 @@
 	    field.value = '';
 	  }
 	}
+	function _getFlowDistributionType2(dialog, flow) {
+	  var _dialog$items, _dialog$items$get, _dialog$items$get$get, _dialog$items$get$get2;
+	  return dialog === null || dialog === void 0 ? void 0 : (_dialog$items = dialog.items) === null || _dialog$items === void 0 ? void 0 : (_dialog$items$get = _dialog$items.get('flow')) === null || _dialog$items$get === void 0 ? void 0 : (_dialog$items$get$get = _dialog$items$get.get(String(flow.id))) === null || _dialog$items$get$get === void 0 ? void 0 : (_dialog$items$get$get2 = _dialog$items$get$get.customData) === null || _dialog$items$get$get2 === void 0 ? void 0 : _dialog$items$get$get2.get('distributionType');
+	}
 	function _getGroupByFlow2(dialog, flow) {
-	  var _dialog$items, _dialog$items$get, _dialog$items$get$get, _dialog$items$get$get2, _classPrivateMethodGe, _classPrivateMethodGe2;
-	  var groupId = dialog === null || dialog === void 0 ? void 0 : (_dialog$items = dialog.items) === null || _dialog$items === void 0 ? void 0 : (_dialog$items$get = _dialog$items.get('flow')) === null || _dialog$items$get === void 0 ? void 0 : (_dialog$items$get$get = _dialog$items$get.get(String(flow.id))) === null || _dialog$items$get$get === void 0 ? void 0 : (_dialog$items$get$get2 = _dialog$items$get$get.customData) === null || _dialog$items$get$get2 === void 0 ? void 0 : _dialog$items$get$get2.get('groupId');
+	  var _dialog$items2, _dialog$items2$get, _dialog$items2$get$ge, _dialog$items2$get$ge2, _classPrivateMethodGe, _classPrivateMethodGe2;
+	  var groupId = dialog === null || dialog === void 0 ? void 0 : (_dialog$items2 = dialog.items) === null || _dialog$items2 === void 0 ? void 0 : (_dialog$items2$get = _dialog$items2.get('flow')) === null || _dialog$items2$get === void 0 ? void 0 : (_dialog$items2$get$ge = _dialog$items2$get.get(String(flow.id))) === null || _dialog$items2$get$ge === void 0 ? void 0 : (_dialog$items2$get$ge2 = _dialog$items2$get$ge.customData) === null || _dialog$items2$get$ge2 === void 0 ? void 0 : _dialog$items2$get$ge2.get('groupId');
 	  return (_classPrivateMethodGe = _classPrivateMethodGet(this, _getGroupIdSelector, _getGroupIdSelector2).call(this).getDialog().items) === null || _classPrivateMethodGe === void 0 ? void 0 : (_classPrivateMethodGe2 = _classPrivateMethodGe.get('project')) === null || _classPrivateMethodGe2 === void 0 ? void 0 : _classPrivateMethodGe2.get(String(groupId));
 	}
 	namespace.Task2Activity = Task2Activity;

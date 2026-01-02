@@ -5,8 +5,10 @@
  */
 jn.define('im/messenger/provider/pull/collab/message', (require, exports, module) => {
 	const { ChatMessagePullHandler } = require('im/messenger/provider/pull/chat');
-	const { LoggerManager } = require('im/messenger/lib/logger');
-	const logger = LoggerManager.getInstance().getLogger('pull-handler--collab-message');
+	const { CollabNewMessageManager } = require('im/messenger/provider/pull/lib/new-message-manager/collab');
+	const { getLogger } = require('im/messenger/lib/logger');
+
+	const logger = getLogger('pull-handler--collab-message');
 
 	/**
 	 * @class CollabMessagePullHandler
@@ -18,19 +20,18 @@ jn.define('im/messenger/provider/pull/collab/message', (require, exports, module
 			super({ logger });
 		}
 
-		handleMessageChat(params, extra, command)
-		{
-			const recentMessageManager = this.getRecentMessageManager(params, extra);
-			if (!recentMessageManager.isCollabChat())
-			{
-				return;
-			}
-
-			super.handleMessageChat(params, extra, command);
-		}
-
 		handleMessage(params, extra, command)
 		{}
+
+		isNeedNotify()
+		{
+			return false;
+		}
+
+		getNewMessageManager(params, extra = {})
+		{
+			return new CollabNewMessageManager(params, extra);
+		}
 	}
 
 	module.exports = {

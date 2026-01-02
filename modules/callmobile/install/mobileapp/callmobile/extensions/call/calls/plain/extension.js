@@ -47,10 +47,12 @@
 		constructor(params)
 		{
 			this.id = params.id;
+			this.uuid = params.uuid;
 			this.instanceId = params.instanceId;
 			this.parentId = params.parentId;
 			this.direction = params.direction;
 			this.associatedEntity = params.associatedEntity || {};
+			this.scheme = params.scheme;
 
 			this.userId = parseInt(env.userId, 10);
 
@@ -108,6 +110,11 @@
 			this.created = new Date();
 
 			this.initPeers();
+		}
+
+		get provider()
+		{
+			return BX.Call.Provider.Plain;
 		}
 
 		initPeers()
@@ -217,13 +224,13 @@
 			switch (this._joinStatus)
 			{
 				case BX.Call.JoinStatus.Local:
-					this.eventEmitter.emit(BX.Call.Event.onJoin, [{callId: this.id, local: true}]);
+					this.eventEmitter.emit(BX.Call.Event.onJoin, [{ callId: this.id, callUuid: this.uuid, local: true }]);
 					break;
 				case BX.Call.JoinStatus.Remote:
-					this.eventEmitter.emit(BX.Call.Event.onJoin, [{callId: this.id, local: false}]);
+					this.eventEmitter.emit(BX.Call.Event.onJoin, [{ callId: this.id, callUuid: this.uuid, local: false }]);
 					break;
 				case BX.Call.JoinStatus.None:
-					this.eventEmitter.emit(BX.Call.Event.onLeave, [{callId: this.id}]);
+					this.eventEmitter.emit(BX.Call.Event.onLeave, [{ callId: this.id, callUuid: this.uuid }]);
 					break;
 			}
 		}
@@ -240,7 +247,7 @@
 				return;
 			}
 			this._active = newActive;
-			this.eventEmitter.emit(this.active ? BX.Call.Event.onActive : BX.Call.Event.onInactive, [this.id]);
+			this.eventEmitter.emit(this.active ? BX.Call.Event.onActive : BX.Call.Event.onInactive, [{ callId: this.id, callUuid: this.uuid }]);
 		}
 
 		isVideoEnabled()
@@ -398,6 +405,14 @@
 					if (!this.videoEnabled && this.localStream)
 					{
 						this.eventEmitter.emit(BX.Call.Event.onLocalMediaStopped);
+					}
+					if (this.muted)
+					{
+						const audioTracks = stream.getAudioTracks();
+						if (audioTracks && audioTracks.length > 0)
+						{
+							audioTracks[0].enabled = false;
+						}
 					}
 					this.localStream = stream;
 					resolve();
@@ -936,9 +951,7 @@
 			clearTimeout(this.reinviteTimeout);
 			clearTimeout(this.lastPingReceivedTimeout);
 
-			this.eventEmitter.emit(BX.Call.Event.onDestroy, [{
-				call: this,
-			}]);
+			this.eventEmitter.emit(BX.Call.Event.onDestroy, [{ callId: this.id, callUuid: this.uuid }]);
 			this.eventEmitter = null;
 			if (this.signaling)
 			{
@@ -1770,6 +1783,11 @@
 
 			this.peerConnection.close();
 			this.peerConnection = null;
+
+			this.videoSender = null;
+			this.audioSender = null;
+			this.incomingVideoTrack = null;
+			this.incomingScreenTrack = null;
 		}
 
 		_hasIncomingVideo()

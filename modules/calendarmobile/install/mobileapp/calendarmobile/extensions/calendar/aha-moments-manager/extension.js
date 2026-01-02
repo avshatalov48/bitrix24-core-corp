@@ -2,24 +2,11 @@
  * @module calendar/aha-moments-manager
  */
 jn.define('calendar/aha-moments-manager', (require, exports, module) => {
-	const { SyncCalendar } = require('calendar/aha-moments-manager/sync-calendar');
 	const { SyncError } = require('calendar/aha-moments-manager/sync-error');
+	const { NewMenu } = require('calendar/aha-moments-manager/new-menu');
 
-	const availableAhaMoments = {
-		syncCalendar: SyncCalendar,
-		syncError: SyncError,
+	module.exports = {
+		SyncError,
+		NewMenu,
 	};
-
-	const getAhaMoment = (ahaMomentName) => {
-		if (!availableAhaMoments[ahaMomentName])
-		{
-			console.error(`Unknown aha: ${ahaMomentName}`);
-
-			return null;
-		}
-
-		return availableAhaMoments[ahaMomentName];
-	};
-
-	module.exports = { getAhaMoment };
 });

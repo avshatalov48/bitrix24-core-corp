@@ -246,7 +246,7 @@ class FieldAttributeManager
 		}
 	}
 
-	public static function findNeighborPhases(int $phaseID, array $phases = []): array
+	public static function findNeighborPhases(string $phaseID, array $phases = []): array
 	{
 		$found = false;
 		$prevPhaseId = null;
@@ -280,7 +280,7 @@ class FieldAttributeManager
 
 	public static function processPhaseDeletion($phaseID, $entityTypeID, $entityScope, array $phases = [])
 	{
-		$phaseID = (int)$phaseID;
+		$phaseID = (string)$phaseID;
 		$entityTypeID = (int)$entityTypeID;
 		$entityScope = (string)$entityScope;
 
@@ -370,6 +370,183 @@ class FieldAttributeManager
 			{
 				FieldAttributeTable::delete($action['params']['id']);
 			}
+		}
+	}
+
+	public static function processPhaseSortModification(
+		string $phaseId,
+		int    $phaseSort,
+		int    $entityTypeID,
+		string $entityScope,
+		array  $phases
+	)
+	{
+		if (!isset($phases[$phaseId]) || $phaseSort === (int)$phases[$phaseId]['SORT'])
+		{
+			return;
+		}
+
+		$phases = static::sortPhasesBySortAscAndIdDesc($phases);
+
+		$newPhases = $phases;
+		$newPhases[$phaseId]['SORT'] = $phaseSort;
+		$newPhases = static::sortPhasesBySortAscAndIdDesc($newPhases);
+
+
+		[$prevOldPhaseId, $nextOldPhaseId] = static::findNeighborPhases($phaseId, $phases);
+		[$prevNewPhaseId, $nextNewPhaseId] = static::findNeighborPhases($phaseId, $newPhases);
+
+		if ($prevOldPhaseId === $prevNewPhaseId && $nextOldPhaseId === $nextNewPhaseId)
+		{
+			return;
+		}
+
+		$fieldsAttributes = FieldAttributeTable::getList(
+			[
+				'filter' => [
+					'=ENTITY_TYPE_ID' => $entityTypeID,
+					'=ENTITY_SCOPE' => $entityScope,
+					'=TYPE_ID' => FieldAttributeType::REQUIRED,
+				]
+			]
+		)->fetchAll();
+
+		$isPhaseRequired = [];
+		$phasesFields = [];
+		foreach ($fieldsAttributes as $fieldAttribute)
+		{
+			$phasesFields[$fieldAttribute['FIELD_NAME']][] = $fieldAttribute;
+			$startPhase = $phases[$fieldAttribute['START_PHASE']];
+			$finishPhase = $phases[$fieldAttribute['FINISH_PHASE']];
+
+			if ($fieldAttribute['START_PHASE'] === $phaseId && $fieldAttribute['FINISH_PHASE'] === $phaseId)
+			{
+				$isPhaseRequired[$fieldAttribute['FIELD_NAME']] = true;
+				Entity\FieldAttributeTable::delete(
+					$fieldAttribute['ID']
+				);
+				$fieldAttribute['START_PHASE'] = $nextOldPhaseId;
+			}
+			elseif ($fieldAttribute['START_PHASE'] === $phaseId)
+			{
+				$isPhaseRequired[$fieldAttribute['FIELD_NAME']] = true;
+				Entity\FieldAttributeTable::update(
+					$fieldAttribute['ID'],
+					[
+						'CREATED_TIME' => new Main\Type\DateTime(),
+						'START_PHASE' => $nextOldPhaseId,
+					]
+				);
+				$fieldAttribute['START_PHASE'] = $nextOldPhaseId;
+			}
+			elseif ($fieldAttribute['FINISH_PHASE'] === $phaseId)
+			{
+				$isPhaseRequired[$fieldAttribute['FIELD_NAME']] = true;
+				Entity\FieldAttributeTable::update(
+					$fieldAttribute['ID'],
+					[
+						'CREATED_TIME' => new Main\Type\DateTime(),
+						'FINISH_PHASE' => $prevOldPhaseId,
+					]
+				);
+				$fieldAttribute['FINISH_PHASE'] = $prevOldPhaseId;
+			}
+			elseif ($startPhase['SORT'] < $phases[$phaseId]['SORT'] && $finishPhase['SORT'] > $phases[$phaseId]['SORT'])
+			{
+				$isPhaseRequired[$fieldAttribute['FIELD_NAME']] = true;
+			}
+		}
+
+		foreach ($phasesFields as $fieldName => $phasesField)
+		{
+			$isPhaseRequired[$fieldName] = $isPhaseRequired[$fieldName] ?? false;
+			self::addPhaseToFieldAttribute($phaseId, $newPhases, $isPhaseRequired[$fieldName], $phasesField, $fieldName);
+		}
+	}
+
+	private static function addPhaseToFieldAttribute(
+		string $phaseId,
+		array $phases,
+		bool $isPhaseRequired,
+		array $fieldsAttributes,
+		string $fieldName
+	)
+	{
+		[$prevPhaseId, $nextPhaseId] = static::findNeighborPhases($phaseId, $phases);
+
+		foreach ($fieldsAttributes as $fieldAttribute)
+		{
+			if ($fieldAttribute['FIELD_NAME'] !== $fieldName)
+			{
+				unset($fieldAttribute);
+				continue;
+			}
+
+			$startPhase = $phases[$fieldAttribute['START_PHASE']];
+			$finishPhase = $phases[$fieldAttribute['FINISH_PHASE']];
+
+			if ($isPhaseRequired)
+			{
+				if ($startPhase['SORT'] < $phases[$phaseId]['SORT'] && $finishPhase['SORT'] > $phases[$phaseId]['SORT'])
+				{
+					return;
+				}
+				elseif ($fieldAttribute['START_PHASE'] === $nextPhaseId)
+				{
+					Entity\FieldAttributeTable::update(
+						$fieldAttribute['ID'],
+						[
+							'CREATED_TIME' => new Main\Type\DateTime(),
+							'START_PHASE' => $phaseId,
+						]
+					);
+
+					return;
+				}
+				elseif ($fieldAttribute['FINISH_PHASE'] === $prevPhaseId)
+				{
+					Entity\FieldAttributeTable::update(
+						$fieldAttribute['ID'],
+						[
+							'CREATED_TIME' => new Main\Type\DateTime(),
+							'FINISH_PHASE' => $phaseId,
+						]
+					);
+
+					return;
+				}
+			}
+			else
+			{
+				if ($startPhase['SORT'] < $phases[$phaseId]['SORT'] && $finishPhase['SORT'] > $phases[$phaseId]['SORT'])
+				{
+					Entity\FieldAttributeTable::update(
+						$fieldAttribute['ID'],
+						[
+							'CREATED_TIME' => new Main\Type\DateTime(),
+							'FINISH_PHASE' => $prevPhaseId,
+						]
+					);
+
+					$data = $fieldsAttributes[0];
+					unset($data['ID']);
+					$data['START_PHASE'] = $nextPhaseId;
+					$data['CREATED_TIME'] = new Main\Type\DateTime();
+					Entity\FieldAttributeTable::add($data);
+
+					return;
+				}
+			}
+		}
+
+		if ($isPhaseRequired)
+		{
+			$data = $fieldsAttributes[0];
+			unset($data['ID']);
+			$data['START_PHASE'] = $phaseId;
+			$data['FINISH_PHASE'] = $phaseId;
+			$data['CREATED_TIME'] = new Main\Type\DateTime();
+			Entity\FieldAttributeTable::add($data);
 		}
 	}
 
@@ -775,8 +952,16 @@ class FieldAttributeManager
 			return;
 		}
 
+		$ufEntityId = $fields['ENTITY_ID'] ?? '';
+		$entityTypeId = CCrmOwnerType::ResolveIDByUFEntityID($ufEntityId);
+		if (!$entityTypeId)
+		{
+			return;
+		}
+
 		$filter = [
 			'=FIELD_NAME' => $fieldName,
+			'=ENTITY_TYPE_ID' => $entityTypeId,
 		];
 		self::delete($filter);
 	}

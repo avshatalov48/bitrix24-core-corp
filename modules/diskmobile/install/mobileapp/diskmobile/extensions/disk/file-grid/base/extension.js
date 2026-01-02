@@ -9,6 +9,7 @@ jn.define('disk/file-grid/base', (require, exports, module) => {
 	const { Type } = require('type');
 	const { isEqual, isEmpty } = require('utils/object');
 	const {
+		NativeViewerMediaTypes,
 		openNativeViewer,
 		getNativeViewerMediaType,
 		getExtension,
@@ -367,6 +368,19 @@ jn.define('disk/file-grid/base', (require, exports, module) => {
 			}, delay);
 		}
 
+		/**
+		 * @public
+		 * @param {number[]} itemIds
+		 * @param {boolean} animated
+		 * @param {boolean} blink
+		 * @param {boolean} checkVisibility
+		 * @return {Promise<void>}
+		 */
+		async scrollToFirstOf(itemIds, animated = true, blink = false, checkVisibility = true)
+		{
+			return this.stateFulListRef?.scrollToTopItem(itemIds, animated, blink, checkVisibility);
+		}
+
 		showStorageName()
 		{
 			return false;
@@ -415,7 +429,7 @@ jn.define('disk/file-grid/base', (require, exports, module) => {
 					context: this.props.context || {
 						storageId: this.getStorageId(),
 					},
-					showRights: true,
+					showRights: 'Y',
 				},
 			};
 		}
@@ -741,6 +755,7 @@ jn.define('disk/file-grid/base', (require, exports, module) => {
 				},
 				parentWidget: this.parentWidget,
 				showStorageName: this.showStorageName(),
+				relativeFolderId: this.getFolderId(),
 			}));
 		};
 
@@ -748,29 +763,52 @@ jn.define('disk/file-grid/base', (require, exports, module) => {
 			const item = selectById(store.getState(), id);
 			if (item.isFolder)
 			{
-				this.openFolder(item);
+				return this.#openFolder(item);
+			}
 
-				return;
+			if (item.typeFile === FileType.FLIPCHART)
+			{
+				return this.#openBoard(item);
 			}
 
 			if (item.typeFile === FileType.IMAGE)
 			{
-				openNativeViewer({
-					fileType: 'image',
-					url: item.links.download,
-					name: item.name,
-					images: this.getImagesForNativeViewer(item.id),
-				});
-
-				return;
+				return this.#openImage(item);
 			}
 
-			openNativeViewer({
-				fileType: getNativeViewerMediaType(getMimeType(getExtension(item.name), item.name)),
+			return openNativeViewer({
+				fileType: getNativeViewerMediaType(
+					getMimeType(getExtension(item.name), item.name),
+				),
 				url: item.links.download,
 				name: item.name,
 			});
 		};
+
+		async #openBoard(item)
+		{
+			const { boardOpener } = await requireLazy('disk:opener/board');
+			const { parentWidget } = this.props;
+
+			return boardOpener({
+				id: item.id,
+				title: item.name,
+				parentWidget,
+				analytics: {
+					moduleId: 'diskmobile',
+				},
+			});
+		}
+
+		#openImage(item)
+		{
+			return openNativeViewer({
+				fileType: NativeViewerMediaTypes.IMAGE,
+				url: item.links.download,
+				name: item.name,
+				images: this.getImagesForNativeViewer(item.id),
+			});
+		}
 
 		getImagesForNativeViewer(defaultId)
 		{
@@ -792,33 +830,38 @@ jn.define('disk/file-grid/base', (require, exports, module) => {
 		};
 
 		/**
-		 * @abstract
 		 * @param {Object} folder
 		 * @param {number} folder.id
 		 * @param {string} folder.name
 		 */
-		openFolder = (folder) => {
-			const { parentWidget, groupId } = this.props;
-			if (parentWidget)
+		async #openFolder(folder)
+		{
+			const { parentWidget, groupId, isCollabToolEnabled } = this.props;
+
+			if (!parentWidget)
 			{
-				parentWidget.openWidget(
-					'layout',
-					{
-						title: folder.name,
-						onReady: (layoutWidget) => {
-							layoutWidget.showComponent(new this.constructor({
-								storageId: this.getStorageId(),
-								folderId: folder.id,
-								parentWidget: layoutWidget,
-								breadcrumbs: [...this.breadcrumbs],
-								groupId,
-							}));
-						},
-						onError: (error) => console.error(error),
-					},
-				);
+				return null;
 			}
-		};
+
+			const layoutWidget = await parentWidget.openWidget(
+				'layout',
+				{
+					title: folder.name,
+					onError: (console.error),
+				},
+			).catch(console.error);
+
+			return layoutWidget.showComponent(
+				new this.constructor({
+					storageId: this.getStorageId(),
+					folderId: folder.id,
+					parentWidget: layoutWidget,
+					breadcrumbs: [...this.breadcrumbs],
+					groupId,
+					isCollabToolEnabled,
+				}),
+			);
+		}
 
 		/**
 		 * @return {StatusBlock}
@@ -874,9 +917,16 @@ jn.define('disk/file-grid/base', (require, exports, module) => {
 		{
 			const preventByCollaber = this.currentUserIsCollaber() && !this.isCollabFolder();
 			const preventByPermissions = this.state.folderRights?.canAdd === false;
+			const preventByCollabAvailability = this.props.isCollabToolEnabled === false;
 
 			// eslint-disable-next-line sonarjs/prefer-single-boolean-return
 			if (preventByCollaber || preventByPermissions)
+			{
+				return false;
+			}
+
+			// eslint-disable-next-line sonarjs/prefer-single-boolean-return
+			if (this.isCollabFolder() && preventByCollabAvailability)
 			{
 				return false;
 			}

@@ -1,4 +1,5 @@
 <?php
+
 namespace Bitrix\Sign\Blank;
 
 use Bitrix\Main\Localization\Loc;
@@ -367,7 +368,7 @@ class Block extends \Bitrix\Sign\Internal\BaseTable
 	public function isEmpty(): bool
 	{
 		return $this->class::isEmpty(
-			$this->getData()
+			$this->getData(),
 		);
 	}
 

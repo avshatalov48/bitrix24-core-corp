@@ -64,6 +64,7 @@ class Icon
 	public const MESSAGE_WITH_POINT = 'message-with-point';
 
 	public const BOOKING = 'booking';
+	public const REPEAT_SALE = 'repeat-sale';
 	//endregion
 
 	public static function getSystemIcons(): array

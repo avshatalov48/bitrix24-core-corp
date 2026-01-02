@@ -4,11 +4,9 @@ return [
 	'extensions' => [
 		'device/connection',
 		'toast',
-		'ui-system/typography/text',
-		'ui-system/typography/heading',
-		'ui-system/form/buttons',
-		'ui-system/layout/card',
+		'ui-system/blocks/setting-selector',
 		'ui-system/blocks/switcher',
+		'ui-system/layout/card',
 		'ui-system/form/inputs/string',
 		'tokens',
 		'assets/icons',

@@ -15,6 +15,14 @@ if (!CModule::IncludeModule('crm'))
  * @var $arParams []
  */
 
+$arParams['~CONFIG'] = $arParams['~CONFIG'] ?? [];
+$arParams['~CONFIG'] = array_merge(
+	$arParams['~CONFIG'],
+	[
+		'AUTOFOCUS' => false,
+	],
+);
+
 $gridID = $arParams['GRID_ID'];
 $gridContext = CCrmGridContext::Get($gridID);
 if(empty($gridContext) && isset($arParams['FILTER_FIELDS']))
@@ -27,5 +35,6 @@ if(empty($gridContext) && isset($arParams['FILTER_FIELDS']))
 }
 $arResult['FILTER_INFO'] = ($gridContext['FILTER_INFO'] ?? []);
 $arResult['SHOW_AUTOMATION_VIEW'] = ($arParams['SHOW_AUTOMATION_VIEW'] ?? true);
+$arResult['SHOW_REPEAT_SALE_VIEW'] = ($arParams['SHOW_REPEAT_SALE_VIEW'] ?? true);
 
 $this->IncludeComponentTemplate();

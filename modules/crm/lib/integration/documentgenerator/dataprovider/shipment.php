@@ -264,7 +264,7 @@ class Shipment extends CrmEntityDataProvider
 		$orderId = $this->getOrderId();
 		if ($orderId > 0)
 		{
-			return Service\Container::getInstance()->getUserPermissions($userId)->checkReadPermissions(
+			return Service\Container::getInstance()->getUserPermissions($userId)->item()->canRead(
 				\CCrmOwnerType::Order,
 				(int)$orderId
 			);

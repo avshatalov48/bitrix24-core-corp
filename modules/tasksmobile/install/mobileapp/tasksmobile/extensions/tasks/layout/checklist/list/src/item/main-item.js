@@ -1,7 +1,7 @@
 /**
- * @module tasks/layout/checklist/list/src/main-item
+ * @module tasks/layout/checklist/list/src/item/main-item
  */
-jn.define('tasks/layout/checklist/list/src/main-item', (require, exports, module) => {
+jn.define('tasks/layout/checklist/list/src/item/main-item', (require, exports, module) => {
 	const { Loc } = require('loc');
 	const { Haptics } = require('haptics');
 	const { Indent } = require('tokens');
@@ -9,7 +9,7 @@ jn.define('tasks/layout/checklist/list/src/main-item', (require, exports, module
 	const { ItemAttachments } = require('tasks/layout/checklist/list/src/actions/attachments');
 	const { CheckBoxCounter } = require('tasks/layout/checklist/list/src/checkbox/checkbox-counter');
 	const { ButtonRemove } = require('tasks/layout/checklist/list/src/buttons/button-remove');
-	const { BaseChecklistItem } = require('tasks/layout/checklist/list/src/base-item');
+	const { BaseChecklistItem } = require('tasks/layout/checklist/list/src/item/base-item');
 	const { MEMBER_TYPE_RESTRICTION_FEATURE_META } = require('tasks/layout/checklist/list/src/constants');
 
 	const LAYOUT_CHECKBOX_WIDTH = 34;
@@ -219,16 +219,16 @@ jn.define('tasks/layout/checklist/list/src/main-item', (require, exports, module
 
 		handleOnFocus()
 		{
-			const { item, showMenu } = this.props;
+			const { item, updateMenu } = this.props;
 
 			if (this.buttonRemoveRef)
 			{
 				this.buttonRemoveRef.show();
 			}
 
-			if (showMenu)
+			if (updateMenu)
 			{
-				showMenu(item);
+				updateMenu(item);
 			}
 
 			super.handleOnFocus(item);
@@ -244,14 +244,6 @@ jn.define('tasks/layout/checklist/list/src/main-item', (require, exports, module
 			{
 				this.textInputBlur();
 			}
-		}
-
-		/**
-		 * @returns {string}
-		 */
-		getTextValue()
-		{
-			return this.textRef.getTextValue().trim();
 		}
 
 		toggleImportant()

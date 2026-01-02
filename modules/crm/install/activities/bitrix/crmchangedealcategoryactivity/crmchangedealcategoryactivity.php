@@ -2,6 +2,7 @@
 
 use Bitrix\Bizproc\WorkflowInstanceTable;
 use Bitrix\Crm;
+use Bitrix\Crm\Integration\Analytics\Dictionary;
 use Bitrix\Main\Localization\Loc;
 
 if (!defined('B_PROLOG_INCLUDED') || B_PROLOG_INCLUDED !== true)
@@ -70,6 +71,12 @@ class CBPCrmChangeDealCategoryActivity extends CBPActivity
 
 		if ($resultError === Crm\Category\DealCategoryChangeError::NONE)
 		{
+			$documentType = $this->getDocumentType();
+			\CCrmBizProcHelper::sendOperationsAnalytics(
+				Dictionary::EVENT_ENTITY_EDIT,
+				$this,
+				$documentType[2] ?? '',
+			);
 			//stop all Workflows
 			$documentId = $this->GetDocumentId();
 			$instanceIds = WorkflowInstanceTable::getIdsByDocument($documentId);

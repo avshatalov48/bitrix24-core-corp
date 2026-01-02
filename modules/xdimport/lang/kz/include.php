@@ -1,0 +1,22 @@
+<?php
+$MESS["LFP_SOCNET_LOG_DATA"] = "Сыртқы деректер";
+$MESS["LFP_SOCNET_LOG_DATA_COMMENT_G_TITLE_MAIL"] = "\"#ENTITY#\" тобындағы \"#TITLE#\" сыртқы дереккөзден алынған деректерге пікір қосылды";
+$MESS["LFP_SOCNET_LOG_DATA_COMMENT_P_TITLE_MAIL"] = "\"#ENTITY#\" сыртқы дереккөзінен алынған \"#TITLE#\" жазбасына пікір қосылды";
+$MESS["LFP_SOCNET_LOG_DATA_COMMENT_TITLE"] = "\"#TITLE#\" жазбасына пікір";
+$MESS["LFP_SOCNET_LOG_DATA_COMMENT_U_TITLE_MAIL"] = "#ENTITY# пайдаланушысының профиліндегі \"#TITLE#\" дереккөзден алынған деректерге пікір қосылды";
+$MESS["LFP_SOCNET_LOG_DATA_G_TITLE_MAIL"] = "#ENTITY# тобында сыртқы деректер алынды: \"#TITLE#\"";
+$MESS["LFP_SOCNET_LOG_DATA_P_TITLE_MAIL"] = "\"#ENTITY#\" сыртқы дереккөзінен деректер алынды: \"#TITLE#\"";
+$MESS["LFP_SOCNET_LOG_DATA_SETTINGS"] = "Осы деректер көзіндегі барлық оқиғалар";
+$MESS["LFP_SOCNET_LOG_DATA_SETTINGS_G_1"] = "сыртқы оқиғалар, топ #TITLE#";
+$MESS["LFP_SOCNET_LOG_DATA_SETTINGS_G_2"] = "#TITLE# тобындағы сыртқы деректер көзінен жазбалар";
+$MESS["LFP_SOCNET_LOG_DATA_SETTINGS_P_1"] = "сыртқы оқиғалар, #TITLE#";
+$MESS["LFP_SOCNET_LOG_DATA_SETTINGS_P_2"] = "#TITLE# сыртқы деректер көзінен жазбалар";
+$MESS["LFP_SOCNET_LOG_DATA_SETTINGS_U_1"] = "сыртқы оқиғалар, пайдаланушы #TITLE#";
+$MESS["LFP_SOCNET_LOG_DATA_SETTINGS_U_2"] = "#TITLE# пайдаланушының сыртқы деректер көзінен жазбалар";
+$MESS["LFP_SOCNET_LOG_DATA_TITLE"] = "Сыртқы деректер көзінен алынған мәліметтер: \"#TITLE#\"";
+$MESS["LFP_SOCNET_LOG_DATA_TITLE_24"] = "Сыртқы дереккөзден хабарлама";
+$MESS["LFP_SOCNET_LOG_DATA_TITLE_IMPORTANT_24"] = "Маңызды хабарлама";
+$MESS["LFP_SOCNET_LOG_DATA_U_TITLE_MAIL"] = "#ENTITY# пайдаланушысының парақшасында сыртқы деректер алынды: \"#TITLE#\"";
+$MESS["LFP_SOCNET_LOG_LIST_P_ALL"] = "Барлық сыртқы оқиғалар";
+$MESS["LFP_SOCNET_LOG_P"] = "Сыртқы деректер көзі";
+$MESS["LFP_SOCNET_LOG_XDI_P"] = "сыртқы деректер көзі";

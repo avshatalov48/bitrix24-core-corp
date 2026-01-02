@@ -166,18 +166,12 @@ class CrmWebFormListAjaxController extends \Bitrix\Crm\WebForm\ComponentControll
 			}
 		}
 
-		/**@var $USER \CUSER*/
-		global $USER;
-		$CrmPerms = new CCrmPerms($USER->GetID());
-		return !$CrmPerms->HavePerm('WEBFORM', BX_CRM_PERM_NONE, 'WRITE');
+		return \Bitrix\Crm\Service\Container::getInstance()->getUserPermissions()->webForm()->canEdit();
 	}
 
 	protected function checkPermissions()
 	{
-		/**@var $USER \CUSER*/
-		global $USER;
-		$CrmPerms = new CCrmPerms($USER->GetID());
-		return !$CrmPerms->HavePerm('WEBFORM', BX_CRM_PERM_NONE, 'READ');
+		return \Bitrix\Crm\Service\Container::getInstance()->getUserPermissions()->webForm()->canRead();
 	}
 
 	protected function prepareRequestData()

@@ -1,4 +1,4 @@
-import { Type, Dom, Tag, Extension, Text } from 'main.core';
+import { Type, Dom, Tag, Text } from 'main.core';
 import { BaseEvent, EventEmitter } from 'main.core.events';
 import { UploaderFile, Uploader } from 'ui.uploader.core';
 
@@ -6,6 +6,8 @@ import MainPostForm from './integration/main-post-form';
 
 import type { TileWidgetItem } from 'ui.uploader.tile-widget';
 import type { VueUploaderAdapter } from 'ui.uploader.vue';
+import { DocumentService } from './const';
+import { userFieldSettings } from './user-field-settings';
 import type { UserFieldWidgetOptions } from './user-field-widget-options';
 
 const instances: Map<string, UserFieldControl> = new Map();
@@ -44,25 +46,7 @@ export default class UserFieldControl extends EventEmitter
 			Type.isStringFilled(options.allowDocumentFieldName) ? options.allowDocumentFieldName : null
 		);
 
-		this.#adapter.subscribe('Item:onAdd', (event: BaseEvent<{ item: TileWidgetItem }>): void => {
-			const item: TileWidgetItem = event.getData().item;
-
-			this.emit('Item:onAdd', { item });
-		});
-
-		this.#adapter.subscribe('Item:onComplete', (event: BaseEvent<{ item: TileWidgetItem }>): void => {
-			const item: TileWidgetItem = event.getData().item;
-			this.setDocumentEdit(item);
-
-			this.emit('Item:onComplete', { item });
-		});
-
-		this.#adapter.subscribe('Item:onRemove', (event: BaseEvent<{ item: TileWidgetItem }>): void => {
-			const item: TileWidgetItem = event.getData().item;
-			this.removeAllowDocumentEditInput(item);
-
-			this.emit('Item:onRemove', { item });
-		});
+		this.#bindHandlers();
 
 		if (options.disableLocalEdit)
 		{
@@ -133,6 +117,45 @@ export default class UserFieldControl extends EventEmitter
 		instances.set(this.#id, this);
 	}
 
+	destroy(): void
+	{
+		this.#unbindHandlers();
+	}
+
+	#bindHandlers(): void
+	{
+		this.#adapter.subscribe('Item:onAdd', this.#handleItemAdd);
+		this.#adapter.subscribe('Item:onComplete', this.#handleItemComplete);
+		this.#adapter.subscribe('Item:onRemove', this.#handleItemRemove);
+	}
+
+	#unbindHandlers(): void
+	{
+		this.#adapter.unsubscribe('Item:onAdd', this.#handleItemAdd);
+		this.#adapter.unsubscribe('Item:onComplete', this.#handleItemComplete);
+		this.#adapter.unsubscribe('Item:onRemove', this.#handleItemRemove);
+	}
+
+	#handleItemAdd = (event: BaseEvent<{ item: TileWidgetItem }>): void => {
+		const item: TileWidgetItem = event.getData().item;
+
+		this.emit('Item:onAdd', { item });
+	};
+
+	#handleItemComplete = (event: BaseEvent<{ item: TileWidgetItem }>): void => {
+		const item: TileWidgetItem = event.getData().item;
+		this.setDocumentEdit(item);
+
+		this.emit('Item:onComplete', { item });
+	};
+
+	#handleItemRemove = (event: BaseEvent<{ item: TileWidgetItem }>): void => {
+		const item: TileWidgetItem = event.getData().item;
+		this.removeAllowDocumentEditInput(item);
+
+		this.emit('Item:onRemove', { item });
+	};
+
 	static getById(id: string): ?UserFieldControl
 	{
 		return instances.get(id) || null;
@@ -145,8 +168,7 @@ export default class UserFieldControl extends EventEmitter
 
 	canCreateDocuments(): boolean
 	{
-		const settings = Extension.getSettings('disk.uploader.user-field-widget');
-		const canCreateDocuments = settings.get('canCreateDocuments', false);
+		const canCreateDocuments = userFieldSettings.canCreateDocuments();
 
 		return canCreateDocuments && this.#widgetComponent.widgetOptions.canCreateDocuments !== false;
 	}
@@ -316,14 +338,7 @@ export default class UserFieldControl extends EventEmitter
 
 	getDocumentServices(): Object<string, Array<{ name: string, code: string }>>
 	{
-		const settings = Extension.getSettings('disk.uploader.user-field-widget');
-		const documentHandlers = settings.get('documentHandlers', {});
-		if (Type.isPlainObject(documentHandlers))
-		{
-			return documentHandlers;
-		}
-
-		return {};
+		return userFieldSettings.getDocumentServices();
 	}
 
 	getCurrentDocumentService(): { name: string, code: string } | null
@@ -331,46 +346,13 @@ export default class UserFieldControl extends EventEmitter
 		let currentServiceCode = BX.Disk.getDocumentService();
 		if (!currentServiceCode && BX.Disk.isAvailableOnlyOffice())
 		{
-			currentServiceCode = 'onlyoffice';
+			currentServiceCode = DocumentService.OnlyOffice;
 		}
 		else if (!currentServiceCode)
 		{
-			currentServiceCode = 'l';
+			currentServiceCode = DocumentService.Local;
 		}
 
 		return this.getDocumentServices()[currentServiceCode] || null;
-	}
-
-	getImportServices(): Object<string, Array<{ name: string, code: string }>>
-	{
-		const settings = Extension.getSettings('disk.uploader.user-field-widget');
-		const importHandlers = settings.get('importHandlers', {});
-		if (Type.isPlainObject(importHandlers))
-		{
-			return importHandlers;
-		}
-
-		return {};
-	}
-
-	canUseImportService(): boolean
-	{
-		const settings = Extension.getSettings('disk.uploader.user-field-widget');
-
-		return settings.get('canUseImport', true);
-	}
-
-	getImportFeatureId(): string
-	{
-		const settings = Extension.getSettings('disk.uploader.user-field-widget');
-
-		return settings.get('importFeatureId', '');
-	}
-
-	isBoardsEnabled(): boolean
-	{
-		const settings = Extension.getSettings('disk.uploader.user-field-widget');
-
-		return settings.get('isBoardsEnabled', '');
 	}
 }

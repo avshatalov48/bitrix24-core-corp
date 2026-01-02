@@ -1,3 +1,9 @@
-body {
-	background: #3ea4d0 url(pattern-blue.svg) 0 0 repeat;
+:root {
+	--air-theme-bg-color: #3ea4d0;
+	--air-theme-bg-size: auto;
+	--air-theme-bg-repeat: repeat;
+	--air-theme-bg-position: 0 0;
+	--air-theme-bg-attachment: fixed;
+	--air-theme-bg-image: url(/bitrix/templates/bitrix24/themes/light/pattern-blue/pattern-blue.svg);
+	--air-theme-bg-image-blurred: url(/bitrix/templates/bitrix24/themes/light/pattern-blue/pattern-blue-blurred.webp);
 }

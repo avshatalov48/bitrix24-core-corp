@@ -3,8 +3,10 @@
 return [
 	'extensions' => [
 		'loc',
-		'analytics-label',
+		'type',
+		'tokens',
 		'assets/icons',
+		'analytics-label',
 		'utils/object',
 		'utils/validation',
 		'utils/enums/base',

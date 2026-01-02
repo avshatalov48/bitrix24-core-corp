@@ -28,11 +28,15 @@
 	display: flex;
 	position: relative;
 	padding: 28px 21px 28px 24px;
-	min-height: 100vh;
+	min-height: calc(100vh - 18px);
 	box-sizing: border-box;
 	background: url(images/background-one.svg) top right no-repeat,
 				url(images/background-two.svg) left bottom no-repeat;
 	background-attachment: fixed;
+}
+
+.sign-settings.--no-background {
+	background: none;
 }
 
 .sign-settings__sidebar {
@@ -84,13 +88,13 @@
 }
 
 .sign-settings.--b2e .sign-settings__head_title {
-	font: 28px/33.41px var(--ui-font-family-system);
+	font: 28px/33.41px var(--ui-font-family-primary, var(--ui-font-family-system));
 	font-weight: var(--ui-font-weight-medium);
 	color: var(--ui-color-palette-black-base);
 }
 
 .sign-settings.--b2e .sign-settings__head_title.--sub {
-	font: 16px/22px var(--ui-font-family-system);
+	font: 16px/22px var(--ui-font-family-primary, var(--ui-font-family-system));
 	color: var(--ui-color-palette-gray-90);
 }
 

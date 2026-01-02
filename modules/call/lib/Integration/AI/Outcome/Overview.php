@@ -3,6 +3,7 @@
 namespace Bitrix\Call\Integration\AI\Outcome;
 
 use Bitrix\Call\Integration;
+use Bitrix\Call\Integration\AI\MentionService;
 use Bitrix\Call\Integration\AI\Task\TranscriptionOverview;
 
 /*
@@ -18,15 +19,16 @@ use Bitrix\Call\Integration\AI\Task\TranscriptionOverview;
 		"is_exception_meeting": "bool",
 		"explanation": "string or null"
 	},
+	"detailed_takeaways": "long string or null",
 	"agreements": [
 		{
 			"agreement": "string or null",
 			"quote": "string or null"
 		}
 	],
-	"tasks": [
+	"action_items": [
 		{
-			"task": "string or null",
+			"action_item": "string or null",
 			"quote": "string or null"
 		}
 	],
@@ -66,10 +68,13 @@ class Overview
 	public int $efficiencyValue = -1;
 	public ?\stdClass $calendar = null;/** @see TranscriptionOverview::buildOutcome */
 	public array $tasks = [];
+	public array $actionItems = [];
 	public array $meetings = [];
 	public array $agreements = [];
 	public ?\stdClass $meetingDetails = null;
 	public bool $isExceptionMeeting = false;
+	public string $detailedTakeaways = '';
+	public bool $isEmpty = true;
 
 
 	public function __construct(?Integration\AI\Outcome $outcome = null)
@@ -87,16 +92,24 @@ class Overview
 					}
 					if (!is_null($val))
 					{
+						$key = lcfirst(str_replace('_', '', ucwords($key, '_')));
 						$output->{$key} = $val;
 					}
 				}
 				return $output;
 			};
 
-			$value = $outcome->getProperty('topic');
-			if ($value)
+			$fieldsMap = [
+				'topic' => 'topic',
+				'detailedTakeaways' => 'detailed_takeaways',
+			];
+			foreach ($fieldsMap as $field => $prop)
 			{
-				$this->topic = $value->getContent();
+				$value = $outcome->getProperty($prop);
+				if ($value)
+				{
+					$this->{$field} = $value->getContent();
+				}
 			}
 
 			$fieldsMap = [
@@ -116,6 +129,7 @@ class Overview
 
 			$fieldsMap = [
 				'tasks' => 'tasks',
+				'actionItems' => 'action_items',
 				'meetings' => 'meetings',
 				'agreements' => 'agreements',
 			];
@@ -139,12 +153,143 @@ class Overview
 
 		if ($this->meetingDetails)
 		{
-			$this->isExceptionMeeting = (bool)($this->meetingDetails?->is_exception_meeting);
+			$this->isExceptionMeeting = (bool)($this->meetingDetails?->isExceptionMeeting);
 		}
 
 		$this->calcEfficiency();
+	}
 
-		return $this;
+
+	public function toRestFormat(): array
+	{
+		$mentionService = MentionService::getInstance();
+
+		$result = [];
+
+		if ($this?->detailedTakeaways)
+		{
+			$result['detailedTakeaways'] = $mentionService->replaceBBMentions($this->detailedTakeaways);
+		}
+		if ($this?->topic)
+		{
+			$result['topic'] = $mentionService->replaceBBMentions($this->topic);
+		}
+		if ($this?->agenda)
+		{
+			$result['agenda'] = [];
+			if ($this->agenda?->explanation)
+			{
+				$result['agenda']['explanation'] = $mentionService->replaceBbMentions($this->agenda->explanation);
+			}
+			if ($this->agenda?->quote)
+			{
+				$result['agenda']['quote'] = $mentionService->replaceBbMentions($this->agenda->quote);
+			}
+		}
+		if ($this?->meetingDetails)
+		{
+			$result['meetingDetails'] = [
+				'type' => $this->meetingDetails->type,
+			];
+		}
+		if ($this?->efficiency)
+		{
+			$result['efficiency'] = [
+				'type' => $this->meetingDetails->type,
+				'agendaClearlyStated' => (bool)$this->efficiency?->agendaClearlyStated?->value,
+				'agendaItemsCovered' => (bool)$this->efficiency?->agendaItemsCovered?->value,
+				'conclusionsAndActionsOutlined' => (bool)$this->efficiency?->conclusionsAndActionsOutlined?->value,
+			];
+		}
+		if ($this->efficiencyValue)
+		{
+			$result['efficiencyValue'] = $this->efficiencyValue;
+		}
+		if ($this?->calendar)
+		{
+			$result['calendar'] = [
+				'overhead' => $this->calendar->overhead,
+			];
+		}
+
+		if ($this?->agreements)
+		{
+			$result['agreements'] = [];
+			foreach ($this->agreements as $i => $row)
+			{
+				if ($row?->agreement)
+				{
+					$result['agreements'][$i] = [
+						'agreement' => $mentionService->replaceBbMentions($row->agreement)
+					];
+					if ($row?->quote)
+					{
+						$result['agreements'][$i]['quote'] = $mentionService->replaceBbMentions($row->quote);
+					}
+				}
+			}
+		}
+		if ($this?->meetings)
+		{
+			$result['meetings'] = [];
+			foreach ($this->meetings as $i => $row)
+			{
+				if ($row?->meeting)
+				{
+					$meeting = $row->meeting;
+					$result['meetings'][$i] = [
+						'meeting' => $mentionService->replaceBbMentions($meeting),
+						'meetingMentionLess' => $mentionService->removeBbMentions($meeting),
+					];
+					if ($row?->quote)
+					{
+						$result['meetings'][$i]['quote'] = $mentionService->replaceBbMentions($row->quote);
+					}
+				}
+			}
+		}
+		if ($this?->actionItems)
+		{
+			$result['actionItems'] = [];
+			foreach ($this->actionItems as $i => $row)
+			{
+				if ($row?->actionItem)
+				{
+					$actionItem = $row->actionItem;
+					$result['actionItems'][$i] = [
+						'actionItem' => $mentionService->replaceBbMentions($actionItem),
+						'actionItemMentionLess' => $mentionService->removeBbMentions($actionItem)
+					];
+					if ($row?->quote)
+					{
+						$result['actionItems'][$i]['quote'] = $mentionService->replaceBbMentions($row->quote);
+					}
+				}
+			}
+		}
+		if ($this?->tasks)
+		{
+			$result['tasks'] = [];
+			foreach ($this->tasks as  $i => $row)
+			{
+				if ($row?->task)
+				{
+					$task = $row->task;
+					$result['tasks'][$i] = [
+						'task' => $mentionService->replaceBbMentions($task),
+						'taskMentionLess' => $mentionService->removeBbMentions($task),
+					];
+					if ($row?->quote)
+					{
+						$result['tasks'][$i]['quote'] = $mentionService->replaceBbMentions($row->quote);
+					}
+				}
+			}
+		}
+
+		$result['isExceptionMeeting'] = $this->isExceptionMeeting;
+
+		return $result;
 	}
 
 	public function calcEfficiency(): int
@@ -179,7 +324,7 @@ class Overview
 			{
 				$this->efficiencyValue += 25; // #1
 				$this->efficiencyValue += 25; // #3
-				if ($isPersist('agenda_items_covered'))
+				if ($isPersist('agendaItemsCovered'))
 				{
 					$this->efficiencyValue += 25;
 				}
@@ -187,9 +332,9 @@ class Overview
 			else
 			{
 				$efficiencyWeights = [
-					'agenda_clearly_stated' => 25, // #1
-					'agenda_items_covered' => 25, // #2
-					'conclusions_and_actions_outlined' => 25,// #3
+					'agendaClearlyStated' => 25, // #1
+					'agendaItemsCovered' => 25, // #2
+					'conclusionsAndActionsOutlined' => 25,// #3
 				];
 				foreach ($efficiencyWeights as $field => $weight)
 				{

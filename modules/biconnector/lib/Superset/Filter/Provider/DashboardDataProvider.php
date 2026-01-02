@@ -2,6 +2,10 @@
 
 namespace Bitrix\BIConnector\Superset\Filter\Provider;
 
+use Bitrix\BIConnector\Integration\UI\EntitySelector\SupersetDashboardProvider;
+use Bitrix\BIConnector\Integration\UI\EntitySelector\SupersetDashboardTagProvider;
+use Bitrix\BIConnector\Integration\UI\EntitySelector\SupersetGroupProvider;
+use Bitrix\BIConnector\Integration\UI\EntitySelector\SupersetScopeProvider;
 use Bitrix\BIConnector\Superset\Dashboard\UrlParameter\ScopeMap;
 use Bitrix\BIConnector\Superset\Scope\ScopeService;
 use Bitrix\Main\Filter\EntityDataProvider;
@@ -93,6 +97,12 @@ class DashboardDataProvider extends EntityDataProvider
 				'partial' => true,
 				'type' => 'entity_selector',
 			]),
+			'GROUPS' => $this->createField('GROUPS.ID', [
+				'name' => Loc::getMessage('BICONNECTOR_SUPERSET_DASHBOARD_GRID_FILTER_TITLE_GROUPS'),
+				'default' => true,
+				'partial' => true,
+				'type' => 'entity_selector',
+			]),
 			'SCOPE' => $this->createField('SCOPE.SCOPE_CODE', [
 				'name' => Loc::getMessage('BICONNECTOR_SUPERSET_DASHBOARD_GRID_FILTER_TITLE_SCOPE'),
 				'default' => true,
@@ -124,7 +134,7 @@ class DashboardDataProvider extends EntityDataProvider
 				],
 				'items' => [
 					'SYSTEM' => Loc::getMessage('BICONNECTOR_SUPERSET_DASHBOARD_GRID_FILTER_TYPE_SYSTEM'),
-					'MARKET' => Loc::getMessage('BICONNECTOR_SUPERSET_DASHBOARD_GRID_FILTER_TYPE_MARKET'),
+					'MARKET' => Loc::getMessage('BICONNECTOR_SUPERSET_DASHBOARD_GRID_FILTER_TYPE_MARKET_MSGVER_1'),
 					'CUSTOM' => Loc::getMessage('BICONNECTOR_SUPERSET_DASHBOARD_GRID_FILTER_TYPE_CUSTOM'),
 				],
 			];
@@ -170,7 +180,7 @@ class DashboardDataProvider extends EntityDataProvider
 						'context' => 'filter',
 						'entities' => [
 							[
-								'id' => 'biconnector-superset-dashboard',
+								'id' => SupersetDashboardProvider::ENTITY_ID,
 								'dynamicLoad' => true,
 								'dynamicSearch' => true,
 							],
@@ -186,11 +196,11 @@ class DashboardDataProvider extends EntityDataProvider
 				'params' => [
 					'multiple' => 'Y',
 					'dialogOptions' => [
-						'context' => 'biconnector-superset-dashboard-tag',
+						'context' => SupersetDashboardTagProvider::ENTITY_ID,
 						'multiple' => 'Y',
 						'entities' => [
 							[
-								'id' => 'biconnector-superset-dashboard-tag',
+								'id' => SupersetDashboardTagProvider::ENTITY_ID,
 								'options' => ['filter' => true],
 								'dynamicLoad' => true,
 								'dynamicSearch' => true,
@@ -203,17 +213,41 @@ class DashboardDataProvider extends EntityDataProvider
 			];
 		}
 
+		if ($fieldID === 'GROUPS.ID')
+		{
+			return [
+				'params' => [
+					'multiple' => 'Y',
+					'dialogOptions' => [
+						'context' => SupersetGroupProvider::ENTITY_ID,
+						'multiple' => 'Y',
+						'entities' => [
+							[
+								'id' => SupersetGroupProvider::ENTITY_ID,
+								'options' => ['filter' => true],
+								'dynamicLoad' => true,
+								'dynamicSearch' => true,
+							],
+						],
+						'dropdownMode' => true,
+						'compactView' => true,
+						'height' => 200,
+					],
+				],
+			];
+		}
+
 		if ($fieldID === 'SCOPE.SCOPE_CODE')
 		{
 			return [
 				'params' => [
 					'multiple' => 'Y',
 					'dialogOptions' => [
-						'context' => 'biconnector-superset-scope',
+						'context' => SupersetScopeProvider::ENTITY_ID,
 						'multiple' => 'Y',
 						'entities' => [
 							[
-								'id' => 'biconnector-superset-scope',
+								'id' => SupersetScopeProvider::ENTITY_ID,
 								'options' => ['filter' => true],
 								'dynamicLoad' => true,
 								'dynamicSearch' => true,

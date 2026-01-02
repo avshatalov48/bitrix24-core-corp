@@ -26,6 +26,7 @@ $MESS["CRM_BIC_DEAL_FIELD_COMPANY_NAME"] = "Company name";
 $MESS["CRM_BIC_DEAL_FIELD_CONTACT"] = "Contact";
 $MESS["CRM_BIC_DEAL_FIELD_CONTACT_FULL"] = "Contact name and ID";
 $MESS["CRM_BIC_DEAL_FIELD_CONTACT_ID"] = "Contact ID";
+$MESS["CRM_BIC_DEAL_FIELD_CONTACT_IDS"] = "Contact IDs (multiple)";
 $MESS["CRM_BIC_DEAL_FIELD_CONTACT_NAME"] = "Contact name";
 $MESS["CRM_BIC_DEAL_FIELD_CREATED_BY"] = "Created by";
 $MESS["CRM_BIC_DEAL_FIELD_CREATED_BY_FULL"] = "The ID and name of the user who created the deal";

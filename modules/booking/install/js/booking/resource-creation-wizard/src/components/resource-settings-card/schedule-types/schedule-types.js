@@ -17,21 +17,21 @@ export const ScheduleTypes = {
 	},
 	setup(): { title: string, titleIconType: string, items: IScheduleItem[] }
 	{
-		const title = Loc.getMessage('BRCW_SETTINGS_CARD_SCHEDULE_TITLE');
-		const titleIconType = IconSet.COLLABORATION;
+		const title = Loc.getMessage('BRCW_SETTINGS_CARD_SCHEDULE_TITLE_MSGVER_1');
+		const titleIconType = IconSet.OPENED_EYE;
 		const items = [
 			{
 				id: 'common',
 				itemClass: 'resource-creation-wizard__form-settings-schedule-view-common',
-				title: Loc.getMessage('BRCW_SETTINGS_CARD_SCHEDULE_COLUMNS_TITLE'),
-				description: Loc.getMessage('BRCW_SETTINGS_CARD_SCHEDULE_COLUMNS_DESCRIPTION_MSGVER_1'),
+				title: Loc.getMessage('BRCW_SETTINGS_CARD_SCHEDULE_COLUMNS_TITLE_MSGVER_1'),
+				description: Loc.getMessage('BRCW_SETTINGS_CARD_SCHEDULE_COLUMNS_DESCRIPTION_MSGVER_2'),
 				value: true,
 			},
 			{
 				id: 'extra',
 				itemClass: 'resource-creation-wizard__form-settings-schedule-view-extra',
-				title: Loc.getMessage('BRCW_SETTINGS_CARD_SCHEDULE_CROSS_RESOURCING_TITLE'),
-				description: Loc.getMessage('BRCW_SETTINGS_CARD_SCHEDULE_CROSS_RESOURCING_DESCRIPTION_MSGVER_1'),
+				title: Loc.getMessage('BRCW_SETTINGS_CARD_SCHEDULE_CROSS_RESOURCING_TITLE_MSGVER_1'),
+				description: Loc.getMessage('BRCW_SETTINGS_CARD_SCHEDULE_CROSS_RESOURCING_DESCRIPTION_MSGVER_2'),
 				value: false,
 			},
 		];

@@ -2,7 +2,7 @@
  * @module im/in-app-url/routes
  */
 jn.define('im/in-app-url/routes', (require, exports, module) => {
-	const { Loc } = require('loc');
+	const { Loc } = require('im/messenger/loc');
 	const { Type } = require('type');
 	const { NotifyManager } = require('notify-manager');
 	const { Haptics } = require('haptics');
@@ -12,9 +12,11 @@ jn.define('im/in-app-url/routes', (require, exports, module) => {
 		ComponentCode,
 		FileType,
 		OpenDialogContextType,
+		NavigationTabByComponent,
 	} = require('im/messenger/const');
 	const { MessengerEmitter } = require('im/messenger/lib/emitter');
 	const { DialogOpener } = require('im/messenger/api/dialog-opener');
+	const { getApiVersion } = require('im/messenger/api/api-version');
 
 	const openlinesPrefix = 'imol|';
 
@@ -34,7 +36,7 @@ jn.define('im/in-app-url/routes', (require, exports, module) => {
 	 * @param {string} dialogId
 	 * @param {string|null} messageId
 	 */
-	const openDialog = (componentCode, dialogId, messageId = null) => {
+	const openDialog = async (componentCode, dialogId, messageId = null) => {
 		const openDialogEvent = {
 			dialogId,
 			context: OpenDialogContextType.link,
@@ -46,7 +48,62 @@ jn.define('im/in-app-url/routes', (require, exports, module) => {
 			openDialogEvent.withMessageHighlight = true;
 		}
 
-		MessengerEmitter.emit(EventType.messenger.openDialog, openDialogEvent, componentCode);
+		const apiVersion = await getApiVersion();
+		if (apiVersion === 1)
+		{
+			MessengerEmitter.emit(
+				EventType.navigation.broadCastEventCheckTabPreload,
+				{
+					broadCastEvent: EventType.messenger.openDialog,
+					toTab: NavigationTabByComponent[componentCode],
+					data: {
+						...openDialogEvent,
+					},
+				},
+				ComponentCode.imNavigation,
+			);
+
+			return;
+		}
+
+		MessengerEmitter.emit(EventType.messenger.openDialog, openDialogEvent);
+	};
+
+	/**
+	 * @param componentCode
+	 * @param {string} dialogId
+	 * @param {string} context
+	 */
+	const openDialogWithBotContext = async (componentCode, dialogId, context) => {
+		const openDialogEvent = {
+			dialogId,
+			context: OpenDialogContextType.link,
+		};
+
+		if (Type.isStringFilled(context))
+		{
+			openDialogEvent.botContextData = context;
+		}
+
+		const apiVersion = await getApiVersion();
+		if (apiVersion === 1)
+		{
+			BX.postComponentEvent(
+				EventType.navigation.broadCastEventWithTabChange,
+				[{
+					broadCastEvent: EventType.messenger.openDialog,
+					toTab: NavigationTabByComponent[componentCode],
+					data: {
+						...openDialogEvent,
+					},
+				}],
+				ComponentCode.imNavigation,
+			);
+
+			return;
+		}
+
+		MessengerEmitter.emit(EventType.messenger.openDialog, openDialogEvent);
 	};
 
 	/**
@@ -259,6 +316,15 @@ jn.define('im/in-app-url/routes', (require, exports, module) => {
 			({ dialogId, messageId }) => openDialog(ComponentCode.imMessenger, dialogId, messageId),
 		).name('im:dialog:goToMessageContext');
 
+		inAppUrl.register(
+			'/online/\\?IM_DIALOG=:dialogId&BOT_CONTEXT=',
+			({ dialogId }, { queryParams }) => openDialogWithBotContext(
+				ComponentCode.imMessenger,
+				dialogId,
+				queryParams.BOT_CONTEXT,
+			),
+		).name('im:dialog:openDialogWithBotContext');
+
 		// CoPilot
 		inAppUrl.register(
 			'/online/\\?IM_COPILOT=:dialogId$',
@@ -343,5 +409,24 @@ jn.define('im/in-app-url/routes', (require, exports, module) => {
 			'/immobile/in-app/helpdesk=:articleCode',
 			({ articleCode }) => helpdesk.openHelpArticle(articleCode, 'helpdesk'),
 		).name('im:helpdesk');
+
+		inAppUrl.register(
+			'/bitrix/components/bitrix/voting.attached.result/slider.php\\?signedAttachId=',
+			(_, { queryParams = {} }) => {
+				MessengerEmitter.emit(
+					EventType.messenger.openVoteResult,
+					{ signedAttachId: queryParams.signedAttachId },
+					ComponentCode.imMessenger,
+				);
+			},
+		).name('im:vote:result:open');
+
+		inAppUrl.register('/vote-result/:signedAttachId', (params) => {
+			MessengerEmitter.emit(
+				EventType.messenger.openVoteResult,
+				params,
+				ComponentCode.imMessenger,
+			);
+		}).name('im:vote:result:open');
 	};
 });

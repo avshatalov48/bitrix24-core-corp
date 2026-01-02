@@ -6,6 +6,7 @@ use Bitrix\Main\Application;
 use Bitrix\Tasks\CheckList\Template\TemplateCheckListFacade;
 use Bitrix\Tasks\Control\Exception\TemplateAddException;
 use Bitrix\Tasks\Control\Exception\TemplateUpdateException;
+use Bitrix\Tasks\Control\Exception\UserFieldTemplateAddException;
 use Bitrix\Tasks\Control\Handler\Exception\TemplateFieldValidateException;
 use Bitrix\Tasks\Control\Handler\TemplateFieldHandler;
 use Bitrix\Tasks\Integration\Pull\PushCommand;
@@ -23,6 +24,7 @@ use Bitrix\Tasks\Internals\Task\TemplateTable;
 use Bitrix\Tasks\Item\SystemLog;
 use Bitrix\Tasks\Member\Service\TemplateMemberService;
 use Bitrix\Tasks\Replication\Replicator\RegularTemplateTaskReplicator;
+use Bitrix\Tasks\Replication\Template\Option\Options;
 
 class Template
 {
@@ -95,6 +97,8 @@ class Template
 	 */
 	public function add(array $fields): TemplateObject
 	{
+		$this->reset();
+
 		try
 		{
 			$fields = $this->prepareFields($fields);
@@ -117,7 +121,8 @@ class Template
 		if (!$this->ufManager->CheckFields(\Bitrix\Tasks\Util\UserField\Task\Template::getEntityCode(), 0, $fields, $this->userId))
 		{
 			$msg = $this->getApplicationError();
-			throw new TemplateAddException($msg);
+
+			throw new UserFieldTemplateAddException($msg);
 		}
 
 		try
@@ -157,6 +162,8 @@ class Template
 		{
 			return false;
 		}
+
+		$this->reset();
 
 		$this->templateId = $id;
 
@@ -225,26 +232,21 @@ class Template
 			throw new TemplateUpdateException();
 		}
 
+		$this->reset();
+
 		$this->templateId = $id;
 		$template = $this->getTemplateData();
+
+		if ($template === null)
+		{
+			throw new TemplateUpdateException('No such template');
+		}
+
+		$isReplicateParamsChanged = $this->isReplicateParametersChanged($template, $fields);
 
 		if ((int)($template['BASE_TEMPLATE_ID'] ?? null) > 0)
 		{
 			unset($fields['REPLICATE'], $fields['PARENT_ID']);
-			$isReplicateParamsChanged = false;
-		}
-		else
-		{
-			$isReplicateParamsChanged =
-				(
-					isset($fields['REPLICATE'])
-					&& $template['REPLICATE'] !== $fields['REPLICATE']
-				)
-				||
-				(
-					isset($fields['REPLICATE_PARAMS'])
-					&& $template['REPLICATE_PARAMS'] !== $fields['REPLICATE_PARAMS']
-				);
 		}
 
 		try
@@ -406,7 +408,7 @@ class Template
 		{
 			DependenceTable::link($this->templateId, intval($fields['BASE_TEMPLATE_ID']));
 		}
-		catch(\Bitrix\Tasks\DB\Tree\LinkExistsException $e)
+		catch(\Bitrix\Tasks\Internals\DataBase\Tree\LinkExistsException $e)
 		{
 		}
 	}
@@ -670,7 +672,7 @@ class Template
 		{
 			DependenceTable::createLink($this->templateId, intval($fields['BASE_TEMPLATE_ID']));
 		}
-		catch(\Bitrix\Tasks\DB\Tree\LinkExistsException $e)
+		catch(\Bitrix\Tasks\Internals\DataBase\Tree\LinkExistsException $e)
 		{
 		}
 	}
@@ -829,5 +831,41 @@ class Template
 		$this->application = $APPLICATION;
 
 		$this->replicator = new RegularTemplateTaskReplicator($this->userId);
+	}
+
+	private function reset(): void
+	{
+		$this->templateId = null;
+		$this->template = null;
+	}
+
+	private function isReplicateParametersChanged(array $template, array $fields): bool
+	{
+		if ((int)($template['BASE_TEMPLATE_ID'] ?? null) > 0)
+		{
+			return false;
+		}
+
+		if (isset($fields['REPLICATE']) && ($template['REPLICATE'] ?? null) !== $fields['REPLICATE'])
+		{
+			return true;
+		}
+
+		if (!isset($fields['REPLICATE_PARAMS']))
+		{
+			return false;
+		}
+
+		$before = $template['REPLICATE_PARAMS'] ?? null;
+		$before = is_string($before) ? unserialize($before, ['allowed_classes' => false]) : $before;
+
+		$after = $fields['REPLICATE_PARAMS'];
+		$after = is_string($after) ? unserialize($after, ['allowed_classes' => false]) : $after;
+		if (!is_array($before))
+		{
+			return is_array($after);
+		}
+
+		return !Options::isNewAndCurrentOptionsEquals($before, $after);
 	}
 }

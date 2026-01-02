@@ -46,6 +46,7 @@ this.BX.Tasks = this.BX.Tasks || {};
 	var _flowData = /*#__PURE__*/babelHelpers.classPrivateFieldLooseKey("flowData");
 	var _copilotChat = /*#__PURE__*/babelHelpers.classPrivateFieldLooseKey("copilotChat");
 	var _ifFirstShow = /*#__PURE__*/babelHelpers.classPrivateFieldLooseKey("ifFirstShow");
+	var _sendAnalytics = /*#__PURE__*/babelHelpers.classPrivateFieldLooseKey("sendAnalytics");
 	var _getChatOptions = /*#__PURE__*/babelHelpers.classPrivateFieldLooseKey("getChatOptions");
 	var _getContextMenuItemHtml = /*#__PURE__*/babelHelpers.classPrivateFieldLooseKey("getContextMenuItemHtml");
 	var _fetchAdvices = /*#__PURE__*/babelHelpers.classPrivateFieldLooseKey("fetchAdvices");
@@ -63,6 +64,9 @@ this.BX.Tasks = this.BX.Tasks || {};
 	    });
 	    Object.defineProperty(this, _getChatOptions, {
 	      value: _getChatOptions2
+	    });
+	    Object.defineProperty(this, _sendAnalytics, {
+	      value: _sendAnalytics2
 	    });
 	    Object.defineProperty(this, _flowData, {
 	      writable: true,
@@ -87,10 +91,23 @@ this.BX.Tasks = this.BX.Tasks || {};
 	      babelHelpers.classPrivateFieldLooseBase(this, _ifFirstShow)[_ifFirstShow] = false;
 	    }
 	    babelHelpers.classPrivateFieldLooseBase(this, _copilotChat)[_copilotChat].show();
+	    void babelHelpers.classPrivateFieldLooseBase(this, _sendAnalytics)[_sendAnalytics]();
 	  }
 	  hide() {
 	    babelHelpers.classPrivateFieldLooseBase(this, _copilotChat)[_copilotChat].hide();
 	  }
+	}
+	async function _sendAnalytics2() {
+	  const {
+	    sendData
+	  } = await main_core.Runtime.loadExtension('ui.analytics');
+	  sendData({
+	    tool: 'tasks',
+	    category: 'flows',
+	    event: 'copilot_advice_view',
+	    c_section: 'tasks',
+	    c_sub_section: 'flows_grid'
+	  });
 	}
 	function _getChatOptions2() {
 	  const chatOptions = getDefaultChatOptions();
@@ -126,7 +143,9 @@ this.BX.Tasks = this.BX.Tasks || {};
 	        onclick: (event, menuItem) => {
 	          menuItem == null ? void 0 : menuItem.menuWindow.close == null ? void 0 : menuItem.menuWindow.close();
 	          tasks_flow_editForm.EditForm.createInstance({
-	            flowId: babelHelpers.classPrivateFieldLooseBase(this, _flowData)[_flowData].flowId
+	            isFeatureTrialable: babelHelpers.classPrivateFieldLooseBase(this, _flowData)[_flowData].isFeatureTrialable,
+	            flowId: babelHelpers.classPrivateFieldLooseBase(this, _flowData)[_flowData].flowId,
+	            context: 'copilot_advice'
 	          });
 	        }
 	      }]
@@ -188,8 +207,12 @@ this.BX.Tasks = this.BX.Tasks || {};
 
 	var _copilotChat$1 = /*#__PURE__*/babelHelpers.classPrivateFieldLooseKey("copilotChat");
 	var _createCopilotChat = /*#__PURE__*/babelHelpers.classPrivateFieldLooseKey("createCopilotChat");
+	var _sendAnalytics$1 = /*#__PURE__*/babelHelpers.classPrivateFieldLooseKey("sendAnalytics");
 	class ExampleChat {
 	  constructor() {
+	    Object.defineProperty(this, _sendAnalytics$1, {
+	      value: _sendAnalytics2$1
+	    });
 	    Object.defineProperty(this, _createCopilotChat, {
 	      value: _createCopilotChat2
 	    });
@@ -201,6 +224,7 @@ this.BX.Tasks = this.BX.Tasks || {};
 	  }
 	  show() {
 	    babelHelpers.classPrivateFieldLooseBase(this, _copilotChat$1)[_copilotChat$1].show();
+	    void babelHelpers.classPrivateFieldLooseBase(this, _sendAnalytics$1)[_sendAnalytics$1]();
 	  }
 	  hide() {
 	    babelHelpers.classPrivateFieldLooseBase(this, _copilotChat$1)[_copilotChat$1].hide();
@@ -239,6 +263,18 @@ this.BX.Tasks = this.BX.Tasks || {};
 	    viewed: true
 	  });
 	  return chat;
+	}
+	async function _sendAnalytics2$1() {
+	  const {
+	    sendData
+	  } = await main_core.Runtime.loadExtension('ui.analytics');
+	  sendData({
+	    tool: 'tasks',
+	    category: 'flows',
+	    event: 'copilot_example_view',
+	    c_section: 'tasks',
+	    c_sub_section: 'flows_grid'
+	  });
 	}
 
 	class CopilotAdvice {

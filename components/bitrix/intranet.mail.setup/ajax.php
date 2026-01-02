@@ -35,7 +35,7 @@ class CIntranetMailSetupAjax
 
 		if ($error === false)
 		{
-			if (\CModule::includeModule('crm') && \CCrmPerms::isAccessEnabled())
+			if (\Bitrix\Intranet\Integration\Crm::getInstance()->canReadSomeItemsInCrm())
 			{
 				self::$crmAvailable = $USER->isAdmin() || $USER->canDoOperation('bitrix24_config')
 					|| COption::getOptionString('intranet', 'allow_external_mail_crm', 'Y', SITE_ID) == 'Y';
@@ -1619,7 +1619,7 @@ class CIntranetMailSetupAjax
 				}
 			}
 		}
-		
+
 		if ($error === false)
 		{
 			$crResponse = CControllerClient::ExecuteEvent('OnMailControllerRegDomain', array(

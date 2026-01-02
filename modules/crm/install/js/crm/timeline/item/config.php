@@ -58,6 +58,7 @@ return [
 		'ui.image-stack-steps',
 		'ui.design-tokens',
 		'ui.avatar',
+		'ui.info-helper',
 	],
 	'settings' => $settings,
 	'skip_core' => false,

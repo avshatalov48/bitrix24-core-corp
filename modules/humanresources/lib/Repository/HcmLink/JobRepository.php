@@ -67,6 +67,12 @@ class JobRepository implements Contract\Repository\HcmLink\JobRepository
 		{
 			$model->setInputData($model->getInputData() + $job->inputData);
 		}
+		if ($job->settingsData)
+		{
+			$model->setSettingsData(
+				$job->settingsData->toArray()
+			);
+		}
 
 		if ($job->status->isFinished())
 		{
@@ -91,18 +97,19 @@ class JobRepository implements Contract\Repository\HcmLink\JobRepository
 	protected function getItemFromModel(Model\HcmLink\Job $model): Item\HcmLink\Job
 	{
 		return new Item\HcmLink\Job(
-			companyId: $model->getCompanyId(),
-			type: JobType::tryFrom($model->getType()) ?? JobType::UNKNOWN,
-			status: JobStatus::tryFrom($model->getStatus()) ?? JobStatus::UNKNOWN,
-			done: $model->getProgressReceived(),
-			total: $model->getProgressTotal(),
-			eventCount: $model->getEventCount(),
-			createdAt: $model->getCreatedAt(),
-			updatedAt: $model->getUpdatedAt(),
-			finishedAt: $model->getFinishedAt(),
-			inputData: $model->getInputData(),
-			outputData: $model->getOutputData(),
-			id: $model->hasId() ? $model->getId() : null,
+			companyId:    $model->getCompanyId(),
+			type:         JobType::tryFrom($model->getType()) ?? JobType::UNKNOWN,
+			status:       JobStatus::tryFrom($model->getStatus()) ?? JobStatus::UNKNOWN,
+			done:         $model->getProgressReceived(),
+			total:        $model->getProgressTotal(),
+			eventCount:   $model->getEventCount(),
+			createdAt:    $model->getCreatedAt(),
+			updatedAt:    $model->getUpdatedAt(),
+			finishedAt:   $model->getFinishedAt(),
+			inputData:    $model->getInputData(),
+			outputData:   $model->getOutputData(),
+			id:           $model->hasId() ? $model->getId() : null,
+			settingsData: Job\SettingsData::fromArray($model->getSettingsData() ?? []),
 		);
 	}
 
@@ -151,6 +158,11 @@ class JobRepository implements Contract\Repository\HcmLink\JobRepository
 		if ($item->finishedAt)
 		{
 			$model->setFinishedAt($item->finishedAt);
+		}
+
+		if ($item->settingsData)
+		{
+			$model->setSettingsData($item->settingsData->toArray());
 		}
 
 		return $model;

@@ -1,6 +1,8 @@
 <?
 if(!defined("B_PROLOG_INCLUDED") || B_PROLOG_INCLUDED!==true) die();
 
+use Bitrix\Main\Localization\Loc;
+
 $this->IncludeLangFile('template.php');
 
 $arExcelFields = array(
@@ -32,7 +34,9 @@ $locMap = [
 		<tr>
 			<?php foreach($arExcelFields as $field):
 				$field = $locMap[$field] ?? $field;
-				$header = GetMessage("TASKS_EXCEL_".$field);
+				$header =
+					Loc::getMessage("TASKS_EXCEL_" . $field . "_MSGVER_1")
+					?? Loc::getMessage("TASKS_EXCEL_" . $field);
 			?><th><?php echo $header?></th>
 			<?php endforeach?>
 		</tr>

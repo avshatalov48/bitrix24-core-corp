@@ -1,6 +1,13 @@
-<?
+<?php
 if(!CModule::IncludeModule('rest'))
 	return;
+
+use Bitrix\Intranet\Repository;
+use Bitrix\Main\Application;
+use Bitrix\Main\DB\SqlQueryException;
+use Bitrix\Rest\AccessException;
+use Bitrix\Rest\Exceptions\ObjectNotFoundException;
+use Bitrix\Rest\RestException;
 
 class CIntranetRestService extends IRestService
 {
@@ -140,31 +147,42 @@ class CIntranetRestService extends IRestService
 
 			$params = array_change_key_case($params, CASE_UPPER);
 
+			/** @var Repository\HrDepartmentRepository | Repository\IblockDepartmentRepository $departmentRepository */
+			$departmentRepository = \Bitrix\Intranet\Service\ServiceContainer::getInstance()
+				->departmentRepository();
+			$sort = (int)($params['SORT'] ?? null);
+			$department = new \Bitrix\Intranet\Entity\Department(
+				$params['NAME'] ?? '',
+				parentId: $params['PARENT'] ?? null,
+				sort: $sort > 0 ? $sort : null,
+			);
+			$conn = Application::getConnection();
+			$conn->startTransaction();
 			try
 			{
-				$departmentRepository = \Bitrix\Intranet\Service\ServiceContainer::getInstance()
-					->departmentRepository();
-				$department = new \Bitrix\Intranet\Entity\Department(
-					$params['NAME'] ?? '',
-					parentId: $params['PARENT'] ?? null,
-					sort: (int)$params['SORT'] > 0 ? (int)$params['SORT'] : null,
-				);
 				$department = $departmentRepository->save($department);
 				if (isset($params['UF_HEAD']) && (int)$params['UF_HEAD'] > 0)
 				{
 					$departmentRepository->setHead($department->getId(), (int)$params['UF_HEAD']);
 				}
+				$conn->commitTransaction();
 
 				return $department->getId();
 			}
+			catch (SqlQueryException)
+			{
+				$conn->rollbackTransaction();
+				throw new RestException('Internal error adding department. Try adding again.');
+			}
 			catch (\Exception $exception)
 			{
-				throw new Exception($exception->getMessage());
+				$conn->rollbackTransaction();
+				throw new RestException($exception->getMessage());
 			}
 		}
 		else
 		{
-			throw new Exception('Access denied!');
+			throw new AccessException();
 		}
 	}
 
@@ -176,36 +194,56 @@ class CIntranetRestService extends IRestService
 
 			$params = array_change_key_case($params, CASE_UPPER);
 
+			/** @var Repository\HrDepartmentRepository | Repository\IblockDepartmentRepository $departmentRepository */
 			$departmentRepository = \Bitrix\Intranet\Service\ServiceContainer::getInstance()
 				->departmentRepository();
 			$oldDepartment = $departmentRepository->getById((int)$params['ID']);
 
 			if($oldDepartment)
 			{
+				$sort = (int)($params['SORT'] ?? null);
 				$department = new \Bitrix\Intranet\Entity\Department(
 					$params['NAME'] ?? $oldDepartment->getName(),
 					id: $oldDepartment->getId(),
 					parentId: $params['PARENT'] ?? $oldDepartment->getParentId(),
-					sort: (int)$params['SORT'] > 0 ? (int)$params['SORT'] : null,
+					sort: $sort > 0 ? $sort : null,
 				);
+				/** @var Repository\HrDepartmentRepository | Repository\IblockDepartmentRepository $departmentRepository */
 				$departmentRepository = \Bitrix\Intranet\Service\ServiceContainer::getInstance()
 					->departmentRepository();
-				$departmentRepository->save($department);
-				if(isset($params['UF_HEAD']))
-				{
-					$departmentRepository->setHead($department->getId(), (int)$params['UF_HEAD']);
-				}
 
-				return true;
+				$conn = Application::getConnection();
+				$conn->startTransaction();
+				try
+				{
+					$departmentRepository->save($department);
+					if (isset($params['UF_HEAD']))
+					{
+						$departmentRepository->setHead($department->getId(), (int)$params['UF_HEAD']);
+					}
+					$conn->commitTransaction();
+
+					return true;
+				}
+				catch (SqlQueryException)
+				{
+					$conn->rollbackTransaction();
+					throw new RestException('Internal error updating department. Try updating again.');
+				}
+				catch (\Exception $exception)
+				{
+					$conn->rollbackTransaction();
+					throw new RestException($exception->getMessage());
+				}
 			}
 			else
 			{
-				throw new Exception('Department not found');
+				throw new ObjectNotFoundException('Department not found');
 			}
 		}
 		else
 		{
-			throw new Exception('Access denied!');
+			throw new AccessException();
 		}
 	}
 
@@ -220,20 +258,38 @@ class CIntranetRestService extends IRestService
 			$arDept = self::getDepartment($params['ID']);
 			if(is_array($arDept))
 			{
+				/** @var Repository\HrDepartmentRepository | Repository\IblockDepartmentRepository $departmentRepository */
 				$departmentRepository = \Bitrix\Intranet\Service\ServiceContainer::getInstance()
 					->departmentRepository();
-				$departmentRepository->delete((int)$arDept['ID']);
 
-				return true;
+				$conn = Application::getConnection();
+				$conn->startTransaction();
+				try
+				{
+					$departmentRepository->delete((int)$arDept['ID']);
+					$conn->commitTransaction();
+
+					return true;
+				}
+				catch (SqlQueryException)
+				{
+					$conn->rollbackTransaction();
+					throw new RestException('Internal error deleting department. Try deleting again.');
+				}
+				catch (\Exception $exception)
+				{
+					$conn->rollbackTransaction();
+					throw new RestException($exception->getMessage());
+				}
 			}
 			else
 			{
-				throw new Exception('Department not found');
+				throw new ObjectNotFoundException('Department not found');
 			}
 		}
 		else
 		{
-			throw new Exception('Access denied!');
+			throw new AccessException();
 		}
 	}
 

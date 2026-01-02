@@ -117,11 +117,17 @@ final class ItemFactory
 
 	private static function getAssessmentByClientAndCallType(ClientType $assessmentClientType, CallType $callType): ?CallAssessmentItem
 	{
-		$filter =  [
+		$filter = [
 			'=CALL_TYPE' => [CallType::ALL->value, $callType->value],
 			'=CLIENT_TYPES.CLIENT_TYPE_ID' => [$assessmentClientType->value],
 			'=IS_ENABLED' => true,
 		];
+
+		$additionalFilter = CopilotCallAssessmentController::getInstance()->getCurrentAvailableAssessmentFilter();
+		if ($additionalFilter)
+		{
+			$filter[] = $additionalFilter;
+		}
 
 		$assessment = CopilotCallAssessmentController::getInstance()->getList([
 			'filter' => $filter,
@@ -129,7 +135,10 @@ final class ItemFactory
 			'order' => ['UPDATED_AT' => 'DESC'],
 		])->current();
 
-		return $assessment ? CallAssessmentItem::createFromEntity($assessment) : null;
+		return $assessment
+			? CallAssessmentItem::createFromEntity($assessment)
+			: null
+		;
 	}
 
 	private static function getCallType(int $callDirection): CallType

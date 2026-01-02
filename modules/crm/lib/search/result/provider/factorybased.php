@@ -50,7 +50,7 @@ class FactoryBased extends Provider
 		$items = $this->factory->getItemsFilteredByPermissions(
 			[
 				'select' => [Item::FIELD_NAME_ID],
-				'filter' => $filter,
+				'filter' => array_merge($filter, $this->additionalFilter),
 				'limit' => $this->limit,
 			],
 			$this->userId,

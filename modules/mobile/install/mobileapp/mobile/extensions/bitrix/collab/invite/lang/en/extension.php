@@ -1,4 +1,15 @@
 <?php
+$MESS["COLLAB_GUESTS_INVITE_DISABLED_BY_COLLAB_ADMIN_BOX_TITLE"] = "Invite guest to collab";
+$MESS["COLLAB_GUESTS_INVITE_DISABLED_BY_COLLAB_ADMIN_BUTTON_TEXT"] = "Close";
+$MESS["COLLAB_GUESTS_INVITE_DISABLED_BY_COLLAB_ADMIN_DESCRIPTION"] = "Please contact the collab administrator to enable this function.";
+$MESS["COLLAB_GUESTS_INVITE_DISABLED_BY_COLLAB_ADMIN_TITLE"] = "Invite to join feature disabled";
+$MESS["COLLAB_GUEST_INVITE_LANGUAGE_CHOOSER_TEXT"] = "Invitation language: [COLOR=#COLOR#][URL]#LANGUAGE#[/URL][/COLOR]";
+$MESS["COLLAB_GUEST_INVITE_RESTRICTIONS_BOX_BUTTON_TEXT"] = "Close";
+$MESS["COLLAB_GUEST_INVITE_RESTRICTIONS_BOX_DETAILS_BUTTON_TEXT"] = "Learn more";
+$MESS["COLLAB_GUEST_INVITE_RESTRICTIONS_BOX_STATUS_BLOCK_DESCRIPTION"] = "Please contact your\nBitrix24 administrator.";
+$MESS["COLLAB_GUEST_INVITE_RESTRICTIONS_BOX_STATUS_BLOCK_DESCRIPTION_FOR_ADMIN"] = "You can enable this option in\nthe Bitrix24 settings on your computer.";
+$MESS["COLLAB_GUEST_INVITE_RESTRICTIONS_BOX_STATUS_BLOCK_TITLE"] = "Guest invitation\ndisabled";
+$MESS["COLLAB_GUEST_INVITE_RESTRICTIONS_BOX_TITLE"] = "Invite guest to collab";
 $MESS["COLLAB_INVITE_CASE_ITEM_CONTACTS_LIST"] = "SMS";
 $MESS["COLLAB_INVITE_CASE_ITEM_MAIL"] = "Email";
 $MESS["COLLAB_INVITE_CASE_ITEM_QR"] = "QR code";
@@ -10,6 +21,8 @@ $MESS["COLLAB_INVITE_INVALID_EMAIL_ALERT_DESCRIPTION"] = "These emails have inco
 $MESS["COLLAB_INVITE_INVALID_EMAIL_ALERT_TITLE"] = "Cannot send invitation to some of the emails";
 $MESS["COLLAB_INVITE_INVALID_PHONE_NUMBER_ALERT_DESCRIPTION"] = "These numbers have incorrect format: #phonesNumbersString#";
 $MESS["COLLAB_INVITE_INVALID_PHONE_NUMBER_ALERT_TITLE"] = "Cannot send invitation to some of the contacts";
+$MESS["COLLAB_INVITE_LANGUAGE_CHOOSER_AHA_MOMENT_TEXT"] = "Select the language that will be used for the guest's invitation and user interface.";
+$MESS["COLLAB_INVITE_LANGUAGE_CHOOSER_MENU_SECTION_TITLE"] = "default";
 $MESS["COLLAB_INVITE_MULTIPLE_ADD_SUCCESS_TOAST_TEXT"] = "Employees added";
 $MESS["COLLAB_INVITE_MULTIPLE_SEND_SUCCESS_TOAST_TEXT"] = "Invitations have been sent";
 $MESS["COLLAB_INVITE_NAME_CHECKER_CLOSE_ALERT_CONTINUE_BUTTON"] = "Continue with invitation";
@@ -25,10 +38,8 @@ $MESS["COLLAB_INVITE_NAME_CHECKER_TITLE_EMAIL"] = "Enter guest names";
 $MESS["COLLAB_INVITE_NAME_CHECKER_TITLE_PHONE"] = "Check guest names";
 $MESS["COLLAB_INVITE_PERMISSIONS_ALERT_DESCRIPTION"] = "Only the collab owner or moderator can invite people to this collab.";
 $MESS["COLLAB_INVITE_PERMISSIONS_ALERT_TITLE"] = "Insufficient permissions";
-$MESS["COLLAB_INVITE_QR_SHARING_MESSAGE_TEXT"] = "Scan the QR code to join the collab";
 $MESS["COLLAB_INVITE_SELECTOR_SEND_BUTTON_TEXT"] = "Invite";
 $MESS["COLLAB_INVITE_SHARE_LINK_DIALOG_TITLE"] = "Share link";
-$MESS["COLLAB_INVITE_SHARING_MESSAGE_TEXT"] = "Join our collab to communicate and bring our project to success #link#";
 $MESS["COLLAB_INVITE_SINGLE_ADD_SUCCESS_TOAST_TEXT"] = "Employee added";
 $MESS["COLLAB_INVITE_SINGLE_SEND_SUCCESS_TOAST_TEXT"] = "Invitation has been sent";
 $MESS["COLLAB_INVITE_TAB_EMPLOYEES_TITLE"] = "Employees";

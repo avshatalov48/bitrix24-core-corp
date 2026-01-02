@@ -97,6 +97,8 @@ $backgroundImageCss = "url('data:image/svg+xml;charset=UTF-8,%3csvg width=%27295
 					serviceUrl: "<?=CUtil::JSEscape($arResult['SERVICE_URL'])?>",
 					terminationTitle: "<?=CUtil::JSEscape($arResult['TERMINATION_TITLE'])?>",
 					verboseMode: <?=$arResult['VERBOSE_MODE'] ? 'true' : 'false'?>,
+					loadingNotificationMessage: '<?= CUtil::JSEscape($arResult['LOADING_NOTIFICATION_MESSAGE']) ?>',
+					entityEditorGuid: '<?= CUtil::JSEscape($arResult['ENTITY_EDITOR_GUID']) ?>',
 				}
 			);
 

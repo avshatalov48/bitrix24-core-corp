@@ -10,18 +10,27 @@ jn.define('selector/widget/entity/tree-selectors/nested-department-selector', (r
 	const { Navigator } = require('selector/widget/entity/tree-selectors/shared/navigator');
 	const { Color } = require('tokens');
 
+	const SCOPES = {
+		[ScopesIds.RECENT]: {
+			id: ScopesIds.RECENT,
+			title: Loc.getMessage('NESTED_DEPARTMENT_PROVIDER_RECENT'),
+		},
+		[ScopesIds.DEPARTMENT]: {
+			id: ScopesIds.DEPARTMENT,
+			title: Loc.getMessage('NESTED_DEPARTMENT_PROVIDER_DEPARTMENTS'),
+		},
+		[ScopesIds.PROJECT]: {
+			id: ScopesIds.PROJECT,
+			title: Loc.getMessage('NESTED_DEPARTMENT_PROVIDER_GROUPS'),
+		},
+	};
+
 	/**
 	 * @class NestedDepartmentSelector
 	 */
 	class NestedDepartmentSelector extends BaseTreeSelector
 	{
 		/**
-		 * @typedef {Object} WidgetParams
-		 * @property {string} title - Title of backdrop.
-		 * @property {Object} backdrop - Backdrop settings.
-		 * @property {number} backdrop.mediumPositionPercent - Medium position percentage for the backdrop.
-		 * @property {boolean} backdrop.horizontalSwipeAllowed - Whether horizontal swipe is allowed.
-		 *
 		 * @typedef {Object} Events
 		 * @property {Function} onClose - Handler for the close event.
 		 *
@@ -56,80 +65,125 @@ jn.define('selector/widget/entity/tree-selectors/nested-department-selector', (r
 		 */
 		constructor(options = {})
 		{
-			const provider = Type.isPlainObject(options.provider) ? options.provider : {};
-			const providerOptions = Type.isPlainObject(options.provider?.options) ? options.provider?.options : {};
+			super(options);
 
-			super(NestedDepartmentSelectorEntity, {
-				...options,
-				searchOptions: {
-					...options.searchOptions,
-					onSearchCancelled: (data) => this.#onSearchCancelled(data),
-					onSearch: (data) => this.#onSearch(data),
-				},
-				provider: {
-					...provider,
-					options: {
-						...providerOptions,
-						onItemsLoadedFromServer: (items) => this.#onItemsLoadedFromServer(items),
-						onRecentLoaded: (items) => this.#onRecentLoaded(items),
-						getScopeId: () => this.getCurrentScopeId(),
-						findInTree: Navigator.findInTree,
-					},
-				},
-				shouldAnimate: true,
-			});
-
-			this.navigator = new Navigator({
-				onCurrentNodeChanged: this.#onDepartmentNodeChanged,
-			});
-
-			this.leftButtons = Type.isArrayFilled(options?.leftButtons) ? options?.leftButtons : [];
+			this.createNavigator();
 
 			this.entity.addEvents({
 				onScopeChanged: this.#onScopeChanged,
 				onItemSelected: this.onItemSelected,
 			});
 
-			this.recentTitle = options.widgetParams.title ?? NestedDepartmentSelectorEntity.getTitle();
-			this.nodeEntityId = 'department';
+			this.recentTitle = this.options.widgetParams.title ?? NestedDepartmentSelectorEntity.getTitle();
+			this.tabConfig = this.createTabConfig(options.customTabsConfig);
+		}
+
+		hasDepartmentScope()
+		{
+			return Object.prototype.hasOwnProperty.call(this.tabConfig, ScopesIds.DEPARTMENT);
+		}
+
+		getEntity()
+		{
+			return NestedDepartmentSelectorEntity;
+		}
+
+		getNodeEntityId()
+		{
+			return 'department';
+		}
+
+		prepareOptions(options)
+		{
+			return {
+				...options,
+				shouldAnimate: true,
+			};
+		}
+
+		prepareProvider(options)
+		{
+			const provider = { ...options.provider };
+			const preparedProvider = Type.isPlainObject(provider) ? provider : {};
+			const providerOptions = Type.isPlainObject(preparedProvider?.options) ? preparedProvider?.options : {};
+
+			return {
+				...provider,
+				options: {
+					...providerOptions,
+					enabledTabs: this.createTabConfig(options.customTabsConfig),
+					onItemsLoadedFromServer: (items) => this.#onItemsLoadedFromServer(items),
+					onInitialItemsLoad: (items) => this.#onInitialItemsLoad(items),
+					getScopeId: () => this.getCurrentScopeId(),
+					findInTree: Navigator.findInTree,
+				},
+			};
+		}
+
+		prepareSearchOptions(options)
+		{
+			return {
+				...options.searchOptions,
+				onSearchCancelled: (data) => this.#onSearchCancelled(data),
+				onSearch: (data) => this.#onSearch(data),
+			};
+		}
+
+		getExternalLeftButtons()
+		{
+			return Type.isArrayFilled(this.options?.leftButtons) ? this.options?.leftButtons : [];
 		}
 
 		getCurrentScopeId = () => {
 			return this.scopeId || {};
 		};
 
-		#getScopes()
+		createTabConfig(customTabsConfig = null)
 		{
-			return [
-				{ id: ScopesIds.RECENT, title: Loc.getMessage('NESTED_DEPARTMENT_PROVIDER_RECENT') },
-				{ id: ScopesIds.DEPARTMENT, title: Loc.getMessage('NESTED_DEPARTMENT_PROVIDER_DEPARTMENTS') },
-			];
-		}
+			const defaultTabs = {
+				[ScopesIds.RECENT]: SCOPES[ScopesIds.RECENT],
+			};
 
-		#setScopeById = ({ scopeId, shouldResetSearch = true }) => {
-			this.#onScopeChanged({
-				scope: { id: scopeId },
-				shouldResetSearch,
+			if (!customTabsConfig || !Type.isArrayFilled(customTabsConfig))
+			{
+				defaultTabs[ScopesIds.DEPARTMENT] = SCOPES[ScopesIds.DEPARTMENT];
+
+				return defaultTabs;
+			}
+
+			customTabsConfig.forEach((id) => {
+				if (SCOPES[id] && id !== ScopesIds.RECENT)
+				{
+					defaultTabs[id] = SCOPES[id];
+				}
 			});
 
-			this.getSelector().getWidget().setScopeById(
-				this.getCurrentScopeId(),
-			);
-		};
+			return defaultTabs;
+		}
 
-		#onRecentLoaded = (items) => {
+		#getScopes()
+		{
+			return Object.entries(this.tabConfig)
+				.map(([id, config]) => ({ id, title: config.title }))
+			;
+		}
+
+		#onInitialItemsLoad = (items) => {
 			this.setTitle(
 				this.recentTitle,
 			);
 
-			const rootDepartment = items.find(({ entityId }) => entityId === this.nodeEntityId);
+			if (this.hasDepartmentScope())
+			{
+				const rootDepartment = items.find(({ entityId }) => entityId === this.getNodeEntityId());
 
-			this.getNavigator().init(rootDepartment);
+				this.getNavigator().init(rootDepartment);
+			}
 		};
 
 		#onItemsLoadedFromServer = (items) => {
 			let scopes = null;
-			if (items.some(({ entityId }) => entityId === this.nodeEntityId))
+			if (items.some(({ entityId }) => entityId === this.getNodeEntityId() || this.options.customTabsConfig))
 			{
 				scopes = this.#getScopes();
 			}
@@ -143,20 +197,17 @@ jn.define('selector/widget/entity/tree-selectors/nested-department-selector', (r
 			this.getSelector().getWidget()?.setScopes(scopes);
 		};
 
-		#onDepartmentNodeChanged = (node) => {
-			this.setTitle(node?.title);
-		};
-
 		#onScopeChanged = ({ text, scope, shouldResetSearch = true }) => {
 			this.scopeId = scope.id;
 
-			const navigator = this.getNavigator();
+			if (this.hasDepartmentScope())
+			{
+				const navigator = this.getNavigator();
+
+				navigator.setCurrentNodeById(navigator.getRootNode());
+			}
 
 			this.setLeftButtons();
-
-			navigator.setCurrentNodeById(
-				navigator.getRootNode(),
-			);
 
 			if (shouldResetSearch)
 			{
@@ -167,20 +218,13 @@ jn.define('selector/widget/entity/tree-selectors/nested-department-selector', (r
 		};
 
 		#setItemsByScope = ({ text, scope }) => {
-			let title = '';
+			const scopeHandlers = {
+				[ScopesIds.RECENT]: () => this.recentTitle,
+				[ScopesIds.DEPARTMENT]: () => this.getNavigator().getCurrentNode().title,
+				[ScopesIds.PROJECT]: () => '',
+			};
 
-			switch (scope.id)
-			{
-				case ScopesIds.RECENT:
-					title = this.recentTitle;
-					break;
-
-				case ScopesIds.DEPARTMENT:
-					title = this.getNavigator().getCurrentNode().title;
-					break;
-
-				default:
-			}
+			const title = scopeHandlers[scope.id] ? scopeHandlers[scope.id]() : '';
 
 			this.setTitle(title);
 
@@ -269,23 +313,29 @@ jn.define('selector/widget/entity/tree-selectors/nested-department-selector', (r
 
 		async #getItemsByScope()
 		{
-			const navigator = this.getNavigator();
 			const provider = this.getSelector().getProvider();
 
-			switch (this.getCurrentScopeId())
-			{
-				case ScopesIds.DEPARTMENT:
-					const children = await this.getOrLoadNodeChildren(
-						navigator.getCurrentNode(),
-					);
+			const scopeHandlers = {
+				[ScopesIds.DEPARTMENT]: async () => {
+					const navigator = this.getNavigator();
+					const children = await this.getOrLoadNodeChildren(navigator.getCurrentNode());
 
 					return this.getPreparedItems(children);
-				case ScopesIds.RECENT:
-
+				},
+				[ScopesIds.RECENT]: async () => {
 					return provider.prepareItems(provider.getRecentItems());
-				default:
-					return [];
-			}
+				},
+				[ScopesIds.PROJECT]: async () => {
+					const groups = await provider.loadGroups();
+
+					return provider.prepareItems(groups);
+				},
+			};
+
+			const currentScopeId = this.getCurrentScopeId();
+			const handler = scopeHandlers[currentScopeId];
+
+			return handler ? handler() : [];
 		}
 	}
 

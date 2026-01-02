@@ -383,7 +383,7 @@
 			}
 			else if(this.data.type === 'recommend')
 			{
-				BX.Salescenter.Manager.openFeedbackFormParams(event, {feedback_type: 'smsprovider_offer'}, {width: 735});
+				BX.Salescenter.Manager.openFeedbackFormParams(event, { feedback_type: 'smsprovider_offer' });
 			}
 			else if(this.data.type === 'actionbox')
 			{

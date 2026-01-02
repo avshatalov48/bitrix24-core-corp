@@ -81,6 +81,7 @@
 	cursor: pointer;
 	position: relative;
 }
+
 .bx-sign-user-party-popup .bx-user-party-popup-popup-user-item:hover .bx-user-party-popup-popup-user-name {
 	text-decoration: underline;
 }
@@ -118,12 +119,17 @@
 	background-image: url('../images/department.svg');
 }
 
+.bx-sign-user-party-popup .--role .bx-user-party-popup-popup-user-icon.--default {
+	background-image: url('../images/user.svg');
+}
+
 .bx-sign-user-party-popup .bx-user-party-popup-popup-user-item.--department {
 	cursor: default;
 	text-decoration: none;
 }
 
-.bx-sign-user-party-popup .bx-user-party-popup-popup-user-item.--department .bx-user-party-popup-popup-user-name  {
+.bx-sign-user-party-popup .bx-user-party-popup-popup-user-item.--department .bx-user-party-popup-popup-user-name,
+.bx-sign-user-party-popup .bx-user-party-popup-popup-user-item.--role .bx-user-party-popup-popup-user-name {
 	cursor: default;
 	text-decoration: none;
 }

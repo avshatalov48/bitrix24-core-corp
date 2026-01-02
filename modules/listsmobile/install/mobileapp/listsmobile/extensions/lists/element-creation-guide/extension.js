@@ -5,6 +5,7 @@ jn.define('lists/element-creation-guide', (require, exports, module) => {
 	const { Loc } = require('loc');
 	const AppTheme = require('apptheme');
 	const { EventEmitter } = require('event-emitter');
+	const { Random } = require('utils/random');
 	const { Wizard } = require('layout/ui/wizard');
 	const { PureComponent } = require('layout/pure-component');
 
@@ -50,7 +51,6 @@ jn.define('lists/element-creation-guide', (require, exports, module) => {
 		{
 			super(props);
 
-			// eslint-disable-next-line no-undef
 			this.uid = props.uid || Random.getString();
 			this.customEventEmitter = EventEmitter.createWithUid(this.uid);
 
@@ -58,6 +58,7 @@ jn.define('lists/element-creation-guide', (require, exports, module) => {
 			this.wizard = null;
 			this.isClosing = false;
 			this.isChanged = false;
+			this.analyticsSection = props.analyticsSection;
 
 			this.selectedIBlockId = null;
 

@@ -98,14 +98,25 @@ jn.define('tasks/dashboard/filter', (require, exports, module) => {
 		 * @param role
 		 * @param isRootComponent
 		 * @param siteId
+		 * @param presets
 		 */
-		constructor(currentUserId, ownerId, projectId, isTabsMode, tabsGuid, presetId, role, isRootComponent, siteId)
-		{
+		constructor(
+			currentUserId,
+			ownerId,
+			projectId,
+			isTabsMode,
+			tabsGuid,
+			presetId,
+			role,
+			isRootComponent,
+			siteId,
+			presets = [],
+		) {
 			super(presetId ?? TasksDashboardFilter.presetType.default, '', false);
 
 			this.currentUserId = Number(currentUserId);
 			this.ownerId = Number(ownerId);
-			this.projectId = Number(projectId);
+			this.projectId = Number(projectId ?? 0);
 			this.isTabsMode = isTabsMode;
 			this.tabsGuid = tabsGuid;
 
@@ -113,7 +124,14 @@ jn.define('tasks/dashboard/filter', (require, exports, module) => {
 			this.role = role ?? TasksDashboardFilter.roleType.all;
 			this.counterValue = 0;
 
-			setTimeout(() => this.fillPresets(this.getFillPresetParams()), 1000);
+			if (presets && presets.length > 0)
+			{
+				this.setPresets(presets);
+			}
+			else
+			{
+				setTimeout(() => this.fillPresets(this.getFillPresetParams()), 1000);
+			}
 
 			if (isRootComponent && this.isMyList())
 			{
@@ -180,7 +198,7 @@ jn.define('tasks/dashboard/filter', (require, exports, module) => {
 		 */
 		getDefaultPreset()
 		{
-			return TasksDashboardFilter.presetType.default;
+			return this.presets.find((preset) => preset.default)?.id;
 		}
 
 		getFillPresetParams()

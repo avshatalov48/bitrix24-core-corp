@@ -106,7 +106,23 @@ class FileRepository
 	public function deleteById(int $id): Main\Result
 	{
 		\CFile::delete($id);
-		return new Main\Result;
+
+		return new Main\Result();
+	}
+
+	/**
+	 * @param array<int> $ids
+	 *
+	 * @return Main\Result
+	 */
+	public function deleteByIds(array $ids): Main\Result
+	{
+		foreach ($ids as $id)
+		{
+			$this->deleteById($id);
+		}
+
+		return new Main\Result();
 	}
 
 	public function getFileSrc(int $id): ?string

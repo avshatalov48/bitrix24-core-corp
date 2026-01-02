@@ -4,9 +4,7 @@
 jn.define('tasks/layout/action-menu/actions', (require, exports, module) => {
 	const { confirmDestructiveAction } = require('alert');
 	const { Icon } = require('ui-system/blocks/icon');
-	const { downloadImages } = require('asset-manager');
 	const { Haptics } = require('haptics');
-	const { Feature } = require('feature');
 	const { Loc } = require('tasks/loc');
 	const { Dod } = require('tasks/layout/dod');
 
@@ -14,20 +12,25 @@ jn.define('tasks/layout/action-menu/actions', (require, exports, module) => {
 	const { SocialNetworkUserSelector } = require('selector/widget/entity/socialnetwork/user');
 	const { ActionMenuError } = require('tasks/layout/action-menu/actions/src/error');
 	const { ExtraSettings } = require('tasks/layout/task/view-new/ui/extra-settings');
+	const { Entry } = require('tasks/entry');
 	const { FeatureId } = require('tasks/enum');
 	const { Alert } = require('alert');
 	const { AnalyticsEvent } = require('analytics');
+	const { DialogOpener } = require('im/messenger/api/dialog-opener');
+	const { NotifyManager } = require('notify-manager');
+	const { ajaxPublicErrorHandler } = require('error');
 
 	const store = require('statemanager/redux/store');
 	const { dispatch } = store;
 	const { usersSelector } = require('statemanager/redux/slices/users');
 
 	const { executeIfOnline } = require('tasks/layout/online');
-	const { openTaskCreateForm } = require('tasks/layout/task/create/opener');
 	const { selectGroupById } = require('tasks/statemanager/redux/slices/groups');
 	const { getFeatureRestriction } = require('tariff-plan-restriction');
 	const { truncate } = require('utils/string');
 	const { throttle } = require('utils/function');
+	const { copyToClipboard } = require('utils/copy');
+	const { AppRatingClient } = require('tasks/app-rating-client');
 	const throttledShowSafeToast = throttle(showSafeToast, 4000);
 
 	const {
@@ -51,6 +54,7 @@ jn.define('tasks/layout/action-menu/actions', (require, exports, module) => {
 		unmute,
 		read,
 		selectByTaskIdOrGuid,
+		selectRunningTask,
 		selectIsCreator,
 		tasksUpserted,
 	} = require('tasks/statemanager/redux/slices/tasks');
@@ -80,6 +84,7 @@ jn.define('tasks/layout/action-menu/actions', (require, exports, module) => {
 		COPY: 'copy',
 		COPY_ID: 'copyId',
 		EXTRA_SETTINGS: 'extraSettings',
+		OPEN_CHAT: 'openChat',
 	};
 
 	const Section = {
@@ -116,6 +121,7 @@ jn.define('tasks/layout/action-menu/actions', (require, exports, module) => {
 		[Section.COMMON_ACTIONS]: [
 			ActionId.COPY_ID,
 			ActionId.COPY,
+			ActionId.OPEN_CHAT,
 			ActionId.SHARE,
 		],
 		[Section.REMOVE_ACTIONS]: [
@@ -132,24 +138,23 @@ jn.define('tasks/layout/action-menu/actions', (require, exports, module) => {
 			title: (task) => Loc.getMessage('M_TASKS_ACTIONS_MENU_COPY_ID_MSGVER_1', {
 				'#TASK_ID#': task.id,
 			}),
-			successToastPhrase: (task) => {
-				if (Feature.hasCopyToClipboardAutoNotification())
-				{
-					return null;
-				}
-
-				return Loc.getMessage('M_TASKS_ACTIONS_MENU_COPY_ID_SUCCESS_MSGVER_1', {
-					'#TASK_ID#': task.id,
-				});
-			},
 			handleAction: (task) => {
-				Application.copyToClipboard(String(task.id));
+				copyToClipboard(
+					String(task.id),
+					Loc.getMessage('M_TASKS_ACTIONS_MENU_COPY_ID_SUCCESS_MSGVER_1', {
+						'#TASK_ID#': task.id,
+					}),
+					true,
+					true,
+				)
+					.catch(console.error);
 			},
 		},
 		[ActionId.START_TIMER]: {
 			id: ActionId.START_TIMER,
 			title: () => Loc.getMessage('M_TASKS_ACTIONS_MENU_START_TIMER'),
 			successToastPhrase: () => Loc.getMessage('M_TASKS_ACTIONS_MENU_START_SUCCESS'),
+			confirmAction: (handleAction) => confirmStartWorkingWithTask(handleAction),
 			handleAction: (task, layoutWidget) => executeIfOnline(
 				() => {
 					dispatch(
@@ -195,6 +200,7 @@ jn.define('tasks/layout/action-menu/actions', (require, exports, module) => {
 			id: ActionId.TAKE,
 			title: () => Loc.getMessage('M_TASKS_ACTIONS_MENU_TAKE'),
 			successToastPhrase: () => Loc.getMessage('M_TASKS_ACTIONS_MENU_TAKE_SUCCESS'),
+			confirmAction: (handleAction) => confirmStartWorkingWithTask(handleAction),
 			handleAction: (task, layoutWidget) => executeIfOnline(
 				() => {
 					dispatch(
@@ -276,6 +282,14 @@ jn.define('tasks/layout/action-menu/actions', (require, exports, module) => {
 									tasksUpserted([data.parentTask]);
 									showCompleteParentTaskAlert(data.task, data.parentTask);
 								}
+							})
+							.catch(console.error);
+
+						AppRatingClient.increaseTaskCompletedCounter()
+							.then(() => {
+								AppRatingClient.tryOpenAppRatingAfterTaskCompleted({
+									parentWidget: layoutWidget,
+								});
 							})
 							.catch(console.error);
 
@@ -533,11 +547,12 @@ jn.define('tasks/layout/action-menu/actions', (require, exports, module) => {
 			id: ActionId.PIN,
 			title: () => Loc.getMessage('M_TASKS_ACTIONS_MENU_PIN'),
 			successToastPhrase: () => Loc.getMessage('M_TASKS_ACTIONS_MENU_PIN_SUCCESS'),
-			handleAction: (task, layoutWidget) => executeIfOnline(
+			handleAction: (task, layoutWidget, { projectId = null }) => executeIfOnline(
 				() => {
 					dispatch(
 						pin({
 							taskId: task.id,
+							projectId,
 						}),
 					);
 				},
@@ -548,13 +563,24 @@ jn.define('tasks/layout/action-menu/actions', (require, exports, module) => {
 			id: ActionId.UNPIN,
 			title: () => Loc.getMessage('M_TASKS_ACTIONS_MENU_UNPIN'),
 			successToastPhrase: () => Loc.getMessage('M_TASKS_ACTIONS_MENU_UNPIN_SUCCESS'),
-			handleAction: (task, layoutWidget) => executeIfOnline(
+			handleAction: (task, layoutWidget, { projectId = null }) => executeIfOnline(
 				() => {
 					dispatch(
 						unpin({
 							taskId: task.id,
+							projectId,
 						}),
 					);
+				},
+				layoutWidget,
+			),
+		},
+		[ActionId.OPEN_CHAT]: {
+			id: ActionId.OPEN_CHAT,
+			title: () => Loc.getMessage('M_TASKS_ACTIONS_MENU_OPEN_CHAT'),
+			handleAction: (task, layoutWidget) => executeIfOnline(
+				async () => {
+					await openTaskChat(task.id);
 				},
 				layoutWidget,
 			),
@@ -672,7 +698,7 @@ jn.define('tasks/layout/action-menu/actions', (require, exports, module) => {
 						layoutWidget,
 					};
 
-					openTaskCreateForm(taskCreateParameters);
+					Entry.openTaskCreation(taskCreateParameters);
 				},
 				layoutWidget,
 			),
@@ -686,56 +712,6 @@ jn.define('tasks/layout/action-menu/actions', (require, exports, module) => {
 			},
 		},
 	};
-
-	const pathToIcons = '/bitrix/mobileapp/tasksmobile/extensions/tasks/layout/action-menu/images';
-	const iconPrefix = `${currentDomain}${pathToIcons}/tasksmobile-layout-action-menu-`;
-	const actionIconMap = {
-		[ActionId.START_TIMER]: `${iconPrefix}start.svg`,
-		[ActionId.PAUSE_TIMER]: `${iconPrefix}pause.svg`,
-		[ActionId.START]: `${iconPrefix}start.svg`,
-		[ActionId.PAUSE]: `${iconPrefix}pause.svg`,
-		[ActionId.COMPLETE]: `${iconPrefix}complete.svg`,
-		[ActionId.RENEW]: `${iconPrefix}renew.svg`,
-		[ActionId.APPROVE]: `${iconPrefix}approve.svg`,
-		[ActionId.DISAPPROVE]: `${iconPrefix}disapprove.svg`,
-		[ActionId.UNFOLLOW]: `${iconPrefix}unfollow.svg`,
-		[ActionId.REMOVE]: `${iconPrefix}remove.svg`,
-		[ActionId.PIN]: `${iconPrefix}pin.svg`,
-		[ActionId.UNPIN]: `${iconPrefix}unpin.svg`,
-		[ActionId.MUTE]: `${iconPrefix}mute.svg`,
-		[ActionId.UNMUTE]: `${iconPrefix}unmute.svg`,
-		[ActionId.SHARE]: `${iconPrefix}share.svg`,
-		[ActionId.READ]: `${iconPrefix}read.svg`,
-		[ActionId.PING]: `${iconPrefix}ping.svg`,
-	};
-
-	const pathToOutlineIcons = `${currentDomain}${pathToIcons}/outline/`;
-	const outlineIconMap = {
-		[ActionId.COPY_ID]: `${pathToOutlineIcons}copy.svg`,
-		[ActionId.START_TIMER]: `${pathToOutlineIcons}play.svg`,
-		[ActionId.PAUSE_TIMER]: `${pathToOutlineIcons}pause.svg`,
-		[ActionId.START]: `${pathToOutlineIcons}play.svg`,
-		[ActionId.PAUSE]: `${pathToOutlineIcons}pause.svg`,
-		[ActionId.FOLLOW]: `${pathToOutlineIcons}follow.svg`,
-		[ActionId.UNFOLLOW]: `${pathToOutlineIcons}unfollow.svg`,
-		[ActionId.DEFER]: `${pathToOutlineIcons}delay.svg`,
-		[ActionId.RENEW]: `${pathToOutlineIcons}renew.svg`,
-		[ActionId.DELEGATE]: `${pathToOutlineIcons}delegate.svg`,
-		[ActionId.REMOVE]: `${pathToOutlineIcons}remove.svg`,
-		[ActionId.PIN]: `${pathToOutlineIcons}pin.svg`,
-		[ActionId.UNPIN]: `${pathToOutlineIcons}unpin.svg`,
-		[ActionId.MUTE]: `${pathToOutlineIcons}mute.svg`,
-		[ActionId.UNMUTE]: `${pathToOutlineIcons}unmute.svg`,
-		[ActionId.COPY]: `${pathToOutlineIcons}duplicate.svg`,
-		[ActionId.SHARE]: `${pathToOutlineIcons}share.svg`,
-		[ActionId.COMPLETE]: `${pathToOutlineIcons}complete.svg`,
-		[ActionId.APPROVE]: `${pathToOutlineIcons}approve.svg`,
-		[ActionId.DISAPPROVE]: `${pathToOutlineIcons}disapprove.svg`,
-		[ActionId.PING]: `${pathToOutlineIcons}ping.svg`,
-		[ActionId.READ]: `${pathToOutlineIcons}chatsWithCheck.svg`,
-		[ActionId.EXTRA_SETTINGS]: `${pathToOutlineIcons}settings.svg`,
-	};
-	const outlineLockIcon = `${pathToOutlineIcons}lock.svg`;
 
 	const outlineInlineIconMap = {
 		[ActionId.START_TIMER]: Icon.PLAY,
@@ -752,6 +728,17 @@ jn.define('tasks/layout/action-menu/actions', (require, exports, module) => {
 		[ActionId.PING]: Icon.PING,
 		[ActionId.READ]: Icon.CHATS_WITH_CHECK,
 		[ActionId.EXTRA_SETTINGS]: Icon.SETTINGS,
+		[ActionId.COPY_ID]: Icon.COPY,
+		[ActionId.FOLLOW]: Icon.OBSERVER,
+		[ActionId.UNFOLLOW]: Icon.CROSSED_EYE,
+		[ActionId.REMOVE]: Icon.TRASHCAN,
+		[ActionId.PIN]: Icon.PIN,
+		[ActionId.UNPIN]: Icon.UNPIN,
+		[ActionId.MUTE]: Icon.SOUND_OFF,
+		[ActionId.UNMUTE]: Icon.SOUND_ON,
+		[ActionId.COPY]: Icon.DUPLICATE,
+		[ActionId.SHARE]: Icon.SHARE,
+		[ActionId.OPEN_CHAT]: Icon.EMPTY_MESSAGE,
 	};
 
 	Object.keys(ActionMeta).forEach((actionId) => {
@@ -759,15 +746,20 @@ jn.define('tasks/layout/action-menu/actions', (require, exports, module) => {
 			return actionsBySectionsMap[section].includes(actionId);
 		});
 		const currentAction = ActionMeta[actionId];
-		const { useSuccessHaptic, useHaptic = true, successToastPhrase, isRestricted, showRestriction } = currentAction;
+		const {
+			useSuccessHaptic,
+			useHaptic = true,
+			successToastPhrase,
+			isRestricted,
+			showRestriction,
+			confirmAction,
+		} = currentAction;
 
 		ActionMeta[actionId] = {
 			...currentAction,
 			sectionCode,
 			getData: () => ({
-				svgUri: actionIconMap[actionId],
-				outlineIconUri: (isRestricted?.() ? outlineLockIcon : outlineIconMap[actionId]),
-				outlineIconContent: outlineInlineIconMap[actionId],
+				outlineIconContent: isRestricted?.() ? Icon.LOCK : outlineInlineIconMap[actionId],
 			}),
 			/**
 			 * @param {object} [task]
@@ -777,7 +769,7 @@ jn.define('tasks/layout/action-menu/actions', (require, exports, module) => {
 			 * @param {object} [analyticsLabel]
 			 * @return {Promise<void>}
 			 */
-			handleAction: async ({ task, taskId, layout, options, analyticsLabel }) => {
+			handleAction: async ({ task, taskId, layout, options = {}, analyticsLabel }) => {
 				try
 				{
 					if (isRestricted?.())
@@ -787,27 +779,37 @@ jn.define('tasks/layout/action-menu/actions', (require, exports, module) => {
 						return;
 					}
 
-					const taskRedux = task ?? selectByTaskIdOrGuid(store.getState(), taskId);
+					const taskRedux = task ?? selectByTaskIdOrGuid(store.getState(), taskId, options.ownerId);
+					const executeAction = async () => {
+						await currentAction.handleAction(taskRedux, layout, options, analyticsLabel);
 
-					await currentAction.handleAction(taskRedux, layout, options, analyticsLabel);
+						if (useSuccessHaptic)
+						{
+							Haptics.notifySuccess();
+						}
+						else if (useHaptic)
+						{
+							Haptics.impactLight();
+						}
 
-					if (useSuccessHaptic)
+						if (successToastPhrase)
+						{
+							showSuccessToast({
+								actionId,
+								message: successToastPhrase(taskRedux),
+								icon: outlineInlineIconMap[actionId],
+								layout,
+							});
+						}
+					};
+
+					if (confirmAction)
 					{
-						Haptics.notifySuccess();
+						confirmAction(executeAction);
 					}
-					else if (useHaptic)
+					else
 					{
-						Haptics.impactLight();
-					}
-
-					if (successToastPhrase)
-					{
-						showSuccessToast({
-							actionId,
-							message: successToastPhrase(taskRedux),
-							iconUrl: outlineIconMap[actionId],
-							layout,
-						});
+						await executeAction();
 					}
 				}
 				catch (error)
@@ -825,7 +827,68 @@ jn.define('tasks/layout/action-menu/actions', (require, exports, module) => {
 		};
 	});
 
-	const showSuccessToast = ({ actionId, message, iconUrl, layout }) => {
+	const confirmStartWorkingWithTask = async (handleAction) => {
+		try
+		{
+			let runningTask = selectRunningTask(store.getState());
+
+			if (!runningTask)
+			{
+				const response = await getTaskFromTimer();
+				runningTask = transformTaskDataFromResponse(response?.data);
+			}
+
+			showTimerAlert(runningTask, handleAction);
+		}
+		catch (error)
+		{
+			console.error(error);
+		}
+	};
+
+	const getTaskFromTimer = () => {
+		return BX.ajax.runComponentAction('bitrix:tasks.task', 'getTaskFromTimer', {
+			mode: 'class',
+			data: {},
+		});
+	};
+
+	const transformTaskDataFromResponse = (responseData) => {
+		if (responseData && responseData.id)
+		{
+			return {
+				id: Number(responseData.id),
+				name: responseData.title,
+			};
+		}
+
+		return null;
+	};
+
+	const showTimerAlert = (task, handleAction) => {
+		if (task)
+		{
+			return Alert.confirm(
+				Loc.getMessage('M_TASKS_ACTIONS_MENU_TIMER_ALERT_TITLE'),
+				Loc.getMessage('M_TASKS_ACTIONS_MENU_TIMER_ALERT_DESCRIPTION', {
+					'#TASK_NAME#': truncate(task.name, 40),
+				}),
+				[
+					{
+						text: Loc.getMessage('M_TASKS_ACTIONS_MENU_TIMER_ALERT_CANCEL'),
+					},
+					{
+						text: Loc.getMessage('M_TASKS_ACTIONS_MENU_TIMER_ALERT_CONTINUE'),
+						onPress: () => handleAction(),
+					},
+				],
+			);
+		}
+
+		return handleAction();
+	};
+
+	const showSuccessToast = ({ actionId, message, icon, layout }) => {
 		if (!message || message.length === 0)
 		{
 			return;
@@ -834,14 +897,8 @@ jn.define('tasks/layout/action-menu/actions', (require, exports, module) => {
 		const params = {
 			message,
 			code: actionId,
+			icon,
 		};
-
-		if (iconUrl)
-		{
-			params.svg = {
-				url: iconUrl,
-			};
-		}
 
 		throttledShowSafeToast(params, layout);
 	};
@@ -886,16 +943,20 @@ jn.define('tasks/layout/action-menu/actions', (require, exports, module) => {
 		);
 	};
 
-	// prefetch assets with timeout to not affect core queries
-	setTimeout(() => {
-		const menuIcons = Object.values(actionIconMap).filter((icon) => icon !== null);
-		const outlineIcons = Object.values({ ...outlineIconMap, outlineLockIcon }).filter(Boolean);
-
-		void downloadImages([
-			...menuIcons,
-			...outlineIcons,
-		]);
-	}, 1000);
+	const openTaskChat = async (taskId) => {
+		await NotifyManager.showLoadingIndicator();
+		const response = await BX.ajax.runAction('intranet.controlbutton.getChat', {
+			data: {
+				entityType: 'task',
+				entityId: taskId,
+			},
+		}).catch(ajaxPublicErrorHandler);
+		NotifyManager.hideLoadingIndicatorWithoutFallback();
+		if (response?.status === 'success' && response.data && DialogOpener)
+		{
+			await DialogOpener.open({ dialogId: `chat${response.data}` });
+		}
+	};
 
 	module.exports = { ActionId, ActionMeta, ActionMenuError };
 });

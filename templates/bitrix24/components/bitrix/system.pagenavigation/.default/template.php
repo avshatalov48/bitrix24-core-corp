@@ -2,6 +2,7 @@
 if(!defined("B_PROLOG_INCLUDED") || B_PROLOG_INCLUDED!==true)die();
 
 $this->setFrameMode(true);
+$this->addExternalCss(SITE_TEMPLATE_PATH . '/src/css/standalone/page-navigation.css');
 
 $ClientID = 'navigation_'.$arResult['NavNum'];
 

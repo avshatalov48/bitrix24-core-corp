@@ -36,7 +36,13 @@
 					})
 				}.bind(this));
 
-				this.menu = new BX.PopupMenuWindow('crm-select-category', element, menuItems);
+				let realElement = element;
+				if (element instanceof BX.UI.BaseButton)
+				{
+					realElement = element.getContainer();
+				}
+
+				this.menu = new BX.PopupMenuWindow('crm-select-category', realElement, menuItems);
 			}
 
 			this.menu.toggle();

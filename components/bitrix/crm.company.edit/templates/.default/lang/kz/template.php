@@ -1,0 +1,19 @@
+<?php
+$MESS["CRM_COMPANY_CREATE_TITLE"] = "Жаңа компания";
+$MESS["CRM_COMPANY_EDIT_DUP_CTRL_BANK_DETAIL_SUMMARY_TITLE"] = "банк деректемесі бойынша";
+$MESS["CRM_COMPANY_EDIT_DUP_CTRL_EMAIL_SUMMARY_TITLE"] = "e-mail бойынша";
+$MESS["CRM_COMPANY_EDIT_DUP_CTRL_PHONE_SUMMARY_TITLE"] = "телефон бойынша";
+$MESS["CRM_COMPANY_EDIT_DUP_CTRL_REQUISITE_SUMMARY_TITLE"] = "деректеме бойынша";
+$MESS["CRM_COMPANY_EDIT_DUP_CTRL_SHORT_SUMMARY_TITLE"] = "табылды";
+$MESS["CRM_COMPANY_EDIT_DUP_CTRL_SUMMARY_TITLE"] = "Табылған сәйкестіктер";
+$MESS["CRM_COMPANY_EDIT_DUP_CTRL_TTL_SUMMARY_TITLE"] = "атауы бойынша";
+$MESS["CRM_COMPANY_EDIT_DUP_CTRL_WARNING_ACCEPT_BTN_TITLE"] = "Елемеу және сақтау";
+$MESS["CRM_COMPANY_EDIT_DUP_CTRL_WARNING_CANCEL_BTN_TITLE"] = "Болдырмау";
+$MESS["CRM_COMPANY_EDIT_DUP_CTRL_WARNING_DLG_TITLE"] = "Телнұсқаларға күдік";
+$MESS["CRM_COMPANY_EDIT_TITLE"] = "№#ID# &mdash; #TITLE# компаниясы";
+$MESS["CRM_TAB_1"] = "Компания";
+$MESS["CRM_TAB_1_TITLE"] = "Компания қасиеттері";
+$MESS["CRM_TAB_2"] = "Оқиғалар";
+$MESS["CRM_TAB_2_TITLE"] = "Компания оқиғалары";
+$MESS["CRM_TAB_3"] = "Бизнес-процесстер";
+$MESS["CRM_TAB_3_TITLE"] = "Компанияның бизнес-процестері";

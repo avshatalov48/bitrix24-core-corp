@@ -11,7 +11,10 @@ abstract class BaseController extends Main\Engine\JsonController
 {
 	public function getDefaultPreFilters()
 	{
-		$prefilters = parent::getDefaultPreFilters();
+		$prefilters = [
+			...parent::getDefaultPreFilters(),
+			new Main\Engine\ActionFilter\Scope(Main\Engine\ActionFilter\Scope::AJAX),
+		];
 
 		if (Loader::includeModule('intranet'))
 		{

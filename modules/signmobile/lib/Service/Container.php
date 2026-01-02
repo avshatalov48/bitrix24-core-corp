@@ -23,7 +23,7 @@ class Container
 		return static::getService('signmobile.repository.notification');
 	}
 
-	public function getNotificationPriorityQueueRepository(): Repository\NotificationPriorityQueueRepository
+	public function getNotificationQueueRepository(): Repository\NotificationQueueRepository
 	{
 		return static::getService('signmobile.repository.notification.priority.queue');
 	}

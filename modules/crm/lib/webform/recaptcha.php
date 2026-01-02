@@ -85,7 +85,7 @@ class ReCaptcha
 	 * @param string $remoteIp The end user's IP address.
 	 * @return bool Verifying result.
 	 */
-	public function verify($response, $remoteIp = null)
+	public function verify($response, $remoteIp = null): bool
 	{
 		$this->error = '';
 		// Discard empty solution submissions
@@ -100,7 +100,7 @@ class ReCaptcha
 			array(
 				'secret' => $this->secret,
 				'response' => $response,
-				'remoteip' => $remoteIp ? $remoteIp : Context::getCurrent()->getServer()->get('REMOTE_ADDR'),
+				'remoteip' => $remoteIp ?: Context::getCurrent()->getServer()->get('REMOTE_ADDR'),
 			)
 		);
 
@@ -141,7 +141,7 @@ class ReCaptcha
 
 		}
 
-		return (bool) $response['success'];
+		return (bool)$response['success'];
 	}
 
 	/**
@@ -212,7 +212,7 @@ class ReCaptcha
 	 * @param string $version Version.
 	 * @return string
 	 */
-	public static function getDefaultKey($version = '')
+	public static function getDefaultKey($version = ''): ?string
 	{
 		return Option::get(self::MODULE_ID, self::OPTION_NAME . $version . '_def_key');
 	}
@@ -223,7 +223,7 @@ class ReCaptcha
 	 * @param string $version Version.
 	 * @return string
 	 */
-	public static function getDefaultSecret($version = '')
+	public static function getDefaultSecret($version = ''): ?string
 	{
 		return Option::get(self::MODULE_ID, self::OPTION_NAME . $version . '_def_secret');
 	}
@@ -234,7 +234,7 @@ class ReCaptcha
 	 * @param string $version Version.
 	 * @return string
 	 */
-	public static function getKey($version = '')
+	public static function getKey($version = ''): ?string
 	{
 		return Option::get(self::MODULE_ID, self::OPTION_NAME . $version . '_key');
 	}
@@ -245,7 +245,7 @@ class ReCaptcha
 	 * @param string $version Version.
 	 * @return string
 	 */
-	public static function getSecret($version = '')
+	public static function getSecret($version = ''): ?string
 	{
 		return Option::get(self::MODULE_ID, self::OPTION_NAME . $version . '_secret');
 	}
@@ -258,7 +258,7 @@ class ReCaptcha
 	 * @param string $version Version.
 	 * @return void
 	 */
-	public static function setKey($key, $secret, $version = '')
+	public static function setKey($key, $secret, $version = ''): void
 	{
 		Option::set(self::MODULE_ID, self::OPTION_NAME . $version . '_key', $key);
 		Option::set(self::MODULE_ID, self::OPTION_NAME . $version . '_secret', $secret);

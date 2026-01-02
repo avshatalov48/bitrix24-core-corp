@@ -6,7 +6,7 @@ jn.define('tasks/layout/fields/result/view-redux-content', (require, exports, mo
 	const { TextEditor } = require('text-editor');
 	const { Loc } = require('loc');
 	const { Indent, Color } = require('tokens');
-	const { Chip } = require('ui-system/blocks/chips/chip');
+	const { ChipButton, ChipButtonDesign, ChipButtonMode } = require('ui-system/blocks/chips/chip-button');
 	const { Text5 } = require('ui-system/typography/text');
 	const { ButtonSize, ButtonDesign, Button } = require('ui-system/form/buttons/button');
 	const { Avatar } = require('ui-system/blocks/avatar');
@@ -30,7 +30,7 @@ jn.define('tasks/layout/fields/result/view-redux-content', (require, exports, mo
 			/** @type {null|ScrollView} */
 			this.scrollRef = null;
 
-			/** @type {Map<number, Chip>} */
+			/** @type {Map<number, ChipButton>} */
 			this.chipsRefs = new Map();
 
 			/** @type {Map<number, number>} */
@@ -217,40 +217,39 @@ jn.define('tasks/layout/fields/result/view-redux-content', (require, exports, mo
 		#renderResultChip(result)
 		{
 			const isSelected = (result.id === this.#result.id);
-
-			return Chip({
+			const date = new Date({
 				style: {
-					height: 32,
+					marginLeft: Indent.XS.toNumber(),
+					color: (isSelected ? Color.accentMainPrimary.toHex() : Color.base3.toHex()),
+				},
+				defaultFormat: (moment) => Loc.getMessage(
+					'TASKS_FIELDS_RESULT_DATE_FORMAT',
+					{
+						'#DATE#': moment.format(moment.inThisYear ? dayMonth() : longDate()),
+						'#TIME#': moment.format(shortTime),
+					},
+				),
+				timeSeparator: '',
+				showTime: true,
+				useTimeAgo: true,
+				timestamp: result.createdAt,
+				testId: `${this.#testId}_ANOTHER_RESULTS_CHIP_${result.id}_DATE`,
+			});
+
+			return ChipButton({
+				style: {
 					marginRight: Indent.L.toNumber(),
 				},
-				indent: Indent.L,
-				borderColor: (isSelected ? Color.accentSoftBorderBlue : Color.bgSeparatorPrimary),
-				children: [
-					Avatar({
-						id: result.createdBy,
-						size: 20,
-						testId: `${this.#testId}_ANOTHER_RESULTS_CHIP_${result.id}_AVATAR`,
-						withRedux: true,
-					}),
-					new Date({
-						style: {
-							marginLeft: Indent.XS.toNumber(),
-							color: (isSelected ? Color.accentMainPrimary.toHex() : Color.base3.toHex()),
-						},
-						defaultFormat: (moment) => Loc.getMessage(
-							'TASKS_FIELDS_RESULT_DATE_FORMAT',
-							{
-								'#DATE#': moment.format(moment.inThisYear ? dayMonth() : longDate()),
-								'#TIME#': moment.format(shortTime),
-							},
-						),
-						timeSeparator: '',
-						showTime: true,
-						useTimeAgo: true,
-						timestamp: result.createdAt,
-						testId: `${this.#testId}_ANOTHER_RESULTS_CHIP_${result.id}_DATE`,
-					}),
-				],
+				design: isSelected ? ChipButtonDesign.PRIMARY : ChipButtonDesign.GREY,
+				mode: ChipButtonMode.OUTLINE,
+				rounded: false,
+				avatar: Avatar({
+					id: result.createdBy,
+					size: 20,
+					testId: `${this.#testId}_ANOTHER_RESULTS_CHIP_${result.id}_AVATAR`,
+					withRedux: true,
+				}),
+				text: date.makeText(date.moment),
 				testId: `${this.#testId}_ANOTHER_RESULTS_CHIP_${result.id}`,
 				onClick: () => {
 					if (result.id !== this.#result.id)
@@ -259,7 +258,7 @@ jn.define('tasks/layout/fields/result/view-redux-content', (require, exports, mo
 					}
 				},
 				onLayout: ({ width }) => this.chipsWidth.set(result.id, width),
-				ref: (ref) => this.chipsRefs.set(result.id, ref),
+				forwardRef: (ref) => this.chipsRefs.set(result.id, ref),
 			});
 		}
 
@@ -332,7 +331,7 @@ jn.define('tasks/layout/fields/result/view-redux-content', (require, exports, mo
 
 	const mapStateToProps = (state, ownProps) => {
 		const result = selectById(state, ownProps.resultId);
-		const actions = selectActions(selectTaskById(state, ownProps.taskId));
+		const actions = selectActions({ task: selectTaskById(state, ownProps.taskId) });
 		const taskActions = {
 			[ActionId.COMPLETE]: actions.complete,
 			[ActionId.APPROVE]: actions.approve,

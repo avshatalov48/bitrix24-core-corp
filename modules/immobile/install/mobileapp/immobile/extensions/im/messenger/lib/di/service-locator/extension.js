@@ -44,8 +44,13 @@ jn.define('im/messenger/lib/di/service-locator', (require, exports, module) => {
 		}
 	}
 
+	/**
+	 * @type {MessengerLocator}
+	 */
+	const serviceLocator = new ServiceLocator();
+
 	module.exports = {
 		ServiceLocator,
-		serviceLocator: new ServiceLocator(),
+		serviceLocator,
 	};
 });

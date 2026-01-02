@@ -1,0 +1,35 @@
+.booking-resource-creation-wizard-label-dropdown {
+	--border-color: var(--ui-color-palette-blue-40);
+	--background-color: var(--ui-color-palette-blue-15);
+	--text-color: var(--ui-color-palette-black-base);
+}
+
+.booking-resource-creation-wizard-notification-container.--disabled .booking-resource-creation-wizard-label-dropdown {
+	--border-color: var(--ui-color-base-10);
+	--background-color: var(--ui-color-base-03);
+	--text-color: var(--ui-color-base-40);
+	pointer-events: none;
+}
+
+
+.booking-resource-creation-wizard-label-dropdown {
+	position: relative;
+	display: inline-block;
+	padding: 1px 16px 2px 7px;
+	border-radius: var(--ui-border-radius-pill);
+	border: var(--ui-border-width-thin) solid var(--border-color);
+	background: var(--background-color);
+	color: var(--text-color);
+	white-space: nowrap;
+	cursor: pointer;
+	transition: border-color 200ms, background 200ms, color 200ms;
+}
+
+.booking-resource-creation-wizard-label-dropdown .ui-icon-set {
+	position: absolute;
+	right: 3px;
+	top: 50%;
+	transform: translateY(-45%);
+	--ui-icon-set__icon-size: 12px;
+	--ui-icon-set__icon-color: var(--ui-color-base-40);
+}

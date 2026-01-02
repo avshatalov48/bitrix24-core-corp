@@ -230,7 +230,7 @@ class UserTable extends \Bitrix\Main\UserTable
 				)->configureJoinType(\Bitrix\Main\ORM\Query\Join::TYPE_LEFT)
 			);
 
-			// remove this after b_extranet_user migration
+			// deprecated
 			$entity->addField(
 				(new \Bitrix\Main\ORM\Fields\Relations\Reference(
 					'EXTRANET_GROUP',
@@ -243,6 +243,9 @@ class UserTable extends \Bitrix\Main\UserTable
 
 	public static function createInvitedQuery(): Query
 	{
-		return static::query()->addFilter('!CONFIRM_CODE', false)->where('IS_REAL_USER', true);
+		return static::query()
+			->addFilter('!CONFIRM_CODE', false)
+			->where('REAL_USER', 'expr', true)
+		;
 	}
 }

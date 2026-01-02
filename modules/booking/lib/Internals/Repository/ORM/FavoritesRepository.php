@@ -48,6 +48,7 @@ class FavoritesRepository implements FavoritesRepositoryInterface
 				'DATA',
 				'SETTINGS',
 				'NOTIFICATION_SETTINGS',
+				'ENTITIES',
 			])
 			->where(Query::filter()
 				->logic('OR')
@@ -62,6 +63,7 @@ class FavoritesRepository implements FavoritesRepositoryInterface
 					->whereIn('ID', new SqlExpression($addedResourceQuery))
 				)
 			)
+			->where('DATA.IS_DELETED', '=', 'N')
 			->exec()
 			->fetchCollection()
 		;

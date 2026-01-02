@@ -1,0 +1,3 @@
+<?php
+$MESS["SELECTOR_COMPONENT_PICK_DEPARTMENT"] = "Бөлімдер";
+$MESS["SELECTOR_COMPONENT_START_TYPING_TO_SEARCH_DEPARTMENT"] = "Бөлімді таңдау үшін теруді бастаңыз";

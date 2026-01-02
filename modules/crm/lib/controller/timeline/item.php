@@ -1,18 +1,17 @@
 <?php
 
-
 namespace Bitrix\Crm\Controller\Timeline;
 
+use Bitrix\Crm\Controller\Base;
 use Bitrix\Crm\ItemIdentifier;
 use Bitrix\Crm\Service;
 use Bitrix\Crm\Service\Container;
+use Bitrix\Crm\Service\Timeline\Item\Factory\HistoryItem;
 use Bitrix\Main\Error;
 use Bitrix\Main\Localization\Loc;
 
-class Item extends \Bitrix\Crm\Controller\Base
+class Item extends Base
 {
-	private const MAX_PINNED_ITEMS_COUNT = 3;
-
 	public function pinAction(int $id, int $ownerTypeId, int $ownerId): void
 	{
 		if (!$this->checkBinding($id, $ownerTypeId, $ownerId))
@@ -21,7 +20,7 @@ class Item extends \Bitrix\Crm\Controller\Base
 		}
 		if (!$this->checkPinnedLimit($id, $ownerTypeId, $ownerId))
 		{
-			$this->addError(new Error(Loc::getMessage('CRM_TIMELINE_FASTEN_LIMIT_MESSAGE')));
+			$this->addError(new Error(Loc::getMessage('CRM_TIMELINE_FASTEN_LIMIT_MESSAGE_MSGVER_1')));
 
 			return;
 		}
@@ -46,7 +45,7 @@ class Item extends \Bitrix\Crm\Controller\Base
 	): array
 	{
 		$permissions = Container::getInstance()->getUserPermissions();
-		if (!$permissions->checkReadPermissions($ownerTypeId, $ownerId))
+		if (!$permissions->item()->canRead($ownerTypeId, $ownerId))
 		{
 			$this->addError(\Bitrix\Crm\Controller\ErrorCode::getAccessDeniedError());
 
@@ -113,7 +112,7 @@ class Item extends \Bitrix\Crm\Controller\Base
 		}
 
 		$permissions = Container::getInstance()->getUserPermissions();
-		if (!$permissions->checkUpdatePermissions($ownerTypeId, $ownerId))
+		if (!$permissions->item()->canUpdate($ownerTypeId, $ownerId))
 		{
 			$this->addError(\Bitrix\Crm\Controller\ErrorCode::getAccessDeniedError());
 
@@ -137,10 +136,10 @@ class Item extends \Bitrix\Crm\Controller\Base
 			->where('ENTITY_ID', $ownerId)
 			->where('IS_FIXED', true)
 			->setSelect(['OWNER_ID'])
-			->setLimit(self::MAX_PINNED_ITEMS_COUNT)
+			->setLimit(HistoryItem::MAX_PINNED_ITEMS_COUNT)
 		;
 
-		return (count($existedItems->exec()->fetchAll()) < self::MAX_PINNED_ITEMS_COUNT);
+		return (count($existedItems->exec()->fetchAll()) < HistoryItem::MAX_PINNED_ITEMS_COUNT);
 
 	}
 

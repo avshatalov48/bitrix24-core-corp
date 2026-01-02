@@ -35,6 +35,15 @@ class EntityBadge
 			}
 
 			$badge = Container::getInstance()->getBadge($badgeParams['TYPE'], $badgeParams['VALUE']);
+
+			$hint = $badgeParams['SETTINGS']['HINT'] ?? null;
+			if ($hint)
+			{
+				$badgeSettings = $badge->getSettings();
+				$badgeSettings['HINT'] = $hint;
+				$badge->setSettings($badgeSettings);
+			}
+
 			if ($items[$id] instanceof Item)
 			{
 				$items[$id]->addBadge($badge->getConfigFromMap());
@@ -141,6 +150,7 @@ class EntityBadge
 			->addSelect('VALUE')
 			->addSelect('SOURCE_PROVIDER_ID')
 			->addSelect('SOURCE_ENTITY_TYPE_ID')
+			->addSelect('SETTINGS')
 			->whereIn('ID', $ids)
 			->fetchAll();
 	}

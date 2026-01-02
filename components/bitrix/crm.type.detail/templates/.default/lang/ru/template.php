@@ -26,6 +26,7 @@ $MESS["CRM_TYPE_DETAIL_FIELD_SOURCE"] = "«Источник»";
 $MESS["CRM_TYPE_DETAIL_FIELD_CLIENT"] = "«Клиент»";
 $MESS["CRM_TYPE_DETAIL_FIELD_DATES"] = "«Дата начала» «Дата завершения»";
 $MESS["CRM_TYPE_DETAIL_FIELD_OBSERVERS"] = "«Наблюдатели»";
+$MESS["CRM_TYPE_DETAIL_FIELD_RECURRING"] = "«Регулярность»";
 $MESS["CRM_TYPE_DETAIL_FIELDS_SECTION_TITLE"] = "Поля в карточке смарт-процесса";
 $MESS["CRM_TYPE_DETAIL_ADDITIONAL_SECTION_TITLE"] = "Дополнительные возможности";
 $MESS["CRM_TYPE_DETAIL_RELATION_CARD_TITLE"] = "Привязка к элементам CRM";

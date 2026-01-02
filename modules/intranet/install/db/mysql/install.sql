@@ -182,7 +182,7 @@ create table if not exists b_intranet_invitation_link
 	ENTITY_TYPE varchar(15) not null,
 	ENTITY_ID int not null,
 	CODE varchar(64) not null,
-	CREATED_BY int(11) unsigned null,
+	CREATED_BY int(11) null,
 	CREATED_AT datetime not null,
 	EXPIRED_AT datetime null,
 	PRIMARY KEY(ID),

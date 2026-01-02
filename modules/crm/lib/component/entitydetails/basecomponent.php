@@ -25,6 +25,7 @@ abstract class BaseComponent extends Crm\Component\Base
 	protected $userID = 0;
 	/** @var  \CCrmPerms|null */
 	protected $userPermissions;
+	protected Crm\Service\UserPermissions $userPermissionsService;
 	/** @var \CCrmUserType|null  */
 	protected $userType;
 	/** @var array|null */
@@ -67,6 +68,7 @@ abstract class BaseComponent extends Crm\Component\Base
 
 		$this->userID = \CCrmSecurityHelper::GetCurrentUserID();
 		$this->userPermissions = \CCrmPerms::GetCurrentUserPermissions();
+		$this->userPermissionsService = Container::getInstance()->getUserPermissions();
 
 		$userFieldEntityID = $this->getUserFieldEntityID();
 		if($userFieldEntityID !== '')
@@ -446,7 +448,10 @@ abstract class BaseComponent extends Crm\Component\Base
 	//todo remove overwritten method in the child and inline this method after complete refactoring
 	protected function initializeConversionWizardFromRequest(Main\Request $request): ?Conversion\EntityConversionWizard
 	{
-		return Conversion\ConversionManager::loadWizardByRequest($request);
+		$wizard = Conversion\ConversionManager::loadWizardByRequest($request);
+		$wizard?->converter->getConfig()->setUseTemporaryFilesForUF(false);
+
+		return $wizard;
 	}
 
 	protected function isPreviewItemBeforeCopyMode(): bool
@@ -579,11 +584,11 @@ abstract class BaseComponent extends Crm\Component\Base
 			&& (
 				(
 					!$isMyCompany
-					&& !$userPermissions->checkAddPermissions($entityTypeID)
+					&& !$userPermissions->entityType()->canAddItemsInCategory($entityTypeID, $entityData['categoryId'] ?? 0)
 				)
 				|| (
 					$isMyCompany
-					&& !$userPermissions->getMyCompanyPermissions()->canAdd()
+					&& !$userPermissions->myCompany()->canAdd()
 				)
 			)
 		)
@@ -735,11 +740,11 @@ abstract class BaseComponent extends Crm\Component\Base
 			&& (
 				(
 					!$isMyCompany
-					&& !$userPermissions->checkUpdatePermissions($entityTypeID, $entityID)
+					&& !$userPermissions->item()->canUpdateItemIdentifier($identifier)
 				)
 				|| (
 					$isMyCompany
-					&& !$userPermissions->getMyCompanyPermissions()->canUpdate()
+					&& !$userPermissions->myCompany()->canUpdate()
 				)
 			)
 		)

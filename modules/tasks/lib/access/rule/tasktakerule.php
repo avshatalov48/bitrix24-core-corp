@@ -15,6 +15,7 @@ use Bitrix\Main\DI\ServiceLocator;
 use Bitrix\Main\LoaderException;
 use Bitrix\Main\ObjectPropertyException;
 use Bitrix\Main\SystemException;
+use Bitrix\Tasks\Access\Model\TaskModel;
 use Bitrix\Tasks\Access\Role\RoleDictionary;
 use Bitrix\Tasks\Flow\Distribution\FlowDistributionType;
 use Bitrix\Tasks\Flow\Flow;
@@ -29,6 +30,12 @@ class TaskTakeRule extends AbstractRule
 {
 	public function execute(AccessibleItem $task = null, $params = null): bool
 	{
+		if (!$task instanceof TaskModel)
+		{
+			$this->controller->addError(static::class, 'Incorrect task');
+			return false;
+		}
+
 		if (!FlowFeature::isFeatureEnabled() || !FlowFeature::isOn())
 		{
 			$this->controller->addError(static::class, 'Flow feature is not enabled.');
@@ -38,6 +45,13 @@ class TaskTakeRule extends AbstractRule
 		if (!$this->isTaskExists($task))
 		{
 			$this->controller->addError(static::class, 'Incorrect task');
+			return false;
+		}
+
+		$flow = $this->getFlow($task);
+		if ($flow === null)
+		{
+			$this->controller->addError(static::class, 'Flow not found');
 			return false;
 		}
 
@@ -56,14 +70,6 @@ class TaskTakeRule extends AbstractRule
 		if ($this->checkUserIsNotResponsible($task))
 		{
 			$this->controller->addError(static::class, 'You are already responsible');
-			return false;
-		}
-
-		$flow = $this->getFlow($task);
-
-		if (!$flow)
-		{
-			$this->controller->addError(static::class, 'Flow not found');
 			return false;
 		}
 
@@ -101,6 +107,11 @@ class TaskTakeRule extends AbstractRule
 
 	private function getFlow(AccessibleItem $task): ?Flow
 	{
+		if ($task->getFlowId() <= 0)
+		{
+			return null;
+		}
+
 		$flowData = FlowRegistry::getInstance()->get($task->getFlowId());
 		if ($flowData === null)
 		{

@@ -1,6 +1,9 @@
 <?php
 $MESS["DISK_BOARDS_HEADER_BTN_SHARING_EXT_LINK"] = "Жалпыға ортақ сілтеме";
+$MESS["DISK_BOARDS_HEADER_BTN_SHARING_EXT_LINK_MSGVER_1"] = "Сыртқы пайдаланушылар үшін";
 $MESS["DISK_BOARDS_HEADER_BTN_SHARING_SHARE"] = "Өңдеуге шақыру";
+$MESS["DISK_BOARDS_HEADER_BTN_SHARING_SHARE_MSGVER_1"] = "Тек қызметкерлер үшін";
 $MESS["DISK_FLIPCHART_EDITOR_ACCESS_RIGHTS"] = "Қол жеткізу құқықтары";
+$MESS["DISK_FLIPCHART_EDITOR_ACCESS_RIGHTS_MSGVER_1"] = "Сілтеме арқылы кіру";
 $MESS["DISK_FLIPCHART_EDITOR_AUTOSAVE"] = "Автосақтау";
 $MESS["DISK_FLIPCHART_EDITOR_HEADER_BOARDS"] = "Тақталар";

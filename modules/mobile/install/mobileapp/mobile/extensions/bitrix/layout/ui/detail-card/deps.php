@@ -4,7 +4,6 @@ return [
 	'extensions' => [
 		'alert',
 		'apptheme',
-		'analytics-label',
 		'analytics',
 		'event-emitter',
 
@@ -13,14 +12,18 @@ return [
 		'layout/ui/detail-card/tabs',
 		'layout/ui/detail-card/toolbar/actions-panel',
 		'layout/ui/detail-card/toolbar/toolbar-padding',
+		'layout/ui/detail-card/tabs/factory',
 
 		'layout/ui/fields/focus-manager',
 		'layout/ui/menu',
 		'loc',
-		'feature',
 		'notify-manager',
 		'qrauth/utils',
+		'rest/run-action-executor',
 		'utils',
+		'utils/random',
+		'utils/function',
+		'utils/object',
 		'haptics',
 	],
 ];

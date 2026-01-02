@@ -175,29 +175,37 @@ class CAllCrmCatalog
 
 		// -------------- register in catalog module -------------->
 		$catalogId = $arFields['ID'];
-		$arFields = array(
-			'IBLOCK_ID' => $catalogId
-		);
+		$vatId = (int)($arFields['VAT_ID'] ?? null);
+		$arFields = [
+			'IBLOCK_ID' => $catalogId,
+		];
 
 		// get default vat
 		// TODO: replace this code to use preset vat id
-		$defCatVatId = 0;
-		$iterator = \Bitrix\Catalog\VatTable::getList([
-			'select' => ['ID', 'SORT'],
-			'order' => ['SORT' => 'ASC'],
-			'limit' => 1
-		]);
-		$vat = $iterator->fetch();
-		if (!empty($vat))
+		if ($vatId)
 		{
-			$defCatVatId = (int)$vat['ID'];
+			$arFields['VAT_ID'] = $vatId;
 		}
-		unset($vat, $iterator);
-		if ($defCatVatId > 0)
+		else
 		{
-			$arFields['VAT_ID'] = $defCatVatId;
+			$defCatVatId = 0;
+			$iterator = \Bitrix\Catalog\VatTable::getList([
+				'select' => ['ID', 'SORT'],
+				'order' => ['SORT' => 'ASC'],
+				'limit' => 1
+			]);
+			$vat = $iterator->fetch();
+			if (!empty($vat))
+			{
+				$defCatVatId = (int)$vat['ID'];
+			}
+			unset($vat, $iterator);
+			if ($defCatVatId > 0)
+			{
+				$arFields['VAT_ID'] = $defCatVatId;
+			}
+			unset($defCatVatId);
 		}
-		unset($defCatVatId);
 
 		// add crm iblock to catalog
 		$CCatalog = new CCatalog();
@@ -434,14 +442,14 @@ class CAllCrmCatalog
 		return (int)Crm\Product\Catalog::getDefaultId();
 	}
 
-	public static function EnsureDefaultExists()
+	public static function EnsureDefaultExists($paramsForCreate = [])
 	{
 		$ID = (int)Crm\Product\Catalog::getDefaultId();
 
 		// Create new IBlock
 		if($ID <= 0)
 		{
-			if(($ID = self::CreateCatalog()) > 0)
+			if(($ID = self::CreateCatalog(paramsForCreate: $paramsForCreate)) > 0)
 			{
 				COption::SetOptionString('crm', 'default_product_catalog_id', $ID);
 				self::setCrmGroupRights($ID);
@@ -470,7 +478,7 @@ class CAllCrmCatalog
 		return self::$DEFAULT_CATALOG_XML_ID;
 	}
 
-	public static function CreateCatalog($originatorID = '', $name = '', $siteID = null)
+	public static function CreateCatalog($originatorID = '', $name = '', $siteID = null, $paramsForCreate = [])
 	{
 		if(!is_string($originatorID) || $originatorID == '')
 		{
@@ -577,11 +585,11 @@ class CAllCrmCatalog
 
 		//creation of catalog
 		$result = CCrmCatalog::Add(
-			array
-			(
+			[
 				'ID' => $iblockID,
-				'ORIGINATOR_ID' => $originatorID
-			)
+				'ORIGINATOR_ID' => $originatorID,
+				...$paramsForCreate,
+			],
 		);
 
 		if($result === false)
@@ -636,16 +644,26 @@ class CAllCrmCatalog
 				'SKU_PROPERTY_ID' => $propertyId
 			];
 			// get default vat
-			$iterator = Catalog\VatTable::getList([
-				'select' => ['ID', 'SORT'],
-				'order' => ['SORT' => 'ASC'],
-				'limit' => 1
-			]);
-			$row = $iterator->fetch();
-			unset($iterator);
-			if (!empty($row))
-				$offersFields['VAT_ID'] = (int)$row['ID'];
-			unset($row);
+			$paramsForCreate['VAT_ID'] = (int)($paramsForCreate['VAT_ID'] ?? 0);
+			if ($paramsForCreate['VAT_ID'])
+			{
+				$offersFields['VAT_ID'] = $paramsForCreate['VAT_ID'];
+			}
+			else
+			{
+				$iterator = Catalog\VatTable::getList([
+					'select' => ['ID', 'SORT'],
+					'order' => ['SORT' => 'ASC'],
+					'limit' => 1
+				]);
+				$row = $iterator->fetch();
+				unset($iterator);
+				if (!empty($row))
+				{
+					$offersFields['VAT_ID'] = (int)$row['ID'];
+				}
+				unset($row);
+			}
 
 			if (!\CCatalog::Add($offersFields))
 			{

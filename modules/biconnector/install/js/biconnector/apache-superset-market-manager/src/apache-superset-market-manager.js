@@ -10,7 +10,7 @@ export class ApacheSupersetMarketManager
 		if (!isMarketInstalled)
 		{
 			BX.UI.Notification.Center.notify({
-				content: Loc.getMessage('BIC_MARKET_MANAGER_NO_MODULE'),
+				content: Loc.getMessage('BIC_MARKET_MANAGER_NO_MODULE_MSGVER_1'),
 			});
 
 			return;

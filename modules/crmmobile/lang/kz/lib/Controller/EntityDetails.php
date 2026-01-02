@@ -1,0 +1,11 @@
+<?php
+$MESS["M_CRM_ENTITY_DETAILS_COPY_TEXT"] = "Элементті көшіру";
+$MESS["M_CRM_ENTITY_DETAILS_COPY_TEXT_COMPANY"] = "Компанияны көшіру";
+$MESS["M_CRM_ENTITY_DETAILS_COPY_TEXT_CONTACT"] = "Байланысты көшіру";
+$MESS["M_CRM_ENTITY_DETAILS_COPY_TEXT_DEAL"] = "Мәмілені көшіру";
+$MESS["M_CRM_ENTITY_DETAILS_COPY_TEXT_LEAD"] = "Лидті көшіру";
+$MESS["M_CRM_ENTITY_DETAILS_COPY_TEXT_QUOTE"] = "Ұсынысты көшіру";
+$MESS["M_CRM_ENTITY_DETAILS_COPY_TEXT_SMART_INVOICE"] = "Шотты көшіру";
+$MESS["M_CRM_ENTITY_DETAILS_REPEATED_APPROACH_DEAL"] = "Қайталанған жүгіну";
+$MESS["M_CRM_ENTITY_DETAILS_REPEATED_DEAL"] = "Қайталанған мәміле";
+$MESS["M_CRM_ENTITY_DETAILS_REPEATED_LEAD"] = "Қайталанған лид";

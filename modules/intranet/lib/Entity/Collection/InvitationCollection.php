@@ -3,7 +3,7 @@
 namespace Bitrix\Intranet\Entity\Collection;
 
 use Bitrix\Intranet\Entity\Department;
-use Bitrix\Intranet\Entity\Invitation;
+use Bitrix\Intranet\Internal\Entity\Invitation;
 
 /**
  * @extends BaseCollection<Invitation>

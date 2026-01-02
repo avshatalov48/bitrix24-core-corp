@@ -2,9 +2,7 @@
 
 return [
 	'extensions' => [
-		'feature',
 		'type',
-		'loc',
 		'in-app-url',
 		'notify-manager',
 		'assets/common',
@@ -23,10 +21,9 @@ return [
 		'tokens',
 		'ui-system/layout/card',
 		'ui-system/blocks/badges/counter',
-		'ui-system/blocks/badges/counter/src/design-enum',
-		'selector/widget/entity/socialnetwork/user',
 
 		'im:lib/theme',
+		'im:messenger/loc',
 		'im:messenger/const',
 		'im:messenger/assets/common',
 
@@ -39,7 +36,9 @@ return [
 		'im:messenger/lib/params',
 		'im:messenger/lib/feature',
 		'im:messenger/lib/rest',
-		'im:messenger/lib/element',
+		'im:messenger/lib/element/user-status',
+		'im:messenger/lib/element/chat-title',
+		'im:messenger/lib/element/chat-avatar',
 		'im:messenger/lib/logger',
 		'im:messenger/lib/helper',
 		'im:messenger/lib/utils',
@@ -55,14 +54,19 @@ return [
 
 		'im:messenger/provider/rest',
 		'im:messenger/provider/data',
-		'im:messenger/provider/service',
+		'im:messenger/provider/services/chat',
+		'im:messenger/provider/services/disk',
+		'im:messenger/provider/services/analytics',
+		'im:messenger/lib/integration/callmobile/call-manager',
+
+		'im:messenger/controller/selector/member'
 	],
 	'bundle' => [
 		'./lib/assets/icons',
 		'./lib/const',
-		
+
 		'./src/base/sidebar-controller',
-		
+
 		'./src/chat/sidebar-controller',
 		'./src/chat/sidebar-view',
 		'./src/chat/sidebar-friendly-date',

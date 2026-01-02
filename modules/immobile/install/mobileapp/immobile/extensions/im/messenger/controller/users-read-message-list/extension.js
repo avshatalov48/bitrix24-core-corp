@@ -2,24 +2,24 @@
  * @module im/messenger/controller/users-read-message-list
  */
 jn.define('im/messenger/controller/users-read-message-list', (require, exports, module) => {
-	const { Loc } = require('loc');
+	const { Loc } = require('im/messenger/loc');
 	const { Type } = require('type');
-	const { Logger } = require('im/messenger/lib/logger');
-	const { Moment } = require('utils/date');
-	const { RestMethod } = require('im/messenger/const/rest');
-	const { UserProfile } = require('im/messenger/controller/user-profile');
-	const { UsersReadMessageListView } = require('im/messenger/controller/users-read-message-list/view');
-	const { atomIcons } = require('im/messenger/assets/common');
-	const { MessengerParams } = require('im/messenger/lib/params');
 	const { FriendlyDate } = require('layout/ui/friendly-date');
+	const { Moment } = require('utils/date');
+
 	const { Theme } = require('im/lib/theme');
-	const { runAction } = require('im/messenger/lib/rest');
-	const { EventType } = require('im/messenger/const');
-	const {
-		ChatTitle,
-		ChatAvatar,
-	} = require('im/messenger/lib/element');
+	const { Icon } = require('assets/icons/src/main');
+	const { RestMethod, EventType } = require('im/messenger/const');
+	const { UserProfile } = require('im/messenger/controller/user-profile');
 	const { serviceLocator } = require('im/messenger/lib/di/service-locator');
+	const { MessengerParams } = require('im/messenger/lib/params');
+	const { Logger } = require('im/messenger/lib/logger');
+
+	const { runAction } = require('im/messenger/lib/rest');
+	const { ChatTitle } = require('im/messenger/lib/element/chat-title');
+	const { ChatAvatar } = require('im/messenger/lib/element/chat-avatar');
+
+	const { UsersReadMessageListView } = require('im/messenger/controller/users-read-message-list/view');
 
 	/**
 	 * @desc This class provider calling backdrop widget with users of list who read message
@@ -31,11 +31,10 @@ jn.define('im/messenger/controller/users-read-message-list', (require, exports, 
 		 * @static
 		 * @param {number} messageId
 		 * @param {MapCache} [cache]
-		 * @param {Function} [setCache] - for update new result after rest call
 		 */
-		static open(messageId, cache, setCache)
+		static open(messageId, cache)
 		{
-			const instanceManger = new UsersReadMessageList(messageId, cache, setCache);
+			const instanceManger = new UsersReadMessageList(messageId, cache);
 			instanceManger.open();
 		}
 
@@ -43,14 +42,12 @@ jn.define('im/messenger/controller/users-read-message-list', (require, exports, 
 		 * @constructor
 		 * @param {number} messageId=0
 		 * @param {MapCache} [cache]
-		 * @param {Function} [setCache]
 		 */
-		constructor(messageId, cache, setCache)
+		constructor(messageId, cache)
 		{
 			this.messageId = messageId;
 			this.items = [];
 			this.cache = cache;
-			this.setCache = setCache;
 			this.store = serviceLocator.get('core').getStore();
 			this.bindMethods();
 
@@ -130,10 +127,7 @@ jn.define('im/messenger/controller/users-read-message-list', (require, exports, 
 		{
 			const restResult = await this.getUserReadMessageList();
 			await this.saveUsers(restResult.users);
-			if (this.setCache)
-			{
-				this.setCache(restResult);
-			}
+			this.cache.set(this.messageId, restResult);
 
 			this.items = this.getUserDataItem(restResult);
 			this.updateStateView();
@@ -217,7 +211,7 @@ jn.define('im/messenger/controller/users-read-message-list', (require, exports, 
 					color: userData.color,
 					title: userData.name,
 					subtitle: dateText,
-					iconSubtitle: atomIcons.doubleCheck(),
+					iconSubtitle: Icon.DOUBLE_CHECK.getIconName(),
 					avatarUri,
 					avatarColor: userData.color,
 					avatar: ChatAvatar.createFromDialogId(userData.id).getListItemAvatarProps(),
@@ -265,11 +259,11 @@ jn.define('im/messenger/controller/users-read-message-list', (require, exports, 
 								align: 'baseline',
 							},
 							iconSubtitleStyle: {
-								width: 14,
-								height: 12,
-								marginTop: 2,
+								width: 22,
+								height: 22,
 								marginRight: 4,
 								alignSelf: 'center',
+								color: Theme.colors.base4,
 							},
 						},
 					},

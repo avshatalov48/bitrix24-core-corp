@@ -9,8 +9,10 @@ return [
 	'js' => 'dist/representative-selector.bundle.js',
 	'rel' => [
 		'main.core',
+		'main.popup',
 		'sign.v2.b2e.user-selector',
 		'sign.v2.helper',
+		'sign.type',
 	],
 	'skip_core' => false,
 ];

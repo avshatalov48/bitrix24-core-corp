@@ -3,8 +3,9 @@ export type BookingUIFilter = {
 	CONTACT?: string[],
 	COMPANY?: string[],
 	RESOURCE?: string[],
+	RESOURCE_label?: string[],
 	CONFIRMED?: 'Y' | 'N',
-	DELAYED?: 'Y' | 'N',
+	REQUIRE_ATTENTION?: string,
 };
 
 export type BookingListFilter = {
@@ -18,5 +19,7 @@ export type BookingListFilter = {
 	RESOURCE_ID?: number[],
 	IS_CONFIRMED?: boolean,
 	IS_DELAYED?: boolean,
+	HAS_DELAYED_COUNTER?: boolean,
+	HAS_NOT_CONFIRMED_COUNTER?: boolean,
 	ID?: number[],
 };

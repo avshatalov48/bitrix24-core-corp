@@ -1,12 +1,4 @@
 <?php
-/**
- * Bitrix Framework
- * @package bitrix
- * @subpackage tasks
- * @copyright 2001-2016 Bitrix
- *
- * @access private
- */
 
 namespace Bitrix\Tasks\Util;
 
@@ -16,7 +8,6 @@ use Bitrix\Main\Loader;
 use Bitrix\Main\ModuleManager;
 use Bitrix\Main\OperationTable;
 use Bitrix\Main\ORM\Fields\ExpressionField;
-use Bitrix\Main\TaskOperationTable;
 use Bitrix\Main\UserTable;
 use Bitrix\Tasks\Integration\Extranet;
 use Bitrix\Tasks\Integration\IMBot;
@@ -30,7 +21,8 @@ final class User
 	private static array $defaultUserStorage = [];
 	private static $accessLevels = array();
 	private static $accessOperations = array();
-	private static $accessLevel2Operation = null;
+
+	private static mixed $userId = null;
 
 	public static function getList($params)
 	{
@@ -135,12 +127,10 @@ final class User
 
 	/**
 	 * Return user id previously set by setOccurAsId()
-	 *
-	 * @return null
 	 */
 	public static function getOccurAsId()
 	{
-		return \CTasksPerHitOption::get('tasks', static::getOccurAsIdKey());
+		return self::$userId;
 	}
 
 	/**
@@ -150,13 +140,10 @@ final class User
 	 * In general, this is a hacky function, so it could be set deprecated in future as architecture changes.
 	 *
 	 * @param int $userId Use 0 or null or false to switch off user replacement
-	 * @return string
 	 */
 	public static function setOccurAsId($userId = 0)
 	{
 		$userId = intval($userId);
-
-		$key = static::getOccurAsIdKey();
 
 		// todo: use user cache here, when implemented
 		if(!$userId || !\CUser::getById($userId)->fetch())
@@ -164,9 +151,7 @@ final class User
 			$userId = null;
 		}
 
-		\CTasksPerHitOption::set('tasks', $key, $userId);
-
-		return $key;
+		self::$userId = $userId;
 	}
 
 	/**
@@ -512,31 +497,6 @@ final class User
 		return time() + static::getTimeZoneOffset($userId);
 	}
 
-	//////////////////////////////
-	// about access
-
-	public static function checkAccessOperationInLevel($operationId, $levelId)
-	{
-		if(static::$accessLevel2Operation === null)
-		{
-			$relations = array();
-			$res = TaskOperationTable::getList(array(
-				'filter' => array(
-					'=TASK.MODULE_ID' => 'tasks',
-					'=OPERATION.MODULE_ID' => 'tasks',
-				),
-			));
-			while($item = $res->fetch())
-			{
-				$relations[$item['TASK_ID']][$item['OPERATION_ID']] = true;
-			}
-
-			static::$accessLevel2Operation = $relations;
-		}
-
-		return static::$accessLevel2Operation[$levelId][$operationId];
-	}
-
 	/**
 	 * Get access level by name
 	 *
@@ -559,26 +519,6 @@ final class User
 		}
 
 		return null;
-	}
-
-	/**
-	 * Get access operation IDs by given names
-	 */
-	public static function mapAccessOperationNames($entityName, array $names)
-	{
-		$names = array_flip($names);
-
-		$ops = static::getAccessOperationsForEntity($entityName);
-		$resultNames = array();
-		foreach($ops as $op)
-		{
-			if(array_key_exists($op['NAME'], $names))
-			{
-				$resultNames[$op['NAME']] = $op['ID'];
-			}
-		}
-
-		return $resultNames;
 	}
 
 	/**
@@ -662,18 +602,6 @@ final class User
 			$cache[$key] = \CTimeZone::getOffset($userId, $force);
 		}
 		return $cache[$key];
-	}
-
-	private static function getOccurAsIdKey()
-	{
-		static $key;
-
-		if($key == null)
-		{
-			$key = 'occurAs_key:' . md5(mt_rand(1000, 999999) . '-' . mt_rand(1000, 999999));
-		}
-
-		return $key;
 	}
 
 	/**

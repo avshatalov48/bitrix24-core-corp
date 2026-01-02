@@ -13,5 +13,6 @@ return [
 		'tasks:enum',
 		'utils/logger/error-logger',
 		'tasks:navigator',
+		'tasks:navigator/meta',
 	],
 ];

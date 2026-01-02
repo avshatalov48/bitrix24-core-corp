@@ -2,9 +2,9 @@
 
 namespace Bitrix\BIConnector\Superset\Grid\Row\Assembler;
 
+use Bitrix\BIConnector\Superset\Grid\Row\Assembler\Field\Source\DescriptionFieldAssembler;
 use Bitrix\BIConnector\Superset\Grid\Settings\ExternalSourceSettings;
 use Bitrix\Main\Grid\Row\RowAssembler;
-use Bitrix\Main\Grid\Row\Assembler\Field\StringFieldAssembler;
 
 class ExternalSourceRowAssembler extends RowAssembler
 {
@@ -46,7 +46,7 @@ class ExternalSourceRowAssembler extends RowAssembler
 				],
 				$this->settings,
 			),
-			new StringFieldAssembler(
+			new DescriptionFieldAssembler(
 				[
 					'DESCRIPTION',
 				],

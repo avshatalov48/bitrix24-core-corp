@@ -1,0 +1,13 @@
+.pagetitile-button-container * {
+	margin-left: 5px;
+}
+
+.pagetitle-edit-button {
+	display: inline-block;
+	vertical-align: middle;
+	cursor: pointer;
+}
+
+.crm-repeat-sale-segment-details {
+	width: 100%;
+}

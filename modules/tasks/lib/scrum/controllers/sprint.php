@@ -211,7 +211,22 @@ class Sprint extends Controller
 		$sprintData['storyPoints'] = $sprintCounters['storyPoints'];
 
 		$taskIds = $sprintCounters['taskIds'];
-		$uncompletedTaskIds = $kanbanService->getUnfinishedTaskIdsInSprint($sprint->getId());
+		$unFinishedTaskIds = $kanbanService->getUnfinishedTaskIdsInSprint($sprint->getId());
+		foreach ($unFinishedTaskIds as $key => $unFinishedTaskId)
+		{
+			$isCompletedTask = $taskService->isCompletedTask($unFinishedTaskId);
+			if ($taskService->getErrors())
+			{
+				$this->errorCollection->add($taskService->getErrors());
+
+				return null;
+			}
+
+			if ($isCompletedTask)
+			{
+				unset($unFinishedTaskIds[$key]);
+			}
+		}
 
 		$uncompletedTasks = [];
 		$epics = [];
@@ -235,7 +250,7 @@ class Sprint extends Controller
 				}
 			}
 
-			if (in_array($item->getSourceId(), $uncompletedTaskIds))
+			if (in_array($item->getSourceId(), $unFinishedTaskIds))
 			{
 				$uncompletedTasks[$item->getSourceId()] = $itemData;
 			}

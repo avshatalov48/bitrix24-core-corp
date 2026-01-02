@@ -308,6 +308,41 @@ abstract class Base extends BaseReport
 		$query->addGroup('DATE');
 	}
 
+	private function getExpressionForDateWithInterval($timePeriodDatasel, int $dateDifference): string
+	{
+		$helper = Application::getConnection()->getSqlHelper();
+		$date = $helper->getDatetimeToDateFunction('%s');
+
+		switch ($timePeriodDatasel)
+		{
+			case DateType::YEAR:
+			case DateType::QUARTER:
+			case DateType::CURRENT_QUARTER:
+				$expression = $helper->formatDate('%YYYY-%MM', $helper->addSecondsToDateTime(-1 * $dateDifference, $date));// % is needed for escaping
+				break;
+
+			default:
+				$expression = $helper->addSecondsToDateTime(-1 * $dateDifference, $date);
+				break;
+		}
+
+		return $expression;
+	}
+
+	/**
+	 *
+	 *  Adds a date shift to use in join.
+	 *
+	 * @param Query $query
+	 * @param $timePeriodDatasel
+	 * @param int $secondDifference - разница в секундах между периодами
+	 */
+	protected function addDateForJoinField(Query $query, $timePeriodDatasel, int $dateDifference): void
+	{
+		$this->addIntervalByDatasel($query, $timePeriodDatasel, $dateDifference, 'DATE_FOR_JOIN');
+		$query->addSelect('DATE_FOR_JOIN');
+	}
+
 	/**
 	 * Return valid interval for insert into query.
 	 *
@@ -801,7 +836,16 @@ abstract class Base extends BaseReport
 	 * @param $timePeriodDatasel
 	 * @param int $dateDifference
 	 */
-	protected function addIntervalByDatasel(Query $query, $timePeriodDatasel, int $dateDifference): void
+	protected function addIntervalByDatasel(Query $query, $timePeriodDatasel, int $dateDifference, $fieldName = 'PREVIOUS_DATE'): void
+	{
+		$query->registerRuntimeField(new ExpressionField(
+			$fieldName,
+			$this::getExpressionForDateWithInterval($timePeriodDatasel, $dateDifference),
+			['CALL_START_DATE']
+		));
+	}
+
+	protected function addJoinDateByDatasel(Query $query, $timePeriodDatasel, int $dateDifference): void
 	{
 		$helper = Application::getConnection()->getSqlHelper();
 		$date = $helper->getDatetimeToDateFunction('%s');
@@ -823,7 +867,7 @@ abstract class Base extends BaseReport
 		}
 
 		$query->registerRuntimeField(new ExpressionField(
-			'PREVIOUS_DATE',
+			'DATE_FOR_JOIN',
 			$expression,
 			['CALL_START_DATE']
 		));

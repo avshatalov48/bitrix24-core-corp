@@ -1,6 +1,7 @@
 <?php
 namespace Bitrix\Crm\Settings;
 use Bitrix\Main;
+use Bitrix\Crm\DbHelper;
 
 class DealSettings
 {
@@ -39,7 +40,7 @@ class DealSettings
 		$this->isOpened = new BooleanSetting('deal_opened_flag', true);
 		$this->enableDeferredCleaning = new BooleanSetting('enable_deal_deferred_cleaning', true);
 		$this->enableRecycleBin = new BooleanSetting('enable_deal_recycle_bin', true);
-		$this->initIsFactoryEnabledSetting(\CCrmOwnerType::Deal, false);
+		$this->initIsFactoryEnabledSetting(\CCrmOwnerType::Deal, !DbHelper::isPgSqlDb());
 	}
 	/**
 	 * Get current instance

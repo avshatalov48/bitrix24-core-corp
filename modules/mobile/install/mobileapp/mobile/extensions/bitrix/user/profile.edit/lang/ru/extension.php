@@ -46,3 +46,4 @@ $MESS["PROFILE_USER_TASKS"] = "Задачи пользователя";
 $MESS["PROFILE_USER_FILES"] = "Файлы пользователя";
 $MESS["PROFILE_USER_MESSAGES"] = "Сообщения пользователя";
 $MESS['DELETE_ACCOUNT'] = 'Удалить профиль';
+$MESS['DELETE_B24'] = 'Удалить мой Битрикс24';

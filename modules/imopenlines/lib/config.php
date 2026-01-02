@@ -1288,19 +1288,12 @@ class Config
 
 		$this->deleteAllAutomaticMessage($configId);
 
-		$sessList = Model\SessionTable::getList([
-			'select' => ['ID', 'CHAT_ID', 'CLOSED'],
-			'filter' => ['=CONFIG_ID' => $configId]
-		]);
-		while ($session = $sessList->fetch())
-		{
-			if ($session['CLOSED'] != 'Y')
-			{
-				Im::chatHide($session['CHAT_ID']);
-			}
-
-			Session::deleteSession($session['ID']);
-		}
+		\Bitrix\Main\Update\Stepper::bindClass(
+			'\Bitrix\Imopenlines\Update\OrphanedSessionCleaner',
+			'imopenlines',
+			60,
+			[$configId],
+		);
 
 		try
 		{

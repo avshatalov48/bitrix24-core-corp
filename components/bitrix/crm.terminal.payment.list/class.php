@@ -5,6 +5,7 @@ if (!defined('B_PROLOG_INCLUDED') || B_PROLOG_INCLUDED !== true)
 	die();
 }
 
+use Bitrix\Crm\ItemMiniCard\Builder\MiniCardHtmlBuilder;
 use Bitrix\Main;
 use Bitrix\Crm;
 use Bitrix\Sale;
@@ -674,20 +675,11 @@ class CrmTerminalPaymentList extends \CBitrixComponent implements Main\Engine\Co
 	private function getContactLink($contact): string
 	{
 		$contactId = (int)$contact['ID'];
+		$title = \CUser::FormatName(\CSite::GetNameFormat(false), $contact);
 
-		$name = \CUser::FormatName(\CSite::GetNameFormat(false), $contact);
-		$name = htmlspecialcharsbx($name);
-
-		$contactUrl = Main\Config\Option::get('crm', 'path_to_contact_details', '/crm/contact/details/#contact_id#/');
-		$contactUrl = CComponentEngine::MakePathFromTemplate($contactUrl, ['contact_id' => $contactId]);
-		$userId = "CONTACT_{$contactId}";
-
-		return "<a href='{$contactUrl}'
-				 bx-tooltip-user-id='{$userId}'
-				 bx-tooltip-loader='/bitrix/components/bitrix/crm.contact.show/card.ajax.php'
-				 bx-tooltip-classname='crm_balloon_contact'>
-				 {$name}
-				</a>"
+		return (new MiniCardHtmlBuilder(CCrmOwnerType::Contact, $contactId))
+			->setTitle($title)
+			->build()
 		;
 	}
 
@@ -782,8 +774,11 @@ class CrmTerminalPaymentList extends \CBitrixComponent implements Main\Engine\Co
 
 	private function checkPermission(): bool
 	{
-		$userPermissions = \CCrmPerms::GetCurrentUserPermissions();
-		if (!Crm\Order\Permissions\Payment::checkReadPermission(0, $userPermissions))
+		if (!\Bitrix\Crm\Service\Container::getInstance()
+			->getUserPermissions()
+			->entityType()
+			->canReadItems(CCrmOwnerType::OrderPayment)
+		)
 		{
 			$this->arResult['ERROR_MESSAGES'][] = Main\Localization\Loc::getMessage('CRM_TERMINAL_PAYMENT_LIST_COMPONENT_PERMISSION_DENIED');
 			return false;

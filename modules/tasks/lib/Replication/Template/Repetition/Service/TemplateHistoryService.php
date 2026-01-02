@@ -15,7 +15,7 @@ class TemplateHistoryService implements HistoryServiceInterface
 	{
 	}
 
-	public function write(string $message, Result $operationResult, int $taskId = 0): Result
+	public function write(string $message, Result $operationResult = new Result(), int $taskId = 0): Result
 	{
 		$result = new Result();
 

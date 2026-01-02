@@ -39,6 +39,9 @@ jn.define('im/messenger/const/rest', (require, exports, module) => {
 
 		imV2RecentChannelTail: 'im.v2.Recent.Channel.tail',
 		imV2RecentCollabTail: 'im.v2.Recent.Collab.tail',
+		imV2RecentExternalChatTail: 'im.v2.Recent.ExternalChat.tail',
+
+		imV2RecentChannelExtendPullWatch: 'im.v2.Recent.Channel.extendPullWatch',
 
 		imV2ChatGet: 'im.v2.Chat.get',
 		imV2ChatExtendPullWatch: 'im.v2.Chat.extendPullWatch',
@@ -63,9 +66,14 @@ jn.define('im/messenger/const/rest', (require, exports, module) => {
 		imV2ChatMessageDeleteRichUrl: 'im.v2.Chat.Message.deleteRichUrl',
 		imV2ChatMessagePin: 'im.v2.Chat.Message.pin',
 		imV2ChatMessageUnpin: 'im.v2.Chat.Message.unpin',
+		imV2ChatMessageSearch: 'im.v2.Chat.Message.search',
+		imV2ChatMemberTail: 'im.v2.Chat.Member.tail',
 
 		imV2ChatPinTail: 'im.v2.Chat.Pin.tail',
 		imV2ChatPinCount: 'im.v2.Chat.Pin.count',
+
+		imV2ChatPin: 'im.v2.Chat.pin',
+		imV2ChatUnpin: 'im.v2.Chat.unpin',
 
 		imV2ChatJoin: 'im.v2.Chat.join',
 		imV2ChatAddUsers: 'im.v2.Chat.addUsers',
@@ -75,6 +83,7 @@ jn.define('im/messenger/const/rest', (require, exports, module) => {
 		imV2ChatDeleteManagers: 'im.v2.Chat.deleteManagers',
 
 		imV2ChatUpdate: 'im.v2.Chat.update',
+		imV2ChatListShared: 'im.v2.Chat.listShared',
 		imV2ChatUpdateAvatar: 'im.v2.Chat.updateAvatar',
 		imV2ChatSetTitle: 'im.v2.Chat.setTitle',
 		imV2ChatSetManageUI: 'im.v2.Chat.setManageUI',
@@ -90,12 +99,19 @@ jn.define('im/messenger/const/rest', (require, exports, module) => {
 		imV2ChatCopilotUpdateRole: 'im.v2.Chat.Copilot.updateRole',
 		imV2ChatMemberEntitiesList: 'im.v2.Chat.MemberEntities.list',
 
+		imV2ChatInputActionNotify: 'im.v2.Chat.InputAction.notify',
+
+		imv2ChatSetMessagesAutoDeleteDelay: 'im.v2.Chat.setMessagesAutoDeleteDelay',
+
+		imV2ChatBotSendContext: 'im.v2.Chat.Bot.sendContext',
+
+		imV2AnchorRead: 'im.v2.Anchor.read',
+		imV2AnchorReadChat: 'im.v2.Chat.Anchor.read',
+
 		imDialogGet: 'im.dialog.get',
 		imDialogMessagesGet: 'im.dialog.messages.get',
 		imDialogRead: 'im.dialog.read',
 		imDialogUnread: 'im.dialog.unread',
-		imDialogWriting: 'im.dialog.writing',
-		imDialogStartRecordVoice: 'im.v2.Chat.startRecordVoice',
 		imDialogRestrictionsGet: 'im.dialog.restrictions.get',
 		imDialogReadAll: 'im.dialog.read.all',
 		imDialogContextGet: 'im.dialog.context.get',
@@ -113,6 +129,8 @@ jn.define('im/messenger/const/rest', (require, exports, module) => {
 		imDiskFilePreviewUpload: 'disk.api.file.attachPreview',
 		imDiskFileDelete: 'im.disk.file.delete',
 		imDiskFileSave: 'im.disk.file.save',
+		imV2DiskFileSave: 'im.v2.Disk.File.save',
+		imV2DiskFileTranscribe: 'im.v2.Disk.File.transcribe',
 
 		imRecentGet: 'im.recent.get',
 		imRecentList: 'im.recent.list',
@@ -148,6 +166,11 @@ jn.define('im/messenger/const/rest', (require, exports, module) => {
 
 		openlinesDialogGet: 'imopenlines.dialog.get',
 
+		immobileSettingsGet: 'immobile.api.Settings.get',
+		immobileSettingsToggleMessengerV2: 'immobile.api.Settings.toggleMessengerV2',
+
+		immobileMessengerLoad: 'immobile.Messenger.load',
+
 		immobileTabChatLoad: 'immobile.Tab.Chat.load',
 		immobileTabCopilotLoad: 'immobile.Tab.Copilot.load',
 		immobileTabChannelLoad: 'immobile.Tab.Channel.load',
@@ -157,6 +180,14 @@ jn.define('im/messenger/const/rest', (require, exports, module) => {
 		socialnetworkCollabMemberDelete: 'socialnetwork.collab.Member.delete',
 		socialnetworkCollabDelete: 'socialnetwork.collab.Collab.delete',
 		socialnetworkCollabMemberLeave: 'socialnetwork.collab.Member.leave',
+
+		voteIntegrationImSend: 'vote.Integration.Im.send',
+		voteAttachedVoteVote: 'vote.AttachedVote.vote',
+		voteAttachedVoteStop: 'vote.AttachedVote.stop',
+		voteAttachedVoteRecall: 'vote.AttachedVote.recall',
+		voteAttachedVoteGetMany: 'vote.AttachedVote.getMany',
+		voteAttachedVoteGetWithVoted: 'vote.AttachedVote.getWithVoted',
+		voteAttachedVoteGetAnswerVoted: 'vote.AttachedVote.getAnswerVoted',
 	});
 
 	module.exports = {

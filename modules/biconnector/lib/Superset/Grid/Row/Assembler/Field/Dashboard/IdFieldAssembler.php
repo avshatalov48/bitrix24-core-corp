@@ -3,7 +3,9 @@
 namespace Bitrix\BIConnector\Superset\Grid\Row\Assembler\Field\Dashboard;
 
 use Bitrix\BIConnector\Configuration\DashboardTariffConfigurator;
+use Bitrix\BIConnector\Integration\Superset\Repository\DashboardGroupRepository;
 use Bitrix\BIConnector\Superset\Grid\Row\Assembler\Field\Base\DetailLinkFieldAssembler;
+use Bitrix\Main\Web\Json;
 
 class IdFieldAssembler extends DetailLinkFieldAssembler
 {
@@ -29,23 +31,33 @@ class IdFieldAssembler extends DetailLinkFieldAssembler
 				</a>
 			";
 		}
-		elseif (empty($value['HAS_ZONE_URL_PARAMS']))
+		elseif ($value['ENTITY_TYPE'] === DashboardGroupRepository::TYPE_GROUP)
 		{
-			$link = "<a href='{$value['DETAIL_URL']}'>{$id}</a>";
-		}
-		else
-		{
+			$ormFilter = $this->getSettings()->getOrmFilter();
+			$eventGroup = Json::encode([
+				'ID' => (int)$value['ID'],
+				'TITLE' => $value['TITLE'],
+				'IS_FILTERED' => isset($ormFilter['GROUPS.ID']) && in_array((int)$value['ID'], $ormFilter['GROUPS.ID']),
+			]);
+
 			$link = "
 				<a 
-					style='cursor: pointer' 
-					onclick='BX.BIConnector.SupersetDashboardGridManager.Instance.showLockedByParamsPopup()'
+					style='cursor: pointer'
+					onclick='BX.BIConnector.SupersetDashboardGridManager.Instance.handleGroupTitleClick($eventGroup)'
 				>
 					{$id}
 				</a>
 			";
 		}
+		elseif (!$value['IS_ACCESS_ALLOWED'])
+		{
+			$link = $id;
+		}
+		else
+		{
+			$link = "<a href='{$value['DETAIL_URL']}' target='_blank'>{$id}</a>";
+		}
 
 		return $link;
 	}
-
 }

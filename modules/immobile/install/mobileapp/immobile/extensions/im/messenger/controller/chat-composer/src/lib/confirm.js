@@ -2,7 +2,7 @@
  * @module im/messenger/controller/chat-composer/lib/confirm
  */
 jn.define('im/messenger/controller/chat-composer/lib/confirm', (require, exports, module) => {
-	const { Loc } = require('loc');
+	const { Loc } = require('im/messenger/loc');
 	const { Alert, makeCancelButton, makeDestructiveButton } = require('alert');
 
 	function showClosingSelectorAlert({ onClose, onCancel })

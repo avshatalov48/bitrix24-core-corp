@@ -17,6 +17,7 @@ use Bitrix\Sale\Helpers\Admin;
 use Bitrix\Sale\Services\PaySystem\Restrictions;
 use Bitrix\SalesCenter\Integration\SaleManager;
 use Bitrix\Seo;
+use Bitrix\Seo\Checkout\Services;
 
 /**
  * Class SalesCenterPaySystemAjaxController
@@ -514,10 +515,21 @@ class SalesCenterPaySystemAjaxController extends \Bitrix\Main\Engine\Controller
 
 		$oauthService = Seo\Checkout\Services\Factory::createService($type);
 
-		$webhookList = $this->getRegisteredWebhookList($oauthService);
-		if ($webhookList)
+		if (
+			$oauthService instanceof Services\AccountYookassa
+			|| $oauthService instanceof Services\AccountYandex
+		)
 		{
-			$this->removeWebhooks($oauthService, $webhookList);
+			$webhookList = $this->getRegisteredWebhookList($oauthService);
+			if ($webhookList)
+			{
+				$this->removeWebhooks($oauthService, $webhookList);
+			}
+			Option::set('sale', 'YANDEX_CHECKOUT_OAUTH', false);
+		}
+		elseif ($oauthService instanceof Services\AccountTBankBusiness)
+		{
+			Services\AccountTBankBusiness::deleteMyCompanyOption();
 		}
 
 		$this->removeAuth($type);
@@ -534,7 +546,6 @@ class SalesCenterPaySystemAjaxController extends \Bitrix\Main\Engine\Controller
 	{
 		$authAdapter = Seo\Checkout\Service::getAuthAdapter($type);
 		$authAdapter->removeAuth();
-		Option::set('sale', 'YANDEX_CHECKOUT_OAUTH', false);
 	}
 
 	/**
@@ -581,7 +592,7 @@ class SalesCenterPaySystemAjaxController extends \Bitrix\Main\Engine\Controller
 	 * @throws \Bitrix\Main\LoaderException
 	 * @throws \Bitrix\Main\SystemException
 	 */
-	public function getProfileStatusAction(string $type)
+	public function getProfileStatusAction(string $type, int $selectedCompany = 0)
 	{
 		if (!Loader::includeModule('seo'))
 		{
@@ -598,11 +609,32 @@ class SalesCenterPaySystemAjaxController extends \Bitrix\Main\Engine\Controller
 		$hasAuth = $authAdapter->hasAuth();
 		if ($hasAuth)
 		{
-			Option::set('sale', 'YANDEX_CHECKOUT_OAUTH', true);
-
 			$oauthService = Seo\Checkout\Services\Factory::createService($authAdapter->getType());
 
-			$this->registerWebhooks($oauthService);
+			if (
+				$oauthService instanceof Services\AccountYookassa
+				|| $oauthService instanceof Services\AccountYandex
+			)
+			{
+				Option::set('sale', 'YANDEX_CHECKOUT_OAUTH', true);
+				$this->registerWebhooks($oauthService);
+			}
+			elseif ($oauthService instanceof Services\AccountTBankBusiness)
+			{
+				if (
+					isset($selectedCompany)
+					&& $selectedCompany > 0
+					&& CCrmCompany::Exists($selectedCompany)
+				)
+				{
+					Services\AccountTBankBusiness::registerMyCompanyOption($selectedCompany);
+				}
+				else
+				{
+					$this->errorCollection->add([new Error(Loc::getMessage('SP_AJAX_BAD_BUSINESS_COMPANY'))]);
+				}
+			}
+
 			if ($this->errorCollection->isEmpty())
 			{
 				$result = [

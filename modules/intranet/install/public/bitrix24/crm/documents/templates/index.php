@@ -24,13 +24,23 @@ if($request['UPLOAD'] == 'Y')
 $uploadUri = new \Bitrix\Main\Web\Uri($request->getRequestUri());
 $uploadUri->addParams(['UPLOAD' => 'Y']);
 
-$APPLICATION->includeComponent(
-	'bitrix:documentgenerator.templates', $templateName,
+/** @global \CMain $APPLICATION */
+$APPLICATION->IncludeComponent(
+	'bitrix:ui.sidepanel.wrapper',
+	'',
 	[
-		'UPLOAD_URI' => $uploadUri,
-		'ID' => $request->get('ID'),
-		'MODULE' => 'crm',
-		'PROVIDER' => $request->get('entityTypeId'),
+		'POPUP_COMPONENT_NAME' => 'bitrix:documentgenerator.templates',
+		'POPUP_COMPONENT_TEMPLATE_NAME' => $templateName,
+		'POPUP_COMPONENT_PARAMS' => [
+			'UPLOAD_URI' => $uploadUri,
+			'ID' => $request->get('ID'),
+			'MODULE' => 'crm',
+			'PROVIDER' => $request->get('entityTypeId'),
+		],
+		'USE_UI_TOOLBAR' => 'Y',
+		'USE_PADDING' => false,
+		'PAGE_MODE' => false,
+		'PAGE_MODE_OFF_BACK_URL' => '/crm',
 	]
 );
 

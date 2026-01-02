@@ -8,5 +8,6 @@ return [
 		'utils/object',
 		'utils/string',
 		'assets/icons',
+		'utils/type',
 	],
 ];

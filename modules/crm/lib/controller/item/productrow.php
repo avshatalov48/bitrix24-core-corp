@@ -54,7 +54,7 @@ class ProductRow extends Base
 			return null;
 		}
 
-		if (!Container::getInstance()->getUserPermissions()->canUpdateItem($item))
+		if (!Container::getInstance()->getUserPermissions()->item()->canUpdateItem($item))
 		{
 			$this->addError(
 				ErrorCode::getAccessDeniedError()
@@ -138,7 +138,10 @@ class ProductRow extends Base
 
 	public function getAction(int $id): ?array
 	{
-		$productRow = $this->dataManager::getById($id)->fetchObject();
+		$productRow = $this->dataManager::getByPrimary(
+			$id,
+			['select' => ['*', 'PRODUCT_ROW_RESERVATION.STORE_ID']],
+		)->fetchObject();
 		if (!$productRow)
 		{
 			$this->addError(
@@ -156,7 +159,7 @@ class ProductRow extends Base
 			return null;
 		}
 
-		if (!Container::getInstance()->getUserPermissions()->canReadItem($item))
+		if (!Container::getInstance()->getUserPermissions()->item()->canReadItem($item))
 		{
 			$this->addError(
 				ErrorCode::getAccessDeniedError()
@@ -166,7 +169,7 @@ class ProductRow extends Base
 		}
 
 		return [
-			'productRow' => $productRow,
+			'productRow' => $this->getFormattedRow($productRow),
 		];
 	}
 
@@ -190,7 +193,7 @@ class ProductRow extends Base
 			return;
 		}
 
-		if (!Container::getInstance()->getUserPermissions()->canUpdateItem($item))
+		if (!Container::getInstance()->getUserPermissions()->item()->canUpdateItem($item))
 		{
 			$this->addError(
 				ErrorCode::getAccessDeniedError()
@@ -228,7 +231,7 @@ class ProductRow extends Base
 			return null;
 		}
 
-		if (!Container::getInstance()->getUserPermissions()->canUpdateItem($item))
+		if (!Container::getInstance()->getUserPermissions()->item()->canUpdateItem($item))
 		{
 			$this->addError(
 				ErrorCode::getAccessDeniedError()
@@ -289,20 +292,43 @@ class ProductRow extends Base
 			return null;
 		}
 
+		$formattedProductRows = [];
 		$collection = $this->dataManager::getList($getListParams)->fetchCollection();
+		foreach ($collection as $collectionElement)
+		{
+			$formattedProductRows[] = $this->getFormattedRow($collectionElement);
+		}
 
 		return new Page(
 			'productRows',
-			$collection,
+			$formattedProductRows,
 			function () use ($getListParams): int {
 				return $this->dataManager::getCount($getListParams['filter']);
 			}
 		);
 	}
 
+	private function getFormattedRow(\Bitrix\Crm\ProductRow $collectionElement): array
+	{
+		$formattedProductRow = $collectionElement->jsonSerialize();
+		$formattedProductRow['storeId'] ??= null;
+		unset(
+			$formattedProductRow['reserveId'],
+			$formattedProductRow['reserveQuantity'],
+			$formattedProductRow['dateReserveEnd'],
+			$formattedProductRow['isAuto'],
+		);
+
+		return $formattedProductRow;
+	}
+
 	protected function prepareGetListParamsFromArgs(?array $order, ?array $filter, ?PageNavigation $pageNavigation): array
 	{
 		$params = [
+			'select' => [
+				'*',
+				'PRODUCT_ROW_RESERVATION.STORE_ID',
+			],
 			'order' => $this->prepareOrderFromArgs($order),
 			'filter' => $this->prepareFilterFromArgs($filter),
 		];
@@ -360,7 +386,7 @@ class ProductRow extends Base
 			return false;
 		}
 
-		$isReadPermitted = Container::getInstance()->getUserPermissions()->checkReadPermissions(
+		$isReadPermitted = Container::getInstance()->getUserPermissions()->item()->canRead(
 			\CCrmOwnerTypeAbbr::ResolveTypeID($ownerType),
 			(int)$ownerId
 		);
@@ -420,7 +446,7 @@ class ProductRow extends Base
 			return null;
 		}
 
-		if (!Container::getInstance()->getUserPermissions()->canUpdateItem($item))
+		if (!Container::getInstance()->getUserPermissions()->item()->canUpdateItem($item))
 		{
 			$this->addError(
 				ErrorCode::getAccessDeniedError()
@@ -469,6 +495,10 @@ class ProductRow extends Base
 	protected function getFieldsInfo(): array
 	{
 		$fieldsInfo = \CCrmProductRow::GetFieldsInfo();
+		$fieldsInfo['STORE_ID'] = [
+			'TYPE' => 'integer',
+			'ATTRIBUTES' => [\CCrmFieldInfoAttr::ReadOnly],
+		];
 
 		foreach ($fieldsInfo as $fieldName => &$singleFieldInfo)
 		{
@@ -629,7 +659,7 @@ class ProductRow extends Base
 			return null;
 		}
 
-		if (!Container::getInstance()->getUserPermissions()->canReadItem($item))
+		if (!Container::getInstance()->getUserPermissions()->item()->canReadItem($item))
 		{
 			$this->addError(
 				ErrorCode::getAccessDeniedError()

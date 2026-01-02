@@ -1,0 +1,16 @@
+.tasks-full-card-chat {
+	width: 60%;
+	min-width: 770px;
+	flex: 1;
+	border-left: 1px solid rgba(0, 0, 0, 0.1);
+}
+
+.tasks-full-card.--blur .tasks-full-card-chat {
+	filter: blur(2px);
+}
+
+@media (min-width: 1600px) {
+	.tasks-full-card-chat {
+		width: 58%;
+	}
+}

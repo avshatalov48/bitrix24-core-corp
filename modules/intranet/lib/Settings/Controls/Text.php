@@ -18,9 +18,10 @@ class Text extends Field
 		?SettingsPermission $permission = null,
 		bool $isEnable = true,
 		?string $helpDesk = null,
+		?string $badge = null,
 	)
 	{
-		parent::__construct($id, $name, $label, self::TYPE, $permission, $isEnable, $value, $hints, $helpDesk);
+		parent::__construct($id, $name, $label, self::TYPE, $permission, $isEnable, $value, $hints, $helpDesk, $badge);
 	}
 
 	public function jsonSerialize(): array
@@ -36,6 +37,7 @@ class Text extends Field
 			'hints' => $this->getHints(),
 			'helpDesk' => $this->getHelpDesk(),
 			'placeholder' => $this->getPlaceholder(),
+			'badge' => $this->getBadge(),
 		];
 		if (isset($this->getHints()['on']) && is_string($this->getHints()['on']))
 		{

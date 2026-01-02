@@ -163,38 +163,4 @@ class EventRelationsTable extends DataManager
 				->fetchCollection()
 		;
 	}
-
-	public static function setAssignedByItem(ItemIdentifier $itemIdentifier, int $assignedById): Result
-	{
-		$ids = static::query()
-			->setSelect(['ID'])
-			->where('ENTITY_TYPE', \CCrmOwnerType::ResolveName($itemIdentifier->getEntityTypeId()))
-			->where('ENTITY_ID', $itemIdentifier->getEntityId())
-			->fetchCollection()
-			->getIdList()
-		;
-
-		if (empty($ids))
-		{
-			return new Result();
-		}
-
-		$connection = Application::getConnection();
-		foreach (array_chunk($ids, self::MAX_ROWS_IN_BATCH_UPDATE) as $idsChunk)
-		{
-			$query = new SqlExpression(
-				/** @lang text */
-				'UPDATE ?# SET ?# = ?i WHERE ID IN (' . implode(',', $idsChunk) . ')',
-				static::getTableName(),
-				'ASSIGNED_BY_ID',
-				$assignedById,
-			);
-
-			$connection->queryExecute((string)$query);
-		}
-
-		static::cleanCache();
-
-		return new Result();
-	}
 }

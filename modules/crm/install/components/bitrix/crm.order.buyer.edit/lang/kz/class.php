@@ -1,0 +1,21 @@
+<?php
+$MESS["CRM_MODULE_NOT_INSTALLED"] = "Crm модулі орнатылмаған.";
+$MESS["CRM_MODULE_NOT_INSTALLED_CATALOG"] = "Catalog модулі орнатылмаған.";
+$MESS["CRM_MODULE_NOT_INSTALLED_SALE"] = "Sale модулі орнатылмаған.";
+$MESS["CRM_ORDER_BUYER_EDIT_COLUMN_ACTIVE"] = "Белсенділік";
+$MESS["CRM_ORDER_BUYER_EDIT_COLUMN_CONFIRM_PASSWORD"] = "Жаңа құпиясөзді растау";
+$MESS["CRM_ORDER_BUYER_EDIT_COLUMN_CONFIRM_PASSWORD_NEW"] = "Құпиясөзді растау";
+$MESS["CRM_ORDER_BUYER_EDIT_COLUMN_DATE_REGISTER"] = "Тіркелген күні";
+$MESS["CRM_ORDER_BUYER_EDIT_COLUMN_EMAIL"] = "E-mail";
+$MESS["CRM_ORDER_BUYER_EDIT_COLUMN_LAST_LOGIN"] = "Соңғы кіру";
+$MESS["CRM_ORDER_BUYER_EDIT_COLUMN_LAST_NAME"] = "Тегі";
+$MESS["CRM_ORDER_BUYER_EDIT_COLUMN_LOGIN"] = "Логин";
+$MESS["CRM_ORDER_BUYER_EDIT_COLUMN_NAME"] = "Аты";
+$MESS["CRM_ORDER_BUYER_EDIT_COLUMN_PASSWORD"] = "Жаңа құпиясөз";
+$MESS["CRM_ORDER_BUYER_EDIT_COLUMN_PASSWORD_NEW"] = "Құпиясөз";
+$MESS["CRM_ORDER_BUYER_EDIT_COLUMN_SECOND_NAME"] = "Әкесінің аты";
+$MESS["CRM_ORDER_BUYER_EDIT_CREATE_TITLE"] = "Сатып алушыны құру";
+$MESS["CRM_ORDER_BUYER_EDIT_EDIT_TITLE"] = "Сатып алушыны редакциялау";
+$MESS["CRM_ORDER_BUYER_EDIT_LOAD_USER_ERROR"] = "Сатып алушы жоқ немесе оған қолжетімділік жоқ.";
+$MESS["CRM_ORDER_BUYER_EDIT_SAVE_ERROR"] = "Сақтау кезінде қате пайда болды.";
+$MESS["CRM_PERMISSION_DENIED"] = "Қолжетімділікке тыйым салынған.";

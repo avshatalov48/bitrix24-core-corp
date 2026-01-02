@@ -19,6 +19,7 @@ return [
 		'assets/icons',
 		'layout/ui/scroll-view',
 		'haptics',
+		'tourist',
 
 		'ui-system/blocks/icon',
 		'ui-system/blocks/badges/counter',
@@ -34,6 +35,7 @@ return [
 		'ui-system/blocks/setting-selector',
 		'ui-system/blocks/chips/chip-filter',
 		'ui-system/blocks/status-block',
+		'ui-system/form/checkbox',
 
 		'statemanager/redux/store',
 		'statemanager/redux/connect',
@@ -55,6 +57,7 @@ return [
 		'calendar:event-view-form',
 		'calendar:statemanager/redux/slices/events',
 		'calendar:enums',
+		'calendar:app-rating-client',
 	],
 	'bundle' => [
 		'./src/state',
@@ -62,6 +65,7 @@ return [
 		'./src/layout/day-label',
 		'./src/layout/event',
 		'./src/layout/calendar-grid',
+		'./src/layout/calendar-header',
 		'./src/layout/invites-banner',
 		'./src/layout/search-header',
 		'./src/layout/event-list',
@@ -71,6 +75,12 @@ return [
 		'./src/settings-page',
 		'./src/list-skeleton',
 		'./src/search/layout',
+		'./src/search/layout-view',
 		'./src/search/preset',
+
+		'./src/section-list/page',
+		'./src/section-list/manager',
+		'./src/section-list/item',
+		'./src/section-list/header',
 	],
 ];

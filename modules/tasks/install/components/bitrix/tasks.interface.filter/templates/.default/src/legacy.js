@@ -331,8 +331,10 @@ if (typeof BX.Tasks.SprintSelector === 'undefined')
 			return;
 		}
 
+		const buttonSelector = BX.UI.ButtonManager.createFromNode(BX(containerId));
+
 		BX.bind(
-			BX(containerId).querySelector('.webform-small-button'),
+			BX(containerId),
 			"click",
 			function()
 			{
@@ -376,8 +378,7 @@ if (typeof BX.Tasks.SprintSelector === 'undefined')
 								]
 							);
 
-							var selectorTextNode = BX(containerId).querySelector('.webform-small-button-text');
-							selectorTextNode.textContent = selectedItem.customData.get('label');
+							buttonSelector.setText(selectedItem.customData.get('label'));
 						},
 					},
 				});

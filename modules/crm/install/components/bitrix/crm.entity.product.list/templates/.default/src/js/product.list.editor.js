@@ -832,7 +832,7 @@ export class Editor
 
 		const format = CurrencyCore.getCurrencyFormat(currencyId);
 
-		return format && format.FORMAT_STRING.replace(/(^|[^&])#/, '$1').trim() || '';
+		return format && format.FORMAT_STRING.replace(/(^|[^&])#/, '$1').trim() || currencyId;
 	}
 
 	getDataFieldName()

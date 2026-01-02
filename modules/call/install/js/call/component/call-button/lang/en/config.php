@@ -2,6 +2,7 @@
 $MESS["CALL_CHAT_HEADER_BUTTON_PROMO_TEXT"] = "CoPilot will highlight things you agreed upon and provide recommendations.";
 $MESS["CALL_CHAT_HEADER_BUTTON_PROMO_TEXT_WITHOUT_TOS"] = "CoPilot will highlight things you agreed upon and provide recommendations. Your Bitrix24 administrator has to accept the new License Agreement to make this feature available.";
 $MESS["CALL_CHAT_HEADER_BUTTON_PROMO_TITLE"] = "CoPilot Follow-Up";
+$MESS["CALL_CHAT_HEADER_BUTTON_RETURN_TO_CALL_TEXT"] = "Return to call";
 $MESS["CALL_CONTENT_CHAT_HEADER_CALL_MENU_AUDIO"] = "Voice call";
 $MESS["CALL_CONTENT_CHAT_HEADER_CALL_MENU_INNER_PHONE_MSGVER_1"] = "Extension";
 $MESS["CALL_CONTENT_CHAT_HEADER_CALL_MENU_PERSONAL_PHONE"] = "Mobile";

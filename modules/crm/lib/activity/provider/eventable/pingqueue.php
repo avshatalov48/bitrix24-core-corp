@@ -10,7 +10,7 @@ class PingQueue extends Base
 {
 	public function register(int $activityId, bool $isCompleted = false, ?string $deadLine = null): void
 	{
-		if (empty($deadLine) || $isCompleted)
+		if (empty($deadLine) || $isCompleted || \CCrmDateTimeHelper::IsMaxDatabaseDate($deadLine))
 		{
 			$this->unregister($activityId);
 

@@ -45,7 +45,6 @@ $APPLICATION->RestartBuffer();
 Header('Content-Type: application/x-javascript; charset='.LANG_CHARSET);
 
 $currentUserID = CCrmSecurityHelper::GetCurrentUserID();
-$currentUserPermissions =  CCrmPerms::GetCurrentUserPermissions();
 
 $action = isset($_POST['ACTION']) ? $_POST['ACTION'] : '';
 if($action === '' && isset($_POST['MODE']))
@@ -60,7 +59,13 @@ if($action === '')
 if($action === 'SAVE')
 {
 	$ID = isset($_POST['ACTION_ENTITY_ID']) ? max((int)$_POST['ACTION_ENTITY_ID'], 0) : 0;
-	if ($ID > 0 && !\Bitrix\Crm\Order\Permissions\Order::checkUpdatePermission($ID, $currentUserPermissions))
+	if (
+		$ID > 0
+		&& !\Bitrix\Crm\Service\Container::getInstance()
+			->getUserPermissions()
+			->item()
+			->canUpdate(\CCrmOwnerType::Order, $ID)
+	)
 	{
 		__CrmOrderProductDetailsEndJsonResponse(array('ERROR' => 'ACCESS_DENIED'));
 	}

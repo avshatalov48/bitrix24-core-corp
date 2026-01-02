@@ -250,6 +250,12 @@
 			}
 
 			this.setPullItemBackground(item);
+
+			if (!item.layout.container)
+			{
+				item.useAnimation = false;
+			}
+
 			item.animate({
 				duration: this.getGrid().animationDuration / 4,
 				draw: function(progress) {
@@ -363,18 +369,21 @@
 				prev_entity_id: afterItemId,
 				status: columnId,
 			}
+			const grid = this.getGrid();
 
-			this.getGrid().ajax(
+			grid.ajax(
 				params,
 				(data) => {
-					this.prepareGridAfterItemsAdded(forSend, data);
+					this.prepareGridAfterItemsAdded(items, data);
+					this.registerAnalyticsChangeStageEvent(items, data);
 				},
 				(error) => {
+					grid.registerAnalyticsChangeStageEvent(items[0], this.getData().type, forSend, BX.Crm.Integration.Analytics.Dictionary.STATUS_ERROR)
 					BX.Kanban.Utils.showErrorDialog(`Error: ${error}`, true);
 				}
 			);
 
-			if (this.getGrid().isRendered())
+			if (grid.isRendered())
 			{
 				// crutches for real total items
 				const arr = [];
@@ -389,6 +398,25 @@
 
 				this.render();
 			}
+		},
+
+		registerAnalyticsChangeStageEvent: function(items, data)
+		{
+			if (!BX.Type.isObjectLike(data))
+			{
+				return;
+			}
+
+			const grid = this.getGrid()
+			const itemsIds = [];
+			for (var i = 0; i < items.length; i++)
+			{
+				itemsIds.push(items[i].getId());
+			}
+
+			const status = grid.hasResponseError(data) ? BX.Crm.Integration.Analytics.Dictionary.STATUS_ERROR : BX.Crm.Integration.Analytics.Dictionary.STATUS_SUCCESS;
+
+			grid.registerAnalyticsChangeStageEvent(items[0], this.getData().type, itemsIds, status);
 		},
 
 		prepareGridAfterItemsAdded: function(itemIds, data)
@@ -931,6 +959,11 @@
 				settings.isController = true;
 				settings.entityTypeName = gridData.entityType;
 				settings.stageId = this.getId();
+
+				if (gridData.params.CATEGORY_ID)
+				{
+					settings.categoryId = gridData.params.CATEGORY_ID;
+				}
 			}
 			else
 			{

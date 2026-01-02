@@ -6,6 +6,7 @@ use Bitrix\Main\Loader;
 use Bitrix\Main\Engine\AutoWire\ExactParameter;
 use Bitrix\Main\Service\MicroService\BaseReceiver;
 use Bitrix\Im\Call\Call;
+use Bitrix\Im\Call\CallUser;
 use Bitrix\Im\V2\Call\CallFactory;
 use Bitrix\Call\Error;
 use Bitrix\Call\Logger\Logger;
@@ -17,6 +18,7 @@ use Bitrix\Call\DTO\ControllerRequest;
 use Bitrix\Call\Model\CallTrackTable;
 use Bitrix\Call\Integration\AI\CallAIError;
 use Bitrix\Call\Integration\AI\CallAISettings;
+use Bitrix\Call\Analytics\FollowUpAnalytics;
 
 
 class CallController extends BaseReceiver
@@ -59,7 +61,6 @@ class CallController extends BaseReceiver
 		Loader::includeModule('im');
 
 		$call = CallFactory::searchActiveByUuid(Call::PROVIDER_BITRIX, $callRequest->callUuid);
-
 		if (!isset($call))
  		{
 			$this->addError(new Error(Error::CALL_NOT_FOUND));
@@ -67,14 +68,7 @@ class CallController extends BaseReceiver
 			return null;
 		}
 
-		$isSuccess = $call->getSignaling()->sendFinish();
-
-		if (!$isSuccess)
-		{
-			$this->addError(new Error(Error::SEND_PULL_ERROR));
-
-			return null;
-		}
+		$call->finish();
 
 		return ['result' => true];
 	}
@@ -87,7 +81,6 @@ class CallController extends BaseReceiver
 		Loader::includeModule('im');
 
 		$call = CallFactory::searchActiveByUuid(Call::PROVIDER_BITRIX, $callRequest->callUuid);
-
 		if (!isset($call))
 		{
 			$this->addError(new Error(Error::CALL_NOT_FOUND));
@@ -95,14 +88,13 @@ class CallController extends BaseReceiver
 			return null;
 		}
 
-		$isSuccess = $call->getSignaling()->sendHangup($callRequest->userId, $call->getUsers(), null);
-
-		if (!$isSuccess)
+		$callUser = $call->getUser($callRequest->userId);
+		if ($callUser)
 		{
-			$this->addError(new Error(Error::SEND_PULL_ERROR));
-
-			return null;
+			$callUser->updateState(CallUser::STATE_IDLE);
 		}
+
+		$call->getSignaling()->sendHangup($callRequest->userId, $call->getUsers(), null);
 
 		return ['result' => true];
 	}
@@ -137,6 +129,8 @@ class CallController extends BaseReceiver
 				->disableAudioRecord()
 				->disableAiAnalyze()
 				->save();
+
+			(new FollowUpAnalytics($call))->addGotEmptyRecord();
 
 			return null;
 		}
@@ -246,6 +240,23 @@ class CallController extends BaseReceiver
 		$call->getSignaling()
 			->sendSwitchTrackRecordStatus(0, false, $trackError->errorCode);
 
+
+		(new FollowUpAnalytics($call))->addErrorRecording($trackError->errorCode);
+
 		return ['result' => true];
+	}
+
+	/**
+	 * @restMethod call.CallController.checkPublicUrl
+	 */
+	public function checkPublicUrlAction(int $ping): ?array
+	{
+		if (CallAISettings::isLoggingEnable())
+		{
+			$logger = Logger::getInstance();
+			$logger->info("Got checkPublicUrl action");
+		}
+
+		return ['pong' => ++$ping];
 	}
 }

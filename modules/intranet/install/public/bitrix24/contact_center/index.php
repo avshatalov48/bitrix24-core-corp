@@ -20,6 +20,7 @@ $APPLICATION->IncludeComponent(
 	[
 		'POPUP_COMPONENT_NAME' => 'bitrix:intranet.contact_center.list',
 		"USE_PADDING" => false,
+		'USE_UI_TOOLBAR' => 'Y',
 	]
 );
 

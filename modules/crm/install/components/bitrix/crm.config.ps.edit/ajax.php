@@ -17,8 +17,7 @@ global $APPLICATION, $USER;
 
 if(!isset($arReturn['ERROR']))
 {
-	$CrmPerms = new CCrmPerms($USER->GetID());
-	$bCrmWritePerm = $CrmPerms->HavePerm('CONFIG', BX_CRM_PERM_CONFIG, 'WRITE');
+	$bCrmWritePerm = \Bitrix\Crm\Service\Container::getInstance()->getUserPermissions()->isCrmAdmin();
 
 	if($USER->IsAuthorized() && check_bitrix_sessid() && $bCrmWritePerm)
 	{

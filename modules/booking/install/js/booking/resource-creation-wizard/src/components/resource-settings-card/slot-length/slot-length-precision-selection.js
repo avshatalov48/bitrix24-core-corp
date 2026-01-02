@@ -20,6 +20,7 @@ export const SlotLengthPrecisionSelection = {
 			days: 0,
 			hours: 0,
 			minutes: 0,
+			minutesFocused: false,
 		};
 	},
 	created()
@@ -59,10 +60,24 @@ export const SlotLengthPrecisionSelection = {
 				this.hours = 12;
 			}
 
-			this.calculateTotalMinutes();
+			if (this.hours === 0)
+			{
+				// delay calculation to let time to determine if minutes focused before
+				setTimeout((): void => {
+					if (!this.minutesFocused)
+					{
+						this.calculateTotalMinutes();
+					}
+				}, 0);
+			}
+			else
+			{
+				this.calculateTotalMinutes();
+			}
 		},
 		validateMinutes()
 		{
+			this.minutesFocused = false;
 			this.minutes = parseInt(this.minutes, 10);
 
 			if (!Type.isNumber(this.minutes))
@@ -164,6 +179,7 @@ export const SlotLengthPrecisionSelection = {
 									v-model="minutes"
 									type="text"
 									class="ui-ctl-element"
+									@focus="minutesFocused = true"
 									@blur="validateMinutes"
 									@keydown="handleEnterKey"
 								>

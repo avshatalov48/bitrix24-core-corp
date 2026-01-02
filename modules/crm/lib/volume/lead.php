@@ -96,14 +96,16 @@ class Lead
 	 */
 	public function canClearEntity()
 	{
-		$userPermissions = \CCrmPerms::GetUserPermissions($this->getOwner());
-		if (!\CCrmLead::CheckReadPermission(0, $userPermissions))
+		$userPermissions = Crm\Service\Container::getInstance()->getUserPermissions($this->getOwner());
+
+		if (!$userPermissions->entityType()->canReadItems(\CCrmOwnerType::Lead))
 		{
 			$this->collectError(new Main\Error('', self::ERROR_PERMISSION_DENIED));
 
 			return false;
 		}
-		if ($userPermissions->HavePerm('LEAD', BX_CRM_PERM_NONE, 'DELETE'))
+
+		if (!$userPermissions->entityType()->canDeleteItems(\CCrmOwnerType::Lead))
 		{
 			$this->collectError(new Main\Error('', self::ERROR_PERMISSION_DENIED));
 

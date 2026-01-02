@@ -1,0 +1,19 @@
+<?php
+$MESS["CRM_MODULE_NOT_INSTALLED"] = "Crm модулі орнатылмаған.";
+$MESS["CRM_PERMISSION_DENIED"] = "Қолжетімділікке тыйым салынған";
+$MESS["CRM_SALE_MODULE_NOT_INSTALLED"] = "Sale модулі орнатылмаған.";
+$MESS["CRM_TAX_ADD"] = "Салықты қосу";
+$MESS["CRM_TAX_ADD_TITLE"] = "Жаңа салықты жасауға өту";
+$MESS["CRM_TAX_DELETE"] = "Салықты жою";
+$MESS["CRM_TAX_DELETE_DLG_BTNTITLE"] = "Салықты жою";
+$MESS["CRM_TAX_DELETE_DLG_MESSAGE"] = "Бұл салықты жойғыңыз келетініне сенімдісіз бе?";
+$MESS["CRM_TAX_DELETE_DLG_TITLE"] = "Салықты жою";
+$MESS["CRM_TAX_DELETE_TITLE"] = "Салықты жою";
+$MESS["CRM_TAX_EDIT"] = "Редакциялау";
+$MESS["CRM_TAX_EDIT_TITLE"] = "Салықты редакциялауға өту";
+$MESS["CRM_TAX_LIST"] = "Салықтар тізімі";
+$MESS["CRM_TAX_LIST_TITLE"] = "Салықтар тізіміне өту";
+$MESS["CRM_TAX_SETTINGS"] = "Баптау";
+$MESS["CRM_TAX_SETTINGS_TITLE"] = "Салықтар жүйесін баптау";
+$MESS["CRM_TAX_SHOW"] = "Қарау";
+$MESS["CRM_TAX_SHOW_TITLE"] = "Салықты қарауға өту";

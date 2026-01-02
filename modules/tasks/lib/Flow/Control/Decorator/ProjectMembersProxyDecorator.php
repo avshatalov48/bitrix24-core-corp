@@ -11,7 +11,7 @@ use Bitrix\Tasks\Flow\Control\Exception\FlowNotAddedException;
 use Bitrix\Tasks\Flow\Control\Exception\FlowNotFoundException;
 use Bitrix\Tasks\Flow\Control\Exception\FlowNotUpdatedException;
 use Bitrix\Tasks\Flow\Integration\Socialnetwork\UpdateGroupCommand;
-use Bitrix\Tasks\InvalidCommandException;
+use Bitrix\Tasks\Flow\Control\Exception\InvalidCommandException;
 use Bitrix\Tasks\Flow\Flow;
 use Bitrix\Tasks\Flow\Integration\Socialnetwork\GroupService;
 use Psr\Container\NotFoundExceptionInterface;

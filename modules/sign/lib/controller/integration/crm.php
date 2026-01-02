@@ -1,4 +1,5 @@
 <?php
+
 namespace Bitrix\Sign\Controller\Integration;
 
 use Bitrix\Main\Engine\ActionFilter;

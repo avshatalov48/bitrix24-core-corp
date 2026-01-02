@@ -46,6 +46,7 @@ declare type TaskReduxModel = {
 	areUserFieldsLoaded?: boolean,
 
 	deadline?: number,
+	updateDate?: number,
 	activityDate?: number,
 	startDatePlan?: number,
 	endDatePlan?: number,
@@ -56,9 +57,6 @@ declare type TaskReduxModel = {
 	checklistDetails?: ChecklistDetailsDTO[],
 	checklistFlatTree?: object[],
 	counter?: CounterDTO,
-
-	// todo: remove this after removing old task card
-	actionsOld?: object;
 
 	canRead?: boolean,
 	canUpdate?: boolean,

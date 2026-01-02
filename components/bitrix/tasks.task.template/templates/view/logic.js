@@ -54,6 +54,8 @@ BX.namespace('Tasks.Component');
 				});
 				BX.addCustomEvent('SidePanel.Slider:onClose', this.onSliderClose.bind(this));
 
+				BX.Event.EventEmitter.subscribe('Grid::beforeRequest', this.onGridRequest.bind(this));
+
 				BX.Event.EventEmitter.subscribe('BX.Tasks.CheckListItem:CheckListChanged', function(eventData) {
 					var action = eventData.data.action;
 					var allowedActions = ['addAccomplice', 'fileUpload', 'tabIn'];
@@ -88,6 +90,23 @@ BX.namespace('Tasks.Component');
 
 				event.denyAction();
 				this.showChecklistCloseSliderPopup(checkListSlider);
+			},
+
+			onGridRequest: function(event)
+			{
+				const [, eventArgs] = event.getCompatData();
+				if (eventArgs.gridId !== this.option('gridId'))
+				{
+					return;
+				}
+
+				eventArgs.sessid = BX.bitrix_sessid();
+				eventArgs.method = 'POST';
+
+				eventArgs.data = {
+					...eventArgs.data,
+					BASE_TEMPLATE_ID: this.option('data').ID,
+				};
 			},
 
 			showChecklistCloseSliderPopup: function(checkListSlider)

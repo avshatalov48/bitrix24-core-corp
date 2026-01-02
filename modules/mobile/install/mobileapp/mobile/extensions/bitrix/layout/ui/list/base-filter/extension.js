@@ -78,6 +78,7 @@ jn.define('layout/ui/list/base-filter', (require, exports, module) => {
 			}
 
 			this.presets = presets;
+			this.setPresetId(this.getDefaultPreset());
 		}
 
 		/**

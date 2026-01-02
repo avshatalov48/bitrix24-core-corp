@@ -22,7 +22,6 @@ class CCrmOrderCheckListComponent extends \CBitrixComponent
 	protected $orderId = 0;
 	/** @var Order\Order $order*/
 	protected $order = null;
-	protected $userPermissions;
 	protected $errors = array();
 	protected $isInternal = false;
 
@@ -91,7 +90,6 @@ class CCrmOrderCheckListComponent extends \CBitrixComponent
 
 	protected function init()
 	{
-		$this->userPermissions = CCrmPerms::GetCurrentUserPermissions();
 		$this->orderId = $this->getOrderId();
 
 		if ((int)$this->orderId <= 0)
@@ -100,7 +98,14 @@ class CCrmOrderCheckListComponent extends \CBitrixComponent
 			return false;
 		}
 
-		if (!\Bitrix\Crm\Order\Permissions\Order::checkReadPermission($this->orderId, $this->userPermissions))
+		$entityUserPermissions = Crm\Service\Container::getInstance()
+			->getUserPermissions()
+			->item()
+		;
+
+		if (
+			!$entityUserPermissions->canRead(\CCrmOwnerType::Order, $this->orderId)
+		)
 		{
 			$this->errors[] = new Main\Error(Loc::getMessage('CRM_PERMISSION_DENIED'));
 			return false;
@@ -113,7 +118,8 @@ class CCrmOrderCheckListComponent extends \CBitrixComponent
 			return false;
 		}
 
-		$this->arResult['PERM']['ADD'] = \Bitrix\Crm\Order\Permissions\Order::checkUpdatePermission($this->orderId, $this->userPermissions);
+		$this->arResult['PERM']['ADD'] = $entityUserPermissions->canUpdate(\CCrmOwnerType::Order, $this->orderId);
+
 		if (!empty($this->arParams['EXTERNAL_ERRORS']))
 		{
 			foreach ($this->arParams['EXTERNAL_ERRORS'] as $errorMessage)

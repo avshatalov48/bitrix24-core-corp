@@ -12,7 +12,7 @@ import {
 } from '../menu-item-commands/index';
 
 import { CopilotMenuItems } from './copilot-menu-items';
-import { Loc } from 'main.core';
+import { Extension, Loc } from 'main.core';
 import { Actions, Main } from 'ui.icon-set.api.core';
 
 type CopilotResultMenuItemsOptions = {
@@ -50,10 +50,7 @@ export class CopilotResultMenuItems extends CopilotMenuItems
 			notHighlight: true,
 		};
 
-		const promptMasterMenuItem = (
-			copilotTextController.getLastCommandCode() === 'zero_prompt'
-			&& copilotTextController.isReadonly() === false
-			&& copilotTextController.getSelectedPromptCodeWithSimpleTemplate() === null)
+		const promptMasterMenuItem = isPromptMasterAvailable(copilotTextController)
 			? {
 				code: 'prompt-master',
 				text: Loc.getMessage('AI_COPILOT_MENU_ITEM_CREATE_PROMPT'),
@@ -204,4 +201,15 @@ function getFeedbackMenuItem(category: string, copilotTextController: CopilotTex
 			copilotTextController,
 		}),
 	};
+}
+
+function isPromptMasterAvailable(copilotTextController: CopilotTextController): boolean
+{
+	const isLibraryAvailable = Extension.getSettings('ai.copilot').get('isLibraryVisible');
+
+	return (
+		copilotTextController.getLastCommandCode() === 'zero_prompt'
+		&& copilotTextController.isReadonly() === false
+		&& copilotTextController.getSelectedPromptCodeWithSimpleTemplate() === null
+		&& isLibraryAvailable);
 }

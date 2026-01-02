@@ -1,5 +1,7 @@
 <?php
 
+use Bitrix\Crm\Integration\Analytics\Dictionary;
+
 if (!defined('B_PROLOG_INCLUDED') || B_PROLOG_INCLUDED !== true)
 {
 	die();
@@ -22,11 +24,15 @@ class CBPCrmRemoveProductRow extends CBPActivity
 			return CBPActivityExecutionStatus::Closed;
 		}
 
+		$documentType = $this->getDocumentType();
+
 		[$entityTypeId, $entityId] = \CCrmBizProcHelper::resolveEntityId($this->GetDocumentId());
 
 		$currentIds = $this->workflow->isDebug() ? $this->getCurrentIds($entityTypeId, $entityId) : [];
 
-		if (!$this->deleteRows($entityTypeId, $entityId))
+		$isProductRowsDeleted = $this->deleteRows($entityTypeId, $entityId);
+
+		if (!$isProductRowsDeleted)
 		{
 			$this->WriteToTrackingService(
 				GetMessage('CRM_RMPR_REMOVE_PRODUCTS_ERROR'),
@@ -37,6 +43,15 @@ class CBPCrmRemoveProductRow extends CBPActivity
 		elseif ($currentIds)
 		{
 			$this->logDebug($currentIds);
+		}
+
+		if ($isProductRowsDeleted)
+		{
+			\CCrmBizProcHelper::sendOperationsAnalytics(
+				Dictionary::EVENT_ENTITY_DELETE,
+				$this,
+				$documentType[2] ?? '',
+			);
 		}
 
 		return CBPActivityExecutionStatus::Closed;

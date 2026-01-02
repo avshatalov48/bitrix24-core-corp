@@ -3,6 +3,6 @@
 return [
 	'extensions' => [
 		'alert',
-		'loc',
+		'im:messenger/loc',
 	],
 ];

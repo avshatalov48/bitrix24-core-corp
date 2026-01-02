@@ -5,6 +5,10 @@
 
 (() =>
 {
+	const require = (ext) => jn.require(ext);
+
+	const { RequestExecutor } = require('rest');
+
 	class PresetSettings
 	{
 		constructor(list, items = [])

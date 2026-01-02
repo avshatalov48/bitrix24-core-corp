@@ -28,7 +28,7 @@ class UserField extends Base
 			return null;
 		}
 
-		if (!Container::getInstance()->getUserPermissions()->canReadTypeInCategory($entityTypeId, $categoryId))
+		if (!Container::getInstance()->getUserPermissions()->entityType()->canReadItemsInCategory($entityTypeId, $categoryId))
 		{
 			$this->addError(ErrorCode::getAccessDeniedError());
 

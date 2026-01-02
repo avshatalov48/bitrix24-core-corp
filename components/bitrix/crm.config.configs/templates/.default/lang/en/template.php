@@ -18,6 +18,7 @@ $MESS["CRM_TAB_LIVEFEED_TITLE2"] = "Feed settings";
 $MESS["CRM_TAB_RECYCLE_BIN_CONFIG"] = "Recycle Bin";
 $MESS["CRM_TAB_RECYCLE_BIN_CONFIG_TITLE"] = "Recycle Bin Settings";
 $MESS["CRM_TAB_REST_2"] = "Market";
+$MESS["CRM_TAB_REST_2_MSGVER_1"] = "Market";
 $MESS["CRM_TAB_REST_TITLE"] = "Application settings";
 $MESS["CRM_TAB_STATUS_CONFIG"] = "Statuses and Dropdowns";
 $MESS["CRM_TAB_STATUS_CONFIG_TITLE"] = "Entity selection controls";

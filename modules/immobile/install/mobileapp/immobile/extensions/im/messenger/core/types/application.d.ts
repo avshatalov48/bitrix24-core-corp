@@ -1,5 +1,4 @@
-declare interface MessengerCoreInitializeOptions
-{
+declare interface MessengerCoreInitializeOptions {
 	localStorage: {
 		enable: boolean,
 		readOnly: boolean,
@@ -14,10 +13,14 @@ declare type MessengerCoreRepository = {
 	user: UserRepository,
 	message: MessageRepository,
 	tempMessage: TempMessageRepository,
-	reaction: ReactionRepository
-	queue: QueueRepository
+	reaction: ReactionRepository,
+	queue: QueueRepository,
 	smile: SmileRepository,
 	pinMessage: PinMessageRepository,
 	copilot?: CopilotRepository,
-	sidebarFile: SidebarFileRepository,
+	draft?: DraftRepository,
+	comment: CommentRepository,
+	vote: VoteRepository,
+	readMessageQueue: ReadMessageQueueRepository,
+	transcript: TranscriptRepository,
 }

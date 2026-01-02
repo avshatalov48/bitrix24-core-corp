@@ -16,6 +16,9 @@ use Bitrix\Main\Web\Json;
 use Bitrix\Main\Web\Uri;
 use Bitrix\Tasks\Helper\RestrictionUrl;
 
+$bodyClass = $APPLICATION->GetPageProperty('BodyClass');
+$APPLICATION->SetPageProperty('BodyClass', ($bodyClass? $bodyClass.' ' : '').'tasks-pagetitle-view');
+
 Extension::load([
 	'tasks.flow.edit-form',
 	'tasks.flow.view-form',
@@ -95,6 +98,7 @@ $currentUrl = $uri->getUri();
 			currentUrl: '<?= CUtil::JSEscape($currentUrl) ?>',
 			isAhaShownOnMyTasksColumn: <?= $arResult['isAhaShownOnMyTasksColumn'] === true ? 'true' : 'false' ?>,
 			isAhaShownCopilotAdvice: <?= $arResult['isAhaShownCopilotAdvice'] === true ? 'true' : 'false' ?>,
+			isFeatureTrialable: <?= $arResult['isFeatureTrialable'] === true ? 'true' : 'false' ?>,
 			flowLimitCode: '<?= \Bitrix\Tasks\Flow\FlowFeature::LIMIT_CODE ?>',
 		});
 

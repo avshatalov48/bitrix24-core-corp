@@ -30,7 +30,7 @@ jn.define('selector/widget/entity/socialnetwork/project', (require, exports, mod
 
 		static prepareItemForDrawing(item)
 		{
-			if (!item.id || !ProjectAvatarClass?.isNativeSupported())
+			if (!item.id)
 			{
 				return item;
 			}

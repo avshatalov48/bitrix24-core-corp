@@ -268,18 +268,6 @@ class Order extends Sale\Order
 			$this->processOnStoreV3OrderCreate();
 		}
 
-		if (
-			$this->fields->isChanged('CANCELED')
-			&& $this->isCanceled()
-			&& Crm\Automation\Factory::isAutomationAvailable(\CCrmOwnerType::Order)
-		)
-		{
-			Crm\Automation\Trigger\OrderCanceledTrigger::execute(
-				[['OWNER_TYPE_ID' => \CCrmOwnerType::Order, 'OWNER_ID' => $this->getId()]],
-				['ORDER' => $this]
-			);
-		}
-
 		if ($binding?->getOwnerTypeId() === \CCrmOwnerType::Deal)
 		{
 			if ($binding->isChanged() && !$this->enableAutomaticDealCreation())
@@ -290,14 +278,21 @@ class Order extends Sale\Order
 
 		if($this->fields->isChanged('RESPONSIBLE_ID'))
 		{
-			Permissions\Order::updatePermission($this->getId(), $this->getField('RESPONSIBLE_ID'));
+			$responsibleId = (int)$this->getField('RESPONSIBLE_ID');
+			if($responsibleId > 0)
+			{
+				$entityAttrs = (new Crm\Security\Controller\OrderPermissionAttributesMaker())->make($responsibleId);
+				$registerOptions = (new \Bitrix\Crm\Security\Controller\RegisterOptions())
+					->setEntityAttributes($entityAttrs)
+				;
+
+				\Bitrix\Crm\Security\Manager::resolveController(\CCrmOwnerType::OrderName)
+					->register(\CCrmOwnerType::OrderName, $this->getId(), $registerOptions)
+				;
+			}
 		}
 
-		if ($this->isNew())
-		{
-			$this->runAutomationOnAdd();
-		}
-		else
+		if (!$this->isNew())
 		{
 			if ($this->fields->isChanged('STATUS_ID'))
 			{
@@ -338,36 +333,11 @@ class Order extends Sale\Order
 
 		if ($this->fields->isChanged('RESPONSIBLE_ID') || $this->fields->isChanged('STATUS_ID'))
 		{
-			if(
-				$this->fields->isChanged('RESPONSIBLE_ID')
-				&& Crm\Automation\Factory::isAutomationAvailable(\CCrmOwnerType::Order)
-				&& $this->isNew()
-			)
-			{
-				Crm\Automation\Trigger\ResponsibleChangedTrigger::execute(
-					[['OWNER_TYPE_ID' => \CCrmOwnerType::Order, 'OWNER_ID' => $this->getId()]],
-					['ORDER' => $this]
-				);
-			}
-
 			static::resetCounters($this->getField('RESPONSIBLE_ID'));
 		}
 
 		if ($this->getFields()->isChanged('PAYED') && $this->isPaid())
 		{
-			$binding = $this->getEntityBinding();
-			if (
-				$binding
-				&& Crm\Automation\Factory::canUseAutomation()
-				&& Crm\Automation\Trigger\OrderPaidTrigger::isSupported($binding->getOwnerTypeId())
-			)
-			{
-				Crm\Automation\Trigger\OrderPaidTrigger::execute(
-					[['OWNER_TYPE_ID' => $binding->getOwnerTypeId(), 'OWNER_ID' => $binding->getOwnerId()]],
-					['ORDER' => $this]
-				);
-			}
-
 			Crm\Timeline\OrderController::getInstance()->onPay(
 				$this->getId(),
 				$this->getTimelineEntryParamsOnPaid()
@@ -382,21 +352,6 @@ class Order extends Sale\Order
 				$this->getId(),
 				$this->getTimelineEntryParamsOnDeducted()
 			);
-
-			$binding = $this->getEntityBinding();
-			if (
-				$binding
-				&& $binding->getOwnerTypeId() === \CCrmOwnerType::Deal
-			)
-			{
-				if (Crm\Automation\Factory::isAutomationAvailable(\CCrmOwnerType::Deal))
-				{
-					Crm\Automation\Trigger\DeliveryFinishedTrigger::execute(
-						[['OWNER_TYPE_ID' => \CCrmOwnerType::Deal, 'OWNER_ID' => $binding->getOwnerId()]],
-						['ORDER' => $this]
-					);
-				}
-			}
 		}
 
 		$this->appendBuyerGroups();
@@ -417,12 +372,67 @@ class Order extends Sale\Order
 
 		Crm\Search\SearchContentBuilderFactory::create(\CCrmOwnerType::Order)->build($this->getId());
 
-		if (!$this->isNew() && Crm\Automation\Factory::isAutomationAvailable(\CCrmOwnerType::Order))
-		{
-			$this->runAutomationOnUpdate($this->fields->getChangedValues(), $this->fields->getOriginalValues());
-		}
+		$this->runAutomation();
 
 		return $result;
+	}
+
+	private function runAutomation(): void
+	{
+		$starter = new Crm\Integration\BizProc\Starter\CrmStarter(
+			new Crm\Integration\BizProc\Starter\Dto\DocumentDto( \CCrmOwnerType::Order, $this->getId())
+		);
+
+		$events = [];
+		if ($this->fields->isChanged('CANCELED') && $this->isCanceled())
+		{
+			$events[] = new Crm\Integration\BizProc\Starter\Dto\EventDto(
+				Crm\Automation\Trigger\OrderCanceledTrigger::getCode(),
+				[new Crm\Integration\BizProc\Starter\Dto\DocumentDto(\CCrmOwnerType::Order, $this->getId())],
+				['ORDER' => $this]
+			);
+		}
+
+		if ($this->fields->isChanged('PAYED') && $this->isPaid())
+		{
+			$binding = $this->getEntityBinding();
+			if ($binding)
+			{
+				$events[] = new Crm\Integration\BizProc\Starter\Dto\EventDto(
+					Crm\Automation\Trigger\OrderPaidTrigger::getCode(),
+					[new Crm\Integration\BizProc\Starter\Dto\DocumentDto($binding->getOwnerTypeId(), $binding->getOwnerId())],
+					['ORDER' => $this]
+				);
+			}
+		}
+
+		if ($this->fields->isChanged('DEDUCTED') && $this->isDeducted())
+		{
+			$binding = $this->getEntityBinding();
+			if ($binding && $binding->getOwnerTypeId() === \CCrmOwnerType::Deal)
+			{
+				$events[] = new Crm\Integration\BizProc\Starter\Dto\EventDto(
+					Crm\Automation\Trigger\DeliveryFinishedTrigger::getCode(),
+					[new Crm\Integration\BizProc\Starter\Dto\DocumentDto(\CCrmOwnerType::Deal, $binding->getOwnerId())],
+					['ORDER' => $this]
+				);
+			}
+		}
+
+		$runDto = new Crm\Integration\BizProc\Starter\Dto\RunDataDto(
+			$this->fields->getChangedValues(),
+			$this->fields->getOriginalValues(),
+			$events,
+		);
+
+		if ($this->isNew)
+		{
+			$starter->runOnDocumentAdd($runDto);
+		}
+		else
+		{
+			$starter->runOnDocumentUpdate($runDto);
+		}
 	}
 
 	/**
@@ -588,24 +598,6 @@ class Order extends Sale\Order
 		}
 	}
 
-	/**
-	 * @return void;
-	 */
-	private function runAutomationOnAdd()
-	{
-		$starter = new Crm\Automation\Starter(\CCrmOwnerType::Order, $this->getId());
-		$starter->runOnAdd();
-	}
-
-	/**
-	 * @return void;
-	 */
-	private function runAutomationOnUpdate(array $fields, array $prevFields)
-	{
-		$starter = new Crm\Automation\Starter(\CCrmOwnerType::Order, $this->getId());
-		$starter->runOnUpdate($fields, $prevFields);
-	}
-
 	private function addTimelineEntryOnCreate(): void
 	{
 		Crm\Timeline\OrderController::getInstance()->onCreate(
@@ -684,27 +676,31 @@ class Order extends Sale\Order
 				$this
 			);
 
-			Crm\MessageSender\MessageSender::send(
-				[
-					Crm\Integration\NotificationsManager::getSenderCode() => [
-						'ACTIVITY_PROVIDER_TYPE_ID' => BaseMessage::PROVIDER_TYPE_CRM_ORDER_COMPLETED,
-						'TEMPLATE_CODE' => 'ORDER_COMPLETED',
-						'PLACEHOLDERS' => [
-							'NAME' => $entityCommunication->getCustomerName(),
-						],
+			$senders = [];
+			if (Main\Application::getInstance()->getLicense()->getRegion() === 'ru')
+			{
+				$senders[Crm\Integration\NotificationsManager::getSenderCode()] = [
+					'ACTIVITY_PROVIDER_TYPE_ID' => BaseMessage::PROVIDER_TYPE_CRM_ORDER_COMPLETED,
+					'TEMPLATE_CODE' => 'ORDER_COMPLETED',
+					'PLACEHOLDERS' => [
+						'NAME' => $entityCommunication->getCustomerName(),
 					],
-					Crm\Integration\SmsManager::getSenderCode() => [
-						'ACTIVITY_PROVIDER_TYPE_ID' => BaseMessage::PROVIDER_TYPE_CRM_ORDER_COMPLETED,
-						'MESSAGE_BODY' => !empty($feedbackPage)
-							? Main\Localization\Loc::getMessage(
-								'CRM_ORDER_ORDER_CREATED_WITH_FEEDBACK_LINK',
-								[
-									'#FEEDBACK_LINK#' => UrlManager::getInstance()->getHostUrl() . \CBXShortUri::GetShortUri($feedbackPage),
-								]
-							)
-							: Main\Localization\Loc::getMessage('CRM_ORDER_ORDER_CREATED_WITHOUT_FEEDBACK_LINK'),
-					]
-				],
+				];
+			}
+			$senders[Crm\Integration\SmsManager::getSenderCode()] = [
+				'ACTIVITY_PROVIDER_TYPE_ID' => BaseMessage::PROVIDER_TYPE_CRM_ORDER_COMPLETED,
+				'MESSAGE_BODY' => !empty($feedbackPage)
+					? Main\Localization\Loc::getMessage(
+						'CRM_ORDER_ORDER_CREATED_WITH_FEEDBACK_LINK',
+						[
+							'#FEEDBACK_LINK#' => UrlManager::getInstance()->getHostUrl() . \CBXShortUri::GetShortUri($feedbackPage),
+						]
+					)
+					: Main\Localization\Loc::getMessage('CRM_ORDER_ORDER_CREATED_WITHOUT_FEEDBACK_LINK'),
+			];
+
+			Crm\MessageSender\MessageSender::send(
+				$senders,
 				[
 					'COMMON_OPTIONS' => [
 						'PHONE_NUMBER' => $phoneTo,

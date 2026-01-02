@@ -7,7 +7,9 @@ use Bitrix\Bizproc\Workflow\Task\TaskTable;
 use Bitrix\Bizproc\Workflow\WorkflowState;
 use Bitrix\BizprocMobile\EntityEditor\Converter;
 use Bitrix\BizprocMobile\EntityEditor\ParametersProvider;
+use Bitrix\BizprocMobile\EntityEditor\ProcessDataProvider;
 use Bitrix\BizprocMobile\UI\CommentCounterView;
+use Bitrix\BizprocMobile\UI\WorkflowUserDetailView;
 use Bitrix\Main\Engine\Action;
 use Bitrix\Main\Error;
 use Bitrix\Main\Localization\Loc;
@@ -27,7 +29,7 @@ class LoadDetailsAction extends Action
 			return null;
 		}
 
-		$select = ['ID', 'MODULE_ID', 'ENTITY', 'DOCUMENT_ID','WORKFLOW_TEMPLATE_ID', 'TEMPLATE'];
+		$select = ['ID', 'MODULE_ID', 'ENTITY', 'DOCUMENT_ID','WORKFLOW_TEMPLATE_ID', 'TEMPLATE', 'STARTED_BY', 'STATE_TITLE'];
 		$state = WorkflowStateTable::getByPrimary($workflowId, ['select' => $select])->fetchObject();
 		if (!$state)
 		{
@@ -36,14 +38,17 @@ class LoadDetailsAction extends Action
 			return null;
 		}
 
+		$workflowView = new WorkflowUserDetailView($state, $currentUserId);
+
 		$canView = $this->canUserViewWorkflow($currentUserId, $state);
 		$commentCounter = new CommentCounterView($workflowId, $currentUserId);
 
-		if ($state->getModuleId() === 'lists' && $state->getEntity() === 'BizprocDocument')
+		if ($workflowView->isLifeFeedProcess())
 		{
 			return [
 				'workflow' => null,
 				'editor' => $canView ? $this->getWorkflowEditor($state) : null,
+				'processEditor' => $canView ? $this->getProcessEditor($workflowView) : null,
 				'taskCount' => $this->getTasksCount($state->getId(), $currentUserId),
 				'commentCounter' => $commentCounter,
 				'isLiveFeedProcess' => true,
@@ -52,16 +57,14 @@ class LoadDetailsAction extends Action
 			];
 		}
 
-		$complexDocumentId = $state->getComplexDocumentId();
-		$template = $state->getTemplate();
-
 		return [
 			'workflow' => [
-				'title' => $template ? $template->getName() : '',
-				'description' => $template ? $template->getDescription() : '',
-				'documentTitle' => $this->getDocumentName($complexDocumentId) ?? '',
+				'title' => $workflowView->getTypeName(),
+				'description' => $workflowView->getDescription(),
+				'documentTitle' => $workflowView->getName(),
 			],
 			'editor' => $canView ? $this->getWorkflowEditor($state) : null,
+			'processEditor' => $canView ? $this->getProcessEditor($workflowView) : null,
 			'taskCount' => $this->getTasksCount($state->getId(), $currentUserId),
 			'commentCounter' => $commentCounter,
 			'isLiveFeedProcess' => false,
@@ -135,6 +138,13 @@ class LoadDetailsAction extends Action
 		}
 
 		return null;
+	}
+
+	private function getProcessEditor(WorkflowUserDetailView $workflowView): ?array
+	{
+		$provider = new ProcessDataProvider($workflowView);
+
+		return (new FormWrapper($provider))->getResult();
 	}
 
 	private function getSignedDocument(array $complexDocumentType, string $documentId): string

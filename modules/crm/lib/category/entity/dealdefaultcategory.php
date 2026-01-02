@@ -71,6 +71,8 @@ class DealDefaultCategory extends Category
 		DealCategory::setDefaultCategoryName($this->name);
 		DealCategory::setDefaultCategorySort($this->sort);
 
+		$this->sendEventCategoriesUpdated();
+
 		return new Result();
 	}
 

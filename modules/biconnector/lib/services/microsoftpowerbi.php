@@ -5,6 +5,7 @@ use Bitrix\BIConnector\LimitManager;
 use Bitrix\BIConnector\Manager;
 use Bitrix\BIConnector\Service;
 use Bitrix\Main\Error;
+use Bitrix\Main\Localization\Loc;
 use Bitrix\Main\Result;
 use Bitrix\Main\Web\Json;
 
@@ -88,41 +89,62 @@ class MicrosoftPowerBI extends Service
 			$fields[] = $fieldInfo['ID'];
 		}
 
-		$count = 0;
 		$size = 0;
 		$countColumns = count($fields);
 		$firstLinePrinted = false;
 
 		$connector->sendAnalytic();
 
+		$licenseLimit = $limitManager->getLimit();
+		$isBreakableOverLimit = $this->isBreakableOverlimitPrinting() && $licenseLimit > 0;
+
 		$queryResult = $connector->query($parameters, $limit, static::$dateFormats);
-		foreach ($queryResult as $row)
+		if ($connector->isFulfilledOutput())
 		{
-			if (!$firstLinePrinted)
+			$count = null;
+			foreach ($queryResult as $item)
 			{
-				$output = "[\n" . Json::encode($fields, JSON_UNESCAPED_UNICODE) . "\n";
-				echo $output;
-				$size += strlen($output);
-				$firstLinePrinted = true;
+				echo $item;
+				$size += strlen((string)$item);
 			}
-
-			if (is_array($row))
+		}
+		else
+		{
+			$count = 0;
+			foreach ($queryResult as $row)
 			{
-				$rowCount = count($row);
-				if ($countColumns < $rowCount)
+				if (!$firstLinePrinted)
 				{
-					$row = array_slice($row, 0, $countColumns);
+					$output = "[\n" . Json::encode($fields, JSON_UNESCAPED_UNICODE) . "\n";
+					echo $output;
+					$size += strlen($output);
+					$firstLinePrinted = true;
 				}
-				elseif ($countColumns > $rowCount)
+				elseif ($isBreakableOverLimit && $licenseLimit < $count)
 				{
-					$row += array_fill($rowCount, $countColumns - $rowCount, null);
+					$count++;
+
+					continue;
 				}
 
-				$output = ',' . Json::encode($row, JSON_UNESCAPED_UNICODE | JSON_INVALID_UTF8_IGNORE) . "\n";
-				echo $output;
-				$size += strlen($output);
+				if (is_array($row))
+				{
+					$rowCount = count($row);
+					if ($countColumns < $rowCount)
+					{
+						$row = array_slice($row, 0, $countColumns);
+					}
+					elseif ($countColumns > $rowCount)
+					{
+						$row += array_fill($rowCount, $countColumns - $rowCount, null);
+					}
 
-				$count++;
+					$output = ',' . Json::encode($row, JSON_UNESCAPED_UNICODE | JSON_INVALID_UTF8_IGNORE) . "\n";
+					echo $output;
+					$size += strlen($output);
+
+					$count++;
+				}
 			}
 		}
 
@@ -131,7 +153,7 @@ class MicrosoftPowerBI extends Service
 		{
 			$result->addErrors($queryReturnResult->getErrors());
 		}
-		else
+		elseif (!$connector->isFulfilledOutput())
 		{
 			if (!$firstLinePrinted)
 			{
@@ -140,12 +162,31 @@ class MicrosoftPowerBI extends Service
 				$size += strlen($output);
 			}
 
+			if ($isBreakableOverLimit && $licenseLimit < $count)
+			{
+				$overLimit = $count - $licenseLimit;
+				$errorRow = [
+					'error' => 'OVER_LIMIT',
+					'errorMessage' => Loc::getMessagePlural(
+						'BICONNECTOR_TABLE_OVER_LIMIT_ERROR',
+						$overLimit,
+						[
+							'#LIMIT#' => $licenseLimit,
+							'#OVERLIMIT_COUNT#' => $overLimit,
+						],
+					),
+				];
+
+				$output = ',' . Json::encode($errorRow, JSON_UNESCAPED_UNICODE | JSON_INVALID_UTF8_IGNORE) . "\n";
+				echo $output;
+			}
+
 			$output = ']';
 			echo $output;
 			$size += strlen($output);
 		}
 
-		$manager->endQuery($logId, $count, $size, $limitManager->fixLimit($count));
+		$manager->endQuery($logId, $count, $size, $limitManager->fixLimit((int)$count));
 
 		$databaseConnection->unlock('biconnector_data');
 

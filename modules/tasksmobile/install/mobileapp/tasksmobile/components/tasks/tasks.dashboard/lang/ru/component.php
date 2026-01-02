@@ -23,6 +23,7 @@ $MESS['M_TASKS_VIEW_ROUTER_DEADLINE_STAGE_PERIOD5'] = 'Все ваши зада�
 $MESS['M_TASKS_VIEW_ROUTER_DEADLINE_STAGE_PERIOD6'] = 'Все ваши задачи со сроком больше двух недель появятся здесь';
 
 $MESS['M_TASKS_VIEW_ROUTER_EMPTY_IN_PROGRESS'] = 'У вас нет задач в работе';
+$MESS['M_TASKS_VIEW_ROUTER_EMPTY_IN_PROGRESS_DESCRIPTION'] = 'Создавайте задачи и контролируйте выполнение, чтобы всё успевать вовремя';
 
 $MESS['M_TASKS_VIEW_ROUTER_SELECTED_FILTER_TITLE'] = "Нет задач по фильтру\n[b]#FILTER_NAME#[/b]";
 

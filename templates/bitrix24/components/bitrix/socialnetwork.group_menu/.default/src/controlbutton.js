@@ -22,7 +22,7 @@ export default class ControlButton
 					container: controlButtonContainer,
 					entityType: 'workgroup',
 					entityId: this.groupId,
-					buttonClassName: `intranet-control-btn-no-hover${this.inIframe ? ' ui-btn-themes' : ''}`,
+					airDesign: true,
 				});
 			});
 		}

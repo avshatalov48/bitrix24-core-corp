@@ -25,6 +25,7 @@ use \Bitrix\Tasks\Internals\Task\SortingTable;
 use \Bitrix\Tasks\Integration\SocialNetwork;
 use \Bitrix\Tasks\Integration\Bizproc;
 use Bitrix\Tasks\Access\ActionDictionary;
+use Bitrix\Tasks\V2\Internal\DI\Container;
 
 Loc::loadMessages(__FILE__);
 
@@ -360,11 +361,12 @@ final class Stages extends \Bitrix\Tasks\Dispatcher\RestrictedAction
 						'STAGE.ENTITY_ID' => $stage['ENTITY_ID']
 					)
 				));
+
+				$stageService = Container::getInstance()->getTaskStageService();
+
 				while ($rowStg = $resStg->fetch())
 				{
-					TaskStageTable::update($rowStg['ID'], array(
-						'STAGE_ID' => $stageId
-					));
+					$stageService->move((int)$rowStg['ID'], (int)$stageId);
 
 					if ($stageId !== (int)$rowStg['STAGE_ID'])
 					{
@@ -417,7 +419,7 @@ final class Stages extends \Bitrix\Tasks\Dispatcher\RestrictedAction
 	 */
 	private function isAdmin()
 	{
-		return $GLOBALS['USER']->isAdmin() || \CTasksTools::IsPortalB24Admin();
+		return $GLOBALS['USER']->isAdmin() || \Bitrix\Tasks\Integration\Bitrix24\User::isAdmin();
 	}
 
 	/**
@@ -648,11 +650,11 @@ final class Stages extends \Bitrix\Tasks\Dispatcher\RestrictedAction
 				'STAGE.ENTITY_ID' => $entity->getId()
 			]
 		]);
+
+		$stageService = Container::getInstance()->getTaskStageService();
 		if ($taskStage = $queryObject->fetch())
 		{
-			TaskStageTable::update($taskStage['ID'], [
-				'STAGE_ID' => $stage['ID'],
-			]);
+			$stageService->move((int)$taskStage['ID'], (int)$stage['ID']);
 
 			$taskObject->update($taskId, ['STAGE_ID' => $stage['ID']]);
 		}

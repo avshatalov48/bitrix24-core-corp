@@ -10,11 +10,10 @@ use Bitrix\Main\Loader;
 use Bitrix\Main\Localization\Loc;
 use Bitrix\Main\UI\Filter;
 use Bitrix\Tasks\Integration\Bitrix24;
-use Bitrix\Tasks\Integration\Intranet\Settings;
 use Bitrix\Tasks\Internals\Task\Template\TemplateTagTable;
 use Bitrix\Tasks\Item\Task\Template;
 use Bitrix\Tasks\Manager;
-use Bitrix\Tasks\Util\Restriction\Bitrix24Restriction\Limit\TaskLimit;
+use Bitrix\Tasks\V2\Internal\DI\Container;
 
 Loc::loadMessages(__FILE__);
 
@@ -145,7 +144,7 @@ class TasksTemplatesListComponent extends TasksBaseComponent
 
 		if ($arResult['IS_TOOL_AVAILABLE'])
 		{
-			$arResult['IS_TOOL_AVAILABLE'] = (new Settings())->isToolAvailable(Settings::TOOLS['templates']);
+			$arResult['IS_TOOL_AVAILABLE'] = Container::getInstance()->getToolService()->isTemplatesAvailable();
 		}
 	}
 
@@ -540,14 +539,20 @@ class TasksTemplatesListComponent extends TasksBaseComponent
 			$filter['SCENARIO'] = $this->arParams['SCENARIO'];
 		}
 
-		if (
-			\Bitrix\Main\Grid\Context::isInternalRequest()
-			&& check_bitrix_sessid()
-			&& (($_REQUEST['action'] ?? null) == \Bitrix\Main\Grid\Actions::GRID_GET_CHILD_ROWS))
+		$request = \Bitrix\Main\Context::getCurrent()?->getRequest();
+
+		if (\Bitrix\Main\Grid\Context::isInternalRequest() && check_bitrix_sessid())
 		{
-			if (!empty($_REQUEST['parent_id']))
+			if (
+				!empty($request?->get('parent_id'))
+				&& $request?->get('action') === \Bitrix\Main\Grid\Actions::GRID_GET_CHILD_ROWS
+			)
 			{
-				$filter['BASE_TEMPLATE_ID'] = $_REQUEST['parent_id'];
+				$filter['BASE_TEMPLATE_ID'] = (int)$request?->get('parent_id');
+			}
+			elseif (!empty($request?->get('BASE_TEMPLATE_ID')))
+			{
+				$filter['BASE_TEMPLATE_ID'] = (int)$request?->get('BASE_TEMPLATE_ID');
 			}
 		}
 

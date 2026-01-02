@@ -49,5 +49,6 @@ $APPLICATION->IncludeComponent(
 		'CLOSE_AFTER_SAVE' => true,
 		'RELOAD_PAGE_AFTER_SAVE' => true,
 		'USE_LINK_TARGETS_REPLACING' => true,
+		'USE_UI_TOOLBAR' => 'Y',
 	)
 );

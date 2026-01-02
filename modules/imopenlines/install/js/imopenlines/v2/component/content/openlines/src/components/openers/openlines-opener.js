@@ -1,6 +1,5 @@
-import { AccessErrorCode } from 'im.v2.lib.access';
 import { Logger } from 'im.v2.lib.logger';
-import { ChatService } from 'im.v2.provider.service';
+import { ChatService } from 'im.v2.provider.service.chat';
 import { Messenger } from 'im.public';
 
 import { OpenLinesContent } from '../content/openlines';
@@ -48,29 +47,11 @@ export const OpenLinesOpener = {
 			Logger.warn(`OpenLinesContent: loading openlines ${this.dialogId}`);
 
 			await this.getChatService().loadChatWithMessages(this.dialogId)
-				.catch((errors) => {
-					this.handleChatLoadError(errors);
-					Logger.error(errors);
+				.catch(() => {
 					Messenger.openLines();
 				});
 
 			Logger.warn(`OpenLinesContent: openlines ${this.dialogId} is loaded`);
-		},
-		handleChatLoadError(errors: Error[]): void
-		{
-			const [firstError] = errors;
-			if (firstError.code === AccessErrorCode.accessDenied)
-			{
-				this.showNotification(this.loc('IMOL_CONTENT_CHAT_ACCESS_ERROR_MSGVER_1'));
-			}
-			else if (firstError.code === AccessErrorCode.messageNotFound)
-			{
-				this.showNotification(this.loc('IMOL_CONTENT_CHAT_CONTEXT_MESSAGE_NOT_FOUND'));
-			}
-		},
-		showNotification(text: string)
-		{
-			BX.UI.Notification.Center.notify({ content: text });
 		},
 		getChatService(): ChatService
 		{

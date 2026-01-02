@@ -19,7 +19,7 @@ jn.define('tokens/src/enums/color-enum', (require, exports, module) => {
 		}
 
 		/**
-		 * @param {number=} opacity
+		 * @param {number} [opacity]
 		 * @return {string}
 		 */
 		toHex(opacity)
@@ -27,7 +27,7 @@ jn.define('tokens/src/enums/color-enum', (require, exports, module) => {
 			const opacityValue = !Type.isNil(opacity) && Number(opacity);
 			const hexColor = this.toString();
 
-			if (opacityValue && Type.isNumber(opacityValue) && opacityValue < 1)
+			if (Type.isNumber(opacityValue) && opacityValue < 1)
 			{
 				return transparent(hexColor, opacityValue);
 			}

@@ -1,25 +1,42 @@
 <?php
-if (!Defined("B_PROLOG_INCLUDED") || B_PROLOG_INCLUDED !== true)
+if (!defined("B_PROLOG_INCLUDED") || B_PROLOG_INCLUDED !== true)
 {
 	die();
 }
 
 /**
  *
- * @var $APPLICATION CMain
- * @var $USER CUser
- * @var $params array
+ * @global CMain $APPLICATION
+ * @global CUser $USER
+ * @var array $params
  */
 global $APPLICATION, $USER;
 
-use Bitrix\Intranet\UI\LeftMenu\Preset\Manager;
+use Bitrix\Intranet\Enum\UserRole;
 use Bitrix\Main;
-use Bitrix\Main\Authentication\ApplicationPasswordTable;
+use Bitrix\Main\Loader;
 use Bitrix\Main\Context;
-use Bitrix\Main\DI\ServiceLocator;
 use Bitrix\Main\ModuleManager;
+use Bitrix\Main\EventManager;
+use Bitrix\Main\DI\ServiceLocator;
 use Bitrix\Main\Web\Uri;
+use Bitrix\Main\Engine\CurrentUser;
+use Bitrix\Main\Authentication\ApplicationPasswordTable;
+use Bitrix\Security\Mfa\Otp;
+use Bitrix\Socialservices\Network;
+use Bitrix\SignMobile\Service\Container;
+use Bitrix\SignMobile\Service\EventService;
+use Bitrix\Voximplant\Security\Helper;
+use Bitrix\Call\Settings;
+use Bitrix\Intranet\Service\MobileAppSettings;
+use Bitrix\Intranet\Settings\Tools\ToolsManager;
+use Bitrix\Intranet\UI\LeftMenu\Preset\Manager;
+use Bitrix\Pull\Config;
+use Bitrix\Mobile;
+use Bitrix\Mobile\Auth;
 use Bitrix\Mobile\AvaMenu;
+use Bitrix\Mobile\Config\Feature;
+use Bitrix\Mobile\Feature\MenuFeature;
 
 if ($_SERVER["REQUEST_METHOD"] == "OPTIONS")
 {
@@ -67,9 +84,9 @@ if (array_key_exists("servercheck", $_REQUEST))
 	{
 		$data['cloud'] = COption::GetOptionString('bitrix24', 'network', 'N') == 'Y';
 
-		if (\Bitrix\Main\Loader::includeModule('socialservices'))
+		if (Loader::includeModule('socialservices'))
 		{
-			$data['host'] = (new Uri(\CSocServBitrix24Net::NETWORK_URL))->getHost();
+			$data['host'] = (new Uri(CSocServBitrix24Net::NETWORK_URL))->getHost();
 		}
 	}
 
@@ -88,7 +105,7 @@ if (!$isAlreadyAuthorized)
 
 	if ($login)
 	{
-		if (\Bitrix\Main\Loader::includeModule('bitrix24') && ($captchaInfo = CBitrix24::getStoredCaptcha()))
+		if (Loader::includeModule('bitrix24') && ($captchaInfo = CBitrix24::getStoredCaptcha()))
 		{
 			$data["captchaCode"] = $captchaInfo["captchaCode"];
 			$data["captchaURL"] = $captchaInfo["captchaURL"];
@@ -98,15 +115,15 @@ if (!$isAlreadyAuthorized)
 			$data["captchaCode"] = $APPLICATION->CaptchaGetCode();
 		}
 
-		if (\Bitrix\Main\Loader::includeModule("security") && \Bitrix\Security\Mfa\Otp::isOtpRequired())
+		if (Loader::includeModule("security") && Otp::isOtpRequired())
 		{
 			$data["needOtp"] = true;
 		}
 	}
 
-	if (Main\Loader::includeModule('socialservices'))
+	if (Loader::includeModule('socialservices'))
 	{
-		$lastUserStatus = \Bitrix\Socialservices\Network::getLastUserStatus();
+		$lastUserStatus = Network::getLastUserStatus();
 		if ($lastUserStatus)
 		{
 			if (is_array($lastUserStatus))
@@ -125,13 +142,26 @@ if (!$isAlreadyAuthorized)
 }
 else
 {
-	$isSignMobileModuleInstalled = \Bitrix\Main\Loader::includeModule("signmobile");
-	$isSignModuleInstalled = \Bitrix\Main\Loader::includeModule("sign");
+	$isSignMobileModuleInstalled = Loader::includeModule("signmobile");
+	$isSignModuleInstalled = Loader::includeModule("sign");
 
 	if ($isSignMobileModuleInstalled && $isSignModuleInstalled)
 	{
-		$service = \Bitrix\SignMobile\Service\Container::instance()->getEventService();
-		$service->checkDocumentsSentForSigning();
+		$service = Container::instance()->getEventService();
+
+		if (method_exists(EventService::class, 'sendPriorityDocumentNotificationToSign'))
+		{
+			$currentUserId = (int)CurrentUser::get()->getId();
+
+			Main\Application::getInstance()->addBackgroundJob(function () use ($service, $currentUserId)
+			{
+				$service->sendPriorityDocumentNotificationToSign($currentUserId);
+			});
+		}
+		else if(method_exists(EventService::class, 'checkDocumentsSentForSigning'))
+		{
+			$service->checkDocumentsSentForSigning();
+		}
 	}
 
 	$event = new Bitrix\Main\Event("mobile", "onRequestSyncMail", [
@@ -139,11 +169,13 @@ else
 	]);
 	$event->send();
 
-	$isExtranetModuleInstalled = \Bitrix\Main\Loader::includeModule("extranet");
+	$isExtranetModuleInstalled = Loader::includeModule("extranet");
+	$extranetSiteId = null;
 	$intent = $_REQUEST['intent'] ?? null;
+
 	if ($isExtranetModuleInstalled)
 	{
-		$extranetSiteId = \CExtranet::getExtranetSiteId();
+		$extranetSiteId = CExtranet::getExtranetSiteId();
 		if (!$extranetSiteId)
 		{
 			$isExtranetModuleInstalled = false;
@@ -173,8 +205,7 @@ else
 		$avatar = CFile::ResizeImageGet(
 			$curUser["PERSONAL_PHOTO"],
 			["width" => 64, "height" => 64],
-			BX_RESIZE_IMAGE_EXACT,
-			false
+			BX_RESIZE_IMAGE_EXACT
 		);
 
 		if ($avatar && $avatar["src"] <> '')
@@ -184,7 +215,7 @@ else
 	}
 
 	$bExtranetUser = ($isExtranetModuleInstalled && intval($curUser["UF_DEPARTMENT"][0]) <= 0);
-	\Bitrix\Main\Loader::includeModule("pull");
+	Loader::includeModule("pull");
 
 	$siteId = (
 	$bExtranetUser
@@ -195,7 +226,7 @@ else
 	$siteDir = SITE_DIR;
 	if ($bExtranetUser)
 	{
-		$res = \CSite::getById($extranetSiteId);
+		$res = CSite::getById($extranetSiteId);
 		if (
 			($extranetSiteFields = $res->fetch())
 			&& ($extranetSiteFields["ACTIVE"] != "N")
@@ -211,14 +242,14 @@ else
 		$moduleVersion .= "_wkwebview";
 	}
 
-	$context = new \Bitrix\Mobile\Context([
+	$context = new Mobile\Context([
 		"extranet" => $bExtranetUser,
 		"siteId" => $siteId,
 		"siteDir" => $siteDir,
 		"version" => $moduleVersion,
 	]);
 
-	$manager = new \Bitrix\Mobile\Tab\Manager($context);
+	$manager = new Mobile\Tab\Manager($context);
 
 	if ($intent)
 	{
@@ -238,7 +269,19 @@ else
 			;
 		}
 
-		if (str_starts_with($intent, 'preset_'))
+		if (preg_match('/^preset_custom_section_id(\d+)$/', $intent, $match))
+		{
+			$customSectionId = $match[1];
+
+			$manager->setCustomConfig([
+				'crm_custom_section-' . $customSectionId => 1,
+				'chat' => 2,
+				'task' => 3,
+				'stream' => 4,
+				'menu' => 5,
+			]);
+		}
+		elseif (str_starts_with($intent, 'preset_'))
 		{
 			$components = explode('_', $intent);
 			if (count($components) >= 2)
@@ -248,7 +291,7 @@ else
 			}
 		}
 	}
-	elseif (Main\Loader::includeModule('intranet') && Main\Loader::includeModule('crm'))
+	elseif (Loader::includeModule('intranet') && Loader::includeModule('crm'))
 	{
 		$lastInstalledPreset = CUserOptions::GetOption('mobile', 'last_installed_preset_by_left_menu');
 		if ($lastInstalledPreset !== 'crm')
@@ -262,6 +305,13 @@ else
 		}
 	}
 
+	// Activate Marta AI trigger for mobile app (every time)
+	if (Loader::includeModule('aiassistant') && ServiceLocator::getInstance()->has(\Bitrix\AiAssistant\Trigger\Service\RunnerService::class))
+	{
+		$runnerService = ServiceLocator::getInstance()->get(\Bitrix\AiAssistant\Trigger\Service\RunnerService::class);
+		$runnerService->registerBackgroundTriggerActivation('/mobile/');
+	}
+
 	$menuTabs = $manager->getActiveTabsData();
 
 	$voximplantOptions = [
@@ -273,7 +323,7 @@ else
 		'defaultLineId' => '',
 		'callLogService' => '',
 	];
-	if (Main\Loader::includeModule('voximplant'))
+	if (Loader::includeModule('voximplant'))
 	{
 		$voximplantServer = '';
 		$voximplantLogin = '';
@@ -290,10 +340,10 @@ else
 			'voximplantInstalled' => true,
 			'voximplantServer' => $voximplantServer,
 			'voximplantLogin' => $voximplantLogin,
-			'canPerformCalls' => \Bitrix\Voximplant\Security\Helper::canCurrentUserPerformCalls(),
+			'canPerformCalls' => Helper::canCurrentUserPerformCalls(),
 			'lines' => CVoxImplantConfig::GetLines(true, true),
 			'defaultLineId' => CVoxImplantUser::getUserOutgoingLine($USER->getId()),
-			'callLogService' => Main\Config\Option::get("im", "call_log_service", ""),
+			'callLogService' => Main\Config\Option::get("im", "call_log_service"),
 		];
 	}
 
@@ -307,20 +357,20 @@ else
 		'bitrixCallsEnabled' => false,
 		'callBetaIosEnabled' => false,
 	];
-	if (Main\Loader::includeModule('call'))
+	if (Loader::includeModule('call'))
 	{
-		$callOptions = \Bitrix\Call\Settings::getMobileOptions();
+		$callOptions = Settings::getMobileOptions();
 	}
 
-	$events = \Bitrix\Main\EventManager::getInstance()->findEventHandlers("mobile", "onMobileTabListBuilt");
+	$events = EventManager::getInstance()->findEventHandlers("mobile", "onMobileTabListBuilt");
 	if (count($events) > 0)
 	{
 		$modifiedMenuTabs = ExecuteModuleEventEx($events[0], [$menuTabs]);
 		$menuTabs = $modifiedMenuTabs;
 	}
 
-	$isImModuleInstalled = Main\Loader::includeModule('im');
-	$userName = \CUser::FormatName(CSite::GetNameFormat(false), [
+	$isImModuleInstalled = Loader::includeModule('im');
+	$userName = CUser::FormatName(CSite::GetNameFormat(false), [
 		"NAME" => $USER->GetFirstName(),
 		"LAST_NAME" => $USER->GetLastName(),
 		"SECOND_NAME" => $USER->GetSecondName(),
@@ -332,7 +382,7 @@ else
 	if (ServiceLocator::getInstance()->has('intranet.option.mobile_app'))
 	{
 		/**
-		 * @var \Bitrix\Intranet\Service\MobileAppSettings $mobileSettings
+		 * @var MobileAppSettings $mobileSettings
 		 */
 
 		$mobileSettings = ServiceLocator::getInstance()->get('intranet.option.mobile_app');
@@ -346,20 +396,32 @@ else
 	$avaMenuManager = new AvaMenu\Manager($context);
 	$profile = new AvaMenu\Profile\Profile();
 
+	$userRole = null;
+	$isCollabToolEnabled = true;
+
+	if (Loader::includeModule('intranet'))
+	{
+		$userRole = (new \Bitrix\Intranet\User((int)$USER->GetID()))->getUserRole();
+		if ($userRole === UserRole::COLLABER)
+		{
+			$isCollabToolEnabled = ToolsManager::getInstance()->checkAvailabilityByToolId('collab');
+		}
+	}
+
 	$data = [
 		"status" => "success",
 		"id" => $USER->GetID(),
 		"login" => $USER->GetLogin(),
 		"name" => $userName,
 		"sessid_md5" => bitrix_sessid(),
-		"cloud" => \Bitrix\Main\ModuleManager::isModuleInstalled("bitrix24") && COption::GetOptionString('bitrix24', 'network', 'N') == 'Y',
-		"backend_version" => \Bitrix\Main\ModuleManager::getVersion('mobile'),
+		"cloud" => ModuleManager::isModuleInstalled("bitrix24") && COption::GetOptionString('bitrix24', 'network', 'N') == 'Y',
+		"backend_version" => ModuleManager::getVersion('mobile'),
 		"target" => md5($USER->GetID() . CMain::GetServerUniqID()),
 		"photoUrl" => $avatarSource,
 		"newStyleSupported" => true,
 		"tabs" => $menuTabs,
 		"user" => [
-			"type" => $profile->getUserType(),
+			"type" => $userRole?->value ?? 'employee',
 			"avatar" => $profile->getAvatar(),
 		],
 		'avamenu' => [
@@ -370,7 +432,7 @@ else
 		"services" => [
 			[
 				"scriptPath" => \Bitrix\MobileApp\Janative\Manager::getComponentPath("call:calls"),
-				"name" => \Bitrix\MobileApp\Mobile::getApiVersion() >= 36 ? "JNUIComponent" : "JSComponent",
+				"name" => "JNUIComponent",
 				"componentCode" => "calls",
 				"params" => array_merge(
 					[
@@ -388,7 +450,7 @@ else
 					"USER_ID" => $USER->getId(),
 					"SITE_ID" => $siteId,
 					"LANGUAGE_ID" => LANGUAGE_ID,
-					"PULL_CONFIG" => \Bitrix\Pull\Config::get(['JSON' => true]),
+					"PULL_CONFIG" => Config::get(['JSON' => true]),
 				],
 				"name" => "JSComponent",
 				"componentCode" => "communication",
@@ -411,26 +473,31 @@ else
 			"menu" => ["url" => $siteDir . "mobile/left.php?version=" . $moduleVersion],
 			"notification" => ["url" => $siteDir . "mobile/im/notify.php"],
 		],
+		"isCollabToolEnabled" => $isCollabToolEnabled,
+		'featureFlags' => [
+			'disableAvaMenu' => Feature::isEnabled(MenuFeature::class),
+		],
 	];
 
-	if (\Bitrix\Main\Loader::includeModule('bitrix24'))
+	if (Loader::includeModule('bitrix24'))
 	{
 		$data["restricted"] = \Bitrix\Bitrix24\Limits\User::isUserRestricted($USER->getId());
 		$data["blocked"] = \Bitrix\Bitrix24\LicenseScanner\Manager::getInstance()->shouldLockPortal();
 	}
 
-	$needAppPass = \Bitrix\Main\Context::getCurrent()->getServer()->get("HTTP_BX_APP_PASS");
-	$appUUID = \Bitrix\Main\Context::getCurrent()->getServer()->get("HTTP_BX_APP_UUID");
-	$deviceName = \Bitrix\Main\Context::getCurrent()->getServer()->get("HTTP_BX_DEVICE_NAME");
+	$needAppPass = Context::getCurrent()->getServer()->get("HTTP_BX_APP_PASS");
+	$appUUID = Context::getCurrent()->getServer()->get("HTTP_BX_APP_UUID");
+	$deviceName = Context::getCurrent()->getServer()->get("HTTP_BX_DEVICE_NAME");
 	$userId = $USER->GetID();
 	$hitHash = trim($_REQUEST["bx_hit_hash"] ?? '');
-	$forceGenerate = \Bitrix\Mobile\Auth::removeOneTimeAuthHash($hitHash);
+	$forceGenerate = Auth::removeOneTimeAuthHash($hitHash);
 	if (($needAppPass == 'mobile' && $USER->GetParam("APPLICATION_ID") === null) || $forceGenerate)
 	{
 		if ($forceGenerate)
 		{
 			setSessionExpired(false);
 		}
+
 		if ($appUUID <> '')
 		{
 			$result = ApplicationPasswordTable::getList([
@@ -462,6 +529,13 @@ else
 			$data["appPassword"] = $password;
 		}
 
+	}
+
+	$isHumanResourcesModuleInstalled = Loader::includeModule('humanresources');
+	if ($isHumanResourcesModuleInstalled)
+	{
+		$isHeadOfDepartment = \Bitrix\HumanResources\Public\Service\Container::getUserDepartmentService()->isHeadOfDepartment($USER->GetID());
+		$data["position"] = $isHeadOfDepartment ? 'head' : 'employee';
 	}
 }
 

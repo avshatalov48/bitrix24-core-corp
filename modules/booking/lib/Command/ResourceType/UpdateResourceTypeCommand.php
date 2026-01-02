@@ -23,10 +23,24 @@ class UpdateResourceTypeCommand extends AbstractCommand
 	public function toArray(): array
 	{
 		return [
-			'resourceType' => $this->resourceType->toArray(),
 			'updatedBy' => $this->updatedBy,
-			'ranges' => $this->rangeCollection?->toArray(),
+			'resourceType' => $this->resourceType->toArray(),
+			'rangeCollection' => $this->rangeCollection?->toArray(),
 		];
+	}
+
+	public static function mapFromArray(array $props): self
+	{
+		$rangeCollection = isset($props['rangeCollection'])
+			? Entity\Slot\RangeCollection::mapFromArray($props['rangeCollection'])
+			: null
+		;
+
+		return new self(
+			updatedBy: $props['updatedBy'],
+			resourceType: Entity\ResourceType\ResourceType::mapFromArray($props['resourceType']),
+			rangeCollection: $rangeCollection,
+		);
 	}
 
 	protected function execute(): Result

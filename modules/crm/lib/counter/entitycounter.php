@@ -463,10 +463,7 @@ class EntityCounter extends CounterBase
 		{
 			$userIDs = [$this->userID];
 		}
-		$categoryId = $this->getIntegerExtraParam(
-			'DEAL_CATEGORY_ID',
-			$this->getIntegerExtraParam('CATEGORY_ID', null)
-		);
+		$categoryId = $this->getCategoryId();
 		if (!is_null($categoryId) && $categoryId >= 0)
 		{
 			$options['CATEGORY_ID'] = $categoryId;
@@ -569,7 +566,7 @@ class EntityCounter extends CounterBase
 
 		if($url === '')
 		{
-			$url = self::getEntityListPath();
+			$url = $this->getEntityListPath();
 		}
 		return \CHTTP::urlAddParams($url, $urlParams);
 	}
@@ -595,8 +592,9 @@ class EntityCounter extends CounterBase
 	 */
 	protected function getEntityListPath()
 	{
-		return \CCrmOwnerType::GetListUrl($this->entityTypeID, false);
+		return Container::getInstance()->getRouter()->getItemListUrlInCurrentView($this->entityTypeID, $this->getCategoryId())->getUri();
 	}
+
 	/**
 	 * @param array|null $params List Params (MASTER_ALIAS, MASTER_IDENTITY and etc).
 	 * @return array
@@ -697,5 +695,13 @@ class EntityCounter extends CounterBase
 		Application::getConnection()
 			->query("UPDATE b_user_counter set CNT=-1 WHERE CODE LIKE 'crm%' AND NOT CODE LIKE 'CRM\_**' and CNT > -1");
 		$CACHE_MANAGER->CleanDir("user_counter");
+	}
+
+	final protected function getCategoryId(): ?int
+	{
+		return $this->getIntegerExtraParam(
+			'DEAL_CATEGORY_ID',
+			$this->getIntegerExtraParam('CATEGORY_ID', null)
+		);
 	}
 }

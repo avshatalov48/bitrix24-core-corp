@@ -1,3 +1,4 @@
+/* eslint-disable */
 this.BX = this.BX || {};
 this.BX.Disk = this.BX.Disk || {};
 (function (exports,main_popup,disk_users,main_core_events,disk_sharingLegacyPopup,disk_externalLink,disk_onlyofficePromoPopup,ui_buttons,main_core_cache,main_core,pull_client) {
@@ -480,6 +481,7 @@ this.BX.Disk = this.BX.Disk || {};
 	    babelHelpers.defineProperty(this, "usersInDocument", null);
 	    babelHelpers.defineProperty(this, "sharingControlType", null);
 	    babelHelpers.defineProperty(this, "brokenDocumentOpened", false);
+	    babelHelpers.defineProperty(this, "unifiedLinkAccessOnly", false);
 	    var options = main_core.Type.isPlainObject(editorOptions) ? editorOptions : {};
 	    this.pullConfig = options.pullConfig;
 	    this.documentSession = options.documentSession;
@@ -504,7 +506,7 @@ this.BX.Disk = this.BX.Disk || {};
 	      context: this.context,
 	      userBoxNode: this.userBoxNode
 	    });
-	    this.sendTelemetryEvent('load');
+	    this.unifiedLinkAccessOnly = options.unifiedLinkAccessOnly;
 	    this.initializeEditor(options.editorJson);
 	    var currentSlider = BX.SidePanel.Instance.getSliderByWindow(window);
 	    if (currentSlider) {
@@ -534,22 +536,6 @@ this.BX.Disk = this.BX.Disk || {};
 	        });
 	        BX.PULL.start(this.pullConfig);
 	      }
-	    }
-	  }, {
-	    key: "sendTelemetryEvent",
-	    value: function sendTelemetryEvent(action, data) {
-	      data = data || {};
-	      var currentSlider = BX.SidePanel.Instance.getSliderByWindow(window);
-	      if (!currentSlider) {
-	        return;
-	      }
-	      var currentSliderData = currentSlider.getData();
-	      data.action = action;
-	      data.uid = currentSliderData.get('uid');
-	      data.documentSessionId = this.context.documentSession.id;
-	      data.documentSessionHash = this.context.documentSession.hash;
-	      data.fileSize = this.context.object.size;
-	      BX.Disk.sendTelemetryEvent(data);
 	    }
 	  }, {
 	    key: "bindEvents",
@@ -701,7 +687,11 @@ this.BX.Disk = this.BX.Disk || {};
 	        eval(menuItem.dataset.blockerExternalLinkFeature);
 	        return;
 	      }
-	      disk_externalLink.ExternalLink.showPopup(this.context.object.id);
+	      if (this.unifiedLinkAccessOnly) {
+	        disk_externalLink.ExternalLinkForUnifiedLink.showPopup(this.context.object.uniqueCode);
+	      } else {
+	        disk_externalLink.ExternalLink.showPopup(this.context.object.id);
+	      }
 	    }
 	  }, {
 	    key: "handleClickEditSubItems",
@@ -796,7 +786,6 @@ this.BX.Disk = this.BX.Disk || {};
 	      pull_client.PULL.sendMessageToChannels([this.context.object.publicChannel], 'disk', 'exitDocument', {
 	        fromUserId: this.context.currentUser.id
 	      });
-	      this.sendTelemetryEvent('exit');
 	      this.emitEventOnClosed();
 	      if (this.dontEndCurrentDocumentSession) {
 	        return;
@@ -908,7 +897,6 @@ this.BX.Disk = this.BX.Disk || {};
 	  }, {
 	    key: "handleDocumentReady",
 	    value: function handleDocumentReady() {
-	      this.sendTelemetryEvent('ready');
 	      this.caughtDocumentReady = Date.now();
 	    }
 	  }, {
@@ -979,14 +967,17 @@ this.BX.Disk = this.BX.Disk || {};
 	    babelHelpers.classCallCheck(this, Waiting);
 	    babelHelpers.defineProperty(this, "documentSession", null);
 	    babelHelpers.defineProperty(this, "object", null);
+	    babelHelpers.defineProperty(this, "unifiedLinkMode", false);
 	    var options = main_core.Type.isPlainObject(waitingOptions) ? waitingOptions : {};
 	    this.documentSession = options.documentSession;
 	    this.object = options.object;
+	    this.unifiedLinkMode = options.unifiedLinkMode;
 	    var loader = new BX.Loader({
 	      target: options.targetNode
 	    });
 	    loader.show();
 	    this.bindEvents();
+	    this.handleSavedDocument({});
 	  }
 	  babelHelpers.createClass(Waiting, [{
 	    key: "bindEvents",
@@ -1001,6 +992,7 @@ this.BX.Disk = this.BX.Disk || {};
 	  }, {
 	    key: "handleSavedDocument",
 	    value: function handleSavedDocument(data) {
+	      var _this = this;
 	      console.log('handleSavedDocument', data);
 	      main_core.ajax.runAction('disk.api.onlyoffice.continueWithNewSession', {
 	        mode: 'ajax',
@@ -1010,7 +1002,11 @@ this.BX.Disk = this.BX.Disk || {};
 	        }
 	      }).then(function (response) {
 	        if (response.status === 'success') {
-	          document.location.href = response.data.documentSession.link;
+	          if (_this.unifiedLinkMode) {
+	            window.location.reload();
+	          } else {
+	            document.location.href = response.data.documentSession.link;
+	          }
 	        }
 	      });
 	    }

@@ -187,7 +187,7 @@ this.BX.Booking = this.BX.Booking || {};
 	    },
 	    config: {
 	      type: Object,
-	      default: {}
+	      default: () => ({})
 	    }
 	  },
 	  mounted() {

@@ -22,6 +22,8 @@ use Bitrix\Main\Engine\Response\DataType\ContentUri;
 use Bitrix\Main\Engine\Response\DataType\Page;
 use Bitrix\Main\Engine\UrlManager;
 use Bitrix\Main\Error;
+use Bitrix\Main\Event;
+use Bitrix\Main\EventManager;
 use Bitrix\Main\IO\Directory;
 use Bitrix\Main\IO\Path;
 use Bitrix\Main\Loader;
@@ -73,7 +75,7 @@ class Template extends Base
 	public function deleteAction(\Bitrix\DocumentGenerator\Template $template, \CRestServer $restServer = null)
 	{
 		$deleteResult = TemplateTable::delete($template->ID);
-		if(!$deleteResult->isSuccess())
+		if (!$deleteResult->isSuccess())
 		{
 			$this->errorCollection = $deleteResult->getErrorCollection();
 		}
@@ -171,19 +173,34 @@ class Template extends Base
 		$converter = new Converter(Converter::TO_UPPER | Converter::KEYS | Converter::TO_SNAKE);
 		$templateData = $converter->process($fields);
 		$result = $this->add($templateData, $fields['providers'], $fields['users']);
-		if($result->isSuccess())
+		if ($result->isSuccess())
 		{
-			foreach($fields['providers'] as $provider)
+			foreach ($fields['providers'] as $provider)
 			{
 				Driver::extendTemplateProviders($fields['moduleId'], $provider);
 			}
+
+			$templateId = $result->getId();
+			if ($templateId > 0 && !empty($fields['customFields']) )
+			{
+				EventManager::getInstance()->send(
+					new Event(
+						Driver::MODULE_ID,
+						'onModifyCustomFields',
+						[
+							'templateId' =>$templateId,
+							'customFields' => $fields['customFields'],
+						]
+					)
+				);
+			}
+
 			return $result->getData();
 		}
-		else
-		{
-			$this->errorCollection = $result->getErrorCollection();
-			return null;
-		}
+
+		$this->errorCollection = $result->getErrorCollection();
+
+		return null;
 	}
 
 	/**
@@ -244,23 +261,37 @@ class Template extends Base
 		}
 
 		$result = $this->add($templateData, $fields['providers'], $fields['users']);
-		if($result->isSuccess())
+		if ($result->isSuccess())
 		{
-			if(!empty($fields['providers']))
+			if (!empty($fields['providers']))
 			{
 				$moduleId = $result->getData()['template']['moduleId'];
-				foreach($fields['providers'] as $provider)
+				foreach ($fields['providers'] as $provider)
 				{
 					Driver::extendTemplateProviders($moduleId, $provider);
 				}
 			}
+
+			if (!empty($fields['customFields']))
+			{
+				EventManager::getInstance()->send(
+					new Event(
+						Driver::MODULE_ID,
+						'onModifyCustomFields',
+						[
+							'templateId' => $template->ID,
+							'customFields' => $fields['customFields'],
+						]
+					)
+				);
+			}
+
 			return $result->getData();
 		}
-		else
-		{
-			$this->errorCollection = $result->getErrorCollection();
-			return null;
-		}
+
+		$this->errorCollection = $result->getErrorCollection();
+
+		return null;
 	}
 
 	/**
@@ -310,9 +341,11 @@ class Template extends Base
 	 * Install default template.
 	 *
 	 * @param array $template
+	 * @param bool $checkPermissions
+	 *
 	 * @return Result
 	 */
-	public function installDefaultTemplate(array $template)
+	public function installDefaultTemplate(array $template, bool $checkPermissions = true)
 	{
 		$result = new Result();
 		if (!isset($template['BODY_TYPE']) || !is_a($template['BODY_TYPE'], Body::class, true))
@@ -399,7 +432,7 @@ class Template extends Base
 				unset($template['PRODUCTS_TABLE_VARIANT']);
 			}
 
-			$result = $this->add($template, $providers, [TemplateUserTable::ALL_USERS]);
+			$result = $this->add($template, $providers, [TemplateUserTable::ALL_USERS], $checkPermissions);
 		}
 
 		return $result;
@@ -408,7 +441,7 @@ class Template extends Base
 	/**
 	 * @internal
 	 */
-	final public function updateBodyOfDefaultTemplate(array $defaultTemplateDescription): Result
+	final public function updateBodyOfDefaultTemplate(array $defaultTemplateDescription, bool $checkPermissions = true): Result
 	{
 		$result = new Result();
 
@@ -449,7 +482,7 @@ class Template extends Base
 			return $fileSaveResult;
 		}
 
-		return $this->add(['ID' => $id, 'FILE_ID' => $fileSaveResult->getId()]);
+		return $this->add(['ID' => $id, 'FILE_ID' => $fileSaveResult->getId()], [], [], $checkPermissions);
 	}
 
 	/**
@@ -642,11 +675,11 @@ class Template extends Base
 	 * @throws \Bitrix\Main\ObjectException
 	 * @throws \Exception
 	 */
-	protected function add(array $templateData, array $providers = [], array $users = [])
+	protected function add(array $templateData, array $providers = [], array $users = [], bool $checkPermissions = true)
 	{
 		$result = new Result();
 		$id = intval($templateData['ID'] ?? 0);
-		if($id > 0 && !Driver::getInstance()->getUserPermissions()->canModifyTemplate($id))
+		if($id > 0 && $checkPermissions && !Driver::getInstance()->getUserPermissions()->canModifyTemplate($id))
 		{
 			$result->addError(new Error('You do not have permissions to modify this template'));
 		}

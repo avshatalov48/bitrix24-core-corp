@@ -2,15 +2,12 @@
  * @module im/messenger/controller/sidebar/chat/tabs/participants/participants-view
  */
 jn.define('im/messenger/controller/sidebar/chat/tabs/participants/participants-view', (require, exports, module) => {
-	const { Loc } = require('loc');
+	const { Loc } = require('im/messenger/loc');
 	const { Type } = require('type');
-	const { Feature: MobileFeature } = require('feature');
 	const { Icon } = require('assets/icons');
 	const { withPressed } = require('utils/color');
-	const { SocialNetworkUserSelector } = require('selector/widget/entity/socialnetwork/user');
 
 	const { Theme } = require('im/lib/theme');
-	const { buttonIcons } = require('im/messenger/assets/common');
 	const {
 		SidebarActionType,
 		ErrorType,
@@ -24,15 +21,19 @@ jn.define('im/messenger/controller/sidebar/chat/tabs/participants/participants-v
 	const { LoaderItem } = require('im/messenger/lib/ui/base/loader');
 	const { ChatPermission } = require('im/messenger/lib/permission-manager');
 	const { DialogHelper, UserHelper } = require('im/messenger/lib/helper');
-	const { ChatTitle, ChatAvatar } = require('im/messenger/lib/element');
+	const { ChatTitle } = require('im/messenger/lib/element/chat-title');
+	const { ChatAvatar } = require('im/messenger/lib/element/chat-avatar');
 	const { Notification } = require('im/messenger/lib/ui/notification');
 	const { UserProfile } = require('im/messenger/controller/user-profile');
 	const { ParticipantManager } = require('im/messenger/controller/participant-manager');
-	const { AnalyticsService } = require('im/messenger/provider/service');
+	const { AnalyticsService } = require('im/messenger/provider/services/analytics');
 	const { showLeaveChatAlert } = require('im/messenger/lib/ui/alert');
 
-	const { ParticipantsService } = require('im/messenger/controller/sidebar/chat/tabs/participants/participants-service');
+	const { ParticipantsService } = require(
+		'im/messenger/controller/sidebar/chat/tabs/participants/participants-service');
 	const { BaseSidebarTabView } = require('im/messenger/controller/sidebar/chat/tabs/base/view');
+
+	const { MemberSelector } = require('im/messenger/controller/selector/member');
 
 	/**
 	 * @class SidebarParticipantsView
@@ -50,9 +51,9 @@ jn.define('im/messenger/controller/sidebar/chat/tabs/participants/participants-v
 			this.state = {
 				participants: this.participantsService.getParticipantsFromStore(),
 				permissions: {
-					isCanRemoveParticipants: ChatPermission.isCanRemoveParticipants(props.dialogId),
-					isCanAddParticipants: ChatPermission.isCanAddParticipants(props.dialogId),
-					isCanLeave: ChatPermission.isCanLeaveFromChat(props.dialogId),
+					canRemoveParticipants: ChatPermission.canRemoveParticipants(props.dialogId),
+					canAddParticipants: ChatPermission.canAddParticipants(props.dialogId),
+					canLeave: ChatPermission.canLeaveFromChat(props.dialogId),
 				},
 			};
 
@@ -78,7 +79,6 @@ jn.define('im/messenger/controller/sidebar/chat/tabs/participants/participants-v
 		{
 			super.bindMethods();
 			this.onUpdateDialogStore = this.onUpdateDialogStore.bind(this);
-			this.onCloseUserSelector = this.onCloseUserSelector.bind(this);
 		}
 
 		/**
@@ -221,7 +221,8 @@ jn.define('im/messenger/controller/sidebar/chat/tabs/participants/participants-v
 					});
 				},
 				onLoadMore: platform === 'ios' ? this.iosOnLoadMore.bind(this) : this.androidOnLoadMore.bind(this),
-				renderLoadMore: platform === 'ios' ? this.iosRenderLoadMore.bind(this) : this.androidRenderLoadMore.bind(this),
+				renderLoadMore: platform === 'ios' ? this.iosRenderLoadMore.bind(this) : this.androidRenderLoadMore.bind(
+					this),
 			});
 		}
 
@@ -236,7 +237,7 @@ jn.define('im/messenger/controller/sidebar/chat/tabs/participants/participants-v
 
 		buildItems()
 		{
-			const { participants, permissions: { isCanAddParticipants: isCanAdd } } = this.state;
+			const { participants, permissions: { canAddParticipants: canAdd } } = this.state;
 			const doneItems = [];
 
 			if (participants.length === 0)
@@ -244,7 +245,7 @@ jn.define('im/messenger/controller/sidebar/chat/tabs/participants/participants-v
 				return doneItems;
 			}
 
-			if (isCanAdd)
+			if (canAdd)
 			{
 				doneItems.push({
 					type: 'addrow',
@@ -266,20 +267,25 @@ jn.define('im/messenger/controller/sidebar/chat/tabs/participants/participants-v
 		 */
 		setStyleItem(item, index)
 		{
+			const chatAvatar = ChatAvatar.createFromDialogId(item.id);
+			const chatTitle = ChatTitle.createFromDialogId(item.id);
+			const title = chatTitle.getTitle({ isNotes: false });
+			const subtitle = chatTitle.getDescription({ isNotes: false });
+
 			return {
 				type: 'item',
 				key: index.toString(),
 				userId: item.id,
-				title: item.title,
+				title,
+				subtitle,
 				isYou: item.isYou,
 				isCopilot: item.isCopilot,
 				isManager: item.isManager,
 				isYouTitle: item.isYouTitle,
-				subtitle: item.desc,
 				avatarUri: item.imageUrl,
 				avatarColor: item.imageColor,
 				// TODO: switch to ChatAvatar for CoPilot
-				avatar: item.isCopilot ? null : ChatAvatar.createFromDialogId(item.id).getListItemAvatarProps(),
+				avatar: item.isCopilot ? null : chatAvatar.getListItemAvatarProps(),
 				status: item.statusSvg,
 				crownStatus: item.crownStatus,
 				isSuperEllipseAvatar: item.isSuperEllipseAvatar,
@@ -323,7 +329,7 @@ jn.define('im/messenger/controller/sidebar/chat/tabs/participants/participants-v
 							marginBottom: 4,
 							fontSize: 16,
 							fontWeight: 500,
-							color: item.id ? ChatTitle.createFromDialogId(item.id).getTitleColor() : Theme.colors.base1,
+							color: item.id ? chatTitle.getTitleColor() : Theme.colors.base1,
 						},
 						isYouTitle: {
 							marginLeft: 4,
@@ -369,8 +375,6 @@ jn.define('im/messenger/controller/sidebar/chat/tabs/participants/participants-v
 				text = Loc.getMessage('IMMOBILE_DIALOG_SIDEBAR_PARTICIPANTS_ADD_ROW_GROUP');
 			}
 
-			const buttonIcon = buttonIcons.specialAdd();
-
 			return View(
 				{
 					style: {
@@ -393,17 +397,26 @@ jn.define('im/messenger/controller/sidebar/chat/tabs/participants/participants-v
 						},
 					},
 					View(
-						{},
-						Image({
+						{
 							style: {
-								width: 44,
-								height: 44,
+								alignItems: 'center',
+								justifyContent: 'center',
+								width: 40,
+								height: 40,
 								marginBottom: 6,
 								marginTop: 6,
 								marginHorizontal: 2,
-								borderRadius: 22,
+								borderRadius: 20,
+								backgroundColor: Theme.colors.bgContentTertiary,
 							},
-							svg: { content: buttonIcon },
+						},
+						Image({
+							style: {
+								width: 30,
+								height: 30,
+							},
+							tintColor: Theme.colors.base3,
+							named: Icon.PLUS.getIconName(),
 							onFailure: () => {
 								logger.error('SidebarParticipantsView.getAddParticipantRow.Image.onFailure');
 							},
@@ -516,7 +529,7 @@ jn.define('im/messenger/controller/sidebar/chat/tabs/participants/participants-v
 							this.removeParticipant(itemPos.index, itemPos.section, userId);
 						}
 					},
-					Loc.getMessage('IMMOBILE_DIALOG_SIDEBAR_REMOVE_PARTICIPANT_CONFIRM_TITLE'),
+					Loc.getMessage('IMMOBILE_DIALOG_SIDEBAR_REMOVE_PARTICIPANT_CONFIRM_TITLE_MSGVER_1'),
 					[
 						Loc.getMessage('IMMOBILE_DIALOG_SIDEBAR_REMOVE_PARTICIPANT_CONFIRM_NO'),
 						Loc.getMessage('IMMOBILE_DIALOG_SIDEBAR_REMOVE_PARTICIPANT_CONFIRM_YES'),
@@ -610,7 +623,7 @@ jn.define('im/messenger/controller/sidebar/chat/tabs/participants/participants-v
 						icon: Icon.FLAG,
 						testId: 'SIDEBAR_USER_CONTEXT_MENU_NOTES',
 					});
-					if (this.state.permissions.isCanLeave)
+					if (this.state.permissions.canLeave)
 					{
 						// TODO copilot dialog always is group chat, then need check count participants
 						if (this.props.isCopilot && participantsCount > 2)
@@ -677,8 +690,8 @@ jn.define('im/messenger/controller/sidebar/chat/tabs/participants/participants-v
 						}
 					}
 
-					const isCanDelete = this.state.permissions.isCanRemoveParticipants;
-					if (isCanDelete && ChatPermission.isCanRemoveUserById(userId, this.props.dialogId))
+					const canDelete = this.state.permissions.canRemoveParticipants;
+					if (canDelete && ChatPermission.canRemoveUserById(userId, this.props.dialogId))
 					{
 						actionsItems.push({
 							id: SidebarActionType.remove,
@@ -767,16 +780,7 @@ jn.define('im/messenger/controller/sidebar/chat/tabs/participants/participants-v
 						testId: 'ITEM_ELLIPSIS_BUTTON',
 					};
 
-					if (MobileFeature.isAirStyleSupported())
-					{
-						imageButtonProps.iconName = Icon.MORE.getIconName();
-					}
-					else
-					{
-						imageButtonProps.svg = {
-							content: buttonIcons.ellipsis(),
-						};
-					}
+					imageButtonProps.iconName = Icon.MORE.getIconName();
 
 					return View(
 						{
@@ -830,44 +834,18 @@ jn.define('im/messenger/controller/sidebar/chat/tabs/participants/participants-v
 				return Promise.resolve();
 			}
 
-			SocialNetworkUserSelector.make({
-				initSelectedIds: [],
-				createOptions: {
-					enableCreation: false,
-				},
-				allowMultipleSelection: true,
-				closeOnSelect: true,
-				provider: {
-					context: 'IMMOBILE_SIDEBAR_ADD_PARTICIPANTS',
-					options: {
-						recentItemsLimit: 20,
-						maxUsersInRecentTab: 20,
-					},
-				},
-				events: {
-					onClose: this.onCloseUserSelector,
-				},
-				widgetParams: {
-					title: this.getUserAddWidgetTitle(),
-					backdrop: {
-						mediumPositionPercent: 70,
-						horizontalSwipeAllowed: false,
-					},
-					sendButtonName: Loc.getMessage('IMMOBILE_DIALOG_SIDEBAR_PARTICIPANTS_ADD_NAME_BTN'),
-				},
-			})
-				.show({})
-				.catch(logger.error);
+			const memberSelector = new MemberSelector({
+				onSelectMembers: this.onSelectMembers,
+			});
+
+			memberSelector.open();
+
+			return Promise.resolve();
 		}
 
 		sendAnalyticsAboutOpeningParticipantAddWidget()
 		{
 			AnalyticsService.getInstance().sendUserAddButtonClicked({ dialogId: this.props.dialogId });
-		}
-
-		getUserAddWidgetTitle()
-		{
-			return Loc.getMessage('IMMOBILE_DIALOG_SIDEBAR_PARTICIPANTS_ADD_TITLE_MSGVER_1');
 		}
 
 		androidOnLoadMore()
@@ -926,16 +904,14 @@ jn.define('im/messenger/controller/sidebar/chat/tabs/participants/participants-v
 		}
 
 		/**
-		 * @param {Array<object>} selectedUsers
+		 * @param {Array<Number>} selectedUsersIds
 		 */
-		onCloseUserSelector(selectedUsers)
-		{
+		onSelectMembers = (selectedUsersIds) => {
 			const isCreateChat = !this.isGroupDialog();
-			const addUsersIds = selectedUsers.map((user) => user.id);
 			const currentUsersIdsList = new Set(
 				this.state.participants.map((user) => user.id),
 			);
-			const uniqueId = addUsersIds.filter((id) => !currentUsersIdsList.has(id));
+			const uniqueId = selectedUsersIds.filter((id) => !currentUsersIdsList.has(id));
 			if (uniqueId.length > 0)
 			{
 				if (isCreateChat)
@@ -955,7 +931,7 @@ jn.define('im/messenger/controller/sidebar/chat/tabs/participants/participants-v
 						));
 				}
 			}
-		}
+		};
 	}
 
 	module.exports = { SidebarParticipantsView };

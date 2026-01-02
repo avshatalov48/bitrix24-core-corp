@@ -351,6 +351,17 @@ class SaleSupport24 extends Network implements SupportBot
 	}
 
 	/**
+	 * Allows certain user write to OL.
+	 * @param int $userId
+	 * @return bool
+	 */
+	public static function isActiveSupportForUser(int $userId): bool
+	{
+		//todo: Add settings flags or something else.
+		return true;
+	}
+
+	/**
 	 * @inheritDoc
 	 * @return bool
 	 */

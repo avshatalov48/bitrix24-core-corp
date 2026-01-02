@@ -401,7 +401,7 @@
 						innerDoc.body.onunload = null;
 					}
 					else if (
-						(eTargetA.href.indexOf("IFRAME=Y") == -1) 
+						(eTargetA.href.indexOf("IFRAME=Y") == -1)
 						&& (eTargetA.href.indexOf("/show_file.php?fid=") == -1)
 						&& (eTargetA.target !== '_blank')
 					)
@@ -580,7 +580,7 @@
 	{
 		var updated = true;
 
-		// This will run onTimeManDataRecieved/onPlannerDataRecieved 
+		// This will run onTimeManDataRecieved/onPlannerDataRecieved
 		// and after it init_timer_data event
 		if (window.BXTIMEMAN)
 			window.BXTIMEMAN.Update(true);
@@ -755,7 +755,7 @@
 				var JS_UNIX_TIMESTAMP = Math.round((new Date()).getTime() / 1000);
 				this.data.TIMER.RUN_TIME = JS_UNIX_TIMESTAMP - this.data.TIMER.TIMER_STARTED_AT - this.data.UNIX_TIMESTAMP_DELTA;
 
-				BX.onCustomEvent(
+				top.BX.onCustomEvent(
 					window,
 					'onTaskTimerChange',
 					[{
@@ -767,21 +767,36 @@
 			}
 		};
 
-		BX.ready(
-			(function(self){
-				return function(){
-					BX.CJSTask.setTimerCallback(
-						'tasks_timer_refresh_daemon_event',
-						(function(self){
-							return function(){
-								self.onTick();
-							}
-						})(self),
-						1024
-					);
-				}
-			})(this)
-		);
+		const setTimerCallback = () => {
+			BX.CJSTask.setTimerCallback(
+				'tasks_timer_refresh_daemon_event',
+				() => {
+					this.onTick();
+				},
+				1024,
+			);
+		};
+
+		if (BX.Type.isUndefined(window.frameCacheVars))
+		{
+			BX.Event.ready(setTimerCallback);
+		}
+		else
+		{
+			const isCompositeReady = (
+				BX.frameCache?.frameDataInserted === true || !BX.Type.isUndefined(window.frameRequestFail)
+			);
+
+			if (isCompositeReady)
+			{
+				setTimerCallback();
+			}
+			else
+			{
+				BX.Event.EventEmitter.subscribe('onFrameDataProcessed', setTimerCallback);
+				BX.Event.EventEmitter.subscribe('onFrameDataRequestFail', setTimerCallback);
+			}
+		}
 
 		this.catchTimerChange = function(params)
 		{
@@ -865,7 +880,7 @@
 					return;
 				}
 
-				if (params.data.TIMER.TIMER_STARTED_AT == 0)
+				if (Number(params.data.TIMER.TIMER_STARTED_AT) === 0)
 				{
 					// Task on pause
 					this.data = null;

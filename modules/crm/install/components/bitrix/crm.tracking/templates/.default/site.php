@@ -11,7 +11,7 @@ global $APPLICATION;
 $APPLICATION->IncludeComponent(
 	'bitrix:ui.sidepanel.wrapper',
 	'',
-	array(
+	[
 		'POPUP_COMPONENT_NAME' => 'bitrix:crm.tracking.site',
 		'POPUP_COMPONENT_TEMPLATE_NAME' => '',
 		'POPUP_COMPONENT_PARAMS' => [
@@ -25,5 +25,6 @@ $APPLICATION->IncludeComponent(
 		'RELOAD_PAGE_AFTER_SAVE' => true,
 		'CLOSE_AFTER_SAVE' => true,
 		'USE_PADDING' => false,
-	)
+		'USE_UI_TOOLBAR' => 'Y',
+	]
 );

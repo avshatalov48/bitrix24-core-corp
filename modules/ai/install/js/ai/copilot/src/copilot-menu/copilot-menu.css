@@ -29,8 +29,8 @@
 	position: relative;
 }
 
-.ai__copilot-menu-popup .menu-popup-item-text {
-	padding-right: 5px;
+.ai__copilot-menu-popup .menu-popup-item-submenu .menu-popup-item-text {
+	padding-right: 18px;
 }
 
 .ai__copilot-menu_item .ui-label {

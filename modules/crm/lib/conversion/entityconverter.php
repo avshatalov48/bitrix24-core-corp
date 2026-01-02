@@ -310,6 +310,8 @@ class EntityConverter
 
 				$sourceValue = $dstValues[$dstField->getName()] ?? $sourceValue;
 
+				$useTemporaryFiles = $this->config->isUseTemporaryFilesForUF();
+
 				if (is_array($sourceValue) && $dstField->isFileUserField())
 				{
 					$fileUploader = Container::getInstance()->getFileUploader();
@@ -318,13 +320,19 @@ class EntityConverter
 					{
 						foreach ($sourceValue as &$singleFileArray)
 						{
-							$singleFileArray = $fileUploader->saveFileTemporary($dstField, $singleFileArray);
+							$singleFileArray = $useTemporaryFiles
+								? $fileUploader->saveFileTemporary($dstField, $singleFileArray)
+								: $fileUploader->saveFilePersistently($dstField, $singleFileArray)
+							;
 						}
 						unset($singleFileArray);
 					}
 					else
 					{
-						$sourceValue = $fileUploader->saveFileTemporary($dstField, $sourceValue);
+						$sourceValue = $useTemporaryFiles
+							? $fileUploader->saveFileTemporary($dstField, $sourceValue)
+							: $fileUploader->saveFilePersistently($dstField, $sourceValue)
+						;
 					}
 				}
 			}
@@ -1069,10 +1077,10 @@ class EntityConverter
 			return false;
 		}
 
-		return Crm\Service\Container::getInstance()->getUserPermissions($this->getUserPermissions()->GetUserID())->isStageTransitionAllowed(
+		return Crm\Service\Container::getInstance()->getUserPermissions($this->getUserPermissions()->GetUserID())->item()->canChangeStage(
+			Crm\ItemIdentifier::createByItem($item),
 			$item->getStageId(),
 			$successfulStageId,
-			Crm\ItemIdentifier::createByItem($item),
 		);
 	}
 	//endregion

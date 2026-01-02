@@ -69,4 +69,16 @@ abstract class Provider
 	{
 		return [];
 	}
+
+	/**
+	 * Returns analytics data for an analytics event that should be registered when the page with such $pageSettings is
+	 * opened.
+	 *
+	 * @param string $pageSettings
+	 * @return Array<string, mixed>
+	 */
+	public function getAnalytics(string $pageSettings): array
+	{
+		return [];
+	}
 }

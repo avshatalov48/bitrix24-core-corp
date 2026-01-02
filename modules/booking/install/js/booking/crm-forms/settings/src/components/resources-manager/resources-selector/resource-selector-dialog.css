@@ -1,0 +1,11 @@
+.crm-forms--booking--resource-selector-dialog__footer {
+	padding: 15px 0;
+	width: 100%;
+	display: flex;
+	justify-content: center;
+	box-shadow: 0 -1px 4px 0 rgba(0, 0, 0, 0.05);
+}
+
+.crm-forms--booking--resource-selector-dialog__footer-btn-width {
+	width: 131px;
+}

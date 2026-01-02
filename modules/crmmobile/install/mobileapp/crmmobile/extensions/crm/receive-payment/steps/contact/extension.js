@@ -9,6 +9,7 @@ jn.define('crm/receive-payment/steps/contact', (require, exports, module) => {
 	const { ClientType } = require('layout/ui/fields/client');
 	const { AnalyticsLabel } = require('analytics-label');
 	const { EventEmitter } = require('event-emitter');
+	const { Random } = require('utils/random');
 
 	/**
 	 * @class ContactStep

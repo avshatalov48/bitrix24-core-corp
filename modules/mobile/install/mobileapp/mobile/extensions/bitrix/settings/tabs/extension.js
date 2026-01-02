@@ -10,6 +10,10 @@ BX.addCustomEvent("onRegisterProvider", (addProviderHandler) =>
 		return;
 	}
 
+	const require = (ext) => jn.require(ext);
+
+	const { DelayedRestRequest, RequestExecutor } = require('rest');
+
 	class TabSettingsProvider extends SettingsProvider
 	{
 		constructor(id, title, subtitle = "")

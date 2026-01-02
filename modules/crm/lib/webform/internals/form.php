@@ -247,6 +247,11 @@ class FormTable extends ORM\Data\DataManager
 				'data_type' => AdsFormLinkTable::class,
 				'reference' => array('=this.ID' => 'ref.WEBFORM_ID'),
 			),
+			'IS_BOOKING_FORM' => array(
+				'data_type' => 'boolean',
+				'default_value' => 'N',
+				'values' => array('N','Y')
+			),
 		);
 	}
 

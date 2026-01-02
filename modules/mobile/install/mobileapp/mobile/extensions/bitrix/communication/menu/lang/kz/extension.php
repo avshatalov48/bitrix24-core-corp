@@ -1,0 +1,20 @@
+<?php
+$MESS["M_CRM_COMMUNICATION_HIDDEN"] = "Жасырылған";
+$MESS["M_CRM_COMMUNICATION_MENU_ADD_COMPANY"] = "Компанияны қосу";
+$MESS["M_CRM_COMMUNICATION_MENU_ADD_CONTACT"] = "Байланысты қосу";
+$MESS["M_CRM_COMMUNICATION_MENU_COMPANY"] = "Компания";
+$MESS["M_CRM_COMMUNICATION_MENU_CONTACT"] = "Байланыс";
+$MESS["M_CRM_COMMUNICATION_MENU_EMAIL_DESCRIPTION"] = "Сіз хаттарды тікелей CRM-ге жібере аласыз және қабылдай аласыз";
+$MESS["M_CRM_COMMUNICATION_MENU_EMAIL_STUB"] = "Поштаны қосу";
+$MESS["M_CRM_COMMUNICATION_MENU_INFO_DESCRIPTION"] = "Қоңырау шалу, хат жазу немесе чатқа хабарлама жіберу үшін клиентті қосыңыз";
+$MESS["M_CRM_COMMUNICATION_MENU_INFO_TITLE"] = "Элементте әлі клиент жоқ";
+$MESS["M_CRM_COMMUNICATION_MENU_INFO_TITLE_DEAL"] = "Мәміледе әлі клиент жоқ";
+$MESS["M_CRM_COMMUNICATION_MENU_INFO_TITLE_LEAD"] = "Лидте әлі клиент жоқ";
+$MESS["M_CRM_COMMUNICATION_MENU_INFO_TITLE_QUOTE"] = "Ұсыныста әлі клиент жоқ";
+$MESS["M_CRM_COMMUNICATION_MENU_INFO_TITLE_SMART_INVOICE"] = "Шотта әлі клиент жоқ";
+$MESS["M_CRM_COMMUNICATION_MENU_LEAD"] = "Лид";
+$MESS["M_CRM_COMMUNICATION_MENU_OPENLINE"] = "Ашық желі";
+$MESS["M_CRM_COMMUNICATION_MENU_PHONE_DESCRIPTION"] = "Сіз CRM-нен тікелей қоңырау шала аласыз, хабарламалар немесе құжаттарды СМС және мессенджерлер арқылы жібере аласыз";
+$MESS["M_CRM_COMMUNICATION_MENU_PHONE_STUB"] = "Телефонды қосу";
+$MESS["M_CRM_COMMUNICATION_MENU_PHONE_TITLE"] = "Сіз CRM-нен тікелей қоңырау шала аласыз, хабарламалар немесе құжаттарды СМС және мессенджерлер арқылы жібере аласыз";
+$MESS["M_CRM_COMMUNICATION_MENU_TITLE"] = "Байланыс арналары";

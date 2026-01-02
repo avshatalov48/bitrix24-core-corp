@@ -1,6 +1,4 @@
 .booking-booking-booking-name {
-	overflow: hidden;
-	text-overflow: ellipsis;
 	font-size: calc(var(--ui-font-size-md) * var(--quater-zoom));
 	font-weight: var(--ui-font-weight-medium);
 }

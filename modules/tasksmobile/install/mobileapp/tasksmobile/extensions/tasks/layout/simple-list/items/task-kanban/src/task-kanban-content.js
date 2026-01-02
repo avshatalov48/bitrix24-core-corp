@@ -924,7 +924,7 @@ jn.define('tasks/layout/simple-list/items/task-kanban/src/task-kanban-content', 
 
 	const mapStateToProps = (state, ownProps) => {
 		const taskId = ownProps.id;
-		const task = selectByTaskIdOrGuid(state, taskId);
+		const task = selectByTaskIdOrGuid(state, taskId, ownProps.ownerId);
 
 		if (!task)
 		{
@@ -988,7 +988,7 @@ jn.define('tasks/layout/simple-list/items/task-kanban/src/task-kanban-content', 
 				activityDate: activityDate - (activityDate % 60),
 				counter: selectCounter(task),
 				isCompleted: selectIsCompleted(task),
-				canChangeDeadline: selectActions(task).updateDeadline,
+				canChangeDeadline: selectActions({ task }).updateDeadline,
 				stageId,
 				canMoveStage,
 			},

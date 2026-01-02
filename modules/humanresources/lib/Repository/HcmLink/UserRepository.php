@@ -34,7 +34,7 @@ class UserRepository implements Contract\Repository\HcmLink\UserRepository
 		}
 
 		$usersQuery = UserTable::query()
-			->setSelect(['NAME', 'LAST_NAME', 'WORK_POSITION', 'PERSONAL_PHOTO'])
+			->setSelect(['NAME', 'LAST_NAME', 'WORK_POSITION', 'SECOND_NAME', 'PERSONAL_PHOTO'])
 			->whereIn('ID', $userIds)
 		;
 
@@ -56,6 +56,7 @@ class UserRepository implements Contract\Repository\HcmLink\UserRepository
 				name: $user->getName() . ' ' . $user->getLastName(),
 				avatarLink: $this->getAvatarLink($user->getPersonalPhoto()),
 				position: $user->getWorkPosition(),
+				fullName: trim($user->getLastName() . ' ' . $user->getName() . ' ' . $user->getSecondName()),
 			));
 		}
 

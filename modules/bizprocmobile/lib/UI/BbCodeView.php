@@ -57,19 +57,16 @@ class BbCodeView implements \JsonSerializable
 			{
 				$fileId = (int)$fileId;
 				$file = File::load($fileId);
-				if (!isset($file))
+				if (isset($file))
 				{
-					return $matches[0];
-				}
-				$uri = 'fid://' . $file->getId();
-				$files[$uri] = $file;
+					$uri = 'fid://' . $file->getId();
+					$files[$uri] = $file;
 
-				return '[url=' . $uri . ']';
+					return '[url=' . $uri . ']';
+				}
 			}
 
-			// File not found
-			// TODO - delete link?
-			return $matches[0];
+			return '[url=/dev/null]'; // File not found
 		};
 	}
 
@@ -83,20 +80,16 @@ class BbCodeView implements \JsonSerializable
 			if (isset($diskFile))
 			{
 				$file = File::load($diskFile->getFileId());
-				if (!isset($file))
+				if (isset($file))
 				{
-					return $matches[0];
+					$uri = 'fid://' . $file->getId();
+					$files[$uri] = $file;
+
+					return '[url=' . $uri . ']';
 				}
-
-				$uri = 'fid://' . $file->getId();
-				$files[$uri] = $file;
-
-				return '[url=' . $uri . ']';
 			}
 
-			// File not found
-			// TODO - delete link?
-			return $matches[0];
+			return '[url=/dev/null]'; // File not found
 		};
 	}
 

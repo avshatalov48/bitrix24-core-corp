@@ -63,6 +63,6 @@ export class FinishService
 
 	#clearLastOpenedElement(): void
 	{
-		LayoutManager.getInstance().setLastOpenedElement(Layout.openlinesV2.name, '');
+		LayoutManager.getInstance().setLastOpenedElement(Layout.openlinesV2, '');
 	}
 }

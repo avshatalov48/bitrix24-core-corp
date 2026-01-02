@@ -13,6 +13,5 @@ return [
 		'type',
 		'utils/object',
 		'utils/string',
-		'utils/number',
 	],
 ];

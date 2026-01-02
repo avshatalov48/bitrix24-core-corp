@@ -14,6 +14,7 @@ use Bitrix\Crm\EntityRequisite;
 use Bitrix\Crm\Field;
 use Bitrix\Crm\Format\PersonNameFormatter;
 use Bitrix\Crm\Format\TextHelper;
+use Bitrix\Crm\Integration\DocumentGenerator\CustomField\Field\Extension\PaymentQrCodePurpose;
 use Bitrix\Crm\Integration\DocumentGenerator\Value\Money;
 use Bitrix\Crm\Integration\DocumentGeneratorManager;
 use Bitrix\Crm\ItemIdentifier;
@@ -23,6 +24,7 @@ use Bitrix\Crm\Timeline\DocumentController;
 use Bitrix\Crm\Timeline\DocumentEntry;
 use Bitrix\Crm\Timeline\TimelineType;
 use Bitrix\Crm\UI\Barcode;
+use Bitrix\Crm\UI\Barcode\Payment\DataAssembler;
 use Bitrix\Crm\UI\Barcode\Payment\TransactionData;
 use Bitrix\DocumentGenerator\CreationMethod;
 use Bitrix\DocumentGenerator\DataProvider;
@@ -1319,6 +1321,7 @@ abstract class CrmEntityDataProvider extends EntityDataProvider implements Hasha
 		{
 			return $this->paymentQrCodePath;
 		}
+
 		if (!$this->isLoaded())
 		{
 			return null;
@@ -1326,8 +1329,10 @@ abstract class CrmEntityDataProvider extends EntityDataProvider implements Hasha
 
 		$transactionData = $this->prepareTransactionData();
 
+		// set additional transaction data:
+		// - Purpose
+		$transactionData->setPurpose($this->getPurposeValue());
 		$paymentQr = new Barcode\Payment($transactionData);
-
 		if (!$paymentQr->validate()->isSuccess())
 		{
 			return null;
@@ -1364,15 +1369,15 @@ abstract class CrmEntityDataProvider extends EntityDataProvider implements Hasha
 		return $myCompany instanceof Company ? $myCompany : null;
 	}
 
-	public function prepareTransactionData(): Barcode\Payment\TransactionData
+	public function prepareTransactionData(): TransactionData
 	{
 		[$myCompanyRequisites, $myCompanyBankDetail] = $this->getMyCompanyRequisitesAndBankDetail();
-		$myCompanyTransactionPartyData = Barcode\Payment\DataAssembler::createTransactionPartyDataByRequisiteData(
+		$myCompanyTransactionPartyData = DataAssembler::createTransactionPartyDataByRequisiteData(
 			$myCompanyRequisites,
 			$myCompanyBankDetail
 		);
 		[$requisites, $bankDetails] = $this->extractRequisiteAndBankDetailDataFromProvider($this);
-		$clientTransactionPartyData = Barcode\Payment\DataAssembler::createTransactionPartyDataByRequisiteData(
+		$clientTransactionPartyData = DataAssembler::createTransactionPartyDataByRequisiteData(
 			$requisites,
 			$bankDetails
 		);
@@ -2186,5 +2191,27 @@ abstract class CrmEntityDataProvider extends EntityDataProvider implements Hasha
 	protected function hasLeadField()
 	{
 		return false;
+	}
+
+	private function getPurposeValue(): ?string
+	{
+		if ($this->getParentProvider() !== null)
+		{
+			return null;
+		}
+
+		$options = $this->getOptions();
+		if (isset($options['VALUES'][PaymentQrCodePurpose::FIELD_UID]))
+		{
+			return (string)($options['VALUES'][PaymentQrCodePurpose::FIELD_UID] ?? '');
+		}
+
+		$templateId = DataProviderManager::getInstance()->getContext()->getTemplateId();
+		$identifier = $this->getTimelineItemIdentifier();
+
+		return ($templateId > 0 && $identifier)
+			? PaymentQrCodePurpose::getValue($templateId, $identifier)
+			: null
+		;
 	}
 }

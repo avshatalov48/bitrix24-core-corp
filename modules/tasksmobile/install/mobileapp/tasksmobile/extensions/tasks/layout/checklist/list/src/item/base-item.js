@@ -1,7 +1,7 @@
 /**
- * @module tasks/layout/checklist/list/src/base-item
+ * @module tasks/layout/checklist/list/src/item/base-item
  */
-jn.define('tasks/layout/checklist/list/src/base-item', (require, exports, module) => {
+jn.define('tasks/layout/checklist/list/src/item/base-item', (require, exports, module) => {
 	const { Loc } = require('loc');
 	const { Random } = require('utils/random');
 	const { ItemTextField } = require('tasks/layout/checklist/list/src/text-field');
@@ -99,12 +99,13 @@ jn.define('tasks/layout/checklist/list/src/base-item', (require, exports, module
 			return '';
 		}
 
-		handleOnChangeTitle(title)
+		handleOnChangeTitle(title, isFocused)
 		{
 			const { item } = this.props;
 
 			item.setTitle(title);
 			item.setIsNew(false);
+
 			this.handleOnChange();
 		}
 
@@ -214,6 +215,14 @@ jn.define('tasks/layout/checklist/list/src/base-item', (require, exports, module
 			const { item } = this.props;
 
 			return (item.getDepth() * 18) + additionalShift;
+		}
+
+		/**
+		 * @returns {string}
+		 */
+		getTextValue()
+		{
+			return this.textRef.getTextValue().trim();
 		}
 
 		toggleCompleteText()

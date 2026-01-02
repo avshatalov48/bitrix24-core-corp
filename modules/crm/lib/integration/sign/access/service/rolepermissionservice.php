@@ -100,7 +100,7 @@ abstract class RolePermissionService
 				$rolePerms[$smartB2eDocumentPermissionEntity] = $preparedValues[$smartB2eDocumentEntityName];
 			}
 			$fields = [
-				'RELATION' => $rolePerms,
+				'PERMISSIONS' => $rolePerms,
 				'NAME' => $roleTitle,
 				'IS_SYSTEM' => 'Y',
 				'GROUP_CODE' => self::ROLE_GROUP_CODE,

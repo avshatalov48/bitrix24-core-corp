@@ -57,10 +57,9 @@ if (!$isErrorOccured && !CCrmSecurityHelper::IsAuthorized())
 	$isErrorOccured = true;
 }
 
-$CrmPerms = CCrmPerms::GetCurrentUserPermissions();
 if (!$isErrorOccured
-	&& !(CCrmPerms::IsAccessEnabled($CrmPerms)
-		&& $CrmPerms->HavePerm('CONFIG', BX_CRM_PERM_CONFIG, 'READ')))
+	&& !\Bitrix\Crm\Service\Container::getInstance()->getUserPermissions()->product()->canRead()
+)
 {
 	$errorMessage = GetMessage('CRM_PERMISSION_DENIED');
 	$isErrorOccured = true;
@@ -80,7 +79,7 @@ if ($isErrorOccured)
 }
 
 $arResult['CAN_DELETE'] = $arResult['CAN_EDIT'] = $arResult['CAN_ADD_SECTION'] = $arResult['CAN_EDIT_SECTION'] =
-	$CrmPerms->HavePerm('CONFIG', BX_CRM_PERM_CONFIG, 'WRITE');
+	\Bitrix\Crm\Service\Container::getInstance()->getUserPermissions()->isCrmAdmin();
 
 $arParams['PATH_TO_PRODUCT_LIST'] = CrmCheckPath('PATH_TO_PRODUCT_LIST', $arParams['PATH_TO_PRODUCT_LIST'], $APPLICATION->GetCurPage().'?section_id=#section_id#');
 $arParams['PATH_TO_PRODUCT_SHOW'] = CrmCheckPath('PATH_TO_PRODUCT_SHOW', $arParams['PATH_TO_PRODUCT_SHOW'], $APPLICATION->GetCurPage().'?product_id=#product_id#&show');

@@ -1,7 +1,7 @@
 /* eslint-disable */
 this.BX = this.BX || {};
 this.BX.Sign = this.BX.Sign || {};
-(function (exports,main_core_cache,sign_featureStorage,sign_v2_analytics,sign_v2_documentSetup,sign_v2_preview,ui_wizard,main_core,sign_type) {
+(function (exports,main_core_cache,sign_v2_analytics,sign_v2_documentSetup,sign_v2_preview,ui_wizard,main_core,sign_type) {
 	'use strict';
 
 	function decorateResultBeforeCompletion(innerCallback, onSuccess, onFail) {
@@ -49,10 +49,7 @@ this.BX.Sign = this.BX.Sign || {};
 	var _getLayout = /*#__PURE__*/babelHelpers.classPrivateFieldLooseKey("getLayout");
 	var _getOverlayContainer = /*#__PURE__*/babelHelpers.classPrivateFieldLooseKey("getOverlayContainer");
 	var _showCompleteNotification = /*#__PURE__*/babelHelpers.classPrivateFieldLooseKey("showCompleteNotification");
-	var _isGroupDocuments = /*#__PURE__*/babelHelpers.classPrivateFieldLooseKey("isGroupDocuments");
-	var _renderPages = /*#__PURE__*/babelHelpers.classPrivateFieldLooseKey("renderPages");
 	var _subscribeOnEditorEvents = /*#__PURE__*/babelHelpers.classPrivateFieldLooseKey("subscribeOnEditorEvents");
-	var _getPagesUrls = /*#__PURE__*/babelHelpers.classPrivateFieldLooseKey("getPagesUrls");
 	var _executeEditorActionsForGroup = /*#__PURE__*/babelHelpers.classPrivateFieldLooseKey("executeEditorActionsForGroup");
 	var _appendOverlay = /*#__PURE__*/babelHelpers.classPrivateFieldLooseKey("appendOverlay");
 	var _render = /*#__PURE__*/babelHelpers.classPrivateFieldLooseKey("render");
@@ -76,17 +73,8 @@ this.BX.Sign = this.BX.Sign || {};
 	    Object.defineProperty(this, _executeEditorActionsForGroup, {
 	      value: _executeEditorActionsForGroup2
 	    });
-	    Object.defineProperty(this, _getPagesUrls, {
-	      value: _getPagesUrls2
-	    });
 	    Object.defineProperty(this, _subscribeOnEditorEvents, {
 	      value: _subscribeOnEditorEvents2
-	    });
-	    Object.defineProperty(this, _renderPages, {
-	      value: _renderPages2
-	    });
-	    Object.defineProperty(this, _isGroupDocuments, {
-	      value: _isGroupDocuments2
 	    });
 	    Object.defineProperty(this, _showCompleteNotification, {
 	      value: _showCompleteNotification2
@@ -165,13 +153,15 @@ this.BX.Sign = this.BX.Sign || {};
 	    this.documentsGroup = new Map();
 	    this.documentsGroupUids = [];
 	    const {
-	      languages
+	      languages,
+	      needSkipEditorStep
 	    } = (_config$documentSendC = config.documentSendConfig) != null ? _config$documentSendC : {};
 	    const EditorConstructor = main_core.Reflection.getClass('top.BX.Sign.V2.Editor');
 	    this.editor = new EditorConstructor(type, {
 	      languages,
 	      isTemplateMode: this.isTemplateMode(),
-	      documentInitiatedByType: initiatedByType
+	      documentInitiatedByType: initiatedByType,
+	      needSkipEditorStep
 	    });
 	    babelHelpers.classPrivateFieldLooseBase(this, _preview)[_preview] = new sign_v2_preview.Preview({
 	      layout: {
@@ -184,6 +174,20 @@ this.BX.Sign = this.BX.Sign || {};
 	  }
 	  isDocumentMode() {
 	    return this.documentMode === sign_type.DocumentMode.document;
+	  }
+	  getLayoutTemplate(header, wizard, preview) {
+	    const className = babelHelpers.classPrivateFieldLooseBase(this, _type)[_type] === 'b2e' ? 'sign-settings --b2e' : 'sign-settings';
+	    return main_core.Tag.render(_t || (_t = _`
+			<div class="sign-settings__scope ${0}">
+				<div class="sign-settings__sidebar">
+					${0}
+					${0}
+				</div>
+				<div class="sing-settings-preview-block">
+					${0}
+				</div>
+			</div>
+		`), className, header, wizard, preview);
 	  }
 	  onComplete(showNotification = true) {
 	    BX.SidePanel.Instance.close();
@@ -206,11 +210,43 @@ this.BX.Sign = this.BX.Sign || {};
 	  isSingleDocument() {
 	    return this.documentsGroup.size === 1;
 	  }
+	  isGroupDocuments() {
+	    return this.documentsGroup.size > 1;
+	  }
+	  async renderPages(documentData, preparedPages = false, isSelectBlank = true) {
+	    babelHelpers.classPrivateFieldLooseBase(this, _preview)[_preview].urls = [];
+	    this.disablePreviewReady();
+	    babelHelpers.classPrivateFieldLooseBase(this, _preview)[_preview].setBlocks(documentData.blocks);
+	    this.editor.setUrls([], 0);
+	    this.wizard.toggleBtnActiveState('back', true);
+	    const handler = (urls, totalPages, newBlocks) => {
+	      this.enablePreviewReady();
+	      babelHelpers.classPrivateFieldLooseBase(this, _preview)[_preview].urls = urls;
+	      this.editor.setUrls(urls, totalPages);
+	      if (main_core.Type.isArray(newBlocks)) {
+	        babelHelpers.classPrivateFieldLooseBase(this, _preview)[_preview].setBlocks(newBlocks);
+	      }
+	      this.wizard.toggleBtnActiveState('back', false);
+	    };
+	    this.documentSetup.waitForPagesList(documentData, handler, preparedPages, isSelectBlank);
+	  }
 	  getFirstDocumentUidFromGroup() {
 	    return this.documentsGroup.keys().next().value;
 	  }
 	  getFirstDocumentDataFromGroup() {
 	    return this.documentsGroup.values().next().value;
+	  }
+
+	  /**
+	   * Returns document data with settings in the wizard
+	   */
+	  getDocumentSetupData() {
+	    const firstDocumentData = this.getFirstDocumentDataFromGroup() || {};
+	    const setupData = this.documentSetup.setupData || {};
+	    return {
+	      ...firstDocumentData,
+	      ...setupData
+	    };
 	  }
 	  subscribeOnEvents() {
 	    const settingsEvents = [{
@@ -251,7 +287,7 @@ this.BX.Sign = this.BX.Sign || {};
 	        const {
 	          uid
 	        } = event.getData();
-	        if (uid && babelHelpers.classPrivateFieldLooseBase(this, _isGroupDocuments)[_isGroupDocuments]()) {
+	        if (uid && this.isGroupDocuments()) {
 	          await babelHelpers.classPrivateFieldLooseBase(this, _executeEditorActionsForGroup)[_executeEditorActionsForGroup](uid);
 	        }
 	        this.editor.show();
@@ -315,6 +351,15 @@ this.BX.Sign = this.BX.Sign || {};
 	    });
 	    babelHelpers.classPrivateFieldLooseBase(this, _subscribeOnEditorEvents)[_subscribeOnEditorEvents]();
 	  }
+	  async getPagesUrls(data) {
+	    const documentUrls = [];
+	    const handler = urls => {
+	      const targetDocument = this.documentsGroup.get(data.uid);
+	      documentUrls.push(...urls);
+	      targetDocument.urls = documentUrls;
+	    };
+	    await this.documentSetup.waitForPagesList(data, handler);
+	  }
 	  async setupDocument(uid, preparedPages = false) {
 	    if (this.documentSetup.isSameBlankSelected()) {
 	      void (await this.documentSetup.setup(uid));
@@ -333,9 +378,7 @@ this.BX.Sign = this.BX.Sign || {};
 	    if (!setupData) {
 	      return null;
 	    }
-	    if (this.documentsGroup.size === 0 || this.editedDocument && this.isFirstDocumentSelected(this.editedDocument.uid) || this.isTemplateMode() || this.isB2bSignMaster || !sign_featureStorage.FeatureStorage.isGroupSendingEnabled()) {
-	      babelHelpers.classPrivateFieldLooseBase(this, _renderPages)[_renderPages](setupData, preparedPages);
-	    }
+	    await this.renderPages(setupData, preparedPages);
 	    if (babelHelpers.classPrivateFieldLooseBase(this, _preview)[_preview].hasUrls()) {
 	      this.hasPreviewUrls = true;
 	      this.wizard.toggleBtnActiveState('next', false);
@@ -425,7 +468,7 @@ this.BX.Sign = this.BX.Sign || {};
 	function _createHead2() {
 	  const headerTitle = babelHelpers.classPrivateFieldLooseBase(this, _getHeaderTitleText)[_getHeaderTitleText]();
 	  const headerTitleSub = babelHelpers.classPrivateFieldLooseBase(this, _getHeaderTitleSubText)[_getHeaderTitleSubText]();
-	  return main_core.Tag.render(_t || (_t = _`
+	  return main_core.Tag.render(_t2 || (_t2 = _`
 			<div class="sign-settings__head">
 				<div>
 					<p class="sign-settings__head_title">${0}</p>
@@ -452,19 +495,8 @@ this.BX.Sign = this.BX.Sign || {};
 	  return main_core.Loc.getMessage('SIGN_SETTINGS_TITLE');
 	}
 	function _getLayout2() {
-	  const className = babelHelpers.classPrivateFieldLooseBase(this, _type)[_type] === 'b2e' ? 'sign-settings --b2e' : 'sign-settings';
 	  babelHelpers.classPrivateFieldLooseBase(this, _previewLayout)[_previewLayout] = babelHelpers.classPrivateFieldLooseBase(this, _preview)[_preview].getLayout();
-	  babelHelpers.classPrivateFieldLooseBase(this, _container)[_container] = main_core.Tag.render(_t2 || (_t2 = _`
-			<div class="sign-settings__scope ${0}">
-				<div class="sign-settings__sidebar">
-					${0}
-					${0}
-				</div>
-				<div style="display: flex; flex-direction: column;">
-					${0}
-				</div>
-			</div>
-		`), className, babelHelpers.classPrivateFieldLooseBase(this, _createHead)[_createHead](), this.wizard.getLayout(), babelHelpers.classPrivateFieldLooseBase(this, _previewLayout)[_previewLayout]);
+	  babelHelpers.classPrivateFieldLooseBase(this, _container)[_container] = this.getLayoutTemplate(babelHelpers.classPrivateFieldLooseBase(this, _createHead)[_createHead](), this.wizard.getLayout(), babelHelpers.classPrivateFieldLooseBase(this, _previewLayout)[_previewLayout]);
 	  return babelHelpers.classPrivateFieldLooseBase(this, _container)[_container];
 	}
 	function _getOverlayContainer2() {
@@ -476,27 +508,11 @@ this.BX.Sign = this.BX.Sign || {};
 	}
 	function _showCompleteNotification2() {
 	  const Notification = main_core.Reflection.getClass('top.BX.UI.Notification');
-	  const notificationText = babelHelpers.classPrivateFieldLooseBase(this, _isGroupDocuments)[_isGroupDocuments]() ? main_core.Loc.getMessage('SIGN_SETTINGS_COMPLETE_NOTIFICATION_TEXT_GROUP') : main_core.Loc.getMessage('SIGN_SETTINGS_COMPLETE_NOTIFICATION_TEXT');
+	  const notificationText = this.isGroupDocuments() ? main_core.Loc.getMessage('SIGN_SETTINGS_COMPLETE_NOTIFICATION_TEXT_GROUP') : main_core.Loc.getMessage('SIGN_SETTINGS_COMPLETE_NOTIFICATION_TEXT');
 	  Notification.Center.notify({
 	    content: notificationText,
 	    autoHideDelay: 4000
 	  });
-	}
-	function _isGroupDocuments2() {
-	  return this.documentsGroup.size > 1;
-	}
-	async function _renderPages2(documentData, preparedPages = false) {
-	  babelHelpers.classPrivateFieldLooseBase(this, _preview)[_preview].urls = [];
-	  this.disablePreviewReady();
-	  babelHelpers.classPrivateFieldLooseBase(this, _preview)[_preview].setBlocks(documentData.blocks);
-	  this.wizard.toggleBtnActiveState('back', true);
-	  const handler = (urls, totalPages) => {
-	    this.enablePreviewReady();
-	    babelHelpers.classPrivateFieldLooseBase(this, _preview)[_preview].urls = urls;
-	    this.editor.setUrls(urls, totalPages);
-	    this.wizard.toggleBtnActiveState('back', false);
-	  };
-	  this.documentSetup.waitForPagesList(documentData, handler, preparedPages);
 	}
 	function _subscribeOnEditorEvents2() {
 	  this.editor.subscribe('save', ({
@@ -504,6 +520,9 @@ this.BX.Sign = this.BX.Sign || {};
 	  }) => {
 	    const blocks = data.blocks;
 	    const uid = data.uid;
+	    if (this.documentsGroup.has(uid) === false) {
+	      return;
+	    }
 	    const selectedDocument = this.documentsGroup.get(uid);
 	    selectedDocument.blocks = blocks;
 	    if (uid === this.getFirstDocumentUidFromGroup()) {
@@ -515,22 +534,13 @@ this.BX.Sign = this.BX.Sign || {};
 	    }
 	  });
 	}
-	async function _getPagesUrls2(data) {
-	  const documentUrls = [];
-	  const handler = urls => {
-	    const targetDocument = this.documentsGroup.get(data.uid);
-	    documentUrls.push(...urls);
-	    targetDocument.urls = documentUrls;
-	  };
-	  await this.documentSetup.waitForPagesList(data, handler);
-	}
 	async function _executeEditorActionsForGroup2(uid) {
 	  this.editor.setUrls([], 0);
 	  const setupData = this.documentsGroup.get(uid);
 	  if (!setupData.urls) {
 	    const openEditorButton = babelHelpers.classPrivateFieldLooseBase(this, _container)[_container].querySelector(`span[data-id="${setupData.id}"]`);
 	    main_core.Dom.addClass(openEditorButton, 'ui-btn-clock');
-	    await babelHelpers.classPrivateFieldLooseBase(this, _getPagesUrls)[_getPagesUrls](setupData);
+	    await this.getPagesUrls(setupData);
 	    main_core.Dom.removeClass(openEditorButton, 'ui-btn-clock');
 	    this.documentSetup.blankSelector.disableSelectedBlank(setupData.blankId);
 	    this.documentSetup.resetDocument();
@@ -576,5 +586,5 @@ this.BX.Sign = this.BX.Sign || {};
 	exports.isTemplateMode = isTemplateMode;
 	exports.SignSettings = SignSettings;
 
-}((this.BX.Sign.V2 = this.BX.Sign.V2 || {}),BX.Cache,BX.Sign,BX.Sign.V2,BX.Sign.V2,BX.Sign.V2,BX.Ui,BX,BX.Sign));
+}((this.BX.Sign.V2 = this.BX.Sign.V2 || {}),BX.Cache,BX.Sign.V2,BX.Sign.V2,BX.Sign.V2,BX.Ui,BX,BX.Sign));
 //# sourceMappingURL=sign-settings.bundle.js.map

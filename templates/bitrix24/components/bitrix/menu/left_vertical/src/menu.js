@@ -1,34 +1,30 @@
-import {Cache, Loc, ajax, Type, Dom} from 'main.core';
-import {EventEmitter} from 'main.core.events';
-import {PopupManager, MenuItem} from 'main.popup';
+import { ajax, Cache, Dom, Loc, Reflection, Runtime, Type } from 'main.core';
+import { BaseEvent, EventEmitter } from 'main.core.events';
+import { MenuItem, PopupManager } from 'main.popup';
+import { AirButtonStyle, Button } from 'ui.buttons';
 import PresetCustomController from './controllers/preset-custom-controller';
 import PresetDefaultController from './controllers/preset-default-controller';
 import SettingsController from './controllers/settings-controller';
 import Options from './options';
 import Backend from './backend';
-import ItemsController from './controllers/items-controller'
-import ItemDirector from './controllers/item-director'
-import Item from "./items/item";
-import ItemSystem from "./items/item-system";
-import Utils from './utils';
-import ItemUserFavorites from "./items/item-user-favorites";
-import {MessageBox, MessageBoxButtons} from 'ui.dialogs.messagebox';
+import ItemsController from './controllers/items-controller';
+import ItemDirector from './controllers/item-director';
+import Item from './items/item';
+import ItemSystem from './items/item-system';
+import ItemUserFavorites from './items/item-user-favorites';
+import { MessageBox, MessageBoxButtons } from 'ui.dialogs.messagebox';
 import { BannerDispatcher } from 'ui.banner-dispatcher';
 import { Analytics, AnalyticActions } from './analytics';
+import { GroupPanel } from './group-panel';
 
 export default class Menu
 {
-	//region containers
 	menuContainer;
 	menuHeader;
 	menuBody;
-	header;
-	headerBurger;
-	headerSettings;
 	mainTable;
 	upButton;
 	menuMoreButton;
-	//endregion
 
 	cache = new Cache.MemoryCache();
 
@@ -36,23 +32,18 @@ export default class Menu
 	lastScrollOffset = 0;
 	slidingModeTimeoutId = 0;
 
-	topMenuSelectedNode = null;//
-	topItemSelectedObj = null;
-
 	isMenuMouseEnterBlocked = false;
 	isMenuMouseLeaveBlocked = [];
 	isCollapsedMode = false;
 
-	workgroupsCounterData = {};
-
 	constructor(params)
 	{
-		//TODO     html
 		this.menuContainer = document.getElementById("menu-items-block");
 		if (!this.menuContainer)
 		{
-			return false;
+			return;
 		}
+
 		params = typeof params === "object" ? params : {};
 
 		Options.isExtranet = params.isExtranet === 'Y';
@@ -61,16 +52,27 @@ export default class Menu
 		Options.isCustomPresetRestricted = params.isCustomPresetAvailable !== 'Y';
 		Options.availablePresetTools = params.availablePresetTools;
 		Options.settingsPath = params.settingsPath;
+		Options.inviteDialogLink = params.inviteDialogLink;
+		Options.showMarta = params.showMarta;
+		Options.showSitemapMenuItem = params.showSitemapMenuItem;
+		Options.showLicenseButton = params.showLicenseButton;
+		Options.licenseButtonPath = params.licenseButtonPath;
 
 		this.isCollapsedMode = params.isCollapsedMode;
-		this.workgroupsCounterData = params.workgroupsCounterData;
 		this.analytics = new Analytics(params.isAdmin);
 
 		this.initAndBindNodes();
 		this.bindEvents();
 		this.getItemsController();
-		//Emulate document scroll because init() can be invoked after page load scroll (a hard reload with script at the bottom).
-		this.handleDocumentScroll();
+		this.#addLicenseButton();
+
+		this.groupPanel = new GroupPanel({
+			isExtranetInstalled: params.isExtranetInstalled !== 'N',
+		});
+
+		// Emulate document scroll because init() can be invoked after page load scroll
+		// (a hard reload with script at the bottom).
+		// this.handleDocumentScroll();
 	}
 
 	initAndBindNodes()
@@ -84,38 +86,19 @@ export default class Menu
 		this.menuBody = this.menuContainer.querySelector(".menu-items-body");
 		this.menuItemsBlock = this.menuContainer.querySelector(".menu-items");
 
-		this.header = document.querySelector("#header");
-		this.headerBurger = this.header.querySelector(".menu-switcher");
+		// document.addEventListener("scroll", this.handleDocumentScroll.bind(this));
 
-		const headerLogoBlock = this.header.querySelector(".header-logo-block");
-		this.headerSettings = this.header.querySelector(".header-logo-block-settings");
-		if (this.headerSettings)
-		{
-			headerLogoBlock.addEventListener("mouseenter", this.handleHeaderLogoMouserEnter.bind(this));
-			headerLogoBlock.addEventListener("mouseleave", this.handleHeaderLogoMouserLeave.bind(this));
-			this.menuHeader.addEventListener("mouseenter", this.handleHeaderLogoMouserEnter.bind(this));
-			this.menuHeader.addEventListener("mouseleave", this.handleHeaderLogoMouserLeave.bind(this));
-		}
-		document.addEventListener("scroll", this.handleDocumentScroll.bind(this));
-
-		this.mainTable = document.querySelector(".bx-layout-table");
+		this.mainTable = document.querySelector(".js-app");
 		this.menuHeaderBurger = this.menuHeader.querySelector(".menu-switcher");
-		this.menuHeaderBurger
-			.addEventListener('click', this.handleBurgerClick.bind(this));
+		this.menuHeaderBurger.addEventListener('click', this.handleBurgerClick.bind(this));
 		this.menuHeader.querySelector(".menu-items-header-title")
 			.addEventListener('click', this.handleBurgerClick.bind(this, true));
 
-		this.upButton = this.menuContainer.querySelector(".menu-btn-arrow-up");
-		this.upButton.addEventListener("click", this.handleUpButtonClick.bind(this));
-		this.menuMoreButton = this.menuContainer.querySelector(".menu-favorites-more-btn");
+		// this.upButton = this.menuContainer.querySelector(".menu-btn-arrow-up");
+		// this.upButton.addEventListener("click", this.handleUpButtonClick.bind(this));
+		this.menuMoreButton = this.menuContainer.querySelector(".menu-item-block.menu-expand");
+		this.menuMoreButton = this.menuContainer.querySelector('[data-role="expand-menu-item"]');
 		this.menuMoreButton.addEventListener("click", this.handleShowHiddenClick.bind(this));
-
-		const helperItem = this.menuContainer.querySelector(".menu-help-btn");
-
-		if (helperItem)
-		{
-			helperItem.addEventListener('click', this.handleHelperClick.bind(this));
-		}
 
 		const siteMapItem = this.menuContainer.querySelector(".menu-sitemap-btn");
 		if (siteMapItem)
@@ -123,14 +106,18 @@ export default class Menu
 			siteMapItem.addEventListener('click', this.handleSiteMapClick.bind(this));
 		}
 
-		const settingsSaveBtn = this.menuContainer.querySelector(".menu-settings-save-btn")
+		const settingsSaveBtn = this.menuContainer.querySelector(".menu-settings-save-btn");
 		if (settingsSaveBtn)
 		{
 			settingsSaveBtn.addEventListener('click', this.handleViewMode.bind(this));
 		}
-		this.menuContainer.querySelector(".menu-settings-btn")?.addEventListener('click', () => {
+
+		// this.menuContainer.querySelector(".menu-settings-btn")?.addEventListener('click', () => {
+		// 	this.getSettingsController().show();
+		// });
+		this.menuContainer.querySelector('[data-role="menu-settings-item"]')?.addEventListener('click', () => {
 			this.getSettingsController().show();
-		})
+		});
 	}
 
 	// region Controllers
@@ -189,7 +176,7 @@ export default class Menu
 	getSettingsController(): ?SettingsController
 	{
 		return this.cache.remember('presetController', () => {
-			const node = this.menuContainer.querySelector(".menu-settings-btn");
+			const node = this.menuContainer.querySelector('[data-role="menu-settings-item"]');
 
 			if (!node)
 			{
@@ -292,30 +279,58 @@ export default class Menu
 			return presetController;
 		});
 	}
-	//endregion
+	// endregion
 
-	bindEvents()
+	bindEvents(): void
 	{
-		//just to hold opened menu in collapsing mode when groups are shown
+		// All Counters from IM
+		EventEmitter.subscribe('onImUpdateCounter', (event: BaseEvent) => {
+			const [counters] = event.getCompatData();
+			this.updateCounters(counters, false);
+		});
+
+		// Messenger counter
+		EventEmitter.subscribe('onImUpdateCounterMessage', (event: BaseEvent) => {
+			const [counter] = event.getCompatData();
+			this.updateCounters({ 'im-message': counter }, false);
+		});
+
+		// Live Feed Counter
+		EventEmitter.subscribe('onCounterDecrement', (event: BaseEvent) => {
+			const [decrement] = event.getCompatData();
+			this.decrementCounter(document.getElementById('menu-counter-live-feed'), decrement);
+		});
+
+		// All Counters
+		EventEmitter.subscribe('onPullEvent-main', (event: BaseEvent) => {
+			const [command, params] = event.getCompatData();
+			if (command === 'user_counter' && params[Loc.getMessage('SITE_ID')])
+			{
+				const counters = { ...params[Loc.getMessage('SITE_ID')] };
+				this.updateCounters(counters, false);
+			}
+		});
+
+		// just to hold opened menu in collapsing mode when groups are shown
 		BX.addCustomEvent("BX.Bitrix24.GroupPanel:onOpen", this.handleGroupPanelOpen.bind(this));
 		BX.addCustomEvent("BX.Bitrix24.GroupPanel:onClose", this.handleGroupPanelClose.bind(this));
 
-		//region Top menu integration
+		// region Top menu integration
 		BX.addCustomEvent('BX.Main.InterfaceButtons:onFirstItemChange', (firstPageLink, firstNode) => {
 			if (!firstPageLink || !Type.isDomNode(firstNode))
 			{
 				return;
 			}
 
-			const topMenuId = firstNode.getAttribute("data-top-menu-id");
+			const topMenuId = firstNode.getAttribute('data-top-menu-id');
 			const leftMenuNode = this.menuBody.querySelector(`[data-top-menu-id="${topMenuId}"]`);
 			if (leftMenuNode)
 			{
-				leftMenuNode.setAttribute("data-link", firstPageLink);
+				leftMenuNode.setAttribute('data-link', firstPageLink);
 				const leftMenuLink = leftMenuNode.querySelector('a.menu-item-link');
 				if (leftMenuLink)
 				{
-					leftMenuLink.setAttribute("href", firstPageLink);
+					leftMenuLink.setAttribute('href', firstPageLink);
 				}
 
 				if (leftMenuNode.previousElementSibling === this.menuContainer.querySelector('#left-menu-empty-item'))
@@ -329,49 +344,51 @@ export default class Menu
 			}
 			this.showMessage(firstNode, Loc.getMessage('MENU_ITEM_MAIN_SECTION_PAGE'));
 		});
-		BX.addCustomEvent("BX.Main.InterfaceButtons:onHideLastVisibleItem", (bindElement) => {
-			this.showMessage(bindElement, Loc.getMessage("MENU_TOP_ITEM_LAST_HIDDEN"));
+
+		BX.addCustomEvent('BX.Main.InterfaceButtons:onHideLastVisibleItem', (bindElement) => {
+			this.showMessage(bindElement, Loc.getMessage('MENU_TOP_ITEM_LAST_HIDDEN'));
 		});
-		//when we edit top menu item
-		BX.addCustomEvent("BX.Main.InterfaceButtons:onBeforeCreateEditMenu", (contextMenu, dataItem, topMenu) => {
+
+		// when we edit top menu item
+		BX.addCustomEvent('BX.Main.InterfaceButtons:onBeforeCreateEditMenu', (contextMenu, dataItem, topMenu) => {
 			let item = this.#getLeftMenuItemByTopMenuItem(dataItem);
 			if (!item && dataItem && Type.isStringFilled(dataItem.URL) && !dataItem.URL.match(/javascript:/))
 			{
 				contextMenu.addMenuItem({
-					text: Loc.getMessage("MENU_ADD_TO_LEFT_MENU"),
+					text: Loc.getMessage('MENU_ADD_TO_LEFT_MENU'),
 					onclick: (event, item) => {
 						this.getItemDirector()
 							.saveStandardPage(dataItem)
 						;
 						item.getMenuWindow().close();
-					}
+					},
 				});
 			}
 			else if (item instanceof ItemUserFavorites)
 			{
 				contextMenu.addMenuItem({
-					text: Loc.getMessage("MENU_DELETE_FROM_LEFT_MENU"),
+					text: Loc.getMessage('MENU_DELETE_FROM_LEFT_MENU'),
 					onclick: (event, item) => {
-						this.getItemDirector()
-							.deleteStandardPage(dataItem)
-						;
+						this.getItemDirector().deleteStandardPage(dataItem);
 						item.getMenuWindow().close();
-					}
+					},
 				});
 			}
 		});
-		//endregion
-		//service event for UI.Toolbar
-		top.BX.addCustomEvent('UI.Toolbar:onRequestMenuItemData', ({currentFullPath, context}) => {
+		// endregion
+
+		// service event for UI.Toolbar
+		top.BX.addCustomEvent('UI.Toolbar:onRequestMenuItemData', ({ currentFullPath, context }) => {
 			if (Type.isStringFilled(currentFullPath))
 			{
 				BX.onCustomEvent('BX.Bitrix24.LeftMenuClass:onSendMenuItemData', [{
 					currentPageInMenu: this.menuContainer.querySelector(`.menu-item-block[data-link="${currentFullPath}"]`),
-					context: context,
+					context,
 				}]);
 			}
 		});
-		//When clicked on a start Favorites like
+
+		// When clicked on a start Favorites like
 		EventEmitter.subscribe('UI.Toolbar:onStarClick', ({compatData: [params]}) => {
 			if (params.isActive)
 			{
@@ -379,7 +396,7 @@ export default class Menu
 					context: params.context,
 					pageLink: params.pageLink,
 				}).then(({itemInfo}) => {
-					BX.onCustomEvent("BX.Bitrix24.LeftMenuClass:onMenuItemDeleted", [itemInfo, this]);
+					BX.onCustomEvent('BX.Bitrix24.LeftMenuClass:onMenuItemDeleted', [itemInfo, this]);
 					BX.onCustomEvent('BX.Bitrix24.LeftMenuClass:onStandardItemChangedSuccess', [{
 						isActive: false,
 						context: params.context,
@@ -390,38 +407,45 @@ export default class Menu
 			{
 				this.getItemDirector()
 					.saveCurrentPage({
-					pageTitle: params.pageTitle,
-					pageLink: params.pageLink,
-				}).then(({itemInfo}) => {
-					BX.onCustomEvent("BX.Bitrix24.LeftMenuClass:onMenuItemAdded", [itemInfo, this]);
-					BX.onCustomEvent('BX.Bitrix24.LeftMenuClass:onStandardItemChangedSuccess', [{
-						isActive: true,
-						context: params.context,
-					}]);
-				});
+						pageTitle: params.pageTitle,
+						pageLink: params.pageLink,
+					}).then(({itemInfo}) => {
+						BX.onCustomEvent('BX.Bitrix24.LeftMenuClass:onMenuItemAdded', [itemInfo, this]);
+						BX.onCustomEvent('BX.Bitrix24.LeftMenuClass:onStandardItemChangedSuccess', [{
+							isActive: true,
+							context: params.context,
+						}]);
+					})
+				;
 			}
 		});
+
 		EventEmitter.subscribe('BX.Main.InterfaceButtons:onBeforeResetMenu', ({compatData: [promises]}) => {
 			promises.push(() => {
 				const p = new BX.Promise();
 				Backend
 					.clearCache()
 					.then(
-						() => { p.fulfill();},
-						(response) => { p.reject("Error: " +  response.errors[0].message);}
+						() => {
+							p.fulfill();
+						},
+						(response) => {
+							p.reject(`Error: ${response.errors[0].message}`);
+						},
 					)
 				;
+
 				return p;
 			});
 		});
 	}
 
-	isEditMode()
+	isEditMode(): boolean
 	{
 		return this.getItemsController().isEditMode;
 	}
 
-	isCollapsed()
+	isCollapsed(): boolean
 	{
 		return this.isCollapsedMode;
 	}
@@ -466,13 +490,29 @@ export default class Menu
 
 	showGlobalPreset()
 	{
-		BannerDispatcher.high.toQueue((onDone) => {
-			const presetController = this.getDefaultPresetController();
-			presetController.show('global');
-			presetController.getPopup().subscribe('onAfterClose', (event) => {
-				onDone();
+		const BannerDispatcher = Reflection.getClass('BX.UI.BannerDispatcher');
+
+		const handleBannerQueue = () => {
+			BannerDispatcher.critical.toQueue((onDone) => {
+				const presetController = this.getDefaultPresetController();
+				presetController.show('global');
+				presetController.getPopup().subscribe('onAfterClose', (event) => {
+					onDone();
+				});
 			});
-		});
+		};
+
+		if (BannerDispatcher)
+		{
+			handleBannerQueue();
+		}
+		else
+		{
+			const loadBannerDispatcherExtensionPromise = Runtime.loadExtension('ui.banner-dispatcher');
+			loadBannerDispatcherExtensionPromise.then(() => {
+				handleBannerQueue();
+			}).catch(() => {});
+		}
 	}
 
 	handleShowHiddenClick()
@@ -585,8 +625,7 @@ export default class Menu
 			}
 		}
 
-
-		const menuItems = [
+		const leftMenuSettingItems = [
 			{
 				text: Loc.getMessage('SORT_ITEMS'),
 				onclick: () => { this.getItemsController().switchToEditMode();}
@@ -596,7 +635,7 @@ export default class Menu
 				onclick: (event, item: MenuItem) => {
 					this.toggle();
 					item.getMenuWindow().destroy();
-				}
+				},
 			},
 			menuItemWithAddingToFavorites,
 			{
@@ -610,17 +649,8 @@ export default class Menu
 					;
 				},
 			},
-			Options.isExtranet ? null : {
-				text: Loc.getMessage('MENU_SET_DEFAULT2'),
-				onclick: () => {
-					this.getDefaultPresetController().show('personal')
-				}
-			},
-			Options.isExtranet ? null : {
-				text: Loc.getMessage('MENU_SET_DEFAULT'),
-				onclick: this.setDefaultMenu.bind(this)
-			}
 		];
+
 		//custom preset
 		if (Options.isAdmin)
 		{
@@ -631,7 +661,7 @@ export default class Menu
 				itemText+= "<span class='menu-lock-icon'></span>";
 			}
 
-			menuItems.push({
+			leftMenuSettingItems.push({
 				html: itemText,
 				className: (Options.isCustomPresetRestricted ? ' menu-popup-disable-text' : ''),
 				onclick: (event, item) => {
@@ -645,20 +675,69 @@ export default class Menu
 					}
 				}
 			});
-
-			if (Options.settingsPath)
-			{
-				menuItems.push({
-					html: Loc.getMessage('MENU_EDIT_TOOLS'),
-					onclick: () => {
-						BX.SidePanel.Instance.open(`${Options.settingsPath}?analyticContext=left_menu&page=tools`, {
-							allowChangeHistory: false,
-							width: 1034,
-						});
-					},
-				});
-			}
 		}
+
+		if (!Options.isExtranet)
+		{
+			leftMenuSettingItems.push({
+				text: Loc.getMessage('MENU_SET_DEFAULT'),
+				onclick: this.setDefaultMenu.bind(this)
+			})
+		}
+
+		const Messenger = Reflection.getClass('BX.Messenger.v2.Lib.Messenger');
+
+		const menuItems = [
+			!Options.isAdmin ? null : {
+				text: Loc.getMessage('LEFT_MENU_SETTINGS_ITEM_B24_SETTINGS'),
+				onclick: () => {
+					BX.SidePanel.Instance.open(`${Options.settingsPath}?analyticContext=left_menu`, {
+						allowChangeHistory: false,
+						width: 1034,
+					});
+				},
+			},
+			Messenger ? {
+				text: Loc.getMessage('LEFT_MENU_SETTINGS_ITEM_MESSENGER_SETTINGS'),
+				onclick: () => {
+					Messenger.openSettings();
+				},
+			} : null,
+			Options.isExtranet ? null : {
+				text: Loc.getMessage('MENU_SET_DEFAULT2'),
+				onclick: () => {
+					this.getDefaultPresetController().show('personal');
+				},
+			},
+			!Options.inviteDialogLink ? null : {
+				text: Loc.getMessage('MENU_INVITE_USERS'),
+				onclick: () => {
+					BX.SidePanel.Instance.open(Options.inviteDialogLink, {cacheable: false, allowChangeHistory: false, width: 1100});
+				},
+			},
+			!Options.isAdmin && Options.isExtranet ? null : {
+				delimiter: true,
+			},
+			{
+				text: Loc.getMessage('LEFT_MENU_SETTINGS_ITEM_MENU_SETTINGS'),
+				items: leftMenuSettingItems,
+			},
+			{
+				delimiter: true,
+			},
+			!Options.showSitemapMenuItem ? null : {
+				text: Loc.getMessage('MENU_SITE_MAP'),
+				onclick: () => {
+					this.handleSiteMapClick();
+				},
+			},
+			{
+				text: Loc.getMessage('MENU_HELP'),
+				onclick: () => {
+					this.handleHelperClick();
+				},
+			},
+		];
 
 		return menuItems.filter((value) => {return value !== null;})
 	}
@@ -761,19 +840,6 @@ export default class Menu
 		}
 	}
 
-	handleHeaderLogoMouserEnter(event)
-	{
-		BX.addClass(this.headerSettings, "header-logo-block-settings-show");
-	}
-
-	handleHeaderLogoMouserLeave(event)
-	{
-		if (!this.headerSettings.hasAttribute("data-rename-portal"))
-		{
-			BX.removeClass(this.headerSettings, "header-logo-block-settings-show");
-		}
-	}
-
 	handleUpButtonClick()
 	{
 		this.blockSliding();
@@ -801,9 +867,6 @@ export default class Menu
 
 	handleDocumentScroll()
 	{
-		this.#adjustAdminPanel();
-		this.applyScrollMode();
-
 		if (window.pageYOffset > document.documentElement.clientHeight)
 		{
 			this.showUpButton();
@@ -842,21 +905,35 @@ export default class Menu
 				if (immediately !== true)
 				{
 					BX.addClass(this.mainTable, "menu-sliding-closing-mode");
+
+					if (Options.showLicenseButton)
+					{
+						this.#getLicenseButton().setCollapsed(true);
+					}
 				}
 
 				BX.removeClass(this.mainTable, "menu-sliding-mode menu-sliding-opening-mode");
+				Dom.removeClass(this.menuContainer, '--ui-context-edge-dark');
 			}
 		}
 		else if (this.isCollapsedMode && !BX.hasClass(this.mainTable, "menu-sliding-mode"))
 		{
 			BX.removeClass(this.mainTable, "menu-sliding-closing-mode");
+			Dom.removeClass(this.menuContainer, '--ui-context-edge-dark');
 
 			if (immediately !== true)
 			{
 				BX.addClass(this.mainTable, "menu-sliding-opening-mode");
+				if (Options.showLicenseButton)
+				{
+					setTimeout(() => {
+						this.#getLicenseButton().setCollapsed(false);
+					}, 50);
+				}
 			}
 
 			BX.addClass(this.mainTable, "menu-sliding-mode");
+			Dom.addClass(this.menuContainer, '--ui-context-edge-dark');
 		}
 	}
 
@@ -872,54 +949,17 @@ export default class Menu
 	{
 		if (enable === false)
 		{
-			this.mainTable.classList.remove('menu-scroll-mode');
+			Dom.removeClass(this.mainTable, 'menu-scroll-mode');
 		}
-		else if (!this.mainTable.classList.contains('menu-scroll-mode'))
+		else if (!Dom.hasClass(this.mainTable, 'menu-scroll-mode'))
 		{
-			this.mainTable.classList.add('menu-scroll-mode');
+			Dom.addClass(this.mainTable, 'menu-scroll-mode');
 		}
 	}
-
-	//region logo
-	#isLogoMaskNeeded(): boolean
-	{
-		return this.cache.remember('isLogoMaskNeeded', () => {
-			const menuHeaderLogo = this.menuHeader.querySelector(".logo");
-			let result = false;
-			if (menuHeaderLogo && !menuHeaderLogo.querySelector(".logo-image-container"))
-			{
-				let widthMeasure = menuHeaderLogo.offsetWidth === 0 ?
-					(this.header.querySelector(".logo") ?
-						this.header.querySelector(".logo").offsetWidth : 0)
-					: menuHeaderLogo.offsetWidth
-				;
-
-				result = widthMeasure > 200;
-			}
-			return result;
-		});
-	}
-
-	switchToLogoMaskMode(enable)
-	{
-		if (!this.#isLogoMaskNeeded())
-		{
-			return
-		}
-		if (enable === false)
-		{
-			this.mainTable.classList.remove('menu-logo-mask-mode');
-		}
-		else if (!this.mainTable.classList.contains('menu-logo-mask-mode'))
-		{
-			this.mainTable.classList.add('menu-logo-mask-mode');
-		}
-	}
-	//endregion
 
 	toggle(flag, fn)
 	{
-		let leftColumn = BX("layout-left-column");
+		let leftColumn = document.querySelector(".js-app");
 		if (!leftColumn)
 		{
 			return;
@@ -934,21 +974,10 @@ export default class Menu
 
 		BX.onCustomEvent("BX.Bitrix24.LeftMenuClass:onMenuToggle", [flag, this]);
 
-		var logoImageContainer = this.menuHeader.querySelector(".logo-image-container");
-		if (logoImageContainer)
-		{
-			var logoWidth = this.header.querySelector(".logo-image-container").offsetWidth;
-			if (logoWidth > 0)
-			{
-				logoImageContainer.style.width = logoWidth + "px";
-			}
-		}
-
 		this.blockSliding();
 		this.switchToSlidingMode(false, true);
-		this.applyScrollMode();
 
-		leftColumn.style.overflow = "hidden";
+		// leftColumn.style.overflow = "hidden";
 		this.mainTable.classList.add("menu-animation-mode", (isOpen ? "menu-animation-closing-mode" : "menu-animation-opening-mode"));
 
 		var menuLinks = [].slice.call(leftColumn.querySelectorAll('.menu-item-link'));
@@ -961,11 +990,6 @@ export default class Menu
 		var menuEmployeesText = leftColumn.querySelector('.menu-invite-employees-text');
 		var menuEmployeesIcon = leftColumn.querySelector('.menu-invite-icon-box');
 
-		var licenseContainer = leftColumn.querySelector('.menu-license-all-container');
-		var licenseBtn = leftColumn.querySelector('.menu-license-all-default');
-		var licenseHeight = licenseBtn ? licenseBtn.offsetHeight : 0;
-		var licenseCollapsedBtn = leftColumn.querySelector('.menu-license-all-collapsed');
-
 		const settingsIconBox = this.menuContainer.querySelector(".menu-settings-icon-box");
 		const settingsBtnText = this.menuContainer.querySelector(".menu-settings-btn-text");
 
@@ -975,46 +999,42 @@ export default class Menu
 		var menuTextDivider = leftColumn.querySelector('.menu-item-separator');
 		var menuMoreCounter = leftColumn.querySelector('.menu-item-index-more');
 
-		var pageHeader = this.mainTable.querySelector(".page-header");
+		var pageHeader = this.mainTable.querySelector(".air-header");
 		var imBar = document.getElementById("bx-im-bar");
 		var imBarWidth = imBar ? imBar.offsetWidth : 0;
+
+		const expandedMenuWidth = parseInt(getComputedStyle(this.menuContainer).getPropertyValue('--menu-width-expanded'), 10);
+		const collapsedMenuWidth = parseInt(getComputedStyle(this.menuContainer).getPropertyValue('--menu-width-collapsed'), 10);
 
 		(new BX.easing({
 			duration: 300,
 			start: {
-				translateIcon: isOpen ? -100 : 0,
-				translateText: isOpen ? 0 : -100,
-				translateMoreBtn: isOpen ? 0 : -84,
-				translateLicenseBtn: isOpen ? 0 : -100,
-				heightLicenseBtn: isOpen ? licenseHeight : 40,
-				burgerMenuWidth: isOpen ? 33 : 66,
-				sidebarWidth: isOpen ? 240 : 66, /* these values are duplicated in style.css as well */
-				opacity: isOpen ? 100 : 0,
-				opacityRevert: isOpen ? 0 : 100
+				sidebarWidth: isOpen ? expandedMenuWidth : collapsedMenuWidth, /* these values are duplicated in style.css as well */
+				// opacity: isOpen ? 100 : 0,
+				// opacityRevert: isOpen ? 0 : 100
 			},
 			finish: {
-				translateIcon: isOpen ? 0 : -100,
-				translateText: isOpen ? -100 : -18,
-				translateMoreBtn: isOpen ? -84 : 0,
-				translateLicenseBtn: isOpen ? -100 : 0,
-				heightLicenseBtn: isOpen ? 40 : licenseHeight,
-				burgerMenuWidth: isOpen ? 66 : 33,
-				sidebarWidth: isOpen ? 66 : 240,
-				opacity: isOpen ? 0 : 100,
-				opacityRevert: isOpen ? 100 : 0
+				sidebarWidth: isOpen ? collapsedMenuWidth : expandedMenuWidth,
+				// opacity: isOpen ? 0 : 100,
+				// opacityRevert: isOpen ? 100 : 0
 			},
 			transition: BX.easing.makeEaseOut(BX.easing.transitions.quart),
 			step: function (state)
 			{
-				leftColumn.style.width = state.sidebarWidth + "px";
+				// leftColumn.style.width = state.sidebarWidth + "px";
 				this.menuContainer.style.width = state.sidebarWidth + "px";
 				this.menuHeaderBurger.style.width = state.burgerMenuWidth + "px";
-				this.headerBurger.style.width = state.burgerMenuWidth + "px";
+				// this.headerBurger.style.width = state.burgerMenuWidth + "px";
 
 				//Change this formula in template_style.css as well
 				if (pageHeader)
 				{
 					pageHeader.style.maxWidth = "calc(100vw - " + state.sidebarWidth + "px - " + imBarWidth + "px)";
+				}
+
+				if (Options.showLicenseButton && state.sidebarWidth > 160)
+				{
+					this.#getLicenseButton().setCollapsed(isOpen);
 				}
 
 				if (isOpen)
@@ -1056,32 +1076,34 @@ export default class Menu
 						settingsBtnText.style.opacity = state.opacity / 100;
 					}
 
-					helpIconBox.style.transform = "translateX(" + state.translateIcon + "px)";
-					helpIconBox.style.opacity = state.opacityRevert / 100;
+					if (helpIconBox)
+					{
+						helpIconBox.style.transform = "translateX(" + state.translateIcon + "px)";
+						helpIconBox.style.opacity = state.opacityRevert / 100;
+					}
 
-					helpBtnText.style.transform = "translateX(" + state.translateText + "px)";
-					helpBtnText.style.opacity = state.opacity / 100;
+					if (helpBtnText)
+					{
+						helpBtnText.style.transform = "translateX(" + state.translateText + "px)";
+						helpBtnText.style.opacity = state.opacity / 100;
+					}
 
-					menuMoreBtn.style.transform = "translateX(" + state.translateIcon + "px)";
-					menuMoreBtn.style.opacity = state.opacityRevert / 100;
+					if (menuMoreBtn)
+					{
+						menuMoreBtn.style.transform = "translateX(" + state.translateIcon + "px)";
+						menuMoreBtn.style.opacity = state.opacityRevert / 100;
+					}
 
-					menuMoreBtnDefault.style.transform = "translateX(" + state.translateMoreBtn + "px)";
-					menuMoreBtnDefault.style.opacity = state.opacity / 100;
+					if (menuMoreBtnDefault)
+					{
+						menuMoreBtnDefault.style.transform = "translateX(" + state.translateMoreBtn + "px)";
+						menuMoreBtnDefault.style.opacity = state.opacity / 100;
+					}
 
 					if (menuMoreCounter)
 					{
 						menuMoreCounter.style.transform = "translateX(" + state.translateIcon + "px)";
 						menuMoreCounter.style.opacity = state.opacityRevert / 100;
-					}
-
-					if (licenseContainer)
-					{
-						licenseBtn.style.transform = "translateX(" + state.translateLicenseBtn + "px)";
-						licenseBtn.style.opacity = state.opacity / 100;
-						licenseBtn.style.height = state.heightLicenseBtn + "px";
-
-						licenseCollapsedBtn.style.transform = "translateX(" + state.translateIcon + "px)";
-						licenseCollapsedBtn.style.opacity = state.opacityRevert / 100;
 					}
 
 					menuLinks.forEach(function(item) {
@@ -1150,31 +1172,33 @@ export default class Menu
 						settingsBtnText.style.opacity = state.opacity / 100;
 					}
 
-					helpIconBox.style.transform = "translateX(" + state.translateIcon + "px)";
-					helpIconBox.style.opacity = state.opacityRevert / 100;
+					if (helpIconBox)
+					{
+						helpIconBox.style.transform = "translateX(" + state.translateIcon + "px)";
+						helpIconBox.style.opacity = state.opacityRevert / 100;
+					}
 
-					helpBtnText.style.transform = "translateX(" + state.translateText + "px)";
-					helpBtnText.style.opacity = state.opacity / 100;
+					if (helpBtnText)
+					{
+						helpBtnText.style.transform = "translateX(" + state.translateText + "px)";
+						helpBtnText.style.opacity = state.opacity / 100;
+					}
 
-					menuMoreBtn.style.transform = "translateX(" + state.translateIcon + "px)";
-					menuMoreBtn.style.opacity = state.opacityRevert / 100;
+					if (menuMoreBtn)
+					{
+						menuMoreBtn.style.transform = "translateX(" + state.translateIcon + "px)";
+						menuMoreBtn.style.opacity = state.opacityRevert / 100;
+					}
 
-					menuMoreBtnDefault.style.transform = "translateX(" + state.translateMoreBtn + "px)";
-					menuMoreBtnDefault.style.opacity = state.opacity / 100;
+					if (menuMoreBtnDefault)
+					{
+						menuMoreBtnDefault.style.transform = "translateX(" + state.translateMoreBtn + "px)";
+						menuMoreBtnDefault.style.opacity = state.opacity / 100;
+					}
 
 					if (menuMoreCounter)
 					{
 						menuMoreCounter.style.transform = "translateX(" + state.translateText + "px)";
-					}
-
-					if (licenseContainer)
-					{
-						licenseBtn.style.transform = "translateX(" + state.translateLicenseBtn + "px)";
-						licenseBtn.style.opacity = state.opacity / 100;
-						licenseBtn.style.height = state.heightLicenseBtn + "px";
-
-						licenseCollapsedBtn.style.transform = "translateX(" + state.translateIcon + "px)";
-						licenseCollapsedBtn.style.opacity = state.opacityRevert / 100;
 					}
 
 					menuLinks.forEach(function(item) {
@@ -1237,16 +1261,13 @@ export default class Menu
 					helpBtnText,
 					menuMoreBtnDefault,
 					menuMoreBtn,
-					logoImageContainer,
 					menuSitemapIcon,
 					menuSitemapText,
 					menuEmployeesIcon,
 					menuEmployeesText,
 					menuMoreCounter,
-					licenseBtn,
-					licenseCollapsedBtn,
 					this.menuContainer,
-					pageHeader
+					pageHeader,
 				];
 
 				containers.forEach(function(container) {
@@ -1278,7 +1299,6 @@ export default class Menu
 				});
 
 				this.releaseSliding();
-				this.#adjustAdminPanel();
 
 				if (BX.type.isFunction(fn))
 				{
@@ -1299,13 +1319,6 @@ export default class Menu
 	handleViewMode()
 	{
 		this.getItemsController().switchToViewMode();
-	}
-
-	applyScrollMode()
-	{
-		this.switchToLogoMaskMode(true);
-		const threshold = this.scrollModeThreshold + Utils.adminPanel.height;
-		this.switchToScrollMode(window.pageYOffset > threshold);
 	}
 
 	handleGroupPanelOpen()
@@ -1417,35 +1430,6 @@ export default class Menu
 			delete counters['**'];
 		}
 
-		let workgroupsCounterUpdated = false;
-		if (!Type.isUndefined(counters['**SG0']))
-		{
-			this.workgroupsCounterData['livefeed'] = counters['**SG0'];
-			delete counters['**SG0'];
-			workgroupsCounterUpdated = true;
-		}
-
-		if (!Type.isUndefined(counters[Loc.getMessage('COUNTER_PROJECTS_MAJOR')]))
-		{
-			this.workgroupsCounterData[Loc.getMessage('COUNTER_PROJECTS_MAJOR')] = counters[Loc.getMessage('COUNTER_PROJECTS_MAJOR')];
-			delete counters[Loc.getMessage('COUNTER_PROJECTS_MAJOR')];
-			workgroupsCounterUpdated = true;
-		}
-
-		if (!Type.isUndefined(counters[Loc.getMessage('COUNTER_SCRUM_TOTAL_COMMENTS')]))
-		{
-			this.workgroupsCounterData[Loc.getMessage('COUNTER_SCRUM_TOTAL_COMMENTS')] = counters[Loc.getMessage('COUNTER_SCRUM_TOTAL_COMMENTS')];
-			delete counters[Loc.getMessage('COUNTER_SCRUM_TOTAL_COMMENTS')];
-			workgroupsCounterUpdated = true;
-		}
-
-		if (workgroupsCounterUpdated)
-		{
-			counters['workgroups'] = Object.entries(this.workgroupsCounterData).reduce((prevValue, [, curValue]) => {
-				return prevValue + Number(curValue);
-			}, 0);
-		}
-
 		if (counters['live-feed'])
 		{
 			if (counters['live-feed'] <= 0)
@@ -1462,18 +1446,46 @@ export default class Menu
 	}
 	//endregion
 
-	#adjustAdminPanel()
+	#addLicenseButton(): void
 	{
-		if (!this['menuAdjustAdminPanel'])
+		if (Options.showLicenseButton)
 		{
-			this['menuAdjustAdminPanel'] = ({data}) => {
-				this.menuContainer.style.top = [data, 'px'].join('');
+			const licenseButtonWrapper = this.menuContainer.querySelector('.menu-license-all-wrapper');
+
+			if (licenseButtonWrapper)
+			{
+				this.#getLicenseButton().renderTo(licenseButtonWrapper);
 			}
-			EventEmitter.subscribe(Utils.adminPanel,
-				Options.eventName('onPanelHasChanged'),
-				this['menuAdjustAdminPanel']
-			);
 		}
-		this.menuContainer.style.top = [Utils.adminPanel.top, 'px'].join('');
+	}
+
+	#getLicenseButton(): Button
+	{
+		if (this.licenseButton)
+		{
+			return this.licenseButton;
+		}
+
+		this.licenseButton = this.#createLicenseButton();
+		this.licenseButton.setCollapsed(this.isCollapsed());
+
+		return this.licenseButton;
+	}
+
+	#createLicenseButton(): Button
+	{
+		return new Button({
+			size: Button.Size.SMALL,
+			text: Loc.getMessage('MENU_LICENSE_ALL'),
+			useAirDesign: true,
+			style: AirButtonStyle.FILLED_BOOST,
+			noCaps: true,
+			wide: true,
+			icon: 'o-rocket',
+			className: 'menu-license-all-button',
+			onclick: () => {
+				BX.SidePanel.Instance.open(Options.licenseButtonPath, { width: 1250, cacheable: false });
+			},
+		});
 	}
 }

@@ -15,6 +15,7 @@ this.BX.Sign.V2 = this.BX.Sign.V2 || {};
 	var _counterNode = /*#__PURE__*/babelHelpers.classPrivateFieldLooseKey("counterNode");
 	var _isShowLimitPopup = /*#__PURE__*/babelHelpers.classPrivateFieldLooseKey("isShowLimitPopup");
 	var _incrementTariffLinkContainer = /*#__PURE__*/babelHelpers.classPrivateFieldLooseKey("incrementTariffLinkContainer");
+	var _guide = /*#__PURE__*/babelHelpers.classPrivateFieldLooseKey("guide");
 	var _getIcon = /*#__PURE__*/babelHelpers.classPrivateFieldLooseKey("getIcon");
 	var _getLimitContainer = /*#__PURE__*/babelHelpers.classPrivateFieldLooseKey("getLimitContainer");
 	var _adjustPopupWithCenterAngle = /*#__PURE__*/babelHelpers.classPrivateFieldLooseKey("adjustPopupWithCenterAngle");
@@ -50,6 +51,10 @@ this.BX.Sign.V2 = this.BX.Sign.V2 || {};
 	      value: false
 	    });
 	    Object.defineProperty(this, _incrementTariffLinkContainer, {
+	      writable: true,
+	      value: null
+	    });
+	    Object.defineProperty(this, _guide, {
 	      writable: true,
 	      value: null
 	    });
@@ -107,11 +112,16 @@ this.BX.Sign.V2 = this.BX.Sign.V2 || {};
 	        });
 	        guide.getLink().setAttribute('onclick', "BX.PreventDefault();top.BX.UI.InfoHelper.show('limit_office_e_signature');");
 	        guide.start();
+	        babelHelpers.classPrivateFieldLooseBase(this, _guide)[_guide] = guide;
 	        babelHelpers.classPrivateFieldLooseBase(this, _isShowLimitPopup)[_isShowLimitPopup] = true;
 	      }
 	    } else {
 	      main_core.Dom.removeClass(babelHelpers.classPrivateFieldLooseBase(this, _container)[_container], '--alert');
 	    }
+	  }
+	  closeGuide() {
+	    var _babelHelpers$classPr;
+	    (_babelHelpers$classPr = babelHelpers.classPrivateFieldLooseBase(this, _guide)[_guide]) == null ? void 0 : _babelHelpers$classPr.close();
 	  }
 	}
 	function _getIcon2() {

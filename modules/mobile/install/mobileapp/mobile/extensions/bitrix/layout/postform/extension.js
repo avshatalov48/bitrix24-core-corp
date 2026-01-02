@@ -4,6 +4,7 @@
 	AppTheme.extend('medalSelector', {
 		Opacity: [1, 0.1],
 	});
+	const { AnalyticsEvent } = require('analytics');
 
 	this.NewPostComponent = class NewPostComponent extends LayoutComponent
 	{
@@ -356,7 +357,7 @@
 			);
 		}
 
-		onPublish()
+		onPublish(shouldSendAnalytics = false)
 		{
 			let postTitle = this.postTitleValue;
 			const postText = this.postText;
@@ -394,6 +395,31 @@
 				.then((postData) => this.processBackground(postData, backgroundImageCode))
 				.then((postData) => this.processVote(postData, voteData))
 				.then((postData) => {
+					let analyticType = 'post';
+					if (postData.GRATITUDE_MEDAL)
+					{
+						analyticType = 'appreciation';
+					}
+					else if (postData.IMPORTANT === 'Y')
+					{
+						analyticType = 'announcement';
+					}
+					else if (postData.UF_BLOG_POST_VOTE)
+					{
+						analyticType = 'poll';
+					}
+
+					if (shouldSendAnalytics)
+					{
+						new AnalyticsEvent({
+							tool: 'feed',
+							category: 'posts_operations',
+							event: 'post_create',
+							type: analyticType,
+							c_section: postData.DEST.some((dest => dest.startsWith('SG'))) ? 'project' : 'posts',
+						}).send();
+					}
+
 					BX.postComponentEvent(
 						'Livefeed.PublicationQueue::setItem',
 						[
@@ -407,7 +433,13 @@
 						'background',
 					);
 
-					postFormLayoutWidget.close();
+					postFormLayoutWidget.close(() => {
+						BX.postComponentEvent(
+							'livefeed.postform::onClose',
+							[],
+							'background',
+						);
+					});
 				})
 				.catch((error) => {
 					console.error(error.message);
@@ -548,9 +580,15 @@
 
 		processGratitude(postData, medal, gratitudeEmployees)
 		{
+			const defaultOpenMenuItem = this.getDefaultOpenMenuItem();
 			const promise = new Promise((resolve, reject) => {
 				postData.GRATITUDE_MEDAL = '';
 				postData.GRATITUDE_EMPLOYEES_DATA = {};
+
+				if (defaultOpenMenuItem && defaultOpenMenuItem === 'gratitude' && !medal)
+				{
+					medal = 'cup';
+				}
 
 				if (
 					medal
@@ -1870,50 +1908,153 @@
 			}
 		}
 
+		getPostFormData()
+		{
+			return BX.componentParameters.get('POST_FORM_DATA', {});
+		}
+
+		getMedalList()
+		{
+			return BX.componentParameters.get('MEDALS_LIST', {});
+		}
+
+		getIsModuleVoteInstalled()
+		{
+			return BX.componentParameters.get('MODULE_VOTE_INSTALLED', 'N') === 'Y';
+		}
+
+		getDefaultOpenMenuItem()
+		{
+			return BX.componentParameters.get('DEFAULT_OPEN_MENU_ITEM', null);
+		}
+
+		getUseImportant()
+		{
+			return BX.componentParameters.get('USE_IMPORTANT', 'Y') === 'Y';
+		}
+
 		render()
 		{
+			const defaultOpenMenuItem = this.getDefaultOpenMenuItem();
+
+			if (defaultOpenMenuItem)
+			{
+				return this.defineComponentTemplate(defaultOpenMenuItem);
+			}
+
+			return this.renderBaseFormComponent();
+		}
+
+		defineComponentTemplate(component)
+		{
+			if (component === 'gratitude')
+			{
+				return this.renderGratitudeComponent();
+			}
+
+			return this.renderBaseFormComponent();
+		}
+
+		renderGratitudeComponent()
+		{
 			const {
-				attachments,
+				medal,
+				gratitudeEmployees,
+				backgroundImage,
+				actionSheetShown,
+				titleShown,
+			} = this.state;
+
+			const defaultMedal = medal ?? 'cup';
+
+			const postTitle = this.postTitleValue;
+			const postText = this.postText;
+
+			const coloredMessage = this.getColoredMessageStatus();
+			const postFormData = this.getPostFormData();
+			const medalsList = this.getMedalList();
+			const moduleVoteInstalled = this.getIsModuleVoteInstalled();
+			const backgroundData = this.defineGratitudeBackground(medalsList[defaultMedal]?.backgroundUrl);
+
+			const content = [
+				this.renderTextField(postTitle, titleShown, coloredMessage),
+				this.renderPostMessage(
+					actionSheetShown,
+					postText,
+					backgroundImage,
+					coloredMessage,
+					backgroundData,
+					moduleVoteInstalled,
+				),
+				defaultMedal && this.renderGratitudePanel(gratitudeEmployees, defaultMedal, postFormData, medalsList),
+			];
+
+			return this.renderMainStructure(backgroundData, content);
+		}
+
+		defineGratitudeBackground(defaultMedalBackground)
+		{
+			const backgroundCommon = BX.componentParameters.get('BACKGROUND_COMMON', {});
+
+			return {
+				backgroundColor: AppTheme.colors.accentSoftBlue2,
+				outer: {
+					backgroundImageSvgUrl: currentDomain + defaultMedalBackground,
+				},
+				inner: {
+					backgroundResizeMode: 'cover',
+					backgroundImage: currentDomain + backgroundCommon.url,
+				},
+			};
+		}
+
+		renderBaseFormComponent()
+		{
+			const {
 				isImportant,
 				importantUntil,
 				voteData,
 				medal,
 				gratitudeEmployees,
-				forAll,
-				recipientsCount,
 				backgroundImage,
-				recipientsStringActionsheet,
-				recipientsStringKeyboard,
 				actionSheetShown,
 				titleShown,
 			} = this.state;
 
 			const postTitle = this.postTitleValue;
 			const postText = this.postText;
-
-			const attachmentPanel = AttachmentPanel({
-				attachments,
-				onDeleteAttachmentItem: (itemId) => this.onDeleteAttachmentItem(itemId),
-				serverName: BX.componentParameters.get('SERVER_NAME'),
-				postFormData: BX.componentParameters.get('POST_FORM_DATA', {}),
-			});
-
+			const postFormData = this.getPostFormData();
+			const medalsList = this.getMedalList();
+			const moduleVoteInstalled = this.getIsModuleVoteInstalled();
 			const backgroundData = this.getFormBackgroundImage();
 			const coloredMessage = this.getColoredMessageStatus();
-			const postFormData = BX.componentParameters.get('POST_FORM_DATA', {});
-			const medalsList = BX.componentParameters.get('MEDALS_LIST', {});
-			const moduleVoteInstalled = BX.componentParameters.get('MODULE_VOTE_INSTALLED', 'N') === 'Y';
-			const useImportant = BX.componentParameters.get('USE_IMPORTANT', 'Y') === 'Y';
 
-			const backgroundAvailable = !(
-				medal
-				|| isImportant
-				|| (
-					Array.isArray(voteData.questions)
-					&& voteData.questions.length > 0
-				)
-				|| !this.checkColoredText(this.postText)
-			);
+			const content = [
+				this.renderTextField(postTitle, titleShown, coloredMessage),
+				this.renderPostMessage(
+					actionSheetShown,
+					postText,
+					backgroundImage,
+					coloredMessage,
+					backgroundData,
+					moduleVoteInstalled,
+				),
+				isImportant && this.renderImportantPanel(importantUntil),
+				medal && this.renderGratitudePanel(gratitudeEmployees, medal, postFormData, medalsList),
+				this.renderVotePanel(voteData, postFormData),
+			];
+
+			return this.renderMainStructure(backgroundData, content);
+		}
+
+		renderMainStructure(backgroundData, content = [])
+		{
+			const {
+				attachments,
+			} = this.state;
+
+			const coloredMessage = this.getColoredMessageStatus();
+			const bottomPanel = this.getBottomPanel(coloredMessage);
 
 			return View(
 				{
@@ -1967,149 +2108,7 @@
 								marginBottom: (this.postMessageFocused ? 0 : device.screen.safeArea.bottom),
 							},
 						},
-						TextField({
-							testId: 'postTitle',
-							value: postTitle,
-							multiline: false,
-							placeholder: BX.message('MOBILE_EXT_LAYOUT_POSTFORM_TITLE_PLACEHOLDER_MSGVER_1'),
-							placeholderTextColor: this.getStyle('placeholderTextColor'),
-							style: {
-								display: (!titleShown || coloredMessage ? 'none' : 'flex'),
-								color: this.getStyle('inputTextColor'),
-								fontSize: 20,
-								margin: this.config.postTitleMargin,
-								textAlign: 'left',
-								textAlignVertical: 'top',
-							},
-							onFocus: () => {
-								this.showKeyboardPanel({
-									isEdit: true,
-								});
-							},
-							onChangeText: (currentText) => {
-								this.postTitleValue = currentText;
-							},
-							onLayout: ({ height }) => {
-								this.height.postTitle = height;
-							},
-							onSubmitEditing: this.onPostTitleSubmitEditing.bind(this),
-							autoCapitalize: 'sentences',
-							ref: (ref) => {
-								this.postTitleRef = ref;
-							},
-						}),
-						PostMessage({
-							actionSheetShown,
-							postText,
-							backgroundImage,
-							coloredMessageBackgroundData: (coloredMessage ? backgroundData.outer : {}),
-							deviceHeight: parseInt(BX.componentParameters.get('DEVICE_HEIGHT', 0)),
-							deviceRatio: BX.componentParameters.get('DEVICE_RATIO', 3),
-							moduleVoteInstalled,
-							inputTextColor: this.getStyle(coloredMessage ? 'inputColoredTextColor' : 'inputTextColor'),
-							placeholderTextColor: this.getStyle(coloredMessage ? 'placeholderColoredTextColor' : 'placeholderTextColor'),
-							checkColoredText: this.checkColoredText.bind(this),
-							rootHeightWithKeyboard: this.rootRef.heightWithKeyboard,
-							marginTop: this.config.postMessageMarginTop,
-							marginBottom: this.config.postMessageMarginBottom,
-							onFocus: () => {
-								this.postMessageFocused = true;
-
-								this.showKeyboardPanel({
-									isEdit: true,
-								}, () => {
-									this.scrollPostMessageToCursor();
-								});
-							},
-							onBlur: () => {
-								this.postMessageFocused = false;
-							},
-							onRef: this.onPostMessageRef.bind(this),
-							onChangeText: (currentText) => {
-								this.recalcBackgroundByTextLength({
-									oldText: this.postText,
-									newText: currentText,
-								});
-								this.recalcMentionHint({
-									text: currentText,
-								});
-								this.postText = currentText;
-							},
-							onSelectionChange: (data) => {
-								const isFocused = this.postMessageRef && this.postMessageRef.isFocused && this.postMessageRef.isFocused();
-								if (!isFocused || !data.selection)
-								{
-									return;
-								}
-
-								const {
-									start,
-									end,
-								} = data.selection;
-
-								if (start === end)
-								{
-									this.postTextCursorPosition = start;
-								}
-							},
-							onInput: this.onPostMessageInput.bind(this),
-							onPostMessageChange: this.onPostMessageChange.bind(this),
-							onCursorPositionChange: this.onCursorPositionChange.bind(this),
-							onScrollViewClick: this.onScrollViewClick.bind(this),
-						}),
-						isImportant && ImportantPanel({
-							importantUntil,
-							onSetImportant: (value) => {
-								this.onSetImportant(value);
-							},
-							onSetImportantUntil: (value) => {
-								this.onSetImportantUntil(value);
-							},
-							onLayout: ({ height }) => {
-								this.height.importantPanel = height;
-							},
-							menuCancelTextColor: this.getStyle('menuCancelTextColor'),
-						}),
-						medal && GratitudePanel({
-							onSetGratitudeEmployee: (value) => {
-								this.onSetGratitudeEmployee(value);
-							},
-							onSetGratitudeMedal: (value) => {
-								this.onSetGratitudeMedal(value);
-							},
-							onSetGratitudeMedalWidget: (layoutWidget) => {
-								this.onSetGratitudeMedalWidget(layoutWidget);
-							},
-							onLayout: ({ height }) => {
-								this.height.gratitudePanel = height;
-							},
-							employees: gratitudeEmployees,
-							medal,
-							menuCancelTextColor: this.getStyle('menuCancelTextColor'),
-							postFormData,
-							medalsList,
-						}),
-						VotePanel({
-							onSetVoteData: (value) => {
-								this.onSetVoteData(value);
-							},
-							onAddVoteQuestion: () => {
-								this.addVoteQuestion();
-							},
-							onSetVoteQuestionMultiple: (voteData, questionIndex, value) => {
-								this.onSetVoteQuestionMultiple(voteData, questionIndex, value);
-							},
-							onFocus: () => this.showKeyboardPanel(),
-							onLayout: ({ height }) => {
-								this.height.votePanel = height;
-							},
-							voteData,
-							inputTextColor: this.getStyle('inputTextColor'),
-							menuCancelTextColor: this.getStyle('menuCancelTextColor'),
-							placeholderTextColor: this.getStyle('placeholderTextColor'),
-							postFormData,
-							rootScrollRef: this.rootScrollRef.element,
-						}),
+						...content,
 					),
 				),
 				View(
@@ -2119,53 +2118,321 @@
 						},
 					},
 				),
-				!actionSheetShown && KeyboardPanel({
+				...bottomPanel,
+			);
+		}
+
+		getBottomPanel(coloredMessage)
+		{
+			const {
+				attachments,
+				isImportant,
+				voteData,
+				medal,
+				forAll,
+				recipientsCount,
+				recipientsStringActionsheet,
+				recipientsStringKeyboard,
+				actionSheetShown,
+				titleShown,
+			} = this.state;
+
+			const postFormData = this.getPostFormData();
+			const moduleVoteInstalled = this.getIsModuleVoteInstalled();
+			const useImportant = this.getUseImportant();
+
+			const attachmentPanel = AttachmentPanel({
+				attachments,
+				onDeleteAttachmentItem: (itemId) => this.onDeleteAttachmentItem(itemId),
+				serverName: BX.componentParameters.get('SERVER_NAME'),
+				postFormData,
+			});
+
+			const backgroundAvailable = !(
+				medal
+				|| isImportant
+				|| (
+					Array.isArray(voteData.questions)
+					&& voteData.questions.length > 0
+				)
+				|| !this.checkColoredText(this.postText)
+			);
+
+			return [
+				!actionSheetShown && this.renderKeyboardPanel(
 					attachmentPanel,
 					forAll,
 					recipientsCount,
-					recipientsString: recipientsStringKeyboard,
+					recipientsStringKeyboard,
 					attachments,
 					postFormData,
 					backgroundAvailable,
-					onClickDestinationMenuItem: () => this.onClickDestinationMenuItem(),
-					onClickMentionMenuItem: () => {
-						this.onClickMentionMenuItem({
-							keyboard: false,
-						});
-					},
-					onClickAttachmentMenuItem: () => this.onClickAttachmentMenuItem(),
-					onClickBackgroundMenuItem: () => this.onClickBackgroundMenuItem(),
-					onKeyboardClick: () => this.hideKeyboardPanel(),
-					onRecipientsLayout: this.onRecipientsLayout.bind(this),
-				}),
-				actionSheetShown && ActionSheet({
+				),
+				actionSheetShown && this.renderActionSheet(
 					attachmentPanel,
 					forAll,
-					recipientsString: recipientsStringActionsheet,
+					recipientsStringActionsheet,
 					attachments,
 					postFormData,
 					titleShown,
 					coloredMessage,
-					onClickDestinationMenuItem: () => this.onClickDestinationMenuItem(),
-					onClickMentionMenuItem: () => {
-						this.onClickMentionMenuItem({
-							keyboard: false,
-						});
-					},
-					onClickAttachmentMenuItem: () => this.onClickAttachmentMenuItem(),
-					onOpenAttachmentList: () => this.onOpenAttachmentList(),
-					onClickBackgroundMenuItem: () => this.onClickBackgroundMenuItem(),
-					onClickImportantMenuItem: () => this.onClickImportantMenuItem(),
-					onClickGratitudeMenuItem: () => this.onClickGratitudeMenuItem(),
-					onClickShowHideTitleItem: (params) => this.onClickShowHideTitleItem(params),
-					onClickVoteMenuItem: () => this.onClickVoteMenuItem(),
 					moduleVoteInstalled,
 					useImportant,
 					backgroundAvailable,
-					onHide: () => this.hideActionSheet(),
-					animation: (this.height.root === null ? {} : { duration: 0.5, delay: 0 }),
-				}),
-			);
+				),
+			];
+		}
+
+		renderTextField(postTitle, titleShown, coloredMessage)
+		{
+			return TextField({
+				testId: 'postTitle',
+				value: postTitle,
+				multiline: false,
+				placeholder: BX.message('MOBILE_EXT_LAYOUT_POSTFORM_TITLE_PLACEHOLDER_MSGVER_1'),
+				placeholderTextColor: this.getStyle('placeholderTextColor'),
+				style: {
+					display: (!titleShown || coloredMessage ? 'none' : 'flex'),
+					color: this.getStyle('inputTextColor'),
+					fontSize: 20,
+					margin: this.config.postTitleMargin,
+					textAlign: 'left',
+					textAlignVertical: 'top',
+				},
+				onFocus: () => {
+					this.showKeyboardPanel({
+						isEdit: true,
+					});
+				},
+				onChangeText: (currentText) => {
+					this.postTitleValue = currentText;
+				},
+				onLayout: ({ height }) => {
+					this.height.postTitle = height;
+				},
+				onSubmitEditing: this.onPostTitleSubmitEditing.bind(this),
+				autoCapitalize: 'sentences',
+				ref: (ref) => {
+					this.postTitleRef = ref;
+				},
+			});
+		}
+
+		renderPostMessage(actionSheetShown, postText, backgroundImage, coloredMessage, backgroundData, moduleVoteInstalled)
+		{
+			return PostMessage({
+				actionSheetShown,
+				postText,
+				backgroundImage,
+				coloredMessageBackgroundData: (coloredMessage ? backgroundData.outer : {}),
+				deviceHeight: parseInt(BX.componentParameters.get('DEVICE_HEIGHT', 0)),
+				deviceRatio: BX.componentParameters.get('DEVICE_RATIO', 3),
+				moduleVoteInstalled,
+				inputTextColor: this.getStyle(coloredMessage ? 'inputColoredTextColor' : 'inputTextColor'),
+				placeholderTextColor: this.getStyle(coloredMessage ? 'placeholderColoredTextColor' : 'placeholderTextColor'),
+				checkColoredText: this.checkColoredText.bind(this),
+				rootHeightWithKeyboard: this.rootRef.heightWithKeyboard,
+				marginTop: this.config.postMessageMarginTop,
+				marginBottom: this.config.postMessageMarginBottom,
+				onFocus: () => {
+					this.postMessageFocused = true;
+
+					this.showKeyboardPanel({
+						isEdit: true,
+					}, () => {
+						this.scrollPostMessageToCursor();
+					});
+				},
+				onBlur: () => {
+					this.postMessageFocused = false;
+				},
+				onRef: this.onPostMessageRef.bind(this),
+				onChangeText: (currentText) => {
+					this.recalcBackgroundByTextLength({
+						oldText: this.postText,
+						newText: currentText,
+					});
+					this.recalcMentionHint({
+						text: currentText,
+					});
+					this.postText = currentText;
+				},
+				onSelectionChange: (data) => {
+					const isFocused = this.postMessageRef && this.postMessageRef.isFocused && this.postMessageRef.isFocused();
+					if (!isFocused || !data.selection)
+					{
+						return;
+					}
+
+					const {
+						start,
+						end,
+					} = data.selection;
+
+					if (start === end)
+					{
+						this.postTextCursorPosition = start;
+					}
+				},
+				onInput: this.onPostMessageInput.bind(this),
+				onPostMessageChange: this.onPostMessageChange.bind(this),
+				onCursorPositionChange: this.onCursorPositionChange.bind(this),
+				onScrollViewClick: this.onScrollViewClick.bind(this),
+			});
+		}
+
+		renderImportantPanel(importantUntil)
+		{
+			return ImportantPanel({
+				importantUntil,
+				onSetImportant: (value) => {
+					this.onSetImportant(value);
+				},
+				onSetImportantUntil: (value) => {
+					this.onSetImportantUntil(value);
+				},
+				onLayout: ({ height }) => {
+					this.height.importantPanel = height;
+				},
+				menuCancelTextColor: this.getStyle('menuCancelTextColor'),
+			});
+		}
+
+		renderGratitudePanel(gratitudeEmployees, medal, postFormData, medalsList)
+		{
+			let isDefaultTemplate = true;
+			const shouldRenderGratitude = this.getDefaultOpenMenuItem() === 'gratitude';
+			if (shouldRenderGratitude)
+			{
+				isDefaultTemplate = false;
+			}
+
+			return GratitudePanel({
+				onSetGratitudeEmployee: (value) => {
+					this.onSetGratitudeEmployee(value);
+				},
+				onSetGratitudeMedal: (value) => {
+					this.onSetGratitudeMedal(value);
+				},
+				onSetGratitudeMedalWidget: (layoutWidget) => {
+					this.onSetGratitudeMedalWidget(layoutWidget);
+				},
+				onLayout: ({ height }) => {
+					this.height.gratitudePanel = height;
+				},
+				employees: gratitudeEmployees,
+				medal,
+				menuCancelTextColor: this.getStyle('menuCancelTextColor'),
+				postFormData,
+				medalsList,
+				isDefaultTemplate,
+			});
+		}
+
+		renderVotePanel(voteData, postFormData)
+		{
+			return VotePanel({
+				onSetVoteData: (value) => {
+					this.onSetVoteData(value);
+				},
+				onAddVoteQuestion: () => {
+					this.addVoteQuestion();
+				},
+				onSetVoteQuestionMultiple: (voteData, questionIndex, value) => {
+					this.onSetVoteQuestionMultiple(voteData, questionIndex, value);
+				},
+				onFocus: () => this.showKeyboardPanel(),
+				onLayout: ({ height }) => {
+					this.height.votePanel = height;
+				},
+				voteData,
+				inputTextColor: this.getStyle('inputTextColor'),
+				menuCancelTextColor: this.getStyle('menuCancelTextColor'),
+				placeholderTextColor: this.getStyle('placeholderTextColor'),
+				postFormData,
+				rootScrollRef: this.rootScrollRef.element,
+			});
+		}
+
+		renderKeyboardPanel(
+			attachmentPanel,
+			forAll,
+			recipientsCount,
+			recipientsStringKeyboard,
+			attachments,
+			postFormData,
+			backgroundAvailable,
+		)
+		{
+			return KeyboardPanel({
+				attachmentPanel,
+				forAll,
+				recipientsCount,
+				recipientsString: recipientsStringKeyboard,
+				attachments,
+				postFormData,
+				backgroundAvailable,
+				onClickDestinationMenuItem: () => this.onClickDestinationMenuItem(),
+				onClickMentionMenuItem: () => {
+					this.onClickMentionMenuItem({
+						keyboard: false,
+					});
+				},
+				onClickAttachmentMenuItem: () => this.onClickAttachmentMenuItem(),
+				onClickBackgroundMenuItem: () => this.onClickBackgroundMenuItem(),
+				onKeyboardClick: () => this.hideKeyboardPanel(),
+				onRecipientsLayout: this.onRecipientsLayout.bind(this),
+			});
+		}
+
+		renderActionSheet(
+			attachmentPanel,
+			forAll,
+			recipientsStringActionsheet,
+			attachments,
+			postFormData,
+			titleShown,
+			coloredMessage,
+			moduleVoteInstalled,
+			useImportant,
+			backgroundAvailable,
+		)
+		{
+			let isDefaultTemplate = true;
+			const component = this.getDefaultOpenMenuItem();
+			if (component)
+			{
+				isDefaultTemplate = false;
+			}
+
+			return ActionSheet({
+				attachmentPanel,
+				forAll,
+				recipientsString: recipientsStringActionsheet,
+				attachments,
+				postFormData,
+				titleShown,
+				coloredMessage,
+				onClickDestinationMenuItem: () => this.onClickDestinationMenuItem(),
+				onClickMentionMenuItem: () => {
+					this.onClickMentionMenuItem({
+						keyboard: false,
+					});
+				},
+				onClickAttachmentMenuItem: () => this.onClickAttachmentMenuItem(),
+				onOpenAttachmentList: () => this.onOpenAttachmentList(),
+				onClickBackgroundMenuItem: () => this.onClickBackgroundMenuItem(),
+				onClickImportantMenuItem: () => this.onClickImportantMenuItem(),
+				onClickGratitudeMenuItem: () => this.onClickGratitudeMenuItem(),
+				onClickShowHideTitleItem: (params) => this.onClickShowHideTitleItem(params),
+				onClickVoteMenuItem: () => this.onClickVoteMenuItem(),
+				moduleVoteInstalled,
+				useImportant,
+				backgroundAvailable,
+				onHide: () => this.hideActionSheet(),
+				animation: (this.height.root === null ? {} : { duration: 0.5, delay: 0 }),
+				isDefaultTemplate,
+			});
 		}
 
 		processRootViewLayoutChange({ height })

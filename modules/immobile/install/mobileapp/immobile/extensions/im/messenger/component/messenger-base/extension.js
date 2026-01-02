@@ -1,21 +1,34 @@
+/* global InAppNotifier */
+
 /**
  * @module im/messenger/component/messenger-base
  */
 jn.define('im/messenger/component/messenger-base', async (require, exports, module) => {
+	const { Loc } = require('im/messenger/loc');
+
+	const { Worker } = require('im/messenger/lib/helper');
+	const { EventType } = require('im/messenger/const');
 	const { RestManager } = require('im/messenger/lib/rest-manager');
 	const { VisibilityManager } = require('im/messenger/lib/visibility-manager');
 	const { Logger } = require('im/messenger/lib/logger');
-	const {
-		ConnectionService,
-		SyncService,
-		SendingService,
-		QueueService,
-	} = require('im/messenger/provider/service');
+	const { QueueService } = require('im/messenger/provider/services/queue');
+	const { ConnectionService } = require('im/messenger/provider/services/connection');
+	const { SendingService } = require('im/messenger/provider/services/sending');
+	const { SyncService } = require('im/messenger/provider/services/sync/service');
 	const { EntityReady } = require('entity-ready');
 	const {
 		AppStatus,
 		MessengerInitRestMethod,
 	} = require('im/messenger/const');
+	const { CallManager } = require('im/messenger/lib/integration/callmobile/call-manager');
+	const { AnchorPullHandler } = require('im/messenger/provider/pull/anchor');
+	const { Anchors } = require('im/messenger/lib/anchors');
+	const { MessengerCounterHandler } = require('im/messenger/lib/counters/counter-manager/messenger/handler');
+	const { Feature } = require('im/messenger/lib/feature');
+	const { createTabCountersByComponent } = require('im/messenger/lib/counters/tab-counters');
+	const { serviceLocator } = require('im/messenger/lib/di/service-locator');
+
+	const REFRESH_AFTER_ERROR_INTERVAL = 10000;
 
 	class MessengerBase
 	{
@@ -31,7 +44,6 @@ jn.define('im/messenger/component/messenger-base', async (require, exports, modu
 		 * @property {Recent} recent - recent chat list controller
 		 * @property {Dialog} dialog - chat controller
 		 * @property {DialogSelector} dialogSelector - chat search controller
-		 * @property {ChatCreator} chatCreator - chat creation dialog
 		 * @property {RestManager} restManager - collects requests to initialize the messenger into a batch and executes it
 		 */
 		constructor()
@@ -40,6 +52,7 @@ jn.define('im/messenger/component/messenger-base', async (require, exports, modu
 			this.isFirstLoad = true;
 			this.refreshTimeout = null;
 			this.refreshErrorNoticeFlag = false;
+			this.refreshAfterErrorInterval = REFRESH_AFTER_ERROR_INTERVAL;
 
 			/**
 			 * @type {CoreApplication}
@@ -83,26 +96,41 @@ jn.define('im/messenger/component/messenger-base', async (require, exports, modu
 			this.dialog = null;
 			/** @type {RecentSelector || DialogSelector} */
 			this.searchSelector = null;
-			this.chatCreator = null;
 			/** @type {DialogCreator || null} */
 			this.dialogCreator = null;
+			this.tabCounters = createTabCountersByComponent();
+			serviceLocator.add('tab-counters', this.tabCounters);
 			this.visibilityManager = VisibilityManager.getInstance();
 
-			this.init();
+			this.callManager = CallManager.getInstance();
+
+			this.counterClientHandler = MessengerCounterHandler.getInstance();
+
+			this.initPromise = this.init();
+
+			this.initPromise.catch((error) => {
+				Logger.error(`${this.constructor.name} init error`, error);
+			});
+
+			this.anchors = new Anchors();
 		}
 
-		init()
+		async init()
 		{
 			this.initCore();
 			this.bindMethods();
 			this.preloadAssets();
 			this.initRequests();
+			this.initPushMessageHandlers();
+			this.initNotifyRefreshErrorWorker();
+			await this.fillDataBaseFromPush();
 
 			BX.onViewLoaded(async () => {
 				try
 				{
 					await this.initComponents();
 					this.subscribeEvents();
+
 					this.initPullHandlers();
 					this.initServices();
 					await this.initCurrentUser();
@@ -110,12 +138,9 @@ jn.define('im/messenger/component/messenger-base', async (require, exports, modu
 
 					this.connectionService.updateStatus();
 
-					EntityReady.wait('im.navigation')
-						.then(() => this.executeStoredPullEvents())
-						.catch((error) => Logger.error(error))
-					;
+					await EntityReady.wait('im.navigation');
+					this.executeStoredPullEvents();
 
-					this.checkChatV2Support();
 					await this.refresh();
 				}
 				catch (error)
@@ -133,6 +158,11 @@ jn.define('im/messenger/component/messenger-base', async (require, exports, modu
 		bindMethods()
 		{
 			this.onApplicationSetStatus = this.applicationSetStatusHandler.bind(this);
+			this.onShortRefresh = this.onShortRefresh.bind(this);
+			this.openDialog = this.openDialog.bind(this);
+			this.openChatCreate = this.openChatCreate.bind(this);
+			this.openChatSearch = this.openChatSearch.bind(this);
+			this.closeChatSearch = this.closeChatSearch.bind(this);
 		}
 
 		preloadAssets()
@@ -159,7 +189,20 @@ jn.define('im/messenger/component/messenger-base', async (require, exports, modu
 
 		subscribeMessengerEvents()
 		{
-			Logger.info('MessengerBase.subscribeMessengerEvents method is not override');
+			BX.addCustomEvent(EventType.messenger.refresh, this.onShortRefresh);
+			BX.addCustomEvent(EventType.messenger.openDialog, this.openDialog);
+			BX.addCustomEvent(EventType.messenger.createChat, this.openChatCreate);
+			BX.addCustomEvent(EventType.messenger.showSearch, this.openChatSearch);
+			BX.addCustomEvent(EventType.messenger.hideSearch, this.closeChatSearch);
+		}
+
+		unsubscribeMessengerEvents()
+		{
+			BX.removeCustomEvent(EventType.messenger.refresh, this.onShortRefresh);
+			BX.removeCustomEvent(EventType.messenger.openDialog, this.openDialog);
+			BX.removeCustomEvent(EventType.messenger.createChat, this.openChatCreate);
+			BX.removeCustomEvent(EventType.messenger.showSearch, this.openChatSearch);
+			BX.removeCustomEvent(EventType.messenger.hideSearch, this.closeChatSearch);
 		}
 
 		subscribeExternalEvents()
@@ -182,9 +225,33 @@ jn.define('im/messenger/component/messenger-base', async (require, exports, modu
 			Logger.info('MessengerBase.unsubscribeExternalEvents method is not override');
 		}
 
+		initPushMessageHandlers()
+		{
+			Logger.info('MessengerBase.initPushMessageHandlers method is not override');
+		}
+
+		initNotifyRefreshErrorWorker()
+		{
+			const notifyRefreshError = () => {
+				this.refreshErrorNoticeFlag = true;
+				const refreshErrorNotificationTime = this.refreshAfterErrorInterval / 1000 - 2;
+
+				InAppNotifier.showNotification({
+					message: Loc.getMessage('IMMOBILE_COMMON_MESSENGER_REFRESH_ERROR'),
+					backgroundColor: '#E6000000',
+					time: refreshErrorNotificationTime,
+				});
+			};
+
+			this.notifyRefreshErrorWorker = new Worker({
+				frequency: 2000,
+				callback: notifyRefreshError.bind(this),
+			});
+		}
+
 		initPullHandlers()
 		{
-			Logger.info('MessengerBase.initPullHandlers method is not override');
+			BX.PULL.subscribe(new AnchorPullHandler());
 		}
 
 		initServices()
@@ -228,20 +295,26 @@ jn.define('im/messenger/component/messenger-base', async (require, exports, modu
 			Logger.info('MessengerBase.executeStoredPullEvents method is not override');
 		}
 
-		/**
-		 * @abstract
-		 */
-		checkChatV2Support()
+		async fillDataBaseFromPush()
 		{
-			Logger.info('MessengerBase.checkChatV2Support method is not override');
+			Logger.info('MessengerBase.fillDataBaseFromPush method is not override');
 		}
 
 		/**
 		 * @abstract
+		 * @param {object} params
+		 * @param {boolean} params.shortMode
 		 */
-		async refresh()
+		async refresh(params = {})
 		{
 			Logger.info('MessengerBase.refresh method is not override');
+		}
+
+		onShortRefresh()
+		{
+			Logger.log('EventType.messenger.refresh');
+
+			this.refresh({ shortMode: true });
 		}
 
 		applicationSetStatusHandler(mutation)
@@ -295,16 +368,47 @@ jn.define('im/messenger/component/messenger-base', async (require, exports, modu
 		/**
 		 * @return {string[]}
 		 */
-		getBaseInitRestMethods()
+		getInitRestMethodsForRefresh()
+		{
+			if (Feature.isChatBetaEnabled)
+			{
+				return [
+					MessengerInitRestMethod.imCounters,
+					MessengerInitRestMethod.anchors,
+				];
+			}
+
+			return [
+				MessengerInitRestMethod.imCounters,
+				MessengerInitRestMethod.anchors,
+				MessengerInitRestMethod.recentList,
+			];
+		}
+
+		/**
+		 * @return {string[]}
+		 */
+		getInitRestMethodsForApplicationStartup()
 		{
 			return [
-				MessengerInitRestMethod.portalCounters,
-				MessengerInitRestMethod.recentList,
 				MessengerInitRestMethod.imCounters,
-				MessengerInitRestMethod.mobileRevision,
-				MessengerInitRestMethod.serverTime,
-				MessengerInitRestMethod.desktopStatus,
+				MessengerInitRestMethod.anchors,
+				MessengerInitRestMethod.recentList,
 			];
+		}
+
+		/**
+		 * @param {boolean} shortMode
+		 * @return {string[]}
+		 */
+		getInitRestMethods(shortMode)
+		{
+			if (shortMode && Feature.isLocalStorageEnabled)
+			{
+				return this.getInitRestMethodsForRefresh();
+			}
+
+			return this.getInitRestMethodsForApplicationStartup();
 		}
 	}
 

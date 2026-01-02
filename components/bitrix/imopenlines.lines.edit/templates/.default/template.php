@@ -37,6 +37,8 @@ if (Loader::includeModule('bitrix24'))
 	\CBitrix24::initLicenseInfoPopupJS();
 }
 
+\Bitrix\UI\Toolbar\Facade\Toolbar::deleteFavoriteStar();
+
 $APPLICATION->SetTitle($arResult['PAGE_TITLE']);
 
 $isBitrix24Template = (SITE_TEMPLATE_ID == 'bitrix24');

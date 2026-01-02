@@ -37,7 +37,7 @@ if (!\CCrmOwnerType::isUseDynamicTypeBasedApproach($entityTypeId) || $parentEnti
 	die();
 }
 
-if (!Container::getInstance()->getUserPermissions()->checkReadPermissions($parentEntityTypeId, $parentEntityId))
+if (!Container::getInstance()->getUserPermissions()->item()->canRead($parentEntityTypeId, $parentEntityId))
 {
 	die();
 }

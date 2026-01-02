@@ -1,7 +1,9 @@
 <?php
 
 use Bitrix\Disk\Configuration;
+use Bitrix\Disk\Document\BoardsHandler;
 use Bitrix\Disk\Document\OnlyOffice;
+use Bitrix\Disk\Document\Flipchart;
 use Bitrix\Disk\Document\OnlyOffice\OnlyOfficeHandler;
 use Bitrix\Main\DI\ServiceLocator;
 use Bitrix\Main\Localization\Loc;
@@ -14,7 +16,7 @@ if(!$USER->IsAdmin())
 IncludeModuleLangFile($_SERVER["DOCUMENT_ROOT"]."/bitrix/modules/main/options.php");
 IncludeModuleLangFile(__FILE__);
 
-\Bitrix\Main\UI\Extension::load(["popup", "loader", "disk.b24-documents-client-registration"]);
+\Bitrix\Main\UI\Extension::load(["popup", "loader", "disk.b24-documents-client-registration", "disk.b24-boards-client-registration"]);
 
 include_once($_SERVER['DOCUMENT_ROOT'].BX_ROOT.'/modules/disk/default_option.php');
 $arDefaultValues['default'] = $disk_default_option;
@@ -71,6 +73,33 @@ if(\Bitrix\Main\Loader::includeModule('disk'))
 		}
 	}
 
+	if (!BoardsHandler::isCloudRegistrationAvailable())
+	{
+		$labelButton = Loc::getMessage('BOARDS_REGISTER_TO_PROXY');
+		$notices['default_viewer_service_boards'] = '<input type="button" id="registerBitrix24Boards" name="registerBitrix24Boards" value="' . $labelButton . '" class="adm-btn-save">';
+	}
+	else
+	{
+		$limitValue = null;
+		$cloudRegistrationData = Flipchart\Configuration::getCloudRegistrationData();
+
+		if ($cloudRegistrationData)
+		{
+			$labelButton = Loc::getMessage('BOARDS_UNREGISTER_TO_PROXY');
+			$notices['default_viewer_service_boards'] = '<input type="button" id="unregisterBitrix24Boards" name="unregisterBitrix24Boards" value="' . $labelButton . '" class="adm-btn">';
+//			$limitValueResult = (new OnlyOffice\Cloud\LimitInfo($cloudRegistrationData['serverHost']))->getClientLimit();
+//			if ($limitValueResult->isSuccess())
+//			{
+//				$limitValue = $limitValueResult->getData()['limit'] ?? null;
+//			}
+		}
+
+		if ($limitValue)
+		{
+			$noticeBlock['default_viewer_service_boards'] = '#BOARDS_PROXY_LIMIT_INFO'; // Loc::getMessage('DISK_SETTINGS_B24_DOCS_LIMIT_INFO', ['#limit#' => $limitValue]) . "<br> " . $noticeBlock['default_viewer_service'];
+		}
+	}
+
 	if(ZipNginx\Configuration::isEnabled() && !ZipNginx\Configuration::isModInstalled())
 	{
 		$notices['disk_nginx_mod_zip_enabled'] = Loc::getMessage('DISK_ENABLE_NGINX_MOD_ZIP_SUPPORT_NOTICE', array(
@@ -103,6 +132,7 @@ $arAllOptions = array_filter(array(
 	array("disk_allow_use_extended_fulltext", GetMessage("DISK_ALLOW_USE_EXTENDED_FULLTEXT"), "N", array("checkbox", "Y")),
 	array("disk_max_file_size_for_index", GetMessage("DISK_MAX_FILE_SIZE_FOR_INDEX"), 1024, Array("text", "20")),
 	array("default_viewer_service", GetMessage("DISK_DEFAULT_VIEWER_SERVICE"), $arDefaultValues['default']['default_viewer_service'], array("selectbox", $optionList)),
+	array("default_viewer_service_boards", GetMessage("DISK_DEFAULT_VIEWER_SERVICE_BOARD"), $arDefaultValues['default']['default_viewer_service_boards']),
 	array("disk_nginx_mod_zip_enabled", GetMessage("DISK_ENABLE_NGINX_MOD_ZIP_SUPPORT"), $arDefaultValues['default']['disk_nginx_mod_zip_enabled'], array("checkbox", "Y")),
 	array("disk_restriction_storage_size_enabled", GetMessage("DISK_ENABLE_RESTRICTION_STORAGE_SIZE_SUPPORT"), 'N', array("checkbox", "Y")),
 	array("disk_allow_use_external_link", GetMessage("DISK_ALLOW_USE_EXTERNAL_LINK"), 'Y', array("checkbox", "Y")),
@@ -252,5 +282,17 @@ HTML;
 
 			(new BX.Disk.B24Documents.ClientUnRegistration()).start();
 		});
+
+		BX.bind(BX('registerBitrix24Boards'), 'click', function(e){
+			e.preventDefault();
+
+			(new BX.Disk.B24Boards.ClientRegistration()).start();
+		});
+		BX.bind(BX('unregisterBitrix24Boards'), 'click', function(e){
+			e.preventDefault();
+
+			(new BX.Disk.B24Boards.ClientUnRegistration()).start();
+		});
 	});
+
 </script>

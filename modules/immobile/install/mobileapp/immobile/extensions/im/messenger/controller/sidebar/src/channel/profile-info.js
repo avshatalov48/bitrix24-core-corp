@@ -2,7 +2,7 @@
  * @module im/messenger/controller/sidebar/channel/profile-info
  */
 jn.define('im/messenger/controller/sidebar/channel/profile-info', (require, exports, module) => {
-	const { ChatTitle } = require('im/messenger/lib/element');
+	const { ChatTitle } = require('im/messenger/lib/element/chat-title');
 
 	const { SidebarProfileInfo } = require('im/messenger/controller/sidebar/chat/sidebar-profile-info');
 	const { ChannelProfileUserCounter } = require('im/messenger/controller/sidebar/channel/profile-user-counter-view');
@@ -72,6 +72,12 @@ jn.define('im/messenger/controller/sidebar/channel/profile-info', (require, expo
 			{
 				newState.dialogType = payload.data?.fields.type;
 				newState.desc = ChatTitle.getChatDescriptionByDialogType(newState.dialogType);
+			}
+
+			const titleColor = this.getTitleColor();
+			if (this.state.titleColor !== titleColor)
+			{
+				newState.titleColor = titleColor;
 			}
 
 			if (Object.keys(newState).length > 0)

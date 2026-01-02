@@ -2,8 +2,8 @@
 
 namespace Bitrix\Crm\Controller\Activity;
 
-use Bitrix\Crm\Badge\Model\CustomBadgeTable;
 use Bitrix\Crm\Badge\Model\CustomBadge;
+use Bitrix\Crm\Badge\Model\CustomBadgeTable;
 use Bitrix\Crm\Controller\Base;
 use Bitrix\Crm\Controller\ErrorCode;
 use Bitrix\Crm\Service\Container;
@@ -65,9 +65,10 @@ class Badge extends Base
 	 * @param string|array $title
 	 * @param string|array $value
 	 * @param string $type
+	 * @param ?array $settings
 	 * @return array|null
 	 */
-	public function addAction(string $code, $title, $value, string $type): ?array
+	public function addAction(string $code, $title, $value, string $type, ?array $settings = null): ?array
 	{
 		if (!$this->isAdmin())
 		{
@@ -89,6 +90,7 @@ class Badge extends Base
 			'TITLE' => $title,
 			'VALUE' => $value,
 			'TYPE' => $type,
+			'SETTINGS' => $settings,
 		]);
 
 		if ($result->isSuccess())

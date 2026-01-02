@@ -9,49 +9,52 @@ class ReCaptcha
 	#target: string|Element;
 	#callback: Function;
 
-	adjust(options: Type.ReCaptcha)
+	adjust(options: Type.ReCaptcha): void
 	{
-		if (typeof options.key !== "undefined")
+		if (typeof options.key !== 'undefined')
 		{
 			this.#key = options.key;
 		}
-		if (typeof options.use !== "undefined")
+
+		if (typeof options.use !== 'undefined')
 		{
 			this.#use = options.use;
 		}
 	}
 
-	canUse()
+	canUse(): boolean
 	{
 		return this.#use && this.getKey();
 	}
 
-	isVerified()
+	isVerified(): boolean
 	{
-		return !this.canUse() || !!this.#response;
+		return !this.canUse() || Boolean(this.#response);
 	}
 
-	getKey()
+	getKey(): string | null
 	{
 		if (this.#key)
 		{
 			return this.#key;
 		}
 
+		// eslint-disable-next-line no-undef
 		if (b24form && b24form.common)
 		{
-			return (b24form.common.properties.recaptcha || {}).key;
+			// eslint-disable-next-line no-undef
+			return (b24form.common.properties.captcha.recaptcha || {}).key;
 		}
 
 		return null;
 	}
 
-	getResponse()
+	getResponse(): string
 	{
 		return this.#response;
 	}
 
-	verify(callback: Function)
+	verify(callback: Function): void
 	{
 		if (!window.grecaptcha)
 		{
@@ -66,7 +69,7 @@ class ReCaptcha
 		window.grecaptcha.execute(this.#widgetId);
 	}
 
-	render(target)
+	render(target): void
 	{
 		if (!window.grecaptcha)
 		{
@@ -77,10 +80,10 @@ class ReCaptcha
 		this.#widgetId = window.grecaptcha.render(
 			target,
 			{
-				sitekey: this.getKey(), //this.#key,
+				sitekey: this.getKey(), // this.#key,
 				badge: 'inline',
 				size: 'invisible',
-				callback: (response) => {
+				callback: (response): void => {
 					this.#response = response;
 					if (this.#callback)
 					{
@@ -88,15 +91,15 @@ class ReCaptcha
 						this.#callback = null;
 					}
 				},
-				'error-callback': () => {
+				'error-callback': (): void => {
 					this.#response = '';
 				},
-				'expired-callback': () => {
+				'expired-callback': (): void => {
 					this.#response = '';
 				},
-			}
+			},
 		);
 	}
 }
 
-export default ReCaptcha
+export default ReCaptcha;

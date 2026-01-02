@@ -49,7 +49,7 @@
 	white-space: nowrap;
 	overflow: hidden;
 	text-overflow: ellipsis;
-	font: var(--ui-font-size-sm, 13px)/18px var(--ui-font-family-system);
+	font: var(--ui-font-size-sm, 13px)/18px var(--ui-font-family-primary, var(--ui-font-family-system));
 	font-weight: var(--ui-font-weight-normal, 400);
 	color: var(--ui-color-palette-gray-90, #525C69);
 }

@@ -6,8 +6,10 @@ namespace Bitrix\AI\Agents;
 use Bitrix\AI\Context;
 use Bitrix\AI\Engine;
 use Bitrix\AI\Facade\User;
+use Bitrix\AI\Services\EngineSettingsService;
 use Bitrix\AI\Tuning\Manager;
 use Bitrix\Im\V2\Integration\AI\Restriction;
+use Bitrix\Main\DI\ServiceLocator;
 
 /**
  * Class EngineSettings
@@ -92,5 +94,31 @@ final class EngineSettings
 		self::resetUserEngineChoiceWhenBitrixGPTAgent();
 
 		$manager->save();
+	}
+
+	public static function resetToBitrixGPTInCloudAgent(): string
+	{
+		self::getEngineSettingsService()->resetToBitrixGPTInCloud();
+
+		return '\Bitrix\AI\Agents\EngineSettings::resetToBitrixGPTInCloudAgent();';
+	}
+
+	public static function resetToBitrixAudioInCloudAgent(): string
+	{
+		self::getEngineSettingsService()->resetToBitrixAudioInCloud();
+
+		return '\Bitrix\AI\Agents\EngineSettings::resetToBitrixAudioInCloudAgent();';
+	}
+
+	public static function resetFollowUpTextStepsToBGPTAgent(): string
+	{
+		self::getEngineSettingsService()->resetResumeTranscriptionToBGPT();
+
+		return '';
+	}
+
+	private static function getEngineSettingsService(): EngineSettingsService
+	{
+		return ServiceLocator::getInstance()->get(EngineSettingsService::class);
 	}
 }

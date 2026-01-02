@@ -1,0 +1,22 @@
+<?php
+$MESS["CRM_ML_MODEL_LIST_AVAILABLE_MODELS"] = "Болжау үшін қолжетімді модельдер";
+$MESS["CRM_ML_MODEL_LIST_BUTTON_CANCEL"] = "Болдырмау";
+$MESS["CRM_ML_MODEL_LIST_BUTTON_DISABLE"] = "Өшіру";
+$MESS["CRM_ML_MODEL_LIST_BUTTON_TRAIN_FREE_OF_CHARGE"] = "Модельді тегін үйрету";
+$MESS["CRM_ML_MODEL_LIST_CONFIRMATION"] = "Растау";
+$MESS["CRM_ML_MODEL_LIST_DEAL_SCORING_DISABLE"] = "Осы иірім үшін мәмілелер скорингін өшіру";
+$MESS["CRM_ML_MODEL_LIST_DISABLE_DEAL_SCORING"] = "Осы иірім үшін мәмілелер скорингін өшіру керек пе?";
+$MESS["CRM_ML_MODEL_LIST_DISABLE_LEAD_SCORING"] = "Лидтер скорингін өшіру керек пе?";
+$MESS["CRM_ML_MODEL_LIST_HELP"] = "Көмек";
+$MESS["CRM_ML_MODEL_LIST_LEAD_SCORING_DISABLE"] = "Лид скорингін өшіру";
+$MESS["CRM_ML_MODEL_LIST_SCORING_DESCRIPTION_P1"] = "Сіздің сату менеджеріңіз мәмілелермен жұмыс жасауда нені басшылыққа алады: кезектілікті, түйсікті? Ең алдымен перспективалы клиенттермен жұмыс жасаңыз.";
+$MESS["CRM_ML_MODEL_LIST_SCORING_DESCRIPTION_P2"] = "АІ скоринг барлық мәмілелерді талдайды және әрқайсысының сәтті аяқталу ықтималдығының % көрсетеді. Жүйе сіздің менеджеріңізге сәттілік ықтималдығын арттыру үшін қайда күш сала түсу керектігін түсінуге көмектеседі. Клиентіңіз болмайтын адамға көңіл бөліп жатқан кезде жылы клиентті жіберіп алу енді мүмкін емес!";
+$MESS["CRM_ML_MODEL_LIST_SCORING_ENOUGH_DATA"] = "Сіздің CRM-де AI скоринг моделін үйрету үшін жеткілікті деректер бар.";
+$MESS["CRM_ML_MODEL_LIST_SCORING_ERROR_TOO_SOON_2"] = "AI скоринг сіздің сұранысыңыз бойынша өшірілген. Сіз AI моделін қайта үйретіп, скорингті кем дегенде #DATE#- тен енгізе аласыз.";
+$MESS["CRM_ML_MODEL_LIST_SCORING_MODEL_QUALITY"] = "Модельдің сапасы: #QUALITY#%.";
+$MESS["CRM_ML_MODEL_LIST_SCORING_MODEL_READY"] = "Модель оқытылған және болжауға дайын.";
+$MESS["CRM_ML_MODEL_LIST_SCORING_MODEL_TRAINING_DATE"] = "Оқыту күні: #TRAINING_DATE#.";
+$MESS["CRM_ML_MODEL_LIST_SCORING_NOT_ENOUGH_DATA"] = "Сіздің CRM-де AI скоринг моделін үйрету үшін деректер жеткіліксіз. Сіз осы #LINK_START#мақаласынан#LINK_END# оқуға қажетті деректердің көлемі мен мазмұнына қойылатын талаптарды біле аласыз";
+$MESS["CRM_ML_MODEL_LIST_SCORING_REENABLE_WARNING"] = "Сіз скорингті #DATE# дейін кері қоса алмайсыз";
+$MESS["CRM_ML_MODEL_LIST_SCORING_TITLE"] = "AI скоринг";
+$MESS["CRM_ML_MODEL_LIST_SCORING_TRAINING_IN_PROCESS"] = "AI скоринг моделін оқыту орындалуда, ағымдағы прогресс:";

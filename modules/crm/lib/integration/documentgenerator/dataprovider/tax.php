@@ -8,6 +8,7 @@ use Bitrix\DocumentGenerator\DataProvider\HashDataProvider;
 use Bitrix\DocumentGenerator\DataProviderManager;
 use Bitrix\Main\IO\Path;
 use Bitrix\Main\Localization\Loc;
+use Bitrix\Crm\Integration\DocumentGenerator\Value\TaxRate;
 
 class Tax extends HashDataProvider
 {
@@ -22,6 +23,14 @@ class Tax extends HashDataProvider
 		if(isset($source['MODE']) && $source['MODE'] === static::MODE_TAX)
 		{
 			$this->mode = static::MODE_TAX;
+		}
+
+		if (isset($this->data['VALUE']) && $this->data['VALUE']->getValue() === null)
+		{
+			$this->options['SHOW_MODIFIER'] = [
+				'NAME' => 'SN',
+				'DEFAULT' => false,
+			];
 		}
 	}
 
@@ -39,6 +48,15 @@ class Tax extends HashDataProvider
 				'TITLE' => GetMessage('CRM_DOCGEN_DATAPROVIDER_TAX_TITLE_NEW_TITLE'),
 				'VALUE' => function()
 				{
+					$taxRate = $this->getValue('RATE');
+					if (
+						$taxRate instanceof TaxRate
+						&& $taxRate->getValue() === TaxRate::TAX_FREE
+					)
+					{
+						return '';
+					}
+
 					if($this->isVatMode())
 					{
 						Loc::loadLanguageFile(__DIR__.'/productsdataprovider.php', DataProviderManager::getInstance()->getContext()->getRegionLanguageId());

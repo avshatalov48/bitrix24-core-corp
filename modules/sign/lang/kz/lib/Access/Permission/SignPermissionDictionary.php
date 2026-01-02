@@ -1,0 +1,27 @@
+<?php
+$MESS["SIGN_ACCESS_RIGHTS"] = "Қолжетімділік құқықтарын өңдеуге қол жеткізу";
+$MESS["SIGN_B2E_MEMBER_DYNAMIC_FIELDS_DELETE"] = "Қосымша ақпараты бар өрістерді жою";
+$MESS["SIGN_B2E_MY_SAFE"] = "\"Компания сейфі\" бөліміне қол жеткізу";
+$MESS["SIGN_B2E_MY_SAFE_DOCUMENTS"] = "Сейф құжаттарына қол жеткізу";
+$MESS["SIGN_B2E_MY_SAFE_FIRED"] = "Сейф сүзгісінде жұмыстан шығарылған қызметкерлер";
+$MESS["SIGN_B2E_PROFILE_FIELDS_ADD"] = "Қызметкердің КЭҚА өрістерін қосу құқығы";
+$MESS["SIGN_B2E_PROFILE_FIELDS_DELETE_MSG_VER_1"] = "Қызметкер туралы негізгі ақпараты бар өрістерді жою";
+$MESS["SIGN_B2E_PROFILE_FIELDS_EDIT"] = "Қызметкердің КЭҚА өрістерін қосу құқығы";
+$MESS["SIGN_B2E_PROFILE_FIELDS_READ"] = "Қызметкердің профилінде КЭҚА өрістерін қарау құқығы";
+$MESS["SIGN_B2E_SIGNERS_LIST_ADD"] = "Қызметкерлер тобын құру құқығы";
+$MESS["SIGN_B2E_SIGNERS_LIST_DELETE"] = "Қызметкерлер тобын жою құқығы";
+$MESS["SIGN_B2E_SIGNERS_LIST_EDIT"] = "Қызметкерлер тобын өзгерту құқығы";
+$MESS["SIGN_B2E_SIGNERS_LIST_READ"] = "Қызметкерлер тобын қарау құқығы";
+$MESS["SIGN_B2E_SIGNERS_LIST_REFUSED"] = "КЭҚА-дан бас тартқан қызметкерлер тобына қол жеткізу";
+$MESS["SIGN_B2E_TEMPLATES_1"] = "Соңғы құжаттарға қол жеткізу";
+$MESS["SIGN_B2E_TEMPLATE_AND_FOLDER_CREATE"] = "Қалыптар мен жиынтықтарды жасау құқығы";
+$MESS["SIGN_B2E_TEMPLATE_AND_FOLDER_DELETE"] = "Қалыптар мен жиынтықтарды жою құқығы";
+$MESS["SIGN_B2E_TEMPLATE_AND_FOLDER_EDIT"] = "Қалыптар мен жиынтықтарды өзгерту құқығы";
+$MESS["SIGN_B2E_TEMPLATE_AND_FOLDER_READ"] = "Қалыптар мен жиынтықтарды қарау құқығы";
+$MESS["SIGN_B2E_TEMPLATE_CREATE"] = "Қалыпты жасау құқығы";
+$MESS["SIGN_B2E_TEMPLATE_DELETE"] = "Қалыпты жою құқығы";
+$MESS["SIGN_B2E_TEMPLATE_EDIT"] = "Қалыпты өзгерту құқығы";
+$MESS["SIGN_B2E_TEMPLATE_READ"] = "Қалыпты қарау құқығы";
+$MESS["SIGN_MY_SAFE"] = "\"Менің сейфім\" бөліміне қол жеткізу";
+$MESS["SIGN_MY_SAFE_DOCUMENTS"] = "Сейф құжаттарына қол жеткізу";
+$MESS["SIGN_TEMPLATES"] = "Құжат қалыптарына қол жеткізу";

@@ -1,4 +1,4 @@
-﻿<?php
+<?php
 
 use Bitrix\Catalog;
 use Bitrix\Crm\Binding\ContactCompanyTable;
@@ -21,14 +21,18 @@ use Bitrix\Crm\Requisite;
 use Bitrix\Crm\Rest;
 use Bitrix\Crm\Security\EntityAuthorization;
 use Bitrix\Crm\Service;
+use Bitrix\Crm\Service\Container;
 use Bitrix\Crm\Settings\RestSettings;
 use Bitrix\Crm\Tracking;
 use Bitrix\Crm\WebForm;
 use Bitrix\Iblock;
+use Bitrix\Iblock\Public\Service\RestValidator as IblockRestValidator;
 use Bitrix\Main;
 use Bitrix\Main\Application;
+use Bitrix\Main\DB\DuplicateEntryException;
 use Bitrix\Main\DB\SqlQueryException;
 use Bitrix\Main\DI\ServiceLocator;
+use Bitrix\Main\Error;
 use Bitrix\Main\Loader;
 use Bitrix\Main\Localization\Loc;
 use Bitrix\Main\Text\StringHelper;
@@ -509,7 +513,7 @@ final class CCrmRestService extends IRestService
 	}
 	public static function onRestServiceMethod($arParams, $nav, CRestServer $server)
 	{
-		if(!CCrmPerms::IsAccessEnabled())
+		if(!Service\Container::getInstance()->getUserPermissions()->entityType()->canReadSomeItemsInCrmOrAutomatedSolutions())
 		{
 			throw new RestException('Access denied.');
 		}
@@ -4014,6 +4018,23 @@ class CCrmProductRestProxy extends CCrmRestProxyBase
 			unset($descriptionType, $description, $isNeedSanitize);
 		}
 
+		if (class_exists('\Bitrix\Iblock\Public\Service\RestValidator\Format\SimplePropertyValueValidator'))
+		{
+			$validator = IblockRestValidator\Format\SimplePropertyValueValidator::getInstance();
+			$validator->setFileValidator(new IblockRestValidator\Format\Type\IblockFile());
+			$validator->setIblockId($catalogID);
+			$internalResult = $validator->run($fields);
+			if (!$internalResult->isSuccess())
+			{
+				foreach ($internalResult->getErrorMessages() as $message)
+				{
+					$errors[] = $message;
+				}
+
+				return false;
+			}
+		}
+
 		// Product properties
 		$this->initializePropertiesInfo($catalogID);
 		$propertyValues = array();
@@ -4023,8 +4044,10 @@ class CCrmProductRestProxy extends CCrmRestProxyBase
 				$propertyValues[$property['ID']] = $fields[$propId];
 			unset($fields[$propId]);
 		}
-		if(count($propertyValues) > 0)
+		if (!empty($propertyValues))
+		{
 			$fields['PROPERTY_VALUES'] = $propertyValues;
+		}
 
 		$conn = Application::getConnection();
 		$conn->startTransaction();
@@ -4424,6 +4447,23 @@ class CCrmProductRestProxy extends CCrmRestProxyBase
 			unset($descriptionType, $description, $isNeedSanitize);
 		}
 
+		if (class_exists('\Bitrix\Iblock\Public\Service\RestValidator\Format\SimplePropertyValueValidator'))
+		{
+			$validator = IblockRestValidator\Format\SimplePropertyValueValidator::getInstance();
+			$validator->setFileValidator(new IblockRestValidator\Format\Type\IblockFile());
+			$validator->setIblockId($catalogID);
+			$internalResult = $validator->run($fields);
+			if (!$internalResult->isSuccess())
+			{
+				foreach ($internalResult->getErrorMessages() as $message)
+				{
+					$errors[] = $message;
+				}
+
+				return false;
+			}
+		}
+
 		// Product properties
 		$this->initializePropertiesInfo($catalogID);
 		$propertyValues = array();
@@ -4433,7 +4473,7 @@ class CCrmProductRestProxy extends CCrmRestProxyBase
 				$propertyValues[$property['ID']] = $fields[$propId];
 			unset($fields[$propId]);
 		}
-		if(!empty($propertyValues))
+		if (!empty($propertyValues))
 		{
 			$fields['PROPERTY_VALUES'] = $propertyValues;
 			$rsProperties = CIBlockElement::GetProperty(
@@ -4489,6 +4529,7 @@ class CCrmProductRestProxy extends CCrmRestProxyBase
 
 		return $result;
 	}
+
 	protected function innerDelete($ID, &$errors, array $params = null)
 	{
 		if(!CModule::IncludeModule('iblock'))
@@ -4548,6 +4589,7 @@ class CCrmProductRestProxy extends CCrmRestProxyBase
 		$bindings[CRestUtil::EVENTS]['onCrmProductUpdate'] = self::createEventInfo('crm', 'OnAfterCrmProductUpdate', $callback);
 		$bindings[CRestUtil::EVENTS]['onCrmProductDelete'] = self::createEventInfo('iblock', 'OnAfterIBlockElementDelete', $callback);
 	}
+
 	public static function processEvent(array $arParams, array $arHandler)
 	{
 		$eventName = $arHandler['EVENT_NAME'];
@@ -4814,8 +4856,7 @@ class CCrmProductPropertyRestProxy extends CCrmRestProxyBase
 			throw new RestException('Could not load iblock module.');
 		}
 
-		$userPerms = CCrmPerms::GetCurrentUserPermissions();
-		if (!$userPerms->HavePerm('CONFIG', BX_CRM_PERM_CONFIG, 'WRITE'))
+		if (!\Bitrix\Crm\Service\Container::getInstance()->getUserPermissions()->isCrmAdmin())
 		{
 			$errors[] = 'Access denied.';
 			return false;
@@ -4920,10 +4961,7 @@ class CCrmProductPropertyRestProxy extends CCrmRestProxyBase
 		{
 			throw new RestException('Could not load iblock module.');
 		}
-
-		/** @var CCrmPerms $userPerms */
-		$userPerms = CCrmPerms::GetCurrentUserPermissions();
-		if (!$userPerms->HavePerm('CONFIG', BX_CRM_PERM_CONFIG, 'READ'))
+		if (!\Bitrix\Crm\Service\Container::getInstance()->getUserPermissions()->product()->canRead())
 		{
 			$errors[] = 'Access denied.';
 			return false;
@@ -4979,13 +5017,25 @@ class CCrmProductPropertyRestProxy extends CCrmRestProxyBase
 		{
 			throw new RestException('Could not load iblock module.');
 		}
-
-		/** @var CCrmPerms $userPerms */
-		$userPerms = CCrmPerms::GetCurrentUserPermissions();
-		if (!$userPerms->HavePerm('CONFIG', BX_CRM_PERM_CONFIG, 'READ'))
+		if (!\Bitrix\Crm\Service\Container::getInstance()->getUserPermissions()->product()->canRead())
 		{
 			$errors[] = 'Access denied.';
 			return false;
+		}
+
+		if (class_exists('\Bitrix\Iblock\Public\Service\RestValidator\Format\PropertyScalarFilterValidator'))
+		{
+			$validator = IblockRestValidator\Format\PropertyScalarFilterValidator::getInstance();
+			$internalResult = $validator->run($filter);
+			if (!$internalResult->isSuccess())
+			{
+				foreach ($internalResult->getErrorMessages() as $message)
+				{
+					$errors[] = $message;
+
+					return false;
+				}
+			}
 		}
 
 		$userTypes = CCrmProductPropsHelper::GetPropsTypesByOperations(false, 'rest');
@@ -5033,9 +5083,7 @@ class CCrmProductPropertyRestProxy extends CCrmRestProxyBase
 			throw new RestException('Could not load iblock module.');
 		}
 
-		/** @var CCrmPerms $userPerms */
-		$userPerms = CCrmPerms::GetCurrentUserPermissions();
-		if (!$userPerms->HavePerm('CONFIG', BX_CRM_PERM_CONFIG, 'WRITE'))
+		if (!\Bitrix\Crm\Service\Container::getInstance()->getUserPermissions()->isCrmAdmin())
 		{
 			$errors[] = 'Access denied.';
 			return false;
@@ -5097,15 +5145,37 @@ class CCrmProductPropertyRestProxy extends CCrmRestProxyBase
 			$fields['MULTIPLE'] = 'N';
 		}
 
-		$property = new CIBlockProperty;
-		$result = $property->Update($id, $fields);
-
+		$conn = Application::getConnection();
+		$conn->startTransaction();
+		$internalError = '';
+		$result = false;
+		try
+		{
+			$property = new CIBlockProperty;
+			$result = $property->Update($id, $fields);
+			if (!$result)
+			{
+				$internalError = $property->getLastError();
+				if (!$internalError)
+				{
+					$exception = $APPLICATION->GetException();
+					if ($exception)
+					{
+						$internalError = $exception->GetString();
+					}
+					unset(
+						$exception,
+					);
+				}
+			}
+		}
+		catch (SqlQueryException)
+		{
+			$internalError = 'Internal error updating property. Try updating again.';
+		}
 		if (!$result)
 		{
-			if (!empty($property->LAST_ERROR))
-				$errors[] = $property->LAST_ERROR;
-			else if($e = $APPLICATION->GetException())
-				$errors[] = $e->GetString();
+			$errors[] = $internalError;
 		}
 
 		return $result;
@@ -5121,9 +5191,7 @@ class CCrmProductPropertyRestProxy extends CCrmRestProxyBase
 			throw new RestException('Could not load iblock module.');
 		}
 
-		/** @var CCrmPerms $userPerms */
-		$userPerms = CCrmPerms::GetCurrentUserPermissions();
-		if (!$userPerms->HavePerm('CONFIG', BX_CRM_PERM_CONFIG, 'WRITE'))
+		if (!\Bitrix\Crm\Service\Container::getInstance()->getUserPermissions()->isCrmAdmin())
 		{
 			$errors[] = 'Access denied.';
 			return false;
@@ -6068,6 +6136,18 @@ class CCrmLeadRestProxy extends CCrmRestProxyBase
 			$actualRows[] = $row;
 		}
 
+		$factory = \Bitrix\Crm\Service\Container::getInstance()->getFactory(\CCrmOwnerType::Lead);
+		$currencyId = $factory?->getItem($ID, [\Bitrix\Crm\Item::FIELD_NAME_CURRENCY_ID])?->getCurrencyId();
+		$checkCatalogRightsResult = Container::getInstance()->getProductRowChecker()->checkCatalogRights(
+			CCrmOwnerType::Lead,
+			$actualRows,
+			$currencyId,
+		);
+		if (!$checkCatalogRightsResult->isSuccess())
+		{
+			throw new RestException($checkCatalogRightsResult->getError()->getMessage());
+		}
+
 		$result = CCrmLead::SaveProductRows($ID, $actualRows, true, true, true);
 		if(!$result)
 		{
@@ -6505,6 +6585,18 @@ class CCrmDealRestProxy extends CCrmRestProxyBase
 			$actualRows[] = $row;
 		}
 
+		$factory = \Bitrix\Crm\Service\Container::getInstance()->getFactory(\CCrmOwnerType::Deal);
+		$currencyId = $factory?->getItem($ID, [\Bitrix\Crm\Item::FIELD_NAME_CURRENCY_ID])?->getCurrencyId();
+		$checkCatalogRightsResult = Container::getInstance()->getProductRowChecker()->checkCatalogRights(
+			CCrmOwnerType::Deal,
+			$actualRows,
+			$currencyId,
+		);
+		if (!$checkCatalogRightsResult->isSuccess())
+		{
+			throw new RestException($checkCatalogRightsResult->getError()->getMessage());
+		}
+
 		$result = CCrmDeal::SaveProductRows($ID, $actualRows, true, true, true);
 		if(!$result)
 		{
@@ -6677,8 +6769,7 @@ class CCrmDealCategoryProxy extends CCrmRestProxyBase
 	}
 	protected function innerAdd(&$fields, &$errors, array $params = null)
 	{
-		$userPermissions = \CCrmPerms::GetCurrentUserPermissions();
-		if (!$userPermissions->HavePerm('CONFIG', BX_CRM_PERM_CONFIG, 'WRITE'))
+		if (!\Bitrix\Crm\Service\Container::getInstance()->getUserPermissions()->isCrmAdmin())
 		{
 			$errors[] = 'Access denied.';
 			return false;
@@ -6696,8 +6787,7 @@ class CCrmDealCategoryProxy extends CCrmRestProxyBase
 	}
 	protected function innerUpdate($ID, &$fields, &$errors, array $params = null)
 	{
-		$userPermissions = \CCrmPerms::GetCurrentUserPermissions();
-		if (!$userPermissions->HavePerm('CONFIG', BX_CRM_PERM_CONFIG, 'WRITE'))
+		if (!\Bitrix\Crm\Service\Container::getInstance()->getUserPermissions()->isCrmAdmin())
 		{
 			$errors[] = 'Access denied.';
 			return false;
@@ -6722,29 +6812,32 @@ class CCrmDealCategoryProxy extends CCrmRestProxyBase
 	}
 	protected function innerDelete($ID, &$errors, array $params = null)
 	{
-		$userPermissions = \CCrmPerms::GetCurrentUserPermissions();
-		if (!$userPermissions->HavePerm('CONFIG', BX_CRM_PERM_CONFIG, 'WRITE'))
+		$container = \Bitrix\Crm\Service\Container::getInstance();
+		if (!$container->getUserPermissions()->isCrmAdmin())
 		{
 			$errors[] = 'Access denied.';
+
 			return false;
 		}
 
-		if(!DealCategory::exists($ID))
+		if (!DealCategory::exists($ID))
 		{
 			$errors[] = 'Not found.';
+
 			return false;
 		}
 
-		try
+		$factory = $container->getFactory(\CCrmOwnerType::Deal);
+		$category = $factory->getCategory($ID);
+		$deleteResult = $category->delete();
+		if ($deleteResult->isSuccess())
 		{
-			DealCategory::delete($ID);
 			return true;
 		}
-		catch(Main\SystemException $ex)
-		{
-			$errors[] = $ex->getMessage();
-			return false;
-		}
+
+		$errors = array_merge($errors, $deleteResult->getErrorMessages());
+
+		return false;
 	}
 	public function resolveStatusEntityID($ID)
 	{
@@ -9786,64 +9879,76 @@ class CCrmActivityRestProxy extends CCrmRestProxyBase
 		}
 
 
-		$storageTypeID = $fields['STORAGE_TYPE_ID'] = CCrmActivity::GetDefaultStorageTypeID();
+		$storageTypeID = CCrmActivity::GetDefaultStorageTypeID();
 		unset($fields['STORAGE_ELEMENT_IDS']);
-		if($storageTypeID === StorageType::WebDav)
+		unset($fields['STORAGE_TYPE_ID']);
+		if ($storageTypeID === StorageType::WebDav)
 		{
 			$webdavElements = isset($fields['WEBDAV_ELEMENTS']) && is_array($fields['WEBDAV_ELEMENTS'])
-				? $fields['WEBDAV_ELEMENTS'] : array();
+				?
+				$fields['WEBDAV_ELEMENTS']
+				: []
+			;
 
-			$prevStorageElementIDs = $currentFields['STORAGE_ELEMENT_IDS'] ?? array();
-			$oldStorageElementIDs = array();
-			foreach($webdavElements as &$element)
+			$prevStorageElementIDs = $currentFields['STORAGE_ELEMENT_IDS'] ?? [];
+			$oldStorageElementIDs = [];
+			foreach ($webdavElements as &$element)
 			{
 				$elementID = isset($element['ELEMENT_ID']) ? intval($element['ELEMENT_ID']) : 0;
-				if($elementID > 0)
+				if ($elementID > 0)
 				{
-					if(!isset($fields['STORAGE_ELEMENT_IDS']))
+					if (!isset($fields['STORAGE_ELEMENT_IDS']))
 					{
-						$fields['STORAGE_ELEMENT_IDS'] = array();
+						$fields['STORAGE_ELEMENT_IDS'] = [];
 					}
 					$fields['STORAGE_ELEMENT_IDS'][] = $elementID;
 				}
 
 				$oldElementID = isset($element['OLD_ELEMENT_ID']) ? intval($element['OLD_ELEMENT_ID']) : 0;
-				if($oldElementID > 0
-					&& ($elementID > 0 || (isset($element['DELETE']) && $element['DELETE'] === true)))
+				if (
+					$oldElementID > 0
+					&& ($elementID > 0 || (isset($element['DELETE']) && $element['DELETE'] === true))
+				)
 				{
-					if(in_array($oldElementID, $prevStorageElementIDs))
+					if (in_array($oldElementID, $prevStorageElementIDs))
 					{
 						$oldStorageElementIDs[] = $oldElementID;
 					}
 				}
 			}
-			unset($element);
 		}
-		else if($storageTypeID === StorageType::Disk)
+		elseif ($storageTypeID === StorageType::Disk)
 		{
 			$diskFiles = isset($fields['FILES']) && is_array($fields['FILES'])
-				? $fields['FILES'] : array();
+				? $fields['FILES']
+				: []
+			;
 
-			if(empty($diskFiles))
+			if (empty($diskFiles))
 			{
 				//For backward compatibility only
 				$diskFiles = isset($fields['WEBDAV_ELEMENTS']) && is_array($fields['WEBDAV_ELEMENTS'])
-					? $fields['WEBDAV_ELEMENTS'] : array();
+					? $fields['WEBDAV_ELEMENTS']
+					: []
+				;
 			}
 
-			foreach($diskFiles as &$fileInfo)
+			foreach ($diskFiles as &$fileInfo)
 			{
 				$fileID = isset($fileInfo['FILE_ID']) ? (int)$fileInfo['FILE_ID'] : 0;
-				if($fileID > 0)
+				if ($fileID > 0)
 				{
-					if(!isset($fields['STORAGE_ELEMENT_IDS']))
+					if (!isset($fields['STORAGE_ELEMENT_IDS']))
 					{
-						$fields['STORAGE_ELEMENT_IDS'] = array();
+						$fields['STORAGE_ELEMENT_IDS'] = [];
 					}
 					$fields['STORAGE_ELEMENT_IDS'][] = $fileID;
 				}
 			}
-			unset($fileInfo);
+		}
+		if (!empty($fields['STORAGE_ELEMENT_IDS']))
+		{
+			$fields['STORAGE_TYPE_ID'] = $storageTypeID;
 		}
 
 		$regEvent = true;
@@ -11562,10 +11667,9 @@ class CCrmUserFieldRestProxy extends UserFieldProxy implements ICrmRestProxy
 	{
 		if($this->isAuthorizedUser === null)
 		{
-			/**@var \CCrmPerms $userPermissions @**/
-			$userPermissions = CCrmPerms::GetUserPermissions($this->user->GetID());
-			$this->isAuthorizedUser = $userPermissions->HavePerm('CONFIG', BX_CRM_PERM_CONFIG, 'WRITE');
+			$this->isAuthorizedUser = \Bitrix\Crm\Service\Container::getInstance()->getUserPermissions($this->user->GetID())->isCrmAdmin();
 		}
+
 		return $this->isAuthorizedUser;
 	}
 	protected function checkCreatePermission()
@@ -11937,6 +12041,18 @@ class CCrmQuoteRestProxy extends CCrmRestProxyBase
 			}
 
 			$actualRows[] = $row;
+		}
+
+		$factory = \Bitrix\Crm\Service\Container::getInstance()->getFactory(\CCrmOwnerType::Quote);
+		$currencyId = $factory?->getItem($ID, [\Bitrix\Crm\Item::FIELD_NAME_CURRENCY_ID])?->getCurrencyId();
+		$checkCatalogRightsResult = Container::getInstance()->getProductRowChecker()->checkCatalogRights(
+			CCrmOwnerType::Quote,
+			$actualRows,
+			$currencyId,
+		);
+		if (!$checkCatalogRightsResult->isSuccess())
+		{
+			throw new RestException($checkCatalogRightsResult->getError()->getMessage());
 		}
 
 		$result = CCrmQuote::SaveProductRows($ID, $actualRows, true, true, true);
@@ -14082,50 +14198,38 @@ class CCrmAddressRestProxy extends CCrmRestProxyBase
 		return $result;
 	}
 
-	protected function innerGetList($order, $filter, $select, $navigation, &$errors)
+	public function getList($order, $filter, $select, $start)
 	{
-		$oldRightsCheck = true;
-		$identsResult = $this->getIdents($filter);
-		if ($identsResult->isSuccess())
-		{
-			$oldRightsCheck = false;
-			$identFields = $identsResult->getData();
-			if (
-				!EntityAddress::checkReadPermissionOwnerEntity(
-					$identFields['entityTypeId'],
-					$identFields['entityId']
-				)
-			)
-			{
-				$errors[] = 'Access denied.';
-				return false;
-			}
-		}
+		$this->prepareListParams($order, $filter, $select);
 
-		if ($oldRightsCheck)
+		$navigation = CCrmRestService::getNavData($start, true);
+
+		$fieldsInfo = $this->getFieldsInfo();
+		$this->internalizeFilterFields($filter, $fieldsInfo);
+
+		if(!EntityAddress::checkReadPermissionOwnerEntity())
 		{
-			if(!EntityAddress::checkReadPermissionOwnerEntity())
-			{
-				$errors[] = 'Access denied.';
-				return false;
-			}
+			throw new RestException('Access denied.');
 		}
 
 		$entity = self::getEntity();
 
-		$page = isset($navigation['iNumPage']) ? (int)$navigation['iNumPage'] : false;
-		$limit = isset($navigation['nPageSize']) ? (int)$navigation['nPageSize'] : CCrmRestService::LIST_LIMIT;
-		$offset = $limit * ($page - 1);
+		$limit = (int)($navigation['limit'] ?? CCrmRestService::LIST_LIMIT);
+		$offset = (int)($navigation['offset'] ?? 0);
 
 		if(!is_array($select))
-			$select = array();
+		{
+			$select = [];
+		}
 
 		if(empty($select))
+		{
 			$select = array_keys($this->getFieldsInfo());
+		}
 
 		//For backward compatibility only
 		if(isset($filter['ENTITY_TYPE_ID']) &&
-				($filter['ENTITY_TYPE_ID'] == CCrmOwnerType::Company || $filter['ENTITY_TYPE_ID'] == CCrmOwnerType::Contact))
+			($filter['ENTITY_TYPE_ID'] == CCrmOwnerType::Company || $filter['ENTITY_TYPE_ID'] == CCrmOwnerType::Contact))
 		{
 			$filter['ANCHOR_TYPE_ID'] = $filter['ENTITY_TYPE_ID'];
 			unset($filter['ENTITY_TYPE_ID']);
@@ -14137,27 +14241,27 @@ class CCrmAddressRestProxy extends CCrmRestProxyBase
 			}
 		}
 
-		$listParams = [
+		$iterator = $entity->getList([
 			'order' => $order,
 			'filter' => $filter,
 			'select' => $select,
-			'count_total' => true
-		];
+			'limit' => $limit,
+			'offset' => $offset,
+		]);
 
-		if ($page !== false)
+		$result = [];
+		while ($item = $iterator->fetch())
 		{
-			$listParams['limit'] = $limit;
-			$listParams['offset'] = $offset;
+			$this->externalizeFields($item, $fieldsInfo);
+			$result[] = $item;
 		}
 
-		$result = $entity->getList($listParams);
-
-		if (!is_object($result))
+		if ($start < 0)
 		{
-			$result = [];
+			return $result;
 		}
 
-		return $this->prepareListResult($result, $page, $limit);
+		return CCrmRestService::setNavData($result, ['offset' => $offset, 'count' => $entity->getCount($filter)]);
 	}
 
 	public function processMethodRequest($name, $nameDetails, $arParams, $nav, $server)
@@ -15087,8 +15191,7 @@ class CCrmPersonTypeRestProxy extends CCrmRestProxyBase
 
 		$result = array();
 
-		$crmPerms = new CCrmPerms($USER->GetID());
-		if (!$crmPerms->HavePerm('CONFIG', BX_CRM_PERM_CONFIG, 'READ'))
+		if (!\Bitrix\Crm\Service\Container::getInstance()->getUserPermissions()->product()->canRead())
 		{
 			$errors[] = 'Access denied.';
 			return false;
@@ -15222,20 +15325,16 @@ class CCrmPaySystemRestProxy extends CCrmRestProxyBase
 	}
 	protected function innerGetList($order, $filter, $select, $navigation, &$errors)
 	{
-		global $USER;
-
 		$result = array();
-
-		$crmPerms = new CCrmPerms($USER->GetID());
-		if (!$crmPerms->HavePerm('CONFIG', BX_CRM_PERM_CONFIG, 'READ'))
-		{
-			$errors[] = 'Access denied.';
-			return false;
-		}
 
 		if (!CModule::IncludeModule('sale'))
 		{
 			$errors[] = 'Sale module is not installed.';
+			return false;
+		}
+		if (!\Bitrix\Crm\Service\Container::getInstance()->getUserPermissions()->product()->canRead())
+		{
+			$errors[] = 'Access denied.';
 			return false;
 		}
 
@@ -15444,15 +15543,44 @@ class CCrmMeasureRestProxy extends CCrmRestProxyBase
 		}
 		else
 		{
-			$result = CCatalogMeasure::add($fields);
-			if($result <= 0)
+			$conn = Application::getConnection();
+			$conn->startTransaction();
+			$result = false;
+			$internalError = '';
+			try
 			{
-				if($exception = $APPLICATION->GetException())
-					$errors[] = $exception->GetString();
-				else
-					$errors[] = 'Unknown error when creating unit of measurement.';
+				$result = CCatalogMeasure::add($fields);
+				if ($result === false)
+				{
+					$exception = $APPLICATION->GetException();
+					if ($exception)
+					{
+						$internalError = $exception->GetString();
+					}
+					else
+					{
+						$internalError = 'Unknown error when creating unit of measurement.';
+					}
+				}
+			}
+			catch (DuplicateEntryException)
+			{
+				$internalError = 'A unit of measurement with the CODE "'.$code.'" already exists.';
+			}
+			catch (SqlQueryException)
+			{
+				$internalError = 'Internal error adding measure. Try adding again.';
+			}
+
+			if ($result === false)
+			{
+				$conn->rollbackTransaction();
+				$errors[] = $internalError;
+
 				return false;
 			}
+
+			$conn->commitTransaction();
 		}
 
 		return $result;

@@ -1,0 +1,78 @@
+.crm-old-layout-disable-alert {
+	display: flex;
+	padding: var(--ui-space-inset-sm);
+	margin-bottom: var(--ui-space-inset-sm2);
+	align-items: center;
+	align-self: stretch;
+	border-radius: var(--ui-border-radius-2xl);
+	background-color: var(--ui-color-bg-content-inapp);
+	color: var(--ui-color-white-base);
+}
+
+.crm-old-layout-left-part {
+	display: flex;
+	padding: var(--ui-space-inset-xs2);
+	justify-content: center;
+	align-items: center;
+	height: 80px;
+	width: 80px;
+}
+
+.crm-old-layout-icon {
+	height: 100%;
+	width: 100%;
+	background: url("../images/icon.svg");
+}
+
+.crm-old-layout-right-part {
+	display: flex;
+	flex-direction: column;
+	align-items: flex-start;
+	padding-left: var(--ui-space-inline-2xs2);
+	gap: var(--ui-space-inline-2xs2);
+	flex: 1 0 0;
+}
+
+.crm-old-layout-title {
+	color: var(--ui-color-white-base);
+	margin: 0;
+}
+
+.crm-old-layout-text {
+	color: var(--ui-color-white-base);
+	opacity: 0.82;
+	margin: 0;
+}
+
+.crm-old-layout-buttons {
+	display: flex;
+	padding: 6px 8px var(--ui-space-inset-2xs2) 0;
+	align-items: flex-start;
+	gap: 12px;
+}
+
+.crm-old-layout-close-button {
+	border: none;
+	padding: 0;
+	height: 24px;
+	width: 24px;
+	align-self: flex-start;
+	background: url("../images/cross.svg");
+	cursor: pointer;
+}
+
+.crm-old-layout-buttons .ui-btn {
+	background: rgba(255, 255, 255, 0.16);
+	border: none;
+	color: white;
+}
+
+.crm-old-layout-buttons .ui-btn:hover {
+	background: rgba(255, 255, 255, 0.12) !important;
+	color: rgba(255, 255, 255, 0.9);
+}
+
+.crm-old-layout-helpdesk-link {
+	color: inherit !important;
+	text-decoration: underline;
+}

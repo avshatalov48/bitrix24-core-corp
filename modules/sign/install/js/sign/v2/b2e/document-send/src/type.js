@@ -13,4 +13,5 @@ export type DocumentData = {
 	externalId: string | null;
 	integrationId: number | null,
 	templateUid: string | null;
+	dateSignUntil: Date;
 };

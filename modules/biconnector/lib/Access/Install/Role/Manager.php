@@ -2,6 +2,7 @@
 
 namespace Bitrix\BIConnector\Access\Install\Role;
 
+use Bitrix\BIConnector\Superset\Scope\ScopeService;
 use Bitrix\Crm\Security\Role\Model\RoleTable;
 use Bitrix\Main\Access\AccessCode;
 use Bitrix\Main\Loader;
@@ -13,8 +14,20 @@ class Manager extends Base
 	{
 		return [
 			PermissionDictionary::BIC_ACCESS,
-			PermissionDictionary::BIC_DASHBOARD_VIEW,
 		];
+	}
+
+	public function getDefaultGroupPermissions(): array
+	{
+		$result = [];
+		foreach (ScopeService::getSystemGroupCode() as $groupCode)
+		{
+			$result[$groupCode] = [
+				PermissionDictionary::BIC_DASHBOARD_VIEW,
+			];
+		}
+
+		return $result;
 	}
 
 	protected function getRelationUserGroups(): array

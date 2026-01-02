@@ -6,6 +6,8 @@
 
 	const AppTheme = require('apptheme');
 	const { WorkgroupUtil } = require('project/utils');
+	const { toMD5 } = require('utils/object');
+	const { RequestExecutor } = require('rest');
 
 	class WorkgroupList
 	{
@@ -135,7 +137,7 @@
 					},
 				};
 
-				this.request.cacheId = Object.toMD5({
+				this.request.cacheId = toMD5({
 					siteId: this.siteId,
 				});
 				this.request.call(useCache);

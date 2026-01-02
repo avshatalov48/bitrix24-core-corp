@@ -779,19 +779,38 @@ class CIntranetSearch
 	public static function OnUserUpdate($arFields)
 	{
 		$obj = new CIntranetSearch;
-		if (!array_intersect(array_merge($obj->arIndexFields, $obj->arIndexUserFields), array_keys($arFields)))
+		$allUserIndexFields = array_merge($obj->arIndexFields, $obj->arIndexUserFields);
+		$userNewFields = array_values(array_intersect($allUserIndexFields, array_keys($arFields)));
+
+		if (empty($userNewFields))
+		{
 			return;
+		}
+
+		if (!in_array('DATE_REGISTER', $userNewFields))
+		{
+			$userNewFields[] = 'DATE_REGISTER';
+		}
 
 		if(CModule::IncludeModule('search'))
 		{
-			$rsUser = CUser::GetByID($arFields["ID"] ?? null);
-			$arOldUser = $rsUser->Fetch();
-			if($arOldUser)
+			$result = \Bitrix\Main\UserTable::getList([
+				'select' => $userNewFields,
+				'filter' => ['=ID' => $arFields['ID']],
+				'limit' => 1
+			]);
+
+			if ($oldUser = $result->fetch())
 			{
 				$arUser = $arFields;
-				foreach($arOldUser as $key => $value)
-					if(!array_key_exists($key, $arUser))
-						$arUser[$key] = $arOldUser[$key];
+				
+				foreach($oldUser as $key => $value)
+				{
+					if (!array_key_exists($key, $arUser))
+					{
+						$arUser[$key] = $oldUser[$key];
+					}
+				}
 
 				if(isset($arUser["UF_DEPARTMENT"]) && is_array($arUser["UF_DEPARTMENT"]))
 					$UF_DEPARTMENT = array_pop($arUser["UF_DEPARTMENT"]);
@@ -826,7 +845,12 @@ class CIntranetSearch
 				{
 					$BODY = "";
 					foreach($obj->arIndexFields as $key)
-						$BODY .= " ".$arUser[$key];
+					{
+						if (isset($arUser[$key]))
+						{
+							$BODY .= " " . $arUser[$key];
+						}
+					}
 					$BODY .= $GLOBALS["USER_FIELD_MANAGER"]->OnSearchIndex("USER", $arUser["ID"]);
 
 					$arResult = Array(

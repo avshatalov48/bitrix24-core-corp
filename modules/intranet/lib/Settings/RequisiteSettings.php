@@ -121,7 +121,7 @@ class RequisiteSettings extends AbstractSettings
 				});
 				$bankField = EntityBankDetail::getSingleInstance()->getRqFieldByCountry()[$preset['COUNTRY_ID']];
 
-				$availableFields = array_merge($presetFields, $bankField);
+				$availableFields = array_merge($presetFields, $bankField ?? []);
 			}
 			else
 			{

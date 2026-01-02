@@ -2,7 +2,7 @@
  * @module im/messenger/lib/ui/selector/multi-selector
  */
 jn.define('im/messenger/lib/ui/selector/multi-selector', (require, exports, module) => {
-	const { Loc } = require('loc');
+	const { Loc } = require('im/messenger/loc');
 	const { Theme } = require('im/lib/theme');
 	const { Notification } = require('im/messenger/lib/ui/notification');
 	const { Type } = require('type');
@@ -144,7 +144,7 @@ jn.define('im/messenger/lib/ui/selector/multi-selector', (require, exports, modu
 					},
 					Text(
 						{
-							text:  Loc.getMessage('IMMOBILE_DIALOG_CREATOR_PARTICIPANTS_DEPARTMENT_TAB_NAME'),
+							text: Loc.getMessage('IMMOBILE_DIALOG_CREATOR_PARTICIPANTS_DEPARTMENT_TAB_NAME'),
 							style: {
 								fontSize: 16,
 								fontWeight: '400',

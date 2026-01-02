@@ -12,7 +12,6 @@ if (isset($_REQUEST['IFRAME']) && $_REQUEST['IFRAME'] === 'Y')
 		[
 			'ENTITY_TYPE_ID' => CCrmOwnerType::Quote,
 			'ENTITY_ID' => $arResult['VARIABLES']['quote_id'],
-			'ENABLE_TITLE_EDIT' => true
 		]
 	);
 }

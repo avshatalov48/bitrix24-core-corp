@@ -71,6 +71,10 @@ class CrmInaccessibilityComponent extends CBitrixComponent
 		{
 			$script = $availabilityManager->getTerminalAvailabilityLock();
 		}
+		elseif ($sliderCode && $sliderCode === ToolsManager::INVENTORY_SLIDER_CODE)
+		{
+			$script = $availabilityManager->getInventoryAvailabilityLock();
+		}
 		else
 		{
 			$script = $availabilityManager->getCrmAvailabilityLock();

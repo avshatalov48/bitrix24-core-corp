@@ -1,8 +1,10 @@
-<?
+<?php
 
+use Bitrix\Intranet\Infrastructure\Update\Menu\SocialPresetMenuConverter;
 use Bitrix\Main\Config\Option;
 use Bitrix\Main\Loader;
 use Bitrix\Main\ModuleManager;
+use Bitrix\Intranet\Integration\Templates;
 
 if (!defined("B_PROLOG_INCLUDED") || B_PROLOG_INCLUDED !== true)
 {
@@ -11,30 +13,30 @@ if (!defined("B_PROLOG_INCLUDED") || B_PROLOG_INCLUDED !== true)
 
 class IntranetReleaseComponent extends \CBitrixComponent implements \Bitrix\Main\Engine\Contract\Controllerable
 {
-	protected string $id = 'gravity';
+	protected string $id = 'lightness';
 	protected array $releaseMap = [
-		'ru' => ['https://gravity.bitrix24.tech/slider/', '27.11.2024 10:00'],
-		'by' => ['https://gravity.bitrix24promo.by/slider/', '27.11.2024 10:00'],
-		'kz' => ['https://gravity.bitrix24kz.works/slider/', '27.11.2024 10:00'],
+		'ru' => ['https://lightness.bitrix24.tech/slider/', '16.05.2025 10:00'],
+		'by' => ['https://lightness.bitrix24promo.by/slider/', '16.05.2025 10:00'],
+		'kz' => ['https://lightness.bitrix24kz.works/slider/', '16.05.2025 10:00'],
 
-		'uk' => ['https://www.bitrix24.uk/promo/winter-2024-release-slider/', '12.12.2024 13:00'],
-		'in' => ['https://www.bitrix24.in/promo/winter-2024-release-slider/', '12.12.2024 11:00'],
-		'eu' => ['https://www.bitrix24.eu/promo/winter-2024-release-slider/', '12.12.2024 13:00'],
-		'br' => ['https://www.bitrix24.com.br/promo/winter-2024-release-slider/', '12.12.2024 17:00'],
-		'la' => ['https://www.bitrix24.es/promo/winter-2024-release-slider/', '12.12.2024 14:00'],
-		'mx' => ['https://www.bitrix24.mx/promo/winter-2024-release-slider/', '12.12.2024 18:00'],
-		'co' => ['https://www.bitrix24.co/promo/winter-2024-release-slider/', '12.12.2024 18:00'],
-		'tr' => ['https://www.bitrix24.com.tr/promo/winter-2024-release-slider/', '12.12.2024 12:00'],
-		'fr' => ['https://www.bitrix24.fr/promo/winter-2024-release-slider/', '12.12.2024 12:00'],
-		'it' => ['https://www.bitrix24.it/promo/winter-2024-release-slider/', '12.12.2024 16:00'],
-		'pl' => ['https://www.bitrix24.pl/promo/winter-2024-release-slider/', '12.12.2024 16:00'],
-		'de' => ['https://www.bitrix24.de/promo/winter-2024-release-slider/', '12.12.2024 15:00'],
+		'uk' => ['https://www.bitrix24.uk/promo/spring-2025-release-slider/', '29.05.2025 13:00'],
+		'in' => ['https://www.bitrix24.in/promo/spring-2025-release-slider/', '29.05.2025 11:00'],
+		'eu' => ['https://www.bitrix24.eu/promo/spring-2025-release-slider/', '29.05.2025 13:00'],
+		'br' => ['https://www.bitrix24.com.br/promo/spring-2025-release-slider/', '29.05.2025 17:00'],
+		'la' => ['https://www.bitrix24.es/promo/spring-2025-release-slider/', '29.05.2025 14:00'],
+		'mx' => ['https://www.bitrix24.mx/promo/spring-2025-release-slider/', '29.05.2025 18:00'],
+		'co' => ['https://www.bitrix24.co/promo/spring-2025-release-slider/', '29.05.2025 18:00'],
+		'tr' => ['https://www.bitrix24.com.tr/promo/spring-2025-release-slider/', '29.05.2025 12:00'],
+		'fr' => ['https://www.bitrix24.fr/promo/spring-2025-release-slider/', '29.05.2025 12:00'],
+		'it' => ['https://www.bitrix24.it/promo/spring-2025-release-slider/', '29.05.2025 16:00'],
+		'pl' => ['https://www.bitrix24.pl/promo/spring-2025-release-slider/', '29.05.2025 16:00'],
+		'de' => ['https://www.bitrix24.de/promo/spring-2025-release-slider/', '29.05.2025 15:00'],
 
-		'en' => ['https://www.bitrix24.com/promo/winter-2024-release-slider/', '12.12.2024 13:00'],
-		'cn' => ['https://www.bitrix24.com/promo/winter-2024-release-slider/', '12.12.2024 11:00'],
-		'vn' => ['https://www.bitrix24.com/promo/winter-2024-release-slider/', '12.12.2024 11:00'],
-		'jp' => ['https://www.bitrix24.com/promo/winter-2024-release-slider/', '12.12.2024 11:00'],
-		'id' => ['https://www.bitrix24.com/promo/winter-2024-release-slider/', '12.12.2024 11:00'],
+		'en' => ['https://www.bitrix24.com/promo/spring-2025-release-slider/', '29.05.2025 13:00'],
+		'cn' => ['https://www.bitrix24.com/promo/spring-2025-release-slider/', '29.05.2025 11:00'],
+		'vn' => ['https://www.bitrix24.com/promo/spring-2025-release-slider/', '29.05.2025 11:00'],
+		'jp' => ['https://www.bitrix24.com/promo/spring-2025-release-slider/', '29.05.2025 11:00'],
+		'id' => ['https://www.bitrix24.com/promo/spring-2025-release-slider/', '29.05.2025 11:00'],
 	];
 
 	public function __construct($component = null)
@@ -52,45 +54,69 @@ class IntranetReleaseComponent extends \CBitrixComponent implements \Bitrix\Main
 		$this->arResult['show_time'] = false;
 		$this->arResult['mode'] = '';
 
-		if ($this->shouldShow())
+		$this->arResult['show_time'] = true;
+		$this->arResult['options'] = $this->getOptions();
+
+		// First set a new theme
+		if ($this->getSliderModeCnt() === -1)
 		{
-			$this->arResult['show_time'] = true;
-			$this->arResult['options'] = $this->getOptions();
-
-			// First set a new theme
-			if ($this->getSliderModeCnt() === -1)
+			$this->incSliderModeCnt();
+			if ($this->setDefaultTheme() && Loader::includeModule('intranet'))
 			{
-				$this->incSliderModeCnt();
-				if ($this->setDefaultTheme())
-				{
-					if (Loader::includeModule('intranet'))
-					{
-						\Bitrix\Intranet\Composite\CacheProvider::deleteUserCache();
-					}
-
-					LocalRedirect($GLOBALS['APPLICATION']->getCurUri());
-				}
+				\Bitrix\Intranet\Composite\CacheProvider::deleteUserCache();
 			}
 
-			// Show Slider for the first hit
-			if ($this->getSliderModeCnt() === 0)
+			$this->enableAirTemplate();
+			LocalRedirect($GLOBALS['APPLICATION']->getCurUri());
+		}
+
+		// Show Slider for the first hit
+		if ($this->getSliderModeCnt() === 0)
+		{
+			$this->arResult['mode'] = 'slider';
+			$this->incSliderModeCnt();
+		}
+		else if ($this->getSliderModeCnt() === 1)
+		{
+			// Repeat after one day
+			$lastShowTime = $this->getLastShowTime();
+			if ((time() - $lastShowTime) > 24 * 3600)
 			{
 				$this->arResult['mode'] = 'slider';
 				$this->incSliderModeCnt();
 			}
-			else if ($this->getSliderModeCnt() === 1)
-			{
-				// Repeat after one day
-				$lastShowTime = $this->getLastShowTime();
-				if ((time() - $lastShowTime) > 24 * 3600)
-				{
-					$this->arResult['mode'] = 'slider';
-					$this->incSliderModeCnt();
-				}
-			}
 		}
 
 		$this->includeComponentTemplate();
+	}
+
+	protected function enableAirTemplate(): bool
+	{
+		$useSiteTemplateOption = Option::get('intranet', 'use_air_site_template', null);
+		if ($useSiteTemplateOption === '')
+		{
+			// If Air Design is disabled on purpose, do not enable it one more
+			return false;
+		}
+
+		if ((bool)$useSiteTemplateOption === true)
+		{
+			return false;
+		}
+
+		if (\Bitrix\Main\Loader::includeModule('intranet'))
+		{
+			\Bitrix\Intranet\Composite\CacheProvider::deleteUserCache();
+		}
+
+		\CBitrixComponent::clearComponentCache('bitrix:menu');
+		$GLOBALS['CACHE_MANAGER']->cleanDir('menu');
+		$GLOBALS['CACHE_MANAGER']->clearByTag('bitrix24_left_menu');
+
+		Option::set('intranet', 'use_air_site_template', true);
+		SocialPresetMenuConverter::bind(0);
+
+		return true;
 	}
 
 	protected function getZone(): ?string
@@ -119,7 +145,8 @@ class IntranetReleaseComponent extends \CBitrixComponent implements \Bitrix\Main
 		}
 
 		$now = time();
-		$startDate = static::createDate($release['releaseDate']);
+		$customDate = $this->getCustomReleaseDate();
+		$startDate = $customDate === null ? static::createDate($release['releaseDate']) : $customDate;
 		$endDate = $startDate + 24 * 3600 * 14;
 		if ($now < $startDate || $now > $endDate)
 		{
@@ -165,21 +192,58 @@ class IntranetReleaseComponent extends \CBitrixComponent implements \Bitrix\Main
 		];
 	}
 
-	protected function getRelease(): ?array
+	protected function getRelease($zone = null): ?array
 	{
-		$zone = $this->getZone();
+		$zone = $zone === null ? $this->getZone() : $zone;
 		if (in_array($zone, ['ua', 'ur']))
 		{
 			return null;
 		}
 
 		$zone = isset($this->releaseMap[$zone]) ? $zone : 'en';
+		$releaseDate = $this->releaseMap[$zone][1];
+		if (in_array($zone, ['ru', 'by', 'kz']))
+		{
+			$lightnessReleaseDate = $this->getLightnessReleaseDate();
+			if ($lightnessReleaseDate !== null)
+			{
+				$releaseDate = $lightnessReleaseDate;
+			}
+		}
 
 		return [
 			'zone' => $zone,
 			'url' => $this->releaseMap[$zone][0],
-			'releaseDate' => $this->releaseMap[$zone][1],
+			'releaseDate' => $releaseDate,
 		];
+	}
+
+	protected function getLightnessReleaseDate(): ?string
+	{
+		if (!Loader::includeModule('bitrix24'))
+		{
+			return null;
+		}
+
+		$license = \CBitrix24::getLicenseFamily();
+		if (in_array($license, ['std', 'nfr']))
+		{
+			return '16.05.2025 10:00';
+		}
+		elseif ($license === 'pro')
+		{
+			return '16.05.2025 13:00';
+		}
+		elseif ($license === 'ent')
+		{
+			return '19.05.2025 15:00';
+		}
+		elseif ($license === 'basic')
+		{
+			return '19.05.2025 15:00';
+		}
+
+		return '19.05.2025 15:00';
 	}
 
 	protected function getUrl(): string
@@ -278,6 +342,21 @@ class IntranetReleaseComponent extends \CBitrixComponent implements \Bitrix\Main
 		Option::set('intranet', $this->getStopChangeDefaultThemeOption(), 'Y');
 	}
 
+	protected function getCustomReleaseDate(): ?int
+	{
+		$date = Option::get('intranet', 'release:custom_date', null);
+		if (is_string($date) && preg_match('/^\d{2}\.\d{2}\.\d{4} \d{2}:\d{2}$/', $date))
+		{
+			$result = \DateTime::createFromFormat('d.m.Y H:i', $date, new \DateTimeZone('Europe/Moscow'));
+			if ($result !== false)
+			{
+				return $result->getTimestamp();
+			}
+		}
+
+		return null;
+	}
+
 	protected function getSliderModeCnt(): ?int
 	{
 		return (int)\CUserOptions::getOption('intranet', $this->getSliderModeCntOption(), -1);
@@ -295,11 +374,13 @@ class IntranetReleaseComponent extends \CBitrixComponent implements \Bitrix\Main
 			return false;
 		}
 
-		$newDefaultThemeId = (
+		/*$newDefaultThemeId = (
 			in_array($this->getZone(), ['ru', 'kz', 'by'])
 				? 'light:gravity'
 				: 'light:dark-silk'
-		);
+		);*/
+
+		$newDefaultThemeId = 'light:lightness';
 
 		$theme = new \Bitrix\Intranet\Integration\Templates\Bitrix24\ThemePicker('bitrix24', 's1');
 

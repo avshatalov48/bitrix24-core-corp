@@ -21,16 +21,22 @@ class User
 		$result = &$params[1];
 		$languageId = $params[2];
 
+		$eventTableName = $params[3];
+		if (!empty($eventTableName) && $eventTableName !== 'user')
+		{
+			return;
+		}
+
 		$result['user'] = [
 			'TABLE_NAME' => 'b_user',
 			'TABLE_ALIAS' => 'U',
 			'FILTER' => [
-				'=IS_EXTERNAL' => 'N',
+				'!=EXTERNAL_AUTH_ID' => \Bitrix\Main\UserTable::getExternalUserTypes(),
 			],
 			'FILTER_FIELDS' => [
-				'IS_EXTERNAL' => [
+				'EXTERNAL_AUTH_ID' => [
 					'IS_METRIC' => 'N',
-					'FIELD_NAME' => "CASE WHEN EXTERNAL_AUTH_ID IN ('" . implode("', '", \Bitrix\Main\UserTable::getExternalUserTypes()) . "') THEN 'Y' ELSE 'N' END",
+					'FIELD_NAME' => 'U.EXTERNAL_AUTH_ID',
 					'FIELD_TYPE' => 'string',
 				],
 			],
@@ -97,8 +103,14 @@ class User
 				],
 				'DEPARTMENT_ID' => [
 					'FIELD_NAME' => 'SN.DEP_ID',
-					'JOIN' => $departmentJoin,
-					'LEFT_JOIN' => $departmentLeftJoin,
+					'JOIN' => [
+						$dshrJoin,
+						$departmentJoin,
+					],
+					'LEFT_JOIN' => [
+						$dshrLeftJoin,
+						$departmentLeftJoin,
+					],
 				],
 				'DEPARTMENT_NAME' => [
 					'IS_METRIC' => 'N',

@@ -1,6 +1,7 @@
-(() => {
-	const require = (ext) => jn.require(ext);
-
+/**
+ * @module crm/tunnel
+ */
+jn.define('crm/tunnel', (require, exports, module) => {
 	const { connect } = require('statemanager/redux/connect');
 	const { PureComponent } = require('layout/pure-component');
 	const { TunnelContent } = require('crm/tunnel/tunnel-content');
@@ -38,6 +39,7 @@
 		};
 	};
 
-	this.Crm = this.Crm || {};
-	this.Crm.Tunnel = connect(mapStateToProps)(Tunnel);
-})();
+	module.exports = {
+		Tunnel: connect(mapStateToProps)(Tunnel),
+	};
+});

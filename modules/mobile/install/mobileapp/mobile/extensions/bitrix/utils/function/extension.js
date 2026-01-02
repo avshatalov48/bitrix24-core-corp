@@ -1,6 +1,8 @@
-(() => {
-	const require = (ext) => jn.require(ext);
-
+/* eslint-disable prefer-rest-params */
+/**
+ * @module utils/function
+ */
+jn.define('utils/function', (require, exports, module) => {
 	const { hashCode } = require('utils/hash');
 	const { camelize, stringify } = require('utils/string');
 
@@ -49,8 +51,9 @@
 	 */
 	function throttle(fn, timeout, context = this)
 	{
-		let lock;
+		let lock = false;
 
+		// eslint-disable-next-line consistent-return
 		return function() {
 			if (!lock)
 			{
@@ -96,11 +99,13 @@
 	 * @returns {function}
 	 */
 	const useCallback = (callback, deps = null) => {
-		deps = deps === undefined ? null : deps;
-
-		if (callback && !callback.hasOwnProperty(hashIdSymbol))
+		if (callback && !Object.prototype.hasOwnProperty.call(callback, hashIdSymbol))
 		{
-			callback[hashIdSymbol] = hashCode(JSON.stringify([stringify(callback), deps]));
+			// eslint-disable-next-line no-param-reassign
+			callback[hashIdSymbol] = hashCode(JSON.stringify([
+				stringify(callback),
+				deps === undefined ? null : deps,
+			]));
 		}
 
 		return callback;
@@ -121,29 +126,7 @@
 		});
 	};
 
-	/**
-	 * @class FunctionUtils
-	 * @deprecated Please import specific utilities directly, using jn.require()
-	 */
-	class FunctionUtils
-	{
-		static debounce(fn, timeout, ctx, immediate = false)
-		{
-			return debounce(fn, timeout, ctx, immediate);
-		}
-
-		static throttle(fn, timeout, context = this)
-		{
-			return throttle(fn, timeout, context);
-		}
-
-		static once(fn)
-		{
-			return once(fn);
-		}
-	}
-
-	window.reflectFunction = function(object, funcName, thisObject) {
+	const reflectFunction = function(object, funcName, thisObject) {
 		return function() {
 			const context = thisObject || object;
 			const targetFunction = camelize(funcName);
@@ -152,24 +135,17 @@
 				return object[targetFunction].apply(context, arguments);
 			}
 
-			return function() {
-			};
+			return function() {};
 		};
 	};
 
-	jnexport(FunctionUtils);
-
-	/**
-	 * @module utils/function
-	 */
-	jn.define('utils/function', (require, exports, module) => {
-		module.exports = {
-			debounce,
-			throttle,
-			once,
-			mapPromise,
-			useCallback,
-			refSubstitution,
-		};
-	});
-})();
+	module.exports = {
+		debounce,
+		throttle,
+		once,
+		mapPromise,
+		useCallback,
+		refSubstitution,
+		reflectFunction,
+	};
+});

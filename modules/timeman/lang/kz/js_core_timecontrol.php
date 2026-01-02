@@ -1,0 +1,23 @@
+<?php
+$MESS["JS_CORE_TC_ABSENCE_END"] = "Аяқталуы: #DATE#";
+$MESS["JS_CORE_TC_ABSENCE_PRIVATE_F"] = "Жеке мәселелеріммен шығып кеттім";
+$MESS["JS_CORE_TC_ABSENCE_PRIVATE_M"] = "Жеке мәселелеріммен шығып кеттім";
+$MESS["JS_CORE_TC_ABSENCE_START"] = "Басталуы: #DATE#";
+$MESS["JS_CORE_TC_ABSENCE_WORK_F"] = "Жұмыс мәселелерін шешумен айналыстым";
+$MESS["JS_CORE_TC_ABSENCE_WORK_M"] = "Жұмыс мәселелерін шешумен айналыстым";
+$MESS["JS_CORE_TC_CONFIRM_CLOSE"] = "Жабу";
+$MESS["JS_CORE_TC_DIALOG_CLOSE"] = "жабу";
+$MESS["JS_CORE_TC_HOURS_0"] = "#NUMBER# сағат";
+$MESS["JS_CORE_TC_HOURS_1"] = "#NUMBER# сағат";
+$MESS["JS_CORE_TC_HOURS_2"] = "#NUMBER# сағат";
+$MESS["JS_CORE_TC_MESSAGE_LINE_1"] = "Мен сіздің #TIME#-де жұмыс орнында болмағаныңызды байқадым";
+$MESS["JS_CORE_TC_MESSAGE_LINE_2"] = "Сіз осы уақытта не істедіңіз?";
+$MESS["JS_CORE_TC_MINUTES_0"] = "#NUMBER# минут";
+$MESS["JS_CORE_TC_MINUTES_1"] = "#NUMBER# минут";
+$MESS["JS_CORE_TC_MINUTES_2"] = "#NUMBER# минут";
+$MESS["JS_CORE_TC_MINUTES_ZERO"] = "бір минуттан аз";
+$MESS["JS_CORE_TC_SAVE_TO_CALENDAR"] = "Күнтізбеге жоқтығын енгізу";
+$MESS["JS_CORE_TC_SEND_ERROR"] = "Битрикс24-ке қосылу қатесі, желіге қосылу параметрлерін тексеріп, әрекетті қайталаңыз.";
+$MESS["JS_CORE_TC_SEND_FORM"] = "Сақтау";
+$MESS["JS_CORE_TC_TEXTAREA_HELP"] = "Жұмыс орнында болмау себебін көрсетіңіз";
+$MESS["JS_CORE_TC_TITLE"] = "Сіздің жеке көмекшіңіз";

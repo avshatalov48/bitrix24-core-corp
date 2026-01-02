@@ -4,13 +4,18 @@
 jn.define('im/messenger/controller/dialog-creator/navigation-button', (require, exports, module) => {
 	const { Theme } = require('im/lib/theme');
 	const { withPressed } = require('utils/color');
-	const { Loc } = require('loc');
+	const { Loc } = require('im/messenger/loc');
 	const { BadgeCounter, BadgeCounterDesign } = require('ui-system/blocks/badges/counter');
 	const { Text5 } = require('ui-system/typography/text');
 	const { Color } = require('tokens');
 
-	function navigationButton({ iconSvg, text, subtitle, onClick, withSeparator, testId = '', isNew = false })
+	/**
+	 * @param {NavigationButtonProps} params
+	 */
+	function navigationButton(params)
 	{
+		const { iconSvg, text, subtitle, onClick, withSeparator, testId = '', isNew = false } = params;
+
 		return View(
 			{
 				testId,
@@ -44,9 +49,10 @@ jn.define('im/messenger/controller/dialog-creator/navigation-button', (require, 
 					style: {
 						flexDirection: 'column',
 						justifyContent: 'center',
-						flexGrow: 1,
+						flex: 1,
 						paddingVertical: 15,
 						marginLeft: 12,
+						paddingRight: 10,
 						borderBottomWidth: withSeparator ? 1 : 0,
 						borderBottomColor: withSeparator ? Theme.colors.bgSeparatorPrimary : null,
 					},
@@ -81,6 +87,7 @@ jn.define('im/messenger/controller/dialog-creator/navigation-button', (require, 
 				subtitle && Text5({
 					text: subtitle.replaceAll('#BR#', '\n'),
 					color: Color.base3,
+					ellipsize: 'end',
 					numberOfLines: 2,
 					style: {
 						marginTop: 2,

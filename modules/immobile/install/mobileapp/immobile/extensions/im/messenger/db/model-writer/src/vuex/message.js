@@ -55,6 +55,7 @@ jn.define('im/messenger/db/model-writer/vuex/message', (require, exports, module
 			const data = mutation?.payload?.data || {};
 			const saveActions = [
 				'setChatCollection',
+				'addList',
 				'add',
 			];
 
@@ -101,6 +102,13 @@ jn.define('im/messenger/db/model-writer/vuex/message', (require, exports, module
 			}
 
 			const actionName = mutation?.payload?.actionName;
+			if (actionName === 'updateList')
+			{
+				await this.updateList(mutation.payload);
+
+				return;
+			}
+
 			const data = mutation?.payload?.data || {};
 			const updateActions = [
 				'update',
@@ -128,13 +136,51 @@ jn.define('im/messenger/db/model-writer/vuex/message', (require, exports, module
 			}
 
 			const chatId = message.chatId;
+			const dialogHelper = DialogHelper.createByChatId(chatId);
+			if (!dialogHelper?.isLocalStorageSupported)
+			{
+				return;
+			}
+
+			await this.repository.message.saveFromModel([message])
+				.catch((error) => Logger.error('MessageWriter.updateRouter.saveFromModel.catch:', error))
+			;
+		}
+
+		/**
+		 * @param {MutationPayload<MessagesUpdateData, MessagesUpdateActions>} payload
+		 */
+		async updateList(payload)
+		{
+			const messageIds = payload.data.messageList.map((message) => message.id);
+			const messagesModelState = this.store.getters['messagesModel/getListByIds'](messageIds);
+
+			const chatId = messagesModelState[0]?.chatId;
 			const dialog = this.store.getters['dialoguesModel/getByChatId'](chatId);
 			if (DialogType.comment === dialog?.type)
 			{
 				return;
 			}
 
-			await this.repository.message.saveFromModel([message])
+			const dialogHelper = DialogHelper.createByChatId(chatId);
+			if (!dialogHelper?.isLocalStorageSupported)
+			{
+				return;
+			}
+
+			if (messagesModelState.length !== payload.data.messageList.length)
+			{
+				const messageModelIdsSet = new Set(messagesModelState.map((messageModelState) => messageModelState.id));
+
+				const lostMessageIds = messageIds.filter((messageId) => !messageModelIdsSet.has(messageId));
+				Logger.warn(`MessageWriter.updateRouter.updateList: there is no messages with ids "${lostMessageIds}" in model`);
+
+				return;
+			}
+
+			const preparedMessages = messagesModelState.filter((messageModelState) => Type.isNumber(messageModelState.id));
+
+			await this.repository.message.saveFromModel(preparedMessages)
 				.catch((error) => Logger.error('MessageWriter.updateRouter.saveFromModel.catch:', error))
 			;
 		}
@@ -205,10 +251,10 @@ jn.define('im/messenger/db/model-writer/vuex/message', (require, exports, module
 				return;
 			}
 
-			const messageId = data.id;
-			if (messageId)
+			const messageIdList = data.messageIdList;
+			if (Type.isArrayFilled(messageIdList))
 			{
-				await this.repository.message.deleteByIdList([data.id]);
+				await this.repository.message.deleteByIdList(messageIdList);
 			}
 		}
 

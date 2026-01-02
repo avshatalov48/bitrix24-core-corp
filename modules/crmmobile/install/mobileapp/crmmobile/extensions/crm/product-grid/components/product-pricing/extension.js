@@ -14,6 +14,7 @@ jn.define('crm/product-grid/components/product-pricing', (require, exports, modu
 	const { notify } = require('layout/ui/product-grid/components/hint');
 	const { Haptics } = require('haptics');
 	const { DiscountType } = require('crm/product-calculator');
+	const { Money } = require('money');
 
 	const tap = (fn) => (...args) => {
 		setTimeout(() => Haptics.impactMedium(), 0);

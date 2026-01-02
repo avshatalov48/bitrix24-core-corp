@@ -6,7 +6,7 @@ use Bitrix\Main\Error;
 use Bitrix\Main\Localization\Loc;
 use Bitrix\Main\Result;
 
-abstract class Validator
+abstract class Validator implements Contract\Validator
 {
 	protected Dto $dto;
 
@@ -14,8 +14,6 @@ abstract class Validator
 	{
 		$this->dto = $dto;
 	}
-
-	abstract public function validate(array $fields): Result;
 
 	protected function getWrongFieldError(string $fieldName, string $parentObjectName): Error
 	{

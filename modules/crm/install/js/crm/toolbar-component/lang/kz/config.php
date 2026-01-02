@@ -1,0 +1,22 @@
+<?php
+$MESS["CRM_TOOLBAR_COMPONENT_ADD_CLIENT_FOR_CALL"] = "Қоңырау шалу үшін телефон нөмірімен клиентті қосыңыз";
+$MESS["CRM_TOOLBAR_COMPONENT_ADD_CLIENT_FOR_CALL_COMPANY"] = "Қоңырау шалу үшін осы компанияға телефон нөмірімен клиентті қосыңыз";
+$MESS["CRM_TOOLBAR_COMPONENT_ADD_CLIENT_FOR_CALL_CONTACT"] = "Қоңырау шалу үшін осы байланысқа телефон нөмірімен клиентті қосыңыз";
+$MESS["CRM_TOOLBAR_COMPONENT_ADD_CLIENT_FOR_CALL_DEAL"] = "Қоңырау шалу үшін осы мәмілеге телефон нөмірімен клиентті қосыңыз";
+$MESS["CRM_TOOLBAR_COMPONENT_ADD_CLIENT_FOR_CALL_INVOICE"] = "Қоңырау шалу үшін осы шотқа телефон нөмірімен клиентті қосыңыз";
+$MESS["CRM_TOOLBAR_COMPONENT_ADD_CLIENT_FOR_CALL_LEAD"] = "Қоңырау шалу үшін осы лидке телефон нөмірімен клиентті қосыңыз";
+$MESS["CRM_TOOLBAR_COMPONENT_ADD_CLIENT_FOR_CALL_QUOTE"] = "Қоңырау шалу үшін осы қосымшаға телефон нөмірімен клиентті қосыңыз";
+$MESS["CRM_TOOLBAR_COMPONENT_ADD_CLIENT_FOR_CALL_SMART_INVOICE"] = "Қоңырау шалу үшін осы шотқа телефон нөмірімен клиентті қосыңыз";
+$MESS["CRM_TOOLBAR_COMPONENT_ADD_CLIENT_FOR_EMAIL_SEND"] = "Хат жіберу үшін клиентті e-mailмен қосыңыз";
+$MESS["CRM_TOOLBAR_COMPONENT_ADD_CLIENT_FOR_EMAIL_SEND_COMPANY"] = "Хат жіберу үшін осы компанияға клиентті e-mailмен қосыңыз";
+$MESS["CRM_TOOLBAR_COMPONENT_ADD_CLIENT_FOR_EMAIL_SEND_CONTACT"] = "Хат жіберу үшін осы байланысқа клиентті e-mailмен қосыңыз";
+$MESS["CRM_TOOLBAR_COMPONENT_ADD_CLIENT_FOR_EMAIL_SEND_DEAL"] = "Хат жіберу үшін осы мәмілеге клиентті e-mailмен қосыңыз";
+$MESS["CRM_TOOLBAR_COMPONENT_ADD_CLIENT_FOR_EMAIL_SEND_INVOICE"] = "Хат жіберу үшін осы шотқа клиентті e-mailмен қосыңыз";
+$MESS["CRM_TOOLBAR_COMPONENT_ADD_CLIENT_FOR_EMAIL_SEND_LEAD"] = "Хат жіберу үшін осы лидке клиентті e-mailмен қосыңыз";
+$MESS["CRM_TOOLBAR_COMPONENT_ADD_CLIENT_FOR_EMAIL_SEND_QUOTE"] = "Хат жіберу үшін осы ұсынысқа клиентті e-mailмен қосыңыз";
+$MESS["CRM_TOOLBAR_COMPONENT_ADD_CLIENT_FOR_EMAIL_SEND_SMART_INVOICE"] = "Хат жіберу үшін осы шотқа клиентті e-mailмен қосыңыз";
+$MESS["CRM_TOOLBAR_COMPONENT_ROBOTS_GUIDE_TEXT"] = "Роботтар мен триггерлерді осында баптауға болады";
+$MESS["CRM_TOOLBAR_COMPONENT_ROBOTS_GUIDE_TEXT_1"] = "Роботтар мен триггерлерді осы жерде баптауға болады";
+$MESS["CRM_TOOLBAR_COMPONENT_SCRIPTS_GUIDE_TEXT"] = "Мұнда ақылды сценарийлерді баптауға болады";
+$MESS["CRM_TOOLBAR_COMPONENT_TELEPHONY_NOT_SUPPORTED"] = "Қоңырау шалу үшін Веб-мессенджер модулін орнату керек. Битрикс24 әкімшісіне хабарласыңыз";
+$MESS["CRM_TOOLBAR_COMPONENT_TELEPHONY_NOT_SUPPORTED_OK"] = "Түсінікті";

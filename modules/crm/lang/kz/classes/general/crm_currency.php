@@ -1,0 +1,19 @@
+<?php
+$MESS["CRM_CURRENCY_FIELD_AMOUNT_CNT_MSGVER_1"] = "Номиналы";
+$MESS["CRM_CURRENCY_FIELD_AMOUNT_MSGVER_1"] = "Айырбас бағамы";
+$MESS["CRM_CURRENCY_FIELD_BASE"] = "Базалық валюта";
+$MESS["CRM_CURRENCY_FIELD_CURRENCY"] = "Валюта";
+$MESS["CRM_CURRENCY_FIELD_DATE_UPDATE"] = "Өзгерту күні";
+$MESS["CRM_CURRENCY_FIELD_DECIMALS"] = "Ондық таңбалардың саны";
+$MESS["CRM_CURRENCY_FIELD_DEC_POINT"] = "Шығару кезіндегі ондық нүкте";
+$MESS["CRM_CURRENCY_FIELD_FORMAT_STRING"] = "Валютаны шығаруға арналған пішім жолы";
+$MESS["CRM_CURRENCY_FIELD_FULL_NAME"] = "Атауы";
+$MESS["CRM_CURRENCY_FIELD_HIDE_ZERO"] = "Мәнсіз нөлдерді көрсетпеу";
+$MESS["CRM_CURRENCY_FIELD_LID"] = "Сайт";
+$MESS["CRM_CURRENCY_FIELD_SORT"] = "Сұрыптау";
+$MESS["CRM_CURRENCY_FIELD_THOUSANDS_SEP"] = "Шығару кезінде сіздің мыңдық бөлгішіңіз";
+$MESS["CRM_CURRENCY_FIELD_THOUSANDS_VARIANT"] = "Шығару кезіндегі мыңдық бөлгіш";
+$MESS["CRM_CURRERCY_ERR_DELETION_OF_ACCOUNTING_CURRENCY"] = "Есептер валютасын жою мүмкін емес.";
+$MESS["CRM_CURRERCY_ERR_DELETION_OF_BASE_CURRENCY"] = "Базалық валютаны жою мүмкін емес.";
+$MESS["CRM_CURRERCY_MODULE_IS_NOT_INSTALLED"] = "\"Валюталар\" модулі табылған жоқ! Өтінеміз, \"Валюталар\" модулін орнатыңыз";
+$MESS["CRM_CURRERCY_MODULE_WARNING"] = "Назар аударыңыз, дұрыс жұмыс істеу үшін \"Валюта\" модулін орнату қажет.";

@@ -16,3 +16,7 @@ drop table if exists b_sign_document_group;
 drop table if exists b_sign_node_sync;
 drop table if exists b_sign_member_node;
 drop table if exists b_sign_field_value;
+drop table if exists b_sign_document_template_folder;
+drop table if exists b_sign_document_template_folder_relation;
+drop table if exists b_sign_signers_list;
+drop table if exists b_sign_signers_list_user;

@@ -24,7 +24,16 @@ jn.define('navigator/base', (require, exports, module) => {
 
 		makeTabActive()
 		{
-			this.navigator.makeTabActive();
+			return new Promise((resolve) => {
+				this.navigator.makeTabActive()
+					.then(() => {
+						resolve(true);
+					})
+					.catch((error) => {
+						console.error('PageManager.makeTabActive error:', error);
+						resolve(false);
+					});
+			});
 		}
 
 		/**

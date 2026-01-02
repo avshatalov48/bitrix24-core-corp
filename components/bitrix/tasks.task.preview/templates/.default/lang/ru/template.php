@@ -10,7 +10,6 @@ $MESS["TASKS_PRIORITY"] = "Приоритет";
 $MESS["TASKS_PRIORITY_0"] = "Низкий";
 $MESS["TASKS_PRIORITY_1"] = "Средний";
 $MESS["TASKS_PRIORITY_2"] = "Высокий";
-$MESS["TASKS_RESPONSIBLE"] = "Ответственный";
 $MESS['TASKS_ASSIGNEE'] = "Исполнитель";
 $MESS["TASKS_CREATOR"] = "Постановщик";
 $MESS["TASKS_STATUS"] = "Статус";
@@ -32,4 +31,3 @@ $MESS["TASKS_END_DATE_PLAN"] = "Дата финиша";
 $MESS["TASKS_NO_DATE"] = "нет";
 $MESS["TASKS_DATE_START"] = "Начало выполнения";
 $MESS["TASKS_CLOSED_DATE"] = "Дата завершения";
-?>

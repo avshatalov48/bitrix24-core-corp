@@ -9,6 +9,7 @@ class ProviderDate implements Item
 {
 	public function __construct(
 		public string $companyUid,
-		public DateTime $dateCreate,
+		public int $companyId,
+		public DateTime $dateLastUsed,
 	) {}
 }

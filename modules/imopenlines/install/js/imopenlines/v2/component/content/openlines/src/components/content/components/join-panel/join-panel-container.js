@@ -1,5 +1,5 @@
 import { Core } from 'im.v2.application.core';
-import { Button as OpenLinesButton } from 'im.v2.component.elements';
+import { ChatButton as OpenLinesButton } from 'im.v2.component.elements.button';
 import { StatusGroup } from 'imopenlines.v2.const';
 
 import { ChatControlPanel } from './components/chat-control-panel';

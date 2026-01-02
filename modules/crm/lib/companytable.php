@@ -291,7 +291,11 @@ class CompanyTable extends Entity\DataManager
 			),
 		];
 
-		return array_merge($map, $fieldRepository->getUtm(\CCrmOwnerType::Company));
+		return array_merge(
+			$map,
+			$fieldRepository->getUtm(\CCrmOwnerType::Company),
+			$fieldRepository->getLastCommunications(\CCrmOwnerType::Company),
+		);
 	}
 
 	public static function disableUserFieldsCheck(): void

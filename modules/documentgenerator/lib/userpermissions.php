@@ -245,7 +245,7 @@ class UserPermissions
 		}
 
 		$userAccessCodes = \CAccess::GetUserCodesArray($this->userId);
-		if(!is_array($userAccessCodes) || count($userAccessCodes) === 0)
+		if(!is_array($userAccessCodes) || empty($userAccessCodes))
 		{
 			return;
 		}

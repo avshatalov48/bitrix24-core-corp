@@ -1,9 +1,7 @@
-import { Reflection, Type } from 'main.core';
+import { Type } from 'main.core';
 import { NavigationPanel } from 'ui.navigationpanel';
 
 import './style.css';
-
-const namespace = Reflection.namespace('BX.Crm');
 
 export default class NavigationBar extends NavigationPanel
 {
@@ -79,5 +77,3 @@ export default class NavigationBar extends NavigationPanel
 		setTimeout(function() { window.location.href = url; }, 150);
 	}
 }
-
-namespace.NavigationBar = NavigationBar;

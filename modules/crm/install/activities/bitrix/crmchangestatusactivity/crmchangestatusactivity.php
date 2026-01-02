@@ -1,6 +1,7 @@
 <?php
 
 use Bitrix\Crm;
+use Bitrix\Crm\Integration\Analytics\Dictionary;
 
 if (!defined('B_PROLOG_INCLUDED') || B_PROLOG_INCLUDED !== true)
 {
@@ -127,6 +128,13 @@ class CBPCrmChangeStatusActivity extends CBPActivity
 				$documentId,
 				[$fieldKey => $targetStatus],
 				$this->ModifiedBy
+			);
+
+			$documentType = $this->getDocumentType();
+			\CCrmBizProcHelper::sendOperationsAnalytics(
+				Dictionary::EVENT_ENTITY_EDIT,
+				$this,
+				$documentType[2] ?? '',
 			);
 		}
 

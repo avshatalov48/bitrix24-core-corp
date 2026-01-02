@@ -3,9 +3,10 @@
 namespace Bitrix\Intranet\Entity;
 
 use Bitrix\HumanResources\Compatibility\Utils\DepartmentBackwardAccessCode;
+use Bitrix\Main\Entity\EntityInterface;
 use Bitrix\Main\Type\DateTime;
 
-class Department
+class Department implements EntityInterface
 {
 	public function __construct(
 		private string $name,
@@ -20,6 +21,7 @@ class Department
 		private ?bool $isGlobalActive = true,
 		private ?int $depth = null,
 		private ?string $accessCode = null,
+		private bool $isIblockSource = true,
 	)
 	{}
 
@@ -60,7 +62,7 @@ class Department
 
 	public function setIsGlobalActive(bool $isGlobalActive): void
 	{
-		$this->isGlobalActive = $isActive;
+		$this->isGlobalActive = $isGlobalActive;
 	}
 
 	public function getId(): ?int
@@ -149,6 +151,11 @@ class Department
 		$this->accessCode = $accessCode;
 	}
 
+	public function isIblockSource(): bool
+	{
+		return $this->isIblockSource;
+	}
+
 	/**
 	 * TODO: remove after remove UF_DEPARTMENT
 	 * Only for migrated structures
@@ -156,7 +163,7 @@ class Department
 	 */
 	public function getIblockSectionId(): ?int
 	{
-		return (new \Bitrix\Intranet\Service\IntranetOption)->get('humanresources_enabled') === 'Y'
+		return !$this->isIblockSource()
 			? DepartmentBackwardAccessCode::extractIdFromCode($this->accessCode)
 			: $this->getId();
 	}

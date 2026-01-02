@@ -1,4 +1,9 @@
-(() => {
+/**
+ * @module tasks/task/uploader/storage
+ */
+jn.define('tasks/task/uploader/storage', (require, exports, module) => {
+	const { TaskUploaderStorageConstants } = require('tasks/task/uploader/storage/constants');
+
 	/**
 	 * @class TaskUploadFilesStorage
 	 */
@@ -51,5 +56,5 @@
 		}
 	}
 
-	jnexport([TaskUploadFilesStorage, 'TaskUploadFilesStorage']);
-})();
+	module.exports = { TaskUploadFilesStorage };
+});

@@ -18,7 +18,7 @@ final class CustomSection extends RoleSeparator
 	protected function isPossibleToTransmit(EO_RolePermission $permission): bool
 	{
 		$entity = $permission->getEntity();
-		$identifier = PermissionEntityTypeHelper::extractEntityEndCategoryFromPermissionEntityType($entity);
+		$identifier = PermissionEntityTypeHelper::extractEntityAndCategoryFromPermissionEntityType($entity);
 		if ($identifier === null)
 		{
 			return false;

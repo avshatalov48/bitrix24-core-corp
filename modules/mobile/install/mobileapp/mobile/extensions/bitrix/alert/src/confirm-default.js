@@ -11,8 +11,8 @@ jn.define('alert/src/confirm-default', (require, exports, module) => {
 	 * @param {object} props
 	 * @param {string} [props.title]
 	 * @param {string} [props.description]
-	 * @param {function} [props.onSave]
-	 * @param {function} [props.onClose]
+	 * @param {function} [props.onAction]
+	 * @param {function} [props.onCancel]
 	 */
 	const confirmDefaultAction = (props = {}) => {
 		const {

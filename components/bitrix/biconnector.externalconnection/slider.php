@@ -16,6 +16,9 @@ if (
 
 $request = Application::getInstance()->getContext()->getRequest();
 $sourceId = (int)$request->get('sourceId');
+$connectorCode = $request->get('connectorCode') ?? '';
+$connectorType = $request->get('connectorType') ?? '';
+$closeAfterCreate = $request->get('closeAfterCreate') === 'Y' ? 'Y' : 'N';
 
 global $APPLICATION;
 $APPLICATION->IncludeComponent(
@@ -24,6 +27,9 @@ $APPLICATION->IncludeComponent(
 		'POPUP_COMPONENT_TEMPLATE_NAME' => '',
 		'POPUP_COMPONENT_PARAMS' => [
 			'SOURCE_ID' => $sourceId,
+			'CONNECTOR_CODE' => $connectorCode,
+			'CONNECTOR_TYPE' => $connectorType,
+			'CLOSE_AFTER_CREATE' => $closeAfterCreate,
 		],
 
 		'CLOSE_AFTER_SAVE' => true,

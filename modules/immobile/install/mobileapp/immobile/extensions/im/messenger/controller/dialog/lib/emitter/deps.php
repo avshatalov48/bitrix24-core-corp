@@ -1,8 +1,4 @@
 <?php
 
 return [
-	'extensions' => [
-	],
-	'bundle' => [
-	],
 ];

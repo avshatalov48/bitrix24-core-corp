@@ -1,0 +1,23 @@
+<?php
+$MESS["INTRANET_AUTH_CAPTCHA_PROMT"] = "Geben Sie den Text ein";
+$MESS["INTRANET_AUTH_CHECK_EMAIL"] = "Überprüfen Sie Ihre E-Mails";
+$MESS["INTRANET_AUTH_CONFIRM"] = "Passwort bestätigen";
+$MESS["INTRANET_AUTH_CONTINUE_BUTTON"] = "Fortfahren";
+$MESS["INTRANET_AUTH_EMAIL"] = "E-Mail-Adresse";
+$MESS["INTRANET_AUTH_EMAIL_PLACEHOLDER"] = "adresse@muster.de";
+$MESS["INTRANET_AUTH_EMAIL_SENT"] = "Registrierungsbestätigung wurde an die angegebene E-Mail-Adresse gesendet.";
+$MESS["INTRANET_AUTH_JOIN_TEXT"] = "Treten Sie dem Team bei";
+$MESS["INTRANET_AUTH_LAST_NAME"] = "Nachname";
+$MESS["INTRANET_AUTH_LAST_NAME_PLACEHOLDER"] = "Schmidt";
+$MESS["INTRANET_AUTH_LINK"] = "Einloggen";
+$MESS["INTRANET_AUTH_LOGIN"] = "Login";
+$MESS["INTRANET_AUTH_LOGIN_HINT"] = "Login muss mindestens 3 Zeichen enthalten.";
+$MESS["INTRANET_AUTH_LOGIN_PLACEHOLDER"] = "johann";
+$MESS["INTRANET_AUTH_NAME"] = "Vorname";
+$MESS["INTRANET_AUTH_NAME_PLACEHOLDER"] = "Johann";
+$MESS["INTRANET_AUTH_PASSWORD"] = "Passwort";
+$MESS["INTRANET_AUTH_PASSWORD_TITLE"] = "Passwort erstellen";
+$MESS["INTRANET_AUTH_REGISTER_BUTTON"] = "Registrieren";
+$MESS["INTRANET_AUTH_REQUIRED_FIELD"] = "(erforderlich)";
+$MESS["INTRANET_AUTH_USER_DATA_TITLE"] = "Geben Sie Ihre Informationen ein";
+$MESS["INTRANET_USER_PROPERTIES_TITLE"] = "Zusätzliche Felder";

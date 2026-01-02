@@ -4,6 +4,7 @@
 jn.define('crm/product-grid/components/sku-selector/elements/price', (require, exports, module) => {
 	const { Loc } = require('loc');
 	const AppTheme = require('apptheme');
+	const { Money, MoneyView } = require('layout/ui/money');
 
 	const skip = () => {};
 

@@ -67,6 +67,47 @@ jn.define('utils/color', (require, exports, module) => {
 	}
 
 	/**
+	 * Converts a HEX color string into a 32-bit ARGB numeric value.
+	 *
+	 * Accepts the following HEX formats (with a leading `#`):
+	 * - `#RGB`       → red, green, blue (alpha defaults to `FF`)
+	 * - `#ARGB`      → alpha, red, green, blue
+	 * - `#RRGGBB`    → red, green, blue (alpha defaults to `FF`)
+	 * - `#AARRGGBB`  → alpha, red, green, blue
+	 *
+	 * @param {string} hexColorInput - HEX color string with a leading `#`.
+	 * @throws {TypeError} If the input is not a string.
+	 * @throws {Error} If the color format is invalid.
+	 * @returns {number} A 32-bit unsigned integer in ARGB format.
+	 */
+	function hexToArgbNumber(hexColorInput)
+	{
+		if (typeof hexColorInput !== 'string')
+		{
+			throw new TypeError(`Expected string, got ${typeof hexColorInput}`);
+		}
+
+		let hex = prepareHexColor(hexColorInput).replace(/^#/, '').toLowerCase();
+
+		if (hex.length === 3 || hex.length === 4)
+		{
+			hex = [...hex].map(c => c.repeat(2)).join('');
+		}
+
+		if (hex.length === 6)
+		{
+			hex = `ff${hex}`;
+		}
+
+		if (!/^[\da-f]{8}$/i.test(hex))
+		{
+			throw new Error(`Invalid HEX color "${hexColorInput}" — must be in #RGB, #ARGB, #RRGGBB, or #AARRGGBB format.`);
+		}
+
+		return Number(`0x${hex}`);
+	}
+
+	/**
 	 * Checks if color is light
 	 *
 	 * @param {string} hexColor with leading #-sign
@@ -162,6 +203,7 @@ jn.define('utils/color', (require, exports, module) => {
 	module.exports = {
 		transparent,
 		hexToRgb,
+		hexToArgbNumber,
 		isLightColor,
 		isDarkColor,
 		lighten,

@@ -43,18 +43,6 @@ jn.define('crm/timeline/item/ui/body/blocks/date-pill', (require, exports, modul
 				});
 			}
 		}
-
-		/**
-		 * @private
-		 * @param {any} params
-		 */
-		emitAction(params)
-		{
-			if (this.factory.onAction && params)
-			{
-				this.factory.onAction(params);
-			}
-		}
 	}
 
 	module.exports = { TimelineItemBodyDatePill };

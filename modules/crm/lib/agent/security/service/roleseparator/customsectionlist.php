@@ -32,7 +32,7 @@ final class CustomSectionList extends RoleSeparator
 
 	protected function expandPermissions(EO_Role $copy, EO_Role $originalRole): void
 	{
-		if (!PermissionsUtil::hasNotEmptyCrmConfig($originalRole))
+		if (!PermissionsUtil::isRoleAllowedCrmConfig($originalRole))
 		{
 			return;
 		}

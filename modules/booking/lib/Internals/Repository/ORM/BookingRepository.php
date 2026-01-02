@@ -9,6 +9,7 @@ use Bitrix\Booking\Internals\Exception\Booking\RemoveBookingException;
 use Bitrix\Booking\Internals\Exception\Note\CreateNoteException;
 use Bitrix\Booking\Internals\Exception\Note\RemoveNoteException;
 use Bitrix\Booking\Internals\Model\BookingTable;
+use Bitrix\Booking\Internals\Model\Enum\EntityType;
 use Bitrix\Booking\Internals\Model\EO_Booking;
 use Bitrix\Booking\Internals\Model\NotesTable;
 use Bitrix\Booking\Entity;
@@ -22,8 +23,6 @@ use Bitrix\Booking\Provider\Params\FilterInterface;
 use Bitrix\Booking\Provider\Params\GridParams;
 use Bitrix\Main\ORM\Query\Query;
 use Bitrix\Main\ORM\Query\QueryHelper;
-use DateTimeImmutable;
-use DateTimeZone;
 
 class BookingRepository implements BookingRepositoryInterface
 {
@@ -34,9 +33,17 @@ class BookingRepository implements BookingRepositoryInterface
 		$this->mapper = $mapper;
 	}
 
-	public function getQuery(): Query
+	public function getQuery(FilterInterface|null $filter = null): Query
 	{
-		return BookingTable::query();
+		$query = BookingTable::query();
+
+		if ($filter !== null)
+		{
+			$filter->prepareQuery($query);
+			$query->where($filter->prepareFilter());
+		}
+
+		return $query;
 	}
 
 	public function getList(
@@ -87,11 +94,9 @@ class BookingRepository implements BookingRepositoryInterface
 	public function getIntersectionsList(
 		Entity\Booking\Booking $booking,
 		int|null $userId = null,
-		int $limit = 1
+		int|null $limit = null
 	): Entity\Booking\BookingCollection
 	{
-		$result = new Entity\Booking\BookingCollection();
-
 		$filter = [
 			'WITHIN' => [
 				'DATE_FROM' => $booking->getDatePeriod()?->getDateFrom()?->getTimestamp(),
@@ -103,85 +108,44 @@ class BookingRepository implements BookingRepositoryInterface
 		{
 			$filter['!ID'] = $booking->getId();
 		}
-		$filter = new BookingFilter($filter);
 
-		$query = BookingTable::query()
-			->setSelect([
-				'ID',
-				'DATE_FROM',
-				'DATE_TO',
-				'IS_RECURRING',
-				'RRULE',
-				'TIMEZONE_FROM',
-				'TIMEZONE_TO',
-			])
-			->where('IS_DELETED', '=', 'N')
-			->where($filter->prepareFilter())
-			->setOrder(
-				(new BookingSort([
-					'DATE_FROM' => 'ASC',
-					'IS_RECURRING' => 'ASC',
-				]))->prepareSort()
-			)
-		;
+		$result = new Entity\Booking\BookingCollection();
 
-		$queryResult = $query->exec();
-		while ($bookingRow = $queryResult->fetchRaw())
+		$intersectingBookingCollection = $this->getList(
+			limit: $limit,
+			filter: new BookingFilter($filter),
+			sort: (new BookingSort([
+				'DATE_FROM' => 'ASC',
+				'IS_RECURRING' => 'ASC',
+			]))->prepareSort(),
+			select: (new BookingSelect(['RESOURCES']))->prepareSelect(),
+			userId: $userId,
+		);
+		foreach ($intersectingBookingCollection as $intersectingBooking)
 		{
-			$existingBooking = (new Entity\Booking\Booking())
-				->setId((int)$bookingRow['ID'])
-				->setDatePeriod($this->getDatePeriodFromRow($bookingRow))
-				->setRrule($this->getRruleFromRow($bookingRow))
-			;
-
-			$intersect = $existingBooking->doEventsIntersect($booking);
-			if ($intersect)
+			$intersect = $intersectingBooking->doEventsIntersect($booking);
+			if (!$intersect)
 			{
-				$result->add($existingBooking);
-				if ($result->count() >= $limit)
-				{
-					break;
-				}
+				continue;
+			}
+
+			$result->add($intersectingBooking);
+			if ($limit !== null && $result->count() >= $limit)
+			{
+				break;
 			}
 		}
 
 		return $result;
 	}
 
-	private function getRruleFromRow(array $bookingRow): ?string
-	{
-		if (
-			$bookingRow['IS_RECURRING'] === 'Y'
-			&& $bookingRow['RRULE'] !== ''
-		)
-		{
-			return (string)$bookingRow['RRULE'];
-		}
-
-		return null;
-	}
-
-	private function getDatePeriodFromRow(array $bookingRow): Entity\DatePeriod
-	{
-		return new Entity\DatePeriod(
-			$this->createDateTimeFromTimestamp(
-				(int)$bookingRow['DATE_FROM'],
-				(string)$bookingRow['TIMEZONE_FROM'],
-			),
-			$this->createDateTimeFromTimestamp(
-				(int)$bookingRow['DATE_TO'],
-				(string)$bookingRow['TIMEZONE_TO'],
-			),
-		);
-	}
-
-	private function createDateTimeFromTimestamp(int $timestamp, string $timezone): DateTimeImmutable
-	{
-		return (new DateTimeImmutable('@' . $timestamp))
-			->setTimezone(new DateTimeZone($timezone));
-	}
-
-	public function getById(int $id, int $userId = 0): Entity\Booking\Booking|null
+	public function getById(
+		int $id,
+		int $userId = 0,
+		bool $withCounters = true,
+		bool $withClientsData = true,
+		bool $withExternalData = true,
+	): Entity\Booking\Booking|null
 	{
 		// todo: needs refactoring, repository should not know about providers
 		$provider = new BookingProvider();
@@ -200,11 +164,20 @@ class BookingRepository implements BookingRepositoryInterface
 			userId: $userId
 		);
 
-		$provider
-			->withCounters($collection, $userId)
-			->withClientsData($collection)
-			->withExternalData($collection)
-		;
+		if ($withCounters)
+		{
+			$provider->withCounters($collection, $userId);
+		}
+
+		if ($withClientsData)
+		{
+			$provider->withClientsData($collection);
+		}
+
+		if ($withExternalData)
+		{
+			$provider->withExternalData($collection);
+		}
 
 		return $collection->getFirstCollectionItem();
 	}
@@ -272,7 +245,8 @@ class BookingRepository implements BookingRepositoryInterface
 		}
 
 		$note->setDescription($noteDescription);
-		$note->setBookingId($bookingId);
+		$note->setEntityType(EntityType::Booking->value);
+		$note->setEntityId($bookingId);
 		$noteSaveResult = $note->save();
 
 		if (!$noteSaveResult->isSuccess())

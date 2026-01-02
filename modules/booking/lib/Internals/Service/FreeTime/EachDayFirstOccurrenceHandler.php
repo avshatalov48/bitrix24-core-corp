@@ -15,7 +15,7 @@ use DateInterval;
 
 class EachDayFirstOccurrenceHandler
 {
-	private const MIN_STEP_SIZE = 15;
+	private const STEP_SIZE = 5;
 
 	public function __invoke(EachDayFirstOccurrenceRequest $request): EachDayFirstOccurrenceResponse
 	{
@@ -49,7 +49,6 @@ class EachDayFirstOccurrenceHandler
 				}
 
 				$slotSize = $slotRange->getSlotSize();
-				$stepSize = self::getStepSize($slotSize);
 				$slotRangeDatePeriod = $slotRange->makeDatePeriod($searchDate);
 				$slotRangeEvents = $this->sortEventCollection(
 					$request->eventCollection->filterByDatePeriod($slotRangeDatePeriod)
@@ -96,21 +95,12 @@ class EachDayFirstOccurrenceHandler
 						break 2;
 					}
 
-					$currentDatePeriod = $currentDatePeriod->addMinutes($stepSize);
+					$currentDatePeriod = $currentDatePeriod->addMinutes(self::STEP_SIZE);
 				}
 			}
 		}
 
 		return $response;
-	}
-
-	private static function getStepSize(int $slotSize): int
-	{
-		/**
-		 * For the best search accuracy $stepSize should always be equal to $slotSize
-		 * but for performance reasons we have to specify minimum step size
-		 */
-		return max($slotSize, self::MIN_STEP_SIZE);
 	}
 
 	private function sortEventCollection(BookingCollection $eventCollection): BookingCollection

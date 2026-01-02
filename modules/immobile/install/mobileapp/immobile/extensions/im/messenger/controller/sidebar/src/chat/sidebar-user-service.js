@@ -3,9 +3,11 @@
  */
 jn.define('im/messenger/controller/sidebar/chat/sidebar-user-service', (require, exports, module) => {
 	const { Type } = require('type');
-	const { Loc } = require('loc');
+	const { Loc } = require('im/messenger/loc');
 	const { serviceLocator } = require('im/messenger/lib/di/service-locator');
-	const { ChatTitle, ChatAvatar, UserStatus } = require('im/messenger/lib/element');
+	const { UserStatus } = require('im/messenger/lib/element/user-status');
+	const { ChatTitle } = require('im/messenger/lib/element/chat-title');
+	const { ChatAvatar } = require('im/messenger/lib/element/chat-avatar');
 	const { bookmarkAvatar } = require('im/messenger/assets/common');
 	const { Moment } = require('utils/date');
 	const { UserUtils } = require('im/messenger/lib/utils');
@@ -33,18 +35,12 @@ jn.define('im/messenger/controller/sidebar/chat/sidebar-user-service', (require,
 		 */
 		getTitleDataById(id = this.dialogId, isCopilot = false, isNotes = this.isNotes)
 		{
-			if (isNotes)
-			{
-				return {
-					title: Loc.getMessage('IMMOBILE_DIALOG_SIDEBAR_PROFILE_TITLE_NOTES'),
-					desc: null,
-				};
-			}
-
 			const chatTitle = ChatTitle.createFromDialogId(id);
 			const titleData = {
-				title: chatTitle.getTitle(),
-				desc: chatTitle.getDescription(),
+				title: chatTitle.getTitle({ useNotes: true }),
+				desc: isNotes
+					? Loc.getMessage('IMMOBILE_DIALOG_SIDEBAR_PROFILE_DESCRIPTION_NOTES')
+					: chatTitle.getDescription(),
 			};
 
 			if (isCopilot)

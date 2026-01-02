@@ -36,7 +36,7 @@
 
 .bx-imol-content-openlines-start__title {
 	text-align: center;
-	font: 24px var(--ui-font-family-system);
+	font: 24px var(--ui-font-family-primary, var(--ui-font-family-system));
 	color: var(--imol-content-openlines-start__color);
 	font-weight: var(--imol-content-openlines-start__font-weight);
 	white-space: pre-line;

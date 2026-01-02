@@ -149,6 +149,15 @@ final class MobileLivefeed extends \Bitrix\Mobile\Component\LogList
 
 		$this->arResult = $this->prepareData();
 
+		if (!empty($this->getErrors()))
+		{
+			ob_start();
+			$this->printErrors();
+			$this->arResult['FatalError'] = ob_get_contents();
+			$this->arResult['ErrorList'] = $this->getErrors();
+			ob_end_clean();
+		}
+
 		$this->includeComponentTemplate();
 	}
 }

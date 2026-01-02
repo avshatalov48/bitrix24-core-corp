@@ -1,5 +1,5 @@
 module.exports = {
-	input: 'src/epic.js',
+	input: 'src/index.js',
 	output: 'dist/epic.bundle.js',
 	namespace: 'BX.Tasks.Scrum'
 };

@@ -11,9 +11,9 @@ jn.define('tasks/flow-list/simple-list/items/flow-redux/src/flow-ai-advice', (re
 	const { BottomSheet } = require('bottom-sheet');
 	const { Color, Indent } = require('tokens');
 	const { Loc } = require('loc');
-	const { ProfileView } = require('user/profile');
 	const { UIMenu } = require('layout/ui/menu');
-	const { openTaskCreateForm } = require('tasks/layout/task/create/opener');
+	const { Entry } = require('tasks/entry');
+	const { UserProfile } = require('user-profile');
 
 	class FlowAiAdvice extends LayoutComponent
 	{
@@ -327,7 +327,7 @@ jn.define('tasks/flow-list/simple-list/items/flow-redux/src/flow-ai-advice', (re
 					iconName: Icon.CIRCLE_CHECK,
 					sectionCode: 'default',
 					onItemSelected: () => {
-						openTaskCreateForm({
+						Entry.openTaskCreation({
 							initialTaskData: {
 								description: adviceText,
 							},
@@ -342,10 +342,10 @@ jn.define('tasks/flow-list/simple-list/items/flow-redux/src/flow-ai-advice', (re
 					iconName: Icon.CALENDAR_WITH_SLOTS,
 					sectionCode: 'default',
 					onItemSelected: async () => {
-						const { Entry } = await requireLazy('calendar:entry');
-						if (Entry)
+						const { Entry: CalendarEntry } = await requireLazy('calendar:entry');
+						if (CalendarEntry)
 						{
-							void Entry.openEventEditForm({
+							void CalendarEntry.openEventEditForm({
 								ownerId: env.userId,
 								description: adviceText,
 								parentLayout: this.props.parentWidget,
@@ -358,7 +358,10 @@ jn.define('tasks/flow-list/simple-list/items/flow-redux/src/flow-ai-advice', (re
 
 		onUserClick({ userId })
 		{
-			ProfileView.openInBottomSheet(userId, this.props.parentWidget);
+			void UserProfile.open({
+				ownerId: userId,
+				parentWidget: this.props.parentWidget,
+			});
 		}
 
 		renderFootnote()

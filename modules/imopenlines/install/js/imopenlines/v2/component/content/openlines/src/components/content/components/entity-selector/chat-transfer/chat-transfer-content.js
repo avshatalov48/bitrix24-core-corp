@@ -1,7 +1,7 @@
 import { TagSelector } from 'ui.entity-selector';
 
-import { Button as MessengerButton, ButtonSize, ButtonColor } from 'im.v2.component.elements';
-import { ChatSearch } from 'im.v2.component.search.chat-search';
+import { ChatButton, ButtonSize, ButtonColor } from 'im.v2.component.elements.button';
+import { AddToChat as ChatSearch } from 'im.v2.component.search';
 import { TransferService } from 'imopenlines.v2.provider.service';
 
 import type { JsonObject } from 'main.core';
@@ -9,16 +9,11 @@ import type { ImModelUser } from 'im.v2.model';
 
 import type { TagItemOptions } from './types/tag-item-options';
 
-const searchConfig = Object.freeze({
-	chats: false,
-	users: true,
-});
-
 const SEARCH_ENTITY_ID = 'user';
 
 export const ChatTransferContent = {
 	name: 'ChatTransferContent',
-	components: { MessengerButton, ChatSearch },
+	components: { ChatButton, ChatSearch },
 	props: {
 		dialogId: {
 			type: String,
@@ -36,7 +31,6 @@ export const ChatTransferContent = {
 	{
 		ButtonSize: () => ButtonSize,
 		ButtonColor: () => ButtonColor,
-		searchConfig: () => searchConfig,
 	},
 	created()
 	{
@@ -135,17 +129,14 @@ export const ChatTransferContent = {
 			<div class="bx-imol-entity-selector-chat-transfer__input" ref="tag-selector"></div>
 			<div class="bx-imol-entity-selector-chat-transfer__search-result-container">
 				<ChatSearch
-					:searchMode="true"
-					:searchQuery="searchQuery"
-					:selectMode="true"
-					:searchConfig="searchConfig"
+					:query="searchQuery"
+					:dialogId="dialogId"
 					:selectedItems="[...selectedItems]"
-					:showMyNotes="false"
 					@clickItem="onSelectItem"
 				/>
 			</div>
 			<div class="bx-imol-entity-selector-chat-transfer__buttons">
-				<MessengerButton
+				<ChatButton
 					:size="ButtonSize.L"
 					:color="ButtonColor.Primary"
 					:isRounded="true"
@@ -153,7 +144,7 @@ export const ChatTransferContent = {
 					:isDisabled="selectedItems.size === 0"
 					@click="onChatTransfer"
 				/>
-				<MessengerButton
+				<ChatButton
 					:size="ButtonSize.L"
 					:color="ButtonColor.LightBorder"
 					:isRounded="true"

@@ -1,7 +1,7 @@
-import {Loc, Uri} from 'main.core';
-import AdminPanel from "./utils/admin-panel";
+import { Loc, Reflection, Runtime, Uri } from 'main.core';
 
-export default class Utils {
+export default class Utils
+{
 	static #curPage = null;
 	static #curUri = null;
 
@@ -11,6 +11,7 @@ export default class Utils {
 		{
 			this.#curPage = document.location.pathname + document.location.search;
 		}
+
 		return this.#curPage === '' ? null : this.#curPage;
 	}
 
@@ -20,31 +21,44 @@ export default class Utils {
 		{
 			this.#curUri = new Uri(document.location.href);
 		}
+
 		return this.#curUri;
 	}
 
-	static catchError(response) {
-		BX.UI.Notification.Center.notify({
-			content: [Loc.getMessage("MENU_ERROR_OCCURRED"),
-				(response.errors ? ': ' + response.errors[0].message : '')].join(' '),
-			position: 'bottom-left',
-			category: 'menu-self-item-popup',
-			autoHideDelay: 3000
-		});
-	}
-	static refineUrl(url)
+	static catchError(response): void
 	{
-		url = String(url).trim();
+		Runtime.loadExtension('ui.notification')
+			.then(() => {
+				const notificationCenter = Reflection.getClass('BX.UI.Notification.Center');
+				notificationCenter.notify({
+					content: [
+						Loc.getMessage('MENU_ERROR_OCCURRED'),
+						(response.errors ? `: ${response.errors[0].message}` : ''),
+					].join(' '),
+					position: 'bottom-left',
+					category: 'menu-self-item-popup',
+					autoHideDelay: 3000,
+				});
+			})
+			.catch(() => {
+				console.log('LeftMenu: cannot load ui.notification.');
+			})
+		;
+	}
+
+	static refineUrl(originUrl: string): string
+	{
+		let url = String(originUrl).trim();
 		if (url !== '')
 		{
-			if (!url.match(/^https?:\/\//i) && !url.match(/^\//i))
+			if (!/^https?:\/\//i.test(url) && !/^\//i.test(url))
 			{
-				//for external links like "google.com" (without a protocol)
-				url = "http://" + url;
+				// for external links like "google.com" (without a protocol)
+				url = `https://${url}`;
 			}
 			else
 			{
-				var link = document.createElement("a");
+				const link = document.createElement('a');
 				link.href = url;
 
 				if (document.location.host === link.host)
@@ -54,11 +68,7 @@ export default class Utils {
 				}
 			}
 		}
-		return url;
-	}
 
-	static get adminPanel(): AdminPanel
-	{
-		return AdminPanel.getInstance();
+		return url;
 	}
 }

@@ -75,7 +75,7 @@ export class Rating
 			return Tag.render`
 				<div
 					class="call-quality__rating__avatar"
-					style="background-image: url(${encodeURI(this.#userPhotoUrl)})"
+					style="background-image: url('${encodeURI(Text.encode(this.#userPhotoUrl))}')"
 				></div>
 			`;
 		}

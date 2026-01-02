@@ -7,9 +7,21 @@ use Bitrix\Main\Loader;
 use Bitrix\Main\ObjectNotFoundException;
 use Bitrix\Mobile\Provider\UserRepository;
 use Psr\Container\NotFoundExceptionInterface;
+use Bitrix\Disk;
+use Bitrix\Disk\File;
+use Bitrix\Main;
 
 class BaseFileList extends Base
 {
+	protected function getDefaultResponse(): array
+	{
+		return [
+			'items' => [],
+			'users' => [],
+			'storages' => [],
+		];
+	}
+
 	protected function getRequestedIds(array $extra = []): array
 	{
 		if (isset($extra['filterParams']['ID']) && is_array($extra['filterParams']['ID']))
@@ -100,6 +112,37 @@ class BaseFileList extends Base
 		$response['storages'] = $storages;
 
 		return $response;
+	}
+
+	protected function withExternalLink(array $items): array
+	{
+		$controller = Main\Engine\ControllerBuilder::build(Disk\Controller\CommonActions::class, []);
+
+		$ids = $items ? array_column($items, 'id') : [];
+
+		$batchById = Disk\BaseObject::loadBatchById(
+			$ids,
+		);
+
+		$resultItems = $items;
+
+		foreach ($batchById as $batchedItem)
+		{
+			$link = $controller->getExternalLinkAction($batchedItem);
+			if ($link)
+			{
+				foreach ($resultItems as $key => $resultItem)
+				{
+					if ((int)$resultItem['id'] === (int)$batchedItem->getId())
+					{
+						$resultItems[$key]['links']['external'] = $link['externalLink'];
+						break;
+					}
+				}
+			}
+		}
+
+		return $resultItems;
 	}
 
 	/**

@@ -36,6 +36,7 @@ use Bitrix\Tasks\Util\Type;
 use Bitrix\Tasks\UI;
 use Bitrix\Tasks\Util;
 use Bitrix\Tasks\Util\User;
+use Bitrix\Tasks\V2\Internal\DI\Container;
 use Throwable;
 
 class TaskService implements Errorable
@@ -687,6 +688,13 @@ class TaskService implements Errorable
 	{
 		if (!$taskId)
 		{
+			$this->errorCollection->setError(
+				new Error(
+					'Task id not specified',
+					self::ERROR_COULD_NOT_CHECK_COMPLETED_TASK
+				)
+			);
+
 			return false;
 		}
 
@@ -701,7 +709,7 @@ class TaskService implements Errorable
 				],
 				['ID']
 			);
-			return ($queryObject->fetch() ? true : false);
+			return (bool)$queryObject->fetch();
 		}
 		catch (\Exception $exception)
 		{
@@ -811,26 +819,24 @@ class TaskService implements Errorable
 	{
 		try
 		{
-			$parentId = \CTasks::getParentOfTask($taskId);
+			$parentId = Container::getInstance()->getParentService()->getParentId($taskId);
 
-			if ($parentId === false)
+			if ($parentId === null)
 			{
 				return 0;
 			}
-			else
-			{
-				[$rows, $queryObject] = $this->getList([
-					'select' => ['ID'],
-					'filter' => [
-						'ID' => $parentId,
-						'GROUP_ID' => $groupId,
-						'CHECK_PERMISSIONS' => 'Y',
-						'!=STATUS' => Status::COMPLETED,
-					],
-				]);
 
-				return (count($rows) > 0 ? $parentId : 0);
-			}
+			[$rows] = $this->getList([
+				'select' => ['ID'],
+				'filter' => [
+					'ID' => $parentId,
+					'GROUP_ID' => $groupId,
+					'CHECK_PERMISSIONS' => 'Y',
+					'!=STATUS' => Status::COMPLETED,
+				],
+			]);
+
+			return (count($rows) > 0 ? $parentId : 0);
 		}
 		catch (\Exception $exception)
 		{
@@ -1366,6 +1372,11 @@ class TaskService implements Errorable
 
 	public function getTasksInfo(array $taskIds): array
 	{
+		if (empty($taskIds))
+		{
+			return [];
+		}
+
 		try
 		{
 			$tasksInfo = [];
@@ -1406,6 +1417,11 @@ class TaskService implements Errorable
 
 	public function getActualParentIds(array $parentIds, int $groupId): array
 	{
+		if (empty($parentIds))
+		{
+			return [];
+		}
+
 		[$rows, $queryObject] = $this->getList([
 			'select' => ['ID'],
 			'filter' => [

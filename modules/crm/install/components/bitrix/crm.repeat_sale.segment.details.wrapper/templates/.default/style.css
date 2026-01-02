@@ -1,0 +1,16 @@
+.ui-page-slider-wrapper.repeat-sale-segment-details {
+	height: 100% !important;
+	overflow: hidden;
+	//background: rgba(0, 117, 255, 0.32) !important;
+	background: #F6F8FA;
+}
+
+.ui-page-slider-wrapper.repeat-sale-segment-details .ui-slider-page {
+	min-height: 100%;
+}
+
+.ui-page-slider-wrapper.repeat-sale-segment-details .ui-side-panel-wrap-workarea {
+	display: flex;
+	justify-content: center;
+	background: inherit;
+}

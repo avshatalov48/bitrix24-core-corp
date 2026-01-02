@@ -2,24 +2,28 @@
 
 namespace Bitrix\HumanResources\Service;
 
+use Bitrix\HumanResources\Config\Storage;
+use Bitrix\HumanResources\Contract;
 use Bitrix\HumanResources\Exception\WrongStructureItemException;
-use Bitrix\HumanResources\Item\Collection\UserCollection;
 use Bitrix\HumanResources\Item\Collection\NodeMemberCollection;
+use Bitrix\HumanResources\Item\Collection\UserCollection;
 use Bitrix\HumanResources\Item\Node;
 use Bitrix\HumanResources\Item\User;
-use Bitrix\HumanResources\Contract;
+use Bitrix\HumanResources\Repository;
 use Bitrix\HumanResources\Type\MemberEntityType;
 use Bitrix\HumanResources\Type\NodeEntityType;
 use Bitrix\Main\ArgumentException;
 use Bitrix\Main\Config\Option;
+use Bitrix\Main\Loader;
 use Bitrix\Main\ObjectPropertyException;
 use Bitrix\Main\SystemException;
+use Bitrix\Main\UserTable;
 use CSite;
 use CUser;
 
-final class UserService implements Contract\Service\UserService
+final class UserService
 {
-	private Contract\Repository\UserRepository $userRepository;
+	private Repository\UserRepository $userRepository;
 	private Contract\Repository\NodeMemberRepository $nodeMemberRepository;
 	private Contract\Util\CacheManager $cacheManager;
 
@@ -53,7 +57,7 @@ final class UserService implements Contract\Service\UserService
 		return CUser::FormatName(
 			CSite::GetNameFormat(false),
 			[
-				'LOGIN' => '',
+				'LOGIN' => $user->login,
 				'NAME' => $user->firstName,
 				'LAST_NAME' => $user->lastName,
 				'SECOND_NAME' => $user->secondName,
@@ -63,7 +67,7 @@ final class UserService implements Contract\Service\UserService
 		);
 	}
 
-	public function getUserAvatar(User $user, int $size = 25): ?string
+	public function getUserAvatar(User $user, int $size = 25): string
 	{
 		$fileTmp = \CFile::ResizeImageGet(
 			$user->personalPhotoId,
@@ -91,7 +95,7 @@ final class UserService implements Contract\Service\UserService
 				$suffix = "unknown";
 		}
 
-		return Option::get('socialnetwork', 'default_user_picture_' . $suffix, false, SITE_ID);
+		return Option::get('socialnetwork', 'default_user_picture_' . $suffix, '', SITE_ID);
 	}
 
 	public function getUserUrl(User $user): string
@@ -114,6 +118,11 @@ final class UserService implements Contract\Service\UserService
 	 */
 	public function isEmployee(int $userId): bool
 	{
+		if (!Storage::instance()->isCompanyStructureConverted())
+		{
+			return $this->isUfDepartmentExists($userId);
+		}
+
 		$cacheKey = sprintf(self::USER_DEPARTMENT_EXISTS_KEY, $userId);
 
 		$cacheValue = $this->cacheManager->getData($cacheKey);
@@ -132,6 +141,24 @@ final class UserService implements Contract\Service\UserService
 		$this->cacheManager->setData($cacheKey, ['exists' => $exists]);
 
 		return $exists;
+	}
+
+	/**
+	 * Check if user have relation with team node
+	 * @param int $userId
+	 *
+	 * @return bool
+	 * @throws ArgumentException
+	 * @throws ObjectPropertyException
+	 * @throws SystemException
+	 */
+	public function isTeamEmployee(int $userId): bool
+	{
+		return $this->nodeMemberRepository->findFirstByEntityIdAndEntityTypeAndNodeTypeAndActive(
+			$userId,
+			MemberEntityType::USER,
+			NodeEntityType::TEAM,
+		) !== null;
 	}
 
 	/**
@@ -161,12 +188,14 @@ final class UserService implements Contract\Service\UserService
 	 * Returns an array of basic user information
 	 * @param User $user
 	 *
-	 * @return array {
+	 * @return array{
 	 *     id: int,
 	 *     name: string,
-	 *     avatar: ?string,
+	 *     avatar: string,
 	 *     url: string,
 	 *     workPosition: ?string,
+	 *     gender: ?string,
+	 *     isInvited: bool,
 	 * }
 	 */
 	public function getBaseInformation(User $user): array
@@ -204,5 +233,36 @@ final class UserService implements Contract\Service\UserService
 	public function isUserInvited(User $user): bool
 	{
 		return $user->active && $user->hasConfirmCode;
+	}
+
+	/**
+	 * @param int $userId
+	 *
+	 * @return bool
+	 * @throws ArgumentException
+	 * @throws ObjectPropertyException
+	 * @throws SystemException
+	 */
+	private function isUfDepartmentExists(int $userId): bool
+	{
+		if (!Loader::includeModule('intranet'))
+		{
+			return false;
+		}
+
+		$user = UserTable::query()
+			->setSelect(
+				[
+					'ID',
+					'UF_DEPARTMENT',
+				]
+			)
+			->where('UF_DEPARTMENT', '!=', false)
+			->where('ID', $userId)
+			->setCacheTtl(86400)
+			->fetch()
+		;
+
+		return $user !== false && !empty($user['UF_DEPARTMENT']);
 	}
 }

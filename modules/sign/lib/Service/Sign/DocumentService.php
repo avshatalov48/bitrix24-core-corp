@@ -6,23 +6,33 @@ use Bitrix\Main;
 use Bitrix\Main\Application;
 use Bitrix\Main\ArgumentException;
 use Bitrix\Main\Context;
+use Bitrix\Main\Engine\CurrentUser;
 use Bitrix\Main\IO\Path;
 use Bitrix\Main\Localization\Loc;
 use Bitrix\Main\Result;
+use Bitrix\Main\Type\DateTime;
 use Bitrix\Sign\Access\Permission\PermissionDictionary;
 use Bitrix\Sign\Document;
 use Bitrix\Sign\Integration\CRM\Model\EventData;
 use Bitrix\Sign\Internal\DocumentTable;
 use Bitrix\Sign\Item;
+use Bitrix\Sign\Item\Document\BindingCollection;
+use Bitrix\Sign\Item\Document\Template\TemplateFolderRelation;
 use Bitrix\Sign\Main\User;
 use Bitrix\Sign\Operation\CheckDocumentAccess;
 use Bitrix\Sign\Operation\ConfigureFillAndStart;
+use Bitrix\Sign\Operation\Document\Validation;
+use Bitrix\Sign\Operation\Document\Blank\Delete;
 use Bitrix\Sign\Operation\Kanban\B2e\SendDeleteEntityPullEvent;
 use Bitrix\Sign\Operation\Result\ConfigureResult;
 use Bitrix\Sign\Repository\BlankRepository;
+use Bitrix\Sign\Repository\Document\TemplateFolderRelationRepository;
+use Bitrix\Sign\Repository\BlockRepository;
 use Bitrix\Sign\Repository\Document\TemplateRepository;
 use Bitrix\Sign\Repository\DocumentRepository;
 use Bitrix\Sign\Repository\MemberRepository;
+use Bitrix\Sign\Result\Service\Sign\Template\CreateTemplateFolderRelationResult;
+use Bitrix\Sign\Result\CreateDocumentResult;
 use Bitrix\Sign\Result\Service\Sign\Document\CreateTemplateResult;
 use Bitrix\Sign\Service;
 use Bitrix\Sign\Service\Container;
@@ -30,6 +40,8 @@ use Bitrix\Sign\Type;
 use Bitrix\Sign\Type\Document\EntityType;
 use Bitrix\Sign\Type\Document\InitiatedByType;
 use Bitrix\Sign\Type\DocumentStatus;
+use Bitrix\Sign\Type\ProviderCode;
+use Bitrix\Sign\Type\Template;
 use Bitrix\Sign\Type\Template\Visibility;
 
 class DocumentService
@@ -44,7 +56,11 @@ class DocumentService
 	private readonly Service\Sign\Document\ProviderCodeService $providerCodeService;
 	private readonly TemplateRepository $documentTemplateRepository;
 	private readonly Service\Sign\Document\TemplateService $documentTemplateService;
+	private readonly Service\Sign\Document\SignUntilService $signUntilService;
 	private readonly MemberRepository $memberRepository;
+	private readonly TemplateFolderRelationRepository $templateFolderRelationRepository;
+	private readonly BlockRepository $blockRepository;
+	private readonly Service\Integration\HumanResources\StructureNodeService $structureNodeService;
 
 	public function __construct(
 		?DocumentRepository $documentRepository = null,
@@ -55,7 +71,9 @@ class DocumentService
 		?Service\Sign\Document\ProviderCodeService $providerCodeService = null,
 		?TemplateRepository $documentTemplateRepository = null,
 		?Service\Sign\Document\TemplateService $documentTemplateService = null,
+		?Service\Sign\Document\SignUntilService $signUntilService = null,
 		?MemberRepository $memberRepository = null,
+		?TemplateFolderRelationRepository $templateFolderRelationRepository = null,
 	)
 	{
 		$container = Container::instance();
@@ -68,7 +86,11 @@ class DocumentService
 		$this->providerCodeService = $providerCodeService ?? $container->getProviderCodeService();
 		$this->documentTemplateRepository = $documentTemplateRepository ?? $container->getDocumentTemplateRepository();
 		$this->documentTemplateService = $documentTemplateService ?? $container->getDocumentTemplateService();
+		$this->signUntilService = $signUntilService ?? $container->getSignUntilService();
 		$this->memberRepository = $memberRepository ?? $container->getMemberRepository();
+		$this->templateFolderRelationRepository = $templateFolderRelationRepository ?? $container->getTemplateFolderRelationRepository();
+		$this->blockRepository = $container->getBlockRepository();
+		$this->structureNodeService = Service\Container::instance()->getHumanResourcesStructureNodeService();
 	}
 
 	/**
@@ -91,17 +113,22 @@ class DocumentService
 	 */
 	public function register(
 		int $blankId,
+		int $createdById,
 		string $title = '',
 		?int $entityId = null,
 		?string $entityType = null,
 		bool $asTemplate = false,
 		InitiatedByType $initiatedByType = InitiatedByType::COMPANY,
-		int $createdById = 0,
 		int $chatId = 0,
-		?int $templateId = null
+		?int $templateId = null,
+		?BindingCollection $bindings = null,
 	): Main\Result
 	{
 		$result = new Main\Result();
+		if($createdById < 1)
+		{
+			return $result->addError(new Main\Error(Loc::getMessage('SIGN_SERVICE_DOCUMENT_USER_NOT_FOUND')));
+		}
 
 		try
 		{
@@ -128,6 +155,11 @@ class DocumentService
 		$documentItem = new Item\Document(entityType: $entityType, entityId: $entityId, templateId: $templateId);
 		$documentItem->initiatedByType = $initiatedByType;
 
+		$documentItem->dateSignUntil = $blank->scenario === Type\BlankScenario::B2B
+			? null
+			: $this->signUntilService->calcDefaultSignUntilDate(new DateTime())
+		;
+
 		if ($blank->scenario === Type\BlankScenario::B2B && $chatId)
 		{
 			$chatService = Service\Container::instance()->getImService();
@@ -153,10 +185,16 @@ class DocumentService
 				return $createTemplateResult;
 			}
 
+			$createTemplateFolderRelationResult = $this->makeTemplateFolderRelation($createTemplateResult->template);
+			if (!$createTemplateFolderRelationResult instanceof CreateTemplateFolderRelationResult)
+			{
+				return $createTemplateFolderRelationResult;
+			}
+
 			$template = $createTemplateResult->template;
 		}
 
-		$result = $this->insertToDB($title, $blank, $documentItem, $createdById);
+		$result = $this->insertToDB($title, $blank, $documentItem, $createdById, $bindings);
 
 		if (!$result->isSuccess())
 		{
@@ -266,10 +304,10 @@ class DocumentService
 
 		return match (Application::getInstance()->getLicense()->getRegion())
 		{
-			'ru' => trim(Loc::getMessage('SIGN_SERVICE_DOCUMENT_TITLE_FORMAT', [
+			'ru' => trim($number ? Loc::getMessage('SIGN_SERVICE_DOCUMENT_TITLE_FORMAT', [
 				'#TITLE#' => $item->title,
 				'#NUM#' => $number,
-			])),
+			]) : $item->title) ,
 			default => trim($item->title),
 		};
 	}
@@ -381,9 +419,8 @@ class DocumentService
 	/**
 	 * @param string $uid
 	 * @param InitiatedByType $initiatedByType
-	 * @return \Bitrix\Main\Result
 	 */
-	public function modifyInitiatedByType(string $uid, InitiatedByType $initiatedByType): Main\Result
+	public function modifyInitiatedByType(string $uid, InitiatedByType $initiatedByType): Main\Result|CreateDocumentResult
 	{
 		$result = new Main\Result();
 
@@ -393,16 +430,53 @@ class DocumentService
 		{
 			return $result->addError(new Main\Error('Document not found'));
 		}
+		if ($document->initiatedByType === $initiatedByType)
+		{
+			return $result;
+		}
 
 		$document->initiatedByType = $initiatedByType;
+		if ($initiatedByType === InitiatedByType::EMPLOYEE)
+		{
+			$document->externalId = null;
+			$document->externalDateCreate = null;
+			$document->externalDateCreateSourceType = Type\Document\ExternalDateCreateSourceType::MANUAL;
+			$document->externalIdSourceType = Type\Document\ExternalIdSourceType::MANUAL;
+			$document->hcmLinkDateSettingId = 0;
+			$document->hcmLinkExternalIdSettingId = 0;
+		}
 		$updateResult = $this->documentRepository->update($document);
-
 		if (!$updateResult->isSuccess())
 		{
 			return $result->addError(new Main\Error('Error when trying to save document'));
 		}
 
-		return $updateResult;
+		$successResult = new CreateDocumentResult($document);
+		if (!$document->isTemplated())
+		{
+			return $successResult;
+		}
+		$template = $this->documentTemplateRepository->getById($document->templateId);
+		if ($template === null)
+		{
+			return $successResult;
+		}
+		if ($template->status === Type\Template\Status::NEW && $template->visibility === Visibility::INVISIBLE)
+		{
+			return $successResult;
+		}
+
+		// When the initiator type is changed, user should complete the template creation process again because some data may be outdated. ticket: 0213028
+		$template->status = Type\Template\Status::NEW;
+		$template->visibility = Visibility::INVISIBLE;
+
+		$result = $this->documentTemplateRepository->update($template);
+		if (!$result->isSuccess())
+		{
+			return $result;
+		}
+
+		return $successResult;
 	}
 
 	public function setResultFileId(Item\Document $document, int $resultFileId): Main\Result
@@ -412,7 +486,11 @@ class DocumentService
 		return DocumentTable::update($document->id, ['RESULT_FILE_ID' => $resultFileId]);
 	}
 
-	public function modifyRepresentativeId(string $documentUid, int $representativeId): Main\Result
+	public function modifyRepresentativeId(
+		string $documentUid,
+		int $representativeId,
+		string $entityType,
+	): Main\Result
 	{
 		$result = new Main\Result();
 
@@ -422,19 +500,29 @@ class DocumentService
 			return $result->addError(new Main\Error('Document not found'));
 		}
 
-		if (Main\UserTable::getCount(['=ID' => $representativeId]) < 1)
+		if (Main\UserTable::getCount(['=ID' => $representativeId]) < 1 && $entityType === Type\Member\EntityType::COMPANY)
 		{
 			return $result->addError(new Main\Error("User with id $representativeId does not exist"));
 		}
 
+		if (
+			$entityType === Type\Member\EntityType::ROLE
+			&& $this->structureNodeService->getRoleNameById($representativeId) === null
+		)
+		{
+			return $result->addError(new Main\Error("Role with id $representativeId does not exist"));
+		}
+
 		$document->representativeId = $representativeId;
+
 		return $this->documentRepository->update($document);
 	}
 
-	public function modifyCompanyUid(string $documentUid, string $companyUid): Main\Result
+	public function modifyCompany(string $documentUid, string $companyUid, int $companyEntityId): Main\Result
 	{
 		$result = new Main\Result();
-		if ($companyUid === '')
+
+		if ($companyUid === '' || $companyEntityId < 1)
 		{
 			return $result->addError(new Main\Error('Company is empty'));
 		}
@@ -446,6 +534,7 @@ class DocumentService
 		}
 
 		$document->companyUid = $companyUid;
+		$document->companyEntityId = $companyEntityId;
 		$updateResult = $this->documentRepository->update($document);
 		if (!$updateResult->isSuccess())
 		{
@@ -471,7 +560,18 @@ class DocumentService
 		return $this->providerCodeService->updateProviderCode($document, $providerCode);
 	}
 
-	private function insertToDB(string $title, Item\Blank $blank, Item\Document $documentItem, int $createdById = 0): Main\Result
+	public function update(Item\Document $document): Main\Result
+	{
+		return $this->documentRepository->update($document);
+	}
+
+	private function insertToDB(
+		string $title,
+		Item\Blank $blank,
+		Item\Document $documentItem,
+		int $createdById = 0,
+		?BindingCollection $bindings = null,
+	): Main\Result
 	{
 		// backward compatibility
 		if ($documentItem->entityType === null)
@@ -538,6 +638,16 @@ class DocumentService
 			return $addResult;
 		}
 
+		if ($bindings !== null)
+		{
+			$addBindingsResult = $this->addBindings($documentItem, $bindings);
+
+			if (!$addBindingsResult->isSuccess())
+			{
+				return $addBindingsResult;
+			}
+		}
+
 		if (!$documentItem->isTemplated())
 		{
 			$eventData = new EventData();
@@ -556,6 +666,37 @@ class DocumentService
 		}
 
 		return $addResult;
+	}
+
+	private function addBindings(Item\Document $document, BindingCollection $bindings): Result
+	{
+		$result = new Result();
+		if ((int)$document->entityId < 1)
+		{
+			return $result->addError(new Main\Error('Invalid document entity id'));
+		}
+
+		foreach ($bindings as $binding)
+		{
+			if ($binding->entityId < 1)
+			{
+				continue;
+			}
+
+			if ($binding->entityType < 1)
+			{
+				continue;
+			}
+
+			$addResult = Container::instance()
+				->getCrmEntityRelationService()
+				->addRelationToSmartB2eDocument($document, $binding->entityId, $binding->entityType)
+			;
+
+			$result->addErrors($addResult->getErrors());
+		}
+
+		return $result;
 	}
 
 	/**
@@ -602,15 +743,7 @@ class DocumentService
 		return null;
 	}
 
-	/**
-	 * Change blank for document
-	 *
-	 * @param string $uid
-	 * @param int $blankId
-	 *
-	 * @return \Bitrix\Main\Result
-	 */
-	public function changeBlank(string $uid, int $blankId): Main\Result
+	public function changeBlank(string $uid, int $blankId, bool $copyBlocksFromPreviousBlank = false): Main\Result
 	{
 		['document' => $document, 'blank' => $blank, 'result' => $extractionResult] = $this->extractDocumentAndBlank($uid, $blankId);
 
@@ -635,9 +768,84 @@ class DocumentService
 			$this->blankService->changeBlankTitleByDocument($document, $document->title);
 		}
 
+		$oldBlankId = $document->blankId;
+
 		$document->blankId = $blankId;
 
-		return $this->documentRepository->update($document);
+		$result = $this->documentRepository->update($document);
+		if (!$result->isSuccess())
+		{
+			return $result;
+		}
+
+		$oldBlank = $this->blankRepository->getById($oldBlankId);
+		if ($copyBlocksFromPreviousBlank && $oldBlank !== null)
+		{
+			$this->blockRepository->loadBlocks($oldBlank);
+			$newBlocks = $oldBlank->blockCollection->copyWithBlackId($blankId);
+
+			$result = $this->blockRepository->addCollection($newBlocks);
+			if (!$result->isSuccess())
+			{
+				return $result;
+			}
+		}
+		$result = (new Delete($oldBlank))->launch();
+		$skippableErrors = [Delete::ERROR_BLANK_USED_IN_DOCUMENTS, Delete::ERROR_BLANK_USED_FOR_RESENT_DOCUMENTS];
+		$isErrorSkippable = in_array($result->getError()?->getCode(), $skippableErrors, true);
+
+		if (!$result->isSuccess() && !$isErrorSkippable)
+		{
+			return $result;
+		}
+
+		return \Bitrix\Sign\Result\Result::createByData(['document' => $document]);
+	}
+
+	/**
+	 * Change "sign until" date for document
+	 *
+	 * @param string $uid
+	 * @param Main\Type\DateTime|null $dateSignUntil
+	 *
+	 * @return \Bitrix\Main\Result
+	 */
+	public function modifyDateSignUntil(string $uid, ?Main\Type\DateTime $dateSignUntil): Main\Result
+	{
+		$result = new Main\Result;
+		$document = $this->documentRepository->getByUid($uid);
+
+		if (!$document)
+		{
+			return $result->addError(new Main\Error('Document not found'));
+		}
+
+		$document->dateSignUntil = $dateSignUntil;
+
+		$validationResult = (new Validation\ValidateDateSignUntil($document))->launch();
+		if (!$validationResult->isSuccess())
+		{
+			return $validationResult;
+		}
+
+		$api = Service\Container::instance()->getApiDocumentService();
+		$request = new Item\Api\Document\ModifyDateSignUntilRequest($document->uid, $document->dateSignUntil->getTimestamp());
+		$response = $api->modifyDateSignUntil($request);
+		if (!$response->isSuccess())
+		{
+			return (new Main\Result())->addErrors($response->getErrors());
+		}
+
+		$updateResult = $this->documentRepository->update($document);
+
+		if (!$updateResult->isSuccess())
+		{
+			return $result->addError(new Main\Error('Error when trying to save document'));
+		}
+
+		$this->fireDocumentUpdatedTimelineEvent($document);
+
+		return $updateResult;
 	}
 
 	/**
@@ -647,7 +855,7 @@ class DocumentService
 	 *
 	 * @return \Bitrix\Main\Result
 	 */
-	public function upload(string $uid): Main\Result
+	public function upload(string $uid, bool $skipReuse = false): Main\Result
 	{
 		['document' => $document, 'blank' => $blank, 'result' => $extractionResult] = $this->extractDocumentAndBlank(
 			$uid,
@@ -657,13 +865,17 @@ class DocumentService
 			return $extractionResult;
 		}
 
-		$reuseResult = $this->reuse($document->uid, $blank->getId());
-		if ($reuseResult->isSuccess())
+		if (!$skipReuse)
 		{
-			$document->status = DocumentStatus::UPLOADED;
+			$reuseResult = $this->reuse($document->uid, $blank->getId());
+			if ($reuseResult->isSuccess())
+			{
+				$document->status = DocumentStatus::UPLOADED;
 
-			return $this->documentRepository->update($document);
+				return $this->documentRepository->update($document);
+			}
 		}
+
 		$fileCollection = new Item\Api\Property\Request\Document\Upload\FileCollection();
 
 		foreach ($blank->fileCollection->toArray() as $file)
@@ -671,7 +883,7 @@ class DocumentService
 			if (empty($file->content->data))
 			{
 				return (new Main\Result())->addError(
-					new Main\Error(Loc::getMessage('SIGN_SERVICE_DOCUMENT_FILE_EMPTY'))
+					new Main\Error(Loc::getMessage('SIGN_SERVICE_DOCUMENT_FILE_EMPTY')),
 				);
 			}
 
@@ -795,7 +1007,7 @@ class DocumentService
 		return $this->documentRepository->getById($id);
 	}
 
-	private function getUserLastDocuments(int $userId, int $limit = 10): Item\DocumentCollection
+	public function getUserLastDocuments(int $userId, int $limit = 10): Item\DocumentCollection
 	{
 		return $this->documentRepository->listLastByUserCreateId($userId, $limit);
 	}
@@ -888,6 +1100,12 @@ class DocumentService
 
 		if ($document->templateId)
 		{
+			$templateFolderRelationResult = $this->templateFolderRelationRepository->deleteByIdAndType($document->templateId, Template\EntityType::TEMPLATE);
+			if (!$templateFolderRelationResult->isSuccess())
+			{
+				return $templateFolderRelationResult;
+			}
+
 			$templateDeleteResult = $this->documentTemplateRepository->deleteById($document->templateId);
 			if (!$templateDeleteResult->isSuccess())
 			{
@@ -978,7 +1196,12 @@ class DocumentService
 		return new Main\Result();
 	}
 
-	public function modifyExternalId(string $documentUid, string $externalId): Main\Result
+	public function modifyExternalId(
+		string $documentUid,
+		?string $externalId,
+		Type\Document\ExternalIdSourceType $sourceType,
+		?int $hcmLinkSettingId,
+	): Main\Result
 	{
 		$document = $this->documentRepository->getByUid($documentUid);
 		if (!$document || !$this->canBeChanged($document))
@@ -986,15 +1209,86 @@ class DocumentService
 			return (new Main\Result())->addError(new Main\Error('Document not found'));
 		}
 
-		$document->externalId = $externalId;
+		if ($sourceType === Type\Document\ExternalIdSourceType::MANUAL)
+		{
+			if (empty((string)$externalId))
+			{
+				return (new Main\Result())->addError(new Main\Error('ExternalId is empty'));
+			}
+
+			$document->externalId = trim($externalId);
+			$document->hcmLinkExternalIdSettingId = 0;
+		}
+		else
+		{
+			$checkDocumentIntegrationResult = $this->checkDocumentIntegration($document);
+			if (!$checkDocumentIntegrationResult->isSuccess())
+			{
+				return $checkDocumentIntegrationResult;
+			}
+
+			if ((int)$hcmLinkSettingId < 1)
+			{
+				return (new Main\Result())->addError(new Main\Error('Empty hcmLinkSettingId'));
+			}
+
+			if (!Container::instance()->getHcmLinkFieldService()->isExternalIdSettingFieldById($hcmLinkSettingId))
+			{
+				return (new Main\Result())->addError(new Main\Error('Invalid hcmLinkSettingId'));
+			}
+
+			$document->externalId = null;
+			$document->hcmLinkExternalIdSettingId = $hcmLinkSettingId;
+		}
+		$document->externalIdSourceType = $sourceType;
+
 		$updateResult = $this->documentRepository->update($document);
 		if (!$updateResult->isSuccess())
 		{
 			return (new Main\Result())->addError(new Main\Error('Error when trying to save document'));
 		}
 
-		$smartDocument = $this->documentEntityFactory->getByDocument($document);
-		$smartDocument?->setTitle($this->composeSmartDocumentTitle($document, $smartDocument));
+		if ($sourceType === Type\Document\ExternalIdSourceType::MANUAL)
+		{
+			$smartDocument = $this->documentEntityFactory->getByDocument($document);
+			$smartDocument?->setTitle($this->composeSmartDocumentTitle($document, $smartDocument));
+		}
+
+		return new Main\Result();
+	}
+
+	public function modifyHcmLinkDocumentType(
+		string $documentUid,
+		?int $hcmLinkSettingId
+	): Result
+	{
+		$document = $this->documentRepository->getByUid($documentUid);
+		if (!$document || !$this->canBeChanged($document))
+		{
+			return (new Main\Result())->addError(new Main\Error('Document not found'));
+		}
+
+		if ($hcmLinkSettingId > 0)
+		{
+			$checkDocumentIntegrationResult = $this->checkDocumentIntegration($document);
+			if (!$checkDocumentIntegrationResult->isSuccess())
+			{
+				return $checkDocumentIntegrationResult;
+			}
+
+			if (!Container::instance()->getHcmLinkFieldService()->isDocumentTypeSettingFieldById($hcmLinkSettingId))
+			{
+				return (new Main\Result())->addError(new Main\Error('Invalid hcmLinkSettingId'));
+			}
+		}
+
+		$document->hcmLinkDocumentTypeSettingId = $hcmLinkSettingId ?? 0;
+
+		$updateResult = $this->documentRepository->update($document);
+		if (!$updateResult->isSuccess())
+		{
+			return (new Main\Result())->addError(new Main\Error('Error when trying to save document'));
+		}
 
 		return new Main\Result();
 	}
@@ -1042,7 +1336,12 @@ class DocumentService
 		return $result->isSuccess();
 	}
 
-	public function modifyExternalDate(string $documentUid, string $externalDate): Main\Result
+	public function modifyExternalDate(
+		string $documentUid,
+		Type\Document\ExternalDateCreateSourceType $sourceType,
+		?string $externalDate = null,
+		?int $hcmLinkSettingId = null,
+	): Main\Result
 	{
 		$document = $this->documentRepository->getByUid($documentUid);
 		if (!$document || !$this->canBeChanged($document))
@@ -1050,25 +1349,52 @@ class DocumentService
 			return (new Main\Result())->addError(new Main\Error('Document not found'));
 		}
 
-		if (empty($externalDate))
+		if ($sourceType == Type\Document\ExternalDateCreateSourceType::MANUAL)
 		{
-			return (new Main\Result())->addError(new Main\Error('Empty date'));
+			if (empty($externalDate))
+			{
+				return (new Main\Result())->addError(new Main\Error('Empty date'));
+			}
+
+			\CTimeZone::Disable();
+			try
+			{
+				$date = Main\Type\DateTime::createFromUserTime($externalDate);
+			}
+			catch (Main\ObjectException $exception)
+			{
+				\CTimeZone::Enable();
+
+				return (new Main\Result())->addError(new Main\Error('Incorrect date format'));
+			}
+
+			$document->externalDateCreateSourceType = Type\Document\ExternalDateCreateSourceType::MANUAL;
+			$document->externalDateCreate = $date->disableUserTime();
+			$document->hcmLinkDateSettingId = 0;
+		}
+		else
+		{
+			$checkDocumentIntegrationResult = $this->checkDocumentIntegration($document);
+			if (!$checkDocumentIntegrationResult->isSuccess())
+			{
+				return $checkDocumentIntegrationResult;
+			}
+
+			if (empty($hcmLinkSettingId))
+			{
+				return (new Main\Result())->addError(new Main\Error('Empty hcmLinkSettingId'));
+			}
+
+			if (!Container::instance()->getHcmLinkFieldService()->isDateSettingFieldById($hcmLinkSettingId))
+			{
+				return (new Main\Result())->addError(new Main\Error('Invalid hcmLinkSettingId'));
+			}
+
+			$document->externalDateCreateSourceType = Type\Document\ExternalDateCreateSourceType::HCMLINK;
+			$document->externalDateCreate = null;
+			$document->hcmLinkDateSettingId = $hcmLinkSettingId;
 		}
 
-		\CTimeZone::Disable();
-		try
-		{
-			$date = Main\Type\DateTime::createFromUserTime($externalDate);
-		}
-		catch (Main\ObjectException $exception)
-		{
-			\CTimeZone::Enable();
-
-			return (new Main\Result())->addError(new Main\Error('Incorrect date format'));
-		}
-
-		$document->externalDateCreate = $date->disableUserTime();
-		\CTimeZone::Enable();
 		$updateResult = $this->documentRepository->update($document);
 		if (!$updateResult->isSuccess())
 		{
@@ -1078,14 +1404,34 @@ class DocumentService
 		return new Main\Result();
 	}
 
+	private function checkDocumentIntegration(Item\Document $document): Main\Result
+	{
+		$result = new Main\Result();
+		if (!$this->isIntegrationDocumentSettingsAvailableForProvider($document->providerCode))
+		{
+			return $result->addError(new Main\Error('Invalid document provider code'));
+		}
+
+		if (!Container::instance()->getHcmLinkService()->isAvailable())
+		{
+			return $result->addError(new Main\Error('Integration is not available', 'HCM_LINK_NOT_AVAILABLE'));
+		}
+
+		if ((int)$document->hcmLinkCompanyId < 1)
+		{
+			return $result->addError(new Main\Error('Incorrect hcmLinkCompanyId', 'HCM_LINK_NOT_AVAILABLE'));
+		}
+
+		if (!Container::instance()->getHcmLinkService()->isCompanyExistWithId((int)$document->hcmLinkCompanyId))
+		{
+			return $result->addError(new Main\Error('HcmLinkCompany not found', 'HCM_LINK_NOT_AVAILABLE'));
+		}
+
+		return $result;
+	}
 
 	public function modifyHcmLinkCompanyId(string $documentUid, ?int $hcmLinkCompanyId = null): ?Main\Result
 	{
-		if (!Container::instance()->getHcmLinkService()->isAvailable())
-		{
-			return (new Main\Result())->addError(new Main\Error('Is not available', 'HCM_LINK_NOT_AVAILABLE'));
-		}
-
 		$document = $this->documentRepository->getByUid($documentUid);
 		if (!$document || !$this->canBeChanged($document))
 		{
@@ -1132,10 +1478,43 @@ class DocumentService
 			return $result;
 		}
 
-		$document->initiatedByType = Type\Document\InitiatedByType::EMPLOYEE;
 		$document->templateId = $template->id;
 
 		return new CreateTemplateResult($template);
+	}
+
+	private function makeTemplateFolderRelation(Item\Document\Template $template): CreateTemplateFolderRelationResult|Result
+	{
+		if (!$template->id)
+		{
+			return (new Main\Result())->addError(new Main\Error('Incorrect template id'));
+		}
+		$currentUserId = (int)CurrentUser::get()->getId();
+		if (!$currentUserId)
+		{
+			return (new Main\Result())->addError(new Main\Error('User not found'));
+		}
+
+		$template = $this->documentTemplateRepository->getById($template?->id);
+		if ($template === null)
+		{
+			return (new Main\Result())->addError(new Main\Error('Template not found'));
+		}
+
+		$templateFolderRelation = new TemplateFolderRelation(
+			entityId: $template->id,
+			entityType: Template\EntityType::TEMPLATE,
+			createdById: $currentUserId,
+			parentId: 0,
+		);
+
+		$result = $this->templateFolderRelationRepository->add($templateFolderRelation);
+		if (!$result->isSuccess())
+		{
+			return $result;
+		}
+
+		return new CreateTemplateFolderRelationResult($templateFolderRelation);
 	}
 
 	/**
@@ -1160,9 +1539,8 @@ class DocumentService
 			return null;
 		}
 
-		$companyMember = $this->memberRepository->getByDocumentAndEntityType(
+		$companyMember = $this->memberRepository->getCompanyMemberByDocument(
 			$document->id,
-			Type\Member\EntityType::COMPANY,
 		);
 
 		return $companyMember?->entityId;
@@ -1176,6 +1554,11 @@ class DocumentService
 		$companyIds = [];
 		foreach ($documents as $document)
 		{
+			if ($document === null)
+			{
+				continue;
+			}
+
 			if ($document->id === null)
 			{
 				continue;
@@ -1211,5 +1594,47 @@ class DocumentService
 	public function getDocumentEntity(Item\Document $document): ?Document\Entity\Dummy
 	{
 		return $this->documentEntityFactory->getByDocument($document);
+	}
+
+	public function getByTemplateId(int $templateId): ?Item\Document
+	{
+		if ($templateId < 1)
+		{
+			return null;
+		}
+
+		return $this->documentRepository->getByTemplateId($templateId);
+	}
+
+	public function getByTemplateIds(int ...$ids): Item\DocumentCollection
+	{
+		return $this->documentRepository->getByTemplateIds(...$ids);
+	}
+
+	private function fireDocumentUpdatedTimelineEvent(Item\Document $document): void
+	{
+		if (!\Bitrix\Main\Loader::includeModule('crm'))
+		{
+			return;
+		}
+
+		/**
+		 * @see \CCrmOwnerType::SmartB2eDocument
+		 * @see \CCrmOwnerType::SmartDocument
+		 */
+		$itemFactory = \Bitrix\Crm\Service\Container::getInstance()->getFactory($document->entityTypeId);
+
+		if (
+			$itemFactory
+			&& $item = $itemFactory->getItem($document->entityId)
+		)
+		{
+			\Bitrix\Crm\Activity\Provider\SignB2eDocument::onDocumentUpdate($item->getId());
+		}
+	}
+
+	private function isIntegrationDocumentSettingsAvailableForProvider(?string $providerCode): bool
+	{
+		return $providerCode && $providerCode !== ProviderCode::SES_RU;
 	}
 }

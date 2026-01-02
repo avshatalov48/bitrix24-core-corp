@@ -2,6 +2,8 @@
 
 namespace Bitrix\Crm\Order;
 
+use Bitrix\Crm\Service\Container;
+
 /**
  * Class Contact
  * @package Bitrix\Crm\Order
@@ -47,13 +49,20 @@ class Contact extends ContactCompanyEntity
 	 */
 	public function getCustomerName(): ?string
 	{
-		$contact = \CAllCrmContact::GetByID($this->getField('ENTITY_ID'), false);
+		$factory = Container::getInstance()->getFactory(static::getEntityType());
 
-		if (!$contact)
+		if (!$factory)
 		{
 			return null;
 		}
 
-		return $contact['NAME'] ?: $contact['FULL_NAME'];
+		$contactItem = $factory->getItem($this->getField('ENTITY_ID'), ['NAME', 'FULL_NAME']);
+
+		if (!$contactItem)
+		{
+			return null;
+		}
+
+		return $contactItem->getName() ?: $contactItem->getFullName();
 	}
 }

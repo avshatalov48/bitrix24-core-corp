@@ -5,6 +5,7 @@ namespace Bitrix\ImOpenlines\Security;
 use Bitrix\Bitrix24\Feature;
 use Bitrix\Main\Loader;
 use Bitrix\Main\Localization\Loc;
+use Bitrix\Crm\Service\Container;
 
 Loc::loadMessages(__FILE__);
 
@@ -111,10 +112,10 @@ class Helper
 		if (is_null(self::$showWidgetLink))
 		{
 			self::$showWidgetLink = false;
-			if (\Bitrix\Main\Loader::includeModule('crm') && \CCrmPerms::IsAccessEnabled())
+			if (\Bitrix\Main\Loader::includeModule('crm'))
 			{
-				$crmPerms = new \CCrmPerms($GLOBALS["USER"]->GetID());
-				if (!$crmPerms->HavePerm('BUTTON', BX_CRM_PERM_NONE))
+				$crmUserPermissions = Container::getInstance()->getUserPermissions();
+				if ($crmUserPermissions->entityType()->canReadSomeItemsInCrm() && $crmUserPermissions->siteButton()->canRead())
 				{
 					self::$showWidgetLink = true;
 				}
@@ -276,12 +277,12 @@ class Helper
 		}
 		if (isset($roleIds['CHIEF']))
 		{
-			$dbGroup = \CGroup::GetList('', '', Array("STRING_ID" => "DIRECTION"));
-			if($arGroup = $dbGroup->Fetch())
+			$groupId = \CGroup::GetIDByCode("DIRECTION");
+			if ($groupId)
 			{
 				\Bitrix\ImOpenlines\Model\RoleAccessTable::add(array(
 					'ROLE_ID' => $roleIds['CHIEF'],
-					'ACCESS_CODE' => 'G'.$arGroup["ID"]
+					'ACCESS_CODE' => 'G' . $groupId
 				));
 			}
 		}

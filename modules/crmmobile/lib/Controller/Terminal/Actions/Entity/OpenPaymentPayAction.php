@@ -4,12 +4,12 @@ declare(strict_types = 1);
 
 namespace Bitrix\CrmMobile\Controller\Terminal\Actions\Entity;
 
+use Bitrix\Crm\Service\Container;
 use Bitrix\CrmMobile\Controller\Action;
 use Bitrix\CrmMobile\Controller\Terminal\Actions\Mixin\ProvidesPsCreationActionProviders;
 use Bitrix\CrmMobile\Controller\Terminal\Actions\Mixin\ProvidesPullConfig;
 use Bitrix\CrmMobile\Integration\Sale\Payment\GetPaymentQuery;
 use Bitrix\Main\Engine\CurrentUser;
-use Bitrix\Crm\Order\Permissions;
 use Bitrix\Main\Loader;
 use Bitrix\Sale\Repository\PaymentRepository;
 use Bitrix\SalesCenter\Integration\LandingManager;
@@ -21,7 +21,7 @@ class OpenPaymentPayAction extends Action
 
 	final public function run(int $id, CurrentUser $currentUser): ?array
 	{
-		if (!Permissions\Payment::checkReadPermission($id))
+		if (!Container::getInstance()->getUserPermissions()->item()->canRead(\CCrmOwnerType::OrderPayment, $id))
 		{
 			return null;
 		}

@@ -1,5 +1,14 @@
 <?php
-if(!defined('B_PROLOG_INCLUDED') || B_PROLOG_INCLUDED!==true) die();
+
+if (!defined('B_PROLOG_INCLUDED') || B_PROLOG_INCLUDED !== true)
+{
+	die();
+}
+
+/** @var CMain $APPLICATION */
+/** @var array $arParams */
+/** @var array $arResult */
+/** @var \CBitrixComponentTemplate $this */
 
 $categoryID = isset($arResult['VARIABLES']['category_id']) ? (int)$arResult['VARIABLES']['category_id'] : -1;
 
@@ -9,40 +18,9 @@ if(!Bitrix\Crm\Integration\Bitrix24Manager::isAccessEnabled(CCrmOwnerType::Deal)
 }
 else
 {
-	$isBitrix24Template = SITE_TEMPLATE_ID === 'bitrix24';
-	if($isBitrix24Template)
-	{
-		$this->SetViewTarget('below_pagetitle', 0);
-	}
+	$bodyClass = $APPLICATION->GetPageProperty('BodyClass');
+	$APPLICATION->SetPageProperty('BodyClass', ($bodyClass ? $bodyClass.' ' : '').'crm-toolbar-modifier');
 
-	$applyFilter = \Bitrix\Main\Application::getInstance()->getContext()->getRequest()->getQuery('apply_filter') === 'Y';
-
-	if($isBitrix24Template)
-	{
-		$this->EndViewTarget();
-	}
-
-	if($isBitrix24Template)
-	{
-		$this->SetViewTarget('inside_pagetitle', 100);
-	}
-	$catalogPath = ($arResult['IS_RECURRING'] !== 'Y') ? $arResult['PATH_TO_DEAL_CATEGORY'] : $arResult['PATH_TO_DEAL_RECUR_CATEGORY'];
-
-	if(SITE_TEMPLATE_ID === 'bitrix24')
-	{
-		$bodyClass = $APPLICATION->GetPageProperty('BodyClass');
-		$APPLICATION->SetPageProperty('BodyClass', ($bodyClass ? $bodyClass.' ' : '').'crm-toolbar-modifier');
-	}
-
-	if($isBitrix24Template)
-	{
-		$this->SetViewTarget('inside_pagetitle', 100);
-	}
-
-	if($isBitrix24Template)
-	{
-		$this->EndViewTarget();
-	}
 	$APPLICATION->ShowViewContent('crm-grid-filter');
 
 	if(\Bitrix\Main\ModuleManager::isModuleInstalled('rest'))
@@ -61,6 +39,8 @@ else
 			array('HIDE_ICONS' => 'Y')
 		);
 	}
+
+	$applyFilter = \Bitrix\Main\Application::getInstance()->getContext()->getRequest()->getQuery('apply_filter') === 'Y';
 
 	$APPLICATION->IncludeComponent(
 		'bitrix:ui.sidepanel.wrapper',
@@ -97,4 +77,3 @@ else
 		]
 	);
 }
-?>

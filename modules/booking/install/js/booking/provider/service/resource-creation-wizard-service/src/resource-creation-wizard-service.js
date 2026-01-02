@@ -1,6 +1,10 @@
+import type { Store } from 'ui.vue3.vuex';
+
 import { Core } from 'booking.core';
-import { ApiClient } from 'booking.lib.api-client';
-import { Model } from 'booking.const';
+import { Model, Option } from 'booking.const';
+import { apiClient } from 'booking.lib.api-client';
+import { optionService } from 'booking.provider.service.option-service';
+
 import { ResourceCreationWizardDataExtractor } from './data-extractor';
 
 class ResourceCreationWizardService
@@ -10,43 +14,54 @@ class ResourceCreationWizardService
 		await this.loadData();
 	}
 
-	async loadData()
+	async loadData(): Promise<void>
 	{
 		try
 		{
-			const api = new ApiClient();
-			const data = await api.post('ResourceWizard.get', {});
+			const data = await apiClient.post('ResourceWizard.get', {});
 
 			const extractor = new ResourceCreationWizardDataExtractor(data);
-			const store = Core.getStore();
-
-			const { notifications, senders } = extractor.getNotificationsSettings();
+			const wizardModel = Model.ResourceCreationWizard;
 
 			await Promise.all([
-				store.dispatch(
-					`${Model.ResourceCreationWizard}/setAdvertisingResourceTypes`,
-					extractor.getAdvertisingResourceTypes(),
-				),
-				store.dispatch(`${Model.Notifications}/upsertMany`, notifications),
-				store.dispatch(`${Model.Notifications}/upsertManySenders`, senders),
-				store.dispatch(
-					`${Model.ResourceCreationWizard}/setCompanyScheduleSlots`,
-					extractor.getCompanyScheduleSlots(),
-				),
-				store.dispatch(
-					`${Model.ResourceCreationWizard}/setCompanyScheduleAccess`,
-					extractor.isCompanyScheduleAccess(),
-				),
-				store.dispatch(
-					`${Model.ResourceCreationWizard}/setWeekStart`,
-					extractor.getWeekStart(),
-				),
+				this.$store.dispatch(`${wizardModel}/setAdvertisingTypes`, extractor.getAdvertisingTypes()),
+				this.$store.dispatch(`${wizardModel}/setCompanyScheduleSlots`, extractor.getCompanyScheduleSlots()),
+				this.$store.dispatch(`${wizardModel}/setCompanyScheduleAccess`, extractor.isCompanyScheduleAccess()),
+				this.$store.dispatch(`${wizardModel}/setCompanyScheduleUrl`, extractor.getCompanyScheduleUrl()),
+				this.$store.dispatch(`${wizardModel}/setWeekStart`, extractor.getWeekStart()),
+				this.$store.dispatch(`${wizardModel}/setIsChannelChoiceAvailable`, extractor.isChannelChoiceAvailable()),
+				this.$store.dispatch(`${Model.Notifications}/upsertMany`, extractor.getNotifications()),
+				this.$store.dispatch(`${Model.Notifications}/upsertManySenders`, extractor.getSenders()),
 			]);
 		}
 		catch (error)
 		{
-			console.error('ResourceCreationWizardService load data error', error);
+			console.error('ResourceCreationWizardService loadData error', error);
 		}
+	}
+
+	async updateNotificationExpanded(type: string, isExpanded: boolean): Promise<void>
+	{
+		await this.$store.dispatch(`${Model.Notifications}/setIsExpanded`, { type, isExpanded });
+
+		const notifications = Object.fromEntries(this.$store.getters[`${Model.Notifications}/get`]
+			.map((notification) => [notification.type, notification.isExpanded]));
+
+		try
+		{
+			await optionService.set(Option.NotificationsExpanded, JSON.stringify(notifications));
+		}
+		catch (error)
+		{
+			await this.$store.dispatch(`${Model.Notifications}/setIsExpanded`, { type, isExpanded: !isExpanded });
+
+			console.error('ResourceCreationWizardService updateNotificationExpanded error', error);
+		}
+	}
+
+	get $store(): Store
+	{
+		return Core.getStore();
 	}
 }
 

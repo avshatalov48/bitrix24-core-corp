@@ -4,7 +4,7 @@ $MESS['IMCONNECTORMOBILE_TELEGRAM_REGISTRY_CONTINUE'] = 'Продолжить';
 $MESS['IMCONNECTORMOBILE_TELEGRAM_REGISTRY_BANNER_TITLE'] = 'Пригласите клиента в Telegram';
 $MESS['IMCONNECTORMOBILE_TELEGRAM_REGISTRY_BANNER_DESCRIPTION'] = 'Клиенты будут писать вам в удобном для них мессенджере, а вся история сообщений сохранится в сделках';
 $MESS['IMCONNECTORMOBILE_TELEGRAM_REGISTRY_STEP_1_TITLE'] = 'Настройте бота в Telegram';
-$MESS['IMCONNECTORMOBILE_TELEGRAM_REGISTRY_STEP_1_DESCRIPTION'] = 'В результате настройки вы получите токен доступа. [URL=https://www.bitrix24.com/]Как это работает?[/URL]';
+$MESS['IMCONNECTORMOBILE_TELEGRAM_REGISTRY_STEP_1_DESCRIPTION_MSGVER_1'] = 'В результате настройки вы получите токен доступа. [URL]Как это работает?[/URL]';
 $MESS['IMCONNECTORMOBILE_TELEGRAM_REGISTRY_STEP_2_TITLE'] = 'Введите токен';
 $MESS['IMCONNECTORMOBILE_TELEGRAM_REGISTRY_STEP_2_DESCRIPTION'] = 'Скопируйте токен в чате настройки бота и вставьте в окно ниже';
 $MESS['IMCONNECTORMOBILE_TELEGRAM_REGISTRY_GO_TO_TELEGRAM'] = 'Перейти в Telegram';

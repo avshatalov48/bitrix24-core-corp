@@ -1,5 +1,7 @@
-(() =>
-{
+/**
+ * @module user/utils
+ */
+jn.define('user/utils', (require, exports, module) => {
 	/**
 	 * @class UserListUtils
 	 * @type {{getFormattedName: (function(*=, *=): any), prepareListForDraw: (function(*=): []), getFormattedHumanName: (function(*, *=): *)}}
@@ -99,10 +101,10 @@
 				.replace(/#NAME#|#LAST_NAME#|#SECOND_NAME#|#LAST_NAME_SHORT#|#SECOND_NAME_SHORT#|#NAME_SHORT#/gi,
 					match => (typeof replace[match] != "undefined" && replace[match] != null) ? replace[match] : "")
 				.trim();
-		}
-
-
+		},
 	};
-	jnexport([Utils, "UserListUtils"]);
 
-})();
+	module.exports = {
+		UserListUtils: Utils,
+	};
+});

@@ -7,9 +7,6 @@ jn.define('tasks/flow-list/src/more-menu', (require, exports, module) => {
 	const { TasksFlowListFilter } = require('tasks/flow-list/src/filter');
 	const { Color } = require('tokens');
 	const { Views } = require('tasks/statemanager/redux/types');
-	const { Feature } = require('feature');
-
-	const airStyleSupported = Feature.isAirStyleSupported();
 
 	const iconPrefix = `${currentDomain}/bitrix/mobileapp/tasksmobile/extensions/tasks/flow-list/images/more-menu-`;
 
@@ -103,14 +100,14 @@ jn.define('tasks/flow-list/src/more-menu', (require, exports, module) => {
 					counterColor: Color.accentMainAlert.toHex(),
 					sectionCode: 'counters',
 					sectionTitle: Loc.getMessage('TASKSMOBILE_FLOW_LIST_MORE_MENU_MY_COUNTER_TITLE'),
-					showIcon: !airStyleSupported,
+					showIcon: false,
 				}),
 				this.createMenuItem({
 					id: TasksFlowListFilter.counterType.newComments,
 					title: Loc.getMessage('TASKSMOBILE_FLOW_LIST_MORE_MENU_NEW_COMMENTS'),
 					counterColor: Color.accentMainSuccess.toHex(),
 					sectionCode: 'counters',
-					showIcon: !airStyleSupported,
+					showIcon: false,
 				}),
 			].filter(Boolean);
 		}

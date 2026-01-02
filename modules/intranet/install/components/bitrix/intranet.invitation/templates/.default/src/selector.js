@@ -3,35 +3,21 @@ import {TagSelector} from 'ui.entity-selector';
 
 export class Selector
 {
-	constructor(parent, params)
+	constructor(params)
 	{
-		this.parent = parent;
-		this.contentBlock = params.contentBlock;
 		this.options = params.options;
 		this.entities = [];
 
-		this.prepareOptions();
+		this.#prepareOptions();
 	}
 
-	prepareOptions()
+	#prepareOptions(): void
 	{
-		for (let type in this.options)
+		for (const type in this.options)
 		{
 			if (!this.options.hasOwnProperty(type))
 			{
 				continue;
-			}
-
-			if (type === "department" && !!this.options[type])
-			{
-				this.entities.push({
-					id: "department",
-					options: {
-						selectMode: "departmentsOnly",
-						allowOnlyUserDepartments: !(!!this.options["isAdmin"] && this.options["isAdmin"] === true),
-						allowSelectRootDepartment: true,
-					}
-				});
 			}
 
 			if (type === "project" && !!this.options[type])
@@ -64,41 +50,32 @@ export class Selector
 		}
 	}
 
-	render()
+	renderTo(target: HTMLElement)
+	{
+		this.tagSelector = this.renderTagSelector();
+
+		if (Type.isDomNode(target))
+		{
+			this.tagSelector.renderTo(target);
+		}
+	}
+
+	renderTagSelector(): TagSelector
 	{
 		const preselectedItems = [];
 
-		if (
-			this.options.hasOwnProperty('projectId')
-			&& this.options.projectId > 0
-		)
+		if (this.options?.projectId > 0)
 		{
-			preselectedItems.push(['project', this.options.projectId])
+			preselectedItems.push(['project', this.options.projectId]);
 		}
 
-		if (
-			this.options.hasOwnProperty('departmentsId')
-			&& Array.isArray(this.options.departmentsId)
-		)
-		{
-			this.options.departmentsId.forEach((departmentId) => {
-				preselectedItems.push(['department', departmentId])
-			});
-		}
-
-		this.tagSelector = new TagSelector({
+		return new TagSelector({
 			dialogOptions: {
-				preselectedItems: preselectedItems,
+				preselectedItems,
 				entities: this.entities,
 				context: 'INTRANET_INVITATION',
 			},
 		});
-
-		if (Type.isDomNode(this.contentBlock))
-		{
-			Dom.clean(this.contentBlock);
-			this.tagSelector.renderTo(this.contentBlock);
-		}
 	}
 
 	getItems()

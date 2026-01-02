@@ -11,12 +11,8 @@ if (!defined("B_PROLOG_INCLUDED") || B_PROLOG_INCLUDED!==true)die();
 /** @var string $componentPath */
 /** @var \CrmVolumeComponent $component */
 
-
-
 use Bitrix\Main\Localization\Loc;
 Loc::loadMessages(__FILE__);
-
-$isBitrix24Template = SITE_TEMPLATE_ID === "bitrix24";
 
 \Bitrix\Main\UI\Extension::load(['ui.design-tokens']);
 
@@ -49,60 +45,34 @@ if($arResult['ENABLE_CONTROL_PANEL'])
 	);
 }
 
-
-
-if ($isBitrix24Template && !$arParams['IS_AJAX_REQUEST'] && $arResult['DATA_COLLECTED'])
+if (!$arParams['IS_AJAX_REQUEST'] && $arResult['DATA_COLLECTED'])
 {
-	$this->SetViewTarget("inside_pagetitle", 10);
-
-	?>
-	<div class="pagetitle-container pagetitle-flexible-space" style="overflow: hidden;">
-		<?
-
-		$APPLICATION->IncludeComponent(
-			'bitrix:main.ui.filter',
-			'',
-			array(
-				'DISABLE_SEARCH' => true,
-				'GRID_ID' => $arResult['GRID_ID'],
-				'FILTER_ID' => $arResult['FILTER_ID'],
-				'FILTER' => $arResult["FILTER"],
-				'FILTER_PRESETS' => $arResult['FILTER_PRESETS'],
-				'ENABLE_LIVE_SEARCH' => true,
-				'ENABLE_LABEL' => true,
-				'RESET_TO_DEFAULT_MODE' => false,
-				'MESSAGES' => array(
-					'MAIN_UI_FILTER__DATE_PREV_DAYS_LABEL' => Loc::getMessage('CRM_VOLUME_DATE_PERIOD_PREV_DAYS_LABEL'),
-				),
-			),
-			$component
-		);
-
-		?>
-	</div>
-	<?
-
-	$this->EndViewTarget();
+	\Bitrix\UI\Toolbar\Facade\Toolbar::addFilter([
+		'DISABLE_SEARCH' => true,
+		'GRID_ID' => $arResult['GRID_ID'],
+		'FILTER_ID' => $arResult['FILTER_ID'],
+		'FILTER' => $arResult['FILTER'],
+		'FILTER_PRESETS' => $arResult['FILTER_PRESETS'],
+		'ENABLE_LIVE_SEARCH' => true,
+		'ENABLE_LABEL' => true,
+		'RESET_TO_DEFAULT_MODE' => false,
+		'MESSAGES' => [
+			'MAIN_UI_FILTER__DATE_PREV_DAYS_LABEL' => Loc::getMessage('CRM_VOLUME_DATE_PERIOD_PREV_DAYS_LABEL'),
+		],
+	]);
 }
 
-
-if ($isBitrix24Template)
+if (!$arResult['QUEUE_RUNNING'] && $arResult['DATA_COLLECTED'])
 {
-	$this->SetViewTarget("inside_pagetitle", 10);
-
-	if (!$arResult['QUEUE_RUNNING'] && $arResult['DATA_COLLECTED'])
-	{
-		?>
-		<a href="<?= $component->getActionUrl(array('reload' => 'Y')); ?>" class="ui-btn ui-btn-primary crm-volume-reload-link">
-			<?= Loc::getMessage('CRM_VOLUME_MEASURE_DATA_REPEAT') ?>
-		</a>
-		<?
-	}
-
-	$this->EndViewTarget();
+	\Bitrix\UI\Toolbar\Facade\Toolbar::addButton([
+		'text' => Loc::getMessage('CRM_VOLUME_MEASURE_DATA_REPEAT'),
+		'color' => \Bitrix\UI\Buttons\Color::PRIMARY,
+		'link' => $component->getActionUrl(['reload' => 'Y']),
+		'dataset' => [
+			'toolbar-collapsed-icon' => Bitrix\UI\Buttons\Icon::RELOAD
+		]
+	]);
 }
-
-
 ?>
 <div id="bx-crm-volume-main-block" class="crm-volume-wrap <? if ($arResult['QUEUE_RUNNING']): ?>crm-volume-running<? endif; ?>">
 	<div id="bx-crm-volume-stepper" class="crm-volume-stepper bx-ui-crm-volume-stepper" <?

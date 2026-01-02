@@ -11,6 +11,7 @@ class SendResult extends SuccessResult
 	public function __construct(
 		public Document $newDocument,
 		public Member $employeeMember,
+		public Member $assigneeMember,
 	)
 	{
 		parent::__construct();

@@ -1,6 +1,5 @@
 import { SavingPopup } from './saving-popup';
 import { Loader } from 'main.loader';
-import '../../css/save-progress-popup.css';
 
 export const ImportProgressPopup = {
 	props: {
@@ -41,7 +40,7 @@ export const ImportProgressPopup = {
 			:options="popupOptions"
 		>
 			<template v-slot:icon>
-				<div ref="loader" class="dataset-save-progress-loader"></div>
+				<div ref="loader" class="biconnector-save-progress-loader"></div>
 			</template>
 		</SaveProgressPopup>
 	`,

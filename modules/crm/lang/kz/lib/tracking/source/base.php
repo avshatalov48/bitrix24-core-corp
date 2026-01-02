@@ -1,0 +1,15 @@
+<?php
+$MESS["CRM_TRACKING_SOURCE_BASE_ADS_DESC"] = "Жарнамалық дереккөз `%name%`";
+$MESS["CRM_TRACKING_SOURCE_BASE_DESC_OTHER"] = "Басқа трафик-бұл аналитикадағы теңшелген көздерге жатқызылмаған барлық клиенттер.";
+$MESS["CRM_TRACKING_SOURCE_BASE_NAME_1C"] = "1C";
+$MESS["CRM_TRACKING_SOURCE_BASE_NAME_FB"] = "Facebook";
+$MESS["CRM_TRACKING_SOURCE_BASE_NAME_GOOGLE_MSGVER_1"] = "Google Ads";
+$MESS["CRM_TRACKING_SOURCE_BASE_NAME_INSTAGRAM"] = "Instagram";
+$MESS["CRM_TRACKING_SOURCE_BASE_NAME_ORGANIC"] = "Органикалық трафик";
+$MESS["CRM_TRACKING_SOURCE_BASE_NAME_OTHER"] = "Өзге трафик";
+$MESS["CRM_TRACKING_SOURCE_BASE_NAME_SENDER-MAIL"] = "Email Маркетинг";
+$MESS["CRM_TRACKING_SOURCE_BASE_NAME_VK"] = "ВКонтакте";
+$MESS["CRM_TRACKING_SOURCE_BASE_NAME_VKADS"] = "VK жарнамасы";
+$MESS["CRM_TRACKING_SOURCE_BASE_NAME_YANDEX"] = "Яндекс.Директ";
+$MESS["CRM_TRACKING_SOURCE_BASE_SHORT_NAME_ORGANIC"] = "Органика";
+$MESS["CRM_TRACKING_SOURCE_BASE_TRAFFIC_DESC"] = "Трафик `%name%` дереккөзі";

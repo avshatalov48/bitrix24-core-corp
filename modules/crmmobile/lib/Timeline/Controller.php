@@ -75,18 +75,11 @@ abstract class Controller extends BaseJson
 
 		if ($entity->isNew())
 		{
-			$isEditable = $userPermissions->checkAddPermissions(
-				$entity->getEntityTypeId(),
-				$entity->getCategoryId()
-			);
+			$isEditable = $userPermissions->item()->canAddItem($entity);
 		}
 		else
 		{
-			$isEditable = $userPermissions->checkUpdatePermissions(
-				$entity->getEntityTypeId(),
-				$entity->getId(),
-				$entity->getCategoryId()
-			);
+			$isEditable = $userPermissions->item()->canUpdateItem($entity);
 		}
 
 		return $isEditable;

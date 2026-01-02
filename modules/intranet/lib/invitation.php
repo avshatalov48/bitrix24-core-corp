@@ -1,6 +1,7 @@
 <?php
 namespace Bitrix\Intranet;
 
+use Bitrix\Bitrix24\Integration\Network\RegisterSettingsSynchronizer;
 use Bitrix\Bitrix24\Sso;
 use Bitrix\Intranet\Counters\Counter;
 use Bitrix\Intranet\Counters\Synchronizations\InvitationAdminDecrementSynchronization;
@@ -8,9 +9,9 @@ use Bitrix\Intranet\Counters\Synchronizations\InvitationAdminSynchronization;
 use Bitrix\Intranet\Counters\Synchronizations\InvitationDecrementSynchronization;
 use Bitrix\Intranet\Counters\Synchronizations\InvitationSynchronization;
 use Bitrix\Intranet\Counters\Synchronizations\TotalInvitationSynchronization;
-use Bitrix\Intranet\Counters\Synchronizations\WaitConfirmationDecrementSynchronization;
 use Bitrix\Intranet\Counters\Synchronizations\WaitConfirmationResetSynchronization;
 use Bitrix\Intranet\Counters\Synchronizations\WaitConfirmationSynchronization;
+use Bitrix\Intranet\Integration\HumanResources\PermissionInvitation;
 use Bitrix\Intranet\Internals\InvitationTable;
 use Bitrix\Main\Application;
 use Bitrix\Main\ArgumentOutOfRangeException;
@@ -25,7 +26,6 @@ use Bitrix\Main;
 use Bitrix\Main\Result;
 use Bitrix\Main\UserTable;
 use Bitrix\Socialnetwork\UserToGroupTable;
-use Bitrix\Socialservices\Network;
 
 class Invitation
 {
@@ -200,19 +200,72 @@ class Invitation
 
 	public static function getRegisterSettings(): ?array
 	{
-		static $result = null;
-
-		if (
-			$result === null
-			&& ModuleManager::isModuleInstalled('bitrix24')
-			&& Loader::includeModule('socialservices')
-		)
+		if (!Loader::includeModule('socialservices'))
 		{
-			$result = Network::getRegisterSettings();
+			return null;
 		}
 
-		return $result;
+		return [
+			'REGISTER' => Option::get('socialservices', 'new_user_registration_network', 'Y'),
+			'REGISTER_CONFIRM' => Option::get('socialservices', 'new_user_registration_confirm', 'N'),
+			'REGISTER_WHITELIST' =>
+				implode(
+					';',
+					unserialize(
+						Option::get('socialservices', 'new_user_registration_whitelist', serialize([])),
+						['allowed_classes' => false]
+					),
+				),
+			'REGISTER_TEXT' => Option::get('socialservices', 'new_user_registration_text', ''),
+			'REGISTER_SECRET' => Option::get('socialservices', 'new_user_registration_secret', ''),
+			'INVITE_TOKEN_SECRET' => Option::get('socialservices', 'new_user_registration_invite_token_secret', ''),
+			'INVITATION_COLLABERS_AVAILABLE' =>
+				Loader::includeModule('extranet')
+				&& \Bitrix\Extranet\PortalSettings::getInstance()->isEnabledCollabersInvitation()
+					? 'Y' : 'N',
+		];
 	}
+
+	public static function setRegisterSettings($settings = []): void
+	{
+		if (!Loader::includeModule('socialservices'))
+		{
+			return;
+		}
+
+		if (isset($settings['REGISTER']))
+		{
+			Option::set('socialservices', 'new_user_registration_network', $settings['REGISTER'] === 'Y' ? 'Y' : 'N');
+		}
+
+		if (isset($settings['REGISTER_CONFIRM']))
+		{
+			Option::set('socialservices', 'new_user_registration_confirm', $settings['REGISTER_CONFIRM'] === 'Y' ? 'Y' : 'N');
+		}
+
+		if (isset($settings['REGISTER_WHITELIST']))
+		{
+			$value = preg_split("/[^a-z0-9\-\.]+/", mb_strtolower($settings['REGISTER_WHITELIST']));
+			Option::set('socialservices', 'new_user_registration_whitelist', serialize($value));
+		}
+
+		if (isset($settings['REGISTER_TEXT']))
+		{
+			Option::set('socialservices', 'new_user_registration_text', trim($settings['REGISTER_TEXT']));
+		}
+
+		if (isset($settings['REGISTER_SECRET']))
+		{
+			Option::set('socialservices', 'new_user_registration_secret', trim($settings['REGISTER_SECRET']));
+		}
+
+		if (isset($settings['INVITE_TOKEN_SECRET']))
+		{
+			Option::set('socialservices', 'new_user_registration_invite_token_secret', trim($settings['INVITE_TOKEN_SECRET']));
+		}
+	}
+
+
 
 	public static function getRegisterUri(): ?Main\Web\Uri
 	{
@@ -273,21 +326,12 @@ class Invitation
 
 	public static function canCurrentUserInvite(): bool
 	{
-		global $USER;
-
 		if (!self::isAvailable())
 		{
 			return false;
 		}
 
-		return (
-			Loader::includeModule('bitrix24')
-			&& \CBitrix24::isInvitingUsersAllowed()
-		)
-		|| (
-			!ModuleManager::isModuleInstalled('bitrix24')
-			&& $USER->CanDoOperation('edit_all_users')
-		);
+		return PermissionInvitation::createByCurrentUser()->canInvite();
 	}
 
 	public static function canCurrentUserInviteByPhone(): bool
@@ -340,6 +384,23 @@ class Invitation
 	public static function getTotalInvitationCounterId(): string
 	{
 		return 'total_invitation';
+	}
+
+	public static function addResyncAllCountersTask(?User $user): void
+	{
+		static $userIdList = [];
+		static $forAdmins = true;
+		$needSyncForAdmins = $forAdmins && empty($userIdList);
+
+		if ($needSyncForAdmins || !in_array($user?->getId(), $userIdList))
+		{
+			Application::getInstance()->addBackgroundJob(fn() => static::fullSyncCounterByUser($user));
+			if ($user instanceof User)
+			{
+				$userIdList[] = $user->getId();
+			}
+			$forAdmins = false;
+		}
 	}
 
 	public static function fullSyncCounterByUser(?User $user): void
@@ -432,7 +493,7 @@ class Invitation
 	public static function onUserInitializeHandler($userId, array $params): bool
 	{
 		$ownUser = (new User((int)$userId))->fetchOriginatorUser();
-		static::fullSyncCounterByUser($ownUser);
+		static::addResyncAllCountersTask($ownUser);
 
 		if (\Bitrix\Main\Loader::includeModule('pull'))
 		{
@@ -512,7 +573,7 @@ class Invitation
 			'OnAfterUserDelete',
 			function(int $userId) use ($ownUser)
 			{
-				static::fullSyncCounterByUser($ownUser);
+				static::addResyncAllCountersTask($ownUser);
 
 				if (\Bitrix\Main\Loader::includeModule('pull'))
 				{
@@ -542,7 +603,7 @@ class Invitation
 		{
 			return true;
 		}
-		static::fullSyncCounterByUser(new User($userId));
+		static::addResyncAllCountersTask(new User($userId));
 
 		return true;
 	}
@@ -561,7 +622,7 @@ class Invitation
 		{
 			return true;
 		}
-		static::fullSyncCounterByUser(new User($userId));
+		static::addResyncAllCountersTask(new User($userId));
 
 		return true;
 	}
@@ -578,7 +639,7 @@ class Invitation
 			return true;
 		}
 
-		static::fullSyncCounterByUser(new User($userId));
+		static::addResyncAllCountersTask(new User($userId));
 
 		return true;
 	}
@@ -627,6 +688,23 @@ class Invitation
 			return $result->addError(new Main\Error('The bitrix24 module is not installed'));
 		}
 		$currentUser = CurrentUser::get();
+		$user = \Bitrix\Intranet\UserTable::query()
+			->where('ID', $userId)
+			->where('ACTIVE', 'N')
+			->whereNotNull('CONFIRM_CODE')
+			->whereNot('CONFIRM_CODE', '')
+			->setSelect([
+				'ID',
+				'ACTIVE',
+				'CONFIRM_CODE',
+			])
+			->setLimit(1)
+			->fetchObject()
+		;
+		if (!$user)
+		{
+			return $result->addError(new Main\Error('', 'USER_CONFIRMED'));
+		}
 		$sql = "
 			SELECT M.*
 			FROM b_im_relation R, b_im_message M
@@ -656,7 +734,7 @@ class Invitation
 	public static function onAfterSetUserGroupHandler($userId, array $params): void
 	{
 		$user = new User((int)$userId);
-		static::fullSyncCounterByUser($user);
+		static::addResyncAllCountersTask($user);
 	}
 
 	public static function inviteUsers(array $fields): Main\Result

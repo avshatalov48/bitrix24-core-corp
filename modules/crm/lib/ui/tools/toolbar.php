@@ -2,9 +2,11 @@
 
 namespace Bitrix\Crm\UI\Tools;
 
+use Bitrix\Crm\RepeatSale\Widget\WidgetManager;
 use Bitrix\Crm\Service\Container;
 use Bitrix\Crm\Service\Router;
 use Bitrix\Main\Localization\Loc;
+use Bitrix\Main\UI\Extension;
 use Bitrix\UI\Buttons\JsCode;
 use Bitrix\UI\Buttons\JsEvent;
 use Bitrix\UI\Buttons\JsHandler;
@@ -16,7 +18,7 @@ class ToolBar
 		'toolbar_lead_list',
 		'toolbar_deal_list',
 		'toolbar_order_kanban',
-		'toolbar_quote_list'
+		'toolbar_quote_list',
 	];
 
 	public static function mapItems(array $inputItems, string $toolbarId = null, array $params = []): array
@@ -28,8 +30,7 @@ class ToolBar
 			return [];
 		}
 
-		$result = array_map(static function ($item)
-		{
+		$result = array_map(static function ($item) {
 			$item = array_change_key_case($item);
 
 			if (isset($item['separator']))
@@ -48,7 +49,7 @@ class ToolBar
 					$item['html'] = sprintf(
 						'%s <span class="main-buttons-item-counter">%d</span>',
 						$item['html'],
-						$item['counter']
+						$item['counter'],
 					);
 				}
 			}
@@ -133,7 +134,7 @@ class ToolBar
 					'text' => Loc::getMessage('CRM_KANBAN_SETTINGS_FIELDS_EDIT'),
 					'onclick' => new JsEvent('crm-kanban-settings-fields-edit'),
 				],
-			]
+			],
 		];
 	}
 
@@ -147,9 +148,9 @@ class ToolBar
 		$kanbanViewTypes = [
 			Router::LIST_VIEW_KANBAN,
 			Router::LIST_VIEW_ACTIVITY,
-			Router::LIST_VIEW_DEADLINES
+			Router::LIST_VIEW_DEADLINES,
 		];
+
 		return in_array($currentView, $kanbanViewTypes, true);
 	}
-
 }

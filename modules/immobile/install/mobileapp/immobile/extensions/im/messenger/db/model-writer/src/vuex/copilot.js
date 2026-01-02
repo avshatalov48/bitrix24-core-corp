@@ -68,6 +68,15 @@ jn.define('im/messenger/db/model-writer/vuex/copilot', (require, exports, module
 				return;
 			}
 
+			const saveActions = [
+				'setCollection',
+			];
+
+			if (!saveActions.includes(mutation.payload.actionName))
+			{
+				return;
+			}
+
 			const data = mutation?.payload?.data || {};
 			const copilotItems = [];
 			if (data.addItems)

@@ -35,7 +35,7 @@ final class Dependence extends \Bitrix\Tasks\Dispatcher\RestrictedAction
 		try
 		{
 			$task = new \CTaskItem($taskIdTo, $this->userId);
-			$task->addDependOn($taskIdFrom, $linkType);
+			$task->addProjectDependence($taskIdFrom, $linkType);
 		}
 		catch(Exception | \CTaskAssertException $e)
 		{
@@ -62,7 +62,7 @@ final class Dependence extends \Bitrix\Tasks\Dispatcher\RestrictedAction
 		try
 		{
 			$task = new \CTaskItem($taskIdTo, $this->userId);
-			$task->deleteDependOn($taskIdFrom);
+			$task->deleteProjectDependence($taskIdFrom);
 		}
 		catch(Exception | \CTaskAssertException $e)
 		{

@@ -1,0 +1,14 @@
+.hr-im-dropdown__container {
+	border-radius: var(--im-border-radius-xs);
+	cursor: pointer;
+	--ui-field-size: var(--ui-field-size-sm);
+}
+
+.hr-im-dropdown__text_disabled {
+	color: rgba(189, 193, 198, 1) !important;
+}
+
+.hr-im-dropdown__text_disabled:hover {
+	color: rgba(189, 193, 198, 1) !important;
+	border: 1px solid rgb(var(--ui-field-color-border-default)) !important;
+}

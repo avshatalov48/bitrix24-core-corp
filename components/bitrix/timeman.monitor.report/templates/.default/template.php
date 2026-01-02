@@ -16,35 +16,15 @@ if (!defined('B_PROLOG_INCLUDED') || B_PROLOG_INCLUDED !== true)
 
 Extension::load(['ui.design-tokens', 'timeman.monitor-report']);
 
-$bodyClass = $APPLICATION->GetPageProperty('BodyClass');
-$APPLICATION->SetPageProperty(
-	'BodyClass',
-	($bodyClass ? $bodyClass . ' ' : '') . 'pagetitle-toolbar-field-view'
-);
-
-$this->SetViewTarget('inside_pagetitle', 0);
-?>
-
-<div class="pagetitle-container pagetitle-flexible-space">
-<?php
-	$APPLICATION->IncludeComponent(
-		'bitrix:main.ui.filter',
-		'',
-		[
-			'GRID_ID' => $arResult['GRID_ID'],
-			'FILTER_ID' => $arResult['FILTER_ID'],
-			'FILTER' => $arResult['FILTER'],
-			'FILTER_PRESETS' => $arResult['FILTER_PRESETS'],
-			'ENABLE_LIVE_SEARCH' => false,
-			'DISABLE_SEARCH' => true,
-			'ENABLE_LABEL' => true,
-		],
-	);
-?>
-</div>
-
-<?php
-$this->EndViewTarget();
+\Bitrix\UI\Toolbar\Facade\Toolbar::addFilter([
+	'GRID_ID' => $arResult['GRID_ID'],
+	'FILTER_ID' => $arResult['FILTER_ID'],
+	'FILTER' => $arResult['FILTER'],
+	'FILTER_PRESETS' => $arResult['FILTER_PRESETS'],
+	'ENABLE_LIVE_SEARCH' => false,
+	'DISABLE_SEARCH' => true,
+	'ENABLE_LABEL' => true,
+]);
 
 function getEmployeeLayout($employeeName, $employeeIcon, $employeeLink): string
 {
@@ -244,8 +224,8 @@ $totalContainer = '
 			'GRID_ID' => $arResult['GRID_ID'],
 			'HEADERS' => $arResult['HEADERS'],
 			'ROWS' => $rows,
-			'SORT' => $arResult['SORT'],
-			'NAV_OBJECT' => $arResult['NAV_OBJECT'],
+			'SORT' => $arResult['SORT'] ?? null,
+			'NAV_OBJECT' => $arResult['NAV_OBJECT'] ?? null,
 			'ALLOW_COLUMNS_SORT' => false,
 			'ALLOW_SORT' => true,
 			'ALLOW_PIN_HEADER' => true,

@@ -12,8 +12,13 @@ final class CopilotCallAssessmentClientTypeController
 {
 	use Singleton;
 
-	public function deleteByAssessmentId(int $assessmentId): Result
+	public function deleteByAssessmentId(int $assessmentId): ?Result
 	{
+		if ($assessmentId <= 0)
+		{
+			return null;
+		}
+
 		$sqlHelper = Application::getConnection()->getSqlHelper();
 
 		$sql =

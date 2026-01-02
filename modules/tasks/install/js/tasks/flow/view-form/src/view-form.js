@@ -16,8 +16,8 @@ import './style.css';
 type Params = {
 	flowId: number,
 	bindElement: HTMLElement,
-	isFeatureEnabled: 'Y' | 'N',
-	flowUrl: string,
+	overlay: ?boolean,
+	popupClassname: ?string,
 };
 
 export class ViewForm
@@ -49,8 +49,7 @@ export class ViewForm
 
 		this.#viewAjax = new ViewAjax(this.#params.flowId);
 
-		this.isFeatureEnabled = params.isFeatureEnabled === 'Y';
-		this.flowUrl = params.flowUrl;
+		this.overlay = Type.isBoolean(params.overlay) ? params.overlay : true;
 
 		void this.#load();
 		this.#subscribeEvents();
@@ -89,17 +88,22 @@ export class ViewForm
 	{
 		this.#viewFormData = await this.#viewAjax.getViewFormData();
 
-		this.#layout.popup.setContent(this.#render());
+		this.getPopup().setContent(this.#render());
 	}
 
 	show(bindElement: HTMLElement): void
 	{
-		this.#layout.popup = this.getPopup();
+		const popup = this.getPopup();
 
-		this.#layout.popup.setContent(this.#render());
-		this.#layout.popup.setBindElement(bindElement);
+		popup.setContent(this.#render());
+		popup.setBindElement(bindElement);
 
-		this.#layout.popup.show();
+		popup.show();
+	}
+
+	isShown(): boolean
+	{
+		return this.getPopup()?.isShown() ?? false;
 	}
 
 	getPopup(): Popup
@@ -111,28 +115,39 @@ export class ViewForm
 			return PopupManager.getPopupById(id);
 		}
 
-		const popup = new Popup({
-			id,
-			className: 'tasks-flow__view-popup',
-			animation: 'fading-slide',
-			minWidth: 347,
-			maxWidth: 347,
-			padding: 0,
-			borderRadius: 12,
-			autoHide: true,
-			overlay: true,
-			closeByEsc: true,
-			autoHideHandler: ({ target }) => {
-				const isSelf = popup.getPopupContainer().contains(target);
-				const isTeam = this.#layout.teamPopup?.getPopup().getPopupContainer().contains(target);
+		if (!this.#layout.popup)
+		{
+			let className = 'tasks-flow__view-popup';
 
-				return !isSelf && !isTeam;
-			},
-		});
+			if (Type.isStringFilled(this.#params.popupClassname))
+			{
+				className += ` ${this.#params.popupClassname}`;
+			}
 
-		new SidePanelIntegration(popup);
+			const popup = new Popup({
+				id,
+				className,
+				animation: 'fading-slide',
+				minWidth: 347,
+				maxWidth: 347,
+				padding: 0,
+				borderRadius: 12,
+				autoHide: true,
+				overlay: this.overlay,
+				closeByEsc: true,
+				autoHideHandler: ({ target }) => {
+					const isSelf = popup.getPopupContainer().contains(target);
+					const isTeam = this.#layout.teamPopup?.getPopup().getPopupContainer().contains(target);
 
-		return popup;
+					return !isSelf && !isTeam;
+				},
+			});
+
+			new SidePanelIntegration(popup);
+			this.#layout.popup = popup;
+		}
+
+		return this.#layout.popup;
 	}
 
 	#render(): HTMLElement
@@ -226,7 +241,7 @@ export class ViewForm
 
 			if (!this.#notificationList.has(notificationId))
 			{
-				const flowURL = window.location.protocol + this.flowUrl;
+				const flowURL = window.location.protocol + this.#viewFormData.link;
 				BX.clipboard.copy(flowURL);
 
 				BX.UI.Notification.Center.notify({
@@ -452,7 +467,7 @@ export class ViewForm
 	{
 		this.#layout.similarFlows ??= new SimilarFlows({
 			flowId: this.#params.flowId,
-			isFeatureEnabled: this.isFeatureEnabled,
+			isFeatureEnabled: this.#viewFormData.isFeatureEnabled,
 			createTaskButtonClickHandler: () => this.#layout.popup?.destroy(),
 		});
 

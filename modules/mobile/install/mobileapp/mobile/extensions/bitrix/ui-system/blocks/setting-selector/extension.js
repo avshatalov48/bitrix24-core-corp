@@ -4,16 +4,20 @@
 jn.define('ui-system/blocks/setting-selector', (require, exports, module) => {
 	const { Indent, Color } = require('tokens');
 	const { Ellipsize } = require('utils/enums/style');
+	const { mergeImmutable } = require('utils/object');
 	const { PureComponent } = require('layout/pure-component');
 	const { IconView, Icon } = require('ui-system/blocks/icon');
-	const { Text3, Text5 } = require('ui-system/typography/text');
+	const { Text3, Text4, Text5 } = require('ui-system/typography/text');
+	const { PropTypes } = require('utils/validation');
 	const { Switcher, SwitcherSize } = require('ui-system/blocks/switcher');
+	const { SettingMode } = require('ui-system/blocks/setting-selector/src/mode-enum');
 
 	/**
 	 * @typedef {Object} SettingSelectorProps
 	 * @property {string} testId
 	 * @property {boolean} [checked]
 	 * @property {boolean} [locked]
+	 * @property {boolean} [divider]
 	 * @property {Icon} [icon]
 	 * @property {Color} [iconColor]
 	 * @property {string} [title]
@@ -22,6 +26,7 @@ jn.define('ui-system/blocks/setting-selector', (require, exports, module) => {
 	 * @property {string} [subtitle]
 	 * @property {Ellipsize} [subtitleEllipsize]
 	 * @property {number} [numberOfLinesSubtitle]
+	 * @property {mode} [SettingMode]
 	 * @property {Function} [onClick]
 	 *
 	 * @function SettingSelector
@@ -53,14 +58,21 @@ jn.define('ui-system/blocks/setting-selector', (require, exports, module) => {
 
 		render()
 		{
-			const { testId, style = {} } = this.props;
+			const { testId, additionalContent, ...restProps } = this.props;
 
-			return View(
+			const renderProps = mergeImmutable(
 				{
 					testId,
-					style,
+					style: this.#dividerStyles(),
+				},
+				restProps,
+				{
 					onClick: this.#handleOnClick,
 				},
+			);
+
+			return View(
+				renderProps,
 				View(
 					{
 						style: {
@@ -85,16 +97,17 @@ jn.define('ui-system/blocks/setting-selector', (require, exports, module) => {
 							this.renderIcon(),
 							this.renderTitle(),
 						),
-						this.renderSwitch(),
+						this.#renderModeComponent(),
 					),
 					this.renderSubtitle(),
+					this.state.checked ? additionalContent : null,
 				),
 			);
 		}
 
 		renderTitle()
 		{
-			const { title, titleEllipsize, numberOfLinesTitle = 2 } = this.props;
+			const { title, titleEllipsize, numberOfLinesTitle = 2, color = Color.base1 } = this.props;
 
 			if (!title)
 			{
@@ -103,7 +116,7 @@ jn.define('ui-system/blocks/setting-selector', (require, exports, module) => {
 
 			return Text3({
 				text: title,
-				color: Color.base1,
+				color,
 				numberOfLines: numberOfLinesTitle,
 				ellipsize: this.#getEllipsize(titleEllipsize),
 				style: {
@@ -115,7 +128,7 @@ jn.define('ui-system/blocks/setting-selector', (require, exports, module) => {
 
 		renderSubtitle()
 		{
-			const { subtitle, numberOfLinesSubtitle = 2, subtitleEllipsize } = this.props;
+			const { subtitle, numberOfLinesSubtitle = 5, subtitleEllipsize } = this.props;
 
 			if (!subtitle)
 			{
@@ -160,7 +173,55 @@ jn.define('ui-system/blocks/setting-selector', (require, exports, module) => {
 			return IconView(iconProps);
 		}
 
-		renderSwitch()
+		#renderModeComponent()
+		{
+			const { mode } = this.props;
+
+			switch (mode)
+			{
+				case SettingMode.PARAMETER:
+					return this.#renderParameterMode();
+				case SettingMode.RIGHT_ICON:
+					return this.#renderRightIcon();
+				default:
+					return this.#renderSwitch();
+			}
+		}
+
+		#renderParameterMode()
+		{
+			const { testId } = this.props;
+			const { chevron, text, iconRef, color } = this.#getModeParams();
+
+			return View(
+				{
+					testId: `${testId}-parameter`,
+					style: {
+						flexDirection: 'row',
+					},
+				},
+				Boolean(text) && Text4({
+					text,
+					color: color ?? Color.base4,
+				}),
+				chevron && IconView({
+					size: 20,
+					icon: Icon.CHEVRON_TO_THE_RIGHT,
+					color: color ?? Color.base4,
+					forwardRef: iconRef,
+					style: {
+						marginLeft: Indent.XS.toNumber(),
+					},
+				}),
+			);
+		}
+
+		#renderRightIcon()
+		{
+			return IconView(this.#getModeParams());
+		}
+
+		#renderSwitch()
 		{
 			const { locked, testId } = this.props;
 			const { checked } = this.state;
@@ -176,6 +237,21 @@ jn.define('ui-system/blocks/setting-selector', (require, exports, module) => {
 					marginLeft: Indent.XL4.toNumber(),
 				},
 			});
+		}
+
+		#dividerStyles()
+		{
+			const { divider } = this.props;
+
+			if (!divider)
+			{
+				return {};
+			}
+
+			return {
+				borderBottomWidth: 1,
+				borderBottomColor: Color.bgSeparatorSecondary.toHex(),
+			};
 		}
 
 		#handleOnClick = () => {
@@ -200,12 +276,19 @@ jn.define('ui-system/blocks/setting-selector', (require, exports, module) => {
 
 		#getSwitchSize()
 		{
-			return SwitcherSize.XL;
+			return this.props.switcherSize ?? SwitcherSize.XL;
 		}
 
 		#getEllipsize(value)
 		{
 			return Ellipsize.resolve(value, Ellipsize.END).toString();
+		}
+
+		#getModeParams()
+		{
+			const { modeParams } = this.props;
+
+			return modeParams || {};
 		}
 	}
 
@@ -213,12 +296,14 @@ jn.define('ui-system/blocks/setting-selector', (require, exports, module) => {
 		testId: null,
 		checked: false,
 		locked: false,
+		divider: false,
 	};
 
 	SettingSelector.propTypes = {
 		testId: PropTypes.string.isRequired,
 		checked: PropTypes.bool,
 		locked: PropTypes.bool,
+		divider: PropTypes.bool,
 		icon: PropTypes.instanceOf(Icon),
 		iconColor: PropTypes.instanceOf(Color),
 		title: PropTypes.string,
@@ -227,6 +312,8 @@ jn.define('ui-system/blocks/setting-selector', (require, exports, module) => {
 		subtitle: PropTypes.string,
 		subtitleEllipsize: PropTypes.instanceOf(Ellipsize),
 		numberOfLinesSubtitle: PropTypes.number,
+		mode: PropTypes.instanceOf(SettingMode),
+		modeParams: PropTypes.object,
 		onClick: PropTypes.func,
 	};
 
@@ -234,6 +321,7 @@ jn.define('ui-system/blocks/setting-selector', (require, exports, module) => {
 		/** @param {SettingSelectorProps} props */
 		SettingSelector: (props) => new SettingSelector(props),
 		Icon,
+		SettingMode,
 		Ellipsize,
 	};
 });

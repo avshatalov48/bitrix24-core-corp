@@ -4,6 +4,7 @@ return [
 		'analytics',
 		'alert',
 		'utils',
+		'utils/random',
 		'rest',
 		'notify',
 	],

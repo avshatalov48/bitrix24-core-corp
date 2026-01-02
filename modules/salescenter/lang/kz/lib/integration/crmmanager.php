@@ -1,0 +1,6 @@
+<?php
+$MESS["SALESCENTER_CRMMANAGER_COMPILATION_SMS_TEMPLATE"] = "Сіздің жеке тауарлар топтамаңыз #LINK#";
+$MESS["SALESCENTER_CRMMANAGER_SMS_TEMPLATE_3"] = "Төлеу үшін сілтеме #LINK#";
+$MESS["SALESCENTER_CRMMANAGER_SMS_TEMPLATE_WRAPPED"] = "Төлеу үшін сілтеме\r\n#LINK#";
+$MESS["SALESCENTER_CRMMANAGER_TERMINAL_PAYMENT_APP_LINK_TEMPLATE"] = "#MANAGER_NAME# Терминалмен #APP_URL# жұмыс істеу үшін Битрикс24 қосымшасын орнатуды сұратуда";
+$MESS["SALESCENTER_CRMMANAGER_TERMINAL_PAYMENT_PAID_SMS_TEMPLATE"] = "Төлем туралы ақпарат: #CHECK_URL#";

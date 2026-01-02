@@ -1,0 +1,5 @@
+<?php
+$MESS["CRM_DOCGEN_DATAPROVIDER_SHPD_RLZ_ARRIVAL_FLD_DOCUMENT_CREATE_TIME"] = "Жасалған күні";
+$MESS["CRM_DOCGEN_DATAPROVIDER_SHPD_RLZ_ARRIVAL_FLD_DOCUMENT_NUMBER"] = "Нөмір";
+$MESS["CRM_DOCGEN_DATAPROVIDER_SHPD_RLZ_MULTI_STORE_PRINT_NOT_AVAILABLE"] = "Құжатта бірнеше қойма көрсетілген. Мұндай құжаттарды басып шығару мүмкіндігі кейінірек пайда болады.";
+$MESS["CRM_DOCGEN_DATAPROVIDER_SHPD_RLZ_TITLE"] = "Сату";

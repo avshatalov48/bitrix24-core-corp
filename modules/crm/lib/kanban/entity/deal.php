@@ -189,6 +189,8 @@ class Deal extends Entity
 			'CLIENT' => '',
 			'PROBLEM_NOTIFICATION' => '',
 			'OBSERVER' => Loc::getMessage('CRM_KANBAN_FIELD_OBSERVER'),
+			'LAST_ACTIVITY_BY_TIME' => '',
+			'LAST_ACTIVITY_BY_USER_AVATAR' => '',
 		];
 	}
 
@@ -202,11 +204,10 @@ class Deal extends Entity
 		return 'bitrix:crm.deal.details';
 	}
 
-	public function getPermissionParameters(\CCrmPerms $permissions): array
+	public function getPermissionParameters(): array
 	{
-		$result = parent::getPermissionParameters($permissions);
-
-		$result['ACCESS_IMPORT'] = \CCrmDeal::CheckImportPermission($permissions);
+		$result = parent::getPermissionParameters();
+		$result['ACCESS_IMPORT'] = $this->userPermissions->entityType()->canImportItems(\CCrmOwnerType::Deal);
 
 		return $result;
 	}
@@ -214,13 +215,6 @@ class Deal extends Entity
 	protected function hasStageDependantRequiredFields(): bool
 	{
 		return true;
-	}
-
-	protected function getAddItemToStagePermissionType(string $stageId, \CCrmPerms $userPermissions): ?string
-	{
-		return \CCrmDeal::getStageCreatePermissionType(
-			$stageId, $userPermissions, $this->categoryId
-		);
 	}
 
 	public function getTableAlias(): string
@@ -276,7 +270,7 @@ class Deal extends Entity
 		return $result;
 	}
 
-	public function updateItemsCategory(array $ids, int $categoryId, \CCrmPerms $permissions): Result
+	public function updateItemsCategory(array $ids, int $categoryId): Result
 	{
 		$result = new Result();
 
@@ -284,8 +278,8 @@ class Deal extends Entity
 		{
 			if (!(
 				$id > 0
-				&& \CCrmDeal::checkUpdatePermission($id, $permissions)
-				&& \CCrmDeal::CheckCreatePermission($permissions, $categoryId)
+				&& $this->userPermissions->item()->canUpdate(\CCrmOwnerType::Deal, $id)
+				&& $this->userPermissions->entityType()->canAddItemsInCategory(\CCrmOwnerType::Deal, $categoryId)
 			))
 			{
 				$result->addError(new Error(Loc::getMessage('CRM_COMMON_ERROR_ACCESS_DENIED')));
@@ -315,28 +309,6 @@ class Deal extends Entity
 				);
 				$newFields = $dbResult->Fetch();
 				$this->runAutomationOnUpdate($id, $newFields);
-			}
-		}
-
-		return $result;
-	}
-
-	public function getCategories(\CCrmPerms $permissions): array
-	{
-		$result = [];
-
-		$categoryPermissions = array_fill_keys(
-			\CCrmDeal::GetPermittedToReadCategoryIDs($permissions),
-			true
-		);
-		foreach (DealCategory::getAll(true) as $id => $category)
-		{
-			$categoryId = $category['ID'];
-
-			if (isset($categoryPermissions[$categoryId]))
-			{
-				$category['url'] = Container::getInstance()->getRouter()->getKanbanUrl($this->getTypeId(), $categoryId);
-				$result[$id] = $category;
 			}
 		}
 
@@ -509,34 +481,5 @@ class Deal extends Entity
 	final protected function isItemsAssignedNotificationSupported(): bool
 	{
 		return true;
-	}
-
-	protected function getHideSumForStagePermissionType(string $stageId, \CCrmPerms $userPermissions): ?string
-	{
-		return $userPermissions->GetPermType(
-			DealCategory::convertToPermissionEntityType($this->categoryId),
-			'HIDE_SUM',
-			["STAGE_ID{$stageId}"]
-		);
-	}
-
-	public function getCategoriesWithAddPermissions(\CCrmPerms $permissions): array
-	{
-		$result = [];
-
-		$permissions = Container::getInstance()->getUserPermissions();
-
-		foreach (DealCategory::getAll(true) as $id => $category)
-		{
-			$categoryId = $category['ID'];
-
-			if ($permissions->checkAddPermissions($this->getTypeId(), $categoryId))
-			{
-				$category['url'] = Container::getInstance()->getRouter()->getKanbanUrl($this->getTypeId(), $categoryId);
-				$result[$id] = $category;
-			}
-		}
-
-		return $result;
 	}
 }

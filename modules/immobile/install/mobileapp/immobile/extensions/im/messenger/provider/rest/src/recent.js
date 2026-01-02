@@ -3,9 +3,12 @@
  */
 jn.define('im/messenger/provider/rest/recent', (require, exports, module) => {
 	const { Type } = require('type');
-	const { DialogHelper } = require('im/messenger/lib/helper');
+
 	const { RestMethod } = require('im/messenger/const');
+	const { DialogHelper } = require('im/messenger/lib/helper');
+	const { runAction } = require('im/messenger/lib/rest');
 	const { callMethod } = require('im/messenger/lib/rest');
+	const { AnalyticsService } = require('im/messenger/provider/services/analytics');
 
 	/**
 	 * @class RecentRest
@@ -82,30 +85,77 @@ jn.define('im/messenger/provider/rest/recent', (require, exports, module) => {
 			return BX.rest.callMethod(RestMethod.imV2RecentCollabTail, methodParams);
 		}
 
-		pinChat(options = {})
+		getExternalChatList(options = {})
 		{
 			const methodParams = {};
 
-			if (!options.dialogId)
+			if (Type.isStringFilled(options.type))
 			{
-				throw new Error('RecentRest: options.dialogId is required.');
+				methodParams.type = options.type;
 			}
 
-			if (!DialogHelper.isDialogId(options.dialogId) && !DialogHelper.isChatId(options.dialogId))
+			if (Type.isNumber(options.limit))
 			{
-				throw new Error('RecentRest: options.dialogId is invalid.');
+				methodParams.limit = options.limit;
 			}
 
-			methodParams.DIALOG_ID = options.dialogId;
-
-			if (!Type.isBoolean(options.shouldPin))
+			if (Type.isPlainObject(options.filter))
 			{
-				throw new TypeError('RecentRest: options.shouldPin must be boolean value.');
+				methodParams.filter = {};
+
+				if (Type.isNumber(options.filter.lastMessageDate) || Type.isStringFilled(options.filter.lastMessageDate))
+				{
+					methodParams.filter.lastMessageDate = options.filter.lastMessageDate;
+				}
 			}
 
-			methodParams.PIN = options.shouldPin ? 'Y' : 'N';
+			return BX.rest.callMethod(RestMethod.imV2RecentExternalChatTail, methodParams);
+		}
 
-			return BX.rest.callMethod(RestMethod.imRecentPin, methodParams);
+		/**
+		 * @param {number|string} dialogId
+		 */
+		pinChat(dialogId)
+		{
+			if (!dialogId)
+			{
+				throw new Error(`${this.constructor.name}: dialogId is required.`);
+			}
+
+			if (!DialogHelper.isDialogId(dialogId) && !DialogHelper.isChatId(dialogId))
+			{
+				throw new Error(`${this.constructor.name}: dialogId is invalid.`);
+			}
+
+			const isNotes = DialogHelper.createByDialogId(dialogId)?.isNotes;
+			if (isNotes)
+			{
+				AnalyticsService.getInstance().sendPinChatNotes();
+			}
+
+			const data = { dialogId };
+
+			return runAction(RestMethod.imV2ChatPin, { data });
+		}
+
+		/**
+		 * @param {DialogId|string} dialogId
+		 */
+		unpinChat(dialogId)
+		{
+			if (!dialogId)
+			{
+				throw new Error(`${this.constructor.name}: dialogId is required.`);
+			}
+
+			if (!DialogHelper.isDialogId(dialogId) && !DialogHelper.isChatId(dialogId))
+			{
+				throw new Error(`${this.constructor.name}: dialogId is invalid.`);
+			}
+
+			const data = { dialogId };
+
+			return runAction(RestMethod.imV2ChatUnpin, { data });
 		}
 
 		hideChat(options = {})

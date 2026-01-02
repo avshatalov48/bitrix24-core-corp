@@ -1,0 +1,23 @@
+.booking--booking--counter-floating-limit-popup-content {
+	display: flex;
+	flex-direction: column;
+	align-items: start;
+	gap: var(--ui-space-inline-2xs2);
+	color: var(--ui-color-on-primary);
+	max-width: 268px;
+	margin: 0 var(--ui-space-inline-xs);
+}
+
+.booking--booking--counter-floating-limit-popup-content__title {
+	font-size: 17px;
+	font-style: normal;
+	font-weight: var(--ui-font-weight-medium);
+	line-height: 23px;
+}
+
+.booking--booking--counter-floating-limit-popup-content__subtitle {
+	font-size: var(--ui-font-size-lg);
+	line-height: 20px;
+	opacity: .82;
+	text-align: start;
+}

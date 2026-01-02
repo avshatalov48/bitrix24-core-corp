@@ -42,6 +42,11 @@ export class AboutPage extends FormPage
 		this.#flow = flow;
 	}
 
+	getFlowId(): ?number
+	{
+		return this.#flow.id ?? null;
+	}
+
 	getId(): string
 	{
 		return 'about-flow';
@@ -137,14 +142,14 @@ export class AboutPage extends FormPage
 		this.#layout.flowName = new TextInput({
 			id: 'tasks-flow-edit-form-field-name',
 			label: Loc.getMessage('TASKS_FLOW_EDIT_FORM_FLOW_NAME'),
-			placeholder: Loc.getMessage('TASKS_FLOW_EDIT_FORM_FLOW_NAME_EXAMPLE'),
+			placeholder: Loc.getMessage('TASKS_FLOW_EDIT_FORM_FLOW_NAME_PLACEHOLDER'),
 			value: this.#flow.name,
 		});
 
 		this.#layout.flowDescription = new TextArea({
 			id: 'tasks-flow-edit-form-field-description',
 			label: Loc.getMessage('TASKS_FLOW_EDIT_FORM_DESCRIPTION'),
-			placeholder: Loc.getMessage('TASKS_FLOW_EDIT_FORM_DESCRIPTION_EXAMPLE'),
+			placeholder: Loc.getMessage('TASKS_FLOW_EDIT_FORM_DESCRIPTION_PLACEHOLDER'),
 			value: this.#flow.description,
 			resizeOnlyY: true,
 		});
@@ -154,6 +159,9 @@ export class AboutPage extends FormPage
 			label: Loc.getMessage('TASKS_FLOW_EDIT_FORM_WHO_CAN_ADD_TASKS'),
 			enableDepartments: true,
 			values: this.#flow.taskCreators,
+			dialogEvents: {
+				onLoad: this.onDialogLoad,
+			},
 		});
 
 		this.#layout.aboutPageForm = Tag.render`
@@ -187,16 +195,12 @@ export class AboutPage extends FormPage
 		const value = this.#flow.plannedCompletionTime;
 		this.#layout.plannedCompletionTimeIntervalSelector = new IntervalSelector({ value });
 
-		const needUseSchedule = this.#needUseSchedule;
-		if (needUseSchedule)
-		{
-			this.#layout.plannedCompletionTimeIntervalSelector.subscribe('intervalChanged', (event) => {
-				const interval = event.getData().interval;
-				const isSkipWeekendsDisabled = this.#isShortInterval(interval);
+		this.#layout.plannedCompletionTimeIntervalSelector.subscribe('intervalChanged', (event) => {
+			const interval = event.getData().interval;
+			const isSkipWeekendsDisabled = this.#isShortInterval(interval);
 
-				this.#layout.skipWeekends.disable(isSkipWeekendsDisabled);
-			});
-		}
+			this.#layout.skipWeekends.disable(isSkipWeekendsDisabled);
+		});
 
 		const duration = this.#layout.plannedCompletionTimeIntervalSelector.getDuration();
 
@@ -216,7 +220,7 @@ export class AboutPage extends FormPage
 
 		this.#layout.plannedCompletionTime = new TextInput({
 			label: plannedCompletionTimeLabel,
-			placeholder: '0',
+			placeholder: '5',
 			inputDefaultWidth: true,
 			value: String(value / duration || ''),
 		});
@@ -230,7 +234,7 @@ export class AboutPage extends FormPage
 		});
 
 		const interval = this.#layout.plannedCompletionTimeIntervalSelector.getInterval();
-		const isSkipWeekendsDisabled = needUseSchedule && this.#isShortInterval(interval);
+		const isSkipWeekendsDisabled = this.#isShortInterval(interval);
 
 		this.#layout.skipWeekends = new ValueChecker({
 			id: 'planned-completion-time-skip-weekends',
@@ -267,13 +271,6 @@ export class AboutPage extends FormPage
 		`;
 
 		return root;
-	}
-
-	get #needUseSchedule(): boolean
-	{
-		const settings = Extension.getSettings('tasks.flow.edit-form');
-
-		return settings.get('needUseSchedule');
 	}
 
 	async onContinueClick(flowData: Flow = {}): Promise<boolean>

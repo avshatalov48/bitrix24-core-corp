@@ -96,6 +96,7 @@ $APPLICATION->IncludeComponent(
 			'ENTITY_DATA' => $arResult['ENTITY_DATA'],
 			'ENABLE_SECTION_EDIT' => true,
 			'ENABLE_SECTION_CREATION' => true,
+			'ENABLE_PAGE_TITLE_EDIT' => false,
 			'ENABLE_USER_FIELD_CREATION' => $arResult['ENABLE_USER_FIELD_CREATION'] ?? null,
 			'USER_FIELD_ENTITY_ID' => $arResult['USER_FIELD_ENTITY_ID'] ?? null,
 			'USER_FIELD_CREATE_PAGE_URL' => $arResult['USER_FIELD_CREATE_PAGE_URL'] ?? '',

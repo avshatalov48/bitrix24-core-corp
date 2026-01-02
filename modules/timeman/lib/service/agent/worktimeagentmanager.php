@@ -429,7 +429,9 @@ class WorktimeAgentManager
 				$this->shiftPlanProvider
 			)
 		);
-		if (!$recordManager->getSchedule() || !$recordManager->getSchedule()->isAutoClosing()
+		if (
+			!$recordManager->getSchedule()
+			|| !$recordManager->getSchedule()->isAutoClosing()
 			|| $recordManager->getRecord()->getRecordedStopTimestamp() > 0
 			|| $recordManager->getRecord()->getAutoClosingAgentId() > 0
 		)
@@ -442,6 +444,27 @@ class WorktimeAgentManager
 			return;
 		}
 
+		$nextExec = TimeHelper::getInstance()->createUserDateTimeFromFormat(
+			'U',
+			$recordStopUtcTimestamp,
+			$recordManager->getRecord()->getUserId()
+		);
+
+		if (\Bitrix\Timeman\Integration\Stafftrack\CheckIn::isCheckInStartEnabled())
+		{
+			$startDateTime = (new \DateTimeImmutable())->setTimestamp(
+				$recordManager->getRecord()->getRecordedStartTimestamp()
+			);
+			$startOfDay = $startDateTime->setTime(0, 0);
+			$startOfNextDay = $startOfDay->modify('+1 day');
+
+			$nextExec = TimeHelper::getInstance()->createUserDateTimeFromFormat(
+				'U',
+				$startOfNextDay->getTimestamp(),
+				$recordManager->getRecord()->getUserId()
+			);
+		}
+
 		$agentId = $this->addAgent([
 			'PARAMS' => [
 				'recordId' => $recordManager->getRecord()->getId(),
@@ -450,7 +473,7 @@ class WorktimeAgentManager
 			'MODULE_ID' => 'timeman',
 			'ACTIVE' => 'Y',
 			'IS_PERIOD' => 'N',
-			'NEXT_EXEC' => TimeHelper::getInstance()->createUserDateTimeFromFormat('U', $recordStopUtcTimestamp, $recordManager->getRecord()->getUserId()),
+			'NEXT_EXEC' => $nextExec,
 			'USER_ID' => false,
 		]);
 		if ($agentId > 0)

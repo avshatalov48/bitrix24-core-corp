@@ -58,16 +58,6 @@ class DealConverter extends EntityConverter
 				EntityConversionException::READ_DENIED
 			);
 		}
-
-		if(!self::checkUpdatePermission(\CCrmOwnerType::DealName, $this->entityID))
-		{
-			throw new EntityConversionException(
-				\CCrmOwnerType::Deal,
-				\CCrmOwnerType::Undefined,
-				EntityConversionException::TARG_SRC,
-				EntityConversionException::UPDATE_DENIED
-			);
-		}
 	}
 	/**
 	 * Get converter entity type ID.

@@ -1,0 +1,4 @@
+<?php
+$MESS["CRM_REPORT_FILTER_NEW_LEAD_CURRENT_MONTH_PRESET_TITLE"] = "Ағымдағы айдағы бастапқы";
+$MESS["CRM_REPORT_FILTER_NEW_LEAD_LAST_30_DAYS_PRESET_TITLE"] = "Соңғы 30 күндегі бастапқы";
+$MESS["CRM_REPORT_FILTER_NEW_LEAD_LAST_MONTH_PRESET_TITLE"] = "Алдыңғы айдағы бастапқы";

@@ -4,10 +4,13 @@ namespace Bitrix\Sign\Internal\Document;
 
 use Bitrix\Main\Entity;
 use Bitrix\Main\Localization\Loc;
+use Bitrix\Main\ORM\Data\Internal\DeleteByFilterTrait;
+use Bitrix\Main\ORM\Fields\BooleanField;
 use Bitrix\Main\ORM\Fields\DatetimeField;
 use Bitrix\Main\ORM\Fields\IntegerField;
 use Bitrix\Main\ORM\Fields\StringField;
 use Bitrix\Sign\Internal\DocumentTable;
+use Bitrix\Sign\Trait\ORM\UpdateByFilterTrait;
 
 Loc::loadMessages(__FILE__);
 
@@ -29,6 +32,9 @@ Loc::loadMessages(__FILE__);
  */
 class TemplateTable extends Entity\DataManager
 {
+	use DeleteByFilterTrait;
+	use UpdateByFilterTrait;
+
 	public static function getObjectClass(): string
 	{
 		return Template::class;
@@ -77,10 +83,24 @@ class TemplateTable extends Entity\DataManager
 			(new IntegerField('VISIBILITY'))
 				->configureRequired()
 			,
+			(new IntegerField('FOLDER_ID'))
+				->configureTitle('Folder ID')
+				->configureNullable()
+			,
+			(new BooleanField('HIDDEN'))
+				->configureRequired()
+				->configureValues(0, 1)
+				->configureDefaultValue(true)
+			,
 			(new Entity\ReferenceField(
 				'DOCUMENT',
 				DocumentTable::class,
 				['=this.ID' => 'ref.TEMPLATE_ID']
+			)),
+			(new Entity\ReferenceField(
+				'FOLDER',
+				TemplateFolderTable::class,
+				['=this.FOLDER_ID' => 'ref.ID'],
 			)),
 		];
 	}

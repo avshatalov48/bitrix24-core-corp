@@ -1,5 +1,5 @@
 import { Loc } from 'main.core';
-import { Menu, MenuItem } from 'main.popup';
+import { Menu } from 'ui.system.menu';
 
 import type UserFieldControl from './user-field-control';
 
@@ -15,27 +15,15 @@ export default class SettingsMenu
 
 	getMenu(button): Menu
 	{
-		if (this.#menu !== null)
-		{
-			return this.#menu;
-		}
-
-		this.#menu = new Menu({
+		this.#menu ??= new Menu({
 			bindElement: button.getContainer(),
-			className: 'disk-user-field-settings-popup',
 			angle: true,
 			autoHide: true,
 			offsetLeft: 16,
-			cacheable: false,
 			items: this.#getItems(),
 			events: {
-				onShow: (): void => {
-					button.select();
-				},
-				onDestroy: (): void => {
-					button.deselect();
-					this.#menu = null;
-				},
+				onShow: (): void => button.select(),
+				onClose: (): void => button.deselect(),
 			},
 		});
 
@@ -50,9 +38,9 @@ export default class SettingsMenu
 		}
 
 		return [{
-			className: this.#userFieldControl.getPhotoTemplate() === 'grid' ? 'disk-user-field-item-checked' : '',
-			text: Loc.getMessage('DISK_UF_WIDGET_ALLOW_PHOTO_COLLAGE'),
-			onclick: (event, menuItem: MenuItem): void => {
+			isSelected: this.#userFieldControl.getPhotoTemplate() === 'grid',
+			title: Loc.getMessage('DISK_UF_WIDGET_ALLOW_PHOTO_COLLAGE'),
+			onClick: (): void => {
 				this.#userFieldControl.setPhotoTemplateMode('manual');
 				if (this.#userFieldControl.getPhotoTemplate() === 'grid')
 				{
@@ -62,8 +50,7 @@ export default class SettingsMenu
 				{
 					this.#userFieldControl.setPhotoTemplate('grid');
 				}
-
-				menuItem.getMenuWindow().close();
+				this.#menu.updateItems(this.#getItems());
 			},
 		}];
 	}
@@ -75,7 +62,7 @@ export default class SettingsMenu
 
 	toggle(button): void
 	{
-		if (this.#menu !== null && this.#menu.getPopupWindow().isShown())
+		if (this.#menu?.getPopup()?.isShown())
 		{
 			this.#menu.close();
 		}
@@ -87,10 +74,7 @@ export default class SettingsMenu
 
 	hide(): void
 	{
-		if (this.#menu !== null)
-		{
-			this.#menu.close();
-		}
+		this.#menu?.close();
 	}
 
 	hasItems(): boolean

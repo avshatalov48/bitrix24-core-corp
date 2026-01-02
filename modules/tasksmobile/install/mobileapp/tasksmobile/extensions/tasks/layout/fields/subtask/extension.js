@@ -3,7 +3,7 @@
  */
 jn.define('tasks/layout/fields/subtask', (require, exports, module) => {
 	const { TaskFieldClass } = require('tasks/layout/task/fields/task');
-	const { openTaskCreateForm } = require('tasks/layout/task/create/opener');
+	const { Entry } = require('tasks/entry');
 	const store = require('statemanager/redux/store');
 	const { usersSelector } = require('statemanager/redux/slices/users');
 	const { Icon } = require('assets/icons');
@@ -16,6 +16,11 @@ jn.define('tasks/layout/fields/subtask', (require, exports, module) => {
 		getAddButtonText()
 		{
 			return BX.message('TASKS_FIELDS_SUBTASK_ADD_BUTTON_TEXT');
+		}
+
+		getDefaultSelectorType()
+		{
+			return 'editable_task';
 		}
 
 		openTaskCreateForm()
@@ -64,7 +69,7 @@ jn.define('tasks/layout/fields/subtask', (require, exports, module) => {
 				analyticsLabel: this.getAnalyticsLabel(),
 			};
 
-			openTaskCreateForm(taskCreateParameters);
+			Entry.openTaskCreation(taskCreateParameters);
 		}
 
 		getDefaultLeftIcon()

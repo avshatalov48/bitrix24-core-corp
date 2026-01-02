@@ -10,11 +10,11 @@ return [
 	'rel' => [
 		'rest.client',
 		'main.core',
-		'ui.buttons',
 		'clipboard',
 		'loadext',
 		'popup',
 		'sidepanel',
+		'ui.feedback.form',
 	],
 	'skip_core' => false,
 ];

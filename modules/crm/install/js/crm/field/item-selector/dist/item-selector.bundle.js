@@ -1,3 +1,4 @@
+/* eslint-disable */
 this.BX = this.BX || {};
 this.BX.Crm = this.BX.Crm || {};
 (function (exports,main_core_events,main_popup,main_core,ui_buttons) {
@@ -325,7 +326,7 @@ this.BX.Crm = this.BX.Crm || {};
 	      babelHelpers.classPrivateFieldSet(this, _addButtonCompact, main_core.Tag.render(_templateObject5 || (_templateObject5 = babelHelpers.taggedTemplateLiteral(["\n\t\t\t\t\t<span \n\t\t\t\t\t\tclass=\"crm-field-item-selector-compact-icon ", "\"\n\t\t\t\t\t></span>\n\t\t\t\t"])), main_core.Type.isStringFilled(babelHelpers.classPrivateFieldGet(this, _icon)) ? "--".concat(babelHelpers.classPrivateFieldGet(this, _icon)) : ''));
 	      _classPrivateMethodGet(this, _adjustAddButtonCompact, _adjustAddButtonCompact2).call(this);
 	    } else {
-	      babelHelpers.classPrivateFieldSet(this, _addButton, new ItemSelectorButton());
+	      babelHelpers.classPrivateFieldSet(this, _addButton, new ItemSelectorButton({}));
 	      main_core.Dom.append(_classPrivateMethodGet(this, _getAddButtonEl, _getAddButtonEl2).call(this), babelHelpers.classPrivateFieldGet(this, _containerEl));
 	    }
 	  }

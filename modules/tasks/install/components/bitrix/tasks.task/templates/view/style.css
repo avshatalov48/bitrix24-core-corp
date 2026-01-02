@@ -460,6 +460,7 @@ input.task-detail-field-add {
 	display: inline-flex;
 	padding-bottom: 0;
 	padding-left: 9px;
+	margin-top: -2px;
 }
 
 .task-detail-extra .feed-post-emoji-top-panel-box.feed-post-emoji-top-panel-container-active {
@@ -569,7 +570,8 @@ input.task-detail-field-add {
 }
 
 .task-group-field-inner a.task-group-field-label {
-	display: unset;
+	/*display: unset;*/
+	line-height: 1.15;
 }
 
 .task-group-field-inner .task-group-field-title-del {
@@ -591,7 +593,7 @@ input.task-detail-field-add {
 
 .task-detail-group-wrap .task-group-field-inner .task-group-field-title-del {
 	position: absolute;
-	top: 4px;
+	top: 6px;
 	right: 0;
 	margin-top: 0;
 }
@@ -1538,4 +1540,5 @@ table.data-table td {
 
 .task-footer-wrap.task-footer-wrap-active {
 	visibility: visible;
+	height: auto;
 }

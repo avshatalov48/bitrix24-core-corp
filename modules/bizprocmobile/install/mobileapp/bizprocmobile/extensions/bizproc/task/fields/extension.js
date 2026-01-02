@@ -6,6 +6,7 @@ jn.define('bizproc/task/fields', (require, exports, module) => {
 	const { EntityManager } = require('layout/ui/entity-editor/manager');
 	const { EventEmitter } = require('event-emitter');
 	const { isFunction } = require('utils/object');
+	const { Random } = require('utils/random');
 
 	class TaskFields extends PureComponent
 	{
@@ -13,7 +14,6 @@ jn.define('bizproc/task/fields', (require, exports, module) => {
 		{
 			super(props);
 
-			// eslint-disable-next-line no-undef
 			this.uid = props.uid || Random.getString();
 			this.customEventEmitter = EventEmitter.createWithUid(this.uid);
 			this.editor = null;

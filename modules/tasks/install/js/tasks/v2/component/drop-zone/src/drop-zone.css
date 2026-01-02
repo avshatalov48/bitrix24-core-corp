@@ -1,0 +1,37 @@
+.tasks-drop-zone__container {
+	border: 1px dashed var(--ui-color-accent-main-primary-alt-2);
+	position: absolute;
+	backdrop-filter: blur(22px);
+	z-index: 90;
+	border-radius: 10px;
+	inset: 16px 16px 10px;
+}
+
+.tasks-drop-zone__box {
+	display: flex;
+	flex-direction: column;
+	align-items: center;
+	justify-content: center;
+	gap: 16px;
+	padding: 0 10px;
+	height: 100%;
+}
+
+.tasks-drop-zone__icon {
+	--ui-icon-set__icon-color: var(--ui-color-base-4);
+}
+
+.tasks-drop-zone__label_text {
+	font-size: var(--ui-font-size-xl);
+	color: var(--ui-color-base-4);
+}
+
+.tasks-drop-zone-fade-enter-active,
+.tasks-drop-zone-fade-leave-active {
+	transition: opacity 0.2s linear;
+}
+
+.tasks-drop-zone-fade-enter-from,
+.tasks-drop-zone-fade-leave-to {
+	opacity: 0;
+}

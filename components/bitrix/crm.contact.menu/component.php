@@ -27,8 +27,8 @@ if (!CModule::IncludeModule('crm'))
 
 Container::getInstance()->getLocalization()->loadMessages();
 
-$currentUserID = CCrmSecurityHelper::GetCurrentUserID();
-$CrmPerms = CCrmPerms::GetCurrentUserPermissions();
+$currentUserID = Container::getInstance()->getContext()->getUserId();
+$userPermissionsService = Container::getInstance()->getUserPermissions();
 
 $arParams['PATH_TO_CONTACT_LIST'] = CrmCheckPath(
 	'PATH_TO_CONTACT_LIST',
@@ -93,11 +93,7 @@ else
 	$arResult['CATEGORY_ID'] = (int)($arParams['CATEGORY_ID'] ?? 0);
 }
 
-if ($CrmPerms->HavePerm(
-	(new \Bitrix\Crm\Category\PermissionEntityTypeHelper(CCrmOwnerType::Contact))
-		->getPermissionEntityTypeForCategory($arResult['CATEGORY_ID']),
-	BX_CRM_PERM_NONE)
-)
+if (!$userPermissionsService->entityType()->canReadItemsInCategory(CCrmOwnerType::Contact, $arResult['CATEGORY_ID']))
 {
 	return;
 }
@@ -132,14 +128,12 @@ $isInSlider = (isset($arParams['IN_SLIDER']) && $arParams['IN_SLIDER'] === 'Y');
 
 if ($arParams['TYPE'] === 'list')
 {
-	$bRead   = CCrmContact::CheckReadPermission(0, $CrmPerms, $arResult['CATEGORY_ID']);
-	$bExport = CCrmContact::CheckExportPermission($CrmPerms, $arResult['CATEGORY_ID']);
-	$bImport = CCrmContact::CheckImportPermission($CrmPerms, $arResult['CATEGORY_ID']);
-	$bAdd    = CCrmContact::CheckCreatePermission($CrmPerms, $arResult['CATEGORY_ID']);
-	$bWrite  = CCrmContact::CheckUpdatePermission(0, $CrmPerms, $arResult['CATEGORY_ID']);
+	$bRead = $userPermissionsService->entityType()->canReadItemsInCategory(CCrmOwnerType::Contact, $arResult['CATEGORY_ID']);
+	$bExport = $userPermissionsService->entityType()->canExportItemsInCategory(CCrmOwnerType::Contact, $arResult['CATEGORY_ID']);
+	$bImport = $userPermissionsService->entityType()->canImportItemsInCategory(CCrmOwnerType::Contact, $arResult['CATEGORY_ID']);
+	$bWrite = $userPermissionsService->entityType()->canUpdateItemsInCategory(CCrmOwnerType::Contact, $arResult['CATEGORY_ID']);
 	$bDelete = false;
-
-	$bDedupe = $bRead && $bWrite && CCrmContact::CheckDeletePermission(0, $CrmPerms, $arResult['CATEGORY_ID']);
+	$bDedupe = $bRead && $bWrite && $userPermissionsService->entityType()->canDeleteItemsInCategory(CCrmOwnerType::Contact, $arResult['CATEGORY_ID']);
 }
 else
 {
@@ -147,11 +141,11 @@ else
 	$bImport = false;
 	$bDedupe = false;
 
-	$bRead   = CCrmContact::CheckReadPermission($arParams['ELEMENT_ID'], $CrmPerms, $arResult['CATEGORY_ID']);
-	$bAdd    = CCrmContact::CheckCreatePermission($CrmPerms, $arResult['CATEGORY_ID']);
-	$bWrite  = CCrmContact::CheckUpdatePermission($arParams['ELEMENT_ID'], $CrmPerms, $arResult['CATEGORY_ID']);
-	$bDelete = CCrmContact::CheckDeletePermission($arParams['ELEMENT_ID'], $CrmPerms, $arResult['CATEGORY_ID']);
+	$bRead = $userPermissionsService->item()->canRead(CCrmOwnerType::Contact, $arParams['ELEMENT_ID']);
+	$bWrite = $userPermissionsService->item()->canUpdate(CCrmOwnerType::Contact, $arParams['ELEMENT_ID']);
+	$bDelete = $userPermissionsService->item()->canDelete(CCrmOwnerType::Contact, $arParams['ELEMENT_ID']);
 }
+$bAdd = $userPermissionsService->entityType()->canAddItemsInCategory(CCrmOwnerType::Contact, $arResult['CATEGORY_ID']);
 
 $isSliderEnabled = \CCrmOwnerType::IsSliderEnabled(\CCrmOwnerType::Contact);
 
@@ -232,7 +226,7 @@ if($arParams['TYPE'] === 'details')
 
 		if ($category && $category->getCode())
 		{
-			$analyticsEventBuilder->setP2WithValueNormalization('category', $category->getCode());
+			$analyticsEventBuilder->setP3WithValueNormalization('category', $category->getCode());
 		}
 
 		$copyUrl = $analyticsEventBuilder
@@ -305,7 +299,7 @@ if($arParams['TYPE'] === 'list')
 
 	if ($category && $category->getCode())
 	{
-		$analyticsEventBuilder->setP2WithValueNormalization('category', $category->getCode());
+		$analyticsEventBuilder->setP3WithValueNormalization('category', $category->getCode());
 	}
 
 	$addEntityUrl = $analyticsEventBuilder->buildUri($addEntityUrl)->getUri();
@@ -486,8 +480,6 @@ if($arParams['TYPE'] === 'list')
 		$arResult['EXPORT_EXCEL_PARAMS']['id'] = $stExportId. '_EXCEL';
 		$arResult['EXPORT_EXCEL_PARAMS']['params']['EXPORT_TYPE'] = 'excel';
 		$arResult['EXPORT_EXCEL_PARAMS']['messages']['DialogTitle'] = Loc::getMessage('CRM_CONTACT_EXPORT_EXCEL_TITLE');
-
-		$arResult['BUTTONS'][] = array('SEPARATOR' => true);
 
 		$lockScript = null;
 		if (!RestrictionManager::getContactExportRestriction()->hasPermission())
@@ -761,7 +753,7 @@ if ($bAdd && $arParams['TYPE'] != 'list' && $arParams['TYPE'] !== 'portrait')
 	);
 }
 
-if ($arParams['TYPE'] == 'show' && CCrmDeal::CheckCreatePermission($CrmPerms))
+if ($arParams['TYPE'] == 'show' && $userPermissionsService->entityType()->canAddItems(CCrmOwnerType::Deal))
 {
 	$dbRes = CCrmContact::GetListEx(array(), array('=ID' => $arParams['ELEMENT_ID'],  'CHECK_PERMISSIONS' => 'N'), false, false, array('ID', 'COMPANY_ID'));
 	$arFields = $dbRes->Fetch();

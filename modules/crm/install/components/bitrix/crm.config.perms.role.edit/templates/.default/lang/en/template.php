@@ -17,5 +17,3 @@ $MESS["CRM_PERMS_DLG_BTN"] = "Delete";
 $MESS["CRM_PERMS_ROLE_DELETE"] = "Delete role";
 $MESS["CRM_PERMS_PERM_INHERIT"] = "Inherit";
 $MESS["CRM_PERMS_AUTOMATION_DISABLED_HELP"] = "This option has no effect if the option \"User can edit settings\" is enabled";
-$MESS["CRM_PERMS_RESTRICTION"] = "To assign your employees different CRM access permissions, upgrade to <a target=\"_blank\" href=\"https://www.bitrix24.com/prices/\">one of the commercial plans</a>.";
-?>

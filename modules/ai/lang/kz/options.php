@@ -1,0 +1,26 @@
+<?php
+$MESS["AI_OPT_CHECK_LIMITS"] = "Шектеулерді тексеру";
+$MESS["AI_OPT_CLOUD_BUTTON_REGISTER"] = "Қосу";
+$MESS["AI_OPT_CLOUD_BUTTON_UNREGISTER"] = "Өшіру";
+$MESS["AI_OPT_CLOUD_LABEL_BUTTON_REGISTER"] = "Бұлтты қызмет";
+$MESS["AI_OPT_DISABLE_HISTORY_FOR_USERS"] = "Пайдаланушылар үшін сұраулар жазбау";
+$MESS["AI_OPT_DISABLE_HISTORY_FOR_USERS_ADD"] = "Пайдаланушыларды қосу";
+$MESS["AI_OPT_ENGINE_AUDIO"] = "AI-аудиоларға арналған провайдер";
+$MESS["AI_OPT_ENGINE_IMAGE"] = "AI-кескіндеріне арналған провайдер";
+$MESS["AI_OPT_ENGINE_TEXT"] = "AI-мәтіндеріне арналған провайдер";
+$MESS["AI_OPT_FORCE_QUEUE"] = "Әрқашан кезекпен жұмыс жасау";
+$MESS["AI_OPT_HEADER_CLOUD"] = "Тіркелу";
+$MESS["AI_OPT_HEADER_ENGINES"] = "Провайдерлер";
+$MESS["AI_OPT_HEADER_HISTORY"] = "Сұраулар тарихы";
+$MESS["AI_OPT_HEADER_QUEUE"] = "Кезек";
+$MESS["AI_OPT_MAX_HISTORY_PER_USER"] = "Бір пайдаланушыға тарих жазбаларының максималды саны";
+$MESS["AI_OPT_OPENAI_BEARER"] = "Open AI кілті";
+$MESS["AI_OPT_PROMPT_HOST_REMOTE_DB"] = "Промптар қоры";
+$MESS["AI_OPT_PROMPT_HOST_REMOTE_DB_CLEAR"] = "жаңарту";
+$MESS["AI_OPT_PROMPT_HOST_REMOTE_DB_SYSTEM"] = "Әдепкі бойынша";
+$MESS["AI_OPT_PUBLIC_URL"] = "Хаттама мен портты қоса алғанда, жария URL мекенжайы";
+$MESS["AI_OPT_QUEUE_URL"] = "Хаттама мен портты қоса алғанда, кезек URL";
+$MESS["AI_OPT_STABLE_DIFFUSION_BEARER"] = "Stable Diffusion кілті";
+$MESS["AI_OPT_WRITE_ERRORS"] = "Тарихқа қате сұрауларды жазу";
+$MESS["AI_OPT_WRITE_HISTORY_ALWAYS"] = "Тарихты үнемі жазу";
+$MESS["AI_OPT_WRITE_HISTORY_REQUEST"] = "Тарихқа толық сұрауларды жазу";

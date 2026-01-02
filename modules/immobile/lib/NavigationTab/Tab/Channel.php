@@ -10,7 +10,7 @@ use Bitrix\ImMobile\User;
 class Channel extends BaseRecent
 {
 	use MessengerComponentTitle;
-	
+
 	public function isAvailable(): bool
 	{
 		$userType = User::getCurrent()?->getType();
@@ -18,48 +18,56 @@ class Channel extends BaseRecent
 		return $userType === UserType::USER;
 	}
 
+	public function isPreload(): bool
+	{
+		return false;
+	}
+
 	public function getId(): string
 	{
 		return 'channel';
 	}
-	
+
+	public function getComponentCode(): string
+	{
+		return 'im.channel.messenger';
+	}
+
 	protected function getTabTitle(): ?string
 	{
 		return Loc::getMessage('IMMOBILE_NAVIGATION_TAB_CHANNEL_TAB_TITLE') ?? 'Channel'; //TODO delete fallback after translate
 	}
-	
-	protected function getComponentCode(): string
-	{
-		return 'im.channel.messenger';
-	}
-	
+
 	protected function getComponentName(): string
 	{
 		return 'im:channel-messenger';
 	}
-	
+
 	protected function getParams(): array
 	{
 		return [
 			'TAB_CODE' => 'chats.channel',
-			'COMPONENT_CODE' => 'im.channel.messenger',
+			'COMPONENT_CODE' => $this->getComponentCode(),
 			'MESSAGES' => [
 				'COMPONENT_TITLE' => $this->getTitle(),
 			],
 		];
 	}
-	
+
 	protected function getWidgetSettings(): array
 	{
 		return [
 			'useSearch' => true,
-			'preload' => true,
+			'preload' => $this->isPreload(),
 			'titleParams' => [
 				'useLargeTitleMode' => true,
 				'text' => $this->getTitle(),
 			],
 		];
 	}
-	
-	
+
+	protected function isWidgetSupported(): bool
+	{
+		return true;
+	}
 }

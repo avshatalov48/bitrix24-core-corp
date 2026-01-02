@@ -54,7 +54,7 @@ class BizpocTab implements Tabable
 		];
 	}
 
-	private function getComponentParams(): array
+	private function getComponentParams(bool $fromAvaMenu = false): array
 	{
 		return [
 			'name' => 'JSStackComponent',
@@ -68,7 +68,9 @@ class BizpocTab implements Tabable
 					'useLargeTitleMode' => true,
 				],
 			],
-			'params' => [],
+			'params' => [
+				'analyticsSection' => $fromAvaMenu ? 'ava_menu' : 'bottom_menu',
+			],
 		];
 	}
 
@@ -86,6 +88,8 @@ class BizpocTab implements Tabable
 		);
 
 		return [
+			'id' => $this->getId(),
+			'section_code' => 'bizproc',
 			'title' => $this->getTitle(),
 			'useLetterImage' => true,
 			'min_api_version' => self::MINIMAL_API_VERSION,
@@ -93,7 +97,7 @@ class BizpocTab implements Tabable
 			'imageUrl' => 'favorite/icon-bp.png',
 			'imageName' => $this->getIconId(),
 			'params' => [
-				'onclick' => Utils::getComponentJSCode($this->getComponentParams()),
+				'onclick' => Utils::getComponentJSCode($this->getComponentParams(true)),
 				'counter' => $counterId,
 			],
 		];

@@ -1,9 +1,11 @@
-(() => {
-
-	const { stringify } = jn.require('utils/string');
+/**
+ * @module utils/hash
+ */
+jn.define('utils/hash', (require, exports, module) => {
+	const { stringify } = require('utils/string');
 
 	/**
-	 * Returns md5 hash of input parameter casted to string.
+	 * Returns md5 hash of input parameter cast to string.
 	 * @param {*} any
 	 * @returns {string}
 	 */
@@ -283,35 +285,8 @@
 		return hash;
 	}
 
-	/**
-	 * @class HashUtils
-	 * @deprecated Please import specific utilities directly, using jn.require()
-	 */
-	class HashUtils
-	{
-		static md5(any)
-		{
-			return md5(any);
-		}
-
-		static hashCode(any)
-		{
-			return hashCode(any);
-		}
-	}
-
-	jnexport(HashUtils);
-
-	/**
-	 * @module utils/hash
-	 */
-	jn.define('utils/hash', (require, exports, module) => {
-
-		module.exports = {
-			md5,
-			hashCode,
-		};
-
-	});
-
-})();
+	module.exports = {
+		md5,
+		hashCode,
+	};
+});

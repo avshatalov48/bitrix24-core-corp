@@ -22,12 +22,14 @@ class BookingSelect implements SelectInterface
 		if (in_array('RESOURCES', $this->select, true))
 		{
 			$result[] = 'RESOURCES';
+			$result[] = 'RESOURCES.IS_PRIMARY';
 			$result[] = 'RESOURCES.RESOURCE';
 			$result[] = 'RESOURCES.RESOURCE.DATA';
 			$result[] = 'RESOURCES.RESOURCE.TYPE';
 			$result[] = 'RESOURCES.RESOURCE.TYPE.NOTIFICATION_SETTINGS';
 			$result[] = 'RESOURCES.RESOURCE.SETTINGS';
 			$result[] = 'RESOURCES.RESOURCE.NOTIFICATION_SETTINGS';
+			$result[] = 'RESOURCES.RESOURCE.ENTITIES';
 		}
 
 		if (in_array('CLIENTS', $this->select, true))

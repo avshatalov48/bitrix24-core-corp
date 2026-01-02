@@ -22,7 +22,7 @@ final class CheckWriteConfigPermission extends ActionFilter\Base
 
 	public function onBeforeAction(Event $event): ?EventResult
 	{
-		if (!$this->userPermissions->canWriteConfig())
+		if (!$this->userPermissions->isCrmAdmin())
 		{
 			$this->errorCollection[] = ErrorCode::getAccessDeniedError();
 

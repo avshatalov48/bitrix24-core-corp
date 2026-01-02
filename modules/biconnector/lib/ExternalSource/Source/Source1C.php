@@ -7,7 +7,9 @@ use Bitrix\BIConnector\ExternalSource\Internal\EO_ExternalSource;
 use Bitrix\BIConnector\ExternalSource\Internal\ExternalDatasetField;
 use Bitrix\BIConnector\ExternalSource\Internal\ExternalDatasetFieldTable;
 use Bitrix\BIConnector\ExternalSource\Internal\ExternalDatasetTable;
+use Bitrix\BIConnector\ExternalSource\Internal\ExternalSourceSettingsCollection;
 use Bitrix\BIConnector\ExternalSource\Internal\ExternalSourceTable;
+use Bitrix\BIConnector\ExternalSource\SourceManager;
 use Bitrix\BIConnector\Superset\Logger\Logger;
 use Bitrix\Main\ArgumentException;
 use Bitrix\Main\Error;
@@ -28,13 +30,14 @@ class Source1C extends Base
 	private string | null $host = null;
 	private string | null $username = null;
 	private string | null $password = null;
-	private int $requestTimeout = 60;
+	private int $requestTimeout = 300;
+
+	private const API_VERSION = 1;
 
 	private const CHECK_CONNECTION_ENDPOINT = '/hs/bitrixAnalytics/checkConnection';
-	private const ACTIVATE_TABLE_ENDPOINT = '/hs/bitrixAnalytics/activateMetadata';
 	private const TABLE_LIST_ENDPOINT = '/hs/bitrixAnalytics/listMetadata';
-	private const TABLE_DESCRIPTION_ENDPOINT = '/odata/standard.odata/$metadata';
-	private const DATA_ENDPOINT = '/odata/standard.odata/';
+	private const TABLE_DESCRIPTION_ENDPOINT = '/hs/bitrixAnalytics/getMetadata';
+	private const DATA_ENDPOINT = '/hs/bitrixAnalytics/getData';
 
 	public function __construct(?int $sourceId)
 	{
@@ -47,11 +50,11 @@ class Source1C extends Base
 		$this->source = $source;
 	}
 
-	public function connect(string $host, string $username, string $password): Result
+	public function connect(ExternalSourceSettingsCollection $settings): Result
 	{
-		$this->host = $host;
-		$this->username = $username;
-		$this->password = $password;
+		$this->host = $settings->getValueByCode('host');
+		$this->username = $settings->getValueByCode('username');
+		$this->password = $settings->getValueByCode('password');
 		$this->requestTimeout = 5;
 
 		$connectResult = $this->get(self::CHECK_CONNECTION_ENDPOINT);
@@ -69,96 +72,68 @@ class Source1C extends Base
 	/**
 	 * @param string|null $searchString Search query.
 	 *
-	 * @return array Array with tables.
+	 * @return Result Result of loading list. Data is array with tables.
 	 *
 	 * ID - table code like "Catalog#BankAccounts" <br>
 	 * TITLE - readable name of table like "(Dictionary) Bank Accounts" <br>
-	 * DESCRIPTION - table name like "Catalog_BankAccounts" <br>
+	 * DESCRIPTION - same readable name of table <br>
+	 * DATASET_NAME - transliterated table name to save as dataset<br>
 	 */
-	public function getEntityList(?string $searchString = null): array
+	public function getEntityList(?string $searchString = null): Result
 	{
-		$result = $this->post(self::TABLE_LIST_ENDPOINT, [
+		$result = new Result();
+		$queryResult = $this->post(self::TABLE_LIST_ENDPOINT, [
 			'searchString' => $searchString,
 		]);
-
-		$tableList = $result->getData()['data'] ?? [];
+		$tableList = $this->decode($queryResult->getData()['answer']);
 		if (!$tableList)
 		{
-			return [];
+			$result->setData([]);
+
+			return $result;
 		}
 
-		$result = [];
+		$formatted = [];
 		foreach ($tableList as $table)
 		{
-			$result[] = [
+			$formatted[] = [
 				'ID' => $table['code'],
-				'TITLE' => $table['description'],
+				'TITLE' => $table['name'],
 				'DESCRIPTION' => $table['name'],
-				'DATASET_NAME' => \CUtil::translit($table['description'], 'ru'),
+				'DATASET_NAME' => \CUtil::translit($table['name'], 'ru'),
 			];
 		}
 
-		return $result;
-	}
-
-	/**
-	 * @param string $tableCode Table code with # - like Catalog#BankAccounts.
-	 *
-	 * @return Result
-	 */
-	public function activateEntity(string $tableCode): Result
-	{
-		$result = $this->post(self::ACTIVATE_TABLE_ENDPOINT, [
-			'code' => $tableCode,
-		]);
-
-		$answer = $result->getData()['data'];
-		if (!is_array($answer) || ($answer['result'] ?? '') !== 'success')
-		{
-			$result->addError(new Error(Loc::getMessage('BICONNECTOR_1C_CONNECTION_ERROR_ACTIVATE_ENTITY')));
-		}
+		$result->setData($formatted);
 
 		return $result;
 	}
 
 	/**
-	 * @param string $entityName Table name with _ - like Catalog_BankAccounts.
+	 * @param string $entityName Table code with # - like Catalog#BankAccounts.
 	 *
 	 * @return array
 	 */
 	public function getDescription(string $entityName): array
 	{
-		$result = $this->get(self::TABLE_DESCRIPTION_ENDPOINT);
-		$tableData = $result->getData()['answer'];
-
-		$xmlParser = new \CDataXML();
-		$xmlParser->loadString($tableData);
-		$tree = $xmlParser->getTree();
-		if (!$tree)
+		$result = $this->post(self::TABLE_DESCRIPTION_ENDPOINT, ['code' => $entityName]);
+		$tableData = $this->decode($result->getData()['answer']);
+		if (!$tableData)
 		{
 			return [];
 		}
 
-		$tables = $tree->elementsByName('EntityType');
 		$columns = [];
-
-		foreach ($tables as $table)
+		foreach ($tableData['columns'] as $column)
 		{
-			if ($entityName === $table->getAttribute('Name'))
+			$type = $this->mapType($column['type']);
+			if ($type)
 			{
-				$properties = $table->elementsByName('Property');
-				foreach ($properties as $property)
-				{
-					$type = $this->mapType($property->getAttribute('Type'));
-					if ($type)
-					{
-						$columns[] = [
-							'ID' => $property->getAttribute('Name'),
-							'NAME' => $property->getAttribute('Name'),
-							'TYPE' => $type,
-						];
-					}
-				}
+				$columns[] = [
+					'NAME' => $column['name'],
+					'EXTERNAL_CODE' => $column['name'],
+					'TYPE' => $type,
+				];
 			}
 		}
 
@@ -166,67 +141,52 @@ class Source1C extends Base
 	}
 
 	/**
-	 * @param string $tableName Table name with _ - like Catalog_BankAccounts.
+	 * @param string $tableName Table code with # - like Catalog#BankAccounts.
 	 * @param array $query Array of query params - select, filter, limit.
 	 *
-	 * @return array Elements are arrays like [fieldName => fieldValue].
+	 * @return string Answer with data in trino format.
 	 */
-	public function getData(string $tableName, array $query): array
+	public function getData(string $tableName, array $query): string
 	{
 		if (!$this->source->getActive())
 		{
 			throw new SystemException(Loc::getMessage('BICONNECTOR_1C_SOURCE_NOT_ACTIVE'));
 		}
 
-		$params = [];
-
-		$selectFields = array_column($query['select'] ?? [], 'NAME');
-		$selectString = $this->prepareSelectString($selectFields);
-
-		$params['$format'] = 'json';
-		$params['$select'] = $selectString;
-
-		$filterString = $this->prepareFilterString($query['filter'] ?? []);
-		if ($filterString)
+		$selectFields = $query['select'];
+		if (!$selectFields)
 		{
-			$params['$filter'] = $filterString;
+			$selectFields = array_map(static fn($field) => $field->getName(), $this->datasetFields);
 		}
 
-		if ($query['limit'] ?? 10)
+		$params = [
+			'code' => $tableName,
+			'select' => $selectFields,
+			'columnNames' => $query['columnNames'],
+			'filters' => $query['filter'] ?? [],
+		];
+
+		if (isset($query['limit']))
 		{
-			$params['$top'] = (int)$query['limit'];
+			$params['limit'] = (int)$query['limit'];
 		}
 
-		$getResult = $this->get(self::DATA_ENDPOINT . $tableName, $params);
+		$result = $this->requestData($params);
 
-		if (!$getResult->isSuccess())
-		{
-			if (($getResult->getData()['statusCode'] ?? 0) === 404)
-			{
-				throw new SystemException(Loc::getMessage('BICONNECTOR_1C_SOURCE_404_ERROR'));
-			}
-
-			throw new SystemException(implode($getResult->getErrorMessages()));
-		}
-
-		$data = $getResult->getData()['data'] ?? [];
-		if (!$data)
-		{
-			return [];
-		}
-
-		return $data['value'];
+		return $result;
 	}
 
 	/**
-	 * @param string $entityName Table name with _ - like Catalog_BankAccounts.
+	 * @param string $entityName Table code with # - like Catalog#BankAccounts.
 	 * @param int $n Amount of rows.
+	 * @param array $fields Field names mapping - [DatasetFieldName => ExternalFieldName]
 	 *
 	 * @return array
 	 */
-	public function getFirstNData(string $entityName, int $n): array
+	public function getFirstNData(string $entityName, int $n, array $fields = []): array
 	{
-		$cacheKey = "biconnector_1c_preview_data_{$entityName}_{$n}_{$this->source->getId()}";
+		$fieldsForCacheKey = implode(',', array_keys($fields));
+		$cacheKey = "biconnector_1c_preview_data_{$entityName}_{$n}_{$this->source->getId()}_{$fieldsForCacheKey}";
 		$cacheManager = \Bitrix\Main\Application::getInstance()->getManagedCache();
 
 		if ($cacheManager->read(3600, $cacheKey))
@@ -234,142 +194,19 @@ class Source1C extends Base
 			return $cacheManager->get($cacheKey);
 		}
 
-		$data = $this->getData($entityName, ['limit' => $n]);
-
-		$cacheManager->set($cacheKey, $data);
-
-		return $data;
-	}
-
-	/**
-	 * @param string[] $selectFields
-	 *
-	 * @return string
-	 */
-	private function prepareSelectString(array $selectFields): string
-	{
-		if (
-			empty($selectFields)
-			|| count($selectFields) === count($this->datasetFields)
-		)
+		$queryParams = [
+			'select' => array_keys($fields),
+			'columnNames' => $fields,
+			'limit' => $n,
+		];
+		$data = $this->getData($entityName, $queryParams);
+		$result = $this->decode($data);
+		if (!$result)
 		{
-			return '*';
+			return [];
 		}
 
-		$result = [];
-		foreach ($selectFields as $selectField)
-		{
-			foreach ($this->datasetFields as $datasetField)
-			{
-				if ($datasetField->getName() === $selectField)
-				{
-					$result[] = $datasetField->getExternalCode();
-				}
-			}
-		}
-
-		return implode(',', $result);
-	}
-
-	private function prepareFilterString(array $filter = []): string
-	{
-		if (empty($filter))
-		{
-			return '';
-		}
-
-		$filterConditions = [];
-		foreach ($filter as $key => $topFilter)
-		{
-			if (is_array($topFilter))
-			{
-				$logic = $topFilter['LOGIC'];
-				unset($topFilter['LOGIC']);
-				foreach ($topFilter as $subFilter)
-				{
-					$fieldConditions = [];
-					foreach ($subFilter as $code => $value)
-					{
-						$fieldCondition = '';
-						$negate = false;
-						if (str_starts_with($code, '!'))
-						{
-							$negate = true;
-						}
-
-						if (str_starts_with($code, '='))
-						{
-							$code = substr($code, 1);
-							$datasetField = $this->datasetFields[$code];
-
-							if (is_array($value))
-							{
-								$valueConditions = [];
-								foreach ($value as $valueItem)
-								{
-									if (str_ends_with($datasetField->getExternalCode(), '_Key'))
-									{
-										$valueConditions[] = "{$datasetField->getExternalCode()} eq guid'{$valueItem}'";
-									}
-									else
-									{
-										$valueConditions[] = "{$datasetField->getExternalCode()} eq '{$valueItem}'";
-									}
-								}
-								$fieldCondition .= '(' . implode(' or ', $valueConditions) . ')';
-							}
-							elseif ($value === false)
-							{
-								// TODO Null operator
-								// $fieldCondition .= $datasetField->getName() . ' is null';
-								// $fieldCondition .=  "isof({$datasetField->getName()}, 'Null')";
-							}
-						}
-						$fieldConditions[] = $fieldCondition;
-					}
-					$filterConditions[] = implode(" {$logic} ", $fieldConditions);
-				}
-			}
-			elseif (
-				str_starts_with($key, '>=')
-				|| str_starts_with($key, '<=')
-			)
-			{
-				$code = substr($key, 2);
-				$operator = null;
-				if (str_starts_with($key, '>='))
-				{
-					$operator = 'gt';
-				}
-				elseif (str_starts_with($key, '<='))
-				{
-					$operator = 'lt';
-				}
-
-				if (!$operator)
-				{
-					continue;
-				}
-				$value = $topFilter;
-				$dateValue = (new DateTime($value));
-				if ($dateValue > new DateTime('31.12.3999'))
-				{
-					// 1c doesn't allow years after 3999 in filters
-					$dateValue = new DateTime('31.12.3999 23:59:59');
-				}
-				$value = $dateValue->format('Y-m-d\TH:i:s');
-				$datasetField = $this->datasetFields[$code];
-				if (
-					$datasetField->getEnumType() === FieldType::DateTime
-					|| $datasetField->getEnumType() === FieldType::Date
-				)
-				{
-					$filterConditions[] = "({$datasetField->getExternalCode()} {$operator} datetime'{$value}')";
-				}
-			}
-		}
-
-		$result = implode(' and ', $filterConditions);
+		$cacheManager->set($cacheKey, $result);
 
 		return $result;
 	}
@@ -402,13 +239,23 @@ class Source1C extends Base
 	private function getHttpClient(): HttpClient
 	{
 		$client = new HttpClient();
-		$username = $this->username ?? $this->source?->getSettings()->getValueByCode('username');
-		$password = $this->password ?? $this->source?->getSettings()->getValueByCode('password');
+
+		$settings = null;
+		if ($this->source)
+		{
+			$settings = SourceManager::getSourceSettings($this->source);
+		}
+		$username = $this->username ?? $settings?->getValueByCode('username');
+		$password = $this->password ?? $settings?->getValueByCode('password');
 		if ($username && $password)
 		{
 			$client->setAuthorization($username, $password);
 		}
 		$client->setTimeout($this->requestTimeout);
+		if (\Bitrix\Main\Config\Option::get('biconnector', 'allow_local_connections', 'N') !== 'Y')
+		{
+			$client->setPrivateIp(false);
+		}
 
 		return $client;
 	}
@@ -420,7 +267,12 @@ class Source1C extends Base
 			return $this->host;
 		}
 
-		$host = $this->source?->getSettings()->getValueByCode('host') ?? '';
+		$settings = null;
+		if ($this->source)
+		{
+			$settings = SourceManager::getSourceSettings($this->source);
+		}
+		$host = $settings?->getValueByCode('host') ?? '';
 		$this->host = $host;
 
 		return $this->host;
@@ -430,6 +282,7 @@ class Source1C extends Base
 	{
 		$encodedUrl = Uri::urnEncode($this->getHost() . $requestedUrl);
 		$url = new Uri($encodedUrl);
+		$queryParams['apiVersion'] = self::API_VERSION;
 		$url->addParams($queryParams);
 
 		$client = $this->getHttpClient();
@@ -445,6 +298,7 @@ class Source1C extends Base
 	{
 		$encodedUrl = Uri::urnEncode($this->getHost() . $requestedUrl);
 		$url = new Uri($encodedUrl);
+		$queryParams['apiVersion'] = self::API_VERSION;
 
 		$client = $this->getHttpClient();
 		$answer = $client->post($url, json_encode($queryParams));
@@ -453,6 +307,24 @@ class Source1C extends Base
 		$this->processResponseErrors($responseResult);
 
 		return $responseResult;
+	}
+
+	private function requestData(array $queryParams = []): string
+	{
+		$encodedUrl = Uri::urnEncode($this->getHost() . self::DATA_ENDPOINT);
+		$url = new Uri($encodedUrl);
+		$queryParams['apiVersion'] = self::API_VERSION;
+		$client = $this->getHttpClient();
+		$answer = $client->post($url, json_encode($queryParams));
+
+		$responseResult = $this->processResponse($answer, $client);
+		$this->processResponseErrors($responseResult);
+		if (!$responseResult->isSuccess())
+		{
+			throw new \Bitrix\Main\SystemException($responseResult->getErrorMessages()[0]);
+		}
+
+		return $answer;
 	}
 
 	private function processResponse($answer, HttpClient $client): Result
@@ -491,13 +363,10 @@ class Source1C extends Base
 			...$result->getData(),
 			'answer' => $answer,
 		]);
-
-		$responseData = $this->decode($answer);
 		if ($client->getStatus() === 200)
 		{
 			$result->setData([
 				...$result->getData(),
-				'data' => $responseData,
 			]);
 
 			return $result;
@@ -546,11 +415,11 @@ class Source1C extends Base
 	{
 		return match ($type)
 		{
-			'Edm.String', 'Edm.Guid' => 'STRING',
-			'Edm.Int16', 'Edm.Int32', 'Edm.Int64' => 'INT',
-			'Edm.Double' => 'DOUBLE',
-			'Edm.DateTime' => 'DATETIME',
-			'Edm.Boolean' => 'BOOLEAN',
+			'string', 'boolean' => 'STRING',
+			'int' => 'INT',
+			'double' => 'DOUBLE',
+			'datetime' => 'DATETIME',
+			'date' => 'DATE',
 			default => null,
 		};
 	}

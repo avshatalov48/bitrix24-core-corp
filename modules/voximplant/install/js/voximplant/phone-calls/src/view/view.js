@@ -382,7 +382,7 @@ export class PhoneCallView
 		this.messengerFacade = params.messengerFacade;
 		this.foldedCallView = params.foldedCallView;
 
-		this.init();
+		this.init(params?.skipCheckChatWindow);
 
 		if (this.backgroundWorker.isDesktop())
 		{
@@ -448,9 +448,9 @@ export class PhoneCallView
 		}
 	};
 
-	init()
+	init(skipCheckChatWindow = false)
 	{
-		if (DesktopApi.isChatWindow() && !this.slave)
+		if ((DesktopApi.isChatWindow() || skipCheckChatWindow) && !this.slave)
 		{
 			console.log('Init phone call view window:', location.href);
 			this.desktop.openCallWindow('', null, {

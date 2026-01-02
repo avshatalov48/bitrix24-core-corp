@@ -106,9 +106,12 @@ jn.define('crm/timeline/controllers/calendar-sharing', (require, exports, module
 					list.setItems(Object.values(members).map(this.prepareMemberItem));
 
 					list.on('onItemSelected', async (user) => {
-						const { openUserProfile } = await requireLazy('user/profile');
+						const { UserProfile } = await requireLazy('user-profile');
 
-						void openUserProfile({ userId: user.id, parentWidget });
+						void UserProfile.open({
+							ownerId: user.id,
+							parentWidget,
+						});
 					});
 				},
 				onError: console.error,

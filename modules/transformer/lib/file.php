@@ -3,7 +3,6 @@ namespace Bitrix\Transformer;
 
 use Bitrix\Main\IO;
 use Bitrix\Main\IO\InvalidPathException;
-use Bitrix\Main\Web\Uri;
 
 class File
 {
@@ -59,7 +58,7 @@ class File
 
 	private function createByCFileId($fileId)
 	{
-		$file = \CFile::GetByID($fileId)->fetch();
+		$file = \CFile::GetByID($fileId)->Fetch();
 		if($file)
 		{
 			$this->absolutePath = \CFile::GetPath($fileId);
@@ -73,10 +72,12 @@ class File
 		{
 			$ioFile = new IO\File($path);
 		}
-		catch(InvalidPathException $exception)
+		/** @noinspection PhpRedundantCatchClauseInspection */
+		catch(InvalidPathException)
 		{
 			return;
 		}
+
 		if($ioFile->isExists())
 		{
 			$this->ioFile = $ioFile;
@@ -88,35 +89,39 @@ class File
 
 	private function findInCloud($path)
 	{
-		if(\Bitrix\Main\Loader::includeModule('clouds'))
+		if (!\Bitrix\Main\Loader::includeModule('clouds'))
 		{
+			return;
+		}
+
+		if (str_starts_with((string)$path, 'http://') || str_starts_with((string)$path, 'https://'))
+		{
+			// absolute url
+
+			$bucket = \CCloudStorage::FindBucketByFile($path);
+			if ($bucket)
+			{
+				$this->bucket = $bucket;
+				$this->absolutePath = $path;
+				$this->localCloudPath = '/' . str_replace($this->bucket->GetFileSRC('/'), '', $this->absolutePath);
+			}
+		}
+		else
+		{
+			// urn
+
 			$cloudPath = \CCloudStorage::FindFileURIByURN($path, FileUploader::MODULE_ID);
-			if(!empty($cloudPath))
+			if (!empty($cloudPath))
 			{
 				$this->bucket = \CCloudStorage::FindBucketByFile($cloudPath);
-				$this->size = $this->bucket->GetFileSize($cloudPath);
 				$this->absolutePath = $cloudPath;
 				$this->localCloudPath = $path;
 			}
 		}
-	}
 
-	private function findByURL($url)
-	{
-		$uri = new Uri($url);
-		if($uri->getHost() <> '')
+		if ($this->bucket && $this->localCloudPath)
 		{
-			if(mb_strpos($uri->getHost(), \CBXPunycode::PREFIX) === false)
-			{
-				$errors = array();
-				$punicodedPath = \CBXPunycode::ToUnicode($uri->getHost(), $errors);
-
-				if($punicodedPath != $uri->getHost())
-				{
-					$uri->setHost($punicodedPath);
-				}
-			}
-			$this->absolutePath = $uri->getLocator();
+			$this->size = $this->bucket->GetFileSize($this->localCloudPath);
 		}
 	}
 

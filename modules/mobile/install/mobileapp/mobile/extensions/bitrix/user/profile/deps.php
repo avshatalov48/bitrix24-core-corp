@@ -4,6 +4,7 @@ return [
 	'extensions' => [
 		'disk',
 		'apptheme',
+		'utils/copy',
 		'im:messenger/api/dialog-opener',
 		'require-lazy',
 		'haptics',

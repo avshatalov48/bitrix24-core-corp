@@ -5,10 +5,10 @@
  * @var array $arResult
  */
 
+use Bitrix\Intranet\Integration\Im\ChatProvider;
 use Bitrix\Main;
 use \Bitrix\Intranet\UI\LeftMenu;
 use Bitrix\Main\Loader;
-use Bitrix\Tasks\Internals\Counter\CounterDictionary as TasksCounterDictionary;
 
 if (!defined("B_PROLOG_INCLUDED") || B_PROLOG_INCLUDED !== true)
 {
@@ -17,10 +17,13 @@ if (!defined("B_PROLOG_INCLUDED") || B_PROLOG_INCLUDED !== true)
 
 Main\Localization\Loc::loadMessages(__FILE__);
 
+$userId = \Bitrix\Intranet\CurrentUser::get()->getId();
 $defaultItems = $arResult;
 $menuUser = new LeftMenu\User();
 $menu = new LeftMenu\Menu($defaultItems, $menuUser);
-$activePreset = LeftMenu\Preset\Manager::getPreset();
+$isCollaber = Loader::includeModule('extranet')
+	&& \Bitrix\Extranet\Service\ServiceContainer::getInstance()->getCollaberService()->isCollaberById($userId);
+$activePreset = LeftMenu\Preset\Manager::getPreset($isCollaber ? 'collab' : null);
 $menu->applyPreset($activePreset);
 $visibleItems = $menu->getVisibleItems();
 
@@ -59,25 +62,10 @@ $arResult = [
 $counters = \CUserCounter::GetValues($USER->GetID(), SITE_ID);
 $counters = is_array($counters) ? $counters : [];
 
-$workgroupCounterData = [
-	'livefeed' => (int)($counters[\CUserCounter::LIVEFEED_CODE . 'SG0'] ?? 0),
-];
-
-if (Loader::includeModule('tasks'))
+$chatProvider = new ChatProvider();
+if ($chatProvider->isAvailable())
 {
-	$tasksCounterInstance = \Bitrix\Tasks\Internals\Counter::getInstance($USER->GetID());
-
-	$workgroupCounterData[TasksCounterDictionary::COUNTER_PROJECTS_MAJOR] = (int)(
-		$tasksCounterInstance->get(TasksCounterDictionary::COUNTER_GROUPS_TOTAL_COMMENTS)
-		+ $tasksCounterInstance->get(TasksCounterDictionary::COUNTER_PROJECTS_TOTAL_COMMENTS)
-		+ $tasksCounterInstance->get(TasksCounterDictionary::COUNTER_GROUPS_TOTAL_EXPIRED)
-		+ $tasksCounterInstance->get(TasksCounterDictionary::COUNTER_PROJECTS_TOTAL_EXPIRED)
-	);
-
-	$workgroupCounterData[TasksCounterDictionary::COUNTER_SCRUM_TOTAL_COMMENTS] = (int)$tasksCounterInstance->get(TasksCounterDictionary::COUNTER_SCRUM_TOTAL_COMMENTS);
+	$counters['im-message'] = $chatProvider->getUnreadMessagesCountForUser($userId);
 }
 
-$counters['workgroups'] = array_sum($workgroupCounterData);
-
 $arResult["COUNTERS"] = $counters;
-$arResult['WORKGROUP_COUNTER_DATA'] = $workgroupCounterData;

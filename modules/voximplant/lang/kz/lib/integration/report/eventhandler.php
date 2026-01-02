@@ -1,0 +1,15 @@
+<?php
+$MESS["TELEPHONY_REPORT_AVERAGE_CALL_TIME_TITLE"] = "Қоңыраудың орташа уақыты";
+$MESS["TELEPHONY_REPORT_BATCH_GENERAL_CALL_ANALYSIS_TITLE"] = "Қоңырауларды жалпы талдау";
+$MESS["TELEPHONY_REPORT_BATCH_GENERAL_CALL_COSTS_TITLE"] = "Қоңырау шығындары";
+$MESS["TELEPHONY_REPORT_BATCH_GENERAL_MANAGERS_EFFICIENCY_TITLE"] = "Менеджерлердің тиімділігі";
+$MESS["TELEPHONY_REPORT_CALL_DURATION_TITLE"] = "Әңгімелесу ұзақтығы";
+$MESS["TELEPHONY_REPORT_CALL_DYNAMICS_TITLE"] = "Қоңырау динамикасы";
+$MESS["TELEPHONY_REPORT_EMPLOYEES_WORKLOAD_TITLE"] = "Қызметкерлер бойынша жүктеме";
+$MESS["TELEPHONY_REPORT_LOST_CALLS_TITLE"] = "Жоғалған қоңыраулар";
+$MESS["TELEPHONY_REPORT_LOST_CALLS_TITLE_2"] = "Жоғалған қоңыраулар";
+$MESS["TELEPHONY_REPORT_LOST_CALL_ACTIVITY"] = "Қоңырау белсенділігі";
+$MESS["TELEPHONY_REPORT_MARKET_LINK"] = "Битрикс24 Маркет";
+$MESS["TELEPHONY_REPORT_MARKET_LINK_MSGVER_1"] = "Маркетплейс";
+$MESS["TELEPHONY_REPORT_MISSED_REACTION_TITLE"] = "Қабылданбаған қоңырауларға реакция";
+$MESS["TELEPHONY_REPORT_PERIOD_COMPARE_TITLE"] = "Кезеңдерді салыстыру";

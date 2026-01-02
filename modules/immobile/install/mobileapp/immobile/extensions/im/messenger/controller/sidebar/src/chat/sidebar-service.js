@@ -3,8 +3,8 @@
  */
 jn.define('im/messenger/controller/sidebar/chat/sidebar-service', (require, exports, module) => {
 	// const { MapCache } = require('im/messenger/cache');
-	const { MuteService } = require('im/messenger/provider/service/classes/chat/mute');
-	const { CommentsService } = require('im/messenger/provider/service/classes/chat/comments');
+	const { MuteService } = require('im/messenger/provider/services/chat/mute');
+	const { CommentsService } = require('im/messenger/provider/services/chat/comments');
 	const { restManager, RestManager } = require('im/messenger/lib/rest-manager');
 	const { SidebarFilesService } = require('im/messenger/controller/sidebar/chat/tabs/files/service');
 	const { SidebarLinksService } = require('im/messenger/controller/sidebar/chat/tabs/links/service');

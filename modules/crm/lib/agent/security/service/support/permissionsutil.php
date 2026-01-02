@@ -9,11 +9,11 @@ use Bitrix\Crm\Security\Role\Utils\RolePermissionChecker;
 
 final class PermissionsUtil
 {
-	public static function findNotEmptyCrmConfig(EO_Role $role): ?EO_RolePermission
+	public static function findPermAllowingCrmConfig(EO_Role $role): ?EO_RolePermission
 	{
 		foreach ($role->getPermissions()?->getAll() ?? [] as $permission)
 		{
-			if (self::isNotEmptyCrmConfig($permission))
+			if (self::isAllowsCrmConfig($permission))
 			{
 				return $permission;
 			}
@@ -22,19 +22,19 @@ final class PermissionsUtil
 		return null;
 	}
 
-	public static function hasNotEmptyCrmConfig(EO_Role $role): bool
+	public static function isRoleAllowedCrmConfig(EO_Role $role): bool
 	{
-		return self::findNotEmptyCrmConfig($role) !== null;
+		return self::findPermAllowingCrmConfig($role) !== null;
 	}
 
-	public static function isNotEmptyCrmConfig(EO_RolePermission $permission): bool
+	public static function isAllowsCrmConfig(EO_RolePermission $permission): bool
 	{
 		$model = PermissionModel::createFromEntityObject($permission);
 
 		return
 			$model->entity() === 'CONFIG'
 			&& $model->permissionCode() === 'WRITE'
-			&& !RolePermissionChecker::isPermissionEmpty($model)
+			&& RolePermissionChecker::isPermissionAllowsAnything($model)
 		;
 	}
 }

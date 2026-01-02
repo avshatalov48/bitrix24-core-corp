@@ -2,7 +2,7 @@
  * @module crm/category-list-view
  */
 jn.define('crm/category-list-view', (require, exports, module) => {
-	const AppTheme = require('apptheme');
+	const { Color } = require('tokens');
 	const { throttle } = require('utils/function');
 	const { NotifyManager } = require('notify-manager');
 	const { NavigationLoader } = require('navigation-loader');
@@ -37,14 +37,17 @@ jn.define('crm/category-list-view', (require, exports, module) => {
 		{
 			return {
 				modal: true,
-				title: CategoryListView.getNavigationTitle(selectAction),
-				backgroundColor: AppTheme.colors.bgSecondary,
+				backgroundColor: Color.bgSecondary.toHex(),
 				backdrop: {
 					showOnTop: true,
 					forceDismissOnSwipeDown: true,
 					horizontalSwipeAllowed: false,
 					swipeContentAllowed: false,
-					navigationBarColor: AppTheme.colors.bgSecondary,
+					navigationBarColor: Color.bgSecondary.toHex(),
+				},
+				titleParams: {
+					text: CategoryListView.getNavigationTitle(selectAction),
+					type: 'dialog',
 				},
 			};
 		}
@@ -165,7 +168,7 @@ jn.define('crm/category-list-view', (require, exports, module) => {
 
 		renderLoader()
 		{
-			return new LoadingScreenComponent({ backgroundColor: AppTheme.colors.bgPrimary });
+			return new LoadingScreenComponent({ backgroundColor: Color.bgPrimary.toHex() });
 		}
 
 		renderContent()

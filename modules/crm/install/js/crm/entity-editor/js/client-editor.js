@@ -265,6 +265,34 @@ if(typeof BX.Crm.EntityEditorClientSearchBox === "undefined")
 					}
 				}
 			},
+			getDropdown(searchOptions, items, creationLegend)
+			{
+				return new BX.UI.Dropdown(
+					{
+						searchAction: 'crm.api.entity.search',
+						searchOptions,
+						searchResultRenderer: null,
+						targetElement: this._searchInput,
+						items,
+						enableCreation: BX.prop.getBoolean(this._settings, 'enableCreation', false),
+						enableCreationOnBlur: this._enableQuickEdit,
+						autocompleteDelay: 500,
+						context: { origin: 'crm.entity.editor', isEmbedded: this._editor.isEmbedded() },
+						messages:
+							{
+								creationLegend,
+								notFound: this.getMessage('notFound'),
+							},
+						events:
+							{
+								onSelect: this.onEntitySelect.bind(this),
+								onAdd: this.onEntityAdd.bind(this),
+								onReset: this.onEntityReset.bind(this),
+								onGetNewAlertContainer: this.onEntitySearch.bind(this),
+							},
+					},
+				);
+			},
 			layout: function(options)
 			{
 				if(this._hasLayout)
@@ -304,7 +332,6 @@ if(typeof BX.Crm.EntityEditorClientSearchBox === "undefined")
 				{
 					BX.addClass(icon, "crm-entity-widget-img-contact");
 				}
-				boxWrapper.appendChild(icon);
 
 				this._searchInput = BX.create("input",
 					{
@@ -317,16 +344,13 @@ if(typeof BX.Crm.EntityEditorClientSearchBox === "undefined")
 							}
 					}
 				);
-				boxWrapper.appendChild(this._searchInput);
 				BX.bind(this._searchInput, "focus", this._inputFocusHandler);
 				BX.bind(this._searchInput, "blur", this._inputBlurHandler);
 				BX.bind(this._searchInput, "dblclick", this._inputDblClickHandler);
 
 				this._badgeElement = BX.create("div", { props: { className: "crm-entity-widget-badge" } });
-				boxWrapper.appendChild(this._badgeElement);
 
 				this._editButton = BX.create("div", { props: { className: "crm-entity-widget-btn-edit" } });
-				boxWrapper.appendChild(this._editButton);
 
 				BX.bind(this._editButton, "click", this._editButtonHandler);
 
@@ -340,7 +364,6 @@ if(typeof BX.Crm.EntityEditorClientSearchBox === "undefined")
 							}
 					}
 				);
-				boxWrapper.appendChild(this._changeButton);
 
 				BX.bind(this._changeButton, "click", this._changeButtonHandler);
 
@@ -353,7 +376,6 @@ if(typeof BX.Crm.EntityEditorClientSearchBox === "undefined")
 
 					}
 				});
-				boxWrapper.appendChild(this._loadingIcon);
 
 				if(this._entityInfo)
 				{
@@ -378,31 +400,19 @@ if(typeof BX.Crm.EntityEditorClientSearchBox === "undefined")
 					creationLegend = this.getMessage(this._entityTypeName.toLowerCase() + "ToCreateLegend");
 				}
 
-				this._searchControl = new BX.UI.Dropdown(
-					{
-						searchAction: 'crm.api.entity.search',
-						searchOptions: searchOptions,
-						searchResultRenderer: null,
-						targetElement: this._searchInput,
-						items: BX.prop.getArray(this._settings, "lastEntityInfos", []),
-						enableCreation: BX.prop.getBoolean(this._settings, "enableCreation", false),
-						enableCreationOnBlur: this._enableQuickEdit,
-						autocompleteDelay: 500,
-						context: { origin: "crm.entity.editor", isEmbedded: this._editor.isEmbedded()  },
-						messages:
-							{
-								creationLegend: creationLegend,
-								notFound: this.getMessage("notFound")
-							},
-						events:
-							{
-								onSelect: this.onEntitySelect.bind(this),
-								onAdd: this.onEntityAdd.bind(this),
-								onReset: this.onEntityReset.bind(this),
-								onGetNewAlertContainer: this.onEntitySearch.bind(this)
-							}
-					}
-				);
+				if (!this._editor.isModeToggleEnabled())
+				{
+					this._searchControl = this.getDropdown(searchOptions, [], creationLegend);
+					this.buildInputLayout(icon, boxWrapper);
+				}
+				else
+				{
+					this.prepareDropdownItems().then((items) => {
+						this._searchControl = this.getDropdown(searchOptions, items, creationLegend);
+
+						this.buildInputLayout(icon, boxWrapper);
+					});
+				}
 
 				this._deleteButton = BX.create("div", { props: { className: "crm-entity-widget-btn-close" } });
 				if(!this._enableDeletion)
@@ -2003,6 +2013,44 @@ if(typeof BX.Crm.EntityEditorClientSearchBox === "undefined")
 						duplicateManager._controller._closeSearchSummary();
 					}
 				}
+			},
+			prepareDropdownItems()
+			{
+				return new Promise((resolve) => {
+					BX.ajax.runAction(
+						'crm.controller.item.recentlyused.getlist',
+						{
+							data: {
+								entityTypeId: BX.CrmEntityType.resolveId(this._editor.getEntityTypeName()),
+								categoryId: this._categoryId,
+								expandEntityTypeId: this._entityTypeId,
+								extraCategoryIds: BX.prop.getArray(this._settings, "extraCategoryIds", []),
+								isMyCompany: BX.prop.getBoolean(this._settings, 'enableMyCompanyOnly', false) ? 1 : 0,
+							},
+						},
+					)
+						.then((response) => {
+							let data = response.data;
+							if (!BX.Type.isArray(data))
+							{
+								data = [];
+							}
+
+							resolve(data);
+						})
+						.catch((response) => {
+							throw response.errors;
+						});
+				});
+			},
+			buildInputLayout(icon, boxWrapper)
+			{
+				BX.Dom.append(icon, boxWrapper);
+				BX.Dom.append(this._searchInput, boxWrapper);
+				BX.Dom.append(this._badgeElement, boxWrapper);
+				BX.Dom.append(this._editButton, boxWrapper);
+				BX.Dom.append(this._changeButton, boxWrapper);
+				BX.Dom.append(this._loadingIcon, boxWrapper);
 			},
 		};
 	if(typeof(BX.Crm.EntityEditorClientSearchBox.messages) === "undefined")

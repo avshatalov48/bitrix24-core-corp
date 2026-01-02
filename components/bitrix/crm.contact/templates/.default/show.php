@@ -3,6 +3,15 @@ if(!defined('B_PROLOG_INCLUDED') || B_PROLOG_INCLUDED!==true) die();
 
 /** @var CMain $APPLICATION */
 $APPLICATION->IncludeComponent(
+	'bitrix:crm.entity.disable_alert',
+	'',
+	[
+		'ENTITY_TYPE_ID' => \CCrmOwnerType::Contact,
+		'ENTITY_ID' => $arResult['VARIABLES']['contact_id'],
+	],
+);
+
+$APPLICATION->IncludeComponent(
 	'bitrix:crm.control_panel',
 	'',
 	array(

@@ -17,8 +17,10 @@ use Bitrix\Disk\Driver;
 use Bitrix\Main;
 use Bitrix\Main\ArgumentException;
 use Bitrix\Main\Db\SqlQueryException;
+use Bitrix\Main\DI\ServiceLocator;
 use Bitrix\Main\Engine\Contract\Controllerable;
 use Bitrix\Main\Engine\Response\Component;
+use Bitrix\Main\Error;
 use Bitrix\Main\Errorable;
 use Bitrix\Main\Loader;
 use Bitrix\Main\Localization\Loc;
@@ -33,6 +35,7 @@ use Bitrix\Socialnetwork\Internals\Registry\FeaturePermRegistry;
 use Bitrix\Tasks\Access\ActionDictionary;
 use Bitrix\Tasks\Access\Role\RoleDictionary;
 use Bitrix\Tasks\Access\TaskAccessController;
+use Bitrix\Tasks\Deadline\Internals\Repository\Cache\Managed\CacheDeadlineUserOptionRepository;
 use Bitrix\Tasks\Integration\SocialNetwork\Collab\Provider\CollabProvider;
 use Bitrix\Tasks\Access\TemplateAccessController;
 use Bitrix\Tasks\AccessDeniedException;
@@ -69,7 +72,6 @@ use Bitrix\Tasks\Internals\Task\ElapsedTimeTable;
 use Bitrix\Tasks\Internals\Task\MemberTable;
 use Bitrix\Tasks\Internals\Task\Priority;
 use Bitrix\Tasks\Internals\Task\RegularParametersTable;
-use Bitrix\Tasks\Internals\Task\ScenarioTable;
 use Bitrix\Tasks\Internals\Task\SortingTable;
 use Bitrix\Tasks\Internals\Task\Status;
 use Bitrix\Tasks\Internals\Task\TimeUnitType;
@@ -105,6 +107,7 @@ use Bitrix\Tasks\Component\Task\TasksTaskHitStateStructure;
 use Bitrix\Tasks\Component\Task\TasksFlowFormState;
 use Bitrix\Tasks\Component\Task\TasksTaskFormState;
 use Bitrix\Main\Engine\CurrentUser;
+use Bitrix\Tasks\Helper\Analytics;
 
 Loc::loadMessages(__FILE__);
 
@@ -138,6 +141,7 @@ class TasksTaskComponent extends TasksBaseComponent implements Errorable, Contro
 
 	protected $hitState = null;
 
+	/** @var \Bitrix\Tasks\Util\Error\Collection */
 	protected $errorCollection;
 
 	private bool $isFlowForm;
@@ -593,9 +597,10 @@ class TasksTaskComponent extends TasksBaseComponent implements Errorable, Contro
 			]);
 			while ($rowStg = $resStg->fetch())
 			{
-				TaskStageTable::update($rowStg['ID'], [
-					'STAGE_ID' => $stageId,
-				]);
+				(new \Bitrix\Tasks\V2\Public\Command\Task\Kanban\MoveTaskCommand(
+					relationId: (int)$rowStg['ID'],
+					stageId: (int)$stageId
+				))->run();
 
 				if ($stageId !== (int)$rowStg['STAGE_ID'])
 				{
@@ -773,6 +778,7 @@ class TasksTaskComponent extends TasksBaseComponent implements Errorable, Contro
 		$lastTimer = $timer->getLastTimer();
 		if (
 			!$stopPrevious
+			&& $lastTimer
 			&& $lastTimer['TASK_ID']
 			&& $lastTimer['TIMER_STARTED_AT'] > 0
 			&& intval($lastTimer['TASK_ID'])
@@ -979,15 +985,39 @@ class TasksTaskComponent extends TasksBaseComponent implements Errorable, Contro
 
 		if (!empty($data))
 		{
-			// todo: move to \Bitrix\Tasks\Item\Task
-			$mgrResult = Task::update($this->userId, $taskId, $data, [
-				'PUBLIC_MODE' => true,
-				'ERRORS' => $this->errorCollection,
-				'THROTTLE_MESSAGES' => $parameters['THROTTLE_MESSAGES'],
 
-				// there also could be RETURN_CAN or RETURN_DATA, or both as RETURN_ENTITY
-				'RETURN_ENTITY' => $parameters['RETURN_ENTITY'],
-			]);
+			try
+			{
+				$mgrResult = Task::update($this->userId, $taskId, $data, [
+					'PUBLIC_MODE' => true,
+					'ERRORS' => $this->errorCollection,
+					'THROTTLE_MESSAGES' => $parameters['THROTTLE_MESSAGES'],
+
+					// there also could be RETURN_CAN or RETURN_DATA, or both as RETURN_ENTITY
+					'RETURN_ENTITY' => $parameters['RETURN_ENTITY'] ?? null,
+				]);
+			}
+			catch (Exception $e)
+			{
+				if (
+					$e instanceof TasksException
+					&& $e->isSerialized()
+				)
+				{
+					$errors = unserialize($e->getMessage(), ['allowed_classes' => false]);
+					$error = $errors[0];
+					$this->errorCollection->add(
+						codeOrInstance: 'ACTION_ERROR.UNEXPECTED_ERROR',
+						message: $error['text'] ?? 'Unexpected error',
+					);
+				}
+				else
+				{
+					$this->errorCollection->add(Error::createFromThrowable($e));
+				}
+
+				return null;
+			}
 
 			$result['ID'] = $taskId;
 			$result['DATA'] = $mgrResult['DATA'];
@@ -1232,6 +1262,17 @@ class TasksTaskComponent extends TasksBaseComponent implements Errorable, Contro
 		{
 			$task = CTaskItem::getInstance($taskId, $this->userId);
 			$task->approve();
+
+			// "TASK_CONTROL" analytics label
+			$isDemo = (Loader::includeModule('bitrix24') && \CBitrix24::IsDemoLicense()) ? 'Y' : 'N';
+
+			Analytics::getInstance($this->userId)->onTaskUpdate(
+				event: Analytics::EVENT['task_update'],
+				subSection: Analytics::SUB_SECTION['task_card'],
+				params: [
+					'p1' => 'isDemo_' . $isDemo,
+				],
+			);
 		}
 		catch (Bitrix\Tasks\Exception $e)
 		{
@@ -1470,6 +1511,11 @@ class TasksTaskComponent extends TasksBaseComponent implements Errorable, Contro
 		return ["fileCount" => $fileCount];
 	}
 
+	/**
+	 * @deprecated
+	 * @TasksV2
+	 * @use \Bitrix\Tasks\V2\Infrastructure\Controller\Task\Attention\Priority
+	 */
 	public function setPriorityAction($taskId, $priority)
 	{
 		$taskId = (int)$taskId;
@@ -1495,6 +1541,33 @@ class TasksTaskComponent extends TasksBaseComponent implements Errorable, Contro
 		{
 			$this->addForbiddenError();
 			return $result;
+		}
+
+		if (\Bitrix\Tasks\V2\FormV2Feature::isOn('priority'))
+		{
+			if ($priority === Priority::HIGH)
+			{
+				$result = (new \Bitrix\Tasks\V2\Public\Command\Task\Attention\SetHighTaskPriorityCommand(
+					taskId: $taskId,
+					userId: $this->userId
+				))->run();
+			}
+			else
+			{
+				$result = (new \Bitrix\Tasks\V2\Public\Command\Task\Attention\SetAverageTaskPriorityCommand(
+					taskId: $taskId,
+					userId: $this->userId
+				))->run();
+			}
+
+			if (!$result->isSuccess())
+			{
+				$this->errorCollection->add($result->getError());
+
+				return null;
+			}
+
+			return [];
 		}
 
 		$this->updateTask(
@@ -1622,6 +1695,17 @@ class TasksTaskComponent extends TasksBaseComponent implements Errorable, Contro
 			$this->addForbiddenError();
 			return $result;
 		}
+
+		// "RENEW" analytics label
+		$isDemo = (Loader::includeModule('bitrix24') && \CBitrix24::IsDemoLicense()) ? 'Y' : 'N';
+
+		Analytics::getInstance($this->userId)->onTaskUpdate(
+			event: Analytics::EVENT['task_update'],
+			subSection: Analytics::SUB_SECTION['task_card'],
+			params: [
+				'p1' => 'isDemo_' . $isDemo,
+			],
+		);
 
 		try
 		{
@@ -1801,6 +1885,8 @@ class TasksTaskComponent extends TasksBaseComponent implements Errorable, Contro
 			return $result;
 		}
 
+		$analytics = Analytics::getInstance($this->userId);
+
 		try
 		{
 			$task = CTaskItem::getInstance($taskId, $this->userId);
@@ -1810,8 +1896,19 @@ class TasksTaskComponent extends TasksBaseComponent implements Errorable, Contro
 		{
 			$this->errorCollection->add('ACTION_ERROR.UNEXPECTED_ERROR', $e->getFirstErrorMessage(), false,
 				['ui' => 'notification']);
+
+			$analytics->onTaskDelegate(
+				section: $analytics->getTaskContext($taskId),
+				status: false,
+			);
+
+
 			return $result;
 		}
+
+		$analytics->onTaskDelegate(
+			section: $analytics->getTaskContext($taskId),
+		);
 
 		return $result;
 	}
@@ -2089,6 +2186,15 @@ class TasksTaskComponent extends TasksBaseComponent implements Errorable, Contro
 			]
 		);
 
+		$analytics = Analytics::getInstance($this->userId);
+
+		$analytics->onTaskUpdate(
+			event: Analytics::EVENT['deadline_set'],
+			section: Analytics::SECTION['tasks'],
+			subSection: Analytics::SUB_SECTION['task_card'],
+			element: Analytics::ELEMENT['deadline_field'],
+		);
+
 		if ($this->errorCollection->checkNoFatals())
 		{
 			return null;
@@ -2110,6 +2216,7 @@ class TasksTaskComponent extends TasksBaseComponent implements Errorable, Contro
 			return null;
 		}
 
+		$data ??= [];
 		$result = [];
 
 		$oldTask = TaskModel::createFromId($taskId);
@@ -2122,12 +2229,20 @@ class TasksTaskComponent extends TasksBaseComponent implements Errorable, Contro
 			return $result;
 		}
 
-		$this->updateTask(
-			$taskId,
-			[
-				'SE_REMINDER' => $data,
-			]
-		);
+		$mapper = \Bitrix\Tasks\V2\Internal\DI\Container::getInstance()->getReminderMapper();
+
+		$reminders = $mapper->mapToCollection($data);
+
+		$result = (new \Bitrix\Tasks\V2\Public\Command\Task\Reminder\SetRemindersCommand(
+			userId: (int)$this->userId,
+			taskId: $taskId,
+			reminders: $reminders
+		))->run();
+
+		if (!$result->isSuccess())
+		{
+			$this->errorCollection->add($result->getError());
+		}
 
 		if ($this->errorCollection->checkNoFatals())
 		{
@@ -2236,6 +2351,12 @@ class TasksTaskComponent extends TasksBaseComponent implements Errorable, Contro
 	{
 		$error = new Util\Error(Loc::getMessage('TASKS_TT_NOT_FOUND_OR_NOT_ACCESSIBLE'), 'ACCESS_DENIED.NO_TASK');
 
+		$userId = (int)($arResult['USER_ID'] ?? 0);
+		if ($userId <= 0)
+		{
+			return $error;
+		}
+
 		$request = null;
 		if (array_key_exists('REQUEST', $auxParams))
 		{
@@ -2284,7 +2405,7 @@ class TasksTaskComponent extends TasksBaseComponent implements Errorable, Contro
 			// Crutch.
 			// Temporary stub to disable creation subtask if user has no access.
 			// It's make me cry.
-			if (count($newTask->getMembers(RoleDictionary::ROLE_RESPONSIBLE)) <= 1)
+			if ($newTask !== null && count($newTask->getMembers(RoleDictionary::ROLE_RESPONSIBLE)) <= 1)
 			{
 				$error->setType(Util\Error::TYPE_ERROR);
 			}
@@ -2309,7 +2430,7 @@ class TasksTaskComponent extends TasksBaseComponent implements Errorable, Contro
 			$action = ActionDictionary::ACTION_TASK_CREATE;
 		}
 
-		$res = (new TaskAccessController($arResult['USER_ID']))->check($action, $oldTask, $accessCheckParams);
+		$res = (new TaskAccessController($userId))->check($action, $oldTask, $accessCheckParams);
 
 		if (!$res)
 		{
@@ -2934,6 +3055,26 @@ class TasksTaskComponent extends TasksBaseComponent implements Errorable, Contro
 	{
 		$stateFlags = $this->arResult['COMPONENT_DATA']['STATE']['FLAGS'];
 
+		$matchWorkTime = (bool)($stateFlags['MATCH_WORK_TIME'] ?? false);
+
+		$deadline = null;
+
+		$isAlreadyTriedToAdd = isset($this->arResult['ACTION_RESULT']['task_action']);
+
+		if (!$isAlreadyTriedToAdd)
+		{
+			$groupId = (int)($this->arParams['GROUP_ID'] ?? 0);
+			$group = SocialNetwork\Group::getById($groupId);
+			$isScrumTask = ($group && $group->isScrumProject());
+
+			if (!$isScrumTask)
+			{
+				$deadlineUserOption = $this->arResult['DATA']['DEADLINE_USER_OPTION'] ?? null;
+
+				$deadline = $deadlineUserOption?->getDefaultDeadlineDate($matchWorkTime);
+			}
+		}
+
 		$rights = Task::getFullRights($this->userId);
 		$data = [
 			'CREATED_BY' => $this->userId,
@@ -2944,13 +3085,14 @@ class TasksTaskComponent extends TasksBaseComponent implements Errorable, Contro
 			'REPLICATE' => 'N',
 			'IS_REGULAR' => 'N',
 			'FLOW_ID' => 0,
+			'DEADLINE' => $deadline?->format(Main\Type\DateTime::getFormat()),
 
 			'REQUIRE_RESULT' => $stateFlags['REQUIRE_RESULT'] ? 'Y' : 'N',
 			'TASK_PARAM_3' => $stateFlags['TASK_PARAM_3'] ? 'Y' : 'N',
 			'ALLOW_CHANGE_DEADLINE' => $stateFlags['ALLOW_CHANGE_DEADLINE'] ? 'Y' : 'N',
 			'ALLOW_TIME_TRACKING' => $stateFlags['ALLOW_TIME_TRACKING'] ? 'Y' : 'N',
 			'TASK_CONTROL' => $stateFlags['TASK_CONTROL'] ? 'Y' : 'N',
-			'MATCH_WORK_TIME' => $stateFlags['MATCH_WORK_TIME'] ? 'Y' : 'N',
+			'MATCH_WORK_TIME' => $matchWorkTime ? 'Y' : 'N',
 
 			'DESCRIPTION_IN_BBCODE' => 'Y', // new tasks should be always in bbcode
 			'DURATION_TYPE' => TimeUnitType::DAY,
@@ -2990,6 +3132,15 @@ class TasksTaskComponent extends TasksBaseComponent implements Errorable, Contro
 		if ($responsibleId)
 		{
 			$data[Task\Responsible::getCode(true)][] = ['ID' => $responsibleId];
+		}
+
+		$accomplices = $this->request->get('ACCOMPLICES');
+		if (is_array($accomplices) && !empty($accomplices))
+		{
+			foreach ($accomplices as $accompliceId)
+			{
+				$data[Task\Accomplice::getCode(true)][] = ['ID' => (int)$accompliceId];
+			}
 		}
 
 		// auditors
@@ -3044,6 +3195,24 @@ class TasksTaskComponent extends TasksBaseComponent implements Errorable, Contro
 			$data[Integration\Disk\UserField::getMainSysUFCode()] = $diskFiles;
 		}
 
+		// rewrite with direct data
+		$fileIds = $this->request->get('FILE_IDS');
+		if (!empty($fileIds))
+		{
+			$data[Integration\Disk\UserField::getMainSysUFCode()] = $fileIds;
+		}
+
+		$checklist = $this->request->get('CHECKLIST');
+		if (!empty($checklist))
+		{
+			uasort(
+				$checklist,
+				static fn ($a, $b): int => (int)($a['SORT_INDEX'] ?? 0) <=> (int)($b['SORT_INDEX'] ?? 0)
+			);
+
+			$data[Task\CheckList::getCode(true)] = $checklist;
+		}
+
 		// crm links
 		$ufCrm = Integration\CRM\UserField::getMainSysUFCode();
 		$crm = $this->hitState->get("INITIAL_TASK_DATA.{$ufCrm}");
@@ -3082,6 +3251,12 @@ class TasksTaskComponent extends TasksBaseComponent implements Errorable, Contro
 			$data['DEADLINE'] = $deadline;
 		}
 
+		$deadlineTs = (int)$this->request->get('DEADLINE_TS');
+		if ($deadlineTs > 0)
+		{
+			$data['DEADLINE'] = Main\Type\DateTime::createFromTimestamp($deadlineTs);
+		}
+
 		// START_DATE_PLAN
 		$startDatePlan = $this->hitState->get('INITIAL_TASK_DATA.START_DATE_PLAN');
 		if (!empty($startDatePlan))
@@ -3098,7 +3273,8 @@ class TasksTaskComponent extends TasksBaseComponent implements Errorable, Contro
 
 		// scenario
 		$scenario = $this->request->get('SCENARIO');
-		if ($scenario && ScenarioTable::isValidScenario($scenario))
+		$scenarioService = \Bitrix\Tasks\V2\Internal\DI\Container::getInstance()->getScenarioService();
+		if ($scenario && $scenarioService->isValid((string)$scenario))
 		{
 			$data['SCENARIO'] = $scenario;
 		}
@@ -3107,6 +3283,12 @@ class TasksTaskComponent extends TasksBaseComponent implements Errorable, Contro
 		if ($flowId)
 		{
 			$data['FLOW_ID'] = $flowId;
+		}
+
+		$isImportant = $this->request->get('IS_IMPORTANT') === 'Y';
+		if ($isImportant)
+		{
+			$data['PRIORITY'] = Priority::HIGH;
 		}
 
 		return ['DATA' => $data];
@@ -3208,6 +3390,13 @@ class TasksTaskComponent extends TasksBaseComponent implements Errorable, Contro
 	private function getTaskDataForNewTask(): ?array
 	{
 		$this->arResult['DATA']['CHECKLIST_CONVERTED'] = true;
+
+		$serviceLocator = ServiceLocator::getInstance();
+
+		$deadlineUserOptionRepository = $serviceLocator->get(CacheDeadlineUserOptionRepository::class);
+		$deadlineUserOption = $deadlineUserOptionRepository->getByUserId($this->userId);
+
+		$this->arResult['DATA']['DEADLINE_USER_OPTION'] = $deadlineUserOption;
 
 		$data = $this->getDataDefaults();
 
@@ -4169,7 +4358,7 @@ class TasksTaskComponent extends TasksBaseComponent implements Errorable, Contro
 			try
 			{
 				$roles['ORIGINATOR'] = $this->task['CREATED_BY'] == $this->userId;
-				$roles['DIRECTOR'] = !!$this->task->isUserRole(CTaskItem::ROLE_DIRECTOR);
+				$roles['DIRECTOR'] = false;
 			}
 			catch (TasksException $e)
 			{
@@ -4819,7 +5008,7 @@ class TasksTaskComponent extends TasksBaseComponent implements Errorable, Contro
 		if (
 			isset($task['SCENARIO_NAME'])
 			&& is_array($task['SCENARIO_NAME'])
-			&& in_array(ScenarioTable::SCENARIO_MOBILE, $task['SCENARIO_NAME'], true)
+			&& in_array(\Bitrix\Tasks\V2\Internal\Entity\Task\Scenario::Mobile->value, $task['SCENARIO_NAME'], true)
 			&& !(new UserOption\Mobile())->isMobileAppInstalled()
 		)
 		{
@@ -4867,8 +5056,8 @@ class TasksTaskComponent extends TasksBaseComponent implements Errorable, Contro
 	private function fillWithIMData(): void
 	{
 		$request = Main\Context::getCurrent()->getRequest();
-		$chatId = (int)($request['IM_CHAT_ID'] ?? null);
-		$messageId = (int)($request['IM_MESSAGE_ID'] ?? null);
+		$chatId = (int)($this->arResult['DATA']['TASK']['IM_CHAT_ID'] ?? $request['IM_CHAT_ID'] ?? null);
+		$messageId = (int)($this->arResult['DATA']['TASK']['IM_MESSAGE_ID'] ?? $request['IM_MESSAGE_ID'] ?? null);
 		if ($chatId > 0)
 		{
 			$this->arResult['immutable']['IM_CHAT_ID'] = $chatId;
@@ -4963,6 +5152,7 @@ class TasksTaskComponent extends TasksBaseComponent implements Errorable, Contro
 		$this->arResult['isFlowForm'] = $this->isFlowForm;
 		$this->arResult['isExtranetUser'] = Extranet\User::isExtranet($this->userId);
 		$this->arResult['noFlow'] = (bool)$this->request->get('NO_FLOW');
+		$this->arResult['canCreateFlow'] = FlowAccessController::can($this->userId, FlowAction::CREATE);
 
 		$this->arResult['canEditTask'] = true;
 

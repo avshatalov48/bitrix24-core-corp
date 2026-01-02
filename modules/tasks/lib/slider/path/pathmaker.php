@@ -6,7 +6,6 @@ abstract class PathMaker
 {
 	public const PERSONAL_CONTEXT = 'personal';
 	public const GROUP_CONTEXT = 'group';
-	public const SPACE_CONTEXT = 'space';
 
 	public const DEFAULT_ACTION = 'view';
 	public const EDIT_ACTION = 'edit';

@@ -20,7 +20,6 @@ return [
 		'date',
 		'ui.notification',
 		'ui.stamp.uploader',
-		'sign.v2.api',
 		'crm.form.fields.selector',
 		'crm.requisite.fieldset-viewer',
 		'sign.type',
@@ -31,6 +30,7 @@ return [
 		'main.core',
 		'ui.draganddrop.draggable',
 		'main.core.events',
+		'sign.v2.api',
 	],
 	'skip_core' => false,
 ];

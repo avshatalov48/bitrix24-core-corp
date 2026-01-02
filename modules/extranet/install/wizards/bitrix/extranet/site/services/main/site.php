@@ -155,6 +155,23 @@ if (!defined("WIZARD_IS_RERUN") || WIZARD_IS_RERUN !== true || WIZARD_B24_TO_CP)
 			'PATH' => WIZARD_SITE_DIR.'call/index.php',
 		]
 	);
+	\Bitrix\Main\UrlRewriter::add(
+		WIZARD_SITE_ID,
+		[
+			'CONDITION' => '#^'.WIZARD_SITE_DIR.'vote-result/([0-9a-z\.]+)#',
+			'RULE' => 'signedAttachId=$1',
+			'ID' => 'bitrix:voting.attached.result',
+			'PATH' => WIZARD_SITE_DIR.'vote-result/index.php',
+		]
+	);
+	\Bitrix\Main\UrlRewriter::add(
+		WIZARD_SITE_ID,
+		[
+			'CONDITION' => '#^' . WIZARD_SITE_DIR . 'task/comments/([0-9]+)#',
+			'RULE' => 'taskId=$1',
+			'PATH' => WIZARD_SITE_DIR . 'tasks/comments.php',
+		]
+	);
 }
 else
 {

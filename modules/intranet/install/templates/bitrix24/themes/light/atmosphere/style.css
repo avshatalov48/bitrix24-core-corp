@@ -1,4 +1,9 @@
-body {
-	background: #012C64 url(atmosphere2.jpg) fixed 0 0 no-repeat;
-	background-size: cover;
+:root {
+  --air-theme-bg-color: #012C64;
+  --air-theme-bg-size: cover;
+  --air-theme-bg-repeat: no-repeat;
+  --air-theme-bg-position: 0 0;
+  --air-theme-bg-attachment: fixed;
+  --air-theme-bg-image: url(/bitrix/templates/bitrix24/themes/light/atmosphere/atmosphere2.jpg);
+  --air-theme-bg-image-blurred: url(/bitrix/templates/bitrix24/themes/light/atmosphere/atmosphere2-blurred.webp);
 }

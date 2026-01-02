@@ -5,6 +5,7 @@ if (!defined('B_PROLOG_INCLUDED') || B_PROLOG_INCLUDED !== true)
 	die();
 }
 
+use Bitrix\Crm\ItemMiniCard\Builder\MiniCardHtmlBuilder;
 use Bitrix\Main\Page\Asset;
 use Bitrix\Main\Text\HtmlFilter;
 
@@ -71,15 +72,11 @@ $publicMode = (isset($arParams['PUBLIC_MODE']) && $arParams['PUBLIC_MODE'] === t
 								);
 								?>
 								<span class="field-item" data-id="<?= $entity['SHORT_ENTITY_TYPE_ID_WITH_ENTITY_ID'] ?>">
-									<a
-										href="<?= HtmlFilter::encode($entity['ENTITY_LINK']) ?>"
-										target="_blank"
-										bx-tooltip-user-id="<?= ($entity['ENTITY_TYPE_ID_WITH_ENTITY_ID'] ?? $entityId) ?>"
-										bx-tooltip-loader="<?= $arEntity['tooltipLoaderUrl'] ?>"
-										bx-tooltip-classname="crm_balloon<?= $crmBalloonClass ?>"
-									>
-										<?= HtmlFilter::encode($entity['ENTITY_TITLE']) ?>
-									</a>
+									<?=
+										(new MiniCardHtmlBuilder($entity['ENTITY_TYPE_ID'], $entityId))
+											->setTitle($entity['ENTITY_TITLE'])
+											->build()
+									?>
 								</span>
 								<?php
 							}

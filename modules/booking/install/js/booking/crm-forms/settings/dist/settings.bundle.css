@@ -1,0 +1,60 @@
+.crm-form--booking--resources-manager--header-resources-title {
+	color: rgba(51, 51, 51, 1);
+	font-size: 13px;
+	font-weight: 500;
+}
+
+.crm-form--booking--resources-manager--header-resources-count {
+	color: rgba(167, 167, 167, 1);
+	font-size: 12px;
+}
+
+.popup-window.crm-form--booking--resource-manager-popup {
+	top: 100px !important;
+}
+
+.popup-window.crm-form--booking--resource-manager-popup .ui-selector-search {
+	border-bottom: none !important;
+}
+
+.popup-window.crm-form--booking--resource-manager-popup .crm-form--booking--resources-manager--header-resources-section {
+	margin: 0 16px 0;
+}
+
+.crm-form--booking--resources-manager--header__btn.--none {
+	display: none;
+	visibility: hidden;
+}
+
+.crm-forms--booking--resources-manager-empty-state_icon {
+	height: 120px;
+	width: 120px;
+	background-image: url(../images/resource-add.svg?5);
+}
+
+.crm-forms--booking--resources-manager-empty-state_title {
+	color: rgba(82, 92, 105, 1);
+	font-size: 17px;
+}
+
+.crm-forms--booking--resources-manager-empty-state_text {
+	color: rgba(130, 139, 149, 1);
+	font-size: 13px;
+	text-align: center;
+}
+
+.crm-forms--booking--resources-manager__empty-state-btn-add {
+	margin-top: 12px;
+}
+
+.crm-forms--booking--resource-selector-dialog__footer {
+	padding: 15px 0;
+	width: 100%;
+	display: flex;
+	justify-content: center;
+	box-shadow: 0 -1px 4px 0 rgba(0, 0, 0, 0.05);
+}
+
+.crm-forms--booking--resource-selector-dialog__footer-btn-width {
+	width: 131px;
+}

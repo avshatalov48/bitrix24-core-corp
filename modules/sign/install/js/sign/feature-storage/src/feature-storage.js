@@ -18,4 +18,14 @@ export class FeatureStorage
 	{
 		return settings.get('isGroupSendingEnabled', false);
 	}
+
+	static isDocumentsInSignersSelectorEnabled(): boolean
+	{
+		return settings.get('isDocumentsInSignersSelectorEnabled', false);
+	}
+
+	static isTemplateFolderGroupingAllowed(): boolean
+	{
+		return settings.get('isTemplateFolderGroupingAllowed');
+	}
 }

@@ -3,11 +3,16 @@
 namespace Bitrix\Tasks\Flow\Filter;
 
 use Bitrix\Main;
+use Bitrix\Main\Error;
+use Bitrix\Main\Result;
 use Bitrix\Main\Localization\Loc;
+use Bitrix\Tasks\Filter\Trait\FilterApplied;
 use Bitrix\Tasks\Flow\Provider\UserProvider;
 
 class Filter
 {
+	use FilterApplied;
+
 	public const MY_PRESET = 'filter_flow_my';
 	public const ACTIVE_PRESET = 'filter_flow_active';
 
@@ -17,6 +22,106 @@ class Filter
 
 	private Main\UI\Filter\Options $filterOptions;
 	private UserProvider $userProvider;
+
+	public const CORRECT_FILTER_FIELD_PREFIXES = [
+		'' => '',
+		'=' => '=',
+		'<>' => '<>',
+		'!=' => '!=',
+		'<' => '<',
+		'<=' => '<=',
+		'>' => '>',
+		'>=' => '>=',
+		'@' => 'in',
+		'><' => 'between',
+		'%' => 'like',
+		'=%' => 'like',
+		'%=' => 'like',
+	];
+
+	private const PREFIXES_THAT_SUPPORT_ARRAY_VALUES = [
+		'@' => '@',
+		'!=' => '!=',
+		'=' => '=',
+		'' => '',
+		'<>' => '<>',
+		'><' => 'between',
+	];
+
+	public function getAllAllowedFilterKeys(array $allowedFields): array
+	{
+		$allAllowedKeys = [];
+
+		foreach ($allowedFields as $fieldKay => $fieldName)
+		{
+			foreach (array_keys(self::CORRECT_FILTER_FIELD_PREFIXES) as $prefix)
+			{
+				$filterFieldName = $prefix . $fieldKay;
+
+				$allAllowedKeys[$filterFieldName] = $filterFieldName;
+			}
+		}
+
+		return $allAllowedKeys;
+	}
+
+	public function validate(array $filter, array $allowedFields): Result
+	{
+		$result = new Result();
+		$allAllowedFilterKeys = $this->getAllAllowedFilterKeys($allowedFields);
+
+		$this->doValidate($filter, $allAllowedFilterKeys, $result);
+
+		return $result;
+	}
+
+	private function doValidate(array $filter, array $allAllowedFilterKeys, Result $result): void
+	{
+		foreach ($filter as $filterFieldName => $filterValue)
+		{
+			if (!isset($allAllowedFilterKeys[$filterFieldName]))
+			{
+				$result->addError(
+					new Error("Invalid filter: field '{$filterFieldName}' is not allowed in filter")
+				);
+			}
+
+			if (!$this->isAllowedValueTypeForKey($filterFieldName, $filterValue))
+			{
+				$result->addError(
+					new Error("Invalid filter: field '{$filterFieldName}' has invalid value",)
+				);
+			}
+		}
+	}
+
+	private function isAllowedValueTypeForKey(string $filterFieldName, mixed $filterValue): bool
+	{
+		$prefix = $this->extractPrefix($filterFieldName);
+		if (is_string($prefix) && isset(self::PREFIXES_THAT_SUPPORT_ARRAY_VALUES[$prefix]) && is_array($filterValue))
+		{
+			return true;
+		}
+
+		return is_string($filterValue) || is_numeric($filterValue) || is_null($filterValue) || is_bool($filterValue);
+	}
+
+	public function extractPrefix(string $filterFieldName): ?string
+	{
+		if (!preg_match('/^([=%><@!]*)\w+$/', $filterFieldName, $matches))
+		{
+			return null;
+		}
+
+		$prefix = $matches[1];
+
+		if (!isset(self::CORRECT_FILTER_FIELD_PREFIXES[$prefix]))
+		{
+			return null;
+		}
+
+		return $prefix;
+	}
 
 	public static function getInstance(int $userId): static
 	{
@@ -51,20 +156,6 @@ class Filter
 	public function getCurrentFilterValues(): array
 	{
 		return $this->filterOptions->getFilter($this->getFieldArrays());
-	}
-
-	public function isUserFilterApplied(): bool
-	{
-		$currentPreset = $this->filterOptions->getCurrentFilterId();
-		$isDefaultPreset = ($this->filterOptions->getDefaultFilterId() === $currentPreset);
-		$additionalFields = $this->filterOptions->getAdditionalPresetFields($currentPreset);
-		$isSearchStringEmpty = ($this->filterOptions->getSearchString() === '');
-
-		return (
-			!$isSearchStringEmpty
-			|| !$isDefaultPreset
-			|| !empty($additionalFields)
-		);
 	}
 
 	public function getPresets(): array

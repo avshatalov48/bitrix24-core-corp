@@ -37,6 +37,8 @@ final class ServerList
 
 		$configuration = new Configuration();
 		$serverListUrl = $configuration->getServerListEndpoint();
+		$region = Application::getInstance()->getLicense()->getRegion();
+
 		if (!$serverListUrl)
 		{
 			return [];
@@ -48,7 +50,9 @@ final class ServerList
 			'version' => HttpClient::HTTP_1_1,
 		]);
 
-		if ($http->get($serverListUrl) === false)
+		$responseRaw = $http->get($serverListUrl . '?' . http_build_query(['region' => $region]));
+
+		if ($responseRaw === false)
 		{
 			throw new \RuntimeException('Server is not available.');
 		}
@@ -57,7 +61,7 @@ final class ServerList
 			throw new \RuntimeException('Server is not available. Status ' . $http->getStatus());
 		}
 
-		$response = Json::decode($http->getResult());
+		$response = Json::decode($responseRaw);
 		if (!$response)
 		{
 			throw new \RuntimeException('Could not decode response.');

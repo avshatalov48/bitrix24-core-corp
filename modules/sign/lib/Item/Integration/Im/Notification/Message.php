@@ -13,6 +13,7 @@ final class Message
 		public ?string $title,
 		/** @var \Closure(): string | string $message */
 		public \Closure|string $message,
+		public string $notifyTag = '',
 	)
 	{
 	}

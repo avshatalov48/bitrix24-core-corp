@@ -5,48 +5,27 @@ jn.define('layout/ui/qr-invite', (require, exports, module) => {
 	const { RunActionExecutor } = require('rest/run-action-executor');
 	const AppTheme = require('apptheme');
 	const { withCurrentDomain } = require('utils/url');
-	const { makeLibraryImagePath } = require('asset-manager');
 	const { Loc } = require('loc');
-	const { Indent, Component } = require('tokens');
+	const { Color, Indent } = require('tokens');
+	const { Type } = require('type');
 	const { BottomSheet } = require('bottom-sheet');
-	const { Text4, Text6 } = require('ui-system/typography/text');
+	const { Text5, Text6 } = require('ui-system/typography/text');
 	const { H3 } = require('ui-system/typography/heading');
-	const { Avatar, AvatarEntityType, AvatarShape } = require('ui-system/blocks/avatar');
+	const { Avatar } = require('ui-system/blocks/avatar');
 	const { Button, ButtonDesign, ButtonSize } = require('ui-system/form/buttons/button');
 	const { Area } = require('ui-system/layout/area');
 	const { AreaList } = require('ui-system/layout/area-list');
-	const { Box } = require('ui-system/layout/box');
+	const { Box, BoxFooter } = require('ui-system/layout/box');
 	const { Alert, ButtonType } = require('alert');
-	const { Color } = require('tokens');
+	const { QrEntity } = require('layout/ui/qr-invite/src/entity');
+	const { makeLibraryImagePath } = require('asset-manager');
+	const { createTestIdGenerator } = require('utils/test');
 
-	const GRADIENT = {
-		start: '#75E4BD',
-		middle: '#32B2F4',
-		end: '#0B83FF',
-		angle: 75,
-	};
-	const CONTAINER_SIZE = 195;
+	const CONTAINER_SIZE = 245;
+	const QR_SIZE = 229;
+	const QR_BORDER_RADIUS = 24;
 
-	const entityTypeMap = {
-		collab: {
-			entityType: AvatarEntityType.COLLAB,
-			shape: AvatarShape.HEXAGON,
-			textColor: Color.collabAccentPrimary,
-			entityName: Loc.getMessage('M_UI_QR_INVITE_ENTITY_GROUP_COLLAB'),
-		},
-		extranet: {
-			entityType: AvatarEntityType.EXTRANET,
-			shape: AvatarShape.CIRCLE,
-			textColor: Color.accentMainWarning,
-			entityName: '',
-		},
-		default: {
-			entityType: AvatarEntityType.GROUP,
-			shape: AvatarShape.CIRCLE,
-			textColor: Color.accentBrandBlue,
-			entityName: '',
-		},
-	};
+	const departmentImage = makeLibraryImagePath('department.png', 'department');
 
 	class QRInvite extends LayoutComponent
 	{
@@ -54,59 +33,87 @@ jn.define('layout/ui/qr-invite', (require, exports, module) => {
 		{
 			super(props);
 			this.state = {
+				uri: props.uri ?? null,
 				loadingError: null,
 				qrCode: null,
 			};
 			this.layoutWidget = props.layoutWidget ?? PageManager;
 			this.isDarkMode = (AppTheme.id === 'dark');
 			this.shimmerRef = null;
-			this.entityNameSize ??= Animated.newCalculatedValue2D(0, 0);
-			this.marginTop = this.entityNameSize.getValue2().interpolate({
-				inputRange: [22, 48],
-				outputRange: [98, 120],
-			});
-			this.height = this.entityNameSize.getValue2().interpolate({
-				inputRange: [22, 48],
-				outputRange: [329, 339],
+			this.defaultImages = {
+				DEPARTMENT: departmentImage,
+				COMPANY: departmentImage,
+			};
+			this.getTestId = createTestIdGenerator({
+				prefix: 'qr-invite',
 			});
 		}
 
-		componentDidMount()
+		async componentDidMount()
 		{
+			await this.#loadUriIfNeeded();
 			this.#generateQr();
 		}
 
 		get uri()
 		{
-			const { uri } = this.props;
+			const { uri } = this.state;
 
 			return withCurrentDomain(uri) || '';
 		}
 
-		get entityType()
+		get entity()
 		{
-			return entityTypeMap[this.props.entityType] ?? entityTypeMap.default;
+			const { entityType } = this.props;
+
+			return entityType?.getValue();
 		}
 
-		get entityId()
+		get avatarUri()
 		{
-			return this.props.entityId || null;
+			const { entityType, avatarUri } = this.props;
+
+			const entityName = entityType?.getName();
+			const defaultImage = this.defaultImages[entityName];
+
+			return avatarUri ?? defaultImage ?? null;
 		}
 
-		get testId()
+		get isGradientBorder()
 		{
-			return 'qr-invite';
+			const entity = this.entity;
+
+			return Type.isObject(entity?.borderColor) ?? false;
 		}
+
+		#loadUriIfNeeded = () => {
+			return new Promise((resolve, reject) => {
+				const { uri, loadUri } = this.props;
+				if (uri)
+				{
+					resolve();
+
+					return;
+				}
+
+				loadUri?.()
+					.then((newUri) => {
+						this.setState({ uri: newUri }, () => resolve());
+					})
+					.catch((e) => {
+						console.error(e);
+						reject();
+					});
+			});
+		};
 
 		#handleQrResponse(response)
 		{
 			const qrCodeSvg = response.data;
 			if (qrCodeSvg)
 			{
-				const transparentQrCode = this.makeBlackTransparent(qrCodeSvg);
-
 				this.setState({
-					qrCode: transparentQrCode,
+					qrCode: qrCodeSvg,
 					loadingError: false,
 				});
 			}
@@ -135,17 +142,10 @@ jn.define('layout/ui/qr-invite', (require, exports, module) => {
 			});
 		}
 
-		makeBlackTransparent(svgString)
-		{
-			return svgString.replaceAll('fill="black"', 'fill="none"');
-		}
-
 		/**
 		 * @param {Object} props
-		 * @param {number} props.entityId
 		 * @param {string} props.uri
-		 * @param {string} props.bottomText
-		 * @param {string} [props.entityType]
+		 * @param {string} props.entityType
 		 * @param {Object} [props.parentWidget]
 		 * @param {string} [props.entityName]
 		 * @param {string} [props.avatarUri]
@@ -158,7 +158,7 @@ jn.define('layout/ui/qr-invite', (require, exports, module) => {
 
 			new BottomSheet({
 				titleParams: {
-					text: props.title ?? Loc.getMessage('M_UI_QR_INVITE_TITLE'),
+					text: props.title ?? '',
 					type: 'dialog',
 					useLargeTitleMode: true,
 				},
@@ -179,7 +179,12 @@ jn.define('layout/ui/qr-invite', (require, exports, module) => {
 		render()
 		{
 			return Box(
-				{},
+				{
+					footer: BoxFooter(
+						{},
+						this.renderButton(),
+					),
+				},
 				this.renderContent(),
 			);
 		}
@@ -206,22 +211,26 @@ jn.define('layout/ui/qr-invite', (require, exports, module) => {
 						width: CONTAINER_SIZE,
 						height: CONTAINER_SIZE,
 						alignSelf: 'center',
-						marginTop: this.marginTop,
 					},
 				},
 				ShimmerView(
 					{
 						animating: true,
-						ref: (ref) => this.shimmerRef = ref,
+						ref: (ref) => {
+							if (ref)
+							{
+								this.shimmerRef = ref;
+							}
+						},
 					},
 					View(
 						{
+							testId: this.getTestId('code-shimmer'),
 							style: {
 								backgroundColor: Color.base6.toHex(),
 								width: CONTAINER_SIZE,
 								height: CONTAINER_SIZE,
-								borderRadius: 6,
-								borderWidth: 1,
+								borderRadius: QR_BORDER_RADIUS,
 							},
 						},
 					),
@@ -233,83 +242,85 @@ jn.define('layout/ui/qr-invite', (require, exports, module) => {
 		{
 			return AreaList(
 				{},
-				View(
+				Area(
 					{
 						style: {
-							flexDirection: 'column',
-							justifyContent: 'space-between',
 							alignItems: 'center',
+							justifyContent: 'flex-start',
 						},
 					},
-					this.renderQrCode(),
-					this.renderButton(),
+					this.renderEntityInfo(),
+					View(
+						{
+							testId: this.getTestId('container'),
+							style: {
+								marginVertical: 30,
+							},
+						},
+						this.renderLoadingOrResult(),
+					),
+					this.renderBottomText(),
 				),
 			);
 		}
 
-		renderEntityName()
+		renderEntityInfo()
 		{
 			return View(
 				{
 					style: {
-						width: 255,
-						zIndex: 1,
-						position: 'absolute',
-						top: 58,
-						left: 24,
-						display: 'flex',
 						alignItems: 'center',
 						justifyContent: 'center',
-					},
-					onLayoutCalculated: {
-						contentSize: this.entityNameSize,
+						paddingHorizontal: Indent.XL3.toNumber(),
 					},
 				},
-				this.props.entityName && H3({
-					text: this.props.entityName,
-					numberOfLines: 2,
-					ellipsize: 'end',
-					color: Color.base1,
-					style: {
-						textAlign: 'center',
-						width: '100%',
-					},
-				}),
+				this.renderAvatar(this.entity),
+				this.renderEntityType(this.entity),
+				this.renderEntityName(),
 			);
 		}
 
-		renderPreviewImage()
+		renderAvatar(entityParams)
 		{
-			const avatarParams = this.entityType;
+			return Avatar({
+				testId: this.getTestId('avatar'),
+				size: 72,
+				accent: entityParams?.accent,
+				entityType: entityParams?.entityType,
+				shape: entityParams?.shape,
+				uri: this.avatarUri,
+				name: this.props.entityName,
+			});
+		}
 
-			return View(
-				{
-					style: {
-						zIndex: 1,
-						display: 'flex',
-						alignItems: 'center',
-						justifyContent: 'center',
-					},
+		renderEntityType(entityParams)
+		{
+			return Text6({
+				testId: this.getTestId(`type-${entityParams?.entityName}`),
+				text: entityParams?.entityName,
+				textAlign: 'center',
+				color: entityParams?.textColor,
+				style: {
+					marginTop: Indent.S.toNumber(),
 				},
-				Avatar({
-					testId: `${this.testId}-avatar`,
-					id: this.entityId,
-					size: 60,
-					accent: true,
-					entityType: avatarParams.entityType,
-					shape: avatarParams.shape,
-					uri: this.props.avatarUri ?? null,
-					name: this.props.entityName,
-				}),
-				Text6({
-					text: avatarParams.entityName,
+			});
+		}
+
+		renderEntityName()
+		{
+			const { entityName } = this.props;
+
+			return entityName && H3({
+				testId: this.getTestId(`title-${entityName}`),
+				text: entityName,
+				numberOfLines: 2,
+				ellipsize: 'end',
+				color: Color.base1,
+				style: {
 					textAlign: 'center',
-					color: avatarParams.textColor,
-					style: {
-						marginTop: 12,
-					},
-				}),
-			);
+					marginTop: Indent.M.toNumber(),
+				},
+			});
 		}
 
 		renderLoadingOrResult()
@@ -327,87 +338,56 @@ jn.define('layout/ui/qr-invite', (require, exports, module) => {
 			return this.showErrorMessage();
 		}
 
+		calculateOuterBorderRadius()
+		{
+			const gap = (CONTAINER_SIZE - QR_SIZE) / 2;
+
+			return QR_BORDER_RADIUS + gap;
+		}
+
 		renderGeneratedQr()
 		{
 			return View(
 				{
 					style: {
+						backgroundColorGradient: this.isGradientBorder ? this.entity?.borderColor : {},
 						width: CONTAINER_SIZE,
 						height: CONTAINER_SIZE,
-						alignSelf: 'center',
-						marginTop: this.marginTop,
-						backgroundColorGradient: GRADIENT,
-					},
-				},
-				View(
-					{
-						style: {
-							width: '100%',
-							height: '100%',
-							backgroundResizeMode: 'stretch',
-							backgroundImageSvg: this.state.qrCode,
-							zIndex: 1,
-							position: 'absolute',
-							top: 0,
-							left: 0,
-						},
-					},
-				),
-			);
-		}
-
-		renderQrCode()
-		{
-			const fileName = 'qr-background.svg';
-			const uri = makeLibraryImagePath(fileName, 'qr-invite');
-
-			return Area(
-				{
-					style: {
-						marginBottom: Indent.XL3.toNumber(),
-						marginTop: Indent.XL.toNumber(),
-						marginHorizontal: Indent.XL3.toNumber(),
-						display: 'flex',
+						borderRadius: this.calculateOuterBorderRadius(),
 						alignItems: 'center',
-						justifyContent: 'flex-start',
-						minHeight: 401,
+						justifyContent: 'center',
 					},
-					isFirst: true,
 				},
-				this.renderPreviewImage(),
-				View(
-					{
-						style: {
-							width: 303,
-							minHeight: this.height,
-							marginTop: -58,
-							backgroundImageSvgUrl: uri,
-							backgroundResizeMode: 'stretch',
-						},
+				View({
+					testId: this.getTestId('code'),
+					style: {
+						alignSelf: 'center',
+						width: QR_SIZE,
+						height: QR_SIZE,
+						borderRadius: QR_BORDER_RADIUS,
+						backgroundImageSvg: this.state.qrCode,
+						backgroundPosition: 'center',
+						backgroundResizeMode: 'stretch',
 					},
-					this.renderEntityName(),
-					this.renderLoadingOrResult(),
-				),
-				this.renderBottomText(),
+				}),
 			);
 		}
 
 		renderBottomText()
 		{
-			const { bottomText } = this.props;
+			const bottomText = this.entity?.bottomText;
 
 			if (!bottomText)
 			{
 				return null;
 			}
 
-			return Text4({
+			return Text5({
+				testId: this.getTestId(`bottom-text-${bottomText}`),
 				text: bottomText,
-				color: Color.base2,
+				color: Color.base3,
 				style: {
 					textAlign: 'center',
-					marginVertical: Indent.XL3.toNumber(),
-					maxWidth: 303,
 				},
 			});
 		}
@@ -422,19 +402,18 @@ jn.define('layout/ui/qr-invite', (require, exports, module) => {
 		renderButton()
 		{
 			return Button({
-				testId: `${this.testId}-button`,
+				testId: this.getTestId('button'),
 				text: Loc.getMessage('M_UI_QR_INVITE_BUTTON_TEXT'),
-				design: ButtonDesign.FILLED,
+				design: ButtonDesign.OUTLINE,
 				size: ButtonSize.L,
 				stretched: true,
 				style: {
 					paddingBottom: Indent.XL.toNumber(),
-					paddingHorizontal: Component.paddingLrMore.toNumber(),
 				},
 				onClick: this.closeWidget,
 			});
 		}
 	}
 
-	module.exports = { QRInvite };
+	module.exports = { QRInvite, QrEntity };
 });

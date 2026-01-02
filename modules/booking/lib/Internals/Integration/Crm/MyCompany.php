@@ -12,11 +12,29 @@ class MyCompany
 {
 	public static function getName(): string|null
 	{
-		if (Loader::includeModule('crm'))
+		if (!Loader::includeModule('crm'))
 		{
-			return Container::getInstance()->getCompanyBroker()->getTitle(EntityLink::getDefaultMyCompanyId());
+			return null;
 		}
 
-		return null;
+		$id = self::getId();
+		if ($id === null)
+		{
+			return null;
+		}
+
+		return Container::getInstance()->getCompanyBroker()->getTitle($id);
+	}
+
+	public static function getId(): int|null
+	{
+		if (!Loader::includeModule('crm'))
+		{
+			return null;
+		}
+
+		$id = (int)EntityLink::getDefaultMyCompanyId();
+
+		return $id > 0 ? $id : null;
 	}
 }

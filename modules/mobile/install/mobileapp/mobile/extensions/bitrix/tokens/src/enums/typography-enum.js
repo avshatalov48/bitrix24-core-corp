@@ -4,6 +4,8 @@
 jn.define('tokens/src/enums/typography-enum', (require, exports, module) => {
 	const { BaseEnum } = require('utils/enums/base');
 
+	const isAndroid = Application.getPlatform() !== 'ios';
+
 	/**
 	 * @class TypographyEnum
 	 * @extends {BaseEnum<TypographyEnum>}
@@ -137,6 +139,106 @@ jn.define('tokens/src/enums/typography-enum', (require, exports, module) => {
 			const { letterSpacing } = this.getValue();
 
 			return letterSpacing > 0 ? letterSpacing : null;
+		}
+
+		getDigitWidth()
+		{
+			const width = {
+				h1: 17,
+				h2: 14,
+				h3: 13,
+				h4: 12,
+				h5: 10,
+
+				h1Accent: 17,
+				h2Accent: 14,
+				h3Accent: 13,
+				h4Accent: 12,
+				h5Accent: 11,
+
+				text1: 13,
+				text2: 11,
+				text3: 11,
+				text4: 10,
+				text5: 9,
+				text6: 8,
+				text7: 7,
+				textCapital: 7,
+
+				text1Accent: 13,
+				text2Accent: 12,
+				text3Accent: 11,
+				text4Accent: 10,
+				text5Accent: 9,
+				text6Accent: 9,
+				text7Accent: 7,
+				textCapitalAccent: 7,
+			};
+			const name = this.getName().replace('body', 'text').replace('Style', '');
+
+			if (!width[name])
+			{
+				console.error('TypographyEnum: getDigitWidth: Invalid token name', name);
+
+				return 0;
+			}
+
+			let androidValueShift = -1;
+			if (width[name] > 14)
+			{
+				androidValueShift = -3;
+			}
+			else if (width[name] > 11)
+			{
+				androidValueShift = -2;
+			}
+
+			return width[name] + (isAndroid ? androidValueShift : 0);
+		}
+
+		getDigitHeight()
+		{
+			const digitHeight = {
+				h1: 33,
+				h2: 27,
+				h3: 24,
+				h4: 22,
+				h5: 20,
+
+				h1Accent: 33,
+				h2Accent: 27,
+				h3Accent: 24,
+				h4Accent: 22,
+				h5Accent: 20,
+
+				text1: 24,
+				text2: 22,
+				text3: 21,
+				text4: 20,
+				text5: 18,
+				text6: 16,
+				text7: 14,
+				textCapital: 14,
+
+				text1Accent: 24,
+				text2Accent: 22,
+				text3Accent: 21,
+				text4Accent: 20,
+				text5Accent: 18,
+				text6Accent: 16,
+				text7Accent: 14,
+				textCapitalAccent: 14,
+			};
+			const name = this.getName().replace('body', 'text').replace('Style', '');
+
+			if (!digitHeight[name])
+			{
+				console.error('TypographyEnum: getDigitHeight: Invalid token name', name);
+
+				return 0;
+			}
+
+			return digitHeight[name] + (isAndroid ? 1 : 0);
 		}
 	}
 

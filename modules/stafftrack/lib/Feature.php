@@ -11,6 +11,7 @@ class Feature
 	public const MODULE_ID = 'stafftrack';
 	public const CHECK_IN_SETTINGS_KEY = 'feature_check_in_enabled_by_settings';
 	public const CHECK_IN_GEO_ENABLED_KEY = 'feature_check_in_geo_enabled';
+	public const CHECK_IN_START_KEY = 'feature_check_in_start_enabled';
 
 	/**
 	 * @return bool
@@ -68,6 +69,16 @@ class Feature
 	}
 
 	/**
+	 * @return bool
+	 */
+	public static function isCheckInStartEnabled(): bool
+	{
+		$option = Option::get(self::MODULE_ID, self::CHECK_IN_START_KEY, 'N');
+
+		return $option === 'Y';
+	}
+
+	/**
 	 * @return void
 	 * @throws \Bitrix\Main\ArgumentOutOfRangeException
 	 */
@@ -83,5 +94,23 @@ class Feature
 	public static function turnCheckInGeoOff(): void
 	{
 		Option::set(self::MODULE_ID, self::CHECK_IN_GEO_ENABLED_KEY, 'N');
+	}
+
+	/**
+	 * @return void
+	 * @throws \Bitrix\Main\ArgumentOutOfRangeException
+	 */
+	public static function turnCheckInStartOn(): void
+	{
+		Option::set(self::MODULE_ID, self::CHECK_IN_START_KEY, 'Y');
+	}
+
+	/**
+	 * @return void
+	 * @throws \Bitrix\Main\ArgumentOutOfRangeException
+	 */
+	public static function turnCheckInStartOff(): void
+	{
+		Option::set(self::MODULE_ID, self::CHECK_IN_START_KEY, 'N');
 	}
 }

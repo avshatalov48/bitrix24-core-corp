@@ -3,6 +3,7 @@
 namespace Bitrix\Crm\Ads;
 
 use Bitrix\Crm\Integration;
+use Bitrix\Crm\Service\Container;
 use Bitrix\Crm\WebForm\Form;
 use Bitrix\Crm\Ads\Form\FieldMapper;
 use Bitrix\Crm\WebForm\Internals\FormFieldMappingTable;
@@ -134,8 +135,7 @@ class AdsForm extends AdsService
 	 */
 	public static function canUserEdit($userId)
 	{
-		$crmPerms = new \CCrmPerms($userId);
-		return !$crmPerms->HavePerm('WEBFORM', BX_CRM_PERM_NONE, 'WRITE');
+		return Container::getInstance()->getUserPermissions((int)$userId)->webForm()->canEdit();
 	}
 
 	/**

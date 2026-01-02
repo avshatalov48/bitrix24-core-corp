@@ -10,5 +10,4 @@ $MESS["CRM_PERMS_EDIT_ENTITIES_MORE"] = "More";
 $MESS["CRM_PERMS_EDIT_ENTITIES_ROLE"] = "Role";
 $MESS["CRM_PERMS_EDIT_ENTITIES_SAVE"] = "Save";
 $MESS["CRM_PERMS_EDIT_ENTITIES_STAGES"] = "Stages";
-$MESS["CRM_PERMS_EDIT_RESTRICTION"] = "Editing CRM access permissions is available only on <a target=\"_blank\" href=\"https://www.bitrix24.com/prices/\">commercial plans</a>.";
 $MESS["CRM_PERMS_EDIT_ROLE_DELETE"] = "Delete role";

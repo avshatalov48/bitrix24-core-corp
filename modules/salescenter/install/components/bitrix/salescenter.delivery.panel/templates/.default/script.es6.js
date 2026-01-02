@@ -61,6 +61,11 @@
 
 		getContent: function()
 		{
+			if (this.data.type === 'counter')
+			{
+				return this.getItemCounter();
+			}
+
 			if(!this.layout.wrapper)
 			{
 				this.layout.wrapper = BX.create('div', {
@@ -94,6 +99,58 @@
 			}
 
 			return this.layout.wrapper;
+		},
+
+		getItemCounter: function()
+		{
+			return BX.create(
+				'div',
+				{
+					props: {
+						className: 'salescenter-delivery-item salescenter-delivery-integration-marketplace-tile-item salescenter-delivery-integration-marketplace-tile-counter',
+					},
+					children: [
+						BX.create('div', {
+							props: {
+								className: 'salescenter-delivery-integration-marketplace-tile-counter-head',
+							},
+							children: [
+								BX.create('div', {
+									props: {
+										className: 'salescenter-delivery-integration-marketplace-tile-counter-name',
+									},
+									text: this.title,
+								}),
+								BX.create('div', {
+									props: {
+										className: 'salescenter-delivery-integration-marketplace-tile-counter-value',
+									},
+									text: this.data.count,
+								}),
+							],
+						}),
+						BX.create('div', {
+							props: {
+								className: 'salescenter-delivery-integration-marketplace-tile-counter-link-box',
+							},
+							children: [
+								BX.create('div', {
+									props: {
+										className: 'salescenter-delivery-integration-marketplace-tile-counter-link',
+									},
+									text: this.data.description,
+								}),
+							],
+						}),
+					],
+					events: {
+						click: function()
+						{
+							this.onClick();
+						}.bind(this),
+					},
+				},
+			);
 		},
 
 		getImage: function()
@@ -235,11 +292,6 @@
 							{
 								this.prepareDeliveryForm(slider);
 							}
-							else
-							{
-								var url = this.data.connectPath;
-								//this.setDeliveryListAddButton(slider, url);
-							}
 						}.bind(this),
 						onClose: function (e)
 						{
@@ -267,6 +319,10 @@
 					});
 				}
 			}
+			else if (this.data.type === 'counter')
+			{
+				BX.SidePanel.Instance.open(this.data.connectPath);
+			}
 			else if(this.data.type === "marketplaceApp")
 			{
 				if (this.itemSelected)
@@ -278,9 +334,9 @@
 					this.showRestApplication(this.data.code);
 				}
 			}
-			else if(this.data.type === 'recommend')
+			else if (this.data.type === 'recommend')
 			{
-				BX.SidePanel.Instance.open(this.data.connectPath, {width: 735});
+				BX.Salescenter.Manager.openFeedbackFormParams(null, this.data.feedbackConfig);
 			}
 			else if(this.data.type === 'actionbox')
 			{

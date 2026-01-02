@@ -6,56 +6,64 @@ jn.define('calendar/event-list-view/more-menu', (require, exports, module) => {
 	const { Loc } = require('loc');
 	const { Icon } = require('ui-system/blocks/icon');
 
+	const { SectionListPage } = require('calendar/event-list-view/section-list/page');
 	const { SettingsPage } = require('calendar/event-list-view/settings-page');
 	const { SyncManager } = require('calendar/data-managers/sync-manager');
 	const { State } = require('calendar/event-list-view/state');
 	const { CalendarType, Counters } = require('calendar/enums');
+	const { BaseMenu, baseSectionType } = require('calendar/base-menu');
 
-	class MoreMenu
+	class MoreMenu extends BaseMenu
 	{
 		constructor(props)
 		{
-			this.props = props;
+			super(props);
+
 			this.counters = props.counters;
-			this.menu = null;
 			this.settingsPage = null;
+			this.sectionListPage = null;
 		}
-
-		showMenu = () => {
-			if (!this.menu)
-			{
-				this.menu = dialogs.createPopupMenu();
-			}
-
-			this.menu.setData(this.getItems(), this.getSections(), (event, item) => {
-				if (event === 'onItemSelected')
-				{
-					this.onItemSelected(item);
-				}
-			});
-
-			this.menu.show();
-		};
 
 		getItems()
 		{
 			const items = [];
 
-			if (!env.extranet && State.calType === CalendarType.USER)
+			if (this.shouldShowSyncItem())
 			{
 				items.push(this.getSyncItem());
 			}
 
-			items.push(this.getSettingsItem());
+			items.push(this.getSectionListItem());
+
+			if (this.shouldShowSettingsItem())
+			{
+				items.push(this.getSettingsItem());
+			}
 
 			return items;
+		}
+
+		getSectionListItem()
+		{
+			return {
+				id: itemTypes.sectionList,
+				sectionCode: baseSectionType,
+				testId: 'calendar-more-menu-calendar-list',
+				title: Loc.getMessage('M_CALENDAR_EVENT_LIST_SECTION_LIST_TITLE'),
+				iconName: Icon.CALENDAR_WITH_CHECKS.getIconName(),
+				styles: {
+					icon: {
+						color: Color.base3.toHex(),
+					},
+				},
+			};
 		}
 
 		getSyncItem()
 		{
 			return {
 				id: itemTypes.sync,
-				sectionCode: sectionTypes.base,
+				sectionCode: baseSectionType,
 				testId: 'calendar-more-menu-sync',
 				title: Loc.getMessage('M_CALENDAR_EVENT_LIST_MORE_MENU_SYNC'),
 				counterValue: this.counters[Counters.SYNC_ERRORS],
@@ -73,7 +81,7 @@ jn.define('calendar/event-list-view/more-menu', (require, exports, module) => {
 		{
 			return {
 				id: itemTypes.settings,
-				sectionCode: sectionTypes.base,
+				sectionCode: baseSectionType,
 				testId: 'calendar-more-menu-settings',
 				title: Loc.getMessage('M_CALENDAR_EVENT_LIST_MORE_MENU_SETTINGS'),
 				iconName: Icon.SETTINGS.getIconName(),
@@ -85,19 +93,14 @@ jn.define('calendar/event-list-view/more-menu', (require, exports, module) => {
 			};
 		}
 
-		getSections()
-		{
-			return [
-				{
-					id: sectionTypes.base,
-					title: '',
-				},
-			];
-		}
-
 		onItemSelected(item)
 		{
 			const menuItemId = item.id;
+
+			if (menuItemId === itemTypes.sectionList)
+			{
+				return this.openSectionListPage();
+			}
 
 			if (menuItemId === itemTypes.sync)
 			{
@@ -117,10 +120,23 @@ jn.define('calendar/event-list-view/more-menu', (require, exports, module) => {
 			return {
 				type: Icon.MORE.getIconName(),
 				id: 'calendar-more',
+				badgeCode: 'calendar-more',
 				testId: 'calendar-more',
-				callback: this.showMenu,
+				callback: () => this.showMenu(),
 				dot: this.hasCountersValue(),
 			};
+		}
+
+		showMenu()
+		{
+			this.show(null);
+		}
+
+		openSectionListPage()
+		{
+			this.sectionListPage = new SectionListPage();
+
+			this.sectionListPage.show(this.props.layout);
 		}
 
 		openSettingsPage()
@@ -139,15 +155,27 @@ jn.define('calendar/event-list-view/more-menu', (require, exports, module) => {
 		{
 			this.counters = counters;
 		}
+
+		shouldShowSyncItem()
+		{
+			return !env.extranet
+				&& State.calType === CalendarType.USER
+				&& State.ownerId === Number(env.userId)
+			;
+		}
+
+		shouldShowSettingsItem()
+		{
+			return State.calType === CalendarType.USER
+				&& State.ownerId === Number(env.userId)
+			;
+		}
 	}
 
 	const itemTypes = {
 		sync: 'sync',
+		sectionList: 'section-list',
 		settings: 'settings',
-	};
-
-	const sectionTypes = {
-		base: 'base',
 	};
 
 	module.exports = { MoreMenu };

@@ -19,17 +19,29 @@ class PersonType extends Sale\PersonType
 	public const CRM_COMPANY = 'CRM_COMPANY';
 	public const CRM_CONTACT = 'CRM_CONTACT';
 
-	public static function getCompanyPersonTypeId()
+	private static array $personTypeList = [];
+
+	public static function getCompanyPersonTypeId(): ?int
 	{
 		return self::getPersonTypeId(static::CRM_COMPANY);
 	}
 
-	public static function getContactPersonTypeId()
+	public static function getContactPersonTypeId(): ?int
 	{
 		return self::getPersonTypeId(static::CRM_CONTACT);
 	}
 
-	private static function getPersonTypeId($code)
+	private static function getPersonTypeId(string $code): ?int
+	{
+		if (!array_key_exists($code, static::$personTypeList))
+		{
+			static::$personTypeList[$code] = static::getPersonTypeIdByCode($code);
+		}
+
+		return static::$personTypeList[$code];
+	}
+
+	private static function getPersonTypeIdByCode(string $code): ?int
 	{
 		if ($code === self::CRM_COMPANY)
 		{
@@ -44,19 +56,20 @@ class PersonType extends Sale\PersonType
 			throw new Main\SystemException('Supported only company or contact entities');
 		}
 
-		$personTypeRaw = static::getList([
+		$personType = static::getList([
 			'filter' => [
 				'=CODE' => $code,
 			],
 			'select' => ['ID'],
-			'limit' => 1
-		]);
-		if ($personType = $personTypeRaw->fetch())
+			'limit' => 1,
+		])->fetch();
+
+		if ($personType)
 		{
-			return $personType['ID'];
+			return (int)$personType['ID'];
 		}
 
-		$personTypeRaw = static::getList([
+		$personType = static::getList([
 			'filter' => [
 				'BIZVAL.DOMAIN' => $businessValueDomain,
 			],
@@ -71,14 +84,9 @@ class PersonType extends Sale\PersonType
 					['join_type' => 'INNER']
 				),
 			],
-			'limit' => 1
-		]);
+			'limit' => 1,
+		])->fetch();
 
-		if ($personType = $personTypeRaw->fetch())
-		{
-			return $personType['ID'];
-		}
-
-		return null;
+		return $personType ? (int)$personType['ID'] : null;
 	}
 }

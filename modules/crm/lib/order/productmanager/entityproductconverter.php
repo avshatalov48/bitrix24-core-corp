@@ -9,7 +9,6 @@ use Bitrix\Crm\Order\OrderDealSynchronizer\Products\ProductRowXmlId;
 use Bitrix\Crm\Order\ProductManager\ProductConverter\PricesConverter;
 use Bitrix\Main\Loader;
 use Bitrix\Sale\Basket;
-use Bitrix\Sale\BasketItem;
 use Bitrix\Sale\Internals\Catalog\ProductTypeMapper;
 use Exception;
 
@@ -20,6 +19,10 @@ class EntityProductConverter implements ProductConverter
 {
 	private ?Basket $basket = null;
 	private PricesConverter $pricesConverter;
+	/**
+	 * @var array Product to Type cache: [productId => type, …]
+	 * */
+	private array $catalogTypesCache = [];
 
 	/**
 	 * @throws Exception if not installed 'sale' module.
@@ -27,6 +30,7 @@ class EntityProductConverter implements ProductConverter
 	public function __construct()
 	{
 		Loader::requireModule('sale');
+		Loader::requireModule('catalog');
 
 		$this->pricesConverter = new PricesConverter;
 	}
@@ -61,11 +65,22 @@ class EntityProductConverter implements ProductConverter
 			$xmlId = BasketXmlId::getXmlIdFromRowId((int)$product['ID']);
 		}
 
+		$productType = null;
+		$productId = (int)($product['PRODUCT_ID'] ?? 0);
+		if ($productId)
+		{
+			$productType = $this->resolveProductType($productId);
+		}
+		if ($productType === null)
+		{
+			$productId = 0;
+		}
+
 		return [
 			'NAME' => $product['PRODUCT_NAME'],
-			'MODULE' => $product['PRODUCT_ID'] ? 'catalog' : '',
-			'PRODUCT_ID' => $product['PRODUCT_ID'],
-			'OFFER_ID' => $product['PRODUCT_ID'], // used in basket builders
+			'MODULE' => $productId ? 'catalog' : '',
+			'PRODUCT_ID' => $productId,
+			'OFFER_ID' => $productId, // used in basket builders
 			'QUANTITY' => $product['QUANTITY'],
 			'DISCOUNT_PRICE' => $prices['DISCOUNT_PRICE'],
 			'BASE_PRICE' => $prices['BASE_PRICE'],
@@ -76,7 +91,7 @@ class EntityProductConverter implements ProductConverter
 			'VAT_RATE' => $vatRate,
 			'VAT_INCLUDED' => $product['TAX_INCLUDED'] ?? 'N',
 			'XML_ID' => $xmlId,
-			'TYPE' => ProductTypeMapper::getType((int)($product['TYPE'] ?? 0)),
+			'TYPE' => ProductTypeMapper::getType((int)$productType),
 			// not `sale` basket item, but used.
 			'DISCOUNT_SUM' => $prices['DISCOUNT_PRICE'],
 			'DISCOUNT_RATE' => $product['DISCOUNT_RATE'] ?? null,
@@ -108,96 +123,92 @@ class EntityProductConverter implements ProductConverter
 			$xmlId = ProductRowXmlId::getXmlIdFromBasketId((int)$basketItem['ID']);
 		}
 
+		$productId = (int)($basketItem['PRODUCT_ID'] ?? 0);
+
+		$defaultProductType = \Bitrix\Catalog\ProductTable::TYPE_PRODUCT;
+
 		$result = [
 			'XML_ID' => $xmlId,
 			'PRODUCT_NAME' => $basketItem['NAME'],
-			'PRODUCT_ID' => $basketItem['PRODUCT_ID'],
+			'PRODUCT_ID' => $productId,
 			'QUANTITY' => $basketItem['QUANTITY'],
 			//'PRICE_ACCOUNT' => 'Calculated when saving',
 			'MEASURE_CODE' => $basketItem['MEASURE_CODE'],
 			'MEASURE_NAME' => $basketItem['MEASURE_NAME'],
 			'TAX_RATE' => $taxRate,
 			'TAX_INCLUDED' => $basketItem['VAT_INCLUDED'],
+			'DISCOUNT_TYPE_ID' => Discount::MONETARY,
+			'TYPE' => $this->resolveProductType($productId) ?? $defaultProductType,
 		];
 
-		// prices
-		$vatRate = (float)$basketItem['VAT_RATE'];
-		$vatIncluded = $basketItem['VAT_INCLUDED'] === 'Y';
-		$price = (float)$basketItem['PRICE'];
-		$basePrice = (float)$basketItem['BASE_PRICE'];
+		$prices = $this->pricesConverter->convertToProductRowPrices(
+			(float)($basketItem['PRICE'] ?? 0),
+			(float)($basketItem['BASE_PRICE'] ?? 0),
+			(float)($basketItem['VAT_RATE'] ?? 0),
+			($basketItem['VAT_INCLUDED'] ?? 'N') === 'Y'
+		);
 
-		$result += $this->pricesConverter->convertToProductRowPrices($price, $basePrice, $vatRate, $vatIncluded);
-		$result['DISCOUNT_TYPE_ID'] = Discount::MONETARY;
-
-		// type
-		$result['TYPE'] = $this->getTypeByProductId((int)$basketItem['PRODUCT_ID']);
-
-		return $result;
+		return array_merge($result, $prices);
 	}
 
-	private function getTypeByProductId(int $productId): ?int
+	private function resolveProductType(int $productId): ?int
 	{
-		$catalogProductTypes = $this->getCatalogProductTypes();
-		return $catalogProductTypes[$productId] ?? null;
+		if ($productId <= 0)
+		{
+			return null;
+		}
+
+		if ($this->basket !== null && empty($this->catalogTypesCache))
+		{
+			$this->loadCatalogTypesForBasket();
+		}
+
+		if (array_key_exists($productId, $this->catalogTypesCache))
+		{
+			return $this->catalogTypesCache[$productId];
+		}
+
+		$this->catalogTypesCache[$productId] = $this->fetchTypeFromCatalog($productId);
+
+		return $this->catalogTypesCache[$productId] ?? null;
 	}
 
-	private function getCatalogProductTypes(): array
+	private function fetchTypeFromCatalog(int $productId): ?int
 	{
-		static $result = [];
+		$row = Catalog\ProductTable::getRow([
+			'select' => ['TYPE'],
+			'filter' => ['=ID' => $productId],
+		]);
 
-		if (!$this->basket)
+		if (!$row)
 		{
-			return $result;
+			return null;
 		}
 
-		if (!Loader::includeModule('catalog'))
-		{
-			return $result;
-		}
+		return (int)$row['TYPE'];
+	}
 
-		// local cache
-		$basketUniqHash = $this->getBasketUniqHash();
-		if (!empty($result[$basketUniqHash]))
-		{
-			return $result[$basketUniqHash];
-		}
-
+	private function loadCatalogTypesForBasket(): void
+	{
 		$productIds = [];
-
-		/** @var BasketItem $basketItem */
-		foreach ($this->basket as $basketItem)
+		foreach ($this->basket as $item)
 		{
-			$productIds[] = $basketItem->getProductId();
+			$productIds[] = (int)$item->getProductId();
+		}
+		$productIds = array_filter($productIds);
+
+		if (empty($productIds))
+		{
+			return;
 		}
 
-		if ($productIds)
+		$res = Catalog\ProductTable::getList([
+			'select' => ['ID', 'TYPE'],
+			'filter' => ['@ID' => $productIds],
+		]);
+		while ($row = $res->fetch())
 		{
-			$productIterator = Catalog\ProductTable::getList([
-				'select' => ['ID', 'TYPE'],
-				'filter' => [
-					'@ID' => $productIds,
-				],
-			]);
-
-			$rows = [];
-			while ($product = $productIterator->fetch())
-			{
-				$rows[$product['ID']] = (int)$product['TYPE'];
-			}
-
-			$result[$basketUniqHash] = $rows;
+			$this->catalogTypesCache[(int)$row['ID']] = (int)$row['TYPE'];
 		}
-
-		return $result[$basketUniqHash];
-	}
-
-	private function getBasketUniqHash(): ?string
-	{
-		if ($this->basket)
-		{
-			return md5(serialize($this->basket->toArray()));
-		}
-
-		return null;
 	}
 }

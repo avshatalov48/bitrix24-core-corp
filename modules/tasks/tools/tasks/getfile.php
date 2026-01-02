@@ -29,5 +29,3 @@ if ( ! (
 	CHTTP::SetAuthHeader(false);
 	die();
 }
-
-require_once($_SERVER["DOCUMENT_ROOT"] . "/bitrix/components/bitrix/tasks.task.detail/show_file.php");

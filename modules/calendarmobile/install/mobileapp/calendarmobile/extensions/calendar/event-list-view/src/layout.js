@@ -2,9 +2,9 @@
  * @module calendar/event-list-view/layout
  */
 jn.define('calendar/event-list-view/layout', (require, exports, module) => {
-	const { Color } = require('tokens');
 	const { Box } = require('ui-system/layout/box');
 
+	const { CalendarHeader } = require('calendar/event-list-view/layout/calendar-header');
 	const { CalendarGrid } = require('calendar/event-list-view/layout/calendar-grid');
 	const { SearchHeader } = require('calendar/event-list-view/layout/search-header');
 	const { InvitesBanner } = require('calendar/event-list-view/layout/invites-banner');
@@ -20,19 +20,24 @@ jn.define('calendar/event-list-view/layout', (require, exports, module) => {
 		{
 			return Box(
 				{
-					backgroundColor: State.isSearchMode ? Color.bgContentPrimary : Color.bgContentSecondary,
 					style: {
 						flex: 1,
 					},
 					safeArea: {
-						bottom: true,
+						bottom: State.isBaseViewMode,
 					},
 				},
 				this.renderSearchHeader(),
+				this.renderCalendarHeader(),
 				this.renderCalendarView(),
 				this.renderInvitesBanner(),
 				this.renderEventList(),
 			);
+		}
+
+		renderCalendarHeader()
+		{
+			return new CalendarHeader();
 		}
 
 		renderCalendarView()

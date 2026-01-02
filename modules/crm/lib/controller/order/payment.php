@@ -15,14 +15,17 @@ class Payment extends Entity
 
 	protected function processBeforeAction(Main\Engine\Action $action)
 	{
-		$userPermissions = \CCrmPerms::GetCurrentUserPermissions();
 		$actionArguments = $action->getArguments();
 
 		if ($action->getName() === 'setPaid')
 		{
 			$id = $actionArguments['payment'] ? $actionArguments['payment']->getId() : 0;
 
-			if (!Crm\Order\Permissions\Payment::checkUpdatePermission($id, $userPermissions))
+			if (!\Bitrix\Crm\Service\Container::getInstance()
+				->getUserPermissions()
+				->item()
+				->canUpdate(\CCrmOwnerType::OrderPayment, $id)
+			)
 			{
 				$this->addError(
 					new Main\Error(
@@ -53,7 +56,11 @@ class Payment extends Entity
 
 			foreach ($ids as $id)
 			{
-				if (!Crm\Order\Permissions\Payment::checkDeletePermission($id, $userPermissions))
+				if (!\Bitrix\Crm\Service\Container::getInstance()
+					->getUserPermissions()
+					->item()
+					->canDelete(\CCrmOwnerType::OrderPayment, $id)
+				)
 				{
 					$this->addError(
 						new Main\Error(

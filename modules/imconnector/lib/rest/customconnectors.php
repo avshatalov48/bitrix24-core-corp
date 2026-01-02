@@ -338,6 +338,7 @@ if (Loader::includeModule('rest'))
 		}
 
 		/**
+		 * @restMethod 'imconnector.register'
 		 * @param $params
 		 * @param $n
 		 * @param \CRestServer $server
@@ -368,10 +369,14 @@ if (Loader::includeModule('rest'))
 			}
 			elseif (
 				!empty($params['ID'])
+				&& is_string($params['ID'])
 				&& !empty($params['NAME'])
+				&& is_string($params['NAME'])
 				&& !empty($params['ICON']['DATA_IMAGE'])
+				&& is_string($params['ICON']['DATA_IMAGE'])
 				&& !empty($appId)
 				&& !empty($params['PLACEMENT_HANDLER'])
+				&& is_string($params['PLACEMENT_HANDLER'])
 			)
 			{
 				$registerParams = [
@@ -454,7 +459,7 @@ if (Loader::includeModule('rest'))
 					];
 				}
 			}
-			elseif (empty($params['ID']))
+			elseif (empty($params['ID']) || !is_string($params['ID']))
 			{
 				$result = [
 					'result' => false,
@@ -462,7 +467,7 @@ if (Loader::includeModule('rest'))
 					'error_description' => Loc::getMessage('IMCONNECTOR_REST_CONNECTOR_ID_REQUIRED')
 				];
 			}
-			elseif (empty($params['NAME']))
+			elseif (empty($params['NAME']) || !is_string($params['NAME']))
 			{
 				$result = [
 					'result' => false,
@@ -470,7 +475,7 @@ if (Loader::includeModule('rest'))
 					'error_description' => Loc::getMessage('IMCONNECTOR_REST_NAME_REQUIRED')
 				];
 			}
-			elseif (empty($params['ICON']['DATA_IMAGE']))
+			elseif (empty($params['ICON']['DATA_IMAGE']) || !is_string($params['ICON']['DATA_IMAGE']))
 			{
 				$result = [
 					'result' => false,
@@ -486,7 +491,7 @@ if (Loader::includeModule('rest'))
 					'error_description' => Loc::getMessage('IMCONNECTOR_REST_NO_APPLICATION_ID')
 				];
 			}
-			elseif (empty($params['PLACEMENT_HANDLER']))
+			elseif (empty($params['PLACEMENT_HANDLER']) || !is_string($params['PLACEMENT_HANDLER']))
 			{
 				$result = [
 					'result' => false,

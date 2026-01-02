@@ -58,7 +58,7 @@
 .bx-imol-list-recent-empty-state__container {
 	padding: 127px 30px 0;
 	text-align: center;
-	font: 13px / 20px var(--ui-font-family-system);
+	font: 13px / 20px var(--ui-font-family-primary, var(--ui-font-family-system));
 	color: var(--imol-list-recent__color_emty-text);
 }
 
@@ -67,6 +67,7 @@
 	overflow: hidden;
 	overflow-y: scroll;
 }
+
 .bx-imol-list-recent__item {
 	--imol-list-recent__color_item-content: var(--ui-color-palette-gray-40);
 	--imol-list-recent__color_hover: rgba(var(--ui-color-palette-white-base-rgb), 0.7);
@@ -147,7 +148,7 @@
 
 .bx-imol-list-recent-item__message {
 	display: flex;
-	font: 14px/19px var(--ui-font-family-system);
+	font: 14px/19px var(--ui-font-family-primary, var(--ui-font-family-system));
 	font-weight: var(--imol-list-recent__font-weight_message);
 	color: var(--ui-color-palette-gray-60);
 }
@@ -198,7 +199,7 @@
 	justify-content: right;
 	height: 18px;
 	margin-left: 3px;
-	font: 12px / 1.2 var(--ui-font-family-system);
+	font: 12px / 1.2 var(--ui-font-family-primary, var(--ui-font-family-system));
 	color: var(--imol-list-recent__color_item-content);
 }
 
@@ -238,7 +239,7 @@
 	border-radius: 30px;
 	transform-style: preserve-3d;
 	color: var(--imol-list-recent__color_counter);
-	font: 12px / 14px var(--ui-font-family-system);
+	font: 12px / 14px var(--ui-font-family-primary, var(--ui-font-family-system));
 	font-weight: var(--imol-list-recent__font-weight_counter);
 	background-color: var(--imol-list-recent__background-color_counter);
 }

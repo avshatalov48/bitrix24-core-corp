@@ -13,7 +13,8 @@ $APPLICATION->IncludeComponent(
 	'',
 	[
 		'ID' => $arResult['MENU_ID'],
-		'ITEMS' => $arResult['ITEMS']
+		'ITEMS' => $arResult['ITEMS'],
+		'THEME' => defined('AIR_SITE_TEMPLATE') ? 'air' : null,
 	],
 	$component,
 	['HIDE_ICONS' => true]

@@ -1,0 +1,19 @@
+<?php
+$MESS["CRM_AUTOMATION_CMP_FIELD_CHANGED_FIELDS"] = "Өрістерді бақылау";
+$MESS["CRM_AUTOMATION_CMP_FIELD_CHANGED_FIELDS_1"] = "Өрістерді бақылау";
+$MESS["CRM_AUTOMATION_CMP_FIELD_CHANGED_FIELDS_CHOOSE"] = "Өрістерді таңдау";
+$MESS["CRM_AUTOMATION_CMP_FILL_TRACKNUM_DELIVERY"] = "Жеткізу қызметі";
+$MESS["CRM_AUTOMATION_CMP_FILL_TRACKNUM_DELIVERY_ANY"] = "кез келген";
+$MESS["CRM_AUTOMATION_CMP_OPENLINE_ANSWER_CTRL_CONDITION"] = "Чат өрістері";
+$MESS["CRM_AUTOMATION_CMP_OPENLINE_MESSAGE_TEXT_CONDITION"] = "Хабарлама мәтінінде";
+$MESS["CRM_AUTOMATION_CMP_SHIPMENT_CHANGED_CONDITION"] = "Жеткізу өрістері";
+$MESS["CRM_AUTOMATION_CMP_TASK_STATUS_ANY"] = "кез келген";
+$MESS["CRM_AUTOMATION_CMP_TASK_STATUS_CONDITION"] = "Міндет өрістері";
+$MESS["CRM_AUTOMATION_CMP_TASK_STATUS_LABEL"] = "Мәртебе";
+$MESS["CRM_AUTOMATION_CMP_TITLE_DEAL_EDIT"] = "Осы иірімнің барлық мәмілелері үшін роботтарды баптау";
+$MESS["CRM_AUTOMATION_CMP_TITLE_DEAL_VIEW"] = "Мәміленің ағымдағы жағдайы:«#TITLE#»";
+$MESS["CRM_AUTOMATION_CMP_TITLE_LEAD_EDIT"] = "Барлық лидтер үшін роботтарды баптау";
+$MESS["CRM_AUTOMATION_CMP_TITLE_LEAD_VIEW"] = "Лидтің ағымдағы жағдайы:«#TITLE#»";
+$MESS["CRM_AUTOMATION_CMP_TITLE_ORDER_EDIT"] = "Барлық тапсырыстар үшін роботтарды баптау";
+$MESS["CRM_AUTOMATION_CMP_TITLE_ORDER_VIEW"] = "Тапсырыстың ағымдағы жағдайы";
+$MESS["CRM_AUTOMATION_CMP_WEBHOOK_PASSWORD_ALERT"] = "Триггер жұмыс істеуі үшін Кіріс вебхук қажет. #A1#Қазір құру керек пе#A2#?";

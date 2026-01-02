@@ -1,7 +1,6 @@
-import { Type, Loc } from 'main.core';
+import { Type, Loc, ajax } from 'main.core';
 import { MessageBox, MessageBoxButtons } from 'ui.dialogs.messagebox';
 import { ErrorCollection } from 'ui.form-elements.field';
-import { Popup } from 'main.popup';
 
 export type SetSortType = {
 	menuId: ?string,
@@ -61,8 +60,8 @@ export class GridManager
 
 	static reinviteCloudAction(data): Promise
 	{
-		return BX.ajax.runAction('intranet.invite.reinviteWithChangeContact', {
-			data: data,
+		return ajax.runAction('intranet.invite.reinviteWithChangeContact', {
+			data,
 		}).then((response) => {
 			if (response.data.result)
 			{
@@ -76,7 +75,7 @@ export class GridManager
 
 			return response;
 		}, (response) => {
-			const errors = response.errors.map(error => error.message);
+			const errors = response.errors.map((error) => error.message);
 			ErrorCollection.showSystemError(errors.join('<br>'));
 
 			return response;
@@ -85,7 +84,7 @@ export class GridManager
 
 	static reinviteAction(userId, isExtranetUser): Promise
 	{
-		return BX.ajax.runAction('intranet.controller.invite.reinvite', {
+		return ajax.runAction('intranet.controller.invite.reinvite', {
 			data: {
 				params: {
 					userId,
@@ -107,7 +106,7 @@ export class GridManager
 		});
 	}
 
-	getGrid():  BX.Main.grid
+	getGrid(): BX.Main.grid
 	{
 		return this.#grid;
 	}
@@ -122,21 +121,37 @@ export class GridManager
 			this.confirmUser(params.isAccept ? 'confirm' : 'decline', () => {
 				const row = this.#grid.getRows().getById(params.userId);
 				row?.stateLoad();
-				BX.ajax.runAction('intranet.controller.invite.confirmUserRequest', {
+				ajax.runAction('intranet.controller.invite.confirmUserRequest', {
 					data: {
 						userId: params.userId,
 						isAccept: params.isAccept ? 'Y' : 'N',
 					},
 				}).then((response) => {
-					row?.update();
-				}).catch((err) => {
-					row?.stateUnload();
-
-					if (!params.isAccept)
+					if (response.data === true)
+					{
+						row?.update();
+					}
+					else if (params.isAccept)
+					{
+						row?.stateUnload();
+					}
+					else
 					{
 						this.activityAction({
 							userId: params.userId,
-							action: 'deactivateInvited',
+							action: 'deleteOrFire',
+						});
+					}
+				}).catch(() => {
+					if (params.isAccept)
+					{
+						row?.stateUnload();
+					}
+					else
+					{
+						this.activityAction({
+							userId: params.userId,
+							action: 'deleteOrFire',
 						});
 					}
 				});
@@ -157,31 +172,21 @@ export class GridManager
 			this.confirmUser(action, () => {
 				const row = this.#grid.getRows().getById(params.userId);
 				row?.stateLoad();
-				BX.ajax.runComponentAction('bitrix:intranet.user.list', 'setActivity', {
-					mode: 'class',
-					data: {
-						params: {
-							userId,
-							action,
-						},
-					},
-				}).then(() => {
-					row?.update();
-				}).catch((response) => {
-					row?.stateUnload();
 
-					if (
-						BX.type.isNotEmptyObject(response)
-						&& BX.type.isArray(response.errors)
-						&& action === 'delete'
-					)
-					{
-						return this.activityAction({
-							action: 'deactivateInvited',
+				if (['fire', 'restore', 'deleteOrFire'].includes(action))
+				{
+					ajax.runAction(`intranet.v2.User.${action}`, {
+						data: {
 							userId,
-						});
-					}
-				});
+						},
+					}).then(() => {
+						row?.update();
+					}).catch((response) => {
+						row?.stateUnload();
+						const errors = response.errors.map((error) => error.message);
+						ErrorCollection.showSystemError(errors.join('<br>'));
+					});
+				}
 			});
 		}
 	}
@@ -209,8 +214,9 @@ export class GridManager
 			case 'confirm':
 				return Loc.getMessage('INTRANET_USER_LIST_ACTION_CONFIRM_TITLE');
 			case 'delete':
+			case 'deleteOrFire':
 				return Loc.getMessage('INTRANET_USER_LIST_ACTION_DELETE_TITLE');
-			case 'deactivate':
+			case 'fire':
 				return Loc.getMessage('INTRANET_USER_LIST_ACTION_DEACTIVATE_TITLE');
 			case 'deactivateInvited':
 				return Loc.getMessage('INTRANET_USER_LIST_ACTION_DEACTIVATE_INVITED_TITLE');
@@ -229,8 +235,9 @@ export class GridManager
 			case 'confirm':
 				return Loc.getMessage('INTRANET_USER_LIST_ACTION_CONFIRM_MESSAGE');
 			case 'delete':
+			case 'deleteOrFire':
 				return Loc.getMessage('INTRANET_USER_LIST_ACTION_DELETE_MESSAGE');
-			case 'deactivate':
+			case 'fire':
 				return Loc.getMessage('INTRANET_USER_LIST_ACTION_DEACTIVATE_MESSAGE');
 			case 'deactivateInvited':
 				return Loc.getMessage('INTRANET_USER_LIST_ACTION_DEACTIVATE_INVITED_MESSAGE');
@@ -250,8 +257,9 @@ export class GridManager
 			case 'confirm':
 				return Loc.getMessage('INTRANET_USER_LIST_ACTION_CONFIRM_BUTTON');
 			case 'delete':
+			case 'deleteOrFire':
 				return Loc.getMessage('INTRANET_USER_LIST_ACTION_DELETE_BUTTON');
-			case 'deactivate':
+			case 'fire':
 				return Loc.getMessage('INTRANET_USER_LIST_ACTION_DEACTIVATE_BUTTON');
 			case 'deactivateInvited':
 				return Loc.getMessage('INTRANET_USER_LIST_ACTION_DEACTIVATE_INVITED_BUTTON');

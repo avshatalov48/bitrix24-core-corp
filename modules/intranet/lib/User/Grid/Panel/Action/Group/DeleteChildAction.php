@@ -2,21 +2,17 @@
 
 namespace Bitrix\Intranet\User\Grid\Panel\Action\Group;
 
-use Bitrix\Main\ArgumentException;
-use Bitrix\Main\Error;
+use Bitrix\Intranet\User\Access\UserActionDictionary;
 use Bitrix\Main\Filter\Filter;
-use Bitrix\Main\Grid\Panel\Action\Group\GroupChildAction;
-use Bitrix\Main\Grid\Panel\Snippet\Onchange;
 use Bitrix\Main\HttpRequest;
 use Bitrix\Main\Localization\Loc;
 use Bitrix\Main\Result;
-use Bitrix\Main\UserTable;
 
-class DeleteChildAction extends UserGroupChildAction
+class DeleteChildAction extends UserAccessChildAction
 {
-	public static function getId(): string
+	public static function getActionType(): UserActionDictionary
 	{
-		return 'delete';
+		return UserActionDictionary::DELETE;
 	}
 
 	public function getName(): string

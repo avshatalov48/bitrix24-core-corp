@@ -106,16 +106,14 @@ jn.define('tasks/layout/checklist/list/src/actions/attachments', (require, expor
 		async handleOnChangeInfo(fileInfo)
 		{
 			const isChanged = this.isChangedFiles(fileInfo);
-			const prevFilesCount = this.getFilesCount();
-			const shouldRender = prevFilesCount === 0 || this.getFilesCount() === 0;
 			this.setFileInfo(fileInfo);
 
-			if (isChanged && this.getFilesCount() > 0)
+			if (isChanged)
 			{
 				this.setState({
 					fileInfo: this.prepareUploadingInfo(fileInfo),
 				}, () => {
-					this.handleOnChange(shouldRender);
+					this.handleOnChange(isChanged);
 				});
 			}
 		}
@@ -139,7 +137,9 @@ jn.define('tasks/layout/checklist/list/src/actions/attachments', (require, expor
 
 		handleOnOpenAttachmentList = async () => {
 			let fileInfo = this.getFileInfo();
-			const isUploadedFileInfo = Object.values(fileInfo).every((attachment) => typeof attachment?.isUploading === 'boolean' && !attachment.isUploading);
+			const isUploadedFileInfo = Object
+				.values(fileInfo)
+				.every((attachment) => typeof attachment?.isUploading === 'boolean' && !attachment.isUploading);
 
 			if (!isUploadedFileInfo)
 			{
@@ -152,8 +152,6 @@ jn.define('tasks/layout/checklist/list/src/actions/attachments', (require, expor
 
 			layoutWidget.preventBottomSheetDismiss(true);
 			layoutWidget.on('preventDismiss', () => {
-				this.handleOnChange();
-
 				layoutWidget.close();
 			});
 

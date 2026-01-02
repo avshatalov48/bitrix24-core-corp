@@ -8,14 +8,13 @@ use Bitrix\BIConnector;
 use Bitrix\Catalog\Access\AccessController;
 use Bitrix\Catalog\Access\ActionDictionary;
 use Bitrix\Intranet\Binding\Marketplace;
+use Bitrix\Intranet\Integration\Socialnetwork\Collab\CollabProviderData;
 use Bitrix\Intranet\Site\Sections\AutomationSection;
 use \Bitrix\Landing\Rights;
 use Bitrix\Main\Loader;
 use Bitrix\Main\Localization\Loc;
-use Bitrix\Socialnetwork\Collab;
 use Bitrix\Intranet\Settings\Tools\ToolsManager;
 use Bitrix\Tasks\Util\Restriction\Bitrix24Restriction\Limit\ProjectLimit;
-
 IncludeModuleLangFile($_SERVER["DOCUMENT_ROOT"]."/bitrix/modules/intranet/public_bitrix24/.superleft.menu_ext.php");
 CModule::IncludeModule("intranet");
 
@@ -46,6 +45,19 @@ $isNewLiveFeedCounterAvailable = (
 	&& \Bitrix\Socialnetwork\Space\Service::isAvailable(true)
 );
 
+$tasksLinkParams = [
+	"real_link" => getLeftMenuItemLink(
+		"tasks_panel_menu",
+		"/company/personal/user/".$userId."/tasks/?ta_sec=left_menu"
+	),
+	"name" => "tasks",
+	"counter_id" => "tasks_total",
+	"menu_item_id" => "menu_tasks",
+	"sub_link" => SITE_DIR."company/personal/user/".$userId."/tasks/task/edit/0/?ta_sec=tasks&ta_el=left_menu&miniform=true"
+	,
+	"top_menu_id" => "tasks_panel_menu",
+];
+
 $arMenu = [
 	[
 		GetMessage("MENU_LIVE_FEED3"),
@@ -62,17 +74,7 @@ $arMenu = [
 		GetMessage("MENU_TASKS"),
 		"/tasks/menu/",
 		[],
-		[
-			"real_link" => getLeftMenuItemLink(
-				"tasks_panel_menu",
-				"/company/personal/user/".$userId."/tasks/"
-			),
-			"name" => "tasks",
-			"counter_id" => "tasks_total",
-			"menu_item_id" => "menu_tasks",
-			"sub_link" => SITE_DIR."company/personal/user/".$userId."/tasks/task/edit/0/?ta_sec=left_menu&ta_el=create_button",
-			"top_menu_id" => "tasks_panel_menu",
-		],
+		$tasksLinkParams,
 		""
 	]
 ];
@@ -96,17 +98,15 @@ if (
 	);
 }
 
+$calendarPath = "/company/personal/user/" . $userId . "/calendar/";
 $arMenu[] = array(
 	GetMessage("MENU_CALENDAR"),
-	"/calendar/",
+	$calendarPath,
 	array(
-		"/company/personal/user/".$userId."/calendar/",
+		"/calendar/",
 	),
 	array(
-		"real_link" => getLeftMenuItemLink(
-			"top_menu_id_calendar",
-			"/company/personal/user/".$userId."/calendar/"
-		),
+		"real_link" => null,
 		"menu_item_id" => "menu_calendar",
 		"sub_link" => SITE_DIR."company/personal/user/".$userId."/calendar/?EVENT_ID=NEW",
 		"counter_id" => "calendar",
@@ -124,17 +124,14 @@ $diskPath =
 
 $arMenu[] = array(
 	GetMessage("MENU_DISK_SECTION_MSGVER_1"),
-	"/docs/",
+	$diskPath,
 	array(
-		$diskPath,
+		"/docs/",
 		"/company/personal/user/".$userId."/disk/volume/",
 		"/company/personal/user/".$userId."/disk/"
 	),
 	array(
-		"real_link" => getLeftMenuItemLink(
-			"top_menu_id_docs",
-			$diskPath
-		),
+		"real_link" => null,
 		"menu_item_id" => "menu_files",
 		"top_menu_id" => "top_menu_id_docs",
 	),
@@ -156,7 +153,7 @@ if ($diskEnabled === "Y" && \Bitrix\Main\Config\Option::get('disk', 'boards_enab
 {
 	$arMenu[] = array(
 		GetMessage("MENU_DISK_FLIPCHARTS"),
-		"/company/personal/user/".$userId."/disk/boards/",
+		'/company/personal/user/' . $userId . '/disk/boards/?c_section=left_menu',
 		[],
 		array(
 			"menu_item_id" => "menu_boards",
@@ -165,7 +162,7 @@ if ($diskEnabled === "Y" && \Bitrix\Main\Config\Option::get('disk', 'boards_enab
 	);
 }
 
-if (CModule::IncludeModule("crm") && CCrmPerms::IsAccessEnabled())
+if (\Bitrix\Intranet\Integration\Crm::getInstance()->canReadSomeItemsInCrm())
 {
 	$counterId = CCrmSaleHelper::isWithOrdersMode() ? 'crm_all' : 'crm_all_no_orders';
 	$arMenu[] = array(
@@ -174,7 +171,6 @@ if (CModule::IncludeModule("crm") && CCrmPerms::IsAccessEnabled())
 		[
 			"/crm/",
 			\Bitrix\Main\ModuleManager::isModuleInstalled('bitrix24') ? '/contact_center/' : SITE_DIR . 'services/contact_center/',
-			'/bi/dashboard/',
 		],
 		[
 			"real_link" => \Bitrix\Crm\Settings\EntityViewSettings::getDefaultPageUrl(),
@@ -203,7 +199,7 @@ else
 	];
 }
 
-if (Loader::includeModule('booking') && \Bitrix\Booking\Service\BookingFeature::isOn())
+if (Loader::includeModule('booking'))
 {
 	$counterId = (\Bitrix\Booking\Service\BookingFeature::isFeatureEnabled() ? 'booking_total' : '');
 
@@ -265,16 +261,21 @@ if (ToolsManager::getInstance()->checkAvailabilityByMenuId('menu_shop'))
 
 if (
 	Loader::includeModule('biconnector')
-	&& ToolsManager::getInstance()->checkAvailabilityByMenuId('crm_bi')
+	&& ToolsManager::getInstance()->checkAvailabilityByMenuId('menu_bi_constructor')
 	&& BIConnector\Access\AccessController::getCurrent()->check(BIConnector\Access\ActionDictionary::ACTION_BIC_ACCESS)
 )
 {
 	$arMenu[] = [
 		Loc::getMessage('MENU_BI_CONSTRUCTOR'),
-		'/bi/dashboard/',
+		'/bi/menu/',
 		[],
 		[
+			'real_link' => getLeftMenuItemLink(
+				'menu_bi_constructor',
+				'/bi/dashboard'
+			),
 			'menu_item_id' => 'menu_bi_constructor',
+			'top_menu_id' => 'top_menu_bi_constructor',
 		],
 		'',
 	];
@@ -312,14 +313,13 @@ $arMenu[] = [
 ];
 
 if (
-	Loader::includeModule('socialnetwork')
-	&& Collab\CollabFeature::isOn()
-	&& Collab\CollabFeature::isFeatureEnabled()
+	ToolsManager::getInstance()->checkAvailabilityByToolId('collab')
+	&& (new CollabProviderData())->isAvailable()
 )
 {
 	$arMenu[] = [
 		Loc::getMessage('MENU_IM_MESSENGER_COLLAB'),
-		'/online/?IM_COLLAB=0',
+		'/online/?IM_COLLAB',
 		[],
 		[
 			'menu_item_id' => 'menu_im_collab',
@@ -481,8 +481,16 @@ if (Loader::includeModule('intranet') && AutomationSection::isAvailable())
 }
 
 //marketplace
+if (\Bitrix\Intranet\Integration\Market\Label::isRenamedMarket())
+{
+	$itemLabel = GetMessage('MENU_MARKETPLACE_APPS_2_MSGVER_1');
+}
+else
+{
+	$itemLabel = GetMessage('MENU_MARKETPLACE_APPS_2');
+}
 $arMenu[] = array(
-	GetMessage("MENU_MARKETPLACE_APPS_2"),
+	$itemLabel,
 	Marketplace::getMainDirectory(),
 	array(),
 	array(
@@ -554,8 +562,7 @@ if (Loader::includeModule("bitrix24"))
 }
 
 if (
-	IsModuleInstalled("bitrix24") && $GLOBALS['USER']->CanDoOperation('bitrix24_config')
-	|| !IsModuleInstalled("bitrix24") && $GLOBALS['USER']->IsAdmin()
+	!IsModuleInstalled("bitrix24") && $GLOBALS['USER']->IsAdmin()
 )
 {
 	$arMenu[] = array(

@@ -16,7 +16,6 @@ $MESS["VI_TRIAL_FEATURES_6"] = "Голосовое меню (IVR)";
 $MESS["VI_TRIAL_FEATURES_6_3"] = "Голосовое меню (IVR) (в тарифах «Команда», «Компания» и «CRM+»)";
 $MESS["VI_TRIAL_FEATURES_7"] = "Автоматическая расшифровка записей";
 $MESS["VI_TRIAL_SOON"] = "скоро";
-$MESS["VI_TRIAL_LINK"] = "https://www.bitrix24.ru/pro/call.php";
 $MESS["VI_TRIAL_LINK_TEXT"] = "Узнать подробнее";
 $MESS["VI_TRIAL_TARIFF"] = "Расширенная Телефония + Расширенная CRM и другие полезные возможности, начиная с тарифа \"Проект+\" за #TF_PRICE#.";
 $MESS["VI_TRIAL_S_TITLE"] = "Распределение прав доступа";
@@ -59,5 +58,4 @@ $MESS["VI_TOS_RU"] = "<p>Для пополнения баланса Телефо
 $MESS["VI_TOS_EN"] = "You are about to leave Bitrix24 website and will be forwarded to Voximplant website. By continuing to this service you accept Voximplant data processing agreement <a href=\"https://voximplant.com/assets/uploads/data-processing-addendum.pdf\" target=\"_blank\">https://voximplant.com/assets/uploads/data-processing-addendum.pdf</a>";
 $MESS["VI_TOS_EN_2"] = "You are about to leave Bitrix24 website and will be forwarded to Voximplant website. By continuing to this service you accept Voximplant #LINK1START#Data Processing Addendum#LINK1END# and Voximplant #LINK2START#Privacy Policy#LINK2END#.";
 $MESS["VI_DEMO_TOPUP_WARNING_TITLE"] = "Демо-режим предназначен только для тестирования всех возможностей Битрикс24.";
-$MESS["VI_DEMO_TOPUP_WARNING"] = "Обратите внимание, Телефония доступна на любом коммерческом тарифе. Когда демо-режим закончится, вы не сможете звонить и принимать звонки, даже если у вас останутся средства на балансе. Все арендованные номера и средства на балансе сохранятся. Когда вы перейдете на коммерческий тариф, вы сможете продолжить работу с Телефонией. <a href=\"#LINK#\">Подробнее</a>"
-?>
+$MESS["VI_DEMO_TOPUP_WARNING"] = "Обратите внимание, Телефония доступна на любом коммерческом тарифе. Когда демо-режим закончится, вы не сможете звонить и принимать звонки, даже если у вас останутся средства на балансе. Все арендованные номера и средства на балансе сохранятся. Когда вы перейдете на коммерческий тариф, вы сможете продолжить работу с Телефонией. <a href=\"#LINK#\">Подробнее</a>";

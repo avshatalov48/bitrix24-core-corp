@@ -9,6 +9,7 @@ return [
 		'statemanager/redux/state-cache',
 
 		'calendar:date-helper',
+		'calendar:enums',
 	],
 	'bundle' => [
 		'./src/meta',

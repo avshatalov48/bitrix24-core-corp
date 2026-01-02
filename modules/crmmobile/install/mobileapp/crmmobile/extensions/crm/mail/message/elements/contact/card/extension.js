@@ -4,8 +4,8 @@
 jn.define('crm/mail/message/elements/contact/card', (require, exports, module) => {
 	const AppTheme = require('apptheme');
 	const { PureComponent } = require('layout/pure-component');
-	const { ProfileView } = require('user/profile');
 	const { AnalyticsEvent } = require('analytics');
+	const { UserProfile } = require('user-profile');
 
 	function Email(props)
 	{
@@ -154,23 +154,16 @@ jn.define('crm/mail/message/elements/contact/card', (require, exports, module) =
 
 	function openUserProfile(userId)
 	{
-		PageManager.openWidget('list', {
-			groupStyle: true,
-			backdrop: {
-				bounceEnable: false,
-				swipeAllowed: true,
-				showOnTop: true,
-				hideNavigationBar: false,
-				horizontalSwipeAllowed: false,
-			},
-		}).then((list) => ProfileView.open({ userId, isBackdrop: true }, list));
+		void UserProfile.open({
+			ownerId: userId,
+		});
 	}
 
 	async function openDetail(id, typeNameId, isUser)
 	{
 		if (isUser)
 		{
-			openUserProfile(id);
+			await openUserProfile(id);
 		}
 		else
 		{

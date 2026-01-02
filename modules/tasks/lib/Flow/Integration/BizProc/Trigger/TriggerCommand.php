@@ -2,7 +2,7 @@
 
 namespace Bitrix\Tasks\Flow\Integration\BizProc\Trigger;
 
-use Bitrix\Tasks\AbstractCommand;
+use Bitrix\Tasks\Flow\AbstractCommand;
 
 class TriggerCommand extends AbstractCommand
 {

@@ -1,0 +1,64 @@
+.menu-switcher {
+	--menu-switcher-color: var(--ui-color-design-plain-na-content-icon);
+	flex-shrink: 0;
+	display: flex;
+	flex-direction: row;
+	align-items: center;
+	justify-content: center;
+	position: relative;
+	width: 38px;
+	height: 32px;
+	vertical-align: middle;
+	cursor: pointer;
+	overflow: hidden;
+	opacity: 1;
+	transition: opacity .3s;
+	border-radius: var(--ui-border-radius-md);
+}
+
+.menu-switcher__icon {
+	width: 24px;
+	height: 24px;
+	mask-image: url("../images/icons/hamburger-menu-icon.svg");
+	mask-size: contain;
+	mask-position: center;
+	mask-repeat: no-repeat;
+	background-color: var(--menu-switcher-color);
+}
+
+.menu-switcher:hover {
+	background-color: color-mix(in srgb, transparent 100%, var(--ui-color-bg-state-hover-default-hex) var(--ui-color-bg-state-hover-default-opacity));
+}
+.menu-switcher:active {
+	background-color: color-mix(in srgb, transparent 100%, var(--ui-color-bg-state-click-default-hex) var(--ui-color-bg-state-click-default-opacity));
+}
+
+.menu-switcher-lines {
+	display: block;
+	position: absolute;
+	left: 50%;
+	width: 16px;
+	top: 31px;
+	right: 8px;
+	height: 2px;
+	transform: translate(-50%,0);
+}
+
+.menu-switcher-lines:before {
+	top: -5px;
+}
+
+.menu-switcher-lines:after {
+	bottom: -5px;
+}
+
+.menu-switcher-lines:after,
+.menu-switcher-lines:before {
+	position: absolute;
+	display: block;
+	left: 0;
+	width: 100%;
+	height: 2px;
+	content: "";
+}
+

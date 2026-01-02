@@ -1,48 +1,42 @@
 import { Uri } from 'main.core';
-import { SidePanel } from 'main.sidepanel';
+import { SidePanel as SidePanelMain } from 'main.sidepanel';
 
-import { Core } from 'booking.core';
-import { CrmEntity, Model, Module } from 'booking.const';
-import { bookingService } from 'booking.provider.service.booking-service';
-import type { BookingModel, DealData } from 'booking.model.bookings';
+import { CrmEntity, Module } from 'booking.const';
+import type { DealData } from 'booking.model.bookings';
 import type { ClientData } from 'booking.model.clients';
+
+import type { CreateCrmDealParams } from './types';
+
+const SidePanel = SidePanelMain || BX.SidePanel;
 
 export class DealHelper
 {
-	#bookingId: number;
-
-	constructor(bookingId: number)
+	openDealSidePanel({ deal, onClose }: { deal: DealData, onClose: (DealData | null) => void }): void
 	{
-		this.#bookingId = bookingId;
-	}
-
-	hasDeal(): boolean
-	{
-		return Boolean(this.#deal);
-	}
-
-	openDeal(): void
-	{
-		SidePanel.Instance.open(`/crm/deal/details/${this.#deal.value}/`, {
+		SidePanel.Instance.open(`/crm/deal/details/${deal.value}/`, {
 			events: {
-				onClose: () => {
-					if (this.#deal?.value)
-					{
-						void bookingService.getById(this.#bookingId);
-					}
-				},
+				onClose: () => onClose(deal),
 			},
 		});
 	}
 
-	createDeal(): void
+	createCrmDeal({
+		itemId,
+		itemIdQueryParamName,
+		queryParams = {},
+		clients,
+		onLoad,
+		onClose,
+	}: CreateCrmDealParams): void
 	{
-		const bookingIdParamName = 'bookingId';
-
 		const createDealUrl = new Uri('/crm/deal/details/0/');
-		createDealUrl.setQueryParam(bookingIdParamName, this.#bookingId);
+		createDealUrl.setQueryParam(itemIdQueryParamName, itemId);
 
-		(this.#booking.clients ?? []).forEach((client: ClientData) => {
+		Object.keys(queryParams).forEach((queryParamsKey: string) => {
+			createDealUrl.setQueryParam(queryParamsKey, queryParams[queryParamsKey]);
+		});
+
+		clients.forEach((client: ClientData) => {
 			const paramName = {
 				[CrmEntity.Contact]: 'contact_id',
 				[CrmEntity.Company]: 'company_id',
@@ -56,25 +50,15 @@ export class DealHelper
 				onLoad: ({ slider }) => {
 					slider.getWindow().BX.Event.EventEmitter.subscribe('onCrmEntityCreate', (event) => {
 						const [data] = event.getData();
-
-						const isDeal = data.entityTypeName === CrmEntity.Deal;
-						const bookingId = Number(new Uri(data.sliderUrl).getQueryParam(bookingIdParamName));
-						if (!isDeal || bookingId !== this.#bookingId)
-						{
-							return;
-						}
-
-						const dealData = this.mapEntityInfoToDeal(data.entityInfo);
-
-						this.saveDeal(dealData);
+						onLoad({
+							isDeal: data.entityTypeName === CrmEntity.Deal,
+							isCanceled: data.isCanceled,
+							itemIdFromQuery: parseInt(new Uri(data.sliderUrl).getQueryParam(itemIdQueryParamName), 10),
+							dealData: this.mapEntityInfoToDeal(data.entityInfo),
+						});
 					});
 				},
-				onClose: () => {
-					if (this.#deal?.value)
-					{
-						this.saveDeal(this.#deal);
-					}
-				},
+				onClose: () => onClose(),
 			},
 		});
 	}
@@ -87,25 +71,5 @@ export class DealHelper
 			value: info.id,
 			data: [],
 		};
-	}
-
-	saveDeal(dealData: DealData | null): void
-	{
-		const externalData = dealData ? [dealData] : [];
-
-		void bookingService.update({
-			id: this.#bookingId,
-			externalData,
-		});
-	}
-
-	get #deal(): DealData | null
-	{
-		return this.#booking.externalData?.find((data) => data.entityTypeId === CrmEntity.Deal) ?? null;
-	}
-
-	get #booking(): BookingModel
-	{
-		return Core.getStore().getters[`${Model.Bookings}/getById`](this.#bookingId);
 	}
 }

@@ -7,8 +7,6 @@ namespace Bitrix\Tasks\Flow\Integration\AI\Copilot;
 use Bitrix\AI\Context;
 use Bitrix\AI\Engine;
 use Bitrix\AI\Payload\Prompt;
-use Bitrix\AI\Payload\Text;
-use Bitrix\AI\Prompt\Manager;
 use Bitrix\Main\Event;
 use Bitrix\Main\EventResult;
 use Bitrix\Main\Loader;
@@ -21,8 +19,6 @@ use Bitrix\AI\Payload\Tokens\TokenType;
 
 class RequestSender
 {
-	private const FLOWS_PROMPT_CODE = 'flows_recommendations';
-
 	public function sendRequest(int $flowId): void
 	{
 		if (!Loader::includeModule('ai'))
@@ -57,7 +53,9 @@ class RequestSender
 			return;
 		}
 
-		$prompt = Manager::getByCode(self::FLOWS_PROMPT_CODE);
+		$promptService = new FlowPromptService();
+		$prompt = $promptService->getPrompt();
+
 		if ($prompt === null)
 		{
 			return;
@@ -97,6 +95,10 @@ class RequestSender
 		$engine
 			->setPayload($payload)
 			->setParameters(['flowId' => $flowId])
+			->onError(function ($error) use ($flowId) {
+				$handler = new RequestHandler();
+				$handler->onQueueJobFail($error, $flowId);
+			})
 		;
 
 		$engine->completionsInQueue();

@@ -1,5 +1,6 @@
 <?php
 $MESS["DISK_EXTENSION_EXTERNAL_LINK_ALLOW_EDITING"] = "құжатты редакциялауға рұқсат ету";
+$MESS["DISK_EXTENSION_EXTERNAL_LINK_ALLOW_EDITING_BOARD"] = "тақтаны редакциялауға рұқсат етіңіз";
 $MESS["DISK_EXTENSION_EXTERNAL_LINK_BEFORE"] = "Дейін: #deathTime#";
 $MESS["DISK_EXTENSION_EXTERNAL_LINK_CANCEL"] = "болдырмау";
 $MESS["DISK_EXTENSION_EXTERNAL_LINK_DAYS"] = "күн";

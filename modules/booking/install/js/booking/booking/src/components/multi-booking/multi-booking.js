@@ -1,9 +1,11 @@
 import { Loc, Text } from 'main.core';
 import { mapGetters } from 'ui.vue3.vuex';
 
-import { Model } from 'booking.const';
+import { Model, CrmEntity } from 'booking.const';
 import { bookingService } from 'booking.provider.service.booking-service';
-import type { BookingModel } from 'booking.model.bookings';
+import { clientService } from 'booking.provider.service.client-service';
+import { BookingAnalytics } from 'booking.lib.analytics';
+import type { BookingModel, DealData } from 'booking.model.bookings';
 import type { ClientModel } from 'booking.model.clients';
 
 import { BookingMultipleButton } from './booking-multiple-button/booking-multiple-button';
@@ -19,12 +21,56 @@ export const MultiBooking = {
 		return {
 			fetching: false,
 			clients: [],
+			externalData: [],
 		};
 	},
-	computed: mapGetters({
-		selectedCells: `${Model.Interface}/selectedCells`,
-		timezone: `${Model.Interface}/timezone`,
-	}),
+	async beforeMount()
+	{
+		this.clients = [];
+		this.externalData = [];
+
+		if (this.embedItems.length === 0)
+		{
+			return;
+		}
+
+		const embedContact = this.embedItems.find((item: DealData) => item.entityTypeId === CrmEntity.Contact);
+		const embedCompany = this.embedItems.find((item: DealData) => item.entityTypeId === CrmEntity.Company);
+		const embedDeal = this.embedItems.find((item: DealData) => item.entityTypeId === CrmEntity.Deal);
+
+		if (embedContact)
+		{
+			const contact = await clientService.getContactById(Number(embedContact.value));
+
+			if (contact)
+			{
+				this.clients.push(contact);
+			}
+		}
+
+		if (embedCompany)
+		{
+			const company = await clientService.getCompanyById(Number(embedCompany.value));
+
+			if (company)
+			{
+				this.clients.push(company);
+			}
+		}
+
+		if (embedDeal)
+		{
+			this.externalData.push(embedDeal);
+		}
+	},
+	computed: {
+		...mapGetters({
+			selectedCells: `${Model.Interface}/selectedCells`,
+			timezone: `${Model.Interface}/timezone`,
+			embedItems: `${Model.Interface}/embedItems`,
+			intersections: `${Model.Interface}/intersections`,
+		}),
+	},
 	methods: {
 		removeSelected(id: string): void
 		{
@@ -43,6 +89,7 @@ export const MultiBooking = {
 
 			this.fetching = true;
 			const bookingList = await bookingService.addList(bookings);
+			BookingAnalytics.sendAddMultiBookings(bookingList.map(({ id }) => id));
 			this.fetching = false;
 
 			this.showNotification(bookingList);
@@ -55,10 +102,14 @@ export const MultiBooking = {
 				id: `tmp-id-${Date.now()}-${Math.random()}`,
 				dateFromTs: cell.fromTs,
 				dateToTs: cell.toTs,
-				name: this.loc('BOOKING_BOOKING_DEFAULT_BOOKING_NAME'),
-				resourcesIds: [cell.resourceId],
+				resourcesIds: [...new Set([
+					cell.resourceId,
+					...(this.intersections[0] ?? []),
+					...(this.intersections[cell.resourceId] ?? []),
+				])],
 				timezoneFrom: this.timezone,
 				timezoneTo: this.timezone,
+				externalData: this.externalData,
 				clients: this.clients,
 			}));
 		},
@@ -107,7 +158,7 @@ export const MultiBooking = {
 				<div class="booking--multi-booking--space"></div>
 				<div class="booking--multi-booking--close">
 					<div class="booking--multi-booking--divider-vertical"></div>
-					<CancelButton @click="closeMultiBooking" />
+					<CancelButton @click="closeMultiBooking"/>
 				</div>
 			</div>
 		</Teleport>

@@ -8,9 +8,13 @@ if (!defined("B_PROLOG_INCLUDED") || B_PROLOG_INCLUDED!==true)
 /** @var array $arParams */
 /** @var array $arResult */
 
+use Bitrix\Crm\Tracking\Provider;
 use Bitrix\Main\Localization\Loc;
 use Bitrix\Main\UI\Extension;
 use Bitrix\Main\Web\Json;
+use Bitrix\UI\Buttons\Color;
+use Bitrix\UI\Buttons\JsCode;
+use Bitrix\UI\Toolbar\Facade\Toolbar;
 
 $APPLICATION->SetPageProperty("BodyClass", ($bodyClass ? $bodyClass." " : "") . "no-all-paddings no-background");
 
@@ -24,20 +28,22 @@ Extension::load([
 	"ui.sidepanel-content",
 	"ui.info-helper",
 	"ui.fonts.opensans",
+	'ui.feedback.form',
 ]);
 
 $containerId = 'crm-tracking-channel-pool';
+$feedbackParams = Json::encode(Provider::getFeedbackParameters());
+
+Toolbar::addButton([
+	"color" => Color::LIGHT_BORDER,
+	"click" => new JsCode(
+		"BX.UI.Feedback.Form.open({$feedbackParams});"
+	),
+	"text" => Provider::getFeedbackButtonTitle(),
+]);
 ?>
 
 <div id="<?=htmlspecialcharsbx($containerId)?>" class="crm-tracking-channel-pool-wrap">
-
-	<?
-	$APPLICATION->IncludeComponent(
-		'bitrix:ui.feedback.form',
-		'',
-		\Bitrix\Crm\Tracking\Provider::getFeedbackParameters()
-	);
-	?>
 
 	<form method="post">
 		<?=bitrix_sessid_post();?>

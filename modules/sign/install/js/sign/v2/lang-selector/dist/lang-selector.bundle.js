@@ -10,7 +10,7 @@ this.BX.Sign = this.BX.Sign || {};
 	var _langs = /*#__PURE__*/babelHelpers.classPrivateFieldLooseKey("langs");
 	var _langButton = /*#__PURE__*/babelHelpers.classPrivateFieldLooseKey("langButton");
 	var _region = /*#__PURE__*/babelHelpers.classPrivateFieldLooseKey("region");
-	var _documentUid = /*#__PURE__*/babelHelpers.classPrivateFieldLooseKey("documentUid");
+	var _documentUids = /*#__PURE__*/babelHelpers.classPrivateFieldLooseKey("documentUids");
 	var _getLanguageItems = /*#__PURE__*/babelHelpers.classPrivateFieldLooseKey("getLanguageItems");
 	var _getLanguageButton = /*#__PURE__*/babelHelpers.classPrivateFieldLooseKey("getLanguageButton");
 	var _changeLang = /*#__PURE__*/babelHelpers.classPrivateFieldLooseKey("changeLang");
@@ -41,13 +41,13 @@ this.BX.Sign = this.BX.Sign || {};
 	      writable: true,
 	      value: void 0
 	    });
-	    Object.defineProperty(this, _documentUid, {
+	    Object.defineProperty(this, _documentUids, {
 	      writable: true,
 	      value: void 0
 	    });
 	    babelHelpers.classPrivateFieldLooseBase(this, _region)[_region] = region;
 	    babelHelpers.classPrivateFieldLooseBase(this, _langs)[_langs] = langs;
-	    babelHelpers.classPrivateFieldLooseBase(this, _documentUid)[_documentUid] = '';
+	    babelHelpers.classPrivateFieldLooseBase(this, _documentUids)[_documentUids] = [];
 	    babelHelpers.classPrivateFieldLooseBase(this, _langButton)[_langButton] = babelHelpers.classPrivateFieldLooseBase(this, _getLanguageButton)[_getLanguageButton]();
 	    babelHelpers.classPrivateFieldLooseBase(this, _api)[_api] = new sign_v2_api.Api();
 	  }
@@ -59,10 +59,10 @@ this.BX.Sign = this.BX.Sign || {};
 				</span>
 				${0}
 			</div>
-		`), main_core.Loc.getMessage('SIGN_BLANK_LANGUAGE_SELECTOR_LABEL'), babelHelpers.classPrivateFieldLooseBase(this, _langButton)[_langButton].getContainer());
+		`), main_core.Loc.getMessage('SIGN_BLANK_LANGUAGE_SELECTOR_LABEL_MSGVER_1'), babelHelpers.classPrivateFieldLooseBase(this, _langButton)[_langButton].getContainer());
 	  }
-	  setDocumentUid(uid) {
-	    babelHelpers.classPrivateFieldLooseBase(this, _documentUid)[_documentUid] = uid;
+	  setDocumentUids(uids) {
+	    babelHelpers.classPrivateFieldLooseBase(this, _documentUids)[_documentUids] = uids;
 	  }
 	}
 	function _getLanguageItems2() {
@@ -99,7 +99,8 @@ this.BX.Sign = this.BX.Sign || {};
 	  });
 	}
 	async function _changeLang2(langId) {
-	  await babelHelpers.classPrivateFieldLooseBase(this, _api)[_api].modifyLanguageId(babelHelpers.classPrivateFieldLooseBase(this, _documentUid)[_documentUid], langId);
+	  const promises = babelHelpers.classPrivateFieldLooseBase(this, _documentUids)[_documentUids].map(uid => babelHelpers.classPrivateFieldLooseBase(this, _api)[_api].modifyLanguageId(uid, langId));
+	  await Promise.all(promises);
 	}
 
 	exports.LangSelector = LangSelector;

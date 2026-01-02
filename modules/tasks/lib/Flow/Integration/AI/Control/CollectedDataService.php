@@ -42,16 +42,27 @@ class CollectedDataService
 
 	protected function update(ReplaceCollectedDataCommand $command): void
 	{
-		$data = Json::encode($command->data, 0);
+		$insertFields = ['FLOW_ID' => $command->flowId,];
+		$updateFields = [];
 
-		$insertFields = [
-			'FLOW_ID' => $command->flowId,
-			'DATA' => $data,
-		];
+		if (isset($command->status))
+		{
+			$insertFields['STATUS'] = $command->status->value;
+			$updateFields['STATUS'] = $command->status->value;
+		}
 
-		$updateFields = ['DATA' => $data];
+		if (!empty($command->data))
+		{
+			$insertFields['DATA'] = Json::encode($command->data, 0);
+			$updateFields['DATA'] = Json::encode($command->data, 0);
+		}
 
 		$uniqueFields = ['FLOW_ID'];
+
+		if (empty($updateFields))
+		{
+			return;
+		}
 
 		FlowCopilotCollectedDataTable::merge($insertFields, $updateFields, $uniqueFields);
 	}

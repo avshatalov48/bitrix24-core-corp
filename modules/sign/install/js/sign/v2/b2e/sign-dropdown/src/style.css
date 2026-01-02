@@ -13,7 +13,7 @@
 	overflow: hidden;
 	white-space: nowrap;
 	text-overflow: ellipsis;
-	font: 14px/20px var(--ui-font-family-system);
+	font: 14px/20px var(--ui-font-family-primary, var(--ui-font-family-system));
 	color: var(--ui-color-palette-black-base);
 }
 

@@ -27,6 +27,7 @@ return [
 		'crm:selector/documentgenerator/template',
 
 		'tasks:selector/task',
+		'tasks:selector/editable-task',
 
 		'utils/logger/warn-logger',
 		'selector/widget/entity/intranet/department',

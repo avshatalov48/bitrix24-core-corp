@@ -13,11 +13,16 @@ export type ResourceCreationWizardState = {
 	fetching: boolean,
 	step: number;
 	globalSchedule: boolean;
+	slotLengthId: SlotLengthId;
 	isSaving: boolean;
 	isCompanyScheduleAccess: boolean;
+	companyScheduleUrl: string;
 	invalidResourceName: boolean;
 	invalidResourceType: boolean;
+	invalidIntegrationCalendarUser: boolean;
 	weekStart: string;
+	isChannelChoiceAvailable: boolean;
+	isIntegrationCalendarEnabled: boolean;
 	checkedForAll: { [type: string]: boolean };
 }
 
@@ -43,3 +48,5 @@ export type AdvertisingResourceType = {
 	description: string;
 	relatedResourceTypeId: number;
 }
+
+export type SlotLengthId = 0 | 60 | 120 | 1440 | 10080;

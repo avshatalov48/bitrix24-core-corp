@@ -6,6 +6,7 @@ jn.define('layout/ui/entity-editor/config', (require, exports, module) => {
 	const { Type } = require('type');
 	const { EntityConfigFactory } = require('layout/ui/entity-editor/config/factory');
 	const { EntityConfigScope } = require('layout/ui/entity-editor/config/scope');
+	const { Random } = require('utils/random');
 
 	class EntityConfig
 	{

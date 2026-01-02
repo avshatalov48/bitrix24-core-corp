@@ -2,6 +2,11 @@
  * @bxjs_lang_path extension.php
  */
 (() => {
+	const require = (ext) => jn.require(ext);
+	const { reflectFunction } = require('utils/function');
+	const { ListSearcher } = require('list/search');
+	const { RequestExecutor } = require('rest');
+
 	/**
 	 *  @interface ListDelegate
 	 * */

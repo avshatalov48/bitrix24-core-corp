@@ -586,9 +586,6 @@ this.BX = this.BX || {};
 	      eval(schemeItem.getAvailabilityLock());
 	      return;
 	    }
-	    babelHelpers.classPrivateFieldLooseBase(this, _config)[_config].getActiveItems().forEach(item => {
-	      babelHelpers.classPrivateFieldLooseBase(this, _sendAnalyticsData)[_sendAnalyticsData](item.getEntityTypeId(), crm_integration_analytics.Dictionary.STATUS_ATTEMPT);
-	    });
 	    babelHelpers.classPrivateFieldLooseBase(this, _collectAdditionalData)[_collectAdditionalData](schemeItem).then(result => {
 	      if (result.isCanceled) {
 	        // pass it to next 'then' handler

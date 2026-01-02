@@ -32,5 +32,10 @@ return [
 		'./src/validators/recent',
 		'./src/internal/dialog',
 		'./src/sidebar/file',
+		'./src/draft',
+		'./src/comment',
+		'./src/vote',
+		'./src/read-message-queue',
+		'./src/transcript',
 	],
 ];

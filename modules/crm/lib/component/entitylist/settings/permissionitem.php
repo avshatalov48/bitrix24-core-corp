@@ -95,10 +95,7 @@ final class PermissionItem implements \JsonSerializable, Arrayable
 			return false;
 		}
 
-		return
-			$this->manager->hasPermissionsToEditRights()
-			&& RoleManagerUtils::getInstance()->isUsePermConfigV2()
-		;
+		return $this->manager->hasPermissionsToEditRights();
 	}
 
 	public function toArray(): array

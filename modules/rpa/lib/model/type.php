@@ -198,11 +198,11 @@ class Type extends UserField\Internal\Type implements Permission\Containable
 		return $this->getFactory()->getItemDataClass($this)::createObject();
 	}
 
-	public function getItem(int $itemId): ?Item
+	public function getItem(int $itemId, array $fieldsToSelect = ['*']): ?Item
 	{
 		$itemDataClass = $this->getFactory()->getItemDataClass($this);
 
-		return $itemDataClass::getById($itemId)->fetchObject();
+		return $itemDataClass::getByPrimary($itemId, ['select' => $fieldsToSelect])->fetchObject();
 	}
 
 	public function getItems(array $parameters = []): Collection

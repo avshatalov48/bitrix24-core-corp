@@ -38,7 +38,6 @@ export class CompleteTaskActivity
 		{
 			for (const [categoryId, stages] of Object.entries(options.stages))
 			{
-				// Due to http://jabber.bx/view.php?id=169508
 				// we have to cast types explicitly
 				this.#stages[categoryId] = stages.map((stageInfo) => ({
 					id: String(stageInfo.id),
@@ -48,7 +47,6 @@ export class CompleteTaskActivity
 		}
 		else if (Type.isArray(options.stages))
 		{
-			// Due to http://jabber.bx/view.php?id=169508
 			// we have to cast types explicitly
 			options.stages.forEach((categoryStages, categoryId) => {
 				this.#stages[categoryId] = categoryStages.map((stageInfo) => ({

@@ -20,7 +20,6 @@ class ScopeFieldAssembler extends FieldAssembler
 		}
 
 		$scopeNames = array_filter(ScopeService::getInstance()->getScopeNameList($value['SCOPE']));
-		$hintMore = null;
 		if (count($scopeNames) > 4)
 		{
 			$scopeNamesToShow = array_slice($scopeNames, 0, 3);
@@ -31,32 +30,31 @@ class ScopeFieldAssembler extends FieldAssembler
 				. ' ',
 			);
 			$hiddenPart = htmlspecialcharsbx(implode(', ', $scopeNamesToHide));
-			$hintMoreText = Loc::getMessage('BICONNECTOR_SUPERSET_DASHBOARD_GRID_SCOPE_MORE', [
-				'#COUNT#' => count($scopeNamesToHide),
-			]);
-			$hintMore = <<<HTML
-				<span
-					data-hint="{$hiddenPart}" 
-					data-hint-no-icon
-					data-hint-interactivity
-					data-hint-center
-					class="biconnector-grid-scope-hint-more"
-				>
-					$hintMoreText
-				</span>
-				HTML;
+
+			$result = Loc::getMessage(
+				'BICONNECTOR_SUPERSET_DASHBOARD_GRID_SCOPES',
+				[
+					'#FIRST_SCOPES#' => $shownPart,
+					'[hint]' => <<<HTML
+						<span
+							data-hint='{$hiddenPart}' 
+							data-hint-no-icon
+							data-hint-interactivity
+							data-hint-center
+							class="biconnector-grid-scope-hint-more"
+						>
+						HTML,
+					'#COUNT#' => count($scopeNamesToHide),
+					'[/hint]' => '</span>',
+				]
+			);
 		}
 		else
 		{
-			$shownPart = htmlspecialcharsbx(implode(', ', $scopeNames));
+			$result = htmlspecialcharsbx(implode(', ', $scopeNames));
 		}
 
-		return <<<HTML
-			<span>
-				{$shownPart}
-				{$hintMore}
-			</span>
-			HTML;
+		return $result;
 	}
 
 	protected function prepareRow(array $row): array

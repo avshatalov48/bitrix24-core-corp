@@ -491,10 +491,64 @@ this.BX.Crm = this.BX.Crm || {};
 	  }, {
 	    key: "addLinkTo",
 	    value: function addLinkTo(destination, robotAction) {
-	      var _this6 = this;
 	      var preventSave = arguments.length > 2 && arguments[2] !== undefined ? arguments[2] : false;
+	      if (!babelHelpers.toConsumableArray(this.links).some(function (link) {
+	        return link.to === destination;
+	      })) {
+	        var linksRoot = this.getLinksRoot();
+	        var path = this.getLinkPath(destination);
+	        var line = d3.line();
+	        var fromId = this.data.column.getId().replace(':', '-');
+	        var toId = destination.data.column.getId().replace(':', '-');
+	        var arrowId = "".concat(fromId, "-").concat(toId);
+	        var arrow = linksRoot.select('defs').append('svg:marker').attr('id', arrowId).attr('refX', 8).attr('refY', 6).attr('markerWidth', 30).attr('markerHeight', 30).attr('markerUnits', 'userSpaceOnUse').attr('orient', 'auto').append('path').attr('d', 'M 0 0 12 6 0 12 3 6').attr('class', 'crm-st-svg-link-arrow').select(function selectCallback() {
+	          return this.parentNode;
+	        });
+	        var linkNode = linksRoot.append('path').attr('class', 'crm-st-svg-link').attr('marker-end', "url(#".concat(arrowId, ")")).attr('d', line(path));
+	        this.showTunnelButton(path);
+	        var link = {
+	          from: this,
+	          to: destination,
+	          node: linkNode,
+	          robotAction: robotAction,
+	          arrow: arrow,
+	          path: path
+	        };
+	        this.emit('Marker:linkFrom', {
+	          link: link,
+	          preventSave: preventSave
+	        });
+	        destination.emit('Marker:linkTo', {
+	          link: link,
+	          preventSave: preventSave
+	        });
+	        this.links.add(link);
+	        var menu = this.getTunnelsListMenu();
+	        var id = menu.getMenuItems().length;
+	        menu.addMenuItem({
+	          id: "#".concat(id),
+	          text: main_core.Text.encode(destination.name),
+	          events: {
+	            onMouseEnter: function onMouseEnter() {
+	              Marker.highlightLink(link);
+	            },
+	            onMouseLeave: function onMouseLeave() {
+	              Marker.unhighlightLinks();
+	            }
+	          },
+	          items: this.getTunnelMenuItems(link)
+	        });
+	      }
+	      if (this.links.size > 1) {
+	        this.setTunnelsCounterValue(this.links.size);
+	      }
+	    }
+	  }, {
+	    key: "addStubLinkTo",
+	    value: function addStubLinkTo(destination) {
+	      var _this6 = this;
 	      setTimeout(function () {
-	        if (!babelHelpers.toConsumableArray(_this6.links).some(function (link) {
+	        if (!babelHelpers.toConsumableArray(_this6.stubLinks).some(function (link) {
 	          return link.to === destination;
 	        })) {
 	          var linksRoot = _this6.getLinksRoot();
@@ -503,76 +557,19 @@ this.BX.Crm = this.BX.Crm || {};
 	          var fromId = _this6.data.column.getId().replace(':', '-');
 	          var toId = destination.data.column.getId().replace(':', '-');
 	          var arrowId = "".concat(fromId, "-").concat(toId);
-	          var arrow = linksRoot.select('defs').append('svg:marker').attr('id', arrowId).attr('refX', 8).attr('refY', 6).attr('markerWidth', 30).attr('markerHeight', 30).attr('markerUnits', 'userSpaceOnUse').attr('orient', 'auto').append('path').attr('d', 'M 0 0 12 6 0 12 3 6').attr('class', 'crm-st-svg-link-arrow').select(function selectCallback() {
-	            return this.parentNode;
-	          });
-	          var linkNode = linksRoot.append('path').attr('class', 'crm-st-svg-link').attr('marker-end', "url(#".concat(arrowId, ")")).attr('d', line(path));
-	          _this6.showTunnelButton(path);
-	          var link = {
-	            from: _this6,
-	            to: destination,
-	            node: linkNode,
-	            robotAction: robotAction,
-	            arrow: arrow,
-	            path: path
-	          };
-	          _this6.emit('Marker:linkFrom', {
-	            link: link,
-	            preventSave: preventSave
-	          });
-	          destination.emit('Marker:linkTo', {
-	            link: link,
-	            preventSave: preventSave
-	          });
-	          _this6.links.add(link);
-	          var menu = _this6.getTunnelsListMenu();
-	          var id = menu.getMenuItems().length;
-	          menu.addMenuItem({
-	            id: "#".concat(id),
-	            text: main_core.Text.encode(destination.name),
-	            events: {
-	              onMouseEnter: function onMouseEnter() {
-	                Marker.highlightLink(link);
-	              },
-	              onMouseLeave: function onMouseLeave() {
-	                Marker.unhighlightLinks();
-	              }
-	            },
-	            items: _this6.getTunnelMenuItems(link)
-	          });
-	        }
-	        if (_this6.links.size > 1) {
-	          _this6.setTunnelsCounterValue(_this6.links.size);
-	        }
-	      });
-	    }
-	  }, {
-	    key: "addStubLinkTo",
-	    value: function addStubLinkTo(destination) {
-	      var _this7 = this;
-	      setTimeout(function () {
-	        if (!babelHelpers.toConsumableArray(_this7.stubLinks).some(function (link) {
-	          return link.to === destination;
-	        })) {
-	          var linksRoot = _this7.getLinksRoot();
-	          var path = _this7.getLinkPath(destination);
-	          var line = d3.line();
-	          var fromId = _this7.data.column.getId().replace(':', '-');
-	          var toId = destination.data.column.getId().replace(':', '-');
-	          var arrowId = "".concat(fromId, "-").concat(toId);
 	          var arrow = linksRoot.select('defs').append('svg:marker').attr('id', arrowId).attr('refX', 8).attr('refY', 6).attr('markerWidth', 30).attr('markerHeight', 30).attr('markerUnits', 'userSpaceOnUse').attr('orient', 'auto').append('path').attr('d', 'M 0 0 12 6 0 12 3 6').attr('class', 'crm-st-svg-link-arrow crm-st-svg-link-arrow-stub').select(function selectCallback() {
 	            return this.parentNode;
 	          });
 	          var linkNode = linksRoot.append('path').attr('class', 'crm-st-svg-link crm-st-svg-link-stub').attr('marker-end', "url(#".concat(arrowId, ")")).attr('d', line(path));
-	          _this7.showTunnelStubButton(path);
+	          _this6.showTunnelStubButton(path);
 	          var link = {
-	            from: _this7,
+	            from: _this6,
 	            to: destination,
 	            node: linkNode,
 	            arrow: arrow,
 	            path: path
 	          };
-	          _this7.emit('Marker:stubLinkFrom', {
+	          _this6.emit('Marker:stubLinkFrom', {
 	            link: link,
 	            preventSave: true
 	          });
@@ -580,7 +577,7 @@ this.BX.Crm = this.BX.Crm || {};
 	            link: link,
 	            preventSave: true
 	          });
-	          _this7.stubLinks.add(link);
+	          _this6.stubLinks.add(link);
 	        }
 	      });
 	    }
@@ -660,10 +657,10 @@ this.BX.Crm = this.BX.Crm || {};
 	  }, {
 	    key: "removeAllLinks",
 	    value: function removeAllLinks() {
-	      var _this8 = this;
+	      var _this7 = this;
 	      var preventSave = arguments.length > 0 && arguments[0] !== undefined ? arguments[0] : false;
 	      this.links.forEach(function (link) {
-	        return _this8.removeLink(link, preventSave);
+	        return _this7.removeLink(link, preventSave);
 	      });
 	    }
 	  }, {
@@ -694,41 +691,41 @@ this.BX.Crm = this.BX.Crm || {};
 	  }, {
 	    key: "removeAllStubLinks",
 	    value: function removeAllStubLinks() {
-	      var _this9 = this;
+	      var _this8 = this;
 	      this.stubLinks.forEach(function (link) {
-	        return _this9.removeStubLink(link);
+	        return _this8.removeStubLink(link);
 	      });
 	    }
 	  }, {
 	    key: "isLinked",
 	    value: function isLinked() {
-	      var _this10 = this;
+	      var _this9 = this;
 	      return babelHelpers.toConsumableArray(Marker.getAllLinks()).some(function (item) {
-	        return !item.hidden && (item.from === _this10 || item.to === _this10);
+	        return !item.hidden && (item.from === _this9 || item.to === _this9);
 	      });
 	    }
 	  }, {
 	    key: "isLinkedFrom",
 	    value: function isLinkedFrom() {
-	      var _this11 = this;
+	      var _this10 = this;
 	      return babelHelpers.toConsumableArray(Marker.getAllLinks()).some(function (item) {
-	        return !item.hidden && item.from === _this11;
+	        return !item.hidden && item.from === _this10;
 	      });
 	    }
 	  }, {
 	    key: "isLinkedTo",
 	    value: function isLinkedTo() {
-	      var _this12 = this;
+	      var _this11 = this;
 	      return babelHelpers.toConsumableArray(Marker.getAllLinks()).some(function (item) {
-	        return !item.hidden && item.to === _this12;
+	        return !item.hidden && item.to === _this11;
 	      });
 	    }
 	  }, {
 	    key: "isLinkedStub",
 	    value: function isLinkedStub() {
-	      var _this13 = this;
+	      var _this12 = this;
 	      return babelHelpers.toConsumableArray(Marker.getAllLinks()).some(function (item) {
-	        return !item.hidden && (item.from === _this13 || item.to === _this13);
+	        return !item.hidden && (item.from === _this12 || item.to === _this12);
 	      });
 	    }
 	  }, {
@@ -745,9 +742,9 @@ this.BX.Crm = this.BX.Crm || {};
 	  }, {
 	    key: "getStubTunnelButton",
 	    value: function getStubTunnelButton() {
-	      var _this14 = this;
+	      var _this13 = this;
 	      return this.cache.remember('tunnelStubButton', function () {
-	        var button = main_core.Runtime.clone(_this14.getTunnelButton());
+	        var button = main_core.Runtime.clone(_this13.getTunnelButton());
 	        main_core.Dom.addClass(button, 'crm-st-tunnel-button-stub');
 	        return button;
 	      });
@@ -766,10 +763,10 @@ this.BX.Crm = this.BX.Crm || {};
 	  }, {
 	    key: "getTunnelButton",
 	    value: function getTunnelButton() {
-	      var _this15 = this;
+	      var _this14 = this;
 	      var canEdit = this.data.column.data.isCategoryEditable;
 	      return this.cache.remember('tunnelButton', function () {
-	        return main_core.Tag.render(_templateObject3 || (_templateObject3 = babelHelpers.taggedTemplateLiteral(["\n\t\t\t\t<div class=\"crm-st-tunnel-button\" \n\t\t\t\t\t onmouseenter=\"", "\"\n\t\t\t\t\t onmouseleave=\"", "\"\n\t\t\t\t\t onclick=\"", "\"\n\t\t\t\t\t title=\"", "\"\n\t\t\t\t\t style=\"", "\"\n\t\t\t\t>", "</div>\n\t\t\t"])), _this15.onTunnelButtonMouseEnter.bind(_this15), Marker.onTunnelButtonMouseLeave, _this15.onTunnelButtonClick.bind(_this15), main_core.Loc.getMessage('CRM_ST_TUNNEL_BUTTON_TITLE'), !canEdit ? 'pointer-events: none;' : '', main_core.Loc.getMessage('CRM_ST_TUNNEL_BUTTON_LABEL'));
+	        return main_core.Tag.render(_templateObject3 || (_templateObject3 = babelHelpers.taggedTemplateLiteral(["\n\t\t\t\t<div class=\"crm-st-tunnel-button\" \n\t\t\t\t\t onmouseenter=\"", "\"\n\t\t\t\t\t onmouseleave=\"", "\"\n\t\t\t\t\t onclick=\"", "\"\n\t\t\t\t\t title=\"", "\"\n\t\t\t\t\t style=\"", "\"\n\t\t\t\t>", "</div>\n\t\t\t"])), _this14.onTunnelButtonMouseEnter.bind(_this14), Marker.onTunnelButtonMouseLeave, _this14.onTunnelButtonClick.bind(_this14), main_core.Loc.getMessage('CRM_ST_TUNNEL_BUTTON_TITLE'), !canEdit ? 'pointer-events: none;' : '', main_core.Loc.getMessage('CRM_ST_TUNNEL_BUTTON_LABEL'));
 	      });
 	    } /** @private */
 	  }, {
@@ -795,7 +792,7 @@ this.BX.Crm = this.BX.Crm || {};
 	  }, {
 	    key: "getTunnelsListMenu",
 	    value: function getTunnelsListMenu() {
-	      var _this16 = this;
+	      var _this15 = this;
 	      return this.cache.remember('tunnelsListMenu', new main_popup.PopupMenuWindow({
 	        bindElement: this.getTunnelButton(),
 	        items: [],
@@ -803,10 +800,10 @@ this.BX.Crm = this.BX.Crm || {};
 	        menuShowDelay: 0,
 	        events: {
 	          onPopupClose: function onPopupClose() {
-	            return _this16.deactivateTunnelButton();
+	            return _this15.deactivateTunnelButton();
 	          },
 	          onPopupShow: function onPopupShow() {
-	            return _this16.activateTunnelButton();
+	            return _this15.activateTunnelButton();
 	          }
 	        }
 	      }));
@@ -878,7 +875,7 @@ this.BX.Crm = this.BX.Crm || {};
 	  }, {
 	    key: "getLinkPath",
 	    value: function getLinkPath(target) {
-	      var _this17 = this;
+	      var _this16 = this;
 	      var targetPosition = target.getPointRect();
 	      var currentPosition = this.getDispatcherRect();
 	      var baseOffset = 80;
@@ -899,7 +896,7 @@ this.BX.Crm = this.BX.Crm || {};
 	      return babelHelpers.toConsumableArray(Marker.getAllLinks()).reduce(function (acc, link) {
 	        var from = link.from,
 	          currentPath = link.path;
-	        if (from !== _this17) {
+	        if (from !== _this16) {
 	          /**
 	           * Horizon lines
 	           * 1x -> 2x
@@ -1009,7 +1006,7 @@ this.BX.Crm = this.BX.Crm || {};
 	  });
 	}
 
-	var _templateObject$2, _templateObject2$1, _templateObject3$1;
+	var _templateObject$2, _templateObject2$1;
 	if (BX.Kanban.Pagination) {
 	  BX.Kanban.Pagination.prototype.adjust = function () {};
 	}
@@ -1266,7 +1263,6 @@ this.BX.Crm = this.BX.Crm || {};
 	        });
 	        main_core.Dom.append(dot, header);
 	      }
-	      main_core.Tag.attrs(header)(_templateObject2$1 || (_templateObject2$1 = babelHelpers.taggedTemplateLiteral(["\n\t\t\ttitle: ", ";\n\t\t"])), this.getName());
 	      return header;
 	    }
 	  }, {
@@ -1298,7 +1294,7 @@ this.BX.Crm = this.BX.Crm || {};
 	        if (_this2.currentName !== _this2.getName()) {
 	          _this2.onNameChangeHandler(_this2);
 	          _this2.currentName = _this2.getName();
-	          main_core.Tag.attrs(_this2.getHeader())(_templateObject3$1 || (_templateObject3$1 = babelHelpers.taggedTemplateLiteral(["\n\t\t\t\t\ttitle: ", ";\n\t\t\t\t"])), _this2.getName());
+	          main_core.Tag.attrs(_this2.getHeader())(_templateObject2$1 || (_templateObject2$1 = babelHelpers.taggedTemplateLiteral(["\n\t\t\t\t\ttitle: ", ";\n\t\t\t\t"])), _this2.getName());
 	        }
 	      }, 500);
 	    }
@@ -1485,7 +1481,201 @@ this.BX.Crm = this.BX.Crm || {};
 	  return Grid;
 	}(main_kanban.Kanban.Grid);
 
-	var _templateObject$3, _templateObject2$2, _templateObject3$2, _templateObject4$1, _templateObject5, _templateObject6, _templateObject7, _templateObject8, _templateObject9, _templateObject10, _templateObject11, _templateObject12, _templateObject13, _templateObject14, _templateObject15, _templateObject16, _templateObject17, _templateObject18, _templateObject19, _templateObject20, _templateObject21, _templateObject22, _templateObject23, _templateObject24, _templateObject25, _templateObject26, _templateObject27, _templateObject28, _templateObject29, _templateObject30, _templateObject31;
+	var Backend = /*#__PURE__*/function () {
+	  function Backend() {
+	    babelHelpers.classCallCheck(this, Backend);
+	  }
+	  babelHelpers.createClass(Backend, null, [{
+	    key: "request",
+	    value: function request(_ref) {
+	      var action = _ref.action,
+	        data = _ref.data,
+	        analyticsLabel = _ref.analyticsLabel;
+	      return new Promise(function (resolve, reject) {
+	        main_core.ajax.runComponentAction(Backend.component, action, {
+	          mode: 'class',
+	          data: {
+	            data: data,
+	            entityTypeId: Backend.entityTypeId
+	          },
+	          analyticsLabel: analyticsLabel
+	        }).then(resolve, reject);
+	      });
+	    }
+	  }, {
+	    key: "createCategory",
+	    value: function createCategory(data) {
+	      return Backend.request({
+	        action: 'createCategory',
+	        analyticsLabel: {
+	          component: Backend.component,
+	          action: 'create.new.category'
+	        },
+	        data: data
+	      });
+	    }
+	  }, {
+	    key: "getCategory",
+	    value: function getCategory(data) {
+	      return Backend.request({
+	        action: 'getCategory',
+	        analyticsLabel: {
+	          component: Backend.component,
+	          action: 'get.category'
+	        },
+	        data: data
+	      });
+	    }
+	  }, {
+	    key: "updateCategory",
+	    value: function updateCategory(data) {
+	      return Backend.request({
+	        action: 'updateCategory',
+	        analyticsLabel: {
+	          component: Backend.component,
+	          action: 'update.category'
+	        },
+	        data: data
+	      });
+	    }
+	  }, {
+	    key: "removeCategory",
+	    value: function removeCategory(data) {
+	      return Backend.request({
+	        action: 'removeCategory',
+	        analyticsLabel: {
+	          component: Backend.component,
+	          action: 'remove.category'
+	        },
+	        data: data
+	      });
+	    }
+	  }, {
+	    key: "accessCategory",
+	    value: function accessCategory(data) {
+	      return Backend.request({
+	        action: 'accessCategory',
+	        analyticsLabel: {
+	          component: Backend.component,
+	          action: 'access.category'
+	        },
+	        data: data
+	      });
+	    }
+	  }, {
+	    key: "copyAccessCategory",
+	    value: function copyAccessCategory(data) {
+	      return Backend.request({
+	        action: 'copyAccessCategory',
+	        analyticsLabel: {
+	          component: Backend.component,
+	          action: 'access.category'
+	        },
+	        data: data
+	      });
+	    }
+	  }, {
+	    key: "createRobot",
+	    value: function createRobot(data) {
+	      return Backend.request({
+	        action: 'createRobot',
+	        analyticsLabel: {
+	          component: Backend.component,
+	          action: 'create.robot'
+	        },
+	        data: data
+	      });
+	    }
+	  }, {
+	    key: "removeRobot",
+	    value: function removeRobot(data) {
+	      return Backend.request({
+	        action: 'removeRobot',
+	        analyticsLabel: {
+	          component: Backend.component,
+	          action: 'remove.robot'
+	        },
+	        data: data
+	      });
+	    }
+	  }, {
+	    key: "getRobotSettingsDialog",
+	    value: function getRobotSettingsDialog(data) {
+	      return Backend.request({
+	        action: 'getRobotSettingsDialog',
+	        analyticsLabel: {
+	          component: Backend.component,
+	          action: 'settings.robot'
+	        },
+	        data: data
+	      });
+	    }
+	  }, {
+	    key: "addStage",
+	    value: function addStage(data) {
+	      return Backend.request({
+	        action: 'addStage',
+	        analyticsLabel: {
+	          component: Backend.component,
+	          action: 'add.stage'
+	        },
+	        data: data
+	      });
+	    }
+	  }, {
+	    key: "removeStage",
+	    value: function removeStage(data) {
+	      return Backend.request({
+	        action: 'removeStage',
+	        analyticsLabel: {
+	          component: Backend.component,
+	          action: 'remove.stage'
+	        },
+	        data: data
+	      });
+	    }
+	  }, {
+	    key: "updateStage",
+	    value: function updateStage(data) {
+	      return Backend.request({
+	        action: 'updateStage',
+	        analyticsLabel: {
+	          component: Backend.component,
+	          action: 'update.stage'
+	        },
+	        data: data
+	      });
+	    }
+	  }, {
+	    key: "updateStages",
+	    value: function updateStages(data) {
+	      return Backend.request({
+	        action: 'updateStages',
+	        analyticsLabel: {
+	          component: Backend.component,
+	          action: 'update.stages'
+	        },
+	        data: data
+	      });
+	    }
+	  }, {
+	    key: "getCategories",
+	    value: function getCategories() {
+	      return Backend.request({
+	        action: 'getCategories',
+	        analyticsLabel: {
+	          component: Backend.component,
+	          action: 'get.categories'
+	        }
+	      });
+	    }
+	  }]);
+	  return Backend;
+	}();
+	babelHelpers.defineProperty(Backend, "component", 'bitrix:crm.sales.tunnels');
+	babelHelpers.defineProperty(Backend, "entityTypeId", 2);
+
+	var _templateObject$3, _templateObject2$2, _templateObject3$1, _templateObject4$1, _templateObject5, _templateObject6, _templateObject7, _templateObject8, _templateObject9, _templateObject10, _templateObject11, _templateObject12, _templateObject13, _templateObject14, _templateObject15, _templateObject16, _templateObject17, _templateObject18, _templateObject19, _templateObject20, _templateObject21, _templateObject22, _templateObject23, _templateObject24, _templateObject25, _templateObject26, _templateObject27, _templateObject28, _templateObject29, _templateObject30, _templateObject31;
 	var Category = /*#__PURE__*/function (_Event$EventEmitter) {
 	  babelHelpers.inherits(Category, _Event$EventEmitter);
 	  babelHelpers.createClass(Category, null, [{
@@ -1652,7 +1842,7 @@ this.BX.Crm = this.BX.Crm || {};
 	          category.cache["delete"]('rectArea');
 	        }
 	        if (y < categoryMiddle && curIndex < _this5.dragIndex && categoryContainer.style.transform !== "translate3d(0px, ".concat(categoryHeight, "px, 0px)")) {
-	          main_core.Tag.style(categoryContainer)(_templateObject3$2 || (_templateObject3$2 = babelHelpers.taggedTemplateLiteral(["\n\t\t\t\t\ttransition: 200ms;\n\t\t\t\t\ttransform: translate3d(0px, ", "px, 0px);\n\t\t\t\t"])), categoryHeight);
+	          main_core.Tag.style(categoryContainer)(_templateObject3$1 || (_templateObject3$1 = babelHelpers.taggedTemplateLiteral(["\n\t\t\t\t\ttransition: 200ms;\n\t\t\t\t\ttransform: translate3d(0px, ", "px, 0px);\n\t\t\t\t"])), categoryHeight);
 	          _this5.dragTargetCategory = category;
 	          category.cache["delete"]('rectArea');
 	        }
@@ -2478,200 +2668,6 @@ this.BX.Crm = this.BX.Crm || {};
 	}(main_core.Event.EventEmitter);
 	babelHelpers.defineProperty(Category, "instances", []);
 
-	var Backend = /*#__PURE__*/function () {
-	  function Backend() {
-	    babelHelpers.classCallCheck(this, Backend);
-	  }
-	  babelHelpers.createClass(Backend, null, [{
-	    key: "request",
-	    value: function request(_ref) {
-	      var action = _ref.action,
-	        data = _ref.data,
-	        analyticsLabel = _ref.analyticsLabel;
-	      return new Promise(function (resolve, reject) {
-	        main_core.ajax.runComponentAction(Backend.component, action, {
-	          mode: 'class',
-	          data: {
-	            data: data,
-	            entityTypeId: Backend.entityTypeId
-	          },
-	          analyticsLabel: analyticsLabel
-	        }).then(resolve, reject);
-	      });
-	    }
-	  }, {
-	    key: "createCategory",
-	    value: function createCategory(data) {
-	      return Backend.request({
-	        action: 'createCategory',
-	        analyticsLabel: {
-	          component: Backend.component,
-	          action: 'create.new.category'
-	        },
-	        data: data
-	      });
-	    }
-	  }, {
-	    key: "getCategory",
-	    value: function getCategory(data) {
-	      return Backend.request({
-	        action: 'getCategory',
-	        analyticsLabel: {
-	          component: Backend.component,
-	          action: 'get.category'
-	        },
-	        data: data
-	      });
-	    }
-	  }, {
-	    key: "updateCategory",
-	    value: function updateCategory(data) {
-	      return Backend.request({
-	        action: 'updateCategory',
-	        analyticsLabel: {
-	          component: Backend.component,
-	          action: 'update.category'
-	        },
-	        data: data
-	      });
-	    }
-	  }, {
-	    key: "removeCategory",
-	    value: function removeCategory(data) {
-	      return Backend.request({
-	        action: 'removeCategory',
-	        analyticsLabel: {
-	          component: Backend.component,
-	          action: 'remove.category'
-	        },
-	        data: data
-	      });
-	    }
-	  }, {
-	    key: "accessCategory",
-	    value: function accessCategory(data) {
-	      return Backend.request({
-	        action: 'accessCategory',
-	        analyticsLabel: {
-	          component: Backend.component,
-	          action: 'access.category'
-	        },
-	        data: data
-	      });
-	    }
-	  }, {
-	    key: "copyAccessCategory",
-	    value: function copyAccessCategory(data) {
-	      return Backend.request({
-	        action: 'copyAccessCategory',
-	        analyticsLabel: {
-	          component: Backend.component,
-	          action: 'access.category'
-	        },
-	        data: data
-	      });
-	    }
-	  }, {
-	    key: "createRobot",
-	    value: function createRobot(data) {
-	      return Backend.request({
-	        action: 'createRobot',
-	        analyticsLabel: {
-	          component: Backend.component,
-	          action: 'create.robot'
-	        },
-	        data: data
-	      });
-	    }
-	  }, {
-	    key: "removeRobot",
-	    value: function removeRobot(data) {
-	      return Backend.request({
-	        action: 'removeRobot',
-	        analyticsLabel: {
-	          component: Backend.component,
-	          action: 'remove.robot'
-	        },
-	        data: data
-	      });
-	    }
-	  }, {
-	    key: "getRobotSettingsDialog",
-	    value: function getRobotSettingsDialog(data) {
-	      return Backend.request({
-	        action: 'getRobotSettingsDialog',
-	        analyticsLabel: {
-	          component: Backend.component,
-	          action: 'settings.robot'
-	        },
-	        data: data
-	      });
-	    }
-	  }, {
-	    key: "addStage",
-	    value: function addStage(data) {
-	      return Backend.request({
-	        action: 'addStage',
-	        analyticsLabel: {
-	          component: Backend.component,
-	          action: 'add.stage'
-	        },
-	        data: data
-	      });
-	    }
-	  }, {
-	    key: "removeStage",
-	    value: function removeStage(data) {
-	      return Backend.request({
-	        action: 'removeStage',
-	        analyticsLabel: {
-	          component: Backend.component,
-	          action: 'remove.stage'
-	        },
-	        data: data
-	      });
-	    }
-	  }, {
-	    key: "updateStage",
-	    value: function updateStage(data) {
-	      return Backend.request({
-	        action: 'updateStage',
-	        analyticsLabel: {
-	          component: Backend.component,
-	          action: 'update.stage'
-	        },
-	        data: data
-	      });
-	    }
-	  }, {
-	    key: "updateStages",
-	    value: function updateStages(data) {
-	      return Backend.request({
-	        action: 'updateStages',
-	        analyticsLabel: {
-	          component: Backend.component,
-	          action: 'update.stages'
-	        },
-	        data: data
-	      });
-	    }
-	  }, {
-	    key: "getCategories",
-	    value: function getCategories() {
-	      return Backend.request({
-	        action: 'getCategories',
-	        analyticsLabel: {
-	          component: Backend.component,
-	          action: 'get.categories'
-	        }
-	      });
-	    }
-	  }]);
-	  return Backend;
-	}();
-	babelHelpers.defineProperty(Backend, "component", 'bitrix:crm.sales.tunnels');
-	babelHelpers.defineProperty(Backend, "entityTypeId", 2);
-
 	var CategoryStub = /*#__PURE__*/function (_Category) {
 	  babelHelpers.inherits(CategoryStub, _Category);
 	  function CategoryStub(options) {
@@ -2750,15 +2746,6 @@ this.BX.Crm = this.BX.Crm || {};
 	    main_core.Event.bind(this.getAddCategoryButton(), 'click', this.onAddCategoryClick.bind(this));
 	    main_core.Event.bind(this.addCategoryButtonTop, 'click', this.onAddCategoryTopClick.bind(this));
 	    main_core.Event.bind(this.helpButton, 'click', this.onHelpButtonClick.bind(this));
-	    var toolbarComponent = main_core.Reflection.getClass('top.BX.Crm.ToolbarComponent') ? main_core.Reflection.getClass('top.BX.Crm.ToolbarComponent').Instance : null;
-	    var slider = this.getSlider();
-	    if (slider && toolbarComponent) {
-	      main_core.Event.EventEmitter.subscribe('SidePanel.Slider:onClose', function () {
-	        if (_this.isChanged) {
-	          toolbarComponent.emitCategoriesUpdatedEvent();
-	        }
-	      });
-	    }
 	    this.constructor.lastInstance = this;
 	  }
 	  babelHelpers.createClass(Manager, [{
@@ -2824,6 +2811,7 @@ this.BX.Crm = this.BX.Crm || {};
 	        sort: this.getMaxSort() + 10
 	      }).then(function (response) {
 	        _this5.addCategoryFromOptions(response.data);
+	        _this5.isChanged = true;
 	        var allStages = _this5.getStages();
 	        var newStages = [].concat(babelHelpers.toConsumableArray(response.data.STAGES.P), babelHelpers.toConsumableArray(response.data.STAGES.S), babelHelpers.toConsumableArray(response.data.STAGES.F));
 	        newStages.forEach(function (item) {
@@ -2858,10 +2846,9 @@ this.BX.Crm = this.BX.Crm || {};
 	  }, {
 	    key: "onHelpButtonClick",
 	    value: function onHelpButtonClick(event) {
+	      var _top$BX$Helper;
 	      event.preventDefault();
-	      if (top.BX.Helper) {
-	        top.BX.Helper.show('redirect=detail&code=9474707');
-	      }
+	      (_top$BX$Helper = top.BX.Helper) === null || _top$BX$Helper === void 0 ? void 0 : _top$BX$Helper.show('redirect=detail&code=20732764');
 	    }
 	  }, {
 	    key: "getCategoryStub",

@@ -1,11 +1,4 @@
-<?
-/**
- * todo: Impact class is TEMPORAL, it should be replaced with (or at least inherited from) \Bitrix\Tasks\Item\Task when ready
- * This class could be changed (removed, renamed, relocated) in any time, so do not use it in public code
- *
- * @internal
- * @access private
- */
+<?php
 
 namespace Bitrix\Tasks\Processor\Task\Scheduler\Result;
 
@@ -103,13 +96,18 @@ final class Impact extends \Bitrix\Tasks\Processor\Task\Result\Impact
 			$this->data['SE_PARAMETER'] = $data['SE_PARAMETER'];
 		}
 
+		if(array_key_exists('MATCH_WORK_TIME', $data))
+		{
+			$this->data['MATCH_WORK_TIME'] = $data['MATCH_WORK_TIME'] ? 'Y' : 'N';
+		}
+
 		if(array_key_exists('START_DATE_PLAN', $data) || array_key_exists('END_DATE_PLAN', $data) || array_key_exists('MATCH_WORK_TIME', $data))
 		{
 			// $startDate and $endDate are dates that were changed, not just actual dates!
 			$startDate = null;
 			$endDate = null;
 
-			if(($data['MATCH_WORK_TIME'] ?? null) == 'Y')
+			if($this->getMatchWorkTime())
 			{
 				// MATCH_WORK_TIME was set to Y, we have to reschedule and re-check existing dates even if no actual date change required
 				$startDate = isset($data['START_DATE_PLAN']) ? $data['START_DATE_PLAN'] : $this->data['START_DATE_PLAN'];
@@ -161,10 +159,7 @@ final class Impact extends \Bitrix\Tasks\Processor\Task\Result\Impact
 				'CORRECT_DATE_PLAN_DEPENDENT_TASKS' => false,
 			));
 
-			if($prevUserId)
-			{
-				User::setOccurAsId($prevUserId);
-			}
+			User::setOccurAsId($prevUserId);
 		}
 		catch(\TasksException $e)
 		{

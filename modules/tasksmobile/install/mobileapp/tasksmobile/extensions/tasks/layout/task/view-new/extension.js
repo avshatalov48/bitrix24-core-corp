@@ -67,6 +67,9 @@ jn.define('tasks/layout/task/view-new', (require, exports, module) => {
 	const { groupsUpserted, groupsAddedFromEntitySelector, selectGroupById } = require(
 		'tasks/statemanager/redux/slices/groups',
 	);
+	const { reactionsUpserted } = require('statemanager/redux/slices/reactions');
+	const { reactionsVoteSignTokenUpserted } = require('statemanager/redux/slices/reactions-vote-key');
+	const { settingsUpserted } = require('statemanager/redux/slices/settings');
 	const { fetch, setFromServer } = require('tasks/statemanager/redux/slices/tasks-results');
 	const { observeCreationError } = require('tasks/statemanager/redux/slices/tasks/observers/creation-error-observer');
 	const { AnalyticsEvent } = require('analytics');
@@ -76,6 +79,7 @@ jn.define('tasks/layout/task/view-new', (require, exports, module) => {
 	const { updateTaskStage } = require('tasks/statemanager/redux/slices/tasks-stages/thunk');
 	const { selectTaskStageByTaskIdOrGuid } = require('tasks/statemanager/redux/slices/tasks-stages');
 	const { getUniqId, selectStages } = require('tasks/statemanager/redux/slices/kanban-settings');
+	const { AppRatingClient } = require('tasks/app-rating-client');
 
 	/**
 	 * @class TaskView
@@ -94,13 +98,15 @@ jn.define('tasks/layout/task/view-new', (require, exports, module) => {
 						type: 'entity',
 					},
 				})
-				.then((newLayout) => {
+				.then(async (newLayout) => {
 					taskViewComponent.init({
 						...props,
 						layout: newLayout,
 					});
 
 					newLayout.showComponent(taskViewComponent);
+
+					void AppRatingClient.increaseTaskViewedCounter();
 				})
 				.catch(console.error)
 			;
@@ -113,6 +119,7 @@ jn.define('tasks/layout/task/view-new', (require, exports, module) => {
 			super(props);
 
 			this.layout = null;
+			this.markedAsViewed = true;
 
 			/** @type {Form|null|undefined} */
 			this.formRef = null;
@@ -153,6 +160,7 @@ jn.define('tasks/layout/task/view-new', (require, exports, module) => {
 			this.layout = props.layout;
 			this.layout.enableNavigationBarBorder(false);
 			this.layout.on('titleClick', () => this.scrollViewRef?.scrollToBegin(true));
+			this.layout.on('onViewRemoved', this.onViewRemoved);
 
 			this.checklistController = new ChecklistController({
 				taskId: this.#taskId,
@@ -202,7 +210,7 @@ jn.define('tasks/layout/task/view-new', (require, exports, module) => {
 			});
 
 			this.view = (!this.props.view || this.props.view === ViewMode.LIST) ? ViewMode.KANBAN : this.props.view;
-			this.kanbanOwnerId = this.view === ViewMode.PLANNER ? this.props.kanbanOwnerId : this.props.userId;
+			this.kanbanOwnerId = this.getKanbanOwnerId();
 			this.initialStageId = selectTaskStageByTaskIdOrGuid(
 				store.getState(),
 				this.#taskId,
@@ -231,8 +239,38 @@ jn.define('tasks/layout/task/view-new', (require, exports, module) => {
 			}
 
 			this.#observeTaskState();
-			this.unsubscribeCreationErrorObserver = observeCreationError(store, this.onCreationErrorChange);
+			this.unsubscribeCreationErrorObserver = observeCreationError(
+				store,
+				this.onCreationErrorChange,
+				{ ownerId: this.props.kanbanOwnerId },
+			);
 		}
+
+		getKanbanOwnerId()
+		{
+			if (this.view === ViewMode.PLANNER)
+			{
+				return this.shouldShowPlannerStages() && this.props.kanbanOwnerId;
+			}
+
+			return this.props.userId;
+		}
+
+		shouldShowPlannerStages()
+		{
+			const kanbanOwnerId = Number(this.props.kanbanOwnerId);
+			const userId = Number(this.props.userId);
+
+			return Number.isInteger(kanbanOwnerId)
+				&& Number.isInteger(userId)
+				&& kanbanOwnerId === userId;
+		}
+
+		onViewRemoved = () => {
+			AppRatingClient.tryOpenAppRatingAfterTaskViewed({
+				parentWidget: this.props.parentWidget,
+			});
+		};
 
 		componentDidMount()
 		{
@@ -281,6 +319,7 @@ jn.define('tasks/layout/task/view-new', (require, exports, module) => {
 				loading: false,
 				isForbidden: false,
 				checklistLoading: selectHasChecklist(this.#task),
+				reactionsLoading: selectIsCreating(this.#task),
 			};
 
 			if (this.props.shouldOpenComments)
@@ -328,12 +367,17 @@ jn.define('tasks/layout/task/view-new', (require, exports, module) => {
 			}
 			else
 			{
+				this.markedAsViewed = false;
 				new AnalyticsEvent(this.analyticsLabel).setStatus('success').send();
 				this.layout.setTitle({ useProgress: false }, true);
 
-				if (this.state.loading || this.state.checklistLoading)
+				if (this.state.loading || this.state.checklistLoading || this.state.reactionsLoading)
 				{
-					this.setState({ loading: false, checklistLoading: false }, () => shouldOpenComments && this.openComments());
+					this.setState({
+						loading: false,
+						checklistLoading: false,
+						reactionsLoading: false,
+					}, () => shouldOpenComments && this.openComments());
 				}
 			}
 		}
@@ -371,6 +415,7 @@ jn.define('tasks/layout/task/view-new', (require, exports, module) => {
 						WITH_CHECKLIST_DATA: (withChecklistData ? 'Y' : 'N'),
 						WORK_MODE: WorkModeByViewMode[this.view],
 						KANBAN_OWNER_ID: this.kanbanOwnerId,
+						MARKED_AS_VIEWED: this.markedAsViewed ? 'Y' : 'N',
 					},
 				})
 					.setHandler((response) => {
@@ -411,7 +456,7 @@ jn.define('tasks/layout/task/view-new', (require, exports, module) => {
 
 		#getDiskFolderId()
 		{
-			return getDiskFolderId().then(({ diskFolderId }) => {
+			return getDiskFolderId(this.#task?.groupId).then(({ diskFolderId }) => {
 				this.checklistController.setDiskConfig({ folderId: diskFolderId });
 			});
 		}
@@ -421,6 +466,9 @@ jn.define('tasks/layout/task/view-new', (require, exports, module) => {
 			const {
 				tasks = [],
 				users = [],
+				reactions = [],
+				reactionsVoteSignToken = null,
+				reactionsTemplateSettings = null,
 				groups = [],
 				relatedtaskids = [],
 				taskstage = [],
@@ -429,8 +477,11 @@ jn.define('tasks/layout/task/view-new', (require, exports, module) => {
 			} = responseData || {};
 
 			const actions = [
-				tasks.length > 0 && tasksUpserted(tasks),
+				tasks.length > 0 && tasksUpserted({ tasks, ownerId: this.kanbanOwnerId }),
 				users.length > 0 && usersUpserted(users),
+				reactions.length > 0 && reactionsUpserted(reactions),
+				reactionsVoteSignToken && reactionsVoteSignTokenUpserted(reactionsVoteSignToken),
+				reactionsTemplateSettings && settingsUpserted(reactionsTemplateSettings),
 				groups.length > 0 && groupsUpserted(groups),
 				relatedtaskids.length > 0 && setRelatedTasks({ taskId: this.#taskId, relatedTasks: relatedtaskids }),
 				Type.isArray(results) && setFromServer({ taskId: this.#taskId, results }),
@@ -491,6 +542,12 @@ jn.define('tasks/layout/task/view-new', (require, exports, module) => {
 					this.layout.setTitle({ useProgress: false }, true);
 					this.formRef?.flushOriginalValues();
 					this.checklistController.setTaskId(this.#taskId);
+
+					this.#getTaskData({ withResultData: true, withChecklistData: true })
+						.then(() => {
+							this.setState({ checklistLoading: false, reactionsLoading: false });
+						})
+						.catch((error) => console.error(error));
 				}
 
 				if (prevTask && !nextTask)
@@ -552,7 +609,7 @@ jn.define('tasks/layout/task/view-new', (require, exports, module) => {
 		 */
 		get #task()
 		{
-			return selectByTaskIdOrGuid(store.getState(), this.props.taskId);
+			return selectByTaskIdOrGuid(store.getState(), this.props.taskId, this.kanbanOwnerId);
 		}
 
 		/**
@@ -565,7 +622,10 @@ jn.define('tasks/layout/task/view-new', (require, exports, module) => {
 
 		get #actions()
 		{
-			return selectActions(this.#task);
+			return selectActions({
+				task: this.#task,
+				isCurrentUser: env.userId === this.props.userId,
+			});
 		}
 
 		shouldBlockUI()
@@ -605,6 +665,7 @@ jn.define('tasks/layout/task/view-new', (require, exports, module) => {
 				ActionMenu.action.extraSettings,
 				ActionMenu.action.copyId,
 				ActionMenu.action.copy,
+				ActionMenu.action.openChat,
 				ActionMenu.action.share,
 				ActionMenu.action.remove,
 			];
@@ -619,6 +680,8 @@ jn.define('tasks/layout/task/view-new', (require, exports, module) => {
 				},
 				engine: new TopMenuEngine(),
 				allowSuccessToasts: true,
+				projectId: this.props.projectId,
+				ownerId: this.kanbanOwnerId,
 			})).show();
 		}
 
@@ -1040,7 +1103,7 @@ jn.define('tasks/layout/task/view-new', (require, exports, module) => {
 						onChange: this.onChangeField,
 						onBlur: this.onBlurField,
 						scrollableProvider: this.scrollableProvider,
-						// renderAfterCompactBar: this.renderLikes,
+						renderAfterCompactBar: this.renderLikes.bind(this),
 						onChangeProjectField: this.onChangeProjectField,
 						onChangeSubTaskField: this.onChangeSubTaskField,
 						onChangeRelatedTaskField: this.onChangeRelatedTaskField,
@@ -1056,6 +1119,7 @@ jn.define('tasks/layout/task/view-new', (require, exports, module) => {
 						view: this.view,
 						isStageSelectorInitiallyHidden: this.#isStageSelectorInitiallyHidden(),
 						kanbanOwnerId: this.kanbanOwnerId,
+						isFlowToolDisabled: this.props.isFlowToolDisabled,
 					}),
 				),
 			);
@@ -1063,17 +1127,12 @@ jn.define('tasks/layout/task/view-new', (require, exports, module) => {
 
 		#isStageSelectorInitiallyHidden()
 		{
-			return this.view === ViewMode.KANBAN && (
-				(
-					// backlog task
-					(
-						this.#task?.groupId !== 0
-						&& Number.isInteger(this.initialStageId)
-						&& (Array.isArray(this.initialStages) && this.initialStages.length === 0)
-					)
-					|| this.#task?.groupId === 0
-				)
-			);
+			if (this.view === ViewMode.PLANNER)
+			{
+				return !this.shouldShowPlannerStages();
+			}
+
+			return (this.view === ViewMode.KANBAN && !this.#task?.shouldShowKanbanStages);
 		}
 
 		/**
@@ -1093,6 +1152,11 @@ jn.define('tasks/layout/task/view-new', (require, exports, module) => {
 			}
 		}
 
+		isLikesPanelEnabled()
+		{
+			return Application.getApiVersion() >= 59;
+		}
+
 		renderBeforeCompactFields(form)
 		{
 			return ActionButtons({
@@ -1101,6 +1165,7 @@ jn.define('tasks/layout/task/view-new', (require, exports, module) => {
 				layout: this.layout,
 				showDivider: form.hasCompactVisibleFields(),
 				analyticsLabel: this.props.analyticsLabel,
+				ownerId: this.kanbanOwnerId,
 			});
 		}
 
@@ -1114,10 +1179,17 @@ jn.define('tasks/layout/task/view-new', (require, exports, module) => {
 
 		renderLikes()
 		{
-			return LikesPanel({
-				taskId: this.#taskId,
-				testId: this.getTestId('LikesPanel'),
-			});
+			if (this.isLikesPanelEnabled())
+			{
+				return LikesPanel({
+					userId: Number(this.props.userId),
+					taskId: this.#taskId,
+					testId: this.getTestId('LikesPanel'),
+					isLoadingAfterCreation: this.state.reactionsLoading,
+				});
+			}
+
+			return View({});
 		}
 
 		#renderCommentsButton()

@@ -2,44 +2,36 @@
 
 namespace Bitrix\Tasks\Flow\Responsible\Distributor;
 
- use Bitrix\Tasks\Flow\Flow;
+use Bitrix\Tasks\Flow\Flow;
+use Bitrix\Tasks\Flow\Task\Trait\TaskFlowTrait;
 use Bitrix\Tasks\Internals\Task\Status;
-use Bitrix\Tasks\Kanban\StagesTable;
 
 class HimselfDistributorStrategy implements DistributorStrategyInterface
 {
+	use TaskFlowTrait;
+
 	public function distribute(Flow $flow, array $fields, array $taskData): int
 	{
-		if (empty($taskData))
+		$isNewTask = empty($taskData);
+		if ($isNewTask)
 		{
-			return $fields['CREATED_BY'];
+			return (int)($fields['CREATED_BY'] ?? 0);
 		}
 
-		if ($this->isTaskAddedToFlow($fields, $taskData))
+		$isPendingTask = (int)($taskData['REAL_STATUS'] ?? 0) === Status::PENDING;
+		if ($isPendingTask && $this->isTaskAddedToFlow($fields, $taskData))
 		{
-			return $taskData['CREATED_BY'];
+			return (int)($fields['CREATED_BY'] ?? $taskData['CREATED_BY']);
 		}
 
-		if (isset($fields['HIMSELF_FLOW_TAKE_USER_ID']))
+		$newFlowId = (int)($fields['FLOW_ID'] ?? 0);
+		$currentFlowId = (int)($taskData['FLOW_ID'] ?? 0);
+
+		if ($newFlowId === $currentFlowId)
 		{
-			return $fields['HIMSELF_FLOW_TAKE_USER_ID'];
+			return (int)$taskData['RESPONSIBLE_ID'];
 		}
 
-		$responsibleId = $fields['RESPONSIBLE_ID'] ?? $taskData['RESPONSIBLE_ID'];
-
-		return (int)$responsibleId;
-	}
-
-	private function isTaskAddedToFlow(array $fields, array $taskData): bool
-	{
-		if (!isset($fields['FLOW_ID']) || (int)$fields['FLOW_ID'] <= 0)
-		{
-			return false;
-		}
-
-		$newFlowId = (int)$fields['FLOW_ID'];
-		$currentFlowId = isset($taskData['FLOW_ID']) ? (int)$taskData['FLOW_ID'] : null;
-
-		return $currentFlowId === null || $currentFlowId !== $newFlowId;
+		return (int)($fields['RESPONSIBLE_ID'] ?? $taskData['RESPONSIBLE_ID']);
 	}
 }

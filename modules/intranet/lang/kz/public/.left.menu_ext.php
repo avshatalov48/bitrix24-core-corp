@@ -1,0 +1,24 @@
+<?php
+$MESS["LEFT_MENU_BLOG"] = "Хабарламалар";
+$MESS["LEFT_MENU_BP"] = "Бизнес-процестер";
+$MESS["LEFT_MENU_CALENDAR"] = "Күнтізбе";
+$MESS["LEFT_MENU_CRM"] = "CRM";
+$MESS["LEFT_MENU_DISC"] = "Менің дискім";
+$MESS["LEFT_MENU_IM_MESSENGER"] = "Чат және қоңыраулар";
+$MESS["LEFT_MENU_LIVE_FEED"] = "Жанды лента";
+$MESS["LEFT_MENU_LIVE_FEED2"] = "Жаңалықтар";
+$MESS["LEFT_MENU_MAIL"] = "Пошта";
+$MESS["LEFT_MENU_MAIL_SETTING"] = "Баптауларды өзгерту";
+$MESS["LEFT_MENU_MY_PROCESS"] = "Менің процестерім";
+$MESS["LEFT_MENU_PHOTO"] = "Фотосуреттер";
+$MESS["LEFT_MENU_TASKS"] = "Міндеттер мен Жобалар";
+$MESS["TOP_MENU_COMPANY"] = "Компания";
+$MESS["TOP_MENU_DEPARTMENTS"] = "Бөлімшелер";
+$MESS["TOP_MENU_DISCS"] = "Дискілер";
+$MESS["TOP_MENU_EMPLOYEES"] = "Қызметкерлер";
+$MESS["TOP_MENU_GROUPS"] = "Топтар";
+$MESS["TOP_MENU_GROUPS_EXTRANET"] = "Экстранет топтары";
+$MESS["TOP_MENU_MARKETPLACE_2"] = "Маркет";
+$MESS["TOP_MENU_OPENLINES"] = "Ашық желілер";
+$MESS["TOP_MENU_SERVICES"] = "Сервистер";
+$MESS["TOP_MENU_TELEPHONY"] = "Телефония";

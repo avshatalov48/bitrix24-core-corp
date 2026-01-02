@@ -121,6 +121,11 @@ class CVoxImplantCrmHelper
 			return false;
 		}
 
+		if (is_array($userId))
+		{
+			$userId = isset($userId[0]) && is_numeric($userId[0]) ? (int)$userId[0] : null;
+		}
+
 		if ($userId > 0)
 		{
 			$findParams = array('USER_ID'=> $userId);
@@ -218,8 +223,8 @@ class CVoxImplantCrmHelper
 		if(!$found)
 		{
 			$arResult = array('FOUND' => 'N');
-			$userPermissions = CCrmPerms::GetUserPermissions($userId);
-			if (CCrmLead::CheckCreatePermission($userPermissions))
+			$crmUserPermissions = \Bitrix\Crm\Service\Container::getInstance()->getUserPermissions($userId);
+			if ($crmUserPermissions->entityType()->canAddItems(CCrmOwnerType::Lead))
 			{
 				$arResult['CAN_CREATE_LEAD'] = self::isLeadEnabled();
 				$arResult['LEAD_URL'] = CCrmOwnerType::GetEditUrl(CCrmOwnerType::Lead, 0);
@@ -229,7 +234,7 @@ class CVoxImplantCrmHelper
 					$arResult['ORIGIN_ID'] = 'VI_'.$callId;
 				}
 			}
-			if (CCrmContact::CheckCreatePermission($userPermissions))
+			if ($crmUserPermissions->entityType()->canAddItems(CCrmOwnerType::Contact))
 			{
 				$arResult['CONTACT_URL'] = CCrmOwnerType::GetEditUrl(CCrmOwnerType::Contact, 0);
 				if($arResult['CONTACT_URL'] !== '')

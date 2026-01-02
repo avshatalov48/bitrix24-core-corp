@@ -115,6 +115,7 @@ export const ListApps = {
 		this.bindPopupEvent();
 		this.initBottomLoader();
 		this.initTagEars();
+		this.checkUrlParams();
 
 		if (!this.$refs.marketCatalogCategories) {
 			setTimeout(() => {
@@ -133,6 +134,14 @@ export const ListApps = {
 			if (this.needSortMenu) {
 				this.options.order = this.result.SORT_INFO.CURRENT.VALUE;
 				this.selectedOrder = this.result.SORT_INFO.CURRENT;
+			}
+		},
+		checkUrlParams: function () {
+			const urlParams = new URLSearchParams(window.location.search);
+			const tag = urlParams.get('tag');
+			if (this.result.FILTER_TAGS.some(x => x.name === tag)) {
+				this.result.SELECTED_TAG = tag;
+				this.filterTag(tag);
 			}
 		},
 		setSelectedTag: function () {
@@ -205,7 +214,7 @@ export const ListApps = {
 			this.options.filter = this.getFilter();
 			this.params['REQUEST'] = [];
 			this.options.page = 1;
-			this.setTagAnalyticsLabel(event.currentTarget);
+			this.setTagAnalyticsLabel(event?.currentTarget);
 			this.showLoader();
 			this.loadItems();
 			this.cleanTagAnalyticsLabel();

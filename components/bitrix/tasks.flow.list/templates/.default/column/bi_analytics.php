@@ -6,6 +6,7 @@ if (!defined('B_PROLOG_INCLUDED') || B_PROLOG_INCLUDED !== true)
 
 use Bitrix\Main\Localization\Loc;
 use Bitrix\Main\Web\Json;
+use Bitrix\Tasks\Flow\Integration\AI\Configuration;
 
 if (!function_exists('renderBIAnalyticsColumn'))
 {
@@ -17,7 +18,7 @@ if (!function_exists('renderBIAnalyticsColumn'))
 
 		$efficiency = $data['efficiency'];
 
-		if ($efficiency < 70)
+		if ($efficiency <= Configuration::getMaxValueForLowEfficiency())
 		{
 			$efficiencyClass = '--danger';
 			$efficiencyText = Loc::getMessage('TASKS_FLOW_LIST_BI_ANALYTICS_BADLY');

@@ -7,39 +7,41 @@ import { ToggleFlowFactory } from './toggle-flow/toggle-flow-factory';
 
 import type { TaskViewToggleFlowParams } from './toggle-flow/type/task-view-toggle-flow';
 import type { TaskEditToggleFlowParams } from './toggle-flow/type/task-edit-toggle-flow';
+import type { FlowParams } from 'tasks.flow.entity-selector';
 import type { AbstractToggleFlow } from './toggle-flow/abstract-toggle-flow';
 
 type FlowSelectorDialogParams = {
 	isExtranet: boolean,
 	toggleFlowParams: TaskEditToggleFlowParams | TaskViewToggleFlowParams,
-
-	flowId: number,
-	flowLimitCode: string,
-	isFeatureEnabled: boolean,
-	isFeatureTrialable: boolean,
+	flowParams: FlowParams,
+	canCreateFlow: boolean,
 }
 
 export class EntitySelectorDialog
 {
-	#params: FlowSelectorDialogParams;
 	#toggleFlow: AbstractToggleFlow;
+	#flowParams: FlowParams;
+
+	#canCreateFlow: boolean;
 
 	#dialog: Dialog;
 	#selectedItemBeforeUpdate: Item;
 
 	constructor(params: FlowSelectorDialogParams)
 	{
-		this.#params = params;
+		this.#flowParams = params.flowParams;
 
-		this.#toggleFlow = ToggleFlowFactory.get(this.#params.toggleFlowParams);
+		this.#canCreateFlow = params.canCreateFlow;
+
+		this.#toggleFlow = ToggleFlowFactory.get(params.toggleFlowParams);
 		this.#selectedItemBeforeUpdate = null;
 	}
 
 	show(target: HTMLElement): void
 	{
-		if (!this.#params.isFeatureEnabled)
+		if (!this.#flowParams.isFeatureEnabled)
 		{
-			InfoHelper.show(this.#params.flowLimitCode);
+			InfoHelper.show(this.#flowParams.limitCode);
 
 			return;
 		}
@@ -62,7 +64,7 @@ export class EntitySelectorDialog
 			dropdownMode: true,
 			enableSearch: true,
 			cacheable: true,
-			preselectedItems: [['flow', this.#params.flowId]],
+			preselectedItems: [['flow', this.#flowParams.id]],
 			entities: [
 				{
 					id: 'flow',
@@ -128,7 +130,7 @@ export class EntitySelectorDialog
 				},
 			},
 			searchOptions: {
-				allowCreateItem: !this.#params.isExtranet,
+				allowCreateItem: this.#canCreateFlow,
 				footerOptions: {
 					label: BX.Loc.getMessage('TASKS_FLOW_ENTITY_SELECTOR_CREATE_BUTTON'),
 				},
@@ -136,12 +138,12 @@ export class EntitySelectorDialog
 			recentTabOptions: {
 				stub: 'BX.Tasks.Flow.EmptyStub',
 				stubOptions: {
-					showArrow: !this.#params.isExtranet,
+					showArrow: this.#canCreateFlow,
 				},
 			},
 		});
 
-		if (!this.#params.isExtranet)
+		if (this.#canCreateFlow)
 		{
 			this.#dialog = this.#addFooter(this.#dialog);
 		}
@@ -152,7 +154,11 @@ export class EntitySelectorDialog
 	#createFlow(flowName): Promise
 	{
 		return Runtime.loadExtension('tasks.flow.edit-form')
-			.then((exports) => exports.EditForm.createInstance({ flowName }))
+			.then((exports) => exports.EditForm.createInstance({
+				flowName,
+				isFeatureTrialable: this.#flowParams.isFeatureTrialable,
+				context: this.#flowParams.context ?? '',
+			}))
 			.then((editForm) => {
 				return new Promise((resolve) => {
 					editForm.subscribe('afterSave', (baseEvent) => {
@@ -167,7 +173,10 @@ export class EntitySelectorDialog
 
 	#addFooter(dialog: Dialog): Dialog
 	{
-		const footer = new Footer(this.#dialog);
+		const footer = new Footer(this.#dialog, {
+			isFeatureTrialable: this.#flowParams.isFeatureTrialable,
+			context: this.#flowParams.context ?? '',
+		});
 		dialog.setFooter(footer.render());
 
 		return dialog;

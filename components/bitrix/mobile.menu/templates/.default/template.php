@@ -86,11 +86,6 @@ $initData = array(
 					data-url="/mobile/crm/deal/list.php"
 					data-pageid="crm_deal_list"><?= htmlspecialcharsbx(GetMessage('MB_CRM_DEAL')) ?></div>
 			<? endif; ?>
-			<? if (!$userPerms->HavePerm('INVOICE', BX_CRM_PERM_NONE, 'READ')): ?>
-				<div class="menu-item menu-item-wrap menu-icon-invoice" id="crm_invoice_list"
-					data-url="/mobile/crm/invoice/list.php"
-					data-pageid="crm_invoice_list"><?= htmlspecialcharsbx(GetMessage('MB_CRM_INVOICE')) ?></div>
-			<? endif; ?>
 			<? if (!$userPerms->HavePerm('LEAD', BX_CRM_PERM_NONE, 'READ')): ?>
 				<div class="menu-item menu-item-wrap menu-icon-leads" id="crm_lead_list"
 					data-url="/mobile/crm/lead/list.php"

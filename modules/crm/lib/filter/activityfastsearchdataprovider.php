@@ -142,6 +142,7 @@ class ActivityFastSearchDataProvider extends EntityDataProvider
 					'referenceClass' => null,
 					'isEnableAllUsers' => false,
 					'isEnableOtherUsers' => false,
+					'isEnableStructureNode' => true,
 				]
 			);
 		}

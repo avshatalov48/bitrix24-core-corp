@@ -258,7 +258,7 @@ abstract class Base extends Controller
 		return Container::getInstance()->getFileUploader()->saveFileTemporary($field, $fileArray);
 	}
 
-	protected function prepareFieldsInfo(array $fieldsInfo): array
+	protected function prepareFieldsInfo(array $fieldsInfo, bool $useOriginalUfNames = false): array
 	{
 		foreach ($fieldsInfo as &$fieldInfo)
 		{
@@ -271,7 +271,12 @@ abstract class Base extends Controller
 		$convertedFieldsInfo = [];
 		foreach ($fieldsInfo as $fieldName => $info)
 		{
-			$convertedFieldName = $ormObjectConverter->convertFieldNameFromUpperCaseToCamelCase($fieldName);
+			$convertedFieldName = (
+				$useOriginalUfNames && str_starts_with($fieldName, 'UF_')
+					? $fieldName
+					: $ormObjectConverter->convertFieldNameFromUpperCaseToCamelCase($fieldName)
+			);
+
 			$info['upperName'] = $fieldName;
 			$convertedFieldsInfo[$convertedFieldName] = $info;
 		}

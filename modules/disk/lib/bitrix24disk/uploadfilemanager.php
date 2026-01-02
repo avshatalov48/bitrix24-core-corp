@@ -175,6 +175,11 @@ class UploadFileManager implements IErrorable
 		list($startRange, $endRange) = $this->getContentRange();
 		$fileSize = $this->getFileSize();
 
+		if ($startRange === $fileSize && $endRange < $startRange)
+		{
+			return true;
+		}
+
 		if(
 			$startRange === null ||
 			(

@@ -390,7 +390,12 @@ jn.define('tasks/checklist/flat-tree/item', (require, exports, module) => {
 
 		checkCanAddAccomplice()
 		{
-			return this.action.addAccomplice;
+			if (this.isRoot())
+			{
+				return this.action.addAccomplice;
+			}
+
+			return this.checklist.getRootItem().checkCanAddAccomplice();
 		}
 
 		checkCanUpdate()
@@ -459,12 +464,15 @@ jn.define('tasks/checklist/flat-tree/item', (require, exports, module) => {
 
 		getMembersCount()
 		{
-			return Object.keys(this.getMembers()).length;
+			return this.getMembers().length;
 		}
 
+		/**
+		 * @returns {Object[]}
+		 */
 		getMembers()
 		{
-			return this.fields.members;
+			return Object.values(this.getFieldMembers());
 		}
 
 		/**
@@ -472,7 +480,7 @@ jn.define('tasks/checklist/flat-tree/item', (require, exports, module) => {
 		 */
 		getPrepareMembers()
 		{
-			return Object.values(this.getMembers()).map((member) => ({
+			return this.getMembers().map((member) => ({
 				...member,
 				type: this.getMemberType(member.type),
 			}));
@@ -480,7 +488,7 @@ jn.define('tasks/checklist/flat-tree/item', (require, exports, module) => {
 
 		getMembersIds(memberType)
 		{
-			return Object.values(this.getMembers())
+			return this.getMembers()
 				.filter(({ type }) => type === this.getMemberType(memberType))
 				.map(({ id }) => id);
 		}
@@ -500,17 +508,26 @@ jn.define('tasks/checklist/flat-tree/item', (require, exports, module) => {
 			});
 		}
 
-		getMember(id)
+		/**
+		 * @param {number} userId
+		 * @returns {Object}
+		 */
+		getMember(userId)
 		{
-			const members = this.getMembers();
+			const fieldMembers = this.getFieldMembers();
 
-			return members[id];
+			return fieldMembers[userId];
+		}
+
+		getFieldMembers()
+		{
+			return this.fields.members;
 		}
 
 		addMember(member)
 		{
 			this.emitter.emit(`${member.type}Add`, [member]);
-			const members = this.getMembers();
+			const members = this.getFieldMembers();
 
 			members[member.id] = member;
 		}
@@ -518,7 +535,7 @@ jn.define('tasks/checklist/flat-tree/item', (require, exports, module) => {
 		clearMemberByType(memberType)
 		{
 			const members = {};
-			Object.values(this.getMembers()).forEach((member) => {
+			this.getMembers().forEach((member) => {
 				const type = shortMemberTypes[memberType]
 					? memberType
 					: this.getMemberType(memberType);
@@ -529,7 +546,7 @@ jn.define('tasks/checklist/flat-tree/item', (require, exports, module) => {
 				}
 			});
 
-			this.fields.members = members;
+			this.setMembers(members);
 		}
 
 		/**
@@ -553,7 +570,7 @@ jn.define('tasks/checklist/flat-tree/item', (require, exports, module) => {
 		 */
 		hasMemberType(memberType)
 		{
-			return Object.values(this.getMembers()).some(({ type }) => memberType === type);
+			return this.getMembers().some(({ type }) => memberType === type);
 		}
 
 		getMemberType(type)

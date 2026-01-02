@@ -1,6 +1,6 @@
 <?php
 $MESS["CRM_CONFIGURATION_MANIFEST_ACTION_DESCRIPTION_CRM_FORM"] = "Click \"Export\" to save your CRM forms to a file";
-$MESS["CRM_CONFIGURATION_MANIFEST_ACTION_DESCRIPTION_VERTICAL_CRM"] = "Click \"Export\" to save your CRM settings to a file";
+$MESS["CRM_CONFIGURATION_MANIFEST_ACTION_DESCRIPTION_VERTICAL_CRM"] = "Click \"Export\" to save your CRM settings to a file.";
 $MESS["CRM_CONFIGURATION_MANIFEST_BLOCK_TITLE_CRM_FORM"] = "Export CRM forms";
 $MESS["CRM_CONFIGURATION_MANIFEST_BLOCK_TITLE_VERTICAL_CRM"] = "Export CRM solution preset";
 $MESS["CRM_CONFIGURATION_MANIFEST_DESCRIPTION_CRM_FORM"] = "Get ready to use CRM forms for your business in only a few minutes!";

@@ -31,6 +31,7 @@ class Item
 		private readonly bool $workWithResult,
 		private readonly bool $isSystem,
 		private readonly bool $isFavorite,
+		private readonly ?string $jsonOutputSchema
 	)
 	{
 		$this->children = new Collection;
@@ -154,5 +155,10 @@ class Item
 	public function getSort(): int
 	{
 		return (int)$this->sort;
+	}
+
+	public function getJsonOutputSchema(): ?string
+	{
+		return  $this->jsonOutputSchema;
 	}
 }

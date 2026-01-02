@@ -72,7 +72,7 @@ if (defined('BX24_HOST_NAME'))
 {
 	$aTabs['OPTIONS'][] = array(
 		'uri_server',
-		Loc::getMessage('IMCONNECTOR_FIELD_URI_SERVER_TITLE'),
+		Loc::getMessage('IMCONNECTOR_FIELD_URI_SERVER_TITLE_MSGVER_1', ['#URL#' => (new \Bitrix\Main\License\UrlProvider)->getTechDomain()]),
 		'',
 		array('text', 50),
 	);

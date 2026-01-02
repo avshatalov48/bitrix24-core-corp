@@ -2,14 +2,17 @@
 
 return [
 	'extensions' => [
-		'loc',
 		'assets/icons',
 		'toast',
-		'feature',
+		'type',
+		'utils/color',
 		'im:lib/theme',
+		'im:messenger/loc',
 		'im:messenger/lib/logger',
+		'utils/object',
 	],
 	'bundle' => [
 		'./src/messenger-toast',
+		'./src/messenger-notifier',
 	],
 ];

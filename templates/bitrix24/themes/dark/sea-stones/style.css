@@ -1,4 +1,9 @@
-body {
-	background: #B7E3F2 url(sea-stones.jpg) fixed 0 0 no-repeat;
-	background-size: cover;
+:root {
+  --air-theme-bg-color: #B7E3F2;
+  --air-theme-bg-size: cover;
+  --air-theme-bg-repeat: no-repeat;
+  --air-theme-bg-position: 0 0;
+  --air-theme-bg-attachment: fixed;
+  --air-theme-bg-image: url(/bitrix/templates/bitrix24/themes/dark/sea-stones/sea-stones.jpg);
+  --air-theme-bg-image-blurred: url(/bitrix/templates/bitrix24/themes/dark/sea-stones/sea-stones-blurred.webp);
 }

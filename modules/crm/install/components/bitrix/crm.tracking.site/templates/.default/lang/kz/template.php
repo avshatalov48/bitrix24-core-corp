@@ -1,0 +1,45 @@
+<?php
+$MESS["CRM_TRACKING_SITE_ADDITIONAL"] = "Қосымша";
+$MESS["CRM_TRACKING_SITE_ADD_EMAIL"] = "email-ды қосу";
+$MESS["CRM_TRACKING_SITE_ADD_PHONE"] = "нөмірді қосу";
+$MESS["CRM_TRACKING_SITE_BTN_ADD"] = "Қосу";
+$MESS["CRM_TRACKING_SITE_BTN_CANCEL"] = "Болдырмау";
+$MESS["CRM_TRACKING_SITE_BTN_COPY"] = "Буферге көшіру (CTRL + C)";
+$MESS["CRM_TRACKING_SITE_BTN_REMOVE"] = "Жою";
+$MESS["CRM_TRACKING_SITE_BTN_VIEW"] = "сайтта қарау";
+$MESS["CRM_TRACKING_SITE_CHECK"] = "Кодты тексеру";
+$MESS["CRM_TRACKING_SITE_CONNECT"] = "Сайттың дайындығын тексеру";
+$MESS["CRM_TRACKING_SITE_DESC"] = "Кодты орнатыңыз. Сайтта оқиғаларды бақылаңыз.
+Сайтыңыздан барлық телефон қоңыраулары мен электрондық хаттар туралы ақпарат алыңыз.";
+$MESS["CRM_TRACKING_SITE_DISCONNECT"] = "Сайтты өшіру";
+$MESS["CRM_TRACKING_SITE_EMAILS"] = "Электрондық мекенжайлар";
+$MESS["CRM_TRACKING_SITE_ENRICH_TEXT"] = "Мәтінді сілтемелерге дейін байыту";
+$MESS["CRM_TRACKING_SITE_ENRICH_TEXT_HINT"] = "Мәтіндегі ауыстырылған нөмірді басылатын сілтемеге айналдыру.";
+$MESS["CRM_TRACKING_SITE_ENRICH_TEXT_HINT1"] = "Мәтіндегі табылған нөмірлер мен email мекенжайларын басылатын сілтемелерге айналдыру.";
+$MESS["CRM_TRACKING_SITE_ENRICH_TEXT_SHORT"] = "Сілтемелер";
+$MESS["CRM_TRACKING_SITE_FOUND"] = "Сайтта";
+$MESS["CRM_TRACKING_SITE_FOUND_ITEMS"] = "%phone_count% телефон және %email_count% email табылды";
+$MESS["CRM_TRACKING_SITE_FOUND_ITEMS_DESC"] = "Тізімді редакциялаңыз немесе нөмірлерді / email қолмен теріп көрсетіңіз.";
+$MESS["CRM_TRACKING_SITE_ITEM_DEMO_EMAIL"] = "Email енгізіңіз";
+$MESS["CRM_TRACKING_SITE_ITEM_DEMO_PHONE"] = "Нөмірді енгізіңіз";
+$MESS["CRM_TRACKING_SITE_NAME"] = "Сайт мекенжайы";
+$MESS["CRM_TRACKING_SITE_NAME_INPUT"] = "Сайттың мекенжайын енгізіңіз";
+$MESS["CRM_TRACKING_SITE_OLD_BROWSER"] = "Сіздің браузеріңіздің ағымдағы нұсқасы ескірген. Құралдың дұрыс жұмыс істеуі үшін браузерді жаңартыңыз.";
+$MESS["CRM_TRACKING_SITE_PHONES"] = "Телефон нөмірлері";
+$MESS["CRM_TRACKING_SITE_REPLACEMENT_DISABLE"] = "Алмастыруды қосу";
+$MESS["CRM_TRACKING_SITE_REPLACE_TEXT"] = "Мәтінде іздеп, алмастыру";
+$MESS["CRM_TRACKING_SITE_REPLACE_TEXT_HINT"] = "Сілтемелер түрінде табылған нөмірлерді ғана емес, қарапайым мәтін түрінде де ауыстыру.";
+$MESS["CRM_TRACKING_SITE_REPLACE_TEXT_SHORT"] = "Мәтінде алмастыру";
+$MESS["CRM_TRACKING_SITE_RESOLVE_DUP"] = "Телнұсқаларды жасыру";
+$MESS["CRM_TRACKING_SITE_RESOLVE_DUP_HINT"] = "Екі түрлі нөмір бір нөмірге ауыстырылады. Егер бұл екі нөмір жақын болса, екіншісі жасырылады.";
+$MESS["CRM_TRACKING_SITE_RESOLVE_DUP_SHORT"] = "Телнұсқалар";
+$MESS["CRM_TRACKING_SITE_SCRIPT"] = "Сіздің сатыңыздың коды";
+$MESS["CRM_TRACKING_SITE_SCRIPT_DESC"] = "%tag_body% жабу тегінің алдында сайтыңызда кодты орнатыңыз";
+$MESS["CRM_TRACKING_SITE_SCRIPT_STATUS"] = "Мәртебе";
+$MESS["CRM_TRACKING_SITE_SCRIPT_STATUS_ERROR"] = "код орнатылмады";
+$MESS["CRM_TRACKING_SITE_SCRIPT_STATUS_NONE"] = "код тексерілмеді";
+$MESS["CRM_TRACKING_SITE_SCRIPT_STATUS_PROCESS"] = "тексеру";
+$MESS["CRM_TRACKING_SITE_SCRIPT_STATUS_SUCCESS"] = "код орнатылды";
+$MESS["CRM_TRACKING_SITE_SUB_DESC"] = "Сіздің сайтыңыздағы өтінім көздерін бақылау үшін ауыстыру қажет. 
+Сайтыңызда ауыстырылуі тиіс нөмірлер мен email-ды таңдаңыз немесе көрсетіңіз.";
+$MESS["CRM_TRACKING_SITE_SUB_TITLE"] = "Телефон нөмірлері мен email-ды ауыстыру";

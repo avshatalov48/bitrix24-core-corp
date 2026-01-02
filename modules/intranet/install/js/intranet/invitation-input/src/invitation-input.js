@@ -1,21 +1,71 @@
-import { Cache, Dom, Tag, Validation, Loc, Extension } from 'main.core';
+import { Cache, Dom, Tag, Validation, Loc, Extension, Type } from 'main.core';
 import { MemoryCache } from 'main.core.cache';
 import { BaseEvent, EventEmitter } from 'main.core.events';
 import { TagSelector } from 'ui.entity-selector';
 import './style.css';
 import type { InvitationProvider } from './provider/invitation-provider';
 import { InvitationToGroup } from './provider/invitation-to-group';
+import { InvitationToPortal } from './provider/invitation-to-portal';
+
+export type InvitationInputOptionType = {
+	placeholder: ?string,
+	minHeight: ?number,
+	showErrorBeforeSubmit: ?boolean,
+	showErrorAfterSubmit: ?boolean,
+};
+
+export const InvitationInputType = Object.freeze({
+	PHONE: 'phone',
+	EMAIL: 'email',
+	ALL: 'all',
+});
 
 export class InvitationInput extends EventEmitter
 {
 	#cache: MemoryCache = new Cache.MemoryCache();
 	#invalidPhoneNumbersTagIds: Array<string> = [];
 	#isReadySendInvitation: boolean = false;
+	#placeholder: string;
+	#inputType: InvitationInputType;
+	#isPhoneEnabled: boolean;
+	#isEmailEnabled: boolean;
+	#userLang: string = null;
+	#minHeight: ?number = null;
+	#showErrorBeforeSubmit: boolean;
+	#showErrorAfterSubmit: boolean;
 
-	constructor()
+	constructor(options: InvitationInputOptionType)
 	{
 		super();
+		this.#inputType = options?.inputType ?? InvitationInputType.ALL;
 		this.setEventNamespace('BX.Intranet.InvitationInput');
+
+		this.#minHeight = options?.minHeight;
+		this.#showErrorBeforeSubmit = Type.isBoolean(options?.showErrorBeforeSubmit)
+			? options.showErrorBeforeSubmit
+			: false;
+		this.#showErrorAfterSubmit = Type.isBoolean(options?.showErrorAfterSubmit)
+			? options.showErrorAfterSubmit
+			: true;
+
+		const settings = Extension.getSettings('intranet.invitation-input');
+		if (this.#inputType === InvitationInputType.PHONE && !settings?.isInvitationByPhoneAvailable)
+		{
+			throw new Error('Incorrect component operation parameters.');
+		}
+
+		this.#isPhoneEnabled = [InvitationInputType.ALL, InvitationInputType.PHONE].includes(this.#inputType)
+			&& Boolean(settings?.isInvitationByPhoneAvailable);
+		this.#isEmailEnabled = [InvitationInputType.ALL, InvitationInputType.EMAIL].includes(this.#inputType);
+		this.#placeholder = Type.isStringFilled(options?.placeholder) ? options.placeholder : this.#getDefaultPlaceholder();
+	}
+
+	changeLanguage(lang: string): void
+	{
+		if (Type.isString(lang))
+		{
+			this.#userLang = lang;
+		}
 	}
 
 	getTagSelector(): TagSelector
@@ -25,7 +75,7 @@ export class InvitationInput extends EventEmitter
 				id: `intranet-invitation-input-${Math.random(4)}`,
 				showTextBox: true,
 				showAddButton: false,
-				placeholder: this.#getDefaultPlaceholder(),
+				placeholder: this.#placeholder,
 				tagTextColor: '#1E8D36',
 				tagBgColor: '#D4FDB0',
 				tagMaxWidth: 200,
@@ -35,6 +85,7 @@ export class InvitationInput extends EventEmitter
 					onEnter: this.#onEnter.bind(this),
 					onBlur: this.#onBlur.bind(this),
 					onInput: this.#onInput.bind(this),
+					onContainerClick: this.#onContainerClick.bind(this),
 				},
 			});
 		});
@@ -51,6 +102,12 @@ export class InvitationInput extends EventEmitter
 			this.getTagSelector().renderTo(this.getWrapper());
 			this.getTagSelector().focusTextBox();
 
+			if (Type.isNumber(this.#minHeight))
+			{
+				const itemsContainer = (this.getTagSelector().getItemsContainer());
+				Dom.style(itemsContainer, 'min-height', `${this.#minHeight}px`);
+			}
+
 			return this.getWrapper();
 		});
 	}
@@ -64,16 +121,36 @@ export class InvitationInput extends EventEmitter
 	{
 		return this.#cache.remember('wrapper', () => {
 			return Tag.render`
-				<div class="intranet-invitation-wrapper">
+				<div class="intranet-invitation-wrapper"></div>
 			`;
 		});
 	}
 
 	inviteToGroup(groupId: number): Promise
 	{
-		const invitationProvider = new InvitationToGroup(groupId, this.#getPreparedUserList());
+		const invitationProvider = new InvitationToGroup(
+			groupId,
+			this.#getPreparedUserList(),
+		);
 
 		return this.#invite(invitationProvider);
+	}
+
+	inviteToPortal(): Promise
+	{
+		const invitationProvider = new InvitationToPortal(this.#getPreparedUserList());
+
+		return this.#invite(invitationProvider);
+	}
+
+	hasErrorTags(): boolean
+	{
+		return this.#getErrorTags().length > 0;
+	}
+
+	isEmptyTags(): boolean
+	{
+		return this.getTagSelector().getTags().length === 0;
 	}
 
 	#invite(invitationProvider: InvitationProvider): Promise
@@ -98,7 +175,15 @@ export class InvitationInput extends EventEmitter
 					this.#setUnreadySaveState();
 					resolve();
 				}).catch((response) => {
-					this.#addErrorBlockByMessage(response.errors[0].message);
+					if (this.#showErrorAfterSubmit)
+					{
+						this.#addErrorBlockByMessage(response.errors[0].message);
+					}
+					else
+					{
+						this.getTagSelector().removeTags();
+					}
+
 					reject(response.errors[0].message);
 				});
 			}
@@ -113,16 +198,17 @@ export class InvitationInput extends EventEmitter
 		const users = [];
 
 		tags.forEach((tag) => {
-			if (tag.getEntityType() === 'email')
+			if (this.#isEmailEnabled && tag.getEntityType() === 'email')
 			{
 				users.push({
 					email: tag.getTitle(),
+					languageId: this.#userLang,
 				});
 			}
 
 			if (
 				tag.getEntityType() === 'phone'
-				&& this.#isInvitationByPhoneAvailable()
+				&& this.#isPhoneEnabled
 				&& !this.#invalidPhoneNumbersTagIds.includes(tag.getId())
 			)
 			{
@@ -149,7 +235,7 @@ export class InvitationInput extends EventEmitter
 
 			if (
 				tag.getEntityType() === 'phone'
-				&& this.#isInvitationByPhoneAvailable()
+				&& this.#isPhoneEnabled
 				&& this.#invalidPhoneNumbersTagIds.includes(tag.getId())
 			)
 			{
@@ -172,13 +258,6 @@ export class InvitationInput extends EventEmitter
 		this.#isReadySendInvitation = false;
 	}
 
-	#isInvitationByPhoneAvailable(): boolean
-	{
-		const settings = Extension.getSettings('intranet.invitation-input');
-
-		return Boolean(settings?.isInvitationByPhoneAvailable);
-	}
-
 	#getPhoneParser(): BX.PhoneNumberParser
 	{
 		return BX.PhoneNumberParser.getInstance();
@@ -186,32 +265,44 @@ export class InvitationInput extends EventEmitter
 
 	#getDefaultPlaceholder(): string
 	{
-		if (this.#isInvitationByPhoneAvailable())
+		if (this.#isPhoneEnabled && !this.#isEmailEnabled)
 		{
-			return Loc.getMessage('INTRANET_INVITATION_INPUT_PLACEHOLDER_WITH_PHONE');
+			return Loc.getMessage('INTRANET_INVITATION_INPUT_PLACEHOLDER_PHONE');
+		}
+		else if (!this.#isPhoneEnabled && this.#isEmailEnabled)
+		{
+			return Loc.getMessage('INTRANET_INVITATION_INPUT_PLACEHOLDER');
 		}
 
-		return Loc.getMessage('INTRANET_INVITATION_INPUT_PLACEHOLDER');
+		return Loc.getMessage('INTRANET_INVITATION_INPUT_PLACEHOLDER_WITH_PHONE');
 	}
 
 	#getDefaultValidationMessage(): string
 	{
-		if (this.#isInvitationByPhoneAvailable())
+		if (this.#isPhoneEnabled && !this.#isEmailEnabled)
 		{
-			return Loc.getMessage('INTRANET_INVITATION_INPUT_VALIDATION_MESSAGE_WITH_PHONE');
+			return Loc.getMessage('INTRANET_INVITATION_INPUT_VALIDATION_MESSAGE_PHONE');
+		}
+		else if (!this.#isPhoneEnabled && this.#isEmailEnabled)
+		{
+			return Loc.getMessage('INTRANET_INVITATION_INPUT_VALIDATION_MESSAGE');
 		}
 
-		return Loc.getMessage('INTRANET_INVITATION_INPUT_VALIDATION_MESSAGE');
+		return Loc.getMessage('INTRANET_INVITATION_INPUT_VALIDATION_MESSAGE_WITH_PHONE');
 	}
 
 	#getEmptyValidationMessage(): string
 	{
-		if (this.#isInvitationByPhoneAvailable())
+		if (this.#isPhoneEnabled && !this.#isEmailEnabled)
 		{
-			return Loc.getMessage('INTRANET_INVITATION_INPUT_EMPTY_MESSAGE_WITH_PHONE');
+			return Loc.getMessage('INTRANET_INVITATION_INPUT_VALIDATION_MESSAGE_PHONE');
+		}
+		else if (!this.#isPhoneEnabled && this.#isEmailEnabled)
+		{
+			return Loc.getMessage('INTRANET_INVITATION_INPUT_EMPTY_MESSAGE');
 		}
 
-		return Loc.getMessage('INTRANET_INVITATION_INPUT_EMPTY_MESSAGE');
+		return Loc.getMessage('INTRANET_INVITATION_INPUT_EMPTY_MESSAGE_WITH_PHONE');
 	}
 
 	#onAfterTagRemove(event: BaseEvent): void
@@ -233,6 +324,11 @@ export class InvitationInput extends EventEmitter
 		else if (errorTags.length === 0)
 		{
 			this.#setReadySaveState();
+
+			if (this.#showErrorBeforeSubmit)
+			{
+				this.#removeErrorBlock();
+			}
 		}
 	}
 
@@ -246,6 +342,11 @@ export class InvitationInput extends EventEmitter
 		if (tag.getEntityType() === 'error')
 		{
 			this.#setErrorStateForTag(tag);
+
+			if (this.#showErrorBeforeSubmit)
+			{
+				this.#addErrorBlockByMessage(this.#getDefaultValidationMessage());
+			}
 		}
 
 		if (tag.getEntityType() === 'phone')
@@ -315,10 +416,15 @@ export class InvitationInput extends EventEmitter
 		}
 	}
 
+	#onContainerClick(): void
+	{
+		this.getTagSelector().getTextBox().focus();
+	}
+
 	#getEntityTypeByValue(value: string): string
 	{
-		const isPhone = this.#isInvitationByPhoneAvailable() ? this.#isPhone(value) : false;
-		const isEmail = Validation.isEmail(value) && /^[^@]+@[^@]+\.[^@]+$/.test(value);
+		const isPhone = this.#isPhoneEnabled ? this.#isPhone(value) : false;
+		const isEmail = this.#isEmailEnabled ? (Validation.isEmail(value) && /^[^@]+@[^@]+\.[^@]+$/.test(value)) : false;
 
 		if (isEmail)
 		{

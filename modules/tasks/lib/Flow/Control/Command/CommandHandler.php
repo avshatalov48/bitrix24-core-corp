@@ -6,9 +6,9 @@ use Bitrix\Main\Application;
 use Bitrix\Main\DB\Connection;
 use Bitrix\Main\DI\ServiceLocator;
 use Bitrix\Main\UI\EntitySelector\Converter;
-use Bitrix\Tasks\AbstractCommand;
+use Bitrix\Tasks\Flow\AbstractCommand;
 use Bitrix\Tasks\Flow\Control\Exception\FlowNotFoundException;
-use Bitrix\Tasks\InvalidCommandException;
+use Bitrix\Tasks\Flow\Control\Exception\InvalidCommandException;
 use Bitrix\Tasks\Flow\Control\Exception\MiddlewareException;
 use Bitrix\Tasks\Flow\Control\Middleware\MiddlewareInterface;
 use Bitrix\Tasks\Flow\Flow;
@@ -73,7 +73,7 @@ abstract class CommandHandler
 		return $flow
 			->setResponsibleList($responsibleList)
 			->setOptions($options)
-		;
+			;
 	}
 
 	/**

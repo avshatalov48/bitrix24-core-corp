@@ -2,6 +2,8 @@
 	let UserModel = function(config) {
 		this.data = {
 			id: BX.prop.getInteger(config, 'id', 0),
+			firstName: BX.prop.getString(config, 'firstName', ''),
+			lastName: BX.prop.getString(config, 'lastName', ''),
 			name: BX.prop.getString(config, 'name', ''),
 			avatar: BX.prop.getString(config, 'avatar', ''),
 			gender: BX.prop.getString(config, 'gender', ''),
@@ -21,6 +23,7 @@
 			pinned: BX.prop.getBoolean(config, 'pinned', false),
 			presenter: BX.prop.getBoolean(config, 'presenter', false),
 			order: BX.prop.getInteger(config, 'order', false),
+			index: BX.prop.getInteger(config, 'index', false),
 		};
 
 		for (var fieldName in this.data)

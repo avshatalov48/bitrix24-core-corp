@@ -2,6 +2,8 @@
  * @module crm/entity-tab/pull-manager
  */
 jn.define('crm/entity-tab/pull-manager', (require, exports, module) => {
+	const { Random } = require('utils/random');
+
 	const TypePull = {
 		Command: 'CRM_KANBANUPDATED',
 		EventNameItemAdded: 'ITEMADDED',

@@ -9,6 +9,7 @@ use Bitrix\Main\Engine\CurrentUser;
 use Bitrix\Main\Entity\Result;
 use Bitrix\Main\Loader;
 use Bitrix\Main\ModuleManager;
+use CUser;
 
 class User extends Internals\Model
 {
@@ -45,6 +46,7 @@ class User extends Internals\Model
 	private $isExternalAuthEmail;
 	/** @var bool */
 	private $isCrmEmail;
+	private $isExternalBotUser = false;
 
 	/** @var User[] */
 	protected static $loadedUsers;
@@ -115,6 +117,12 @@ class User extends Internals\Model
 			if (isset($attributes['UF_DEPARTMENT']))
 			{
 				$userModel->setIsIntranetUser($attributes);
+			}
+
+			/** @see \Bitrix\Im\Bot::EXTERNAL_AUTH_ID */
+			if (isset($attributes['EXTERNAL_AUTH_ID']) &&  $attributes['EXTERNAL_AUTH_ID'] === 'bot')
+			{
+				$userModel->setIsBotUser(true);
 			}
 
 			self::$loadedUsers[$id] = $userModel;
@@ -308,18 +316,9 @@ class User extends Internals\Model
 		{
 			return false;
 		}
-		$queryUser = \CUser::getList(
-			'ID',
-			'ASC',
-			array(
-				'ID_EQUAL_EXACT' => $this->id,
-			),
-			array(
-				'FIELDS' => array('ID', 'EXTERNAL_AUTH_ID'),
-				'SELECT' => array('UF_DEPARTMENT', 'UF_USER_CRM_ENTITY'),
-			)
-		);
-		if ($user = $queryUser->fetch())
+
+		$queryUser = CUser::GetByID($this->id);
+		if ($user = $queryUser->Fetch())
 		{
 			$this->setIsIntranetUser($user);
 
@@ -383,6 +382,20 @@ class User extends Internals\Model
 	public function isExternalAuthEmail()
 	{
 		return !$this->isIntranetUser() && $this->isExternalAuthEmail;
+	}
+
+	/**
+	 * Checks is a bot user.
+	 * @return bool
+	 */
+	public function isBotUser():bool
+	{
+		return (bool)$this->isExternalBotUser;
+	}
+
+	public function setIsBotUser($value)
+	{
+		$this->isExternalBotUser = (bool)$value;
 	}
 
 	/**

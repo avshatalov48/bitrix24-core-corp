@@ -10,7 +10,6 @@ use Bitrix\AI\ShareRole\Events\Enums\Status;
 use Bitrix\AI\ShareRole\Events\SaveAnalyticEvent;
 use Bitrix\AI\ShareRole\Request\ChangeRequest;
 use Bitrix\AI\ShareRole\Request\GetRoleDataByCodeRequest;
-use Bitrix\Intranet\ActionFilter\IntranetUser;
 use Bitrix\AI\ShareRole\Request\CreateRequest;
 use Bitrix\AI\ShareRole\Service\RoleService;
 use Bitrix\AI\ShareRole\Service\ShareService;
@@ -19,6 +18,7 @@ use Bitrix\Main\Engine\ActionFilter\Csrf;
 use Bitrix\Main\Engine\Response\BFile;
 use Bitrix\Main\Loader;
 use Bitrix\Main\Engine\Controller;
+use Bitrix\AI\Controller\ActionFilter\CheckCopilotAccess;
 
 class ShareRole extends Controller
 {
@@ -41,9 +41,9 @@ class ShareRole extends Controller
 	public function getDefaultPreFilters(): array
 	{
 		$filters = parent::getDefaultPreFilters();
-		if (Loader::includeModule('intranet'))
+		if (Loader::includeModule('intranet') && Loader::includeModule('extranet'))
 		{
-			$filters[] = new IntranetUser();
+			$filters[] = new CheckCopilotAccess();
 		}
 
 		return $filters;
@@ -128,10 +128,7 @@ class ShareRole extends Controller
 		}
 
 		$event->send(Status::Success);
-
-//		$ownerService->unsetDeletedFlagsForUsers($requestDTO->usersIdsInAccessCodes, $requestDTO->roleId);
 	}
-
 
 	public function getRoleByCodeForUpdateAction(
 		GetRoleDataByCodeRequest $request,
@@ -168,10 +165,9 @@ class ShareRole extends Controller
 	public function showAvatarAction(
 		RoleService $roleService,
 		int $roleId,
+		string $avatarSize
 	): BFile
 	{
-		$fileId = $roleService->getAvatarIdByRoleId($roleId);
-
-		return BFile::createByFileId($fileId)->showInline(true);
+		return $roleService->getAvatarByRoleId($roleId, $avatarSize);
 	}
 }

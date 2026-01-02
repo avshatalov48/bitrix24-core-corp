@@ -6,6 +6,7 @@ if (!defined('B_PROLOG_INCLUDED') || B_PROLOG_INCLUDED !== true)
 }
 
 use \Bitrix\Crm;
+use Bitrix\Crm\Integration\Analytics\Dictionary;
 use \Bitrix\Main\Localization\Loc;
 
 $runtime = CBPRuntime::GetRuntime();
@@ -78,6 +79,13 @@ class CBPCrmChangeDynamicCategoryActivity extends CBPCrmCopyDynamicActivity
 
 		if ($updateResult->isSuccess())
 		{
+			$documentType = $this->getDocumentType();
+			\CCrmBizProcHelper::sendOperationsAnalytics(
+				Dictionary::EVENT_ENTITY_EDIT,
+				$this,
+				$documentType[2] ?? '',
+			);
+
 			$terminateResult = $this->terminateDocumentWorkflows();
 			if (!$terminateResult->isSuccess())
 			{

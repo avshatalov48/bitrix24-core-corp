@@ -28,7 +28,6 @@ use Bitrix\Main\Error;
 use Bitrix\Main\HttpResponse;
 use Bitrix\Main\Loader;
 use Bitrix\Main\Localization\Loc;
-use Bitrix\Main\Result;
 use Bitrix\Main\UI\PageNavigation;
 use Bitrix\Rest\APAuth\PasswordTable;
 use Bitrix\Rest\AppTable;
@@ -222,38 +221,55 @@ class Document extends Base
 	 */
 	public function addAction(\Bitrix\DocumentGenerator\Template $template, $providerClassName = null, $value = null, array $values = [], $stampsEnabled = null, array $fields = [], \CRestServer $restServer = null)
 	{
-		if($restServer)
+		if ($restServer)
 		{
 			$providerClassName = Rest::class;
 		}
-		elseif(!$providerClassName)
+		elseif (!$providerClassName)
 		{
 			$this->errorCollection[] = new Error('Empty required parameter "providerClassName"');
+
 			return null;
 		}
-		if(!$value)
+
+		if (!$value)
 		{
 			$this->errorCollection[] = new Error('Empty required parameter "value"');
+
 			return null;
 		}
-		if($template->isDeleted())
+
+		if ($template->isDeleted())
 		{
 			$this->errorCollection[] = new Error('Cannot create document on deleted template');
+
 			return null;
 		}
+
 		$template->setSourceType($providerClassName);
 		$document = \Bitrix\DocumentGenerator\Document::createByTemplate($template, $value);
-		if(!$document->hasAccess())
+		if (!$document)
+		{
+			$this->errorCollection[] = new Error('Cannot create document');
+
+			return null;
+		}
+
+		if (!$document->hasAccess())
 		{
 			$this->errorCollection[] = new Error('Access denied', static::ERROR_ACCESS_DENIED);
+
 			return null;
 		}
-		if(Bitrix24Manager::isEnabled() && Bitrix24Manager::isDocumentsLimitReached())
+
+		if (Bitrix24Manager::isEnabled() && Bitrix24Manager::isDocumentsLimitReached())
 		{
 			$this->errorCollection[] = new Error('Maximum count of documents has been reached', Bitrix24Manager::LIMIT_ERROR_CODE);
+
 			return null;
 		}
-		if($restServer || $this->getScope() === static::SCOPE_REST)
+
+		if ($restServer || $this->getScope() === static::SCOPE_REST)
 		{
 			CreationMethod::markDocumentAsCreatedByRest($document);
 		}
@@ -261,7 +277,8 @@ class Document extends Base
 		{
 			CreationMethod::markDocumentAsCreatedByPublic($document);
 		}
-		if($stampsEnabled === null)
+
+		if ($stampsEnabled === null)
 		{
 			$stampsEnabled = ($template->WITH_STAMPS === 'Y' ? 1 : 0);
 		}
@@ -269,14 +286,18 @@ class Document extends Base
 		{
 			$stampsEnabled = (int) $stampsEnabled;
 		}
+
 		$result = $document->enableStamps($stampsEnabled === 1)->setValues($values)->setFields($fields)->getFile(true, $this->getScope() === static::SCOPE_REST);
-		if(!$result->isSuccess())
+		if (!$result->isSuccess())
 		{
 			$this->errorCollection = $result->getErrorCollection();
+
 			return null;
 		}
 
-		return ['document' => $result->getData()];
+		return [
+			'document' => $result->getData(),
+		];
 	}
 
 	/**

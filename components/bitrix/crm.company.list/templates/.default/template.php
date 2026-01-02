@@ -15,23 +15,25 @@ if (!defined('B_PROLOG_INCLUDED') || B_PROLOG_INCLUDED !== true)
  * @var CBitrixComponent $component
  */
 
+use Bitrix\Crm\Activity\LastCommunication\LastCommunicationTimeFormatter;
 use Bitrix\Crm\Activity\ToDo\CalendarSettings\CalendarSettingsProvider;
 use Bitrix\Crm\Activity\ToDo\ColorSettings\ColorSettingsProvider;
 use Bitrix\Crm\Activity\TodoPingSettingsProvider;
 use Bitrix\Crm\Restriction\AvailabilityManager;
 use Bitrix\Crm\Service\Container;
+use Bitrix\Crm\Tour\RepeatSale\OnboardingPopup;
 use Bitrix\Crm\Tracking;
 use Bitrix\Crm\UI\NavigationBarPanel;
 use Bitrix\Crm\UI\SettingsButtonExtender\SettingsButtonExtenderParams;
 use Bitrix\Main\Localization\Loc;
 use Bitrix\Main\Web\Uri;
+use Bitrix\UI\Buttons\AirButtonStyle;
+use Bitrix\UI\Buttons\Icon;
+use Bitrix\UI\Buttons\JsCode;
 
 $APPLICATION->SetAdditionalCSS("/bitrix/themes/.default/crm-entity-show.css");
 
-if (SITE_TEMPLATE_ID === 'bitrix24')
-{
-	$APPLICATION->SetAdditionalCSS("/bitrix/themes/.default/bitrix24/crm-entity-show.css");
-}
+$APPLICATION->SetAdditionalCSS('/bitrix/themes/.default/bitrix24/crm-entity-show.css');
 
 if (CModule::IncludeModule('bitrix24') && !\Bitrix\Crm\CallList\CallList::isAvailable())
 {
@@ -47,7 +49,8 @@ Bitrix\Main\UI\Extension::load(
 		'crm.entity-list.panel',
 		'crm.badge',
 		'ui.design-tokens',
-		'crm.template.editor'
+		'crm.template.editor',
+		'crm.entity-list.binder',
 	]
 );
 
@@ -341,7 +344,7 @@ foreach($arResult['COMPANY'] as $sKey =>  $arCompany)
 		}
 
 		if (
-			\Bitrix\Crm\Service\Container::getInstance()->getUserPermissions()->checkAddPermissions(\CCrmOwnerType::SmartInvoice)
+			\Bitrix\Crm\Service\Container::getInstance()->getUserPermissions()->entityType()->canAddItems(\CCrmOwnerType::SmartInvoice)
 			&& !$arResult['CATEGORY_ID']
 		)
 		{
@@ -654,28 +657,55 @@ foreach($arResult['COMPANY'] as $sKey =>  $arCompany)
 		$resultItem['columns']['COMPANY_SUMMARY'] .= Bitrix\Crm\Component\EntityList\BadgeBuilder::render($arCompany['badges']);
 	}
 
+	(new LastCommunicationTimeFormatter())->formatListDate($arCompany, $resultItem['columns']);
+
 	$arResult['GRID_DATA'][] = &$resultItem;
 	unset($resultItem);
 }
 
-if ($arResult['ENABLE_TOOLBAR'])
+if ($arResult['ENABLE_TOOLBAR'] && !\Bitrix\Main\Grid\Context::isInternalRequest())
 {
-	$APPLICATION->IncludeComponent(
-		'bitrix:crm.interface.toolbar',
-		'',
-		[
-			'TOOLBAR_ID' => mb_strtolower($arResult['GRID_ID']).'_toolbar',
-			'BUTTONS' => [
-				[
-					'TEXT' => \CCrmOwnerType::GetDescription(\CCrmOwnerType::Company),
-					'LINK' => $arResult['PATH_TO_COMPANY_ADD'],
-					'ICON' => 'btn-new',
-				]
-			]
-		],
-		$component,
-		['HIDE_ICONS' => 'Y'],
+	$relationCode = (int)$arParams['PARENT_ENTITY_TYPE_ID'] . '-' . (int)$arParams['PARENT_ENTITY_ID'] . '-' . \CCrmOwnerType::Company;
+	$targetId = 'relation-button-' . $relationCode;
+
+	$jsCode = sprintf(
+		<<<js
+			(function() {
+				void BX.Crm.Binder.Manager.Instance.createRelatedSelector('%s', '%s')?.show();
+			})()
+		js,
+		\CUtil::JSEscape('relation-' . $relationCode),
+		\CUtil::JSEscape($targetId),
 	);
+
+	$linkButton = new \Bitrix\UI\Buttons\Button([
+		'id' => $targetId,
+		'text' =>  Loc::getMessage('CRM_COMPANY_LIST_LINK_COMPANY'),
+		'style' => AirButtonStyle::OUTLINE,
+		'icon' => Icon::ADD,
+		'onclick' => new JsCode($jsCode),
+	]);
+
+	$linkButton->addAttribute('id', $targetId);
+
+	$toolbarId = mb_strtolower($arResult['GRID_ID']) . '_toolbar';
+	$toolbar = \Bitrix\UI\Toolbar\Manager::getInstance()->createToolbar($toolbarId, []);
+	$toolbar->addButton($linkButton, \Bitrix\UI\Toolbar\ButtonLocation::AFTER_TITLE);
+
+	$toolbar->hideTitle();
+	?>
+	<div class="crm-list-top-toolbar">
+		<?php
+		$GLOBALS["APPLICATION"]->IncludeComponent(
+			'bitrix:ui.toolbar',
+			'',
+			[
+				'TOOLBAR_ID' => $toolbarId,
+			],
+		);
+		?>
+		</div>
+	<?php
 }
 
 $APPLICATION->IncludeComponent(
@@ -696,6 +726,24 @@ $filterLazyLoadParams = [
 	'siteID' => SITE_ID,
 ];
 $uri = new Uri($filterLazyLoadUrl);
+
+$navigationBar = (new NavigationBarPanel(CCrmOwnerType::Company))
+	->setBinding($arResult['NAVIGATION_CONTEXT_ID'])
+;
+$isDefaultCategory = $arResult['IS_DEFAULT_CATEGORY'] ?? false;
+if ($isDefaultCategory)
+{
+	$navigationBar->setItems([
+		NavigationBarPanel::ID_REPEAT_SALE,
+	]);
+
+	$analytics = [
+		'c_section' => \Bitrix\Crm\Integration\Analytics\Dictionary::SECTION_COMPANY,
+		'c_sub_section' => \Bitrix\Crm\Integration\Analytics\Dictionary::SUB_SECTION_LIST,
+	];
+
+	print OnboardingPopup::getInstance()->setAnalytics($analytics)->build();
+}
 
 $APPLICATION->IncludeComponent(
 	'bitrix:crm.interface.grid',
@@ -747,9 +795,13 @@ $APPLICATION->IncludeComponent(
 		'PAGINATION' => isset($arResult['PAGINATION']) && is_array($arResult['PAGINATION']) ? $arResult['PAGINATION'] : [],
 		'ENABLE_ROW_COUNT_LOADER' => true,
 		'PRESERVE_HISTORY' => $arResult['PRESERVE_HISTORY'],
-		'NAVIGATION_BAR' => $isMyCompanyMode
-			? null
-			: (new NavigationBarPanel(CCrmOwnerType::Company))->setBinding($arResult['NAVIGATION_CONTEXT_ID'])->get(),
+		'COUNTER_PANEL' => $isMyCompanyMode ? null : [
+			'ENTITY_TYPE_NAME' => CCrmOwnerType::CompanyName,
+			'EXTRAS' => [
+				'CATEGORY_ID' => (int)($arResult['CATEGORY_ID'] ?? 0),
+			],
+		],
+		'NAVIGATION_BAR' => $isMyCompanyMode ? null : $navigationBar->get(),
 		'IS_EXTERNAL_FILTER' => $arResult['IS_EXTERNAL_FILTER'],
 		'EXTENSION' => [
 			'ID' => $gridManagerID,
@@ -790,6 +842,15 @@ $APPLICATION->IncludeComponent(
 					"makeCall": "<?= GetMessageJS('CRM_SIP_MGR_MAKE_CALL')?>"
 				};
 			}
+
+			<?php if (isset($arParams['PARENT_ENTITY_TYPE_ID'])):?>
+			BX.Crm.Binder.Manager.Instance.initializeBinder(
+				<?=$arParams['PARENT_ENTITY_TYPE_ID']?>,
+				<?=$arParams['PARENT_ENTITY_ID']?>,
+				<?=\CCrmOwnerType::Company?>,
+				'<?= CUtil::JSEscape($arResult['GRID_ID'])?>'
+			);
+			<?php endif;?>
 		}
 	);
 </script>

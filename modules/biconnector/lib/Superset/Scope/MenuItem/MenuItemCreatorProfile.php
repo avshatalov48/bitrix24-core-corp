@@ -20,13 +20,18 @@ final class MenuItemCreatorProfile extends BaseMenuItemCreator
 			$menuItems[] = [
 				'ID' => "BIC_DASHBOARD_{$dashboard->getId()}",
 				'TEXT' => $dashboard->getTitle(),
-				'URL' => $this->getDetailUrl(
-					$dashboard,
-					$params,
-					['openFrom' => 'menu']
-				),
+				'ON_CLICK' => $this->createDashboardOpenEventFromMenu($dashboard, $params),
 				'IS_ACTIVE' => false,
 			];
+		}
+
+		if (!empty($menuItems))
+		{
+			$menuItems[] = [
+				'IS_DELIMITER' => true,
+			];
+
+			$menuItems = [...$menuItems, ...$this->getAdditionalItems()];
 		}
 
 		return [

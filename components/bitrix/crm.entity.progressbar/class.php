@@ -301,6 +301,9 @@ class CCrmEntityProgressBarComponent extends CBitrixComponent
 		$this->arResult['ITEMS'] = $items;
 		$this->arResult['CURRENT_COLOR'] = $this->currentColor;
 		$this->arResult['DEFAULT_BACKGROUND_COLOR'] = $this->defaultBackgroundColor;
+		$this->arResult['ENTITY_EDITOR_GUID'] = $this->arParams['ENTITY_EDITOR_GUID'] ?? '';
+		$this->arResult['LOADING_NOTIFICATION_MESSAGE'] = Loc::getMessage('CRM_STAGE_UPDATE_LOADING_NOTIFICATION_MESSAGE');
+
 		$this->includeComponentTemplate();
 	}
 }

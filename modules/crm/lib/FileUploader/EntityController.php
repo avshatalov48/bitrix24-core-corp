@@ -2,6 +2,7 @@
 
 namespace Bitrix\Crm\FileUploader;
 
+use Bitrix\Crm\ItemIdentifier;
 use Bitrix\Crm\Service\Container;
 use Bitrix\Crm\Service\UserPermissions;
 use Bitrix\Main\ArgumentException;
@@ -59,7 +60,15 @@ abstract class EntityController extends UploaderController
 			'categoryId' => $categoryId,
 		] = $this->getOptions();
 
-		return $this->userPermissions->checkReadPermissions($entityTypeId, $entityId, $categoryId);
+		if ($entityId <= 0)
+		{
+			return is_null($categoryId)
+				? $this->userPermissions->entityType()->canReadItems($entityTypeId)
+				: $this->userPermissions->entityType()->canReadItemsInCategory($entityTypeId, $categoryId)
+			;
+		}
+
+		return $this->userPermissions->item()->canReadItemIdentifier(new ItemIdentifier($entityTypeId, $entityId, $categoryId));
 	}
 
 	public function getConfiguration(): Configuration
@@ -77,10 +86,14 @@ abstract class EntityController extends UploaderController
 
 		if ($entityId)
 		{
-			return $this->userPermissions->checkUpdatePermissions($entityTypeId, $entityId, $categoryId);
+			return $this->userPermissions->item()->canUpdateItemIdentifier(new ItemIdentifier($entityTypeId, $entityId, $categoryId));
 		}
 
-		return $this->userPermissions->checkAddPermissions($entityTypeId, $categoryId);
+		return
+			is_null($categoryId)
+				? $this->userPermissions->entityType()->canAddItems($entityTypeId)
+				: $this->userPermissions->entityType()->canAddItemsInCategory($entityTypeId, $categoryId)
+			;
 	}
 
 	public function verifyFileOwner(FileOwnershipCollection $files): void

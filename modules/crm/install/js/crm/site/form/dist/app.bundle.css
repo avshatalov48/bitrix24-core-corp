@@ -555,7 +555,8 @@ a.b24-form-click-btn-font-modern {
 	color: #215f98;
 }
 
-.b24-form-recaptcha {
+.b24-form-recaptcha,
+.b24-form-yandex-captcha {
 	display: -webkit-box;
 	display: -ms-flexbox;
 	display: flex;

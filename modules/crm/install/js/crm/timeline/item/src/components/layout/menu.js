@@ -91,7 +91,9 @@ export class Menu
 			menu.close();
 		}
 
-		void (new Action(item.action)).execute(this.#vueComponent);
+		const action = new Action(item.action);
+
+		void action.execute(this.#vueComponent);
 	}
 
 	static showMenu(vueComponent: Object, menuItems: Array, menuOptions: ?Object): void

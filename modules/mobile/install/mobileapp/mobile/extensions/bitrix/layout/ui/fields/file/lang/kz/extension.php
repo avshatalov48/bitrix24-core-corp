@@ -1,0 +1,20 @@
+<?php
+$MESS["FIELDS_FILE_ADD_FILE"] = "Файлды қосу";
+$MESS["FIELDS_FILE_ADD_FILES"] = "Файлдарды қосу";
+$MESS["FIELDS_FILE_ADD_IMAGE"] = "Фотосуретті қосу";
+$MESS["FIELDS_FILE_ADD_VIDEO"] = "Видеоны қосу";
+$MESS["FIELDS_FILE_ATTACHMENTS_NAVIGATION_TITLE"] = "Файлдар (#NUM#)";
+$MESS["FIELDS_FILE_B24_DISK_MSGVER_1"] = "Битрикс24 Диск";
+$MESS["FIELDS_FILE_CAMERA"] = "Суретке түсіру";
+$MESS["FIELDS_FILE_EDIT"] = "Редакциялау";
+$MESS["FIELDS_FILE_EDIT_FILE"] = "Файлды ауыстыру";
+$MESS["FIELDS_FILE_EDIT_IMAGE"] = "Фотосуретті ауыстыру";
+$MESS["FIELDS_FILE_EDIT_VIDEO"] = "Видеоны ауыстыру";
+$MESS["FIELDS_FILE_MEDIATEKA"] = "Галереядан таңдау";
+$MESS["FIELDS_FILE_MEDIA_TYPE_ALERT_CONFIRM"] = "Түсінікті";
+$MESS["FIELDS_FILE_MEDIA_TYPE_ALERT_DESCR"] = "Басқа файлды жүктеп көріңіз";
+$MESS["FIELDS_FILE_MEDIA_TYPE_ALERT_TITLE"] = "Файл түрі дұрыс емес";
+$MESS["FIELDS_FILE_OPEN_GALLERY"] = "Қарау";
+$MESS["FIELDS_FILE_UPLOAD_ALERT_DESCR"] = "Қайталап көріңіз. \nЕгер қате тағы да орын алса, сіздің Битрикс24 әкімшісіне хабарласыңыз.";
+$MESS["FIELDS_FILE_UPLOAD_ALERT_TITLE"] = "Файлдарды жүктеу қатесі";
+$MESS["FIELDS_FILE_VALIDATION_ERROR"] = "Файлды жойып, қайта жүктеп көріңіз";

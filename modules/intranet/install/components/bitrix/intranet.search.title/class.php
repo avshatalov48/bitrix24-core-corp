@@ -17,7 +17,9 @@ use Bitrix\Main\ModuleManager;
 use Bitrix\Main\Config\Option;
 use Bitrix\Main\PhoneNumber;
 use Bitrix\Main\Text\Emoji;
+use Bitrix\Socialnetwork\Collab\CollabFeature;
 use Bitrix\Socialnetwork\UserToGroupTable;
+use Bitrix\Crm\Service\Container;
 
 class CIntranetSearchTitleComponent extends CBitrixComponent
 {
@@ -239,13 +241,13 @@ class CIntranetSearchTitleComponent extends CBitrixComponent
 		if ($extranetUser)
 		{
 			$userGroupList = [];
-			$res = UserToGroupTable::getList(array(
-				'filter' => array(
-				   'USER_ID' => $USER->getId(),
-				   '@ROLE' => UserToGroupTable::getRolesMember()
-				),
-				'select' => array('GROUP_ID')
-			));
+			$res = UserToGroupTable::getList([
+				'filter' => [
+					'USER_ID' => $USER->getId(),
+					'@ROLE' => UserToGroupTable::getRolesMember()
+				],
+				'select' => ['GROUP_ID']
+			]);
 
 			while($relation = $res->fetch())
 			{
@@ -320,14 +322,14 @@ class CIntranetSearchTitleComponent extends CBitrixComponent
 			}
 			elseif (!empty($groupIdList))
 			{
-				$res = UserToGroupTable::getList(array(
-																		   'filter' => array(
-																			   'USER_ID' => $USER->getId(),
-																			   '@GROUP_ID' => $groupIdList,
-																			   '@ROLE' => UserToGroupTable::getRolesMember()
-																		   ),
-																		   'select' => array('GROUP_ID')
-																	   ));
+				$res = UserToGroupTable::getList([
+					'filter' => [
+						'USER_ID' => $USER->getId(),
+						'@GROUP_ID' => $groupIdList,
+						'@ROLE' => UserToGroupTable::getRolesMember()
+					],
+					'select' => ['GROUP_ID']
+				]);
 				while($relation = $res->fetch())
 				{
 					$memberGroupIdList[] = $relation['GROUP_ID'];
@@ -418,7 +420,7 @@ class CIntranetSearchTitleComponent extends CBitrixComponent
 		}
 
 		$result = array();
-		if ($entityType === 'sonetgroups')
+		if ($entityType === 'sonetgroups' || $entityType === 'collabs')
 		{
 			$result = array(
 				'id' => 'G'.$arEntity["ID"],
@@ -538,7 +540,7 @@ class CIntranetSearchTitleComponent extends CBitrixComponent
 				}, $chain);
 
 				$result[] = array(
-					'NAME' => $menuItem['TEXT'],
+					'NAME' => htmlspecialcharsbx($menuItem['TEXT']),
 					'URL' => $url,
 					'CHAIN' => $chain,
 					'MODULE_ID' => '',
@@ -565,9 +567,11 @@ class CIntranetSearchTitleComponent extends CBitrixComponent
 			$bSocialnetworkIncluded = Loader::includeModule('socialnetwork');
 		}
 
+		$extranetIncluded = Bitrix\Main\Loader::includeModule('extranet');
+
 		if ($bExtranetSite === null)
 		{
-			$bExtranetSite = (Loader::includeModule('extranet') && CExtranet::IsExtranetSite());
+			$bExtranetSite = $extranetIncluded && CExtranet::IsExtranetSite();
 		}
 
 		for($i = 0; $i < $this->arParams["NUM_CATEGORIES"]; $i++)
@@ -615,7 +619,11 @@ class CIntranetSearchTitleComponent extends CBitrixComponent
 				)
 				{
 					$this->arResult["customSonetGroupsCategoryId"] = $i;
-					$this->arResult["CATEGORIES"][$i]["ITEMS"] = $this->getSonetGroups($searchString);
+					$sonetgroups = array_filter(
+						$this->getSonetGroups($searchString),
+						fn ($group) => $group['GROUP_TYPE'] !== 'collab'
+					);
+					$this->arResult["CATEGORIES"][$i]["ITEMS"] = array_values($sonetgroups);
 
 					if ($this->arResult["customResultEmpty"] && !empty($this->arResult["CATEGORIES"][$i]["ITEMS"]))
 					{
@@ -625,6 +633,30 @@ class CIntranetSearchTitleComponent extends CBitrixComponent
 					foreach($this->arResult["CATEGORIES"][$i]["ITEMS"] as $key => $arItem)
 					{
 						$clientDbItem = $this->convertAjaxToClientDb($arItem, 'sonetgroups');
+						$this->arResult["CATEGORIES"][$i]["ITEMS"][$key]['CHECKSUM'] = $clientDbItem['checksum'];
+					}
+				}
+				elseif (
+					$categoryCode === 'custom_collabs'
+					&& $bSocialnetworkIncluded
+					&& $extranetIncluded
+					&& CollabFeature::isOn()
+				)
+				{
+					$collabs = array_filter(
+						$this->getSonetGroups($searchString),
+						fn ($group) => $group['GROUP_TYPE'] === 'collab'
+					);
+					$this->arResult["CATEGORIES"][$i]["ITEMS"] = array_values($collabs);
+
+					if ($this->arResult["customResultEmpty"] && !empty($this->arResult["CATEGORIES"][$i]["ITEMS"]))
+					{
+						$this->arResult["customResultEmpty"] = false;
+					}
+
+					foreach($this->arResult["CATEGORIES"][$i]["ITEMS"] as $key => $arItem)
+					{
+						$clientDbItem = $this->convertAjaxToClientDb($arItem, 'collabs');
 						$this->arResult["CATEGORIES"][$i]["ITEMS"][$key]['CHECKSUM'] = $clientDbItem['checksum'];
 					}
 				}
@@ -658,16 +690,17 @@ class CIntranetSearchTitleComponent extends CBitrixComponent
 
 	private function prepareCategories()
 	{
+		$this->arResult["CATEGORIES_ALL"] = [];
 		for($i = 0; $i < $this->arParams["NUM_CATEGORIES"]; $i++)
 		{
-			$categoryCode = $this->arParams["CATEGORY_".$i];
+			$categoryCode = $this->arParams["CATEGORY_".$i] ?? '';
 
 			if (is_array($categoryCode))
 			{
 				$categoryCode = $categoryCode[0];
 			}
 
-			$categoryTitle = trim($this->arParams["CATEGORY_".$i."_TITLE"]);
+			$categoryTitle = trim($this->arParams["CATEGORY_".$i."_TITLE"] ?? '');
 			if(empty($categoryTitle))
 				continue;
 
@@ -870,13 +903,15 @@ class CIntranetSearchTitleComponent extends CBitrixComponent
 
 		$globalCrmSearchCategories = [];
 
-		if (Loader::includeModule("crm") && CCrmPerms::IsAccessEnabled())
+		if (\Bitrix\Intranet\Integration\Crm::getInstance()->canReadSomeItemsInCrm())
 		{
+			$userId = $USER->GetID();
+			$crmUserPermissions = Container::getInstance()->getUserPermissions($userId);
 			$cache = new \CPHPCache;
-			$cacheId = "CRM_SEARCH_TITLE_".$USER->GetID();
-			$cacheDir = "/crm/search_title_".substr(md5($USER->GetID()), -2)."/".$USER->GetID()."/";
+			$cacheId = "CRM_SEARCH_TITLE_".$userId;
+			$cacheDir = "/crm/search_title_".substr(md5($userId), -2)."/".$userId."/";
 
-			if($cache->initCache(7200, $cacheId, $cacheDir))
+			if ($cache->initCache(7200, $cacheId, $cacheDir))
 			{
 				$cacheVars = $cache->getVars();
 				$globalCrmSearchCategories = $cacheVars["CRM_SEARCH_CATEGORIES"];
@@ -887,55 +922,68 @@ class CIntranetSearchTitleComponent extends CBitrixComponent
 				$CACHE_MANAGER->StartTagCache($cacheDir);
 				$CACHE_MANAGER->RegisterTag('crm_change_role');
 
-				$isAdmin = CCrmPerms::IsAdmin();
-				$userPermissions = CCrmPerms::GetCurrentUserPermissions();
+				$isAdmin = $crmUserPermissions->isAdmin();
 
-				if (CCrmLead::CheckReadPermission(0, $userPermissions)) {
-					$leadPaths = array(
+				if ($isAdmin || $crmUserPermissions->entityType()->canReadItems(CCrmOwnerType::Lead))
+				{
+					$leadPaths = [
 						EntityViewSettings::LIST_VIEW => CrmCheckPath('PATH_TO_LEAD_LIST', "", SITE_DIR . 'crm/lead/list/'),
 						EntityViewSettings::KANBAN_VIEW => CrmCheckPath('PATH_TO_LEAD_KANBAN', "", SITE_DIR . 'crm/lead/kanban/')
-					);
+					];
 					$currentView = LeadSettings::getCurrent()->getCurrentListViewID();
 					$leadPath = $leadPaths[$currentView] ?? $leadPaths[EntityViewSettings::LIST_VIEW];
 
-					$globalCrmSearchCategories["lead"] = array(
+					$globalCrmSearchCategories["lead"] = [
 						"url" => $leadPath . "?apply_filter=Y&with_preset=Y&FIND=",
 						"text" => GetMessage("CT_BST_GLOBAL_SEARCH_CRM_LEAD")
-					);
+					];
 				}
 
-				if (CCrmDeal::CheckReadPermission(0, $userPermissions)) {
-					$dealPaths = array(
+				if ($isAdmin || $crmUserPermissions->entityType()->canReadItems(CCrmOwnerType::Deal))
+				{
+					$dealPaths = [
 						EntityViewSettings::LIST_VIEW => CrmCheckPath('PATH_TO_DEAL_LIST', "", SITE_DIR . 'crm/deal/list/'),
 						EntityViewSettings::KANBAN_VIEW => CrmCheckPath('PATH_TO_DEAL_KANBAN', "", SITE_DIR . 'crm/deal/kanban/')
-					);
+					];
 					$currentView = DealSettings::getCurrent()->getCurrentListViewID();
 					$dealPath = ($dealPaths[$currentView] ?? $dealPaths[EntityViewSettings::LIST_VIEW]);
 
-					$globalCrmSearchCategories["deal"] = array(
+					$globalCrmSearchCategories["deal"] = [
 						"url" => $dealPath . "?apply_filter=Y&with_preset=Y&FIND=",
 						"text" => GetMessage("CT_BST_GLOBAL_SEARCH_CRM_DEAL")
-					);
+					];
 				}
 
 				$crm = \Bitrix\Intranet\Integration\Crm::getInstance();
-				if ($crm->isOldInvoicesEnabled() && ($isAdmin || !$userPermissions->HavePerm('INVOICE', BX_CRM_PERM_NONE, 'READ')))
+				if (
+					$crm->isOldInvoicesEnabled()
+					&& (
+						$isAdmin
+						|| $crmUserPermissions->entityType()->canReadItems(CCrmOwnerType::Invoice)
+					)
+				)
 				{
-					$invoicePaths = array(
+					$invoicePaths = [
 						EntityViewSettings::LIST_VIEW => CrmCheckPath('PATH_TO_INVOICE_LIST', "", SITE_DIR . 'crm/invoice/list/'),
 						EntityViewSettings::KANBAN_VIEW => CrmCheckPath('PATH_TO_INVOICE_KANBAN', "", SITE_DIR . 'crm/invoice/kanban/')
-					);
+					];
 
 					$currentView = InvoiceSettings::getCurrent()->getCurrentListViewID();
 					$invoicePath = ($invoicePaths[$currentView] ?? $invoicePaths[EntityViewSettings::LIST_VIEW]);
 
-					$globalCrmSearchCategories["invoice"] = array(
+					$globalCrmSearchCategories["invoice"] = [
 						"url" => $invoicePath . "?apply_filter=Y&with_preset=Y&FIND=",
 						"text" => \CCrmOwnerType::GetCategoryCaption(\CCrmOwnerType::Invoice),
-					);
+					];
 				}
 
-				if ($crm->isSmartInvoicesEnabled() && $crm->checkReadPermissions(\CCrmOwnerType::SmartInvoice))
+				if (
+					$crm->isSmartInvoicesEnabled()
+					&& (
+						$isAdmin
+						|| $crmUserPermissions->entityType()->canReadItems(CCrmOwnerType::SmartInvoice)
+					)
+				)
 				{
 					$listUrl = $crm->getItemListUrlInCurrentView(\CCrmOwnerType::SmartInvoice);
 					if ($listUrl)
@@ -953,46 +1001,46 @@ class CIntranetSearchTitleComponent extends CBitrixComponent
 					];
 				}
 
-				if ($isAdmin || CCrmQuote::CheckReadPermission(0, $userPermissions))
+				if ($isAdmin || $crmUserPermissions->entityType()->canReadItems(CCrmOwnerType::Quote))
 				{
-					$quotePaths = array(
+					$quotePaths = [
 						EntityViewSettings::LIST_VIEW => CrmCheckPath('PATH_TO_QUOTE_LIST', "", SITE_DIR . 'crm/quote/list/'),
 						EntityViewSettings::KANBAN_VIEW => CrmCheckPath('PATH_TO_QUOTE_KANBAN', "", SITE_DIR . 'crm/quote/kanban/')
-					);
+					];
 					$currentView = QuoteSettings::getCurrent()->getCurrentListViewID();
 					$quotePath = $quotePaths[$currentView] ?? $quotePaths[EntityViewSettings::LIST_VIEW];
 
-					$globalCrmSearchCategories["quote"] = array(
+					$globalCrmSearchCategories["quote"] = [
 						"url" => $quotePath . "?apply_filter=Y&with_preset=Y&FIND=",
 						"text" => GetMessage("CT_BST_GLOBAL_SEARCH_CRM_QUOTE_MSGVER_1")
-					);
+					];
 				}
 
-				if ($isAdmin || CCrmContact::CheckReadPermission(0, $userPermissions))
+				if ($isAdmin || $crmUserPermissions->entityType()->canReadItems(CCrmOwnerType::Contact))
 				{
-					$globalCrmSearchCategories["contact"] = array(
+					$globalCrmSearchCategories["contact"] = [
 						"url" => SITE_DIR . "crm/contact/list/?apply_filter=Y&with_preset=Y&FIND=",
 						"text" => GetMessage("CT_BST_GLOBAL_SEARCH_CRM_CONTACT")
-					);
+					];
 				}
 
-				if ($isAdmin || CCrmCompany::CheckReadPermission(0, $userPermissions))
+				if ($isAdmin || $crmUserPermissions->entityType()->canReadItems(CCrmOwnerType::Company))
 				{
-					$globalCrmSearchCategories["company"] = array(
+					$globalCrmSearchCategories["company"] = [
 						"url" => SITE_DIR . "crm/company/list/?apply_filter=Y&with_preset=Y&FIND=",
 						"text" => GetMessage("CT_BST_GLOBAL_SEARCH_CRM_COMPANY")
-					);
+					];
 				}
 
-				$globalCrmSearchCategories["activity"] = array(
+				$globalCrmSearchCategories["activity"] = [
 					"url" => SITE_DIR . "crm/activity/list/?apply_filter=Y&with_preset=Y&FIND=",
 					"text" => GetMessage("CT_BST_GLOBAL_SEARCH_CRM_ACTIVITY")
-				);
+				];
 
 				$CACHE_MANAGER->EndTagCache();
-				$cache->endDataCache(array(
+				$cache->endDataCache([
 					"CRM_SEARCH_CATEGORIES" => $globalCrmSearchCategories
-				));
+				]);
 			}
 		}
 
@@ -1071,6 +1119,17 @@ class CIntranetSearchTitleComponent extends CBitrixComponent
 		global $APPLICATION;
 
 		$this->arResult["CATEGORIES"] = array();
+		$this->arParams["NUM_CATEGORIES"] = isset($this->arParams["NUM_CATEGORIES"]) ? (int)$this->arParams["NUM_CATEGORIES"] : 0;
+		if ($this->arParams["NUM_CATEGORIES"] <= 0)
+		{
+			$this->arParams["NUM_CATEGORIES"] = 1;
+		}
+
+		$this->arParams["TOP_COUNT"] = isset($this->arParams["TOP_COUNT"]) ? (int)$this->arParams["TOP_COUNT"] : 0;
+		if ($this->arParams["TOP_COUNT"] <= 0)
+		{
+			$this->arParams["TOP_COUNT"] = 5;
+		}
 
 		$query = ltrim($_POST["q"] ?? '');
 		if(
@@ -1084,18 +1143,6 @@ class CIntranetSearchTitleComponent extends CBitrixComponent
 		{
 			$this->arResult["alt_query"] = "";
 			$this->arResult["query"] = $query;
-
-			$this->arParams["NUM_CATEGORIES"] = (int)$this->arParams["NUM_CATEGORIES"];
-			if ($this->arParams["NUM_CATEGORIES"] <= 0)
-			{
-				$this->arParams["NUM_CATEGORIES"] = 1;
-			}
-
-			$this->arParams["TOP_COUNT"] = (int)$this->arParams["TOP_COUNT"];
-			if ($this->arParams["TOP_COUNT"] <= 0)
-			{
-				$this->arParams["TOP_COUNT"] = 5;
-			}
 
 			for ($i = 0; $i < $this->arParams["NUM_CATEGORIES"]; $i++)
 			{

@@ -7,10 +7,10 @@ if (!CModule::IncludeModule('crm'))
 	return;
 }
 
-$userID = $arResult['USER_ID'] = intval(CCrmSecurityHelper::GetCurrentUserID());
-$userPerms = CCrmPerms::GetCurrentUserPermissions();
-//$userPerms = CCrmPerms::GetCurrentUserPermissions();
-if (!CCrmPerms::IsAccessEnabled())
+$crmUserPermissions = \Bitrix\Crm\Service\Container::getInstance()->getUserPermissions();
+$userID = $arResult['USER_ID'] = $crmUserPermissions->getUserId();
+
+if (!$crmUserPermissions->entityType()->canReadSomeItemsInCrm())
 {
 	ShowError(GetMessage('CRM_PERMISSION_DENIED'));
 	return;

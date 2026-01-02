@@ -1,0 +1,211 @@
+body table.bx-interface-grid {
+	border: 0;
+}
+
+body table.bx-interface-grid td {
+	padding: 10px !important;
+	font: 13px/20px var(--ui-font-family-primary, var(--ui-font-family-helvetica));
+	color: #555;
+}
+
+body table.bx-interface-grid tr.bx-grid-footer table.bx-grid-footer td {
+	padding: 0 15px !important;
+}
+
+body table.bx-interface-grid td.bx-left,
+body table.bx-interface-grid td.bx-actions-col {
+	border-left: 0;
+	border-right: 0;
+	border-top: 0;
+	text-align: center;
+	vertical-align: middle;
+}
+
+body table.bx-interface-grid td {
+	border-top: 0;
+	border-left: 0;
+	border-right: 0;
+}
+
+body table.bx-interface-grid tr.bx-grid-gutter {
+	display: none;
+}
+
+body table.bx-interface-grid table.bx-grid-sorting td.bx-sort-sign {
+	background-image: none !important;
+	width: 20px;
+}
+
+body table.bx-interface-grid table.bx-grid-sorting td.bx-sort-sign .empty {
+	width: 20px;
+}
+
+body table.bx-interface-grid table.bx-grid-sorting td.bx-sort-sign.bx-sort-down,
+body table.bx-interface-grid table.bx-grid-sorting td.bx-sort-sign.bx-sort-up {
+	/*display:table-cell;*/
+	padding: 0;
+	background-position: center center;
+}
+
+body table.bx-interface-grid table.bx-grid-sorting td.bx-sort-sign.bx-sort-up {
+	background-image: url(/bitrix/js/intranet/old-interface/grid/images/interface/grid/bx-sort-up.png) !important;
+}
+
+body table.bx-interface-grid table.bx-grid-sorting td.bx-sort-sign.bx-sort-down {
+	background-image: url(/bitrix/js/intranet/old-interface/grid/images/interface/grid/bx-sort-down.png) !important;
+}
+
+body table.bx-interface-grid tr.bx-grid-head td.bx-sorted,
+body table.bx-interface-grid tr.bx-grid-gutter td,
+body table.bx-interface-grid tr.bx-grid-gutter td.bx-left,
+body table.bx-interface-grid tr.bx-grid-gutter td.bx-right,
+body table.bx-interface-grid tr.bx-grid-head td,
+body table.bx-interface-grid tr.bx-grid-head td.bx-left,
+body table.bx-interface-grid tr.bx-grid-head td.bx-right {
+	border: 0;
+	padding: 0 10px !important;
+	/*text-shadow:#fff 0 1px 1px;*/
+	font: 12px/40px var(--ui-font-family-primary, var(--ui-font-family-helvetica));
+	vertical-align: middle;
+	white-space: nowrap;
+}
+
+body table.bx-interface-grid tr.bx-grid-head td {
+	text-shadow: #fff 0 1px 1px;
+	color: #555 !important;
+	background-color: transparent !important;
+}
+
+body table.bx-interface-grid tr.bx-grid-head > td {
+	background: #e4e4e4 url(/bitrix/js/intranet/old-interface/grid/images/interface/grid/bx-grid-head.png) repeat-x left top !important;
+}
+
+body table.bx-interface-grid tr.bx-grid-head > td.bx-sorted {
+	background: #cbcfd1 url(/bitrix/js/intranet/old-interface/grid/images/interface/grid/bx-grid-head-sorted.png) repeat-x left top !important;
+}
+
+body table.bx-interface-grid tr.bx-grid-head td.bx-left {
+	border-radius: 4px 0 0 4px;
+}
+
+body table.bx-interface-grid tr.bx-grid-head td.bx-right {
+	border-radius: 0 4px 4px 0;
+}
+
+body table.bx-interface-grid tr.bx-grid-head td td {
+	cursor: pointer;
+	padding: 0 !important;
+	width: 0;
+}
+
+body table.bx-interface-grid tr.bx-even td.bx-sorted,
+body table.bx-interface-grid tr.bx-odd td.bx-sorted,
+body table.bx-interface-grid tr.bx-even td {
+	background: transparent;
+}
+
+body table.bx-interface-grid tr.bx-even.bx-over td.bx-sorted,
+body table.bx-interface-grid tr.bx-odd.bx-over td.bx-sorted,
+body table.bx-interface-grid tr.bx-over td, .bx-interface-grid .bx-over .bx-ilike-button {
+	background-color: #f5f5f5;
+}
+
+body table.bx-interface-grid tr.bx-even.bx-selected td.bx-sorted,
+body table.bx-interface-grid tr.bx-odd.bx-selected td.bx-sorted,
+body table.bx-interface-grid tr.bx-selected td, .bx-interface-grid .bx-selected .bx-ilike-button {
+	background-color: #edf3de;
+}
+
+body table.bx-interface-grid tr.bx-even.bx-active td.bx-sorted,
+body table.bx-interface-grid tr.bx-odd.bx-active td.bx-sorted,
+body table.bx-interface-grid tr.bx-active td, .bx-interface-grid .bx-active .bx-ilike-button {
+	background-color: #e8e9eb;
+}
+
+body div.bx-edit-tab-inner table.bx-interface-grid tr.bx-grid-footer > td,
+body table.bx-interface-grid tr.bx-grid-footer > td {
+	height: 38px;
+	border: 0;
+	padding: 0 !important;
+	-moz-border-radius: 0 0 4px 4px !important;
+	-webkit-border-radius: 0 0 4px 4px !important;
+	-khtml-border-radius: 0 0 4px 4px !important;
+	border-radius: 0 0 4px 4px !important;
+	background: transparent url(/bitrix/js/intranet/old-interface/grid/images/interface/grid/bx-grid-footer.png) repeat-x left top !important;
+}
+
+body div.bx-edit-tab-inner table.bx-interface-grid tr.bx-grid-footer td {
+	color: #555 !important;
+	background-color: transparent !important;
+}
+
+body table.bx-interface-grid tr.bx-grid-footer td td {
+	height: 38px;
+	border: 0;
+	padding: 0 15px !important;
+	font: 12px/38px var(--ui-font-family-primary, var(--ui-font-family-helvetica));
+	background: transparent;
+	color: #555;
+}
+
+body table.bx-interface-grid tr.bx-grid-footer td td span {
+	font-weight: normal;
+	color: #555 !important;
+}
+
+body tr.bx-grid-footer table.bx-grid-footer div.modern-page-navigation a {
+	color: #555;
+}
+
+/*body table.bx-interface-grid tr.bx-even td.bx-sorted,
+body table.bx-interface-grid tr.bx-odd td.bx-sorted,
+body table.bx-interface-grid tr.bx-even td,*/
+body table.bx-interface-grid tr > td {
+	border-bottom: 1px solid #EDEDED !important;
+}
+
+body table.bx-interface-grid tr.bx-grid-head td,
+body table.bx-interface-grid tr.bx-grid-footer td {
+	border-bottom: 0 !important;
+}
+
+body table.bx-interface-grid a.bx-action:hover div,
+body table.bx-interface-grid tr.bx-over a.bx-action div,
+body table.bx-interface-grid a.bx-action div {
+	background-image: url(/bitrix/js/intranet/old-interface/grid/images/interface/grid/action.gif);
+	background-position: center center !important;
+}
+
+body table.bx-interface-grid tr.bx-grid-head a.bx-action div {
+	background: url(/bitrix/js/intranet/old-interface/grid/images/interface/grid/action_head.gif) no-repeat center center;
+}
+
+body table.bx-interface-grid tr.bx-grid-head a.bx-action.pressed div,
+body table.bx-interface-grid tr.bx-grid-head a.bx-action:hover div {
+	background: #d2d2d2 url(/bitrix/js/intranet/old-interface/grid/images/interface/grid/action_head.gif) no-repeat center center;
+}
+
+.bx-grid-themes-menu-item {
+	display: none
+}
+
+body div.bx-form-notes {
+	font-size: 14px;
+	font-family: var(--ui-font-family-primary, var(--ui-font-family-helvetica)) !important;
+}
+
+body table.bx-interface-grid td input,
+body table.bx-interface-grid td textarea,
+body table.bx-interface-grid td select {
+	font-size: 14px;
+	font-family: var(--ui-font-family-primary, var(--ui-font-family-helvetica)) !important;
+	border: 1px solid #b9bcbe;
+	border-radius: var(--ui-field-border-radius);
+	background-color: #fff;
+	color: #535c69 !important;
+	vertical-align: middle;
+	height: var(--ui-field-size);
+	padding: 0 11px;
+	box-sizing: border-box;
+}
+

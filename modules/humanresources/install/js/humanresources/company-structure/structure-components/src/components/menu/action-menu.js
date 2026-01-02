@@ -14,6 +14,7 @@ export const ActionMenu = {
 			:id="id"
 			:items="items"
 			:bindElement="bindElement"
+			:containerDataTestId="containerDataTestId"
 			:width="260"
 			:delimiter="false"
 			v-slot="{item}"
@@ -24,6 +25,7 @@ export const ActionMenu = {
 				:title="item.title"
 				:imageClass="item.imageClass"
 				:color="item.color"
+				:dataTestId="item.dataTestId"
 				@click="this.$emit('action', item.id)"
 			/>
 		</BaseActionMenu>

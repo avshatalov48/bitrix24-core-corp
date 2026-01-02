@@ -6,12 +6,24 @@ use Bitrix\Crm\Comparer\ComparerBase;
 use Bitrix\Crm\History;
 use Bitrix\Crm\Integration\Channel\DealChannelBinding;
 use Bitrix\Crm\Item;
+use Bitrix\Crm\Service\Factory;
 use Bitrix\Crm\Statistics;
 use Bitrix\Main\ORM\Objectify\Values;
 use Bitrix\Main\Result;
 
 final class Deal extends Statistics\OperationFacade
 {
+	private History\StageHistory\AbstractStageHistory $stageHistory;
+	private History\StageHistoryWithSupposed\AbstractStageHistoryWithSupposed $supposedStageHistory;
+
+	public function __construct(Factory $factory)
+	{
+		$this->stageHistory = new History\StageHistory\DealStageHistory($factory);
+		$this->supposedStageHistory = new History\StageHistoryWithSupposed\DealStageHistoryWithSupposed(
+			new History\StageHistoryWithSupposed\TransitionsCalculator($factory),
+		);
+	}
+
 	public function add(Item $item): Result
 	{
 		if ($item->getIsRecurring())
@@ -20,10 +32,12 @@ final class Deal extends Statistics\OperationFacade
 		}
 
 		$compatibleData = $item->getCompatibleData();
+		$commonDiff = ComparerBase::compareEntityFields([], $item->getData());
 
 		Statistics\DealSumStatisticEntry::register($item->getId(), $compatibleData);
 		Statistics\DealInvoiceStatisticEntry::synchronize($item->getId(), $compatibleData);
-		History\DealStageHistoryEntry::register($item->getId(), $compatibleData, ['IS_NEW' => true]);
+		$this->stageHistory->registerItemAdd($commonDiff);
+		$this->supposedStageHistory->registerItemAdd($commonDiff);
 
 		if ($item->getLeadId() > 0)
 		{
@@ -43,35 +57,36 @@ final class Deal extends Statistics\OperationFacade
 		$compatibleData = $item->getCompatibleData();
 
 		Statistics\DealSumStatisticEntry::register($item->getId(), $compatibleData);
-		History\DealStageHistoryEntry::synchronize($item->getId(), $compatibleData);
+
 		Statistics\DealInvoiceStatisticEntry::synchronize($item->getId(), $compatibleData);
 		Statistics\DealActivityStatisticEntry::synchronize($item->getId(), $compatibleData);
 		DealChannelBinding::synchronize($item->getId(), $compatibleData);
-		History\DealStageHistoryEntry::register($item->getId(), $compatibleData, ['IS_NEW' => false]);
 
-		$difference = ComparerBase::compareEntityFields(
+		$commonDiff = ComparerBase::compareEntityFields(
 			$itemBeforeSave->getData(Values::ACTUAL),
 			$item->getData(),
 		);
 
-		if ($difference->isChanged(Item::FIELD_NAME_LEAD_ID))
+		$this->stageHistory->registerItemUpdate($commonDiff);
+		$this->supposedStageHistory->registerItemUpdate($commonDiff);
+
+		if ($commonDiff->isChanged(Item::FIELD_NAME_LEAD_ID))
 		{
-			$previousLeadId = $difference->getPreviousValue(Item::FIELD_NAME_LEAD_ID);
+			$previousLeadId = $commonDiff->getPreviousValue(Item::FIELD_NAME_LEAD_ID);
 			if ($previousLeadId > 0)
 			{
 				Statistics\LeadConversionStatisticsEntry::processBindingsChange($previousLeadId);
 			}
 
-			$currentLeadId = $difference->getCurrentValue(Item::FIELD_NAME_LEAD_ID);
+			$currentLeadId = $commonDiff->getCurrentValue(Item::FIELD_NAME_LEAD_ID);
 			if ($currentLeadId > 0)
 			{
 				Statistics\LeadConversionStatisticsEntry::processBindingsChange($currentLeadId);
 			}
 		}
 
-		if ($difference->isChanged(Item::FIELD_NAME_CATEGORY_ID))
+		if ($commonDiff->isChanged(Item::FIELD_NAME_CATEGORY_ID))
 		{
-			History\DealStageHistoryEntry::processCagegoryChange($item->getId());
 			Statistics\DealSumStatisticEntry::processCagegoryChange($item->getId());
 			Statistics\DealInvoiceStatisticEntry::processCagegoryChange($item->getId());
 			Statistics\DealActivityStatisticEntry::processCagegoryChange($item->getId());
@@ -82,7 +97,8 @@ final class Deal extends Statistics\OperationFacade
 
 	public function delete(Item $itemBeforeDeletion): Result
 	{
-		History\DealStageHistoryEntry::unregister($itemBeforeDeletion->getId());
+		$this->stageHistory->registerItemDelete($itemBeforeDeletion->getId());
+		$this->supposedStageHistory->registerItemDelete($itemBeforeDeletion->getId());
 		Statistics\DealSumStatisticEntry::unregister($itemBeforeDeletion->getId());
 		Statistics\DealInvoiceStatisticEntry::unregister($itemBeforeDeletion->getId());
 		Statistics\DealActivityStatisticEntry::unregister($itemBeforeDeletion->getId());

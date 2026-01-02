@@ -149,7 +149,11 @@ this.BX.Crm = this.BX.Crm || {};
 	          size: ui_buttons.ButtonSize.EXTRA_SMALL,
 	          round: true,
 	          events: {
-	            click: () => popup.close()
+	            click: () => {
+	              var _babelHelpers$classPr, _babelHelpers$classPr2, _babelHelpers$classPr3;
+	              (_babelHelpers$classPr = babelHelpers.classPrivateFieldGet(this, _todoEditor)) === null || _babelHelpers$classPr === void 0 ? void 0 : _babelHelpers$classPr.sendAnalyticsCancelEvent((_babelHelpers$classPr2 = (_babelHelpers$classPr3 = babelHelpers.classPrivateFieldGet(this, _context)) === null || _babelHelpers$classPr3 === void 0 ? void 0 : _babelHelpers$classPr3.analytics) !== null && _babelHelpers$classPr2 !== void 0 ? _babelHelpers$classPr2 : {});
+	              popup.close();
+	            }
 	          }
 	        })]);
 	        popup.subscribeOnce('onFirstShow', event => {
@@ -181,7 +185,7 @@ this.BX.Crm = this.BX.Crm || {};
 	  return AddingPopup;
 	}();
 	async function _createToDoEditor2() {
-	  var _babelHelpers$classPr, _babelHelpers$classPr2, _analytics$c_section, _analytics$c_sub_sect;
+	  var _babelHelpers$classPr4, _babelHelpers$classPr5, _analytics$c_section, _analytics$c_sub_sect;
 	  // just created, initialize
 	  const params = {
 	    container: babelHelpers.classPrivateFieldGet(this, _popupToDoEditorContainer),
@@ -196,7 +200,7 @@ this.BX.Crm = this.BX.Crm || {};
 	    },
 	    popupMode: true
 	  };
-	  const analytics = (_babelHelpers$classPr = (_babelHelpers$classPr2 = babelHelpers.classPrivateFieldGet(this, _context)) === null || _babelHelpers$classPr2 === void 0 ? void 0 : _babelHelpers$classPr2.analytics) !== null && _babelHelpers$classPr !== void 0 ? _babelHelpers$classPr : {};
+	  const analytics = (_babelHelpers$classPr4 = (_babelHelpers$classPr5 = babelHelpers.classPrivateFieldGet(this, _context)) === null || _babelHelpers$classPr5 === void 0 ? void 0 : _babelHelpers$classPr5.analytics) !== null && _babelHelpers$classPr4 !== void 0 ? _babelHelpers$classPr4 : {};
 	  const section = (_analytics$c_section = analytics.c_section) !== null && _analytics$c_section !== void 0 ? _analytics$c_section : null;
 	  const subSection = (_analytics$c_sub_sect = analytics.c_sub_section) !== null && _analytics$c_sub_sect !== void 0 ? _analytics$c_sub_sect : null;
 	  params.calendarSettings = babelHelpers.classPrivateFieldGet(this, _calendarSettings);

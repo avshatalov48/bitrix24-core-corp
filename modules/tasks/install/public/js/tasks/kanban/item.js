@@ -1194,18 +1194,6 @@ BX.Tasks.Kanban.Item.prototype = {
 		this.container = BX.create("div", {
 			props: {
 				className: "tasks-kanban-item"
-			},
-			events: {
-				click: function()
-				{
-					if (
-						typeof BX.Bitrix24 !== "undefined" &&
-						typeof BX.Bitrix24.PageSlider !== "undefined"
-					)
-					{
-						// BX.Bitrix24.PageSlider.open(this.getTaskUrl(this.getId()));
-					}
-				}.bind(this)
 			}
 		});
 

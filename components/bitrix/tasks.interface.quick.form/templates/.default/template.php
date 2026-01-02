@@ -29,6 +29,15 @@ if (is_array($arResult['GROUP']))
 	$projectName = $arResult['GROUP']['NAME'];
 }
 
+$isV2Form = \Bitrix\Tasks\V2\FormV2Feature::isOn('miniform')
+	|| \Bitrix\Tasks\V2\FormV2Feature::isOn('', $projectId)
+;
+
+if ($isV2Form)
+{
+	Extension::load('tasks.v2.application.task-card');
+}
+
 $formattedUserName = CUser::FormatName(
 	CSite::GetNameFormat(),
 	[
@@ -112,6 +121,25 @@ $formattedUserName = CUser::FormatName(
 
 	?>
 	<script>
+		<?php if ($isV2Form) { ?>
+		BX.ready(() => {
+			const quickFormButton = document.getElementById('task-quick-form-button');
+			if (quickFormButton)
+			{
+				quickFormButton.onclick = function(e) {
+					const groupId = <?= ($projectId > 0) ? $projectId : 'null' ?>;
+					BX.Tasks.V2.Application.TaskCard.showCompactCard({
+						groupId,
+						analytics: {
+							context: 'tasks',
+							additionalContext: '<?= ($arParams['SCOPE'] ?? null) === ScopeDictionary::SCOPE_TASKS_GANTT ? 'gantt' : 'list'?>',
+							element: 'quick_button',
+						},
+					});
+				};
+			}
+		})
+		<?php } else { ?>
 		new BX.Tasks.QuickForm('task-new-item', {
 			button: 'task-quick-form-button',
 			gridId: "<?=CUtil::JSEscape($arParams['GRID_ID'])?>",
@@ -134,5 +162,6 @@ $formattedUserName = CUser::FormatName(
 			isProjectEnabled: <?= \Bitrix\Main\Web\Json::encode($isProjectEnabled); ?>,
 			projectFeatureId: '<?= ProjectLimit::getFeatureId() ?>',
 		});
+		<?php } ?>
 	</script>
 </div>

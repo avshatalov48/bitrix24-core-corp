@@ -40,6 +40,11 @@ class DailyFileUploadLimit
 
 	public function incrementByValue(int $size): Main\Result
 	{
+		if ($size <= 0)
+		{
+			return new Main\Result();
+		}
+
 		return LimitationTable::incrementByValue(self::LIMIT_CODE, self::LIMIT_TYPE, $size);
 	}
 

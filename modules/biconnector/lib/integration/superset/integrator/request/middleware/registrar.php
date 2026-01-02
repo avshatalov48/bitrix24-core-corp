@@ -27,10 +27,21 @@ final class Registrar extends Base
 		$result = $this->registrar->register();
 		if (!$result->isSuccess())
 		{
+			$status = $result->getData()['STATUS_CODE'] ?? 0;
+
 			$this->logger->logErrors([
 				new Error('cannot register portal on supersetproxy while make method ' . $request->getAction()),
 				...$result->getErrors(),
 			]);
+
+			if ($status === IntegratorResponse::STATUS_LIMIT_EXCEEDED)
+			{
+				return new IntegratorResponse(
+					IntegratorResponse::STATUS_LIMIT_EXCEEDED,
+					null,
+					$result->getErrors(),
+				);
+			}
 
 			return new IntegratorResponse(
 				IntegratorResponse::STATUS_UNKNOWN,

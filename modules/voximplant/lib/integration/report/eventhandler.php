@@ -170,7 +170,7 @@ class EventHandler
 
 		$marketAppsLink = new AnalyticBoard('market_apps_link');
 		$marketAppsLink->setGroup(self::BATCH_GROUP_TELEPHONY_GENERAL);
-		$marketAppsLink->setTitle(Loc::getMessage('TELEPHONY_REPORT_MARKET_LINK'));
+		$marketAppsLink->setTitle(Loc::getMessage('TELEPHONY_REPORT_MARKET_LINK_MSGVER_1'));
 		$marketAppsLink->setExternal(true);
 		$marketAppsLink->setExternalUrl('/market/?placement=TELEPHONY_ANALYTICS_MENU');
 		$boards[] = $marketAppsLink;

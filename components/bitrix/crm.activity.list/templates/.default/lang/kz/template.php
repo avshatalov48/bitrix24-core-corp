@@ -1,0 +1,27 @@
+<?php
+$MESS["CRM_ACTIVITY_CURRENT"] = "Әрекеттер";
+$MESS["CRM_ACTIVITY_DLG_BTN_CANCEL"] = "Сақтамай шығу";
+$MESS["CRM_ACTIVITY_EXECUTE"] = "Орындау";
+$MESS["CRM_ACTIVITY_HISTORY"] = "Журнал";
+$MESS["CRM_ACTIVITY_LIST_ADD_CALL"] = "Қоңырауды қосу";
+$MESS["CRM_ACTIVITY_LIST_ADD_EMAIL"] = "Хатты жазу";
+$MESS["CRM_ACTIVITY_LIST_ADD_MEETING"] = "Кездесуді қосу";
+$MESS["CRM_ACTIVITY_LIST_ADD_TASK"] = "Міндетті қосу";
+$MESS["CRM_ACTIVITY_ROW_COL_TTL_DEAD_LINE"] = "Мерзімі";
+$MESS["CRM_ACTIVITY_ROW_COL_TTL_PRIORITY"] = "Маңыздылық";
+$MESS["CRM_ACTIVITY_ROW_COL_TTL_RESPONSIBLE"] = "Жауапты";
+$MESS["CRM_ACTIVITY_ROW_COL_TTL_SUBJECT"] = "Атауы";
+$MESS["CRM_ACTIVITY_ROW_COL_TTL_TYPE"] = "Түрі";
+$MESS["CRM_ACTIVITY_SHOW_ALL"] = "Барлығын көрсету (#COUNT#)";
+$MESS["CRM_CALL_STATUS_COMPLETED"] = "Жасалды";
+$MESS["CRM_CALL_STATUS_WAITING"] = "Күтілуде";
+$MESS["CRM_FF_CANCEL"] = "Болдырмау";
+$MESS["CRM_FF_CHANGE"] = "Өзгерту";
+$MESS["CRM_FF_CLOSE"] = "Жабу";
+$MESS["CRM_FF_LAST"] = "Соңғы";
+$MESS["CRM_FF_NO_RESULT"] = "Өкінішті, сіздің іздеу сұрауыңыз бойынша ештеңе табылған жоқ";
+$MESS["CRM_FF_OK"] = "Таңдау";
+$MESS["CRM_FF_SEARCH"] = "Іздеу";
+$MESS["CRM_MEETING_STATUS_COMPLETED"] = "Аяқталды";
+$MESS["CRM_MEETING_STATUS_WAITING"] = "Күтілуде";
+$MESS["CRM_UNDEFINED_VALUE"] = "[орнатылмаған]";

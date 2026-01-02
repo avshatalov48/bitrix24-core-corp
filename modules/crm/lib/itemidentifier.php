@@ -2,6 +2,7 @@
 
 namespace Bitrix\Crm;
 
+use Bitrix\Crm\Service\Container;
 use Bitrix\Main\ArgumentException;
 use Bitrix\Main\ArgumentOutOfRangeException;
 
@@ -149,6 +150,17 @@ class ItemIdentifier implements \JsonSerializable
 	 */
 	public function getCategoryId(): ?int
 	{
+		if (is_null($this->categoryId)) // load categoryId if need
+		{
+			$factory = Container::getInstance()->getFactory($this->entityTypeId);
+			if (!$factory || !$factory->isCategoriesSupported())
+			{
+				return null;
+			}
+
+			$this->categoryId = (int)$factory->getItemCategoryId($this->entityId);
+		}
+
 		return $this->categoryId;
 	}
 

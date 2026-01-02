@@ -17,11 +17,20 @@
 	align-items: stretch;
 }
 
-.ai__copilot-chat-message_menu {
+.ai__copilot-chat-message_menu,
+.ai__copilot-chat-message_retry-button {
 	margin-left: 8px;
 }
 
+.ai__copilot-chat-message_retry-button {
+	margin-top: 8px;
+}
+
 .ai__copilot-chat-message:hover .ai__copilot-chat-message-menu {
+	opacity: var(--ui-opacity-full);
+}
+
+.ai__copilot-chat-message_retry-button .ai__copilot-chat-message-menu {
 	opacity: var(--ui-opacity-full);
 }
 
@@ -42,6 +51,11 @@
 	--ai__copilot-chat-message-delivery-status-icon-color: var(--ui-color-copilot-primary);
 
 	font-weight: var(--ui-font-weight-medium);
+}
+
+.ai__copilot-chat-message.--color-schema-error {
+	--ai__copilot-chat-message-background: var(--ui-color-background-alert);
+	--ai__copilot-chat-message-delivery-status-icon-color: var(--ui-color-background-on-alert);
 }
 
 .ai__copilot-chat-message_avatar-wrapper {
@@ -196,7 +210,7 @@
 
 .ai__copilot-chat-message_status.--error {
 	mask-image: url("../../image/message-status-icon-send-error.svg");
-	background-color: var(--ui-color-copilot-primary);
+	background-color: var(--ui-color-background-on-alert);
 }
 
 .ai__copilot-chat-message_status.--depart {

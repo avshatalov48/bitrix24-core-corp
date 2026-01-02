@@ -13,7 +13,7 @@ class Message
 
 	public function validate(): Main\Result
 	{
-		return new Main\Result;
+		return new Main\Result();
 	}
 
 	public function toArray(): array
@@ -28,6 +28,7 @@ class Message
 	public function setData(array $data): self
 	{
 		$this->data = $data;
+
 		return $this;
 	}
 
@@ -44,17 +45,19 @@ class Message
 	public function setDebugTraceId(string $debugTraceId): self
 	{
 		$this->debugTraceId = $debugTraceId;
+
 		return $this;
 	}
 
 	public function getVersion(): ?int
 	{
-		return (int) $this->data['version'] ?? null;
+		return (int)$this->data['version'] ?? null;
 	}
 
 	public function setVersion(int $version): self
 	{
 		$this->data['version'] = $version;
+
 		return $this;
 	}
 }

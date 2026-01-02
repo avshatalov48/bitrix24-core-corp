@@ -15,4 +15,9 @@ class ExternalDatasetField extends EO_ExternalDatasetField
 	{
 		return BIConnector\ExternalSource\FieldType::from($this->getType());
 	}
+
+	public function toArray(): array
+	{
+		return $this->collectValues();
+	}
 }

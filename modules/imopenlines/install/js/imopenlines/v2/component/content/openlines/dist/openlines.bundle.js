@@ -3,19 +3,15 @@ this.BX = this.BX || {};
 this.BX.OpenLines = this.BX.OpenLines || {};
 this.BX.OpenLines.v2 = this.BX.OpenLines.v2 || {};
 this.BX.OpenLines.v2.Component = this.BX.OpenLines.v2.Component || {};
-(function (exports,imopenlines_v2_css_tokens,im_v2_lib_access,im_v2_lib_logger,im_v2_provider_service,imopenlines_v2_lib_queue,im_v2_component_dialog_chat,main_popup,ui_entitySelector,im_v2_component_search_chatSearch,im_public,im_v2_component_elements,im_v2_const,im_v2_lib_layout,im_v2_application_core,imopenlines_v2_const,imopenlines_v2_provider_service,im_v2_component_content_elements,im_v2_component_textarea,im_v2_component_messageList,im_v2_lib_theme) {
+(function (exports,imopenlines_v2_css_tokens,im_v2_lib_logger,im_v2_provider_service_chat,im_v2_component_dialog_chat,imopenlines_v2_lib_queue,main_popup,im_v2_component_elements_popup,ui_entitySelector,im_v2_component_search,im_public,im_v2_component_elements_button,im_v2_const,im_v2_lib_layout,im_v2_application_core,imopenlines_v2_const,imopenlines_v2_provider_service,im_v2_component_content_elements,im_v2_component_textarea,im_v2_lib_menu,im_v2_lib_theme) {
 	'use strict';
 
-	const searchConfig = Object.freeze({
-	  chats: false,
-	  users: true
-	});
 	const SEARCH_ENTITY_ID = 'user';
 	const ChatTransferContent = {
 	  name: 'ChatTransferContent',
 	  components: {
-	    MessengerButton: im_v2_component_elements.Button,
-	    ChatSearch: im_v2_component_search_chatSearch.ChatSearch
+	    ChatButton: im_v2_component_elements_button.ChatButton,
+	    ChatSearch: im_v2_component_search.AddToChat
 	  },
 	  props: {
 	    dialogId: {
@@ -30,9 +26,8 @@ this.BX.OpenLines.v2.Component = this.BX.OpenLines.v2.Component || {};
 	    };
 	  },
 	  computed: {
-	    ButtonSize: () => im_v2_component_elements.ButtonSize,
-	    ButtonColor: () => im_v2_component_elements.ButtonColor,
-	    searchConfig: () => searchConfig
+	    ButtonSize: () => im_v2_component_elements_button.ButtonSize,
+	    ButtonColor: () => im_v2_component_elements_button.ButtonColor
 	  },
 	  created() {
 	    this.membersSelector = this.getTagSelector();
@@ -116,17 +111,14 @@ this.BX.OpenLines.v2.Component = this.BX.OpenLines.v2.Component || {};
 			<div class="bx-imol-entity-selector-chat-transfer__input" ref="tag-selector"></div>
 			<div class="bx-imol-entity-selector-chat-transfer__search-result-container">
 				<ChatSearch
-					:searchMode="true"
-					:searchQuery="searchQuery"
-					:selectMode="true"
-					:searchConfig="searchConfig"
+					:query="searchQuery"
+					:dialogId="dialogId"
 					:selectedItems="[...selectedItems]"
-					:showMyNotes="false"
 					@clickItem="onSelectItem"
 				/>
 			</div>
 			<div class="bx-imol-entity-selector-chat-transfer__buttons">
-				<MessengerButton
+				<ChatButton
 					:size="ButtonSize.L"
 					:color="ButtonColor.Primary"
 					:isRounded="true"
@@ -134,7 +126,7 @@ this.BX.OpenLines.v2.Component = this.BX.OpenLines.v2.Component || {};
 					:isDisabled="selectedItems.size === 0"
 					@click="onChatTransfer"
 				/>
-				<MessengerButton
+				<ChatButton
 					:size="ButtonSize.L"
 					:color="ButtonColor.LightBorder"
 					:isRounded="true"
@@ -152,7 +144,7 @@ this.BX.OpenLines.v2.Component = this.BX.OpenLines.v2.Component || {};
 	const ChatTransfer = {
 	  name: 'ChatTransfer',
 	  components: {
-	    MessengerPopup: im_v2_component_elements.MessengerPopup,
+	    MessengerPopup: im_v2_component_elements_popup.MessengerPopup,
 	    ChatTransferContent
 	  },
 	  props: {
@@ -210,7 +202,7 @@ this.BX.OpenLines.v2.Component = this.BX.OpenLines.v2.Component || {};
 	const ChatControlPanel = {
 	  name: 'ChatControlPanel',
 	  components: {
-	    ButtonPanel: im_v2_component_elements.Button,
+	    ChatButton: im_v2_component_elements_button.ChatButton,
 	    ChatTransfer
 	  },
 	  props: {
@@ -229,8 +221,8 @@ this.BX.OpenLines.v2.Component = this.BX.OpenLines.v2.Component || {};
 	    };
 	  },
 	  computed: {
-	    ButtonSize: () => im_v2_component_elements.ButtonSize,
-	    ButtonColor: () => im_v2_component_elements.ButtonColor,
+	    ButtonSize: () => im_v2_component_elements_button.ButtonSize,
+	    ButtonColor: () => im_v2_component_elements_button.ButtonColor,
 	    buttonColorScheme() {
 	      return {
 	        backgroundColor: BUTTON_COLOR,
@@ -270,7 +262,7 @@ this.BX.OpenLines.v2.Component = this.BX.OpenLines.v2.Component || {};
 	  template: `
 		<ul class="bx-imol-textarea_join-panel-list-button">
 			<li class="bx-imol-textarea_join-panel-item-button">
-				<ButtonPanel
+				<ChatButton
 					:size="ButtonSize.L"
 					:color="ButtonColor.Success"
 					:text="loc('IMOL_CONTENT_TEXTAREA_JOIN_PANEL_ANSWER')"
@@ -278,7 +270,7 @@ this.BX.OpenLines.v2.Component = this.BX.OpenLines.v2.Component || {};
 				/>
 			</li>
 			<li v-if="!isQueueTypeAll" class="bx-imol-textarea_join-panel-item-button">
-				<ButtonPanel
+				<ChatButton
 					:size="ButtonSize.L"
 					:color="ButtonColor.Danger"
 					:text="loc('IMOL_CONTENT_TEXTAREA_JOIN_PANEL_SKIP')"
@@ -286,7 +278,7 @@ this.BX.OpenLines.v2.Component = this.BX.OpenLines.v2.Component || {};
 				/>
 			</li>
 			<li class="bx-imol-textarea_join-panel-item-button" ref="transfer-chat">
-				<ButtonPanel
+				<ChatButton
 					:size="ButtonSize.L"
 					:customColorScheme="buttonColorScheme"
 					:text="loc('IMOL_CONTENT_BUTTON_TRANSFER')"
@@ -309,7 +301,7 @@ this.BX.OpenLines.v2.Component = this.BX.OpenLines.v2.Component || {};
 	const JoinPanel = {
 	  name: 'JoinPanel',
 	  components: {
-	    ButtonPanel: im_v2_component_elements.Button
+	    ChatButton: im_v2_component_elements_button.ChatButton
 	  },
 	  props: {
 	    dialogId: {
@@ -326,8 +318,8 @@ this.BX.OpenLines.v2.Component = this.BX.OpenLines.v2.Component || {};
 	    }
 	  },
 	  computed: {
-	    ButtonSize: () => im_v2_component_elements.ButtonSize,
-	    ButtonColor: () => im_v2_component_elements.ButtonColor,
+	    ButtonSize: () => im_v2_component_elements_button.ButtonSize,
+	    ButtonColor: () => im_v2_component_elements_button.ButtonColor,
 	    textStartJoinButtons() {
 	      return this.isClosed ? this.loc('IMOL_CONTENT_TEXTAREA_JOIN_PANEL_START') : this.loc('IMOL_CONTENT_TEXTAREA_JOIN_PANEL_JOIN_BUTTON');
 	    }
@@ -341,7 +333,7 @@ this.BX.OpenLines.v2.Component = this.BX.OpenLines.v2.Component || {};
 	    },
 	    closeDialog() {
 	      void im_public.Messenger.openLines();
-	      im_v2_lib_layout.LayoutManager.getInstance().setLastOpenedElement(im_v2_const.Layout.openlinesV2.name, '');
+	      im_v2_lib_layout.LayoutManager.getInstance().setLastOpenedElement(im_v2_const.Layout.openlinesV2, '');
 	    },
 	    getStartService() {
 	      if (!this.startService) {
@@ -362,7 +354,7 @@ this.BX.OpenLines.v2.Component = this.BX.OpenLines.v2.Component || {};
 	  template: `
 		<ul class="bx-imol-textarea_join-panel-list-button">
 			<li v-if="!isNewSession" class="bx-imol-textarea_join-panel-item-button">
-				<ButtonPanel
+				<ChatButton
 					:size="ButtonSize.L"
 					:color="ButtonColor.Success"
 					:text=textStartJoinButtons
@@ -370,7 +362,7 @@ this.BX.OpenLines.v2.Component = this.BX.OpenLines.v2.Component || {};
 				/>
 			</li>
 			<li class="bx-imol-textarea_join-panel-item-button">
-				<ButtonPanel
+				<ChatButton
 					:size="ButtonSize.L"
 					:color="ButtonColor.Danger"
 					:text="loc('IMOL_CONTENT_TEXTAREA_JOIN_PANEL_CLOSE')"
@@ -385,7 +377,7 @@ this.BX.OpenLines.v2.Component = this.BX.OpenLines.v2.Component || {};
 	const JoinPanelContainer = {
 	  name: 'JoinPanelContainer',
 	  components: {
-	    OpenLinesButton: im_v2_component_elements.Button,
+	    OpenLinesButton: im_v2_component_elements_button.ChatButton,
 	    ChatControlPanel,
 	    JoinPanel
 	  },
@@ -619,31 +611,23 @@ this.BX.OpenLines.v2.Component = this.BX.OpenLines.v2.Component || {};
 	`
 	};
 
-	class OpenLinesMessageMenu extends im_v2_component_messageList.MessageMenu {
+	const MenuSectionCode = Object.freeze({
+	  main: 'main',
+	  select: 'select'
+	});
+	class OpenLinesMessageMenu extends im_v2_lib_menu.MessageMenu {
 	  getMenuItems() {
-	    return [this.getReplyItem(), this.getCopyItem(), this.getForwardItem(), this.getFavoriteItem(), this.getDelimiter(), this.getDownloadFileItem(), this.getDelimiter(), this.getEditItem(), this.getDelimiter(), this.getDeleteItem(), this.getDelimiter(), this.getMarkItem(), this.getDelimiter(), this.getSelectItem()];
+	    const mainGroupItems = [this.getReplyItem(), this.getCopyItem(), this.getMarkItem(), this.getForwardItem(), this.getFavoriteItem(), this.getDownloadFileItem(), this.getEditItem(), this.getDeleteItem()];
+	    return [...this.groupItems(mainGroupItems, MenuSectionCode.main), ...this.groupItems([this.getSelectItem()], MenuSectionCode.select)];
+	  }
+	  getMenuGroups() {
+	    return [{
+	      code: MenuSectionCode.main
+	    }, {
+	      code: MenuSectionCode.select
+	    }];
 	  }
 	}
-
-	// @vue/component
-	const OpenLinesMessageList = {
-	  name: 'OpenLinesMessageList',
-	  components: {
-	    MessageList: im_v2_component_messageList.MessageList
-	  },
-	  props: {
-	    dialogId: {
-	      type: String,
-	      required: true
-	    }
-	  },
-	  computed: {
-	    OpenLinesMessageMenu: () => OpenLinesMessageMenu
-	  },
-	  template: `
-		<MessageList :dialogId="dialogId" :messageMenuClass="OpenLinesMessageMenu" />
-	`
-	};
 
 	// @vue/component
 	const OpenLinesContent = {
@@ -653,8 +637,7 @@ this.BX.OpenLines.v2.Component = this.BX.OpenLines.v2.Component || {};
 	    JoinPanelContainer,
 	    OpenLinesHeader,
 	    ChatDialog: im_v2_component_dialog_chat.ChatDialog,
-	    OpenLinesTextarea,
-	    OpenLinesMessageList
+	    OpenLinesTextarea
 	  },
 	  props: {
 	    dialogId: {
@@ -672,7 +655,16 @@ this.BX.OpenLines.v2.Component = this.BX.OpenLines.v2.Component || {};
 	      return this.queueType === imopenlines_v2_lib_queue.QueueType.all;
 	    }
 	  },
+	  created() {
+	    this.registerMessageMenu();
+	  },
 	  methods: {
+	    registerMessageMenu() {
+	      im_v2_lib_menu.MessageMenuManager.getInstance().registerMenuByCallback(context => {
+	        const chat = this.$store.getters['chats/get'](context.dialogId);
+	        return chat.type === im_v2_const.ChatType.lines;
+	      }, OpenLinesMessageMenu);
+	    },
 	    getSessionByDialogId(dialogId) {
 	      return this.$store.getters['recentOpenLines/getSession'](dialogId, true);
 	    }
@@ -681,13 +673,6 @@ this.BX.OpenLines.v2.Component = this.BX.OpenLines.v2.Component || {};
 		<BaseChatContent :dialogId="dialogId">
 			<template #header>
 				<OpenLinesHeader :dialogId="dialogId" :key="dialogId" :isQueueTypeAll="isQueueTypeAll" />
-			</template>
-			<template #dialog>
-				<ChatDialog :dialogId="dialogId" :key="dialogId">
-					<template #message-list>
-						<OpenLinesMessageList :dialogId="dialogId" />
-					</template>
-				</ChatDialog>
 			</template>
 			<template #textarea="{ onTextareaMount }">
 				<OpenLinesTextarea :dialogId="dialogId" @mounted="onTextareaMount"/>
@@ -754,29 +739,14 @@ this.BX.OpenLines.v2.Component = this.BX.OpenLines.v2.Component || {};
 	        return;
 	      }
 	      im_v2_lib_logger.Logger.warn(`OpenLinesContent: loading openlines ${this.dialogId}`);
-	      await this.getChatService().loadChatWithMessages(this.dialogId).catch(errors => {
-	        this.handleChatLoadError(errors);
-	        im_v2_lib_logger.Logger.error(errors);
+	      await this.getChatService().loadChatWithMessages(this.dialogId).catch(() => {
 	        im_public.Messenger.openLines();
 	      });
 	      im_v2_lib_logger.Logger.warn(`OpenLinesContent: openlines ${this.dialogId} is loaded`);
 	    },
-	    handleChatLoadError(errors) {
-	      const [firstError] = errors;
-	      if (firstError.code === im_v2_lib_access.AccessErrorCode.accessDenied) {
-	        this.showNotification(this.loc('IMOL_CONTENT_CHAT_ACCESS_ERROR_MSGVER_1'));
-	      } else if (firstError.code === im_v2_lib_access.AccessErrorCode.messageNotFound) {
-	        this.showNotification(this.loc('IMOL_CONTENT_CHAT_CONTEXT_MESSAGE_NOT_FOUND'));
-	      }
-	    },
-	    showNotification(text) {
-	      BX.UI.Notification.Center.notify({
-	        content: text
-	      });
-	    },
 	    getChatService() {
 	      if (!this.chatService) {
-	        this.chatService = new im_v2_provider_service.ChatService();
+	        this.chatService = new im_v2_provider_service_chat.ChatService();
 	      }
 	      return this.chatService;
 	    },
@@ -814,5 +784,5 @@ this.BX.OpenLines.v2.Component = this.BX.OpenLines.v2.Component || {};
 
 	exports.OpenLinesContent = OpenLinesContent$1;
 
-}((this.BX.OpenLines.v2.Component.Content = this.BX.OpenLines.v2.Component.Content || {}),BX.OpenLines.v2.Css,BX.Messenger.v2.Lib,BX.Messenger.v2.Lib,BX.Messenger.v2.Service,BX.OpenLines.v2.Lib,BX.Messenger.v2.Component.Dialog,BX.Main,BX.UI.EntitySelector,BX.Messenger.v2.Component,BX.Messenger.v2.Lib,BX.Messenger.v2.Component.Elements,BX.Messenger.v2.Const,BX.Messenger.v2.Lib,BX.Messenger.v2.Application,BX.OpenLines.v2.Const,BX.OpenLines.v2.Provider.Service,BX.Messenger.v2.Component.Content,BX.Messenger.v2.Component,BX.Messenger.v2.Component,BX.Messenger.v2.Lib));
+}((this.BX.OpenLines.v2.Component.Content = this.BX.OpenLines.v2.Component.Content || {}),BX.OpenLines.v2.Css,BX.Messenger.v2.Lib,BX.Messenger.v2.Service,BX.Messenger.v2.Component.Dialog,BX.OpenLines.v2.Lib,BX.Main,BX.Messenger.v2.Component.Elements,BX.UI.EntitySelector,BX.Messenger.v2.Component,BX.Messenger.v2.Lib,BX.Messenger.v2.Component.Elements,BX.Messenger.v2.Const,BX.Messenger.v2.Lib,BX.Messenger.v2.Application,BX.OpenLines.v2.Const,BX.OpenLines.v2.Provider.Service,BX.Messenger.v2.Component.Content,BX.Messenger.v2.Component,BX.Messenger.v2.Lib,BX.Messenger.v2.Lib));
 //# sourceMappingURL=openlines.bundle.js.map

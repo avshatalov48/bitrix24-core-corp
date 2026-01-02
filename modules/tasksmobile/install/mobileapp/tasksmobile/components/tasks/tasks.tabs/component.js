@@ -9,12 +9,14 @@
 	const { getFeatureRestriction, tariffPlanRestrictionsReady } = require('tariff-plan-restriction');
 	const { RunActionExecutor } = require('rest/run-action-executor');
 	const { TasksNavigator } = require('tasks/navigator');
+	const { TASKS_TABS_NAVIGATOR, TASKS_ROOT_COMPONENT_NAME } = require('tasks/navigator/meta');
 
 	const SITE_ID = BX.componentParameters.get('SITE_ID', 's1');
 
 	const tasksNavigator = new TasksNavigator();
 	tasksNavigator.unsubscribeFromPushNotifications();
 	tasksNavigator.subscribeToPushNotifications();
+	tasksNavigator.subscribeOnMakeTabActive();
 
 	class Pull
 	{
@@ -255,6 +257,18 @@
 			BX.addCustomEvent('flows.list:setVisualCounter', (data) => this.updateFlowsCounter(data.value));
 			BX.addCustomEvent('tasks.project.list:setVisualCounter', (data) => this.updateProjectsCounter(data.value));
 			BX.addCustomEvent('tasks.scrum.list:setVisualCounter', (data) => this.updateScrumCounter(data.value));
+			BX.addCustomEvent(TASKS_TABS_NAVIGATOR.makeTabActive, (taskId) => {
+				this.tabs.setActiveItem(taskId);
+			});
+
+			EntityReady.ready(TASKS_ROOT_COMPONENT_NAME);
+
+			this.tabs.setListener((event, data) => {
+				if (event === 'onViewRemoved')
+				{
+					EntityReady.unready(TASKS_ROOT_COMPONENT_NAME);
+				}
+			});
 		}
 
 		onAppPaused()

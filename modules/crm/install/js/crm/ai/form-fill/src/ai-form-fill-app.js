@@ -4,6 +4,7 @@ import { addCustomEvent, Loc, removeAllCustomEvents, Type } from 'main.core';
 import { Button } from 'ui.buttons';
 import { AiFormFillApplication } from './app';
 import SliderButtonsAdapter from './services/slider-buttons-adapter';
+import { Settings, Setting } from 'crm.integration.ui.settings';
 
 export let sliderButtonsAdapter: ?SliderButtonsAdapter = null;
 
@@ -63,14 +64,17 @@ class ConflictFieldsliderCreator
 		this.#sliderInstance.open();
 	}
 
-	#makeSliderToolbar(): Array {
+	#makeSliderToolbar(): Array
+	{
 		const toolbarButtons = this.#copilotSliderClass.makeDefaultToolbarButtons();
 
 		const transcriptButton = new Button({
 			text: Loc.getMessage('CRM_AI_FORM_FILL_MERGER_TRANSCRIPTION'),
-			size: Button.Size.MEDIUM,
+			size: Settings.get(Setting.UseAirDesign) ? Button.Size.SMALL : Button.Size.MEDIUM,
 			color: Button.Color.LIGHT_BORDER,
 			dependOnTheme: true,
+			useAirDesign: Settings.get(Setting.UseAirDesign),
+			style: Button.AirStyle.OUTLINE,
 			onclick: () => {
 				if (top.BX.Helper)
 				{
@@ -88,9 +92,11 @@ class ConflictFieldsliderCreator
 
 		const resumeButton = new Button({
 			text: Loc.getMessage('CRM_AI_FORM_FILL_MERGER_RESUME'),
-			size: Button.Size.MEDIUM,
+			size: Settings.get(Setting.UseAirDesign) ? Button.Size.SMALL : Button.Size.MEDIUM,
 			color: Button.Color.LIGHT_BORDER,
 			dependOnTheme: true,
+			useAirDesign: Settings.get(Setting.UseAirDesign),
+			style: Button.AirStyle.OUTLINE,
 			onclick: () => {
 				if (top.BX.Helper)
 				{
@@ -113,7 +119,8 @@ class ConflictFieldsliderCreator
 		];
 	}
 
-	#createSliderWrapper() {
+	#createSliderWrapper(): Slider
+	{
 		const buttons = sliderButtonsAdapter.getButtons();
 		const toolbarButtons = this.#makeSliderToolbar();
 
@@ -121,7 +128,7 @@ class ConflictFieldsliderCreator
 			content: () => `<div id="${this.#containerId}"></div>`,
 			sliderTitle: Loc.getMessage('CRM_AI_FORM_FILL_MERGER_TITLE'),
 			label: this.#options.label,
-			extensions: ['crm.ai-form-fill', 'crm.entity-editor'],
+			extensions: ['crm.ai.form-fill', 'crm.entity-editor'],
 			url: this.#sliderUrl,
 			width: this.#calculateSliderWidth(),
 			toolbar: () => toolbarButtons,

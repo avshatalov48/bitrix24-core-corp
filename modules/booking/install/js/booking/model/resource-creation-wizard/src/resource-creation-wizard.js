@@ -1,9 +1,12 @@
+/* eslint-disable no-param-reassign,max-lines-per-function */
 import { Loc, Type } from 'main.core';
 import { BuilderModel } from 'ui.vue3.vuex';
 import type { ActionTree, GetterTree, MutationTree } from 'ui.vue3.vuex';
 
-import { Model, NotificationFieldsMap } from 'booking.const';
+import { Model, NotificationFieldsMap, ResourceEntityType } from 'booking.const';
 import { SlotRange } from 'booking.model.resources';
+import type { IntegrationCalendarType, IntegrationCalendarDataType } from 'booking.model.resources';
+
 import { getEmptyResource, getResource } from './lib';
 import type {
 	ResourceCreationWizardState,
@@ -32,10 +35,14 @@ export class ResourceCreationWizardModel extends BuilderModel
 			isSaving: false,
 			invalidResourceName: false,
 			invalidResourceType: false,
+			invalidIntegrationCalendarUser: false,
 			isCompanyScheduleAccess: false,
+			companyScheduleUrl: '',
 			weekStart: 'Mon',
 			globalSchedule: false,
 			checkedForAll: {},
+			isChannelChoiceAvailable: true,
+			isIntegrationCalendarEnabled: false,
 		};
 	}
 
@@ -56,9 +63,16 @@ export class ResourceCreationWizardModel extends BuilderModel
 				return Type.isNull(state.resourceId) ? 1 : 2;
 			},
 			finishStep: (): number => 3,
+			invalidIntegrationCalendarUser: (state): boolean => {
+				return state.isIntegrationCalendarEnabled && state.invalidIntegrationCalendarUser;
+			},
 			invalidChooseTypeCard: (state): boolean => Type.isNull(state.resource.typeId),
-			invalidSettingsCard: (state): boolean => {
-				return state.invalidResourceName || !state.resource.typeId;
+			invalidSettingsCard: (state, getters): boolean => {
+				return (
+					state.invalidResourceName
+					|| !state.resource.typeId
+					|| getters.invalidIntegrationCalendarUser
+				);
 			},
 			invalidCurrentCard: (state, getters): boolean => {
 				if (state.step === 1)
@@ -75,10 +89,27 @@ export class ResourceCreationWizardModel extends BuilderModel
 			},
 			/** @function resource-creation-wizard/isCompanyScheduleAccess */
 			isCompanyScheduleAccess: (state): boolean => state.isCompanyScheduleAccess,
+			/** @function resource-creation-wizard/companyScheduleUrl */
+			companyScheduleUrl: (state): boolean => state.companyScheduleUrl,
 			/** @function resource-creation-wizard/weekStart */
 			weekStart: (state): boolean => state.weekStart,
+			/** @function resource-creation-wizard/isChannelChoiceAvailable */
+			isChannelChoiceAvailable: (state): boolean => state.isChannelChoiceAvailable,
 			/** @function resource-creation-wizard/isCheckedForAll */
 			isCheckedForAll: (state) => (type: string): boolean => state.checkedForAll[type] ?? true,
+			advertisingResourceType: (state): AdvertisingResourceType | undefined => {
+				const typeId = state.resource.typeId;
+
+				return state.advertisingResourceTypes.find(({ relatedResourceTypeId }) => {
+					return relatedResourceTypeId === typeId;
+				}) || null;
+			},
+			entityCalendar: (state): IntegrationCalendarType | null => {
+				return state.resource?.entities?.find((ent) => ent.entityType === ResourceEntityType.Calendar) || null;
+			},
+			isIntegrationCalendarEnabled: (state): boolean => {
+				return state.isIntegrationCalendarEnabled;
+			},
 		};
 	}
 
@@ -115,6 +146,11 @@ export class ResourceCreationWizardModel extends BuilderModel
 					step: 2,
 				});
 				commit('setCurrentResourceName', resource.name);
+
+				commit(
+					'setIsIntegrationCalendarEnabled',
+					resource.entities?.find((ent) => ent.entityType === ResourceEntityType.Calendar)?.data?.userIds?.length > 0,
+				);
 			},
 			nextStep({ state, getters, commit }): void
 			{
@@ -135,7 +171,7 @@ export class ResourceCreationWizardModel extends BuilderModel
 					commit('updateStep', state.step - 1);
 				}
 			},
-			setAdvertisingResourceTypes({ commit }, types: AdvertisingResourceType[]): void
+			setAdvertisingTypes({ commit }, types: AdvertisingResourceType[]): void
 			{
 				const advertisingResourceType: AdvertisingResourceType[] = [
 					...types,
@@ -146,7 +182,7 @@ export class ResourceCreationWizardModel extends BuilderModel
 					},
 				];
 
-				commit('setAdvertisingResourceTypes', advertisingResourceType);
+				commit('setAdvertisingTypes', advertisingResourceType);
 			},
 			/** @function resource-creation-wizard/updateResource */
 			updateResource({ commit, rootGetters }, patch: Partial<ResourceModel>): void
@@ -157,6 +193,7 @@ export class ResourceCreationWizardModel extends BuilderModel
 					const notifications = [
 						...Object.values(NotificationFieldsMap.NotificationOn),
 						...Object.values(NotificationFieldsMap.TemplateType),
+						...Object.values(NotificationFieldsMap.Settings).flat(),
 					].reduce((acc: Partial<ResourceModel>, field: $Keys<ResourceModel>) => ({
 						...acc,
 						[field]: resourceType[field],
@@ -166,6 +203,16 @@ export class ResourceCreationWizardModel extends BuilderModel
 				}
 
 				commit('updateResource', patch);
+			},
+			/** @function resource-creation-wizard/createResourceEntityCalendar */
+			createResourceEntityCalendar({ commit }): void
+			{
+				commit('createResourceEntityCalendar');
+			},
+			/** @function resource-creation-wizard/updateResourceEntityCalendar */
+			updateResourceEntityCalendar({ commit }, calendarPath: Partial<IntegrationCalendarDataType>): void
+			{
+				commit('updateResourceEntityCalendar', calendarPath);
 			},
 			/** @function resource-creation-wizard/setCompanyScheduleSlots */
 			setCompanyScheduleSlots({ commit }, slots: SlotRange[]): void
@@ -187,6 +234,11 @@ export class ResourceCreationWizardModel extends BuilderModel
 			setCompanyScheduleAccess({ commit }, isCompanyScheduleAccess: boolean): void
 			{
 				commit('setCompanyScheduleAccess', isCompanyScheduleAccess);
+			},
+			/** @function resource-creation-wizard/setCompanyScheduleUrl */
+			setCompanyScheduleUrl({ commit }, companyScheduleUrl: string): void
+			{
+				commit('setCompanyScheduleUrl', companyScheduleUrl);
 			},
 			/** @function resource-creation-wizard/setInvalidResourceName */
 			setInvalidResourceName({ commit, state }, invalid: boolean): void
@@ -214,6 +266,25 @@ export class ResourceCreationWizardModel extends BuilderModel
 			{
 				commit('setCheckedForAll', { type, isChecked });
 			},
+			setSlotLengthId({ commit }, { slotLengthId }: { slotLengthId: number }): void
+			{
+				commit('setSlotLengthId', { slotLengthId });
+			},
+			/** @function resource-creation-wizard/setIsChannelChoiceAvailable */
+			setIsChannelChoiceAvailable({ commit }, isChannelChoiceAvailable: boolean): void
+			{
+				commit('setIsChannelChoiceAvailable', isChannelChoiceAvailable);
+			},
+			/** @function resource-creation-wizard/setIsIntegrationCalendarEnabled */
+			setIsIntegrationCalendarEnabled({ commit }, isIntegrationCalendarEnabled: boolean): void
+			{
+				commit('setIsIntegrationCalendarEnabled', isIntegrationCalendarEnabled);
+			},
+			/** @function resource-creation-wizard/setInvalidIntegrationCalendarUser */
+			setInvalidIntegrationCalendarUser({ commit }, invalidIntegrationCalendarUser: boolean): void
+			{
+				commit('setInvalidIntegrationCalendarUser', invalidIntegrationCalendarUser);
+			},
 		};
 	}
 
@@ -230,7 +301,7 @@ export class ResourceCreationWizardModel extends BuilderModel
 			{
 				state.resourceName = name;
 			},
-			setAdvertisingResourceTypes(state: ResourceCreationWizardState, types: AdvertisingResourceType[]): void
+			setAdvertisingTypes(state: ResourceCreationWizardState, types: AdvertisingResourceType[]): void
 			{
 				state.advertisingResourceTypes = types;
 			},
@@ -249,6 +320,39 @@ export class ResourceCreationWizardModel extends BuilderModel
 					...patch,
 				};
 			},
+			createResourceEntityCalendar(state): void
+			{
+				const hasCalendarEntity = state.resource?.entities?.some(
+					(entity) => entity.entityType === ResourceEntityType.Calendar,
+				);
+
+				if (!hasCalendarEntity)
+				{
+					state.resource?.entities?.push({
+						entityType: ResourceEntityType.Calendar,
+						entityId: 0,
+						data: {
+							userIds: [],
+							locationId: null,
+							checkAvailability: false,
+							reminders: [],
+						},
+					});
+				}
+			},
+			updateResourceEntityCalendar(state, calendarPath: Partial<IntegrationCalendarDataType>): void
+			{
+				const index = state.resource?.entities.findIndex((ent) => ent.entityType === ResourceEntityType.Calendar);
+
+				if (index >= 0)
+				{
+					const entityCalendar = state.resource.entities[index];
+					entityCalendar.data = {
+						...entityCalendar.data,
+						...calendarPath,
+					};
+				}
+			},
 			setGlobalSchedule(state: ResourceCreationWizardState, checked: boolean): void
 			{
 				state.globalSchedule = Boolean(checked);
@@ -265,6 +369,10 @@ export class ResourceCreationWizardModel extends BuilderModel
 			{
 				state.isCompanyScheduleAccess = isCompanyScheduleAccess;
 			},
+			setCompanyScheduleUrl(state: ResourceCreationWizardState, companyScheduleUrl: string): void
+			{
+				state.companyScheduleUrl = companyScheduleUrl;
+			},
 			setInvalidResourceName(state, invalid: boolean): void
 			{
 				state.invalidResourceName = invalid;
@@ -280,6 +388,22 @@ export class ResourceCreationWizardModel extends BuilderModel
 			setCheckedForAll(state, { type, isChecked }: { type: string, isChecked: boolean }): void
 			{
 				state.checkedForAll[type] = isChecked;
+			},
+			setSlotLengthId(state, { slotLengthId }: { slotLengthId: number }): void
+			{
+				state.slotLengthId = slotLengthId;
+			},
+			setIsChannelChoiceAvailable(state, isChannelChoiceAvailable: boolean): void
+			{
+				state.isChannelChoiceAvailable = isChannelChoiceAvailable;
+			},
+			setIsIntegrationCalendarEnabled(state, isIntegrationCalendarEnabled: boolean): void
+			{
+				state.isIntegrationCalendarEnabled = isIntegrationCalendarEnabled;
+			},
+			setInvalidIntegrationCalendarUser(state, invalidIntegrationCalendarUser = false): void
+			{
+				state.invalidIntegrationCalendarUser = invalidIntegrationCalendarUser;
 			},
 		};
 	}

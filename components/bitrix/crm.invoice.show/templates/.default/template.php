@@ -17,10 +17,7 @@ global $APPLICATION;
 
 $APPLICATION->SetAdditionalCSS('/bitrix/js/crm/css/crm.css');
 $APPLICATION->SetAdditionalCSS("/bitrix/themes/.default/crm-entity-show.css");
-if(SITE_TEMPLATE_ID === 'bitrix24')
-{
-	$APPLICATION->SetAdditionalCSS("/bitrix/themes/.default/bitrix24/crm-entity-show.css");
-}
+$APPLICATION->SetAdditionalCSS('/bitrix/themes/.default/bitrix24/crm-entity-show.css');
 $titleName = $arParams['IS_RECURRING'] === "Y" ? 'CRM_INVOICE_RECUR_SHOW_TITLE' : 'CRM_INVOICE_SHOW_TITLE';
 $arResult['CRM_CUSTOM_PAGE_TITLE'] = GetMessage(
 	$titleName,

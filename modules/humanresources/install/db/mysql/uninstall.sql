@@ -19,3 +19,4 @@ DROP TABLE `b_hr_hcmlink_field_value`;
 DROP TABLE `b_hr_hcmlink_job`;
 DROP TABLE `b_hr_hcmlink_person`;
 DROP TABLE `b_hr_hcmlink_person_index`;
+DROP TABLE `b_hr_structure_node_settings`;

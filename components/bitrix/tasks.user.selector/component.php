@@ -8,6 +8,93 @@ if (!CModule::IncludeModule("tasks"))
 	return;
 }
 
+if (!function_exists('tasksGetLastSelected'))
+{
+	function tasksGetLastSelected($arManagers, $bSubordinateOnly = false, $nameTemplate = "")
+	{
+		static $arLastUsers;
+
+		$userId = \Bitrix\Tasks\Util\User::getId();
+
+		if (!isset($arLastUsers))
+		{
+			$arSubDeps = CTasks::GetSubordinateDeps();
+
+			$arLastSelected = CUserOptions::GetOption("tasks", "user_search", array());
+			if (is_array($arLastSelected) && ($arLastSelected['last_selected'] ?? null) <> '')
+				$arLastSelected = array_unique(explode(',', $arLastSelected['last_selected']));
+			else
+				$arLastSelected = false;
+
+			if (is_array($arLastSelected))
+			{
+				$currentUser = array_search($userId, $arLastSelected);
+				if ($currentUser !== false)
+				{
+					unset($arLastSelected[$currentUser]);
+				}
+				array_unshift($arLastSelected, $userId);
+			}
+			else
+			{
+				$arLastSelected = is_array($arLastSelected) ? $arLastSelected : [];
+
+				$arLastSelected[] = $userId;
+			}
+
+			$arFilter = array('ACTIVE' => 'Y');
+			if ($bSubordinateOnly)
+			{
+				$arFilter["UF_DEPARTMENT"] = $arSubDeps;
+			}
+			else
+			{
+				$arFilter['!UF_DEPARTMENT'] = false;
+			}
+			$arFilter['ID'] = is_array($arLastSelected) ? implode('|', array_slice($arLastSelected, 0, 10)) : '-1';
+			$dbRes = CUser::GetList('last_name', 'asc', $arFilter, array('SELECT' => array('UF_DEPARTMENT')));
+			$arLastUsers = array();
+			while ($arRes = $dbRes->GetNext())
+			{
+				$arPhoto = array('IMG' => '');
+
+				if (!$arRes['PERSONAL_PHOTO'])
+				{
+					switch ($arRes['PERSONAL_GENDER'])
+					{
+						case "M":
+							$suffix = "male";
+							break;
+						case "F":
+							$suffix = "female";
+							break;
+						default:
+							$suffix = "unknown";
+					}
+					$arRes['PERSONAL_PHOTO'] = COption::GetOptionInt("socialnetwork", "default_user_picture_".$suffix, false, isset($arParams['SITE_ID']) ? $arParams['SITE_ID'] : SITE_ID);
+				}
+
+				if ($arRes['PERSONAL_PHOTO'] > 0)
+					$arPhoto = CIntranetUtils::InitImage($arRes['PERSONAL_PHOTO'], 30, 0, BX_RESIZE_IMAGE_EXACT);
+
+				$arLastUsers[$arRes['ID']] = array(
+					'ID' => $arRes['ID'],
+					'NAME' => CUser::FormatName(empty($nameTemplate) ? CSite::GetNameFormat() : $nameTemplate, $arRes, true, false),
+					'LOGIN' => $arRes['LOGIN'],
+					'EMAIL' => $arRes['EMAIL'],
+					'WORK_POSITION' => htmlspecialcharsBack($arRes['WORK_POSITION'] ? $arRes['WORK_POSITION'] : $arRes['PERSONAL_PROFESSION']),
+					'PHOTO' => isset($arPhoto['CACHE']['src']) ? $arPhoto['CACHE']['src'] : "",
+					'HEAD' => false,
+					'SUBORDINATE' => is_array($arSubDeps) && is_array($arRes['UF_DEPARTMENT']) && array_intersect($arRes['UF_DEPARTMENT'], $arSubDeps) ? 'Y' : 'N',
+					'SUPERORDINATE' => in_array($arRes["ID"], $arManagers) ? 'Y' : 'N'
+				);
+			}
+		}
+
+		return $arLastUsers;
+	}
+}
+
 $arParams['MULTIPLE'] = $arParams['MULTIPLE'] == 'Y' ? 'Y' : 'N'; // allow multiple user selection
 
 $arParams['FORM_NAME'] = isset($arParams['FORM_NAME']) && preg_match('/^[a-zA-Z0-9_-]+$/', $arParams['FORM_NAME']) ? $arParams['FORM_NAME'] : false;

@@ -56,7 +56,10 @@ export class MessageStatus extends BuilderModel
 				const { bookingId, status } = payload;
 				// eslint-disable-next-line no-param-reassign
 				state.collection[bookingId] ??= status;
-				Object.assign(state.collection[bookingId], status);
+				if (status)
+				{
+					Object.assign(state.collection[bookingId], status);
+				}
 			},
 		};
 	}

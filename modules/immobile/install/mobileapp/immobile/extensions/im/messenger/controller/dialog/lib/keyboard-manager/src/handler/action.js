@@ -2,7 +2,7 @@
  * @module im/messenger/controller/dialog/lib/keyboard-manager/handler/action
  */
 jn.define('im/messenger/controller/dialog/lib/keyboard-manager/handler/action', (require, exports, module) => {
-	const { Loc } = require('loc');
+	const { Loc } = require('im/messenger/loc');
 	const { openPhoneMenu } = require('communication/phone-menu');
 
 	const {

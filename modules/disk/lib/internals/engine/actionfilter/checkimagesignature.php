@@ -12,28 +12,34 @@ use Bitrix\Main\EventResult;
 
 class CheckImageSignature extends ActionFilter\Base
 {
-	const ERROR_EMPTY_SIGNATURE   = 'empty_signature';
-	const ERROR_INVALID_SIGNATURE = 'invalid_signature';
+	public const ERROR_EMPTY_SIGNATURE = 'empty_signature';
+	public const ERROR_INVALID_SIGNATURE = 'invalid_signature';
+
+	private array $requestParameterNames;
 
 	/**
-	 * @var array
+	 * @var callable
 	 */
-	private $requestParameterNames;
+	private $idExtractor;
 
 	/**
 	 * CheckImageSignature constructor.
 	 *
 	 * @param array $requestParameterNames
 	 */
-	public function __construct(array $requestParameterNames = [
-		'signature' => 'signature',
-		'width' => 'width',
-		'height' => 'height'
-	])
+	public function __construct(
+		array $requestParameterNames = [
+			'signature' => 'signature',
+			'width' => 'width',
+			'height' => 'height'
+		],
+		callable $idExtractor = null
+	)
 	{
 		parent::__construct();
 
 		$this->requestParameterNames = $requestParameterNames;
+		$this->idExtractor = $idExtractor ?: [$this, 'getFileIdFromActionArguments'];
 	}
 
 	public function onBeforeAction(Event $event)
@@ -42,7 +48,7 @@ class CheckImageSignature extends ActionFilter\Base
 		$width = (int)Context::getCurrent()->getRequest()->get($this->requestParameterNames['width']);
 		$height = (int)Context::getCurrent()->getRequest()->get($this->requestParameterNames['height']);
 
-		$fileId = $this->getFileIdFromActionArguments();
+		$fileId = \call_user_func($this->idExtractor, $this->action->getArguments());
 		if (!$signature && ($width > 0 || $height > 0))
 		{
 			$this->errorCollection[] = new Error(
@@ -61,9 +67,9 @@ class CheckImageSignature extends ActionFilter\Base
 		}
 	}
 
-	private function getFileIdFromActionArguments()
+	private function getFileIdFromActionArguments(array $arguments)
 	{
-		foreach ($this->action->getArguments() as $argument)
+		foreach ($arguments as $argument)
 		{
 			if ($argument instanceof File)
 			{

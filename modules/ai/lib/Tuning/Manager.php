@@ -3,8 +3,10 @@
 namespace Bitrix\AI\Tuning;
 
 use Bitrix\AI\Config;
+use Bitrix\AI\Engine;
 use Bitrix\Main\Event;
 use Bitrix\Main\ORM;
+use Bitrix\Main\Web\Json;
 
 /**
  * Class for manage tuning options
@@ -23,6 +25,8 @@ class Manager
 
 		$this->loadExternal();
 		$this->loadInternal();
+
+		$this->onAfterLoad();
 	}
 
 	/**
@@ -58,7 +62,7 @@ class Manager
 		$event = new Event('ai', 'onTuningLoad');
 		$event->send();
 
-		$storage = json_decode(Config::getValue(self::CONFIG_EXTERNAL_CODE) ?? "", true) ?: [];
+		$storage = self::getTuningStorage();
 		foreach ($event->getResults() as $result)
 		{
 			if (!$result instanceof Orm\EventResult)
@@ -108,6 +112,86 @@ class Manager
 	}
 
 	/**
+	 * Special preparatory operations on setting items. F.e. hiding some elements from lists
+	 * @return void
+	 */
+	private function onAfterLoad(): void
+	{
+		$engineConfigurations = [
+			[
+				'configKey' => 'bitrixgpt_options',
+				'engineCode' => Engine\Cloud\Bitrix24::ENGINE_CODE,
+			],
+			[
+				'configKey' => 'bitrixaudio_availableIn',
+				'engineCode' => Engine\Cloud\BitrixAudio::ENGINE_CODE,
+			],
+			[
+				'configKey' => 'bitrixaudio_availableIn',
+				'engineCode' => 'BitrixAudioCall',
+			]
+		];
+
+		foreach ($engineConfigurations as $config)
+		{
+			$optionValue = Config::getValue($config['configKey']);
+			if ($optionValue === null)
+			{
+				continue;
+			}
+
+			$availableInItems = [];
+			$decodedValue = json_decode($optionValue, true);
+			if (isset($decodedValue['availableIn']) && $config['configKey'] === 'bitrixgpt_options')
+			{
+				$availableInItems = $decodedValue['availableIn'];
+			}
+			elseif (is_array($decodedValue) && $config['configKey'] === 'bitrixaudio_availableIn')
+			{
+				$availableInItems = $decodedValue;
+			}
+
+			if (empty($availableInItems))
+			{
+				return;
+			}
+
+			$this->removeEngineFromGroups($availableInItems, $config['engineCode']);
+		}
+	}
+
+	private function removeEngineFromGroups(array $availableInItems, string $engineCode): void
+	{
+		foreach ($this->groups as $group)
+		{
+			/** @var Group $group */
+			foreach ($group->getItems() as $item)
+			{
+				if (!$this->shouldProcessItem($item, $availableInItems))
+				{
+					continue;
+				}
+
+				$this->removeEngineFromItem($item, $engineCode);
+			}
+		}
+	}
+
+	private function shouldProcessItem($item, array $availableInItems): bool
+	{
+		return $item->isList() && !in_array($item->getCode(), $availableInItems, true);
+	}
+
+	private function removeEngineFromItem($item, string $engineCode): void
+	{
+		$item->setOptions(array_filter(
+			$item->getOptions(),
+			static fn($code) => $code !== $engineCode,
+			ARRAY_FILTER_USE_KEY
+		));
+	}
+
+	/**
 	 * Get default internal groups and add to store
 	 * @return void
 	 */
@@ -137,7 +221,7 @@ class Manager
 	 *
 	 * @return GroupCollection|array
 	 */
-	public function getList(bool $toArray = false): GroupCollection | array
+	public function getList(bool $toArray = false): GroupCollection|array
 	{
 		$this->groups->sort();
 		foreach ($this->groups as $group)
@@ -154,7 +238,6 @@ class Manager
 		;
 	}
 
-
 	/**
 	 * Returns tuning item by code.
 	 *
@@ -165,6 +248,9 @@ class Manager
 	{
 		foreach ($this->groups as $group)
 		{
+			/**
+			 * @var Group $group
+			 */
 			if ($group->getItems()->get($code))
 			{
 				return $group->getItems()->get($code);
@@ -207,5 +293,12 @@ class Manager
 		{
 			Config::setOptionsValue(self::CONFIG_EXTERNAL_CODE, json_encode($externalConfig->toArray()));
 		}
+	}
+
+	public static function getTuningStorage(): array
+	{
+		$config = json_decode(Config::getValue(self::CONFIG_EXTERNAL_CODE) ?? "", true) ?: [];
+
+		return is_array($config) ? $config : [];
 	}
 }

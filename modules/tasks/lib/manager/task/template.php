@@ -473,7 +473,7 @@ final class Template extends \Bitrix\Tasks\Manager
 				elseif($parameters['MODE'] == static::MODE_UPDATE) // task update, replicate = y
 				{
 					$template = static::getByParentTask(false, $taskId);
-					if(intval($template['DATA']['ID'])) // then update template
+					if(intval($template['DATA']['ID'] ?? null)) // then update template
 					{
 						static::update(
 							$userId,

@@ -46,8 +46,7 @@ class CBitrixCrmConfigLocationImport2Component extends CBitrixSaleLocationImport
 
 		$errors = array();
 
-		$CCrmPerms = new CCrmPerms($GLOBALS['USER']->GetID());
-		if ($CCrmPerms->HavePerm('CONFIG', BX_CRM_PERM_NONE, 'WRITE'))
+		if (!\Bitrix\Crm\Service\Container::getInstance()->getUserPermissions()->isCrmAdmin())
 		{
 			$errors[] = Loc::getMessage("SALE_CCLI2_CRM_MODULE_WRITE_ACCESS_DENIED");
 		}

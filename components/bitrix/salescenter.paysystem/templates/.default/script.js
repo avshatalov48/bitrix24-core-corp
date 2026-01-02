@@ -24,12 +24,20 @@
 			this.settingsMenu = null;
 			this.settingsMenuNode = BX(parameters.settingsMenuId);
 			this.buttonPanelId = parameters.buttonPanelId;
+			this.myCompanyList = parameters.myCompanyList;
+			this.selectedCompanyId = parameters.selectedCompanyId;
+			this.hasChangesMyCompanyList = false;
 
 			this.uiNodes = {
 				'name': this.containerNode.querySelector('[data-bx-salescenter-auth-name]'),
 				'link': this.containerNode.querySelector('[data-bx-salescenter-auth-link]'),
 				'logout': this.containerNode.querySelector('[data-bx-salescenter-auth-logout]')
 			};
+
+			if (parameters.isInitBusinessConnectComponents && !this.auth.PROFILE)
+			{
+				this.initBusinessConnectComponents();
+			}
 
 			this.initExpertMenu();
 			this.showBlockByAuth();
@@ -102,6 +110,144 @@
 			}
 		},
 
+		initBusinessConnectComponents()
+		{
+			this.uiNodes.businessAlert = BX('bx-salescenter-business-alert-block');
+			this.uiNodes.companyInfoNode = BX('bx-salescenter-business-company-info');
+			this.uiNodes.companyEmpty = BX('bx-salescenter-business-company-empty');
+			this.uiNodes.companyNode = {
+				titleNode: this.uiNodes.companyInfoNode.querySelector('.salescenter-paysystem-business-company-name'),
+				detailsNode: this.uiNodes.companyInfoNode.querySelector('.salescenter-paysystem-business-company-details'),
+			};
+
+			BX.bind(this.uiNodes.companyInfoNode, 'click', BX.proxy(this.openCompanySelectorDialog, this));
+			BX.bind(BX('bx-salescenter-business-connect-button'), 'click', BX.proxy(this.openBusinessPopup, this));
+			BX.bind(BX('bx-salescenter-business-company-create-button'), 'click', BX.proxy(this.openCompanyCreateSlider, this));
+			BX.bind(BX('bx-salescenter-business-company-edit-button'), 'click', BX.proxy(this.openCompanyEditSlider, this));
+			BX.bind(BX('bx-salescenter-business-company-fill-button'), 'click', BX.proxy(this.openCompanyEditSlider, this));
+
+			this.companySelectorDialog = new BX.UI.EntitySelector.Dialog({
+				targetNode: this.uiNodes.companyInfoNode,
+				height: 250,
+				dropdownMode: true,
+				multiple: false,
+				focusOnFirst: false,
+				showAvatars: true,
+				footer: this.getCompanySelectorFooter(),
+				events: {
+					'Item:onSelect': (event) => {
+						const { item } = event.getData();
+
+						if (!item || !item.id || item.id < 0)
+						{
+							return;
+						}
+
+						this.selectedCompanyId = item.id;
+						this.refreshBusinessConnectComponents();
+					},
+				},
+			});
+
+			this.refreshCompanySelectorItems();
+			this.refreshBusinessConnectComponents();
+		},
+
+		refreshCompanySelectorItems()
+		{
+			if (!this.companySelectorDialog)
+			{
+				return;
+			}
+
+			if (this.companySelectorDialog.getItems().length > 0)
+			{
+				this.companySelectorDialog.removeItems();
+			}
+
+			Object.keys(this.myCompanyList).forEach((myCompanyId) => {
+				const companyInfo = this.myCompanyList[myCompanyId];
+				this.companySelectorDialog.addItem({
+					id: companyInfo.ID,
+					entityId: 'company',
+					title: companyInfo.TITLE,
+					subtitle: companyInfo.LABEL.DETAILS,
+					tabs: 'recents',
+					selected: companyInfo.ID === this.selectedCompanyId,
+					deselectable: false,
+					avatar: 'data:image/svg+xml;base64,PHN2ZyB3aWR0aD0iMzYiIGhlaWdodD0iMzYiIHZpZXdCb3g9IjAgMCAzNiAzNiIgZmlsbD0ibm9uZSIgeG1sbnM9Imh0dHA6Ly93d3cudzMub3JnLzIwMDAvc3ZnIj4KPHJlY3Qgd2lkdGg9IjM2IiBoZWlnaHQ9IjM2IiByeD0iMTgiIGZpbGw9IiMyRkM2RjYiLz4KPHBhdGggZmlsbC1ydWxlPSJldmVub2RkIiBjbGlwLXJ1bGU9ImV2ZW5vZGQiIGQ9Ik0yMC45OTk4IDIyLjgyNDRWMTYuNTkyOEMyMC45OTk4IDE2LjU0MzggMjEuMDA1OCAxNi40OTQ5IDIxLjAxNzcgMTYuNDQ3M0MyMS4wOTggMTYuMTI1OCAyMS40MjM4IDE1LjkzMDQgMjEuNzQ1MyAxNi4wMTA3TDI0LjU0NTMgMTYuNzEwN0MyNC44MTI0IDE2Ljc3NzUgMjQuOTk5OCAxNy4wMTc1IDI0Ljk5OTggMTcuMjkyOFYyMi44MjQ0SDI1Ljk5OThWMjQuODI0NEg5Ljk5OTc2VjIyLjgyNDRIMTAuOTk5OFYxMy4xMzc2QzEwLjk5OTggMTIuNjQ3MyAxMS4zNTUzIDEyLjIyOTIgMTEuODM5MyAxMi4xNTA2TDE4LjgzOTMgMTEuMDEzQzE4Ljg5MjQgMTEuMDA0MyAxOC45NDYgMTEgMTguOTk5OCAxMUMxOS41NTIgMTEgMTkuOTk5OCAxMS40NDc3IDE5Ljk5OTggMTJWMjIuODI0NEgyMC45OTk4Wk0xMy45OTk4IDIyLjgyNDRIMTYuOTk5OFYxOS44MjQ0SDEzLjk5OThWMjIuODI0NFpNMjMuOTk5OCAxOUgyMS45OTk4VjIxSDIzLjk5OThWMTlaTTE3Ljk5OTggMTMuODI0NEgxNS45OTk4VjE1LjgyNDRIMTcuOTk5OFYxMy44MjQ0Wk0xNC45OTk4IDEzLjgyNDRIMTIuOTk5OFYxNS44MjQ0SDE0Ljk5OThWMTMuODI0NFpNMTcuOTk5OCAxNi44MjQ0SDE1Ljk5OThWMTguODI0NEgxNy45OTk4VjE2LjgyNDRaTTE0Ljk5OTggMTYuODI0NEgxMi45OTk4VjE4LjgyNDRIMTQuOTk5OFYxNi44MjQ0WiIgZmlsbD0id2hpdGUiLz4KPC9zdmc+Cg==',
+					avatarOptions: {
+						bgSize: '35px',
+					},
+				});
+			});
+		},
+
+		getCompanySelectorFooter()
+		{
+			const footer = BX.Tag.render`<span class="ui-selector-footer-link ui-selector-footer-link-add">${BX.Loc.getMessage('SALESCENTER_SP_CONNECT_CREATE_COMPANY')}</span>`;
+
+			BX.bind(footer, 'click', BX.proxy(this.openCompanyCreateSlider, this));
+
+			return footer;
+		},
+
+		refreshBusinessConnectComponents()
+		{
+			const isSelectorShow = (
+				this.selectedCompanyId > 0
+				&& Object.keys(this.myCompanyList).length > 0
+			);
+
+			this.displayBlock(
+				'data-bx-salescenter-company-list',
+				isSelectorShow ? 'selector' : 'empty',
+				'flex',
+			);
+
+			if (this.companySelectorDialog && this.hasChangesMyCompanyList)
+			{
+				this.hasChangesMyCompanyList = false;
+				this.refreshCompanySelectorItems();
+			}
+
+			const selectedCompany = this.myCompanyList[this.selectedCompanyId];
+
+			if (selectedCompany)
+			{
+				const titleNode = this.uiNodes.companyNode.titleNode;
+				const detailsNode = this.uiNodes.companyNode.detailsNode;
+
+				if (titleNode.innerText !== selectedCompany.TITLE)
+				{
+					titleNode.innerText = selectedCompany.TITLE;
+					titleNode.setAttribute('title', selectedCompany.TITLE);
+				}
+
+				if (detailsNode.innerText !== selectedCompany.LABEL.DETAILS)
+				{
+					detailsNode.innerText = selectedCompany.LABEL.DETAILS;
+				}
+			}
+
+			if (selectedCompany && selectedCompany.IS_DETAILS_COMPLETE)
+			{
+				this.hideAlert();
+				this.displayBlock('data-bx-salescenter-action', 'edit');
+				BX.removeClass(BX('bx-salescenter-business-connect-button'), 'ui-btn-disabled');
+			}
+			else
+			{
+				if (selectedCompany && selectedCompany.LABEL.ALERT)
+				{
+					this.displayAlert(selectedCompany.LABEL.ALERT);
+				}
+
+				this.displayBlock('data-bx-salescenter-action', 'fill');
+				BX.addClass(BX('bx-salescenter-business-connect-button'), 'ui-btn-disabled');
+			}
+		},
+
 		addLogoutMenuItem()
 		{
 			var self = this;
@@ -152,6 +298,162 @@
 			}
 		},
 
+		openCompanySelectorDialog: function(e)
+		{
+			this.companySelectorDialog.show();
+		},
+
+		openCompanyEditSlider: function(e)
+		{
+			let companyId = 0;
+
+			if (this.auth.HAS_AUTH && this.auth.PROFILE)
+			{
+				companyId = this.auth.PROFILE.ID;
+			}
+			else if (this.selectedCompanyId > 0)
+			{
+				companyId = this.selectedCompanyId;
+			}
+
+			this.openCompanySlider(companyId, { init_mode: 'edit' }, false);
+		},
+
+		openCompanyCreateSlider: function(e)
+		{
+			this.openCompanySlider(0, { mycompany: 'Y' }, true);
+		},
+
+		openCompanySlider(companyId, urlParams, isNewCompany)
+		{
+			let url = `/crm/company/details/${companyId}/`;
+			url = BX.Uri.addParam(url, urlParams);
+
+			BX.SidePanel.Instance.open(
+				url,
+				{
+					events: {
+						onCloseComplete: (event) => {
+							BX.SidePanel.Instance.destroy(url);
+
+							const loader = new BX.Loader({
+								size: 30,
+								target: Object.keys(this.myCompanyList).length > 0
+									? this.uiNodes.companyInfoNode
+									: this.uiNodes.companyEmpty,
+								mode: 'inline',
+							});
+
+							loader.show();
+
+							this.companySelectorDialog.hide();
+							BX.unbind(this.uiNodes.companyInfoNode, 'click', BX.proxy(this.openCompanySelectorDialog, this));
+
+							BX.ajax.runComponentAction(
+								'bitrix:salescenter.paysystem',
+								'getMyCompanyList',
+								{
+									mode: 'class',
+								},
+							).then(
+								(response) => {
+									this.myCompanyList = response.data.myCompanyList ?? {};
+
+									if (isNewCompany)
+									{
+										const newCompanyId = this.extractIdFromUrl(event.slider.url);
+										if (newCompanyId && newCompanyId > 0)
+										{
+											this.selectedCompanyId = newCompanyId;
+										}
+									}
+
+									if (
+										this.selectedCompanyId === 0
+										|| !this.myCompanyList[this.selectedCompanyId]
+									)
+									{
+										this.selectedCompanyId = response.data.selectedCompanyId ?? 0;
+									}
+
+									this.hasChangesMyCompanyList = true;
+
+									loader.destroy();
+									BX.bind(this.uiNodes.companyInfoNode, 'click', BX.proxy(this.openCompanySelectorDialog, this));
+
+									this.refreshBusinessConnectComponents();
+								},
+								(response) => {
+									this.showErrorPopup(response.errors);
+									loader.destroy();
+									BX.bind(this.uiNodes.companyInfoNode, 'click', BX.proxy(this.openCompanySelectorDialog, this));
+								},
+							);
+						},
+					},
+				},
+			);
+		},
+
+		extractIdFromUrl(url) {
+			const parts = url.split('/');
+
+			const id = parts.filter((part) => part !== '').pop() ?? 0;
+
+			return parseInt(id, 10);
+		},
+
+		openBusinessPopup: function()
+		{
+			if (BX.hasClass(BX('bx-salescenter-business-connect-button'), 'ui-btn-disabled'))
+			{
+				return;
+			}
+
+			if (this.auth && this.auth.URL)
+			{
+				const selectedCompanyId = this.selectedCompanyId;
+
+				if (!selectedCompanyId || selectedCompanyId < 0)
+				{
+					BX.UI.Dialogs.MessageBox.alert(
+						BX.Loc.getMessage('SALESCENTER_SP_CONNECT_COMPANY_BAD_SELECTION'),
+					);
+
+					return;
+				}
+
+				if (!this.myCompanyList || !this.myCompanyList[selectedCompanyId])
+				{
+					BX.UI.Dialogs.MessageBox.alert(
+						BX.Loc.getMessage('SALESCENTER_SP_CONNECT_COMPANY_DOESNT_EXIST'),
+					);
+
+					return;
+				}
+
+				const selectedCompany = this.myCompanyList[selectedCompanyId];
+
+				if (!selectedCompany.IS_DETAILS_COMPLETE)
+				{
+					BX.UI.Dialogs.MessageBox.alert(
+						BX.Loc.getMessage('SALESCENTER_SP_CONNECT_COMPANY_EMPTY_DETAILS'),
+					);
+
+					return;
+				}
+
+				if (selectedCompany.URL_PARAMETERS)
+				{
+					this.auth.URL = BX.Uri.addParam(this.auth.URL, { urlParameters: selectedCompany.URL_PARAMETERS });
+				}
+
+				this.auth.selectedCompany = selectedCompanyId;
+
+				this.openPopup();
+			}
+		},
+
 		onPopupOpenHandler: function(popupWindow)
 		{
 			var self = this,
@@ -168,9 +470,18 @@
 
 		logoutAction: function()
 		{
+			let confirmationText = BX.Loc.getMessage('SALESCENTER_SP_LOGOUT_CONFIRMATION_TEXT');
+			let confirmationTitle = BX.Loc.getMessage('SALESCENTER_SP_LOGOUT_CONFIRMATION_TITLE');
+
+			if (this.auth.TYPE === 'tbankbusiness')
+			{
+				confirmationTitle = BX.Loc.getMessage('SALESCENTER_SP_TBANK_BUSINESS_LOGOUT_CONFIRMATION_TITLE');
+				confirmationText = BX.Loc.getMessage('SALESCENTER_SP_TBANK_BUSINESS_LOGOUT_CONFIRMATION_TEXT');
+			}
+
 			BX.UI.Dialogs.MessageBox.confirm(
-				BX.message('SALESCENTER_SP_LOGOUT_CONFIRMATION_TEXT'),
-				BX.message('SALESCENTER_SP_LOGOUT_CONFIRMATION_TITLE'),
+				confirmationText,
+				confirmationTitle,
 				(messageBox) => {
 					messageBox.close();
 					BX.ajax.runComponentAction(
@@ -193,25 +504,40 @@
 						}.bind(this)
 					);
 				},
-				BX.message('SALESCENTER_SP_LOGOUT_CONFIRMATION_OK'),
+				BX.Loc.getMessage('SALESCENTER_SP_LOGOUT_CONFIRMATION_OK'),
 				(messageBox) => messageBox.close(),
-				BX.message('SALESCENTER_SP_LOGOUT_CONFIRMATION_CANCEL'),
+				BX.Loc.getMessage('SALESCENTER_SP_LOGOUT_CONFIRMATION_CANCEL'),
 			);
 		},
 
 		checkAuthStatusAction: function(eventData)
 		{
+			if (!eventData)
+			{
+				return;
+			}
+
 			eventData.reload = false;
 			this.checkedAuthStatus = true;
+
+			const data = {
+				type: this.auth.TYPE,
+			};
+
+			if (
+				this.auth.selectedCompany
+				&& this.auth.selectedCompany > 0
+			)
+			{
+				data.selectedCompany = this.auth.selectedCompany;
+			}
 
 			BX.ajax.runComponentAction(
 				'bitrix:salescenter.paysystem',
 				'getProfileStatus',
 				{
 					mode: 'ajax',
-					data: {
-						type: this.auth.TYPE
-					}
+					data,
 				}
 			).then(
 				function(response)
@@ -293,6 +619,31 @@
 				var isShow = BX.util.in_array(code, blockCodes);
 				blockNode.style.display = isShow ? 'block' : 'none';
 			}, this);
+		},
+
+		displayAlert(message)
+		{
+			const alertNode = this.uiNodes.businessAlert;
+			BX.Dom.style(alertNode, 'display', 'block');
+			alertNode.querySelector('.ui-label-inner').innerText = message;
+		},
+
+		hideAlert()
+		{
+			const alertNode = this.uiNodes.businessAlert;
+			BX.Dom.style(alertNode, 'display', 'none');
+		},
+
+		displayBlock(attributeBlock, rawBlockCodes, blockStyle = 'block')
+		{
+			const blockCodes = BX.type.isArray(rawBlockCodes) ? rawBlockCodes : [rawBlockCodes];
+			let blockNodes = this.containerNode.querySelectorAll(`[${attributeBlock}]`);
+			blockNodes = BX.convert.nodeListToArray(blockNodes);
+			blockNodes.forEach((blockNode) => {
+				const code = blockNode.getAttribute(attributeBlock);
+				const isShow = BX.util.in_array(code, blockCodes);
+				BX.Dom.style(blockNode, 'display', isShow ? blockStyle : 'none');
+			});
 		},
 
 		showBlockByAuth: function()
@@ -828,7 +1179,6 @@
 
 			BX.UI.Dialogs.MessageBox.alert(
 				contentNode,
-				BX.Loc.getMessage('SALESCENTER_SP_ERROR_POPUP_TITLE'),
 				(messageBox) => messageBox.close(),
 				BX.Loc.getMessage('SALESCENTER_SP_BUTTON_CLOSE'),
 			);
@@ -1259,12 +1609,26 @@
 
 			if (section.warning)
 			{
-				innerContent.appendChild(BX.create('div', {
-					props: {
-						className: 'ui-alert ui-alert-warning'
-					},
-					text: section.warning
-				}));
+				if (BX.Type.isArray(section.warning))
+				{
+					section.warning.forEach((warningElement) => {
+						innerContent.appendChild(BX.create('div', {
+							props: {
+								className: 'ui-alert ui-alert-warning',
+							},
+							text: warningElement,
+						}));
+					});
+				}
+				else
+				{
+					innerContent.appendChild(BX.create('div', {
+						props: {
+							className: 'ui-alert ui-alert-warning',
+						},
+						text: section.warning,
+					}));
+				}
 			}
 
 			fields.forEach(function (field) {

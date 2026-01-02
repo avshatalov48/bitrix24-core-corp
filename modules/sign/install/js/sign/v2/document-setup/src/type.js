@@ -20,9 +20,11 @@ type Block = {
 
 export type DocumentDetails = {
 	blocks: Array<Block>;
+	companyEntityId: number | null;
 	companyUid: string | null;
 	createdById: number;
 	blankId: number;
+	previewUrl: string | null;
 	entityId: number;
 	entityType: string;
 	entityTypeId: number;
@@ -39,4 +41,16 @@ export type DocumentDetails = {
 	uid: string;
 	hcmLinkCompanyId: number | null,
 	initiatedByType: DocumentInitiatedType;
+	groupId: number | null;
+	providerCode: string | null,
+	dateSignUntil: Date,
+	externalDateCreateSourceType: string | null,
+	externalDateCreate: string | null,
+	hcmLinkDateSettingId: number | null,
+	externalIdSourceType: string | null,
+	hcmLinkExternalIdSettingId: number | null,
+	hcmLinkDocumentTypeSettingId: number | null,
+	regionDocumentType: string | null,
 };
+
+export type ActionMode = 'create' | 'edit';

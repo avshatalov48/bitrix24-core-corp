@@ -48,6 +48,7 @@ jn.define('sign/dialog/banners/refused', (require, exports, module) => {
 				buttonsView: View(
 					{},
 					Button({
+						testId: 'refusedBanner-button-close',
 						text: Loc.getMessage('SIGN_MOBILE_DIALOG_REFUSED_BUTTON_CLOSE_TITLE'),
 						size: ButtonSize.XL,
 						design: ButtonDesign.PLAN_ACCENT,

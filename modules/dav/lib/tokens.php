@@ -84,12 +84,15 @@ class TokensTable extends Entity\DataManager
 
 	/**
 	 * @param int $userId User id.
-	 * @return array|false
+	 * @return string|false
 	 */
 	public static function getToken($userId)
 	{
 		$result = static::getList([
-			'filter' => array('USER_ID' => $userId),
+			'select' => ['TOKEN'],
+			'filter' => ['USER_ID' => $userId],
+			'order' => ['EXPIRED_AT' => 'DESC'],
+			'limit' => 1
 		])->fetchRaw();
 
 		return !empty($result['TOKEN']) ? $result['TOKEN']: null;
@@ -104,16 +107,32 @@ class TokensTable extends Entity\DataManager
 	public static function createToken($userId, $token = null, DateTime $expiredAt = null)
 	{
 		$params['USER_ID'] = $userId;
-		if ($token)
-		{
-			$params['TOKEN'] = $token;
-		}
 		if ($expiredAt)
 		{
 			$params['EXPIRED_AT'] = $expiredAt;
 		}
 
-		return static::add($params)->getData();
+		if ($token)
+		{
+			$params['TOKEN'] = $token;
+		}
+		else
+		{
+			$params['TOKEN'] = Random::getString(static::DEFAULT_TOKEN_LENGTH);
+		}
+
+		try
+		{
+			$result = self::add($params);
+		}
+		catch (\Exception)
+		{
+			$params['TOKEN'] = Random::getString(static::DEFAULT_TOKEN_LENGTH);
+
+			$result = self::add($params);
+		}
+
+		return $result->getData();
 	}
 
 	/**
@@ -136,12 +155,13 @@ class TokensTable extends Entity\DataManager
 	 * @param string $token Token passed from user for checking.
 	 * @return bool
 	 */
-	public static function isTokenValid($token)
+	public static function isTokenValid($token): bool
 	{
 		if (!$token)
 		{
 			return false;
 		}
+
 		$result = static::getById($token)->fetch();
 
 		return $result && $result['EXPIRED_AT'] >= self::getTokenLastValidTime();

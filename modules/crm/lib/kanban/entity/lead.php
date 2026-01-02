@@ -165,6 +165,8 @@ class Lead extends Entity
 			'ORDER_STAGE' => '',
 			'CLIENT' => '',
 			'PROBLEM_NOTIFICATION' => '',
+			'LAST_ACTIVITY_BY_TIME' => '',
+			'LAST_ACTIVITY_BY_USER_AVATAR' => '',
 		];
 	}
 
@@ -173,14 +175,17 @@ class Lead extends Entity
 		return 'bitrix:crm.lead.details';
 	}
 
-	public function getPermissionParameters(\CCrmPerms $permissions): array
+	public function getPermissionParameters(): array
 	{
-		$result = parent::getPermissionParameters($permissions);
+		$result = parent::getPermissionParameters();
 
-		$result['ACCESS_IMPORT'] = \CCrmLead::CheckImportPermission($permissions);
-		$result['CAN_CONVERT_TO_CONTACT'] = \CCrmContact::CheckCreatePermission($permissions);
-		$result['CAN_CONVERT_TO_COMPANY'] = \CCrmCompany::CheckCreatePermission($permissions);
-		$result['CAN_CONVERT_TO_DEAL'] = \CCrmDeal::CheckCreatePermission($permissions);
+		$entityTypePermissions = $this->userPermissions->entityType();
+
+		$result['ACCESS_IMPORT'] = $entityTypePermissions->canImportItems(\CCrmOwnerType::Lead);
+
+		$result['CAN_CONVERT_TO_CONTACT'] = $entityTypePermissions->canAddItemsInCategory(\CCrmOwnerType::Contact, 0);
+		$result['CAN_CONVERT_TO_COMPANY'] = $entityTypePermissions->canAddItemsInCategory(\CCrmOwnerType::Company, 0);
+		$result['CAN_CONVERT_TO_DEAL'] = $entityTypePermissions->canAddItems(\CCrmOwnerType::Deal);
 		$result['CONVERSION_CONFIG'] = \Bitrix\Crm\Conversion\LeadConversionConfig::load();
 		if ($result['CONVERSION_CONFIG'] === null)
 		{
@@ -193,13 +198,6 @@ class Lead extends Entity
 	protected function hasStageDependantRequiredFields(): bool
 	{
 		return true;
-	}
-
-	protected function getAddItemToStagePermissionType(string $stageId, \CCrmPerms $userPermissions): ?string
-	{
-		return \CCrmLead::GetStatusCreatePermissionType(
-			$stageId, $userPermissions
-		);
 	}
 
 	public function getTableAlias(): string
@@ -244,14 +242,14 @@ class Lead extends Entity
 		];
 	}
 
-	public function canAddItemToStage(string $stageId, \CCrmPerms $userPermissions, string $semantics = PhaseSemantics::UNDEFINED): bool
+	public function canAddItemToStage(string $stageId, string $semantics = PhaseSemantics::UNDEFINED): bool
 	{
 		if ($semantics === PhaseSemantics::SUCCESS)
 		{
 			return false;
 		}
 
-		return parent::canAddItemToStage($stageId, $userPermissions, $semantics);
+		return parent::canAddItemToStage($stageId, $semantics);
 	}
 
 	final protected function isItemsAssignedNotificationSupported(): bool
@@ -271,15 +269,6 @@ class Lead extends Entity
 		}
 
 		return $fields;
-	}
-
-	protected function getHideSumForStagePermissionType(string $statusId, \CCrmPerms $userPermissions): ?string
-	{
-		return $userPermissions->GetPermType(
-			$this->getTypeName(),
-			'HIDE_SUM',
-			["STATUS_ID{$statusId}"]
-		);
 	}
 
 	public function skipClientField(array $row, string $code): bool

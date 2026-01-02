@@ -5,6 +5,8 @@ if (!defined("B_PROLOG_INCLUDED") || B_PROLOG_INCLUDED !== true)
 }
 
 use Bitrix\Main\Localization\Loc;
+use Bitrix\UI\Toolbar\Facade\Toolbar;
+use Bitrix\Main\UI\Filter\Theme;
 
 /** @global CMain $APPLICATION */
 /** @var array $arParams */
@@ -16,55 +18,22 @@ Loc::loadMessages(__FILE__);
 $bodyClass = $APPLICATION->GetPageProperty('BodyClass');
 $APPLICATION->SetPageProperty(
 	'BodyClass',
-	($bodyClass ? $bodyClass . ' ' : '') . ' no-all-paddings pagetitle-toolbar-field-view '
+	($bodyClass ? $bodyClass . ' ' : '') . ' no-all-paddings pagetitle-toolbar-field-view tasks-pagetitle-view '
 );
-$isBitrix24Template = SITE_TEMPLATE_ID === "bitrix24";
 
 \Bitrix\Main\UI\Extension::load('recyclebin.deletion-manager');
-?>
 
-<?php
-if ($isBitrix24Template)
-{
-	$this->SetViewTarget('inside_pagetitle');
-}
+Toolbar::addFilter([
+	'FILTER_ID' => $arParams['FILTER_ID'],
+	'GRID_ID' => $arParams['GRID_ID'],
+	'FILTER' => $arResult['FILTER']['FIELDS'],
+	'FILTER_PRESETS' => $arResult['FILTER']['PRESETS'],
+	'ENABLE_LABEL' => true,
+	'ENABLE_LIVE_SEARCH' => $arResult['FILTER']['USE_LIVE_SEARCH'] === 'Y',
+	'RESET_TO_DEFAULT_MODE' => true,
+	'THEME' => Theme::LIGHT,
+]);
 
-//region FILTER
-
-if (!$isBitrix24Template): ?>
-<div class="recyclebin-interface-filter-container">
-	<?php
-	endif ?>
-
-	<div class="pagetitle-container pagetitle-flexible-space">
-		<?php
-		$APPLICATION->IncludeComponent(
-			"bitrix:main.ui.filter",
-			"",
-			[
-				"FILTER_ID" => $arParams['FILTER_ID'],
-				"GRID_ID" => $arParams["GRID_ID"],
-
-				"FILTER" => $arResult['FILTER']['FIELDS'],
-				"FILTER_PRESETS" => $arResult['FILTER']['PRESETS'],
-
-				"ENABLE_LABEL" => true,
-				'ENABLE_LIVE_SEARCH' => $arResult['FILTER']['USE_LIVE_SEARCH'] === 'Y',
-				'RESET_TO_DEFAULT_MODE' => true,
-				'THEME' => Bitrix\Main\UI\Filter\Theme::LIGHT,
-			],
-			$component,
-			["HIDE_ICONS" => true]
-		); ?>
-	</div>
-
-	<?php
-	if (!$isBitrix24Template): ?>
-</div>
-<?php
-endif ?>
-<?php
-//endregion
 ob_start();
 ?>
 <div class="recyclebin-list-page-nav">
@@ -82,13 +51,7 @@ ob_start();
 </div>
 <?php
 $navigationHtml = ob_get_clean();
-if ($isBitrix24Template)
-{
-	$this->EndViewTarget();
-}
-?>
 
-<?php
 if (CModule::IncludeModule('bitrix24'))
 {
 	$APPLICATION->IncludeComponent("bitrix:ui.info.helper", "", []);

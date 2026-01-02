@@ -1,10 +1,18 @@
 import { EventEmitter, type BaseEvent } from 'main.core.events';
-import { events } from './events';
+import { events } from './consts';
 import { BitrixVue } from 'ui.vue3';
 import { createPinia } from 'ui.vue3.pinia';
 import { Dom } from 'main.core';
 import { Chart } from './app';
 import { PermissionChecker } from 'humanresources.company-structure.permission-checker';
+
+export { UsersTabActionMenu } from './components/menu/menu/users-tab-action-menu';
+export { EmptyUsersTabActionMenu } from './components/menu/menu/empty-users-tab-action-menu';
+export { UserListActionMenu } from './components/menu/menu/user-list-item-action-menu';
+export { ChatListActionMenu } from './components/menu/menu/chat-list-action-menu';
+export { MenuActions } from './components/menu/menu-actions';
+export { NotConvertedState } from './not-converted-state';
+export { events } from './consts';
 
 export class App
 {

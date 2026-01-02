@@ -1,0 +1,6 @@
+<?php
+$MESS["STAFFTRACK_CANCEL_REASON_CUSTOM"] = "Өз нұсқаңыз";
+$MESS["STAFFTRACK_CANCEL_REASON_ILLNESS"] = "Өзімді нашар сезініп тұрмын";
+$MESS["STAFFTRACK_CANCEL_REASON_SICK_LEAVE"] = "Сырқаттану";
+$MESS["STAFFTRACK_CANCEL_REASON_TIME_OFF"] = "Демалыс (отгул)";
+$MESS["STAFFTRACK_CANCEL_REASON_VACATION"] = "Демалыс";

@@ -12,76 +12,46 @@
 		getExtension,
 		openNativeViewer,
 		NativeViewerMediaTypes,
+		mimeTypes,
 	} = require('utils/file');
 	const { Line } = require('utils/skeleton');
 	const { Loc } = require('loc');
 	const { ShimmedSafeImage } = require('layout/ui/safe-image');
+	const { resolveFileIcon } = require('assets/icons');
+	const { IconView } = require('ui-system/blocks/icon');
+	const { stringify } = require('utils/string');
 
-	const throttledNativeViewer = throttle(openNativeViewer, 500);
+	const throttledNativeViewer = throttle(async (params) => {
+		const { file } = params;
 
-	function getFileIconType(extension)
-	{
-		let result = null;
-
-		switch (extension)
+		if (file?.type === mimeTypes.board)
 		{
-			case 'xls':
-			case 'xlsx':
-				result = 'xls';
-				break;
+			try
+			{
+				const opener = await requireLazy('disk:opener/board');
+				if (opener)
+				{
+					const { boardOpener } = opener;
 
-			case 'doc':
-			case 'docx':
-				result = 'doc';
-				break;
-
-			case 'ppt':
-			case 'pptx':
-				result = 'ppt';
-				break;
-
-			case 'txt':
-				result = 'txt';
-				break;
-
-			case 'pdf':
-				result = 'pdf';
-				break;
-
-			case 'php':
-				result = 'php';
-				break;
-
-			case 'rar':
-				result = 'rar';
-				break;
-
-			case 'zip':
-				result = 'zip';
-				break;
-
-			case 'mp4':
-			case 'mpeg':
-			case 'ogg':
-			case 'mov':
-			case '3gp':
-				result = 'video';
-				break;
-
-			case 'png':
-			case 'gif':
-			case 'jpg':
-			case 'jpeg':
-			case 'heic':
-				result = 'image';
-				break;
-
-			default:
-				result = null;
+					return boardOpener?.({
+						id: file.id,
+						title: file.name,
+						isAttached: true,
+						analytics: {
+							moduleId: 'mobile',
+						},
+					});
+				}
+			}
+			catch (e)
+			{
+				openNativeViewer(params);
+				console.error(e);
+			}
 		}
 
-		return result;
-	}
+		openNativeViewer(params);
+	}, 500);
 
 	function prepareImageCollection(files, id, url)
 	{
@@ -267,11 +237,13 @@
 	function renderFile(options)
 	{
 		const {
+			id,
 			name,
 			fileType,
 			isLoading,
 			hasError,
 			styles,
+			files,
 			attachmentCloseIcon,
 			onDeleteAttachmentItem,
 			textLines,
@@ -284,13 +256,14 @@
 		attachmentFileIconFolder = getAbsolutePath(attachmentFileIconFolder);
 
 		const extension = getExtension(name || url);
-		const icon = getFileIconType(extension) || 'empty';
+		const icon = resolveFileIcon(extension);
+		const file = files.find((fileObj) => Number(fileObj.id) === Number(id));
 
 		return View(
 			{
 				testId: 'pinnedFileContainer',
 				style: styles.wrapper,
-				onClick: () => throttledNativeViewer({ fileType, url, name }),
+				onClick: () => throttledNativeViewer({ fileType, url, name, file }),
 			},
 			View(
 				{
@@ -309,19 +282,12 @@
 							alignItems: 'center',
 						},
 					},
-					Image(
-						{
-							testId: 'pinnedFileIcon',
-							style: {
-								width: styles.imagePreview.width ? styles.imagePreview.width / 2 : 20,
-								height: styles.imagePreview.height ? styles.imagePreview.height / 2 : 20,
-							},
-							svg: {
-								uri: `${attachmentFileIconFolder + icon}.svg`,
-							},
-							resizeMode: 'contain',
-						},
-					),
+					IconView({
+						icon,
+						color: null,
+						testId: 'pinnedFileIcon',
+						size: styles.imagePreview.width ? styles.imagePreview.width / 2 : 20,
+					}),
 				),
 				View(
 					{
@@ -423,13 +389,12 @@
 			size,
 		} = options;
 
-		let { url, attachmentFileIconFolder } = options;
+		let { url } = options;
 
 		url = encodeURI(url);
-		attachmentFileIconFolder = getAbsolutePath(attachmentFileIconFolder);
 
-		const extension = (getExtension(name || url));
-		const icon = (getFileIconType(extension) || 'empty');
+		const extension = getExtension(name || url);
+		const icon = resolveFileIcon(extension);
 
 		return View(
 			{
@@ -451,19 +416,12 @@
 							flexDirection: 'row',
 						},
 					},
-					Image(
-						{
-							testId: 'pinnedFileIcon',
-							style: {
-								width: 24,
-								height: 24,
-							},
-							svg: {
-								uri: `${attachmentFileIconFolder}${icon}.svg`,
-							},
-							resizeMode: 'contain',
-						},
-					),
+					IconView({
+						icon,
+						color: null,
+						testId: 'pinnedFileIcon',
+						size: 24,
+					}),
 					Text({
 						testId: 'pinnedFileName',
 						style: {
@@ -479,19 +437,29 @@
 						ellipsize: 'middle',
 					}),
 				),
-				Text({
-					testId: 'pinnedFileSize',
-					style: {
-						color: (hasError ? AppTheme.colors.accentMainAlert : AppTheme.colors.base4),
-						fontWeight: '400',
-						fontSize: 16,
-					},
-					text: size.toUpperCase(),
-					numberOfLines: 1,
-					ellipsize: 'middle',
-				}),
+				renderFileSize(size, hasError),
 			),
 		);
+	}
+
+	function renderFileSize(size, hasError = false)
+	{
+		if (!size)
+		{
+			return null;
+		}
+
+		return Text({
+			testId: 'pinnedFileSize',
+			style: {
+				color: (hasError ? AppTheme.colors.accentMainAlert : AppTheme.colors.base4),
+				fontWeight: '400',
+				fontSize: 16,
+			},
+			text: stringify(size).toUpperCase(),
+			numberOfLines: 1,
+			ellipsize: 'middle',
+		});
 	}
 
 	function renderShimmedFile(options)

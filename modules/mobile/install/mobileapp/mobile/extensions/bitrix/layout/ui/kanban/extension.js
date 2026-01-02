@@ -486,6 +486,19 @@ jn.define('layout/ui/kanban', (require, exports, module) => {
 			);
 		}
 
+		shouldRenderFloatingButton()
+		{
+			let shouldRender = BX.prop.getBoolean(this.props, 'isShowFloatingButton', true);
+			const stage = this.getActiveStage();
+
+			if (stage && stage.statusId === 'PERIOD7')
+			{
+				shouldRender = false;
+			}
+
+			return shouldRender;
+		}
+
 		renderCurrentStage()
 		{
 			return new StatefulList({
@@ -499,7 +512,7 @@ jn.define('layout/ui/kanban', (require, exports, module) => {
 				onItemLongClick: this.props.onItemLongClick,
 				itemCounterLongClickHandler: this.props.itemCounterLongClickHandler,
 				getItemCustomStyles: this.getItemCustomStyles,
-				isShowFloatingButton: BX.prop.getBoolean(this.props, 'isShowFloatingButton', true),
+				isShowFloatingButton: this.shouldRenderFloatingButton(),
 				onFloatingButtonClick: this.props.onFloatingButtonClick,
 				onFloatingButtonLongClick: this.props.onFloatingButtonLongClick,
 				needInitMenu: this.props.needInitMenu,
@@ -536,6 +549,7 @@ jn.define('layout/ui/kanban', (require, exports, module) => {
 				onListReloaded: this.props.onListReloaded,
 				showTitleLoader: this.props.showTitleLoader,
 				hideTitleLoader: this.props.hideTitleLoader,
+				requestTimeoutInMilliseconds: this.props.requestTimeoutInMilliseconds,
 			});
 		}
 

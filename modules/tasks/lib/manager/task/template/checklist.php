@@ -12,11 +12,7 @@
 
 namespace Bitrix\Tasks\Manager\Task\Template;
 
-use \Bitrix\Main\Loader;
 use \Bitrix\Main\Localization\Loc;
-
-use \Bitrix\Tasks\Util\Error\Collection;
-use \Bitrix\Tasks\Template\CheckListTable;
 use \Bitrix\Tasks\Util\Assert;
 
 Loc::loadMessages(__FILE__);
@@ -40,7 +36,7 @@ final class CheckList extends \Bitrix\Tasks\Manager\Task\CheckList
 		}
 		*/
 
-		$res = CheckListTable::getList(array(
+		$res = \Bitrix\Tasks\Internals\Task\Template\CheckListTable::getList(array(
 			'filter' => array('=TEMPLATE_ID' => $templateId),
 			'order' => array('SORT' => 'asc'),
 			'select' => array('ID', 'TITLE', 'SORT_INDEX', 'IS_COMPLETE')
@@ -133,7 +129,7 @@ final class CheckList extends \Bitrix\Tasks\Manager\Task\CheckList
 		if(!empty($itemsToUpdate))
 		{
 			// todo: pass errors here
-			$uResult = \Bitrix\Tasks\Template\CheckListTable::updateForTemplate($templateId, $itemsToUpdate);
+			$uResult = \Bitrix\Tasks\Internals\Task\Template\CheckListTable::updateForTemplate($templateId, $itemsToUpdate);
 		}
 
 		//$result['DATA'] = $data;

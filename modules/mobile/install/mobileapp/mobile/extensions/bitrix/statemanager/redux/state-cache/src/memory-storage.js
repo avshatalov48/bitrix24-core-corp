@@ -10,8 +10,6 @@ jn.define('statemanager/redux/state-cache/memory-storage', (require, exports, mo
 		LogType.ERROR,
 	]);
 
-	const STORE_KEY = 'cache_data';
-
 	/**
 	 * @class MemoryStorage
 	 */
@@ -26,20 +24,20 @@ jn.define('statemanager/redux/state-cache/memory-storage', (require, exports, mo
 			this.store = new MemoryStorageEngine('statemanager/redux/memory-state-cache');
 		}
 
-		load()
+		load(key)
 		{
-			const cache = this.store.getSync(STORE_KEY) ?? {};
+			const cache = this.store.getSync(key) ?? null;
 
-			logger.info('StateCache/MemoryStorage: load cache storage', cache);
+			logger.info('StateCache/MemoryStorage: load cache from storage', key, cache);
 
 			return cache;
 		}
 
-		async save(cache)
+		async save(key, cache)
 		{
-			logger.info('StateCache/MemoryStorage: save state to storage', cache);
+			logger.info('StateCache/MemoryStorage: save cache to storage', key, cache);
 
-			await this.store.set(STORE_KEY, cache);
+			await this.store.set(key, cache);
 		}
 	}
 

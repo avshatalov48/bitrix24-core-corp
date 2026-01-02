@@ -5,6 +5,10 @@
 
 BX.addCustomEvent("onRegisterProvider", (addProviderHandler) =>
 {
+	const require = (ext) => jn.require(ext);
+
+	const { DelayedRestRequest } = require('rest');
+
 	let paramsType = {
 		push_low_activity: {
 			type: FormItemType.SWITCH,

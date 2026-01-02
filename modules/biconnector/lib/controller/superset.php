@@ -6,6 +6,7 @@ use Bitrix\BIConnector\Access\AccessController;
 use Bitrix\BIConnector\Access\ActionDictionary;
 use Bitrix\BIConnector\Integration\Superset\SupersetInitializer;
 use Bitrix\BIConnector\Superset\Cache\CacheManager;
+use Bitrix\BIConnector\Superset\SystemDashboardManager;
 use Bitrix\Main\Engine\Controller;
 use Bitrix\Main\Error;
 use Bitrix\Main\Loader;
@@ -86,7 +87,8 @@ class Superset extends Controller
 		}
 
 		SupersetInitializer::setSupersetStatus(SupersetInitializer::SUPERSET_STATUS_DOESNT_EXISTS);
-		// SupersetInitializer::startupSuperset();
+		BIConnector\Access\Install\AccessInstaller::install();
+		SystemDashboardManager::actualizeSystemDashboards();
 
 		return true;
 	}

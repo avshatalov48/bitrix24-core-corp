@@ -9,6 +9,7 @@ use Bitrix\Main\Context;
 use Bitrix\Main\Engine\CurrentUser;
 use Bitrix\Sign\Config\Feature;
 use Bitrix\Sign\Config\Storage;
+use Bitrix\Sign\Config\Ui\SkipEditorWizardStepOption;
 use Bitrix\Sign\Document;
 use Bitrix\Sign\Internal\DocumentTable;
 use Bitrix\Sign\Item\Api\Client\DomainRequest;
@@ -17,6 +18,7 @@ use Bitrix\Sign\Main\User;
 use Bitrix\Sign\Service\Container;
 use Bitrix\Sign\Service\Sign\Document\GroupService;
 use Bitrix\Sign\Type\Document\InitiatedByType;
+use Bitrix\Sign\Type\Template\EntityType;
 
 \CBitrixComponent::includeComponentClass('bitrix:sign.base');
 
@@ -36,6 +38,7 @@ class SignMasterComponent extends SignBaseComponent
 	private const SES_COM_AGREEMENT_DATE_DAY = 1;
 	private const SES_COM_AGREEMENT_DATE_MONTH = 3;
 
+	private const MODE_TEMPLATE_FOLDER = 'templateFolder';
 	private const MODE_TEMPLATE = 'template';
 	private const MODE_DOCUMENT = 'document';
 
@@ -164,6 +167,7 @@ class SignMasterComponent extends SignBaseComponent
 		$this->setResult('WIZARD_CONFIG', $this->getWizardConfig());
 		$this->setResult('STAGE_ID', $document?->getStageId());
 		$this->setResult('DOCUMENT_MODE', $this->getDocumentMode());
+		$this->setResult('FROM_TEMPLATE_FOLDER', $this->fromTemplateFolder());
 		$this->setResult('INITIATED_BY_TYPE', $this->getInitiatedByType($documentItem)->value);
 		$this->setResult('BLANKS', $this->getBlanks());
 		$this->setResult('IS_MASTER_PERMISSIONS_FOR_USER_DENIED', $this->isMasterPermissionsForUserDenied($documentItem));
@@ -214,6 +218,7 @@ class SignMasterComponent extends SignBaseComponent
 			'documentSendConfig' => [
 				'region' => $regionCode,
 				'languages' => $storage->getLanguages(),
+				'needSkipEditorStep' => SkipEditorWizardStepOption::needSkip(),
 			],
 			'userPartyConfig' => [
 				'region' => $regionCode,
@@ -269,7 +274,7 @@ class SignMasterComponent extends SignBaseComponent
 		$rows = DocumentTable::query()
 			->addSelect('*')
 			->where('CREATED_BY_ID', $userId)
-			->addOrder('DATE_CREATE', 'DESC')
+			->addOrder('ID', 'DESC')
 			->setLimit($amount)
 			->fetchAll()
 		;
@@ -395,19 +400,28 @@ class SignMasterComponent extends SignBaseComponent
 	{
 		$mode = self::MODE_DOCUMENT;
 
-		if (!Feature::instance()->isSendDocumentByEmployeeEnabled())
+		if (!Feature::instance()->isDocumentTemplatesAvailable())
 		{
 			return $mode;
 		}
 
 		$modeFromRequest = (string)$this->getRequest('mode');
-
 		if (in_array($modeFromRequest, [self::MODE_TEMPLATE, self::MODE_DOCUMENT], true))
 		{
 			$mode = $modeFromRequest;
 		}
 
 		return $mode;
+	}
+
+	private function fromTemplateFolder(): bool
+	{
+		$templateId = (int)$this->getRequest(self::TEMPLATE_ID_URL_PARAMETER_NAME);
+		$folderRelation = Container::instance()
+			->getTemplateFolderRelationRepository()
+			->getByEntityIdAndType($templateId, EntityType::TEMPLATE);
+
+		return $templateId > 0 && $folderRelation && $folderRelation->parentId > 0;
 	}
 
 	private function getInitiatedByType(?\Bitrix\Sign\Item\Document $document): InitiatedByType
@@ -417,9 +431,12 @@ class SignMasterComponent extends SignBaseComponent
 			return $document->initiatedByType;
 		}
 
-		return $this->getDocumentMode() === self::MODE_TEMPLATE
-			? InitiatedByType::EMPLOYEE
-			: InitiatedByType::COMPANY;
+		if ($this->getDocumentMode() === self::MODE_TEMPLATE && Feature::instance()->isSendDocumentByEmployeeEnabled())
+		{
+			return InitiatedByType::EMPLOYEE;
+		}
+
+		return InitiatedByType::COMPANY;
 	}
 
 	private function getTemplateUid(): ?string
@@ -516,8 +533,10 @@ class SignMasterComponent extends SignBaseComponent
 			return $this->documentItem;
 		}
 
+		/** @var Document|null $document */
 		$document = $this->getResult('DOCUMENT');
-		if ($document === null)
+
+		if ($document?->getUid() === null)
 		{
 			return null;
 		}

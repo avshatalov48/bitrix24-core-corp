@@ -28,6 +28,22 @@ class TemplateCollection extends Collection
 		return array_filter($this->getIds(), static fn(?int $id): bool => $id !== null);
 	}
 
+	/**
+	 * Get array with keys - values of id field
+	 *
+	 * @return array<int, Template>
+	 */
+	public function mapWithIdKeys(): array
+	{
+		$templates = [];
+		foreach ($this->toArray() as $template)
+		{
+			$templates[$template->id] = $template;
+		}
+
+		return $templates;
+	}
+
 	public function findById(int $id): ?Template
 	{
 		return $this->findByRule(static fn(Template $template): bool => $template->id === $id);

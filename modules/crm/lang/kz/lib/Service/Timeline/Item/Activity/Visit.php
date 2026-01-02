@@ -1,0 +1,4 @@
+<?php
+$MESS["CRM_TIMELINE_ITEM_VISIT_EMPTY_STATE"] = "Сапар жазбасы жоқ";
+$MESS["CRM_TIMELINE_ITEM_VISIT_TAG_ERROR_RECORD"] = "Жазба қатесі";
+$MESS["CRM_TIMELINE_ITEM_VISIT_TITLE"] = "Сапар аяқталды";

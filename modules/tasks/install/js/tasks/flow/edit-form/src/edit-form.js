@@ -1,4 +1,4 @@
-import { ajax, Event, Loc, Tag, Text, Type } from 'main.core';
+import { ajax, Event, Loc, Tag, Text, Type, Runtime } from 'main.core';
 import { BaseEvent, EventEmitter } from 'main.core.events';
 import { Popup } from 'main.popup';
 import { Button, ButtonState } from 'ui.buttons';
@@ -14,14 +14,23 @@ import 'ui.forms';
 import 'ui.hint';
 import './style.css';
 
+type Context = 'flows_grid' | 'copilot_advice' | 'flow_guide';
+
+type FeatureParams = {
+	isFeatureTrialable: boolean,
+}
+
 type Params = {
 	flowId?: number,
 	flowName?: string,
 	demoFlow?: 'Y' | 'N',
 	guideFlow?: 'Y' | 'N',
+
+	context?: Context,
+	isFeatureTrialable?: boolean,
 };
 
-export type DistributionType = 'manually' | 'queue' | 'himself' | 'by_workload';
+export type DistributionType = 'manually' | 'queue' | 'himself' | 'immutable';
 
 export type Flow = {
 	id: ?number,
@@ -123,14 +132,14 @@ export class EditForm extends EventEmitter
 			contentCallback: async (slider) => {
 				this.slider = slider;
 
-						const { data: noAccess } = await ajax.runAction('tasks.flow.View.Access.check', {
-							data: {
-								flowId: this.#flow.id > 0 ? this.#flow.id : 0,
-								context: 'edit-form',
-								demoFlow: this.#params.demoFlow,
-								guideFlow: this.#params.guideFlow,
-							},
-						});
+				const { data: noAccess } = await ajax.runAction('tasks.flow.View.Access.check', {
+					data: {
+						flowId: this.#flow.id > 0 ? this.#flow.id : 0,
+						context: this.#params.context ?? 'flows_grid',
+						demoFlow: this.#params.demoFlow,
+						guideFlow: this.#params.guideFlow,
+					},
+				});
 
 				if (noAccess !== null)
 				{
@@ -310,7 +319,10 @@ export class EditForm extends EventEmitter
 			{
 				data: {
 					flowData,
-					guideFlow: this.#params.guideFlow,
+					analyticsParams: {
+						guideFlow: this.#params.guideFlow ?? 'N',
+						context: this.#params.context ?? 'flows_grid',
+					},
 				},
 			},
 		).then((response) => {
@@ -512,7 +524,7 @@ export class EditForm extends EventEmitter
 		};
 	}
 
-	#onContinueHandler(): Promise<boolean>
+	async #onContinueHandler(): Promise<boolean>
 	{
 		if (this.#pageChanging === true)
 		{
@@ -524,12 +536,51 @@ export class EditForm extends EventEmitter
 		const stepId = this.#wizard.getCurrentStep().id;
 		const currentPage = this.#pages.find((page) => page.getId() === stepId);
 
-		return currentPage?.onContinueClick(this.#flow)
-			.then((canContinue: Boolean) => {
+		const canContinue = await currentPage?.onContinueClick(this.#flow)
+			.then((result: Boolean) => {
 				this.#pageChanging = false;
 
-				return canContinue;
+				return result;
 			})
 		;
+
+		const isNewFlow = Type.isNil(currentPage.getFlowId());
+		const isNeedSendAnalytics = isNewFlow && canContinue;
+
+		if (isNeedSendAnalytics)
+		{
+			await this.#sendStepAnalytics();
+		}
+
+		return canContinue;
+	}
+
+	async #sendStepAnalytics(): Promise<void>
+	{
+		const { sendData } = await Runtime.loadExtension('ui.analytics');
+		const stepNumber = this.#wizard.getCurrentStepIndex() + 1;
+		const demoSuffix = await this.#isFeatureTrialable() ? 'Y' : 'N';
+
+		sendData({
+			tool: 'tasks',
+			category: 'flows',
+			event: `flow_create_step${stepNumber}`,
+			c_section: 'tasks',
+			c_sub_section: this.#params.context ?? 'flows_grid',
+			c_element: 'continue_button',
+			p1: `isDemo_${demoSuffix}`,
+		});
+	}
+
+	async #isFeatureTrialable(): Promise<Boolean>
+	{
+		if (Type.isNil(this.#params.isFeatureTrialable))
+		{
+			const { data }: FeatureParams = await ajax.runAction('tasks.flow.Flow.getFeatureParams');
+
+			this.#params.isFeatureTrialable = data.isFeatureTrialable;
+		}
+
+		return this.#params.isFeatureTrialable;
 	}
 }

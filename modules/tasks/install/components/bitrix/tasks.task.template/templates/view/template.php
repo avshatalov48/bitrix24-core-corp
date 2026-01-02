@@ -20,7 +20,8 @@ use Bitrix\Tasks\Update\TemplateConverter;
 use Bitrix\Tasks\Util\Result;
 use Bitrix\Tasks\Util\User;
 use Bitrix\Tasks\Util\UserField;
-use Bitrix\Tasks\Integration\SocialNetwork\Collab\CollabRegistry;
+use Bitrix\UI\Buttons;
+use Bitrix\UI\Toolbar\Facade\Toolbar;
 
 Loc::loadMessages(__FILE__);
 
@@ -49,11 +50,14 @@ $toList = str_replace("#user_id#", $arParams["USER_ID"], $arParams["PATH_TO_USER
 $bodyClass = $APPLICATION->GetPageProperty('BodyClass');
 $APPLICATION->SetPageProperty(
 	'BodyClass',
-	($bodyClass ? $bodyClass.' ' : '').'no-all-paddings'
+	($bodyClass ? $bodyClass.' ' : '')
 );
 
 Extension::load(['ui.design-tokens', 'ui.fonts.opensans', 'viewer']);
 $APPLICATION->SetAdditionalCSS('/bitrix/js/tasks/css/tasks.css');
+
+Toolbar::enableMultiLineTitle();
+Toolbar::deleteFavoriteStar();
 ?>
 
 <?php
@@ -69,7 +73,7 @@ if (($arResult['IS_TOOL_AVAILABLE'] ?? null) === false)
 }
 if($arParams["ENABLE_MENU_TOOLBAR"]):?>
 
-	<?php
+<?php
 	if(!$_REQUEST['IFRAME']) {
 		$APPLICATION->IncludeComponent(
 			'bitrix:tasks.interface.topmenu',
@@ -100,36 +104,49 @@ if($arParams["ENABLE_MENU_TOOLBAR"]):?>
 			$component,
 			array('HIDE_ICONS' => true)
 		);
-	}?>
-
-	<?php
-	$this->SetViewTarget("pagetitle", 100);?>
-	<div class="task-list-toolbar">
-		<div class="task-list-toolbar-actions">
-			<?php
-			if (!$_REQUEST['IFRAME'])
-			{
-				?><a href="<?=htmlspecialcharsbx($toList)?>" class="task-list-back">
-				<?=Loc::getMessage('TASKS_TASK_TEMPLATE_COMPONENT_TEMPLATE_TO_LIST')?>
-				</a><?php
-			}
-
-			$buttonIcon = (($taskLimitExceeded || $templateSubtaskLimitExceeded) ? 'ui-btn-icon-lock' : 'ui-btn-icon-add');
-			$href = (($taskLimitExceeded || $templateSubtaskLimitExceeded) ? '' : htmlspecialcharsbx($arParams['PATH_TO_TASKS_TEMPLATE_CREATE_SUB'] ?? ''));
-			?>
-			<button class="ui-btn ui-btn-light-border ui-btn-icon-setting ui-btn-themes" id="templateViewPopupMenuOptions"></button>
-			<?php
-			if (!$helper->checkHasFatals() && TemplateAccessController::can(User::getId(), ActionDictionary::ACTION_TEMPLATE_CREATE)):?>
-				<a class="ui-btn ui-btn-primary ui-btn-medium <?=$buttonIcon?>" id="subTemplateAdd" href="<?=$href?>">
-					<?=Loc::getMessage('TASKS_TASK_TEMPLATE_COMPONENT_TEMPLATE_ADD_SUBTEMPLATE')?>
-				</a>
-			<?php endif?>
-		</div>
-	</div>
-	<?php
-	$this->EndViewTarget();?>
+	}
+?>
 
 <?php
+	if (!$_REQUEST['IFRAME'])
+	{
+		$toListBtn = new Buttons\Button([
+			'text' => Loc::getMessage('TASKS_TASK_TEMPLATE_COMPONENT_TEMPLATE_TO_LIST'),
+			'tag' =>  Buttons\Tag::LINK,
+			'color' => Buttons\Color::LINK,
+		]);
+
+		$toListBtn->addAttribute('href', htmlspecialcharsbx($toList));
+		Toolbar::addButton($toListBtn);
+	}
+
+	$buttonIcon = ($taskLimitExceeded || $templateSubtaskLimitExceeded) ? Buttons\Icon::LOCK : Buttons\Icon::ADD;
+	$href = (($taskLimitExceeded || $templateSubtaskLimitExceeded) ? '' : htmlspecialcharsbx($arParams['PATH_TO_TASKS_TEMPLATE_CREATE_SUB'] ?? ''));
+
+	$settingButton = new Buttons\Button([
+		'color' => Buttons\Color::LIGHT_BORDER,
+		'icon' => Buttons\Icon::SETTING,
+	]);
+
+	$settingButton->addClass('ui-btn-themes');
+	$settingButton->addAttribute('id', 'templateViewPopupMenuOptions');
+	Toolbar::addButton($settingButton);
+
+	if (!$helper->checkHasFatals() && TemplateAccessController::can(User::getId(), ActionDictionary::ACTION_TEMPLATE_CREATE))
+	{
+		$addButton = new Buttons\Button([
+			'color' => Buttons\Color::PRIMARY,
+			'size' => Buttons\Size::MEDIUM,
+			'text' => Loc::getMessage('TASKS_TASK_TEMPLATE_COMPONENT_TEMPLATE_ADD_SUBTEMPLATE'),
+			'icon' => $buttonIcon,
+			'tag' =>  Buttons\Tag::LINK,
+		]);
+
+		$addButton->addAttribute('href', $href);
+		$addButton->addAttribute('id', 'subTemplateAdd');
+
+		Toolbar::addButton($addButton);
+	}
 endif?>
 
 <?php if (TemplateConverter::isProceed()): ?>
@@ -413,6 +430,7 @@ endif?>
 								'HIDE_FILTER'      => 'Y',
 								'BASE_TEMPLATE_ID' => $template->getId(),
 								'SET_TITLE'        => 'N',
+								'GRID_ID' => $arResult['GRID_ID'] ?? null,
 							)), null, array("HIDE_ICONS" => "Y")
 						);
 						?>

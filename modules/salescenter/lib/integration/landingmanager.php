@@ -1214,6 +1214,7 @@ class LandingManager extends Base
 					'=TPL_CODE' => $webFormPageCode,
 				],
 				'order' => ['ID' => 'DESC'],
+				'limit' => 1,
 			])->fetch();
 		}
 

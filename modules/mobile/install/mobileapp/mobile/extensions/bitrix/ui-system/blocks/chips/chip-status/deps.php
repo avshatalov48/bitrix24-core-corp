@@ -6,6 +6,7 @@ return [
 		'utils/object',
 		'utils/enums/base',
 		'utils/validation',
+		'utils/enums/style',
 	],
 	'bundle' => [
 		'./src/design-enum',

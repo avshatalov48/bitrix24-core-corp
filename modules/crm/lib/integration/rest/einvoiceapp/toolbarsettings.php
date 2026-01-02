@@ -2,6 +2,7 @@
 
 namespace Bitrix\Crm\Integration\Rest\EInvoiceApp;
 
+use Bitrix\Crm\Integration\Market\Label;
 use Bitrix\Main\Localization\Loc;
 use Bitrix\UI\Buttons;
 
@@ -85,7 +86,7 @@ final class ToolbarSettings
 		$marketUrl = "/market/collection/{$collectionTag}/";
 
 		return [
-			'text' => Loc::getMessage('CRM_INTEGRATION_REST_EINVOICE_GO_TO_MARKET'),
+			'text' => Label::isRenamedMarket() ? Loc::getMessage('CRM_INTEGRATION_REST_EINVOICE_GO_TO_MARKET_MSGVER_1') : Loc::getMessage('CRM_INTEGRATION_REST_EINVOICE_GO_TO_MARKET'),
 			'onclick' => $this->getOpenSliderJsCode($marketUrl),
 		];
 	}

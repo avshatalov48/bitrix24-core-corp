@@ -12,8 +12,8 @@ final class Source1C extends Base
 	public function getSqlTableAlias(): string
 	{
 		return sprintf(
-			'%s%s',
-			'EXTERNAL',
+			'%s_%s',
+			'SOURCE_1C',
 			strtoupper($this->dataset->getName())
 		);
 	}

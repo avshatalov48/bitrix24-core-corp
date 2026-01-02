@@ -9,16 +9,16 @@ return [
 	'js' => 'dist/confirm-page-public.bundle.js',
 	'rel' => [
 		'ui.vue3',
-		'booking.model.bookings',
 		'booking.component.mixin.loc-mixin',
 		'ui.icon-set.main',
 		'main.date',
 		'ui.icon-set.api.vue',
 		'main.core',
 		'main.popup',
-		'booking.component.button',
 		'booking.component.popup',
 		'ui.icon-set.actions',
+		'booking.component.button',
+		'booking.model.bookings',
 	],
 	'skip_core' => false,
 ];

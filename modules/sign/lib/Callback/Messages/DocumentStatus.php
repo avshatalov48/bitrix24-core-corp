@@ -1,4 +1,5 @@
 <?php
+
 namespace Bitrix\Sign\Callback\Messages;
 
 use Bitrix\Main\Type\DateTime;
@@ -20,6 +21,7 @@ class DocumentStatus extends Callback\Message
 	public function setStatus(string $status): self
 	{
 		$this->data['status'] = $status;
+
 		return $this;
 	}
 
@@ -31,6 +33,7 @@ class DocumentStatus extends Callback\Message
 	public function setCode(string $code): self
 	{
 		$this->data['code'] = $code;
+
 		return $this;
 	}
 
@@ -46,7 +49,7 @@ class DocumentStatus extends Callback\Message
 			return null;
 		}
 
-		return (new DateTime($this->data['signDate'], self::SIGN_DATE_FORMAT));
+		return new DateTime($this->data['signDate'], self::SIGN_DATE_FORMAT);
 	}
 
 	public function getInitiatorUid(): string

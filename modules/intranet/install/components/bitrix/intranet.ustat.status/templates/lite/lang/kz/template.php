@@ -1,0 +1,6 @@
+<?php
+$MESS["INTRANET_USTAT_RATING_COMMON_TAB"] = "Жалпы рейтинг";
+$MESS["INTRANET_USTAT_RATING_INVOLVE_TAB"] = "Тартылмаған";
+$MESS["INTRANET_USTAT_RATING_LOADING"] = "Жүктеу...";
+$MESS["INTRANET_USTAT_WIDGET_LOADING"] = "Жүктеу...";
+$MESS["INTRANET_USTAT_WIDGET_TITLE"] = "Компанияның пульсі";

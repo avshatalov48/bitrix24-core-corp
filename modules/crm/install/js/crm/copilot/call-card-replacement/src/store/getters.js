@@ -21,11 +21,6 @@ export default {
 		return state.assessment.id !== null;
 	},
 
-	isAttachAssessment(state: ApplicationState): boolean
-	{
-		return state.isAttachCallAssessment;
-	},
-
 	hasAvailableSelectorItems(state: ApplicationState): boolean
 	{
 		return state.hasAvailableSelectorItems;

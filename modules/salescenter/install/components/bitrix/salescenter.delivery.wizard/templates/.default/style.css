@@ -76,10 +76,6 @@ h2.sales-center-delivery-install-title {
 
 .salescenter-delivery-installation-wrap .ui-ctl-label-text {display: block;}
 
-.salescenter-main-header-feedback-container {
-	margin-left: auto;
-}
-
 .salescenter-delivery-install-input > input {
 	z-index: 1;
 	display: block;

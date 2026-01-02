@@ -74,7 +74,7 @@ if (!empty($arResult['IMAGES']))
 				? 'disk-ui-file-thumbnails-grid-vertical-'.$suffix
 				: 'disk-ui-file-thumbnails-grid-horizontal-'.$suffix
 		);
-		
+
 		if ($count > 4)
 		{
 			$gridBlockClassesList[] = 'disk-ui-file-thumbnails-grid-more';
@@ -203,7 +203,7 @@ if (!empty($arResult['FILES']))
 				?>
 				<div class="ui-icon ui-icon-file-<?= mb_strtolower($file["EXTENSION"]) ?>"><i></i></div>
 				<a <?=$attributes
-					?>onclick="app.openDocument({'url' : '<?= $file['DOWNLOAD_URL'] ?>'}); return BX.PreventDefault(event);" <?php
+					?>onclick="openDocument({'url': '<?=$file['DOWNLOAD_URL']?>', 'view_url': '<?=$file['VIEW_URL']?>', 'isBoard': '<?=$file['IS_BOARD']?>'}); return BX.PreventDefault(event);" <?php
 					?>href="javascript:void(0);" <?php
 					?>class="post-item-attached-file-link"><?php
 						?><span><?=htmlspecialcharsbx($file['NAME_WO_EXTENSION'])?></span><?php
@@ -265,6 +265,22 @@ if(!empty($arResult['DELETED_FILES']))
 			signedParameters: '<?=\Bitrix\Main\Component\ParameterSigner::signParameters($this->getComponent()->getName(), $arResult['SIGNED_PARAMS'])?>'
 		});
 	});
+
+	function openDocument({url, isBoard, view_url})
+	{
+		if (isBoard === 'Y' && typeof BX.MobileTools !== 'undefined')
+		{
+			const openWidget = BX.MobileTools.resolveOpenFunction(`${view_url}`);
+			if (openWidget)
+			{
+				openWidget();
+			}
+
+			return;
+		}
+
+		app.openDocument({url});
+	}
 </script>
 <?php
 

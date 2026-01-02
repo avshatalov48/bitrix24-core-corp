@@ -5,6 +5,7 @@ namespace Bitrix\Sign\Service\Integration\Crm;
 use Bitrix\Crm\ItemIdentifier;
 use Bitrix\Crm\Requisite\DefaultRequisite;
 use Bitrix\Main\Application;
+use Bitrix\Main\Loader;
 use Bitrix\Sign\Connector\Crm\MyCompany;
 use Bitrix\Sign\Item\Integration\Crm\MyCompanyCollection;
 
@@ -50,4 +51,19 @@ final class MyCompanyService
 	{
 		return Application::getInstance()->getLicense()->getRegion() !== 'ru';
 	}
+
+	public function getFirstCompanyWithTaxId(bool $checkRequisitePermissions = true): ?\Bitrix\Sign\Item\Integration\Crm\MyCompany
+	{
+		$companies = $this->listWithTaxIds(checkRequisitePermissions: $checkRequisitePermissions);
+		foreach ($companies as $company)
+		{
+			if (!empty($company->taxId))
+			{
+				return $company;
+			}
+		}
+
+		return null;
+	}
+
 }

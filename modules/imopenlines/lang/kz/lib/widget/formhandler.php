@@ -1,0 +1,22 @@
+<?php
+$MESS["IMOL_LCC_ERROR_ACCESS_DENIED"] = "Сіз бұл сөйлесуді аша алмайсыз, өйткені сіздің құқықтарыңыз жеткіліксіз.";
+$MESS["IMOL_LCC_ERROR_CHAT_ID"] = "Чаттың қате идентификаторы көрсетілген";
+$MESS["IMOL_LCC_ERROR_CHAT_TYPE"] = "Көрсетілген чат ашық желі болып табылмайды";
+$MESS["IMOL_LCC_ERROR_FORM_ID"] = "Нысан идентификаторы берілмеген";
+$MESS["IMOL_LCC_ERROR_IM_LOAD"] = "Веб-мессенджер модулін жүктеу қатесі";
+$MESS["IMOL_LCC_ERROR_PULL_LOAD"] = "Push & Pull модулін жүктеу қатесі";
+$MESS["IMOL_LCC_ERROR_USER_ID"] = "Пайдаланушының қате идентификаторы көрсетілген";
+$MESS["IMOL_LCC_FILL_FORM"] = "Нысанды толтырыңыз";
+$MESS["IMOL_LCC_FORM_ACTIVITY_LINK"] = "CRM-де нысан деректерін қарау";
+$MESS["IMOL_LCC_FORM_EMAIL"] = "E-mail";
+$MESS["IMOL_LCC_FORM_HISTORY"] = "Клиент №#LINK# диалогының тарихын сұрады";
+$MESS["IMOL_LCC_FORM_HISTORY_2"] = "Клиенттің сұранысы бойынша №#LINK# диалогының тарихы жіберілді";
+$MESS["IMOL_LCC_FORM_LAST_NAME"] = "Тегі";
+$MESS["IMOL_LCC_FORM_NAME"] = "Аты";
+$MESS["IMOL_LCC_FORM_NONE"] = "толтырылмады";
+$MESS["IMOL_LCC_FORM_PHONE"] = "Телефон";
+$MESS["IMOL_LCC_FORM_SENT"] = "Нысан жіберілді";
+$MESS["IMOL_LCC_FORM_SUBMIT"] = "Нысан толтырылды";
+$MESS["IMOL_LCC_GUEST_NAME"] = "Қонақ";
+$MESS["IMOL_TRACKER_BUTTON_CANCEL"] = "Болдырмау";
+$MESS["IMOL_TRACKER_BUTTON_CHANGE"] = "Ауыстыру";

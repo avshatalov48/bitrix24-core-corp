@@ -3,6 +3,7 @@
 namespace Bitrix\Crm\Copilot\CallAssessment\Entity;
 
 use Bitrix\Crm\Copilot\CallAssessment\Entity\Fields\Validators\PromptLengthValidator;
+use Bitrix\Crm\Copilot\CallAssessment\Enum\AvailabilityType;
 use Bitrix\Crm\Integration\AI\Model\QueueTable;
 use Bitrix\Crm\Service\Container;
 use Bitrix\Main;
@@ -11,8 +12,25 @@ use Bitrix\Main\ObjectNotFoundException;
 use Bitrix\Main\ORM\Fields\Relations\OneToMany;
 use Bitrix\Main\ORM\Fields\Validators\RangeValidator;
 use Bitrix\Main\SystemException;
+use Bitrix\Main\Text\Emoji;
 use Psr\Container\NotFoundExceptionInterface;
 
+/**
+ * Class CopilotCallAssessmentTable
+ *
+ * DO NOT WRITE ANYTHING BELOW THIS
+ *
+ * <<< ORMENTITYANNOTATION
+ * @method static EO_CopilotCallAssessment_Query query()
+ * @method static EO_CopilotCallAssessment_Result getByPrimary($primary, array $parameters = [])
+ * @method static EO_CopilotCallAssessment_Result getById($id)
+ * @method static EO_CopilotCallAssessment_Result getList(array $parameters = [])
+ * @method static EO_CopilotCallAssessment_Entity getEntity()
+ * @method static \Bitrix\Crm\Copilot\CallAssessment\Entity\CopilotCallAssessment createObject($setDefaultValues = true)
+ * @method static \Bitrix\Crm\Copilot\CallAssessment\Entity\EO_CopilotCallAssessment_Collection createCollection()
+ * @method static \Bitrix\Crm\Copilot\CallAssessment\Entity\CopilotCallAssessment wakeUpObject($row)
+ * @method static \Bitrix\Crm\Copilot\CallAssessment\Entity\EO_CopilotCallAssessment_Collection wakeUpCollection($rows)
+ */
 class CopilotCallAssessmentTable extends Main\ORM\Data\DataManager
 {
 	public static function getTableName(): string
@@ -43,6 +61,8 @@ class CopilotCallAssessmentTable extends Main\ORM\Data\DataManager
 			,
 			(new Main\ORM\Fields\StringField('PROMPT'))
 				->addValidator(new PromptLengthValidator())
+				->addSaveDataModifier([Emoji::class, 'encode'])
+				->addFetchDataModifier([Emoji::class, 'decode'])
 				->configureRequired()
 			,
 			(new Main\ORM\Fields\StringField('GIST')),
@@ -86,6 +106,11 @@ class CopilotCallAssessmentTable extends Main\ORM\Data\DataManager
 				->configureDefaultValue(100)
 				->addValidator(new RangeValidator(min: 0, max: 100))
 			,
+			(new Main\ORM\Fields\EnumField('AVAILABILITY_TYPE'))
+				->configureRequired()
+				->configureValues(AvailabilityType::values())
+				->configureDefaultValue(AvailabilityType::ALWAYS_ACTIVE->value)
+			,
 			$fieldRepository->getCreatedTime('CREATED_AT'),
 			$fieldRepository->getUpdatedTime('UPDATED_AT'),
 			$fieldRepository
@@ -97,6 +122,7 @@ class CopilotCallAssessmentTable extends Main\ORM\Data\DataManager
 				->configureDefaultValue(static fn() => Container::getInstance()->getContext()->getUserId())
 			,
 			(new OneToMany('CLIENT_TYPES', CopilotCallAssessmentClientTypeTable::class, 'ASSESSMENT')),
+			(new OneToMany('AVAILABILITY_DATA', CopilotCallAssessmentAvailabilityTable::class, 'ASSESSMENT')),
 		];
 	}
 }

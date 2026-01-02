@@ -1,0 +1,22 @@
+<?php
+$MESS["TIMEMAN_MODULE_NOT_INSTALLED"] = "\"Жұмыс уақытын есепке алу\" модулі орнатылмаған";
+$MESS["TM_SCHEDULE_DELETE_CONFIRM"] = "Сіз шынымен \"#SCHEDULE_NAME#\" күн тәртібін жойғыңыз келе ме?";
+$MESS["TM_SCHEDULE_DELETE_CONFIRM_NO"] = "Болдырмау";
+$MESS["TM_SCHEDULE_DELETE_CONFIRM_TITLE"] = "Әрекетті растаңыз";
+$MESS["TM_SCHEDULE_DELETE_CONFIRM_YES"] = "Жою";
+$MESS["TM_SCHEDULE_LIST_ACCESS_DENIED"] = "Құқықтар жеткіліксіз";
+$MESS["TM_SCHEDULE_LIST_ACTION_DELETE"] = "Жою";
+$MESS["TM_SCHEDULE_LIST_ACTION_EDIT"] = "Редакциялау";
+$MESS["TM_SCHEDULE_LIST_ACTION_PLAN"] = "Кесте";
+$MESS["TM_SCHEDULE_LIST_ACTION_READ"] = "Қарау";
+$MESS["TM_SCHEDULE_LIST_ACTION_SELECT"] = "Әрекетті таңдаңыз";
+$MESS["TM_SCHEDULE_LIST_ACTION_WORKTIME_STATS"] = "Жұмыс уақыты";
+$MESS["TM_SCHEDULE_LIST_ADD"] = "Күн тәртібін қосу";
+$MESS["TM_SCHEDULE_LIST_COLUMN_ID"] = "ID";
+$MESS["TM_SCHEDULE_LIST_COLUMN_NAME"] = "Атауы";
+$MESS["TM_SCHEDULE_LIST_COLUMN_PERIOD"] = "Есептік кезең";
+$MESS["TM_SCHEDULE_LIST_COLUMN_SHIFT_COUNT"] = "Ауысымдар саны";
+$MESS["TM_SCHEDULE_LIST_COLUMN_TYPE"] = "Түрі";
+$MESS["TM_SCHEDULE_LIST_COLUMN_USER_COUNT"] = "Адамдар саны";
+$MESS["TM_SCHEDULE_LIST_DELETE_CONFIRM"] = "Сіз шынымен \"#SCHEDULE_NAMES#\" күн тәртіптерін жойғыңыз келе ме?";
+$MESS["TM_SCHEDULE_LIST_TITLE"] = "Жұмыс күн тәртіптері";

@@ -83,7 +83,8 @@ trait EditorConfig
 					] + $this->arResult['CONTEXT'],
 			],
 			'SHOW_EMPTY_FIELDS' => !empty($this->arParams['SHOW_EMPTY_FIELDS']),
-			'ENABLE_PAGE_TITLE_CONTROLS' => $this->arResult['IS_EDIT_MODE'],
+			'ENABLE_PAGE_TITLE_CONTROLS' => true,
+			'ENABLE_PAGE_TITLE_EDIT' => $this->isPageTitleEditable(),
 			// this data is used to send analytics when user clicks 'save' button
 			'ANALYTICS_CONFIG' => [
 				'data' => $analyticsBuilder->buildData(),
@@ -94,6 +95,11 @@ trait EditorConfig
 			],
 		];
 		//@codingStandardsIgnoreEnd
+	}
+
+	protected function isPageTitleEditable(): bool
+	{
+		return $this->arResult['IS_EDIT_MODE'];
 	}
 
 	private function getDetailComponentName(): ?string

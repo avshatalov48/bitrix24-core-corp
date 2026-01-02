@@ -401,7 +401,7 @@ this.BX.Crm = this.BX.Crm || {};
 	      return main_core.Type.isStringFilled(this.errorText) ? this.errorText : main_core.Loc.getMessage('CRM_COPILOT_CALL_QUALITY_ERROR_TEXT');
 	    }
 	  },
-	  template: "\n\t\t<div class=\"call-quality__explanation\">\n\t\t\t<div class=\"call-quality__explanation__container --error\">\n\t\t\t\t<div class=\"call-quality__explanation-title\">\n\t\t\t\t\t{{ $Bitrix.Loc.getMessage('CRM_COPILOT_CALL_QUALITY_ERROR_TITLE') }}\n\t\t\t\t</div>\n\t\t\t\t<div class=\"call-quality__explanation-text\">\n\t\t\t\t\t{{ explanationText }}\n\t\t\t\t</div>\n\t\t\t</div>\n\t\t</div>\n\t"
+	  template: "\n\t\t<div class=\"call-quality__explanation\">\n\t\t\t<div class=\"call-quality__explanation__container --error\">\n\t\t\t\t<div class=\"call-quality__explanation-title\">\n\t\t\t\t\t{{ $Bitrix.Loc.getMessage('CRM_COPILOT_CALL_QUALITY_ERROR_TITLE') }}\n\t\t\t\t</div>\n\t\t\t\t<div \n\t\t\t\t\tclass=\"call-quality__explanation-text\"\n\t\t\t\t\tv-html=\"explanationText\"\n\t\t\t\t></div>\n\t\t\t</div>\n\t\t</div>\n\t"
 	};
 
 	var NotAssessmentScriptBlock = {
@@ -482,7 +482,7 @@ this.BX.Crm = this.BX.Crm || {};
 	  },
 	  computed: {
 	    disclaimer: function disclaimer() {
-	      return main_core.Loc.getMessage('CRM_COPILOT_CALL_QUALITY_EXPLANATION_DISCLAIMER', {
+	      return main_core.Loc.getMessage('CRM_COPILOT_CALL_QUALITY_EXPLANATION_DISCLAIMER_MSGVER_1', {
 	        '#LINK_START#': "<a onclick='window.top.BX?.Helper?.show(`redirect=detail&code=".concat(DISCLAIMER_ARTICLE_CODE, "`)' href=\"#\">"),
 	        '#LINK_END#': '</a>'
 	      });
@@ -595,15 +595,6 @@ this.BX.Crm = this.BX.Crm || {};
 	          dialog: {
 	            events: {
 	              'Item:onBeforeSelect': this.onBeforeSelect.bind(this)
-	            }
-	          },
-	          popup: {
-	            events: {
-	              onShow: function onShow(event) {
-	                // @todo maybe there is a better solution?
-	                var zIndex = ui_sidepanel.SidePanel.Instance.getTopSlider().getZindex() + 1;
-	                event.target.getZIndexComponent().setZIndex(zIndex);
-	              }
 	            }
 	          }
 	        }
@@ -1104,7 +1095,7 @@ this.BX.Crm = this.BX.Crm || {};
 	}
 	function _getAvatar2() {
 	  if (main_core.Type.isStringFilled(babelHelpers.classPrivateFieldGet(this, _userPhotoUrl))) {
-	    return main_core.Tag.render(_templateObject4 || (_templateObject4 = babelHelpers.taggedTemplateLiteral(["\n\t\t\t\t<div\n\t\t\t\t\tclass=\"call-quality__rating__avatar\"\n\t\t\t\t\tstyle=\"background-image: url(", ")\"\n\t\t\t\t></div>\n\t\t\t"])), encodeURI(babelHelpers.classPrivateFieldGet(this, _userPhotoUrl)));
+	    return main_core.Tag.render(_templateObject4 || (_templateObject4 = babelHelpers.taggedTemplateLiteral(["\n\t\t\t\t<div\n\t\t\t\t\tclass=\"call-quality__rating__avatar\"\n\t\t\t\t\tstyle=\"background-image: url('", "')\"\n\t\t\t\t></div>\n\t\t\t"])), encodeURI(main_core.Text.encode(babelHelpers.classPrivateFieldGet(this, _userPhotoUrl))));
 	  }
 	  return main_core.Tag.render(_templateObject5 || (_templateObject5 = babelHelpers.taggedTemplateLiteral(["\n\t\t\t<div class=\"call-quality__rating__avatar ui-icon ui-icon-common-user\">\n\t\t\t\t<i style=\"\"></i>\n\t\t\t</div>\n\t\t"])));
 	}

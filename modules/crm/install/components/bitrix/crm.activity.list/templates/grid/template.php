@@ -7,7 +7,6 @@ if (!defined('B_PROLOG_INCLUDED') || B_PROLOG_INCLUDED !== true)
 
 use Bitrix\Crm\Activity\Provider\ProviderManager;
 use Bitrix\Crm\Restriction\RestrictionManager;
-use Bitrix\Main\Localization\Loc;
 use Bitrix\Main\UI;
 
 UI\Extension::load(["ui.tooltip", "ui.fonts.opensans", 'crm.autorun']);
@@ -25,10 +24,7 @@ UI\Extension::load(["ui.tooltip", "ui.fonts.opensans", 'crm.autorun']);
 Bitrix\Main\Page\Asset::getInstance()->addCss('/bitrix/js/crm/css/crm.css');
 Bitrix\Main\Page\Asset::getInstance()->addCss("/bitrix/themes/.default/crm-entity-show.css");
 
-if(SITE_TEMPLATE_ID === 'bitrix24')
-{
-	$APPLICATION->SetAdditionalCSS("/bitrix/themes/.default/bitrix24/crm-entity-show.css");
-}
+$APPLICATION->SetAdditionalCSS('/bitrix/themes/.default/bitrix24/crm-entity-show.css');
 Bitrix\Main\Page\Asset::getInstance()->addJs('/bitrix/js/crm/interface_grid.js');
 if (CModule::IncludeModule('bitrix24') && !\Bitrix\Crm\CallList\CallList::isAvailable())
 {
@@ -462,8 +458,8 @@ $APPLICATION->IncludeComponent(
 		'READ_ONLY' => $arResult['READ_ONLY'],
 		'ENABLE_UI' => false,
 		'ENABLE_TASK_ADD' => $arResult['ENABLE_TASK_ADD'],
-		'ENABLE_CALENDAR_EVENT_ADD' => $arResult['ENABLE_CALENDAR_EVENT_ADD'],
-		'ENABLE_EMAIL_ADD' => $arResult['ENABLE_EMAIL_ADD'],
+		'ENABLE_CALENDAR_EVENT_ADD' => $arResult['ENABLE_CALENDAR_EVENT_ADD'] ?? false,
+		'ENABLE_EMAIL_ADD' => $arResult['ENABLE_EMAIL_ADD'] ?? false,
 		'ENABLE_TOOLBAR' => $enableToolbar,
 		'TOOLBAR_ID' => $toolbarID,
 		'FORM_ID' => $arResult['FORM_ID'],
@@ -604,7 +600,7 @@ if(!$isInternal && ! $useQuickFilter)
 
 if($enableToolbar && $arResult['ENABLE_CREATE_TOOLBAR_BUTTON'])
 {
-	$isSingleButtonMode = SITE_TEMPLATE_ID === 'bitrix24' && !$isInternal;
+	$isSingleButtonMode = !$isInternal;
 	$toolbarButtons = array();
 	if($isEditable && $arResult['OWNER_TYPE'] !== '' && $arResult['OWNER_ID'] !== '')
 	{
@@ -721,14 +717,15 @@ $APPLICATION->IncludeComponent(
 		'ENABLE_ROW_COUNT_LOADER' => true,
 		'PRESERVE_HISTORY' => $arResult['PRESERVE_HISTORY'],
 		'NAVIGATION_BAR' => [
+			/*
 			'ITEMS' => [
-				/*[
+				[
 					'icon' => 'table',
 					'id' => 'kanban',
 					'name' => Loc::getMessage('CRM_COMMON_KANBAN'),
 					'active' => false,
 					'url' => $arParams['PATH_TO_ACTIVITY_KANBAN'] ?? '',
-				],*/
+				],
 				[
 					'icon' => 'table',
 					'id' => 'list',
@@ -737,6 +734,7 @@ $APPLICATION->IncludeComponent(
 					'url' => $arParams['PATH_TO_ACTIVITY_LIST']
 				],
 			],
+			*/
 			'BINDING' => [
 				'category' => 'crm.navigation',
 				'name' => 'index',

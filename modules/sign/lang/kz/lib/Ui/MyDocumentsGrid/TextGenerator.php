@@ -1,0 +1,22 @@
+<?php
+$MESS["SIGN_MEMBER_ACTION_APPROVE"] = "Келісу";
+$MESS["SIGN_MEMBER_ACTION_DOWNLOAD"] = "Жүктеу";
+$MESS["SIGN_MEMBER_ACTION_EDIT"] = "Толтыру";
+$MESS["SIGN_MEMBER_ACTION_SIGN"] = "Қол қою";
+$MESS["SIGN_MEMBER_ACTION_VIEW"] = "Қарап шығу";
+$MESS["SIGN_MEMBER_APPROVED"] = "Келісілді";
+$MESS["SIGN_MEMBER_APPROVED_WITH_YOU_MSGVER_1"] = "Мен келістірген";
+$MESS["SIGN_MEMBER_APPROVES"] = "Келісуде";
+$MESS["SIGN_MEMBER_EDIT"] = "Толтыруда";
+$MESS["SIGN_MEMBER_EDITED"] = "Толтырылды";
+$MESS["SIGN_MEMBER_EDITED_WITH_YOU_MSGVER_1"] = "Мен толтырған";
+$MESS["SIGN_MEMBER_ROLE_IN_PROCESS_ASSIGNEE"] = "Компания атынан қол қоямын";
+$MESS["SIGN_MEMBER_ROLE_IN_PROCESS_EDITOR"] = "Толтырып жатырмын";
+$MESS["SIGN_MEMBER_ROLE_IN_PROCESS_REVIEWER"] = "Келісіп жатырмын";
+$MESS["SIGN_MEMBER_ROLE_IN_PROCESS_SIGNER_B2E"] = "Қызметкер ретінде қол қоямын";
+$MESS["SIGN_MEMBER_ROLE_IN_PROCESS_SIGNER_E2B"] = "Жіберуші";
+$MESS["SIGN_MEMBER_SIGNED"] = "Қол қойды";
+$MESS["SIGN_MEMBER_SIGNED_WITH_YOU_MSGVER_1"] = "Мен қол қойған";
+$MESS["SIGN_MEMBER_SIGNS"] = "Қол қоюда";
+$MESS["SIGN_MEMBER_STOPPED"] = "Бас тартылды";
+$MESS["SIGN_MEMBER_STOPPED_WITH_YOU_MSGVER_1"] = "Мен бас тартқан";

@@ -24,24 +24,24 @@ class TimelineEvent extends Callback\Message
 		return $this->data['event']['type'];
 	}
 
-	public function setEventType(string $eventType): TimelineEvent
+	public function setEventType(string $eventType): self
 	{
 		$this->data['event']['type'] = $eventType;
+
 		return $this;
 	}
-
 
 	public function getEventData(): array
 	{
 		return isset($this->data['event']['data']) && is_array($this->data['event']['data'])
 			? $this->data['event']['data']
-			: []
-		;
+			: [];
 	}
 
-	public function setEventData(array $data): TimelineEvent
+	public function setEventData(array $data): self
 	{
 		$this->data['event']['data'] = $data;
+
 		return $this;
 	}
 
@@ -53,6 +53,7 @@ class TimelineEvent extends Callback\Message
 	public function setDocumentCode(string $documentCode): self
 	{
 		$this->data['documentCode'] = $documentCode;
+
 		return $this;
 	}
 
@@ -64,6 +65,7 @@ class TimelineEvent extends Callback\Message
 	public function setMemberCode(string $memberCode): self
 	{
 		$this->data['memberCode'] = $memberCode;
+
 		return $this;
 	}
 
@@ -90,6 +92,7 @@ class TimelineEvent extends Callback\Message
 	public function setVersion(int $version): self
 	{
 		$this->data['version'] = $version;
+
 		return $this;
 	}
 }

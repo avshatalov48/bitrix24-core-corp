@@ -109,13 +109,20 @@ if ($mode == 'GENERATE_LINK')
 {
 	$invoiceId = 0;
 	if (isset($_POST['INVOICE_ID']))
-		$invoiceId = $_POST['INVOICE_ID'];
-	else
-		__CrmInvoiceShowEndJsonResonse(array('ERROR'=>'INVOICE_ID NOT DEFINED!'));
+	{
+		$invoiceId = (int)$_POST['INVOICE_ID'];
+	}
+
+	if (!$invoiceId)
+	{
+		__CrmInvoiceShowEndJsonResonse(array('ERROR' => 'INVOICE_ID NOT DEFINED!'));
+	}
 
 	$CCrmInvoice = new CCrmInvoice();
-	if ($CCrmInvoice->cPerms->HavePerm('INVOICE', BX_CRM_PERM_NONE, 'READ') || !CCrmInvoice::CheckReadPermission($invoiceId))
-		__CrmInvoiceShowEndJsonResonse(array('ERROR'=>'PERMISSION DENIED!'));
+	if (!\Bitrix\Crm\Service\Container::getInstance()->getUserPermissions()->item()->canRead(CCrmOwnerType::Invoice, $invoiceId))
+	{
+		__CrmInvoiceShowEndJsonResonse(array('ERROR' => 'PERMISSION DENIED!'));
+	}
 
 	if ($invoiceId > 0)
 	{
@@ -225,14 +232,14 @@ if($type !== 'I')
 
 if($mode === 'UPDATE')
 {
-	$ID = isset($_POST['OWNER_ID']) ? $_POST['OWNER_ID'] : 0;
+	$ID = (int)(isset($_POST['OWNER_ID']) ? $_POST['OWNER_ID'] : 0);
 	if($ID <= 0)
 	{
 		__CrmInvoiceShowEndJsonResonse(array('ERROR'=>'ID IS INVALID OR NOT DEFINED!'));
 	}
 
 	$CCrmInvoice = new CCrmInvoice();
-	if ($CCrmInvoice->cPerms->HavePerm('INVOICE', BX_CRM_PERM_NONE, 'WRITE') || !CCrmInvoice::CheckUpdatePermission($ID))
+	if (!\Bitrix\Crm\Service\Container::getInstance()->getUserPermissions()->item()->canUpdate(CCrmOwnerType::Invoice, $ID))
 	{
 		__CrmInvoiceShowEndJsonResonse(array('ERROR'=>'PERMISSION DENIED!'));
 	}

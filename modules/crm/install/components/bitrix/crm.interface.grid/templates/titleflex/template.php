@@ -13,7 +13,7 @@ if (!defined('B_PROLOG_INCLUDED') || B_PROLOG_INCLUDED !== true) die();
 
 CUtil::InitJSCore(array('window'));
 
-if(SITE_TEMPLATE_ID === 'bitrix24' && ($arParams['~STYLES_LOADED'] ?? null) !== 'Y')
+if(($arParams['~STYLES_LOADED'] ?? null) !== 'Y')
 {
 	$APPLICATION->SetAdditionalCSS('/bitrix/themes/.default/bitrix24/crm-entity-show.css');
 	$bodyClass = $APPLICATION->GetPageProperty('BodyClass');
@@ -53,17 +53,18 @@ if(!Bitrix\Main\Grid\Context::isInternalRequest() && ($arParams['~HIDE_FILTER'] 
 	$filterParams = isset($arParams['~FILTER_PARAMS']) ? $arParams['~FILTER_PARAMS'] : array();
 	$APPLICATION->IncludeComponent(
 		'bitrix:crm.interface.filter',
-		isset($arParams['~FILTER_TEMPLATE']) ? $arParams['~FILTER_TEMPLATE'] : 'title',
+		$arParams['~FILTER_TEMPLATE'] ?? 'title',
 		array_merge(
 			array(
 				'GRID_ID' => $gridID,
 				'FILTER_ID' => $gridID,
-				'FILTER' => isset($arParams['~FILTER']) ? $arParams['~FILTER'] : array(),
-				'FILTER_PRESETS' => isset($arParams['~FILTER_PRESETS']) ? $arParams['~FILTER_PRESETS'] : array(),
-				'RENDER_INTO_VIEW' => isset($arParams['~RENDER_FILTER_INTO_VIEW']) ? $arParams['~RENDER_FILTER_INTO_VIEW'] : '',
+				'FILTER' => $arParams['~FILTER'] ?? array(),
+				'FILTER_PRESETS' => $arParams['~FILTER_PRESETS'] ?? array(),
+				'RENDER_INTO_VIEW' => $arParams['~RENDER_FILTER_INTO_VIEW'] ?? '',
 				'DISABLE_NAVIGATION_BAR' => $disableNavigationBar,
-				'NAVIGATION_BAR' => isset($arParams['~NAVIGATION_BAR']) ? $arParams['~NAVIGATION_BAR'] : null,
-				'LIMITS' => isset($arParams['~LIVE_SEARCH_LIMIT_INFO']) ? $arParams['~LIVE_SEARCH_LIMIT_INFO'] : null,
+				'COUNTER_PANEL' => $arParams['~COUNTER_PANEL'] ?? null,
+				'NAVIGATION_BAR' => $arParams['~NAVIGATION_BAR'] ?? null,
+				'LIMITS' => $arParams['~LIVE_SEARCH_LIMIT_INFO'] ?? null,
 				'ENABLE_LIVE_SEARCH' => isset($arParams['~ENABLE_LIVE_SEARCH']) && $arParams['~ENABLE_LIVE_SEARCH'] === true,
 				'DISABLE_SEARCH' => isset($arParams['~DISABLE_SEARCH']) && $arParams['~DISABLE_SEARCH'] === true,
 				'USE_CHECKBOX_LIST_FOR_SETTINGS_POPUP' => \Bitrix\Main\ModuleManager::isModuleInstalled('ui'),

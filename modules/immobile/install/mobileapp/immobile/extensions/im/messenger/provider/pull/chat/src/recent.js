@@ -4,11 +4,11 @@
 jn.define('im/messenger/provider/pull/chat/recent', (require, exports, module) => {
 	const { clone } = require('utils/object');
 	const { BasePullHandler } = require('im/messenger/provider/pull/base');
-	const { RecentConverter } = require('im/messenger/lib/converter');
-	const { ChatRecentUpdateManager } = require('im/messenger/provider/pull/lib/recent/chat');
-	const { LoggerManager } = require('im/messenger/lib/logger');
+	const { RecentDataConverter } = require('im/messenger/lib/converter/data/recent');
+	const { ChatRecentUpdateManager } = require('im/messenger/provider/pull/lib/recent/chat/update-manager');
+	const { getLogger } = require('im/messenger/lib/logger');
 
-	const logger = LoggerManager.getInstance().getLogger('pull-handler--chat-recent');
+	const logger = getLogger('pull-handler--chat-recent');
 
 	/* global userId */
 
@@ -25,7 +25,7 @@ jn.define('im/messenger/provider/pull/chat/recent', (require, exports, module) =
 		 */
 		handleRecentUpdate(params, extra, command)
 		{
-			if (this.interceptEvent(params, extra, command))
+			if (this.interceptEvent(extra))
 			{
 				return;
 			}
@@ -47,12 +47,11 @@ jn.define('im/messenger/provider/pull/chat/recent', (require, exports, module) =
 				? params.users[message.author_id]
 				: { id: 0 };
 
-			const recentItem = RecentConverter.fromPushToModel({
+			const recentItem = RecentDataConverter.fromPushToModel({
 				id: dialogId,
 				chat: params.chat,
 				user: userData,
 				counter: params.counter,
-				liked: false,
 				lastActivityDate: params.lastActivityDate,
 				message,
 			});
@@ -67,7 +66,7 @@ jn.define('im/messenger/provider/pull/chat/recent', (require, exports, module) =
 		 */
 		async handleUserShowInRecent(params, extra, command)
 		{
-			if (this.interceptEvent(params, extra, command))
+			if (this.interceptEvent(extra))
 			{
 				return;
 			}

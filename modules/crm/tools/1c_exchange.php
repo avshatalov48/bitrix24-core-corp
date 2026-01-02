@@ -56,7 +56,7 @@ if ($err_msg == "" && !CCrmPerms::IsAuthorized())
 	$err_msg = "failure\n".GetMessage('CRM_EXCH1C_AUTH_ERROR');
 if ($err_msg == "")
 	$crmPerms = new CCrmPerms($GLOBALS["USER"]->GetID());
-if ($err_msg == "" && !CCrmPerms::IsAdmin() && !$crmPerms->HavePerm('CONFIG', BX_CRM_PERM_CONFIG, 'WRITE'))
+if ($err_msg == "" && !\Bitrix\Crm\Service\Container::getInstance()->getUserPermissions()->isAdmin() && !\Bitrix\Crm\Service\Container::getInstance()->getUserPermissions()->isCrmAdmin())
 	$err_msg = "failure\n".GetMessage('CRM_EXCH1C_PERMISSION_DENIED');
 if ($err_msg == "")
 	$type = isset($_REQUEST["type"]) ? $_REQUEST["type"] : "";

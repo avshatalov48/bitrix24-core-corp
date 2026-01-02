@@ -1,5 +1,6 @@
 <?php
 $MESS["DISK_JS_EL_SETTINGS_LINK_CAN_EDIT_DOCUMENT"] = "құжатты редакциялауға рұқсат ету";
+$MESS["DISK_JS_EL_SETTINGS_LINK_CAN_EDIT_DOCUMENT_BOARD"] = "тақтаны редакциялауға рұқсат етіңіз";
 $MESS["DISK_JS_EL_SETTINGS_LINK_HINT_PROTECT_BY_LIFETIME"] = "уақытты шектеу";
 $MESS["DISK_JS_EL_SETTINGS_LINK_HINT_PROTECT_BY_PASSWORD"] = "құпиясөзді тағайындау";
 $MESS["DISK_JS_EL_SETTINGS_LINK_LABEL_DAY"] = "күн";

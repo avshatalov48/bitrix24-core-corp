@@ -16,7 +16,9 @@ return [
 		'pull/client/events',
 		'layout/ui/stateful-list/pull',
 		'layout/ui/stateful-list/type-generator',
+		'loc',
 		'type',
+		'tokens',
 	],
 	'bundle' => [
 		'./src/cache',

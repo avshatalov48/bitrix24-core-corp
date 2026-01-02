@@ -13,7 +13,7 @@ use Bitrix\Tasks\Flow\Control\Exception\FlowNotUpdatedException;
 use Bitrix\Tasks\Flow\Control\FlowService;
 use Bitrix\Tasks\Flow\Efficiency\Command\EfficiencyCommand;
 use Bitrix\Tasks\Flow\Flow;
-use Bitrix\Tasks\InvalidCommandException;
+use Bitrix\Tasks\Flow\Control\Exception\InvalidCommandException;
 use Psr\Container\NotFoundExceptionInterface;
 
 class EfficiencyService

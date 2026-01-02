@@ -1,7 +1,12 @@
 (() => {
 	const require = (ext) => jn.require(ext);
 	const AppTheme = require('apptheme');
+	const { Notify } = require('notify');
+	const { RequestExecutor } = require('rest');
+	const { BottomSheet } = require('bottom-sheet');
 	const { ButtonsToolbar } = require('layout/ui/buttons-toolbar');
+	const { ProjectNameField } = require('layout/socialnetwork/project/fields/name');
+	const { ProjectTagsField } = require('layout/socialnetwork/project/fields/tags');
 
 	class ProjectEdit extends LayoutComponent
 	{
@@ -24,7 +29,6 @@
 				avatarPreview = (props.avatar.indexOf('http') === 0 ? props.avatar : `${currentDomain}${props.avatar}`);
 			}
 
-			this.layoutWidget = null;
 			this.state = {
 				userId: props.userId,
 				userUploadedFilesFolder: props.userUploadedFilesFolder,
@@ -54,6 +58,11 @@
 			this.ownerId = props.ownerData.id;
 
 			BX.addCustomEvent('onFileUploadStatusChanged', this.onFileUploadStatusChanged.bind(this));
+		}
+
+		get layoutWidget()
+		{
+			return this.props.layoutWidget;
 		}
 
 		getGuid()
@@ -221,7 +230,7 @@
 		{
 			if (!this.state.name || this.state.name.trim() === '')
 			{
-				Notify.showIndicatorError({
+				void Notify.showIndicatorError({
 					text: BX.message('MOBILE_LAYOUT_PROJECT_EDIT_ERROR_NO_TITLE'),
 					hideAfter: 3000,
 				});
@@ -231,7 +240,7 @@
 
 			if (this.state.avatarSelected === 'loaded' && this.state.avatarIsLoading)
 			{
-				Notify.showIndicatorError({
+				void Notify.showIndicatorError({
 					text: BX.message('MOBILE_LAYOUT_PROJECT_EDIT_ERROR_AVATAR_IS_UPLOADING'),
 					hideAfter: 3000,
 				});
@@ -239,19 +248,19 @@
 				return;
 			}
 
-			Notify.showIndicatorLoading();
+			void Notify.showIndicatorLoading();
 			Action.save(this.state, this.ownerId)
 				.then(
 					() => this.close(),
 					(response) => {
-						Notify.showIndicatorError({
+						void Notify.showIndicatorError({
 							text: response.error.description,
 							hideAfter: 3000,
 						});
 					},
 				)
 				.catch(() => {
-					Notify.showIndicatorError({
+					void Notify.showIndicatorError({
 						text: 'Something goes wrong',
 						hideAfter: 3000,
 					});
@@ -263,18 +272,14 @@
 			this.close();
 		}
 
-		close(callback = () => {
-		})
+		close(callback = () => {})
 		{
 			const resultCallback = () => {
 				callback();
 				BX.onCustomEvent('ProjectEdit:close', [{ id: this.state.id }]);
 			};
 
-			if (this.layoutWidget)
-			{
-				this.layoutWidget.close(resultCallback);
-			}
+			this.layoutWidget.close(resultCallback);
 		}
 
 		onFileUploadStatusChanged(eventName, eventData, taskId)
@@ -292,10 +297,12 @@
 					{
 						break;
 					}
+
 					this.setState({
 						avatarFileId: eventData.result.data.file.id,
 						avatarIsLoading: false,
 					});
+
 					break;
 				}
 
@@ -304,16 +311,14 @@
 				case BX.FileUploadEvents.ALL_TASK_COMPLETED:
 				case BX.FileUploadEvents.TASK_TOKEN_DEFINED:
 				case BX.FileUploadEvents.TASK_CREATED:
-				default:
-					// do nothing
-					break;
-
 				case BX.FileUploadEvents.TASK_STARTED_FAILED:
 				case BX.FileUploadEvents.FILE_CREATED_FAILED:
 				case BX.FileUploadEvents.FILE_UPLOAD_FAILED:
 				case BX.FileUploadEvents.TASK_CANCELLED:
 				case BX.FileUploadEvents.TASK_NOT_FOUND:
 				case BX.FileUploadEvents.FILE_READ_ERROR:
+				default:
+					// do nothing
 					break;
 			}
 
@@ -326,14 +331,17 @@
 		static save(fields, ownerId)
 		{
 			return new Promise((resolve, reject) => {
-				Action.saveProjectFields(fields).then(
+				void Action.saveProjectFields(fields).then(
 					(response) => {
-						Action.saveModerators(fields).then(
+						void Action.saveModerators(fields).then(
 							() => {
-								Action.saveOwner(fields, ownerId).then(
-									() => resolve(),
-									(response) => reject(response),
-								).catch(console.error);
+								Action.saveOwner(fields, ownerId)
+									.then(
+										() => resolve(),
+										(response) => reject(response),
+									)
+									.catch(console.error)
+								;
 							},
 							() => reject(response),
 						);
@@ -363,8 +371,7 @@
 					imageFileId = false;
 				}
 
-				(new RequestExecutor('sonet_group.update', {
-
+				new RequestExecutor('sonet_group.update', {
 					GROUP_ID: fields.id,
 					NAME: fields.name,
 					DESCRIPTION: fields.description,
@@ -376,12 +383,14 @@
 					INITIATE_PERMS: fields.initiatePerms,
 					KEYWORDS: fields.tags.join(','),
 					...Action.typeToFields(fields.type),
-				}))
+				})
 					.call()
 					.then(
 						(response) => resolve(response),
 						(response) => reject(response),
-					).catch(console.error);
+					)
+					.catch(console.error)
+				;
 			});
 		}
 
@@ -390,95 +399,84 @@
 			return new Promise((resolve, reject) => {
 				const moderatorsIds = fields.moderatorsData.map((item) => item.id);
 
-				(new RequestExecutor('socialnetwork.api.usertogroup.setModerators', {
+				new RequestExecutor('socialnetwork.api.usertogroup.setModerators', {
 					groupId: fields.id,
 					userIds: (moderatorsIds.length > 0 ? moderatorsIds : [0]),
-				}))
+				})
 					.call()
 					.then(
 						(response) => resolve(response),
 						(response) => reject(response),
-					).catch(console.error);
+					)
+					.catch(console.error)
+				;
 			});
 		}
 
 		static saveOwner(fields, ownerId)
 		{
+			if (ownerId === fields.ownerData.id)
+			{
+				return Promise.resolve();
+			}
+
 			return new Promise((resolve, reject) => {
-				if (ownerId === fields.ownerData.id)
-				{
-					resolve();
-
-					return;
-				}
-
-				(new RequestExecutor('socialnetwork.api.usertogroup.setowner', {
+				new RequestExecutor('socialnetwork.api.usertogroup.setowner', {
 					userId: fields.ownerData.id,
 					groupId: fields.id,
-				}))
+				})
 					.call()
 					.then(
 						(response) => resolve(response),
 						(response) => reject(response),
-					).catch(console.error);
+					)
+					.catch(console.error)
+				;
 			});
 		}
 
 		static typeToFields(type)
 		{
-			if (!Object.keys(ProjectEdit.projectTypes).includes(type))
+			switch (type)
 			{
-				type = ProjectEdit.projectTypes.public;
-			}
+				case ProjectEdit.projectTypes.secret:
+					return {
+						OPENED: 'N',
+						VISIBLE: 'N',
+					};
 
-			let isOpened = 'N';
-			let isVisible = 'N';
+				case ProjectEdit.projectTypes.private:
+					return {
+						OPENED: 'N',
+						VISIBLE: 'Y',
+					};
 
-			if (type === ProjectEdit.projectTypes.private)
-			{
-				isVisible = 'Y';
+				case ProjectEdit.projectTypes.public:
+				default:
+					return {
+						OPENED: 'Y',
+						VISIBLE: 'Y',
+					};
 			}
-			else if (type === ProjectEdit.projectTypes.public)
-			{
-				isOpened = 'Y';
-				isVisible = 'Y';
-			}
-
-			return {
-				OPENED: isOpened,
-				VISIBLE: isVisible,
-			};
 		}
 	}
 
 	class ProjectEditManager
 	{
-		static open(data, parentWidget = null)
+		/**
+		 * @param data
+		 * @param {PageManager} parentWidget
+		 */
+		static open(data, parentWidget = PageManager)
 		{
-			const projectEdit = new ProjectEdit(data);
-			const widgetParams = {
-				backdrop: {
-					bounceEnable: true,
-					swipeAllowed: true,
-					showOnTop: true,
-					hideNavigationBar: true,
-					horizontalSwipeAllowed: false,
-				},
-				onReady: (layoutWidget) => {
-					projectEdit.layoutWidget = layoutWidget;
-					layoutWidget.showComponent(projectEdit);
-				},
-				onError: console.error,
-			};
-
-			if (parentWidget)
-			{
-				parentWidget.openWidget('layout', widgetParams);
-			}
-			else
-			{
-				PageManager.openWidget('layout', widgetParams);
-			}
+			void new BottomSheet({
+				component: (layoutWidget) => new ProjectEdit({ ...data, layoutWidget }),
+			})
+				.setParentWidget(parentWidget)
+				.setBackgroundColor(AppTheme.colors.bgPrimary)
+				.showOnTop()
+				.open()
+			;
 		}
 	}
 

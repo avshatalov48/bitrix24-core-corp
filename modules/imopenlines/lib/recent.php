@@ -214,6 +214,27 @@ class Recent
 		return $result;
 	}
 
+	public static function isNonAnsweredChat(int $chatId, ?int $userId = null): bool
+	{
+		$userId = \Bitrix\Im\Common::getUserId($userId);
+		if (!$userId)
+		{
+			return false;
+		}
+
+		$recentRow = RecentTable::getRow([
+			'select' => [
+				'CHAT_ID'
+			],
+			'filter' => [
+				'=USER_ID' => $userId,
+				'=CHAT_ID' => $chatId,
+			],
+		]);
+
+		return !is_null($recentRow);
+	}
+
 	public static function getUserIdsByChatId(int $chatId): array
 	{
 		$recentRows = RecentTable::getList([

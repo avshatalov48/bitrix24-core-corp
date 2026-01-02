@@ -160,6 +160,7 @@ final class TasksStagesProvider
 	private function fillWithDeadlineStages(array $tasks): array
 	{
 		$possibleStages = $this->fetchPossibleStages();
+		$timeZoneOffset = \CTimeZone::GetOffset($this->userId);
 		$deadlines = [];
 		$periods = [];
 		$result = [];
@@ -179,8 +180,8 @@ final class TasksStagesProvider
 		{
 			if ($task['DEADLINE'])
 			{
-				$taskDeadline = strtotime($task['DEADLINE']);
-				$now = time();
+				$taskDeadline = strtotime($task['DEADLINE']) + $timeZoneOffset;
+				$now = time() + $timeZoneOffset;
 				$stageId = null;
 
 				if (!$taskDeadline)

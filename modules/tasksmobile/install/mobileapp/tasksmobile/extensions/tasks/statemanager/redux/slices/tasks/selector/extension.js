@@ -21,7 +21,32 @@ jn.define('tasks/statemanager/redux/slices/tasks/selector', (require, exports, m
 				return entity.guid && entity.guid === taskId;
 			});
 		},
-		(taskById, taskByGuid) => (taskById || taskByGuid),
+		(state, taskId, ownerId = env.userId) => ownerId,
+		(taskById, taskByGuid, ownerId) => {
+			const task = taskById || taskByGuid;
+
+			return task ? {
+				...task,
+				isPinned: task.isPinned[ownerId],
+			} : task;
+		},
+	);
+
+	const selectTaskEntities = createDraftSafeSelector(
+		(state) => selectEntities(state),
+		(state, ownerId = env.userId) => ownerId,
+		(tasks, ownerId) => {
+			const preparedTasks = {};
+
+			Object.keys(tasks).forEach((id) => {
+				preparedTasks[id] = {
+					...tasks[id],
+					isPinned: tasks[id].isPinned[ownerId],
+				};
+			});
+
+			return preparedTasks;
+		},
 	);
 
 	const selectIsCreator = createDraftSafeSelector(
@@ -100,6 +125,7 @@ jn.define('tasks/statemanager/redux/slices/tasks/selector', (require, exports, m
 						deadline: task.deadline,
 						isCompleted: selectIsCompleted(task),
 						status: task.status,
+						canUpdate: task.canUpdate,
 					},
 				}))
 				.sort((a, b) => a.customData.isCompleted - b.customData.isCompleted);
@@ -144,8 +170,7 @@ jn.define('tasks/statemanager/redux/slices/tasks/selector', (require, exports, m
 							status: relatedTask.status,
 						},
 					};
-				})
-					.sort((a, b) => a.customData.isCompleted - b.customData.isCompleted);
+				}).sort((a, b) => a.customData.isCompleted - b.customData.isCompleted);
 			}
 
 			return [];
@@ -185,7 +210,13 @@ jn.define('tasks/statemanager/redux/slices/tasks/selector', (require, exports, m
 
 	const selectWithCreationError = createDraftSafeSelector(
 		(state) => selectAll(state),
-		(allTasks) => allTasks.filter((task) => task.isCreationErrorExist),
+		(state, ownerId = env.userId) => ownerId,
+		(allTasks, ownerId) => allTasks
+			.map((task) => ({
+				...task,
+				isPinned: task.isPinned[ownerId],
+			}))
+			.filter((task) => task.isCreationErrorExist),
 	);
 
 	const selectIsExpiredSoon = createDraftSafeSelector(
@@ -282,9 +313,12 @@ jn.define('tasks/statemanager/redux/slices/tasks/selector', (require, exports, m
 	);
 
 	const selectActions = createDraftSafeSelector(
-		(task) => task,
-		selectIsAuditor,
-		(task, isAuditor) => ({
+		({ task }) => task,
+		({ isProjectContext }) => isProjectContext,
+		({ isCurrentUser }) => isCurrentUser,
+		({ task }) => selectIsAuditor(task),
+		({ task }) => selectIsMember(task),
+		(task, isProjectContext, isCurrentUser, isAuditor, isMember) => ({
 			read: task.canRead,
 			update: task.canUpdate,
 			updateDeadline: task.canUpdateDeadline,
@@ -299,6 +333,7 @@ jn.define('tasks/statemanager/redux/slices/tasks/selector', (require, exports, m
 			updateElapsedTime: task.canUpdateElapsedTime,
 			addChecklist: task.canAddChecklist,
 			updateChecklist: task.canUpdateChecklist,
+			editChecklist: task.canUpdateChecklist || task.canAddChecklist,
 			remove: task.canRemove,
 			startTimer: (task.canUseTimer && !task.isTimerRunningForCurrentUser),
 			pauseTimer: (task.canUseTimer && task.isTimerRunningForCurrentUser),
@@ -311,10 +346,10 @@ jn.define('tasks/statemanager/redux/slices/tasks/selector', (require, exports, m
 			defer: task.canDefer,
 			follow: !isAuditor,
 			unfollow: isAuditor,
-			pin: !task.isPinned,
-			unpin: task.isPinned,
-			mute: !task.isMuted,
-			unmute: task.isMuted,
+			pin: isCurrentUser && (isProjectContext ? !task.isPinnedInGroup : !task.isPinned),
+			unpin: isCurrentUser && (isProjectContext ? task.isPinnedInGroup : task.isPinned),
+			mute: isMember && !task.isMuted,
+			unmute: isMember && task.isMuted,
 			favoriteAdd: !task.isInFavorites,
 			favoriteDelete: task.isInFavorites,
 			ping: true,
@@ -322,6 +357,7 @@ jn.define('tasks/statemanager/redux/slices/tasks/selector', (require, exports, m
 			copy: true,
 			copyId: true,
 			extraSettings: task.canUpdate,
+			canCreate: task.canCreate,
 		}),
 	);
 
@@ -338,13 +374,20 @@ jn.define('tasks/statemanager/redux/slices/tasks/selector', (require, exports, m
 		},
 	);
 
+	const selectRunningTask = createDraftSafeSelector(
+		(state) => selectAll(state),
+		(allTasks) => {
+			return allTasks.find((task) => task.isTimerRunningForCurrentUser === true) ?? null;
+		},
+	);
+
 	module.exports = {
 		selectAll,
 		selectById,
-		selectEntities,
 		selectIds,
 		selectTotal,
 		selectByTaskIdOrGuid,
+		selectTaskEntities,
 
 		selectIsCreator,
 		selectIsResponsible,
@@ -377,5 +420,6 @@ jn.define('tasks/statemanager/redux/slices/tasks/selector', (require, exports, m
 		selectActions,
 
 		selectTimerState,
+		selectRunningTask,
 	};
 });

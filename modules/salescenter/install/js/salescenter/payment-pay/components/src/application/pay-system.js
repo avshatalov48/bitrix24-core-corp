@@ -12,7 +12,7 @@ BitrixVue.component('salescenter-payment_pay-components-application-pay_system',
 	mixins: [MixinMethods],
 	data()
 	{
-		let settings = new Settings(this.options);
+		const settings = new Settings(this.options);
 
 		return {
 			stageType: StageType,
@@ -33,9 +33,8 @@ BitrixVue.component('salescenter-payment_pay-components-application-pay_system',
 		initUserConsent()
 		{
 			this.userConsentManager = new UserConsentManager({
-				containerId: this.consent.containerId,
-				accepted: this.consent.accepted,
-				eventName: this.consent.eventName
+				eventName: this.consent.eventName,
+				items: this.consent.items,
 			});
 		},
 		initBackendProvider()
@@ -51,7 +50,7 @@ BitrixVue.component('salescenter-payment_pay-components-application-pay_system',
 		{
 			if (this.loading)
 			{
-				return false;
+				return;
 			}
 
 			this.userConsentManager.askUserToPerform(() => {
@@ -63,7 +62,8 @@ BitrixVue.component('salescenter-payment_pay-components-application-pay_system',
 		},
 		prepareParamsStages()
 		{
-			let settings = new Settings(this.options);
+			const settings = new Settings(this.options);
+
 			return {
 				paySystemList: {
 					paySystems: settings.get('app.paySystems', []),
@@ -86,11 +86,13 @@ BitrixVue.component('salescenter-payment_pay-components-application-pay_system',
 		prepareUserConsentSettings(settings)
 		{
 			return {
-				id: settings.get('consent.id'),
+				items: settings.get('consent.items'),
 				title: settings.get('consent.title'),
 				eventName: settings.get('consent.eventName'),
-				accepted: settings.get('consent.accepted'),
 				containerId: settings.get('consent.containerId'),
+				autoSave: settings.get('consent.autoSave'),
+				originatorId: settings.get('consent.originatorId'),
+				originId: settings.get('consent.originId'),
 			};
 		},
 	},
@@ -102,14 +104,16 @@ BitrixVue.component('salescenter-payment_pay-components-application-pay_system',
 				:paySystems="stages.paySystemList.paySystems"
 				:selectedPaySystem="stages.paySystemList.selectedPaySystem"
 				:loading="loading"
-                :title="stages.paySystemList.title"
+				:title="stages.paySystemList.title"
 				@start-payment="startPayment($event)">
 				<template v-slot:user-consent>
 					<salescenter-payment_pay-components-payment_system-user_consent
-						:id="consent.id"
+						:items="consent.items"
 						:title="consent.title"
-						:checked="consent.accepted"
-						:submitEventName="consent.eventName"/>
+						:submitEventName="consent.eventName"
+						:autoSave="consent.autoSave"
+						:originatorId="consent.originatorId"
+						:originId="consent.originId"/>
 				</template>
 			</salescenter-payment_pay-components-payment_system-pay_system_list>
 			<salescenter-payment_pay-components-payment_system-error_box

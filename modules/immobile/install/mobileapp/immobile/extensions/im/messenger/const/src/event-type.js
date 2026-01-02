@@ -37,6 +37,7 @@ jn.define('im/messenger/const/event-type', (require, exports, module) => {
 			createChat: 'ImMobile.Messenger.Chat:create',
 			createChannel: 'ImMobile.Messenger.Channel:create',
 			createCollab: 'ImMobile.Messenger.Collab:create',
+			createCopilot: 'ImMobile.Messenger.Copilot:create',
 			refresh: 'ImMobile.Messenger:refresh',
 			init: 'ImMobile.Messenger.Init',
 			afterRefreshSuccess: 'ImMobile.Messenger:afterRefreshSuccess',
@@ -44,6 +45,14 @@ jn.define('im/messenger/const/event-type', (require, exports, module) => {
 			destroyDialog: 'ImMobile.Messenger:destroyDialog',
 			dialogAccessError: 'ImMobile.Messenger:dialogAccessError',
 			updatePlanLimitsData: 'ImMobile.Messenger:updatePlanLimitsData',
+			openVoteResult: 'ImMobile.Messenger.VoteResult:open',
+			voteResultPullSubscribed: 'ImMobile.Messenger.VoteResult:pullSubscribed',
+			voteResultPullUnsubscribed: 'ImMobile.Messenger.VoteResult:pullUnsubscribed',
+			clearDatabase: 'ImMobile.Messenger:clearDatabase',
+			clearDatabaseResult: 'ImMobile.Messenger:clearDatabaseResult',
+			dev: {
+				openConsole: 'ImMobile.Messenger.Dev:openConsole',
+			},
 		},
 		/** Extension events */
 		recent: {
@@ -78,6 +87,7 @@ jn.define('im/messenger/const/event-type', (require, exports, module) => {
 			audioRecordingStart: 'audioRecordingStart',
 			audioRecordingFinish: 'audioRecordingFinish',
 			submitAudio: 'submitAudio',
+			audioTranscriptionTap: 'transcriptionTap',
 			scrollBegin: 'scrollBegin',
 			scrollEnd: 'scrollEnd',
 			messageTap: 'messageTap',
@@ -98,7 +108,10 @@ jn.define('im/messenger/const/event-type', (require, exports, module) => {
 			messageAttachImageTap: 'attachImageTap',
 			messageAttachFileTap: 'attachFileTap',
 			messageKeyboardButtonTap: 'messageKeyboardButtonTap',
+			voteAnswerTap: 'voteAnswerTap',
+			voteButtonTap: 'voteButtonTap',
 			copilotFootnoteTap: 'copilotFootnoteTap',
+			footnoteTap: 'footnoteTap',
 			urlTap: 'urlTap',
 			imageTap: 'imageTap',
 			audioTap: 'audioTap',
@@ -125,6 +138,7 @@ jn.define('im/messenger/const/event-type', (require, exports, module) => {
 			richCancelTap: 'richCancelTap',
 			channelCommentTap: 'channelCommentTap',
 			updateUploadProgressByMessageId: 'updateUploadProgressByMessageId',
+			bbcodeImgTap: 'bbcodeImgTap',
 			external: {
 				goToMessageContext: 'ImMobile.Messenger.Dialog:goToMessageContext',
 				scrollToBottom: 'ImMobile.Messenger.Dialog:scrollToBottom',
@@ -140,6 +154,9 @@ jn.define('im/messenger/const/event-type', (require, exports, module) => {
 				deleteComment: 'ImMobile.Messenger.Dialog:deleteComment',
 				resend: 'ImMobile.Messenger.Dialog:resend',
 			},
+			internal: {
+				readMessages: 'ImMobile.Messenger.Dialog:readMessages',
+			},
 
 			textField: {
 				submit: 'submit',
@@ -150,12 +167,16 @@ jn.define('im/messenger/const/event-type', (require, exports, module) => {
 				changeState: 'changeState',
 				focus: 'focus',
 				blur: 'blur',
+				actionButtonTap: 'actionButtonTap',
+				actionButtonMenuItemTap: 'actionButtonMenuItemTap',
+				actionButtonMenuHidden: 'actionButtonMenuHidden',
 			},
 			statusField: {
 				tap: 'tap',
 			},
 			chatJoinButton: {
 				tap: 'tap',
+				hideDone: 'hideDone',
 			},
 			pinPanel: {
 				itemTap: 'itemTap',
@@ -170,7 +191,23 @@ jn.define('im/messenger/const/event-type', (require, exports, module) => {
 			},
 			actionPanel: {
 				buttonTap: 'buttonTap',
+				disabledButtonTap: 'disabledButtonTap',
 			},
+			mentionPanel: {
+				itemTap: 'itemTap',
+			},
+			commentsButton: {
+				tap: 'tap',
+			},
+			notifyPanel: {
+				buttonTap: 'buttonTap',
+			},
+		},
+		callManager: {
+			activeCallsReceived: 'ImMobile.CallManager:activeCallsReceived',
+			updateCallToken: 'ImMobile.CallManager:updateCallToken',
+			createCall: 'onCallInvite',
+			setCurrentUser: 'ImMobile.CallManager:setCurrentUser',
 		},
 		/** Integration (other components events) */
 		chatDialog: {
@@ -201,8 +238,12 @@ jn.define('im/messenger/const/event-type', (require, exports, module) => {
 		navigation: {
 			tabChanged: 'ImMobile.Navigation:tabChanged',
 			broadCastEventWithTabChange: 'ImMobile.Navigation:broadCastEventWithChangeTab',
+			broadCastEventCheckTabPreload: 'ImMobile.Navigation:broadCastEventCheckTabPreload',
 			changeTab: 'ImMobile.Navigation:changeTab',
 			changeTabResult: 'ImMobile.Navigation:changeTabResult',
+			onRootTabsSelected: 'onTabsSelected',
+			closeAll: 'ImMobile.Navigation:closeAll',
+			closeAllComplete: 'ImMobile.Navigation:closeAllComplete',
 		},
 		sidebar: {
 			destroy: 'sidebarDestroy',
@@ -212,6 +253,20 @@ jn.define('im/messenger/const/event-type', (require, exports, module) => {
 		},
 		calendar: {
 			addMeeting: 'Calendar.EventEditForm::onAfterEventSave',
+		},
+		push: {
+			messageBatch: 'ImMobile.Push:messageBatch',
+			completeExecuteBatch: 'ImMobile.Push:completeExecuteBatch',
+		},
+		counters: {
+			clearAll: 'ImMobile.Counters:clearAll',
+		},
+		audio: {
+			audioPanelReturnClick: 'audioPanelReturnClick',
+		},
+		recentManager: {
+			initController: 'RecentManager::initController',
+			resumeController: 'RecentManager::resumeController',
 		},
 	});
 

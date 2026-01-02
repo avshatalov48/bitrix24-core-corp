@@ -12,8 +12,11 @@ CREATE TABLE b_transformer_command (
 	UPDATE_TIME timestamp,
 	SEND_TIME timestamp,
 	CONTROLLER_URL varchar(255),
+	DEADLINE timestamp,
+
 	PRIMARY KEY (ID)
 );
 CREATE UNIQUE INDEX ux_b_transformer_command_guid ON b_transformer_command (guid);
 CREATE INDEX ix_b_transformer_command_file ON b_transformer_command (file);
 CREATE INDEX ix_b_transformer_command_update_time_error ON b_transformer_command (update_time, error);
+CREATE INDEX ix_b_transformer_command_status_deadline ON b_transformer_command (status, deadline);

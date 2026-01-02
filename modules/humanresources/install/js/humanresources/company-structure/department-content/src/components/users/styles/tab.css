@@ -9,3 +9,43 @@
 .--with-add .hr-department-detail-content__empty-user-list-item-image {
 	background-image: url('../images/empty-user-item-with-add.svg') ;
 }
+
+.hr-department-detail-content__empty-tab-user-not-found-icon {
+	height: 121px;
+	width: 121px;
+	background-image: url('../images/user-not-found.svg');
+}
+
+.hr-department-detail-content__empty-tab-add-user-icon {
+	height: 121px;
+	width: 121px;
+	background-image: url('../images/add-user.svg');
+}
+
+.hr-department-detail-content__empty-tab-cant-add-user-icon {
+	height: 121px;
+	width: 121px;
+	background-image: url('../images/cant-add-user.svg');
+}
+
+.hr-department-detail-content__empty-tab-empty-department-icon {
+	height: 121px;
+	width: 121px;
+	background-image: url('../images/empty-department.svg');
+}
+
+body.--user-dragging .hr-department-detail-content__user-container:hover {
+	pointer-events: none;
+}
+
+.hr-department-detail-content__user-role-select {
+	margin-top: 10px;
+}
+
+.hr-department-detail-content__user-role-select .ui-ctl-element {
+	border-radius: 9px;
+}
+
+.hr-department-detail-content__user-role-select .ui-ctl-after {
+	right: 0;
+}

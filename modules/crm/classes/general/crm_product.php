@@ -1690,23 +1690,19 @@ class CCrmProduct
 	// Checking User Permissions -->
 	public static function CheckCreatePermission()
 	{
-		$perms = CCrmPerms::GetCurrentUserPermissions();
-		return $perms->HavePerm('CONFIG', BX_CRM_PERM_CONFIG, 'WRITE');
+		return \Bitrix\Crm\Service\Container::getInstance()->getUserPermissions()->product()->canAdd();
 	}
 	public static function CheckUpdatePermission($ID)
 	{
-		$perms = CCrmPerms::GetCurrentUserPermissions();
-		return $perms->HavePerm('CONFIG', BX_CRM_PERM_CONFIG, 'WRITE');
+		return \Bitrix\Crm\Service\Container::getInstance()->getUserPermissions()->product()->canUpdate();
 	}
 	public static function CheckDeletePermission($ID)
 	{
-		$perms = CCrmPerms::GetCurrentUserPermissions();
-		return $perms->HavePerm('CONFIG', BX_CRM_PERM_CONFIG, 'WRITE');
+		return \Bitrix\Crm\Service\Container::getInstance()->getUserPermissions()->product()->canDelete();
 	}
 	public static function CheckReadPermission($ID = 0)
 	{
-		$perms = CCrmPerms::GetCurrentUserPermissions();
-		return $perms->HavePerm('CONFIG', BX_CRM_PERM_CONFIG, 'READ');
+		return \Bitrix\Crm\Service\Container::getInstance()->getUserPermissions()->product()->canRead();
 	}
 	// <-- Checking User Permissions
 }

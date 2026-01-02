@@ -36,6 +36,7 @@ jn.define('tasks/flow-list/simple-list/items/flow-redux/src/flow', (require, exp
 				layout: this.props.layout,
 				onCloseButtonClick: this.props.onCloseButtonClick,
 				analyticsLabel: this.props.analyticsLabel,
+				menuViewRef: this.props.menuViewRef,
 			});
 		}
 

@@ -43,7 +43,7 @@ $hasBitrix24Link = is_string($arResult['bitrix24Link']);
 		const container = document.getElementById('booking-confirm-page');
 		const booking = <?= \Bitrix\Main\Web\Json::encode($arResult['booking']) ?>;
 		const hash = '<?= $arResult['hash']; ?>';
-		const company = '<?= $arResult['company']; ?>';
+		const company = '<?= CUtil::JSEscape($arResult['company']); ?>';
 		const context = '<?= $arResult['context']; ?>';
 
 		new BX.Booking.ConfirmPagePublic({

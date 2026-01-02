@@ -11,7 +11,7 @@ final class WebForm extends AbstractPermissions
 
 	protected function hasPermissions(): bool
 	{
-		return $this->userPermissions->canWriteWebFormConfig();
+		return $this->userPermissions->webForm()->canWriteConfig();
 	}
 
 	protected function title(): string

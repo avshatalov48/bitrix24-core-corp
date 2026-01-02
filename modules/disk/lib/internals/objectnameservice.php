@@ -89,21 +89,21 @@ final class ObjectNameService
 			return $this->buildRenameResult($this->getDesiredName());
 		}
 
+		$nonUniqueError = $this->createNonUniqueError();
+
+		if ($this->lock() === false)
+		{
+			$result = new Result();
+			$result->addErrors([
+				$nonUniqueError,
+				$this->createNonUniqueLockError(),
+			]);
+
+			return $result;
+		}
+
 		if ($this->shouldGenerateUniqueName === false)
 		{
-			$nonUniqueError = $this->createNonUniqueError();
-
-			if ($this->lock() === false)
-			{
-				$result = new Result();
-				$result->addErrors([
-					$nonUniqueError,
-					$this->createNonUniqueLockError(),
-				]);
-				
-				return $result;
-			}
-
 			$uniqueResult = $this->isUniqueName(
 				excludeId: $this->excludeId ?? null,
 				returnOpponentId: $this->shouldRequireOpponentId

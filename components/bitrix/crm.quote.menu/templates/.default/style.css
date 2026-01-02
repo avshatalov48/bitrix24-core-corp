@@ -51,3 +51,16 @@ div.bx-popup-menu td.popupmenu div.popupitem td.gutter div.btn-add-calendar
 {
 	background: url("images/buttons/calendar.gif") no-repeat left top !important;
 }
+
+[data-role="crm-interface-toolbar-type2"] .intranet-binding-menu-btn.ui-btn-split:not(.--air) {
+	--ui-btn-border-color: #c6cdd3 !important;
+	--ui-btn-colors-after-bg: #535c69 !important;
+	--ui-btn-colors-before-bg: #535c69 !important;
+	--ui-btn-background-hover: #cfd4d8 !important;
+	--ui-btn-background: transparent !important;
+	background-color: transparent !important;
+}
+
+[data-role="crm-interface-toolbar-type2"] .intranet-binding-menu-btn.ui-btn-split:not(.--air) #intranet_binding_menu_crm_detail_top {
+	color: rgb(83, 91, 105) !important;
+}

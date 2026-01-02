@@ -7,11 +7,34 @@ namespace Bitrix\Booking\Command\Resource;
 use Bitrix\Booking\Entity;
 use Bitrix\Booking\Internals\Container;
 use Bitrix\Booking\Internals\Exception\Resource\CreateResourceException;
+use Bitrix\Booking\Internals\Repository\ResourceRepositoryInterface;
+use Bitrix\Booking\Internals\Repository\ResourceSlotRepositoryInterface;
+use Bitrix\Booking\Internals\Repository\ResourceTypeRepositoryInterface;
+use Bitrix\Booking\Internals\Repository\TransactionHandlerInterface;
 use Bitrix\Booking\Internals\Service\Journal\JournalEvent;
+use Bitrix\Booking\Internals\Service\Journal\JournalServiceInterface;
 use Bitrix\Booking\Internals\Service\Journal\JournalType;
+use Bitrix\Booking\Internals\Service\ResourceService;
 
 class AddResourceCommandHandler
 {
+	private TransactionHandlerInterface $transactionHandler;
+	private ResourceRepositoryInterface $resourceRepository;
+	private ResourceService $resourceService;
+	private JournalServiceInterface $journalService;
+	private ResourceTypeRepositoryInterface $resourceTypeRepository;
+	private ResourceSlotRepositoryInterface $resourceSlotRepository;
+
+	public function __construct()
+	{
+		$this->transactionHandler = Container::getTransactionHandler();
+		$this->resourceRepository = Container::getResourceRepository();
+		$this->resourceService = Container::getResourceService();
+		$this->journalService = Container::getJournalService();
+		$this->resourceTypeRepository = Container::getResourceTypeRepository();
+		$this->resourceSlotRepository = Container::getResourceSlotRepository();
+	}
+
 	public function __invoke(AddResourceCommand $command): Entity\Resource\Resource
 	{
 		if (!$this->isValidType($command))
@@ -19,23 +42,25 @@ class AddResourceCommandHandler
 			throw new CreateResourceException('ResourceType not found');
 		}
 
-		return Container::getTransactionHandler()->handle(
+		return $this->transactionHandler->handle(
 			fn: function() use ($command) {
 				// save resource
 				$command->resource->setCreatedBy($command->createdBy);
-				$resourceId = Container::getResourceRepository()->save($command->resource);
-				$resource = Container::getResourceRepository()->getById($resourceId);
+				$resourceId = $this->resourceRepository->save($command->resource);
+				$resource = $this->resourceRepository->getById($resourceId);
 
 				if (!$resource)
 				{
 					throw new CreateResourceException();
 				}
 
+				$this->resourceService->handleResourceEntities($resource, $command->resource->getEntityCollection());
+
 				// save slot ranges if any provided
 				$this->handleSlotRanges($command, $resource);
 
 				// fire new ResourceCreated event
-				Container::getJournalService()->append(
+				$this->journalService->append(
 					new JournalEvent(
 						entityId: $resource->getId(),
 						type: JournalType::ResourceAdded,
@@ -64,7 +89,7 @@ class AddResourceCommandHandler
 			return false;
 		}
 
-		return Container::getResourceTypeRepository()->isExists($typeId);
+		return $this->resourceTypeRepository->isExists($typeId);
 	}
 
 	private function handleSlotRanges(AddResourceCommand $command, Entity\Resource\Resource $resource): void
@@ -80,7 +105,7 @@ class AddResourceCommandHandler
 				$range->setTypeId($resource->getType()->getId());
 			}
 
-			Container::getResourceSlotRepository()->save($slotRanges);
+			$this->resourceSlotRepository->save($slotRanges);
 			$resource->setSlotRanges($slotRanges);
 		}
 	}

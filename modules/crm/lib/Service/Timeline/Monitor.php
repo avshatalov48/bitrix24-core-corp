@@ -4,60 +4,46 @@ namespace Bitrix\Crm\Service\Timeline;
 
 use Bitrix\Crm\Activity\Entity\IncomingChannelTable;
 use Bitrix\Crm\ActivityTable;
-use Bitrix\Crm\Integration\PullManager;
+use Bitrix\Crm\EO_Activity;
 use Bitrix\Crm\Item;
 use Bitrix\Crm\ItemIdentifier;
-use Bitrix\Crm\Kanban\Entity;
 use Bitrix\Crm\Service\Container;
-use Bitrix\Crm\Service\Context;
 use Bitrix\Crm\Service\Factory;
 use Bitrix\Crm\Timeline\ActivityController;
+use Bitrix\Crm\Timeline\Entity\EO_Timeline;
 use Bitrix\Crm\Timeline\Entity\TimelineTable;
 use Bitrix\Crm\Traits;
-use Bitrix\Main\Application;
-use Bitrix\Main\Loader;
-use Bitrix\Main\ORM\Query\Query;
-use Bitrix\Main\Type\Collection;
-use Bitrix\Main\Type\DateTime;
+use Bitrix\Main\InvalidOperationException;
+use Bitrix\Main\ORM\Query\Filter\ConditionTree;
 
 final class Monitor
 {
 	use Traits\Singleton;
+	use Traits\BackgroundProcessor;
 
-	private static bool $isAgentRunning = false;
-
-	/** @var Array<int, Array<int, Array<mixed, mixed>>> - [entityTypeId => [itemId => ['recalculate' => bool]]] */
+	/** @var array<int, array<int, ItemIdentifier>> - [entityTypeId => [itemId => ItemIdentifier]] */
 	private array $changes = [];
+	/** @var array<int, array<int, Item>> - [entityTypeId => [itemId => Item]] */
+	private array $loadedTimelineOwners = [];
+	private array $suitableTimelineEntriesCache = [];
 
-	/** @var string|TimelineTable */
+	// no type hints for managers since they can be mocked in tests
+
+	/**
+	 * @var string|TimelineTable
+	 * @noinspection PhpMissingFieldTypeInspection
+	 */
 	private $timelineDataManager = TimelineTable::class;
-	/** @var string|ActivityTable */
+	/**
+	 * @var string|ActivityTable
+	 * @noinspection PhpMissingFieldTypeInspection
+	 */
 	private $activityDataManager = ActivityTable::class;
-	/** @var string|IncomingChannelTable */
+	/**
+	 * @var string|IncomingChannelTable
+	 * @noinspection PhpMissingFieldTypeInspection
+	 */
 	private $incomingChannelDataManager = IncomingChannelTable::class;
-
-	private $suitableActivitiesCache = [];
-	private $suitableTimelineEntriesCache = [];
-
-	private function __construct()
-	{
-		if (!self::$isAgentRunning)
-		{
-			Application::getInstance()->addBackgroundJob(fn() => $this->processChanges());
-		}
-	}
-
-	public function isTimelineChanged(ItemIdentifier $timelineOwner): bool
-	{
-		$change = $this->changes[$timelineOwner->getEntityTypeId()][$timelineOwner->getEntityId()] ?? null;
-
-		return ($change && $change['recalculate']);
-	}
-
-	public function onTimelineEntryAdd(ItemIdentifier $timelineOwner): void
-	{
-		$this->upsertChange($timelineOwner, true);
-	}
 
 	public function onTimelineEntryAddIfSuitable(ItemIdentifier $timelineOwner, int $timelineEntryId): void
 	{
@@ -67,22 +53,19 @@ final class Monitor
 		}
 	}
 
-	public function onTimelineEntryRemove(ItemIdentifier $timelineOwner): void
+	public function onTimelineEntryAdd(ItemIdentifier $timelineOwner): void
 	{
-		$this->upsertChange($timelineOwner, true);
+		$this->upsertChange($timelineOwner);
 	}
 
 	public function onTimelineEntryRemoveIfSuitable(ItemIdentifier $timelineOwner, int $timelineEntryId): void
 	{
-		if ($this->isTimelineEntrySuitable($timelineOwner, $timelineEntryId))
-		{
-			$this->onTimelineEntryRemove($timelineOwner);
-		}
-	}
+		// no-op, last activity cant decrease
+ 	}
 
-	public function onActivityAdd(ItemIdentifier $timelineOwner): void
+	public function onTimelineEntryRemove(ItemIdentifier $timelineOwner): void
 	{
-		$this->upsertChange($timelineOwner, true);
+		// no-op, last activity cant decrease
 	}
 
 	public function onActivityAddIfSuitable(ItemIdentifier $timelineOwner, int $activityId): void
@@ -93,107 +76,199 @@ final class Monitor
 		}
 	}
 
-	public function onActivityRemove(ItemIdentifier $timelineOwner): void
+	public function onActivityAdd(ItemIdentifier $timelineOwner): void
 	{
-		$this->upsertChange($timelineOwner, true);
+		$this->upsertChange($timelineOwner);
 	}
 
 	public function onActivityRemoveIfSuitable(ItemIdentifier $timelineOwner, int $activityId): void
 	{
-		if ($this->isActivitySuitable($activityId))
-		{
-			$this->onActivityRemove($timelineOwner);
-		}
+		// no-op, last activity cant decrease
 	}
 
-	public function onUncompletedActivityChange(ItemIdentifier $timelineOwner): void
+	public function onActivityRemove(ItemIdentifier $timelineOwner): void
 	{
-		$this->upsertChange($timelineOwner, false);
+		// no-op, last activity cant decrease
 	}
 
-	public function onBadgesSync(ItemIdentifier $timelineOwner): void
+	public function onEntityTypeDelete(int $entityTypeId): void
 	{
-		$this->upsertChange($timelineOwner, false);
+		unset($this->changes[$entityTypeId], $this->loadedTimelineOwners[$entityTypeId]);
 	}
 
 	/**
-	 * @internal For internal system usage only. Is not covered by backwards compatibility.
-	 * Will be deleted in future versions.
+	 * @deprecated You don't to call this method to sync badges in realtime anymore. Badges API will do it for you
+	 * automatically.
 	 *
-	 * @return void
+	 * If you still want to manually trigger sync for some reason.
+	 * Do it only if you fully understand what you are doing.
+	 * @see \Bitrix\Crm\Service\PullEventsQueue::onBadgeChange
 	 */
-	public static function onLastActivityRecalculationByAgent(): void
+	public function onBadgesSync(ItemIdentifier $timelineOwner): void
 	{
-		self::$isAgentRunning = true;
 	}
 
-	private function upsertChange(ItemIdentifier $timelineOwner, bool $recalculate): void
+	private function upsertChange(ItemIdentifier $timelineOwner): void
 	{
-		$change = $this->changes[$timelineOwner->getEntityTypeId()][$timelineOwner->getEntityId()] ?? [];
-
-		if (!isset($change['recalculate']))
-		{
-			$change['recalculate'] = $recalculate;
-		}
-		elseif ($recalculate && !$change['recalculate'])
-		{
-			$change['recalculate'] = true;
-		}
-
-		$this->changes[$timelineOwner->getEntityTypeId()][$timelineOwner->getEntityId()] = $change;
+		$this->changes[$timelineOwner->getEntityTypeId()][$timelineOwner->getEntityId()] = $timelineOwner;
+		$this->ensureProcessingScheduled();
 	}
 
-	public function calculateLastActivityInfo(ItemIdentifier $timelineOwner): array
+	protected function process(): void
 	{
-		$lastTimelineEntryQuery =
-			$this->timelineDataManager::query()
-				->setSelect([
-					'AUTHOR_ID',
-					'CREATED',
-				])
-				->where('BINDINGS.ENTITY_TYPE_ID', $timelineOwner->getEntityTypeId())
-				->where('BINDINGS.ENTITY_ID', $timelineOwner->getEntityId())
-				->setOrder([
-					'CREATED' => 'DESC',
-				])
-				->setLimit(1)
-		;
-		$this->addTimelineTypeFilter($timelineOwner, $lastTimelineEntryQuery);
+		$this->preloadTimelineOwners();
 
-		$lastTimelineEntry = $lastTimelineEntryQuery->fetchObject();
+		$lastActivityService = Container::getInstance()->getLastActivity();
 
-		$lastIncomingActivity = $this->incomingChannelDataManager::query()
-			->where('BINDINGS.OWNER_TYPE_ID', $timelineOwner->getEntityTypeId())
-			->where('BINDINGS.OWNER_ID', $timelineOwner->getEntityId())
-			->setOrder([
-				'ID' => 'DESC',
-			])
-			->setLimit(1)
-			->setSelect(['ACTIVITY_ID'])
-			->fetchObject()
-		;
+		foreach ($this->changes as $entityTypeId => $itemIdentifiers)
+		{
+			if (!$this->isEntitySupported($entityTypeId))
+			{
+				continue;
+			}
 
-		$lastActivity = $lastIncomingActivity
-			? $this->activityDataManager::query()
-				->setSelect([
-					'CREATED',
-					'EDITOR_ID',
-					'AUTHOR_ID',
-					'RESPONSIBLE_ID',
-					'PROVIDER_ID',
-				])
-				->where('ID', $lastIncomingActivity->getActivityId())
-				->setLimit(1)
-				->fetchObject()
-			: null
-		;
+			foreach ($itemIdentifiers as $singleIdentifier)
+			{
+				[$lastActivityTime, $lastActivityBy] = $this->calculateLastActivityInfo($singleIdentifier);
 
-		$timeFromEntry = $lastTimelineEntry ? $lastTimelineEntry->getCreated() : null;
-		$timeFromActivity = $lastActivity ? $lastActivity->getCreated() : null;
+				$lastActivityTime ??= $this->getTimelineOwner($singleIdentifier)?->getCreatedTime();
+				$lastActivityBy ??= $this->getTimelineOwner($singleIdentifier)?->getCreatedBy();
+
+				if ($lastActivityTime !== null && $lastActivityBy !== null)
+				{
+					$lastActivityService->set($singleIdentifier, $lastActivityTime, $lastActivityBy);
+				}
+			}
+		}
+
+		$this->changes = [];
+	}
+
+	private function isEntitySupported(int $entityTypeId): bool
+	{
+		return $this->getSupportedFactory($entityTypeId) !== null;
+	}
+
+	private function getSupportedFactory(int $entityTypeId): ?Factory
+	{
+		if (!\CCrmOwnerType::isUseFactoryBasedApproach($entityTypeId))
+		{
+			return null;
+		}
+
+		$factory = Container::getInstance()->getFactory($entityTypeId);
+
+		if (!$factory || !$factory->isLastActivitySupported())
+		{
+			return null;
+		}
+
+		return $factory;
+	}
+
+	private function preloadTimelineOwners(): void
+	{
+		foreach ($this->changes as $entityTypeId => $identifiersOfSameType)
+		{
+			$notLoadedIds = array_keys(
+				array_diff_key(
+					$identifiersOfSameType,
+					$this->loadedTimelineOwners[$entityTypeId] ?? []
+				),
+			);
+			if (empty($notLoadedIds))
+			{
+				continue;
+			}
+
+			$items = $this->loadTimelineOwners($entityTypeId, $notLoadedIds);
+
+			$this->loadedTimelineOwners[$entityTypeId] ??= [];
+			foreach ($items as $itemId => $item)
+			{
+				$this->loadedTimelineOwners[$entityTypeId][$itemId] = $item;
+			}
+		}
+	}
+
+	private function loadTimelineOwners(int $entityTypeId, array $itemIds): array
+	{
+		if (empty($itemIds))
+		{
+			return [];
+		}
+
+		$factory = $this->getSupportedFactory($entityTypeId);
+		if (!$factory)
+		{
+			return [];
+		}
+
+		$items = $factory->getItems([
+			'select' => [
+				Item::FIELD_NAME_ASSIGNED,
+				Item::FIELD_NAME_CREATED_BY,
+				Item::FIELD_NAME_CREATED_TIME,
+			],
+			'filter' => [
+				'@' . Item::FIELD_NAME_ID => $itemIds,
+			],
+		]);
+
+		$result = [];
+		foreach ($items as $item)
+		{
+			$result[$item->getId()] = $item;
+		}
+
+		return $result;
+	}
+
+	private function getTimelineOwner(ItemIdentifier $identifier): ?Item
+	{
+		$preloaded = $this->loadedTimelineOwners[$identifier->getEntityTypeId()][$identifier->getEntityId()] ?? null;
+		if ($preloaded)
+		{
+			return $preloaded;
+		}
+
+		$items = $this->loadTimelineOwners($identifier->getEntityTypeId(), [$identifier->getEntityId()]);
+		$item = $items[$identifier->getEntityId()] ?? null;
+		if (!$item)
+		{
+			return null;
+		}
+
+		$this->loadedTimelineOwners[$identifier->getEntityTypeId()] ??= [];
+		$this->loadedTimelineOwners[$identifier->getEntityTypeId()][$identifier->getEntityId()] = $item;
+
+		return $item;
+	}
+
+	private function calculateLastActivityInfo(ItemIdentifier $timelineOwner): array
+	{
+		$lastTimelineEntry = $this->getLastRelevantTimelineEntry($timelineOwner);
+		$lastActivity = $this->getLastRelevantActivity($timelineOwner);
+
+		$timeFromEntry = $lastTimelineEntry?->requireCreated();
+		$timeFromActivity = $lastActivity?->requireCreated();
+
+		if (!$timeFromEntry && !$timeFromActivity)
+		{
+			//neither any activity nor any timeline entry exists
+			return [
+				null,
+				null,
+			];
+		}
 
 		if (
 			($timeFromEntry && !$timeFromActivity)
-			|| ($timeFromEntry && $timeFromActivity && $timeFromEntry->getTimestamp() > $timeFromActivity->getTimestamp())
+			|| (
+				$timeFromEntry
+				&& $timeFromActivity
+				&& $timeFromEntry->getTimestamp() > $timeFromActivity->getTimestamp()
+			)
 		)
 		{
 			return [
@@ -204,7 +279,11 @@ final class Monitor
 
 		if (
 			(!$timeFromEntry && $timeFromActivity)
-			|| ($timeFromEntry && $timeFromActivity && $timeFromEntry->getTimestamp() <= $timeFromActivity->getTimestamp())
+			|| (
+				$timeFromEntry
+				&& $timeFromActivity
+				&& $timeFromEntry->getTimestamp() <= $timeFromActivity->getTimestamp()
+			)
 		)
 		{
 			return [
@@ -213,240 +292,144 @@ final class Monitor
 			];
 		}
 
-		//neither any activity nor any timeline entry exists
-		return [
-			null,
-			null,
-		];
+		throw new InvalidOperationException('Unknown case');
 	}
 
-	private function processChanges(): void
+	private function getLastRelevantTimelineEntry(ItemIdentifier $timelineOwner): ?EO_Timeline
 	{
-		if (self::$isAgentRunning)
-		{
-			return;
-		}
-
-		$container = Container::getInstance();
-
-		foreach ($this->changes as $entityTypeId => $changesOfItemsOfSameType)
-		{
-			if ($entityTypeId === \CCrmOwnerType::Order && Loader::includeModule('sale'))
-			{
-				//todo delete when orders support factory based approach
-				$this->sendOrdersUpdatedPushes(array_keys($changesOfItemsOfSameType));
-				continue;
-			}
-
-			$factory = $container->getFactory($entityTypeId);
-			if (!$factory || !\CCrmOwnerType::isUseFactoryBasedApproach($entityTypeId))
-			{
-				continue;
-			}
-
-			$items = $factory->getItems([
-				'select' => ['*'],
-				'filter' => [
-					'@' . Item::FIELD_NAME_ID => array_keys($changesOfItemsOfSameType),
-				],
-			]);
-
-			foreach ($items as $singleItem)
-			{
-				$this->processSingleItemChange($factory, $singleItem);
-			}
-		}
-	}
-
-	private function processSingleItemChange(Factory $factory, Item $item): void
-	{
-		$isPushAlreadySent = false;
-
-		$shouldRecalculate = $this->isTimelineChanged(ItemIdentifier::createByItem($item));
-		if ($shouldRecalculate && $item->hasField(Item::FIELD_NAME_LAST_ACTIVITY_TIME))
-		{
-			/** @var DateTime|null $lastActivityTimePrevious */
-			$lastActivityTimePrevious = $item->get(Item::FIELD_NAME_LAST_ACTIVITY_TIME);
-			$this->launchUpdateOperation($factory, $item);
-			/** @var DateTime|null $lastActivityTimeCurrent */
-			$lastActivityTimeCurrent = $item->get(Item::FIELD_NAME_LAST_ACTIVITY_TIME);
-
-			if (
-				$lastActivityTimePrevious
-				&& $lastActivityTimeCurrent
-				&& $lastActivityTimePrevious->getTimestamp() !== $lastActivityTimeCurrent->getTimestamp()
+		return $this->timelineDataManager::query()
+			->setSelect([
+				'AUTHOR_ID',
+				'CREATED',
+			])
+			->where('BINDINGS.ENTITY_TYPE_ID', $timelineOwner->getEntityTypeId())
+			->where('BINDINGS.ENTITY_ID', $timelineOwner->getEntityId())
+			->where(
+				(new ConditionTree())
+					->logic(ConditionTree::LOGIC_OR)
+					->where($this->getRelevantCommentFilter($timelineOwner))
+					->where($this->getRelevantPingFilter())
 			)
-			{
-				$isPushAlreadySent = true;
-			}
-		}
-
-		if (!$isPushAlreadySent)
-		{
-			$this->sendItemUpdatedPush($item);
-		}
+			->setOrder([
+				'CREATED' => 'DESC',
+			])
+			->setLimit(1)
+			->fetchObject()
+		;
 	}
 
-	private function launchUpdateOperation(Factory $factory, Item $item): void
+	private function getRelevantCommentFilter(ItemIdentifier $timelineOwner): ConditionTree
 	{
-		$context = clone Container::getInstance()->getContext();
-		$context->setScope(Context::SCOPE_TASK);
+		$item = $this->getTimelineOwner($timelineOwner);
 
-		$operation = $factory->getUpdateOperation($item, $context);
-		$operation
-			//it's a system operation, data consistency will be harmed if any check fails
-			->disableAllChecks()
-			//to exclude any possibility of recursion
-			->disableSaveToTimeline()
-			->disableBizProc()
-			->disableAutomation()
+		$assigned = (int)$item?->getAssignedById();
+
+		return (new ConditionTree())
+			->whereNot('AUTHOR_ID', $assigned)
+			->where('TYPE_ID', \Bitrix\Crm\Timeline\TimelineType::COMMENT)
+		;
+	}
+
+	private function getRelevantPingFilter(): ConditionTree
+	{
+		return (new ConditionTree())
+			->where('TYPE_ID', \Bitrix\Crm\Timeline\TimelineType::LOG_MESSAGE)
+			->where('TYPE_CATEGORY_ID', \Bitrix\Crm\Timeline\LogMessageType::PING)
+			->whereNot('ASSOCIATED_ENTITY_TYPE_ID', \CCrmOwnerType::SuspendedActivity)
+		;
+	}
+
+	private function getLastRelevantActivity(ItemIdentifier $timelineOwner): ?EO_Activity
+	{
+		$lastIncomingActivity = $this->incomingChannelDataManager::query()
+			->setSelect(['ACTIVITY_ID'])
+			->where('BINDINGS.OWNER_TYPE_ID', $timelineOwner->getEntityTypeId())
+			->where('BINDINGS.OWNER_ID', $timelineOwner->getEntityId())
+			->setOrder([
+				'ID' => 'DESC',
+			])
+			->setLimit(1)
+			->fetchObject()
 		;
 
-		$operation->launch();
-	}
-
-	private function sendItemUpdatedPush(Item $item): void
-	{
-		$entityTypeName = \CCrmOwnerType::ResolveName($item->getEntityTypeId());
-		$kanbanEntity = Entity::getInstance($entityTypeName);
-		if ($kanbanEntity)
+		if (!$lastIncomingActivity)
 		{
-			PullManager::getInstance()->sendItemUpdatedEvent(
-				$kanbanEntity->createPullItem($item->getCompatibleData()),
-				[
-					'TYPE' => $entityTypeName,
-					'SKIP_CURRENT_USER' => false,
-					'CATEGORY_ID' => $item->isCategoriesSupported() ? $item->getCategoryId() : null,
-					'IGNORE_DELAY' => true,
-				],
-			);
-		}
-	}
-
-	private function sendOrdersUpdatedPushes(array $ids): void
-	{
-		Collection::normalizeArrayValuesByInt($ids);
-		if (empty($ids))
-		{
-			return;
+			return null;
 		}
 
-		$entity = Entity::getInstance(\CCrmOwnerType::OrderName);
-		if (!$entity)
-		{
-			return;
-		}
-
-		$dbResult = $entity->getItems([
-			'filter' => ['@ID' => $ids],
-		]);
-
-		$pullManager = PullManager::getInstance();
-
-		while ($orderArray = $dbResult->Fetch())
-		{
-			$pullManager->sendItemUpdatedEvent(
-				$entity->createPullItem($orderArray),
-				[
-					'TYPE' => \CCrmOwnerType::OrderName,
-					'SKIP_CURRENT_USER' => false,
-				],
-			);
-		}
-	}
-
-	private function addTimelineTypeFilter(ItemIdentifier $timelineOwner, Query $lastTimelineQuery): void
-	{
-		$lastTimelineQuery->where(Query::filter()
-			->logic('OR')
-			->where(Query::filter()
-				->whereNot('AUTHOR_ID', $this->getOwnerAssignedBy($timelineOwner))
-				->where('TYPE_ID', \Bitrix\Crm\Timeline\TimelineType::COMMENT)
-			)
-			->where(Query::filter()
-				->where('TYPE_ID', \Bitrix\Crm\Timeline\TimelineType::LOG_MESSAGE)
-				->where('TYPE_CATEGORY_ID', \Bitrix\Crm\Timeline\LogMessageType::PING)
-				->whereNot('ASSOCIATED_ENTITY_TYPE_ID', \CCrmOwnerType::SuspendedActivity)
-			)
-		);
+		return $this->activityDataManager::query()
+			->setSelect([
+				'CREATED',
+				'EDITOR_ID',
+				'AUTHOR_ID',
+				'RESPONSIBLE_ID',
+				'PROVIDER_ID',
+			])
+			->where('ID', $lastIncomingActivity->requireActivityId())
+			->setLimit(1)
+			->fetchObject()
+		;
 	}
 
 	private function isActivitySuitable(int $activityId): bool
 	{
-		if (!array_key_exists($activityId, $this->suitableActivitiesCache))
-		{
-			$this->suitableActivitiesCache[$activityId] = \Bitrix\Crm\Activity\IncomingChannel::getInstance()->isIncomingChannel($activityId);
-		}
-
-		return $this->suitableActivitiesCache[$activityId];
+		return \Bitrix\Crm\Activity\IncomingChannel::getInstance()->isIncomingChannel($activityId);
 	}
 
+	/**
+	 * Last activity calculation over the timeline table is very expensive.
+	 * Don't do it unless something relevant was added.
+	 */
 	private function isTimelineEntrySuitable(ItemIdentifier $timelineOwner, int $timelineEntryId): bool
 	{
-		$assignedById = $this->getOwnerAssignedBy($timelineOwner);
+		$assignedById = (int)$this->getTimelineOwner($timelineOwner)?->getAssignedById();
 		$cacheKey = $assignedById . ':' . $timelineEntryId;
 
-		if (!array_key_exists($cacheKey, $this->suitableTimelineEntriesCache))
+		if (array_key_exists($cacheKey, $this->suitableTimelineEntriesCache))
 		{
-			$timelineEntry = TimelineTable::query()
-				->where('ID', $timelineEntryId)
-				->setSelect([
-					'AUTHOR_ID',
-					'TYPE_ID',
-					'TYPE_CATEGORY_ID',
-					'ASSOCIATED_ENTITY_TYPE_ID',
-				])
-				->fetch()
-			;
-			if (!$timelineEntry)
-			{
-				$this->suitableTimelineEntriesCache[$cacheKey] = false;
-			}
-			else
-			{
-				$this->suitableTimelineEntriesCache[$cacheKey] = (
-					(
-						$timelineEntry['AUTHOR_ID'] != $assignedById
-						&& $timelineEntry['TYPE_ID'] == \Bitrix\Crm\Timeline\TimelineType::COMMENT
-					)
-					||
-					(
-						$timelineEntry['TYPE_ID'] == \Bitrix\Crm\Timeline\TimelineType::LOG_MESSAGE
-						&& $timelineEntry['TYPE_CATEGORY_ID'] == \Bitrix\Crm\Timeline\LogMessageType::PING
-						&& $timelineEntry['ASSOCIATED_ENTITY_TYPE_ID'] != \CCrmOwnerType::SuspendedActivity
-					)
-				);
-			}
+			return $this->suitableTimelineEntriesCache[$cacheKey];
 		}
+
+		$timelineEntry = $this->timelineDataManager::query()
+			->setSelect([
+				'AUTHOR_ID',
+				'TYPE_ID',
+				'TYPE_CATEGORY_ID',
+				'ASSOCIATED_ENTITY_TYPE_ID',
+			])
+			->where('ID', $timelineEntryId)
+			->fetchObject()
+		;
+
+		if (!$timelineEntry)
+		{
+			$this->suitableTimelineEntriesCache[$cacheKey] = false;
+
+			return false;
+		}
+
+		$this->suitableTimelineEntriesCache[$cacheKey] =
+			$this->isRelevantComment($timelineEntry, $assignedById)
+			|| $this->isRelevantPing($timelineEntry)
+		;
 
 		return $this->suitableTimelineEntriesCache[$cacheKey];
 	}
 
-	private function getOwnerAssignedBy(ItemIdentifier $timelineOwner): int
+	private function isRelevantComment(EO_Timeline $timelineEntry, int $assignedById): bool
 	{
-		$factory = Container::getInstance()->getFactory($timelineOwner->getEntityTypeId());
-		if (!$factory)
-		{
-			return 0;
-		}
-		if (!$factory->isFieldExists(\Bitrix\Crm\Item::FIELD_NAME_ASSIGNED))
-		{
-			return 0;
-		}
+		return (
+			$timelineEntry->getAuthorId() !== $assignedById
+			&& $timelineEntry->getTypeId() === \Bitrix\Crm\Timeline\TimelineType::COMMENT
+		);
+	}
 
-		$assignedByFieldName = $factory->getEntityFieldNameByMap(\Bitrix\Crm\Item::FIELD_NAME_ASSIGNED);
-
-		$result = $factory->getDataClass()::getList([
-				'filter' => [
-					'=ID' => $timelineOwner->getEntityId(),
-				],
-				'select' => [
-					$assignedByFieldName,
-				],
-				'limit' => 1,
-			])->fetch()[$assignedByFieldName] ?? 0
-		;
-
-		return (int)$result;
+	private function isRelevantPing(EO_Timeline $timelineEntry): bool
+	{
+		return (
+			$timelineEntry->getTypeId() === \Bitrix\Crm\Timeline\TimelineType::LOG_MESSAGE
+			&& $timelineEntry->getTypeCategoryId() === \Bitrix\Crm\Timeline\LogMessageType::PING
+			&& $timelineEntry->getAssociatedEntityId() !== \CCrmOwnerType::SuspendedActivity
+		);
 	}
 }

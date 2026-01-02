@@ -2,17 +2,28 @@
 
 namespace Bitrix\HumanResources\Service;
 
+use Bitrix\HumanResources\Access\AuthProvider\StructureAuthProvider;
 use Bitrix\HumanResources\Compatibility\Converter\StructureBackwardConverter;
 use Bitrix\HumanResources\Compatibility\Converter\UserBackwardConverter;
-use Bitrix\HumanResources\Contract\Repository\NodeRepository;
-use Bitrix\HumanResources\Contract\Repository\NodeRelationRepository;
+use Bitrix\HumanResources\Contract;
 use Bitrix\HumanResources\Contract\Repository\NodeMemberRepository;
+use Bitrix\HumanResources\Integration\Socialnetwork\CollabService;
+use Bitrix\HumanResources\Repository\NodeRelationRepository;
+use Bitrix\HumanResources\Contract\Repository\NodeRepository;
 use Bitrix\HumanResources\Contract\Repository\StructureRepository;
+use Bitrix\HumanResources\Public\Service\NodeSettingsService;
+use Bitrix\HumanResources\Repository;
+use Bitrix\HumanResources\Repository\Access\PermissionRestrictedNodeRepository;
+use Bitrix\HumanResources\Repository\NodeSettingsRepository;
+use Bitrix\HumanResources\Type\StructureAction;
+use Bitrix\HumanResources\Integration\Im\ChatService;
+use Bitrix\HumanResources\Integration\Pull\PushMessageService;
 use Bitrix\HumanResources\Service;
 use Bitrix\HumanResources\Service\HcmLink\JobKillerService;
+use Bitrix\HumanResources\Util;
 use Bitrix\Main\DI\ServiceLocator;
-use \Bitrix\HumanResources\Contract;
-use \Bitrix\HumanResources\Util;
+use Bitrix\HumanResources\Repository\NodePathRepository;
+use Bitrix\Main\SystemException;
 
 class Container
 {
@@ -43,9 +54,22 @@ class Container
 		;
 	}
 
-	public static function getNodeAccessCodeRepository(): Contract\Repository\NodeAccessCodeRepository
+	/**
+	 * @throws SystemException
+	 */
+	public static function getPermissionRestrictedNodeRepository(StructureAction $structureAction): PermissionRestrictedNodeRepository
 	{
-		return self::getService('humanresources.repository.node.access.code');
+		return match ($structureAction)
+		{
+			StructureAction::ViewAction => self::getService('humanresources.repository.permission.restricted.node'),
+			StructureAction::CreateAction => self::getService('humanresources.repository.createPermission.restricted.node'),
+			StructureAction::UpdateAction => self::getService('humanresources.repository.updatePermission.restricted.node'),
+			StructureAction::DeleteAction => self::getService('humanresources.repository.deletePermission.restricted.node'),
+			StructureAction::AddMemberAction => self::getService('humanresources.repository.addEmployeePermission.restricted.node'),
+			StructureAction::RemoveMemberAction => self::getService('humanresources.repository.removeEmployeePermission.restricted.node'),
+			StructureAction::InviteUserAction => self::getService('humanresources.repository.inviteEmployeePermission.restricted.node'),
+			default => throw new SystemException('Invalid StructureAction for PermissionRestrictedRepository'),
+		};
 	}
 
 	public static function getNodeRelationRepository(): NodeRelationRepository
@@ -68,6 +92,11 @@ class Container
 		return self::getService('humanresources.service.node');
 	}
 
+	public static function getNodeBranchService(): NodeBranchService
+	{
+		return self::getService('humanresources.service.node.branch');
+	}
+
 	public static function getRoleRepository(): Contract\Repository\RoleRepository
 	{
 		return self::getService('humanresources.repository.role');
@@ -78,7 +107,7 @@ class Container
 		return self::getService('humanresources.service.role.helper');
 	}
 
-	public static function getEventSenderService(): Contract\Service\EventSenderService
+	public static function getEventSenderService(): Service\EventSenderService
 	{
 		return self::getService('humanresources.service.event.sender');
 	}
@@ -98,27 +127,27 @@ class Container
 		return self::getService('humanresources.util.cache');
 	}
 
-	public static function getAccessRolePermissionService(): Contract\Service\Access\RolePermissionService
+	public static function getAccessRolePermissionService(): Service\Access\RolePermissionService
 	{
 		return self::getService('humanresources.service.access.rolePermission');
 	}
 
-	public static function getAccessRoleRelationService(): Contract\Service\Access\RoleRelationService
+	public static function getAccessRoleRelationService(): Service\Access\RoleRelationService
 	{
 		return self::getService('humanresources.service.access.roleRelation');
 	}
 
-	public static function getAccessPermissionRepository(): Contract\Repository\Access\PermissionRepository
+	public static function getAccessPermissionRepository(): Repository\Access\PermissionRepository
 	{
 		return self::getService('humanresources.repository.access.permission');
 	}
 
-	public static function getAccessRoleRepository(): Contract\Repository\Access\RoleRepository
+	public static function getAccessRoleRepository(): Repository\Access\RoleRepository
 	{
 		return self::getService('humanresources.repository.access.role');
 	}
 
-	public static function getAccessRoleRelationRepository(): Contract\Repository\Access\RoleRelationRepository
+	public static function getAccessRoleRelationRepository(): Repository\Access\RoleRelationRepository
 	{
 		return self::getService('humanresources.repository.access.roleRelation');
 	}
@@ -133,7 +162,7 @@ class Container
 		return self::getService('humanresources.compatibility.converter.user');
 	}
 
-	public static function getNodeRelationService(): Contract\Service\NodeRelationService
+	public static function getNodeRelationService(): Service\NodeRelationService
 	{
 		return self::getService('humanresources.service.node.relation');
 	}
@@ -148,12 +177,12 @@ class Container
 		return self::getService('humanresources.service.semaphore');
 	}
 
-	public static function getUserService(): Contract\Service\UserService
+	public static function getUserService(): Service\UserService
 	{
 		return self::getService('humanresources.service.user');
 	}
 
-	public static function getUserRepository(): Contract\Repository\UserRepository
+	public static function getUserRepository(): Repository\UserRepository
 	{
 		return self::getService('humanresources.repository.user');
 	}
@@ -163,7 +192,7 @@ class Container
 		return self::getService('humanresources.helper.node.member.counter');
 	}
 
-	public static function getAccessNodeRepository(): Contract\Repository\Access\AccessNodeRepository
+	public static function getAccessNodeRepository(): Repository\Access\AccessNodeRepository
 	{
 		return self::getService('humanresources.repository.access.accessNodeRepository');
 	}
@@ -213,6 +242,11 @@ class Container
 		return self::getService('humanresources.repository.hcmlink.user');
 	}
 
+	public static function getHcmLinkFieldService(): Service\HcmLink\FieldService
+	{
+		return self::getService('humanresources.service.hcmlink.field');
+	}
+
 	public static function getHcmLinkFieldValueService(): Contract\Service\HcmLink\FieldValueService
 	{
 		return self::getService('humanresources.service.hcmlink.field.value');
@@ -236,5 +270,50 @@ class Container
 	public static function getHcmLinkSalaryAndVacationService(): Service\HcmLink\Placement\SalaryVacationService
 	{
 		return self::getService('humanresources.service.hcmlink.placement.salaryAndVacation');
+	}
+
+	public static function getDepartmentUserSearchService(): Service\Member\DepartmentUserSearchService
+	{
+		return self::getService('humanresources.service.member.departmentUserSearchService');
+	}
+
+	public static function getNodePathRepository(): NodePathRepository
+	{
+		return self::getService('humanresources.repository.node.path');
+	}
+
+	public static function getNodeSettingsRepository(): NodeSettingsRepository
+	{
+		return self::getService('humanresources.repository.nodeSettings');
+	}
+
+	/**
+	 * Temporary solution for business proc module
+	 *
+	 * @return NodeSettingsService
+	 */
+	public static function getNodeSettingsService(): NodeSettingsService
+	{
+		return self::getService('humanresources.service.public.nodeSettings');
+	}
+
+	public static function getChatService(): ChatService
+	{
+		return self::getService('humanresources.intergation.im.chatService');
+	}
+
+	public static function getCollabService(): CollabService
+	{
+		return self::getService('humanresources.intergation.socialnetwork.collabService');
+	}
+
+	public static function getPushMessageService(): PushMessageService
+	{
+		return self::getService('humanresources.intergation.pull.pushMessageService');
+	}
+
+	public static function getStructureAuthProvider(): StructureAuthProvider
+	{
+		return self::getService('humanresources.access.authProvider.structureAuthProvider');
 	}
 }

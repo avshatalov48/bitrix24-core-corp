@@ -2,36 +2,44 @@
 
 if (!defined("B_PROLOG_INCLUDED") || B_PROLOG_INCLUDED !== true)
 {
-	die;
+	die();
 }
 
 use Bitrix\Main\Analytics\AnalyticsEvent;
 use Bitrix\Main\Engine\CurrentUser;
-use Bitrix\Main\Loader;
 use Bitrix\Main\Localization\Loc;
 use Bitrix\Main\ORM\Query\Filter\ConditionTree;
+use Bitrix\Main\ORM\Query\Query;
 use Bitrix\Main\UI\Filter\Options;
 use Bitrix\Main\UI\PageNavigation;
 use Bitrix\Sign\Access\ActionDictionary;
-use Bitrix\Sign\Access\Model\UserModel;
 use Bitrix\Sign\Access\Permission\SignPermissionDictionary;
-use Bitrix\Sign\Access\Service\RolePermissionService;
 use Bitrix\Sign\Config\Feature;
 use Bitrix\Sign\Config\Storage;
 use Bitrix\Sign\Connector\Crm\MyCompany;
 use Bitrix\Sign\Debug\Logger;
 use Bitrix\Sign\Integration\Bitrix24\B2eTariff;
-use Bitrix\Sign\Item\Document;
+use Bitrix\Sign\Item\Document\Template;
+use Bitrix\Sign\Item\Document\TemplateCollection;
+use Bitrix\Sign\Item\DocumentTemplateGrid\QueryOptions;
+use Bitrix\Sign\Item\DocumentTemplateGrid\Row;
+use Bitrix\Sign\Item\DocumentTemplateGrid\RowCollection;
+use Bitrix\Sign\Repository\Grid\TemplateGridRepository;
 use Bitrix\Sign\Repository\DocumentRepository;
 use Bitrix\Sign\Repository\MemberRepository;
 use Bitrix\Sign\Repository\UserRepository;
 use Bitrix\Sign\Service\Container;
+use Bitrix\Sign\Service\Sign\Document\Template\AccessService;
+use Bitrix\Sign\Service\Sign\Document\TemplateFolderService;
 use Bitrix\Sign\Service\Sign\Document\TemplateService;
+use Bitrix\Sign\Service\Sign\UrlGeneratorService;
 use Bitrix\Sign\Type\Document\InitiatedByType;
 use Bitrix\Sign\Type\Member\EntityType;
 use Bitrix\Sign\Type\Member\Role;
 use Bitrix\Sign\Item\UserCollection;
 use Bitrix\Sign\Type\Template\Visibility;
+use Bitrix\UI\Buttons\BaseButton;
+use Bitrix\Main\Context;
 
 Loc::loadMessages(__FILE__);
 
@@ -40,31 +48,46 @@ CBitrixComponent::includeComponentClass('bitrix:sign.base');
 final class SignB2eEmployeeTemplateListComponent extends SignBaseComponent
 {
 	private const DEFAULT_GRID_ID = 'SIGN_B2E_EMPLOYEE_TEMPLATE_LIST_GRID';
+	private const SEND_TEMPLATE_MODE_GRID_ID = 'SIGN_B2E_EMPLOYEE_TEMPLATE_LIST_GRID_SEND_MODE';
 	private const DEFAULT_FILTER_ID = 'SIGN_B2E_EMPLOYEE_TEMPLATE_LIST_FILTER';
+	private const FOLDER_TEMPLATE_MODE_FILTER_ID = 'SIGN_B2E_EMPLOYEE_TEMPLATE_LIST_FOLDER_MODE_FILTER';
+	private const SEND_TEMPLATE_MODE_NAVIGATION_KEY = 'sign-b2e-employee-template-list-send-mode';
 	private const DEFAULT_NAVIGATION_KEY = 'sign-b2e-employee-template-list';
 	private const DEFAULT_PAGE_SIZE = 10;
-	private const ADD_NEW_TEMPLATE_LINK = '/sign/b2e/doc/0/?mode=template';
-	private readonly TemplateService $documentTemplateService;
+	private readonly TemplateFolderService $templateFolderService;
+	private readonly TemplateService $templateService;
+	private readonly TemplateGridRepository $templateGridRepository;
 	private readonly PageNavigation $pageNavigation;
 	private readonly DocumentRepository $documentRepository;
 	private readonly UserRepository $userRepository;
 	private readonly MemberRepository $memberRepository;
-	private UserModel $currentUserAccessModel;
-	/** @var array<int|string, string|null> */
-	private array $currentUserPermissionValuesCache = [];
+	private readonly AccessService $templateAccessService;
+	private readonly UrlGeneratorService $urlGeneratorService;
+	private readonly int $folderId;
 
 	public function __construct($component = null)
 	{
 		parent::__construct($component);
-		$this->documentTemplateService = Container::instance()->getDocumentTemplateService();
+		$this->templateService = Container::instance()->getDocumentTemplateService();
+		$this->templateFolderService = Container::instance()->getTemplateFolderService();
+		$this->templateGridRepository = Container::instance()->getTemplateGridRepository();
 		$this->documentRepository = Container::instance()->getDocumentRepository();
 		$this->userRepository = Container::instance()->getUserRepository();
 		$this->memberRepository = Container::instance()->getMemberRepository();
+		$this->templateAccessService = Container::instance()->getTemplateAccessService();
 		$this->pageNavigation = $this->getPageNavigation();
+		$this->urlGeneratorService = Container::instance()->getUrlGeneratorService();
+		$this->folderId = $this->getCurrentFolderId();
 	}
 
 	public function executeComponent(): void
 	{
+		$currentUserId = (int)CurrentUser::get()->getId();
+		if ($currentUserId < 1)
+		{
+			return;
+		}
+
 		if (!Storage::instance()->isB2eAvailable())
 		{
 			showError((string)Loc::getMessage('SIGN_B2E_EMPLOYEE_TEMPLATE_LIST_B2E_NOT_ACTIVATED'));
@@ -72,18 +95,58 @@ final class SignB2eEmployeeTemplateListComponent extends SignBaseComponent
 			return;
 		}
 
-		if (!Feature::instance()->isSendDocumentByEmployeeEnabled())
+		$accessController = $this->getAccessController();
+		$hasAccessDocumentAdd = $accessController->check(ActionDictionary::ACTION_B2E_DOCUMENT_ADD);
+		$hasAccessDocumentRead = $accessController->check(ActionDictionary::ACTION_B2E_DOCUMENT_READ);
+		$hasAccessDocumentEdit = $accessController->check(ActionDictionary::ACTION_B2E_DOCUMENT_EDIT);
+		$notAccess = !$hasAccessDocumentAdd || !$hasAccessDocumentRead || !$hasAccessDocumentEdit;
+		$isB2eRestrictedInCurrentTariff = B2eTariff::instance()->isB2eRestrictedInCurrentTariff();
+		$isTemplateFolderGroupingAllowed = Feature::instance()->isTemplateFolderGroupingAllowed();
+
+		if ($this->fromCompanyTemplateSendMode() && ($isB2eRestrictedInCurrentTariff || $notAccess || !$isTemplateFolderGroupingAllowed))
+		{
+			showError('Access denied');
+
+			return;
+		}
+
+		if (!Feature::instance()->isDocumentTemplatesAvailable())
 		{
 			showError((string)Loc::getMessage('SIGN_B2E_EMPLOYEE_TEMPLATE_LIST_TO_EMPLOYEE_NOT_ACTIVATED'));
 
 			return;
 		}
-		$accessController = $this->getAccessController();
+
 		if (!$accessController->check(ActionDictionary::ACTION_B2E_TEMPLATE_READ))
 		{
 			showError('Access denied');
 
 			return;
+		}
+
+		if ($this->isFolderContentMode())
+		{
+			if (!Feature::instance()->isTemplateFolderGroupingAllowed())
+			{
+				showError('Access denied');
+
+				return;
+			}
+
+			$folder = $this->templateFolderService->getById($this->getCurrentFolderId());
+			if (!$folder)
+			{
+				showError('Folder not found');
+
+				return;
+			}
+
+			if (!$accessController->checkByItem(ActionDictionary::ACTION_B2E_TEMPLATE_READ, $folder))
+			{
+				showError('Access denied');
+
+				return;
+			}
 		}
 
 		parent::executeComponent();
@@ -94,12 +157,13 @@ final class SignB2eEmployeeTemplateListComponent extends SignBaseComponent
 		$this->installPresetTemplatesIfNeed();
 		$this->setResult('NAVIGATION_KEY', $this->pageNavigation->getId());
 		$this->setResult('CURRENT_PAGE', $this->getNavigation()->getCurrentPage());
-		$this->setParam('ADD_NEW_TEMPLATE_LINK', self::ADD_NEW_TEMPLATE_LINK);
+		$this->setParam('ADD_NEW_TEMPLATE_LINK', $this->getCreateTemplateLink());
 		$this->setParam('COLUMNS', $this->getGridColumnList());
 		$this->setParam('FILTER_FIELDS', $this->getFilterFieldList());
 		$this->setParam('FILTER_PRESETS', $this->getFilterPresets());
-		$this->setParam('GRID_ID', self::DEFAULT_GRID_ID);
-		$this->setParam('FILTER_ID', self::DEFAULT_FILTER_ID);
+		$this->setParam('GRID_ID', $this->getGridId());
+		$this->setParam('FILTER_ID', $this->getFilterId());
+		$this->setParam('CURRENT_FOLDER_TITLE', $this->getCurrentFolderTitle());
 		$this->setResult('TOTAL_COUNT', $this->pageNavigation->getRecordCount());
 		$this->setResult('DOCUMENT_TEMPLATES', $this->getGridData());
 		$this->setResult('PAGE_SIZE', $this->pageNavigation->getPageSize());
@@ -107,7 +171,34 @@ final class SignB2eEmployeeTemplateListComponent extends SignBaseComponent
 		$this->setResult('SHOW_TARIFF_SLIDER', B2eTariff::instance()->isB2eRestrictedInCurrentTariff());
 		$this->setResult('CAN_ADD_TEMPLATE', $this->canAddTemplate());
 		$this->setResult('CAN_EXPORT_BLANK', $this->canExportBlank());
+		$this->setResult('FOLDER_ID', $this->folderId);
+		$this->setResult('IS_FOLDER_CONTENT_MODE', $this->isFolderContentMode());
+		$this->setResult('CREATE_TEMPLATE_ENTITY_BUTTON', $this->getCreateTemplateEntityButton());
 		$this->collectAnalytics();
+	}
+
+	private function getGridId(): string
+	{
+		return $this->isFolderIdProvided()
+			? self::SEND_TEMPLATE_MODE_GRID_ID
+			: self::DEFAULT_GRID_ID
+		;
+	}
+
+	private function getNavigationKey(): string
+	{
+		return $this->isFolderContentMode()
+			? self::SEND_TEMPLATE_MODE_NAVIGATION_KEY
+			: self::DEFAULT_NAVIGATION_KEY
+		;
+	}
+
+	private function getFilterId(): string
+	{
+		return $this->isFolderContentMode()
+			? self::FOLDER_TEMPLATE_MODE_FILTER_ID
+			: self::DEFAULT_FILTER_ID
+		;
 	}
 
 	private function prepareNavigation(): PageNavigation
@@ -146,13 +237,41 @@ final class SignB2eEmployeeTemplateListComponent extends SignBaseComponent
 		return $this->mapElementsToGridData($currentPageElements);
 	}
 
-	private function getCurrentPageElements(): Document\TemplateCollection
+	private function getCurrentPageElements(): RowCollection
 	{
-		return $this->documentTemplateService->getB2eEmployeeTemplateList(
-			$this->getFilterQuery(),
-			$this->pageNavigation->getPageSize(),
-			$this->pageNavigation->getOffset(),
+		$options = new QueryOptions(
+			filter: $this->getFilterQuery(),
+			limit: $this->pageNavigation->getPageSize(),
+			offset: $this->pageNavigation->getOffset()
 		);
+
+		if ($this->isFolderContentMode() && $this->getCurrentFolderId() !== 0)
+		{
+			return $this->templateGridRepository->listTemplatesByFolderId($this->getCurrentFolderId(), $options);
+		}
+
+		return $this->templateGridRepository->listFoldersAndTemplates($options);
+	}
+
+	private function getCurrentFolderTitle(): ?string
+	{
+		if ($this->isFolderContentMode())
+		{
+			return $this->templateFolderService->getById($this->getCurrentFolderId())->title;
+		}
+
+		return null;
+	}
+
+	private function getCurrentFolderId(): int
+	{
+		return (int)Context::getCurrent()->getRequest()->getQuery("folderId");
+
+	}
+
+	private function isFolderIdProvided(): bool
+	{
+		return Context::getCurrent()->getRequest()->getQuery("folderId") !== null;
 	}
 
 	private function decrementCurrentPage(): void
@@ -160,72 +279,132 @@ final class SignB2eEmployeeTemplateListComponent extends SignBaseComponent
 		$this->pageNavigation->setCurrentPage($this->pageNavigation->getCurrentPage() - 1);
 	}
 
-	private function mapElementsToGridData(Document\TemplateCollection $templates): array
+	private function mapElementsToGridData(RowCollection $templateEntities): array
 	{
 		$responsibleIds = [];
 		$templateIds = [];
-		foreach ($templates as $template)
+		$folderIds = [];
+
+		foreach ($templateEntities as $templateEntity)
 		{
-			$responsibleId = $this->getResponsibleByTemplate($template);
+			$responsibleId = $this->getResponsibleByRow($templateEntity);
 			$responsibleIds[$responsibleId] = $responsibleId;
-			$templateIds[] = $template->id;
+
+			if ($templateEntity->entityType->isFolder())
+			{
+				$folderIds[] = $templateEntity->id;
+			}
+
+			$templateIds[] = $templateEntity->id;
 		}
+
 		$responsibleUsers = $this->userRepository->getByIds($responsibleIds);
 		$companiesByTemplateIds = $this->getCompaniesByTemplateIds($templateIds);
+		$folderTemplateIdsMap = $this->templateFolderService->getTemplateIdsByIdsMap($folderIds);
+
+		$allTemplateIds = array_merge($templateIds, ...array_values($folderTemplateIdsMap));
+		$allTemplates = $this->templateService->getByIds($allTemplateIds);
+
+		$rootAndNestedTemplatesMap = [];
+		foreach ($allTemplates as $template)
+		{
+			$rootAndNestedTemplatesMap[$template->id] = $template;
+		}
 
 		return array_map(
-			fn(Document\Template $template): array => $this->mapTemplateToGridData(
-				$template,
+			fn(Row $row): array => $this->mapTemplateToGridData(
+				$row,
 				$responsibleUsers,
 				$companiesByTemplateIds,
+				$folderTemplateIdsMap,
+				$rootAndNestedTemplatesMap
 			),
-			$templates->toArray(),
+			$templateEntities->toArray(),
 		);
 	}
 
 	/**
-	 * @param Document\Template $template
+	 * @param Row $row
 	 * @param UserCollection $responsibleUsers
 	 * @param array<int, MyCompany> $companiesByTemplateIds
+	 * @param array<int, list<int>> $folderTemplateIdsMap
+	 * @param array<int, Template> $rootAndNestedTemplatesMap
 	 *
 	 * @return array
 	 */
 	private function mapTemplateToGridData(
-		Document\Template $template,
+		Row $row,
 		UserCollection $responsibleUsers,
 		array $companiesByTemplateIds,
+		array $folderTemplateIdsMap,
+		array $rootAndNestedTemplatesMap
 	): array
 	{
-		$responsibleData = $responsibleUsers->getByIdMap($this->getResponsibleByTemplate($template) ?? 0);
+		$responsibleData = $responsibleUsers->getByIdMap($this->getResponsibleByRow($row) ?? 0);
 		$personalPhoto = $responsibleData?->personalPhotoId;
-		$responsibleAvatarPath = $personalPhoto
-			? htmlspecialcharsbx(CFile::GetPath($personalPhoto))
-			: '';
+		$responsibleAvatarPath = $personalPhoto ? htmlspecialcharsbx(CFile::GetPath($personalPhoto)) : '';
 		$responsibleName = $responsibleData?->name ?? '';
 		$responsibleLastName = $responsibleData?->lastName ?? '';
 		$responsibleFullName = htmlspecialcharsbx("$responsibleName $responsibleLastName");
-		$company = $companiesByTemplateIds[$template->id] ?? null;
-		$document = $this->documentRepository->getByTemplateId($template->id);
+
+		$document = $this->documentRepository->getByTemplateId($row->id);
+		$company = $this->getCompanies($companiesByTemplateIds, $row);
+
+		$isMultipleCompaniesInFolder = $company['COUNT'] > 0 && $row->entityType->isFolder();
+		$isNoCompaniesInFolder = $company['COUNT'] < 0 && $row->entityType->isFolder();
+		$isInvisible = $row->visibility->isInvisible();
+		$isTemplateDisabled = $row->entityType->isTemplate() && $row->visibility->isInvisible() && $row->status->isNew();
+
+		$templateIds = $row->entityType->isFolder() ? ($folderTemplateIdsMap[$row->id] ?? []) : [$row->id];
+		$templates = array_filter(array_map(fn(int $id) => $rootAndNestedTemplatesMap[$id] ?? null, $templateIds));
+		$templatesCollection = new TemplateCollection(...$templates);
+		$hasAnyInvisibleTemplates = $this->templateService->hasAnyInvisibleTemplates($templatesCollection);
+		$hasAccessToRead = $this->templateAccessService->hasAccessToReadForCollection($templatesCollection);
+
+		$isBlocked = $isMultipleCompaniesInFolder
+			|| $isNoCompaniesInFolder
+			|| $isInvisible
+			|| $isTemplateDisabled
+			|| !$hasAccessToRead
+			|| $hasAnyInvisibleTemplates
+		;
 
 		$data = [
-			'id' => $template->id,
+			'id' => $row->id,
+			'templateIds' => $this->templateFolderService->getTemplateIdsByRow($row),
+			'entityType' => $row->entityType,
+			'sendBlockedParams' => [
+				'isBlocked' => $isBlocked,
+				'isMultipleCompaniesInFolder' => $isMultipleCompaniesInFolder,
+				'isNoCompaniesInFolder' => $isNoCompaniesInFolder,
+				'isInvisible' => $isInvisible,
+				'hasAnyInvisibleTemplates' => $hasAnyInvisibleTemplates,
+				'isTemplateDisabled' => $isTemplateDisabled,
+				'hasNoReadAccess' => !$hasAccessToRead,
+			],
 			'columns' => [
-				'ID' => $template->id,
-				'TITLE' => $template->title,
-				'DATE_MODIFY' => $template->dateModify ?? $template->dateCreate ?? null,
+				'ID' => $row->id,
+				'TITLE' => $row->title,
+				'DATE_MODIFY' => $row->dateModify ?? $row->dateCreate ?? null,
 				'RESPONSIBLE' => [
-					'ID' => $template->modifiedById,
+					'ID' => $row->modifiedById,
 					'FULL_NAME' => $responsibleFullName,
 					'AVATAR_PATH' => $responsibleAvatarPath,
 				],
-				'VISIBILITY' => $template->visibility,
-				'STATUS' => $template->status,
-				'COMPANY' => $company?->name,
+				'VISIBILITY' => $row->visibility,
+				'STATUS' => $row->status,
+				'COMPANY' => $company,
 			],
 			'access' => [
-				'canEdit' => $this->canCurrentUserEditTemplate($template),
-				'canDelete' => $this->canCurrentUserDeleteTemplate($template),
-				'canCreate' => $this->canCurrentUserCreateTemplate($template),
+				'canRead' => $this->canCurrentUserReadTemplates($row),
+				'canEdit' => $this->canCurrentUserEditTemplate($row),
+				'canDelete' => $this->canCurrentUserDeleteTemplate($row),
+				'canCreate' => $this->canCurrentUserCreateTemplate($row),
+				'canMoveToFolder' => $row->entityType->isTemplate()
+					&& Feature::instance()->isTemplateFolderGroupingAllowed()
+					&& $document?->initiatedByType?->isCompany()
+					&& $this->canCurrentUserEditTemplate($row)
+				,
 			],
 		];
 
@@ -261,7 +440,7 @@ final class SignB2eEmployeeTemplateListComponent extends SignBaseComponent
 			];
 		}
 
-		return array_merge($data, [
+		$data = array_merge($data, [
 			[
 				'id' => 'COMPANY',
 				'name' => (string)Loc::getMessage('SIGN_B2E_EMPLOYEE_TEMPLATE_LIST_COLUMN_COMPANY'),
@@ -283,6 +462,17 @@ final class SignB2eEmployeeTemplateListComponent extends SignBaseComponent
 				'default' => true,
 			],
 		]);
+
+		if ($this->fromCompanyTemplateSendMode())
+		{
+			$data[] = [
+				'id' => 'ACTION',
+				'name' => (string)Loc::getMessage('SIGN_B2E_EMPLOYEE_TEMPLATE_LIST_COLUMN_ACTION'),
+				'default' => true,
+			];
+		}
+
+		return $data;
 	}
 
 	private function getFilterFieldList(): array
@@ -331,7 +521,7 @@ final class SignB2eEmployeeTemplateListComponent extends SignBaseComponent
 			],
 		];
 
-		if (Feature::instance()->isSenderTypeAvailable())
+		if ($this->isSenderTypeAvailableAndNotInFolderContentMode())
 		{
 			$filterFieldList[] = [
 				'id' => 'TYPE',
@@ -352,15 +542,23 @@ final class SignB2eEmployeeTemplateListComponent extends SignBaseComponent
 		return $filterFieldList;
 	}
 
+	private function isSenderTypeAvailableAndNotInFolderContentMode(): bool
+	{
+		return Feature::instance()->isSenderTypeAvailable() && !$this->isFolderContentMode();
+	}
+
 	private function getPageNavigation(): PageNavigation
 	{
 		$pageSize = (int)$this->getParam('PAGE_SIZE');
 		$pageSize = $pageSize > 0 ? $pageSize : self::DEFAULT_PAGE_SIZE;
-		$navigationKey = $this->getParam('NAVIGATION_KEY') ?? self::DEFAULT_NAVIGATION_KEY;
+		$navigationKey = $this->getParam('NAVIGATION_KEY') ?? $this->getNavigationKey();
 
 		$pageNavigation = new \Bitrix\Sign\Util\UI\PageNavigation($navigationKey);
 		$pageNavigation->setPageSize($pageSize)
-			->setRecordCount($this->documentTemplateService->getB2eEmployeeTemplateListCount($this->getFilterQuery()))
+			->setRecordCount($this->templateGridRepository->getListCount(
+				new QueryOptions($this->getFilterQuery()),
+				$this->getCurrentFolderId()
+			))
 			->allowAllRecords(false)
 			->initFromUri()
 		;
@@ -374,12 +572,12 @@ final class SignB2eEmployeeTemplateListComponent extends SignBaseComponent
 
 		$queryFilter = $this->prepareQueryFilterByGridFilterData($filterData);
 
-		return $this->prepareQueryFilterByTemplatePermission($queryFilter);
+		return $this->templateAccessService->prepareQueryFilterByTemplatePermission($queryFilter);
 	}
 
 	private function getFilterValues(): array
 	{
-		$options = new Options(self::DEFAULT_FILTER_ID);
+		$options = new Options($this->getFilterId());
 
 		return $options->getFilter($this->getFilterFieldList());
 	}
@@ -387,51 +585,117 @@ final class SignB2eEmployeeTemplateListComponent extends SignBaseComponent
 	private function prepareQueryFilterByGridFilterData(array $filterData): ConditionTree
 	{
 		$filter = Bitrix\Main\ORM\Query\Query::filter();
+		if (!Feature::instance()->isTemplateFolderGroupingAllowed())
+		{
+			$filter->where('ENTITY_TYPE', \Bitrix\Sign\Type\Template\EntityType::TEMPLATE->value);
+		}
 
 		$dateModifyFrom = $filterData['DATE_MODIFY_from'] ?? null;
 		if ($dateModifyFrom && \Bitrix\Main\Type\DateTime::isCorrect($dateModifyFrom))
 		{
-			$filter->where('DATE_MODIFY', '>=', new \Bitrix\Main\Type\DateTime($dateModifyFrom));
+			$filter->where(
+				Query::filter()
+					->logic('or')
+					->where('TEMPLATE.DATE_MODIFY', '>=', new \Bitrix\Main\Type\DateTime($dateModifyFrom))
+					->where('FOLDER.DATE_MODIFY', '>=', new \Bitrix\Main\Type\DateTime($dateModifyFrom))
+			);
 		}
 
 		$dateModifyTo = $filterData['DATE_MODIFY_to'] ?? null;
 		if ($dateModifyTo && \Bitrix\Main\Type\DateTime::isCorrect($dateModifyTo))
 		{
-			$filter->where('DATE_MODIFY', '<=', new \Bitrix\Main\Type\DateTime($dateModifyTo));
+			$filter->where(
+				Query::filter()
+					->logic('or')
+					->where('TEMPLATE.DATE_MODIFY', '<=', new \Bitrix\Main\Type\DateTime($dateModifyTo))
+					->where('FOLDER.DATE_MODIFY', '<=', new \Bitrix\Main\Type\DateTime($dateModifyTo))
+			);
 		}
 
 		$editorIds = $this->ensureArray($filterData['EDITOR'] ?? []);
 		if ($editorIds)
 		{
-			$filter->whereIn('MODIFIED_BY_ID', $editorIds);
+			$filter->where(
+				Query::filter()
+					->logic('or')
+					->whereIn('TEMPLATE.MODIFIED_BY_ID', $editorIds)
+					->whereIn('FOLDER.MODIFIED_BY_ID', $editorIds)
+			);
 		}
 
 		$companyIds = $this->ensureArray($filterData['COMPANY'] ?? []);
 		if ($companyIds)
 		{
-			$filter
-				->whereIn('DOCUMENT.MEMBER.ENTITY_ID', $companyIds)
-				->where('DOCUMENT.MEMBER.ENTITY_TYPE', EntityType::COMPANY)
-			;
+			$filter->where(
+				(Query::filter()
+					->logic('or')
+					->where(Query::filter()
+						->logic('and')
+						->whereIn('TEMPLATE.DOCUMENT.MEMBER.ENTITY_ID', $companyIds)
+						->where('TEMPLATE.DOCUMENT.MEMBER.ENTITY_TYPE', EntityType::COMPANY)
+					)
+					->where(Query::filter()
+						->logic('and')
+						->whereIn('FOLDER.TEMPLATE.DOCUMENT.MEMBER.ENTITY_ID', $companyIds)
+						->where('FOLDER.TEMPLATE.DOCUMENT.MEMBER.ENTITY_TYPE', EntityType::COMPANY)
+					)
+				)
+			);
 		}
 
 		$visibilityValues = $this->ensureArray($filterData['VISIBILITY'] ?? []);
 		if ($visibilityValues)
 		{
-			$filter->whereIn('VISIBILITY', $visibilityValues);
+			$filter->where(
+				Query::filter()
+					->logic('or')
+					->whereIn('TEMPLATE.VISIBILITY', $visibilityValues)
+					->whereIn('FOLDER.VISIBILITY', $visibilityValues)
+			);
 		}
 
-		$initiatedByTypeValues = $this->ensureArray($filterData['TYPE'] ?? []);
+		$initiatedByTypeValues = array_map(function($value)
+		{
+			return (int)$value;
+		}, $this->ensureArray($filterData['TYPE'] ?? []));
+
 		if ($initiatedByTypeValues)
 		{
-			$filter->whereIn('DOCUMENT.INITIATED_BY_TYPE', $initiatedByTypeValues);
+			if (in_array(InitiatedByType::COMPANY->toInt(), $initiatedByTypeValues, true))
+			{
+				$filter->where(
+					Query::filter()
+						->logic('or')
+						->whereIn('TEMPLATE.DOCUMENT.INITIATED_BY_TYPE', $initiatedByTypeValues)
+						->where('ENTITY_TYPE', \Bitrix\Sign\Type\Template\EntityType::FOLDER->value)
+				);
+			}
+			else
+			{
+				$filter->whereIn('TEMPLATE.DOCUMENT.INITIATED_BY_TYPE', $initiatedByTypeValues);
+			}
 		}
 
 		$find = $filterData['FIND'] ?? null;
 		$title = $find ?: $filterData['TITLE'] ?? null;
 		if ($title)
 		{
-			$filter->whereLike('TITLE', '%' . $title . '%');
+			$filter->where(
+				Query::filter()
+					->logic('or')
+					->whereLike('TEMPLATE.TITLE', '%' . $title . '%')
+					->whereLike('FOLDER.TITLE', '%' . $title . '%')
+			);
+		}
+
+		if ($this->fromCompanyTemplateSendMode())
+		{
+			$filter->where(
+				Query::filter()
+					->logic('or')
+					->where('TEMPLATE.DOCUMENT.INITIATED_BY_TYPE', InitiatedByType::COMPANY->toInt())
+					->where('ENTITY_TYPE', \Bitrix\Sign\Type\Template\EntityType::FOLDER->value)
+			);
 		}
 
 		return $filter;
@@ -449,101 +713,46 @@ final class SignB2eEmployeeTemplateListComponent extends SignBaseComponent
 		return $accessController->checkAll([ActionDictionary::ACTION_B2E_TEMPLATE_ADD, ActionDictionary::ACTION_B2E_TEMPLATE_EDIT]);
 	}
 
-	private function getCurrentUserAccessModel(): UserModel
-	{
-		$this->currentUserAccessModel ??= UserModel::createFromId(CurrentUser::get()->getId());
-
-		return $this->currentUserAccessModel;
-	}
-
-	private function prepareQueryFilterByTemplatePermission(ConditionTree $queryFilter): ConditionTree
-	{
-		if (!Loader::includeModule('crm'))
-		{
-			return $queryFilter;
-		}
-
-		$user = $this->getCurrentUserAccessModel();
-		if ($user->isAdmin())
-		{
-			return $queryFilter;
-		}
-
-		$templateReadPermission = $this->getValueForPermissionFromCurrentUser(SignPermissionDictionary::SIGN_B2E_TEMPLATE_READ);
-
-		return match ($templateReadPermission)
-		{
-			CCrmPerms::PERM_ALL => $queryFilter,
-			CCrmPerms::PERM_SELF => $queryFilter->where('CREATED_BY_ID', $user->getUserId()),
-			CCrmPerms::PERM_DEPARTMENT => $queryFilter->whereIn('CREATED_BY_ID', $user->getUserDepartmentMembers()),
-			CCrmPerms::PERM_SUBDEPARTMENT => $queryFilter->whereIn('CREATED_BY_ID', $user->getUserDepartmentMembers(true)),
-			default => $queryFilter->where('CREATED_BY_ID', 0),
-		};
-	}
-
-	private function canCurrentUserEditTemplate(Document\Template $template): bool
+	private function canCurrentUserEditTemplate(Row $row): bool
 	{
 		if (!$this->getAccessController()->check(ActionDictionary::ACTION_B2E_TEMPLATE_ADD))
 		{
 			return false;
 		}
 
-		return $this->hasCurrentUserAccessToPermissionByItemWithOwnerId(
-			$template->getOwnerId(),
+		return $this->templateAccessService->hasCurrentUserAccessToPermissionByItemWithOwnerId(
+			$row->createdById,
 			SignPermissionDictionary::SIGN_B2E_TEMPLATE_WRITE,
 		);
 	}
 
-	private function canCurrentUserDeleteTemplate(Document\Template $template): bool
+	private function canCurrentUserReadTemplates(Row $row): bool
 	{
-		return $this->hasCurrentUserAccessToPermissionByItemWithOwnerId(
-			$template->getOwnerId(),
+		return $this->templateAccessService->hasCurrentUserAccessToPermissionByItemWithOwnerId(
+			$row->createdById,
+			SignPermissionDictionary::SIGN_B2E_TEMPLATE_READ,
+		);
+	}
+
+	private function canCurrentUserDeleteTemplate(Row $row): bool
+	{
+		return $this->templateAccessService->hasCurrentUserAccessToPermissionByItemWithOwnerId(
+			$row->createdById,
 			SignPermissionDictionary::SIGN_B2E_TEMPLATE_DELETE,
 		);
 	}
 
-	private function canCurrentUserCreateTemplate(Document\Template $template): bool
+	private function canCurrentUserCreateTemplate(Row $row): bool
 	{
-		return $this->hasCurrentUserAccessToPermissionByItemWithOwnerId(
-			$template->getOwnerId(),
+		return $this->templateAccessService->hasCurrentUserAccessToPermissionByItemWithOwnerId(
+			$row->createdById,
 			SignPermissionDictionary::SIGN_B2E_TEMPLATE_CREATE,
 		);
 	}
 
-	private function hasCurrentUserAccessToPermissionByItemWithOwnerId(int $itemOwnerId, int|string $permissionId): bool
+	private function getResponsibleByRow(Row $row): ?int
 	{
-		$userAccessModel = $this->getCurrentUserAccessModel();
-		if ($userAccessModel->isAdmin())
-		{
-			return true;
-		}
-
-		$permission = $this->getValueForPermissionFromCurrentUser($permissionId);
-
-		return match ($permission) {
-			CCrmPerms::PERM_ALL => true,
-			CCrmPerms::PERM_SELF => $itemOwnerId === $userAccessModel->getUserId(),
-			CCrmPerms::PERM_DEPARTMENT => in_array($itemOwnerId, $userAccessModel->getUserDepartmentMembers(), true),
-			CCrmPerms::PERM_SUBDEPARTMENT => in_array($itemOwnerId, $userAccessModel->getUserDepartmentMembers(true), true),
-			default => false,
-		};
-	}
-
-	private function getValueForPermissionFromCurrentUser(string|int $permissionId): ?string
-	{
-		$permissionService = new RolePermissionService();
-
-		$this->currentUserPermissionValuesCache[$permissionId] ??= $permissionService->getValueForPermission(
-			$this->getCurrentUserAccessModel()->getRoles(),
-			$permissionId,
-		);
-
-		return $this->currentUserPermissionValuesCache[$permissionId];
-	}
-
-	private function getResponsibleByTemplate(Document\Template $template): ?int
-	{
-		return $template->modifiedById ?? $template->createdById;
+		return $row->modifiedById ?? $row->createdById;
 	}
 
 	/**
@@ -576,6 +785,29 @@ final class SignB2eEmployeeTemplateListComponent extends SignBaseComponent
 		}
 
 		return $companiesByTemplateId;
+	}
+
+	private function getCompanies(array $companiesByTemplateIds, Row $row): array
+	{
+		$company = $companiesByTemplateIds[$row->id] ?? null;
+		$templateIdsForFolder = $row->entityType->isFolder()
+			? $this->templateFolderService->getTemplateIdsById($row->id)
+			: [];
+		$companies = $this->getCompaniesByTemplateIds($templateIdsForFolder);
+		$companyNames = [];
+		foreach ($companies as $company)
+		{
+			$companyNames[] = $company?->name;
+		}
+
+		$uniqueCompanyNames = array_unique($companyNames);
+		$companyForFolder = $uniqueCompanyNames === [] ? null : $uniqueCompanyNames[0];
+		$companyTitle = $row->entityType->isTemplate() ? $company?->name : $companyForFolder;
+
+		return [
+			'TITLE' => $companyTitle,
+			'COUNT' => count($uniqueCompanyNames) - 1,
+		];
 	}
 
 	/**
@@ -619,7 +851,11 @@ final class SignB2eEmployeeTemplateListComponent extends SignBaseComponent
 		$companyIdsByTemplateIds = [];
 		foreach ($members as $member)
 		{
-			if ($member->entityType !== EntityType::COMPANY || empty($member->entityId))
+			if (!in_array(
+					$member->entityType,
+					[EntityType::COMPANY, EntityType::ROLE],
+					true
+				) || empty($member->entityId))
 			{
 				continue;
 			}
@@ -641,7 +877,15 @@ final class SignB2eEmployeeTemplateListComponent extends SignBaseComponent
 
 	private function installPresetTemplatesIfNeed(): void
 	{
-		$result = (new \Bitrix\Sign\Operation\Document\Template\InstallPresetTemplates())->launch();
+		$createdById = (int)CurrentUser::get()->getId();
+		if($createdById < 1)
+		{
+			return;
+		}
+
+		$result = (new \Bitrix\Sign\Operation\Document\Template\InstallPresetTemplates(
+			createdById: $createdById,
+		))->launch();
 		if (!$result instanceof \Bitrix\Sign\Result\Operation\Document\Template\InstallPresetTemplatesResult)
 		{
 			$this->logWithErrorsFromResult('preset install errors: ', $result);
@@ -650,6 +894,7 @@ final class SignB2eEmployeeTemplateListComponent extends SignBaseComponent
 		}
 
 		$operation = new \Bitrix\Sign\Operation\Document\Template\FixDismissalPresetTemplate(
+			createdById: $createdById,
 			isOptionsReloaded: $result->isOptionsReloaded,
 		);
 
@@ -709,7 +954,7 @@ final class SignB2eEmployeeTemplateListComponent extends SignBaseComponent
 	private function getFilterPresets(): array
 	{
 		$presets = [];
-		if (Feature::instance()->isSenderTypeAvailable())
+		if ($this->isSenderTypeAvailableAndNotInFolderContentMode())
 		{
 			$presets['fromCompany'] = [
 				'name' => (string)Loc::getMessage('SIGN_B2E_EMPLOYEE_TEMPLATE_LIST_FILTER_PRESET_TYPE_COMPANY'),
@@ -768,5 +1013,73 @@ final class SignB2eEmployeeTemplateListComponent extends SignBaseComponent
 			->setSection('left_menu')
 		;
 		$analyticService->sendEventWithSigningContext($event);
+	}
+
+	private function getCreateTemplateEntityButton(): ?BaseButton
+	{
+		$currentUserId = (int)CurrentUser::get()->getId();
+		if ($currentUserId < 1)
+		{
+			return null;
+		}
+
+		$canCreate = $this->templateAccessService->hasCurrentUserAccessToPermissionByItemWithOwnerId(
+			$currentUserId,
+			SignPermissionDictionary::SIGN_B2E_TEMPLATE_CREATE,
+		);
+		if (!$canCreate)
+		{
+			return null;
+		}
+
+		$createTemplateLink = $this->getCreateTemplateLink();
+		if (!Feature::instance()->isTemplateFolderGroupingAllowed() || $this->isFolderContentMode())
+		{
+			return (new \Bitrix\UI\Buttons\CreateButton([]))
+				->setText(Loc::getMessage('SIGN_B2E_EMPLOYEE_TEMPLATE_LIST_ADD_NEW_TEMPLATE_MAIN_TITLE') ?? '')
+				->setLink($createTemplateLink)
+			;
+		}
+
+		$buttonParams = [
+			'text' => Loc::getMessage('SIGN_B2E_EMPLOYEE_TEMPLATE_LIST_ADD_NEW_TEMPLATE_MAIN_TITLE') ?? '',
+		];
+
+		$menuItems = [
+			[
+				'text' => Loc::getMessage('SIGN_B2E_EMPLOYEE_TEMPLATE_LIST_ADD_NEW_TEMPLATE_ITEM_TITLE'),
+				'href' => $createTemplateLink,
+				'onclick' => new \Bitrix\UI\Buttons\JsCode('this.close()'),
+			],
+			[
+				'text' => Loc::getMessage('SIGN_B2E_EMPLOYEE_TEMPLATE_LIST_ADD_NEW_TEMPLATE_FOLDR_ITEM_TITLE'),
+				'onclick' => new \Bitrix\UI\Buttons\JsCode('this.close(); templateGrid.createFolder();'),
+			],
+		];
+
+		$showTariffSlider = B2eTariff::instance()->isB2eRestrictedInCurrentTariff();
+		if (!$showTariffSlider)
+		{
+			$buttonParams['mainButton'] = ['link' => $createTemplateLink];
+			$buttonParams['menu'] = ['items' => $menuItems];
+
+		}
+
+		return new \Bitrix\UI\Buttons\Split\CreateButton($buttonParams);
+	}
+
+	private function isFolderContentMode(): bool
+	{
+		return $this->getCurrentFolderId() > 0;
+	}
+
+	private function fromCompanyTemplateSendMode(): bool
+	{
+		return $this->isFolderIdProvided() && $this->getCurrentFolderId() === 0;
+	}
+
+	private function getCreateTemplateLink(): string
+	{
+		return $this->urlGeneratorService->makeCreateTemplateLink($this->isFolderIdProvided(), $this->folderId);
 	}
 }

@@ -1,4 +1,5 @@
 <?php
+
 /**
  * Bitrix Framework
  * @package bitrix
@@ -51,19 +52,20 @@ class PermissionTable extends AccessPermissionTable
 		return [
 			new Entity\IntegerField('ID', [
 				'autocomplete' => true,
-				'primary' => true
+				'primary' => true,
 			]),
 			new Entity\IntegerField('ROLE_ID', [
-				'required' => true
+				'required' => true,
 			]),
 			new Entity\StringField('PERMISSION_ID', [
-				'required' => true
+				'required' => true,
 			]),
 			new Entity\StringField('VALUE', [
-				'required' => true
-			])
+				'required' => true,
+			]),
 		];
 	}
+
 	public static function getObjectClass(): string
 	{
 		return Permission::class;

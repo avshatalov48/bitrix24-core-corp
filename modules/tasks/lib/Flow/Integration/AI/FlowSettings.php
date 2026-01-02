@@ -34,7 +34,7 @@ final class FlowSettings extends Settings
 			return true;
 		}
 
-		return (Option::get('ai', 'queue_mode', 'N') === 'Y') && (Option::get('ai', 'force_queue', 'N') === 'Y');
+		return (Option::get('ai', 'queue_mode', 'Y') === 'Y') && (Option::get('ai', 'force_queue', 'Y') === 'Y');
 	}
 
 	public static function isFlowsTextAvailable(): bool

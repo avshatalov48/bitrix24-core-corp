@@ -21,6 +21,11 @@ class AccessCode implements CheckInterface
 			return true;
 		}
 
+		if ($value === 'U0')
+		{
+			return false;
+		}
+
 		return \Bitrix\Main\Access\AccessCode::isValid($value);
 	}
 }

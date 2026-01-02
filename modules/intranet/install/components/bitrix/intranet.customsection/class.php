@@ -48,6 +48,7 @@ class IntranetCustomSectionComponent extends \CBitrixComponent implements \Bitri
 				$resolveResult->getActivePage(),
 				$resolveResult->getAvailablePages()
 			),
+			'THEME' => 'air',
 		];
 		$this->arResult['componentToInclude'] = $resolveResult->getComponentToInclude();
 

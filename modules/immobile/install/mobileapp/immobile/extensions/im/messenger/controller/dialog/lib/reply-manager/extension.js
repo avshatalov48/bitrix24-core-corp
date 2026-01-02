@@ -5,7 +5,7 @@
  * @module im/messenger/controller/dialog/lib/reply-manager
  */
 jn.define('im/messenger/controller/dialog/lib/reply-manager', (require, exports, module) => {
-	const { Loc } = require('loc');
+	const { Loc } = require('im/messenger/loc');
 	const { Type } = require('type');
 	const { clone } = require('utils/object');
 	const {
@@ -18,7 +18,6 @@ jn.define('im/messenger/controller/dialog/lib/reply-manager', (require, exports,
 	const { parser } = require('im/messenger/lib/parser');
 	const { MessengerParams } = require('im/messenger/lib/params');
 	const { DateFormatter } = require('im/messenger/lib/date-formatter');
-	const { DialogConverter } = require('im/messenger/lib/converter');
 
 	const QUOTE_DELIMITER = '-'.repeat(54);
 	const SHORT_NAME_SYMBOLS_LIMIT = 12;
@@ -31,11 +30,14 @@ jn.define('im/messenger/controller/dialog/lib/reply-manager', (require, exports,
 	 */
 	class ReplyManager
 	{
-		constructor({ store, dialogView })
+		constructor({ store, dialogView, dialogLocator })
 		{
 			this.store = store;
 			/** @type {DialogView} */
 			this.dialogView = dialogView;
+
+			/** @type {DialogLocator} */
+			this.dialogLocator = dialogLocator;
 
 			this.quoteMessage = null;
 			this.inputTextBuffer = null;
@@ -87,7 +89,7 @@ jn.define('im/messenger/controller/dialog/lib/reply-manager', (require, exports,
 		{
 			const modelMessage = this.store.getters['messagesModel/getById'](message.id);
 
-			const quoteMessage = DialogConverter.createMessage(modelMessage);
+			const quoteMessage = this.dialogLocator.get('message-ui-converter').createMessage(modelMessage);
 			const isSystemMessage = modelMessage.authorId === 0;
 			// const isAudioMessage = message.type === MessageType.audio;
 			// const isEmptyText = !modelMessage.text || modelMessage.text === '';
@@ -105,10 +107,12 @@ jn.define('im/messenger/controller/dialog/lib/reply-manager', (require, exports,
 			// 	};
 			// }
 
-			quoteMessage.message = [{
-				type: 'text',
-				text: parser.simplifyMessage(modelMessage),
-			}];
+			quoteMessage.message = [
+				{
+					type: 'text',
+					text: parser.simplifyMessage(modelMessage),
+				},
+			];
 
 			this.quoteMessage = quoteMessage;
 		}
@@ -119,8 +123,8 @@ jn.define('im/messenger/controller/dialog/lib/reply-manager', (require, exports,
 		}
 
 		/**
-		* @return {ForwardMessage}
-		*/
+		 * @return {ForwardMessage}
+		 */
 		getForwardMessage()
 		{
 			return this.forwardMessage;
@@ -182,7 +186,7 @@ jn.define('im/messenger/controller/dialog/lib/reply-manager', (require, exports,
 		setEditMessage(message)
 		{
 			const modelMessage = this.store.getters['messagesModel/getById'](message.id);
-			const editMessage = DialogConverter.createMessage(modelMessage);
+			const editMessage = this.dialogLocator.get('message-ui-converter').createMessage(modelMessage);
 			editMessage.username = Loc.getMessage('IMMOBILE_MESSENGER_DIALOG_REPLY_MANAGER_MESSAGE_EDIT_FIELD');
 
 			const isAudioMessage = message.type === MessageType.audio;
@@ -194,10 +198,12 @@ jn.define('im/messenger/controller/dialog/lib/reply-manager', (require, exports,
 			// 		text: Loc.getMessage('IMMOBILE_MESSENGER_DIALOG_REPLY_MANAGER_MESSAGE_FIELD_VOICE'),
 			// 	};
 			// }
-			editMessage.message = [{
-				type: 'text',
-				text: parser.simplifyMessage(modelMessage),
-			}];
+			editMessage.message = [
+				{
+					type: 'text',
+					text: parser.simplifyMessage(modelMessage),
+				},
+			];
 
 			this.editMessage = editMessage;
 		}
@@ -213,7 +219,7 @@ jn.define('im/messenger/controller/dialog/lib/reply-manager', (require, exports,
 				const messageModel = this.store.getters['messagesModel/getById'](Number(message));
 
 				// eslint-disable-next-line no-param-reassign
-				message = DialogConverter.createMessage(messageModel);
+				message = this.dialogLocator.get('message-ui-converter').createMessage(messageModel);
 			}
 
 			const modelMessage = this.store.getters['messagesModel/getById'](message.id);
@@ -302,7 +308,8 @@ jn.define('im/messenger/controller/dialog/lib/reply-manager', (require, exports,
 		 * @param {Array<string>} authorNames
 		 * @return {string}
 		 */
-		truncateAuthorNames(authorNames) {
+		truncateAuthorNames(authorNames)
+		{
 			if (authorNames.length === 1)
 			{
 				return authorNames[0];
@@ -436,7 +443,6 @@ jn.define('im/messenger/controller/dialog/lib/reply-manager', (require, exports,
 
 		startEditingMessage(message)
 		{
-			// TODO: remove setTimeout 0 after fixing dialogView.getInput method. Works only on the UI thread.
 			const inputText = this.dialogView.getInput();
 			if (!this.isEditInProcess && inputText !== '')
 			{
@@ -503,7 +509,9 @@ jn.define('im/messenger/controller/dialog/lib/reply-manager', (require, exports,
 		finishQuotingMessage()
 		{
 			this._isQuoteInProcess = false;
-			this.draftManager.cancelReply();
+			this.draftManager.cancelReply(
+				this.dialogView.getInput(),
+			);
 
 			return this.dialogView.removeInputQuote();
 		}
@@ -512,7 +520,7 @@ jn.define('im/messenger/controller/dialog/lib/reply-manager', (require, exports,
 		{
 			this._isEditInProcess = false;
 			this.dialogView.clearInput();
-			this.draftManager.saveDraft('');
+			this.draftManager.cancelEditingMessage();
 			if (this.inputTextBuffer !== null)
 			{
 				this.dialogView.setInput(this.inputTextBuffer);
@@ -544,7 +552,7 @@ jn.define('im/messenger/controller/dialog/lib/reply-manager', (require, exports,
 				this._isQuoteInBackground = false;
 			}
 			this.dialogView.clearInput();
-			this.draftManager.saveDraft('');
+			this.draftManager.clearDraft();
 			this.dialogView.removeInputQuote();
 			this.dialogView.enableAlwaysSendButtonMode(false);
 		}
@@ -577,7 +585,7 @@ jn.define('im/messenger/controller/dialog/lib/reply-manager', (require, exports,
 		 */
 		isHasQuote(message)
 		{
-			return message.params.replyId;
+			return Boolean(message.params?.replyId);
 		}
 	}
 

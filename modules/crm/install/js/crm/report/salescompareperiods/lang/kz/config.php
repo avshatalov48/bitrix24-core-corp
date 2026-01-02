@@ -1,0 +1,3 @@
+<?php
+$MESS["CRM_REPORT_SALES_COMPARE_CURRENT_PERIOD"] = "Ағымдағы кезең";
+$MESS["CRM_REPORT_SALES_COMPARE_PREV_PERIOD"] = "Алдыңғы кезең";

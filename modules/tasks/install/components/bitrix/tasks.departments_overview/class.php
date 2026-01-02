@@ -14,7 +14,6 @@ use Bitrix\Main\UI\Filter\Options;
 use Bitrix\Main\UI\PageNavigation;
 use Bitrix\Main\UserTable;
 use Bitrix\Tasks\Integration\Bitrix24;
-use Bitrix\Tasks\Integration\Intranet\Settings;
 use Bitrix\Tasks\Internals\Counter;
 use Bitrix\Tasks\Internals\Task\Status;
 use Bitrix\Tasks\Util\Error\Collection;
@@ -27,6 +26,28 @@ CBitrixComponent::includeComponentClass("bitrix:tasks.base");
 
 class TasksDepartmentsOverviewComponent extends TasksBaseComponent
 {
+	public function executeComponent()
+	{
+		$this->sendAnalytics();
+
+		return parent::executeComponent();
+	}
+
+	private function sendAnalytics(): void
+	{
+		$request = Main\Context::getCurrent()?->getRequest();
+
+		if (!empty($request->get('ta_sec')))
+		{
+			\Bitrix\Tasks\Helper\Analytics::getInstance($this->userId)->onLeadView(
+				$request->get('ta_sec'),
+				$request->get('ta_el'),
+				$request->get('ta_sub'),
+				['p1' => $request->get('p1')]
+			);
+		}
+	}
+
 	protected static function checkRequiredModules(array &$arParams, array &$arResult, Collection $errors, array $auxParams = [])
 	{
 		if (!Loader::includeModule('intranet'))
@@ -61,7 +82,7 @@ class TasksDepartmentsOverviewComponent extends TasksBaseComponent
 			return;
 		}
 
-		$arResult['IS_TOOL_AVAILABLE'] = (new Settings())->isToolAvailable(Settings::TOOLS['departments']);
+		$arResult['IS_TOOL_AVAILABLE'] = \Bitrix\Tasks\V2\Internal\DI\Container::getInstance()->getToolService()->isDepartmentsAvailable();
 	}
 
 	protected function checkParameters()

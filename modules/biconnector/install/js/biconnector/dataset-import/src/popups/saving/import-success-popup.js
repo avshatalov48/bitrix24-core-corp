@@ -1,6 +1,5 @@
 import { ajax as Ajax, Dom } from 'main.core';
 import { SavingPopup } from './saving-popup';
-import '../../css/save-progress-popup.css';
 
 export const ImportSuccessPopup = {
 	emits: ['click', 'oneMoreClick'],
@@ -67,11 +66,11 @@ export const ImportSuccessPopup = {
 			:description="description"
 		>
 			<template v-slot:icon>
-				<div class="dataset-save-progress-popup__success-logo"></div>
+				<div class="biconnector-save-progress-popup__success-logo"></div>
 			</template>
 			<template v-slot:buttons>
 				<a class="ui-btn ui-btn-md ui-btn-primary" @click="onButtonClick" ref="openDatasetButton">
-					{{ $Bitrix.Loc.getMessage('DATASET_IMPORT_SUCCESS_POPUP_BUTTON') }}
+					{{ $Bitrix.Loc.getMessage('DATASET_IMPORT_SUCCESS_POPUP_BUTTON_MSGVER_1') }}
 				</a>
 				<a class="ui-btn ui-btn-md ui-btn-light-border" @click="onOneMoreButtonClick" ref="oneMoreButton" v-if="showMoreButton">
 					{{ $Bitrix.Loc.getMessage('DATASET_IMPORT_SUCCESS_POPUP_ONE_MORE_BUTTON') }}

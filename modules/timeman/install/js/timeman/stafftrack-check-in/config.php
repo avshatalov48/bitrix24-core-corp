@@ -22,6 +22,7 @@ return [
 	'js' => 'dist/stafftrack-check-in.bundle.js',
 	'rel' => [
 		'main.core',
+		'ui.icon-set.api.core',
 		'stafftrack.user-statistics-link',
 		'ui.analytics',
 		'ui.counter',
@@ -29,6 +30,7 @@ return [
 	'settings' => [
 		'counter' => $counter,
 		'isCheckinEnabled' => $isCheckinEnabled,
+		'isAirTemplate' => defined('AIR_SITE_TEMPLATE'),
 	],
 	'skip_core' => false,
 ];

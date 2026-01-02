@@ -10,7 +10,8 @@ class Setters extends Formatter implements IFormatter
 	private const SETTERS_TO_PARAM = [
 		'temperature' => 'temperature',
 		'tokens' => 'max_tokens',
-		'responsejson' => 'response_json'
+		'responsejson' => 'response_json',
+		'reasoningeffort' => 'reasoning_effort',
 
 	];
 

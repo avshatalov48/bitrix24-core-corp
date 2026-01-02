@@ -5,6 +5,7 @@ jn.define('layout/ui/range-slider', (require, exports, module) => {
 	const AppTheme = require('apptheme');
 	const { EventEmitter } = require('event-emitter');
 	const { throttle, debounce } = require('utils/function');
+	const { Random } = require('utils/random');
 	const nothing = () => {};
 	const SECONDS_COUNT = 60;
 

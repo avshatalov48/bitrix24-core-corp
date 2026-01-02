@@ -7,6 +7,7 @@ use Bitrix\HumanResources\Enum\DepthLevel;
 use Bitrix\Main\Application;
 use Bitrix\Intranet\MainPage;
 use Bitrix\Main\Loader;
+use Bitrix\Main\Type\Date;
 
 IncludeModuleLangFile(__FILE__);
 
@@ -109,6 +110,11 @@ class CIntranetUtils
 			return $result;
 		}
 
+		if (!Loader::includeModule('iblock'))
+		{
+			return [];
+		}
+
 		$dbRes = CIBlockSection::GetList(
 			[ 'LEFT_MARGIN' => 'asc' ],
 			[ 'ID' => $arSections ],
@@ -148,6 +154,11 @@ class CIntranetUtils
 
 	public static function GetIBlockTopSection($SECTION_ID)
 	{
+		if (!Loader::includeModule('iblock'))
+		{
+			return $SECTION_ID;
+		}
+
 		if (is_array($SECTION_ID)) $SECTION_ID = $SECTION_ID[0];
 		$dbRes = CIBlockSection::GetNavChain(0, $SECTION_ID);
 
@@ -197,17 +208,23 @@ class CIntranetUtils
 						$departments[] = DepartmentBackwardAccessCode::makeById((int)$department);
 					}
 				);
-				$nodes = \Bitrix\HumanResources\Service\Container::getNodeRepository()
-					->findAllByAccessCodes($departments);
 
-				foreach ($nodes as $node)
+				$departmentsChunk = array_chunk($departments, 200);
+
+				foreach ($departmentsChunk as $chunk)
 				{
-					$sectionId = DepartmentBackwardAccessCode::extractIdFromCode($node->accessCode);
-					$INTR_DEPARTMENTS_CACHE[] = $sectionId;
-					$INTR_DEPARTMENTS_CACHE_VALUE[$sectionId] = $node->name;
+					$nodes = \Bitrix\HumanResources\Service\Container::getNodeRepository()
+						->findAllByAccessCodes($chunk);
+
+					foreach ($nodes as $node)
+					{
+						$sectionId = DepartmentBackwardAccessCode::extractIdFromCode($node->accessCode);
+						$INTR_DEPARTMENTS_CACHE[] = $sectionId;
+						$INTR_DEPARTMENTS_CACHE_VALUE[$sectionId] = $node->name;
+					}
 				}
 			}
-			else
+			elseif (Loader::includeModule('iblock'))
 			{
 				$dbRes = CIBlockSection::GetList(array('SORT' => 'ASC'), array('ID' => $arNewDep));
 
@@ -234,7 +251,7 @@ class CIntranetUtils
 		if (null === $CACHE_ABSENCE)
 		{
 			$cache_ttl = (24-date('G')) * 3600;
-			$cache_dir = '/'.SITE_ID.'/intranet/absence';
+			$cache_dir = '/'.SITE_ID.'/intranet/absence/v3';
 
 			$obCache = new CPHPCache();
 			if ($obCache->InitCache($cache_ttl, 'intranet_absence', $cache_dir))
@@ -246,17 +263,28 @@ class CIntranetUtils
 				if (null == $CALENDAR_IBLOCK_ID)
 					$CALENDAR_IBLOCK_ID = COption::GetOptionInt('intranet', 'iblock_calendar', null);
 
-				$dt = ConvertTimeStamp(false, 'SHORT');
+				$timeZoneEnabled = \CTimeZone::Enabled();
+
+				if ($timeZoneEnabled)
+				{
+					\CTimeZone::Disable();
+				}
+
 				$arAbsence = CIntranetUtils::GetAbsenceData(
 					array(
 						'CALENDAR_IBLOCK_ID' => $CALENDAR_IBLOCK_ID,
-						'DATE_START' => $dt,
-						'DATE_FINISH' => $dt,
+						'DATE_START' => (new Date(null, 'Y-m-01'))->add('-1 day'),
+						'DATE_FINISH' => (new Date(null, 'Y-m-01'))->add('1 month'),
 						'PER_USER' => true,
 						'SELECT' => array('DATE_ACTIVE_FROM', 'DATE_ACTIVE_TO'),
 						'CHECK_PERMISSIONS' => 'N'
 					)
 				);
+
+				if ($timeZoneEnabled)
+				{
+					\CTimeZone::Enable();
+				}
 
 				$obCache->StartDataCache();
 				$CACHE_MANAGER->StartTagCache($cache_dir);
@@ -282,19 +310,28 @@ class CIntranetUtils
 
 		if (is_array($arAbsence[$USER_ID] ?? null))
 		{
-			$ts = time() + \CTimeZone::getOffset();
+			$ts = (new \Bitrix\Main\Type\DateTime())->enableUserTime()->getTimestamp();
 			foreach($arAbsence[$USER_ID] as $arEntry)
 			{
-				$ts_start = MakeTimeStamp($arEntry['DATE_FROM'], FORMAT_DATETIME);
+				$ts_start = MakeTimeStamp($arEntry['DATE_FROM'], FORMAT_DATETIME) + CTimeZone::GetOffset();
 				if ($ts_start < $ts)
 				{
-					$ts_finish = MakeTimeStamp($arEntry['DATE_TO'], FORMAT_DATETIME);
+					$ts_finish = MakeTimeStamp($arEntry['DATE_TO'], FORMAT_DATETIME) + CTimeZone::GetOffset();
 
 					if ($ts_finish > $ts)
+					{
 						return true;
+					}
 
-					if (($ts_start+date('Z')) % 86400 == 0 && $ts_start == $ts_finish)
+					if ($ts_start === $ts_finish && !self::IsDateTime($ts_start))
+					{
 						return true;
+					}
+
+					if (($ts_finish + 86400 > $ts) && (!self::IsDateTime($ts_finish)))
+					{
+						return true;
+					}
 				}
 			}
 		}
@@ -330,10 +367,13 @@ class CIntranetUtils
 					return false;
 				}
 
-				$dbRes = CIBlockElement::GetList(array('ID' => 'ASC'), $arFilter, array('ID', 'IBLOCK_ID', 'PROPERTY_USER'));
-				while ($arRes = $dbRes->Fetch())
+				if (Loader::includeModule('iblock'))
 				{
-					$CACHE_HONOUR[] = $arRes;
+					$dbRes = CIBlockElement::GetList(array('ID' => 'ASC'), $arFilter, array('ID', 'IBLOCK_ID', 'PROPERTY_USER'));
+					while ($arRes = $dbRes->Fetch())
+					{
+						$CACHE_HONOUR[] = $arRes;
+					}
 				}
 
 				$obCache->StartDataCache();
@@ -583,31 +623,34 @@ class CIntranetUtils
 				if (is_array($arParams['USERS']))
 					$arFilter['=PROPERTY_USER'] = $arParams['USERS'];
 
-				$dbRes = CIBlockElement::GetList(
-					array('DATE_ACTIVE_FROM' => 'ASC', 'DATE_ACTIVE_TO' => 'ASC'),
-					$arFilter,
-					false,
-					false,
-					$arParams['SELECT']
-				);
-
-				while ($arRes = $dbRes->Fetch())
+				if (Loader::includeModule('iblock'))
 				{
-					$arRes['USER_ID'] = $arRes['PROPERTY_USER_VALUE'];
-					$arRes['DATE_FROM'] = $arRes['DATE_ACTIVE_FROM'];
-					$arRes['DATE_TO'] = $arRes['DATE_ACTIVE_TO'];
-					$arRes['ENTRY_TYPE'] = BX_INTRANET_ABSENCE_HR;
+					$dbRes = CIBlockElement::GetList(
+						array('DATE_ACTIVE_FROM' => 'ASC', 'DATE_ACTIVE_TO' => 'ASC'),
+						$arFilter,
+						false,
+						false,
+						$arParams['SELECT']
+					);
 
-					if ($arParams['PER_USER'])
+					while ($arRes = $dbRes->Fetch())
 					{
-						if (!isset($arResult[$arRes['USER_ID']]))
-							$arResult[$arRes['USER_ID']] = array();
+						$arRes['USER_ID'] = $arRes['PROPERTY_USER_VALUE'];
+						$arRes['DATE_FROM'] = $arRes['DATE_ACTIVE_FROM'];
+						$arRes['DATE_TO'] = $arRes['DATE_ACTIVE_TO'];
+						$arRes['ENTRY_TYPE'] = BX_INTRANET_ABSENCE_HR;
 
-						$arResult[$arRes['USER_ID']][] = $arRes;
-					}
-					else
-					{
-						$arResult[] = $arRes;
+						if ($arParams['PER_USER'])
+						{
+							if (!isset($arResult[$arRes['USER_ID']]))
+								$arResult[$arRes['USER_ID']] = array();
+
+							$arResult[$arRes['USER_ID']][] = $arRes;
+						}
+						else
+						{
+							$arResult[] = $arRes;
+						}
 					}
 				}
 			}
@@ -844,7 +887,7 @@ class CIntranetUtils
 
 	public static function UpdateOWSVersion($IBLOCK_ID, $ID, $value = null)
 	{
-		if (!defined('INTR_WS_OUTLOOK_UPDATE'))
+		if (!defined('INTR_WS_OUTLOOK_UPDATE') && Loader::includeModule('iblock'))
 		{
 			if (null === $value)
 			{
@@ -1059,7 +1102,7 @@ class CIntranetUtils
 					{
 						$arFilter['SECTION_ID'] = $sectionId;
 					}
-					else
+					elseif (Loader::includeModule('iblock'))
 					{
 						$dbSection = CIBlockSection::GetList(
 							array('LEFT_MARGIN' => 'ASC'),
@@ -1082,29 +1125,32 @@ class CIntranetUtils
 					$arFilter['<=DEPTH_LEVEL'] = $depth;
 				}
 
-				$dbSections = CIBlockSection::GetList(
-					array('LEFT_MARGIN' => 'ASC'),
-					$arFilter,
-					false,
-					array('ID', 'NAME', 'IBLOCK_SECTION_ID', 'UF_HEAD')
-				);
-				if (!empty($dbSections))
+				if (Loader::includeModule('iblock'))
 				{
-					while ($section = $dbSections->fetch())
+					$dbSections = CIBlockSection::GetList(
+						array('LEFT_MARGIN' => 'ASC'),
+						$arFilter,
+						false,
+						array('ID', 'NAME', 'IBLOCK_SECTION_ID', 'UF_HEAD')
+					);
+					if (!empty($dbSections))
 					{
-						if (empty($section['IBLOCK_SECTION_ID']))
-							$section['IBLOCK_SECTION_ID'] = 0;
+						while ($section = $dbSections->fetch())
+						{
+							if (empty($section['IBLOCK_SECTION_ID']))
+								$section['IBLOCK_SECTION_ID'] = 0;
 
-						if (!isset($subStructure['TREE'][$section['IBLOCK_SECTION_ID']]))
-							$subStructure['TREE'][$section['IBLOCK_SECTION_ID']] = array();
+							if (!isset($subStructure['TREE'][$section['IBLOCK_SECTION_ID']]))
+								$subStructure['TREE'][$section['IBLOCK_SECTION_ID']] = array();
 
-						$subStructure['TREE'][$section['IBLOCK_SECTION_ID']][] = $section['ID'];
-						$subStructure['DATA'][$section['ID']] = array(
-							'ID'                => $section['ID'],
-							'NAME'              => $section['NAME'],
-							'IBLOCK_SECTION_ID' => $section['IBLOCK_SECTION_ID'],
-							'UF_HEAD'           => $section['UF_HEAD']
-						);
+							$subStructure['TREE'][$section['IBLOCK_SECTION_ID']][] = $section['ID'];
+							$subStructure['DATA'][$section['ID']] = array(
+								'ID'                => $section['ID'],
+								'NAME'              => $section['NAME'],
+								'IBLOCK_SECTION_ID' => $section['IBLOCK_SECTION_ID'],
+								'UF_HEAD'           => $section['UF_HEAD']
+							);
+						}
 					}
 				}
 
@@ -1165,7 +1211,7 @@ class CIntranetUtils
 			self::_GetDeparmentsTreeWithoutEmployee();
 		}
 
-		return self::$SECTIONS_SETTINGS_WITHOUT_EMPLOYEE_CACHE['DATA'][$section_id]['UF_HEAD'];
+		return self::$SECTIONS_SETTINGS_WITHOUT_EMPLOYEE_CACHE['DATA'][$section_id]['UF_HEAD'] ?? null;
 	}
 
 	/**
@@ -1192,9 +1238,9 @@ class CIntranetUtils
 		$arManagerIDs = array();
 		foreach ($arDepartments as $section_id)
 		{
-			$arSection = self::$SECTIONS_SETTINGS_WITHOUT_EMPLOYEE_CACHE['DATA'][$section_id];
+			$arSection = self::$SECTIONS_SETTINGS_WITHOUT_EMPLOYEE_CACHE['DATA'][$section_id] ?? null;
 
-			if ($arSection['UF_HEAD'] && $arSection['UF_HEAD'] != $skipUserId)
+			if (isset($arSection['UF_HEAD']) && $arSection['UF_HEAD'] && $arSection['UF_HEAD'] != $skipUserId)
 			{
 				$arManagers[$arSection['UF_HEAD']] = null;
 				$arManagerIDs[] = $arSection['UF_HEAD'];
@@ -1203,8 +1249,11 @@ class CIntranetUtils
 
 		if(count($arManagerIDs) > 0)
 		{
-			$dbRes = CUser::GetList('ID', 'ASC', array('ID' => implode('|', array_unique($arManagerIDs))));
-			while($arUser = $dbRes->GetNext())
+			$res = new \CDBResult(\Bitrix\Main\UserTable::getList([
+				'select' => ['*', 'UF_*'],
+				'filter' => ['@ID' => array_unique($arManagerIDs)],
+			]));
+			while($arUser = $res->GetNext())
 			{
 				$arManagers[$arUser['ID']] = $arUser;
 			}
@@ -1212,13 +1261,14 @@ class CIntranetUtils
 
 		foreach ($arDepartments as $section_id)
 		{
-			$arSection = self::$SECTIONS_SETTINGS_WITHOUT_EMPLOYEE_CACHE['DATA'][$section_id];
+			$arSection = self::$SECTIONS_SETTINGS_WITHOUT_EMPLOYEE_CACHE['DATA'][$section_id] ?? null;
 
-			$bFound = $arSection['UF_HEAD']
+			$bFound = isset($arSection['UF_HEAD'])
+				&& $arSection['UF_HEAD']
 				&& $arSection['UF_HEAD'] != $skipUserId
 				&& array_key_exists($arSection['UF_HEAD'], $arManagers);
 
-			if (!$bFound && $bRecursive && $arSection['IBLOCK_SECTION_ID'])
+			if (!$bFound && $bRecursive && !empty($arSection['IBLOCK_SECTION_ID']))
 			{
 				$ar = CIntranetUtils::GetDepartmentManager(array($arSection['IBLOCK_SECTION_ID']), $skipUserId, $bRecursive);
 				$arManagers = $arManagers + $ar;
@@ -1384,7 +1434,7 @@ class CIntranetUtils
 
 		if ($supportNew && Loader::includeModule('humanresources'))
 		{
-			$structure = StructureBackwardAdapter::getStructure();
+			$structure = StructureBackwardAdapter::getStructure(null, null);
 
 			if (!empty($structure) && !empty($structure['DATA']))
 			{
@@ -1400,8 +1450,11 @@ class CIntranetUtils
 		);
 
 		$ibDept = COption::GetOptionInt('intranet', 'iblock_structure', false);
-		if ($ibDept <= 0)
+
+		if ($ibDept <= 0 || !Loader::includeModule('iblock'))
+		{
 			return;
+		}
 
 		$cache_dir = '/intranet/structure';
 		$cache_id = 'intranet|structure2|'.$ibDept;
@@ -1521,31 +1574,34 @@ class CIntranetUtils
 			$taggedCache->registerTag('iblock_id_' . $ibDept);
 			$taggedCache->endTagCache();
 
-			$dbRes = CIBlockSection::GetList(
-				array("LEFT_MARGIN" => "ASC"),
-				array('IBLOCK_ID' => $ibDept, 'ACTIVE' => 'Y'),
-				false,
-				array('ID', 'NAME', 'IBLOCK_SECTION_ID', 'UF_HEAD', 'SECTION_PAGE_URL', 'DEPTH_LEVEL')
-			);
-
-			while ($arRes = $dbRes->Fetch())
+			if (Loader::includeModule('iblock'))
 			{
-				if (empty($arRes['IBLOCK_SECTION_ID']))
-					$arRes['IBLOCK_SECTION_ID'] = 0;
-
-				if (empty(self::$SECTIONS_SETTINGS_WITHOUT_EMPLOYEE_CACHE['TREE'][$arRes['IBLOCK_SECTION_ID']]))
-					self::$SECTIONS_SETTINGS_WITHOUT_EMPLOYEE_CACHE['TREE'][$arRes['IBLOCK_SECTION_ID']] = array();
-
-				self::$SECTIONS_SETTINGS_WITHOUT_EMPLOYEE_CACHE['TREE'][$arRes['IBLOCK_SECTION_ID']][] = $arRes['ID'];
-				self::$SECTIONS_SETTINGS_WITHOUT_EMPLOYEE_CACHE['DATA'][$arRes['ID']] = array(
-					'ID' => $arRes['ID'],
-					'NAME' => $arRes['NAME'],
-					'IBLOCK_SECTION_ID' => $arRes['IBLOCK_SECTION_ID'],
-					'UF_HEAD' => $arRes['UF_HEAD'],
-					'SECTION_PAGE_URL' => $arRes['SECTION_PAGE_URL'],
-					'DEPTH_LEVEL' => $arRes['DEPTH_LEVEL'],
-					'EMPLOYEES' => array()
+				$dbRes = CIBlockSection::GetList(
+					array("LEFT_MARGIN" => "ASC"),
+					array('IBLOCK_ID' => $ibDept, 'ACTIVE' => 'Y'),
+					false,
+					array('ID', 'NAME', 'IBLOCK_SECTION_ID', 'UF_HEAD', 'SECTION_PAGE_URL', 'DEPTH_LEVEL')
 				);
+
+				while ($arRes = $dbRes->Fetch())
+				{
+					if (empty($arRes['IBLOCK_SECTION_ID']))
+						$arRes['IBLOCK_SECTION_ID'] = 0;
+
+					if (empty(self::$SECTIONS_SETTINGS_WITHOUT_EMPLOYEE_CACHE['TREE'][$arRes['IBLOCK_SECTION_ID']]))
+						self::$SECTIONS_SETTINGS_WITHOUT_EMPLOYEE_CACHE['TREE'][$arRes['IBLOCK_SECTION_ID']] = array();
+
+					self::$SECTIONS_SETTINGS_WITHOUT_EMPLOYEE_CACHE['TREE'][$arRes['IBLOCK_SECTION_ID']][] = $arRes['ID'];
+					self::$SECTIONS_SETTINGS_WITHOUT_EMPLOYEE_CACHE['DATA'][$arRes['ID']] = array(
+						'ID' => $arRes['ID'],
+						'NAME' => $arRes['NAME'],
+						'IBLOCK_SECTION_ID' => $arRes['IBLOCK_SECTION_ID'],
+						'UF_HEAD' => $arRes['UF_HEAD'],
+						'SECTION_PAGE_URL' => $arRes['SECTION_PAGE_URL'],
+						'DEPTH_LEVEL' => $arRes['DEPTH_LEVEL'],
+						'EMPLOYEES' => array()
+					);
+				}
 			}
 
 			$cache->endDataCache(self::$SECTIONS_SETTINGS_WITHOUT_EMPLOYEE_CACHE);
@@ -1650,6 +1706,8 @@ class CIntranetUtils
 	 */
 	public static function GetSubordinateDepartmentsList($USER_ID)
 	{
+		Loader::includeModule('iblock');
+
 		return CIBlockSection::GetList(
 			array('SORT' => 'ASC', 'NAME' => 'ASC'),
 			array('IBLOCK_ID' => COption::GetOptionInt('intranet', 'iblock_structure', 0), 'UF_HEAD' => $USER_ID, 'ACTIVE' => 'Y'),
@@ -1692,7 +1750,7 @@ class CIntranetUtils
 
 	public static function GetDepartmentManagerOld($arDepartments, $skipUserId=false, $bRecursive=false)
 	{
-		if(!is_array($arDepartments) || empty($arDepartments))
+		if(!is_array($arDepartments) || empty($arDepartments) || !Loader::includeModule('iblock'))
 			return array();
 
 		$arManagers = array();
@@ -1879,6 +1937,7 @@ class CIntranetUtils
 							'FROM_USER_ID'   => 0,
 							'NOTIFY_TYPE'    => IM_NOTIFY_SYSTEM,
 							'NOTIFY_MODULE'  => 'intranet',
+							'NOTIFY_EVENT' => 'admin_notification',
 							'NOTIFY_MESSAGE' => str_replace(
 								array('#DOMAIN#', '#SERVER#'),
 								array(htmlspecialcharsbx($service['SERVER']), $siteUrl),
@@ -2196,8 +2255,6 @@ class CIntranetUtils
 
 		switch ($portalZone)
 		{
-			case "ua_bitrix_portal":
-				return "ua";
 			case "bitrix_portal":
 				return "en";
 			case "1c_bitrix_portal":

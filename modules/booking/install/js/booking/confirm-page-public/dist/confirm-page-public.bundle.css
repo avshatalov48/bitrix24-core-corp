@@ -117,6 +117,14 @@ body{
 	gap: 6px;
 	display: flex;
 }
+.confirm-page__footer {
+	display: flex;
+	align-self: stretch;
+	flex-direction: column;
+	align-items: center;
+	margin-top: 12px;
+	gap: 12px;
+}
 
 
 .confirm-page-content-booking-time{
@@ -327,13 +335,8 @@ body{
 	display: inline-flex;
 }
 .cancel-booking{
-	margin-top: 10px;
 	display: flex;
 	align-items: center;
-}
-
-.cancel-booking-icon{
-
 }
 
 .cancel-booking-link{
@@ -409,4 +412,17 @@ body{
 	color: var(--ui-color-palette-black-base);
 	font-size: var(--ui-font-size-lg);
 	font-weight: var(--ui-font-weight-regular);
+}
+
+.add-to-calendar__container {
+	width: 100%;
+}
+
+.add-to-calendar__btn {
+	width: 100%;
+	text-transform: initial;
+	font-size: var(--ui-font-size-lg);
+	font-weight: var(--ui-font-weight-regular);
+	border-color: var(--ui-color-tag-9);
+	border-radius: 6px;
 }

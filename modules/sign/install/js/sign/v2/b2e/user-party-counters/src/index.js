@@ -16,6 +16,7 @@ export class UserPartyCounters
 	#counterNode: ?HTMLSpanElement = null;
 	#isShowLimitPopup: Boolean = false;
 	#incrementTariffLinkContainer: ?HTMLAnchorElement = null;
+	#guide: ?Guide = null;
 
 	constructor(options: UserPartyCountersOption)
 	{
@@ -108,6 +109,7 @@ export class UserPartyCounters
 
 				guide.getLink().setAttribute('onclick', "BX.PreventDefault();top.BX.UI.InfoHelper.show('limit_office_e_signature');");
 				guide.start();
+				this.#guide = guide;
 
 				this.#isShowLimitPopup = true;
 			}
@@ -149,5 +151,10 @@ export class UserPartyCounters
 		`;
 
 		return this.#incrementTariffLinkContainer;
+	}
+
+	closeGuide(): void
+	{
+		this.#guide?.close();
 	}
 }

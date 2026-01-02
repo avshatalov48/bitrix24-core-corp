@@ -4,6 +4,7 @@ namespace Bitrix\Sign\Controllers\V1\Document;
 
 use Bitrix\Sign\Access\ActionDictionary;
 use Bitrix\Sign\Config\Storage;
+use Bitrix\Sign\Operation\Document\Blank\ResolveInvalidBlockPositions;
 use Bitrix\Sign\Operation\SaveBlankPreviewPage;
 use Bitrix\Sign\Service;
 use Bitrix\Sign\Item;
@@ -74,6 +75,17 @@ class Pages extends \Bitrix\Sign\Engine\Controller
 				))->launch();
 			}
 			$pages[] = ['url' => $page->url];
+		}
+
+		if ($document->isTemplated())
+		{
+			$result = (new ResolveInvalidBlockPositions($blank, $listResponse->pages->count()))->launch();
+			if (!$result->isSuccess())
+			{
+				$this->addErrorsFromResult($result);
+
+				return [];
+			}
 		}
 
 		return [

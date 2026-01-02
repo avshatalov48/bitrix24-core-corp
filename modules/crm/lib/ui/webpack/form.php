@@ -49,6 +49,7 @@ class Form extends Webpack\Base
 		$isSuccess = (
 			Form\Polyfill::instance()->build() &&
 			Form\ResourceBooking::instance()->build() &&
+			Form\Booking::instance()->build() &&
 			Form\App::instance()->build()
 		);
 
@@ -107,9 +108,15 @@ class Form extends Webpack\Base
 	{
 		$polyfill = Form\Polyfill::instance();
 		$resourceBooking = Form\ResourceBooking::instance();
+		$booking = Form\Booking::instance();
 		$app = Form\App::instance();
 
-		if ($polyfill->checkFileExists() && $resourceBooking->checkFileExists() && $app->checkFileExists())
+		if (
+			$polyfill->checkFileExists()
+			&& $resourceBooking->checkFileExists()
+			&& $booking->checkFileExists()
+			&& $app->checkFileExists()
+		)
 		{
 			return '';
 		}

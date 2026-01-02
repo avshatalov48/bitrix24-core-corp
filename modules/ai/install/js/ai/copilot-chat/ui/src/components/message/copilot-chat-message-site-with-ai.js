@@ -1,4 +1,5 @@
-import { bind, Dom, Tag } from 'main.core';
+import { bind, Dom, Reflection, Tag } from 'main.core';
+import 'helper';
 import { type CopilotChat } from 'ai.copilot-chat.ui';
 import type { CopilotChatMessage } from '../../types';
 import { CopilotChatMessageWelcome } from './copilot-chat-message-welcome';
@@ -32,7 +33,7 @@ export const CopilotChatMessageSiteWithAi = {
 				...this.message,
 				params: {
 					...this.message.params,
-					title: 'Привет! Я — Веб-дизайнер',
+					title: this.$Bitrix.Loc.getMessage('AI_COPILOT_CHAT_WELCOME_MESSAGE_SITE_WITH_AI_TITLE'),
 					subtitle: '',
 					content: '',
 				},
@@ -56,8 +57,17 @@ export const CopilotChatMessageSiteWithAi = {
 				<div ref="root">
 					<p>${this.$Bitrix.Loc.getMessage('AI_COPILOT_CHAT_WELCOME_MESSAGE_SITE_WITH_AI_1')}</p>
 					<p>${paragraph2}</p>
+					<a href="#" ref="infoLink">${this.$Bitrix.Loc.getMessage('AI_COPILOT_CHAT_WELCOME_LINK_SITE_WITH_AI')}</a>
 				</div>
 			`;
+
+			bind(content.infoLink, 'click', () => {
+				const Helper = Reflection.getClass('top.BX.Helper');
+				if (Helper)
+				{
+					Helper.show('redirect=detail&code=24409174');
+				}
+			});
 
 			if (isMessageHaveCreateSiteButton)
 			{

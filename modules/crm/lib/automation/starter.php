@@ -3,7 +3,7 @@ namespace Bitrix\Crm\Automation;
 
 use Bitrix\Crm\Automation\Trigger\FieldChangedTrigger;
 use Bitrix\Crm\Automation\Trigger\ResponsibleChangedTrigger;
-use Bitrix\Main\Loader;
+use Bitrix\Crm\Integration\BizProc\Starter\DocumentFieldComparator;
 
 class Starter
 {
@@ -156,54 +156,11 @@ class Starter
 		return $this->isManual;
 	}
 
-	private function compareFields(array $actual, array $previous)
+	private function compareFields(array $actual, array $previous): array
 	{
-		$diff = [];
-		foreach ($actual as $key => $field)
-		{
-			if (
-				$key !== 'ID'
-				&& (!array_key_exists($key, $previous) || $previous[$key] != $field)
-			)
-			{
-				if (!$this->isDefaultValue($key, $field) || !\CBPHelper::isEmptyValue($previous[$key] ?? null))
-				{
-					$diff[] = $key;
-				}
-			}
-		}
-		return $diff;
-	}
+		$comparator = new DocumentFieldComparator($this->entityTypeId, $actual, $previous);
 
-	private function isDefaultValue(string $fieldName, $fieldValue): bool
-	{
-		static $documentFields = null;
-		if (is_null($documentFields))
-		{
-			$documentFields = $this->getDocumentFields();
-		}
-
-		return (
-			isset($documentFields[$fieldName], $documentFields[$fieldName]['Default'])
-			&& $documentFields[$fieldName]['Default'] === $fieldValue
-		);
- 	}
-
-	private function getDocumentFields(): array
-	{
-		if (!Loader::includeModule('bizproc'))
-		{
-			return [];
-		}
-
-		$documentService = \CBPRuntime::getRuntime(true)->getDocumentService();
-
-		return $documentService->getDocumentFields($this->getDocumentType());
-	}
-
-	private function getDocumentType(): ?array
-	{
-		return \CCrmBizProcHelper::ResolveDocumentType($this->entityTypeId);
+		return $comparator->compare();
 	}
 
 	private function isStatusChanged(array $changedFields): bool

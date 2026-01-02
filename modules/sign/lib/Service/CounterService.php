@@ -3,7 +3,6 @@
 namespace Bitrix\Sign\Service;
 
 use Bitrix\Sign\Type\CounterType;
-use CAllUserCounter;
 use CUserCounter;
 
 final class CounterService
@@ -12,7 +11,7 @@ final class CounterService
 
 	public function get(CounterType $counterType, int $userId): int
 	{
-		return ($userId > 0) ? (int)CUserCounter::GetValue($userId, $counterType->value, CAllUserCounter::ALL_SITES) : 0;
+		return ($userId > 0) ? (int)CUserCounter::GetValue($userId, $counterType->value, CUserCounter::ALL_SITES) : 0;
 	}
 
 	public function set(CounterType $counterType, int $value, int $userId): bool
@@ -22,7 +21,7 @@ final class CounterService
 			return false;
 		}
 
-		return CUserCounter::Set($userId, $counterType->value, $value, CAllUserCounter::ALL_SITES);
+		return CUserCounter::Set($userId, $counterType->value, $value, CUserCounter::ALL_SITES);
 	}
 
 	public function clear(CounterType $counterType, int $userId): void
@@ -32,7 +31,7 @@ final class CounterService
 			return;
 		}
 
-		CUserCounter::Clear($userId, $counterType->value, CAllUserCounter::ALL_SITES);
+		CUserCounter::Clear($userId, $counterType->value, CUserCounter::ALL_SITES);
 	}
 
 	public function getPullEventName(CounterType $counterType): string

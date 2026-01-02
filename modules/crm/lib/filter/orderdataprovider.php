@@ -1,13 +1,14 @@
 <?php
+
 namespace Bitrix\Crm\Filter;
 
+use Bitrix\Crm\Counter\EntityCounterType;
 use Bitrix\Crm\Service\Container;
+use Bitrix\Crm\Tracking;
 use Bitrix\Crm\UI\EntitySelector;
 use Bitrix\Main;
-use Bitrix\Sale;
 use Bitrix\Main\Localization\Loc;
-use Bitrix\Crm\Counter\EntityCounterType;
-use Bitrix\Crm\Tracking;
+use Bitrix\Sale;
 
 Loc::loadMessages(__FILE__);
 Main\Loader::includeModule('sale');
@@ -292,6 +293,7 @@ class OrderDataProvider extends EntityDataProvider implements FactoryOptionable
 					'referenceClass' => null,
 					'isEnableAllUsers' => true,
 					'isEnableOtherUsers' => true,
+					'isEnableStructureNode' => true,
 				]
 			);
 		}

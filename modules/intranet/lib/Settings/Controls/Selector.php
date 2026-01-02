@@ -19,10 +19,11 @@ class Selector extends Field
 		?array $hints = null,
 		?SettingsPermission $permission = null,
 		bool $isEnable = true,
-		?string $helpDesk = null
+		?string $helpDesk = null,
+		?string $badge = null,
 	)
 	{
-		parent::__construct($id, $name, $label, self::TYPE, $permission, $isEnable, $value, $hints, $helpDesk);
+		parent::__construct($id, $name, $label, self::TYPE, $permission, $isEnable, $value, $hints, $helpDesk, $badge);
 		$this->items = $items;
 	}
 
@@ -42,7 +43,7 @@ class Selector extends Field
 			'inputName' => $this->getName(),
 			'items' => $this->items,
 			'values' => $this->items,
-			'multiValue' => $this->multiValue
+			'multiValue' => $this->multiValue,
 		];
 		if (isset($this->getHints()['on']) && is_string($this->getHints()['on']))
 		{

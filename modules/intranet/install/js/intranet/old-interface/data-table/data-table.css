@@ -1,0 +1,41 @@
+table.data-table {
+	border: 1px solid #fff;
+	border-collapse: collapse;
+}
+
+table.data-table td {
+	background-color: #fff;
+	border: 1px solid #efefef;
+	border-left: none;
+	border-right: none;
+	padding: 6px 5px;
+}
+
+table.data-table thead td, table.data-table th, table.data-table thead th {
+	background-color: #ebebeb;
+	background-image: none;
+	border: 1px solid #fff;
+	color: #072838;
+	font-size: 12px;
+	font-weight: var(--ui-font-weight-bold);
+	padding: 8px;
+	text-align: left;
+}
+
+table.data-table thead td.selected, table.data-table th.selected, table.data-table thead th.selected {
+	background-color: #f6f6f5;
+}
+
+table.data-table tbody td {
+	background-color: #fff;
+	background-image: none;
+}
+
+table.data-table td.selected, table.data-table tr.selected td {
+	background-color: #f6f6f6;
+}
+
+table.data-table tfoot td {
+	background-color: #f6f6f5;
+	padding: 4px;
+}

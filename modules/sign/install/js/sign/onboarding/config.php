@@ -11,10 +11,12 @@ return [
 		'main.core',
 		'main.popup',
 		'sign.tour',
+		'sign.v2.b2e.sign-settings-onboarding',
+		'sign.v2.api',
 		'ui.banner-dispatcher',
+		'ui.icon-set.api.core',
 		'ui.buttons',
 		'ui.design-tokens',
-		'ui.icon-set.api.core',
 	],
 	'skip_core' => false,
 ];

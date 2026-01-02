@@ -13,6 +13,7 @@ jn.define('calendar/state/base-state', (require, exports, module) => {
 		{
 			this.subscribers = [];
 
+			// eslint-disable-next-line no-constructor-return
 			return this.asProxy();
 		}
 
@@ -37,7 +38,7 @@ jn.define('calendar/state/base-state', (require, exports, module) => {
 		asProxy()
 		{
 			const properties = Object.getOwnPropertyNames(Object.getPrototypeOf(this));
-			const setters = properties.filter((property) => this.isSetter(property));
+			const setters = new Set(properties.filter((property) => this.isSetter(property)));
 
 			return new Proxy(this, {
 				get: (target, property) => {
@@ -46,7 +47,7 @@ jn.define('calendar/state/base-state', (require, exports, module) => {
 						const field = this.getFieldName(property);
 
 						return (...args) => {
-							if (setters.includes(property))
+							if (setters.has(property))
 							{
 								target[property](...args);
 							}

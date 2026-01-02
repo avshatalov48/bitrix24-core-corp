@@ -9,3 +9,4 @@ $MESS["MOBILE_PROJECT_TAB_MEMBERS_0"] = "#NUM# участник";
 $MESS["MOBILE_PROJECT_TAB_MEMBERS_1"] = "#NUM# участника";
 $MESS["MOBILE_PROJECT_TAB_MEMBERS_2"] = "#NUM# участников";
 $MESS["MOBILE_PROJECT_TAB_TASKS_INPUT_PANEL_PLACEHOLDER"] = "Новая задача";
+$MESS["MOBILE_PROJECT_NO_PROJECT_ERROR"] = "Группа не найдена или доступ запрещён";

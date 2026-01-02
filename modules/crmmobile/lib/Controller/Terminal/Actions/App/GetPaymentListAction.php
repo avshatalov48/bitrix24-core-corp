@@ -14,7 +14,6 @@ use Bitrix\CrmMobile\Terminal\ListSearchPreset;
 use Bitrix\Main\UI\PageNavigation;
 use Bitrix\CrmMobile\Controller\Action;
 use Bitrix\Sale\Repository\PaymentRepository;
-use Bitrix\Crm\Order\Permissions;
 
 class GetPaymentListAction extends Action
 {
@@ -133,10 +132,15 @@ class GetPaymentListAction extends Action
 
 	protected function getUserPermissions(): array
 	{
+		$userPermissions = Container::getInstance()
+			->getUserPermissions()
+			->entityType()
+		;
+
 		return [
-			'read' => Permissions\Payment::checkReadPermission(),
-			'write' => Permissions\Payment::checkUpdatePermission(),
-			'add' => Permissions\Payment::checkCreatePermission(),
+			'read' => $userPermissions->canReadItems(\CCrmOwnerType::OrderPayment),
+			'write' => $userPermissions->canUpdateItems(\CCrmOwnerType::OrderPayment),
+			'add' => $userPermissions->canAddItems(\CCrmOwnerType::OrderPayment),
 		];
 	}
 }

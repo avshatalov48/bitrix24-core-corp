@@ -9,7 +9,6 @@ jn.define('ui-system/blocks/link', (require, exports, module) => {
 	const { LinkDesign } = require('ui-system/blocks/link/src/design-enum');
 	const { PropTypes } = require('utils/validation');
 	const { isValidLink } = require('utils/url');
-	const { inAppUrl } = require('in-app-url');
 	const { Ellipsize } = require('utils/enums/style');
 
 	const ICON_SIZE = 20;
@@ -124,11 +123,12 @@ jn.define('ui-system/blocks/link', (require, exports, module) => {
 			);
 		}
 
-		#handleOnClick = () => {
+		#handleOnClick = async () => {
 			const { onClick, href, useInAppLink = true } = this.props;
 
 			if (useInAppLink && href && isValidLink(href))
 			{
+				const { inAppUrl } = await requireLazy('in-app-url');
 				inAppUrl.open(href);
 			}
 

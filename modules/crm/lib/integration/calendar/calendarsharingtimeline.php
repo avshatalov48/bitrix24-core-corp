@@ -6,7 +6,6 @@ use Bitrix\Crm\Badge\SourceIdentifier;
 use Bitrix\Crm\Badge\Type\CalendarSharingStatus;
 use Bitrix\Crm\ItemIdentifier;
 use Bitrix\Crm\Service\Container;
-use Bitrix\Crm\Service\Timeline\Monitor;
 use Bitrix\Crm\Timeline\CalendarSharing\Controller;
 use Bitrix\Crm\Timeline\LogMessageType;
 use Bitrix\Main\Event;
@@ -134,8 +133,6 @@ class CalendarSharingTimeline
 		);
 
 		$badge->upsert($itemIdentifier, $sourceIdentifier);
-
-		Monitor::getInstance()->onBadgesSync($itemIdentifier);
 	}
 
 	/**

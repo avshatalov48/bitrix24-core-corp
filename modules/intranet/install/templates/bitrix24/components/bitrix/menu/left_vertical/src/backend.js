@@ -1,16 +1,22 @@
 import {ajax, Loc} from 'main.core';
 import Options from './options';
 
-export default class Backend {
-
-	static toggleMenu(collapse) {
+export default class Backend
+{
+	static toggleMenu(collapse)
+	{
 		if (Loc.getMessage('USER_ID') <= 0)
 		{
 			return;
 		}
 
+		const siteDir = Loc.getMessage('SITE_DIR') || '/';
+		const context = window.location.pathname.toString().startsWith(`${siteDir}online/`) ? 'online' : '';
+
 		return ajax.runAction(`intranet.leftmenu.${collapse ? "collapseMenu" : "expandMenu"}`, {
-			data: {},
+			data: {
+				context,
+			},
 			analyticsLabel: { leftmenu: {action: collapse ? "collapseMenu" : "expandMenu"} }
 		});
 	}

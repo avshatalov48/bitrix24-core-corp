@@ -13,8 +13,6 @@ use Bitrix\MobileApp\Mobile;
 
 class CatalogStore implements Tabable {
 
-	const MINIMAL_API_VERSION = 49;
-
 	/**
 	 * @var Context $context
 	 */
@@ -24,7 +22,6 @@ class CatalogStore implements Tabable {
 	{
 		return (
 			!$this->context->extranet
-			&& Mobile::getApiVersion() >= self::MINIMAL_API_VERSION
 			&& IsModuleInstalled('catalog')
 			&& \CModule::IncludeModule('catalog')
 			&& AccessController::getCurrent()->check(ActionDictionary::ACTION_CATALOG_READ)
@@ -47,14 +44,23 @@ class CatalogStore implements Tabable {
 
 	public function getMenuData() {
 		return [
+			'id' => 'catalog_store',
+			'sort' => 400,
 			'title' => $this->getTitle(),
 			'useLetterImage' => true,
 			'sectionCode' => 'catalog_store',
+			'section_code' => 'crm',
 			'color' => '#05b5ab',
 			'imageUrl' => 'catalog/icon-catalog-store.png',
 			'imageName' => $this->getIconId(),
 			'params' => [
 				'onclick' => Utils::getComponentJSCode($this->getComponentParams()),
+				'analytics' => [
+					'tool' => 'inventory',
+					'category' => 'inventory',
+					'event' => 'open_section',
+					'c_section' => 'ava_menu',
+				],
 			],
 		];
 	}
@@ -119,6 +125,6 @@ class CatalogStore implements Tabable {
 
 	public function getIconId(): string
 	{
-		return Mobile::getApiVersion() < 56 ? $this->getId() : 'stock';
+		return 'stock';
 	}
 }

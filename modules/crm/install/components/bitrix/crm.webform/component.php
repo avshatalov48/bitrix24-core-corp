@@ -28,10 +28,7 @@ if (!CModule::IncludeModule('sale'))
 	return;
 }
 
-/**@var $USER \CUser*/
-global $USER;
-$CrmPerms = new CCrmPerms($USER->GetID());
-if($CrmPerms->HavePerm('WEBFORM', BX_CRM_PERM_NONE))
+if (!\Bitrix\Crm\Service\Container::getInstance()->getUserPermissions()->webForm()->canRead())
 {
 	ShowError(GetMessage('CRM_PERMISSION_DENIED'));
 	return;

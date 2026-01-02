@@ -14,6 +14,7 @@ jn.define('qrauth', (require, exports, module) => {
 	};
 });
 
+// todo remove after all global usages in other modules will be cleaned
 (function() {
 	const require = (ext) => jn.require(ext);
 	const { QRCodeScannerComponent, QRCodeAuthComponent } = require('qrauth');

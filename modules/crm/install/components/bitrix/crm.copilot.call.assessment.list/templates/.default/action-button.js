@@ -1,5 +1,5 @@
 import { Reflection } from 'main.core';
-import { SidePanel } from 'main.sidepanel';
+import { SidePanel } from 'ui.sidepanel';
 
 const namespace = Reflection.namespace('BX.Crm.Copilot.CallAssessmentList');
 

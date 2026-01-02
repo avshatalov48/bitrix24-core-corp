@@ -11,10 +11,11 @@ jn.define('im/messenger/db/repository/dialog', (require, exports, module) => {
 		MessageTable,
 	} = require('im/messenger/db/table');
 	const { DateHelper } = require('im/messenger/lib/helper');
+	const { DialogBackgroundId } = require('im/messenger/const');
 	const { DialogInternalRepository } = require('im/messenger/db/repository/internal/dialog');
-	const { LoggerManager } = require('im/messenger/lib/logger');
+	const { getLogger } = require('im/messenger/lib/logger');
 	const { ChatPermission } = require('im/messenger/lib/permission-manager');
-	const logger = LoggerManager.getInstance().getLogger('repository--dialog');
+	const logger = getLogger('repository--dialog');
 
 	/**
 	 * @class DialogRepository
@@ -121,6 +122,21 @@ jn.define('im/messenger/db/repository/dialog', (require, exports, module) => {
 			return this.dialogTable.deleteByChatIdList(chatIdList);
 		}
 
+		async clearCounters()
+		{
+			if (!Feature.isLocalStorageEnabled)
+			{
+				return null;
+			}
+
+			return this.dialogTable.update({
+				fields: {
+					counter: 0,
+				},
+				filter: {},
+			});
+		}
+
 		async saveFromModel(dialogList)
 		{
 			const dialogListToAdd = [];
@@ -149,6 +165,24 @@ jn.define('im/messenger/db/repository/dialog', (require, exports, module) => {
 			await this.internal.saveByDialogList(dialogListToAdd);
 
 			return this.dialogTable.add(dialogListToAdd, true);
+		}
+
+		async saveFromPush(dialogList)
+		{
+			const dialogListMergePromiseList = [];
+			dialogList.forEach((dialog) => {
+				const dialogToAdd = this.validatePushDialog(dialog);
+				const mergePromise = this.dialogTable.merge(dialogToAdd.dialogId, (existingDialog) => {
+					return {
+						...existingDialog,
+						...dialogToAdd,
+					};
+				});
+
+				dialogListMergePromiseList.push(mergePromise);
+			});
+
+			return Promise.all(dialogListMergePromiseList);
 		}
 
 		/**
@@ -301,6 +335,11 @@ jn.define('im/messenger/db/repository/dialog', (require, exports, module) => {
 				result.entityId = dialog.entity_id.toString();
 			}
 
+			if (Type.isPlainObject(dialog.entityLink))
+			{
+				result.entityLink = dialog.entityLink;
+			}
+
 			if (!Type.isUndefined(dialog.dateCreate))
 			{
 				result.dateCreate = DateHelper.cast(dialog.dateCreate);
@@ -351,6 +390,21 @@ jn.define('im/messenger/db/repository/dialog', (require, exports, module) => {
 				result.role = dialog.role;
 			}
 
+			if (Type.isBoolean(dialog.text_field_enabled) || Type.isBoolean(dialog.textFieldEnabled))
+			{
+				result.textFieldEnabled = dialog.text_field_enabled ?? dialog.textFieldEnabled;
+			}
+
+			if (Type.isStringFilled(dialog.background_id) || Type.isStringFilled(dialog.backgroundId))
+			{
+				result.backgroundId = dialog.background_id ?? dialog.backgroundId;
+			}
+
+			if (Type.isNull(dialog.background_id) || Type.isNull(dialog.backgroundId))
+			{
+				result.backgroundId = DialogBackgroundId.default;
+			}
+
 			result.permissions = {};
 			if (Type.isObject(dialog.permissions))
 			{
@@ -360,6 +414,11 @@ jn.define('im/messenger/db/repository/dialog', (require, exports, module) => {
 			result.permissions = mergeImmutable(ChatPermission.getActionGroupsByChatType(result.type), result.permissions);
 
 			return result;
+		}
+
+		validatePushDialog(dialog)
+		{
+			return this.validateRestDialog(dialog);
 		}
 
 		/**
@@ -388,11 +447,6 @@ jn.define('im/messenger/db/repository/dialog', (require, exports, module) => {
 			if (Type.isStringFilled(fields.manage_settings) || Type.isStringFilled(fields.manageSettings))
 			{
 				result.manageSettings = fields.manage_settings || fields.manageSettings;
-			}
-
-			if (Type.isStringFilled(fields.can_post) || Type.isStringFilled(fields.canPost))
-			{
-				fields.manageMessages = fields.can_post || fields.canPost;
 			}
 
 			if (Type.isStringFilled(fields.manage_messages) || Type.isStringFilled(fields.manageMessages))

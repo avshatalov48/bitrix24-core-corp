@@ -6,7 +6,6 @@ use Bitrix\Tasks\Replication\Template\Repetition\Conversion\ConverterInterface;
 use Bitrix\Tasks\Replication\RepositoryInterface;
 use Bitrix\Tasks\Util\Calendar;
 use Bitrix\Tasks\Util\Type\DateTime;
-use Bitrix\Tasks\Util\User;
 
 abstract class AbstractDateTimeConverter implements ConverterInterface
 {
@@ -39,23 +38,13 @@ abstract class AbstractDateTimeConverter implements ConverterInterface
 			return null;
 		}
 
-		if (\Bitrix\Tasks\Integration\Calendar\Calendar::needUseCalendar('regular_template'))
-		{
-			$calendar = \Bitrix\Tasks\Integration\Calendar\Calendar::createFromPortalSchedule();
+		$calendar = \Bitrix\Tasks\Integration\Calendar\Calendar::createFromPortalSchedule();
 
-			return $calendar->getClosestDate(
-				new \Bitrix\Main\Type\DateTime(),
-				$seconds,
-				$matchWorkTime,
-			);
-		}
-
-		if ($matchWorkTime)
-		{
-			return $this->getDateMatchedWorkTime($seconds);
-		}
-
-		return $this->getDateAfter($seconds);
+		return $calendar->getClosestDate(
+			new \Bitrix\Main\Type\DateTime(),
+			$seconds,
+			$matchWorkTime,
+		);
 	}
 
 	private function getDateMatchedWorkTime(int $seconds): DateTime

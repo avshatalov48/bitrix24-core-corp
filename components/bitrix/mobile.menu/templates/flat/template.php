@@ -224,26 +224,6 @@ if (CModule::IncludeModule('im'))
 			</div>
 		</div>
 	<? endif; ?>
-		<? if (!$userPerms->HavePerm('INVOICE', BX_CRM_PERM_NONE, 'READ')): ?>
-		<div class="menu-item" id="crm_invoice_list"
-					data-url="/mobile/crm/invoice/"
-					data-pageid="crm_invoice_list"
-					data-bx24ModernStyle="Y">
-			<div class="menu-item-inner menu-icon-invoice">
-				<?= htmlspecialcharsbx(GetMessage('MB_CRM_INVOICE')) ?>
-			</div>
-		</div>
-	<? endif; ?>
-			<? if (!$userPerms->HavePerm('QUOTE', BX_CRM_PERM_NONE, 'READ')): ?>
-				<div class="menu-item" id="crm_quote_list"
-						data-url="/mobile/crm/quote/"
-						data-pageid="crm_quote_list"
-						data-bx24ModernStyle="Y">
-					<div class="menu-item-inner menu-icon-quote">
-						<?= htmlspecialcharsbx(GetMessage('MB_CRM_QUOTE')) ?>
-					</div>
-				</div>
-			<? endif; ?>
 		<? if (!$userPerms->HavePerm('LEAD', BX_CRM_PERM_NONE, 'READ')): ?>
 		<div class="menu-item" id="crm_lead_list"
 					data-url="/mobile/crm/lead/"

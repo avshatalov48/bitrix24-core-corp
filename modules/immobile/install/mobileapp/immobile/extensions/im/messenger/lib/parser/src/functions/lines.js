@@ -7,7 +7,7 @@
  */
 jn.define('im/messenger/lib/parser/functions/lines', (require, exports, module) => {
 
-	const { Loc } = require('loc');
+	const { Loc } = require('im/messenger/loc');
 
 	const parserLines = {
 		simplify(text)

@@ -35,6 +35,13 @@
 		showUsers: 'Call::showUsers',
 		showAll: 'Call::showAll',
 		hideAll: 'Call::hideAll',
+		onActionSent: 'onActionSent',
+		audioMutedEvent: 'audioMutedEvent',
+		videoMutedEvent: 'videoMutedEvent',
+		screenShareMutedEvent: 'screenShareMutedEvent',
+		participantAudioMutedEvent: 'participantAudioMutedEvent',
+		participantVideoMutedEvent: 'participantVideoMutedEvent',
+		participantScreenshareMutedEvent: 'participantScreenshareMutedEvent',
 	};
 
 	const BitrixCallDevEvent = {
@@ -51,11 +58,12 @@
 		constructor(params)
 		{
 			this.id = params.id;
-			this.roomId = params.roomId;
+			this.uuid = params.uuid;
 			this.instanceId = params.instanceId;
 			this.parentId = params.parentId || null;
 			this.direction = params.direction;
 			this.type = params.type || BX.Call.Type.Instant; // @see {BX.Call.Type}
+			this.scheme = params.scheme;
 
 			this.ready = false;
 			this.userId = env.userId;
@@ -125,6 +133,7 @@
 			this.__onCallMessageReceivedHandler = this.__onCallMessageReceived.bind(this);
 			this.__onCallEndpointAddedHandler = this.__onCallEndpointAdded.bind(this);
 			this.__onCallReconnectedHandler = this.__onCallReconnected.bind(this);
+			this.__onUsersLimitExceededHandler = this.__onUsersLimitExceeded.bind(this);
 
 			this.__onSDKLogMessageHandler = this.__onSDKLogMessage.bind(this);
 
@@ -137,6 +146,11 @@
 			this.lastSelfPingReceivedTimeout = null;
 
 			this.created = new Date();
+		}
+
+		get provider()
+		{
+			return BX.Call.Provider.Bitrix;
 		}
 
 		log()
@@ -282,13 +296,13 @@
 			switch (this._joinStatus)
 			{
 				case BX.Call.JoinStatus.Local:
-					this.eventEmitter.emit(BX.Call.Event.onJoin, [{ callId: this.id, local: true }]);
+					this.eventEmitter.emit(BX.Call.Event.onJoin, [{ callId: this.id, callUuid: this.uuid, local: true }]);
 					break;
 				case BX.Call.JoinStatus.Remote:
-					this.eventEmitter.emit(BX.Call.Event.onJoin, [{ callId: this.id, local: false }]);
+					this.eventEmitter.emit(BX.Call.Event.onJoin, [{ callId: this.id, callUuid: this.uuid, local: false }]);
 					break;
 				case BX.Call.JoinStatus.None:
-					this.eventEmitter.emit(BX.Call.Event.onLeave, [{ callId: this.id }]);
+					this.eventEmitter.emit(BX.Call.Event.onLeave, [{ callId: this.id, callUuid: this.uuid }]);
 					break;
 			}
 		}
@@ -305,7 +319,7 @@
 				return;
 			}
 			this._active = newActive;
-			this.eventEmitter.emit(this.active ? BX.Call.Event.onActive : BX.Call.Event.onInactive, [this.id]);
+			this.eventEmitter.emit(this.active ? BX.Call.Event.onActive : BX.Call.Event.onInactive, [{ callId: this.id, callUuid: this.uuid }]);
 		}
 
 		bindClientEvents()
@@ -618,7 +632,7 @@
 				}
 
 				const clientOptions = {
-					roomId: this.roomId,
+					roomId: this.uuid,
 					endpoint: this.connectionData.endpoint,
 					token: this.connectionData.jwt,
 				};
@@ -711,6 +725,11 @@
 			});
 		}
 
+		updateUsersCount(users)
+		{
+			this.eventEmitter.emit(BX.Call.Event.onChatUsersCountUpdate, [users]);
+		}
+
 		bindCallEvents()
 		{
 			this.bitrixCallDev.on(JNBXCall.Events.Disconnected, this.__onCallDisconnectedHandler);
@@ -718,6 +737,7 @@
 			this.bitrixCallDev.on(JNBXCall.Events.EndpointAdded, this.__onCallEndpointAddedHandler);
 			this.bitrixCallDev.on(JNBXCall.Events.LocalVideoStreamAdded, this.__onLocalVideoStreamReceivedHandler);
 			this.bitrixCallDev.on(JNBXCall.Events.LocalVideoStreamRemoved, this.__onLocalVideoStreamRemovedHandler);
+			this.bitrixCallDev.on(JNBXCall.Events.OnUsersLimitExceeded, this.__onUsersLimitExceededHandler);
 			this.bitrixCallDev.on(JNBXCall.Events.Reconnected, this.__onCallReconnectedHandler);
 		}
 
@@ -730,6 +750,7 @@
 				this.bitrixCallDev.off(JNBXCall.Events.EndpointAdded, this.__onCallEndpointAddedHandler);
 				this.bitrixCallDev.off(JNBXCall.Events.LocalVideoStreamAdded, this.__onLocalVideoStreamReceivedHandler);
 				this.bitrixCallDev.off(JNBXCall.Events.LocalVideoStreamRemoved, this.__onLocalVideoStreamRemovedHandler);
+				this.bitrixCallDev.off(JNBXCall.Events.OnUsersLimitExceeded, this.__onUsersLimitExceededHandler);
 				this.bitrixCallDev.off(JNBXCall.Events.Reconnected, this.__onCallReconnectedHandler);
 			}
 		}
@@ -789,6 +810,8 @@
 				}
 				this.eventEmitter.emit(BX.Call.Event.onUserInvited, [{ userId }]);
 			}
+
+			this.updateUsersCount(this.users.length);
 		}
 
 		isAnyoneParticipating(withCalling)
@@ -1074,7 +1097,7 @@
 			let logData = {};
 
 			const evt = e && typeof e === 'object' ? e : {};
-			const { headers, leaveInformation } = evt;
+			const { headers } = evt;
 
 			if (headers)
 			{
@@ -1084,19 +1107,11 @@
 				};
 			}
 
-			if (leaveInformation)
-			{
-				logData = {
-					...logData,
-					leaveInformation,
-				};
-			}
-
 			this.log('__onCallDisconnected', (Object.keys(logData).length ? logData : null));
 
-			if (this.ready && leaveInformation)
+			if (this.ready && headers.leaveInformation)
 			{
-				this.hangup(leaveInformation.code, leaveInformation.reason);
+				this.hangup(headers.leaveInformation.code, headers.leaveInformation.reason);
 			}
 
 			this.ready = false;
@@ -1107,89 +1122,6 @@
 			this.bitrixCallDev = null;
 
 			this.joinStatus = BX.Call.JoinStatus.None;
-		}
-
-		__onCallReconnected()
-		{
-			this.eventEmitter.emit(BX.Call.Event.onReconnected);
-		}
-
-		onFatalError(error)
-		{
-			if (error && error.call)
-			{
-				delete error.call;
-			}
-			CallUtil.error('onFatalError', error);
-			this.log('onFatalError', error);
-
-			this.ready = false;
-			this.muted = false;
-			this.reinitPeers();
-
-			if (this.bitrixCallDev)
-			{
-				this.removeCallEvents();
-				try
-				{
-					this.bitrixCallDev.hangup({
-						'X-Reason': 'Fatal error',
-						'X-Error': typeof (error) === 'string' ? error : error.code || error.name,
-					});
-				}
-				catch
-				{ /* nothing :) */
-				}
-				this.bitrixCallDev = null;
-			}
-
-			if (typeof (error) === 'string')
-			{
-				this.eventEmitter.emit(BX.Call.Event.onCallFailure, [error]);
-			}
-			else if (error instanceof Error)
-			{
-				this.eventEmitter.emit(BX.Call.Event.onCallFailure, [error.toString()]);
-			}
-			else
-			{
-				this.eventEmitter.emit(BX.Call.Event.onCallFailure);
-			}
-		}
-
-		__onCallEndpointAdded(endpoint)
-		{
-			const userName = typeof (endpoint.userDisplayName) === 'string' ? endpoint.userDisplayName : '';
-			this.log(`__onCallEndpointAdded (${userName})`);
-
-			if (BX.type.isNotEmptyString(userName) && userName.slice(0, 4) == 'user')
-			{
-				// user connected to conference
-				const userId = parseInt(userName.slice(4));
-				if (this.peers[userId])
-				{
-					this.peers[userId].setEndpoint(endpoint);
-				}
-			}
-			else
-			{
-				endpoint.on(JNBXEndpoint.Events.InfoUpdated, () => {
-					const userName = typeof (endpoint.userDisplayName) === 'string' ? endpoint.userDisplayName : '';
-					this.log(`BitrixDev.EndpointEvents.InfoUpdated (${userName})`, endpoint);
-
-					if (userName.slice(0, 4) == 'user')
-					{
-						// user connected to conference
-						const userId = parseInt(userName.slice(4));
-						if (this.peers[userId])
-						{
-							this.peers[userId].setEndpoint(endpoint);
-						}
-					}
-				});
-
-				this.log(`Unknown endpoint ${userName}`);
-			}
 		}
 
 		__onCallMessageReceived(call, callMessage)
@@ -1288,6 +1220,97 @@
 			}
 		}
 
+		__onCallReconnected()
+		{
+			this.eventEmitter.emit(BX.Call.Event.onReconnected);
+		}
+
+		onFatalError(error)
+		{
+			if (error && error.call)
+			{
+				delete error.call;
+			}
+			CallUtil.error('onFatalError', error);
+			this.log('onFatalError', error);
+
+			this.ready = false;
+			this.muted = false;
+			this.reinitPeers();
+
+			if (this.bitrixCallDev)
+			{
+				this.removeCallEvents();
+				try
+				{
+					this.bitrixCallDev.hangup({
+						'X-Reason': 'Fatal error',
+						'X-Error': typeof (error) === 'string' ? error : error.code || error.name,
+					});
+				}
+				catch
+				{ /* nothing :) */
+				}
+				this.bitrixCallDev = null;
+			}
+
+			if (typeof (error) === 'string')
+			{
+				this.eventEmitter.emit(BX.Call.Event.onCallFailure, [error]);
+			}
+			else if (error instanceof Error)
+			{
+				this.eventEmitter.emit(BX.Call.Event.onCallFailure, [error.toString()]);
+			}
+			else
+			{
+				this.eventEmitter.emit(BX.Call.Event.onCallFailure);
+			}
+		}
+
+		__onCallEndpointAdded(endpoint)
+		{
+			const userName = typeof (endpoint.userDisplayName) === 'string' ? endpoint.userDisplayName : '';
+			this.log(`__onCallEndpointAdded (${userName})`);
+
+			if (BX.type.isNotEmptyString(userName) && userName.slice(0, 4) == 'user')
+			{
+				// user connected to conference
+				const userId = parseInt(userName.slice(4));
+				if (this.peers[userId])
+				{
+					this.peers[userId].setEndpoint(endpoint);
+				}
+			}
+			else
+			{
+				endpoint.on(JNBXEndpoint.Events.InfoUpdated, () => {
+					const userName = typeof (endpoint.userDisplayName) === 'string' ? endpoint.userDisplayName : '';
+					this.log(`BitrixDev.EndpointEvents.InfoUpdated (${userName})`, endpoint);
+
+					if (userName.slice(0, 4) == 'user')
+					{
+						// user connected to conference
+						const userId = parseInt(userName.slice(4));
+						if (this.peers[userId])
+						{
+							this.peers[userId].setEndpoint(endpoint);
+						}
+					}
+				});
+
+				this.log(`Unknown endpoint ${userName}`);
+			}
+		}
+
+		__onUsersLimitExceeded()
+		{
+			this.log(`__onUsersLimitExceeded`);
+			this.eventEmitter.emit(BX.Call.Event.onUsersLimitExceeded);
+		}
+
+
+
 		destroy()
 		{
 			this.ready = false;
@@ -1323,9 +1346,7 @@
 			clearTimeout(this.pingUsersInterval);
 			clearTimeout(this.pingBackendInterval);
 
-			this.eventEmitter.emit(BX.Call.Event.onDestroy, [{
-				call: this,
-			}]);
+			this.eventEmitter.emit(BX.Call.Event.onDestroy, [{ callId: this.id, callUuid: this.uuid }]);
 			this.eventEmitter = null;
 			if (this.signaling)
 			{
@@ -1441,11 +1462,11 @@
 		{
 			return new Promise((resolve, reject) => {
 				client.requestOneTimeKey(options.roomId, options.endpoint, options.token).then((oneTimeKey) => {
-					CallUtil.warn('ontimekey received');
-					CallUtil.warn('ontimekey signed');
+						CallUtil.warn('ontimekey received');
+						CallUtil.warn('ontimekey signed');
 
-					resolve(client);
-				})
+						resolve(client);
+					})
 					.catch((error) => {
 						reject(error);
 					});
@@ -1829,7 +1850,6 @@
 		{
 			this.log(`Adding endpoint with ${endpoint.remoteVideoStreams.length} remote video streams`);
 
-			this.setReady(true);
 			this.inviteTimeout = false;
 			this.declined = false;
 			clearTimeout(this.connectionRestoreTimeout);
@@ -1851,7 +1871,14 @@
 				});
 			}
 
-			this.updateCalculatedState();
+			if (this.ready === true)
+			{
+				this.updateCalculatedState();
+			}
+			else
+			{
+				this.setReady(true);
+			}
 			this.bindEndpointEventHandlers();
 			if (endpoint.initialState)
 			{
@@ -2129,4 +2156,3 @@
 	window.BitrixCallDev = BitrixCallDev;
 })
 ();
-

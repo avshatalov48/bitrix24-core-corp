@@ -2769,7 +2769,7 @@ this.BX = this.BX || {};
 	    this._isDesktop = _params.messengerFacade ? _params.messengerFacade.isDesktop() : _params.isDesktop === true;
 	    this.messengerFacade = _params.messengerFacade;
 	    this.foldedCallView = _params.foldedCallView;
-	    this.init();
+	    this.init(_params === null || _params === void 0 ? void 0 : _params.skipCheckChatWindow);
 	    if (this.backgroundWorker.isDesktop()) {
 	      this.backgroundWorker.removeDesktopEventHandlers();
 	    }
@@ -2846,7 +2846,8 @@ this.BX = this.BX || {};
 	    key: "init",
 	    value: function init() {
 	      var _this2 = this;
-	      if (im_v2_lib_desktopApi.DesktopApi.isChatWindow() && !this.slave) {
+	      var skipCheckChatWindow = arguments.length > 0 && arguments[0] !== undefined ? arguments[0] : false;
+	      if ((im_v2_lib_desktopApi.DesktopApi.isChatWindow() || skipCheckChatWindow) && !this.slave) {
 	        console.log('Init phone call view window:', location.href);
 	        this.desktop.openCallWindow('', null, {
 	          width: this.getInitialWidth(),
@@ -6551,6 +6552,101 @@ this.BX = this.BX || {};
 	      return readDefaults;
 	    }()
 	  }, {
+	    key: "prepareCallParams",
+	    value: function prepareCallParams(params) {
+	      var skipCheckChatWindow = arguments.length > 1 && arguments[1] !== undefined ? arguments[1] : false;
+	      if (params.CRM && params.CRM.FOUND) {
+	        this.phoneCrm = params.CRM;
+	      } else {
+	        this.phoneCrm = {};
+	      }
+	      this.phonePortalCall = !!params.portalCall;
+	      if (this.phonePortalCall && params.portalCallData) {
+	        var userData = params.portalCallData[params.portalCallUserId];
+	        if (userData) {
+	          params.callerId = userData.name;
+	        }
+	        params.phoneNumber = '';
+	      }
+	      this.phoneCallConfig = params.config ? params.config : {};
+	      this.phoneCallTime = 0;
+	      this.messengerFacade.repeatSound('ringtone', 5000, true);
+	      BX.rest.callMethod('voximplant.call.sendWait', {
+	        'CALL_ID': params.callId,
+	        'DEBUG_INFO': this.getDebugInfo()
+	      });
+	      this.isCallTransfer = !!params.isTransfer;
+	      this.displayIncomingCall({
+	        chatId: params.chatId,
+	        callId: params.callId,
+	        callerId: params.callerId,
+	        lineNumber: params.lineNumber,
+	        companyPhoneNumber: params.phoneNumber,
+	        isCallback: params.isCallback,
+	        showCrmCard: params.showCrmCard,
+	        crmEntityType: params.crmEntityType,
+	        crmEntityId: params.crmEntityId,
+	        crmActivityId: params.crmActivityId,
+	        crmActivityEditUrl: params.crmActivityEditUrl,
+	        portalCall: params.portalCall,
+	        portalCallUserId: params.portalCallUserId,
+	        portalCallData: params.portalCallData,
+	        config: params.config
+	      }, skipCheckChatWindow);
+	    }
+	  }, {
+	    key: "prepareOutgoingExternalCall",
+	    value: function prepareOutgoingExternalCall(params) {
+	      var skipCheckChatWindow = arguments.length > 1 && arguments[1] !== undefined ? arguments[1] : false;
+	      this.deviceType = params.callDevice === DeviceType.Phone ? DeviceType.Phone : DeviceType.Webrtc;
+	      this.phonePortalCall = !!params.portalCall;
+	      this.callId = params.callId;
+	      this.phoneCallTime = 0;
+	      this.phoneCallConfig = params.config ? params.config : {};
+	      this.phoneCrm = params.CRM;
+	      this.phoneDisplayExternal({
+	        callId: params.callId,
+	        config: params.config ? params.config : {},
+	        phoneNumber: params.phoneNumber,
+	        portalCall: params.portalCall,
+	        portalCallUserId: params.portalCallUserId,
+	        portalCallData: params.portalCallData,
+	        portalCallQueueName: params.portalCallQueueName,
+	        showCrmCard: params.showCrmCard,
+	        crmEntityType: params.crmEntityType,
+	        crmEntityId: params.crmEntityId
+	      }, skipCheckChatWindow);
+	    }
+	  }, {
+	    key: "prepareExternalCall",
+	    value: function prepareExternalCall(params) {
+	      var skipCheckChatWindow = arguments.length > 1 && arguments[1] !== undefined ? arguments[1] : false;
+	      if (params.CRM && params.CRM.FOUND) {
+	        this.phoneCrm = params.CRM;
+	      } else {
+	        this.phoneCrm = {};
+	      }
+	      this.showExternalCall({
+	        callId: params.callId,
+	        fromUserId: params.fromUserId,
+	        toUserId: params.toUserId,
+	        isCallback: params.isCallback,
+	        phoneNumber: params.phoneNumber,
+	        lineNumber: params.lineNumber,
+	        companyPhoneNumber: params.companyPhoneNumber,
+	        showCrmCard: params.showCrmCard,
+	        crmEntityType: params.crmEntityType,
+	        crmEntityId: params.crmEntityId,
+	        crmBindings: params.crmBindings,
+	        crmActivityId: params.crmActivityId,
+	        crmActivityEditUrl: params.crmActivityEditUrl,
+	        config: params.config,
+	        portalCall: params.portalCall,
+	        portalCallData: params.portalCallData,
+	        portalCallUserId: params.portalCallUserId
+	      }, skipCheckChatWindow);
+	    }
+	  }, {
 	    key: "correctPhoneNumber",
 	    value: function correctPhoneNumber(number) {
 	      return number.toString().replace(/[^0-9+#*;,]/g, '');
@@ -6835,6 +6931,7 @@ this.BX = this.BX || {};
 	  }, {
 	    key: "phoneDisplayExternal",
 	    value: function phoneDisplayExternal(params) {
+	      var skipCheckChatWindow = arguments.length > 1 && arguments[1] !== undefined ? arguments[1] : false;
 	      var number = params.phoneNumber;
 	      this.phoneLog(number, params);
 	      this.phoneNumberUser = main_core.Text.encode(number);
@@ -6872,7 +6969,8 @@ this.BX = this.BX || {};
 	        foldedCallView: this.foldedCallView,
 	        backgroundWorker: this.backgroundWorker,
 	        messengerFacade: this.messengerFacade,
-	        restApps: this.restApps
+	        restApps: this.restApps,
+	        skipCheckChatWindow: skipCheckChatWindow
 	      });
 	      _classPrivateMethodGet$1(this, _bindPhoneViewCallbacks, _bindPhoneViewCallbacks2).call(this, this.callView);
 	      this.callView.setUiState(UiState.idle);
@@ -6990,7 +7088,8 @@ this.BX = this.BX || {};
 	        foldedCallView: this.foldedCallView,
 	        backgroundWorker: this.backgroundWorker,
 	        messengerFacade: this.messengerFacade,
-	        restApps: this.restApps
+	        restApps: this.restApps,
+	        skipCheckChatWindow: im_v2_lib_desktopApi.DesktopApi.isAirDesignEnabledInDesktop()
 	      });
 	      _classPrivateMethodGet$1(this, _bindPhoneViewCallbacks, _bindPhoneViewCallbacks2).call(this, this.callView);
 	      this.callView.show();
@@ -7134,6 +7233,7 @@ this.BX = this.BX || {};
 	    key: "displayIncomingCall",
 	    value: function displayIncomingCall(params) {
 	      var _this11 = this;
+	      var skipCheckChatWindow = arguments.length > 1 && arguments[1] !== undefined ? arguments[1] : false;
 	      /*chatId, callId, callerId, lineNumber, companyPhoneNumber, isCallback*/
 	      params.isCallback = !!params.isCallback;
 	      this.phoneLog('incoming call', params);
@@ -7174,7 +7274,8 @@ this.BX = this.BX || {};
 	        foldedCallView: this.foldedCallView,
 	        backgroundWorker: this.backgroundWorker,
 	        messengerFacade: this.messengerFacade,
-	        restApps: this.restApps
+	        restApps: this.restApps,
+	        skipCheckChatWindow: skipCheckChatWindow
 	      });
 	      _classPrivateMethodGet$1(this, _bindPhoneViewCallbacks, _bindPhoneViewCallbacks2).call(this, this.callView);
 	      this.callView.setUiState(UiState.incoming);
@@ -7272,6 +7373,7 @@ this.BX = this.BX || {};
 	    key: "showExternalCall",
 	    value: function showExternalCall(params) {
 	      var _this13 = this;
+	      var skipCheckChatWindow = arguments.length > 1 && arguments[1] !== undefined ? arguments[1] : false;
 	      var direction;
 	      if (this.callView) {
 	        return;
@@ -7314,7 +7416,8 @@ this.BX = this.BX || {};
 	        foldedCallView: this.foldedCallView,
 	        backgroundWorker: this.backgroundWorker,
 	        messengerFacade: this.messengerFacade,
-	        restApps: this.restApps
+	        restApps: this.restApps,
+	        skipCheckChatWindow: skipCheckChatWindow
 	      });
 	      this.bindPhoneViewCallbacksExternalCall(this.callView);
 	      this.callView.setUiState(UiState.externalCard);
@@ -7769,44 +7872,7 @@ this.BX = this.BX || {};
 	    return false;
 	  }
 	  this.checkDesktop().then(function () {
-	    if (params.CRM && params.CRM.FOUND) {
-	      _this18.phoneCrm = params.CRM;
-	    } else {
-	      _this18.phoneCrm = {};
-	    }
-	    _this18.phonePortalCall = !!params.portalCall;
-	    if (_this18.phonePortalCall && params.portalCallData) {
-	      var userData = params.portalCallData[params.portalCallUserId];
-	      if (userData) {
-	        params.callerId = userData.name;
-	      }
-	      params.phoneNumber = '';
-	    }
-	    _this18.phoneCallConfig = params.config ? params.config : {};
-	    _this18.phoneCallTime = 0;
-	    _this18.messengerFacade.repeatSound('ringtone', 5000, true);
-	    BX.rest.callMethod('voximplant.call.sendWait', {
-	      'CALL_ID': params.callId,
-	      'DEBUG_INFO': _this18.getDebugInfo()
-	    });
-	    _this18.isCallTransfer = !!params.isTransfer;
-	    _this18.displayIncomingCall({
-	      chatId: params.chatId,
-	      callId: params.callId,
-	      callerId: params.callerId,
-	      lineNumber: params.lineNumber,
-	      companyPhoneNumber: params.phoneNumber,
-	      isCallback: params.isCallback,
-	      showCrmCard: params.showCrmCard,
-	      crmEntityType: params.crmEntityType,
-	      crmEntityId: params.crmEntityId,
-	      crmActivityId: params.crmActivityId,
-	      crmActivityEditUrl: params.crmActivityEditUrl,
-	      portalCall: params.portalCall,
-	      portalCallUserId: params.portalCallUserId,
-	      portalCallData: params.portalCallData,
-	      config: params.config
-	    });
+	    _this18.prepareCallParams(params);
 	  })["catch"](function () {});
 	}
 	function _onPullAnswerSelf2(params) {
@@ -7902,24 +7968,7 @@ this.BX = this.BX || {};
 	    }
 	  } else if (!this.hasActiveCall() && params.callDevice === DeviceType.Phone) {
 	    this.checkDesktop().then(function () {
-	      _this19.deviceType = params.callDevice === DeviceType.Phone ? DeviceType.Phone : DeviceType.Webrtc;
-	      _this19.phonePortalCall = !!params.portalCall;
-	      _this19.callId = params.callId;
-	      _this19.phoneCallTime = 0;
-	      _this19.phoneCallConfig = params.config ? params.config : {};
-	      _this19.phoneCrm = params.CRM;
-	      _this19.phoneDisplayExternal({
-	        callId: params.callId,
-	        config: params.config ? params.config : {},
-	        phoneNumber: params.phoneNumber,
-	        portalCall: params.portalCall,
-	        portalCallUserId: params.portalCallUserId,
-	        portalCallData: params.portalCallData,
-	        portalCallQueueName: params.portalCallQueueName,
-	        showCrmCard: params.showCrmCard,
-	        crmEntityType: params.crmEntityType,
-	        crmEntityId: params.crmEntityId
-	      });
+	      _this19.prepareOutgoingExternalCall(params);
 	    })["catch"](function () {});
 	  }
 	}
@@ -8037,30 +8086,7 @@ this.BX = this.BX || {};
 	    return false;
 	  }
 	  this.checkDesktop().then(function () {
-	    if (params.CRM && params.CRM.FOUND) {
-	      _this20.phoneCrm = params.CRM;
-	    } else {
-	      _this20.phoneCrm = {};
-	    }
-	    _this20.showExternalCall({
-	      callId: params.callId,
-	      fromUserId: params.fromUserId,
-	      toUserId: params.toUserId,
-	      isCallback: params.isCallback,
-	      phoneNumber: params.phoneNumber,
-	      lineNumber: params.lineNumber,
-	      companyPhoneNumber: params.companyPhoneNumber,
-	      showCrmCard: params.showCrmCard,
-	      crmEntityType: params.crmEntityType,
-	      crmEntityId: params.crmEntityId,
-	      crmBindings: params.crmBindings,
-	      crmActivityId: params.crmActivityId,
-	      crmActivityEditUrl: params.crmActivityEditUrl,
-	      config: params.config,
-	      portalCall: params.portalCall,
-	      portalCallData: params.portalCallData,
-	      portalCallUserId: params.portalCallUserId
-	    });
+	    _this20.prepareExternalCall(params);
 	  })["catch"](function () {});
 	}
 	function _onPullHideExternalCall2(params) {
@@ -8312,7 +8338,8 @@ this.BX = this.BX || {};
 	    foldedCallView: this.foldedCallView,
 	    backgroundWorker: this.backgroundWorker,
 	    messengerFacade: this.messengerFacade,
-	    restApps: this.restApps
+	    restApps: this.restApps,
+	    skipCheckChatWindow: im_v2_lib_desktopApi.DesktopApi.isAirDesignEnabledInDesktop()
 	  });
 	  _classPrivateMethodGet$1(this, _bindPhoneViewCallbacks, _bindPhoneViewCallbacks2).call(this, this.callView);
 	  this.callView.show();

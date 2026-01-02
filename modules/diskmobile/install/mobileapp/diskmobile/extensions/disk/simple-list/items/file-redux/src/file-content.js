@@ -351,8 +351,12 @@ jn.define('disk/simple-list/items/file-redux/file-content', (require, exports, m
 							{
 								style: {
 									justifyContent: 'center',
+									alignContent: 'center',
+									alignItems: 'center',
+									flexDirection: 'row',
 								},
 							},
+							this.renderLinkBage(),
 							this.renderUpdateTime(),
 						),
 					),
@@ -486,6 +490,22 @@ jn.define('disk/simple-list/items/file-redux/file-content', (require, exports, m
 			});
 		}
 
+		renderLinkBage()
+		{
+			const external = this.diskObject?.links?.external || null;
+
+			if (!external)
+			{
+				return null;
+			}
+
+			return IconView({
+				size: 20,
+				icon: Icon.LINK,
+				color: Color.base3,
+			});
+		}
+
 		renderUpdateTime()
 		{
 			const { updateTime } = this.diskObject;
@@ -510,6 +530,9 @@ jn.define('disk/simple-list/items/file-redux/file-content', (require, exports, m
 				testId: this.getTestId('last-activity-date'),
 				text: formattedTime,
 				color: Color.base3,
+				style: {
+					marginLeft: Indent.S.toNumber(),
+				}
 			});
 		}
 
@@ -543,6 +566,7 @@ jn.define('disk/simple-list/items/file-redux/file-content', (require, exports, m
 				this.diskObject.id,
 				this.props.order,
 				this.props.context,
+				this.props.relativeFolderId,
 				this.parentWidget,
 			).show(this.containerRef);
 		};

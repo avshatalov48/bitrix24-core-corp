@@ -49,13 +49,18 @@ class ResourceProvider extends BaseProvider
 		);
 	}
 
-	public function __construct()
+	public function __construct(array $options = [])
 	{
 		parent::__construct();
 
 		$this->userId = (int)CurrentUser::get()->getId();
 		$this->resourceProvider = new Provider\ResourceProvider();
 		$this->resourceAccessController = Container::getResourceAccessController();
+
+		if (isset($options['includeDeleted']))
+		{
+			$this->options['includeDeleted'] = (bool)$options['includeDeleted'];
+		}
 	}
 
 	public function isAvailable(): bool
@@ -75,6 +80,7 @@ class ResourceProvider extends BaseProvider
 				filter: new Provider\Params\Resource\ResourceFilter([
 					'ID' => $ids,
 					'MODULE_ID' => 'booking',
+					'INCLUDE_DELETED' => $this->getOption('includeDeleted'),
 				]),
 			),
 			userId: $this->userId,
@@ -85,25 +91,45 @@ class ResourceProvider extends BaseProvider
 
 	public function doSearch(SearchQuery $searchQuery, Dialog $dialog): void
 	{
-		$items = $this->getResourceItems($searchQuery);
+		$items = $this->getResourceItems(
+			[
+				'searchQuery' => $searchQuery,
+				'includeDeleted' => true,
+			]
+		);
 
 		$dialog->addItems($items);
 	}
 
 	public function fillDialog(Dialog $dialog): void
 	{
-		$dialog->addRecentItems($this->getResourceItems());
+		$items = $this->getResourceItems([
+			'includeDeleted' => $this->getOption('includeDeleted'),
+		]);
+
+		$dialog->addRecentItems($items);
 	}
 
-	private function getResourceItems(?SearchQuery $searchQuery = null): array
+	/**
+	* @param array{
+	*     searchQuery?: SearchQuery,
+	*     includeDeleted?: bool,
+	* } $filterParams
+	*/
+	private function getResourceItems(array $filterParams): array
 	{
 		$filter = [
 			'MODULE_ID' => 'booking',
 		];
 
-		if ($searchQuery)
+		if (isset($filterParams['searchQuery']))
 		{
-			$filter['SEARCH_QUERY'] = $searchQuery->getQuery();
+			$filter['SEARCH_QUERY'] = $filterParams['searchQuery']->getQuery();
+		}
+
+		if (isset($filterParams['includeDeleted']))
+		{
+			$filter['INCLUDE_DELETED'] = $filterParams['includeDeleted'];
 		}
 
 		$resources = $this->resourceProvider->getList(

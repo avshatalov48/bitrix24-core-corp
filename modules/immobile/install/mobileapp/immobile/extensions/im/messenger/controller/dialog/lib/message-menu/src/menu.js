@@ -1,49 +1,25 @@
-/* eslint no-undef: 0 */
 /**
- * @module im/messenger/controller/dialog/lib/message-menu/message-menu
+ * @module im/messenger/controller/dialog/lib/message-menu/menu
  */
-jn.define('im/messenger/controller/dialog/lib/message-menu/message-menu', (require, exports, module) => {
-	include('InAppNotifier');
-	const { Filesystem, utils } = require('native/filesystem');
-
+jn.define('im/messenger/controller/dialog/lib/message-menu/menu', (require, exports, module) => {
 	const { Type } = require('type');
-	const { Loc } = require('loc');
-	const { Haptics } = require('haptics');
-	const { NotifyManager } = require('notify-manager');
-	const { withCurrentDomain } = require('utils/url');
+	const { Loc } = require('im/messenger/loc');
+	const { Alert, confirmDestructiveAction } = require('alert');
 	const { Icon } = require('assets/icons');
-	const { Theme } = require('im/lib/theme');
-
-	const {
-		EventType,
-		FileType,
-		OwnMessageStatus,
-		MessageParams,
-	} = require('im/messenger/const');
-	const { LoggerManager } = require('im/messenger/lib/logger');
 	const { isOnline } = require('device/connection');
+	const { EventType, MessageMenuActionType, PinCount } = require('im/messenger/const');
+	const { serviceLocator } = require('im/messenger/lib/di/service-locator');
 	const { MessengerEmitter } = require('im/messenger/lib/emitter');
-	const { Feature } = require('im/messenger/lib/feature');
 	const { Notification, ToastType } = require('im/messenger/lib/ui/notification');
 	const { showDeleteChannelPostAlert } = require('im/messenger/lib/ui/alert');
-	const { ChatPermission } = require('im/messenger/lib/permission-manager');
 	const { UserProfile } = require('im/messenger/controller/user-profile');
-	const { ForwardSelector } = require('im/messenger/controller/forward-selector');
+	const { ForwardSelector } = require('im/messenger/controller/selector/forward');
 	const { DialogTextHelper } = require('im/messenger/controller/dialog/lib/helper/text');
-	const { SelectManager } = require('im/messenger/controller/dialog/lib/select-manager');
-	const { serviceLocator } = require('im/messenger/lib/di/service-locator');
 	const { DialogHelper } = require('im/messenger/lib/helper');
-	const { AnalyticsService } = require('im/messenger/provider/service');
+	const { AnalyticsService } = require('im/messenger/provider/services/analytics');
+	const { getLogger } = require('im/messenger/lib/logger');
+	const { Color } = require('tokens');
 
-	const {
-		LikeReaction,
-		KissReaction,
-		LaughReaction,
-		WonderReaction,
-		CryReaction,
-		AngryReaction,
-		FacepalmReaction,
-	} = require('im/messenger/controller/dialog/lib/message-menu/reaction');
 	const {
 		CopyAction,
 		CopyLinkAction,
@@ -62,310 +38,112 @@ jn.define('im/messenger/controller/dialog/lib/message-menu/message-menu', (requi
 		SubscribeAction,
 		UnsubscribeAction,
 		MultiSelectAction,
+		FinishVoteAction,
+		RevoteAction,
+		OpenVoteResultAction,
 	} = require('im/messenger/controller/dialog/lib/message-menu/action');
-	const { ActionType } = require('im/messenger/controller/dialog/lib/message-menu/action-type');
-	const { MessageMenuMessage } = require('im/messenger/controller/dialog/lib/message-menu/message');
-	const { MessageMenuView } = require('im/messenger/controller/dialog/lib/message-menu/view');
 	const { MessageCreateMenu } = require('im/messenger/controller/dialog/lib/message-create-menu');
 	const { MessageHelper } = require('im/messenger/lib/helper');
+	const { MessageContextMenu } = require('im/messenger/api/dialog-integration/message/context-menu');
+	const { fileSaver } = require('im/messenger/controller/dialog/lib/message-menu/src/saver/file-saver');
+	const { diskSaver } = require('im/messenger/controller/dialog/lib/message-menu/src/saver/disk-saver');
 
-	const logger = LoggerManager.getInstance().getLogger('dialog--message-menu');
+	const logger = getLogger('dialog--message-menu');
 
 	/**
 	 * @class MessageMenu
+	 * @implements {IMessageContextMenu}
 	 */
-	class MessageMenu
+	class MessageMenu extends MessageContextMenu
 	{
 		/**
-		 *
-		 * @param {DialogLocator} serviceLocator
-		 * @param {DialogId} dialogId
+		 * @type {number}
 		 */
-		constructor({ serviceLocator, dialogId })
+		maxPins = PinCount.max;
+
+		/**
+		 * @return {MessengerCoreStore}
+		 */
+		get store()
 		{
-			/** @type {DialogLocator} */
-			this.locator = serviceLocator;
-			this.dialogId = dialogId;
-			this.store = serviceLocator.get('store');
-			/** @type {Record<string, function(Message): void>} */
-			this.handlers = {};
-
-			this.actions = {};
-
-			this.messageLongTapHandler = this.onMessageLongTap.bind(this);
-			this.messageMenuActionTapHandler = this.onMessageMenuActionTap.bind(this);
-			this.messageMenuReactionTapHandler = this.onMessageMenuReactionTap.bind(this);
-
-			this.registerActions();
-			this.registerActionHandlers();
-		}
-
-		subscribeEvents()
-		{
-			this.locator.get('view')
-				.on(EventType.dialog.messageMenuActionTap, this.messageMenuActionTapHandler)
-				.on(EventType.dialog.messageMenuReactionTap, this.messageMenuReactionTapHandler)
-				.on(EventType.dialog.messageLongTap, this.messageLongTapHandler)
-			;
-		}
-
-		unsubscribeEvents()
-		{
-			this.locator.get('view')
-				.off(EventType.dialog.messageMenuActionTap, this.messageMenuActionTapHandler)
-				.off(EventType.dialog.messageMenuReactionTap, this.messageMenuReactionTapHandler)
-				.off(EventType.dialog.messageLongTap, this.messageLongTapHandler)
-			;
+			return serviceLocator.get('core').getStore();
 		}
 
 		/**
-		 * @param {Message} message
-		 * @return {Array<string>}
+		 * @return {VoteManager}
 		 */
-		getOrderedActions(message)
+		get voteManager()
 		{
-			return [
-				ActionType.reaction,
-				ActionType.reply,
-				ActionType.copy,
-				ActionType.copyLink,
-				ActionType.subscribe,
-				ActionType.unsubscribe,
-				ActionType.pin,
-				ActionType.unpin,
-				ActionType.forward,
-				ActionType.create,
-				ActionType.downloadToDevice,
-				ActionType.downloadToDisk,
-				ActionType.profile,
-				ActionType.edit,
-				ActionType.delete,
-				ActionType.multiselect,
-			];
+			return this.dialogLocator.get('vote-manager');
 		}
 
 		/**
-		 * @param {Message} message
-		 * @return {Array<string>}
+		 * @param {DialogLocator} dialogLocator
 		 */
-		getOrderedActionsForErrorMessage(message)
+		setDialogLocator(dialogLocator)
 		{
-			return [
-				ActionType.resend,
-				ActionType.delete,
-			];
+			this.dialogLocator = dialogLocator;
 		}
 
 		/**
-		 * @param index
-		 * @param {Message} message
+		 * @abstract
+		 * @return {Record<string, (MessageMenuView, MessageMenuMessage) => void>}
 		 */
-		onMessageLongTap(index, message)
+		getActions()
 		{
-			logger.log('MessageMenu onMessageLongTap', message);
-			const messageId = Number(message.id);
-			const isRealMessage = Type.isNumber(messageId);
-			if (!isRealMessage)
-			{
-				this.#processFileErrorMessage(message);
-
-				return;
-			}
-
-			if (!ChatPermission.isCanOpenMessageMenu(this.dialogId))
-			{
-				Haptics.notifyFailure();
-
-				return;
-			}
-
-			const messageModel = this.store.getters['messagesModel/getById'](messageId);
-
-			if (!messageModel || !('id' in messageModel))
-			{
-				Haptics.notifyFailure();
-
-				return;
-			}
-
-			if (this.isMenuNotAvailableByComponentId(messageModel))
-			{
-				Haptics.notifyFailure();
-
-				return;
-			}
-
-			const fileModel = this.store.getters['filesModel/getById'](messageModel.files[0]);
-			const dialogModel = this.store.getters['dialoguesModel/getById'](this.dialogId);
-			const userModel = this.store.getters['usersModel/getById'](messageModel.authorId);
-			const commentInfo = this.store.getters['commentModel/getByMessageId'](messageModel.id);
-
-			let isUserSubscribed = false;
-
-			if (commentInfo)
-			{
-				isUserSubscribed = commentInfo.isUserSubscribed;
-			}
-
-			if (!commentInfo && messageModel.authorId === serviceLocator.get('core').getUserId())
-			{
-				isUserSubscribed = true;
-			}
-
-			const contextMenuMessage = new MessageMenuMessage({
-				messageModel,
-				fileModel,
-				dialogModel,
-				userModel,
-				isPinned: this.store.getters['messagesModel/pinModel/isPinned'](messageModel.id),
-				isUserSubscribed,
-			});
-
-			const menu = new MessageMenuView();
-
-			this.getOrderedActions(message)
-				.forEach((actionId) => this.actions[actionId](menu, contextMenuMessage))
-			;
-
-			this.locator.get('view')
-				.showMenuForMessage(message, menu)
-			;
-			Haptics.impactMedium();
-		}
-
-		/**
-		 * @param {Message} message
-		 */
-		#processFileErrorMessage(message)
-		{
-			if (message.status !== OwnMessageStatus.error)
-			{
-				Haptics.notifyFailure();
-
-				return;
-			}
-
-			const messageModel = this.store.getters['messagesModel/getById'](message.id);
-			if (!messageModel || !('id' in messageModel))
-			{
-				Haptics.notifyFailure();
-
-				return;
-			}
-
-			if (this.isMenuNotAvailableByComponentId(messageModel))
-			{
-				Haptics.notifyFailure();
-
-				return;
-			}
-
-			const dialogModel = this.store.getters['dialoguesModel/getById'](this.dialogId);
-			const contextMenuMessage = new MessageMenuMessage({
-				messageModel,
-				dialogModel,
-			});
-
-			const menu = new MessageMenuView();
-			this.getOrderedActionsForErrorMessage()
-				.forEach((actionId) => this.actions[actionId](menu, contextMenuMessage))
-			;
-
-			this.locator.get('view')
-				.showMenuForMessage(message, menu)
-			;
-			Haptics.impactMedium();
-		}
-
-		/**
-		 * @param {string} actionId
-		 * @param {Message} message
-		 */
-		onMessageMenuActionTap(actionId, message)
-		{
-			logger.log('MessageMenu onMessageMenuActionTap', actionId, message);
-			if (!(actionId in this.handlers))
-			{
-				logger.error('Message Menu: unknown action', actionId, message);
-			}
-
-			this.handlers[actionId](message);
-		}
-
-		onMessageMenuReactionTap(reactionId, message)
-		{
-			logger.log('MessageMenu onMessageMenuReactionTap', reactionId, message);
-
-			this.locator.get('message-service')
-				.setReaction(reactionId, message.id)
-			;
-		}
-
-		registerActions()
-		{
-			this.actions = {
-				[ActionType.reaction]: this.addReactionAction.bind(this),
-				[ActionType.copy]: this.addCopyAction.bind(this),
-				[ActionType.copyLink]: this.addCopyLinkAction.bind(this),
-				[ActionType.pin]: this.addPinAction.bind(this),
-				[ActionType.unpin]: this.addUnpinAction.bind(this),
-				[ActionType.subscribe]: this.addSubscribeAction.bind(this),
-				[ActionType.unsubscribe]: this.addUnsubscribeAction.bind(this),
-				[ActionType.forward]: this.addForwardAction.bind(this),
-				[ActionType.create]: this.addCreateAction.bind(this),
-				[ActionType.reply]: this.addReplyAction.bind(this),
-				[ActionType.profile]: this.addProfileAction.bind(this),
-				[ActionType.edit]: this.addEditAction.bind(this),
-				[ActionType.delete]: this.addDeleteAction.bind(this),
-				[ActionType.downloadToDevice]: this.addDownloadToDeviceAction.bind(this),
-				[ActionType.downloadToDisk]: this.addDownloadToDiskAction.bind(this),
-				[ActionType.feedback]: this.addFeedbackAction.bind(this),
-				[ActionType.multiselect]: this.addMultiselectAction.bind(this),
-				[ActionType.resend]: this.addResendAction.bind(this),
-			};
-		}
-
-		registerActionHandlers()
-		{
-			this.handlers = {
-				[ActionType.copy]: this.onCopy.bind(this),
-				[ActionType.copyLink]: this.onCopyLink.bind(this),
-				[ActionType.reply]: this.onReply.bind(this),
-				[ActionType.pin]: this.onPin.bind(this),
-				[ActionType.unpin]: this.onUnpin.bind(this),
-				[ActionType.subscribe]: this.onSubscribe.bind(this),
-				[ActionType.unsubscribe]: this.onUnsubscribe.bind(this),
-				[ActionType.forward]: this.onForward.bind(this),
-				[ActionType.create]: this.onCreate.bind(this),
-				[ActionType.profile]: this.onProfile.bind(this),
-				[ActionType.edit]: this.onEdit.bind(this),
-				[ActionType.delete]: this.onDelete.bind(this),
-				[ActionType.downloadToDevice]: this.onDownloadToDevice.bind(this),
-				[ActionType.downloadToDisk]: this.onDownloadToDisk.bind(this),
-				[ActionType.feedback]: this.onFeedback.bind(this),
-				[ActionType.multiselect]: this.onMultiSelect.bind(this),
-				[ActionType.resend]: this.onResend.bind(this),
+			return {
+				[MessageMenuActionType.copy]: this.addCopyAction.bind(this),
+				[MessageMenuActionType.copyLink]: this.addCopyLinkAction.bind(this),
+				[MessageMenuActionType.pin]: this.addPinAction.bind(this),
+				[MessageMenuActionType.unpin]: this.addUnpinAction.bind(this),
+				[MessageMenuActionType.subscribe]: this.addSubscribeAction.bind(this),
+				[MessageMenuActionType.unsubscribe]: this.addUnsubscribeAction.bind(this),
+				[MessageMenuActionType.forward]: this.addForwardAction.bind(this),
+				[MessageMenuActionType.create]: this.addCreateAction.bind(this),
+				[MessageMenuActionType.reply]: this.addReplyAction.bind(this),
+				[MessageMenuActionType.profile]: this.addProfileAction.bind(this),
+				[MessageMenuActionType.edit]: this.addEditAction.bind(this),
+				[MessageMenuActionType.delete]: this.addDeleteAction.bind(this),
+				[MessageMenuActionType.downloadToDevice]: this.addDownloadToDeviceAction.bind(this),
+				[MessageMenuActionType.downloadToDisk]: this.addDownloadToDiskAction.bind(this),
+				[MessageMenuActionType.feedback]: this.addFeedbackAction.bind(this),
+				[MessageMenuActionType.multiselect]: this.addMultiselectAction.bind(this),
+				[MessageMenuActionType.resend]: this.addResendAction.bind(this),
+				[MessageMenuActionType.finishVote]: this.addFinishVoteAction.bind(this),
+				[MessageMenuActionType.revote]: this.addRevoteAction.bind(this),
+				[MessageMenuActionType.openVoteResult]: this.addOpenVoteResultAction.bind(this),
 			};
 		}
 
 		/**
-		 * @param {MessageMenuView} menu
-		 * @param {MessageMenuMessage} message
+		 * @abstract
+		 * @return {Object<string, (MessageMenuMessage) => void>}
 		 */
-		addReactionAction(menu, message)
+		getActionHandlers()
 		{
-			if (message.isPossibleReact())
-			{
-				menu
-					.addReaction(LikeReaction)
-					.addReaction(KissReaction)
-					.addReaction(LaughReaction)
-					.addReaction(WonderReaction)
-					.addReaction(CryReaction)
-					.addReaction(AngryReaction)
-					.addReaction(FacepalmReaction)
-				;
-			}
+			return {
+				[MessageMenuActionType.copy]: this.onCopy.bind(this),
+				[MessageMenuActionType.copyLink]: this.onCopyLink.bind(this),
+				[MessageMenuActionType.reply]: this.onReply.bind(this),
+				[MessageMenuActionType.pin]: this.onPin.bind(this),
+				[MessageMenuActionType.unpin]: this.onUnpin.bind(this),
+				[MessageMenuActionType.subscribe]: this.onSubscribe.bind(this),
+				[MessageMenuActionType.unsubscribe]: this.onUnsubscribe.bind(this),
+				[MessageMenuActionType.forward]: this.onForward.bind(this),
+				[MessageMenuActionType.create]: this.onCreate.bind(this),
+				[MessageMenuActionType.profile]: this.onProfile.bind(this),
+				[MessageMenuActionType.edit]: this.onEdit.bind(this),
+				[MessageMenuActionType.delete]: this.onDelete.bind(this),
+				[MessageMenuActionType.downloadToDevice]: this.onDownloadToDevice.bind(this),
+				[MessageMenuActionType.downloadToDisk]: this.onDownloadToDisk.bind(this),
+				[MessageMenuActionType.feedback]: this.onFeedback.bind(this),
+				[MessageMenuActionType.multiselect]: this.onMultiSelect.bind(this),
+				[MessageMenuActionType.resend]: this.onResend.bind(this),
+				[MessageMenuActionType.finishVote]: this.onFinishVote.bind(this),
+				[MessageMenuActionType.revote]: this.onRevote.bind(this),
+				[MessageMenuActionType.openVoteResult]: this.onOpenVoteResult.bind(this),
+				[MessageMenuActionType.goToMessage]: this.onGoToMessage.bind(this),
+			};
 		}
 
 		/**
@@ -386,7 +164,7 @@ jn.define('im/messenger/controller/dialog/lib/message-menu/message-menu', (requi
 		 */
 		addCopyLinkAction(menu, message)
 		{
-			if (Feature.isMessageMenuAirIconSupported && message.isPossibleCopyLink())
+			if (message.isPossibleCopyLink())
 			{
 				menu.addAction(CopyLinkAction);
 			}
@@ -518,6 +296,11 @@ jn.define('im/messenger/controller/dialog/lib/message-menu/message-menu', (requi
 				menu.addSeparator();
 				menu.addAction(DeleteAction);
 			}
+
+			if (message.isPossibleMultiselect())
+			{
+				menu.addSeparator();
+			}
 		}
 
 		/**
@@ -526,8 +309,9 @@ jn.define('im/messenger/controller/dialog/lib/message-menu/message-menu', (requi
 		 */
 		addDownloadToDeviceAction(menu, message)
 		{
-			if (message.isPossibleSaveToLibrary())
+			if (message.isPossibleDownloadToDevice())
 			{
+				menu.addSeparator();
 				menu.addAction(DownloadToDeviceAction);
 			}
 		}
@@ -538,9 +322,10 @@ jn.define('im/messenger/controller/dialog/lib/message-menu/message-menu', (requi
 		 */
 		addDownloadToDiskAction(menu, message)
 		{
-			if (message.isPossibleSaveToLibrary())
+			if (message.isPossibleSaveFile())
 			{
 				menu.addAction(DownloadToDiskAction);
+				menu.addSeparator();
 			}
 		}
 
@@ -564,6 +349,7 @@ jn.define('im/messenger/controller/dialog/lib/message-menu/message-menu', (requi
 		{
 			if (message.isPossibleMultiselect())
 			{
+				menu.addSeparator();
 				menu.addAction(MultiSelectAction);
 			}
 		}
@@ -581,26 +367,64 @@ jn.define('im/messenger/controller/dialog/lib/message-menu/message-menu', (requi
 		}
 
 		/**
-		 * @param {Message} message
+		 * @param {MessageMenuView} menu
+		 * @param {MessageMenuMessage} message
+		 */
+		addFinishVoteAction(menu, message)
+		{
+			if (message.isPossibleFinishVote())
+			{
+				menu.addAction(FinishVoteAction);
+			}
+		}
+
+		/**
+		 * @param {MessageMenuView} menu
+		 * @param {MessageMenuMessage} message
+		 */
+		addRevoteAction(menu, message)
+		{
+			if (message.isPossibleRevote())
+			{
+				menu.addAction(RevoteAction);
+			}
+		}
+
+		/**
+		 * @param {MessageMenuView} menu
+		 * @param {MessageMenuMessage} message
+		 */
+		addOpenVoteResultAction(menu, message)
+		{
+			if (message.isPossibleOpenVoteResult())
+			{
+				menu.addAction(OpenVoteResultAction);
+			}
+		}
+
+		/**
+		 * @param {MessageMenuMessage} message
 		 */
 		onCopy(message)
 		{
-			const modelMessage = this.store.getters['messagesModel/getById'](message.id);
+			const modelMessage = this.#getMessageModel(message.messageModel.id);
 
 			DialogTextHelper.copyToClipboard(
 				modelMessage.text,
 				{
-					parentWidget: this.locator.get('view').ui,
+					parentWidget: this.#getUiView(),
 				},
 			);
 		}
 
 		/**
-		 * @param {Message} message
+		 * @param {MessageMenuMessage} message
 		 */
 		onCopyLink(message)
 		{
-			const link = MessageHelper.createById(message.id)?.getLinkToMessage();
+			const messageHelper = MessageHelper.createById(message.messageModel.id);
+
+			const link = messageHelper?.getLinkToMessage();
 			if (!Type.isStringFilled(link))
 			{
 				return;
@@ -611,13 +435,22 @@ jn.define('im/messenger/controller/dialog/lib/message-menu/message-menu', (requi
 				{
 					notificationText: Loc.getMessage('IMMOBILE_MESSENGER_DIALOG_MESSAGE_MENU_COPY_LINK_SUCCESS'),
 					notificationIcon: Icon.LINK,
-					parentWidget: this.locator.get('view').ui,
+					parentWidget: this.#getUiView(),
 				},
+				true,
 			);
+
+			if (messageHelper?.isVoteModelExist)
+			{
+				AnalyticsService.getInstance().sendVoteMessageLinkCopied(
+					this.getDialog().dialogId,
+					messageHelper.voteModel.voteId,
+				);
+			}
 		}
 
 		/**
-		 * @param {Message} message
+		 * @param {MessageMenuMessage} message
 		 */
 		onReply(message)
 		{
@@ -628,30 +461,53 @@ jn.define('im/messenger/controller/dialog/lib/message-menu/message-menu', (requi
 				return;
 			}
 
-			const replyManager = this.locator.get('reply-manager');
+			const replyManager = this.dialogLocator.get('reply-manager');
 
 			if (
 				replyManager.isQuoteInProcess
-				&& message.id === replyManager.getQuoteMessage().id
+				&& message.messageModel.id === replyManager.getQuoteMessage().id
 			)
 			{
 				return;
 			}
 
-			replyManager.startQuotingMessage(message);
+			const textFieldManager = this.dialogLocator.get('text-field-manager');
+			if (textFieldManager?.isHide())
+			{
+				return;
+			}
+
+			replyManager.startQuotingMessage(message.messageModel);
 		}
 
 		/**
-		 * @param {Message} message
+		 * @param {MessageMenuMessage} message
+		 * @param {GoToMessageContextEvent} [params={}]
+		 * @return {Promise<void>}
+		 */
+		onGoToMessage(message, params = {})
+		{
+			const messageId = message.messageModel?.id;
+			if (!messageId || !this.#checkOnlineStatus())
+			{
+				return Promise.reject();
+			}
+
+			const dialogId = this.getDialog().dialogId;
+
+			return this.dialogLocator.get('context-manager').goToMessageContext({
+				dialogId,
+				messageId,
+				...params,
+			});
+		}
+
+		/**
+		 * @param {MessageMenuMessage} message
 		 */
 		onPin(message)
 		{
-			if (!Feature.isMessagePinSupported)
-			{
-				Notification.showComingSoon();
-
-				return;
-			}
+			const dialogId = this.#getDialogId();
 
 			if (!isOnline())
 			{
@@ -660,29 +516,36 @@ jn.define('im/messenger/controller/dialog/lib/message-menu/message-menu', (requi
 				return;
 			}
 
-			const messageModel = this.store.getters['messagesModel/getById'](message.id);
+			const messageModel = this.#getMessageModel(message.messageModel.id);
 			if (!messageModel.id)
 			{
 				return;
 			}
 
-			this.locator.get('message-service')
+			if (this.#isPinsLimitReached(messageModel.chatId))
+			{
+				this.#showPinsLimitAlert();
+
+				AnalyticsService.getInstance().sendPinnedMessageLimitException({ dialogId });
+
+				return;
+			}
+
+			this.dialogLocator.get('message-service')
 				.pinMessage(messageModel.id)
 			;
+
+			AnalyticsService.getInstance().sendMessagePin({
+				dialogId,
+				chatId: messageModel.chatId,
+			});
 		}
 
 		/**
-		 * @param {Message} message
+		 * @param {MessageMenuMessage} message
 		 */
 		onUnpin(message)
 		{
-			if (!Feature.isMessagePinSupported)
-			{
-				Notification.showComingSoon();
-
-				return;
-			}
-
 			if (!isOnline())
 			{
 				Notification.showOfflineToast();
@@ -690,15 +553,20 @@ jn.define('im/messenger/controller/dialog/lib/message-menu/message-menu', (requi
 				return;
 			}
 
-			const messageModel = this.store.getters['messagesModel/getById'](message.id);
+			const messageModel = this.#getMessageModel(message.messageModel.id);
 			if (!messageModel.id)
 			{
 				return;
 			}
 
-			this.locator.get('message-service')
+			this.dialogLocator.get('message-service')
 				.unpinMessage(messageModel.id)
 			;
+
+			AnalyticsService.getInstance().sendMessageUnpin({
+				dialogId: this.#getDialogId(),
+				chatId: messageModel.chatId,
+			});
 		}
 
 		onSubscribe(message)
@@ -710,9 +578,9 @@ jn.define('im/messenger/controller/dialog/lib/message-menu/message-menu', (requi
 				return;
 			}
 
-			Notification.showToast(ToastType.subscribeToComments, this.locator.get('view').ui);
-			const modelMessage = this.store.getters['messagesModel/getById'](message.id);
-			this.locator.get('chat-service').subscribeToCommentsByPostId(modelMessage.id);
+			Notification.showToast(ToastType.subscribeToComments, this.#getUiView());
+			const modelMessage = this.#getMessageModel(message.messageModel.id);
+			this.dialogLocator.get('chat-service').subscribeToCommentsByPostId(modelMessage.id);
 		}
 
 		onUnsubscribe(message)
@@ -724,40 +592,40 @@ jn.define('im/messenger/controller/dialog/lib/message-menu/message-menu', (requi
 				return;
 			}
 
-			Notification.showToast(ToastType.unsubscribeFromComments, this.locator.get('view').ui);
-			const modelMessage = this.store.getters['messagesModel/getById'](message.id);
-			this.locator.get('chat-service').unsubscribeFromCommentsByPostId(modelMessage.id);
+			Notification.showToast(ToastType.unsubscribeFromComments, this.#getUiView());
+			const modelMessage = this.#getMessageModel(message.messageModel.id);
+			this.dialogLocator.get('chat-service').unsubscribeFromCommentsByPostId(modelMessage.id);
 		}
 
 		/**
-		 * @param {Message} message
+		 * @param {MessageMenuMessage} message
+		 * @param parentWidget
+		 * @param onItemSelected
+		 * @param {boolean} [closeOnSelect=true]
+		 * @return {Promise}
 		 */
-		onForward(message)
+		onForward(message, { parentWidget, onItemSelected, closeOnSelect = true } = {})
 		{
-			if (!Feature.isMessageForwardSupported)
-			{
-				Notification.showComingSoon();
-
-				return;
-			}
-
 			if (!isOnline())
 			{
 				Notification.showOfflineToast();
 
-				return;
+				return Promise.reject();
 			}
 
-			const forwardController = new ForwardSelector();
-			forwardController.open({
-				messageIds: [message.id],
-				fromDialogId: this.dialogId,
-				locator: this.locator,
+			const forwardSelector = new ForwardSelector({
+				messageIds: [message.messageModel.id],
+				fromDialogId: this.#getDialogId(),
+				locator: this.dialogLocator,
+				onDialogSelected: onItemSelected,
+				closeOnSelect,
 			});
+
+			return forwardSelector.open({ parentWidget });
 		}
 
 		/**
-		 * @param {Message} message
+		 * @param {MessageMenuMessage} message
 		 */
 		onCreate(message)
 		{
@@ -768,21 +636,21 @@ jn.define('im/messenger/controller/dialog/lib/message-menu/message-menu', (requi
 				return;
 			}
 
-			const messageModel = this.store.getters['messagesModel/getById'](message.id);
+			const messageModel = this.#getMessageModel(message.messageModel.id);
 			if (!messageModel)
 			{
 				return;
 			}
 
-			MessageCreateMenu.open(this.dialogId, messageModel, this.store);
+			MessageCreateMenu.open(this.#getDialogId(), messageModel, this.store);
 		}
 
 		/**
-		 * @param {Message} message
+		 * @param {MessageMenuMessage} message
 		 */
 		onProfile(message)
 		{
-			const messageModel = this.store.getters['messagesModel/getById'](message.id);
+			const messageModel = this.#getMessageModel(message.messageModel.id);
 			if (!messageModel.id)
 			{
 				return;
@@ -790,26 +658,31 @@ jn.define('im/messenger/controller/dialog/lib/message-menu/message-menu', (requi
 
 			UserProfile.show(messageModel.authorId, {
 				backdrop: true,
-				openingDialogId: this.dialogId,
+				openingDialogId: this.#getDialogId(),
 			});
 		}
 
 		/**
-		 * @param {Message} message
+		 * @param {MessageMenuMessage} message
 		 */
 		onEdit(message)
 		{
-			this.locator.get('reply-manager')
-				.startEditingMessage(message)
-			;
+			this.dialogLocator.get('reply-manager').startEditingMessage(message.messageModel);
 		}
 
 		/**
-		 * @param {Message} message
+		 * @param {MessageMenuMessage} message
 		 */
 		onDelete(message)
 		{
-			const messageModel = this.store.getters['messagesModel/getById'](message.id);
+			if (!isOnline())
+			{
+				Notification.showOfflineToast();
+
+				return;
+			}
+
+			const messageModel = this.#getMessageModel(message.messageModel.id);
 			if (!messageModel.id)
 			{
 				return;
@@ -819,18 +692,18 @@ jn.define('im/messenger/controller/dialog/lib/message-menu/message-menu', (requi
 			{
 				AnalyticsService.getInstance().sendMessageDeleteActionClicked({
 					messageId: messageModel.id,
-					dialogId: this.dialogId,
+					dialogId: this.#getDialogId(),
 				});
 			}
 
-			const helper = DialogHelper.createByDialogId(this.dialogId);
+			const helper = DialogHelper.createByDialogId(this.#getDialogId());
 
 			if (helper?.isChannel)
 			{
 				showDeleteChannelPostAlert({
 					deleteCallback: () => {
-						this.locator.get('message-service')
-							.delete(messageModel, this.dialogId)
+						this.dialogLocator.get('message-service')
+							.delete(messageModel, this.#getDialogId())
 						;
 					},
 					cancelCallback: () => {
@@ -838,7 +711,7 @@ jn.define('im/messenger/controller/dialog/lib/message-menu/message-menu', (requi
 						{
 							AnalyticsService.getInstance().sendMessageDeletingCanceled({
 								messageId: messageModel.id,
-								dialogId: this.dialogId,
+								dialogId: this.#getDialogId(),
 							});
 						}
 					},
@@ -847,231 +720,309 @@ jn.define('im/messenger/controller/dialog/lib/message-menu/message-menu', (requi
 				return;
 			}
 
-			this.locator.get('message-service')
-				.delete(messageModel, this.dialogId)
+			this.dialogLocator.get('message-service')
+				.delete(messageModel, this.#getDialogId())
 			;
+
+			this.#deleteQuotingMessage(message.messageModel.id);
 		}
 
 		/**
-		 * @param {Message} message
+		 * @param {string} messageId
 		 */
-		onDownloadToDevice(message)
+		#deleteQuotingMessage(messageId)
 		{
-			if (!isOnline())
-			{
-				Notification.showOfflineToast();
-
-				return;
-			}
-
-			const messageModel = this.store.getters['messagesModel/getById'](message.id);
-			if (!messageModel.id)
+			const isQuoteInProcess = this.dialogLocator.get('reply-manager')?.isQuoteInProcess;
+			if (!isQuoteInProcess)
 			{
 				return;
 			}
 
-			const file = this.store.getters['filesModel/getById'](messageModel.files[0]);
-			if (!file)
+			const quoteMessage = this.dialogLocator.get('reply-manager').getQuoteMessage();
+			if (quoteMessage?.id !== messageId)
 			{
 				return;
 			}
 
-			void NotifyManager.showLoadingIndicator();
-			Filesystem.downloadFile(withCurrentDomain(file.urlDownload))
-				.then((localPath) => {
-					AnalyticsService.getInstance().sendDownloadToDevice({
-						fileType: file.type,
-						dialogId: this.dialogId,
-					});
-
-					if (file.type === FileType.audio)
-					{
-						this.#saveFile(localPath, messageModel);
-
-						return;
-					}
-
-					this.#saveToLibrary(localPath, file.type, messageModel);
-				})
-				.catch((error) => {
-					logger.error(`${this.constructor.name}.onDownloadToDevice.downloadFile.catch:`, error);
-				});
+			this.dialogLocator.get('reply-manager').finishQuotingMessage();
 		}
 
 		/**
-		 * @param {String} localPath
-		 * @param {FileType} fileType
-		 * @param {MessagesModelState} messageModel
+		 * @param {MessageMenuMessage} message
+		 * @param {LayoutWidget} parentWidget
 		 */
-		#saveToLibrary(localPath, fileType, messageModel)
+		async onDownloadToDevice(message, { parentWidget } = {})
 		{
-			return utils.saveToLibrary(localPath)
-				.then(() => {
-					const successMessages = {
-						[FileType.image]: Loc.getMessage('IMMOBILE_MESSENGER_DIALOG_MESSAGE_MENU_DOWNLOAD_PHOTO_TO_GALLERY_SUCCESS'),
-						[FileType.video]: Loc.getMessage('IMMOBILE_MESSENGER_DIALOG_MESSAGE_MENU_DOWNLOAD_VIDEO_TO_GALLERY_SUCCESS'),
-					};
-					const successMessage = successMessages[fileType];
-					if (successMessages)
-					{
-						Notification.showToastWithParams({ message: successMessage, svgType: 'image' }, this.locator.get('view').ui);
-					}
-				})
-				.catch((error) => {
-					logger.error(`${this.constructor.name}.saveToLibrary.catch:`, error);
-					const locDescMessage = Loc.getMessage('IMMOBILE_MESSENGER_DIALOG_MESSAGE_MENU_DOWNLOAD_TO_GALLERY_FAILURE');
-					const locSettingsMessage = Loc.getMessage('IMMOBILE_MESSENGER_DIALOG_MESSAGE_MENU_DOWNLOAD_TO_GALLERY_FAILURE_SETTINGS');
-					const locNoMessage = Loc.getMessage('IMMOBILE_MESSENGER_DIALOG_MESSAGE_MENU_DOWNLOAD_TO_GALLERY_FAILURE_NO');
+			const messageId = message.messageModel?.id;
+			if (!messageId || !this.#checkOnlineStatus())
+			{
+				return;
+			}
 
-					navigator.notification.confirm(
-						'',
-						(buttonId) => {
-							if (buttonId === 2)
-							{
-								Application.openSettings();
-							}
-						},
-						locDescMessage,
-						[
-							locNoMessage,
-							locSettingsMessage,
-						],
-					);
-				})
-				.finally(() => {
-					NotifyManager.hideLoadingIndicatorWithoutFallback();
-				});
+			const messageHelper = MessageHelper.createById(messageId);
+
+			if (!messageHelper.isWithFile)
+			{
+				return;
+			}
+
+			void fileSaver({
+				locator: this.dialogLocator,
+				dialogId: this.#getDialogId(),
+				messageHelper: MessageHelper.createById(messageId),
+				parentWidget,
+			}).save();
 		}
 
 		/**
-		 * @param {String} localPath
+		 * @param {MessageMenuMessage} message
+		 * @param {Object} parentWidget
 		 */
-		#saveFile(localPath)
+		onDownloadToDisk(message, { parentWidget = null } = {})
 		{
-			return utils.saveFile(localPath)
-				.catch((error) => {
-					logger.error(`${this.constructor.name}.saveFile.catch:`, error);
-				})
-				.finally(() => {
-					NotifyManager.hideLoadingIndicatorWithoutFallback();
-				});
+			const messageId = message.messageModel?.id;
+			if (!messageId || !this.#checkOnlineStatus())
+			{
+				return;
+			}
+
+			void diskSaver({
+				locator: this.dialogLocator,
+				dialogId: this.#getDialogId(),
+				messageHelper: MessageHelper.createById(messageId),
+				parentWidget,
+			}).save();
 		}
 
 		/**
-		 * @param {Message} message
-		 */
-		onDownloadToDisk(message)
-		{
-			if (!isOnline())
-			{
-				Notification.showOfflineToast();
-
-				return;
-			}
-
-			const messageModel = this.store.getters['messagesModel/getById'](message.id);
-			if (!messageModel.id)
-			{
-				return;
-			}
-
-			const file = this.store.getters['filesModel/getById'](messageModel.files[0]);
-			if (!file)
-			{
-				return;
-			}
-
-			this.locator.get('disk-service')
-				.save(file.id)
-				.then(() => {
-					const successMessages = {
-						[FileType.image]: Loc.getMessage('IMMOBILE_MESSENGER_DIALOG_MESSAGE_MENU_DOWNLOAD_PHOTO_TO_DISK_SUCCESS'),
-						[FileType.video]: Loc.getMessage('IMMOBILE_MESSENGER_DIALOG_MESSAGE_MENU_DOWNLOAD_VIDEO_TO_DISK_SUCCESS'),
-						[FileType.audio]: Loc.getMessage('IMMOBILE_MESSENGER_DIALOG_MESSAGE_MENU_DOWNLOAD_AUDIO_TO_DISK_SUCCESS'),
-					};
-					const successMessage = successMessages[file.type];
-					if (successMessages)
-					{
-						Notification.showToastWithParams({ message: successMessage, svgType: 'catalogueSuccess' }, this.locator.get('view').ui);
-					}
-
-					AnalyticsService.getInstance().sendDownloadToDisk({
-						fileType: file.type,
-						dialogId: this.dialogId,
-					});
-				})
-				.catch((error) => {
-					logger.error(`${this.constructor.name}.onDownloadToDisk.catch`, error);
-					const errorMessage = Loc.getMessage('IMMOBILE_MESSENGER_DIALOG_MESSAGE_MENU_DOWNLOAD_TO_DISK_FAILURE');
-					Notification.showToastWithParams(
-						{ message: errorMessage, svgType: 'catalogue', backgroundColor: Theme.colors.accentMainAlert },
-						this.locator.get('view').ui,
-					);
-				})
-			;
-		}
-
-		/**
-		 * @param {Message} message
+		 * @param {MessageMenuMessage} message
 		 */
 		onFeedback(message)
 		{
-			const { openFeedbackForm } = require('layout/ui/feedback-form-opener');
-			openFeedbackForm('copilotRoles');
+			let formId = 'copilotRoles';
+			if (message.isAiAssistantMessage())
+			{
+				formId = 'aiAssistant';
+			}
+
+			const openFormFallback = () => {
+				const hiddenFields = encodeURIComponent(JSON.stringify({
+					from_domain: currentDomain,
+					back_version: Application.getAppVersion(),
+					os_phone: Application.getPlatform(),
+					app_version: Application.getApiVersion(),
+					region_model: env.languageId,
+					phone_model: device.model,
+					os_version: device.version,
+				}));
+
+				PageManager.openPage({
+					backgroundColor: Color.bgSecondary.toHex(),
+					url: `${env.siteDir}mobile/settings?formId=${formId}&hiddenFields=${hiddenFields}`,
+					backdrop: {
+						mediumPositionPercent: 80,
+						onlyMediumPosition: true,
+						forceDismissOnSwipeDown: true,
+						swipeAllowed: true,
+						swipeContentAllowed: true,
+						horizontalSwipeAllowed: false,
+						navigationBarColor: Color.bgSecondary.toHex(),
+						enableNavigationBarBorder: false,
+					},
+					titleParams: {
+						text: Loc.getMessage('FEEDBACK_FORM_TITLE'),
+					},
+					enableNavigationBarBorder: false,
+					modal: true,
+					cache: true,
+				});
+			};
+
+			requireLazy('layout/ui/feedback-form-opener').then(({ FeedbackForm }) => {
+				if (FeedbackForm)
+				{
+					(new FeedbackForm({
+						formId,
+						senderPage: 'MessageMenu',
+					})).openInBackdrop();
+				}
+				else
+				{
+					openFormFallback();
+				}
+			}).catch(() => {
+				openFormFallback();
+			});
 		}
 
 		/**
-		 * @param {Message} message
+		 * @param {MessageMenuMessage} message
 		 */
 		onMultiSelect(message)
 		{
-			(new SelectManager(this.locator, this.dialogId))
-				.enableMultiSelectMode(message.id)
-				.catch((error) => logger.error(`${this.constructor.name}.onMultiSelect(${message.id}).enableMultiSelectMode catch:`, error))
+			if (!isOnline())
+			{
+				Notification.showOfflineToast();
+
+				return;
+			}
+
+			this.dialogLocator.get('select-manager')
+				.enableMultiSelectMode(String(message.messageModel.id))
+				.catch((error) => logger.error(
+					`${this.constructor.name}.onMultiSelect(${String(message.messageModel.id)}).enableMultiSelectMode catch:`,
+					error,
+				))
 			;
 		}
 
 		/**
-		 * @param {Message} message
+		 * @param {MessageMenuMessage} message
 		 */
 		onResend(message)
 		{
 			MessengerEmitter.emit(EventType.dialog.external.resend, {
 				index: null,
-				message,
+				message: message.messageModel,
 			});
 		}
 
 		/**
-		 * @param {MessagesModelState} message
-		 * @return {Boolean}
+		 * @param {MessageMenuMessage} message
 		 */
-		isMenuNotAvailableByComponentId(message)
+		onFinishVote(message)
 		{
-			const componentId = message.params?.componentId;
-			if (Type.isNil(componentId))
+			if (!isOnline())
 			{
+				Notification.showOfflineToast();
+
+				return;
+			}
+
+			const messageModel = this.store.getters['messagesModel/getById'](message.messageModel.id);
+			if (!messageModel.id)
+			{
+				return;
+			}
+
+			confirmDestructiveAction({
+				title: Loc.getMessage('IMMOBILE_MESSENGER_DIALOG_MESSAGE_MENU_FINISH_VOTE_CONFIRM_TITLE'),
+				description: Loc.getMessage('IMMOBILE_MESSENGER_DIALOG_MESSAGE_MENU_FINISH_VOTE_CONFIRM_DESCRIPTION'),
+				destructionText: Loc.getMessage('IMMOBILE_MESSENGER_DIALOG_MESSAGE_MENU_FINISH_VOTE_CONFIRM_FINISH'),
+				onDestruct: () => this.voteManager?.finishVote(messageModel.id),
+			});
+		}
+
+		/**
+		 * @param {MessageMenuMessage} message
+		 */
+		onRevote(message)
+		{
+			if (!isOnline())
+			{
+				Notification.showOfflineToast();
+
+				return;
+			}
+
+			const messageModel = this.store.getters['messagesModel/getById'](message.messageModel.id);
+			if (!messageModel.id)
+			{
+				return;
+			}
+
+			void this.voteManager?.revote(messageModel.id);
+		}
+
+		/**
+		 * @param {MessageMenuMessage} message
+		 */
+		onOpenVoteResult(message)
+		{
+			if (!isOnline())
+			{
+				Notification.showOfflineToast();
+
+				return;
+			}
+
+			const messageModel = this.store.getters['messagesModel/getById'](message.messageModel.id);
+			if (!messageModel.id)
+			{
+				return;
+			}
+
+			void this.voteManager?.openVoteResult(messageModel.id);
+		}
+
+		/**
+		 * @param {number} chatId
+		 * @returns {boolean}
+		 */
+		#isPinsLimitReached(chatId)
+		{
+			const pinsCounter = this.store.getters['messagesModel/pinModel/getPinsCounter'](chatId);
+
+			return pinsCounter >= this.maxPins;
+		}
+
+		#showPinsLimitAlert()
+		{
+			Alert.alert(
+				Loc.getMessage('IMMOBILE_MESSENGER_DIALOG_MESSAGE_MENU_PIN_LIMIT_ALERT_TITLE', {
+					'#MAX_PINS#': this.maxPins,
+				}),
+				'',
+				null,
+				Loc.getMessage('IMMOBILE_MESSENGER_DIALOG_MESSAGE_MENU_PIN_LIMIT_ALERT_BUTTON_NAME'),
+			);
+		}
+
+		/**
+		 * @param {MessageId} messageId
+		 * @returns {MessagesModelState|{}}
+		 */
+		#getMessageModel(messageId)
+		{
+			return this.store.getters['messagesModel/getById'](messageId);
+		}
+
+		/**
+		 * @param {MessageId} messageId
+		 * @returns {Array<FilesModelState>}
+		 */
+		#getFilesModel(messageId)
+		{
+			return this.store.getters['messagesModel/getMessageFiles'](messageId);
+		}
+
+		#checkOnlineStatus()
+		{
+			if (!isOnline())
+			{
+				Notification.showOfflineToast();
+
 				return false;
 			}
 
-			const componentIdsNotAvailableMenu = [
-				MessageParams.ComponentId.SignMessage,
-				MessageParams.ComponentId.CallMessage,
-			];
-			if (componentIdsNotAvailableMenu.includes(componentId))
-			{
-				return true;
-			}
+			return true;
+		}
 
-			const isCreateBannerMessage = componentId?.includes('CreationMessage');
-			if (isCreateBannerMessage)
-			{
-				return true;
-			}
+		#getUiView()
+		{
+			return this.dialogLocator.get('view').ui;
+		}
 
-			return false;
+		/**
+		 * @returns {DialogId}
+		 */
+		#getDialogId()
+		{
+			return this.getDialog().dialogId;
 		}
 	}
 
-	module.exports = { MessageMenu };
+	module.exports = {
+		MessageMenu,
+	};
 });

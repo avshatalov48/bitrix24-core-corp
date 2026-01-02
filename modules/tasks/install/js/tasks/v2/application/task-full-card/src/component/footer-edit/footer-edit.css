@@ -1,0 +1,42 @@
+.tasks-full-card-footer-edit {
+	display: flex;
+	align-items: center;
+	gap: 20px;
+}
+
+.tasks-full-card-footer-actions {
+	margin-left: auto;
+	display: flex;
+	align-items: center;
+	font-size: var(--ui-font-size-sm);
+}
+
+
+
+.tasks-full-card-footer-reaction {
+	margin-right: 18px;
+	display: flex;
+	align-items: center;
+	color: var(--ui-color-base-3);
+	cursor: pointer;
+}
+
+.tasks-full-card-footer-reaction .ui-icon-set {
+	margin-right: 3px;
+	--ui-icon-set__icon-color: var(--ui-color-base-4);
+	--ui-icon-set__icon-size: 22px;
+}
+
+
+
+.tasks-full-card-footer-views {
+	display: flex;
+	align-items: center;
+	color: var(--ui-color-base-5);
+	cursor: default;
+}
+
+.tasks-full-card-footer-views .ui-icon-set {
+	--ui-icon-set__icon-color: var(--ui-color-base-5);
+	--ui-icon-set__icon-size: 22px;
+}

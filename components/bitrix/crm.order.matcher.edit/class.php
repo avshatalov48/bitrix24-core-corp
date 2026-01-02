@@ -90,17 +90,13 @@ class CCrmConfigOrderProps extends \CBitrixComponent
 
 	protected function checkPermissions()
 	{
-		global $USER;
-
-		$crmPerms = new CCrmPerms($USER->GetID());
-
-		if (!$crmPerms->HavePerm('CONFIG', BX_CRM_PERM_CONFIG, 'READ'))
+		if (!\Bitrix\Crm\Service\Container::getInstance()->getUserPermissions()->entityType()->canReadSomeItemsInCrm())
 		{
 			$this->errors[] = Loc::getMessage('CRM_PERMISSION_DENIED');
 			return false;
 		}
 
-		$this->arResult['PERM_CAN_EDIT'] = $crmPerms->HavePerm('CONFIG', BX_CRM_PERM_CONFIG, 'WRITE');
+		$this->arResult['PERM_CAN_EDIT'] = \Bitrix\Crm\Service\Container::getInstance()->getUserPermissions()->isCrmAdmin();
 
 		return true;
 	}
@@ -514,7 +510,14 @@ class CCrmConfigOrderProps extends \CBitrixComponent
 
 		foreach (\Bitrix\Crm\Order\Matcher\BaseEntityMatcher::DUPLICATE_CONTROL_MODES as $mode)
 		{
-			$duplicateModeList[$mode] = Loc::getMessage('CRM_ORDERFORM_RESULT_ENTITY_DC_'.$mode);
+			$message = Loc::getMessage('CRM_ORDERFORM_RESULT_ENTITY_DC_' . $mode) ?? null;
+
+			if (!$message)
+			{
+				$message = Loc::getMessage('CRM_ORDERFORM_RESULT_ENTITY_DC_' . $mode . '_MSGVER_1');
+			}
+
+			$duplicateModeList[$mode] = $message;
 		}
 
 		return $duplicateModeList;
@@ -638,22 +641,13 @@ class CCrmConfigOrderProps extends \CBitrixComponent
 			);
 		}
 
-		$this->arResult['CONFIG_ASSIGNED_BY'] = array(
-			'valueInputName' => 'ASSIGNED_BY_ID',
-			'selected' => array(),
-			'multiple' => true,
-			'required' => true,
-		);
+		$this->arResult['CONFIG_ASSIGNED_BY'] = [
+			'selected' => [],
+			'isMultiple' => true,
+		];
 		foreach ($this->arResult['ASSIGNED_BY']['LIST'] as $assignedBy)
 		{
-			$this->arResult['CONFIG_ASSIGNED_BY']['selected'][] = array(
-				'id' => 'U'.(int)$assignedBy['ID'],
-				'entityId' => (int)$assignedBy['ID'],
-				'entityType' => 'users',
-				'name' => htmlspecialcharsBx($assignedBy['NAME']),
-				'avatar' => '',
-				'desc' => '&nbsp;'
-			);
+			$this->arResult['CONFIG_ASSIGNED_BY']['selected'][] = (int)$assignedBy['ID'];
 		}
 	}
 
@@ -805,46 +799,6 @@ class CCrmConfigOrderProps extends \CBitrixComponent
 		static::sendJsonAnswer(['requiredFieldCodes' => $requiredFields]);
 	}
 
-	protected function getDestinationDataAjaxAction()
-	{
-		$result = ['LAST' => []];
-
-		if ($this->checkPostRequest() && $this->checkEditPermission())
-		{
-			if (\Bitrix\Main\Loader::includeModule('socialnetwork'))
-			{
-				$arStructure = CSocNetLogDestination::GetStucture([]);
-				$result['DEPARTMENT'] = $arStructure['department'];
-				$result['DEPARTMENT_RELATION'] = $arStructure['department_relation'];
-				$result['DEPARTMENT_RELATION_HEAD'] = $arStructure['department_relation_head'];
-
-				$result['DEST_SORT'] = CSocNetLogDestination::GetDestinationSort([
-					'DEST_CONTEXT' => 'CRM_AUTOMATION',
-				]);
-
-				CSocNetLogDestination::fillLastDestination(
-					$result['DEST_SORT'],
-					$result['LAST']
-				);
-
-				$destinationUser = [];
-
-				if (!empty($result['LAST']['USERS']) && is_array($result['LAST']['USERS']))
-				{
-					foreach ($result['LAST']['USERS'] as $value)
-					{
-						$destinationUser[] = str_replace('U', '', $value);
-					}
-				}
-
-				$result['USERS'] = \CSocNetLogDestination::getUsers(['id' => $destinationUser]);
-				$result['ROLES'] = [];
-			}
-		}
-
-		static::sendJsonAnswer(['DATA' => $result]);
-	}
-
 	protected function saveForm()
 	{
 		$personTypeId = $this->arParams['PERSON_TYPE_ID'];
@@ -864,12 +818,11 @@ class CCrmConfigOrderProps extends \CBitrixComponent
 			$this->errors = array_merge($this->errors, $result->getErrorMessages());
 		}
 
-		$assignedById = explode(',', $this->request->get('ASSIGNED_BY_ID') ?: '');
-		$assignedById = is_array($assignedById) ? $assignedById : [$assignedById];
+		$assignedByList = $this->request->get('assignedBy') ?? [];
 		$assignedWorkTime = $this->request->get('ASSIGNED_WORK_TIME') === 'Y';
 
 		$responsibleQueue = new ResponsibleQueue($personTypeId);
-		$responsibleQueue->setList($assignedById, $assignedWorkTime);
+		$responsibleQueue->setList($assignedByList, $assignedWorkTime);
 
 		$duplicateMode = $this->request->get('DUPLICATE_MODE');
 		FieldSynchronizer::updateDuplicateMode($personTypeId, $duplicateMode);

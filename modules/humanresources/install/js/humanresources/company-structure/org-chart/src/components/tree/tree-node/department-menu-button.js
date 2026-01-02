@@ -1,144 +1,42 @@
+import { AnalyticsSourceType } from 'humanresources.company-structure.api';
 import { EventEmitter } from 'main.core.events';
 import { RouteActionMenu } from 'humanresources.company-structure.structure-components';
-import { Main, CRM } from 'ui.icon-set.api.core';
-import { getColorCode } from 'humanresources.company-structure.utils';
+import { EntityTypes } from 'humanresources.company-structure.utils';
 import 'ui.icon-set.main';
-import { events } from '../../../events';
-import { PermissionActions, PermissionChecker } from 'humanresources.company-structure.permission-checker';
+import { events } from '../../../consts';
+import { EntityActionMenu } from '../../menu/menu/entity-action-menu';
 
-export const MenuActions = Object.freeze({
-	editDepartment: 'editDepartment',
-	addDepartment: 'addDepartment',
-	editEmployee: 'editEmployee',
-	moveEmployee: 'moveEmployee',
-	addEmployee: 'addEmployee',
-	userInvite: 'userInvite',
-	removeDepartment: 'removeDepartment',
-});
-
+// @vue/component
 export const DepartmentMenuButton = {
 	name: 'DepartmentMenuButton',
-	emits: ['addDepartment', 'editDepartment', 'moveEmployee', 'addEmployee', 'removeDepartment', 'editEmployee', 'userInvite'],
-
-	props: {
-		departmentId: {
-			type: Number,
-			required: true,
-		},
-	},
 
 	components: {
 		RouteActionMenu,
 	},
 
-	created(): void
-	{
-		this.menuItems = [];
-		this.permissionChecker = PermissionChecker.getInstance();
-
-		if (!this.permissionChecker)
-		{
-			return;
-		}
-
-		this.menuItems = [
-			{
-				id: MenuActions.editDepartment,
-				title: this.loc('HUMANRESOURCES_COMPANY_STRUCTURE_DEPARTMENT_DETAIL_EDIT_MENU_EDIT_DEPARTMENT_TITLE'),
-				description: this.loc('HUMANRESOURCES_COMPANY_STRUCTURE_DEPARTMENT_DETAIL_EDIT_MENU_EDIT_DEPARTMENT_SUBTITLE'),
-				bIcon: {
-					name: Main.EDIT_PENCIL,
-					size: 20,
-					color: getColorCode('paletteBlue50'),
-				},
-				permission: { action: PermissionActions.departmentEdit },
-			},
-			{
-				id: MenuActions.addDepartment,
-				title: this.loc('HUMANRESOURCES_COMPANY_STRUCTURE_DEPARTMENT_DETAIL_EDIT_MENU_ADD_DEPARTMENT_TITLE'),
-				description: this.loc('HUMANRESOURCES_COMPANY_STRUCTURE_DEPARTMENT_DETAIL_EDIT_MENU_ADD_DEPARTMENT_SUBTITLE'),
-				bIcon: {
-					name: Main.CUBE_PLUS,
-					size: 20,
-					color: getColorCode('paletteBlue50'),
-				},
-				permission: { action: PermissionActions.departmentCreate },
-			},
-			{
-				id: MenuActions.editEmployee,
-				title: this.loc('HUMANRESOURCES_COMPANY_STRUCTURE_DEPARTMENT_DETAIL_EDIT_MENU_EDIT_EMPLOYEE_LIST_TITLE'),
-				description: this.loc('HUMANRESOURCES_COMPANY_STRUCTURE_DEPARTMENT_DETAIL_EDIT_MENU_EDIT_EMPLOYEE_LIST_SUBTITLE'),
-				imageClass: '-hr-department-org-chart-menu-edit-list',
-				bIcon: {
-					name: Main.EDIT_MENU,
-					size: 20,
-					color: getColorCode('paletteBlue50'),
-				},
-				permission: { action: PermissionActions.employeeAddToDepartment },
-			},
-			{
-				id: MenuActions.moveEmployee,
-				title: this.loc('HUMANRESOURCES_COMPANY_STRUCTURE_DEPARTMENT_DETAIL_EDIT_MENU_MOVE_EMPLOYEE_TITLE'),
-				description: this.loc('HUMANRESOURCES_COMPANY_STRUCTURE_DEPARTMENT_DETAIL_EDIT_MENU_MOVE_EMPLOYEE_SUBTITLE'),
-				bIcon: {
-					name: Main.PERSON_ARROW_LEFT_1,
-					size: 20,
-					color: getColorCode('paletteBlue50'),
-				},
-				permission: { action: PermissionActions.employeeAddToDepartment },
-			},
-			{
-				id: MenuActions.userInvite,
-				title: this.loc('HUMANRESOURCES_COMPANY_STRUCTURE_DEPARTMENT_DETAIL_EDIT_MENU_USER_INVITE_TITLE'),
-				description: this.loc('HUMANRESOURCES_COMPANY_STRUCTURE_DEPARTMENT_DETAIL_EDIT_MENU_USER_INVITE_SUBTITLE'),
-				bIcon: {
-					name: Main.PERSON_LETTER,
-					size: 20,
-					color: getColorCode('paletteBlue50'),
-				},
-				permission: { action: PermissionActions.inviteToDepartment },
-			},
-			{
-				id: MenuActions.addEmployee,
-				title: this.loc('HUMANRESOURCES_COMPANY_STRUCTURE_DEPARTMENT_DETAIL_EDIT_MENU_ADD_EMPLOYEE_TITLE'),
-				description: this.loc('HUMANRESOURCES_COMPANY_STRUCTURE_DEPARTMENT_DETAIL_EDIT_MENU_ADD_EMPLOYEE_SUBTITLE'),
-				bIcon: {
-					name: CRM.PERSON_PLUS_2,
-					size: 20,
-					color: getColorCode('paletteBlue50'),
-				},
-				permission: { action: PermissionActions.employeeAddToDepartment },
-			},
-			{
-				id: MenuActions.removeDepartment,
-				title: this.loc('HUMANRESOURCES_COMPANY_STRUCTURE_DEPARTMENT_DETAIL_EDIT_MENU_REMOVE_DEPARTMENT_TITLE'),
-				description: this.loc('HUMANRESOURCES_COMPANY_STRUCTURE_DEPARTMENT_DETAIL_EDIT_MENU_REMOVE_DEPARTMENT_SUBTITLE'),
-				bIcon: {
-					name: Main.TRASH_BIN,
-					size: 20,
-					color: getColorCode('paletteRed40'),
-				},
-				permission: { action: PermissionActions.departmentDelete },
-			},
-		];
-
-		this.menuItems = this.menuItems.filter((item) => {
-			if (!item.permission)
-			{
-				return false;
-			}
-
-			return this.permissionChecker.hasPermission(item.permission.action, this.departmentId);
-		});
+	props: {
+		entityId: {
+			type: Number,
+			required: true,
+		},
+		entityType: {
+			type: String,
+			default: EntityTypes.department,
+		},
 	},
 
 	data(): Object
 	{
 		return {
-			menu: {
-				visible: false,
-			},
+			menuVisible: false,
 		};
+	},
+
+	computed: {
+		menu(): EntityActionMenu
+		{
+			return new EntityActionMenu(this.entityId, this.entityType, AnalyticsSourceType.CARD);
+		},
 	},
 
 	methods: {
@@ -148,35 +46,44 @@ export const DepartmentMenuButton = {
 		},
 		onActionMenuItemClick(actionId: string): void
 		{
-			this.$emit(actionId, actionId);
+			this.menu.onActionMenuItemClick(actionId);
 		},
 		closeMenu(): void
 		{
-			this.menu.visible = false;
-			EventEmitter.unsubscribe(events.HR_DEPARTMENT_MENU_CLOSE, this.closeMenu);
+			if (this.menuVisible)
+			{
+				this.menuVisible = false;
+				EventEmitter.unsubscribe(events.HR_DEPARTMENT_MENU_CLOSE, this.closeMenu);
+				EventEmitter.unsubscribe(events.HR_DRAG_ENTITY, this.closeMenu);
+			}
 		},
 		openMenu(): void
 		{
-			this.menu.visible = true;
-			EventEmitter.subscribe(events.HR_DEPARTMENT_MENU_CLOSE, this.closeMenu);
+			if (!this.menuVisible)
+			{
+				this.menuVisible = true;
+				EventEmitter.subscribe(events.HR_DEPARTMENT_MENU_CLOSE, this.closeMenu);
+				EventEmitter.subscribe(events.HR_DRAG_ENTITY, this.closeMenu);
+			}
 		},
 	},
 
 	template: `
 		<div
-			v-if="menuItems.length"
+			v-if="menu.items.length"
 			class="ui-icon-set --more humanresources-tree__node_department-menu-button"
-			:class="{ '--focused': this.menu.visible }"
+			:class="{ '--focused': this.menuVisible }"
 			ref="departmentMenuButton"
+			data-test-id="tree-node-more-button"
 			@click.stop="openMenu"
 		>
 		</div>
 
 		<RouteActionMenu
-			v-if="menu.visible"
-			:id="'tree-node-department-menu-' + departmentId"
+			v-if="menuVisible"
+			:id="'tree-node-department-menu-' + entityId"
 			:width="302"
-			:items="menuItems"
+			:items="menu.items"
 			:bindElement="this.$refs.departmentMenuButton"
 			@action="onActionMenuItemClick"
 			@close="closeMenu"

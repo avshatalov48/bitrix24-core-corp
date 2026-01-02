@@ -10,4 +10,5 @@ $MESS["SCP_POPUP_BUTTON_STAY"] = "Cancel";
 $MESS["SCP_POPUP_CONTENT_MSGVER_1"] = "The changes have not been saved. Are you sure you want to close the settings?";
 $MESS["SCP_SALESCENTER_CASHBOX_SUB_TITLE"] = "Cash registers";
 $MESS["SCP_SALESCENTER_OFFILINE_CASHBOX_SUB_TITLE"] = "Physical cash register";
+$MESS["SCP_SALESCENTER_OTHERS_CASHBOX_SUB_TITLE"] = "Other online cash registers";
 $MESS["SCP_SALESCENTER_TITLE"] = "Select cash register";

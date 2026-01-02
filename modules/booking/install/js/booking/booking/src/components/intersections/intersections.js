@@ -150,7 +150,7 @@ export const Intersections = {
 	computed: {
 		...mapGetters({
 			resourcesIds: `${Model.Interface}/resourcesIds`,
-			isFilterMode: `${Model.Interface}/isFilterMode`,
+			isFilterMode: `${Model.Filter}/isFilterMode`,
 			isEditingBookingMode: `${Model.Interface}/isEditingBookingMode`,
 			intersections: `${Model.Interface}/intersections`,
 			isIntersectionForAll: `${Model.Interface}/isIntersectionForAll`,

@@ -11,13 +11,10 @@ use Bitrix\Booking\Internals\Service\Journal\JournalStatus;
 use Bitrix\Booking\Internals\Service\Journal\JournalType;
 use Bitrix\Booking\Internals\Model\JournalTable;
 use Bitrix\Booking\Internals\Repository\JournalRepositoryInterface;
-use Bitrix\Main\Application;
 use Bitrix\Main\Web\Json;
 
 class JournalRepository implements JournalRepositoryInterface
 {
-	private const LOCK_KEY = 'booking.journallock';
-
 	public function append(JournalEvent $event): void
 	{
 		$result = JournalTable::add([
@@ -35,11 +32,6 @@ class JournalRepository implements JournalRepositoryInterface
 
 	public function getPending(int $limit = 50): JournalEventCollection
 	{
-		if (!Application::getConnection()->lock(self::LOCK_KEY))
-		{
-			return new JournalEventCollection(...[]);
-		}
-
 		$result = JournalTable::query()
 			->setSelect(['ID', 'ENTITY_ID', 'TYPE', 'DATA'])
 			->where('STATUS', '=', JournalStatus::Pending->value)
@@ -94,18 +86,6 @@ class JournalRepository implements JournalRepositoryInterface
 		JournalTable::updateMulti($ids, [
 			'STATUS' => JournalStatus::Processed->value,
 		]);
-
-		Application::getConnection()->unlock(self::LOCK_KEY);
-	}
-
-	public function updateStatus(int $id, JournalStatus $status, string $info): void
-	{
-		JournalTable::update($id, [
-			'STATUS' => $status->value,
-			'INFO' => $info,
-		]);
-
-		Application::getConnection()->unlock(self::LOCK_KEY);
 	}
 
 	private function mapRowToEntity(array $row): JournalEvent

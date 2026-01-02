@@ -10,6 +10,7 @@ use Bitrix\Main\ArgumentNullException;
 use Bitrix\Main\Error;
 use Bitrix\Main\Loader;
 use Bitrix\Main\Result;
+use Bitrix\Main\SystemException;
 use Bitrix\Socialnetwork\Control\Member\AbstractMemberService;
 use Bitrix\Socialnetwork\Control\Member\Command\AddCommand;
 use Bitrix\Socialnetwork\Control\Member\Command\MembersCommand;
@@ -25,6 +26,10 @@ class MemberServiceFacade
 		?int $userId = null
 	)
 	{
+		if (!Loader::includeModule('socialnetwork'))
+		{
+			throw new SystemException('The module "socialnetwork" not found');
+		}
 		$this->memberService = ServiceFactory::getInstance()->getMemberService($this->groupId);
 		$userId = (int)$userId <= 0 ? (int)CurrentUser::get()->getId() : $userId;
 		if ($userId <= 0)

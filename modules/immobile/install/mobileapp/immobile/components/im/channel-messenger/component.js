@@ -1,7 +1,5 @@
-// jn.require('im/messenger/lib/dev/action-timer');
-
 // eslint-disable-next-line no-var
-var REVISION = 19; // API revision - sync with im/lib/revision.php
+var REVISION = 21; // API revision - sync with im/lib/revision.php
 
 /* region Environment variables */
 
@@ -17,20 +15,32 @@ if (typeof window.messenger !== 'undefined' && typeof window.messenger.destructo
 	window.messenger.destructor();
 }
 
+window.messengerDebug = {};
+
 /* endregion Clearing session variables after script reload */
 
 (async () => {
-	/* global dialogList, ChatTimer, InAppNotifier, ChatUtils, reloadAllScripts */
+	/* global dialogList, reloadAllScripts */
 	/* region import */
 	const require = (ext) => jn.require(ext); // for IDE hints
 
+	/**
+	 * @description Import MessengerParams and waiting should be higher than other imports.
+	 */
+	const { MessengerParams } = require('im/messenger/lib/params');
+	await MessengerParams.waitSharedParamsInit();
+
+	const { QuickRecentLoader } = require('im/messenger/lib/quick-recent-load');
+	QuickRecentLoader.renderItemsOnViewLoaded(dialogList);
+
 	const DialogList = dialogList;
 	const { Type } = require('type');
-	const { Loc } = require('loc');
-	const { isEqual } = require('utils/object');
+	const { Loc } = require('im/messenger/loc');
+	const { isEqual, clone } = require('utils/object');
+	const { EntityReady } = require('entity-ready');
+
 	const { ChannelApplication } = require('im/messenger/core/channel');
 	const { serviceLocator } = require('im/messenger/lib/di/service-locator');
-	const { EntityReady } = require('entity-ready');
 	const { Logger } = require('im/messenger/lib/logger');
 	const {
 		AppStatus,
@@ -38,8 +48,10 @@ if (typeof window.messenger !== 'undefined' && typeof window.messenger.destructo
 		RestMethod,
 		ComponentCode,
 		NavigationTab,
-		ViewName,
+		Analytics,
 	} = require('im/messenger/const');
+
+	EntityReady.ready(`${ComponentCode.imChannelMessenger}::launched`);
 
 	const core = new ChannelApplication({
 		localStorage: {
@@ -60,7 +72,7 @@ if (typeof window.messenger !== 'undefined' && typeof window.messenger.destructo
 	const emitter = new JNEventEmitter();
 	serviceLocator.add('emitter', emitter);
 
-	const { MessengerInitService } = require('im/messenger/provider/service/messenger-init');
+	const { MessengerInitService } = require('im/messenger/provider/services/messenger-init');
 	const channelInitService = new MessengerInitService({
 		actionName: RestMethod.immobileTabChannelLoad,
 	});
@@ -74,20 +86,22 @@ if (typeof window.messenger !== 'undefined' && typeof window.messenger.destructo
 		ChannelFilePullHandler,
 	} = require('im/messenger/provider/pull/channel');
 	const { SidebarPullHandler } = require('im/messenger/provider/pull/sidebar');
-	const { SyncFillerChannel } = require('im/messenger/provider/service');
+	const { VotePullHandler } = require('im/messenger/provider/pull/vote');
+	const { SyncFillerChannel } = require('im/messenger/provider/services/sync/fillers/channel');
+	const { AnalyticsService } = require('im/messenger/provider/services/analytics');
+	const { CreateChannel } = require('im/messenger/controller/chat-composer');
 
 	const { MessengerEmitter } = require('im/messenger/lib/emitter');
 
 	const { ChannelRecent } = require('im/messenger/controller/recent/channel');
 	const { RecentView } = require('im/messenger/view/recent');
 	const { Dialog } = require('im/messenger/controller/dialog/chat');
-	const { Counters } = require('im/messenger/lib/counters');
 	const { runAction } = require('im/messenger/lib/rest');
 	const { Communication } = require('im/messenger/lib/integration/mobile/communication');
 	const { RecentSelector } = require('im/messenger/controller/search/experimental');
 	const { SmileManager } = require('im/messenger/lib/smile-manager');
-	const { MessengerParams } = require('im/messenger/lib/params');
 	const { MessengerBase } = require('im/messenger/component/messenger-base');
+	const { SidebarLazyFactory } = require('im/messenger/controller/sidebar-v2/factory');
 	/* endregion import */
 
 	class ChannelMessenger extends MessengerBase
@@ -106,19 +120,16 @@ if (typeof window.messenger !== 'undefined' && typeof window.messenger.destructo
 		 * @property {ChannelRecent} recent - recent chat list controller
 		 * @property {Dialog} dialog - chat controller
 		 * @property {DialogSelector} dialogSelector - chat search controller
-		 * @property {ChatCreator} chatCreator - chat creation dialog
 		 * @property {RestManager} restManager - collects requests to initialize the messenger into a batch and executes it
 		 */
 		constructor()
 		{
 			super();
-			this.refreshAfterErrorInterval = 10000;
-
 			this.communication = new Communication();
 
 			this.extendWatchTimerId = null;
 			this.currentTab = MessengerParams.get('FIRST_TAB_ID', NavigationTab.imMessenger);
-			EntityReady.addCondition('channel-messenger', () => this.isReady);
+			EntityReady.addCondition(`${ComponentCode.imChannelMessenger}::ready`, () => this.isReady);
 		}
 
 		initCore()
@@ -146,14 +157,6 @@ if (typeof window.messenger !== 'undefined' && typeof window.messenger.destructo
 			this.storeManager = this.core.getStoreManager();
 		}
 
-		/**
-		 * @override
-		 */
-		checkChatV2Support()
-		{
-			return true;
-		}
-
 		initRequests()
 		{
 			this.channelInitService.onInit(this.checkRevision.bind(this));
@@ -167,7 +170,6 @@ if (typeof window.messenger !== 'undefined' && typeof window.messenger.destructo
 			this.recent = new ChannelRecent({
 				view: new RecentView({
 					ui: DialogList,
-					viewName: ViewName.recent,
 				}),
 			});
 			await this.recent.init();
@@ -182,9 +184,9 @@ if (typeof window.messenger !== 'undefined' && typeof window.messenger.destructo
 		{
 			super.bindMethods();
 			this.openDialog = this.openDialog.bind(this);
-			this.getOpenDialogParams = this.getOpenDialogParams.bind(this);
 			this.openChatSearch = this.openChatSearch.bind(this);
 			this.closeChatSearch = this.closeChatSearch.bind(this);
+			this.openChatCreate = this.openChatCreate.bind(this);
 			this.refresh = this.refresh.bind(this);
 
 			this.onChatDialogCounterChange = this.onChatDialogCounterChange.bind(this);
@@ -198,22 +200,9 @@ if (typeof window.messenger !== 'undefined' && typeof window.messenger.destructo
 		/**
 		 * @override
 		 */
-		subscribeMessengerEvents()
+		preloadAssets()
 		{
-			BX.addCustomEvent(EventType.messenger.getOpenDialogParams, this.getOpenDialogParams);
-			BX.addCustomEvent(EventType.messenger.showSearch, this.openChatSearch);
-			BX.addCustomEvent(EventType.messenger.hideSearch, this.closeChatSearch);
-			BX.addCustomEvent(EventType.messenger.refresh, this.refresh);
-			BX.addCustomEvent(EventType.messenger.openDialog, this.openDialog);
-		}
-
-		unsubscribeMessengerEvents()
-		{
-			BX.removeCustomEvent(EventType.messenger.openDialog, this.openDialog);
-			BX.removeCustomEvent(EventType.messenger.getOpenDialogParams, this.getOpenDialogParams);
-			BX.removeCustomEvent(EventType.messenger.showSearch, this.openChatSearch);
-			BX.removeCustomEvent(EventType.messenger.hideSearch, this.closeChatSearch);
-			BX.removeCustomEvent(EventType.messenger.refresh, this.refresh);
+			SidebarLazyFactory.preload();
 		}
 
 		/**
@@ -280,8 +269,7 @@ if (typeof window.messenger !== 'undefined' && typeof window.messenger.destructo
 					break;
 
 				default:
-					// headerTitle = Loc.getMessage('IMMOBILE_COMMON_MESSENGER_HEADER');
-					headerTitle = MessengerParams.getMessengerTitle();
+					headerTitle = Loc.getMessage('IMMOBILE_MESSENGER_COMMON_TITLE');
 					useProgress = false;
 					break;
 			}
@@ -306,10 +294,12 @@ if (typeof window.messenger !== 'undefined' && typeof window.messenger.destructo
 		 */
 		initPullHandlers()
 		{
+			super.initPullHandlers();
 			BX.PULL.subscribe(new ChannelFilePullHandler());
 			BX.PULL.subscribe(new ChannelMessagePullHandler());
 			BX.PULL.subscribe(new ChannelDialogPullHandler());
 			BX.PULL.subscribe(new SidebarPullHandler());
+			BX.PULL.subscribe(new VotePullHandler());
 		}
 
 		/**
@@ -345,7 +335,7 @@ if (typeof window.messenger !== 'undefined' && typeof window.messenger.destructo
 					MessengerEmitter.emit(EventType.dialog.external.disableScrollToBottom);
 				}
 
-				this.refresh()
+				void this.refresh({ shortMode: true })
 					.finally(() => {
 						MessengerEmitter.emit(EventType.dialog.external.scrollToFirstUnread);
 					})
@@ -354,10 +344,16 @@ if (typeof window.messenger !== 'undefined' && typeof window.messenger.destructo
 		}
 
 		/**
+		 * @param {object} params
+		 * @param {boolean} params.shortMode
 		 * @override
 		 */
-		async refresh()
+		async refresh(params = {})
 		{
+			await EntityReady.wait('im.navigation');
+
+			const { shortMode = false } = params;
+
 			await this.core.setAppStatus(AppStatus.connection, true);
 			this.smileManager = SmileManager.getInstance();
 			await SmileManager.init();
@@ -370,7 +366,7 @@ if (typeof window.messenger !== 'undefined' && typeof window.messenger.destructo
 
 			await this.queueCallBatch();
 
-			return this.channelInitService.runAction(this.getBaseInitRestMethods())
+			return this.channelInitService.runAction(this.getInitRestMethods(shortMode))
 				.then(() => {
 					this.afterRefresh();
 				})
@@ -443,9 +439,9 @@ if (typeof window.messenger !== 'undefined' && typeof window.messenger.destructo
 		{
 			await this.core.setAppStatus(AppStatus.connection, false);
 			this.refreshErrorNoticeFlag = false;
-			ChatTimer.stop('recent', 'error', true);
+			this.notifyRefreshErrorWorker.stop();
 
-			Counters.update();
+			serviceLocator.get('tab-counters').update();
 
 			return this.ready();
 		}
@@ -471,17 +467,7 @@ if (typeof window.messenger !== 'undefined' && typeof window.messenger.destructo
 			this.refreshTimeout = setTimeout(() => {
 				if (!this.refreshErrorNoticeFlag && !Application.isBackground())
 				{
-					const notifyRefreshError = () => {
-						this.refreshErrorNoticeFlag = true;
-
-						InAppNotifier.showNotification({
-							message: Loc.getMessage('IMMOBILE_COMMON_MESSENGER_REFRESH_ERROR'),
-							backgroundColor: '#E6000000',
-							time: this.refreshAfterErrorInterval / 1000 - 2,
-						});
-					};
-
-					ChatTimer.start('recent', 'error', 2000, notifyRefreshError);
+					this.notifyRefreshErrorWorker.startOnce();
 				}
 
 				Logger.warn('ChannelMessenger.refresh after error');
@@ -497,7 +483,7 @@ if (typeof window.messenger !== 'undefined' && typeof window.messenger.destructo
 			if (this.isFirstLoad)
 			{
 				Logger.warn('ChannelMessenger.ready');
-				EntityReady.ready('channel-messenger');
+				EntityReady.ready(`${ComponentCode.imChannelMessenger}::ready`);
 			}
 
 			this.isFirstLoad = false;
@@ -526,7 +512,10 @@ if (typeof window.messenger !== 'undefined' && typeof window.messenger.destructo
 			}
 
 			PageManager.getNavigator().makeTabActive();
-			this.visibilityManager.checkIsDialogVisible({ dialogId: openDialogOptions.dialogId })
+			this.visibilityManager.checkIsDialogVisible({
+				dialogId: openDialogOptions.dialogId,
+				currentContextOnly: true,
+			})
 				.then((isVisible) => {
 					if (isVisible)
 					{
@@ -537,6 +526,15 @@ if (typeof window.messenger !== 'undefined' && typeof window.messenger.destructo
 					this.dialog.open(openDialogOptions);
 
 					this.recent.view.renderChatCreateButton();
+
+					if (openDialogOptions.backToMessenegerTab)
+					{
+						MessengerEmitter.emit(
+							EventType.navigation.changeTab,
+							ComponentCode.imMessenger,
+							ComponentCode.imNavigation,
+						);
+					}
 				})
 				.catch((error) => {
 					Logger.error(error);
@@ -558,17 +556,23 @@ if (typeof window.messenger !== 'undefined' && typeof window.messenger.destructo
 			this.searchSelector.close();
 		}
 
+		openChatCreate()
+		{
+			Logger.log(`${this.constructor.name}.createChat`);
+
+			const createChannel = new CreateChannel();
+			createChannel.open();
+
+			AnalyticsService.getInstance().sendStartCreation({
+				section: Analytics.Section.channelTab,
+				category: Analytics.Category.channel,
+				type: Analytics.Type.channel,
+			});
+		}
+
 		onTaskStatusSuccess(taskId, result)
 		{
 			Logger.log('ChannelMessenger.chatDialog.taskStatusSuccess', taskId, result);
-		}
-
-		getOpenDialogParams(options = {})
-		{
-			const openDialogParamsResponseEvent = `${EventType.messenger.openDialogParams}::${options.dialogId}`;
-
-			const params = Dialog.getOpenDialogParams(options);
-			BX.postComponentEvent(openDialogParamsResponseEvent, [params], ComponentCode.imChannelMessenger);
 		}
 
 		/**
@@ -586,17 +590,14 @@ if (typeof window.messenger !== 'undefined' && typeof window.messenger.destructo
 		{
 			Logger.log('ChannelMessenger.chatDialog.counterChange', event);
 
-			const recentItem = ChatUtils.objectClone(
-				this.store.getters['recentModel/getById'](event.dialogId),
-			);
-
+			const recentItem = clone(this.store.getters['recentModel/getById'](event.dialogId));
 			if (!recentItem)
 			{
 				return;
 			}
 
 			recentItem.counter = event.counter;
-			const dialogItem = ChatUtils.objectClone(this.store.getters['dialoguesModel/getById'](event.dialogId));
+			const dialogItem = clone(this.store.getters['dialoguesModel/getById'](event.dialogId));
 			if (dialogItem)
 			{
 				this.store.dispatch('dialoguesModel/update', {
@@ -651,7 +652,7 @@ if (typeof window.messenger !== 'undefined' && typeof window.messenger.destructo
 				revision,
 			);
 
-			reloadAllScripts();
+			// reloadAllScripts();
 
 			return false;
 		}

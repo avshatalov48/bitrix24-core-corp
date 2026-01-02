@@ -15,6 +15,7 @@ class UpdateBookingCommand extends AbstractCommand
 	public function __construct(
 		public readonly int $updatedBy,
 		public readonly Entity\Booking\Booking $booking,
+		public readonly bool $allowOverbooking = false,
 	)
 	{
 
@@ -25,6 +26,7 @@ class UpdateBookingCommand extends AbstractCommand
 		return [
 			'booking' => $this->booking->toArray(),
 			'updatedBy' => $this->updatedBy,
+			'allowOverbooking' => $this->allowOverbooking,
 		];
 	}
 
@@ -33,6 +35,7 @@ class UpdateBookingCommand extends AbstractCommand
 		return new self(
 			updatedBy: $props['updatedBy'],
 			booking: Entity\Booking\Booking::mapFromArray($props['booking']),
+			allowOverbooking: isset($props['allowOverbooking']) && $props['allowOverbooking'],
 		);
 	}
 

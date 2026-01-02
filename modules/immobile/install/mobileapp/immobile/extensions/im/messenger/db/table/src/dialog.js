@@ -10,17 +10,22 @@ jn.define('im/messenger/db/table/dialog', (require, exports, module) => {
 		FieldType,
 		FieldDefaultValue,
 	} = require('im/messenger/db/table/table');
-	const { LoggerManager } = require('im/messenger/lib/logger');
-	const logger = LoggerManager.getInstance().getLogger('database-table--dialog');
+	const { getLogger } = require('im/messenger/lib/logger');
+	const logger = getLogger('database-table--dialog');
 
 	/**
 	 * @extends {Table<DialogStoredData>}
 	 */
 	class DialogTable extends Table
 	{
-		getName()
+		static getTableName()
 		{
 			return 'b_im_dialog';
+		}
+
+		getName()
+		{
+			return DialogTable.getTableName();
 		}
 
 		getPrimaryKey()
@@ -59,7 +64,38 @@ jn.define('im/messenger/db/table/dialog', (require, exports, module) => {
 				{ name: 'aiProvider', type: FieldType.text },
 				{ name: 'role', type: FieldType.text, defaultValue: FieldDefaultValue.noneText },
 				{ name: 'permissions', type: FieldType.json },
+				{ name: 'optionalParams', type: FieldType.json, deprecated: true, replacement: ['textFieldEnabled', 'backgroundId'], defaultValue: FieldDefaultValue.emptyObject },
+				{ name: 'textFieldEnabled', type: FieldType.boolean, defaultValue: FieldDefaultValue.trueBoolean },
+				{ name: 'backgroundId', type: FieldType.text, defaultValue: FieldDefaultValue.emptyText },
+				{ name: 'containsCollaber', type: FieldType.boolean, defaultValue: FieldDefaultValue.falseBoolean },
+				{ name: 'entityLink', type: FieldType.object, defaultValue: FieldDefaultValue.emptyObject },
 			];
+		}
+
+		async getById(dialogId)
+		{
+			if (!this.isSupported || !Feature.isLocalStorageEnabled)
+			{
+				return null;
+			}
+
+			const result = await this.getList({
+				filter: {
+					dialogId,
+				},
+			});
+
+			if (Type.isArrayFilled(result.items))
+			{
+				if (result.items.length > 1)
+				{
+					logger.error(`${this.constructor.table}.getById: duplicate dialog in table`, dialogId, result);
+				}
+
+				return result.items[0];
+			}
+
+			return null;
 		}
 
 		/**

@@ -3,6 +3,7 @@
 namespace Bitrix\ImBot\Bot;
 
 use Bitrix\ImBot\DialogSession;
+use Bitrix\ImBot\Model\NetworkSessionTable;
 use Bitrix\Main;
 use Bitrix\Main\Loader;
 use Bitrix\Main\Config\Option;
@@ -32,6 +33,8 @@ class Support24 extends Network implements MenuBot, SupportBot, SupportQuestion
 		COMMAND_ACTIVATE_PARTNER = 'activatePartnerSupport',
 		COMMAND_DEACTIVATE_PARTNER = 'deactivatePartnerSupport',
 		COMMAND_DECLINE_PARTNER_REQUEST = 'declinePartnerRequest',
+
+		COMMAND_SEND_SYSTEM_NOTIFY = 'clientSystemNotifier',
 
 		SUPPORT_TIME_UNLIMITED = -1,
 		SUPPORT_TIME_NONE = 0,
@@ -78,8 +81,17 @@ class Support24 extends Network implements MenuBot, SupportBot, SupportQuestion
 		OPTION_BOT_FREE_MENU_STAGE = 'support24_free_menu_stage',
 		OPTION_BOT_PAID_MENU_STAGE = 'support24_paid_menu_stage',
 		OPTION_BOT_FREE_MESSAGES = 'support24_free_messages',
-		OPTION_BOT_PAID_MESSAGES = 'support24_paid_messages'
+		OPTION_BOT_PAID_MESSAGES = 'support24_paid_messages',
+		OPTION_BOT_TEMP_CURRENT_CODE = 'temp_current_code',
+		OPTION_BOT_SEND_MESSAGE_CHANGE_LICENCE = 'licence_change_message_sent'
 	;
+
+	public const
+		SUPPORT24_ROLE_ADMIN ='admin',
+		SUPPORT24_ROLE_INTEGRATOR ='integrator',
+		SUPPORT24_ROLE_USER ='user'
+	;
+
 
 	//region Register
 
@@ -331,6 +343,56 @@ class Support24 extends Network implements MenuBot, SupportBot, SupportQuestion
 						}
 					}
 
+					if ($isSupportLevelChanged)
+					{
+						$alreadySent = Option::get(self::MODULE_ID, self::OPTION_BOT_SEND_MESSAGE_CHANGE_LICENCE, 'N');
+					}
+
+					$hasActiveSessions = NetworkSessionTable::getList([
+						'filter' => [
+							'=BOT_ID' => self::getBotId(),
+							'=STATUS' => Network::MULTIDIALOG_STATUS_OPEN,
+						],
+						'limit' => 1,
+					])->fetch();
+
+					if (
+						$isSupportLevelChanged
+						&& $hasActiveSessions
+						&& $alreadySent !== 'Y'
+					)
+					{
+						$http = self::instanceHttpClient();
+						$http->query(
+							self::COMMAND_SEND_SYSTEM_NOTIFY,
+							[
+								'BOT_ID' => self::getBotId(),
+								'SESSION_ID' => $hasActiveSessions['SESSION_ID'],
+								'TYPE' => 'licence',
+							]
+						);
+
+						Option::set(self::MODULE_ID, self::OPTION_BOT_SEND_MESSAGE_CHANGE_LICENCE, 'Y');
+						Option::set(self::MODULE_ID, self::OPTION_BOT_TEMP_CURRENT_CODE, $currentCode);
+
+						return __METHOD__. '();';
+					}
+
+					if ($hasActiveSessions)
+					{
+						return __METHOD__ . '();';
+					}
+
+					$hasTempCode = Option::get(self::MODULE_ID, self::OPTION_BOT_TEMP_CURRENT_CODE, '');
+
+					if($hasTempCode)
+					{
+						$currentCode = Option::get(self::MODULE_ID, self::OPTION_BOT_TEMP_CURRENT_CODE, '');
+						$isSupportLevelChanged = true;
+						Option::delete(self::MODULE_ID, ["name" => self::OPTION_BOT_SEND_MESSAGE_CHANGE_LICENCE]);
+						Option::delete(self::MODULE_ID, ["name" => self::OPTION_BOT_TEMP_CURRENT_CODE]);
+					}
+
 					if ($isSupportLevelChanged || $isLineCodeChanged)
 					{
 						(new DialogSession)->clearSessions(['BOT_ID' => self::getBotId()]);
@@ -358,7 +420,6 @@ class Support24 extends Network implements MenuBot, SupportBot, SupportQuestion
 				}
 			}
 		}
-
 		return $regular ? __METHOD__. '();' : '';
 	}
 
@@ -936,7 +997,16 @@ class Support24 extends Network implements MenuBot, SupportBot, SupportQuestion
 			return true;
 		}
 
-		return false;
+		$hasActiveSessions = NetworkSessionTable::getList([
+			'filter' => [
+				'=DIALOG_ID' => $userId,
+				'=BOT_ID' => self::getBotId(),
+				'=STATUS' => Network::MULTIDIALOG_STATUS_OPEN,
+			],
+			'limit' => 1,
+		])->fetch();
+
+		return (bool)$hasActiveSessions;
 	}
 
 	/**
@@ -995,7 +1065,16 @@ class Support24 extends Network implements MenuBot, SupportBot, SupportQuestion
 			return false;
 		}
 
-		return self::isUserAdmin($userId) || self::isUserIntegrator($userId);
+		$hasActiveSessions = NetworkSessionTable::getList([
+		'filter' => [
+			'=DIALOG_ID' => $userId,
+			'=BOT_ID' => self::getBotId(),
+			'=STATUS' => Network::MULTIDIALOG_STATUS_OPEN,
+		],
+		'limit' => 1,
+		])->fetch();
+
+		return self::isUserAdmin($userId) || self::isUserIntegrator($userId) || $hasActiveSessions;
 	}
 
 	/**
@@ -1250,11 +1329,7 @@ class Support24 extends Network implements MenuBot, SupportBot, SupportQuestion
 	 */
 	protected static function checkMessageRestriction(array $messageFields): bool
 	{
-		if (
-			!self::isUserAdmin(self::getCurrentUser()->getId())
-			&& !self::isUserIntegrator(self::getCurrentUser()->getId())
-			&& !self::isActivePaidSupportForAll()
-		)
+		if (!self::isActiveSupportForUser(self::getCurrentUser()->getId()))
 		{
 			return false;
 		}
@@ -1275,6 +1350,83 @@ class Support24 extends Network implements MenuBot, SupportBot, SupportQuestion
 				$messageFields['MESSAGE_TYPE'] === \IM_MESSAGE_CHAT
 				&& $messageFields['CHAT_ENTITY_TYPE'] === self::CHAT_ENTITY_TYPE
 			);
+	}
+
+	/**
+	 * Support bot was activated.
+	 * @return bool
+	 */
+	public static function isActiveSupport(): bool
+	{
+		//todo: Add settings flags or something else.
+		return true;
+	}
+
+	/**
+	 * Allows certain user write to OL.
+	 * @param int $userId
+	 * @return bool
+	 */
+	public static function isActiveSupportForUser(int $userId): bool
+	{
+		if (
+			!self::isUserAdmin($userId)
+			&& !self::isUserIntegrator($userId)
+		)
+		{
+			$hasActiveSessions = NetworkSessionTable::getList([
+				'filter' => [
+					'=DIALOG_ID' => $userId,
+					'=BOT_ID' => self::getBotId(),
+					'=STATUS' => Network::MULTIDIALOG_STATUS_OPEN,
+				],
+				'limit' => 1,
+			])->fetch();
+
+			if ($hasActiveSessions)
+			{
+				return true;
+			}
+		}
+		return
+			self::isUserAdmin($userId)
+			|| self::isUserIntegrator($userId)
+			|| self::isActivePaidSupportForAll()
+		;
+	}
+
+	protected static function checkAndUpdateUserRole($userId)
+	{
+		$optionKey = 'user_role_' . $userId;
+
+		if (self::isUserAdmin($userId))
+		{
+			$currentRole = self::SUPPORT24_ROLE_ADMIN;
+		}
+		elseif (self::isUserIntegrator($userId))
+		{
+			$currentRole = self::SUPPORT24_ROLE_INTEGRATOR;
+		}
+		else
+		{
+			$currentRole = self::SUPPORT24_ROLE_USER;
+		}
+
+		$savedRole = Option::get(self::MODULE_ID, $optionKey, '');
+
+		if ($savedRole === null || $savedRole === '')
+		{
+			Option::set(self::MODULE_ID, $optionKey, $currentRole);
+			return ['changed' => false];
+		}
+
+		if ($currentRole !== $savedRole)
+		{
+			Option::set(self::MODULE_ID, $optionKey, $currentRole);
+			return ['changed' => true];
+		}
+
+		return ['changed' => false];
 	}
 
 	/**
@@ -1322,6 +1474,42 @@ class Support24 extends Network implements MenuBot, SupportBot, SupportQuestion
 		{
 			$dialogId = 'chat'.(int)$messageFields['CHAT_ID'];
 		}
+
+		$roleCheck = self::checkAndUpdateUserRole($fromUserId);
+
+		if ($roleCheck['changed'])
+		{
+			$botId = self::getBotId();
+			$session = null;
+
+			if ($dialogId && $botId)
+			{
+				$session = NetworkSessionTable::getList([
+					'filter' => [
+						'=DIALOG_ID' => $dialogId,
+						'=BOT_ID' => $botId,
+						'=STATUS' => Network::MULTIDIALOG_STATUS_OPEN,
+					],
+					'limit' => 1,
+				])->fetch();
+			}
+
+			if ($session && $session['SESSION_ID'] > 0)
+			{
+				$http = self::instanceHttpClient();
+				$http->query(
+					self::COMMAND_SEND_SYSTEM_NOTIFY,
+					[
+						'BOT_ID' => $botId,
+						'SESSION_ID' => $session['SESSION_ID'],
+						'TYPE' => 'rights',
+						'CURRENT_ROLE' => $roleCheck['new'],
+						'PREVIOUS_ROLE' => $roleCheck['old']
+					]
+				);
+			}
+		}
+
 
 		// check restrictions
 		if (!self::checkMembershipRestriction($messageFields))
@@ -1811,7 +1999,7 @@ class Support24 extends Network implements MenuBot, SupportBot, SupportQuestion
 			$params['DIALOG_ID'] = (string)$params['USER_ID'];
 		}
 		$sess = self::instanceDialogSession(self::getBotId(), $params['DIALOG_ID']);
-		if ($sess->getParam('GREETING_SHOWN') === 'Y')
+		if ($sess->getParam('GREETING_SHOWN') === 'Y' && $sess->getParam('SESSION_ID') !== '0')
 		{
 			return false;
 		}

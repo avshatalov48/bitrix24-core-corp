@@ -1,4 +1,6 @@
 (() => {
+	const require = (ext) => jn.require(ext);
+	const { tryJSONParse } = require('utils/object');
 
 	/**
 	 * @class KeyValueStorage
@@ -61,7 +63,7 @@
 
 		getObject (key, fallback = {})
 		{
-			let result = Object.tryJSONParse(this.storageObject.get(key));
+			let result = tryJSONParse(this.storageObject.get(key));
 			if (result == null)
 			{
 				return fallback;

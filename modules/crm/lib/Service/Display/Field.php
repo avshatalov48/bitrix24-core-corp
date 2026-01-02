@@ -9,6 +9,7 @@ use Bitrix\Crm\Service\Display\Field\CrmActivityProvider;
 use Bitrix\Crm\Service\Display\Field\CrmActivityProviderType;
 use Bitrix\Crm\Service\Display\Field\CrmCurrencyField;
 use Bitrix\Crm\Service\Display\Field\CrmField;
+use Bitrix\Crm\Service\Display\Field\CrmRepeatSaleSegmentTitleField;
 use Bitrix\Crm\Service\Display\Field\CrmStatusField;
 use Bitrix\Crm\Service\Display\Field\DateField;
 use Bitrix\Crm\Service\Display\Field\DateTimeField;
@@ -304,6 +305,11 @@ abstract class Field
 		if ($type === CrmActivityProviderType::TYPE)
 		{
 			return new CrmActivityProviderType($id);
+		}
+
+		if ($type === CrmRepeatSaleSegmentTitleField::TYPE)
+		{
+			return new CrmRepeatSaleSegmentTitleField($id);
 		}
 
 		$crmField = static::resolveCrmField($type, $id);

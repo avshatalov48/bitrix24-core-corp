@@ -45,14 +45,24 @@ final class ItemDataProvider extends DataProvider
 	{
 		$actions = [];
 
-		if ($this->userPermissions->checkDeletePermissions($this->factory->getEntityTypeId(), 0, $this->getCategoryId()))
+		$canDelete = is_null($this->getCategoryId())
+			? $this->userPermissions->entityType()->canDeleteItems($this->factory->getEntityTypeId())
+			: $this->userPermissions->entityType()->canDeleteItemsInCategory($this->factory->getEntityTypeId(), $this->getCategoryId())
+		;
+
+		if ($canDelete)
 		{
 			$actions[] = new DeleteAction($this->factory->getEntityTypeId());
 		}
 
 		if (!$this->getSettings()->isMyCompany())
 		{
-			if ($this->userPermissions->checkUpdatePermissions($this->factory->getEntityTypeId(), 0, $this->getCategoryId()))
+			$canUpdate = is_null($this->getCategoryId())
+				? $this->userPermissions->entityType()->canUpdateItems($this->factory->getEntityTypeId())
+				: $this->userPermissions->entityType()->canUpdateItemsInCategory($this->factory->getEntityTypeId(), $this->getCategoryId())
+			;
+
+			if ($canUpdate)
 			{
 				$actions[] = new EditAction(
 					$this->factory,

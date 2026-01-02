@@ -29,7 +29,7 @@ export class CallScoringResult extends Base
 		}
 	}
 
-	#open(actionData: Object): void
+	async #open(actionData: Object): void
 	{
 		if (
 			!Type.isInteger(actionData.activityId)
@@ -40,7 +40,9 @@ export class CallScoringResult extends Base
 			return;
 		}
 
-		const callQualityDlg = new CallScoringResultDialog.CallQuality({
+		await top.BX.Runtime.loadExtension('crm.ai.call');
+
+		const callQualityDlg = new top.BX.Crm.AI.Call.CallQuality({
 			activityId: actionData.activityId,
 			activityCreated: actionData.activityCreated ?? null,
 			ownerTypeId: actionData.ownerTypeId,

@@ -5,14 +5,68 @@ this.BX.Booking.Provider = this.BX.Booking.Provider || {};
 (function (exports,main_core,booking_core,booking_const,booking_lib_apiClient,booking_lib_bookingFilter) {
 	'use strict';
 
+	async function* requestNextBookingDatesGenerator(startDateTs, limitDateTs, filter, request) {
+	  const direction = startDateTs < limitDateTs ? 1 : -1;
+	  const getWithin = getWithinBuilder(3, direction, limitDateTs);
+	  let {
+	    fromDate,
+	    toDate
+	  } = getWithin(new Date(startDateTs));
+	  const isLimit = toDateTs => {
+	    return direction === 1 ? toDateTs > limitDateTs : toDateTs < limitDateTs;
+	  };
+	  while (!isLimit(fromDate.getTime())) {
+	    const data = await request({
+	      ...filter,
+	      WITHIN: {
+	        DATE_FROM: fromDate.getTime() / 1000,
+	        DATE_TO: toDate.getTime() / 1000
+	      }
+	    });
+	    const nextDates = getWithin(direction === 1 ? toDate : fromDate);
+	    fromDate = nextDates.fromDate;
+	    toDate = nextDates.toDate;
+	    if (data.foundDates.length > 0) {
+	      yield data;
+	    }
+	  }
+	}
+	function getWithinBuilder(duration, direction, limitDateTs) {
+	  let intervalDuration = duration;
+	  return function (firstDate) {
+	    intervalDuration++;
+	    const secondDate = new Date(firstDate);
+	    secondDate.setMonth(secondDate.getMonth() + (intervalDuration + 1) * direction);
+	    secondDate.setDate(0);
+	    if (direction === 1) {
+	      return {
+	        fromDate: firstDate,
+	        toDate: secondDate.getDate() > limitDateTs ? new Date(limitDateTs) : secondDate
+	      };
+	    }
+	    const fromDate = secondDate.getTime() < limitDateTs ? new Date(limitDateTs) : secondDate;
+	    const toDate = firstDate;
+	    if (toDate.getTime() === fromDate.getTime()) {
+	      toDate.setDate(toDate.getDate() + 1);
+	    }
+	    return {
+	      fromDate,
+	      toDate
+	    };
+	  };
+	}
+
 	var _filterMarksRequests = /*#__PURE__*/babelHelpers.classPrivateFieldLooseKey("filterMarksRequests");
+	var _filterBookingDatesCountRequests = /*#__PURE__*/babelHelpers.classPrivateFieldLooseKey("filterBookingDatesCountRequests");
 	var _lastFilterMarksRequest = /*#__PURE__*/babelHelpers.classPrivateFieldLooseKey("lastFilterMarksRequest");
 	var _freeMarksRequests = /*#__PURE__*/babelHelpers.classPrivateFieldLooseKey("freeMarksRequests");
 	var _lastFreeMarksRequest = /*#__PURE__*/babelHelpers.classPrivateFieldLooseKey("lastFreeMarksRequest");
 	var _counterMarksRequests = /*#__PURE__*/babelHelpers.classPrivateFieldLooseKey("counterMarksRequests");
 	var _requestLoadMarks = /*#__PURE__*/babelHelpers.classPrivateFieldLooseKey("requestLoadMarks");
 	var _requestFilterMarks = /*#__PURE__*/babelHelpers.classPrivateFieldLooseKey("requestFilterMarks");
+	var _requestNextBookingDates = /*#__PURE__*/babelHelpers.classPrivateFieldLooseKey("requestNextBookingDates");
 	var _requestCounterMarks = /*#__PURE__*/babelHelpers.classPrivateFieldLooseKey("requestCounterMarks");
+	var _requestBookingsDateCount = /*#__PURE__*/babelHelpers.classPrivateFieldLooseKey("requestBookingsDateCount");
 	var _offset = /*#__PURE__*/babelHelpers.classPrivateFieldLooseKey("offset");
 	var _timezone = /*#__PURE__*/babelHelpers.classPrivateFieldLooseKey("timezone");
 	class CalendarService {
@@ -25,8 +79,14 @@ this.BX.Booking.Provider = this.BX.Booking.Provider || {};
 	      get: _get_offset,
 	      set: void 0
 	    });
+	    Object.defineProperty(this, _requestBookingsDateCount, {
+	      value: _requestBookingsDateCount2
+	    });
 	    Object.defineProperty(this, _requestCounterMarks, {
 	      value: _requestCounterMarks2
+	    });
+	    Object.defineProperty(this, _requestNextBookingDates, {
+	      value: _requestNextBookingDates2
 	    });
 	    Object.defineProperty(this, _requestFilterMarks, {
 	      value: _requestFilterMarks2
@@ -35,6 +95,10 @@ this.BX.Booking.Provider = this.BX.Booking.Provider || {};
 	      value: _requestLoadMarks2
 	    });
 	    Object.defineProperty(this, _filterMarksRequests, {
+	      writable: true,
+	      value: {}
+	    });
+	    Object.defineProperty(this, _filterBookingDatesCountRequests, {
 	      writable: true,
 	      value: {}
 	    });
@@ -74,6 +138,10 @@ this.BX.Booking.Provider = this.BX.Booking.Provider || {};
 	  }
 	  clearFilterCache() {
 	    babelHelpers.classPrivateFieldLooseBase(this, _filterMarksRequests)[_filterMarksRequests] = {};
+	    this.clearDataCountCache();
+	  }
+	  clearDataCountCache() {
+	    babelHelpers.classPrivateFieldLooseBase(this, _filterBookingDatesCountRequests)[_filterBookingDatesCountRequests] = {};
 	  }
 	  async loadMarks(dateTs, resources) {
 	    try {
@@ -99,10 +167,10 @@ this.BX.Booking.Provider = this.BX.Booking.Provider || {};
 	      console.error('BookingService: loadMarks error', error);
 	    }
 	  }
-	  async loadFilterMarks(fields) {
+	  async loadFilterMarks(fields, inFuture = false) {
 	    try {
 	      var _babelHelpers$classPr3, _babelHelpers$classPr4;
-	      const filter = booking_lib_bookingFilter.bookingFilter.prepareFilter(fields, true);
+	      const filter = inFuture ? booking_lib_bookingFilter.bookingDateCountFilter.prepareFutureFilter(fields, true) : booking_lib_bookingFilter.bookingFilter.prepareFilter(fields, true);
 	      const key = JSON.stringify(filter);
 	      (_babelHelpers$classPr4 = (_babelHelpers$classPr3 = babelHelpers.classPrivateFieldLooseBase(this, _filterMarksRequests)[_filterMarksRequests])[key]) != null ? _babelHelpers$classPr4 : _babelHelpers$classPr3[key] = babelHelpers.classPrivateFieldLooseBase(this, _requestFilterMarks)[_requestFilterMarks](filter);
 	      babelHelpers.classPrivateFieldLooseBase(this, _lastFilterMarksRequest)[_lastFilterMarksRequest] = babelHelpers.classPrivateFieldLooseBase(this, _filterMarksRequests)[_filterMarksRequests][key];
@@ -113,7 +181,7 @@ this.BX.Booking.Provider = this.BX.Booking.Provider || {};
 	      if (babelHelpers.classPrivateFieldLooseBase(this, _filterMarksRequests)[_filterMarksRequests][key] !== babelHelpers.classPrivateFieldLooseBase(this, _lastFilterMarksRequest)[_lastFilterMarksRequest]) {
 	        return;
 	      }
-	      await Promise.all([booking_core.Core.getStore().dispatch(`${booking_const.Model.Interface}/setFilteredMarks`, foundDates), booking_core.Core.getStore().dispatch(`${booking_const.Model.Interface}/setCounterMarks`, foundDatesWithCounters)]);
+	      await Promise.all([booking_core.Core.getStore().dispatch(`${booking_const.Model.Filter}/addFilterDates`, foundDates), booking_core.Core.getStore().dispatch(`${booking_const.Model.Filter}/setFilteredMarks`, foundDates), booking_core.Core.getStore().dispatch(`${booking_const.Model.Interface}/setCounterMarks`, foundDatesWithCounters)]);
 	    } catch (error) {
 	      console.error('BookingService: loadFilterMarks error', error);
 	    }
@@ -133,6 +201,34 @@ this.BX.Booking.Provider = this.BX.Booking.Provider || {};
 	      console.error('CalendarService: loadCounterMarks error', error);
 	    }
 	  }
+	  async loadBookingsDateCount(fields, futureOnly = false) {
+	    try {
+	      var _babelHelpers$classPr7, _babelHelpers$classPr8;
+	      const filter = futureOnly ? booking_lib_bookingFilter.bookingDateCountFilter.prepareFutureOnlyFilter(fields, true) : booking_lib_bookingFilter.bookingDateCountFilter.prepareUndatedFilter(fields, true);
+	      const key = JSON.stringify(filter);
+	      (_babelHelpers$classPr8 = (_babelHelpers$classPr7 = babelHelpers.classPrivateFieldLooseBase(this, _filterBookingDatesCountRequests)[_filterBookingDatesCountRequests])[key]) != null ? _babelHelpers$classPr8 : _babelHelpers$classPr7[key] = babelHelpers.classPrivateFieldLooseBase(this, _requestBookingsDateCount)[_requestBookingsDateCount](filter);
+	      const data = await babelHelpers.classPrivateFieldLooseBase(this, _filterBookingDatesCountRequests)[_filterBookingDatesCountRequests][key];
+	      await booking_core.Core.getStore().dispatch(`${booking_const.Model.Filter}/setDatesCount`, data);
+	    } catch (error) {
+	      console.error('CalendarService: loadBookingDatesCount error', error);
+	    }
+	  }
+	  async loadNextFilterMarks(fields, startDateTs, limitDateTs) {
+	    const $store = booking_core.Core.getStore();
+	    try {
+	      const filter = booking_lib_bookingFilter.bookingFilter.prepareFilter(fields, true);
+	      $store.dispatch(`${booking_const.Model.Filter}/setFetchingNextDate`, true);
+	      const {
+	        foundDates,
+	        foundDatesWithCounters
+	      } = await babelHelpers.classPrivateFieldLooseBase(this, _requestNextBookingDates)[_requestNextBookingDates](filter, startDateTs, limitDateTs);
+	      await Promise.all([booking_core.Core.getStore().dispatch(`${booking_const.Model.Filter}/addFilterDates`, foundDates), booking_core.Core.getStore().dispatch(`${booking_const.Model.Filter}/setFilteredMarks`, foundDates), booking_core.Core.getStore().dispatch(`${booking_const.Model.Interface}/setCounterMarks`, foundDatesWithCounters)]);
+	    } catch (error) {
+	      console.error('BookingService: loadNextFilterMarks error', error);
+	    } finally {
+	      $store.dispatch(`${booking_const.Model.Filter}/setFetchingNextDate`, false);
+	    }
+	  }
 	}
 	async function _requestLoadMarks2(dateTs, resources) {
 	  const now = new Date();
@@ -140,7 +236,7 @@ this.BX.Booking.Provider = this.BX.Booking.Provider || {};
 	  const minTs = today.getTime() + babelHelpers.classPrivateFieldLooseBase(this, _offset)[_offset];
 	  const dateFromTs = Math.max(minTs, dateTs) / 1000;
 	  const dateToTs = new Date(dateTs).setMonth(new Date(dateTs).getMonth() + 1) / 1000;
-	  if (dateToTs < minTs / 1000) {
+	  if (dateToTs <= minTs / 1000) {
 	    return [];
 	  }
 	  const {
@@ -161,6 +257,18 @@ this.BX.Booking.Provider = this.BX.Booking.Provider || {};
 	    filter
 	  });
 	}
+	async function _requestNextBookingDates2(filter, startTs, limitDateTs) {
+	  const getBookingDatesGenerator = requestNextBookingDatesGenerator(startTs, limitDateTs, filter, babelHelpers.classPrivateFieldLooseBase(this, _requestFilterMarks)[_requestFilterMarks].bind(this));
+	  for await (const data of getBookingDatesGenerator) {
+	    if (data.foundDates.length > 0) {
+	      return data;
+	    }
+	  }
+	  return {
+	    foundDates: [],
+	    foundDatesWithCounters: []
+	  };
+	}
 	async function _requestCounterMarks2(dateTs) {
 	  const dateFromTs = dateTs / 1000;
 	  const dateToTs = new Date(dateTs).setMonth(new Date(dateTs).getMonth() + 1) / 1000;
@@ -175,6 +283,12 @@ this.BX.Booking.Provider = this.BX.Booking.Provider || {};
 	    }
 	  });
 	  return foundDatesWithCounters;
+	}
+	function _requestBookingsDateCount2(filter) {
+	  return new booking_lib_apiClient.ApiClient().post('Calendar.getBookingsDatesCount', {
+	    timezone: babelHelpers.classPrivateFieldLooseBase(this, _timezone)[_timezone],
+	    filter
+	  });
 	}
 	function _get_offset() {
 	  return booking_core.Core.getStore().getters[`${booking_const.Model.Interface}/offset`];

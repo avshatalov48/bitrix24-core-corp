@@ -2,7 +2,7 @@
  * @module im/messenger/controller/chat-composer/lib/view/group-chat
  */
 jn.define('im/messenger/controller/chat-composer/lib/view/group-chat', (require, exports, module) => {
-	const { Loc } = require('loc');
+	const { Loc } = require('im/messenger/loc');
 	const { Type } = require('type');
 	const { isEqual } = require('utils/object');
 	const { Color, Indent } = require('tokens');
@@ -12,9 +12,11 @@ jn.define('im/messenger/controller/chat-composer/lib/view/group-chat', (require,
 	const { BoxFooter } = require('ui-system/layout/dialog-footer');
 
 	const { DialogType } = require('im/messenger/const');
+	const { Feature } = require('im/messenger/lib/feature');
 
 	const { DialogInfo } = require('im/messenger/controller/chat-composer/lib/area/dialog-info');
 	const { SettingsPanel } = require('im/messenger/controller/chat-composer/lib/area/settings-panel');
+	const { MessagesAutoDeletePanel } = require('im/messenger/controller/chat-composer/lib/area/messages-auto-delete');
 	const { ComposerDialogType } = require('im/messenger/controller/chat-composer/lib/const');
 	const { dialogTypeAction, participantsAction, managersAction, rulesAction } = require('im/messenger/controller/chat-composer/lib/actions');
 	const { ParticipantsList } = require('im/messenger/controller/chat-composer/lib/area/participants-list');
@@ -59,6 +61,7 @@ jn.define('im/messenger/controller/chat-composer/lib/view/group-chat', (require,
 				title: props.title,
 				description: props.description,
 				inputRef: null,
+				messagesAutoDeleteDelay: 0,
 			};
 		}
 
@@ -82,11 +85,27 @@ jn.define('im/messenger/controller/chat-composer/lib/view/group-chat', (require,
 					onClick: this.onClickBox.bind(this),
 				},
 				this.renderEntityInfo(),
+				this.renderMessagesAutoDeletePanel(),
 				this.props.isCreate
 					? this.renderParticipantsList()
 					: this.renderSettingsPanel()
 				,
 			);
+		}
+
+		renderMessagesAutoDeletePanel()
+		{
+			if (
+				!this.props.isCreate
+				|| !Feature.isMessagesAutoDeleteNativeAvailable
+			)
+			{
+				return null;
+			}
+
+			return new MessagesAutoDeletePanel({
+				onChange: this.onChangeMessagesAutoDeleteDelay.bind(this),
+			});
 		}
 
 		renderCreateFooter()
@@ -365,6 +384,14 @@ jn.define('im/messenger/controller/chat-composer/lib/view/group-chat', (require,
 		onChangeAvatar(event)
 		{
 			this.props.callbacks?.onChangeAvatar(event.avatar, event.preview);
+		}
+
+		/**
+		 * @param {string} delay
+		 */
+		onChangeMessagesAutoDeleteDelay(delay)
+		{
+			this.props.callbacks?.onChangeMessagesAutoDeleteDelay(delay);
 		}
 	}
 

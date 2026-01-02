@@ -194,7 +194,6 @@ elseif($action === 'ENABLE_SONET_SUBSCRIPTION')
 }
 elseif($action === 'FIND_DUPLICATES')
 {
-	$userPermissions = CCrmPerms::GetCurrentUserPermissions();
 	$params = isset($_POST['PARAMS']) && is_array($_POST['PARAMS']) ? $_POST['PARAMS'] : [];
 	$entityTypeName = $params['ENTITY_TYPE_NAME'] ?? '';
 	if ($entityTypeName === '')
@@ -215,8 +214,14 @@ elseif($action === 'FIND_DUPLICATES')
 
 	if (
 		!(
-			CCrmContact::CheckCreatePermission($userPermissions)
-			|| CCrmContact::CheckUpdatePermission(0, $userPermissions)
+			Container::getInstance()
+				->getUserPermissions()
+				->entityType()
+				->canAddItems(CCrmOwnerType::Contact)
+			|| Container::getInstance()
+				->getUserPermissions()
+				->entityType()
+				->canUpdateItems(CCrmOwnerType::Contact)
 		)
 	)
 	{
@@ -599,7 +604,8 @@ elseif($action === 'FIND_DUPLICATES')
 
 				$isReadable = Container::getInstance()
 					->getUserPermissions()
-					->checkReadPermissions(
+					->item()
+					->canRead(
 						$entityTypeID,
 						$entityID
 					)
@@ -612,7 +618,7 @@ elseif($action === 'FIND_DUPLICATES')
 					&& CCrmCompany::isMyCompany((int)$entityID)
 				)
 				{
-					$isReadable = $userPermissions->HavePerm('CONFIG', BX_CRM_PERM_CONFIG, 'WRITE');
+					$isReadable = \Bitrix\Crm\Service\Container::getInstance()->getUserPermissions()->myCompany()->canRead();
 				}
 
 				if ($isReadable)
@@ -658,11 +664,14 @@ elseif($action === 'FIND_DUPLICATES')
 							$info['IMAGE_URL'] = $imageInfo['src'];
 						}
 
-						$isEditable = CCrmAuthorizationHelper::CheckUpdatePermission(
-							$entityTypeName,
-							$entityID,
-							$userPermissions
-						);
+						$isEditable =  Container::getInstance()
+							->getUserPermissions()
+							->item()
+							->canUpdate(
+								CCrmOwnerType::ResolveID($entityTypeName),
+								$entityID
+							)
+						;
 
 						if ($isEditable && isset($entityInfo['EDIT_URL']))
 						{

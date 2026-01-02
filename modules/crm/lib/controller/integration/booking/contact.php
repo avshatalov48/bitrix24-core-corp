@@ -25,6 +25,10 @@ class Contact extends Crm\Controller\Base
 			);
 		}
 
+		$fields['NAME'] = $fields['NAME'] ?? '';
+		$fields['SECOND_NAME'] = $fields['SECOND_NAME'] ?? '';
+		$fields['LAST_NAME'] = $fields['LAST_NAME'] ?? '';
+
 		return $fields;
 	}
 

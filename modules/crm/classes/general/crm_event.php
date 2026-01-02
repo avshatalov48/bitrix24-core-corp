@@ -8,6 +8,7 @@ use Bitrix\Crm\Service\EventHistory;
 use Bitrix\Crm\Settings\HistorySettings;
 use Bitrix\Main\Entity\ReferenceField;
 use Bitrix\Main\ORM\Query\Join;
+use Bitrix\Main\Text\Emoji;
 
 class CCrmEvent
 {
@@ -99,17 +100,18 @@ class CCrmEvent
 			unset($arFile);
 		}
 
-
-		$arFields_i = Array(
-			'ASSIGNED_BY_ID'=> (int)(isset($arFields['USER_ID']) ? intval($arFields['USER_ID']) : $this->currentUserID),
-			'CREATED_BY_ID'	=> (int)(isset($arFields['USER_ID']) ? intval($arFields['USER_ID']) : $this->currentUserID),
-			'EVENT_ID' 		=> isset($arFields['EVENT_ID'])? $arFields['EVENT_ID']: '',
-			'EVENT_NAME' 	=> $arFields['EVENT_NAME'],
-			'EVENT_TYPE' 	=> intval($arFields['EVENT_TYPE']),
-			'EVENT_TEXT_1'  => isset($arFields['EVENT_TEXT_1'])? $arFields['EVENT_TEXT_1']: '',
-			'EVENT_TEXT_2'  => isset($arFields['EVENT_TEXT_2'])? $arFields['EVENT_TEXT_2']: '',
+		$userId = (int)($arFields['USER_ID'] ?? 0);
+		$arFields_i = [
+			'ASSIGNED_BY_ID'=> $userId > 0 ? $userId : $this->currentUserID,
+			'CREATED_BY_ID' => $userId > 0 ? $userId : $this->currentUserID,
+			'EVENT_ID' => $arFields['EVENT_ID'] ?? '',
+			'EVENT_NAME' => $arFields['EVENT_NAME'],
+			'EVENT_TYPE' => (int)$arFields['EVENT_TYPE'],
+			'EVENT_TEXT_1' => Emoji::encode($arFields['EVENT_TEXT_1'] ?? ''),
+			'EVENT_TEXT_2' => Emoji::encode($arFields['EVENT_TEXT_2'] ?? ''),
 			'FILES' => null,
-		);
+		];
+
 		if (count($arFiles) > 0)
 		{
 			$arFields_i['FILES'] = serialize($arFiles);
@@ -205,24 +207,7 @@ class CCrmEvent
 		}
 		return $REL_ID; //?
 	}
-	public function RemoveRelation($RELATION_ID, $ENTITY_TYPE, $bPermCheck = true)
-	{
-		$RELATION_ID = intval($RELATION_ID);
 
-		if (!in_array($ENTITY_TYPE, Array('LEAD', 'CONTACT', 'COMPANY', 'DEAL', 'QUOTE')))
-			return false;
-
-		if ($bPermCheck)
-		{
-			$CrmPerms = new CCrmPerms($this->currentUserID);
-			if ($CrmPerms->HavePerm($ENTITY_TYPE, BX_CRM_PERM_NONE))
-				return false;
-		}
-
-		$sSql = "DELETE FROM b_crm_event_relations WHERE ID = $RELATION_ID";
-		$this->cdb->Query($sSql, 'FILE: '.__FILE__.'<br /> LINE: '.__LINE__);
-		return true;
-	}
 	public function CheckFields($arFields)
 	{
 		$aMsg = array();
@@ -381,249 +366,16 @@ class CCrmEvent
 		$lb->SetUserFields(array('FILES' => array('MULTIPLE' => 'Y')));
 		return $lb->Prepare($arOrder, $arFilter, $arGroupBy, $arNavStartParams, $arSelectFields, $arOptions);
 	}
+
+	/**
+	 * @deprecated
+	 * @see \CCrmEvent::GetListEx
+	 */
 	public static function GetList($arSort=array(), $arFilter=Array(), $nPageTop = false)
 	{
-		global $DB, $USER;
-		$currentUser = (isset($USER) && ((get_class($USER) === 'CUser') || ($USER instanceof CUser))) ? $USER : (new CUser());
-
-		$arSqlSearch = Array();
-		$strSqlSearch = "";
-
-		if (isset($arFilter['ENTITY']))
-		{
-			$ar = explode('_', $arFilter['ENTITY']);
-			$arFilter['ENTITY_TYPE'] = CUserTypeCrm::GetLongEntityType($ar[0]);
-			$arFilter['ENTITY_ID'] = intval($ar[1]);
-			unset($arFilter['ENTITY']);
-		}
-
-		// permission check
-		$strPermission = "";
-		if (!$currentUser->IsAdmin())
-		{
-			$CCrmPerms = new CCrmPerms($currentUser->GetID());
-			$arUserAttr = array();
-			$arEntity = array();
-			if (empty($arFilter['ENTITY_TYPE']))
-				$arEntity = array('LEAD', 'DEAL', 'CONTACT', 'COMPANY', 'QUOTE');
-			else if (is_array($arFilter['ENTITY_TYPE']))
-				$arEntity = $arFilter['ENTITY_TYPE'];
-			else
-				$arEntity = array($arFilter['ENTITY_TYPE']);
-
-			$arInEntity = array();
-			foreach ($arEntity as $sEntityType)
-			{
-				$arEntityAttr = $CCrmPerms->GetUserAttrForSelectEntity($sEntityType, 'READ');
-				$arUserAttr[$sEntityType] = $arEntityAttr;
-			}
-
-			if (empty($arUserAttr))
-			{
-				$CDBResult = new CDBResult();
-				$CDBResult->InitFromArray(array());
-				return $CDBResult;
-			}
-
-			$arUserPerm = array();
-			foreach ($arUserAttr as $sEntityType => $_arAttrs)
-			{
-				if (isset($_arAttrs[0]) && is_array($_arAttrs[0]) && empty($_arAttrs[0]))
-				{
-					$arInEntity[] = $sEntityType;
-					continue;
-				}
-				foreach ($_arAttrs as $_arAttr)
-				{
-					if (empty($_arAttr))
-						continue;
-					$_icnt = count($_arAttr);
-					$_idcnt = -1;
-					foreach ($_arAttr as $sAttr)
-						if ($sAttr[0] == 'D')
-							$_idcnt++;
-					if ($_icnt == 1 && ($_idcnt == 1 || $_idcnt == -1))
-						$_idcnt = 0;
-
-					$arUserPerm[] = "(P.ENTITY = '$sEntityType' AND SUM(CASE WHEN P.ATTR = '".implode("' or P.ATTR = '", $_arAttr)."' THEN 1 ELSE 0 END) = ".($_icnt - $_idcnt).')';
-				}
-			}
-
-			$arPermission = array();
-			if (!empty($arInEntity))
-				$arPermission[] = " CER.ENTITY_TYPE IN ('".implode("','", $arInEntity)."')";
-
-			if (!empty($arUserPerm))
-				$arPermission[] = "
-						EXISTS(
-							SELECT 1
-							FROM b_crm_entity_perms P
-							WHERE P.ENTITY = CER.ENTITY_TYPE AND CER.ENTITY_ID = P.ENTITY_ID
-							GROUP BY P.ENTITY, P.ENTITY_ID
-							HAVING ".implode(" \n\t\t\t\t\t\t\t\tOR ", $arUserPerm)."
-						)";
-			if (!empty($arPermission))
-				$strPermission = 'AND ('.implode(' OR ', $arPermission).')';
-		}
-
-		$sOrder = '';
-		foreach($arSort as $key => $val)
-		{
-			$ord = (mb_strtoupper($val) <> 'ASC'? 'DESC':'ASC');
-			switch(mb_strtoupper($key))
-			{
-				case 'ID':
-					$sOrder .= ', CER.ID '.$ord;
-					break;
-				case 'CREATED_BY_ID':
-					$sOrder .= ', CE.CREATED_BY_ID '.$ord;
-					break;
-				case 'EVENT_TYPE':
-					$sOrder .= ', CE.EVENT_TYPE '.$ord;
-					break;
-				case 'ENTITY_TYPE':
-					$sOrder .= ', CER.ENTITY_TYPE '.$ord;
-					break;
-				case 'ENTITY_ID':
-					$sOrder .= ', CER.ENTITY_ID '.$ord;
-					break;
-				case 'EVENT_ID':
-					$sOrder .= ', CE.EVENT_ID '.$ord;
-					break;
-				case 'DATE_CREATE':
-					$sOrder .= ', CE.DATE_CREATE '.$ord;
-					break;
-				case 'EVENT_NAME':
-					$sOrder .= ', CE.EVENT_NAME 	 '.$ord;
-					break;
-				case 'ENTITY_FIELD':
-					$sOrder .= ', CER.ENTITY_FIELD 	 '.$ord;
-					break;
-			}
-		}
-
-		if ($sOrder == '')
-			$sOrder = 'CER.ID DESC';
-
-		$strSqlOrder = ' ORDER BY '.trim($sOrder, ', ');
-
-		// where
-		$arWhereFields = array(
-			'ID' => array(
-				'TABLE_ALIAS' => 'CER',
-				'FIELD_NAME' => 'CER.ID',
-				'FIELD_TYPE' => 'int',
-				'JOIN' => false
-			),
-			'ENTITY_TYPE' => array(
-				'TABLE_ALIAS' => 'CER',
-				'FIELD_NAME' => 'CER.ENTITY_TYPE',
-				'FIELD_TYPE' => 'string',
-				'JOIN' => false
-			),
-			'EVENT_REL_ID' => array(
-				'TABLE_ALIAS' => 'CER',
-				'FIELD_NAME' => 'CER.EVENT_ID',
-				'FIELD_TYPE' => 'string',
-				'JOIN' => false
-			),
-			'EVENT_ID' => array(
-				'TABLE_ALIAS' => 'CE',
-				'FIELD_NAME' => 'CE.EVENT_ID',
-				'FIELD_TYPE' => 'string',
-				'JOIN' => false
-			),
-			'CREATED_BY_ID' => array(
-				'TABLE_ALIAS' => 'CE',
-				'FIELD_NAME' => 'CE.CREATED_BY_ID',
-				'FIELD_TYPE' => 'int',
-				'JOIN' => false
-			),
-			'ASSIGNED_BY_ID' => array(
-				'TABLE_ALIAS' => 'CER',
-				'FIELD_NAME' => 'CER.ASSIGNED_BY_ID',
-				'FIELD_TYPE' => 'int',
-				'JOIN' => false
-			),
-			'EVENT_TYPE' => array(
-				'TABLE_ALIAS' => 'CE',
-				'FIELD_NAME' => 'CE.EVENT_TYPE',
-				'FIELD_TYPE' => 'string',
-				'JOIN' => false
-			),
-			'EVENT_DESC' => array(
-				'TABLE_ALIAS' => 'CE',
-				'FIELD_NAME' => 'CE.EVENT_TEXT_1',
-				'FIELD_TYPE' => 'string',
-				'JOIN' => false
-			),
-			'ENTITY_ID' => array(
-				'TABLE_ALIAS' => 'CER',
-				'FIELD_NAME' => 'CER.ENTITY_ID',
-				'FIELD_TYPE' => 'int',
-				'JOIN' => false
-			),
-			'ENTITY_FIELD' => array(
-				'TABLE_ALIAS' => 'CER',
-				'FIELD_NAME' => 'CER.ENTITY_FIELD',
-				'FIELD_TYPE' => 'string',
-				'JOIN' => false
-			),
-			'DATE_CREATE' => array(
-				'TABLE_ALIAS' => 'CE',
-				'FIELD_NAME' => 'CE.DATE_CREATE',
-				'FIELD_TYPE' => 'datetime',
-				'JOIN' => false
-			)
-		);
-
-
-		$obQueryWhere = new CSQLWhere();
-		$obQueryWhere->SetFields($arWhereFields);
-		if (!is_array($arFilter))
-			$arFilter = array();
-		$sQueryWhereFields = $obQueryWhere->GetQuery($arFilter);
-
-		if (!empty($sQueryWhereFields))
-			$strSqlSearch .= "\n\t\t\t\tAND ($sQueryWhereFields) ";
-
-		$strSql = "
-			SELECT
-				CER.ID,
-				CER.ENTITY_TYPE,
-				CER.ENTITY_ID,
-				CER.ENTITY_FIELD,
-				".$DB->DateToCharFunction('CE.DATE_CREATE')." DATE_CREATE,
-				CER.EVENT_ID,
-				CE.EVENT_NAME,
-				CE.EVENT_TYPE,
-				CE.EVENT_TEXT_1,
-				CE.EVENT_TEXT_2,
-				CE.FILES,
-				CE.CREATED_BY_ID,
-				U.LOGIN as CREATED_BY_LOGIN,
-				U.NAME as CREATED_BY_NAME,
-				U.LAST_NAME as CREATED_BY_LAST_NAME,
-				U.SECOND_NAME as CREATED_BY_SECOND_NAME
-			FROM
-				b_crm_event_relations CER,
-				b_crm_event CE LEFT JOIN b_user U ON CE.CREATED_BY_ID = U.ID
-			WHERE
-				CER.EVENT_ID = CE.ID
-				$strSqlSearch
-				$strPermission
-				$strSqlOrder";
-
-		if ($nPageTop !== false)
-		{
-			$nPageTop = (int) $nPageTop;
-			$strSql = $DB->TopSql($strSql, $nPageTop);
-		}
-
-		$res = $DB->Query($strSql);
-		$res->SetUserFields(array('FILES' => array('MULTIPLE' => 'Y')));
-		return $res;
+		return self::GetListEx($arSort, $arFilter, false, $nPageTop ? ['nTopCount' => $nPageTop] : false);
 	}
+
 	public function DeleteByElement($entityTypeName, $entityID)
 	{
 		$entityID = (int)$entityID;

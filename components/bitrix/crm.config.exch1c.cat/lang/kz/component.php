@@ -1,0 +1,27 @@
+<?php
+$MESS["CAT_1CE_ELEMENTS_PER_STEP"] = "Бір қадамда жүктелетін элементтер саны (0-бір қадамда жүктеуді орындау)";
+$MESS["CAT_1CE_INTERVAL"] = "Секундтардағы бір қадамдық аралық (0-бір қадамда жүктеуді орындау)";
+$MESS["CAT_1C_DEACTIVATE"] = "өшіру";
+$MESS["CAT_1C_DELETE"] = "жою";
+$MESS["CAT_1C_DETAIL_HEIGHT"] = "Егжей-тегжейлі суреттің максималды рұқсат етілген биіктігі";
+$MESS["CAT_1C_DETAIL_RESIZE"] = "Толық суретті өзгерту";
+$MESS["CAT_1C_DETAIL_WIDTH"] = "Егжей-тегжейлі суреттің максималды рұқсат етілген ені";
+$MESS["CAT_1C_ELEMENT_ACTION"] = "Импорттау файлында жоқ элементтермен не істеу керек";
+$MESS["CAT_1C_FILE_SIZE_LIMIT"] = "Файлдың бір реттік жүктелетін бөлігінің өлшемі (байтпен)";
+$MESS["CAT_1C_GROUP_PERMISSIONS"] = "Пайдаланушы топтарына жүктеуге рұқсат ету";
+$MESS["CAT_1C_INTERVAL"] = "Секундтардағы бір қадамдық аралық (0-бір қадамда жүктеуді орындау)";
+$MESS["CAT_1C_NONE"] = "ештеңе";
+$MESS["CAT_1C_PICTURE"] = "Аңдатпаның суреті";
+$MESS["CAT_1C_SECTION_ACTION"] = "Импорттау файлында жоқ бөлімдермен не істеу керек";
+$MESS["CAT_1C_USE_CRC"] = "Каталогты жаңартуды оңтайландыру үшін элементтердің бақылау сомаларын пайдалану";
+$MESS["CRM_CATALOG_XML_ID"] = "Бөлісуге арналған каталог идентификаторы";
+$MESS["CRM_EXCH1C_LIST"] = "\"1С:Кәсіпорынмен\" интеграция";
+$MESS["CRM_MODULE_NOT_INSTALLED"] = "Crm модулі орнатылмаған.";
+$MESS["CRM_MODULE_NOT_INSTALLED_CATALOG"] = "Catalog модулі орнатылмаған.";
+$MESS["CRM_MODULE_NOT_INSTALLED_CURRENCY"] = "Currency модулі орнатылмаған.";
+$MESS["CRM_MODULE_NOT_INSTALLED_IBLOCK"] = "iblock модулі орнатылмаған.";
+$MESS["CRM_MODULE_NOT_INSTALLED_SALE"] = "Sale модулі орнатылмаған.";
+$MESS["CRM_PERMISSION_DENIED"] = "Қолжетімділікке тыйым салынған";
+$MESS["CRM_SELECTED_CATALOG_GROUP_ID"] = "CRM-де қолданылатын баға түрі";
+$MESS["CRM_TAB_CATALOG_EXPORT"] = "Тауарлар - экспорт";
+$MESS["CRM_TAB_CATALOG_IMPORT"] = "Тауарлар - импорт";

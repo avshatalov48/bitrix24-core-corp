@@ -61,7 +61,7 @@ final class SetCategoryChildAction extends GroupChildAction
 		$permissions = Container::getInstance()->getUserPermissions();
 		foreach ($this->factory->getCategories() as $category)
 		{
-			if ($permissions->checkAddPermissions($this->factory->getEntityTypeId(), $category->getId()))
+			if ($permissions->entityType()->canAddItemsInCategory($this->factory->getEntityTypeId(), $category->getId()))
 			{
 				$categoriesList[] = [
 					'NAME' => $category->getName(),

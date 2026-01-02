@@ -4,8 +4,8 @@ if (!defined("B_PROLOG_INCLUDED") || B_PROLOG_INCLUDED !== true)
 	die();
 }
 \Bitrix\Main\UI\Extension::load([
-	'intranet_theme_picker',
-	'loader'
+	'intranet.theme-picker.dialog',
+	'loader',
 ]);
 
 /**
@@ -53,11 +53,12 @@ if ($arParams['SHOW_LOADER'] !== 'N')
 			if (sideSlider && data.eventName === 'themeChanging')
 			{
 				BX.Intranet.Bitrix24.ThemePicker.Singleton.showDialog(false);
+				const ThemePickerDialog = new BX.Intranet.ThemePickerDialog(BX.Intranet.Bitrix24.ThemePicker.Singleton);
 
 				if (data.themeId)
 				{
 					const selectTheme = (attempt) => {
-						const container = BX.Intranet.Bitrix24.ThemePicker.Singleton.getContentContainer();
+						const container = ThemePickerDialog.getContentContainer();
 						if (!BX.type.isDomNode(container))
 						{
 							if (attempt > 0)
@@ -70,12 +71,10 @@ if ($arParams['SHOW_LOADER'] !== 'N')
 							}
 							return;
 						}
-						const themeNode = BX.Intranet.Bitrix24.ThemePicker.Singleton
-							.getContentContainer()
-							.querySelector(`[data-theme-id="${data.themeId}"]`);
+						const themeNode = ThemePickerDialog.getContentContainer().querySelector(`[data-theme-id="${data.themeId}"]`);
 						if (themeNode)
 						{
-							BX.Intranet.Bitrix24.ThemePicker.Singleton.selectItem(themeNode);
+							ThemePickerDialog.selectItem(themeNode);
 							sideSlider.hide();
 						}
 					};
@@ -86,7 +85,7 @@ if ($arParams['SHOW_LOADER'] !== 'N')
 					sideSlider.hide();
 				}
 				BX.addCustomEvent(
-					BX.Intranet.Bitrix24.ThemePicker.Singleton.getThemeListDialog(),
+					BX.Intranet.Bitrix24.ThemePicker.Singleton.getDialogPopup(),
 					'onPopupDestroy',
 					() => {
 						sideSlider.unhide();

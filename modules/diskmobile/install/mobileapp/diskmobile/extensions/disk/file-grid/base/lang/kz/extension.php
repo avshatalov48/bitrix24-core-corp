@@ -1,0 +1,24 @@
+<?php
+$MESS["M_DISK_COLLAB_FILES_EMPTY_DESCRIPTION"] = "Мұнда чаттан, міндеттерден және коллаб күнтізбесінен файлдар пайда болады";
+$MESS["M_DISK_COLLAB_FILES_EMPTY_TITLE"] = "Мұнда коллаб файлдары болады";
+$MESS["M_DISK_COMMON_ERROR_OK"] = "Түсінікті";
+$MESS["M_DISK_COMMON_READ_MORE"] = "Толығырақ";
+$MESS["M_DISK_EMPTY_FOLDER_TITLE"] = "Бумада файлдар жоқ";
+$MESS["M_DISK_EMPTY_SEARCH_RESULT_DESCRIPTION_MSGVER_2"] = "Сұрауды өзгертіңіз немесе барлық файлдар мен бумалардың арасынан іздеп көріңіз";
+$MESS["M_DISK_EMPTY_SEARCH_RESULT_GLOBAL_DESCRIPTION"] = "Сұрауда қателер болуы мүмкін немесе файлға кіру жабық болуы мүмкін";
+$MESS["M_DISK_EMPTY_SEARCH_RESULT_GLOBAL_TITLE"] = "Мұндай файл жоқ";
+$MESS["M_DISK_EMPTY_SEARCH_RESULT_SEARCH_EVERYWHERE"] = "Барлық жерде іздеу";
+$MESS["M_DISK_EMPTY_SEARCH_RESULT_TITLE_MSGVER_2"] = "Бұл бумада файл жоқ";
+$MESS["M_DISK_FILE_GRID_TRASHCAN_TITLE"] = "Себет";
+$MESS["M_DISK_GROUP_FILES_EMPTY_DESCRIPTION_MSGVER_1"] = "Сіз қолмен жүктейтіндер";
+$MESS["M_DISK_GROUP_FILES_EMPTY_TITLE"] = "Мұнда жоба файлдары болады";
+$MESS["M_DISK_MY_FILES_EMPTY_DESCRIPTION"] = "Мұнда Битрикс24-те жұмыс істейтін файлдар пайда болады";
+$MESS["M_DISK_MY_FILES_EMPTY_TITLE"] = "Мұнда сіздің файлдарыңыз болады";
+$MESS["M_DISK_RECENT_FILES_EMPTY_DESCRIPTION"] = "Мұнда сіз жақында жұмыс істеген файлдар пайда болады";
+$MESS["M_DISK_RECENT_FILES_EMPTY_TITLE"] = "Мұнда соңғы файлдар болады";
+$MESS["M_DISK_SHARED_FILES_EMPTY_DESCRIPTION"] = "Мұнда сіз қол жеткізе алатын компанияның ортақ файлдары пайда болады";
+$MESS["M_DISK_SHARED_FILES_EMPTY_TITLE"] = "Мұнда компания файлдары болады";
+$MESS["M_DISK_STORAGE_LOAD_ERROR_TEXT"] = "Біраз уақыттан кейін қайталап көріңіз. Егер қате орын алса, Битрикс24 әкімшісіне хабарласыңыз";
+$MESS["M_DISK_STORAGE_LOAD_ERROR_TITLE"] = "Файлдарды сақтау қолжетімсіз";
+$MESS["M_DISK_UPLOAD_BUTTON_FOR_COLLABER_AHA_MOMENT"] = "Файлдарды қосыңыз және оларды коллаб қатысушыларымен \nс талқылаңыз";
+$MESS["M_DISK_UPLOAD_IS_POSSIBLE_ONLY_TO_COLLAB_DIR"] = "Файлды қосу үшін коллабтар бумасына өтіңіз";

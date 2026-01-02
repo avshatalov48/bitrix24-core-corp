@@ -18,11 +18,6 @@ jn.define('im/messenger/controller/recent/channel/recent', (require, exports, mo
 			this.lastMessageId = null;
 		}
 
-		async fillStoreFromCache()
-		{
-			return Promise.resolve();
-		}
-
 		async drawCacheItems()
 		{
 			return Promise.resolve();
@@ -115,27 +110,11 @@ jn.define('im/messenger/controller/recent/channel/recent', (require, exports, mo
 			void await this.store.dispatch('dialoguesModel/set', modelData.dialogues);
 			void await this.store.dispatch('filesModel/set', modelData.files);
 			void await this.store.dispatch('messagesModel/store', modelData.messages);
-
 			void await this.store.dispatch('recentModel/set', modelData.recent);
 
 			if (this.recentService.pageNavigation.currentPage === 1)
 			{
-				const recentIndex = [];
-				modelData.recent.forEach((item) => recentIndex.push(item.id.toString()));
-
-				const idListForDeleteFromCache = [];
-				this.store.getters['recentModel/getCollection']()
-					.forEach((item) => {
-						if (!recentIndex.includes(item.id.toString()))
-						{
-							idListForDeleteFromCache.push(item.id);
-						}
-					});
-
-				for (const id of idListForDeleteFromCache)
-				{
-					this.store.dispatch('recentModel/deleteFromModel', { id });
-				}
+				this.deleteItemsFromStore(modelData.recent);
 			}
 		}
 
@@ -168,7 +147,7 @@ jn.define('im/messenger/controller/recent/channel/recent', (require, exports, mo
 				/** @type {RecentModelState} */
 				const item = {
 					id: recentItem.dialogId,
-					pinned: recentItem.pinned,
+					pinned: false,
 					liked: false,
 					unread: recentItem.unread,
 					message: itemMessage,
@@ -182,15 +161,7 @@ jn.define('im/messenger/controller/recent/channel/recent', (require, exports, mo
 
 		onCreateChat()
 		{
-			MessengerEmitter.emit(
-				EventType.navigation.broadCastEventWithTabChange,
-				{
-					broadCastEvent: EventType.messenger.createChannel,
-					toTab: ComponentCode.imMessenger,
-					data: {},
-				},
-				ComponentCode.imNavigation,
-			);
+			MessengerEmitter.emit(EventType.messenger.createChat, {}, ComponentCode.imChannelMessenger);
 		}
 
 		/**

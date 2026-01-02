@@ -3,6 +3,7 @@
 namespace Bitrix\Call\Integration\AI\Outcome;
 
 use Bitrix\Call\Integration;
+use Bitrix\Call\Integration\AI\MentionService;
 
 /*
 {
@@ -51,7 +52,26 @@ class Summary
 				$this->isEmpty = empty($this->summary);
 			}
 		}
+	}
 
-		return $this;
+	public function toRestFormat(): array
+	{
+		$mentionService = MentionService::getInstance();
+
+		$result = [];
+		foreach ($this->summary as $row)
+		{
+			if (!empty($row->title) || !empty($row->summary))
+			{
+				$result[]  = [
+					'start' => $row->start,
+					'end' => $row->end,
+					'title' => $mentionService->replaceBbMentions($row->title),
+					'summary' => $mentionService->replaceBbMentions($row->summary),
+				];
+			}
+		}
+
+		return $result;
 	}
 }

@@ -104,7 +104,16 @@ this.BX.Intranet = this.BX.Intranet || {};
 	let _$2 = t => t,
 	  _t$2,
 	  _t2$1;
+	var _onButtonStateChange = /*#__PURE__*/babelHelpers.classPrivateFieldLooseKey("onButtonStateChange");
 	class EmailForm extends Form {
+	  constructor(options) {
+	    super(options);
+	    Object.defineProperty(this, _onButtonStateChange, {
+	      writable: true,
+	      value: void 0
+	    });
+	    babelHelpers.classPrivateFieldLooseBase(this, _onButtonStateChange)[_onButtonStateChange] = main_core.Type.isFunction(options.onButtonStateChange) ? options.onButtonStateChange : null;
+	  }
 	  getTitleRender() {
 	    return main_core.Tag.render(_t$2 || (_t$2 = _$2`<div class="intranet-reinvite-popup-title">
 			${0}
@@ -113,7 +122,7 @@ this.BX.Intranet = this.BX.Intranet || {};
 	    }));
 	  }
 	  getFieldRender() {
-	    return main_core.Tag.render(_t2$1 || (_t2$1 = _$2`
+	    const field = main_core.Tag.render(_t2$1 || (_t2$1 = _$2`
 			<div class="intranet-reinvite-popup-field-row">
 				<div class="intranet-reinvite-popup-field-label">
 					<label>${0}</label>
@@ -122,6 +131,14 @@ this.BX.Intranet = this.BX.Intranet || {};
 					<input type="text" name="newEmail" value="${0}" class="ui-ctl-element"> 
 				</div>
 			</div>`), main_core.Loc.getMessage('INTRANET_JS_EMAIL_FIELD_LABEL'), this.getValue());
+	    const input = field.querySelector('input[name="newEmail"]');
+	    if (input && babelHelpers.classPrivateFieldLooseBase(this, _onButtonStateChange)[_onButtonStateChange]) {
+	      main_core.Event.bind(input, 'input', event => {
+	        const value = event.target.value.trim();
+	        babelHelpers.classPrivateFieldLooseBase(this, _onButtonStateChange)[_onButtonStateChange](main_core.Type.isStringFilled(value));
+	      });
+	    }
+	    return field;
 	  }
 	}
 
@@ -152,11 +169,16 @@ this.BX.Intranet = this.BX.Intranet || {};
 	var _bindElement = /*#__PURE__*/babelHelpers.classPrivateFieldLooseKey("bindElement");
 	var _form = /*#__PURE__*/babelHelpers.classPrivateFieldLooseKey("form");
 	var _width = /*#__PURE__*/babelHelpers.classPrivateFieldLooseKey("width");
+	var _sendButton = /*#__PURE__*/babelHelpers.classPrivateFieldLooseKey("sendButton");
+	var _handleButtonStateChange = /*#__PURE__*/babelHelpers.classPrivateFieldLooseKey("handleButtonStateChange");
 	var _createPopup = /*#__PURE__*/babelHelpers.classPrivateFieldLooseKey("createPopup");
 	class ReinvitePopup {
 	  constructor(options) {
 	    Object.defineProperty(this, _createPopup, {
 	      value: _createPopup2
+	    });
+	    Object.defineProperty(this, _handleButtonStateChange, {
+	      value: _handleButtonStateChange2
 	    });
 	    Object.defineProperty(this, _popup, {
 	      writable: true,
@@ -190,6 +212,10 @@ this.BX.Intranet = this.BX.Intranet || {};
 	      writable: true,
 	      value: void 0
 	    });
+	    Object.defineProperty(this, _sendButton, {
+	      writable: true,
+	      value: void 0
+	    });
 	    if (options.userId <= 0) {
 	      throw new Error('Invalide "userId" parameter');
 	    }
@@ -201,7 +227,8 @@ this.BX.Intranet = this.BX.Intranet || {};
 	    babelHelpers.classPrivateFieldLooseBase(this, _form)[_form] = FormFactory.create(options.formType, {
 	      id: babelHelpers.classPrivateFieldLooseBase(this, _id$1)[_id$1],
 	      userId: babelHelpers.classPrivateFieldLooseBase(this, _userId$1)[_userId$1],
-	      inputValue: options.inputValue
+	      inputValue: options.inputValue,
+	      onButtonStateChange: babelHelpers.classPrivateFieldLooseBase(this, _handleButtonStateChange)[_handleButtonStateChange].bind(this)
 	    });
 	  }
 	  show() {
@@ -218,11 +245,17 @@ this.BX.Intranet = this.BX.Intranet || {};
 	    babelHelpers.classPrivateFieldLooseBase(this, _transport)[_transport](babelHelpers.classPrivateFieldLooseBase(this, _form)[_form].getData());
 	  }
 	}
+	function _handleButtonStateChange2(isEnabled) {
+	  if (babelHelpers.classPrivateFieldLooseBase(this, _sendButton)[_sendButton]) {
+	    babelHelpers.classPrivateFieldLooseBase(this, _sendButton)[_sendButton].setDisabled(!isEnabled);
+	  }
+	}
 	function _createPopup2(options) {
+	  var _babelHelpers$classPr;
 	  if (main_popup.PopupManager.isPopupExists(babelHelpers.classPrivateFieldLooseBase(this, _id$1)[_id$1])) {
 	    return main_popup.PopupManager.getPopupById(babelHelpers.classPrivateFieldLooseBase(this, _id$1)[_id$1]);
 	  }
-	  return new main_popup.Popup(babelHelpers.classPrivateFieldLooseBase(this, _id$1)[_id$1], babelHelpers.classPrivateFieldLooseBase(this, _bindElement)[_bindElement], {
+	  const popup = new main_popup.Popup(babelHelpers.classPrivateFieldLooseBase(this, _id$1)[_id$1], babelHelpers.classPrivateFieldLooseBase(this, _bindElement)[_bindElement], {
 	    content: babelHelpers.classPrivateFieldLooseBase(this, _form)[_form].render(),
 	    autoHide: true,
 	    angle: {
@@ -239,7 +272,7 @@ this.BX.Intranet = this.BX.Intranet || {};
 	      position: 'top'
 	    },
 	    animation: "fading-slide",
-	    buttons: [new ui_buttons.Button({
+	    buttons: [babelHelpers.classPrivateFieldLooseBase(this, _sendButton)[_sendButton] = new ui_buttons.Button({
 	      text: main_core.Loc.getMessage('INTRANET_JS_BTN_SEND'),
 	      color: ui_buttons.Button.Color.PRIMARY,
 	      round: true,
@@ -258,6 +291,9 @@ this.BX.Intranet = this.BX.Intranet || {};
 	      }
 	    })]
 	  });
+	  const inputValue = ((_babelHelpers$classPr = babelHelpers.classPrivateFieldLooseBase(this, _form)[_form].getValue()) == null ? void 0 : _babelHelpers$classPr.trim()) || '';
+	  babelHelpers.classPrivateFieldLooseBase(this, _handleButtonStateChange)[_handleButtonStateChange](inputValue !== '');
+	  return popup;
 	}
 
 	exports.ReinvitePopup = ReinvitePopup;

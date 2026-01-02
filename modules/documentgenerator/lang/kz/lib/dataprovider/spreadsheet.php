@@ -1,0 +1,2 @@
+<?php
+$MESS["DOCGEN_DATAPROVIDER_SPREADSHEET_CONTENT_TITLE"] = "Кестенің мазмұны";

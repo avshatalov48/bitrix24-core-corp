@@ -15,10 +15,13 @@ jn.define('im/messenger/lib/helper', (require, exports, module) => {
 		formatFileSize,
 		getShortFileName,
 		getFileExtension,
+		isAudioMessageFile,
 		getFileTypeByExtension,
 		getFileIconTypeByExtension,
+		getAudioRecordFormat,
 	} = require('im/messenger/lib/helper/file');
 	const { EntitySelectorHelper } = require('im/messenger/lib/helper/entity-selector');
+	const { CounterHelper } = require('im/messenger/lib/helper/counter');
 
 	module.exports = {
 		DateHelper: new DateHelper(),
@@ -28,11 +31,14 @@ jn.define('im/messenger/lib/helper', (require, exports, module) => {
 		Url,
 		Worker,
 		SoftLoader,
+		isAudioMessageFile,
 		formatFileSize,
 		getShortFileName,
 		getFileExtension,
 		getFileTypeByExtension,
 		getFileIconTypeByExtension,
+		getAudioRecordFormat,
 		EntitySelectorHelper,
+		CounterHelper,
 	};
 });

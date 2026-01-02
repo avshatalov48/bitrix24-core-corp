@@ -12,14 +12,13 @@ if (!CModule::IncludeModule('iblock'))
 	return;
 }
 
-$CrmPerms = new CCrmPerms($USER->GetID());
-if (!$CrmPerms->HavePerm('CONFIG', BX_CRM_PERM_CONFIG, 'READ'))
+if (!\Bitrix\Crm\Service\Container::getInstance()->getUserPermissions()->entityType()->canReadSomeItemsInCrm())
 {
 	ShowError(GetMessage('CRM_PERMISSION_DENIED'));
 	return;
 }
 
-$arResult['CAN_ADD'] = $arResult['CAN_EDIT'] = $arResult['CAN_DELETE'] = $CrmPerms->HavePerm('CONFIG', BX_CRM_PERM_CONFIG, 'WRITE');
+$arResult['CAN_ADD'] = $arResult['CAN_EDIT'] = $arResult['CAN_DELETE'] = \Bitrix\Crm\Service\Container::getInstance()->getUserPermissions()->isCrmAdmin();
 
 $arParams['PATH_TO_SECTION_LIST'] = CrmCheckPath('PATH_TO_SECTION_LIST', $arParams['PATH_TO_SECTION_LIST'], '?section_id=#section_id#');
 $sectionParam = isset($arParams['SECTION_ID_PARAM']) && !empty($arParams['SECTION_ID_PARAM']) ? $arParams['SECTION_ID_PARAM'] : 'section_id';

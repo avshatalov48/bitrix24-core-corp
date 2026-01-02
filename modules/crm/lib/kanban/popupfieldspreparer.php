@@ -2,6 +2,9 @@
 
 namespace Bitrix\Crm\Kanban;
 
+use Bitrix\Crm\Item;
+use CBitrixComponent;
+
 class PopupFieldsPreparer
 {
 	private const DISABLED_FIELDS_FOR_VIEW_TYPE = [
@@ -18,6 +21,8 @@ class PopupFieldsPreparer
 		'DATE_MODIFY',
 		'COMMENTS',
 		'OPPORTUNITY',
+		'LAST_COMMUNICATION_TIME',
+		Item::FIELD_NAME_REPEAT_SALE_SEGMENT_ID,
 	];
 
 	private array $fieldsSections;
@@ -28,9 +33,9 @@ class PopupFieldsPreparer
 	private ?string $additionalSectionCode = null;
 
 	public function __construct(
-		private \Bitrix\Crm\Kanban\Entity $entity,
-		private \CBitrixComponent $detailComponent,
-		private string $viewType
+		private readonly Entity $entity,
+		private readonly CBitrixComponent $detailComponent,
+		private readonly string $viewType,
 	)
 	{
 		$this->detailComponent->prepareFieldInfos();

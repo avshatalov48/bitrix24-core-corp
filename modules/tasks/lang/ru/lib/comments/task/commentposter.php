@@ -61,15 +61,12 @@ $MESS['COMMENT_POSTER_COMMENT_TASK_UPDATE_CHANGES_FIELD_GROUP_ID_V2'] = "Про�
 $MESS['COMMENT_POSTER_COMMENT_TASK_UPDATE_CHANGES_FIELD_COLLAB_ID'] = 'Коллаба задачи изменена на: #NEW_VALUE#';
 
 $MESS['COMMENT_POSTER_COMMENT_TASK_UPDATE_CHANGES_FIELD_CREATED_BY'] = "#NEW_VALUE#, вы назначены постановщиком.";
-$MESS['COMMENT_POSTER_COMMENT_TASK_UPDATE_CHANGES_FIELD_RESPONSIBLE_ID'] = "#NEW_VALUE#, вы назначены ответственным.";
 $MESS['COMMENT_POSTER_COMMENT_TASK_UPDATE_CHANGES_FIELD_ASSIGNEE'] = "#NEW_VALUE#, вы назначены исполнителем.";
 $MESS['COMMENT_POSTER_COMMENT_TASK_UPDATE_CHANGES_FIELD_ACCOMPLICES'] = "#NEW_VALUE#, вы назначены соисполнителем.";
 $MESS['COMMENT_POSTER_COMMENT_TASK_UPDATE_CHANGES_FIELD_AUDITORS'] = "#NEW_VALUE#, вы добавлены наблюдателем.";
 
 $MESS['COMMENT_POSTER_COMMENT_TASK_UPDATE_CHANGES_FIELD_DEADLINE'] = "Изменен крайний срок: #NEW_VALUE#";
 $MESS['COMMENT_POSTER_COMMENT_TASK_UPDATE_CHANGES_FIELD_DEADLINE_V2'] = "Крайний срок изменен на: #NEW_VALUE#";
-$MESS['COMMENT_POSTER_COMMENT_TASK_UPDATE_CHANGES_FIELD_START_DATE_PLAN'] = "Планируемая дата начала: #OLD_VALUE# &rarr; #NEW_VALUE#";
-$MESS['COMMENT_POSTER_COMMENT_TASK_UPDATE_CHANGES_FIELD_END_DATE_PLAN'] = "Планируемая дата завершения: #OLD_VALUE# &rarr; #NEW_VALUE#";
 $MESS['COMMENT_POSTER_COMMENT_TASK_UPDATE_CHANGES_FIELD_TIME_ESTIMATE'] = "Время на выполнение задачи: #OLD_VALUE# &rarr; #NEW_VALUE#";
 
 $MESS['COMMENT_POSTER_COMMENT_TASK_UPDATE_CHANGES_FIELD_TASK_CONTROL'] = "Задача потребует контроля постановщика после завершения: #NEW_VALUE#";
@@ -78,7 +75,6 @@ $MESS['COMMENT_POSTER_COMMENT_TASK_UPDATE_CHANGES_FIELD_TASK_CONTROL_N'] = "Не
 $MESS['COMMENT_POSTER_COMMENT_TASK_UPDATE_CHANGES_FIELD_ALLOW_TIME_TRACKING'] = "Учет затраченного времени: #NEW_VALUE#";
 $MESS['COMMENT_POSTER_COMMENT_TASK_UPDATE_CHANGES_FIELD_ALLOW_TIME_TRACKING_Y'] = "Включен";
 $MESS['COMMENT_POSTER_COMMENT_TASK_UPDATE_CHANGES_FIELD_ALLOW_TIME_TRACKING_N'] = "Выключен";
-$MESS['COMMENT_POSTER_COMMENT_TASK_UPDATE_CHANGES_FIELD_ALLOW_CHANGE_DEADLINE'] = "Ответственный может изменять сроки задачи: #NEW_VALUE#";
 $MESS['COMMENT_POSTER_COMMENT_TASK_UPDATE_CHANGES_FIELD_ALLOW_CHANGE_DEADLINE_V2'] = 'Исполнитель может изменять сроки задачи: #NEW_VALUE#';
 $MESS['COMMENT_POSTER_COMMENT_TASK_UPDATE_CHANGES_FIELD_ALLOW_CHANGE_DEADLINE_Y'] = "Да";
 $MESS['COMMENT_POSTER_COMMENT_TASK_UPDATE_CHANGES_FIELD_ALLOW_CHANGE_DEADLINE_N'] = "Нет";
@@ -104,3 +100,8 @@ $MESS['COMMENT_POSTER_COMMENT_TASK_UPDATE_CHANGES_FIELD_VALUE_NOT_PRESENT_SINGLE
 $MESS['COMMENT_POSTER_COMMENT_TASK_ADD_TO_FLOW_WITH_MANUAL_DISTRIBUTION'] = "#RESPONSIBLE#, назначьте #TASK_CHANGE_RESPONSIBLE_START#сотрудника#TASK_CHANGE_RESPONSIBLE_END#, который будет выполнять эту задачу.";
 $MESS['COMMENT_POSTER_COMMENT_TASK_ADD_TO_FLOW_WITH_HIMSELF_DISTRIBUTION'] = "#RESPONSIBLE_LIST#, возьмите задачу в работу.";
 $MESS['COMMENT_POSTER_COMMENT_TASK_ADD_TO_FLOW_WITH_HIMSELF_DISTRIBUTION_WITH_MORE'] = "#RESPONSIBLE_LIST# и #SHOW_FLOW_ATTENDEES_START# ещё #COUNT_USERS##SHOW_FLOW_ATTENDEES_END#, возьмите задачу в работу";
+
+$MESS['COMMENT_POSTER_ONBOARDING_COMMENT_RESPONSIBLE_INVITATION_NOT_ACCEPTED_ONE_DAY_V2'] = '#CREATED_BY#, исполнитель пока не принял приглашение в ваш Битрикс24. Напомните ему о приглашении — это поможет быстрее завершить задачу и не терять время';
+$MESS['COMMENT_POSTER_ONBOARDING_COMMENT_RESPONSIBLE_INVITATION_ACCEPTED_V2'] = "#RESPONSIBLE_ID#, задача ждёт вашего внимания.\n#CREATED_BY#, исполнитель присоединился к Битрикс24, напомните ему о задаче, чтобы уложиться в сроки";
+$MESS['COMMENT_POSTER_ONBOARDING_COMMENT_INVITED_RESPONSIBLE_NOT_VIEW_TASK_TWO_DAYS_V2'] = "#RESPONSIBLE_ID#, задача ждёт выполнения.\n#CREATED_BY#, исполнитель пока не открыл её — напомните ему о задаче, чтобы уложиться в сроки";
+

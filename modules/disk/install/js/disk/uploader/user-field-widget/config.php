@@ -1,16 +1,24 @@
 <?php
 
+use Bitrix\Disk\Document\Contract\FileCreatable;
 use Bitrix\Disk\Document\Flipchart\Configuration;
 use Bitrix\Disk\Document\LocalDocumentController;
+use Bitrix\Disk\Driver;
 use Bitrix\Disk\Integration\Bitrix24Manager;
+use Bitrix\Main\Loader;
 
 if (!defined('B_PROLOG_INCLUDED') || B_PROLOG_INCLUDED !== true)
 {
-	die();
+	die;
+}
+
+if (!Loader::includeModule('disk'))
+{
+	return [];
 }
 
 $importHandlers = [];
-$handlersManager = \Bitrix\Disk\Driver::getInstance()->getDocumentHandlersManager();
+$handlersManager = Driver::getInstance()->getDocumentHandlersManager();
 foreach ($handlersManager->getHandlersForImport() as $handler)
 {
 	$importHandlers[$handler::getCode()] = [
@@ -25,11 +33,12 @@ if ($canCreateDocuments)
 {
 	foreach ($handlersManager->getHandlers() as $handler)
 	{
-		if ($handler instanceof \Bitrix\Disk\Document\Contract\FileCreatable)
+		if ($handler instanceof FileCreatable)
 		{
 			$documentHandlers[$handler::getCode()] = [
 				'code' => $handler::getCode(),
 				'name' => $handler::getName(),
+				'supportsUnifiedLink' => $handler->supportsUnifiedLink(),
 			];
 		}
 	}
@@ -37,6 +46,7 @@ if ($canCreateDocuments)
 	$documentHandlers[LocalDocumentController::getCode()] = [
 		'code' => LocalDocumentController::getCode(),
 		'name' => LocalDocumentController::getName(),
+		'supportsUnifiedLink' => false,
 	];
 }
 
@@ -48,16 +58,19 @@ return [
 	'js' => 'dist/disk.uploader.uf-file.bundle.js',
 	'css' => 'dist/disk.uploader.uf-file.bundle.css',
 	'rel' => [
-		'main.core',
-		'ui.design-tokens',
 		'ui.uploader.vue',
 		'ui.uploader.tile-widget',
-		'main.popup',
+		'main.core.events',
+		'ui.buttons',
 		'ui.info-helper',
-
-		// it would be better to load these extensions on demand
 		'disk.document',
-		'disk.viewer.actions',
+		'ui.vue3.components.rich-loc',
+		'main.core',
+		'ui.system.menu',
+		'ui.uploader.core',
+		'ui.icons.generator',
+		'ui.icon-set.api.core',
+		'ui.icon-set.outline',
 	],
 	'skip_core' => false,
 	'settings' => [

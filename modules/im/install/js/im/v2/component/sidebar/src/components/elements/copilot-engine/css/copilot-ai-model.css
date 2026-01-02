@@ -1,0 +1,27 @@
+.bx-im-sidebar-copilot-ai-model__container {
+	--im-sidebar-main-preview-settings__color_copilot-chip_text: var(--im-color-palette-copilot-primary);
+	--im-sidebar-main-preview-settings__color_copilot-chip_border: var(--im-color-palette-copilot-light);
+
+	display: flex;
+	width: fit-content;
+	justify-content: space-between;
+	align-items: center;
+	height: 20px;
+	cursor: pointer;
+	font: var(--im-font-size-xs)/var(--im-font-line-height-2xs) var(--im-font-family-system);
+	font-weight: var(--im-font-weight-normal);
+	color: var(--im-sidebar-main-preview-settings__color_copilot-chip_text);
+	border: var(--ui-border-width-thin) solid var(--im-sidebar-main-preview-settings__color_copilot-chip_border);
+	border-radius: var(--im-border-radius-xs);
+	padding: 2px 4px 2px 10px;
+	margin-left: 30px;
+}
+
+.bx-im-sidebar-copilot-ai-model__title {
+	margin: auto;
+}
+.bx-im-sidebar-copilot-ai-model__arrow-icon {
+	width: 16px;
+	height: 16px;
+	background: url("./images/arrow.svg") no-repeat center;
+}

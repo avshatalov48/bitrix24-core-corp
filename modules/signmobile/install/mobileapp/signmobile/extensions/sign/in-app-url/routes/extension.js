@@ -3,6 +3,7 @@
  */
 jn.define('sign/in-app-url/routes', (require, exports, module) => {
 	const { SignOpener } = require('sign/opener');
+	const { Entry } = require('sign/entry');
 
 	/**
 	 * @param {InAppUrl} inAppUrl
@@ -10,6 +11,9 @@ jn.define('sign/in-app-url/routes', (require, exports, module) => {
 	module.exports = (inAppUrl) => {
 		inAppUrl.register('/sign/link/member/:memberId/', eventOpenHandler)
 			.name('sign:document:open');
+		inAppUrl.register('/sign/documents/', () => {
+			Entry.openE2bMaster();
+		});
 	};
 
 	const eventOpenHandler = ({ memberId }) => {

@@ -122,42 +122,15 @@ foreach ($bbFieldNames as $fieldName)
 	];
 }
 
-if(Main\Loader::includeModule('socialnetwork'))
+// @todo: remove?
+if (Main\Loader::includeModule('socialnetwork'))
 {
 	\CJSCore::init(array('socnetlogdest'));
 
-	$destSort = CSocNetLogDestination::GetDestinationSort(
-			array('DEST_CONTEXT' => \Bitrix\Crm\Entity\EntityEditor::getUserSelectorContext())
-	);
-	$last = array();
-	CSocNetLogDestination::fillLastDestination($destSort, $last);
-
-	$destUserIDs = array();
-	if(isset($last['USERS']))
-	{
-		foreach($last['USERS'] as $code)
-		{
-			$destUserIDs[] = str_replace('U', '', $code);
-		}
-	}
-
-	$dstUsers = CSocNetLogDestination::GetUsers(array('id' => $destUserIDs));
-	$structure = CSocNetLogDestination::GetStucture(array('LAZY_LOAD' => true));
-	$socnetGroups = CSocNetLogDestination::getSocnetGroup();
-
-	$department = $structure['department'];
-	$departmentRelation = $structure['department_relation'];
-	$departmentRelationHead = $structure['department_relation_head'];
 	?><script>
 		BX.ready(
 			function()
 			{
-				BX.UI.EntityEditorUserSelector.users =  <?=CUtil::PhpToJSObject($dstUsers)?>;
-				BX.UI.EntityEditorUserSelector.socnetGroups =  <?=CUtil::PhpToJSObject($socnetGroups)?>;
-				BX.UI.EntityEditorUserSelector.department = <?=CUtil::PhpToJSObject($department)?>;
-				BX.UI.EntityEditorUserSelector.departmentRelation = <?=CUtil::PhpToJSObject($departmentRelation)?>;
-				BX.UI.EntityEditorUserSelector.last = <?=CUtil::PhpToJSObject(array_change_key_case($last, CASE_LOWER))?>;
-
 				BX.Crm.EntityEditorCrmSelector.contacts = {};
 				BX.Crm.EntityEditorCrmSelector.contactsLast = {};
 
@@ -182,7 +155,7 @@ if(Main\Loader::includeModule('socialnetwork'))
 if($arResult['REST_USE'])
 {
 	?><span id="<?=htmlspecialcharsbx($restSectionButtonID)?>" class="crm-entity-add-app-link">
-		<?=GetMessage('CRM_ENTITY_ED_REST_SECTION_2')?>
+		<?=Crm\Integration\Market\Label::isRenamedMarket() ? GetMessage('CRM_ENTITY_ED_REST_SECTION_MSGVER_1') : GetMessage('CRM_ENTITY_ED_REST_SECTION_2')?>
 	</span><?
 }
 
@@ -457,27 +430,19 @@ if (!empty($htmlEditorConfigs))
 			{
 				newSectionTitle: "<?=GetMessageJS('CRM_ENTITY_ED_NEW_SECTION_TITLE')?>",
 				inlineEditHint: "<?=GetMessageJS('CRM_ENTITY_ED_INLINE_EDIT_HINT')?>",
-				resetConfig: "<?=GetMessageJS('CRM_ENTITY_ED_RESET_CONFIG_2')?>",
-				forceCommonConfigForAllUsers: "<?=GetMessageJS('CRM_ENTITY_ED_FORCE_COMMON_CONFIG_FOR_ALL')?>",
-				switchToPersonalConfig: "<?=GetMessageJS('CRM_ENTITY_ED_SWITCH_TO_PERSONAL_CONFIG')?>",
-				switchToCommonConfig: "<?=GetMessageJS('CRM_ENTITY_ED_SWITCH_TO_COMMON_CONFIG')?>",
 				couldNotFindEntityIdError: "<?=GetMessageJS('CRM_ENTITY_ED_COULD_NOT_FIND_ENTITY_ID')?>",
 				titleEdit: "<?=GetMessageJS('CRM_ENTITY_ED_TITLE_EDIT')?>",
 				titleEditUnsavedChanges: "<?=GetMessageJS('CRM_ENTITY_ED_TITLE_EDIT_UNSAVED_CHANGES')?>",
 				checkScope: "<?=GetMessageJS('CRM_ENTITY_ED_CHECK_SCOPE')?>",
-				createScope: "<?=GetMessageJS('CRM_ENTITY_ED_CREATE_SCOPE')?>",
-				updateScope: "<?=GetMessageJS('CRM_ENTITY_ED_UPDATE_SCOPE')?>",
+				copyPageUrl: "<?= \CUtil::JSEscape($arResult['MESSAGES']['COPY_PAGE_URL']) ?>",
+				pageUrlCopied: "<?= \CUtil::JSEscape($arResult['MESSAGES']['PAGE_URL_COPIED']) ?>",
 			};
 
 			BX.Crm.EntityEditorScopeConfig.messages =
 			{
-				createScope: "<?=GetMessageJS('CRM_ENTITY_ED_CREATE_SCOPE')?>",
-				scopeName: "<?=GetMessageJS('CRM_ENTITY_ED_CONFIG_SCOPE_NAME')?>",
 				scopeNamePlaceholder: "<?=GetMessageJS('CRM_ENTITY_ED_CONFIG_SCOPE_NAME_PLACEHOLDER')?>",
-				scopeMembers: "<?=GetMessageJS('CRM_ENTITY_ED_CONFIG_SCOPE_MEMBERS')?>",
 				scopeSave: "<?=GetMessageJS('CRM_ENTITY_ED_CONFIG_SCOPE_SAVE')?>",
 				scopeCancel: "<?=GetMessageJS('CRM_ENTITY_ED_CONFIG_SCOPE_CANCEL')?>",
-				scopeSaved: "<?=GetMessageJS('CRM_ENTITY_ED_CONFIG_SCOPE_SAVED')?>",
 			};
 
 			BX.UI.EntityUserFieldManager.messages =
@@ -948,6 +913,8 @@ if (!empty($htmlEditorConfigs))
 						enableBottomPanel: <?=$arResult['ENABLE_BOTTOM_PANEL'] ? 'true' : 'false'?>,
 						enableFieldsContextMenu: <?=$arResult['ENABLE_FIELDS_CONTEXT_MENU'] ? 'true' : 'false'?>,
 						enablePageTitleControls: <?=$arResult['ENABLE_PAGE_TITLE_CONTROLS'] ? 'true' : 'false'?>,
+						enablePageTitleControlsViaToolbar: <?=$arResult['ENABLE_PAGE_TITLE_CONTROLS_VIA_TOOLBAR'] ? 'true' : 'false'?>,
+						enablePageTitleEdit: <?=$arResult['ENABLE_PAGE_TITLE_EDIT'] ? 'true' : 'false'?>,
 						enableCommunicationControls: <?=$arResult['ENABLE_COMMUNICATION_CONTROLS'] ? 'true' : 'false'?>,
 						enableExternalLayoutResolvers: <?=$arResult['ENABLE_EXTERNAL_LAYOUT_RESOLVERS'] ? 'true' : 'false'?>,
 						readOnly: <?=$arResult['READ_ONLY'] ? 'true' : 'false'?>,

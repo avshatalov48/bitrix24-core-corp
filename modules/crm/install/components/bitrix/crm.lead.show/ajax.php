@@ -526,7 +526,7 @@ if($type !== 'L')
 }
 
 $CCrmLead = new CCrmLead();
-if ($CCrmLead->cPerms->HavePerm('LEAD', BX_CRM_PERM_NONE, 'WRITE'))
+if (!\Bitrix\Crm\Service\Container::getInstance()->getUserPermissions()->entityType()->canUpdateItems(CCrmOwnerType::Lead))
 {
 	__CrmLeadShowEndJsonResonse(array('ERROR'=>'PERMISSION DENIED!'));
 }

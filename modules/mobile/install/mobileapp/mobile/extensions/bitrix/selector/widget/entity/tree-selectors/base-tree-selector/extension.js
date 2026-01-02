@@ -4,6 +4,7 @@
 jn.define('selector/widget/entity/tree-selectors/base-tree-selector', (require, exports, module) => {
 	const { isEqual } = require('utils/object');
 	const { Loc } = require('loc');
+	const { Navigator } = require('selector/widget/entity/tree-selectors/shared/navigator');
 
 	const COMMON_SECTION_CODE = 'common';
 
@@ -12,16 +13,79 @@ jn.define('selector/widget/entity/tree-selectors/base-tree-selector', (require, 
 	 */
 	class BaseTreeSelector
 	{
-		constructor(entityClass, options = {})
+		/**
+		 * @typedef {Object} WidgetParams
+		 * @property {Object} backdrop - Backdrop settings.
+		 * @property {number} backdrop.mediumPositionPercent - Medium position percentage for the backdrop.
+		 * @property {boolean} backdrop.horizontalSwipeAllowed - Whether horizontal swipe is allowed.
+		 * @property {string} sendButtonName - Name of the send button.
+		 * @property {string} title - Title of the widget.
+		 */
+		constructor(options = {})
 		{
-			this.navigator = null;
-			this.leftButtons = [];
-			this.nodeEntityId = '';
+			this.options = this.prepareOptions(options);
 
-			this.shouldAnimate = options.shouldAnimate ?? false;
+			this.shouldAnimate = this.options.shouldAnimate ?? false;
 
-			this.entity = entityClass.make(options);
 			this.onItemSelected = this.onItemSelected.bind(this);
+
+			this.createNavigator();
+
+			this.entity = this.makeEntity(this.getEntity(), options);
+		}
+
+		makeEntity(entityClass, options = {})
+		{
+			return entityClass.make({
+				...this.options,
+				searchOptions: this.prepareSearchOptions(options),
+				provider: this.prepareProvider(options),
+				widgetParams: this.prepareWidgetParams(options),
+			});
+		}
+
+		/**
+		 * @abstract
+		 */
+		getEntity()
+		{
+			throw new Error('Method must be implemented');
+		}
+
+		/**
+		 * @abstract
+		 */
+		getNodeEntityId()
+		{
+			throw new Error('Method must be implemented');
+		}
+
+		prepareOptions(options)
+		{
+			return options;
+		}
+
+		prepareWidgetParams(options)
+		{
+			return options.widgetParams;
+		}
+
+		prepareProvider(options)
+		{
+			return options.provider;
+		}
+
+		prepareSearchOptions(options)
+		{
+			return options.searchOptions;
+		}
+
+		createNavigator(options = {})
+		{
+			this.navigator = new Navigator({
+				onCurrentNodeChanged: this.onNodeChanged,
+				...options,
+			});
 		}
 
 		/**
@@ -54,6 +118,11 @@ jn.define('selector/widget/entity/tree-selectors/base-tree-selector', (require, 
 			this.getSelector().getWidget().setQueryText('');
 		};
 
+		getExternalLeftButtons()
+		{
+			return [];
+		}
+
 		setLeftButtons()
 		{
 			const navigator = this.getNavigator();
@@ -64,12 +133,12 @@ jn.define('selector/widget/entity/tree-selectors/base-tree-selector', (require, 
 
 			this.getSelector().getWidget().setLeftButtons(
 				useInsideNavigationButtons
-					? this.#getLeftButtons()
-					: this.leftButtons,
+					? this.#getNavigationalLeftButtons()
+					: this.getExternalLeftButtons(),
 			);
 		}
 
-		#getLeftButtons()
+		#getNavigationalLeftButtons()
 		{
 			return [
 				{
@@ -89,6 +158,14 @@ jn.define('selector/widget/entity/tree-selectors/base-tree-selector', (require, 
 			navigator.moveToParentNode();
 
 			this.setLeftButtons();
+
+			const currentNode = navigator.getCurrentNode();
+
+			const title = currentNode.type === 'user'
+				? Loc.getMessage('DIRECTORY_SELECTOR_USER_ROOT_DIRECTORY_TITLE')
+				: currentNode.name || currentNode.title;
+
+			this.setTitle(title);
 
 			this.getSelector().setItems(
 				this.getPreparedItems(
@@ -114,6 +191,10 @@ jn.define('selector/widget/entity/tree-selectors/base-tree-selector', (require, 
 			return navigator.getCurrentNode();
 		}
 
+		onNodeChanged = ({ title }) => {
+			this.setTitle(title);
+		};
+
 		setTitle = (title, useProgress = false) => {
 			this.getSelector().getWidget()?.setTitle({
 				text: title,
@@ -126,7 +207,7 @@ jn.define('selector/widget/entity/tree-selectors/base-tree-selector', (require, 
 		{
 			const { sourceEntity } = item.params.customData;
 
-			if (sourceEntity.entityId !== this.nodeEntityId)
+			if (sourceEntity.entityId !== this.getNodeEntityId())
 			{
 				return;
 			}

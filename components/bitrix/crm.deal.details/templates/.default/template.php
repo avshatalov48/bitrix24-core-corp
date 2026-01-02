@@ -19,6 +19,8 @@ $guid = $arResult['GUID'];
 $prefix = mb_strtolower($guid);
 $activityEditorID = "{$prefix}_editor";
 $isRecurring = isset($arResult['ENTITY_DATA']['IS_RECURRING']) && $arResult['ENTITY_DATA']['IS_RECURRING'] === 'Y';
+$factory = \Bitrix\Crm\Service\Container::getInstance()->getFactory(\CCrmOwnerType::Deal);
+$userPermissions = \Bitrix\Crm\Service\Container::getInstance()->getUserPermissions();
 
 \Bitrix\Main\UI\Extension::load([
 	'crm.scoringbutton',
@@ -28,53 +30,11 @@ $isRecurring = isset($arResult['ENTITY_DATA']['IS_RECURRING']) && $arResult['ENT
 
 Asset::getInstance()->addJs('/bitrix/js/crm/category.js');
 
-//region LEGEND
-if (!empty($arResult['LEGEND']))
-{
-	$this->SetViewTarget('crm_details_legend');
-	$isConversion = isset($arResult['CONTEXT']['PARAMS']['CONVERSION_SOURCE']);
-	if ($arResult['ENTITY_ID'] <= 0 && !$isConversion)
-	{
-		$moveToCategoryIDs = array_values(
-			array_diff(
-				\CCrmDeal::GetPermittedToMoveCategoryIDs(),
-				[$arResult['CATEGORY_ID']]
-			)
-		);
-		?><script>
-			// beautify element
-			const categorySelectorElement = document.getElementById('pagetitle_sub');
-			BX.Dom.style(categorySelectorElement, {
-				position: 'relative',
-				padding: '10px',
-				'z-index': 1000,
-				'background-size': 'contain',
-			});
-			BX.Crm.DealCategoryChanger.create('deal_category_change_new', {
-				entityId: 0,
-				categoryIds: <?=\Bitrix\Main\Web\Json::encode($moveToCategoryIDs)?>,
-			});
+if (isset($arResult['IS_AUTOMATION_DEBUG_ITEM']) && $arResult['IS_AUTOMATION_DEBUG_ITEM'] === 'Y' && \Bitrix\Main\Loader::includeModule('ui')):
+	// css
+	\Bitrix\Main\UI\Extension::load(['crm.item-details-component.pagetitle']);
 
-			BX.Crm.DealCategoryChanger.messages = {
-				changeFunnelConfirmDialogTitle: "<?=GetMessageJS('CRM_DEAL_DETAIL_CHANGE_FUNNEL_CONFIRM_DIALOG_TITLE')?>",
-				changeFunnelConfirmDialogMessage: "<?=GetMessageJS('CRM_DEAL_DETAIL_CHANGE_FUNNEL_CONFIRM_DIALOG_MESSAGE')?>",
-				changeFunnelConfirmDialogOkBtn: "<?=GetMessageJS('CRM_DEAL_DETAIL_CHANGE_FUNNEL_CONFIRM_DIALOG_OK_BTN')?>",
-			};
-		</script><?php
-	}
-	?>
-		<a href="#" onclick="BX.Crm.DealCategoryChanger.processEntity(<?=$arResult['ENTITY_ID']?>,{ usePopupMenu: true, anchor: this }); return false;">
-			<?=htmlspecialcharsbx($arResult['LEGEND'])?>
-		</a><?php
-	$this->EndViewTarget();
-}
-
-if (isset($arResult['IS_AUTOMATION_DEBUG_ITEM']) && $arResult['IS_AUTOMATION_DEBUG_ITEM'] === 'Y'):
-	$this->SetViewTarget('crm_details_title_prefix');
-	?><span class="crm-details-debug-item">
-		<?= htmlspecialcharsbx(Loc::getMessage('CRM_DEAL_DETAIL_AUTOMATION_DEBUG_ITEM')) ?>
-	</span><?php
-	$this->EndViewTarget();
+	\Bitrix\UI\Toolbar\Facade\Toolbar::addBeforeTitleHtml('<div class="crm-details-pagetitle-prefix"><span style="color: #FFA900;">' . Loc::getMessage('CRM_DEAL_DETAIL_AUTOMATION_DEBUG_ITEM') . '</span></div>');
 endif;
 //endregion
 
@@ -328,6 +288,34 @@ endif;
 		BX.Crm.Deal.DealComponent = new BX.Crm.Deal.DealManager({
 			guid: '<?=CUtil::JSEscape($guid)?>',
 		});
+
+		<?php
+			$isConversion = isset($arResult['CONTEXT']['PARAMS']['CONVERSION_SOURCE']);
+			if (!$isConversion && \Bitrix\Main\Loader::includeModule('ui')):
+				\Bitrix\Main\UI\Extension::load([
+					'crm.item-details-component.pagetitle',
+				]);
+
+				\Bitrix\UI\Toolbar\Facade\Toolbar::addAfterTitleHtml('<div id="crm-details-category-changer-container" class="crm-details-pagetitle-container"></div>');
+
+				$changeableCategories = $userPermissions->category()->filterAvailableForAddingCategories(
+					$factory?->getCategories() ?? [],
+				);
+
+				?>
+				BX.Crm.ItemDetailsComponent.PageTitle.CategoryChanger.renderToTarget(
+					'#crm-details-category-changer-container',
+					<?= \Bitrix\Main\Web\Json::encode([
+						'entityTypeId' => \CCrmOwnerType::Deal,
+						'entityId' => $arResult['ENTITY_ID'],
+						'categoryId' => $arResult['CATEGORY_ID'],
+						'categories' => $changeableCategories,
+						'editorGuid' => $guid . '_editor',
+						'labelTemplate' => $arResult['CATEGORY_LABEL'] ?? null,
+					]) ?>,
+				);
+			<?php endif; ?>
+
 		<?php if($arResult['WAREHOUSE_CRM_TOUR_DATA']['IS_TOUR_AVAILABLE']): ?>
 		BX.Loc.setMessage(<?=CUtil::PhpToJSObject([
 			'CRM_DEAL_DETAIL_WAREHOUSE_AUTOMATIC_RESERVATION_GUIDE_TITLE' => Loc::getMessage('CRM_DEAL_DETAIL_WAREHOUSE_AUTOMATIC_RESERVATION_GUIDE_TITLE'),

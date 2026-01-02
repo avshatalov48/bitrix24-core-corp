@@ -2,9 +2,7 @@
  * @module in-app-url/routes
  */
 jn.define('in-app-url/routes', (require, exports, module) => {
-	const { Feature } = require('feature');
-	const { getHttpPath } = require('utils/url');
-	const { ProfileView } = require('user/profile');
+	const { UserProfile } = require('user-profile');
 	const { WorkgroupUtil } = require('project/utils');
 
 	/**
@@ -30,11 +28,6 @@ jn.define('in-app-url/routes', (require, exports, module) => {
 						diskParams[param] = value;
 					}
 				});
-
-				if (!Feature.isOpenImageNonContextSupported())
-				{
-					return Application.openUrl(getHttpPath(url));
-				}
 
 				return BX.postComponentEvent('onDiskFolderOpen', [diskParams], 'background');
 			}).name('disk:entity');
@@ -66,23 +59,9 @@ jn.define('in-app-url/routes', (require, exports, module) => {
 		}
 
 		inAppUrl.register('/company/personal/user/:userId/(\\?\\w+)?$', ({ userId }, { context = {} }) => {
-			const widgetParams = { groupStyle: true };
-			const { backdrop = true } = context;
-
-			if (backdrop)
-			{
-				widgetParams.backdrop = {
-					bounceEnable: false,
-					swipeAllowed: true,
-					showOnTop: true,
-					hideNavigationBar: false,
-					horizontalSwipeAllowed: false,
-				};
-			}
-
-			PageManager.openWidget('list', widgetParams)
-				.then((list) => ProfileView.open({ userId, backdrop }, list))
-				.catch(console.error);
+			void UserProfile.open({
+				ownerId: userId,
+			});
 		}).name('open:user');
 
 		inAppUrl.register('/company/personal/user/:userId/blog/:postId/$', ({ postId }) => {
@@ -106,7 +85,7 @@ jn.define('in-app-url/routes', (require, exports, module) => {
 			});
 		}).name('log:entry');
 
-		inAppUrl.register('/workgroups/group/:groupId/$', ({ groupId }) => {
+		inAppUrl.register('/workgroups/group/:groupId/', ({ groupId }) => {
 			void WorkgroupUtil.openProject(null, {
 				projectId: groupId,
 				siteId: env.siteId,

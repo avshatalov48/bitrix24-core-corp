@@ -31,8 +31,4 @@ $arResult["IMAGE_PATH"] =
 	$this->getFolder()."/images/".($arResult["PAGE"] === "MACOS" ? "macos" : "windows").$postfix.".png";
 
 $downloadLinks = \Bitrix\Intranet\Portal::getInstance()->getSettings()->getDesktopDownloadLinks();
-$arResult["DOWNLOAD_PATH"] =
-	$arResult["PAGE"] === "MACOS" ?
-		htmlspecialcharsbx($downloadLinks['macos']) :
-		htmlspecialcharsbx($downloadLinks['windows'])
-;
+$arResult["DOWNLOAD_PATH"] = $downloadLinks;

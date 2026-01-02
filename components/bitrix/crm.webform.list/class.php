@@ -196,36 +196,6 @@ class CCrmWebFormListComponent extends \CBitrixComponent
 			'description' => Loc::getMessage('TASKS_GRID_STUB_NO_DATA_DESCRIPTION'),
 		];
 		$this->arResult['SHOW_PLUGINS'] = false;
-		$this->arResult['USER_CONSENT_EMAIL'] = '';
-
-		$userOptionViewType = 'webform_list_view';
-		$userViewTypes = \CUserOptions::GetOption('crm', $userOptionViewType, array());
-		$this->arResult['HIDE_DESC'] = ($userViewTypes['hide-desc'] ?? 'N') == 'Y';
-
-		$this->arResult['HIDE_DESC_FZ152'] = true;
-		if (in_array(Main\Application::getInstance()->getLicense()->getRegion(), ['ru', 'by']))
-		{
-			$notifyOptions = \CUserOptions::GetOption('crm', 'notify_webform', array());
-			$this->arResult['HIDE_DESC_FZ152'] = (is_array($notifyOptions) && $notifyOptions['ru_fz_152'] == 'Y');
-
-			$user = UserTable::getList(array(
-				'select' => array('EMAIL'),
-				'filter' => array(
-					'=ID' => array_slice(\CGroup::getGroupUser(1), 0, 200),
-					'=ACTIVE' => 'Y'
-				),
-				'limit' => 1
-			))->fetch();
-			if ($user && $user['EMAIL'])
-			{
-				$email = $user['EMAIL'];
-			}
-			else
-			{
-				$email = Option::get('main', 'email_from', '');
-			}
-			$this->arResult['USER_CONSENT_EMAIL'] = $email;
-		}
 		$this->arResult['RESTRICTION_POPUP'] = \Bitrix\Crm\Restriction\RestrictionManager::getWebformLimitRestriction()->preparePopupScript();
 	}
 
@@ -781,6 +751,10 @@ class CCrmWebFormListComponent extends \CBitrixComponent
 		{
 			$filter['=IS_CALLBACK_FORM'] = $requestFilter['IS_CALLBACK_FORM'] === 'Y';
 		}
+		if (isset($requestFilter['IS_BOOKING_FORM']) && in_array($requestFilter['IS_BOOKING_FORM'], ['Y', 'N'], true))
+		{
+			$filter['=IS_BOOKING_FORM'] = $requestFilter['IS_BOOKING_FORM'] === 'Y';
+		}
 		if (isset($requestFilter['IS_WHATSAPP_FORM']) && in_array($requestFilter['IS_WHATSAPP_FORM'], ['Y', 'N'], true))
 		{
 			$filter['=IS_WHATSAPP_FORM'] = $requestFilter['IS_WHATSAPP_FORM'] === 'Y';
@@ -915,6 +889,16 @@ class CCrmWebFormListComponent extends \CBitrixComponent
 			]
 		);
 
+		if (ModuleManager::isModuleInstalled('booking'))
+		{
+			$list[] = [
+				"id" => 'IS_BOOKING_FORM',
+				"name" => Loc::getMessage('CRM_WEBFORM_LIST_FILTER_PRESET_BOOKING_FORMS'),
+				'type' => 'checkbox',
+				'default' => false,
+			];
+		}
+
 		if (\Bitrix\Main\ModuleManager::isModuleInstalled('landing'))
 		{
 			$list[] = array(
@@ -993,8 +977,18 @@ class CCrmWebFormListComponent extends \CBitrixComponent
 					'GET_PAYMENT' => 'Y',
 					'ACTIVE' => 'Y',
 				]
-			]
+			],
 		);
+
+		if (ModuleManager::isModuleInstalled('booking'))
+		{
+			$list['booking_forms'] = [
+				'name' => Loc::getMessage('CRM_WEBFORM_LIST_FILTER_PRESET_BOOKING_FORMS'),
+				'fields' => [
+					'IS_BOOKING_FORM' => 'Y',
+				],
+			];
+		}
 
 		if (WebForm\WhatsApp::canUse())
 		{
@@ -1060,15 +1054,13 @@ class CCrmWebFormListComponent extends \CBitrixComponent
 			return;
 		}
 
-		/**@var $USER \CUser*/
-		global $USER;
-		$CrmPerms = new CCrmPerms($USER->GetID());
-		if($CrmPerms->HavePerm('WEBFORM', BX_CRM_PERM_NONE))
+		if (!\Bitrix\Crm\Service\Container::getInstance()->getUserPermissions()->webForm()->canRead())
 		{
 			ShowError(Loc::getMessage('CRM_PERMISSION_DENIED'));
 			return;
 		}
-		$this->arResult['PERM_CAN_EDIT'] = !$CrmPerms->HavePerm('WEBFORM', BX_CRM_PERM_NONE, 'WRITE');
+
+		$this->arResult['PERM_CAN_EDIT'] = \Bitrix\Crm\Service\Container::getInstance()->getUserPermissions()->webForm()->canEdit();
 
 		$this->prepareParams();
 

@@ -47,6 +47,8 @@ class Field
 	public const TYPE_CRM_ACTIVITY_PROVIDER = 'crm_activity_provider';
 	public const TYPE_CRM_ACTIVITY_PROVIDER_TYPE = 'crm_activity_provider_type';
 	public const TYPE_CRM_DYNAMIC_TYPE = 'crm_dynamic_type';
+	public const TYPE_CRM_REPEAT_SALE_SEGMENT_TITLE = 'crm_repeat_sale_segment_title';
+	public const TYPE_RECURRING = 'recurring';
 
 	public const VALUE_TYPE_PLAIN_TEXT = 'text';
 	public const VALUE_TYPE_BB = 'bb';

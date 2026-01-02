@@ -3,7 +3,6 @@
  */
 jn.define('im/messenger/provider/pull/collab', (require, exports, module) => {
 	const { CollabMessagePullHandler } = require('im/messenger/provider/pull/collab/message');
-	const { CollabCounterPullHandler } = require('im/messenger/provider/pull/collab/counter');
 	const { CollabFilePullHandler } = require('im/messenger/provider/pull/collab/file');
 	const { CollabDialogPullHandler } = require('im/messenger/provider/pull/collab/dialog');
 	const { CollabUserPullHandler } = require('im/messenger/provider/pull/collab/user');
@@ -11,7 +10,6 @@ jn.define('im/messenger/provider/pull/collab', (require, exports, module) => {
 
 	module.exports = {
 		CollabMessagePullHandler,
-		CollabCounterPullHandler,
 		CollabFilePullHandler,
 		CollabDialogPullHandler,
 		CollabUserPullHandler,

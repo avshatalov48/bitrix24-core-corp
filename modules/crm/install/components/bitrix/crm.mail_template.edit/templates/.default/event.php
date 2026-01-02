@@ -8,29 +8,6 @@ if (!defined('B_PROLOG_INCLUDED') || B_PROLOG_INCLUDED!==true)die();
  * @var array $arResult
  */
 
-if ($_REQUEST['IFRAME'] == 'Y' && $_REQUEST['IFRAME_TYPE'] == 'SIDE_SLIDER')
-{
-	$APPLICATION->restartBuffer();
-
-	?><!DOCTYPE html>
-	<html>
-		<head><? $APPLICATION->showHead(); ?></head>
-		<body style="background: #eef2f4 !important; ">
-			<div style="padding: 0 20px 20px 20px; ">
-				<div class="pagetitle-wrap">
-					<div class="pagetitle-inner-container">
-						<div class="pagetitle-menu" id="pagetitle-menu"><?
-							$APPLICATION->showViewContent('pagetitle');
-							$APPLICATION->showViewContent('inside_pagetitle');
-						?></div>
-						<div class="pagetitle">
-							<span id="pagetitle" class="pagetitle-item"><? $APPLICATION->showTitle() ?></span>
-						</div>
-					</div>
-				</div>
-	<?
-}
-
 $APPLICATION->SetAdditionalCSS("/bitrix/themes/.default/crm-entity-show.css");
 
 $event = isset($arResult['EXTERNAL_EVENT']) && is_array($arResult['EXTERNAL_EVENT'])
@@ -85,15 +62,6 @@ else
 	);
 </script>
 
-<?
-
-if ($_REQUEST['IFRAME'] == 'Y' && $_REQUEST['IFRAME_TYPE'] == 'SIDE_SLIDER')
-{
-	?>
-			</div>
-		</body>
-	</html><?
-
-	require_once($_SERVER['DOCUMENT_ROOT'].'/bitrix/modules/main/include/epilog_after.php');
-	die;
-}
+<?php
+require_once($_SERVER['DOCUMENT_ROOT'].'/bitrix/modules/main/include/epilog_after.php');
+die;

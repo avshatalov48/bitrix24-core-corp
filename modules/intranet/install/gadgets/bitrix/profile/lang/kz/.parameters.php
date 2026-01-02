@@ -1,0 +1,25 @@
+<?php
+$MESS["GD_PROFILE_P_PATH_TO_BLOG"] = "Блог парақшасының URL";
+$MESS["GD_PROFILE_P_PATH_TO_BLOG_NEW"] = "Блогқа жаңа хабарлама қосу парақшасының URL";
+$MESS["GD_PROFILE_P_PATH_TO_CAL"] = "Күнтізбе парақшасының URL";
+$MESS["GD_PROFILE_P_PATH_TO_FORUM"] = "Форум парақшасының URL";
+$MESS["GD_PROFILE_P_PATH_TO_GENERAL"] = "Басты парақшасының URL";
+$MESS["GD_PROFILE_P_PATH_TO_GROUPS"] = "Менің топтарым парақшасының URL";
+$MESS["GD_PROFILE_P_PATH_TO_GROUP_NEW"] = "Топты құру парақшасының URL";
+$MESS["GD_PROFILE_P_PATH_TO_LIB"] = "Файлдар парақшасының URL";
+$MESS["GD_PROFILE_P_PATH_TO_LOG"] = "Жаңарту парақшасының URL";
+$MESS["GD_PROFILE_P_PATH_TO_MSG"] = "Менің хабарламаларым парақшасының URL";
+$MESS["GD_PROFILE_P_PATH_TO_PHOTO"] = "Менің фотосуреттерім парақшасының URL";
+$MESS["GD_PROFILE_P_PATH_TO_PHOTO_NEW"] = "Фотосуреттерді қосу парақшасының URL";
+$MESS["GD_PROFILE_P_PATH_TO_PROFILE_EDIT"] = "Профильді өзгерту парақшасының URL";
+$MESS["GD_PROFILE_P_PATH_TO_SUBSCR"] = "Менің жазылымдарым парақшасының URL";
+$MESS["GD_PROFILE_P_PATH_TO_TASK"] = "Міндеттер парақшасының URL";
+$MESS["GD_PROFILE_P_PATH_TO_TASK_NEW"] = "Міндетті қосу парақшасының URL";
+$MESS["GD_PROFILE_P_SHOW_BLOG"] = "Блогты көрсету";
+$MESS["GD_PROFILE_P_SHOW_CAL"] = "Күнтізбені көрсету";
+$MESS["GD_PROFILE_P_SHOW_FORUM"] = "Форумды көрсету";
+$MESS["GD_PROFILE_P_SHOW_GENERAL"] = "Негізгіні көрсету";
+$MESS["GD_PROFILE_P_SHOW_GROUPS"] = "Топтарды көрсету";
+$MESS["GD_PROFILE_P_SHOW_LIB"] = "Файлдарды көрсету";
+$MESS["GD_PROFILE_P_SHOW_PHOTO"] = "Фото көрсету";
+$MESS["GD_PROFILE_P_SHOW_TASK"] = "Міндеттерді көрсету";

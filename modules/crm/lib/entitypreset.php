@@ -5,6 +5,7 @@ namespace Bitrix\Crm;
 use Bitrix\Crm\Attribute\FieldAttributeManager;
 use Bitrix\Crm\Order\Matcher\BaseEntityMatcher;
 use Bitrix\Crm\Order\Matcher\Internals\OrderPropsMatchTable;
+use Bitrix\Crm\Service\Container;
 use Bitrix\Main;
 use Bitrix\Main\Config\Option;
 use Bitrix\Main\Data\Cache;
@@ -1070,92 +1071,34 @@ class EntityPreset
 		return false;
 	}
 
-	public static function checkReadPermissionOwnerEntity()
+	public static function checkReadPermissionOwnerEntity(): bool
 	{
 		return EntityRequisite::checkReadPermissionOwnerEntity();
 	}
 
-	/**
-	 * @param \CCrmPerms $userPermissions
-	 * @return bool
-	 */
-	public static function checkCreatePermission($userPermissions = null)
+	public static function checkCreatePermission(): bool
 	{
-		if ($userPermissions === null)
-			$userPermissions = \CCrmPerms::GetCurrentUserPermissions();
-
-		if ($userPermissions instanceof \CCrmPerms ||
-			!$userPermissions->HavePerm('CONFIG', BX_CRM_PERM_CONFIG, 'WRITE'))
-		{
-			return false;
-		}
-
-		return true;
+		return Container::getInstance()->getUserPermissions()->isCrmAdmin();
 	}
 
-	/**
-	 * @param \CCrmPerms $userPermissions
-	 * @return bool
-	 */
-	public static function checkUpdatePermission($userPermissions = null)
+	public static function checkUpdatePermission(): bool
 	{
-		if ($userPermissions === null)
-			$userPermissions = \CCrmPerms::GetCurrentUserPermissions();
-
-		if ($userPermissions instanceof \CCrmPerms && $userPermissions->HavePerm('CONFIG', BX_CRM_PERM_CONFIG, 'WRITE'))
-		{
-			return true;
-		}
-
-		return false;
+		return Container::getInstance()->getUserPermissions()->isCrmAdmin();
 	}
 
-	/**
-	 * @param \CCrmPerms $userPermissions
-	 * @return bool
-	 */
-	public static function checkDeletePermission($userPermissions = null)
+	public static function checkDeletePermission(): bool
 	{
-		if ($userPermissions === null)
-			$userPermissions = \CCrmPerms::GetCurrentUserPermissions();
-
-		if ($userPermissions instanceof \CCrmPerms && $userPermissions->HavePerm('CONFIG', BX_CRM_PERM_CONFIG, 'WRITE'))
-		{
-			return true;
-		}
-
-		return false;
+		return Container::getInstance()->getUserPermissions()->isCrmAdmin();
 	}
 
-	/**
-	 * @param \CCrmPerms $userPermissions
-	 * @return bool
-	 */
-	public static function checkReadPermission($userPermissions = null)
+	public static function checkReadPermission(): bool
 	{
 		return true;
 	}
 
-	/**
-	 * @param \CCrmPerms $userPermissions
-	 * @return bool
-	 */
-	public static function checkChangeCurrentCountryPermission($userPermissions = null)
+	public static function checkChangeCurrentCountryPermission(): bool
 	{
-		if ($userPermissions === null)
-		{
-			$userPermissions = \CCrmPerms::GetCurrentUserPermissions();
-		}
-
-		if (
-			$userPermissions instanceof \CCrmPerms
-			&& $userPermissions->HavePerm('CONFIG', BX_CRM_PERM_CONFIG, 'WRITE')
-		)
-		{
-			return true;
-		}
-
-		return false;
+		return Container::getInstance()->getUserPermissions()->isCrmAdmin();
 	}
 
 	public static function formatName($id, $title)

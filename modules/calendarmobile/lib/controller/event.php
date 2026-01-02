@@ -6,6 +6,7 @@ use Bitrix\Calendar\Controller\CalendarEntryAjax;
 use Bitrix\Calendar\Core\Event\Tools\Dictionary;
 use Bitrix\Calendar\Ui\CalendarFilter;
 use Bitrix\Calendar\Ui\CountersManager;
+use Bitrix\Calendar\UserSettings;
 use Bitrix\CalendarMobile\AhaMoments\Factory;
 use Bitrix\CalendarMobile\Integration;
 use Bitrix\CalendarMobile\Provider\BaseInfoProvider;
@@ -373,7 +374,7 @@ class Event extends Controller
 		$viewFormProvider = new ViewFormProvider(
 			$this->userId,
 			$eventId,
-			$eventDate,
+			urldecode($eventDate),
 			$timezoneOffset,
 			$userIds,
 			$requestUsers === 'Y',
@@ -459,6 +460,16 @@ class Event extends Controller
 		}
 
 		return $result->getData();
+	}
+
+	public function saveHiddenSectionsAction(int $ownerId, string $calType, array $sections = []): void
+	{
+		$optionName = $this->userId === $ownerId && $calType === Dictionary::CALENDAR_TYPE['user']
+			? 'hidden_sections'
+			: 'hidden_sections_' . $calType
+		;
+
+		UserSettings::saveHiddenSections($this->userId, $sections, $optionName);
 	}
 
 	/**

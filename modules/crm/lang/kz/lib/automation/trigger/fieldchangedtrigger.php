@@ -1,0 +1,6 @@
+<?php
+$MESS["CRM_AUTOMATION_TRIGGER_FIELD_CHANGED_DESCRIPTION"] = "Егер элементте өріс мәндері өзгертілсе, сатыны өзгертеді";
+$MESS["CRM_AUTOMATION_TRIGGER_FIELD_CHANGED_NAME"] = "Өрістер өзгертілді";
+$MESS["CRM_AUTOMATION_TRIGGER_FIELD_CHANGED_NAME_1"] = "Өрістердің өзгеруін қадағалау";
+$MESS["CRM_AUTOMATION_TRIGGER_FIELD_CHANGED_PROPERTY_FIELDS"] = "Өрістерді бақылау";
+$MESS["CRM_AUTOMATION_TRIGGER_FIELD_CHANGED_PROPERTY_FIELDS_CHOOSE"] = "Өрістерді таңдау";

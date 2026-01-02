@@ -10,4 +10,5 @@ interface Source
 
 	public function getTitle(): string;
 	public function getDescription(): string;
+	public function getLogo(): ?string;
 }

@@ -29,11 +29,6 @@ class TaskPathMaker extends PathMaker
 				$subject = RouteDictionary::PATH_TO_GROUP_TASK;
 				break;
 
-			case PathMaker::SPACE_CONTEXT:
-				$search = ['#group_id#', '#action#', '#task_id#'];
-				$subject = RouteDictionary::PATH_TO_SPACE_TASK;
-				break;
-
 			case PathMaker::PERSONAL_CONTEXT:
 			default:
 				$search = ['#user_id#', '#action#', '#task_id#'];
@@ -56,11 +51,6 @@ class TaskPathMaker extends PathMaker
 				$subject = RouteDictionary::PATH_TO_GROUP_TASKS_LIST;
 				break;
 
-			case PathMaker::SPACE_CONTEXT:
-				$search = ['#group_id#'];
-				$subject = RouteDictionary::PATH_TO_SPACE_TASKS_LIST;
-				break;
-
 			case PathMaker::PERSONAL_CONTEXT:
 			default:
 				$search = ['#user_id#'];
@@ -68,6 +58,8 @@ class TaskPathMaker extends PathMaker
 				break;
 		}
 
-		return str_replace($search, $replace, $subject);
+		$path = str_replace($search, $replace, $subject);
+
+		return $path . $this->queryParams;
 	}
 }

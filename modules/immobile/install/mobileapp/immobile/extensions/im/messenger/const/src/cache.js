@@ -3,9 +3,9 @@
  */
 jn.define('im/messenger/const/cache', (require, exports, module) => {
 
-	const CacheNamespace = 'im/messenger/cache/v2.2/';
+	const CacheNamespace = `${currentDomain}/${env.userId}/im/messenger/cache/v2.2/`;
 	const CacheName = Object.freeze({
-		draft: 'draft',
+		developer: 'developer',
 	});
 
 	module.exports = {

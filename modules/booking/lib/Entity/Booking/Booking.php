@@ -4,10 +4,17 @@ declare(strict_types=1);
 
 namespace Bitrix\Booking\Entity\Booking;
 
+use Bitrix\Booking\Entity\Client\Client;
+use Bitrix\Booking\Entity\Client\ClientCollection;
+use Bitrix\Booking\Entity\EntityWithClientRelationInterface;
 use Bitrix\Booking\Entity\DatePeriod;
+use Bitrix\Booking\Entity\DatePeriodCollection;
 use Bitrix\Booking\Entity\EntityInterface;
+use Bitrix\Booking\Entity\EntityWithExternalDataRelationInterface;
 use Bitrix\Booking\Entity\EventInterface;
 use Bitrix\Booking\Entity\EventTrait;
+use Bitrix\Booking\Entity\ExternalData\ExternalDataCollection;
+use Bitrix\Booking\Entity\Message\BookingMessageCollection;
 use Bitrix\Booking\Entity\Resource\Resource;
 use Bitrix\Booking\Entity\Resource\ResourceCollection;
 use Bitrix\Booking\Internals\Exception\Booking\ConfirmBookingException;
@@ -19,7 +26,11 @@ use Bitrix\Booking\Internals\Service\Time;
 use DateTimeImmutable;
 use DateTimeZone;
 
-class Booking implements EntityInterface, EventInterface
+class Booking implements
+	EntityInterface,
+	EventInterface,
+	EntityWithClientRelationInterface,
+	EntityWithExternalDataRelationInterface
 {
 	use EventTrait;
 
@@ -38,23 +49,25 @@ class Booking implements EntityInterface, EventInterface
 	private ResourceCollection $resourceCollection;
 	private ClientCollection $clientCollection;
 	private ExternalDataCollection $externalDataCollection;
+	private BookingMessageCollection $messageCollection;
 
 	private string|null $rrule = null;
 	private Booking|null $parent = null;
 
 	private BookingVisitStatus|null $visitStatus = null;
+	private BookingSource|null $source = null;
 
 	private int|null $createdBy = null;
 	private int|null $createdAt = null;
 	private int|null $updatedAt = null;
-
 	private string|null $note = null;
 
 	public function __construct()
 	{
-		$this->resourceCollection = new ResourceCollection(...[]);
-		$this->clientCollection = new ClientCollection(...[]);
-		$this->externalDataCollection = new ExternalDataCollection(...[]);
+		$this->resourceCollection = new ResourceCollection();
+		$this->clientCollection = new ClientCollection();
+		$this->externalDataCollection = new ExternalDataCollection();
+		$this->messageCollection = new BookingMessageCollection();
 	}
 
 	public function getId(): int|null
@@ -131,7 +144,7 @@ class Booking implements EntityInterface, EventInterface
 		return $url ?? '#';
 	}
 
-	public function setClientCollection(ClientCollection $clientCollection): Booking
+	public function setClientCollection(ClientCollection $clientCollection): self
 	{
 		$this->clientCollection = $clientCollection;
 
@@ -151,6 +164,20 @@ class Booking implements EntityInterface, EventInterface
 	public function setDatePeriod(DatePeriod|null $datePeriod): self
 	{
 		$this->datePeriod = $datePeriod;
+
+		return $this;
+	}
+
+	public function setDatePeriodFromArray(array $datePeriod): self
+	{
+		$this->setDatePeriod(
+			new DatePeriod(
+				(new DateTimeImmutable('@' . (int)$datePeriod['from']['timestamp']))
+					->setTimezone(new DateTimeZone((string)$datePeriod['from']['timezone'])),
+				(new DateTimeImmutable('@' . (int)$datePeriod['to']['timestamp']))
+					->setTimezone(new DateTimeZone((string)$datePeriod['to']['timezone']))
+			)
+		);
 
 		return $this;
 	}
@@ -191,16 +218,9 @@ class Booking implements EntityInterface, EventInterface
 		return $this;
 	}
 
-	/**
-	 * Returns primary resource from resource collection
-	 * Primary resource is used for obtaining notification settings for a certain booking
-	 * We are currently expecting that the first item from resource collection is primary
-	 *
-	 * @return Resource|null
-	 */
 	public function getPrimaryResource(): Resource|null
 	{
-		return $this->resourceCollection->getFirstCollectionItem();
+		return $this->resourceCollection->getPrimary();
 	}
 
 	public function getResourceCollection(): ResourceCollection
@@ -223,6 +243,18 @@ class Booking implements EntityInterface, EventInterface
 	public function setExternalDataCollection(ExternalDataCollection $externalDataCollection): self
 	{
 		$this->externalDataCollection = $externalDataCollection;
+
+		return $this;
+	}
+
+	public function getMessageCollection(): BookingMessageCollection
+	{
+		return $this->messageCollection;
+	}
+
+	public function setMessageCollection(BookingMessageCollection $messageCollection): self
+	{
+		$this->messageCollection = $messageCollection;
 
 		return $this;
 	}
@@ -329,12 +361,24 @@ class Booking implements EntityInterface, EventInterface
 		return $this;
 	}
 
+	public function getSource(): BookingSource
+	{
+		return $this->source ?? BookingSource::Internal;
+	}
+
+	public function setSource(BookingSource $source): self
+	{
+		$this->source = $source;
+
+		return $this;
+	}
+
 	public function isDelayed(): bool
 	{
 		$now = time();
 
 		if (
-			$this->getDatePeriod()->getDateFrom()->getTimestamp() < ($now - Time::SECONDS_IN_MINUTE * 5)
+			$this->getDatePeriod()->getDateFrom()->getTimestamp() < ($now - Time::CONSIDER_BOOKING__DELAYED_AFTER_SECONDS)
 			&& $this->getDatePeriod()->getDateTo()->getTimestamp() > $now
 			&& $this->visitStatus->value !== BookingVisitStatus::Visited->value
 		)
@@ -370,6 +414,7 @@ class Booking implements EntityInterface, EventInterface
 			'resources' => $this->resourceCollection->toArray(),
 			'clients' => $this->clientCollection->toArray(),
 			'externalData' => $this->externalDataCollection->toArray(),
+			'messages' => $this->messageCollection->toArray(),
 			'primaryClient' => $this->getPrimaryClient(),
 			'rrule' => $this->rrule,
 			'parent' => $this->parent?->toArray(),
@@ -380,6 +425,7 @@ class Booking implements EntityInterface, EventInterface
 			'counters' => $this->counters,
 			'note' => $this->note,
 			'visitStatus' => $this->getVisitStatus()->value,
+			'source' => $this->getSource()->value,
 		];
 	}
 
@@ -419,14 +465,7 @@ class Booking implements EntityInterface, EventInterface
 			&& !empty($props['datePeriod']['to']['timezone'])
 		)
 		{
-			$result->setDatePeriod(
-				new DatePeriod(
-					(new DateTimeImmutable('@' . (int)$props['datePeriod']['from']['timestamp']))
-						->setTimezone(new DateTimeZone((string)$props['datePeriod']['from']['timezone'])),
-					(new DateTimeImmutable('@' . (int)$props['datePeriod']['to']['timestamp']))
-						->setTimezone(new DateTimeZone((string)$props['datePeriod']['to']['timezone']))
-				)
-			);
+			$result->setDatePeriodFromArray($props['datePeriod']);
 		}
 
 		if (isset($props['resources']))
@@ -447,6 +486,13 @@ class Booking implements EntityInterface, EventInterface
 		{
 			$result->setExternalDataCollection(
 				ExternalDataCollection::mapFromArray((array)$props['externalData'])
+			);
+		}
+
+		if (isset($props['messages']))
+		{
+			$result->setMessageCollection(
+				BookingMessageCollection::mapFromArray((array)$props['messages'])
 			);
 		}
 
@@ -489,6 +535,15 @@ class Booking implements EntityInterface, EventInterface
 			);
 		}
 
+		if (isset($props['source']))
+		{
+			$result->setSource(
+				BookingSource::tryFrom(
+					(string)$props['source']
+				)
+			);
+		}
+
 		return $result;
 	}
 
@@ -513,5 +568,16 @@ class Booking implements EntityInterface, EventInterface
 			$this->getRrule(),
 			$this->getDatePeriod()
 		);
+	}
+
+	public function getEventDatePeriodCollection(): DatePeriodCollection
+	{
+		$rrule = $this->getEventRrule();
+		if ($rrule)
+		{
+			return $rrule->getDatePeriodCollection();
+		}
+
+		return new DatePeriodCollection($this->getDatePeriod());
 	}
 }

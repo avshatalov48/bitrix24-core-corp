@@ -14,7 +14,6 @@ use Bitrix\Main\LoaderException;
 use Bitrix\Main\Localization\Loc;
 use Bitrix\Main\SystemException;
 use Bitrix\Main\Type\DateTime;
-use Bitrix\Tasks\Integration\Intranet\Settings;
 use Bitrix\Tasks\Integration\SocialNetwork\Group;
 use Bitrix\Tasks\Scrum\Service\ItemService;
 use Bitrix\Tasks\Scrum\Service\KanbanService;
@@ -23,6 +22,7 @@ use Bitrix\Tasks\Scrum\Service\TaskService;
 use Bitrix\Tasks\Scrum\Utility\BurnDownChart;
 use Bitrix\Tasks\Scrum\Utility\StoryPoints;
 use Bitrix\Tasks\Util;
+use Bitrix\Tasks\V2\Internal\DI\Container;
 
 class TasksScrumBurnDownComponent extends \CBitrixComponent implements Controllerable, Errorable
 {
@@ -164,7 +164,7 @@ class TasksScrumBurnDownComponent extends \CBitrixComponent implements Controlle
 
 	private function isScrumEnabled(): bool
 	{
-		return (new Settings())->isToolAvailable(Settings::TOOLS['scrum']);
+		return Container::getInstance()->getToolService()->isScrumAvailable();
 	}
 
 	private function canReadGroupTasks(int $groupId): bool

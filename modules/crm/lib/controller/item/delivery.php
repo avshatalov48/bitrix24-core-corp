@@ -24,7 +24,7 @@ final class Delivery extends Crm\Controller\Base
 		/** @var Crm\Entity\PaymentDocumentsRepository $repository */
 		$repository = Main\DI\ServiceLocator::getInstance()->get('crm.entity.paymentDocumentsRepository');
 
-		$hasEntityPermission = Container::getInstance()->getUserPermissions()->checkReadPermissions(
+		$hasEntityPermission = Container::getInstance()->getUserPermissions()->item()->canRead(
 			$entityTypeId,
 			$entityId
 		);
@@ -65,7 +65,7 @@ final class Delivery extends Crm\Controller\Base
 			return null;
 		}
 
-		$hasPermission = Container::getInstance()->getUserPermissions()->checkReadPermissions(
+		$hasPermission = Container::getInstance()->getUserPermissions()->item()->canRead(
 			\CCrmOwnerType::Order,
 			$shipment->getOrder()->getId()
 		);

@@ -184,7 +184,7 @@ class SprintService implements Errorable
 			$itemIds = $itemService->getItemIdsBySourceIds($completedTaskIds, [$sprint->getId()]);
 			if (!$itemService->getErrors())
 			{
-				$itemService->moveItemsToEntity($itemIds, $backlog->getId(), $pushService);
+				$itemService->moveItemsToEntity($backlog->getGroupId(), $itemIds, $backlog->getId(), $pushService);
 			}
 
 			$subTaskIds = [];
@@ -370,25 +370,34 @@ class SprintService implements Errorable
 
 			foreach ($taskIdsToComplete as $taskIdToComplete)
 			{
-				if (!$taskService->isCompletedTask($taskIdToComplete))
+				$isCompletedTask = $taskService->isCompletedTask($taskIdToComplete);
+				if ($taskService->getErrors())
+				{
+					$this->errorCollection->add($taskService->getErrors());
+
+					return $sprint;
+				}
+
+				if (!$isCompletedTask)
 				{
 					$unFinishedTaskIds[] = $taskIdToComplete;
 				}
 			}
 
 			$itemIds = $itemService->getItemIdsBySourceIds($unFinishedTaskIds, [$sprint->getId()]);
-
-			if (!$itemService->getErrors() && !$this->getErrors())
-			{
-				$itemService->moveItemsToEntity($itemIds, $entity->getId(), $pushService);
-			}
-
 			if ($itemService->getErrors())
 			{
 				$this->errorCollection->add($itemService->getErrors());
 
 				return $sprint;
 			}
+
+			if ($this->getErrors())
+			{
+				return $sprint;
+			}
+
+			$itemService->moveItemsToEntity($entity->getGroupId(), $itemIds, $entity->getId(), $pushService);
 
 			$result = EntityTable::update($sprint->getId(), $sprint->getFieldsToUpdateEntity());
 
@@ -696,6 +705,31 @@ class SprintService implements Errorable
 		}
 
 		return $sprint;
+	}
+
+	public function getSprintByIds(array $ids): array
+	{
+		\Bitrix\Main\Type\Collection::normalizeArrayValuesByInt($ids, false);
+		if (empty($ids))
+		{
+			return [];
+		}
+
+		$sprints = [];
+
+		$query = new Query(EntityTable::getEntity());
+		$query->setSelect(['*']);
+		$query->whereIn('ID', $ids);
+		$rows = $query->exec();
+
+		while ($sprintsData = $rows->fetch())
+		{
+			$sprint = new EntityForm();
+			$sprint->fillFromDatabase($sprintsData);
+			$sprints[] = $sprint;
+		}
+
+		return $sprints;
 	}
 
 	public function removeSprint(EntityForm $sprint, PushService $pushService = null): bool

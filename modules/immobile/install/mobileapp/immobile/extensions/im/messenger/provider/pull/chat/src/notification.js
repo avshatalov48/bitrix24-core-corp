@@ -3,14 +3,14 @@
  */
 jn.define('im/messenger/provider/pull/chat/notification', (require, exports, module) => {
 	const { Type } = require('type');
-	const { Loc } = require('loc');
+	const { Loc } = require('im/messenger/loc');
 	const { BasePullHandler } = require('im/messenger/provider/pull/base');
-	const { Counters } = require('im/messenger/lib/counters');
 	const { EventType } = require('im/messenger/const');
 	const { Notifier } = require('im/messenger/lib/notifier');
 	const { MessengerEmitter } = require('im/messenger/lib/emitter');
-	const { LoggerManager } = require('im/messenger/lib/logger');
-	const logger = LoggerManager.getInstance().getLogger('pull-handler--notification');
+	const { serviceLocator } = require('im/messenger/lib/di/service-locator');
+	const { getLogger } = require('im/messenger/lib/logger');
+	const logger = getLogger('pull-handler--notification');
 
 	/**
 	 * @class NotificationPullHandler
@@ -19,7 +19,7 @@ jn.define('im/messenger/provider/pull/chat/notification', (require, exports, mod
 	{
 		handleNotifyAdd(params, extra, command)
 		{
-			if (this.interceptEvent(params, extra, command))
+			if (this.interceptEvent(extra))
 			{
 				return;
 			}
@@ -54,9 +54,11 @@ jn.define('im/messenger/provider/pull/chat/notification', (require, exports, mod
 				}
 			}
 
-			Counters.notificationCounter.value = params.counter;
+			const tabCounters = serviceLocator.get('tab-counters');
+
+			tabCounters.setNotificationCounters(params.counter);
 			MessengerEmitter.emit(EventType.notification.reload, params);
-			Counters.update();
+			tabCounters.update();
 
 			const userName = params.userName ? params.userName : '';
 			if (extra && extra.server_time_ago <= 5)
@@ -68,49 +70,70 @@ jn.define('im/messenger/provider/pull/chat/notification', (require, exports, mod
 					title: Loc.getMessage('IMMOBILE_PULL_HANDLER_NOTIFICATION_TITLE'),
 					text: (userName ? `${userName}: ` : '') + purifiedNotificationText,
 					avatar: params.userAvatar ? params.userAvatar : '',
+				}).catch((error) => {
+					this.logger.error(`${this.getClassName()}.handleNotifyAdd notify error:`, error);
 				});
 			}
 		}
 
+		handleNotifyDelete(params, extra)
+		{
+			if (this.interceptEvent(extra))
+			{
+				return;
+			}
+
+			logger.info(`${this.constructor.name}.handleNotifyDelete`, params);
+
+			const tabCounters = serviceLocator.get('tab-counters');
+			tabCounters.setNotificationCounters(params.counter);
+			tabCounters.update();
+
+			MessengerEmitter.emit(EventType.notification.reload, params);
+		}
+
 		handleNotifyRead(params, extra, command)
 		{
-			if (this.interceptEvent(params, extra, command))
+			if (this.interceptEvent(extra))
 			{
 				return;
 			}
 
 			logger.info('NotificationPullHandler.handleNotifyRead', params);
 
-			Counters.notificationCounter.value = params.counter;
-			Counters.update();
+			const tabCounters = serviceLocator.get('tab-counters');
+			tabCounters.setNotificationCounters(params.counter);
+			tabCounters.update();
 		}
 
 		handleNotifyUnread(params, extra, command)
 		{
-			if (this.interceptEvent(params, extra, command))
+			if (this.interceptEvent(extra))
 			{
 				return;
 			}
 
 			logger.info('NotificationPullHandler.handleNotifyUnread', params);
 
-			Counters.notificationCounter.value = params.counter;
-			Counters.update();
+			const tabCounters = serviceLocator.get('tab-counters');
+			tabCounters.setNotificationCounters(params.counter);
+			tabCounters.update();
 
 			MessengerEmitter.emit(EventType.notification.reload, params);
 		}
 
 		handleNotifyConfirm(params, extra, command)
 		{
-			if (this.interceptEvent(params, extra, command))
+			if (this.interceptEvent(extra))
 			{
 				return;
 			}
 
 			logger.info('NotificationPullHandler.handleNotifyConfirm', params);
 
-			Counters.notificationCounter.value = params.counter;
-			Counters.update();
+			const tabCounters = serviceLocator.get('tab-counters');
+			tabCounters.setNotificationCounters(params.counter);
+			tabCounters.update();
 
 			MessengerEmitter.emit(EventType.notification.reload, params);
 		}

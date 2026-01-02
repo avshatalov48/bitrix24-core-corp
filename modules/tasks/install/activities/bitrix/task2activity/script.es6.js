@@ -31,20 +31,31 @@ class Task2Activity
 	#gottenFromFlowFields: HTMLElement[] = [];
 	#flowId: Element;
 	#flowIdExpression: Element;
+	#flowDistributionType: string;
+	#flowModifiedFieldsMap: Map<string, string>;
+	#flowDistributionMap: Map<number, string>;
+	#controlledByFlowFields: [];
 	#robotControlledByFlowFieldSelector: [];
 	#robotControlledByFlowFields: [];
 	#fakeRobotControlledByFlowFields: [] = [];
 
 	constructor(options: {
 		isRobot: boolean,
-		controlledByFlowFields: Array<string>;
+		controlledByFlowFields: ?Array<string>;
+		flowModifiedFieldsMap: Map<string, string>,
+		flowDistributionMap: Map<number, string>,
+		flowDistributionType: ?string,
+		flowList: ?Array<Map<string, string>>,
 		formName: ?string,
 		selectedGroupId: ?(number | string),
-		selectedFlowId: ?(number | string),
+		selectedFlowId: ?number,
 		selectedTags: Array<{ type: string, id: ?number, name: string } | string>,
 		dependsOn: Array<string | number>,
 	})
 	{
+		this.#flowModifiedFieldsMap = options.flowModifiedFieldsMap;
+		this.#flowDistributionMap = options.flowDistributionMap;
+
 		if (options.isRobot)
 		{
 			this.#form = document.forms.namedItem(options.formName);
@@ -82,7 +93,16 @@ class Task2Activity
 		else
 		{
 			this.#designersControlledByFlowFields = [];
-			for (const fieldName of options.controlledByFlowFields)
+			this.#controlledByFlowFields = [];
+
+			if (options.selectedFlowId > 0)
+			{
+				this.#selectedFlowId = options.selectedFlowId;
+				this.#flowDistributionType = options.flowDistributionMap[this.#selectedFlowId];
+				this.#controlledByFlowFields = options.flowModifiedFieldsMap[this.#flowDistributionType];
+			}
+
+			for (const fieldName of this.#controlledByFlowFields)
 			{
 				const field = document.querySelector(`[name="${fieldName}"]`)?.closest('td[width="60%"]');
 				if (field)
@@ -105,7 +125,7 @@ class Task2Activity
 	{
 		const fieldSelectors = [];
 		const fields = [];
-		for (const fieldName of controlledByFlowFields)
+		for (const fieldName of (controlledByFlowFields ?? []))
 		{
 			const target =
 				document.getElementById(`id_${fieldName}`)
@@ -289,6 +309,10 @@ class Task2Activity
 						Dom.clean(this.#form.FLOW_ID);
 						this.#form.FLOW_ID.append(new Option(tag.getTitle(), tag.getId(), true, true));
 
+						this.#flowDistributionType = this.#getFlowDistributionType(event.target.getDialog(), tag);
+						const newFieldsControlledByFlow = this.#flowModifiedFieldsMap[this.#flowDistributionType];
+						this.#getControlledByFlowFields(newFieldsControlledByFlow);
+
 						this.#setFlowValues(this.#getGroupByFlow(event.target.getDialog(), tag));
 						this.#lockFieldsControlledByFlow();
 					},
@@ -458,7 +482,7 @@ class Task2Activity
 			for (const tagName of newTags.values())
 			{
 				this.#tagsSelector.addTag({
-					id: String(Math.random()),
+					id: tagName,
 					title: tagName,
 					entityId: 'task-tag',
 					customData: {
@@ -716,12 +740,11 @@ class Task2Activity
 
 	#onChangedFlow()
 	{
-		if (!this.#flowId.value && !this.#flowIdExpression.value)
+		this.#showFieldsControlledByFlow();
+
+		if (this.#flowId.value || this.#flowIdExpression.value)
 		{
-			this.#showFieldsControlledByFlow();
-		}
-		else
-		{
+			this.#updateFieldsControlledByFlow();
 			this.#hideFieldsControlledByFlow();
 		}
 	}
@@ -758,6 +781,23 @@ class Task2Activity
 			if (this.#gottenFromFlowFields[index])
 			{
 				this.#gottenFromFlowFields[index].hidden = true;
+			}
+		}
+	}
+
+	#updateFieldsControlledByFlow()
+	{
+		this.#flowDistributionType = this.#flowDistributionMap[this.#flowId.value];
+		this.#controlledByFlowFields = this.#flowModifiedFieldsMap[this.#flowDistributionType] ?? [];
+		this.#designersControlledByFlowFields = [];
+		this.#gottenFromFlowFields = [];
+
+		for (const fieldName of this.#controlledByFlowFields)
+		{
+			const field = document.querySelector(`[name="${fieldName}"]`)?.closest('td[width="60%"]');
+			if (field)
+			{
+				this.#designersControlledByFlowFields.push(field);
 			}
 		}
 	}
@@ -841,6 +881,11 @@ class Task2Activity
 		{
 			field.value = '';
 		}
+	}
+
+	#getFlowDistributionType(dialog, flow)
+	{
+		return dialog?.items?.get('flow')?.get(String(flow.id))?.customData?.get('distributionType');
 	}
 
 	#getGroupByFlow(dialog, flow)

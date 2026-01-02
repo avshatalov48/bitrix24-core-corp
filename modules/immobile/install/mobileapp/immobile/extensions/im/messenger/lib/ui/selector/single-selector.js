@@ -123,7 +123,7 @@ jn.define('im/messenger/lib/ui/selector/single-selector', (require, exports, mod
 			return View(
 				{
 					style: {
-						backgroundColor: Theme.isDesignSystemSupported ? Theme.colors.bgContentPrimary : Theme.colors.bgContentTertiary,
+						backgroundColor: Theme.colors.bgContentPrimary,
 						padding: 10,
 					},
 				},

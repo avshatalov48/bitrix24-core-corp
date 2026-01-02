@@ -1,0 +1,16 @@
+.tasks-full-card-header-burger-container {
+	flex-shrink: 0;
+	margin: 0 0 0 10px;
+	line-height: 0;
+	cursor: pointer;
+}
+
+.tasks-full-card-header-burger {
+	--ui-icon-set__icon-color: var(--ui-color-base-4);
+	--ui-icon-set__icon-size: 22px;
+
+	/* icon "ellipsys vertical" */
+	transform-origin: center;
+	transform: rotate(90deg);
+	/* icon "ellipsys vertical" end */
+}

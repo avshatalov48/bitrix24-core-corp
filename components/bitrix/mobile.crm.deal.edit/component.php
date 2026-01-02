@@ -24,7 +24,6 @@ global $USER_FIELD_MANAGER, $DB, $USER;
 $CCrmDeal = new CCrmDeal();
 $CCrmUserType = new CCrmUserType($USER_FIELD_MANAGER, CCrmDeal::$sUFEntityID);
 $CCrmBizProc = new CCrmBizProc('DEAL');
-$userPermissions = CCrmPerms::GetCurrentUserPermissions();
 
 $arParams['NAME_TEMPLATE'] = empty($arParams['NAME_TEMPLATE']) ? CSite::GetNameFormat(false) : str_replace(array("#NOBR#","#/NOBR#"), array("",""), $arParams["NAME_TEMPLATE"]);
 
@@ -76,7 +75,7 @@ if($arResult['CATEGORY_ID'] < 0)
 	}
 	else
 	{
-		$categoryIDs = CCrmDeal::GetPermittedToCreateCategoryIDs($userPermissions);
+		$categoryIDs = \Bitrix\Crm\Service\Container::getInstance()->getUserPermissions()->category()->getAvailableForAddingCategoriesIds(CCrmOwnerType::Deal);
 		if(!empty($categoryIDs))
 		{
 			$arResult['CATEGORY_ID'] = $categoryIDs[0];
@@ -117,23 +116,23 @@ elseif (isset($_REQUEST['conv_quote_id']) && $_REQUEST['conv_quote_id'] > 0)
 
 $arResult["IS_EDIT_PERMITTED"] = false;
 $arResult["IS_VIEW_PERMITTED"] = false;
-$arResult["IS_DELETE_PERMITTED"] = CCrmDeal::CheckDeletePermission($arParams['ELEMENT_ID'], $userPermissions);
+$arResult["IS_DELETE_PERMITTED"] = CCrmDeal::CheckDeletePermission($arParams['ELEMENT_ID']);
 
 if($isEditMode)
 {
-	$arResult["IS_EDIT_PERMITTED"] = CCrmDeal::CheckUpdatePermission($arParams['ELEMENT_ID'], $userPermissions);
+	$arResult["IS_EDIT_PERMITTED"] = CCrmDeal::CheckUpdatePermission($arParams['ELEMENT_ID']);
 	if (!$arResult["IS_EDIT_PERMITTED"] && $arParams["RESTRICTED_MODE"])
 	{
-		$arResult["IS_VIEW_PERMITTED"] = CCrmDeal::CheckReadPermission($arParams['ELEMENT_ID'], $userPermissions);
+		$arResult["IS_VIEW_PERMITTED"] = CCrmDeal::CheckReadPermission($arParams['ELEMENT_ID']);
 	}
 }
 elseif($isCopyMode)
 {
-	$arResult["IS_VIEW_PERMITTED"] = CCrmDeal::CheckReadPermission($arParams['ELEMENT_ID'], $userPermissions);
+	$arResult["IS_VIEW_PERMITTED"] = CCrmDeal::CheckReadPermission($arParams['ELEMENT_ID']);
 }
 else
 {
-	$arResult["IS_EDIT_PERMITTED"] = CCrmDeal::CheckCreatePermission($userPermissions);
+	$arResult["IS_EDIT_PERMITTED"] = CCrmDeal::CheckCreatePermission();
 }
 
 if(!$arResult["IS_EDIT_PERMITTED"] && !$arResult["IS_VIEW_PERMITTED"])
@@ -141,10 +140,6 @@ if(!$arResult["IS_EDIT_PERMITTED"] && !$arResult["IS_VIEW_PERMITTED"])
 	ShowError(GetMessage('CRM_PERMISSION_DENIED'));
 	return;
 }
-
-$arEntityAttr = $arParams['ELEMENT_ID'] > 0
-	? $userPermissions->GetEntityAttr('DEAL', array($arParams['ELEMENT_ID']))
-	: array();
 
 $bInternal = false;
 if (isset($arParams['INTERNAL_FILTER']) && !empty($arParams['INTERNAL_FILTER']))
@@ -156,7 +151,7 @@ $arResult['TAX_MODE'] = $bTaxMode ? 'Y' : 'N';
 
 if($isEditMode)
 {
-	CCrmDeal::PrepareConversionPermissionFlags($arParams['ELEMENT_ID'], $arResult, $userPermissions);
+	CCrmDeal::PrepareConversionPermissionFlags($arParams['ELEMENT_ID'], $arResult);
 	if($arResult['CAN_CONVERT'])
 	{
 		$config = \Bitrix\Crm\Conversion\DealConversionConfig::load();
@@ -633,7 +628,7 @@ else
 					$arResult['ERROR_MESSAGE'] .= GetMessage('UNKNOWN_ERROR');
 			}
 
-			if (($arBizProcParametersValues = $CCrmBizProc->CheckFields($isEditMode ? $arResult['ELEMENT']['ID']: false, false, $arResult['ELEMENT']['ASSIGNED_BY'], $isEditMode ? $arEntityAttr : null)) === false)
+			if (($arBizProcParametersValues = $CCrmBizProc->CheckFields($isEditMode ? $arResult['ELEMENT']['ID']: false, false, $arResult['ELEMENT']['ASSIGNED_BY'])) === false)
 				$arResult['ERROR_MESSAGE'] .= $CCrmBizProc->LAST_ERROR;
 
 			if (empty($arResult['ERROR_MESSAGE']))
@@ -823,13 +818,15 @@ $arResult['BACK_URL'] = $conversionWizard !== null && $conversionWizard->hasOrig
 
 $arResult['STAGE_LIST'] = array();
 $arResult['~STAGE_LIST'] = Bitrix\Crm\Category\DealCategory::getStageList($arResult['CATEGORY_ID']);
+$stageUserPermissions = \Bitrix\Crm\Service\Container::getInstance()->getUserPermissions()->stage();
 foreach ($arResult['~STAGE_LIST'] as $statusID => $statusTitle)
 {
-	$permissionType = $isEditMode
-		? CCrmDeal::GetStageUpdatePermissionType($statusID, $userPermissions, $arResult['CATEGORY_ID'])
-		: CCrmDeal::GetStageCreatePermissionType($statusID, $userPermissions, $arResult['CATEGORY_ID']);
+	$hasAccessToStage = $isEditMode
+		? $stageUserPermissions->canUpdateInStage(CCrmOwnerType::Deal, (int)$arResult['CATEGORY_ID'], $statusID)
+		: $stageUserPermissions->canAddInStage(CCrmOwnerType::Deal, (int)$arResult['CATEGORY_ID'], $statusID)
+	;
 
-	if ($permissionType > BX_CRM_PERM_NONE)
+	if ($hasAccessToStage)
 	{
 		$arResult['STAGE_LIST'][$statusID] = $statusTitle;
 	}
@@ -1027,7 +1024,7 @@ $arResult['FIELDS'][] = array(
 		: (\Bitrix\Crm\Settings\DealSettings::getCurrent()->getOpenedFlag() ? 'Y' : 'N')
 );
 
-if (CCrmContact::CheckReadPermission($arResult['ELEMENT']['CONTACT_ID'], $userPermissions))
+if (CCrmContact::CheckReadPermission($arResult['ELEMENT']['CONTACT_ID']))
 {
 	$arResult['ELEMENT_CONTACT'] = "";
 	if ($arResult['ELEMENT']['CONTACT_ID'])
@@ -1095,7 +1092,7 @@ if (CCrmContact::CheckReadPermission($arResult['ELEMENT']['CONTACT_ID'], $userPe
 		);
 	}
 }
-if (CCrmCompany::CheckReadPermission($arResult['ELEMENT']['COMPANY_ID'], $userPermissions))
+if (CCrmCompany::CheckReadPermission($arResult['ELEMENT']['COMPANY_ID']))
 {
 	$arResult['ELEMENT_COMPANY'] = "";
 	if ($arResult['ELEMENT']['COMPANY_ID'])

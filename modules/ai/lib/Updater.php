@@ -2,6 +2,7 @@
 
 namespace Bitrix\AI;
 
+use Bitrix\AI\Facade\AiUrlManager;
 use Bitrix\AI\Facade\Bitrix24;
 use Bitrix\AI\Synchronization\Enum\SyncMode;
 use Bitrix\AI\Synchronization\ImageStylePromptSync;
@@ -11,6 +12,7 @@ use Bitrix\AI\Synchronization\RoleIndustrySync;
 use Bitrix\AI\Synchronization\RoleSync;
 use Bitrix\AI\Synchronization\SectionSync;
 use Bitrix\Main\Application;
+use Bitrix\Main\DI\ServiceLocator;
 use Bitrix\Main\Type\DateTime;
 use Bitrix\Main\Web\HttpClient;
 use Bitrix\Main\Web\Json;
@@ -119,7 +121,7 @@ final class Updater
 	{
 		if (Bitrix24::shouldUseB24() === false)
 		{
-			return 'https://static-ai-proxy.bitrix.info/v2/box.json';
+			return self::getAiUrlManager()->getPromptBaseUrl();
 		}
 
 		return Config::getValue('ai_prompt_db_uri');
@@ -369,5 +371,10 @@ final class Updater
 	private static function sendInfo($msg)
 	{
 		AddMessage2Log('Prompt Updater ' . $msg, 'ai');
+	}
+
+	private static function getAiUrlManager(): AiUrlManager
+	{
+		return ServiceLocator::getInstance()->get(AiUrlManager::class);
 	}
 }

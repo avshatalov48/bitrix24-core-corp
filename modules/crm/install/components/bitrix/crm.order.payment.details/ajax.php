@@ -1,11 +1,14 @@
 <?php
 
-define('NO_KEEP_STATISTIC', 'Y');
-define('NO_AGENT_STATISTIC','Y');
-define('NO_AGENT_CHECK', true);
-define('DisableEventsCheck', true);
+const NO_KEEP_STATISTIC = 'Y';
+const NO_AGENT_STATISTIC = 'Y';
+const NO_AGENT_CHECK = true;
+const DisableEventsCheck = true;
 
-use Bitrix\Crm\Order\Permissions;
+/**
+ * @global \CMain $APPLICATION
+ */
+
 use Bitrix\Main\Loader;
 use Bitrix\Main\Localization\Loc;
 use Bitrix\Main\Type\Date;
@@ -53,7 +56,7 @@ final class AjaxProcessor extends \Bitrix\Crm\Order\AjaxProcessor
 
 		if ($id > 0)
 		{
-			if (!Permissions\Payment::checkUpdatePermission($id, $this->userPermissions))
+			if (!\Bitrix\Crm\Service\Container::getInstance()->getUserPermissions()->item()->canUpdate(CCrmOwnerType::OrderPayment, $id))
 			{
 				$this->addError(Loc::getMessage("CRM_ORDER_P_ACCESS_DENIED"));
 
@@ -71,7 +74,7 @@ final class AjaxProcessor extends \Bitrix\Crm\Order\AjaxProcessor
 		}
 		else
 		{
-			if (!Permissions\Payment::checkCreatePermission($this->userPermissions))
+			if (!\Bitrix\Crm\Service\Container::getInstance()->getUserPermissions()->entityType()->canAddItems(CCrmOwnerType::OrderPayment))
 			{
 				$this->addError(new \Bitrix\Main\Error(Loc::getMessage('CRM_ORDER_P_ACCESS_DENIED')));
 
@@ -213,7 +216,11 @@ final class AjaxProcessor extends \Bitrix\Crm\Order\AjaxProcessor
 			return;
 		}
 
-		if (!\Bitrix\Crm\Order\Permissions\Order::checkUpdatePermission($payment['ORDER_ID'], $this->userPermissions))
+		if (!\Bitrix\Crm\Service\Container::getInstance()
+			->getUserPermissions()
+			->item()
+			->canUpdate(CCrmOwnerType::Order, (int)$payment['ORDER_ID'])
+		)
 		{
 			$this->addError(Loc::getMessage('CRM_ORDER_ACCESS_DENIED'));
 
@@ -287,14 +294,22 @@ final class AjaxProcessor extends \Bitrix\Crm\Order\AjaxProcessor
 
 		if ((int)$formData['ID'] <= 0)
 		{
-			if (!Permissions\Payment::checkCreatePermission($this->userPermissions))
+			if (!\Bitrix\Crm\Service\Container::getInstance()
+				->getUserPermissions()
+				->entityType()
+				->canAddItems(CCrmOwnerType::OrderPayment)
+			)
 			{
 				$this->addError(Loc::getMessage('CRM_ORDER_P_ACCESS_DENIED'));
 
 				return;
 			}
 		}
-		elseif (!Permissions\Payment::checkUpdatePermission((int)$formData['ID'], $this->userPermissions))
+		elseif (!\Bitrix\Crm\Service\Container::getInstance()
+			->getUserPermissions()
+			->item()
+			->canUpdate(CCrmOwnerType::OrderPayment, (int)$formData['ID'])
+		)
 		{
 			$this->addError(Loc::getMessage('CRM_ORDER_P_ACCESS_DENIED'));
 
@@ -318,7 +333,11 @@ final class AjaxProcessor extends \Bitrix\Crm\Order\AjaxProcessor
 			return;
 		}
 
-		if (!Permissions\Payment::checkUpdatePermission((int)$formData['ID'], $this->userPermissions))
+		if (!\Bitrix\Crm\Service\Container::getInstance()
+			->getUserPermissions()
+			->item()
+			->canUpdate(CCrmOwnerType::OrderPayment, (int)$formData['ID'])
+		)
 		{
 			$this->addError(Loc::getMessage('CRM_ORDER_P_ACCESS_DENIED'));
 
@@ -393,7 +412,11 @@ final class AjaxProcessor extends \Bitrix\Crm\Order\AjaxProcessor
 			return;
 		}
 
-		if (!Permissions\Payment::checkDeletePermission($id, $this->userPermissions))
+		if (!\Bitrix\Crm\Service\Container::getInstance()
+			->getUserPermissions()
+			->item()
+			->canDelete(CCrmOwnerType::OrderPayment, $id)
+		)
 		{
 			$this->addError(Loc::getMessage('CRM_ORDER_P_ACCESS_DENIED'));
 

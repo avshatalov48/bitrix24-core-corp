@@ -17,6 +17,7 @@ use Bitrix\Socialnetwork\Component\WorkgroupList;
 use Bitrix\Socialnetwork\Helper\Feature;
 use Bitrix\TasksMobile\Provider\TariffPlanRestrictionProvider;
 use Bitrix\TasksMobile\Settings;
+use Bitrix\Mobile\Menu\Analytics;
 
 class Task implements Tabable
 {
@@ -42,12 +43,15 @@ class Task implements Tabable
 	public function getMenuData(): ?array
 	{
 		$result = [
+			'id' => $this->getId(),
+			'section_code' => 'tasks',
 			'title' => $this->getTitle(),
 			'useLetterImage' => true,
 			'color' => '#fabb3f',
 			'imageUrl' => 'favorite/icon-tasks.png',
 			'params' => [
 				'id' => 'tasks_tabs',
+				'analytics' => Analytics::tasks(),
 			],
 			'imageName' => $this->getIconId(),
 		];
@@ -56,7 +60,7 @@ class Task implements Tabable
 		if (!empty($data['component']))
 		{
 			$result['params']['onclick'] = Utils::getComponentJSCode($data['component']);
-			$result['params']['counter'] =' tasks_total';
+			$result['params']['counter'] ='tasks_total';
 		}
 		elseif (!empty($data['page']))
 		{
@@ -105,6 +109,22 @@ class Task implements Tabable
 		return true;
 	}
 
+	private function getCacheId(): string
+	{
+		$enabledTools = [];
+
+		$tools = ['projects', 'tasks', 'scrum', 'effective', 'flows'];
+		foreach ($tools as $toolId)
+		{
+			if ($this->isToolAvailable($toolId))
+			{
+				$enabledTools[] = $toolId;
+			}
+		}
+
+		return 'tasks_tabs_' . hash('sha256', implode('_', $enabledTools));
+	}
+
 	/**
 	 * @throws \Exception
 	 */
@@ -112,6 +132,7 @@ class Task implements Tabable
 	{
 		return [
 			'sort' => 400,
+			'cacheId' => $this->getCacheId(),
 			'imageName' => $this->getIconId(),
 			'badgeCode' => 'tasks',
 			'id' => 'tasks',
@@ -271,7 +292,7 @@ class Task implements Tabable
 
 	private function getFlowListTab(): ?array
 	{
-		if (!Settings::getInstance()->isTaskFlowAvailable())
+		if ($this->context->extranet || !Settings::getInstance()->isTaskFlowAvailable())
 		{
 			return null;
 		}

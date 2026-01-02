@@ -107,25 +107,6 @@ jn.define('layout/ui/smartphone-contact-selector', (require, exports, module) =>
 		}
 
 		open = async () => {
-			if (Feature.isSmartphoneContactsAPISupported())
-			{
-				await this.openNewSelector();
-
-				return;
-			}
-
-			if (Application.getPlatform() === 'android')
-			{
-				Feature.showDefaultUnsupportedWidget({}, this.parentLayout);
-
-				return;
-			}
-
-			await this.openOldNativeSelector();
-		};
-
-		async openNewSelector()
-		{
 			await Notify.showIndicatorLoading();
 			this.allContacts = await this.#getContacts();
 			Notify.hideCurrentIndicator();
@@ -169,7 +150,7 @@ jn.define('layout/ui/smartphone-contact-selector', (require, exports, module) =>
 			}
 
 			this.#initSelector();
-		}
+		};
 
 		#onPhoneInputBoxContinue = ({ phone, selectorInstance }) => {
 			const contact = {
@@ -179,7 +160,7 @@ jn.define('layout/ui/smartphone-contact-selector', (require, exports, module) =>
 
 			if (Type.isFunction(this.onSendButtonClickHandler))
 			{
-				this.onSendButtonClickHandler([contact], selectorInstance);
+				this.onSendButtonClickHandler([contact], selectorInstance, true);
 			}
 		};
 
@@ -225,7 +206,7 @@ jn.define('layout/ui/smartphone-contact-selector', (require, exports, module) =>
 			const contactsData = await this.getContactsDetailData(selectedContacts);
 			if (contactsData && contactsData.length > 0 && this.onSendButtonClickHandler)
 			{
-				this.onSendButtonClickHandler(contactsData, this);
+				this.onSendButtonClickHandler(contactsData, this, false);
 			}
 		}
 
@@ -250,11 +231,8 @@ jn.define('layout/ui/smartphone-contact-selector', (require, exports, module) =>
 			return [];
 		};
 
-		close = () => {
-			if (this.selector)
-			{
-				this.selector.close();
-			}
+		close = (callback) => {
+			this.selector?.close(callback ?? null);
 		};
 
 		enableSendButtonLoadingIndicator(enable = true)
@@ -321,7 +299,7 @@ jn.define('layout/ui/smartphone-contact-selector', (require, exports, module) =>
 
 						if (Type.isFunction(this.onSendButtonClickHandler))
 						{
-							this.onSendButtonClickHandler(this.getSelectedContacts(), this);
+							this.onSendButtonClickHandler(this.getSelectedContacts(), this, false);
 						}
 					}
 				});
@@ -441,20 +419,12 @@ jn.define('layout/ui/smartphone-contact-selector', (require, exports, module) =>
 		#getContacts = async () => {
 			if (Type.isFunction(contacts.hasContactListAccess) && contacts.hasContactListAccess())
 			{
-				const initialContacts = await contacts.getContacts([
-					'id',
-					'displayName',
-					'firstName',
-					'secondName',
-					'phoneNumbers',
-					'avatar',
-				]).catch((error) => {
-					console.error(error);
-				});
+				const initialContacts = this.props.initialContacts ?? await getSmartphoneContacts();
 
 				Notify.hideCurrentIndicator();
 				const contactsWithSeparatedPhoneNumbers = [];
-				if (Array.isArray(initialContacts) && initialContacts.length > 0)
+				if (Array.isArray(initialContacts)
+					&& initialContacts.length > 0)
 				{
 					initialContacts.forEach((item) => {
 						if (Array.isArray(item.phoneNumbers) && item.phoneNumbers.length > 0)
@@ -545,6 +515,24 @@ jn.define('layout/ui/smartphone-contact-selector', (require, exports, module) =>
 		};
 	}
 
+	const getSmartphoneContacts = async () => {
+		if (Type.isFunction(contacts.hasContactListAccess) && contacts.hasContactListAccess())
+		{
+			return contacts.getContacts([
+				'id',
+				'displayName',
+				'firstName',
+				'secondName',
+				'phoneNumbers',
+				'avatar',
+			]).catch((error) => {
+				console.error(error);
+			});
+		}
+
+		return null;
+	};
+
 	SmartphoneContactSelector.defaultProps = {
 		allowMultipleSelection: true,
 		closeAfterSendButtonClick: true,
@@ -564,5 +552,6 @@ jn.define('layout/ui/smartphone-contact-selector', (require, exports, module) =>
 	module.exports = {
 		SmartphoneContactSelector,
 		AvatarEntityType,
+		getSmartphoneContacts,
 	};
 });

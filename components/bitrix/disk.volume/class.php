@@ -258,68 +258,61 @@ class CDiskVolumeComponent extends BaseComponent
 	/**
 	 * @return boolean
 	 */
-	public function isNeedReload()
+	protected function isNeedReload(): bool
 	{
 		// there are no running task
-		$filter = array(
+		$filter = [
 			'=OWNER_ID' => $this->getUser()->getId(),
-			'=AGENT_LOCK' => array(
+			'=AGENT_LOCK' => [
 				Volume\Task::TASK_STATUS_RUNNING,
 				Volume\Task::TASK_STATUS_WAIT,
-			),
-		);
+			],
+		];
 		if (!$this->isAdminMode())
 		{
 			$filter['=STORAGE_ID'] = $this->getCurrentUserStorageId();
 		}
-		$workerResult = \Bitrix\Disk\Internals\VolumeTable::getList(array(
-			'select' => array('ID'),
+		$workerResult = \Bitrix\Disk\Internals\VolumeTable::getList([
+			'select' => ['ID'],
 			'filter' => $filter,
 			'limit' => 1,
-		));
-		if ($workerResult)
+		]);
+		if ($workerResult->fetch())
 		{
-			if ($row = $workerResult->fetch())
-			{
-				return false;
-			}
+			return false;
 		}
 
 		// are there finished tasks
 		// last measure a day ago
-		$filter = array(
+		$filter = [
 			'=OWNER_ID' => $this->getUser()->getId(),
-			array(
+			[
 				'LOGIC' => 'OR',
-				'=AGENT_LOCK' => array(
+				'=AGENT_LOCK' => [
 					Volume\Task::TASK_STATUS_DONE,
 					Volume\Task::TASK_STATUS_CANCEL,
-				),
-				array(
+				],
+				[
 					'LOGIC' => 'AND',
-					'=AGENT_LOCK' => array(
+					'=AGENT_LOCK' => [
 						Volume\Task::TASK_STATUS_NONE,
-					),
+					],
 					'<CREATE_TIME' => new \Bitrix\Main\Type\DateTime(date('Y-m-d H:i:s', strtotime('-1 days')), 'Y-m-d H:i:s'),
-				),
-			),
-		);
+				],
+			],
+		];
 		if (!$this->isAdminMode())
 		{
 			$filter['=STORAGE_ID'] = $this->getCurrentUserStorageId();
 		}
-		$workerResult = \Bitrix\Disk\Internals\VolumeTable::getList(array(
-			'select' => array('ID'),
+		$workerResult = \Bitrix\Disk\Internals\VolumeTable::getList([
+			'select' => ['ID'],
 			'filter' => $filter,
-			'order' => array('CREATE_TIME' => 'DESC'),
 			'limit' => 1,
-		));
-		if ($workerResult)
+		]);
+		if ($workerResult->fetch())
 		{
-			if ($row = $workerResult->fetch())
-			{
-				return true;
-			}
+			return true;
 		}
 
 		return false;

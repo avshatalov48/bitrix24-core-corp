@@ -1,0 +1,12 @@
+<?php
+$MESS["CRM_TIMELINE_MENU_ADD_FILE"] = "Файлды қосу";
+$MESS["CRM_TIMELINE_MENU_CANCEL"] = "Болдырмау";
+$MESS["CRM_TIMELINE_MENU_CHANGE_RESPONSIBLE"] = "Жауаптыны ауыстыру";
+$MESS["CRM_TIMELINE_MENU_DELETE"] = "Жою";
+$MESS["CRM_TIMELINE_MENU_DELETE_TAG"] = "Мәртебені жою";
+$MESS["CRM_TIMELINE_MENU_DOWNLOAD_FILE"] = "Жүктеу";
+$MESS["CRM_TIMELINE_MENU_EDIT"] = "Өзгерту";
+$MESS["CRM_TIMELINE_MENU_FILTER_RELATED"] = "Байланысқан істер";
+$MESS["CRM_TIMELINE_MENU_MOVE_TO"] = "Істі ауыстыру";
+$MESS["CRM_TIMELINE_MENU_REPEAT"] = "Қайталау";
+$MESS["CRM_TIMELINE_MENU_VIEW"] = "Қарау";

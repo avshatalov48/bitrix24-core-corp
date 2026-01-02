@@ -1,4 +1,4 @@
-<?
+<?php
 if(!defined("B_PROLOG_INCLUDED") || B_PROLOG_INCLUDED!==true)die();
 
 CJSCore::RegisterExt('voximplant_config_rent', array(
@@ -7,23 +7,19 @@ CJSCore::RegisterExt('voximplant_config_rent', array(
 ));
 CJSCore::Init(array('voximplant.common', 'voximplant_config_rent', 'loader', 'sidepanel', 'ui.alerts', 'ui.hint', 'ui.buttons'));
 
-$isBitrix24Template = (SITE_TEMPLATE_ID == "bitrix24");
-if($isBitrix24Template)
-{
-	$this->SetViewTarget("pagetitle", 100);
-}
-?>
-<div class="pagetitle-container pagetitle-align-right-container">
-	<? if($arResult['RENT_PACKET_SIZE'] > 1): ?>
-		<a class="ui-btn ui-btn-default" onclick="top.BX.Helper.show('redirect=detail&code=9079921');"><?=GetMessage("VI_CONFIG_RENT_PACKET_DETAILS")?></a>
-	<? endif ?>
-</div>
-<?
+$buttonAdd = new \Bitrix\UI\Buttons\Button([
+	'text' => GetMessage('VI_CONFIG_RENT_PACKET_DETAILS'),
+	'color' => \Bitrix\UI\Buttons\Color::LIGHT_BORDER,
+	'click' => new \Bitrix\UI\Buttons\JsCode(
+		"top.BX.Helper.show('redirect=detail&code=9079921');"
+	),
+	'dataset' => [
+		'toolbar-collapsed-icon' => Bitrix\UI\Buttons\Icon::INFO,
+	]
+]);
+$buttonAdd->addAttribute('id', 'vox-blacklist-add');
+\Bitrix\UI\Toolbar\Facade\Toolbar::addButton($buttonAdd);
 
-if($isBitrix24Template)
-{
-	$this->EndViewTarget();
-}
 $APPLICATION->IncludeComponent("bitrix:ui.info.helper", "", array());
 ?>
 

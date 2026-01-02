@@ -7,17 +7,19 @@ this.BX.Sign.V2 = this.BX.Sign.V2 || {};
 
 	const EntityTypes = Object.freeze({
 	  User: 'user',
-	  Company: 'company'
+	  Company: 'company',
+	  Role: 'structure-node-role'
 	});
 	var _api = /*#__PURE__*/babelHelpers.classPrivateFieldLooseKey("api");
 	var _ui = /*#__PURE__*/babelHelpers.classPrivateFieldLooseKey("ui");
-	var _userDialog = /*#__PURE__*/babelHelpers.classPrivateFieldLooseKey("userDialog");
+	var _dataDialog = /*#__PURE__*/babelHelpers.classPrivateFieldLooseKey("dataDialog");
 	var _loader = /*#__PURE__*/babelHelpers.classPrivateFieldLooseKey("loader");
 	var _data = /*#__PURE__*/babelHelpers.classPrivateFieldLooseKey("data");
 	var _viewData = /*#__PURE__*/babelHelpers.classPrivateFieldLooseKey("viewData");
+	var _load = /*#__PURE__*/babelHelpers.classPrivateFieldLooseKey("load");
 	var _loadCompany = /*#__PURE__*/babelHelpers.classPrivateFieldLooseKey("loadCompany");
 	var _loadUser = /*#__PURE__*/babelHelpers.classPrivateFieldLooseKey("loadUser");
-	var _load = /*#__PURE__*/babelHelpers.classPrivateFieldLooseKey("load");
+	var _loadRole = /*#__PURE__*/babelHelpers.classPrivateFieldLooseKey("loadRole");
 	var _refreshView = /*#__PURE__*/babelHelpers.classPrivateFieldLooseKey("refreshView");
 	var _getLoader = /*#__PURE__*/babelHelpers.classPrivateFieldLooseKey("getLoader");
 	var _hideLoader = /*#__PURE__*/babelHelpers.classPrivateFieldLooseKey("hideLoader");

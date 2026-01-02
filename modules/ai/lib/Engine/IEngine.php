@@ -28,6 +28,8 @@ interface IEngine
 	 */
 	public function getConsumptionId(): string;
 
+	public function setQuality(string $quality): void;
+
 	/**
 	 * Returns true, if this Engine is available for use.
 	 *

@@ -84,7 +84,7 @@ class PortalSettings
 		return $this->settingsPath;
 	}
 
-	public function getDefaultLogo(): array
+	public function getDefaultLogo(): Intranet\Entity\Type\Logo
 	{
 		if (LANGUAGE_ID === 'ru')
 		{
@@ -92,24 +92,27 @@ class PortalSettings
 
 			if ($region === 'by')
 			{
-				return [
-					'white' => '/bitrix/images/intranet/logo/bitrix24/by/bitrix24-logo-by-white.svg',
-					'black' => '/bitrix/images/intranet/logo/bitrix24/by/bitrix24-logo-by-black.svg',
-				];
+				return new Intranet\Entity\Type\Logo(
+					color: '/bitrix/images/intranet/logo/bitrix24/by/bitrix24-logo-by-color.svg',
+					white: '/bitrix/images/intranet/logo/bitrix24/by/bitrix24-logo-by-white.svg',
+					black: '/bitrix/images/intranet/logo/bitrix24/by/bitrix24-logo-by-black.svg',
+				);
 			}
 			else
 			{
-				return [
-					'white' => '/bitrix/images/intranet/logo/bitrix24/ru/bitrix24-logo-ru-white.svg',
-					'black' => '/bitrix/images/intranet/logo/bitrix24/ru/bitrix24-logo-ru-black.svg',
-				];
+				return new Intranet\Entity\Type\Logo(
+					color: '/bitrix/images/intranet/logo/bitrix24/ru/bitrix24-logo-ru-color.svg',
+					white: '/bitrix/images/intranet/logo/bitrix24/ru/bitrix24-logo-ru-white.svg',
+					black: '/bitrix/images/intranet/logo/bitrix24/ru/bitrix24-logo-ru-black.svg',
+				);
 			}
 		}
 
-		return [
-			'white' => '/bitrix/images/intranet/logo/bitrix24/en/bitrix24-logo-en-white.svg',
-			'black' => '/bitrix/images/intranet/logo/bitrix24/en/bitrix24-logo-en-black.svg',
-		];
+		return new Intranet\Entity\Type\Logo(
+			color: '/bitrix/images/intranet/logo/bitrix24/en/bitrix24-logo-en-color.svg',
+			white: '/bitrix/images/intranet/logo/bitrix24/en/bitrix24-logo-en-white.svg',
+			black: '/bitrix/images/intranet/logo/bitrix24/en/bitrix24-logo-en-black.svg',
+		);
 	}
 
 	final public function getDesktopDownloadLinks(): array

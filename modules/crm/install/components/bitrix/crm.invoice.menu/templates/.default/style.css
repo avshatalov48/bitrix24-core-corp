@@ -64,3 +64,8 @@ div.bx-popup-menu td.popupmenu div.popupitem td.gutter div.btn-add-calendar
 	text-overflow: ellipsis;
 	max-width: 88px;
 }
+
+/* intranet.binding.menu hacks for old template */
+[data-role="crm-interface-toolbar-type2"] .intranet-binding-menu-btn.ui-btn-split:not(.--air) #intranet_binding_menu_crm_detail_top {
+	color: rgb(83, 91, 105) !important;
+}

@@ -27,8 +27,16 @@ jn.define('crm/timeline/item/ui/body/blocks/item-selector', (require, exports, m
 
 		sendChanges(selected)
 		{
-			const updateAction = this.props.saveAction?.value;
-			const updateParams = this.props.saveAction?.actionParams;
+			if (!this.props.saveAction)
+			{
+				return;
+			}
+
+			const {
+				value: updateAction,
+				actionParams: updateParams,
+				analytics,
+			} = this.props.saveAction;
 
 			if (!updateAction || !updateParams)
 			{
@@ -39,7 +47,7 @@ jn.define('crm/timeline/item/ui/body/blocks/item-selector', (require, exports, m
 				value: selected,
 			};
 
-			BX.ajax.runAction(updateAction, { data })
+			BX.ajax.runAction(updateAction, { data, analyticsLabel: analytics })
 				.catch((reject) => console.error(reject));
 		}
 	}

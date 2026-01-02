@@ -5,6 +5,7 @@ export type DocumentSendConfig = {
 	languages: {[key: string]: { NAME: string; IS_BETA: boolean; }},
 	documentMode: 'document' | 'template',
 	analytics?: Analytics,
+	needSkipEditorStep: boolean,
 };
 export type DocumentData = {
 	uid: string;

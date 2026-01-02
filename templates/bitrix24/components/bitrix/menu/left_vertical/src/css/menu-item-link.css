@@ -1,0 +1,75 @@
+.menu-item-link {
+	--menu-item-link-edit-icon-space: 28px;
+
+	box-sizing: border-box;
+	min-width: 38px;
+	max-width: 100%;
+	margin: 0;
+	padding: 6px;
+	display: flex;
+	align-items: center;
+	flex: 1;
+	font-size: var(--ui-font-size-lg);
+	line-height: var(--ui-font-line-height-3xs);
+	outline: none;
+	position: relative;
+	text-decoration: none;
+	white-space: nowrap;
+	color: inherit;
+	overflow: visible;
+	cursor: pointer;
+}
+
+.menu-item-group .menu-item-link {
+	padding: 5px;
+}
+
+.menu-items-edit-mode .menu-item-link {
+	cursor: default;
+	overflow: hidden;
+}
+
+.menu-item-draggable .menu-item-link {
+	cursor: move;
+}
+
+.menu-items-view-mode .menu-item-block:not(.menu-item-group):not(.menu-item-draggable) .menu-item-link {
+	clip-path: inset(0 0 0 0);
+	mask-image: linear-gradient(to left, rgba(0, 0, 0, 0) 0, rgba(0, 0, 0, 1) 0px);
+	mask-position: 0 0;
+}
+
+.menu-items-view-mode .menu-item-block:not(.menu-item-group):not(.menu-item-draggable):hover .menu-item-link,
+.menu-items-view-mode .menu-item-block:not(.menu-item-group):not(.menu-item-draggable).menu-item-block-hover .menu-item-link,
+.menu-items-edit-mode .menu-item-block:not(.menu-item-group):not(.menu-item-draggable) .menu-item-link {
+	clip-path: inset(0 var(--menu-item-link-edit-icon-space) 0 0);
+	transition: clip-path .3s .6s, mask-position .3s .6s;
+	mask-image: linear-gradient(to left, rgba(0, 0, 0, 0) 0, rgba(0, 0, 0, 1) var(--menu-item-link-edit-icon-space));
+	mask-position: calc(var(--menu-item-link-edit-icon-space) * -1) 0;
+}
+
+.menu-items-view-mode .menu-item-block.menu-all-groups:not(.menu-item-draggable) .menu-item-link {
+	clip-path: inset(0 0 0 0);
+	mask-image: linear-gradient(to left, rgba(0, 0, 0, 0) 0, rgba(0, 0, 0, 1) 0px);
+	mask-position: 0 0;
+}
+
+.menu-items-view-mode .menu-item-block.menu-all-groups:not(.menu-item-draggable):hover .menu-item-link,
+.menu-items-view-mode .menu-item-block.menu-all-groups:not(.menu-item-draggable).menu-item-block-hover .menu-item-link,
+.menu-items-edit-mode .menu-item-block.menu-all-groups:not(.menu-item-draggable) .menu-item-link {
+	--mask-size: 38px;
+	clip-path: inset(0 var(--mask-size) 0 0);
+	transition: clip-path .15s, mask-position .1s ease-in-out;
+	mask-image: linear-gradient(to left, rgba(0, 0, 0, 0) calc(var(--mask-size) / 1.5), rgba(0, 0, 0, 1) var(--mask-size));
+	mask-position: calc(var(--mask-size) * -1) 0;
+}
+
+.menu-collapsed-mode:not(.menu-sliding-mode) .menu-item-block:not(.menu-item-group):not(.menu-item-draggable) .menu-item-link,
+.menu-animation-closing-mode .menu-item-block:not(.menu-item-group):not(.menu-item-draggable) .menu-item-link,
+.menu-collapsed-mode:not(.menu-sliding-mode) .menu-item-block:not(.menu-item-group):not(.menu-item-draggable):hover .menu-item-link {
+	clip-path: none;
+	transition: none;
+	mask-image: none;
+}
+
+

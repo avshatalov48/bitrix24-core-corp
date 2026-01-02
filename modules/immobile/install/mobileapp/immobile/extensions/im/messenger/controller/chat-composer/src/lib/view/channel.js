@@ -2,7 +2,7 @@
  * @module im/messenger/controller/chat-composer/lib/view/channel
  */
 jn.define('im/messenger/controller/chat-composer/lib/view/channel', (require, exports, module) => {
-	const { Loc } = require('loc');
+	const { Loc } = require('im/messenger/loc');
 	const { Type } = require('type');
 	const { Color, Indent } = require('tokens');
 	const { BoxFooter } = require('ui-system/layout/dialog-footer');

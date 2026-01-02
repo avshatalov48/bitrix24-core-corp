@@ -1,2 +1,2 @@
 <?php
-$MESS["HR_ACTION_ACCESS_DENIED"] = "Insufficient permissions. Please contact your Bitrix24 administrator.";
+$MESS["HR_ACTION_ACCESS_DENIED_MSGVER_1"] = "Insufficient permissions. Refresh the page, or contact your Bitrix24 administrator.";

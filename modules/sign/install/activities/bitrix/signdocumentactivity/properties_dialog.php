@@ -62,6 +62,17 @@ $blankSelectorConfig = (new \Bitrix\Sign\Config\Ui\BlankSelector())->create(
 <tr>
 	<td align="right" width="40%" valign="top">
 		<span class="adm-required-field">
+			<?= htmlspecialcharsbx($dialog->getMap()['responsible']['Name']) ?>
+		</span>:
+	</td>
+	<td width="60%">
+		<?= $dialog->renderFieldControl($dialog->getMap()['responsible'], null, true, 0) ?>
+	</td>
+</tr>
+
+<tr>
+	<td align="right" width="40%" valign="top">
+		<span class="adm-required-field">
 			<?= htmlspecialcharsbx($dialog->getMap()['initiatorName']['Name']) ?>
 		</span>:
 	</td>

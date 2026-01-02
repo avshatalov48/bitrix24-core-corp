@@ -1,0 +1,7 @@
+<?php
+$MESS["VOX_INVOICES_DATE_RANGE"] = "Кезең";
+$MESS["VOX_INVOICES_DOCUMENT_DATE"] = "Құжаттың күні";
+$MESS["VOX_INVOICES_DOCUMENT_NUMBER"] = "Нөмір";
+$MESS["VOX_INVOICES_DOCUMENT_TYPE"] = "Құжаттың түрі";
+$MESS["VOX_INVOICES_DOWNLOAD"] = "Жүктеу";
+$MESS["VOX_INVOICES_TOTAL_AMOUNT"] = "Жалпы сома";

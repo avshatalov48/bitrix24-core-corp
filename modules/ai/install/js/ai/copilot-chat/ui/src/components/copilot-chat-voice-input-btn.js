@@ -75,12 +75,15 @@ export const CopilotChatVoiceInputBtn = {
 		}
 	},
 	unmounted() {
-		const converter: SpeechConverter = toRaw(this.converter);
+		if (this.isVoiceInputDisabled === false)
+		{
+			const converter: SpeechConverter = toRaw(this.converter);
 
-		converter.unsubscribe(speechConverterEvents.start, this.handleSpeechConverterStartEvent);
-		converter.unsubscribe(speechConverterEvents.stop, this.handleSpeechConverterStopEvent);
-		converter.unsubscribe(speechConverterEvents.result, this.handleSpeechConverterResultEvent.bind(this));
-		converter.unsubscribe(speechConverterEvents.error, this.handleSpeechConverterErrorEvent);
+			converter.unsubscribe(speechConverterEvents.start, this.handleSpeechConverterStartEvent);
+			converter.unsubscribe(speechConverterEvents.stop, this.handleSpeechConverterStopEvent);
+			converter.unsubscribe(speechConverterEvents.result, this.handleSpeechConverterResultEvent.bind(this));
+			converter.unsubscribe(speechConverterEvents.error, this.handleSpeechConverterErrorEvent);
+		}
 	},
 	template: `
 		<button

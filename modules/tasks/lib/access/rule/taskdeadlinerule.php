@@ -1,24 +1,27 @@
 <?php
-/**
- * Bitrix Framework
- * @package bitrix
- * @subpackage tasks
- * @copyright 2001-2021 Bitrix
- */
 
 namespace Bitrix\Tasks\Access\Rule;
 
+use Bitrix\Main\Access\Rule\AbstractRule;
 use Bitrix\Tasks\Access\ActionDictionary;
 use Bitrix\Main\Access\AccessibleItem;
+use Bitrix\Tasks\Access\Model\TaskModel;
+use Bitrix\Tasks\Access\Model\UserModel;
 use Bitrix\Tasks\Access\Role\RoleDictionary;
+use Bitrix\Tasks\Access\TaskAccessController;
 
-class TaskDeadlineRule extends \Bitrix\Main\Access\Rule\AbstractRule
+/**
+ * @property TaskAccessController $controller
+ * @property UserModel $user
+ */
+class TaskDeadlineRule extends AbstractRule
 {
-	public function execute(AccessibleItem $task = null, $params = null): bool
+	public function execute(AccessibleItem $item = null, $params = null): bool
 	{
-		if (!$task)
+		if (!$item instanceof TaskModel)
 		{
 			$this->controller->addError(static::class, 'Incorrect task');
+
 			return false;
 		}
 
@@ -28,28 +31,26 @@ class TaskDeadlineRule extends \Bitrix\Main\Access\Rule\AbstractRule
 		}
 
 		if (
-			$task->isMember($this->user->getUserId(), RoleDictionary::ROLE_RESPONSIBLE)
-			&& $task->isAllowedChangeDeadline()
+			$item->isAllowedChangeDeadline()
+			&& $item->isMember($this->user->getUserId(), RoleDictionary::ROLE_RESPONSIBLE)
 		)
+		{
+			return true;
+		}
+
+		if (array_intersect($item->getMembers(RoleDictionary::ROLE_DIRECTOR), $this->user->getAllSubordinates()))
 		{
 			return true;
 		}
 
 		if (
-			array_intersect($task->getMembers(RoleDictionary::ROLE_DIRECTOR), $this->user->getAllSubordinates())
+			$item->isAllowedChangeDeadline()
+			&& array_intersect($item->getMembers(RoleDictionary::ROLE_RESPONSIBLE), $this->user->getAllSubordinates())
 		)
 		{
 			return true;
 		}
 
-		if (
-			$task->isAllowedChangeDeadline()
-			&& array_intersect($task->getMembers(RoleDictionary::ROLE_RESPONSIBLE), $this->user->getAllSubordinates())
-		)
-		{
-			return true;
-		}
-
-		return $this->controller->check(ActionDictionary::ACTION_TASK_EDIT, $task, $params);
+		return $this->controller->check(ActionDictionary::ACTION_TASK_EDIT, $item, $params);
 	}
 }

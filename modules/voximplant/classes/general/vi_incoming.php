@@ -267,13 +267,19 @@ class CVoxImplantIncoming
 			'waitResponse' => $waitResponse
 		));
 		$queryResult = $http->query('POST', $call['ACCESS_URL'], Json::encode($answer));
-		if($waitResponse)
+		if ($waitResponse)
 		{
 			if ($queryResult === false)
 			{
 				$httpClientErrors = $http->getError();
-				if(!empty($httpClientErrors))
+				if (!empty($httpClientErrors))
 				{
+					$errors = $httpClientErrors;
+					$errors[] = 'command:'.$answer['COMMAND'];
+					$errors[] = 'url:'.$call['ACCESS_URL'];
+					$systemException = new \Bitrix\Main\SystemException('Voximplant connection error: '.implode('; ', $errors));
+					\Bitrix\Main\Application::getInstance()->getExceptionHandler()->writeToLog($systemException);
+
 					foreach ($httpClientErrors as $code => $message)
 					{
 						$result->addError(new \Bitrix\Main\Error($message, $code));
@@ -286,14 +292,28 @@ class CVoxImplantIncoming
 			{
 				// nothing here
 			}
-			else if ($http->getStatus() == 404)
-			{
-				$result->addError(new \Bitrix\Main\Error('Call scenario is not running', 'NOT_FOUND'));
-			}
 			else
 			{
-				$result->addError(new \Bitrix\Main\Error("Scenario server returns code " . $http->getStatus()));
+				$errors = [];
+				$errors[] = 'status:'.$responseStatus;
+				$reason = $http->getResponse()?->getReasonPhrase();
+				if (!empty($reason))
+				{
+					$errors[] = 'error:'. $reason;
+				}
+				$errors[] = 'command:'.$answer['COMMAND'];
+				$errors[] = 'url:'.$call['ACCESS_URL'];
+				$systemException = new \Bitrix\Main\SystemException('Voximplant response error: '.implode('; ', $errors));
+				\Bitrix\Main\Application::getInstance()->getExceptionHandler()->writeToLog($systemException);
 
+				if ($http->getStatus() == 404)
+				{
+					$result->addError(new \Bitrix\Main\Error('Call scenario is not running', 'NOT_FOUND'));
+				}
+				else
+				{
+					$result->addError(new \Bitrix\Main\Error("Scenario server returns code " . $http->getStatus()));
+				}
 			}
 		}
 

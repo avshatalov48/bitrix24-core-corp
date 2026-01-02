@@ -250,4 +250,36 @@ class CCrmDateTimeHelper
 			DateTime::convertFormatToPhp(FORMAT_DATETIME)
 		);
 	}
+
+	final public static function getYear(Date $date): int
+	{
+		return (int)$date->format('Y');
+	}
+
+	final public static function getMonth(Date $date): int
+	{
+		return (int)$date->format('m');
+	}
+
+	final public static function getQuarter(Date $date): int
+	{
+		$month = self::getMonth($date);
+
+		if ($month <= 3)
+		{
+			return 1;
+		}
+
+		if ($month <= 6)
+		{
+			return 2;
+		}
+
+		if ($month <= 9)
+		{
+			return 3;
+		}
+
+		return 4;
+	}
 }

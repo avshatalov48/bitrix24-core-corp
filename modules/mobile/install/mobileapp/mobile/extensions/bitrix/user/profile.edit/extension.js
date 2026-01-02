@@ -6,7 +6,7 @@ jn.define('user/profile.edit', (require, exports, module) => {
 	const { Profile } = require('user/profile');
 	const { getFile } = require('files/entry');
 	const { FileConverter } = require('files/converter');
-	const { openDeleteDialog } = require('user/account-delete');
+	const { openDeleteBitrix24Dialog, openDeleteDialog } = require('user/account');
 	const { AvaMenu } = require('ava-menu');
 	const store = require('statemanager/redux/store');
 	const { updateUserThunk } = require('statemanager/redux/slices/users/thunk');
@@ -35,16 +35,17 @@ jn.define('user/profile.edit', (require, exports, module) => {
 			if (item.id === 'delete_account')
 			{
 				openDeleteDialog();
+			} else if (item.id === 'delete_b24') {
+				openDeleteBitrix24Dialog()
 			}
 		}
 
 		onItemChanged(data)
 		{
 			this.changed = true;
-			if (data.id === 'delete_account')
+			if (data.id === 'delete_account' || data.id === 'delete_b24')
 			{
 				this.onItemSelected(data);
-
 				return;
 			}
 
@@ -194,17 +195,34 @@ jn.define('user/profile.edit', (require, exports, module) => {
 			const items = Object.values(this.formFields);
 			if (Number(this.userId) === Number(env.userId))
 			{
-				const { isCloudAccount } = require('user/account-delete');
+				const { isCloudAccount } = require('user/account');
 				if (isCloudAccount())
 				{
+					if (env.isAdmin)
+					{
+						items.push({
+							sectionCode: 'account',
+							title: BX.message('DELETE_B24'),
+							id: 'delete_b24',
+							styles: {
+								title: {
+									font: {
+										useColor: true,
+										color: AppTheme.colors.accentSoftElementRed1,
+									},
+								},
+							},
+						});
+					}
+
 					items.push({
 						sectionCode: 'account',
-						type: 'default',
 						title: BX.message('DELETE_ACCOUNT'),
 						id: 'delete_account',
 						styles: {
 							title: {
 								font: {
+									useColor: true,
 									color: AppTheme.colors.accentSoftElementRed1,
 								},
 							},
@@ -232,7 +250,8 @@ jn.define('user/profile.edit', (require, exports, module) => {
 									{
 										return false;
 									}
-									let oldValue = this.formFields[item.id].value;
+
+									let oldValue = this.formFields[item.id]?.value ;
 									if (typeof oldValue === 'undefined')
 									{
 										oldValue = '';

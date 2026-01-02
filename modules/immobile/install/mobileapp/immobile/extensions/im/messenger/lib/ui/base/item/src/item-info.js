@@ -2,6 +2,7 @@
  * @module im/messenger/lib/ui/base/item/item-info
  */
 jn.define('im/messenger/lib/ui/base/item/item-info', (require, exports, module) => {
+	const { Theme } = require('im/lib/theme');
 	const { getStatus } = require('im/messenger/assets/common');
 
 	class ItemInfo extends LayoutComponent
@@ -37,16 +38,7 @@ jn.define('im/messenger/lib/ui/base/item/item-info', (require, exports, module) 
 			}
 			/** @type{ItemInfoStyle} */
 			const style = this.props.style;
-			const iconSubtitle = this.props.iconSubtitle
-				? Image({
-					style: style.iconSubtitleStyle || {
-						width: 14,
-						height: 12,
-						alignSelf: 'center',
-					},
-					svg: { content: this.props.iconSubtitle },
-				})
-				: null;
+			const iconSubtitle = this.#prepareIconSubtitle();
 
 			return View(
 				{
@@ -97,6 +89,28 @@ jn.define('im/messenger/lib/ui/base/item/item-info', (require, exports, module) 
 					),
 				),
 			);
+		}
+
+		#prepareIconSubtitle()
+		{
+			if (!this.props.iconSubtitle)
+			{
+				return null;
+			}
+
+			const defaultStyle = {
+				width: 22,
+				height: 22,
+				alignSelf: 'center',
+			};
+			const style = this.props.style.iconSubtitleStyle || defaultStyle;
+			const tintColor = this.props.style.iconSubtitleStyle.color || Theme.colors.base4;
+
+			return Image({
+				style,
+				tintColor,
+				named: this.props.iconSubtitle,
+			});
 		}
 	}
 

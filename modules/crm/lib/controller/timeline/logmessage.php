@@ -19,6 +19,7 @@ use Bitrix\Main\ORM\Fields\ExpressionField;
 use Bitrix\Main\Type\DateTime;
 use CCrmOwnerType;
 use CRestServer;
+use Bitrix\Crm\Timeline\Entity\TimelineBindingTable;
 
 class LogMessage extends Base
 {
@@ -54,6 +55,23 @@ class LogMessage extends Base
 
 			return null;
 		}
+		$bindings = $this->getTimelineItemBindings($id);
+		$hasPermissions = false;
+		foreach ($bindings as $binding)
+		{
+			if (Container::getInstance()->getUserPermissions()->item()->canReadItemIdentifier($binding))
+			{
+				$hasPermissions = true;
+				break;
+			}
+		}
+
+		if (!$hasPermissions)
+		{
+			$this->addError(ErrorCode::getAccessDeniedError());
+
+			return null;
+		}
 
 		return [
 			'logMessage' => $this->getPreparedLogMessage($item),
@@ -61,8 +79,15 @@ class LogMessage extends Base
 	}
 
 	// 'crm.timeline.logmessage.list' method handler
-	public function listAction(int $entityTypeId, int $entityId, ?array $order = null, $offset = 0): Page
+	public function listAction(int $entityTypeId, int $entityId, ?array $order = null, $offset = 0): ?Page
 	{
+		if (!Container::getInstance()->getUserPermissions()->item()->canRead($entityTypeId, $entityId))
+		{
+			$this->addError(ErrorCode::getAccessDeniedError());
+
+			return null;
+		}
+
 		$this->prepareOrder($order);
 
 		$logMessages = $this->timelineTable::getList([
@@ -92,16 +117,19 @@ class LogMessage extends Base
 	// 'crm.timeline.logmessage.add' method handler
 	public function addAction(array $fields, CRestServer $server): ?array
 	{
-		if (!$this->isAdmin())
-		{
-			$this->addError(ErrorCode::getAccessDeniedError());
-
-			return null;
-		}
-
 		$preparedFields = $this->getPreparedRequiredFields($fields);
 		if (!$preparedFields)
 		{
+			return null;
+		}
+
+		$entityTypeId = $preparedFields['entityTypeId'];
+		$entityId = $preparedFields['entityId'];
+
+		if (!Container::getInstance()->getUserPermissions()->item()->canUpdate($entityTypeId, $entityId))
+		{
+			$this->addError(ErrorCode::getAccessDeniedError());
+
 			return null;
 		}
 
@@ -111,9 +139,6 @@ class LogMessage extends Base
 			'ICON_CODE' => $preparedFields['iconCode'],
 			'CLIENT_ID' => $server->getClientId(),
 		];
-
-		$entityTypeId = $preparedFields['entityTypeId'];
-		$entityId = $preparedFields['entityId'];
 
 		if ($entityId <= 0 || !CCrmOwnerType::IsDefined($entityTypeId))
 		{
@@ -350,5 +375,30 @@ class LogMessage extends Base
 			'text' => $settings['TEXT'] ?? '',
 			'iconCode' => $settings['ICON_CODE'] ?? '',
 		];
+	}
+
+	/**
+	 * @return ItemIdentifier[]
+	 */
+	protected function getTimelineItemBindings(int $id): array
+	{
+		$result = [];
+
+		$bindings = TimelineBindingTable::query()
+			->where('OWNER_ID', $id)
+			->setSelect(['ENTITY_TYPE_ID', 'ENTITY_ID'])
+			->exec()
+		;
+
+		while ($binding = $bindings->fetch())
+		{
+			$itemId = ItemIdentifier::createFromArray($binding);
+			if ($itemId)
+			{
+				$result[] = $itemId;
+			}
+		}
+
+		return $result;
 	}
 }

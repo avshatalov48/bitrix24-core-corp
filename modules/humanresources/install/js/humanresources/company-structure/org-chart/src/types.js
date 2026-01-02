@@ -1,3 +1,5 @@
+import { EntityTypes, type NodeColorSettingsType } from 'humanresources.company-structure.utils';
+
 type ChartData = {
 	canvas: {
 		shown: boolean;
@@ -38,6 +40,8 @@ type TreeItem = {
 	parentId: number;
 	children?: Array<string>;
 	description?: string;
+	entityType: EntityTypes.department | EntityTypes.team | EntityTypes.company;
+	teamColor?: NodeColorSettingsType;
 };
 
 type Point = {
@@ -45,25 +49,30 @@ type Point = {
 	y: number;
 };
 
-type ConnectorData = {
+type MountedDepartment = {
 	id: string;
 	parentId: string;
-	startPoint: Point;
-	endPoint: Point;
-	html: HTMLElement;
-	offset: number;
+	startPoint?: Point;
+	endPoint?: Point;
+	html?: HTMLElement;
+	parentsPath?: number[];
 };
 
 type TreeData = {
-	connectors: ConnectorData;
-	expandedNodes: Array<string>;
+	expandedNodes: Array<number>;
+};
+
+type ConnectorsData = {
+	...MountedDepartment,
+	show: boolean;
+	highlighted: boolean;
 };
 
 type TreeNodeData = {
-	chidldrenLoaded: boolean;
 	childrenOffset: number;
 	childrenMounted: boolean;
 	showInfo: boolean;
+	showDnd: boolean;
 };
 
 type FirstPopupData = {
@@ -74,12 +83,22 @@ type FirstPopupData = {
 	features: string[];
 };
 
+type DragAndDropData = {
+	draggedId: number;
+	targetId: number;
+	affectedItems: HTMLElement[];
+	direction: 1 | -1,
+	insertion: 'reorder' | 'sibling' | 'inside',
+};
+
 export type {
 	TreeItem,
-	ConnectorData,
 	TreeData,
+	ConnectorsData,
+	MountedDepartment,
 	TreeNodeData,
 	ChartData,
 	FirstPopupData,
 	Head,
+	DragAndDropData,
 };

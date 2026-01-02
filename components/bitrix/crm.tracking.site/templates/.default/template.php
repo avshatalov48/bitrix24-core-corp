@@ -4,9 +4,17 @@ if (!defined("B_PROLOG_INCLUDED") || B_PROLOG_INCLUDED!==true)
 	die();
 }
 
+use Bitrix\Crm\Tracking\Provider;
+use Bitrix\Main\Loader;
 use Bitrix\Main\Localization\Loc;
+use Bitrix\Main\Page\Asset;
 use Bitrix\Main\Web\Json;
 use Bitrix\Main\UI\Extension;
+use Bitrix\UI\Buttons\Button;
+use Bitrix\UI\Buttons\Color;
+use Bitrix\UI\Buttons\Icon;
+use Bitrix\UI\Buttons\JsCode;
+use Bitrix\UI\Toolbar\Facade\Toolbar;
 
 /** @var CMain $APPLICATION */
 /** @var array $arParams */
@@ -30,33 +38,37 @@ Extension::load([
 	'ui.forms',
 	'crm.tracking.connector',
 	'ui.sidepanel-content',
+	'ui.feedback.form',
 ]);
-
-\Bitrix\Main\Page\Asset::getInstance()->addCss('/bitrix/components/bitrix/crm.analytics.channel.phone/templates/.default/style.css');
+Loader::includeModule('ui');
+Asset::getInstance()->addCss('/bitrix/components/bitrix/crm.analytics.channel.phone/templates/.default/style.css');
 
 $containerId = 'crm-tracking-site';
+$feedbackParams = Json::encode(Provider::getFeedbackParameters());
+
+Toolbar::deleteFavoriteStar();
+Toolbar::addButton([
+	"color" => Color::LIGHT_BORDER,
+	"click" => new JsCode(
+		"BX.UI.Feedback.Form.open({$feedbackParams});"
+	),
+	"text" => Provider::getFeedbackButtonTitle(),
+]);
+
+if ($arResult['ROW']['ID'])
+{
+	$editButton = new Button([
+		"text" => Loc::getMessage('CRM_TRACKING_SITE_BTN_REMOVE'),
+		"color" => Color::LIGHT_BORDER,
+		"icon" => Icon::REMOVE,
+	]);
+	$editButton->addAttribute('id', 'crm-tracking-site-remove');
+
+	Toolbar::addButton($editButton);
+}
 ?>
 
 <div id="<?=htmlspecialcharsbx($containerId)?>" class="crm-tracking-site-wrap">
-
-	<?
-		if ($arResult['ROW']['ID']):
-			$this->SetViewTarget('pagetitle');
-	?>
-			<div id="crm-tracking-site-remove" class="ui-btn ui-btn-light-border ui-btn-icon-remove">
-				<?=Loc::getMessage('CRM_TRACKING_SITE_BTN_REMOVE')?>
-			</div>
-	<?
-			$this->EndViewTarget();
-		endif;
-	?>
-	<?
-	$APPLICATION->IncludeComponent(
-		'bitrix:ui.feedback.form',
-		'',
-		\Bitrix\Crm\Tracking\Provider::getFeedbackParameters()
-	);
-	?>
 
 	<form method="post" id="crm-tracking-site-form">
 		<?=bitrix_sessid_post();?>

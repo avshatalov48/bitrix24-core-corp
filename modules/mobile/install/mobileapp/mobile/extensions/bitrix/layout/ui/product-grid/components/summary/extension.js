@@ -6,6 +6,7 @@ jn.define('layout/ui/product-grid/components/summary', (require, exports, module
 	const AppTheme = require('apptheme');
 	const { clone, isEqual, get } = require('utils/object');
 	const { DiscountPrice } = require('layout/ui/product-grid/components/discount-price');
+	const { Money, MoneyView } = require('layout/ui/money');
 	const { animate, transition } = require('animation');
 
 	/**

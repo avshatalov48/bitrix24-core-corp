@@ -120,6 +120,10 @@ class CommandTable extends Main\Entity\DataManager
 				->configureSize(255)
 				->configureNullable()
 			,
+
+			(new DatetimeField('DEADLINE'))
+				->configureNullable()
+			,
 		];
 	}
 
@@ -186,5 +190,47 @@ class CommandTable extends Main\Entity\DataManager
 		}
 
 		return "\\Bitrix\\Transformer\\Entity\\CommandTable::deleteOldAgent({$days}, {$portion});";
+	}
+
+	/**
+	 * @internal
+	 */
+	final public static function encode(mixed $data): string
+	{
+		$normalized = is_array($data) ? self::normalizeArray($data) : $data;
+
+		return base64_encode(serialize($normalized));
+	}
+
+	private static function normalizeArray(array $array): array
+	{
+		if (Main\Type\ArrayHelper::isAssociative($array))
+		{
+			ksort($array);
+		}
+		else
+		{
+			sort($array);
+		}
+
+		foreach ($array as &$value)
+		{
+			if (is_array($value))
+			{
+				$value = self::normalizeArray($value);
+			}
+		}
+
+		return $array;
+	}
+
+	/**
+	 * @internal
+	 */
+	final public static function decode(string $encoded): mixed
+	{
+		$decoded = base64_decode($encoded);
+
+		return unserialize($decoded, ['allowed_classes' => false]);
 	}
 }

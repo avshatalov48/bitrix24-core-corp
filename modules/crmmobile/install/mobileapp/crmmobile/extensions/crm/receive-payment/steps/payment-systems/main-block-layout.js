@@ -6,6 +6,7 @@ jn.define('crm/receive-payment/steps/payment-systems/main-block-layout', (requir
 	const AppTheme = require('apptheme');
 	const { ExpandableList } = require('crm/receive-payment/steps/payment-systems/expandable-list');
 	const { EventEmitter } = require('event-emitter');
+	const { Random } = require('utils/random');
 
 	const pathToExtension = `${currentDomain}/bitrix/mobileapp/crmmobile/extensions/crm/receive-payment/steps/payment-systems`;
 

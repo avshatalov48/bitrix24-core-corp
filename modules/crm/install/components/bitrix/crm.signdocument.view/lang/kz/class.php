@@ -1,0 +1,5 @@
+<?php
+$MESS["CRM_SIGNDOCUMENT_VIEW_DOCUMENT_DOWNLOAD"] = "Құжатты жүктеп алу";
+$MESS["CRM_SIGNDOCUMENT_VIEW_DOCUMENT_INITIATOR_NOT_FOUND"] = "Құжаттың бастамашысы табылмады";
+$MESS["CRM_SIGNDOCUMENT_VIEW_DOCUMENT_NOT_FOUND"] = "Құжат табылмады";
+$MESS["CRM_SIGNDOCUMENT_VIEW_TITLE"] = "Құжатты қарау";

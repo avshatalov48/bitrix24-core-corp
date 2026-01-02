@@ -20,6 +20,10 @@ use Bitrix\Main\Localization\Loc;
 
 Loc::loadMessages(__FILE__);
 
+/**
+ * @deprecated ATTENTION! This component is no longer used or maintained.
+ * This is a dead code that remains only for backwards compatibility.
+ */
 class CrmClientPortraitComponent extends \CBitrixComponent
 {
 	const LOAD_STAT_CACHE_TIME = 86400;
@@ -32,7 +36,7 @@ class CrmClientPortraitComponent extends \CBitrixComponent
 	public function onPrepareComponentParams($arParams)
 	{
 		global $APPLICATION;
-		
+
 		$arParams['PATH_TO_CONTACT_LIST'] = CrmCheckPath(
 			'PATH_TO_CONTACT_LIST',
 			$arParams['PATH_TO_CONTACT_LIST'] ?? '',
@@ -109,7 +113,7 @@ class CrmClientPortraitComponent extends \CBitrixComponent
 	{
 		return isset($this->arParams['ELEMENT_TYPE']) ? (int)$this->arParams['ELEMENT_TYPE'] : 0;
 	}
-	
+
 	protected function getEntityType()
 	{
 		$type = '';
@@ -123,14 +127,14 @@ class CrmClientPortraitComponent extends \CBitrixComponent
 				$type = 'CONTACT';
 				break;
 		}
-		
+
 		return $type;
 	}
 
 	protected function getElement()
 	{
 		$elementId = $this->getElementId();
-		
+
 		$iterator = null;
 
 		switch ($this->getElementType())
@@ -141,7 +145,7 @@ class CrmClientPortraitComponent extends \CBitrixComponent
 					array('ID' => $elementId, '@CATEGORY_ID' => 0,)
 				);
 				break;
-				
+
 			case CCrmOwnerType::Contact:
 				$iterator = CCrmContact::GetListEx(
 					[],
@@ -175,18 +179,18 @@ class CrmClientPortraitComponent extends \CBitrixComponent
 					),
 					true, false
 				) : GetMessage('RESPONSIBLE_NOT_ASSIGNED');
-			
+
 			$element['ASSIGNED_BY_URL'] = (int)$element['ASSIGNED_BY_ID'] > 0 ? CComponentEngine::MakePathFromTemplate(
 				$this->arParams['PATH_TO_USER_PROFILE'],
 				array('user_id' => $element['ASSIGNED_BY_ID'])
 			) : '';
 		}
-		
+
 		if ($this->getElementType() == CCrmOwnerType::Company)
 		{
 			$companyTypeList = CCrmStatus::GetStatusListEx('COMPANY_TYPE');
 			$companyIndustryList = CCrmStatus::GetStatusListEx('INDUSTRY');
-			
+
 			if (isset($companyTypeList[$element['COMPANY_TYPE']]))
 				$element['COMPANY_TYPE_TITLE'] = $companyTypeList[$element['COMPANY_TYPE']];
 
@@ -196,7 +200,7 @@ class CrmClientPortraitComponent extends \CBitrixComponent
 
 		return $element;
 	}
-	
+
 	protected function getPageTitle()
 	{
 		return Loc::getMessage('CRM_CLIENT_PORTRAIT_'.$this->getEntityType().'_TITLE');
@@ -215,7 +219,7 @@ class CrmClientPortraitComponent extends \CBitrixComponent
 			return false;
 
 		$elementType = $this->getElementType();
-		
+
 		switch ($elementType)
 		{
 			case CCrmOwnerType::Company:
@@ -271,7 +275,7 @@ class CrmClientPortraitComponent extends \CBitrixComponent
 
 		$dbResult = $query->exec();
 		$result = $dbResult->fetch();
-		
+
 		$result = array(
 			'SUM' => $result && $result['SUM_TOTAL_R'] ? (float)$result['SUM_TOTAL_R'] : 0,
 			'CNT' => $result && $result['CNT'] ? (int)$result['CNT'] : 0,
@@ -279,7 +283,7 @@ class CrmClientPortraitComponent extends \CBitrixComponent
 
 		$currencyID = CCrmCurrency::GetAccountCurrencyID();
 		$result['SUM_FORMATTED'] = CCrmCurrency::MoneyToString($result['SUM'], $currencyID);
-		
+
 		return $result;
 	}
 
@@ -317,7 +321,7 @@ class CrmClientPortraitComponent extends \CBitrixComponent
 			{
 				$label = $provider::getName();
 			}
-			
+
 			$result['ITEMS'][] = array(
 				'LABEL' => $label,
 				'CNT' => $row['CNT']
@@ -347,7 +351,7 @@ class CrmClientPortraitComponent extends \CBitrixComponent
 			ShowError(GetMessage('CRM_PERMISSION_DENIED'));
 			return;
 		}
-		
+
 		$this->arResult['ELEMENT'] = $this->getElement();
 		$this->arResult['IS_COMPANY'] = $this->getElementType() === \CCrmOwnerType::Company;
 		$this->arResult['ENTITY_TYPE_ID'] = $this->getElementType();
@@ -357,7 +361,7 @@ class CrmClientPortraitComponent extends \CBitrixComponent
 			ShowError(GetMessage('CRM_PERMISSION_DENIED'));
 			return;
 		}
-		
+
 		if ($this->arResult['IS_COMPANY'])
 			$this->arResult['ELEMENT_PHOTO_SRC'] = CFile::GetPath($this->arResult['ELEMENT']['LOGO']);
 		else
@@ -399,9 +403,7 @@ class CrmClientPortraitComponent extends \CBitrixComponent
 			}
 		}
 
-		$curUser = CCrmSecurityHelper::GetCurrentUser();
-		$CrmPerms = new CCrmPerms($curUser->GetID());
-		$this->arResult['CAN_WRITE_CONFIG'] = $CrmPerms->HavePerm('CONFIG', BX_CRM_PERM_CONFIG, 'WRITE');
+		$this->arResult['CAN_WRITE_CONFIG'] = \Bitrix\Crm\Service\Container::getInstance()->getUserPermissions()->isCrmAdmin();
 
 		$this->includeComponentTemplate();
 	}

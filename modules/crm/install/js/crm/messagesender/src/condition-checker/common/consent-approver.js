@@ -48,8 +48,6 @@ export class ConsentApprover
 	{
 		BX.UI.Dialogs.MessageBox.show({
 			modal: true,
-			minWidth: 980,
-			title,
 			message,
 			buttons: this.#getButtons(resolve),
 			popupOptions: {

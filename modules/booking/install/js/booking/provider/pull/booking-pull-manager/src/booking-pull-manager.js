@@ -6,12 +6,14 @@ import { Module } from 'booking.const';
 import { BookingPullHandler } from './handler/booking-pull-handler';
 import { BasePullHandler } from './handler/base-pull-handler';
 import { CountersPullHandler } from './handler/counters-pull-handler';
+import { MessagePullHandler } from './handler/message-pull-handler';
 import { ResourcePullHandler } from './handler/resource-pull-handler';
 import { ResourceTypePullHandler } from './handler/resource-type-pull-handler';
+import { WaitListItemPullHandler } from './handler/wait-list-item-pull-handler';
 
 type Params = {
 	currentUserId: number,
-}
+};
 
 export class BookingPullManager
 {
@@ -29,6 +31,8 @@ export class BookingPullManager
 			new ResourcePullHandler(),
 			new ResourceTypePullHandler(),
 			new CountersPullHandler(),
+			new MessagePullHandler(),
+			new WaitListItemPullHandler(),
 		]);
 	}
 

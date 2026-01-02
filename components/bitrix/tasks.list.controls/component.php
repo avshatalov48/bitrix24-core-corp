@@ -40,7 +40,7 @@ $loggedInUserId = (int) $USER->getId();
 
 $isAccessToCounters = ($arParams['USER_ID'] == $loggedInUserId)
 	|| $USER->isAdmin()
-	|| CTasksTools::IsPortalB24Admin()
+	|| \Bitrix\Tasks\Integration\Bitrix24\User::isAdmin()
 	|| CTasks::IsSubordinate($arParams['USER_ID'], $loggedInUserId);
 
 if ($arParams["GROUP_ID"] > 0)

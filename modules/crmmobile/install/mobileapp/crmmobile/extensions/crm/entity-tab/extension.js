@@ -53,6 +53,7 @@ jn.define('crm/entity-tab', (require, exports, module) => {
 	const {
 		fetchStageCounters,
 	} = require('crm/statemanager/redux/slices/stage-counters');
+	const { debounce } = require('utils/function');
 
 	const PULL_MODULE_ID = 'crm';
 	const PULL_EVENT_NAME_ITEM_UPDATED = 'ITEMUPDATED';
@@ -152,6 +153,7 @@ jn.define('crm/entity-tab', (require, exports, module) => {
 			this.onFloatingButtonLongClickHandler = this.handleFloatingButtonLongClick.bind(this);
 			this.onDetailCardUpdateHandler = this.onDetailCardUpdate.bind(this);
 			this.onDetailCardCreateHandler = this.onDetailCardCreate.bind(this);
+			this.debouncedFetchStageCounters = debounce(this.fetchStageCounters, 5000, this);
 		}
 
 		/**
@@ -491,19 +493,25 @@ jn.define('crm/entity-tab', (require, exports, module) => {
 
 		getMenuActions()
 		{
-			const actions = [
-				{
-					type: UIMenuType.DESKTOP,
-					showHint: false,
-					data: {
-						qrUrl: this.getEntityType(this.props.entityTypeId).link,
-						analyticsSection: 'crm',
-					},
-				},
-			];
+			const { userInfo, entityTypeId } = this.props;
 
-			const { userInfo } = this.props;
 			const entity = TypeFactory.getEntityByType(this.entityTypeName, { userInfo });
+			const link = this.getEntityType(entityTypeId)?.link;
+
+			let actions = [];
+			if (CoreType.isStringFilled(link))
+			{
+				actions = [
+					{
+						type: UIMenuType.DESKTOP,
+						showHint: false,
+						data: {
+							qrUrl: link,
+							analyticsSection: 'crm',
+						},
+					},
+				];
+			}
 
 			return [
 				...actions,
@@ -720,14 +728,7 @@ jn.define('crm/entity-tab', (require, exports, module) => {
 							const entityTypeId = this.props.entityTypeId;
 							const categoryId = this.getCategoryId(entityTypeId);
 
-							store.dispatch(fetchStageCounters({
-								entityTypeId,
-								categoryId,
-								params: {
-									filter: this.filter,
-								},
-								forceFetch: true,
-							}));
+							this.debouncedFetchStageCounters(entityTypeId, categoryId);
 
 							const { item, eventName } = data.params;
 							const oldItem = this.getCurrentStatefulList().getItemComponent(item.id);
@@ -791,6 +792,22 @@ jn.define('crm/entity-tab', (require, exports, module) => {
 					});
 				},
 			};
+		}
+
+		/**
+		 * @param {number} entityTypeId
+		 * @param {number} categoryId
+		 */
+		fetchStageCounters(entityTypeId, categoryId)
+		{
+			store.dispatch(fetchStageCounters({
+				entityTypeId,
+				categoryId,
+				params: {
+					filter: this.filter,
+				},
+				forceFetch: true,
+			}));
 		}
 
 		/**
@@ -1017,10 +1034,9 @@ jn.define('crm/entity-tab', (require, exports, module) => {
 
 		getAnalytics()
 		{
-			return new AnalyticsEvent()
+			return new AnalyticsEvent(this.props.analyticsEvent)
 				.setTool('crm')
 				.setCategory('entity_operations')
-				.setSection(`${this.entityTypeName.toLowerCase()}_section`)
 				.setSubSection(this.getView());
 		}
 
@@ -1417,7 +1433,8 @@ jn.define('crm/entity-tab', (require, exports, module) => {
 				},
 			);
 
-			const linkTemplate = this.getEntityType(entityTypeId).entityLink;
+			const linkTemplate = this.getEntityType(entityTypeId)?.entityLink;
+
 			if (CoreType.isStringFilled(linkTemplate))
 			{
 				const {
@@ -1474,16 +1491,20 @@ jn.define('crm/entity-tab', (require, exports, module) => {
 		 */
 		getEntityTypeModel(params = {})
 		{
-			params.categoryId = this.getCategoryId(this.props.entityTypeId);
-			params.categoriesCount = this.getCurrentEntityType().data.categoriesCount || 0;
-			params.userInfo = this.props.userInfo;
-			params.isChatSupported = this.getCurrentEntityType().isChatSupported;
-			params.reminders = this.prepareReminders(
-				this.getCurrentEntityType().data.reminders,
-				this.props.remindersList,
-			);
+			const preparedParams = {
+				...params,
+				categoryId: this.getCategoryId(this.props.entityTypeId),
+				categoriesCount: this.getCurrentEntityType().data.categoriesCount || 0,
+				userInfo: this.props.userInfo,
+				isChatSupported: this.getCurrentEntityType().isChatSupported,
+				reminders: this.prepareReminders(
+					this.getCurrentEntityType().data.reminders,
+					this.props.remindersList,
+				),
+				analyticsEvent: this.props.analyticsEvent,
+			};
 
-			return TypeFactory.getEntityByType(this.entityTypeName, params);
+			return TypeFactory.getEntityByType(this.entityTypeName, preparedParams);
 		}
 
 		/**

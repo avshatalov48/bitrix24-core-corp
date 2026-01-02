@@ -62,7 +62,7 @@ else
 
 // check access
 $CCrmLead = new CCrmLead();
-if ($CCrmLead->cPerms->HavePerm('LEAD', BX_CRM_PERM_NONE, 'ADD'))
+if (!\Bitrix\Crm\Service\Container::getInstance()->getUserPermissions()->entityType()->canAddItems(CCrmOwnerType::Lead))
 {
 	$APPLICATION->RestartBuffer();
 	echo CUtil::PhpToJSObject(array('error' => 403, 'error_message' => GetMessage('CRM_PERMISSION_DENIED')));

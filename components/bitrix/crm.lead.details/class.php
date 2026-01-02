@@ -6,13 +6,14 @@ if (!defined('B_PROLOG_INCLUDED') || B_PROLOG_INCLUDED !== true)
 }
 
 use Bitrix\Crm;
+use Bitrix\Crm\Activity\LastCommunication\LastCommunicationTimeFormatter;
 use Bitrix\Crm\Attribute\FieldAttributeManager;
 use Bitrix\Crm\Component\EntityDetails\ComponentMode;
 use Bitrix\Crm\Component\EntityDetails\Traits;
-use Bitrix\Crm\Controller\Action\Entity\SearchAction;
 use Bitrix\Crm\Conversion\LeadConversionDispatcher;
 use Bitrix\Crm\Conversion\LeadConversionScheme;
 use Bitrix\Crm\CustomerType;
+use Bitrix\Crm\Integration\UI\EntityEditor\DefaultEntityConfig\LeadDefaultEntityConfig;
 use Bitrix\Crm\Integrity\DuplicateControl;
 use Bitrix\Crm\Service\Container;
 use Bitrix\Crm\Service\EditorAdapter;
@@ -56,8 +57,7 @@ class CCrmLeadDetailsComponent
 	protected $guid = '';
 	/** @var int */
 	private $userID = 0;
-	/** @var  CCrmPerms|null */
-	private $userPermissions = null;
+	private Bitrix\Crm\Service\UserPermissions $userPermissionsService;
 	/** @var string */
 	private $userFieldEntityID;
 	/** @var CCrmUserType|null  */
@@ -119,8 +119,8 @@ class CCrmLeadDetailsComponent
 
 		parent::__construct($component);
 
-		$this->userID = CCrmSecurityHelper::GetCurrentUserID();
-		$this->userPermissions = CCrmPerms::GetCurrentUserPermissions();
+		$this->userID = Container::getInstance()->getContext()->getUserId();
+		$this->userPermissionsService = Container::getInstance()->getUserPermissions($this->userID);
 		$this->userFieldEntityID = \CCrmLead::GetUserFieldEntityID();
 		$this->userType = new \CCrmUserType($USER_FIELD_MANAGER, $this->userFieldEntityID);
 		$this->userFieldDispatcher = \Bitrix\Main\UserField\Dispatcher::instance();
@@ -182,13 +182,13 @@ class CCrmLeadDetailsComponent
 
 		if ($this->isCopyMode)
 		{
-			if (!\CCrmLead::CheckReadPermission($this->entityID, $this->userPermissions))
+			if (!$this->userPermissionsService->item()->canRead(CCrmOwnerType::Lead, $this->entityID))
 			{
 				Crm\Component\EntityDetails\Error::showError(Crm\Component\EntityDetails\Error::NoReadPermission, CCrmOwnerType::Lead);
 
 				return;
 			}
-			elseif (!\CCrmLead::CheckCreatePermission($this->userPermissions))
+			elseif (!$this->userPermissionsService->entityType()->canAddItems(CCrmOwnerType::Lead))
 			{
 				Crm\Component\EntityDetails\Error::showError(Crm\Component\EntityDetails\Error::NoAddPermission, CCrmOwnerType::Lead);
 
@@ -198,8 +198,8 @@ class CCrmLeadDetailsComponent
 		elseif ($this->isEditMode)
 		{
 			if (
-				!\CCrmLead::CheckUpdatePermission(0)
-				&& !\CCrmLead::CheckReadPermission()
+				!$this->userPermissionsService->entityType()->canUpdateItems(CCrmOwnerType::Lead)
+				&& !$this->userPermissionsService->entityType()->canReadItems(CCrmOwnerType::Lead)
 			)
 			{
 				Crm\Component\EntityDetails\Error::showError(Crm\Component\EntityDetails\Error::NoAccessToEntityType, CCrmOwnerType::Lead);
@@ -207,8 +207,8 @@ class CCrmLeadDetailsComponent
 				return;
 			}
 			elseif (
-				!\CCrmLead::CheckUpdatePermission($this->entityID, $this->userPermissions)
-				&& !\CCrmLead::CheckReadPermission($this->entityID, $this->userPermissions)
+				!$this->userPermissionsService->item()->canUpdate(CCrmOwnerType::Lead, $this->entityID)
+				&& !$this->userPermissionsService->item()->canRead(CCrmOwnerType::Lead, $this->entityID)
 			)
 			{
 				Crm\Component\EntityDetails\Error::showError(Crm\Component\EntityDetails\Error::NoReadPermission, CCrmOwnerType::Lead);
@@ -216,7 +216,7 @@ class CCrmLeadDetailsComponent
 				return;
 			}
 		}
-		elseif (!\CCrmLead::CheckCreatePermission($this->userPermissions))
+		elseif (!$this->userPermissionsService->entityType()->canAddItems(CCrmOwnerType::Lead))
 		{
 			Crm\Component\EntityDetails\Error::showError(Crm\Component\EntityDetails\Error::NoAddPermission, CCrmOwnerType::Lead);
 
@@ -262,7 +262,7 @@ class CCrmLeadDetailsComponent
 
 		//region Conversion
 		$this->arResult['PERMISSION_ENTITY_TYPE'] = 'LEAD';
-		\CCrmLead::PrepareConversionPermissionFlags($this->entityID, $this->arResult, $this->userPermissions);
+		\CCrmLead::PrepareConversionPermissionFlags($this->entityID, $this->arResult);
 		if ($this->isCopyMode || $this->entityID <= 0)
 		{
 			$this->arResult['CAN_CONVERT'] = false;
@@ -386,6 +386,7 @@ class CCrmLeadDetailsComponent
 							'ENABLE_TOOLBAR' => true,
 							'PRESERVE_HISTORY' => true,
 							'ADD_EVENT_NAME' => 'CrmCreateQuoteFromLead',
+							'EXTENDED_INTERNAL_MODE' => true,
 							'ANALYTICS' => [
 								// we dont know where from this component was opened from - it could be anywhere on portal
 								'c_section' => \Bitrix\Crm\Integration\Analytics\Dictionary::SECTION_LEAD,
@@ -778,6 +779,7 @@ class CCrmLeadDetailsComponent
 
 		$prohibitedStatusIDs = [];
 		$allStatuses = CCrmStatus::GetStatusList('STATUS');
+		$stagePermissions = $this->userPermissionsService->stage();
 		foreach(array_keys($allStatuses) as $statusID)
 		{
 			if (isset($this->arResult['READ_ONLY']) && $this->arResult['READ_ONLY'])
@@ -786,11 +788,10 @@ class CCrmLeadDetailsComponent
 			}
 			else
 			{
-				$permissionType = $this->isEditMode
-					? \CCrmLead::GetStatusUpdatePermissionType($statusID, $this->userPermissions)
-					: \CCrmLead::GetStatusCreatePermissionType($statusID, $this->userPermissions);
-
-				if($permissionType == BX_CRM_PERM_NONE)
+				if (!($this->isEditMode
+					? $stagePermissions->canUpdateInStage(CCrmOwnerType::Lead, null, $statusID)
+					: $stagePermissions->canAddInStage(CCrmOwnerType::Lead, null, $statusID)
+				))
 				{
 					$prohibitedStatusIDs[] = $statusID;
 				}
@@ -944,6 +945,27 @@ class CCrmLeadDetailsComponent
 				Loc::getMessage('CRM_LEAD_FIELD_PRODUCTS'),
 				'PRODUCT_ROW_SUMMARY'
 			),
+			[
+				'name' => 'MOVED_BY_ID',
+				'title' => Loc::getMessage('CRM_LEAD_FIELD_MOVED_BY_ID'),
+				'type' => 'user',
+				'editable' => false,
+				'data' => [
+					'enableEditInView' => false,
+					'formated' => 'MOVED_BY_FORMATTED_NAME',
+					'position' => 'MOVED_BY_WORK_POSITION',
+					'photoUrl' => 'MOVED_BY_PHOTO_URL',
+					'showUrl' => 'PATH_TO_MOVED_BY_USER',
+					'pathToProfile' => $this->arResult['PATH_TO_USER_PROFILE'] ?? null
+				],
+				'enableAttributes' => false
+			],
+			[
+				'name' => 'MOVED_TIME',
+				'title' => Loc::getMessage('CRM_LEAD_FIELD_MOVED_TIME'),
+				'type' => 'datetime',
+				'editable' => false,
+			],
 		);
 
 		if($this->customerType === CustomerType::GENERAL)
@@ -1115,8 +1137,6 @@ class CCrmLeadDetailsComponent
 				'categoryParams' => $categoryParams,
 				'map' => ['data' => 'CLIENT_DATA'],
 				'info' => 'CLIENT_INFO',
-				'lastCompanyInfos' => 'LAST_COMPANY_INFOS',
-				'lastContactInfos' => 'LAST_CONTACT_INFOS',
 				'loaders' => [
 					'primary' => [
 						CCrmOwnerType::CompanyName => [
@@ -1169,6 +1189,8 @@ class CCrmLeadDetailsComponent
 				array_values($parentFieldsInfo)
 			);
 		}
+
+		(new Crm\Filter\Field\LastCommunicationField())->addLastCommunicationFieldInfo($this->entityFieldInfos);
 
 		$this->arResult['ENTITY_FIELDS'] = $this->entityFieldInfos;
 
@@ -1382,104 +1404,24 @@ class CCrmLeadDetailsComponent
 
 		return $result;
 	}
+
 	public function prepareConfiguration()
 	{
-		if(isset($this->arResult['ENTITY_CONFIG']))
+		if (isset($this->arResult['ENTITY_CONFIG']))
 		{
 			return $this->arResult['ENTITY_CONFIG'];
 		}
 
-		$userFieldConfigElements = [];
-		foreach(array_keys($this->userFieldInfos) as $fieldName)
-		{
-			$userFieldConfigElements[] = array('name' => $fieldName);
-		}
+		$userFieldNames = array_keys($this->userFieldInfos);
+		$multiFieldNames = array_keys($this->multiFieldInfos);
 
-		$sectionMain = array(
-			'name' => 'main',
-			'title' => Loc::getMessage('CRM_LEAD_SECTION_MAIN'),
-			'type' => 'section',
-			'elements' => []
-		);
-		$sectionAdditional = array(
-			'name' => 'additional',
-			'title' => Loc::getMessage('CRM_LEAD_SECTION_ADDITIONAL'),
-			'type' => 'section',
-			'elements' => []
-		);
-		$sectionProductRow = array(
-			'name' => 'products',
-			'title' => Loc::getMessage('CRM_LEAD_SECTION_PRODUCTS'),
-			'type' => 'section',
-			'elements' => array(
-				array('name' => 'PRODUCT_ROW_SUMMARY')
-			)
-		);
+		$defaultConfig = new LeadDefaultEntityConfig($userFieldNames, $multiFieldNames, $this->customerType);
 
-		if($this->customerType === CustomerType::GENERAL)
-		{
-			$multiFieldConfigElements = [];
-			foreach(array_keys($this->multiFieldInfos) as $fieldName)
-			{
-				$multiFieldConfigElements[] = array('name' => $fieldName);
-			}
+		$this->arResult['ENTITY_CONFIG'] = $defaultConfig->get();
 
-			$sectionMain['elements'] = array_merge(
-				array(
-					array('name' => 'TITLE'),
-					array('name' => 'STATUS_ID'),
-					array('name' => 'OPPORTUNITY_WITH_CURRENCY'),
-					array('name' => 'CLIENT'),
-					array('name' => 'HONORIFIC'),
-					array('name' => 'LAST_NAME'),
-					array('name' => 'NAME'),
-					array('name' => 'SECOND_NAME'),
-					array('name' => 'BIRTHDATE'),
-					array('name' => 'POST'),
-					array('name' => 'COMPANY_TITLE')
-				),
-				$multiFieldConfigElements
-			);
-
-			$sectionAdditional['elements'] = array_merge(
-				array(
-					array('name' => 'SOURCE_ID'),
-					array('name' => 'SOURCE_DESCRIPTION'),
-					array('name' => 'OPENED'),
-					array('name' => 'ASSIGNED_BY_ID'),
-					array('name' => 'OBSERVER'),
-					array('name' => 'COMMENTS'),
-					array('name' => 'ADDRESS'),
-					array('name' => 'UTM'),
-				),
-				$userFieldConfigElements
-			);
-		}
-		elseif($this->customerType === CustomerType::RETURNING)
-		{
-			$sectionMain['elements'] = array(
-				array('name' => 'TITLE'),
-				array('name' => 'STATUS_ID'),
-				array('name' => 'OPPORTUNITY_WITH_CURRENCY'),
-				array('name' => 'CLIENT')
-			);
-
-			$sectionAdditional['elements'] = array_merge(
-				array(
-					array('name' => 'SOURCE_ID'),
-					array('name' => 'SOURCE_DESCRIPTION'),
-					array('name' => 'OPENED'),
-					array('name' => 'ASSIGNED_BY_ID'),
-					array('name' => 'COMMENTS'),
-					array('name' => 'UTM'),
-				),
-				$userFieldConfigElements
-			);
-		}
-
-		$this->arResult['ENTITY_CONFIG'] = array($sectionMain, $sectionAdditional, $sectionProductRow);
 		return $this->arResult['ENTITY_CONFIG'];
 	}
+
 	public function prepareEntityUserFields()
 	{
 		if($this->userFields === null)
@@ -1858,6 +1800,54 @@ class CCrmLeadDetailsComponent
 		}
 		//endregion
 
+		$movedByID = isset($this->entityData['MOVED_BY_ID']) ? (int)$this->entityData['MOVED_BY_ID'] : 0;
+		if($movedByID > 0)
+		{
+			$user = Container::getInstance()->getUserBroker()->getById($movedByID);
+			if(is_array($user))
+			{
+				$this->entityData['MOVED_BY_LOGIN'] = $user['LOGIN'];
+				$this->entityData['MOVED_BY_NAME'] = isset($user['NAME']) ? $user['NAME'] : '';
+				$this->entityData['MOVED_BY_SECOND_NAME'] = isset($user['SECOND_NAME']) ? $user['SECOND_NAME'] : '';
+				$this->entityData['MOVED_BY_LAST_NAME'] = isset($user['LAST_NAME']) ? $user['LAST_NAME'] : '';
+				$this->entityData['MOVED_BY_PERSONAL_PHOTO'] = isset($user['PERSONAL_PHOTO']) ? $user['PERSONAL_PHOTO'] : '';
+			}
+
+			$this->entityData['MOVED_BY_FORMATTED_NAME'] =
+				\CUser::FormatName(
+					$this->arResult['NAME_TEMPLATE'],
+					[
+						'LOGIN' => $this->entityData['MOVED_BY_LOGIN'],
+						'NAME' => $this->entityData['MOVED_BY_NAME'],
+						'LAST_NAME' => $this->entityData['MOVED_BY_LAST_NAME'],
+						'SECOND_NAME' => $this->entityData['MOVED_BY_SECOND_NAME']
+					],
+					true,
+					false
+				);
+
+			$movedByPhotoID = isset($this->entityData['MOVED_BY_PERSONAL_PHOTO'])
+				? (int)$this->entityData['MOVED_BY_PERSONAL_PHOTO'] : 0;
+
+			if($movedByPhotoID > 0)
+			{
+				$file = new CFile();
+				$fileInfo = $file->ResizeImageGet(
+					$movedByPhotoID,
+					['width' => 60, 'height'=> 60],
+					BX_RESIZE_IMAGE_EXACT
+				);
+				if(is_array($fileInfo) && isset($fileInfo['src']))
+				{
+					$this->entityData['MOVED_BY_PHOTO_URL'] = $fileInfo['src'];
+				}
+			}
+
+			$this->entityData['PATH_TO_MOVED_BY_USER'] = CComponentEngine::MakePathFromTemplate(
+				$this->arResult['PATH_TO_USER_PROFILE'] ?? null,
+				['user_id' => $movedByID]
+			);
+		}
 		//region Observers
 		if(isset($this->entityData['OBSERVER_IDS']) && !empty($this->entityData['OBSERVER_IDS']))
 		{
@@ -1880,21 +1870,29 @@ class CCrmLeadDetailsComponent
 		//endregion
 
 		//region User Fields
-		foreach($this->userFields as $userField)
+		foreach ($this->userFields as $userField)
 		{
 			$fieldName = $userField['FIELD_NAME'];
-			$fieldValue = isset($userField['VALUE']) ? $userField['VALUE'] : '';
-
-			$fieldData = isset($this->userFieldInfos[$fieldName])
-				? $this->userFieldInfos[$fieldName] : null;
-			if(!is_array($fieldData))
+			$fieldValue = $userField['VALUE'] ?? '';
+			$fieldData = $this->userFieldInfos[$fieldName] ?? null;
+			if (!is_array($fieldData))
 			{
 				continue;
 			}
 
 			$isEmptyField = true;
 			$fieldParams = $fieldData['data']['fieldInfo'];
-			if((is_string($fieldValue) && $fieldValue !== '')
+
+			if (
+				$this->entityID <= 0
+				&& $fieldParams['USER_TYPE_ID'] === 'boolean'
+			)
+			{
+				$fieldValue = (string)$fieldParams['SETTINGS']['DEFAULT_VALUE'];
+			}
+
+			if (
+				(is_string($fieldValue) && $fieldValue !== '')
 				|| (is_array($fieldValue) && !empty($fieldValue))
 			)
 			{
@@ -1903,27 +1901,27 @@ class CCrmLeadDetailsComponent
 			}
 
 			$fieldSignature = $this->userFieldDispatcher->getSignature($fieldParams);
-			if($isEmptyField)
+			if ($isEmptyField)
 			{
-				$this->entityData[$fieldName] = array(
+				$this->entityData[$fieldName] = [
 					'SIGNATURE' => $fieldSignature,
-					'IS_EMPTY' => true
-				);
+					'IS_EMPTY' => true,
+				];
 			}
 			else
 			{
-				$this->entityData[$fieldName] = array(
+				$this->entityData[$fieldName] = [
 					'VALUE' => $fieldValue,
 					'SIGNATURE' => $fieldSignature,
-					'IS_EMPTY' => false
-				);
+					'IS_EMPTY' => false,
+				];
 
-				if($fieldData['data']['fieldInfo']['USER_TYPE_ID'] === 'file')
+				if ($fieldData['data']['fieldInfo']['USER_TYPE_ID'] === 'file')
 				{
-					$values = is_array($fieldValue) ? $fieldValue : array($fieldValue);
-					$this->entityData[$fieldName]['EXTRAS'] = array(
+					$values = is_array($fieldValue) ? $fieldValue : [$fieldValue];
+					$this->entityData[$fieldName]['EXTRAS'] = [
 						'OWNER_TOKEN' => \CCrmFileProxy::PrepareOwnerToken(array_fill_keys($values, $this->entityID))
-					);
+					];
 				}
 			}
 		}
@@ -1993,14 +1991,13 @@ class CCrmLeadDetailsComponent
 		$companyID = (int)($this->entityData['COMPANY_ID'] ?? 0);
 		if ($companyID > 0)
 		{
-			$isEntityReadPermitted = \CCrmCompany::CheckReadPermission($companyID, $this->userPermissions);
+			$isEntityReadPermitted = $this->userPermissionsService->item()->canRead(CCrmOwnerType::Company, $companyID);
 			$companyInfo = \CCrmEntitySelectorHelper::PrepareEntityInfo(
 				CCrmOwnerType::CompanyName,
 				$companyID,
 				array(
 					'ENTITY_EDITOR_FORMAT' => true,
 					'IS_HIDDEN' => !$isEntityReadPermitted,
-					'USER_PERMISSIONS' => $this->userPermissions,
 					'REQUIRE_REQUISITE_DATA' => true,
 					'REQUIRE_EDIT_REQUISITE_DATA' => true,
 					'REQUIRE_MULTIFIELDS' => true,
@@ -2033,14 +2030,13 @@ class CCrmLeadDetailsComponent
 		$iteration= 0;
 		foreach($contactIDs as $contactID)
 		{
-			$isEntityReadPermitted = CCrmContact::CheckReadPermission($contactID, $this->userPermissions);
+			$isEntityReadPermitted = $this->userPermissionsService->item()->canRead(CCrmOwnerType::Contact, $contactID);
 			$clientInfo['CONTACT_DATA'][] = CCrmEntitySelectorHelper::PrepareEntityInfo(
 				CCrmOwnerType::ContactName,
 				$contactID,
 				array(
 					'ENTITY_EDITOR_FORMAT' => true,
 					'IS_HIDDEN' => !$isEntityReadPermitted,
-					'USER_PERMISSIONS' => $this->userPermissions,
 					'REQUIRE_REQUISITE_DATA' => true,
 					'REQUIRE_EDIT_REQUISITE_DATA' => ($iteration === 0), // load full requisite data for first item only (due to performance optimisation)
 					'REQUIRE_MULTIFIELDS' => true,
@@ -2052,31 +2048,6 @@ class CCrmLeadDetailsComponent
 			$iteration++;
 		}
 		$this->entityData['CLIENT_INFO'] = $clientInfo;
-
-		if ($this->enableSearchHistory)
-		{
-			$categoryParams = CCrmComponentHelper::getEntityClientFieldCategoryParams(CCrmOwnerType::Lead);
-			$this->entityData['LAST_COMPANY_INFOS'] = SearchAction::prepareSearchResultsJson(
-				Crm\Controller\Entity::getRecentlyUsedItems(
-					'crm.lead.details',
-					'company',
-					[
-						'EXPAND_ENTITY_TYPE_ID' => CCrmOwnerType::Company,
-						'EXPAND_CATEGORY_ID' => $categoryParams[CCrmOwnerType::Company]['categoryId'],
-					]
-				)
-			);
-			$this->entityData['LAST_CONTACT_INFOS'] = SearchAction::prepareSearchResultsJson(
-				Crm\Controller\Entity::getRecentlyUsedItems(
-					'crm.lead.details',
-					'contact',
-					[
-						'EXPAND_ENTITY_TYPE_ID' => CCrmOwnerType::Contact,
-						'EXPAND_CATEGORY_ID' => $categoryParams[CCrmOwnerType::Contact]['categoryId'],
-					]
-				)
-			);
-		}
 
 		//endregion
 		//region Multifield Data
@@ -2187,6 +2158,8 @@ class CCrmLeadDetailsComponent
 			}
 		}
 
+		(new LastCommunicationTimeFormatter())->formatDetailDate($this->entityData);
+
 		$this->arResult['ENTITY_DATA'] = $this->entityData;
 
 		return $this->entityData;
@@ -2271,14 +2244,14 @@ class CCrmLeadDetailsComponent
 		if($this->statuses === null)
 		{
 			$this->statuses = [];
+			$stagePermissions = $this->userPermissionsService->stage();
 			$allStatuses = CCrmStatus::GetStatusList('STATUS');
 			foreach ($allStatuses as $statusID => $statusTitle)
 			{
-				$permissionType = $this->isEditMode
-					? \CCrmLead::GetStatusUpdatePermissionType($statusID, $this->userPermissions)
-					: \CCrmLead::GetStatusCreatePermissionType($statusID, $this->userPermissions);
-
-				if ($permissionType > BX_CRM_PERM_NONE)
+				if ($this->isEditMode
+					? $stagePermissions->canUpdateInStage(CCrmOwnerType::Lead, null, $statusID)
+					: $stagePermissions->canAddInStage(CCrmOwnerType::Lead, null, $statusID)
+				)
 				{
 					$this->statuses[$statusID] = $statusTitle;
 				}
@@ -2391,17 +2364,29 @@ class CCrmLeadDetailsComponent
 	{
 		$this->arResult['READ_ONLY'] = true;
 
+		if ($this->isReadOnlyForced())
+		{
+			return;
+		}
+
 		if ($this->isEditMode)
 		{
-			if (\CCrmLead::CheckUpdatePermission($this->entityID, $this->userPermissions))
+			if ($this->userPermissionsService->item()->canUpdate(CCrmOwnerType::Lead, $this->entityID))
 			{
 				$this->arResult['READ_ONLY'] = false;
 			}
 		}
-		elseif (\CCrmLead::CheckCreatePermission($this->userPermissions))
+		elseif ($this->userPermissionsService->entityType()->canAddItems(CCrmOwnerType::Lead))
 		{
 			$this->arResult['READ_ONLY'] = false;
 		}
+	}
+
+	private function isReadOnlyForced(): bool
+	{
+		$isForcedReadonly = $this->request->get('FORCE_READONLY');
+
+		return $isForcedReadonly === 'Y';
 	}
 
 	private function initializeConfigId(): void

@@ -748,7 +748,7 @@ final class FromTemplate extends Util\Replicator\Task
 	{
 		$num =
 			(int)$replicateParams["EVERY_DAY"]
-			+ (int)($replicateParams["DAILY_MONTH_INTERVAL"] ?? 0)
+			+ (int)($replicateParams["DAILY_MONTH_INTERVAL"] ?? 0) * 30
 		;
 
 		$date = static::stripTime($baseTime) + $preferredTime;

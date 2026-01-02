@@ -8,6 +8,10 @@ class ScenarioMenuItem
 		'id' => 'fields',
 		'data' => ['extension' => 'landing.ui.panel.formsettingspanel.content.fields'],
 	];
+	public const BOOKING_RESOURCE_AUTO_SELECTION = [
+		'id' => 'booking-resource-auto-selection',
+		'data' => ['extension' => 'landing.ui.panel.formsettingspanel.content.booking-resource-auto-selection'],
+	];
 	public const AGREEMENTS = [
 		'id' => 'agreements',
 		'important' => true,

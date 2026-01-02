@@ -19,10 +19,15 @@ class Quality
 		'json_response_mode' => 'json_response_mode',
 		// support chatting
 		'chat_talk' => 'chat_talk',
+		// can create ai site
+		'ai_site' => 'ai_site',
 		// parse json with fields and give advice on it
 		'give_advice' => 'give_advice',
 		// support meeting processing in video and audio calls
 		'meeting_processing' => 'meeting_processing',
+		'scoring' => 'scoring',
+		// can transcribe voice messages in chat
+		'transcribe_chat_voice_messages' => 'transcribe_chat_voice_messages',
 	];
 
 	private array|string $qualities;

@@ -51,6 +51,6 @@ h6 {
 	--mib-radius: 0 0 var(--ui-border-radius-md) var(--ui-border-radius-md);
 }
 
-.ui-side-panel-content > .pagetitle-above > .main-buttons:first-child {
+.ui-side-panel-content .ui-side-panel-menu > .main-buttons:first-child {
 	--mib-radius: 0 0 var(--ui-border-radius-md) var(--ui-border-radius-md);
 }

@@ -9,4 +9,27 @@ use Bitrix\HumanResources\Item;
  */
 class NodeMemberCollection extends BaseCollection
 {
+	/**
+	 * @return list<int>
+	 */
+	public function getNodeIds(): array
+	{
+		return array_values(
+			$this->map(
+				static fn(Item\NodeMember $member) => $member->nodeId,
+			),
+		);
+	}
+
+	/**
+	 * @return list<int>
+	 */
+	public function getEntityIds(): array
+	{
+		return array_values(
+			$this->map(
+				static fn(Item\NodeMember $member) => $member->entityId,
+			),
+		);
+	}
 }

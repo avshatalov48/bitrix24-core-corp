@@ -21,11 +21,12 @@ class StagesMapping
 			'TABLE_NAME' => 'b_crm_status',
 			'TABLE_ALIAS' => 'S',
 			'FILTER' => [
-				//ENTITY_ID = 'STATUS' OR ENTITY_ID like 'DEAL_STAGE%' OR ENTITY_ID like 'DYNAMIC%STAGE%'
-				'LOGIC' => 'OR',
-				'=ENTITY_ID_LEAD' => 'STATUS',
-				'ENTITY_ID_DEAL' => 'DEAL_STAGE%',
-				'ENTITY_ID_SMART' => 'DYNAMIC%STAGE%',
+				[ //ENTITY_ID = 'STATUS' OR ENTITY_ID like 'DEAL_STAGE%' OR ENTITY_ID like 'DYNAMIC%STAGE%'
+					'LOGIC' => 'OR',
+					'=ENTITY_ID_LEAD' => 'STATUS',
+					'ENTITY_ID_DEAL' => 'DEAL_STAGE%',
+					'ENTITY_ID_SMART' => 'DYNAMIC%STAGE%',
+				],
 			],
 			'FILTER_FIELDS' => [
 				'ENTITY_ID_LEAD' => [

@@ -25,6 +25,6 @@ export class Backend
 	{
 		return Ajax
 			.runAction('sign.api.tour.isAllToursDisabled', {})
-			.then(({ data }) => data)
+			.then(({ data }) => data);
 	}
 }

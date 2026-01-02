@@ -83,4 +83,9 @@ class FileCollection implements Contract\ItemCollection, \Iterator, \Countable
 
 		return $ids;
 	}
+
+	public function empty(): bool
+	{
+		return empty($this->items);
+	}
 }

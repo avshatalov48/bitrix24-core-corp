@@ -1,0 +1,29 @@
+.intranet-user-mini-profile__divider {
+	display: flex;
+	align-items: center;
+	justify-content: center;
+}
+
+.intranet-user-mini-profile__divider.--horizontal {
+	min-height: 9px;
+	width: 100%;
+}
+
+.intranet-user-mini-profile__divider.--vertical {
+	min-width: 9px;
+	height: 100%;
+}
+
+.intranet-user-mini-profile__divider-inner {
+	background: #F0F0F0;
+}
+
+.intranet-user-mini-profile__divider.--horizontal .intranet-user-mini-profile__divider-inner {
+	height: 1px;
+	width: 100%;
+}
+
+.intranet-user-mini-profile__divider.--vertical .intranet-user-mini-profile__divider-inner {
+	width: 1px;
+	height: 100%;
+}

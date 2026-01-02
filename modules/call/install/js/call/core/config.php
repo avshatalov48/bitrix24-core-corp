@@ -4,14 +4,17 @@ if (!defined("B_PROLOG_INCLUDED") || B_PROLOG_INCLUDED !== true)
 	die();
 }
 
-if (!\Bitrix\Main\Loader::includeModule('im'))
+use Bitrix\Main\Loader;
+use Bitrix\Main\Config\Option;
+use Bitrix\Main\Engine\CurrentUser;
+use Bitrix\Call\Settings;
+use Bitrix\Call\Integration\AI\CallAISettings;
+
+if (!Loader::includeModule('im') || !Loader::includeModule('call'))
 {
 	return [];
 }
 
-use Bitrix\Main\Config\Option;
-use Bitrix\Call\Settings;
-use Bitrix\Call\Integration\AI\CallAISettings;
 
 return [
 	'js' => [
@@ -22,18 +25,22 @@ return [
 	],
 	'rel' => [
 		'im.lib.utils',
+		'call.core',
 		'im.v2.lib.promo',
-		'ui.switcher',
 		'ui.dialogs.messagebox',
 		'ui.buttons',
 		'im.v2.lib.desktop-api',
 		'im.v2.const',
+		'im.v2.lib.desktop',
 		'intranet.desktop-download',
-		'main.core.events',
 		'im.v2.lib.utils',
+		'call.lib.call-token-manager',
+		'call.lib.analytics',
 		'main.core',
 		'main.popup',
-		'call.lib.analytics',
+		'main.core.events',
+		'ui.switcher',
+		'call.lib.settings-manager',
 		'call.component.user-list-popup',
 		'call.component.user-list',
 		'loader',
@@ -57,11 +64,11 @@ return [
 
 		return [
 			'lang_additional' => [
-				'turn_server' => Option::get('im', 'turn_server'),
-				'turn_server_firefox' => Option::get('im', 'turn_server_firefox'),
-				'turn_server_login' => Option::get('im', 'turn_server_login'),
-				'turn_server_password' => Option::get('im', 'turn_server_password'),
-				'turn_server_max_users' => Option::get('im', 'turn_server_max_users'),
+				'turn_server' => \Bitrix\Im\Call\Call::getTurnServer(),
+				'turn_server_firefox' => \Bitrix\Im\Call\Call::getTurnServer(),
+				'turn_server_login' => Option::get('call', 'turn_server_login'),
+				'turn_server_password' => Option::get('call', 'turn_server_password'),
+				'turn_server_max_users' => Option::get('call', 'turn_server_max_users'),
 				'call_server_enabled' => \Bitrix\Im\Call\Call::isCallServerEnabled() ? 'Y' : 'N',
 				'call_beta_ios_enabled' => \Bitrix\Im\Call\Call::isIosBetaEnabled() ? 'Y' : 'N',
 				'call_server_max_users' => \Bitrix\Im\Call\Call::getMaxCallServerParticipants(),
@@ -73,6 +80,7 @@ return [
 				'call_features' => $features,
 				'conference_chat_enabled' => Settings::isConferenceChatEnabled(),
 				'call_use_tcp_sdp' => Settings::useTcpSdp(),
+				'user_jwt' => \Bitrix\Call\JwtCall::getUserJwt((int)CurrentUser::get()->getId()),
 			],
 			'settings' => [
 				'ai' => [
@@ -85,10 +93,22 @@ return [
 					'feedBackLink' => CallAISettings::getFeedBackLink(),
 					'baasPromoSlider' => CallAISettings::getBaasSliderCode(),
 					'helpSlider' => CallAISettings::getHelpSliderCode(),
+					'disclaimerArticleCode' => CallAISettings::getDisclaimerArticleCode(),
 				],
-				'isUserControlFeatureEnabled' => Settings::isUserControlFeatureEnabled(),
-				'isPictureInPictureFeatureEnabled' => Settings::isPictureInPictureFeatureEnabled(),
+				'call' => [
+					'jwtCallsEnabled' => Settings::isNewCallsEnabled(),
+					'plainCallsUseJwt' => Settings::isPlainCallsUseNewScheme(),
+					'callBalancerUrl' => Settings::getBalancerUrl(),
+				],
+				'isUserControlFeatureEnabled' => Settings::isNewCallsEnabled(),
+				'isPictureInPictureFeatureEnabled' => Settings::isNewCallsEnabled(),
+				'isDisableCameraNewJoinedUsersFeatureEnabled' => Settings::isDisableCameraNewJoinedUsersFeatureEnabled(),
+				'isKibanaLogsEnabled' => Settings::isKibanaLogsEnabled(),
+				'countDisableCameraNewJoinedUsersFeature' => Settings::countDisableCameraNewJoinedUsersFeature(),
 				'isNewQOSEnabled' => Settings::isNewQOSEnabled(),
+				'isAirDesignEnabled' => \Bitrix\Im\V2\Service\Locator::getMessenger()->getApplication()->isAirDesignEnabled(),
+				'shouldHideQuickAccess' => \Bitrix\Im\V2\Service\Locator::getMessenger()->getApplication()->shouldHideQuickAccess(),
+				'callInstalled' => \Bitrix\Main\ModuleManager::isModuleInstalled('call'),
 			],
 		];
 	},

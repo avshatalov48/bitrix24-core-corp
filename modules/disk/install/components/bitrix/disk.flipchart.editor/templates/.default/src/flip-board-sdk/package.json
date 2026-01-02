@@ -1,11 +1,13 @@
 {
   "name": "@flip-chart/flip-board-sdk",
-  "version": "0.0.17",
+  "version": "0.0.25",
   "license": "MIT",
   "dependencies": {
     "tslib": "^2.3.0"
   },
-  "type": "commonjs",
+  "type": "module",
   "main": "./src/index.js",
-  "typings": "./src/index.d.ts"
+  "typings": "./src/index.d.ts",
+  "types": "./src/index.d.ts",
+  "module": "./src/index.js"
 }

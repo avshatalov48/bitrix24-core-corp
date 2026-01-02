@@ -20,7 +20,6 @@ use Bitrix\Tasks\Control\Log\Change;
 use Bitrix\Tasks\Control\Log\Command\AddCommand;
 use Bitrix\Tasks\Control\Log\Command\DeleteByTaskIdCommand;
 use Bitrix\Tasks\Control\Log\TaskLogService;
-use Bitrix\Tasks\InvalidCommandException;
 use Bitrix\Tasks\Kanban\StagesTable;
 use Bitrix\Tasks\Provider\Exception\Log\TaskLogProviderException;
 use Bitrix\Tasks\Provider\Log\TaskLogProvider;
@@ -104,7 +103,6 @@ class CTaskLog
 
 	/**
 	 * @use TaskLogService::add
-	 * @throws InvalidCommandException
 	 * @throws ObjectNotFoundException
 	 * @throws NotFoundExceptionInterface
 	 */

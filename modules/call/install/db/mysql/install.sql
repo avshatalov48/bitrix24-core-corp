@@ -1,3 +1,11 @@
+CREATE TABLE IF NOT EXISTS b_call_chat_entity
+(
+	ID int not null auto_increment,
+	CHAT_ID int not null,
+	CALL_TOKEN_VERSION int not null,
+	PRIMARY KEY (ID),
+	KEY IX_CALL_CHAT_ID (CHAT_ID)
+);
 CREATE TABLE IF NOT EXISTS b_call_track
 (
 	ID int not null auto_increment,

@@ -2,9 +2,10 @@
 
 namespace Bitrix\BIConnector\Integration\Superset\Events\Main;
 
-use Bitrix\BIConnector\Integration\Superset\SupersetInitializer;
 use Bitrix\Main\Application;
 use Bitrix\Main\UserTable;
+use Bitrix\Main\Engine\CurrentUser;
+use Bitrix\BIConnector\Integration\Superset\SupersetInitializer;
 use Bitrix\BIConnector\Integration\Superset\Integrator\Integrator;
 use Bitrix\BIConnector\Integration\Superset\Integrator\Dto;
 use Bitrix\BIConnector\Integration\Superset\Repository\SupersetUserRepository;
@@ -25,6 +26,12 @@ class User
 		'LAST_NAME',
 	];
 
+	/**
+	 * Gets and keeps current user fields before update.
+	 *
+	 * @param array $fields
+	 * @return void
+	 */
 	public static function onBeforeUserUpdate(array $fields): void
 	{
 		if (
@@ -33,62 +40,43 @@ class User
 			&& array_intersect(self::$changableFields, array_keys($fields))
 		)
 		{
-			global $USER;
-			$userData = [];
+			$id = (int)$fields['ID'];
+			$currentUser = CurrentUser::get();
 
-			$currentUserId = (isset($USER) && $USER instanceof \CUser) ? (int)$USER->GetID() : 0;
-			if ((int)$fields['ID'] === $currentUserId)
+			if ($id === (int)$currentUser->getId())
 			{
-				$userData = [
+				self::$currentUserFields = [
 					'ACTIVE' => 'Y',
-					'EMAIL' => $USER->GetParam('EMAIL'),
-					'NAME' => $USER->GetParam('FIRST_NAME'),
-					'LAST_NAME' => $USER->GetParam('LAST_NAME'),
-					'LOGIN' => $USER->GetParam('LOGIN'),
+					'EMAIL' => $currentUser->getEmail(),
+					'NAME' => $currentUser->getFirstName(),
+					'LAST_NAME' => $currentUser->getLastName(),
+					'LOGIN' => $currentUser->getLogin(),
 				];
 			}
 			else
 			{
-				$userData = UserTable::getRow([
+				self::$currentUserFields = UserTable::getRow([
 					'select' => array_merge(self::$changableFields, ['LOGIN']),
 					'filter' => [
-						'=ID' => (int)$fields['ID'],
+						'=ID' => $id,
 					],
 				]);
-			}
-
-			if ($userData)
-			{
-				self::$currentUserFields = $userData;
 			}
 		}
 	}
 
 	/**
-	 * Update superset user
+	 * Checks and updates superset user after user update.
+	 * Uses addBackgroundJob for updating user in background.
 	 *
 	 * @param array $fields
 	 * @return void
 	 */
 	public static function onAfterUserUpdate(array $fields): void
 	{
-		if (!SupersetInitializer::isSupersetReady())
-		{
-			return;
-		}
+		$userId = (isset($fields['ID']) && ((int)$fields['ID']) > 0) ? (int)$fields['ID'] : 0;
 
-		$userId = 0;
-
-		if (!self::$currentUserFields)
-		{
-			return;
-		}
-
-		if (isset($fields['ID']) && ((int)$fields['ID']) > 0)
-		{
-			$userId = (int)$fields['ID'];
-		}
-		else
+		if (!self::$currentUserFields || !$userId)
 		{
 			return;
 		}
@@ -100,15 +88,17 @@ class User
 		}
 
 		$isChangedActivity = isset($fields['ACTIVE']) && ($fields['ACTIVE'] !== self::$currentUserFields['ACTIVE']);
-		if ($isChangedActivity)
-		{
-			self::changeActivity($user, $fields['ACTIVE'] === 'Y');
-		}
+
+		$email = '';
+		$name = '';
+		$lastName = '';
 
 		$isChangedEmail = isset($fields['EMAIL']) && $fields['EMAIL'] !== self::$currentUserFields['EMAIL'];
 		$isChangedName = isset($fields['NAME']) && $fields['NAME'] !== self::$currentUserFields['NAME'];
 		$isChangedLastName = isset($fields['LAST_NAME']) && $fields['LAST_NAME'] !== self::$currentUserFields['LAST_NAME'];
-		if ($isChangedName || $isChangedLastName || $isChangedEmail)
+
+		$isChangedFields = $isChangedName || $isChangedLastName || $isChangedEmail;
+		if ($isChangedFields)
 		{
 			// login
 			$login = self::$currentUserFields['LOGIN'];
@@ -152,13 +142,28 @@ class User
 			{
 				$lastName = $fields['LAST_NAME'];
 			}
+		}
 
-			self::updateUser(
-				$user,
-				$email,
-				$name,
-				$lastName
-			);
+		if ($isChangedActivity || $isChangedFields)
+		{
+			if (SupersetInitializer::isSupersetReady())
+			{
+				if ($isChangedActivity)
+				{
+					self::changeActivity($user, $fields['ACTIVE'] === 'Y');
+				}
+
+				if ($isChangedFields)
+				{
+					self::updateUser($user, $email, $name, $lastName);
+				}
+
+				self::setUpdated($user);
+			}
+			else
+			{
+				self::setNotUpdated($user);
+			}
 		}
 
 		self::$currentUserFields = null;
@@ -171,17 +176,28 @@ class User
 		Application::getInstance()->addBackgroundJob(function() use ($integrator, $user, $isActive) {
 			if ($isActive)
 			{
-				$integrator->activateUser($user);
-				(new Synchronizer($user->id))->sync();
+				$activeUserResult = $integrator->activateUser($user);
+				if (!$activeUserResult->hasErrors())
+				{
+					(new Synchronizer($user->id))->sync();
+				}
 			}
 			else
 			{
-				$integrator->deactivateUser($user);
-				$integrator->setEmptyRole($user);
+				$activeUserResult = $integrator->deactivateUser($user);
+				if (!$activeUserResult->hasErrors())
+				{
+					$integrator->setEmptyRole($user);
+				}
+			}
+
+			if ($activeUserResult->hasErrors())
+			{
+				self::setNotUpdated($user);
 			}
 		});
 
-		SupersetUserTable::updatePermissionHash($user->id, '');
+		self::clearPermissionHash($user);
 	}
 
 	private static function updateUser(Dto\User $user, string $email, string $firstName, string $lastName): void
@@ -194,12 +210,31 @@ class User
 		$integrator = Integrator::getInstance();
 
 		Application::getInstance()->addBackgroundJob(function() use ($integrator, $user) {
-			$integrator->updateUser($user);
+			$updateResult = $integrator->updateUser($user);
+			if ($updateResult->hasErrors())
+			{
+				self::setNotUpdated($user);
+			}
 		});
 	}
 
 	private static function getUser(int $userId): ?Dto\User
 	{
 		return (new SupersetUserRepository)->getById($userId);
+	}
+
+	private static function clearPermissionHash(Dto\User $user): void
+	{
+		SupersetUserTable::updatePermissionHash($user->id, '');
+	}
+
+	private static function setUpdated(Dto\User $user): void
+	{
+		SupersetUserTable::updateUpdated($user->id, true);
+	}
+
+	private static function setNotUpdated(Dto\User $user): void
+	{
+		SupersetUserTable::updateUpdated($user->id, false);
 	}
 }

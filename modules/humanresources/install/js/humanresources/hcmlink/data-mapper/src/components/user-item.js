@@ -35,6 +35,12 @@ export const UserItem = {
 		},
 	},
 
+	computed: {
+		displayName(): string {
+			return this.item.fullName ?? this.item.name;
+		},
+	},
+
 	template: `
 		<div 
 			class="hr-hcmlink-item-user__container"
@@ -43,8 +49,8 @@ export const UserItem = {
 		>
 			<div v-if="this.mode === 'direct'" class="hr-hcmlink-item-user__avatar" ref="avatarContainer"></div>
 			<div class="hr-hcmlink-item-user_info">
-				<div class="hr-hcmlink-item-user__info-name">{{ item.name }}</div>
-				<div class="hr-hcmlink-item-user__info-position">{{ item.position }}</div>
+				<div class="hr-hcmlink-item-user__info-name" :title="displayName">{{ displayName }}</div>
+				<div class="hr-hcmlink-item-user__info-position" :title="item.position">{{ item.position }}</div>
 			</div>
 		</div>
 	`,

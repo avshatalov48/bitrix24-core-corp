@@ -105,60 +105,110 @@ abstract class Event
 		return $this;
 	}
 
+	/**
+	 * st[type]
+	 * @param string|null $type
+	 * @return $this
+	 */
 	public function setType(?string $type): self
 	{
 		$this->type = $type;
 		return $this;
 	}
 
+	/**
+	 * st[c_section]
+	 * @param string|null $section
+	 * @return $this
+	 */
 	public function setSection(?string $section): self
 	{
 		$this->section = $section;
 		return $this;
 	}
 
+	/**
+	 * st[c_sub_section]
+	 * @param string|null $subSection
+	 * @return $this
+	 */
 	public function setSubSection(?string $subSection): self
 	{
 		$this->subSection = $subSection;
 		return $this;
 	}
 
+	/**
+	 * st[c_element]
+	 * @param string|null $element
+	 * @return $this
+	 */
 	public function setElement(?string $element): self
 	{
 		$this->element = $element;
 		return $this;
 	}
 
+	/**
+	 * status
+	 * @param string|null $status
+	 * @return $this
+	 */
 	public function setStatus(?string $status): self
 	{
 		$this->status = $status;
 		return $this;
 	}
 
+	/**
+	 * st[p1]
+	 * @param string|null $p1
+	 * @return $this
+	 */
 	public function setP1(?string $p1): self
 	{
 		$this->p1 = $p1;
 		return $this;
 	}
 
+	/**
+	 * st[p2]
+	 * @param string|null $p2
+	 * @return $this
+	 */
 	public function setP2(?string $p2): self
 	{
 		$this->p2 = $p2;
 		return $this;
 	}
 
+	/**
+	 * st[p3]
+	 * @param string|null $p3
+	 * @return $this
+	 */
 	public function setP3(?string $p3): self
 	{
 		$this->p3 = $p3;
 		return $this;
 	}
 
+	/**
+	 * st[p4]
+	 * @param string|null $p4
+	 * @return $this
+	 */
 	public function setP4(?string $p4): self
 	{
 		$this->p4 = $p4;
 		return $this;
 	}
 
+	/**
+	 * st[p5]
+	 * @param string|null $p5
+	 * @return $this
+	 */
 	public function setP5(?string $p5): self
 	{
 		$this->p5 = $p5;

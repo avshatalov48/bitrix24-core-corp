@@ -40,4 +40,9 @@ enum Status: string implements IntModelValue
 			self::COMPLETED => 1,
 		};
 	}
+
+	public function isNew(): bool
+	{
+		return $this === self::NEW;
+	}
 }

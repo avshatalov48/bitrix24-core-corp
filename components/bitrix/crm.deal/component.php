@@ -371,13 +371,6 @@ elseif($componentPage === 'kanbancategory')
 {
 	$componentPage = 'kanban';
 }
-elseif($componentPage === 'activitycategory' || $componentPage === 'activity')
-{
-	$arResult['KANBAN_VIEW_MODE'] = \Bitrix\Crm\Kanban\ViewMode::MODE_ACTIVITIES;
-	$arResult['CAN_USE_ALL_CATEGORIES'] = true;
-	$arResult['PATH_TO_DEAL_KANBANCATEGORY'] = $arResult['PATH_TO_DEAL_ACTIVITYCATEGORY'];
-	$componentPage = 'kanban';
-}
 elseif($componentPage === 'calendarcategory')
 {
 	$componentPage = 'calendar';
@@ -448,6 +441,15 @@ elseif ($componentPage === 'list')
 elseif ($componentPage === 'calendar')
 {
 	$router->checkAndUpdateCurrentListView($router::LIST_VIEW_CALENDAR, \CCrmOwnerType::Deal, $categoryID);
+}
+elseif($componentPage === 'activitycategory' || $componentPage === 'activity')
+{
+	$arResult['KANBAN_VIEW_MODE'] = \Bitrix\Crm\Kanban\ViewMode::MODE_ACTIVITIES;
+	$arResult['CAN_USE_ALL_CATEGORIES'] = true;
+	$arResult['PATH_TO_DEAL_KANBANCATEGORY'] = $arResult['PATH_TO_DEAL_ACTIVITYCATEGORY'];
+	$componentPage = 'kanban';
+
+	$router->checkAndUpdateCurrentListView($router::LIST_VIEW_ACTIVITY, \CCrmOwnerType::Deal, $categoryID);
 }
 
 $this->IncludeComponentTemplate($componentPage);

@@ -16,7 +16,6 @@ $APPLICATION->IncludeComponent(
 		'ENTITY_TYPE_ID' => CCrmOwnerType::OrderShipment,
 		'ENTITY_ID' => $arResult['VARIABLES']['shipment_id'] ?? null,
 		'EXTRAS' => ["ORDER_ID" => $arResult['VARIABLES']['order_id'] ?? null],
-		'ENABLE_TITLE_EDIT' => false,
 		'DISABLE_TOP_MENU' => 'Y',
 	]
 );

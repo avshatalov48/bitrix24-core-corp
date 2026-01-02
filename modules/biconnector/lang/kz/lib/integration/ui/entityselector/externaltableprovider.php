@@ -1,0 +1,3 @@
+<?php
+$MESS["EXTERNAL_TABLE_PROVIDER_EMPTY_EXTERNAL_SOURCE"] = "Қосылым көзі табылмады.";
+$MESS["EXTERNAL_TABLE_PROVIDER_UNKNOWN_TYPE_EXTERNAL_SOURCE"] = "Белгісіз қосылым түрі.";

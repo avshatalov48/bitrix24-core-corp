@@ -124,6 +124,7 @@ $APPLICATION->IncludeComponent(
 			'CONTEXT_ID' => $arResult['CONTEXT_ID'],
 			'CONTEXT' => $editorContext,
 			'ENABLE_PAGE_TITLE_CONTROLS' => $arResult['COMPONENT_MODE'] === ComponentMode::MODIFICATION,
+			'ENABLE_PAGE_TITLE_EDIT' => false,
 		),
 		'TIMELINE' => array(
 			'GUID' => "{$guid}_timeline",

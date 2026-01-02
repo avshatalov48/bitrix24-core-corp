@@ -22,6 +22,9 @@ final class ControlPanelMenuMapper
 	public const MENU_ID_CRM_CONTACT_CENTER = 'menu_contact_center';
 	public const MENU_ID_CRM_CONTACT = 'menu_crm_contact';
 	public const MENU_ID_CRM_COMPANY = 'menu_crm_company';
+	public const COMMUNICATIONS_CENTER = 'communications_center';
+	public const SALES_MANAGEMENT = 'sales_management';
+	public const MENU_ID_CRM_OPERATIONAL_ANALYTICS = 'operational_analytics';
 	// The hierarchy map is not complete and contains only tabs that are used in mCRM. Will be filled as needed.
 	// 3rd nesting level button MENU_ID example:
 	// 'crm_control_panel_menu_crm_clients:menu_crm_counterparty:menu_crm_counterparty_contacts'

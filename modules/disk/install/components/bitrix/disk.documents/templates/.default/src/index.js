@@ -9,6 +9,7 @@ import {Ears} from 'ui.ears';
 import {EventEmitter} from 'main.core.events';
 import Backend from './backend';
 import BoardsGuide from './boards-guide';
+import { Switcher as GridSwitcher } from './grid/switcher';
 import 'ui.tour';
 
 function showShared(objectId, node) {
@@ -28,6 +29,7 @@ export {
 	TileGridEmptyBlockGenerator,
 	Backend,
 	BoardsGuide,
+	GridSwitcher,
 };
 
 //Template things
@@ -89,5 +91,21 @@ BX.ready(() => {
 			EventEmitter.unsubscribe(EventEmitter.GLOBAL_TARGET, 'onUploaderIsInited', listener);
 		};
 		EventEmitter.subscribe(EventEmitter.GLOBAL_TARGET, 'onUploaderIsInited', listener);
+	}
+
+	if (window.location.search)
+	{
+		const searchParams = new URLSearchParams(window.location.search);
+		searchParams.delete('c_section');
+		let newState = null;
+		if (searchParams.size > 0)
+		{
+			newState = `?${searchParams.toString()}`;
+		}
+		else
+		{
+			newState = window.location.pathname;
+		}
+		window.history.replaceState(null, '', newState);
 	}
 });

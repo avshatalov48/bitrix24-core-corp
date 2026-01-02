@@ -5,7 +5,7 @@ jn.define('layout/ui/address-editor-opener', (require, exports, module) => {
 	const AppTheme = require('apptheme');
 	const { Loc } = require('loc');
 	const { withCurrentDomain } = require('utils/url');
-	const { Feature } = require('feature');
+	const { Random } = require('utils/random');
 
 	/**
 	 * @class AddressEditorOpener
@@ -28,12 +28,12 @@ jn.define('layout/ui/address-editor-opener', (require, exports, module) => {
 		 * @returns {Promise}
 		 */
 		async open({
-					   address = null,
-					   geoPoint = null,
-					   mode = AddressEditorModes.edit,
-					   uid = Random.getString(),
-					   onAddressSelected = null,
-				   })
+			address = null,
+			geoPoint = null,
+			mode = AddressEditorModes.edit,
+			uid = Random.getString(),
+			onAddressSelected = null,
+		})
 		{
 			const deviceGeoPosition = mode === AddressEditorModes.edit
 				? await this.requestDeviceGeoPosition()
@@ -106,11 +106,6 @@ jn.define('layout/ui/address-editor-opener', (require, exports, module) => {
 		async requestDeviceGeoPosition()
 		{
 			return new Promise((resolve) => {
-				if (!Feature.isGeoPositionSupported())
-				{
-					resolve(null);
-				}
-
 				device.getLocation({ accuracy: 'approximate' })
 					.then((response) => resolve(response))
 					.catch(() => resolve(null));

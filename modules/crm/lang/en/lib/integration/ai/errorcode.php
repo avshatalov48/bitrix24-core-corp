@@ -5,3 +5,4 @@ $MESS["CRM_INTEGRATION_AI_ERROR_ENGINE_LIMIT_EXCEEDED"] = "Maximum possible requ
 $MESS["CRM_INTEGRATION_AI_ERROR_FILE_NOT_FOUND"] = "CoPilot cannot find the call recording. Please refresh the page and try again.";
 $MESS["CRM_INTEGRATION_AI_ERROR_JOB_ALREADY_EXISTS"] = "CoPilot is already processing this call";
 $MESS["CRM_INTEGRATION_AI_ERROR_NOT_AVAILABLE"] = "The AI Integration module is not installed.";
+$MESS["CRM_INTEGRATION_AI_ERROR_WRONG_REPEAT_SALE_PAYLOAD_MARKERS"] = "Insufficient customer information.";

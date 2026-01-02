@@ -2,15 +2,13 @@
 
 namespace Bitrix\HumanResources\Model;
 
-use Bitrix\Main\Application;
-use Bitrix\Main\ArgumentException;
-use Bitrix\Main\DB\SqlQueryException;
+use Bitrix\HumanResources\Service\Container;
 use Bitrix\HumanResources\Type\NodeEntityType;
 use Bitrix\Main\ORM;
 use Bitrix\Main\ORM\Event;
 use Bitrix\Main\ORM\Query\Query;
 use Bitrix\Main\Type\DateTime;
-use Bitrix\Main\SystemException;
+use \Bitrix\Main\Text\Emoji;
 
 /**
  * Class StructureTable
@@ -54,6 +52,8 @@ class NodeTable extends ORM\Data\DataManager
 				->configureTitle('ID')
 			,
 			(new ORM\Fields\StringField('NAME'))
+				->addSaveDataModifier(fn($value) => Emoji::encode($value))
+				->addFetchDataModifier(fn($value) => Emoji::decode($value))
 				->configureTitle('NAME')
 			,
 			(new ORM\Fields\EnumField('TYPE'))
@@ -94,10 +94,17 @@ class NodeTable extends ORM\Data\DataManager
 			,
 			(new ORM\Fields\IntegerField('SORT'))
 				->configureTitle('SORT')
-				->configureDefaultValue('500')
+				->configureDefaultValue('0')
 			,
 			(new ORM\Fields\StringField('DESCRIPTION'))
+				->addSaveDataModifier(fn($value) => Emoji::encode($value))
+				->addFetchDataModifier(fn($value) => Emoji::decode($value))
 				->configureTitle('DESCRIPTION')
+				->configureDefaultValue(null)
+				->configureNullable()
+			,
+			(new ORM\Fields\StringField('COLOR_NAME'))
+				->configureTitle('Color for org chart')
 				->configureDefaultValue(null)
 				->configureNullable()
 			,
@@ -130,7 +137,8 @@ class NodeTable extends ORM\Data\DataManager
 		NodePathTable::deleteList(['=CHILD_ID' => $nodeId]);
 		NodePathTable::deleteList(['=PARENT_ID' => $nodeId]);
 		NodeBackwardAccessCodeTable::deleteList(['=NODE_ID' => $nodeId]);
-		NodeMemberTable::deleteList(['=NODE_ID' => $nodeId]);
+		Container::getNodeMemberRepository()->removeAllMembersByNodeId($nodeId);
+		NodeSettingsTable::deleteByFilter(['=NODE_ID' => $nodeId]);
 	}
 
 	public static function deleteList(array $filter)

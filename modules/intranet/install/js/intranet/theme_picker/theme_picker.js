@@ -21,11 +21,6 @@ BX.Intranet.Bitrix24.ThemePicker = function(options)
 	this.allowSetDefaultTheme = options.allowSetDefaultTheme === true;
 	this.isVideo = options.isVideo === true;
 
-	if (BX.type.isDomNode(options.link))
-	{
-		BX.bind(options.link, "click", this.show.bind(this));
-	}
-
 	this.themes = [];
 	this.baseThemes = {};
 
@@ -128,16 +123,16 @@ BX.Intranet.Bitrix24.ThemePicker.prototype =
 		{
 			this.loader = BX.create("div", {
 				props: {
-					className: "intranet-loader-container intranet-loader-show"
+					className: "theme-loader-container theme-loader-show"
 				},
 				html:
-				'<svg class="intranet-loader-circular" viewBox="25 25 50 50">' +
-					'<circle class="intranet-loader-path" cx="50" cy="50" r="20" fill="none" stroke-miterlimit="10"/>' +
+				'<svg class="theme-loader-circular" viewBox="25 25 50 50">' +
+					'<circle class="theme-loader-path" cx="50" cy="50" r="20" fill="none" stroke-miterlimit="10"/>' +
 				'</svg>'
 			});
 		}
 
-		this.loader.classList[small ? "add" : "remove"]("intranet-loader-container-small");
+		this.loader.classList[small ? "add" : "remove"]("theme-loader-container-small");
 
 		return this.loader;
 	},
@@ -339,10 +334,16 @@ BX.Intranet.Bitrix24.ThemePicker.prototype =
 		var appliedBaseThemeId = this.getAppliedThemeId().split(":")[0];
 		var baseThemeId = themeId.split(":")[0];
 
+		const contexts = {
+			light: '--ui-context-edge-dark',
+			dark: '--ui-context-edge-light',
+			default: '--ui-context-edge-light',
+		};
+
 		if (appliedBaseThemeId !== baseThemeId)
 		{
-			BX.removeClass(document.body, "bitrix24-" + appliedBaseThemeId + "-theme");
-			BX.addClass(document.body, "bitrix24-" + baseThemeId + "-theme");
+			BX.Dom.removeClass(document.body, [`bitrix24-${appliedBaseThemeId}-theme`, contexts[appliedBaseThemeId]]);
+			BX.Dom.addClass(document.body, [`bitrix24-${baseThemeId}-theme`, contexts[baseThemeId]]);
 		}
 	},
 
@@ -1001,6 +1002,25 @@ BX.Intranet.Bitrix24.ThemePicker.prototype =
 			BX.removeClass(document.body, "bitrix24-light-theme");
 			this.isBodyClassRemoved = true;
 		}
+
+		const contextsToRemove = [
+			'--ui-context-edge-dark',
+			'--ui-context-edge-light',
+			'--ui-context-content-dark',
+		];
+
+		contextsToRemove.forEach((contextToRemove) => {
+			if (BX.hasClass(document.body, contextToRemove))
+			{
+				BX.removeClass(document.body, contextToRemove);
+				this.removedContextClassname = contextToRemove;
+			}
+		});
+
+		if (this.removedContextClassname)
+		{
+			BX.addClass(document.body, '--ui-context-content-light');
+		}
 	},
 
 	handleAfterPrint: function()
@@ -1009,6 +1029,13 @@ BX.Intranet.Bitrix24.ThemePicker.prototype =
 		{
 			BX.addClass(document.body, "bitrix24-light-theme");
 			this.isBodyClassRemoved = false;
+		}
+
+		if (this.removedContextClassname)
+		{
+			BX.removeClass(document.body, 'ui-context-content-light');
+			BX.addClass(document.body, this.removedContextClassname);
+			this.removedContextClassname = null;
 		}
 	},
 

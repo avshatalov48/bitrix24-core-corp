@@ -42,8 +42,7 @@ class ScenarioSelection extends CBitrixComponent implements Bitrix\Main\Engine\C
 		Main\Loader::includeModule('sale');
 		Main\Loader::includeModule('crm');
 
-		$userPermissions = CCrmPerms::GetCurrentUserPermissions();
-		if (!$userPermissions->HavePerm('CONFIG', BX_CRM_PERM_CONFIG, 'WRITE'))
+		if (!\Bitrix\Crm\Service\Container::getInstance()->getUserPermissions()->isCrmAdmin())
 		{
 			return [
 				'success' => false,

@@ -11,9 +11,13 @@ use Bitrix\Main\Entity\Result;
 use Bitrix\Main\Error;
 use Bitrix\Main\Loader;
 use Bitrix\Main\Localization\Loc;
+use Bitrix\Main\ObjectException;
 use Bitrix\Main\Web\HttpClient;
 
-/** @internal */
+/**
+ * @internal
+ * @deprecated
+ */
 class Instagram
 {
 	const AUTH_CACHE_DIR = '/store/import/instagram/auth/';
@@ -98,6 +102,11 @@ class Instagram
 		if (static::$provider === null)
 		{
 			static::$provider = new Provider(static::$connectorName);
+		}
+
+		if (!(static::$provider instanceof Provider))
+		{
+			throw new ObjectException('Store connector is not defined');
 		}
 
 		return static::$provider;

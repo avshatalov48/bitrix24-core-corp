@@ -4,7 +4,9 @@ declare(strict_types=1);
 
 namespace Bitrix\Booking\Internals\Model;
 
-use Bitrix\Main\Entity\DataManager;
+use Bitrix\Main\ORM\Data\DataManager;
+use Bitrix\Booking\Internals\Model\Trait\UpdateByFilterTrait;
+use Bitrix\Main\ORM\Fields\BooleanField;
 use Bitrix\Main\ORM\Fields\DatetimeField;
 use Bitrix\Main\ORM\Fields\IntegerField;
 use Bitrix\Main\ORM\Fields\StringField;
@@ -29,6 +31,8 @@ use Bitrix\Main\Type\DateTime;
  */
 class ResourceDataTable extends DataManager
 {
+	use UpdateByFilterTrait;
+
 	public static function getTableName(): string
 	{
 		return 'b_booking_resource_data';
@@ -61,8 +65,17 @@ class ResourceDataTable extends DataManager
 
 			(new DatetimeField('CREATED_AT'))
 				->configureDefaultValue(new DateTime()),
+
 			(new DatetimeField('UPDATED_AT'))
 				->configureDefaultValue(new DateTime()),
+
+			(new BooleanField('IS_DELETED'))
+				->configureValues('N', 'Y')
+				->configureDefaultValue('N')
+				->configureRequired(),
+
+			(new DatetimeField('DELETED_AT'))
+				->configureDefaultValue(null),
 		];
 	}
 }

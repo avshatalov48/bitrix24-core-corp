@@ -27,7 +27,6 @@ class MemberConnectorFactory
 
 		return $connector instanceof Contract\RequisiteConnector
 			? $connector
-			: null
-		;
+			: null;
 	}
 }

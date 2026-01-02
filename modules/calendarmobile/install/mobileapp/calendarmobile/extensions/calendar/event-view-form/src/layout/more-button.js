@@ -38,6 +38,7 @@ jn.define('calendar/event-view-form/layout/more-button', (require, exports, modu
 			this.dateToTs = null;
 			this.meetingStatus = null;
 			this.eventType = null;
+			this.isDeleted = false;
 		}
 
 		get eventId()
@@ -53,7 +54,7 @@ jn.define('calendar/event-view-form/layout/more-button', (require, exports, modu
 			this.recurrenceRuleDescription = event?.recurrenceRuleDescription;
 			this.dateFromTs = event?.dateFromTs;
 			this.dateToTs = event?.dateToTs;
-			this.isFullDay = event?.isFullDay;
+			this.fullDay = event?.fullDay;
 			this.meetingStatus = event?.meetingStatus;
 			this.eventType = event?.eventType;
 		}
@@ -99,13 +100,6 @@ jn.define('calendar/event-view-form/layout/more-button', (require, exports, modu
 
 		async openEditForm(recursionMode = null)
 		{
-			if (!this.isSameDate() || this.isFullDay)
-			{
-				this.showEditUnableInfo(Loc.getMessage('M_CALENDAR_EVENT_VIEW_FORM_EVENT_EDIT_LONG_UNABLE'));
-
-				return;
-			}
-
 			if (this.hasPassed())
 			{
 				this.showEditUnableInfo(Loc.getMessage('M_CALENDAR_EVENT_VIEW_FORM_EVENT_EDIT_PAST_UNABLE'));
@@ -170,25 +164,23 @@ jn.define('calendar/event-view-form/layout/more-button', (require, exports, modu
 
 		copyEventUrl()
 		{
-			const pathToCalendar = withCurrentDomain(SettingsManager.getPathToUserCalendar());
+			copyToClipboard(this.getEventUrl(), Loc.getMessage('M_CALENDAR_EVENT_VIEW_FORM_LINK_COPIED'), true, true);
+		}
+
+		getEventUrl()
+		{
+			const pathToCalendar = withCurrentDomain(SettingsManager.getPathToCalendar());
 			const params = {
 				EVENT_ID: this.props.eventId,
 				EVENT_DATE: DateHelper.formatDate(new Date(this.props.dateFromTs)),
 			};
 
-			const eventUrl = this.addParams(pathToCalendar, params);
-
-			copyToClipboard(eventUrl, Loc.getMessage('M_CALENDAR_EVENT_VIEW_FORM_LINK_COPIED'));
-		}
-
-		addParams(url, params)
-		{
 			const paramsString = Object.entries(params)
 				.map(([param, value]) => `${param}=${encodeURIComponent(value)}`)
 				.join('&')
 			;
 
-			return `${url}?${paramsString}`;
+			return `${pathToCalendar}?${paramsString}`;
 		}
 
 		deleteEvent()
@@ -213,15 +205,17 @@ jn.define('calendar/event-view-form/layout/more-button', (require, exports, modu
 		}
 
 		deleteSingleEvent = () => {
+			this.beforeDeleteEvent();
+
 			void DeleteManager.delete({
 				eventId: this.eventId,
 				parentId: this.parentId,
 			});
-
-			this.afterDeleteEvent();
 		};
 
 		deleteThisEvent = () => {
+			this.beforeDeleteEvent();
+
 			void DeleteManager.deleteThis({
 				eventId: this.eventId,
 				parentId: this.parentId,
@@ -229,11 +223,11 @@ jn.define('calendar/event-view-form/layout/more-button', (require, exports, modu
 				isRecurrence: this.isRecurrence(),
 				recurrenceId: this.recurrenceId,
 			});
-
-			this.afterDeleteEvent();
 		};
 
 		deleteNextEvent = () => {
+			this.beforeDeleteEvent();
+
 			const untilDateTs = this.dateFromTs - DateHelper.dayLength;
 
 			void DeleteManager.deleteNext({
@@ -242,21 +236,20 @@ jn.define('calendar/event-view-form/layout/more-button', (require, exports, modu
 				untilDate: DateHelper.formatDate(new Date(untilDateTs)),
 				untilDateTs,
 			});
-
-			this.afterDeleteEvent();
 		};
 
 		deleteAllEvent = () => {
+			this.beforeDeleteEvent();
+
 			void DeleteManager.deleteAll({
 				eventId: this.eventId,
 				parentId: this.parentId,
 			});
-
-			this.afterDeleteEvent();
 		};
 
-		afterDeleteEvent()
+		beforeDeleteEvent()
 		{
+			this.isDeleted = true;
 			this.props.layout.back();
 		}
 
@@ -268,15 +261,6 @@ jn.define('calendar/event-view-form/layout/more-button', (require, exports, modu
 		wasEverRecursive()
 		{
 			return this.isRecurrence() || this.recurrenceId > 0;
-		}
-
-		isSameDate()
-		{
-			const minusSecond = this.isFullDay ? 1000 : 0;
-			const eventFrom = new Date(this.dateFromTs);
-			const eventTo = new Date(this.dateToTs - minusSecond);
-
-			return DateHelper.getDayCode(eventFrom) === DateHelper.getDayCode(eventTo);
 		}
 
 		hasPassed()

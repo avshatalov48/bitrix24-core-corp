@@ -6,6 +6,7 @@ jn.define('intranet/invite', (require, exports, module) => {
 	const { Notify } = require('notify');
 	const { Alert } = require('alert');
 	const { IntranetInviteAnalytics } = require('intranet/invite/src/analytics');
+	const { Random } = require('utils/random');
 
 	/**
 	 * @class IntranetInvite
@@ -210,7 +211,7 @@ jn.define('intranet/invite', (require, exports, module) => {
 			BX.ajax.runAction('intranet.invite.setRegisterSettings', {
 				data: {
 					params: {
-						SECRET: Utils.getRandom(8),
+						SECRET: Random.getString(8),
 					},
 				},
 			}).then((response) => {

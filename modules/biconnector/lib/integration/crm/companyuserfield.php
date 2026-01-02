@@ -28,6 +28,12 @@ class CompanyUserField
 		$result = &$params[1];
 		$languageId = $params[2];
 
+		$eventTableName = $params[3];
+		if (!empty($eventTableName) && $eventTableName !== 'crm_company_uf')
+		{
+			return;
+		}
+
 		$userFields = $USER_FIELD_MANAGER->getUserFields(\CCrmCompany::$sUFEntityID, 0, $languageId);
 		if (!$userFields)
 		{
@@ -125,7 +131,7 @@ class CompanyUserField
 							$localUF = $userField;
 							$localUF['VALUE'] = $result;
 
-							$returnResult = $USER_FIELD_MANAGER->getPublicText($localUF);
+							$returnResult = \Bitrix\BIConnector\UserField\ProxyUserFieldManager::getText($localUF);
 							\Bitrix\BIConnector\MemoryCache::set($userField['ID'], $cacheKey, $returnResult);
 
 							return $returnResult;

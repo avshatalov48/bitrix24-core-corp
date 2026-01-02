@@ -1,5 +1,5 @@
 import { CopilotChat, CopilotChatMessageType } from 'ai.copilot-chat.ui';
-import { Loc } from 'main.core';
+import { Loc, Runtime } from 'main.core';
 import { getDefaultChatOptions } from './default-chat-options';
 
 export class ExampleChat
@@ -55,6 +55,20 @@ export class ExampleChat
 	show()
 	{
 		this.#copilotChat.show();
+		void this.#sendAnalytics();
+	}
+
+	async #sendAnalytics(): Promise<void>
+	{
+		const { sendData } = await Runtime.loadExtension('ui.analytics');
+
+		sendData({
+			tool: 'tasks',
+			category: 'flows',
+			event: 'copilot_example_view',
+			c_section: 'tasks',
+			c_sub_section: 'flows_grid',
+		});
 	}
 
 	hide()

@@ -10,25 +10,28 @@ use Bitrix\Catalog\Access\AccessController;
 use Bitrix\Catalog\Access\ActionDictionary;
 use Bitrix\Catalog\Product\Price;
 use Bitrix\Crm\Product\Url;
+use Bitrix\Crm\Service\Container;
 use Bitrix\Iblock\Url\AdminPage\BuilderManager;
 use Bitrix\Main;
 use Bitrix\Main\Application;
 use Bitrix\Main\Loader;
 use Bitrix\Main\Localization\Loc;
+use Bitrix\Main\UI\Extension;
 
 Loc::loadMessages(__FILE__);
 
 final class CCrmOrderProductListComponent extends \CBitrixComponent
 {
 	private $userId = 0;
-	private $userPermissions;
 	private $errors = [];
 
 	/** @var Bitrix\Crm\Order\Order */
 	private $order = null;
 
-	/** @var null|\Bitrix\Catalog\Url\AdminPage\CatalogBuilder  */
+	/** @var null|Catalog\Url\ShopBuilder  */
 	private $urlBuilder = null;
+
+	private Container $serviceContainer;
 
 	private function init()
 	{
@@ -60,9 +63,14 @@ final class CCrmOrderProductListComponent extends \CBitrixComponent
 			return false;
 		}
 
-		$this->userPermissions = CCrmPerms::GetCurrentUserPermissions();
+		$this->serviceContainer = Container::getInstance();
 
-		if (!\Bitrix\Crm\Order\Permissions\Order::checkReadPermission(0, $this->userPermissions))
+		if (
+			!$this->serviceContainer
+				->getUserPermissions()
+				->entityType()
+				->canReadItems(CCrmOwnerType::Order)
+		)
 		{
 			$this->errors[] = new Main\Error(Loc::getMessage('CRM_PERMISSION_DENIED'));
 
@@ -127,8 +135,8 @@ final class CCrmOrderProductListComponent extends \CBitrixComponent
 		}
 
 		$this->initCouponsData($this->order->getUserId(), $this->order->getId());
-		$this->userId = CCrmSecurityHelper::GetCurrentUserID();
-		CUtil::InitJSCore(['ajax', 'tooltip']);
+		$this->userId = $this->serviceContainer->getContext()->getUserId();
+		Extension::load(['ajax', 'tooltip']);
 
 		return true;
 	}
@@ -761,7 +769,7 @@ final class CCrmOrderProductListComponent extends \CBitrixComponent
 			\CCrmOwnerType::Order
 		);
 	}
-	
+
 	private function isProductDiscountSet(): bool
 	{
 		return AccessController::getCurrent()->checkByValue(
@@ -814,7 +822,23 @@ final class CCrmOrderProductListComponent extends \CBitrixComponent
 		);
 		$this->arResult['ORDER_SITE_ID'] = $this->order->getSiteId();
 		$this->arResult['ORDER_ID'] = $this->order->getId();
-		$this->arResult['CAN_UPDATE_ORDER'] = \Bitrix\Crm\Order\Permissions\Order::checkUpdatePermission(intval($this->arResult['ORDER_ID']), $this->userPermissions);
+		if ($this->arResult['ORDER_ID'] > 0)
+		{
+			$this->arResult['CAN_UPDATE_ORDER'] = $this->serviceContainer
+				->getUserPermissions()
+				->item()
+				->canUpdate(\CCrmOwnerType::Order, $this->arResult['ORDER_ID'])
+			;
+		}
+		else
+		{
+			$this->arResult['CAN_UPDATE_ORDER'] = $this->serviceContainer
+				->getUserPermissions()
+				->entityType()
+				->canAddItems(\CCrmOwnerType::Order)
+			;
+		}
+
 		$this->arResult['VAT_RATES'] = $this->getVatRates();
 
 		$this->arResult["DISCOUNTS_LIST"] = \Bitrix\Sale\Helpers\Admin\OrderEdit::getOrderedDiscounts($this->order);

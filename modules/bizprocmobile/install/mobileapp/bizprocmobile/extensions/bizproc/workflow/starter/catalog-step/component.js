@@ -6,6 +6,7 @@ jn.define('bizproc/workflow/starter/catalog-step/component', (require, exports, 
 	const { StorageCache } = require('storage-cache');
 	const { NotifyManager } = require('notify-manager');
 	const { isNil } = require('utils/type');
+	const { Random } = require('utils/random');
 	const { PureComponent } = require('layout/pure-component');
 	const { CatalogStepView } = require('bizproc/workflow/starter/catalog-step/view');
 	const { formatRoundedTime, roundTimeInSeconds } = require('bizproc/helper/duration');
@@ -20,7 +21,6 @@ jn.define('bizproc/workflow/starter/catalog-step/component', (require, exports, 
 			this.selectedTemplate = this.props.selectedTemplate || null;
 			this.isLoading = false;
 
-			// eslint-disable-next-line no-undef
 			this.uid = props.uid || Random.getString();
 			this.customEventEmitter = EventEmitter.createWithUid(this.uid);
 

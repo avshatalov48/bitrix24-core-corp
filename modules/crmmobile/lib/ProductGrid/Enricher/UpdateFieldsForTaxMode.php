@@ -7,6 +7,7 @@ namespace Bitrix\CrmMobile\ProductGrid\Enricher;
 use Bitrix\Crm\Item;
 use Bitrix\Crm\ProductRow;
 use Bitrix\Crm\Service\Accounting;
+use Bitrix\CrmMobile\ProductGrid\ProductItem;
 use Bitrix\CrmMobile\ProductGrid\ProductRowViewModel;
 
 final class UpdateFieldsForTaxMode implements EnricherContract
@@ -46,11 +47,6 @@ final class UpdateFieldsForTaxMode implements EnricherContract
 
 	private function rebuild(ProductRow $source, array $mutations): ProductRow
 	{
-		$result = ProductRow::createFromArray(array_merge(
-			$source->toArray(),
-			$mutations
-		));
-		$this->entity->addToProductRows($result);
-		return $result;
+		return ProductItem::rebuild($source, $mutations, $this->entity);
 	}
 }

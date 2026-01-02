@@ -3,6 +3,7 @@
  */
 jn.define('tasks/statemanager/redux/slices/stage-settings/thunk/src/data-provider', (require, exports, module) => {
 	const { Views } = require('tasks/statemanager/redux/types');
+	const { RunActionExecutor } = require('rest');
 
 	function getAddStageEndpoint(view)
 	{

@@ -811,6 +811,7 @@ this.BX.Tasks = this.BX.Tasks || {};
 	var _commentReadAll = /*#__PURE__*/babelHelpers.classPrivateFieldLooseKey("commentReadAll");
 	var _onFlowAdd = /*#__PURE__*/babelHelpers.classPrivateFieldLooseKey("onFlowAdd");
 	var _onFlowUpdate = /*#__PURE__*/babelHelpers.classPrivateFieldLooseKey("onFlowUpdate");
+	var _onFlowPinned = /*#__PURE__*/babelHelpers.classPrivateFieldLooseKey("onFlowPinned");
 	var _onFlowDelete = /*#__PURE__*/babelHelpers.classPrivateFieldLooseKey("onFlowDelete");
 	var _afterRowUpdated = /*#__PURE__*/babelHelpers.classPrivateFieldLooseKey("afterRowUpdated");
 	var _recognizeFlowId = /*#__PURE__*/babelHelpers.classPrivateFieldLooseKey("recognizeFlowId");
@@ -904,6 +905,9 @@ this.BX.Tasks = this.BX.Tasks || {};
 	    });
 	    Object.defineProperty(this, _onFlowDelete, {
 	      value: _onFlowDelete2
+	    });
+	    Object.defineProperty(this, _onFlowPinned, {
+	      value: _onFlowPinned2
 	    });
 	    Object.defineProperty(this, _onFlowUpdate, {
 	      value: _onFlowUpdate2
@@ -1032,7 +1036,8 @@ this.BX.Tasks = this.BX.Tasks || {};
 	    babelHelpers.classPrivateFieldLooseBase(this, _instantPullHandlers)[_instantPullHandlers] = {
 	      comment_read_all: babelHelpers.classPrivateFieldLooseBase(this, _commentReadAll)[_commentReadAll],
 	      flow_add: babelHelpers.classPrivateFieldLooseBase(this, _onFlowAdd)[_onFlowAdd],
-	      flow_delete: babelHelpers.classPrivateFieldLooseBase(this, _onFlowDelete)[_onFlowDelete]
+	      flow_delete: babelHelpers.classPrivateFieldLooseBase(this, _onFlowDelete)[_onFlowDelete],
+	      flow_pinned_for_user: babelHelpers.classPrivateFieldLooseBase(this, _onFlowPinned)[_onFlowPinned]
 	    };
 	    babelHelpers.classPrivateFieldLooseBase(this, _delayedPullFlowHandlers)[_delayedPullFlowHandlers] = {
 	      flow_update: babelHelpers.classPrivateFieldLooseBase(this, _onFlowUpdate)[_onFlowUpdate]
@@ -1082,7 +1087,6 @@ this.BX.Tasks = this.BX.Tasks || {};
 	          }]
 	        });
 	      }
-	      babelHelpers.classPrivateFieldLooseBase(this, _updateRow)[_updateRow](flowId);
 	    });
 	  }
 	  removeFlow(flowId) {
@@ -1422,6 +1426,12 @@ this.BX.Tasks = this.BX.Tasks || {};
 	  }
 	  babelHelpers.classPrivateFieldLooseBase(this, _updateRow)[_updateRow](flowId, 'update');
 	}
+	function _onFlowPinned2(data, flowId) {
+	  if (!babelHelpers.classPrivateFieldLooseBase(this, _isRowExist)[_isRowExist](flowId)) {
+	    return;
+	  }
+	  babelHelpers.classPrivateFieldLooseBase(this, _updateRow)[_updateRow](flowId);
+	}
 	function _onFlowDelete2(data, flowId) {
 	  if (!babelHelpers.classPrivateFieldLooseBase(this, _isRowExist)[_isRowExist](flowId)) {
 	    return;
@@ -1599,7 +1609,8 @@ this.BX.Tasks = this.BX.Tasks || {};
 	    window.history.replaceState(null, null, uri.toString());
 	    tasks_flow_editForm.EditForm.createInstance({
 	      flowId: demoFlowId,
-	      demoFlow: 'Y'
+	      demoFlow: 'Y',
+	      isFeatureTrialable: babelHelpers.classPrivateFieldLooseBase(this, _params)[_params].isFeatureTrialable
 	    });
 	  }
 	  const createFlow = uri.getQueryParam('create_flow');
@@ -1607,7 +1618,8 @@ this.BX.Tasks = this.BX.Tasks || {};
 	    uri.removeQueryParam('create_flow');
 	    window.history.replaceState(null, null, uri.toString());
 	    tasks_flow_editForm.EditForm.createInstance({
-	      guideFlow: 'Y'
+	      guideFlow: 'Y',
+	      isFeatureTrialable: babelHelpers.classPrivateFieldLooseBase(this, _params)[_params].isFeatureTrialable
 	    });
 	  }
 	}
@@ -1839,7 +1851,7 @@ this.BX.Tasks = this.BX.Tasks || {};
 	  openFirstDashboard() {
 	    const dashboard = babelHelpers.classPrivateFieldLooseBase(this, _dashboards)[_dashboards][0];
 	    if (dashboard) {
-	      main_sidepanel.SidePanel.Instance.open(dashboard.url);
+	      window.open(dashboard.url, '_blank');
 	    }
 	  }
 	}
@@ -1850,7 +1862,7 @@ this.BX.Tasks = this.BX.Tasks || {};
 	      tabId: dashboard.id,
 	      text: dashboard.title,
 	      onclick: () => {
-	        main_sidepanel.SidePanel.Instance.open(dashboard.url);
+	        window.open(dashboard.url, '_blank');
 	      }
 	    });
 	  });
@@ -1859,29 +1871,35 @@ this.BX.Tasks = this.BX.Tasks || {};
 
 	let _$1 = t => t,
 	  _t$1;
-	class NotEnoughTasksPopup {
-	  static show(bindElement) {
+	const CopilotAdviceErrorTypes = Object.freeze({
+	  NotEnoughTasks: 'notEnoughTasks',
+	  UnexpectedError: 'unexpectedError',
+	  AdviceFetching: 'adviceFetching'
+	});
+	class CopilotAdviceErrorPopup {
+	  static show(bindElement, errorType = null) {
+	    const messages = this.getMessagesByErrorType(errorType);
 	    const {
 	      root: popupContent,
 	      exampleLink
 	    } = main_core.Tag.render(_t$1 || (_t$1 = _$1`
-			<div class="tasks-flow__not-enough-tasks-popup">
-				<div class="tasks-flow__not-enough-tasks-popup-title">
-					<span class="tasks-flow__not-enough-tasks-popup-icon ui-icon-set --copilot-ai"/>
-					<span class="tasks-flow__not-enough-tasks-popup-title-text">
+			<div class="tasks-flow__copilot-advice-error-popup">
+				<div class="tasks-flow__copilot-advice-error-popup-title">
+					<span class="tasks-flow__copilot-advice-error-popup-icon ui-icon-set --copilot-ai"/>
+					<span class="tasks-flow__copilot-advice-error-popup-title-text">
 						${0}
 					</span>
 				</div>
-				<div class="tasks-flow__not-enough-tasks-popup-description">
+				<div class="tasks-flow__copilot-advice-error-popup-description">
 					${0}
 				</div>
-				<div class="tasks-flow__not-enough-tasks-popup-example">
-					<span class="tasks-flow__not-enough-tasks-popup-example-text" ref="exampleLink">
+				<div class="tasks-flow__copilot-advice-error-popup-example">
+					<span class="tasks-flow__copilot-advice-error-popup-example-text" ref="exampleLink">
 						${0}
 					</span>
 				</div>
 			</div>
-		`), main_core.Loc.getMessage('TASKS_FLOW_LIST_COPILOT_NOT_ENOUGH_TASKS_POPUP_TITLE'), main_core.Loc.getMessage('TASKS_FLOW_LIST_COPILOT_NOT_ENOUGH_TASKS_POPUP_DESCRIPTION'), main_core.Loc.getMessage('TASKS_FLOW_LIST_COPILOT_NOT_ENOUGH_TASKS_POPUP_SHOW_EXAMPLE'));
+		`), main_core.Loc.getMessage(messages.titleCode), main_core.Loc.getMessage(messages.descriptionCode), main_core.Loc.getMessage('TASKS_FLOW_LIST_COPILOT_NOT_ENOUGH_TASKS_POPUP_SHOW_EXAMPLE'));
 	    const popup = new main_popup.Popup({
 	      bindElement,
 	      content: popupContent,
@@ -1901,12 +1919,42 @@ this.BX.Tasks = this.BX.Tasks || {};
 	    });
 	    popup.show();
 	  }
+	  static getMessagesByErrorType(errorType = null) {
+	    let titleCode = '';
+	    let descriptionCode = '';
+	    switch (errorType) {
+	      case CopilotAdviceErrorTypes.UnexpectedError:
+	        {
+	          titleCode = 'TASKS_FLOW_LIST_COPILOT_UNEXPECTED_ERROR_POPUP_TITLE';
+	          descriptionCode = 'TASKS_FLOW_LIST_COPILOT_UNEXPECTED_ERROR_POPUP_DESCRIPTION';
+	          break;
+	        }
+	      case CopilotAdviceErrorTypes.AdviceFetching:
+	        {
+	          titleCode = 'TASKS_FLOW_LIST_COPILOT_ADVICE_FETCHING_POPUP_TITLE';
+	          descriptionCode = 'TASKS_FLOW_LIST_COPILOT_ADVICE_FETCHING_POPUP_DESCRIPTION';
+	          break;
+	        }
+	      case CopilotAdviceErrorTypes.NotEnoughTasks:
+	      default:
+	        {
+	          titleCode = 'TASKS_FLOW_LIST_COPILOT_NOT_ENOUGH_TASKS_POPUP_TITLE';
+	          descriptionCode = 'TASKS_FLOW_LIST_COPILOT_NOT_ENOUGH_TASKS_POPUP_DESCRIPTION';
+	          break;
+	        }
+	    }
+	    return {
+	      titleCode,
+	      descriptionCode
+	    };
+	  }
 	}
 
 	exports.Grid = Grid;
 	exports.Filter = Filter;
 	exports.BIAnalytics = BIAnalytics;
-	exports.NotEnoughTasksPopup = NotEnoughTasksPopup;
+	exports.CopilotAdviceErrorPopup = CopilotAdviceErrorPopup;
+	exports.CopilotAdviceErrorTypes = CopilotAdviceErrorTypes;
 
-}((this.BX.Tasks.Flow = this.BX.Tasks.Flow || {}),BX.Tasks.Flow,BX.UI.Dialogs,BX.UI,BX.Pull,BX.Tasks.Flow,BX.Tasks.Flow,BX.Tasks,BX.UI.Manual,BX,BX.Event,BX,BX,BX.Main,BX.Tasks.Flow));
+}((this.BX.Tasks.Flow = this.BX.Tasks.Flow || {}),BX.Tasks.Flow,BX.UI.Dialogs,BX.UI,BX.Pull,BX.Tasks.Flow,BX.Tasks.Flow,BX.Tasks,BX.UI.Manual,BX,BX.Event,BX.SidePanel,BX,BX.Main,BX.Tasks.Flow));
 //# sourceMappingURL=script.js.map

@@ -4,7 +4,6 @@
 jn.define('im/messenger/lib/audio-player', (require, exports, module) => {
 	const NativeAudioPlayer = require('native/media').AudioPlayer;
 	const {
-		FeatureFlag,
 		FileType,
 	} = require('im/messenger/const');
 	const { Logger } = require('im/messenger/lib/logger');
@@ -16,21 +15,11 @@ jn.define('im/messenger/lib/audio-player', (require, exports, module) => {
 	{
 		constructor(store)
 		{
-			if (!this.isSupported())
-			{
-				return;
-			}
-
 			this.store = store;
 			this.player = null;
 			this.playingMessageId = null;
 			this.isPaused = false;
 			this.loadingMessageIdCollection = new Set();
-		}
-
-		isSupported()
-		{
-			return FeatureFlag.native.mediaModuleSupported;
 		}
 
 		checkMessageWaitingToBeLoaded(messageId)
@@ -40,11 +29,6 @@ jn.define('im/messenger/lib/audio-player', (require, exports, module) => {
 
 		playMessage(messageId)
 		{
-			if (!this.isSupported())
-			{
-				return;
-			}
-
 			if (this.playingMessageId)
 			{
 				this.stop();
@@ -129,11 +113,6 @@ jn.define('im/messenger/lib/audio-player', (require, exports, module) => {
 
 		stop()
 		{
-			if (!this.isSupported())
-			{
-				return;
-			}
-
 			if (!this.playingMessageId)
 			{
 				return;

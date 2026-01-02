@@ -1,0 +1,3 @@
+<?php
+$MESS['IMMOBILE_MESSENGER_CONTROLLER_RECENT_SERVICE_ACTION_INVITE_RESEND_DONE'] = 'Приглашение успешно отправлено.';
+$MESS['IMMOBILE_MESSENGER_CONTROLLER_RECENT_SERVICE_ACTION_PIN_ERROR_MAX_PINNED'] = 'Всего можно закрепить не больше 45 чатов, каналов и коллаб';

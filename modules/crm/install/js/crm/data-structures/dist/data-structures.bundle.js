@@ -1,3 +1,4 @@
+/* eslint-disable */
 this.BX = this.BX || {};
 this.BX.Crm = this.BX.Crm || {};
 (function (exports,main_core) {
@@ -37,6 +38,9 @@ this.BX.Crm = this.BX.Crm || {};
 	  }
 	  get entityTypeId() {
 	    return babelHelpers.classPrivateFieldLooseBase(this, _entityTypeId)[_entityTypeId];
+	  }
+	  get entityTypeName() {
+	    return BX.CrmEntityType.resolveName(babelHelpers.classPrivateFieldLooseBase(this, _entityTypeId)[_entityTypeId]);
 	  }
 	  get entityId() {
 	    return babelHelpers.classPrivateFieldLooseBase(this, _entityId)[_entityId];

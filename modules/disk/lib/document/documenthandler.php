@@ -2,12 +2,14 @@
 
 namespace Bitrix\Disk\Document;
 
+use Bitrix\Disk\Internal\Service\UnifiedLink\UnifiedLinkSupportService;
 use Bitrix\Disk\Internals\Error\Error;
 use Bitrix\Disk\Internals\Error\ErrorCollection;
 use Bitrix\Disk\Internals\Error\IErrorable;
 use Bitrix\Disk\SpecificFolder;
 use Bitrix\Disk\TypeFile;
 use Bitrix\Main\Application;
+use Bitrix\Main\DI\ServiceLocator;
 use Bitrix\Main\Localization\Loc;
 use Bitrix\Main\NotImplementedException;
 use Bitrix\Main\Text\Encoding;
@@ -432,6 +434,13 @@ abstract class DocumentHandler implements IErrorable
 		}
 
 		return true;
+	}
+
+	public function supportsUnifiedLink(): bool
+	{
+		$unifiedLinkSupportService = ServiceLocator::getInstance()->get(UnifiedLinkSupportService::class);
+
+		return $unifiedLinkSupportService->supportsDocumentHandler($this);
 	}
 
 	protected function recoverExtensionInName(string &$fileName, string $mimeType): bool

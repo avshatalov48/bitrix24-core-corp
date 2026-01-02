@@ -1,0 +1,35 @@
+.sign-signers-grid-create-list-popup > .popup-window-buttons {
+	padding-bottom: 20px;
+}
+
+.sign-create-list-popup-item-container-wrapper {
+	padding: 20px 20px 0 20px;
+}
+
+.sign-create-list-popup-item-container {
+	display: flex;
+	flex-direction: column;
+	align-items: center;
+	justify-content: center;
+	padding: 20px;
+	background-color: var(--ui-color-palette-gray-03);
+}
+
+.sign-create-list-title-input-container {
+	padding: 10px;
+	width: 100%;
+}
+
+.sign-create-list-title-titlebar {
+	box-sizing: border-box;
+	color: #80868e;
+	display: inline-block;
+	font-size: 14px;
+	font-weight: var(--ui-font-weight-bold);
+	max-width: 100%;
+	overflow: hidden;
+	-o-text-overflow: ellipsis;
+	text-overflow: ellipsis;
+	white-space: nowrap;
+	margin-bottom: 20px;
+}

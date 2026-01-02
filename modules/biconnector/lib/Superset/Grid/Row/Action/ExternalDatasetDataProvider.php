@@ -2,8 +2,10 @@
 
 namespace Bitrix\BIConnector\Superset\Grid\Row\Action;
 
+use Bitrix\BIConnector\ExternalSource\Type;
 use Bitrix\BIConnector\Integration\Superset\SupersetInitializer;
 use Bitrix\BIConnector\Superset\Grid\Settings\ExternalDatasetSettings;
+use Bitrix\BIConnector\Superset\Grid\Row\Action\Dataset\CreateChartAction;
 use Bitrix\Main\Grid\Row\Action\DataProvider;
 
 /**
@@ -20,6 +22,8 @@ class ExternalDatasetDataProvider extends DataProvider
 
 		return [
 			new OpenDatasetAction(),
+			new CreateChartAction(),
+			new ExportCsvDatasetAction(),
 			new DeleteDatasetAction(),
 		];
 	}
@@ -33,6 +37,14 @@ class ExternalDatasetDataProvider extends DataProvider
 			if (
 				$rawFields['IS_DELETED'] === true &&
 				!($actionsItem instanceof DeleteDatasetAction)
+			)
+			{
+				continue;
+			}
+
+			if (
+				$rawFields['TYPE'] !== Type::Csv->value &&
+				$actionsItem instanceof ExportCsvDatasetAction
 			)
 			{
 				continue;

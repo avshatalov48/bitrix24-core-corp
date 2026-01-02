@@ -46,7 +46,7 @@ jn.define('im/messenger/lib/permission-manager/user-permission', (require, expor
 		 * @param {boolean} [verbose=false] - prop for verbose response, returns object with key
 		 * @return {boolean|object}
 		 */
-		isCanCall(userData, verbose = false)
+		canCall(userData, verbose = false)
 		{
 			if (!this.setUserData(userData))
 			{
@@ -57,12 +57,12 @@ jn.define('im/messenger/lib/permission-manager/user-permission', (require, expor
 			const isBot = this.isBot();
 			const isNetwork = this.isNetwork();
 			const isLive = this.isLive();
-			const isCanCall = !isYou && !isBot && !isNetwork && isLive;
+			const canCall = !isYou && !isBot && !isNetwork && isLive;
 
 			if (verbose)
 			{
 				return {
-					isCanCall,
+					canCall,
 					isYou,
 					isBot,
 					isNetwork,
@@ -70,12 +70,12 @@ jn.define('im/messenger/lib/permission-manager/user-permission', (require, expor
 				};
 			}
 
-			return isCanCall;
+			return canCall;
 		}
 
 		/**
 		 * @desc check user is bot by property user data
-		 * @param {UserState} [userData]
+		 * @param {UsersModelState} [userData]
 		 * @return {boolean}
 		 */
 		isBot(userData = this.userData)
@@ -128,9 +128,9 @@ jn.define('im/messenger/lib/permission-manager/user-permission', (require, expor
 		/**
 		 * @param actionType
 		 * @param {UsersModelState||number} userData
-		 * @return {*|boolean|boolean}
+		 * @return {boolean}
 		 */
-		canPerformActionByUserType(actionType, userData)
+		canPerformActionByUserType(actionType, userData = null)
 		{
 			let userInfo = MessengerParams.getUserInfo();
 			if (userData && this.setUserData(userData))
@@ -143,7 +143,7 @@ jn.define('im/messenger/lib/permission-manager/user-permission', (require, expor
 
 		/**
 		 * @param {UsersModelState||number} userData
-		 * @return {*|boolean|boolean}
+		 * @return {boolean}
 		 */
 		canLeaveFromCollab(userData)
 		{
@@ -155,6 +155,22 @@ jn.define('im/messenger/lib/permission-manager/user-permission', (require, expor
 			const permissionsByUserType = this.getPermissionByUserType(this.userData);
 
 			return permissionsByUserType?.[ActionByUserType.leaveCollab] ?? false;
+		}
+
+		/**
+		 * @param {UsersModelState||number} userData
+		 * @return {boolean}
+		 */
+		canChangeMessagesAutoDeleteDelay(userData)
+		{
+			if (!this.setUserData(userData))
+			{
+				return false;
+			}
+
+			const permissionsByUserType = this.getPermissionByUserType(this.userData);
+
+			return permissionsByUserType?.[ActionByUserType.changeMessagesAutoDeleteDelay] ?? false;
 		}
 
 		/**
@@ -174,6 +190,22 @@ jn.define('im/messenger/lib/permission-manager/user-permission', (require, expor
 			const chatPermissions = this.getChatPermissions();
 
 			return chatPermissions?.byUserType?.[userType] ?? {};
+		}
+
+		/**
+		 * @param {UsersModelState} userData
+		 * @returns {boolean}
+		 */
+		canBotSetReactions(userData)
+		{
+			if (!this.setUserData(userData) || !this.isBot(userData))
+			{
+				return false;
+			}
+
+			const reactionsEnabled = this.userData.botData?.reactionsEnabled;
+
+			return Boolean(reactionsEnabled);
 		}
 	}
 

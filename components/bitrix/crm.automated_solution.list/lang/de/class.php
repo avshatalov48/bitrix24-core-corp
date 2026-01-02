@@ -1,0 +1,3 @@
+<?php
+$MESS["CRM_AUTOMATED_SOLUTION_LIST_EXPORT_IMPORT_ITEM"] = "Lösungspresets";
+$MESS["CRM_AUTOMATED_SOLUTION_LIST_TITLE"] = "Automatisierte Lösungen";

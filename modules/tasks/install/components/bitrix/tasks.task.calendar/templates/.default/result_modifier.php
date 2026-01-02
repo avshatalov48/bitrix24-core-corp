@@ -2,12 +2,13 @@
 if (!defined("B_PROLOG_INCLUDED") || B_PROLOG_INCLUDED !== true) die();
 use Bitrix\Tasks\Util;
 use Bitrix\Tasks\Integration\Socialnetwork\Context\Context;
+use Bitrix\Main\Localization\Loc;
 
 $isCollab = isset($arResult['CONTEXT']) && $arResult['CONTEXT'] === Context::getCollab();
 //region TITLE
 if ($isCollab)
 {
-	$sTitle = $sTitleShort = GetMessage("TASKS_TITLE");
+	$sTitle = $sTitleShort = Loc::getMessage("TASKS_TITLE");
 }
 elseif ($arParams['PROJECT_VIEW'] === 'Y')
 {

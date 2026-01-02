@@ -1,4 +1,3 @@
-<?
-$MESS["TEMPLATE_NAME"] = "Social Intranet";
-$MESS["TEMPLATE_DESCRIPTION"] = "This template is designed for accenting the social aspects of the Intranet and combines conventional authoring and productivity tools in a context that facilitates social communication. The Social Intranet layout is a highly intuitive productivity booster and requires minimal time for adoption and orientation.";
-?>
+<?php
+$MESS["TEMPLATE_DESCRIPTION"] = "New users will find the novel user interface easy to navigate, while the experienced users will see their productivity skyrocket. The new workspace unifies tasks, chats, calls, calendar, CRM and other tools.";
+$MESS["TEMPLATE_NAME"] = "Bitrix24 Air";

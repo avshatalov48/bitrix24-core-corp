@@ -2,17 +2,24 @@
 
 namespace Bitrix\Mobile\Controller;
 
+use Bitrix\Extranet\PortalSettings;
 use Bitrix\Main\Engine\ActionFilter\CloseSession;
+use Bitrix\Main\Error;
+use Bitrix\Main\LoaderException;
+use Bitrix\Main\Localization\Loc;
 use Bitrix\Mobile\Collab\ActionFilter\CollabAccessControl;
 use Bitrix\Mobile\Collab\Dto\CollabPermissionSettingsDto;
 use Bitrix\Mobile\Collab\Dto\CollabSecuritySettingsDto;
 use Bitrix\Mobile\Collab\Dto\CollabSettingsUserDto;
 use Bitrix\Main\Engine\JsonController;
 use Bitrix\Main\Loader;
+use Bitrix\Mobile\Collab\Dto\CollabTaskPermissionsSettingsDto;
+use Bitrix\Mobile\Collab\Provider\LanguageProvider;
 use Bitrix\Mobile\Trait\PublicErrorsTrait;
-use Bitrix\Intranet\Service\InviteLinkGenerator;
 use Bitrix\SocialNetwork\Collab\Access\CollabAccessController;
 use Bitrix\SocialNetwork\Collab\Access\CollabDictionary;
+use Bitrix\Main\Config\Option;
+use Bitrix\Socialnetwork\Collab\Provider\CollabProvider;
 
 final class Collab extends JsonController
 {
@@ -40,6 +47,7 @@ final class Collab extends JsonController
 			'getInviteSettings',
 			'getCreateSettings',
 			'getIsCollabNameExistsStatus',
+			'getSharingMessageText',
 		];
 	}
 
@@ -61,24 +69,62 @@ final class Collab extends JsonController
 
 	/**
 	 * @restMethod mobile.Collab.getInviteSettings
+	 * @param int $collabId
 	 * @return array
+	 * @throws LoaderException
 	 */
 	public function getInviteSettingsAction(int $collabId): array
 	{
-		$canCurrentUserInvite = CollabAccessController::can($this->getCurrentUser()->getId(), CollabDictionary::INVITE, $collabId);
+		$canCurrentUserInvite = CollabAccessController::can($this->getCurrentUser()?->getId(), CollabDictionary::INVITE, $collabId);
 		$isBitrix24Included = Loader::includeModule('bitrix24');
-		$inviteLink = null;
-		if ($canCurrentUserInvite)
+		$languages = (new LanguageProvider())->getLanguages();
+
+		$canInviteCollabersInPortalSettings = false;
+		if (Loader::includeModule('extranet'))
 		{
-			$linkGenerator = InviteLinkGenerator::createByCollabId($collabId);
-			$inviteLink = empty($linkGenerator) ? '' : $linkGenerator->getShortCollabLink();
+			$canInviteCollabersInPortalSettings = PortalSettings::getInstance()->isEnabledCollabersInvitation();
 		}
+
+		$allowGuestsInvitation = $this->getAllowGuestsInvitationByCollabId($collabId);
 
 		return [
 			'canCurrentUserInvite' => $canCurrentUserInvite,
-			'inviteLink' => $inviteLink,
 			'isBitrix24Included' => $isBitrix24Included,
+			'canInviteCollabersInPortalSettings' => $canInviteCollabersInPortalSettings,
+			'allowGuestsInvitation' => $allowGuestsInvitation,
+			'languages' => $languages,
 		];
+	}
+
+	private function getAllowGuestsInvitationByCollabId(int $collabId): ?bool
+	{
+		if (!CollabAccessController::can($this->getCurrentUser()?->getId(), CollabDictionary::VIEW, $collabId))
+		{
+			$this->addError(new Error('Access denied'));
+
+			return null;
+		}
+
+
+		$collab = CollabProvider::getInstance()->getCollab($collabId);
+		if (!$collab)
+		{
+			$this->addError(new Error('Collab not found'));
+
+			return null;
+		}
+
+		return $collab->toJson()['options']['allowGuestsInvitation'] === 'Y';
+	}
+
+	/**
+	 * @restMethod mobile.Collab.getSharingMessageText
+	 * @param string|mixed|null $languageCode
+	 * @return string
+	 */
+	public function getSharingMessageTextAction(string $languageCode = LANGUAGE_ID): string
+	{
+		return Loc::getMessage('COLLAB_INVITE_SHARING_MESSAGE_TEXT', null, $languageCode);
 	}
 
 	/**
@@ -89,8 +135,17 @@ final class Collab extends JsonController
 	{
 		$result = [
 			'permissions' => null,
+			'taskPermissions' => null,
+			'autoDeleteEnabledInPortalSettings' => null,
 			'security' => new CollabSecuritySettingsDto(),
+			'canInviteCollabersInPortalSettings' => false,
 		];
+
+		if (Loader::includeModule('extranet'))
+		{
+			$result['canInviteCollabersInPortalSettings'] = PortalSettings::getInstance()->isEnabledCollabersInvitation();
+		}
+
 		$user = $this->getCurrentUser();
 
 		if ($user)
@@ -103,9 +158,9 @@ final class Collab extends JsonController
 					$user->getFullName(),
 				),
 				$moderators = [],
-				$inviters = 'K',
-				$messageWriters = 'K',
 			);
+			$result['taskPermissions'] = new CollabTaskPermissionsSettingsDto();
+			$result['autoDeleteEnabledInPortalSettings'] = Option::get('im', 'isAutoDeleteMessagesEnabled', 'Y') === 'Y';
 		}
 
 		return $result;
@@ -113,6 +168,7 @@ final class Collab extends JsonController
 
 	/**
 	 * @restMethod mobile.Collab.getIsCollabNameExistsStatus
+	 * @param string $name
 	 * @return array
 	 */
 	public function getIsCollabNameExistsStatusAction(string $name): array
@@ -120,6 +176,16 @@ final class Collab extends JsonController
 		return [
 			'isExists' => \Bitrix\Socialnetwork\Provider\GroupProvider::getInstance()->isExistingGroup($name),
 			'name' => $name,
+		];
+	}
+
+	/**
+	 * @throws LoaderException
+	 */
+	public function isCollabToolEnabledAction(): array
+	{
+		return [
+			'isCollabToolEnabled' => CollabAccessControl::isCollabToolEnabled(),
 		];
 	}
 }

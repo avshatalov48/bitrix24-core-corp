@@ -2,6 +2,8 @@
 
 namespace Bitrix\Crm\Timeline\SignB2eDocument;
 
+use Bitrix\Crm\ItemIdentifier;
+use Bitrix\Crm\Service\Container;
 use Bitrix\Crm\Timeline\SignDocument\DocumentData;
 use Bitrix\Crm\Timeline\SignDocument\MessageData;
 use Bitrix\Crm\Timeline\TimelineEntry;
@@ -82,6 +84,29 @@ class Entry extends TimelineEntry
 				'ENTITY_ID' => $entityId
 			];
 		}
+
+		if ($entityTypeId === \CCrmOwnerType::SmartB2eDocument)
+		{
+			$itemIdentifier = new ItemIdentifier(
+				\CCrmOwnerType::SmartB2eDocument,
+				$entityId,
+			);
+			$relatedIdentifierList = Container::getInstance()->getRelationManager()->getParentElements($itemIdentifier);
+
+			foreach ($relatedIdentifierList as $identifier)
+			{
+				if (\CCrmOwnerType::isPossibleDynamicTypeId($identifier->getEntityTypeId()) === false)
+				{
+					continue;
+				}
+
+				$bindings[] = [
+					'ENTITY_ID' => $identifier->getEntityId(),
+					'ENTITY_TYPE_ID' => $identifier->getEntityTypeId(),
+				];
+			}
+		}
+
 		self::registerBindings($id, $bindings);
 
 		return $id;

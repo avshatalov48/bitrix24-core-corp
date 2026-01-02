@@ -836,8 +836,7 @@ class PresetEditComponent extends \CBitrixComponent
 
 	protected function checkRights()
 	{
-		$permissions = new \CCrmPerms(\CCrmSecurityHelper::GetCurrentUserID());
-		if (!$permissions->HavePerm('CONFIG', BX_CRM_PERM_CONFIG, 'WRITE'))
+		if (!\Bitrix\Crm\Service\Container::getInstance()->getUserPermissions()->isCrmAdmin())
 		{
 			$this->errors[] = GetMessage('CRM_PERMISSION_DENIED');
 			return false;

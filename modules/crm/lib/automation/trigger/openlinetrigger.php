@@ -58,15 +58,16 @@ class OpenLineTrigger extends BaseTrigger
 		$msg = $this->getInputData('MESSAGE');
 		if (
 			$msg
-			&& is_array($trigger['APPLY_RULES'])
-			&& !empty($trigger['APPLY_RULES']['msg_text'])
+			&& isset($trigger['APPLY_RULES']['msg_text'])
+			&& $trigger['APPLY_RULES']['msg_text'] !== ''
 		)
 		{
 			$msgText = $msg['PLAIN_TEXT'] ?? $msg['TEXT'];
-			if ($msgText)
+			if ($msgText !== '')
 			{
 				return (mb_stripos($msgText, $trigger['APPLY_RULES']['msg_text']) !== false);
 			}
+
 			return false;
 		}
 

@@ -5,10 +5,15 @@ if (!defined("B_PROLOG_INCLUDED") || B_PROLOG_INCLUDED !== true)
 	die();
 }
 
-use Bitrix\Crm\Integration;
 use Bitrix\Main\Localization\Loc;
 use Bitrix\Main\UI\Extension;
 use Bitrix\Crm\Feature;
+
+/** @global CMain $APPLICATION */
+/** @var array $arParams */
+/** @var array $arResult */
+/** @var \CBitrixComponentTemplate $this */
+/** @var \SalesTunnels $component */
 
 Extension::load([
 	'ui.design-tokens',
@@ -25,6 +30,8 @@ Extension::load([
 	'crm_common',
 ]);
 
+$component->addToolbar($this);
+
 ?>
 <div class="crm-st">
 	<div class="crm-st-container">
@@ -38,40 +45,6 @@ Extension::load([
 		<? endif; ?>
 	</div>
 </div>
-
-<?php
-$this->SetViewTarget('pagetitle', 100);
-?>
-
-<div class="pagetitle-container">
-	<?
-	if (\Bitrix\Main\Loader::includeModule('intranet'))
-	{
-		$APPLICATION->includeComponent(
-			'bitrix:intranet.binding.menu',
-			'',
-			[
-				'SECTION_CODE' => Integration\Intranet\BindingMenu\SectionCode::TUNNELS,
-				'MENU_CODE' => Integration\Intranet\BindingMenu\CodeBuilder::getMenuCode(
-					(int)($arResult['entityTypeId'] ?? null),
-				),
-			]
-		);
-	}
-	if ($arResult['entityTypeId'] !== \CCrmOwnerType::Lead)
-	{
-		?><button class="ui-btn ui-btn-icon-info ui-btn-light-border crm-st-help-button"><?=Loc::getMessage('CRM_ST_HELP_BUTTON')?></button><?php
-	}
-	if ($arResult['isCategoryCreatable'])
-	{
-		?><button class="ui-btn ui-btn-primary crm-st-add-category-btn-top"><?=Loc::getMessage('CRM_ST_ADD_FUNNEL_BUTTON2')?></button><?php
-	}
-	?>
-</div>
-
-<?php
-$this->EndViewTarget();
-?>
 
 
 <?php
@@ -113,9 +86,8 @@ $APPLICATION->includeComponent(
 
 		robotsUrl: '<?=$arResult['robotsUrl']?>',
 		generatorUrl: '<?=$arResult['generatorUrl']?>',
-		permissionEditUrl: '<?= \CUtil::JSEscape(Feature::enabled(Feature\PermissionsLayoutV2::class)
-			? \Bitrix\Crm\Service\Container::getInstance()->getRouter()->getEntityPermissionsUrl((int)$arResult['entityTypeId'])
-			: \Bitrix\Crm\Service\Container::getInstance()->getRouter()->getPermissionsUrl()
+		permissionEditUrl: '<?= \CUtil::JSEscape(
+			\Bitrix\Crm\Service\Container::getInstance()->getRouter()->getEntityPermissionsUrl((int)$arResult['entityTypeId'])
 		)
 		?>',
 		allowWrite: true,

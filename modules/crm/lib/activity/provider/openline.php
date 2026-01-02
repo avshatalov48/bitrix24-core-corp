@@ -251,7 +251,7 @@ class OpenLine extends Base implements EventRegistrarInterface
 
 		$userCode = $activityFields['PROVIDER_PARAMS']['USER_CODE'] ?? null;
 		$responsibleId = $activityFields['RESPONSIBLE_ID'] ?? null;
-		$isNotReadChat = OpenLineManager::getChatUnReadMessages($userCode, $responsibleId) > 0;
+		$isNotReadChat = OpenLineManager::getChatUnReadMessagesCount($userCode, $responsibleId) > 0;
 		if ($isNotReadChat)
 		{
 			foreach ($bindings as $singleBinding)

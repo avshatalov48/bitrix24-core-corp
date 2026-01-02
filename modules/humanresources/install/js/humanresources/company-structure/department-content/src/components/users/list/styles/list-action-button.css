@@ -1,6 +1,6 @@
 .hr-department-detail-content__list-header-button {
 	position: relative;
-	font-family: var(--ui-font-family-system);
+	font-family: var(--ui-font-family-primary, var(--ui-font-family-system));
 	font-weight: var(--ui-font-weight-medium);
 	font-size: var(--ui-font-size-3xs);
 	line-height: var(--ui-font-line-height-sm);

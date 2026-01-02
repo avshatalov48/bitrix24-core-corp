@@ -1,11 +1,5 @@
 <?php
 
-//define("NOT_CHECK_PERMISSIONS", true);
-//define("STOP_STATISTICS", true);
-//define("NO_KEEP_STATISTIC", "Y");
-//define("NO_AGENT_STATISTIC","Y");
-//define("DisableEventsCheck", true);
-
 $siteId = '';
 if(isset($_REQUEST['site_id']) && is_string($_REQUEST['site_id']))
 {
@@ -30,13 +24,21 @@ if($request['UPLOAD'] == 'Y')
 $uploadUri = new \Bitrix\Main\Web\Uri($request->getRequestUri());
 $uploadUri->addParams(['UPLOAD' => 'Y']);
 
-$APPLICATION->includeComponent(
-	'bitrix:documentgenerator.templates', $templateName,
+/** @global \CMain $APPLICATION */
+$APPLICATION->IncludeComponent(
+	'bitrix:ui.sidepanel.wrapper',
+	'',
 	[
-		'UPLOAD_URI' => $uploadUri,
-		'ID' => $request->get('ID'),
-		'MODULE' => $request->get('MODULE'),
-		'PROVIDER' => $request->get('PROVIDER'),
+		'POPUP_COMPONENT_NAME' => 'bitrix:documentgenerator.templates',
+		'POPUP_COMPONENT_TEMPLATE_NAME' => $templateName,
+		'POPUP_COMPONENT_PARAMS' => [
+			'UPLOAD_URI' => $uploadUri,
+			'ID' => $request->get('ID'),
+			'MODULE' => $request->get('MODULE'),
+			'PROVIDER' => $request->get('PROVIDER'),
+		],
+		'USE_UI_TOOLBAR' => 'Y',
+		'USE_PADDING' => false,
 	]
 );
 

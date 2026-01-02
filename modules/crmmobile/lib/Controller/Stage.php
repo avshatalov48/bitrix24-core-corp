@@ -21,7 +21,7 @@ class Stage extends Base
 		$entityId = $factory->getStagesEntityId($categoryId);
 		$status = new \CCrmStatus($entityId);
 
-		if (!Container::getInstance()->getUserPermissions()->canWriteConfig())
+		if (!Container::getInstance()->getUserPermissions()->isAdminForEntity($factory->getEntityTypeId()))
 		{
 			$this->addError(ErrorCode::getAccessDeniedError());
 			return null;
@@ -78,7 +78,7 @@ class Stage extends Base
 			return false;
 		}
 
-		if (!Container::getInstance()->getUserPermissions()->canWriteConfig())
+		if (!Container::getInstance()->getUserPermissions()->isAdminForEntity($factory->getEntityTypeId()))
 		{
 			$this->addError(ErrorCode::getAccessDeniedError());
 			return false;
@@ -139,7 +139,7 @@ class Stage extends Base
 			return false;
 		}
 
-		if (!Container::getInstance()->getUserPermissions()->canWriteConfig())
+		if (!Container::getInstance()->getUserPermissions()->isAdminForEntity($factory->getEntityTypeId()))
 		{
 			$this->addError(ErrorCode::getAccessDeniedError());
 			return false;

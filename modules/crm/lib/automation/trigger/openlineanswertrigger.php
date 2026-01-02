@@ -34,6 +34,7 @@ class OpenLineAnswerTrigger extends OpenLineTrigger
 				'Id' => 'OpenLineAnswerTimeSec',
 				'Name' => Loc::getMessage('CRM_AUTOMATION_TRIGGER_OPENLINE_ANSWER_RETURN_ANSWER_TIME'),
 				'Type' => 'int',
+				'Default' => null,
 			]
 		];
 	}

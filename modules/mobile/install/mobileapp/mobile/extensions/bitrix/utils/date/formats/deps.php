@@ -3,5 +3,6 @@
 return [
 	'extensions' => [
 		'date',
+		'loc',
 	],
 ];

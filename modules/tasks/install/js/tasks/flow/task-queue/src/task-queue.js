@@ -155,8 +155,14 @@ export class TaskQueue
 							<span class="tasks-flow__task-queue-popup_label-text" title="${Loc.getMessage(`TASKS_FLOW_TASK_QUEUE_POPUP_LABEL_${this.#type}`)}">
 								${Loc.getMessage(`TASKS_FLOW_TASK_QUEUE_POPUP_LABEL_${this.#type}`)}
 							</span>
-							${this.#renderCounterContainer()}
 						</span>
+						<div class="tasks-flow__task-queue-popup_status-counter-box">
+							<span class="tasks-flow__task-queue-popup_status" title="${Loc.getMessage(`TASKS_FLOW_TASK_QUEUE_POPUP_STATUS_${this.#type}`)}">
+								${Loc.getMessage(`TASKS_FLOW_TASK_QUEUE_POPUP_STATUS_${this.#type}`)}
+							</span>
+							${this.#renderCounterContainer()}
+						</div>
+							<div class="tasks-flow__task-queue-popup_delimiter"></div>
 						${this.#renderLines()}
 					</div>
 				</div>

@@ -31,7 +31,7 @@ final class Workflow extends Base
 
 	public static function getName()
 	{
-		return Loc::getMessage('CRM_ACTIVITY_PROVIDER_BIZPROC_WORKFLOW_NAME') ?? '';
+		return Loc::getMessage('CRM_ACTIVITY_PROVIDER_BIZPROC_WORKFLOW_NAME_MSGVER_1') ?? '';
 	}
 
 	public static function getTypes(): array

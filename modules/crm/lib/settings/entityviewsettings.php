@@ -161,14 +161,14 @@ class EntityViewSettings
 					|| $entityTypeID === \CCrmOwnerType::Invoice
 				)
 				{
-					return "/crm/{$entityTypeName}/?redirect_to";
+					return SITE_DIR . "crm/{$entityTypeName}/?redirect_to";
 				}
 			}
 
-			return $settings['firstPageLink'];
+			return SITE_DIR . ltrim($settings['firstPageLink'], '/');
 		}
 
 		$entityTypeName = mb_strtolower(Crm\Settings\LeadSettings::isEnabled()? \CCrmOwnerType::LeadName : \CCrmOwnerType::DealName);
-		return "/crm/{$entityTypeName}/?redirect_to";
+		return SITE_DIR . "crm/{$entityTypeName}/?redirect_to";
 	}
 }

@@ -5,9 +5,9 @@ namespace Bitrix\AI\Engine\Models;
 
 enum GigaChatModel: string
 {
-	case Lite = 'GigaChat';
-	case Plus = 'GigaChat-Plus';
-	case Pro = 'GigaChat-Pro';
+	case Lite = 'GigaChat-2';
+	case Pro = 'GigaChat-2-Pro';
+	case Max = 'GigaChat-2-Max';
 
 	/**
 	 * Returns the maximum number of tokens that can be processed in one request.
@@ -16,8 +16,7 @@ enum GigaChatModel: string
 	public function contextLimit(): int
 	{
 		return match ($this) {
-			self::Lite, self::Pro => 8192,
-			self::Plus => 32768,
+			self::Lite, self::Pro, self::Max => 131072,
 		};
 	}
 }

@@ -1,3 +1,6 @@
-import { SidePanel } from 'main.sidepanel';
+import { SidePanel, Manager } from 'main.sidepanel';
 
-export const SidePanelInstance = window === top ? SidePanel.Instance : new SidePanel.Manager({});
+const sp = SidePanel ?? BX.SidePanel;
+const ManagerInst = Manager ?? BX.SidePanel.Manager;
+
+export const SidePanelInstance = window === top ? sp.Instance : new ManagerInst();

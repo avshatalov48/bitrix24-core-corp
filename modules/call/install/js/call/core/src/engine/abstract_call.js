@@ -2,7 +2,7 @@ import {Type} from 'main.core'
 import {DesktopApi} from 'im.v2.lib.desktop-api';
 import {Logger} from './logger'
 import {CallType, CallEvent, CallState, CallEngine, Provider} from './engine'
-import {Hardware} from '../hardware';
+import {Hardware} from '../call_hardware';
 import Util from '../util'
 
 /**
@@ -31,14 +31,18 @@ export class AbstractCall
 	constructor(params)
 	{
 		this.id = params.id;
+		this.uuid = params.uuid;
 		this.instanceId = params.instanceId;
 		this.parentId = params.parentId || null;
+		this.parentUuid = params.parentUuid || null;
 		this.direction = params.direction;
+		this.scheme = params.scheme;
 		this.type = BX.prop.getInteger(params, "type", CallType.Instant); // @see {BX.Call.Type}
 		this.state = BX.prop.getString(params, "state", CallState.Idle);
 
 		this.ready = false;
 		this.userId = CallEngine.getCurrentUserId();
+		this.userData = Type.isPlainObject(params.userData) ? params.userData : {};
 
 		this.initiatorId = params.initiatorId || '';
 		this.users = Type.isArray(params.users) ? params.users.filter(userId => userId != this.userId) : [];
@@ -74,7 +78,7 @@ export class AbstractCall
 			this.initEventListeners(params.events);
 		}
 
-		this.connectionData = params.connectionData;
+		this.connectionData = params.connectionData || {};
 
 		this._microphoneLevel = 0;
 	};
@@ -100,6 +104,11 @@ export class AbstractCall
 		}
 	}
 
+	addDialogInfo(dialogInfo)
+	{
+		this.associatedEntity = Type.isPlainObject(dialogInfo) ? dialogInfo : {};
+	}
+
 	initEventListeners(eventListeners)
 	{
 		for (var eventName in eventListeners)
@@ -114,6 +123,12 @@ export class AbstractCall
 		{
 			this.eventListeners[eventName] = [];
 		}
+
+		if (Type.isArray(this.eventListeners[eventName]) && this.eventListeners[eventName].includes(listener))
+		{
+			return;
+		}
+
 		if (Type.isFunction(listener))
 		{
 			this.eventListeners[eventName].push(listener);

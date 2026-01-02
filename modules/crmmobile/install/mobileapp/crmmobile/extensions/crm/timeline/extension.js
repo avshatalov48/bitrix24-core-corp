@@ -49,14 +49,17 @@ jn.define('crm/timeline', (require, exports, module) => {
 				timeline: this,
 			});
 
-			const { entity, user } = this.props;
+			const { entity, user, detailCard: { analytics } } = this.props;
 			this.timelineScheduler = new TimelineScheduler({
 				entity,
 				user,
+				analytics,
 			});
 			this.dataProvider = new TimelineDataProvider({
 				entity,
 			});
+
+			this.analyticsEvent = analytics;
 
 			this.initStreams();
 
@@ -75,6 +78,7 @@ jn.define('crm/timeline', (require, exports, module) => {
 				isEditable: this.isEditable,
 				onItemAction: (params) => this.onItemAction(params),
 				entityType: Type.resolveNameById(this.props.entity.typeId)?.toLowerCase(),
+				analyticsEvent: this.analyticsEvent,
 			};
 
 			this.pinnedStream = new TimelineStreamPinned(commonSettings);

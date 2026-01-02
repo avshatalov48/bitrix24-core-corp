@@ -184,34 +184,54 @@ class CDiskFileViewComponent extends DiskComponent implements Controllerable, Si
 			$previewImage = $urlManager->getUrlForShowPreview($this->file, $this->imageSize);
 		}
 
-		$attr = FileAttributes::buildByFileId($this->file->getFileId(), new Uri($urlManager->getUrlForDownloadFile($this->file)))
+		$attr = FileAttributes::buildByFileId($this->file->getFileId(), new Uri($urlManager->getUrlForDownloadFile($this->file)), $this->file)
 			->setObjectId($this->file->getId())
 			->setTitle($this->file->getName())
 			->addAction([
 				'type' => 'download',
 			])
+			->setUnifiedLinkOptions([
+				'noRedirect' => true,
+			])
 		;
 
 		if ($canUpdate && \Bitrix\Disk\Document\DocumentHandler::isEditable($this->file->getExtension()))
 		{
-			$documentName = \CUtil::JSEscape($this->file->getName());
-			$items = [];
-			foreach ($this->getDocumentHandlersForEditingFile() as $handlerData)
+			if ($this->file->supportsUnifiedLink())
 			{
-				$items[] = [
-					'text' => $handlerData['name'],
-					'onclick' => "BX.Disk.Viewer.Actions.runActionEdit({name: '{$documentName}', objectId: {$this->file->getId()}, serviceCode: '{$handlerData['code']}'})",
-				];
+				$editUnifiedLink = $urlManager->getUnifiedEditLink($this->file);
+				$attr
+					->addAction([
+						'type' => 'edit',
+						'buttonIconClass' => ' ',
+						'action' => "BX.Disk.Viewer.Actions.openUnifiedLink",
+						'params' => [
+							'unifiedLinkToOpen' => $editUnifiedLink,
+						],
+					])
+				;
 			}
-			$attr->addAction([
-				'type' => 'edit',
-				'action' => 'BX.Disk.Viewer.Actions.runActionDefaultEdit',
-				'params' => [
-					'objectId' => $this->file->getId(),
-					'name' => $documentName,
-				],
-				'items' => $items,
-			]);
+			else
+			{
+				$documentName = \CUtil::JSEscape($this->file->getName());
+				$items = [];
+				foreach ($this->getDocumentHandlersForEditingFile() as $handlerData)
+				{
+					$items[] = [
+						'text' => $handlerData['name'],
+						'onclick' => "BX.Disk.Viewer.Actions.runActionEdit({name: '{$documentName}', objectId: {$this->file->getId()}, serviceCode: '{$handlerData['code']}'})",
+					];
+				}
+				$attr->addAction([
+					'type' => 'edit',
+					'action' => 'BX.Disk.Viewer.Actions.runActionDefaultEdit',
+					'params' => [
+						'objectId' => $this->file->getId(),
+						'name' => $documentName,
+					],
+					'items' => $items,
+				]);
+			}
 		}
 
 		$this->arResult = array(
@@ -398,7 +418,7 @@ class CDiskFileViewComponent extends DiskComponent implements Controllerable, Si
 		global $APPLICATION;
 
 		$APPLICATION->IncludeComponent(
-			'bitrix:disk.sidepanel.wrapper',
+			'bitrix:ui.sidepanel.wrapper',
 			"",
 			array(
 				'POPUP_COMPONENT_NAME' => 'bitrix:disk.file.view',
@@ -413,7 +433,7 @@ class CDiskFileViewComponent extends DiskComponent implements Controllerable, Si
 		global $APPLICATION;
 
 		$APPLICATION->IncludeComponent(
-			'bitrix:disk.sidepanel.wrapper',
+			'bitrix:ui.sidepanel.wrapper',
 			"",
 			array(
 				'POPUP_COMPONENT_NAME' => 'bitrix:disk.file.view',

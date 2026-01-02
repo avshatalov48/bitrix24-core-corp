@@ -42,11 +42,8 @@ $APPLICATION->IncludeComponent(
 	$component
 );
 
-if (SITE_TEMPLATE_ID === 'bitrix24')
-{
-	$bodyClass = $APPLICATION->GetPageProperty('BodyClass');
-	$APPLICATION->SetPageProperty('BodyClass', ($bodyClass ? $bodyClass.' ' : '').'crm-start-page');
-}
+$bodyClass = $APPLICATION->GetPageProperty('BodyClass');
+$APPLICATION->SetPageProperty('BodyClass', ($bodyClass ? $bodyClass.' ' : '').'crm-start-page');
 \Bitrix\Main\Loader::includeModule('intranet');
 CJSCore::Init(array('amcharts', 'amcharts_funnel', 'amcharts_serial', 'amcharts_pie', 'fx', 'drag_drop', 'popup', 'date', 'ajax', 'intranet_notify_dialog'));
 

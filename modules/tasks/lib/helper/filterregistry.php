@@ -12,12 +12,14 @@ class FilterRegistry
 {
 	public const FILTER_GRID = 'GRID';
 	public const FILTER_GANTT = 'GANTT';
+	public const FILTER_RELATION = 'RELATION';
 
 	public static function getList(): array
 	{
 		return [
 			self::FILTER_GRID,
 			self::FILTER_GANTT,
+			self::FILTER_RELATION,
 		];
 	}
 

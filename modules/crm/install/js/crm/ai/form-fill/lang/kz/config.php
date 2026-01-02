@@ -1,0 +1,16 @@
+<?php
+$MESS["CRM_AI_FORM_FILL_MERGER_CANCEL"] = "Болдырмау";
+$MESS["CRM_AI_FORM_FILL_MERGER_CANCEL_CONFIRM_CANCEL"] = "Болдырмау";
+$MESS["CRM_AI_FORM_FILL_MERGER_CANCEL_CONFIRM_CLOSE"] = "Жабу";
+$MESS["CRM_AI_FORM_FILL_MERGER_CANCEL_CONFIRM_TEXT"] = "Сіздің өзгерістеріңіз сақталмайды";
+$MESS["CRM_AI_FORM_FILL_MERGER_CANCEL_CONFIRM_TITLE"] = "Парақшаны жабу керек пе?";
+$MESS["CRM_AI_FORM_FILL_MERGER_REPLACE_BTN_BACK"] = "Қайтару";
+$MESS["CRM_AI_FORM_FILL_MERGER_REPLACE_BTN_FORTH"] = "Алмастыру";
+$MESS["CRM_AI_FORM_FILL_MERGER_RESUME"] = "Түйіндеме";
+$MESS["CRM_AI_FORM_FILL_MERGER_SAVE"] = "Сақтау";
+$MESS["CRM_AI_FORM_FILL_MERGER_SAVE_ERROR"] = "Сақтау қатесі";
+$MESS["CRM_AI_FORM_FILL_MERGER_TITLE"] = "CoPilot өрістерді алмастыруды ұсынады";
+$MESS["CRM_AI_FORM_FILL_MERGER_TRANSCRIPTION"] = "Мағынасын ашу";
+$MESS["CRM_AI_FORM_FILL_TOOLBAR_BUTTON_APPLY_ALL"] = "Барлық өрістерді ауыстыру";
+$MESS["CRM_AI_FORM_FILL_TOOLBAR_BUTTON_ROLLBACK"] = "Менің деректерімді қайтару";
+$MESS["CRM_AI_FORM_FILL_TOOLBAR_CONFLICT_COUNT_TITLE"] = "Өрістерді ауыстыруды ұсынады:";

@@ -14,6 +14,12 @@ use Bitrix\Tasks\Internals\Registry\TaskRegistry;
 use Bitrix\Tasks\Internals\Task\Status;
 use Bitrix\Tasks\Internals\TaskObject;
 use Bitrix\Tasks\Util\Type\DateTime;
+use Bitrix\Tasks\V2\FormV2Feature;
+use Bitrix\Tasks\V2\Internal\DI\Container;
+use Bitrix\Tasks\V2\Internal\Integration\Im\Chat;
+use Bitrix\Tasks\V2\Internal\Integration\Im\ChatNotification;
+use Bitrix\Tasks\V2\Internal\Integration\Im\ChatNotificationInterface;
+use Bitrix\Tasks\V2\Internal\Integration\Im\NotificationType;
 use CAgent;
 use CTimeZone;
 
@@ -31,6 +37,7 @@ class Agent
 	private Controller $notificationController;
 	private TimeLineManager $timeLineManager;
 	private ?CommentPoster $commentPoster;
+	private ChatNotificationInterface $chatNotification;
 
 	private string $eventType;
 	private array $taskData;
@@ -139,6 +146,7 @@ class Agent
 			->sendEvent()
 			->triggerAutomation()
 			->runCrmEvent()
+			->notifyTaskChat()
 			->finish();
 	}
 
@@ -212,6 +220,29 @@ class Agent
 		return $this;
 	}
 
+	private function notifyTaskChat(): static
+	{
+		if ($this->eventType !== static::EVENT_TASK_EXPIRED || !FormV2Feature::isOn('create'))
+		{
+			return $this;
+		}
+
+		$taskEntity = Container::getInstance()
+			->getTaskRepository()
+			->getById($this->task->getId());
+
+		if ($taskEntity)
+		{
+			$this->chatNotification->notify(
+				type: NotificationType::TaskOverdue,
+				task: $taskEntity,
+				args: ['triggeredBy' => null],
+			);
+		}
+
+		return $this;
+	}
+
 	private function finish(): string
 	{
 		return '';
@@ -222,6 +253,7 @@ class Agent
 		$this->notificationController = new Controller();
 		$this->timeLineManager = new TimeLineManager($this->task->getId(), $this->task->getResponsibleId());
 		$this->commentPoster = CommentPoster::getInstance($this->task->getId(), $this->task->getCreatedBy());
+		$this->chatNotification = new ChatNotification();
 		$this->taskData = $this->task->toArray(true);
 	}
 

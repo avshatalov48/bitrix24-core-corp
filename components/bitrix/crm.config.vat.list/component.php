@@ -15,10 +15,9 @@ if (!Loader::includeModule('catalog'))
 	return;
 }
 
-global $USER, $APPLICATION;
+global $APPLICATION;
 
-$CrmPerms = new CCrmPerms($USER->GetID());
-$arResult['CAN_DELETE'] = $arResult['CAN_EDIT'] = $CrmPerms->HavePerm('CONFIG', BX_CRM_PERM_CONFIG, 'WRITE');
+$arResult['CAN_DELETE'] = $arResult['CAN_EDIT'] = \Bitrix\Crm\Service\Container::getInstance()->getUserPermissions()->isCrmAdmin();
 if (!$arResult['CAN_EDIT'])
 {
 	ShowError(GetMessage('CRM_PERMISSION_DENIED'));

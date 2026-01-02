@@ -18,14 +18,13 @@ if (!CModule::IncludeModule('sale'))
 
 global $USER, $APPLICATION;
 
-$CrmPerms = new CCrmPerms($USER->GetID());
-if (!$CrmPerms->HavePerm('CONFIG', BX_CRM_PERM_CONFIG, 'READ'))
+if (!\Bitrix\Crm\Service\Container::getInstance()->getUserPermissions()->entityType()->canReadSomeItemsInCrm())
 {
 	ShowError(GetMessage('CRM_PERMISSION_DENIED'));
 	return;
 }
 
-$arResult['CAN_ADD'] = $arResult['CAN_DELETE'] = $arResult['CAN_EDIT'] = $CrmPerms->HavePerm('CONFIG', BX_CRM_PERM_CONFIG, 'WRITE');
+$arResult['CAN_ADD'] = $arResult['CAN_DELETE'] = $arResult['CAN_EDIT'] = \Bitrix\Crm\Service\Container::getInstance()->getUserPermissions()->isCrmAdmin();
 
 $arParams['PATH_TO_PS_LIST'] = CrmCheckPath('PATH_TO_PS_LIST', $arParams['PATH_TO_PS_LIST'], '');
 $arParams['PATH_TO_PS_ADD'] = CrmCheckPath('PATH_TO_PS_ADD', $arParams['PATH_TO_PS_ADD'], '?add');

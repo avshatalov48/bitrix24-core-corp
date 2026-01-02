@@ -72,15 +72,6 @@ export const ScriptSelector = {
 							'Item:onBeforeSelect': this.onBeforeSelect.bind(this),
 						},
 					},
-					popup: {
-						events: {
-							onShow: (event) => {
-								// @todo maybe there is a better solution?
-								const zIndex = SidePanel.Instance.getTopSlider().getZindex() + 1;
-								event.target.getZIndexComponent().setZIndex(zIndex);
-							},
-						},
-					},
 				},
 			});
 		},

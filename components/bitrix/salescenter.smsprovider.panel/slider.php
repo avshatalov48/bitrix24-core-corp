@@ -39,6 +39,7 @@ else
 			'POPUP_COMPONENT_PARAMS' => [''],
 			'USE_UI_TOOLBAR_MARGIN' => false,
 			'USE_PADDING' => false,
+			'USE_UI_TOOLBAR' => 'Y',
 		]
 	);
 }

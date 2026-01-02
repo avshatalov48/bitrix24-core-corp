@@ -44,6 +44,6 @@ final class Scrum extends Base
 			return true;
 		}
 
-		return $this->forward(new Comment(), 'readScrum', ['groupId' => $fields['GROUP_ID']]);
+		return $this->forward(new Comment(), 'readAll', ['groupId' => $fields['GROUP_ID']]);
 	}
 }

@@ -1,0 +1,45 @@
+body {
+	color: #333;
+	font-family: var(--ui-font-family-primary, var(--ui-font-family-helvetica));
+	font-size: 14px;
+	-webkit-font-smoothing: antialiased;
+	-moz-osx-font-smoothing: grayscale;
+}
+
+form {
+	margin: 0;
+	padding: 0;
+}
+
+a {
+	color: var(--ui-color-link-primary-base);
+	text-decoration: none;
+	-webkit-transition: border-bottom-color 0.2s linear;
+	transition: border-bottom-color 0.2s linear;
+}
+
+h1 {
+	color: #555;
+	font-size: 30px;
+	font-weight: normal;
+	margin: 0;
+	padding: 0;
+}
+
+img {
+	border: medium none;
+}
+
+input {
+	outline: none;
+}
+
+input::-ms-clear {
+	display: none;
+}
+
+input,
+select,
+textarea {
+	font-family: var(--ui-font-family-primary, var(--ui-font-family-system));
+}

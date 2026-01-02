@@ -2,6 +2,7 @@
  * @module bizproc/task/details
  */
 jn.define('bizproc/task/details', (require, exports, module) => {
+	const { Color } = require('tokens');
 	const AppTheme = require('apptheme');
 	const { Alert, confirmClosing } = require('alert');
 	const { EventEmitter } = require('event-emitter');
@@ -10,9 +11,11 @@ jn.define('bizproc/task/details', (require, exports, module) => {
 	const { Loc } = require('loc');
 	const { Type } = require('type');
 	const { showToast } = require('toast');
+	const { QRCodeAuthComponent } = require('qrauth');
 
 	const { openNativeViewer } = require('utils/file');
 	const { throttle } = require('utils/function');
+	const { Random } = require('utils/random');
 
 	const { PureComponent } = require('layout/pure-component');
 	const { ContextMenu } = require('layout/ui/context-menu');
@@ -22,9 +25,9 @@ jn.define('bizproc/task/details', (require, exports, module) => {
 
 	const { TaskUserStatus } = require('bizproc/task/task-constants');
 	const { TaskFields } = require('bizproc/task/fields');
-	const { Skeleton } = require('bizproc/task/details/skeleton');
 	const { WorkflowComments } = require('bizproc/workflow/comments');
 	const { TaskDetailsButtons } = require('bizproc/task/details/buttons');
+	const { WorkflowDetailsSkeleton } = require('bizproc/skeleton');
 
 	class TaskDetails extends PureComponent
 	{
@@ -37,12 +40,11 @@ jn.define('bizproc/task/details', (require, exports, module) => {
 					titleParams: {
 						text: Type.isString(props.title) ? props.title : Loc.getMessage('BPMOBILE_TASK_DETAILS_TITLE'),
 						type: 'dialog',
+						textColor: Color.base4.toHex(),
 					},
-					backgroundColor: AppTheme.colors.bgSecondary,
 					backdrop: {
 						onlyMediumPosition: false,
 						mediumPositionPercent: 90,
-						navigationBarColor: AppTheme.colors.bgSecondary,
 						swipeAllowed: true,
 						swipeContentAllowed: true,
 						horizontalSwipeAllowed: false,
@@ -58,6 +60,7 @@ jn.define('bizproc/task/details', (require, exports, module) => {
 							targetUserId: props.targetUserId || null,
 							readOnlyTimeline: props.readOnlyTimeline || false,
 							showNotifications: props.showNotifications,
+							isNeedFastClose: props.isNeedFastClose ?? true,
 						}));
 					},
 				},
@@ -86,7 +89,6 @@ jn.define('bizproc/task/details', (require, exports, module) => {
 			this.isClosing = false;
 			this.isChanged = false;
 
-			// eslint-disable-next-line no-undef
 			this.uid = props.uid || Random.getString();
 			this.customEventEmitter = EventEmitter.createWithUid(this.uid);
 
@@ -191,13 +193,12 @@ jn.define('bizproc/task/details', (require, exports, module) => {
 		{
 			if (!this.task.id)
 			{
-				return new Skeleton({});
+				return WorkflowDetailsSkeleton();
 			}
 
 			// todo: add RPA tasks?
 			if (this.task.activity === 'RpaRequestActivity')
 			{
-				// eslint-disable-next-line no-undef
 				return new QRCodeAuthComponent({
 					redirectUrl: this.task.documentUrl,
 					showHint: true,
@@ -283,6 +284,13 @@ jn.define('bizproc/task/details', (require, exports, module) => {
 							url: file.url,
 							name: file.name,
 						});
+
+						return;
+					}
+
+					if (url === '/dev/null')
+					{
+						Alert.alert(Loc.getMessage('BPMOBILE_TASK_DETAILS_FILE_NOT_FOUND'));
 
 						return;
 					}
@@ -418,6 +426,7 @@ jn.define('bizproc/task/details', (require, exports, module) => {
 				allTaskCount: this.state.allCount,
 				layout: this.layout,
 				showNotifications: BX.prop.getBoolean(this.props, 'showNotifications', true),
+				isNeedFastClose: BX.prop.getBoolean(this.props, 'isNeedFastClose', true),
 				detailsRef: this,
 			});
 		}

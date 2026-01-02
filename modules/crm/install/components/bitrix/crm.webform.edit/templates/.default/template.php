@@ -5,6 +5,8 @@ use Bitrix\Main\Localization\Loc;
 use Bitrix\Main\Web\Json;
 use Bitrix\Main\UI\Extension;
 use Bitrix\Crm\UI\Webpack;
+use Bitrix\UI\Buttons\Color;
+use Bitrix\UI\Buttons\Icon;
 
 /** @var array $arResult Component result. */
 /** @var array $arParams Component parameters. */
@@ -62,6 +64,18 @@ $userBlockController = new CrmWebFormEditUserBlockController(
 	CrmWebFormEditTemplate::getUserBlock(),
 	CrmWebFormEditTemplate::getUserBlockNav()
 );
+$button = new Bitrix\UI\Buttons\Button([
+	'text' => Loc::getMessage('CRM_WEBFORM_EDIT_BACK_TO_LIST1'),
+	'link' => htmlspecialcharsbx($arResult['PATH_TO_WEB_FORM_LIST']),
+	'classList' => ['crm-webform-edit-list-back'],
+	'color' => Color::PRIMARY,
+	"icon" => Icon::ADD,
+]);
+$button->addAttribute('id', 'CRM_WEBFORM_EDIT_TO_LIST');
+if ($arParams['CAN_EDIT'])
+{
+	\Bitrix\UI\Toolbar\Facade\Toolbar::addButton($button);
+}
 ?>
 
 <?$jsEventsManagerId = 'PageEventsManager_'.$arResult['COMPONENT_ID'];?>
@@ -136,13 +150,7 @@ $userBlockController = new CrmWebFormEditUserBlockController(
 
 <?
 	require 'js_templates.php';
-?>
 
-<?$this->SetViewTarget('pagetitle', 5);?>
-	<a id="CRM_WEBFORM_EDIT_TO_LIST" href="<?=htmlspecialcharsbx($arResult['PATH_TO_WEB_FORM_LIST'])?>" class="crm-webform-edit-list-back"><?=Loc::getMessage('CRM_WEBFORM_EDIT_BACK_TO_LIST1')?></a>
-<?$this->EndViewTarget();?>
-
-<?
 if (!empty($arResult['ERRORS']))
 {
 	?><div class="crm-webform-edit-top-block"><?

@@ -3,6 +3,7 @@ import { BookingMappers } from 'booking.provider.service.booking-service';
 import { ClientMappers } from 'booking.provider.service.client-service';
 import { ResourceMappers } from 'booking.provider.service.resources-service';
 import { ResourceTypeMappers } from 'booking.provider.service.resources-type-service';
+import { WaitListMappers } from 'booking.provider.service.wait-list-service';
 
 import type { BookingModel } from 'booking.model.bookings';
 import type { BookingDto } from 'booking.provider.service.booking-service';
@@ -13,6 +14,9 @@ import type { ResourceModel } from 'booking.model.resources';
 import type { ResourceDto } from 'booking.provider.service.resources-service';
 import type { ResourceTypeModel } from 'booking.model.resource-types';
 import type { ResourceTypeDto } from 'booking.provider.service.resources-type-service';
+import type { FormsMenuModel } from 'booking.model.forms-menu';
+import type { WaitListItemModel } from 'booking.model.wait-list';
+import type { WaitListItemDto } from 'booking.provider.service.wait-list-service';
 
 import type { MainPageGetResponse } from './types';
 
@@ -47,6 +51,7 @@ export class MainPageDataExtractor
 		return [
 			...this.#extractClients(CrmEntity.Contact),
 			...this.#extractClients(CrmEntity.Company),
+			...this.#extractClientsFromWaitListItems(),
 			...this.#extractClientsFromBookings(),
 		];
 	}
@@ -67,10 +72,19 @@ export class MainPageDataExtractor
 
 	#extractClientsFromBookings(): ClientModel[]
 	{
-		return this.#response.bookings
-			.flatMap(({ clients }) => clients.map((client: ClientDto): ClientModel => {
-				return ClientMappers.mapDtoToModel(client);
-			}));
+		return MainPageDataExtractor.#extractClientsFromItem(this.#response.bookings);
+	}
+
+	#extractClientsFromWaitListItems(): ClientModel[]
+	{
+		return MainPageDataExtractor.#extractClientsFromItem(this.#response.waitListItems);
+	}
+
+	static #extractClientsFromItem(items: { clients: ClientDto[] }[]): ClientModel[]
+	{
+		return items.flatMap(({ clients }) => clients.map((client: ClientDto): ClientModel => {
+			return ClientMappers.mapDtoToModel(client);
+		}));
 	}
 
 	getCounters(): CountersModel
@@ -98,6 +112,13 @@ export class MainPageDataExtractor
 		});
 	}
 
+	getWaitListItems(): WaitListItemModel[]
+	{
+		return this.#response.waitListItems.map((waitListItemDto: WaitListItemDto): WaitListItemModel => {
+			return WaitListMappers.mapDtoToModel(waitListItemDto);
+		});
+	}
+
 	getIntersectionMode(): boolean
 	{
 		return this.#response.isIntersectionForAll;
@@ -106,5 +127,10 @@ export class MainPageDataExtractor
 	getIsCurrentSenderAvailable(): boolean
 	{
 		return this.#response.isCurrentSenderAvailable;
+	}
+
+	getFormsMenu(): FormsMenuModel
+	{
+		return this.#response.formsMenu;
 	}
 }

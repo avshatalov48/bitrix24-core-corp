@@ -36,7 +36,11 @@ class Counter extends Base
 		}
 		$categoryId = $extras['CATEGORY_ID'] ?? $extras['DEAL_CATEGORY_ID'] ?? null;
 		$categoryId = is_null($categoryId) ? null : (int)$categoryId;
-		if (!Container::getInstance()->getUserPermissions()->checkReadPermissions($entityTypeId, 0, $categoryId))
+		$userPermissions = Container::getInstance()->getUserPermissions();
+
+		if (!(is_null($categoryId)
+			? $userPermissions->entityType()->canReadItems($entityTypeId)
+			: $userPermissions->entityType()->canReadItemsInCategory($entityTypeId, $categoryId)))
 		{
 			$this->addError(ErrorCode::getAccessDeniedError());
 

@@ -4,13 +4,15 @@
  * @bxjs_lang_path component.php
  */
 
-var { ChatSelector } = jn.require('im/chat/selector/chat');
+var { AnalyticsEvent } = jn.require('analytics');
 var { EntityReady } = jn.require('entity-ready');
+var { ChatSelector } = jn.require('im/chat/selector/chat');
 var { SelectorDialogListAdapter } = jn.require('im/chat/selector/adapter/dialog-list');
 var { Theme } = jn.require('im/lib/theme');
-var { AnalyticsEvent } = jn.require('analytics');
+var { Feature } = jn.require('im/messenger/lib/feature');
+var { getTopMenuNotificationsButton: _getTopMenuNotificationsButton } = jn.require('im/messenger/api/notifications-opener');
 
-var REVISION = 19; // api revision - sync with im/lib/revision.php
+var REVISION = 21; // api revision - sync with im/lib/revision.php
 
 /* Clean session variables after page restart */
 BX.message.LIMIT_ONLINE = BX.componentParameters.get('LIMIT_ONLINE', 1380);
@@ -338,7 +340,7 @@ RecentList.openDialog = function(dialogId, dialogTitleParams)
 			PageManager.getNavigator().getAll().forEach((page) => {
 				if (pageIsOpened)
 
-				
+
       { return true;
 				}
 
@@ -498,12 +500,19 @@ RecentList.getOpenDialogParams = function(dialogId, modern, push)
 			}
 		}
 
+		let userEntity = false;
+		if (this.userData)
+		{
+			userEntity = JSON.stringify(this.userData);
+		}
+
 		return {
 			PAGE_ID: `im-${dialogId}`,
 
 			DIALOG_ID: dialogId,
 			DIALOG_TYPE: element.type,
 			DIALOG_ENTITY: dialogEntity,
+			USER_ENTITY: userEntity,
 			USER_ID: this.userId,
 			SITE_ID: this.siteId,
 			SITE_DIR: env.siteDir,
@@ -574,8 +583,12 @@ RecentList.openUserProfile = function(userId, userData = {})
 			url: `${currentDomain}/mobile/users/?user_id=${userId}&FROM_DIALOG=Y`,
 		};
 	}
-	const { ProfileView } = jn.require('user/profile');
-	ProfileView.open(params);
+
+	const { UserProfile } = jn.require('user-profile');
+	void UserProfile.open({
+		ownerId: params.userId,
+		widgetParams: params,
+	});
 };
 
 RecentList.callUser = function(userId, action, number)
@@ -1377,7 +1390,7 @@ RecentList.openEmptyScreen = function()
 	let params = {};
 	if (this.isRecent())
 	{
-		if (BX.componentParameters.get('INTRANET_INVITATION_CAN_INVITE', false))
+		if (Feature.isIntranetInvitationAvailable)
 		{
 			params = {
 				upperText: BX.message('IM_EMPTY_TEXT_1'),
@@ -1673,11 +1686,16 @@ RecentList.drawCallNative = function(element)
 	});
 };
 
-RecentList.removeCall = function(id)
+RecentList.removeCall = function(call)
 {
-	console.warn('removeCall', id);
-	this.callList = this.callList.filter((element) => element.id !== id);
-	dialogList.removeItem({ id });
+	console.warn('removeCall', call.uuid);
+	const id = `call${call.associatedEntity.id}`;
+	const prevCallsCount = this.callList.length;
+	this.callList = this.callList.filter((element) => !(element.id === id && element.params.call.uuid === call.uuid));
+	if (prevCallsCount !== this.callList.length)
+	{
+		dialogList.removeItem({ id });
+	}
 };
 
 RecentList.updateCallState = function()
@@ -2012,7 +2030,7 @@ RecentList.push.updateList = function()
 RecentList.push.actionExecute = function()
 {
 	if (Application.isBackground())
-	
+
 	{ return false;
 	}
 
@@ -3125,7 +3143,7 @@ RecentList.notify.read = function(id)
 {
 	id = parseInt(id);
 	if (id <= 0)
-	
+
 	{ return false;
 	}
 
@@ -3297,8 +3315,15 @@ RecentList.topMenu.init = function()
 		return false;
 	}
 
-	if (!this.base.isRecent())
+	if (!this.base.isRecent() && !this.base.isOpenlinesRecent())
 	{
+		return false;
+	}
+
+	if (this.base.isOpenlinesRecent())
+	{
+		dialogList.setRightButtons([_getTopMenuNotificationsButton()]);
+
 		return false;
 	}
 
@@ -4167,10 +4192,10 @@ RecentList.event.callActive = function(call, callStatus)
 	);
 };
 
-RecentList.event.callInactive = function(callId)
+RecentList.event.callInactive = function(call)
 {
-	console.log('RecentList: call inactive', callId);
-	this.base.removeCall(`call${callId}`);
+	console.log('RecentList: call inactive', call.uuid);
+	this.base.removeCall(call);
 };
 
 /* CreateChat API */
@@ -4201,7 +4226,7 @@ RecentList.chatCreate.open = function()
 
 			SEARCH_MIN_SIZE: this.base.searchMinTokenLength,
 
-			INTRANET_INVITATION_CAN_INVITE: BX.componentParameters.get('INTRANET_INVITATION_CAN_INVITE', false),
+			INTRANET_INVITATION_CAN_INVITE: Feature.isIntranetInvitationAvailable,
 			INTRANET_INVITATION_REGISTER_URL: BX.componentParameters.get('INTRANET_INVITATION_REGISTER_URL', ''),
 			INTRANET_INVITATION_ROOT_STRUCTURE_SECTION_ID: BX.componentParameters.get('INTRANET_INVITATION_ROOT_STRUCTURE_SECTION_ID', 0),
 			INTRANET_INVITATION_REGISTER_ADMIN_CONFIRM: BX.componentParameters.get('INTRANET_INVITATION_REGISTER_ADMIN_CONFIRM', false),
@@ -4225,7 +4250,7 @@ RecentList.chatCreate.open = function()
 					topPosition: 100,
 				},
 				supportInvites: (
-					BX.componentParameters.get('INTRANET_INVITATION_CAN_INVITE', false)
+					Feature.isIntranetInvitationAvailable
 					&& Application.getApiVersion() >= 34
 				),
 			},

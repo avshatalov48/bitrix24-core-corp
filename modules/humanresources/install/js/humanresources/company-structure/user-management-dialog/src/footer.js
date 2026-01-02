@@ -1,7 +1,8 @@
 import { Dom, Event, Tag, Loc, Type, Text } from 'main.core';
 import { BaseFooter, type FooterOptions, type ItemOptions, type Tab } from 'ui.entity-selector';
-import { getUserDataBySelectorItem } from 'humanresources.company-structure.utils';
-import { memberRoles } from 'humanresources.company-structure.api';
+import { UserService } from 'humanresources.company-structure.chart-store';
+import { EntityTypes, getUserDataBySelectorItem } from 'humanresources.company-structure.utils';
+import { getMemberRoles, type MemberRolesType } from 'humanresources.company-structure.api';
 import type { BaseEvent } from 'main.core.events';
 import { UI } from 'ui.notification';
 import { UserManagementDialogActions } from './actions';
@@ -16,6 +17,7 @@ export class BaseUserManagementDialogFooter extends BaseFooter
 	confirmButtonText: ?string;
 	type: string;
 	role: string;
+	memberRoles: MemberRolesType;
 
 	constructor(tab: Tab, options: FooterOptions)
 	{
@@ -26,8 +28,10 @@ export class BaseUserManagementDialogFooter extends BaseFooter
 		{
 			throw new TypeError("Invalid argument 'nodeId'. An integer value was expected.");
 		}
+		this.entityType = this.getOption('entityType') ?? EntityTypes.team;
+		this.memberRoles = getMemberRoles(this.entityType);
 
-		this.role = this.getOption('role') ?? memberRoles.employee;
+		this.role = this.getOption('role') ?? this.memberRoles.employee;
 		const type = this.getOption('type') ?? '';
 		if (Type.isString(type) && allowedDialogTypes.includes(type))
 		{
@@ -157,7 +161,7 @@ export class BaseUserManagementDialogFooter extends BaseFooter
 		}
 
 		this.isInProcess = true;
-		const departmentUserIds = this.type === 'move' ? { [memberRoles.employee]: userIds } : userIds;
+		const departmentUserIds = this.type === 'move' ? { [this.memberRoles.employee]: userIds } : userIds;
 
 		const data = await this.#saveUsers(departmentUserIds).catch(() => {});
 		if (!data)
@@ -169,17 +173,17 @@ export class BaseUserManagementDialogFooter extends BaseFooter
 
 		if (this.type === 'add')
 		{
-			UserManagementDialogActions.addUsersToDepartment(
+			UserService.addUsersToEntity(
 				this.nodeId,
 				this.users,
 				data.userCount ?? 0,
-				this.role ?? memberRoles.employee,
+				this.role ?? this.memberRoles.employee,
 			);
 		}
 
 		if (this.type === 'move')
 		{
-			UserManagementDialogActions.moveUsersToDepartment(
+			UserService.moveUsersToEntity(
 				this.nodeId,
 				this.users,
 				data.userCount ?? 0,
@@ -220,18 +224,33 @@ export class BaseUserManagementDialogFooter extends BaseFooter
 		});
 	}
 
+	// eslint-disable-next-line sonarjs/cognitive-complexity
 	getNotificationMessageCode(): ?string
 	{
 		if (this.type === 'add')
 		{
 			if (this.users.length > 1)
 			{
-				this.showNotification('HUMANRESOURCES_COMPANY_STRUCTURE_USER_MANAGEMENT_DIALOG_ADD_USER_ADD_EMPLOYEES_MESSAGE');
+				if (this.entityType === EntityTypes.team)
+				{
+					this.showNotification('HUMANRESOURCES_COMPANY_STRUCTURE_USER_MANAGEMENT_DIALOG_ADD_TEAM_USER_ADD_EMPLOYEES_MESSAGE');
+				}
+				else
+				{
+					this.showNotification('HUMANRESOURCES_COMPANY_STRUCTURE_USER_MANAGEMENT_DIALOG_ADD_USER_ADD_EMPLOYEES_MESSAGE');
+				}
 			}
 
 			if (this.users.length === 1)
 			{
-				this.showNotification('HUMANRESOURCES_COMPANY_STRUCTURE_USER_MANAGEMENT_DIALOG_ADD_USER_ADD_EMPLOYEE_MESSAGE');
+				if (this.entityType === EntityTypes.team)
+				{
+					this.showNotification('HUMANRESOURCES_COMPANY_STRUCTURE_USER_MANAGEMENT_DIALOG_ADD_TEAM_USER_ADD_EMPLOYEE_MESSAGE');
+				}
+				else
+				{
+					this.showNotification('HUMANRESOURCES_COMPANY_STRUCTURE_USER_MANAGEMENT_DIALOG_ADD_USER_ADD_EMPLOYEE_MESSAGE');
+				}
 			}
 		}
 

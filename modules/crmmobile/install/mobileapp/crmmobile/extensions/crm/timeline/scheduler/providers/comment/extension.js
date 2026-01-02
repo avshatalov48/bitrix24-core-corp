@@ -172,11 +172,7 @@ jn.define('crm/timeline/scheduler/providers/comment', (require, exports, module)
 						mediaType: 'file',
 						parentWidget: this.layout,
 						controller: {
-							endpoint: 'crm.FileUploader.CommentUploaderController',
-							options: {
-								entityTypeId: this.entity.typeId,
-								entityId: this.entity.id,
-							},
+							endpoint: 'disk.Uf.Integration.DiskUploaderController',
 						},
 					},
 					readOnly: false,
@@ -327,7 +323,7 @@ jn.define('crm/timeline/scheduler/providers/comment', (require, exports, module)
 						ENTITY_ID: this.entity.id,
 						COMMENT: this.comment,
 						// AUTHOR_ID:
-						FILES: this.files,
+						ATTACHMENTS: this.state.files?.map(({ serverFileId }) => serverFileId),
 					},
 				};
 

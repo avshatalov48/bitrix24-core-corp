@@ -14,16 +14,16 @@ interface BottomSheetWidgetOptions {
  * Options object for configuring a navigation title.
  */
 interface TitleParams {
-	type: 'section' | 'entity' | 'wizard' | 'dialog' | 'common';
-	text: string;
-	textColor: string;
-	detailText: string;
-	detailTextColor: string;
-	useLargeTitleMode: boolean;
-	useProgress: boolean;
-	svg: object;
-	isRounded: boolean;
-	tintColor: string;
+	type?: 'section' | 'entity' | 'wizard' | 'dialog' | 'common';
+	text?: string;
+	textColor?: string;
+	detailText?: string;
+	detailTextColor?: string;
+	useLargeTitleMode?: boolean;
+	useProgress?: boolean;
+	svg?: object;
+	isRounded?: boolean;
+	tintColor?: string;
 }
 
 /**

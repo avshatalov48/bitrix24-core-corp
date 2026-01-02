@@ -1,6 +1,7 @@
 (() => {
 	const require = (ext) => jn.require(ext);
 	const AppTheme = require('apptheme');
+	const { ProjectTagsField } = require('layout/socialnetwork/project/fields/tags');
 
 	class AdvancedSettings extends LayoutComponent
 	{

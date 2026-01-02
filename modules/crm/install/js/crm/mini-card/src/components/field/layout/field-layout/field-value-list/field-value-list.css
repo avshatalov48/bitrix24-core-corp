@@ -1,0 +1,5 @@
+.crm-mini-card__field-value-list {
+	display: flex;
+	flex-direction: column;
+	gap: var(--ui-size-2xs);
+}

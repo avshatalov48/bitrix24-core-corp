@@ -5,6 +5,7 @@ namespace Bitrix\Crm\Service\WebForm;
 class ScenarioCategory
 {
 	public const CRM = 'crm';
+	public const BOOKING = 'booking';
 	public const PRODUCTS = 'products';
 	public const SOCIAL = 'social';
 	public const CRM_AUTOMATION = 'crm_automation';

@@ -7,9 +7,9 @@ use Bitrix\Intranet\Enum\LinkEntityType;
 
 interface InvitationLinkRepository
 {
-	public function getByEntity(LinkEntityType $entitytype, int $entityId): ?InvitationLink;
+	public function getByEntity(LinkEntityType $entityType, int $entityId): ?InvitationLink;
 
-	public function getActualByEntity(LinkEntityType $entitytype, int $entityId): ?InvitationLink;
+	public function getActualByEntity(LinkEntityType $entityType, int $entityId): ?InvitationLink;
 
 	public function create(InvitationLink $entity): InvitationLink;
 

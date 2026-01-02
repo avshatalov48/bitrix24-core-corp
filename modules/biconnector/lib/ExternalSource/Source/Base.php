@@ -2,6 +2,7 @@
 
 namespace Bitrix\BIConnector\ExternalSource\Source;
 
+use Bitrix\BIConnector\ExternalSource\Internal\ExternalSourceSettingsCollection;
 use Bitrix\Main;
 
 abstract class Base
@@ -19,12 +20,12 @@ abstract class Base
 	/**
 	 * Connects to external source
 	 */
-	abstract public function connect(string $host, string $username, string $password): Main\Result;
+	abstract public function connect(ExternalSourceSettingsCollection $settings): Main\Result;
 
 	/**
 	 * @return array
 	 */
-	abstract public function getEntityList(): array;
+	abstract public function getEntityList(): Main\Result;
 
 	/**
 	 * @param string $entityName
@@ -35,7 +36,8 @@ abstract class Base
 	/**
 	 * @param string $entityName
 	 * @param int $n
+	 * @param array $fields
 	 * @return array
 	 */
-	abstract public function getFirstNData(string $entityName, int $n): array;
+	abstract public function getFirstNData(string $entityName, int $n, array $fields = []): array;
 }

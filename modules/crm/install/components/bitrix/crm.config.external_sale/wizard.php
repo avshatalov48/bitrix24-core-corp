@@ -45,8 +45,7 @@ function __ExtSaleWizardShowError($text)
 	exit();
 }
 
-$CrmPerms = new CCrmPerms($USER->GetID());
-if (!$CrmPerms->HavePerm('CONFIG', BX_CRM_PERM_CONFIG, 'WRITE'))
+if (!\Bitrix\Crm\Service\Container::getInstance()->getUserPermissions()->isCrmAdmin())
 	__ExtSaleWizardShowError(GetMessage('CRM_PERMISSION_DENIED'));
 
 $id = intval($_REQUEST["id"]);
@@ -750,7 +749,10 @@ if ($processActions && !empty($errorMessage))
 				$arFields["IMPORT_RESPONSIBLE"] = 0;
 		}
 		$arGroup = false;
-		if (intval($arFields["IMPORT_GROUP_ID"]) > 0)
+		if (
+			intval($arFields["IMPORT_GROUP_ID"]) > 0
+			&& CModule::includeModule('socialnetwork')
+		)
 		{
 			$arGroup = CSocNetGroup::GetByID($arFields["IMPORT_GROUP_ID"]);
 			if (!$arGroup)

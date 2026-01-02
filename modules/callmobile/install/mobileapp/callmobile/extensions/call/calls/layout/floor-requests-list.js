@@ -3,6 +3,8 @@
 */
 jn.define('call/calls/layout/floor-requests-list', (require, exports, module) => {
 	const { Color, Corner } = require('tokens');
+	const { Avatar } = require('ui-system/blocks/avatar');
+	const Utils = require('src/util');
 
 	const Events = {
 		onRequestFloor: 'onRequestFloor',
@@ -100,7 +102,8 @@ jn.define('call/calls/layout/floor-requests-list', (require, exports, module) =>
 			const users = this.state.userList.map((userModel) => this.renderUser(
 				userModel.avatar,
 				userModel.name,
-				userModel.workPosition,
+				userModel.getDescription(),
+				userModel.id,
 			));
 
 			return View(
@@ -139,12 +142,15 @@ jn.define('call/calls/layout/floor-requests-list', (require, exports, module) =>
 			);
 		}
 
-		renderUser(avatarPath, name, title)
+		renderUser(avatarPath, name, title, id)
 		{
-			const avatar = avatarPath === ''
-				? { svg: { content: Icons.emptyAvatar } }
-				: { uri: encodeURI(avatarPath) }
-			;
+			const avatar = Avatar({
+				testId: 'floor-request-list-avatar',
+				uri: encodeURI(avatarPath),
+				name: BX.utils.html.htmlDecode(name),
+				size: 40,
+				backgroundColor: Utils.convertHexToColorEnum(CallUtil.userData[id].color),
+			});
 
 			return View(
 				{
@@ -158,17 +164,7 @@ jn.define('call/calls/layout/floor-requests-list', (require, exports, module) =>
 							alignSelf: 'center',
 						},
 					},
-					Image(
-						{
-							style: {
-								width: 40,
-								height: 40,
-								borderRadius: 20,
-							},
-							resizeMode: 'cover',
-							...avatar,
-						},
-					),
+					avatar,
 				),
 				View(
 					{

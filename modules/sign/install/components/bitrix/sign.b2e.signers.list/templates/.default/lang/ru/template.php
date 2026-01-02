@@ -1,0 +1,8 @@
+<?php
+
+$MESS['SIGN_B2E_SIGNERS_LIST_ADD_NEW_TITLE'] = 'Создать группу';
+$MESS['SIGN_B2E_SIGNERS_LIST_TITLE'] = 'Группы сотрудников';
+$MESS['SIGN_B2E_SIGNERS_LIST_ACTION_RENAME'] = 'Переименовать';
+$MESS['SIGN_B2E_SIGNERS_LIST_ACTION_EDIT'] = 'Сотрудники';
+$MESS['SIGN_B2E_SIGNERS_LIST_ACTION_COPY'] = 'Скопировать';
+$MESS['SIGN_B2E_SIGNERS_LIST_ACTION_DELETE'] = 'Удалить';

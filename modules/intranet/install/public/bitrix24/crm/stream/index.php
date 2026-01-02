@@ -7,13 +7,14 @@ $APPLICATION->SetTitle(GetMessage("TITLE"));
 $bodyClass = $APPLICATION->GetPageProperty("BodyClass");
 $APPLICATION->SetPageProperty("BodyClass", ($bodyClass ? $bodyClass." " : "")."page-one-column");
 
-if(CModule::IncludeModule("crm") && CCrmPerms::IsAccessEnabled()):
+if(\Bitrix\Intranet\Integration\Crm::getInstance()->canReadSomeItemsInCrm()):
 
-	$currentUserPerms = CCrmPerms::GetCurrentUserPermissions();
-	$canEdit = CCrmLead::CheckUpdatePermission(0, $currentUserPerms)
-		|| CCrmContact::CheckUpdatePermission(0, $currentUserPerms)
-		|| CCrmCompany::CheckUpdatePermission(0, $currentUserPerms)
-		|| CCrmDeal::CheckUpdatePermission(0, $currentUserPerms);
+	$entityTypePermissions = \Bitrix\Crm\Service\Container::getInstance()->getUserPermissions()->entityType();
+	$canEdit = $entityTypePermissions->canUpdateItems(CCrmOwnerType::Lead)
+		|| $entityTypePermissions->canUpdateItems(CCrmOwnerType::Company)
+		|| $entityTypePermissions->canUpdateItems(CCrmOwnerType::Contact)
+		|| $entityTypePermissions->canUpdateItems(CCrmOwnerType::Deal)
+	;
 
 	$APPLICATION->IncludeComponent(
 		"bitrix:crm.control_panel",

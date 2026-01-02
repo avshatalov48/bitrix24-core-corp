@@ -11,6 +11,7 @@ if (!defined('B_PROLOG_INCLUDED') || B_PROLOG_INCLUDED !== true)
 
 use Bitrix\Main\Localization\Loc;
 use Bitrix\Main\Page\Asset;
+use Bitrix\Main\Web\Json;
 use Bitrix\Tasks\Internals\Counter\CounterDictionary;
 use Bitrix\Tasks\UI\ScopeDictionary;
 use Bitrix\UI\Buttons;
@@ -29,9 +30,13 @@ $APPLICATION->setPageProperty(
 
 if ($arResult['canCreateFlow'])
 {
+	$editFormParams = Json::encode([
+		'isFeatureTrialable' => $arResult['isFeatureTrialable'],
+	]);
+
 	$click = (
 		($arResult['isFeatureEnabled'] || $arResult['canTurnOnTrial'])
-			? 'BX.Tasks.Flow.EditForm.createInstance'
+			? new Buttons\JsCode("BX.Tasks.Flow.EditForm.createInstance({$editFormParams});")
 			: new Buttons\JsCode('BX.Tasks.Flow.Grid.showFlowLimit();')
 	);
 
@@ -58,7 +63,7 @@ Toolbar::addFilter([
 	'THEME' => \Bitrix\Main\UI\Filter\Theme::LIGHT,
 ]);
 
-$isBitrix24Template = SITE_TEMPLATE_ID === 'bitrix24';
+$isBitrix24Template = SITE_TEMPLATE_ID === 'bitrix24' || SITE_TEMPLATE_ID === 'air';
 
 if ($isBitrix24Template)
 {
@@ -68,7 +73,7 @@ if ($isBitrix24Template)
 $isTrial = $arResult['isFeatureTrialable'] ? 'Y' : 'N';
 
 ?>
-	<div class="task-interface-toolbar">
+	<div class="ui-actions-bar">
 		<?php
 
 		$APPLICATION->IncludeComponent(
@@ -89,9 +94,8 @@ $isTrial = $arResult['isFeatureTrialable'] ? 'Y' : 'N';
 			$component
 		);
 		?>
-		<div id="tasks-flow-switcher" class="task-interface-toolbar--item --visible"></div>
 
-	<div class="tasks-flow__additional-items pagetitle-align-right-container">
+		<div class="ui-actions-bar__buttons">
 		<div
 			class="tasks-flow__guide-btn"
 			onclick="BX.Tasks.Flow.Grid.showGuide('<?=$isTrial?>');"
@@ -109,18 +113,10 @@ $isTrial = $arResult['isFeatureTrialable'] ? 'Y' : 'N';
 				<?=Loc::getMessage("TASKS_FLOW_LIST_GUIDE_BTN")?>
 			</span>
 		</div>
-		<?php
-			include_once ('bi-analytics.php');
-		?>
 	</div>
 </div>
 
 <?php
-
-if ($isBitrix24Template)
-{
-	$this->SetViewTarget('inside_pagetitle');
-}
 
 if ($isBitrix24Template)
 {

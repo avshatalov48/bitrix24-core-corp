@@ -1,6 +1,8 @@
-import { BIcon as Icon, Set as IconSet } from 'ui.icon-set.api.vue';
 import { Text } from 'main.core';
 import { BaseEvent } from 'main.core.events';
+import { BIcon as Icon, Set as IconSet } from 'ui.icon-set.api.vue';
+
+import { Timezone } from 'booking.lib.timezone';
 import type { SlotRange } from 'booking.model.resources';
 import { WorkTimeSlotRange } from './work-time-slot-range';
 
@@ -36,6 +38,10 @@ export const WorkTimeSelector = {
 		},
 		isCompanyScheduleAccess: {
 			type: Boolean,
+			required: true,
+		},
+		companyScheduleUrl: {
+			type: String,
 			required: true,
 		},
 	},
@@ -74,7 +80,11 @@ export const WorkTimeSelector = {
 		openCompanyWorkTime(event): void
 		{
 			const isTextClick = event.target === event.currentTarget;
-			if (!isTextClick && this.isCompanyScheduleAccess)
+			if (
+				!isTextClick
+				&& this.isCompanyScheduleAccess
+				&& this.companyScheduleUrl !== ''
+			)
 			{
 				top.BX.Event.EventEmitter.subscribeOnce(
 					top.BX.Event.EventEmitter.GLOBAL_TARGET,
@@ -95,7 +105,7 @@ export const WorkTimeSelector = {
 				);
 
 				BX.SidePanel.Instance.open(
-					'/settings/configs/?page=schedule',
+					this.companyScheduleUrl,
 					{ cacheable: false },
 				);
 
@@ -136,11 +146,7 @@ export const WorkTimeSelector = {
 		},
 		getTimezoneOffset(timeZone: string): number
 		{
-			const now = new Date();
-			const utcDate = new Date(now.toLocaleString('en-US', { timeZone: 'UTC' }));
-			const tzDate = new Date(now.toLocaleString('en-US', { timeZone }));
-
-			return (utcDate.getTime() - tzDate.getTime()) / (1000 * 60);
+			return Timezone.getOffset(Date.now(), timeZone) / (-60);
 		},
 		calculateDifferenceBetweenTimezones(initialTimezone: string, currentTimezone: string): void
 		{
@@ -212,7 +218,7 @@ export const WorkTimeSelector = {
 						>
 						<span
 							class="ui-ctl-label-text work-time-selector-label-text"
-							:class="{'--disabled': !isCompanyScheduleAccess }"
+							:class="{'--disabled': !isCompanyScheduleAccess || companyScheduleUrl === ''}"
 							@click="openCompanyWorkTime"
 							v-html="companyWorkTimeOptionLabel"
 						></span>

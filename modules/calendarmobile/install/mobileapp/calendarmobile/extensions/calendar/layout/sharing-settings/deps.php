@@ -9,6 +9,7 @@ return [
 		'assets/common',
 		'utils/date',
 		'utils/color',
+		'utils/random',
 		'utils/date/formats',
 		'tokens',
 		'selector/widget/factory',

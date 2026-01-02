@@ -1,9 +1,11 @@
-<?
+<?php
+
 if (!defined("B_PROLOG_INCLUDED") || B_PROLOG_INCLUDED !== true)
 {
 	die();
 }
 
+use Bitrix\Main\Engine\CurrentUser;
 use Bitrix\Main\Localization\Loc;
 use Bitrix\Main\ErrorCollection;
 use Bitrix\Main\Loader;
@@ -101,13 +103,14 @@ class CrmTrackingSourceEditComponent  extends \CBitrixComponent implements Contr
 	protected function preparePost()
 	{
 		$name = $this->request->get('NAME');
+		$currentUserId = CurrentUser::get()->getId();
 		$data = [
 			'NAME' => $name,
 			'ICON_COLOR' => $this->arParams['CODE'] ? '' : $this->request->get('ICON_COLOR'),
-			//'UTM_SOURCE' => trim($this->request->get('UTM_SOURCE')),
 			'TAGS' => [],
 			'AD_CLIENT_ID' => $this->arParams['CODE'] ? $this->request->get('AD_CLIENT_ID') : null,
 			'AD_ACCOUNT_ID' => $this->arParams['CODE'] ? $this->request->get('AD_ACCOUNT_ID') : null,
+			'UPDATED_BY_ID' => $currentUserId,
 		];
 
 		$resultId = 0;
@@ -126,6 +129,7 @@ class CrmTrackingSourceEditComponent  extends \CBitrixComponent implements Contr
 		else
 		{
 			$data['CODE'] = $this->arParams['CODE'];
+			$data['CREATED_BY_ID'] = $currentUserId;
 			$result = Tracking\Internals\SourceTable::add($data);
 			$resultId = $result->getId() ?: 0;
 		}

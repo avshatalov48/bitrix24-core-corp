@@ -1,17 +1,24 @@
 import { Type } from 'main.core';
+import { RichLoc } from 'ui.vue3.components.rich-loc';
 import { mapGetters } from 'ui.vue3.vuex';
 import 'ui.icon-set.main';
 
 import { Model, AhaMoment, HelpDesk } from 'booking.const';
 import { ahaMoments } from 'booking.lib.aha-moments';
 
-import { replaceLabelMixin } from '../label/label';
+import { LabelDropdown } from '../label/label';
 import { ResourceNotification } from '../layout/resource-notification';
 import { ResourceNotificationTextRow } from '../layout/resource-notification-text-row';
 
+// @vue/component
 export const BaseInfo = {
 	name: 'ResourceNotificationCardBaseInfo',
-	mixins: [replaceLabelMixin],
+	components: {
+		ResourceNotification,
+		ResourceNotificationTextRow,
+		LabelDropdown,
+		RichLoc,
+	},
 	props: {
 		/** @type {NotificationsModel} */
 		model: {
@@ -19,15 +26,9 @@ export const BaseInfo = {
 			required: true,
 		},
 	},
-	mounted(): void
-	{
-		if (ahaMoments.shouldShow(AhaMoment.MessageTemplate))
-		{
-			setTimeout(() => this.showAhaMoment(), 500);
-		}
-	},
 	computed: {
 		...mapGetters({
+			/** @type {ResourceModel} */
 			resource: `${Model.ResourceCreationWizard}/getResource`,
 			isCurrentSenderAvailable: `${Model.Notifications}/isCurrentSenderAvailable`,
 		}),
@@ -41,19 +42,34 @@ export const BaseInfo = {
 				void this.$store.dispatch(`${Model.ResourceCreationWizard}/updateResource`, { isInfoNotificationOn });
 			},
 		},
+		infoNotificationDelay: {
+			get(): number
+			{
+				return this.resource.infoNotificationDelay;
+			},
+			set(infoNotificationDelay: number): void
+			{
+				void this.$store.dispatch(`${Model.ResourceCreationWizard}/updateResource`, { infoNotificationDelay });
+				this.$refs.card.$forceUpdate();
+			},
+		},
 		locInfoTimeSend(): string
 		{
-			const hint = this.loc('BRCW_BOOKING_SOON_HINT');
-			const immediately = this.loc('BRCW_NOTIFICATION_CARD_LABEL_IMMEDIATELY');
-
-			return this.loc('BRCW_NOTIFICATION_CARD_BASE_INFO_HELPER_TEXT_SECOND', {
-				'#time#': this.getLabel(immediately, this.isInfoNotificationOn, hint),
-			});
+			return this.loc('BRCW_NOTIFICATION_CARD_BASE_INFO_HELPER_TEXT_SECOND')
+				.replace('#time#', '[delay/]')
+			;
 		},
 		helpDesk(): Object
 		{
 			return HelpDesk.ResourceNotificationInfo;
 		},
+	},
+	mounted(): void
+	{
+		if (ahaMoments.shouldShow(AhaMoment.MessageTemplate))
+		{
+			setTimeout(() => this.showAhaMoment(), 500);
+		}
 	},
 	methods: {
 		async showAhaMoment(): Promise<void>
@@ -76,22 +92,24 @@ export const BaseInfo = {
 			ahaMoments.setShown(AhaMoment.MessageTemplate);
 		},
 	},
-	components: {
-		ResourceNotification,
-		ResourceNotificationTextRow,
-	},
 	template: `
 		<ResourceNotification
 			v-model:checked="isInfoNotificationOn"
 			:type="model.type"
-			:title="loc('BRCW_NOTIFICATION_CARD_BASE_INFO_TITLE')"
-			:description="loc('BRCW_NOTIFICATION_CARD_BASE_INFO_HELPER_TEXT_FIRST_MSGVER_1')"
+			:title="loc('BRCW_NOTIFICATION_CARD_BASE_INFO_TITLE_MSGVER_1')"
+			:description="loc('BRCW_NOTIFICATION_CARD_BASE_INFO_HELPER_TEXT_FIRST_MSGVER_2')"
 			:helpDesk="helpDesk"
 			ref="card"
 		>
-			<ResourceNotificationTextRow icon="--clock-2">
-				<div class="resource-creation-wizard__form-notification-text" v-html="locInfoTimeSend"></div>
-			</ResourceNotificationTextRow>
+			<template #client>
+				<ResourceNotificationTextRow icon="--clock-2">
+					<RichLoc :text="locInfoTimeSend" :placeholder="'[delay/]'">
+						<template #delay>
+							<LabelDropdown v-model:value="infoNotificationDelay" :items="model.settings.notification.delayValues"/>
+						</template>
+					</RichLoc>
+				</ResourceNotificationTextRow>
+			</template>
 		</ResourceNotification>
 	`,
 };

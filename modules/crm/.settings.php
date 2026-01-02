@@ -5,8 +5,9 @@ use Bitrix\Crm\Integration\UI\EntitySelector\ActivityProvider;
 use Bitrix\Crm\Integration\UI\EntitySelector\CopilotLanguageProvider;
 use Bitrix\Crm\Integration\UI\EntitySelector\CountryProvider;
 use Bitrix\Crm\Integration\UI\EntitySelector\DynamicMultipleProvider;
-use Bitrix\Crm\Integration\UI\EntitySelector\MessageTemplateProvider;
 use Bitrix\Crm\Integration\UI\EntitySelector\MailRecipientProvider;
+use Bitrix\Crm\Integration\UI\EntitySelector\MessageTemplateProvider;
+use Bitrix\Crm\Integration\UI\EntitySelector\MultiplePlaceholderProvider;
 use Bitrix\Crm\Integration\UI\EntitySelector\PlaceholderProvider;
 use Bitrix\Crm\Integration\UI\EntitySelector\TimelinePingProvider;
 
@@ -22,20 +23,6 @@ $uiEntitySelectorConfig = [
 			],
 			[
 				'entityId' => 'company',
-				'provider' => [
-					'moduleId' => 'crm',
-					'className' => '\\Bitrix\\Crm\\Integration\\UI\\EntitySelector\\CompanyProvider',
-				],
-			],
-			[
-				'entityId' => 'contact',
-				'provider' => [
-					'moduleId' => 'crm',
-					'className' => '\\Bitrix\\Crm\\Integration\\UI\\EntitySelector\\CompanyProvider',
-				],
-			],
-			[
-				'entityId' => 'user',
 				'provider' => [
 					'moduleId' => 'crm',
 					'className' => '\\Bitrix\\Crm\\Integration\\UI\\EntitySelector\\CompanyProvider',
@@ -147,6 +134,13 @@ $uiEntitySelectorConfig = [
 				],
 			],
 			[
+				'entityId' => 'multiple_placeholder',
+				'provider' => [
+					'moduleId' => 'crm',
+					'className' => MultiplePlaceholderProvider::class,
+				],
+			],
+			[
 				'entityId' => 'message_template',
 				'provider' => [
 					'moduleId' => 'crm',
@@ -160,6 +154,13 @@ $uiEntitySelectorConfig = [
 					'className' => CallScriptProvider::class,
 				],
 			],
+			[
+				'entityId' => 'crm_entity',
+				'provider' => [
+					'moduleId' => 'crm',
+					'className' => '\\Bitrix\\Crm\\Integration\\UI\\EntitySelector\\CrmEntityProvider',
+				],
+			]
 		],
 		'extensions' => ['crm.entity-selector'],
 	],
@@ -255,6 +256,9 @@ return array(
 						\Bitrix\Main\Context::getCurrent()->getCulture(),
 					];
 				},
+			],
+			'crm.service.webform.defaultvalueprovider' => [
+				'className' => '\\Bitrix\\Crm\\Service\\WebForm\\DefaultValueProvider',
 			],
 			'crm.service.converter.ormObject' => [
 				'className' => '\\Bitrix\\Crm\\Service\\Converter\\OrmObject',
@@ -375,6 +379,12 @@ return array(
 			],
 			'crm.service.multifieldStorage' => [
 				'className' => '\\Bitrix\\Crm\\Service\\MultifieldStorage',
+			],
+			'crm.service.pullEventsQueue' => [
+				'className' => '\\Bitrix\\Crm\\Service\\PullEventsQueue',
+			],
+			'crm.service.lastActivity' => [
+				'className' => '\\Bitrix\\Crm\\Service\\LastActivity',
 			],
 			'crm.kanban.entity.lead' => [
 				'className' => '\\Bitrix\\Crm\\Kanban\\Entity\\Lead',
@@ -587,6 +597,12 @@ return array(
 			'crm.service.integration.im' => [
 				'className' => \Bitrix\Crm\Integration\Im\ImService::class,
 			],
+			'crm.repeatSale.availabilityChecker' => [
+				'className' => \Bitrix\Crm\RepeatSale\AvailabilityChecker::class,
+			],
+			'crm.integration.catalog.access.productRowChecker' => [
+				'className' => \Bitrix\Crm\Integration\Catalog\Access\ProductRowChecker::class,
+			],
 		],
 		'readonly' => true,
 	],
@@ -611,9 +627,30 @@ return array(
 			},
 		],
 	],
+	'documentgenerator.customFields' => [
+		'value' => [
+			'manager' => '\\Bitrix\\Crm\\Integration\\DocumentGenerator\\CustomField\\FieldManager',
+		],
+	],
 	'loggers' => [
 		'value' => [
-			'Default' => static fn() => (new \Bitrix\Crm\Service\Logger\DbLogger('Default', 168))->setLevel(\Psr\Log\LogLevel::ERROR),
+			'Default' => static function () {
+				$loggers = [
+					(new \Bitrix\Crm\Service\Logger\DbLogger('Default', 168))
+						->setLevel(\Psr\Log\LogLevel::ERROR)
+					,
+				];
+
+				if (\Bitrix\Main\Loader::includeModule('bitrix24'))
+				{
+					$loggers[] =
+						(new \Bitrix\Crm\Service\Logger\Message2LogLogger('crm.Default', 9))
+							->setLevel(\Psr\Log\LogLevel::CRITICAL)
+					;
+				}
+
+				return new \Bitrix\Crm\Service\Logger\StackLogger(...$loggers);
+			},
 			'Integration.AI' => static function () {
 				if (\Bitrix\Main\Loader::includeModule('bitrix24') || \Bitrix\Main\Config\Option::get('crm', 'USE_ADDM2LOG_FOR_AI', false))
 				{
@@ -628,6 +665,90 @@ return array(
 				'Permissions',
 				(int)\Bitrix\Main\Config\Option::get('crm', 'permissions_logger_ttl', 24*30))
 			)->setLevel(\Bitrix\Main\Config\Option::get('crm', 'permissions_logger_level', \Psr\Log\LogLevel::INFO)),
+			'Webform' => static function () {
+				$loggers = [
+					(new \Bitrix\Crm\Service\Logger\DbLogger('webform', 168))
+						->setLevel(\Psr\Log\LogLevel::ERROR)
+					,
+				];
+
+				if (\Bitrix\Main\Loader::includeModule('bitrix24'))
+				{
+					$loggers[] =
+						(new \Bitrix\Crm\Service\Logger\Message2LogLogger('webform', 9))
+							->setLevel(\Psr\Log\LogLevel::ERROR)
+					;
+				}
+
+				return new \Bitrix\Crm\Service\Logger\StackLogger(...$loggers);
+			},
+			'RepeatSale' => static function () {
+				$loggers = [
+					(new \Bitrix\Crm\Service\Logger\DbLogger('crm.repeatSale', 168))
+						->setLevel(\Bitrix\Main\Config\Option::get('crm', 'log_repeat_sale_db_level', \Psr\Log\LogLevel::ERROR))
+					,
+				];
+
+				if (\Bitrix\Main\Loader::includeModule('bitrix24'))
+				{
+					$loggers[] =
+						(new \Bitrix\Crm\Service\Logger\Message2LogLogger('crm.repeatSale', 9))
+							->setLevel(\Bitrix\Main\Config\Option::get('crm', 'log_repeat_sale_message_level', \Psr\Log\LogLevel::INFO))
+					;
+				}
+
+				return new \Bitrix\Crm\Service\Logger\StackLogger(...$loggers);
+			},
+			'Features' => static function () {
+				$loggers = [
+					(new \Bitrix\Crm\Service\Logger\DbLogger('Features', (int)\Bitrix\Main\Config\Option::get('crm', 'features_logger_ttl', 24*90)))
+						->setLevel(\Bitrix\Main\Config\Option::get('crm', 'features_logger_level', \Psr\Log\LogLevel::INFO))
+					,
+				];
+
+				if (\Bitrix\Main\Loader::includeModule('bitrix24'))
+				{
+					$loggers[] =
+						(new \Bitrix\Crm\Service\Logger\Message2LogLogger('Features', 9))
+							->setLevel(\Bitrix\Main\Config\Option::get('crm', 'features_logger_message_level', \Psr\Log\LogLevel::INFO))
+					;
+				}
+
+				return new \Bitrix\Crm\Service\Logger\StackLogger(...$loggers);
+			},
+			'ScenarioInvestigation' => static function () {
+				if (\Bitrix\Main\Loader::includeModule('bitrix24'))
+				{
+					$logger = new \Bitrix\Crm\Service\Logger\Message2LogLogger('Scenario.Investigation', 9);
+					$logger->setLevel(\Psr\Log\LogLevel::NOTICE);
+
+					return $logger;
+				}
+				return new \Psr\Log\NullLogger();
+			}
 		],
+	],
+	'console' => [
+		'value' => [
+			'commands' => [
+				\Bitrix\Crm\Cli\GenerateEntitiesCommand::class,
+			],
+		],
+		'readonly' => true,
+	],
+	'aiassistant.marta' => [
+		'value' => [
+			'agents' => [
+				Bitrix\Crm\Integration\AiAssistant\Agents\CrmExecutorAgent::class,
+				Bitrix\Crm\Integration\AiAssistant\Agents\CrmExecutorPlannerAgent::class,
+			],
+			'scenarios' => [
+				Bitrix\Crm\Integration\AiAssistant\Scenario\EmptyCrmSetupScenario::class,
+			],
+			'profileDataProviders' => [
+				Bitrix\Crm\Integration\AiAssistant\DataProviders\CrmProvider::class,
+			],
+		],
+		'readonly' => true,
 	],
 );

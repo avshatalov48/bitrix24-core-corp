@@ -3,16 +3,20 @@
  */
 
 jn.define('im/messenger/controller/dialog/copilot/component/message-menu', (require, exports, module) => {
-	const { MessageMenu, ActionType } = require('im/messenger/controller/dialog/lib/message-menu');
-	const { MessageParams } = require('im/messenger/const');
+	const {
+		MessageParams,
+		MessageMenuActionType,
+	} = require('im/messenger/const');
+	const { MessageMenuController } = require('im/messenger/controller/dialog/lib/message-menu');
+
 	/**
 	 * @class CopilotMessageMenu
 	 */
-	class CopilotMessageMenu extends MessageMenu
+	class CopilotMessageMenu extends MessageMenuController
 	{
-		getOrderedActions(message)
+		async getOrderedActions(message)
 		{
-			const modelMessage = this.store.getters['messagesModel/getById'](message.id);
+			const modelMessage = this.store.getters['messagesModel/getById'](message.messageModel.id);
 
 			if (this.isCopilotMessage(modelMessage))
 			{
@@ -29,10 +33,18 @@ jn.define('im/messenger/controller/dialog/copilot/component/message-menu', (requ
 				return [];
 			}
 
-			return super
-				.getOrderedActions(message)
+			const contextMenuMessage = this.createMessageMenuMessage(message.messageModel.id);
+
+			const orderedActions = await super.getOrderedActions(contextMenuMessage);
+
+			return orderedActions
 				.filter((action) => {
-					return ([ActionType.reaction, ActionType.edit, ActionType.delete, ActionType.copy].includes(action));
+					return ([
+						MessageMenuActionType.reaction,
+						MessageMenuActionType.edit,
+						MessageMenuActionType.delete,
+						MessageMenuActionType.copy,
+					].includes(action));
 				})
 			;
 		}
@@ -67,8 +79,8 @@ jn.define('im/messenger/controller/dialog/copilot/component/message-menu', (requ
 		getCopilotActions()
 		{
 			return [
-				ActionType.reaction,
-				ActionType.feedback,
+				MessageMenuActionType.reaction,
+				MessageMenuActionType.feedback,
 			];
 		}
 	}

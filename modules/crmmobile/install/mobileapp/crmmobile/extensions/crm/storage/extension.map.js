@@ -1,1 +1,0 @@
-{"version":3,"sources":["extension.js"],"names":["jn","define","require","exports","module","BaseStorage","CategoryStorage"],"mappings":"AAGAA,GAAGC,OAAO,eAAe,CAACC,EAASC,EAASC,KAE3C,MAAMC,YAAEA,GAAgBH,EAAQ,oBAChC,MAAMI,gBAAEA,GAAoBJ,EAAQ,wBAEpCE,EAAOD,QAAU,CAChBE,YAAAA,EACAC,gBAAAA","file":"extension.map.js"}

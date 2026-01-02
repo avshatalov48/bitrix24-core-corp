@@ -1,0 +1,25 @@
+.crm-mini-card__field-value {
+	font-weight: var(--ui-font-weight-regular);
+	font-size: var(--ui-font-size-md);
+	line-height: 19px;
+	letter-spacing: -0.05px;
+	color: var(--ui-color-base-2);
+	display: flex;
+	align-items: center;
+	max-width: 100%;
+	overflow: hidden;
+}
+
+.crm-mini-card__field-value a.--value-link {
+	display: flex;
+	align-items: center;
+	color: rgba(1, 84, 200, 1);
+	cursor: pointer;
+	transition: text-decoration .15s linear;
+	max-width: 100%;
+	overflow: hidden;
+}
+
+.crm-mini-card__field-value a.--value-link:hover {
+	text-decoration: underline !important;
+}

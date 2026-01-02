@@ -7,8 +7,8 @@
 	const require = (ext) => jn.require(ext);
 
 	const AppTheme = require('apptheme');
-	const { ProfileView } = require('user/profile');
 	const { AnalyticsEvent } = require('analytics');
+	const { UserProfile } = require('user-profile');
 	const storageId = 'user.component.result';
 
 	// eslint-disable-next-line init-declarations
@@ -89,8 +89,9 @@
 
 		onUserSelected(user)
 		{
-			ProfileView.open(
-				{
+			void UserProfile.open({
+				ownerId: user.params.id,
+				widgetParams: {
 					userId: user.params.id,
 					imageUrl: encodeURI(user.imageUrl),
 					title: BX.message('PROFILE_INFO_MSGVER_1'),
@@ -98,7 +99,7 @@
 					name: user.title,
 					url: user.params.profileUrl,
 				},
-			);
+			});
 		}
 	}
 

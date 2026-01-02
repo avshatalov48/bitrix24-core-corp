@@ -1,5 +1,5 @@
 /* eslint-disable */
-(function (exports,main_sidepanel,main_core_events,ui_dialogs_messagebox,ui_notification,main_core,ui_progressround) {
+(function (exports,ui_sidepanel,main_core_events,ui_dialogs_messagebox,ui_notification,main_core,ui_progressround) {
 	'use strict';
 
 	function _classPrivateFieldInitSpec(obj, privateMap, value) { _checkPrivateRedeclaration(obj, privateMap); privateMap.set(obj, value); }
@@ -21,11 +21,11 @@
 	    value: function execute() {
 	      var _top$BX$UI, _top$BX$UI$InfoHelper;
 	      if (babelHelpers.classPrivateFieldGet(this, _isActive)) {
-	        if (!main_sidepanel.SidePanel.Instance) {
+	        if (!ui_sidepanel.SidePanel.Instance) {
 	          console.error('SidePanel.Instance not found');
 	          return;
 	        }
-	        main_sidepanel.SidePanel.Instance.open("/crm/copilot-call-assessment/details/0/", {
+	        ui_sidepanel.SidePanel.Instance.open("/crm/copilot-call-assessment/details/0/", {
 	          cacheable: false,
 	          width: 700,
 	          allowChangeHistory: false
@@ -39,6 +39,7 @@
 	}();
 	namespace.ActionButton = ActionButton;
 
+	var _templateObject;
 	function _classPrivateMethodInitSpec(obj, privateSet) { _checkPrivateRedeclaration$1(obj, privateSet); privateSet.add(obj); }
 	function _classPrivateFieldInitSpec$1(obj, privateMap, value) { _checkPrivateRedeclaration$1(obj, privateMap); privateMap.set(obj, value); }
 	function _checkPrivateRedeclaration$1(obj, privateCollection) { if (privateCollection.has(obj)) { throw new TypeError("Cannot initialize the same private elements twice on an object"); } }
@@ -84,13 +85,32 @@
 	      var _this = this;
 	      void main_core.Runtime.loadExtension('ui.switcher').then(function (exports) {
 	        var Switcher = exports.Switcher;
-	        var switcher = new Switcher({
+	        _this.switcher = new Switcher({
 	          checked: babelHelpers.classPrivateFieldGet(_this, _checked),
 	          disabled: babelHelpers.classPrivateFieldGet(_this, _readOnly),
 	          handlers: {
 	            checked: function checked(event) {
 	              event.stopPropagation();
-	              _classPrivateMethodGet(_this, _changeCallAssessmentActive, _changeCallAssessmentActive2).call(_this, false);
+	              var popupContainer = main_core.Tag.render(_templateObject || (_templateObject = babelHelpers.taggedTemplateLiteral(["\n\t\t\t\t\t\t\t<div class=\"crm-copilot-call-assessment-list-confirm-container\">\n\t\t\t\t\t\t\t\t<div class=\"crm-copilot-call-assessment-list-confirm-title\">\n\t\t\t\t\t\t\t\t\t", "\n\t\t\t\t\t\t\t\t</div>\n\t\t\t\t\t\t\t\t<div class=\"crm-copilot-call-assessment-list-confirm-message\"></div>\n\t\t\t\t\t\t\t</div>\n\t\t\t\t\t\t"])), main_core.Loc.getMessage('CRM_COPILOT_CALL_ASSESSMENT_LIST_COLUMN_ACTIVITY_CONFIRM_DIALOG_TITLE'));
+	              ui_dialogs_messagebox.MessageBox.show({
+	                modal: true,
+	                minHeight: 100,
+	                minWidth: 400,
+	                popupOptions: {
+	                  content: popupContainer,
+	                  closeIcon: false
+	                },
+	                buttons: ui_dialogs_messagebox.MessageBoxButtons.OK_CANCEL,
+	                okCaption: main_core.Loc.getMessage('CRM_COPILOT_CALL_ASSESSMENT_LIST_COLUMN_ACTIVITY_CONFIRM_DIALOG_OK_BTN'),
+	                onOk: function onOk(messageBox) {
+	                  messageBox.close();
+	                  _classPrivateMethodGet(_this, _changeCallAssessmentActive, _changeCallAssessmentActive2).call(_this, false);
+	                },
+	                onCancel: function onCancel(messageBox) {
+	                  _this.switcher.check(true, false);
+	                  messageBox.close();
+	                }
+	              });
 	            },
 	            unchecked: function unchecked(event) {
 	              event.stopPropagation();
@@ -99,7 +119,7 @@
 	          }
 	        });
 	        main_core.Dom.clean(babelHelpers.classPrivateFieldGet(_this, _targetNode));
-	        switcher.renderTo(babelHelpers.classPrivateFieldGet(_this, _targetNode));
+	        _this.switcher.renderTo(babelHelpers.classPrivateFieldGet(_this, _targetNode));
 	      });
 	    }
 	  }]);
@@ -215,7 +235,7 @@
 	}
 	namespace$2.Grid = Grid;
 
-	var _templateObject, _templateObject2;
+	var _templateObject$1, _templateObject2;
 	function _classPrivateMethodInitSpec$2(obj, privateSet) { _checkPrivateRedeclaration$3(obj, privateSet); privateSet.add(obj); }
 	function _classPrivateFieldInitSpec$3(obj, privateMap, value) { _checkPrivateRedeclaration$3(obj, privateMap); privateMap.set(obj, value); }
 	function _checkPrivateRedeclaration$3(obj, privateCollection) { if (privateCollection.has(obj)) { throw new TypeError("Cannot initialize the same private elements twice on an object"); } }
@@ -277,7 +297,7 @@
 	      if (babelHelpers.classPrivateFieldGet(this, _value) === null) {
 	        return;
 	      }
-	      babelHelpers.classPrivateFieldSet(this, _valueContainer, main_core.Tag.render(_templateObject || (_templateObject = babelHelpers.taggedTemplateLiteral(["<div></div>"]))));
+	      babelHelpers.classPrivateFieldSet(this, _valueContainer, main_core.Tag.render(_templateObject$1 || (_templateObject$1 = babelHelpers.taggedTemplateLiteral(["<div></div>"]))));
 	      var content = main_core.Tag.render(_templateObject2 || (_templateObject2 = babelHelpers.taggedTemplateLiteral(["\n\t\t\t<div class=\"crm-copilot-call-assessment-list-assessment-avg\">\n\t\t\t\t", "\n\t\t\t\t<div class=\"crm-copilot-call-assessment-list-assessment-avg-value\">\n\t\t\t\t\t", "\n\t\t\t\t\t<span class=\"crm-copilot-call-assessment-list-assessment-avg-percent\">%</span>\n\t\t\t\t</div>\n\t\t\t</div>\n\t\t"])), babelHelpers.classPrivateFieldGet(this, _valueContainer), babelHelpers.classPrivateFieldGet(this, _value));
 	      main_core.Dom.append(content, babelHelpers.classPrivateFieldGet(this, _targetNode$1));
 	      var loader = new ui_progressround.ProgressRound({
@@ -323,12 +343,10 @@
 	function _showTooltip2(event) {
 	  var lowBorder = _classPrivateMethodGet$2(this, _getBorderById, _getBorderById2).call(this, LOW_BORDER);
 	  var highBorder = _classPrivateMethodGet$2(this, _getBorderById, _getBorderById2).call(this, HIGH_BORDER);
-	  main_core.Runtime.debounce(function () {
-	    BX.UI.Hint.show(event.target, main_core.Loc.getMessage('CRM_COPILOT_CALL_ASSESSMENT_LIST_COLUMN_ASSESSMENT_AVG_TOOLTIP', {
-	      '#LOW_BORDER#': lowBorder.value,
-	      '#HIGH_BORDER#': highBorder.value
-	    }), true);
-	  }, 50, this)();
+	  BX.UI.Hint.show(event.target, main_core.Loc.getMessage('CRM_COPILOT_CALL_ASSESSMENT_LIST_COLUMN_ASSESSMENT_AVG_TOOLTIP', {
+	    '#LOW_BORDER#': lowBorder.value,
+	    '#HIGH_BORDER#': highBorder.value
+	  }), true);
 	}
 	function _hideTooltip2(event) {
 	  BX.UI.Hint.hide(event.target);

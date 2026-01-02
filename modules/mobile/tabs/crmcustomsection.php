@@ -11,12 +11,13 @@ use Bitrix\Mobile\Tab\Tabable;
 use Bitrix\Mobile\Tab\Utils;
 use Bitrix\MobileApp\Janative\Manager;
 use Bitrix\MobileApp\Mobile;
+use Bitrix\Mobile\Menu\Analytics;
+use Bitrix\Mobile\Config\Feature;
+use Bitrix\Mobile\Feature\MenuFeature;
 
 final class CrmCustomSection implements Tabable
 {
 	private const INITIAL_COMPONENT = 'crm:crm.tabs';
-
-	private const MINIMAL_API_VERSION = 45;
 	private const ID_PREFIX = 'crm_custom_section';
 	private const MAX_SHORT_TITLE_LENGTH = 14;
 
@@ -49,17 +50,12 @@ final class CrmCustomSection implements Tabable
 			return false;
 		}
 
-		if (Mobile::getApiVersion() < self::MINIMAL_API_VERSION)
-		{
-			return false;
-		}
-
 		$userPermissions = Container::getInstance()->getUserPermissions();
 
 		foreach ($this->pages as $page)
 		{
 			$entityTypeId = IntranetManager::getEntityTypeIdByPageSettings($page->getSettings());
-			if ($userPermissions->checkReadPermissions($entityTypeId))
+			if ($userPermissions->entityType()->canReadItems($entityTypeId))
 			{
 				return true;
 			}
@@ -91,22 +87,24 @@ final class CrmCustomSection implements Tabable
 	public function getMenuData(): array
 	{
 		return [
-			'title' => $this->getShortTitle(),
+			'id' => $this->getId(),
+			'title' => $this->getTitle(),
 			'useLetterImage' => true,
-			'min_api_version' => self::MINIMAL_API_VERSION,
+			'section_code' => 'crm_dynamic',
 			'color' => '#00ace3',
 			'imageUrl' => 'favorite/icon-crm_custom_section.png',
 			'imageName' => $this->getIconId(),
 			'params' => [
 				'onclick' => Utils::getComponentJSCode($this->getComponentParams()),
 				'counter' => 'crm_custom_section_' . $this->customSection->getId(),
+				'analytics' => Analytics::crmCustomSection(),
 			]
 		];
 	}
 
 	public function shouldShowInMenu(): bool
 	{
-		return false;
+		return Feature::isEnabled(MenuFeature::class);
 	}
 
 	public function canBeRemoved(): bool
@@ -166,6 +164,6 @@ final class CrmCustomSection implements Tabable
 
 	public function getIconId(): string
 	{
-		return Mobile::getApiVersion() < 56 ?  self::ID_PREFIX : 'activity';
+		return 'activity';
 	}
 }

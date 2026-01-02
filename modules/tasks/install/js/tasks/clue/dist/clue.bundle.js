@@ -102,6 +102,15 @@ this.BX = this.BX || {};
 	  }
 	}
 
+	class CommentCounter extends Spot {
+	  getTitle() {
+	    return main_core.Loc.getMessage('TASKS_CLUE_FLASH_COMMENT_COUNTER_TITLE');
+	  }
+	  getText() {
+	    return main_core.Loc.getMessage('TASKS_CLUE_FLASH_COMMENT_COUNTER_TEXT');
+	  }
+	}
+
 	var _params = /*#__PURE__*/babelHelpers.classPrivateFieldLooseKey("params");
 	var _spot = /*#__PURE__*/babelHelpers.classPrivateFieldLooseKey("spot");
 	var _guide = /*#__PURE__*/babelHelpers.classPrivateFieldLooseKey("guide");
@@ -188,7 +197,8 @@ this.BX = this.BX || {};
 	Clue.SPOT = Object.freeze({
 	  MY_TASKS: new MyTasks(),
 	  TASK_START: new TaskStart(),
-	  FLOW_COPILOT_ADVICE: new FlowCopilotAdvice()
+	  FLOW_COPILOT_ADVICE: new FlowCopilotAdvice(),
+	  COMMENT_COUNTER: new CommentCounter()
 	});
 
 	exports.Clue = Clue;

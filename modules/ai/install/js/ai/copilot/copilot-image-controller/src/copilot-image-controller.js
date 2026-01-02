@@ -364,6 +364,8 @@ export class CopilotImageController extends EventEmitter
 				useAngle: false,
 			},
 			errorCode: firstError?.code,
+			showSliderWithMsg: firstError?.customData?.showSliderWithMsg,
+			sliderCode: firstError?.customData?.sliderCode,
 		});
 	}
 

@@ -80,7 +80,6 @@ export class FirstProject extends EventEmitter
 			target,
 			cursorMode: true,
 			targetEvent: () => {
-				BX.SidePanel.Instance.open(target.href);
 				setTimeout(() => this.guide.close(), 1000);
 			},
 		}));

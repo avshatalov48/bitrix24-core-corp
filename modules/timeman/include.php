@@ -1,6 +1,8 @@
-<?
+<?php
 if (!CModule::IncludeModule('intranet'))
 	return false;
+
+use Bitrix\Timeman\Integration\Stafftrack\CheckIn;
 
 IncludeModuleLangFile(__FILE__);
 IncludeModuleLangFile($_SERVER["DOCUMENT_ROOT"]."/bitrix/modules/timeman/install/index.php");
@@ -64,6 +66,14 @@ CJSCore::RegisterExt('timeman', array(
 		'ui.layout-form',
 		'ui.analytics',
 	],
+	'oninit' => function () {
+		return [
+			'settings' => [
+				'featureCheckInStartEnabled' => CheckIn::isCheckInStartEnabled(),
+				'isAirTemplate' => defined('AIR_SITE_TEMPLATE'),
+			],
+		];
+	},
 ));
 
 CJSCore::RegisterExt('timecontrol', array(
@@ -75,5 +85,3 @@ CJSCore::RegisterExt('timecontrol', array(
 
 \Bitrix\Main\Page\Asset::getInstance()->groupJs('calendar_planner_handler', 'timeman');
 \Bitrix\Main\Page\Asset::getInstance()->groupCss('calendar_planner_handler', 'timeman');
-
-?>

@@ -48,6 +48,7 @@ jn.define('sign/dialog/banners/signedbyeditor', (require, exports, module) => {
 				buttonsView: View(
 					{},
 					Button({
+						testId: 'signedByEditorBanner-button-close',
 						text: Loc.getMessage('SIGN_MOBILE_DIALOG_SIGNED_SIGNED_BY_EDITOR_BUTTON_CLOSE'),
 						size: ButtonSize.XL,
 						design: ButtonDesign.PLAN_ACCENT,

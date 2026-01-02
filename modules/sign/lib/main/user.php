@@ -1,6 +1,8 @@
 <?php
 namespace Bitrix\Sign\Main;
 
+use Bitrix\Intranet\Util;
+
 /**
  * @deprecated
  */
@@ -37,13 +39,13 @@ class User
 			return $hasAccess;
 		}
 
-		$user = \CUser::getList(
-			'ID', 'ASC',
-			['ID_EQUAL_EXACT' => self::getInstance()->getId()],
-			['FIELDS' => 'ID', 'SELECT' => ['UF_DEPARTMENT']]
-		)->fetch();
+		if (!\Bitrix\Main\Loader::includeModule('intranet'))
+		{
+			return false;
+		}
 
-		$hasAccess = ($user['UF_DEPARTMENT'][0] ?? 0) > 0;
+		$hasAccess = Util::isIntranetUser(self::getInstance()->getId());
+
 		return $hasAccess;
 	}
 }

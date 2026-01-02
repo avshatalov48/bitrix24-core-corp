@@ -19,7 +19,7 @@ if(!Main\Loader::includeModule('crm'))
 {
 	$result = array('ERROR' => Main\Localization\Loc::getMessage('CRM_MODULE_NOT_INSTALLED'));
 }
-elseif(!(\Bitrix\Crm\Order\Permissions\Order::checkReadPermission() && check_bitrix_sessid()))
+elseif(!(\Bitrix\Crm\Service\Container::getInstance()->getUserPermissions()->entityType()->canReadItems(CCrmOwnerType::Order) && check_bitrix_sessid()))
 {
 	$result = array('ERROR' => Main\Localization\Loc::getMessage('CRM_ACCESS_DENIED'));
 }

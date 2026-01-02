@@ -313,9 +313,18 @@ class Item extends \CCrmDocument implements \IBPWorkflowDocument
 		);
 	}
 
-	public static function createAutomationTarget($documentType)
+	public static function createAutomationTarget($documentType, string|int|null $documentId = null)
 	{
 		$typeId = static::GetDocumentInfo($documentType)['TYPE_ID'];
+
+		if (is_string($documentId))
+		{
+			[$entityTypeId, $entityId] = \CCrmBizProcHelper::resolveEntityIdByDocumentId($documentId);
+			if ($entityId > 0 && $entityTypeId === $typeId)
+			{
+				return \Bitrix\Crm\Automation\Factory::getTarget($typeId, $entityId);
+			}
+		}
 
 		return Crm\Automation\Factory::createTarget($typeId);
 	}

@@ -1,4 +1,12 @@
 <?php
+
+use Bitrix\Crm\Security\Role\PermissionsManager;
+use Bitrix\Crm\Service\UserPermissions;
+
+/**
+ * @deprecated
+ * @see UserPermissions
+ */
 class CCrmAuthorizationHelper
 {
 	private static $USER_PERMISSIONS = null;
@@ -15,180 +23,146 @@ class CCrmAuthorizationHelper
 		return self::$USER_PERMISSIONS[$userId];
 	}
 
+	/**
+	 * @deprecated
+	 * @see Container::getInstance()->getUserPermissions()->entityType()->canAddItems() or Container::getInstance()->getUserPermissions()->entityType()->canAddItemsInCategory()
+	 */
 	public static function CheckCreatePermission($entityTypeName, $userPermissions = null)
 	{
-		$entityTypeName = strval($entityTypeName);
-
-		if(!$userPermissions)
-		{
-			$userPermissions = self::GetUserPermissions();
-		}
-
-		return !$userPermissions->HavePerm($entityTypeName, BX_CRM_PERM_NONE, 'ADD');
+		return self::checkPermissionForType(UserPermissions::OPERATION_ADD, $entityTypeName, $userPermissions);
 	}
 
+	/**
+	 * @deprecated
+	 * @see Container::getInstance()->getUserPermissions()->item()->canUpdate()
+	 */
 	public static function CheckUpdatePermission($entityTypeName, $entityID, $userPermissions = null, $entityAttrs = null)
 	{
-		$entityTypeName = strval($entityTypeName);
-		$entityID = intval($entityID);
-
-		if(!$userPermissions)
-		{
-			$userPermissions = self::GetUserPermissions();
-		}
-
-		if (\Bitrix\Crm\Service\Container::getInstance()->getUserPermissions($userPermissions->GetUserID())->isAdmin())
-		{
-			return true;
-		}
-
-		if($entityID <= 0)
-		{
-			return !$userPermissions->HavePerm($entityTypeName, BX_CRM_PERM_NONE, 'WRITE');
-		}
-
-		if(!is_array($entityAttrs))
-		{
-			$entityAttrs = $userPermissions->GetEntityAttr($entityTypeName, $entityID);
-		}
-		return !$userPermissions->HavePerm($entityTypeName, BX_CRM_PERM_NONE, 'WRITE')
-			&& $userPermissions->CheckEnityAccess($entityTypeName, 'WRITE', isset($entityAttrs[$entityID]) ? $entityAttrs[$entityID] : array());
+		return self::checkPermissionForTypeAndAttributes(UserPermissions::OPERATION_UPDATE, $entityTypeName, $entityID, $userPermissions, $entityAttrs);
 	}
 
+	/**
+	 * @deprecated
+	 * @see Container::getInstance()->getUserPermissions()->item()->canDelete() or Container::getInstance()->getUserPermissions()->entityType()->canDeleteItems()
+	 */
 	public static function CheckDeletePermission($entityTypeName, $entityID, $userPermissions = null, $entityAttrs = null)
 	{
-		$entityTypeName = strval($entityTypeName);
-		$entityID = intval($entityID);
-
-		if(!$userPermissions)
-		{
-			$userPermissions = self::GetUserPermissions();
-		}
-
-		if (\Bitrix\Crm\Service\Container::getInstance()->getUserPermissions($userPermissions->GetUserID())->isAdmin())
-		{
-			return true;
-		}
-
-		if($entityID <= 0)
-		{
-			return !$userPermissions->HavePerm($entityTypeName, BX_CRM_PERM_NONE, 'DELETE');
-		}
-
-		if(!is_array($entityAttrs))
-		{
-			$entityAttrs = $userPermissions->GetEntityAttr($entityTypeName, $entityID);
-		}
-
-		return !$userPermissions->HavePerm($entityTypeName, BX_CRM_PERM_NONE, 'DELETE')
-			&& $userPermissions->CheckEnityAccess($entityTypeName, 'DELETE', isset($entityAttrs[$entityID]) ? $entityAttrs[$entityID] : array());
+		return self::checkPermissionForTypeAndAttributes(UserPermissions::OPERATION_DELETE, $entityTypeName, $entityID, $userPermissions, $entityAttrs);
 	}
 
-	public static function CheckReadPermission($entityType, $entityID, $userPermissions = null, $entityAttrs = null)
+	/**
+	 * @deprecated
+	 * @see Container::getInstance()->getUserPermissions()->item()->canRead() or Container::getInstance()->getUserPermissions()->entityType()->canReadItems()
+	 */
+	public static function CheckReadPermission($entityTypeName, $entityID, $userPermissions = null, $entityAttrs = null)
 	{
-		$entityTypeName = is_numeric($entityType)
-			? CCrmOwnerType::ResolveName($entityType)
-			: mb_strtoupper(strval($entityType));
-
-		$entityID = intval($entityID);
-
-		if(!$userPermissions)
-		{
-			$userPermissions = self::GetUserPermissions();
-		}
-
-		if (\Bitrix\Crm\Service\Container::getInstance()->getUserPermissions($userPermissions->GetUserID())->isAdmin())
-		{
-			return true;
-		}
-
-		if($entityID <= 0)
-		{
-			return !$userPermissions->HavePerm($entityTypeName, BX_CRM_PERM_NONE, 'READ');
-		}
-
-		if(!is_array($entityAttrs))
-		{
-			$entityAttrs = $userPermissions->GetEntityAttr($entityTypeName, $entityID);
-		}
-
-		return !$userPermissions->HavePerm($entityTypeName, BX_CRM_PERM_NONE, 'READ')
-			&& $userPermissions->CheckEnityAccess($entityTypeName, 'READ', isset($entityAttrs[$entityID]) ? $entityAttrs[$entityID] : array());
+		return self::checkPermissionForTypeAndAttributes(UserPermissions::OPERATION_READ, $entityTypeName, $entityID, $userPermissions, $entityAttrs);
 	}
 
-	public static function CheckImportPermission($entityType, $userPermissions = null)
+	/**
+	 * @deprecated
+	 * @see Container::getInstance()->getUserPermissions()->entityType()->canImportItems() or Container::getInstance()->getUserPermissions()->entityType()->canImportItemsInCategory()
+	 */
+	public static function CheckImportPermission($entityTypeName, $userPermissions = null)
 	{
-		$entityTypeName = is_numeric($entityType)
-			? CCrmOwnerType::ResolveName($entityType)
-			: mb_strtoupper(strval($entityType));
-
-		if(!$userPermissions)
-		{
-			$userPermissions = self::GetUserPermissions();
-		}
-
-		return !$userPermissions->HavePerm($entityTypeName, BX_CRM_PERM_NONE, 'IMPORT');
+		return self::checkPermissionForType(UserPermissions::OPERATION_IMPORT, $entityTypeName, $userPermissions);
 	}
 
-	public static function CheckExportPermission($entityType, $userPermissions = null)
+	/**
+	 * @deprecated
+	 * @see Container::getInstance()->getUserPermissions()->entityType()->canExportItems() or Container::getInstance()->getUserPermissions()->entityType()-canExportItemsInCategory()
+	 */
+	public static function CheckExportPermission($entityTypeName, $userPermissions = null)
 	{
-		$entityTypeName = is_numeric($entityType)
-			? CCrmOwnerType::ResolveName($entityType)
-			: mb_strtoupper(strval($entityType));
-
-		if(!$userPermissions)
-		{
-			$userPermissions = self::GetUserPermissions();
-		}
-
-		return !$userPermissions->HavePerm($entityTypeName, BX_CRM_PERM_NONE, 'EXPORT');
+		return self::checkPermissionForType(UserPermissions::OPERATION_EXPORT, $entityTypeName, $userPermissions);
 	}
 
-	public static function CheckAutomationCreatePermission($entityType, $userPermissions = null)
-	{
-		$entityTypeName = is_numeric($entityType)
-			? CCrmOwnerType::ResolveName($entityType)
-			: mb_strtoupper(strval($entityType));
-
-		if(!$userPermissions)
-		{
-			$userPermissions = self::GetUserPermissions();
-		}
-
-		return (
-			static::CheckConfigurationUpdatePermission($userPermissions)
-			||
-			$userPermissions->HavePerm($entityTypeName, BX_CRM_PERM_ALL, 'AUTOMATION')
-		);
-	}
-
+	/**
+	 * @deprecated
+	 * @see Container::getInstance()->getUserPermissions()->isCrmAdmin()
+	 */
 	public static function CheckConfigurationUpdatePermission($userPermissions = null)
 	{
-		if(!$userPermissions)
-		{
-			$userPermissions = self::GetUserPermissions();
-		}
+		$userPermissions = $userPermissions ?? self::GetUserPermissions();
 
-		return $userPermissions->HavePerm('CONFIG', BX_CRM_PERM_CONFIG, 'WRITE');
+		return \Bitrix\Crm\Service\Container::getInstance()
+			->getUserPermissions($userPermissions->GetUserID())
+			->isCrmAdmin()
+		;
 	}
 
+	/**
+	 * @deprecated
+	 * Method is meaningless because always returns true
+	 */
 	public static function CheckConfigurationReadPermission($userPermissions = null)
 	{
-		if(!$userPermissions)
-		{
-			$userPermissions = self::GetUserPermissions();
-		}
-
-		return $userPermissions->HavePerm('CONFIG', BX_CRM_PERM_CONFIG, 'READ');
+		return true;
 	}
 
-	public static function CanEditOtherSettings($user = null)
+	/**
+	 * @deprecated
+	 * @see Container::getInstance()->getUserPermissions()->entityEditor()->canEditCommonView
+	 */
+	public static function CanEditOtherSettings()
 	{
-		if(!($user !== null && ((get_class($user) === 'CUser') || ($user instanceof CUser))))
+		return \Bitrix\Crm\Service\Container::getInstance()
+			->getUserPermissions()
+			->entityEditor()
+			->canEditCommonView()
+		;
+	}
+
+	private static function checkPermissionForType(string $permissionType, $entityTypeName, $userPermissions = null): bool
+	{
+		$entityTypeName = (string)$entityTypeName;
+		$userPermissions = $userPermissions ?? self::GetUserPermissions();
+
+		return PermissionsManager::getInstance($userPermissions->GetUserID())
+			->hasPermission($entityTypeName, $permissionType)
+		;
+	}
+
+	private static function checkPermissionForTypeAndAttributes(string $permissionType, $entityTypeName, $entityID, $userPermissions = null, $entityAttrs = null): bool
+	{
+		$entityTypeName = is_numeric($entityTypeName)
+			? CCrmOwnerType::ResolveName($entityTypeName)
+			: mb_strtoupper(strval($entityTypeName))
+		;
+
+		if (str_starts_with($entityTypeName, CCrmOwnerType::DealRecurringName)) // recurring deal permissions should be checked for real deals
 		{
-			$user = CCrmSecurityHelper::GetCurrentUser();
+			$entityTypeName = str_replace(CCrmOwnerType::DealRecurringName,  CCrmOwnerType::DealName, $entityTypeName);
 		}
 
-		return $user->CanDoOperation('edit_other_settings');
+		$entityID = (int)$entityID;
+		$userPermissions = $userPermissions ?? self::GetUserPermissions();
+
+		$userPermissionsService = \Bitrix\Crm\Service\Container::getInstance()
+			->getUserPermissions($userPermissions->GetUserID())
+		;
+
+		if ($userPermissionsService->isAdmin())
+		{
+			return true;
+		}
+
+		$permissionsManager = PermissionsManager::getInstance($userPermissionsService->getUserId());
+		if($entityID <= 0)
+		{
+			return $permissionsManager->hasPermission($entityTypeName, $permissionType);
+		}
+
+		if(!is_array($entityAttrs))
+		{
+			$entityAttrs = \Bitrix\Crm\Security\Manager::resolveController($entityTypeName)
+				->getPermissionAttributes($entityTypeName, [$entityID]);
+		}
+		$entityAttrs = $entityAttrs[$entityID] ?? [];
+
+		return
+			$permissionsManager->hasPermission($entityTypeName, $permissionType)
+			&& $permissionsManager->doUserAttributesMatchesToEntityAttributes($entityTypeName, $permissionType, $entityAttrs)
+		;
 	}
 }

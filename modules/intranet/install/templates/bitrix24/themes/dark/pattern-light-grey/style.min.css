@@ -1,1 +1,1 @@
-body{background:#eef2f4 url(pattern-light-grey.svg) 0 0 repeat}
+:root{--air-theme-bg-color:#eef2f4;--air-theme-bg-size:auto;--air-theme-bg-repeat:repeat;--air-theme-bg-position:0 0;--air-theme-bg-attachment:fixed;--air-theme-bg-image:url(/bitrix/templates/bitrix24/themes/dark/pattern-light-grey/pattern-light-grey.svg);--air-theme-bg-image-blurred:url(/bitrix/templates/bitrix24/themes/dark/pattern-light-grey/pattern-light-grey-blurred.webp)}

@@ -3,8 +3,13 @@
  */
 (() => {
 	const require = (extension) => jn.require(extension);
+	const { CollabAccessService } = require('collab/service/access');
 	const { getFeatureRestriction, tariffPlanRestrictionsReady } = require('tariff-plan-restriction');
 	const { qrauth } = require('qrauth/utils');
+	const { showToast } = require('toast');
+	const { NotifyManager } = require('notify-manager');
+	const { Loc } = require('loc');
+	const { RequestExecutor } = require('rest');
 
 	const pathToExtension = '/bitrix/mobileapp/mobile/extensions/bitrix/project/utils';
 	const projectCache = new Map();
@@ -161,7 +166,8 @@
 						SITE_DIR: siteDir,
 						LANGUAGE_ID: env.languageId,
 						PATH_TO_TASK_ADD: `${siteDir}mobile/tasks/snmrouter/?routePage=#action#&TASK_ID=#taskId#`,
-						analyticsLabel: params.analyticsLabel,
+						ANALYTICS_LABEL: params.analyticsLabel,
+						isScrum: item.params?.isScrum,
 					},
 				},
 			};
@@ -245,7 +251,7 @@
 		{
 			if (membersCount > 0)
 			{
-				const pluralForm = CommonUtils.getPluralForm(membersCount);
+				const pluralForm = Loc.getPluralForm(membersCount);
 
 				return BX.message(`MOBILE_PROJECT_TAB_MEMBERS_${pluralForm}`).replace('#NUM#', membersCount);
 			}
@@ -301,14 +307,25 @@
 			}]);
 		}
 
-		static onTabSelectedCalendar(url)
+		static async onTabSelectedCalendar(groupId, url)
 		{
-			qrauth.open({
-				redirectUrl: url || '',
-				showHint: true,
-				title: BX.message('MOBILE_PROJECT_TAB_CALENDAR_QR_TITLE'),
-				analyticsSection: 'project',
-			});
+			const { Entry } = await requireLazy('calendar:entry');
+			if (false)
+			{
+				void Entry.openGroupCalendarView({
+					groupId,
+					title: BX.message('MOBILE_PROJECT_TAB_CALENDAR'),
+				});
+			}
+			else
+			{
+				qrauth.open({
+					redirectUrl: url || '',
+					showHint: true,
+					title: BX.message('MOBILE_PROJECT_TAB_CALENDAR_QR_TITLE'),
+					analyticsSection: 'project',
+				});
+			}
 		}
 
 		static async openProject(item, initialParams)
@@ -339,17 +356,39 @@
 				return;
 			}
 
-			if (item === null)
+			const isCollabToolEnabled = await CollabAccessService.checkAccess();
+
+			if (item)
 			{
-				BX.postComponentEvent('project.background::showLoadingIndicator');
+				if (item.type === 'collab' && !isCollabToolEnabled)
+				{
+					CollabAccessService.openAccessDeniedBox();
 
-				WorkgroupUtil.getProjectData(params)
-					.then((result) => {
-						BX.postComponentEvent('project.background::hideLoadingIndicator');
+					return;
+				}
 
+				WorkgroupUtil.openComponent(item, params);
+
+				return;
+			}
+
+			void NotifyManager.showLoadingIndicator();
+
+			WorkgroupUtil.getProjectData(params)
+				.then(
+					(result) => {
 						const data = result.data || null;
 						if (!data)
 						{
+							WorkgroupUtil.showProjectErrorToast();
+
+							return;
+						}
+
+						if (data.TYPE === 'collab' && !isCollabToolEnabled)
+						{
+							CollabAccessService.openAccessDeniedBox();
+
 							return;
 						}
 
@@ -369,18 +408,22 @@
 									opened: (data.OPENED || 'N'),
 									isCollab: data.TYPE === 'collab',
 									dialogId: data.DIALOG_ID,
+									isScrum: data.TYPE === 'scrum',
 								},
 							},
 							params,
 						);
-					})
-					.catch(() => BX.postComponentEvent('project.background::hideLoadingIndicator'))
-				;
-			}
-			else
-			{
-				WorkgroupUtil.openComponent(item, params);
-			}
+					},
+					() => WorkgroupUtil.showProjectErrorToast(),
+				)
+				.catch(() => WorkgroupUtil.showProjectErrorToast())
+				.finally(() => NotifyManager.hideLoadingIndicatorWithoutFallback())
+			;
+		}
+
+		static showProjectErrorToast()
+		{
+			showToast({ message: BX.message('MOBILE_PROJECT_NO_PROJECT_ERROR') });
 		}
 
 		static openComponent(item, params)

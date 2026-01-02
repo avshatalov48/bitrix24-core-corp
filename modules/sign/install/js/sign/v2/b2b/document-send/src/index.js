@@ -73,7 +73,7 @@ export class DocumentSend extends EventEmitter
 
 	getLayout(): HTMLElement
 	{
-		this.#langSelector.setDocumentUid(this.#documentData.uid);
+		this.#langSelector.setDocumentUids([this.#documentData.uid]);
 		this.#sendContainer = Tag.render`
 			<div class="sign-document-send">
 				<div class="sign-document-send__summary-title-wrapper">

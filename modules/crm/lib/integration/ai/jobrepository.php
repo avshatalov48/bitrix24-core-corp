@@ -2,15 +2,17 @@
 
 namespace Bitrix\Crm\Integration\AI;
 
-use Bitrix\Crm\Integration\AI\Dto\ExtractScoringCriteriaPayload;
 use Bitrix\Crm\Integration\AI\Dto\FillItemFieldsFromCallTranscriptionPayload;
-use Bitrix\Crm\Integration\AI\Dto\ScoreCallPayload;
+use Bitrix\Crm\Integration\AI\Dto\RepeatSale\FillRepeatSaleTipsPayload;
+use Bitrix\Crm\Integration\AI\Dto\Scoring\ExtractScoringCriteriaPayload;
+use Bitrix\Crm\Integration\AI\Dto\Scoring\ScoreCallPayload;
 use Bitrix\Crm\Integration\AI\Dto\SummarizeCallTranscriptionPayload;
 use Bitrix\Crm\Integration\AI\Dto\TranscribeCallRecordingPayload;
 use Bitrix\Crm\Integration\AI\Model\EO_Queue;
 use Bitrix\Crm\Integration\AI\Model\QueueTable;
 use Bitrix\Crm\Integration\AI\Operation\ExtractScoringCriteria;
 use Bitrix\Crm\Integration\AI\Operation\FillItemFieldsFromCallTranscription;
+use Bitrix\Crm\Integration\AI\Operation\FillRepeatSaleTips;
 use Bitrix\Crm\Integration\AI\Operation\ScoreCall;
 use Bitrix\Crm\Integration\AI\Operation\SummarizeCallTranscription;
 use Bitrix\Crm\Integration\AI\Operation\TranscribeCallRecording;
@@ -37,6 +39,8 @@ final class JobRepository
 	private array $callScoringCache = [];
 	/** @var Array<int, Result|null> */
 	private array $extractScoringCriteriaCache = [];
+	/** @var Array<int, Result|null> */
+	private array $fillRepeatSaleTips = [];
 
 	private \Bitrix\Main\ORM\EventManager $ormEventManager;
 	private array $eventKeys = [
@@ -315,6 +319,42 @@ final class JobRepository
 
 		return $result;
 	}
+	
+	/**
+	 * @return Result<FillRepeatSaleTipsPayload>|null
+	 */
+	public function getFillRepeatSaleTipsByActivity(int $activityId): ?Result
+	{
+		if (array_key_exists($activityId, $this->fillRepeatSaleTips))
+		{
+			return is_object($this->fillRepeatSaleTips[$activityId])
+				? clone $this->fillRepeatSaleTips[$activityId]
+				: null
+			;
+		}
+		
+		if ($activityId > 0)
+		{
+			$job = QueueTable::query()
+				->setSelect(['*'])
+				->where('ENTITY_TYPE_ID', CCrmOwnerType::Activity)
+				->where('ENTITY_ID', $activityId)
+				->where('TYPE_ID', FillRepeatSaleTips::TYPE_ID)
+				->setLimit(1)
+				->fetchObject()
+			;
+		}
+		else
+		{
+			$job = null;
+		}
+		
+		$result = $job ? FillRepeatSaleTips::constructResult($job) : null;
+		
+		$this->fillRepeatSaleTips[$activityId] = is_object($result) ? clone $result : null;
+		
+		return $result;
+	}
 	// endregion
 
 	/**
@@ -455,5 +495,6 @@ final class JobRepository
 		$this->fillCache = [];
 		$this->fillByIdCache = [];
 		$this->callScoringCache = [];
+		$this->fillRepeatSaleTips = [];
 	}
 }

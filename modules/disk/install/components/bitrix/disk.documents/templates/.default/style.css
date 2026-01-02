@@ -10,9 +10,12 @@
 	align-items: center;
 }
 
-.disk-documents-toolbar {
-	padding-top: 10px;
+.disk-documents-grid-view-switcher {
 	border-top: 1px solid rgba(255,255,255,.15);
+}
+
+.template-air .disk-documents-grid-view-switcher {
+	border: none;
 }
 
 .main-grid-cell-external-link {
@@ -28,6 +31,11 @@
 	padding: 30px 0;
 	min-height: 166px;
 	overflow: hidden;
+	scrollbar-width: none;
+}
+
+.disk-documents-control-panel::-webkit-scrollbar {
+	width: 0;
 }
 
 .disk-documents-control-panel-label {
@@ -296,86 +304,6 @@
 .disk-documents-grid-empty-icon.ui-icon {
 	width: 99px;
 	height: 99px;
-}
-
-/* endregion */
-
-/* region view switcher */
-.disk-documents-toolbar-item {
-	margin: 0 10px 10px 0;
-	display: inline-flex;
-	overflow: hidden;
-	border-radius: 16px;
-	background: rgba(82, 92, 105, .08);
-}
-
-.disk-documents-toolbar-item:last-of-type {
-	margin-right: 0;
-}
-
-.bitrix24-light-theme .disk-documents-toolbar-item {
-	background: rgba(255,255,255,.15);
-}
-
-/* switcher */
-.disk-documents-toolbar-switcher {
-	display: flex;
-	align-items: center;
-	flex: 1;
-	padding: 6px;
-}
-
-.disk-documents-toolbar-switcher-item {
-	display: inline-flex;
-	align-items: center;
-	flex: 1;
-	position: relative;
-	margin: 0 13px;
-	font: 14px var(--ui-font-family-secondary, var(--ui-font-family-open-sans));
-	font-weight: var(--ui-font-weight-regular, 400);
-	color: rgba(82, 92, 105, .8);
-	white-space: nowrap;
-	transition: color .3s;
-}
-
-.bitrix24-light-theme .disk-documents-toolbar-switcher-item {
-	color: rgba(255, 255, 255, .8);
-}
-
-.disk-documents-toolbar-switcher-item:hover,
-.disk-documents-toolbar-switcher-item.--active {
-	color: rgba(82, 92, 105, 1);
-}
-
-.disk-documents-toolbar-switcher-item.--active {
-	border-bottom: 2px solid rgba(82, 92, 105, .4);
-	font: 14px var(--ui-font-family-secondary, var(--ui-font-family-open-sans));
-	font-weight: var(--ui-font-weight-semi-bold, 600);
-}
-
-.bitrix24-light-theme .disk-documents-toolbar-switcher-item.--active {
-	border-bottom: 2px solid rgba(255, 255, 255, .5);
-	font: 14px var(--ui-font-family-secondary, var(--ui-font-family-open-sans));
-	font-weight: var(--ui-font-weight-semi-bold, 600);
-	color: #fff;
-}
-
-.bitrix24-light-theme .disk-documents-toolbar-switcher-item:hover {
-	color: #fff;
-}
-
-.disk-documents-toolbar-switcher-item:after {
-	content: none;
-	position: absolute;
-	bottom: 1px;
-	left: 0;
-	right: 0;
-	height: 2px;
-	background: rgba(82, 92, 105, .4);
-}
-
-.bitrix24-light-theme .disk-documents-toolbar-switcher-item:after {
-	background: rgba(255, 255, 255, .5);
 }
 
 /* endregion */

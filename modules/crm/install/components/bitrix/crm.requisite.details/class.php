@@ -1900,7 +1900,7 @@ class CCrmRequisiteDetailsComponent extends CBitrixComponent
 	{
 		$params = [];
 
-		$params['~ENABLE_SETTINGS_FOR_ALL'] = CCrmAuthorizationHelper::CanEditOtherSettings();
+		$params['~ENABLE_SETTINGS_FOR_ALL'] = \Bitrix\Crm\Service\Container::getInstance()->getUserPermissions()->entityEditor()->canEditCommonView();
 
 		//region CAN_UPDATE_PERSONAL_CONFIGURATION && CAN_UPDATE_COMMON_CONFIGURATION
 		$canUpdatePersonalConfiguration = true;

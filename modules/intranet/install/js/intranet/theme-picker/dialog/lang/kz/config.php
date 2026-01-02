@@ -1,0 +1,22 @@
+<?php
+$MESS["BITRIX24_THEME_CREATE_YOUR_OWN_THEME"] = "Жаңа тақырып құру";
+$MESS["BITRIX24_THEME_DEFAULT_THEME"] = "Әдепкі бойынша";
+$MESS["BITRIX24_THEME_DEFAULT_THEME_FOR_ALL"] = "Барлығына әдепкі бойынша қосу";
+$MESS["BITRIX24_THEME_DIALOG_CANCEL_BUTTON"] = "Болдырмау";
+$MESS["BITRIX24_THEME_DIALOG_CREATE_BUTTON"] = "Жасау";
+$MESS["BITRIX24_THEME_DIALOG_NEW_THEME"] = "Өз тақырыбың";
+$MESS["BITRIX24_THEME_DIALOG_SAVE_BUTTON"] = "Сақтау";
+$MESS["BITRIX24_THEME_DRAG_BG_IMAGE"] = "Немесе Drag&Drop көмегімен файлды көшіріңіз";
+$MESS["BITRIX24_THEME_EMPTY_FORM_DATA"] = "Фонның картинасын немесе фонның түсін көрсетіңіз.";
+$MESS["BITRIX24_THEME_FILE_SIZE_EXCEEDED"] = "Файлдың максималды өлшемінен асып кетті (#LIMIT#).";
+$MESS["BITRIX24_THEME_NEW_THEME"] = "Жаңа";
+$MESS["BITRIX24_THEME_REMOVE_THEME"] = "Тақырыпты жою";
+$MESS["BITRIX24_THEME_THEME_BG_COLOR"] = "Фонның түсі";
+$MESS["BITRIX24_THEME_THEME_BG_IMAGE"] = "Фоннның картинасы";
+$MESS["BITRIX24_THEME_THEME_DARK_COLOR"] = "Қараңғы";
+$MESS["BITRIX24_THEME_THEME_LIGHT_COLOR"] = "Ашық";
+$MESS["BITRIX24_THEME_THEME_TEXT_COLOR"] = "Мәтіннің түсі";
+$MESS["BITRIX24_THEME_UNKNOWN_ERROR"] = "Бұл операцияны орындау мүмкін емес. Әрекетті қайталаңыз.";
+$MESS["BITRIX24_THEME_UPLOAD_BG_IMAGE"] = "Фон картинасын жүктеңіз";
+$MESS["BITRIX24_THEME_WRONG_BG_COLOR"] = "Фонның түсі дұрыс емес көрсетілген.";
+$MESS["BITRIX24_THEME_WRONG_FILE_TYPE"] = "Жүктелетін файл картина болып табылмайды.";

@@ -208,7 +208,7 @@ jn.define('imconnector/connectors/telegram/view/registry', (require, exports, mo
 				withStep: true,
 				number: 1,
 				title: Loc.getMessage('IMCONNECTORMOBILE_TELEGRAM_REGISTRY_STEP_1_TITLE'),
-				description: Loc.getMessage('IMCONNECTORMOBILE_TELEGRAM_REGISTRY_STEP_1_DESCRIPTION'),
+				description: Loc.getMessage('IMCONNECTORMOBILE_TELEGRAM_REGISTRY_STEP_1_DESCRIPTION_MSGVER_1'),
 				icon: telegramIcon,
 				additionalComponents: [
 					this.getSwitcher(),

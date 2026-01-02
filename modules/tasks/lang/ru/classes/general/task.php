@@ -86,5 +86,8 @@ $MESS['TASKS_FIELDS_SORTING']='Индекс сортировки';
 $MESS['TASKS_FIELDS_DURATION_PLAN']='Затрачено (план)';
 $MESS['TASKS_FIELDS_DURATION_FACT']='Затрачено (фактически)';
 $MESS['TASKS_FIELDS_DURATION_TYPE']='DURATION_TYPE';
+$MESS['TASKS_FIELDS_FLOW_ID'] = 'Поток';
+$MESS['TASKS_FIELDS_SPRINT_ID']='Спринт';
+$MESS['TASKS_FIELDS_BACKLOG_ID']='Бэклог';
 
 $MESS['ERROR_TASKS_GUID_NON_UNIQUE']='GUID должен быть уникальным полем';

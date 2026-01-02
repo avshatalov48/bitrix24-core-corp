@@ -6,7 +6,6 @@ if (!defined('B_PROLOG_INCLUDED') || B_PROLOG_INCLUDED !== true)
 }
 
 return [
-	'css' => 'dist/is-real-id.bundle.css',
 	'js' => 'dist/is-real-id.bundle.js',
 	'rel' => [
 		'main.polyfill.core',

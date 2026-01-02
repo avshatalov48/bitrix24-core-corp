@@ -6,9 +6,9 @@ jn.define('im/messenger/api/dialog-selector/controller', (require, exports, modu
 	const { RecentProvider, RecentSelector } = require('im/messenger/controller/search/experimental');
 
 	const { DialogSelectorView } = require('im/messenger/api/dialog-selector/view');
-	const { LoggerManager } = require('im/messenger/lib/logger');
+	const { getLogger } = require('im/messenger/lib/logger');
 
-	const logger = LoggerManager.getInstance().getLogger('dialog-selector');
+	const logger = getLogger('dialog-selector');
 
 	/**
 	 * @class DialogSelector

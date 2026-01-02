@@ -1,4 +1,3 @@
-import { Loc } from 'main.core';
 import { Button as UiButton, ButtonSize, ButtonColor } from 'booking.component.button';
 
 export const BookingMultipleButton = {

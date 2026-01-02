@@ -1,5 +1,6 @@
-import {Event, Loc, Tag} from 'main.core';
-import {EventEmitter} from 'main.core.events';
+import { Loc } from 'main.core';
+import { EventEmitter } from 'main.core.events';
+import { Button, ButtonColor, ButtonSize } from 'ui.buttons';
 
 export class BurnDownButton extends EventEmitter
 {
@@ -12,17 +13,18 @@ export class BurnDownButton extends EventEmitter
 
 	render(): HTMLElement
 	{
-		const node = Tag.render`
-			<div class="ui-btn ui-btn-sm ui-btn-primary ui-btn-xs ui-btn-round ui-btn-no-caps">
-				<span>
-					${Loc.getMessage('TASKS_SCRUM_ACTIVE_SPRINT_BUTTON')}
-				</span>
-			</div>
-		`;
+		const burnDownButton = new Button({
+			text: Loc.getMessage('TASKS_SCRUM_ACTIVE_SPRINT_BUTTON'),
+			color: ButtonColor.PRIMARY,
+			size: ButtonSize.EXTRA_SMALL,
+			round: true,
+			noCaps: true,
+			onclick: () => {
+				this.onClick();
+			},
+		});
 
-		Event.bind(node, 'click', this.onClick.bind(this));
-
-		return node;
+		return burnDownButton.render();
 	}
 
 	onClick()

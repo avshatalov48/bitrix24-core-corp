@@ -1,0 +1,23 @@
+<?php
+$MESS["BAAS_WIDGET_AI_PURCHASE_LEFT_STATUS"] = "Сұрау қалды: #date# дейін #total# ішінен #left#";
+$MESS["BAAS_WIDGET_ALL_DESCRIPTION"] = "Барлық бусттар";
+$MESS["BAAS_WIDGET_BUY_BUTTON_TITLE"] = "Сатып алу";
+$MESS["BAAS_WIDGET_DESCRIPTION"] = "Сіздің Битрикс24-тің мүмкіндігі көп. Тарифті өзгертпей, пайдалы мүмкіндіктерді қосыңыз";
+$MESS["BAAS_WIDGET_DFT_PURCHASE_LEFT"] = "Дейін жарамды:";
+$MESS["BAAS_WIDGET_MORE_LINK_TITLE"] = "Толығырақ";
+$MESS["BAAS_WIDGET_ONLY_ADMIN_CAN_PURCHASE_BAAS"] = "Битрикс24 әкімшілерінің біреуі ғана бустты сатып ала алады";
+$MESS["BAAS_WIDGET_PURCHASES_ARE_ACTIVE"] = "Белсенді";
+$MESS["BAAS_WIDGET_PURCHASES_ARE_PAID"] = "Төленген";
+$MESS["BAAS_WIDGET_PURCHASES_TITLE"] = "Бусттар";
+$MESS["BAAS_WIDGET_PURCHASE_ADD"] = "Қосу";
+$MESS["BAAS_WIDGET_PURCHASE_ANNUAL_LIFETIME"] = "Буст #date# дейін жарамды";
+$MESS["BAAS_WIDGET_PURCHASE_DISK_LEFT_STATUS"] = '#total# бастап #date# дейін қолжетімді';
+$MESS["BAAS_WIDGET_PURCHASE_IS_ACTIVE"] = "Белсенді";
+$MESS["BAAS_WIDGET_PURCHASE_LEFT_STATUS"] = "#date# дейін #total# ішінен #left# қалды";
+$MESS["BAAS_WIDGET_PURCHASE_LIMIT_IS_ALMOST_EXCEEDED"] = "Аяқталып қалды";
+$MESS["BAAS_WIDGET_PURCHASE_LIMIT_IS_EXCEEDED"] = "Аяқталды";
+$MESS["BAAS_WIDGET_PURCHASE_LIMIT_IS_EXCEEDED_THIS_MONTH"] = "Бұл айда қалған жоқ";
+$MESS["BAAS_WIDGET_PURCHASE_TITLE"] = "Буст";
+$MESS["BAAS_WIDGET_PURCHASE_WILL_BE_AVAILABLE_STATUS"] = "Қолжетімді болады: #date# кейін #total# ішінен #left#";
+$MESS["BAAS_WIDGET_RELOAD_PACKAGES"] = "Бусттар тізімін жаңарту";
+$MESS["BAAS_WIDGET_TITLE"] = "Бусттар";

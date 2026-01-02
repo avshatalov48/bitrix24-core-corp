@@ -102,14 +102,8 @@ foreach ($smsSenders as $sender)
 
 \Bitrix\Crm\Settings\Crm::markAsInitiated();
 
-$arResult['PERM_CONFIG'] = false;
-$arResult['IS_ACCESS_ENABLED'] = false;
-/** @var \CCrmPerms $crmPerms */
-$crmPerms = CCrmPerms::getCurrentUserPermissions();
-if(!$crmPerms->HavePerm('CONFIG', BX_CRM_PERM_NONE))
-	$arResult['PERM_CONFIG'] = true;
-if($crmPerms->IsAccessEnabled())
-	$arResult['IS_ACCESS_ENABLED'] = true;
+$arResult['PERM_CONFIG'] = \Bitrix\Crm\Service\Container::getInstance()->getUserPermissions()->isCrmAdmin();
+$arResult['IS_ACCESS_ENABLED'] = \Bitrix\Crm\Service\Container::getInstance()->getUserPermissions()->entityType()->canReadSomeItemsInCrm();
 
 $arResult['RAND_STRING'] = $this->randString();
 

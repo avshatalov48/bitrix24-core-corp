@@ -20,5 +20,6 @@ return [
 		'utils/file',
 		'utils/prop',
 		'utils/skeleton',
+		'utils/validation',
 	],
 ];

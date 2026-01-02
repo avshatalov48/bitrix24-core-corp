@@ -3,6 +3,8 @@
 */
 jn.define('call/calls/layout/participants-list', (require, exports, module) => {
 	const { Color, Corner } = require('tokens');
+	const { Avatar } = require('ui-system/blocks/avatar');
+	const Utils = require('src/util')
 
 	const Events = {
 		onRequestFloor: 'onRequestFloor',
@@ -88,8 +90,10 @@ jn.define('call/calls/layout/participants-list', (require, exports, module) => {
 		constructor(props = {})
 		{
 			super(props);
+
 			this.state = {
 				avatarPath: props.avatarPath,
+				avatarColor: props.avatarColor,
 				title: props.title,
 				subtitle: props.subtitle,
 				userList: props.userList,
@@ -105,10 +109,12 @@ jn.define('call/calls/layout/participants-list', (require, exports, module) => {
 		{
 			const users = this.state.userList.map((userModel) => this.renderUser(userModel));
 
-			const avatar = this.state.avatarPath === ''
-				? { svg: { content: Icons.emptyAvatar } }
-				: { uri: encodeURI(this.state.avatarPath) }
-			;
+			const avatar = Avatar({
+				uri: this.state.avatarPath,
+				name: this.state.title,
+				size: 72,
+				backgroundColor: Utils.convertHexToColorEnum(this.state.avatarColor),
+			});
 
 			return View(
 				{
@@ -118,10 +124,7 @@ jn.define('call/calls/layout/participants-list', (require, exports, module) => {
 					{
 						style: { paddingTop: 12, paddingBottom: 12, paddingLeft: 18, flexDirection: 'row' },
 					},
-					Image({
-						style: { marginLeft: 12, width: 72, height: 72 },
-						...avatar,
-					}),
+					avatar,
 					View(
 						{
 							style: {
@@ -199,10 +202,12 @@ jn.define('call/calls/layout/participants-list', (require, exports, module) => {
 
 		renderUser(userModel)
 		{
-			const avatar = userModel.avatar === ''
-				? { svg: { content: Icons.emptyAvatar } }
-				: { uri: encodeURI(userModel.avatar) }
-			;
+			const avatar = Avatar({
+				uri: userModel.avatar,
+				name: userModel.name,
+				size: 40,
+				backgroundColor: Utils.convertHexToColorEnum(CallUtil.userData[userModel.id].color),
+			});
 
 			return View(
 				{
@@ -215,17 +220,7 @@ jn.define('call/calls/layout/participants-list', (require, exports, module) => {
 							alignSelf: 'center',
 						},
 					},
-					Image(
-						{
-							style: {
-								width: 40,
-								height: 40,
-								borderRadius: 20,
-							},
-							resizeMode: 'cover',
-							...avatar,
-						},
-					),
+					avatar,
 				),
 				View(
 					{

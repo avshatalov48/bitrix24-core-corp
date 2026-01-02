@@ -18,7 +18,7 @@ class CounterSettings
 	private const MAX_ACTIVITIES_COUNT_VAR_NAME = 'crm_max_activities_count';
 
 	private const LIMIT_CACHE_TTL = 3 * 60 * 60; // 3 hours
-	private const LIMIT_CACHE_ID = 'counter_limit';
+	private const LIMIT_CACHE_ID = 'counter_limit_v2';
 	private const LIMIT_CACHE_PATH = '/crm/counter_limit/';
 
 	private BooleanSetting $isEnabled;
@@ -75,7 +75,7 @@ class CounterSettings
 		return EntityCountableActivityTable::getCount();
 	}
 
-	public function isCounterCurrentValueExceeded(int $limit): int
+	public function isCounterCurrentValueExceeded(int $limit): bool
 	{
 		$query = EntityCountableActivityTable::query()
 			->setSelect(['ID'])
@@ -117,6 +117,7 @@ class CounterSettings
 		{
 			return false;
 		}
+		$maxActivitiesCount = max(0, (int)$this->getCounterLimitValue());
 
 		if ($this->useCache)
 		{
@@ -127,7 +128,7 @@ class CounterSettings
 			}
 			else
 			{
-				$result['TOTAL'] =  $this->getCounterCurrentValue();
+				$result['LIMIT_REACHED'] =  $this->isCounterCurrentValueExceeded($maxActivitiesCount);
 
 				$cache->startDataCache();
 				$cache->endDataCache($result);
@@ -135,11 +136,9 @@ class CounterSettings
 		}
 		else
 		{
-			$result['TOTAL'] =  $this->getCounterCurrentValue();
+			$result['LIMIT_REACHED'] = $this->isCounterCurrentValueExceeded($maxActivitiesCount);
 		}
 
-		$maxActivitiesCount = max(0, (int)$this->getCounterLimitValue());
-
-		return $result['TOTAL'] > $maxActivitiesCount;
+		return (bool)$result['LIMIT_REACHED'];
 	}
 }

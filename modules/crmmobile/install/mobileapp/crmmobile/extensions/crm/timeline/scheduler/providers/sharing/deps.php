@@ -13,6 +13,7 @@ return [
 		'utils/color',
 		'utils/copy',
 		'utils/skeleton',
+		'utils/random',
 		'assets/icons/src/outline',
 		'layout/ui/context-menu',
 		'event-emitter',

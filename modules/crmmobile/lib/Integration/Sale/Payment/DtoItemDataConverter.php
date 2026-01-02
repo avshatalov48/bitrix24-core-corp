@@ -91,7 +91,7 @@ class DtoItemDataConverter
 	private static function getPermissions(Payment $payment): array
 	{
 		return [
-			'delete' => Permissions\Payment::checkDeletePermission($payment->getId()),
+			'delete' => Container::getInstance()->getUserPermissions()->item()->canDelete(\CCrmOwnerType::OrderPayment, $payment->getId()),
 		];
 	}
 

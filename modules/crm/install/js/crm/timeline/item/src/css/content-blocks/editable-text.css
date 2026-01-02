@@ -98,18 +98,6 @@
 	overflow-y: hidden;
 }
 
-.crm-timeline__editable-text::before {
-	background: url("../../images/common/crm-timeline__corner.svg");
-	background-color: inherit;
-	width: 20px;
-	height: 15px;
-	position: absolute;
-	content: '';
-	display: block;
-	right: -10px;
-	top: -4px;
-}
-
 .crm-timeline__editable-text::after {
 	content: '';
 	display: block;
@@ -123,6 +111,10 @@
 	background-image: linear-gradient(180deg, rgba(255, 254, 239, 0) -7.89%, var(--crm-timeline__editable-text_bg-color) 92.11%);
 }
 
+.crm-timeline__editable-text.--copiloted {
+	border-color: var(--ui-color-copilot-primary);
+}
+
 .crm-timeline__editable-text_content {
 	position: relative;
 	min-height: 19.68px;
@@ -130,6 +122,19 @@
 
 	--ui-typography-font-size: var(--ui-font-size-md);
 	--ui-typography-block-space-stack: 15px;
+}
+
+.crm-timeline__editable-text_header-text {
+	padding-top: 10px;
+	padding-bottom: 0;
+	font-size: var(--ui-font-size-sm);
+	line-height: var(--ui-font-line-height-sm);
+	color: var(--ui-color-base-70);
+}
+
+.crm-timeline__editable-text-copilot-header {
+	padding-top: 8px;
+	margin-bottom: -10px;
 }
 
 .crm-timeline__editable-text_text {
@@ -148,6 +153,10 @@
 	outline: none;
 	resize: none;
 	word-break: break-word;
+}
+
+.crm-timeline__editable-text_text.--hidden {
+	display: none;
 }
 
 .crm-timeline__editable-text_text::placeholder {
@@ -240,7 +249,6 @@
 	transition-duration: unset;
 	--crm-timeline__editable-text_edit-icon-opacity: 0.3;
 }
-
 
 .crm-timeline__editable-text_actions {
 	margin-top: 12px;

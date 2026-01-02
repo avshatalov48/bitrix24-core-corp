@@ -1,9 +1,14 @@
 <?php
 
-use Bitrix\Main\Analytics\AnalyticsEvent;
+use Bitrix\Intranet\Enum\InvitationMessageType;
+use Bitrix\Intranet\Integration\Socialnetwork\Collab\CollabProviderData;
+use Bitrix\Intranet\Internal\Factory\Message\CollabJoinMessageFactory;
+use Bitrix\Intranet\Repository\UserRepository;
 use Bitrix\Main\Loader;
 use Bitrix\Main\Event;
 use Bitrix\Intranet\Internals\InvitationTable;
+use Bitrix\Main\ModuleManager;
+use Bitrix\Main\UserTable;
 
 IncludeModuleLangFile(__FILE__);
 
@@ -21,7 +26,7 @@ class CIntranetEventHandlers
 			return;
 		}
 
-		if (!self::$fieldsCache[$arFields['IBLOCK_ID']])
+		if (!isset(self::$fieldsCache[$arFields['IBLOCK_ID']]))
 		{
 			$dbRes = CIntranetSharepoint::GetByID($arFields['IBLOCK_ID']);
 			if ($arRes = $dbRes->Fetch())
@@ -30,7 +35,7 @@ class CIntranetEventHandlers
 			}
 		}
 
-		if (self::$fieldsCache[$arFields['IBLOCK_ID']])
+		if (isset(self::$fieldsCache[$arFields['IBLOCK_ID']]))
 		{
 			CIntranetSharepoint::AddToUpdateLog(self::$fieldsCache[$arFields['IBLOCK_ID']]);
 		}
@@ -521,7 +526,8 @@ class CIntranetEventHandlers
 		}
 
 		if (
-			!array_key_exists("TOPIC_INFO", $arForumMessage)
+			!is_array($arForumMessage)
+			|| !array_key_exists("TOPIC_INFO", $arForumMessage)
 			|| !is_array($arForumMessage["TOPIC_INFO"])
 			|| !array_key_exists("XML_ID", $arForumMessage["TOPIC_INFO"])
 			|| empty($arForumMessage["TOPIC_INFO"]["XML_ID"])
@@ -1028,10 +1034,30 @@ class CIntranetEventHandlers
 			]);
 		}
 
+		$user = (new UserRepository())->getUserById($userId);
+		if ($user->isCollaber())
+		{
+			static::sendCollabMail($user);
+		}
+
 		(new \Bitrix\Main\Event('intranet', 'onUserFirstInitialization', [
 			'invitationFields' => $invitationFields,
 			'userId' => $userId
 		]))->send();
+	}
+
+	private static function sendCollabMail(Bitrix\Intranet\Entity\User $user): void
+	{
+		$userCollab = (new CollabProviderData())->getUserCollabCollection($user);
+		foreach ($userCollab as $collab)
+		{
+			(new CollabJoinMessageFactory(
+				$user,
+				$collab
+			))
+				->createEmailEvent()
+				->sendImmediately();
+		}
 	}
 
 	public static function OnAfterUserAdd($arUser)
@@ -1101,24 +1127,33 @@ class CIntranetEventHandlers
 	/*
 	RegisterModuleDependences("main", "OnBeforeUserUpdate", "intranet", "CIntranetEventHandlers", "OnBeforeUserUpdate");
 	*/
-	public static function OnBeforeUserUpdate(&$fields)
+	public static function OnBeforeUserUpdate(&$fields): void
 	{
-		if (
-			!is_array($fields)
-			|| !isset($fields['ID'])
-			|| intval($fields['ID']) <= 0
-		)
+		$userId = (int)($fields['ID'] ?? null);
+		if ($userId <= 0)
 		{
 			return;
 		}
 
-		$userId = intval($fields['ID']);
-
-		$res = CUser::getList("id", "asc", array("ID_EQUAL_EXACT" => $userId), array("SELECT" => array("UF_DEPARTMENT"), "FIELDS" => array("ID", "ACTIVE")));
-		if ($user = $res->fetch())
+		$userResult = CUser::getList(
+			'id',
+			'asc',
+			[
+				'ID_EQUAL_EXACT' => $userId,
+			],
+			[
+				'SELECT' => ['UF_DEPARTMENT'],
+				'FIELDS' => ['ID', 'ACTIVE'],
+			]
+		);
+		if ($user = $userResult->fetch())
 		{
-			self::$userDepartmentCache[$userId] = $user["UF_DEPARTMENT"];
-			self::$userActiveCache = $user["ACTIVE"];
+			self::$userDepartmentCache[$userId] = $user['UF_DEPARTMENT'];
+			self::$userActiveCache = $user['ACTIVE'];
+		}
+		else
+		{
+			return;
 		}
 
 		if (!defined('BX_COMP_MANAGED_CACHE') || !BX_COMP_MANAGED_CACHE)
@@ -1128,33 +1163,25 @@ class CIntranetEventHandlers
 
 		global $CACHE_MANAGER;
 
-		$queryObject = CUser::getList(
-			"id", "asc",
-			["ID_EQUAL_EXACT" => intval($fields['ID'])],
-			['SELECT' => ['UF_DEPARTMENT']]
-		);
-		if ($oldFields = $queryObject->fetch())
+		if (
+			isset($fields['UF_DEPARTMENT'])
+			&& is_array($fields['UF_DEPARTMENT'])
+			&& $fields['UF_DEPARTMENT'] != ($user['UF_DEPARTMENT'] ?? null)
+		)
 		{
-			if (
-				isset($fields['UF_DEPARTMENT'])
-				&& is_array($fields['UF_DEPARTMENT'])
-				&& $fields['UF_DEPARTMENT'] != $oldFields['UF_DEPARTMENT']
-			)
+			if (!is_array($user['UF_DEPARTMENT']))
 			{
-				if (!is_array($oldFields['UF_DEPARTMENT']))
-				{
-					$oldFields['UF_DEPARTMENT'] = [];
-				}
+				$user['UF_DEPARTMENT'] = [];
+			}
 
-				$arDepts = array_merge($fields['UF_DEPARTMENT'], $oldFields['UF_DEPARTMENT']);
-				if (count($arDepts) > 0)
-				{
-					$CACHE_MANAGER->ClearByTag('intranet_department_structure');
+			$departmentsIds = array_merge($fields['UF_DEPARTMENT'], $user['UF_DEPARTMENT']);
+			if (count($departmentsIds) > 0)
+			{
+				$CACHE_MANAGER->ClearByTag('intranet_department_structure');
 
-					foreach ($arDepts as $dpt)
-					{
-						$CACHE_MANAGER->ClearByTag('intranet_department_'.$dpt);
-					}
+				foreach ($departmentsIds as $departmentId)
+				{
+					$CACHE_MANAGER->ClearByTag('intranet_department_'.$departmentId);
 				}
 			}
 		}
@@ -1167,12 +1194,12 @@ class CIntranetEventHandlers
 	{
 		if(array_key_exists('UF_DEPARTMENT', $fields))
 		{
+			// Empty array to check for adding a previously non-existent department
+			$ufDepartment = is_array($fields['UF_DEPARTMENT']) ? $fields['UF_DEPARTMENT'] : [];
+			$cachedDepartment = is_array(self::$userDepartmentCache[$fields['ID']]) ? self::$userDepartmentCache[$fields['ID']] : [];
 			if(
-				is_array(self::$userDepartmentCache[$fields['ID']])
-				&& (
-					array_diff($fields['UF_DEPARTMENT'], self::$userDepartmentCache[$fields['ID']])
-					|| count($fields['UF_DEPARTMENT']) !== count(self::$userDepartmentCache[$fields['ID']])
-				)
+				array_diff($ufDepartment, $cachedDepartment)
+				|| count($ufDepartment) !== count($cachedDepartment)
 			)
 			{
 				$event = new Event("intranet", "onEmployeeDepartmentsChanged", array(
@@ -1217,7 +1244,11 @@ class CIntranetEventHandlers
 
 	public static function OnFillSocNetAllowedSubscribeEntityTypes(&$arSocNetAllowedSubscribeEntityTypes)
 	{
-		define("SONET_SUBSCRIBE_ENTITY_NEWS", "N");
+		if (!defined('SONET_SUBSCRIBE_ENTITY_NEWS'))
+		{
+			define('SONET_SUBSCRIBE_ENTITY_NEWS', 'N');
+		}
+
 		$arSocNetAllowedSubscribeEntityTypes[] = SONET_SUBSCRIBE_ENTITY_NEWS;
 
 		global $arSocNetAllowedSubscribeEntityTypesDesc;
@@ -1461,12 +1492,27 @@ RegisterModuleDependences('main', 'OnBeforeProlog', 'intranet', 'CIntranetEventH
 		if(defined("ADMIN_SECTION") && ADMIN_SECTION == true)
 			return;
 
+		if (
+			!defined('AIR_SITE_TEMPLATE')
+			&& defined('SITE_TEMPLATE_ID')
+			&& SITE_TEMPLATE_ID === 'bitrix24'
+		)
+		{
+			define('AIR_SITE_TEMPLATE', true);
+		}
+
+		$isBitrix24Cloud = ModuleManager::isModuleInstalled('bitrix24');
+		if (defined('AIR_SITE_TEMPLATE') && ($isBitrix24Cloud && !$USER->isAdmin() || defined('SKIP_SHOW_PANEL')))
+		{
+			return;
+		}
+
 		if (self::isSkipWizardButton())
 		{
 			return;
 		}
 
-		if($USER->IsAdmin())
+		if($USER->IsAdmin() && \CTopPanel::shouldShowPanel())
 		{
 			$hint = GetMessage('INTR_SET_BUT_HINT');
 			$arMenu = Array(
@@ -1881,6 +1927,18 @@ RegisterModuleDependences('main', 'OnBeforeProlog', 'intranet', 'CIntranetEventH
 		{
 			$user = new CUser();
 			$user->Update($arParams["user_fields"]["ID"], array("CONFIRM_CODE" => ""));
+		}
+		$userId = (int)$arParams["user_fields"]["ID"];
+		if ($userId > 0 && (!defined('BX_SECURITY_SESSION_VIRTUAL') || BX_SECURITY_SESSION_VIRTUAL !== true))
+		{
+			\Bitrix\Intranet\Service\ServiceContainer::getInstance()
+				->getUserService()
+				->logAuthTimeForNonMobile($userId)
+			;
+			\Bitrix\Intranet\Service\ServiceContainer::getInstance()
+				->getUserService()
+				->logFirstTimeAuthForMobile($userId)
+			;
 		}
 	}
 

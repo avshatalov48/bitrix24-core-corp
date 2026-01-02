@@ -1,0 +1,3 @@
+<?php
+$MESS["SERVICES_MENU_OPENLINES_LINES"] = "Басқару";
+$MESS["SERVICES_MENU_OPENLINES_STATS"] = "Статистика";

@@ -1,5 +1,4 @@
 <?php
-$MESS['CRM_COMPONENT_FACTORYBASED_EDITOR_MAIN_SECTION_TITLE'] = 'Об элементе';
 $MESS['CRM_COMPONENT_FACTORYBASED_NEW_ITEM_TITLE'] = 'Создание #ENTITY_NAME#';
 $MESS['CRM_COMPONENT_FACTORYBASED_TIMELINE_HISTORY_STUB'] = 'Прямо сейчас вы создаете элемент...';
 $MESS['CRM_COMPONENT_FACTORYBASED_COPY_PAGE_URL'] = 'Скопировать ссылку на элемент в буфер обмена';

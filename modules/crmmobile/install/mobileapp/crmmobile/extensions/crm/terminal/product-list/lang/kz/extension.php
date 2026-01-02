@@ -1,0 +1,4 @@
+<?php
+$MESS["M_CRM_TL_PRODUCT_LIST_SUMMARY_TOTAL"] = "Төлем сомасы: ";
+$MESS["M_CRM_TL_PRODUCT_LIST_SUMMARY_TOTAL_DISCOUNT"] = "Жеңілдік: ";
+$MESS["M_CRM_TL_PRODUCT_LIST_TITLE"] = "Тауарлар";

@@ -3,7 +3,6 @@
 namespace Bitrix\Tasks\Integration\SocialNetwork\UseCase;
 
 use Bitrix\Main\Localization\Loc;
-use Bitrix\Tasks\Integration\Socialnetwork\Space\SpaceService;
 use Bitrix\Tasks\Internals\Notification\Message;
 use Bitrix\Tasks\Internals\TaskObject;
 use Bitrix\Tasks\Internals\UserOption;
@@ -188,9 +187,8 @@ class TaskUpdated extends BaseCase
 				'LOG_ID' => $logId,
 				'EFFECTIVE_USER_ID' => $message->getSender()->getId(),
 			];
-			SpaceService::useNotificationStrategy()
-				? $this->setSonetLogRights($message, $params, $task)
-				: $this->setSonetLogRightsEx($message, $params, $task, $previosFields);
+
+			$this->setSonetLogRightsEx($message, $params, $task, $previosFields);
 		}
 	}
 
@@ -211,26 +209,6 @@ class TaskUpdated extends BaseCase
 		}
 
 		return array_unique(array_filter($arNames));
-	}
-
-	private function setSonetLogRights(Message $message, array $params, TaskObject $task): void
-	{
-		$logId = (int)$params['LOG_ID'];
-		$effectiveUserId = (int)$params['EFFECTIVE_USER_ID'];
-
-		if ($logId <= 0 || $effectiveUserId <= 0)
-		{
-			return;
-		}
-
-		if ($task->getGroupId() > 0)
-		{
-			$this->addGroupRights($message, $task->getGroupId(), $logId);
-		}
-
-		$this->addUserRights($message, $message->getSender(), $logId);
-		$this->addUserRights($message, $message->getRecepient(), $logId);
-		\CSocNetLogRights::deleteByLogID($logId);
 	}
 
 	private function setSonetLogRightsEx(Message $message, array $params, TaskObject $task, array $previousFields): void

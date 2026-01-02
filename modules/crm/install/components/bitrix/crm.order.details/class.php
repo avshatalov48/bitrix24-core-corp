@@ -309,7 +309,7 @@ class CCrmOrderDetailsComponent extends Crm\Component\EntityDetails\BaseComponen
 					$contactIds = Binding\ContactCompanyTable::getCompanyContactIDs($externalCompanyID);
 					foreach ($contactIds as $contactId)
 					{
-						if(CCrmContact::CheckReadPermission($contactId, $this->userPermissions))
+						if ($this->userPermissionsService->item()->canRead(\CCrmOwnerType::Contact, $contactId))
 						{
 							$clientInfo['CONTACT_IDS'][] = $contactId;
 						}
@@ -791,11 +791,7 @@ class CCrmOrderDetailsComponent extends Crm\Component\EntityDetails\BaseComponen
 			$allStatuses[$status['STATUS_ID']] = $status['NAME'];
 		}
 
-
-		$statusSelectorPermissionType = ($this->mode === ComponentMode::CREATION ||
-			$this->mode === ComponentMode::COPING) ? EntityPermissionType::CREATE : EntityPermissionType::UPDATE;
-
-		foreach(array_keys($allStatuses) as $statusID)
+		foreach (array_keys($allStatuses) as $statusID)
 		{
 			if($this->mode === ComponentMode::VIEW)
 			{
@@ -803,7 +799,12 @@ class CCrmOrderDetailsComponent extends Crm\Component\EntityDetails\BaseComponen
 			}
 			else
 			{
-				if(!\Bitrix\Crm\Order\Permissions\Order::checkStatusPermission($statusID, $statusSelectorPermissionType, $this->userPermissions))
+				$hasEditPermission = ($this->mode === ComponentMode::CREATION || $this->mode === ComponentMode::COPING)
+					? $this->userPermissionsService->stage()->canAddInStage(CCrmOwnerType::Order, null, $statusID)
+					: $this->userPermissionsService->stage()->canUpdateInStage(CCrmOwnerType::Order, null, $statusID)
+				;
+
+				if(!$hasEditPermission)
 				{
 					$disabledStatusIDs[] = $statusID;
 				}
@@ -1004,7 +1005,7 @@ class CCrmOrderDetailsComponent extends Crm\Component\EntityDetails\BaseComponen
 			'type' => 'order_property_wrapper',
 			'transferable' => false,
 			'editable' => true,
-			'isDragEnabled' => $this->userPermissions->HavePerm('CONFIG', BX_CRM_PERM_CONFIG, 'WRITE'),
+			'isDragEnabled' => $this->userPermissionsService->isCrmAdmin(),
 			'elements' => [],
 			'sortedElements' => [
 				'active' => isset($this->arResult['SHIPMENT_PROPERTIES']["ACTIVE"]) && is_array($this->arResult['SHIPMENT_PROPERTIES']["ACTIVE"])
@@ -1054,7 +1055,7 @@ class CCrmOrderDetailsComponent extends Crm\Component\EntityDetails\BaseComponen
 			'type' => 'order_property_wrapper',
 			'transferable' => false,
 			'editable' => true,
-			'isDragEnabled' => $this->userPermissions->HavePerm('CONFIG', BX_CRM_PERM_CONFIG, 'WRITE'),
+			'isDragEnabled' => $this->userPermissionsService->isCrmAdmin(),
 			'elements' => [],
 			'sortedElements' => [
 				'active' => isset($this->arResult['ORDER_PROPERTIES']["ACTIVE"]) && is_array($this->arResult['ORDER_PROPERTIES']["ACTIVE"])
@@ -1137,9 +1138,9 @@ class CCrmOrderDetailsComponent extends Crm\Component\EntityDetails\BaseComponen
 		return $this->arResult['ENTITY_FIELDS'];
 	}
 
-	protected function getStatusList($entityPermissionTypeID)
+	protected function getStatusList(): array
 	{
-		$allStatuses = array();
+		$allStatuses = [];
 
 		$statusList = Order\OrderStatus::getListInCrmFormat();
 		foreach ($statusList as $status)
@@ -1147,14 +1148,15 @@ class CCrmOrderDetailsComponent extends Crm\Component\EntityDetails\BaseComponen
 			$allStatuses[$status['STATUS_ID']] = $status['NAME'];
 		}
 
-		$statuses = array();
+		$statuses = [];
 		foreach ($allStatuses as $ID => $title)
 		{
-			if(\Bitrix\Crm\Order\Permissions\Order::checkStatusPermission($ID, $entityPermissionTypeID, $this->userPermissions))
+			if($this->userPermissionsService->stage()->canAddInStage(CCrmOwnerType::Order, null, $ID))
 			{
 				$statuses[$ID] = $title;
 			}
 		}
+
 		return $statuses;
 	}
 
@@ -1212,7 +1214,7 @@ class CCrmOrderDetailsComponent extends Crm\Component\EntityDetails\BaseComponen
 			//endregion
 
 			//region Default Stage ID
-			$statusList = $this->getStatusList(EntityPermissionType::CREATE);
+			$statusList = $this->getStatusList();
 			if(!empty($statusList))
 			{
 				$requestStatusId = $this->request->get('stage_id');
@@ -1293,7 +1295,7 @@ class CCrmOrderDetailsComponent extends Crm\Component\EntityDetails\BaseComponen
 					$this->entityData['RESPONSIBLE_ID'] = $this->userID;
 				}
 
-				$statusList = $this->getStatusList(EntityPermissionType::CREATE);
+				$statusList = $this->getStatusList();
 				if(!empty($statusList))
 				{
 					$this->entityData['STATUS_ID'] = current(array_keys($statusList));
@@ -1412,7 +1414,7 @@ class CCrmOrderDetailsComponent extends Crm\Component\EntityDetails\BaseComponen
 				$this->entityData
 			);
 
-			$isEntityReadPermitted = \CCrmCompany::CheckReadPermission($companyId, $this->userPermissions);
+			$isEntityReadPermitted = $this->userPermissionsService->item()->canRead(\CCrmOwnerType::Company, $companyId);
 			$companyInfo = \CCrmEntitySelectorHelper::PrepareEntityInfo(
 				CCrmOwnerType::CompanyName,
 				$companyId,
@@ -1443,7 +1445,7 @@ class CCrmOrderDetailsComponent extends Crm\Component\EntityDetails\BaseComponen
 		);
 		foreach ($contactIDs as $contactID)
 		{
-			$isEntityReadPermitted = CCrmContact::CheckReadPermission($contactID, $this->userPermissions);
+			$isEntityReadPermitted = $this->userPermissionsService->item()->canRead(\CCrmOwnerType::Contact, $contactID);
 			$clientInfo['CONTACT_DATA'][] = CCrmEntitySelectorHelper::PrepareEntityInfo(
 				CCrmOwnerType::ContactName,
 				$contactID,

@@ -24,7 +24,7 @@ class CCrmBizProc
 			$this->sEntityType = CCrmOwnerType::LeadName;
 			$this->sDocument = CCrmBizProcHelper::ResolveDocumentId(CCrmOwnerType::Lead);
 		}
-		
+
 		if (is_object($USER))
 		{
 			$this->arCurrentUserGroups = $USER->GetUserGroupArray();
@@ -144,7 +144,7 @@ class CCrmBizProc
 		if(!CModule::IncludeModule('bizproc') || !CBPRuntime::isFeatureEnabled())
 			return true;
 
-		$userID = CCrmSecurityHelper::GetCurrentUserID();
+		$userID = \Bitrix\Crm\Service\Container::getInstance()->getContext()->getUserId();
 		$bDeleteError = !CBPDocument::CanUserOperateDocument(
 			CBPCanUserOperateOperation::WriteDocument,
 			$userID,
@@ -152,7 +152,7 @@ class CCrmBizProc
 			array_merge(
 				array(
 					'UserGroups' => $this->arCurrentUserGroups,
-					'UserIsAdmin' => CCrmPerms::IsAdmin($userID),
+					'UserIsAdmin' => \Bitrix\Crm\Service\Container::getInstance()->getUserPermissions($userID)->isAdmin(),
 					'CRMEntityAttr' => $arEntityAttr
 				),
 				$arParameters
@@ -160,28 +160,30 @@ class CCrmBizProc
 		);
 		if (!$bDeleteError)
 		{
-			return $this->ProcessDeletion($ID);
+			return $this->processDeletion($ID);
 		}
 		return true;
 	}
 
-	public function ProcessDeletion($ID)
+	public function processDeletion($ID): bool
 	{
-		if(!CModule::IncludeModule('bizproc') || !CBPRuntime::isFeatureEnabled())
+		if (!CModule::IncludeModule('bizproc'))
+		{
 			return true;
+		}
 
-		$arErrorsTmp = array();
-		CBPDocument::OnDocumentDelete(array('crm', $this->sDocument, $this->sEntityType.'_'.$ID), $arErrorsTmp);
+		$deletionRelatedDataErrors = [];
+		CBPDocument::OnDocumentDelete(['crm', $this->sDocument, $this->sEntityType.'_'.$ID], $deletionRelatedDataErrors);
 		\Bitrix\Crm\Automation\QR\QrTable::deleteByEntity(
 			CCrmOwnerType::ResolveID($this->sEntityType),
-			$ID
+			$ID,
 		);
 
-		if ($arErrorsTmp)
-		{
-			$this->LAST_ERROR = '';
-			foreach ($arErrorsTmp as $e)
-				$this->LAST_ERROR .= $e['message'].'<br />';
+		if ($deletionRelatedDataErrors) {
+			$this->LAST_ERROR = implode(
+				'<br />',
+				array_map(static fn($error) => $error['message'], $deletionRelatedDataErrors)
+			) . '<br />';
 			return false;
 		}
 		return true;

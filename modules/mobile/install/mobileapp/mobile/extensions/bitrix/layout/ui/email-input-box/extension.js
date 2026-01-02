@@ -7,13 +7,14 @@ jn.define('layout/ui/email-input-box', (require, exports, module) => {
 	const { Area } = require('ui-system/layout/area');
 	const { BoxFooter } = require('ui-system/layout/dialog-footer');
 	const { Button, ButtonSize, ButtonDesign } = require('ui-system/form/buttons');
-	const { Card, CardDesign } = require('ui-system/layout/card');
-	const { Color } = require('tokens');
+	const { Color, Indent } = require('tokens');
 	const { BottomSheet } = require('bottom-sheet');
-	const { EmailInput } = require('layout/ui/email-input-box/src/email-input');
-	const { BadgeCounter, BadgeCounterDesign } = require('ui-system/blocks/badges/counter');
 	const { Haptics } = require('haptics');
 	const { Alert, ButtonType } = require('alert');
+	const { MultiEmailInput, ChipDesign, MultiEmailInputDesign } = require('ui-system/form/inputs/multi-email');
+	const { InviteButton } = require('layout/ui/email-input-box/src/invite-button');
+	const { createTestIdGenerator } = require('utils/test');
+	const { Text5 } = require('ui-system/typography/text');
 
 	const layoutHeight = 285;
 
@@ -23,27 +24,22 @@ jn.define('layout/ui/email-input-box', (require, exports, module) => {
 		{
 			super(props);
 			this.layoutWidget = null;
-			this.emailInputRef = null;
+			this.multiEmailInput = null;
+			this.getTestId = createTestIdGenerator({
+				prefix: 'email-input-box',
+				context: this,
+			});
+			this.#initState(props);
+		}
+
+		#initState = (props) => {
 			this.state = {
-				pending: false,
-				emails: [],
+				allEmails: props.allEmails ?? [],
+				validEmails: props.validEmails ?? [],
+				pending: props.pending ?? false,
+				newEmailInputValue: props.newEmailInputValue ?? '',
 			};
-		}
-
-		get testId()
-		{
-			return `${this.props.testId}-email-input-box`;
-		}
-
-		get inputPlaceholder()
-		{
-			return this.props.inputPlaceholder ?? '';
-		}
-
-		get bottomButtonText()
-		{
-			return this.props.bottomButtonText ?? '';
-		}
+		};
 
 		get dismissAlert()
 		{
@@ -52,9 +48,10 @@ jn.define('layout/ui/email-input-box', (require, exports, module) => {
 
 		componentDidMount()
 		{
-			this.#focusInput();
 			this.layoutWidget.on('preventDismiss', () => {
-				if (this.props.dismissAlert && this.state.emails.length > 0)
+				const { dismissAlert } = this.props;
+				const { allEmails } = this.state;
+				if (dismissAlert && allEmails.length > 0)
 				{
 					this.#showConfirmOnBoxClosing();
 				}
@@ -67,9 +64,12 @@ jn.define('layout/ui/email-input-box', (require, exports, module) => {
 
 		render()
 		{
+			const { inputPlaceholder, emailChipDesign, description } = this.props;
+			const { allEmails, newEmailInputValue } = this.state;
+
 			return Box(
 				{
-					testId: this.testId,
+					testId: this.getTestId(),
 					safeArea: {
 						bottom: true,
 					},
@@ -78,7 +78,8 @@ jn.define('layout/ui/email-input-box', (require, exports, module) => {
 				},
 				AreaList(
 					{
-						testId: `${this.testId}-area-list`,
+						testId: this.getTestId('area-list'),
+						withScroll: false,
 						style: {
 							flex: 1,
 							width: '100%',
@@ -86,27 +87,42 @@ jn.define('layout/ui/email-input-box', (require, exports, module) => {
 					},
 					Area(
 						{},
-						Card(
-							{
-								testId: `${this.testId}-input-card`,
-								border: true,
-								design: CardDesign.PRIMARY,
+						MultiEmailInput({
+							testId: this.getTestId('multi-email'),
+							ref: this.#bindMultiEmailInputRef,
+							emails: allEmails,
+							newEmailInputValue,
+							placeholder: inputPlaceholder,
+							height: 136,
+							focus: true,
+							showEmailsCounter: false,
+							design: MultiEmailInputDesign.LIGHT_GREY,
+							chipDesign: emailChipDesign ?? ChipDesign.COLLAB,
+							onChange: this.#multiEmailInputOnChange,
+						}),
+						description && Text5({
+							text: description,
+							color: Color.base3,
+							style: {
+								marginTop: Indent.M.toNumber(),
 							},
-							EmailInput({
-								ref: this.#bindEmailInputRef,
-								testId: this.testId,
-								inputPlaceholder: this.inputPlaceholder,
-								onEmailsChanged: (emails) => {
-									this.setState({
-										emails,
-									});
-								},
-							}),
-						),
+						}),
 					),
 				),
 			);
 		}
+
+		#bindMultiEmailInputRef = (ref) => {
+			this.multiEmailInput = ref;
+		};
+
+		#multiEmailInputOnChange = ({ allEmails, validEmails, newEmailInputValue }) => {
+			this.setState({
+				allEmails: [...allEmails],
+				validEmails: [...validEmails],
+				newEmailInputValue,
+			});
+		};
 
 		#showConfirmOnBoxClosing()
 		{
@@ -130,16 +146,8 @@ jn.define('layout/ui/email-input-box', (require, exports, module) => {
 			);
 		}
 
-		#bindEmailInputRef = (ref) => {
-			this.emailInputRef = ref;
-		};
-
-		#focusInput = () => {
-			this.emailInputRef?.focus();
-		};
-
-		close = () => {
-			this.layoutWidget?.close();
+		close = (callback) => {
+			this.layoutWidget?.close(callback);
 		};
 
 		disableButtonLoading = () => {
@@ -152,62 +160,77 @@ jn.define('layout/ui/email-input-box', (require, exports, module) => {
 			return BoxFooter(
 				{
 					safeArea: Application.getPlatform() === 'ios',
-					keyboardButton: {
-						text: this.bottomButtonText,
-						loading: this.state.pending,
-						onClick: this.onSendInviteButtonClick,
-						badge: this.renderCounter(),
-						disabled: this.state.emails.length === 0,
-						forwardRef: (ref) => {
-							this.inviteButtonRef = ref;
-						},
-					},
+					keyboardButton: this.renderKeyboardButton,
 				},
-				Button({
-					testId: `${this.testId}-invite-button`,
-					text: this.bottomButtonText,
-					design: ButtonDesign.FILLED,
-					size: ButtonSize.L,
-					loading: this.state.pending,
-					stretched: true,
-					badge: this.renderCounter(),
-					disabled: this.state.emails.length === 0,
-					style: {
-						paddingVertical: 0,
-					},
-					onClick: this.onSendInviteButtonClick,
-				}),
+				this.renderButton(),
 			);
 		};
 
-		renderCounter()
-		{
-			if (this.state.emails.length === 0)
+		#isInviteButtonDisabled = () => {
+			const { allEmails, validEmails } = this.state;
+
+			return validEmails.length === 0 || validEmails.length !== allEmails.length;
+		};
+
+		renderKeyboardButton = () => {
+			const { bottomButtonText } = this.props;
+			const { pending, validEmails } = this.state;
+
+			return InviteButton({
+				testId: this.getTestId('invite-keyboard-button'),
+				text: bottomButtonText,
+				pending,
+				disabled: this.#isInviteButtonDisabled(),
+				counter: validEmails.length,
+				onButtonClick: this.onButtonClick,
+			});
+		};
+
+		renderButton = () => {
+			const { bottomButtonText } = this.props;
+			const { pending, validEmails } = this.state;
+
+			return Button({
+				testId: this.getTestId('invite-button'),
+				text: bottomButtonText,
+				design: ButtonDesign.FILLED,
+				size: ButtonSize.L,
+				loading: pending,
+				stretched: true,
+				disabled: this.#isInviteButtonDisabled(),
+				counter: validEmails.length,
+				style: {
+					paddingVertical: 0,
+				},
+				onClick: this.onButtonClick,
+			});
+		};
+
+		onButtonClick = () => {
+			if (this.multiEmailInput.isEditingSomeEmail())
 			{
-				return null;
+				this.multiEmailInput.focusNewEmailInput();
+				setTimeout(() => {
+					if (!this.#isInviteButtonDisabled())
+					{
+						this.onButtonClick();
+					}
+				}, 100);
+
+				return;
 			}
 
-			return BadgeCounter({
-				testId: `${this.testId}-badge-counter`,
-				value: String(this.state.emails.length),
-				design: BadgeCounterDesign.WHITE,
-			});
-		}
-
-		onSendInviteButtonClick = () => {
-			if (this.state.pending)
+			const { onButtonClick } = this.props;
+			const { pending, validEmails } = this.state;
+			if (pending || validEmails.length === 0 || this.#isInviteButtonDisabled())
 			{
 				return;
 			}
 
 			this.setState({
 				pending: true,
-			}, () => {
-				if (this.props.onButtonClick)
-				{
-					this.props.onButtonClick(this.state.emails);
-				}
 			});
+			onButtonClick?.(validEmails);
 		};
 	}
 
@@ -219,6 +242,7 @@ jn.define('layout/ui/email-input-box', (require, exports, module) => {
 	 * @param {String} props.inputPlaceholder
 	 * @param {Function} props.onButtonClick
 	 * @param {LayoutComponent} props.parentLayout
+	 * @param {ChipTextInputStatusDesign} props.emailChipDesign
 	 * @return {Promise}
 	 */
 	const openEmailInputBox = (props) => {
@@ -258,5 +282,6 @@ jn.define('layout/ui/email-input-box', (require, exports, module) => {
 
 	module.exports = {
 		openEmailInputBox,
+		ChipDesign,
 	};
 });

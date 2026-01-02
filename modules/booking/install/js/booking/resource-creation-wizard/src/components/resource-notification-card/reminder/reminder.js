@@ -1,14 +1,21 @@
+import { RichLoc } from 'ui.vue3.components.rich-loc';
 import { mapGetters } from 'ui.vue3.vuex';
 import 'ui.icon-set.main';
 
 import { HelpDesk, Model } from 'booking.const';
 import { ResourceNotification } from '../layout/resource-notification';
 import { ResourceNotificationTextRow } from '../layout/resource-notification-text-row';
-import { replaceLabelMixin } from '../label/label';
+import { LabelDropdown } from '../label/label';
 
+// @vue/component
 export const Reminder = {
 	name: 'ResourceNotificationCardReminder',
-	mixins: [replaceLabelMixin],
+	components: {
+		ResourceNotification,
+		ResourceNotificationTextRow,
+		LabelDropdown,
+		RichLoc,
+	},
 	props: {
 		/** @type {NotificationsModel} */
 		model: {
@@ -18,6 +25,7 @@ export const Reminder = {
 	},
 	computed: {
 		...mapGetters({
+			/** @type {ResourceModel} */
 			resource: `${Model.ResourceCreationWizard}/getResource`,
 			isCurrentSenderAvailable: `${Model.Notifications}/isCurrentSenderAvailable`,
 		}),
@@ -31,23 +39,27 @@ export const Reminder = {
 				void this.$store.dispatch(`${Model.ResourceCreationWizard}/updateResource`, { isReminderNotificationOn });
 			},
 		},
+		reminderNotificationDelay: {
+			get(): number
+			{
+				return this.resource.reminderNotificationDelay;
+			},
+			set(reminderNotificationDelay: number): void
+			{
+				void this.$store.dispatch(`${Model.ResourceCreationWizard}/updateResource`, { reminderNotificationDelay });
+				this.$refs.card.$forceUpdate();
+			},
+		},
 		locSendReminderTime(): string
 		{
-			const hint = this.loc('BRCW_BOOKING_SOON_HINT');
-			const chooseTime = this.loc('BRCW_NOTIFICATION_CARD_LABEL_CHOOSE_TIME');
-
-			return this.loc('BRCW_NOTIFICATION_CARD_REMINDER_HELPER_TEXT_SECOND', {
-				'#time#': this.getLabel(chooseTime, this.isReminderNotificationOn, hint),
-			});
+			return this.loc('BRCW_NOTIFICATION_CARD_REMINDER_HELPER_TEXT_SECOND')
+				.replace('#time#', '[delay/]')
+			;
 		},
 		helpDesk(): Object
 		{
 			return HelpDesk.ResourceNotificationReminder;
 		},
-	},
-	components: {
-		ResourceNotification,
-		ResourceNotificationTextRow,
 	},
 	template: `
 		<ResourceNotification
@@ -56,10 +68,17 @@ export const Reminder = {
 			:title="loc('BRCW_NOTIFICATION_CARD_REMINDER_TITLE')"
 			:description="loc('BRCW_NOTIFICATION_CARD_REMINDER_HELPER_TEXT_FIRST_MSGVER_1')"
 			:helpDesk="helpDesk"
+			ref="card"
 		>
-			<ResourceNotificationTextRow icon="--clock-2">
-				<div class="resource-creation-wizard__form-notification-text" v-html="locSendReminderTime"></div>
-			</ResourceNotificationTextRow>
+			<template #client>
+				<ResourceNotificationTextRow icon="--clock-2">
+					<RichLoc :text="locSendReminderTime" :placeholder="'[delay/]'">
+						<template #delay>
+							<LabelDropdown v-model:value="reminderNotificationDelay" :items="model.settings.notification.delayValues"/>
+						</template>
+					</RichLoc>
+				</ResourceNotificationTextRow>
+			</template>
 		</ResourceNotification>
 	`,
 };

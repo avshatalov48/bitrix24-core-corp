@@ -2,7 +2,7 @@
 
 namespace Bitrix\HumanResources\Type;
 
-use Bitrix\HumanResources\Trait\ValuesTrait;
+use Bitrix\HumanResources\Internals\Trait\ValuesTrait;
 
 enum StructureType: string
 {

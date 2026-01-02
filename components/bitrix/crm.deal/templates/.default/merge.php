@@ -4,6 +4,12 @@ if(!defined('B_PROLOG_INCLUDED') || B_PROLOG_INCLUDED!==true) die();
 /** @var array $arParams */
 /** @var array $arResult */
 $APPLICATION->SetTitle(GetMessage('CRM_DEAL_MERGE_PAGE_TITLE'));
+
+if (\Bitrix\Main\Loader::includeModule('ui'))
+{
+	\Bitrix\UI\Toolbar\Facade\Toolbar::deleteFavoriteStar();
+}
+
 $APPLICATION->IncludeComponent(
 	'bitrix:ui.sidepanel.wrapper',
 	'',
@@ -22,6 +28,7 @@ $APPLICATION->IncludeComponent(
 		],
 		'USE_PADDING' => false,
 		'PAGE_MODE' => false,
-		'PAGE_MODE_OFF_BACK_URL' => '/crm/deal/'
+		'PAGE_MODE_OFF_BACK_URL' => '/crm/deal/',
+		'USE_UI_TOOLBAR' => 'Y',
 	]
 );

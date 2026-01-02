@@ -8,6 +8,8 @@ use \Bitrix\Crm\EntityPreset;
 use \Bitrix\Crm\EntityRequisite;
 use \Bitrix\Crm\EntityBankDetail;
 
+use Bitrix\Crm\Integration\Analytics\Dictionary;
+
 $runtime = CBPRuntime::GetRuntime();
 $runtime->IncludeActivityFile('CrmGetRequisitesInfoActivity');
 
@@ -26,6 +28,8 @@ class CBPCrmChangeRequisiteActivity extends CBPCrmGetRequisitesInfoActivity
 		{
 			return CBPActivityExecutionStatus::Closed;
 		}
+
+		$documentType = $this->getDocumentType();
 
 		[$this->CrmEntityType, $this->CrmEntityId] = $this->defineCrmEntityWithRequisites();
 		$this->logRequisiteProperties();
@@ -50,6 +54,12 @@ class CBPCrmChangeRequisiteActivity extends CBPCrmGetRequisitesInfoActivity
 		$bankDetailId = $this->getBankDetailId($requisiteSettings, $requisiteId, $this->getRequisitePresetId());
 
 		$this->updateRequisite($requisiteId, $bankDetailId, $fieldsValues);
+
+		\CCrmBizProcHelper::sendOperationsAnalytics(
+			Dictionary::EVENT_ENTITY_EDIT,
+			$this,
+			$documentType[2] ?? '',
+		);
 
 		return CBPActivityExecutionStatus::Closed;
 	}
@@ -86,8 +96,9 @@ class CBPCrmChangeRequisiteActivity extends CBPCrmGetRequisitesInfoActivity
 	protected function filterPresetRequisiteFields(array $requisiteFieldsValues)
 	{
 		$requisiteFieldsIds = EntityRequisite::getSingleInstance()->getRqFields();
+		$presetFields = EntityPreset::getSingleInstance()->getById($this->getRequisitePresetId())['SETTINGS']['FIELDS'] ?? [];
 		$presetFieldsIds = array_column(
-			EntityPreset::getSingleInstance()->getById($this->getRequisitePresetId())['SETTINGS']['FIELDS'],
+			$presetFields,
 			null,
 			'FIELD_NAME'
 		);

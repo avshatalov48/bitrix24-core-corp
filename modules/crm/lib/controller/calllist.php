@@ -226,7 +226,7 @@ class CallList extends \IRestService
 
 		foreach ($rowItems->exec() as $rowItem)
 		{
-			$canReadItem = $userPermissions->checkReadPermissions((int)$rowItem['ENTITY_TYPE_ID'], (int)$rowItem['ID']);
+			$canReadItem = $userPermissions->item()->canRead((int)$rowItem['ENTITY_TYPE_ID'], (int)$rowItem['ID']);
 			if (!$canReadItem)
 			{
 				continue;
@@ -367,7 +367,7 @@ class CallList extends \IRestService
 
 		if (!$userPermissions->isAdmin())
 		{
-			$canReadType = $userPermissions->canReadType($entityTypeId);
+			$canReadType = $userPermissions->entityType()->canReadItems($entityTypeId);
 			if (!$canReadType)
 			{
 				throw new RestException(
@@ -527,7 +527,7 @@ class CallList extends \IRestService
 		$userPermissions = \Bitrix\Crm\Service\Container::getInstance()->getUserPermissions();
 		foreach ($entityIds as $key => $entity)
 		{
-			$canReadItem = $userPermissions->checkReadPermissions($entityTypeId, (int)$entity);
+			$canReadItem = $userPermissions->item()->canRead($entityTypeId, (int)$entity);
 			if (!$canReadItem)
 			{
 				unset($entityIds[$key]);

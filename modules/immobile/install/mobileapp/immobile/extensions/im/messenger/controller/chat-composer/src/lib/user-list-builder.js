@@ -3,10 +3,12 @@
  */
 jn.define('im/messenger/controller/chat-composer/lib/user-list-builder', (require, exports, module) => {
 	const { Type } = require('type');
-	const { Loc } = require('loc');
+	const { Loc } = require('im/messenger/loc');
 	const { serviceLocator } = require('im/messenger/lib/di/service-locator');
 	const { MessengerParams } = require('im/messenger/lib/params');
-	const { ChatTitle, ChatAvatar, UserStatus } = require('im/messenger/lib/element');
+	const { UserStatus } = require('im/messenger/lib/element/user-status');
+	const { ChatTitle } = require('im/messenger/lib/element/chat-title');
+	const { ChatAvatar } = require('im/messenger/lib/element/chat-avatar');
 
 	/**
 	 * @class UserListBuilder

@@ -13,7 +13,7 @@ class Exception	extends \Bitrix\Tasks\Exception
 {
 	public function __construct($message = false, array $data = array(), array $additional = array())
 	{
-		if (is_array($data['NODES']) && (string)($data['AUX']['MESSAGE'] ?? null) === '')
+		if (is_array($data['NODES'] ?? null) && (string)($data['AUX']['MESSAGE'] ?? null) === '')
 		{
 			$data['AUX']['MESSAGE'] = 'nodes: '.implode(', ', $data['NODES']);
 		}
@@ -49,6 +49,11 @@ class ParentNodeNotFoundException extends NodeNotFoundException
 }
 class LinkExistsException extends Exception
 {
+	public function getData(): mixed
+	{
+		return $this->data;
+	}
+
 	public function getDefaultMessage()
 	{
 		return 'Link already exists';

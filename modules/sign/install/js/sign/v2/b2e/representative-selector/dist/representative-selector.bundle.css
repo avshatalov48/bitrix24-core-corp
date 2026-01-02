@@ -36,12 +36,12 @@
 }
 
 .sign-document-b2e-representative-info-user-name {
-	font: 16px/20px var(--ui-font-family-system);
+	font: 16px/20px var(--ui-font-family-primary, var(--ui-font-family-system));
 	color: var(--ui-color-palette-gray-90);
 }
 
 .sign-document-b2e-representative-info-user-pos {
-	font: 12px/14.32px var(--ui-font-family-system);
+	font: 12px/14.32px var(--ui-font-family-primary, var(--ui-font-family-system));
 	color: var(--ui-color-palette-gray-50);
 }
 
@@ -66,7 +66,7 @@
 }
 
 .sign-document-b2e-representative-select-text {
-	font: 16px/20px var(--ui-font-family-system);
+	font: 16px/20px var(--ui-font-family-primary, var(--ui-font-family-system));
 	flex-grow: 1;
 	color: var(--ui-color-palette-gray-90);
 	margin-bottom: 5px;
@@ -83,11 +83,15 @@
 }
 
 .sign-document-b2e-representative__info {
-	font: 13px/15.51px var(--ui-font-family-system);
+	font: 13px/15.51px var(--ui-font-family-primary, var(--ui-font-family-system));
 	color: var(--ui-color-palette-gray-60);
 	margin: 5px 0 0 0;
 }
 
 .sign-document-b2e-representative__info_paragraph {
 	margin: 0 0 7px 0;
+}
+
+.sign-document-b2e-company-info-edit {
+	margin-left: auto;
 }

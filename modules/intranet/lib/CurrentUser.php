@@ -69,11 +69,11 @@ class CurrentUser
 
 	public function isAdmin(): bool
 	{
-		return (
-			Loader::includeModule('bitrix24')
-			&& \CBitrix24::IsPortalAdmin($this->currentUser->getId())
-		)
-		|| $this->currentUser->isAdmin();
+		return $this->currentUser->isAdmin()
+			|| (
+				Loader::includeModule('bitrix24')
+				&& \CBitrix24::IsPortalAdmin($this->currentUser->getId())
+			);
 	}
 
 	public function getDepartmentIds(): ?array

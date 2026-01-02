@@ -25,10 +25,8 @@ $arResult['BUTTONS'] = array();
 
 $vatID = (int)($arParams['VAT_ID'] ?? 0);
 
-$CrmPerms = new CCrmPerms($USER->GetID());
-
-$vatAdd = $vatEdit = $vatDelete = $CrmPerms->HavePerm('CONFIG', BX_CRM_PERM_CONFIG, 'WRITE');
-$vatShow = $CrmPerms->HavePerm('CONFIG', BX_CRM_PERM_CONFIG, 'READ');
+$vatAdd = $vatEdit = $vatDelete = \Bitrix\Crm\Service\Container::getInstance()->getUserPermissions()->isCrmAdmin();
+$vatShow = \Bitrix\Crm\Service\Container::getInstance()->getUserPermissions()->entityType()->canReadSomeItemsInCrm();
 
 $exists = $vatID > 0 && is_array(CCrmVat::GetByID($vatID));
 

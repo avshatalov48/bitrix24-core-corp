@@ -1,8 +1,15 @@
 .booking-resource-creation-wizard-channel-menu-button {
 	height: max-content;
+	margin-left: 3px;
 	border-bottom: 1px dashed var(--ui-color-base-30);
 	color: var(--ui-color-base-60);
 	font-size: var(--ui-font-size-sm);
 	font-weight: var(--ui-font-weight-medium);
 	cursor: pointer;
+}
+
+.booking-resource-creation-wizard-channel-menu-button.--disabled {
+	cursor: default;
+	border-bottom: none;
+	font-weight: inherit;
 }

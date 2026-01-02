@@ -6,6 +6,7 @@ jn.define('im/messenger/provider/data/chat', (require, exports, module) => {
 	const { Type } = require('type');
 	const { ChatGetter } = require('im/messenger/provider/data/chat/getter');
 	const { ChatDeleter } = require('im/messenger/provider/data/chat/deleter');
+	const { ChatUpdater } = require('im/messenger/provider/data/chat/entity-updater');
 	const { BaseDataProvider } = require('im/messenger/provider/data/base');
 	const { DataProviderResult } = require('im/messenger/provider/data/result');
 
@@ -20,6 +21,7 @@ jn.define('im/messenger/provider/data/chat', (require, exports, module) => {
 	{
 		#getter = new ChatGetter();
 		#deleter = new ChatDeleter();
+		#updater = new ChatUpdater();
 
 		get className()
 		{
@@ -51,7 +53,7 @@ jn.define('im/messenger/provider/data/chat', (require, exports, module) => {
 
 		/**
 		 * @desc performs a complete cleaning of chat data from the database and a partial one from the model
-		 * @param {?DialogId} dialogId
+		 * @param {?number|string} dialogId
 		 * @param {?number} chatId
 		 */
 		async delete({ dialogId = null, chatId = null })
@@ -91,6 +93,13 @@ jn.define('im/messenger/provider/data/chat', (require, exports, module) => {
 			}
 
 			logger.error(`${this.className}.deleteEntityFromSource error: unknown source: ${source}`);
+		}
+
+		async clearCounters()
+		{
+			logger.log(`${this.constructor.name}.clearCounters`);
+
+			await this.#updater.clearCounters();
 		}
 
 		/**

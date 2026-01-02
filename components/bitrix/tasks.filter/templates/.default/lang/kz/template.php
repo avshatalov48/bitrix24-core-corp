@@ -1,0 +1,20 @@
+<?php
+$MESS["TASKS_CANCEL"] = "Болдырмау";
+$MESS["TASKS_FILTER"] = "Сүзгі";
+$MESS["TASKS_FILTER_ACTIVE_DATE"] = "Жұмыста болды";
+$MESS["TASKS_FILTER_ADV_IN_REPORT"] = "есепте";
+$MESS["TASKS_FILTER_BY_TAG"] = "Тегтер бойынша";
+$MESS["TASKS_FILTER_CLOSE_DATE"] = "Жабылу күні";
+$MESS["TASKS_FILTER_COMMON"] = "Әдеттегі";
+$MESS["TASKS_FILTER_CREAT_DATE"] = "Құрылған күні";
+$MESS["TASKS_FILTER_EXTENDED"] = "Кеңейтілген";
+$MESS["TASKS_FILTER_FIND"] = "Табу";
+$MESS["TASKS_FILTER_ID"] = "ID";
+$MESS["TASKS_FILTER_MARKED"] = "бағаланды";
+$MESS["TASKS_FILTER_OVERDUED"] = "мерзімі өтіп кеткен";
+$MESS["TASKS_FILTER_PICK_DATE"] = "Күнтізбеде күнді таңдау";
+$MESS["TASKS_FILTER_SELECT"] = "таңдау";
+$MESS["TASKS_FILTER_SHOW_SUBORDINATE"] = "бағыныштылардың міндеттерін көрсету";
+$MESS["TASKS_FILTER_STATUS"] = "Мәртебе";
+$MESS["TASKS_FILTER_STATUSES"] = "Мәртебелер";
+$MESS["TASKS_FILTER_WORKGROUP"] = "Жұмыс тобы";

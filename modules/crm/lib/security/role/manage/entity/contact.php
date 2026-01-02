@@ -2,6 +2,8 @@
 
 namespace Bitrix\Crm\Security\Role\Manage\Entity;
 
+use Bitrix\Crm\Category\PermissionEntityTypeHelper;
+use Bitrix\Crm\Integration\Catalog\Contractor;
 use Bitrix\Crm\Security\Role\Manage\DTO\EntityDTO;
 use Bitrix\Crm\Security\Role\Manage\PermissionAttrPresets;
 use Bitrix\Crm\Service;
@@ -29,6 +31,7 @@ class Contact implements PermissionEntity, FilterableByCategory
 
 		$hiddenContactCategories = [
 			Service\Factory\SmartDocument::CONTACT_CATEGORY_CODE,
+			Contractor\CategoryRepository::CATALOG_CONTRACTOR_CONTACT,
 		];
 
 		$result = [];
@@ -38,12 +41,14 @@ class Contact implements PermissionEntity, FilterableByCategory
 
 		foreach ($categories as $category)
 		{
-			if (in_array($category->getCode(), $hiddenContactCategories))
+			if (in_array($category->getCode(), $hiddenContactCategories, true))
 			{
 				continue;
 			}
 
-			$entityName = Service\UserPermissions::getPermissionEntityType($factory->getEntityTypeId(), $category->getId());
+			$entityName = (new PermissionEntityTypeHelper($factory->getEntityTypeId()))
+				->getPermissionEntityTypeForCategory($category->getId())
+			;
 			$entityTitle = $category->getSingleNameIfPossible();
 
 			if ($category->getIsDefault())

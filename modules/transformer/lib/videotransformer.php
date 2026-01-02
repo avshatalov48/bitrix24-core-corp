@@ -1,4 +1,4 @@
-<?
+<?php
 
 namespace Bitrix\Transformer;
 
@@ -15,7 +15,7 @@ class VideoTransformer extends FileTransformer
 
 	protected function getCommandName()
 	{
-		return 'Bitrix\TransformerController\Video';
+		return WellKnownControllerCommand::Video->value;
 	}
 
 	protected function getFileTypeName()

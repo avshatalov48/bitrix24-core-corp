@@ -77,6 +77,7 @@ jn.define('bizproc/task/buttons', (require, exports, module) => {
 					{
 						taskId: this.task.id,
 						title: this.props.title,
+						uid: this.uid,
 					},
 				);
 			});
@@ -230,6 +231,7 @@ jn.define('bizproc/task/buttons', (require, exports, module) => {
 				testId: `${this.testId}_BUTTON_DETAILS`,
 				taskId: this.task.id,
 				title: this.props.title,
+				uid: this.uid,
 			});
 		}
 
@@ -242,7 +244,7 @@ jn.define('bizproc/task/buttons', (require, exports, module) => {
 
 			const onBeforeActionResult = (
 				isFunction(this.props.onBeforeAction)
-					? this.props.onBeforeAction(task, button)
+					? this.props.onBeforeAction(task, button, props)
 					: null
 			);
 
@@ -270,7 +272,7 @@ jn.define('bizproc/task/buttons', (require, exports, module) => {
 			{
 				this.customEventEmitter.emit(
 					'Task:onTouch',
-					{ task: this.task, isInline: this.props.isInline },
+					{ task: this.task, isInline: this.props.isInline, request: props },
 				);
 			}
 

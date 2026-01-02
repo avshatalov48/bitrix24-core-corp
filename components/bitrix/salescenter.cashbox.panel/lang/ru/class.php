@@ -15,3 +15,5 @@ $MESS["SCP_CASHBOX_FFD_12"] = "ФФД 1.2";
 $MESS["SCP_CASHBOX_OFFLINE"] = "Своя касса";
 $MESS["SCP_CASHBOX_APP_RECOMMEND"] = "Рекомендовать";
 $MESS["SCP_CASHBOX_CHECKBOX"] = "Checkbox";
+$MESS["SCP_CASHBOX_APP_SEE_ALL"] = "Показать все";
+$MESS["SCP_CASHBOX_APP_TOTAL_APPLICATIONS"] = "Всего решений";

@@ -2,7 +2,9 @@
 
 namespace Bitrix\BIConnector\Superset\Grid\Row\Assembler\Field\Dashboard;
 
+use Bitrix\BIConnector\Integration\Superset\Model\SupersetDashboardGroupTable;
 use Bitrix\BIConnector\Integration\Superset\Model\SupersetDashboardTable;
+use Bitrix\BIConnector\Integration\Superset\Repository\DashboardGroupRepository;
 use Bitrix\BIConnector\Superset\Grid\Row\Assembler\Field\Base\UserFieldAssembler;
 use Bitrix\BIConnector\Superset\Grid\Settings\DashboardSettings;
 use Bitrix\Main\Localization\Loc;
@@ -21,9 +23,12 @@ class OwnerFieldAssembler extends UserFieldAssembler
 		$ownerId = (int)$value['OWNER_ID'];
 		$type = $value['TYPE'];
 
-		if ($type === SupersetDashboardTable::DASHBOARD_TYPE_MARKET)
+		if (
+			$value['ENTITY_TYPE'] === DashboardGroupRepository::TYPE_DASHBOARD
+			&& $type === SupersetDashboardTable::DASHBOARD_TYPE_MARKET
+		)
 		{
-			$ownerText = Loc::getMessage('BICONNECTOR_SUPERSET_DASHBOARD_GRID_OWNER_MARKET');
+			$ownerText = Loc::getMessage('BICONNECTOR_SUPERSET_DASHBOARD_GRID_OWNER_MARKET_MSGVER_1');
 
 			return "<span class=\"biconnector-grid-market-cell\">
 				<img src=\"/bitrix/images/biconnector/superset-dashboard-grid/icon-type-market.png\" width='24' height='24' alt=\"{$ownerText}\"> 
@@ -31,7 +36,10 @@ class OwnerFieldAssembler extends UserFieldAssembler
 			</span>";
 		}
 
-		if ($type === SupersetDashboardTable::DASHBOARD_TYPE_SYSTEM)
+		if (
+			($value['ENTITY_TYPE'] === DashboardGroupRepository::TYPE_DASHBOARD && $type === SupersetDashboardTable::DASHBOARD_TYPE_SYSTEM)
+			|| ($value['ENTITY_TYPE'] === DashboardGroupRepository::TYPE_GROUP && $type === SupersetDashboardGroupTable::GROUP_TYPE_SYSTEM)
+		)
 		{
 			$ownerText = Loc::getMessage('BICONNECTOR_SUPERSET_DASHBOARD_GRID_OWNER_SYSTEM');
 
@@ -68,17 +76,17 @@ class OwnerFieldAssembler extends UserFieldAssembler
 			}
 
 			return <<<HTML
-<span 
-	class="$selector"
-	onclick='BX.BIConnector.SupersetDashboardGridManager.Instance.handleOwnerClick($event)'
->
-	<span class="biconnector-grid-avatar ui-icon ui-icon-common-user">
-		<i{$avatar}></i>
-	</span>
-	<span class="biconnector-grid-username">$userName</span>
-	$closeIcon
-</span>
-HTML;
+				<span 
+					class="$selector"
+					onclick='BX.BIConnector.SupersetDashboardGridManager.Instance.handleOwnerClick($event)'
+				>
+					<span class="biconnector-grid-avatar ui-icon ui-icon-common-user">
+						<i{$avatar}></i>
+					</span>
+					<span class="biconnector-grid-username">$userName</span>
+					$closeIcon
+				</span>
+				HTML;
 		}
 
 		return '';

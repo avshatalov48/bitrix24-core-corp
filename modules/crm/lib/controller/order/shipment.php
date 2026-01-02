@@ -15,11 +15,15 @@ class Shipment extends Entity
 
 	protected function processBeforeAction(Main\Engine\Action $action)
 	{
-		$userPermissions = \CCrmPerms::GetCurrentUserPermissions();
 		$actionArguments = $action->getArguments();
 		$id = $actionArguments['shipment'] ? $actionArguments['shipment']->getId() : 0;
 
-		if (!Crm\Order\Permissions\Shipment::checkUpdatePermission($id, $userPermissions))
+		if (
+			!\Bitrix\Crm\Service\Container::getInstance()
+				->getUserPermissions()
+				->item()
+				->canUpdate(\CCrmOwnerType::OrderShipment, $id)
+		)
 		{
 			$this->addError(
 				new Main\Error(

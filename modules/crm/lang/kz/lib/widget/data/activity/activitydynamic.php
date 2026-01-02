@@ -1,0 +1,20 @@
+<?php
+$MESS["CRM_ACTIVITY_DYNAMIC_CHANNELS_ARE_NOT_FOUND"] = "Қолжетімді арналар жоқ.";
+$MESS["CRM_ACTIVITY_DYNAMIC_CONNECT"] = "Қосыңыз: ";
+$MESS["CRM_ACTIVITY_DYNAMIC_CONNECTED"] = "Қосылғандар: ";
+$MESS["CRM_ACTIVITY_DYNAMIC_CONNECTED_CHANNELS"] = "Қосылған арналар";
+$MESS["CRM_ACTIVITY_DYNAMIC_CONNECTED_CHANNELS_IN"] = "Кіріс";
+$MESS["CRM_ACTIVITY_DYNAMIC_CONNECTED_CHANNELS_OUT"] = "Шығыс";
+$MESS["CRM_ACTIVITY_DYNAMIC_DEMO_IMOPENLINE"] = "Мессенджерлер және әлеум.желілер";
+$MESS["CRM_ACTIVITY_DYNAMIC_DEMO_IMOPENLINE_1"] = "Бірінші ашық желі";
+$MESS["CRM_ACTIVITY_DYNAMIC_DEMO_LIVECHAT"] = "Онлайн-чат";
+$MESS["CRM_ACTIVITY_DYNAMIC_DEMO_VKGROUP"] = "Вконтакте";
+$MESS["CRM_ACTIVITY_DYNAMIC_DEMO_WEBFORM"] = "CRM-нысан";
+$MESS["CRM_ACTIVITY_DYNAMIC_DEMO_WEBFORM_1"] = "Байланыс деректері";
+$MESS["CRM_ACTIVITY_DYNAMIC_DEMO_WEBFORM_2"] = "Кері байланыс нысаны";
+$MESS["CRM_ACTIVITY_DYNAMIC_DEMO_WEBFORM_4"] = "\"Базалық станция нөмірі\" нөмірінен кері қоңырау";
+$MESS["CRM_ACTIVITY_DYNAMIC_TITLE"] = "Коммуникацияларды бақылау";
+$MESS["CRM_ACTIVITY_DYNAMIC_UNCONNECTED_1"] = "және басқалары";
+$MESS["CRM_ACTIVITY_DYNAMIC_UNCONNECTED_3"] = "Көбірек арналар қосыңыз: ";
+$MESS["CRM_CH_TRACKER_START_VIDEO"] = "<iframe id=\"activity-dynamic-video\" width=\"560\" height=\"315\" src=\"https://www.youtube.com/embed/jmOibB-DU70?rel=0&autoplay=1#VOLUME#\" frameborder=\"0\" allowfullscreen></iframe>";
+$MESS["CRM_CH_TRACKER_START_VIDEO_TITLE"] = "Кез келген уақытта промо бейнені қараңыз";

@@ -34,6 +34,7 @@
 		{
 			this.eventEmitter = new JNEventEmitter();
 			this.items = config.items || [];
+			this.avatar = config.avatar;
 			this.header = config.header || null;
 			this.largeIcons = config.largeIcons === true;
 
@@ -93,6 +94,7 @@
 							this.widget = layoutWidget;
 							this.menuLayout = new MenuLayout({
 								items: this.items,
+								avatar: this.avatar,
 								header: this.header,
 								largeIcons: this.largeIcons,
 							});
@@ -158,6 +160,7 @@
 				items: props.items || [],
 				header: props.header || null,
 				largeIcons: props.largeIcons === true,
+				avatar: props.avatar || null,
 			}
 		}
 
@@ -231,25 +234,10 @@
 				return null;
 			}
 			let showSubMenu = config.showSubMenu === true;
-			let imageSource = {};
 			const showMuted = "userModel" in config && !config.userModel.microphoneState;
 			const showCameraState = "userModel" in config && !config.userModel.cameraState;
 			const iconIsAvatar = "userModel" in config;
-			if ("userModel" in config)
-			{
-				if (config.userModel.avatar)
-				{
-					imageSource.uri = encodeURI(config.userModel.avatar);
-				}
-				else
-				{
-					imageSource.svg = {content: Icons.emptyAvatar};
-				}
-			}
-			else if ("iconClass" in config && config.iconClass in Icons)
-			{
-				imageSource.svg = {content: Icons[config.iconClass]};
-			}
+
 			const selected = config.selected === true;
 
 			return View(
@@ -284,16 +272,7 @@
 							width: 59
 						}
 					},
-					Image({
-							style: {
-								width: !this.state.largeIcons && iconIsAvatar ? 23 : 34,
-								height: !this.state.largeIcons && iconIsAvatar ? 23 : 34,
-								borderRadius: iconIsAvatar ? (this.state.largeIcons ? 17 : 11.5) : 0,
-							},
-							resizeMode: iconIsAvatar ? "cover" : "center",
-							...imageSource
-						}
-					),
+					iconIsAvatar && this.state.avatar,
 				),
 
 				showMuted && Image({

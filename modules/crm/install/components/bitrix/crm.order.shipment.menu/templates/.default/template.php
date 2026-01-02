@@ -10,11 +10,11 @@ if (!empty($arResult['BUTTONS']))
 	$template = 'type2';
 	if($type === 'list')
 	{
-		$template = SITE_TEMPLATE_ID === 'bitrix24' ? 'title' : '';
+		$template = 'title';
 	}
 	else if($type === 'details')
 	{
-		$template = SITE_TEMPLATE_ID === 'bitrix24' ? 'slider' : 'type2';
+		$template = 'slider';
 	}
 
 	$APPLICATION->IncludeComponent(

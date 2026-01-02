@@ -1,14 +1,12 @@
+import type { Store } from 'ui.vue3.vuex';
+
 import { Model } from 'booking.const';
 import { Core } from 'booking.core';
-import { ApiClient } from 'booking.lib.api-client';
+import { apiClient } from 'booking.lib.api-client';
+import type { MessageModel } from 'booking.model.bookings';
 
 class BookingActionsService
 {
-	async getDealData(bookingId: string): Promise<void>
-	{
-		return Promise.resolve();
-	}
-
 	async getDocData(bookingId: string): Promise<void>
 	{
 		return Promise.resolve();
@@ -16,21 +14,31 @@ class BookingActionsService
 
 	async getMessageData(bookingId: number): Promise<void>
 	{
-		const status = await (new ApiClient()).post('MessageStatus.get', { bookingId });
+		const status = await apiClient.post('MessageStatus.get', { bookingId });
 
 		await Promise.all([
-			Core.getStore().dispatch(`${Model.MessageStatus}/upsert`, { bookingId, status }),
+			this.$store.dispatch(`${Model.MessageStatus}/upsert`, { bookingId, status }),
 		]);
 	}
 
 	async sendMessage(bookingId: number, notificationType: string): Promise<void>
 	{
-		return (new ApiClient()).post('Message.send', { bookingId, notificationType });
+		const message: MessageModel = await apiClient.post('Message.send', { bookingId, notificationType });
+
+		const booking = this.$store.getters[`${Model.Bookings}/getById`](bookingId);
+
+		void this.$store.dispatch(`${Model.Bookings}/update`, {
+			id: booking.id,
+			booking: {
+				...booking,
+				messages: [...(booking.messages ?? []), message],
+			},
+		});
 	}
 
-	async getVisitData(bookingId: string): Promise<void>
+	get $store(): Store
 	{
-		return Promise.resolve();
+		return Core.getStore();
 	}
 }
 

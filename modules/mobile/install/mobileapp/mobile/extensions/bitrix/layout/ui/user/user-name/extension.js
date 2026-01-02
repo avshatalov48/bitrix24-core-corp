@@ -86,7 +86,7 @@ jn.define('layout/ui/user/user-name', (require, exports, module) => {
 	UserName.propTypes = {
 		textElement: PropTypes.func,
 		testId: PropTypes.string.isRequired,
-		id: PropTypes.number,
+		id: PropTypes.oneOfType([PropTypes.string, PropTypes.number]),
 		name: PropTypes.string,
 		color: PropTypes.instanceOf(Color),
 		entityType: PropTypes.instanceOf(UserType),

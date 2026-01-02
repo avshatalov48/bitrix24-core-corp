@@ -1,2 +1,0 @@
-<?php
-$MESS["TASKSMOBILE_TASKS_TASK_TABS_TASK_REMOVED_NOTIFICATION"] = "Task has been deleted.";

@@ -258,8 +258,11 @@ jn.define('crm/communication/button', (require, exports, module) => {
 					.then((data) => {
 						if (openLinesAccess === true || (data && data.canEditConnector))
 						{
-							resolve();
-							this.telegramConnectorManager.openEditor();
+							resolve({
+								closeCallback: () => {
+									this.telegramConnectorManager.openEditor();
+								},
+							});
 						}
 						else
 						{

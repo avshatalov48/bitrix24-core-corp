@@ -14,6 +14,7 @@ use Bitrix\Sign\Result\Service\Sign\Document\CreateGroupResult;
 use Bitrix\Sign\Service\Container;
 use Bitrix\Sign\Type\Access\AccessibleItemType;
 use Bitrix\Sign\Operation;
+use Bitrix\Sign\Type\ProviderCode;
 
 final class Group extends Controller
 {
@@ -103,23 +104,24 @@ final class Group extends Controller
 	)]
 	public function documentListAction(int $groupId): array
 	{
-		if (!Storage::instance()->isB2eAvailable())
-		{
+		if (!Storage::instance()->isB2eAvailable()) {
 			$this->addError(new Error('B2E is not available'));
 
 			return [];
 		}
 
-		if ($groupId < 1)
-		{
+		if ($groupId < 1) {
 			$this->addError(new Error('Invalid group id'));
 
 			return [];
 		}
 
-		$documentList = Container::instance()->getDocumentGroupService()->getDocumentList($groupId);
+		$documentList = Container::instance()->getDocumentGroupService()->getDraftDocumentList($groupId);
 
-		return $documentList->toArray();
+		return array_map(
+			fn(Document $document) => (new \Bitrix\Sign\Ui\ViewModel\Wizard\Document($document))->toArray(),
+			$documentList->toArray()
+		);
 	}
 
 	#[Attribute\Access\LogicOr(

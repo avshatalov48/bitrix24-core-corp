@@ -12,6 +12,10 @@ if(!defined("B_PROLOG_INCLUDED") || B_PROLOG_INCLUDED !== true) die();
 	'ui.buttons',
 	'ui.buttons.icons',
 ]);
+ 
+ CJSCore::Init([
+ 	'CJSTask',
+ ]);
 
 Loc::loadMessages(__FILE__);
 
@@ -32,6 +36,8 @@ $helper = $arResult['HELPER'];
 $taskId = $arParams["TASK_ID"];
 $can = $arParams["TASK"]["ACTION"];
 $taskData = $arParams["TASK"];
+ 
+\Bitrix\Main\Page\Asset::getInstance()->addJs('/bitrix/js/tasks/task-iframe-popup.js');
 
  if (\Bitrix\Main\ModuleManager::isModuleInstalled('rest'))
  {
@@ -49,8 +55,15 @@ $taskData = $arParams["TASK"];
 		 array('HIDE_ICONS' => 'Y')
 	 );
  }
-
-
+ 
+$timeManagerData = [];
+if (Loader::includeModule('intranet'))
+{
+	$intranetData = CIntranetPlanner::getData(SITE_ID, true);
+	CIntranetPlanner::initScripts($intranetData);
+	
+	$timeManagerData = $intranetData['DATA'];
+}
 ?>
 
 <div id="<?=$helper->getScopeId()?>" class="task-view-buttonset <?=implode(' ', $arResult['CLASSES'])?>">
@@ -122,8 +135,10 @@ $taskData = $arParams["TASK"];
 
 	<script>
 		BX.message({
-			TASKS_REST_BUTTON_TITLE_2: '<?=Loc::getMessage('TASKS_REST_BUTTON_TITLE_2')?>',
+			TASKS_REST_BUTTON_TITLE_MSGVER_1: '<?=Loc::getMessage('TASKS_REST_BUTTON_TITLE_MSGVER_1')?>',
 			TASKS_DELETE_SUCCESS: '<?= Loader::includeModule('recyclebin') ? Task::getDeleteMessage((int)$arParams['USER_ID']) : Loc::getMessage('TASKS_DELETE_SUCCESS') ?>'
 		});
+		
+		BX.TasksTimerManager.onDataRecieved(<?=\Bitrix\Main\Web\Json::encode($timeManagerData)?>);
 	</script>
 <?$helper->initializeExtension();?>

@@ -7,3 +7,10 @@ $MESS['M_INTRANET_CREATE_DEPARTMENT_HEAD_OF_DEPARTMENT_SELECTOR_TITLE'] = 'Ру�
 $MESS['M_INTRANET_CREATE_DEPARTMENT_NAME_INPUT_ERROR'] = 'Введите название отдела';
 $MESS['M_INTRANET_CREATE_DEPARTMENT_SAVE_TOAST_SUCCESS_MESSAGE'] = 'Отдел создан';
 $MESS['M_INTRANET_CREATE_DEPARTMENT_SAVE_TOAST_ERROR_MESSAGE'] = 'Что-то пошло не так, отдел не был создан';
+
+$MESS['M_INTRANET_CREATE_DEPARTMENT_NO_PERMISSIONS_BOX_TITLE'] = 'Новый отдел';
+$MESS['M_INTRANET_CREATE_DEPARTMENT_NO_PERMISSIONS_TITLE'] = "Недостаточно прав\nна добавление новых отделов";
+$MESS['M_INTRANET_CREATE_SUBDEPARTMENT_NO_PERMISSIONS_TITLE'] = "Новый отдел не может быть\nв подчинении у выбранного отдела";
+$MESS['M_INTRANET_CREATE_DEPARTMENT_NO_PERMISSIONS_DESCRIPTION'] = "Обратитесь к администратору\nвашего Битрикс24";
+$MESS['M_INTRANET_CREATE_SUBDEPARTMENT_NO_PERMISSIONS_DESCRIPTION'] = "Выберите другой\nвышестоящий отдел";
+$MESS['M_INTRANET_CREATE_DEPARTMENT_NO_PERMISSIONS_BUTTON_TEXT'] = 'Закрыть';

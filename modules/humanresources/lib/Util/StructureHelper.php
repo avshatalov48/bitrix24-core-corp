@@ -7,6 +7,7 @@ use Bitrix\HumanResources\Item;
 use Bitrix\HumanResources\Item\Node;
 use Bitrix\HumanResources\Item\NodeMember;
 use Bitrix\HumanResources\Service\Container;
+use Bitrix\HumanResources\Type\NodeEntityType;
 use Bitrix\Main\ArgumentException;
 use Bitrix\Main\ObjectPropertyException;
 use Bitrix\Main\SystemException;
@@ -63,16 +64,16 @@ class StructureHelper
 	 *     parentId: int|null,
 	 *     name: string,
 	 *     description: string|null,
-	 *     heads: array{
+	 *     heads: array<int, array{
 	 *         id: int,
 	 *         name: string,
 	 *         avatar: string,
 	 *         url: string,
 	 *         role: string,
 	 *         workPosition: string|null
-	 *     },
+	 *     }>,
 	 *     userCount: int
-	 * }
+ * }
 	 */
 	public static function getNodeInfo(Item\Node $node, bool $withHeads = false): array
 	{
@@ -95,6 +96,8 @@ class StructureHelper
 			'description' => $node->description ?? '',
 			'accessCode' => $node->accessCode,
 			'userCount' => $countByStructureId[$node->structureId][$node->id] ?? 0,
+			'entityType' => $node->type->value,
+			'colorName' => $node->colorName,
 		];
 
 		if ($withHeads)
@@ -109,18 +112,35 @@ class StructureHelper
 	{
 		$headUsers = [];
 		$roleRepository  = Container::getRoleRepository();
-		static $headRole = null;
+		$headRole = null;
 
-		if (!$headRole)
+		if ($node->type === NodeEntityType::DEPARTMENT)
 		{
-			$headRole = $roleRepository->findByXmlId(NodeMember::DEFAULT_ROLE_XML_ID['HEAD']);
+			static $departmentHeadRole = null;
+			if (!$departmentHeadRole)
+			{
+				$departmentHeadRole = $roleRepository->findByXmlId(NodeMember::DEFAULT_ROLE_XML_ID['HEAD']);
+			}
+
+			$headRole = $departmentHeadRole;
 		}
 
-		$nodeMemberService = Container::getNodeMemberService();
+		if ($node->type === NodeEntityType::TEAM)
+		{
+			static $teamHeadRole = null;
+			if (!$teamHeadRole)
+			{
+				$teamHeadRole = $roleRepository->findByXmlId(NodeMember::TEAM_ROLE_XML_ID['TEAM_HEAD']);
+			}
+
+			$headRole = $teamHeadRole;
+		}
+
+		$nodeMemberRepository = Container::getNodeMemberRepository();
 		$userService = Container::getUserService();
 		if ($headRole)
 		{
-			$headEmployees = $nodeMemberService->getDefaultHeadRoleEmployees($node->id);
+			$headEmployees = $nodeMemberRepository->findAllByRoleIdAndNodeId($headRole->id, $node->id);
 			if (!$headEmployees->empty())
 			{
 				$headUserCollection = $userService->getUserCollectionFromMemberCollection($headEmployees);
@@ -133,13 +153,27 @@ class StructureHelper
 			}
 		}
 
-		$nodeMemberRepository = Container::getNodeMemberRepository();
-
-		static $deputyHeadRole = null;
-
-		if (!$deputyHeadRole)
+		$deputyHeadRole = null;
+		if ($node->type === NodeEntityType::DEPARTMENT)
 		{
-			$deputyHeadRole = $roleRepository->findByXmlId(NodeMember::DEFAULT_ROLE_XML_ID['DEPUTY_HEAD']);
+			static $departmentDeputyHeadRole = null;
+			if (!$departmentDeputyHeadRole)
+			{
+				$departmentDeputyHeadRole = $roleRepository->findByXmlId(NodeMember::DEFAULT_ROLE_XML_ID['DEPUTY_HEAD']);
+			}
+
+			$deputyHeadRole = $departmentDeputyHeadRole;
+		}
+
+		if ($node->type === NodeEntityType::TEAM)
+		{
+			static $teamDeputyHeadRole = null;
+			if (!$teamDeputyHeadRole)
+			{
+				$teamDeputyHeadRole = $roleRepository->findByXmlId(NodeMember::TEAM_ROLE_XML_ID['TEAM_DEPUTY_HEAD']);
+			}
+
+			$deputyHeadRole = $teamDeputyHeadRole;
 		}
 
 		if ($deputyHeadRole)

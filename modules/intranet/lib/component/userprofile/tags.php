@@ -126,6 +126,13 @@ class Tags
 		return $result;
 	}
 
+	/**
+	 * @param array $params
+	 * @param int $params['limit'] - Limit of tags to return
+	 * @param string $params['searchString'] - Search string for tags
+	 * @param bool $params ['excludeUserTags'] = true - exclude tags that the user already has
+	 * @return array
+	 */
 	public function searchTagsAction(array $params = array())
 	{
 		$result = [];
@@ -141,6 +148,8 @@ class Tags
 				? trim($params['searchString'])
 				: ''
 		);
+
+		$excludeUserTags = $params['excludeUserTags'] ?? true;
 
 		$query = new Entity\Query(\Bitrix\Socialnetwork\UserTagTable::getEntity());
 		$query->setSelect(['NAME', 'CNT']);
@@ -168,9 +177,14 @@ class Tags
 			)
 		);
 
-		$filter = [
-			'=REF_NAME.NAME' => null
-		];
+		$filter = [];
+		if ($excludeUserTags)
+		{
+			$filter = [
+				'=REF_NAME.NAME' => null
+			];
+		}
+
 
 		if (!empty($searchString))
 		{
@@ -178,7 +192,9 @@ class Tags
 		}
 
 		$query->setFilter($filter);
-		$query->setLimit(5);
+
+		$limit = $params['limit'] ?? 5;
+		$query->setLimit($limit);
 
 		$res = $query->exec();
 

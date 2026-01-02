@@ -9,12 +9,12 @@ use Bitrix\AI\Engine\IQueue;
 use Bitrix\AI\Engine\IQueueOptional;
 use Bitrix\AI\Facade\Bitrix24;
 use Bitrix\AI\Facade\User;
-use Bitrix\AI\Guard\ShowCopilotGuard;
 use Bitrix\AI\Limiter\Enums\ErrorLimit;
 use Bitrix\AI\Limiter\LimitControlService;
 use Bitrix\AI\Limiter\ReserveRequest;
 use Bitrix\AI\Limiter\Usage;
 use Bitrix\AI\Payload\IPayload;
+use Bitrix\AI\Services\CopilotAccessCheckerService;
 use Bitrix\Main\Config\Option;
 use Bitrix\Main\Engine\CurrentUser;
 use Bitrix\Main\Error;
@@ -306,9 +306,10 @@ class Engine
 	 */
 	public static function getByCategory(string $category, Context $context, ?Quality $quality = null): ?self
 	{
-		/** @var ShowCopilotGuard $showCopilotGuard */
-		$showCopilotGuard = Container::init()->getItem(ShowCopilotGuard::class);
-		if (!$showCopilotGuard->hasAccess(CurrentUser::get()->getId()))
+		/** @var CopilotAccessCheckerService $copilotAccessCheckerService */
+		$copilotAccessCheckerService = Container::init()->getItem(CopilotAccessCheckerService::class);
+		$userId = CurrentUser::get()->getId();
+		if (!$copilotAccessCheckerService->canAccessEngines($userId))
 		{
 			return null;
 		}
@@ -727,7 +728,7 @@ class Engine
 	 */
 	public function completions(bool $queue = false): void
 	{
-		if (Config::getValue('force_queue') === 'Y' && $this->isNotTranslatePicturePrompt())
+		if (Option::get('ai', 'force_queue', 'Y') === 'Y' && $this->isNotTranslatePicturePrompt())
 		{
 			$queue = true;
 		}

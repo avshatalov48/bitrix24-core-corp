@@ -23,6 +23,11 @@
 		this.additionalQueryParameters = parameters.additionalQueryParameters || {};
 		this.service = null;
 		this.popupConfirm = null;
+
+		if (BX.type.isFunction(parameters.onAfterCreateFile))
+		{
+			this.onAfterCreateFile = parameters.onAfterCreateFile;
+		}
 	};
 
 	BX.Disk.Document.CreateProcess.prototype =
@@ -38,6 +43,26 @@
 				typeFile: this.typeFile,
 				targetFolderId: this.targetFolderId
 			}, this.additionalQueryParameters)
+		},
+
+		openInNewTab: function ()
+		{
+			const newTab = window.open('', '_blank');
+
+			BX.ajax.runAction('disk.api.documentService.goToCreate', {
+				data: {
+					serviceCode: this.serviceCode,
+					typeFile: this.typeFile,
+					targetFolderId: this.targetFolderId,
+					createByUnifiedLink: true,
+				},
+			}).then((response) => {
+				newTab.location.href = response.data.openUrl;
+
+				this.onAfterCreateFile(response);
+			}).catch((error) => {
+				console.error(error);
+			});
 		},
 
 		getSliderData: function ()

@@ -6,10 +6,10 @@ if (!CModule::IncludeModule('crm'))
 	ShowError(GetMessage('CRM_MODULE_NOT_INSTALLED'));
 	return;
 }
+$crmUserPermissions = \Bitrix\Crm\Service\Container::getInstance()->getUserPermissions();
+$currentUserID = $arResult['USER_ID'] = $arParams['USER_ID'] = $crmUserPermissions->getUserId();
 
-$currentUserID = $arResult['USER_ID'] = $arParams['USER_ID'] = intval(CCrmSecurityHelper::GetCurrentUserID());
-$userPerms = CCrmPerms::GetCurrentUserPermissions();
-if (!$userPerms->IsAccessEnabled())
+if (!$crmUserPermissions->entityType()->canReadSomeItemsInCrm())
 {
 	ShowError(GetMessage('CRM_PERMISSION_DENIED'));
 	return;
@@ -199,10 +199,10 @@ $arResult['RELOAD_URL'] = $APPLICATION->GetCurPageParam(
 
 //Require any update permission
 $arResult['PERMISSIONS'] = array(
-	'CREATE' => CCrmLead::CheckUpdatePermission(0, $userPerms)
-		|| CCrmCompany::CheckUpdatePermission(0, $userPerms)
-		|| CCrmContact::CheckUpdatePermission(0, $userPerms)
-		|| CCrmDeal::CheckUpdatePermission(0, $userPerms)
+	'CREATE' => $crmUserPermissions->entityType()->canUpdateItems(CCrmOwnerType::Lead)
+		|| $crmUserPermissions->entityType()->canUpdateItems(CCrmOwnerType::Contact)
+		|| $crmUserPermissions->entityType()->canUpdateItems(CCrmOwnerType::Company)
+		|| $crmUserPermissions->entityType()->canUpdateItems(CCrmOwnerType::Deal)
 );
 
 $format = isset($_REQUEST['FORMAT'])? mb_strtolower($_REQUEST['FORMAT']) : '';

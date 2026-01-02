@@ -95,7 +95,7 @@ abstract class EntityDataProvider extends DataProvider
 				return;
 			}
 
-			if ($this->source === null || (is_numeric($this->source) && (int)$this->source <= 0))
+			if ($this->isEmptySource())
 			{
 				return;
 			}
@@ -114,6 +114,26 @@ abstract class EntityDataProvider extends DataProvider
 				$this->data = $data;
 			}
 		}
+	}
+
+	private function isEmptySource(): bool
+	{
+		if ($this->source === null)
+		{
+			return true;
+		}
+
+		if (is_string($this->source) && trim($this->source) === '')
+		{
+			return true;
+		}
+
+		if (is_numeric($this->source) && (int)$this->source <= 0)
+		{
+			return true;
+		}
+
+		return false;
 	}
 
 	/**

@@ -62,7 +62,6 @@ jn.define('ui-system/form/inputs/phone', (require, exports, module) => {
 				onChange: this.handleOnChangeNumber,
 				onClickLeftContent: this.handleOnClickLeftContent,
 				keyboardType: 'phone-pad',
-				placeholder: null,
 			};
 		}
 
@@ -80,6 +79,13 @@ jn.define('ui-system/form/inputs/phone', (require, exports, module) => {
 		}
 
 		handleOnClickLeftContent = async () => {
+			if (!this.#isEnable())
+			{
+				this.handleOnClick(this.getValue());
+
+				return;
+			}
+
 			const { phoneNumber } = await showCountryPicker({ phoneNumber: this.getValue() });
 
 			this.handleOnChangeNumber(phoneNumber);
@@ -204,6 +210,32 @@ jn.define('ui-system/form/inputs/phone', (require, exports, module) => {
 			const { onChange } = this.props;
 
 			onChange?.(value);
+		}
+
+		handleOnClick()
+		{
+			const { onClick } = this.props;
+
+			onClick?.();
+		}
+
+		#isDisabled()
+		{
+			const { disabled } = this.props;
+
+			return Boolean(disabled);
+		}
+
+		#isReadOnly()
+		{
+			const { readOnly } = this.props;
+
+			return Boolean(readOnly);
+		}
+
+		#isEnable()
+		{
+			return !this.#isReadOnly() && !this.#isDisabled();
 		}
 	}
 

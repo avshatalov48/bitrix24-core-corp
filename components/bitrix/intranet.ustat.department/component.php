@@ -12,7 +12,6 @@ if (!\Bitrix\Intranet\UStat\UStat::checkAvailableCompanyPulseAndNotifyAdmin())
 		'SUM_INVOLVEMENT' => 0,
 		'SUM_ACTIVITY' => 0,
 		'MAX_ACTIVITY' => 1,
-		'ALLOW_TELL_ABOUT' => false,
 		'USERS_RATING' => [],
 		'USERS_INFO' => [],
 		'SECTION_DATA' => [],
@@ -354,19 +353,6 @@ while ($row = $result->fetch())
 	$usersInfo[$row['ID']] = $row;
 }
 
-// if user has a right to tell about servies
-$allowTellAbout = false;
-if ($USER->IsAdmin()
-	|| CModule::IncludeModule("bitrix24") && CBitrix24::IsPortalAdmin($USER->GetID())
-	|| in_array((int)$USER->getId(), \Bitrix\Intranet\UStat\UStat::getHeadsOfDepartments(), true)
-)
-{
-	$allowTellAbout = true;
-}
-
-// forced disabling
-$allowTellAbout = false;
-
 // test
 if (array_key_exists('utest', $_REQUEST))
 {
@@ -384,7 +370,6 @@ $arResult = array(
 	'SUM_INVOLVEMENT' => $sumInvolvement,
 	'SUM_ACTIVITY' => $sumActivity,
 	'MAX_ACTIVITY' => $maxActivity,
-	'ALLOW_TELL_ABOUT' => $allowTellAbout,
 	'USERS_RATING' => $usersRating,
 	'USERS_INFO' => $usersInfo,
 	'SECTION_DATA' => $sectionData,

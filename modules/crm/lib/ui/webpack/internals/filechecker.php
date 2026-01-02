@@ -144,7 +144,7 @@ final class FileChecker
 		}
 
 		$agentName = self::class . "::checkAsAgent();";
-		if (\CAgent::GetList(null, ['NAME' => $agentName, 'MODULE_ID' => 'crm'])->Fetch())
+		if (\CAgent::GetList([], ['NAME' => $agentName, 'MODULE_ID' => 'crm'])->Fetch())
 		{
 			return;
 		}

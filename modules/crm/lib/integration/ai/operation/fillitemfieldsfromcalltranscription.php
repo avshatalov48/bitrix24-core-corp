@@ -2,6 +2,8 @@
 
 namespace Bitrix\Crm\Integration\AI\Operation;
 
+use Bitrix\AI\Engine;
+use Bitrix\AI\Quality;
 use Bitrix\Crm\Badge;
 use Bitrix\Crm\Dto\Dto;
 use Bitrix\Crm\Entity\FieldDataProvider;
@@ -14,6 +16,8 @@ use Bitrix\Crm\Integration\AI\ErrorCode;
 use Bitrix\Crm\Integration\AI\JobRepository;
 use Bitrix\Crm\Integration\AI\Model\EO_Queue;
 use Bitrix\Crm\Integration\AI\Model\QueueTable;
+use Bitrix\Crm\Integration\AI\Operation\Payload\Payload\ExtractFormFields;
+use Bitrix\Crm\Integration\AI\Operation\Payload\PayloadFactory;
 use Bitrix\Crm\Integration\AI\Result;
 use Bitrix\Crm\Integration\Analytics\Builder\AI\AIBaseEvent;
 use Bitrix\Crm\Integration\Analytics\Builder\AI\ExtractFieldsEvent;
@@ -26,11 +30,6 @@ use Bitrix\Crm\Timeline\AI\Call\Controller;
 use Bitrix\Main\ArgumentException;
 use Bitrix\Main\ArgumentNullException;
 use Bitrix\Main\Localization\Loc;
-use Bitrix\Main\Security\Random;
-use Bitrix\Main\UserField\Types\DoubleType;
-use Bitrix\Main\UserField\Types\IntegerType;
-use Bitrix\Main\UserField\Types\StringType;
-use Bitrix\Main\Web\Json;
 use CCrmOwnerType;
 
 class FillItemFieldsFromCallTranscription extends AbstractOperation
@@ -60,6 +59,16 @@ class FillItemFieldsFromCallTranscription extends AbstractOperation
 		parent::__construct($target, $userId, $parentJobId);
 	}
 
+	public static function isAccessGranted(int $userId, ItemIdentifier $target): bool
+	{
+		return parent::isAccessGranted($userId, $target)
+			&& Container::getInstance()->getUserPermissions($userId)->item()->canUpdate(
+				$target->getEntityTypeId(),
+				$target->getEntityId()
+			)
+		;
+	}
+
 	public static function isSuitableTarget(ItemIdentifier $target): bool
 	{
 		return in_array($target->getEntityTypeId(), self::SUPPORTED_TARGET_ENTITY_TYPE_IDS, true);
@@ -87,79 +96,11 @@ class FillItemFieldsFromCallTranscription extends AbstractOperation
 
 	protected function getAIPayload(): \Bitrix\Main\Result
 	{
-		$fields = [
-			// unallocated data
-			'comment' => 'list[string]',
-		];
-
-		// sent to AI all available fields, regardless of user
-		foreach (self::getAllSuitableFields($this->target->getEntityTypeId()) as $fieldDescription)
-		{
-			if ($fieldDescription['MULTIPLE'])
-			{
-				$type = 'list[' . $fieldDescription['TYPE'] . ']';
-			}
-			else
-			{
-				$type = $fieldDescription['TYPE'];
-			}
-
-			$fields[$fieldDescription['NAME']] = "{$type} or null";
-		}
-
-		return (new \Bitrix\Main\Result())->setData([
-			'payload' => (new \Bitrix\AI\Payload\Prompt('extract_form_fields'))
-				->setMarkers(['original_message' => $this->summary, 'fields' => $fields])
-			,
-		]);
-	}
-
-	protected function getStubPayload(): mixed
-	{
-		$generateSingleStubValue = static function(string $type): mixed {
-			return match ($type) {
-				StringType::USER_TYPE_ID => Random::getString(4, true),
-				IntegerType::USER_TYPE_ID => Random::getInt(0, 10_000),
-				DoubleType::USER_TYPE_ID => Random::getInt(0, 100_000) * 0.1,
-				default => null,
-			};
-		};
-
-		$fields = [
-			// unallocated data
-			'comment' => [
-				'This is stub of an unallocated data',
-				'Imagine that it was returned by AI',
-				'(Some supermagic info here)',
-			],
-		];
-		foreach (self::getAllSuitableFields($this->target->getEntityTypeId()) as $fieldDescription)
-		{
-			if ($fieldDescription['MULTIPLE'])
-			{
-				$numberOfElements = Random::getInt(-1, 3);
-				if ($numberOfElements < 0)
-				{
-					$value = null;
-				}
-				else
-				{
-					$value = [];
-					while (count($value) < $numberOfElements)
-					{
-						$value[] = $generateSingleStubValue($fieldDescription['TYPE']);
-					}
-				}
-			}
-			else
-			{
-				$value = Random::getInt(0, 1) ? $generateSingleStubValue($fieldDescription['TYPE']) : null;
-			}
-
-			$fields[$fieldDescription['NAME']] = $value;
-		}
-
-		return Json::encode($fields);
+		return PayloadFactory::build(self::TYPE_ID, $this->userId, $this->target)
+			->setMarkers([
+				'original_message' => $this->summary,
+			])->getResult()
+		;
 	}
 
 	final protected function getContextLanguageId(): string
@@ -192,7 +133,7 @@ class FillItemFieldsFromCallTranscription extends AbstractOperation
 		}
 
 		$map = [];
-		foreach (self::getAllSuitableFields($job->requireEntityTypeId()) as $singleFieldDescription)
+		foreach (ExtractFormFields::getAllSuitableFields($job->requireEntityTypeId()) as $singleFieldDescription)
 		{
 			$map[$singleFieldDescription['NAME']] = $singleFieldDescription;
 		}
@@ -211,7 +152,7 @@ class FillItemFieldsFromCallTranscription extends AbstractOperation
 			{
 				$candidate = new MultipleFieldFillPayload([
 					'name' => $fieldDescription['ID'],
-					'aiValues' => $value,
+					'aiValues' => ExtractFormFields::prepareValue($fieldDescription, $value),
 				]);
 				if (!$candidate->hasValidationErrors())
 				{
@@ -222,7 +163,7 @@ class FillItemFieldsFromCallTranscription extends AbstractOperation
 			{
 				$candidate = new SingleFieldFillPayload([
 					'name' => $fieldDescription['ID'],
-					'aiValue' => $value,
+					'aiValue' => ExtractFormFields::prepareValue($fieldDescription, $value),
 				]);
 				if (!$candidate->hasValidationErrors())
 				{
@@ -234,7 +175,7 @@ class FillItemFieldsFromCallTranscription extends AbstractOperation
 		return new FillItemFieldsFromCallTranscriptionPayload([
 			'singleFields' => $singleFields,
 			'multipleFields' => $multipleFields,
-			'unallocatedData' => self::extractPayloadString($json['comment'] ?? ''),
+			'unallocatedData' => self::extractPayloadString($json['comment'] ?? $json['comments'] ?? ''),
 		]);
 	}
 
@@ -264,7 +205,11 @@ class FillItemFieldsFromCallTranscription extends AbstractOperation
 				$aiValue = $fieldDto->aiValue;
 
 				//todo will it work for list fields?
-				if (!$field->isValueEmpty($itemValue) && !$field->isValueEmpty($aiValue) && (string)$itemValue !== (string)$aiValue)
+				if (
+					!$field->isValueEmpty($itemValue)
+					&& !$field->isValueEmpty($aiValue)
+					&& (string)$itemValue !== (string)$aiValue
+				)
 				{
 					$fieldDto->isConflict = true;
 				}
@@ -525,7 +470,7 @@ class FillItemFieldsFromCallTranscription extends AbstractOperation
 					[
 						'OPERATION_TYPE_ID' => self::TYPE_ID,
 						'ENGINE_ID' => self::$engineId,
-						'ERRORS' => $result->getErrorMessages(),
+						'ERRORS' => array_unique($result->getErrorMessages()),
 					],
 					$result->getUserId(),
 				);
@@ -576,16 +521,13 @@ class FillItemFieldsFromCallTranscription extends AbstractOperation
 		;
 	}
 
-	private static function getAllSuitableFields(int $entityTypeId): array
-	{
-		return (new FieldDataProvider($entityTypeId, Context::SCOPE_AI))->getFieldData();
-	}
-
 	private static function getAutomaticallyHandledFields(Item $item, int $userId): array
 	{
 		$categoryId = $item->isCategoriesSupported() ? $item->getCategoryId() : null;
 
-		return (new FieldDataProvider($item->getEntityTypeId(), Context::SCOPE_AI))->getDisplayedInEntityEditorFieldData($userId, $categoryId);
+		return (new FieldDataProvider($item->getEntityTypeId(), Context::SCOPE_AI))
+			->getDisplayedInEntityEditorFieldData($userId, $categoryId)
+		;
 	}
 
 	public static function actualizeResult(Result $result, ?int $userId = null): Result
@@ -673,5 +615,13 @@ class FillItemFieldsFromCallTranscription extends AbstractOperation
 	protected static function getJobFinishEventBuilder(): AIBaseEvent
 	{
 		return new ExtractFieldsEvent();
+	}
+
+	protected static function setQuality(Engine $engine): void
+	{
+		if (isset(Quality::QUALITIES['fields_highlight']) && method_exists($engine->getIEngine(), 'setQuality'))
+		{
+			$engine->getIEngine()->setQuality(Quality::QUALITIES['fields_highlight']);
+		}
 	}
 }

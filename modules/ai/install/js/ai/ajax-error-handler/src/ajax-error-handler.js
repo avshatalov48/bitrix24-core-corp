@@ -6,6 +6,8 @@ export type HandleGenerateErrorParams = {
 	baasBindElement: HTMLElement;
 	baasContext: string;
 	baasOptions: HandleGenerateErrorParamsBaasOptions;
+	showSliderWithMsg?: string;
+	sliderCode?: string;
 };
 
 type HandleGenerateErrorParamsBaasOptions = {
@@ -43,7 +45,7 @@ export class AjaxErrorHandler
 		{
 			case ErrorCode.MONTHLY_LIMIT:
 			{
-				return this.#handleMonthlyLimitError();
+				return this.#handleMonthlyLimitError(handleGenerateErrorParams?.sliderCode);
 			}
 
 			case ErrorCode.DAILY_LIMIT:
@@ -58,6 +60,10 @@ export class AjaxErrorHandler
 
 			case ErrorCode.BAAS_LIMIT:
 			{
+				if (handleGenerateErrorParams?.showSliderWithMsg && handleGenerateErrorParams?.sliderCode) {
+					return this.#handleMonthlyLimitError(handleGenerateErrorParams.sliderCode);
+				}
+
 				return this.#handleBaasLimitError(handleGenerateErrorParams.baasOptions);
 			}
 
@@ -113,10 +119,10 @@ export class AjaxErrorHandler
 		);
 	}
 
-	static #handleMonthlyLimitError(): void
+	static #handleMonthlyLimitError(sliderCode: ?string): void
 	{
 		AjaxErrorHandler.#showInfoHelper(
-			AjaxErrorHandler.#replaceSliderCodeWithBoxLimitCodeIfBox('limit_copilot_requests'),
+			sliderCode ?? 'limit_copilot_requests',
 		);
 	}
 
@@ -146,13 +152,6 @@ export class AjaxErrorHandler
 	static #handleBaasLimitError(baasOptions: HandleGenerateErrorParamsBaasOptions): void
 	{
 		const { bindElement, context, useAngle = true, useSlider = false } = baasOptions;
-
-		if (AjaxErrorHandler.#isCloud() === false)
-		{
-			AjaxErrorHandler.#showInfoHelper(AjaxErrorHandler.#boxLimitSliderCode);
-
-			return;
-		}
 
 		if (useSlider)
 		{
@@ -203,7 +202,7 @@ export class AjaxErrorHandler
 		{
 			case ErrorCode.MONTHLY_LIMIT:
 			{
-				return this.#handleMonthlyLimitError();
+				return this.#handleMonthlyLimitError(handleGenerateErrorParams?.sliderCode);
 			}
 
 			case ErrorCode.DAILY_LIMIT:
@@ -218,6 +217,10 @@ export class AjaxErrorHandler
 
 			case ErrorCode.BAAS_LIMIT:
 			{
+				if (handleGenerateErrorParams?.showSliderWithMsg && handleGenerateErrorParams?.sliderCode) {
+					return this.#handleMonthlyLimitError(handleGenerateErrorParams.sliderCode);
+				}
+
 				return this.#handleBaasLimitError(handleGenerateErrorParams.baasOptions);
 			}
 

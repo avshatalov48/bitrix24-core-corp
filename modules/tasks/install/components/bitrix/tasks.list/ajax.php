@@ -120,7 +120,7 @@ if (check_bitrix_sessid())
 				$bGannt = (isset($_POST['bGannt']) ? (bool)$_POST['bGannt'] : false);
 				if($bGannt)
 				{
-					$res = \Bitrix\Tasks\Task\DependenceTable::getListByLegacyTaskFilter($arFilter);
+					$res = \Bitrix\Tasks\Internals\Task\ProjectDependenceTable::getListByLegacyTaskFilter($arFilter);
 					while($item = $res->fetch())
 					{
 						if(isset($arTasks[$item['TASK_ID']]))
@@ -150,7 +150,7 @@ if (check_bitrix_sessid())
 
 				$i = 0;
 				$iMax = count($arTasks);
-				$bIsJSON = ($_POST["type"] === "json");
+				$bIsJSON = (($_POST["type"] ?? null) === "json");
 				if ($bIsJSON)
 				{
 					echo "[";
@@ -207,7 +207,7 @@ if (check_bitrix_sessid())
 							"NAME_TEMPLATE" => $nameTemplate,
 							'DATA_COLLECTION' => array(
 								array(
-									"CHILDREN_COUNT"   => $arChildrenCount["PARENT_" . $task["ID"]],
+									"CHILDREN_COUNT"   => $arChildrenCount["PARENT_" . $task["ID"]] ?? null,
 									"DEPTH"            => $depth,
 									"UPDATES_COUNT"    => $arUpdatesCount[$task["ID"]],
 									"PROJECT_EXPANDED" => true,

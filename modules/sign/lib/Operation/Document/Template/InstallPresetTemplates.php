@@ -3,6 +3,7 @@
 namespace Bitrix\Sign\Operation\Document\Template;
 
 use Bitrix\Main;
+use Bitrix\Sign\Config\Storage;
 use Bitrix\Sign\Contract\Operation;
 use Bitrix\Sign\Operation\Document\UnserializePortableBlank;
 use Bitrix\Sign\Result\Operation\Document\Template\InstallPresetTemplatesResult;
@@ -19,15 +20,19 @@ class InstallPresetTemplates implements Operation
 
 	private readonly B2eTariffRestrictionService $b2ETariffRestrictionService;
 	private readonly PresetTemplatesService $presetTemplatesService;
+	private readonly Storage $storage;
 
 	public function __construct(
+		private readonly int $createdById,
 		?B2eTariffRestrictionService $b2ETariffRestrictionService = null,
 		?PresetTemplatesService $presetTemplatesService = null,
+		?Storage $storage = null,
 	)
 	{
 		$container = Container::instance();
 		$this->b2ETariffRestrictionService = $b2ETariffRestrictionService ?? $container->getB2eTariffRestrictionService();
 		$this->presetTemplatesService = $presetTemplatesService ?? $container->getPresetTemplatesService();
+		$this->storage = $storage ?? Storage::instance();
 	}
 
 	public function launch(): Main\Result|InstallPresetTemplatesResult
@@ -62,6 +67,11 @@ class InstallPresetTemplates implements Operation
 		foreach ($this->presetTemplatesService->getSerializedTemplatesPathsToInstall() as $filesystemEntry)
 		{
 			$templateName = $filesystemEntry->getName();
+			if ($templateName === $this->storage->getOnboardingTemplateName())
+			{
+				continue;
+			}
+
 			if ($this->presetTemplatesService->isTemplateInstalled($templateName))
 			{
 				continue;
@@ -120,7 +130,7 @@ class InstallPresetTemplates implements Operation
 			return $result;
 		}
 
-		return (new ImportTemplate($result->blank))->launch();
+		return (new ImportTemplate($result->blank, $this->createdById))->launch();
 	}
 
 	private function getLock(): bool

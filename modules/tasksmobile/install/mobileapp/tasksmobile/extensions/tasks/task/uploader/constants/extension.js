@@ -1,13 +1,11 @@
 /**
- * @module task/uploader/constants
+ * @module tasks/task/uploader/constants
  */
-(() => {
-	/** @class TaskUploaderEvents */
-	jnexport([
-		{
-			FILE_SUCCESS_UPLOAD: 'ontaskfilesuccessupload',
-			FILE_FAIL_UPLOAD: 'ontaskfilefailupload',
-		},
-		'TaskUploaderEvents',
-	]);
-})();
+jn.define('tasks/task/uploader/constants', (require, exports, module) => {
+	const TaskUploaderEvents = {
+		FILE_SUCCESS_UPLOAD: 'ontaskfilesuccessupload',
+		FILE_FAIL_UPLOAD: 'ontaskfilefailupload',
+	};
+
+	module.exports = { TaskUploaderEvents };
+});

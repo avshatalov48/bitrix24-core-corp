@@ -18,13 +18,33 @@ jn.define('collab/create/src/edit', (require, exports, module) => {
 	const { debounce } = require('utils/function');
 	const { TextAreaInput } = require('ui-system/form/inputs/textarea');
 	const { capitalize } = require('utils/string');
+	const { MessagesAutoDeleteContextMenu } = require('im/messenger/lib/ui/context-menu/messages-auto-delete');
+	const { MessagesAutoDeleteDelay } = require('im/messenger/const');
+	const { Haptics } = require('haptics');
+	const { showToast } = require('toast');
+	const { Icon } = require('assets/icons');
 
 	const helpArticleCode = '22706878';
 	const CollabSettingsItem = {
 		PERMISSIONS: 'permissions',
 		SECURITY: 'security',
+		TASK_PERMISSIONS: 'taskPermissions',
+		AUTO_DELETE_MESSAGES: 'autoDeleteMessages',
 	};
 
+	/**
+	 * @typedef {Object} CollabCreateEditProps
+	 * @property {string} testId
+	 * @property {string} name
+	 * @property {string} description
+	 * @property {string} image
+	 * @property {boolean} isEditMode
+	 * @property {function} onChange
+	 * @property {function} onCreateButtonClick
+	 * @property {function} onSettingsItemClick
+
+	 * @class CollabCreateEdit
+	 */
 	class CollabCreateEdit extends LayoutComponent
 	{
 		constructor(props)
@@ -32,6 +52,7 @@ jn.define('collab/create/src/edit', (require, exports, module) => {
 			super(props);
 			this.#initializeState(props);
 
+			this.settingsSelectorItemsRefsMap = new Map();
 			this.nameFieldRef = null;
 			this.descriptionFieldRef = null;
 			this.imageSelectorRef = null;
@@ -39,6 +60,7 @@ jn.define('collab/create/src/edit', (require, exports, module) => {
 			this.scrollViewRef = null;
 
 			this.debounceGetIsCollabNameExistsStatus = debounce(this.#getIsCollabNameExistsStatus, 500);
+			this.onChangeDelay = this.onChangeDelay.bind(this);
 		}
 
 		get testId()
@@ -65,15 +87,19 @@ jn.define('collab/create/src/edit', (require, exports, module) => {
 			this.#initializeState(props);
 		}
 
-		#initializeState = (props) => {
+		#initializeState(props)
+		{
 			this.state = {
 				name: props.name ?? '',
 				isCollabNameExists: null,
 				description: props.description ?? '',
 				image: props.image ?? null,
 				pending: false,
+				messagesAutoDeleteDelay: props.messagesAutoDeleteDelay
+					? Number(props.messagesAutoDeleteDelay)
+					: MessagesAutoDeleteDelay.off,
 			};
-		};
+		}
 
 		render()
 		{
@@ -83,7 +109,6 @@ jn.define('collab/create/src/edit', (require, exports, module) => {
 					resizableByKeyboard: true,
 					footer: this.#renderSaveButton(),
 					onClick: this.#hideKeyboard,
-					onPan: this.#hideKeyboard,
 				},
 				this.#renderEditableFields(),
 			);
@@ -188,7 +213,6 @@ jn.define('collab/create/src/edit', (require, exports, module) => {
 						style: {
 							height: 60,
 							flex: 1,
-							paddingTop: Indent.M.getValue(),
 							paddingLeft: Indent.XL2.getValue(),
 						},
 					},
@@ -247,15 +271,24 @@ jn.define('collab/create/src/edit', (require, exports, module) => {
 			this.setState({ description }, () => this.#callOnChangeHandler());
 		};
 
+		onChangeDelay(messagesAutoDeleteDelay)
+		{
+			this.setState({ messagesAutoDeleteDelay }, this.#callOnChangeHandler);
+		}
+
 		#callOnChangeHandler = () => {
 			this.props?.onChange({
 				name: this.state.name,
 				description: this.state.description,
 				image: this.state.image,
+				messagesAutoDeleteDelay: this.state.messagesAutoDeleteDelay,
 			});
 		};
 
 		#renderSettings = () => {
+			const { messagesAutoDeleteDelay } = this.state;
+			const { isEditMode, isAutoDeleteFeatureAvailable } = this.props;
+
 			return Area(
 				{
 					testId: `${this.testId}-area-settings`,
@@ -263,9 +296,26 @@ jn.define('collab/create/src/edit', (require, exports, module) => {
 				SettingSelectorList({
 					items: [
 						{
+							id: CollabSettingsItem.AUTO_DELETE_MESSAGES,
+							title: Loc.getMessage('M_COLLAB_CREATE_AUTO_DELETE_MESSAGES_ITEM_TITLE'),
+							subtitle: null,
+							design: SettingSelectorListItemDesign.OPENER,
+							useOptionPreview: true,
+							optionPreviewValue: this.#getAutoDeleteText(messagesAutoDeleteDelay),
+							optionColor: messagesAutoDeleteDelay === MessagesAutoDeleteDelay.off
+								? null
+								: Color.accentMainPrimary,
+						},
+						{
 							id: CollabSettingsItem.PERMISSIONS,
-							title: Loc.getMessage('M_COLLAB_CREATE_PERMISSIONS_ITEM_TITLE'),
-							subtitle: Loc.getMessage('M_COLLAB_CREATE_PERMISSIONS_ITEM_SUBTITLE'),
+							title: Loc.getMessage('M_COLLAB_CREATE_PERMISSIONS_ITEM_TITLE_MSGVER_1'),
+							subtitle: Loc.getMessage('M_COLLAB_CREATE_PERMISSIONS_ITEM_SUBTITLE_MSGVER_1'),
+							design: SettingSelectorListItemDesign.OPENER,
+						},
+						{
+							id: CollabSettingsItem.TASK_PERMISSIONS,
+							title: Loc.getMessage('M_COLLAB_CREATE_TASK_PERMISSIONS_ITEM_TITLE'),
+							subtitle: Loc.getMessage('M_COLLAB_CREATE_TASK_PERMISSIONS_ITEM_SUBTITLE'),
 							design: SettingSelectorListItemDesign.OPENER,
 						},
 						/* {
@@ -274,14 +324,68 @@ jn.define('collab/create/src/edit', (require, exports, module) => {
 							subtitle: Loc.getMessage('M_COLLAB_CREATE_SECURITY_ITEM_SUBTITLE'),
 							design: SettingSelectorListItemDesign.OPENER,
 						}, */
-					],
+					].filter((item) => item.id !== CollabSettingsItem.AUTO_DELETE_MESSAGES
+						|| (!isEditMode && isAutoDeleteFeatureAvailable)),
+					itemRef: this.#bindSettingsSelectorItemRef,
 					onItemClick: this.#onSettingsItemClick,
 				}),
 				this.#renderDetailsButton(),
 			);
 		};
 
+		#getAutoDeleteText = (messagesAutoDeleteDelay) => {
+			switch (messagesAutoDeleteDelay)
+			{
+				case MessagesAutoDeleteDelay.off:
+					return Loc.getMessage('M_COLLAB_CREATE_AUTO_DELETE_MESSAGES_ITEM_OFF');
+				case MessagesAutoDeleteDelay.hour:
+					return Loc.getMessage('M_COLLAB_CREATE_AUTO_DELETE_MESSAGES_ITEM_HOUR');
+				case MessagesAutoDeleteDelay.day:
+					return Loc.getMessage('M_COLLAB_CREATE_AUTO_DELETE_MESSAGES_ITEM_DAY');
+				case MessagesAutoDeleteDelay.week:
+					return Loc.getMessage('M_COLLAB_CREATE_AUTO_DELETE_MESSAGES_ITEM_WEEK');
+				case MessagesAutoDeleteDelay.month:
+					return Loc.getMessage('M_COLLAB_CREATE_AUTO_DELETE_MESSAGES_ITEM_MONTH');
+				default:
+					return '';
+			}
+		};
+
+		#bindSettingsSelectorItemRef = (ref, item) => {
+			this.settingsSelectorItemsRefsMap.set(item.id, {
+				ref,
+				item,
+			});
+		};
+
 		#onSettingsItemClick = async (item) => {
+			if (item.id === CollabSettingsItem.AUTO_DELETE_MESSAGES)
+			{
+				if (!this.props.isEnabledAutoDeleteInPortalSettings)
+				{
+					Haptics.notifyWarning();
+					showToast(
+						{
+							message: Loc.getMessage('M_COLLAB_CREATE_AUTO_DELETE_PERMISSION_MESSAGE'),
+							iconName: Icon.TIMER_DOT.getIconName(),
+						},
+						this.props.layoutWidget,
+					);
+
+					return;
+				}
+
+				void MessagesAutoDeleteContextMenu
+					.createByFileId({
+						ref: this.settingsSelectorItemsRefsMap.get(CollabSettingsItem.AUTO_DELETE_MESSAGES).ref,
+						selectedItem: this.state.messagesAutoDeleteDelay,
+						onItemSelected: this.onChangeDelay,
+					})
+					.open();
+
+				return;
+			}
+
 			this.props.onSettingsItemClick?.(item);
 		};
 
@@ -458,6 +562,10 @@ jn.define('collab/create/src/edit', (require, exports, module) => {
 	}
 
 	module.exports = {
+		/**
+		 * @param {CollabCreateEditProps} props
+		 * @returns {CollabCreateEdit}
+		 */
 		CollabCreateEdit: (props) => new CollabCreateEdit(props),
 		CollabSettingsItem,
 	};

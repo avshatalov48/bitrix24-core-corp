@@ -54,6 +54,7 @@ class FieldTable extends Entity\DataManager
 	const TYPE_ENUM_HR = 'hr';
 	const TYPE_ENUM_BR = 'br';
 	const TYPE_ENUM_RESOURCEBOOKING = 'resourcebooking';
+	const TYPE_ENUM_BOOKING = 'booking';
 	const TYPE_ENUM_RQ = 'rq';
 	const TYPE_ENUM_ADDRESS = 'address';
 
@@ -169,6 +170,7 @@ class FieldTable extends Entity\DataManager
 			self::TYPE_ENUM_TYPED_STRING => Loc::getMessage('CRM_WEBFORM_FIELD_TYPE_TYPED_STRING'),
 			self::TYPE_ENUM_PRODUCT => Loc::getMessage('CRM_WEBFORM_FIELD_TYPE_PRODUCT'),
 			self::TYPE_ENUM_RESOURCEBOOKING => Loc::getMessage('CRM_WEBFORM_FIELD_TYPE_RESOURCEBOOKING'),
+			self::TYPE_ENUM_BOOKING => Loc::getMessage('CRM_WEBFORM_FIELD_TYPE_RESOURCEBOOKING'),
 			self::TYPE_ENUM_RQ => Loc::getMessage('CRM_WEBFORM_FIELD_TYPE_RQ'),
 			self::TYPE_ENUM_ADDRESS => Loc::getMessage('CRM_WEBFORM_FIELD_TYPE_ADDRESS'),
 		);

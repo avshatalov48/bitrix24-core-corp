@@ -9,7 +9,6 @@ use Bitrix\Sign\Contract;
 use Bitrix\Sign\Item;
 
 use Bitrix\Main;
-use CCrmPerms;
 
 class CheckDocumentAccess implements Contract\Operation
 {
@@ -76,16 +75,16 @@ class CheckDocumentAccess implements Contract\Operation
 			$permissionId
 		);
 
-		if ($permission === CCrmPerms::PERM_ALL || $user->isAdmin())
+		if ($permission === \Bitrix\Crm\Service\UserPermissions::PERMISSION_ALL || $user->isAdmin())
 		{
 			return $result;
 		}
 
 		$allowedUserIds = match ($permission)
 		{
-			CCrmPerms::PERM_SUBDEPARTMENT => $user->getUserDepartmentMembers(true),
-			CCrmPerms::PERM_DEPARTMENT => $user->getUserDepartmentMembers(),
-			CCrmPerms::PERM_SELF => [$user->getUserId()],
+			\Bitrix\Crm\Service\UserPermissions::PERMISSION_SUBDEPARTMENT => $user->getUserDepartmentMembers(true),
+			\Bitrix\Crm\Service\UserPermissions::PERMISSION_DEPARTMENT => $user->getUserDepartmentMembers(),
+			\Bitrix\Crm\Service\UserPermissions::PERMISSION_SELF => [$user->getUserId()],
 			default => []
 		};
 

@@ -40,6 +40,7 @@ jn.define('sign/dialog/banners/gotoweb', (require, exports, module) => {
 				buttonsView: View(
 					{},
 					Button({
+						testId: 'goToWebBanner-button-qrAuth',
 						text: Loc.getMessage('SIGN_MOBILE_DIALOG_GO_TO_WEB_BUTTON_QRCODE_AUTH_TITLE'),
 						size: ButtonSize.XL,
 						design: ButtonDesign.FILLED,
@@ -61,6 +62,7 @@ jn.define('sign/dialog/banners/gotoweb', (require, exports, module) => {
 						},
 					}),
 					Button({
+						testId: 'goToWebBanner-button-close',
 						text: Loc.getMessage('SIGN_MOBILE_DIALOG_GO_TO_WEB_BUTTON_CLOSE_TITLE'),
 						size: ButtonSize.XL,
 						design: ButtonDesign.PLAN_ACCENT,

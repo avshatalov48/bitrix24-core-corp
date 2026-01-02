@@ -14,19 +14,21 @@ final class ActionSliderParamsDto extends \Bitrix\Crm\Dto\Dto
 	public ?string $labelText = null;
 	public ?string $title = null;
 
+	public const ALLOWED_LABEL_BG_COLORS = [
+		'aqua',
+		'green',
+		'orange',
+		'brown',
+		'pink',
+		'blue',
+		'grey',
+		'violet',
+	];
+
 	protected function getValidators(array $fields): array
 	{
 		$validators = [];
-		$validators[] = new \Bitrix\Crm\Dto\Validator\EnumField($this, 'labelBgColor', [
-			'aqua',
-			'green',
-			'orange',
-			'brown',
-			'pink',
-			'blue',
-			'grey',
-			'violet',
-		]);
+		$validators[] = new \Bitrix\Crm\Dto\Validator\EnumField($this, 'labelBgColor', self::ALLOWED_LABEL_BG_COLORS);
 
 		$validators[] = new class ($this) extends \Bitrix\Crm\Dto\Validator
 		{

@@ -12,6 +12,7 @@ use Bitrix\Main\Engine\Contract\Controllerable;
 use Bitrix\Intranet\ContactCenter;
 use Bitrix\Main\Localization\Loc;
 use Bitrix\Main\Web\Uri;
+use Bitrix\Crm\Service\Container;
 
 Loc::loadMessages(__FILE__);
 
@@ -77,7 +78,7 @@ class CIntranetContactCenterListComponent extends \CBitrixComponent implements C
 		}
 		if (Loader::includeModule("crm"))
 		{
-			$additionalCacheId[] = CCrmPerms::IsAccessEnabled();
+			$additionalCacheId[] = \Bitrix\Intranet\Integration\Crm::getInstance()->canReadSomeItemsInCrm();
 		}
 		if (Loader::includeModule("imopenlines") && Loader::includeModule("imconnector"))
 		{
@@ -208,9 +209,7 @@ class CIntranetContactCenterListComponent extends \CBitrixComponent implements C
 	 */
 	private function getFormCreateUrl(string $code)
 	{
-		global $USER;
-		$CrmPerms = new CCrmPerms($USER->GetID());
-		if ($CrmPerms->HavePerm('WEBFORM', BX_CRM_PERM_NONE, 'WRITE'))
+		if (!Container::getInstance()->getUserPermissions()->webForm()->canEdit())
 		{
 			return $this->getFormsListLink($code, ['show_permission_error' => 'Y']);
 		}
@@ -258,7 +257,7 @@ class CIntranetContactCenterListComponent extends \CBitrixComponent implements C
 	{
 		$itemsList = array();
 
-		if (CCrmPerms::IsAccessEnabled())
+		if (\Bitrix\Intranet\Integration\Crm::getInstance()->canReadSomeItemsInCrm())
 		{
 			//setting preset forms and widgets if not installed yet
 			if (\Bitrix\Crm\SiteButton\Preset::checkVersion())

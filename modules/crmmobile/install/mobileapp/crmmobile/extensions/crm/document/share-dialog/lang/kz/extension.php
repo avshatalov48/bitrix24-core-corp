@@ -1,0 +1,21 @@
+<?php
+$MESS["M_CRM_DOCUMENT_SHARE_DIALOG_CANCEL"] = "Болдырмау";
+$MESS["M_CRM_DOCUMENT_SHARE_DIALOG_CHANNEL_NOT_AVAILABLE"] = "Жіберу әдісі қолжетімсіз";
+$MESS["M_CRM_DOCUMENT_SHARE_DIALOG_CHECK_OUT_FILE_BY_LINK"] = "#URL# құжатты қараңыз";
+$MESS["M_CRM_DOCUMENT_SHARE_DIALOG_COPY_LINK_DONE"] = "Көшірілді";
+$MESS["M_CRM_DOCUMENT_SHARE_DIALOG_COPY_LINK_ERROR"] = "Сілтемені жасау мүмкін болмады";
+$MESS["M_CRM_DOCUMENT_SHARE_DIALOG_COPY_LINK_SUBTITLE"] = "Сілтеме бойынша қолжетімділік";
+$MESS["M_CRM_DOCUMENT_SHARE_DIALOG_COPY_LINK_TITLE"] = "Сілтемені көшіру";
+$MESS["M_CRM_DOCUMENT_SHARE_DIALOG_EMAIL_FILE_ATTACHED"] = "Тіркемедегі құжатты қараңыз";
+$MESS["M_CRM_DOCUMENT_SHARE_DIALOG_EMAIL_NOT_FOUND"] = "Клиенттің e-mail көрсетілмеген";
+$MESS["M_CRM_DOCUMENT_SHARE_DIALOG_EMAIL_TITLE"] = "E-mail";
+$MESS["M_CRM_DOCUMENT_SHARE_DIALOG_OPENLINE_NOT_FOUND"] = "Байланысты ашық желі жоқ";
+$MESS["M_CRM_DOCUMENT_SHARE_DIALOG_OPENLINE_TITLE"] = "Ашық желі";
+$MESS["M_CRM_DOCUMENT_SHARE_DIALOG_PHONE_NOT_FOUND"] = "Клиенттің телефоны көрсетілмеген";
+$MESS["M_CRM_DOCUMENT_SHARE_DIALOG_SIGN_SUBTITLE"] = "Құжаттарға қол қою сервисі арқылы жіберу";
+$MESS["M_CRM_DOCUMENT_SHARE_DIALOG_SIGN_TITLE"] = "Қол қою";
+$MESS["M_CRM_DOCUMENT_SHARE_DIALOG_SMS_TITLE"] = "СМС/Whatsapp";
+$MESS["M_CRM_DOCUMENT_SHARE_DIALOG_SYSTEM_SHARE_SUBTITLE"] = "Жүктеп алу немесе телефондағы байланыстарға жіберу";
+$MESS["M_CRM_DOCUMENT_SHARE_DIALOG_SYSTEM_SHARE_TITLE"] = "Құжатпен бөлісу";
+$MESS["M_CRM_DOCUMENT_SHARE_DIALOG_TARIFF_RESTRICTION"] = "Сіздің тарифіңізде қолжетімсіз";
+$MESS["M_CRM_DOCUMENT_SHARE_DIALOG_TITLE"] = "Клиентке жіберу";

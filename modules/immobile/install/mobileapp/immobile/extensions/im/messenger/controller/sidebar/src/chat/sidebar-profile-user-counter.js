@@ -4,7 +4,7 @@
 jn.define('im/messenger/controller/sidebar/chat/sidebar-profile-user-counter', (require, exports, module) => {
 	const { LoggerManager } = require('im/messenger/lib/logger');
 	const logger = LoggerManager.getInstance().getLogger('sidebar--sidebar-profile-user-counter');
-	const { Loc } = require('loc');
+	const { Loc } = require('im/messenger/loc');
 	const { EventType } = require('im/messenger/const');
 	const { serviceLocator } = require('im/messenger/lib/di/service-locator');
 

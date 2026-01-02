@@ -2,13 +2,13 @@
  * @module bizproc/workflow/faces
  * */
 jn.define('bizproc/workflow/faces', (require, exports, module) => {
-	const { Loc } = require('loc');
+	const { Color } = require('tokens');
 	const { PureComponent } = require('layout/pure-component');
 	const AppTheme = require('apptheme');
 	const { Type } = require('type');
-	const { formatRoundedTime, roundTimeInSeconds } = require('bizproc/helper/duration');
 	const { WorkflowFacesColumn } = require('bizproc/workflow/faces/column-view');
 	const { WorkflowFacesTimeline } = require('bizproc/workflow/faces/timeline');
+	const { ElementsStackSteps, Stick } = require('layout/ui/elements-stack-steps');
 
 	class WorkflowFaces extends PureComponent
 	{
@@ -19,109 +19,117 @@ jn.define('bizproc/workflow/faces', (require, exports, module) => {
 
 		get needRenderMoreTasksIcon()
 		{
-			return (
-				(this.faces.completedTaskCount >= 3)
-				|| (!this.faces.workflowIsCompleted && this.faces.completedTaskCount >= 2)
-			);
+			return Boolean(this.faces.progressBox);
 		}
 
-		getDurations()
+		get isWorkflowFinished()
 		{
-			return {
-				author: Type.isNil(this.faces.time?.author) ? 0 : this.faces.time.author,
-				completed: Type.isNil(this.faces.time?.completed) ? 0 : this.faces.time.completed,
-				running: Type.isNil(this.faces.time?.running) ? 0 : this.faces.time.running,
-				done: Type.isNil(this.faces.time?.done) ? 0 : this.faces.time.done,
-			};
+			return this.faces.isWorkflowFinished;
 		}
 
 		render()
 		{
 			return View(
-				{ style: styles.wrapper },
+				{
+					style: {
+						flexDirection: 'row',
+						maxWidth: 440,
+						height: 104,
+						borderTopColor: Color.bgSeparatorSecondary.toHex(),
+						borderTopWidth: 1,
+						borderBottomColor: Color.bgSeparatorSecondary.toHex(),
+						borderBottomWidth: 1,
+					},
+				},
+				View(
+					{ style: { flex: 3, justifyContent: 'center' } },
+					ElementsStackSteps(
+						{ testId: `bizproc-workflow-faces-${this.props.workflowId}` },
+						Stick({ leftOffset: '17%', rightOffset: '17%' }),
+						this.renderFirstColumn(),
+						this.renderMoreTasksIcon(),
+						this.renderSecondColumn(),
+						this.renderThirdColumn(),
+					),
+				),
+				this.renderChevron(),
 				View(
 					{
-						style: styles.facesWrapper,
+						style: {
+							flex: 1,
+							justifyContent: 'center',
+							backgroundColor: this.isWorkflowFinished ? Color.accentSoftGreen3.toHex() : null,
+						},
 					},
-					this.renderStick(),
-					this.renderFirstColumn(),
-					this.renderMoreTasksIcon(),
-					this.renderSecondColumn(),
-					this.needRenderMoreTasksIcon && View({ style: { width: 1 } }),
-					this.renderThirdColumn(),
+					ElementsStackSteps(
+						{ testId: `bizproc-workflow-faces-timeline-${this.props.workflowId}` },
+						this.renderTimeColumn(),
+					),
 				),
-				new WorkflowFacesTimeline({
-					isCompleted: this.faces.workflowIsCompleted,
-					durations: this.getDurations(),
-				}),
 			);
 		}
 
 		renderFirstColumn()
 		{
+			const step = this.faces.steps[0] || {};
+
 			return new WorkflowFacesColumn({
-				label: Loc.getMessage('BPMOBILE_WORKFLOW_FACES_AUTHOR'),
-				avatars: [this.faces.author],
-				time: this.getFormattedTime(this.getDurations().author),
-				columnStyles: {
-					marginLeft: 9,
-					minWidth: 42,
-					flexShrink: 2,
-				},
+				label: step.name,
+				avatars: step.avatars,
+				duration: step.duration,
+				status: Type.isArrayFilled(step.avatars) ? null : 'bp',
 			});
 		}
 
 		renderSecondColumn()
 		{
-			if (this.faces.completed.length === 0)
-			{
-				return this.faces.workflowIsCompleted ? this.renderDoneColumn() : this.renderRunningColumn();
-			}
+			const step = this.faces.steps[1] || {};
 
 			return new WorkflowFacesColumn({
-				label: Loc.getMessage('BPMOBILE_WORKFLOW_FACES_COMPLETED_MSGVER_1'),
-				avatars: this.faces.completed,
-				status: this.faces.completedSuccess ? 'accept' : 'decline',
-				time: this.getFormattedTime(this.getDurations().completed),
+				label: step.name,
+				avatars: step.avatars,
+				duration: step.duration,
+				status: step.status,
 			});
 		}
 
 		renderThirdColumn()
 		{
-			if (this.faces.completed.length === 0)
-			{
-				return new WorkflowFacesColumn({
-					testId: `${this.testId}_EMPTY_BLOCK`,
-					columnStyles: {
-						minWidth: 42,
-					},
-				});
-			}
+			const step = this.faces.steps[2] || {};
 
-			return this.faces.workflowIsCompleted ? this.renderDoneColumn() : this.renderRunningColumn();
-		}
-
-		renderRunningColumn()
-		{
 			return new WorkflowFacesColumn({
-				label: Loc.getMessage('BPMOBILE_WORKFLOW_FACES_RUNNING_1'),
-				status: 'progress',
-				avatars: Type.isArrayFilled(this.faces.running) ? this.faces.running : null,
-				time: this.getFormattedTime(this.getDurations().running),
+				label: step.name,
+				avatars: step.avatars,
+				duration: step.duration,
+				status: step.status,
 			});
 		}
 
-		renderDoneColumn()
+		renderChevron()
 		{
-			return new WorkflowFacesColumn({
-				label: Loc.getMessage('BPMOBILE_WORKFLOW_FACES_COMPLETED_DONE_MSGVER_1'),
-				avatars: Type.isArrayFilled(this.faces.done) ? this.faces.done : null,
-				status: (
-					Type.isArrayFilled(this.faces.done)
-						? (this.faces.doneSuccess ? 'accept' : 'decline')
-						: 'accept'
-				),
-				time: this.getFormattedTime(this.getDurations().done),
+			return View(
+				{
+					style: {
+						width: 16,
+						height: '100%',
+						backgroundColor: this.isWorkflowFinished ? Color.accentSoftGreen3.toHex() : null,
+					},
+				},
+				Image({
+					style: { width: 16, height: '100%' },
+					svg: { content: chevron },
+				}),
+			);
+		}
+
+		renderTimeColumn()
+		{
+			const step = this.faces.timeStep || {};
+
+			return new WorkflowFacesTimeline({
+				label: step.name,
+				duration: step.duration,
+				isCompleted: this.isWorkflowFinished,
 			});
 		}
 
@@ -140,57 +148,14 @@ jn.define('bizproc/workflow/faces', (require, exports, module) => {
 				}),
 			);
 		}
-
-		getFormattedTime(time)
-		{
-			return (
-				time === 0
-					? Loc.getMessage('BPMOBILE_WORKFLOW_FACES_EMPTY_TIME')
-					: formatRoundedTime(roundTimeInSeconds(Number(time)))
-			);
-		}
-
-		renderStick()
-		{
-			return View({ style: styles.facesStick });
-		}
 	}
 
-	const styles = {
-		wrapper: {
-			flexDirection: 'row',
-			alignItems: 'stretch',
-			marginTop: 10,
-			maxWidth: 440,
-			height: 100,
-		},
-		facesWrapper: {
-			flex: 1,
-			flexDirection: 'row',
-			alignItems: 'flex-start',
-			justifyContent: 'space-between',
-			paddingTop: 12.5,
-			paddingBottom: 11.5,
-			paddingRight: 10,
-			paddingLeft: 4.5,
-			borderTopLeftRadius: 6,
-			borderBottomLeftRadius: 6,
-			borderLeftWidth: 1,
-			borderLeftColor: AppTheme.colors.base7,
-			borderTopWidth: 1,
-			borderTopColor: AppTheme.colors.base7,
-			borderBottomWidth: 1,
-			borderBottomColor: AppTheme.colors.base7,
-		},
-		facesStick: {
-			height: 1,
-			position: 'absolute',
-			top: 50,
-			left: 35,
-			right: 35,
-			backgroundColor: AppTheme.colors.base6,
-		},
-	};
+	const chevron = `
+		<svg width="14" height="92" viewBox="0 0 14 92" fill="none" xmlns="http://www.w3.org/2000/svg">
+			<path d="M13 46L0 92V0L13 46Z" fill="${AppTheme.colors.bgContentPrimary}"/>
+			<path d="M0.5 0L13 46.2514L0.5 92" stroke="${Color.bgSeparatorSecondary.toHex()}"/>
+		</svg>
+	`;
 
 	const dots = `
 		<svg width="16" height="16" viewBox="0 0 16 16" fill="none" xmlns="http://www.w3.org/2000/svg">

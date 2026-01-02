@@ -108,20 +108,23 @@ final class RecentlyUsedTable extends DataManager
 	public static function deleteOldObjects($userId)
 	{
 		$offset = self::MAX_COUNT_FOR_USER - 1;
+
 		$connection = Application::getConnection();
 		if($connection instanceof MysqlCommonConnection)
 		{
+			// language=mysql
 			$connection->queryExecute("
-				DELETE t
-				FROM
-				    b_disk_recently_used AS t
-			    JOIN
-				( SELECT ID
-				  FROM b_disk_recently_used
-				  WHERE USER_ID = {$userId}
-				  ORDER BY ID DESC
-				  LIMIT 1 OFFSET {$offset}
-				) tlimit ON t.ID < tlimit.ID AND t.USER_ID = {$userId}
+				DELETE FROM b_disk_recently_used
+				WHERE USER_ID = {$userId}
+				  AND ID < (
+					  SELECT ID FROM (
+						  SELECT ID 
+						  FROM b_disk_recently_used 
+						  WHERE USER_ID = {$userId} 
+						  ORDER BY ID DESC 
+						  LIMIT 1 OFFSET {$offset}
+					  ) AS tlimit
+				  )
 			");
 		}
 		else

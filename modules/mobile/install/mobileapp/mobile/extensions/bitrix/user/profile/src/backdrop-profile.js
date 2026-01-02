@@ -4,6 +4,7 @@
 jn.define('user/profile/src/backdrop-profile', (require, exports, module) => {
 
 	/**
+	 * @deprecated Use UserProfile instead ('user-profile')
 	 * @param {object} props
 	 * @param {PageManager} [props.parentWidget=PageManager]
 	 * @param {...*} props.restProps

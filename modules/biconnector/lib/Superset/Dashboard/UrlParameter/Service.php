@@ -66,13 +66,9 @@ final class Service
 				$param->delete();
 			}
 
-			$compatibleParams = $this->getCompatibleParams($scopes);
 			foreach ($params as $param)
 			{
-				if (
-					in_array($param, $compatibleParams, true)
-					&& Parameter::tryFrom($param) !== null
-				)
+				if (Parameter::tryFrom($param) !== null)
 				{
 					SupersetDashboardUrlParameterTable::createObject()
 						->setDashboardId($dashboardId)
@@ -91,37 +87,6 @@ final class Service
 		}
 
 		return $result;
-	}
-
-	/**
-	 * Get compatible params by array of scope codes.
-	 *
-	 * @param array $scopes
-	 *
-	 * @return array Array of param codes.
-	 */
-	private function getCompatibleParams(array $scopes): array
-	{
-		$fullMap = ScopeMap::getMap();
-		$scopeMap = [];
-		foreach ($scopes as $scope)
-		{
-			if (isset($fullMap[$scope]))
-			{
-				$scopeMap[] = array_map(static fn(Parameter $param) => $param->code(), $fullMap[$scope]);
-			}
-		}
-
-		$availableParams = [];
-		if (count($scopeMap) >= 1)
-		{
-			$availableParams = array_intersect(...$scopeMap);
-		}
-
-		$globalParams = array_map(static fn(Parameter $param) => $param->code(), ScopeMap::getGlobals());
-		$availableParams = array_merge($availableParams, $globalParams);
-
-		return $availableParams;
 	}
 
 	/**
@@ -186,7 +151,7 @@ final class Service
 		{
 			$externalParams = array_merge(
 				$externalParams,
-				['params' => self::encode($parameters)]
+				['params' => self::encode($parameters)],
 			);
 		}
 
@@ -204,8 +169,8 @@ final class Service
 	{
 		return Uri::urnEncode(
 			base64_encode(
-				(new Signer())->sign(Json::encode($variables), self::getSalt())
-			)
+				(new Signer())->sign(Json::encode($variables), self::getSalt()),
+			),
 		);
 	}
 
@@ -216,7 +181,8 @@ final class Service
 	 */
 	public static function decode(string $encoded): ?array
 	{
-		try {
+		try
+		{
 			$encoded = Uri::urnDecode($encoded);
 			$encoded = base64_decode($encoded);
 			$json = (new Signer())->unsign($encoded, self::getSalt());

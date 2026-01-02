@@ -81,6 +81,11 @@ class Difference
 		return $this;
 	}
 
+	public function getValue(string $fieldName): mixed
+	{
+		return $this->getCurrentValue($fieldName) ?? $this->getPreviousValue($fieldName);
+	}
+
 	/**
 	 * Configure that a field is not considered changed if there is no such field in current values
 	 *

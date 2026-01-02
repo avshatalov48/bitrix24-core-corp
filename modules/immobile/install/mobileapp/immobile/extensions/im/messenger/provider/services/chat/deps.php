@@ -1,0 +1,38 @@
+<?php
+
+return [
+	'extensions' => [
+		'type',
+		'runtime',
+		'utils/object',
+		'im:messenger/lib/helper',
+		'im:messenger/lib/di/service-locator',
+		'im:messenger/lib/rest-manager',
+		'im:messenger/const',
+		'im:messenger/provider/services/lib/chat-data-extractor',
+		'im:messenger/provider/services/message',
+		'im:messenger/lib/counters/counter-manager/messenger/sender',
+		'im:messenger/lib/emitter',
+		'im:messenger/lib/logger',
+		'im:messenger/lib/converter/data/recent',
+		'im:messenger/lib/rest',
+		'im:messenger/lib/integration/callmobile/call-manager',
+		'im:messenger/lib/uuid-manager',
+		'im:messenger/lib/feature',
+		'im:messenger/const/rest',
+		'im:messenger/provider/services/lib/message-context-creator',
+	],
+	'bundle' => [
+		'./src/bot',
+		'./src/comments',
+		'./src/create',
+		'./src/input-action-notify',
+		'./src/load',
+		'./src/mute',
+		'./src/read',
+		'./src/service',
+		'./src/update',
+		'./src/user',
+		'./src/health-check',
+	],
+];

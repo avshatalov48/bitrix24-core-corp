@@ -12,6 +12,7 @@ return [
 		'loc',
 		'type',
 		'toast',
+		'require-lazy',
 
 		'utils/object',
 		'utils/function',
@@ -19,6 +20,7 @@ return [
 
 		'layout/pure-component',
 		'layout/ui/simple-list',
+		'layout/ui/simple-list/items/base',
 		'layout/ui/bottom-toolbar',
 		'layout/ui/friendly-date',
 
@@ -29,5 +31,6 @@ return [
 		'bizproc:task/buttons',
 		'bizproc:task/task-constants',
 		'bizproc:workflow/list/view-mode',
+		'bizproc:app-rating-client',
 	],
 ];

@@ -1,8 +1,13 @@
 import { CrmEntity, Model } from 'booking.const';
+import { Profit } from 'booking.component.booking';
 import type { BookingModel, DealData } from 'booking.model.bookings';
 import './profit.css';
 
-export const Profit = {
+export const BookingProfit = {
+	name: 'BookingProfit',
+	components: {
+		Profit,
+	},
 	props: {
 		bookingId: {
 			type: [Number, String],
@@ -24,14 +29,14 @@ export const Profit = {
 		},
 	},
 	template: `
-		<div
-			v-if="deal"
-			class="booking-booking-booking-profit"
-			data-element="booking-booking-profit"
-			:data-id="bookingId"
-			:data-resource-id="resourceId"
-			:data-profit="deal.data.opportunity"
-			v-html="deal.data.formattedOpportunity"
-		></div>
+		<Profit
+			:deal
+			:dataAttributes="{
+				'data-id': bookingId,
+				'data-resource-id': resourceId,
+				'data-element': 'booking-booking-profit'
+			}"
+			className="booking-booking-booking-profit"
+		/>
 	`,
 };

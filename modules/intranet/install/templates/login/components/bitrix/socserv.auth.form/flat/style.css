@@ -1,0 +1,214 @@
+.bx-authform-social-popup{
+	display: none;
+	background: #fff;
+	width: auto;
+	padding: 15px;
+	font-size: 14px;
+	white-space: nowrap;
+}
+
+.bx-authform-social-popup form{margin-bottom: 0;}
+
+.bx-authform-social-popup input[type="text"] {
+	display: inline-block;
+	max-width: 150px;
+	font-size: 18px;
+	height: 30px;
+	margin: 0;
+	padding: 0 4px;
+	border: 1px solid #CCD5DB;
+	border-radius: 2px;
+	background: #f8fafc;
+	outline: none;
+	-webkit-box-sizing: border-box;
+	-moz-box-sizing: border-box;
+	box-sizing: border-box;
+}
+
+.bx-authform-social ul {
+  	padding: 5px 0 12px;
+  	margin: 0 0 15px;
+  	display: block;
+}
+
+.bx-authform-social ul li {
+	position: relative;
+	display: inline-block;
+	width: 42px;
+	height: 42px;
+	margin-right: 5px;
+}
+.bx-authform-social ul li .bx-authform-social-icon {
+	display: block;
+	width: 42px;
+	height: 42px;
+	border-bottom: none;
+}
+
+.b24net-icon-btn {
+	user-select: none;
+	box-sizing: border-box;
+	border-radius: 50%;
+}
+.b24net-icon-btn:hover .b24net-icon-btn__icon {
+	opacity: 1;
+}
+.b24net-icon-btn .b24net-icon-btn__icon {
+	border-radius: 50%;
+	background-color: #fff;
+	box-shadow:
+		0 0 0 1px #00000005,
+		0px 4px 8px 0px #0000001f;
+	transition: box-shadow 0.08s ease-in;
+}
+
+.b24net-icon-btn--social-odnoklassniki {
+	--ui-icon-service-bg-image: url("data:image/svg+xml,%3Csvg width='24' height='24' viewBox='0 0 512 512' fill='none' xmlns='http://www.w3.org/2000/svg'%3E%3Cg clip-path='url(%23clip0_1074_400)'%3E%3Cpath d='M0 245.742C0 129.938 0 72.0356 36.0178 36.0178C72.0356 0 129.938 0 245.742 0H266.258C382.062 0 439.964 0 475.982 36.0178C512 72.0356 512 129.938 512 245.742V266.258C512 382.062 512 439.964 475.982 475.982C439.964 512 382.062 512 266.258 512H245.742C129.938 512 72.0356 512 36.0178 475.982C0 439.964 0 382.062 0 266.258V245.742Z' fill='white'/%3E%3Cpath d='M256 254.633C281.075 254.633 303.644 244.602 320.057 228.189C336.47 211.776 346.5 188.98 346.5 164.132C346.5 139.056 336.47 116.488 320.057 100.075C303.644 83.6619 281.075 73.6317 256 73.6317C230.924 73.6317 208.356 83.6619 191.943 100.075C175.53 116.488 165.499 139.056 165.499 164.132C165.499 189.208 175.53 211.776 191.943 228.189C208.356 244.374 230.924 254.633 256 254.633ZM227.049 134.953C234.571 127.43 244.83 122.871 256 122.871C267.398 122.871 277.656 127.43 284.951 134.953C292.473 142.476 297.033 152.734 297.033 163.904C297.033 175.074 292.473 185.56 284.951 192.855C277.428 200.378 267.17 204.937 256 204.937C244.602 204.937 234.343 200.378 227.049 192.855C219.526 185.332 214.967 175.074 214.967 163.904C214.967 152.734 219.526 142.476 227.049 134.953Z' fill='%23FF7700'/%3E%3Cpath d='M377.731 291.106L351.06 254.86C349.464 252.809 346.728 252.581 344.677 254.176C319.601 275.605 288.826 289.282 255.772 289.282C222.718 289.282 191.943 275.377 166.867 254.176C165.044 252.581 162.08 252.809 160.484 254.86L134.041 291.106C132.673 292.93 133.129 295.437 134.725 296.805C157.065 315.042 183.052 327.124 210.18 333.507L154.101 432.214C152.734 434.949 154.785 438.369 157.977 438.369H212.915C214.511 438.369 216.107 437.457 216.791 435.861L256 348.324L295.209 435.861C295.893 437.457 297.489 438.369 299.084 438.369H354.023C357.214 438.369 359.266 434.949 357.67 432.214L301.592 333.507C328.719 327.124 354.479 315.042 376.819 296.805C378.643 295.437 378.871 292.93 377.731 291.106Z' fill='%23FF7700'/%3E%3C/g%3E%3C/svg%3E");
+}
+
+.b24net-icon-btn--social-odnoklassniki .b24net-icon-btn__icon {
+	background-size: 70%;
+}
+
+.b24net-icon-btn--social-vkontakte {
+	--ui-icon-service-bg-image: url("data:image/svg+xml,%3Csvg width='42' height='42' viewBox='0 0 42 42' fill='none' xmlns='http://www.w3.org/2000/svg'%3E%3Cpath d='M21.3458 26.9971C14.8558 26.9971 11.1538 22.4946 11 15H14.2521C14.3603 20.4999 16.7552 22.8319 18.6547 23.3104V15H21.716V19.7447C23.5898 19.54 25.5604 17.3781 26.2239 15H29.2852C28.7755 17.9315 26.6397 20.0934 25.1219 20.9813C26.6397 21.7019 29.0745 23.5871 30 27H26.6311C25.9078 24.717 24.1052 22.9529 21.7188 22.7108V27H21.3515L21.3458 26.9971Z' fill='%232282FF'/%3E%3C/svg%3E");
+}
+
+.b24net-icon-btn--social-yandex {
+	--ui-icon-service-bg-image: url("data:image/svg+xml,%3Csvg%20width%3D%2243%22%20height%3D%2242%22%20viewBox%3D%220%200%2043%2042%22%20fill%3D%22none%22%20xmlns%3D%22http%3A%2F%2Fwww.w3.org%2F2000%2Fsvg%22%3E%3Cpath%20d%3D%22M11.8398%2021C11.8398%2015.477%2016.3158%2011%2021.8398%2011C27.3618%2011%2031.8398%2015.477%2031.8398%2021C31.8398%2026.523%2027.3618%2031%2021.8398%2031C16.3158%2031%2011.8398%2026.523%2011.8398%2021Z%22%20fill%3D%22%23FC3F1D%22%2F%3E%3Cpath%20d%3D%22M23.1191%2016.6665H22.1951C20.5011%2016.6665%2019.6101%2017.5245%2019.6101%2018.7895C19.6101%2020.2195%2020.2261%2020.8895%2021.4911%2021.7485L22.5361%2022.4525L19.5331%2026.9395H17.2891L19.9841%2022.9255C18.4341%2021.8145%2017.5641%2020.7355%2017.5641%2018.9105C17.5641%2016.6225%2019.1591%2015.0605%2022.1841%2015.0605H25.1871V26.9285H23.1191V16.6665Z%22%20fill%3D%22white%22%2F%3E%3C%2Fsvg%3E") !important;
+}
+
+.b24net-icon-btn--social-yandex .b24net-icon-btn__icon {
+	background-size: 110%;
+}
+
+.b24net-icon-btn--social-google {
+	--ui-icon-service-bg-image: url("/bitrix/js/ui/icons/service/images/ui-service-google.svg");
+}
+
+.b24net-icon-btn--social-google .b24net-icon-btn__icon {
+	background-size: 100%;
+}
+
+.b24net-icon-btn--social-openid-mail-ru {
+	--ui-icon-service-bg-image: url("/bitrix/js/ui/icons/service/images/ui-service-light-mailru.svg");
+}
+
+.b24net-icon-btn--social-openid-mail-ru .b24net-icon-btn__icon {
+	background-size: 85%;
+}
+
+.b24net-icon-btn--social-mymailru {
+	--ui-icon-service-bg-image: url("/bitrix/js/ui/icons/service/images/ui-service-mailru.svg");
+}
+
+.b24net-icon-btn--social-mymailru .b24net-icon-btn__icon {
+	background-size: 85%;
+}
+
+.b24net-icon-btn--social-mailru2	 {
+	--ui-icon-service-bg-image: url("/bitrix/js/ui/icons/service/images/ui-service-light-mailru.svg");
+}
+
+.b24net-icon-btn--social-mailru2 .b24net-icon-btn__icon {
+	background-size: 85%;
+}
+
+.b24net-icon-btn--social-facebook {
+	--ui-icon-service-bg-image: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 42 42'%3E%3Cpath fill='%2338659f' d='M18.161 18.289H16v3.704h2.161V33h4.44V21.994h2.98s.279-1.776.415-3.718h-3.378v-2.533c0-.378.484-.887.963-.887H26V11h-3.29c-4.658 0-4.549 3.707-4.549 4.261v3.028z'/%3E%3C/svg%3E");
+}
+
+.b24net-icon-btn--social-facebook .b24net-icon-btn__icon {
+	background-size: 90%;
+}
+
+.b24net-icon-btn--social-office365 {
+	--ui-icon-service-bg-image: url("/bitrix/js/ui/icons/service/images/ui-service-office365.svg");
+}
+
+.b24net-icon-btn--social-office365 .b24net-icon-btn__icon {
+	background-size: 70%;
+}
+
+.b24net-icon-btn--social-liveinternet {
+	--ui-icon-service-bg-image: url("data:image/svg+xml,%3Csvg width='42' height='42' viewBox='0 0 42 42' fill='none' xmlns='http://www.w3.org/2000/svg'%3E%3Cpath fill-rule='evenodd' clip-rule='evenodd' d='M15.4386 11.9277L15.4382 26.3177L22.6928 26.3186V30.065H11.5892V11.9277H15.4386ZM29.8624 19.0945V30.0415H26.0131V19.0945H29.8624ZM29.8624 11.9353V15.6817H26.0131V11.9353H29.8624Z' fill='%2330889e'/%3E%3C/svg%3E");
+}
+.b24net-icon-btn--social-liveinternet .b24net-icon-btn__icon {
+	background-size: 80%;
+}
+
+.b24net-icon-btn--social-apple {
+	--ui-icon-service-bg-image: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='42' height='42' viewBox='0 0 42 42'%3E%3Cpath fill='%23000' d='M31.448 25.364a13.403 13.403 0 0 1-1.326 2.383c-.697.994-1.267 1.682-1.707 2.064-.682.627-1.412.948-2.195.966-.561 0-1.238-.16-2.027-.484-.79-.323-1.517-.482-2.182-.482-.697 0-1.444.16-2.244.482-.8.324-1.445.493-1.939.51-.75.032-1.497-.298-2.244-.992-.476-.416-1.072-1.128-1.785-2.137-.766-1.077-1.396-2.327-1.889-3.751-.528-1.538-.793-3.028-.793-4.47 0-1.653.357-3.078 1.072-4.272a6.289 6.289 0 0 1 2.246-2.27 6.04 6.04 0 0 1 3.035-.858c.596 0 1.377.185 2.348.547.968.363 1.59.548 1.862.548.204 0 .895-.216 2.065-.645 1.107-.399 2.042-.564 2.807-.499 2.074.168 3.633.985 4.669 2.458-1.855 1.124-2.773 2.698-2.754 4.718.016 1.573.587 2.882 1.708 3.921a5.616 5.616 0 0 0 1.708 1.12c-.137.397-.282.778-.435 1.143zM26.69 6.645c0 1.233-.45 2.384-1.349 3.45-1.083 1.267-2.394 1.998-3.815 1.883a3.838 3.838 0 0 1-.028-.467c0-1.184.515-2.45 1.43-3.486.457-.525 1.038-.96 1.742-1.308.703-.343 1.368-.533 1.994-.565.018.165.026.33.026.493z'/%3E%3C/svg%3E");
+}
+.b24net-icon-btn--social-apple .b24net-icon-btn__icon {
+	background-size: 85%;
+}
+
+.b24net-icon-btn--social-blogger .b24net-icon-btn__icon {
+	--ui-icon-service-bg-image: url("data:image/svg+xml,%3Csvg width='42' height='42' viewBox='0 0 42 42' fill='none' xmlns='http://www.w3.org/2000/svg'%3E%3Cpath fill-rule='evenodd' clip-rule='evenodd' d='M25.8223 30.8024C27.2782 30.6038 28.4191 30.0202 29.4894 28.9268C30.2637 28.1357 30.7484 27.2795 31.0651 26.1432C31.1967 25.6711 31.2077 25.4413 31.2319 22.6696C31.2501 20.5776 31.2349 19.5979 31.1804 19.3505C31.1014 18.992 30.8776 18.6591 30.6223 18.5203C30.5437 18.4776 30.0402 18.4231 29.5034 18.3993C28.6039 18.3594 28.5032 18.3418 28.2193 18.1754C27.769 17.9115 27.6449 17.6265 27.6437 16.8527C27.6413 15.3743 27.0261 14.0018 25.8105 12.763C24.9444 11.8805 23.9783 11.2831 22.8757 10.9484C22.6117 10.8683 22.0207 10.841 20.041 10.8176C16.9347 10.7809 16.2452 10.8446 15.1877 11.2658C13.238 12.0424 11.8372 13.679 11.3262 15.7772C11.2302 16.1712 11.2116 16.8028 11.1889 20.4309C11.1605 24.9761 11.1918 25.6436 11.4758 26.5443C11.7105 27.2885 11.9472 27.7445 12.4349 28.3918C13.3641 29.6249 14.7566 30.5154 16.1488 30.7669C16.8113 30.8866 24.9852 30.9166 25.8223 30.8024ZM17.2316 18.3248C16.4873 18.1197 16.2092 17.0518 16.7563 16.4995C17.1059 16.1465 17.2026 16.1331 19.3911 16.1331C21.3559 16.1331 21.4219 16.1374 21.7105 16.2832C22.1276 16.4939 22.3088 16.7909 22.3088 17.2639C22.3088 17.691 22.1386 17.9904 21.759 18.2309C21.5551 18.3601 21.4333 18.3681 19.5083 18.3795C18.3196 18.3864 17.3727 18.3637 17.2316 18.3248ZM16.4699 24.6426C16.5214 24.9854 16.8189 25.3722 17.1384 25.5114C17.297 25.5805 18.1604 25.6363 21.2082 25.6006L24.6767 25.56L25.3422 25.4518C25.9898 25.085 26.1032 24.1917 25.5658 23.6899C25.512 23.6397 25.4662 23.5966 25.416 23.5596C25.1106 23.3352 24.639 23.3368 21.1937 23.3395C17.2931 23.3426 17.1539 23.3521 16.8367 23.6392C16.5851 23.8669 16.421 24.3159 16.4699 24.6426Z' fill='%23f06a35'/%3E%3C/svg%3E");
+}
+.b24net-icon-btn--social-blogger .b24net-icon-btn__icon {
+	background-size: 85%;
+}
+
+.b24net-icon-btn--social-box {
+	--ui-icon-service-bg-image: url("data:image/svg+xml,%3Csvg width='42' height='42' viewBox='0 0 42 42' fill='none' xmlns='http://www.w3.org/2000/svg'%3E%3Cpath d='M36.9037 25.8285C37.3047 26.3898 37.2245 27.1114 36.7434 27.5123C36.1821 27.9133 35.3802 27.8331 34.9793 27.352L32.1728 23.7437L29.4465 27.2718C29.0456 27.8331 28.2438 27.8331 27.6825 27.4322C27.1212 27.0312 27.041 26.3096 27.4419 25.7483L30.6493 21.5787L27.4419 17.409C27.041 16.8477 27.2014 16.0459 27.6825 15.645C28.2438 15.244 29.0456 15.4044 29.4465 15.8855L32.1728 19.4939L34.9793 16.0459C35.3802 15.4846 36.1019 15.4044 36.7434 15.8053C37.3047 16.2063 37.3047 17.0081 36.9037 17.5694L33.7765 21.6588L36.9037 25.8285ZM22.3101 25.3473C20.2253 25.3473 18.5414 23.7437 18.5414 21.6588C18.5414 19.6542 20.2253 17.9703 22.3101 17.9703C24.3949 17.9703 26.0788 19.6542 26.0788 21.6588C25.9986 23.7437 24.3147 25.3473 22.3101 25.3473ZM11.2446 25.3473C9.15974 25.3473 7.47586 23.7437 7.47586 21.6588C7.47586 19.6542 9.15974 17.9703 11.2446 17.9703C13.3294 17.9703 15.0132 19.6542 15.0132 21.6588C15.0132 23.7437 13.3294 25.3473 11.2446 25.3473ZM22.3101 15.5648C19.9847 15.5648 17.8999 16.8477 16.8575 18.7722C15.8151 16.8477 13.7303 15.5648 11.3247 15.5648C9.88141 15.5648 8.59845 16.0459 7.55605 16.7676V11.6357C7.55605 10.9942 6.99475 10.433 6.35327 10.433C5.63161 10.433 5.07031 10.9942 5.07031 11.6357V21.739C5.1505 25.1068 7.87679 27.7529 11.2446 27.7529C13.6501 27.7529 15.7349 26.3898 16.7773 24.4653C17.8197 26.3898 19.9045 27.7529 22.2299 27.7529C25.6778 27.7529 28.4843 25.0266 28.4843 21.5787C28.5645 18.2911 25.758 15.5648 22.3101 15.5648Z' fill='%230061d5'/%3E%3C/svg%3E");
+}
+.b24net-icon-btn--social-box .b24net-icon-btn__icon {
+	background-size: 80%;
+}
+
+.b24net-icon-btn--social-dropbox {
+	--ui-icon-service-bg-image: url("data:image/svg+xml,%3Csvg class='title-bar-icon__svg' alt='Dropbox' xmlns='http://www.w3.org/2000/svg' role='img' width='32px' height='32px' viewBox='0 0 32 32' style='fill: rgb(0, 98, 255);'%3E%3Ctitle%3EDropbox%3C/title%3E%3Cpath d='M8 2.4l8 5.1-8 5.1-8-5.1 8-5.1zm16 0l8 5.1-8 5.1-8-5.1 8-5.1zM0 17.7l8-5.1 8 5.1-8 5.1-8-5.1zm24-5.1l8 5.1-8 5.1-8-5.1 8-5.1zM8 24.5l8-5.1 8 5.1-8 5.1-8-5.1z'%3E%3C/path%3E%3C/svg%3E");
+}
+.b24net-icon-btn--social-dropbox .b24net-icon-btn__icon {
+	background-size: 50%;
+}
+
+.b24net-icon-btn--social-zoom {
+	--ui-icon-service-bg-image: url("/bitrix/js/ui/icons/service/images/ui-service-blue-zoom.svg");
+}
+.b24net-icon-btn--social-zoom .b24net-icon-btn__icon {
+	background-size: 90%;
+}
+
+.b24net-icon-btn--social-livejournal {
+	--ui-icon-service-bg-image: url("/bitrix/js/ui/icons/service/images/ui-service-livejournal.svg");
+}
+.b24net-icon-btn--social-livejournal .b24net-icon-btn__icon {
+	background-size: 75%;
+}
+
+.b24net-icon-btn--social-bitrix24 {
+	--ui-icon-service-bg-image: url("data:image/svg+xml,%3Csvg id='svg2' width='441.28' height='144.2' viewBox='0 0 441.28 144.2' sodipodi:docname='Logo B24_color.eps' xmlns:inkscape='http://www.inkscape.org/namespaces/inkscape' xmlns:sodipodi='http://sodipodi.sourceforge.net/DTD/sodipodi-0.dtd' xmlns='http://www.w3.org/2000/svg' xmlns:svg='http://www.w3.org/2000/svg'%3E%3Cdefs id='defs6' /%3E%3Csodipodi:namedview id='namedview4' pagecolor='%23ffffff' bordercolor='%23000000' borderopacity='0.25' inkscape:showpageshadow='2' inkscape:pageopacity='0.0' inkscape:pagecheckerboard='0' inkscape:deskcolor='%23d1d1d1' /%3E%3Cg id='g8' inkscape:groupmode='layer' inkscape:label='ink_ext_XXXXXX' transform='matrix(1.3333333,0,0,-1.3333333,0,144.2)'%3E%3Cg id='g10' transform='scale(0.1)'%3E%3Cpath d='M 4.20703,0 H 286.016 c 315.457,0 429.023,138.801 429.023,332.281 0,130.387 -54.68,218.715 -151.422,269.192 -75.707,42.058 -172.449,54.675 -290.219,54.675 h -75.71 V 908.516 H 622.504 L 672.977,1064.14 0,1064.14 V 0 Z M 197.688,159.828 v 332.285 h 79.914 c 71.503,0 130.39,-8.414 172.453,-33.648 42.058,-25.238 67.297,-67.301 67.297,-134.598 0,-113.562 -67.297,-164.039 -227.129,-164.039 h -92.535' style='fill:%2351c7f3;fill-opacity:1;fill-rule:nonzero;stroke:none' id='path12' /%3E%3Cpath d='m 2897.36,980.934 c -171.4,0 -311.63,-140.235 -311.63,-311.633 3.89,-175.293 140.23,-311.633 311.63,-311.633 171.4,0 311.63,140.234 311.63,311.633 0,171.398 -140.23,311.633 -311.63,311.633 z m 0,-723.832 c -227.13,0 -407.99,180.863 -412.2,412.199 0,227.129 185.07,412.199 412.2,412.199 227.13,0 412.2,-185.07 412.2,-412.199 0,-227.129 -185.07,-412.199 -412.2,-412.199' style='fill:%232f5c9b;fill-opacity:1;fill-rule:nonzero;stroke:none' id='path14' /%3E%3Cpath d='m 2925.47,609.215 h -80.34 v 271.172 h 80.34 V 609.215' style='fill:%232f5c9b;fill-opacity:1;fill-rule:nonzero;stroke:none' id='path16' /%3E%3Cpath d='m 2845.13,609.215 v 80.336 h 271.17 v -80.336 h -271.17' style='fill:%232f5c9b;fill-opacity:1;fill-rule:nonzero;stroke:none' id='path18' /%3E%3Cpath d='m 1803.39,412.195 269.19,361.727 c 0,-29.442 -8.41,-121.977 -8.41,-206.102 V 416.402 h -126.18 c -37.86,0 -109.36,-4.207 -134.6,-4.207 z M 1588.88,260.777 h 475.29 V 0 h 189.28 v 260.777 h 159.83 V 420.609 H 2253.45 V 1068.35 H 2114.64 L 1588.88,386.961 Z M 827.574,0 h 740.276 v 164.035 h -487.91 c 67.3,269.192 479.5,328.078 479.5,626.711 0,159.832 -109.36,277.604 -340.7,277.604 -143.01,0 -269.189,-42.06 -353.31,-84.123 l 50.472,-151.418 c 75.711,37.851 164.038,71.504 273.398,71.504 84.12,0 164.04,-37.856 164.04,-134.598 C 1353.34,550.996 869.637,534.172 827.574,0' style='fill:%232f5c9b;fill-opacity:1;fill-rule:nonzero;stroke:none' id='path20' /%3E%3C/g%3E%3C/g%3E%3C/svg%3E");
+}
+.b24net-icon-btn--social-bitrix24 .b24net-icon-btn__icon {
+	background-size: 70%;
+	background-position: 10px center;
+}
+
+.b24net-icon-btn--social-liveid {
+	--ui-icon-service-bg-image: url("data:image/svg+xml,%3Csvg width='42' height='42' fill='none' xmlns='http://www.w3.org/2000/svg'%3E%3Cpath style='fill:%23ffb900;fill-opacity:1;stroke:%23fc0;stroke-width:5.12209' d='M23.97 24.026h3.878v3.878H23.97z' transform='translate(.007 -.027)'/%3E%3Cpath style='fill:%23ffb900;fill-opacity:1;stroke:%237fba00;stroke-width:5.12209;stroke-opacity:1' d='M23.97 14.149h3.878v3.878H23.97z' transform='translate(.007 -.027)'/%3E%3Cpath style='fill:%23ffb900;fill-opacity:1;stroke:%23f25022;stroke-width:5.12209;stroke-opacity:1' d='M14.139 14.149h3.878v3.878h-3.878z' transform='translate(.007 -.027)'/%3E%3Cpath style='fill:%23ffb900;fill-opacity:1;stroke:%2300a4ef;stroke-width:5.12209;stroke-opacity:1' d='M14.139 24.026h3.878v3.878h-3.878z' transform='translate(.007 -.027)'/%3E%3C/svg%3E");
+}
+.b24net-icon-btn--social-liveid .b24net-icon-btn__icon {
+	background-size: 80%;
+}
+
+.b24net-icon-btn--social-openid {
+	--ui-icon-service-bg-image: url("/bitrix/js/ui/icons/service/images/ui-service-openid.svg");
+}
+.b24net-icon-btn--social-openid .b24net-icon-btn__icon {
+	background-size: 80%;
+}
+
+.b24net-icon-btn--social-twitter {
+	--ui-icon-service-bg-image: url("data:image/svg+xml,%3Csvg width='42' height='42' fill='none' xmlns='http://www.w3.org/2000/svg'%3E%3Cpath d='m22.706 19.597 6.676-7.76H27.8l-5.797 6.738-4.63-6.738h-5.339l7 10.189-7 8.137h1.582l6.121-7.115 4.89 7.115h5.339l-7.26-10.566Zm-2.167 2.518-.71-1.014-5.643-8.073h2.43l4.555 6.515.709 1.015 5.92 8.468h-2.43l-4.83-6.91z' fill='%2314171a' style='stroke-width:.0149433'/%3E%3C/svg%3E");
+}
+.b24net-icon-btn--social-twitter .b24net-icon-btn__icon {
+	background-size: 90%;
+}
+
+.b24net-icon-btn--social-others .b24net-icon-btn__icon {
+	height: 100%;
+	padding-top: 0;
+}

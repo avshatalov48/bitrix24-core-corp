@@ -43,7 +43,7 @@ if (!empty($arResult['COUNTERS_RUNNING']['lists']['BizprocDocument']) || !empty(
 		<div class="sidebar-widget-content">
 		<span class="sidebar-widget-item-list task-item-list">
 			<span class="sidebar-widget-item --with-separator">
-				<a href="<?= htmlspecialcharsbx($tasksUrl) ?>" class="task-item">
+				<a href="<?= htmlspecialcharsbx($tasksUrl) ?>" class="task-item <?= $arResult['COUNTERS']['*'] === 0 ? '--zero' : '' ?>">
 					<span class="task-item-text"><?= GetMessage('BPTLWGT_RUNNING') ?></span>
 					<span class="task-item-index-wrap">
 						<span class="task-item-index"><?= $arResult['COUNTERS']['*'] < 100 ? $arResult['COUNTERS']['*'] : '99+' ?></span>
@@ -55,7 +55,7 @@ if (!empty($arResult['COUNTERS_RUNNING']['lists']['BizprocDocument']) || !empty(
 					continue;
 				?>
 				<span class="sidebar-widget-item">
-					<a href="<?= htmlspecialcharsbx($whiteList[$module]['URL']) ?>" class="task-item">
+					<a href="<?= htmlspecialcharsbx($whiteList[$module]['URL']) ?>" class="task-item <?= $arResult['COUNTERS'][$module]['*'] === 0 ? '--zero' : '' ?>">
 					<span class="task-item-text"><?= htmlspecialcharsbx($whiteList[$module]['LABEL']) ?></span>
 					<span class="task-item-index-wrap">
 						<span class="task-item-index"><?= $arResult['COUNTERS'][$module]['*'] < 100 ? $arResult['COUNTERS'][$module]['*'] : '99+' ?></span>

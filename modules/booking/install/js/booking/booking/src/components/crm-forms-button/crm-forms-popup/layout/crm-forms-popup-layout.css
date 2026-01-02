@@ -1,0 +1,36 @@
+.booking--booking--crm-forms-popup__wrapper {
+	display: flex;
+	flex-direction: column;
+	gap: 12px;
+	flex-grow: 1;
+}
+
+.booking--booking--crm-forms-popup__header-title {
+	color: var(--ui-color-text-primary, #333);
+	font-size: 19px;
+	font-style: normal;
+	font-weight: var(--ui-font-weight-medium);
+	line-height: 26px;
+	letter-spacing: -0.2px;
+}
+
+.booking--booking--crm-forms-popup__header-description {
+	font-size: var(--ui-font-size-lg);
+	font-weight: var(--ui-font-weight-normal);
+	line-height: 18px;
+}
+
+.booking--booking--crm-forms-popup__toolbar {
+	display: flex;
+	align-items: center;
+	justify-content: space-between;
+	gap: 12px;
+}
+
+.booking--booking-crm-forms-popup__list-wrapper {
+	background: var(--ui-color-palette-white-base, #FFF);
+	border-radius: 12px;
+	border: 1px solid rgba(var(--ui-color-palette-black-solid-rgb), 0.08);
+	display: flex;
+	flex-grow: 1;
+}

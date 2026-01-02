@@ -17,7 +17,14 @@ import { DialogFooter } from './dialog-footer/dialog-footer';
 import { ResourceWorkload } from '../resource/resource-workload/resource-workload';
 import './select-resources.css';
 
+// @vue/component
 export const SelectResources = {
+	name: 'SelectResources',
+	components: {
+		DialogHeader,
+		DialogFooter,
+		ResourceWorkload,
+	},
 	data(): Object
 	{
 		return {
@@ -27,6 +34,58 @@ export const SelectResources = {
 			workloadRefs: {},
 			selectedTypes: {},
 		};
+	},
+	computed: {
+		...mapGetters({
+			selectedDateTs: `${Model.Interface}/selectedDateTs`,
+			favoritesIds: `${Model.Favorites}/get`,
+			resources: `${Model.Resources}/get`,
+			isFilterMode: `${Model.Filter}/isFilterMode`,
+			isEditingBookingMode: `${Model.Interface}/isEditingBookingMode`,
+			isLoaded: `${Model.Interface}/isLoaded`,
+			mainResources: `${Model.MainResources}/resources`,
+			resourceTypes: `${Model.ResourceTypes}/get`,
+		}),
+		mainResourceIds(): Set<number>
+		{
+			return new Set(this.mainResources);
+		},
+		isDefaultState(): boolean
+		{
+			return this.mainResourceIds.size === this.favoritesIds.length
+				&& this.favoritesIds.every((id: number) => this.mainResourceIds.has(id));
+		},
+		visibleResourceTypes(): number[]
+		{
+			return this.resourceTypes
+				.filter((item) => item.resourcesCnt > 0)
+				.map(({ id }) => id);
+		},
+	},
+	watch: {
+		favoritesIds(): void
+		{
+			this.updateItems();
+		},
+		resources: {
+			handler(resources: ResourceModel[]): void
+			{
+				setTimeout(() => this.addItems(resources));
+				resourceDialogService.clearMainResourcesCache();
+			},
+			deep: true,
+		},
+		selectedTypes: {
+			handler(): void
+			{
+				void this.updateItemsByType();
+			},
+			deep: true,
+		},
+		isLoaded(): void
+		{
+			this.tryShowAhaMoment();
+		},
 	},
 	mounted(): void
 	{
@@ -63,26 +122,6 @@ export const SelectResources = {
 		Event.EventEmitter.subscribe('BX.Main.Popup:onAfterClose', this.tryShowAhaMoment);
 		Event.EventEmitter.subscribe('BX.Main.Popup:onDestroy', this.tryShowAhaMoment);
 	},
-	computed: {
-		...mapGetters({
-			selectedDateTs: `${Model.Interface}/selectedDateTs`,
-			favoritesIds: `${Model.Favorites}/get`,
-			resources: `${Model.Resources}/get`,
-			isFilterMode: `${Model.Interface}/isFilterMode`,
-			isEditingBookingMode: `${Model.Interface}/isEditingBookingMode`,
-			isLoaded: `${Model.Interface}/isLoaded`,
-			mainResources: `${Model.MainResources}/resources`,
-		}),
-		mainResourceIds(): Set<number>
-		{
-			return new Set(this.mainResources);
-		},
-		isDefaultState(): boolean
-		{
-			return this.mainResourceIds.size === this.favoritesIds.length
-				&& this.favoritesIds.every((id: number) => this.mainResourceIds.has(id));
-		},
-	},
 	methods: {
 		showDialog(): void
 		{
@@ -113,7 +152,8 @@ export const SelectResources = {
 			if (scrollTop + 10 >= maxScroll)
 			{
 				const loadedResourcesIds = resourcesDateCache.getIdsByDateTs(this.selectedDateTs / 1000);
-				const resourcesIds = this.resources.map((resource: ResourceModel) => resource.id);
+				const activeResources = this.resources.filter((resource: ResourceModel) => !resource.isDeleted);
+				const resourcesIds = activeResources.map((resource: ResourceModel) => resource.id);
 				const idsToLoad = resourcesIds
 					.filter((id: number) => !loadedResourcesIds.includes(id))
 					.slice(0, Limit.ResourcesDialog)
@@ -219,7 +259,12 @@ export const SelectResources = {
 		{
 			const loadedResourcesIds = resourcesDateCache.getIdsByDateTs(this.selectedDateTs / 1000);
 			const resource = this.getResource(id);
-			const visible = loadedResourcesIds.includes(id) && resource && this.selectedTypes[resource.typeId];
+
+			const visible = loadedResourcesIds.includes(id)
+				&& resource
+				&& !resource.isDeleted
+				&& this.selectedTypes[resource.typeId]
+			;
 
 			return !visible;
 		},
@@ -240,7 +285,7 @@ export const SelectResources = {
 			this.dialog.getSearchTab().getStub().hide();
 			this.dialog.getSearchTab().getSearchLoader().show();
 
-			await resourceDialogService.doSearch(this.query, this.selectedDateTs / 1000);
+			await resourceDialogService.doSearch(this.query, this.selectedDateTs / 1000, this.visibleResourceTypes);
 
 			this.dialog.search(this.query);
 			this.updateItems();
@@ -293,9 +338,12 @@ export const SelectResources = {
 		{
 			await ahaMoments.show({
 				id: 'booking-select-resources',
-				title: this.loc('BOOKING_AHA_SELECT_RESOURCES_TITLE'),
-				text: this.loc('BOOKING_AHA_SELECT_RESOURCES_TEXT'),
-				article: HelpDesk.AhaSelectResources,
+				title: this.loc('BOOKING_AHA_SELECT_RESOURCES_TITLE_MSGVER_1'),
+				text: this.loc('BOOKING_AHA_SELECT_RESOURCES_TEXT_MSGVER_1'),
+				article: {
+					...HelpDesk.AhaSelectResources,
+					title: this.loc('BOOKING_AHA_ARTICLE_LINK_TITLE'),
+				},
 				target: this.$refs.button,
 			});
 
@@ -316,36 +364,32 @@ export const SelectResources = {
 				}
 			});
 		},
-	},
-	watch: {
-		favoritesIds(): void
+		getSelectedTypes(): number[]
 		{
-			this.updateItems();
+			return this.visibleResourceTypes.filter((id) => this.selectedTypes[id]);
 		},
-		resources: {
-			handler(resources: ResourceModel[]): void
-			{
-				setTimeout(() => this.addItems(resources));
-				resourceDialogService.clearMainResourcesCache();
-			},
-			deep: true,
-		},
-		selectedTypes: {
-			handler(): void
+		async updateItemsByType(): Promise<void>
+		{
+			if (
+				this.query
+				|| this.visibleResourceTypes.every((id) => this.selectedTypes[id])
+				|| this.visibleResourceTypes.every((id) => !this.selectedTypes[id])
+			)
 			{
 				this.updateItems();
-			},
-			deep: true,
+
+				return;
+			}
+
+			await resourceDialogService.doSearch(this.query, this.selectedDateTs / 1000, this.getSelectedTypes());
+
+			this.updateItems();
+			this.dialog.getSearchTab().getSearchLoader().hide();
+			if (this.dialog.getSearchTab().isEmptyResult())
+			{
+				this.dialog.getSearchTab().getStub().show();
+			}
 		},
-		isLoaded(): void
-		{
-			this.tryShowAhaMoment();
-		},
-	},
-	components: {
-		DialogHeader,
-		DialogFooter,
-		ResourceWorkload,
 	},
 	template: `
 		<div

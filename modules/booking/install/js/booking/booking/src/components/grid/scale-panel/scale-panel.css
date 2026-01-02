@@ -9,6 +9,7 @@
 	border-radius: 12px;
 	border: 1px solid var(--ui-color-base-10);
 	background: var(--ui-color-background-primary);
+	user-select: none;
 }
 
 .booking-booking-grid-scale-panel-full-screen {

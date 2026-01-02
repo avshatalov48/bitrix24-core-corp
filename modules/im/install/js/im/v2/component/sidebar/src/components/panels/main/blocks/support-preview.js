@@ -1,4 +1,6 @@
-import { ChatAvatar, AvatarSize, ChatTitle } from 'im.v2.component.elements';
+import { ChatTitle } from 'im.v2.component.elements.chat-title';
+import { ChatAvatar, AvatarSize } from 'im.v2.component.elements.avatar';
+
 import { AutoDelete } from '../../../elements/auto-delete/auto-delete';
 
 // @vue/component
@@ -24,7 +26,7 @@ export const SupportPreview = {
 				<ChatTitle :dialogId="dialogId" :twoLine="true" class="bx-im-sidebar-main-preview-group-chat__title" />
 			</div>
 			<div class="bx-im-sidebar-main-preview-group-chat__settings">
-				<AutoDelete />
+				<AutoDelete :dialogId="dialogId" />
 			</div>
 		</div>
 	`,

@@ -2,7 +2,7 @@
 
 namespace Bitrix\Tasks\Flow\Integration\Socialnetwork;
 
-use Bitrix\Tasks\AbstractCommand;
+use Bitrix\Tasks\Flow\AbstractCommand;
 use Bitrix\Tasks\Internals\Attribute\ExpectedNumeric;
 use Bitrix\Tasks\Internals\Attribute\Nullable;
 use Bitrix\Tasks\Internals\Attribute\PositiveNumber;

@@ -1,0 +1,20 @@
+<?php
+$MESS["ERROR_TASKS_GUID_NON_UNIQUE"] = "GUID бірегей болуы тиіс";
+$MESS["TASKS_BAD_ASSIGNEE_ID"] = "Орындаушы көрсетілмеген";
+$MESS["TASKS_BAD_ASSIGNEE_IN_COLLAB"] = "Міндетті орындаушы таңдалған коллабтың қатысушы емес";
+$MESS["TASKS_BAD_ASSIGNEE_IN_GROUP"] = " Міндетті орындаушы таңдалған жобаға қатысушы болып табылмайды";
+$MESS["TASKS_BAD_CREATED_BY"] = "Қоюшы көрсетілмеген";
+$MESS["TASKS_BAD_DURATION"] = "Мерзімдерді жоспарлауда көрсетілген міндет тым ұзақ";
+$MESS["TASKS_BAD_GROUP"] = "Міндет үшін жоба таңдалмаған";
+$MESS["TASKS_BAD_PARENT_ID"] = "&quot;Үстеме міндет&quot; өрісінде көрсетілген міндет табылмады";
+$MESS["TASKS_BAD_PLAN_DATES"] = "Мерзімдерді жоспарлауда басталу күнінен кем аяқталу күні көрсетілген";
+$MESS["TASKS_BAD_RESPONSIBLE_ID"] = "Жауапты адам көрсетілмеген";
+$MESS["TASKS_BAD_RESPONSIBLE_ID_EX"] = "&quot;Жауапты&quot; өрісінде көрсетілген пайдаланушы табылмады";
+$MESS["TASKS_BAD_TITLE"] = "Міндеттің атауы көрсетілмеген.";
+$MESS["TASKS_DEADLINE_OUT_OF_PROJECT_RANGE"] = "Міндеттің соңғы мерзімі жоба шеңберінен тыс";
+$MESS["TASKS_DEPENDS_ON_SELF"] = "Міндет өзіне тәуелді бола алмайды";
+$MESS["TASKS_INCORRECT_STATUS"] = "Дұрыс емес мәртебе";
+$MESS["TASKS_IS_LINKED_END_DATE_PLAN_REMOVE"] = "Міндеттің аяқталу уақытын жою мүмкін емес: міндетте тәуелділіктер бар";
+$MESS["TASKS_IS_LINKED_SET_PARENT"] = "Ата-ана міндетін тағайындау мүмкін емес: міндет берілген міндетке тәуелді";
+$MESS["TASKS_PLAN_DATE_END_OUT_OF_PROJECT_RANGE"] = "Міндеттің жоспарланған аяқталу күні жоба шеңберінен тыс";
+$MESS["TASKS_PLAN_DATE_START_OUT_OF_PROJECT_RANGE"] = "Міндеттің жоспарланған басталу күні жоба шеңберінен тыс";

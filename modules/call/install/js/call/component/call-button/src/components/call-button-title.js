@@ -15,6 +15,10 @@ export const CallButtonTitle = {
 			type: Boolean,
 			default: false,
 		},
+		showIcon: {
+			type: Boolean,
+			default: true,
+		},
 	},
 	computed: {
 		callButtonIconClasses(): Array<String>
@@ -27,7 +31,7 @@ export const CallButtonTitle = {
 		},
 	},
 	template: `
-		<div :class="callButtonIconClasses"></div>
+		<div v-if="showIcon || compactMode" :class="callButtonIconClasses"></div>
 		<div v-if="!compactMode" class="bx-call-chat-header-call-button__text">
 			{{ text }}
 		</div>

@@ -11,5 +11,8 @@ return [
 		'statemanager/redux/toolkit',
 		'statemanager/redux/middleware/analytics-sender',
 		'utils/function',
+
+		'settings/developer/meta',
+		'settings/developer/cache-manager',
 	],
 ];

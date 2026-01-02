@@ -5,7 +5,7 @@ jn.define('calendar/event-list-view', (require, exports, module) => {
 	const { Type } = require('type');
 	const { FloatingActionButton } = require('ui-system/form/buttons/floating-action-button');
 	const { tariffPlanRestrictionsReady } = require('tariff-plan-restriction');
-	const { Icon } = require('ui-system/blocks/icon');
+	const { Tourist } = require('tourist');
 
 	const { Sharing, SharingContext } = require('calendar/sharing');
 	const { EventManager } = require('calendar/data-managers/event-manager');
@@ -16,14 +16,18 @@ jn.define('calendar/event-list-view', (require, exports, module) => {
 	const { CollabManager } = require('calendar/data-managers/collab-manager');
 	const { UserManager } = require('calendar/data-managers/user-manager');
 	const { MoreMenu } = require('calendar/event-list-view/more-menu');
+	const { SearchLayout } = require('calendar/event-list-view/search/layout');
 	const { SharingButton } = require('calendar/event-list-view/sharing-button');
 	const { EventEditForm } = require('calendar/event-edit-form');
 	const { Layout } = require('calendar/event-list-view/layout');
 	const { State } = require('calendar/event-list-view/state');
-	const { CalendarType, EventMeetingStatus, PullCommand } = require('calendar/enums');
-	const { DateHelper } = require('calendar/date-helper');
-
-	const isAndroid = Application.getPlatform() === 'android';
+	const { NewMenu, SyncError } = require('calendar/aha-moments-manager');
+	const {
+		CalendarType,
+		EventMeetingStatus,
+		PullCommand,
+		AhaMomentEvent,
+	} = require('calendar/enums');
 
 	/**
 	 * @class CalendarEventListView
@@ -34,8 +38,13 @@ jn.define('calendar/event-list-view', (require, exports, module) => {
 		{
 			super(props);
 
-			this.timezoneOffset = isAndroid ? 0 : DateHelper.timezoneOffset;
 			this.floatingActionButtonRef = null;
+
+			this.syncErrorAhaShowed = false;
+
+			this.search = null;
+			this.sharingButton = null;
+			this.moreMenu = null;
 
 			this.initManagers();
 			this.initState();
@@ -48,17 +57,28 @@ jn.define('calendar/event-list-view', (require, exports, module) => {
 			return this.props.readOnly;
 		}
 
+		get layout()
+		{
+			return this.props.layout;
+		}
+
 		initManagers()
 		{
 			SectionManager.setSections(this.props.sectionInfo);
 			SectionManager.setCollabSections(this.props.collabSectionInfo);
+			SectionManager.setTrackingUserList(this.props.additionalSectionInfo.trackingUserList);
+			SectionManager.setHiddenSections(this.props.additionalSectionInfo.hiddenSections);
 			LocationManager.setLocations(this.props.locationInfo);
 			LocationManager.setCategories(this.props.categoryInfo);
 			SettingsManager.setSettings(this.props.settings);
 			CollabManager.setCollabs(this.props.collabInfo);
 			UserManager.addUsersToRedux(this.props.user);
 
-			if (this.props.calType === CalendarType.USER && !env.extranet)
+			if (
+				this.props.calType === CalendarType.USER
+				&& Number(this.props.ownerId) === Number(env.userId)
+				&& !env.extranet
+			)
 			{
 				SyncManager.setSyncInfo(this.props.syncInfo);
 			}
@@ -69,7 +89,9 @@ jn.define('calendar/event-list-view', (require, exports, module) => {
 			State.init({
 				calType: this.props.calType,
 				ownerId: this.props.ownerId,
+				viewMode: this.props.viewMode,
 				counters: this.props.counters,
+				hiddenSections: SectionManager.getHiddenSections(),
 				showDeclined: SettingsManager.isShowDeclinedEnabled(),
 				showWeekNumbers: SettingsManager.isShowWeekNumbersEnabled(),
 				denyBusyInvitation: SettingsManager.isDenyBusyInvitationEnabled(),
@@ -78,8 +100,7 @@ jn.define('calendar/event-list-view', (require, exports, module) => {
 
 		initRightMenuButtons()
 		{
-			this.sharingButton = null;
-			if (State.calType === CalendarType.USER && !env.extranet)
+			if (this.shouldShowSharingButton())
 			{
 				const sharing = new Sharing({
 					sharingInfo: this.props.sharingInfo,
@@ -88,13 +109,22 @@ jn.define('calendar/event-list-view', (require, exports, module) => {
 
 				this.sharingButton = new SharingButton({
 					sharing,
-					layout: this.props.layout,
+					layout: this.layout,
 					onSharing: () => this.initRightMenu(),
 				});
 			}
 
+			if (this.shouldShowSearchButton())
+			{
+				this.search = new SearchLayout({
+					layout: this.props.layout,
+					filterPresets: this.props.filterPresets,
+				});
+			}
+
 			this.moreMenu = new MoreMenu({
-				layout: this.props.layout,
+				targetElementRef: null,
+				layoutWidget: this.layout,
 				counters: this.props.counters,
 			});
 		}
@@ -109,7 +139,10 @@ jn.define('calendar/event-list-view', (require, exports, module) => {
 			];
 
 			Promise.allSettled(preloads)
-				.then(() => this.initRightMenu())
+				.then(() => {
+					this.initRightMenu();
+					this.handleAhaMoments();
+				})
 				.catch((errors) => console.error(errors))
 			;
 
@@ -129,6 +162,7 @@ jn.define('calendar/event-list-view', (require, exports, module) => {
 			BX.addCustomEvent('Calendar.EventListView::onSearch', this.onSearch);
 			BX.addCustomEvent('Calendar.SyncPage::onSetSectionStatus', this.onSetSectionStatus);
 			BX.addCustomEvent('Calendar.Sync::onSyncStatusChanged', this.onSyncStatusChanged);
+			BX.addCustomEvent('Calendar.EventEditForm::onAfterEventSave', this.onAfterEventSave);
 		}
 
 		unbindEvents()
@@ -136,6 +170,7 @@ jn.define('calendar/event-list-view', (require, exports, module) => {
 			BX.removeCustomEvent('Calendar.EventListView::onSearch', this.onSearch);
 			BX.removeCustomEvent('Calendar.SyncPage::onSetSectionStatus', this.onSetSectionStatus);
 			BX.removeCustomEvent('Calendar.Sync::onSyncStatusChanged', this.onSyncStatusChanged);
+			BX.removeCustomEvent('Calendar.EventEditForm::onAfterEventSave', this.onAfterEventSave);
 		}
 
 		pullSubscribe()
@@ -151,24 +186,24 @@ jn.define('calendar/event-list-view', (require, exports, module) => {
 							this.onMeetingStatusChange(data.params.fields);
 							break;
 						case PullCommand.EDIT_EVENT:
-							this.onEventEdit(data.params.fields);
+							void this.onEventEdit(data.params.fields);
 							break;
 						case PullCommand.DELETE_EVENT:
 							EventManager.handlePullEventDelete(data.params.fields);
 							break;
 						case PullCommand.EDIT_SECTION:
-							SectionManager.handlePull(data);
-							break;
 						case PullCommand.DELETE_SECTION:
 							SectionManager.handlePull(data);
-							void EventManager.refresh();
+							break;
+						case PullCommand.HIDDEN_SECTIONS_UPDATED:
+							this.hiddenSectionsUpdated(data.params.hiddenSections);
 							break;
 						case PullCommand.REFRESH_SYNC_STATUS:
 						case PullCommand.DELETE_SYNC_CONNECTION:
 							SyncManager.handlePull(data);
 							break;
 						case PullCommand.HANDLE_SUCCESSFUL_CONNECTION:
-							SectionManager.refresh(State.ownerId, State.calType, true);
+							void this.onHandleSuccessfulConnection();
 							break;
 						case PullCommand.UPDATE_USER_COUNTERS:
 							this.updateUserCounter(data);
@@ -183,11 +218,39 @@ jn.define('calendar/event-list-view', (require, exports, module) => {
 			});
 		}
 
+		handleAhaMoments()
+		{
+			if (!env.isCollaber && Tourist.firstTime(AhaMomentEvent.NEW_MENU))
+			{
+				setTimeout(() => {
+					NewMenu.show();
+
+					void Tourist.remember(AhaMomentEvent.NEW_MENU);
+				}, 500);
+			}
+			else if (!env.isCollaber && this.moreMenu.hasCountersValue() && Tourist.firstTime(AhaMomentEvent.SYNC_ERROR))
+			{
+				setTimeout(() => {
+					SyncError.show(this.onHideSyncErrorAha);
+
+					void Tourist.remember(AhaMomentEvent.SYNC_ERROR);
+				}, 500);
+			}
+		}
+
+		onHideSyncErrorAha = () => {
+			if (!this.syncErrorAhaShowed)
+			{
+				SyncManager.openSyncPage();
+				this.syncErrorAhaShowed = true;
+			}
+		};
+
 		initRightMenu()
 		{
 			const buttons = this.getMenuButtons();
 
-			this.props.layout.setRightButtons(buttons);
+			this.layout.setRightButtons(buttons);
 		}
 
 		getMenuButtons()
@@ -195,23 +258,12 @@ jn.define('calendar/event-list-view', (require, exports, module) => {
 			const buttons = [];
 
 			buttons.push(
-				this.getSearchButton(),
+				this.search?.getButton(),
 				this.sharingButton?.getButton(),
 				this.moreMenu.getMenuButton(),
 			);
 
 			return buttons.filter(Boolean);
-		}
-
-		getSearchButton()
-		{
-			return {
-				type: Icon.SEARCH.getIconName(),
-				id: 'calendar-search',
-				testId: 'calendar-search',
-				accent: State.isSearchMode,
-				callback: this.showSearch,
-			};
 		}
 
 		initFloatingButton()
@@ -220,15 +272,11 @@ jn.define('calendar/event-list-view', (require, exports, module) => {
 			{
 				this.floatingActionButtonRef = FloatingActionButton({
 					testId: 'calendar_event_list_ADD_BTN',
-					parentLayout: this.props.layout,
+					parentLayout: this.layout,
 					onClick: this.handleFloatingButtonClick,
 				});
 			}
 		}
-
-		showSearch = () => {
-			State.setIsSearchVisible(true);
-		};
 
 		onSearch = (params) => {
 			this.initRightMenu();
@@ -284,13 +332,42 @@ jn.define('calendar/event-list-view', (require, exports, module) => {
 			}
 		}
 
+		async onHandleSuccessfulConnection()
+		{
+			await SectionManager.refresh(State.ownerId, State.calType, true);
+			void EventManager.refresh(true);
+		}
+
+		hiddenSectionsUpdated(hiddenSections)
+		{
+			SectionManager.setHiddenSections(hiddenSections);
+			State.setHiddenSections(SectionManager.getHiddenSections());
+		}
+
 		onSyncStatusChanged = (params) => {
 			this.initRightMenu();
 		};
 
+		onAfterEventSave = (params) => {
+			const { section } = params.fields;
+			const currentHidden = SectionManager.getHiddenSections();
+
+			const isHidden = currentHidden.find((sectionId) => sectionId === section);
+
+			if (isHidden)
+			{
+				const hiddenSections = currentHidden.filter((sectionId) => sectionId !== section);
+				SectionManager.saveHiddenSections(State.ownerId, State.calType, hiddenSections);
+				State.setHiddenSections(SectionManager.getHiddenSections());
+			}
+		};
+
 		updateUserCounter(data)
 		{
-			if (State.calType !== CalendarType.USER)
+			if (
+				State.calType !== CalendarType.USER
+				&& State.ownerId !== Number(env.userId)
+			)
 			{
 				return;
 			}
@@ -334,19 +411,32 @@ jn.define('calendar/event-list-view', (require, exports, module) => {
 						flex: 1,
 					},
 				},
-				new Layout({
-					layout: this.props.layout,
-					floatingActionButtonRef: this.floatingActionButtonRef,
-				}),
+				this.renderLayout(),
 			);
 		}
 
+		renderLayout()
+		{
+			return new Layout({
+				layout: this.layout,
+				floatingActionButtonRef: this.floatingActionButtonRef,
+			});
+		}
+
 		handleFloatingButtonClick = () => {
+			const participantsEntityList = [Number(env.userId)];
+
+			if (State.calType === CalendarType.USER && State.ownerId !== Number(env.userId))
+			{
+				participantsEntityList.push(State.ownerId);
+			}
+
 			void EventEditForm.open({
+				participantsEntityList,
 				ownerId: State.ownerId,
 				calType: State.calType,
 				selectedDayTs: State.selectedDate.getTime(),
-				parentLayout: this.props.layout,
+				parentLayout: this.layout,
 				sectionId: SettingsManager.getMeetSectionId(),
 				firstWeekday: SettingsManager.getFirstWeekday(),
 				user: this.getUserForEditForm(),
@@ -364,6 +454,23 @@ jn.define('calendar/event-list-view', (require, exports, module) => {
 				isExtranet,
 				name: fullName,
 			};
+		}
+
+		shouldShowSharingButton()
+		{
+			return (
+				State.calType === CalendarType.USER
+				&& State.ownerId === Number(env.userId)
+				&& !env.extranet
+			);
+		}
+
+		shouldShowSearchButton()
+		{
+			return (State.calType === CalendarType.USER && State.ownerId === Number(env.userId))
+				|| State.calType === CalendarType.GROUP
+				|| State.calType === CalendarType.COMPANY_CALENDAR
+			;
 		}
 	}
 

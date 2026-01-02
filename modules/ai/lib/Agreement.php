@@ -13,6 +13,10 @@ class Agreement
 	private string $title;
 	private string $text;
 
+	private static array $fixedAgreementValues = [
+		'AI_BOX_AGREEMENT' => true,
+	];
+
 	private function __construct() {}
 
 	/**
@@ -27,7 +31,16 @@ class Agreement
 		{
 			return null;
 		}
+		if (self::isFixedAgreementValue($code))
+		{
+			$agreement = new self();
+			$agreement->id = 0;
+			$agreement->code = $code;
+			$agreement->title = '';
+			$agreement->text = '';
 
+			return $agreement;
+		}
 		$data = Facade\Agreement::getByCode($code, true);
 		if ($data)
 		{
@@ -39,8 +52,17 @@ class Agreement
 
 			return $agreement;
 		}
-
 		return null;
+	}
+
+	private static function isFixedAgreementValue(string $code): bool
+	{
+		return array_key_exists($code, self::$fixedAgreementValues);
+	}
+
+	private static function getFixedAgreementValue(string $code): ?bool
+	{
+		return self::$fixedAgreementValues[$code] ?? null;
 	}
 
 	/**
@@ -81,9 +103,9 @@ class Agreement
 	 */
 	public function isAcceptedByContext(Context $context): bool
 	{
-		if ($this->code === 'AI_BOX_AGREEMENT')
+		if (self::isFixedAgreementValue($this->code))
 		{
-			return true;
+			return self::getFixedAgreementValue($this->code);
 		}
 
 		if (!$context->getUserId())
@@ -113,9 +135,9 @@ class Agreement
 	 */
 	public function isAcceptedByUser(int $userId): bool
 	{
-		if ($this->code === 'AI_BOX_AGREEMENT')
+		if (self::isFixedAgreementValue($this->code))
 		{
-			return true;
+			return self::getFixedAgreementValue($this->code);
 		}
 
 		return Facade\Agreement::isAcceptedByUser($this->id, $userId);

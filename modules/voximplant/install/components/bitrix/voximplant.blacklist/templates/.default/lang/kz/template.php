@@ -1,0 +1,27 @@
+<?php
+$MESS["BLACKLIST_ABOUT_2"] = "Тізімде көрсетілген нөмірден кіріс қоңырау келгенде, қоңырау қабылданбайды. Мұндай қоңырау туралы ақпарат \"#LINK#\"-те жазылады.";
+$MESS["BLACKLIST_ABOUT_LINK"] = "Қоңыраулар детализациясы";
+$MESS["BLACKLIST_CANCEL"] = "Болдырмау";
+$MESS["BLACKLIST_DELETE_CONFIRM"] = "Нөмірді қара тізімнен жойғыңыз келетініне сенімдісіз бе?";
+$MESS["BLACKLIST_DELETE_ERROR"] = "Нөмірді жою қатесі";
+$MESS["BLACKLIST_ENABLE"] = "Жұмыс уақытынан тыс қаскүнемдердің телефон нөмірлерін автоматты түрде бұғаттау.";
+$MESS["BLACKLIST_ENABLE_TEXT"] = "Жұмыс істемейтін уақыт \"Телефония баптаулары\" парақшасындағы әрбір нөмір үшін бөлек көрсетіледі.";
+$MESS["BLACKLIST_ERROR_TITLE"] = "Қате";
+$MESS["BLACKLIST_NUMBERS"] = "Қара тізімдегі нөмірлер";
+$MESS["BLACKLIST_NUMBER_ADD"] = "Нөмірді қосу";
+$MESS["BLACKLIST_NUMBER_DELETE"] = "Жою";
+$MESS["BLACKLIST_REGISTER_IN_CRM_2"] = "Қара тізімдегі нөмірлерден қоңырауларды CRM-ге тіркеу";
+$MESS["BLACKLIST_SAVE"] = "Сақтау";
+$MESS["BLACKLIST_SETTINGS_TITLE"] = "Бұғаттау баптаулары";
+$MESS["BLACKLIST_TEXT1"] = "Егер бір нөмірден қоңырау шалса";
+$MESS["BLACKLIST_TEXT2"] = "аралықта қатарынан рет";
+$MESS["BLACKLIST_TEXT3"] = "минут.";
+$MESS["BLACKLIST_TITLE"] = "Қара тізімді баптау";
+$MESS["VI_BLACKLIST_NUMBER_ALREADY_EXISTS"] = "Бұл нөмір қара тізімде бұрыннан бар";
+$MESS["VOX_BLACKLIST_ADD_TO_LIST"] = "Тізімге қосу";
+$MESS["VOX_BLACKLIST_INTERVAL_IN_MINUTES"] = "Аралық, минут";
+$MESS["VOX_BLACKLIST_NUMBERS_HINT"] = "Бағанға телефон нөмірлерінің тізімін көрсету (әр жазба жаңа жолда).";
+$MESS["VOX_BLACKLIST_NUMBERS_SUBTITLE"] = "Телефон нөмірлерінің тізімі";
+$MESS["VOX_BLACKLIST_NUMBERS_TITLE"] = "Қара тізімге жүктеу";
+$MESS["VOX_BLACKLIST_RINGS_COUNT"] = "Қоңыраулар саны";
+$MESS["VOX_BLACKLIST_VALUE"] = "Мәні";

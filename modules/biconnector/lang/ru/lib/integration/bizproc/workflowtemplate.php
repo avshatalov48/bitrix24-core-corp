@@ -1,0 +1,35 @@
+<?php
+
+$MESS['WORKFLOW_TEMPLATE_TABLE'] = 'Шаблоны бизнес-процесса';
+$MESS['WORKFLOW_TEMPLATE_FIELD_ID'] = 'ID шаблона';
+$MESS['WORKFLOW_TEMPLATE_FIELD_ID_FULL'] = 'Идентификатор шаблона бизнес-процесса';
+$MESS['WORKFLOW_TEMPLATE_FIELD_WORKFLOW_TEMPLATE'] = 'ID и название';
+$MESS['WORKFLOW_TEMPLATE_FIELD_WORKFLOW_TEMPLATE_FULL'] = 'Идентификатор и название шаблона бизнес-процесса';
+$MESS['WORKFLOW_TEMPLATE_FIELD_MODULE_ID'] = 'Модуль';
+$MESS['WORKFLOW_TEMPLATE_FIELD_MODULE_ID_FULL'] = 'Название модуля';
+$MESS['WORKFLOW_TEMPLATE_FIELD_ENTITY'] = 'Сущность';
+$MESS['WORKFLOW_TEMPLATE_FIELD_ENTITY_FULL'] = 'Название сущности';
+$MESS['WORKFLOW_TEMPLATE_FIELD_DOCUMENT_TYPE'] = 'Тип документа';
+$MESS['WORKFLOW_TEMPLATE_FIELD_DOCUMENT_TYPE_FULL'] = 'Тип документа используется для привязки документа к указанному объекту';
+$MESS['WORKFLOW_TEMPLATE_FIELD_DOCUMENT_STATUS'] = 'Статус';
+$MESS['WORKFLOW_TEMPLATE_FIELD_DOCUMENT_STATUS_FULL'] = 'Статус шаблона бизнес-процесса';
+$MESS['WORKFLOW_TEMPLATE_FIELD_NAME'] = 'Название';
+$MESS['WORKFLOW_TEMPLATE_FIELD_NAME_FULL'] = 'Название шаблона бизнес-процесса';
+$MESS['WORKFLOW_TEMPLATE_FIELD_IS_MODIFIED'] = 'Шаблон изменён';
+$MESS['WORKFLOW_TEMPLATE_FIELD_IS_MODIFIED_FULL'] = 'Шаблон бизнес-процесса изменён, Y - да, N - нет';
+$MESS['WORKFLOW_TEMPLATE_FIELD_USER_ID'] = 'ID пользователя';
+$MESS['WORKFLOW_TEMPLATE_FIELD_USER_ID_FULL'] = 'Идентификатор пользователя, добавившего шаблон бизнес-процесса';
+$MESS['WORKFLOW_TEMPLATE_FIELD_USER_NAME'] = 'Имя пользователя';
+$MESS['WORKFLOW_TEMPLATE_FIELD_USER_NAME_FULL'] = 'Имя пользователя, добавившего шаблон бизнес-процесса';
+$MESS['WORKFLOW_TEMPLATE_FIELD_USER'] = 'ID и имя пользователя';
+$MESS['WORKFLOW_TEMPLATE_FIELD_USER_FULL'] = 'Идентификатор и имя пользователя, добавившего шаблон бизнес-процесса';
+$MESS['WORKFLOW_TEMPLATE_FIELD_MODIFIED'] = 'Дата изменения';
+$MESS['WORKFLOW_TEMPLATE_FIELD_MODIFIED_FULL'] = 'Дата изменения шаблон бизнес-процесса';
+$MESS['WORKFLOW_TEMPLATE_FIELD_SYSTEM_CODE'] = 'Системный код шаблона';
+$MESS['WORKFLOW_TEMPLATE_FIELD_SYSTEM_CODE_FULL'] = 'Системный код используется для идентификации типовых шаблонов бизнес-процессов и шаблонов, созданных приложениями';
+$MESS['WORKFLOW_TEMPLATE_FIELD_IS_SYSTEM'] = 'Системный шаблон';
+$MESS['WORKFLOW_TEMPLATE_FIELD_IS_SYSTEM_FULL'] = 'Системный шаблон бизнес-процесса, Y - да, N - нет';
+$MESS['WORKFLOW_TEMPLATE_FIELD_ACTIVE'] = 'Активность';
+$MESS['WORKFLOW_TEMPLATE_FIELD_ACTIVE_FULL'] = 'Активность, Y - активен, N - отключен';
+$MESS['WORKFLOW_TEMPLATE_FIELD_TYPE'] = 'Тип шаблона';
+$MESS['WORKFLOW_TEMPLATE_FIELD_TYPE_FULL'] = 'Тип шаблона бизнес-процесса указывает на его тип: бизнес-процесс, встроенный робот или пользовательский робот';

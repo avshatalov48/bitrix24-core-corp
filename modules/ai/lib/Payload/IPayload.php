@@ -39,6 +39,14 @@ interface IPayload
 	public function setEngine(IEngine $engine): static;
 
 	/**
+	 * Sets the payload data.
+	 *
+	 * @param string $payload Payload data.
+	 * @return static
+	 */
+	public function setPayload(string $payload): static;
+
+	/**
 	 * Sets Role instance for Payload.
 	 *
 	 * @param Role $role Role instance.

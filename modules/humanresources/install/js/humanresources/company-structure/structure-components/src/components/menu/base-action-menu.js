@@ -22,6 +22,10 @@ export const BaseActionMenuPropsMixin = {
 			type: String,
 			required: false,
 		},
+		containerDataTestId: {
+			type: String,
+			required: false,
+		},
 	},
 };
 
@@ -120,7 +124,10 @@ export const BaseActionMenu = {
 			:id="id"
 			@close="close"
 		>
-			<div class="hr-structure-components-action-menu-container">
+			<div
+				class="hr-structure-components-action-menu-container"
+				:data-test-id="containerDataTestId"
+			>
 			<template v-for="(item, index) in items">
 				<div
 					class="hr-structure-components-action-menu-item-wrapper"

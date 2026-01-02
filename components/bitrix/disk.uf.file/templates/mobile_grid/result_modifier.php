@@ -159,7 +159,7 @@ foreach ($arResult['FILES'] as $id => $file)
 			BX_RESIZE_IMAGE_PROPORTIONAL,
 			$createPicture,
 			$dummy,
-			$calculatedSize
+			$calculatedSize,
 		);
 
 		if ($createPicture)
@@ -192,6 +192,17 @@ foreach ($arResult['FILES'] as $id => $file)
 		}
 
 		$file['NAME_WO_EXTENSION'] = mb_substr($file['NAME'], 0, (mb_strlen($file['NAME']) - mb_strlen($file['EXTENSION']) - 1));
+
+		if (Bitrix\Main\Loader::includeModule('disk'))
+		{
+			$fileObject = Bitrix\Disk\File::loadById($file['FILE_ID']);
+
+			if (Bitrix\Disk\TypeFile::isBoard($fileObject))
+			{
+				$file['VIEW_URL'] = Bitrix\Disk\Driver::getInstance()->getUrlManager()->getUrlForViewAttachedBoard($fileObject, $file['ID']);
+				$file['IS_BOARD'] = 'Y';
+			}
+		}
 
 		$files[$id] = $file;
 	}

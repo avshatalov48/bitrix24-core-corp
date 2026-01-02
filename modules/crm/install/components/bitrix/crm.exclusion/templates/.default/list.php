@@ -13,20 +13,20 @@ $componentParameters = [
 	'PATH_TO_LIST' => $arResult['PATH_TO_LIST'],
 	'PATH_TO_IMPORT' => $arResult['PATH_TO_IMPORT'],
 	'CAN_EDIT' => $arResult['CAN_EDIT'],
-	'RENDER_FILTER_INTO_VIEW' => 'pagetitle',
 ];
 
-if ($_REQUEST['IFRAME'] == 'Y')
+if ($_REQUEST['IFRAME'] === 'Y')
 {
-	$componentParameters['IFRAME'] = $_REQUEST['IFRAME'] == 'Y' ? 'Y' : 'N';
+	$componentParameters['IFRAME'] = $_REQUEST['IFRAME'] === 'Y' ? 'Y' : 'N';
 	$APPLICATION->IncludeComponent(
-		"bitrix:crm.webform.popup",
+		"bitrix:ui.sidepanel.wrapper",
 		"",
-		array(
+		[
 			'POPUP_COMPONENT_NAME' => "bitrix:crm.exclusion.list",
 			"POPUP_COMPONENT_TEMPLATE_NAME" => "",
 			"POPUP_COMPONENT_PARAMS" => $componentParameters,
-		)
+			"USE_UI_TOOLBAR" => "Y",
+		]
 	);
 }
 else

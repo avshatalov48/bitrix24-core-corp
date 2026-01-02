@@ -1,4 +1,5 @@
 <?php
+$MESS["SP_AJAX_BAD_BUSINESS_COMPANY"] = "This company was not found.";
 $MESS["SP_AJAX_SAVE_PAYSYSTEM_CASHBOX_ERROR_CREATE_CASHBOX"] = "Error creating cash register";
 $MESS["SP_AJAX_SAVE_PAYSYSTEM_CASHBOX_ERROR_KEY_IS_EMPTY"] = "Payment system does not specify field \"#CODE_NAME#\"";
 $MESS["SP_AJAX_SAVE_PAYSYSTEM_CASHBOX_ERROR_NO_HANDLER_EXIST"] = "Cash register handler is incorrect";

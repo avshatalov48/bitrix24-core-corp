@@ -59,7 +59,39 @@ class AutoCloseWorktimeAgent
 		$recordForm->userId = $record->getUserId();
 		$recordForm->isSystem = true;
 		$recordForm->stopOffset = $record->getStartOffset();
-		$this->worktimeService->stopWorktime($recordForm);
+
+		if (\Bitrix\Timeman\Integration\Stafftrack\CheckIn::isCheckInStartEnabled())
+		{
+			$recordForm->getFirstEventForm()->reason = Loc::getMessage('TIMEMAN_CHECK_IN_CLOSE_DAY_REASON');
+		}
+
+		$result = $this->worktimeService->stopWorktime($recordForm);
+		if (
+			\Bitrix\Timeman\Integration\Stafftrack\CheckIn::isCheckInStartEnabled()
+			&& $result->isSuccess()
+		)
+		{
+			$reportData = [];
+			$queryObject = \CTimeManReport::getList(
+				[],
+				[
+					'ENTRY_ID' => $record->getId(),
+					'REPORT_TYPE' => 'REPORT',
+				],
+			);
+			if ($report = $queryObject->fetch())
+			{
+				$reportData['REPORT'] = $report['REPORT'];
+			}
+
+			\CTimeManReportDaily::Add([
+				'USER_ID' => $record->getUserId(),
+				'ENTRY_ID' => $record->getId(),
+				'REPORT_DATE' => $record->getDateStart()->setTime(0, 0),
+				'ACTIVE' => $record->getActive() ? 'Y' : 'N',
+				'REPORT' => $reportData['REPORT'] ?? '',
+			], true);
+		}
 
 		return '';
 	}

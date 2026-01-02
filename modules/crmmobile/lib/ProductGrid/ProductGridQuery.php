@@ -146,18 +146,11 @@ class ProductGridQuery extends Query
 
 		if ($this->entity->isNew())
 		{
-			$isEditable = $userPermissions->checkAddPermissions(
-				$this->entity->getEntityTypeId(),
-				$this->entity->getCategoryId()
-			);
+			$isEditable = $userPermissions->item()->canAddItem($this->entity);
 		}
 		else
 		{
-			$isEditable = $userPermissions->checkUpdatePermissions(
-				$this->entity->getEntityTypeId(),
-				$this->entity->getId(),
-				$this->entity->getCategoryId()
-			);
+			$isEditable = $userPermissions->item()->canUpdateItem($this->entity);
 		}
 
 		return $isEditable;

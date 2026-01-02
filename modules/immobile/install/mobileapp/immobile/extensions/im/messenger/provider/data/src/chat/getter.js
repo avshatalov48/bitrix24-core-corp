@@ -6,7 +6,7 @@ jn.define('im/messenger/provider/data/chat/getter', (require, exports, module) =
 	const { mergeImmutable } = require('utils/object');
 	const { DataProviderResult } = require('im/messenger/provider/data/result');
 	const { BaseDataProvider } = require('im/messenger/provider/data/base');
-	const { dialogDefaultElement } = require('im/messenger/model');
+	const { dialogDefaultElement } = require('im/messenger/model/dialogues');
 
 	/**
 	 * @class ChatGetter
@@ -33,7 +33,7 @@ jn.define('im/messenger/provider/data/chat/getter', (require, exports, module) =
 				return new DataProviderResult();
 			}
 
-			const preparedChatData = this.#prepareDatabaseData(chatData);
+			const preparedChatData = this.#prepareDatabaseData(databaseChatData);
 
 			return new DataProviderResult(preparedChatData, BaseDataProvider.source.database);
 		}
@@ -58,9 +58,9 @@ jn.define('im/messenger/provider/data/chat/getter', (require, exports, module) =
 				return new DataProviderResult();
 			}
 
-			const preparedChatData = this.#prepareDatabaseData(chatData);
+			const preparedDatabaseChatData = this.#prepareDatabaseData(databaseChatData);
 
-			return new DataProviderResult(preparedChatData, BaseDataProvider.source.database);
+			return new DataProviderResult(preparedDatabaseChatData, BaseDataProvider.source.database);
 		}
 
 		/**

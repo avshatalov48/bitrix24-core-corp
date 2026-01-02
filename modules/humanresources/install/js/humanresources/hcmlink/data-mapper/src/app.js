@@ -112,6 +112,7 @@ export const HumanresourcesHcmlinkMapper = {
 			if (value)
 			{
 				this.footerDisplay(false);
+				this.$Bitrix.eventEmitter.emit(EventList.HR_DATA_MAPPER_DONE);
 			}
 		},
 		isSearchEmpty(value): void
@@ -223,6 +224,8 @@ export const HumanresourcesHcmlinkMapper = {
 			this.searchName = null;
 			this.footerDisplay(false);
 			this.isJobResolved = false;
+			this.isDone = false;
+
 			await this.api.cancelJob({ jobId: this.jobId, companyId: this.companyId });
 			this.createUpdateEmployeeListJob(true);
 		},
@@ -310,7 +313,7 @@ export const HumanresourcesHcmlinkMapper = {
 	template: `
 		<Teleport v-if="isReadyToolbar" :to="toolbarContainer">
 			<Toolbar
-				:isMappingReady="isMappingReady"
+				:showCounters="isJobResolved"
 				:countAllPersonsForMap=countAllPersonsForMap
 				:countMappedPersons=countMappedPersons
 				:countUnmappedPersons=countUnmappedPersons

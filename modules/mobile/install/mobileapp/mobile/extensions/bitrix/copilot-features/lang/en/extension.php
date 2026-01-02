@@ -1,0 +1,19 @@
+<?php
+$MESS["COPILOT_FEATURE_ADVANTAGE_BUTTON_TEXT"] = "Learn more";
+$MESS["COPILOT_FEATURE_CHAT_DESCRIPTION"] = "Provides expert advice, suggests ideas, and writes texts for you.";
+$MESS["COPILOT_FEATURE_CHAT_TITLE"] = "Chat with CoPilot";
+$MESS["COPILOT_FEATURE_CRM_ADVANTAGE_1"] = "Transcripts the customer call and fills out missing CRM fields.";
+$MESS["COPILOT_FEATURE_CRM_ADVANTAGE_2"] = "Matches the customer call against a script and provides helpful hints.";
+$MESS["COPILOT_FEATURE_CRM_ADVANTAGE_3"] = "Creates a call summary and highlights key points.";
+$MESS["COPILOT_FEATURE_CRM_DESCRIPTION"] = "Transcripts the customer call, matches the customer call against a script, creates a call summary and fills out missing CRM fields.";
+$MESS["COPILOT_FEATURE_CRM_TITLE"] = "CoPilot in CRM";
+$MESS["COPILOT_FEATURE_DESCRIPTION"] = "Use the AI to boost your productivity.";
+$MESS["COPILOT_FEATURE_FLOW_DESCRIPTION"] = "Evaluates flow efficiency and suggests ways to increase performance.";
+$MESS["COPILOT_FEATURE_FLOW_TITLE"] = "Flow recommendations";
+$MESS["COPILOT_FEATURE_FLOW_UP_ADVANTAGE_1"] = "Trains the team to follow the rules during the meeting.";
+$MESS["COPILOT_FEATURE_FLOW_UP_ADVANTAGE_2"] = "Analyzes each participant's input and highlights key points.";
+$MESS["COPILOT_FEATURE_FLOW_UP_ADVANTAGE_3"] = "Documents the meeting results,  provides a summary and a transcript.";
+$MESS["COPILOT_FEATURE_FLOW_UP_DESCRIPTION"] = "Analyzes the meeting and creates a summary.";
+$MESS["COPILOT_FEATURE_FLOW_UP_TITLE"] = "Call Follow-Up";
+$MESS["COPILOT_FEATURE_NEW_STATUS_TEXT"] = "New";
+$MESS["COPILOT_FEATURE_TITLE"] = "CoPilot";

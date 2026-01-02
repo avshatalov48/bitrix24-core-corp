@@ -253,10 +253,10 @@ $GLOBALS['APPLICATION']->IncludeComponent(
 		'READ_ONLY' => $arResult['READ_ONLY'],
 		'ENABLE_UI' => false,
 		'ENABLE_TASK_ADD' => $arResult['ENABLE_TASK_ADD'],
-		'ENABLE_CALENDAR_EVENT_ADD' => $arResult['ENABLE_CALENDAR_EVENT_ADD'],
-		'ENABLE_EMAIL_ADD' => $arResult['ENABLE_EMAIL_ADD'],
+		'ENABLE_CALENDAR_EVENT_ADD' => $arResult['ENABLE_CALENDAR_EVENT_ADD'] ?? false,
+		'ENABLE_EMAIL_ADD' => $arResult['ENABLE_EMAIL_ADD'] ?? false,
 		'ENABLE_TOOLBAR' => false,
-		'EDITOR_ITEMS' => array()
+		'EDITOR_ITEMS' => []
 	),
 	null,
 	array('HIDE_ICONS' => 'Y')

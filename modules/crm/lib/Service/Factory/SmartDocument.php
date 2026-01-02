@@ -249,6 +249,7 @@ class SmartDocument extends Dynamic
 	public function getAdditionalTableFields(): array
 	{
 		return [
+			...parent::getAdditionalTableFields(),
 			(new Fields\StringField(Item\SmartDocument::FIELD_NAME_NUMBER))
 				->configureTitle(Loc::getMessage('CRM_TYPE_SMART_DOCUMENT_FIELD_NUMBER'))
 				->configureDefaultValue('')
@@ -328,5 +329,10 @@ class SmartDocument extends Dynamic
 	public function isCommunicationRoutingSupported(): bool
 	{
 		return false;
+	}
+
+	public function hasCustomPermissionsUI(): bool
+	{
+		return true;
 	}
 }

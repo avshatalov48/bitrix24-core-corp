@@ -75,8 +75,7 @@ final class PermissionsPage extends SystemPageProvider
 		return
 			parent::isPageAvailable($section)
 			&& $automatedSolution
-			&& Feature::enabled(Feature\PermissionsLayoutV2::class)
-			&& Container::getInstance()->getUserPermissions()->isAutomatedSolutionAdmin($automatedSolution['ID'])
+			&& Container::getInstance()->getUserPermissions()->automatedSolution()->isAutomatedSolutionAdmin($automatedSolution['ID'])
 		;
 	}
 }

@@ -1,0 +1,61 @@
+.check-list-widget-item-panel {
+	display: flex;
+	position: absolute;
+	left: 10px;
+	z-index: 2;
+	background: var(--ui-color-base-white-fixed);
+	padding: 8px 0;
+	border: 1px solid var(--ui-color-divider-default);
+	border-radius: 10px;
+	box-shadow: 0 3px 6px rgba(0, 0, 0, 0.11);
+	justify-content: center;
+	align-items: center;
+}
+
+.check-list-widget-item-panel-section {
+	display: flex;
+	justify-content: center;
+	align-items: center;
+	padding: 0 8px 0 8px;
+}
+
+.check-list-widget-item-panel-section:not(:last-child)
+{
+	border-right: 1px solid var(--ui-color-divider-default);
+}
+
+.check-list-widget-item-panel-section.--icons {
+	gap: 8px;
+}
+
+.check-list-widget-item-panel-section.--accomplice,
+.check-list-widget-item-panel-section.--auditor {
+	gap: 2px;
+}
+.check-list-widget-item-panel-section.--accomplice .ui-icon-set,
+.check-list-widget-item-panel-section.--auditor .ui-icon-set {
+	--ui-icon-set__icon-size: 20px;
+}
+
+.check-list-widget-item-panel-section-item {
+	display: flex;
+	justify-content: center;
+	align-items: center;
+	cursor: pointer;
+	font-size: var(--ui-font-size-sm);
+	color: var(--ui-color-base-4);
+	transition: opacity 0.2s;
+}
+
+.check-list-widget-item-panel-section-item.--disabled {
+	opacity: 0.4;
+	cursor: default;
+}
+
+.check-list-widget-item-panel-section-item .ui-icon-set {
+	--ui-icon-set__icon-color: var(--ui-color-base-4);
+}
+
+.check-list-widget-item-panel-section-item.--active.--important  .ui-icon-set {
+	--ui-icon-set__icon-color: radial-gradient(100.66% 100.66% at 50% 100.66%, #FAA72C 0%, #FF5752 67.91%);
+}

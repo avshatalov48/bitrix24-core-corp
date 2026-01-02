@@ -85,10 +85,12 @@ final class ErrorCode
 		);
 	}
 
-	public static function getAILimitOfRequestsExceededError(array $customData = null): Error
+	public static function getAILimitOfRequestsExceededError(array $customData = null, string $message = null): Error
 	{
+		$errormessage = $message ?? Loc::getMessage('CRM_INTEGRATION_AI_ERROR_ENGINE_LIMIT_EXCEEDED');
+
 		return new Error(
-			Loc::getMessage('CRM_INTEGRATION_AI_ERROR_ENGINE_LIMIT_EXCEEDED'),
+			$errormessage,
 			self::AI_ENGINE_LIMIT_EXCEEDED,
 			$customData
 		);
@@ -147,6 +149,14 @@ final class ErrorCode
 		return new Error(
 			'Payload cant be completely empty',
 			self::PAYLOAD_IS_EMPTY_ERROR_CODE
+		);
+	}
+
+	public static function getInvalidPayloadMarkersForFillRepeatSaleTipsError(): Error
+	{
+		return new Error(
+			Loc::getMessage('CRM_INTEGRATION_AI_ERROR_WRONG_REPEAT_SALE_PAYLOAD_MARKERS'),
+			self::INVALID_ARG_VALUE
 		);
 	}
 

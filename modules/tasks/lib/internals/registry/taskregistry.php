@@ -13,6 +13,7 @@ use Bitrix\Tasks\Flow\Internal\FlowTaskTable;
 use Bitrix\Tasks\Integration\Recyclebin\Manager;
 use Bitrix\Tasks\Internals\Task\FavoriteTable;
 use Bitrix\Tasks\Internals\Task\MemberTable;
+use Bitrix\Tasks\Internals\Task\ParameterTable;
 use Bitrix\Tasks\Internals\TaskObject;
 use Bitrix\Tasks\Util\Type\DateTime;
 
@@ -68,7 +69,7 @@ class TaskRegistry
 	 */
 	public function get(int $taskId, bool $withRelations = false): ?array
 	{
-		if (!array_key_exists($taskId, $this->storage))
+		if (!$this->isLoaded($taskId))
 		{
 			$this->load($taskId, $withRelations);
 		}
@@ -108,6 +109,14 @@ class TaskRegistry
 		)
 		{
 			$this->fillFlowId([$taskId]);
+		}
+
+		if (
+			$withRelations
+			&& !isset($this->storage[$taskId]['IS_RESULT_REQUIRED'])
+		)
+		{
+			$this->fillParameters([$taskId]);
 		}
 
 		return $this->storage[$taskId];
@@ -160,7 +169,9 @@ class TaskRegistry
 			->addSelect('ID')
 			->addSelect('TITLE')
 			->addSelect('GROUP_ID')
+			->addSelect('STAGE_ID')
 			->addSelect('STATUS')
+			->addSelect('STATUS_CHANGED_DATE')
 			->addSelect('ALLOW_CHANGE_DEADLINE')
 			->addSelect('ALLOW_TIME_TRACKING')
 			->addSelect('DEADLINE')
@@ -171,8 +182,10 @@ class TaskRegistry
 			->addSelect('RESPONSIBLE_ID')
 			->addSelect('CREATED_BY')
 			->addSelect('CLOSED_DATE')
+			->addSelect('CREATED_DATE')
 			->addSelect('START_DATE_PLAN')
 			->addSelect('END_DATE_PLAN')
+			->addSelect('SITE_ID')
 			->whereIn('ID', $taskIds)
 			->exec();
 
@@ -203,9 +216,15 @@ class TaskRegistry
 			$this->fillMembers($foundIds);
 			$this->fillDepartments($foundIds);
 			$this->fillFlowId($foundIds);
+			$this->fillParameters($foundIds);
 		}
 
 		return $this;
+	}
+
+	public function isLoaded(int $taskId): bool
+	{
+		return array_key_exists($taskId, $this->storage);
 	}
 
 	/**
@@ -474,4 +493,28 @@ class TaskRegistry
 		}
 	}
 
+	private function fillParameters(array $taskIds): void
+	{
+		$parameters =
+			ParameterTable::query()
+				->setSelect(['ID', 'CODE', 'VALUE', 'TASK_ID'])
+				->whereIn('TASK_ID', $taskIds)
+				->exec()
+				->fetchAll()
+		;
+
+		foreach ($parameters as $parameter)
+		{
+			$taskId = (int)$parameter['TASK_ID'];
+
+			if ((int)$parameter['CODE'] === ParameterTable::PARAM_RESULT_REQUIRED)
+			{
+				$this->storage[$taskId]['IS_RESULT_REQUIRED'] = $parameter['VALUE'];
+			}
+			elseif ((int)$parameter['CODE'] === ParameterTable::PARAM_ALLOW_CHANGE_DATE_PLAN)
+			{
+				$this->storage[$taskId]['ALLOW_CHANGE_DATE_PLAN'] = $parameter['VALUE'];
+			}
+		}
+	}
 }

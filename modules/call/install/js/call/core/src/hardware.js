@@ -46,13 +46,12 @@ class HardwareManager extends EventEmitter
 			return this.initPromise;
 		}
 
+		this._checkPermissions();
+
 		this.initPromise = new Promise((resolve, reject) =>
 		{
-			this.enumerateDevices()
-				.then((deviceList) =>
-				{
-					this._currentDeviceList = this.filterDeviceList(deviceList);
-
+			this.getCurrentDeviceList()
+				.then(() => {
 					navigator.mediaDevices.addEventListener('devicechange', BX.debounce(this.onNavigatorDeviceChanged.bind(this), 500));
 					this.initialized = true;
 					this.initPromise = null;
@@ -69,16 +68,35 @@ class HardwareManager extends EventEmitter
 		return this.initPromise;
 	}
 
-	enumerateDevices()
+	async _checkPermissions()
 	{
-		return new Promise((resolve, reject) =>
+		const cameraPermission = await navigator.permissions.query({ name: 'camera' });
+		const microphonePermission = await navigator.permissions.query({ name: 'microphone' });
+
+		cameraPermission.onchange = (status) => {
+			this.getCurrentDeviceList();
+		};
+
+		microphonePermission.onchange = (status) => {
+			this.getCurrentDeviceList();
+		};
+	}
+
+	async enumerateDevices() {
+		if (!navigator.mediaDevices || !navigator.mediaDevices.enumerateDevices)
 		{
-			if (!navigator.mediaDevices || !navigator.mediaDevices.enumerateDevices)
-			{
-				return reject("NO_WEBRTC");
-			}
-			navigator.mediaDevices.enumerateDevices().then(devices => resolve(devices))
-		});
+			const error = new Error("NO_WEBRTC");
+			error.code = "NO_WEBRTC";
+			throw error;
+		}
+
+		try
+		{
+			const devices = await navigator.mediaDevices.enumerateDevices();
+			return devices;
+		} catch (e) {
+			throw e;
+		}
 	}
 
 	get cameraList()
@@ -243,6 +261,24 @@ class HardwareManager extends EventEmitter
 		}
 	}
 
+	/*
+
+	the setter "isCameraOn" is duplicated by that function
+	to emit additional params in "onChangeCameraOn" event
+
+	for task-565624 off all participants mic/cam/screenshare
+
+	*/
+
+	setIsCameraOn(options)
+	{
+		if (this._isCameraOn !== options.isCameraOn)
+		{
+			this._isCameraOn = options.isCameraOn;
+			this.emit(Events.onChangeCameraOn, options);
+		}
+	}
+
 	get isMicrophoneMuted()
 	{
 		return this._isMicrophoneMuted;
@@ -257,6 +293,24 @@ class HardwareManager extends EventEmitter
 		}
 	}
 
+	/*
+
+	the setter "isMicrophoneMuted" is duplicated by that function
+	to emit additional params in "onChangeMicrophoneMuted" event
+
+	for task-565624 off all participants mic/cam/screenshare
+
+	*/
+
+	setIsMicrophoneMuted(options)
+	{
+		if (this._isMicrophoneMuted !== options.isMicrophoneMuted)
+		{
+			this._isMicrophoneMuted = options.isMicrophoneMuted;
+			this.emit(Events.onChangeMicrophoneMuted, options);
+		}
+	}
+
 	hasCamera()
 	{
 		if (!this.initialized)
@@ -265,6 +319,16 @@ class HardwareManager extends EventEmitter
 		}
 
 		return Object.keys(this.cameraList).length > 0;
+	}
+
+	hasMicrophone()
+	{
+		if (!this.initialized)
+		{
+			throw new Error("HardwareManager is not initialized yet");
+		}
+
+		return Object.keys(this.microphoneList).length > 0;
 	}
 
 	getMicrophoneList()
@@ -339,6 +403,8 @@ class HardwareManager extends EventEmitter
 				}
 			});
 
+			this._currentDeviceList = devices;
+
 			if (!shouldSkipDeviceChangedEvent)
 			{
 				this.emit(Events.deviceChanged, {
@@ -347,7 +413,6 @@ class HardwareManager extends EventEmitter
 				});
 			}
 
-			this._currentDeviceList = devices;
 			this.updating = false;
 		})
 	}
@@ -468,14 +533,11 @@ class HardwareManager extends EventEmitter
 		return resultDeviceList;
 	}
 
-	getCurrentDeviceList()
+	async getCurrentDeviceList()
 	{
-		return new Promise((resolve, reject) => {
-			this.enumerateDevices().then(deviceList => {
-				this._currentDeviceList = this.filterDeviceList(deviceList);
-				resolve();
-			})
-		});
+		const deviceList = await this.enumerateDevices();
+		this._currentDeviceList = this.filterDeviceList(deviceList);
+		return { currentDeviceList: this._currentDeviceList, deviceList };
 	}
 
 	getRemovedUsedDevices(devices, currentDevices)

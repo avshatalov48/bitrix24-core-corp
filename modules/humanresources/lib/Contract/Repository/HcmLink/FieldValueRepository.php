@@ -13,11 +13,14 @@ interface FieldValueRepository
 
 	public function update(FieldValue $item): FieldValue;
 
-	public function getByUnique(int $employeeId, int $fieldId): ?FieldValue;
+	public function getByUnique(int $entityId, int $fieldId): ?FieldValue;
 
-	public function getByFieldAndEmployee(Field $field, Employee $employee): ?FieldValue;
-
-	public function getByFieldIdsAndEmployeeIds(array $fieldIds, array $employeeIds): FieldValueCollection;
+	/**
+	 * @param list<int> $fieldIds
+	 * @param list<int> $entityIds
+	 * @return FieldValueCollection
+	 */
+	public function getByFieldIdsAndEntityIds(array $fieldIds, array $entityIds): FieldValueCollection;
 
 	public function listExpiredIds(int $limit = 100): array;
 

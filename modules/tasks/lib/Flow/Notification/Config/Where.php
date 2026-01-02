@@ -3,8 +3,6 @@
 namespace Bitrix\Tasks\Flow\Notification\Config;
 
 use Bitrix\Tasks\Flow\Notification\Exception\InvalidPayload;
-use Bitrix\Tasks\Integration\Bizproc\Robot\ChannelDictionary;
-use Bitrix\Tasks\ValueObjectInterface;
 
 class Where implements ValueObjectInterface
 {

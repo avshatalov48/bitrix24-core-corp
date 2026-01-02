@@ -11,11 +11,7 @@ CJSCore::Init(array('date', 'popup', 'ajax', 'tooltip', 'ui.fonts.opensans'));
 \Bitrix\Main\Page\Asset::getInstance()->addCss('/bitrix/js/crm/css/crm.css');
 \Bitrix\Main\Page\Asset::getInstance()->addCss('/bitrix/themes/.default/crm-entity-show.css');
 Bitrix\Main\Page\Asset::getInstance()->addJs('/bitrix/components/bitrix/crm.entity.details/templates/.default/script.js');
-
-if(SITE_TEMPLATE_ID === 'bitrix24')
-{
-	\Bitrix\Main\Page\Asset::getInstance()->addCss("/bitrix/themes/.default/bitrix24/crm-entity-show.css");
-}
+\Bitrix\Main\Page\Asset::getInstance()->addCss('/bitrix/themes/.default/bitrix24/crm-entity-show.css');
 $guid = $arResult['GUID']."_editor";
 $prefix = mb_strtolower($guid);
 $activityEditorID = "{$prefix}_editor";

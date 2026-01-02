@@ -2,13 +2,12 @@
  * @module im/messenger/controller/chat-composer/lib/view/managers
  */
 jn.define('im/messenger/controller/chat-composer/lib/view/managers', (require, exports, module) => {
-	const { Loc } = require('loc');
+	const { Loc } = require('im/messenger/loc');
 	const { isEqual } = require('utils/object');
 	const { withPressed } = require('utils/color');
 	const { Icon } = require('assets/icons');
 	const { Theme } = require('im/lib/theme');
 	const { Item } = require('im/messenger/lib/ui/base/item');
-	const { buttonIcons } = require('im/messenger/assets/common');
 	const { SidebarActionType, EventType, ComponentCode } = require('im/messenger/const');
 	const { MessengerEmitter } = require('im/messenger/lib/emitter');
 	const { LoggerManager } = require('im/messenger/lib/logger');
@@ -160,7 +159,8 @@ jn.define('im/messenger/controller/chat-composer/lib/view/managers', (require, e
 								width: 24,
 								height: 24,
 							},
-							svg: { content: buttonIcons.ellipsis() },
+							tintColor: Theme.colors.base4,
+							iconName: Icon.MORE.getIconName(),
 							onClick: () => {
 								onLongClickItem(item.key, item.userId, item.isYou, this.viewRef);
 							},
@@ -259,7 +259,6 @@ jn.define('im/messenger/controller/chat-composer/lib/view/managers', (require, e
 		getAddParticipantRow()
 		{
 			const text = Loc.getMessage('IMMOBILE_CHAT_COMPOSER_MANAGERS_ADD_ROW');
-			const buttonIcon = buttonIcons.specialAdd();
 
 			return View(
 				{
@@ -284,17 +283,26 @@ jn.define('im/messenger/controller/chat-composer/lib/view/managers', (require, e
 						testId: 'ADD_MANAGER_BUTTON',
 					},
 					View(
-						{},
-						Image({
+						{
 							style: {
-								width: 44,
-								height: 44,
+								alignItems: 'center',
+								justifyContent: 'center',
+								width: 40,
+								height: 40,
 								marginBottom: 6,
 								marginTop: 6,
 								marginHorizontal: 2,
-								borderRadius: 22,
+								borderRadius: 20,
+								backgroundColor: Theme.colors.bgContentTertiary,
 							},
-							svg: { content: buttonIcon },
+						},
+						Image({
+							style: {
+								width: 30,
+								height: 30,
+							},
+							tintColor: Theme.colors.base3,
+							named: Icon.PLUS.getIconName(),
 							onFailure: () => {
 								logger.error(`${this.constructor.name}.getAddParticipantRow.Image.onFailure`);
 							},

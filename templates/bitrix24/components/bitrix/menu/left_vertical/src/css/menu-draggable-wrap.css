@@ -1,0 +1,21 @@
+.menu-draggable-wrap {
+	box-sizing: border-box;
+	max-width: 100%;
+	width: calc(100% - var(--menu-items-block-padding-x));
+	position: absolute;
+	left: var(--menu-items-block-padding-x);
+	pointer-events: none;
+}
+
+.menu-item-draggable {
+	cursor: move;
+	z-index: 5;
+}
+
+.menu-item-draggable a {
+	color: #aeb6bc !important;
+}
+
+.menu-item-draggable .menu-fav-editable-btn {
+	display: none;
+}

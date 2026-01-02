@@ -4,21 +4,26 @@ if (!defined('B_PROLOG_INCLUDED') || B_PROLOG_INCLUDED !== true)
 	die();
 }
 
+use Bitrix\UI\Buttons;
+use Bitrix\UI\Toolbar\ButtonLocation;
+use Bitrix\UI\Toolbar\Facade\Toolbar;
+
 $containerID = 'tasks_sprint_selector';
 
 $currentSprintName = htmlspecialcharsbx($arResult['SPRINT']['START_TIME'])
 	. ' - ' . htmlspecialcharsbx($arResult['SPRINT']['FINISH_TIME'])
 ;
-?>
 
-<div class="pagetitle-container pagetitle-flexible-space">
-	<div id="<?= $containerID;?>" class="tasks-interface-toolbar-button-container">
-		<div class="webform-small-button webform-small-button-transparent webform-small-button-dropdown">
-			<span class="webform-small-button-text"><?=$currentSprintName?></span>
-			<span class="webform-small-button-icon"></span>
-		</div>
-	</div>
-</div>
+$tasksSprintSelector = new Buttons\Button([
+	'color' => Buttons\Color::LIGHT_BORDER,
+	'text' => $currentSprintName,
+	'dropdown' => true,
+]);
+
+$tasksSprintSelector->addAttribute('id', $containerID);
+
+Toolbar::addButton($tasksSprintSelector, ButtonLocation::AFTER_FILTER);
+?>
 
 <script>
 	BX.ready(function()

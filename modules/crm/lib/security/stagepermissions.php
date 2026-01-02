@@ -2,10 +2,11 @@
 
 namespace Bitrix\Crm\Security;
 
+use Bitrix\Crm\Category\PermissionEntityTypeHelper;
 use Bitrix\Crm\Security\EntityPermission\ApproveCustomPermsToExistRole;
 use Bitrix\Crm\Security\Role\Manage\Permissions\Transition;
+use Bitrix\Crm\Security\Role\PermissionsManager;
 use Bitrix\Crm\Service\Container;
-use Bitrix\Crm\Service\UserPermissions;
 
 final class StagePermissions
 {
@@ -70,49 +71,38 @@ final class StagePermissions
 			return [];
 		}
 
-		$entityTypeName = $factory->getEntityName();
-		if ($this->categoryId)
-		{
-			$entityTypeName = UserPermissions::getPermissionEntityType($this->entityTypeId, $this->categoryId);
-		}
+		$permissionEntity = (new PermissionEntityTypeHelper($this->entityTypeId))->getPermissionEntityTypeForCategory((int)$this->categoryId);
+		$permissionType = (new Transition())->code();
+
+		$userPermissions = Container::getInstance()->getUserPermissions();
+		$permissionLevel = PermissionsManager::getInstance($userPermissions->getUserId())
+			->getPermissionLevel($permissionEntity, $permissionType)
+		;
 
 		$stages = $factory->getStages($this->categoryId)->getAll();
-		$allStatusIds = array_map(static fn($stage) => $stage->getStatusId(), $stages);
+		$allStagesIds = array_map(static fn($stage) => $stage->getStatusId(), $stages);
 
-		$userId = Container::getInstance()->getContext()->getUserId();
-		$userPermissions = \CCrmRole::GetUserPerms($userId);
-		$isAdmin = Container::getInstance()->getUserPermissions($userId)->isAdmin();
-		$canWriteConfig = Container::getInstance()->getUserPermissions($userId)->canWriteConfig();
+		$isAdmin = $userPermissions->isAdminForEntity($this->entityTypeId);
 
-		$entityPermissions = $userPermissions['settings'][$entityTypeName][(new Transition())->code()] ?? [];
-		$stageId = Container::getInstance()->getUserPermissions()->getStageFieldName($this->entityTypeId);
-
-		$permissions = [];
-		foreach ($allStatusIds as $statusId)
+		$permissionsByStage = [];
+		foreach ($allStagesIds as $stageId)
 		{
 			if ((new ApproveCustomPermsToExistRole())->hasWaitingPermission(new Transition()))
 			{
-				$permissions[$statusId] = $allStatusIds;
+				$permissionsByStage[$stageId] = $allStagesIds;
 
 				continue;
 			}
-
-			$transitions = $entityPermissions[$stageId][$statusId] ?? $entityPermissions['-'] ?? [];
-			if (
-				(count($transitions) === 1 && reset($transitions) === Transition::TRANSITION_INHERIT)
-			)
-			{
-				$transitions = $entityPermissions['-'] ?? [];
-			}
+			$transitions = $permissionLevel->getSettingsForStage($stageId);
 
 			if (in_array(Transition::TRANSITION_ANY, $transitions))
 			{
-				$transitions = $allStatusIds;
+				$transitions = $allStagesIds;
 			}
-			$permissions[$statusId] = $isAdmin || $canWriteConfig ? $allStatusIds : array_values(array_intersect($allStatusIds, $transitions)); //merge with role stage transitions
+			$permissionsByStage[$stageId] = $isAdmin ? $allStagesIds : array_values(array_intersect($allStagesIds, $transitions)); //merge with role stage transitions
 		}
 
-		return $permissions;
+		return $permissionsByStage;
 	}
 
 	private function getStubPermissions(): ?array

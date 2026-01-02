@@ -1,5 +1,5 @@
-import {Loc, ajax} from 'main.core';
-import {Guide} from 'ui.tour';
+import { Loc, ajax } from 'main.core';
+import { Guide } from 'ui.tour';
 
 type DashboardGridOptions = {
 	bindElement: HTMLElement,
@@ -30,7 +30,7 @@ export class DashboardGrid
 				mode: 'class',
 				data: {
 					id: id,
-				}
+				},
 			}).then(() => {
 				grid.removeRow(id);
 			});
@@ -86,7 +86,7 @@ export class DashboardGrid
 						},
 						onShow: () => {
 							ajax.runComponentAction(DashboardGrid.componentName, 'markShowOnboarding', {
-								mode: 'class'
+								mode: 'class',
 							});
 						},
 					},

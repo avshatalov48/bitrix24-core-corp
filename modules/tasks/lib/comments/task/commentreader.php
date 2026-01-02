@@ -170,6 +170,7 @@ class CommentReader
 					}
 					break;
 
+				case 'COMMENT_POSTER_ONBOARDING_COMMENT_RESPONSIBLE_INVITATION_NOT_ACCEPTED_ONE_DAY_V2':
 				case 'COMMENT_POSTER_COMMENT_TASK_UPDATE_CHANGES_FIELD_CREATED_BY':
 					foreach ($this->members as $member)
 					{
@@ -186,6 +187,21 @@ class CommentReader
 					$rolesToSkip = [
 						MemberTable::MEMBER_TYPE_RESPONSIBLE,
 						MemberTable::MEMBER_TYPE_ACCOMPLICE,
+					];
+					foreach ($this->members as $member)
+					{
+						if (in_array($member['TYPE'], $rolesToSkip, true))
+						{
+							$usersToSkipReading[] = $member['USER_ID'];
+						}
+					}
+					break;
+
+				case 'COMMENT_POSTER_ONBOARDING_COMMENT_RESPONSIBLE_INVITATION_ACCEPTED_V2':
+				case 'COMMENT_POSTER_ONBOARDING_COMMENT_INVITED_RESPONSIBLE_NOT_VIEW_TASK_TWO_DAYS_V2':
+					$rolesToSkip = [
+						MemberTable::MEMBER_TYPE_RESPONSIBLE,
+						MemberTable::MEMBER_TYPE_ORIGINATOR,
 					];
 					foreach ($this->members as $member)
 					{

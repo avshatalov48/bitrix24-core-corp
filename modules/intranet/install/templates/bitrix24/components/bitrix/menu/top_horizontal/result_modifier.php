@@ -9,6 +9,8 @@ if (!is_array($arResult) || empty($arResult))
 	return;
 }
 
+define('AIR_TOP_HORIZONTAL_MENU_EXISTS', true);
+
 foreach ($arResult as &$item)
 {
 	$item["PARAMS"] = $item["PARAMS"] ?? [];

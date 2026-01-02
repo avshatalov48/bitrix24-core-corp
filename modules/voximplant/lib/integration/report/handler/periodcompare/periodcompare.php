@@ -70,10 +70,12 @@ abstract class PeriodCompare extends Base
 		$this->addCallTypeField($query, $filterParameters['INCOMING'], 'CALL_COUNT',true);
 		$query->whereBetween('CALL_START_DATE', $startDate, $finishDate);
 
+		$this->addDateForJoinField($query, $filterParameters['TIME_PERIOD_datesel'], $dateDifference);
+
 		$query->registerRuntimeField(new ReferenceField(
 			'previous',
 			\Bitrix\Main\Entity\Base::getInstanceByQuery($subQuery),
-			Join::on('this.DATE', 'ref.PREVIOUS_DATE')
+			Join::on('this.DATE_FOR_JOIN', 'ref.DATE')
 		));
 
 		$this->addCallTypeCompareField($query, 'CALL_COUNT');

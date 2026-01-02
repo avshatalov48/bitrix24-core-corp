@@ -35,9 +35,9 @@ jn.define('testing/report', (require, exports, module) => {
 			this.log.push({ type: 'success', message });
 		}
 
-		fail(message, expected, actual)
+		fail(message, expected, actual, trace)
 		{
-			this.log.push({ type: 'fail', message, expected, actual });
+			this.log.push({ type: 'fail', message, expected, actual, trace });
 		}
 	}
 

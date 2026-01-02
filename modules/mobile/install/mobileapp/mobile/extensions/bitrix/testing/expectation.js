@@ -11,9 +11,14 @@ jn.define('testing/expectation', (require, exports, module) => {
 		ExceptionMatcher,
 		AsyncExceptionMatcher,
 		DefinedMatcher,
+		UndefinedMatcher,
 		NullMatcher,
 		BooleanMatcher,
 		MatchObjectMatcher,
+		InstanceOfMatcher,
+		RegexMatcher,
+		LessThanMatcher,
+		GreaterThanMatcher,
 	} = require('testing/matchers');
 
 	class TestingExpectation
@@ -62,7 +67,7 @@ jn.define('testing/expectation', (require, exports, module) => {
 
 			if (!result)
 			{
-				throw new ExpectationFailed(matcher.actualValue, matcher.expectedValue);
+				throw new ExpectationFailed(matcher.actualValue, matcher.expectedValue, (new Error('stack')).stack);
 			}
 
 			expectationCount.confirmExpectation();
@@ -88,6 +93,11 @@ jn.define('testing/expectation', (require, exports, module) => {
 			return this.apply(new DefinedMatcher(this.actualValue));
 		}
 
+		toBeUndefined()
+		{
+			return this.apply(new UndefinedMatcher(this.actualValue, undefined));
+		}
+
 		toBeNull()
 		{
 			return this.apply(new NullMatcher(this.actualValue, null));
@@ -106,6 +116,26 @@ jn.define('testing/expectation', (require, exports, module) => {
 		toMatchObject(expectedValue)
 		{
 			return this.apply(new MatchObjectMatcher(this.actualValue, expectedValue));
+		}
+
+		toBeInstanceOf(expectedClass)
+		{
+			return this.apply(new InstanceOfMatcher(this.actualValue, expectedClass));
+		}
+
+		toMatchRegex(regex)
+		{
+			return this.apply(new RegexMatcher(this.actualValue, regex));
+		}
+
+		toBeLessThan(expectedValue)
+		{
+			return this.apply(new LessThanMatcher(this.actualValue, expectedValue));
+		}
+
+		toBeGreaterThan(expectedValue)
+		{
+			return this.apply(new GreaterThanMatcher(this.actualValue, expectedValue));
 		}
 	}
 
@@ -148,6 +178,13 @@ jn.define('testing/expectation', (require, exports, module) => {
 			return this.apply(new AsyncExceptionMatcher(this.actualValue, expectedException));
 		}
 
+		async toBeUndefined()
+		{
+			await this.#awaitActualValue();
+
+			return super.toBeUndefined();
+		}
+
 		async toBeDefined()
 		{
 			await this.#awaitActualValue();
@@ -181,6 +218,13 @@ jn.define('testing/expectation', (require, exports, module) => {
 			await this.#awaitActualValue();
 
 			return super.toMatchObject(expectedValue);
+		}
+
+		async toBeInstanceOf(expectedClass)
+		{
+			await this.#awaitActualValue();
+
+			return super.toBeInstanceOf(expectedClass);
 		}
 
 		async #awaitActualValue()

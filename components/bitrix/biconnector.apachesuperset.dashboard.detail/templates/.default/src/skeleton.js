@@ -1,6 +1,8 @@
-import { Dom, Tag, Event, Type, Loc } from 'main.core';
+import { Dom, Tag, Type, Loc } from 'main.core';
 import { Lottie } from 'ui.lottie';
 import SkeletonAnimation from './skeleton/biconnector-dashboard-skeleton.json';
+import DashboardLoadingAnimation from './skeleton/biconnector-dashboard-loading.json';
+import DotsAnimation from './skeleton/biconnector-dots-animation.json';
 import type { SkeletonConfig } from './type/skeleton-config';
 import { DashboardManager } from 'biconnector.apache-superset-dashboard-manager';
 import { BaseEvent, EventEmitter } from 'main.core.events';
@@ -8,55 +10,80 @@ import { BaseEvent, EventEmitter } from 'main.core.events';
 export class Skeleton
 {
 	#dashboardManager: DashboardManager;
+	#periodicReload: boolean;
+	#reloadInterval: number;
+
 	constructor(options: SkeletonConfig)
 	{
 		this.container = options.container ?? null;
 		this.dashboardId = options.dashboardId;
 		this.status = options.status;
-		this.isSupersetAvailable = options.isSupersetAvailable;
+		this.dashboardType = options.dashboardType;
+		this.supersetStatus = options.supersetStatus;
+		this.isFirstStartup = options.isFirstStartup;
 		this.#dashboardManager = new DashboardManager();
-		this.paramsCompatible = options.paramsCompatible ?? true;
+		this.#periodicReload = options.periodicReload ?? false;
+		this.#reloadInterval = null;
 
 		this.subscribeOnEvents();
 
 		if (Type.isDomNode(this.container))
 		{
-			Dom.append(this.getAnimationContainer(), this.container);
+			Dom.append(this.#initAnimationContainer(), this.container);
+			this.#changeContent(this.#getContent(this.status));
 		}
 
-		if (this.paramsCompatible === false)
+		if (this.supersetStatus === 'READY' && this.status === 'N')
 		{
-			this.#changeContent(this.#getParamsCompatibilityErrorContent());
+			DashboardManager.installDashboard(this.dashboardId)
+				.then(() => {})
+				.catch(() => {
+					this.#changeContent(this.#getFailedContent());
+					this.#clearReloadInterval();
+				});
+		}
+
+		if (this.#periodicReload)
+		{
+			this.#reloadInterval = setInterval(() => {
+				window.location.reload();
+			}, 10000);
 		}
 	}
 
 	subscribeOnEvents(): void
 	{
+		// eslint-disable-next-line no-unused-expressions
 		BX.PULL && BX.PULL.extendWatch('superset_dashboard', true);
 		EventEmitter.subscribe('onPullEvent-biconnector', (event: BaseEvent) => {
 			const [eventName, eventData] = event.data;
-			if (eventName !== 'onSupersetStatusUpdated' || !eventData)
+			if (eventName === 'onSupersetStatusUpdated')
 			{
-				return;
-			}
+				const status = eventData?.status;
+				if (!status)
+				{
+					return;
+				}
 
-			const status = eventData?.status;
-			if (!status)
-			{
-				return;
-			}
-
-			switch (status)
-			{
-				case 'READY':
-					window.location.reload();
-					break;
-				case 'LOAD':
-					this.showLoadingContent();
-					break;
-				case 'ERROR':
-					this.showErrorContent();
-					break;
+				switch (status)
+				{
+					case 'READY':
+						this.#clearReloadInterval();
+						DashboardManager.installDashboard(this.dashboardId);
+						break;
+					case 'LOAD':
+						this.#changeContent(this.#getLoadingContent());
+						break;
+					case 'ERROR':
+						this.#clearReloadInterval();
+						this.#changeContent(this.#getUnavailableSupersetHint());
+						break;
+					case 'LIMIT_EXCEEDED':
+						this.#changeContent(this.#getLimitExceededHint());
+						break;
+					default:
+						break;
+				}
 			}
 		});
 
@@ -78,15 +105,16 @@ export class Skeleton
 			{
 				if (Number(dashboard.id) === this.dashboardId)
 				{
-					this.onDashboardStatusUpdated(dashboard.status);
+					this.#onDashboardStatusUpdated(dashboard.status);
 				}
 			}
 		});
 	}
 
-	onDashboardStatusUpdated(status: string): void
+	#onDashboardStatusUpdated(status: string): void
 	{
-		switch (status) {
+		switch (status)
+		{
 			case DashboardManager.DASHBOARD_STATUS_DRAFT:
 			case DashboardManager.DASHBOARD_STATUS_READY: {
 				window.location.reload();
@@ -94,66 +122,31 @@ export class Skeleton
 			}
 
 			case DashboardManager.DASHBOARD_STATUS_LOAD: {
-				this.showLoadingContent();
+				this.#changeContent(this.#getLoadingContent());
 				break;
 			}
 
 			case DashboardManager.DASHBOARD_STATUS_FAILED: {
-				this.showFailedContent();
+				this.#clearReloadInterval();
+				this.#changeContent(this.#getFailedContent());
 				break;
 			}
+
+			default:
+				break;
 		}
 	}
 
-	showLoadingContent(): void
+	#clearReloadInterval(): void
 	{
-		this.#changeContent(this.getLoadingContent());
-	}
-
-	showFailedContent(): void
-	{
-		this.#changeContent(this.getFailedContent());
-	}
-
-	showErrorContent(): void
-	{
-		this.#changeContent(this.getUnavailableSupersetHint());
-	}
-
-	#changeContent(innerContent: HTMLElement): void
-	{
-		if (!this.container)
+		if (this.#reloadInterval)
 		{
-			return;
+			clearInterval(this.#reloadInterval);
+			this.#reloadInterval = null;
 		}
-
-		const hint = this.container.querySelector('#biconnector-dashboard__hint');
-		let content = hint.querySelector('#dashboard__hint__content');
-		if (content)
-		{
-			content.remove();
-		}
-
-		content = Tag.render`
-			<div id="dashboard__hint__content">
-					${innerContent}
-			</div>
-		`;
-
-		Dom.append(content, hint);
 	}
 
-	getAnimationContainer(): HTMLElement
-	{
-		return Tag.render`
-			<div class="biconnector-dashboard__animation">
-				${this.getLoadingHint()}
-				${this.getAnimationBox()}
-			</div>
-		`;
-	}
-
-	getAnimationBox(): HTMLElement
+	#initAnimationContainer(): HTMLElement
 	{
 		const animationBox = Tag.render`
 			<div class="biconnector-dashboard__animation_box"></div>
@@ -169,48 +162,111 @@ export class Skeleton
 
 		animation.play();
 
-		return animationBox;
+		return Tag.render`
+			<div class="biconnector-dashboard__animation">
+				<div class="biconnector-dashboard__hint_container"></div>
+				${animationBox}
+			</div>
+		`;
 	}
 
-	getContentByStatus(status: string): HTMLElement
+	#changeContent(innerContent: HTMLElement): void
 	{
-		if (status === DashboardManager.DASHBOARD_STATUS_LOAD)
+		if (!this.container)
 		{
-			return this.getLoadingContent();
+			return;
 		}
 
-		if (status === DashboardManager.DASHBOARD_STATUS_FAILED)
+		const hint = this.container.querySelector('.biconnector-dashboard__hint_container');
+		Dom.clean(hint);
+		Dom.append(innerContent, hint);
+	}
+
+	#getContent(): HTMLElement
+	{
+		if (this.supersetStatus === 'LIMIT_EXCEEDED')
 		{
-			return this.getFailedContent();
+			return this.#getLimitExceededHint();
+		}
+
+		if (this.supersetStatus === 'ERROR')
+		{
+			return this.#getUnavailableSupersetHint();
+		}
+
+		if (
+			this.status === DashboardManager.DASHBOARD_STATUS_LOAD
+			|| this.status === DashboardManager.DASHBOARD_STATUS_NOT_INSTALLED
+		)
+		{
+			return this.#getLoadingContent();
+		}
+
+		if (this.status === DashboardManager.DASHBOARD_STATUS_FAILED)
+		{
+			return this.#getFailedContent();
 		}
 
 		return '';
 	}
 
-	getLoadingContent(): HTMLElement
+	#getLoadingContent(): HTMLElement
 	{
-		const hintLink = Tag.render`
-			<a href="#" class="biconnector-dashboard__hint_link">
-				${Loc.getMessage('SUPERSET_DASHBOARD_DETAIL_HINT_LINK')}
-			</a>
+		const loadingAnimationContainer = Tag.render`
+			<div class="biconnector-dashboard__loading-animation"></div>
 		`;
 
-		Event.bind(hintLink, 'click', () => {
-			top.BX.Helper.show('redirect=detail&code=18897300');
+		Lottie.loadAnimation({
+			container: loadingAnimationContainer,
+			renderer: 'svg',
+			loop: false,
+			autoplay: true,
+			animationData: DashboardLoadingAnimation,
 		});
 
-		return Tag.render`
-			<div class="biconnector-dashboard__hint_title">
-				${Loc.getMessage('SUPERSET_DASHBOARD_DETAIL_HINT_TITLE_MSGVER_1')}
+		let descriptionBlock = '';
+		if (this.isFirstStartup)
+		{
+			const description: string = this.dashboardType === 'CUSTOM'
+				? Loc.getMessage('SUPERSET_DASHBOARD_DETAIL_HINT_DESC_CREATING')
+				: Loc.getMessage('SUPERSET_DASHBOARD_DETAIL_HINT_DESC_MSGVER_2')
+			;
+
+			descriptionBlock = Tag.render`
+				<div class="biconnector-dashboard__hint_desc">
+					${description.replaceAll('[br]', '<br>')}
+				</div>
+			`;
+		}
+
+		const title: string = this.dashboardType === 'CUSTOM'
+			? Loc.getMessage('SUPERSET_DASHBOARD_DETAIL_HINT_TITLE_CREATING')
+			: Loc.getMessage('SUPERSET_DASHBOARD_DETAIL_HINT_TITLE_MSGVER_2')
+		;
+
+		const container = Tag.render`
+			<div class="biconnector-dashboard__hint biconnector-dashboard__hint__loading">
+				${loadingAnimationContainer}
+				<div class="biconnector-dashboard__hint_title">
+					${title.replace('[dots]', '<span class="biconnector-dashboard__dots-animation"></span>')}
+				</div>
+				${descriptionBlock}
 			</div>
-			<div class="biconnector-dashboard__hint_desc">
-				${Loc.getMessage('SUPERSET_DASHBOARD_DETAIL_HINT_DESC_MSGVER_1')}
-			</div>
-			${hintLink}
 		`;
+
+		const dotsContainer = container.querySelector('.biconnector-dashboard__dots-animation');
+		Lottie.loadAnimation({
+			container: dotsContainer,
+			renderer: 'svg',
+			loop: true,
+			autoplay: true,
+			animationData: DotsAnimation,
+		});
+
+		return container;
 	}
 
-	getFailedContent(): HTMLElement
+	#getFailedContent(): HTMLElement
 	{
 		const reloadBtn = Tag.render`
 			<button class="ui-btn ui-btn-sm biconnector-dashboard__error_btn ui-btn-primary">
@@ -233,7 +289,7 @@ export class Skeleton
 					{
 						if (Number(restartedDashboardId) === this.dashboardId)
 						{
-							this.showLoadingContent();
+							this.#changeContent(this.#getLoadingContent());
 						}
 					}
 				},
@@ -241,67 +297,62 @@ export class Skeleton
 		};
 
 		return Tag.render`
-			<div class="biconnector-dashboard__error__logo-wrapper">
-				${this.getErrorLogo()}
+			<div class="biconnector-dashboard__hint biconnector-dashboard__hint__error">
+				<div class="biconnector-dashboard__error__logo-wrapper">
+					${this.#getErrorLogo()}
+				</div>
+				<div class="biconnector-dashboard__hint_desc biconnector-dashboard__error_desc">
+					${Loc.getMessage('SUPERSET_DASHBOARD_DETAIL_ERROR_DESC')}
+				</div>
+				${reloadBtn}
 			</div>
-			<div class="biconnector-dashboard__hint_desc biconnector-dashboard__error_desc">
-				${Loc.getMessage('SUPERSET_DASHBOARD_DETAIL_ERROR_DESC')}
-			</div>
-			${reloadBtn}
 		`;
 	}
 
-	getLoadingHint(): HTMLElement
+	#getUnavailableSupersetHint(): HTMLElement
 	{
-		let content: HTMLElement;
-		if (this.isSupersetAvailable)
-		{
-			content = this.getContentByStatus(this.status);
-		}
-		else
-		{
-			content = this.getUnavailableSupersetHint();
-		}
-
 		return Tag.render`
-			<div class="biconnector-dashboard__hint" id="biconnector-dashboard__hint">
-				<div id="dashboard__hint__content">
-					${content}
+			<div class="biconnector-dashboard__hint biconnector-dashboard__hint__unavailable">
+				<div class="biconnector-dashboard__error__logo-wrapper">
+					${this.#getErrorLogo()}
+				</div>
+				<div class="biconnector-dashboard__hint_title">
+					${Loc.getMessage('SUPERSET_DASHBOARD_DETAIL_HINT_TITLE_UNAVAILABLE')}
+				</div>
+				<div class="biconnector-dashboard__hint_desc">
+					${Loc.getMessage('SUPERSET_DASHBOARD_DETAIL_HINT_DESC_UNAVAILABLE')}
 				</div>
 			</div>
 		`;
 	}
 
-	getUnavailableSupersetHint(): HTMLElement
-	{
-		return Tag.render`
-			<div class="biconnector-dashboard__error__logo-wrapper">
-				${this.getErrorLogo()}
-			</div>
-			<div class="biconnector-dashboard__hint_title">
-				${Loc.getMessage('SUPERSET_DASHBOARD_DETAIL_HINT_TITLE_UNAVAILABLE')}
-			</div>
-			<div class="biconnector-dashboard__hint_desc">
-				${Loc.getMessage('SUPERSET_DASHBOARD_DETAIL_HINT_DESC_UNAVAILABLE')}
-			</div>
-		`;
-	}
-
-	getErrorLogo(): HTMLElement {
+	#getErrorLogo(): HTMLElement {
 		return Tag.render`
 			<div class="biconnector-dashboard__error__logo"></div>
 		`;
 	}
 
-	#getParamsCompatibilityErrorContent(): HTMLElement
+	#getLimitExceededHint(): HTMLElement
 	{
 		return Tag.render`
-			<div class="biconnector-dashboard__error__logo-wrapper">
-				${this.getErrorLogo()}
+			<div class="biconnector-dashboard__hint biconnector-dashboard__limit__exceeded__warning">
+				<div class="biconnector-dashboard__error__logo-wrapper">
+					${this.#getWarningLogo()}
+				</div>
+				<div class="biconnector-dashboard__hint_title">
+					${Loc.getMessage('SUPERSET_DASHBOARD_DETAIL_HINT_TITLE_LIMIT_EXCEEDED')}
+				</div>
+				<div class="biconnector-dashboard__hint_desc biconnector-dashboard__limit__exceeded__warning_desc">
+					${Loc.getMessage('SUPERSET_DASHBOARD_DETAIL_HINT_DESC_LIMIT_EXCEEDED_MSGVER_1').replaceAll('[br]', '<br>')}
+				</div>
 			</div>
-			<div class="biconnector-dashboard__hint_desc">
-				${Loc.getMessage('SUPERSET_DASHBOARD_DETAIL_PARAMS_INCOMPATIBLE')}
-			</div>
+		`;
+	}
+
+	#getWarningLogo(): HTMLElement
+	{
+		return Tag.render`
+			<div class="biconnector-dashboard__limit__exceeded__warning__logo"></div>
 		`;
 	}
 }

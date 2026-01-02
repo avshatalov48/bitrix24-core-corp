@@ -273,9 +273,14 @@ jn.define('calendar/event-edit-form/layout/event-settings', (require, exports, m
 
 		getReminderTitle(minutes)
 		{
-			if (minutes === 0)
+			if (minutes === -1)
 			{
 				return Loc.getMessage('M_CALENDAR_EVENT_EDIT_FORM_BOOLEAN_N');
+			}
+
+			if (minutes === 0)
+			{
+				return Loc.getMessage('M_CALENDAR_EVENT_EDIT_FORM_REMINDER_AT_MOMENT');
 			}
 
 			return this.formatMinutes(minutes);
@@ -324,7 +329,12 @@ jn.define('calendar/event-edit-form/layout/event-settings', (require, exports, m
 			},
 			onClick,
 		},
-		Text3({ text }),
+		Text3({
+			text,
+			style: {
+				paddingVertical: Indent.XS.toNumber(),
+			},
+		}),
 		content,
 	);
 

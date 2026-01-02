@@ -1,0 +1,325 @@
+<?php
+
+namespace Bitrix\Crm\Model;
+
+use Bitrix\Crm\Field;
+use Bitrix\Crm\ItemIdentifier;
+use Bitrix\Main\DB\DuplicateEntryException;
+use Bitrix\Main\Entity\DataManager;
+use Bitrix\Main\Error;
+use Bitrix\Main\Localization\Loc;
+use Bitrix\Main\ORM\Fields\DatetimeField;
+use Bitrix\Main\ORM\Fields\IntegerField;
+use Bitrix\Main\ORM\Fields\StringField;
+use Bitrix\Main\Result;
+use Bitrix\Main\Type\DateTime;
+
+/**
+ * Class LastCommunicationTable
+ *
+ * DO NOT WRITE ANYTHING BELOW THIS
+ *
+ * <<< ORMENTITYANNOTATION
+ * @method static EO_LastCommunication_Query query()
+ * @method static EO_LastCommunication_Result getByPrimary($primary, array $parameters = [])
+ * @method static EO_LastCommunication_Result getById($id)
+ * @method static EO_LastCommunication_Result getList(array $parameters = [])
+ * @method static EO_LastCommunication_Entity getEntity()
+ * @method static \Bitrix\Crm\Model\EO_LastCommunication createObject($setDefaultValues = true)
+ * @method static \Bitrix\Crm\Model\EO_LastCommunication_Collection createCollection()
+ * @method static \Bitrix\Crm\Model\EO_LastCommunication wakeUpObject($row)
+ * @method static \Bitrix\Crm\Model\EO_LastCommunication_Collection wakeUpCollection($rows)
+ */
+class LastCommunicationTable extends DataManager
+{
+	public const FIELD_PREFIX = 'LAST_COMMUNICATION_';
+	private static array $entityCache = [];
+	public const ENUM_LAST_TIME = 'TIME';
+	public const ENUM_CALL_TIME = 'CALL_TIME';
+	public const ENUM_EMAIL_TIME = 'EMAIL_TIME';
+	public const ENUM_IM_OPEN_LINES_TIME = 'IMOL_TIME';
+	public const ENUM_WEB_FORM_TIME = 'WEBFORM_TIME';
+
+	private static array $currentDataCache = [];
+
+	public static function getTableName(): string
+	{
+		return 'b_crm_last_communication';
+	}
+
+	public static function getMap(): array
+	{
+		return [
+			(new IntegerField('ID'))
+				->configurePrimary()
+				->configureAutocomplete(),
+			(new IntegerField('ENTITY_TYPE_ID'))
+				->configureRequired(),
+			(new IntegerField('ENTITY_ID'))
+				->configureRequired(),
+			(new DatetimeField('LAST_COMMUNICATION_TIME'))
+				->configureRequired()
+				->configureDefaultValue(static function() {
+					return new DateTime();
+				}),
+			(new StringField('TYPE'))
+				->configureSize(64)
+				->configureDefaultValue(''),
+			new IntegerField('ACTIVITY_ID'),
+		];
+	}
+
+	public static function getCodeNames()
+	{
+		return [
+			self::ENUM_LAST_TIME => Loc::getMessage('CRM_LAST_COMMUNICATION_TIME_TITLE'),
+			self::ENUM_CALL_TIME => Loc::getMessage('CRM_LAST_COMMUNICATION_CALL_TIME_TITLE'),
+			self::ENUM_EMAIL_TIME => Loc::getMessage('CRM_LAST_COMMUNICATION_EMAIL_TIME_TITLE'),
+			self::ENUM_IM_OPEN_LINES_TIME => Loc::getMessage('CRM_LAST_COMMUNICATION_IMOL_TIME_TITLE'),
+			self::ENUM_WEB_FORM_TIME => Loc::getMessage('CRM_LAST_COMMUNICATION_WEBFORM_TIME_TITLE'),
+		];
+	}
+
+	public static function getLastStateCodeName(): array
+	{
+		return [self::FIELD_PREFIX . self::ENUM_LAST_TIME, self::getCodeNames()[self::ENUM_LAST_TIME]];
+	}
+
+	public static function getCodeList(bool $lastStateOnly = false): array
+	{
+		$codes = $lastStateOnly ? [self::ENUM_LAST_TIME => self::getCodeNames()[self::ENUM_LAST_TIME]] : self::getCodeNames();
+
+		return array_map(static function ($key) {
+			return self::FIELD_PREFIX . $key;
+		}, array_keys($codes));
+	}
+
+	private static function getFieldList(bool $lastStateOnly = false): array
+	{
+		$fieldList = $lastStateOnly ? [self::ENUM_LAST_TIME => self::getCodeNames()[self::ENUM_LAST_TIME]] : self::getCodeNames();
+
+		$fieldData = [];
+		foreach ($fieldList as $code => $field)
+		{
+			$fieldData[self::FIELD_PREFIX . $code] = $code;
+		}
+
+		return $fieldData;
+	}
+
+	public static function getFieldsByEntityTypeId(int $entityTypeId, bool $lastStateOnly = false, string $entitySqlTableAlias = 'L'): array
+	{
+		$resultList = [];
+		$codeList = self::getFieldList($lastStateOnly);
+		foreach ($codeList as $key => $value)
+		{
+			$fieldName = mb_strtoupper($key);
+			$tableAlias = 'LC_' . $fieldName;
+			$resultList[$fieldName] = [
+				'FIELD' => "{$tableAlias}.LAST_COMMUNICATION_TIME",
+				'TYPE' => 'datetime',
+				'FROM' => 'LEFT JOIN ' . self::getTableName() . " {$tableAlias} ON"
+					. " {$tableAlias}.ENTITY_TYPE_ID = " . $entityTypeId
+					. " AND {$tableAlias}.ENTITY_ID = " . $entitySqlTableAlias . '.ID'
+					. " AND {$tableAlias}.TYPE = '" . $value . "'",
+			];
+		}
+
+		return $resultList;
+	}
+
+	public static function getLastStateFieldInfo(): array
+	{
+		[$code] = self::getLastStateCodeName();
+
+		return [
+			$code => [
+				'TYPE' => Field::TYPE_STRING,
+				'ATTRIBUTES' => [
+					\CCrmFieldInfoAttr::ReadOnly,
+				],
+			],
+		];
+	}
+
+	public static function getFieldsInfo(): array
+	{
+		$info = [];
+		foreach (self::getCodeNames() as $code => $title)
+		{
+			$info[self::FIELD_PREFIX . $code] = [
+				'TYPE' => Field::TYPE_DATETIME,
+				'ATTRIBUTES' => [
+					\CCrmFieldInfoAttr::ReadOnly,
+					\CCrmFieldInfoAttr::NotDisplayed,
+					\CCrmFieldInfoAttr::AutoGenerated,
+				],
+				'TITLE' => $title,
+			];
+
+			if ($code === self::ENUM_LAST_TIME)
+			{
+				$info[self::FIELD_PREFIX . $code]['ATTRIBUTES'] = [\CCrmFieldInfoAttr::ReadOnly];
+			}
+		}
+
+		return $info;
+	}
+
+	public static function getEntityLastCommunication(ItemIdentifier $itemIdentifier): array
+	{
+		$cacheKay = $itemIdentifier->getHash();
+
+		if (isset(static::$entityCache[$cacheKay]))
+		{
+			return static::$entityCache[$cacheKay];
+		}
+
+		$dbResult = static::getList([
+			'filter' => [
+				'=ENTITY_TYPE_ID' => $itemIdentifier->getEntityTypeId(),
+				'=ENTITY_ID' => $itemIdentifier->getEntityId(),
+			],
+		]);
+
+		$communications = [];
+		while ($row = $dbResult->fetch())
+		{
+			$communications[self::FIELD_PREFIX . $row['TYPE']] = $row['LAST_COMMUNICATION_TIME'];
+		}
+
+		self::$entityCache[$cacheKay] = $communications;
+
+		return $communications;
+	}
+
+	public static function getLastStateFieldName(): string
+	{
+		return self::FIELD_PREFIX . self::ENUM_LAST_TIME;
+	}
+
+	public static function deleteByEntity(ItemIdentifier $itemIdentifier): Result
+	{
+		$result = new Result();
+
+		$dbResult
+			= self::query()
+				->setSelect(['ID'])
+				->where('ENTITY_TYPE_ID', $itemIdentifier->getEntityTypeId())
+				->where('ENTITY_ID', $itemIdentifier->getEntityId())
+				->exec()
+		;
+
+		while ($row = $dbResult->fetchObject())
+		{
+			$deleteResult = $row->delete();
+			if (!$deleteResult->isSuccess())
+			{
+				$result->addErrors($deleteResult->getErrors());
+			}
+		}
+
+		return $result;
+	}
+
+    public static function upsertLastCommunicationData(
+		ItemIdentifier $itemIdentifier,
+		DateTime $lastUpdated,
+		string $type,
+		int $activityId,
+		bool $forceUpdate = false,
+	): Result {
+
+		if (!array_key_exists($type, self::getCodeNames()))
+		{
+			return (new Result())->addError(new Error('Unknown last communication type'));
+		}
+
+		$rowKey = self::getCacheKey($type, $itemIdentifier);
+
+		if (isset(self::$currentDataCache[$rowKey]))
+		{
+			$existingRow = self::$currentDataCache[$rowKey];
+		}
+		else
+		{
+			$rows = self::query()
+				->setSelect(['ID', 'LAST_COMMUNICATION_TIME', 'TYPE'])
+				->where('ENTITY_TYPE_ID', $itemIdentifier->getEntityTypeId())
+				->where('ENTITY_ID', $itemIdentifier->getEntityId())
+				->whereIn('TYPE', [$type, self::ENUM_LAST_TIME])
+				->fetchAll()
+			;
+
+			if ($rows)
+			{
+				foreach ($rows as $row)
+				{
+					$key = self::getCacheKey($row['TYPE'], $itemIdentifier);
+					self::$currentDataCache[$key] = $row;
+				}
+			}
+
+			$existingRow = self::$currentDataCache[$rowKey] ?? null;
+		}
+
+		$fields = [
+			'LAST_COMMUNICATION_TIME' => $lastUpdated,
+			'ACTIVITY_ID' => $activityId,
+		];
+		
+		if (
+			$existingRow
+			&& ($forceUpdate || $existingRow['LAST_COMMUNICATION_TIME']->getTimestamp() <= $lastUpdated->getTimestamp())
+		) {
+			return self::update($existingRow['ID'], $fields);
+		}
+
+		if ($existingRow) //skip upsert if not forceUpdate or communication time earlier than stored one
+		{
+			return new Result();
+		}
+
+		$fields['ENTITY_TYPE_ID'] = $itemIdentifier->getEntityTypeId();
+		$fields['ENTITY_ID'] = $itemIdentifier->getEntityId();
+		$fields['TYPE'] = $type;
+
+		try
+		{
+			return self::add($fields);
+		}
+		catch (DuplicateEntryException $e)
+		{
+			return static::upsertLastCommunicationData($itemIdentifier, $lastUpdated, $type, $activityId, $forceUpdate);
+		}
+	}
+
+	public static function deleteByItemIdentifierAndActivityId(ItemIdentifier $itemIdentifier, int $activityId): Result
+	{
+		$result = new Result();
+
+		$dbResult = self::query()
+			->setSelect(['ID'])
+			->where('ENTITY_TYPE_ID', $itemIdentifier->getEntityTypeId())
+			->where('ENTITY_ID', $itemIdentifier->getEntityId())
+			->where('ACTIVITY_ID', $activityId)
+			->exec()
+		;
+
+		while ($row = $dbResult->fetchObject())
+		{
+			$deleteResult = $row->delete();
+			if (!$deleteResult->isSuccess())
+			{
+				$result->addErrors($deleteResult->getErrors());
+			}
+		}
+
+		return $result;
+	}
+
+	private static function getCacheKey(string $type, ItemIdentifier $itemIdentifier): string
+	{
+		return $type . '_' . $itemIdentifier->getEntityTypeId() . '_' . $itemIdentifier->getEntityId();
+	}
+}

@@ -101,6 +101,11 @@ class TaskLog implements Arrayable
 		return $this->userName;
 	}
 
+	public function getChange(): ?Change
+	{
+		return $this->change;
+	}
+
 	public function toArray(): array
 	{
 		return [

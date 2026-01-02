@@ -136,11 +136,22 @@ class CustomSectionPageTable extends DataManager
 			return;
 		}
 
-		$id = $event->getParameter('primary')['ID'];
-		$customSectionId =
-			self::extractFieldFromOrmEvent($event, $result, 'CUSTOM_SECTION_ID')
-			?: static::getCustomSectionId($id)
-		;
+		$customSectionId = self::extractFieldFromOrmEvent($event, $result, 'CUSTOM_SECTION_ID');
+		if (!$customSectionId)
+		{
+			$pageId = $event->getParameter('primary')['ID'] ?? null;
+			if ($pageId !== null)
+			{
+				$customSectionId = static::getCustomSectionId($pageId);
+			}
+
+			if (!$customSectionId)
+			{
+				$result->addError(new EntityError('Failed to get CUSTOM_SECTION_ID. Could not generate CODE automatically'));
+
+				return;
+			}
+		}
 
 		$codeGenerator = static::getCodeGenerator($customSectionId);
 		if (!$codeGenerator->isCodeValid((string)$code))
@@ -247,5 +258,6 @@ class CustomSectionPageTable extends DataManager
 	protected static function clearCache(): void
 	{
 		ServiceLocator::getInstance()->get('intranet.customSection.manager')->clearLeftMenuCache();
+		ServiceLocator::getInstance()->get('intranet.customSection.repository')->clearCache();
 	}
 }

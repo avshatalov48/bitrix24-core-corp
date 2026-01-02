@@ -235,11 +235,9 @@ jn.define('text-editor/components/text-input', (require, exports, module) => {
 					});
 				},
 				onFocus: () => {
-					console.log('focus');
 					this.emit('onFocus', []);
 				},
 				onBlur: () => {
-					console.log('blur');
 					this.emit('onBlur', []);
 				},
 				selectedStyles: (data) => {

@@ -43,6 +43,7 @@ class Updater_22_100_0
 //			"FROM_USER_ID" => $userData["ID"],
 			'NOTIFY_TYPE' => IM_NOTIFY_SYSTEM,
 			'NOTIFY_MODULE' => 'voximplant',
+			'NOTIFY_EVENT' => 'admin_notification',
 			'NOTIFY_SUB_TAG' => 'VOXIMPLANT_NOTIFY_TTS_AMAZON_CHANGE|',
 			'NOTIFY_MESSAGE' => Loc::getMessage(
 				'VI_UPDATE_AMAZON_TTS_CHANGE',

@@ -4,10 +4,13 @@ namespace Bitrix\Crm\Dto;
 
 use Bitrix\Crm\Dto\Exception\DtoPropertyNotFoundException;
 use Bitrix\Main\ErrorCollection;
+use ReflectionClass;
+use ReflectionProperty;
 
 abstract class Dto implements \JsonSerializable, \Bitrix\Main\Type\Contract\Arrayable
 {
 	private ErrorCollection $validationErrors;
+	protected bool $isCollectPropertiesFromParent = false;
 
 	public function __construct(?array $fields = null)
 	{
@@ -23,8 +26,8 @@ abstract class Dto implements \JsonSerializable, \Bitrix\Main\Type\Contract\Arra
 	{
 		$this->validationErrors = clone $this->validationErrors;
 
-		$self = new \ReflectionClass($this);
-		$publicFields = $self->getProperties(\ReflectionProperty::IS_PUBLIC);
+		$self = new ReflectionClass($this);
+		$publicFields = $self->getProperties(ReflectionProperty::IS_PUBLIC);
 
 		foreach ($publicFields as $property)
 		{
@@ -138,15 +141,18 @@ abstract class Dto implements \JsonSerializable, \Bitrix\Main\Type\Contract\Arra
 	 */
 	protected function getProperties(): array
 	{
-		$self = new \ReflectionClass($this);
-		$properties = $self->getProperties(\ReflectionProperty::IS_PUBLIC);
-		$result = [];
+		$properties = [];
 
-		foreach ($properties as $property)
-		{
-			$result[] = new Property($property, $this);
-		}
-		return $result;
+		$class = new ReflectionClass($this);
+		do {
+			$reflectionProperties = $class->getProperties(ReflectionProperty::IS_PUBLIC);
+			foreach ($reflectionProperties as $reflectionProperty)
+			{
+				$properties[] = new Property($reflectionProperty, $this);
+			}
+		} while ($this->isCollectPropertiesFromParent && $class = $class->getParentClass());
+
+		return $properties;
 	}
 
 	/**
@@ -172,7 +178,7 @@ abstract class Dto implements \JsonSerializable, \Bitrix\Main\Type\Contract\Arra
 
 	/**
 	 * @param array $fields
-	 * @return Validator[]
+	 * @return Contract\Validator[]
 	 */
 	protected function getValidators(array $fields): array
 	{

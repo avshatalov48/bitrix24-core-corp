@@ -3,7 +3,6 @@
 return [
 	'extensions' => [
 		'haptics',
-		'feature',
 		'utils/prop',
 		'utils/color',
 		'utils/number',

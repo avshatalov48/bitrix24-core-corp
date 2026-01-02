@@ -84,7 +84,7 @@ class SignMyDocumentsComponent extends SignBaseComponent
 		$button->addClass(self::SIGN_B2E_MY_DOCUMENTS_CREATE_BUTTON_CLASS);
 		if (B2eTariff::instance()->isB2eRestrictedInCurrentTariff())
 		{
-			$button->addClass('ui-btn-icon-lock');
+			$button->setIcon(\Bitrix\UI\Buttons\Icon::LOCK);
 			$button->setTag('button');
 		}
 
@@ -121,6 +121,7 @@ class SignMyDocumentsComponent extends SignBaseComponent
 		$button->setText(Loc::getMessage('SIGN_B2E_MY_DOCUMENTS_SALARY_AND_VACATION_BUTTON_TITLE') ?? '');
 		$button->setDropdown();
 		$button->setColor(\Bitrix\UI\Buttons\Color::PRIMARY);
+		$button->setStyle(\Bitrix\UI\Buttons\AirButtonStyle::FILLED);
 
 		if (
 			!$salaryAndVacationService->isConfigured()

@@ -1,3 +1,5 @@
+/* eslint-disable */
+
 BX.namespace("BX.Crm");
 
 if(typeof BX.Crm.EntityEditorMultipleUser === "undefined")
@@ -108,22 +110,30 @@ if(typeof BX.Crm.EntityEditorMultipleUser === "undefined")
 
 		return item;
 	};
-	BX.Crm.EntityEditorMultipleUser.prototype.deleteItem = function(item)
+
+	BX.Crm.EntityEditorMultipleUser.prototype.deleteItem = function(input)
 	{
-		if(!this._items)
+		if (!this._items)
 		{
 			return;
 		}
 
-		var index = this.findItemIndex(item);
-		if(index >= 0)
+		const index = this.findItemIndex(input);
+		if (index >= 0)
 		{
-			item.clearLayout();
-			item.setContainer(null);
+			input.clearLayout();
+			input.setContainer(null);
 
-			this._items.splice(index, 1);
+			this._items = this._items.filter((item) => item.getValue() !== input.getValue());
+			this._items.forEach((item, num) => {
+				if (BX.Type.isDomNode(item._input))
+				{
+					item._input.setAttribute('name', this.getDataKey() + "[" + num + "]");
+				}
+			});
 		}
 	};
+
 	BX.Crm.EntityEditorMultipleUser.prototype.adjust = function()
 	{
 		if(this.isInViewMode())
@@ -253,18 +263,21 @@ if(typeof BX.Crm.EntityEditorMultipleUser === "undefined")
 			this.getEmptyState().remove();
 		}
 	};
+
 	BX.Crm.EntityEditorMultipleUser.prototype.doRegisterLayout = function()
 	{
-		if(this.isInEditMode()
+		if (
+			this.isInEditMode()
 			&& this.checkModeOption(BX.UI.EntityEditorModeOptions.individual)
 		)
 		{
 			window.setTimeout(
-				function(){ this.getSelector().open(this._bottomButton); }.bind(this),
+				function(){ this.openSelector(this._bottomButton); }.bind(this),
 				500
 			);
 		}
 	};
+
 	BX.Crm.EntityEditorMultipleUser.prototype.doClearLayout = function(options)
 	{
 		this._input = null;
@@ -359,73 +372,166 @@ if(typeof BX.Crm.EntityEditorMultipleUser === "undefined")
 	};
 	BX.Crm.EntityEditorMultipleUser.prototype.onTopButtonClick = function(e)
 	{
-		var event = this.fireOnBeforeSelectorEvent();
+		const event = this.fireOnBeforeSelectorEvent();
 		if (event.isCanceled)
 		{
 			return;
 		}
-		//If any other control has changed try to switch to edit mode.
-		if(this._mode === BX.UI.EntityEditorMode.view && this.isEditInViewEnabled() && this.getEditor().isChanged())
+
+		// if any other control has changed try to switch to edit mode.
+		if (
+			this._mode === BX.UI.EntityEditorMode.view
+			&& this.isEditInViewEnabled()
+			&& this.getEditor().isChanged()
+		)
 		{
 			this.switchToSingleEditMode();
 		}
 		else
 		{
-			this.getSelector().open(this._topButton);
+			this.openSelector(this._topButton);
 		}
 	};
-	BX.Crm.EntityEditorMultipleUser.prototype.onBottomButtonClick = function(e)
+
+	BX.Crm.EntityEditorMultipleUser.prototype.onBottomButtonClick = function()
 	{
-		var event = this.fireOnBeforeSelectorEvent();
+		const event = this.fireOnBeforeSelectorEvent();
 		if (event.isCanceled)
 		{
 			return;
 		}
-		this.getSelector().open(this._bottomButton);
+
+		this.openSelector(this._bottomButton);
 	};
-	BX.Crm.EntityEditorMultipleUser.prototype.getSelector = function()
+
+	BX.Crm.EntityEditorMultipleUser.prototype.openSelector = function(node)
 	{
-		if(!this._userSelector)
+		if (this._userSelector && this._userSelector.isOpen())
 		{
-			this._userSelector = BX.UI.EntityEditorUserSelector.create(
-				this._id,
-				{ callback: BX.delegate(this.processItemSelect, this) }
-			);
+			this._userSelector.hide();
+
+			return;
 		}
 
-		return this._userSelector;
+		const currentUserIds = this._items.map((element) => {
+			return ['user', parseInt(element.getValue(), 10)];
+		});
+
+		this._userSelector = new BX.UI.EntitySelector.Dialog({
+			id: 'crm-entity-editor-multiple-user-selector-dialog-' + this._id,
+			targetNode: node,
+			context: 'CRM_ENTITY_EDITOR_MULTIPLE_USER',
+			multiple: true,
+			enableSearch: true,
+			width: 450,
+			height: 300,
+			preselectedItems: currentUserIds,
+			entities: [
+				{
+					id: 'user',
+					options: {
+						inviteEmployeeLink: false,
+						emailUsers: false,
+						inviteGuestLink: false,
+						intranetUsersOnly: true,
+					},
+				},
+				{
+					id: 'structure-node',
+					options: {
+						selectMode: 'usersOnly',
+						allowFlatDepartments: true,
+					},
+				}
+			],
+			events: {
+				'Item:onSelect': (event) => {
+					this.processItemSelect(event);
+					this._userSelector.setTargetNode(node);
+				},
+				'Item:onDeselect': (event) => {
+					this.processItemDeSelect(event);
+					this._userSelector.setTargetNode(node);
+				},
+				onDestroy: () => {
+					this.saveControlAfterEntitySelectorWork();
+				},
+				onHide: () => {
+					this.saveControlAfterEntitySelectorWork();
+				},
+			},
+		});
+
+		this._userSelector.show();
 	};
-	BX.Crm.EntityEditorMultipleUser.prototype.processItemSelect = function(selector, item)
+
+	BX.Crm.EntityEditorMultipleUser.prototype.processItemSelect = function(event)
 	{
-		if(!(this.isInEditMode() || (this.isEditInViewEnabled() && !this.isReadOnly())))
+		if (!(this.isInEditMode() || (this.isEditInViewEnabled() && !this.isReadOnly())))
 		{
 			return;
 		}
 
-		var userId = BX.prop.getInteger(item, "entityId", 0);
-		if(this.findItemIndexById(userId) >= 0)
+		const { item: selectedItem } = event.getData();
+		if (!selectedItem)
 		{
-			this._userSelector.close();
 			return;
 		}
 
-		var userInfo =
-			{
-				ID: userId,
-				PHOTO_URL: BX.prop.getString(item, "avatar", ""),
-				FORMATTED_NAME: BX.util.htmlspecialcharsback(BX.prop.getString(item, "name", "")),
-				WORK_POSITION: BX.util.htmlspecialcharsback(BX.prop.getString(item, "desc", ""))
-			};
+		const userId = selectedItem.getId();
+		if (this.findItemIndexById(userId) >= 0)
+		{
+			return;
+		}
 
-		userInfo["SHOW_URL"] = this._schemeElement.getDataStringParam("pathToProfile", "")
-			.replace(/#user_id#/gi, userInfo["ID"]);
+		const userInfo = {
+			ID: userId,
+			PHOTO_URL: selectedItem.getAvatar(),
+			FORMATTED_NAME: BX.util.htmlspecialcharsback(selectedItem.getTitle()),
+			WORK_POSITION: BX.util.htmlspecialcharsback(selectedItem.customData?.get('position') ?? '')
+		};
+
+		userInfo['SHOW_URL'] = this._schemeElement
+			.getDataStringParam('pathToProfile', '')
+			.replace(/#user_id#/gi, userInfo['ID'])
+		;
 
 		this.addItem(userInfo);
-		this._userSelector.close();
-
 		this.adjust();
+	};
 
-		if(this.isInEditMode())
+	BX.Crm.EntityEditorMultipleUser.prototype.processItemDeSelect = function(event)
+	{
+		if (!(this.isInEditMode() || (this.isEditInViewEnabled() && !this.isReadOnly())))
+		{
+			return;
+		}
+
+		const { item: selectedItem } = event.getData();
+		if (!selectedItem)
+		{
+			return;
+		}
+
+		const userId = selectedItem.getId();
+		const multipleUserItem = this._items.find((element) => parseInt(element.getValue(), 10) === userId);
+		if (!multipleUserItem)
+		{
+			return;
+		}
+
+		this.deleteItem(multipleUserItem);
+		this.adjust();
+	}
+
+	BX.Crm.EntityEditorMultipleUser.prototype.saveControlAfterEntitySelectorWork = function()
+	{
+		if (!(this.isInEditMode() || (this.isEditInViewEnabled() && !this.isReadOnly())))
+		{
+			return;
+		}
+
+		if (this.isInEditMode())
 		{
 			this.markAsChanged();
 		}
@@ -433,7 +539,8 @@ if(typeof BX.Crm.EntityEditorMultipleUser === "undefined")
 		{
 			this._editor.saveControl(this);
 		}
-	};
+	}
+
 	BX.Crm.EntityEditorMultipleUser.prototype.processModelChange = function(params)
 	{
 		if(BX.prop.get(params, "originator", null) === this)

@@ -82,6 +82,11 @@ export class DiskVideoPopup
 	{
 		this.getPopup().show();
 		document.body.style.overflowY = 'hidden';
+		BX.UI.Analytics.sendData({
+			event: 'show_promo',
+			tool: 'boards',
+			category: 'boards',
+		});
 	}
 
 	setViewed(): void

@@ -3,4 +3,5 @@ export type UserManagementDialogConfiguration = {
 	dialog: Dialog;
 	type: string;
 	role: string;
+	entityType: string;
 }

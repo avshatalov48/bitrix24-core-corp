@@ -1,0 +1,81 @@
+.sign-datetime-limit-selector {
+	line-height: 1.2;
+	vertical-align: middle;
+}
+
+.sign-datetime-limit-selector__label,
+.sign-datetime-limit-selector_field {
+	vertical-align: middle;
+}
+
+.sign-datetime-limit-selector__label {
+	font: 12px/14.32px var(--ui-font-family-primary, var(--ui-font-family-system));
+	color: var(--ui-color-palette-gray-60);
+	margin-right: 10px;
+}
+
+.sign-datetime-limit-selector__calendar-button {
+	font: 13px/17.2px var(--ui-font-family-primary, var(--ui-font-family-system));
+	text-transform: none;
+	background: var(--ui-color-palette-gray-05);
+	border: none;
+	border-radius: 25px;
+	height: auto;
+	padding: 6px 26px 6px 10px;
+}
+
+.ui-btn.ui-btn-dropdown.sign-datetime-limit-selector__calendar-button:before {
+	border-width: 4px;
+	border-style: solid;
+	border-color: var(--ui-color-palette-gray-90) transparent transparent;
+	transform: none;
+}
+
+.sign-datetime-limit-selector_field.--invalid {
+	border: 1px solid var(--ui-color-background-on-alert);
+}
+
+.sign-datetime-limit-selector__error {
+	color: var(--ui-color-text-alert);
+}
+
+.sign-datetime-limit-selector_field {
+	background: var(--ui-color-palette-gray-05);
+	border-radius: 25px;
+	cursor: pointer;
+	padding: 7px 10px;
+	position: relative;
+	display: inline-flex;
+	align-items: center;
+	max-width: 100%;
+	gap: 10px;
+}
+
+.sign-datetime-limit-selector_field:before {
+	content: '';
+	display: block;
+	width: 12px;
+	height: 12px;
+	background: url('../images/calendar.svg') no-repeat;
+}
+
+.sign-datetime-limit-selector_field-text {
+	font: 13px/15.51px var(--ui-font-family-primary, var(--ui-font-family-system));
+	color: var(--ui-color-palette-gray-90);
+	flex: 1;
+	white-space: nowrap;
+	overflow: hidden;
+	text-overflow: ellipsis;
+}
+
+.sign-datetime-limit-selector_field:after {
+	content: '';
+	box-sizing: border-box;
+	display: block;
+	width: 8px;
+	height: 8px;
+	border-width: 4px;
+	border-style: solid;
+	border-color: var(--ui-color-palette-gray-90) transparent transparent;
+	margin-top: 5px;
+}

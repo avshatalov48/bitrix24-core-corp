@@ -4,25 +4,29 @@ namespace Bitrix\Sign\Service\Sign\Document;
 
 use Bitrix\Main\Result;
 use Bitrix\Main\Error;
+use Bitrix\Sign\Item\Document;
 use Bitrix\Sign\Item\Document\Group;
 use Bitrix\Sign\Item\DocumentCollection;
 use Bitrix\Sign\Repository\Document\GroupRepository;
 use Bitrix\Sign\Repository\DocumentRepository;
 use Bitrix\Sign\Result\Service\Sign\Document\CreateGroupResult;
 use Bitrix\Sign\Service\Container;
+use Bitrix\Sign\Service\Sign\DocumentService;
 use Bitrix\Sign\Type\DocumentScenario;
 
 final class GroupService
 {
-	public const MAX_DOCUMENT_COUNT = 20;
+	public const MAX_DOCUMENT_COUNT = 30;
 	private readonly GroupRepository $groupRepository;
 	private readonly DocumentRepository $documentRepository;
+	private readonly DocumentService $documentService;
 
 	public function __construct()
 	{
 		$container = Container::instance();
 		$this->groupRepository = $container->getDocumentGroupRepository();
 		$this->documentRepository = $container->getDocumentRepository();
+		$this->documentService = $container->getDocumentService();
 	}
 
 	public function create(int $userId): Result|CreateGroupResult
@@ -57,7 +61,7 @@ final class GroupService
 		}
 
 		$groupDocumentCount = $this->documentRepository->getCountByGroupId($groupId);
-		if ($groupDocumentCount >= self::MAX_DOCUMENT_COUNT)
+		if ($groupDocumentCount > self::MAX_DOCUMENT_COUNT)
 		{
 			return $result->addError(new Error('Group already has too many documents', 'MAX_DOCUMENT_COUNT_EXCEEDED'));
 		}
@@ -122,5 +126,13 @@ final class GroupService
 		}
 
 		return $this->documentRepository->listByGroupId($groupId, self::MAX_DOCUMENT_COUNT);
+	}
+
+	public function getDraftDocumentList(int $groupId): DocumentCollection
+	{
+		return $this
+			->getDocumentList($groupId)
+			->filter(fn(Document $document) => $this->documentService->canBeChanged($document))
+		;
 	}
 }

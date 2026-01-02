@@ -6,7 +6,6 @@
 .booking-booking-header-inner {
 	display: flex;
 	overflow: auto;
-	padding-right: 5px;
 }
 
 .booking-booking-header-inner::-webkit-scrollbar {

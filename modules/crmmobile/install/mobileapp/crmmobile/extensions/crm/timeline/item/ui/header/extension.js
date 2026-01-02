@@ -242,7 +242,7 @@ jn.define('crm/timeline/item/ui/header', (require, exports, module) => {
 				return null;
 			}
 
-			const { analyticsEvent, isReadonly, changeStreamButton, activityType, confirmationTexts } = this.props;
+			const { isReadonly, changeStreamButton } = this.props;
 			const { type, action, disableIfReadonly } = changeStreamButton;
 
 			const props = {
@@ -253,38 +253,6 @@ jn.define('crm/timeline/item/ui/header', (require, exports, module) => {
 				isReadonly: isReadonly && disableIfReadonly,
 			};
 
-			const cancelButton = makeCancelButton(
-				() => this.changeStreamButtonRef.uncheck(),
-
-				confirmationTexts.cancelButton,
-			);
-
-			const confirmButton = makeButton(
-				confirmationTexts.confirmButton,
-
-				() => {
-					this.sharedStorage.set(`${activityType}_showConfirm`, 'N');
-					this.onAction(action, analyticsEvent);
-				},
-			);
-
-			const onCompleteButtonClick = () => {
-				Haptics.impactMedium();
-
-				if (this.sharedStorage.get(`${activityType}_showConfirm`) === 'N')
-				{
-					this.onAction(action, analyticsEvent);
-				}
-				else
-				{
-					Alert.confirm(
-						confirmationTexts.title,
-						confirmationTexts.description,
-						[confirmButton, cancelButton],
-					);
-				}
-			};
-
 			const ChangeStreamButton = () => {
 				switch (type)
 				{
@@ -293,7 +261,7 @@ jn.define('crm/timeline/item/ui/header', (require, exports, module) => {
 							ref: (ref) => {
 								this.changeStreamButtonRef = ref;
 							},
-							onClick: onCompleteButtonClick,
+							onClick: () => this.#onCompleteButtonClick(action),
 							testId: 'TimelineItemChangeStreamComplete',
 							isReadonly: isReadonly && disableIfReadonly,
 						});
@@ -328,34 +296,51 @@ jn.define('crm/timeline/item/ui/header', (require, exports, module) => {
 			);
 		}
 
-		onAction(action, analyticsEvent = null)
+		#onCompleteButtonClick(action)
 		{
-			if (!(action && this.props.onAction))
-			{
-				return;
-			}
+			const { analyticsEvent, activityType, confirmationTexts } = this.props;
 
-			let result = this.props.onAction(action);
-			if (!(result instanceof Promise))
-			{
-				result = Promise.resolve();
-			}
+			analyticsEvent
+				.setEvent('activity_complete')
+				.setElement('checkbox');
 
-			if (!analyticsEvent)
-			{
-				return;
-			}
+			const cancelButton = makeCancelButton(
+				() => this.changeStreamButtonRef.uncheck(),
 
-			result
-				.then(() => {
-					analyticsEvent.setStatus('success');
-				})
-				.catch(() => {
-					analyticsEvent.setStatus('error');
-				})
-				.finally(() => {
-					analyticsEvent.send();
-				});
+				confirmationTexts.cancelButton,
+			);
+
+			const confirmButton = makeButton(
+				confirmationTexts.confirmButton,
+
+				() => {
+					this.sharedStorage.set(`${activityType}_showConfirm`, 'N');
+					this.onAction({ ...action, analytics: analyticsEvent });
+				},
+			);
+
+			Haptics.impactMedium();
+
+			if (this.sharedStorage.get(`${activityType}_showConfirm`) === 'N')
+			{
+				this.onAction({ ...action, analytics: analyticsEvent });
+			}
+			else
+			{
+				Alert.confirm(
+					confirmationTexts.title,
+					confirmationTexts.description,
+					[confirmButton, cancelButton],
+				);
+			}
+		}
+
+		onAction(action)
+		{
+			if (action && this.props.onAction)
+			{
+				this.props.onAction(action);
+			}
 		}
 	}
 

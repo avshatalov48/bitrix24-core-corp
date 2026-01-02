@@ -17,6 +17,8 @@ interface RoleRepository
 
 	public function findByXmlId(string $xmlId): ?Item\Role;
 
+	public function findByXmlIds(string ...$xmlIds): Item\Collection\RoleCollection;
+
 	/**
 	 * @param array<int> $ids
 	 * @return RoleCollection

@@ -1,7 +1,15 @@
-<?
-if (!defined('B_PROLOG_INCLUDED') || B_PROLOG_INCLUDED!==true)die();
+<?php
+
+if (!defined('B_PROLOG_INCLUDED') || B_PROLOG_INCLUDED !== true)
+{
+	die();
+}
 
 use Bitrix\Tasks;
+
+use Bitrix\Main\Loader;
+
+use Bitrix\Crm\Integration\Analytics\Dictionary;
 
 $runtime = CBPRuntime::GetRuntime();
 $runtime->IncludeActivityFile('DeleteDocumentActivity');
@@ -12,11 +20,11 @@ class CBPTasksDeleteTaskActivity extends CBPDeleteDocumentActivity
 	{
 		if (!CModule::IncludeModule('tasks'))
 		{
-			CBPActivityExecutionStatus::Closed;
+			return CBPActivityExecutionStatus::Closed;
 		}
 
-		$documentType = $this->GetDocumentType()[2];
-		$documentId = $this->GetDocumentId();
+		$documentType = $this->getDocumentType()[2];
+		$documentId = $this->getDocumentId();
 		$taskId = $documentId[2];
 
 		$canDelete = false;
@@ -61,6 +69,19 @@ class CBPTasksDeleteTaskActivity extends CBPDeleteDocumentActivity
 		{
 			$documentService = $this->workflow->GetService("DocumentService");
 			$documentService->DeleteDocument($documentId);
+
+			if (
+				Loader::includeModule('crm')
+				&& defined('Bitrix\Crm\Integration\Analytics\Dictionary::EVENT_ENTITY_DELETE')
+				&& method_exists(CCrmBizProcHelper::class, 'sendOperationsAnalytics')
+			)
+			{
+				\CCrmBizProcHelper::sendOperationsAnalytics(
+					Dictionary::EVENT_ENTITY_DELETE,
+					$this,
+					$documentType ?? '',
+				);
+			}
 		}
 
 		return CBPActivityExecutionStatus::Closed;

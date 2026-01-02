@@ -93,7 +93,6 @@ class GroupStepper extends Stepper
 				if (!$result->isSuccess())
 				{
 					$queueOption["errorOffset"] += $this->getErrorOffset($taskCopyManager);
-					$queueOption["errorOffset"] += $this->getErrorOffset($taskCopyManager);
 				}
 
 				$mapIdsCopiedTasks = $taskCopyManager->getMapIdsCopiedTasks() + $mapIdsCopiedTasks;

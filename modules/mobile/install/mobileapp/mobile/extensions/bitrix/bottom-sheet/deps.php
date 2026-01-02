@@ -3,7 +3,7 @@
 return [
 	'extensions' => [
 		'type',
-		'apptheme',
+		'tokens',
 		'utils/color',
 		'utils/object',
 		'utils/page-manager'

@@ -345,7 +345,7 @@ include_once(str_replace(array("\\", "//"), "/", __DIR__."/messages.php"));
 						BX.Disk.Files['<?= $file['ID'] ?>'] = [
 							{
 								className : 'disk-uf-file__popup-menu_item menu-popup-no-icon',
-								html : '<span class="ui-icon-set --document"></span><span>' + BX.message('JS_CORE_VIEWER_VIEW_ELEMENT') +'</span>',
+								html : '<span class="ui-icon-set --document"></span><span>' + BX.message('DISK_JS_BTN_OPEN') +'</span>',
 								onclick: function(e){
 									top.BX.UI.Viewer.Instance.openByNode(BX("disk-attach-<?=$file['ID']?>"));
 									BX.PopupMenu.currentItem.popupWindow.close();

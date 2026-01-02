@@ -15,6 +15,7 @@ use Bitrix\Call\Logger\Logger;
 use Bitrix\Call\Integration\AI;
 use Bitrix\Call\Integration\AI\CallAIError;
 use Bitrix\Call\Integration\AI\CallAISettings;
+use Bitrix\Call\Analytics\FollowUpAnalytics;
 
 
 final class TrackService
@@ -42,7 +43,7 @@ final class TrackService
 	{
 		return
 			!$track->getDownloaded()
-			&& $track->hasDownloadUrl()
+			&& !empty($track->getDownloadUrl())
 		;
 	}
 
@@ -54,9 +55,8 @@ final class TrackService
 		}
 
 		return
-			!$track->hasDiskFileId()
-			&& $track->getDiskFileId() > 0
-			&& $track->hasFileId()
+			!$track->getDiskFileId()
+			&& $track->getFileId()
 		;
 	}
 
@@ -119,10 +119,16 @@ final class TrackService
 
 			$error = new CallAIError(CallAIError::AI_RECORD_TOO_SHORT);
 
+
+			$aiService = AI\CallAIService::getInstance();
+			$aiService->removeExpectation($track->getCallId());
+
 			if ($track->getType() == Call\Track::TYPE_TRACK_PACK)
 			{
 				$call = Registry::getCallWithId($track->getCallId());
 				NotifyService::getInstance()->sendTaskFailedMessage($error, $call);
+
+				(new FollowUpAnalytics($call))->addGotEmptyRecord();
 			}
 
 			return $result->addError($error);
@@ -135,6 +141,7 @@ final class TrackService
 				$log && $logger->error('Unable process track. Module AI is unavailable. TrackId:'.$track->getId());
 
 				$error = new CallAIError(CallAIError::AI_UNAVAILABLE_ERROR);
+				$error->allowRecover();
 
 				$call = Registry::getCallWithId($track->getCallId());
 				NotifyService::getInstance()->sendTaskFailedMessage($error, $call);

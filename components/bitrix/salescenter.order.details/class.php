@@ -205,6 +205,10 @@ class SalesCenterOrderDetails extends CBitrixComponent implements Main\Engine\Co
 				{
 					/** @var Order\BasketItem $basketItem */
 					$basketItem = $item->getEntityObject();
+					if (!$basketItem)
+					{
+						continue;
+					}
 
 					$basketValues = $this->extractBasketItemData($basketItem);
 					$basketValues['QUANTITY'] = $item->getQuantity();

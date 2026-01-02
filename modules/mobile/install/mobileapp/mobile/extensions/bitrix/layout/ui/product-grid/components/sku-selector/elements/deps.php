@@ -4,6 +4,7 @@ return [
 	'extensions' => [
 		'loc',
 		'apptheme',
+		'layout/ui/image-stack',
 	],
 	'bundle' => [
 		'./bottom-panel',

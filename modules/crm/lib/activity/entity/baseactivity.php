@@ -37,6 +37,7 @@ class BaseActivity implements OptionallyConfigurable
 	private ?string $providerId = null;
 	private ?string $providerTypeId = null;
 	protected int $responsibleId;
+	protected ?int $authorId = null;
 	protected ?array $settings = null;
 	protected ?array $storageElementIds = null;
 	protected string $subject = '';
@@ -218,6 +219,18 @@ class BaseActivity implements OptionallyConfigurable
 	public function setResponsibleId(int $responsibleId): self
 	{
 		$this->responsibleId = $responsibleId;
+
+		return $this;
+	}
+	
+	public function getAuthorId(): ?int
+	{
+		return $this->authorId;
+	}
+
+	public function setAuthorId(int $authorId): self
+	{
+		$this->authorId = $authorId;
 
 		return $this;
 	}
@@ -415,7 +428,6 @@ class BaseActivity implements OptionallyConfigurable
 		return $activity;
 	}
 
-
 	public function save(array $options = [], $useCurrentSettings = false): Result
 	{
 		$result = new Result();
@@ -426,6 +438,7 @@ class BaseActivity implements OptionallyConfigurable
 			'DESCRIPTION_TYPE' => \CCrmContentType::BBCode,
 			'CALENDAR_EVENT_ID' => $this->getCalendarEventId(),
 			'RESPONSIBLE_ID' => $this->getResponsibleId(),
+			'AUTHOR_ID' => $this->getAuthorId() ?? $this->getResponsibleId(),
 			'BINDINGS' => CCrmActivity::GetBindings($this->getId()),
 		];
 
@@ -529,7 +542,8 @@ class BaseActivity implements OptionallyConfigurable
 					$result->addError(new Error($errorMessage));
 				}
 			}
-		} else
+		}
+		else
 		{
 			$fields['BINDINGS'] = empty($parentActivityBindings)
 				? [

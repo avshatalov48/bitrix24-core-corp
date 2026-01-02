@@ -1,15 +1,16 @@
 <?php
 namespace Bitrix\Crm\Recurring\Entity\Item;
 
-use Bitrix\Main,
-	Bitrix\Main\Result,
-	Bitrix\Main\Type\Date,
-	Bitrix\Crm\DealRecurTable,
-	Bitrix\Crm\Automation,
-	Bitrix\Crm\Observer\ObserverManager,
-	Bitrix\Crm\Binding\DealContactTable,
-	Bitrix\Crm\Timeline\DealRecurringController,
-	Bitrix\Crm\Recurring;
+use Bitrix\Crm\Automation;
+use Bitrix\Crm\Binding\DealContactTable;
+use Bitrix\Crm\DealRecurTable;
+use Bitrix\Crm\Observer\ObserverManager;
+use Bitrix\Crm\Recurring;
+use Bitrix\Crm\Service\Container;
+use Bitrix\Crm\Timeline\DealRecurringController;
+use Bitrix\Main;
+use Bitrix\Main\Result;
+use Bitrix\Main\Type\Date;
 
 class DealExist extends DealEntity
 {
@@ -215,7 +216,19 @@ class DealExist extends DealEntity
 			$fields['CATEGORY_ID'] = $this->recurringFields['CATEGORY_ID'];
 		}
 		$fields['PRODUCT_ROWS'] = is_array($fields['PRODUCT_ROWS']) ? $fields['PRODUCT_ROWS'] : [];
-		$fields['STAGE_ID'] = \CCrmDeal::GetStartStageID($fields['CATEGORY_ID']);
+
+		$categoryId = $fields['CATEGORY_ID'] ?? 0;
+		$statusIdList = Container::getInstance()
+			->getFactory(\CCrmOwnerType::Deal)
+			?->getStages($categoryId)
+			->getStatusIdList()
+		;
+
+		$stageId = $fields['STAGE_ID'] ?? null;
+		$fields['STAGE_ID'] = (in_array($stageId, $statusIdList, true)
+			? $stageId
+			: \CCrmDeal::GetStartStageID($categoryId)
+		);
 
 		$beginDate = $this->calculateBeginDate();
 		if ($beginDate <> '')

@@ -6,5 +6,6 @@ return [
 		'apptheme',
 		'animation',
 		'layout/ui/product-grid/components/discount-price',
+		'layout/ui/money',
 	],
 ];

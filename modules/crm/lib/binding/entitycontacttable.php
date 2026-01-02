@@ -3,12 +3,14 @@
 namespace Bitrix\Crm\Binding;
 
 use Bitrix\Crm\ContactTable;
+use Bitrix\Main;
 use Bitrix\Main\Application;
 use Bitrix\Main\ORM\Data\DataManager;
 use Bitrix\Main\ORM\Fields\BooleanField;
 use Bitrix\Main\ORM\Fields\IntegerField;
 use Bitrix\Main\ORM\Fields\Relations\Reference;
 use Bitrix\Main\ORM\Query\Join;
+use Bitrix\Main\ORM\Data\AddStrategy;
 
 /**
  * Class EntityContactTable
@@ -28,6 +30,8 @@ use Bitrix\Main\ORM\Query\Join;
  */
 class EntityContactTable extends DataManager
 {
+	use AddStrategy\Trait\MergeByDefaultTrait;
+
 	public static function getTableName(): string
 	{
 		return 'b_crm_entity_contact';

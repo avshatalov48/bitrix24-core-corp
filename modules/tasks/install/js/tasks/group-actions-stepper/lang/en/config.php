@@ -12,6 +12,7 @@ $MESS["TASKS_GRID_GROUP_ACTION_NAME_DELETE"] = "Deleting selected tasks...";
 $MESS["TASKS_GRID_GROUP_ACTION_NAME_MUTE"] = "Muting tasks...";
 $MESS["TASKS_GRID_GROUP_ACTION_NAME_PING"] = "Pinging employees...";
 $MESS["TASKS_GRID_GROUP_ACTION_NAME_REMOVEFROMFAVORITE"] = "Removing tasks from Favorites…";
+$MESS["TASKS_GRID_GROUP_ACTION_NAME_SETCOLLAB"] = "Adding tasks to collab. Group action will stop if you close this browser tab or window.";
 $MESS["TASKS_GRID_GROUP_ACTION_NAME_SETDEADLINE"] = "Setting task deadlines...";
 $MESS["TASKS_GRID_GROUP_ACTION_NAME_SETFLOW"] = "Adding tasks to flow. Group action will stop if you close this browser tab or window.";
 $MESS["TASKS_GRID_GROUP_ACTION_NAME_SETGROUP"] = "Adding tasks to workgroup...";

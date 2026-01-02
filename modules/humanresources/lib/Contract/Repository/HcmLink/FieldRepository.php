@@ -4,6 +4,8 @@ namespace Bitrix\HumanResources\Contract\Repository\HcmLink;
 
 use Bitrix\HumanResources\Item\Collection\HcmLink\FieldCollection;
 use Bitrix\HumanResources\Item\HcmLink\Field;
+use Bitrix\HumanResources\Type\HcmLink\FieldEntityType;
+use Bitrix\HumanResources\Type\HcmLink\FieldType;
 
 interface FieldRepository
 {
@@ -14,6 +16,8 @@ interface FieldRepository
 	public function update(Field $field): Field;
 
 	public function getByCompany(int $companyId): FieldCollection;
+	public function getByCompanyIdAndEntityType(int $companyId, FieldEntityType $entityType): FieldCollection;
+	public function getByCompanyIdAndType(int $companyId, FieldType $type): FieldCollection;
 
 	public function deleteByCompany(int $companyId): void;
 

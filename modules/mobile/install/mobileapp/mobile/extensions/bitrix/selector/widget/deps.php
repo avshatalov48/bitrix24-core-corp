@@ -4,7 +4,6 @@ return [
 	'extensions' => [
 		'loc',
 		'tokens',
-		'feature',
 		'selector/providers/common',
 		'toast',
 		'utils/array',

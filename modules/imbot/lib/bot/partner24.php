@@ -369,7 +369,7 @@ class Partner24 extends Network implements SupportBot
 	 *
 	 * @return bool
 	 */
-	public static function isActiveSupportForUser($userId): bool
+	public static function isActiveSupportForUser(int $userId): bool
 	{
 		if (!self::isActiveSupport())
 		{
@@ -500,7 +500,7 @@ class Partner24 extends Network implements SupportBot
 			{
 				$message = self::getMessage('WELCOME_INTEGRATOR');
 			}
-			else if (self::isActiveSupportForUser($messageFields['USER_ID']))
+			else if (self::isActiveSupportForUser((int)$messageFields['USER_ID']))
 			{
 				$message = self::getMessage('WELCOME');
 			}
@@ -567,7 +567,7 @@ class Partner24 extends Network implements SupportBot
 		$message = '';
 		if (self::isActiveSupport())
 		{
-			if (!self::isActiveSupportForUser($messageFields['FROM_USER_ID']))
+			if (!self::isActiveSupportForUser((int)$messageFields['FROM_USER_ID']))
 			{
 				if (!self::isUserIntegrator($messageFields['FROM_USER_ID']))
 				{
@@ -612,7 +612,7 @@ class Partner24 extends Network implements SupportBot
 			{
 				return false;
 			}
-			if (!self::isActiveSupportForUser($params['USER_ID']))
+			if (!self::isActiveSupportForUser((int)$params['USER_ID']))
 			{
 				return false;
 			}

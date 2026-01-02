@@ -23,11 +23,7 @@ use Bitrix\Main\UI\Extension;
 use Bitrix\Main\Web\Uri;
 
 $APPLICATION->SetAdditionalCSS("/bitrix/themes/.default/crm-entity-show.css");
-
-if (SITE_TEMPLATE_ID === 'bitrix24')
-{
-	$APPLICATION->SetAdditionalCSS("/bitrix/themes/.default/bitrix24/crm-entity-show.css");
-}
+$APPLICATION->SetAdditionalCSS('/bitrix/themes/.default/bitrix24/crm-entity-show.css');
 
 if (CModule::IncludeModule('bitrix24') && !\Bitrix\Crm\CallList\CallList::isAvailable())
 {
@@ -336,13 +332,18 @@ if (!Bitrix\Main\Grid\Context::isInternalRequest()
 				'popupWidth' => 800,
 				'showPopupInCenter' => true,
 			],
+			'COUNTER_PANEL' => $isRecurring ? null : [
+				'ENTITY_TYPE_NAME' => CCrmOwnerType::DealName,
+				'EXTRAS' => ['DEAL_CATEGORY_ID' => $arResult['CATEGORY_ID']],
+			],
 			'NAVIGATION_BAR' => (new NavigationBarPanel(CCrmOwnerType::Deal, $arResult['CATEGORY_ID']))
 				->setItems([
 					NavigationBarPanel::ID_KANBAN,
 					NavigationBarPanel::ID_LIST,
 					NavigationBarPanel::ID_ACTIVITY,
 					NavigationBarPanel::ID_CALENDAR,
-					NavigationBarPanel::ID_AUTOMATION
+					NavigationBarPanel::ID_REPEAT_SALE,
+					NavigationBarPanel::ID_AUTOMATION,
 				], NavigationBarPanel::ID_CALENDAR)
 				->setBinding($arResult['NAVIGATION_CONTEXT_ID'])
 				->get(),

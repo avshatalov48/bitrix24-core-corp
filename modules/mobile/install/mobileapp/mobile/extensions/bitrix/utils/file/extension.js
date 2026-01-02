@@ -5,11 +5,28 @@ jn.define('utils/file', (require, exports, module) => {
 	const { Loc } = require('loc');
 	const { showSafeToast } = require('toast');
 	const { RequestExecutor } = require('rest');
+	const { fileSaver } = require('utils/file/src/saver');
 
 	const NativeViewerMediaTypes = {
 		IMAGE: 'image',
 		VIDEO: 'video',
 		FILE: 'file',
+	};
+
+	const mimeTypes = {
+		png: 'image/png',
+		gif: 'image/gif',
+		jpg: 'image/jpeg',
+		jpeg: 'image/jpeg',
+		heic: 'image/heic',
+		mp3: 'audio/mpeg',
+		mp4: 'video/mp4',
+		mpeg: 'video/mpeg',
+		ogg: 'video/ogg',
+		mov: 'video/quicktime',
+		zip: 'application/zip',
+		board: 'application/board',
+		php: 'text/php',
 	};
 
 	/**
@@ -25,6 +42,11 @@ jn.define('utils/file', (require, exports, module) => {
 		}
 
 		return absolutePath;
+	}
+
+	function isLocalFile(url)
+	{
+		return url.startsWith('file://');
 	}
 
 	/**
@@ -78,24 +100,9 @@ jn.define('utils/file', (require, exports, module) => {
 			mimeType = fileName.split('.').pop().toLowerCase();
 		}
 
-		const mimeTypeMap = {
-			png: 'image/png',
-			gif: 'image/gif',
-			jpg: 'image/jpeg',
-			jpeg: 'image/jpeg',
-			heic: 'image/heic',
-			mp3: 'audio/mpeg',
-			mp4: 'video/mp4',
-			mpeg: 'video/mpeg',
-			ogg: 'video/ogg',
-			mov: 'video/quicktime',
-			zip: 'application/zip',
-			php: 'text/php',
-		};
-
-		if (mimeTypeMap[mimeType])
+		if (mimeTypes[mimeType])
 		{
-			return mimeTypeMap[mimeType];
+			return mimeTypes[mimeType];
 		}
 
 		if (fileExtOrMimeType.includes('/')) // iOS old form
@@ -267,6 +274,7 @@ jn.define('utils/file', (require, exports, module) => {
 	};
 
 	module.exports = {
+		isLocalFile,
 		NativeViewerMediaTypes,
 		getAbsolutePath,
 		getNativeViewerMediaType,
@@ -279,5 +287,7 @@ jn.define('utils/file', (require, exports, module) => {
 		prepareObjectId,
 		openNativeViewerByFileId,
 		formatFileSize,
+		fileSaver,
+		mimeTypes,
 	};
 });

@@ -46,6 +46,8 @@ class PermissionDictionary extends \Bitrix\Main\Access\Permission\PermissionDict
 	public const TEMPLATE_NON_DEPARTMENT_EDIT = 46;
 	public const TEMPLATE_REMOVE = 48;
 
+	public const FLOW_CREATE = 49;
+
 	public const TASK_ROBOT_EDIT = 47;
 
 	public const TASK_ACCESS_MANAGE = 99;

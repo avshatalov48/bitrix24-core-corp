@@ -4,8 +4,8 @@
 jn.define('layout/ui/friendly-date', (require, exports, module) => {
 	const { AutoupdatingDatetime } = require('layout/ui/friendly-date/autoupdating-datetime');
 	const { Loc } = require('loc');
-	const { TimeAgoFormat } = require('layout/ui/friendly-date/time-ago-format');
 	const { date, shortTime } = require('utils/date/formats');
+	const { FormatterFactory } = require('layout/ui/friendly-date/formatter-factory');
 
 	/**
 	 * @class FriendlyDate
@@ -15,15 +15,6 @@ jn.define('layout/ui/friendly-date', (require, exports, module) => {
 		constructor(props)
 		{
 			super(props);
-		}
-
-		get timeAgoTextBuilder()
-		{
-			return new TimeAgoFormat({
-				defaultFormat: this.defaultTimeFormat,
-				futureAllowed: this.futureAllowed,
-				context: this.props.context,
-			});
 		}
 
 		get defaultTimeFormat()
@@ -52,7 +43,7 @@ jn.define('layout/ui/friendly-date', (require, exports, module) => {
 
 		get skipTimeAgoAfterSeconds()
 		{
-			return BX.prop.getNumber(this.props, 'skipTimeAgoAfterSeconds', 3600);
+			return BX.prop.getNumber(this.props, 'skipTimeAgoAfterSeconds', 3600 * 4);
 		}
 
 		get futureAllowed()
@@ -60,11 +51,46 @@ jn.define('layout/ui/friendly-date', (require, exports, module) => {
 			return BX.prop.getBoolean(this.props, 'futureAllowed', false);
 		}
 
+		get formatType()
+		{
+			return BX.prop.getString(this.props, 'formatType', null);
+		}
+
 		/**
 		 * @param {Moment} moment
 		 * @return {string}
 		 */
 		makeText(moment)
+		{
+			if (this.formatType)
+			{
+				try
+				{
+					return FormatterFactory.create(
+						this.formatType,
+						{
+							defaultFormat: this.props.defaultTimeFormat,
+							futureAllowed: this.props.futureAllowed,
+							context: this.props.context,
+							showTime: this.props.showTime,
+						},
+					).format(moment);
+				}
+				catch (error)
+				{
+					console.error(error);
+				}
+			}
+
+			return this.makeDefaultText(moment);
+		}
+
+		/**
+		 * private
+		 * @param {Moment} moment
+		 * @return {string}
+		 */
+		makeDefaultText(moment)
 		{
 			if (moment.isYesterday)
 			{
@@ -75,7 +101,12 @@ jn.define('layout/ui/friendly-date', (require, exports, module) => {
 			{
 				if (this.useTimeAgo && !moment.isOverSeconds(this.skipTimeAgoAfterSeconds))
 				{
-					return this.timeAgoTextBuilder.format(moment);
+					return FormatterFactory.createDefault({
+						defaultFormat: this.props.defaultTimeFormat,
+						futureAllowed: this.props.futureAllowed,
+						context: this.props.context,
+						showTime: this.props.showTime,
+					}).format(moment);
 				}
 
 				return this.getMessage('MOBILE_UI_FRIENDLY_DATE_TODAY_MSGVER_1', moment);

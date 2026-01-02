@@ -1,6 +1,12 @@
+// @vue/component
+
 import { hint } from 'ui.vue3.directives.hint';
 import 'ui.buttons';
+
+import { Model } from 'booking.const';
 import { Duration } from 'booking.lib.duration';
+import type { SlotLengthId } from 'booking.model.resource-creation-wizard';
+
 import { SlotLengthPrecisionSelection } from './slot-length-precision-selection';
 import './slot-length-selector.css';
 
@@ -27,10 +33,46 @@ export const SlotLengthSelector = {
 	data(): Object
 	{
 		return {
-			selectedValue: this.initialSelectedValue,
 			selectedPrecisionValue: this.initialSelectedValue,
 			precisionMode: false,
 		};
+	},
+	computed: {
+		selectedValue: {
+			get(): SlotLengthId
+			{
+				return this.$store.state[Model.ResourceCreationWizard].slotLengthId;
+			},
+			set(slotLengthId: SlotLengthId): void
+			{
+				this.$store.dispatch(`${Model.ResourceCreationWizard}/setSlotLengthId`, { slotLengthId });
+			},
+		},
+		durations(): { label: string, value: number }[]
+		{
+			return [
+				{
+					label: new Duration(unitDurations.H).format('H'),
+					value: units.H,
+				},
+				{
+					label: new Duration(unitDurations.H * 2).format('H'),
+					value: units.H * 2,
+				},
+				{
+					label: new Duration(unitDurations.H * 24).format('H'),
+					value: units.H * 24,
+				},
+				{
+					label: new Duration(unitDurations.d * 7).format('d'),
+					value: units.d * 7,
+				},
+				{
+					label: this.loc('BRCW_SETTINGS_CARD_SLOT_LENGTH_SELECTOR_CUSTOM'),
+					value: 0,
+				},
+			];
+		},
 	},
 	created(): void
 	{
@@ -41,6 +83,7 @@ export const SlotLengthSelector = {
 			units.d * 7,
 		]);
 
+		this.selectedValue = this.initialSelectedValue;
 		if (!templateValues.has(this.selectedValue))
 		{
 			this.selectedValue = 0;
@@ -106,33 +149,6 @@ export const SlotLengthSelector = {
 			}
 
 			return null;
-		},
-	},
-	computed: {
-		durations(): { label: string, value: number }[]
-		{
-			return [
-				{
-					label: new Duration(unitDurations.H).format('H'),
-					value: units.H,
-				},
-				{
-					label: new Duration(unitDurations.H * 2).format('H'),
-					value: units.H * 2,
-				},
-				{
-					label: new Duration(unitDurations.H * 24).format('H'),
-					value: units.H * 24,
-				},
-				{
-					label: new Duration(unitDurations.d * 7).format('d'),
-					value: units.d * 7,
-				},
-				{
-					label: this.loc('BRCW_SETTINGS_CARD_SLOT_LENGTH_SELECTOR_CUSTOM'),
-					value: 0,
-				},
-			];
 		},
 	},
 	template: `

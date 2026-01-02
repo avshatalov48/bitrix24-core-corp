@@ -4,9 +4,13 @@ namespace Bitrix\Crm\Service;
 
 use Bitrix\Crm\Agent\Security\DynamicTypes\AttrConvertOptions;
 use Bitrix\Crm\Attribute\FieldAttributeManager;
+use Bitrix\Crm\Automation\Helper;
 use Bitrix\Crm\Automation\Starter;
 use Bitrix\Crm\Field;
 use Bitrix\Crm\Field\Collection;
+use Bitrix\Crm\Integration\BizProc\Starter\CrmStarter;
+use Bitrix\Crm\Integration\BizProc\Starter\Dto\DocumentDto;
+use Bitrix\Crm\Integration\BizProc\Starter\Dto\RunDataDto;
 use Bitrix\Crm\Item;
 use Bitrix\Crm\ItemIdentifier;
 use Bitrix\Crm\Kanban\Entity;
@@ -23,6 +27,7 @@ use Bitrix\Main\Error;
 use Bitrix\Main\Event;
 use Bitrix\Main\EventManager;
 use Bitrix\Main\InvalidOperationException;
+use Bitrix\Main\ORM\Objectify\Values;
 use Bitrix\Main\Result;
 
 abstract class Operation
@@ -543,34 +548,49 @@ abstract class Operation
 	{
 		$result = new Result();
 
-		if (is_int($this->bizProcEventType))
+		$starter = null;
+		try
 		{
-			$errors = [];
+			$starter = new CrmStarter(new DocumentDto($this->item->getEntityTypeId(), $this->item->getId()));
+		}
+		catch (ArgumentException $exception)
+		{
+			$result->addError(new Error($exception->getMessage()));
+		}
 
+		if (is_int($this->bizProcEventType) && $starter)
+		{
 			$request = Application::getInstance()->getContext()->getRequest();
 			$data = $request->getPost('data');
-			$workflowParameters = [];
-			if (is_array($data) && isset($data['bizproc_parameters']))
+			$workflowParameters = $data['bizproc_parameters'] ?? null;
+
+			$scope = $this->getContext()->getScope() === Context::SCOPE_AUTOMATION ? CrmStarter::AUTOMATION_SCOPE : '';
+			if ($this->getContext()->getScope() === Context::SCOPE_REST)
 			{
-				$workflowParameters = $data['bizproc_parameters'];
+				$scope = CrmStarter::REST_SCOPE;
 			}
 
-			$this->bizProcHelper::AutoStartWorkflows(
-				$this->item->getEntityTypeId(),
-				$this->item->getId(),
+			$runResult = $starter->runProcess(
+				new RunDataDto(
+					actualFields: Helper::prepareCompatibleData(
+						$this->itemBeforeSave->getEntityTypeId(),
+						$this->itemBeforeSave->getCompatibleData(Values::CURRENT)
+					),
+					previousFields: Helper::prepareCompatibleData(
+						$this->itemBeforeSave->getEntityTypeId(),
+						$this->itemBeforeSave->getCompatibleData(Values::ACTUAL)
+					),
+					userId: (
+						in_array($this->getContext()->getScope(), [Context::SCOPE_AUTOMATION, Context::SCOPE_REST], true)
+							? 0
+							: $this->getContext()->getUserId()
+					),
+					parameters: is_array($workflowParameters) || is_string($workflowParameters) ? $workflowParameters : null,
+					scope: $scope,
+				),
 				$this->bizProcEventType,
-				$errors,
-				$workflowParameters,
 			);
-
-			foreach ($errors as $singleError)
-			{
-				$customData = array_diff_key($singleError, ['message' => '', 'code' => '']);
-
-				$result->addError(
-					new Error($singleError['message'], $singleError['code'], $customData)
-				);
-			}
+			$result->addErrors($runResult->getErrors());
 		}
 
 		return $result;
@@ -581,22 +601,41 @@ abstract class Operation
 	 */
 	protected function runAutomation(): Result
 	{
-		$starter = new Starter($this->item->getEntityTypeId(), $this->item->getId());
+		$result = new Result();
 
-		switch ($this->getContext()->getScope())
+		$scope = $this->getContext()->getScope() === Context::SCOPE_AUTOMATION ? CrmStarter::AUTOMATION_SCOPE : '';
+		if ($this->getContext()->getScope() === Context::SCOPE_REST)
 		{
-			case Context::SCOPE_AUTOMATION:
-				$starter->setContextToBizproc();
-				break;
-			case Context::SCOPE_REST:
-				$starter->setContextToRest();
-				break;
-			default:
-				$starter->setUserId($this->getContext()->getUserId());
-				break;
+			$scope = CrmStarter::REST_SCOPE;
 		}
 
-		return (new Result())->setData(['starter' => $starter]);
+		$starter = null;
+		try
+		{
+			$starter = new CrmStarter(new DocumentDto($this->item->getEntityTypeId(), $this->item->getId()));
+		}
+		catch (ArgumentException $exception)
+		{
+			$result->addError(new Error($exception->getMessage()));
+		}
+
+		$runData = null;
+		if ($starter)
+		{
+			$runData = new RunDataDto(
+				actualFields: Helper::prepareCompatibleData(
+					$this->itemBeforeSave->getEntityTypeId(),
+					$this->itemBeforeSave->getCompatibleData(Values::CURRENT)
+				),
+				previousFields: Helper::prepareCompatibleData(
+					$this->itemBeforeSave->getEntityTypeId(),
+					$this->itemBeforeSave->getCompatibleData(Values::ACTUAL)
+				),
+				scope: $scope,
+			);
+		}
+
+		return $result->setData(['runData' => $runData, 'newStarter' => $starter, 'starter' => null]);
 	}
 
 	abstract protected function save(): Result;
@@ -1127,9 +1166,9 @@ abstract class Operation
 	{
 		$userPermissions = Container::getInstance()->getUserPermissions($this->getContext()->getUserId());
 
-		$permissionEntityType = UserPermissions::getItemPermissionEntityType($this->item);
+		$permissionEntityType = \Bitrix\Crm\Category\PermissionEntityTypeHelper::getPermissionEntityTypeForItem($this->item);
 		$securityRegisterOptions = (new \Bitrix\Crm\Security\Controller\RegisterOptions())
-			->setEntityAttributes($userPermissions->prepareItemPermissionAttributes($this->item))
+			->setEntityAttributes($userPermissions->item()->prepareItemPermissionAttributes($this->item))
 		;
 
 		$controller = \Bitrix\Crm\Security\Manager::resolveController($permissionEntityType);

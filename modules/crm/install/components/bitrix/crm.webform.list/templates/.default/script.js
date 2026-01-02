@@ -37,22 +37,6 @@
 	      this.reloadGridTimeoutId = 0;
 	      this.gridId = params.gridId;
 	      this.gridNode = document.getElementById(this.gridId);
-	      var hideDescBtnNode = BX('CRM_LIST_DESC_BTN_HIDE');
-	      if (hideDescBtnNode) {
-	        BX.bind(hideDescBtnNode, 'click', function () {
-	          BX.addClass(BX('CRM_LIST_DESC_CONT'), 'crm-webform-list-info-hide');
-	          BX.userOptions.delay = 0;
-	          BX.userOptions.save('crm', 'webform_list_view', 'hide-desc', 'Y');
-	        });
-	      }
-	      var notifyBtnNode = BX('CRM_LIST_WEBFORM_NOTIFY_BTN_HIDE');
-	      if (notifyBtnNode) {
-	        BX.bind(notifyBtnNode, 'click', function () {
-	          BX.addClass(BX('CRM_LIST_DESC_CONT'), 'crm-webform-list-info-hide');
-	          BX.userOptions.delay = 0;
-	          BX.userOptions.save('crm', 'notify_webform', 'ru_fz_152', 'Y');
-	        });
-	      }
 	      _classPrivateMethodGet(this, _renderGridRows, _renderGridRows2).call(this);
 	      BX.addCustomEvent('Grid::updated', function () {
 	        _classPrivateMethodGet(_this, _renderGridRows, _renderGridRows2).call(_this);

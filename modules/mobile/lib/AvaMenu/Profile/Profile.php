@@ -19,16 +19,6 @@ class Profile
 		$this->type = $this->getType();
 	}
 
-	public function getUserType(): string
-	{
-		if ($this->context->isCollaber)
-		{
-			return 'collaber';
-		}
-
-		return "user";
-	}
-
 	public function getData($reloadFromDb = false): array
 	{
 		return [

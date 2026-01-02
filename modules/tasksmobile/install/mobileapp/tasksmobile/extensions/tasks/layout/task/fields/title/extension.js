@@ -5,6 +5,7 @@ jn.define('tasks/layout/task/fields/title', (require, exports, module) => {
 	const { Loc } = require('loc');
 	const { ReadOnlyElementType } = require('layout/ui/fields/string');
 	const { TextAreaField } = require('layout/ui/fields/textarea');
+	const { copyToClipboard } = require('utils/copy');
 
 	class Title extends LayoutComponent
 	{
@@ -66,11 +67,6 @@ jn.define('tasks/layout/task/fields/title', (require, exports, module) => {
 					},
 					style,
 					onLayout,
-					onLongClick: (
-						readOnly && Application.getPlatform() === 'android' && Application.getApiVersion() < 51
-							? () => this.copyTitle()
-							: () => {}
-					),
 				},
 				TextAreaField({
 					focus,
@@ -96,12 +92,7 @@ jn.define('tasks/layout/task/fields/title', (require, exports, module) => {
 
 		copyTitle()
 		{
-			Notify.showMessage(
-				'',
-				Loc.getMessage('TASKSMOBILE_LAYOUT_TASK_FIELDS_TITLE_COPIED'),
-				{ time: 1 },
-			);
-			Application.copyToClipboard(this.state.title);
+			copyToClipboard(this.state.title, Loc.getMessage('TASKSMOBILE_LAYOUT_TASK_FIELDS_TITLE_COPIED'));
 		}
 	}
 

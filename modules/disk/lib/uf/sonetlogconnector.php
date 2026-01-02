@@ -4,6 +4,7 @@ namespace Bitrix\Disk\Uf;
 
 use Bitrix\Main\Loader;
 use Bitrix\Main\Application;
+use Bitrix\Crm\Service\Container;
 
 final class SonetLogConnector extends StubConnector implements ISupportForeignConnector
 {
@@ -142,16 +143,15 @@ final class SonetLogConnector extends StubConnector implements ISupportForeignCo
 		{
 			if (mb_strpos($log["EVENT_ID"], "crm_") === 0 && Loader::includeModule('crm'))
 			{
-				$userPermissions = \CCrmPerms::getUserPermissions($userId);
+				$userPermissions = Container::getInstance()->getUserPermissions($userId)->item();
 				if ($log["ENTITY_TYPE"] == "CRMACTIVITY")
 				{
 					$bindings = \CCRMActivity::getBindings($log["ENTITY_ID"]);
 					foreach($bindings as $binding)
 					{
-						if (\Bitrix\Crm\Security\EntityAuthorization::checkReadPermission(
+						if ($userPermissions->canRead(
 							$binding["OWNER_TYPE_ID"],
-							$binding["OWNER_ID"],
-							$userPermissions
+							$binding["OWNER_ID"]
 						))
 						{
 							$this->canRead = true;
@@ -162,10 +162,9 @@ final class SonetLogConnector extends StubConnector implements ISupportForeignCo
 				}
 				else
 				{
-					if (\Bitrix\Crm\Security\EntityAuthorization::checkReadPermission(
+					if ($userPermissions->canRead(
 						\CCrmLiveFeedEntity::resolveEntityTypeID($log["ENTITY_TYPE"]),
-						$log["ENTITY_ID"],
-						$userPermissions
+						$log["ENTITY_ID"]
 					))
 					{
 						$this->canRead = true;

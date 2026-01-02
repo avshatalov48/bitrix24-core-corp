@@ -59,7 +59,7 @@ jn.define('ui-system/blocks/avatar-stack', (require, exports, module) => {
 		}
 
 		renderRestElement = (restCount) => {
-			const { restView } = this.props;
+			const { restView = {} } = this.props;
 
 			if (restView)
 			{
@@ -303,6 +303,7 @@ jn.define('ui-system/blocks/avatar-stack', (require, exports, module) => {
 		 * @param {AvatarStackProps} props
 		 */
 		AvatarStack: (props) => new AvatarStack(props),
+		AvatarStackClass: AvatarStack,
 		AvatarShape,
 		AvatarEntityType,
 		AvatarStackDirection: ElementsStackDirection,

@@ -3,10 +3,9 @@
 namespace Bitrix\Crm\Automation\Trigger;
 
 use Bitrix\Crm\Automation\Factory;
-use Bitrix\Crm\Automation\Trigger\Entity\TriggerTable;
-use Bitrix\Crm\EntityManageFacility;
+use Bitrix\Crm\Integration\BizProc\Starter\Mixins\Dto\TriggerBindingDocumentsDto;
+use Bitrix\Crm\Integration\BizProc\Starter\Mixins\TriggerBindingDocumentsTrait;
 use Bitrix\Crm\Service\Container;
-use Bitrix\Crm\Settings\LeadSettings;
 use Bitrix\Main;
 
 if (!Main\Loader::includeModule('bizproc'))
@@ -16,6 +15,8 @@ if (!Main\Loader::includeModule('bizproc'))
 
 class BaseTrigger extends \Bitrix\Bizproc\Automation\Trigger\BaseTrigger
 {
+	use TriggerBindingDocumentsTrait;
+
 	protected $inputData;
 
 	/**
@@ -58,136 +59,35 @@ class BaseTrigger extends \Bitrix\Bizproc\Automation\Trigger\BaseTrigger
 	{
 		$triggersSent = false;
 		$triggersApplied = false;
-		$clientBindings = [];
-		$bindingDocuments = [];
 
-		$result = new Main\Result();
-
+		$documents = [];
 		foreach ($bindings as $binding)
 		{
-			$entityTypeId = (int)$binding['OWNER_TYPE_ID'];
-			$entityId = (int)$binding['OWNER_ID'];
+			$bindingDocuments = static::getBindingDocuments(
+				new TriggerBindingDocumentsDto(
+					(int)$binding['OWNER_TYPE_ID'],
+					(int)$binding['OWNER_ID'],
+					static::getCode(),
+					static::areDynamicTypesSupported(),
+					$useEntitySearch
+				)
+			);
 
-			if ($entityTypeId === \CCrmOwnerType::Contact || $entityTypeId === \CCrmOwnerType::Company)
+			foreach ($bindingDocuments as $document)
 			{
-				$clientBindings[] = $binding;
-
-				continue;
-			}
-
-			$bindingDocuments[] = [$entityTypeId, $entityId];
-
-			if (Factory::isSupported($entityTypeId))
-			{
-				if ($entityTypeId === \CCrmOwnerType::Lead && !LeadSettings::isEnabled())
+				if (!in_array($document, $documents, true))
 				{
-					continue;
-				}
-
-				$triggersApplied = static::sendTrigger([$entityTypeId, $entityId], $inputData);
-				$triggersSent = true;
-			}
-		}
-
-		if ($clientBindings && $useEntitySearch)
-		{
-			$facilitySelector = (new EntityManageFacility())->getSelector();
-
-			foreach ($clientBindings as $binding)
-			{
-				if (!$facilitySelector)
-				{
-					break;
-				}
-
-				$facilitySelector
-					->setEntity($binding['OWNER_TYPE_ID'], $binding['OWNER_ID'])
-					->search()
-				;
-
-				$documents = [];
-
-				$dealId = $facilitySelector->getDealId();
-				$orderIds = $facilitySelector->getOrders();
-
-				if ($dealId)
-				{
-					$documents[] = [\CCrmOwnerType::Deal, $dealId];
-				}
-				foreach ($orderIds as $orderId)
-				{
-					$documents[] = [\CCrmOwnerType::Order, $orderId];
-				}
-
-				if (static::areDynamicTypesSupported())
-				{
-					$entityTypeIdsWithTrigger = static::getEntityTypeIdsBySelfCode();
-
-					$ownerIdFieldName = '';
-					if ($binding['OWNER_TYPE_ID'] === \CCrmOwnerType::Contact)
-					{
-						$ownerIdFieldName = 'CONTACT_ID';
-					}
-					elseif ($binding['OWNER_TYPE_ID'] === \CCrmOwnerType::Company)
-					{
-						$ownerIdFieldName = 'COMPANY_ID';
-					}
-
-					foreach ($entityTypeIdsWithTrigger as $entityTypeIdWithTrigger)
-					{
-						if (empty($ownerIdFieldName))
-						{
-							break;
-						}
-
-						if (
-							!\CCrmOwnerType::isPossibleDynamicTypeId($entityTypeIdWithTrigger)
-							|| !Factory::isSupported($entityTypeIdWithTrigger)
-						)
-						{
-							continue;
-						}
-
-						$factory = \Bitrix\Crm\Service\Container::getInstance()->getFactory($entityTypeIdWithTrigger);
-						if (!$factory)
-						{
-							continue;
-						}
-
-						$items = $factory->getItems([
-							'select' => ['ID'],
-							'filter' => [
-								'=' . $ownerIdFieldName => (int)$binding['OWNER_ID'],
-							],
-						]);
-
-						foreach ($items as $item)
-						{
-							$documents[] = [(int)$entityTypeIdWithTrigger, $item->getId()];
-						}
-
-					}
-				}
-
-				foreach ($documents as $document)
-				{
-					if (in_array($document, $bindingDocuments, true))
-					{
-						continue;
-					}
-
+					$documents[] = $document;
+					$triggersSent = true;
 					if (static::sendTrigger($document, $inputData))
 					{
 						$triggersApplied = true;
 					}
-					$triggersSent = true;
 				}
 			}
 		}
 
-		$result->setData(['triggersSent' => $triggersSent, 'triggersApplied' => $triggersApplied]);
-
-		return $result;
+		return (new Main\Result())->setData(['triggersSent' => $triggersSent, 'triggersApplied' => $triggersApplied]);
 	}
 
 	public function setInputData($data)
@@ -223,11 +123,16 @@ class BaseTrigger extends \Bitrix\Bizproc\Automation\Trigger\BaseTrigger
 			$trigger->setInputData($inputData);
 		}
 
-		return $trigger->send($entityId);
+		return $trigger->send();
 	}
 
-	public function send($entityId)
+	public function send()
 	{
+		if (method_exists(\Bitrix\Bizproc\Automation\Trigger\BaseTrigger::class, 'send'))
+		{
+			return parent::send();
+		}
+
 		$applied = false;
 		$triggers = $this->getPotentialTriggers();
 		if ($triggers)
@@ -286,26 +191,5 @@ class BaseTrigger extends \Bitrix\Bizproc\Automation\Trigger\BaseTrigger
 		}
 
 		return true;
-	}
-
-	protected static function getEntityTypeIdsBySelfCode(): array
-	{
-		$triggerCode = static::getCode();
-		if (empty($triggerCode) || $triggerCode === self::getCode())
-		{
-			return [];
-		}
-
-		$entityTypeIds = TriggerTable::getList([
-			'select' => ['ENTITY_TYPE_ID'],
-			'filter' => [
-				'=CODE' => $triggerCode
-			],
-			'cache' => [
-				'ttl' => '7200'
-			]
-		])->fetchAll();
-
-		return array_unique(array_column($entityTypeIds, 'ENTITY_TYPE_ID'));
 	}
 }

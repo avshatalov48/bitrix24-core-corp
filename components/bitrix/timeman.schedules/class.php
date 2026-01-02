@@ -164,8 +164,9 @@ class Component extends BaseComponent
 				'POPUP_COMPONENT_NAME' => 'bitrix:timeman.schedule.edit',
 				'POPUP_COMPONENT_TEMPLATE_NAME' => '',
 				'POPUP_COMPONENT_PARAMS' => [
-					'SCHEDULE_ID' => isset($this->arResult['VARIABLES']['SCHEDULE_ID']) ? $this->arResult['VARIABLES']['SCHEDULE_ID'] : '',
+					'SCHEDULE_ID' => $this->arResult['VARIABLES']['SCHEDULE_ID'] ?? '',
 				],
+				'USE_UI_TOOLBAR' => 'Y',
 			]
 		);
 	}
@@ -179,9 +180,10 @@ class Component extends BaseComponent
 				'POPUP_COMPONENT_NAME' => 'bitrix:timeman.schedule.shift.edit',
 				'POPUP_COMPONENT_TEMPLATE_NAME' => '',
 				'POPUP_COMPONENT_PARAMS' => [
-					'SCHEDULE_ID' => isset($this->arResult['VARIABLES']['SCHEDULE_ID']) ? $this->arResult['VARIABLES']['SCHEDULE_ID'] : '',
-					'SHIFT_ID' => isset($this->arResult['VARIABLES']['SHIFT_ID']) ? $this->arResult['VARIABLES']['SHIFT_ID'] : '',
+					'SCHEDULE_ID' => $this->arResult['VARIABLES']['SCHEDULE_ID'] ?? '',
+					'SHIFT_ID' => $this->arResult['VARIABLES']['SHIFT_ID'] ?? '',
 				],
+				'USE_UI_TOOLBAR' => 'Y',
 			]
 		);
 	}
@@ -195,7 +197,7 @@ class Component extends BaseComponent
 				'POPUP_COMPONENT_NAME' => 'bitrix:timeman.schedule.shiftplan',
 				'POPUP_COMPONENT_TEMPLATE_NAME' => '',
 				'POPUP_COMPONENT_PARAMS' => [
-					'SCHEDULE_ID' => isset($this->arResult['VARIABLES']['SCHEDULE_ID']) ? $this->arResult['VARIABLES']['SCHEDULE_ID'] : '',
+					'SCHEDULE_ID' => $this->arResult['VARIABLES']['SCHEDULE_ID'] ?? '',
 				],
 				'USE_UI_TOOLBAR' => 'Y',
 			]

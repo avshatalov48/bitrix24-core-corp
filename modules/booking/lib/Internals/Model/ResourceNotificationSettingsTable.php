@@ -4,8 +4,8 @@ declare(strict_types=1);
 
 namespace Bitrix\Booking\Internals\Model;
 
-use Bitrix\Main\Entity\BooleanField;
-use Bitrix\Main\Entity\DataManager;
+use Bitrix\Main\ORM\Fields\BooleanField;
+use Bitrix\Main\ORM\Data\DataManager;
 use Bitrix\Main\ORM\Fields\IntegerField;
 use Bitrix\Main\ORM\Fields\StringField;
 use Bitrix\Main\ORM\Fields\Validators\LengthValidator;
@@ -52,34 +52,48 @@ final class ResourceNotificationSettingsTable extends DataManager
 
 			(new BooleanField('IS_INFO_ON'))
 				->configureValues('N', 'Y')
-				->configureDefaultValue('Y')
 				->configureRequired(),
 
 			(new StringField('TEMPLATE_TYPE_INFO'))
 				->addValidator(new LengthValidator(1, 255))
 				->configureRequired(),
 
+			(new IntegerField('INFO_DELAY'))
+				->configureRequired(),
+
 			(new BooleanField('IS_CONFIRMATION_ON'))
 				->configureValues('N', 'Y')
-				->configureDefaultValue('Y')
 				->configureRequired(),
 
 			(new StringField('TEMPLATE_TYPE_CONFIRMATION'))
 				->addValidator(new LengthValidator(1, 255))
 				->configureRequired(),
 
+			(new IntegerField('CONFIRMATION_DELAY'))
+				->configureRequired(),
+
+			(new IntegerField('CONFIRMATION_REPETITIONS'))
+				->configureRequired(),
+
+			(new IntegerField('CONFIRMATION_REPETITIONS_INTERVAL'))
+				->configureRequired(),
+
+			(new IntegerField('CONFIRMATION_COUNTER_DELAY'))
+				->configureRequired(),
+
 			(new BooleanField('IS_REMINDER_ON'))
 				->configureValues('N', 'Y')
-				->configureDefaultValue('Y')
 				->configureRequired(),
 
 			(new StringField('TEMPLATE_TYPE_REMINDER'))
 				->addValidator(new LengthValidator(1, 255))
 				->configureRequired(),
 
+			(new IntegerField('REMINDER_DELAY'))
+				->configureRequired(),
+
 			(new BooleanField('IS_FEEDBACK_ON'))
 				->configureValues('N', 'Y')
-				->configureDefaultValue('Y')
 				->configureRequired(),
 
 			(new StringField('TEMPLATE_TYPE_FEEDBACK'))
@@ -88,11 +102,16 @@ final class ResourceNotificationSettingsTable extends DataManager
 
 			(new BooleanField('IS_DELAYED_ON'))
 				->configureValues('N', 'Y')
-				->configureDefaultValue('Y')
 				->configureRequired(),
 
 			(new StringField('TEMPLATE_TYPE_DELAYED'))
 				->addValidator(new LengthValidator(1, 255))
+				->configureRequired(),
+
+			(new IntegerField('DELAYED_DELAY'))
+				->configureRequired(),
+
+			(new IntegerField('DELAYED_COUNTER_DELAY'))
 				->configureRequired(),
 		];
 	}

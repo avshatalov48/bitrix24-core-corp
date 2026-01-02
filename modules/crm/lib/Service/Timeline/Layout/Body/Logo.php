@@ -15,12 +15,17 @@ class Logo extends Base
 	public const ICON_TYPE_PURPLE = 'purple';
 	public const ICON_TYPE_ORANGE = 'orange';
 	public const ICON_TYPE_SECONDARY = 'secondary';
+	public const ICON_TYPE_PALE_BLUE = 'pale-blue';
+	public const ICON_TYPE_ORANGE_STRIPE = 'orange-stripe';
+	public const ICON_TYPE_GREEN = 'green';
+	public const ICON_TYPE_DARK_ORANGE = 'dark-orange';
 
 	public const ADDITIONAL_ICON_CODE_PROGRESS = 'progress';
 	public const ADDITIONAL_ICON_CODE_PENCIL = 'pencil';
 	public const ADDITIONAL_ICON_CODE_SIGN = 'sign';
 	public const ADDITIONAL_ICON_CODE_DONE = 'done';
 	public const ADDITIONAL_ICON_CODE_UNAVAILABLE = 'unavailable';
+	public const ADDITIONAL_ICON_CODE_CROSS = 'cross';
 
 	protected const BODY_LOGO_BACKGROUND_SIZE = 60;
 

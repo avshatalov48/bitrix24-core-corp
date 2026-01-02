@@ -7,17 +7,14 @@ use Bitrix\Crm\Field;
 class Collection implements \Iterator, \ArrayAccess, \Countable
 {
 	/** @var Field[] */
-	protected $fields = [];
+	protected array $fields = [];
 
 	/**
 	 * @param Field[] $fields
 	 */
-	public function __construct(array $fields)
+	public function __construct(array $fields = [])
 	{
-		foreach ($fields as $field)
-		{
-			$this->fields[$field->getName()] = $field;
-		}
+		array_map([$this, 'push'], $fields);
 	}
 
 	public function toArray(): array
@@ -67,6 +64,23 @@ class Collection implements \Iterator, \ArrayAccess, \Countable
 		}
 
 		return new self($fields);
+	}
+
+	public function merge(self $collection): self
+	{
+		foreach ($collection as $field)
+		{
+			$this->push($field);
+		}
+
+		return $this;
+	}
+
+	public function push(Field $field): self
+	{
+		$this->fields[$field->getName()] = $field;
+
+		return $this;
 	}
 
 	public function current(): ?Field
@@ -120,6 +134,11 @@ class Collection implements \Iterator, \ArrayAccess, \Countable
 	public function offsetUnset(mixed $offset): void
 	{
 		unset($this->fields[$offset]);
+	}
+
+	public function isEmpty(): bool
+	{
+		return $this->count() <= 0;
 	}
 
 	public function count(): int

@@ -1,0 +1,12 @@
+.add-to-calendar__container {
+	width: 100%;
+}
+
+.add-to-calendar__btn {
+	width: 100%;
+	text-transform: initial;
+	font-size: var(--ui-font-size-lg);
+	font-weight: var(--ui-font-weight-regular);
+	border-color: var(--ui-color-tag-9);
+	border-radius: 6px;
+}

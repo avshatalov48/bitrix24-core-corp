@@ -14,6 +14,7 @@ final class ProviderCode
 	public const TAXCOM = 'TAXCOM';
 	public const SES_RU = 'SES_RU';
 	public const SES_COM = 'SES_COM';
+	public const SES_RU_EXPRESS = 'SES_RU_EXPRESS';
 	public const EXTERNAL = 'EXTERNAL';
 
 	/**
@@ -26,8 +27,19 @@ final class ProviderCode
 			self::TAXCOM,
 			self::SES_RU,
 			self::SES_COM,
+			self::SES_RU_EXPRESS,
 			self::EXTERNAL,
 		];
+	}
+
+	/**
+	 * @return array
+	 */
+	public static function getAllFormattedCodes(): array
+	{
+		return array_filter(
+			array_map([self::class, 'toRepresentativeString'], self::getAll())
+		);
 	}
 
 	public static function isValid(string $providerCode): bool
@@ -64,19 +76,20 @@ final class ProviderCode
 			self::TAXCOM => 'taxcom',
 			self::SES_RU => 'ses-ru',
 			self::SES_COM => 'ses-com',
+			self::SES_RU_EXPRESS => 'ses-ru-express',
 			self::EXTERNAL => 'external',
 			default => '',
 		};
 	}
 
 	public static function toAnalyticString(string $providerCode): string
-		{
+	{
 		return match ($providerCode)
 		{
-			self::SES_RU, self::SES_COM => 'integration_bitrix24KEDO',
+			self::SES_RU, self::SES_COM, self::SES_RU_EXPRESS => 'integration_bitrix24KEDO',
 			self::GOS_KEY => 'integration_Goskluch',
 			self::EXTERNAL => 'integration_external',
 			default => 'integration_N',
 		};
-		}
+	}
 }

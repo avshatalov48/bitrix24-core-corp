@@ -8,26 +8,32 @@ use Bitrix\SignMobile\Contract;
 class Notification implements Contract\PushNotification
 {
 	public function __construct(
-		public ?int $type = 0,
-		public ?int $userId = 0,
-		public ?int $signMemberId = 0,
+		public ?int $type = null,
+		public int $userId = 0,
+		public ?int $signMemberId = null,
 		public ?DateTime $dateUpdate = null,
 		public ?DateTime $dateCreate = null,
+		public ?int $id = null,
 	) {}
 
-	public function getType(): int
+	public function getType(): ?int
 	{
-		return (int)$this->type;
+		return $this->type;
 	}
 
 	public function getUserId(): int
 	{
-		return (int)$this->userId;
+		return $this->userId;
 	}
 
-	public function getSignMemberId(): int
+	public function getId(): ?int
 	{
-		return (int)$this->signMemberId;
+		return $this->id;
+	}
+
+	public function getSignMemberId(): ?int
+	{
+		return $this->signMemberId;
 	}
 
 	public function getDateUpdate(): ?DateTime

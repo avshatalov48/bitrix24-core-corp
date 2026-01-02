@@ -8,9 +8,12 @@ use Bitrix\Tasks\Access\Model\TemplateModel;
 use Bitrix\Tasks\Access\TemplateAccessController;
 use Bitrix\Main\Engine\Response;
 use Bitrix\Tasks\Item\Task\Template as TaskTemplate;
+use Bitrix\Tasks\Rest\Controllers\Trait\ErrorResponseTrait;
 
 class Template extends Base
 {
+	use ErrorResponseTrait;
+
 	/**
 	 * Return all DB and UF_ fields of task template
 	 *
@@ -29,26 +32,27 @@ class Template extends Base
 	 *
 	 * @return bool|int
 	 */
-	public function addAction(array $fields, array $params = [])
+	public function addAction(array $fields, array $params = []): ?int
 	{
 		$currentUserId = CurrentUser::get()->getId();
 
-		if (!TemplateAccessController::can($currentUserId, ActionDictionary::ACTION_TEMPLATE_CREATE))
-		{
-			return false;
-		}
-
 		$fields = $this->filterFields($fields);
+
+		$templateModel = TemplateModel::createFromArray($fields);
+
+		if (!TemplateAccessController::can($currentUserId, ActionDictionary::ACTION_TEMPLATE_CREATE, null, $templateModel))
+		{
+			return $this->buildErrorResponse('Access denied');
+		}
 
 		if (
 			array_key_exists('REPLICATE', $fields)
 			&& $fields['REPLICATE'] === 'Y'
 		)
 		{
-			$templateModel = TemplateModel::createFromArray($fields);
 			if (!TemplateAccessController::can($currentUserId, ActionDictionary::ACTION_TEMPLATE_SAVE, null, $templateModel))
 			{
-				return false;
+				return $this->buildErrorResponse('Access denied');
 			}
 		}
 
@@ -61,7 +65,7 @@ class Template extends Base
 			unset($fields['ID']);
 		}
 
-		return (new \CTaskTemplates())->Add($fields, $params);
+		return (int)(new \CTaskTemplates())->Add($fields, $params);
 	}
 
 	/**

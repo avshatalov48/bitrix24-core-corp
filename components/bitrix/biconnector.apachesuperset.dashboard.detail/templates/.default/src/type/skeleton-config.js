@@ -2,6 +2,8 @@ export type SkeletonConfig = {
 	container: HTMLElement,
 	dashboardId: number,
 	status: string,
-	isSupersetAvailable: boolean,
-	paramsCompatible: boolean,
+	dashboardType: 'SYSTEM' | 'MARKET' | 'CUSTOM',
+	isFirstStartup: boolean,
+	periodicReload: boolean,
+	supersetStatus: 'LOAD' | 'READY' | 'ERROR',
 }

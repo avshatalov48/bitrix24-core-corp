@@ -15,11 +15,15 @@
 	height: calc(100vh - 188px);
 }
 
+.template-air .crm-copilot__call-assessment_page-wrapper {
+	height: calc(100vh - 206px);
+}
+
 .crm-copilot__call-assessment_breadcrumbs-wrapper {
 	display: flex;
 	flex-direction: row;
 	padding: 18px var(--crm-call-assessment-horizontal-padding);
-	border-bottom: 1px solid var(--ui-color-palette-gray-05);
+	border-bottom: var(--ui-border-width-thin) var(--ui-text-decoration-style-solid) var(--ui-color-palette-gray-05);
 }
 
 .crm-copilot__call-assessment_breadcrumbs-item {
@@ -95,7 +99,7 @@
 }
 
 .crm-copilot__call-assessment_page-section.--additional .crm-copilot__call-assessment_page-section-header-description {
-	border-bottom: 1px solid var(--ui-color-palette-gray-05);
+	border-bottom: var(--ui-border-width-thin) var(--ui-text-decoration-style-solid) var(--ui-color-palette-gray-05);
 	padding-bottom: 8px;
 }
 
@@ -185,7 +189,7 @@
 
 .crm-copilot__call-assessment_page-section-body-field-container {
 	border-radius: 8px;
-	border: 1px solid #0000001C;
+	border: var(--ui-border-width-thin) var(--ui-text-decoration-style-solid) #0000001C;
 	padding: 18px;
 }
 
@@ -197,7 +201,7 @@
 	color: var(--ui-color-palette-black-base);
 	font-size: var(--ui-font-size-2xl);
 	padding-bottom: 16px;
-	border-bottom: 1px solid var(--ui-color-palette-gray-10);
+	border-bottom: var(--ui-border-width-thin) var(--ui-text-decoration-style-solid) var(--ui-color-palette-gray-10);
 	position: relative;
 	padding-left: 34px;
 }
@@ -251,7 +255,7 @@
 	padding: 20px;
 	font-size: var(--ui-size-md);
 	color: var(--ui-color-palette-black-base);
-	border: 1px solid var(--ui-color-palette-gray-50);
+	border: var(--ui-border-width-thin) var(--ui-text-decoration-style-solid) var(--ui-color-palette-gray-50);
 	box-sizing: border-box;
 	height: 250px;
 }
@@ -272,7 +276,7 @@
 }
 
 .crm-copilot__call-assessment_page-section-body-field-client-type:hover {
-	background-color: #F2F7FD;
+	background-color: #f2f7fd;
 	transition: background-color 300ms;
 }
 
@@ -310,7 +314,7 @@
 }
 
 .crm-copilot__call-assessment_page-section-body-field-client-type.--active {
-	background-color: #F2F7FD;
+	background-color: #f2f7fd;
 	border-radius: var(--ui-border-radius-xl);
 }
 
@@ -323,9 +327,8 @@
 }
 
 .crm-copilot__call-assessment_page-section-body-field-client-type.--active.--readonly:hover {
-	background-color: #F2F7FD;
+	background-color: #f2f7fd;
 }
-
 
 .crm-copilot__call-assessment_page-section-body-field-client-type input {
 	right: 14px;
@@ -392,23 +395,8 @@
 	opacity: var(--ui-opacity-full);
 }
 
-.crm-copilot__call-assessment_title-wrapper {
-	display: flex;
-	width: 100%;
-}
-
-.crm-copilot__call-assessment_title-item {
-	flex: 1;
-	display: inline-block;
-	box-sizing: border-box;
-	border: none;
-	border-bottom: 1px solid #cfd6da;
-	background-color: transparent;
-	color: var(--ui-color-palette-white-base);
-	word-wrap: break-word;
-	font: var(--ui-font-family-secondary, var(--ui-font-family-open-sans));
-	font-weight: var(--ui-font-weight-light, 300);
-	margin: -1px 0 0 -2px;
+.copilot-call-assessment-details .ui-toolbar-edit-title-input {
+	color: var(--ui-color-palette-white-base) !important;
 }
 
 .crm-copilot__call-assessment-help-link {
@@ -490,7 +478,7 @@
 	cursor: pointer;
 	color: var(--ui-color-link-primary-base);
 	font-weight: var(--ui-font-weight-bold);
-	border-bottom: 1px dashed var(--ui-color-link-primary-base);
+	border-bottom: var(--ui-border-width-thin) var(--ui-text-decoration-style-dashed) var(--ui-color-link-primary-base);
 }
 
 .crm-copilot__call-assessment-item-selector.--inactive {
@@ -551,11 +539,11 @@
 }
 
 .crm-copilot__call-assessment-pill.--low {
-	background: url('../images/pill-stars.svg') center right, linear-gradient(191deg, #FF3131 -31.18%, #FF31C5 90.04%);
+	background: url('../images/pill-stars.svg') center right, linear-gradient(191deg, #ff3131 -31.18%, #ff31c5 90.04%);
 }
 
 .crm-copilot__call-assessment-pill.--high {
-	background: url('../images/pill-stars.svg') center right, linear-gradient(191deg, #05DE8E -31.18%, #5EDB30 90.04%);
+	background: url('../images/pill-stars.svg') center right, linear-gradient(191deg, #05de8e -31.18%, #5edb30 90.04%);
 }
 
 .crm-copilot__call-assessment-pill-title {
@@ -581,7 +569,7 @@
 	height: 32px;
 	background: var(--ui-color-palette-white-base);
 	border-radius: 50%;
-	color: #FF3272;
+	color: #ff3272;
 	cursor: pointer;
 	transition: box-shadow 300ms;
 	position: relative
@@ -704,4 +692,99 @@
 
 .crm-copilot__call-assessment-ai-disabled .ui-icon-set:hover {
 	opacity: var(--ui-opacity-full);
+}
+
+.crm-copilot__call-assessment-availability-rows {
+	padding: 14px 24px;
+	border-radius: var(--ui-border-radius-sm);
+	border: var(--ui-border-width-thin) var(--ui-text-decoration-style-solid) rgba(0, 0, 0, 0.11);
+	margin-top: 12px;
+}
+
+.crm-copilot__call-assessment-availability-row {
+	display: flex;
+	align-items: center;
+	margin: 6px 0;
+}
+
+.crm-copilot__call-assessment-availability-selector-row {
+	display: flex;
+	align-items: center;
+}
+
+.crm-copilot__call-assessment-availability-selector-delimiter {
+	background: url('../images/delimiter-row-period-input.svg') center center no-repeat;
+	width: 14px;
+	height: 20px;
+	margin: 0 5px 0 14px;
+}
+
+.crm-copilot__call-assessment-availability-selector-input {
+	border: var(--ui-border-width-thin) var(--ui-text-decoration-style-solid) var(--ui-color-palette-gray-15);
+	border-radius: 512px;
+	padding: 5px 27px 5px 14px;
+	color: var(--ui-color-palette-gray-90);
+	font-size: var(--ui-font-size-md);
+	height: var(--ui-font-size-5xl);
+	cursor: pointer;
+}
+
+.ui-ctl-element.crm-copilot__call-assessment-availability-selector-input.--weekday-type {
+	width: 200px;
+}
+
+.crm-copilot__call-assessment-availability-selector-input.--time {
+	width: 60px;
+}
+
+.crm-copilot__call-assessment-availability-selector-input.--invalid {
+	border: var(--ui-border-width-thin) var(--ui-text-decoration-style-solid) var(--ui-color-palette-red-solid);;
+}
+
+.crm-copilot__call-assessment-availability-selector-button {
+	width: 26px;
+	height: 26px;
+	border-radius: 64px;
+	background-position: center center;
+	background-repeat: no-repeat;
+	background-color: var(--ui-color-palette-gray-02);
+	cursor: pointer;
+	margin-left: 16px;
+	transition: background-color 300ms;
+}
+
+.crm-copilot__call-assessment-availability-selector-button:hover,
+.crm-copilot__call-assessment-availability-selector-chevron:hover
+{
+	background-color: var(--ui-color-palette-gray-04);
+}
+
+.crm-copilot__call-assessment-availability-selector-button.--add {
+	background-image: url('../images/button-row-period-add.svg');
+}
+
+.crm-copilot__call-assessment-availability-selector-button.--remove {
+	background-image: url('../images/button-row-period-remove.svg');
+}
+
+.crm-copilot__call-assessment-availability-selector-row-wrapper {
+	display: flex;
+	align-items: center;
+}
+
+.crm-copilot__call-assessment-availability-selector-chevron {
+	width: 26px;
+	height: 26px;
+	border-radius: 64px;
+	background-position: center center;
+	background-repeat: no-repeat;
+	background-color: var(--ui-color-palette-gray-02);
+	cursor: pointer;
+	background-image: url('../images/chevron.svg');
+	margin-left: -35px;
+	transition: all .2s;
+}
+
+.crm-copilot__call-assessment-availability-selector-chevron.--expanded {
+	transform: rotate(-180deg);
 }

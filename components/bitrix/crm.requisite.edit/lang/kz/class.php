@@ -1,0 +1,21 @@
+<?php
+$MESS["CRM_MODULE_NOT_INSTALLED"] = "Crm модулі орнатылмаған.";
+$MESS["CRM_REQUISITE_ADDRESS_TYPE_TITLE"] = "Мекенжай түрі";
+$MESS["CRM_REQUISITE_BANK_DETAILS_EDITOR_FIELD"] = "Банк деректемелері";
+$MESS["CRM_REQUISITE_EDIT_CUSTOM_FORM_HTML"] = "Нысанның қосымша деректері";
+$MESS["CRM_REQUISITE_EDIT_ENTITY_BINDING"] = "Байланыстыру";
+$MESS["CRM_REQUISITE_EDIT_ERR_COMPANY_EDIT_DENIED"] = "Компанияның деректемелерін өңдеуге рұқсат жоқ";
+$MESS["CRM_REQUISITE_EDIT_ERR_COMPANY_NOT_FOUND"] = "Деректемелерді редакциялау үшін компания табылмады";
+$MESS["CRM_REQUISITE_EDIT_ERR_CONTACT_EDIT_DENIED"] = "Компанияның деректемелерін өңдеуге қолжетімділік жоқ";
+$MESS["CRM_REQUISITE_EDIT_ERR_CONTACT_NOT_FOUND"] = "Деректемелерді редакциялау үшін байланыс табылмады";
+$MESS["CRM_REQUISITE_EDIT_ERR_ENTITY_TYPE_ID"] = "Деректемелерді редакциялау үшін мән түрі дүрыс емес";
+$MESS["CRM_REQUISITE_EDIT_ERR_INVALID_DATA"] = "Деректемелерді жасау үшін дұрыс емес деректер";
+$MESS["CRM_REQUISITE_EDIT_ERR_NOT_FOUND"] = "Деректемелерді алу мүмкін болмады (ID = #ID#)";
+$MESS["CRM_REQUISITE_EDIT_ERR_PRESET_NOT_SELECTED"] = "Деректемелерді редакциялауға арналған қалып берілмеген.";
+$MESS["CRM_REQUISITE_EDIT_POPUP_RESPONSE"] = "Ішкі деректер";
+$MESS["CRM_REQUISITE_EDIT_PRESET_NAME"] = "Қалып";
+$MESS["CRM_REQUISITE_EDIT_PRESET_NOT_SELECTED"] = "(Таңдалмаған)";
+$MESS["CRM_SECTION_COMPANY_REQUISITE_INFO"] = "Деректемелер туралы";
+$MESS["CRM_SECTION_COMPANY_REQUISITE_VALUES"] = "Деректемелер мәні";
+$MESS["CRM_SECTION_CONTACT_REQUISITE_INFO"] = "Деректемелер туралы";
+$MESS["CRM_SECTION_CONTACT_REQUISITE_VALUES"] = "Деректемелер мәні";

@@ -1,0 +1,9 @@
+<?php
+$MESS["MENU_BITRIX24_SECTION_TITLE"] = "Сіздің Битрикс24";
+$MESS["MENU_BIZPROC_SECTION_TITLE"] = "Автоматтандыру";
+$MESS["MENU_CRM_DYNAMIC_SECTION_TITLE"] = "Сандық жұмыс орындары";
+$MESS["MENU_CRM_SECTION_TITLE"] = "CRM";
+$MESS["MENU_MARKETPLACE_SECTION_TITLE"] = "Маркет";
+$MESS["MENU_TASKS_SECTION_TITLE"] = "Міндеттер";
+$MESS["MENU_TEAMWORK_SECTION_TITLE"] = "Бірлескен жұмыс";
+$MESS["MENU_TOOLS_SECTION_TITLE"] = "Құралдар";

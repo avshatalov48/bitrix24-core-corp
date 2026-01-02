@@ -137,6 +137,6 @@ final class Structure extends RestController
 
 	private function getStructureDontExistError(int $id): Main\Error
 	{
-		return new Main\Error("Structure with id: ${id} dont exist",'HR_STRUCTURE_DONT_EXIST');
+		return new Main\Error("Structure with id: {$id} dont exist",'HR_STRUCTURE_DONT_EXIST');
 	}
 }

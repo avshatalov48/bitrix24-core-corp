@@ -20,7 +20,7 @@
 		constructor()
 		{
 			this.pushTypesRename = {
-				'im': BX.message('SE_NOTIFY_CATEGORY_IM_TITLE')
+				'im': BX.message('SE_NOTIFY_CATEGORY_IM_TITLE_MSGVER_1')
 			};
 
 			this.userId = BX.componentParameters.get('USER_ID', 0);
@@ -117,10 +117,10 @@
 				table.delete().then(() =>
 				{
 					table.add({value : {
-						values: this.values,
-						pushTypes: this.pushTypes,
-						counterTypes: this.counterTypes
-					}}).then(() => {
+							values: this.values,
+							pushTypes: this.pushTypes,
+							counterTypes: this.counterTypes
+						}}).then(() => {
 						console.info(`SettingsNotify.saveCache: cache config updated (${new Date()-executeTime}ms)`);
 					});
 				})
@@ -230,11 +230,11 @@
 					new FormSection("push").addItems([
 						new FormItem("push", FormItemType.SWITCH, BX.message("SE_NOTIFY_PUSH_TITLE")).setEnabled(this.configDataLoaded).setValue(this.getFormItemValue({type: SettingsNotifyTypes.PUSH})),
 					]),
-					new FormSection("smart", '', BX.message("SE_NOTIFY_SMART_FILTER_DESC")).addItems([
-						new FormItem("smart", FormItemType.SWITCH, BX.message("SE_NOTIFY_SMART_FILTER_TITLE")).setEnabled(this.configDataLoaded).setValue(this.getFormItemValue({type: SettingsNotifyTypes.SMART_FILTER})),
+					new FormSection("smart", '', BX.message("SE_NOTIFY_SMART_FILTER_DESC_MSGVER_1")).addItems([
+						new FormItem("smart", FormItemType.SWITCH, BX.message("SE_NOTIFY_SMART_FILTER_TITLE_MSGVER_1")).setEnabled(this.configDataLoaded).setValue(this.getFormItemValue({type: SettingsNotifyTypes.SMART_FILTER})),
 					]),
 					new FormSection("counters", '', BX.message("SE_NOTIFY_MAIN_COUNTER_DETAIL_DESC")).addItems([
-						new FormItem("counters", FormItemType.BUTTON, BX.message("SE_NOTIFY_MAIN_COUNTER_TITLE")).setButtonTransition(true),
+						new FormItem("counters", FormItemType.BUTTON, BX.message("SE_NOTIFY_MAIN_COUNTER_TITLE_MSGVER_1")).setButtonTransition(true),
 					]),
 					new FormSection("push_category", BX.message("SE_NOTIFY_NOTIFY_TYPES_TITLE")).addItems(pushTypes),
 				]);
@@ -258,7 +258,7 @@
 					)
 				}
 
-				this.forms[formId] = new Form(formId, BX.message("SE_NOTIFY_MAIN_COUNTER_TITLE")).addSection(
+				this.forms[formId] = new Form(formId, BX.message("SE_NOTIFY_MAIN_COUNTER_TITLE_MSGVER_1")).addSection(
 					new FormSection("counters", '', BX.message("SE_NOTIFY_MAIN_COUNTER_DETAIL_DESC")).addItems(counterTypes)
 				);
 

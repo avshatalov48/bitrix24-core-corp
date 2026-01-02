@@ -1,0 +1,20 @@
+<?php
+$MESS["TASKS_SCRUM_ERROR_TITLE_POPUP"] = "Қате орын алды";
+$MESS["TASKS_SCRUM_SPRINT_COMPLETION_ERROR_TITLE_POPUP"] = "Спринтті аяқтау мүмкін емес";
+$MESS["TASKS_SCRUM_SPRINT_COMPLETION_FORM_ACTION_MOVE_LABEL"] = "Барлық аяқталмаған міндеттерді қайда тасымалдау керектігін таңдаңыз";
+$MESS["TASKS_SCRUM_SPRINT_COMPLETION_FORM_ACTION_ROW_LABEL"] = "Аяқталған міндеттері бар әрекеттер";
+$MESS["TASKS_SCRUM_SPRINT_COMPLETION_FORM_BUTTON"] = "Аяқтау";
+$MESS["TASKS_SCRUM_SPRINT_COMPLETION_FORM_DATE_END_LABEL"] = "Аяқталуы:";
+$MESS["TASKS_SCRUM_SPRINT_COMPLETION_FORM_DATE_START_LABEL"] = "Басталуы:";
+$MESS["TASKS_SCRUM_SPRINT_COMPLETION_FORM_DATE_START_LABEL_MSGVER_1"] = "Бастау:";
+$MESS["TASKS_SCRUM_SPRINT_COMPLETION_FORM_DONE_SP"] = "Орындалды";
+$MESS["TASKS_SCRUM_SPRINT_COMPLETION_FORM_EPICS_ROW_LABEL"] = "Спринттегі эпиктер";
+$MESS["TASKS_SCRUM_SPRINT_COMPLETION_FORM_PERIOD_LABEL"] = "Ұзақтығы:";
+$MESS["TASKS_SCRUM_SPRINT_COMPLETION_FORM_PLAN_ROW_LABEL"] = "Жоспардың орындалуы<br>(Стори Поинттар)";
+$MESS["TASKS_SCRUM_SPRINT_COMPLETION_FORM_PLAN_SP"] = "Жоспарланған";
+$MESS["TASKS_SCRUM_SPRINT_COMPLETION_FORM_SELECTOR_BACKLOG"] = "Бэклог";
+$MESS["TASKS_SCRUM_SPRINT_COMPLETION_FORM_SELECTOR_SPRINT"] = "Жаңа спринт";
+$MESS["TASKS_SCRUM_SPRINT_COMPLETION_FORM_TIME_ROW_LABEL"] = "Спринттің мерзімі";
+$MESS["TASKS_SCRUM_SPRINT_COMPLETION_FORM_TITLE"] = "Спринттің аяқталуы";
+$MESS["TASKS_SCRUM_SPRINT_SIDE_PANEL_LABEL"] = "Аяқталу";
+$MESS["TSS_START_STORY_POINTS_HINT"] = "Мұнда сіз спринт аясында қанша Стори Поинт орындауға жоспарланғанын және команданың қаншасын үлгергенін көресіз. Стори Поинттердің саны бір міндеттің екіншісінен қаншалықты қиын екенін көрсетеді. Мұндай бағалау команданың спринт үшін қанша Стори Поинт орындай алатынын түсіну және команданың негізгі мақсатына жету мерзімдерін жоспарлау үшін қажет.";

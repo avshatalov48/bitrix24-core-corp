@@ -109,4 +109,3 @@ UI\Toolbar\Facade\Toolbar::addFilter($arResult['filter']);
 		(new BX.Crm.TypeListComponent(params)).init();
     });
 </script>
-</div>

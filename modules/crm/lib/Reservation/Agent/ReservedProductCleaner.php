@@ -129,7 +129,7 @@ class ReservedProductCleaner extends Stepper implements LoggerAwareInterface
 					'PRODUCT_ROW_OWNER_ID' => 'PRODUCT_ROW.OWNER_ID',
 				],
 				'filter' => [
-					'=PRODUCT_ROW.OWNER_TYPE' => CCrmOwnerType::Deal,
+					'=PRODUCT_ROW.OWNER_TYPE' => \CCrmOwnerTypeAbbr::Deal,
 					'>RESERVE_QUANTITY' => 0,
 					'<=DATE_RESERVE_END' => new DateTime(),
 					'!=PRODUCT_ROW.DEAL_OWNER.CLOSED' => 'Y',

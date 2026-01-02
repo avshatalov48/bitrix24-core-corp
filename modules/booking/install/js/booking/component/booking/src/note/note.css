@@ -1,0 +1,18 @@
+.booking--booking-base-note-button {
+	display: flex;
+	border-radius: 3px;
+	cursor: pointer;
+}
+
+.booking--booking-base-note-button:hover {
+	box-shadow: inset 0 0 999px rgba(0, 0, 0, 0.05);
+}
+
+.booking--booking-base-note-button .ui-icon-set {
+	--ui-icon-set__icon-color: rgba(var(--ui-color-palette-white-base-rgb), 0.5);
+	--ui-icon-set__icon-size: 16px;
+}
+
+.booking--booking-base-note-button.--has-note .ui-icon-set {
+	--ui-icon-set__icon-color: var(--ui-color-palette-orange-25);
+}

@@ -1,0 +1,23 @@
+<?php
+$MESS["BI_GROUP_ADD_DASHBOARD"] = "Add dashboards";
+$MESS["BI_GROUP_DASHBOARD_SCOPES_EMPTY"] = "Select scope";
+$MESS["BI_GROUP_EMPTY_SUBTITLE"] = "Click \"Add dashboards\" to add dashboards to this group.";
+$MESS["BI_GROUP_EMPTY_TITLE"] = "There are no dashboards in this group";
+$MESS["BI_GROUP_NAME_NEW"] = "New group";
+$MESS["BI_GROUP_SAVE"] = "Save";
+$MESS["BI_GROUP_SAVE_CANCEL_MSGVER_1"] = "Cancel";
+$MESS["BI_GROUP_SAVE_WARN_DONT_SHOW"] = "Don't show again";
+$MESS["BI_GROUP_SAVE_WARN_NO"] = "No";
+$MESS["BI_GROUP_SAVE_WARN_TEXT_MSGVER_1"] = "Are you sure you want to remove the dashboard from this group? You may lose access to the dashboard.";
+$MESS["BI_GROUP_SAVE_WARN_TITLE"] = "Remove dashboard from group";
+$MESS["BI_GROUP_SAVE_WARN_YES"] = "Yes";
+$MESS["BI_GROUP_SCOPES_DASHBOARD"] = "#FIRST_SCOPES# [hint]and #NUMBER# more[/hint]";
+$MESS["BI_GROUP_SCOPES_GROUP"] = "[title]Scope:[/title] #SCOPE#";
+$MESS["BI_GROUP_SCOPES_GROUP_EMPTY"] = "[title]Scope:[/title] select";
+$MESS["BI_GROUP_SCOPES_GROUP_MANY"] = "[title]Scope:[/title] #FIRST_SCOPES# [hint]and #NUMBER# more[/hint]";
+$MESS["BI_GROUP_SCOPE_HINT"] = "Selected scopes will be applied to all dashboards in the group. [link]Learn more[/link]";
+$MESS["BI_GROUP_SUBTITLE_PLURAL_0"] = "#COUNT# dashboard";
+$MESS["BI_GROUP_SUBTITLE_PLURAL_1"] = "#COUNT# dashboards";
+$MESS["BI_GROUP_SUBTITLE_PLURAL_2"] = "#COUNT# dashboards";
+$MESS["BI_GROUP_SYSTEM_NAME_HINT"] = "Cannot rename a system group.";
+$MESS["BI_GROUP_SYSTEM_SCOPES_HINT"] = "Cannot change scope of a system group.";

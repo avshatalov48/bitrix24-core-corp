@@ -6,16 +6,15 @@ if (!defined('B_PROLOG_INCLUDED') || B_PROLOG_INCLUDED !== true)
 }
 
 use Bitrix\BIConnector;
-use Bitrix\BIConnector\Superset\SystemDashboardManager;
 use Bitrix\BIConnector\Access\AccessController;
 use Bitrix\BIConnector\Access\ActionDictionary;
+use Bitrix\BIConnector\Integration\Superset\SupersetInitializer;
 use Bitrix\BIConnector\Superset\UI\SettingsPanel\Controller\IconController;
 use Bitrix\BIConnector\Integration\Superset\Integrator\Integrator;
 use Bitrix\BIConnector\KeyTable;
 use Bitrix\BIConnector\Services\ApacheSuperset;
 use Bitrix\BIConnector\Superset\KeyManager;
 use Bitrix\BIConnector\Superset\UI\SettingsPanel\Field\KeyInfoField;
-use Bitrix\BIConnector\Superset\UI\SettingsPanel\Field\NewDashboardNotificationSelectorField;
 use Bitrix\BIConnector\Superset\UI\SettingsPanel\Field\DeleteSupersetField;
 use Bitrix\BIConnector\Superset\UI\SettingsPanel\Section\EntityEditorSection;
 use Bitrix\BIConnector\Superset\UI\SettingsPanel\Controller\EntityEditorController;
@@ -35,7 +34,6 @@ use Bitrix\Main\Localization\Loc;
 use Bitrix\Main\Result;
 use Bitrix\Main\Error;
 use Bitrix\Main\Type\Date;
-use Bitrix\Main\Web\Json;
 use Bitrix\UI\Toolbar\Facade\Toolbar;
 use Bitrix\UI\Buttons;
 use Bitrix\Bitrix24\Feature;
@@ -117,21 +115,25 @@ class ApacheSupersetSettingComponent
 				new IconController('ICON_CONTROLLER')
 			)
 			->addSection($this->getFilterSection())
-			->addSection($this->getNewDashboardNotificationSection())
-			->addSection($this->getClearCacheSection())
 			->setAjaxData($ajaxData)
 		;
 
-		$user = CurrentUser::get();
-		if (KeyManager::canManageKey($user))
+		if (SupersetInitializer::isSupersetExist())
 		{
-			$settingsPanel->addSection($this->getSupersetKeySection());
+			$settingsPanel->addSection($this->getClearCacheSection());
+
+			$user = CurrentUser::get();
+			if (KeyManager::canManageKey($user))
+			{
+				$settingsPanel->addSection($this->getSupersetKeySection());
+			}
+
+			if (BIConnector\Manager::isAdmin())
+			{
+				$settingsPanel->addSection($this->getDeleteSupersetSection());
+			}
 		}
 
-		if (BIConnector\Manager::isAdmin())
-		{
-			$settingsPanel->addSection($this->getDeleteSupersetSection());
-		}
 
 		$this->arResult['SETTINGS_PANEL'] = $settingsPanel;
 	}
@@ -177,18 +179,6 @@ class ApacheSupersetSettingComponent
 		);
 		$dateFilterSection->setIconClass('--calendar-1');
 		$dateFilterSection->addField(new PeriodFilterField('DASHBOARD_FILTER'));
-
-		return $dateFilterSection;
-	}
-
-	private function getNewDashboardNotificationSection(): EntityEditorSection
-	{
-		$dateFilterSection = new EntityEditorSection(
-			name: 'NEW_DASHBOARD_NOTIFICATION',
-			title: Loc::getMessage('BICONNECTOR_SUPERSET_NEW_DASHBOARD_NOTIFICATION_SECTION'),
-		);
-		$dateFilterSection->setIconClass('--bell');
-		$dateFilterSection->addField(new NewDashboardNotificationSelectorField('NOTIFICATION_SELECTOR'));
 
 		return $dateFilterSection;
 	}
@@ -299,12 +289,7 @@ class ApacheSupersetSettingComponent
 			Option::delete('biconnector', ['name' => EmbeddedFilter\DateTime::CONFIG_INCLUDE_LAST_FILTER_DATE_OPTION_NAME]);
 		}
 
-		$ids = $data['NOTIFICATION_SELECTOR'] ?? [];
-		$ids = !empty($ids) && is_array($ids) ? $ids : [];
-		Option::set('biconnector', SystemDashboardManager::OPTION_NEW_DASHBOARD_NOTIFICATION_LIST, Json::encode($ids));
-
 		return [
-			'NOTIFICATION_SELECTOR' => $ids,
 			'FILTER_PERIOD' => $period,
 			'DATE_FILTER_START' => $startTime,
 			'DATE_FILTER_END' => $endTime,
@@ -323,7 +308,7 @@ class ApacheSupersetSettingComponent
 			return null;
 		}
 
-		$key = KeyTable::getList([
+		$activeKeys = KeyTable::getList([
 				'select' => [
 					'ID',
 				],
@@ -332,9 +317,8 @@ class ApacheSupersetSettingComponent
 					'=ACTIVE' => 'Y',
 					'=APP_ID' => false,
 				],
-				'limit' => 1,
 			])
-			->fetchObject()
+			->fetchCollection()
 		;
 
 		$result = KeyManager::createAccessKey($user);
@@ -354,14 +338,19 @@ class ApacheSupersetSettingComponent
 
 		if ($response->hasErrors())
 		{
+			KeyManager::deleteKey($accessKey);
+
 			return null;
 		}
 
 		$proxyIntegrator->refreshDomainConnection();
 
-		if ($key)
+		if (!$activeKeys->isEmpty())
 		{
-			$key->delete();
+			foreach ($activeKeys as $key)
+			{
+				$key->delete();
+			}
 		}
 		else
 		{

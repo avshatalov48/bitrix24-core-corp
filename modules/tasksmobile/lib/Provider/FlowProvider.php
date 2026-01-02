@@ -9,6 +9,8 @@ use Bitrix\Main\ORM\Query\Filter\ConditionTree;
 use Bitrix\Main\Type\Collection;
 use Bitrix\Main\UI\PageNavigation;
 use Bitrix\Mobile\Provider\UserRepository;
+use Bitrix\Tasks\Flow\Option\FlowUserOption\FlowUserOptionRepository;
+use Bitrix\Tasks\Flow\Option\FlowUserOption\FlowUserOptionDictionary;
 use Bitrix\Tasks\Flow\Filter\Filter;
 use Bitrix\Tasks\Flow\FlowCollection;
 use Bitrix\Tasks\Flow\Grid\Preload\AccessPreloader;
@@ -32,6 +34,7 @@ use Bitrix\TasksMobile\Dto\FlowRequestFilter;
 use Bitrix\Tasks\Flow\Search;
 use Bitrix\TasksMobile\FlowAiAdvice\Provider\FlowAiAdviceProvider;
 use CPullWatch;
+use Throwable;
 
 final class FlowProvider
 {
@@ -51,6 +54,8 @@ final class FlowProvider
 	private string $order;
 	private ?PageNavigation $pageNavigation;
 	private ?FlowRequestFilter $searchParams;
+
+	private FlowUserOptionRepository $flowUserOptionRepository;
 
 	/**
 	 * @param int $userId
@@ -72,6 +77,7 @@ final class FlowProvider
 		$this->order = $order;
 		$this->extra = $extra;
 		$this->pageNavigation = $pageNavigation;
+		$this->flowUserOptionRepository = FlowUserOptionRepository::getInstance();
 	}
 
 	public function subscribeCurrentUserToPull(): bool
@@ -80,9 +86,9 @@ final class FlowProvider
 		if (Loader::includeModule('pull'))
 		{
 			$pushTagList = [
-				FlowProvider::PUSH_COMMAND_FLOW_ADDED,
-				FlowProvider::PUSH_COMMAND_FLOW_UPDATED,
-				FlowProvider::PUSH_COMMAND_FLOW_DELETED,
+				self::PUSH_COMMAND_FLOW_ADDED,
+				self::PUSH_COMMAND_FLOW_UPDATED,
+				self::PUSH_COMMAND_FLOW_DELETED,
 			];
 
 			foreach ($pushTagList as $tag)
@@ -96,6 +102,28 @@ final class FlowProvider
 		}
 
 		return $success;
+	}
+
+	private function getPinnedFlowsIds(): array
+	{
+		try
+		{
+			$options = $this->flowUserOptionRepository->getOptions(
+				[
+					'USER_ID' => $this->userId,
+					'NAME' => FlowUserOptionDictionary::FLOW_PINNED_FOR_USER->value,
+					'VALUE' => 'Y',
+				]
+			);
+
+			$result = array_map(static fn ($option) => $option->getFlowId(), $options);
+		}
+		catch (Throwable $e)
+		{
+			$result = [];
+		}
+
+		return $result;
 	}
 
 	public function getFlowById(int $id): ?FlowDto
@@ -123,28 +151,77 @@ final class FlowProvider
 			->setWhere((new ConditionTree())->whereIn('ID', $ids))
 		;
 
-		$data = $this->getFlowsInternal($query);
+		$pinnedFlowsIds = $this->getPinnedFlowsIds();
+		$data = $this->getFlowsInternal($query, $pinnedFlowsIds);
 
 		return $data['items'];
 	}
 
 	public function getFlows(): array
 	{
+		$pinnedFlowsIds = $this->getPinnedFlowsIds();
+		[
+			'items' => $items,
+			'userIds' => $userIds,
+			'groupIds' => $groupIds
+		] = $this->getPinnedFlows($pinnedFlowsIds);
+		$remainingLimit = $this->pageNavigation->getLimit() - count($items);
+		if ($remainingLimit > 0)
+		{
+			[
+				'items' => $unpinnedItems,
+				'userIds' => $unpinnedUserIds,
+				'groupIds' => $unpinnedGroupIds
+			] = $this->completeFlowPage($pinnedFlowsIds, $remainingLimit);
+
+			$items = array_merge($items, $unpinnedItems);
+			$userIds = array_merge($userIds, $unpinnedUserIds);
+			$groupIds = array_merge($groupIds, $unpinnedGroupIds);
+		}
+
+		return [
+			'items' => $items,
+			'users' => UserRepository::getByIds($userIds),
+			'groups' => GroupProvider::loadByIds($groupIds),
+			'showFlowsInfo' => $this->getShowFlowsFeatureInfo(),
+		];
+	}
+
+	private function completeFlowPage(array $pinnedFlowsIds, int $limit): array
+	{
+		$filter = $this->getFlowFilter()->whereNotIn('ID', $pinnedFlowsIds);
+		$offset = max(0, $this->pageNavigation->getOffset() - count($pinnedFlowsIds));
+
 		$query = (new FlowQuery($this->userId))
 			->setSelect($this->getAvailableFields())
-			->setWhere($this->getFlowFilter())
+			->setWhere($filter)
+			->setLimit($limit)
+			->setOffset($offset)
+			->setOrderBy(['ACTIVITY' => 'DESC', 'ID' => 'DESC']);
+
+		return $this->getFlowsInternal($query, $pinnedFlowsIds);
+	}
+
+	private function getPinnedFlows(array $pinnedFlowsIds): array
+	{
+		if (empty($pinnedFlowsIds))
+		{
+			return [
+				'items' => [],
+				'userIds' => [],
+				'groupIds' => [],
+			];
+		}
+
+		$filter = $this->getFlowFilter()->whereIn('ID', $pinnedFlowsIds);
+		$query = (new FlowQuery($this->userId))
+			->setSelect($this->getAvailableFields())
+			->setWhere($filter)
 			->setPageNavigation($this->pageNavigation)
 			->setOrderBy(['ACTIVITY' => 'DESC', 'ID' => 'DESC'])
 		;
 
-		$data = $this->getFlowsInternal($query);
-
-		return [
-			'items' => $data['items'],
-			'users' => UserRepository::getByIds($data['userIds']),
-			'groups' => GroupProvider::loadByIds($data['groupIds']),
-			'showFlowsInfo' => FlowProvider::getShowFlowsFeatureInfo(),
-		];
+		return $this->getFlowsInternal($query, $pinnedFlowsIds);
 	}
 
 	public function getShowFlowsFeatureInfo(): bool
@@ -169,7 +246,7 @@ final class FlowProvider
 		return $ids;
 	}
 
-	private function getFlowsInternal(FlowQuery $query): array
+	private function getFlowsInternal(FlowQuery $query, array $pinnedFlowsIds = []): array
 	{
 		// ToDo check flow read permissions and allowance to create tasks in the flow
 
@@ -214,6 +291,7 @@ final class FlowProvider
 			$averageCompletedTime = $this->getAverageCompletedTimePreloader()->get($flowId)->getFormatted();
 			$plannedCompletionTime = $flow->getPlannedCompletionTime();
 			$plannedCompletionTimeText = DatePresenter::createFromSeconds($plannedCompletionTime)->getFormatted();
+			$isPinned = in_array($flowId, $pinnedFlowsIds, true);
 
 			$userIds[] = [
 				$ownerId,
@@ -248,6 +326,7 @@ final class FlowProvider
 				efficiency: $this->getMainFlowProvider()->getEfficiency($flow),
 				active: $flowActive,
 				demo: $flow->isDemo(),
+				isPinned: $isPinned,
 				plannedCompletionTime: $plannedCompletionTime,
 				name: $flow->getName(),
 				distributionType: $flow->getDistributionType(),
@@ -606,7 +685,8 @@ final class FlowProvider
 		$availablePresets = $filterInstance->getAvailablePresets();
 
 		foreach ($availablePresets as $key => $name) {
-			$presets[$key] = [
+			$presets[] = [
+				'id' => $key,
 				'name' => $name,
 				'default' => false,
 			];

@@ -21,11 +21,16 @@ class RunAjaxAction extends Action
 	public function toArray(): array
 	{
 		return [
-			'type' => 'runAjaxAction',
+			'type' => $this->getType(),
 			'value' => $this->getAction(),
 			'actionParams' => $this->getActionParams(),
 			'animation' => $this->getAnimation(),
 			'analytics' => $this->getAnalytics(),
 		];
+	}
+
+	protected function getType(): string
+	{
+		return 'runAjaxAction';
 	}
 }

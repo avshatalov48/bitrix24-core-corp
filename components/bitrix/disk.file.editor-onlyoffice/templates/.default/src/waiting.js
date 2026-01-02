@@ -6,6 +6,7 @@ export default class Waiting
 {
 	documentSession: DocumentSession = null;
 	object: BaseObject = null;
+	unifiedLinkMode: boolean = false;
 
 	constructor(waitingOptions: WaitingOptions)
 	{
@@ -14,12 +15,16 @@ export default class Waiting
 		this.documentSession = options.documentSession;
 		this.object = options.object;
 
+		this.unifiedLinkMode = options.unifiedLinkMode;
+
 		const loader = new BX.Loader({
 			target: options.targetNode,
 		});
 		loader.show();
 
 		this.bindEvents();
+
+		this.handleSavedDocument({});
 	}
 
 	bindEvents(): void
@@ -41,11 +46,18 @@ export default class Waiting
 			json: {
 				sessionId: this.documentSession.id,
 				documentSessionHash: this.documentSession.hash,
-			}
+			},
 		}).then((response) => {
 			if (response.status === 'success')
 			{
-				document.location.href = response.data.documentSession.link;
+				if (this.unifiedLinkMode)
+				{
+					window.location.reload();
+				}
+				else
+				{
+					document.location.href = response.data.documentSession.link;
+				}
 			}
 		});
 	}

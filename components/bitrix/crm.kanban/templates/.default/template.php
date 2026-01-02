@@ -5,21 +5,29 @@ if (!defined('B_PROLOG_INCLUDED') || B_PROLOG_INCLUDED !== true)
 	die();
 }
 
+use Bitrix\Crm\Activity\Provider\Visit;
+use Bitrix\Crm\Conversion\LeadConversionConfig;
+use Bitrix\Crm\Integration\Analytics\Dictionary;
+use Bitrix\Crm\Integration\Market\Router;
 use Bitrix\Crm\Integration\NotificationsManager;
 use Bitrix\Crm\Integration\PullManager;
 use Bitrix\Crm\Kanban\Helper;
+use Bitrix\Crm\Kanban\ViewMode;
 use Bitrix\Crm\Service\Container;
 use Bitrix\Crm\Settings\CounterSettings;
 use Bitrix\Crm\Tour;
+use Bitrix\Crm\Tour\RepeatSale\OnboardingPopup;
+use Bitrix\Crm\UI\SettingsButtonExtender\SettingsButtonExtenderParams;
 use Bitrix\Main\Localization\Loc;
+use Bitrix\Main\Type\Date;
 use Bitrix\Main\UI\Extension;
 use Bitrix\Main\Web\Json;
 
 /**
  * @var array $arParams
  * @var array $arResult
- * @global \CMain $APPLICATION
- * @var \CBitrixComponentTemplate $this
+ * @global CMain $APPLICATION
+ * @var CBitrixComponentTemplate $this
  */
 
 if (isset($arResult['ERROR']))
@@ -40,7 +48,7 @@ $APPLICATION->setPageProperty("BodyClass",
 );
 
 $data = $arResult['ITEMS'];
-$date = new \Bitrix\Main\Type\Date;
+$date = new Date;
 $contactCenterUrl = Container::getInstance()->getRouter()->getContactCenterUrl();
 // $demoAccess =
 // 	\CJSCore::IsExtRegistered('intranet_notify_dialog')
@@ -71,7 +79,6 @@ Extension::load([
 	'crm.entity-editor',
 	'popup_menu',
 	'currency',
-	'core_money_editor',
 	'intranet_notify_dialog',
 	'marketplace',
 	'sidepanel',
@@ -109,13 +116,32 @@ echo Tour\Permissions\AutomatedSolution::getInstance()
 	->setEntityTypeId($entityTypeId)
 	->build()
 ;
+
+$repeatSaleEntityTypeIds = [\CCrmOwnerType::Deal, \CCrmOwnerType::Contact, \CCrmOwnerType::Company];
+if (in_array($entityTypeId, $repeatSaleEntityTypeIds, true))
+{
+	print OnboardingPopup::getInstance()->setAnalytics([
+		'c_section' => $section,
+		'c_sub_section' => $subSection,
+	])->build();
+}
+
+if (defined('AIR_SITE_TEMPLATE'))
+{
+	$isInIframe = \Bitrix\Main\Context::getCurrent()->getRequest()->getQuery('IFRAME') === 'Y';
+	$this->setViewTarget($isInIframe ? 'above_pagetitle' : 'page_menu', 100);
+		?><div class="crm-kanban-action-panel-container">
+			<div class="crm-kanban-action-panel"><div></div></div><?
+		?></div><?
+	$this->endViewTarget();
+}
 ?>
 
 <div id="crm_kanban"></div>
 
 <script>
-	var Kanban;
-	var ajaxHandlerPath = "<?= $this->getComponent()->getPath()?>/ajax.old.php";
+	let Kanban;
+	const ajaxHandlerPath = "<?= $this->getComponent()->getPath()?>/ajax.old.php";
 
 	BX.ready(
 		function()
@@ -123,7 +149,7 @@ echo Tour\Permissions\AutomatedSolution::getInstance()
 			"use strict";
 
 			BX.CRM.Kanban.Restriction.init({
-				isUniversalActivityScenarioEnabled: <?= \Bitrix\Crm\Settings\Crm::isUniversalActivityScenarioEnabled() ? 'true' : 'false' ?>,
+				isUniversalActivityScenarioEnabled: 'true',
 				isLastActivityEnabled: <?= ($arResult['IS_LAST_ACTIVITY_ENABLED'] ?? false) ? 'true' : 'false' ?>,
 			});
 
@@ -140,52 +166,32 @@ echo Tour\Permissions\AutomatedSolution::getInstance()
 
 			BX.Currency.setCurrencyFormat(
 				"<?= $arParams['CURRENCY']?>",
-				<?= \CUtil::PhpToJSObject(\CCurrencyLang::GetFormatDescription($arParams['CURRENCY']), false, true)?>
+				<?= CUtil::PhpToJSObject(\CCurrencyLang::GetFormatDescription($arParams['CURRENCY']), false, true)?>
 			);
 
-			BX.Crm.PartialEditorDialog.entityEditorUrls =
-			{
-				<?= \CCrmOwnerType::DealName;?>: "<?= '/bitrix/components/bitrix/crm.deal.details/ajax.php?' . bitrix_sessid_get();?>",
-				<?= \CCrmOwnerType::LeadName?>: "<?= '/bitrix/components/bitrix/crm.lead.details/ajax.php?' . bitrix_sessid_get();?>"
+			BX.Crm.PartialEditorDialog.entityEditorUrls = {
+				<?= CCrmOwnerType::DealName ?>: "<?= '/bitrix/components/bitrix/crm.deal.details/ajax.php?' . bitrix_sessid_get() ?>",
+				<?= CCrmOwnerType::LeadName ?>: "<?= '/bitrix/components/bitrix/crm.lead.details/ajax.php?' . bitrix_sessid_get() ?>",
 			};
 
-			var schemeInline = BX.UI.EntityScheme.create(
-				'kanban_scheme',
-				{
-					current: <?= \CUtil::phpToJSObject($arResult['ITEMS']['scheme_inline']);?>
-				}
-			);
-
-			var userFieldManagerInline = BX.UI.EntityUserFieldManager.create(
-				'kanban_ufmanager',
-				{
-					entityId: 0,
-					enableCreation: false
-				}
-			);
-
-			BX.Crm.EntityEditorUser.messages =
-			{
-				change: "<?= CUtil::JSEscape(Loc::getMessage('CRM_KANBAN_ED_CHANGE_USER'));?>"
+			BX.Crm.EntityEditorUser.messages = {
+				change: "<?= CUtil::JSEscape(Loc::getMessage('CRM_KANBAN_ED_CHANGE_USER')) ?>",
 			};
 
-			BX.UI.EntityEditorBoolean.messages =
-			{
-				yes: "<?= CUtil::JSEscape(Loc::getMessage('MAIN_YES'));?>",
-				no: "<?= CUtil::JSEscape(Loc::getMessage('MAIN_NO'));?>"
+			BX.UI.EntityEditorBoolean.messages = {
+				yes: "<?= CUtil::JSEscape(Loc::getMessage('MAIN_YES')) ?>",
+				no: "<?= CUtil::JSEscape(Loc::getMessage('MAIN_NO')) ?>",
 			};
 
-			BX.Crm.EntityEditorSection.messages =
-			{
-				change: "<?= CUtil::JSEscape(Loc::getMessage('CRM_KANBAN_ED_CHANGE'));?>",
-				cancel: "<?= CUtil::JSEscape(Loc::getMessage('CRM_KANBAN_ED_CANCEL'));?>"
+			BX.Crm.EntityEditorSection.messages = {
+				change: "<?= CUtil::JSEscape(Loc::getMessage('CRM_KANBAN_ED_CHANGE')) ?>",
+				cancel: "<?= CUtil::JSEscape(Loc::getMessage('CRM_KANBAN_ED_CANCEL')) ?>",
 			};
 
-			BX.CRM.Kanban.Item.messages =
-			{
+			BX.CRM.Kanban.Item.messages = {
 				company: "<?= CUtil::JSEscape(Loc::getMessage('CRM_KANBAN_COMPANY')) ?>",
 				contact: "<?= CUtil::JSEscape(Loc::getMessage('CRM_KANBAN_CONTACT')) ?>",
-				noname: "<?= CUtil::JSEscape(Loc::getMessage('FORMATNAME_NONAME')) ?>"
+				noname: "<?= CUtil::JSEscape(Loc::getMessage('FORMATNAME_NONAME')) ?>",
 			};
 
 			Kanban = new BX.CRM.Kanban.Grid(
@@ -201,37 +207,36 @@ echo Tour\Permissions\AutomatedSolution::getInstance()
 					canSortColumn: <?= $arResult['CONFIG_BY_VIEW_MODE']['canSortColumn'] ?>,
 					canSortItem: true,
 					canChangeItemStage: <?= $arResult['CONFIG_BY_VIEW_MODE']['canChangeItemStage'] ?>,
-					bgColor: <?= (SITE_TEMPLATE_ID === 'bitrix24' ? '"transparent"' : 'null')?>,
-					columns: <?= \CUtil::PhpToJSObject(array_values($data['columns']), false, false, true)?>,
-					items: <?= \CUtil::PhpToJSObject($data['items'], false, false, true)?>,
-					dropZones: <?= \CUtil::PhpToJSObject(array_values($data['dropzones']), false, false, true)?>,
-					emptyStubItems: <?= \CUtil::PhpToJSObject($arResult['STUB'] ?? null)?>,
+					bgColor: 'transparent',
+					columns: <?= CUtil::PhpToJSObject(array_values($data['columns']), false, false, true)?>,
+					items: <?= CUtil::PhpToJSObject($data['items'], false, false, true)?>,
+					dropZones: <?= CUtil::PhpToJSObject(array_values($data['dropzones']), false, false, true)?>,
+					emptyStubItems: <?= CUtil::PhpToJSObject($arResult['STUB'] ?? null)?>,
 					data:
 						{
-							schemeInline: schemeInline,
-							userFieldManagerInline: userFieldManagerInline,
-							contactCenterShow: <?= $arParams['HIDE_CC'] ? 'false' : 'true';?>,
-							restDemoBlockShow: <?= $arParams['HIDE_REST'] ? 'false' : 'true';?>,
-							reckonActivitylessItems: <?= \CCrmUserCounterSettings::getValue(\CCrmUserCounterSettings::ReckonActivitylessItems, true) ? 'true' : 'false';?>,
-							ajaxHandlerPath: ajaxHandlerPath,
-							entityType: "<?= \CUtil::JSEscape($arParams['ENTITY_TYPE_CHR'])?>",
+							itemsConfig: <?= Json::encode($data['config'] ?? []) ?>,
+							contactCenterShow: <?= $arParams['HIDE_CC'] ? 'false' : 'true' ?>,
+							restDemoBlockShow: <?= $arParams['HIDE_REST'] ? 'false' : 'true' ?>,
+							reckonActivitylessItems: <?= CCrmUserCounterSettings::getValue(CCrmUserCounterSettings::ReckonActivitylessItems, true) ? 'true' : 'false';?>,
+							ajaxHandlerPath,
+							entityType: "<?= CUtil::JSEscape($arParams['ENTITY_TYPE_CHR'])?>",
 							entityTypeInt: "<?= $entityTypeId ?>",
-							typeInfo: <?= \CUtil::PhpToJSObject($arParams['ENTITY_TYPE_INFO'])?>,
-							viewMode: "<?= \CUtil::JSEscape($arParams['VIEW_MODE'])?>",
+							typeInfo: <?= CUtil::PhpToJSObject($arParams['ENTITY_TYPE_INFO'])?>,
+							viewMode: "<?= CUtil::JSEscape($arParams['VIEW_MODE'])?>",
 							useItemPlanner: <?= ($arResult['USE_ITEM_PLANNER'] ? 'true' : 'false') ?>,
 							skipColumnCountCheck: <?= ($arResult['SKIP_COLUMN_COUNT_CHECK'] ? 'true' : 'false') ?>,
 							isDynamicEntity: <?= ($arParams['IS_DYNAMIC_ENTITY'] ? 'true' : 'false') ?>,
-							entityPath: "<?= \CUtil::JSEscape($arParams['ENTITY_PATH'])?>",
-							editorConfigId: "<?= \CUtil::JSEscape($arParams['EDITOR_CONFIG_ID'])?>",
+							entityPath: "<?= CUtil::JSEscape($arParams['ENTITY_PATH'])?>",
+							editorConfigId: "<?= CUtil::JSEscape($arParams['EDITOR_CONFIG_ID'])?>",
 							quickEditorPath: {
-								lead: "/bitrix/components/bitrix/crm.lead.details/ajax.php?<?= bitrix_sessid_get();?>",
-								deal: "/bitrix/components/bitrix/crm.deal.details/ajax.php?<?= bitrix_sessid_get();?>"
+								lead: "/bitrix/components/bitrix/crm.lead.details/ajax.php?<?= bitrix_sessid_get() ?>",
+								deal: "/bitrix/components/bitrix/crm.deal.details/ajax.php?<?= bitrix_sessid_get() ?>",
 							},
-							headersSections: <?= \CUtil::PhpToJSObject($arResult['HEADERS_SECTIONS'] ?? [])?>,
-							defaultHeaderSectionId: "<?= \CUtil::JSEscape($arResult['DEFAULT_HEADER_SECTION_ID'] ?? '') ?>",
-							params: <?= json_encode($arParams['EXTRA'])?>,
-							gridId: "<?=\CUtil::JSEscape($gridId)?>",
-							converterId: "<?=\CUtil::JSEscape($gridId)?>",
+							headersSections: <?= CUtil::PhpToJSObject($arResult['HEADERS_SECTIONS'] ?? [])?>,
+							defaultHeaderSectionId: "<?= CUtil::JSEscape($arResult['DEFAULT_HEADER_SECTION_ID'] ?? '') ?>",
+							params: <?= Json::encode($arParams['EXTRA']) ?>,
+							gridId: "<?=CUtil::JSEscape($gridId)?>",
+							converterId: "<?=CUtil::JSEscape($gridId)?>",
 							showActivity: <?= $showActivity ?>,
 							currency: "<?= $arParams['CURRENCY']?>",
 							lastId: <?= (int)$data['last_id']?>,
@@ -243,39 +248,39 @@ echo Tour\Permissions\AutomatedSolution::getInstance()
 									canSortColumn: <?= $arResult['ACCESS_CONFIG_PERMS'] ? 'true' : 'false'?>,
 									canImport: <?= isset($arResult['ACCESS_IMPORT']) && $arResult['ACCESS_IMPORT'] ? 'true' : 'false'?>,
 									canSortItem: true,
-									canUseVisit: <?= \Bitrix\Crm\Activity\Provider\Visit::isAvailable() ? 'true' : 'false';?>
+									canUseVisit: <?= Visit::isAvailable() ? 'true' : 'false' ?>
 								},
-							visitParams: <?= \CUtil::PhpToJSObject(\Bitrix\Crm\Activity\Provider\Visit::getPopupParameters(), false, false, true)?>,
-							admins: <?= \CUtil::PhpToJSObject(array_values($arResult['ADMINS']))?>,
-							userId: <?= $arParams['USER_ID'];?>,
+							visitParams: <?= CUtil::PhpToJSObject(Visit::getPopupParameters(), false, false, true)?>,
+							admins: <?= CUtil::PhpToJSObject(array_values($arResult['ADMINS']))?>,
+							userId: <?= $arParams['USER_ID'] ?>,
 							currentUser: <?=Json::encode($arParams['LAYOUT_CURRENT_USER'])?>,
 							pingSettings: <?=Json::encode($arParams['PING_SETTINGS'])?>,
-							customFields: <?= \CUtil::phpToJSObject(array_keys($arResult['MORE_FIELDS']));?>,
-							customEditFields: <?= \CUtil::phpToJSObject(array_keys($arResult['MORE_EDIT_FIELDS']));?>,
-							restrictedFields: <?= \CUtil::phpToJSObject($arResult['RESTRICTED_FIELDS']) ?>,
+							customFields: <?= CUtil::phpToJSObject(array_keys($arResult['MORE_FIELDS'])) ?>,
+							customEditFields: <?= CUtil::phpToJSObject(array_keys($arResult['MORE_EDIT_FIELDS'])) ?>,
+							restrictedFields: <?= CUtil::phpToJSObject($arResult['RESTRICTED_FIELDS']) ?>,
 							userSelectorId: "kanban_multi_actions",
 							linksPath: {
 								marketplace: {
-									url: "<?= \CUtil::jsEscape(\Bitrix\Crm\Integration\Market\Router::getCategoryPath('migration', ['from' => 'kanban']));?>"
+									url: "<?= CUtil::jsEscape(Router::getCategoryPath('migration', ['from' => 'kanban'])) ?>",
 								},
 								importexcel: {
-									url: "<?= \CUtil::jsEscape($arParams['PATH_TO_IMPORT']);?>"
+									url: "<?= CUtil::jsEscape($arParams['PATH_TO_IMPORT']) ?>",
 								},
 								dealCategory: {
-									url: "<?= \CUtil::jsEscape($arParams['PATH_TO_DEAL_KANBANCATEGORY']);?>"
+									url: "<?= CUtil::jsEscape($arParams['PATH_TO_DEAL_KANBANCATEGORY']) ?>",
 								},
 								contact_center: {
 									url: "<?= $contactCenterUrl->addParams(['from' => 'kanban']) ?>",
 								},
 								rest_demo: {
-									url: "<?= $arParams['REST_DEMO_URL'];?>",
+									url: "<?= $arParams['REST_DEMO_URL'] ?>",
 									params: {
-										width: 940
-									}
-								}
+										width: 940,
+									},
+								},
 							},
-							categories: <?= \CUtil::phpToJsObject(array_values($arResult['CATEGORIES']));?>,
-							pullTag: "<?= \CUtil::JSEscape(PullManager::getInstance()->subscribeOnKanbanUpdate(
+							categories: <?= CUtil::phpToJsObject(array_values($arResult['CATEGORIES'])) ?>,
+							pullTag: "<?= CUtil::JSEscape(PullManager::getInstance()->subscribeOnKanbanUpdate(
 								$arParams['ENTITY_TYPE_CHR'],
 								$arParams['EXTRA']
 							)) ?>",
@@ -283,7 +288,7 @@ echo Tour\Permissions\AutomatedSolution::getInstance()
 								$arParams['ENTITY_TYPE_CHR'],
 								$arParams['EXTRA']
 							)) ?>,
-							moduleId: "<?= \CUtil::JSEscape(PullManager::MODULE_ID) ?>",
+							moduleId: "<?= CUtil::JSEscape(PullManager::MODULE_ID) ?>",
 							tariffRestrictions: {
 								// We use negation so as not to confuse when working, since the default has always been allowed
 								addItemNotPermittedByTariff: <?= !($arParams['EXTRA']['ADD_ITEM_PERMITTED_BY_TARIFF'] ?? true) ? 'true' : 'false' ?>,
@@ -291,10 +296,10 @@ echo Tour\Permissions\AutomatedSolution::getInstance()
 							showErrorCounterByActivityResponsible: <?= $arResult['SHOW_ERROR_COUNTER_BY_ACTIVITY_RESPONSIBLE'] ? 'true' : 'false' ?>,
 							isActivityLimitIsExceeded: <?= $isActivityLimitIsExceeded ? 'true' : 'false' ?>,
 							analytics: {
-								c_section: '<?= \CUtil::JSEscape($section) ?>',
-								c_sub_section: '<?= \CUtil::JSEscape($subSection) ?>',
+								c_section: '<?= CUtil::JSEscape($section) ?>',
+								c_sub_section: '<?= CUtil::JSEscape($subSection) ?>',
 							},
-							performance: <?= \CUtil::phpToJsObject($arResult['PERFORMANCE']) ?>,
+							performance: <?= CUtil::phpToJsObject($arResult['PERFORMANCE']) ?>,
 						}
 				}
 			);
@@ -303,22 +308,22 @@ echo Tour\Permissions\AutomatedSolution::getInstance()
 
 			Kanban.draw();
 
-			<?if ($arParams['ENTITY_TYPE_CHR'] == 'LEAD' || $arParams['ENTITY_TYPE_CHR'] == 'INVOICE'):?>
+			<?php if ($arParams['ENTITY_TYPE_CHR'] === 'LEAD' || $arParams['ENTITY_TYPE_CHR'] === 'INVOICE'): ?>
 			BX.addCustomEvent("Crm.Kanban.Grid:onItemMovedFinal", BX.delegate(BX.Crm.KanbanComponent.columnPopup, this));
-			<?endif;?>
+			<?php endif; ?>
 
-			<?if ($arParams['ENTITY_TYPE_CHR'] == 'INVOICE'):?>
+			<?php if ($arParams['ENTITY_TYPE_CHR'] === 'INVOICE'): ?>
 			BX.addCustomEvent("Crm.Kanban.Grid:onBeforeItemCapturedStart", BX.delegate(BX.Crm.KanbanComponent.dropPopup, this));
-			<?endif;?>
+			<?php endif; ?>
 
-			<?if ($arParams['ENTITY_TYPE_CHR'] == 'LEAD'):?>
+			<?php if ($arParams['ENTITY_TYPE_CHR'] === 'LEAD'): ?>
 			BX.addCustomEvent("onPopupClose", BX.proxy(BX.Crm.KanbanComponent.onPopupClose, this));
-			<?endif;?>
+			<?php endif; ?>
 
 			BX.message(
 				{
-					CRM_KANBAN_POPUP_PARAMS_SAVE: "<?= CUtil::JSEscape(Loc::getMessage('CRM_KANBAN_POPUP_PARAMS_SAVE'));?>",
-					CRM_KANBAN_POPUP_PARAMS_CANCEL: "<?= CUtil::JSEscape(Loc::getMessage('CRM_KANBAN_POPUP_PARAMS_CANCEL'));?>",
+					CRM_KANBAN_POPUP_PARAMS_SAVE: "<?= CUtil::JSEscape(Loc::getMessage('CRM_KANBAN_POPUP_PARAMS_SAVE')) ?>",
+					CRM_KANBAN_POPUP_PARAMS_CANCEL: "<?= CUtil::JSEscape(Loc::getMessage('CRM_KANBAN_POPUP_PARAMS_CANCEL')) ?>",
 					CRM_KANBAN_DELETE_SUCCESS_MULTIPLE: "<?= GetMessageJS('CRM_KANBAN_DELETE_SUCCESS_MULTIPLE_MSGVER_1') ?>",
 					CRM_KANBAN_DELETE_SUCCESS_MULTIPLE_WITH_ERRORS: "<?= GetMessageJS('CRM_KANBAN_DELETE_SUCCESS_MULTIPLE_WITH_ERRORS') ?>",
 					CRM_KANBAN_DELETE_SUCCESS: "<?= GetMessageJS('CRM_KANBAN_DELETE_SUCCESS_MSGVER_1') ?>",
@@ -336,22 +341,22 @@ echo Tour\Permissions\AutomatedSolution::getInstance()
 			);
 			BX.CRM.Kanban.Sort.SettingsController.init(Kanban, sortSettings);
 
-			<?if ($isMergeEnabled):?>
+			<?php if ($isMergeEnabled): ?>
 				BX.Crm.BatchMergeManager.create(
-					"<?=\CUtil::JSEscape($gridId)?>",
+					"<?=CUtil::JSEscape($gridId)?>",
 					{
 						kanban: Kanban,
 						entityTypeId: "<?= $entityTypeId ?>",
-						mergerUrl: "<?=\CUtil::JSEscape($arParams['PATH_TO_MERGE'])?>"
+						mergerUrl: "<?=CUtil::JSEscape($arParams['PATH_TO_MERGE'])?>"
 					}
 				);
-			<?endif;?>
+			<?php endif; ?>
 
 			<?php
 				$factory = Container::getInstance()->getFactory($entityTypeId);
 				if ($factory)
 				{
-					$settingsButtonExtenderParams = new \Bitrix\Crm\UI\SettingsButtonExtender\SettingsButtonExtenderParams(
+					$settingsButtonExtenderParams = new SettingsButtonExtenderParams(
 						$factory,
 					);
 					$settingsButtonExtenderParams
@@ -369,16 +374,16 @@ echo Tour\Permissions\AutomatedSolution::getInstance()
 	);
 </script>
 
-<?include $_SERVER['DOCUMENT_ROOT'] . $this->getFolder() . '/popups.php'?>
+<?php include $_SERVER['DOCUMENT_ROOT'] . $this->getFolder() . '/popups.php' ?>
 
-<?if (isset($arParams['ENTITY_TYPE_CHR']) && $arParams['ENTITY_TYPE_CHR'] === 'LEAD'):
+<?php if (isset($arParams['ENTITY_TYPE_CHR']) && $arParams['ENTITY_TYPE_CHR'] === 'LEAD'):
 	print (Tour\NumberOfClients::getInstance())->build();
 
 	Loc::loadMessages($_SERVER['DOCUMENT_ROOT'].'/bitrix/components/bitrix/crm.lead.list/templates/.default/template.php');
 
 	Extension::load(['crm.conversion', 'crm.integration.analytics']);
 
-	/** @var \Bitrix\Crm\Conversion\LeadConversionConfig $conversionConfig */
+	/** @var LeadConversionConfig $conversionConfig */
 	$conversionConfig = $arResult['CONVERSION_CONFIG'];
 	?>
 	<script>
@@ -402,7 +407,7 @@ echo Tour\Permissions\AutomatedSolution::getInstance()
 						configItems: <?= CUtil::PhpToJSObject($conversionConfig->toJson()) ?>,
 						scheme: <?= CUtil::PhpToJSObject($conversionConfig->getScheme()->toJson(true)) ?>,
 						params: {
-							id: '<?= \CUtil::JSEscape($gridId) ?>',
+							id: '<?= CUtil::JSEscape($gridId) ?>',
 							serviceUrl: "<?='/bitrix/components/bitrix/crm.lead.show/ajax.php?action=convert&'.bitrix_sessid_get()?>",
 							messages: {
 								accessDenied: "<?=GetMessageJS("CRM_LEAD_CONV_ACCESS_DENIED")?>",
@@ -425,9 +430,9 @@ echo Tour\Permissions\AutomatedSolution::getInstance()
 							},
 							analytics: {
 								c_sub_section: '<?=
-									$arParams['VIEW_MODE'] === \Bitrix\Crm\Kanban\ViewMode::MODE_ACTIVITIES
-										? \Bitrix\Crm\Integration\Analytics\Dictionary::SUB_SECTION_ACTIVITIES
-										: \Bitrix\Crm\Integration\Analytics\Dictionary::SUB_SECTION_KANBAN
+									$arParams['VIEW_MODE'] === ViewMode::MODE_ACTIVITIES
+										? Dictionary::SUB_SECTION_ACTIVITIES
+										: Dictionary::SUB_SECTION_KANBAN
 								?>',
 							},
 						}
@@ -436,7 +441,7 @@ echo Tour\Permissions\AutomatedSolution::getInstance()
 			}
 		);
 	</script>
-<?elseif (isset($arParams['ENTITY_TYPE_CHR']) && $arParams['ENTITY_TYPE_CHR'] === 'DEAL'):
+<?php elseif (isset($arParams['ENTITY_TYPE_CHR']) && $arParams['ENTITY_TYPE_CHR'] === 'DEAL'):
 	print (Tour\NumberOfClients::getInstance())->build();
 
 	NotificationsManager::showSignUpFormOnCrmShopCreated();

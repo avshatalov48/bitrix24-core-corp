@@ -7,12 +7,12 @@ use Bitrix\Main\Localization\Loc;
 use Bitrix\Main\Type\DateTime;
 use Bitrix\Main\UI\Filter;
 use Bitrix\Main\UI\PageNavigation;
-use Bitrix\Tasks\Integration\Intranet\Settings;
 use Bitrix\Tasks\Internals\Effective;
 use Bitrix\Tasks\Internals\Counter\EffectiveTable;
 use Bitrix\Tasks\Util\Error\Collection;
 use Bitrix\Tasks\Util\Restriction\Bitrix24Restriction\Limit\TaskLimit;
 use Bitrix\Tasks\Util\User;
+use Bitrix\Tasks\V2\Internal\DI\Container;
 
 Loc::loadMessages(__FILE__);
 
@@ -61,7 +61,7 @@ class TasksReportEffectiveDetailComponent extends TasksBaseComponent
 			return;
 		}
 
-		$arResult['IS_TOOL_AVAILABLE'] = (new Settings())->isToolAvailable(Settings::TOOLS['effective']);
+		$arResult['IS_TOOL_AVAILABLE'] = Container::getInstance()->getToolService()->isEffectiveAvailable();
 	}
 
 	protected function checkParameters()

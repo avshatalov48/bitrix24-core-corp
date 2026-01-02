@@ -146,7 +146,7 @@
 }
 
 span[data-role=crm-timeline-calendar-sharing_open-configure-slots] {
-	font: var(--ui-typography-text-md-font-size)/var(--ui-typography-text-md-line-height) var(--ui-font-family-system);
+	font: var(--ui-typography-text-md-font-size)/var(--ui-typography-text-md-line-height) var(--ui-font-family-primary, var(--ui-font-family-system));
 	font-weight: 500;
 	color: var(--ui-color-base-90);
 	border-bottom: 1px dashed var(--ui-color-base-90);

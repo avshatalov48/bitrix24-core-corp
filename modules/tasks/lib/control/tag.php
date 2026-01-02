@@ -31,6 +31,21 @@ class Tag
 		$this->userId = $userId;
 	}
 
+	public function add(int $taskId, array $tags, int $groupId): void
+	{
+		$add = $this->formatTags($tags);
+		if ($groupId > 0)
+		{
+			$this->addToGroupTask($taskId, $groupId, $add);
+		}
+		else
+		{
+			$this->addToTask($taskId, $add);
+		}
+
+		self::invalidate();
+	}
+
 	/**
 	 * @throws SystemException
 	 * @throws SqlQueryException
@@ -451,21 +466,7 @@ class Tag
 		$this->cacheCurrentTags($taskId);
 		$currentTags = $this->getNames(self::$storage[self::TASK_TAGS_CACHE]);
 
-		$addToTask = array_diff($newTags, $currentTags);
-
-		$add = [];
-		foreach ($addToTask as $tag)
-		{
-			if (is_string($tag))
-			{
-				$add[] = [
-					'NAME' => $tag,
-					'USER_ID' => $this->userId,
-				];
-			}
-		}
-
-		return $add;
+		return $this->formatTags(array_diff($newTags, $currentTags));
 	}
 
 	/**
@@ -478,17 +479,26 @@ class Tag
 		$this->cacheCurrentTags($taskId);
 		$currentTags = $this->getNames(self::$storage[self::TASK_TAGS_CACHE]);
 
-		$delete = [];
+		return $this->formatTags(array_diff($currentTags, $newTags));
+	}
 
-		foreach (array_diff($currentTags, $newTags) as $tag)
+	private function formatTags(array $tags): array
+	{
+		$data = [];
+		foreach ($tags as $tag)
 		{
-			$delete[] = [
+			if (!is_string($tag))
+			{
+				continue;
+			}
+
+			$data[] = [
 				'NAME' => $tag,
 				'USER_ID' => $this->userId,
 			];
 		}
 
-		return $delete;
+		return $data;
 	}
 
 	private function getNames(array $tags): array
@@ -505,12 +515,12 @@ class Tag
 	public function getGroupId(int $taskId): int
 	{
 		$task = TaskRegistry::getInstance()->get($taskId);
-		if (isset($task))
+		if ($task === null)
 		{
-			return $task['GROUP_ID'];
+			return 0;
 		}
 
-		return 0;
+		return (int)($task['GROUP_ID'] ?? 0);
 	}
 
 	/**
@@ -626,13 +636,7 @@ class Tag
 			return;
 		}
 
-		LabelTable::add([
-			'NAME' => $tagName,
-			'USER_ID' => $this->userId,
-			'GROUP_ID' => 0,
-		]);
-
-		self::invalidate();
+		$this->saveTag($tagName, $this->userId);
 	}
 
 	/**
@@ -676,13 +680,7 @@ class Tag
 			return;
 		}
 
-		LabelTable::add([
-			'NAME' => $tagName,
-			'USER_ID' => 0,
-			'GROUP_ID' => $groupId,
-		]);
-
-		self::invalidate();
+		$this->saveTag($tagName, 0, $groupId);
 	}
 
 	/**
@@ -776,7 +774,7 @@ class Tag
 					continue;
 				}
 				$addToUser[] = [
-					'USER_ID' => $tag['USER_ID'],
+					'USER_ID' => $tag['USER_ID'] ?? 0,
 					'NAME' => $tag['NAME'],
 				];
 				continue;
@@ -998,5 +996,22 @@ class Tag
 	private function getSqlHelper(): SqlHelper
 	{
 		return Application::getConnection()->getSqlHelper();
+	}
+
+	private function saveTag(string $name, int $userId = 0, int $groupId = 0): void
+	{
+		$name = Application::getConnection()->getSqlHelper()->forSql($name);
+
+		$sql = $this->getSqlHelper()->getInsertIgnore(
+			LabelTable::getTableName(),
+			' (NAME, USER_ID, GROUP_ID)',
+			" VALUES ('{$name}', {$userId}, {$groupId})"
+		);
+
+		Application::getConnection()->query($sql);
+
+		LabelTable::cleanCache();
+
+		self::invalidate();
 	}
 }

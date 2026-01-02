@@ -4,6 +4,9 @@ namespace Bitrix\Crm\Integration;
 
 use Bitrix\Crm\Binding\EntityBinding;
 use Bitrix\Crm\CustomerType;
+use Bitrix\Crm\DealTable;
+use Bitrix\Crm\Item;
+use Bitrix\Crm\LeadTable;
 use Bitrix\Crm\MessageSender\Channel;
 use Bitrix\Crm\MessageSender\Channel\Correspondents\From;
 use Bitrix\Crm\MessageSender\ICanSendMessage;
@@ -452,7 +455,7 @@ class SmsManager implements ICanSendMessage
 		$entityTypeId = (int)$entityTypeId;
 		$entityId = (int)$entityId;
 
-		$communications = array();
+		$communications = [];
 
 		if (in_array($entityTypeId, array(\CCrmOwnerType::Lead, \CCrmOwnerType::Contact, \CCrmOwnerType::Company), true))
 		{
@@ -460,7 +463,11 @@ class SmsManager implements ICanSendMessage
 		}
 		elseif ($entityTypeId === \CCrmOwnerType::Deal)
 		{
-			$entity = \CCrmDeal::getById($entityId);
+			$entity = DealTable::query()
+				->setSelect(['ID', 'COMPANY_ID'])
+				->where('ID', $entityId)
+				->fetch()
+			;
 			if (!empty($entity))
 			{
 				$dealContactIds = \Bitrix\Crm\Binding\DealContactTable::getDealContactIds($entityId);
@@ -511,7 +518,11 @@ class SmsManager implements ICanSendMessage
 			$factory = Container::getInstance()->getFactory($entityTypeId);
 			if($factory && $factory->isClientEnabled())
 			{
-				$item = $factory->getItem($entityId);
+				$item = $factory->getItem($entityId, [
+					Item::FIELD_NAME_ID,
+					Item::FIELD_NAME_CONTACT_BINDINGS,
+					Item::FIELD_NAME_COMPANY_ID,
+				]);
 				if($item)
 				{
 					foreach($item->getContactBindings() as $binding)
@@ -544,7 +555,11 @@ class SmsManager implements ICanSendMessage
 			&& \CCrmLead::GetCustomerType($entityId) === CustomerType::RETURNING
 		)
 		{
-			$entity = \CCrmLead::getById($entityId);
+			$entity = LeadTable::query()
+				->setSelect(['ID', 'COMPANY_ID', 'CONTACT_ID'])
+				->where('ID', $entityId)
+				->fetch()
+			;
 			if (!empty($entity))
 			{
 				if ($entity['CONTACT_ID'] > 0)

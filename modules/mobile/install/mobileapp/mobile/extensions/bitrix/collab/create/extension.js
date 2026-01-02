@@ -16,11 +16,14 @@ jn.define('collab/create', (require, exports, module) => {
 	const { isNil } = require('utils/type');
 	const { ajaxPublicErrorHandler, ajaxAlertErrorHandler, showInternalAlert } = require('error');
 	const { Alert, ButtonType } = require('alert');
+	const { CollabTaskPermissions } = require('collab/create/src/task-permissions');
+	const { CollabAccessService } = require('collab/service/access');
 
 	const CollabCreateStage = {
 		INTRO: 'intro',
 		EDITING: 'editing',
 		PERMISSIONS: 'permissions',
+		TASK_PERMISSIONS: 'taskPermissions',
 		SECURITY: 'security',
 	};
 
@@ -30,6 +33,9 @@ jn.define('collab/create', (require, exports, module) => {
 		EXIT_WITHOUT_SAVE: 'exit_without_save',
 	};
 
+	/**
+	 * @class CollabCreate
+	 */
 	class CollabCreate extends LayoutComponent
 	{
 		static getOpenWidgetSettings(props, parentWidget = PageManager)
@@ -72,6 +78,14 @@ jn.define('collab/create', (require, exports, module) => {
 		{
 			const { collabId = null, stage = CollabCreateStage.INTRO } = props;
 			const isEditMode = !isNil(collabId);
+			const isCollabToolEnabled = await CollabAccessService.checkAccess();
+
+			if (!isCollabToolEnabled)
+			{
+				CollabAccessService.openAccessDeniedBox();
+
+				return;
+			}
 
 			try
 			{
@@ -210,13 +224,23 @@ jn.define('collab/create', (require, exports, module) => {
 			}
 
 			const { data } = response;
-			const { name, description, ownerId, moderatorMembers, options, additionalInfo } = data;
-			const { whoCanInvite, manageMessages } = options;
+			const { name, description, ownerId, moderatorMembers, options, additionalInfo, permissions } = data;
+			const {
+				whoCanInvite,
+				allowGuestsInvitation,
+				manageMessages,
+				showHistory,
+				messagesAutoDeleteDelay,
+				canInviteCollabers,
+			} = options;
+			const { tasks } = permissions;
 			const { users, image } = additionalInfo;
 
 			return {
 				name,
 				description,
+				messagesAutoDeleteDelay,
+				canInviteCollabersInPortalSettings: canInviteCollabers === 'Y',
 				image: isNil(image) ? null : {
 					id: image.id,
 					previewUrl: encodeURI(image.src),
@@ -224,9 +248,12 @@ jn.define('collab/create', (require, exports, module) => {
 				permissions: {
 					owner: users[ownerId],
 					moderators: moderatorMembers.map((id) => users[id]),
+					showHistory,
 					inviters: whoCanInvite,
+					allowGuestsInvitation,
 					messageWriters: manageMessages,
 				},
+				taskPermissions: tasks,
 			};
 		};
 
@@ -293,7 +320,9 @@ jn.define('collab/create', (require, exports, module) => {
 			switch (stage)
 			{
 				case CollabCreateStage.PERMISSIONS:
-					return Loc.getMessage('M_COLLAB_CREATE_PERMISSIONS_ITEM_TITLE');
+					return Loc.getMessage('M_COLLAB_CREATE_PERMISSIONS_ITEM_TITLE_MSGVER_1');
+				case CollabCreateStage.TASK_PERMISSIONS:
+					return Loc.getMessage('M_COLLAB_CREATE_TASK_PERMISSIONS_ITEM_TITLE');
 				case CollabCreateStage.SECURITY:
 					return Loc.getMessage('M_COLLAB_CREATE_SECURITY_ITEM_TITLE');
 				case CollabCreateStage.EDITING:
@@ -329,6 +358,8 @@ jn.define('collab/create', (require, exports, module) => {
 					return this.#renderEditingScreen();
 				case CollabCreateStage.PERMISSIONS:
 					return this.#renderPermissionsScreen();
+				case CollabCreateStage.TASK_PERMISSIONS:
+					return this.#renderTaskPermissionsScreen();
 				case CollabCreateStage.SECURITY:
 					return this.#renderSecurityScreen();
 				default:
@@ -350,13 +381,31 @@ jn.define('collab/create', (require, exports, module) => {
 			this.props.onSecurityChange?.(newSettings);
 		};
 
+		#renderTaskPermissionsScreen()
+		{
+			return CollabTaskPermissions({
+				...this.settings.taskPermissions,
+				testId: this.testId,
+				onChange: this.#onTaskPermissionScreenSettingsChange,
+				layoutWidget: this.props.layoutWidget,
+			});
+		}
+
+		#onTaskPermissionScreenSettingsChange = (newSettings) => {
+			this.props.onTaskPermissionsChange?.(newSettings);
+		};
+
 		#renderPermissionsScreen()
 		{
+			const { canInviteCollabersInPortalSettings, permissions } = this.settings;
+			const { layoutWidget } = this.props;
+
 			return CollabCreatePermissions({
-				...this.settings.permissions,
+				...permissions,
+				canInviteCollabersInPortalSettings,
 				testId: this.testId,
 				onChange: this.#onPermissionScreenSettingsChange,
-				layoutWidget: this.props.layoutWidget,
+				layoutWidget,
 			});
 		}
 
@@ -381,9 +430,20 @@ jn.define('collab/create', (require, exports, module) => {
 				description: this.settings.description,
 				image: this.settings.image,
 				onCreateButtonClick: this.#onCreateButtonClick,
+				messagesAutoDeleteDelay: this.settings.messagesAutoDeleteDelay,
+				isEnabledAutoDeleteInPortalSettings: this.settings.autoDeleteEnabledInPortalSettings,
+				isAutoDeleteFeatureAvailable: this.#isAutoDeleteFeatureAvailable(),
+				layoutWidget: this.props.layoutWidget,
 			});
 
 			return this.currentStepInstance;
+		}
+
+		#isAutoDeleteFeatureAvailable()
+		{
+			const chatFeatureClass = require('im/messenger/lib/feature')?.Feature;
+
+			return chatFeatureClass.isMessagesAutoDeleteNativeAvailable;
 		}
 
 		enablePendingForEditScreen = () => {
@@ -413,8 +473,8 @@ jn.define('collab/create', (require, exports, module) => {
 		};
 
 		#getSettingsForUpdateRequest = () => {
-			const { name, description, image, permissions } = this.settings;
-			const { owner, moderators, inviters, messageWriters } = permissions;
+			const { name, description, image, permissions, taskPermissions } = this.settings;
+			const { owner, moderators, showHistory, inviters, allowGuestsInvitation, messageWriters } = permissions;
 
 			const changedProps = {};
 			if (name !== this.props.settings.name)
@@ -463,12 +523,42 @@ jn.define('collab/create', (require, exports, module) => {
 				};
 			}
 
+			if (allowGuestsInvitation !== this.props.settings.permissions.allowGuestsInvitation)
+			{
+				changedProps.options = {
+					...changedProps.options,
+					allowGuestsInvitation,
+				};
+			}
+
 			if (messageWriters !== this.props.settings.permissions.messageWriters)
 			{
 				changedProps.options = {
 					...changedProps.options,
 					manageMessages: messageWriters,
 				};
+			}
+
+			if (showHistory !== this.props.settings.permissions.showHistory)
+			{
+				changedProps.options = {
+					...changedProps.options,
+					showHistory,
+				};
+			}
+
+			if (taskPermissions !== this.props.settings.taskPermissions)
+			{
+				changedProps.permissions = {
+					tasks: {},
+				};
+				const taskPermissionsProps = ['view_all', 'sort', 'create_tasks', 'edit_tasks', 'delete_tasks'];
+				taskPermissionsProps.forEach((prop) => {
+					if (taskPermissions[prop] !== this.props.settings.taskPermissions[prop])
+					{
+						changedProps.permissions.tasks[prop] = taskPermissions[prop];
+					}
+				});
 			}
 
 			return changedProps;
@@ -479,8 +569,8 @@ jn.define('collab/create', (require, exports, module) => {
 		};
 
 		#getSettingsForCreateRequest = () => {
-			const { name, description, image, permissions } = this.settings;
-			const { owner, moderators, inviters, messageWriters } = permissions;
+			const { name, description, image, permissions, taskPermissions, messagesAutoDeleteDelay } = this.settings;
+			const { owner, moderators, showHistory, inviters, allowGuestsInvitation, messageWriters } = permissions;
 
 			return {
 				ownerId: owner.id,
@@ -491,7 +581,13 @@ jn.define('collab/create', (require, exports, module) => {
 
 				options: {
 					whoCanInvite: inviters,
+					allowGuestsInvitation,
 					manageMessages: messageWriters,
+					messagesAutoDeleteDelay,
+					showHistory,
+				},
+				permissions: {
+					tasks: taskPermissions,
 				},
 			};
 		};
@@ -554,6 +650,7 @@ jn.define('collab/create', (require, exports, module) => {
 				await DialogOpener.open({
 					dialogId,
 					context: DialogOpener.context.chatCreation,
+					navigationTab: this.props?.navigationTab,
 				});
 				await openCollabInvite({
 					collabId,
@@ -588,6 +685,14 @@ jn.define('collab/create', (require, exports, module) => {
 						onPermissionsChange: this.#onPermissionsChange,
 					}, this.props.layoutWidget);
 					break;
+				case CollabSettingsItem.TASK_PERMISSIONS:
+					void CollabCreate.open({
+						...this.props,
+						stage: CollabCreateStage.TASK_PERMISSIONS,
+						settings: this.settings,
+						onTaskPermissionsChange: this.#onTaskPermissionsChange,
+					}, this.props.layoutWidget);
+					break;
 				case CollabSettingsItem.SECURITY:
 					void CollabCreate.open({
 						...this.props,
@@ -599,6 +704,10 @@ jn.define('collab/create', (require, exports, module) => {
 				default:
 					break;
 			}
+		};
+
+		#onTaskPermissionsChange = (newSettings) => {
+			this.settings.taskPermissions = newSettings;
 		};
 
 		#onPermissionsChange = (newSettings) => {
@@ -613,6 +722,7 @@ jn.define('collab/create', (require, exports, module) => {
 	/**
 	 * @param {Object} props
 	 * @param {function} props.onCreate
+	 * @param {string} props.navigationTab
 	 * @param {LayoutComponent} parentWidget
 	 * @returns {Promise<CollabCreate|null>}
 	 */

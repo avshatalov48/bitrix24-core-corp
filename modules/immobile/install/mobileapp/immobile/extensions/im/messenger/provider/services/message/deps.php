@@ -1,0 +1,35 @@
+<?php
+
+return [
+	'extensions' => [
+		'type',
+		'utils/object',
+		'utils/array',
+		'im:messenger/loc',
+		'im:messenger/const',
+		'im:messenger/const/rest',
+		'im:messenger/lib/di/service-locator',
+		'im:messenger/lib/logger',
+		'im:messenger/lib/rest',
+		'im:messenger/lib/feature',
+		'im:messenger/lib/user-manager',
+		'im:messenger/lib/rest-manager',
+		'im:messenger/lib/helper',
+		'im:messenger/lib/params',
+		'im:messenger/lib/uuid-manager',
+		'im:messenger/cache',
+		'im:messenger/cache/share-dialog',
+		'im:messenger/provider/services/queue',
+		'im:messenger/provider/services/lib/message-context-creator',
+		'im:messenger/controller/users-read-message-list',
+	],
+	'bundle' => [
+		'./src/action',
+		'./src/load',
+		'./src/pin',
+		'./src/reaction',
+		'./src/rich',
+		'./src/status',
+		'./src/service',
+	],
+];

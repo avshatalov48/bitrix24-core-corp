@@ -1,4 +1,4 @@
-import { Loc, Reflection, Text, Type } from 'main.core';
+import { Event, Loc, Reflection, Text, Type } from 'main.core';
 import { BaseEvent, EventEmitter } from 'main.core.events';
 import { CounterItem, CounterPanel } from 'ui.counterpanel';
 import EntityCounterFilterManager from './entity-counter-filter-manager';
@@ -25,7 +25,8 @@ class EntityCounterPanel extends CounterPanel
 	#filterManager: ?EntityCounterFilterManager;
 	#filterLastPresetId: String;
 	#filterLastPreset: Object;
-	#filterResponsibleFiledName: string
+	#filterResponsibleFiledName: string;
+	#lockedCallback: ?string;
 
 	constructor(options: EntityCounterPanelOptions): void
 	{
@@ -70,24 +71,35 @@ class EntityCounterPanel extends CounterPanel
 			? JSON.parse(options.filterLastPresetData[0])
 			: {presetId: null};
 
-		this.#bindEvents(options);
+		this.#lockedCallback = Type.isStringFilled(options.lockedCallback) ? options.lockedCallback : null;
 	}
 
-	#bindEvents(options: EntityCounterPanelOptions): void
+	bindToFilter(): void
 	{
-		if (Type.isStringFilled(options.lockedCallback))
+		this.#filterManager.bindToFilter();
+		this.#markCounters();
+	}
+
+	bindEvents(): void
+	{
+		this.#counterManager?.bindEvents();
+
+		if (Type.isStringFilled(this.#lockedCallback))
 		{
-			BX.bind(BX(options.id), 'click', function() {
-				eval(options.lockedCallback);
+			const elem = document.getElementById(this.#id);
+
+			Event.bind(elem, 'click', () => {
+				// eslint-disable-next-line no-eval
+				eval(this.#lockedCallback);
 			});
+
+			return;
 		}
-		else
-		{
-			EventEmitter.subscribe('BX.UI.CounterPanel.Item:activate', this.#onActivateItem.bind(this));
-			EventEmitter.subscribe('BX.UI.CounterPanel.Item:deactivate', this.#onDeactivateItem.bind(this));
-			EventEmitter.subscribe('BX.Main.Filter:apply', this.#onFilterApply.bind(this));
-			EventEmitter.subscribe('BX.Crm.EntityCounterManager:onRecalculate', this.#onRecalculate.bind(this));
-		}
+
+		EventEmitter.subscribe('BX.UI.CounterPanel.Item:activate', this.#onActivateItem.bind(this));
+		EventEmitter.subscribe('BX.UI.CounterPanel.Item:deactivate', this.#onDeactivateItem.bind(this));
+		EventEmitter.subscribe('BX.Main.Filter:apply', this.#onFilterApply.bind(this));
+		EventEmitter.subscribe('BX.Crm.EntityCounterManager:onRecalculate', this.#onRecalculate.bind(this));
 	}
 
 	#onActivateItem(event: BaseEvent): void
@@ -96,7 +108,7 @@ class EntityCounterPanel extends CounterPanel
 
 		if (!this.#processItemSelection(item))
 		{
-			return event.preventDefault()
+			event.preventDefault();
 		}
 	}
 

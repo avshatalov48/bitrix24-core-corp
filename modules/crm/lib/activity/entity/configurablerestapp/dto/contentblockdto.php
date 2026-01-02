@@ -13,6 +13,15 @@ final class ContentBlockDto extends \Bitrix\Crm\Dto\Dto
 	public const TYPE_WITH_TITLE = 'withTitle';
 	public const TYPE_LINE_OF_BLOCKS = 'lineOfBlocks';
 
+	public const ALLOWED_TYPES = [
+		self::TYPE_TEXT,
+		self::TYPE_LARGE_TEXT,
+		self::TYPE_LINK,
+		self::TYPE_DEADLINE,
+		self::TYPE_WITH_TITLE,
+		self::TYPE_LINE_OF_BLOCKS,
+	];
+
 	public ?string $type = null;
 	public ?Dto\ContentBlock\BaseContentBlockDto $properties = null;
 
@@ -41,14 +50,7 @@ final class ContentBlockDto extends \Bitrix\Crm\Dto\Dto
 	protected function getValidators(array $fields): array
 	{
 		return [
-			new \Bitrix\Crm\Dto\Validator\EnumField($this, 'type', [
-				self::TYPE_TEXT,
-				self::TYPE_LARGE_TEXT,
-				self::TYPE_LINK,
-				self::TYPE_DEADLINE,
-				self::TYPE_WITH_TITLE,
-				self::TYPE_LINE_OF_BLOCKS,
-			])
+			new \Bitrix\Crm\Dto\Validator\EnumField($this, 'type', self::ALLOWED_TYPES)
 		];
 	}
 }

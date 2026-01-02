@@ -6,6 +6,7 @@ use Bitrix\HumanResources\Item\HcmLink\Company;
 use Bitrix\HumanResources\Item\HcmLink\Employee;
 use Bitrix\HumanResources\Item\HcmLink\Field;
 use Bitrix\HumanResources\Item\HcmLink\FieldValue;
+use Bitrix\HumanResources\Item\HcmLink\Job;
 use Bitrix\HumanResources\Item\HcmLink\Person;
 use Bitrix\HumanResources\Service\Container;
 use Bitrix\HumanResources\Type\HcmLink\FieldEntityType;
@@ -672,10 +673,12 @@ class HcmLink extends IRestService
 		$companyRepository = Container::getHcmLinkCompanyRepository();
 		$fieldRepository = Container::getHcmLinkFieldRepository();
 		$employeeRepository = Container::getHcmLinkEmployeeRepository();
+		$jobRepository = Container::getHcmLinkJobRepository();
 
 		$companyUuid = $query['company'];
 		$data = $query['data'];
 
+		$job = null;
 		try
 		{
 			if (is_array($query['job'] ?? null))
@@ -685,6 +688,11 @@ class HcmLink extends IRestService
 				{
 					return $jobResult;
 				}
+			}
+
+			if (is_numeric($query['job']['id'] ?? null))
+			{
+				$job = $jobRepository->getById((int)$query['job']['id']);
 			}
 
 			$company = $companyRepository->getByUnique($companyUuid);
@@ -722,12 +730,23 @@ class HcmLink extends IRestService
 					continue;
 				}
 
-				$savedFieldValue = $fieldValueRepository->getByFieldAndEmployee($field, $employee);
+				$uniqueId = $employee->id;
+				if ($field->entityType === FieldEntityType::DOCUMENT)
+				{
+					$uniqueId = $job?->settingsData?->documentIdByEmployeeId[$employee->id] ?? null;
+				}
+
+				if (!$uniqueId)
+				{
+					continue;
+				}
+
+				$savedFieldValue = $fieldValueRepository->getByUnique($uniqueId, $field->id);
 				if ($savedFieldValue === null)
 				{
 					$fieldValueRepository->add(
 						new FieldValue(
-							employeeId: $employee->id,
+							entityId: $uniqueId,
 							fieldId: $field->id,
 							value: $fieldValue['value'] ?? '',
 							createdAt: new DateTime(),

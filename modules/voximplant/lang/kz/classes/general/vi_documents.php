@@ -1,0 +1,27 @@
+<?php
+$MESS["DOCUMENTS_VERIFICATION_NOTIFY"] = "Нөмірді жалға алу үшін құжаттарды тексеру аяқталды";
+$MESS["DOCUMENTS_VERIFICATION_NOTIFY_BODY_REQUIRED"] = "Бас тарту себебі: #REJECT_REASON#. Тексеруге  құжаттарды қайта жүктеу үшін нөмірлерді басқару парақшасына өтіңіз.";
+$MESS["DOCUMENTS_VERIFICATION_NOTIFY_BODY_VERIFIED"] = "Енді сіз Битрикс24 телефон нөмірін жалға алып, қоңыраулармен жұмыс жасай аласыз!";
+$MESS["DOCUMENTS_VERIFICATION_NOTIFY_HEAD_REQUIRED"] = "Өкінішті, сіздің құжаттарыңыз тексерістен өтпеді.";
+$MESS["DOCUMENTS_VERIFICATION_NOTIFY_HEAD_VERIFIED"] = "Сіздің құжаттарыңыз тексерілді.";
+$MESS["DOCUMENTS_VERIFICATION_NOTIFY_LINK_REQUIRED"] = "Нөмірлерді басқаруға өту";
+$MESS["DOCUMENTS_VERIFICATION_NOTIFY_LINK_VERIFIED"] = "Нөмірлерді басқаруға өту";
+$MESS["VI_DOCS_COUNTRY_RU"] = "Ресей";
+$MESS["VI_DOCS_DOCUMENT_STATUS_ACCEPTED"] = "Расталды";
+$MESS["VI_DOCS_DOCUMENT_STATUS_AWAITING_AGREEMENT_UPLOADING"] = "Сканерленген келісімшарттың жүктелуін күту";
+$MESS["VI_DOCS_DOCUMENT_STATUS_AWAITING_VERIFICATION"] = "Құжаттар верификациясын күту";
+$MESS["VI_DOCS_DOCUMENT_STATUS_INCOMPLETE_SET"] = "Толық емес жиынтық";
+$MESS["VI_DOCS_DOCUMENT_STATUS_IN_PROGRESS"] = "Тексеруде";
+$MESS["VI_DOCS_DOCUMENT_STATUS_REJECTED"] = "Құжаттар қабылданбады";
+$MESS["VI_DOCS_DOCUMENT_STATUS_VERIFIED"] = "Құжаттар сәтті верификацияланды";
+$MESS["VI_DOCS_DOCUMENT_STATUS_WAITING_CONFIRMATION_DOCS"] = "Құжаттардың түпнұсқаларын күту";
+$MESS["VI_DOCS_DOCUMENT_STATUS_WAITING_PERIOD_EXPIRED"] = "Түпнұсқалар алынбағандықтан құжаттар қабылданбады";
+$MESS["VI_DOCS_IS_INDIVIDUAL_N"] = "Заңды тұлға";
+$MESS["VI_DOCS_IS_INDIVIDUAL_Y"] = "Жеке тұлға";
+$MESS["VI_DOCS_STATUS_DECLINED"] = "Құжаттар қабылданбады";
+$MESS["VI_DOCS_STATUS_IN_PROGRESS"] = "Тексерудегі құжаттар";
+$MESS["VI_DOCS_STATUS_NOT_REQUIRED"] = "Құжаттарды жүктеу қажет емес (жалға алынған нөмірлер жоқ)";
+$MESS["VI_DOCS_STATUS_PENDING"] = "Қосымша құжаттар қажет";
+$MESS["VI_DOCS_STATUS_REJECTED"] = "Құжаттар қабылданбады";
+$MESS["VI_DOCS_STATUS_REQUIRED"] = "Құжаттарды жүктеу қажет";
+$MESS["VI_DOCS_STATUS_VERIFIED"] = "Құжаттар расталды";

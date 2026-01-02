@@ -53,6 +53,7 @@ export class FormatSelector
 					},
 				});
 			},
+			cacheable: false,
 		});
 	}
 

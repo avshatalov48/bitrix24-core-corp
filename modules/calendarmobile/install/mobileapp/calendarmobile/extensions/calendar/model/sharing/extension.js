@@ -4,6 +4,7 @@
 jn.define('calendar/model/sharing', (require, exports, module) => {
 	const { EventEmitter } = require('event-emitter');
 	const { withCurrentDomain } = require('utils/url');
+	const { Random } = require('utils/random');
 	const { Settings } = require('calendar/model/sharing/settings');
 	const { SharingAjax } = require('calendar/ajax');
 

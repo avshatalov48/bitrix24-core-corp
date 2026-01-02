@@ -38,12 +38,12 @@ jn.define('files/entry', (require, exports, module) => {
 
 		getType()
 		{
-			return this.file.type;
+			return this.file.type || this.getMimeType();
 		}
 
 		getMimeType()
 		{
-			return this.file.type;
+			return this.file.mimeType;
 		}
 
 		getName()
@@ -122,7 +122,7 @@ jn.define('files/entry', (require, exports, module) => {
 						return;
 					}
 
-					reject(new FileError(102, "Parameter 'file' is not instance of 'File'"));
+					reject(new FileError(102, 'Parameter \'file\' is not instance of \'File\''));
 				}
 			});
 		}

@@ -4,12 +4,11 @@
 jn.define('im/messenger/controller/sidebar/base/sidebar-controller', (require, exports, module) => {
 	const { UIMenu } = require('layout/ui/menu');
 	const { Icon } = require('assets/icons');
-	const { Loc } = require('loc');
+	const { Loc } = require('im/messenger/loc');
 	const { SidebarHeaderContextMenuActionType } = require('im/messenger/const');
 
 	const { DialogHelper } = require('im/messenger/lib/helper');
 	const { ChatPermission } = require('im/messenger/lib/permission-manager');
-	const { Feature } = require('im/messenger/lib/feature');
 	const { serviceLocator } = require('im/messenger/lib/di/service-locator');
 
 	const { LoggerManager } = require('im/messenger/lib/logger');
@@ -81,7 +80,7 @@ jn.define('im/messenger/controller/sidebar/base/sidebar-controller', (require, e
 
 		canEdit()
 		{
-			return Feature.isChatComposerSupported && ChatPermission.isCanEditDialog(this.dialogId);
+			return ChatPermission.canEditDialog(this.dialogId);
 		}
 
 		canLeave()
@@ -91,7 +90,7 @@ jn.define('im/messenger/controller/sidebar/base/sidebar-controller', (require, e
 				return false;
 			}
 
-			const canLeave = ChatPermission.isCanLeaveFromChat(this.dialogId);
+			const canLeave = ChatPermission.canLeaveFromChat(this.dialogId);
 			if (this.helper.isCopilot)
 			{
 				return canLeave && this.helper.dialogModel.userCounter > 2;

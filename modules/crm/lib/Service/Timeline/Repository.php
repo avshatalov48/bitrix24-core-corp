@@ -389,7 +389,7 @@ class Repository
 	private function getActivityIds(array $filter): array
 	{
 		$dbResult = \CCrmActivity::GetList(
-			[], // use php sort after fetch data (see http://jabber.bx/view.php?id=175956)
+			[], // use php sort after fetch data
 			$filter,
 			false,
 			false,

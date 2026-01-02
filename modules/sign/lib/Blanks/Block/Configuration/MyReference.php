@@ -20,14 +20,14 @@ class MyReference extends Configuration
 				new Main\Error(
 					Loc::getMessage('SIGN_BLANKS_BLOCK_CONFIGURATION_MYREFERENCE_ERROR_FIELD_NOT_SELECTED'),
 					'REFERENCE_ERROR_FIELD_NOT_SELECTED',
-				)
+				),
 			);
 		}
 
 		return $result;
 	}
 
-	function loadData(Item\Block $block, Item\Document $document, ?Item\Member $member = null): array
+	public function loadData(Item\Block $block, Item\Document $document, ?Item\Member $member = null): array
 	{
 		$data = $block->data;
 		if (($data['field'] ?? null) === null)
@@ -46,7 +46,7 @@ class MyReference extends Configuration
 		{
 			$data = array_merge(
 				$data,
-				$fieldValue
+				$fieldValue,
 			);
 		}
 
@@ -69,7 +69,7 @@ class MyReference extends Configuration
 	private static function getEntityIdByFieldCode(
 		string $fieldCode,
 		Item\Document $document,
-		Item\Member $member
+		Item\Member $member,
 	): ?int
 	{
 		$entityTypeId = (new CRM\FieldCode($fieldCode))->getEntityTypeId();

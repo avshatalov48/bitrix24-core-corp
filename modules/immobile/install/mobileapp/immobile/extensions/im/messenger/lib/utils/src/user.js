@@ -2,7 +2,7 @@
  * @module im/messenger/lib/utils/user
  */
 jn.define('im/messenger/lib/utils/user', (require, exports, module) => {
-	const { Loc } = require('loc');
+	const { Loc } = require('im/messenger/loc');
 	const { Moment } = require('utils/date');
 	const { DateUtils } = require('im/messenger/lib/utils/date');
 	const { longDate, dayMonth, shortTime } = require('utils/date/formats');
@@ -42,7 +42,7 @@ jn.define('im/messenger/lib/utils/user', (require, exports, module) => {
 			// truly online, last activity date < 5 minutes ago - show status text
 			else if (isOnline && !lastSeenText)
 			{
-				text = this.getStatusTextForLastDate(userData.status);
+				text = this.getStatusTextForLastDate(userData.status ?? '');
 			}
 			// last activity date > 5 minutes ago - "Was online X minutes ago"
 			else if (lastSeenText)

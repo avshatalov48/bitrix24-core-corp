@@ -1,4 +1,4 @@
-E006 [Parse error at active-field.js:8,4
+E006 [Parse error at active-field.js:9,4
 	#id: string;
 	   ^
 ERROR: Unexpected token: punc (:)

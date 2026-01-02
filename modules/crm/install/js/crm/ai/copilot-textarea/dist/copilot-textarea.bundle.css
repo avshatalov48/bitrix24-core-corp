@@ -12,7 +12,7 @@
 	height: var(--ui-size-3xl);
 	color: var(--ui-color-palette-white-base);
 	border-radius: var(--ui-border-radius-2xs);
-	font-family: var(--ui-font-family-system);
+	font-family: var(--ui-font-family-primary, var(--ui-font-family-system));
 	font-weight: var(--ui-font-weight-bold);
 	font-size: var(--ui-font-size-xs);
 	line-height: var(--ui-typography-heading-h1-line-height);

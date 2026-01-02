@@ -7,6 +7,7 @@ namespace Bitrix\Booking\Internals\Integration\Notifications;
 use Bitrix\Booking\Internals\Service\Notifications\NotificationTemplateType;
 use Bitrix\Booking\Internals\Service\Notifications\NotificationType;
 use Bitrix\Booking\Provider\NotificationsAvailabilityProvider;
+use Bitrix\Booking\Provider\NotificationsLanguageProvider;
 use Bitrix\Main\Data\Cache;
 use Bitrix\Main\Loader;
 use Bitrix\Main\Localization\Loc;
@@ -17,15 +18,20 @@ Loc::loadMessages($_SERVER['DOCUMENT_ROOT'] . BX_ROOT . '/modules/booking/lib/In
 
 class TemplateRepository
 {
+	private NotificationsLanguageProvider $notificationsLanguageProvider;
 	private array|null $templates = null;
 
 	private const CACHE_TIME = 86400;
 	private const CACHE_DIR = '/booking/template_repository/';
 
+	public function __construct()
+	{
+		$this->notificationsLanguageProvider = new NotificationsLanguageProvider();
+	}
+
 	public function getTemplatesByNotificationType(NotificationType $notificationType): array
 	{
-
-		self::loadTemplates();
+		$this->loadTemplates();
 
 		$notificationToTemplateTypeMap = self::getNotificationToTemplateTypeMap();
 
@@ -80,22 +86,9 @@ class TemplateRepository
 
 		return [
 			'type' => $notificationTemplateType->value,
-			'text' => self::replaceTemplateVars(
-				self::replaceLineBreaks(
-					$this->templates[$templateCode]['TEXT']
-				)
-			),
-			'textSms' => self::replaceTemplateVars(
-				self::replaceLineBreaks(
-					$this->templates[$templateCode]['TEXT_SMS']
-				)
-			),
+			'text' => self::replaceTemplateVars($this->templates[$templateCode]['TEXT']),
+			'textSms' => self::replaceTemplateVars($this->templates[$templateCode]['TEXT_SMS']),
 		];
-	}
-
-	private static function replaceLineBreaks(string $text): string
-	{
-		return str_replace("\n", '<br/>', $text);
 	}
 
 	private static function replaceTemplateVars(string $text): string
@@ -120,8 +113,8 @@ class TemplateRepository
 
 		return str_replace(
 			array_map(static fn($item) => '#' . $item . '#', array_keys($map)),
-			array_map(static fn($item) => '<span>[' . $item . ']</span>', array_values($map)),
-			$text
+			array_map(static fn($item) => '#' . $item . '#', array_values($map)),
+			$text,
 		);
 	}
 
@@ -196,7 +189,8 @@ class TemplateRepository
 			return;
 		}
 
-		$langId = 'ru';
+		$langId = $this->notificationsLanguageProvider->getLanguageId();
+
 		$cache = Cache::createInstance();
 		$cacheId = md5('booking-template-repository' . '-lang-' . $langId);
 

@@ -1,0 +1,16 @@
+<?php
+$MESS["M_CRM_ACTIVITY_LIST_CREATE_CALL"] = "Қоңырау шалу";
+$MESS["M_CRM_ACTIVITY_LIST_CREATE_EMAIL"] = "Хат жасау";
+$MESS["M_CRM_ACTIVITY_LIST_CREATE_MEETING"] = "Кездесуді құру";
+$MESS["M_CRM_ACTIVITY_LIST_DOWN_TEXT"] = "Жаңарту үшін жіберіңіз...";
+$MESS["M_CRM_ACTIVITY_LIST_FILTER_CUSTOM"] = "Іздеу нәтижелері";
+$MESS["M_CRM_ACTIVITY_LIST_FILTER_NONE"] = "Барлық істер";
+$MESS["M_CRM_ACTIVITY_LIST_IMPORTANT"] = "Маңызды";
+$MESS["M_CRM_ACTIVITY_LIST_LOAD_TEXT"] = "Тізімді жаңарту...";
+$MESS["M_CRM_ACTIVITY_LIST_NOTHING_FOUND"] = "Істер табылмады";
+$MESS["M_CRM_ACTIVITY_LIST_PULL_TEXT"] = "Жаңарту үшін тартыңыз...";
+$MESS["M_CRM_ACTIVITY_LIST_RUBRIC_FILTER_NONE"] = "Барлығы";
+$MESS["M_CRM_ACTIVITY_LIST_RUBRIC_LEGEND"] = "(Істер)";
+$MESS["M_CRM_ACTIVITY_LIST_SEARCH_BUTTON"] = "Іздеу";
+$MESS["M_CRM_ACTIVITY_LIST_SEARCH_PLACEHOLDER"] = "Атауы бойынша іздеу";
+$MESS["M_CRM_ACTIVITY_LIST_TIME_NOT_DEFINED"] = "[мерзімі жоқ]";

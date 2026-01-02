@@ -88,7 +88,7 @@ jn.define('sign/master/master-step-layout', (require, exports, module) => {
 				},
 				Button({
 					text: this.step.getNextStepButtonText(),
-					testId: 'Button',
+					testId: 'stepLayout-button-nextStep',
 					size: ButtonSize.XL,
 					design: ButtonDesign.FILLED,
 					stretched: true,

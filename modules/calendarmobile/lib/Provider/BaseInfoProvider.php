@@ -5,6 +5,7 @@ namespace Bitrix\CalendarMobile\Provider;
 use Bitrix\Calendar\Core\Event\Tools\Dictionary;
 use Bitrix\Calendar\Integration\Bitrix24\FeatureDictionary;
 use Bitrix\Calendar\Integration\Bitrix24Manager;
+use Bitrix\Calendar\Integration\SocialNetwork\Collab\Collabs;
 use Bitrix\Calendar\Internals\Counter;
 use Bitrix\Calendar\Internals\Counter\CounterDictionary;
 use Bitrix\Calendar\Ui\CalendarFilter;
@@ -30,12 +31,15 @@ IncludeModuleLangFile($_SERVER["DOCUMENT_ROOT"].BX_ROOT."/modules/calendar/insta
 
 final class BaseInfoProvider
 {
+	private readonly bool $isCollaber;
+
 	public function __construct(
 		private readonly int $userId,
 		private readonly int $ownerId,
 		private readonly string $calType,
 	)
 	{
+		$this->isCollaber = Util::isCollabUser($this->userId);
 	}
 
 	/**
@@ -67,16 +71,19 @@ final class BaseInfoProvider
 			return $result->addError(new Error(Loc::getMessage('EC_IBLOCK_ACCESS_DENIED')));
 		}
 
-		$collabs = $this->getCollabs();
 		$sections = $this->getSectionInfo();
+		$collabs = $this->getCollabs();
 		$collabSections = $this->getCollabSections($collabs);
 
+		if ($this->isCollabContext())
+		{
+			$sections = [...$sections, ...$collabSections];
+		}
+
 		return $result->setData([
-			'readOnly' => $this->isReadOnly(
-				$permission,
-				$this->isCollabContext() ? $collabSections : $sections,
-			),
+			'readOnly' => $this->isReadOnly($permission, $this->isCollabContext() ? $collabSections : $sections),
 			'sectionInfo' => $sections,
+			'additionalSectionInfo' => $this->getAdditionalSectionsInfo($sections),
 			'locationInfo' => $this->getLocationInfo(),
 			'categoryInfo' => $this->getCategoriesInfo(),
 			'sharingInfo' => $this->getSharingInfo(),
@@ -101,7 +108,6 @@ final class BaseInfoProvider
 	public function checkPermissions(): bool
 	{
 		$isExternalUser = Loader::includeModule('intranet') && !\Bitrix\Intranet\Util::isIntranetUser();
-		$isCollaber = Util::isCollabUser($this->userId);
 
 		if (
 			$isExternalUser
@@ -115,12 +121,16 @@ final class BaseInfoProvider
 			return false;
 		}
 
-		if ($this->calType === Dictionary::CALENDAR_TYPE['user'] && $isExternalUser && !$isCollaber)
+		if ($this->calType === Dictionary::CALENDAR_TYPE['user'] && $isExternalUser && !$this->isCollaber)
 		{
 			return false;
 		}
 
-		if ($this->calType === Dictionary::CALENDAR_TYPE['user'] && $isCollaber && $this->userId !== $this->ownerId)
+		if (
+			$this->calType === Dictionary::CALENDAR_TYPE['user']
+			&& $this->isCollaber
+			&& $this->userId !== $this->ownerId
+		)
 		{
 			return false;
 		}
@@ -151,7 +161,7 @@ final class BaseInfoProvider
 			'view_all'
 		);
 
-		$canViewGroup = is_array($featurePerms) && isset($featurePerms[$this->ownerId]) && $featurePerms[$this->ownerId];
+		$canViewGroup = $this->canViewGroup($featurePerms);
 
 		if (!$canViewGroup)
 		{
@@ -161,10 +171,20 @@ final class BaseInfoProvider
 				'calendar',
 				'view'
 			);
-			$canViewGroup = is_array($featurePerms) && isset($featurePerms[$this->ownerId]) && $featurePerms[$this->ownerId];
+			$canViewGroup = $this->canViewGroup($featurePerms);
 		}
 
 		return $canViewGroup;
+	}
+
+	/**
+	 * @param $featurePerms
+	 *
+	 * @return bool
+	 */
+	private function canViewGroup($featurePerms): bool
+	{
+		return is_array($featurePerms) && isset($featurePerms[$this->ownerId]) && $featurePerms[$this->ownerId];
 	}
 
 	/**
@@ -172,14 +192,26 @@ final class BaseInfoProvider
 	 */
 	public function getSectionInfo(): array
 	{
-		$sections = \CCalendar::getSectionList([
-			'CAL_TYPE' => $this->calType,
-			'OWNER_ID' => $this->ownerId,
-			'checkPermissions' => true,
-			'getPermissions' => true,
-		]);
+		$sections = [
+			...$this->getSectionListForContext(),
+			...$this->getSectionListAvailableForUser(),
+		];
 
-		if (empty($sections))
+		$sectionIdList = [];
+		$sections = array_filter($sections, static function ($section) use (&$sectionIdList) {
+			$sectionId = (int)$section['ID'];
+
+			if (!in_array($sectionId, $sectionIdList, true))
+			{
+				$sectionIdList[] = $sectionId;
+
+				return true;
+			}
+
+			return false;
+		});
+
+		if ($this->hasToCreateDefaultCalendar($sections))
 		{
 			$sections[] = \CCalendarSect::createDefault([
 				'type' => $this->calType,
@@ -193,13 +225,46 @@ final class BaseInfoProvider
 	/**
 	 * @return array
 	 */
+	private function getSectionListForContext(): array
+	{
+		$followedSectionList = $this->isCollaber ? [] : UserSettings::getFollowedSectionIdList($this->userId);
+
+		return \CCalendar::getSectionList([
+			'CAL_TYPE' => $this->calType,
+			'OWNER_ID' => $this->ownerId,
+			'ACTIVE' => 'Y',
+			'ADDITIONAL_IDS' => $followedSectionList,
+		]);
+	}
+
+	/**
+	 * @return array
+	 */
+	private function getSectionListAvailableForUser(): array
+	{
+		if ($this->isCollaber || $this->isPersonalContext())
+		{
+			return [];
+		}
+
+		return \CCalendar::getSectionList([
+			'CAL_TYPE' => Dictionary::CALENDAR_TYPE['user'],
+			'OWNER_ID' => $this->userId,
+			'ACTIVE' => 'Y',
+		]);
+	}
+
+	/**
+	 * @return array
+	 */
 	public function getBaseSettings(): array
 	{
 		return [
 			'firstWeekday' => $this->getFirstWeekDay(),
 			'meetSectionId' => \CCalendar::GetMeetingSection($this->userId),
-			'pathToUserCalendar' => \Bitrix\Calendar\Util::getPathToCalendar($this->ownerId, $this->calType),
+			'pathToCalendar' => \Bitrix\Calendar\Util::getPathToCalendar($this->ownerId, $this->calType),
 			'userTimezoneName' => \CCalendar::GetUserTimezoneName($this->userId),
+			'pathToUserCalendar' => \Bitrix\Calendar\Util::getPathToCalendar($this->ownerId, $this->calType),
 		];
 	}
 
@@ -230,6 +295,7 @@ final class BaseInfoProvider
 			'weekHolidays' => $this->getWeekHolidays($calendarSettings['week_holidays']),
 			'yearHolidays' => $this->getYearHolidays($calendarSettings['year_holidays']),
 			'userTimezoneName' => \CCalendar::GetUserTimezoneName($this->userId),
+			'isCollabCalendar' => $this->isCollabCalendar(),
 		];
 	}
 
@@ -272,11 +338,6 @@ final class BaseInfoProvider
 	 */
 	private function getCollabSections(array $collabGroup): array
 	{
-		if ($this->calType !== Dictionary::CALENDAR_TYPE['user'])
-		{
-			return [];
-		}
-
 		$collabIds = array_keys($collabGroup);
 
 		if (empty($collabIds))
@@ -366,7 +427,7 @@ final class BaseInfoProvider
 			$calculateTimestamp = \CCalendarSync::getTimestampWithUserOffset($this->userId);
 			$syncInfo = \CCalendarSync::getNewSyncItemsInfo($this->userId, $calculateTimestamp);
 
-			$defaultSyncData = static function($name){
+			$defaultSyncData = static function($name) {
 				return [
 					'type' => $name,
 					'active' => false,
@@ -395,7 +456,13 @@ final class BaseInfoProvider
 			return [];
 		}
 
-		return UserRepository::getByIds([$this->userId]);
+		$userIds = [$this->userId];
+		if ($this->calType === Dictionary::CALENDAR_TYPE['user'] && $this->userId !== $this->ownerId)
+		{
+			$userIds[] = $this->ownerId;
+		}
+
+		return UserRepository::getByIds($userIds);
 	}
 
 
@@ -506,14 +573,21 @@ final class BaseInfoProvider
 
 		foreach ($sections as $section)
 		{
-			if ($noEditAccessedCalendars && $section['PERM']['edit'])
+			if (
+				$groupOrUser
+				&& $section['CAL_TYPE'] === $this->calType
+				&& (int)$section['OWNER_ID'] === $this->ownerId
+			)
 			{
-				$noEditAccessedCalendars = false;
-			}
+				if ($noEditAccessedCalendars && $section['PERM']['edit'])
+				{
+					$noEditAccessedCalendars = false;
+				}
 
-			if ($readOnly && ($section['PERM']['edit'] || $section['PERM']['edit_section']))
-			{
-				$readOnly = false;
+				if ($readOnly && ($section['PERM']['edit'] || $section['PERM']['edit_section']))
+				{
+					$readOnly = false;
+				}
 			}
 		}
 
@@ -531,5 +605,98 @@ final class BaseInfoProvider
 	private function isCollabContext(): bool
 	{
 		return $this->calType === Dictionary::CALENDAR_TYPE['user'] && Util::isCollabUser($this->userId);
+	}
+
+	/**
+	 * @return bool
+	 */
+	private function isCollabCalendar(): bool
+	{
+		return $this->calType === Dictionary::CALENDAR_TYPE['group']
+			&& Collabs::getInstance()->getCollabIfExists($this->ownerId)
+		;
+	}
+
+	/**
+	 * @return bool
+	 */
+	private function isPersonalContext(): bool
+	{
+		return $this->calType === Dictionary::CALENDAR_TYPE['user'] && $this->userId === $this->ownerId;
+	}
+
+	/**
+	 * @param array $sections
+	 *
+	 * @return bool
+	 */
+	private function hasToCreateDefaultCalendar(array $sections): bool
+	{
+		$createDefault = true;
+
+		if ($this->calType === Dictionary::CALENDAR_TYPE['user'])
+		{
+			$createDefault = $this->userId === $this->ownerId;
+		}
+
+		foreach ($sections as $section)
+		{
+			if (
+				$createDefault
+				&& $section['CAL_TYPE'] === $this->calType
+				&& (int)$section['OWNER_ID'] === $this->ownerId
+			)
+			{
+				return false;
+			}
+		}
+
+		return $createDefault;
+	}
+
+	/**
+	 * @param array $sections
+	 *
+	 * @return array
+	 */
+	private function getAdditionalSectionsInfo(array $sections): array
+	{
+		return [
+			'hiddenSections' => $this->getHiddenSections($sections),
+			'trackingUserList' => UserSettings::getTrackingUsers($this->userId),
+		];
+	}
+
+	/**
+	 * @param $sections
+	 *
+	 * @return array
+	 */
+	private function getHiddenSections($sections): array
+	{
+		$defaultHiddenSections = [];
+
+		foreach ($sections as $section)
+		{
+			if ($this->isCollaber && $section['IS_COLLAB'])
+			{
+				continue;
+			}
+
+			if ($section['CAL_TYPE'] !== $this->calType || (int)$section['OWNER_ID'] !== $this->ownerId)
+			{
+				$defaultHiddenSections[] = (int)$section['ID'];
+			}
+		}
+
+		return UserSettings::getHiddenSections(
+			$this->userId,
+			[
+				'type' => $this->calType,
+				'ownerId' => $this->ownerId,
+				'isPersonalCalendarContext' => $this->isPersonalContext(),
+				'defaultHiddenSections' => $defaultHiddenSections,
+			],
+		);
 	}
 }

@@ -44,8 +44,6 @@ class ExternalSourceSettingsTable extends DataManager
 {
 	use DeleteByFilterTrait;
 
-	public const SETTING_TYPE_STRING = 'STRING';
-
 	/**
 	 * Returns DB table name for entity.
 	 *
@@ -102,7 +100,7 @@ class ExternalSourceSettingsTable extends DataManager
 					'required' => true,
 					'validation' => function()
 					{
-						return[
+						return [
 							new LengthValidator(null, 512),
 						];
 					},
@@ -121,7 +119,7 @@ class ExternalSourceSettingsTable extends DataManager
 					'required' => true,
 					'validation' => function()
 					{
-						return[
+						return [
 							new LengthValidator(null, 512),
 						];
 					},
@@ -134,8 +132,9 @@ class ExternalSourceSettingsTable extends DataManager
 					'required' => true,
 					'validation' => function()
 					{
-						return[
+						return [
 							new LengthValidator(null, 50),
+							new Validator\SourceSettingTypeValidator(),
 						];
 					},
 					'title' => Loc::getMessage('EXTERNAL_SOURCE_SETTINGS_ENTITY_TYPE_FIELD'),

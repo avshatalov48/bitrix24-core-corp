@@ -7,7 +7,7 @@ use Bitrix\Main\Web\Json;
 class ArrayStringState extends BaseState
 {
 	protected $state = [];
-	public function __construct(private readonly string $delimiter = '')
+	public function __construct(private readonly ?string $delimiter)
 	{
 	}
 

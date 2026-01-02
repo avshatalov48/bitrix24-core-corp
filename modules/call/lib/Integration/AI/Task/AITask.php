@@ -83,38 +83,37 @@ abstract class AITask
 
 	public static function buildBySource(EO_CallAITask $source): self
 	{
-		$class = match ($source->getType())
+		$taskSenseType = SenseType::tryFrom($source->getType());
+		if ($taskSenseType)
 		{
-			SenseType::TRANSCRIBE->value => TranscribeCallRecord::class,
-			SenseType::SUMMARY->value => TranscriptionSummary::class,
-			SenseType::OVERVIEW->value => TranscriptionOverview::class,
-			SenseType::INSIGHTS->value => TranscriptionInsights::class,
-			default => ''
-		};
-		if (!$class)
-		{
-			return new class($source) extends AITask
-			{
-				public function setPayload($payload): AITask
-				{
-					return $this;
-				}
-				public function getAIPayload(): Result
-				{
-					return new Result;
-				}
-				public function getAIEngineCategory(): string
-				{
-					return '';
-				}
-				public function getAISenseType(): string
-				{
-					return '';
-				}
-			};
+			$class = $taskSenseType->getTaskClass();
+
+			return new $class($source);
 		}
 
-		return new $class($source);
+		return new class($source) extends AITask
+		{
+			public function setPayload($payload): AITask
+			{
+				return $this;
+			}
+			public function getAIPayload(): Result
+			{
+				return new Result;
+			}
+			public function getAIEngineCategory(): string
+			{
+				return '';
+			}
+			public function getAISenseType(): string
+			{
+				return '';
+			}
+			public function allowNotifyTaskFailed(): bool
+			{
+				return false;
+			}
+		};
 	}
 
 	public static function getTaskForCall(int $callId, SenseType $senseType): ?self
@@ -208,6 +207,30 @@ abstract class AITask
 
 	abstract public function getAISenseType(): string;
 
+	/**
+	 * Allows to output thw chat error message then task failed.
+	 * @return bool
+	 */
+	abstract public function allowNotifyTaskFailed(): bool;
+
+	/**
+	 * Check pending state of the task.
+	 * @return bool
+	 */
+	public function isPending(): bool
+	{
+		return $this->getStatus() == self::STATUS_PENDING;
+	}
+
+	/**
+	 * Check pending state of the task.
+	 * @return bool
+	 */
+	public function isFinished(): bool
+	{
+		return $this->getStatus() == self::STATUS_FINISHED;
+	}
+
 	public function getAIEngineCode(): string
 	{
 		return '';
@@ -290,28 +313,6 @@ abstract class AITask
 		}
 
 		return $jsonData;
-	}
-
-	public function detectRowError(string $againstError): string
-	{
-		$history = \Bitrix\AI\Model\HistoryTable::getList([
-			'filter' => [
-				'=CONTEXT_MODULE' => 'call',
-				'=CONTEXT_ID' => $this->getContextId()
-			],
-			'order' => ['ID' => 'DESC'],
-			'limit' => 1,
-		]);
-		if (
-			($row = $history->fetch())
-			&& !empty($row['RESULT_TEXT'])
-			&& $row['RESULT_TEXT'] != $againstError
-		)
-		{
-			return $row['RESULT_TEXT'];
-		}
-
-		return '';
 	}
 
 	public function decodePayload(string $str): string

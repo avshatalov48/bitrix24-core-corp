@@ -51,17 +51,18 @@ class ExternalSourceDataProvider extends DataProvider
 				->setType(Type::TEXT)
 				->setName(Loc::getMessage('BICONNECTOR_SUPERSET_EXTERNAL_SOURCE_GRID_COLUMN_TITLE_CREATED_BY'))
 				->setAlign('left')
-				->setDefault(false)
+				->setDefault(true)
 		;
 
-		// $result[] =
-		// 	$this->createColumn('DESCRIPTION')
-		// 		->setEditable(true)
-		// 		->setType(Type::TEXT)
-		// 		->setName(Loc::getMessage('BICONNECTOR_SUPERSET_EXTERNAL_SOURCE_GRID_COLUMN_TITLE_DESCRIPTION'))
-		// 		->setAlign('left')
-		// 		->setDefault(false)
-		// ;
+		 $result[] =
+		 	$this->createColumn('DESCRIPTION')
+		 		->setEditable(true)
+		 		->setType(Type::TEXT)
+		 		->setName(Loc::getMessage('BICONNECTOR_SUPERSET_EXTERNAL_SOURCE_GRID_COLUMN_TITLE_DESCRIPTION'))
+		 		->setAlign('left')
+		 		->setDefault(true)
+				->setWidth(400)
+		 ;
 
 		return $result;
 	}

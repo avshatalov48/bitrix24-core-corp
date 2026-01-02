@@ -2,7 +2,7 @@
 
 namespace Bitrix\Crm\Security\Role\Manage;
 
-use Bitrix\Crm\Security\Role\Manage\AttrPreset\UserRoleAndHierarchy;
+use Bitrix\Crm\Security\Role\Manage\AttrPreset\UserDepartmentAndOpened;
 use Bitrix\Crm\Security\Role\Manage\Permissions\Add;
 use Bitrix\Crm\Security\Role\Manage\Permissions\Automation;
 use Bitrix\Crm\Security\Role\Manage\Permissions\Delete;
@@ -28,30 +28,30 @@ class PermissionAttrPresets
 	 */
 	public static function crmEntityPreset(): array
 	{
-		$hierarchy = (new UserRoleAndHierarchy())->exclude(UserRoleAndHierarchy::THIS_ROLE);
-		$variants = $hierarchy->getVariants();
+		$permissionPreset = (new UserDepartmentAndOpened());
+		$variants = $permissionPreset->getVariants();
 
-		$withoutUserRoleDependentVariables = (new DependentVariables\UserRoleAndHierarchyAsAttributes())
-			->setHierarchy($hierarchy)
+		$dependentVariablesAsSettings = (new DependentVariables\UserDepartmentAndOpenedAsSettings())
+			->setPermissionPreset($permissionPreset)
 			->addSelectedVariablesAlias(
 				[
-					UserRoleAndHierarchy::SELF,
-					UserRoleAndHierarchy::DEPARTMENT,
-					UserRoleAndHierarchy::SUBDEPARTMENTS,
-					UserRoleAndHierarchy::OPEN,
-					UserRoleAndHierarchy::ALL,
+					UserDepartmentAndOpened::SELF,
+					UserDepartmentAndOpened::DEPARTMENT,
+					UserDepartmentAndOpened::SUBDEPARTMENTS,
+					UserDepartmentAndOpened::OPEN,
+					UserDepartmentAndOpened::ALL,
 				],
 				Loc::getMessage('CRM_SECURITY_ROLE_PERMS_TYPE_X'),
 			)
 		;
 
 		return [
-			new Read($variants, $withoutUserRoleDependentVariables),
-			new Add($variants, $withoutUserRoleDependentVariables),
-			new Write($variants, $withoutUserRoleDependentVariables),
-			new Delete($variants, $withoutUserRoleDependentVariables),
-			new Export($variants, $withoutUserRoleDependentVariables),
-			new Import($variants, $withoutUserRoleDependentVariables),
+			new Read($variants, $dependentVariablesAsSettings),
+			new Add($variants, $dependentVariablesAsSettings),
+			new Write($variants, $dependentVariablesAsSettings),
+			new Delete($variants, $dependentVariablesAsSettings),
+			new Export($variants, $dependentVariablesAsSettings),
+			new Import($variants, $dependentVariablesAsSettings),
 			new MyCardView(self::allowedYesNo(), (new Toggler())->setDefaultValue(
 				(new MyCardView())->getDefaultAttribute() === UserPermissions::PERMISSION_ALL
 			)),

@@ -6,9 +6,19 @@
 	max-width: 100%;
 }
 
+.ui-tag-selector-tag-avatar {
+	background-position: center;
+	background-repeat: no-repeat;
+	background-size: contain;
+}
+
+.ui-tag-selector-text-box {
+	width: 100%;
+}
+
 .connection-error {
 	display: flex;
-	align-items: center;
+	align-items: flex-start;
 	flex-direction: row;
 	margin-top: 6px;
 	color: var(--ui-color-palette-red-50);
@@ -26,6 +36,8 @@
 	background-size: 14px 12px;
 	background-repeat: no-repeat;
 	background-position: center center;
+	margin-top: 2px;
+	flex-shrink: 0;
 }
 
 .table-title {

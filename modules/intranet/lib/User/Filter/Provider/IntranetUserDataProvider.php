@@ -200,12 +200,11 @@ class IntranetUserDataProvider extends EntityDataProvider
 			&& $this->getSettings()->isFilterAvailable(IntranetUserSettings::VISITOR_FIELD)
 		)
 		{
-			$extranetGroupId = Loader::includeModule('extranet') ? \CExtranet::getExtranetUserGroupId() : 0;
 			$filterValue['UF_DEPARTMENT'] = false;
 
-			if ($extranetGroupId)
+			if (Loader::includeModule('extranet'))
 			{
-				$filterValue['INTRANET_USER_EXTRANET_GROUP_GROUP_ID'] = false;
+				$filterValue[] = ['=EXTRANET.ID' => null];
 			}
 		}
 		elseif (
@@ -216,12 +215,12 @@ class IntranetUserDataProvider extends EntityDataProvider
 			)
 		)
 		{
-			if (Loader::includeModule('extranet') && \CExtranet::getExtranetUserGroupId())
+			if (Loader::includeModule('extranet'))
 			{
 				$filterValue[] = [
 					'LOGIC' => 'OR',
-					['!UF_DEPARTMENT' => false],
-					['!INTRANET_USER_EXTRANET_GROUP_GROUP_ID' => false],
+					'!UF_DEPARTMENT' => false,
+					'!=EXTRANET.ID' => null,
 				];
 			}
 			else

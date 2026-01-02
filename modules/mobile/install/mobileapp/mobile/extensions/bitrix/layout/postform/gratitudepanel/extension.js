@@ -12,6 +12,7 @@
 		menuCancelTextColor,
 		postFormData,
 		medalsList,
+		isDefaultTemplate = true,
 	}) => {
 		const config = {
 			medalSize: 62,
@@ -53,6 +54,7 @@
 						medal,
 						onSetGratitudeMedalWidget,
 						medalsList,
+						isDefaultTemplate,
 					});
 				},
 			}),
@@ -252,7 +254,7 @@
 				Text({
 					style: {
 						fontSize: 12,
-						color: AppTheme.colors.accentMainAlert,
+						color: AppTheme.colors.base3,
 					},
 					text: employee.subtitle,
 				}),
@@ -373,6 +375,7 @@
 		medal,
 		onSetGratitudeMedalWidget,
 		medalsList,
+		isDefaultTemplate,
 	}) => {
 		const menu = dialogs.createPopupMenu();
 
@@ -384,18 +387,20 @@
 					iconUrl: currentDomain + postFormData.menuMedalIcon,
 					sectionCode: '0',
 				},
-				{
-					id: 'close',
-					title: BX.message('MOBILE_EXT_LAYOUT_POSTFORM_GRATITUDEPANEL_MENU_DELETE'),
-					iconUrl: currentDomain + postFormData.menuDeleteIcon,
-					sectionCode: '0',
-				},
-				{
-					id: 'cancel',
-					title: BX.message('MOBILE_EXT_LAYOUT_POSTFORM_GRATITUDEPANEL_MENU_CANCEL'),
-					textColor: menuCancelTextColor,
-					sectionCode: '0',
-				},
+				...(isDefaultTemplate ? [
+					{
+						id: 'close',
+						title: BX.message('MOBILE_EXT_LAYOUT_POSTFORM_GRATITUDEPANEL_MENU_DELETE'),
+						iconUrl: currentDomain + postFormData.menuDeleteIcon,
+						sectionCode: '0',
+					},
+					{
+						id: 'cancel',
+						title: BX.message('MOBILE_EXT_LAYOUT_POSTFORM_GRATITUDEPANEL_MENU_CANCEL'),
+						textColor: menuCancelTextColor,
+						sectionCode: '0',
+					},
+				] : []),
 			],
 			[
 				{ id: '0' },

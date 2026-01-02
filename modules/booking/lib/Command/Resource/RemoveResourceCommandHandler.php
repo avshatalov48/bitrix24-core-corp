@@ -14,20 +14,33 @@ class RemoveResourceCommandHandler
 {
 	public function __invoke(RemoveResourceCommand $command): void
 	{
-		$hasResources = Container::getBookingRepository()->getList(
+		$currentResource = Container::getResourceRepository()->getById($command->id);
+
+		if (!$currentResource || $currentResource->isDeleted())
+		{
+			throw new RemoveResourceException('Resource not found');
+		}
+
+		$hasFutureBookings = !Container::getBookingRepository()->getList(
 			limit: 1,
-			filter: new BookingFilter(['RESOURCE_ID' => [$command->id]]),
+			filter: new BookingFilter([
+				'RESOURCE_ID' => [$command->id],
+				'WITHIN' => [
+					'DATE_FROM' => time(),
+				],
+			]),
 		)->isEmpty();
 
-		if (!$hasResources)
+		if ($hasFutureBookings)
 		{
-			throw new RemoveResourceException('The resource can not be deleted. There are bookings with that resource.');
+			throw new RemoveResourceException('The resource can not be deleted. There are future bookings with that resource.');
 		}
 
 		Container::getTransactionHandler()->handle(
 			fn: function() use ($command) {
 				// remove resource
 				Container::getResourceRepository()->remove($command->id);
+
 				// append command to the journal
 				Container::getJournalService()->append(
 					new JournalEvent(

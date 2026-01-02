@@ -3,6 +3,7 @@
 return [
 	'extensions' => [
 		'apptheme',
+		'analytics',
 		'recipient',
 		'layout/postform/entitylist',
 		'layout/postform/separator',

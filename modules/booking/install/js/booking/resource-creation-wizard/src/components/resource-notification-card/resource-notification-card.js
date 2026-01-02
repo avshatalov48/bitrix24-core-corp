@@ -1,7 +1,7 @@
 import { mapGetters } from 'ui.vue3.vuex';
 import 'ui.forms';
 import 'ui.layout-form';
-import 'ui.icon-set.main';
+import type { BitrixVueComponentProps } from 'ui.vue3';
 
 import { Model } from 'booking.const';
 import type { NotificationsModel } from 'booking.model.notifications';
@@ -14,34 +14,20 @@ import { Late } from './late/late';
 
 import './resource-notification-card.css';
 
+// @vue/component
 export const ResourceNotificationCard = {
 	name: 'ResourceNotificationCard',
-	components: {
-		BaseInfo,
-		Confirmation,
-		Reminder,
-		Late,
-		Feedback,
-	},
 	computed: {
-		notificationViews(): { view: string, model: NotificationsModel }[]
+		notificationViews(): { view: BitrixVueComponentProps, model: NotificationsModel }[]
 		{
-			return this.notifications.map((notificationsModel: NotificationsModel) => {
-				switch (notificationsModel.type)
-				{
-					case this.dictionary.Info.value:
-						return { view: 'BaseInfo', model: notificationsModel };
-					case this.dictionary.Confirmation.value:
-						return { view: 'Confirmation', model: notificationsModel };
-					case this.dictionary.Reminder.value:
-						return { view: 'Reminder', model: notificationsModel };
-					case this.dictionary.Delayed.value:
-						return { view: 'Late', model: notificationsModel };
-					case this.dictionary.Feedback.value:
-						return { view: 'Feedback', model: notificationsModel };
-					default:
-						return '';
-				}
+			return this.notifications.map((model: NotificationsModel) => {
+				return {
+					[this.dictionary.Info.value]: { view: BaseInfo, model },
+					[this.dictionary.Confirmation.value]: { view: Confirmation, model },
+					[this.dictionary.Reminder.value]: { view: Reminder, model },
+					[this.dictionary.Delayed.value]: { view: Late, model },
+					[this.dictionary.Feedback.value]: { view: Feedback, model },
+				}[model.type] ?? {};
 			});
 		},
 		...mapGetters({

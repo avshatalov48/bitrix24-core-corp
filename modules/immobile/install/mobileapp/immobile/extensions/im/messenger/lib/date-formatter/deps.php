@@ -5,6 +5,6 @@ return [
 		'utils/date',
 		'type',
 		'date',
-		'loc',
+		'im:messenger/loc',
 	],
 ];

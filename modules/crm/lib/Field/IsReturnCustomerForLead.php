@@ -5,7 +5,6 @@ namespace Bitrix\Crm\Field;
 use Bitrix\Crm\Field;
 use Bitrix\Crm\Item;
 use Bitrix\Crm\Merger;
-use Bitrix\Crm\PhaseSemantics;
 use Bitrix\Crm\Service\Container;
 use Bitrix\Crm\Service\Context;
 use Bitrix\Crm\Service\Operation\FieldAfterSaveResult;
@@ -38,7 +37,7 @@ class IsReturnCustomerForLead extends Field
 
 		return (
 			!$this->isItemOnSuccessfulStage($item, $successfulStageId)
-			&& !$this->isItemWasOnSuccessfulStageInThePast($item, $successfulStageId)
+			&& !$this->isItemWasOnSuccessfulStage($item, $successfulStageId)
 		);
 	}
 
@@ -47,12 +46,10 @@ class IsReturnCustomerForLead extends Field
 		$factory = Container::getInstance()->getFactory($entityTypeId);
 		if ($factory && $factory->isStagesSupported())
 		{
-			foreach ($factory->getStages() as $stage)
+			$stage = $factory->getSuccessfulStage();
+			if ($stage)
 			{
-				if (PhaseSemantics::isSuccess($stage->getSemantics()))
-				{
-					return $stage->getStatusId();
-				}
+				return $stage->getStatusId();
 			}
 		}
 
@@ -64,14 +61,9 @@ class IsReturnCustomerForLead extends Field
 		return (string)$item->getStageId() === $successfulStageId;
 	}
 
-	private function isItemWasOnSuccessfulStageInThePast(Item $item, string $successfulStageId): bool
+	private function isItemWasOnSuccessfulStage(Item $item, string $successfulStageId): bool
 	{
-		if ($item->getEntityTypeId() !== \CCrmOwnerType::Lead)
-		{
-			throw new NotSupportedException('Only lead supported here');
-		}
-
-		return \Bitrix\Crm\History\LeadStatusHistoryEntry::checkStatus($item->getId(), $successfulStageId);
+		return (string)$item->remindActual(Item::FIELD_NAME_STAGE_ID) === $successfulStageId;
 	}
 
 	public function processAfterSave(Item $itemBeforeSave, Item $item, Context $context = null): FieldAfterSaveResult

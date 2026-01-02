@@ -4,7 +4,7 @@ namespace Bitrix\Tasks\Flow\Kanban;
 
 use Bitrix\Bizproc\Automation\Engine\Robot;
 use Bitrix\Main\ArgumentException;
-use Bitrix\Tasks\InvalidCommandException;
+use Bitrix\Tasks\Flow\Control\Exception\InvalidCommandException;
 use Bitrix\Tasks\Flow\Integration\BizProc\DocumentTrait;
 use Bitrix\Tasks\Flow\Internal\Entity\FlowRobotCollection;
 use Bitrix\Tasks\Flow\Internal\FlowRobotTable;

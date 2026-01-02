@@ -4,6 +4,7 @@ namespace Bitrix\BIConnector\Access\Rule;
 
 use Bitrix\BIConnector\Access\Model\DashboardAccessItem;
 use Bitrix\BIConnector\Integration\Superset\Model\SupersetDashboardTable;
+use Bitrix\BIConnector\Superset\SystemDashboardManager;
 
 final class DashboardDeleteRule extends DashboardRule
 {
@@ -21,7 +22,10 @@ final class DashboardDeleteRule extends DashboardRule
 		{
 			if ($item->getType() === SupersetDashboardTable::DASHBOARD_TYPE_SYSTEM)
 			{
-				return false;
+				return (
+					SystemDashboardManager::canDeleteSystemDashboard()
+					&& $this->user->canDeleteRestApp()
+				);
 			}
 
 			if ($item->getType() === SupersetDashboardTable::DASHBOARD_TYPE_MARKET && !$this->user->canDeleteRestApp())
@@ -37,21 +41,6 @@ final class DashboardDeleteRule extends DashboardRule
 
 	protected function isAlwaysAvailableForAdmin(): bool
 	{
-		return false;
-	}
-
-	protected function loadAvailableValues(): array
-	{
-		$dashboardList = SupersetDashboardTable::getList([
-			'select' => ['ID'],
-			'filter' => [
-				'!@TYPE' => [
-					SupersetDashboardTable::DASHBOARD_TYPE_SYSTEM,
-					SupersetDashboardTable::DASHBOARD_TYPE_MARKET,
-				],
-			],
-		])->fetchAll();
-
-		return array_column($dashboardList, 'ID');
+		return SystemDashboardManager::canDeleteSystemDashboard();
 	}
 }

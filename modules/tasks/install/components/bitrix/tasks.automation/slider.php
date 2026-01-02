@@ -14,7 +14,7 @@ if ($_REQUEST['IFRAME'] == 'Y' && $_REQUEST['IFRAME_TYPE'] == 'SIDE_SLIDER')
 	$APPLICATION->IncludeComponent(
 		'bitrix:ui.sidepanel.wrapper',
 		'',
-		array(
+		[
 			'POPUP_COMPONENT_NAME' => 'bitrix:tasks.automation',
 			'POPUP_COMPONENT_TEMPLATE_NAME' => '',
 			'POPUP_COMPONENT_PARAMS' => $cmpParams,
@@ -22,7 +22,8 @@ if ($_REQUEST['IFRAME'] == 'Y' && $_REQUEST['IFRAME_TYPE'] == 'SIDE_SLIDER')
 			'POPUP_COMPONENT_USE_BITRIX24_THEME' => 'Y',
 			'DEFAULT_THEME_ID' => 'light:robots',
 			'USE_PADDING' => false,
-		)
+			'USE_UI_TOOLBAR' => 'Y',
+		]
 	);
 }
 else

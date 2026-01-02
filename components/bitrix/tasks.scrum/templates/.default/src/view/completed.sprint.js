@@ -44,8 +44,6 @@ export class CompletedSprint extends View
 		const burnDownButton = new BurnDownButton();
 		burnDownButton.subscribe('click', this.onShowSprintBurnDownChart.bind(this));
 
-		Dom.addClass(container, '--without-bg');
-
 		Dom.append(burnDownButton.render(), container);
 	}
 

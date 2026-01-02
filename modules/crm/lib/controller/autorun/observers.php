@@ -65,13 +65,6 @@ final class Observers extends Base
 			throw new ArgumentTypeException('data', ObserversPreparedData::class);
 		}
 
-		$userPermissions = Container::getInstance()->getUserPermissions();
-
-		if (!$userPermissions->checkUpdatePermissions($item->getEntityTypeId(), $item->getId(), $item->getCategoryId()))
-		{
-			return (new Result())->addError(ErrorCode::getAccessDeniedError());
-		}
-
 		$item->setObservers(array_unique(array_merge($item->getObservers(), $data->observerIdList)));
 
 		$operation = $factory->getUpdateOperation($item);

@@ -1,9 +1,9 @@
 <?php
+
 namespace Bitrix\Sign\Blank\Block;
 
 use Bitrix\Main\Localization\Loc;
 use Bitrix\Sign\Blank\Section;
-use Bitrix\Sign\Document;
 
 class Stamp extends MyStamp
 {

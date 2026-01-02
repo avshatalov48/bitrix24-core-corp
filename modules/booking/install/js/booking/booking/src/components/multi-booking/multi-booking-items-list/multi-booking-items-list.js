@@ -1,3 +1,5 @@
+// @vue/component
+
 import { Ears } from 'ui.ears';
 import { Model } from 'booking.const';
 import { MultiBookingItem } from './multi-booking-item';
@@ -5,6 +7,9 @@ import './multi-booking-items-list.css';
 
 export const MultiBookingItemsList = {
 	name: 'MultiBookingItemsList',
+	components: {
+		MultiBookingItem,
+	},
 	emits: ['remove-selected'],
 	computed: {
 		selectedCells(): Object
@@ -32,9 +37,6 @@ export const MultiBookingItemsList = {
 				setTimeout(() => this.ears.toggleEars(), 0);
 			},
 		},
-	},
-	components: {
-		MultiBookingItem,
 	},
 	template: `
 		<div class="booking--multi-booking--book-list">

@@ -1,9 +1,10 @@
-import {Event, Uri, Type, Loc, Text, Tag} from 'main.core';
+import { Event, Uri, Type, Loc, Text, Tag, Dom } from 'main.core';
 import {EventEmitter} from 'main.core.events';
 import {PopupManager, Menu, MenuItem} from 'main.popup';
 import Options from "../options";
 import Utils from "../utils";
 import {SaveButton, CancelButton} from 'ui.buttons';
+import { Counter } from 'ui.cnt';
 
 export default class Item
 {
@@ -127,12 +128,19 @@ export default class Item
 		this.links.forEach((link, index) => {
 			if (areUrlsEqual(link, currentUri))
 			{
+				let priority = 0;
+				if (index === 0) // main link is in higher priority
+				{
+					priority = this.getCode() === 'default' ? 2 : 1;
+				}
+
 				result.push({
-					priority: index > 0 ? 0 : 1, // main link is in higher priority
-					url: link
-				})
+					priority,
+					url: link,
+				});
 			}
 		});
+
 		return result;
 	}
 
@@ -154,43 +162,42 @@ export default class Item
 
 	getCounterValue(): ?number
 	{
-		const node = this.container.querySelector('[data-role="counter"]');
-		if (!node)
+		const counter = Counter.initFromCounterNode(this.container.querySelector(`.${Counter.BaseClassname}`));
+
+		if (!counter)
 		{
 			return null;
 		}
-		return parseInt(node.dataset.counterValue);
+
+		return counter.getRealValue();
 	}
 
-	updateCounter(counterValue)
+	updateCounter(counterValue: number): { oldValue: number, newValue: number }
 	{
-		const node = this.container.querySelector('[data-role="counter"]');
-		if (!node)
+		const counter = Counter.initFromCounterNode(this.container.querySelector(`.${Counter.BaseClassname}`));
+
+		if (!counter)
 		{
 			return;
 		}
-		const oldValue = parseInt(node.dataset.counterValue) || 0;
-		node.dataset.counterValue = counterValue;
+
+		const oldValue = counter.getRealValue() || 0;
+
+		counter.update(parseInt(counterValue, 10));
 
 		if (counterValue > 0)
 		{
-			node.innerHTML = (counterValue > 99 ? '99+' : counterValue);
-			this.container.classList.add('menu-item-with-index');
+			Dom.addClass(this.container, 'menu-item-with-index');
 		}
 		else
 		{
-			node.innerHTML = '';
-			this.container.classList.remove('menu-item-with-index');
-			if (counterValue < 0) // TODO need to know what it means
-			{
-				const warning = BX('menu-counter-warning-' + this.getId());
-				if (warning)
-				{
-					warning.style.display = 'inline-block';
-				}
-			}
+			Dom.removeClass(this.container, 'menu-item-with-index');
 		}
-		return {oldValue, newValue: counterValue};
+
+		return {
+			oldValue,
+			newValue: counterValue,
+		};
 	}
 
 	markAsActive()
@@ -318,6 +325,14 @@ export default class Item
 		counterId = counterId ? Text.encode(counterId) : '';
 		counterValue = counterValue ? parseInt(counterValue) : 0;
 		openInNewPage = openInNewPage === 'Y' ? 'Y' : 'N';
+		const counter = new Counter({
+			size: Counter.Size.SMALL,
+			style: Counter.Style.FILLED_ALERT,
+			useAirDesign: true,
+			value: counterValue,
+			id: `menu-counter-${counterId}`,
+		});
+
 		return Tag.render`<li 
 			id="bx_left_menu_${id}" 
 			data-status="show" 
@@ -342,8 +357,7 @@ export default class Item
 					<span class="menu-item-link-text " data-role="item-text">${text}</span>
 					${counterId ? 
 					`<span class="menu-item-index-wrap">
-						<span data-role="counter"
-							data-counter-value="${counterValue}" class="menu-item-index" id="menu-counter-${counterId}">${counterValue}</span>
+						${counter.render()}
 					</span>` : '' }
 				</a>
 				<span data-role="item-edit-control" class="menu-fav-editable-btn menu-favorites-btn">

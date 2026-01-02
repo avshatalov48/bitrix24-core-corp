@@ -15,7 +15,8 @@ export class ReinvitePopup
 	#inputValue: string;
 	#bindElement: ?HTMLElement;
 	#form: Form;
-	#width : number;
+	#width: number;
+	#sendButton: Button;
 
 	constructor(options: ReinvitePopupOptions)
 	{
@@ -25,7 +26,7 @@ export class ReinvitePopup
 		}
 		this.#userId = options.userId;
 		this.#id = 'reinvite-popup-' + options.userId;
-		this.#bindElement  = Type.isElementNode(options.bindElement) ? options.bindElement : null;
+		this.#bindElement = Type.isElementNode(options.bindElement) ? options.bindElement : null;
 		this.#transport = Type.isFunction(options.transport) ? options.transport : null;
 		this.#width = 348;
 
@@ -33,7 +34,16 @@ export class ReinvitePopup
 			id: this.#id,
 			userId: this.#userId,
 			inputValue: options.inputValue,
+			onButtonStateChange: this.#handleButtonStateChange.bind(this),
 		});
+	}
+
+	#handleButtonStateChange(isEnabled: boolean): void
+	{
+		if (this.#sendButton)
+		{
+			this.#sendButton.setDisabled(!isEnabled);
+		}
 	}
 
 	show(): void
@@ -60,7 +70,7 @@ export class ReinvitePopup
 			return PopupManager.getPopupById(this.#id);
 		}
 
-		return new Popup(
+		const popup = new Popup(
 			this.#id,
 			this.#bindElement,
 			{
@@ -79,7 +89,7 @@ export class ReinvitePopup
 				bindOptions: { position: 'top' },
 				animation: "fading-slide",
 				buttons: [
-					new Button({
+					this.#sendButton = new Button({
 						text: Loc.getMessage('INTRANET_JS_BTN_SEND'),
 						color: Button.Color.PRIMARY,
 						round: true,
@@ -101,6 +111,11 @@ export class ReinvitePopup
 				],
 			},
 		);
+
+		const inputValue = this.#form.getValue()?.trim() || '';
+		this.#handleButtonStateChange(inputValue !== '');
+
+		return popup;
 	}
 
 	send(): void

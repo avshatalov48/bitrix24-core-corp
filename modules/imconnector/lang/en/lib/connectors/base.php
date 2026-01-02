@@ -1,6 +1,7 @@
 <?php
 $MESS["IMCONNECTOR_CONTACT_NAME"] = "Full name: ";
 $MESS["IMCONNECTOR_CONTACT_PHONE"] = "Phone number: ";
+$MESS["IMCONNECTOR_ERROR_EXPIRED_ACCESS_TOKEN"] = "Authentication token has expired. To fix the issue, disable and then enable this open channel back in [url=#LINK#]Contact Center[/url].";
 $MESS["IMCONNECTOR_FORWARDED_MESSAGE"] = "Forwarded message: ";
 $MESS["IMCONNECTOR_GUEST_USER"] = "Guest";
 $MESS["IMCONNECTOR_LINK_TO_ORIGINAL_POST"] = "Link to original post: #LINK#";

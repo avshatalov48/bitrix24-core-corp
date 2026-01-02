@@ -6,4 +6,5 @@ module.exports = {
 	},
 	namespace: 'BX.Intranet.Configs',
 	adjustConfigPhp: false,
+	browserslist: true,
 };

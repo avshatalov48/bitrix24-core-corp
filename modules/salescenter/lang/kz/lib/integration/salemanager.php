@@ -1,0 +1,7 @@
+<?php
+$MESS["SALESCENTER_SALEMANAGER_SYSTEM_ORDER_EMAIL_WARNING"] = "[B]МАҢЫЗДЫ![/B] Тапсырыс сипаттамасында клиенттің деректері және сіздің Битрикс24 әкімшісінің мекенжайы көрсетілмеген. Чек жасалмайды. Клиенттің электрондық поштасын немесе телефонын көрсетіңіз немесе әкімші профилін толтырыңыз. [URL=https://helpdesk.bitrix24.ru/open/9612449/]Деректерді толтыру неліктен маңызды?[/URL]";
+$MESS["SALESCENTER_SALEMANAGER_SYSTEM_ORDER_NOT_PAID_TEXT"] = "Төлем: төленбеген";
+$MESS["SALESCENTER_SALEMANAGER_SYSTEM_ORDER_NO_CASHBOXES_WARNING"] = "[B]МАҢЫЗДЫ![/B]Сізде бапталған касса жоқ. [URL=https://dev.1c-bitrix.ru/learning/course/index.php?COURSE_ID=42&CHAPTER_ID=09179&LESSON_PATH=3912.4580.9179]Кассаны қалай баптауға болады[/URL]";
+$MESS["SALESCENTER_SALEMANAGER_SYSTEM_ORDER_NO_CHECK_URL_WARNING"] = "[B]МАҢЫЗДЫ![/B] Тапсырыс сипаттамасында клиенттің деректері көрсетілмеген. Клиенттің поштасын немесе телефонын қосыңыз. [URL=https://helpdesk.bitrix24.ru/open/9612449/]Деректерді толтыру неліктен маңызды?[/URL]";
+$MESS["SALESCENTER_SALEMANAGER_SYSTEM_ORDER_NO_CONTACT_EMAIL_WARNING"] = "[B]МАҢЫЗДЫ![/B] Тапсырыс сипаттамасында клиенттің деректері көрсетілмеген. Клиенттің поштасын немесе телефонын қосыңыз немесе чекке сіздің Битрикс24 әкімшісінің деректері енгізіледі. [URL=https://helpdesk.bitrix24.ru/open/9612449/]Деректерді толтыру неліктен маңызды?[/URL]";
+$MESS["SALESCENTER_SALEMANAGER_SYSTEM_ORDER_PAID_TEXT"] = "Төлем: \"#PAYSYSTEM#\" арқылы төленді #DATE#";

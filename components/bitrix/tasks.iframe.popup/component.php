@@ -42,27 +42,12 @@ if($this->__templateName != 'legacy')
 	}
 
 	$arResult['IFRAME_TYPE'] = $iFrameType;
-
-	$initialized = CTasksPerHitOption::get('tasks', 'componentTaskIframePopupAlreadyRunned');
-	if(!$initialized)
-	{
-		CTasksPerHitOption::set('tasks', 'componentTaskIframePopupAlreadyRunned', true);
-	}
-
-	$arResult['INITIALIZED'] = $initialized;
 }
 else // left for backward compatiblity, unncescessary data for old templates
 {
 	// Mark that we are called not first at this hit. Template will skip some work in this case.
 	$arResult['FIRST_RUN_AT_HIT'] = true;
 	$arParams['ALLOW_NOT_FIRST_RUN_OPTIMIZATION'] = isset($arParams['ALLOW_NOT_FIRST_RUN_OPTIMIZATION']) ? $arParams['ALLOW_NOT_FIRST_RUN_OPTIMIZATION'] : 'Y';
-
-	$bAlreadyRun = CTasksPerHitOption::get('tasks', 'componentTaskIframePopupAlreadyRunned');
-
-	if ($bAlreadyRun)
-		$arResult['FIRST_RUN_AT_HIT'] = false;
-	else
-		CTasksPerHitOption::set('tasks', 'componentTaskIframePopupAlreadyRunned', true);
 
 	$arResult['OPTIMIZE_REPEATED_RUN'] = false;
 	if ($arParams['ALLOW_NOT_FIRST_RUN_OPTIMIZATION'] === 'Y')

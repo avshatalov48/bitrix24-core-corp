@@ -1,5 +1,5 @@
-import {EventEmitter} from 'main.core.events';
-import {EventType} from 'sale.payment-pay.const';
+import { EventEmitter } from 'main.core.events';
+import { EventType } from 'sale.payment-pay.const';
 
 export class UserConsent
 {
@@ -11,12 +11,26 @@ export class UserConsent
 	{
 		this.options = options || {};
 
-		this.accepted = this.option('accepted', false);
-		this.container = document.getElementById(this.option('containerId'), '');
 		this.eventName = this.option('eventName', false);
-		this.callback = null;
+		this.items = this.option('items', []);
+		this.preselectedConsentsIsSubmitted = false;
+		this.setCallback(null);
 
 		this.subscribeToEvents();
+	}
+
+	setCallback(callback): void
+	{
+		this.callback = callback;
+	}
+
+	runCallback(): void
+	{
+		if (this.callback)
+		{
+			this.callback();
+		}
+		this.setCallback(null);
 	}
 
 	/**
@@ -25,14 +39,32 @@ export class UserConsent
 	subscribeToEvents()
 	{
 		EventEmitter.subscribe(EventType.consent.accepted, (event) => {
-			this.accepted = true;
-			if (this.callback) {
-				this.callback();
+			const currentId = event.getData()[0].config.id;
+			const currentItem = this.getItemById(currentId);
+			if (currentItem)
+			{
+				currentItem.checked = 'Y';
 			}
+
+			const firstRequiredUncheckedItem = this.getFirstRequiredUncheckedItem();
+			if (firstRequiredUncheckedItem && this.callback)
+			{
+				EventEmitter.emit(`${this.eventName}-${firstRequiredUncheckedItem.id}`);
+
+				return;
+			}
+
+			this.runCallback();
 		});
 		EventEmitter.subscribe(EventType.consent.refused, (event) => {
-			this.accepted = false;
-			this.callback = null;
+			const currentId = event.getData()[0].config.id;
+			const currentItem = this.getItemById(currentId);
+			if (currentItem)
+			{
+				currentItem.checked = 'N';
+			}
+
+			this.setCallback(null);
 		});
 	}
 
@@ -40,7 +72,7 @@ export class UserConsent
 	 * @public
 	 * @returns {boolean}
 	 */
-	isAvailable()
+	isAvailable(): boolean
 	{
 		return BX.UserConsent && this.eventName;
 	}
@@ -49,31 +81,51 @@ export class UserConsent
 	 * @public
 	 * @param callback
 	 */
-	askUserToPerform(callback)
+	askUserToPerform(callback): void
 	{
-		if (!this.isAvailable() || this.accepted)
+		this.setCallback(callback);
+		if (!this.isAvailable())
 		{
-			callback();
+			this.runCallback();
+
 			return;
 		}
 
-		this.callback = callback;
-		EventEmitter.emit(this.eventName);
-
-		if (this.checkCurrentConsent())
+		if (!this.preselectedConsentsIsSubmitted)
 		{
-			callback();
+			this.sendEventsForCheckedConsents();
+			this.preselectedConsentsIsSubmitted = true;
 		}
+
+		const firstRequiredUncheckedItem = this.getFirstRequiredUncheckedItem();
+		if (firstRequiredUncheckedItem)
+		{
+			EventEmitter.emit(`${this.eventName}-${firstRequiredUncheckedItem.id}`);
+
+			return;
+		}
+
+		this.runCallback();
 	}
 
-	checkCurrentConsent()
+	sendEventsForCheckedConsents(): void
 	{
-		if (!BX.UserConsent || !BX.UserConsent.current)
-		{
-			return false;
-		}
+		this.items.forEach((item) => {
+			if (item.checked === 'Y')
+			{
+				EventEmitter.emit(`${this.eventName}-${item.id}`);
+			}
+		});
+	}
 
-		return BX.UserConsent.check(BX.UserConsent.current);
+	getFirstRequiredUncheckedItem(): ?Object
+	{
+		return this.items.find((item) => item.required === 'Y' && item.checked === 'N') ?? null;
+	}
+
+	getItemById(currentId): ?Object
+	{
+		return this.items.find((item) => parseInt(item.id, 10) === currentId) ?? null;
 	}
 
 	/**
@@ -82,8 +134,8 @@ export class UserConsent
 	 * @param defaultValue
 	 * @returns {*}
 	 */
-	option(name, defaultValue)
+	option(name: string, defaultValue): Object
 	{
-		return this.options.hasOwnProperty(name) ? this.options[name] : defaultValue;
+		return Object.hasOwn(this.options, name) ? this.options[name] : defaultValue;
 	}
 }

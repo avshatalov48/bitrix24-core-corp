@@ -21,6 +21,6 @@ class CommentUploaderController extends EntityController
 	{
 		['entityTypeId' => $entityTypeId, 'entityId' => $entityId] = $this->getOptions();
 
-		return $this->userPermissions->checkReadPermissions($entityTypeId, $entityId);
+		return $this->userPermissions->item()->canRead($entityTypeId, $entityId);
 	}
 }

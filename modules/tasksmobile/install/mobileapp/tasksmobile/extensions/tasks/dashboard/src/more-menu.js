@@ -6,47 +6,31 @@ jn.define('tasks/dashboard/src/more-menu', (require, exports, module) => {
 	const { BaseListMoreMenu } = require('layout/ui/list/base-more-menu');
 	const { TasksDashboardFilter } = require('tasks/dashboard/filter');
 	const { TasksDashboardSorting } = require('tasks/dashboard/src/sorting');
-	const { Feature } = require('feature');
 	const { Color } = require('tokens');
 	const { Views } = require('tasks/statemanager/redux/types');
 	const { Loc } = require('tasks/loc');
 	const { AnalyticsEvent } = require('analytics');
+	const { Icon } = require('assets/icons');
 
-	const airStyleSupported = Feature.isAirStyleSupported();
-
-	let iconPrefix = `${currentDomain}/bitrix/mobileapp/tasksmobile/extensions/tasks/dashboard/images/more-menu-`;
-
-	if (airStyleSupported)
-	{
-		iconPrefix += 'outline-';
-	}
+	const ViewIcons = {
+		[Views.DEADLINE]: Icon.PLANNING,
+		[Views.KANBAN]: Icon.KANBAN,
+		[Views.LIST]: Icon.BULLETED_LIST,
+		[Views.PLANNER]: Icon.MY_PLAN,
+	};
 
 	/**
 	 * @class TasksDashboardMoreMenu
 	 */
 	class TasksDashboardMoreMenu extends BaseListMoreMenu
 	{
-		get icons()
-		{
-			return {
-				[TasksDashboardFilter.counterType.expired]: airStyleSupported ? null : `${iconPrefix}expired.png`,
-				[TasksDashboardFilter.counterType.newComments]: airStyleSupported ? null : `${iconPrefix}new-comments.png`,
-				sortByActivity: `${iconPrefix}sort-by-activity.png`,
-				sortByDeadline: `${iconPrefix}sort-by-deadline.png`,
-				readAll: `${iconPrefix}read-all.png`,
-				[Views.DEADLINE]: `${iconPrefix}view-deadline.png`,
-				[Views.KANBAN]: `${iconPrefix}view-kanban.png`,
-				[Views.LIST]: `${iconPrefix}view-list.png`,
-				[Views.PLANNER]: `${iconPrefix}view-planner.png`,
-			};
-		}
-
 		/**
 		 * @param {Array} counters
 		 * @param {String} selectedCounter
 		 * @param {String} selectedSorting
 		 * @param {Object} callbacks
 		 * @param {Object} analyticsLabel
+		 * @param {Boolean} isASC
 		 */
 		constructor(
 			counters,
@@ -54,6 +38,7 @@ jn.define('tasks/dashboard/src/more-menu', (require, exports, module) => {
 			selectedSorting,
 			callbacks = {},
 			analyticsLabel = {},
+			isASC= false,
 		)
 		{
 			super(counters, selectedCounter, selectedSorting, callbacks);
@@ -62,6 +47,7 @@ jn.define('tasks/dashboard/src/more-menu', (require, exports, module) => {
 			this.getSelectedView = callbacks.getSelectedView;
 			this.getOwnerId = callbacks.getOwnerId;
 			this.getProjectId = callbacks.getProjectId;
+			this.isScrumProject = callbacks.isScrumProject;
 
 			this.openViewSwitcher = callbacks.openViewSwitcher;
 			this.onListClick = callbacks.onListClick;
@@ -69,6 +55,12 @@ jn.define('tasks/dashboard/src/more-menu', (require, exports, module) => {
 			this.onPlannerClick = callbacks.onPlannerClick;
 			this.onDeadlineClick = callbacks.onDeadlineClick;
 			this.analyticsLabel = analyticsLabel;
+			this.isASC = isASC;
+		}
+
+		setIsASC(isASC)
+		{
+			this.isASC = isASC;
 		}
 
 		/**
@@ -113,9 +105,9 @@ jn.define('tasks/dashboard/src/more-menu', (require, exports, module) => {
 		 */
 		getMenuItems()
 		{
+			const orderIcon = this.isASC ? Icon.ARROW_TOP : Icon.ARROW_DOWN;
+
 			const articleCode = this.getHelpdeskArticleCode();
-
-
 			const viewSwitcherNextMenu = {
 				items: this.getViewSwitcherMenuItems(),
 				sections: [
@@ -135,42 +127,45 @@ jn.define('tasks/dashboard/src/more-menu', (require, exports, module) => {
 							? Loc.getMessage('TASKSMOBILE_DASHBOARD_MORE_MENU_MY_COUNTER_TITLE')
 							: Loc.getMessage('TASKSMOBILE_DASHBOARD_MORE_MENU_COUNTER_TITLE')
 					),
-					showIcon: !airStyleSupported,
+					showIcon: false,
 				}),
 				this.createMenuItem({
 					id: TasksDashboardFilter.counterType.newComments,
 					title: Loc.getMessage('TASKSMOBILE_TASK_VIEW_ROUTER_MORE_MENU_NEW_COMMENTS'),
 					counterColor: Color.accentMainSuccess.toHex(),
 					sectionCode: 'counters',
-					showIcon: !airStyleSupported,
+					showIcon: false,
 				}),
 				this.createMenuItem({
 					id: 'sortByActivity',
 					title: Loc.getMessage('TASKSMOBILE_TASK_VIEW_ROUTER_MORE_MENU_SORT_ACTIVITY_MSGVER_1'),
-					checked: this.selectedSorting === 'ACTIVITY',
+					icon: orderIcon,
+					showIcon: this.selectedSorting === 'ACTIVITY',
 					showTopSeparator: true,
 					sectionCode: 'sorting',
-					sectionTitle: Loc.getMessage('TASKSMOBILE_DASHBOARD_MORE_MENU_SORT_TITLE'),
+					sectionTitle: Loc.getMessage('TASKSMOBILE_DASHBOARD_MORE_MENU_SORT_TITLE_MSGVER_1'),
 				}),
 				this.createMenuItem({
 					id: 'sortByDeadline',
 					title: Loc.getMessage('TASKSMOBILE_TASK_VIEW_ROUTER_MORE_MENU_SORT_DEADLINE'),
-					checked: this.selectedSorting === 'DEADLINE',
+					icon: orderIcon,
+					showIcon: this.selectedSorting === 'DEADLINE',
 					sectionCode: 'sorting',
 				}),
 				this.createMenuItem({
 					id: 'readAll',
 					title: Loc.getMessage('TASKSMOBILE_TASK_VIEW_ROUTER_MORE_MENU_READ_ALL'),
+					icon: Icon.CHATS_WITH_CHECK,
 					showTopSeparator: true,
 					sectionCode: 'settings',
 				}),
-				this.createMenuItem({
+				!this.isScrumProject() && this.createMenuItem({
 					id: 'view-switcher',
 					title: Loc.getMessage('M_TASKS_VIEW_ROUTER_MENU_TITLE'),
-					iconUrl: this.icons[this.getSelectedView()],
+					icon: ViewIcons[this.getSelectedView()],
 					showTopSeparator: true,
 					sectionCode: 'changeView',
-					nextMenu: airStyleSupported ? viewSwitcherNextMenu : null,
+					nextMenu: viewSwitcherNextMenu,
 				}),
 				articleCode && {
 					type: UIMenuType.HELPDESK,
@@ -182,10 +177,11 @@ jn.define('tasks/dashboard/src/more-menu', (require, exports, module) => {
 
 		getViewSwitcherMenuItems = () => {
 			return Object.values(Views)
-				.filter((view) => !(view === Views.KANBAN && this.getProjectId() === null))
+				.filter((view) => !(view === Views.KANBAN && (this.getProjectId() === null || this.isScrumProject())))
 				.map((view) => ({
 					id: view,
 					title: Loc.getMessage(`M_TASKS_VIEW_ROUTER_MENU_TITLE_${view}`),
+					icon: ViewIcons[view],
 					checked: this.getSelectedView() === view,
 					showCheckedIcon: false,
 					sectionCode: 'changeView',
@@ -238,8 +234,8 @@ jn.define('tasks/dashboard/src/more-menu', (require, exports, module) => {
 					analyticsEvent
 						.setEvent('overdue_counters_on')
 						.setElement('overdue_counters_filter')
-						.send();
-
+						.send()
+					;
 					this.onCounterClick(item.id);
 					break;
 
@@ -247,8 +243,8 @@ jn.define('tasks/dashboard/src/more-menu', (require, exports, module) => {
 					analyticsEvent
 						.setEvent('comments_counters_on')
 						.setElement('comments_counters_filter')
-						.send();
-
+						.send()
+					;
 					this.onCounterClick(item.id);
 					break;
 
@@ -257,23 +253,15 @@ jn.define('tasks/dashboard/src/more-menu', (require, exports, module) => {
 					break;
 
 				case 'sortByDeadline':
-				{
 					this.onSortingClick(TasksDashboardSorting.types.DEADLINE);
 					break;
-				}
 
 				case 'readAll':
 					this.onReadAllClick();
 					break;
 
 				case 'view-switcher':
-				{
-					if (!airStyleSupported)
-					{
-						this.openViewSwitcher();
-					}
 					break;
-				}
 
 				case Views.LIST:
 					this.onListClick();

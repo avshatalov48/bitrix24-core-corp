@@ -1,6 +1,7 @@
 <?php
 namespace Bitrix\BIConnector\ExternalSource\Internal;
 
+use Bitrix\Main\Error;
 use Bitrix\Main\Localization\Loc;
 use Bitrix\Main\ORM\Data\DataManager;
 use Bitrix\Main\ORM\Fields\BooleanField;
@@ -12,6 +13,7 @@ use Bitrix\Main\ORM\Fields\Validators\LengthValidator;
 use Bitrix\Main\ORM\Event;
 use Bitrix\Main\ORM\EventResult;
 use Bitrix\Main\ORM\EntityError;
+use Bitrix\Main\Result;
 use Bitrix\Main\Type\DateTime;
 
 /**
@@ -91,7 +93,7 @@ class ExternalSourceTable extends DataManager
 					'required' => true,
 					'validation' => function()
 					{
-						return[
+						return [
 							new LengthValidator(null, 50),
 						];
 					},
@@ -104,7 +106,7 @@ class ExternalSourceTable extends DataManager
 					'required' => true,
 					'validation' => function()
 					{
-						return[
+						return [
 							new LengthValidator(null, 512),
 						];
 					},
@@ -117,7 +119,7 @@ class ExternalSourceTable extends DataManager
 					'required' => true,
 					'validation' => function()
 					{
-						return[
+						return [
 							new LengthValidator(null, 512),
 						];
 					},
@@ -174,11 +176,25 @@ class ExternalSourceTable extends DataManager
 
 		$primary = $event->getParameter('id');
 		$id = $primary['ID'];
+		$validationResult = static::validateSourceBeforeDelete($id);
+		if (!$validationResult->isSuccess())
+		{
+			foreach ($validationResult->getErrors() as $error)
+			{
+				$result->addError(new EntityError($error->getMessage()));
+			}
+		}
 
-		$relations = ExternalSourceDatasetRelationTable::getBySourceId($id);
+		return $result;
+	}
+
+	public static function validateSourceBeforeDelete(int $sourceId): Result
+	{
+		$result = new Result();
+		$relations = ExternalSourceDatasetRelationTable::getBySourceId($sourceId);
 		if ($relations)
 		{
-			$result->addError(new EntityError(Loc::getMessage('BICONNECTOR_EXTERNAL_SOURCE_EXTERNAL_SOURCE_DELETE_RELATION_ERROR')));
+			$result->addError(new Error(Loc::getMessage('BICONNECTOR_EXTERNAL_SOURCE_EXTERNAL_SOURCE_DELETE_RELATION_ERROR_MSGVER_1'), 409));
 		}
 
 		return $result;

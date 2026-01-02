@@ -6,11 +6,16 @@ use Bitrix\Crm\Entity\EntityEditorConfigScope;
 use Bitrix\Crm\Entity\EntityEditorConfig;
 use Bitrix\Crm\Category\DealCategory;
 use Bitrix\Crm\CustomerType;
+use Bitrix\Crm\Integration\Rest\Configuration\Helper;
+use Bitrix\Crm\Service\Container;
 use Bitrix\Main\ArgumentException;
+use Bitrix\Main\Error;
 use Bitrix\Main\InvalidOperationException;
 use Bitrix\Main\NotSupportedException;
-use Bitrix\Rest\Configuration\Helper;
+use Bitrix\Main\Result;
+use Bitrix\Rest\Configuration\Manifest;
 use CCrmOwnerType;
+use CCrmSecurityHelper;
 use Exception;
 
 class DetailConfiguration
@@ -19,12 +24,14 @@ class DetailConfiguration
 	const ENTITY_CODE = 'CRM_DETAIL_CONFIGURATION';
 
 	private $entityTypeDetailConfiguration = [];
+	private bool $isEntityTypeDetailConfigurationReady = false;
 
 	private static $instance = null;
 
 	private $accessManifest = [
 		'total',
-		'crm'
+		'crm',
+		'automated_solution',
 	];
 
 	/**
@@ -32,6 +39,24 @@ class DetailConfiguration
 	 */
 	private function __construct()
 	{
+	}
+
+	/**
+	 * @return DetailConfiguration|null
+	 */
+	public static function getInstance()
+	{
+		if(self::$instance === null)
+		{
+			self::$instance = new self;
+		}
+
+		return self::$instance;
+	}
+
+	private function refreshEntityTypeDetailConfiguration(): void
+	{
+		$this->isEntityTypeDetailConfigurationReady = false;
 		$this->entityTypeDetailConfiguration = [
 			'LEAD'.EntityEditorConfigScope::COMMON => [
 				'ID' => CCrmOwnerType::Lead,
@@ -51,19 +76,118 @@ class DetailConfiguration
 			],
 		];
 
-	}
+		$dynamicTypesMap = Container::getInstance()->getDynamicTypesMap()->load(
+			[
+				'isLoadCategories' => true,
+				'isLoadStages' => false,
+			]
+		);
 
-	/**
-	 * @return DetailConfiguration|null
-	 */
-	public static function getInstance()
-	{
-		if(self::$instance === null)
+		foreach ($dynamicTypesMap->getTypes() as $type)
 		{
-			self::$instance = new self;
+			$entityTypeId = $type->getEntityTypeId();
+			$entityTypeName = CCrmOwnerType::ResolveName($type->getEntityTypeId());
+			$scope = EntityEditorConfigScope::COMMON;
+
+			foreach ($dynamicTypesMap->getCategories($entityTypeId) as $category)
+			{
+				$categoryId = $category->getId();
+				$this->entityTypeDetailConfiguration["$entityTypeName{$scope}_$categoryId"] = [
+					'ID' => $entityTypeId,
+					'SCOPE' => $scope,
+					'CATEGORY_ID' => $categoryId,
+				];
+			}
 		}
 
-		return self::$instance;
+		$this->isEntityTypeDetailConfigurationReady = true;
+	}
+
+	private function getEntityTypeDetailConfiguration(): array
+	{
+		if (!$this->isEntityTypeDetailConfigurationReady)
+		{
+			$this->refreshEntityTypeDetailConfiguration();
+		}
+
+		return $this->entityTypeDetailConfiguration;
+	}
+
+	private function filterDetailConfigurationKeysByOptions(array $configKeyList, array $options): array
+	{
+		$map = array_fill_keys($configKeyList, true);
+
+		return array_keys($this->filterDetailConfigurationListByOptions($map, $options));
+	}
+
+	private function filterDetailConfigurationListByOptions(array $configList, array $options): array
+	{
+		$filteredConfigList = [];
+
+		if (empty($configList))
+		{
+			return $configList;
+		}
+
+		$automatedSolutionModeParams = (new Helper())->getAutomatedSolutionModeParams($options);
+
+		if (
+			$automatedSolutionModeParams['isAutomatedSolutionMode']
+			&& !Container::getInstance()->getUserPermissions()->automatedSolution()->canEdit()
+		)
+		{
+			return $filteredConfigList;
+		}
+
+		$helper = new Helper();
+		$dynamicTypesMap = Container::getInstance()->getDynamicTypesMap()->load(
+			[
+				'isLoadCategories' => true,
+				'isLoadStages' => false,
+			]
+		);
+		$dynamicConfigMap = [];
+		foreach ($dynamicTypesMap->getTypes() as $type)
+		{
+			if (
+				!$helper->checkDynamicTypeExportConditions(
+					array_merge(
+						$automatedSolutionModeParams,
+						$helper->getDynamicTypeCheckExportParamsByEntityTypeId($type->getEntityTypeId() ?? 0)
+					)
+				)
+			)
+			{
+				continue;
+			}
+
+			$scope = EntityEditorConfigScope::COMMON;
+			$dynamicTypePrefix = CCrmOwnerType::DynamicTypePrefixName;
+			foreach ($dynamicTypesMap->getCategories($type->getEntityTypeId()) as $category)
+			{
+				$dynamicEntityTypeId = $type->getEntityTypeId();
+				$categoryId = $category->getId();
+				$configKey = "$dynamicTypePrefix$dynamicEntityTypeId{$scope}_$categoryId";
+				if (isset($configList[$configKey]))
+				{
+					$dynamicConfigMap[$configKey] = true;
+				}
+			}
+		}
+
+		foreach ($configList as $configKey => $config)
+		{
+			$isDynamicType = str_starts_with($configKey, 'DYNAMIC_');
+			if (
+				(!$isDynamicType && !$automatedSolutionModeParams['isAutomatedSolutionMode'])
+				|| isset($dynamicConfigMap[$configKey])
+			)
+			{
+				$filteredConfigList[$configKey] = $config;
+			}
+		}
+
+		return $filteredConfigList;
 	}
 
 	/**
@@ -72,7 +196,7 @@ class DetailConfiguration
 	 */
 	private function exportDetailConfigurationList()
 	{
-		$return = $this->entityTypeDetailConfiguration;
+		$return = $this->getEntityTypeDetailConfiguration();
 		unset($return['LEAD'.EntityEditorConfigScope::COMMON]);
 		$return = array_keys($return);
 
@@ -104,7 +228,12 @@ class DetailConfiguration
 	 */
 	public function export($option)
 	{
-		if(!Helper::checkAccessManifest($option, $this->accessManifest))
+		if (!Manifest::isEntityAvailable('', $option, $this->accessManifest))
+		{
+			return null;
+		}
+
+		if (!(new Helper())->checkAutomatedSolutionModeExportParams($option))
 		{
 			return null;
 		}
@@ -116,6 +245,7 @@ class DetailConfiguration
 		}
 
 		$keys = $this->exportDetailConfigurationList();
+		$keys = $this->filterDetailConfigurationKeysByOptions($keys, $option);
 		$typeEntity = $keys[$step]?:'';
 		$return = [
 			'FILE_NAME' => $typeEntity,
@@ -123,14 +253,25 @@ class DetailConfiguration
 			'NEXT' => count($keys) > $step+1 ? $step : false
 		];
 
-		if(!empty($this->entityTypeDetailConfiguration[$typeEntity]))
+		$entityTypeDetailConfiguration = $this->getEntityTypeDetailConfiguration();
+		$entityTypeDetailConfiguration = $this->filterDetailConfigurationListByOptions(
+			$entityTypeDetailConfiguration,
+			$option
+		);
+		if(!empty($entityTypeDetailConfiguration[$typeEntity]))
 		{
-			global $USER;
-			$extras = [];
+			if (isset($entityTypeDetailConfiguration[$typeEntity]['CATEGORY_ID']))
+			{
+				$extras = ['CATEGORY_ID' => $entityTypeDetailConfiguration[$typeEntity]['CATEGORY_ID']];
+			}
+			else
+			{
+				$extras = [];
+			}
 			$config = new EntityEditorConfig(
-				$this->entityTypeDetailConfiguration[$typeEntity]['ID'],
-				$USER->GetID(),
-				$this->entityTypeDetailConfiguration[$typeEntity]['SCOPE'],
+				$entityTypeDetailConfiguration[$typeEntity]['ID'],
+				CCrmSecurityHelper::GetCurrentUser()->GetID(),
+				$entityTypeDetailConfiguration[$typeEntity]['SCOPE'],
 				$extras
 			);
 			try
@@ -146,10 +287,9 @@ class DetailConfiguration
 		}
 		elseif(mb_strpos($typeEntity,'DEAL') !== false || mb_strpos($typeEntity,'LEAD') !== false)
 		{
-			list($entity, $id) = explode('_', $typeEntity,2);
-			if($this->entityTypeDetailConfiguration[$entity])
+			[$entity, $id] = explode('_', $typeEntity,2);
+			if($entityTypeDetailConfiguration[$entity])
 			{
-				global $USER;
 				$id = intVal($id);
 				if(mb_strpos($typeEntity,'DEAL') !== false)
 				{
@@ -164,9 +304,9 @@ class DetailConfiguration
 					];
 				}
 				$config = new EntityEditorConfig(
-					$this->entityTypeDetailConfiguration[$entity]['ID'],
-					$USER->GetID(),
-					$this->entityTypeDetailConfiguration[$entity]['SCOPE'],
+					$entityTypeDetailConfiguration[$entity]['ID'],
+					CCrmSecurityHelper::GetCurrentUser()->GetID(),
+					$entityTypeDetailConfiguration[$entity]['SCOPE'],
 					$extras
 				);
 				if($id > 0)
@@ -204,7 +344,13 @@ class DetailConfiguration
 	 */
 	public function clear($option)
 	{
-		if(!Helper::checkAccessManifest($option, $this->accessManifest))
+		if(!Manifest::isEntityAvailable('', $option, $this->accessManifest))
+		{
+			return null;
+		}
+
+		$helper = new Helper();
+		if (!$helper->checkAutomatedSolutionModeClearParams($option))
 		{
 			return null;
 		}
@@ -215,39 +361,89 @@ class DetailConfiguration
 		$clearFull = $option['CLEAR_FULL'];
 		if($clearFull)
 		{
-			global $USER;
-
 			$configurationEntity = $this->exportDetailConfigurationList();
+			$configurationEntity = $this->filterDetailConfigurationKeysByOptions($configurationEntity, $option);
+
 			foreach ($configurationEntity as $entity)
 			{
 				$extras = [];
 				if (mb_strpos($entity, 'LEAD') !== false)
 				{
-					list($entity, $id) = explode('_', $entity, 2);
+					[$entity, $id] = explode('_', $entity, 2);
 					$extras = [
 						'LEAD_CUSTOMER_TYPE' => $id
 					];
 				}
 
-				if($this->entityTypeDetailConfiguration[$entity])
+				$entityTypeDetailConfiguration = $this->getEntityTypeDetailConfiguration();
+				$entityTypeDetailConfiguration = $this->filterDetailConfigurationListByOptions(
+					$entityTypeDetailConfiguration,
+					$option
+				);
+
+				if($entityTypeDetailConfiguration[$entity])
 				{
-					$id = $this->entityTypeDetailConfiguration[$entity]['ID'];
-					$scope = $this->entityTypeDetailConfiguration[$entity]['SCOPE'];
+					$id = $entityTypeDetailConfiguration[$entity]['ID'];
+					$scope = $entityTypeDetailConfiguration[$entity]['SCOPE'];
 				}
 				else
 				{
 					continue;
 				}
 
+				if (isset($entityTypeDetailConfiguration[$entity]['CATEGORY_ID']))
+				{
+					$extras['CATEGORY_ID'] = $entityTypeDetailConfiguration[$entity]['CATEGORY_ID'];
+				}
+
 				$config = new EntityEditorConfig(
 					$id,
-					$USER->GetID(),
+					CCrmSecurityHelper::GetCurrentUser()->GetID(),
 					$scope,
 					$extras
 				);
 				try
 				{
 					$config->reset();
+					$config->forceCommonScopeForAll();
+				}
+				catch (\Exception $e)
+				{
+				}
+			}
+		}
+
+		return $result;
+	}
+
+	protected function setEntityTypeDetailConfig(
+		array $configData,
+		int $entityTypeId,
+		int $userId,
+		string $scope,
+		array $extras
+	): Result
+	{
+		$result = new Result();
+
+		$config = new EntityEditorConfig($entityTypeId, $userId, $scope, $extras);
+		$errors = [];
+		$data = $config->normalize($configData, ['remove_if_empty_name' => true]);
+		if(!$config->check($data, $errors))
+		{
+			foreach ($errors as $error)
+			{
+				$result->addError(new Error($error));
+			}
+		}
+		else
+		{
+			$data = $config->sanitize($data);
+			if(!empty($data))
+			{
+				try
+				{
+					$config->set($data);
 					$config->forceCommonScopeForAll();
 				}
 				catch (\Exception $e)
@@ -269,47 +465,102 @@ class DetailConfiguration
 	 */
 	public function import($import)
 	{
-		if(!Helper::checkAccessManifest($import, $this->accessManifest))
+		if(!Manifest::isEntityAvailable('', $import, $this->accessManifest))
 		{
 			return null;
 		}
 
-		$return = [];
+		$helper = new Helper();
+		if (!$helper->checkAutomatedSolutionModeImportParams($import))
+		{
+			return null;
+		}
+
+		$result = [];
+
 		if(!isset($import['CONTENT']['DATA']))
 		{
-			return $return;
+			return $result;
 		}
 		$item = $import['CONTENT']['DATA'];
 		if(!$item['ENTITY'] || !$item['DATA'])
 		{
-			return $return;
+			return $result;
 		}
-		if($this->entityTypeDetailConfiguration[$item['ENTITY']])
+
+		$entityTypeDetailConfiguration = $this->getEntityTypeDetailConfiguration();
+
+		$isDynamicType = (is_string($item['ENTITY']) && mb_substr($item['ENTITY'], 0, 8) === 'DYNAMIC_');
+
+		$automatedSolutionModeParams = $helper->getAutomatedSolutionModeImportParams($import);
+		if (!$isDynamicType && $automatedSolutionModeParams['isAutomatedSolutionMode'])
 		{
-			global $USER;
-			$extras = [];
-			$config = new EntityEditorConfig(
-				$this->entityTypeDetailConfiguration[$item['ENTITY']]['ID'],
-				$USER->GetID(),
-				$this->entityTypeDetailConfiguration[$item['ENTITY']]['SCOPE'],
-				$extras
+			return $result;
+		}
+
+		if ($isDynamicType)
+		{
+			$oldDynamicEntityTypeId = $this->getDynamicEntityTypeIdByEntityId($item['ENTITY']);
+			$isSetRatio = (isset($import['RATIO']) && is_array($import['RATIO']));
+			$newDynamicEntityTypeId = $helper->getDynamicEntityTypeIdByOldEntityTypeId(
+				$oldDynamicEntityTypeId,
+				$isSetRatio ? $import['RATIO'] : []
 			);
-			$data = $config->normalize($item['DATA'], ['remove_if_empty_name' => true]);
-			$data = $config->sanitize($data);
-			if(!empty($data))
+			if (!$helper->checkDynamicTypeImportConditions($newDynamicEntityTypeId, $import))
 			{
-				$config->set($data);
-				$config->forceCommonScopeForAll();
+				return $result;
 			}
 		}
-		elseif(mb_strpos($item['ENTITY'],'DEAL') !== false || mb_strpos($item['ENTITY'],'LEAD') !== false)
+
+		$entityCode = $isDynamicType ? $this->getNewEntityId($import, $item['ENTITY']) : $item['ENTITY'];
+		if ($entityTypeDetailConfiguration[$entityCode])
 		{
-			list($entity, $id) = explode('_', $item['ENTITY'],2);
-			if($this->entityTypeDetailConfiguration[$entity])
+			if (isset($entityTypeDetailConfiguration[$entityCode]['CATEGORY_ID']))
 			{
-				global $USER;
+				$extras = ['CATEGORY_ID' => $entityTypeDetailConfiguration[$entityCode]['CATEGORY_ID']];
+			}
+			else
+			{
+				$extras = [];
+			}
+
+			if (
+				$isDynamicType
+				&& isset($import['RATIO']['CRM_DYNAMIC_TYPES'])
+				&& is_array($import['RATIO']['CRM_DYNAMIC_TYPES'])
+				&& !empty($import['RATIO']['CRM_DYNAMIC_TYPES'])
+			)
+			{
+				$configData = $this->replaceUserFieldNamesWithNewDynamicTypeId(
+					$import['RATIO']['CRM_DYNAMIC_TYPES'],
+					$item['DATA']
+				);
+			}
+			else
+			{
+				$configData = $item['DATA'];
+			}
+
+			$setConfigResult = $this->setEntityTypeDetailConfig(
+				$configData,
+				$entityTypeDetailConfiguration[$entityCode]['ID'],
+				CCrmSecurityHelper::GetCurrentUser()->GetID(),
+				$entityTypeDetailConfiguration[$entityCode]['SCOPE'],
+				$extras
+			);
+
+			if (!$setConfigResult->isSuccess())
+			{
+				$result['ERROR_MESSAGES'][] = $setConfigResult->getErrorMessages();
+			}
+		}
+		elseif(mb_strpos($entityCode,'DEAL') !== false || mb_strpos($entityCode,'LEAD') !== false)
+		{
+			[$entity, $id] = explode('_', $entityCode,2);
+			if ($entityTypeDetailConfiguration[$entity])
+			{
 				$id = intVal($id);
-				if(mb_strpos($item['ENTITY'],'DEAL') !== false)
+				if(mb_strpos($entityCode,'DEAL') !== false)
 				{
 					if(!empty($import['RATIO'][Status::ENTITY_CODE][$id]))
 					{
@@ -326,36 +577,124 @@ class DetailConfiguration
 						'LEAD_CUSTOMER_TYPE' => $id
 					];
 				}
-				$config = new EntityEditorConfig(
-					$this->entityTypeDetailConfiguration[$entity]['ID'],
-					$USER->GetID(),
-					$this->entityTypeDetailConfiguration[$entity]['SCOPE'],
+
+				$setConfigResult = $this->setEntityTypeDetailConfig(
+					$item['DATA'],
+					$entityTypeDetailConfiguration[$entity]['ID'],
+					CCrmSecurityHelper::GetCurrentUser()->GetID(),
+					$entityTypeDetailConfiguration[$entity]['SCOPE'],
 					$extras
 				);
-				$errors = [];
-				$data = $config->normalize($item['DATA'], ['remove_if_empty_name' => true]);
-				if(!$config->check($data, $errors))
+
+				if (!$setConfigResult->isSuccess())
 				{
-					$return['ERROR_MESSAGES'][] = $errors;
+					$result['ERROR_MESSAGES'][] = $setConfigResult->getErrorMessages();
 				}
-				else
+			}
+		}
+
+		return $result;
+	}
+
+	protected function replaceUserFieldNamesWithNewDynamicTypeId(array $dynamicTypeImportInfo, array $configData): array
+	{
+		foreach ($configData as $key => $value)
+		{
+			$matches = [];
+			if (is_array($value))
+			{
+				$configData[$key] = $this->replaceUserFieldNamesWithNewDynamicTypeId($dynamicTypeImportInfo, $value);
+			}
+			elseif (
+				$key === 'name'
+				&& is_string($value)
+				&& preg_match('/^UF_CRM_(\\d+)_/u', $value, $matches)
+			)
+			{
+				$oldDynamicTypeId = (int)$matches[1];
+				$infoKey = "DT$oldDynamicTypeId";
+				if (
+					$oldDynamicTypeId > 0
+					&& isset($dynamicTypeImportInfo[$infoKey])
+					&& $dynamicTypeImportInfo[$infoKey] > 0
+				)
 				{
-					$data = $config->sanitize($data);
-					if(!empty($data))
+					$newDynamicTypeId = (int)$dynamicTypeImportInfo[$infoKey];
+					$configData[$key] = "UF_CRM_{$newDynamicTypeId}_" . mb_substr($value, mb_strlen($matches[0]));
+				}
+			}
+		}
+
+		return $configData;
+	}
+
+	private function getIdsByEntityId(string $entityId): array
+	{
+		static $data = [];
+
+		if (!isset($data[$entityId]))
+		{
+			$scope = EntityEditorConfigScope::COMMON;
+			$dynamicTypePrefix = CCrmOwnerType::DynamicTypePrefixName;
+			$matches = [];
+
+			if ($entityId !== '' && preg_match("/^$dynamicTypePrefix(\\d+){$scope}_(\\d+)$/u", $entityId, $matches))
+			{
+				$data[$entityId] = [(int)$matches[1], (int)$matches[2]];
+			}
+			else
+			{
+				$data[$entityId] = [0, 0];
+			}
+		}
+
+		return $data[$entityId];
+	}
+
+	protected function getDynamicEntityTypeIdByEntityId(string $entityId): int
+	{
+		$ids = $this->getIdsByEntityId($entityId);
+
+		return $ids[0];
+	}
+
+	protected function getDynamicCategoryIdByEntityId(string $entityId): int
+	{
+		$ids = $this->getIdsByEntityId($entityId);
+
+		return $ids[1];
+	}
+
+	protected function getNewEntityId(array $importData, string $entityId): string
+	{
+		$result = $entityId;
+
+		if ($entityId !== '')
+		{
+			$oldDynamicEntityTypeId = $this->getDynamicEntityTypeIdByEntityId($entityId);
+			$oldCategoryId = $this->getDynamicCategoryIdByEntityId($entityId);
+			if ($oldDynamicEntityTypeId > 0 && $oldCategoryId > 0)
+			{
+				$helper = new Helper();
+				$isSetRatio = (isset($importData['RATIO']) && is_array($importData['RATIO']));
+				$newDynamicEntityTypeId = $helper->getDynamicEntityTypeIdByOldEntityTypeId(
+					$oldDynamicEntityTypeId,
+					$isSetRatio ? $importData['RATIO'] : []
+				);
+				$categoryRatioKey = "DT{$oldDynamicEntityTypeId}_$oldCategoryId";
+				if ($newDynamicEntityTypeId > 0 && isset($importData['RATIO']['CRM_STATUS'][$categoryRatioKey]))
+				{
+					$newCategoryId = (int)$importData['RATIO']['CRM_STATUS'][$categoryRatioKey];
+					if ($newCategoryId > 0)
 					{
-						try
-						{
-							$config->set($data);
-							$config->forceCommonScopeForAll();
-						}
-						catch (\Exception $e)
-						{
-						}
+						$scope = EntityEditorConfigScope::COMMON;
+						$dynamicTypePrefix = CCrmOwnerType::DynamicTypePrefixName;
+						$result = "$dynamicTypePrefix$newDynamicEntityTypeId{$scope}_$newCategoryId";
 					}
 				}
 			}
 		}
 
-		return $return;
+		return $result;
 	}
 }

@@ -2,15 +2,29 @@
 
 namespace Bitrix\HumanResources\Contract\Service;
 
+use Bitrix\HumanResources\Exception\DeleteFailedException;
+use Bitrix\HumanResources\Exception\UpdateFailedException;
 use Bitrix\HumanResources\Item;
+use Bitrix\HumanResources\Item\NodeMember;
 use Bitrix\HumanResources\Type;
 use Bitrix\HumanResources\Type\MemberSubordinateRelationType;
+use Bitrix\HumanResources\Type\StructureRole;
 
 interface NodeMemberService
 {
 	public const MEMBER_TO_MEMBER_SUBORDINATE_CACHE_KEY = 'node_member/member_from/%d/member_to/%d';
 
 	public function getMemberInformation(int $memberId): Item\NodeMember;
+
+	/**
+	 * @param NodeMember $nodeMember
+	 * @param Item\Node $node
+	 *
+	 * @return NodeMember
+	 *
+	 * @throws UpdateFailedException
+	 *
+	 */
 	public function moveMember(Item\NodeMember $nodeMember, Item\Node $node): Item\NodeMember;
 
 	/**
@@ -46,6 +60,14 @@ interface NodeMemberService
 	 * @param Item\NodeMember $nodeMember
 	 *
 	 * @return Item\NodeMember|null
+	 *
+	 * @return NodeMember|null
+	 * @throws UpdateFailedException
+	 * @throws \Bitrix\HumanResources\Exception\WrongStructureItemException
+	 * @throws \Bitrix\Main\ArgumentException
+	 * @throws \Bitrix\Main\ObjectPropertyException
+	 * @throws \Bitrix\Main\SystemException
+	 * @throws DeleteFailedException
 	 */
 	public function removeUserMemberFromDepartment(Item\NodeMember $nodeMember): ?Item\NodeMember;
 
@@ -54,6 +76,14 @@ interface NodeMemberService
 	 * @param array $departmentUserIds
 	 *
 	 * @return Item\Collection\NodeMemberCollection
+	 * @throws \Bitrix\HumanResources\Exception\CreationFailedException
+	 * @throws \Bitrix\HumanResources\Exception\DeleteFailedException
+	 * @throws \Bitrix\Main\ArgumentException
+	 * @throws \Bitrix\Main\DB\DuplicateEntryException
+	 * @throws \Bitrix\Main\DB\SqlQueryException
+	 * @throws \Bitrix\Main\ObjectPropertyException
+	 * @throws \Bitrix\Main\SystemException
+	 * @throws \Exception
 	 */
 	public function saveUsersToDepartment(Item\Node $node, array $departmentUserIds = []): Item\Collection\NodeMemberCollection;
 
@@ -74,4 +104,5 @@ interface NodeMemberService
 	 * @throws \Bitrix\Main\SystemException
 	 */
 	public function moveUsersToDepartment(Item\Node $node, array $departmentUserIds = []): Item\Collection\NodeMemberCollection;
+	public function getNearestUserIdByEmployeeUserIdAndRole(int $employeeUserId, StructureRole $structureRole): int;
 }

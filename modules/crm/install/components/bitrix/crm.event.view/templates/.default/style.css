@@ -119,3 +119,7 @@ table.bx-interface-grid td { padding: 6px !important; }
 	text-overflow: ellipsis;
 }
 
+.crm-event-history-filter-wrapper {
+	margin-top: 18px;
+	margin-bottom: 18px;
+}

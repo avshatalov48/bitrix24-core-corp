@@ -14,6 +14,7 @@ class MappingEntity implements Item, Arrayable, \JsonSerializable
 	 * @param string $avatarLink
 	 * @param string $position
 	 * @param ?int $suggestId
+	 * @param ?string $fullName
 	 */
 	public function __construct(
 		public int $id,
@@ -21,6 +22,7 @@ class MappingEntity implements Item, Arrayable, \JsonSerializable
 		public string $avatarLink,
 		public string $position,
 		public ?int $suggestId = null,
+		public ?string $fullName = null,
 	)
 	{}
 
@@ -32,6 +34,7 @@ class MappingEntity implements Item, Arrayable, \JsonSerializable
 			'avatarLink' => $this->avatarLink,
 			'position' => $this->position,
 			'suggestId' => $this->suggestId,
+			'fullName' => $this->fullName,
 		];
 	}
 

@@ -28,7 +28,7 @@ class FieldConnectorFactory
 				$field,
 				$member,
 				$this->memberConnectorFactory,
-				$this->documentRepository
+				$this->documentRepository,
 			),
 			default => null,
 		};
@@ -45,7 +45,7 @@ class FieldConnectorFactory
 			$field,
 			$member,
 			$this->memberConnectorFactory,
-			new Connector\Crm\SmartDocument($member->entityId)
+			new Connector\Crm\SmartDocument($member->entityId),
 		);
 	}
 }

@@ -16,7 +16,7 @@ class RoleForUpdateDto implements Arrayable
 	protected string $code = '';
 	protected string $nameTranslate = '';
 	protected string $descriptionTranslate = '';
-	protected string $avatar = '';
+	protected string|int $avatar = '';
 	protected string $instruction = '';
 	protected array $accessCodes = [];
 	protected string $authorId = '';
@@ -54,10 +54,6 @@ class RoleForUpdateDto implements Arrayable
 			$this->descriptionTranslate = $data['DESCRIPTION_TEXT'];
 		}
 
-		if (array_key_exists('AVATAR', $data) && is_string($data['AVATAR']))
-		{
-			$this->avatar = $data['AVATAR'];
-		}
 
 		if (array_key_exists('AVATAR_URL', $data) && is_string($data['AVATAR_URL']))
 		{

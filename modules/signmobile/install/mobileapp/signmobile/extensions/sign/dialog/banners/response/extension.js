@@ -77,6 +77,7 @@ jn.define('sign/dialog/banners/response', (require, exports, module) => {
 				buttonsView: View(
 					{},
 					Button({
+						testId: 'responseBanner-button-confirm',
 						text: Loc.getMessage('SIGN_MOBILE_DIALOG_RESPONSE_BUTTON_CONFIRM'),
 						size: ButtonSize.XL,
 						design: ButtonDesign.FILLED,
@@ -115,6 +116,7 @@ jn.define('sign/dialog/banners/response', (require, exports, module) => {
 						},
 					}),
 					Button({
+						testId: 'responseBanner-button-close',
 						text: Loc.getMessage('SIGN_MOBILE_DIALOG_RESPONSE_BUTTON_CLOSE'),
 						size: ButtonSize.XL,
 						design: ButtonDesign.PLAN_ACCENT,

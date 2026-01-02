@@ -3,66 +3,74 @@
  */
 jn.define('im/messenger/api/tab', (require, exports, module) => {
 	const { Type } = require('type');
-	const { EntityReady } = require('entity-ready');
 
 	const {
 		EventType,
 		ComponentCode,
 	} = require('im/messenger/const');
+	const { createPromiseWithResolvers } = require('im/messenger/lib/utils');
+	const { getApiVersion } = require('im/messenger/api/api-version');
 
 	/**
+	 * @param {TabOptions} options
 	 * @return {Promise}
 	 */
-	async function openChatsTab()
+	async function openChatsTab(options)
 	{
-		return openTab(ComponentCode.imMessenger);
+		return openTab(ComponentCode.imMessenger, options);
 	}
 
 	/**
+	 * @param {TabOptions} options
 	 * @return {Promise}
 	 */
-	async function openCopilotTab()
+	async function openCopilotTab(options)
 	{
-		return openTab(ComponentCode.imCopilotMessenger);
+		return openTab(ComponentCode.imCopilotMessenger, options);
 	}
 
 	/**
+	 * @param {TabOptions} options
 	 * @return {Promise}
 	 */
-	async function openChannelsTab()
+	async function openChannelsTab(options)
 	{
-		return openTab(ComponentCode.imChannelMessenger);
+		return openTab(ComponentCode.imChannelMessenger, options);
 	}
 
 	/**
+	 * @param {TabOptions} options
 	 * @return {Promise}
 	 */
-	async function openCollabsTab()
+	async function openCollabsTab(options)
 	{
-		return openTab(ComponentCode.imCollabMessenger);
+		return openTab(ComponentCode.imCollabMessenger, options);
 	}
 
 	/**
+	 * @param {TabOptions} options
 	 * @return {Promise}
 	 */
-	async function openLinesTab()
+	async function openLinesTab(options)
 	{
-		return openTab(ComponentCode.imOpenlinesRecent);
+		return openTab(ComponentCode.imOpenlinesRecent, options);
 	}
 
 	/**
+	 * @param {TabOptions} options
 	 * @return {Promise}
 	 */
-	async function openNotificationsTab()
+	async function openNotificationsTab(options)
 	{
-		return openTab(ComponentCode.imNotify);
+		return openTab(ComponentCode.imNotify, options);
 	}
 
 	/**
 	 * @param {string} tabComponentCode
+	 * @param {TabOptions} options
 	 * @return {Promise}
 	 */
-	async function openTab(tabComponentCode)
+	async function openTab(tabComponentCode, options)
 	{
 		if (!Object.values(ComponentCode).includes(tabComponentCode))
 		{
@@ -71,40 +79,35 @@ jn.define('im/messenger/api/tab', (require, exports, module) => {
 			return Promise.reject(error);
 		}
 
-		await EntityReady.wait('im.navigation');
+		const apiVersion = await getApiVersion();
 
 		const {
 			promise,
 			resolve,
 			reject,
 		} = createPromiseWithResolvers();
+		try
+		{
+			const { sendChangeTabEvent } = require(`im/messenger/api/tab/v${apiVersion}`);
 
-		registerChangeTabResultHandler(
-			tabComponentCode,
-			resolve,
-			reject,
-		);
+			registerChangeTabResultHandler(
+				tabComponentCode,
+				resolve,
+				reject,
+			);
 
-		sendChangeTabEvent(tabComponentCode);
+			sendChangeTabEvent(tabComponentCode, options)
+				.catch((error) => {
+					console.error('Messenger api: openTab error', error);
+				})
+			;
+		}
+		catch (error)
+		{
+			reject(error);
+		}
 
 		return promise;
-	}
-
-	function createPromiseWithResolvers()
-	{
-		let resolvePromise = () => {};
-
-		let rejectPromise = () => {};
-		const promise = new Promise((resolve, reject) => {
-			resolvePromise = resolve;
-			rejectPromise = reject;
-		});
-
-		return {
-			promise,
-			resolve: resolvePromise,
-			reject: rejectPromise,
-		};
 	}
 
 	function registerChangeTabResultHandler(tabComponentCode, successHandler, errorHandler)
@@ -130,15 +133,6 @@ jn.define('im/messenger/api/tab', (require, exports, module) => {
 		BX.addCustomEvent(EventType.navigation.changeTabResult, handler);
 
 		return handler;
-	}
-
-	function sendChangeTabEvent(tabComponentCode)
-	{
-		BX.postComponentEvent(
-			EventType.navigation.changeTab,
-			[tabComponentCode],
-			ComponentCode.imNavigation,
-		);
 	}
 
 	module.exports = {

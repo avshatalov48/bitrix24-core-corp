@@ -3,7 +3,7 @@
 namespace Bitrix\Tasks\Provider\Tag;
 
 use Bitrix\Tasks\Provider\Tag\Builders\TagSelectBuilder;
-use Bitrix\Tasks\Provider\TaskQueryInterface;
+use Bitrix\Tasks\Provider\Query\TaskQueryInterface;
 
 class TagQuery implements TaskQueryInterface
 {

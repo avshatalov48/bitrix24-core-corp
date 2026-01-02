@@ -6,7 +6,6 @@ use Bitrix\Crm;
 use Bitrix\Crm\Activity;
 use Bitrix\Crm\Activity\CommunicationStatistics;
 use Bitrix\Crm\Automation\Trigger\EmailSentTrigger;
-use Bitrix\Crm\Service\Timeline;
 use Bitrix\Crm\Timeline\LogMessageType;
 use Bitrix\Mail\Message;
 use Bitrix\Main\Config;
@@ -173,7 +172,7 @@ class Email extends Activity\Provider\Base
 	{
 		$direction = isset($activityFields['DIRECTION']) ? (int)$activityFields['DIRECTION'] : \CCrmActivityDirection::Undefined;
 
-		if ($direction === \CCrmActivityDirection::Outgoing && Crm\Automation\Factory::canUseAutomation())
+		if ($direction === \CCrmActivityDirection::Outgoing)
 		{
 			EmailSentTrigger::execute($activityFields['BINDINGS'], $activityFields);
 		}
@@ -188,7 +187,6 @@ class Email extends Activity\Provider\Base
 					Crm\Badge\Type\MailMessageDeliveryStatus::MAIL_MESSAGE_DELIVERY_ERROR_VALUE,
 				);
 				$badge->deleteByEntity($itemIdentifier, $badge->getType(), $badge->getValue());
-				Timeline\Monitor::getInstance()->onBadgesSync($itemIdentifier);
 			}
 		}
 	}

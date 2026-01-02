@@ -5,7 +5,10 @@ import { mapGetters } from 'ui.vue3.vuex';
 import { BIcon as Icon, Set as IconSet } from 'ui.icon-set.api.vue';
 
 import { Model } from 'booking.const';
+import { DealData } from 'booking.model.bookings';
+import { ClientData } from 'booking.model.clients';
 import { bookingService } from 'booking.provider.service.booking-service';
+import { BookingAnalytics } from 'booking.lib.analytics';
 import { limit } from 'booking.lib.limit';
 import { grid } from 'booking.lib.grid';
 import './base-cell.css';
@@ -25,6 +28,10 @@ export const BaseCell = {
 			type: Object,
 			required: true,
 		},
+		className: {
+			type: [String, Object],
+			default: '',
+		},
 	},
 	components: {
 		Icon,
@@ -43,7 +50,8 @@ export const BaseCell = {
 			timezone: `${Model.Interface}/timezone`,
 			offset: `${Model.Interface}/offset`,
 			isFeatureEnabled: `${Model.Interface}/isFeatureEnabled`,
-			draggedBookingId: `${Model.Interface}/draggedBookingId`,
+			draggedDataTransfer: `${Model.Interface}/draggedDataTransfer`,
+			embedItems: `${Model.Interface}/embedItems`,
 		}),
 		selected(): boolean
 		{
@@ -65,6 +73,26 @@ export const BaseCell = {
 		height(): number
 		{
 			return grid.calculateRealHeight(this.cell.fromTs, this.cell.toTs);
+		},
+		externalData(): DealData[]
+		{
+			return this.embedItems;
+		},
+		clients(): ClientData[]
+		{
+			const clients = this.embedItems.filter((item: DealData) => {
+				return item.entityTypeId === 'CONTACT' || item.entityTypeId === 'COMPANY';
+			});
+
+			return clients.map((item: DealData) => {
+				return {
+					id: item.value,
+					type: {
+						code: item.entityTypeId,
+						module: item.moduleId,
+					},
+				};
+			});
 		},
 	},
 	methods: {
@@ -99,12 +127,11 @@ export const BaseCell = {
 
 			this.creatingBookingId = `tmp-id-${Date.now()}-${Math.random()}`;
 
-			void this.$store.dispatch(`${Model.Interface}/addQuickFilterIgnoredBookingId`, this.creatingBookingId);
+			void this.$store.dispatch(`${Model.Filter}/addQuickFilterIgnoredBookingId`, this.creatingBookingId);
 			void this.$store.dispatch(`${Model.Bookings}/add`, {
 				id: this.creatingBookingId,
 				dateFromTs: this.cell.fromTs,
 				dateToTs: this.cell.toTs,
-				name: this.loc('BOOKING_BOOKING_DEFAULT_BOOKING_NAME'),
 				resourcesIds: [...new Set([
 					this.cell.resourceId,
 					...(this.intersections[0] ?? []),
@@ -112,6 +139,8 @@ export const BaseCell = {
 				])],
 				timezoneFrom: this.timezone,
 				timezoneTo: this.timezone,
+				externalData: this.externalData,
+				clients: this.clients,
 			});
 
 			Event.bind(window, 'mouseup', this.addBooking);
@@ -127,23 +156,29 @@ export const BaseCell = {
 				return;
 			}
 
-			setTimeout(() => {
+			setTimeout(async (): Promise<void> => {
 				const creatingBooking = this.$store.getters[`${Model.Bookings}/getById`](this.creatingBookingId);
-
-				void bookingService.add(creatingBooking);
+				const result = await bookingService.add(creatingBooking);
+				if (result.success && result.booking)
+				{
+					const overbookingMap = this.$store.getters[`${Model.Bookings}/overbookingMap`];
+					BookingAnalytics.sendAddBooking({
+						isOverbooking: Boolean(overbookingMap?.has?.(result.booking.id)),
+					});
+				}
 			});
 		},
 	},
 	template: `
 		<div
 			class="booking-booking-base-cell"
-			:class="{
+			:class="[className, {
 				'--selected': selected,
 				'--bounded-to-bottom': cell.boundedToBottom,
 				'--height-is-less-than-40': height < 40,
 				'--compact-mode': height < 40 || zoom < 0.8,
 				'--small': height <= 12.5,
-			}"
+			}]"
 			:style="{
 				'--height': height + 'px',
 			}"
@@ -161,7 +196,7 @@ export const BaseCell = {
 					>
 						<span class="booking-booking-grid-cell-time-inner">
 							<input
-								v-if="!draggedBookingId"
+								v-if="!draggedDataTransfer.id"
 								class="booking-booking-grid-cell-checkbox"
 								type="checkbox"
 								:checked="selected"
@@ -173,7 +208,7 @@ export const BaseCell = {
 						</span>
 					</label>
 					<div
-						v-if="!hasSelectedCells && !draggedBookingId"
+						v-if="!hasSelectedCells && !draggedDataTransfer.id"
 						class="booking-booking-grid-cell-select-button-container"
 						ref="button"
 					>

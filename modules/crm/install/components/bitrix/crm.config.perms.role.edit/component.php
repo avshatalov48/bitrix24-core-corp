@@ -18,8 +18,7 @@ if (!CModule::IncludeModule('crm'))
 	return;
 }
 
-$CrmPerms = new CCrmPerms($USER->GetID());
-if (!$CrmPerms->HavePerm('CONFIG', BX_CRM_PERM_CONFIG, 'WRITE'))
+if (!\Bitrix\Crm\Service\Container::getInstance()->getUserPermissions()->isCrmAdmin())
 {
 	ShowError(GetMessage('CRM_PERMISSION_DENIED'));
 
@@ -58,10 +57,10 @@ if ($arResult['IS_PERMITTED'])
 	{
 		$permissions = (isset($_POST['ROLE_PERMS']) && is_array($_POST['ROLE_PERMS'])) ? $_POST['ROLE_PERMS'] : [];
 		$bVarsFromForm = true;
-		$arFields = array(
+		$arFields = [
 			'NAME' => $_POST['NAME'],
-			'RELATION' => $permissions
-		);
+			'PERMISSIONS' => $permissions,
+		];
 
 		$CCrmRole = new CcrmRole();
 		if ($arParams['ROLE_ID'] > 0)
@@ -187,7 +186,8 @@ foreach ($factory->getCategories() as $category)
 		continue;
 	}
 
-	$entityName = htmlspecialcharsbx(Service\UserPermissions::getPermissionEntityType($factory->getEntityTypeId(), $category->getId()));
+	$entityName = htmlspecialcharsbx((new \Bitrix\Crm\Category\PermissionEntityTypeHelper($factory->getEntityTypeId()))
+		->getPermissionEntityTypeForCategory($category->getId()));
 	$entityTitle = $category->getSingleNameIfPossible();
 	$arResult['ENTITY'][$entityName] =  htmlspecialcharsbx($entityTitle);
 	$arResult['ROLE_PERM'][$entityName] = $permissionSet;
@@ -202,7 +202,8 @@ foreach ($factory->getCategories() as $category)
 	{
 		continue;
 	}
-	$entityName = htmlspecialcharsbx(Service\UserPermissions::getPermissionEntityType($factory->getEntityTypeId(), $category->getId()));
+	$entityName = htmlspecialcharsbx((new \Bitrix\Crm\Category\PermissionEntityTypeHelper($factory->getEntityTypeId()))
+		->getPermissionEntityTypeForCategory($category->getId()));
 	$entityTitle = $category->getSingleNameIfPossible();
 	$arResult['ENTITY'][$entityName] = htmlspecialcharsbx($entityTitle);
 	$arResult['ROLE_PERM'][$entityName] = $permissionSet;
@@ -243,7 +244,8 @@ if (\Bitrix\Crm\Settings\InvoiceSettings::getCurrent()->isSmartInvoiceEnabled())
 		$isAutomationEnabled = $smartInvoiceFactory->isAutomationEnabled();
 		foreach ($smartInvoiceFactory->getCategories() as $category)
 		{
-			$entityName = htmlspecialcharsbx(Service\UserPermissions::getPermissionEntityType(\CCrmOwnerType::SmartInvoice, $category->getId()));
+			$entityName = htmlspecialcharsbx((new \Bitrix\Crm\Category\PermissionEntityTypeHelper(\CCrmOwnerType::SmartInvoice))
+				->getPermissionEntityTypeForCategory($category->getId()));
 			$entityTitle = \CCrmOwnerType::GetDescription(\CCrmOwnerType::SmartInvoice);
 			if ($smartInvoiceFactory->isCategoriesEnabled())
 			{
@@ -317,7 +319,8 @@ foreach ($typesMap->getTypes() as $type)
 	$stagesFieldName = htmlspecialcharsbx($typesMap->getStagesFieldName($type->getEntityTypeId()));
 	foreach ($typesMap->getCategories($type->getEntityTypeId()) as $category)
 	{
-		$entityName = htmlspecialcharsbx(Service\UserPermissions::getPermissionEntityType($type->getEntityTypeId(), $category->getId()));
+		$entityName = htmlspecialcharsbx((new \Bitrix\Crm\Category\PermissionEntityTypeHelper($type->getEntityTypeId()))
+			->getPermissionEntityTypeForCategory($category->getId()));
 		$entityTitle = $type->getTitle();
 		if ($type->getIsCategoriesEnabled())
 		{

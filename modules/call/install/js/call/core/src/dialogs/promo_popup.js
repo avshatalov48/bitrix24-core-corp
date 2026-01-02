@@ -63,7 +63,7 @@ export class PromoPopup
 							children: [
 								Dom.create("div", {
 									props: {className: "bx-call-promo-title"},
-									text: BX.message("IM_CALL_DOCUMENT_PROMO_TITLE")
+									text: BX.message("IM_CALL_DOCUMENT_PROMO_TITLE_MSGVER_2")
 								}),
 								Dom.create("div", {
 									props: {className: "bx-call-promo-text"},

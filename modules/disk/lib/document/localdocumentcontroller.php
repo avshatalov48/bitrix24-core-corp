@@ -5,7 +5,6 @@ namespace Bitrix\Disk\Document;
 
 use Bitrix\Disk\Analytics\DiskAnalytics;
 use Bitrix\Disk\Analytics\Enum\DocumentHandlerType;
-use Bitrix\Disk\Controller\Integration\Flipchart;
 use Bitrix\Disk\Document\Flipchart\BoardService;
 use Bitrix\Disk\Driver;
 use Bitrix\Disk\File;
@@ -13,7 +12,6 @@ use Bitrix\Disk\Folder;
 use Bitrix\Disk\Internals;
 use Bitrix\Disk\Internals\Error\Error;
 use Bitrix\Disk\Uf\FileUserType;
-use Bitrix\Disk\UrlManager;
 use Bitrix\Disk\User;
 use Bitrix\Disk\Version;
 use Bitrix\Main\Application;
@@ -235,6 +233,7 @@ class LocalDocumentController extends Internals\Controller
 			$fileData = new BlankFileData($type);
 		}
 
+		$calledFromDisk = false;
 		if($this->request->getPost('targetFolderId'))
 		{
 			$folder = Folder::loadById((int)$this->request->getPost('targetFolderId'), array('STORAGE'));
@@ -243,6 +242,7 @@ class LocalDocumentController extends Internals\Controller
 				$this->errorCollection->add(array(new Error(Loc::getMessage('DISK_LOCAL_DOC_CONTROLLER_ERROR_COULD_NOT_FIND_FOLDER'), self::ERROR_COULD_NOT_FIND_FOLDER)));
 				$this->sendJsonErrorResponse();
 			}
+			$calledFromDisk = true;
 		}
 		else
 		{
@@ -319,9 +319,10 @@ class LocalDocumentController extends Internals\Controller
 		});
 
 		$openUrl = null;
+		$urlManager = Driver::getInstance()->getUrlManager();
 		if ($type === 'board')
 		{
-			$openUrl = Driver::getInstance()->getUrlManager()->getUrlForViewBoard($newFile->getId());
+			$openUrl = $urlManager->getUrlForViewBoard($newFile, false, $calledFromDisk ? 'disk_page' : 'docs_attach');
 		}
 
 		$this->sendJsonSuccessResponse(array(
@@ -336,7 +337,7 @@ class LocalDocumentController extends Internals\Controller
 				'nameWithoutExtension' => getFileNameWithoutExtension($newFile->getName()),
 			),
 			'folderName' => $storage->getProxyType()->getTitleForCurrentUser() . ' / ' . $folder->getName(),
-			'link' => Driver::getInstance()->getUrlManager()->getUrlForStartEditFile($newFile->getId(), self::CODE),
+			'link' => $urlManager->getUrlForStartEditFile($newFile->getId(), self::CODE),
 			'openUrl' => $openUrl,
 		));
 	}

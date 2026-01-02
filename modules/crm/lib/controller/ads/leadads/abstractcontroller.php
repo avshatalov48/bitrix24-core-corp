@@ -2,6 +2,7 @@
 
 namespace Bitrix\Crm\Controller\Ads\LeadAds;
 
+use Bitrix\Crm\Service\Container;
 use Bitrix\Main;
 use Bitrix\Main\Engine\Response\AjaxJson;
 use Bitrix\Seo\LeadAds;
@@ -25,9 +26,14 @@ abstract class AbstractController extends Main\Engine\Controller
 	 */
 	protected function checkPermissions(bool $writeMode): bool
 	{
-		$auth = new \CCrmPerms($this->getCurrentUser()->getId());
+		$webformPermissions = Container::getInstance()->getUserPermissions()->webForm();
 
-		if($auth->havePerm('WEBFORM', BX_CRM_PERM_NONE, $writeMode ? 'WRITE' : 'READ'))
+		$hasAccess = $writeMode
+			? $webformPermissions->canEdit()
+			: $webformPermissions->canRead()
+		;
+
+		if(!$hasAccess)
 		{
 			throw new Main\AccessDeniedException();
 		}

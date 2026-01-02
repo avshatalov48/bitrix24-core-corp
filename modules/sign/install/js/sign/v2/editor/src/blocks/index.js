@@ -16,4 +16,26 @@ import MyB2eReference from './b2e/myb2ereference';
 import EmployeeDynamic from './b2e/employeedynamic';
 import HcmLinkReference from './b2e/hcmlinkreference';
 
-export { Date, Dummy, MyRequisites, MySign, MyStamp, Number, Reference, Requisites, Sign, Stamp, Text, MyReference, B2eReference, MyB2eReference, EmployeeDynamic, HcmLinkReference };
+import DocumentDate from './b2e/documentdate';
+import ExternalId from './b2e/externalid';
+
+export {
+	Date,
+	Dummy,
+	MyRequisites,
+	MySign,
+	MyStamp,
+	Number,
+	Reference,
+	Requisites,
+	Sign,
+	Stamp,
+	Text,
+	MyReference,
+	B2eReference,
+	MyB2eReference,
+	EmployeeDynamic,
+	HcmLinkReference,
+	DocumentDate,
+	ExternalId,
+};

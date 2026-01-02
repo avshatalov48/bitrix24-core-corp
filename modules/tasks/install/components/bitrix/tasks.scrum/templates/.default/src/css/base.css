@@ -7,10 +7,6 @@
 	padding-right: 15px !important;
 }
 
-.tasks-scrum-wrapper .pagetitle-below {
-	margin-right: 15px;
-}
-
 .tasks-scrum-side-panel-padding {
 	padding: 0 35px 0 20px !important;
 }
@@ -105,7 +101,7 @@
 	left: 0;
 	z-index: -1;
 	background: var(--tasks_scrum-white_alpha_16);
-	backdrop-filter: blur(28px);
+	backdrop-filter: var(--ui-bg-blur-accent, blur(28px));
 	border-radius: var(--ui-border-radius-xs, 3px);
 }
 
@@ -344,16 +340,6 @@
 	cursor: grab;
 	z-index: 10;
 	padding: 4px;
-}
-
-.tasks-scrum-sprint-stats {
-	display: inline-flex;
-	padding: 8px 6px;
-	color: #fff;
-	text-decoration: none;
-	font-size: 13px;
-	font-weight: var(--ui-font-weight-bold);
-	margin-left: auto;
 }
 
 .tasks-scrum-project-side-panel {

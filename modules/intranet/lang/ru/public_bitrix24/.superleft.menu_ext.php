@@ -34,6 +34,7 @@ $MESS["MENU_RPA_SECTION"] = "Роботизация бизнеса (RPA)";
 $MESS["MENU_BIZPROC"] = "Бизнес-процессы";
 $MESS["MENU_MARKETPLACE_ALL"] = "Все приложения";
 $MESS["MENU_MARKETPLACE_APPS_2"] = "Маркет";
+$MESS["MENU_MARKETPLACE_APPS_2_MSGVER_1"] = "Маркетплейс";
 $MESS["MENU_ONEC_SECTION"] = "1С + CRM Битрикс24";
 $MESS["MENU_LICENSE"] = "Мой тариф";
 $MESS["MENU_BLOG"] = "Сообщения";

@@ -64,7 +64,15 @@ class CBPRpaChangeStageActivity extends CBPActivity
 
 	private function getCurrentStage()
 	{
-		$document = $this->workflow->getService('DocumentService')->getDocument($this->getDocumentId());
+		$documentService = $this->workflow->GetService('DocumentService');
+		if (defined('\CBPDocument::PARAM_USED_DOCUMENT_FIELDS'))
+		{
+			$document = $documentService->getDocument($this->getDocumentId(), select: ['STAGE_ID']);
+		}
+		else
+		{
+			$document = $documentService->getDocument($this->getDocumentId());
+		}
 
 		return (int) $document['STAGE_ID'];
 	}

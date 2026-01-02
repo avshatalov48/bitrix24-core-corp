@@ -69,13 +69,7 @@ class CrmDocumentViewComponent extends ViewComponent
 		{
 			$isNewDocument = false;
 		}
-//		$emptyFields = $this->document->checkFields();
-//		if((!empty($emptyFields) && !$this->document->ID && $this->arParams['MODE'] !== 'change') || $this->arParams['EDIT'] && \Bitrix\DocumentGenerator\Driver::getInstance()->getUserPermissions()->canModifyDocument($this->document))
-//		{
-//			$this->arResult['FIELDS'] = $this->document->getFields([], false, true);
-//			$this->includeComponentTemplate('edit');
-//			return;
-//		}
+
 		if (
 			$this->arParams['MODE'] === 'change'
 			&& $this->document->ID > 0
@@ -90,10 +84,13 @@ class CrmDocumentViewComponent extends ViewComponent
 			{
 				CreationMethod::markDocumentAsCreatedByPublic($this->document);
 			}
+
 			$isSendToTransformation = !$this->document->PDF_ID;
 			$result = $this->document->getFile($isSendToTransformation);
 		}
+
 		$this->arResult = $result->getData();
+
 		if (
 			$isSendToTransformation
 			&& !empty($this->arResult['transformationCancelReason'])
@@ -209,7 +206,8 @@ class CrmDocumentViewComponent extends ViewComponent
 				($provider instanceof \Bitrix\Crm\Integration\DocumentGenerator\DataProvider\Deal)
 				&& \Bitrix\Crm\Service\Container::getInstance()
 					->getUserPermissions()
-					->checkAddPermissions(\CCrmOwnerType::SmartDocument)
+					->entityType()
+					->canAddItems(\CCrmOwnerType::SmartDocument)
 				&& \Bitrix\Crm\Settings\Crm::isDocumentSigningEnabled()
 				&& \Bitrix\Sign\Config\Storage::instance()->isAvailable()
 			;

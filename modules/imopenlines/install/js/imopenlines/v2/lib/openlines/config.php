@@ -10,6 +10,7 @@ return [
 	'rel' => [
 		'main.polyfill.core',
 		'im.v2.application.core',
+		'imopenlines.v2.lib.message-manager',
 		'imopenlines.v2.provider.service',
 	],
 	'skip_core' => true,

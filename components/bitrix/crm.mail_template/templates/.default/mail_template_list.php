@@ -1,13 +1,16 @@
 <?php
 if(!defined('B_PROLOG_INCLUDED') || B_PROLOG_INCLUDED !== true) die();
 
-global $APPLICATION;
+/** @global CMain $APPLICATION */
+/** @var CBitrixComponent $component */
+/** @var array $arResult */
 
-if ($_REQUEST['IFRAME'] !== 'Y') {
+if ($_REQUEST['IFRAME'] !== 'Y')
+{
 	$APPLICATION->IncludeComponent(
 		'bitrix:crm.control_panel',
 		'',
-		array(
+		[
 			'ID' => 'MAIL_TEMPLATE_LIST',
 			'ACTIVE_ITEM_ID' => '',
 			'PATH_TO_COMPANY_LIST' => isset($arResult['PATH_TO_COMPANY_LIST']) ? $arResult['PATH_TO_COMPANY_LIST'] : '',
@@ -26,7 +29,7 @@ if ($_REQUEST['IFRAME'] !== 'Y') {
 			'PATH_TO_DEAL_FUNNEL' => isset($arResult['PATH_TO_DEAL_FUNNEL']) ? $arResult['PATH_TO_DEAL_FUNNEL'] : '',
 			'PATH_TO_EVENT_LIST' => isset($arResult['PATH_TO_EVENT_LIST']) ? $arResult['PATH_TO_EVENT_LIST'] : '',
 			'PATH_TO_PRODUCT_LIST' => isset($arResult['PATH_TO_PRODUCT_LIST']) ? $arResult['PATH_TO_PRODUCT_LIST'] : ''
-		),
+		],
 		$component
 	);
 }
@@ -36,13 +39,13 @@ if ($_REQUEST['IFRAME'] !== 'Y') {
 	$APPLICATION->IncludeComponent(
 		'bitrix:crm.mail_template.menu',
 		'',
-		array(
+		[
 			'PATH_TO_MAIL_TEMPLATE_LIST' => $arResult['PATH_TO_MAIL_TEMPLATE_LIST'],
 			'PATH_TO_MAIL_TEMPLATE_ADD' => $arResult['PATH_TO_MAIL_TEMPLATE_ADD'],
 			'PATH_TO_MAIL_TEMPLATE_EDIT' => $arResult['PATH_TO_MAIL_TEMPLATE_EDIT'],
 			'ELEMENT_ID' => $arResult['VARIABLES']['element_id'],
-			'TYPE' => 'list'
-		),
+			'TYPE' => 'list',
+		],
 		$component
 	);
 
@@ -51,12 +54,12 @@ if ($_REQUEST['IFRAME'] !== 'Y')
 	$APPLICATION->IncludeComponent(
 		'bitrix:crm.mail_template.list',
 		'',
-		array(
+		[
 			'PATH_TO_MAIL_TEMPLATE_LIST' => $arResult['PATH_TO_MAIL_TEMPLATE_LIST'],
 			'PATH_TO_MAIL_TEMPLATE_ADD' => $arResult['PATH_TO_MAIL_TEMPLATE_ADD'],
 			'PATH_TO_MAIL_TEMPLATE_EDIT' => $arResult['PATH_TO_MAIL_TEMPLATE_EDIT'],
-			'MESSAGE_VIEW_ID' => 'crm-mail-template-message'
-		),
+			'MESSAGE_VIEW_ID' => 'crm-mail-template-message',
+		],
 		$component
 	);
 }
@@ -68,12 +71,13 @@ else
 		[
 			'POPUP_COMPONENT_NAME' => 'bitrix:crm.mail_template.list',
 			'POPUP_COMPONENT_TEMPLATE_NAME' => '',
-			'POPUP_COMPONENT_PARAMS' => array(
+			'USE_UI_TOOLBAR' => 'Y',
+			'POPUP_COMPONENT_PARAMS' => [
 				'PATH_TO_MAIL_TEMPLATE_LIST' => $arResult['PATH_TO_MAIL_TEMPLATE_LIST'],
 				'PATH_TO_MAIL_TEMPLATE_ADD' => $arResult['PATH_TO_MAIL_TEMPLATE_ADD'],
 				'PATH_TO_MAIL_TEMPLATE_EDIT' => $arResult['PATH_TO_MAIL_TEMPLATE_EDIT'],
 				'MESSAGE_VIEW_ID' => 'crm-mail-template-message'
-			)
+			]
 		],
 		$component
 	);

@@ -321,6 +321,7 @@ class ScheduleForm extends CompositeForm
 					return (int)$value;
 				})
 			,
+			(new Filter\Validator\RequiredValidator('type')),
 			(new Filter\Validator\RangeValidator('reportPeriodStartWeekDay'))
 				->configureRange(ScheduleFormHelper::getReportPeriodWeekDaysValues())
 				->configureStrict(true)

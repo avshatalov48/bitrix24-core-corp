@@ -11,7 +11,7 @@ export const RolesDialogGroupListHeader = {
 			return this.$Bitrix.Loc.getMessage('AI_COPILOT_ROLES_GROUP_LIST_HEADER_2');
 		},
 		hint(): string {
-			return this.$Bitrix.Loc.getMessage('AI_COPILOT_ROLES_GROUP_LIST_HEADER_HINT_2');
+			return '';
 		},
 	},
 	template: `

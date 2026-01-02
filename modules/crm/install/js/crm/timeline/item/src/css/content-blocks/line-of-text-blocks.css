@@ -1,4 +1,3 @@
 .crm-timeline-block-line-of-texts {
-	display: flex;
-	flex-wrap: wrap;
+	display: inline-block;
 }

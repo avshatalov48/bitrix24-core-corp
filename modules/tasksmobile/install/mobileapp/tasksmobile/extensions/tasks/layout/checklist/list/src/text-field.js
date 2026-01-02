@@ -3,7 +3,9 @@
  */
 jn.define('tasks/layout/checklist/list/src/text-field', (require, exports, module) => {
 	const { Color } = require('tokens');
+	const { inAppUrl } = require('in-app-url');
 	const { TextInput } = require('ui-system/typography/text-input');
+	const { PlainTextFormatter } = require('bbcode/formatter/plain-text-formatter');
 
 	/**
 	 * @class ItemTextField
@@ -73,11 +75,14 @@ jn.define('tasks/layout/checklist/list/src/text-field', (require, exports, modul
 			}
 		};
 
+		handleOnLinkClick = ({ url }) => {
+			inAppUrl.open(url);
+		};
+
 		handleOnFocus = () => {
 			const { onFocus, item, enable } = this.props;
 			const title = item.getTitle();
 
-			// this.setSelection();
 			this.cursorPosition = title.length;
 
 			if (onFocus && enable)
@@ -88,8 +93,13 @@ jn.define('tasks/layout/checklist/list/src/text-field', (require, exports, modul
 
 		handleOnBlur = () => {
 			const { onBlur } = this.props;
+			const value = this.getTextValue();
 
-			if (onBlur)
+			if (value)
+			{
+				this.setState({}, onBlur);
+			}
+			else
 			{
 				onBlur();
 			}
@@ -175,27 +185,19 @@ jn.define('tasks/layout/checklist/list/src/text-field', (require, exports, modul
 
 		#renderTextField()
 		{
-			const { item, style = {}, placeholder, header, textSize, enable = true } = this.props;
-
-			if (!item.isRoot())
-			{
-				style.color = this.getTitleColor().toHex();
-			}
+			const { placeholder, header, textSize, enable = true } = this.props;
 
 			return TextInput({
 				size: textSize,
 				header,
 				enable,
-				ref: this.handleOnRef,
-				placeholder,
-				placeholderTextColor: Color.base4.toHex(),
-				style: {
-					textAlignVertical: 'center',
-					color: this.getTitleColor().toHex(),
-					...style,
-				},
 				multiline: true,
-				forcedValue: this.getTitle(),
+				placeholder,
+				ref: this.handleOnRef,
+				placeholderTextColor: Color.base4.toHex(),
+				color: Color.base1,
+				style: this.getStyle(),
+				forcedValue: this.getValue(),
 				onBlur: this.handleOnBlur,
 				onFocus: this.handleOnFocus,
 				returnKeyType: this.getReturnKeyType(),
@@ -204,33 +206,8 @@ jn.define('tasks/layout/checklist/list/src/text-field', (require, exports, modul
 				onSelectionChange: ({ selection }) => {
 					this.cursorPosition = selection.start;
 				},
+				onLinkClick: this.handleOnLinkClick,
 			});
-		}
-
-		renderBBCodeText()
-		{
-			const { style = {} } = this.props;
-
-			return View(
-				{
-					style: {
-						alignItems: 'center',
-						flexDirection: 'row',
-					},
-				},
-				BBCodeText({
-					style: {
-						fontSize: 16,
-						fontWeight: '400',
-						color: Color.base3,
-						textAlignVertical: 'center',
-						...style,
-					},
-					focus: false,
-					linksUnderline: false,
-					value: this.getTitleWithUrls(),
-				}),
-			);
 		}
 
 		getReturnKeyType()
@@ -240,34 +217,41 @@ jn.define('tasks/layout/checklist/list/src/text-field', (require, exports, modul
 			return item.isRoot() ? 'done' : null;
 		}
 
-		getTitleWithUrls(title, members)
+		getValue()
 		{
-			let newTitle = title;
-			Object.keys(members).forEach((id) => {
-				const { name } = members[id];
-				newTitle = newTitle.replace(
-					name,
-					`[COLOR=${Color.accentMainLinks}][URL=${id}]${name}[/URL][/COLOR]`,
-				);
+			const { item } = this.props;
+
+			return this.parseTextValue(item.getTitle());
+		}
+
+		parseTextValue(value)
+		{
+			const plainTextFormatter = new PlainTextFormatter({
+				diskRenderType: 'link',
+				mentionRenderType: 'text',
+				tableRenderType: 'placeholder',
+				codeRenderType: 'text',
+				listRenderType: 'text',
+				allowedTags: ['url'],
 			});
+
+			const plainAst = plainTextFormatter.format({
+				source: value,
+			});
+
+			return plainAst.toString({ encode: false });
 		}
 
-		getTitle()
+		getStyle()
 		{
-			const { item } = this.props;
-
-			return item.getTitle();
-		}
-
-		/**
-		 * @return {Color}
-		 */
-		getTitleColor()
-		{
-			const { item } = this.props;
+			const { item, style = {} } = this.props;
 			const completed = item.getIsComplete();
 
-			return completed ? Color.base5 : Color.base1;
+			return {
+				textAlignVertical: 'center',
+				opacity: completed ? 0.6 : 1,
+				...style,
+			};
 		}
 
 		getCursorPosition()
@@ -282,7 +266,7 @@ jn.define('tasks/layout/checklist/list/src/text-field', (require, exports, modul
 
 		setSelection()
 		{
-			const titleLength = this.getTitle().length;
+			const titleLength = this.getValue().length;
 
 			if (!titleLength || !this.textInputRef)
 			{

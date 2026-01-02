@@ -8,96 +8,60 @@ this.BX.Crm = this.BX.Crm || {};
 	 * @extends BX.Crm.Model
 	 * @memberOf BX.Crm.Models
 	 */
-	var StageModel = /*#__PURE__*/function (_Model) {
-	  babelHelpers.inherits(StageModel, _Model);
-	  function StageModel(data, params) {
-	    babelHelpers.classCallCheck(this, StageModel);
-	    return babelHelpers.possibleConstructorReturn(this, babelHelpers.getPrototypeOf(StageModel).call(this, data, params));
+	class StageModel extends crm_model.Model {
+	  constructor(data, params) {
+	    super(data, params);
 	  }
-	  babelHelpers.createClass(StageModel, [{
-	    key: "getModelName",
-	    value: function getModelName() {
-	      return 'stage';
-	    }
-	  }, {
-	    key: "getName",
-	    value: function getName() {
-	      return this.data.name;
-	    }
-	  }, {
-	    key: "setName",
-	    value: function setName(name) {
-	      this.data.name = name;
-	    }
-	  }, {
-	    key: "getEntityId",
-	    value: function getEntityId() {
-	      return this.data.entityId;
-	    }
-	  }, {
-	    key: "getStatusId",
-	    value: function getStatusId() {
-	      return this.data.statusId;
-	    }
-	  }, {
-	    key: "getSort",
-	    value: function getSort() {
-	      return this.data.sort;
-	    }
-	  }, {
-	    key: "setSort",
-	    value: function setSort(sort) {
-	      this.data.sort = sort;
-	    }
-	  }, {
-	    key: "getColor",
-	    value: function getColor() {
-	      return this.data.color;
-	    }
-	  }, {
-	    key: "setColor",
-	    value: function setColor(color) {
-	      this.data.color = color;
-	    }
-	  }, {
-	    key: "getSemantics",
-	    value: function getSemantics() {
-	      return this.data.semantics;
-	    }
-	  }, {
-	    key: "getCategoryId",
-	    value: function getCategoryId() {
-	      return this.data.categoryId;
-	    }
-	  }, {
-	    key: "getStagesToMove",
-	    value: function getStagesToMove() {
-	      return this.data.stagesToMove;
-	    }
-	  }, {
-	    key: "isAllowedMoveToAnyStage",
-	    value: function isAllowedMoveToAnyStage() {
-	      var _this$data$allowMoveT;
-	      return (_this$data$allowMoveT = this.data.allowMoveToAnyStage) !== null && _this$data$allowMoveT !== void 0 ? _this$data$allowMoveT : false;
-	    }
-	  }, {
-	    key: "isFinal",
-	    value: function isFinal() {
-	      return this.isSuccess() || this.isFailure();
-	    }
-	  }, {
-	    key: "isSuccess",
-	    value: function isSuccess() {
-	      return this.getSemantics() === 'S';
-	    }
-	  }, {
-	    key: "isFailure",
-	    value: function isFailure() {
-	      return this.getSemantics() === 'F';
-	    }
-	  }]);
-	  return StageModel;
-	}(crm_model.Model);
+	  getModelName() {
+	    return 'stage';
+	  }
+	  getName() {
+	    return this.data.name;
+	  }
+	  setName(name) {
+	    this.data.name = name;
+	  }
+	  getEntityId() {
+	    return this.data.entityId;
+	  }
+	  getStatusId() {
+	    return this.data.statusId;
+	  }
+	  getSort() {
+	    return this.data.sort;
+	  }
+	  setSort(sort) {
+	    this.data.sort = sort;
+	  }
+	  getColor() {
+	    return this.data.color;
+	  }
+	  setColor(color) {
+	    this.data.color = color;
+	  }
+	  getSemantics() {
+	    return this.data.semantics;
+	  }
+	  getCategoryId() {
+	    return this.data.categoryId;
+	  }
+	  getStagesToMove() {
+	    return this.data.stagesToMove;
+	  }
+	  isAllowedMoveToAnyStage() {
+	    var _this$data$allowMoveT;
+	    return (_this$data$allowMoveT = this.data.allowMoveToAnyStage) != null ? _this$data$allowMoveT : false;
+	  }
+	  isFinal() {
+	    return this.isSuccess() || this.isFailure();
+	  }
+	  isSuccess() {
+	    return this.getSemantics() === 'S';
+	  }
+	  isFailure() {
+	    return this.getSemantics() === 'F';
+	  }
+	}
 
 	exports.StageModel = StageModel;
 

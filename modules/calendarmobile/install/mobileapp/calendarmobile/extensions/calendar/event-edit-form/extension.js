@@ -41,13 +41,7 @@ jn.define('calendar/event-edit-form', (require, exports, module) => {
 		componentDidMount()
 		{
 			tariffPlanRestrictionsReady();
-			this.bindKeyboardHandlers();
 			this.initLayout();
-		}
-
-		componentWillUnmount()
-		{
-			this.unbindKeyboardHandlers();
 		}
 
 		initLayout()
@@ -62,26 +56,6 @@ jn.define('calendar/event-edit-form', (require, exports, module) => {
 			this.layout.preventBottomSheetDismiss(true);
 			this.layout.on('preventDismiss', this.onPreventDismiss);
 		}
-
-		bindKeyboardHandlers()
-		{
-			Keyboard.on(Keyboard.Event.WillHide, this.#onKeyboardWillHide);
-			Keyboard.on(Keyboard.Event.WillShow, this.#onKeyboardWillShow);
-		}
-
-		unbindKeyboardHandlers()
-		{
-			Keyboard.off(Keyboard.Event.WillHide, this.#onKeyboardWillHide);
-			Keyboard.off(Keyboard.Event.WillShow, this.#onKeyboardWillShow);
-		}
-
-		#onKeyboardWillShow = () => {
-			State.setKeyboardShown(true);
-		};
-
-		#onKeyboardWillHide = () => {
-			State.setKeyboardShown(false);
-		};
 
 		onPreventDismiss = () => {
 			if (!State.hasChanges())
@@ -153,6 +127,7 @@ jn.define('calendar/event-edit-form', (require, exports, module) => {
 			recursionMode = null,
 			createChatId = null,
 			editAttendeesMode = false,
+			participantsEntityList = [],
 		})
 		{
 			const event = await this.getEvent(eventId, dateFromTs);
@@ -168,12 +143,13 @@ jn.define('calendar/event-edit-form', (require, exports, module) => {
 				recursionMode,
 				selectedDayTs,
 				editAttendeesMode,
+				participantsEntityList,
 			});
 
-			this.openPage(parentLayout, editAttendeesMode);
+			this.openPage(parentLayout, editAttendeesMode, event?.name);
 		}
 
-		static openPage(parentLayout, editAttendeesMode = false)
+		static openPage(parentLayout, editAttendeesMode = false, eventName = null)
 		{
 			const component = (layout) => new this({ layout, editAttendeesMode });
 
@@ -182,7 +158,7 @@ jn.define('calendar/event-edit-form', (require, exports, module) => {
 				.setNavigationBarColor(Color.bgSecondary.toHex())
 				.setBackgroundColor(Color.bgSecondary.toHex())
 				.setTitleParams({
-					text: Loc.getMessage('M_CALENDAR_EVENT_EDIT_FORM_TITLE'),
+					text: eventName || Loc.getMessage('M_CALENDAR_EVENT_EDIT_FORM_TITLE'),
 					type: 'wizard',
 				})
 				.disableSwipe()

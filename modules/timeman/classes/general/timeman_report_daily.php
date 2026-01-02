@@ -35,7 +35,7 @@ abstract class CAllTimeManReportDaily
 		return true;
 	}
 
-	public static function Add($arFields)
+	public static function Add($arFields, $isSystem = false)
 	{
 		global $DB;
 
@@ -52,7 +52,7 @@ abstract class CAllTimeManReportDaily
 		CTimeZone::Disable();
 		$ID = $DB->Add('b_timeman_report_daily', $arFields, array('REPORT', 'TASKS', 'EVENTS'));
 		CTimeZone::Enable();
-		if ($ID > 0)
+		if ($ID > 0 && $isSystem === false)
 		{
 			$arFields['ID'] = $ID;
 

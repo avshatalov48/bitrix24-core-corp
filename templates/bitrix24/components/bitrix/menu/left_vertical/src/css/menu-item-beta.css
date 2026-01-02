@@ -1,0 +1,21 @@
+.menu-item-beta {
+	display: none;
+	position: relative;
+	top: -7px;
+	font-size: 12px;
+	color: #e2e2e2;
+}
+
+.bitrix24-dark-theme .menu-item-beta {
+	color: #a6a6a6;
+}
+
+.menu-items-view-mode .menu-item-active .menu-item-beta,
+.menu-collapsed-mode.menu-sliding-mode .menu-items-view-mode .menu-item-active .menu-item-beta,
+.menu-collapsed-mode.menu-animation-opening-mode .menu-items-view-mode .menu-item-active .menu-item-beta {
+	display: inline-block;
+}
+
+.menu-collapsed-mode .menu-items-view-mode .menu-item-active .menu-item-beta {
+	display: none;
+}

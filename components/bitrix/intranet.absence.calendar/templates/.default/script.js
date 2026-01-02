@@ -97,6 +97,10 @@ var jsBXAC = {
 
 		this.MESSAGES = arParams.MESSAGES;
 		this.ERRORS = arParams.ERRORS;
+
+		BX.Event.EventEmitter.subscribe('BX.Calendar.Entry:delete', () => {
+			jsBXAC.LoadData();
+		});
 	},
 
 	Show: function(MAIN_LAYOUT, VIEW)
@@ -934,9 +938,17 @@ function JCCalendarInfoWin(entry_id, entry_type, user_id, loader, typeBgColors)
 			_this.DIV.style.zIndex = '1000';
 		}
 
+		if (null == data && _this.INFO != null)
+		{
+			data = _this.INFO;
+		}
+
 		if (null != data)
 		{
-			eval('_this.INFO = ' + data);
+			if (data !== _this.INFO)
+			{
+				eval('_this.INFO = ' + data);
+			}
 
 			var departments = '';
 			for (var i = 0; i < _this.INFO.USER.UF_DEPARTMENT.length; i++)
@@ -968,6 +980,7 @@ function JCCalendarInfoWin(entry_id, entry_type, user_id, loader, typeBgColors)
 				strAdmin += '<div class="bx-calendar-info-admin">'
 					+ '<a href="'
 						+ jsBXAC.SETTINGS.DETAIL_URL_PERSONAL.replace(/#USER_ID#/g, _this.USER_ID).replace(/#EVENT_ID#/g, _this.ID)
+						+ (_this.dateFrom ? '&EVENT_DATE=' + _this.dateFrom : '')
 					+ '" class="bx-calendar-personal">'
 						+ jsBXAC.MESSAGES.INTR_ABSC_TPL_PERSONAL_LINK_TITLE
 					+ '</a>'
@@ -1044,6 +1057,11 @@ function JCCalendarInfoWin(entry_id, entry_type, user_id, loader, typeBgColors)
 JCCalendarInfoWin.prototype.Show = function(e)
 {
 	if (null == e) e = window.event;
+
+	if (e.currentTarget.dataset.dateFrom)
+	{
+		this.dateFrom = e.currentTarget.dataset.dateFrom;
+	}
 
 	if (null == this.DIV)
 	{

@@ -3,7 +3,7 @@
  */
 jn.define('im/messenger/controller/chat-composer/lib/area/participants-list', (require, exports, module) => {
 	const { EntitySelectorElementType } = require('im/messenger/const');
-	const { Loc } = require('loc');
+	const { Loc } = require('im/messenger/loc');
 	const { Type } = require('type');
 	const { Color, Indent } = require('tokens');
 	const { Text4 } = require('ui-system/typography');

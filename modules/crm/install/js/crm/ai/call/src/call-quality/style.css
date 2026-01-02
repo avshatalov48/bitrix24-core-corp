@@ -231,8 +231,16 @@
 	text-align: center;
 }
 
+.call-quality__compliance__container.--high .call-quality__compliance__assessment {
+	background-image: url('./images/percent-container-high.svg');
+}
+
+.call-quality__compliance__container.--low .call-quality__compliance__assessment {
+	background-image: url('./images/percent-container-low.svg');
+}
+
 .call-quality__compliance__assessment-value {
-	font-size: 31px;
+	font-size: 30px;
 	font-weight: var(--ui-font-weight-semi-bold);
 	line-height: 50px;
 }

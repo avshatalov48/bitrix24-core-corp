@@ -44,6 +44,7 @@ jn.define('bizproc/task/buttons/detail-button', (require, exports, module) => {
 					{
 						taskId: BX.prop.getNumber(this.props, 'taskId', 0),
 						title: BX.prop.getString(this.props, 'title', ''),
+						uid: this.props.uid,
 					},
 				);
 			});

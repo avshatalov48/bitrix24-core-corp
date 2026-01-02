@@ -55,8 +55,6 @@ class IntranetAiCenter extends \CBitrixComponent
 			AI\Center::getAssistants(),
 			AI\Center::getCrmScoring(),
 			AI\Center::getSegmentScoring(),
-			AI\Center::getFaceCard(),
-			AI\Center::getFaceTracker(),
 		);
 	}
 }

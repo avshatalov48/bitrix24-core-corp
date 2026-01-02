@@ -1,0 +1,22 @@
+<?php
+$MESS["TASKS_V2_DATE_PLAN_ADD"] = "Қосу";
+$MESS["TASKS_V2_DATE_PLAN_ALLOW_CHANGE"] = "Орындаушыға жоспарланған мерзімдерді өзгертуге рұқсат ету";
+$MESS["TASKS_V2_DATE_PLAN_BUTTON_SAVE"] = "Сақтау";
+$MESS["TASKS_V2_DATE_PLAN_DAYS"] = "Күндер";
+$MESS["TASKS_V2_DATE_PLAN_DESCRIPTION"] = "Міндеттің басталу және аяқталу күндерін жоспарлаңыз. Бұл міндетті уақытында орындауға және басымдық беруге көмектеседі";
+$MESS["TASKS_V2_DATE_PLAN_DURATION"] = "Ұзақтығы";
+$MESS["TASKS_V2_DATE_PLAN_END"] = "Аяқтау";
+$MESS["TASKS_V2_DATE_PLAN_FIELD_END"] = "Аяқталу күні";
+$MESS["TASKS_V2_DATE_PLAN_FIELD_START"] = "Басталу күні";
+$MESS["TASKS_V2_DATE_PLAN_HOURS"] = "Сағат";
+$MESS["TASKS_V2_DATE_PLAN_MATCH_SUBTASKS_TIME"] = "Міндеттің мерзі қосымша міндетке байланысты";
+$MESS["TASKS_V2_DATE_PLAN_MATCH_SUBTASKS_TIME_HINT"] = "Міндеттің жоспарланған мерзімдері қосымша міндеттерде көрсетілген мерзімдерге байланысты өзгереді";
+$MESS["TASKS_V2_DATE_PLAN_MATCH_SUBTASKS_TIME_STATE"] = "Қосымша міндеттерге байланысты";
+$MESS["TASKS_V2_DATE_PLAN_MATCH_WORK_TIME"] = "Демалыс күндерін өткізіп жіберу";
+$MESS["TASKS_V2_DATE_PLAN_MATCH_WORK_TIME_HINT"] = "Мерзім демалыс немесе мерекеге сәйкес келсе автоматты түрде ауыстыру";
+$MESS["TASKS_V2_DATE_PLAN_MINUTES"] = "Минут";
+$MESS["TASKS_V2_DATE_PLAN_NO_SUBTASKS_HINT"] = "Міндетте қосымша міндеттер жоқ. Олар пайда болғаннан кейін орындалу мерзімі автоматты түрде белгіленеді";
+$MESS["TASKS_V2_DATE_PLAN_START"] = "Бастау";
+$MESS["TASKS_V2_DATE_PLAN_TITLE"] = "Мерзімдері";
+$MESS["TASKS_V2_DATE_PLAN_TITLE_CHIP"] = "Мерзімдерді жоспарлау";
+$MESS["TASKS_V2_DATE_PLAN_TITLE_SHEET"] = "Мерзімдерді жоспарлау";

@@ -1,3 +1,2 @@
-<?
-$MESS["VI_PAGE_STAT_DETAIL"] = "Call Details";
-?>
+<?php
+$MESS["VI_PAGE_STAT_DETAIL"] = "Call details";

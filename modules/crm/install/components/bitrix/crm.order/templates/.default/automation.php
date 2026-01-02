@@ -25,19 +25,20 @@ $cmpParams = [
 	'back_url' => '/shop/orders/automation/0/',
 ];
 
-if ($_REQUEST['IFRAME'] == 'Y' && $_REQUEST['IFRAME_TYPE'] == 'SIDE_SLIDER')
+if ($_REQUEST['IFRAME'] === 'Y' && $_REQUEST['IFRAME_TYPE'] === 'SIDE_SLIDER')
 {
 	$APPLICATION->IncludeComponent(
 		'bitrix:ui.sidepanel.wrapper',
 		'',
-		array(
+		[
 			'POPUP_COMPONENT_NAME' => 'bitrix:crm.config.automation',
 			'POPUP_COMPONENT_TEMPLATE_NAME' => '',
 			'POPUP_COMPONENT_PARAMS' => $cmpParams,
 			'POPUP_COMPONENT_USE_BITRIX24_THEME' => 'Y',
 			'DEFAULT_THEME_ID' => 'light:robots',
 			'USE_PADDING' => false,
-		)
+			'USE_UI_TOOLBAR' => 'Y'
+		],
 	);
 }
 else

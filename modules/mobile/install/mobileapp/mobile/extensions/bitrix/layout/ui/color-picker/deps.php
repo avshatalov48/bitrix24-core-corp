@@ -2,8 +2,12 @@
 
 return [
 	'extensions' => [
+		'loc',
 		'apptheme',
 		'utils/prop',
-		'layout/ui/color-picker/menu',
+		'ui-system/popups/color-picker',
+		'ui-system/blocks/icon',
+		'tokens',
+		'ui-system/typography/text',
 	],
 ];

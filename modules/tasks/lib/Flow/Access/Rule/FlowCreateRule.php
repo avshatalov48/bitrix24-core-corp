@@ -2,6 +2,7 @@
 
 namespace Bitrix\Tasks\Flow\Access\Rule;
 
+use Bitrix\Tasks\Access\Permission\PermissionDictionary;
 use Bitrix\Main\Access\AccessibleItem;
 use Bitrix\Main\Access\Rule\AbstractRule;
 use Bitrix\Main\Loader;
@@ -25,6 +26,7 @@ class FlowCreateRule extends AbstractRule
 		if (!Loader::includeModule('socialnetwork'))
 		{
 			$this->controller->addError(static::class, 'Module socialnetwork is required');
+
 			return false;
 		}
 
@@ -39,6 +41,15 @@ class FlowCreateRule extends AbstractRule
 		)
 		{
 			$this->controller->addError(static::class, 'Forbidden for extranet users');
+
+			return false;
+		}
+
+		$permission = $this->user->getPermission(PermissionDictionary::FLOW_CREATE);
+		if ($permission !== \Bitrix\Main\Access\Permission\PermissionDictionary::VALUE_YES)
+		{
+			$this->controller->addError(static::class, 'Forbidden by permissions');
+
 			return false;
 		}
 

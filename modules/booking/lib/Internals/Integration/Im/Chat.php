@@ -20,7 +20,6 @@ class Chat
 		string $notifyEvent,
 		callable $titleFn,
 		callable $messageFn,
-		int $fromUserId = 1,
 	): Result
 	{
 		if (!Loader::includeModule('im'))
@@ -31,7 +30,6 @@ class Chat
 		$params = [
 			'NOTIFY_MODULE' => 'booking',
 			'TITLE' => $titleFn,
-			'FROM_USER_ID' => $fromUserId,
 			'TO_USER_ID' => $toUserId,
 			'NOTIFY_EVENT' => $notifyEvent,
 			'NOTIFY_TAG' => $notifyTag,

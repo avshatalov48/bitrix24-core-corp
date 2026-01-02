@@ -155,7 +155,7 @@ interface NodeRepository
 	public function deleteById(int $nodeId): void;
 
 	/**
-	 * @param list<int> $departments
+	 * @param list<string> $departments
 	 *
 	 * @return \Bitrix\HumanResources\Item\Collection\NodeCollection
 	 * @throws ArgumentException

@@ -32,10 +32,10 @@ final class DashboardTagGrid extends Grid
 				'DASHBOARD_COUNT',
 			]
 		);
-		
+
 		return new Rows(
 			$rowAssembler,
-			new Action\DashboardTagDataProvider($this->getSettings())
+			new Action\DashboardTag\DashboardTagActionDataProvider($this->getSettings())
 		);
 	}
 

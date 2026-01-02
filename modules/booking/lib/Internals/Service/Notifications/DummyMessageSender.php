@@ -26,7 +26,7 @@ class DummyMessageSender implements MessageSender
 
 	public function createMessage(): MessageBodyBased
 	{
-		return new MessageBodyBased();
+		return (new MessageBodyBased())->setMessageBody('dummy');
 	}
 
 	public function send(Booking $booking, $message): Result

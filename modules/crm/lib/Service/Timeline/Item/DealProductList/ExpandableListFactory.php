@@ -75,7 +75,7 @@ final class ExpandableListFactory
 				&& $product->getCurrency()
 			)
 			{
-				if ($dealCurrency !== $product->getCurrency())
+				if ((string)$dealCurrency !== '' && $dealCurrency !== $product->getCurrency())
 				{
 					$convertedPrice = \CCrmCurrency::ConvertMoney($product->getPrice(), $product->getCurrency(), $dealCurrency);
 					$product->setPrice($convertedPrice);

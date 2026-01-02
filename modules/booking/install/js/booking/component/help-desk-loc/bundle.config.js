@@ -1,5 +1,5 @@
 module.exports = {
-	input: 'src/help-desk-loc.js',
+	input: 'src/index.js',
 	output: 'dist/help-desk-loc.bundle.js',
 	namespace: 'BX.Booking.Component',
 	browserslist: true,

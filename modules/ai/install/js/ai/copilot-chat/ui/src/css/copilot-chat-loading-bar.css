@@ -1,0 +1,38 @@
+.ai__copilot-chat-loading-bar {
+	--ai-copilot-chat-loading-bar__background-color_gradient-background: var(--ui-color-copilot-secondary);
+	--ai-copilot-chat-loading-bar__background-color_gradient-accent: var(--ui-color-copilot-primary);
+
+	height: 4px;
+	width: 100%;
+	background:
+		repeating-linear-gradient(
+			to right,
+			var(--ai-copilot-chat-loading-bar__background-color_gradient-background) 0%,
+			var(--ai-copilot-chat-loading-bar__background-color_gradient-accent) 50%,
+			var(--ai-copilot-chat-loading-bar__background-color_gradient-background) 100%
+		)
+		0 100%;
+	background-size: 200% auto;
+	opacity: 1;
+	animation-fill-mode: forwards;
+	animation-timing-function: linear;
+	animation: copilot-chat-loading-bar 2s infinite;
+}
+
+@keyframes copilot-chat-loading-bar {
+	0%   { background-position: 0 0; }
+	100% { background-position: -200% 0; }
+}
+
+.copilot-chat-loading-bar-transition-enter-active,
+.copilot-chat-loading-bar-transition-leave-active {
+	transition: opacity 0.2s;
+}
+
+.copilot-chat-loading-bar-transition-enter-from {
+	opacity: 0;
+}
+
+.copilot-chat-loading-bar-transition-leave-to {
+	opacity: 0;
+}

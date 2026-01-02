@@ -8,11 +8,13 @@ jn.define('bizproc/task/details/buttons', (require, exports, module) => {
 	const { Loc } = require('loc');
 	const { NotifyManager } = require('notify-manager');
 	const { showToast, Position } = require('toast');
+	const { Random } = require('utils/random');
 
 	const { PureComponent } = require('layout/pure-component');
 
-	const { TaskErrorCode } = require('bizproc/task/task-constants');
+	const { TaskErrorCode, TaskUserStatus } = require('bizproc/task/task-constants');
 	const { TaskButtons, DelegateButton } = require('bizproc/task/buttons');
+	const { AppRatingClient } = require('bizproc/app-rating-client');
 
 	class TaskDetailsButtons extends PureComponent
 	{
@@ -34,7 +36,6 @@ jn.define('bizproc/task/details/buttons', (require, exports, module) => {
 		{
 			super(props);
 
-			// eslint-disable-next-line no-undef
 			this.uid = props.uid || Random.getString();
 			this.customEventEmitter = EventEmitter.createWithUid(this.uid);
 		}
@@ -124,7 +125,7 @@ jn.define('bizproc/task/details/buttons', (require, exports, module) => {
 			);
 		}
 
-		async onBeforeTaskButtonAction(task, button)
+		async onBeforeTaskButtonAction(task, button, taskCompletionParams)
 		{
 			await NotifyManager.showLoadingIndicator();
 
@@ -140,6 +141,16 @@ jn.define('bizproc/task/details/buttons', (require, exports, module) => {
 
 			if (!hasErrors)
 			{
+				if (this.layout && this.props.isNeedFastClose)
+				{
+					this.layout.close(() => {
+						BX.postComponentEvent(
+							'AppRatingManager.onBizProcTaskCompleted',
+							[taskCompletionParams?.taskRequest],
+						);
+					});
+				}
+
 				return Promise.resolve(data);
 			}
 
@@ -151,8 +162,6 @@ jn.define('bizproc/task/details/buttons', (require, exports, module) => {
 		onTaskCompleted(responseData, taskCompletionParams)
 		{
 			NotifyManager.hideLoadingIndicatorWithoutFallback();
-			// eslint-disable-next-line no-undef
-			Notify.showIndicatorSuccess({ hideAfter: 300 });
 
 			this.customEventEmitter.emit(
 				'TaskDetails:OnTaskCompleted',
@@ -163,7 +172,14 @@ jn.define('bizproc/task/details/buttons', (require, exports, module) => {
 				() => {
 					if (this.layout)
 					{
-						this.layout.close();
+						this.layout.close(() => {
+							if (taskCompletionParams?.taskRequest?.INLINE_USER_STATUS === TaskUserStatus.YES
+								|| taskCompletionParams?.taskRequest?.INLINE_USER_STATUS === TaskUserStatus.OK)
+							{
+								AppRatingClient.increaseBusinessProcessExecutedCounter();
+								AppRatingClient.tryOpenAppRatingAfterBusinessProcessExecuted();
+							}
+						});
 					}
 				},
 				280,
@@ -178,34 +194,6 @@ jn.define('bizproc/task/details/buttons', (require, exports, module) => {
 				'TaskDetails:OnTaskCompleteFailed',
 				[{ errors, task: this.task }],
 			);
-
-			if (!Array.isArray(errors) || errors.length <= 0)
-			{
-				return;
-			}
-
-			const firstError = errors[0];
-
-			if (TaskErrorCode.isTaskNotFoundErrorCode(firstError.code))
-			{
-				if (this.props.showNotifications)
-				{
-					showToast({
-						message: firstError.message,
-						position: Position.TOP,
-						code: 'bp-workflow-details-buttons-task-not-found',
-					});
-				}
-
-				if (this.layout)
-				{
-					this.layout.close();
-				}
-
-				return;
-			}
-
-			Alert.alert(firstError.message);
 		}
 
 		renderDelegateButton()

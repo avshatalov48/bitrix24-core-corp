@@ -135,8 +135,13 @@ class Scenario
 			if ($queryResult === false)
 			{
 				$httpClientErrors = $httpClient->getError();
-				if(!empty($httpClientErrors))
+				if (!empty($httpClientErrors))
 				{
+					$errors = $httpClientErrors;
+					$errors[] = 'command:'.$command['COMMAND'];
+					$errors[] = 'url:'.$this->call->getAccessUrl();
+					$systemException = new \Bitrix\Main\SystemException('Voximplant connection error: '.implode('; ', $errors));
+					\Bitrix\Main\Application::getInstance()->getExceptionHandler()->writeToLog($systemException);
 					foreach ($httpClientErrors as $code => $message)
 					{
 						$result->addError(new \Bitrix\Main\Error($message, $code));
@@ -149,14 +154,28 @@ class Scenario
 			{
 				// nothing here
 			}
-			else if ($httpClient->getStatus() == 404)
-			{
-				$result->addError(new \Bitrix\Main\Error('Call scenario is not running', 'NOT_FOUND'));
-			}
 			else
 			{
-				$result->addError(new \Bitrix\Main\Error("Scenario server returns code " . $httpClient->getStatus()));
+				$errors = [];
+				$errors[] = 'status:'.$responseStatus;
+				$reason = $httpClient->getResponse()?->getReasonPhrase();
+				if (!empty($reason))
+				{
+					$errors[] = 'error:'. $reason;
+				}
+				$errors[] = 'command:'.$command['COMMAND'];
+				$errors[] = 'url:'.$this->call->getAccessUrl();
+				$systemException = new \Bitrix\Main\SystemException('Voximplant response error: '.implode('; ', $errors));
+				\Bitrix\Main\Application::getInstance()->getExceptionHandler()->writeToLog($systemException);
 
+				if ($httpClient->getStatus() == 404)
+				{
+					$result->addError(new \Bitrix\Main\Error('Call scenario is not running', 'NOT_FOUND'));
+				}
+				else
+				{
+					$result->addError(new \Bitrix\Main\Error("Scenario server returns code " . $httpClient->getStatus()));
+				}
 			}
 		}
 

@@ -38,7 +38,6 @@ $crm_default_option = [
 	'path_to_order_shipment_details' => '/shop/orders/shipment/details/#shipment_id#/',
 	'path_to_order_kanban' => '/shop/orders/kanban/',
 	'path_to_order_activity' => '/shop/orders/activity/',
-	'path_to_order_import_instagram' => '/shop/import/instagram/',
 
 	'path_to_contact_edit' => '/crm/contact/edit/#contact_id#/',
 	'path_to_contact_show' => '/crm/contact/show/#contact_id#/',

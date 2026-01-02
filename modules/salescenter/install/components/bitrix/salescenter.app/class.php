@@ -930,6 +930,10 @@ class CSalesCenterAppComponent extends CBitrixComponent implements Controllerabl
 			foreach ($payableItemCollection as $payableItem)
 			{
 				$entity = $payableItem->getEntityObject();
+				if (!$entity)
+				{
+					continue;
+				}
 
 				$item = $entity->getFieldValues();
 				$item['BASKET_CODE'] = $entity->getBasketCode();
@@ -1544,18 +1548,12 @@ class CSalesCenterAppComponent extends CBitrixComponent implements Controllerabl
 				'group' => 'other',
 			];
 
-			if (Bitrix24Manager::getInstance()->isEnabled())
+			$manager = Bitrix24Manager::getInstance();
+			if ($manager->isEnabled())
 			{
-				$feedbackPath = $this->getComponentSliderPath('bitrix:salescenter.feedback');
-				$queryParams = [
-					'lang' => LANGUAGE_ID,
-					'feedback_type' => 'paysystem_offer',
-				];
-				$feedbackPath->addParams($queryParams);
-
 				$result['items'][] = [
 					'name' => Loc::getMessage('SALESCENTER_APP_RECOMMENDATION_TITLE'),
-					'link' => $feedbackPath->getLocator(),
+					'link' => $manager->getSliderFeedbackUrl(Bitrix24Manager::FEEDBACK_TYPE_PAYSYSTEM_OFFER),
 					'width' => 735,
 					'type' => 'offer',
 					'group' => 'other',
@@ -1609,8 +1607,7 @@ class CSalesCenterAppComponent extends CBitrixComponent implements Controllerabl
 						}
 
 						$result['items'][] = [
-							'name' => $handlerDescription['NAME'] ?? $handlerList['SYSTEM'][$systemHandler],
-							'psModeName' => $psModeList[$psMode],
+							'name' => $psModeList[$psMode] ?? $handlerDescription['NAME'] ?? $handlerList['SYSTEM'][$systemHandler],
 							'img' => $psModeImage,
 							'info' => Loc::getMessage(
 								'SALESCENTER_APP_PAYSYSTEM_MODE_INFO',
@@ -1786,18 +1783,12 @@ class CSalesCenterAppComponent extends CBitrixComponent implements Controllerabl
 			unset($marketplaceItems);
 		}
 
-		if (Bitrix24Manager::getInstance()->isEnabled())
+		$manager = Bitrix24Manager::getInstance();
+		if ($manager->isEnabled())
 		{
-			$feedbackPath = $this->getComponentSliderPath('bitrix:salescenter.feedback');
-			$queryParams = [
-				'lang' => LANGUAGE_ID,
-				'feedback_type' => 'delivery_offer',
-			];
-			$feedbackPath->addParams($queryParams);
-
 			$result['items'][] = [
 				'name' => Loc::getMessage('SALESCENTER_APP_RECOMMENDATION_TITLE'),
-				'link' => $feedbackPath->getLocator(),
+				'link' => $manager->getSliderFeedbackUrl(Bitrix24Manager::FEEDBACK_TYPE_DELIVERY_OFFER),
 				'width' => 735,
 				'type' => 'offer',
 			];
@@ -1912,18 +1903,12 @@ class CSalesCenterAppComponent extends CBitrixComponent implements Controllerabl
 				'type' => 'more'
 			];
 
-			if (Bitrix24Manager::getInstance()->isEnabled())
+			$manager = Bitrix24Manager::getInstance();
+			if ($manager->isEnabled())
 			{
-				$feedbackPath = $this->getComponentSliderPath('bitrix:salescenter.feedback');
-				$queryParams = [
-					'lang' => LANGUAGE_ID,
-					'feedback_type' => 'paysystem_offer',
-				];
-				$feedbackPath->addParams($queryParams);
-
 				$result['items'][] = [
 					'name' => Loc::getMessage('SALESCENTER_APP_RECOMMENDATION_TITLE'),
-					'link' => $feedbackPath->getLocator(),
+					'link' => $manager->getSliderFeedbackUrl(Bitrix24Manager::FEEDBACK_TYPE_PAYSYSTEM_OFFER),
 					'width' => 735,
 					'type' => 'offer',
 				];
@@ -2031,18 +2016,12 @@ class CSalesCenterAppComponent extends CBitrixComponent implements Controllerabl
 				'type' => 'more',
 			];
 
-			if (Bitrix24Manager::getInstance()->isEnabled())
+			$manager = Bitrix24Manager::getInstance();
+			if ($manager->isEnabled())
 			{
-				$feedbackPath = $this->getComponentSliderPath('bitrix:salescenter.feedback');
-				$queryParams = [
-					'lang' => LANGUAGE_ID,
-					'feedback_type' => 'paysystem_offer',
-				];
-				$feedbackPath->addParams($queryParams);
-
 				$result['items'][] = [
 					'name' => Loc::getMessage('SALESCENTER_APP_RECOMMENDATION_TITLE'),
-					'link' => $feedbackPath->getLocator(),
+					'link' => $manager->getSliderFeedbackUrl(Bitrix24Manager::FEEDBACK_TYPE_PAYSYSTEM_OFFER),
 					'width' => 735,
 					'type' => 'offer',
 				];
@@ -2223,9 +2202,7 @@ class CSalesCenterAppComponent extends CBitrixComponent implements Controllerabl
 				Main\Loader::includeModule('salescenter');
 				Main\Loader::includeModule('crm');
 
-				global $USER;
-				$crmPerms = new \CCrmPerms($USER->GetID());
-				if (!$crmPerms->HavePerm('CONFIG', BX_CRM_PERM_CONFIG, 'WRITE'))
+				if (!Container::getInstance()->getUserPermissions()->isCrmAdmin())
 				{
 					$this->addError(new Main\Error(
 						Loc::getMessage('SALESCENTER_CRM_PERMISSION_DENIED'),

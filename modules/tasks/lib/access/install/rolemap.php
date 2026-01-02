@@ -45,6 +45,8 @@ class RoleMap
 				PermissionDictionary::TASK_EXPORT,
 				PermissionDictionary::TASK_IMPORT,
 
+				PermissionDictionary::FLOW_CREATE,
+
 				PermissionDictionary::TEMPLATE_CREATE,
 				PermissionDictionary::TEMPLATE_VIEW,
 				PermissionDictionary::TEMPLATE_FULL,
@@ -72,6 +74,8 @@ class RoleMap
 				PermissionDictionary::TASK_EXPORT,
 				PermissionDictionary::TASK_IMPORT,
 
+				PermissionDictionary::FLOW_CREATE,
+
 				PermissionDictionary::TEMPLATE_CREATE,
 				PermissionDictionary::TEMPLATE_VIEW,
 
@@ -91,6 +95,8 @@ class RoleMap
 
 				PermissionDictionary::TASK_EXPORT,
 				PermissionDictionary::TASK_IMPORT,
+
+				PermissionDictionary::FLOW_CREATE,
 
 				PermissionDictionary::TEMPLATE_CREATE,
 				PermissionDictionary::TEMPLATE_VIEW,

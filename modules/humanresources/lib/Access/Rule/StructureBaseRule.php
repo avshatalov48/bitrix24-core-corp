@@ -2,7 +2,9 @@
 
 namespace Bitrix\HumanResources\Access\Rule;
 
-use Bitrix\HumanResources\Item\NodeMember;
+use Bitrix\HumanResources\Access\Permission\PermissionDictionary;
+use Bitrix\HumanResources\Item\Node;
+use Bitrix\HumanResources\Type\NodeEntityType;
 use Bitrix\Main\Access\AccessibleItem;
 use Bitrix\Main\Access\Rule\AbstractRule;
 use Bitrix\HumanResources\Access\Model\NodeModel;
@@ -15,9 +17,33 @@ class StructureBaseRule extends AbstractRule
 
 	public function execute(AccessibleItem $item = null, $params = null): bool
 	{
-		if (empty($params[self::PERMISSION_ID_KEY] ?? null))
+		if (
+			!($item instanceof NodeModel)
+			|| !is_array($params)
+			|| !isset($params[self::PERMISSION_ID_KEY])
+		)
 		{
 			return false;
+		}
+
+		$node = $item->getNode();
+		if (!$node || !$node->id)
+		{
+			return false;
+		}
+
+		$permissionId = (string)$params[self::PERMISSION_ID_KEY];
+		if (
+			$node->type !== NodeEntityType::DEPARTMENT
+			|| !PermissionDictionary::isDepartmentVariablesPermission($permissionId)
+		)
+		{
+			return false;
+		}
+
+		if ($this->user->isAdmin())
+		{
+			return true;
 		}
 
 		$permissionValue = $this->user->getPermission($params[self::PERMISSION_ID_KEY]);
@@ -31,12 +57,7 @@ class StructureBaseRule extends AbstractRule
 			return true;
 		}
 
-		if (!($item instanceof NodeModel))
-		{
-			return false;
-		}
-
-		if (!$item->getId())
+		if ($node->type === NodeEntityType::TEAM)
 		{
 			return false;
 		}

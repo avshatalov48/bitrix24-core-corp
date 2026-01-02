@@ -1,1 +1,0 @@
-{"version":3,"sources":["extension.js"],"names":["jn","define","require","exports","module","EventManager"],"mappings":"AAGAA,GAAGC,OAAO,kCAAkC,CAACC,EAASC,EAASC,KAE9D,MAAMC,aAAEA,GAAiBL,GAAGE,QAAQ,gDAEpCE,EAAOD,QAAU,CAChBE,aAAAA","file":"extension.map.js"}

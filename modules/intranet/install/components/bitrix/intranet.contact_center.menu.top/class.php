@@ -99,7 +99,7 @@ class IntranetContactCenterMenuTop extends \CBitrixComponent
 		{
 			$result[] = [
 				'TEXT' => Loc::getMessage('MENU_CONTACT_CENTER_TELEPHONY_STATISTICS'),
-				'URL' => '/report/telephony/?analyticBoardKey=telephony_calls_dynamics',
+				'URL' => SITE_DIR . 'report/telephony/?analyticBoardKey=telephony_calls_dynamics',
 				'ID' => 'menu_contact_center_telephony_statistics'
 			];
 		}

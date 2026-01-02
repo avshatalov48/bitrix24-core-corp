@@ -9,6 +9,7 @@
 namespace Bitrix\Crm\WebForm\Embed;
 
 use Bitrix\Main;
+use Bitrix\Main\Config\Option;
 use Bitrix\Rest\RestException;
 use Bitrix\Crm\WebForm;
 use Bitrix\Crm\UI\Webpack;
@@ -54,14 +55,9 @@ class Rest
 		$consents = $consents ? Main\Web\Json::decode($consents) : [];
 		$consents = is_array($consents) ? $consents : [];
 		$recaptchaResponse = empty($query['recaptcha']) ? null : $query['recaptcha'];
+		$yandexSmartCaptchaResponse = empty($query['yandexSmartCaptcha']) ? null : $query['yandexSmartCaptcha'];
 		$signString = empty($query['security_sign']) ? null : $query['security_sign'];
 		//$entities = empty($query['entities']) ? null : $query['entities'];
-
-		$timeZoneOffset = isset($query['timeZoneOffset']) ? (int)$query['timeZoneOffset'] : null;
-		if (!\CTimeZone::GetCookieValue() && $timeZoneOffset)
-		{
-			\CTimeZone::SetCookieValue($timeZoneOffset);
-		}
 
 		$form = null;
 
@@ -94,19 +90,44 @@ class Rest
 
 			if ($form->isUsedCaptcha())
 			{
-				$recaptchaSecret = WebForm\ReCaptcha::getSecret(2) ?: WebForm\ReCaptcha::getDefaultSecret(2);
-				$recaptchaKey = WebForm\ReCaptcha::getKey(2) ?: WebForm\ReCaptcha::getDefaultKey(2);
-				if ($recaptchaSecret && $recaptchaKey)
+				if (Option::get('crm', 'crm_form_captcha_service') === 'yandex')
 				{
-					if (!$recaptchaResponse)
-					{
-						self::printErrors(["Parameter `recaptcha` is invalid."]);
-					}
+					$yandexSecret = WebForm\YandexCaptcha::getSecret() ?: WebForm\YandexCaptcha::getDefaultSecret();
+					$yandexKey = WebForm\YandexCaptcha::getKey() ?: WebForm\YandexCaptcha::getDefaultKey();
 
-					$recaptcha = new WebForm\ReCaptcha($recaptchaSecret);
-					if (!$recaptcha->verify($recaptchaResponse))
+					if ($yandexSecret && $yandexKey)
 					{
-						self::printErrors([$recaptcha->getError()]);
+						if (!$recaptchaResponse)
+						{
+							self::printErrors(["Parameter `yandexSmartCaptcha` is invalid."]);
+						}
+
+						$yandexCaptcha = new WebForm\YandexCaptcha($yandexSecret);
+
+						if (!$yandexCaptcha->verify($yandexSmartCaptchaResponse))
+						{
+							self::printErrors([$yandexCaptcha->getError()]);
+						}
+					}
+				}
+				else
+				{
+					$recaptchaSecret = WebForm\ReCaptcha::getSecret(2) ?: WebForm\ReCaptcha::getDefaultSecret(2);
+					$recaptchaKey = WebForm\ReCaptcha::getKey(2) ?: WebForm\ReCaptcha::getDefaultKey(2);
+
+					if ($recaptchaSecret && $recaptchaKey)
+					{
+						if (!$recaptchaResponse)
+						{
+							self::printErrors(["Parameter `recaptcha` is invalid."]);
+						}
+
+						$recaptcha = new WebForm\ReCaptcha($recaptchaSecret);
+
+						if (!$recaptcha->verify($recaptchaResponse))
+						{
+							self::printErrors([$recaptcha->getError()]);
+						}
 					}
 				}
 			}

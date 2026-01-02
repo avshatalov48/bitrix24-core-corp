@@ -2,6 +2,7 @@
 if (!defined("B_PROLOG_INCLUDED") || B_PROLOG_INCLUDED !== true) die();
 
 use Bitrix\Main\Engine\CurrentUser;
+use Bitrix\Main\Loader;
 use Bitrix\Main\Localization\Loc;
 use Bitrix\Main\Type\Collection;
 use Bitrix\Socialnetwork\WorkgroupTable;
@@ -18,6 +19,8 @@ use Bitrix\Tasks\Util\User;
 use Bitrix\Tasks\Access\TemplateAccessController;
 use Bitrix\Tasks\Access\Model\TemplateModel;
 use Bitrix\Tasks\Integration\Extranet;
+use Bitrix\Tasks\Validation\Validator\SerializedValidator;
+use Bitrix\Tasks\Helper\Analytics;
 
 Loc::loadMessages(__FILE__);
 
@@ -286,7 +289,7 @@ class TasksWidgetMemberSelectorComponent extends TasksBaseComponent
 		else
 		{
 			$oldTask = TaskModel::createFromId(($taskId));
-			$newTask = TaskModel::createFromRequest(['GROUP_ID' => $groupId]);
+			$newTask = TaskModel::createFromArray(['GROUP_ID' => $groupId]);
 
 			$isAccess = (new TaskAccessController($this->userId))->check(ActionDictionary::ACTION_TASK_SAVE, $oldTask, $newTask);
 		}
@@ -315,6 +318,16 @@ class TasksWidgetMemberSelectorComponent extends TasksBaseComponent
 				]
 			);
 		}
+
+		$isDemo = (Loader::includeModule('bitrix24') && \CBitrix24::IsDemoLicense()) ? 'Y' : 'N';
+
+		Analytics::getInstance($this->userId)->onTaskUpdate(
+			event: Analytics::EVENT['task_update'],
+			subSection: Analytics::SUB_SECTION['task_card'],
+			params: [
+				'p1' => 'isDemo_' . $isDemo,
+			],
+		);
 
 
 		if ($this->errorCollection->checkNoFatals())
@@ -619,6 +632,28 @@ class TasksWidgetMemberSelectorComponent extends TasksBaseComponent
 			);
 		}
 
+		// analytics for task auditors
+		if ($context && $context !== self::CONTEXT_TEMPLATE)
+		{
+			$members = TaskModel::createFromId($taskId)->getMembers();
+
+			$analytics = Analytics::getInstance($this->userId);
+
+			$isDemo = (Loader::includeModule('bitrix24') && \CBitrix24::IsDemoLicense()) ? 'Y' : 'N';
+
+			$analytics->onTaskUpdate(
+				event: Analytics::EVENT['add_viewer'],
+				section: Analytics::SECTION[$analytics->getTaskContext($taskId)],
+				element: Analytics::ELEMENT['viewer_button'],
+				params: [
+					'p1' => 'isDemo_' . $isDemo,
+					'p3' => 'viewersCount_' . (array_key_exists('U', $members) ? (string)count($members['U']) : '0'),
+
+					'p5' => 'coexecutorsCount_' . (array_key_exists('A', $members) ? (string)count($members['A']) : '0'),
+				],
+			);
+		}
+
 		if ($this->errorCollection->checkNoFatals())
 		{
 			return null;
@@ -715,6 +750,25 @@ class TasksWidgetMemberSelectorComponent extends TasksBaseComponent
 			);
 		}
 
+		// analytics for task coexecutors
+		if ($context && $context !== self::CONTEXT_TEMPLATE)
+		{
+			$analytics = Analytics::getInstance($this->userId);
+
+			$isDemo = (Loader::includeModule('bitrix24') && \CBitrix24::IsDemoLicense()) ? 'Y' : 'N';
+
+			$analytics->onTaskUpdate(
+				event: Analytics::EVENT['add_coexecutor'],
+				section: Analytics::SECTION[$analytics->getTaskContext($taskId)],
+				element: Analytics::ELEMENT['coexecutor_button'],
+				params: [
+					'p1' => 'isDemo_' . $isDemo,
+					'p3' => 'viewersCount_' . (array_key_exists('U', $members) ? (string)count($members['U']) : '0'),
+					'p5' => 'coexecutorsCount_' . (array_key_exists('A', $members) ? (string)count($members['A']) : '0'),
+				]
+			);
+		}
+
 		if ($this->errorCollection->checkNoFatals())
 		{
 			return null;
@@ -763,14 +817,22 @@ class TasksWidgetMemberSelectorComponent extends TasksBaseComponent
 		}
 		catch (TasksException $e)
 		{
-			LogFacade::logThrowable($e, 'TASKS_DEBUG_MEMBER_SELECTOR');
-			$messages = @unserialize($e->getMessage(), ['allowed_classes' => false]);
-			if (is_array($messages))
+			$isSerialized = (new SerializedValidator())->validate($e->getMessage())->isSuccess();
+			if ($isSerialized)
 			{
-				foreach ($messages as $message)
+				$messages = unserialize($e->getMessage(), ['allowed_classes' => false]);
+				if (is_array($messages))
 				{
-					$this->errorCollection->add('TASK_EXCEPTION', $message['text'], false, ['ui' => 'notification']);
+					foreach ($messages as $message)
+					{
+						$this->errorCollection->add('TASK_EXCEPTION', $message['text'], false, ['ui' => 'notification']
+						);
+					}
 				}
+			}
+			elseif (is_string($e->getMessage()))
+			{
+				$this->errorCollection->add('TASK_EXCEPTION', $e->getMessage(), false, ['ui' => 'notification']);
 			}
 		}
 		catch (\Exception $e)
@@ -807,7 +869,7 @@ class TasksWidgetMemberSelectorComponent extends TasksBaseComponent
 		}
 
 		$responsibleId = $task->getResponsibleId();
-
+ 
 		$responsible = User::getData([$responsibleId], [
 			'ID',
 			'NAME',
@@ -841,7 +903,7 @@ class TasksWidgetMemberSelectorComponent extends TasksBaseComponent
 
 			return null;
 		}
-
+ 
 		$task = TaskRegistry::getInstance()->getObject($taskId);
 		if (null === $task)
 		{
@@ -860,7 +922,7 @@ class TasksWidgetMemberSelectorComponent extends TasksBaseComponent
 	public function getMemberAction(array $userIds, int $taskId): ?array
 	{
 		Collection::normalizeArrayValuesByInt($userIds, false);
-
+ 
 		if (empty($userIds) || $taskId <= 0)
 		{
 			return [];
@@ -889,7 +951,7 @@ class TasksWidgetMemberSelectorComponent extends TasksBaseComponent
 		{
 			return [];
 		}
-
+ 
 		foreach ($userIds as $userId)
 		{
 			if (!in_array($userId, $task->getAuditorMembersIds(), true))

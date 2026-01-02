@@ -1,6 +1,13 @@
-import { JNChatBaseClassInterface } from '../../../../../../../../../../mobile/dev/janative/api.td';
+// @ts-ignore
+import {JNBaseClassInterface} from '../../../../../../../../../../mobile/dev/janative/api'
 
-declare interface JNChatRestrictions extends JNChatBaseClassInterface
+
+declare class DialogRestrictions
+{
+	ui: JNChatRestrictions;
+}
+
+declare interface JNChatRestrictions extends JNBaseClassInterface
 {
 	update(params: ChatRestrictionsParams): void;
 }

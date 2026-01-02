@@ -1,0 +1,4 @@
+<?php
+$MESS['DISK_UNIFIED_LINK_ACCESS_LEVEL_DENIED'] = 'Доступ запрещён';
+$MESS['DISK_UNIFIED_LINK_ACCESS_LEVEL_READ'] = 'Чтение';
+$MESS['DISK_UNIFIED_LINK_ACCESS_LEVEL_EDIT'] = 'Редактирование';

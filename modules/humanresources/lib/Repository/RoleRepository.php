@@ -17,6 +17,7 @@ use Bitrix\Main\SystemException;
 
 class RoleRepository implements \Bitrix\HumanResources\Contract\Repository\RoleRepository
 {
+	private const DEFAULT_CACHE_TTL = 86400;
 	/**
 	 * Create a new role.
 	 *
@@ -181,7 +182,7 @@ class RoleRepository implements \Bitrix\HumanResources\Contract\Repository\RoleR
 	{
 		$model = Model\RoleTable::getList([
 			'filter' => ['=XML_ID' => $xmlId],
-			'cache' => ['ttl' => 86400],
+			'cache' => ['ttl' => self::DEFAULT_CACHE_TTL],
 			'limit' => 1
 		])->fetchObject();
 
@@ -191,6 +192,29 @@ class RoleRepository implements \Bitrix\HumanResources\Contract\Repository\RoleR
 		}
 
 		return null;
+	}
+
+	public function findByXmlIds(string ...$xmlIds): Item\Collection\RoleCollection
+	{
+		$result = new Item\Collection\RoleCollection();
+		if (empty($xmlIds))
+		{
+			return $result;
+		}
+
+		$modelArray = Model\RoleTable::query()
+			->setSelect(['*'])
+			->whereIn('XML_ID', $xmlIds)
+			->setCacheTtl(self::DEFAULT_CACHE_TTL)
+			->fetchAll()
+		;
+
+		foreach ($modelArray as $model)
+		{
+			$result->add($this->convertModelArrayToItem($model));
+		}
+
+		return $result;
 	}
 
 	/**

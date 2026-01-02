@@ -142,6 +142,6 @@ final class Node extends RestController
 
 	private function getNodeDontExistError(int $id): Main\Error
 	{
-		return new Main\Error("Node with id: ${id} dont exist",'HR_NODE_DONT_EXIST');
+		return new Main\Error("Node with id: {$id} dont exist",'HR_NODE_DONT_EXIST');
 	}
 }

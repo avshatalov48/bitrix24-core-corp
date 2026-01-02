@@ -52,22 +52,11 @@ else
 							icon: 'checkbox',
 							arrowFlag: true,
 							action: function() {
-								if (<?=\Bitrix\MobileApp\Mobile::getApiVersion()?> >= 31)
-								{
-									BXMobileApp.Events.postToComponent(
-										"taskbackground::taskList::open",
-										[{groupId: <?=(int)$arParams["GROUP_ID"]?>}],
-										"background"
-									);
-								}
-								else
-								{
-									var path = '<?php echo CUtil::JSEscape($arParams['PATH_TO_TASKS_SNM_ROUTER']); ?>';
-									path = path
-										.replace('__ROUTE_PAGE__', 'list')
-										.replace('#USER_ID#', <?php echo (int) $GLOBALS['USER']->GetID(); ?>);
-									BXMobileApp.PageManager.loadPageUnique({url: path, bx24ModernStyle: true});
-								}
+								BXMobileApp.Events.postToComponent(
+									"taskbackground::taskList::open",
+									[{groupId: <?=(int)$arParams["GROUP_ID"]?>}],
+									"background"
+								);
 							}
 						},
 						{

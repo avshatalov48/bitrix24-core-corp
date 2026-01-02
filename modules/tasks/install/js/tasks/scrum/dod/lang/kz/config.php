@@ -1,0 +1,27 @@
+<?php
+$MESS["TASKS_SCRUM_BUTTON_TEXT_REMOVE"] = "Жою";
+$MESS["TASKS_SCRUM_CONFIRM_TEXT_REMOVE_TYPE"] = "Сіз түрді шынымен жойғыңыз келеді ме?";
+$MESS["TASKS_SCRUM_CONFIRM_TEXT_REMOVE_TYPE_NEW"] = "<b>#name#<b> тізімін шынымен жойғыңыз келеді ме?";
+$MESS["TASKS_SCRUM_CONFIRM_TEXT_REMOVE_TYPE_TITLE"] = "Тізімді жою";
+$MESS["TASKS_SCRUM_CREATE_TYPE"] = "Түрді құру";
+$MESS["TASKS_SCRUM_CREATE_TYPE_PROMPT"] = "Міндеттің жаңа түрін құрыңыз";
+$MESS["TASKS_SCRUM_DOD_BTN_CREATE_TYPE"] = "Қосу";
+$MESS["TASKS_SCRUM_DOD_BTN_EDIT_TYPE"] = "Атауын өзгерту";
+$MESS["TASKS_SCRUM_DOD_BTN_REMOVE_TYPE"] = "Жою";
+$MESS["TASKS_SCRUM_DOD_BTN_SAVE"] = "Сақтау";
+$MESS["TASKS_SCRUM_DOD_CONFIRM_COMPLETE_BUTTON_TEXT"] = "Аяқтау";
+$MESS["TASKS_SCRUM_DOD_CONFIRM_SAVE_BUTTON_TEXT"] = "Сақтау";
+$MESS["TASKS_SCRUM_DOD_CONFIRM_TEXT_COMPLETE"] = "Міндетті аяқтағыңыз келеді ме немесе Definition of Done сақтағыңыз керек пе?";
+$MESS["TASKS_SCRUM_DOD_INFO_TEXT"] = "Міндетті аяқтау үшін Definition of Done барлық тармақтарын орындау қажет";
+$MESS["TASKS_SCRUM_DOD_LABEL_EMPTY"] = "Definition of Done <span>баптау</span> қажет";
+$MESS["TASKS_SCRUM_DOD_LABEL_TYPES"] = "Міндет түрі";
+$MESS["TASKS_SCRUM_DOD_LABEL_USER_SELECTOR"] = "DoD сұрату:";
+$MESS["TASKS_SCRUM_DOD_OPTIONS_REQUIRED_LABEL"] = "Тармақтарды орындау міндетті болып табылады";
+$MESS["TASKS_SCRUM_DOD_POPUP_EMPTY_NAME"] = "Атауын енгізіңіз";
+$MESS["TASKS_SCRUM_DOD_POPUP_INPUT_PLACEHOLDER"] = "Атауы";
+$MESS["TASKS_SCRUM_DOD_POPUP_TITLE_CREATE"] = "Тізімнің атауын енгізіңіз";
+$MESS["TASKS_SCRUM_DOD_POPUP_TITLE_EDIT"] = "Тізімнің жаңа атауын енгізіңіз";
+$MESS["TASKS_SCRUM_DOD_SAVE_SETTINGS_NOTIFY"] = "Баптаулар сақталды";
+$MESS["TASKS_SCRUM_DOD_TITLE"] = "Міндеттің дайындық критерийлері (DoD)";
+$MESS["TASKS_SCRUM_DOD_TOOLBAR_SETTINGS"] = "Баптау";
+$MESS["TSD_ERROR_POPUP_TITLE"] = "Қате орын алды";

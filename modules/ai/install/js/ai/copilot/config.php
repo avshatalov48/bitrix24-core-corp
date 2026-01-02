@@ -5,25 +5,32 @@ if (!defined('B_PROLOG_INCLUDED') || B_PROLOG_INCLUDED !== true)
 }
 
 use Bitrix\AI\Agreement;
+use Bitrix\AI\Container;
 use Bitrix\AI\Facade\User;
-use \Bitrix\AI\Facade\Bitrix24;
+use Bitrix\AI\Facade\Bitrix24;
+use Bitrix\AI\Services\CopilotAccessCheckerService;
 use Bitrix\Main\Loader;
 
-$isAgreementAccepted = true;
+$isShowAgreementPopup = false;
 $isRestrictByEula = false;
+$userHasAccessToLibrary = false;
 
 if (Loader::includeModule('ai'))
 {
+	$userId = User::getCurrentUserId();
+
 	if (Bitrix24::shouldUseB24() === false)
 	{
-		$userId = User::getCurrentUserId();
-		$isAgreementAccepted = Agreement::get('AI_BOX_AGREEMENT')->isAcceptedByUser($userId);
+		$isShowAgreementPopup = !Agreement::get('AI_BOX_AGREEMENT')->isAcceptedByUser($userId);
 	}
 
 	if (Bitrix24::isFeatureEnabled('ai_available_by_version') === false)
 	{
 		$isRestrictByEula = true;
 	}
+
+	$copilotAccessCheckerService = Container::init()->getItem(CopilotAccessCheckerService::class);
+	$userHasAccessToLibrary = $copilotAccessCheckerService->canShowLibrariesInFrontend($userId);
 }
 
 return [
@@ -53,6 +60,7 @@ return [
 	'skip_core' => false,
 	'settings' => [
 		'isRestrictByEula' => $isRestrictByEula,
-		'isShowAgreementPopup' => $isAgreementAccepted === false,
+		'isShowAgreementPopup' => $isShowAgreementPopup,
+		'isLibraryVisible' => $userHasAccessToLibrary,
 	]
 ];

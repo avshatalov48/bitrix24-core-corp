@@ -33,7 +33,7 @@ class SignB2eMemberDynamicSettingsComponent extends \CBitrixComponent
 			return;
 		}
 
-		if (!Storage::instance()->isB2eAvailable() || !Feature::instance()->isSendDocumentByEmployeeEnabled())
+		if (!Storage::instance()->isB2eAvailable() || !Feature::instance()->isDocumentTemplatesAvailable())
 		{
 			showError('access denied');
 

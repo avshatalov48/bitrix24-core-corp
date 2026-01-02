@@ -114,25 +114,27 @@ final class Template extends \Bitrix\Tasks\Dispatcher\PublicAction
 	{
 		$result = array();
 
-		if (!TemplateAccessController::can($this->userId, ActionDictionary::ACTION_TEMPLATE_CREATE))
+		$this->prepareMembers($data);
+		$this->prepareReplicateParams($data);
+
+		$templateModel = TemplateModel::createFromArray($data);
+
+		if (!TemplateAccessController::can($this->userId, ActionDictionary::ACTION_TEMPLATE_CREATE, null, $templateModel))
 		{
+			$this->errors->add('TEMPLATE_CREATE_TASK_NOT_ACCESSIBLE', Loc::getMessage('TASKS_TEMPLATE_CREATE_TASK_NOT_ACCESSIBLE_MSGVER_1'));
 			return $result;
 		}
 
 		// todo: check $data here, check for publicly-readable\writable keys\values
-
-		$this->prepareMembers($data);
-		$this->prepareReplicateParams($data);
 
 		if (
 			array_key_exists('REPLICATE', $data)
 			&& $data['REPLICATE'] === 'Y'
 		)
 		{
-			$templateModel = TemplateModel::createFromArray($data);
 			if (!TemplateAccessController::can($this->userId, ActionDictionary::ACTION_TEMPLATE_SAVE, null, $templateModel))
 			{
-				$this->errors->add('TEMPLATE_CREATE_TASK_NOT_ACCESSIBLE', Loc::getMessage('TASKS_TEMPLATE_CREATE_TASK_NOT_ACCESSIBLE'));
+				$this->errors->add('TEMPLATE_CREATE_TASK_NOT_ACCESSIBLE', Loc::getMessage('TASKS_TEMPLATE_CREATE_TASK_NOT_ACCESSIBLE_MSGVER_1'));
 				return $result;
 			}
 		}
@@ -249,7 +251,7 @@ final class Template extends \Bitrix\Tasks\Dispatcher\PublicAction
 		$isAccess = (new TemplateAccessController($this->userId))->check(ActionDictionary::ACTION_TEMPLATE_SAVE, $oldTemplate, $newTemplate);
 		if (!$isAccess)
 		{
-			$this->errors->add('TEMPLATE_CREATE_TASK_NOT_ACCESSIBLE', Loc::getMessage('TASKS_TEMPLATE_CREATE_TASK_NOT_ACCESSIBLE'));
+			$this->errors->add('TEMPLATE_CREATE_TASK_NOT_ACCESSIBLE', Loc::getMessage('TASKS_TEMPLATE_CREATE_TASK_NOT_ACCESSIBLE_MSGVER_1'));
 			return $result;
 		}
 
@@ -523,11 +525,12 @@ final class Template extends \Bitrix\Tasks\Dispatcher\PublicAction
 					continue;
 				}
 
-				if(!intval($user['ID']) && \check_email($user['EMAIL']))
+				$userId = (int)(is_array($user) ? ($user['ID'] ?? 0) : $user);
+				if(is_array($user) && !intval($user['ID']) && \check_email($user['EMAIL']))
 				{
 					$toInvite['MAIL'][$user['EMAIL']] = $user;
 				}
-				elseif(User::isNetworkId($user['ID']))
+				elseif(User::isNetworkId($userId))
 				{
 					$toInvite['NETWORK'][$user['ID']] = $user;
 				}

@@ -889,16 +889,13 @@ class CVoximplantStatisticDetailComponent extends \CBitrixComponent implements \
 		}
 
 		$callStartDate = $recordInfo['CALL_START_DATE'];
-		$recordUrl = $recordInfo['CALL_RECORD_URL'];
-
-		if (!$recordUrl || !$this->isDownloadLinkActual($callStartDate))
+		if (!$recordInfo['CALL_RECORD_URL'] || !$this->isDownloadLinkActual($callStartDate))
 		{
 			$this->errorCollection[] = new Bitrix\Main\Error('Link to call recording is missing or expired.');
 			return null;
 		}
-		$recordUrl = Uri::urnEncode($recordUrl);
 
-		return \CVoxImplantHistory::DownloadAgent($historyId, $recordUrl, false, false);
+		return \CVoxImplantHistory::DownloadAgent($historyId, null, false, false);
 	}
 
 	protected function isDownloadLinkActual($callStartDate)

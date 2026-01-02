@@ -35,6 +35,27 @@ jn.define('ui-system/layout/card/src/card-design-enum', (require, exports, modul
 			backgroundColor: Color.accentSoftRed2,
 			accentColor: Color.accentMainAlert,
 		});
+
+		/**
+		 * @param {Object} params
+		 * @param {boolean} params.withPressed
+		 * @returns {{backgroundColor: string, accentColor: string}}
+		 */
+		getStyle(params)
+		{
+			const { backgroundColor, accentColor } = this.getValue();
+
+			const style = {
+				backgroundColor: backgroundColor.toHex(),
+				accentColor: accentColor?.toHex(),
+			};
+			if (params?.withPressed)
+			{
+				style.backgroundColor = backgroundColor.withPressed();
+			}
+
+			return style;
+		}
 	}
 
 	module.exports = { CardDesign };

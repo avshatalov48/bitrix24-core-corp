@@ -20,8 +20,16 @@ use Bitrix\Tasks\CheckList\Task\TaskCheckListFacade;
 use Bitrix\Tasks\Comments\Internals\Comment;
 use Bitrix\Tasks\Comments\Task\CommentPoster;
 use Bitrix\Tasks\Control\Exception\TaskAddException;
+use Bitrix\Tasks\Control\Exception\TaskNotExistsException;
 use Bitrix\Tasks\Control\Exception\TaskNotFoundException;
+use Bitrix\Tasks\Control\Exception\TaskStopDeleteException;
 use Bitrix\Tasks\Control\Exception\TaskUpdateException;
+use Bitrix\Tasks\Control\Exception\WrongTaskIdException;
+use Bitrix\Tasks\V2\Internal\Entity\Task\Scenario;
+use Bitrix\Tasks\V2\Internal\DI\Container;
+use Bitrix\Tasks\V2\Internal\Service\Task\Action\Add\Config\AddConfig;
+use Bitrix\Tasks\V2\Internal\Service\Task\Action\Delete\Config\DeleteConfig;
+use Bitrix\Tasks\V2\Internal\Service\Task\Action\Update\Config\UpdateConfig;
 use Bitrix\Tasks\Control\Handler\TaskFieldHandler;
 use Bitrix\Tasks\Control\Handler\TariffFieldHandler;
 use Bitrix\Tasks\Control\Handler\Exception\TaskFieldValidateException;
@@ -60,7 +68,6 @@ use Bitrix\Tasks\Internals\TaskObject;
 use Bitrix\Tasks\Internals\TaskTable;
 use Bitrix\Tasks\Internals\UserOption;
 use Bitrix\Tasks\Kanban\StagesTable;
-use Bitrix\Tasks\Kanban\TaskStageTable;
 use Bitrix\Tasks\Member\Service\TaskMemberService;
 use Bitrix\Tasks\Processor\Task\AutoCloser;
 use Bitrix\Tasks\Processor\Task\Scheduler;
@@ -72,6 +79,8 @@ use Bitrix\Tasks\Scrum\Internal\ItemTable;
 use Bitrix\Tasks\UI;
 use Bitrix\Tasks\Util;
 use Bitrix\Main\Localization\Loc;
+use Bitrix\Tasks\V2\FormV2Feature;
+use Bitrix\Tasks\V2\Internal\Error\ErrorCode;
 use CAdminException;
 use CApplicationException;
 use CIBlock;
@@ -263,6 +272,35 @@ class Task
 	{
 		$this->reset();
 
+		if (FormV2Feature::isOn('create'))
+		{
+			$config = new AddConfig(
+				userId: $this->userId,
+				fromAgent: $this->fromAgent,
+				fromWorkFlow: $this->fromWorkFlow,
+				checkFileRights: $this->checkFileRights,
+				cloneAttachments: $this->cloneAttachments,
+				byPassParameters: $this->byPassParams,
+				skipBP: $this->skipBP,
+				skipTimeZoneFields: $this->skipTimeZoneFields,
+				needCorrectDatePlan: $this->needCorrectDatePlan,
+				eventGuid: $this->eventGuid
+			);
+
+			$mapper = Container::getInstance()->getOrmTaskMapper();
+			$service = Container::getInstance()->getAddTaskService();
+
+			$entity = $mapper->mapToEntity($fields);
+
+			$entity = $service->add(
+				task: $entity,
+				config: $config,
+				useConsistency: false
+			);
+
+			return $mapper->mapToObject($entity);
+		}
+
 		try
 		{
 			$fields = $this->prepareFields($fields);
@@ -347,6 +385,48 @@ class Task
 	public function update(int $taskId, array $fields): TaskObject|bool
 	{
 		$this->reset();
+
+		if (FormV2Feature::isOn('update'))
+		{
+			$config = new UpdateConfig(
+				userId: $this->userId,
+				needCorrectDatePlan: $this->needCorrectDatePlan,
+				checkFileRights: $this->checkFileRights,
+				correctDatePlanDependent: $this->correctDatePlanDependent,
+				needAutoclose: $this->needAutoclose,
+				skipNotifications: $this->skipNotifications,
+				skipRecount: $this->skipRecount,
+				byPassParameters: $this->byPassParams,
+				skipComments: $this->skipComments,
+				skipPush: $this->skipPush,
+				skipBP: $this->skipBP,
+				eventGuid: $this->eventGuid
+			);
+
+			$mapper = Container::getInstance()->getOrmTaskMapper();
+			$service = Container::getInstance()->getUpdateTaskService();
+
+			$fields['ID'] = $taskId;
+
+			$entity = $mapper->mapToEntity($fields);
+
+			try
+			{
+				$entity = $service->update(
+					task: $entity,
+					config: $config,
+					useConsistency: false
+				);
+			}
+			catch (WrongTaskIdException|TaskNotExistsException)
+			{
+				return false;
+			}
+
+			$this->legacyOperationResultData = $config->getRuntime()->getLegacyOperationResultData();
+
+			return $mapper->mapToObject($entity);
+		}
 
 		if ($taskId < 1)
 		{
@@ -460,6 +540,34 @@ class Task
 	{
 		$this->reset();
 
+		if (FormV2Feature::isOn('delete'))
+		{
+			$config = new DeleteConfig(
+				userId: $this->userId,
+				byPassParameters: $this->byPassParams,
+				skipExchangeSync: $this->skipExchangeSync,
+				eventGuid: $this->eventGuid,
+				skipBP: $this->skipBP
+			);
+
+			$service = Container::getInstance()->getDeleteTaskService();
+
+			try
+			{
+				$service->delete(
+					taskId: $taskId,
+					config: $config,
+					useConsistency: false
+				);
+			}
+			catch (WrongTaskIdException|TaskNotExistsException|TaskStopDeleteException)
+			{
+				return false;
+			}
+
+			return true;
+		}
+
 		if ($taskId < 1)
 		{
 			return false;
@@ -472,14 +580,14 @@ class Task
 			return false;
 		}
 
-		$safeDelete = $this->proceedSafeDelete($taskData);
-
-		CounterService::getInstance()->collectData($this->taskId);
-
 		if (!$this->onBeforeDelete())
 		{
 			return false;
 		}
+
+		$safeDelete = $this->proceedSafeDelete($taskData);
+
+		CounterService::getInstance()->collectData($this->taskId);
 
 		$taskObject = TaskRegistry::getInstance()->getObject($taskId, true)?->fillAllMemberIds();
 		$timeLineManager = new TimeLineManager($taskId, $this->userId);
@@ -769,6 +877,7 @@ class Task
 		$after['GROUP_ID'] = (int)$taskData['GROUP_ID'];
 
 		$lastResult = ResultManager::getLastResult($this->taskId);
+		$isLastResultOpened = $lastResult && (int)$lastResult['STATUS'] === ResultTable::STATUS_OPENED;
 
 		$params = [
 			'TASK_ID' => $this->taskId,
@@ -782,10 +891,10 @@ class Task
 				'updateCommentExists' => $updateComment,
 				'removedParticipants' => array_values($removedParticipants),
 			],
-			'taskRequireResult' => ResultManager::requireResult($this->taskId) ? "Y" : "N",
-			'taskHasResult' => $lastResult ? "Y" : "N",
-			'taskHasOpenResult' => ($lastResult && (int)$lastResult['STATUS'] === ResultTable::STATUS_OPENED) ? "Y"
-				: "N",
+			'taskRequireResult' => ResultManager::requireResult($this->taskId) ? 'Y' : 'N',
+			'taskHasResult' => $lastResult ? 'Y' : 'N',
+			'taskHasOpenResult' => $isLastResultOpened ? 'Y' : 'N',
+			'updateDate' => strtotime($taskData['CHANGED_DATE'] ?? '') ?: null,
 		];
 
 		try
@@ -1032,6 +1141,7 @@ class Task
 		$this->sourceTaskData = null;
 		$this->legacyOperationResultData = null;
 		$this->changes = null;
+		$this->taskId = null;
 	}
 
 	/**
@@ -1071,7 +1181,8 @@ class Task
 
 		$this->getTask(true);
 		$scenarioObject = $this->task->getScenario();
-		$fields['SCENARIO'] = is_null($scenarioObject) ? ScenarioTable::SCENARIO_DEFAULT
+		$fields['SCENARIO'] = is_null($scenarioObject)
+			? Scenario::Default->value
 			: $scenarioObject->getScenario();
 
 		return $fields;
@@ -1162,6 +1273,19 @@ class Task
 			return;
 		}
 
+		$analyticsLabels = [
+			'PARENT_ID',
+			'CREATED_BY',
+			'START_DATE_PLAN',
+			'END_DATE_PLAN',
+			'DURATION_PLAN',
+			'DURATION_PLAN_SECONDS',
+			'TIME_ESTIMATE',
+			'TIME_SPENT_IN_LOGS',
+			'DEPENDS_ON',
+			'ALLOW_TIME_TRACKING',
+		];
+
 		foreach ($this->changes as $key => $value)
 		{
 			$arLogFields = [
@@ -1172,6 +1296,18 @@ class Task
 				"FROM_VALUE" => $value["FROM_VALUE"],
 				"TO_VALUE" => $value["TO_VALUE"],
 			];
+
+			if (in_array($key, $analyticsLabels, true))
+			{
+				$isDemo = (Loader::includeModule('bitrix24') && \CBitrix24::IsDemoLicense()) ? 'Y' : 'N';
+
+				Analytics::getInstance($this->userId)->onTaskUpdate(
+					event: Analytics::EVENT['task_update'],
+					params: [
+						'p1' => 'isDemo_' . $isDemo,
+					],
+				);
+			}
 
 			$log = new CTaskLog();
 			$log->Add($arLogFields);
@@ -1385,7 +1521,7 @@ class Task
 		FavoriteTable::deleteByTaskId($this->taskId, ['LOW_LEVEL' => true]);
 		SortingTable::deleteByTaskId($this->taskId);
 		UserOption::deleteByTaskId($this->taskId);
-		TaskStageTable::clearTask($this->taskId);
+		Container::getInstance()->getTaskStageRepository()->deleteByTaskId($this->taskId);
 		TaskCheckListFacade::deleteByEntityIdOnLowLevel($this->taskId);
 
 		(new ResultManager($this->userId))->deleteByTaskId($this->taskId);
@@ -2681,16 +2817,19 @@ class Task
 	 */
 	private function setScenario(array $fields): void
 	{
+		$scenarioService = Container::getInstance()->getScenarioService();
 		if (empty($fields[self::FIELD_SCENARIO]))
 		{
-			// set default scenario if none specified
-			ScenarioTable::insertIgnore($this->taskId, [ScenarioTable::SCENARIO_DEFAULT]);
+			$scenarioService->saveDefault($this->taskId);
+
 			return;
 		}
 
-		$scenarios = is_array($fields[self::FIELD_SCENARIO]) ? $fields[self::FIELD_SCENARIO]
+		$scenarios = is_array($fields[self::FIELD_SCENARIO])
+			? $fields[self::FIELD_SCENARIO]
 			: [$fields[self::FIELD_SCENARIO]];
-		ScenarioTable::insertIgnore($this->taskId, $scenarios);
+
+		$scenarioService->save($this->taskId, $scenarios);
 	}
 
 	/**
@@ -2759,6 +2898,13 @@ class Task
 		{
 			$parentId = (int)($fields['PARENT_ID'] ?? null);
 			$event = $parentId ? Analytics::EVENT['subtask_add'] : Analytics::EVENT['task_create'];
+			$params = array_merge(
+				$fields['TASKS_ANALYTICS_PARAMS'] ?? [],
+				[
+					'p3' => 'auditorsCount_' . count($fields['AUDITORS'] ?? []),
+					'p5' => 'accomplicesCount_' . count($fields['ACCOMPLICES'] ?? []),
+				]
+			);
 
 			Analytics::getInstance($this->userId)->onTaskCreate(
 				$fields['TASKS_ANALYTICS_CATEGORY'] ?: Analytics::TASK_CATEGORY,
@@ -2767,7 +2913,7 @@ class Task
 				$fields['TASKS_ANALYTICS_ELEMENT'] ?? null,
 				$fields['TASKS_ANALYTICS_SUB_SECTION'] ?? null,
 				$status,
-				$fields['TASKS_ANALYTICS_PARAMS'] ?? [],
+				$params,
 			);
 		}
 	}

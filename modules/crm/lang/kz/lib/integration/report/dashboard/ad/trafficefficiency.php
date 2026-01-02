@@ -1,0 +1,3 @@
+<?php
+$MESS["CRM_INTEGRATION_REPORT_TRAFFIC_EFFICIENCY_FUNNEL_TITLE"] = "Өтпелі иірім - жарнамадан сатылымға дейін";
+$MESS["CRM_INTEGRATION_REPORT_TRAFFIC_EFFICIENCY_GRID_TITLE"] = "Менеджерлерге бөлу";

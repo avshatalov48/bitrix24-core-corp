@@ -8,6 +8,9 @@
 
 	const AppTheme = require('apptheme');
 	const { splitByWords, compareWords } = require('utils/string');
+	const { reflectFunction } = require('utils/function');
+	const { UserListUtils } = require('user/utils');
+	const { DelayedRestRequest, RequestExecutor } = require('rest');
 
 	/** @interface UserListDelegate */
 	class UserListDelegate
@@ -698,5 +701,4 @@
 	};
 
 	this.UserList = UserList;
-	jnexport(['UserListUtils', Utils]);
 })();

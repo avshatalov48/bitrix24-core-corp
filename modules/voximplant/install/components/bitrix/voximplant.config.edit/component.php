@@ -482,7 +482,7 @@ foreach ($melodies as $id)
 }
 $arResult["ITEM"]["MELODY_LANG"] = (empty($arResult["ITEM"]["MELODY_LANG"])? mb_strtoupper(LANGUAGE_ID) : $arResult["ITEM"]["MELODY_LANG"]);
 $arResult["ITEM"]["MELODY_LANG"] = (in_array($arResult["ITEM"]["MELODY_LANG"], CVoxImplantConfig::GetMelodyLanguages()) ? $arResult["ITEM"]["MELODY_LANG"] : "EN");
-$arResult["DEFAULT_MELODIES"] = CVoxImplantConfig::GetDefaultMelodies(false);
+$arResult["DEFAULT_MELODIES"] = CVoxImplantConfig::getDefaultMelodies(false);
 
 if (IsModuleInstalled('bitrix24'))
 {

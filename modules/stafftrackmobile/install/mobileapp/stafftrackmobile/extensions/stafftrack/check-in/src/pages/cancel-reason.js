@@ -13,12 +13,11 @@ jn.define('stafftrack/check-in/pages/cancel-reason', (require, exports, module) 
 
 	const { Box } = require('ui-system/layout/box');
 	const { Area } = require('ui-system/layout/area');
-	const { IconView, Icon } = require('ui-system/blocks/icon');
+	const { Icon } = require('ui-system/blocks/icon');
 	const { Button } = require('ui-system/form/buttons/button');
-	const { H3 } = require('ui-system/typography/heading');
 	const { Link3, LinkDesign, LinkMode } = require('ui-system/blocks/link');
 	const { Text3 } = require('ui-system/typography/text');
-	const { DialogFooter } = require('ui-system/layout/dialog-footer');
+	const { BoxFooter } = require('ui-system/layout/dialog-footer');
 
 	const { Message } = require('stafftrack/check-in/message');
 	const { ShiftManager } = require('stafftrack/data-managers/shift-manager');
@@ -52,12 +51,6 @@ jn.define('stafftrack/check-in/pages/cancel-reason', (require, exports, module) 
 			this.cancelReasonMenu = null;
 
 			this.previousToast = null;
-
-			this.onSwitcherClick = this.onSwitcherClick.bind(this);
-
-			this.onConfirmButtonClick = this.onConfirmButtonClick.bind(this);
-			this.onReasonSelectorClick = this.onReasonSelectorClick.bind(this);
-			this.onReasonSelected = this.onReasonSelected.bind(this);
 		}
 
 		get user()
@@ -77,6 +70,13 @@ jn.define('stafftrack/check-in/pages/cancel-reason', (require, exports, module) 
 
 		componentDidMount()
 		{
+			this.refs.layoutWidget.setRightButtons([
+				{
+					type: Icon.CROSS.getIconName(),
+					callback: () => this.refs.layoutWidget.close(),
+				},
+			]);
+
 			if (this.isCustomReason())
 			{
 				this.refs.message?.focus();
@@ -99,6 +99,10 @@ jn.define('stafftrack/check-in/pages/cancel-reason', (require, exports, module) 
 				.setParentWidget(parentLayout)
 				.setMediumPositionHeight(DEFAULT_HEIGHT)
 				.setBackgroundColor(Color.bgSecondary.toHex())
+				.setTitleParams({
+					text: Loc.getMessage('M_STAFFTRACK_CHECK_IN_CANCEL_REASON_TITLE'),
+					type: 'wizard',
+				})
 				.enableAdoptHeightByKeyboard()
 				.disableOnlyMediumPosition()
 				.disableContentSwipe()
@@ -185,18 +189,16 @@ jn.define('stafftrack/check-in/pages/cancel-reason', (require, exports, module) 
 
 		render()
 		{
-			return View(
+			return Box(
 				{
-					style: {
-						flex: 1,
-					},
+					style: { flex: 1 },
+					backgroundColor: Color.bgSecondary,
 					resizableByKeyboard: true,
 					onClick: () => Keyboard.dismiss(),
 					testId: 'stafftrack-check-in-cancel-reason',
+					footer: this.renderBoxFooter(),
 				},
-				this.renderHeader(),
 				this.renderBody(),
-				this.renderDialogFooter(),
 			);
 		}
 
@@ -208,39 +210,7 @@ jn.define('stafftrack/check-in/pages/cancel-reason', (require, exports, module) 
 						flex: 1,
 					},
 				},
-				Box(
-					{
-						backgroundColor: Color.bgSecondary,
-					},
-					this.renderContent(),
-				),
-			);
-		}
-
-		renderHeader()
-		{
-			return Area(
-				{
-					isFirst: true,
-					style: {
-						flexDirection: 'row',
-					},
-				},
-				IconView({
-					icon: Icon.ARROW_TO_THE_LEFT,
-					size: 24,
-					color: Color.base4,
-					onClick: () => this.refs.layoutWidget.close(),
-				}),
-				H3({
-					numberOfLines: 1,
-					ellipsize: 'end',
-					text: Loc.getMessage('M_STAFFTRACK_CHECK_IN_CANCEL_REASON_TITLE'),
-					style: {
-						flex: 1,
-						marginLeft: Indent.XL.toNumber(),
-					},
-				}),
+				this.renderContent(),
 			);
 		}
 
@@ -277,10 +247,9 @@ jn.define('stafftrack/check-in/pages/cancel-reason', (require, exports, module) 
 			});
 		}
 
-		onSwitcherClick(sendMessage)
-		{
+		onSwitcherClick = (sendMessage) => {
 			this.setState({ sendMessage });
-		}
+		};
 
 		renderReasonSelector()
 		{
@@ -319,24 +288,14 @@ jn.define('stafftrack/check-in/pages/cancel-reason', (require, exports, module) 
 
 		renderConfirmButton()
 		{
-			return View(
-				{
-					style: {
-						opacity: 1,
-					},
-					ref: (ref) => {
-						this.refs.buttonContainer = ref;
-					},
-				},
-				Button({
-					testId: 'stafftrack-check-in-cancel-reason-confirm-button',
-					text: this.getConfirmButtonText(),
-					onClick: this.onConfirmButtonClick,
-					backgroundColor: Color.accentMainPrimary,
-					color: Color.baseWhiteFixed,
-					stretched: true,
-				}),
-			);
+			return Button({
+				testId: 'stafftrack-check-in-cancel-reason-confirm-button',
+				text: this.getConfirmButtonText(),
+				onClick: this.onConfirmButtonClick,
+				backgroundColor: Color.accentMainPrimary,
+				color: Color.baseWhiteFixed,
+				stretched: true,
+			});
 		}
 
 		getConfirmButtonText()
@@ -352,9 +311,9 @@ jn.define('stafftrack/check-in/pages/cancel-reason', (require, exports, module) 
 			return Loc.getMessage('M_STAFFTRACK_CHECK_IN_CANCEL');
 		}
 
-		renderDialogFooter()
+		renderBoxFooter()
 		{
-			return DialogFooter(
+			return BoxFooter(
 				{
 					safeArea: true,
 					keyboardButton: {
@@ -367,8 +326,7 @@ jn.define('stafftrack/check-in/pages/cancel-reason', (require, exports, module) 
 			);
 		}
 
-		onReasonSelectorClick()
-		{
+		onReasonSelectorClick = () => {
 			this.refs.message?.blur();
 
 			this.cancelReasonMenu ??= new CancelReasonMenu({
@@ -377,19 +335,17 @@ jn.define('stafftrack/check-in/pages/cancel-reason', (require, exports, module) 
 			});
 
 			this.cancelReasonMenu.show(this.refs.reasonSelector);
-		}
+		};
 
-		onReasonSelected(selectedReason)
-		{
+		onReasonSelected = (selectedReason) => {
 			this.setState({ selectedReason });
 
 			Haptics.impactMedium();
 
 			this.refs.message?.changeMessageContent(this.getCancelReasonText(selectedReason));
-		}
+		};
 
-		async onConfirmButtonClick()
-		{
+		onConfirmButtonClick = async () => {
 			if (this.cancelType === StatusEnum.NOT_WORKING)
 			{
 				void this.startNotWorkingDay();
@@ -398,7 +354,7 @@ jn.define('stafftrack/check-in/pages/cancel-reason', (require, exports, module) 
 			{
 				void this.cancelWorkingDay();
 			}
-		}
+		};
 
 		// eslint-disable-next-line consistent-return
 		startNotWorkingDay()

@@ -20,20 +20,6 @@ if(!isset($arResult['HIDE_BUTTONS']) || !$arResult['HIDE_BUTTONS']) {
 		<div class="disk-documents-control-panel-label">
 			<div class="disk-documents-control-panel-label-item"><?=Loc::getMessage('DISK_DOCUMENTS_TOOLBAR_CREATE')?></div>
 		</div>
-		<?php
-		if (\Bitrix\Main\Config\Option::get('disk', 'boards_enabled', 'N') === 'Y')
-		{
-		?>
-			<div class="disk-documents-control-panel-card-box" onclick="BX.Disk.Documents.Toolbar.createBoard();">
-				<div class="disk-documents-control-panel-card disk-documents-control-panel-card--board">
-					<div class="disk-documents-control-panel-card-icon"></div>
-					<div class="disk-documents-control-panel-card-btn"></div>
-					<div class="disk-documents-control-panel-card-name"><?=Loc::getMessage('DISK_DOCUMENTS_TOOLBAR_CREATE_BOARD')?></div>
-				</div>
-			</div>
-		<?php
-		}
-		?>
 		<div class="disk-documents-control-panel-card-box" onclick="BX.Disk.Documents.Toolbar.createDocx();">
 			<div class="disk-documents-control-panel-card disk-documents-control-panel-card--doc">
 				<div class="disk-documents-control-panel-card-icon"></div>
@@ -55,6 +41,20 @@ if(!isset($arResult['HIDE_BUTTONS']) || !$arResult['HIDE_BUTTONS']) {
 				<div class="disk-documents-control-panel-card-name"><?=Loc::getMessage('DISK_DOCUMENTS_TOOLBAR_CREATE_PPT')?></div>
 			</div>
 		</div>
+		<?php
+		if (\Bitrix\Main\Config\Option::get('disk', 'boards_enabled', 'N') === 'Y')
+		{
+			?>
+			<div class="disk-documents-control-panel-card-box" onclick="BX.Disk.Documents.Toolbar.createBoard('docs_page');">
+				<div class="disk-documents-control-panel-card disk-documents-control-panel-card--board">
+					<div class="disk-documents-control-panel-card-icon"></div>
+					<div class="disk-documents-control-panel-card-btn"></div>
+					<div class="disk-documents-control-panel-card-name"><?=Loc::getMessage('DISK_DOCUMENTS_TOOLBAR_CREATE_BOARD')?></div>
+				</div>
+			</div>
+			<?php
+		}
+		?>
 	</div>
 	<div class="disk-documents-control-panel-create">
 		<div class="disk-documents-control-panel-label">

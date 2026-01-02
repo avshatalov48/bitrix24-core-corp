@@ -11,7 +11,7 @@ if (CModule::IncludeModule('voximplant') && \Bitrix\Voximplant\Security\Helper::
 {
 	$aMenuLinks[] = Array(
 		GetMessage("MENU_TELEPHONY_CONNECT"),
-		"/telephony/index.php",
+		SITE_DIR . "telephony/index.php",
 		Array(),
 		Array("menu_item_id"=>"menu_telephony_start"),
 		""
@@ -20,7 +20,7 @@ if (CModule::IncludeModule('voximplant') && \Bitrix\Voximplant\Security\Helper::
 	{
 		$aMenuLinks[] = [
 			GetMessage("MENU_TELEPHONY_DETAIL"),
-			"/telephony/detail.php",
+			SITE_DIR . "telephony/detail.php",
 			[],
 			[
 				"menu_item_id" => "menu_telephony_detail",

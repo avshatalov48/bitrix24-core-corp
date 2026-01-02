@@ -19,6 +19,7 @@ export class PickerImage extends PickerBase
 	{
 		return Tag.render`
 			<div class="ai__picker-image">
+				<div class="ai__picker-image_input-field-baas-point"></div>
 				${this.renderTextMessage()}
 				${this.#renderHistory()}
 			</div>

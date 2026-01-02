@@ -1,19 +1,19 @@
 <?php
 
 use Bitrix\Disk\Configuration;
-use Bitrix\Disk\Controller\Integration\Flipchart;
 use Bitrix\Disk\Integration\Collab\CollabService;
-use Bitrix\Disk\Integration\Socialnetwork\Context\Context;
 use Bitrix\Disk\Document\DocumentHandler;
 use Bitrix\Disk\Integration\Bitrix24Manager;
 use Bitrix\Disk\Search\Reindex\BaseObjectIndex;
 use Bitrix\Disk\Search\Reindex\ExtendedIndex;
 use Bitrix\Disk\Search\Reindex\HeadIndex;
+use Bitrix\Disk\Security\ParameterSigner;
 use Bitrix\Disk\Storage;
 use Bitrix\Disk\TypeFile;
 use Bitrix\Disk\Ui\Avatar;
 use Bitrix\Disk\Ui\FileAttributes;
-use Bitrix\Disk\UrlManager;
+use Bitrix\Disk\Ui\Text;
+use Bitrix\Disk\UserConfiguration;
 use Bitrix\Disk\ZipNginx;
 use Bitrix\Disk\Document\Contract;
 use Bitrix\Disk\Document\LocalDocumentController;
@@ -32,41 +32,58 @@ use Bitrix\Disk\BaseObject;
 use Bitrix\Disk\Sharing;
 use Bitrix\Disk\Ui;
 use Bitrix\Main\Application;
+use Bitrix\Main\ArgumentException;
+use Bitrix\Main\ArgumentNullException;
+use Bitrix\Main\ArgumentOutOfRangeException;
+use Bitrix\Main\ArgumentTypeException;
+use Bitrix\Main\DI\Exception\CircularDependencyException;
+use Bitrix\Main\DI\Exception\ServiceNotFoundException;
+use Bitrix\Main\Engine\Contract\Controllerable;
 use Bitrix\Main\Engine\CurrentUser;
-use Bitrix\Main\Entity\ExpressionField;
-use Bitrix\Main\Entity\Query\Filter;
+use Bitrix\Main\Engine\UrlManager;
+use Bitrix\Main\LoaderException;
+use Bitrix\Main\NotImplementedException;
+use Bitrix\Main\ObjectException;
+use Bitrix\Main\ObjectNotFoundException;
+use Bitrix\Main\ObjectPropertyException;
+use Bitrix\Main\ORM\Fields\ExpressionField;
 use Bitrix\Main\Localization\Loc;
 use Bitrix\Main\Grid;
 use Bitrix\Main\Loader;
 use Bitrix\Disk\Security\SecurityContext;
 use Bitrix\Main\ModuleManager;
 use Bitrix\Main\Search\Content;
+use Bitrix\Main\SystemException;
 use Bitrix\Main\Type\DateTime;
+use Bitrix\Main\UI\Filter\Options;
 use Bitrix\Main\UI\UiTour;
 use Bitrix\Main\UI\Viewer\ItemAttributes;
+use Bitrix\Main\Web\Cookie;
 use Bitrix\Main\Web\Uri;
 use Bitrix\Socialnetwork;
+use Bitrix\Main\DI\ServiceLocator;
+use Psr\Container\NotFoundExceptionInterface;
 
-if(!defined("B_PROLOG_INCLUDED") || B_PROLOG_INCLUDED!==true)die();
+if (!defined("B_PROLOG_INCLUDED") || B_PROLOG_INCLUDED!==true)
+{
+	die;
+}
 
 Loc::loadMessages(__FILE__);
 
-class CDiskFolderListComponent extends DiskComponent implements \Bitrix\Main\Engine\Contract\Controllerable
+class CDiskFolderListComponent extends DiskComponent implements Controllerable
 {
-	const ERROR_COULD_NOT_FIND_OBJECT  = 'DISK_FL_22001';
-	const ERROR_COULD_NOT_FIND_SHARING = 'DISK_FL_22002';
-	const ERROR_INVALID_DATA_TYPE      = 'DISK_FL_22003';
+	private const FILTER_WITH_EXTERNAL_LINK = 1;
+	private const FILTER_SHARED_FROM_ME     = 2;
+	public const FILTER_SHARED_TO_ME       = 3;
 
-	const FILTER_WITH_EXTERNAL_LINK = 1;
-	const FILTER_SHARED_FROM_ME     = 2;
-	const FILTER_SHARED_TO_ME       = 3;
-
-	const COLLABER_TOUR_ON_ADD_BUTTON_ID =  'tour-guide-on-add-button-for-collaber';
+	private const COLLABER_TOUR_ON_ADD_BUTTON_ID =  'tour-guide-on-add-button-for-collaber';
+	private const READONLY_COLLAB_FOLDER_STATE_COOKIE_NAME = 'DISK_IS_READONLY_COLLAB_FOLDER';
 
 	protected $componentId = 'folder_list';
 
 	protected $trashMode = false;
-	/** @var \Bitrix\Disk\Folder */
+	/** @var Folder */
 	protected $folder;
 	/** @var  array */
 	protected $breadcrumbs;
@@ -75,10 +92,12 @@ class CDiskFolderListComponent extends DiskComponent implements \Bitrix\Main\Eng
 	/** @var string */
 	private $information = '';
 	/** @var  array */
-	private $imageSize = array('width' => 64, 'height' => 64, 'exact' => 'Y');
+	private $imageSize = ['width' => 64, 'height' => 64, 'exact' => 'Y'];
 	private $templateBizProc;
 	/** @var CollabService */
 	private $collabService;
+	private bool $isUserCollaber = false;
+	private ?Cookie $readOnlyCollabFolderStateCookie = null;
 
 	protected function processBeforeAction($actionName)
 	{
@@ -98,10 +117,11 @@ class CDiskFolderListComponent extends DiskComponent implements \Bitrix\Main\Eng
 		}
 		if ($this->request->getQuery('sortMode') || $this->request->getPost('sortMode'))
 		{
-			$this->gridOptions->storeSortMode($this->request->getQuery('sortMode')?: $this->request->getPost('sortMode'));
+			$this->gridOptions->storeSortMode($this->request->getQuery('sortMode') ?: $this->request->getPost('sortMode'));
 		}
 
 		$this->collabService = new CollabService();
+		$this->isUserCollaber = $this->isCollaber();
 
 		return true;
 	}
@@ -113,11 +133,11 @@ class CDiskFolderListComponent extends DiskComponent implements \Bitrix\Main\Eng
 			$this->arParams['FOLDER_ID'] = (int)$this->request->getPost('folderId');
 		}
 
-		$this->folder = \Bitrix\Disk\Folder::loadById($this->arParams['FOLDER_ID']);
+		$this->folder = Folder::loadById($this->arParams['FOLDER_ID']);
 
 		if (!$this->folder)
 		{
-			throw new \Bitrix\Main\SystemException("Invalid file.");
+			throw new SystemException("Invalid file.");
 		}
 
 		return $this;
@@ -127,8 +147,8 @@ class CDiskFolderListComponent extends DiskComponent implements \Bitrix\Main\Eng
 	{
 		$viewStorage = null;
 		if (
-			Bitrix\Main\Grid\Context::isInternalRequest() &&
-			($this->request->getPost('viewGridStorageId') || $this->request->get('grid_id'))
+			Bitrix\Main\Grid\Context::isInternalRequest()
+			&& ($this->request->getPost('viewGridStorageId') || $this->request->get('grid_id'))
 		)
 		{
 			$viewStorageId = (int)$this->request->getPost('viewGridStorageId');
@@ -163,18 +183,18 @@ class CDiskFolderListComponent extends DiskComponent implements \Bitrix\Main\Eng
 		{
 			if (!$this->arParams['FOLDER'] instanceof Folder)
 			{
-				throw new \Bitrix\Main\ArgumentException('FOLDER not instance of \\Bitrix\\Disk\\Folder');
+				throw new ArgumentException('FOLDER not instance of \\Bitrix\\Disk\\Folder');
 			}
 			$this->arParams['FOLDER_ID'] = $this->arParams['FOLDER']->getId();
 		}
 		if (!isset($this->arParams['FOLDER_ID']))
 		{
-			throw new \Bitrix\Main\ArgumentException('FOLDER_ID required');
+			throw new ArgumentException('FOLDER_ID required');
 		}
 		$this->arParams['FOLDER_ID'] = (int)$this->arParams['FOLDER_ID'];
 		if ($this->arParams['FOLDER_ID'] <= 0)
 		{
-			throw new \Bitrix\Main\ArgumentException('FOLDER_ID < 0');
+			throw new ArgumentException('FOLDER_ID < 0');
 		}
 
 		if (empty($this->arParams['PATH_TO_GROUP']))
@@ -214,7 +234,7 @@ class CDiskFolderListComponent extends DiskComponent implements \Bitrix\Main\Eng
 	private function shouldBeBlockAddButtons(Storage $storage): bool
 	{
 		$proxyType = $storage->getProxyType();
-		if (!($proxyType instanceof ProxyType\Common))
+		if (!$proxyType instanceof ProxyType\Common)
 		{
 			return false;
 		}
@@ -237,13 +257,21 @@ class CDiskFolderListComponent extends DiskComponent implements \Bitrix\Main\Eng
 	}
 
 	/**
-	 * @throws \Bitrix\Main\ObjectException
-	 * @throws \Bitrix\Main\ArgumentNullException
-	 * @throws \Bitrix\Main\ArgumentTypeException
-	 * @throws \Bitrix\Main\LoaderException
-	 * @throws \Bitrix\Main\ArgumentOutOfRangeException
+	 * @throws ArgumentNullException
+	 * @throws ArgumentOutOfRangeException
+	 * @throws ArgumentTypeException
+	 * @throws LoaderException
+	 * @throws ObjectException
+	 * @throws ArgumentException
+	 * @throws CircularDependencyException
+	 * @throws ServiceNotFoundException
+	 * @throws NotImplementedException
+	 * @throws ObjectNotFoundException
+	 * @throws ObjectPropertyException
+	 * @throws SystemException
+	 * @throws NotFoundExceptionInterface
 	 */
-	protected function processActionDefault()
+	protected function processActionDefault(): void
 	{
 		$errorsInGridActions = $this->processGridActions();
 		$this->setPageTitle();
@@ -252,7 +280,7 @@ class CDiskFolderListComponent extends DiskComponent implements \Bitrix\Main\Eng
 		$proxyType = $this->storage->getProxyType();
 
 		$connectedGroupObject = $this->getConnectedGroupObject();
-		$filterOptions = new \Bitrix\Main\UI\Filter\Options($this->gridOptions->getGridId());
+		$filterOptions = new Options($this->gridOptions->getGridId());
 		$folderListFilter = new Ui\FolderListFilter($this->storage->getId(), $this->isTrashMode());
 
 		$isCollab = $this->collabService->isCollabStorage($this->storage);
@@ -265,9 +293,11 @@ class CDiskFolderListComponent extends DiskComponent implements \Bitrix\Main\Eng
 				$avatar = null;
 			}
 		}
+		$canAddInCurrentFolder = $this->folder->canAdd($securityContext);
 
-		$this->arResult = array(
-			'CONTEXT' => $this->arParams['CONTEXT'] ?? Context::DEFAULT,
+		$this->setUiFlagForReadonlyCollabFolderState($canAddInCurrentFolder);
+
+		$this->arResult = [
 			'GRID_INFORMATION' => $this->information,
 			'ERRORS_IN_GRID_ACTIONS' => $errorsInGridActions->toArray(),
 			'FILTER' => $folderListFilter->getConfig(),
@@ -275,16 +305,16 @@ class CDiskFolderListComponent extends DiskComponent implements \Bitrix\Main\Eng
 			'GRID' => $this->getGridData(),
 			'IS_BITRIX24' => ModuleManager::isModuleInstalled('bitrix24'),
 			'IS_TRASH_MODE' => $this->isTrashMode(),
-			'FOLDER' => array(
+			'FOLDER' => [
 				'ID' => $this->folder->getId(),
 				'MODEL' => $this->folder,
 				'NAME' => $this->folder->getName(),
 				'IS_DELETED' => $this->folder->isDeleted(),
-				'CAN_ADD' => $this->folder->canAdd($securityContext),
+				'CAN_ADD' => $canAddInCurrentFolder,
 				'CREATE_TIME' => $this->folder->getCreateTime(),
 				'UPDATE_TIME' => $this->folder->getUpdateTime(),
-			),
-			'STORAGE' => array(
+			],
+			'STORAGE' => [
 				'ID' => $this->storage->getId(),
 				'IS_COLLAB' => $isCollab,
 				'AVATAR' => $avatar,
@@ -299,12 +329,12 @@ class CDiskFolderListComponent extends DiskComponent implements \Bitrix\Main\Eng
 				'CAN_CHANGE_RIGHTS_ON_STORAGE' => $this->storage->canChangeRights($securityContext),
 				'CAN_CHANGE_SETTINGS_ON_STORAGE' => $this->storage->canChangeSettings($securityContext),
 				'CAN_CHANGE_SETTINGS_ON_BIZPROC' => $this->storage->canCreateWorkflow($securityContext),
-				'CAN_CHANGE_SETTINGS_ON_BIZPROC_EXCEPT_USER' => $proxyType instanceof ProxyType\User ? false : true,
+				'CAN_CHANGE_SETTINGS_ON_BIZPROC_EXCEPT_USER' => !$proxyType instanceof ProxyType\User,
 				'SHOW_BIZPROC' => $this->isItTimeToShowBizProc(),
 				'FOR_SOCNET_GROUP' => $proxyType instanceof ProxyType\Group,
-				'CONNECTED_SOCNET_GROUP_OBJECT_ID' => isset($connectedGroupObject['LINK_OBJECT_ID'])? $connectedGroupObject['LINK_OBJECT_ID'] : null,
+				'CONNECTED_SOCNET_GROUP_OBJECT_ID' => $connectedGroupObject['LINK_OBJECT_ID'] ?? null,
 				'NETWORK_DRIVE_LINK' => Driver::getInstance()->getUrlManager()->getHostUrl() . $proxyType->getBaseUrlFolderList(),
-			),
+			],
 			'RELATIVE_PATH' => $this->arParams['RELATIVE_PATH'],
 			'RELATIVE_PATH_ENCODED' => $this->getUrlManager()->encodeUrn($this->arParams['RELATIVE_PATH']),
 			'BREADCRUMBS' => $this->getBreadcrumbs(),
@@ -321,13 +351,15 @@ class CDiskFolderListComponent extends DiskComponent implements \Bitrix\Main\Eng
 			'DOCUMENT_HANDLERS' => $this->getDocumentHandlersForCreatingFile(),
 			'STATUS_BIZPROC' => $this->storage->isEnabledBizProc() && Loader::includeModule("bizproc"),
 			'SHOW_SEARCH_NOTICE' => \Bitrix\Main\Config\Option::get('disk', 'needBaseObjectIndex', 'x') !== 'N',
-			'IS_USER_COLLABER' => $this->isCollaber(),
+			'IS_USER_COLLABER' => $this->isUserCollaber,
 			'COLLABER_TOUR_ON_ADD_BUTTON_ID' => self::COLLABER_TOUR_ON_ADD_BUTTON_ID,
 			'IS_COLLABER_TOUR_ON_ADD_BUTTON_VIEWED' => $this->isCollaberTourOnAddButtonViewed(),
-		);
+			'READONLY_COLLAB_FOLDER_STATE_COOKIE_NAME' => $this->getReadOnlyCollabFolderStateCookie()->getName(),
+		];
 
 		if ($this->gridOptions->getViewMode() === FolderListOptions::VIEW_MODE_TILE)
 		{
+			$scopeTokenService = ServiceLocator::getInstance()->get('disk.scopeTokenService');
 			$isEnabledObjectLock = Configuration::isEnabledObjectLock();
 			$this->arResult['TILE_ITEMS'] = [];
 			foreach ($this->arResult['GRID']['ROWS'] as $row)
@@ -360,18 +392,20 @@ class CDiskFolderListComponent extends DiskComponent implements \Bitrix\Main\Eng
 
 				if ($object instanceof File && TypeFile::isImage($object))
 				{
-					$info['image'] = \Bitrix\Main\Engine\UrlManager::getInstance()->create('disk.api.file.showImage', [
+					$accessInfo = $scopeTokenService->grantAccessWithScope($object, $this->gridOptions->getGridId());
+					$info['image'] = UrlManager::getInstance()->create('disk.api.file.showImage', [
 						'fileId' => $object->getId(),
-						'signature' => \Bitrix\Disk\Security\ParameterSigner::getImageSignature($object->getId(), 400, 400),
+						'signature' => ParameterSigner::getImageSignature($object->getId(), 400, 400),
 						'width' => 400,
 						'height' => 400,
+						'_esd' => $accessInfo['encryptedScope'],
 					]);
 				}
 				elseif ($object instanceof File && $object->getPreviewId())
 				{
-					$info['image'] = \Bitrix\Main\Engine\UrlManager::getInstance()->create('disk.api.file.showPreview', [
+					$info['image'] = UrlManager::getInstance()->create('disk.api.file.showPreview', [
 						'fileId' => $object->getId(),
-						'signature' => \Bitrix\Disk\Security\ParameterSigner::getImageSignature($object->getId(), 400, 400),
+						'signature' => ParameterSigner::getImageSignature($object->getId(), 400, 400),
 						'width' => 400,
 						'height' => 400,
 					]);
@@ -406,20 +440,20 @@ class CDiskFolderListComponent extends DiskComponent implements \Bitrix\Main\Eng
 		return $this->storage->isEnabledBizProc() && BizProcManager::isAvailable();
 	}
 
-	private function getGridData()
+	private function getGridData(): array
 	{
-		$grid = array(
+		$grid = [
 			'ID' => $this->gridOptions->getGridId(),
 			'MODE' => $this->gridOptions->getViewMode(),
 			'SORT_MODE' => $this->gridOptions->getSortMode(),
 			'VIEW_SIZE' => $this->gridOptions->getViewSize(),
-		);
+		];
 		[$grid['SORT'], $grid['SORT_VARS']] = $this->gridOptions->getGridOptionsSorting();
 
 		$possibleColumnForSorting = $this->gridOptions->getPossibleColumnForSorting();
 		$visibleColumns = array_combine(
 			$this->gridOptions->getVisibleColumns(),
-			$this->gridOptions->getVisibleColumns()
+			$this->gridOptions->getVisibleColumns(),
 		);
 
 		$isEnabledObjectLock = Configuration::isEnabledObjectLock();
@@ -427,7 +461,7 @@ class CDiskFolderListComponent extends DiskComponent implements \Bitrix\Main\Eng
 		$isItTimeToShowBizProc = $this->isItTimeToShowBizProc();
 		$securityContext = $this->storage->getCurrentUserSecurityContext();
 		$proxyType = $this->storage->getProxyType();
-		$isStorageCurrentUser = $proxyType instanceof ProxyType\User && $proxyType->getTitleForCurrentUser() != $proxyType->getTitle();
+		$isStorageCurrentUser = $proxyType instanceof ProxyType\User && $proxyType->getTitleForCurrentUser() !== $proxyType->getTitle();
 
 		$pageSize = $this->gridOptions->getPageSize();
 		$nav = $this->gridOptions->getNavigation();
@@ -436,17 +470,21 @@ class CDiskFolderListComponent extends DiskComponent implements \Bitrix\Main\Eng
 		$parameters = Driver::getInstance()->getRightsManager()->addRightsCheck(
 			$securityContext,
 			[],
-			array('ID', 'CREATED_BY')
+			['ID', 'CREATED_BY'],
 		);
 
 		$parameters['order'] = $this->gridOptions->getOrderForOrm();
 
-		if ($this->isCollaber())
+		if ($isStorageCurrentUser && $this->isCollaber())
 		{
 			$folderForUploadedFilesId = $this->storage->getFolderForUploadedFiles()?->getId();
+			$folderForCreatedFilesId = $this->storage->getFolderForCreatedFiles()?->getId();
 			if ($folderForUploadedFilesId !== null)
 			{
-				$parameters['filter']['!=ID'] = $folderForUploadedFilesId;
+				$parameters['filter']['!=ID'] = [
+					$folderForUploadedFilesId,
+					$folderForCreatedFilesId,
+				];
 			}
 		}
 
@@ -485,7 +523,7 @@ class CDiskFolderListComponent extends DiskComponent implements \Bitrix\Main\Eng
 		$storageTitle = $proxyType->getTitle();
 
 		$countObjectsOnPage = 0;
-		if($this->arParams['RELATIVE_PATH'] !== '/')
+		if ($this->arParams['RELATIVE_PATH'] !== '/')
 		{
 			$relativePath = trim($this->arParams['RELATIVE_PATH'], '/');
 		}
@@ -503,7 +541,7 @@ class CDiskFolderListComponent extends DiskComponent implements \Bitrix\Main\Eng
 			],
 			'with' => $this->buildWithByVisibleColumns($visibleColumns),
 			'filter' => [
-				'@ID' => $objectIds?: [0],
+				'@ID' => $objectIds ?: [0],
 			],
 			'order' => $parameters['order'],
 		];
@@ -512,12 +550,12 @@ class CDiskFolderListComponent extends DiskComponent implements \Bitrix\Main\Eng
 			$parameters['with'][] = 'LOCK';
 		}
 
-		$rows = array();
+		$rows = [];
 		foreach (Folder::getList($parameters) as $row)
 		{
 			$countObjectsOnPage++;
 
-			if($countObjectsOnPage > $pageSize)
+			if ($countObjectsOnPage > $pageSize)
 			{
 				break;
 			}
@@ -526,20 +564,23 @@ class CDiskFolderListComponent extends DiskComponent implements \Bitrix\Main\Eng
 			/** @var File|Folder $object */
 			$name = $object->getName();
 			$objectId = $object->getId();
-			$exportData = array(
+			$exportData = [
 				'TYPE' => $object->getType(),
 				'NAME' => $name,
 				'SHARED' => !empty($sharedObjectIds[$row['ID']]),
 				'ID' => $objectId,
-			);
+			];
 
 			$isFolder = $object instanceof Folder;
 			$isFile = !$isFolder;
-			$actions = $columns = array();
+			$supportsUnifiedLink = $isFile && $object->supportsUnifiedLink();
+			$isBoard = $isFile && (int)$object->getTypeFile() === TypeFile::FLIPCHART;
+
+			$actions = $columns = [];
 
 			if ($isShowFromDifferentLevels)
 			{
-				$distance = $crumbStorage->calculateDistance($this->folder, $object)?: array();
+				$distance = $crumbStorage->calculateDistance($this->folder, $object) ?: [];
 				$pathFromFolder = trim(implode('/', $distance), '/');
 
 				if (!$isFolder)
@@ -558,20 +599,21 @@ class CDiskFolderListComponent extends DiskComponent implements \Bitrix\Main\Eng
 			}
 
 			if (
-				$onlyRead &&
-				($object->canUpdate($securityContext) || $object->canMarkDeleted($securityContext))
+				$onlyRead
+				&& ($object->canUpdate($securityContext) || $object->canMarkDeleted($securityContext))
 			)
 			{
 				$onlyRead = false;
 			}
 
-			if($object->canRead($securityContext))
+
+			if ($object->canRead($securityContext))
 			{
 				if ($isFolder)
 				{
 					$exportData['OPEN_URL'] = $urlManager->encodeUrn(rtrim($listingPage, '/') . '/' . $object->getOriginalName() . '/');
 
-					$openAction = array(
+					$openAction = [
 						'id' => 'open',
 						'text' => Loc::getMessage('DISK_FOLDER_LIST_ACT_OPEN'),
 						'icon' => '/bitrix/js/ui/actionpanel/images/ui_icon_actionpanel_open.svg',
@@ -581,90 +623,112 @@ class CDiskFolderListComponent extends DiskComponent implements \Bitrix\Main\Eng
 							id: {$objectId},
 							name: '" . CUtil::JSEscape($name) . "'
 						});",
-					);
+					];
 				}
-				elseif ($object->getTypeFile() == TypeFile::FLIPCHART)
+				elseif ($isBoard)
 				{
-					$openUrl = $this->getUrlManager()->getUrlForViewBoard($objectId);
+					$openUrl = $this->getUrlManager()->getUrlForViewBoard($object, false, 'disk_page');
+
 					$openAction = [
 						'id' => 'open',
 						'text' => Loc::getMessage('DISK_FOLDER_LIST_ACT_OPEN'),
 						'icon' => '/bitrix/js/ui/actionpanel/images/ui_icon_actionpanel_open.svg',
 						'className' => 'disk-folder-list-context-menu-item',
-						'onclick' => "BX.Disk.Viewer.Actions.openInNewTab({id: {$objectId}}, {url: '{$openUrl}'});",
+						'href' => $openUrl,
+						'target' => '_blank',
 					];
 				}
 				else
 				{
 					$exportData['OPEN_URL'] = $urlManager->encodeUrn($detailPageFile);
-					$openAction = array(
+					$openAction = [
 						'id' => 'open',
 						'text' => Loc::getMessage('DISK_FOLDER_LIST_ACT_DETAILS'),
 						'icon' => '/bitrix/js/ui/actionpanel/images/ui_icon_actionpanel_open.svg',
 						'className' => 'disk-folder-list-context-menu-item',
 						'href' => $exportData['OPEN_URL'],
 						'onclick' => "BX.SidePanel.Instance.open('" . CUtil::JSEscape($exportData['OPEN_URL']) . "'); event.preventDefault();",
-					);
+					];
 				}
 
 				$actions[] = $openAction;
 
+				if ($isFile && !$isBoard && $supportsUnifiedLink)
+				{
+					$viewUnifiedLink = $urlManager->getUnifiedLink($object);
+					$actions[] = [
+						'id' => 'view',
+						'text' => Loc::getMessage('DISK_FOLDER_LIST_ACT_OPEN'),
+						'icon' => '/bitrix/js/disk/css/images/disk-icon-opened-eye.svg',
+						'className' => 'disk-folder-list-context-menu-item',
+						'onclick' => "BX.Disk.Viewer.Actions.openInNewTab(null, { url: '" . CUtil::JSEscape($viewUnifiedLink) . "'}); event.preventDefault();",
+					];
+				}
+
 				if ($isFile)
 				{
-					$actions[] = array(
+					$actions[] = [
 						'className' => 'disk-folder-list-context-menu-item',
 						'icon' => '/bitrix/js/ui/actionpanel/images/ui_icon_actionpanel_download.svg',
 						"text" => Loc::getMessage('DISK_FOLDER_LIST_ACT_DOWNLOAD'),
 						"href" => $urlManager->getUrlForDownloadFile($object),
-					);
+					];
 				}
 				elseif ($isFolder && $possibleToDownloadArchive && !$object->isDeleted())
 				{
-					$uriToDownloadArchive = \Bitrix\Main\Engine\UrlManager::getInstance()->create('disk.api.folder.downloadArchive', [
+					$uriToDownloadArchive = UrlManager::getInstance()->create('disk.api.folder.downloadArchive', [
 						'folderId' => $objectId,
 					]);
 
-					$actions[] = array(
+					$actions[] = [
 						'className' => 'disk-folder-list-context-menu-item',
 						'icon' => '/bitrix/js/ui/actionpanel/images/ui_icon_actionpanel_download.svg',
 						'text' => Loc::getMessage('DISK_FOLDER_LIST_ACT_DOWNLOAD'),
 						'href' => $uriToDownloadArchive,
-					);
+						"onclick" => "
+							event.preventDefault();
+							BX.Disk.FolderListClass_{$this->getComponentId()}.checkFileLimit('" . $objectId . "', '" . $uriToDownloadArchive . "');
+						",
+					];
 				}
 
 				if ($object->isDeleted() && $object->canRestore($securityContext))
 				{
-					$actions[] = array(
+					$actions[] = [
 						"text" => Loc::getMessage('DISK_TRASHCAN_ACT_RESTORE'),
 						'className' => 'disk-folder-list-context-menu-item',
-						"onclick" =>
-							"BX.Disk['FolderListClass_{$this->getComponentId()}'].openConfirmRestore({
+						"onclick" => "BX.Disk['FolderListClass_{$this->getComponentId()}'].openConfirmRestore({
 							object: {
 								id: {$object->getId()},
 								name: '" . CUtil::JSEscape($name) . "',
 								isFolder: " . ($isFolder? 'true' : 'false') . "
 							 }
 						})",
-					);
+					];
 				}
 
 				if ($isFile && $object->canUpdate($securityContext) && DocumentHandler::isEditable($object->getExtension()))
 				{
-					$actions[] = array(
+					$isSetLocalDocumentService = UserConfiguration::isSetLocalDocumentService();
+					$actions[] = [
 						'id' => 'edit',
 						'text' => Loc::getMessage('DISK_FOLDER_LIST_ACT_EDIT'),
-						'className' => \Bitrix\Disk\UserConfiguration::isSetLocalDocumentService()? 'disk-folder-list-context-menu-item' : 'disk-popup-menu-hidden-item disk-folder-list-context-menu-item',
-						'hide' => \Bitrix\Disk\UserConfiguration::isSetLocalDocumentService()? false : true,
+						'className' => $isSetLocalDocumentService ? 'disk-folder-list-context-menu-item' : 'disk-popup-menu-hidden-item disk-folder-list-context-menu-item',
+						'hide' => !$isSetLocalDocumentService,
 						'icon' => '/bitrix/js/ui/actionpanel/images/ui_icon_actionpanel_edit.svg',
 						'onclick' => "BX.UI.Viewer.Instance.runActionByNode(BX('disk_obj_{$objectId}'), 'edit', {
 							modalWindow: BX.Disk.openBlankDocumentPopup()
 						});",
-					);
+					];
 				}
 
 				if ($isFolder)
 				{
-					$internalLink = $urlManager->getUrlFocusController('openFolderList', array('folderId' => $object->getId()), true);
+					$internalLink = $urlManager->getUrlFocusController('openFolderList', ['folderId' => $object->getId()], true);
+				}
+				elseif ($supportsUnifiedLink)
+				{
+					$internalLink = $urlManager->getUnifiedLink($object, ['absolute' => true]);
 				}
 				else
 				{
@@ -693,22 +757,21 @@ class CDiskFolderListComponent extends DiskComponent implements \Bitrix\Main\Eng
 					})();
 				";
 
-				if(!$object->isDeleted() && Configuration::isPossibleToShowExternalLinkControl())
+				if (!$object->isDeleted() && Configuration::isPossibleToShowExternalLinkControl())
 				{
-					$actionToShare[] = array(
+					$actionToShare[] = [
 						"text" => Loc::getMessage('DISK_FOLDER_LIST_ACT_GET_EXT_LINK'),
 						'className' => 'disk-folder-list-context-menu-item',
-						"onclick" =>
-							$this->filterB24Feature(
-								$this->getExternalLinkFeature($object),
-								"BX.Disk['FolderListClass_{$this->componentId}'].openExternalLinkDetailSettingsWithEditing({$objectId});"
-							),
-					);
+						"onclick" => $this->filterB24Feature(
+							$this->getExternalLinkFeature($object),
+							"BX.Disk['FolderListClass_{$this->componentId}'].openExternalLinkDetailSettingsWithEditing({$objectId});",
+						),
+					];
 				}
 
 				if (!$object->isDeleted())
 				{
-					$actionToShare[] = array(
+					$actionToShare[] = [
 						"id" => "copy-buffer",
 						'className' => 'disk-folder-list-context-menu-item',
 						'dataset' => [
@@ -716,16 +779,16 @@ class CDiskFolderListComponent extends DiskComponent implements \Bitrix\Main\Eng
 						],
 						"text" => Loc::getMessage('DISK_FOLDER_LIST_ACT_COPY_INTERNAL_LINK'),
 						"onclick" => "BX.Disk['FolderListClass_{$this->componentId}'].copyLinkInternalLink('{$internalLink}', this);",
-					);
+					];
 				}
 
-				if(!$object->isDeleted() && !$isFolder && $isEnabledObjectLock && $object->canLock($securityContext))
+				if (!$isFolder && !$object->isDeleted() && $isEnabledObjectLock && $object->canLock($securityContext))
 				{
-					$actions[] = array(
+					$actions[] = [
 						"id" => "lock",
-						"className" => $object->getLock()? "disk-popup-menu-hidden-item disk-folder-list-context-menu-item" : 'disk-folder-list-context-menu-item',
+						"className" => $object->getLock() ? "disk-popup-menu-hidden-item disk-folder-list-context-menu-item" : 'disk-folder-list-context-menu-item',
 						"text" => Loc::getMessage('DISK_FOLDER_LIST_ACT_LOCK'),
-						'hide' => $object->getLock()? true : false,
+						'hide' => $object->getLock() ? true : false,
 						'icon' => '/bitrix/js/ui/actionpanel/images/ui_icon_actionpanel_lock.svg',
 						"onclick" => "BX.Disk['FolderListClass_{$this->componentId}'].lockFile({
 							object: {
@@ -733,15 +796,15 @@ class CDiskFolderListComponent extends DiskComponent implements \Bitrix\Main\Eng
 								name: '" . CUtil::JSEscape($name) . "'
 							}
 						}); BX.fireEvent(document.body, 'click');",
-					);
+					];
 				}
-				if (!$object->isDeleted() && !$isFolder && $isEnabledObjectLock && $object->canUnlock($securityContext))
+				if ($isEnabledObjectLock && !$isFolder && !$object->isDeleted() && $object->canUnlock($securityContext))
 				{
-					$actions[] = array(
+					$actions[] = [
 						"id" => "unlock",
-						"className" => !$object->getLock()? "disk-popup-menu-hidden-item disk-folder-list-context-menu-item" : 'disk-folder-list-context-menu-item',
+						"className" => !$object->getLock() ? "disk-popup-menu-hidden-item disk-folder-list-context-menu-item" : 'disk-folder-list-context-menu-item',
 						"text" => Loc::getMessage('DISK_FOLDER_LIST_ACT_UNLOCK'),
-						'hide' => !$object->getLock()? true : false,
+						'hide' => !$object->getLock() ? true : false,
 						'icon' => '/bitrix/js/ui/actionpanel/images/ui_icon_actionpanel_unlock.svg',
 						"onclick" => "BX.Disk['FolderListClass_{$this->componentId}'].unlockFile({
 							object: {
@@ -749,71 +812,68 @@ class CDiskFolderListComponent extends DiskComponent implements \Bitrix\Main\Eng
 								name: '" . CUtil::JSEscape($name) . "'
 							}
 						}); BX.fireEvent(document.body, 'click');",
-					);
+					];
 				}
 
 				if (!$object->isDeleted() && !$object->canChangeRights($securityContext) && !$object->canShare($securityContext))
 				{
-					$actionToShare[] = array(
+					$actionToShare[] = [
 						"id" => "share",
 						'className' => 'disk-folder-list-context-menu-item',
 						"text" => Loc::getMessage('DISK_FOLDER_LIST_ACT_SHOW_SHARING_DETAIL_3'),
-						"onclick" =>
-							$this->filterB24Feature(
-								$isFolder? 'disk_folder_sharing' : 'disk_file_sharing',
-								"{$closeActionsMenu}BX.Disk.showSharingDetailWithoutEdit({
-									ajaxUrl: '/bitrix/components/bitrix/disk.folder.list/ajax.php',
-									object: {
-										id: {$objectId},
-										name: '" . CUtil::JSEscape($name) . "',
-										isFolder: " . ($isFolder? 'true' : 'false') . "
-									 }
-								});"
-							),
-					);
+						"onclick" => $this->filterB24Feature(
+							$isFolder ? 'disk_folder_sharing' : 'disk_file_sharing',
+							"{$closeActionsMenu}BX.Disk.showSharingDetailWithoutEdit({
+								ajaxUrl: '/bitrix/components/bitrix/disk.folder.list/ajax.php',
+								object: {
+									id: {$objectId},
+									name: '" . CUtil::JSEscape($name) . "',
+									isFolder: " . ($isFolder ? 'true' : 'false') . "
+								 }
+							});",
+						),
+					];
 				}
 				elseif (!$object->isDeleted() && $object->canChangeRights($securityContext))
 				{
-					$actionToShare[] = array(
+					$actionToShare[] = [
 						"id" => "share",
 						'className' => 'disk-folder-list-context-menu-item',
 						"text" => Loc::getMessage('DISK_FOLDER_LIST_ACT_SHOW_SHARING_DETAIL_3'),
-						"onclick" =>
-							$this->filterB24Feature(
-								$isFolder? 'disk_folder_sharing' : 'disk_file_sharing',
-								"{$closeActionsMenu}BX.Disk['FolderListClass_{$this->componentId}'].showSharingDetailWithChangeRights({
-									object: {
-										id: {$objectId},
-										name: '" . CUtil::JSEscape($name) . "',
-										isFolder: " . ($isFolder? 'true' : 'false') . "
-									 }
-								});"
-							),
-					);
+						"onclick" => $this->filterB24Feature(
+							$isFolder ? 'disk_folder_sharing' : 'disk_file_sharing',
+							"{$closeActionsMenu}BX.Disk['FolderListClass_{$this->componentId}'].showSharingDetailWithChangeRights({
+								object: {
+									id: {$objectId},
+									name: '" . CUtil::JSEscape($name) . "',
+									isFolder: " . ($isFolder ? 'true' : 'false') . "
+								 }
+							});",
+						),
+					];
 				}
 				elseif (!$object->isDeleted() && $object->canShare($securityContext))
 				{
-					$actionToShare[] = array(
+					$actionToShare[] = [
 						"id" => "share",
 						'className' => 'disk-folder-list-context-menu-item',
 						"text" => Loc::getMessage('DISK_FOLDER_LIST_ACT_SHOW_SHARING_DETAIL_3'),
-						"onclick" =>
-							$this->filterB24Feature(
-								$isFolder? 'disk_folder_sharing' : 'disk_file_sharing',
-								"{$closeActionsMenu}BX.Disk['FolderListClass_{$this->componentId}'].showSharingDetailWithSharing({
-									object: {
-										id: {$objectId},
-										name: '" . CUtil::JSEscape($name) . "',
-										isFolder: " . ($isFolder? 'true' : 'false') . "
-									 }
-								});"
-							),
-					);
+						"onclick" => $this->filterB24Feature(
+							$isFolder ? 'disk_folder_sharing' : 'disk_file_sharing',
+							"{$closeActionsMenu}BX.Disk['FolderListClass_{$this->componentId}'].showSharingDetailWithSharing({
+								object: {
+									id: {$objectId},
+									name: '" . CUtil::JSEscape($name) . "',
+									isFolder: " . ($isFolder ? 'true' : 'false') . "
+								 }
+							});",
+						),
+					];
 				}
 
 				if ($actionToShare)
 				{
-					$actions[] = array(
+					$actions[] = [
 						'id' => 'share-section',
 						'text' => Loc::getMessage('DISK_FOLDER_LIST_ACT_SHARE_COMPLEX'),
 						'icon' => '/bitrix/js/ui/actionpanel/images/ui_icon_actionpanel_share.svg',
@@ -822,42 +882,41 @@ class CDiskFolderListComponent extends DiskComponent implements \Bitrix\Main\Eng
 							'preventCloseContextMenu' => true,
 						],
 						'items' => $actionToShare,
-					);
+					];
 				}
 
-				if(!$object->isDeleted() && $isEnabledShowExtendedRights && !$object->isLink() && $object->canChangeRights($securityContext))
+				if ($isEnabledShowExtendedRights && !$object->isDeleted() && !$object->isLink() && $object->canChangeRights($securityContext))
 				{
-					$actions[] = array(
+					$actions[] = [
 						"text" => Loc::getMessage('DISK_FOLDER_LIST_ACT_RIGHTS_SETTINGS'),
 						'icon' => '/bitrix/js/ui/actionpanel/images/ui_icon_actionpanel_general_access.svg',
 						'className' => 'disk-folder-list-context-menu-item',
-						"onclick" =>
-							$this->filterB24Feature(
-								$isFolder? 'disk_folder_rights' : 'disk_file_rights',
-								"BX.Disk['FolderListClass_{$this->componentId}'].showRightsOnObjectDetail({
-									object: {
-										id: {$objectId},
-										name: '" . CUtil::JSEscape($name) . "',
-										isFolder: " . ($isFolder? 'true' : 'false') . "
-									 }
-								})"
-							),
-					);
+						"onclick" => $this->filterB24Feature(
+							$isFolder ? 'disk_folder_rights' : 'disk_file_rights',
+							"BX.Disk['FolderListClass_{$this->componentId}'].showRightsOnObjectDetail({
+								object: {
+									id: {$objectId},
+									name: '" . CUtil::JSEscape($name) . "',
+									isFolder: " . ($isFolder ? 'true' : 'false') . "
+								 }
+							})",
+						),
+					];
 				}
 
 				if (!$object->isDeleted())
 				{
-					if($object->canRename($securityContext))
+					if ($object->canRename($securityContext))
 					{
-						$actions[] = array(
+						$actions[] = [
 							"text" => Loc::getMessage('DISK_FOLDER_LIST_ACT_RENAME'),
 							'icon' => '/bitrix/js/ui/actionpanel/images/ui_icon_actionpanel_rename.svg',
 							'className' => 'disk-folder-list-context-menu-item',
 							"onclick" => "BX.Disk['FolderListClass_{$this->componentId}'].renameInline({$objectId})",
-						);
+						];
 					}
 
-					$actions[] = array(
+					$actions[] = [
 						"text" => Loc::getMessage('DISK_FOLDER_LIST_ACT_COPY'),
 						'icon' => '/bitrix/js/ui/actionpanel/images/ui_icon_actionpanel_copy.svg',
 						'className' => 'disk-folder-list-context-menu-item',
@@ -869,11 +928,11 @@ class CDiskFolderListComponent extends DiskComponent implements \Bitrix\Main\Eng
 							id: {$objectId},
 							name: '" . CUtil::JSEscape($name) . "'
 						});",
-					);
+					];
 
-					if($object->canMarkDeleted($securityContext))
+					if ($object->canMarkDeleted($securityContext))
 					{
-						$actions[] = array(
+						$actions[] = [
 							"text" => Loc::getMessage('DISK_FOLDER_LIST_ACT_MOVE'),
 							'icon' => '/bitrix/js/ui/actionpanel/images/ui_icon_actionpanel_move.svg',
 							'className' => 'disk-folder-list-context-menu-item',
@@ -885,16 +944,16 @@ class CDiskFolderListComponent extends DiskComponent implements \Bitrix\Main\Eng
 								id: {$objectId},
 								name: '" . CUtil::JSEscape($name) . "'
 							});",
-						);
+						];
 					}
 
-					if(
-						!$isStorageCurrentUser &&
-						(!isset($sharedObjectIds[$object->getRealObjectId()]) ||
-							$sharedObjectIds[$object->getRealObjectId()]['TO_ENTITY'] != Sharing::CODE_USER . $this->getUser()->getId())
+					if (
+						!$isStorageCurrentUser
+						&& (!isset($sharedObjectIds[$object->getRealObjectId()])
+							|| $sharedObjectIds[$object->getRealObjectId()]['TO_ENTITY'] != Sharing::CODE_USER . $this->getUser()->getId())
 					)
 					{
-						$actions[] = array(
+						$actions[] = [
 							'id' => 'connect',
 							"text" => Loc::getMessage('DISK_FOLDER_LIST_ACT_CONNECT'),
 							'icon' => '/bitrix/js/ui/actionpanel/images/ui_icon_actionpanel_connect_to_disk.svg',
@@ -903,82 +962,80 @@ class CDiskFolderListComponent extends DiskComponent implements \Bitrix\Main\Eng
 								object: {
 									id: {$objectId},
 									name: '" . CUtil::JSEscape($name) . "',
-									isFolder: " . ($isFolder? 'true' : 'false') . "
+									isFolder: " . ($isFolder ? 'true' : 'false') . "
 								}
 							});",
-						);
+						];
 					}
 				}
 
-				if(!$isFolder)
+				if (!$isFolder)
 				{
 					$linkOnHistory = CComponentEngine::makePathFromTemplate(
 						$this->arParams['PATH_TO_FILE_HISTORY'],
 						[
 							'FILE_ID' => $object->getId(),
-						]
+						],
 					);
 
-					$actions[] = array(
+					$actions[] = [
 						'text' => Loc::getMessage('DISK_FOLDER_LIST_ACT_SHOW_HISTORY'),
 						'icon' => '/bitrix/js/ui/actionpanel/images/ui_icon_actionpanel_history.svg',
 						'className' => 'disk-folder-list-context-menu-item',
-						'onclick' =>  Bitrix24Manager::isFeatureEnabled('disk_file_history')? "BX.SidePanel.Instance.open('{$linkOnHistory}')" : "BX.UI.InfoHelper.show('limit_office_version_storage');",
-					);
+						'onclick' =>  Bitrix24Manager::isFeatureEnabled('disk_file_history') ? "BX.SidePanel.Instance.open('{$linkOnHistory}')" : "BX.UI.InfoHelper.show('limit_office_version_storage');",
+					];
 				}
 			}
 
-			$columnsBizProc = array(
-				'BIZPROC' => ''
-			);
-			$bizprocIcon = array(
-				'BIZPROC' => ''
-			);
-			if($isItTimeToShowBizProc && !$isFolder)
+			$columnsBizProc = [
+				'BIZPROC' => '',
+			];
+			$bizprocIcon = [
+				'BIZPROC' => '',
+			];
+			if ($isItTimeToShowBizProc && !$isFolder)
 			{
 				[$actions, $columnsBizProc, $bizprocIcon] = $this->getBizProcData($object, $securityContext, $actions, $columnsBizProc, $bizprocIcon, $exportData);
 			}
 
-			if($object->canMarkDeleted($securityContext))
+			if ($object->canMarkDeleted($securityContext))
 			{
-				if($object->isLink())
+				if ($object->isLink())
 				{
-					$actions[] = array(
+					$actions[] = [
 						"id" => "detach",
 						'className' => 'disk-folder-list-context-menu-item',
 						"text" => Loc::getMessage('DISK_FOLDER_LIST_DETACH_BUTTON'),
 						'icon' => '/bitrix/js/ui/actionpanel/images/ui_icon_actionpanel_disconnect.svg',
-						"onclick" =>
-							"BX.Disk['FolderListClass_{$this->componentId}'].openConfirmDetach({
+						"onclick" => "BX.Disk['FolderListClass_{$this->componentId}'].openConfirmDetach({
 								object: {
 									id: {$objectId},
 									name: '" . CUtil::JSEscape($name) . "',
-									isFolder: " . ($isFolder? 'true' : 'false') . "
+									isFolder: " . ($isFolder ? 'true' : 'false') . "
 								 }
 							})",
-					);
+					];
 				}
-				elseif($object->getCode() !== Folder::CODE_FOR_UPLOADED_FILES)
+				elseif ($object->getCode() !== Folder::CODE_FOR_UPLOADED_FILES)
 				{
-					$actions[] = array(
+					$actions[] = [
 						"text" => Loc::getMessage('DISK_FOLDER_LIST_ACT_MARK_DELETED'),
 						'icon' => '/bitrix/js/ui/actionpanel/images/ui_icon_actionpanel_remove.svg',
 						'className' => 'disk-folder-list-context-menu-item',
-						"onclick" =>
-							"BX.Disk['FolderListClass_{$this->componentId}'].openConfirmDelete({
-								object: {
-									id: {$objectId},
-									name: '" . CUtil::JSEscape($name) . "',
-									isDeleted: " . ($object->isDeleted()? 'true' : 'false') . ",
-									isFolder: " . ($isFolder? 'true' : 'false') . "
-								 },
-								canDelete: " . ($object->canDelete($securityContext)? 'true' : 'false') . "
-							})",
-					);
+						"onclick" => "BX.Disk['FolderListClass_{$this->componentId}'].openConfirmDelete({
+							object: {
+								id: {$objectId},
+								name: '" . CUtil::JSEscape($name) . "',
+								isDeleted: " . ($object->isDeleted() ? 'true' : 'false') . ",
+								isFolder: " . ($isFolder ? 'true' : 'false') . "
+							 },
+							canDelete: " . ($object->canDelete($securityContext) ? 'true' : 'false') . "
+						})",
+					];
 				}
 			}
 			$iconClass = Ui\Icon::getIconClassByObject($object, !empty($sharedObjectIds[$objectId]));
-			if($isFolder)
+			if ($isFolder)
 			{
 				$nameSpecialChars = htmlspecialcharsbx($name);
 				$columnName = "
@@ -1034,7 +1091,7 @@ class CDiskFolderListComponent extends DiskComponent implements \Bitrix\Main\Eng
 						}
 					}
 
-					if ($object->getTypeFile() != TypeFile::FLIPCHART)
+					if (!$isBoard)
 					{
 						$attr->addAction(
 							[
@@ -1047,7 +1104,7 @@ class CDiskFolderListComponent extends DiskComponent implements \Bitrix\Main\Eng
 									'dependsOnService' => $items ? null : LocalDocumentController::getCode(),
 								],
 								'items' => $items,
-							]
+							],
 						);
 					}
 				}
@@ -1061,44 +1118,44 @@ class CDiskFolderListComponent extends DiskComponent implements \Bitrix\Main\Eng
 					'extension' => 'disk.viewer.actions',
 				]);
 
-				if ($object->getTypeFile() == TypeFile::FLIPCHART)
+				if ($isBoard)
 				{
-					$openUrl = $this->getUrlManager()->getUrlForViewBoard($objectId);
-					$attr->addAction(
-						[
-							'type' => 'open',
-							'buttonIconClass' => ' ',
-							'action' => 'BX.Disk.Viewer.Actions.openInNewTab',
-							'params' => [
-								'objectId' => $objectId,
-								'url' => $openUrl,
+					$cElementParam = 'disk_page';
+					if ($supportsUnifiedLink)
+					{
+						$attr->setUnifiedLinkOptions(['additionalQueryParams' => ['c_element' => $cElementParam]]);
+					}
+					else
+					{
+						$openUrl = $this->getUrlManager()->getUrlForViewBoard($object, false, $cElementParam);
+						$attr->addAction(
+							[
+								'type' => 'open',
+								'buttonIconClass' => ' ',
+								'action' => 'BX.Disk.Viewer.Actions.openInNewTab',
+								'params' => [
+									'objectId' => $objectId,
+									'url' => $openUrl,
+								],
 							],
-							'items' => $items,
-						]
-					);
+						);
+					}
 				}
 
-
-				if($grid['MODE'] === FolderListOptions::VIEW_MODE_TILE)
+				if ($grid['MODE'] === FolderListOptions::VIEW_MODE_TILE)
 				{
 					$exportData['VIEWER_ATTRS'] = $attr;
 				}
 
 				$lockedBy = null;
 				$inlineStyleLockIcon = 'style="display:none;"';
-				if($isEnabledObjectLock && $object->getLock())
+				if ($isEnabledObjectLock && $object->getLock())
 				{
 					$lockedBy = $object->getLock()->getCreatedBy();
 					$inlineStyleLockIcon = '';
 				}
 
 				$nameSpecialChars = htmlspecialcharsbx($name);
-
-				$fileNameFormatted = <<<HTML
-					<span href="{$exportData['OPEN_URL']}" class="bx-disk-folder-title" style='cursor: pointer;' id="disk_obj_{$objectId}" {$attr}>
-						{$nameSpecialChars}
-					</span>
-HTML;
 
 				$columnName = "
 					<table class=\"bx-disk-object-name\"><tr>
@@ -1116,23 +1173,23 @@ HTML;
 
 			$timestampCreate = $object->getCreateTime()->toUserTime()->getTimestamp();
 			$timestampUpdate = $object->getUpdateTime()->toUserTime()->getTimestamp();
-			$timestampDelete = $object->isDeleted()? $object->getDeleteTime()->toUserTime()->getTimestamp() : 0;
+			$timestampDelete = $object->isDeleted() ? $object->getDeleteTime()->toUserTime()->getTimestamp() : 0;
 
-			$columns = array(
+			$columns = [
 				'ID' => $objectId,
-				'CREATE_TIME' => ($nowTime - $timestampCreate > 158400)? formatDate($fullFormatWithoutSec, $timestampCreate, $nowTime) : formatDate('x', $timestampCreate, $nowTime),
-				'UPDATE_TIME' => ($nowTime - $timestampUpdate > 158400)? formatDate($fullFormatWithoutSec, $timestampUpdate, $nowTime) : formatDate('x', $timestampUpdate, $nowTime),
-				'DELETE_TIME' => ($nowTime - $timestampDelete > 158400)? formatDate($fullFormatWithoutSec, $timestampDelete, $nowTime) : formatDate('x', $timestampDelete, $nowTime),
+				'CREATE_TIME' => ($nowTime - $timestampCreate > 158400) ? formatDate($fullFormatWithoutSec, $timestampCreate, $nowTime) : formatDate('x', $timestampCreate, $nowTime),
+				'UPDATE_TIME' => ($nowTime - $timestampUpdate > 158400) ? formatDate($fullFormatWithoutSec, $timestampUpdate, $nowTime) : formatDate('x', $timestampUpdate, $nowTime),
+				'DELETE_TIME' => ($nowTime - $timestampDelete > 158400) ? formatDate($fullFormatWithoutSec, $timestampDelete, $nowTime) : formatDate('x', $timestampDelete, $nowTime),
 				'NAME' => $columnName,
-				'FORMATTED_SIZE' => $isFolder? '' : CFile::formatSize($object->getSize()),
-			);
+				'FORMATTED_SIZE' => $isFolder ? '' : CFile::formatSize($object->getSize()),
+			];
 
 			if (isset($visibleColumns['CREATE_USER']))
 			{
 				$createUser = $object->getCreateUser();
 				$createdByLink = \CComponentEngine::makePathFromTemplate(
 					$this->arParams['PATH_TO_USER'],
-					array('user_id' => $object->getCreatedBy())
+					['user_id' => $object->getCreatedBy()],
 				);
 
 				$columns['CREATE_USER'] = '
@@ -1143,10 +1200,10 @@ HTML;
 
 			if (isset($visibleColumns['UPDATE_USER']))
 			{
-				$updateUser = $object->getUpdateUser()?: $object->getCreateUser();
+				$updateUser = $object->getUpdateUser() ?: $object->getCreateUser();
 				$updatedByLink = \CComponentEngine::makePathFromTemplate(
 					$this->arParams['PATH_TO_USER'],
-					array('user_id' => $updateUser->getId())
+					['user_id' => $updateUser->getId()],
 				);
 
 				$columns['UPDATE_USER'] = "
@@ -1157,10 +1214,10 @@ HTML;
 
 			if (isset($visibleColumns['DELETE_USER']))
 			{
-				$deleteUser = $object->getDeleteUser()?: $object->getCreateUser();
+				$deleteUser = $object->getDeleteUser() ?: $object->getCreateUser();
 				$deletedByLink = \CComponentEngine::makePathFromTemplate(
 					$this->arParams['PATH_TO_USER'],
-					array('user_id' => $deleteUser->getId())
+					['user_id' => $deleteUser->getId()],
 				);
 
 				$columns['DELETE_USER'] = "
@@ -1169,23 +1226,23 @@ HTML;
 				";
 			}
 
-			if($isItTimeToShowBizProc)
+			if ($isItTimeToShowBizProc)
 			{
 				$columns['BIZPROC'] = $columnsBizProc["BIZPROC"];
 			}
 
-			$rows[] = array(
+			$rows[] = [
 				'id' => $objectId,
 				'object' => $object,
 				'data' => $exportData,
 				'columns' => $columns,
-				'attrs' => array(
+				'attrs' => [
 					'data-can-destroy' => $object->canDelete($securityContext),
 					'data-is-folder' => $isFolder,
 					'data-is-file' => !$isFolder,
-				),
+				],
 				'actions' => $actions,
-			);
+			];
 		}
 
 		$nav->setRecordCount($nav->getOffset() + $countObjectsOnPage);
@@ -1195,10 +1252,10 @@ HTML;
 
 		$grid['COLUMN_FOR_SORTING'] = $possibleColumnForSorting;
 		$grid['ROWS'] = $rows;
-		$grid['ACTION_PANEL'] = $this->getGroupActions(array(
+		$grid['ACTION_PANEL'] = $this->getGroupActions([
 			'edit' => !$onlyRead,
 			'delete' => !$onlyRead,
-		));
+		]);
 
 		$grid['ONLY_READ_ACTIONS'] = $onlyRead;
 
@@ -1210,131 +1267,132 @@ HTML;
 		return Bitrix24Manager::filterJsAction($feature, $js, $skip);
 	}
 
-	protected function getGroupActions(array $configuration = array())
+	protected function getGroupActions(array $configuration = [])
 	{
 		$snippet = new \Bitrix\Main\Grid\Panel\Snippet();
 
-		$deleteButton = array(
+		$deleteButton = [
 			'ICON' => '/bitrix/js/ui/actionpanel/images/ui_icon_actionpanel_remove.svg',
 			'TYPE' => Grid\Panel\Types::BUTTON,
 			'NAME' => Loc::getMessage('DISK_FOLDER_LIST_ACT_MARK_DELETED'),
 			'TEXT' => Loc::getMessage('DISK_FOLDER_LIST_ACT_MARK_DELETED'),
 			'VALUE' => 'delete',
-			'ONCHANGE' => array(
-				array(
+			'ONCHANGE' => [
+				[
 					'ACTION' => Grid\Panel\Actions::CALLBACK,
-					'DATA' => array(
-						array(
+					'DATA' => [
+						[
 							'JS' => "BX.Disk['FolderListClass_{$this->componentId}'].openConfirmDeleteGroup()",
-						),
-					),
-				),
-			),
-		);
-		$destroyLink = array(
+						],
+					],
+				],
+			],
+		];
+		$destroyLink = [
 			'ICON' => '/bitrix/js/ui/actionpanel/images/ui_icon_actionpanel_remove.svg',
 			'NAME' => Loc::getMessage('DISK_TRASHCAN_ACT_DESTROY'),
 			'TEXT' => Loc::getMessage('DISK_TRASHCAN_ACT_DESTROY'),
 			'TYPE' => Grid\Panel\Types::BUTTON,
 			'VALUE' => 'destroy',
-			'ONCHANGE' => array(
-				array(
+			'ONCHANGE' => [
+				[
 					'ACTION' => Grid\Panel\Actions::CALLBACK,
-					'DATA' => array(
-						array(
+					'DATA' => [
+						[
 							'JS' => "BX.Disk['FolderListClass_{$this->componentId}'].openConfirmDestroyGroup()",
-						),
-					),
-				),
-			),
-		);
-		$restoreLink = array(
+						],
+					],
+				],
+			],
+		];
+		$restoreLink = [
 			"TYPE" => Grid\Panel\Types::BUTTON,
 			'NAME' => Loc::getMessage('DISK_TRASHCAN_ACT_RESTORE'),
 			'TEXT' => Loc::getMessage('DISK_TRASHCAN_ACT_RESTORE'),
 			'VALUE' => 'restore',
-			'ONCHANGE' => array(
-				array(
+			'ONCHANGE' => [
+				[
 					'ACTION' => Grid\Panel\Actions::CALLBACK,
 					'CONFIRM' => true,
 					'CONFIRM_APPLY_BUTTON' => Loc::getMessage('DISK_TRASHCAN_ACT_RESTORE'),
-					'DATA' => array(
-						array(
+					'DATA' => [
+						[
 							'JS' => "BX.Disk['FolderListClass_{$this->componentId}'].processGridGroupActionRestore()",
-						),
-					),
-				),
-			),
-		);
+						],
+					],
+				],
+			],
+		];
 
-		$copyButton = array(
+		$copyButton = [
 			'ICON' => '/bitrix/js/ui/actionpanel/images/ui_icon_actionpanel_copy.svg',
 			'TYPE' => Grid\Panel\Types::BUTTON,
 			'NAME' => Loc::getMessage('DISK_FOLDER_LIST_ACT_COPY'),
 			'TEXT' => Loc::getMessage('DISK_FOLDER_LIST_ACT_COPY'),
 			'VALUE' => 'copy',
-			'ONCHANGE' => array(
-				array(
+			'ONCHANGE' => [
+				[
 					'ACTION' => Grid\Panel\Actions::CALLBACK,
-					'DATA' => array(
-						array(
+					'DATA' => [
+						[
 							'JS' => "BX.Disk['FolderListClass_{$this->componentId}'].openConfirmCopyGroup()",
-						),
-					),
-				),
-			),
-		);
-		$moveButton = array(
+						],
+					],
+				],
+			],
+		];
+		$moveButton = [
 			'ICON' => '/bitrix/js/ui/actionpanel/images/ui_icon_actionpanel_move.svg',
 			'TYPE' => Grid\Panel\Types::BUTTON,
 			'NAME' => Loc::getMessage('DISK_FOLDER_LIST_ACT_MOVE'),
 			'TEXT' => Loc::getMessage('DISK_FOLDER_LIST_ACT_MOVE'),
 			'VALUE' => 'move',
-			'ONCHANGE' => array(
-				array(
+			'ONCHANGE' => [
+				[
 					'ACTION' => Grid\Panel\Actions::CALLBACK,
-					'DATA' => array(
-						array(
+					'DATA' => [
+						[
 							'JS' => "BX.Disk['FolderListClass_{$this->componentId}'].openConfirmMoveGroup()",
-						),
-					),
-				),
-			),
-		);
-		$downloadButton = array(
+						],
+					],
+				],
+			],
+		];
+		//
+		$downloadButton = [
 			'ICON' => '/bitrix/js/ui/actionpanel/images/ui_icon_actionpanel_download.svg',
 			'TYPE' => Grid\Panel\Types::BUTTON,
 			'NAME' => Loc::getMessage('DISK_FOLDER_LIST_ACT_DOWNLOAD'),
 			'TEXT' => Loc::getMessage('DISK_FOLDER_LIST_ACT_DOWNLOAD'),
 			'VALUE' => 'download',
-			'ONCHANGE' => array(
-				array(
+			'ONCHANGE' => [
+				[
 					'ACTION' => Grid\Panel\Actions::CALLBACK,
-					'DATA' => array(
-						array(
+					'DATA' => [
+						[
 							'JS' => "BX.Disk['FolderListClass_{$this->componentId}'].downloadGroup()",
-						),
-					),
-				),
-			),
-		);
+						],
+					],
+				],
+			],
+		];
 
 		if ($this->isTrashMode())
 		{
-			$buttons = array(
+			$buttons = [
 				$restoreLink,
 				$destroyLink,
-			);
+			];
 		}
 		else
 		{
-			$buttons = array(
-				ZipNginx\Configuration::isEnabled()? $downloadButton : null,
+			$buttons = [
+				ZipNginx\Configuration::isEnabled() ? $downloadButton : null,
 				$copyButton,
 				$moveButton,
-				$configuration['edit']? $snippet->getEditAction() : null,
-				$configuration['delete']? $deleteButton : null,
-			);
+				$configuration['edit'] ? $snippet->getEditAction() : null,
+				$configuration['delete'] ? $deleteButton : null,
+			];
 		}
 
 		return [
@@ -1342,18 +1400,21 @@ HTML;
 				[
 					'ITEMS' => array_values(array_filter($buttons)),
 				],
-			]
+			],
 		];
 	}
 
 	private function buildItemAttributes(File $file, Uri $sourceUri, array $possibleFileData = [])
 	{
-		if (isset($possibleFileData['ID']) && isset($possibleFileData['CONTENT_TYPE']))
+		if (isset($possibleFileData['ID'], $possibleFileData['CONTENT_TYPE']))
 		{
-			return FileAttributes::buildByFileData($possibleFileData, $sourceUri)->setObjectId($file->getId());
+			$possibleFileData[FileAttributes::KEY_FILE_OBJECT] = $file;
+			return FileAttributes::buildByFileData($possibleFileData, $sourceUri)
+				->setObjectId($file->getId())
+			;
 		}
 
-		return FileAttributes::tryBuildByFileId($file->getFileId(), $sourceUri)
+		return FileAttributes::tryBuildByFileId($file->getFileId(), $sourceUri, $file)
 			->setObjectId($file->getId())
 		;
 	}
@@ -1364,9 +1425,9 @@ HTML;
 		{
 			if ($relativePath)
 			{
-				return rtrim(CComponentEngine::makePathFromTemplate($this->arParams['PATH_TO_TRASHCAN_LIST'], array(
+				return rtrim(CComponentEngine::makePathFromTemplate($this->arParams['PATH_TO_TRASHCAN_LIST'], [
 					'TRASH_PATH' => $relativePath,
-				)), '/');
+				]), '/');
 			}
 
 			return $this->getUrlManager()->getPathInTrashcanListing($object);
@@ -1374,9 +1435,9 @@ HTML;
 
 		if ($relativePath)
 		{
-			return rtrim(CComponentEngine::makePathFromTemplate($this->arParams['PATH_TO_FOLDER_LIST'], array(
+			return rtrim(CComponentEngine::makePathFromTemplate($this->arParams['PATH_TO_FOLDER_LIST'], [
 				'PATH' => $relativePath,
-			)), '/');
+			]), '/');
 		}
 
 		if (!$object->getParent())
@@ -1393,10 +1454,10 @@ HTML;
 		{
 			if ($relativePath)
 			{
-				return CComponentEngine::makePathFromTemplate($this->arParams['PATH_TO_TRASHCAN_FILE_VIEW'], array(
+				return CComponentEngine::makePathFromTemplate($this->arParams['PATH_TO_TRASHCAN_FILE_VIEW'], [
 					'FILE_ID' => $file->getId(),
 					'TRASH_FILE_PATH' => ltrim($relativePath . '/' . $file->getOriginalName(), '/'),
-				));
+				]);
 
 			}
 
@@ -1405,17 +1466,17 @@ HTML;
 
 		if ($relativePath)
 		{
-			return CComponentEngine::makePathFromTemplate($this->arParams['PATH_TO_FILE_VIEW'], array(
+			return CComponentEngine::makePathFromTemplate($this->arParams['PATH_TO_FILE_VIEW'], [
 				'FILE_ID' => $file->getId(),
 				'FILE_PATH' => ltrim($relativePath . '/' . $file->getName(), '/'),
-			));
+			]);
 
 		}
 
 		return $this->getUrlManager()->getPathFileDetail($file);
 	}
 
-	private function isShowFromDifferentLevels(array $filter = array())
+	private function isShowFromDifferentLevels(array $filter = [])
 	{
 		return !empty($filter['PATH_CHILD.PARENT_ID']);
 	}
@@ -1424,17 +1485,17 @@ HTML;
 	{
 		return array_intersect_key(
 			$visibleColumns,
-			array(
+			[
 				'CREATE_USER' => true,
 				'UPDATE_USER' => true,
 				'DELETE_USER' => true,
-			)
+			],
 		);
 	}
 
 	private function modifyByFilter(array $parameters)
 	{
-		$filterOptions = new \Bitrix\Main\UI\Filter\Options($this->gridOptions->getGridId());
+		$filterOptions = new Options($this->gridOptions->getGridId());
 		if ($this->request->getPost('resetFilter') || $this->request->get('resetFilter'))
 		{
 			$filterOptions->reset();
@@ -1466,10 +1527,10 @@ HTML;
 		}
 		else
 		{
-			$filter = array(
+			$filter = [
 				'PARENT_ID' => $this->folder->getRealObjectId(),
 				'DELETED_TYPE' => ObjectTable::DELETED_TYPE_NONE,
-			);
+			];
 		}
 
 		$fulltextContent = null;
@@ -1482,8 +1543,8 @@ HTML;
 		}
 
 		if (
-			!array_key_exists('FILTER_APPLIED', $filterData) ||
-			$filterData['FILTER_APPLIED'] != true
+			!array_key_exists('FILTER_APPLIED', $filterData)
+			|| $filterData['FILTER_APPLIED'] != true
 		)
 		{
 			$parameters['filter'] = array_merge($parameters['filter'], $filter);
@@ -1506,19 +1567,17 @@ HTML;
 			{
 				$filter["*HEAD_INDEX.SEARCH_INDEX"] = $fulltextContent;
 			}
-			elseif
-			(
-				!empty($filterData['SEARCH_BY_CONTENT']) &&
-				Configuration::allowUseExtendedFullText() &&
-				ExtendedIndex::isReady()
+			elseif (
+				!empty($filterData['SEARCH_BY_CONTENT'])
+				&& Configuration::allowUseExtendedFullText()
+				&& ExtendedIndex::isReady()
 			)
 			{
 				$filter["*EXTENDED_INDEX.SEARCH_INDEX"] = $fulltextContent;
 			}
-			elseif
-			(
-				(!empty($filterData['SEARCH_BY_CONTENT']) || !HeadIndex::isReady()) &&
-				BaseObjectIndex::isReady()
+			elseif (
+				(!empty($filterData['SEARCH_BY_CONTENT']) || !HeadIndex::isReady())
+				&& BaseObjectIndex::isReady()
 			)
 			{
 				$filter["*SEARCH_INDEX"] = $fulltextContent;
@@ -1562,7 +1621,7 @@ HTML;
 			{
 				$filter['>=CREATE_TIME'] = new DateTime($filterData['CREATE_TIME_from']);
 			}
-			catch (Exception $e)
+			catch (Exception)
 			{}
 		}
 
@@ -1572,7 +1631,7 @@ HTML;
 			{
 				$filter['<=CREATE_TIME'] = new DateTime($filterData['CREATE_TIME_to']);
 			}
-			catch (Exception $e)
+			catch (Exception)
 			{}
 		}
 
@@ -1582,7 +1641,7 @@ HTML;
 			{
 				$filter['>=UPDATE_TIME'] = new DateTime($filterData['UPDATE_TIME_from']);
 			}
-			catch (Exception $e)
+			catch (Exception)
 			{}
 		}
 
@@ -1602,7 +1661,7 @@ HTML;
 			{
 				$filter['>=DELETE_TIME'] = new DateTime($filterData['DELETE_TIME_from']);
 			}
-			catch (Exception $e)
+			catch (Exception)
 			{}
 		}
 
@@ -1612,7 +1671,7 @@ HTML;
 			{
 				$filter['<=DELETE_TIME'] = new DateTime($filterData['DELETE_TIME_to']);
 			}
-			catch (Exception $e)
+			catch (Exception)
 			{}
 		}
 
@@ -1642,8 +1701,8 @@ HTML;
 							s.STATUS = ' . SharingTable::STATUS_IS_APPROVED . ' AND s.FROM_ENTITY = "' . $fromEntity . '"
 						)
 					THEN 1 ELSE 0 END',
-					array('REAL_OBJECT_ID', 'STORAGE_ID'),
-					array('data_type' => 'boolean',)
+					['REAL_OBJECT_ID', 'STORAGE_ID'],
+					['data_type' => 'boolean'],
 				);
 
 				$filter['HAS_SHARING'] = 1;
@@ -1657,19 +1716,19 @@ HTML;
 
 	private function getUserShareObjectIds()
 	{
-		$sharedObjectIds = array();
-		foreach(SharingTable::getList(array(
-			'select' => array('REAL_OBJECT_ID', 'TO_ENTITY', 'FROM_ENTITY'),
-			'filter' => array(
-				array(
+		$sharedObjectIds = [];
+		foreach (SharingTable::getList([
+			'select' => ['REAL_OBJECT_ID', 'TO_ENTITY', 'FROM_ENTITY'],
+			'filter' => [
+				[
 					'LOGIC' => 'OR',
 					'=TO_ENTITY' => Sharing::CODE_USER . $this->getUser()->getId(),
 					'=FROM_ENTITY' => Sharing::CODE_USER . $this->getUser()->getId(),
-				),
+				],
 				'!=STATUS' => SharingTable::STATUS_IS_DECLINED,
 				'REAL_STORAGE_ID' => $this->folder->getStorageId(),
-			),
-		))->fetchAll() as $row)
+			],
+		])->fetchAll() as $row)
 		{
 			$sharedObjectIds[$row['REAL_OBJECT_ID']] = $row;
 		}
@@ -1680,31 +1739,31 @@ HTML;
 
 	private function appendToResultAutoloadTemplateBizProc()
 	{
-		$this->arResult['WORKFLOW_TEMPLATES'] = array();
+		$this->arResult['WORKFLOW_TEMPLATES'] = [];
 		$this->arResult['BIZPROC_PARAMETERS'] = false;
 
-		$documentData = array(
-			'DISK' => array(
+		$documentData = [
+			'DISK' => [
 				'DOCUMENT_TYPE' => \Bitrix\Disk\BizProcDocument::generateDocumentComplexType($this->storage->getId()),
-			),
-			'WEBDAV' => array(
+			],
+			'WEBDAV' => [
 				'DOCUMENT_TYPE' => \Bitrix\Disk\BizProcDocumentCompatible::generateDocumentComplexType($this->storage->getId()),
-			),
-		);
+			],
+		];
 
 		foreach ($documentData as $nameModule => $data)
 		{
 			$workflowTemplateObject = CBPWorkflowTemplateLoader::getList(
-				array(),
-				array(
+				[],
+				[
 					"DOCUMENT_TYPE" => $data["DOCUMENT_TYPE"],
 					"AUTO_EXECUTE" => CBPDocumentEventType::Create,
 					"ACTIVE" => "Y",
-					"!PARAMETERS" => null
-				),
+					"!PARAMETERS" => null,
+				],
 				false,
 				false,
-				array("ID", "NAME", "DESCRIPTION", "PARAMETERS")
+				["ID", "NAME", "DESCRIPTION", "PARAMETERS"],
 			);
 			while ($workflowTemplate = $workflowTemplateObject->getNext())
 			{
@@ -1721,19 +1780,19 @@ HTML;
 
 	private function getTemplateBizProc($documentData)
 	{
-		$temporary = array();
-		foreach($documentData as $nameModule => $data)
+		$temporary = [];
+		foreach ($documentData as $nameModule => $data)
 		{
 			$res = CBPWorkflowTemplateLoader::getList(
-				array(),
-				array('DOCUMENT_TYPE' => $data['DOCUMENT_TYPE']),
+				[],
+				['DOCUMENT_TYPE' => $data['DOCUMENT_TYPE']],
 				false,
 				false,
-				array("ID", "NAME", 'DOCUMENT_TYPE', 'ENTITY', 'PARAMETERS')
+				["ID", "NAME", 'DOCUMENT_TYPE', 'ENTITY', 'PARAMETERS'],
 			);
 			while ($workflowTemplate = $res->getNext())
 			{
-				if($nameModule == 'DISK')
+				if ($nameModule == 'DISK')
 				{
 					$old = '';
 					$templateName = $workflowTemplate["NAME"];
@@ -1741,11 +1800,11 @@ HTML;
 				else
 				{
 					$old = '&old=1';
-					$templateName = $workflowTemplate["NAME"]." ".Loc::getMessage('DISK_FOLDER_LIST_ACT_BIZPROC_OLD_TEMPLATE');
+					$templateName = $workflowTemplate["NAME"] . " " . Loc::getMessage('DISK_FOLDER_LIST_ACT_BIZPROC_OLD_TEMPLATE');
 				}
 				$url = $this->arParams['PATH_TO_DISK_START_BIZPROC'];
-				$url .= "?back_url=".urlencode($this->application->getCurPageParam());
-				$url .= (mb_strpos($url, "?") === false ? "?" : "&")."workflow_template_id=".$workflowTemplate["ID"].$old.'&'.bitrix_sessid_get();
+				$url .= "?back_url=" . urlencode($this->application->getCurPageParam());
+				$url .= (mb_strpos($url, "?") === false ? "?" : "&")."workflow_template_id=" . $workflowTemplate["ID"] . $old . '&' . bitrix_sessid_get();
 				$temporary[$workflowTemplate["ID"]] = $workflowTemplate;
 				$temporary[$workflowTemplate["ID"]]['NAME'] = $templateName;
 				$temporary[$workflowTemplate["ID"]]['URL'] = $url;
@@ -1756,27 +1815,27 @@ HTML;
 
 	private function getBizProcData(File $object, SecurityContext $securityContext, array $actions, array $columnsBizProc, array $bizprocIcon, array $exportData)
 	{
-		$documentData = array(
-			'DISK'   => array(
+		$documentData = [
+			'DISK'   => [
 				'DOCUMENT_TYPE' => \Bitrix\Disk\BizProcDocument::generateDocumentComplexType($this->storage->getId()),
 				'DOCUMENT_ID'   => \Bitrix\Disk\BizProcDocument::getDocumentComplexId($object->getId()),
-			),
-			'WEBDAV' => array(
+			],
+			'WEBDAV' => [
 				'DOCUMENT_TYPE' => \Bitrix\Disk\BizProcDocumentCompatible::generateDocumentComplexType($this->storage->getId()),
 				'DOCUMENT_ID'   => \Bitrix\Disk\BizProcDocumentCompatible::getDocumentComplexId($object->getId()),
-			),
-		);
+			],
+		];
 
 		if ($this->templateBizProc === null)
 		{
 			$this->templateBizProc = $this->getTemplateBizProc($documentData);
 		}
 
-		$listBpTemplates = array();
+		$listBpTemplates = [];
 		foreach ($this->templateBizProc as $idTemplate => $valueTemplate)
 		{
 			$params = \Bitrix\Main\Web\Json::encode(
-				array(
+				[
 					'moduleId' => $valueTemplate['DOCUMENT_TYPE'][0],
 					'entity' => $valueTemplate['DOCUMENT_TYPE'][1],
 					'documentType' => $valueTemplate['DOCUMENT_TYPE'][2],
@@ -1784,25 +1843,25 @@ HTML;
 					'templateId' => $idTemplate,
 					'templateName' => $valueTemplate['NAME'],
 					'hasParameters' => !empty($valueTemplate['PARAMETERS']),
-				)
+				],
 			);
 
-			$listBpTemplates[] = array(
+			$listBpTemplates[] = [
 				"text" => $valueTemplate['NAME'],
 				"onclick" => "BX.Bizproc.Starter.singleStart({$params}, function(){ BX.Disk.showModalWithStatusAction({status: 'success'}); });",
-			);
+			];
 		}
 
 		if ($object->canStartBizProc($securityContext) && !empty($listBpTemplates))
 		{
-			$actions[] = array(
+			$actions[] = [
 				"className" => 'disk-folder-list-context-menu-item',
 				"text" => Loc::getMessage("DISK_FOLDER_LIST_ACT_START_BIZPROC"),
 				'dataset' => [
 					'preventCloseContextMenu' => true,
 				],
-				"items" => $listBpTemplates
-			);
+				"items" => $listBpTemplates,
+			];
 		}
 
 		$webdavFileId = $object->getXmlId();
@@ -1812,20 +1871,20 @@ HTML;
 			{
 				if ($this->storage->getProxyType() instanceof ProxyType\Group)
 				{
-					$iblock = CIBlockElement::getList(array(), array("ID" => $webdavFileId, 'SHOW_NEW' => 'Y'), false, false, array('ID', 'IBLOCK_ID'))->fetch();
+					$iblock = CIBlockElement::getList([], ["ID" => $webdavFileId, 'SHOW_NEW' => 'Y'], false, false, ['ID', 'IBLOCK_ID'])->fetch();
 					$entity = 'CIBlockDocumentWebdavSocnet';
 				}
 				else
 				{
-					$iblock = CIBlockElement::getList(array(), array("ID" => $webdavFileId, 'SHOW_NEW' => 'Y'), false, false, array('ID', 'IBLOCK_ID'))->fetch();
+					$iblock = CIBlockElement::getList([], ["ID" => $webdavFileId, 'SHOW_NEW' => 'Y'], false, false, ['ID', 'IBLOCK_ID'])->fetch();
 					$entity = 'CIBlockDocumentWebdav';
 				}
 				if (!empty($iblock))
 				{
-					$documentData['OLD_FILE'] = array(
-						'DOCUMENT_TYPE' => array('webdav', $entity, "iblock_".$iblock['IBLOCK_ID']),
-						'DOCUMENT_ID'   => array('webdav', $entity, $iblock['ID']),
-					);
+					$documentData['OLD_FILE'] = [
+						'DOCUMENT_TYPE' => ['webdav', $entity, "iblock_" . $iblock['IBLOCK_ID']],
+						'DOCUMENT_ID'   => ['webdav', $entity, $iblock['ID']],
+					];
 				}
 			}
 		}
@@ -1876,7 +1935,7 @@ HTML;
 
 					if (!empty($tasksWorkflow))
 					{
-						$tmp = array();
+						$tmp = [];
 						foreach ($tasksWorkflow as $val)
 						{
 							$url = CComponentEngine::makePathFromTemplate($this->arParams["PATH_TO_DISK_TASK"], array("ID" => $val["ID"]));
@@ -1885,17 +1944,17 @@ HTML;
 						}
 						$columnsBizProc["BIZPROC"] .= '<div class="bizproc-tasks">'.implode(", ", $tmp).'</div>';
 
-						return array($actions, $columnsBizProc, $bizprocIcon);
+						return [$actions, $columnsBizProc, $bizprocIcon];
 					}
 
-					return array($actions, $columnsBizProc, $bizprocIcon);
+					return [$actions, $columnsBizProc, $bizprocIcon];
 				}
 
-				return array($actions, $columnsBizProc, $bizprocIcon);
+				return [$actions, $columnsBizProc, $bizprocIcon];
 			}
 			else
 			{
-				$tasks = array();
+				$tasks = [];
 				$inprogress = false;
 				foreach ($documentStates as $key => $documentState)
 				{
@@ -1926,11 +1985,11 @@ HTML;
 					($inprogress ? ' bizproc-status-'.(empty($tasks) ? "inprogress" : "attention") : '').
 					"\" onmouseover='BX.hint(this, \"".addslashes($columnsBizProc['BIZPROC'])."\")'></div>";
 
-				return array($actions, $columnsBizProc, $bizprocIcon);
+				return [$actions, $columnsBizProc, $bizprocIcon];
 			}
 		}
 
-		return array($actions, $columnsBizProc, $bizprocIcon);
+		return [$actions, $columnsBizProc, $bizprocIcon];
 	}
 
 	private function getDocumentHandlersForEditingFile()
@@ -1950,21 +2009,23 @@ HTML;
 		]]);
 	}
 
-	private function getDocumentHandlersForCreatingFile()
+	private function getDocumentHandlersForCreatingFile(): array
 	{
-		$handlers = array();
+		$handlers = [];
 		foreach ($this->listCloudHandlersForCreatingFile() as $handler)
 		{
-			$handlers[] = array(
+			$handlers[] = [
 				'code' => $handler::getCode(),
 				'name' => $handler::getName(),
-			);
+				'supportsUnifiedLink' => $handler->supportsUnifiedLink(),
+			];
 		}
 
-		return array_merge($handlers, array(array(
+		return array_merge($handlers, [[
 			'code' => LocalDocumentController::getCode(),
 			'name' => LocalDocumentController::getName(),
-		)));
+			'supportsUnifiedLink' => false,
+		]]);
 	}
 
 	/**
@@ -1972,12 +2033,12 @@ HTML;
 	 */
 	private function listCloudHandlersForCreatingFile()
 	{
-		if (!\Bitrix\Disk\Configuration::canCreateFileByCloud())
+		if (!Configuration::canCreateFileByCloud())
 		{
-			return array();
+			return [];
 		}
 
-		$list = array();
+		$list = [];
 		$documentHandlersManager = Driver::getInstance()->getDocumentHandlersManager();
 		foreach ($documentHandlersManager->getHandlers() as $handler)
 		{
@@ -2008,10 +2069,10 @@ HTML;
 		{
 			return CComponentEngine::MakePathFromTemplate(
 				$path,
-				array(
+				[
 					'ACTION' => '',
 					'user_id' => CurrentUser::get()->getId()
-				)
+				]
 			);
 		}
 
@@ -2022,7 +2083,7 @@ HTML;
 	{
 		$proxyType = $this->storage->getProxyType();
 		$isGroupStorage = $proxyType instanceof ProxyType\Group;
-		$groupSharingData = array();
+		$groupSharingData = [];
 		if (!$isGroupStorage)
 		{
 			return null;
@@ -2042,9 +2103,9 @@ HTML;
 		$buttonName = "action_button_{$this->gridOptions->getGridId()}";
 
 		if (
-			!Bitrix\Main\Grid\Context::isInternalRequest() ||
-			!$this->existActionButton($buttonName) ||
-			!check_bitrix_sessid()
+			!Bitrix\Main\Grid\Context::isInternalRequest()
+			|| !$this->existActionButton($buttonName)
+			|| !check_bitrix_sessid()
 		)
 		{
 			return new \Bitrix\Disk\Internals\Error\ErrorCollection();
@@ -2110,10 +2171,10 @@ HTML;
 
 	private function copyObject($objectId, $targetFolderId)
 	{
-		static $targetList = array();
+		static $targetList = [];
 		if (!isset($targetList[$targetFolderId]))
 		{
-			$targetList[$targetFolderId] = Folder::loadById($targetFolderId, array('STORAGE'));
+			$targetList[$targetFolderId] = Folder::loadById($targetFolderId, ['STORAGE']);
 		}
 		/** @var Folder $targetFolder */
 		$targetFolder = $targetList[$targetFolderId];
@@ -2123,23 +2184,23 @@ HTML;
 		}
 
 		/** @var Folder|File $object */
-		$object = BaseObject::loadById((int)$objectId, array('STORAGE'));
-		if(!$object)
+		$object = BaseObject::loadById((int)$objectId, ['STORAGE']);
+		if (!$object)
 		{
 			return false;
 		}
 
-		if(!$object->canRead($object->getStorage()->getCurrentUserSecurityContext()))
+		if (!$object->canRead($object->getStorage()->getCurrentUserSecurityContext()))
 		{
 			return false;
 		}
 
-		if(!$targetFolder->canAdd($targetFolder->getStorage()->getCurrentUserSecurityContext()))
+		if (!$targetFolder->canAdd($targetFolder->getStorage()->getCurrentUserSecurityContext()))
 		{
 			return false;
 		}
 
-		if($object->copyTo($targetFolder, $this->getUser()->getId(), true))
+		if ($object->copyTo($targetFolder, $this->getUser()->getId(), true))
 		{
 			$this->errorCollection->add($object->getErrors());
 
@@ -2151,10 +2212,10 @@ HTML;
 
 	private function moveObject($objectId, $targetFolderId)
 	{
-		static $targetList = array();
+		static $targetList = [];
 		if (!isset($targetList[$targetFolderId]))
 		{
-			$targetList[$targetFolderId] = Folder::loadById($targetFolderId, array('STORAGE'));
+			$targetList[$targetFolderId] = Folder::loadById($targetFolderId, ['STORAGE']);
 		}
 		/** @var Folder $targetFolder */
 		$targetFolder = $targetList[$targetFolderId];
@@ -2165,17 +2226,17 @@ HTML;
 
 		/** @var Folder|File $object */
 		$object = BaseObject::loadById((int)$objectId, array('STORAGE'));
-		if(!$object)
+		if (!$object)
 		{
 			return false;
 		}
 
-		if(!$object->canMove($object->getStorage()->getCurrentUserSecurityContext(), $targetFolder))
+		if (!$object->canMove($object->getStorage()->getCurrentUserSecurityContext(), $targetFolder))
 		{
 			return false;
 		}
 
-		if($object->moveTo($targetFolder, $this->getUser()->getId(), true))
+		if ($object->moveTo($targetFolder, $this->getUser()->getId(), true))
 		{
 			$this->errorCollection->add($object->getErrors());
 
@@ -2205,11 +2266,11 @@ HTML;
 
 		if ($object instanceof Folder)
 		{
-			$sourceData['NAME'] = \Bitrix\Disk\Ui\Text::correctFolderName($sourceData['NAME']);
+			$sourceData['NAME'] = Text::correctFolderName($sourceData['NAME']);
 		}
 		if ($object instanceof File)
 		{
-			$sourceData['NAME'] = \Bitrix\Disk\Ui\Text::correctFilename($sourceData['NAME']);
+			$sourceData['NAME'] = Text::correctFilename($sourceData['NAME']);
 		}
 
 		if (!$object->rename($sourceData['NAME']))
@@ -2243,11 +2304,11 @@ HTML;
 	{
 		/** @var Folder|File $object */
 		$object = BaseObject::loadById($objectId);
-		if(!$object)
+		if (!$object)
 		{
 			return false;
 		}
-		if(!$object->canRestore($object->getStorage()->getCurrentUserSecurityContext()))
+		if (!$object->canRestore($object->getStorage()->getCurrentUserSecurityContext()))
 		{
 			return false;
 		}
@@ -2286,18 +2347,18 @@ HTML;
 	{
 		$proxyType = $this->storage->getProxyType();
 
-		return array(
+		return [
 			'NAME' => $proxyType->getTitleForCurrentUser(),
 			'LINK' => $proxyType->getBaseUrlFolderList(),
-			'ID' => $this->isTrashMode()? null : $this->storage->getRootObjectId(),
-		);
+			'ID' => $this->isTrashMode() ? null : $this->storage->getRootObjectId(),
+		];
 	}
 
 	private function getBreadcrumbs()
 	{
-		$template = $this->isTrashMode()? $this->arParams['PATH_TO_TRASHCAN_LIST'] : $this->arParams['PATH_TO_FOLDER_LIST'];
+		$template = $this->isTrashMode() ? $this->arParams['PATH_TO_TRASHCAN_LIST'] : $this->arParams['PATH_TO_FOLDER_LIST'];
 
-		$crumbs = array();
+		$crumbs = [];
 		$parts = explode('/', trim($this->arParams['RELATIVE_PATH'], '/'));
 		foreach ($this->arParams['RELATIVE_ITEMS'] as $i => $item)
 		{
@@ -2307,20 +2368,20 @@ HTML;
 			}
 
 			$path = implode('/', (array_slice($parts, 0, $i + 1)));
-			$crumbs[] = array(
+			$crumbs[] = [
 				'ID' => $item['ID'],
-				'NAME' => Ui\Text::cleanTrashCanSuffix($item['NAME']),
+				'NAME' => Text::cleanTrashCanSuffix($item['NAME']),
 				'LINK' => rtrim(
-						CComponentEngine::MakePathFromTemplate(
-							$template,
-							array(
-								'PATH' => $path,
-								'TRASH_PATH' => $path,
-							)
-						),
-						'/'
-					) . '/',
-			);
+					CComponentEngine::MakePathFromTemplate(
+						$template,
+						[
+							'PATH' => $path,
+							'TRASH_PATH' => $path,
+						],
+					),
+					'/',
+				) . '/',
+			];
 		}
 
 		if ($this->isTrashMode())
@@ -2334,9 +2395,9 @@ HTML;
 						$this->arParams['PATH_TO_TRASHCAN_LIST'],
 						[
 							'TRASH_PATH' => '',
-						]
+						],
 					),
-				]
+				],
 			);
 		}
 
@@ -2352,14 +2413,14 @@ HTML;
 			return $conf;
 		}
 
-		if (!\Bitrix\Disk\Configuration::canCreateFileByCloud())
+		if (!Configuration::canCreateFileByCloud())
 		{
-			return array();
+			return [];
 		}
 
 		$documentHandlerName = $documentHandlerCode = null;
 
-		$documentServiceCode = \Bitrix\Disk\UserConfiguration::getDocumentServiceCode();
+		$documentServiceCode = UserConfiguration::getDocumentServiceCode();
 		if (!$documentServiceCode)
 		{
 			$documentServiceCode = 'l';
@@ -2381,20 +2442,20 @@ HTML;
 
 		if (!$documentHandlerCode)
 		{
-			return array();
+			return [];
 		}
 
 		$urlManager = Driver::getInstance()->getUrlManager();
 
-		$conf = array(
+		$conf = [
 			'DEFAULT_SERVICE' => $documentHandlerCode,
 			'DEFAULT_SERVICE_LABEL' => $documentHandlerName,
 			'CREATE_BLANK_FILE_URL' => $urlManager::getUrlForStartCreateFile('docx', $documentHandlerCode),
 			'RENAME_BLANK_FILE_URL' => $urlManager::getUrlDocumentController(
 				'rename',
-				array('document_action' => 'rename')
+				['document_action' => 'rename'],
 			),
-		);
+		];
 
 		return $conf;
 	}
@@ -2404,78 +2465,78 @@ HTML;
 		$possibleColumnForSorting = $this->gridOptions->getPossibleColumnForSorting();
 		$defaultColumns = array_combine(
 			$this->gridOptions->getDefaultColumns(),
-			$this->gridOptions->getDefaultColumns()
+			$this->gridOptions->getDefaultColumns(),
 		);
 
-		$headers = array(
-			array(
+		$headers = [
+			[
 				'id' => 'ID',
 				'name' => 'ID',
 				'sort' => isset($possibleColumnForSorting['ID']) ? 'ID' : false,
 				'default' => isset($defaultColumns['ID']),
-			),
-			array(
+			],
+			[
 				'id' => 'NAME',
 				'name' => Loc::getMessage('DISK_FOLDER_LIST_COLUMN_NAME'),
 				'sort' => isset($possibleColumnForSorting['NAME']) ? 'NAME' : false,
 				'default' => isset($defaultColumns['NAME']),
-				'editable' => array(
+				'editable' => [
 					'size' => 45,
-				),
-			),
-			array(
+				],
+			],
+			[
 				'id' => 'CREATE_TIME',
 				'name' => Loc::getMessage('DISK_FOLDER_LIST_COLUMN_CREATE_TIME'),
 				'sort' => isset($possibleColumnForSorting['CREATE_TIME']) ? 'CREATE_TIME' : false,
 				'default' => isset($defaultColumns['CREATE_TIME']),
-			),
-			array(
+			],
+			[
 				'id' => 'UPDATE_TIME',
 				'name' => Loc::getMessage('DISK_FOLDER_LIST_COLUMN_UPDATE_TIME'),
 				'sort' => isset($possibleColumnForSorting['UPDATE_TIME']) ? 'UPDATE_TIME' : false,
-				'first_order' => $this->isTrashMode()? null : 'desc',
+				'first_order' => $this->isTrashMode() ? null : 'desc',
 				'default' => isset($defaultColumns['UPDATE_TIME']),
-			),
-			($this->isTrashMode() ? array(
+			],
+			($this->isTrashMode() ? [
 				'id' => 'DELETE_TIME',
 				'name' => Loc::getMessage('DISK_TRASHCAN_COLUMN_DELETE_TIME'),
 				'sort' => isset($possibleColumnForSorting['DELETE_TIME']) ? 'DELETE_TIME' : false,
 				'first_order' => $this->isTrashMode() ? 'desc' : null,
 				'default' => isset($defaultColumns['DELETE_TIME']),
-			) : null),
-			array(
+			] : null),
+			[
 				'id' => 'CREATE_USER',
 				'name' => Loc::getMessage('DISK_FOLDER_LIST_COLUMN_CREATE_USER'),
 				'sort' => isset($possibleColumnForSorting['CREATE_USER']) ? 'CREATE_USER' : false,
 				'default' => isset($defaultColumns['CREATE_USER']),
-			),
-			array(
+			],
+			[
 				'id' => 'UPDATE_USER',
 				'name' => Loc::getMessage('DISK_FOLDER_LIST_COLUMN_UPDATE_USER'),
 				'sort' => isset($possibleColumnForSorting['UPDATE_USER']) ? 'UPDATE_USER' : false,
 				'default' => isset($defaultColumns['UPDATE_USER']),
-			),
-			($this->isTrashMode() ? array(
+			],
+			($this->isTrashMode() ? [
 				'id' => 'DELETE_USER',
 				'name' => Loc::getMessage('DISK_TRASHCAN_COLUMN_DELETE_USER'),
 				'default' => isset($defaultColumns['DELETE_USER']),
-			) : null),
-			array(
+			] : null),
+			[
 				'id' => 'FORMATTED_SIZE',
 				'name' => Loc::getMessage('DISK_FOLDER_LIST_COLUMN_FORMATTED_SIZE'),
 				'sort' => isset($possibleColumnForSorting['FORMATTED_SIZE']) ? 'FORMATTED_SIZE' : false,
 				'first_order' => 'desc',
 				'default' => isset($defaultColumns['FORMATTED_SIZE']),
-			),
-		);
+			],
+		];
 
-		if($this->isItTimeToShowBizProc())
+		if ($this->isItTimeToShowBizProc())
 		{
-			$headers[] = array(
+			$headers[] = [
 				'id' => 'BIZPROC',
 				'name' => Loc::getMessage('DISK_FOLDER_LIST_COLUMN_BIZPROC'),
 				'default' => isset($defaultColumns['BIZPROC']),
-			);
+			];
 		}
 
 		return array_filter($headers);
@@ -2560,5 +2621,68 @@ HTML;
 		}
 
 		return 'disk_manual_external_link';
+	}
+
+	private function isInCollabFolder(): bool
+	{
+		$firstRelativeItemId = (int)($this->arParams['RELATIVE_ITEMS'][0]['ID'] ?? null);
+
+		if ($firstRelativeItemId === 0)
+		{
+			return false;
+		}
+
+		if ($firstRelativeItemId === (int)$this->folder->getId())
+		{
+			$firstFolder = $this->folder->getRealObject();
+		}
+		else
+		{
+			$firstFolder = Folder::getById($firstRelativeItemId)?->getRealObject();
+		}
+
+		if ($firstFolder === null)
+		{
+			return false;
+		}
+
+		return $this->collabService->isCollabStorage($firstFolder->getStorage());
+	}
+
+	private function setUiFlagForReadonlyCollabFolderState(bool $canAddInCurrentFolder): void
+	{
+		if ($this->isUserCollaber)
+		{
+			$isReadonlyCollabFolder = !$canAddInCurrentFolder && $this->isInCollabFolder();
+
+			$cookie = $this->getReadOnlyCollabFolderStateCookie();
+			$cookieName = $cookie->getName();
+			$cookieValue = $isReadonlyCollabFolder ? '1' : '0';
+			$cookieOptions = [
+				'path' => $cookie->getPath(),
+				'domain' => $cookie->getDomain(),
+				'expires' => $cookie->getExpires(),
+				'httponly' => $cookie->getHttponly(),
+				'samesite' => $cookie->getSamesite(),
+				'secure' => $cookie->getSecure(),
+			];
+
+			/*
+			you cannot set cookies here via \Bitrix\Main\HttpResponse::addCookie,
+			since the response object is replaced by the bitrix:main.ui.grid component when the tiled view is used.
+			*/
+			setcookie($cookieName, $cookieValue, $cookieOptions);
+		}
+	}
+
+	private function getReadOnlyCollabFolderStateCookie(): Cookie
+	{
+		if ($this->readOnlyCollabFolderStateCookie === null)
+		{
+			$this->readOnlyCollabFolderStateCookie = new Cookie(self::READONLY_COLLAB_FOLDER_STATE_COOKIE_NAME, '0');
+			$this->readOnlyCollabFolderStateCookie->setHttpOnly(false);
+		}
+
+		return $this->readOnlyCollabFolderStateCookie;
 	}
 }

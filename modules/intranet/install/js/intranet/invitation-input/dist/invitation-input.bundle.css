@@ -23,3 +23,7 @@
 	flex-grow: 1;
 	min-width: 0;
 }
+
+.intranet-invitation-wrapper .ui-tag-selector-outer-container {
+	cursor: text;
+}

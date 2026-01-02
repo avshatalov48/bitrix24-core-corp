@@ -30,8 +30,8 @@ $currencyID = isset($arParams['CURRENCY_ID']) ? strval($arParams['CURRENCY_ID'])
 
 $CrmPerms = new CCrmPerms($USER->GetID());
 
-$currencyAdd = $currencyEdit = $currencyDelete = $CrmPerms->HavePerm('CONFIG', BX_CRM_PERM_CONFIG, 'WRITE');
-$currencyShow = $CrmPerms->HavePerm('CONFIG', BX_CRM_PERM_CONFIG, 'READ');
+$currencyAdd = $currencyEdit = $currencyDelete = \Bitrix\Crm\Service\Container::getInstance()->getUserPermissions()->isCrmAdmin();
+$currencyShow = \Bitrix\Crm\Service\Container::getInstance()->getUserPermissions()->entityType()->canReadSomeItemsInCrm();
 
 $exists = isset($currencyID[0]) && is_array(CCrmCurrency::GetByID($currencyID));
 

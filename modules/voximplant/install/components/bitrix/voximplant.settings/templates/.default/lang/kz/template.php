@@ -1,0 +1,26 @@
+<?php
+$MESS["VI_BACKUP_LINE_LABEL"] = "Резервтік нөмірге қоңырау шалу үшін қосылуды пайдалану";
+$MESS["VI_BACKUP_LINE_SAVE"] = "Сақтау";
+$MESS["VI_BACKUP_LINE_TITLE"] = "Резервтік телефон нөмірі";
+$MESS["VI_BACKUP_NUMBER"] = "Қоңырауды қайта бағыттауға арналған нөмір";
+$MESS["VI_BACKUP_NUMBER_LABEL"] = "Битрикс24-пен байланыс болмаған жағдайда қоңырау қайта бағытталатын нөмірді көрсетіңіз";
+$MESS["VI_COMBINATIONS_SAVE"] = "Сақтау";
+$MESS["VI_COMBINATIONS_TITLE"] = "Пернелер тіркесімдері";
+$MESS["VI_COMBINATION_INTERCEPT_GROUP"] = "Қызметкер тұратын топқа бағытталған қоңырауды ұстау:";
+$MESS["VI_CRM_INTEGRATION_SAVE"] = "Сақтау";
+$MESS["VI_CRM_INTEGRATION_TITLE"] = "CRM-мен интеграция";
+$MESS["VI_CRM_INTEGRATION_WORKFLOW_EXECUTION_TITLE"] = "Жаңа лид құрудың бизнес-процесін іске қосу:";
+$MESS["VI_INTERFACE_CHAT_ADD"] = "Әр қоңырау үшін бөлек чат құру";
+$MESS["VI_INTERFACE_CHAT_APPEND"] = "Барлық қоңыраулар үшін бірегей чат құру";
+$MESS["VI_INTERFACE_CHAT_NONE"] = "Бизнес-чатта қоңырауларды көрсетпеу";
+$MESS["VI_INTERFACE_CHAT_TITLE"] = "Бизнес-чатта телефон қоңырауларын көрсету:";
+$MESS["VI_INTERFACE_SAVE"] = "Сақтау";
+$MESS["VI_INTERFACE_TITLE"] = "Қоңыраулар интерфейсін баптау";
+$MESS["VI_NUMBERS_APPLY"] = "Қолдану";
+$MESS["VI_NUMBERS_CANCEL"] = "Болдырмау";
+$MESS["VI_NUMBERS_CONFIG"] = "Баптау";
+$MESS["VI_NUMBERS_CONFIG_BACKPHONE"] = "Әдепкі шығыс қоңырауға арналған нөмір";
+$MESS["VI_NUMBERS_CONFIG_BACKPHONE_TITLE"] = "Битрикс24-тен қоңырау шалған кезде сіздің сөйлесуішіңіз бұл нөмірді көреді";
+$MESS["VI_NUMBERS_EDIT"] = "Өзгерту";
+$MESS["VI_NUMBERS_SAVE"] = "Сақтау";
+$MESS["VI_NUMBERS_TITLE_2"] = "Әдепкі нөмірлерді орнату";

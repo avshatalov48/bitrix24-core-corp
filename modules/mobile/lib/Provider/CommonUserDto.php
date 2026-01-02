@@ -24,6 +24,9 @@ final class CommonUserDto extends Dto
 		public ?bool $isExtranet = null,
 		public ?string $personalMobile = null,
 		public ?string $personalPhone = null,
+		public ?string $lastActivityDate = null,
+		public ?\DateTimeZone $timezone = null,
+		public ?string $personalGender = null,
 	)
 	{
 		parent::__construct();

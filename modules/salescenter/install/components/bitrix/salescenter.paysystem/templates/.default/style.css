@@ -77,6 +77,14 @@
 	padding: 0;
 }
 
+.ui-slider-section-icon {
+	padding: 14px 24px 24px 24px;
+}
+
+.ui-slider-icon {
+	margin-right: 24px;
+}
+
 #salescenter-paysystem-cashbox .salescenter-editor-section-content {
 	padding: 15px 0;
 }
@@ -253,6 +261,13 @@
 	background-color: #289D37;
 }
 
+.salescenter-yandexcheckout-sber_loan-icon { width: 97px; }
+.salescenter-yandexcheckout-sber_loan-icon i {
+	background-image: url(images/yandexcheckout_sber_loan.svg);
+	background-size: 85% auto;
+	background-color: #289D37;
+}
+
 .salescenter-yandexcheckout-embedded-icon { width: 97px; }
 .salescenter-yandexcheckout-embedded-icon i {
 	background-image: url(images/yandexcheckout_embedded.svg);
@@ -265,13 +280,6 @@
 	background-image: url(images/yandexcheckout_tinkoff_bank.svg);
 	background-size: 85% auto;
 	background-color: #FFE52B;
-}
-
-.salescenter-yandexcheckout-installments-icon { width: 97px; }
-.salescenter-yandexcheckout-installments-icon i {
-	background-image: url(images/yandexcheckout_installments.svg);
-	background-size: 75% auto;
-	background-color: #00EEBC;
 }
 
 .salescenter-yandexcheckout-sbp-icon { width: 97px; }
@@ -456,6 +464,12 @@
 	background-color: #4285F4;
 }
 
+.salescenter-tbankbusiness-icon { width: 97px; }
+.salescenter-tbankbusiness-icon i {
+	background-image: url(images/tbankbusiness.svg);
+	background-size: 80% auto;
+	background-color: #FFDD2D;
+}
 
 .salescenter-main-header-right-block {
 	width: 100%;
@@ -509,13 +523,16 @@
 	overflow: hidden;
 	height: 26px;
 	margin: 0 20px 0 0;
-	min-width: 85px;
-	background: url(images/logo-services.svg) no-repeat;
+	min-width: 75px;
 }
 
 .salescenter-auth-popup-social-yandex:before {
-	background-position: 0 0;
 	width: 118px;
+	background: url(images/logo-services.svg) no-repeat 0 0;
+}
+
+.salescenter-auth-popup-social-tbankbusiness:before {
+	background: url(images/tbankbusiness-logo-service.svg) no-repeat 0 0;
 }
 
 .salescenter-auth-popup-social-delimiter {
@@ -551,20 +568,23 @@
 	padding: 0 8px;
 }
 
-.salescenter-auth-popup-social-user-link {
+.salescenter-auth-popup-social-user-link,
+.salescenter-paysystem-business-company-info-link {
 	display: inline-block;
 	overflow: hidden;
 	max-width: 100%;
-	white-space: nowrap;
+	white-space: normal;
 	text-overflow: ellipsis;
 	font-size: 14px;
 	color: #0b66c3;
 	font-weight: var(--ui-font-weight-bold);
 	cursor: pointer;
 	text-decoration: none;
+	margin-left: 5px;
 }
 
-.salescenter-auth-popup-social-user-link:hover {
+.salescenter-auth-popup-social-user-link:hover,
+.salescenter-paysystem-business-company-info-link:hover {
 	text-decoration: underline;
 }
 
@@ -594,7 +614,6 @@
 
 .salescenter-button-container {
 	padding-top: 5px;
-	margin-bottom: 15px;
 }
 
 .salescenter-paysystem-cashbox-block {
@@ -712,4 +731,191 @@
 
 .salescenter-paysystem-checkbox-input {
 	margin-bottom: 16px !important;
+}
+
+.salescenter-paysystem-information-block {
+	margin: 6px 0 10px;
+	padding: 14px 16px 14px 16px;
+	background: #ebf9fe;
+	transition: background .2s linear;
+	border-radius: var(--ui-border-radius-md);
+}
+
+.salescenter-paysystem-business-company-create {
+	width: 100%;
+	display: flex;
+	align-items: center;
+	color: #333;
+	font-size: 14px;
+	line-height: 18px;
+}
+
+.salescenter-paysystem-warning-block {
+	display: flex;
+	align-items: center;
+	margin: 6px 0 10px;
+	padding: 14px 16px 14px 16px;
+	background: #FFF1D6;
+	transition: background .2s linear;
+	border-radius: var(--ui-border-radius-md);
+}
+
+.salescenter-paysystem-warning-block-icon {
+	height: 24px;
+	width: 24px;
+	margin-right: 12px;
+	background: url('data:image/svg+xml;base64,PHN2ZyB3aWR0aD0iMjQiIGhlaWdodD0iMjQiIHZpZXdCb3g9IjAgMCAyNCAyNCIgZmlsbD0ibm9uZSIgeG1sbnM9Imh0dHA6Ly93d3cudzMub3JnLzIwMDAvc3ZnIj4KPHBhdGggZmlsbC1ydWxlPSJldmVub2RkIiBjbGlwLXJ1bGU9ImV2ZW5vZGQiIGQ9Ik0yMC4wMTU0IDE1LjkxMjNMMTMuMTM2MyA0LjQ1NDY0QzEyLjYwNjMgMy41NzUwMiAxMS4zNDMyIDMuNTc1MDIgMTAuODI0NSA0LjQ1NDY0TDMuOTQ1MzYgMTUuOTEyM0MzLjQwNDA2IDE2LjgxNDUgNC4wNTgxNCAxNy45NTM1IDUuMTA2OTIgMTcuOTUzNUgxOC44NjUyQzE5LjkwMjcgMTcuOTUzNSAyMC41NTY3IDE2LjgxNDUgMjAuMDE1NCAxNS45MTIzWk0xMC45OTM2IDguNDQ2NzhDMTAuOTkzNiA3LjkzOTMxIDExLjM5OTYgNy41MzMzMyAxMS45MDcxIDcuNTMzMzNIMTIuMDMxMUMxMi41Mzg2IDcuNTMzMzMgMTIuOTQ0NiA3LjkzOTMxIDEyLjk0NDYgOC40NDY3OFYxMS44NjM4QzEyLjk0NDYgMTIuMzcxMyAxMi41Mzg2IDEyLjc3NzIgMTIuMDMxMSAxMi43NzcySDExLjkwNzFDMTEuMzk5NiAxMi43NzcyIDEwLjk5MzYgMTIuMzcxMyAxMC45OTM2IDExLjg2MzhWOC40NDY3OFpNMTMuMTI1IDE1LjA3NzhDMTMuMTI1IDE1LjcwOTMgMTIuNjA2MyAxNi4yMjgxIDExLjk3NDggMTYuMjI4MUMxMS4zNDMyIDE2LjIyODEgMTAuODI0NSAxNS43MDkzIDEwLjgyNDUgMTUuMDc3OEMxMC44MjQ1IDE0LjQ0NjMgMTEuMzQzMiAxMy45Mjc1IDExLjk3NDggMTMuOTI3NUMxMi42MDYzIDEzLjkyNzUgMTMuMTI1IDE0LjQ0NjMgMTMuMTI1IDE1LjA3NzhaIiBmaWxsPSIjRkZBOTAwIi8+Cjwvc3ZnPg==');
+}
+
+.salescenter-paysystem-warning-block-description {
+	color: #333;
+	font-weight: 400;
+	font-size: 14px;
+	line-height: 17px;
+}
+
+.salescenter-paysystem-information-block-description {
+	color: #333;
+	font-size: 14px;
+	line-height: 18px;
+}
+
+.salescenter-paysystem-business-authorization {
+	display: flex;
+	flex-wrap: wrap;
+	justify-content: space-between;
+}
+
+.salescenter-paysystem-business-connect {
+	display: flex;
+	justify-content: flex-end;
+}
+
+.salescenter-paysystem-business-company {
+	border-radius: var(--ui-border-radius-md);
+	border: var(--ui-border-width-thin) solid rgba(var(--ui-color-base-90-rgb), 0.16);
+	margin: 6px 0 20px;
+	min-height: 36px;
+	display: flex;
+	justify-content: space-between;
+	align-items: center;
+}
+
+.salescenter-paysystem-business-company-selector,
+.salescenter-paysystem-business-company-empty,
+.salescenter-paysystem-business-company-profile {
+	display: flex;
+	align-items: center;
+	padding: 10px 8px 10px 16px;
+}
+
+.salescenter-paysystem-business-company-profile .salescenter-paysystem-business-company-info .salescenter-paysystem-business-company-title {
+	max-width: calc(80vw - 60px);
+}
+
+.salescenter-paysystem-business-company-selector:hover {
+	cursor: pointer;
+	background-color: #ebf9fe;
+	border-radius: var(--ui-border-radius-md) 0 0 var(--ui-border-radius-md);
+}
+
+.salescenter-paysystem-business-company-selector-icon {
+	display: block;
+	box-sizing: border-box;
+	margin-top: 7px;
+	margin-right: 10px;
+	width: 8px;
+	height: 8px;
+	border-bottom: 2px solid;
+	border-left: 2px solid;
+	content: '';
+	transform: translateY(-50%) rotate(-45deg);
+	color: #959CA4;
+}
+
+.salescenter-paysystem-business-company-action {
+	margin-right: 16px;
+}
+
+.salescenter-paysystem-business-company-action .ui-btn {
+	text-transform: none;
+}
+
+.salescenter-paysystem-business-company-info {
+	display: flex;
+	flex-direction: column;
+	align-items: flex-start;
+	margin: 0 10px;
+}
+
+.salescenter-paysystem-business-company-title {
+	display: flex;
+	align-items: center;
+	max-width: calc(80vw - 200px);
+}
+
+.salescenter-paysystem-business-company-name {
+	margin-right: 5px;
+	flex-shrink: 1;
+	max-width: 100%;
+	overflow: hidden;
+	text-overflow: ellipsis;
+	white-space: nowrap;
+	font-size: 16px;
+	font-weight: 400;
+	line-height: 20px;
+	color: #525C69;
+}
+
+.salescenter-paysystem-business-company-alert {
+	font: 12px / 14px var(--ui-font-family-secondary, var(--ui-font-family-open-sans)) !important;
+	margin-right: 8px;
+}
+
+.salescenter-paysystem-business-company-icon {
+	width: 35px;
+	height: 35px;
+	min-width: 35px;
+	min-height: 35px;
+	border-radius: 50%;
+	overflow: hidden;
+	float: left;
+}
+
+.salescenter-paysystem-business-company-icon[type='selected'] {
+	background: url(data:image/svg+xml;base64,PHN2ZyB3aWR0aD0iMzYiIGhlaWdodD0iMzYiIHZpZXdCb3g9IjAgMCAzNiAzNiIgZmlsbD0ibm9uZSIgeG1sbnM9Imh0dHA6Ly93d3cudzMub3JnLzIwMDAvc3ZnIj4KPHJlY3Qgd2lkdGg9IjM2IiBoZWlnaHQ9IjM2IiByeD0iMTgiIGZpbGw9IiMyRkM2RjYiLz4KPHBhdGggZmlsbC1ydWxlPSJldmVub2RkIiBjbGlwLXJ1bGU9ImV2ZW5vZGQiIGQ9Ik0yMC45OTk4IDIyLjgyNDRWMTYuNTkyOEMyMC45OTk4IDE2LjU0MzggMjEuMDA1OCAxNi40OTQ5IDIxLjAxNzcgMTYuNDQ3M0MyMS4wOTggMTYuMTI1OCAyMS40MjM4IDE1LjkzMDQgMjEuNzQ1MyAxNi4wMTA3TDI0LjU0NTMgMTYuNzEwN0MyNC44MTI0IDE2Ljc3NzUgMjQuOTk5OCAxNy4wMTc1IDI0Ljk5OTggMTcuMjkyOFYyMi44MjQ0SDI1Ljk5OThWMjQuODI0NEg5Ljk5OTc2VjIyLjgyNDRIMTAuOTk5OFYxMy4xMzc2QzEwLjk5OTggMTIuNjQ3MyAxMS4zNTUzIDEyLjIyOTIgMTEuODM5MyAxMi4xNTA2TDE4LjgzOTMgMTEuMDEzQzE4Ljg5MjQgMTEuMDA0MyAxOC45NDYgMTEgMTguOTk5OCAxMUMxOS41NTIgMTEgMTkuOTk5OCAxMS40NDc3IDE5Ljk5OTggMTJWMjIuODI0NEgyMC45OTk4Wk0xMy45OTk4IDIyLjgyNDRIMTYuOTk5OFYxOS44MjQ0SDEzLjk5OThWMjIuODI0NFpNMjMuOTk5OCAxOUgyMS45OTk4VjIxSDIzLjk5OThWMTlaTTE3Ljk5OTggMTMuODI0NEgxNS45OTk4VjE1LjgyNDRIMTcuOTk5OFYxMy44MjQ0Wk0xNC45OTk4IDEzLjgyNDRIMTIuOTk5OFYxNS44MjQ0SDE0Ljk5OThWMTMuODI0NFpNMTcuOTk5OCAxNi44MjQ0SDE1Ljk5OThWMTguODI0NEgxNy45OTk4VjE2LjgyNDRaTTE0Ljk5OTggMTYuODI0NEgxMi45OTk4VjE4LjgyNDRIMTQuOTk5OFYxNi44MjQ0WiIgZmlsbD0id2hpdGUiLz4KPC9zdmc+Cg==) no-repeat;
+}
+
+.salescenter-paysystem-business-company-icon[type='empty'] {
+	background: url(data:image/svg+xml;base64,PHN2ZyB3aWR0aD0iMzYiIGhlaWdodD0iMzYiIHZpZXdCb3g9IjAgMCAzNiAzNiIgZmlsbD0ibm9uZSIgeG1sbnM9Imh0dHA6Ly93d3cudzMub3JnLzIwMDAvc3ZnIj4KPHJlY3Qgd2lkdGg9IjM2IiBoZWlnaHQ9IjM2IiByeD0iMTgiIGZpbGw9IiNCREMxQzYiLz4KPHBhdGggZmlsbC1ydWxlPSJldmVub2RkIiBjbGlwLXJ1bGU9ImV2ZW5vZGQiIGQ9Ik0yMS4xMzk3IDE1Ljk1MjlDMjEuMTI3MiAxNi4wMDQ1IDIxLjEyMDcgMTYuMDU3NiAyMS4xMjA3IDE2LjExMDlWMTguNzAzMUMyMi4wNDEyIDE3LjYxNzEgMjMuNDE1MyAxNi45Mjc3IDI0Ljk1MDQgMTYuOTI3N0MyNS4wOTI4IDE2LjkyNzcgMjUuMjMzOCAxNi45MzM3IDI1LjM3MzEgMTYuOTQ1M1YxNi44NzA4QzI1LjM3MzEgMTYuNTcxOSAyNS4xNzM5IDE2LjMxMTQgMjQuODg5OSAxNi4yMzg5TDIxLjkxMzMgMTUuNDc4OUMyMS41NzE1IDE1LjM5MTcgMjEuMjI1MiAxNS42MDM5IDIxLjEzOTcgMTUuOTUyOVpNMjEuMDA1NCAyNS4wNDczSDkuODI2NzZDOS42MDU4NCAyNS4wNDczIDkuNDI2NzYgMjQuODY4MiA5LjQyNjc2IDI0LjY0NzNWMjMuMjc2MUM5LjQyNjc2IDIzLjA1NTEgOS42MDU4NCAyMi44NzYxIDkuODI2NzYgMjIuODc2MUgxMC40ODk4VjEyLjM1OThDMTAuNDg5OCAxMS44Mjc0IDEwLjg2NzkgMTEuMzczNiAxMS4zODI0IDExLjI4ODJMMTguODI0IDEwLjA1MzFDMTguODgwNSAxMC4wNDM4IDE4LjkzNzQgMTAuMDM5MSAxOC45OTQ1IDEwLjAzOTFDMTkuNTgxNiAxMC4wMzkxIDIwLjA1NzcgMTAuNTI1MSAyMC4wNTc3IDExLjEyNDdWMjAuODI2NEMxOS45NzU3IDIxLjE4NjMgMTkuOTMyNCAyMS41NjEgMTkuOTMyNCAyMS45NDU4QzE5LjkzMjQgMjMuMTE2NiAyMC4zMzMzIDI0LjE5MzcgMjEuMDA1NCAyNS4wNDczWk0xNS4wNzI1IDE5LjQzMzZWMjIuNzY5MUgxMy4xNjY1VjE5LjQzMzZIMTUuMDcyNVpNMTcuOTc4NSAxOS40MzM2VjIxLjMzOTZIMTYuMDcyNVYxOS40MzM2SDE3Ljk3ODVaTTE2LjA3MjUgMTMuNjIxMUgxNy45Nzg1VjE1LjUyNzFIMTYuMDcyNVYxMy42MjExWk0xMy4xNjY0IDEzLjYyMDlIMTUuMDcyNFYxNS41MjY5SDEzLjE2NjRWMTMuNjIwOVpNMTYuMDcyNSAxNi41MjczSDE3Ljk3ODVWMTguNDMzM0gxNi4wNzI1VjE2LjUyNzNaTTEzLjE2NjUgMTYuNTI3M0gxNS4wNzI1VjE4LjQzMzNIMTMuMTY2NVYxNi41MjczWiIgZmlsbD0id2hpdGUiLz4KPHBhdGggZmlsbC1ydWxlPSJldmVub2RkIiBjbGlwLXJ1bGU9ImV2ZW5vZGQiIGQ9Ik0yNS44MzY4IDE4LjU2NDVIMjQuMTM5MVYyMS4xMzk2SDIxLjUzMTJWMjIuODM3NEgyNC4xMzkxVjI1LjQxNDJIMjUuODM2OFYyMi44Mzc0SDI4LjM4MVYyMS4xMzk2SDI1LjgzNjhWMTguNTY0NVoiIGZpbGw9IndoaXRlIi8+Cjwvc3ZnPgo=) no-repeat;
+}
+
+.salescenter-paysystem-business-company-info-link {
+	display: flex;
+	flex-wrap: wrap;
+}
+
+.salescenter-paysystem-business-company-details {
+	font-size: 13px;
+	font-weight: 400;
+	line-height: 14px;
+	color: #959CA4;
+	white-space: nowrap;
+	text-overflow: ellipsis;
+	overflow: hidden;
+}
+
+.salescenter-paysystem-business-empty-company-label {
+	font-size: 16px;
+	font-weight: 400;
+	line-height: 20px;
+	color: #525C69;
+}
+
+.ui-label-inner {
+	font-size: 11px !important;
+}
+
+.ui-label {
+	margin-right: 0 !important;
 }

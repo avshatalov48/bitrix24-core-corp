@@ -11,8 +11,17 @@ import {
 
 export class Copilot
 {
+	#callAutoStartRecordSent: Array<string> = [];
+
 	onAIRecordStart(params)
 	{
+		if (params?.isAutostart && this.#callAutoStartRecordSent.includes(params.callId))
+		{
+			return;
+		}
+
+		this.#callAutoStartRecordSent.push(params.callId);
+
 		const errorCodes = {
 			AI_UNAVAILABLE_ERROR: AnalyticsStatus.errorB24,
 			AI_SETTINGS_ERROR: AnalyticsStatus.errorB24,
@@ -26,8 +35,11 @@ export class Copilot
 			event: AnalyticsEvent.aiRecordStart,
 			type: params.callType,
 			c_section: AnalyticsSection.callFollowup,
+			p2: `chatUserCount_${params.chatUserCount}`,
 			p5: `callId_${params.callId}`,
 		};
+
+		resultData.p1 = params?.isAutostart ? 'launchType_auto' : 'launchType_manual';
 
 		if (params?.userCount)
 		{
@@ -61,6 +73,16 @@ export class Copilot
 			category: AnalyticsCategory.callFollowup,
 			event: AnalyticsEvent.openTab,
 			type: params.tabName,
+			p5: `callId_${params.callId}`,
+		});
+	}
+	
+	onOpenFollowUpSlider(params)
+	{
+		sendData({
+			tool: AnalyticsTool.im,
+			category: AnalyticsCategory.callFollowup,
+			event: AnalyticsEvent.openSlider,
 			p5: `callId_${params.callId}`,
 		});
 	}
@@ -123,6 +145,40 @@ export class Copilot
 			tool: AnalyticsTool.im,
 			category: AnalyticsCategory.callFollowup,
 			event: AnalyticsEvent.playRecord,
+			p5: `callId_${params.callId}`,
+		});
+	}
+
+	onClickAIOff(params)
+	{
+		sendData({
+			tool: AnalyticsTool.im,
+			category: AnalyticsCategory.call,
+			event: AnalyticsEvent.clickAiOff,
+			type: params.callType,
+			p5: `callId_${params.callId}`,
+		});
+	}
+
+	onSelectAIOff(params)
+	{
+		sendData({
+			tool: AnalyticsTool.im,
+			category: AnalyticsCategory.call,
+			event: AnalyticsEvent.aiOff,
+			type: params.callType,
+			p5: `callId_${params.callId}`,
+		});
+	}
+
+	onSelectAIDelete(params)
+	{
+		sendData({
+			tool: AnalyticsTool.im,
+			category: AnalyticsCategory.callFollowup,
+			event: AnalyticsEvent.delete,
+			type: params.callType,
+			c_section: AnalyticsSection.call,
 			p5: `callId_${params.callId}`,
 		});
 	}

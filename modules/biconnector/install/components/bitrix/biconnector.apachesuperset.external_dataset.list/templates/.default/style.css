@@ -48,7 +48,8 @@
 	width: 22px;
 	min-width: 22px;
 	height: 22px;
-	background-size: cover;
+	background-size: contain;
+	background-repeat: no-repeat;
 	background-position: center;
 }
 
@@ -56,12 +57,28 @@
 	padding-bottom: 90px;
 }
 
-.ui-page-slider-wrapper, .ui-slider-page{
+.ui-page-slider-wrapper{
 	height: 100% !important;
+}
+
+.ui-slider-page{
+	min-height: 100% !important;
+	padding-bottom: 20px;
 }
 
 .dataset-title-wrapper {
 	display: flex;
 	justify-content: space-between;
 	align-items: center;
+}
+
+.ui-page-slider-wrapper.grid-mode .main-grid-empty-stub table.main-grid-table
+{
+	height: calc(100vh - 240px) !important;
+}
+
+.biconnector-delete-dataset-popup-content {
+	font-weight: var(--ui-font-weight-normal);
+	font-size: var(--ui-font-size-lg);
+	color: #555555;
 }

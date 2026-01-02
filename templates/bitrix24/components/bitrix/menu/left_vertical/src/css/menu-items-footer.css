@@ -1,0 +1,15 @@
+.menu-items-footer {
+	display: flex;
+	flex: 1;
+	padding-bottom: 14px;
+	padding-right: var(--menu-items-block-padding-x);
+}
+
+.menu-items-footer-inner {
+	display: flex;
+	flex-direction: column;
+	align-items: stretch;
+	justify-content: space-between;
+	width: 100%;
+	padding-left: var(--menu-items-block-padding-x);
+}

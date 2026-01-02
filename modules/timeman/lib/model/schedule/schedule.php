@@ -221,8 +221,16 @@ class Schedule extends EO_Schedule
 			   && (int)$schedule['CONTROLLED_ACTIONS'] === ScheduleTable::CONTROLLED_ACTION_START;
 	}
 
-	public function isAutoClosing()
+	public function isAutoClosing($skipCheckIn = false)
 	{
+		if (
+			$skipCheckIn === false
+			&& \Bitrix\Timeman\Integration\Stafftrack\CheckIn::isCheckInStartEnabled()
+		)
+		{
+			return true;
+		}
+
 		return static::isAutoClosingEnabledForSchedule($this);
 	}
 

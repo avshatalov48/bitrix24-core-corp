@@ -95,6 +95,7 @@ class ApacheSupersetDashboardTagListComponent extends CBitrixComponent
 			];
 		}
 
+		Toolbar::addFavoriteStar();
 		Toolbar::addFilter($options);
 	}
 

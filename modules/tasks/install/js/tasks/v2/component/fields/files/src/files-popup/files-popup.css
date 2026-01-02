@@ -1,0 +1,48 @@
+.tasks-field-files-popup {
+	display: flex;
+	flex-direction: column;
+	height: 100%;
+	overflow: hidden;
+}
+
+.tasks-field-files-popup-files {
+	overflow-y: scroll;
+	padding: 0 5px 15px 0;
+}
+
+@supports not selector(::-webkit-scrollbar) {
+	.tasks-field-files-popup-files {
+		scrollbar-color: rgba(0, 0, 0, 0.11) transparent;
+		scrollbar-width: thin;
+	}
+}
+
+.tasks-field-files-popup-files::-webkit-scrollbar {
+	background-color: rgba(0, 0, 0, 0);
+	width: 5px;
+}
+
+.tasks-field-files-popup-files::-webkit-scrollbar-track {
+	background: transparent;
+}
+
+.tasks-field-files-popup-files::-webkit-scrollbar-thumb {
+	background: rgba(0, 0, 0, 0.11);
+	border-radius: 5px;
+	cursor: pointer;
+	transition: .2s;
+}
+
+.tasks-field-files-popup-footer {
+	display: flex;
+	justify-content: space-between;
+	gap: 10px;
+	margin-top: auto;
+	padding-top: 18px;
+	border-top: var(--ui-border-width-thin) solid var(--ui-color-divider-default);
+}
+
+.tasks-field-files-popup-add-buttons {
+	display: flex;
+	gap: 10px;
+}

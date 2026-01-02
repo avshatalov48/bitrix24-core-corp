@@ -13,8 +13,6 @@ $MESS["TASKS_DURATION_DAYS"] = "дней";
 
 $MESS["TASKS_EXCEL_ID"] = "ID";
 $MESS["TASKS_EXCEL_TITLE"] = "Задача";
-$MESS["TASKS_EXCEL_RESPONSIBLE_ID"] = "Ответственный";
-$MESS["TASKS_EXCEL_RESPONSIBLE_NAME"] = "Ответственный";
 $MESS["TASKS_EXCEL_CREATED_BY"] = "Постановщик";
 $MESS["TASKS_EXCEL_ORIGINATOR_NAME"] = "Постановщик";
 $MESS["TASKS_EXCEL_CREATED_DATE"] = "Дата создания";
@@ -36,7 +34,6 @@ $MESS["TASKS_EXCEL_TAG"] = "Тэги";
 
 $MESS["TASKS_EXCEL_CHANGED_DATE"] = "Дата изменения";
 $MESS["TASKS_EXCEL_ALLOW_TIME_TRACKING"] = "Учитывать рабочее время";
-$MESS["TASKS_EXCEL_ALLOW_CHANGE_DEADLINE"] = "Разрешено изменять крайний срок";
 $MESS["TASKS_EXCEL_UF_CRM_TASK"] = "CRM";
 
 $MESS["TASKS_ELAPSED_H"] = "ч";

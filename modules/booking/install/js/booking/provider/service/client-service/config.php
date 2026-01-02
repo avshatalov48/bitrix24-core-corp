@@ -6,7 +6,6 @@ if (!defined('B_PROLOG_INCLUDED') || B_PROLOG_INCLUDED !== true)
 }
 
 return [
-	'css' => 'dist/client-service.bundle.css',
 	'js' => 'dist/client-service.bundle.js',
 	'rel' => [
 		'main.core',

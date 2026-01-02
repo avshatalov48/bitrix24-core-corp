@@ -1,4 +1,7 @@
-<?
+<?php
+
+use Bitrix\Main\Localization\Loc;
+
 if (!defined("B_PROLOG_INCLUDED") || B_PROLOG_INCLUDED!==true)
 {
 	die();
@@ -9,86 +12,140 @@ if (!defined("B_PROLOG_INCLUDED") || B_PROLOG_INCLUDED!==true)
  * @var array $arResult
  */
 
-if ($arResult['REQUIRED_BY_MANDATORY'] === true) {
-	$APPLICATION->IncludeComponent(
-		"bitrix:security.auth.otp.mandatory",
-		"",
-		array(
-			"AUTH_LOGIN_URL" => $arResult["~AUTH_LOGIN_URL"],
-			"NOT_SHOW_LINKS" => $arParams["NOT_SHOW_LINKS"]
-		)
-	);
-}
-elseif (isset($_GET["help"]) && $_GET["help"] == "Y")
+\Bitrix\Main\UI\Extension::load(['ui.forms', 'ui.vue3']);
+?>
+
+<?php
+if ($arResult['REQUIRED_BY_MANDATORY'] === true)
 {
 ?>
-	<div class="login-inner">
-		<div class="log-header-box">
-			<div class="log-popup-header" style="text-align: left; display: inline-block; width:75%"><?=GetMessage("AUTH_OTP_HELP_TITLE")?></div>
-			<div class="log-header-additional-wrap" style="width:24%;"><a href="<?=htmlspecialcharsbx($arResult["AUTH_OTP_LINK"])?>" class="log-header-additional-text"><?=GetMessage("AUTH_OTP_BACK")?></a></div>
+	<div class="intranet-island__otp">
+	<?php
+	$APPLICATION->IncludeComponent(
+		'bitrix:security.auth.otp.mandatory',
+		'',
+		array(
+			'AUTH_LOGIN_URL' => $arResult['~AUTH_LOGIN_URL'],
+			'NOT_SHOW_LINKS' => $arParams['NOT_SHOW_LINKS']
+		)
+	);
+	?>
+	</div>
+<?php
+}
+elseif (isset($_GET['help']) && $_GET['help'] === 'Y')
+{
+?>
+	<div class="intranet-island__otp">
+		<div>
+			<div class="intranet-otp-help-header"><?=Loc::getMessage('INTRANET_AUTH_OTP_HELP_TITLE')?></div>
+			<div class="intranet-otp-help-additional-wrap">
+				<a href="<?=htmlspecialcharsbx($arResult['AUTH_OTP_LINK'])?>" class="intranet-otp-help-additional-text"><?=Loc::getMessage('INTRANET_AUTH_OTP_BACK')?></a>
+			</div>
 		</div>
 		<hr class="b_line_gray">
-		<div class="login-text">
-			<?=GetMessage("AUTH_OTP_HELP_TEXT_MSGVER_1", array("#PATH#" => $this->GetFolder()))?>
-			<div class="log-popup-footer">
-				<a href="<?=htmlspecialcharsbx($arResult["AUTH_OTP_LINK"])?>" class="login-tr-btn"><?=GetMessage("AUTH_OTP_BACK")?></a>
+		<div class="intranet-otp-help-text">
+			<?=Loc::getMessage('INTRANET_AUTH_OTP_HELP_TEXT_MSGVER_1', array('#PATH#' => $this->GetFolder()))?>
+			<div class="intranet-otp-help-footer">
+				<a href="<?=htmlspecialcharsbx($arResult['AUTH_OTP_LINK'])?>" class="intranet-otp-help-btn"><?=Loc::getMessage('INTRANET_AUTH_OTP_BACK')?></a>
 			</div>
 		</div>
 	</div>
-<?
+<?php
 }
 else
 {
 ?>
-<form name="form_auth" method="post" target="_top" action="<?=$arResult["AUTH_URL"]?>">
-	<input type="hidden" name="AUTH_FORM" value="Y" />
-	<input type="hidden" name="TYPE" value="OTP" />
+<div class="intranet-island" data-role="otp-container">
+	<form name="form_auth" method="post" target="_top" action="<?=$arResult['AUTH_URL']?>">
+		<input type="hidden" name="AUTH_FORM" value="Y" />
+		<input type="hidden" name="TYPE" value="OTP" />
 
-	<div class="log-header-box">
-		<div class="log-popup-header" style="text-align: left; display: inline-block; width:49%"><?=GetMessage("AUTH_OTP_PLEASE_AUTH")?></div>
-		<?if ($arParams["NOT_SHOW_LINKS"] != "Y"):?>
-			<div class="log-header-additional-wrap" style="width:50%;">
-				<noindex>
-					<?if (!IsModuleInstalled("bitrix24")):?><a href="<?=$arResult["AUTH_LOGIN_URL"]?>" rel="nofollow" class="log-header-additional-text"><?echo GetMessage("AUTH_OTP_AUTH_BACK")?></a><?endif?>
-				</noindex>
+		<h2 class="intranet-island-title">
+			<?=Loc::getMessage('INTRANET_AUTH_OTP_TITLE')?>
+		</h2>
+		<?php ShowMessage($arParams['~AUTH_RESULT']); ?> <!-- errors -->
+
+		<div class="intranet-login-enter-form intranet-logging-in__login-form">
+			<div class="intranet-login-enter-form__login-wrapper">
+				<div class="intranet-text-input intranet-login-enter-form__login">
+					<input
+						type="text"
+						name="USER_OTP"
+						class="ui-ctl-element intranet-text-input__field"
+						maxlength="50"
+						value=""
+						autocomplete="off"
+						placeholder="<?=Loc::getMessage('INTRANET_AUTH_OTP_PLACEHOLDER')?>"
+						ref="modalInput"
+					/>
+				</div>
+
+				<?php if($arResult['CAPTCHA_CODE']): ?>
+					<h4 class="intranet-form-add-block__title intranet-form-add-block__title--margin">
+						<?=Loc::getMessage('INTRANET_AUTH_OTP_CAPTCHA_PROMT')?>
+					</h4>
+					<div class="intranet-text-captcha_item">
+						<input type="hidden" name="captcha_sid" value="<?=$arResult['CAPTCHA_CODE']?>" />
+						<img src="/bitrix/tools/captcha.php?captcha_sid=<?=$arResult['CAPTCHA_CODE']?>" width="180" height="40" alt="CAPTCHA" />
+					</div>
+					<div class="intranet-text-input intranet-login-enter-form__login">
+						<input
+							type="text"
+							name="captcha_word"
+							placeholder="<?=Loc::getMessage('INTRANET_AUTH_OTP_CAPTCHA_PROMT')?>"
+							maxlength="50"
+							value=""
+							autocomplete="off"
+							class="ui-ctl-element intranet-text-input__field"
+						/>
+					</div>
+				<?php endif; ?>
 			</div>
-		<?endif?>
-	</div>
-	<hr class="b_line_gray">
-	<?
-	ShowMessage($arParams["~AUTH_RESULT"]);
-	?>
-	<div class="">
-		<div class="login-item">
-			<span class="login-label"><?=GetMessage("AUTH_OTP_OTP_MSGVER_1")?></span>
-			<input type="text" name="USER_OTP" class="login-inp" maxlength="50" value="" autocomplete="off" />
+			<button
+				class="intranet-text-btn intranet-text-btn__reg ui-btn ui-btn-lg ui-btn-success"
+				type="submit"
+				@click="onSubmitForm"
+			>
+				<span class="intranet-text-btn__content-wrapper"><?=Loc::getMessage('INTRANET_AUTH_OTP_CONTINUE_BUTTON')?></span>
+				<div class="intranet-text-btn__spinner" v-show="isWaiting"></div>
+			</button>
+			<?php if($arResult['REMEMBER_OTP']): ?>
+				<div class="intranet-base-checkbox intranet-password-enter-form__remember-me">
+					<input type="checkbox" id="OTP_REMEMBER" name="OTP_REMEMBER" value="Y" class="login-checkbox-user-remember"/>
+					<label for="OTP_REMEMBER" class="login-item-checkbox-label">&nbsp;<?=Loc::getMessage("INTRANET_AUTH_OTP_REMEMBER_ME")?></label>
+				</div>
+			<?php endif ?>
 		</div>
 
-		<?if($arResult["CAPTCHA_CODE"]):?>
-		<div class="login-item">
-			<span class="login-label"><?echo GetMessage("AUTH_OTP_CAPTCHA_PROMT")?>:</span><br/>
-			<input type="hidden" name="captcha_sid" value="<?echo $arResult["CAPTCHA_CODE"]?>" />
-			<input class="login-inp" style="width:40%; display:inline-block" type="text" name="captcha_word" maxlength="50" value="" size="15" autocomplete="off" />
-			<div style="display:inline-block; vertical-align: middle;margin-left:10px" ><img src="/bitrix/tools/captcha.php?captcha_sid=<?echo $arResult["CAPTCHA_CODE"]?>" width="180" height="40" alt="CAPTCHA" /></div>
-		</div>
-		<?endif;?>
-	</div>
+		<Teleport to=".intranet-body__footer-right">
+			<button class="intranet-help-widget intranet-page-base__help">
+				<i class="ui-icon-set intranet-help-widget__icon"></i>
+				<a class="intranet-help-widget__text" href="<?=htmlspecialcharsbx($arResult["AUTH_OTP_HELP_LINK"])?>">
+					<?=Loc::getMessage('INTRANET_AUTH_OTP_HELP')?>
+				</a>
+			</button>
+		</Teleport>
 
-	<div class="login-text login-item">
-		<?if($arResult["REMEMBER_OTP"]):?>
-			<input type="checkbox" id="OTP_REMEMBER" name="OTP_REMEMBER" value="Y" /><label for="OTP_REMEMBER">&nbsp;<?=GetMessage("AUTH_OTP_REMEMBER_ME")?></label>
-		<?endif?>
-	</div>
-	<div class="log-popup-footer">
-		<input type="submit" name="Otp" class="login-btn" value="<?=GetMessage("AUTH_OTP_AUTHORIZE")?>" onclick="BX.addClass(this, 'wait');"/>
-		<a class="login-link-forgot-pass" href="<?=htmlspecialcharsbx($arResult["AUTH_OTP_HELP_LINK"])?>"><?=GetMessage("AUTH_OTP_HELP_LINK")?></a>
-	</div>
-</form>
+		<?php if ($arParams['NOT_SHOW_LINKS'] !== 'Y' && !IsModuleInstalled('bitrix24')): ?>
+			<Teleport to=".intranet-body__header-right">
+				<div class="intranet-text-btn intranet-text-btn--auth">
+					<a class="intranet-text-btn-link" href="<?=htmlspecialcharsbx($arResult["AUTH_LOGIN_URL"])?>" rel="nofollow"><?=Loc::getMessage('INTRANET_AUTH_OTP_LINK')?></a>
+				</div>
+			</Teleport>
+		<?php endif ?>
+	</form>
+</div>
 
 <script>
-	try{document.form_auth.USER_OTP.focus();}catch(e){}
+	BX.ready(() => {
+		const params = {
+			containerNode: document.querySelector("[data-role='otp-container']"),
+		};
+		new BX.Intranet.SystemAuthOtp(params);
+	});
 </script>
-<?
+<?php
 }
 ?>
 

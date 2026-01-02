@@ -2,6 +2,7 @@
 
 namespace Bitrix\Salescenter\PaymentSlip;
 
+use Bitrix\Main\Application;
 use Bitrix\Main\Config\Option;
 use Bitrix\Main\Loader;
 use Bitrix\MessageService\Sender\BaseConfigurable;
@@ -34,7 +35,10 @@ final class PaymentSlipConfig
 			return false;
 		}
 
-		return \Bitrix\Crm\Integration\NotificationsManager::isConnected();
+		return (
+			\Bitrix\Crm\Integration\NotificationsManager::isConnected()
+			&& Application::getInstance()->getLicense()->getRegion() === 'ru'
+		);
 	}
 
 	public function isSendingEnabled(): bool

@@ -4,3 +4,4 @@ $MESS["SIGN_SERVICE_DOCUMENT_FILE_EMPTY"] = "The file is empty.";
 $MESS["SIGN_SERVICE_DOCUMENT_NOT_FOUND"] = "Document was not found.";
 $MESS["SIGN_SERVICE_DOCUMENT_TITLE_FORMAT"] = "#TITLE# ##NUM#";
 $MESS["SIGN_SERVICE_DOCUMENT_TITLE_PLACEHOLDER"] = "#DOC_NAME#, #DATE#";
+$MESS["SIGN_SERVICE_DOCUMENT_USER_NOT_FOUND"] = "Responsible person you selected was not found in your Bitrix24.";

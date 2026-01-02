@@ -1,5 +1,6 @@
 import { Event, Loc, Type } from 'main.core';
 import { EventName, Model } from 'booking.const';
+import { RcwAnalytics } from 'booking.lib.analytics';
 import { Step } from './step';
 
 export class ResourceSettingsStep extends Step
@@ -45,7 +46,13 @@ export class ResourceSettingsStep extends Step
 			return;
 		}
 
-		return super.next();
+		if (!this.#validateIntegrationCalendarUser())
+		{
+			return;
+		}
+
+		await super.next();
+		RcwAnalytics.sendAddResourceStep2();
 	}
 
 	async back()
@@ -58,5 +65,25 @@ export class ResourceSettingsStep extends Step
 		{
 			await super.back();
 		}
+	}
+
+	#validateIntegrationCalendarUser(): boolean
+	{
+		const isIntegrationCalendarEnabled = this.store.getters[`${Model.ResourceCreationWizard}/isIntegrationCalendarEnabled`];
+		const calendarEntity = this.store.getters[`${Model.ResourceCreationWizard}/entityCalendar`];
+
+		if (!isIntegrationCalendarEnabled || !calendarEntity || calendarEntity.data.userIds.length > 0)
+		{
+			return true;
+		}
+
+		if (!calendarEntity.data.locationId && calendarEntity.data.reminders.length === 0)
+		{
+			return true;
+		}
+
+		void this.store.dispatch(`${Model.ResourceCreationWizard}/setInvalidIntegrationCalendarUser`, true);
+
+		return false;
 	}
 }

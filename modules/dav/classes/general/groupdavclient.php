@@ -1,5 +1,6 @@
-<?
+<?php
 
+use Bitrix\Calendar\Synchronization\Internal\Service\Logger\RequestLogger;
 use Bitrix\Main\Web\IpAddress;
 
 IncludeModuleLangFile(__FILE__);
@@ -180,6 +181,16 @@ class CDavGroupdavClient
 	public function GetErrors()
 	{
 		return $this->arError;
+	}
+
+	public function getErrorMessages(): array
+	{
+		return array_map(static function(array $error) {
+			$code = $error[0] ?? null;
+			$message = $error[1] ?? null;
+
+			return "{$code} {$message}";
+		}, $this->getErrors());
 	}
 
 	public function AddError($code, $message)
@@ -986,7 +997,7 @@ If the "algorithm" directive's value is "MD5" or is unspecified, then
 	}
 
 	private function logAction(
-		\Bitrix\Calendar\Sync\Util\RequestLogger $logger,
+		RequestLogger $logger,
 		CDavGroupdavClientRequest $request,
 		CDavGroupdavClientResponce $response
 	): void
@@ -997,20 +1008,23 @@ If the "algorithm" directive's value is "MD5" or is unspecified, then
 		}
 
 		$responseBody = '';
+
 		if ($response->GetBody())
 		{
 			$responseBody = $this->Encode($response->GetBody());
 			$responseBody = preg_replace("/\n[\s\n]+\n/", "\n" , $responseBody);
 		}
 
-		$logger->write([
-			'requestParams' => $request->GetBody(),
-			'url' => $request->GetPath(),
-			'method' => $request->GetMethod(),
-			'statusCode' => $response->GetStatus(),
-			'response' => $responseBody,
-			'error' => implode(',', $this->GetErrors()),
-		]);
+		$logger->debug(
+			'Dav request',
+			[
+				'requestParams' => $request->GetBody(),
+				'url' => $request->GetPath(),
+				'method' => $request->GetMethod(),
+				'statusCode' => $response->GetStatus(),
+				'response' => $responseBody,
+				'error' => implode(',', $this->getErrorMessages()),
+			]
+		);
 	}
 }
-?>

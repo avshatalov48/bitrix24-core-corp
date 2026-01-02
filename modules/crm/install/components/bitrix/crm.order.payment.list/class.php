@@ -18,7 +18,6 @@ Loc::loadMessages(__FILE__);
 class CCrmOrderPaymentListComponent extends \CBitrixComponent
 {
 	protected $userId = 0;
-	protected $userPermissions;
 	protected $errors = array();
 	protected $isInternal = false;
 
@@ -91,9 +90,12 @@ class CCrmOrderPaymentListComponent extends \CBitrixComponent
 			return false;
 		}
 
-		$this->userPermissions = CCrmPerms::GetCurrentUserPermissions();
-
-		if (!\Bitrix\Crm\Order\Permissions\Order::checkReadPermission(0, $this->userPermissions))
+		if (
+			!Container::getInstance()
+				->getUserPermissions()
+				->entityType()
+				->canReadItems(CCrmOwnerType::OrderPayment)
+		)
 		{
 			$this->errors[] = new Main\Error(Loc::getMessage('CRM_PERMISSION_DENIED'));
 			return false;
@@ -171,7 +173,10 @@ class CCrmOrderPaymentListComponent extends \CBitrixComponent
 						if($id <= 0)
 							continue;
 
-						$hasDelPerm = \Bitrix\Crm\Order\Permissions\Order::checkDeletePermission($id, $this->userPermissions);
+						$hasDelPerm = Container::getInstance()
+							->getUserPermissions()
+							->item()
+							->canDelete(\CCrmOwnerType::Order, $id);
 
 						if(!$hasDelPerm)
 							continue;
@@ -225,7 +230,12 @@ class CCrmOrderPaymentListComponent extends \CBitrixComponent
 					{
 						if($payment = Manager::getPaymentObject($id))
 						{
-							if($hasDelPerm = \Bitrix\Crm\Order\Permissions\Order::checkDeletePermission($id, $this->userPermissions))
+							if(
+								Container::getInstance()
+									->getUserPermissions()
+									->item()
+									->canDelete(\CCrmOwnerType::Order, $id)
+							)
 							{
 								$order = $payment->getCollection()->getOrder();
 								$res = $payment->delete();
@@ -397,9 +407,10 @@ class CCrmOrderPaymentListComponent extends \CBitrixComponent
 
 		$this->arResult['WEBFORM_LIST'] = WebFormManager::getListNames();
 		/** ToDo Change checking orderId */
-		$this->arResult['PERMS']['ADD'] = \Bitrix\Crm\Order\Permissions\Payment::checkCreatePermission($this->userPermissions);
-		$this->arResult['PERMS']['WRITE'] = \Bitrix\Crm\Order\Permissions\Order::checkUpdatePermission($this->arResult['ORDER_ID'], $this->userPermissions);
-		$this->arResult['PERMS']['DELETE'] = \Bitrix\Crm\Order\Permissions\Order::checkDeletePermission($this->arResult['ORDER_ID'], $this->userPermissions);
+		$userPermissions = Container::getInstance()->getUserPermissions();
+		$this->arResult['PERMS']['ADD'] = $userPermissions->entityType()->canAddItems(CCrmOwnerType::OrderPayment);
+		$this->arResult['PERMS']['WRITE'] = $userPermissions->item()->canUpdate(CCrmOwnerType::Order, $this->arResult['ORDER_ID']);
+		$this->arResult['PERMS']['DELETE'] = $userPermissions->item()->canDelete(CCrmOwnerType::Order, $this->arResult['ORDER_ID']);
 
 		$this->arResult['AJAX_MODE'] = $this->arParams['AJAX_MODE'] ?? ($this->arResult['INTERNAL'] ? 'N' : 'Y');
 		$this->arResult['AJAX_ID'] = $this->arParams['AJAX_ID'] ?? '';

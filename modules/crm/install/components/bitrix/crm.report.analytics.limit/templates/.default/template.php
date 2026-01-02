@@ -1,6 +1,6 @@
 <?php
 
-if (!defined('B_PROLOG_INCLUDED') || B_PROLOG_INCLUDED!==true)
+if (!defined('B_PROLOG_INCLUDED') || B_PROLOG_INCLUDED !== true)
 {
 	die();
 }
@@ -23,29 +23,6 @@ if (!$sliderCode)
 			? 'limit_crm_analytics_max_number'
 			: 'limit_crm_analytics_1000_number'
 	);
-}
-
-$isBitrix24Template = SITE_TEMPLATE_ID === 'bitrix24';
-if ($isBitrix24Template)
-{
-	$this->SetViewTarget('inside_pagetitle');
-}
-?>
-
-<? if (!$isBitrix24Template): ?>
-<div class="tasks-interface-filter-container">
-	<? endif ?>
-	<div class="pagetitle-container<? if (!$isBitrix24Template): ?> pagetitle-container-light<? endif ?> pagetitle-flexible-space">
-		<div class="pagetitle-container pagetitle-align-right-container"></div>
-	</div>
-	<? if (!$isBitrix24Template): ?>
-</div>
-<? endif ?>
-
-<?php
-if ($isBitrix24Template)
-{
-	$this->EndViewTarget();
 }
 ?>
 

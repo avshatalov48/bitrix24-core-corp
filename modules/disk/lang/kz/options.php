@@ -1,4 +1,6 @@
 <?php
+$MESS["BOARDS_REGISTER_TO_PROXY"] = "Қосу";
+$MESS["BOARDS_UNREGISTER_TO_PROXY"] = "Өшіру";
 $MESS["DISK_ALLOW_AUTOCONNECT_SHARED_OBJECTS"] = "Пайдаланушы топқа кірген кезде Топ дискісін<br/>автоматты түрде қосу";
 $MESS["DISK_ALLOW_CREATE_FILE_BY_CLOUD"] = "Cыртқы қызметтер (Google Docs, MS Office Online және басқалары) арқылы құжаттармен жұмыс істеуді қосу";
 $MESS["DISK_ALLOW_DOCUMENT_TRANSFORMATION"] = "Құжаттар үшін pdf және jpg файлдарын автоматты жасауды қосу";
@@ -9,6 +11,7 @@ $MESS["DISK_ALLOW_USE_EXTENDED_FULLTEXT"] = "Құжаттардың контен
 $MESS["DISK_ALLOW_USE_EXTERNAL_LINK"] = "Жалпыға ортақ сілтемелерді пайдалануға рұқсат ету";
 $MESS["DISK_ALLOW_VIDEO_TRANSFORMATION"] = "Бейне файлдары үшін mp4 және jpg автоматты жасауды қосу";
 $MESS["DISK_DEFAULT_VIEWER_SERVICE"] = "Көмегімен құжаттарды қарау";
+$MESS["DISK_DEFAULT_VIEWER_SERVICE_BOARD"] = "Битрикс24 Тақталар";
 $MESS["DISK_DEFAULT_VIEWER_SERVICE_NOTICE_SOC_SERVICE"] = "<a href='/bitrix/admin/settings.php?lang=#LANG#&mid=socialservices' target='_blank'>#NAME# әлеуметтік сервисі</a> бапталмаған.";
 $MESS["DISK_ENABLE_NGINX_MOD_ZIP_SUPPORT"] = "Файлдарды мұрағатпен жүктеуді қолдау";
 $MESS["DISK_ENABLE_NGINX_MOD_ZIP_SUPPORT_NOTICE"] = "<a href='#LINK#' target='_blank'>mod_zip</a> модулі орнатылмаған";

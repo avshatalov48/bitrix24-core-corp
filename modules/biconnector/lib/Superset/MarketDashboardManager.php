@@ -2,21 +2,25 @@
 
 namespace Bitrix\BIConnector\Superset;
 
+use Bitrix\BIConnector\Access\Service\DashboardGroupService;
 use Bitrix\BIConnector\Configuration\Feature;
 use Bitrix\BIConnector\Integration\Superset\Integrator\Integrator;
 use Bitrix\BIConnector\Integration\Superset\Integrator\Request\IntegratorResponse;
 use Bitrix\BIConnector\Integration\Superset\Model;
+use Bitrix\BIConnector\Integration\Superset\Model\SupersetDashboardGroupBindingTable;
+use Bitrix\BIConnector\Integration\Superset\Model\SupersetDashboardGroupScopeTable;
+use Bitrix\BIConnector\Integration\Superset\Model\SupersetDashboardGroupTable;
 use Bitrix\BIConnector\Integration\Superset\Model\SupersetDashboardTable;
-use Bitrix\BIConnector;
+use Bitrix\BIConnector\Integration\Superset\SupersetInitializer;
 use Bitrix\BIConnector\Superset\Dashboard\EmbeddedFilter;
 use Bitrix\BIConnector\Superset\Logger\MarketDashboardLogger;
 use Bitrix\BIConnector\Superset\Scope\ScopeService;
+use Bitrix\BIConnector\Superset\Scope\MarketCollectionUrlBuilder;
 use Bitrix\BIConnector\Superset\UI\DashboardManager;
 use Bitrix\BIConnector\Superset\Dashboard\UrlParameter;
 use Bitrix\Main\Config\Option;
 use Bitrix\Main\Error;
 use Bitrix\Main\Event;
-use Bitrix\Main\Loader;
 use Bitrix\Main\Localization\Loc;
 use Bitrix\Main\Result;
 use Bitrix\Main\Type\Date;
@@ -27,8 +31,6 @@ use Bitrix\Rest\Marketplace\Application;
 
 final class MarketDashboardManager
 {
-	private const SYSTEM_DASHBOARDS_TAG = 'bi_system_dashboard';
-	public const MARKET_COLLECTION_ID = 'bi_constructor_dashboards';
 	private const DASHBOARD_EXPORT_ENABLED_OPTION_NAME = 'bi_constructor_dashboard_export_enabled';
 	private const EVENT_ON_AFTER_DASHBOARD_INSTALL = 'onAfterDashboardInstall';
 
@@ -47,13 +49,7 @@ final class MarketDashboardManager
 
 	public static function getMarketCollectionUrl(): string
 	{
-		$marketPrefix = '/marketplace/';
-		if (Loader::includeModule('intranet'))
-		{
-			$marketPrefix = \Bitrix\Intranet\Binding\Marketplace::getMainDirectory();
-		}
-
-		return $marketPrefix . 'collection/' . self::MARKET_COLLECTION_ID . '/';
+		return (new MarketCollectionUrlBuilder())->build();
 	}
 
 	/**
@@ -67,6 +63,7 @@ final class MarketDashboardManager
 	 * 3) If it is an updating dashboard - uuid of dashboard can be changed due to dependency uuid from app id. In this
 	 * case we need to update EXTERNAL_ID of the row and delete dashboard with old uuid.
 	 *
+	 *
 	 * @param string $filePath Path to archive with dashboard to send to superset.
 	 * @param Event $event Event with APP_ID parameter.
 	 * @return Result
@@ -74,42 +71,70 @@ final class MarketDashboardManager
 	public function handleInstallMarketDashboard(string $filePath, Event $event): Result
 	{
 		$appId = $event->getParameter('APP_ID');
-		$appRow = AppTable::getRow([
-			'select' => ['ID', 'CODE'],
+		$app = AppTable::getList([
+			'select' => ['ID', 'CODE', 'APP_NAME'],
 			'filter' => ['=ID' => $appId],
-		]);
-		$appCode = $appRow['CODE'];
+			'limit' => 1,
+		])
+			->fetchObject()
+		;
+		$appCode = $app->getCode();
 
 		$result = new Result();
-		$response = $this->integrator->importDashboard($filePath, $appCode);
-
-		if ($response->hasErrors())
+		if (!$appCode)
 		{
-			if (self::isSystemAppByAppCode($appCode))
+			$result->addError(new Error(Loc::getMessage('BI_CONNECTOR_SUPERSET_ERROR_INSTALL_PROXY')));
+			MarketDashboardLogger::logErrors($result->getErrors(), [
+				'message' => 'Empty app code',
+			]);
+
+			return $result;
+		}
+
+		if (SupersetInitializer::isSupersetExist())
+		{
+			$response = $this->integrator->importDashboard($filePath, $appCode);
+			if ($response->hasErrors())
 			{
 				MarketDashboardLogger::logErrors($response->getErrors(),[
-					'message' => 'System dashboard installation error',
+					'message' => 'Dashboard installation error',
 					'app_code' => $appCode,
 				]);
+
+				$this->handleUnsuccessfulInstall($appCode);
+				$result->addError(new Error(Loc::getMessage('BI_CONNECTOR_SUPERSET_ERROR_INSTALL_PROXY')));
+
+				return $result;
 			}
 
-			$this->handleUnsuccessfulInstall($appCode);
-			$result->addError(new Error(Loc::getMessage('BI_CONNECTOR_SUPERSET_ERROR_INSTALL_PROXY')));
+			$externalDashboards = $response->getData()['dashboards'];
+			if (!is_array($externalDashboards))
+			{
+				MarketDashboardLogger::logInfo('No dashboards in import response', [
+					'app_code' => $appCode,
+				]);
+				$this->handleUnsuccessfulInstall($appCode);
+				$result->addError(new Error(Loc::getMessage('BI_CONNECTOR_SUPERSET_ERROR_INSTALL_PROXY')));
 
-			return $result;
+				return $result;
+			}
+
+			$externalDashboard = current($externalDashboards);
+			$externalDashboardId = (int)$externalDashboard['id'];
+			$dashboardTitle = $externalDashboard['dashboard_title'];
+			$dashboardStatus = SupersetDashboardTable::DASHBOARD_STATUS_READY;
 		}
-
-		$type = SupersetDashboardTable::DASHBOARD_TYPE_MARKET;
-		if (self::isSystemAppByAppCode($appCode))
+		else
 		{
-			$type = SupersetDashboardTable::DASHBOARD_TYPE_SYSTEM;
+			$externalDashboardId = null;
+			$dashboardTitle = $app->getAppName();
+			$dashboardStatus = SupersetDashboardTable::DASHBOARD_STATUS_NOT_INSTALLED;
 		}
 
-		$externalDashboards = $response->getData()['dashboards'];
-		if (!is_array($externalDashboards))
-		{
-			return $result;
-		}
+		$type = self::isSystemAppByAppCode($appCode)
+			? SupersetDashboardTable::DASHBOARD_TYPE_SYSTEM
+			: SupersetDashboardTable::DASHBOARD_TYPE_MARKET
+		;
 
 		$dashboard = SupersetDashboardTable::getList([
 			'select' => ['ID', 'APP_ID', 'EXTERNAL_ID', 'STATUS'],
@@ -119,15 +144,13 @@ final class MarketDashboardManager
 			->fetchObject()
 		;
 
-		if (empty($dashboard))
+		if (!$dashboard)
 		{
 			$dashboard = SupersetDashboardTable::createObject();
 		}
-
-		$externalDashboard = current($externalDashboards);
-		if (
+		elseif (
 			$dashboard->getExternalId() > 0
-			&& $dashboard->getExternalId() !== (int)$externalDashboard['id']
+			&& $dashboard->getExternalId() !== $externalDashboardId
 		)
 		{
 			$this->integrator->deleteDashboard([$dashboard->getExternalId()]);
@@ -136,11 +159,11 @@ final class MarketDashboardManager
 		$isDashboardExists = $dashboard->getExternalId() > 0;
 
 		$dashboard
-			->setExternalId((int)$externalDashboard['id'])
-			->setTitle($externalDashboard['dashboard_title'])
+			->setExternalId($externalDashboardId)
+			->setTitle($dashboardTitle)
 			->setType($type)
 			->setAppId($appCode)
-			->setStatus(SupersetDashboardTable::DASHBOARD_STATUS_READY)
+			->setStatus($dashboardStatus)
 			->setDateModify(new DateTime())
 			->save()
 		;
@@ -162,11 +185,12 @@ final class MarketDashboardManager
 				: 'System dashboard was successfully installed'
 			;
 			MarketDashboardLogger::logInfo($logMessage, ['app_code' => $appCode]);
-
-			SystemDashboardManager::notifyUserDashboardModification($dashboard, $isDashboardExists);
 		}
 
-		$result->setData(['dashboard' => $dashboard]);
+		$result->setData([
+			'dashboard' => $dashboard,
+			'isExists' => $isDashboardExists,
+		]);
 
 		return $result;
 	}
@@ -181,8 +205,10 @@ final class MarketDashboardManager
 	 */
 	public function applyDashboardSettings(Model\SupersetDashboard $dashboard, array $dashboardSettings = []): void
 	{
-		if (!$dashboardSettings)
+		if (!$dashboardSettings && Feature::isCheckPermissionsByGroup())
 		{
+			$this->saveDashboardGroupByScope($dashboard->getId(), self::getDefaultDashboardGroupScope());
+
 			return;
 		}
 
@@ -240,6 +266,64 @@ final class MarketDashboardManager
 				;
 			}
 		}
+
+		if (Feature::isCheckPermissionsByGroup())
+		{
+
+			if (
+				isset($dashboardSettings['groupCode'])
+				&& is_string($dashboardSettings['groupCode'])
+				&& in_array($dashboardSettings['groupCode'], ScopeService::getSystemGroupCode())
+			)
+			{
+				$groupScopeCode = $dashboardSettings['groupCode'];
+			}
+			elseif (isset($scopesToSave))
+			{
+				$groupScopeCodeList = array_intersect(ScopeService::getSystemGroupCode(), $scopesToSave);
+
+				$additionalScopeMap = [];
+				foreach (DashboardGroupService::getAdditionalScopeMap() as $mainScope => $scopeMap)
+				{
+					foreach ($scopeMap as $scope)
+					{
+						$additionalScopeMap[$scope] = $mainScope;
+					}
+				}
+
+				foreach ($scopesToSave as $dashboardScope)
+				{
+					if (
+						isset($additionalScopeMap[$dashboardScope])
+						&& !in_array($additionalScopeMap[$dashboardScope], $groupScopeCodeList, true)
+					)
+					{
+						$groupScopeCodeList[] = $additionalScopeMap[$dashboardScope];
+					}
+				}
+
+				if (empty($groupScopeCodeList))
+				{
+					$groupScopeCode = self::getDefaultDashboardGroupScope();
+				}
+			}
+			else
+			{
+				$groupScopeCode = self::getDefaultDashboardGroupScope();
+			}
+
+			if (!empty($groupScopeCodeList))
+			{
+				foreach ($groupScopeCodeList as $scopeCode)
+				{
+					$this->saveDashboardGroupByScope($dashboard->getId(), $scopeCode);
+				}
+			}
+			else
+			{
+				$this->saveDashboardGroupByScope($dashboard->getId(), $groupScopeCode);
+			}
+		}
 	}
 
 	/**
@@ -264,71 +348,33 @@ final class MarketDashboardManager
 
 			DashboardManager::notifyDashboardStatus(
 				(int)$row['ID'],
-				SupersetDashboardTable::DASHBOARD_STATUS_FAILED
+				SupersetDashboardTable::DASHBOARD_STATUS_FAILED,
 			);
 
 			$dashboard->save();
 		}
 	}
 
-	/**
-	 * Sends import query to proxy to import datasets.
-	 * No manipulations in b_biconnector_superset_dashboard table required.
-	 *
-	 * @param string $filePath Path to archive with datasets to send to superset.
-	 * @param Event $event
-	 *
-	 * @return Result
-	 */
-	public function handleInstallDatasets(string $filePath, Event $event): Result
-	{
-		$result = new Result();
-
-		$appId = $event->getParameter('APP_ID');
-		$appRow = AppTable::getRow([
-			'select' => ['ID', 'CODE'],
-			'filter' => ['=ID' => $appId],
-		]);
-		$appCode = $appRow['CODE'];
-		if (!self::isSystemAppByAppCode($appCode))
-		{
-			$result->addError(new Error(Loc::getMessage('BI_CONNECTOR_SUPERSET_DELETE_ERROR_DATASET_IMPORT')));
-
-			return $result;
-		}
-
-		$response = $this->integrator->importDataset($filePath);
-		if ($response->hasErrors())
-		{
-			if (self::isSystemAppByAppCode($appCode))
-			{
-				MarketDashboardLogger::logErrors($response->getErrors(), [
-					'message' => 'System dataset installation error',
-					'app_code' => $appCode,
-				]);
-			}
-
-			$result->addError(new Error(Loc::getMessage('BI_CONNECTOR_SUPERSET_ERROR_INSTALL_PROXY')));
-
-			return $result;
-		}
-
-		if (self::isSystemAppByAppCode($appCode))
-		{
-			MarketDashboardLogger::logInfo('System dataset was successfully installed', ['app_code' => $appCode]);
-		}
-
-		return $result;
-	}
-
 	public static function isSystemAppByAppCode(string $appCode): bool
 	{
-		return preg_match('/^(bitrix|alaio)\.bic_/', $appCode);
+		$anotherVendors = SystemDashboardManager::getAdditionalSystemVendors();
+		$vendorListString = implode('|', array_merge(
+			[SystemDashboardManager::SYSTEM_VENDOR_MAIN],
+			$anotherVendors,
+		));
+
+		return preg_match("/^({$vendorListString})\.bic_/", $appCode);
 	}
 
 	public static function isDatasetAppByAppCode(string $appCode): bool
 	{
-		return preg_match('/^(bitrix|alaio)\.bic_datasets_/', $appCode);
+		$anotherVendors = SystemDashboardManager::getAdditionalSystemVendors();
+		$vendorListString = implode('|', array_merge(
+			[SystemDashboardManager::SYSTEM_VENDOR_MAIN],
+			$anotherVendors,
+		));
+
+		return preg_match("/^({$vendorListString})\.bic_datasets_/", $appCode);
 	}
 
 	public function handleDeleteApp(int $appId): Result
@@ -344,12 +390,13 @@ final class MarketDashboardManager
 
 		if (self::isDatasetAppByAppCode($appRow['CODE']))
 		{
-			$result->addError(new Error(Loc::getMessage('BI_CONNECTOR_SUPERSET_DELETE_ERROR_DATASETS')));
-
 			return $result;
 		}
 
-		if (self::isSystemAppByAppCode($appRow['CODE']))
+		if (
+			!SystemDashboardManager::canDeleteSystemDashboard()
+			&& self::isSystemAppByAppCode($appRow['CODE'])
+		)
 		{
 			$result->addError(new Error(Loc::getMessage('BI_CONNECTOR_SUPERSET_DELETE_ERROR_SYSTEM_DASHBOARD')));
 
@@ -374,7 +421,10 @@ final class MarketDashboardManager
 		$originalDashboard = null;
 		foreach ($installedDashboards as $dashboard)
 		{
-			if ($dashboard->getType() === SupersetDashboardTable::DASHBOARD_TYPE_SYSTEM)
+			if (
+				!SystemDashboardManager::canDeleteSystemDashboard()
+				&& $dashboard->getType() === SupersetDashboardTable::DASHBOARD_TYPE_SYSTEM
+			)
 			{
 				$result->addError(new Error(Loc::getMessage('BI_CONNECTOR_SUPERSET_DELETE_ERROR_SYSTEM_DASHBOARD')));
 
@@ -393,21 +443,32 @@ final class MarketDashboardManager
 
 		if ($originalDashboard)
 		{
-			$response = $this->integrator->deleteDashboard([$originalDashboard->getExternalId()]);
-			if ($response->hasErrors())
+			if (SupersetInitializer::isSupersetExist())
 			{
-				if ($response->getStatus() === IntegratorResponse::STATUS_NOT_FOUND)
+				$response = $this->integrator->deleteDashboard([$originalDashboard->getExternalId()]);
+				if ($response->hasErrors())
 				{
-					$originalDashboard->delete();
+					if ($response->getStatus() === IntegratorResponse::STATUS_NOT_FOUND)
+					{
+						if ($originalDashboard->getType() === SupersetDashboardTable::DASHBOARD_TYPE_SYSTEM)
+						{
+							SystemDashboardManager::saveDeletedSystemDashboard($appCode);
+						}
+						$originalDashboard->delete();
+
+						return $result;
+					}
+
+					$result->addError(new Error(Loc::getMessage('BI_CONNECTOR_SUPERSET_ERROR_DELETE_PROXY')));
 
 					return $result;
 				}
-
-				$result->addError(new Error(Loc::getMessage('BI_CONNECTOR_SUPERSET_ERROR_DELETE_PROXY')));
-
-				return $result;
 			}
 
+			if ($originalDashboard->getType() === SupersetDashboardTable::DASHBOARD_TYPE_SYSTEM)
+			{
+				SystemDashboardManager::saveDeletedSystemDashboard($appCode);
+			}
 			$originalDashboard->delete();
 		}
 
@@ -426,72 +487,10 @@ final class MarketDashboardManager
 		return $result;
 	}
 
-	public function installInitialDashboards(): Result
-	{
-		MarketDashboardLogger::logInfo('Start installing initial dashboards');
-
-		$result = new Result();
-
-		$appList = $this->getSystemApps();
-		$systemAppCodes = array_column($appList, 'CODE');
-		foreach ($systemAppCodes as $code)
-		{
-			if (self::isDatasetAppByAppCode($code))
-			{
-				$installResult = $this->installApplication($code);
-				if (!$installResult->isSuccess())
-				{
-					$result->addErrors($installResult->getErrors());
-				}
-			}
-		}
-
-		foreach ($systemAppCodes as $code)
-		{
-			if (
-				!self::isSystemAppByAppCode($code)
-				|| self::isDatasetAppByAppCode($code)
-			)
-			{
-				continue;
-			}
-
-			$row = SupersetDashboardTable::getList([
-				'select' => ['ID', 'APP_ID', 'EXTERNAL_ID'],
-				'filter' => [
-					'=APP_ID' => $code,
-				],
-				'limit' => 1,
-			])->fetch();
-
-			if ($row && !isset($row['EXTERNAL_ID']))
-			{
-				$installResult = $this->installApplication($code);
-				$dashboard = SupersetDashboardTable::getByPrimary($row['ID'])->fetchObject();
-
-				if (!$installResult->isSuccess())
-				{
-					$result->addErrors($installResult->getErrors());
-					$status = SupersetDashboardTable::DASHBOARD_STATUS_FAILED;
-					$dashboard->setStatus($status);
-					$dashboard->save();
-					DashboardManager::notifyDashboardStatus((int)$row['ID'], $status);
-				}
-			}
-		}
-
-		return $result;
-	}
-
 	public function reinstallDashboard(int $dashboardId): void
 	{
 		$dashboard = SupersetDashboardTable::getByPrimary($dashboardId)->fetchObject();
 		if ($dashboard === null)
-		{
-			return;
-		}
-
-		if ($dashboard->getStatus() === SupersetDashboardTable::DASHBOARD_STATUS_READY)
 		{
 			return;
 		}
@@ -520,42 +519,59 @@ final class MarketDashboardManager
 		DashboardManager::notifyDashboardStatus($dashboardId, $status);
 	}
 
-	private static function getAppIdByDashboardId(int $dashboardId): ?string
-	{
-		return SupersetDashboardTable::getByPrimary($dashboardId)?->fetchObject()?->getAppId();
-	}
-
-	public function getSystemApps(): array
+	public static function getMarketItems(array $tags): array
 	{
 		$managedCache = \Bitrix\Main\Application::getInstance()->getManagedCache();
-		$cacheId = 'biconnector_superset_dashboard_list_market';
+		$cacheId = 'biconnector_superset_dashboard_list_market_' . implode('_', $tags);
 
 		if ($managedCache->read(86400, $cacheId))
 		{
 			return $managedCache->get($cacheId);
 		}
 
-		$appList = Rest\Marketplace\Client::getByTag([self::SYSTEM_DASHBOARDS_TAG])['ITEMS'] ?? [];
-		$managedCache->set($cacheId, $appList);
+		$result = [];
+		$page = 1;
+		$pageSize = 50;
+		do
+		{
+			$appList = Rest\Marketplace\Client::getByTag($tags, $page, $pageSize)['ITEMS'] ?? [];
+			if (!$appList)
+			{
+				return $result;
+			}
 
-		return $appList;
+			foreach ($appList as $item)
+			{
+				$result[] = $item;
+			}
+			$page++;
+			$needLoadNextPage = count($appList) === $pageSize;
+		}
+		while ($needLoadNextPage);
+
+		$managedCache->set($cacheId, $result);
+
+		return $result;
 	}
 
+	/**
+	 * @deprecated
+	 * @use SystemDashboardManager::getSystemApps()
+	 * @return array
+	 */
 	public function getSystemDashboardApps(): array
 	{
-		$systemDashboardApps = [];
-		foreach ($this->getSystemApps() as $systemApp)
-		{
-			if (
-				!self::isDatasetAppByAppCode($systemApp['CODE'])
-				&& self::isSystemAppByAppCode($systemApp['CODE'])
-			)
-			{
-				$systemDashboardApps[] = $systemApp;
-			}
-		}
+		return SystemDashboardManager::getSystemApps();
+	}
 
-		return $systemDashboardApps;
+	/**
+	 * @deprecated
+	 * @use SystemDashboardManager::getSystemApps()
+	 * @return array
+	 */
+	public function getSystemApps(): array
+	{
+		return SystemDashboardManager::getSystemApps();
 	}
 
 	public function installApplication(string $code, ?int $version = null): Result
@@ -563,7 +579,7 @@ final class MarketDashboardManager
 		return MarketAppInstaller::getInstance()->installApplication($code, $version);
 	}
 
-	public function updateApplications()
+	public function updateApplications(): Result
 	{
 		return MarketAppUpdater::getInstance()->updateApplications();
 	}
@@ -578,11 +594,63 @@ final class MarketDashboardManager
 			return true;
 		}
 
-		if (!Feature::isBiBuilderExportEnabled())
-		{
-			return false;
-		}
+		return Feature::isBiBuilderExportEnabled();
+	}
 
-		return BIConnector\Manager::isAdmin();
+	/**
+	 * @deprecated Will be removed in future updates.
+	 */
+	public function areInitialDashboardsInstalling(): bool
+	{
+		return false;
+	}
+
+	private function saveDashboardGroupByScope(int $dashboardId, string $groupScopeCode): void
+	{
+		$group = SupersetDashboardGroupScopeTable::getList([
+			'select' => ['GROUP_ID'],
+			'filter' => [
+				'SCOPE_CODE' => $groupScopeCode,
+				'GROUP.TYPE' => SupersetDashboardGroupTable::GROUP_TYPE_SYSTEM,
+			],
+			'limit' => 1,
+		])
+			->fetch()
+		;
+		$groupId = $group['GROUP_ID'] ?? null;
+
+		if ($groupId !== null)
+		{
+			$existGroupRelation = SupersetDashboardGroupBindingTable::getList([
+				'select' => ['GROUP'],
+				'filter' => [
+					'GROUP.ID' => $groupId,
+					'DASHBOARD_ID' => $dashboardId,
+				],
+				'limit' => 1,
+			])
+				->fetchObject()
+			;
+
+			if (is_null($existGroupRelation))
+			{
+				$groupRelation = SupersetDashboardGroupBindingTable::createObject();
+				$groupRelation->setGroupId((int)$groupId);
+				$groupRelation->setDashboardId($dashboardId);
+				$groupRelation->save();
+			}
+
+			$scopes = ScopeService::getInstance()->getDashboardScopes($dashboardId);
+			if (!in_array($groupScopeCode, $scopes, true))
+			{
+				$scopes[] = $groupScopeCode;
+				ScopeService::getInstance()->saveDashboardScopes($dashboardId, $scopes);
+			}
+		}
+	}
+
+	public static function getDefaultDashboardGroupScope(): string
+	{
+		return ScopeService::BIC_SCOPE_CRM;
 	}
 }

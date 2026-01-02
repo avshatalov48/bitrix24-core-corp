@@ -9,6 +9,7 @@ return [
 		'statemanager/redux/store',
 		'tasks:enum',
 		'tasks:statemanager/redux/slices/groups',
+		'tasks:statemanager/redux/slices/reactions',
 		'tasks:statemanager/redux/slices/tasks/expiration-registry',
 		'tasks:statemanager/redux/slices/tasks/extra-reducer',
 		'tasks:statemanager/redux/slices/tasks/meta',
@@ -17,8 +18,5 @@ return [
 		'tasks:statemanager/redux/slices/tasks/thunk',
 		'tasks:statemanager/redux/slices/tasks-results/thunk',
 		'tasks/statemanager/redux/slices/tasks-stages/thunk',
-	],
-	'bundle' => [
-		'./src/mapper',
 	],
 ];

@@ -1,0 +1,25 @@
+<?php
+$MESS["CRM_REPEAT_SALE_SEGMENT_CALL_ASSESSMENT_DESCRIPTION"] = "Сату мүмкіндігін арттыру үшін жаңа мәмілеге сату скриптін қосыңыз. Менеджер клиентке қоңырау шалу кезінде скрипті көреді және сөйлесуді қалай құру керектігін біледі";
+$MESS["CRM_REPEAT_SALE_SEGMENT_CALL_ASSESSMENT_SELECTOR"] = "Скрипті таңдау";
+$MESS["CRM_REPEAT_SALE_SEGMENT_CALL_ASSESSMENT_TITLE"] = "Сату скриптері";
+$MESS["CRM_REPEAT_SALE_SEGMENT_COPILOT_DESCRIPTION"] = "AI клиенттермен әрекеттесу тарихын және өткен мәмілелердегі барлық ақпаратты талдайды, жаңа мәмілелер жасайды және ұсыныстар дайындайды. Бұл клиентпен диалогты дұрыс құруға және мәмілені сәтті аяқтауға көмектеседі";
+$MESS["CRM_REPEAT_SALE_SEGMENT_COPILOT_DISABLED"] = "Өшірулі";
+$MESS["CRM_REPEAT_SALE_SEGMENT_COPILOT_ENABLED"] = "Қосылған";
+$MESS["CRM_REPEAT_SALE_SEGMENT_COPILOT_TITLE"] = "CoPilot Автоматикасы";
+$MESS["CRM_REPEAT_SALE_SEGMENT_DEAL_ASSIGNED_TITLE"] = "Жауапты";
+$MESS["CRM_REPEAT_SALE_SEGMENT_DEAL_HELP"] = "Бұл мәмілелерде қалай жұмыс істейді";
+$MESS["CRM_REPEAT_SALE_SEGMENT_DEAL_NAME_PATTERN_TITLE"] = "Жаңа мәмілелердің атауы";
+$MESS["CRM_REPEAT_SALE_SEGMENT_HOW_IT_WORK_TITLE"] = "Бұл мәмілелерде қалай жұмыс істейді";
+$MESS["CRM_REPEAT_SALE_SEGMENT_MANUAL_SECTION_TITLE"] = "Жаңа мәмілелер үшін иірім";
+$MESS["CRM_REPEAT_SALE_SEGMENT_MANUAL_STAGE_TITLE"] = "Кезең";
+$MESS["CRM_REPEAT_SALE_SEGMENT_MANUAL_TEXTAREA_TITLE"] = "Менеджерге арналған CRM іс мәтіні";
+$MESS["CRM_REPEAT_SALE_SEGMENT_NAVIGATION_BUTTON_CANCEL"] = "Болдырмау";
+$MESS["CRM_REPEAT_SALE_SEGMENT_NAVIGATION_BUTTON_CLOSE"] = "Жабу";
+$MESS["CRM_REPEAT_SALE_SEGMENT_NAVIGATION_BUTTON_UPDATE"] = "Сақтау";
+$MESS["CRM_REPEAT_SALE_SEGMENT_PLACEHOLDER"] = "Менеджерге не істеу керектігін егжей-тегжейлі сипаттаңыз";
+$MESS["CRM_REPEAT_SALE_SEGMENT_PLACEHOLDER_WITH_COPILOT"] = "Менеджер не істеу керектігін егжей-тегжейлі сипаттаңыз немесе CoPilot іске қосу үшін бос орын батырмасын басыңыз";
+$MESS["CRM_REPEAT_SALE_SEGMENT_SAVE_ERROR"] = "Сценарийді сақтау мүмкін болмады. Қайталап көріңіз";
+$MESS["CRM_REPEAT_SALE_SEGMENT_TITLE"] = "Қайта сату сценарийін баптау";
+$MESS["CRM_REPEAT_SALE_SEGMENT_TITLE_READ_ONLY"] = "Қайта сату сценарийі";
+$MESS["CRM_REPEAT_SALE_SEGMENT_VALIDATE_ASSIGNMENT_USERS_ERROR"] = "Сценарийде кем дегенде бір жауапты адам болуы керек";
+$MESS["CRM_REPEAT_SALE_SEGMENT_VALIDATE_TEXT_ERROR"] = "Сценарийде &nbsp;CRM іс мәтіні толтырылуы керек";

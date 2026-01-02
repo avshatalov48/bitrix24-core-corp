@@ -42,7 +42,7 @@ if(!CCrmPerms::IsAuthorized())
 $action = isset($_REQUEST['ACTION']) ? $_REQUEST['ACTION'] : '';
 if (isset($_REQUEST['MODE']) && $_REQUEST['MODE'] === 'SEARCH')
 {
-	if($userPerms->HavePerm('INVOICE', BX_CRM_PERM_NONE, 'READ'))
+	if (!\Bitrix\Crm\Service\Container::getInstance()->getUserPermissions()->entityType()->canReadItems(CCrmOwnerType::Invoice))
 	{
 		return;
 	}
@@ -170,15 +170,14 @@ elseif ($action === 'SAVE_PROGRESS' && check_bitrix_sessid())
 		return;
 	}
 
-	$entityAttrs = $userPerms->GetEntityAttr($targetTypeName, array($ID));
-	if (!$userPerms->CheckEnityAccess($targetTypeName, 'WRITE', $entityAttrs[$ID]))
+	if (!\Bitrix\Crm\Service\Container::getInstance()->getUserPermissions()->item()->canUpdate(CCrmOwnerType::Invoice, $ID))
 	{
 		return;
 	}
 
 	if (empty($errMessage))
 	{
-		$CCrmInvoice = new CCrmInvoice(false);
+		$CCrmInvoice = new CCrmInvoice();
 		if (!$CCrmInvoice->SetStatus($ID, $statusID, $statusParams, array('SYNCHRONIZE_LIVE_FEED' => true)))
 		{
 			$errMessage = 'Status error!';

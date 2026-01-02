@@ -3,7 +3,7 @@
  */
 jn.define('im/messenger/controller/copilot-agreement', (require, exports, module) => {
 	const { Color, Component, Indent } = require('tokens');
-	const { Loc } = require('loc');
+	const { Loc } = require('im/messenger/loc');
 	const { Box } = require('ui-system/layout/box');
 	const { StatusBlock } = require('ui-system/blocks/status-block');
 	const { Button, ButtonSize, ButtonDesign } = require('ui-system/form/buttons');

@@ -9,6 +9,7 @@ jn.define('crm/stage-list', (require, exports, module) => {
 		MIN_STAGE_HEIGHT,
 		FIRST_TUNNEL_ADDITIONAL_HEIGHT,
 		TUNNEL_HEIGHT,
+		TUNNEL_MARGIN_TOP,
 	} = require('crm/stage-list/item');
 
 	/**
@@ -55,17 +56,16 @@ jn.define('crm/stage-list', (require, exports, module) => {
 
 		calculateHeight(stages)
 		{
-			const stagesHeight = stages.length * MIN_STAGE_HEIGHT + 5;
-			if (!this.showTunnels)
+			let height = MIN_STAGE_HEIGHT * stages.length;
+
+			if (this.showTunnels && this.tunnels.length > 0)
 			{
-				return stagesHeight;
+				height += this.tunnels.length * TUNNEL_HEIGHT;
+				height += FIRST_TUNNEL_ADDITIONAL_HEIGHT;
+				height -= TUNNEL_MARGIN_TOP;
 			}
 
-			const tunnelsHeight = this.tunnels.length > 0
-				? this.tunnels.length * TUNNEL_HEIGHT + FIRST_TUNNEL_ADDITIONAL_HEIGHT
-				: 0;
-
-			return stagesHeight + tunnelsHeight;
+			return height;
 		}
 
 		renderStageListItem(stage)

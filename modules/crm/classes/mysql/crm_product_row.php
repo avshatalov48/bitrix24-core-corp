@@ -1,6 +1,8 @@
 <?php
 
+use Bitrix\Crm\ProductRowTable;
 use Bitrix\Crm\Reservation\Compatibility\ProductRowReserves;
+use Bitrix\Crm\Reservation\Internals\ProductRowReservationTable;
 
 class CCrmProductRow extends CAllCrmProductRow
 {
@@ -15,26 +17,21 @@ class CCrmProductRow extends CAllCrmProductRow
 	static $originalRows = [];
 
 	// Contract -->
+
+	/**
+	 * @deprecated
+	 * @see ProductRowTable::deleteByItem
+	 *
+	 * @param string $ownerType Owner type id (deal, lead, etc.).
+	 * @param int $ownerID Owner id (entity identifier).
+	 * @return void
+	 */
 	public static function DeleteByOwner($ownerType, $ownerID)
 	{
-		$ownerType = (string)($ownerType);
-		$ownerID = (int)($ownerID);
-
-		global $DB;
-		$ownerType = $DB->ForSql($ownerType);
-
-		$tableName = self::TABLE_NAME;
-
-		$reservationTableName = \Bitrix\Crm\Reservation\Internals\ProductRowReservationTable::getTableName();
-		$DB->Query(
-			"DELETE FROM {$reservationTableName} WHERE ROW_ID IN (
-					SELECT ID FROM {$tableName} WHERE OWNER_TYPE = '{$ownerType}' AND OWNER_ID = {$ownerID}
-			)",
-			true
+		ProductRowTable::deleteByItem(
+			\CCrmOwnerType::ResolveID((string)$ownerType),
+			(int)$ownerID
 		);
-
-		$DB->Query(
-			"DELETE FROM {$tableName} WHERE OWNER_TYPE = '{$ownerType}' AND OWNER_ID = {$ownerID}");
 	}
 
 	public static function SaveRows($ownerType, $ownerID, $arRows, $accountContext = null, $checkPerms = true, $regEvent = true, $syncOwner = true, $totalInfo = array())
@@ -110,7 +107,7 @@ class CCrmProductRow extends CAllCrmProductRow
 			$scriptValues = implode(',', $deleteRows);
 			$DB->Query("DELETE FROM {$tableName} WHERE ID IN ({$scriptValues})");
 
-			$reservationTableName = \Bitrix\Crm\Reservation\Internals\ProductRowReservationTable::getTableName();
+			$reservationTableName = ProductRowReservationTable::getTableName();
 			$DB->Query(
 				"DELETE FROM {$reservationTableName} WHERE ROW_ID IN ({$scriptValues})",
 				true

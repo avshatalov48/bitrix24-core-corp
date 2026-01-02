@@ -1,4 +1,5 @@
 <?php
+
 namespace Bitrix\Sign\Blank\Block;
 
 use Bitrix\Main\Localization\Loc;
@@ -30,7 +31,7 @@ class Date extends Dummy
 	public static function getDefaultData(): array
 	{
 		return [
-			'text' => FormatDate('SHORT')
+			'text' => FormatDate('SHORT'),
 		];
 	}
 }

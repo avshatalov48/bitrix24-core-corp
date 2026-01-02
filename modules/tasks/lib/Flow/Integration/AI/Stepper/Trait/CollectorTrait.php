@@ -8,6 +8,7 @@ use Bitrix\Main\DI\ServiceLocator;
 use Bitrix\Tasks\Flow\Integration\AI\Control\CollectedDataService;
 use Bitrix\Tasks\Flow\Integration\AI\Control\Command\ReplaceCollectedDataCommand;
 use Bitrix\Tasks\Flow\Integration\AI\Provider\CollectedDataProvider;
+use Bitrix\Tasks\Flow\Integration\AI\Provider\CollectedDataStatus;
 use Bitrix\Tasks\Flow\Integration\AI\Result\CollectorResult;
 use Bitrix\Tasks\Flow\Integration\AI\Result\Node\Exception\CreateNodeException;
 use Bitrix\Tasks\Flow\Integration\AI\Result\Node\NodeFactory;
@@ -52,6 +53,7 @@ trait CollectorTrait
 			(new ReplaceCollectedDataCommand())
 				->setFlowId($this->getFlowId())
 				->setData($finalData)
+				->setStatus(CollectedDataStatus::COLLECTING)
 		;
 
 		/** @var CollectedDataService $collectedDataService */

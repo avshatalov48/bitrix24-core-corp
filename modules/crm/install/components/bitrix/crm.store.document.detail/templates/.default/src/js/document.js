@@ -1,8 +1,9 @@
-import { Dom, Event, Loc, Reflection, Tag, Text } from 'main.core';
+import { Dom, Event, Loc, Reflection, Tag, Text, Type } from 'main.core';
 import { BaseCard } from 'catalog.entity-card';
 import { EventEmitter } from 'main.core.events';
 import { Popup } from 'main.popup';
 import { Button, ButtonColor, ButtonState } from 'ui.buttons';
+import { Label, LabelOptions, LabelSize } from 'ui.label';
 import { DocumentOnboardingManager, OnboardingData } from './document.onboarding.manager';
 import { EnableWizardOpener, AnalyticsContextList } from 'catalog.store-enable-wizard';
 import { OneCPlanRestrictionSlider } from 'catalog.tool-availability-manager';
@@ -31,6 +32,12 @@ export class Document extends BaseCard
 		this.inventoryManagementFeatureCode = settings.inventoryManagementFeatureCode;
 		this.lockedCancellation = settings.isProductBatchMethodSelected;
 		this.isOnecMode = settings.isOnecMode;
+		this.insidePageTitleConfig = settings.insidePageTitleConfig || {};
+
+		if (Type.isPlainObject(this.insidePageTitleConfig))
+		{
+			this.appendInsidePageTitle(this.insidePageTitleConfig);
+		}
 
 		this.addCopyLinkPopup();
 
@@ -107,6 +114,49 @@ export class Document extends BaseCard
 
 		BX.UI.SidePanel.Wrapper.setParam('closeAfterSave', true);
 		this.showNotificationOnClose = false;
+	}
+
+	appendInsidePageTitle(config: Object): void
+	{
+		const toolbar = BX.UI?.ToolbarManager?.getDefaultToolbar();
+		const titleContainer = toolbar?.titleContainer.querySelector('.ui-toolbar-title-item-box');
+
+		if (!titleContainer)
+		{
+			return;
+		}
+
+		let pageLink = null;
+		if (config.enablePageLink)
+		{
+			pageLink = Tag.render`
+				<span id="${this.settings.copyLinkButtonId}" class="page-link-btn"></span>
+			`;
+		}
+		if (pageLink)
+		{
+			const buttonContainer = Tag.render`
+				<span id="pagetitle_btn_wrapper" class="pagetitile-button-container"></span>
+			`;
+			Dom.append(pageLink, buttonContainer);
+			Dom.append(buttonContainer, titleContainer);
+		}
+
+		if (config.enableStatusLabel)
+		{
+			const labelOptions: LabelOptions = {
+				text: config.statusLabel.text,
+				color: config.statusLabel.color,
+				size: LabelSize.LG,
+				link: '',
+				fill: true,
+				customClass: 'document-status-label',
+			};
+
+			const label = new Label(labelOptions);
+
+			Dom.append(label.render(), titleContainer);
+		}
 	}
 
 	#subscribeToProductRowSummaryEvents()
@@ -683,7 +733,7 @@ export class Document extends BaseCard
 		);
 		popup.show();
 
-		setTimeout(() => 
+		setTimeout(() =>
                      { popup.close();
 		}, 1500);
 	}

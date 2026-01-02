@@ -8,6 +8,7 @@ use Bitrix\HumanResources\Enum\LoggerEntityType;
 use Bitrix\HumanResources\Exception\CompanyStructureNotFoundException;
 use Bitrix\HumanResources\Exception\CreationFailedException;
 use Bitrix\HumanResources\Exception\ElementNotFoundException;
+use Bitrix\HumanResources\Item;
 use Bitrix\HumanResources\Item\Node;
 use Bitrix\HumanResources\Item\NodeMember;
 use Bitrix\HumanResources\Item\Structure;
@@ -116,6 +117,8 @@ class StructureBackwardConverter
 			}
 
 			$this->clearOldStructureCache();
+			Container::getCacheManager()->cleanDir('');
+
 		}
 		catch (ElementNotFoundException)
 		{
@@ -160,6 +163,9 @@ class StructureBackwardConverter
 				),
 			);
 			self::addDeputyHeadRole();
+			self::addTeamHeadRole();
+			self::addTeamDeputyHeadRole();
+			self::addTeamEmployeeRole();
 		}
 		catch (\Bitrix\Main\DB\SqlQueryException | CreationFailedException)
 		{}
@@ -373,6 +379,11 @@ class StructureBackwardConverter
 	{
 		$newStruct = StructureBackwardAdapter::getStructureWithoutEmployee();
 
+		if (!isset($newStruct['DATA']) || !is_iterable($newStruct['DATA']))
+		{
+			return;
+		}
+
 		foreach ($newStruct['DATA'] as $struct)
 		{
 			if (!isset($oldStruct[$struct['ID']]))
@@ -427,19 +438,19 @@ class StructureBackwardConverter
 	{
 		Container::getEventSenderService()->removeEventHandlers(
 			self::MODULE_NAME,
-			\Bitrix\HumanResources\Enum\EventName::NODE_ADDED->name,
+			\Bitrix\HumanResources\Enum\EventName::OnNodeAdded->name,
 		);
 		Container::getEventSenderService()->removeEventHandlers(
 			self::MODULE_NAME,
-			\Bitrix\HumanResources\Enum\EventName::NODE_UPDATED->name,
+			\Bitrix\HumanResources\Enum\EventName::OnNodeUpdated->name,
 		);
 		Container::getEventSenderService()->removeEventHandlers(
 			self::MODULE_NAME,
-			\Bitrix\HumanResources\Enum\EventName::MEMBER_ADDED->name,
+			\Bitrix\HumanResources\Enum\EventName::OnMemberAdded->name,
 		);
 		Container::getEventSenderService()->removeEventHandlers(
 			self::MODULE_NAME,
-			\Bitrix\HumanResources\Enum\EventName::MEMBER_DELETED->name,
+			\Bitrix\HumanResources\Enum\EventName::OnMemberDeleted->name,
 		);
 	}
 
@@ -448,7 +459,7 @@ class StructureBackwardConverter
 		$message = 'Failed to convert Structure';
 		if (!empty($reason))
 		{
-			$message .= ": ${reason}";
+			$message .= ": {$reason}";
 		}
 
 		$this->logger->write([
@@ -705,6 +716,8 @@ class StructureBackwardConverter
 			return "Bitrix\\HumanResources\\Compatibility\\Converter\\StructureBackwardConverter::moveEmployees($limit, $offset);";
 		}
 
+		Container::getCacheManager()->cleanDir('');
+
 		return '';
 	}
 
@@ -778,6 +791,82 @@ class StructureBackwardConverter
 				),
 			);
 		}
+	}
+
+	public static function installTeamRoles(): string
+	{
+		try
+		{
+			self::addTeamHeadRole();
+			self::addTeamDeputyHeadRole();
+			self::addTeamEmployeeRole();
+		}
+		catch (\Bitrix\Main\DB\SqlQueryException | CreationFailedException)
+		{
+			return 'Bitrix\HumanResources\Compatibility\Converter\StructureBackwardConverter::installTeamRoles();';
+		}
+
+		return '';
+	}
+
+	private static function addTeamHeadRole(): void
+	{
+		$roleRepository = Container::getRoleRepository();
+		$role = $roleRepository->findByXmlId(NodeMember::TEAM_ROLE_XML_ID['TEAM_HEAD']);
+		if ($role)
+		{
+			return;
+		}
+
+		$roleRepository->create(
+			new Item\Role(
+				name: 'TEAM_HEAD',
+				xmlId: Item\NodeMember::TEAM_ROLE_XML_ID['TEAM_HEAD'],
+				entityType: \Bitrix\HumanResources\Type\RoleEntityType::MEMBER,
+				childAffectionType: \Bitrix\HumanResources\Type\RoleChildAffectionType::NO_AFFECTION,
+				priority: 50,
+			),
+		);
+	}
+
+	private static function addTeamDeputyHeadRole(): void
+	{
+		$roleRepository = Container::getRoleRepository();
+		$role = $roleRepository->findByXmlId(NodeMember::TEAM_ROLE_XML_ID['TEAM_DEPUTY_HEAD']);
+		if ($role)
+		{
+			return;
+		}
+
+		$roleRepository->create(
+			new Item\Role(
+				name: 'TEAM_DEPUTY_HEAD',
+				xmlId: Item\NodeMember::TEAM_ROLE_XML_ID['TEAM_DEPUTY_HEAD'],
+				entityType: \Bitrix\HumanResources\Type\RoleEntityType::MEMBER,
+				childAffectionType: \Bitrix\HumanResources\Type\RoleChildAffectionType::NO_AFFECTION,
+				priority: 40,
+			),
+		);
+	}
+
+	private static function addTeamEmployeeRole(): void
+	{
+		$roleRepository = Container::getRoleRepository();
+		$role = $roleRepository->findByXmlId(NodeMember::TEAM_ROLE_XML_ID['TEAM_EMPLOYEE']);
+		if ($role)
+		{
+			return;
+		}
+
+		$roleRepository->create(
+			new Item\Role(
+				name: 'TEAM_EMPLOYEE',
+				xmlId: Item\NodeMember::TEAM_ROLE_XML_ID['TEAM_EMPLOYEE'],
+				entityType: \Bitrix\HumanResources\Type\RoleEntityType::MEMBER,
+				childAffectionType: \Bitrix\HumanResources\Type\RoleChildAffectionType::NO_AFFECTION,
+				priority: 0,
+			),
+		);
 	}
 
 	public function reSyncStructureTree(): void

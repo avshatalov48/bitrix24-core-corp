@@ -3,6 +3,7 @@
  */
 jn.define('calendar/statemanager/redux/slices/events/model', (require, exports, module) => {
 	const { Type } = require('type');
+	const { DateHelper } = require('calendar/date-helper');
 	const { EventAccessibility, EventImportance, EventMeetingStatus, CalendarType } = require('calendar/enums');
 
 	class Model
@@ -15,64 +16,64 @@ jn.define('calendar/statemanager/redux/slices/events/model', (require, exports, 
 		 */
 		static fromEventData(eventData, existingReduxEvent = null)
 		{
-			const preparedEvent = { ...existingReduxEvent };
-
-			preparedEvent.id = BX.prop.getNumber(eventData, 'ID', preparedEvent.id);
-			preparedEvent.parentId = BX.prop.getNumber(eventData, 'PARENT_ID', 0);
-			preparedEvent.isFullDay = BX.prop.getString(eventData, 'DT_SKIP_TIME', 'N') === 'Y';
-			preparedEvent.timezone = BX.prop.getString(eventData, 'TZ_FROM', null);
-			preparedEvent.timezoneOffset = BX.prop.getNumber(eventData, 'TZ_OFFSET_FROM', 0);
-			preparedEvent.sectionId = BX.prop.getNumber(eventData, 'SECTION_ID', 0);
-			preparedEvent.name = BX.prop.getString(eventData, 'NAME', '').replaceAll('\r\n', ' ');
-			preparedEvent.description = BX.prop.getString(eventData, 'DESCRIPTION', '');
-			preparedEvent.location = BX.prop.getString(eventData, 'LOCATION', '');
-			preparedEvent.color = BX.prop.getString(eventData, 'COLOR', '');
-			preparedEvent.eventType = BX.prop.getString(eventData, 'EVENT_TYPE', '');
-			preparedEvent.meetingStatus = BX.prop.getString(eventData, 'MEETING_STATUS', '');
-			preparedEvent.recurrenceRule = BX.prop.getObject(eventData, 'RRULE', null);
-			preparedEvent.recurrenceRuleDescription = BX.prop.getString(eventData, '~RRULE_DESCRIPTION', '');
-			preparedEvent.recurrenceId = BX.prop.getNumber(eventData, 'RECURRENCE_ID', 0);
-			preparedEvent.excludedDates = BX.prop.getString(eventData, 'EXDATE', '').split(';');
-			preparedEvent.eventLength = BX.prop.getNumber(eventData, 'DT_LENGTH', null) ?? BX.prop.getNumber(eventData, 'DURATION', 0);
-			preparedEvent.calType = BX.prop.getString(eventData, 'CAL_TYPE', '');
-			preparedEvent.attendees = BX.prop.getArray(eventData, 'ATTENDEE_LIST', []).map(({ id, status }) => ({ id, status }));
-			preparedEvent.reminders = BX.prop.getArray(eventData, 'REMIND', []);
-			preparedEvent.collabId = BX.prop.getNumber(eventData, 'COLLAB_ID', 0);
-			preparedEvent.ownerId = BX.prop.getNumber(eventData, 'OWNER_ID', 0);
-			preparedEvent.meetingHost = BX.prop.getNumber(eventData, 'MEETING_HOST', 0);
-			preparedEvent.accessibility = BX.prop.getString(eventData, 'ACCESSIBILITY', EventAccessibility.BUSY);
-			preparedEvent.importance = BX.prop.getString(eventData, 'IMPORTANCE', EventImportance.NORMAL);
-			preparedEvent.privateEvent = BX.prop.getNumber(eventData, 'PRIVATE_EVENT', 0);
+			const preparedEvent = {
+				...existingReduxEvent,
+				id: BX.prop.getNumber(eventData, 'ID', 0),
+				parentId: BX.prop.getNumber(eventData, 'PARENT_ID', 0),
+				dateFromFormatted: BX.prop.getString(eventData, 'DATE_FROM_FORMATTED', ''),
+				fullDay: BX.prop.getString(eventData, 'DT_SKIP_TIME', 'N') === 'Y',
+				timezone: BX.prop.getString(eventData, 'TZ_FROM', null),
+				timezoneOffset: BX.prop.getNumber(eventData, 'TZ_OFFSET_FROM', 0),
+				isDaylightSavingTimezone: BX.prop.getString(eventData, 'IS_DAYLIGHT_SAVING_TZ', ''),
+				sectionId: BX.prop.getNumber(eventData, 'SECTION_ID', 0),
+				name: BX.prop.getString(eventData, 'NAME', '').replaceAll('\r\n', ' '),
+				description: BX.prop.getString(eventData, 'DESCRIPTION', ''),
+				location: BX.prop.getString(eventData, 'LOCATION', ''),
+				color: BX.prop.getString(eventData, 'COLOR', ''),
+				eventType: BX.prop.getString(eventData, 'EVENT_TYPE', ''),
+				meetingStatus: BX.prop.getString(eventData, 'MEETING_STATUS', ''),
+				recurrenceRule: BX.prop.getObject(eventData, 'RRULE', null),
+				recurrenceRuleDescription: BX.prop.getString(eventData, '~RRULE_DESCRIPTION', ''),
+				recurrenceId: BX.prop.getNumber(eventData, 'RECURRENCE_ID', 0),
+				excludedDates: BX.prop.getString(eventData, 'EXDATE', '').split(';'),
+				eventLength: BX.prop.getNumber(eventData, 'DT_LENGTH', null) ?? BX.prop.getNumber(eventData, 'DURATION', 0),
+				calType: BX.prop.getString(eventData, 'CAL_TYPE', CalendarType.USER),
+				attendees: BX.prop.getArray(eventData, 'ATTENDEE_LIST', []).map(({ id, status }) => ({ id, status })),
+				reminders: BX.prop.getArray(eventData, 'REMIND', []),
+				collabId: BX.prop.getNumber(eventData, 'COLLAB_ID', 0),
+				ownerId: BX.prop.getNumber(eventData, 'OWNER_ID', 0),
+				meetingHost: BX.prop.getNumber(eventData, 'MEETING_HOST', 0),
+				accessibility: BX.prop.getString(eventData, 'ACCESSIBILITY', EventAccessibility.BUSY),
+				importance: BX.prop.getString(eventData, 'IMPORTANCE', EventImportance.NORMAL),
+				privateEvent: BX.prop.getNumber(eventData, 'PRIVATE_EVENT', 0),
+				permissions: BX.prop.getObject(eventData, 'permissions', null),
+				files: BX.prop.getArray(eventData, 'files', null),
+				entityRelation: BX.prop.getObject(eventData, 'entityRelation', null),
+			};
 
 			if (
-				existingReduxEvent?.permissions
-				&& Type.isObject(existingReduxEvent.permissions)
-				&& !Type.isUndefined(existingReduxEvent.permissions?.edit)
+				Type.isObject(existingReduxEvent?.permissions)
+				&& !Type.isUndefined(existingReduxEvent?.permissions?.edit)
 			)
 			{
-				preparedEvent.permissions = existingReduxEvent.permissions;
-			}
-			else
-			{
-				preparedEvent.permissions = eventData.permissions;
+				preparedEvent.permissions = existingReduxEvent?.permissions;
 			}
 
-			if (existingReduxEvent?.files && Type.isArrayFilled(existingReduxEvent.files))
+			if (Type.isArrayFilled(existingReduxEvent?.files))
 			{
-				preparedEvent.files = existingReduxEvent.files;
+				preparedEvent.files = existingReduxEvent?.files;
 			}
-			else
+
+			if (Type.isObject(existingReduxEvent?.entityRelation))
 			{
-				preparedEvent.files = eventData.files;
+				preparedEvent.entityRelation = existingReduxEvent?.entityRelation;
 			}
 
 			const meeting = BX.prop.getObject(eventData, 'MEETING', {});
 			preparedEvent.chatId = BX.prop.getNumber(meeting, 'CHAT_ID', 0);
 
-			preparedEvent.dateFromFormatted = BX.prop.getString(eventData, 'DATE_FROM_FORMATTED', '');
-
 			const dateFrom = preparedEvent.dateFromFormatted ? new Date(preparedEvent.dateFromFormatted) : new Date();
-			if (preparedEvent.isFullDay)
+			if (preparedEvent.fullDay)
 			{
 				preparedEvent.eventLength ||= 86400;
 				dateFrom.setHours(0, 0, 0, 0);
@@ -86,6 +87,10 @@ jn.define('calendar/statemanager/redux/slices/events/model', (require, exports, 
 
 			preparedEvent.dateFromTs = dateFrom.getTime();
 			preparedEvent.dateToTs = dateTo.getTime();
+			preparedEvent.longWithTime = preparedEvent.fullDay
+				? preparedEvent.eventLength > 86400
+				: DateHelper.getDayCode(dateFrom) !== DateHelper.getDayCode(dateTo)
+			;
 
 			return preparedEvent;
 		}
@@ -104,7 +109,8 @@ jn.define('calendar/statemanager/redux/slices/events/model', (require, exports, 
 				parentId: 0,
 				dateFromTs,
 				dateToTs: dateFromTs + hour,
-				isFullDay: false,
+				fullDay: false,
+				longWithTime: false,
 				timezone: null,
 				sectionId: 0,
 				name: '',
@@ -128,6 +134,7 @@ jn.define('calendar/statemanager/redux/slices/events/model', (require, exports, 
 				chatId: 0,
 				permissions: {},
 				files: [],
+				entityRelation: null,
 				hasUploadedFiles: false,
 			};
 		}

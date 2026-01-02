@@ -4,11 +4,14 @@ namespace Bitrix\Crm\Field;
 
 use Bitrix\Crm\Field;
 use Bitrix\Crm\Item;
+use Bitrix\Crm\ItemIdentifier;
 use Bitrix\Crm\PhaseSemantics;
 use Bitrix\Crm\Service\Container;
 use Bitrix\Crm\Service\Context;
 use Bitrix\Crm\Service\Factory;
+use Bitrix\Crm\Service\UserPermissions;
 use Bitrix\Main\Error;
+use Bitrix\Main\Localization\Loc;
 use Bitrix\Main\Result;
 
 class Stage extends Field
@@ -111,5 +114,47 @@ class Stage extends Field
 		}
 
 		return null;
+	}
+
+	public function processWithPermissions(Item $item, UserPermissions $userPermissions): Result
+	{
+		if (!$item->isNew())
+		{
+			$needCheckStage = true;
+
+			$newStageId = $item->getStageId();
+			$oldStageId = $item->remindActual(Item::FIELD_NAME_STAGE_ID);
+			if ($oldStageId === $newStageId)
+			{
+				$needCheckStage = false;
+			}
+
+			if ($needCheckStage && $item->isCategoriesSupported() && ($item->getCategoryId() !== $item->remindActual('CATEGORY_ID')))
+			{
+				$needCheckStage = false;
+			}
+
+			if ($needCheckStage && $oldStageId === null) // item already not exist
+			{
+				$result = new Result();
+				$result->addError(new Error(Loc::getMessage('CRM_TYPE_ITEM_NOT_FOUND')));
+
+				return $result;
+			}
+
+			if ($needCheckStage && !$userPermissions->item()->canChangeStage(
+				ItemIdentifier::createByItem($item),
+				$oldStageId,
+				$newStageId,
+			))
+			{
+				$result = new Result();
+				$result->addError(new Error(Loc::getMessage('CRM_PERMISSION_STAGE_TRANSITION_NOT_ALLOWED')));
+
+				return $result;
+			}
+		}
+
+		return parent::processWithPermissions($item, $userPermissions);
 	}
 }

@@ -13,7 +13,7 @@ if (empty($arResult["EMAIL_FORWARD_TO"]))
 ?>
 <div class="intranet-socnet-email" id="intranet-socnet-email">
 
-	<div class="intranet-socnet-email-intro"><?=Loc::getMessage("INTRANET_SOCNET_EMAIL_SETTINGS_DESC")?></div>
+	<div class="intranet-socnet-email-intro"><?=Loc::getMessage("INTRANET_SOCNET_EMAIL_SETTINGS_DESC_MSGVER_1")?></div>
 
 	<?
 	if (!empty($arResult["EMAIL_FORWARD_TO"]['BLOG_POST']))

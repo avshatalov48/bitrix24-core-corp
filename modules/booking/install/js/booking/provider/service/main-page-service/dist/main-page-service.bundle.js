@@ -2,14 +2,19 @@
 this.BX = this.BX || {};
 this.BX.Booking = this.BX.Booking || {};
 this.BX.Booking.Provider = this.BX.Booking.Provider || {};
-(function (exports,booking_core,booking_lib_resourcesDateCache,booking_lib_apiClient,booking_const,booking_provider_service_bookingService,booking_provider_service_clientService,booking_provider_service_resourcesService,booking_provider_service_resourcesTypeService) {
+(function (exports,booking_core,booking_lib_resourcesDateCache,booking_lib_apiClient,booking_const,booking_provider_service_bookingService,booking_provider_service_clientService,booking_provider_service_resourcesService,booking_provider_service_resourcesTypeService,booking_provider_service_waitListService) {
 	'use strict';
 
 	var _response = /*#__PURE__*/babelHelpers.classPrivateFieldLooseKey("response");
 	var _extractClients = /*#__PURE__*/babelHelpers.classPrivateFieldLooseKey("extractClients");
 	var _extractClientsFromBookings = /*#__PURE__*/babelHelpers.classPrivateFieldLooseKey("extractClientsFromBookings");
+	var _extractClientsFromWaitListItems = /*#__PURE__*/babelHelpers.classPrivateFieldLooseKey("extractClientsFromWaitListItems");
+	var _extractClientsFromItem = /*#__PURE__*/babelHelpers.classPrivateFieldLooseKey("extractClientsFromItem");
 	class MainPageDataExtractor {
 	  constructor(response) {
+	    Object.defineProperty(this, _extractClientsFromWaitListItems, {
+	      value: _extractClientsFromWaitListItems2
+	    });
 	    Object.defineProperty(this, _extractClientsFromBookings, {
 	      value: _extractClientsFromBookings2
 	    });
@@ -34,7 +39,7 @@ this.BX.Booking.Provider = this.BX.Booking.Provider || {};
 	    return babelHelpers.classPrivateFieldLooseBase(this, _response)[_response].clients.providerModuleId;
 	  }
 	  getClients() {
-	    return [...babelHelpers.classPrivateFieldLooseBase(this, _extractClients)[_extractClients](booking_const.CrmEntity.Contact), ...babelHelpers.classPrivateFieldLooseBase(this, _extractClients)[_extractClients](booking_const.CrmEntity.Company), ...babelHelpers.classPrivateFieldLooseBase(this, _extractClientsFromBookings)[_extractClientsFromBookings]()];
+	    return [...babelHelpers.classPrivateFieldLooseBase(this, _extractClients)[_extractClients](booking_const.CrmEntity.Contact), ...babelHelpers.classPrivateFieldLooseBase(this, _extractClients)[_extractClients](booking_const.CrmEntity.Company), ...babelHelpers.classPrivateFieldLooseBase(this, _extractClientsFromWaitListItems)[_extractClientsFromWaitListItems](), ...babelHelpers.classPrivateFieldLooseBase(this, _extractClientsFromBookings)[_extractClientsFromBookings]()];
 	  }
 	  getCounters() {
 	    return babelHelpers.classPrivateFieldLooseBase(this, _response)[_response].counters;
@@ -57,11 +62,19 @@ this.BX.Booking.Provider = this.BX.Booking.Provider || {};
 	      return booking_provider_service_resourcesTypeService.ResourceTypeMappers.mapDtoToModel(resourceTypeDto);
 	    });
 	  }
+	  getWaitListItems() {
+	    return babelHelpers.classPrivateFieldLooseBase(this, _response)[_response].waitListItems.map(waitListItemDto => {
+	      return booking_provider_service_waitListService.WaitListMappers.mapDtoToModel(waitListItemDto);
+	    });
+	  }
 	  getIntersectionMode() {
 	    return babelHelpers.classPrivateFieldLooseBase(this, _response)[_response].isIntersectionForAll;
 	  }
 	  getIsCurrentSenderAvailable() {
 	    return babelHelpers.classPrivateFieldLooseBase(this, _response)[_response].isCurrentSenderAvailable;
+	  }
+	  getFormsMenu() {
+	    return babelHelpers.classPrivateFieldLooseBase(this, _response)[_response].formsMenu;
 	  }
 	}
 	function _extractClients2(code) {
@@ -78,12 +91,21 @@ this.BX.Booking.Provider = this.BX.Booking.Provider || {};
 	  }));
 	}
 	function _extractClientsFromBookings2() {
-	  return babelHelpers.classPrivateFieldLooseBase(this, _response)[_response].bookings.flatMap(({
+	  return babelHelpers.classPrivateFieldLooseBase(MainPageDataExtractor, _extractClientsFromItem)[_extractClientsFromItem](babelHelpers.classPrivateFieldLooseBase(this, _response)[_response].bookings);
+	}
+	function _extractClientsFromWaitListItems2() {
+	  return babelHelpers.classPrivateFieldLooseBase(MainPageDataExtractor, _extractClientsFromItem)[_extractClientsFromItem](babelHelpers.classPrivateFieldLooseBase(this, _response)[_response].waitListItems);
+	}
+	function _extractClientsFromItem2(items) {
+	  return items.flatMap(({
 	    clients
 	  }) => clients.map(client => {
 	    return booking_provider_service_clientService.ClientMappers.mapDtoToModel(client);
 	  }));
 	}
+	Object.defineProperty(MainPageDataExtractor, _extractClientsFromItem, {
+	  value: _extractClientsFromItem2
+	});
 
 	var _response$1 = /*#__PURE__*/babelHelpers.classPrivateFieldLooseKey("response");
 	class CountersExtractor {
@@ -136,7 +158,7 @@ this.BX.Booking.Provider = this.BX.Booking.Provider || {};
 	  }
 	  async loadData(dateTs) {
 	    try {
-	      if (booking_core.Core.getStore().getters[`${booking_const.Model.Interface}/isEditingBookingMode`]) {
+	      if (booking_core.Core.getStore().getters[`${booking_const.Model.Interface}/editingBookingId`] > 0) {
 	        await babelHelpers.classPrivateFieldLooseBase(this, _requestDataForBooking)[_requestDataForBooking](dateTs);
 	      } else {
 	        await babelHelpers.classPrivateFieldLooseBase(this, _requestData)[_requestData](dateTs);
@@ -169,7 +191,7 @@ this.BX.Booking.Provider = this.BX.Booking.Provider || {};
 	  });
 	  const extractor = new MainPageDataExtractor(data);
 	  booking_lib_resourcesDateCache.resourcesDateCache.upsertIds(dateTs, extractor.getFavoriteIds());
-	  await Promise.all([booking_core.Core.getStore().dispatch(`${booking_const.Model.Favorites}/set`, extractor.getFavoriteIds()), booking_core.Core.getStore().dispatch(`${booking_const.Model.Interface}/setResourcesIds`, extractor.getFavoriteIds()), booking_core.Core.getStore().dispatch(`${booking_const.Model.Interface}/setIntersectionMode`, extractor.getIntersectionMode()), booking_core.Core.getStore().dispatch(`${booking_const.Model.Resources}/upsertMany`, extractor.getResources()), booking_core.Core.getStore().dispatch(`${booking_const.Model.ResourceTypes}/upsertMany`, extractor.getResourceTypes()), booking_core.Core.getStore().dispatch(`${booking_const.Model.Counters}/set`, extractor.getCounters()), booking_core.Core.getStore().dispatch(`${booking_const.Model.Bookings}/upsertMany`, extractor.getBookings()), booking_core.Core.getStore().dispatch(`${booking_const.Model.Clients}/upsertMany`, extractor.getClients()), booking_core.Core.getStore().dispatch(`${booking_const.Model.Clients}/setProviderModuleId`, extractor.getClientsProviderModuleId()), booking_core.Core.getStore().dispatch(`${booking_const.Model.Interface}/setIsCurrentSenderAvailable`, extractor.getIsCurrentSenderAvailable())]);
+	  await Promise.all([booking_core.Core.getStore().dispatch(`${booking_const.Model.Favorites}/set`, extractor.getFavoriteIds()), booking_core.Core.getStore().dispatch(`${booking_const.Model.Interface}/setResourcesIds`, extractor.getFavoriteIds()), booking_core.Core.getStore().dispatch(`${booking_const.Model.Interface}/setIntersectionMode`, extractor.getIntersectionMode()), booking_core.Core.getStore().dispatch(`${booking_const.Model.Resources}/upsertMany`, extractor.getResources()), booking_core.Core.getStore().dispatch(`${booking_const.Model.ResourceTypes}/upsertMany`, extractor.getResourceTypes()), booking_core.Core.getStore().dispatch(`${booking_const.Model.Counters}/set`, extractor.getCounters()), booking_core.Core.getStore().dispatch(`${booking_const.Model.Bookings}/upsertMany`, extractor.getBookings()), booking_core.Core.getStore().dispatch(`${booking_const.Model.WaitList}/upsertMany`, extractor.getWaitListItems()), booking_core.Core.getStore().dispatch(`${booking_const.Model.Clients}/upsertMany`, extractor.getClients()), booking_core.Core.getStore().dispatch(`${booking_const.Model.Clients}/setProviderModuleId`, extractor.getClientsProviderModuleId()), booking_core.Core.getStore().dispatch(`${booking_const.Model.Interface}/setIsCurrentSenderAvailable`, extractor.getIsCurrentSenderAvailable()), booking_core.Core.getStore().dispatch(`${booking_const.Model.FormsMenu}/setFormsMenu`, extractor.getFormsMenu())]);
 	}
 	async function _requestDataForBooking2(dateTs) {
 	  const bookingId = booking_core.Core.getParams().editingBookingId;
@@ -206,5 +228,5 @@ this.BX.Booking.Provider = this.BX.Booking.Provider || {};
 
 	exports.mainPageService = mainPageService;
 
-}((this.BX.Booking.Provider.Service = this.BX.Booking.Provider.Service || {}),BX.Booking,BX.Booking.Lib,BX.Booking.Lib,BX.Booking.Const,BX.Booking.Provider.Service,BX.Booking.Provider.Service,BX.Booking.Provider.Service,BX.Booking.Provider.Service));
+}((this.BX.Booking.Provider.Service = this.BX.Booking.Provider.Service || {}),BX.Booking,BX.Booking.Lib,BX.Booking.Lib,BX.Booking.Const,BX.Booking.Provider.Service,BX.Booking.Provider.Service,BX.Booking.Provider.Service,BX.Booking.Provider.Service,BX.Booking.Provider.Service));
 //# sourceMappingURL=main-page-service.bundle.js.map

@@ -128,7 +128,7 @@ class CCrmSipHelper
 				'COMPANY_TITLE' => static::getCompanyTitle($companyId) ?? '',
 				'POST' => $contactItem->getPost() ?? '',
 				'ASSIGNED_BY_ID' => $contactItem->getAssignedById() ?? 0,
-				'CAN_READ' => $userPermissions->checkReadPermissions(CCrmOwnerType::Contact, $entityId),
+				'CAN_READ' => $userPermissions->item()->canRead(CCrmOwnerType::Contact, $entityId),
 			];
 
 			if ($fields['CAN_READ'] && $enableExtendedMode)
@@ -163,7 +163,7 @@ class CCrmSipHelper
 				'TITLE' => $companyItem->getTitle() ?? '',
 				'LOGO' => $companyItem->get(Item\Company::FIELD_NAME_LOGO) ?? 0,
 				'ASSIGNED_BY_ID' => $companyItem->getAssignedById() ?? 0,
-				'CAN_READ' => $userPermissions->checkReadPermissions(CCrmOwnerType::Company, $entityId),
+				'CAN_READ' => $userPermissions->item()->canRead(CCrmOwnerType::Company, $entityId),
 			];
 
 			if ($fields['CAN_READ'] && $enableExtendedMode)
@@ -204,7 +204,7 @@ class CCrmSipHelper
 				'COMPANY_TITLE' => static::getCompanyTitle($companyId) ?? '',
 				'POST' => $leadItem->getPost() ?? '',
 				'ASSIGNED_BY_ID' => $leadItem->getAssignedById() ?? 0,
-				'CAN_READ' => $userPermissions->checkReadPermissions(CCrmOwnerType::Lead, $entityId),
+				'CAN_READ' => $userPermissions->item()->canRead(CCrmOwnerType::Lead, $entityId),
 				'IS_FINAL' => \Bitrix\Crm\PhaseSemantics::isFinal(CCrmLead::GetSemanticID($leadItem->get(Item\Lead::FIELD_NAME_STATUS_ID))),
 				'STATUS_TEXT' => static::getStatusText(\CCrmOwnerType::Lead, $leadItem->getIsReturnCustomer(), false),
 				'STATUS_COLOR' => static::getStatusColor(\CCrmOwnerType::Lead),

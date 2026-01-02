@@ -3,13 +3,12 @@
  */
 jn.define('im/messenger/lib/ui/base/item/item', (require, exports, module) => {
 	const { Type } = require('type');
-	const { Feature: MobileFeature } = require('feature');
 
 	const { Avatar: MessengerAvatarLegacy } = require('im/messenger/lib/ui/base/avatar');
 	const { ItemInfo } = require('im/messenger/lib/ui/base/item/item-info');
 	const { styles: itemStyles } = require('im/messenger/lib/ui/base/item/style');
 	const { withPressed } = require('utils/color');
-	const { ChatTitle } = require('im/messenger/lib/element');
+	const { ChatTitle } = require('im/messenger/lib/element/chat-title');
 	const { Logger } = require('im/messenger/lib/logger');
 	const { clone } = require('utils/object');
 
@@ -46,7 +45,7 @@ jn.define('im/messenger/lib/ui/base/item/item', (require, exports, module) => {
 		{
 			const style = this.getStyleBySize();
 			let avatar = null;
-			if (Type.isObject(this.props.data.avatar) && MobileFeature.isNativeAvatarSupported())
+			if (Type.isObject(this.props.data.avatar))
 			{
 				avatar = Avatar(this.props.data.avatar);
 			}
@@ -168,7 +167,7 @@ jn.define('im/messenger/lib/ui/base/item/item', (require, exports, module) => {
 						onFailure: (e) => Logger.error(e),
 					})
 					: null,
-				!!this.props.data.status && Image({
+				Type.isStringFilled(this.props.data.status) && Image({
 					style: {
 						width: 18,
 						height: 18,

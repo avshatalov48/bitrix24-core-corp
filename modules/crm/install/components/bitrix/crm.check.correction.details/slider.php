@@ -16,6 +16,11 @@ require($_SERVER['DOCUMENT_ROOT'].'/bitrix/header.php');
 
 $request = \Bitrix\Main\Application::getInstance()->getContext()->getRequest();
 
+if (\Bitrix\Main\Loader::includeModule('ui'))
+{
+	\Bitrix\UI\Toolbar\Facade\Toolbar::deleteFavoriteStar();
+}
+
 global $APPLICATION;
 
 $APPLICATION->IncludeComponent(
@@ -25,6 +30,7 @@ $APPLICATION->IncludeComponent(
 		'POPUP_COMPONENT_NAME' => 'bitrix:crm.check.correction.details',
 		'POPUP_COMPONENT_TEMPLATE_NAME' => '',
 		'POPUP_COMPONENT_PARAMS' => [],
+		'USE_UI_TOOLBAR' => 'Y',
 	]
 );
 

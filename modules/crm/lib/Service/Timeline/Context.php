@@ -83,7 +83,7 @@ class Context
 
 	public function canReadEntity(): bool
 	{
-		return $this->getUserPermissions()->checkReadPermissions($this->getEntityTypeId(), $this->getEntityId());
+		return $this->getUserPermissions()->item()->canReadItemIdentifier($this->getIdentifier());
 	}
 
 	final public function isClosedEntity(): bool

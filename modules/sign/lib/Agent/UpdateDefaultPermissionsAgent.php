@@ -8,7 +8,7 @@ use Bitrix\Sign\Access\Permission\SignPermissionDictionary;
 use Bitrix\Sign\Access\Service\RolePermissionService;
 use Bitrix\Sign\Debug\Logger;
 use Bitrix\Sign\Service\Container;
-use CCrmPerms;
+use Bitrix\Crm\Service\UserPermissions;
 
 final class UpdateDefaultPermissionsAgent
 {
@@ -19,6 +19,7 @@ final class UpdateDefaultPermissionsAgent
 		SignPermissionDictionary::SIGN_B2E_PROFILE_FIELDS_DELETE,
 		SignPermissionDictionary::SIGN_B2E_MY_SAFE_DOCUMENTS,
 		SignPermissionDictionary::SIGN_B2E_MY_SAFE,
+		SignPermissionDictionary::SIGN_B2E_MY_SAFE_FIRED,
 		SignPermissionDictionary::SIGN_B2E_TEMPLATES,
 	];
 	private const B2E_CRM_PERMISSION_IDS = [
@@ -40,6 +41,7 @@ final class UpdateDefaultPermissionsAgent
 		if ($rolePermissionService === null)
 		{
 			$logger->notice('RolePermissionService not found. Cant update default permissions');
+
 			return '';
 		}
 
@@ -47,6 +49,7 @@ final class UpdateDefaultPermissionsAgent
 		if (!$isDefaultRolesExists)
 		{
 			$logger->notice('Default roles doesnt exists');
+
 			return '';
 		}
 
@@ -54,6 +57,7 @@ final class UpdateDefaultPermissionsAgent
 		if (!$allPermissionsHasDefaultValues)
 		{
 			$logger->notice('All permissions has default values');
+
 			return '';
 		}
 
@@ -74,7 +78,7 @@ final class UpdateDefaultPermissionsAgent
 		$flatAccessRightsFromAllRoles = $rolePermissionService->getFlatAccessRightsFromAllRoles();
 
 		$permissionIds = [...self::B2E_CRM_PERMISSION_IDS, ...self::B2E_SIGN_PERMISSION_IDS];
-		$previousDefaultPermissionValues = [\CCrmPerms::PERM_NONE, '0'];
+		$previousDefaultPermissionValues = [\Bitrix\Crm\Service\UserPermissions::PERMISSION_NONE, '0'];
 		foreach ($flatAccessRightsFromAllRoles as $accessRight)
 		{
 			$permissionId = $accessRight['id'];
@@ -147,19 +151,19 @@ final class UpdateDefaultPermissionsAgent
 			$employeeAccessRights = [
 				[
 					'id' => PermissionDictionary::SIGN_CRM_SMART_B2E_DOC_ADD,
-					'value' => CCrmPerms::PERM_SELF,
+					'value' => UserPermissions::PERMISSION_SELF,
 				],
 				[
 					'id' => PermissionDictionary::SIGN_CRM_SMART_B2E_DOC_READ,
-					'value' => CCrmPerms::PERM_SELF,
+					'value' => UserPermissions::PERMISSION_SELF,
 				],
 				[
 					'id' => PermissionDictionary::SIGN_CRM_SMART_B2E_DOC_WRITE,
-					'value' => CCrmPerms::PERM_SELF,
+					'value' => UserPermissions::PERMISSION_SELF,
 				],
 				[
 					'id' => PermissionDictionary::SIGN_CRM_SMART_B2E_DOC_DELETE,
-					'value' => CCrmPerms::PERM_SELF,
+					'value' => UserPermissions::PERMISSION_SELF,
 				],
 				[
 					'id' => SignPermissionDictionary::SIGN_B2E_MY_SAFE,
@@ -167,11 +171,15 @@ final class UpdateDefaultPermissionsAgent
 				],
 				[
 					'id' => SignPermissionDictionary::SIGN_B2E_MY_SAFE_DOCUMENTS,
-					'value' => CCrmPerms::PERM_SELF,
+					'value' => UserPermissions::PERMISSION_SELF,
+				],
+				[
+					'id' => SignPermissionDictionary::SIGN_B2E_MY_SAFE_FIRED,
+					'value' => UserPermissions::PERMISSION_NONE,
 				],
 				[
 					'id' => SignPermissionDictionary::SIGN_B2E_TEMPLATES,
-					'value' => CCrmPerms::PERM_SELF,
+					'value' => UserPermissions::PERMISSION_SELF,
 				],
 			];
 			$existedChiefPermissions = $settings[$employeeRoleId];
@@ -198,19 +206,19 @@ final class UpdateDefaultPermissionsAgent
 			$chiefAccessRights = [
 				[
 					'id' => PermissionDictionary::SIGN_CRM_SMART_B2E_DOC_ADD,
-					'value' => CCrmPerms::PERM_SUBDEPARTMENT,
+					'value' => UserPermissions::PERMISSION_SUBDEPARTMENT,
 				],
 				[
 					'id' => PermissionDictionary::SIGN_CRM_SMART_B2E_DOC_READ,
-					'value' => CCrmPerms::PERM_SUBDEPARTMENT,
+					'value' => UserPermissions::PERMISSION_SUBDEPARTMENT,
 				],
 				[
 					'id' => PermissionDictionary::SIGN_CRM_SMART_B2E_DOC_WRITE,
-					'value' => CCrmPerms::PERM_SUBDEPARTMENT,
+					'value' => UserPermissions::PERMISSION_SUBDEPARTMENT,
 				],
 				[
 					'id' => PermissionDictionary::SIGN_CRM_SMART_B2E_DOC_DELETE,
-					'value' => CCrmPerms::PERM_SUBDEPARTMENT,
+					'value' => UserPermissions::PERMISSION_SUBDEPARTMENT,
 				],
 				[
 					'id' => SignPermissionDictionary::SIGN_B2E_MY_SAFE,
@@ -218,11 +226,15 @@ final class UpdateDefaultPermissionsAgent
 				],
 				[
 					'id' => SignPermissionDictionary::SIGN_B2E_MY_SAFE_DOCUMENTS,
-					'value' => CCrmPerms::PERM_SUBDEPARTMENT,
+					'value' => UserPermissions::PERMISSION_SUBDEPARTMENT,
+				],
+				[
+					'id' => SignPermissionDictionary::SIGN_B2E_MY_SAFE_FIRED,
+					'value' => UserPermissions::PERMISSION_NONE,
 				],
 				[
 					'id' => SignPermissionDictionary::SIGN_B2E_TEMPLATES,
-					'value' => CCrmPerms::PERM_SUBDEPARTMENT,
+					'value' => UserPermissions::PERMISSION_SUBDEPARTMENT,
 				],
 			];
 

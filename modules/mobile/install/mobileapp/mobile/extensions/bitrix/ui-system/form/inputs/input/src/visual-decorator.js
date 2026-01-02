@@ -6,6 +6,7 @@ jn.define('ui-system/form/inputs/input/src/visual-decorator', (require, exports,
 	const { isNil } = require('utils/type');
 	const { isEmpty, isEqual } = require('utils/object');
 	const { refSubstitution, debounce } = require('utils/function');
+	const { PropTypes } = require('utils/validation');
 	const { PureComponent } = require('layout/pure-component');
 
 	/**
@@ -171,8 +172,8 @@ jn.define('ui-system/form/inputs/input/src/visual-decorator', (require, exports,
 		handleOnChange = (value) => {
 			const { onChange } = this.props;
 			const valid = this.isValidValue({
+				value,
 				focus: this.#isFocused(),
-				value: this.getValue(),
 			});
 
 			this.updateState(

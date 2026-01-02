@@ -31,6 +31,7 @@ class TranscriptionOverview extends AITask
 					"is_exception_meeting": "bool",
 					"explanation": "string or null"
 				},
+				"detailed_takeaways": "long string or null",
 				"agreements": [
 					{
 						"agreement": "string or null",
@@ -40,6 +41,12 @@ class TranscriptionOverview extends AITask
 				"tasks": [
 					{
 						"task": "string or null",
+						"quote": "string or null"
+					}
+				],
+				"action_items": [
+					{
+						"action_item": "string or null",
 						"quote": "string or null"
 					}
 				],
@@ -166,6 +173,11 @@ class TranscriptionOverview extends AITask
 		return SenseType::OVERVIEW->value;
 	}
 
+	public function allowNotifyTaskFailed(): bool
+	{
+		return true;
+	}
+
 	public static function getAIPromptFields(): array
 	{
 		static $fields;
@@ -192,7 +204,7 @@ class TranscriptionOverview extends AITask
 				{
 					$findFieldToConvert($field);
 				}
-				elseif (is_string($field) && $field == 'string or null')
+				elseif (is_string($field) && str_contains($field, 'string or null'))
 				{
 					$fieldsConvert[$code] = true;
 				}
@@ -246,7 +258,7 @@ class TranscriptionOverview extends AITask
 		if (
 			($chatId = $call?->getChatId())
 			&& ($chat = Chat::getInstance($chatId))
-			&& $chat->getEntityType() == Chat\Type::Calendar->value
+			&& $chat->getEntityType() == Chat\ExtendedType::Calendar->value
 			&& Loader::includeModule('calendar')
 			&& ($entryId = $chat->getEntityId())
 			&& ($event = \Bitrix\Calendar\Internals\EventTable::getById($entryId)?->fetchObject())

@@ -8,7 +8,12 @@ jn.define('statemanager/redux/slices/tariff-plan-restrictions/tools', (require, 
 	const { fetch } = require('statemanager/redux/slices/tariff-plan-restrictions/thunk');
 
 	const loadTariffPlanRestrictions = (isForceLoad = false) => {
-		return (!isForceLoad && selectIsLoaded(store.getState()) ? Promise.resolve() : dispatch(fetch()));
+		if (!isForceLoad && selectIsLoaded(store.getState()))
+		{
+			return Promise.resolve();
+		}
+
+		return dispatch(fetch());
 	};
 
 	module.exports = { loadTariffPlanRestrictions };

@@ -60,6 +60,7 @@ return [
 		'stafftrack:analytics',
 		'stafftrack:ui',
 		'stafftrack:entry',
+		'stafftrack:app-rating-client',
 	],
 	'bundle' => [
 		'./src/pages/check-in',

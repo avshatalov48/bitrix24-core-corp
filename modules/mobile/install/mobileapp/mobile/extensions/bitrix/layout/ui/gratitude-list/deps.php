@@ -1,0 +1,42 @@
+<?php
+
+return [
+	'extensions' => [
+		'loc',
+		'utils/enums/base',
+		'layout/ui/stateful-list',
+		'ui-system/blocks/status-block',
+		'asset-manager',
+		'tokens',
+		'layout/ui/simple-list/items',
+		'layout/ui/simple-list/items/base',
+		'assets/gratitude-icons',
+		'ui-system/typography/text',
+		'ui-system/blocks/avatar',
+		'statemanager/redux/slices/users/thunk',
+		'statemanager/redux/store',
+		'statemanager/redux/connect',
+		'statemanager/redux/slices/users',
+		'in-app-url',
+		'layout/pure-component',
+		'statemanager/redux/slices/gratitude',
+		'assets/icons',
+		'layout/ui/friendly-date/formatter-factory',
+		'utils/date',
+		'layout/ui/friendly-date/human-date-formatter',
+		'utils/test',
+		'type',
+		'module',
+		'ui-system/layout/card',
+		'utils/validation',
+	],
+	'bundle' => [
+		'./src/list',
+		'./src/item',
+		'./src/factory',
+		'./src/gratitude',
+	],
+	'components' => [
+		'livefeed.postform',
+	],
+];

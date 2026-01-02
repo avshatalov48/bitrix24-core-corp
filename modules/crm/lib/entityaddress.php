@@ -118,6 +118,11 @@ class EntityAddress
 		return AddressTable::getList($params);
 	}
 
+	public function getCount($filter): int
+	{
+		return AddressTable::getCount($filter);
+	}
+
 	/** @deprecated Use method of EntityAddressType */
 	public static function isDefined($typeID)
 	{

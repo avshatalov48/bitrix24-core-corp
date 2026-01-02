@@ -1509,6 +1509,12 @@ abstract class EntityMerger
 		{
 			return false;
 		}
+
+		if ($fieldID === Crm\Item::FIELD_NAME_LAST_ACTIVITY_TIME || $fieldID === Crm\Item::FIELD_NAME_LAST_ACTIVITY_BY)
+		{
+			return false;
+		}
+
 		return true;
 	}
 
@@ -1612,7 +1618,12 @@ abstract class EntityMerger
 		{
 			return new Crm\Merger\ConflictResolver\StringField($fieldId);
 		}
-		return new ConflictResolver\Base($fieldId);
+
+		return match ($fieldId)
+		{
+			Crm\Item::FIELD_NAME_LAST_ACTIVITY_TIME, Crm\Item::FIELD_NAME_LAST_ACTIVITY_BY => new Crm\Merger\ConflictResolver\IgnoredField($fieldId),
+			default => new ConflictResolver\Base($fieldId),
+		};
 	}
 
 	protected static function getUserDefinedConflictResolver(int $entityTypeId, string $fieldId, string $type)

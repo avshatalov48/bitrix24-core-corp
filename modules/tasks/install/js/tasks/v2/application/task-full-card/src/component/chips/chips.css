@@ -1,0 +1,7 @@
+.tasks-full-card-chips {
+	display: flex;
+	flex-wrap: wrap;
+	align-content: start;
+	gap: 10px;
+	padding-top: 6px;
+}

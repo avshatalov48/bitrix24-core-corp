@@ -2,8 +2,15 @@
 
 namespace Bitrix\Disk;
 
+use Bitrix\Main\Loader;
 use Bitrix\Main\Localization\Loc;
 use CBPArgumentNullException;
+
+if (!Loader::includeModule('bizproc'))
+{
+	return;
+}
+
 
 class BizProcDocumentCompatible extends BizProcDocument
 {

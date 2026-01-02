@@ -37,6 +37,7 @@ Extension::load([
 	'biconnector.dashboard-parameters-selector',
 	'ui.forms',
 	'ui.hint',
+	'ui.notification',
 ]);
 
 Toolbar::deleteFavoriteStar();

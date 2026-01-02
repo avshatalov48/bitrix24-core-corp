@@ -5,6 +5,7 @@ import { FlowCopilotAdvice } from './spot/flow-copilot-advice';
 import { Spot } from './spot/spot';
 import { MyTasks } from './spot/my-tasks';
 import { TaskStart } from './spot/task-start';
+import { CommentCounter } from './spot/comment-counter';
 
 type Params = {
 	id: number,
@@ -18,6 +19,7 @@ export class Clue
 		MY_TASKS: new MyTasks(),
 		TASK_START: new TaskStart(),
 		FLOW_COPILOT_ADVICE: new FlowCopilotAdvice(),
+		COMMENT_COUNTER: new CommentCounter(),
 	});
 
 	#params: Params;

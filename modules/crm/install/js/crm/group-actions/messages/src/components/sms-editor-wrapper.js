@@ -73,7 +73,9 @@ export const SmsEditorWrapper = {
 
 			const templateId = this.templateParam.ID;
 
-			EventEmitter.emit('BX.Crm.SmsEditorWrapper:click', { text, templateId });
+			const originalTemplateId = this.templateParam.ORIGINAL_ID;
+
+			EventEmitter.emit('BX.Crm.SmsEditorWrapperOnSend:click', { text, templateId, originalTemplateId });
 		},
 	},
 	mounted()

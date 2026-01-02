@@ -254,6 +254,7 @@ class TimemanScheduleComponent extends \Bitrix\Timeman\Component\BaseComponent
 				['zones' => ['en'], 'id' => '130', 'lang' => 'en', 'sec' => 'ou6ezy'],
 			],
 			'PRESETS' => [],
+			'VIEW_TARGET' => false,
 		];
 
 		$this->arResult['weekDays'][1] = Loc::getMessage('TIMEMAN_SCHEDULE_EDIT_MON');

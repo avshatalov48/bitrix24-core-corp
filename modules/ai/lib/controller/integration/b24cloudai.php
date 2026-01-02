@@ -78,9 +78,8 @@ class B24CloudAi extends Controller
 	/**
 	 * Test action for Queue.
 	 * @param JsonPayload $payload Payload.
-	 * @return array
+	 * @return array{payload: array, time: int}
 	 */
-	#[ArrayShape(['payload' => 'array', 'time' => 'int'])]
 	public function testEchoAction(JsonPayload $payload): array
 	{
 		return [

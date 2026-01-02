@@ -245,13 +245,6 @@ if ($componentPage === 'index')
 {
 	$componentPage = 'list';
 }
-elseif ($componentPage === 'activity')
-{
-	$arResult['KANBAN_VIEW_MODE'] = \Bitrix\Crm\Kanban\ViewMode::MODE_ACTIVITIES;
-	$arResult['PATH_TO_LEAD_KANBAN'] = $arResult['PATH_TO_LEAD_ACTIVITY'];
-
-	$componentPage = 'kanban';
-}
 
 if (isset($_GET['id']))
 {
@@ -311,6 +304,14 @@ elseif ($componentPage === 'list')
 elseif ($componentPage === 'calendar')
 {
 	$router->checkAndUpdateCurrentListView($router::LIST_VIEW_CALENDAR, \CCrmOwnerType::Lead);
+}
+elseif ($componentPage === 'activity')
+{
+	$arResult['KANBAN_VIEW_MODE'] = \Bitrix\Crm\Kanban\ViewMode::MODE_ACTIVITIES;
+	$arResult['PATH_TO_LEAD_KANBAN'] = $arResult['PATH_TO_LEAD_ACTIVITY'];
+	$componentPage = 'kanban';
+
+	$router->checkAndUpdateCurrentListView($router::LIST_VIEW_ACTIVITY, \CCrmOwnerType::Lead);
 }
 
 $this->IncludeComponentTemplate($componentPage);

@@ -21,6 +21,16 @@ class ProductProperty
 			return;
 		}
 
+		$params = $event->getParameters();
+		$result = &$params[1];
+		$languageId = $params[2];
+
+		$eventTableName = $params[3];
+		if (!empty($eventTableName) && $eventTableName !== 'crm_product_property')
+		{
+			return;
+		}
+
 		$crmCatalogIblockId = \Bitrix\Crm\Product\Catalog::getDefaultId();
 		$crmCatalogIblockOfferId = \Bitrix\Crm\Product\Catalog::getDefaultOfferId();
 		if (!$crmCatalogIblockId)
@@ -28,9 +38,6 @@ class ProductProperty
 			return;
 		}
 
-		$params = $event->getParameters();
-		$result = &$params[1];
-		$languageId = $params[2];
 		$result['crm_product_property'] = [
 			'TABLE_NAME' => 'b_iblock_property',
 			'TABLE_ALIAS' => 'IP',

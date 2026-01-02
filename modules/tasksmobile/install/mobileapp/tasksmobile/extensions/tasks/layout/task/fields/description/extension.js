@@ -6,6 +6,7 @@ jn.define('tasks/layout/task/fields/description', (require, exports, module) => 
 	const { inAppUrl } = require('in-app-url');
 	const { ReadOnlyElementType } = require('layout/ui/fields/string');
 	const { TextAreaField } = require('layout/ui/fields/textarea');
+	const { copyToClipboard } = require('utils/copy');
 
 	class Description extends LayoutComponent
 	{
@@ -94,11 +95,6 @@ jn.define('tasks/layout/task/fields/description', (require, exports, module) => 
 			return View(
 				{
 					style: (this.props.style || {}),
-					onLongClick: (
-						this.state.readOnly && Application.getPlatform() === 'android' && Application.getApiVersion() < 51
-							? () => this.copyDescription()
-							: () => {}
-					),
 				},
 				TextAreaField({
 					readOnly: this.state.readOnly,
@@ -170,12 +166,7 @@ jn.define('tasks/layout/task/fields/description', (require, exports, module) => 
 
 		copyDescription()
 		{
-			Notify.showMessage(
-				'',
-				Loc.getMessage('TASKSMOBILE_LAYOUT_TASK_FIELDS_DESCRIPTION_COPIED'),
-				{ time: 1 },
-			);
-			Application.copyToClipboard(this.state.description);
+			copyToClipboard(this.state.description, Loc.getMessage('TASKSMOBILE_LAYOUT_TASK_FIELDS_DESCRIPTION_COPIED'));
 		}
 	}
 

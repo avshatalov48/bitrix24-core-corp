@@ -82,7 +82,7 @@ class PermissionModel implements \JsonSerializable
 		$fieldValue = $form['stageCode'] ?? null;
 
 		$attr = $form['value'] ?? null;
-		$settings = $form['settings'] ?? [];
+		$settings = $form['settings'] ?? null;
 
 		return new self($entity, $permissionCode, $field, $fieldValue, $attr, $settings);
 	}

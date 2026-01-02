@@ -128,8 +128,16 @@ export default class DatetimeConverter
 		return DateTimeFormat.getFormat('FORMAT_DATE');
 	}
 
-	static getSiteDateTimeFormat(): string
+	static getSiteShortTimeFormat(): string
 	{
-		return DateTimeFormat.getFormat('FORMAT_DATETIME');
+		return DateTimeFormat.getFormat('SHORT_TIME_FORMAT');
+	}
+
+	static getSiteDateTimeFormat(useShortTime: boolean = false): string
+	{
+		return useShortTime
+			? `${DatetimeConverter.getSiteDateFormat()} ${DatetimeConverter.getSiteShortTimeFormat()}`
+			: DateTimeFormat.getFormat('FORMAT_DATETIME')
+		;
 	}
 }

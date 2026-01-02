@@ -1,0 +1,23 @@
+<?php
+$MESS["CRM_COULD_NOT_DELETE_PRODUCT_ROWS_EXIST_EXT"] = "#NAME#' ##ID# жою мүмкін емес: бұл тауар мәмілелерде, лидтерде, ұсыныстарда немесе шоттарда бар.";
+$MESS["CRM_PRODUCT_FIELD_ACTIVE"] = "Белсенді";
+$MESS["CRM_PRODUCT_FIELD_CATALOG_ID"] = "Каталог";
+$MESS["CRM_PRODUCT_FIELD_CREATED_BY"] = "Кім жасады";
+$MESS["CRM_PRODUCT_FIELD_CURRENCY_ID"] = "Валюта";
+$MESS["CRM_PRODUCT_FIELD_DATE_CREATE"] = "Жасалған күні";
+$MESS["CRM_PRODUCT_FIELD_DESCRIPTION"] = "Сипаттама";
+$MESS["CRM_PRODUCT_FIELD_DESCRIPTION_TYPE"] = "Сипаттама түрі";
+$MESS["CRM_PRODUCT_FIELD_DETAIL_PICTURE"] = "Егжей-тегжейлі кескін";
+$MESS["CRM_PRODUCT_FIELD_ID"] = "ID";
+$MESS["CRM_PRODUCT_FIELD_MEASURE"] = "Өлшем бірлігі";
+$MESS["CRM_PRODUCT_FIELD_MODIFIED_BY"] = "Кім өзгерткен";
+$MESS["CRM_PRODUCT_FIELD_NAME"] = "Атауы";
+$MESS["CRM_PRODUCT_FIELD_ORIGIN_ID"] = "Деректер көзіндегі элемент идентификаторы";
+$MESS["CRM_PRODUCT_FIELD_PREVIEW_PICTURE"] = "Аңдатпаға арналған кескін";
+$MESS["CRM_PRODUCT_FIELD_PRICE"] = "Бағасы";
+$MESS["CRM_PRODUCT_FIELD_SECTION_ID"] = "Бөлім";
+$MESS["CRM_PRODUCT_FIELD_SORT"] = "Сұрыптау";
+$MESS["CRM_PRODUCT_FIELD_TIMESTAMP_X"] = "Өзгерту күні";
+$MESS["CRM_PRODUCT_FIELD_VAT_ID"] = "ҚҚС мөлшерлемесі";
+$MESS["CRM_PRODUCT_FIELD_VAT_INCLUDED"] = "ҚҚС бағаға кіреді";
+$MESS["CRM_PRODUCT_FIELD_XML_ID"] = "Сыртқы код";

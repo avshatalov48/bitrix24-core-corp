@@ -2,6 +2,7 @@
 
 namespace Bitrix\Crm\Component\EntityDetails\TimelineMenuBar;
 
+use Bitrix\Crm\Component\EntityDetails\TimelineMenuBar\Item\Booking;
 use Bitrix\Crm\Component\EntityDetails\TimelineMenuBar\Item\Call;
 use Bitrix\Crm\Component\EntityDetails\TimelineMenuBar\Item\Comment;
 use Bitrix\Crm\Component\EntityDetails\TimelineMenuBar\Item\Delivery;
@@ -51,6 +52,7 @@ final class Repository
 		$items = [
 			new ToDo($context),
 			new Comment($context),
+			new Booking($context),
 			new Task($context),
 			new Sharing($context),
 		];

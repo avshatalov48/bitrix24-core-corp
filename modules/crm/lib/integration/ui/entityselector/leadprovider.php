@@ -19,6 +19,25 @@ class LeadProvider extends EntityProvider
 		$this->setEmailOnlyMode($options['onlyWithEmail'] ?? false);
 	}
 
+	public function getRecentItemIds(string $context): array
+	{
+		if ($this->notLinkedOnly)
+		{
+			$ids = $this->getNotLinkedEntityIds();
+		}
+		else
+		{
+			$ids = parent::getRecentItemIds($context);
+		}
+
+		return $ids;
+	}
+
+	protected function getTabIcon(): string
+	{
+		return 'o-lead';
+	}
+
 	protected function getEntityTypeId(): int
 	{
 		return CCrmOwnerType::Lead;
@@ -27,6 +46,11 @@ class LeadProvider extends EntityProvider
 	protected function getAdditionalFilter(): array
 	{
 		$filter = [];
+
+		if ($this->notLinkedOnly)
+		{
+			$filter = $this->getNotLinkedFilter();
+		}
 
 		return array_merge($filter, $this->getEmailFilters());
 	}

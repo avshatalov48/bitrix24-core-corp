@@ -11,6 +11,9 @@ class Requisite extends BaseRequisite
 	protected $nameData;
 	protected $rawNameValues = [];
 
+	private ?int $signatureId = null;
+	private ?int $stampId = null;
+
 	/**
 	 * Returns list of value names for this Provider.
 	 *
@@ -36,8 +39,10 @@ class Requisite extends BaseRequisite
 			$this->fields['RQ_LAST_NAME']['VALUE'] = [$this, 'getNameValue'];
 
 			$this->fields['RQ_SIGNATURE']['TYPE'] = static::FIELD_TYPE_STAMP;
+			$this->fields['RQ_SIGNATURE']['VALUE'] = [$this, 'getSignature'];
 
 			$this->fields['RQ_STAMP']['TYPE'] = static::FIELD_TYPE_STAMP;
+			$this->fields['RQ_STAMP']['VALUE'] = [$this, 'getStamp'];
 
 			$this->fields['RQ_PHONE']['TYPE'] = 'PHONE';
 
@@ -107,6 +112,18 @@ class Requisite extends BaseRequisite
 					$this->data['RQ_SECOND_NAME'],
 					$this->data['RQ_LAST_NAME']
 				);
+
+				if (isset($this->data['RQ_SIGNATURE']) && $this->data['RQ_SIGNATURE'] > 0)
+				{
+					$this->signatureId = (int)$this->data['RQ_SIGNATURE'];
+				}
+				unset($this->data['RQ_SIGNATURE']);
+
+				if (isset($this->data['RQ_STAMP']) && $this->data['RQ_STAMP'] > 0)
+				{
+					$this->stampId = (int)$this->data['RQ_STAMP'];
+				}
+				unset($this->data['RQ_STAMP']);
 
 				foreach($this->getSmartNameFields() as $placeholder)
 				{
@@ -258,5 +275,25 @@ class Requisite extends BaseRequisite
 	public function getRawNameValue(string $placeholder): ?string
 	{
 		return $this->rawNameValues[$placeholder] ?? null;
+	}
+
+	public function getSignature(): ?string
+	{
+		if ($this->signatureId > 0)
+		{
+			return \CFile::GetPath($this->signatureId);
+		}
+
+		return null;
+	}
+
+	public function getStamp(): ?string
+	{
+		if ($this->stampId > 0)
+		{
+			return \CFile::GetPath($this->stampId);
+		}
+
+		return null;
 	}
 }

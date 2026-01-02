@@ -73,7 +73,7 @@ jn.define('ui-system/popups/color-picker', (require, exports, module) => {
 				.setNavigationBarColor(Color.bgContentPrimary.toHex())
 				.disableContentSwipe()
 				.disableHorizontalSwipe()
-				.setMediumPositionPercent(70)
+				.setMediumPositionPercent(75)
 				.setTitleParams({
 					text: props.title,
 					type: 'dialog',

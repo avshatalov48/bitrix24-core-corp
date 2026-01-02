@@ -35,13 +35,13 @@ enum Visibility: string implements IntModelValue
 		};
 	}
 
-	public static function fromString(string $visibility): ?self
+	public function isVisible(): bool
 	{
-		return match ($visibility)
-		{
-			self::VISIBLE->value => self::VISIBLE,
-			self::INVISIBLE->value => self::INVISIBLE,
-			default => null,
-		};
+		return $this === self::VISIBLE;
+	}
+
+	public function isInvisible(): bool
+	{
+		return $this === self::INVISIBLE;
 	}
 }

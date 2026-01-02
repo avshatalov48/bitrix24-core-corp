@@ -128,6 +128,36 @@ class BackendForTrackedObject extends Backend
 	}
 }
 
+class BackendForUnifiedLink extends Backend
+{
+	static disableExternalLink(objectId): Promise
+	{
+		BX.ajax.runAction('disk.api.UnifiedLinkActions.disableExternalLink', {
+			data: {
+				uniqueCode: objectId,
+			},
+		});
+	}
+
+	static generateExternalLink(objectId): Promise
+	{
+		return ajax.runAction('disk.api.UnifiedLinkActions.generateExternalLink', {
+			data: {
+				uniqueCode: objectId,
+			},
+		});
+	}
+
+	static getExternalLink(objectId): Promise
+	{
+		return ajax.runAction('disk.api.UnifiedLinkActions.getExternalLink', {
+			data: {
+				uniqueCode: objectId,
+			},
+		});
+	}
+}
+
 export {
-	Backend, BackendForTrackedObject
+	Backend, BackendForTrackedObject, BackendForUnifiedLink,
 }

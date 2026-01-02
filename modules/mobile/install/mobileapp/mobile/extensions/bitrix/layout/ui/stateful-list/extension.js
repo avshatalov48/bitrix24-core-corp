@@ -13,6 +13,8 @@ jn.define('layout/ui/stateful-list', (require, exports, module) => {
 	const { TypeGenerator } = require('layout/ui/stateful-list/type-generator');
 	const { ListItemType, ListItemsFactory } = require('layout/ui/simple-list/items');
 	const { RunActionExecutor } = require('rest/run-action-executor');
+	const { Loc } = require('loc');
+	const { showOfflineToast, showErrorToast } = require('toast');
 	const {
 		FloatingActionButton,
 		FloatingActionButtonSupportNative,
@@ -29,6 +31,8 @@ jn.define('layout/ui/stateful-list', (require, exports, module) => {
 
 	const DEFAULT_BLOCK_PAGE = 1;
 	const MINIMAL_SEARCH_LENGTH = 3;
+
+	const TIME_TO_BAD_REQUEST = 60000;
 
 	const renderType = {
 		cache: 'cache',
@@ -65,6 +69,10 @@ jn.define('layout/ui/stateful-list', (require, exports, module) => {
 			this.state.itemActions = this.getValue(props, 'itemActions', []);
 			this.state.forcedShowSkeleton = this.getValue(props, 'forcedShowSkeleton', true);
 
+			this.actionResponseAdapter = Type.isFunction(props.actionResponseAdapter)
+				? props.actionResponseAdapter
+				: (response) => response
+			;
 			this.loadItemsHandler = this.loadItems.bind(this);
 			this.reloadList = this.reloadList.bind(this);
 			this.updateItemHandler = this.updateItemHandler.bind(this);
@@ -104,6 +112,7 @@ jn.define('layout/ui/stateful-list', (require, exports, module) => {
 			this.onViewShow = this.onViewShowHandler.bind(this);
 
 			this.debounceSearch = debounce((params, callback) => this.search(params, callback), 500, this);
+			this.jsonEnabled = props.jsonEnabled ?? false;
 		}
 
 		get layout()
@@ -244,9 +253,7 @@ jn.define('layout/ui/stateful-list', (require, exports, module) => {
 
 			if (this.state.allItemsLoaded)
 			{
-				this.setState({
-					isRefreshing: false,
-				});
+				this.stopRefreshingList();
 
 				return;
 			}
@@ -293,12 +300,14 @@ jn.define('layout/ui/stateful-list', (require, exports, module) => {
 							return;
 						}
 
+						const adaptedResponse = this.actionResponseAdapter(response);
+
 						if (Type.isFunction(this.props.actionCallbacks?.loadItems))
 						{
-							this.props.actionCallbacks.loadItems(response?.data, renderType.cache);
+							this.props.actionCallbacks.loadItems(adaptedResponse?.data, renderType.cache, config);
 						}
 
-						this.drawListFromCache(response, blockPage, appendItems);
+						this.drawListFromCache(adaptedResponse, blockPage, appendItems);
 						this.hideTitleLoader(true);
 					})
 					.setHandler((response, uid) => {
@@ -307,21 +316,35 @@ jn.define('layout/ui/stateful-list', (require, exports, module) => {
 							return;
 						}
 
+						const adaptedResponse = this.actionResponseAdapter(response);
+
+						clearTimeout(this.requestRenderTimeout);
+
 						const serverResponseTime = Date.now() - requestStartTime;
 						const remainingTime = useCache ? 0 : Math.max(300 - serverResponseTime, 0);
 
 						this.requestRenderTimeout = setTimeout(() => {
 							if (Type.isFunction(this.props.actionCallbacks?.loadItems))
 							{
-								this.props.actionCallbacks.loadItems(response?.data, renderType.ajax);
+								this.props.actionCallbacks.loadItems(adaptedResponse?.data, renderType.ajax, config);
 							}
 
-							this.drawListFromAjax(response, blockPage, appendItems);
+							this.drawListFromAjax(adaptedResponse, blockPage, appendItems);
 							this.hideTitleLoader(false);
 							this.currentRequestUid = null;
 						}, remainingTime);
 					})
+					.setTimeoutHandler(
+						this.props.requestTimeoutInMilliseconds ?? TIME_TO_BAD_REQUEST,
+						this.triggerBadConnectionRequest,
+					)
+					.setNetworkErrorHandler(this.triggerOfflineRequest)
 			);
+
+			if (this.jsonEnabled)
+			{
+				runActionExecutor.enableJson();
+			}
 
 			const newRequestUid = runActionExecutor.getUid();
 
@@ -331,6 +354,7 @@ jn.define('layout/ui/stateful-list', (require, exports, module) => {
 			}
 
 			this.currentRequestUid = newRequestUid;
+
 			clearTimeout(this.requestRenderTimeout);
 
 			this.showTitleLoader({ useCache, isDefaultBlockPage });
@@ -342,6 +366,39 @@ jn.define('layout/ui/stateful-list', (require, exports, module) => {
 
 			runActionExecutor.call(useCache).catch(console.error);
 		}
+
+		triggerBadConnectionRequest = () => {
+			this.stopRefreshingList();
+			this.hideTitleLoader(false);
+			this.showBadConnectionToast();
+			console.error(
+				`StatefulList: timeout for request "${this.props.actions.loadItems}" has expired. List data loading is stopped.`,
+				this.state.actionParams.loadItems,
+			);
+		};
+
+		stopRefreshingList()
+		{
+			this.setState({
+				isRefreshing: false,
+			});
+		}
+
+		showBadConnectionToast()
+		{
+			showErrorToast(
+				{
+					message: Loc.getMessage('M_UI_STATEFUL_LIST_BAD_CONNECTION_TOAST'),
+				},
+				this.layout,
+			);
+		}
+
+		triggerOfflineRequest = () => {
+			this.stopRefreshingList();
+			this.hideTitleLoader(false);
+			showOfflineToast({}, this.layout);
+		};
 
 		/**
 		 * @param {String[]|Number[]} ids
@@ -417,7 +474,7 @@ jn.define('layout/ui/stateful-list', (require, exports, module) => {
 			this.simpleList?.scrollToBegin(animated);
 		}
 
-		async scrollToTopItem(itemIds, animated = true, blink = false)
+		async scrollToTopItem(itemIds, animated = true, blink = false, checkVisibility = true)
 		{
 			const existingItems = itemIds.filter((id) => this.hasItem(id));
 			if (existingItems.length === 0)
@@ -425,7 +482,7 @@ jn.define('layout/ui/stateful-list', (require, exports, module) => {
 				return;
 			}
 
-			await this.simpleList?.scrollToTopItem(existingItems, animated);
+			await this.simpleList?.scrollToTopItem(existingItems, animated, checkVisibility);
 
 			if (blink)
 			{
@@ -772,6 +829,8 @@ jn.define('layout/ui/stateful-list', (require, exports, module) => {
 			{
 				console.error('StatefulList: drawList error', response.errors);
 
+				this.stopRefreshingList();
+
 				if (response.data)
 				{
 					response.errors
@@ -782,7 +841,7 @@ jn.define('layout/ui/stateful-list', (require, exports, module) => {
 				}
 			}
 
-			let { data } = response;
+			const { data } = response;
 
 			let items = [];
 
@@ -1218,6 +1277,13 @@ jn.define('layout/ui/stateful-list', (require, exports, module) => {
 				accentByDefault: this.isFloatingButtonAccent(),
 				hide: !this.isShowFloatingButton(),
 			};
+
+			if (!this.floatingButton && !floatingButtonParams.hide)
+			{
+				this.initFloatingButton();
+
+				return;
+			}
 
 			this.floatingButton?.setFloatingButton(floatingButtonParams);
 		}

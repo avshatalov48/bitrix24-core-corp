@@ -15,6 +15,9 @@ if (!defined('B_PROLOG_INCLUDED') || B_PROLOG_INCLUDED !== true)
 use Bitrix\Main\Web\Json;
 use Bitrix\Tasks\Helper\Filter;
 use Bitrix\Tasks\Update\TagConverter;
+use Bitrix\Main\UI\Extension;
+
+Extension::load(['ui.actions-bar']);
 
 if ($arParams['CONTEXT'] === 'group')
 {
@@ -42,6 +45,8 @@ $tagsAreConverting = TagConverter::isProceed();
 <script>
 	BX.ready(function()
 	{
+		const blockRenderNav = document.getElementById('tasks-scrum-switcher');
+
 		BX.message(<?= Json::encode($messages) ?>);
 		BX.Tasks.Scrum.Entry = new BX.Tasks.Scrum.Entry({
 			tagsAreConverting: '<?=$tagsAreConverting?>',
@@ -67,14 +72,20 @@ $tagsAreConverting = TagConverter::isProceed();
 			pageSize: <?= $arResult['pageSize'] ?>,
 			isShortView: '<?= $arResult['isShortView'] ?>',
 			isExactSearchApplied: '<?= $arResult['isExactSearchApplied'] ?>',
-			displayPriority: '<?= $arResult['displayPriority'] ?>'
+			displayPriority: '<?= $arResult['displayPriority'] ?>',
+			target: blockRenderNav,
 		});
 
 		<?php if ($arParams['CONTEXT'] === 'group'): ?>
-			BX.Tasks.Scrum.Entry.renderTabsTo(document.getElementById('tasks-scrum-switcher'));
+			BX.Tasks.Scrum.Entry.renderTabsTo(blockRenderNav);
 			BX.Tasks.Scrum.Entry.renderRightElementsTo(document.getElementById('tasks-scrum-right-container'));
 		<?php endif; ?>
 
 		BX.Tasks.Scrum.Entry.renderTo(document.getElementById('tasks-scrum-container'));
 	});
+
+	(new BX.UI.ActionsBar.RightButtons({
+		buttonsContainer: document.getElementById('tasks-scrum-right-container'),
+		collapsable: false,
+	})).init();
 </script>

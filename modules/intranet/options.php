@@ -190,24 +190,27 @@ if($_SERVER['REQUEST_METHOD']=="POST" && $Update.$Apply.$RestoreDefaults <> '' &
 	}
 }
 
-$dbIBlockType = CIBlockType::GetList();
-$arIBTypes = array();
-$arIB = array();
-while ($arIBType = $dbIBlockType->Fetch())
+if (\Bitrix\Main\Loader::includeModule('iblock'))
 {
-	if ($arIBTypeData = CIBlockType::GetByIDLang($arIBType["ID"], LANG))
+	$dbIBlockType = CIBlockType::GetList();
+	$arIBTypes = array();
+	$arIB = array();
+	while ($arIBType = $dbIBlockType->Fetch())
 	{
-		$arIB[$arIBType['ID']] = array();
-		$arIBTypes[$arIBType['ID']] = '['.$arIBType['ID'].'] '.$arIBTypeData['NAME'];
+		if ($arIBTypeData = CIBlockType::GetByIDLang($arIBType["ID"], LANG))
+		{
+			$arIB[$arIBType['ID']] = array();
+			$arIBTypes[$arIBType['ID']] = '['.$arIBType['ID'].'] '.$arIBTypeData['NAME'];
+		}
 	}
-}
 
-$vacationTypes = \Bitrix\Intranet\UserAbsence::getVacationTypes();
+	$vacationTypes = \Bitrix\Intranet\UserAbsence::getVacationTypes();
 
-$dbIBlock = CIBlock::GetList(array('SORT' => 'ASC'), array('ACTIVE' => 'Y'));
-while ($arIBlock = $dbIBlock->Fetch())
-{
-	$arIB[$arIBlock['IBLOCK_TYPE_ID']][$arIBlock['ID']] = ($arIBlock['CODE'] ? '['.$arIBlock['CODE'].'] ' : '').$arIBlock['NAME'];
+	$dbIBlock = CIBlock::GetList(array('SORT' => 'ASC'), array('ACTIVE' => 'Y'));
+	while ($arIBlock = $dbIBlock->Fetch())
+	{
+		$arIB[$arIBlock['IBLOCK_TYPE_ID']][$arIBlock['ID']] = ($arIBlock['CODE'] ? '['.$arIBlock['CODE'].'] ' : '').$arIBlock['NAME'];
+	}
 }
 
 $hideBlockNewUserLFCommon = true;

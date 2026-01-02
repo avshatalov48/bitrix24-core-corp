@@ -6,7 +6,7 @@ $APPLICATION->SetAdditionalCSS("/bitrix/js/intranet/intranet-common.css");
 if($arParams['USE_TITLE_TARGET'] !== 'N')
 {
 	$arParams["TITLE_TARGET"] = isset($arParams["TITLE_TARGET"]) && mb_strlen($arParams["TITLE_TARGET"]) ? $arParams["TITLE_TARGET"] : "pagetitle";
-	if(SITE_TEMPLATE_ID === "bitrix24")
+	if(SITE_TEMPLATE_ID === "bitrix24" || SITE_TEMPLATE_ID === 'air')
 	{
 		$this->SetViewTarget($arParams["TITLE_TARGET"], 100);
 	}
@@ -162,17 +162,17 @@ if($arParams['USE_TITLE_TARGET'] !== 'N')
 		?>
 	</div>
 	<?
-	if(SITE_TEMPLATE_ID === "bitrix24")
+	if(SITE_TEMPLATE_ID === "bitrix24" || SITE_TEMPLATE_ID === 'air')
 	{
 		$this->EndViewTarget();
 	}
 }
 
-$defaultMenuTarget = SITE_TEMPLATE_ID === "bitrix24" ? "above_pagetitle" : "task_menu";
+$defaultMenuTarget = SITE_TEMPLATE_ID === "bitrix24" || SITE_TEMPLATE_ID === 'air' ? "above_pagetitle" : "task_menu";
 $arParams["MENU_TARGET"] = isset($arParams["MENU_TARGET"]) && mb_strlen($arParams["MENU_TARGET"]) ? $arParams["MENU_TARGET"] : $defaultMenuTarget;
 $arParams["CONTROLS_TARGET"] = isset($arParams["CONTROLS_TARGET"]) && mb_strlen($arParams["CONTROLS_TARGET"]) ? $arParams["CONTROLS_TARGET"] : "task_menu";
 
-if(SITE_TEMPLATE_ID === "bitrix24")
+if(SITE_TEMPLATE_ID === "bitrix24" || SITE_TEMPLATE_ID === 'air')
 {
 	$this->SetViewTarget($arParams["MENU_TARGET"], 200);
 }
@@ -186,7 +186,7 @@ if (
 	require_once($_SERVER["DOCUMENT_ROOT"] . $templateFolder . "/topnav.php");
 }
 
-if(SITE_TEMPLATE_ID === "bitrix24")
+if(SITE_TEMPLATE_ID === "bitrix24" || SITE_TEMPLATE_ID === 'air')
 {
 	$this->EndViewTarget();
 }?>

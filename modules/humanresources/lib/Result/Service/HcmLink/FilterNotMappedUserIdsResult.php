@@ -2,9 +2,9 @@
 
 namespace Bitrix\HumanResources\Result\Service\HcmLink;
 
-use Bitrix\HumanResources\Result\SuccessResult;
+use Bitrix\HumanResources\Result\PropertyResult;
 
-class FilterNotMappedUserIdsResult extends SuccessResult
+class FilterNotMappedUserIdsResult extends PropertyResult
 {
 	/**
 	 * @param array<int, int> $userIds

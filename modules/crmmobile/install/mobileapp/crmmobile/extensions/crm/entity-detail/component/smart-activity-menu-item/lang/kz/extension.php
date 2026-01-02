@@ -1,0 +1,21 @@
+<?php
+$MESS["M_CRM_ACTION_SMART_ACTIVITY2"] = "Ақылды істер";
+$MESS["M_CRM_ACTION_SMART_ACTIVITY_DISABLED_NOTIFY_TEXT"] = "Push CRM сізге шығу кезінде іс құруды ұсынбайды";
+$MESS["M_CRM_ACTION_SMART_ACTIVITY_DISABLED_NOTIFY_TEXT_DEAL"] = "Push CRM сізге мәміледен шығу кезінде іс құруды ұсынбайды";
+$MESS["M_CRM_ACTION_SMART_ACTIVITY_DISABLED_NOTIFY_TEXT_LEAD"] = "Push CRM сізге лидтен шығу кезінде іс құруды ұсынбайды";
+$MESS["M_CRM_ACTION_SMART_ACTIVITY_DISABLED_NOTIFY_TITLE"] = "Ақылды істер өшірулі";
+$MESS["M_CRM_ACTION_SMART_ACTIVITY_ENABLED_NOTIFY_TEXT"] = "Push CRM сізге шығу кезінде іс құруды ұсынады";
+$MESS["M_CRM_ACTION_SMART_ACTIVITY_ENABLED_NOTIFY_TEXT_DEAL"] = "Push CRM сізге мәміледен шығу кезінде іс құруды ұсынады";
+$MESS["M_CRM_ACTION_SMART_ACTIVITY_ENABLED_NOTIFY_TEXT_LEAD"] = "Push CRM сізге лидтен шығу кезінде іс құруды ұсынады";
+$MESS["M_CRM_ACTION_SMART_ACTIVITY_ENABLED_NOTIFY_TITLE"] = "Ақылды істер қосулы";
+$MESS["M_CRM_ACTION_SMART_ACTIVITY_SKIP_DAY"] = "Бүгін";
+$MESS["M_CRM_ACTION_SMART_ACTIVITY_SKIP_FOREVER"] = "Ешқашан";
+$MESS["M_CRM_ACTION_SMART_ACTIVITY_SKIP_MONTH"] = "Осы айда";
+$MESS["M_CRM_ACTION_SMART_ACTIVITY_SKIP_TITLE"] = "Ұсынбау";
+$MESS["M_CRM_ACTION_SMART_ACTIVITY_SKIP_TITLE_COMPANY"] = "Ұсынбау (барлық компаниялар үшін)";
+$MESS["M_CRM_ACTION_SMART_ACTIVITY_SKIP_TITLE_CONTACT"] = "Ұсынбау (барлық байланыстар үшін)";
+$MESS["M_CRM_ACTION_SMART_ACTIVITY_SKIP_TITLE_DEAL"] = "Ұсынбау (барлық иірім мәмілелері үшін)";
+$MESS["M_CRM_ACTION_SMART_ACTIVITY_SKIP_TITLE_LEAD"] = "Ұсынбау (барлық лидтар үшін)";
+$MESS["M_CRM_ACTION_SMART_ACTIVITY_SKIP_TITLE_QUOTE"] = "Ұсынбау (барлық ұсыныстар үшін)";
+$MESS["M_CRM_ACTION_SMART_ACTIVITY_SKIP_TITLE_SMART_INVOICE"] = "Ұсынбау (барлық шоттар үшін)";
+$MESS["M_CRM_ACTION_SMART_ACTIVITY_SKIP_WEEK"] = "Осы аптада";

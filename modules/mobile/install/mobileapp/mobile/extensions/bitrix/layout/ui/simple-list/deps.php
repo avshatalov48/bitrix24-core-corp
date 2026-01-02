@@ -3,7 +3,6 @@
 return [
 	'extensions' => [
 		'apptheme',
-		'feature',
 		'haptics',
 		'layout/pure-component',
 		'layout/ui/context-menu',

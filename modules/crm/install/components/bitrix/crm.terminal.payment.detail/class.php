@@ -544,8 +544,7 @@ class CrmTerminalPaymentDetail extends \CBitrixComponent
 
 	private function checkPermission(int $paymentId): bool
 	{
-		$userPermissions = \CCrmPerms::GetCurrentUserPermissions();
-		if (!Crm\Order\Permissions\Payment::checkReadPermission($paymentId, $userPermissions))
+		if (!\Bitrix\Crm\Service\Container::getInstance()->getUserPermissions()->item()->canRead(CCrmOwnerType::OrderPayment, $paymentId))
 		{
 			$this->arResult['ERROR_MESSAGES'][] = Main\Localization\Loc::getMessage('CRM_TERMINAL_PAYMENT_DETAIL_COMPONENT_PERMISSION_DENIED');
 			return false;

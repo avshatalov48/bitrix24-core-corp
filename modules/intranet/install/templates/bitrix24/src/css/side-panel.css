@@ -1,0 +1,18 @@
+body {
+	--sidepanel-border-radius: 18px 18px 0 0;
+	--sidepanel-label-background: #3e7aaa;
+	--sidepanel-label-background-hover: #5596cb;
+	--sidepanel-label-border: 1px solid #4783b3;
+	--sidepanel-label-border-hover: 1px solid #5596cb;
+	--sidepanel-label-icon-color: #c9ccd0;
+	--sidepanel-label-icon-color-hover: #ffffff;
+
+	--sidepanel-close-label-background: #4685b7;
+	--sidepanel-close-label-background-hover: #5596cb;
+	--sidepanel-close-label-border: 1px solid #5090c4;
+	--sidepanel-close-label-border-hover: 1px solid #5596cb;
+	--sidepanel-close-label-icon-color: #dfe0e3;
+	--sidepanel-close-label-icon-color-hover: #ffffff;
+
+	--sidepanel-label-box-shadow: none;
+}

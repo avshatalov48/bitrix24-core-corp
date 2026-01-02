@@ -28,7 +28,7 @@ return [
 				'className' => Repository\NotificationRepository::class,
 			],
 			'signmobile.repository.notification.priority.queue' => [
-				'className' => Repository\NotificationPriorityQueueRepository::class,
+				'className' => Repository\NotificationQueueRepository::class,
 			],
 		],
 	],

@@ -418,6 +418,18 @@ class Calendar
 		return self::$calendarEvents[$id] ?? null;
 	}
 
+	public static function getUserTimeZone(int $userId, bool $getDefault = true): ?string
+	{
+		if (Loader::includeModule('calendar'))
+		{
+			$userTimeZone = \CCalendar::GetUserTimezoneName($userId, $getDefault);
+
+			return is_string($userTimeZone) ? $userTimeZone : null;
+		}
+
+		return null;
+	}
+
 	public static function getSectionListAvailableForUser(int $userId): array
 	{
 		if (!Loader::includeModule('calendar'))
@@ -425,7 +437,11 @@ class Calendar
 			return [];
 		}
 
-		return \CCalendar::getSectionListAvailableForUser($userId);
+		$sectionList = \CCalendar::getSectionListAvailableForUser($userId);
+
+		return array_filter($sectionList, static function(array $section) {
+			return ($section['PERM']['edit'] ?? null) === true;
+		});
 	}
 
 	public static function getCrmSectionId(int $userId, bool $autoCreate = false): ?int
@@ -437,7 +453,7 @@ class Calendar
 
 		$crmSection = \CCalendar::GetCrmSection($userId, $autoCreate);
 
-		return is_string($crmSection) ? (int)$crmSection : null;
+		return is_numeric($crmSection) ? (int)$crmSection : null;
 	}
 
 	public static function createDefault(array $params = []): ?array
@@ -469,5 +485,28 @@ class Calendar
 		}
 
 		return array_unique($accessibility->getBusyUsersIds($userIds, $fromTs, $toTs));
+	}
+
+	public static function getChildEvents(int $parentEventId, int $userId, array $selectFields = []): ?array
+	{
+		$params = [
+			'arFilter' => [
+				'PARENT_ID' => $parentEventId,
+				'CREATED_BY' => $userId,
+				'IS_MEETING' => 1,
+				'DELETED' => 'N',
+			],
+			'parseRecursion' => false,
+			'fetchAttendees' => true,
+			'checkPermissions' => false,
+			'setDefaultLimit' => false,
+		];
+
+		if (!empty($selectFields))
+		{
+			$params['arSelect'] = $selectFields;
+		}
+
+		return \CCalendarEvent::GetList($params);
 	}
 }

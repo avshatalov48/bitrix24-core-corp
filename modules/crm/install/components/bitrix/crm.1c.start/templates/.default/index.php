@@ -16,7 +16,7 @@ $APPLICATION->SetPageProperty("BodyClass", ($bodyClass ? $bodyClass." " : "") . 
 	'ui.icons.service',
 	'ui.forms',
 	'ui.buttons',
-	'ui.feedback.form',
+	'ui.feedback.partnerform',
 ]);
 
 if (!is_array($arResult["ITEMS"]) || empty($arResult["ITEMS"]))
@@ -134,12 +134,12 @@ $jsParams = array(
 	"integrationTileManagerId" => $arResult['INTEGRATION_TILE_ID'],
 	"otherTileManagerId" => $arResult['OTHER_TILE_ID'],
 	"helperTileManagerId" => $arResult['HELPER_TILE_ID'],
-	"formPortalUri" => $arResult['FORM_PORTAL_URI'],
+	"formPortalSource" => 'crm.1c.start',
 );
 ?>
 <script>
 	BX.ready(function () {
-		BX.CrmStart.Onec.initTile(<?=CUtil::PhpToJSObject($jsParams)?>);
-		BX.CrmStart.OnecAppPaths = <?=CUtil::PhpToJSObject($arResult['PATH_TO_APPS'])?>;
+		BX.CrmStart.Onec.initTile(<?=\Bitrix\Main\Web\Json::encode($jsParams)?>);
+		BX.CrmStart.OnecAppPaths = <?=Bitrix\Main\Web\Json::encode($arResult['PATH_TO_APPS'])?>;
 	});
 </script>

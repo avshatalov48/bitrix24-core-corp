@@ -11,7 +11,7 @@ import { MessageBox } from 'ui.dialogs.messagebox';
 import 'ui.info-helper';
 import { UI } from 'ui.notification';
 import { BlockItem, Config, DocumentOptions, MemberItem, PositionType } from '../types/document';
-import type { FieldSelectEvent } from '../types/events/FieldSelectEvent';
+import type { FieldSelectEvent } from '../types/events/fieldSelectEvent';
 import Block from './block';
 import Resize from './resize';
 
@@ -555,7 +555,7 @@ export class BlocksManager
 		return this.#blocks;
 	}
 
-	getLanguages(): {[key: string]: { NAME: string; IS_BETA: boolean; }}
+	getLanguages(): { [key: string]: { NAME: string; IS_BETA: boolean; } }
 	{
 		return this.#languages;
 	}
@@ -618,6 +618,9 @@ export class BlocksManager
 				case 'sign':
 				case 'mysign':
 					type = 'image';
+					break;
+				default:
+					type = 'text';
 			}
 			postData.push({
 				id: block.getId(),
@@ -633,7 +636,7 @@ export class BlocksManager
 		const params = {};
 		if (this.#closeDemoContent)
 		{
-			params['closeDemoContent'] = true;
+			params.closeDemoContent = true;
 		}
 		this.hideResizeArea();
 

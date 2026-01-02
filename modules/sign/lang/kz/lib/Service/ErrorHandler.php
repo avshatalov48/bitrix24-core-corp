@@ -1,0 +1,22 @@
+<?php
+$MESS["SIGN_SERVICE_DEFAULT_ERROR"] = "Әрекетті орындау мүмкін болмады, кейінірек қайталап көріңіз";
+$MESS["SIGN_SERVICE_DEFAULT_ERROR_WITH_CODE"] = "Әрекетті орындау мүмкін болмады, кейінірек қайталап көріңіз (қате коды: #CODE#)";
+$MESS["SIGN_SERVICE_ERROR_BLANK_DELETE_FAILED"] = "Қалыпты жою мүмкін болмады, кейінірек қайталап көріңіз";
+$MESS["SIGN_SERVICE_ERROR_DELETE_DOCUMENTS_EXISTS"] = "Құжаттар жасалған қалып жойылмай жатыр";
+$MESS["SIGN_SERVICE_ERROR_DOCUMENT_SIGNING_EXPIRED"] = "Құжатқа қол қою мерзімі аяқталды";
+$MESS["SIGN_SERVICE_ERROR_DOCUMENT_TO_MANY_MEMBERS"] = "Қол қоюдың 2 қатысушысы болуы керек";
+$MESS["SIGN_SERVICE_ERROR_EMPTY_MEMBER_CHANNEL"] = "Қол қоюшының телефон нөмірін немесе e-mail көрсетіңіз";
+$MESS["SIGN_SERVICE_ERROR_FIELD_FILE_NOT_IMAGE"] = "Бұл өріске тек кескіндерді қосуға болады";
+$MESS["SIGN_SERVICE_ERROR_FILE_TOO_BIG"] = "Файл тым үлкен";
+$MESS["SIGN_SERVICE_ERROR_FILE_TOO_BIG_SIZE_MSG_1"] = "Файл тым үлкен. Максималды өлшем #SIZE# MБ аспауы керек";
+$MESS["SIGN_SERVICE_ERROR_FILE_TO_MANY_PAGES_COUNT"] = "Файлдағы беттер саны #COUNT#-тан аспауы керек";
+$MESS["SIGN_SERVICE_ERROR_INCORRECT_TAX_ID"] = "Мұндай СТН-ы бар компания жоқ. СТН қатесіз көрсетілгеніне көз жеткізіңіз";
+$MESS["SIGN_SERVICE_ERROR_MEMBERS_NOT_READY_FOR_RESEND"] = "Құжат жіберуге дайын емес";
+$MESS["SIGN_SERVICE_ERROR_MEMBER_INVALID_PHONE"] = "SMS жіберу үшін дұрыс нөмірді енгізіңіз немесе e-mail таңдаңыз";
+$MESS["SIGN_SERVICE_ERROR_MEMBER_PHONE_UNSUPPORTED_COUNTRY_CODE"] = "Бұл нөмірге SMS жіберу уақытша қолжетімсіз. Сіз құжатты e-mail арқылы қол қоюға жібере аласыз";
+$MESS["SIGN_SERVICE_ERROR_NO_FILE_TYPE"] = "Мұндай пішім қолжетімсіз. Файлдарды pdf, doc, docx, rtf, odt, jpg, png пішімдерінде қосуға болады";
+$MESS["SIGN_SERVICE_ERROR_PREVIOUS_MEMBER_NOT_DONE"] = "Әрекетті бірінші тарап құжатқа қол қойғаннан кейін ғана орындауға болады";
+$MESS["SIGN_SERVICE_ERROR_PROTECTED_PDF"] = "Файл құпиясөзбен қорғалған және оны жүктеу мүмкін емес";
+$MESS["SIGN_SERVICE_ERROR_REQUIRED_FIELDS_VALIDATION"] = "Міндетті өрістерді толтырыңыз";
+$MESS["SIGN_SERVICE_ERROR_SMS_LIMIT_EXCEEDED"] = "SMS арқылы қайта жіберу шегі асып кетті";
+$MESS["SIGN_SERVICE_ERROR_TOO_MANY_FILES_COUNT"] = "Қол қоюға #COUNT# кескін немесе pdf, doc, docx, rtf, odt пішімдеріндегі 1 файл жіберуге болады";

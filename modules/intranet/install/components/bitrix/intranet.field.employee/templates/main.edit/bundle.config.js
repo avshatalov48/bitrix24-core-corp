@@ -5,4 +5,5 @@ module.exports = {
 	},
 	namespace: 'BX.Default.Field.String',
 	//adjustConfigPhp: false,
+	browserslist: true,
 };

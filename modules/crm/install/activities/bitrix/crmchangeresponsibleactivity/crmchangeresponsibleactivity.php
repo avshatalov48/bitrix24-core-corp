@@ -71,7 +71,15 @@ class CBPCrmChangeResponsibleActivity extends CBPActivity
 	{
 		$ds = $this->workflow->GetRuntime()->getDocumentService();
 		$documentId = $this->GetDocumentId();
-		$document = $ds->GetDocument($documentId);
+
+		if (defined('\CBPDocument::PARAM_USED_DOCUMENT_FIELDS'))
+		{
+			$document = $ds->GetDocument($documentId, select: [$responsibleFieldName]);
+		}
+		else
+		{
+			$document = $ds->GetDocument($documentId);
+		}
 
 		if (isset($document[$responsibleFieldName]))
 		{

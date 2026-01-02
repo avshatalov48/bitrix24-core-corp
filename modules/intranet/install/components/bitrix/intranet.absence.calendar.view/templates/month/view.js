@@ -398,6 +398,7 @@ JCCalendarViewMonth.prototype.__drawData = function()
 
 				width = Math.abs(finish_pos - start_pos - (BX.browser.IsIE() ? padding * 2 : padding));
 
+				this.ENTRIES[i]['DATA'][j].VISUAL.dataset.dateFrom = this.ENTRIES[i]['DATA'][j]['DATE_FROM'];
 				this.ENTRIES[i]['DATA'][j].VISUAL.style.left = parseInt(start_pos) + 'px';
 				this.ENTRIES[i]['DATA'][j].VISUAL.style.width = (isNaN(width) || width < 20 ? '20' : width) + 'px';
 				this.ENTRIES[i]['DATA'][j].VISUAL.style.height = parseInt(obPos.height - padding) + 'px';

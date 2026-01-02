@@ -9,8 +9,8 @@ use Bitrix\Main\ObjectPropertyException;
 use Bitrix\Main\SystemException;
 use Bitrix\Tasks\Internals\EO_Task_Collection;
 use Bitrix\Tasks\Internals\Log\Log;
-use Bitrix\Tasks\Internals\Task\ScenarioTable;
 use Bitrix\Tasks\Internals\TaskTable;
+use Bitrix\Tasks\V2\Internal\DI\Container;
 
 class SyncTaskScenario implements AgentInterface
 {
@@ -58,7 +58,7 @@ class SyncTaskScenario implements AgentInterface
 			// insert default scenario
 			foreach ($tasks as $task)
 			{
-				ScenarioTable::insertIgnore($task->getId(), [ScenarioTable::SCENARIO_DEFAULT]);
+				Container::getInstance()->getScenarioService()->saveDefault($task->getId());
 				$latestTaskId = $task->getId();
 			}
 

@@ -4,8 +4,10 @@ type EventReduxModel = {
 	dateFromTs: number,
 	dateToTs: number,
 	dateFromFormatted: string,
-	isFullDay: boolean,
+	fullDay: boolean,
 	timezone: string,
+	timezoneOffset: number,
+	isDaylightSavingTimezone: string,
 	sectionId: number,
 	name: string,
 	description: string,
@@ -28,6 +30,7 @@ type EventReduxModel = {
 	accessibility: string,
 	privateEvent: number,
 	collabId: number,
+	entityRelation: EntityRelation | null,
 };
 
 type Attendee = {
@@ -65,4 +68,15 @@ type Attachment = {
 	previewUrl: string,
 	width: number,
 	height: number,
+};
+
+type EntityRelation = {
+	eventId: number,
+	owner: {
+		id: number,
+	},
+	entity: {
+		id: number,
+		type: string,
+	},
 };

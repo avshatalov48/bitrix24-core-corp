@@ -14,7 +14,7 @@ jn.define('im/messenger/provider/pull/plan-limits', (require, exports, module) =
 	{
 		handleChangeTariff(params, extra, command)
 		{
-			if (this.interceptEvent(params, extra, command))
+			if (this.interceptEvent(extra))
 			{
 				return;
 			}

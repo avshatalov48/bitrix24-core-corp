@@ -53,6 +53,7 @@ jn.define('sign/dialog/banners/external', (require, exports, module) => {
 				buttonsView: View(
 					{},
 					Button({
+						testId: 'externalBanner-button-confirm',
 						text: Loc.getMessage('SIGN_MOBILE_DIALOG_EXTERNAL_BUTTON_CONFIRM'),
 						size: ButtonSize.XL,
 						design: ButtonDesign.FILLED,
@@ -87,6 +88,7 @@ jn.define('sign/dialog/banners/external', (require, exports, module) => {
 						},
 					}),
 					Button({
+						testId: 'externalBanner-button-close',
 						text: Loc.getMessage('SIGN_MOBILE_DIALOG_EXTERNAL_BUTTON_CLOSE'),
 						size: ButtonSize.XL,
 						design: ButtonDesign.PLAN_ACCENT,

@@ -99,25 +99,21 @@ $isInSlider = isset($arParams['IN_SLIDER']) && $arParams['IN_SLIDER'] === 'Y';
 
 if ($arParams['TYPE'] === 'list')
 {
-	$bRead   = !$CrmPerms->HavePerm('QUOTE', BX_CRM_PERM_NONE, 'READ');
-	$bExport = !$CrmPerms->HavePerm('QUOTE', BX_CRM_PERM_NONE, 'EXPORT');
-	//$bImport = !$CrmPerms->HavePerm('QUOTE', BX_CRM_PERM_NONE, 'IMPORT');
-	$bAdd    = !$CrmPerms->HavePerm('QUOTE', BX_CRM_PERM_NONE, 'ADD');
-	$bWrite  = !$CrmPerms->HavePerm('QUOTE', BX_CRM_PERM_NONE, 'WRITE');
-	$bConfig = $CrmPerms->HavePerm('CONFIG', BX_CRM_PERM_CONFIG, 'WRITE');
+	$bRead = \Bitrix\Crm\Service\Container::getInstance()->getUserPermissions()->entityType()->canReadItems(CCrmOwnerType::Quote);
+	$bExport = \Bitrix\Crm\Service\Container::getInstance()->getUserPermissions()->entityType()->canExportItems(CCrmOwnerType::Quote);
+	$bWrite = \Bitrix\Crm\Service\Container::getInstance()->getUserPermissions()->entityType()->canUpdateItems(CCrmOwnerType::Quote);
 	$bDelete = false;
 }
 else
 {
 	$bExport = false;
-	//$bImport = false;
-
-	$bRead   = CCrmQuote::CheckReadPermission($arParams['ELEMENT_ID'], $CrmPerms);
-	$bAdd    = CCrmQuote::CheckCreatePermission($CrmPerms);
-	$bWrite  = CCrmQuote::CheckUpdatePermission($arParams['ELEMENT_ID'], $CrmPerms);
-	$bDelete = CCrmQuote::CheckDeletePermission($arParams['ELEMENT_ID'], $CrmPerms);
-	$bConfig = $CrmPerms->HavePerm('CONFIG', BX_CRM_PERM_CONFIG, 'WRITE');
+	$bRead = \Bitrix\Crm\Service\Container::getInstance()->getUserPermissions()->item()->canRead(CCrmOwnerType::Quote, $arParams['ELEMENT_ID']);
+	$bWrite = \Bitrix\Crm\Service\Container::getInstance()->getUserPermissions()->item()->canUpdate(CCrmOwnerType::Quote, $arParams['ELEMENT_ID']);
+	$bDelete = \Bitrix\Crm\Service\Container::getInstance()->getUserPermissions()->item()->canDelete(CCrmOwnerType::Quote, $arParams['ELEMENT_ID']);
 }
+
+$bAdd = \Bitrix\Crm\Service\Container::getInstance()->getUserPermissions()->entityType()->canAddItems(CCrmOwnerType::Quote);
+$bConfig = \Bitrix\Crm\Service\Container::getInstance()->getUserPermissions()->isCrmAdmin();
 
 if (isset($arParams['DISABLE_EXPORT']) && $arParams['DISABLE_EXPORT'] === 'Y')
 {
@@ -146,7 +142,7 @@ if ($arParams['TYPE'] === 'details')
 
 	$scripts = isset($arParams['~SCRIPTS']) && is_array($arParams['~SCRIPTS']) ? $arParams['~SCRIPTS'] : [];
 
-	CCrmQuote::PrepareConversionPermissionFlags($arParams['ELEMENT_ID'], $arResult, $CrmPerms);
+	CCrmQuote::PrepareConversionPermissionFlags($arParams['ELEMENT_ID'], $arResult);
 	if ($arResult['CAN_CONVERT'])
 	{
 		$schemeID = \Bitrix\Crm\Conversion\QuoteConversionConfig::getCurrentSchemeID();
@@ -155,15 +151,7 @@ if ($arParams['TYPE'] === 'details')
 		$arResult['BUTTONS'][] = array(
 			'TYPE' => 'toolbar-conv-scheme',
 			'PARAMS' => array(
-				'NAME' => 'quote_converter',
-				'ENTITY_TYPE_ID' => CCrmOwnerType::Quote,
-				'ENTITY_TYPE_NAME' => CCrmOwnerType::QuoteName,
-				'ENTITY_ID' => $arParams['ELEMENT_ID'],
-				'SCHEME_ID' => $schemeID,
-				'SCHEME_NAME' => \Bitrix\Crm\Conversion\QuoteConversionScheme::resolveName($schemeID),
 				'SCHEME_DESCRIPTION' => \Bitrix\Crm\Conversion\QuoteConversionScheme::getDescription($schemeID),
-				'IS_PERMITTED' => $isPermitted,
-				'LOCK_SCRIPT' => $isPermitted ? '' : $restriction->prepareInfoHelperScript()
 			),
 			'CODE' => 'convert',
 			'TEXT' => Loc::getMessage('QUOTE_CREATE_ON_BASIS'),
@@ -355,7 +343,6 @@ if ($arParams['TYPE'] === 'list')
 		unset($stExportId);
 	}
 
-	$isAddDelimiter = true;
 	$permissionItem = PermissionItem::createByEntity(CCrmOwnerType::Quote);
 	if (isset($arParams['ANALYTICS']) && is_array($arParams['ANALYTICS']))
 	{
@@ -363,18 +350,12 @@ if ($arParams['TYPE'] === 'list')
 	}
 	if ($permissionItem->canShow())
 	{
-		$isAddDelimiter = false;
 		$arResult['BUTTONS'][] = $permissionItem->interfaceToolbarDelimiter();
 		$arResult['BUTTONS'][] = $permissionItem->toInterfaceToolbarButton();
 	}
 
 	if (count($arResult['BUTTONS']) > 1)
 	{
-		if ($isAddDelimiter)
-		{
-			$arResult['BUTTONS'][] = ['SEPARATOR' => true];
-		}
-
 		//Force start new bar after first button
 		array_splice($arResult['BUTTONS'], 1, 0, array(array('NEWBAR' => true)));
 	}
@@ -386,7 +367,7 @@ if ($arParams['TYPE'] === 'list')
 if (
 	($arParams['TYPE'] === 'edit' || $arParams['TYPE'] === 'show')
 	&& !empty($arParams['ELEMENT_ID'])
-	&& CCrmQuote::CheckConvertPermission($arParams['ELEMENT_ID'], CCrmOwnerType::Undefined, $CrmPerms)
+	&& CCrmQuote::CheckConvertPermission($arParams['ELEMENT_ID'], CCrmOwnerType::Undefined)
 )
 {
 	$schemeID = \Bitrix\Crm\Conversion\QuoteConversionConfig::getCurrentSchemeID();

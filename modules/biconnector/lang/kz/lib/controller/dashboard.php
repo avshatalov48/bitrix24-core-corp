@@ -1,0 +1,24 @@
+<?php
+$MESS["BICONNECTOR_CONTROLLER_DASHBOARD_ACCESS_ERROR_COPY"] = "Есепті көшіру үшін құқықтар жеткіліксіз Өзіңіздің басшыңызға немесе Битрикс24 әкімшісіне жүгініңіз";
+$MESS["BICONNECTOR_CONTROLLER_DASHBOARD_ACCESS_ERROR_DELETE"] = "Есепті жою үшін құқықтар жеткіліксіз Өзіңіздің басшыңызға немесе Битрикс24 әкімшісіне жүгініңіз";
+$MESS["BICONNECTOR_CONTROLLER_DASHBOARD_ACCESS_ERROR_EDIT"] = "Есепті редакциялау үшін құқықтар жеткіліксіз Өзіңіздің басшыңызға немесе Битрикс24 әкімшісіне жүгініңіз";
+$MESS["BICONNECTOR_CONTROLLER_DASHBOARD_ACCESS_ERROR_EXPORT"] = "Есепті экспорттау үшін құқықтар жеткіліксіз Өзіңіздің басшыңызға немесе Битрикс24 әкімшісіне жүгініңіз";
+$MESS["BICONNECTOR_CONTROLLER_DASHBOARD_ACCESS_ERROR_TAG_MODIFY"] = "Есеп тегтерін басқаруға құқықтар жеткіліксіз. Өзіңіздің басшыңызға немесе Битрикс24 әкімшісіне жүгініңіз";
+$MESS["BICONNECTOR_CONTROLLER_DASHBOARD_ACCESS_ERROR_VIEW"] = "Есепті қарау үшін құқықтар жеткіліксіз Өзіңіздің басшыңызға немесе Битрикс24 әкімшісіне жүгініңіз";
+$MESS["BICONNECTOR_CONTROLLER_DASHBOARD_COPIED_DASHBOARD_TITLE"] = "#DASHBOARD_TITLE# (көшірме)";
+$MESS["BICONNECTOR_CONTROLLER_DASHBOARD_COPY_ERROR"] = "Есепті көшіру мүмкін болмады. Қайталап көріңіз";
+$MESS["BICONNECTOR_CONTROLLER_DASHBOARD_DELETE_ERROR"] = "Есепті жою мүмкін болмады. Қайталап көріңіз";
+$MESS["BICONNECTOR_CONTROLLER_DASHBOARD_DELETE_ERROR_COPIED"] = "Есепті барлық көшірмелері жойылғаннан кейін ғана жоюға болады";
+$MESS["BICONNECTOR_CONTROLLER_DASHBOARD_DELETE_ERROR_SYSTEM"] = "Жүйелік есептерді жою мүмкін емес";
+$MESS["BICONNECTOR_CONTROLLER_DASHBOARD_EMPTY_DASHBOARD_NAME"] = "Жаңа есеп";
+$MESS["BICONNECTOR_CONTROLLER_DASHBOARD_ERROR_NOT_FOUND"] = "Мұндай есеп жоқ";
+$MESS["BICONNECTOR_CONTROLLER_DASHBOARD_EXPORT_DATA_PERIOD"] = "#DATE_FROM# - #DATE_TO#";
+$MESS["BICONNECTOR_CONTROLLER_DASHBOARD_EXPORT_DATA_PERIOD_DEFAULT"] = "Әдепкі бойынша";
+$MESS["BICONNECTOR_CONTROLLER_DASHBOARD_EXPORT_DATA_PERIOD_INCLUDE_LAST_FILTER_DATE"] = "#DATE_FROM# - #DATE_TO# (cоңғы күн есепке енгізілген)";
+$MESS["BICONNECTOR_CONTROLLER_DASHBOARD_EXPORT_ERROR"] = "Есепті экспорттау мүмкін болмады. Қайталап көріңіз";
+$MESS["BICONNECTOR_CONTROLLER_DASHBOARD_RENAME_ERROR_CANNOT_EDIT_TITLE_NOT_EMPTY"] = "Есептің атауын қосыңыз.";
+$MESS["BICONNECTOR_CONTROLLER_DASHBOARD_RENAME_ERROR_CANNOT_EDIT_TITLE_NOT_FOUND"] = "Мұндай есеп енді жоқ. Парақшаны жаңартыңыз";
+$MESS["BICONNECTOR_CONTROLLER_DASHBOARD_RENAME_ERROR_CANNOT_EDIT_TITLE_NOT_READY"] = "Есеп әлі де орнатылуда. Процестің аяқталуын күтіп, қайталап көріңіз";
+$MESS["BICONNECTOR_CONTROLLER_DASHBOARD_RENAME_ERROR_CANNOT_EDIT_TITLE_ONLY_CUSTOM_MSGVER_1"] = "Жүйелік есептер мен Маркетплейстегі есептердің атауларын өзгерту мүмкін емес. Есепті көшіруге және көшірменің атын өзгертуге болады";
+$MESS["BICONNECTOR_CONTROLLER_DASHBOARD_RENAME_ERROR_CANNOT_EDIT_TITLE_UNHANDLED"] = "Есептің атауын өзгерту мүмкін болмады, тағы қайталап көріңіз";
+$MESS["BICONNECTOR_CONTROLLER_DASHBOARD_RENAME_ERROR_UNAVAILABLE"] = "Есептің атауын өзгерту мүмкін болмады, кейінірек қайталап көріңіз";

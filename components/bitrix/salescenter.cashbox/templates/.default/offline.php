@@ -1,22 +1,37 @@
 <?php
-if (!defined('B_PROLOG_INCLUDED') || B_PROLOG_INCLUDED !== true) die();
 
-use Bitrix\Main\Localization\Loc,
-	Bitrix\Main\UI\Extension;
+if (!defined('B_PROLOG_INCLUDED') || B_PROLOG_INCLUDED !== true)
+{
+	die();
+}
+
+use Bitrix\Main\Localization\Loc;
+use Bitrix\Main\UI\Extension;
+
+/**
+ * @global CMain $APPLICATION
+ * @var array $arResult
+ */
 
 Loc::loadMessages(__DIR__.'/template.php');
 
-Extension::load(['ui.buttons', 'ui.icons', 'ui.common', 'ui.alerts', 'salescenter.manager', 'ui.sidepanel-content']);
+Extension::load([
+	'ui.buttons',
+	'ui.icons',
+	'ui.common',
+	'ui.alerts',
+	'salescenter.manager',
+	'ui.sidepanel-content',
+]);
 
 $APPLICATION->SetTitle(Loc::getMessage('SC_CASHBOX_OFFLINE_TITLE'));
+
+$manager = Bitrix\SalesCenter\Integration\Bitrix24Manager::getInstance();
+$manager->addFeedbackButtonToToolbar();
+unset(
+	$manager,
+);
 ?>
-
-<?php $this->setViewTarget("inside_pagetitle_below", 100); ?>
-<div class="salescenter-main-header-feedback-container">
-	<?Bitrix\SalesCenter\Integration\Bitrix24Manager::getInstance()->renderFeedbackButton();?>
-</div>
-<?php $this->endViewTarget(); ?>
-
 <div id="salescenter-wrapper" class="salescenter-wrapper">
 	<div id="salescenter-cashbox-info">
 		<div class="ui-slider-section ui-slider-section-icon">

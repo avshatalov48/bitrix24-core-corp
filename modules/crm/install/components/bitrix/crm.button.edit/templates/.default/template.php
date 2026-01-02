@@ -5,6 +5,7 @@ use Bitrix\Crm\WebForm\WhatsApp;
 use Bitrix\Main\Localization\Loc;
 use Bitrix\Main\Web\Json;
 use \Bitrix\Main\UI\Extension;
+use Bitrix\UI\Toolbar\Facade\Toolbar;
 
 /** @var CMain $APPLICATION */
 /** @var array $arResult */
@@ -18,6 +19,11 @@ use \Bitrix\Main\UI\Extension;
 	'ui.buttons',
 	'ui.buttons.icons',
 ]);
+
+if (isset($_REQUEST['IFRAME']) && $_REQUEST['IFRAME'] === 'Y')
+{
+	Toolbar::deleteFavoriteStar();
+}
 
 if(!$arResult['BUTTON']['BACKGROUND_COLOR'])
 {

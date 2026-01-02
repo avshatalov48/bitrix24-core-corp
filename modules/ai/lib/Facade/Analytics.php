@@ -28,10 +28,9 @@ class Analytics
 		'meeting_overview' => 'system_videocall',
 		'meeting_insights' => 'system_videocall',
 
-		'site_ai_data' => 'system_site',
-		'site_ai_blocks_content' => 'system_site',
-		'site_ai_image_prompts_text' => 'system_site',
-		'site_ai_block_content' => 'system_site',
+		'landing_ai_data' => 'system_site',
+		'landing_ai_content' => 'system_site',
+		'landing_ai_block_content' => 'system_site',
 	];
 
 	public static function engineGenerateResultEvent(

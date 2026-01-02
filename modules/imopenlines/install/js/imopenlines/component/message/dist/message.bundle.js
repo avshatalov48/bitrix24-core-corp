@@ -1,3 +1,4 @@
+/* eslint-disable */
 (function (exports,ui_vue,ui_vue_vuex,im_view_message,ui_fonts_opensans,main_core_events) {
 	'use strict';
 

@@ -16,6 +16,7 @@ jn.define('calendar/ajax/event', (require, exports, module) => {
 		GET_EVENT_CHAT_ID: 'getEventChatId',
 		GET_ICS_LINK: 'getIcsLink',
 		GET_FILES_FOR_VIEW_FORM: 'getFilesForViewForm',
+		SAVE_HIDDEN_SECTIONS: 'saveHiddenSections',
 	};
 
 	class EventAjax extends BaseAjax
@@ -165,6 +166,17 @@ jn.define('calendar/ajax/event', (require, exports, module) => {
 		getIcsLink({ eventId })
 		{
 			return this.fetch(EventActions.GET_ICS_LINK, { eventId });
+		}
+
+		/**
+		 * @param ownerId {number}
+		 * @param calType {string}
+		 * @param sections {array}
+		 * @returns {Promise<Object, void>}
+		 */
+		saveHiddenSections({ ownerId, calType, sections })
+		{
+			return this.fetch(EventActions.SAVE_HIDDEN_SECTIONS, { ownerId, calType, sections });
 		}
 	}
 

@@ -11,6 +11,7 @@ jn.define('crm/receive-payment/steps/finish/status-block', (require, exports, mo
 	const { TypeId } = require('crm/type');
 	const { EventEmitter } = require('event-emitter');
 	const { WarningBlock } = require('layout/ui/warning-block');
+	const { Random } = require('utils/random');
 
 	const pathToExtension = `${currentDomain}/bitrix/mobileapp/crmmobile/extensions/crm/receive-payment/steps/finish`;
 

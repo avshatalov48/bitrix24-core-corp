@@ -8,6 +8,7 @@ jn.define('im/messenger/const/counter', (require, exports, module) => {
 		copilot: 'copilot',
 		openline: 'openline',
 		collab: 'collab',
+		tasksTask: 'tasksTask',
 	});
 
 	module.exports = {

@@ -31,7 +31,7 @@ class Portal extends \Bitrix\Main\Engine\Controller
 
 		if (empty($result['title']) && empty($result['logo']))
 		{
-			$result['defaultLogo'] = $settings->getDefaultLogo();
+			$result['defaultLogo'] = $settings->getDefaultLogo()->toArray();
 		}
 
 		return $result;

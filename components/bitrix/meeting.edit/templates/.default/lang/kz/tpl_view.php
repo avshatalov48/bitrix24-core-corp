@@ -1,0 +1,20 @@
+<?php
+$MESS["ME_ACTION"] = "Жиналысты бастау";
+$MESS["ME_AGENDA"] = "Күн тәртібі";
+$MESS["ME_CHANGE"] = "ауыстыру";
+$MESS["ME_CLOSE"] = "Жиналысты аяқтау";
+$MESS["ME_COMMENTS"] = "Пікірлер";
+$MESS["ME_COPY"] = "Келесі жиналысты жасау";
+$MESS["ME_CURRENT_STATE_MSGVER_1"] = "Мәртебесі:";
+$MESS["ME_DATE_START_MSGVER_1"] = "Басталуы:";
+$MESS["ME_DESCR_TITLE"] = "Жиналыс сипаттамасы";
+$MESS["ME_EDIT_TITLE"] = "Редакциялау";
+$MESS["ME_FILES_MSGVER_1"] = "Файлдар:";
+$MESS["ME_GROUP_MSGVER_1"] = "Жоба:";
+$MESS["ME_KEEPER_MSGVER_1"] = "Хатшы";
+$MESS["ME_LIST_TITLE"] = "Жиналыстар тізіміне";
+$MESS["ME_MEMBERS"] = "Қатысушылар";
+$MESS["ME_OWNER"] = "Ұйымдастырушы";
+$MESS["ME_PLACE_MSGVER_1"] = "Орын:";
+$MESS["ME_PREPARE"] = "Жиналысты қайта бастау";
+$MESS["ME_REFUSED"] = "Қатысудан бас тартты";

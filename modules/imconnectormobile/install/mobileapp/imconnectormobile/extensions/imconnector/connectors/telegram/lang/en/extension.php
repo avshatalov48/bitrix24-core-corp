@@ -29,7 +29,7 @@ $MESS["IMCONNECTORMOBILE_TELEGRAM_REGISTRY_CONTINUE"] = "Continue";
 $MESS["IMCONNECTORMOBILE_TELEGRAM_REGISTRY_GO_TO_TELEGRAM"] = "Open Telegram";
 $MESS["IMCONNECTORMOBILE_TELEGRAM_REGISTRY_LOADER_DESCRIPTION"] = "Connecting Telegram bot to your Bitrix24. It will take a few moments";
 $MESS["IMCONNECTORMOBILE_TELEGRAM_REGISTRY_LOADER_TITLE"] = "Connect Telegram";
-$MESS["IMCONNECTORMOBILE_TELEGRAM_REGISTRY_STEP_1_DESCRIPTION"] = "Once this step is finished, you will get an access token. [URL=https://www.bitrix24.com/]How does it work?[/URL]";
+$MESS["IMCONNECTORMOBILE_TELEGRAM_REGISTRY_STEP_1_DESCRIPTION_MSGVER_1"] = "Once this step is finished, you will get an access token. [URL]How does it work?[/URL]";
 $MESS["IMCONNECTORMOBILE_TELEGRAM_REGISTRY_STEP_1_TITLE"] = "Set up a Telegram bot";
 $MESS["IMCONNECTORMOBILE_TELEGRAM_REGISTRY_STEP_2_DESCRIPTION"] = "Copy the token in the bot configuration chat and paste it below";
 $MESS["IMCONNECTORMOBILE_TELEGRAM_REGISTRY_STEP_2_TITLE"] = "Enter token";

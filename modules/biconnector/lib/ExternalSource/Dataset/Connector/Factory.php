@@ -20,6 +20,7 @@ final class Factory
 		{
 			Type::Csv => new Csv($name, $fields, $datasetInfo),
 			Type::Source1C => new Source1C($name, $fields, $datasetInfo),
+			Type::Rest => new Rest($name, $fields, $datasetInfo),
 			default => throw new SystemException("Unknown type {$type->value}"),
 		};
 	}

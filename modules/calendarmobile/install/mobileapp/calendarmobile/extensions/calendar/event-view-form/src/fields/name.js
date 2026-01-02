@@ -67,7 +67,7 @@ jn.define('calendar/event-view-form/fields/name', (require, exports, module) => 
 		{
 			return H3({
 				testId: 'calendar-event-view-form-name_CONTENT',
-				text: this.props.name,
+				text: this.props.value,
 			});
 		}
 

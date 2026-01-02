@@ -18,7 +18,6 @@
 	    this.userId = options.userId;
 	    this.taskId = options.taskId;
 	    this.guid = options.guid;
-	    this.isTabsMode = options.isTabsMode;
 	    this.canReadCommentsOnInit = true;
 	    this.timeout = 0;
 	    this.timeoutSec = 2000;
@@ -106,7 +105,7 @@
 	          list = _event$getData2[1];
 	        if (xmlId === "TASK_".concat(_this.taskId)) {
 	          _this.commentsList = list;
-	          _this.commentsList.canCheckVisibleComments = !_this.isTabsMode;
+	          _this.commentsList.canCheckVisibleComments = true;
 	          _this.unreadComments = new Map(_this.commentsList.unreadComments);
 	        }
 	      });
@@ -163,23 +162,15 @@
 	        }
 	      });
 	      BXMobileApp.addCustomEvent('onPull-tasks', function () {});
-	      if (this.isTabsMode) {
-	        BXMobileApp.addCustomEvent('tasks.task.tabs:onTabSelected', function (event) {
-	          if (event.guid === _this.guid && _this.commentsList) {
-	            _this.setCanCheckVisibleComments(event.tab === 'tasks.task.comments');
-	          }
-	        });
-	      } else {
-	        main_core.Event.bind(document, 'visibilitychange', function () {
-	          return _this.setCanCheckVisibleComments(!document.hidden);
-	        });
-	        main_core.Event.bind(window, 'pagehide', function () {
-	          return _this.setCanCheckVisibleComments(false);
-	        });
-	        main_core.Event.bind(window, 'pageshow', function () {
-	          return _this.setCanCheckVisibleComments(true);
-	        });
-	      }
+	      main_core.Event.bind(document, 'visibilitychange', function () {
+	        return _this.setCanCheckVisibleComments(!document.hidden);
+	      });
+	      main_core.Event.bind(window, 'pagehide', function () {
+	        return _this.setCanCheckVisibleComments(false);
+	      });
+	      main_core.Event.bind(window, 'pageshow', function () {
+	        return _this.setCanCheckVisibleComments(true);
+	      });
 	      BX.MobileUI.addLivefeedLongTapHandler(this.commentsBlock, {
 	        likeNodeClass: 'post-comment-control-item-like'
 	      });
@@ -187,7 +178,7 @@
 	  }, {
 	    key: "setCanCheckVisibleComments",
 	    value: function setCanCheckVisibleComments(canCheck) {
-	      if (!this.isTabsMode && canCheck && this.canReadCommentsOnInit) {
+	      if (canCheck && this.canReadCommentsOnInit) {
 	        this.canReadCommentsOnInit = false;
 	        this.readComments();
 	      }

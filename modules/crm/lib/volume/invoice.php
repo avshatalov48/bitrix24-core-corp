@@ -194,14 +194,16 @@ class Invoice
 	 */
 	public function canClearEntity()
 	{
-		$userPermissions = \CCrmPerms::GetUserPermissions($this->getOwner());
-		if (!\CCrmInvoice::CheckReadPermission(0, $userPermissions))
+		$userPermissions = Crm\Service\Container::getInstance()->getUserPermissions($this->getOwner());
+
+		if (!$userPermissions->entityType()->canReadItems(\CCrmOwnerType::Invoice))
 		{
 			$this->collectError(new Main\Error('', self::ERROR_PERMISSION_DENIED));
 
 			return false;
 		}
-		if ($userPermissions->HavePerm('INVOICE', BX_CRM_PERM_NONE, 'DELETE'))
+
+		if (!$userPermissions->entityType()->canDeleteItems(\CCrmOwnerType::Invoice))
 		{
 			$this->collectError(new Main\Error('', self::ERROR_PERMISSION_DENIED));
 
@@ -740,10 +742,7 @@ class Invoice
 			{
 				$this->setProcessOffset($invoice['INVOICE_ID']);
 
-				$entityAttr = $userPermissions->GetEntityAttr('INVOICE', array($invoice['INVOICE_ID']));
-				$attr = $entityAttr[$invoice['INVOICE_ID']];
-
-				if($userPermissions->CheckEnityAccess('INVOICE', 'DELETE', $attr))
+				if ($this->canDeleteItem(\CCrmOwnerType::Invoice, $invoice['INVOICE_ID']))
 				{
 					$connection->startTransaction();
 

@@ -4,6 +4,7 @@ if (!defined("B_PROLOG_INCLUDED") || B_PROLOG_INCLUDED !== true)
 	die();
 }
 
+use Bitrix\Disk\Uf\Integration\DiskUploaderController;
 use Bitrix\Main\Loader;
 use Bitrix\Main\Localization\Loc;
 use Bitrix\Main\Page\Asset;
@@ -50,6 +51,27 @@ $arParams =& $helper->getComponent()->arParams; // make $arParams the same varia
 <?php if(!$helper->checkHasFatals()):?>
 
 	<?php
+	$collectedFilesIds = array_merge(...array_values($arResult['NEW_FILE_IDS']));
+	$files = DiskUploaderController::getFileInfo($collectedFilesIds);
+
+	$map = [];
+	foreach ($files as $file)
+	{
+		$map[$file['serverFileId']] = $file;
+	}
+
+	foreach ($arResult['NEW_FILE_IDS'] as $nodeId => $nodeFileIds)
+	{
+		foreach ($nodeFileIds as $nodeFileId)
+		{
+			if (isset($map[$nodeFileId]))
+			{
+				$arResult['ATTACHMENTS'][$nodeId][] = $map[$nodeFileId];
+			}
+		}
+	}
+
+
 	foreach ($arResult['UF_CHECKLIST_FILES'] as $id => $field)
 	{
 		ob_start();

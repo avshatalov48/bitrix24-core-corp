@@ -1,0 +1,21 @@
+<?php
+$MESS["CRM_PROCESS_ENTITY_COMPANY_BECOME_RESPONSIBLE"] = "Сіз \"<a href=\"#URL#\" class=\"bx-notifier-item-action\">#TITLE#</a>\" компаниясы үшін жауапты ретінде тағайындалдыңыз";
+$MESS["CRM_PROCESS_ENTITY_COMPANY_NO_LONGER_RESPONSIBLE"] = "Сіз \"<a href=\"#URL#\" class=\"bx-notifier-item-action\">#TITLE#</a>\" компаниясы үшін жауапты болуды тоқтаттыңыз";
+$MESS["CRM_PROCESS_ENTITY_CONTACT_BECOME_RESPONSIBLE"] = "Сіз \"<a href=\"#URL#\" class=\"bx-notifier-item-action\">#TITLE#</a>\" байланысы үшін жауапты ретінде тағайындалдыңыз";
+$MESS["CRM_PROCESS_ENTITY_CONTACT_NO_LONGER_RESPONSIBLE"] = "Сіз \"<a href=\"#URL#\" class=\"bx-notifier-item-action\">#TITLE#</a>\" байланысы үшін жауапты болуды тоқтаттыңыз";
+$MESS["CRM_PROCESS_ENTITY_DEAL_BECOME_RESPONSIBLE"] = "Сіз \"<a href=\"#URL#\" class=\"bx-notifier-item-action\">#TITLE#</a>\" мәмілесі үшін жауапты ретінде тағайындалдыңыз";
+$MESS["CRM_PROCESS_ENTITY_DEAL_NO_LONGER_RESPONSIBLE"] = "Сіз \"<a href=\"#URL#\" class=\"bx-notifier-item-action\">#TITLE#</a>\" мәмілесі үшін жауапты болуды тоқтаттыңыз";
+$MESS["CRM_PROCESS_ENTITY_DEFAULT_BECOME_RESPONSIBLE"] = "Сіз \"<a href=\"#URL#\" class=\"bx-notifier-item-action\">#TITLE#</a>\" түріндегі элемент үшін жауапты ретінде тағайындалдыңыз";
+$MESS["CRM_PROCESS_ENTITY_DEFAULT_NO_LONGER_RESPONSIBLE"] = "Сіз \"#ENTITY_TYPE_CAPTION#\" \"<a href=\"#URL#\" class=\"bx-notifier-item-action\">#TITLE#</a>\" түріндегі элемент үшін жауапты болуды тоқтаттыңыз";
+$MESS["CRM_PROCESS_ENTITY_DYNAMIC_BECOME_RESPONSIBLE"] = "Сіз \"#ENTITY_TYPE_CAPTION#\" \"<a href=\"#URL#\" class=\"bx-notifier-item-action\">#TITLE#</a>\" смарт-процесс  элементі үшін жауапты болып тағайындалдыңыз";
+$MESS["CRM_PROCESS_ENTITY_DYNAMIC_NO_LONGER_RESPONSIBLE"] = "Сіз \"#ENTITY_TYPE_CAPTION#\" \"<a href=\"#URL#\" class=\"bx-notifier-item-action\">#TITLE#</a>\" смарт-процесс  элементі үшін жауапты болуды тоқтаттыңыз";
+$MESS["CRM_PROCESS_ENTITY_LEAD_BECOME_RESPONSIBLE"] = "Сіз \"<a href=\"#URL#\" class=\"bx-notifier-item-action\">#TITLE#</a>\" лиді үшін жауапты ретінде тағайындалдыңыз";
+$MESS["CRM_PROCESS_ENTITY_LEAD_NO_LONGER_RESPONSIBLE"] = "Сіз \"<a href=\"#URL#\" class=\"bx-notifier-item-action\">#TITLE#</a>\" лиді үшін жауапты болуды тоқтаттыңыз";
+$MESS["CRM_PROCESS_ENTITY_ORDER_BECOME_RESPONSIBLE"] = "Сіз \"<a href=\"#URL#\" class=\"bx-notifier-item-action\">#TITLE#</a>\" тапсырысы үшін жауапты ретінде тағайындалдыңыз";
+$MESS["CRM_PROCESS_ENTITY_ORDER_NO_LONGER_RESPONSIBLE"] = "Сіз \"<a href=\"#URL#\" class=\"bx-notifier-item-action\">#TITLE#</a>\" тапсырысы үшін жауапты болуды тоқтаттыңыз";
+$MESS["CRM_PROCESS_ENTITY_QUOTE_BECOME_RESPONSIBLE_MSGVER_1"] = "Сіз \"<a href=\"#URL#\" class=\"bx-notifier-item-action\">#TITLE#</a>\" ұсынысы үшін жауапты ретінде тағайындалдыңыз";
+$MESS["CRM_PROCESS_ENTITY_QUOTE_NO_LONGER_RESPONSIBLE"] = "Сіз \"<a href=\"#URL#\" class=\"bx-notifier-item-action\">#TITLE#</a>\" ұсынысы үшін жауапты болуды тоқтаттыңыз";
+$MESS["CRM_PROCESS_ENTITY_RECURRING_DEAL_BECOME_RESPONSIBLE"] = "Сіз \"<a href=\"#URL#\" class=\"bx-notifier-item-action\">#TITLE#</a>\" мәміле қалыбы үшін жауапты ретінде тағайындалдыңыз";
+$MESS["CRM_PROCESS_ENTITY_RECURRING_DEAL_NO_LONGER_RESPONSIBLE"] = "Сіз \"<a href=\"#URL#\" class=\"bx-notifier-item-action\">#TITLE#</a>\" мәміле қалыбы үшін жауапты болуды тоқтаттыңыз";
+$MESS["CRM_PROCESS_ENTITY_SMART_INVOICE_BECOME_RESPONSIBLE"] = "Сіз \"<a href=\"#URL#\" class=\"bx-notifier-item-action\">#TITLE#</a>\" шоты үшін жауапты ретінде тағайындалдыңыз";
+$MESS["CRM_PROCESS_ENTITY_SMART_INVOICE_NO_LONGER_RESPONSIBLE"] = "Сіз \"<a href=\"#URL#\" class=\"bx-notifier-item-action\">#TITLE#</a>\" шоты үшін жауапты болуды тоқтаттыңыз";

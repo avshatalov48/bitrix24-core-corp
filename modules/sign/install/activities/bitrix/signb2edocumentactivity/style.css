@@ -1,0 +1,20 @@
+.bizproc-automation-popup-section {
+	display: flex;
+	align-items: flex-end;
+}
+
+.bizproc-automation-popup-section > button {
+	bottom: 11px;
+	height: 36px;
+}
+
+.bizproc-automation-popup-settings,
+.bizproc-automation-popup-settings > select {
+	width: 100% !important;
+}
+
+.bizproc-automation-popup-settings .ui-hint {
+	width: 8px;
+	position: relative;
+	top: 3px;
+}

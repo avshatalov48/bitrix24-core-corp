@@ -1,0 +1,54 @@
+.booking-wait-list-item {
+	--wait-list-item-bg: rgb(135, 186, 202);
+
+	height: 50px;
+	transition-duration: var(--booking-animation-duration);
+	transition-timing-function: var(--booking-animation-function);
+}
+
+.no-transition {
+	transition: none !important;
+}
+
+.embed-editing-mode.booking-wait-list .booking-wait-list-item:not(.--accent,.--disabled) {
+	filter: opacity(.75);
+}
+
+.booking-wait-list-item .booking--booking-base-inner {
+	background: var(--wait-list-item-bg);
+}
+
+.booking-wait-list-item.--accent .booking--booking-base-inner {
+	box-shadow: 0 7px 14px rgba(0, 0, 0, 0.11);
+	outline: 2px solid rgba(93, 145, 161, 1);
+}
+
+.ui-draggable--draggable.--deleting .booking-wait-list-item {
+	scale: 0.5;
+}
+
+.ui-draggable--draggable .booking-wait-list-item {
+	inset: 0;
+	pointer-events: none;
+	transition-property: scale, transform;
+}
+
+.ui-draggable--type-move .booking--booking-base-inner {
+	cursor: grabbing;
+}
+
+.booking-wait-list-item.--drag-source {
+	--wait-list-item-bg: rgba(135, 186, 202, 0.2);
+}
+
+.booking-wait-list-item.--drag-source .booking--booking-base-inner {
+	outline: 1px dashed rgba(135, 186, 202, 0.6);
+}
+
+.booking--wait-list-item--space {
+	flex-grow: 1;
+}
+
+.booking--wait-list-item-actions:hover {
+	border-radius: 0 6px 6px 0;
+}

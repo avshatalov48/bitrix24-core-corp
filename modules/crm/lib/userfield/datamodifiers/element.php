@@ -640,7 +640,7 @@ class Element
 		}
 	}
 
-	public static function setCompanies(array &$result, array $params, $userPermissions): void
+	public static function setCompanies(array &$result, array $params): void
 	{
 		if(in_array('COMPANY', $params['ENTITY_TYPE'], true))
 		{
@@ -649,8 +649,7 @@ class Element
 			$topIdList = CCrmCompany::GetTopIDsInCategory(
 				0,
 				self::ELEMENTS_LIMIT,
-				'DESC',
-				$userPermissions
+				'DESC'
 			);
 
 			if(empty($topIdList))
@@ -721,7 +720,7 @@ class Element
 		}
 	}
 
-	public static function setDeals(array &$result, array $params, $userPermissions): void
+	public static function setDeals(array &$result, array $params): void
 	{
 		if(in_array('DEAL', $params['ENTITY_TYPE'], true))
 		{
@@ -731,8 +730,7 @@ class Element
 			{
 				$topIdList = CCrmDeal::GetTopIDs(
 					self::ELEMENTS_LIMIT,
-					'DESC',
-					$userPermissions
+					'DESC'
 				);
 
 				if(empty($topIdList))
@@ -788,7 +786,7 @@ class Element
 		}
 	}
 
-	public static function setQuotes(array &$result, array $params, $userPermissions): void
+	public static function setQuotes(array &$result, array $params): void
 	{
 		if(in_array('QUOTE', $params['ENTITY_TYPE'], true))
 		{
@@ -798,8 +796,7 @@ class Element
 			{
 				$topIdList = CCrmQuote::GetTopIDs(
 					self::ELEMENTS_LIMIT,
-					'DESC',
-					$userPermissions
+					'DESC'
 				);
 
 				if(empty($topIdList))
@@ -855,7 +852,7 @@ class Element
 		}
 	}
 
-	public static function setProducts(array &$result, array $params, $userPermissions): void
+	public static function setProducts(array &$result, array $params): void
 	{
 		if(in_array('PRODUCT', $params['ENTITY_TYPE'], true))
 		{
@@ -923,7 +920,7 @@ class Element
 		}
 	}
 
-	public static function setOrders(array &$result, array $params, $userPermissions): void
+	public static function setOrders(array &$result, array $params): void
 	{
 		if(in_array('ORDER', $params['ENTITY_TYPE'], true))
 		{
@@ -955,7 +952,7 @@ class Element
 		}
 	}
 
-	public static function setDynamics(array &$result, array $params, $userPermissions): void
+	public static function setDynamics(array &$result, array $params): void
 	{
 		foreach($params['ENTITY_TYPE'] as $entityTypeName)
 		{
@@ -1016,12 +1013,10 @@ class Element
 	}
 
 	/**
-	 * @todo remove $userPermissions later, now only for compatibility with the Mobile module
 	 * @param array $supportedTypes
-	 * @param array $userPermissions
 	 * @return array
 	 */
-	public static function getEntityTypes(array $supportedTypes, $userPermissions = null): array
+	public static function getEntityTypes(array $supportedTypes): array
 	{
 		$entityTypes = [];
 		foreach ($supportedTypes as $typeId => $type)

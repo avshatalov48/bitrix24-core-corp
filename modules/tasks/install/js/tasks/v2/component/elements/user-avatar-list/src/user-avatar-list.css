@@ -1,0 +1,66 @@
+.b24-user-avatar-list {
+	display: flex;
+	margin-left: 8px;
+}
+
+.b24-user-avatar-list-item {
+	position: relative;
+	z-index: 1;
+	margin-left: -8px;
+	border-radius: var(--ui-border-radius-circle);
+	border: var(--ui-border-width-thin) solid var(--ui-color-base-8);
+}
+
+.b24-user-avatar .ui-avatar {
+	pointer-events: none;
+}
+
+.b24-user-avatar-list-more {
+	display: flex;
+	align-items: center;
+	justify-content: center;
+	color: var(--ui-color-base-3);
+	font-size: var(--ui-font-size-sm);
+	font-weight: var(--ui-font-weight-normal);
+	margin-left: 3px;
+	cursor: pointer;
+}
+
+.b24-user-avatar-list-users {
+	position: relative;
+	display: flex;
+	flex-direction: column;
+	gap: 8px;
+}
+
+.b24-user-avatar-list-users.--popup {
+	overflow: auto;
+	gap: 10px;
+	font-size: var(--ui-font-size-lg);
+	--scrollbar-width: 5px;
+	overflow-y: scroll;
+	margin-right: calc(-1* var(--scrollbar-width));
+}
+
+@supports not selector(::-webkit-scrollbar) {
+	.b24-user-avatar-list-users.--popup {
+		scrollbar-color: rgba(0, 0, 0, 0.11) transparent;
+		scrollbar-width: thin;
+	}
+}
+
+.b24-user-avatar-list-users.--popup::-webkit-scrollbar {
+	background-color: rgba(0, 0, 0, 0);
+	width: var(--scrollbar-width);
+}
+
+.b24-user-avatar-list-users.--popup::-webkit-scrollbar-track {
+	background: transparent;
+}
+
+.b24-user-avatar-list-users.--popup::-webkit-scrollbar-thumb {
+	background: rgba(0, 0, 0, 0.11);
+	border-radius: 5px;
+	cursor: pointer;
+	transition: .2s;
+}

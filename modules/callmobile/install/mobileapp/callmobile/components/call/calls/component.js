@@ -2156,6 +2156,7 @@
 
 	window.CallUtil = new CCallUtil();
 	window.callEngine = new CallEngine();
+	window.tokenManager = new TokenManager();
 	window.callController = new CallController();
 
 	window.mtelephony = new MobileTelephony();

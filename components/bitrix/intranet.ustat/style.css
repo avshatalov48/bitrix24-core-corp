@@ -1245,52 +1245,6 @@
 
 .pulse-nav-item-wrap-active .pulse-nav-item-corner {display: block;}
 
-.pulse-nav-item-footer {
-	background-color: rgba(225, 229, 231, .9);
-	-webkit-box-shadow: 0 0 1px 1px rgba(0, 0, 0, 0.2);
-	box-shadow: 0 0 1px 1px rgba(0, 0, 0, 0.2);
-	bottom: 0;
-	border-radius: 0 0 4px 4px;
-	color: #1a65b2;
-	height: 21px;
-	font-size: 13px;
-	font-weight: var(--ui-font-weight-bold);
-	opacity: 0;
-	padding: 7px 10px 0 11px;
-	position: absolute;
-	text-transform: none;
-	width: 115px;
-	z-index: 1;
-
-	-webkit-transition: bottom 0.2s linear;
-	-moz-transition: bottom 0.2s linear;
-	-ms-transition: bottom 0.2s linear;
-	transition: bottom 0.2s linear;
-}
-.pulse-nav-item-wrap:hover .pulse-nav-item-footer,
-.pulse-nav-item-wrap-active .pulse-nav-item-footer {
-	bottom: -24px;
-	opacity: 1;
-}
-
-.pulse-nav-item-footer:hover {
-	text-decoration: underline;
-	cursor: pointer;
-}
-
-
-.pulse-nav-item-footer-icon {
-	background: url(images/pulse-sprite.png?1408) no-repeat center -583px;
-	display: inline-block;
-	height: 8px;
-	margin-top: 6px;
-	margin-left: 4px;
-	vertical-align: top;
-	width: 4px;
-}
-
-
-
 .pulse-cont-shadow {
 	background-color: #fff;
 	-webkit-box-shadow: 0 0 1px 1px rgba(0, 0, 0, .12);

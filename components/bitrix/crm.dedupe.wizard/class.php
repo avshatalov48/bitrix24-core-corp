@@ -27,8 +27,6 @@ class CCrmDedupeWizardComponent extends CBitrixComponent
 	protected $entityTypeID = CCrmOwnerType::Undefined;
 	/** @var string */
 	protected $entityTypeName = '';
-	/** @var  CCrmPerms|null */
-	private $userPermissions = null;
 
 	protected function getHelper(): CCrmDedupeWizardComponentHelper
 	{
@@ -46,7 +44,6 @@ class CCrmDedupeWizardComponent extends CBitrixComponent
 	protected function initUser(): void
 	{
 		$this->userID = CCrmSecurityHelper::GetCurrentUserID();
-		$this->userPermissions = CCrmPerms::GetCurrentUserPermissions();
 	}
 
 	protected function initEntityType(): void
@@ -62,21 +59,9 @@ class CCrmDedupeWizardComponent extends CBitrixComponent
 	protected function checkPermissions(): bool
 	{
 
-		$hasReadPermission = Crm\Security\EntityAuthorization::checkReadPermission(
-			$this->entityTypeID,
-			0,
-			$this->userPermissions
-		);
-		$hasUpdatePermission = Crm\Security\EntityAuthorization::checkUpdatePermission(
-			$this->entityTypeID,
-			0,
-			$this->userPermissions
-		);
-		$hasDeletePermission = Crm\Security\EntityAuthorization::checkDeletePermission(
-			$this->entityTypeID,
-			0,
-			$this->userPermissions
-		);
+		$hasReadPermission = \Bitrix\Crm\Service\Container::getInstance()->getUserPermissions()->entityType()->canReadItems($this->entityTypeID);
+		$hasUpdatePermission = \Bitrix\Crm\Service\Container::getInstance()->getUserPermissions()->entityType()->canUpdateItems($this->entityTypeID);
+		$hasDeletePermission = \Bitrix\Crm\Service\Container::getInstance()->getUserPermissions()->entityType()->canDeleteItems($this->entityTypeID);
 
 		return ($hasReadPermission && $hasUpdatePermission && $hasDeletePermission &&
 			Crm\Restriction\RestrictionManager::isDuplicateControlPermitted());
@@ -271,7 +256,7 @@ class CCrmDedupeWizardComponent extends CBitrixComponent
 		}
 
 		$enableFlag = $this->request->get('enable');
-		if(is_string($enableFlag) && $this->userPermissions->HavePerm('CONFIG', BX_CRM_PERM_CONFIG, 'WRITE'))
+		if (is_string($enableFlag) && \Bitrix\Crm\Service\Container::getInstance()->getUserPermissions()->isCrmAdmin())
 		{
 			Crm\Settings\LayoutSettings::getCurrent()->enableDedupeWizard(strcasecmp($enableFlag, 'Y') == 0);
 		}

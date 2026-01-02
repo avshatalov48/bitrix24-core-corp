@@ -22,7 +22,7 @@ class MyStamp extends Configuration
 		$this->memberService = $memberService ?? Container::instance()->getMemberService();
 	}
 
-	function loadData(Item\Block $block, Item\Document $document, ?Item\Member $member = null): array
+	public function loadData(Item\Block $block, Item\Document $document, ?Item\Member $member = null): array
 	{
 		$data = $block->data;
 
@@ -35,8 +35,7 @@ class MyStamp extends Configuration
 		if ($fileId !== null)
 		{
 			$file = $this->fileRepository->getById($fileId)
-				?? $this->memberService->getStampFileFromMemberOrEntity($member)
-			;
+				?? $this->memberService->getStampFileFromMemberOrEntity($member);
 		}
 		else
 		{

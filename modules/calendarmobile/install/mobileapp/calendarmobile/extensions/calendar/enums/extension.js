@@ -15,6 +15,7 @@ jn.define('calendar/enums', (require, exports, module) => {
 		SHARED_CRM: '#shared_crm#',
 		COLLAB: '#collab#',
 		SHARED_COLLAB: '#shared_collab#',
+		BOOKING: '#booking#',
 	};
 
 	const EventFormFields = {
@@ -30,6 +31,9 @@ jn.define('calendar/enums', (require, exports, module) => {
 		RECURRENCE_RULE: 'recurrence-rule',
 		DOWNLOAD_ICS: 'download-ics',
 		FILES: 'files',
+		ACCESSIBILITY: 'accessibility',
+		SPECIAL: 'special',
+		ENTITY_RELATION: 'entity-relation',
 	};
 
 	const EventMeetingStatus = {
@@ -43,6 +47,7 @@ jn.define('calendar/enums', (require, exports, module) => {
 		BUSY: 'busy',
 		FREE: 'free',
 		ABSENT: 'absent',
+		QUEST: 'quest',
 	};
 
 	const EventImportance = {
@@ -56,6 +61,13 @@ jn.define('calendar/enums', (require, exports, module) => {
 		ALL: 'all',
 	};
 
+	const RecursionFrequency = {
+		DAILY: 'DAILY',
+		WEEKLY: 'WEEKLY',
+		MONTHLY: 'MONTHLY',
+		YEARLY: 'YEARLY',
+	};
+
 	const PullCommand = {
 		EDIT_EVENT: 'edit_event',
 		DELETE_EVENT: 'delete_event',
@@ -67,6 +79,7 @@ jn.define('calendar/enums', (require, exports, module) => {
 		HANDLE_SUCCESSFUL_CONNECTION: 'handle_successful_connection',
 		UPDATE_USER_COUNTERS: 'update_user_counters',
 		UPDATE_GROUP_COUNTERS: 'update_group_counters',
+		HIDDEN_SECTIONS_UPDATED: 'hidden_sections_updated',
 	};
 
 	const FeatureId = {
@@ -113,6 +126,8 @@ jn.define('calendar/enums', (require, exports, module) => {
 		ICLOUD: 'icloud',
 		OFFICE365: 'office365',
 		ARCHIVE: 'archive',
+		EXCHANGE: 'exchange',
+		CALDAV: 'caldav',
 	};
 
 	const EventPermissionActions = {
@@ -126,6 +141,21 @@ jn.define('calendar/enums', (require, exports, module) => {
 		DELETE: 'delete',
 	};
 
+	const AhaMomentEvent = {
+		SYNC_ERROR: 'calendar_sync_error',
+		NEW_MENU: 'calendar_new_menu',
+	};
+
+	const ViewMode = {
+		BASE: 'base',
+		TABS: 'tabs',
+	};
+
+	const EntityRelationType = {
+		DEAL: 'deal',
+		BOOKING: 'booking',
+	};
+
 	module.exports = {
 		CalendarType,
 		EventTypes,
@@ -134,6 +164,7 @@ jn.define('calendar/enums', (require, exports, module) => {
 		EventAccessibility,
 		EventImportance,
 		RecursionMode,
+		RecursionFrequency,
 		PullCommand,
 		FeatureId,
 		Counters,
@@ -142,5 +173,8 @@ jn.define('calendar/enums', (require, exports, module) => {
 		SectionPermissionActions,
 		SectionExternalTypes,
 		EventPermissionActions,
+		AhaMomentEvent,
+		ViewMode,
+		EntityRelationType,
 	};
 });

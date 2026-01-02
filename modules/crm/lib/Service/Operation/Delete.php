@@ -32,7 +32,7 @@ class Delete extends Operation
 		$result = new Result();
 
 		$userId = $this->getContext()->getUserId();
-		if (!Container::getInstance()->getUserPermissions($userId)->canDeleteItem($this->item))
+		if (!Container::getInstance()->getUserPermissions($userId)->item()->canDeleteItem($this->item))
 		{
 			$title =  $this->item->getHeading() ?? '';
 			$message = Loc::getMessage(
@@ -147,27 +147,8 @@ class Delete extends Operation
 
 	protected function runAutomation(): Result
 	{
-		$entityTypeId = $this->itemBeforeSave->getEntityTypeId();
-		$entityId = $this->itemBeforeSave->getId();
-		$documentId = $this->bizProcHelper::ResolveDocumentId($entityTypeId, $entityId);
-
-		$deleteErrors = [];
-		\CBPDocument::OnDocumentDelete($documentId, $deleteErrors);
-		\Bitrix\Crm\Automation\QR\QrTable::deleteByEntity($entityTypeId, $entityId);
-
-		$result = new Result();
-		foreach ($deleteErrors as $error)
-		{
-			$result->addError(
-				new Error(
-					$error['message'] ?? '',
-					$error['code'] ?? 0,
-					$error['file'] ?? ''
-				)
-			);
-		}
-
-		return $result;
+		// There is no need to run automation during deleting.
+		return new Result();
 	}
 
 	public function processFieldsAfterSave(): Result
@@ -225,7 +206,7 @@ class Delete extends Operation
 	protected function updatePermissions(): void
 	{
 		$item = $this->getItemBeforeSave();
-		$permissionEntityType = \Bitrix\Crm\Service\UserPermissions::getItemPermissionEntityType($item);
+		$permissionEntityType = \Bitrix\Crm\Category\PermissionEntityTypeHelper::getPermissionEntityTypeForItem($item);
 
 		$controller = \Bitrix\Crm\Security\Manager::resolveController($permissionEntityType);
 		$controller

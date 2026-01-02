@@ -5,6 +5,7 @@ namespace Bitrix\Tasks\Flow;
 use ArrayAccess;
 use ArrayIterator;
 use Bitrix\Main\Type\Contract\Arrayable;
+use Bitrix\Main\Type\Contract\Jsonable;
 use Bitrix\Tasks\Flow\Distribution\FlowDistributionType;
 use Countable;
 use IteratorAggregate;
@@ -15,7 +16,7 @@ use IteratorAggregate;
  * @method array getGroupIdList()
  */
 
-class FlowCollection implements IteratorAggregate, Arrayable, Countable, ArrayAccess
+class FlowCollection implements IteratorAggregate, Arrayable, Jsonable, Countable, ArrayAccess
 {
 	/** @var Flow[]  */
 	private array $flows = [];
@@ -43,6 +44,11 @@ class FlowCollection implements IteratorAggregate, Arrayable, Countable, ArrayAc
 	public function toArray(): array
 	{
 		return array_map(static fn (Flow $flow): array => $flow->toArray(), $this->flows);
+	}
+
+	public function toJson($options = 0): array
+	{
+		return array_map(static fn (Flow $flow): array => $flow->toJson(), $this->flows);
 	}
 
 	public function getFlows(): array

@@ -62,32 +62,70 @@ class CounterRepository implements CounterRepositoryInterface
 		$connection->query($sql);
 	}
 
-	public function down(int $entityId, CounterDictionary $type, ?int $userId = null): void
+	public function down(int $entityId, CounterDictionary $type, int|null $userId = null): void
 	{
-		unset($this->cache[$userId]);
+		$this->downMultiple([$entityId], [$type], $userId);
+	}
 
-		$filter = [
-			'=ENTITY_ID' => $entityId,
-			'=TYPE' => $type->value,
-		];
+	/**
+	 * @param int[] $entityIds
+	 * @param CounterDictionary[] $types
+	 */
+	public function downMultiple(array $entityIds, array $types, int|null $userId = null): void
+	{
+		if (empty($entityIds) && empty($types) && $userId === null)
+		{
+			return;
+		}
+
+		if ($userId !== null)
+		{
+			unset($this->cache[$userId]);
+		}
+		else
+		{
+			// TODO: fix me
+			// here we can not determine which users affected by removed counters
+			// so for current cache structure, need to clear whole cache
+			// alternatively we can make query by filter and get affected users
+			$this->cache = [];
+		}
+
+		$filter = [];
+
+		if (!empty($entityIds))
+		{
+			$filter['=ENTITY_ID'] = $entityIds;
+		}
+
+		if (!empty($types))
+		{
+			$filter['=TYPE'] = array_map(static fn (CounterDictionary $type) => $type->value, $types);
+		}
 
 		if ($userId)
 		{
 			$filter['=USER_ID'] = $userId;
 		}
 
-		ScorerTable::deleteByFilter($filter);
+		$this->deleteByFilter($filter);
 	}
 
-	public function getUsersByCounterType(int $entityId, CounterDictionary $type): array
+	public function getUsersByCounterType(array $entityIds, array $types): array
 	{
+		if (empty($entityIds) || empty($types))
+		{
+			return [];
+		}
+
 		return ScorerTable::query()
 			->setSelect(['USER_ID'])
-			->where('TYPE', '=', $type->value)
-			->where('ENTITY_ID', '=', $entityId)
+			->setDistinct()
+			->whereIn('TYPE', array_map(static fn (CounterDictionary $type) => $type->value, $types))
+			->whereIn('ENTITY_ID', $entityIds)
 			->exec()
 			->fetchAll()
-			;
+		;
 	}
 
 	public function getList(int $userId): array
@@ -97,6 +135,11 @@ class CounterRepository implements CounterRepositoryInterface
 			'unConfirmed' => $this->get($userId, CounterDictionary::BookingUnConfirmed),
 			'delayed' => $this->get($userId, CounterDictionary::BookingDelayed),
 		];
+	}
+
+	private function deleteByFilter(array $filter): void
+	{
+		ScorerTable::deleteByFilter($filter);
 	}
 
 	private function getTotal(int $userId): int

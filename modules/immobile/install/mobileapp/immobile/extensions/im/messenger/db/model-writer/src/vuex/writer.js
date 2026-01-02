@@ -4,7 +4,8 @@
  * @module im/messenger/db/model-writer/vuex/writer
  */
 jn.define('im/messenger/db/model-writer/vuex/writer', (require, exports, module) => {
-	const { Logger } = require('im/messenger/lib/logger');
+	const { getLoggerWithContext } = require('im/messenger/lib/logger');
+	const logger = getLoggerWithContext('writer--base', 'Writer');
 
 	class Writer
 	{
@@ -19,10 +20,11 @@ jn.define('im/messenger/db/model-writer/vuex/writer', (require, exports, module)
 		 *  user: UserRepository,
 		 *  message: MessageRepository,
 		 *  tempMessage: TempMessageRepository,
-		 *  reaction: ReactionRepository
-		 *  queue: QueueRepository
-		 *  pinMessage: PinMessageRepository
-		 *  sidebarFile: SidebarFileRepository
+		 *  reaction: ReactionRepository,
+		 *  queue: QueueRepository,
+		 *  pinMessage: PinMessageRepository,
+		 *  comment: CommentRepository,
+		 *  vote: VoteRepository,
 		 * }} options.repository
 		 */
 		constructor(options)
@@ -91,7 +93,7 @@ jn.define('im/messenger/db/model-writer/vuex/writer', (require, exports, module)
 				return true;
 			}
 
-			Logger.error('Writer: invalid mutation skipped: ', mutation);
+			logger.error('checkIsValidMutation invalid mutation: ', mutation);
 
 			return false;
 		}

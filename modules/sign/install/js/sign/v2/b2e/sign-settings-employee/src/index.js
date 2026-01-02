@@ -132,6 +132,7 @@ export class B2EEmployeeSignSettings
 					},
 					company: currentTemplateSelected.company,
 					fields: signSettings.#stepsContext.fields,
+					isOnboarding: false,
 				});
 
 				const layout = submitDocumentInfo.getLayout();

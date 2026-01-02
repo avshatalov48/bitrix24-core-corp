@@ -247,6 +247,44 @@ class StatusTable extends Entity\DataManager
 		return $result;
 	}
 
+	public static function onUpdate(Event $event): EventResult
+	{
+		$result = new EventResult();
+
+		$id = $event->getParameter('id');
+		$status = static::getById($id)->fetch();
+		$data = $event->getParameter('fields');
+
+		if (!isset($data['SORT']))
+		{
+			return $result;
+		}
+
+		$entityId = $status['ENTITY_ID'] ?? null;
+		$entity = \CCrmStatus::GetEntityTypes()[$entityId] ?? null;
+		if (!$entity)
+		{
+			return $result;
+		}
+
+		$entityTypeId = $entity['ENTITY_TYPE_ID'] ?? null;
+		if (!$entityTypeId)
+		{
+			return $result;
+		}
+		$entityScope = $entity['FIELD_ATTRIBUTE_SCOPE'] ?? '';
+
+		FieldAttributeManager::processPhaseSortModification(
+			$status['STATUS_ID'],
+			$data['SORT'],
+			$entityTypeId,
+			$entityScope,
+			static::getStatusesByEntityId($entityId)
+		);
+
+		return $result;
+	}
+
 	public static function onAfterUpdate(Event $event): EventResult
 	{
 		$result = new EventResult();

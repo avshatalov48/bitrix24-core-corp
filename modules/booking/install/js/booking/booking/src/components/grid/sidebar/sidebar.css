@@ -1,11 +1,31 @@
 .booking-booking-sidebar {
-	box-sizing: border-box;
 	position: absolute;
 	z-index: 12;
+	box-sizing: border-box;
+	max-width: 267px;
+	overflow: hidden;
 	top: 55px;
 	right: 0;
+	bottom: 0;
+	display: flex;
+	flex-direction: column;
 	padding: 15px;
 	pointer-events: none;
 	transform-origin: top right;
-	transform: scale(calc(260 / 300));
+	cursor: default;
+}
+
+.booking-sidebar-button {
+	display: flex;
+	cursor: pointer;
+}
+
+.booking-sidebar-button .ui-icon-set {
+	--ui-icon-set__icon-color: var(--ui-color-base-40);
+	--ui-icon-set__icon-size: 16px;
+}
+
+.booking-sidebar-button:hover {
+	box-shadow: inset 0 0 999px rgba(0, 0, 0, 0.03);
+	border-radius: 4px;
 }

@@ -116,7 +116,7 @@ jn.define('sign/grid', (require, exports, module) => {
 				actionParams: {
 					loadItems: {
 						filterParams: this.getFilterParams(),
-					}
+					},
 				},
 				actionCallbacks: {
 					loadItems: this.#onItemsLoaded,

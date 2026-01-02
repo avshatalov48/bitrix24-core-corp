@@ -798,12 +798,12 @@ class Queue
 				}
 				else
 				{
-					$tmUser->GetCurrentInfo(true); // need for reload cache
-					if ((string)$tmUser->State() === 'OPENED')
+					$tmUserStatus = $tmUser->getCurrentRecordStatus();
+					if ($tmUserStatus === 'OPENED')
 					{
 						$result = true;
 					}
-					elseif((string)$tmUser->State() === 'PAUSED')
+					elseif($tmUserStatus === 'PAUSED')
 					{
 						if($ignorePause === true)
 						{

@@ -4,6 +4,7 @@
 jn.define('layout/ui/product-grid/components/price-details', (require, exports, module) => {
 	const { Loc } = require('loc');
 	const AppTheme = require('apptheme');
+	const { Money, MoneyView } = require('layout/ui/money');
 
 	class PriceDetails extends LayoutComponent
 	{

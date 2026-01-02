@@ -11,7 +11,7 @@ final class AutomatedSolutionList extends AbstractPermissions
 
 	protected function hasPermissions(): bool
 	{
-		return $this->userPermissions->isAutomatedSolutionsAdmin();
+		return $this->userPermissions->automatedSolution()->isAllAutomatedSolutionsAdmin();
 	}
 
 	protected function title(): string

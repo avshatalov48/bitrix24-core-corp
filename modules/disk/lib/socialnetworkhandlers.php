@@ -24,7 +24,11 @@ class SocialnetworkHandlers
 		}
 
 		$user = User::buildFromArray($fields);
-		Driver::getInstance()->addUserStorageByObject($user);
+
+		if (!$user->isBotUser())
+		{
+			Driver::getInstance()->addUserStorageByObject($user);
+		}
 	}
 
 	/**

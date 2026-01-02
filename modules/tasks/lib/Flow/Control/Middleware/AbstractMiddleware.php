@@ -2,7 +2,7 @@
 
 namespace Bitrix\Tasks\Flow\Control\Middleware;
 
-use Bitrix\Tasks\AbstractCommand;
+use Bitrix\Tasks\Flow\AbstractCommand;
 
 abstract class AbstractMiddleware implements MiddlewareInterface
 {

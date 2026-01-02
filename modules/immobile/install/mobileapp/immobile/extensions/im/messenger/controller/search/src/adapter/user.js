@@ -4,7 +4,8 @@
 jn.define('im/messenger/controller/search/adapter/user', (require, exports, module) => {
 	const { serviceLocator } = require('im/messenger/lib/di/service-locator');
 	const { SelectorDialogListAdapter } = require('im/chat/selector/adapter/dialog-list');
-	const { ChatTitle, ChatAvatar } = require('im/messenger/lib/element');
+	const { ChatTitle } = require('im/messenger/lib/element/chat-title');
+	const { ChatAvatar } = require('im/messenger/lib/element/chat-avatar');
 	const { ObjectUtils } = require('im/messenger/lib/utils');
 
 	class UserAdapter extends SelectorDialogListAdapter
@@ -58,10 +59,24 @@ jn.define('im/messenger/controller/search/adapter/user', (require, exports, modu
 				return true;
 			});
 
-			const itemsData = filteredItems.map((item) => ObjectUtils.convertKeysToCamelCase(item.params.customData.imUser));
-			this.store.dispatch('usersModel/set', itemsData);
+			const userItemsData = [];
+			const dialogItemsData = [];
+			filteredItems.forEach((item) => {
+				userItemsData.push(ObjectUtils.convertKeysToCamelCase(item.params.customData.imUser));
 
-			const renderingItems = this.prepareItems(itemsData);
+				if (item.params.customData.imChat)
+				{
+					dialogItemsData.push({
+						dialogId: String(item.params.id),
+						...ObjectUtils.convertKeysToCamelCase(item.params.customData.imChat),
+					});
+				}
+			});
+
+			this.store.dispatch('usersModel/set', userItemsData);
+			this.store.dispatch('dialoguesModel/set', dialogItemsData);
+
+			const renderingItems = this.prepareItems(userItemsData);
 			const loaderItem = items.find((item) => item.id === 'loading');
 
 			const withLoader = typeof loaderItem !== 'undefined';

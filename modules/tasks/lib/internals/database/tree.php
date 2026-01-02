@@ -1,4 +1,4 @@
-<?
+<?php
 /**
  * Closure table tree implementation
  * 
@@ -16,7 +16,6 @@
 namespace Bitrix\Tasks\Internals\DataBase;
 
 use Bitrix\Main;
-use Bitrix\Main\DB;
 use Bitrix\Main\Entity;
 use Bitrix\Main\Localization\Loc;
 
@@ -24,7 +23,7 @@ use Bitrix\Tasks\Util\Assert;
 
 Loc::loadMessages(__FILE__);
 
-abstract class Tree extends Entity\DataManager
+abstract class Tree extends Main\ORM\Data\DataManager
 {
 	public static function link($id, $parentId)
 	{

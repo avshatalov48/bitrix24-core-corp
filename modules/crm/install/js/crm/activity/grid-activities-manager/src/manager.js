@@ -165,10 +165,7 @@ export class Manager
 			return;
 		}
 
-		let taskOpenUrl = allowEdit
-			? '/company/personal/user/#user_id#/tasks/task/edit/#task_id#/'
-			: '/company/personal/user/#user_id#/tasks/task/view/#task_id#/'
-		;
+		let taskOpenUrl = '/company/personal/user/#user_id#/tasks/task/view/#task_id#/';
 
 		taskOpenUrl = taskOpenUrl.replace('#user_id#', this.#getCurrentUserId());
 		taskOpenUrl = taskOpenUrl.replace('#task_id#', taskId);

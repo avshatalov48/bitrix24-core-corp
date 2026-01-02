@@ -35,8 +35,8 @@ final class Synchronizer
 
 		$accessController = new AccessController($this->userId);
 
-		$viewValues = $accessController->getPermissionValue(ActionDictionary::ACTION_BIC_DASHBOARD_VIEW);
-		$editValues = $accessController->getPermissionValue(ActionDictionary::ACTION_BIC_DASHBOARD_EDIT);
+		$viewValues = $accessController->getAllowedDashboardValue(ActionDictionary::ACTION_BIC_DASHBOARD_VIEW);
+		$editValues = $accessController->getAllowedDashboardValue(ActionDictionary::ACTION_BIC_DASHBOARD_EDIT);
 
 		$currentHash = $this->calculateHash($viewValues, $editValues);
 		if ($user->permissionHash === $currentHash)
@@ -44,7 +44,6 @@ final class Synchronizer
 			return $syncResult;
 		}
 
-		$dashboardsExternalIdList = [];
 		if (is_array($editValues) && count($editValues) === 1 && current($editValues) === PermissionDictionary::VALUE_VARIATION_ALL)
 		{
 			$dashboardsExternalIdList = self::getDashboardExternalIdList();

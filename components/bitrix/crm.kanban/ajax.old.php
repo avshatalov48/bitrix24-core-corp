@@ -6,7 +6,10 @@
  * Please, use new ajax.php class for new features
  */
 
+use Bitrix\Crm\Component\Utils\JsonCompatibleConverter;
+use Bitrix\Crm\Kanban\ViewMode;
 use Bitrix\Crm\Service\Container;
+use Bitrix\Main\Web\Json;
 
 define('NO_KEEP_STATISTIC', 'Y');
 define('NO_AGENT_STATISTIC','Y');
@@ -27,7 +30,6 @@ $page = $request->get('page');
 $column = $request->get('column');
 $newState = $request->get('status');
 $extra = $request->get('extra');
-$version = $request->get('version');
 $force = $request->get('force');
 $onlyItems = $request->get('onlyItems');
 $viewMode = $request->get('viewMode');
@@ -35,8 +37,42 @@ $useItemPlanner = $request->get('useItemPlanner');
 $skipColumnsCountCheck = $request->get('skipColumnCountCheck');
 $result = null;
 
+$version = $request->get('version');
+$isVersion2 = ((int)$version === 2);
+
+global $APPLICATION;
+
 //get one or more items
-if ($action == 'get' && (!empty($id) || $minId))
+if ($action === 'get')
+{
+	$params = [
+		'IS_AJAX' => 'Y',
+		'ENTITY_TYPE' => $type,
+		'EXTRA' => $extra,
+		'VIEW_MODE' => $viewMode,
+		'USE_ITEM_PLANNER' => $useItemPlanner,
+		'SKIP_COLUMN_COUNT_CHECK' => $skipColumnsCountCheck,
+	];
+
+	if (!empty($id) || $minId)
+	{
+		$params = array_merge($params, [
+			'GET_AVATARS' => 'Y',
+			'FORCE_FILTER' => $force,
+			'ADDITIONAL_FILTER' => (empty($id) ? ['>ID' => $minId] : ['ID' => $id]),
+			'ONLY_ITEMS' => ($onlyItems ?? 'N'),
+			'FULL_CONFIG' => 'N',
+		]);
+	}
+
+	$result = $APPLICATION->IncludeComponent(
+		'bitrix:crm.kanban',
+		'',
+		$params
+	);
+}
+//get next page
+elseif ($action === 'page' && !empty($column))
 {
 	$result = $APPLICATION->IncludeComponent(
 		'bitrix:crm.kanban',
@@ -44,13 +80,8 @@ if ($action == 'get' && (!empty($id) || $minId))
 		[
 			'IS_AJAX' => 'Y',
 			'ENTITY_TYPE' => $type,
-			'GET_AVATARS' => 'Y',
-			'FORCE_FILTER' => $force,
-			'ADDITIONAL_FILTER' => (
-				!empty($id)
-					? ['ID' => $id]
-					: ['>ID' => $minId]
-			),
+			'ADDITIONAL_FILTER' => ['COLUMN' => $column],
+			'PAGE' => $page,
 			'EXTRA' => $extra,
 			'ONLY_ITEMS' => ($onlyItems ?? 'N'),
 			'VIEW_MODE' => $viewMode,
@@ -59,46 +90,21 @@ if ($action == 'get' && (!empty($id) || $minId))
 		]
 	);
 }
-//refresh Kanban
-elseif ($action == 'get')
-{
-	$result = $APPLICATION->IncludeComponent('bitrix:crm.kanban', '', array(
-		'IS_AJAX' => 'Y',
-		'ENTITY_TYPE' => $type,
-		'EXTRA' => $extra,
-		'VIEW_MODE' => $viewMode,
-		'USE_ITEM_PLANNER' => $useItemPlanner,
-		'SKIP_COLUMN_COUNT_CHECK' => $skipColumnsCountCheck,
-	));
-}
-//get next page
-elseif ($action == 'page' && !empty($column))
-{
-	$result = $APPLICATION->IncludeComponent('bitrix:crm.kanban', '', array(
-		'IS_AJAX' => 'Y',
-		'ENTITY_TYPE' => $type,
-		'ADDITIONAL_FILTER' => array('COLUMN' => $column),
-		'PAGE' => $page,
-		'EXTRA' => $extra,
-		'ONLY_ITEMS' => ($onlyItems ?? 'N'),
-		'VIEW_MODE' => $viewMode,
-		'USE_ITEM_PLANNER' => $useItemPlanner,
-		'SKIP_COLUMN_COUNT_CHECK' => $skipColumnsCountCheck,
-	));
-}
 //change stage
-elseif ($action == 'status' && !empty($id) && !empty($newState))
+elseif ($action === 'status' && !empty($id) && !empty($newState))
 {
-	$params = array(
+	$params = [
 		'IS_AJAX' => 'Y',
 		'ENTITY_TYPE' => $type,
 		'EXTRA' => $extra,
 		'VIEW_MODE' => $viewMode,
 		'USE_ITEM_PLANNER' => $useItemPlanner,
 		'SKIP_COLUMN_COUNT_CHECK' => $skipColumnsCountCheck,
-	);
+		'FULL_CONFIG' => 'N',
+	];
+
 	// in version 2 we don't need in items
-	if ($version == 2)
+	if ($isVersion2)
 	{
 		$params['EMPTY_RESULT'] = 'Y';
 	}
@@ -106,42 +112,51 @@ elseif ($action == 'status' && !empty($id) && !empty($newState))
 	{
 		$params['ONLY_COLUMNS'] = 'Y';
 	}
+
 	$result = $APPLICATION->IncludeComponent('bitrix:crm.kanban', '', $params);
 }
 //activity items
-elseif ($action == 'activities' && !empty($id))
+elseif ($action === 'activities' && !empty($id))
 {
-	$APPLICATION->IncludeComponent('bitrix:crm.activity.todo', '', array(
-		'OWNER_TYPE_ID' => $type,
-		'OWNER_ID' => $id,
-		'IS_AJAX' => 'Y',
-		'COMPLETED' => 'N'
-	));
+	$APPLICATION->IncludeComponent(
+		'bitrix:crm.activity.todo',
+		'',
+		[
+			'OWNER_TYPE_ID' => $type,
+			'OWNER_ID' => $id,
+			'IS_AJAX' => 'Y',
+			'COMPLETED' => 'N',
+		]
+	);
 }
-//another foramt work with action in ver 2
-elseif ($version == 2)
+//another format work with action in ver 2
+elseif ($isVersion2)
 {
-	$result = $APPLICATION->IncludeComponent('bitrix:crm.kanban', '', array(
-		'IS_AJAX' => 'Y',
-		'ENTITY_TYPE' => $type,
-		'EMPTY_RESULT' => 'Y',
-		'EXTRA' => $extra,
-		'VIEW_MODE' => $viewMode,
-		'USE_ITEM_PLANNER' => $useItemPlanner,
-		'SKIP_COLUMN_COUNT_CHECK' => $skipColumnsCountCheck,
-	));
+	$result = $APPLICATION->IncludeComponent(
+		'bitrix:crm.kanban',
+		'',
+		[
+			'IS_AJAX' => 'Y',
+			'ENTITY_TYPE' => $type,
+			'EMPTY_RESULT' => 'Y',
+			'EXTRA' => $extra,
+			'VIEW_MODE' => $viewMode,
+			'USE_ITEM_PLANNER' => $useItemPlanner,
+			'SKIP_COLUMN_COUNT_CHECK' => $skipColumnsCountCheck,
+		]
+	);
 }
 else
 {
-	$result = array('ERROR' => 'Unknown action or params');
+	$result = ['ERROR' => 'Unknown action or params'];
 }
 
 // for compatibility
-if ($version == 2)
+if ($isVersion2)
 {
 	if (isset($result['ITEMS']['columns']))
 	{
-		$result['ITEMS']['dropzones'] = array();
+		$result['ITEMS']['dropzones'] = [];
 
 		$entityTypeId = CCrmOwnerType::ResolveID($type);
 		$isAdminForEntity = Container::getInstance()->getUserPermissions()->isAdminForEntity($entityTypeId);
@@ -181,7 +196,7 @@ if ($version == 2)
 				$canSort = (
 					$isAdminForEntity
 					&& $column['type'] === 'PROGRESS'
-					&& !\Bitrix\Crm\Kanban\ViewMode::isDatesBasedView($viewMode)
+					&& !ViewMode::isDatesBasedView($viewMode)
 				);
 
 				$column = [
@@ -209,34 +224,42 @@ if ($version == 2)
 		$result['ITEMS']['dropzones'] = array_values($result['ITEMS']['dropzones']);
 		$result['ITEMS']['columns'] = array_values($result['ITEMS']['columns']);
 	}
-	else if (!isset($result['data']) && mb_strtolower($action) == 'modifystage')
+	else if (!isset($result['data']) && mb_strtolower($action) === 'modifystage')
 	{
-		$result['data'] = array(
-			'type' => isset($result['type'])
-						? $result['type']
-						: 'PROGRESS',
-			'sum' => isset($result['sum'])
-						? $result['sum']
-						: 0,
-			'sum_format' => isset($result['sum_format'])
-						? $result['sum']
-						: '',
-			'sum_init' => 0
-		);
+		$result['data'] = [
+			'type' => $result['type'] ?? 'PROGRESS',
+			'sum' => $result['sum'] ?? 0,
+			'sum_format' => isset($result['sum_format']) ? $result['sum'] : '',
+			'sum_init' => 0,
+		];
 	}
 
 	if (isset($result['ITEMS']['items']))
 	{
 		foreach ($result['ITEMS']['items'] as &$item)
 		{
-			$item = array(
+			$isCountable = ($item['countable'] ?? true);
+			$isDroppable = ($item['droppable'] ?? true);
+			$isDraggable = ($item['draggable'] ?? true);
+
+			$item = [
 				'id' => $item['id'],
-				'countable' => !isset($item['countable']) || $item['countable'],
-				'droppable' => !isset($item['droppable']) || $item['droppable'],
-				'draggable' => !isset($item['draggable']) || $item['draggable'],
 				'columnId' => $item['columnId'],
-				'data' => $item
-			);
+				'data' => $item,
+			];
+
+			if (!$isCountable)
+			{
+				$item['countable'] = false;
+			}
+			if (!$isDroppable)
+			{
+				$item['droppable'] = false;
+			}
+			if (!$isDraggable)
+			{
+				$item['draggable'] = false;
+			}
 		}
 		unset($item);
 	}
@@ -249,22 +272,24 @@ if ($result !== null)
 
 	header('Content-Type: application/json');
 
-	if (isset($result['ERROR']) && $result['ERROR']!='')
+	if (!empty($result['ERROR']))
 	{
-		echo \CUtil::PhpToJSObject(array(
+		$data = [
 			'error' => $result['ERROR'],
-			'fatal' => isset($result['FATAL']) ? $result['FATAL'] : false
-		), false, false, true);
+			'fatal' => $result['FATAL'] ?? false,
+		];
+
+		print Json::encode(JsonCompatibleConverter::convert($data, true));
 	}
 	elseif (isset($result['ITEMS']))
 	{
-		echo \CUtil::PhpToJSObject($result['ITEMS'], false, false, true);
+		print Json::encode(JsonCompatibleConverter::convert($result['ITEMS'], true));
 	}
 	else
 	{
-		echo \CUtil::PhpToJSObject($result, false, false, true);
+		print Json::encode(JsonCompatibleConverter::convert($result, true));
 	}
 }
 
-\CMain::finalActions();
+CMain::finalActions();
 die();

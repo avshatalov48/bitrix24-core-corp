@@ -56,6 +56,7 @@ $APPLICATION->restartBuffer();
 								'MESSAGE_ID' => $activity['UF_MAIL_MESSAGE'],
 							)
 						); ?>
+						<?=\Bitrix\UI\Toolbar\Facade\Toolbar::renderRightButtons()?>
 					<? endif ?>
 				</div>
 			</div><!--crm-task-list-header-->

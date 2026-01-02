@@ -101,6 +101,14 @@ class CrmMobile extends CModule
 			Counter::class,
 			'onGetMobileCounterTypes'
 		);
+
+		$eventManager->registerEventHandler(
+			'mobile',
+			'onMobileMenuStructureBuilt',
+			'crmmobile',
+			'Bitrix\CrmMobile\MobileMenuManager',
+			'onMobileMenuStructureBuilt',
+		);
 	}
 
 	public function uninstallEvents()
@@ -121,6 +129,14 @@ class CrmMobile extends CModule
 			'crmmobile',
 			Counter::class,
 			'onGetMobileCounterTypes'
+		);
+
+		$eventManager->unRegisterEventHandler(
+			'mobile',
+			'onMobileMenuStructureBuilt',
+			'crmmobile',
+			'Bitrix\CrmMobile\MobileMenuManager',
+			'onMobileMenuStructureBuilt',
 		);
 	}
 

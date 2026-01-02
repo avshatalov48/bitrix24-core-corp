@@ -1,7 +1,3 @@
-.effective_counter .main-buttons-item-counter {
-    background: #4fc3f7 !important;
-}
-
-.effective_counter .main-buttons-item-counter:after {
-    content: '%';
+.main-buttons-item-super-title.effective_counter  {
+	font-size: var(--ui-font-size-4xs);
 }

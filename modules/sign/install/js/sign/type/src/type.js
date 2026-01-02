@@ -45,3 +45,16 @@ export const Reminder: $ReadOnly<{ [key: ReminderType]: ReminderType }> = Object
 	twicePerDay: 'twicePerDay',
 	threeTimesPerDay: 'threeTimesPerDay',
 });
+
+export type TemplateEntityType = 'template' | 'folder' | 'multiple';
+export const TemplateEntity: Readonly<Record<string, TemplateEntityType>> = Object.freeze({
+	template: 'template',
+	folder: 'folder',
+	multiple: 'multiple',
+});
+
+export const EntityType = Object.freeze({
+	USER: 'user',
+	STRUCTURE_NODE_ROLE: 'structure-node-role',
+	COMPANY: 'company',
+});

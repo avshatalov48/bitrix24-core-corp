@@ -2,7 +2,7 @@
 this.BX = this.BX || {};
 this.BX.Booking = this.BX.Booking || {};
 this.BX.Booking.Provider = this.BX.Booking.Provider || {};
-(function (exports,booking_core,booking_lib_apiClient,booking_const) {
+(function (exports,booking_core,booking_const,booking_lib_apiClient) {
 	'use strict';
 
 	function mapDtoToModel(resourceDto) {
@@ -17,19 +17,36 @@ this.BX.Booking.Provider = this.BX.Booking.Provider || {};
 	    })),
 	    counter: resourceDto.counter,
 	    isMain: resourceDto.isMain,
-	    isConfirmationNotificationOn: resourceDto.isConfirmationNotificationOn,
-	    isFeedbackNotificationOn: resourceDto.isFeedbackNotificationOn,
-	    isInfoNotificationOn: resourceDto.isInfoNotificationOn,
-	    isDelayedNotificationOn: resourceDto.isDelayedNotificationOn,
-	    isReminderNotificationOn: resourceDto.isReminderNotificationOn,
-	    templateTypeConfirmation: resourceDto.templateTypeConfirmation,
-	    templateTypeFeedback: resourceDto.templateTypeFeedback,
-	    templateTypeInfo: resourceDto.templateTypeInfo,
-	    templateTypeDelayed: resourceDto.templateTypeDelayed,
-	    templateTypeReminder: resourceDto.templateTypeReminder,
+	    isDeleted: resourceDto.isDeleted,
 	    createdBy: resourceDto.createdBy,
 	    createdAt: resourceDto.createdAt,
-	    updatedAt: resourceDto.updatedAt
+	    updatedAt: resourceDto.updatedAt,
+	    deletedAt: resourceDto.deletedAt,
+	    // info
+	    isInfoNotificationOn: resourceDto.isInfoNotificationOn,
+	    templateTypeInfo: resourceDto.templateTypeInfo,
+	    infoNotificationDelay: resourceDto.infoNotificationDelay,
+	    // confirmation
+	    isConfirmationNotificationOn: resourceDto.isConfirmationNotificationOn,
+	    templateTypeConfirmation: resourceDto.templateTypeConfirmation,
+	    confirmationNotificationDelay: resourceDto.confirmationNotificationDelay,
+	    confirmationNotificationRepetitions: resourceDto.confirmationNotificationRepetitions,
+	    confirmationNotificationRepetitionsInterval: resourceDto.confirmationNotificationRepetitionsInterval,
+	    confirmationCounterDelay: resourceDto.confirmationCounterDelay,
+	    // reminder
+	    isReminderNotificationOn: resourceDto.isReminderNotificationOn,
+	    templateTypeReminder: resourceDto.templateTypeReminder,
+	    reminderNotificationDelay: resourceDto.reminderNotificationDelay,
+	    // delayed
+	    isDelayedNotificationOn: resourceDto.isDelayedNotificationOn,
+	    templateTypeDelayed: resourceDto.templateTypeDelayed,
+	    delayedNotificationDelay: resourceDto.delayedNotificationDelay,
+	    delayedCounterDelay: resourceDto.delayedCounterDelay,
+	    // feedback
+	    isFeedbackNotificationOn: resourceDto.isFeedbackNotificationOn,
+	    templateTypeFeedback: resourceDto.templateTypeFeedback,
+	    // integrationCalendar
+	    entities: resourceDto.entities || []
 	  };
 	}
 	function mapModelToDto(resource) {
@@ -43,20 +60,46 @@ this.BX.Booking.Provider = this.BX.Booking.Provider || {};
 	    slotRanges: resource.slotRanges,
 	    counter: null,
 	    isMain: resource.isMain,
-	    isConfirmationNotificationOn: resource.isConfirmationNotificationOn,
-	    isFeedbackNotificationOn: resource.isFeedbackNotificationOn,
-	    isInfoNotificationOn: resource.isInfoNotificationOn,
-	    isDelayedNotificationOn: resource.isDelayedNotificationOn,
-	    isReminderNotificationOn: resource.isReminderNotificationOn,
-	    templateTypeConfirmation: resource.templateTypeConfirmation,
-	    templateTypeFeedback: resource.templateTypeFeedback,
-	    templateTypeInfo: resource.templateTypeInfo,
-	    templateTypeDelayed: resource.templateTypeDelayed,
-	    templateTypeReminder: resource.templateTypeReminder,
+	    isDeleted: resource.isDeleted,
 	    createdBy: null,
 	    createdAt: null,
-	    updatedAt: null
+	    updatedAt: null,
+	    // info
+	    isInfoNotificationOn: resource.isInfoNotificationOn,
+	    templateTypeInfo: resource.templateTypeInfo,
+	    infoNotificationDelay: resource.infoNotificationDelay,
+	    // confirmation
+	    isConfirmationNotificationOn: resource.isConfirmationNotificationOn,
+	    templateTypeConfirmation: resource.templateTypeConfirmation,
+	    confirmationNotificationDelay: resource.confirmationNotificationDelay,
+	    confirmationNotificationRepetitions: resource.confirmationNotificationRepetitions,
+	    confirmationNotificationRepetitionsInterval: resource.confirmationNotificationRepetitionsInterval,
+	    confirmationCounterDelay: resource.confirmationCounterDelay,
+	    // reminder
+	    isReminderNotificationOn: resource.isReminderNotificationOn,
+	    templateTypeReminder: resource.templateTypeReminder,
+	    reminderNotificationDelay: resource.reminderNotificationDelay,
+	    // delayed
+	    isDelayedNotificationOn: resource.isDelayedNotificationOn,
+	    templateTypeDelayed: resource.templateTypeDelayed,
+	    delayedNotificationDelay: resource.delayedNotificationDelay,
+	    delayedCounterDelay: resource.delayedCounterDelay,
+	    // feedback
+	    isFeedbackNotificationOn: resource.isFeedbackNotificationOn,
+	    templateTypeFeedback: resource.templateTypeFeedback,
+	    // integrationCalendar
+	    entities: entitiesToDto(resource.entities)
 	  };
+	}
+	function entitiesToDto(entities) {
+	  return checkEntityCalendar(entities);
+	}
+	function checkEntityCalendar(entities) {
+	  // eslint-disable-next-line max-len
+	  return entities.filter(entity => {
+	    var _entity$data;
+	    return !(entity.entityType === booking_const.ResourceEntityType.Calendar && ((_entity$data = entity.data) == null ? void 0 : _entity$data.userIds.length) === 0);
+	  });
 	}
 
 	var _updateResourcesFromFavorites = /*#__PURE__*/babelHelpers.classPrivateFieldLooseKey("updateResourcesFromFavorites");
@@ -113,29 +156,37 @@ this.BX.Booking.Provider = this.BX.Booking.Provider || {};
 	      return error;
 	    }
 	  }
-	  async delete(resourceId) {
+	  async delete(resourceId, withFutureBookings = false) {
 	    try {
-	      await new booking_lib_apiClient.ApiClient().post('Resource.delete', {
+	      const action = withFutureBookings ? 'Resource.forceDelete' : 'Resource.delete';
+	      const {
+	        removedBookingIds
+	      } = await new booking_lib_apiClient.ApiClient().post(action, {
 	        id: resourceId
 	      });
-	      await Promise.all([booking_core.Core.getStore().dispatch(`${booking_const.Model.Resources}/delete`, resourceId), booking_core.Core.getStore().dispatch(`${booking_const.Model.Favorites}/delete`, resourceId), booking_core.Core.getStore().dispatch(`${booking_const.Model.Interface}/deleteResourceId`, resourceId)]);
+	      const $store = booking_core.Core.getStore();
+	      const updateStoreActions = [$store.dispatch(`${booking_const.Model.Resources}/delete`, resourceId), $store.dispatch(`${booking_const.Model.Favorites}/delete`, resourceId), $store.dispatch(`${booking_const.Model.Interface}/deleteResourceId`, resourceId), $store.dispatch(`${booking_const.Model.Interface}/removeDeletingResource`, resourceId)];
+	      if (removedBookingIds) {
+	        updateStoreActions.push($store.dispatch(`${booking_const.Model.Bookings}/deleteMany`, removedBookingIds));
+	      }
+	      await Promise.all(updateStoreActions);
 	    } catch (error) {
 	      console.error('ResourceService: delete error', error);
 	    }
 	  }
-	  async hasBookings(resourceId) {
+	  async hasFutureBookings(resourceId) {
 	    try {
-	      return new booking_lib_apiClient.ApiClient().post('Resource.hasBookings', {
+	      return new booking_lib_apiClient.ApiClient().post('Resource.hasFutureBookings', {
 	        resourceId
 	      });
 	    } catch (error) {
-	      console.error('ResourceService: hasBookings error', error);
+	      console.error('ResourceService: hasFutureBookings error', error);
 	    }
 	    return Promise.resolve();
 	  }
 	}
 	function _updateResourcesFromFavorites2() {
-	  const isFilterMode = booking_core.Core.getStore().getters[`${booking_const.Model.Interface}/isFilterMode`];
+	  const isFilterMode = booking_core.Core.getStore().getters[`${booking_const.Model.Filter}/isFilterMode`];
 	  if (isFilterMode) {
 	    return;
 	  }
@@ -157,5 +208,5 @@ this.BX.Booking.Provider = this.BX.Booking.Provider || {};
 	exports.ResourceMappers = ResourceMappers;
 	exports.resourceService = resourceService;
 
-}((this.BX.Booking.Provider.Service = this.BX.Booking.Provider.Service || {}),BX.Booking,BX.Booking.Lib,BX.Booking.Const));
+}((this.BX.Booking.Provider.Service = this.BX.Booking.Provider.Service || {}),BX.Booking,BX.Booking.Const,BX.Booking.Lib));
 //# sourceMappingURL=resources-service.bundle.js.map

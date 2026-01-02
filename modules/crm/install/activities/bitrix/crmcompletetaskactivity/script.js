@@ -1,3 +1,4 @@
+/* eslint-disable */
 (function (exports,main_core) {
 	'use strict';
 
@@ -57,7 +58,6 @@
 	        var _Object$entries$_i = babelHelpers.slicedToArray(_Object$entries[_i], 2),
 	          categoryId = _Object$entries$_i[0],
 	          stages = _Object$entries$_i[1];
-	        // Due to http://jabber.bx/view.php?id=169508
 	        // we have to cast types explicitly
 	        babelHelpers.classPrivateFieldGet(this, _stages)[categoryId] = stages.map(function (stageInfo) {
 	          return {
@@ -67,7 +67,6 @@
 	        });
 	      }
 	    } else if (main_core.Type.isArray(options.stages)) {
-	      // Due to http://jabber.bx/view.php?id=169508
 	      // we have to cast types explicitly
 	      options.stages.forEach(function (categoryStages, categoryId) {
 	        babelHelpers.classPrivateFieldGet(_this, _stages)[categoryId] = categoryStages.map(function (stageInfo) {

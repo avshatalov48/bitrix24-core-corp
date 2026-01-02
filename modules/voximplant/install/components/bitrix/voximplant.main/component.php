@@ -52,6 +52,7 @@ if(\Bitrix\Voximplant\Integration\Bitrix24::getLicensePrefix() === "by")
 }
 
 $arResult['LINK_TO_BUY'] = CVoxImplantMain::GetBuyLink();
+$arResult['TELEPHONY_TARIFFS_LINK'] = CVoxImplantMain::getTelephonyTariffsLink();
 $arResult['RECORD_LIMIT'] = \CVoxImplantAccount::GetRecordLimit();
 
 $arResult['STATISTICS'] = array();
@@ -135,5 +136,3 @@ function getStatisticsStartDate()
 
 	return \Bitrix\Main\Type\Date::createFromPhp($startDate);
 }
-
-?>

@@ -2,6 +2,7 @@
 $MESS["IMBOT_NETWORK_BOT_WORK_POSITION"] = "Открытая линия";
 $MESS["IMBOT_NETWORK_ERROR_LINE_DISABLED"] = "Сообщение не отправлено![br]Отправка сообщений в данную открытую линию заблокирована";
 $MESS["IMBOT_NETWORK_ERROR_NOT_FOUND"] = "Сообщение не отправлено![br]Открытая линия в данный момент не доступна";
+$MESS["IMBOT_NETWORK_ERROR_NOT_FOUND_MSGVER_1"] = "Сообщение не отправлено[br]Открытая линия сейчас недоступна. [helpdesklink]Подробнее[/helpdesklink]";
 $MESS["IMBOT_NETWORK_ERROR_PUBLIC_URL_EMPTY"] = "В настройках модуля \"Чат-боты Битрикс24\" необходимо указать публичный адрес сайта";
 $MESS["IMBOT_NETWORK_ERROR_PUBLIC_URL_MALFORMED"] = "Указан некорректный публичный адрес сайта";
 $MESS["IMBOT_NETWORK_ERROR_PUBLIC_URL_LOCALHOST"] = "Публичный адрес сайта указывает на локальный хост: #HOST#";

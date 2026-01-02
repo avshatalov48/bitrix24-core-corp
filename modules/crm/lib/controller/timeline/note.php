@@ -21,7 +21,7 @@ class Note extends Base
 {
 	public function saveAction(int $itemId, int $itemType, int $ownerTypeId, int $ownerId, string $text): bool
 	{
-		if (!Container::getInstance()->getUserPermissions()->checkUpdatePermissions($ownerTypeId, $ownerId))
+		if (!Container::getInstance()->getUserPermissions()->item()->canUpdate($ownerTypeId, $ownerId))
 		{
 			$this->addError(ErrorCode::getAccessDeniedError());
 
@@ -58,7 +58,7 @@ class Note extends Base
 
 	public function deleteAction(int $itemId, int $itemType, int $ownerTypeId, int $ownerId): bool
 	{
-		if (!Container::getInstance()->getUserPermissions()->checkUpdatePermissions($ownerTypeId, $ownerId))
+		if (!Container::getInstance()->getUserPermissions()->item()->canUpdate($ownerTypeId, $ownerId))
 		{
 			$this->addError(ErrorCode::getAccessDeniedError());
 
@@ -93,7 +93,7 @@ class Note extends Base
 
 	public function getAction(int $itemId, int $itemType, int $ownerTypeId, int $ownerId): ?array
 	{
-		if (!Container::getInstance()->getUserPermissions()->checkReadPermissions($ownerTypeId, $ownerId))
+		if (!Container::getInstance()->getUserPermissions()->item()->canRead($ownerTypeId, $ownerId))
 		{
 			$this->addError(ErrorCode::getAccessDeniedError());
 

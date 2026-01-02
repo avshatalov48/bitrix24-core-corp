@@ -3,31 +3,45 @@
 namespace Bitrix\SalesCenter\Integration;
 
 use Bitrix\Bitrix24\Feature;
+use Bitrix\Main\Application;
 use Bitrix\Main\Config\Option;
 use Bitrix\Main\Loader;
 use Bitrix\Main\Localization\Loc;
 use Bitrix\Main\UI\Extension;
+use Bitrix\Main\Web\Json;
 use Bitrix\SalesCenter\Driver;
 use Bitrix\UI\Buttons\Color;
+use Bitrix\UI\Buttons\FeedbackButton;
+use Bitrix\UI\Buttons\Icon;
 use Bitrix\UI\Buttons\JsHandler;
+use Bitrix\UI\Buttons\JsCode;
 use Bitrix\UI\Toolbar\Facade\Toolbar;
 
-Loc::loadLanguageFile(\Bitrix\Main\Application::getDocumentRoot() . '/bitrix/modules/salescenter/install/js/salescenter/app/config.php');
+Loc::loadLanguageFile(Application::getDocumentRoot() . '/bitrix/modules/salescenter/install/js/salescenter/app/config.php');
 
 class Bitrix24Manager extends Base
 {
-	const FEATURE_NAME = 'salescenter';
-	const OPTION_PAYMENTS_COUNT_PARAM = 'payments_limit';
+	public const FEATURE_NAME = 'salescenter';
+	public const OPTION_PAYMENTS_COUNT_PARAM = 'payments_limit';
 
-	const ANALYTICS_DATA_SET_INTEGRATION = 'manager-openIntegrationRequestForm-params';
-	const ANALYTICS_SENDER_PAGE = 'sender_page';
-	const ANALYTICS_LABEL_SALESHUB = 'saleshub';
-	const ANALYTICS_LABEL_SALESHUB_RECEIVING_PAYMENT = 'receiving_payment';
-	const ANALYTICS_LABEL_SALESHUB_CRM_STORE = 'crm_store';
-	const ANALYTICS_LABEL_SALESHUB_CRM_FORM = 'crm_form';
-	const ANALYTICS_LABEL_SALESHUB_CASHBOX = 'saleshub_cashbox';
-	const ANALYTICS_LABEL_SALESHUB_DELIVERY = 'saleshub_delivery';
-	const ANALYTICS_LABEL_SALESHUB_PAYSYSTEM = 'saleshub_paysystem';
+	public const FEEDBACK_TYPE_FEEDBACK = 'feedback';
+	public const FEEDBACK_TYPE_PAY_ORDER = 'pay_order';
+	public const FEEDBACK_TYPE_PAYSYSTEM_OFFER = 'paysystem_offer';
+	public const FEEDBACK_TYPE_PAYSYSTEM_SBP_OFFER = 'paysystem_sbp_offer';
+	public const FEEDBACK_TYPE_SMSPROVIDER_OFFER = 'smsprovider_offer';
+	public const FEEDBACK_TYPE_DELIVERY_OFFER = 'delivery_offer';
+	public const FEEDBACK_TYPE_TERMINAL_OFFER = 'terminal_offer';
+	public const FEEDBACK_TYPE_INTEGRATION_REQUEST = 'integration_request';
+
+	public const ANALYTICS_DATA_SET_INTEGRATION = 'manager-openIntegrationRequestForm-params';
+	public const ANALYTICS_SENDER_PAGE = 'sender_page';
+	public const ANALYTICS_LABEL_SALESHUB = 'saleshub';
+	public const ANALYTICS_LABEL_SALESHUB_RECEIVING_PAYMENT = 'receiving_payment';
+	public const ANALYTICS_LABEL_SALESHUB_CRM_STORE = 'crm_store';
+	public const ANALYTICS_LABEL_SALESHUB_CRM_FORM = 'crm_form';
+	public const ANALYTICS_LABEL_SALESHUB_CASHBOX = 'saleshub_cashbox';
+	public const ANALYTICS_LABEL_SALESHUB_DELIVERY = 'saleshub_delivery';
+	public const ANALYTICS_LABEL_SALESHUB_PAYSYSTEM = 'saleshub_paysystem';
 
 	/**
 	 * @return string
@@ -278,7 +292,7 @@ class Bitrix24Manager extends Base
 
 	public function getFeedbackPaySystemSbpOfferFormInfo($region)
 	{
-		return ['id' => 263, 'sec' => '7q205j', 'code' => 'b5309667'];
+		return ['id' => 263, 'sec' => '7q205j', 'code' => 'b5309667', 'lang' => 'ru', 'zones' => ['ru']];
 	}
 
 	/**
@@ -310,13 +324,7 @@ class Bitrix24Manager extends Base
 	 */
 	public function isIntegrationRequestPossible(): bool
 	{
-		$isPortalValidForIntegration = in_array(
-			$this->getPortalZone(),
-			['ru', 'ua', 'by', 'kz']
-		);
-		$doesFormHavePortalLanguage = in_array(LANGUAGE_ID, ['ru', 'ua']);
-
-		return $isPortalValidForIntegration && $doesFormHavePortalLanguage;
+		return true;
 	}
 
 	/**
@@ -382,17 +390,13 @@ class Bitrix24Manager extends Base
 
 	public function addFeedbackButtonToToolbar(): void
 	{
-		if($this->isEnabled() && Loader::includeModule('ui'))
+		if ($this->isEnabled() && Loader::includeModule('ui'))
 		{
 			Extension::load(['salescenter.manager']);
-			Toolbar::addButton([
-				'color' => Color::LIGHT_BORDER,
+
+			Toolbar::addButton(new FeedbackButton([
 				'click' => new JsHandler('BX.Salescenter.Manager.openFeedbackForm'),
-				'text' => Loc::getMessage('SALESCENTER_FEEDBACK'),
-				'dataset' => [
-					'toolbar-collapsed-icon' => \Bitrix\UI\Buttons\Icon::INFO
-				],
-			]);
+			]));
 		}
 	}
 
@@ -406,10 +410,12 @@ class Bitrix24Manager extends Base
 				'color' => Color::LIGHT_BORDER,
 				'click' => new JsHandler('BX.Salescenter.Manager.openIntegrationRequestForm'),
 				'text' => Loc::getMessage('SALESCENTER_LEFT_PAYMENT_INTEGRATION_MSGVER_3'),
-				'dataset' => ['toolbar-collapsed-icon' => \Bitrix\UI\Buttons\Icon::INFO],
+				'dataset' => [
+					'toolbar-collapsed-icon' => Icon::INFO,
+				],
 			];
 
-			if (count($params) > 0)
+			if (!empty($params))
 			{
 				$button['dataset'][self::ANALYTICS_DATA_SET_INTEGRATION] = self::prepareParamsIntegrationRequest($params);
 			}
@@ -418,64 +424,147 @@ class Bitrix24Manager extends Base
 		}
 	}
 
-	static private function prepareParamsIntegrationRequest(array $params = []): ?string
+	public function addFeedbackPayOrderOfferButtonToToolbar(): void
 	{
-		$list = [];
-
-		if (count($params) > 0)
+		if ($this->isEnabled() && Loader::includeModule('ui'))
 		{
-			foreach ($params as $name => $value)
-			{
-				$list[] = $name . ':' . $value;
-			}
+			Extension::load(['salescenter.manager']);
 
-			return implode(',', $list);
+			Toolbar::addButton(new FeedbackButton([
+				'click' => new JsHandler('BX.Salescenter.Manager.openFeedbackPayOrderForm'),
+			]));
 		}
-
-		return null;
 	}
 
-	static private function renderAttrDataSet(array $params): string
+	public function addFeedbackDeliveryOfferButtonToToolbar(): void
+	{
+		if($this->isEnabled() && Loader::includeModule('ui'))
+		{
+			Extension::load(['salescenter.manager']);
+
+			Toolbar::addButton(new FeedbackButton([
+				'click' => new JsHandler('BX.Salescenter.Manager.openFeedbackDeliveryOfferForm'),
+			]));
+		}
+	}
+
+	public function addFeedbackTerminalOfferButtonToToolbar(): void
+	{
+		if ($this->isEnabled() && Loader::includeModule('ui'))
+		{
+			Extension::load(['salescenter.manager']);
+
+			$formParams = Json::encode([
+				'feedback_type' => 'terminal_offer',
+				'sender_page' => 'terminal',
+			]);
+			$clickCode =
+				'BX.Salescenter.Manager.openFeedbackFormParams('
+				. 'event, '
+				. $formParams
+				. ');'
+			;
+
+			Toolbar::addButton(new FeedbackButton([
+				'click' => new JsCode($clickCode),
+			]));
+		}
+	}
+
+	private static function prepareParamsIntegrationRequest(array $params = []): ?string
+	{
+		if (empty($params))
+		{
+			return null;
+		}
+
+		$list = [];
+		foreach ($params as $name => $value)
+		{
+			$list[] = $name . ':' . $value;
+		}
+
+		return implode(',', $list);
+	}
+
+	private static function renderAttrDataSet(array $params): string
 	{
 		return "data-" . self::ANALYTICS_DATA_SET_INTEGRATION . "=" . self::prepareParamsIntegrationRequest($params);
 	}
 
 	public function renderFeedbackButton(): void
 	{
-		if($this->isEnabled() && Loader::includeModule('ui'))
+		if ($this->isEnabled() && Loader::includeModule('ui'))
 		{
 			Extension::load(['salescenter.manager']);
-			echo '<button class="ui-btn ui-btn-md ui-btn-light-border" onclick="BX.Salescenter.Manager.openFeedbackForm(event);">'.Loc::getMessage('SALESCENTER_FEEDBACK').'</button>';
+
+			echo
+				'<button class="ui-btn ui-btn-md ui-btn-light-border" onclick="BX.Salescenter.Manager.openFeedbackForm(event);">'
+				. Loc::getMessage('SALESCENTER_FEEDBACK')
+				. '</button>'
+			;
 		}
 	}
 
+	/**
+	 * @deprecated
+	 * @see \Bitrix\SalesCenter\Integration\Bitrix24Manager::addIntegrationRequestButtonToToolbar
+	 * @param array $params
+	 * @return void
+	 */
 	public function renderIntegrationRequestButton(array $params = []): void
 	{
-		if($this->isEnabled() && $this->isIntegrationRequestPossible() && Loader::includeModule('ui'))
+		if ($this->isEnabled() && $this->isIntegrationRequestPossible() && Loader::includeModule('ui'))
 		{
 			Extension::load(['salescenter.manager']);
-			echo '<button class="ui-btn ui-btn-md ui-btn-light-border" ' . self::renderAttrDataSet($params) . ' onclick="BX.Salescenter.Manager.openIntegrationRequestForm(event);">' . Loc::getMessage('SALESCENTER_LEFT_PAYMENT_INTEGRATION_MSGVER_3') . '</button>';
+
+			echo
+				'<button class="ui-btn ui-btn-md ui-btn-light-border" '
+				. self::renderAttrDataSet($params)
+				. ' onclick="BX.Salescenter.Manager.openIntegrationRequestForm(event);">'
+				. Loc::getMessage('SALESCENTER_LEFT_PAYMENT_INTEGRATION_MSGVER_3')
+				. '</button>'
+			;
 		}
 	}
 
+	/**
+	 * @deprecated
+	 * @return void
+	 */
 	public function renderFeedbackSmsProviderOfferButton(): void
 	{
-		if($this->isEnabled() && Loader::includeModule('ui'))
+		if ($this->isEnabled() && Loader::includeModule('ui'))
 		{
 			Extension::load(['salescenter.manager']);
-			echo '<button class="ui-btn ui-btn-md ui-btn-light-border" onclick="BX.Salescenter.Manager.openFeedbackFormParams(event, '.\CUtil::PhpToJSObject(['feedback_type'=>'smsprovider_offer']).', '.\CUtil::PhpToJSObject(['width'=>intval(735)], false, false, true).');">'.Loc::getMessage('SALESCENTER_FEEDBACK').'</button>';
+
+			echo
+				'<button class="ui-btn ui-btn-md ui-btn-light-border" onclick="BX.Salescenter.Manager.openFeedbackFormParams(event, '.\CUtil::PhpToJSObject(['feedback_type'=>'smsprovider_offer']).', '.\CUtil::PhpToJSObject(['width'=>intval(735)], false, false, true).');">'
+				. Loc::getMessage('SALESCENTER_FEEDBACK')
+				. '</button>'
+			;
 		}
 	}
 
+	/**
+	 * @deprecated
+	 * @see \Bitrix\SalesCenter\Integration\Bitrix24Manager::addFeedbackPayOrderOfferButtonToToolbar
+	 * @return void
+	 */
 	public function renderFeedbackPayOrderOfferButton(): void
 	{
-		if($this->isEnabled() && Loader::includeModule('ui'))
+		if ($this->isEnabled() && Loader::includeModule('ui'))
 		{
 			Extension::load(['salescenter.manager']);
 			echo '<button class="ui-btn ui-btn-md ui-btn-light-border" onclick="BX.Salescenter.Manager.openFeedbackFormParams(event, '.\CUtil::PhpToJSObject(['feedback_type'=>'pay_order']).', '.\CUtil::PhpToJSObject(['width'=>intval(735)], false, false, true).');">'.Loc::getMessage('SALESCENTER_FEEDBACK').'</button>';
 		}
 	}
 
+	/**
+	 * @deprecated
+	 * @see \Bitrix\SalesCenter\Integration\Bitrix24Manager::addFeedbackDeliveryOfferButtonToToolbar
+	 * @return void
+	 */
 	public function renderFeedbackDeliveryOfferButton(): void
 	{
 		if($this->isEnabled() && Loader::includeModule('ui'))
@@ -485,6 +574,11 @@ class Bitrix24Manager extends Base
 		}
 	}
 
+	/**
+	 * @deprecated
+	 * @see \Bitrix\SalesCenter\Integration\Bitrix24Manager::addFeedbackTerminalOfferButtonToToolbar
+	 * @return void
+	 */
 	public function renderFeedbackTerminalOfferButton(): void
 	{
 		if($this->isEnabled() && Loader::includeModule('ui'))
@@ -492,5 +586,10 @@ class Bitrix24Manager extends Base
 			Extension::load(['salescenter.manager']);
 			echo '<button class="ui-btn ui-btn-md ui-btn-light-border" onclick="BX.Salescenter.Manager.openFeedbackFormParams(event, '.\CUtil::PhpToJSObject(['feedback_type'=>'terminal_offer', 'sender_page'=>'terminal']).', '.\CUtil::PhpToJSObject(['width'=>intval(735)], false, false, true).');">'.Loc::getMessage('SALESCENTER_FEEDBACK').'</button>';
 		}
+	}
+
+	public function getSliderFeedbackUrl(string $feedbackType): string
+	{
+		return 'feedback:' . $feedbackType;
 	}
 }

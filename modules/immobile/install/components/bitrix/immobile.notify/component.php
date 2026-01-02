@@ -11,7 +11,10 @@ if (!CModule::IncludeModule('im'))
 
 session_write_close();
 
-\Bitrix\Main\UI\Extension::load("rest.client");
+\Bitrix\Main\UI\Extension::load([
+	'rest.client',
+	'ui.avatar',
+]);
 
 $CIMNotify = new CIMNotify(false);
 $result = $CIMNotify->GetNotifyList(['PAGE' => 0]);

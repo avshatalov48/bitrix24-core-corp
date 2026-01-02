@@ -31,6 +31,8 @@ class StructureBackwardAdapter
 			return [];
 		}
 
+		self::checkAccessCodesUpdate();
+
 		if (\COption::GetOptionInt("humanresources", "check_user_existence") !== 1)
 		{
 			\CAgent::AddAgent(
@@ -81,11 +83,17 @@ class StructureBackwardAdapter
 
 		foreach ($employees as $employee)
 		{
+			if (!isset($structure['COMPATIBILITY'][$employee->nodeId]))
+			{
+				continue;
+			}
+
 			$department = $structure['DATA'][$structure['COMPATIBILITY'][$employee->nodeId]] ?? false;
 			if (!$department)
 			{
 				continue;
 			}
+
 			if (!$department['EMPLOYEES'])
 			{
 				$structure['DATA'][$structure['COMPATIBILITY'][$employee->nodeId]]['EMPLOYEES'] = [];
@@ -174,7 +182,14 @@ class StructureBackwardAdapter
 			return [];
 		}
 
-		$children = $nodeRepository->getChildOf($rootNode, $depth === null ? DepthLevel::FULL : ($depth - 1));
+		if ($fromIblockSectionId && $depth === 1)
+		{
+			$children = $nodeRepository->getChildOf($rootNode);
+		}
+		else
+		{
+			$children = $nodeRepository->getChildOf($rootNode, $depth === null ? DepthLevel::FULL : ($depth - 1));
+		}
 
 		$structureArray = [
 			'TREE' => [],
@@ -287,5 +302,22 @@ class StructureBackwardAdapter
 		self::$headRole = null;
 
 		self::getCacheManager()->cleanDir(self::CACHE_SUB_DIR);
+	}
+
+	private static function checkAccessCodesUpdate()
+	{
+		if (\COption::GetOptionInt("humanresources", "access_code_update") !== 1)
+		{
+			\CAgent::AddAgent(
+				name: '\Bitrix\HumanResources\Install\Agent\AccessCodeUpdate::run();',
+				module: 'humanresources',
+				interval: 60,
+				next_exec: \ConvertTimeStamp(time() + \CTimeZone::GetOffset() + 600, 'FULL'),
+				existError: false,
+			);
+
+			\COption::SetOptionInt("humanresources", "access_code_update", 1);
+		}
+
 	}
 }

@@ -7,7 +7,6 @@ export type RoleMasterOptions = {
 	authorId?: string;
 	text?: string;
 	/** The URL for the avatar */
-	avatar?: string;
 	avatarUrl?: string;
 	name?: string;
 	description?: string;

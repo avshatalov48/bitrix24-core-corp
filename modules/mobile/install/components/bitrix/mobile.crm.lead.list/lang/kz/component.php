@@ -1,0 +1,20 @@
+<?php
+$MESS["CRM_MODULE_NOT_INSTALLED"] = "CRM модулі орнатылмаған.";
+$MESS["CRM_PERMISSION_DENIED"] = "Қолжетімділікке тыйым салынған";
+$MESS["M_CRM_LEAD_LIST_ADD_DEAL"] = "Істі қосу";
+$MESS["M_CRM_LEAD_LIST_CALL"] = "Қоңырау шалу";
+$MESS["M_CRM_LEAD_LIST_CREATE_BASE"] = "Негізінде жасау";
+$MESS["M_CRM_LEAD_LIST_CREATE_DEAL"] = "Мәмілені";
+$MESS["M_CRM_LEAD_LIST_DECLINE"] = "Жарамсыз деп белгілеу";
+$MESS["M_CRM_LEAD_LIST_DELETE"] = "Жою";
+$MESS["M_CRM_LEAD_LIST_EDIT"] = "Редакциялау";
+$MESS["M_CRM_LEAD_LIST_FILTER_CUSTOM"] = "Іздеу нәтижелері";
+$MESS["M_CRM_LEAD_LIST_FILTER_NONE"] = "Барлық лидтер";
+$MESS["M_CRM_LEAD_LIST_JUNK"] = "Сапасыз";
+$MESS["M_CRM_LEAD_LIST_MAIL"] = "Хатты жазу";
+$MESS["M_CRM_LEAD_LIST_MEETING"] = "Кездесуді құру";
+$MESS["M_CRM_LEAD_LIST_MORE"] = "Тағы";
+$MESS["M_CRM_LEAD_LIST_NO_FILTER"] = "Барлық лидтер";
+$MESS["M_CRM_LEAD_LIST_PRESET_MY"] = "Менің лидтерім";
+$MESS["M_CRM_LEAD_LIST_PRESET_NEW"] = "Жаңа лидтер";
+$MESS["M_CRM_LEAD_LIST_PRESET_USER"] = "Пайдаланушы сүзгісі";

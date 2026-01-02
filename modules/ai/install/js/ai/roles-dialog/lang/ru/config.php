@@ -32,3 +32,4 @@ $MESS['AI_COPILOT_ROLES_EMPTY_CUSTOM_GROUP_TITLE'] = 'Здесь будут ва
 $MESS['AI_COPILOT_ROLES_EMPTY_CUSTOM_GROUP'] = 'Создавайте их в #LINK#Библиотеке ролей#/LINK# или используйте роли, которыми с вами поделились коллеги';
 
 $MESS['AI_COPILOT_ROLES_LIBRARY_TITLE'] = 'Библиотека ролей';
+$MESS['AI_COPILOT_ROLES_LIBRARY_COLLABER_ACCESS_DENIED'] = 'Библиотека ролей доступна только для сотрудников компании';

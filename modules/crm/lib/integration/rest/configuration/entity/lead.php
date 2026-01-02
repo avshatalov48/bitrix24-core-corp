@@ -2,7 +2,8 @@
 
 namespace Bitrix\Crm\Integration\Rest\Configuration\Entity;
 
-use Bitrix\Rest\Configuration\Helper;
+use Bitrix\Crm\Integration\Rest\Configuration\Helper;
+use Bitrix\Rest\Configuration\Manifest;
 use CCrmLead;
 
 class Lead
@@ -20,7 +21,13 @@ class Lead
 	 */
 	public static function clear($option)
 	{
-		if(!Helper::checkAccessManifest($option, static::$accessManifest))
+		if(!Manifest::isEntityAvailable('', $option, static::$accessManifest))
+		{
+			return null;
+		}
+
+		$helper = new Helper();
+		if (!$helper->checkAutomatedSolutionModeClearParams($option))
 		{
 			return null;
 		}

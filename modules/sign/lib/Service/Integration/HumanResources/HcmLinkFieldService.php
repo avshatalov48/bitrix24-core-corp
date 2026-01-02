@@ -31,7 +31,10 @@ class HcmLinkFieldService
 		}
 
 		$employeeFieldCollection = HumanResources\Service\Container::getHcmLinkFieldRepository()
-			->getByCompany($hcmLinkCompanyId)
+			->getByCompanyIdAndEntityType(
+				$hcmLinkCompanyId,
+				HumanResources\Type\HcmLink\FieldEntityType::EMPLOYEE
+			)
 		;
 
 		$response = [
@@ -182,7 +185,7 @@ class HcmLinkFieldService
 	}
 
 	public function getFieldValue(
-		array $employeeIds,
+		array $entityIds,
 		array $fieldIds,
 	): Result|HumanResources\Result\Service\HcmLink\GetFieldValueResult
 	{
@@ -191,12 +194,15 @@ class HcmLinkFieldService
 			return (new Result())->addError(new Error('Integration not available'));
 		}
 
-		return HumanResources\Service\Container::getHcmLinkFieldValueService()->getFieldValue($employeeIds, $fieldIds);
+		return HumanResources\Service\Container::getHcmLinkFieldValueService()->getFieldValue($entityIds, $fieldIds);
 	}
 
 	public function requestFieldValues(
 		int $companyId,
-		array $employeeIds, array $fieldIds): Result|HcmLinkFieldRequestResult
+		array $employeeIds,
+		array $fieldIds,
+		array $signerMemberIdByEmployeeIdMap,
+	): Result|HcmLinkFieldRequestResult
 	{
 		if (!$this->isAvailable())
 		{
@@ -204,7 +210,12 @@ class HcmLinkFieldService
 		}
 
 		$result = HumanResources\Service\Container::getHcmLinkFieldValueService()
-			->requestFieldValue($companyId, $employeeIds, $fieldIds)
+			->requestFieldValue(
+				$companyId,
+				$employeeIds,
+				$fieldIds,
+				$signerMemberIdByEmployeeIdMap
+			)
 		;
 
 		if ($result instanceof HumanResources\Result\Service\HcmLink\JobServiceResult)
@@ -253,6 +264,8 @@ class HcmLinkFieldService
 			FieldType::LAST_NAME => HumanResources\Type\HcmLink\FieldType::LAST_NAME,
 			FieldType::PATRONYMIC => HumanResources\Type\HcmLink\FieldType::PATRONYMIC_NAME,
 			FieldType::POSITION => HumanResources\Type\HcmLink\FieldType::POSITION,
+			FieldType::EXTERNAL_ID => HumanResources\Type\HcmLink\FieldType::DOCUMENT_REGISTRATION_NUMBER,
+			FieldType::EXTERNAL_DATE => HumanResources\Type\HcmLink\FieldType::DOCUMENT_DATE,
 			default => null,
 		};
 	}
@@ -268,5 +281,41 @@ class HcmLinkFieldService
 			HumanResources\Type\HcmLink\FieldType::POSITION => FieldType::POSITION,
 			default => null,
 		};
+	}
+
+	public function isDateSettingFieldById(int $id): bool
+	{
+		if (!$this->isAvailable())
+		{
+			return false;
+		}
+
+		$field = HumanResources\Service\Container::getHcmLinkFieldRepository()->getById($id);
+
+		return $field?->type === HumanResources\Type\HcmLink\FieldType::DOCUMENT_DATE;
+	}
+
+	public function isExternalIdSettingFieldById(int $id): bool
+	{
+		if (!$this->isAvailable())
+		{
+			return false;
+		}
+
+		$field = HumanResources\Service\Container::getHcmLinkFieldRepository()->getById($id);
+
+		return $field?->type === HumanResources\Type\HcmLink\FieldType::DOCUMENT_REGISTRATION_NUMBER;
+	}
+
+	public function isDocumentTypeSettingFieldById(int $id): bool
+	{
+		if (!$this->isAvailable())
+		{
+			return false;
+		}
+
+		$field = HumanResources\Service\Container::getHcmLinkFieldRepository()->getById($id);
+
+		return $field?->type === HumanResources\Type\HcmLink\FieldType::DOCUMENT_UID;
 	}
 }

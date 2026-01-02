@@ -12,16 +12,15 @@ namespace Bitrix\Tasks\Integration\Forum\Task;
 
 use Bitrix\Disk\Internals\AttachedObjectTable;
 use Bitrix\Disk\Uf\ForumMessageConnector;
-use Bitrix\Main\Analytics\AnalyticsEvent;
 use Bitrix\Main\Config\Option;
 use Bitrix\Main\Loader;
 use Bitrix\Main\Localization\Loc;
 use Bitrix\Main\Web\Json;
+use Bitrix\Tasks\Access\ActionDictionary;
+use Bitrix\Tasks\Access\TaskAccessController;
 use Bitrix\Tasks\Comments;
 use Bitrix\Tasks\Helper\Analytics;
-use Bitrix\Tasks\Integration\CRM\Timeline;
 use Bitrix\Tasks\Integration\CRM\TimeLineManager;
-use Bitrix\Tasks\Integration\IM;
 use Bitrix\Tasks\Integration\Pull\PushCommand;
 use Bitrix\Tasks\Integration\Pull\PushService;
 use Bitrix\Tasks\Integration\SocialNetwork;
@@ -156,7 +155,7 @@ final class Comment extends \Bitrix\Tasks\Integration\Forum\Comment
 				{
 					$taskData = \CTaskItem::getInstance($taskId, $data['AUTHOR_ID']);
 					$responsibleId = (int)$taskData['RESPONSIBLE_ID'];
-					$accomplices = $taskData['ACCOMPLICES'];
+					$accomplices = $taskData['ACCOMPLICES'] ?? [];
 					$accomplices = (is_array($accomplices) ? $accomplices : $accomplices->export());
 					$accomplices = array_map('intval', $accomplices);
 
@@ -325,40 +324,14 @@ final class Comment extends \Bitrix\Tasks\Integration\Forum\Comment
 
 	// event handling below...
 
-
-	public static function onCommentSave($entityType, $taskId, $commentId, &$data)
-	{
-		if ($entityType !== 'TK' || !$taskId)
-		{
-			return;
-		}
-
-		self::processResultData(parseInt($commentId));
-	}
-
+	/**
+	 * @deprecated
+	 *
+	 * Waiting for unbound event
+	 */
 	public static function onPrepareComments($component)
 	{
-		if(Comments\Viewed\Group::isOn())
-		{
-			$arResult =& $component->arResult;
-			$arParams =& $component->arParams;
 
-			$arMessages = &$arResult['MESSAGES'];
-
-			$template = $arParams['TEMPLATE_DATA'] ?? [];
-			$data = $template['DATA'] ?? [];
-			$viewed = $data['GROUP_VIEWED'] ?? [];
-			$unRead = $viewed['UNREAD_MID'] ?? [];
-
-			$component = \CBitrixComponent::includeComponentClass('bitrix:forum.comments');
-			/** @var \ForumCommentsComponent $component */
-
-			foreach ($arMessages as $messageId => $messageFields)
-			{
-				$arResult['MESSAGES'][$messageId]['NEW'] = in_array($messageId, $unRead) ? $component::MID_NEW : $component::MID_OLD;
-				// $arResult['MESSAGES'][$messageId]['NEW'] = $component::MID_NEW;
-			}
-		}
 	}
 
 	private static function processResultData($commentId = 0): void
@@ -616,7 +589,7 @@ final class Comment extends \Bitrix\Tasks\Integration\Forum\Comment
 		try
 		{
 			$oTask = new \CTaskItem($taskId, User::getAdminId());
-			$arTask = $oTask->getData();
+			$arTask = $oTask->getData(false);
 		}
 		catch (\TasksException | \CTaskAssertException $e)
 		{
@@ -665,8 +638,10 @@ final class Comment extends \Bitrix\Tasks\Integration\Forum\Comment
 				)
 			);
 
-			if (!$bCrmTask)
-			{
+			// 1. commented in 2025 because of http://jabber.bx/view.php?id=192038
+			// 2. added in 2014 because of http://jabber.bx/view.php?id=48069
+			// if (!$bCrmTask)
+			// {
 				$dbRes = \CSocNetLog::getList(
 					array("ID" => "DESC"),
 					array(
@@ -722,7 +697,7 @@ final class Comment extends \Bitrix\Tasks\Integration\Forum\Comment
 						}
 					}
 				}
-			}
+			// }
 
 			if ((int)($log_id ?? null) > 0)
 			{
@@ -893,7 +868,7 @@ final class Comment extends \Bitrix\Tasks\Integration\Forum\Comment
 		}
 
 		$recipientsIds = static::getTaskMembersByTaskId($taskId, $occurAsUserId);
-		$userIdToShareList = static::processMentions($arData);
+		$userIdToShareList = static::processMentions($arData, (int)$messageAuthorId);
 
 		if (is_array($userIdToShareList))
 		{
@@ -1443,7 +1418,7 @@ final class Comment extends \Bitrix\Tasks\Integration\Forum\Comment
 		$log->add($fields);
 	}
 
-	private static function processMentions(array $fields): array
+	private static function processMentions(array $fields, int $authorId): array
 	{
 		$newMentionedUserIds = [];
 
@@ -1500,7 +1475,15 @@ final class Comment extends \Bitrix\Tasks\Integration\Forum\Comment
 		{
 			foreach ($mentionedUserIds as $userId)
 			{
-				if (!in_array($userId, $taskMembers))
+				if (
+					!in_array($userId, $taskMembers)
+					&& TaskAccessController::can(
+						$authorId,
+						ActionDictionary::ACTION_TASK_ADD_AUDITORS,
+						$task->getId(),
+						$userId
+					)
+				)
 				{
 					$newMentionedUserIds[] = (int)$userId;
 				}
@@ -1613,181 +1596,23 @@ final class Comment extends \Bitrix\Tasks\Integration\Forum\Comment
 	}
 
 	/**
-	 * @param $messageData
-	 * @param $taskData
-	 * @param $fromUser
-	 * @param $toUsers
-	 * @param array $eventData
-	 * @return bool
+	 * @deprecated
+	 * @use \Bitrix\Tasks\Internals\Notification\Controller::onCommentCreated
 	 */
 	private static function sendNotification($messageData, $taskData, $fromUser, $toUsers, array $eventData = []): bool
 	{
 		$message = (string)Util::trim(\CTextParser::clearAllTags($messageData['POST_MESSAGE']));
 
-		if (\CTaskNotifications::useNewNotifications())
-		{
-			$task = \Bitrix\Tasks\Internals\Registry\TaskRegistry::getInstance()->getObject($taskData['ID'], true);
-			if (!$task)
-			{
-				return false;
-			}
-			$controller = new \Bitrix\Tasks\Internals\Notification\Controller();
-			$controller->onCommentCreated($task, $messageData['ID'], $message);
-			$controller->push();
-			return true;
-		}
-
-		if (empty($toUsers) || !IM::includeModule())
+		$task = \Bitrix\Tasks\Internals\Registry\TaskRegistry::getInstance()->getObject($taskData['ID'], true);
+		if (!$task)
 		{
 			return false;
 		}
-
-		// some sources do not even pass $eventData, so ensure we got at least MESSAGE_ID
-		$eventData['MESSAGE_ID'] = $messageData['ID'];
-
-//		$notifyType = IM_NOTIFY_SYSTEM;
-//		$notifyAnswer = false;
-
-		$user = \CTaskNotifications::getUser($fromUser);
-
-//		$messageTemplate = '[color=#000]#TASK_TITLE#[/color][br][i]#USER_NAME#:[/i] #TASK_COMMENT_TEXT#';
-//		$messageTemplatePush = '#USER_NAME#: #TASK_COMMENT_TEXT#';
-
-//		if (
-//			Loader::includeModule('socialnetwork')
-//			&& $messageData['POST_MESSAGE'] === \Bitrix\Socialnetwork\CommentAux\TaskInfo::POST_TEXT
-//			&& array_key_exists('AUX_DATA', $eventData)
-//		)
-//		{
-//			$commentInfo = unserialize($eventData['AUX_DATA'], ['allowed_classes' => false]);
-//			if (!$commentInfo)
-//			{
-//				return false;
-//			}
-//			$message = Comments\Task\CommentPoster::getCommentText($commentInfo);
-//		}
-
-		$messageTemplate = \CTaskNotifications::getGenderMessage($fromUser, 'TASKS_COMMENT_MESSAGE_ADD');
-		$messageTemplatePush = \CTaskNotifications::getGenderMessage($fromUser, 'TASKS_COMMENT_MESSAGE_ADD_PUSH');
-
-		$messageCropped = self::cropMessage($message);
-		if ($messageCropped !== '')
-		{
-			$messageTemplate .= Loc::getMessage('TASKS_COMMENT_MESSAGE_ADD_WITH_TEXT');
-			$messageTemplatePush .= ': #TASK_COMMENT_TEXT#';
-		}
-
-		\CTaskNotifications::SendMessageEx(
-			$taskData['ID'],
-			$fromUser,
-			$toUsers,
-			[
-				'INSTANT' => str_replace('#TASK_COMMENT_TEXT#', $messageCropped, $messageTemplate),
-				'EMAIL' => str_replace('#TASK_COMMENT_TEXT#', $message, $messageTemplate),
-				'PUSH' => \CTaskNotifications::cropMessage(
-					$messageTemplatePush,
-					[
-						'USER_NAME' => User::formatName($user),
-						'TASK_TITLE' => $taskData['TITLE'],
-						'TASK_COMMENT_TEXT' => $message,
-					],
-					\CTaskNotifications::PUSH_MESSAGE_MAX_LENGTH
-				)
-			],
-			[
-				'ENTITY_CODE' => 'COMMENT',
-				'ENTITY_OPERATION' => 'ADD',
-				'EVENT_DATA' => $eventData,
-				'NOTIFY_EVENT' => 'comment',
-				'NOTIFY_ANSWER' => true,
-				'TASK_DATA' => $taskData,
-				'TASK_URL' => [
-					'PARAMETERS' => static::getUrlParameters($messageData['ID']),
-					'HASH' => static::makeUrlHash($messageData['ID']),
-				],
-			]
-		);
-
-//		\CTaskNotifications::SendMessageEx(
-//			$taskData["ID"],
-//			$fromUser,
-//			$toUsers,
-//			[
-//				'INSTANT' => str_replace(
-//					["#TASK_COMMENT_TEXT#", "#USER_NAME#", "#TASK_TITLE#"],
-//					[$messageCropped, User::formatName($user), $taskData["TITLE"]],
-//					$messageTemplate
-//				),
-//				'EMAIL' => str_replace(
-//					["#TASK_COMMENT_TEXT#", "#USER_NAME#"],
-//					[$message, User::formatName($user)],
-//					$messageTemplate
-//				),
-//				'PUSH' => \CTaskNotifications::cropMessage(
-//					$messageTemplatePush,
-//					[
-//						'USER_NAME' => 			User::formatName($user),
-//						'TASK_TITLE' => 		$taskData["TITLE"],
-//						'TASK_COMMENT_TEXT' => 	$message
-//					],
-//					\CTaskNotifications::PUSH_MESSAGE_MAX_LENGTH
-//				)
-//			],
-//			[
-//				'ENTITY_CODE' => 'COMMENT',
-//				'ENTITY_OPERATION' => 'ADD',
-//				'EVENT_DATA' => $eventData,
-//				'NOTIFY_EVENT' => 'comment',
-//				'NOTIFY_ANSWER' => $notifyAnswer,
-//				'NOTIFY_TYPE' => $notifyType,
-//				'TASK_DATA' => $taskData,
-//				'TASK_URL' => [
-//					'PARAMETERS' => static::getUrlParameters($messageData['ID']),
-//					'HASH' => static::makeUrlHash($messageData['ID'])
-//				],
-//				'PUSH_PARAMS' => [
-//					'SENDER_NAME' => $taskData["TITLE"]
-//				]
-//			]);
+		$controller = new \Bitrix\Tasks\Internals\Notification\Controller();
+		$controller->onCommentCreated($task, $messageData['ID'], $message);
+		$controller->push();
 
 		return true;
-	}
-
-	/**
-	 * @param string $message
-	 * @return string
-	 */
-	private static function cropMessage(string $message): string
-	{
-		// cropped message to instant messenger
-		if (mb_strlen($message) >= 100)
-		{
-			$dot = '...';
-			$message = mb_substr($message, 0, 99);
-
-			if (mb_substr($message, -1) === '[')
-			{
-				$message = mb_substr($message, 0, 98);
-			}
-
-			if (
-				(($lastLinkPosition = mb_strrpos($message, '[u')) !== false)
-				|| (($lastLinkPosition = mb_strrpos($message, 'http://')) !== false)
-				|| (($lastLinkPosition = mb_strrpos($message, 'https://')) !== false)
-				|| (($lastLinkPosition = mb_strrpos($message, 'ftp://')) !== false)
-				|| (($lastLinkPosition = mb_strrpos($message, 'ftps://')) !== false)
-			)
-			{
-				if (mb_strpos($message, ' ', $lastLinkPosition) === false)
-				{
-					$message = mb_substr($message, 0, $lastLinkPosition);
-				}
-			}
-
-			$message .= $dot;
-		}
-
-		return $message;
 	}
 
 	/**
@@ -1816,17 +1641,6 @@ final class Comment extends \Bitrix\Tasks\Integration\Forum\Comment
 		{
 			return;
 		}
-	}
-
-	private static function getUserId()
-	{
-		$userId = User::getId();
-		if(!$userId)
-		{
-			$userId = User::getAdminId();
-		}
-
-		return $userId;
 	}
 
 	// legacy webdav support. it will be removed in future, so no external integration helper for webdav used here

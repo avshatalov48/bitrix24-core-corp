@@ -3,10 +3,7 @@
 global $APPLICATION;
 
 $APPLICATION->SetAdditionalCSS("/bitrix/themes/.default/crm-entity-show.css");
-if(SITE_TEMPLATE_ID === 'bitrix24')
-{
-	$APPLICATION->SetAdditionalCSS("/bitrix/themes/.default/bitrix24/crm-entity-show.css");
-}
+$APPLICATION->SetAdditionalCSS('/bitrix/themes/.default/bitrix24/crm-entity-show.css');
 
 $isCopyMode = (isset($arResult['IS_COPY_MODE']) &&
 	($arResult['IS_COPY_MODE'] === 'Y' || $arResult['IS_COPY_MODE'] === true));

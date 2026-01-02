@@ -58,7 +58,7 @@
 .bx-imol-list-recent-empty-state__container {
 	padding: 127px 30px 0;
 	text-align: center;
-	font: 13px / 20px var(--ui-font-family-system);
+	font: 13px / 20px var(--ui-font-family-primary, var(--ui-font-family-system));
 	color: var(--imol-list-recent__color_emty-text);
 }
 

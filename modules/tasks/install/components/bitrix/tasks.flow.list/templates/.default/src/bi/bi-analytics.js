@@ -53,7 +53,7 @@ export class BIAnalytics
 
 		if (dashboard)
 		{
-			SidePanel.Instance.open(dashboard.url);
+			window.open(dashboard.url, '_blank');
 		}
 	}
 
@@ -66,7 +66,7 @@ export class BIAnalytics
 				tabId: dashboard.id,
 				text: dashboard.title,
 				onclick: () => {
-					SidePanel.Instance.open(dashboard.url);
+					window.open(dashboard.url, '_blank');
 				},
 			});
 		});

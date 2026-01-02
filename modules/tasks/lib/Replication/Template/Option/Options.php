@@ -96,6 +96,23 @@ class Options
 		return $options;
 	}
 
+	public static function isNewAndCurrentOptionsEquals(array $newOptions, array $currentOptions): bool
+	{
+		$newOptions = static::validate($newOptions);
+		$currentOptions = static::validate($currentOptions);
+
+		foreach ($newOptions as $key => $value)
+		{
+			$secondValue = $currentOptions[$key] ?? null;
+			if ($secondValue != $value)
+			{
+				return false;
+			}
+		}
+
+		return true;
+	}
+
 	private static function validateTypeSelector(int $type): int
 	{
 		if ($type < 1 || $type > 2)

@@ -2,10 +2,13 @@
 
 namespace Bitrix\Sign\Repository\Document;
 
+use Bitrix\Main\ArgumentException;
+use Bitrix\Main\Error;
 use Bitrix\Main\ORM\Query\Filter\ConditionTree;
 use Bitrix\Main\ORM\Query\Query;
 use Bitrix\Main\Result;
 use Bitrix\Main\Security\Random;
+use Bitrix\Sign\Helper\IterationHelper;
 use Bitrix\Sign\Internal\Document\Template as TemplateModel;
 use Bitrix\Sign\Internal\Document\TemplateCollection as TemplateCollectionModel;
 use Bitrix\Sign\Internal\Document\TemplateTable;
@@ -44,6 +47,26 @@ class TemplateRepository
 		$model = TemplateTable::query()
 			->setSelect(['*'])
 			->where('UID', $uid)
+			->setLimit(1)
+			->fetchObject()
+		;
+
+		if ($model === null)
+		{
+			return null;
+		}
+
+		return $this->extractItemFromModel($model);
+	}
+
+	public function getCompletedAndVisibleCompanyTemplateByUid(string $uid): ?Item\Document\Template
+	{
+		$model = TemplateTable::query()
+			->setSelect(['*'])
+			->where('UID', $uid)
+			->where('STATUS', Status::COMPLETED->toInt())
+			->where('VISIBILITY', Visibility::VISIBLE->toInt())
+			->where('DOCUMENT.INITIATED_BY_TYPE', InitiatedByType::COMPANY->toInt())
 			->setLimit(1)
 			->fetchObject()
 		;
@@ -112,6 +135,35 @@ class TemplateRepository
 		return $this->extractItemCollectionFromModelCollection($models);
 	}
 
+	public function getCompletedAndVisibleCompanyTemplateList(): Item\Document\TemplateCollection
+	{
+		$query = TemplateTable::query()
+			->setSelect(['*'])
+			->where('STATUS', Status::COMPLETED->toInt())
+			->where('VISIBILITY', Visibility::VISIBLE->toInt())
+			->where('DOCUMENT.INITIATED_BY_TYPE', InitiatedByType::COMPANY->toInt())
+			->setLimit(1000)
+			->addOrder('ID', 'DESC')
+		;
+
+		$models = $query->fetchCollection();
+
+		return $this->extractItemCollectionFromModelCollection($models);
+	}
+
+	public function getHiddenTemplatesByTitle(
+		string $templateTitle,
+	): Item\Document\TemplateCollection
+	{
+		$filter = (new ConditionTree())
+			->logic('and')
+			->where('TITLE', $templateTitle)
+			->where('HIDDEN', true)
+		;
+
+		return $this->getB2eEmployeeTemplateList($filter);
+	}
+
 	public function getB2eEmployeeTemplateList(
 		ConditionTree $filter,
 		int $limit = 10,
@@ -161,6 +213,8 @@ class TemplateRepository
 			->setModifiedById($item->modifiedById)
 			->setTitle($item->title)
 			->setVisibility($item->visibility->toInt())
+			->setFolderId($item->folderId)
+			->setHidden($item->hidden)
 		;
 	}
 
@@ -176,6 +230,8 @@ class TemplateRepository
 			dateModify: Type\DateTime::createFromMainDateTimeOrNull($model->getDateModify()),
 			modifiedById: $model->getModifiedById(),
 			visibility: Type\Template\Visibility::tryFromInt($model->getVisibility()) ?? Type\Template\Visibility::VISIBLE,
+			folderId: $model->getFolderId(),
+			hidden: $model->getHidden(),
 		);
 	}
 
@@ -224,6 +280,33 @@ class TemplateRepository
 		return TemplateTable::update($templateId, ['VISIBILITY' => $visibility->toInt()]);
 	}
 
+	/**
+	 * @param int[] $templateIds
+	 * @param Type\Template\Visibility $visibility
+	 * @return Result
+	 */
+	public function updateVisibilities(array $templateIds, Type\Template\Visibility $visibility): Result
+	{
+		if (empty($templateIds))
+		{
+			return (new Result())->addError(new Error('Template ids cannot be empty'));
+		}
+
+		try
+		{
+			TemplateTable::updateByFilter(
+				['@ID' => $templateIds, '!=STATUS' => Status::NEW->toInt()],
+				['VISIBILITY' => $visibility->toInt()],
+			);
+		}
+		catch (ArgumentException $e)
+		{
+			return (new Result())->addError(new Error($e->getMessage()));
+		}
+
+		return new Result();
+	}
+
 	public function getById(int $id): ?Item\Document\Template
 	{
 		$model = TemplateTable::getByPrimary($id)->fetchObject();
@@ -236,8 +319,85 @@ class TemplateRepository
 		return $this->extractItemFromModel($model);
 	}
 
+	/**
+	 * @param list<int> $ids
+	 * @return Item\Document\TemplateCollection
+	 */
+	public function getByIds(array $ids): Item\Document\TemplateCollection
+	{
+		if (empty($ids))
+		{
+			return new Item\Document\TemplateCollection();
+		}
+
+		$models = TemplateTable::query()
+			->setSelect(['*'])
+			->whereIn('ID', $ids)
+			->fetchCollection()
+		;
+
+		return $this->extractItemCollectionFromModelCollection($models);
+	}
+
 	public function deleteById(int $id): Result
 	{
 		return TemplateTable::delete($id);
+	}
+
+	/**
+	 * @param iterable<int> $ids
+	 * @return Result
+	 */
+	public function deleteByIds(iterable $ids): Result
+	{
+		$ids = IterationHelper::getArrayByIterable($ids);
+		if (empty($ids))
+		{
+			return new Result();
+		}
+
+		try
+		{
+			TemplateTable::deleteByFilter([
+				'@ID' => $ids,
+			]);
+		}
+		catch (ArgumentException $e)
+		{
+			return (new Result())->addError(new Error($e->getMessage()));
+		}
+
+		return new Result();
+	}
+
+	/**
+	 * @param array<int> $templateIds
+	 */
+	public function isAllInitiatedByTypeByIds(array $templateIds, InitiatedByType $initiatedByType): bool
+	{
+		$query = TemplateTable::query()
+			->setSelect(['ID'])
+			->whereIn('ID', $templateIds)
+			->where('DOCUMENT.INITIATED_BY_TYPE', $initiatedByType->toInt())
+			->setLimit(count($templateIds))
+		;
+
+		return (int)$query->queryCountTotal() === count($templateIds);
+	}
+
+	public function listByUids(array $uids): Item\Document\TemplateCollection
+	{
+		if (empty($uids))
+		{
+			return new Item\Document\TemplateCollection();
+		}
+
+		$models = TemplateTable::query()
+			->setSelect(['*'])
+			->whereIn('UID', $uids)
+			->fetchCollection()
+		;
+
+		return $this->extractItemCollectionFromModelCollection($models);
 	}
 }

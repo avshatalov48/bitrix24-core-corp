@@ -35,6 +35,7 @@ jn.define('ui-system/form/inputs/input', (require, exports, module) => {
 	 * @property {string} [value]
 	 * @property {string} [placeholder]
 	 * @property {string} [label]
+	 * @property {number} [maxLength]
 	 * @property {InputSize} [size=InputSize.M]
 	 * @property {InputMode} [mode=InputMode.STROKE]
 	 * @property {InputDesign} [design=InputDesign.PRIMARY]
@@ -46,6 +47,7 @@ jn.define('ui-system/form/inputs/input', (require, exports, module) => {
 	 * @property {boolean} [edit=false]
 	 * @property {boolean} [dropdown=false]
 	 * @property {boolean} [erase=false]
+	 * @property {Color} [eraseIconColor=Color.base2]
 	 * @property {boolean} [required=false]
 	 * @property {boolean} [error=false]
 	 * @property {boolean} [enableKeyboardHide]
@@ -61,6 +63,7 @@ jn.define('ui-system/form/inputs/input', (require, exports, module) => {
 	 * @property {Object | Icon} [rightContent]
 	 * @property {Function} [onClickRightContent]
 	 * @property {Object | Icon} [rightStickContent]
+	 * @property {Color} [rightStickContentColor=Color.base2]
 	 * @property {Function} [onClickRightStickContent]
 	 * @property {Function} [onFocus]
 	 * @property {Function} [onChange]
@@ -90,8 +93,9 @@ jn.define('ui-system/form/inputs/input', (require, exports, module) => {
 
 			this.initProperties();
 
-			this.handleOnFocus = this.handleOnFocus.bind(this);
 			this.handleOnBlur = this.handleOnBlur.bind(this);
+			this.handleOnFocus = this.handleOnFocus.bind(this);
+			this.handleOnClick = this.handleOnClick.bind(this);
 			this.handleOnSubmit = this.handleOnSubmit.bind(this);
 			this.handleOnChange = this.handleOnChange.bind(this);
 			this.handleOnChangeText = this.handleOnChangeText.bind(this);
@@ -227,6 +231,8 @@ jn.define('ui-system/form/inputs/input', (require, exports, module) => {
 			return View(
 				{
 					testId: this.getTestId('label'),
+					onClick: this.handleOnContentClick,
+					onLongClick: this.handleOnContentLongClick,
 					style: {
 						position: 'absolute',
 						top: 0,
@@ -314,12 +320,12 @@ jn.define('ui-system/form/inputs/input', (require, exports, module) => {
 				return null;
 			}
 
-			const { onClickRightStickContent } = this.props;
+			const { onClickRightStickContent, rightStickContentColor } = this.props;
 
 			return this.renderIconContent({
 				position: 'right_stick',
 				content: rightStickContent,
-				iconColor: Color.base2,
+				iconColor: rightStickContentColor,
 				onClick: onClickRightStickContent,
 			});
 		}
@@ -343,6 +349,7 @@ jn.define('ui-system/form/inputs/input', (require, exports, module) => {
 					marginRight: Indent.XS.toNumber(),
 				},
 				onClick: this.handleOnClickLeftContent,
+				onLongClick: this.handleOnContentLongClick,
 			});
 		}
 
@@ -365,6 +372,7 @@ jn.define('ui-system/form/inputs/input', (require, exports, module) => {
 					marginLeft: Indent.XS2.toNumber(),
 				},
 				onClick: this.handleOnClickRightContent,
+				onLongClick: this.handleOnContentLongClick,
 			});
 		}
 
@@ -407,7 +415,7 @@ jn.define('ui-system/form/inputs/input', (require, exports, module) => {
 				testId: this.getTestId('erase'),
 				size: Input.getIconSize(),
 				icon: Icon.CROSS,
-				color: Color.base2,
+				color: this.props.eraseIconColor,
 				onClick: this.handleOnErase,
 			});
 		}
@@ -474,13 +482,18 @@ jn.define('ui-system/form/inputs/input', (require, exports, module) => {
 		{
 			const { style = {} } = this.props;
 			const containerHeight = this.getContainerHeight();
-			const paddingTop = this.shouldRenderLabel() ? Indent.M.toNumber() : 0;
+			const paddingTop = this.getContainerPaddingTop();
 			const paddingBottom = this.getContainerPaddingBottom();
-			const height = containerHeight + paddingTop + paddingBottom + (this.isIOS() ? 0 : 1);
+			const height = (
+				containerHeight
+					? containerHeight + paddingTop + paddingBottom + (this.isIOS() ? 0 : 1)
+					: undefined
+			);
 
 			return {
 				height,
 				paddingTop,
+				paddingBottom,
 				position: 'relative',
 				width: '100%',
 				backgroundColor: this.getBackgroundColor(),
@@ -490,11 +503,31 @@ jn.define('ui-system/form/inputs/input', (require, exports, module) => {
 		}
 
 		/**
+		 * Indent for errorText
 		 * @protected
 		 */
 		getContainerPaddingBottom()
 		{
-			return this.shouldRenderErrorText() ? Indent.S.toNumber() : 0;
+			if (!this.isNaked() || (this.isNaked() && this.shouldRenderErrorText()))
+			{
+				return Indent.S.toNumber();
+			}
+
+			return 0;
+		}
+
+		/**
+		 * Indent for label
+		 * @protected
+		 */
+		getContainerPaddingTop()
+		{
+			if (!this.isNaked() || (this.isNaked() && this.shouldRenderLabel()))
+			{
+				return Indent.M.toNumber();
+			}
+
+			return 0;
 		}
 
 		/**
@@ -590,7 +623,7 @@ jn.define('ui-system/form/inputs/input', (require, exports, module) => {
 
 		getBorderStyle({ filled } = {})
 		{
-			if (!this.isStroke())
+			if (this.isNaked())
 			{
 				return {};
 			}
@@ -725,6 +758,11 @@ jn.define('ui-system/form/inputs/input', (require, exports, module) => {
 			return Boolean(multiline);
 		}
 
+		getMaxLength()
+		{
+			return this.props.maxLength;
+		}
+
 		/**
 		 * @protected
 		 */
@@ -784,6 +822,10 @@ jn.define('ui-system/form/inputs/input', (require, exports, module) => {
 			{
 				onClickLeftContent();
 			}
+			else
+			{
+				this.handleOnContentClick();
+			}
 		}
 
 		handleOnClickRightContent()
@@ -793,6 +835,10 @@ jn.define('ui-system/form/inputs/input', (require, exports, module) => {
 			if (onClickRightContent)
 			{
 				onClickRightContent();
+			}
+			else
+			{
+				this.handleOnContentClick();
 			}
 		}
 
@@ -924,6 +970,7 @@ jn.define('ui-system/form/inputs/input', (require, exports, module) => {
 					this.contentFieldRef = ref;
 				},
 				multiline: this.isMultiline(),
+				maxLength: this.getMaxLength(),
 				focus: this.#isFocused(),
 				enable: this.isEnable(),
 				size: this.getTextSize(),
@@ -939,7 +986,7 @@ jn.define('ui-system/form/inputs/input', (require, exports, module) => {
 				showBBCode: this.shouldShowBBCode(),
 				isScrollEnabled: this.isScrollEnabled(),
 				onSelectionChange: this.handleOnSelectionChange,
-				onCursorPositionChange: this.handleOnSelectionChange,
+				onCursorPositionChange: this.handleOnCursorPositionChange,
 			};
 
 			if (!this.isEnableLineBreak())
@@ -1095,11 +1142,13 @@ jn.define('ui-system/form/inputs/input', (require, exports, module) => {
 		dropdown: false,
 		required: false,
 		erase: false,
+		eraseIconColor: Color.base2,
 		multiline: false,
 		focus: false,
 		enableKeyboardHide: false,
 		enableLineBreak: false,
 		showBBCode: true,
+		rightStickContentColor: Color.base2,
 	};
 
 	Input.propTypes = {
@@ -1108,6 +1157,7 @@ jn.define('ui-system/form/inputs/input', (require, exports, module) => {
 		value: PropTypes.oneOfType([PropTypes.string, PropTypes.number]),
 		placeholder: PropTypes.string,
 		label: PropTypes.string,
+		maxLength: PropTypes.number,
 		size: PropTypes.instanceOf(InputSize),
 		design: PropTypes.instanceOf(InputDesign),
 		mode: PropTypes.instanceOf(InputMode),
@@ -1119,6 +1169,8 @@ jn.define('ui-system/form/inputs/input', (require, exports, module) => {
 		edit: PropTypes.bool,
 		dropdown: PropTypes.bool,
 		required: PropTypes.bool,
+		erase: PropTypes.bool,
+		eraseIconColor: PropTypes.instanceOf(Color),
 		error: PropTypes.bool,
 		enableKeyboardHide: PropTypes.bool,
 		enableLineBreak: PropTypes.bool,
@@ -1134,6 +1186,7 @@ jn.define('ui-system/form/inputs/input', (require, exports, module) => {
 		rightContent: PropTypes.oneOfType([PropTypes.object, PropTypes.instanceOf(Icon)]),
 		onClickRightContent: PropTypes.func,
 		rightStickContent: PropTypes.oneOfType([PropTypes.object, PropTypes.instanceOf(Icon)]),
+		rightStickContentColor: PropTypes.instanceOf(Color),
 		onClickRightStickContent: PropTypes.func,
 		onChange: PropTypes.func,
 		onSubmit: PropTypes.func,

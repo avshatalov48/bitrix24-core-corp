@@ -43,7 +43,7 @@ final class FixB2bDoneDocumentsAgent
 			name: self::getAgentName(),
 			module: 'sign',
 			interval: 60,
-			existError: false
+			existError: false,
 		);
 	}
 

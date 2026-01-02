@@ -4,7 +4,7 @@ namespace Bitrix\Tasks\Flow\Provider\Query;
 
 use Bitrix\Main\UI\PageNavigation;
 use Bitrix\Tasks\Provider\Query\AbstractTaskQuery;
-use Bitrix\Tasks\Provider\TaskQueryInterface;
+use Bitrix\Tasks\Provider\Query\TaskQueryInterface;
 
 class FlowQuery extends AbstractTaskQuery implements TaskQueryInterface
 {

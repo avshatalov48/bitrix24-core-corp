@@ -17,6 +17,7 @@ use Bitrix\Crm\Integration\UserConsent as CrmIntegrationUserConsent;
 use Bitrix\Crm\Integrity\ActualEntitySelector;
 use Bitrix\Crm\Merger\EntityMerger;
 use Bitrix\Crm\Order\TradingPlatform;
+use Bitrix\Crm\WebForm\Debug\ResultEntityDebugLogger;
 use Bitrix\Main;
 use Bitrix\Main\Config\Option;
 use Bitrix\Main\Context;
@@ -91,6 +92,13 @@ class ResultEntity
 	protected $traceId;
 	protected $entities = [];
 	protected $agreements = [];
+
+	private ResultEntityDebugLogger $debugLogger;
+
+	public function __construct()
+	{
+		$this->debugLogger = new ResultEntityDebugLogger();
+	}
 
 	public static function getDuplicateModes()
 	{
@@ -266,6 +274,8 @@ class ResultEntity
 
 		/** @var  $merger \Bitrix\Crm\Merger\EntityMerger */
 		$mergerClass = $entity['DUPLICATE_CHECK']['MERGER_CLASS_NAME'];
+
+		$debugPrefixContextId = "$entityTypeName:$rowId";
 		switch($this->duplicateMode)
 		{
 			case self::DUPLICATE_CONTROL_MODE_MERGE:
@@ -294,9 +304,19 @@ class ResultEntity
 					}
 				}
 				$merger = new $mergerClass(0, false);
+
+				$this->debugLogger->addAdditionalContext("$debugPrefixContextId: $this->duplicateMode before merge", [
+					'entityFields' => $entityFields,
+					'fields' => $fields,
+				]);
+
 				$merger->mergeFields($fields, $entityFields, false, $mergerOptions);
 
+				$this->debugLogger->addAdditionalContext("$debugPrefixContextId: after merge", $entityFields);
+
 				$entityObject->Update($rowId, $entityFields);
+
+				$this->debugLogger->addAdditionalContext("$debugPrefixContextId: after update", $entityFields);
 				break;
 
 			case self::DUPLICATE_CONTROL_MODE_REPLACE:
@@ -318,8 +338,19 @@ class ResultEntity
 				}
 
 				$merger = new $mergerClass(0, false);
+
+				$this->debugLogger->addAdditionalContext("$debugPrefixContextId: $this->duplicateMode before merge", [
+					'entityFields' => $entityFields,
+					'fields' => $fields,
+				]);
+
 				$merger->mergeFields($fields, $entityFields, false, $mergerOptions);
+
+				$this->debugLogger->addAdditionalContext("$debugPrefixContextId: after merge", $entityFields);
+
 				$entityObject->Update($rowId, $entityFields);
+
+				$this->debugLogger->addAdditionalContext("$debugPrefixContextId: after update", $entityFields);
 				break;
 		}
 
@@ -719,11 +750,14 @@ class ResultEntity
 				$entityFields['WEBFORM_ID'] = $this->formId;
 				if($isEntityLead)
 				{
+					$this->debugLogger->addAdditionalContext('LEAD:EntityFields', $entityFields);
+
 					$facility->setRegisterMode(EntityManageFacility::REGISTER_MODE_ALWAYS_ADD);
 					$id = $facility->addLead($entityFields, true, $addOptions);
 				}
 				else
 				{
+					$this->debugLogger->addAdditionalContext("$entityName:entityFields", $entityFields);
 					$id = $entityInstance->add($entityFields, true, $addOptions);
 				}
 
@@ -2073,6 +2107,8 @@ class ResultEntity
 
 	public function add($schemeId, $fields)
 	{
+		$this->debugLogger->setFormId($this->formId);
+
 		$this->entityMap = Entity::getMap();
 		$this->scheme = $schemeId;
 		$this->fields = $this->prepareFields($fields);
@@ -2168,13 +2204,27 @@ class ResultEntity
 					break;
 			}
 
+			$this->debugLogger
+				->setRawFields($fields)
+				->setResultEntityPack($this->resultEntityPack)
+			;
+
+			$this->debugLogger
+				->setCaseName('OnAfterEntityAdd')
+				->analyze()
+			;
+
 			$this->fillTrace();
 			$this->addActivity();
 			$this->addConsent();
 			$this->runAutomation();
 			WebFormTrigger::onFormFill($this);
 
-			if(count($this->resultEntityPack) > 0)
+			$this->debugLogger
+				->setCaseName('OnAfterAutomationRun')
+				->analyze()
+			;
+			if (count($this->resultEntityPack) > 0)
 			{
 				ResultEntityTable::addBatch($this->formId, $this->resultEntityPack);
 			}

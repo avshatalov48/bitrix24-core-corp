@@ -1,9 +1,13 @@
 .ui-page-slider-workarea {
-	height: calc(100vh - 100px);
+	min-height: calc(100vh - 100px);
 }
 
 .ui-form {
 	padding-top: 16px;
+}
+
+.ui-selector-tab-labels {
+	display: none;
 }
 
 .db-connection-hint {
@@ -16,15 +20,16 @@
 .db-connection-button-block {
 	display: flex;
 	flex-direction: row;
-	align-items: center;
+	align-items: flex-start;
 	margin-top: 16px;
 }
 
 .db-connection-success, .db-connection-error {
 	display: flex;
 	flex-direction: row;
-	align-items: center;
+	align-items: flex-start;
 	margin-left: 8px;
+	margin-top: 11px;
 }
 
 .db-connection-status .ui-icon-set {

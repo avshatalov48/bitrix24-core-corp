@@ -28,7 +28,14 @@ while($lang = $langs->Fetch())
 		"NAME" => GetMessage("EXTRANET_INVITATION_NAME"),
 		"DESCRIPTION" => GetMessage("EXTRANET_INVITATION_DESC"),
 	));
-	
+
+	$et = new CEventType;
+	$et->Add(array(
+		"LID" => $lid,
+		"EVENT_NAME" => "COLLAB_INVITATION",
+		"NAME" => GetMessage("EXTRANET_INVITATION_NAME"),
+		"DESCRIPTION" => GetMessage("EXTRANET_INVITATION_DESC"),
+	));
 	
 	$arSites = array();
 	$sites = CSite::GetList("", "", Array("LANGUAGE_ID"=>$lid));
@@ -87,6 +94,19 @@ while($lang = $langs->Fetch())
 			"SUBJECT" => "#COLLAB_INVITATION_SUBJECT#",
 			"MESSAGE" => "<?EventMessageThemeCompiler::includeComponent(\"bitrix:intranet.template.mail\", \"\", array(\"USER_ID\" => \"{#USER_ID#}\",\"CHECKWORD\" => \"{#CHECKWORD#}\",\"SERVER_NAME\" => \"{#SERVER_NAME#}\",\"USER_TEXT\" => \"{#USER_TEXT#}\",\"USER_ID_FROM\" => \"{#USER_ID_FROM#}\",\"TEMPLATE_TYPE\" => \"COLLAB_INVITATION\",\"FIELDS\" => \$arParams));?>",
 			"BODY_TYPE" => "html",
+		));
+
+		$emess = new CEventMessage;
+		$emess->Add(array(
+			'ACTIVE' => 'Y',
+			'EVENT_NAME' => 'COLLAB_JOIN',
+			'LID' => $arSites,
+			'EMAIL_FROM' => '#DEFAULT_EMAIL_FROM#',
+			'EMAIL_TO' => '#EMAIL#',
+			'BCC' => "",
+			'SUBJECT' => '#COLLAB_JOIN_SUBJECT#',
+			'MESSAGE' => '<?EventMessageThemeCompiler::includeComponent("bitrix:intranet.template.mail", "", array("USER_ID" => "{#USER_ID#}","SERVER_NAME" => "{#SERVER_NAME#}","USER_TEXT" => "{#USER_TEXT#}","USER_ID_FROM" => "{#USER_ID_FROM#}","TEMPLATE_TYPE" => "COLLAB_JOIN","FIELDS" => $arParams));?>',
+			'BODY_TYPE' => 'html',
 		));
 	}
 }

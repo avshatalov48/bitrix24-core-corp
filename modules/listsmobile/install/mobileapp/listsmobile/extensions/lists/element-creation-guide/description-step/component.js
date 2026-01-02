@@ -3,9 +3,10 @@
  */
 jn.define('lists/element-creation-guide/description-step/component', (require, exports, module) => {
 	const { PureComponent } = require('layout/pure-component');
-	const { DescriptionStepView } = require('lists/element-creation-guide/description-step/view');
 	const { EventEmitter } = require('event-emitter');
 	const { NotifyManager } = require('notify-manager');
+	const { Random } = require('utils/random');
+	const { DescriptionStepView } = require('lists/element-creation-guide/description-step/view');
 
 	class DescriptionStepComponent extends PureComponent
 	{
@@ -27,7 +28,6 @@ jn.define('lists/element-creation-guide/description-step/component', (require, e
 			this.isConstantsTuned = false;
 			this.isLoading = false;
 
-			// eslint-disable-next-line no-undef
 			this.uid = props.uid || Random.getString();
 			this.customEventEmitter = EventEmitter.createWithUid(this.uid);
 		}

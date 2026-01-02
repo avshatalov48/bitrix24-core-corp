@@ -10,6 +10,7 @@ use Bitrix\DocumentGenerator\Driver;
 use Bitrix\DocumentGenerator\Integration\Bitrix24Manager;
 use Bitrix\DocumentGenerator\Template;
 use Bitrix\Main;
+use Bitrix\Main\EventManager;
 use Bitrix\Main\Loader;
 use Bitrix\Main\Localization\Loc;
 use Bitrix\Main\ORM\Event;
@@ -303,6 +304,21 @@ class TemplateTable extends FileModel
 		}
 		static::addToStack();
 		return parent::onAfterUpdate($event);
+	}
+
+	public static function onAfterDelete(Event $event)
+	{
+		EventManager::getInstance()->send(
+			new \Bitrix\Main\Event(
+				Driver::MODULE_ID,
+				'onDeleteTemplate',
+				[
+					'templateId' => $event->getParameter('primary')['ID'],
+				]
+			)
+		);
+
+		return parent::onAfterDelete($event);
 	}
 
 	/**

@@ -345,40 +345,24 @@ jn.define('bizproc/workflow/list/simple-list', (require, exports, module) => {
 		handleWorkflowDetailOpen(entityId, item)
 		{
 			const task = item.tasks[0];
-			if (!task)
-			{
-				void requireLazy('bizproc:workflow/details')
-					.then(({ WorkflowDetails }) => {
-						if (WorkflowDetails)
-						{
-							WorkflowDetails.open(
-								{
-									uid: this.uid,
-									workflowId: entityId,
-									title: item.typeName || null,
-								},
-								this.props.layout,
-							);
-						}
-					})
-				;
-
-				return;
-			}
-
-			void requireLazy('bizproc:task/details').then(({ TaskDetails }) => {
-				void TaskDetails.open(
-					this.props.layout,
+			void requireLazy('bizproc:workflow/info')
+				.then(({ WorkflowInfo }) => {
+					if (WorkflowInfo)
 					{
-						uid: this.uid,
-						taskId: task.id,
-						workflowId: item.id,
-						title: item.typeName,
-						readOnlyTimeline: BX.prop.getBoolean(this.props, 'readOnlyTimeline', false),
-						showNotifications: BX.prop.getBoolean(this.props, 'showNotifications', true),
-					},
-				);
-			});
+						WorkflowInfo.open(
+							{
+								uid: this.uid,
+								taskId: task ? task.id : null,
+								workflowId: entityId,
+								title: item.typeName || null,
+								readOnlyTimeline: BX.prop.getBoolean(this.props, 'readOnlyTimeline', false),
+								showNotifications: BX.prop.getBoolean(this.props, 'showNotifications', true),
+							},
+							this.props.layout,
+						);
+					}
+				})
+			;
 		}
 
 		hideItem(id)

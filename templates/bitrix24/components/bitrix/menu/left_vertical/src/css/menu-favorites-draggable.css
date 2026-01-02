@@ -1,0 +1,26 @@
+.menu-favorites-draggable {
+	display: none;
+	width: 20px;
+	height: 20px;
+	position: absolute;
+	left: -16px;
+	top: 9px;
+	background-color: var(--menu-item-color);
+	mask-image: url('../images/icons/drag.svg');
+	mask-repeat: no-repeat;
+	mask-size: contain;
+	cursor: move;
+	z-index: 1;
+}
+
+.bitrix24-dark-theme .menu-favorites-draggable {
+	background-image: url('data:image/svg+xml;charset=US-ASCII,%3Csvg%20viewBox%3D%220%200%208%2018%22%20xmlns%3D%22http%3A//www.w3.org/2000/svg%22%3E%3Cpath%20d%3D%22M0%200h3v3H0V0zm0%205h3v3H0V5zm0%205h3v3H0v-3zm0%205h3v3H0v-3zM5%200h3v3H5V0zm0%205h3v3H5V5zm0%205h3v3H5v-3zm0%205h3v3H5v-3z%22%20fill%3D%22%23333%22%20fill-rule%3D%22evenodd%22/%3E%3C/svg%3E');
+}
+
+.menu-items-edit-mode .menu-favorites-draggable {
+	display: block;
+}
+
+.menu-collapsed-mode .menu-collapsed-more-btn {
+	display: block;
+}

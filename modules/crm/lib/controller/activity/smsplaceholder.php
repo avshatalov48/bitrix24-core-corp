@@ -156,7 +156,11 @@ class SmsPlaceholder extends Base
 	private function checkPermissions(int $entityTypeId, ?int $entityCategoryId = null): bool
 	{
 		$userPermissions = Container::getInstance()->getUserPermissions($this->getCurrentUser()?->getId());
-		if ($userPermissions->checkUpdatePermissions($entityTypeId, 0, $entityCategoryId))
+		if (
+			is_null($entityCategoryId)
+			? $userPermissions->entityType()->canUpdateItems($entityTypeId)
+			: $userPermissions->entityType()->canUpdateItemsInCategory($entityTypeId, $entityCategoryId)
+		)
 		{
 			return true;
 		}

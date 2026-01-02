@@ -7,7 +7,6 @@ $MESS["CRM_ML_DEAL_SCORING_DISABLE"] = "Disable deal scoring for this pipeline";
 $MESS["CRM_ML_DEAL_SUCCESS_PROBABILITY"] = "Success probability";
 $MESS["CRM_ML_DISABLE_DEAL_SCORING"] = "Disable deal scoring for this pipeline?";
 $MESS["CRM_ML_DISABLE_LEAD_SCORING"] = "Disable lead scoring?";
-$MESS["CRM_ML_FEEDBACK"] = "Feedback";
 $MESS["CRM_ML_FORECAST_DYNAMICS"] = "Forecast dynamics";
 $MESS["CRM_ML_HELP"] = "Help";
 $MESS["CRM_ML_INFLUENCING_EVENT"] = "Influencing events";

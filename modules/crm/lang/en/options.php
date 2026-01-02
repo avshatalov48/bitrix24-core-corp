@@ -52,7 +52,6 @@ $MESS["CRM_OPTIONS_PATH_TO_LEAD_WIDGET"] = "Lead widget path template";
 $MESS["CRM_OPTIONS_PATH_TO_ORDER_CHECK_DETAILS"] = "Order receipt page path";
 $MESS["CRM_OPTIONS_PATH_TO_ORDER_DETAILS"] = "Order details page path";
 $MESS["CRM_OPTIONS_PATH_TO_ORDER_FORM"] = "Ordering form configuration page path";
-$MESS["CRM_OPTIONS_PATH_TO_ORDER_IMPORT_INSTAGRAM"] = "Instagram product import page";
 $MESS["CRM_OPTIONS_PATH_TO_ORDER_LIST"] = "Order list page path";
 $MESS["CRM_OPTIONS_PATH_TO_ORDER_PAYMENT_DETAILS"] = "Payment details page path";
 $MESS["CRM_OPTIONS_PATH_TO_ORDER_PAYMENT_LIST"] = "Payment list page path";

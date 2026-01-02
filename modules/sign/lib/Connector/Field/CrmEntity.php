@@ -23,10 +23,10 @@ class CrmEntity implements Contract\Connector
 	)
 	{
 		$this->memberConnectorFactory = $memberConnectorFactory ?? Container::instance()->getMemberConnectorFactory();
-		$documentConnectorFactory = $documentConnectorFactory ?? Container::instance()->getDocumentConnectorFactory();
+		$documentConnectorFactory ??= Container::instance()->getDocumentConnectorFactory();
 
 		$this->documentConnector = $documentConnectorFactory->create(
-			Container::instance()->getDocumentRepository()->getById($this->member->documentId)
+			Container::instance()->getDocumentRepository()->getById($this->member->documentId),
 		);
 	}
 
@@ -37,6 +37,7 @@ class CrmEntity implements Contract\Connector
 		{
 			return $result;
 		}
+
 		return match ($this->field->entityType)
 		{
 			EntityType::DOCUMENT => $this->fetchDocumentField(),
@@ -49,7 +50,7 @@ class CrmEntity implements Contract\Connector
 		$memberConnector = $this->memberConnectorFactory->create($this->member);
 		$fields = $memberConnector->fetchFields();
 		$field = $fields->findFirst(fn (Item\Connector\Field $field) => $field->name === $this->field->entityCode
-			&& Item\Connector\Field::isValueTypeSupported($field->data)
+			&& Item\Connector\Field::isValueTypeSupported($field->data),
 		);
 
 		$result = new FieldCollection();
@@ -57,6 +58,7 @@ class CrmEntity implements Contract\Connector
 		{
 			$result->add($field);
 		}
+
 		return $result;
 	}
 
@@ -64,7 +66,7 @@ class CrmEntity implements Contract\Connector
 	{
 		$fields = $this->documentConnector->fetchFields();
 		$field = $fields->findFirst(fn (Item\Connector\Field $field) => $field->name === $this->field->entityCode
-			&& Item\Connector\Field::isValueTypeSupported($field->data)
+			&& Item\Connector\Field::isValueTypeSupported($field->data),
 		);
 
 		$result = new FieldCollection();
@@ -72,6 +74,7 @@ class CrmEntity implements Contract\Connector
 		{
 			$result->add($field);
 		}
+
 		return $result;
 	}
 

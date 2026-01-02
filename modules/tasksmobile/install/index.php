@@ -50,6 +50,13 @@ class TasksMobile extends CModule
 			\Bitrix\TasksMobile\Provider\TariffPlanRestrictionProvider::class,
 			'getTariffPlanRestrictions',
 		);
+		$eventManager->registerEventHandler(
+			'mobile',
+			'onMobileMenuStructureBuilt',
+			'tasksmobile',
+			'Bitrix\TasksMobile\MobileMenuManager',
+			'onMobileMenuStructureBuilt',
+		);
 
 		return true;
 	}
@@ -70,6 +77,13 @@ class TasksMobile extends CModule
 			'tasksmobile',
 			\Bitrix\TasksMobile\Provider\TariffPlanRestrictionProvider::class,
 			'getTariffPlanRestrictions',
+		);
+		$eventManager->unRegisterEventHandler(
+			'mobile',
+			'onMobileMenuStructureBuilt',
+			'tasksmobile',
+			'Bitrix\TasksMobile\MobileMenuManager',
+			'onMobileMenuStructureBuilt',
 		);
 
 		ModuleManager::unRegisterModule($this->MODULE_ID);

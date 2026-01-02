@@ -33,27 +33,6 @@ class AI extends \CModule
 	public $MODULE_NAME;
 	public $MODULE_DESCRIPTION;
 
-	public array $eventsData = [
-		'main' => [
-			/** @see \Bitrix\AI\Handler\Main::onAfterUserDelete */
-			'onAfterUserDelete' => [Main::class, 'onAfterUserDelete'],
-		],
-		'rest' => [
-			/** @see \Bitrix\AI\Rest::onRestServiceBuildDescription */
-			'onRestServiceBuildDescription' => [Rest::class, 'onRestServiceBuildDescription'],
-			/** @see \Bitrix\AI\Rest::onRestAppDelete */
-			'onRestAppDelete' => [Rest::class, 'onRestAppDelete'],
-		],
-		'intranet' => [
-			/** @see \Bitrix\AI\Handler\Intranet::onSettingsProvidersCollect */
-			'onSettingsProvidersCollect' => [Intranet::class, 'onSettingsProvidersCollect'],
-		],
-		'baas' => [
-			/** @see \Bitrix\AI\Handler\Baas::onPackagePurchased **/
-			'onPackagePurchased' => [Baas::class, 'onPackagePurchased'],
-		],
-	];
-
 	/**
 	 * Constructor.
 	 */
@@ -170,7 +149,7 @@ class AI extends \CModule
 		}
 
 		// module
-		registerModule($this->MODULE_ID);
+		registerModule('ai');
 
 		try
 		{
@@ -189,43 +168,75 @@ class AI extends \CModule
 		{
 		}
 
-		//should be deleted after the next release, because it is not used anymore in the next version main, fileman
-		if (Loader::includeModule('ai') && Facade\Bitrix24::shouldUseB24() === false)
-		{
-			\COption::SetOptionString('fileman', 'isCopilotFeatureEnabled', 'Y');
-			\COption::SetOptionString('main', 'bitrix:main.post.form:AIImage', 'Y');
-			\COption::SetOptionString('main', 'bitrix:main.post.form:AIText', 'Y');
-			\COption::SetOptionString('main', 'bitrix:main.post.form:Copilot', 'Y');
-		}
-
-
 		// install event handlers
 		$eventManager = EventManager::getInstance();
-		foreach ($this->eventsData as $module => $events)
-		{
-			foreach ($events as $eventCode => $callback)
-			{
-				$eventManager->registerEventHandler(
-					$module,
-					$eventCode,
-					$this->MODULE_ID,
-					$callback[0],
-					$callback[1]
-				);
-			}
-		}
+		/** @see \Bitrix\AI\Handler\Main */
+		$eventManager->registerEventHandler('main', 'onAfterUserDelete', 'ai', '\\Bitrix\\AI\\Handler\\Main', 'onAfterUserDelete');
+		/** @see \Bitrix\AI\Rest */
+		$eventManager->registerEventHandler('rest', 'onRestServiceBuildDescription', 'ai', '\\Bitrix\\AI\\Rest', 'onRestServiceBuildDescription');
+		/** @see \Bitrix\AI\Rest */
+		$eventManager->registerEventHandler('rest', 'onRestAppDelete', 'ai', '\\Bitrix\\AI\\Rest', 'onRestAppDelete');
+		/** @see \Bitrix\AI\Handler\Intranet */
+		$eventManager->registerEventHandler('intranet', 'onSettingsProvidersCollect', 'ai', '\\Bitrix\\AI\\Handler\\Intranet', 'onSettingsProvidersCollect');
+		/** @see \Bitrix\AI\Handler\Baas */
+		$eventManager->registerEventHandler('baas', 'onPackagePurchased', 'ai', '\\Bitrix\\AI\\Handler\\Baas', 'onPackagePurchased');
 
 		// agents
 		/** @see \Bitrix\AI\QueueJob::clearOldAgent */
-		CAgent::AddAgent('Bitrix\AI\QueueJob::clearOldAgent();', $this->MODULE_ID, 'N', 120);
+		CAgent::AddAgent('Bitrix\AI\QueueJob::clearOldAgent();', 'ai', 'N', 120);
 		/** @see \Bitrix\AI\Updater::refreshDbAgent */
-		CAgent::AddAgent('Bitrix\AI\Updater::refreshDbAgent();', $this->MODULE_ID, 'N', 3600);
+		CAgent::AddAgent('Bitrix\AI\Updater::refreshDbAgent();', 'ai', 'N', 3600);
 		/** @see \Bitrix\AI\Cloud\Agent\PropertiesSync::retrieveModelsAgent */
 		CAgent::addAgent(
 			'Bitrix\\AI\\Cloud\\Agent\\PropertiesSync::retrieveModelsAgent();',
-			$this->MODULE_ID,
+			'ai',
 		);
 
+		if ((Loader::includeModule('ai') && Facade\Bitrix24::shouldUseB24()))
+		{
+			\COption::SetOptionString(
+				'ai',
+				'bitrixaudio_modules',
+				json_encode(['crm'])
+			);
+			\COption::SetOptionString(
+				'ai',
+				'bitrixaudio_availableIn',
+				json_encode(['crm_copilot_fill_item_from_call_engine_audio'])
+			);
+			\COption::SetOptionString(
+				'ai',
+				'bitrixaudio_portalSettingsItemsToForceReset',
+				json_encode(['crm_copilot_fill_item_from_call_engine_audio'])
+			);
+
+			/** @see \Bitrix\AI\Agents\EngineSettings::resetToBitrixAudioInCloudAgent */
+			\CAgent::AddAgent(
+				'\Bitrix\AI\Agents\EngineSettings::resetToBitrixAudioInCloudAgent();',
+				'ai',
+				interval: 3600,
+				next_exec: ConvertTimeStamp(time() + CTimeZone::GetOffset() + 600, 'FULL'),
+			);
+
+			/** @see \Bitrix\AI\Agents\EngineSettings::resetToBitrixGPTInCloudAgent */
+			\CAgent::AddAgent(
+				'\Bitrix\AI\Agents\EngineSettings::resetToBitrixGPTInCloudAgent();',
+				'ai',
+				interval: 3600,
+				next_exec: ConvertTimeStamp(time() + CTimeZone::GetOffset() + 600, 'FULL'),
+			);
+		}
+
+		if ((Loader::includeModule('ai') && !Facade\Bitrix24::shouldUseB24()))
+		{
+			/** @see \Bitrix\AI\Agents\EngineSettings::resetFollowUpTextStepsToBGPTAgent */
+			\CAgent::AddAgent(
+				'\Bitrix\AI\Agents\EngineSettings::resetFollowUpTextStepsToBGPTAgent();',
+				'ai',
+				interval: 3600,
+				next_exec: ConvertTimeStamp(time() + CTimeZone::GetOffset() + 600, 'FULL'),
+			);
+		}
 
 		// rights
 		//$this->InstallTasks();
@@ -284,27 +295,24 @@ class AI extends \CModule
 		}
 
 		// agents and rights
-		CAgent::removeModuleAgents($this->MODULE_ID);
+		CAgent::removeModuleAgents('ai');
 		$this->unInstallTasks();
 
 		// uninstall event handlers
 		$eventManager = EventManager::getInstance();
-		foreach ($this->eventsData as $module => $events)
-		{
-			foreach ($events as $eventCode => $callback)
-			{
-				$eventManager->unregisterEventHandler(
-					$module,
-					$eventCode,
-					$this->MODULE_ID,
-					$callback[0],
-					$callback[1]
-				);
-			}
-		}
+		/** @see \Bitrix\AI\Handler\Main */
+		$eventManager->unRegisterEventHandler('main', 'onAfterUserDelete', 'ai', '\\Bitrix\\AI\\Handler\\Main', 'onAfterUserDelete');
+		/** @see \Bitrix\AI\Rest */
+		$eventManager->unRegisterEventHandler('rest', 'onRestServiceBuildDescription', 'ai', '\\Bitrix\\AI\\Rest', 'onRestServiceBuildDescription');
+		/** @see \Bitrix\AI\Rest */
+		$eventManager->unRegisterEventHandler('rest', 'onRestAppDelete', 'ai', '\\Bitrix\\AI\\Rest', 'onRestAppDelete');
+		/** @see \Bitrix\AI\Handler\Intranet */
+		$eventManager->unRegisterEventHandler('intranet', 'onSettingsProvidersCollect', 'ai', '\\Bitrix\\AI\\Handler\\Intranet', 'onSettingsProvidersCollect');
+		/** @see \Bitrix\AI\Handler\Baas */
+		$eventManager->unRegisterEventHandler('baas', 'onPackagePurchased', 'ai', '\\Bitrix\\AI\\Handler\\Baas', 'onPackagePurchased');
 
 		// module
-		unregisterModule($this->MODULE_ID);
+		unregisterModule('ai');
 
 		// delete files finally
 		if (isset($arParams['savedata']) && !$arParams['savedata'])
@@ -314,7 +322,7 @@ class AI extends \CModule
 					'ID',
 				],
 				'filter' => [
-					'=MODULE_ID' => $this->MODULE_ID,
+					'=MODULE_ID' => 'ai',
 				],
 				'order' => [
 					'ID' => 'desc',

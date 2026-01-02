@@ -33,8 +33,9 @@ if (!CModule::IncludeModule('crm'))
 	$isErrorOccured = true;
 }
 
-$CCrmPerms = CCrmPerms::GetCurrentUserPermissions();
-if (!$isErrorOccured && $CCrmPerms->HavePerm('QUOTE', BX_CRM_PERM_NONE, 'READ'))
+$userPermissionsService = \Bitrix\Crm\Service\Container::getInstance()->getUserPermissions();
+
+if (!$isErrorOccured && !\Bitrix\Crm\Service\Container::getInstance()->getUserPermissions()->entityType()->canReadItems(CCrmOwnerType::Quote))
 {
 	$errorMessage = GetMessage('CRM_PERMISSION_DENIED');
 	$isErrorOccured = true;
@@ -72,7 +73,7 @@ $arResult['STEXPORT_MODE'] = $isStExport ? 'Y' : 'N';
 $arResult['STEXPORT_TOTAL_ITEMS'] = isset($arParams['STEXPORT_TOTAL_ITEMS']) ? (int)$arParams['STEXPORT_TOTAL_ITEMS'] : 0;
 //endregion
 
-if (!$isErrorOccured && $isInExportMode && $CCrmPerms->HavePerm('QUOTE', BX_CRM_PERM_NONE, 'EXPORT'))
+if (!$isErrorOccured && $isInExportMode && !$userPermissionsService->entityType()->canExportItems(CCrmOwnerType::Quote))
 {
 	$errorMessage = GetMessage('CRM_PERMISSION_DENIED');
 	$isErrorOccured = true;
@@ -97,8 +98,8 @@ $fieldRestrictionManager = new FieldRestrictionManager(
 );
 $CCrmQuote = new CCrmQuote(false);
 
-$userID = CCrmSecurityHelper::GetCurrentUserID();
-$isAdmin = CCrmPerms::IsAdmin();
+$userID = Crm\Service\Container::getInstance()->getContext()->getUserId();
+$isAdmin = $userPermissionsService->isAdmin();
 
 $arResult['CURRENT_USER_ID'] = CCrmSecurityHelper::GetCurrentUserID();
 $arParams['PATH_TO_QUOTE_LIST'] = CrmCheckPath('PATH_TO_QUOTE_LIST', $arParams['PATH_TO_QUOTE_LIST'] ?? '', $APPLICATION->GetCurPage());
@@ -178,24 +179,26 @@ $arResult['WEBFORM_LIST'] = WebFormManager::getListNamesEncoded();
 $arResult['FILTER'] = [];
 $arResult['FILTER2LOGIC'] = [];
 $arResult['FILTER_PRESETS'] = [];
-$arResult['PERMS']['ADD']    = !$CCrmPerms->HavePerm('QUOTE', BX_CRM_PERM_NONE, 'ADD');
-$arResult['PERMS']['WRITE']  = !$CCrmPerms->HavePerm('QUOTE', BX_CRM_PERM_NONE, 'WRITE');
-$arResult['PERMS']['DELETE'] = !$CCrmPerms->HavePerm('QUOTE', BX_CRM_PERM_NONE, 'DELETE');
+$arResult['PERMS']['ADD'] = $userPermissionsService->entityType()->canReadItems(CCrmOwnerType::Quote);
+$arResult['PERMS']['WRITE'] = $userPermissionsService->entityType()->canUpdateItems(CCrmOwnerType::Quote);
+$arResult['PERMS']['DELETE'] = $userPermissionsService->entityType()->canDeleteItems(CCrmOwnerType::Quote);
 
 $arResult['AJAX_MODE'] = isset($arParams['AJAX_MODE']) ? $arParams['AJAX_MODE'] : ($arResult['INTERNAL'] ? 'N' : 'Y');
 $arResult['AJAX_ID'] = isset($arParams['AJAX_ID']) ? $arParams['AJAX_ID'] : '';
 $arResult['AJAX_OPTION_JUMP'] = isset($arParams['AJAX_OPTION_JUMP']) ? $arParams['AJAX_OPTION_JUMP'] : 'N';
 $arResult['AJAX_OPTION_HISTORY'] = isset($arParams['AJAX_OPTION_HISTORY']) ? $arParams['AJAX_OPTION_HISTORY'] : 'N';
 
-CCrmQuote::PrepareConversionPermissionFlags(0, $arResult, $CCrmPerms);
+CCrmQuote::PrepareConversionPermissionFlags(0, $arResult);
 if($arResult['CAN_CONVERT'])
 {
 	$arResult['CONVERSION_CONFIG'] = Crm\Conversion\ConversionManager::getConfig(\CCrmOwnerType::Quote);
 	$arResult['CONVERTER_ID'] = $arResult['GRID_ID'];
 }
 
+$isExtendedInternal = $arParams['EXTENDED_INTERNAL_MODE'] ?? null;
+
 //region Filter Presets Initialization
-if (!$bInternal)
+if (!$bInternal || $isExtendedInternal === true)
 {
 	$entityFilter = Crm\Filter\Factory::createEntityFilter(
 		new Crm\Filter\QuoteSettings(['ID' => $arResult['GRID_ID']])
@@ -226,7 +229,7 @@ $fieldRestrictionManager->removeRestrictedFields($filterOptions, $gridOptions);
 //endregion
 
 //region Filter initialization
-if (!$bInternal)
+if (!$bInternal || $isExtendedInternal === true)
 {
 	$arResult['FILTER2LOGIC'] = ['TITLE', 'COMMENTS'];
 
@@ -275,8 +278,10 @@ $arResult['~STATUS_LIST_WRITE']= CCrmStatus::GetStatusList('QUOTE_STATUS');
 $arResult['STATUS_LIST_WRITE'] = [];
 foreach ($arResult['~STATUS_LIST_WRITE'] as $sStatusId => $sStatusTitle)
 {
-	if ($CCrmPerms->GetPermType('QUOTE', 'WRITE', array('STATUS_ID'.$sStatusId)) > BX_CRM_PERM_NONE)
+	if ($userPermissionsService->stage()->canUpdateInStage(CCrmOwnerType::Quote, null, $sStatusId))
+	{
 		$arResult['STATUS_LIST_WRITE'][$sStatusId] = $sStatusTitle;
+	}
 }
 $factory = Crm\Service\Container::getInstance()->getFactory(\CCrmOwnerType::Quote);
 
@@ -340,6 +345,8 @@ if (
 {
 	$arResult['HEADERS'][] = ['id' => Crm\Item::FIELD_NAME_LAST_ACTIVITY_TIME, 'name' => $factory->getFieldCaption(Crm\Item::FIELD_NAME_LAST_ACTIVITY_TIME), 'sort' => mb_strtolower(Crm\Item::FIELD_NAME_LAST_ACTIVITY_TIME), 'first_order' => 'desc', 'class' => 'datetime'];
 }
+
+(new Crm\Filter\Field\LastCommunicationField())->addLastCommunicationGridHeader($arResult['HEADERS']);
 
 $arResult['HEADERS_SECTIONS'] = \Bitrix\Crm\Filter\HeaderSections::getInstance()
 	->sections($factory);
@@ -608,10 +615,7 @@ if($actionData['ACTIVE'] && $actionData['METHOD'] == 'GET')
 	{
 		$ID = intval($actionData['ID']);
 
-		$arEntityAttr = $CCrmPerms->GetEntityAttr('QUOTE', array($ID));
-		$attr = $arEntityAttr[$ID];
-
-		if($CCrmPerms->CheckEnityAccess('QUOTE', 'DELETE', $attr))
+		if ($userPermissionsService->item()->canDelete(CCrmOwnerType::Quote, $ID))
 		{
 			$DB->StartTransaction();
 
@@ -1197,7 +1201,7 @@ if (!$preFetchWasEmpty)
 				'ENTITY_ID' => $contactID
 			);
 
-			if (!CCrmContact::CheckReadPermission($contactID, $CCrmPerms))
+			if (!$userPermissionsService->item()->canRead(CCrmOwnerType::Contact, $contactID))
 			{
 				$arQuote['CONTACT_INFO']['IS_HIDDEN'] = true;
 				$arQuote['CONTACT_LINK_HTML'] = CCrmViewHelper::GetHiddenEntityCaption(CCrmOwnerType::Contact);
@@ -1239,7 +1243,7 @@ if (!$preFetchWasEmpty)
 				'ENTITY_ID' => $companyID
 			];
 
-			if (!CCrmCompany::CheckReadPermission($companyID, $CCrmPerms))
+			if (!$userPermissionsService->item()->canRead(CCrmOwnerType::Company, $companyID))
 			{
 				$arQuote['COMPANY_INFO']['IS_HIDDEN'] = true;
 				$arQuote['COMPANY_LINK_HTML'] = CCrmViewHelper::GetHiddenEntityCaption(CCrmOwnerType::Company);
@@ -1280,7 +1284,7 @@ if (!$preFetchWasEmpty)
 				'ENTITY_ID' => $leadID
 			);
 
-			if (!CCrmLead::CheckReadPermission($leadID, $CCrmPerms))
+			if (!$userPermissionsService->item()->canRead(CCrmOwnerType::Lead, $leadID))
 			{
 				$arQuote['LEAD_INFO']['IS_HIDDEN'] = true;
 				$arQuote['LEAD_LINK_HTML'] = CCrmViewHelper::GetHiddenEntityCaption(CCrmOwnerType::Lead);
@@ -1321,7 +1325,7 @@ if (!$preFetchWasEmpty)
 				'ENTITY_ID' => $dealID
 			];
 
-			if (!CCrmDeal::CheckReadPermission($dealID, $CCrmPerms))
+			if (!$userPermissionsService->item()->canRead(CCrmOwnerType::Deal, $dealID))
 			{
 				$arQuote['DEAL_INFO']['IS_HIDDEN'] = true;
 				$arQuote['DEAL_LINK_HTML'] = CCrmViewHelper::GetHiddenEntityCaption(CCrmOwnerType::Deal);
@@ -1356,10 +1360,7 @@ if (!$preFetchWasEmpty)
 			);
 		if(
 			$myCompanyID > 0
-			&& Crm\Service\Container::getInstance()->getUserPermissions()->checkReadPermissions(
-				\CCrmOwnerType::Company,
-				$myCompanyID
-			)
+			&& $userPermissionsService->item()->canRead(CCrmOwnerType::Company, $myCompanyID)
 		)
 		{
 			$arQuote['MY_COMPANY_INFO'] = [
@@ -1644,11 +1645,11 @@ if (isset($arResult['QUOTE_ID']) && !empty($arResult['QUOTE_ID']))
 	}
 
 	// checkig access for operation
-	$arQuoteAttr = CCrmPerms::GetEntityAttr('QUOTE', $arResult['QUOTE_ID']);
+	$userPermissionsService->item()->preloadPermissionAttributes(CCrmOwnerType::Quote, $arResult['QUOTE_ID']);
 	foreach ($arResult['QUOTE_ID'] as $iQuoteId)
 	{
-		$arResult['QUOTE'][$iQuoteId]['EDIT'] = $CCrmPerms->CheckEnityAccess('QUOTE', 'WRITE', $arQuoteAttr[$iQuoteId]);
-		$arResult['QUOTE'][$iQuoteId]['DELETE'] = $CCrmPerms->CheckEnityAccess('QUOTE', 'DELETE', $arQuoteAttr[$iQuoteId]);
+		$arResult['QUOTE'][$iQuoteId]['EDIT'] = $userPermissionsService->item()->canUpdate(CCrmOwnerType::Quote, $iQuoteId);
+		$arResult['QUOTE'][$iQuoteId]['DELETE'] = $userPermissionsService->item()->canDelete(CCrmOwnerType::Quote, $iQuoteId);
 	}
 
 	$entityBadges = new Bitrix\Crm\Kanban\EntityBadge(CCrmOwnerType::Quote, $arResult['QUOTE_ID']);
@@ -1668,7 +1669,7 @@ if (!$isInExportMode)
 			$arResult['NEED_FOR_REBUILD_SEARCH_CONTENT'] = true;
 		}
 
-		if(CCrmPerms::IsAdmin())
+		if($userPermissionsService->isAdmin())
 		{
 			if(COption::GetOptionString('crm', '~CRM_REBUILD_QUOTE_ATTR', 'N') === 'Y')
 			{

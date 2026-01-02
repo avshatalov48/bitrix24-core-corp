@@ -43,5 +43,7 @@ jn.define('ui-system/form/inputs/input/src/enums/design-enum', (require, exports
 		}
 	}
 
-	module.exports = { InputDesign };
+	module.exports = {
+		InputDesign: InputDesign.export(),
+	};
 });

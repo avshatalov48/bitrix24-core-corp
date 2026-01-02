@@ -166,10 +166,24 @@ export const TodoEditorBlocksCalendar = {
 					this.config = response.data ?? {};
 					this.sectionSelectorReadOnly = data.config.readOnly ?? false;
 
+					const hasSelectedSection = this.config.sections.some((section) => section.ID === this.sectionId);
+					if (this.sectionSelectorReadOnly && !hasSelectedSection)
+					{
+						this.plannerInstance?.setReadonly();
+					}
+
 					if (Type.isNil(data.sectionId))
 					{
 						const defaultSection = data.config.sections.find((section) => section.DEFAULT === true);
-						this.sectionId = defaultSection ? defaultSection.ID : data.config.sections[0].ID;
+						if (Type.isObject(defaultSection))
+						{
+							this.sectionId = defaultSection.ID;
+						}
+						else
+						{
+							const firstUserSection = data.config.sections.find((section) => section.OWNER_ID === data.ownerId);
+							this.sectionId = firstUserSection?.ID ?? 0;
+						}
 					}
 				});
 			}
@@ -198,6 +212,7 @@ export const TodoEditorBlocksCalendar = {
 					height: 104,
 					width: 770,
 					entryTimezone: this.timezoneName,
+					readonly: this.sectionSelectorReadOnly,
 				});
 			}
 
@@ -409,17 +424,26 @@ export const TodoEditorBlocksCalendar = {
 				multiple: true,
 				dropdownMode: true,
 				showAvatars: true,
-				enableSearch: true,
+				enableSearch: !this.sectionSelectorReadOnly,
 				width: 450,
 				zIndex: 2500,
 				entities: [{ id: 'user' }],
 				preselectedItems,
 				undeselectedItems,
 				events: {
+					'Item:onBeforeSelect': this.onBeforeSelectUser,
+					'Item:onBeforeDeselect': this.onBeforeSelectUser,
 					'Item:onSelect': this.onSelectUser,
 					'Item:onDeselect': this.onDeselectUser,
 				},
 			});
+		},
+		onBeforeSelectUser(event: BaseEvent): void
+		{
+			if (this.sectionSelectorReadOnly)
+			{
+				event.preventDefault();
+			}
 		},
 		onSelectUser({ data: { item } }): void
 		{

@@ -1,21 +1,14 @@
-<?
-$MESS["AUTH_PLEASE_AUTH"] = "Пожалуйста, авторизуйтесь:";
-$MESS["AUTH_LOGIN"] = "Логин";
-$MESS["AUTH_PASSWORD"] = "Пароль";
-$MESS["AUTH_REMEMBER_ME"] = "Запомнить меня на этом компьютере";
-$MESS["AUTH_AUTHORIZE"] = "Войти";
-$MESS["AUTH_REGISTER"] = "Зарегистрироваться";
-$MESS["AUTH_FIRST_ONE"] = "Если вы впервые на сайте, заполните, пожалуйста, регистрационную форму.";
-$MESS["AUTH_FORGOT_PASSWORD_2"] = "Забыли свой пароль?";
-$MESS["AUTH_CAPTCHA_PROMT"] = "Введите слово на картинке";
-$MESS["AUTH_TITLE"] = "Вход в Битрикс24";
-$MESS["AUTH_SECURE_NOTE"]="Перед отправкой формы авторизации пароль будет зашифрован в браузере. Это позволит избежать передачи пароля в открытом виде.";
-$MESS["AUTH_NONSECURE_NOTE"]="Пароль будет отправлен в открытом виде. Включите JavaScript в браузере, чтобы зашифровать пароль перед отправкой.";
-$MESS["AUTH_SOCSERV"]="Вход через социальные сервисы:";
-$MESS["AUTH_1_SOCSERV"] = "Войти через";
-$MESS["AUTH_2_FORM"] = "или через форму —";
-$MESS["AUTH_AUTHORIZE_BY_QR"] = "ВХОД ПО QR";
-$MESS["AUTH_AUTHORIZE_BY_QR_INFO_1"] = "Отсканируйте QR-код";
-$MESS["AUTH_AUTHORIZE_BY_QR_INFO_2"] = "в приложении Битрикс24 или камерой смартфона";
-$MESS["AUTH_BACK"] = "Назад";
+<?php
+$MESS["INTRANET_AUTH_TITLE"] = "Войти в Битрикс24";
+$MESS["INTRANET_AUTH_LOGIN"] = "Логин";
+$MESS["INTRANET_AUTH_PASSWORD"] = "Пароль";
+$MESS["INTRANET_AUTH_SOCSERV_TITLE"] = "Войти с помощью";
+$MESS["INTRANET_AUTH_QR_TITLE"] = "Вход без логина[br]и пароля";
+$MESS["INTRANET_AUTH_QR_DESC"] = "Наведите камеру[br]на QR-код, чтобы быстро[br]войти в Битрикс24";
+$MESS["INTRANET_INSTALL_APP_WITH_QR"] = "Если у вас ещё нет мобильного приложения,[br] установите его с помощью этого QR";
+$MESS["INTRANET_AUTH_REMEMBER_ME"] = "Запомнить меня";
+$MESS["INTRANET_AUTH_REGISTER"] = "Зарегистрироваться";
+$MESS["INTRANET_AUTH_FORGOT_PASSWORD"] = "Не помню пароль";
+$MESS["INTRANET_AUTH_BUTTON"] = "Продолжить";
+$MESS["INTRANET_AUTH_CAPTCHA_PROMT"] = "Введите буквы с картинки";
 ?>

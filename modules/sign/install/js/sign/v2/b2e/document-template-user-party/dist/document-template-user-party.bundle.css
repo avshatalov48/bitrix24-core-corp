@@ -1,0 +1,8 @@
+.sign-document-b2e-user-party__description {
+	padding: var(--ui-space-stack-sm);
+	background: #ECFAFE;
+	border-radius: var(--ui-border-radius-xs);
+	font-size: 13px;
+	color: var(--ui-color-gray-90);
+	margin-top: var(--ui-space-stack-xs);
+}

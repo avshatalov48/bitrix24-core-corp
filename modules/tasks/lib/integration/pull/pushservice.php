@@ -3,6 +3,7 @@ namespace Bitrix\Tasks\Integration\Pull;
 
 use Bitrix\Main;
 use Bitrix\Pull\Event;
+use Bitrix\Tasks\V2\FormV2Feature;
 
 /**
  * Class PushService
@@ -51,8 +52,8 @@ class PushService
 			'RECIPIENTS' => $recipients,
 			'PARAMS' => $params,
 		];
-		self::getInstance()->registerEvent($parameters);
-		self::getInstance()->addBackgroundJob();
+
+		self::getInstance()->registerEvent($parameters)->flush();
 	}
 
 	public static function addEventByTag(string $tag, array $params): void
@@ -63,8 +64,7 @@ class PushService
 			'TAG' => $tag,
 			'PARAMS' => $params,
 		];
-		self::getInstance()->registerEvent($parameters);
-		self::getInstance()->addBackgroundJob();
+		self::getInstance()->registerEvent($parameters)->flush();
 	}
 
 	/**
@@ -94,18 +94,20 @@ class PushService
 	/**
 	 * @param array $parameters
 	 */
-	private function registerEvent(array $parameters): void
+	private function registerEvent(array $parameters): static
 	{
 		$this->registry[] = [
 			'TAG' => $parameters['TAG'] ?? null,
 			'RECIPIENTS' => $parameters['RECIPIENTS'] ?? null,
 			'PARAMS' => $parameters['PARAMS'] ?? null,
 		];
+
+		return $this;
 	}
 
 	private function sendEvents(): void
 	{
-		foreach ($this->registry as $event)
+		foreach ($this->registry as $k => $event)
 		{
 			if (isset($event['TAG']) && $event['TAG'] !== '')
 			{
@@ -122,6 +124,20 @@ class PushService
 			{
 				Event::add($event['RECIPIENTS'], $event['PARAMS']);
 			}
+
+			unset($this->registry[$k]);
+		}
+	}
+
+	private function flush(): void
+	{
+		if (FormV2Feature::isOn('miniform'))
+		{
+			self::proceed();
+		}
+		else
+		{
+			self::getInstance()->addBackgroundJob();
 		}
 	}
 
@@ -135,7 +151,7 @@ class PushService
 			'ignoreDelay' => false,
 		];
 
-		$params['params'] = array_merge($params['params'], $pullManagerParams);
+		$params['params'] = $params['params'] + $pullManagerParams;
 
 		return $params;
 	}

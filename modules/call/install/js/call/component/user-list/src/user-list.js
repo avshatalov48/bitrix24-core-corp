@@ -20,6 +20,16 @@ export const UserList = {
 			required: false,
 			default: false,
 		},
+		withBorder: {
+			type: Boolean,
+			required: false,
+			default: true,
+		},
+		withIcon: {
+			type: Boolean,
+			required: false,
+			default: false,
+		},
 	},
 	data(): JsonObject
 	{
@@ -62,17 +72,24 @@ export const UserList = {
 		onClosePopup()
 		{
 			this.showPopup = false;
-		}
+		},
 	},
 	template: `
-		<div class="bx-call-user-list-component bx-call-user-list-component-scope" ref="users-popup-bind" @click="showUsersPopup">
+		<div
+			class="bx-call-user-list-component bx-call-user-list-component-scope"
+			:class="{ '--border': this.withBorder }"
+			ref="users-popup-bind"
+			@click="showUsersPopup"
+		>
 			<template v-if="!isLoading && !hasError">
+				<div v-if="withIcon" class="bx-call-user-list-component__icon"></div>
 				<div  v-for="user in displayedUsers" :key="user.id || 'remaining'" class="bx-call-user-list-component__user-item">
 					<img
 						v-if="user.avatar"
-						:src="encodeURI(user.avatar)"
+						:src="user.avatar"
 						:alt="user.name"
 						class="bx-call-user-list-component__user-avatar"
+						:class="{ '--border': this.withBorder }"
 						draggable="false"
 					/>
 					<div v-else-if="user.name" class="bx-call-user-list-component__user-avatar --icon" :style="backgroundStyle(user)"></div>

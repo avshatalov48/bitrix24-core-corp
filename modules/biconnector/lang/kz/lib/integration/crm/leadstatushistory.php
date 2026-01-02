@@ -1,0 +1,19 @@
+<?php
+$MESS["CRM_BIC_LSH_FIELD_ASSIGNED_BY"] = "Жауапты";
+$MESS["CRM_BIC_LSH_FIELD_ASSIGNED_BY_DEPARTMENT"] = "Жауапты бөлім";
+$MESS["CRM_BIC_LSH_FIELD_ASSIGNED_BY_DEPARTMENT_FULL"] = "Компания бөлімдерінің иерархиясындағы жол";
+$MESS["CRM_BIC_LSH_FIELD_ASSIGNED_BY_FULL"] = "Лид үшін жауапты болып тағайындалған пайдаланушы идентификаторы мен аты";
+$MESS["CRM_BIC_LSH_FIELD_ASSIGNED_BY_ID"] = "Жауаптының идентификаторы";
+$MESS["CRM_BIC_LSH_FIELD_ASSIGNED_BY_ID_FULL"] = "Лид үшін жауапты болып тағайындалған пайдаланушының идентификаторы";
+$MESS["CRM_BIC_LSH_FIELD_ASSIGNED_BY_NAME"] = "Жауапты адамның аты";
+$MESS["CRM_BIC_LSH_FIELD_ASSIGNED_BY_NAME_FULL"] = "Лид үшін жауапты болып тағайындалған пайдаланушының аты";
+$MESS["CRM_BIC_LSH_FIELD_DATE_CREATE"] = "Жасау уақыты";
+$MESS["CRM_BIC_LSH_FIELD_ID"] = "Бірегей кілт";
+$MESS["CRM_BIC_LSH_FIELD_LEAD_ID"] = "Лид идентификаторы";
+$MESS["CRM_BIC_LSH_FIELD_STATUS"] = "Мәртебе";
+$MESS["CRM_BIC_LSH_FIELD_STATUS_ID"] = "Мәртебе идентификаторы";
+$MESS["CRM_BIC_LSH_FIELD_STATUS_NAME"] = "Мәртебенің атауы";
+$MESS["CRM_BIC_LSH_FIELD_STATUS_SEMANTIC"] = "Мәртебе түрі";
+$MESS["CRM_BIC_LSH_FIELD_STATUS_SEMANTIC_ID"] = "Мәртебе түрінің идентификаторы";
+$MESS["CRM_BIC_LSH_FIELD_TYPE_ID"] = "Жазба түрі";
+$MESS["CRM_BIC_LSH_TABLE"] = "Лид: мәртебе тарихы";

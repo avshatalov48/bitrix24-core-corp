@@ -23,10 +23,24 @@ class AddResourceTypeCommand extends AbstractCommand
 	public function toArray(): array
 	{
 		return [
-			'resourceType' => $this->resourceType->toArray(),
 			'createdBy' => $this->createdBy,
-			'ranges' => $this->rangeCollection?->toArray(),
+			'resourceType' => $this->resourceType->toArray(),
+			'rangeCollection' => $this->rangeCollection?->toArray(),
 		];
+	}
+
+	public static function mapFromArray(array $props): self
+	{
+		$rangeCollection = isset($props['rangeCollection'])
+			? Entity\Slot\RangeCollection::mapFromArray($props['rangeCollection'])
+			: null
+		;
+
+		return new self(
+			createdBy: $props['createdBy'],
+			resourceType: Entity\ResourceType\ResourceType::mapFromArray($props['resourceType']),
+			rangeCollection: $rangeCollection,
+		);
 	}
 
 	protected function execute(): Result

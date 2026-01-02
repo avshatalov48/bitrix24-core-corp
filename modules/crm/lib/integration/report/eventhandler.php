@@ -5,6 +5,7 @@ namespace Bitrix\Crm\Integration\Report;
 use Bitrix\Crm\Agent\History\DealStageSupposedHistory;
 use Bitrix\Crm\Agent\History\LeadStatusSupposedHistory;
 use Bitrix\Crm\Integration\Intranet\ToolsManager;
+use Bitrix\Crm\Integration\Market\Label;
 use Bitrix\Crm\Integration\Report\AnalyticBoard\MyReports\ActivityAnalyticBoard;
 use Bitrix\Crm\Integration\Report\AnalyticBoard\MyReports\CompanyAnalyticBoard;
 use Bitrix\Crm\Integration\Report\AnalyticBoard\MyReports\ContactAnalyticBoard;
@@ -63,6 +64,12 @@ use Bitrix\Report\VisualConstructor\Helper\Util;
 use Bitrix\Report\VisualConstructor\Views\Component\Number;
 use Bitrix\Report\VisualConstructor\Views\JsComponent\AmChart\LinearGraph;
 use Bitrix\Rest\Marketplace\Url;
+use Bitrix\UI\Buttons\Button;
+use Bitrix\UI\Buttons\Color;
+use Bitrix\UI\Buttons\Icon;
+use Bitrix\UI\Buttons\JsCode;
+use Bitrix\UI\Buttons\JsHandler;
+use Bitrix\UI\Buttons\Tag;
 use Bitrix\Voximplant\Integration\Report\Dashboard\CallDynamics\CallDynamicsBoard;
 
 /**
@@ -610,14 +617,24 @@ class EventHandler
 			static::getLimitComponentParams(Dashboard\Ad\AdPayback::BOARD_KEY),
 			Limit::isAnalyticsLimited(Dashboard\Ad\AdPayback::BOARD_KEY)
 		);
+
 		$board->addFeedbackButton();
-		$board->addButton(
-			new BoardButton(
-				'<a href="/crm/tracking/" target="_top" class="ui-btn ui-btn-primary">'.
-				Loc::getMessage('CRM_REPORT_TRAFFIC_EFFECT_CONFIG_BUTTON_TITLE').
-				'</a>'
-			)
-		);
+		if (Loader::includeModule('ui'))
+		{
+			$button = Button::create([
+				'color' => Color::PRIMARY,
+				'text' => Loc::getMessage('CRM_REPORT_TRAFFIC_EFFECT_CONFIG_BUTTON_TITLE'),
+				'tag' => Tag::LINK,
+				'link' => '/crm/tracking/',
+				'air' => true,
+			]);
+			$button->addAttribute('target', '_top');
+
+			$board->addButton(
+				new BoardButton($button->render()),
+			);
+		}
+
 		$analyticPageList[] = $board;
 
 		$board = new AnalyticBoard();
@@ -638,14 +655,26 @@ class EventHandler
 			static::getLimitComponentParams(Dashboard\Ad\TrafficEfficiency::BOARD_KEY),
 			Limit::isAnalyticsLimited(Dashboard\Ad\TrafficEfficiency::BOARD_KEY)
 		);
+
 		$board->addFeedbackButton();
-		$board->addButton(
-			new BoardButton(
-				'<a href="/crm/tracking/" target="_top" class="ui-btn ui-btn-primary">'.
-				Loc::getMessage('CRM_REPORT_TRAFFIC_EFFECT_CONFIG_BUTTON_TITLE').
-				'</a>'
-			)
-		);
+		if (Loader::includeModule('ui'))
+		{
+			$button = Button::create([
+				'color' => Color::PRIMARY,
+				'tag' => Tag::LINK,
+				'text' => Loc::getMessage('CRM_REPORT_TRAFFIC_EFFECT_CONFIG_BUTTON_TITLE'),
+				'link' => '/crm/tracking/',
+				'air' => true,
+			]);
+			$button->addAttribute('target', '_top');
+
+			$board->addButton(
+				new BoardButton(
+					$button->render(),
+				),
+			);
+		}
+
 		$analyticPageList[] = $board;
 	}
 
@@ -713,16 +742,26 @@ class EventHandler
 		}
 
 		$myReportsDeal->setBatchKey(self::BATCH_MY_REPORTS);
-		$myReportsDeal->addButton(
-			new BoardButton('
-				<div class="ui-btn-split ui-btn-light-border ui-btn-themes"> 
-					<button id="crm-report-deal-category" class="ui-btn-main">
-						' . htmlspecialcharsbx(MyReports\DealBoard::getCurrentCategoryName()) . '
-					</button> 
-					<button class="ui-btn-menu" onclick="BX.Crm.Report.DealWidgetBoard.onSelectCategoryButtonClick(this);"></button> 
-				</div>
-			')
-		);
+		if (Loader::includeModule('ui'))
+		{
+			$button = \Bitrix\UI\Buttons\Split\Button::create([
+				'air' => true,
+				'color' => Color::LIGHT_BORDER,
+			]);
+			$button->getMainButton()->addAttribute('id', 'crm-report-deal-category');
+			$button->getMainButton()->setText(MyReports\DealBoard::getCurrentCategoryName());
+			$button->getMenuButton()->bindEvent(
+				'click',
+				new JsHandler(
+					'BX.Crm.Report.DealWidgetBoard.onSelectCategoryButtonClick',
+					'BX.Crm.Report.DealWidgetBoard',
+				),
+			);
+
+			$myReportsDeal->addButton(
+				new BoardButton($button->render())
+			);
+		}
 		$myReportsDeal->addButton(static::getAddWidgetButton());
 		$analyticPageList[] = $myReportsDeal;
 
@@ -1235,11 +1274,21 @@ class EventHandler
 
 	private static function getAddWidgetButton()
 	{
-		return new BoardButton('
-			<button class="ui-btn ui-btn-primary ui-btn-icon-add" onclick="BX.CrmWidgetPanel.current.processAction(\'add\');">
-				'.Loc::getMessage('CRM_REPORT_MY_REPORTS_ADD').'
-			</button>
-		');
+		$html = '';
+		if (Loader::includeModule('ui'))
+		{
+			$button = Button::create([
+				'color' => Color::PRIMARY,
+				'icon' => Icon::ADD,
+				'text' => Loc::getMessage('CRM_REPORT_MY_REPORTS_ADD'),
+				'air' => true,
+				'onclick' => new JsCode("BX.CrmWidgetPanel.current.processAction('add');")
+			]);
+
+			$html = $button->render();
+		}
+
+		return new BoardButton($html);
 	}
 
 	private static function getMarketplaceAnalyticsBoard()
@@ -1248,7 +1297,11 @@ class EventHandler
 
 		$marketplaceExternalLink = new AnalyticBoard();
 		$marketplaceExternalLink->setBoardKey('crm_marketplace_external_link');
-		$marketplaceExternalLink->setTitle(Loc::getMessage('CRM_REPORT_EXTERNAL_LINK_MARKETPLACE_BOARD_TITLE'));
+		$marketplaceExternalLink->setTitle(
+			Label::isRenamedMarket()
+			? Loc::getMessage('CRM_REPORT_EXTERNAL_LINK_MARKETPLACE_BOARD_TITLE_MSGVER_1')
+			: Loc::getMessage('CRM_REPORT_EXTERNAL_LINK_MARKETPLACE_BOARD_TITLE')
+		);
 		$marketplaceExternalLink->setExternal(true);
 		$marketplaceExternalLink->setExternalUrl(
 			Url::getCategoryByPlacement('CRM_ANALYTICS_MENU')

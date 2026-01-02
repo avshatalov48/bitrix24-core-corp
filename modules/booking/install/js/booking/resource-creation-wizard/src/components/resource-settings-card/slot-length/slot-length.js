@@ -34,7 +34,7 @@ export const SlotLength = {
 	computed: {
 		title(): string
 		{
-			return this.loc('BRCW_SETTINGS_CARD_SLOT_LENGTH_TITLE');
+			return this.loc('BRCW_SETTINGS_CARD_SLOT_LENGTH_TITLE_MSGVER_1');
 		},
 		titleIconType(): string
 		{
@@ -49,7 +49,7 @@ export const SlotLength = {
 			/>
 			<TextLayout
 				type="SlotLength"
-				:text="loc('BRCW_SETTINGS_CARD_SLOT_LENGTH_TEXT_MSGVER_1')"
+				:text="loc('BRCW_SETTINGS_CARD_SLOT_LENGTH_TEXT_MSGVER_2')"
 			/>
 			<div>
 				<SlotLengthSelector

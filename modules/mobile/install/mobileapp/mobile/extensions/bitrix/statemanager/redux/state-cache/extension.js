@@ -2,11 +2,9 @@
  * @module statemanager/redux/state-cache
  */
 jn.define('statemanager/redux/state-cache', (require, exports, module) => {
-	const { Feature } = require('feature');
 	const { debounce } = require('utils/function');
 	const { isEqual } = require('utils/object');
 	const { Logger, LogType } = require('utils/logger');
-	const { FileStorage } = require('statemanager/redux/state-cache/file-storage');
 	const { MemoryStorage } = require('statemanager/redux/state-cache/memory-storage');
 
 	const logger = new Logger([
@@ -21,10 +19,10 @@ jn.define('statemanager/redux/state-cache', (require, exports, module) => {
 	{
 		constructor()
 		{
-			this.emitChange = null;
+			this.storage = new MemoryStorage();
 
-			this.storage = Feature.isMemoryStorageSupported() ? new MemoryStorage() : new FileStorage();
-			this.cache = this.storage.load();
+			this.cache = new Map();
+			this.pendingSaves = new Set();
 
 			this.debouncedSave = debounce(this.#save, 100, this);
 		}
@@ -37,7 +35,7 @@ jn.define('statemanager/redux/state-cache', (require, exports, module) => {
 		 */
 		getReducerState(reducerName, defaultValue = null)
 		{
-			return this.cache[reducerName] ?? defaultValue;
+			return this.#loadReducerStateFromStorage(reducerName) ?? defaultValue;
 		}
 
 		/**
@@ -47,41 +45,59 @@ jn.define('statemanager/redux/state-cache', (require, exports, module) => {
 		 */
 		setState(state)
 		{
-			if (this.#isEqualToGivenState(state))
-			{
-				logger.info('StateCache: state is equal, nothing to do', this.cache, state);
-
-				return;
-			}
-
 			for (const [reducerName, reducerState] of Object.entries(state))
 			{
-				this.cache[reducerName] = reducerState;
+				const cachedReducerState = this.#loadReducerStateFromStorage(reducerName);
+
+				if (isEqual(reducerState, cachedReducerState))
+				{
+					logger.info(
+						'StateCache: states are equal, nothing to do',
+						reducerName,
+						reducerState,
+						cachedReducerState,
+					);
+					continue;
+				}
+
+				logger.info('StateCache: queued new state for save', reducerName, reducerState);
+
+				this.cache.set(reducerName, reducerState);
+				this.pendingSaves.add(reducerName);
+
+				this.debouncedSave();
 			}
-
-			logger.info('StateCache: queued new state for save', this.cache);
-
-			this.debouncedSave();
 		}
 
-		#isEqualToGivenState(state)
+		#loadReducerStateFromStorage(reducerName)
 		{
-			for (const [reducerName, reducerState] of Object.entries(state))
+			if (!this.cache.has(reducerName))
 			{
-				if (!isEqual(this.cache[reducerName], reducerState))
+				const reducerState = this.storage.load(reducerName);
+				if (!reducerState)
 				{
-					return false;
+					return null;
 				}
+
+				this.cache.set(reducerName, reducerState);
 			}
 
-			return true;
+			return this.cache.get(reducerName);
 		}
 
 		async #save()
 		{
-			logger.info('StateCache: save state to storage', this.cache);
+			logger.info(
+				'StateCache: save states',
+				[...this.pendingSaves].map((reducerName) => [reducerName, this.cache.get(reducerName)]),
+			);
 
-			await this.storage.save(this.cache);
+			await Promise.all(
+				[...this.pendingSaves].map(async (reducerName) => {
+					await this.storage.save(reducerName, this.cache.get(reducerName));
+					this.pendingSaves.delete(reducerName);
+				}),
+			);
 		}
 	}
 

@@ -110,12 +110,12 @@ class UserEventHandler
 
 		Container::getEventSenderService()->removeEventHandlers(
 			'humanresources',
-			EventName::MEMBER_DELETED->name
+			EventName::OnMemberDeleted->name
 		);
 
 		Container::getEventSenderService()->removeEventHandlers(
 			'humanresources',
-			EventName::MEMBER_ADDED->name
+			EventName::OnMemberAdded->name
 		);
 
 		array_walk(

@@ -71,6 +71,10 @@ class TaskUpdated
 			$resolvedKey = $this->mapKey($this->replaceKey($value['FROM_VALUE'], $value['TO_VALUE'], $key));
 
 			$actionMessage = Loc::getMessage('TASKS_MESSAGE_' . $resolvedKey, null, $recepient->getLang());
+			if(empty($actionMessage))
+			{
+				$actionMessage = Loc::getMessage('TASKS_MESSAGE_' . $resolvedKey . '_MSGVER_1', null, $recepient->getLang());
+			}
 			if(empty($actionMessage) && isset($trackedFields[$key]) && !empty($trackedFields[$key]['TITLE']))
 			{
 				$actionMessage = $trackedFields[$key]['TITLE'];

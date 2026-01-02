@@ -2,6 +2,7 @@
 
 namespace Bitrix\Intranet\Controller;
 
+use Bitrix\Intranet\Settings\Tools\ToolsManager;
 use Bitrix\Main\Loader;
 use Bitrix\Main\Localization\Loc;
 use Bitrix\Main\Config\Option;
@@ -11,19 +12,6 @@ use Bitrix\Main\Engine\Response;
 
 class InvitationWidget extends Engine\Controller
 {
-	public function configureActions(): array
-	{
-		$configureActions = parent::configureActions();
-
-		$accessControl = new Intranet\ActionFilter\InviteIntranetAccessControl();
-		$configureActions['saveInvitationRight'] = [
-			'+prefilters' => [
-				$accessControl
-			]
-		];
-
-		return $configureActions;
-	}
 
 	protected function getDefaultPreFilters()
 	{
@@ -78,9 +66,28 @@ class InvitationWidget extends Engine\Controller
 			]);
 		}
 
+		$collabFeatureOn = Loader::includeModule('socialnetwork') &&
+			\Bitrix\Socialnetwork\Collab\CollabFeature::isOn();
+		$intranetUser = new Intranet\User();
+
 		return [
+			'isCurrentUserAdmin' => $intranetUser->isAdmin(),
+			'isInvitationAvailable' => \CBitrix24::isInvitingUsersAllowed(),
+			'structureLink' => '/company/vis_structure.php',
+			'invitationLink' => Intranet\CurrentUser::get()->isAdmin() || \CBitrix24::isInvitingUsersAllowed()
+				? Engine\UrlManager::getInstance()->create('getSliderContent', [
+					'c' => 'bitrix:intranet.invitation',
+					'mode' => Engine\Router::COMPONENT_MODE_AJAX,
+					'analyticsLabel[source]' => 'headerPopup',
+				]) : '',
+			'isExtranetAvailable' => Loader::includeModule('extranet') && !$collabFeatureOn,
+			'isCollabAvailable' => Loader::includeModule('extranet')
+				&& $collabFeatureOn
+				&& ToolsManager::getInstance()->checkAvailabilityByToolId('collab'),
+			'invitationCounter' => $intranetUser->getTotalInvitationCounterValue(),
+			'counterId' => Intranet\Invitation::getTotalInvitationCounterId(),
+			'shouldShowStructureCounter' => $this->shouldShowStructureCounter(),
 			'users' => [
-				'rightType' => $this->getInvitationRight(),
 				'currentUserCountMessage' => $currentUserCountMessage,
 				'currentUserCount' => $currentUserCount,
 				'currentExtranetUserCountMessage' => $currentExtranetUserCountMessage,
@@ -97,23 +104,6 @@ class InvitationWidget extends Engine\Controller
 
 	}
 
-	public function saveInvitationRightAction($type): void
-	{
-		if (!Intranet\CurrentUser::get()->isAdmin())
-		{
-			return;
-		}
-
-		Option::set('bitrix24', 'allow_invite_users', ($type === 'all' ? 'Y' : 'N'));
-	}
-
-	public function getInvitationRight(): string
-	{
-		$rightSetting = Option::get('bitrix24', 'allow_invite_users', 'N');
-
-		return ($rightSetting === 'N' ? 'admin' : 'all');
-	}
-
 	public function getUserOnlineComponentAction(): Response\Component
 	{
 		$componentName = 'bitrix:intranet.ustat.online';
@@ -124,5 +114,13 @@ class InvitationWidget extends Engine\Controller
 		];
 
 		return new Response\Component($componentName, '', $params, []);
+	}
+
+	private function shouldShowStructureCounter(): bool
+	{
+		return
+			(bool)Option::get('humanresources', 'public_structure_is_available', false) === true
+			&& \CUserOptions::GetOption("humanresources", 'first_time_opened', 'N') === 'N'
+			;
 	}
 }

@@ -2,7 +2,7 @@
  * @module im/messenger/controller/chat-composer/lib/area/dialog-info
  */
 jn.define('im/messenger/controller/chat-composer/lib/area/dialog-info', (require, exports, module) => {
-	const { Loc } = require('loc');
+	const { Loc } = require('im/messenger/loc');
 	const { Type } = require('type');
 	const { Indent } = require('tokens');
 	const { Area } = require('ui-system/layout/area');

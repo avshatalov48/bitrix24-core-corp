@@ -1,0 +1,5 @@
+.tasks-full-card-footer-more {
+	--ui-icon-set__icon-color: var(--ui-color-base-2);
+	--ui-icon-set__icon-size: 28px;
+	cursor: pointer;
+}

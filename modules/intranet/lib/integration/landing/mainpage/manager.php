@@ -10,6 +10,7 @@ use Bitrix\Main\Web\Uri;
 
 class Manager
 {
+	private bool $isLandingIncluded = false;
 	private ?int $siteId;
 	private ?int $pageId;
 	private ?string $previewImg;
@@ -17,17 +18,22 @@ class Manager
 
 	public function __construct()
 	{
-		$landingManager = new Landing\Mainpage\Manager();
+		if (Loader::includeModule('landing'))
+		{
+			$this->isLandingIncluded = true;
+			$landingManager = new Landing\Mainpage\Manager();
 
-		$this->siteId = $landingManager->getConnectedSiteId();
-		$this->pageId = $landingManager->getConnectedPageId();
-		$this->previewImg = $landingManager->getPreviewImg();
-		$this->pageTitle = $landingManager->getPageTitle();
+			$this->siteId = $landingManager->getConnectedSiteId();
+			$this->pageId = $landingManager->getConnectedPageId();
+			$this->previewImg = $landingManager->getPreviewImg();
+			$this->pageTitle = $landingManager->getPageTitle();
+		}
 	}
 
 	public const SEF_EDIT_URL_TEMPLATES = [
 		'landing_edit' => '#site_show#/#landing_edit#/',
 		'landing_view' => '#site_show#/view/#landing_edit#/',
+		'landing_settings' => '#site_show#/settings/#landing_edit#/',
 		'site_edit' => '#site_edit#/',
 		'site_show' => '#site_show#/',
 	];
@@ -39,52 +45,52 @@ class Manager
 
 	public function isSiteExists(): bool
 	{
-		return (int)$this->siteId > 0;
+		return isset($this->siteId) && $this->siteId > 0;
 	}
 
 	public function isPageExists(): bool
 	{
-		return (int)$this->pageId > 0;
+		return isset($this->pageId) && $this->pageId > 0;
 	}
 
 	public function getEditUrl(): ?string
 	{
-		if (!Loader::includeModule('landing'))
-		{
-			return null;
-		}
-
 		return
-			($this->siteId && $this->pageId)
+			$this->isSiteExists() && $this->isPageExists()
 				? $this->getEditPath() . str_replace(
 					['#site_show#', '#landing_edit#'],
 					[$this->siteId, $this->pageId],
 					self::SEF_EDIT_URL_TEMPLATES['landing_view']
 				)
-				: null;
+				: null
+			;
 	}
 
 	public function getImportUrl(): string
 	{
-		return Landing\Transfer\Import\Site::getUrl('MAINPAGE');
+		return
+			$this->isLandingIncluded
+				? Landing\Transfer\Import\Site::getUrl('MAINPAGE')
+				: ''
+			;
 	}
 
-	public function getExportUrl(): ?string
+	public function getExportUrl(): string
 	{
 		return
-			$this->siteId
+			$this->isSiteExists()
 				? new Uri(Landing\Transfer\Export\Site::getUrl('MAINPAGE', $this->siteId))
-				: null
+				: ''
 			;
 	}
 
 	public function getPreviewImg(): ?string
 	{
-		return $this->previewImg;
+		return $this->previewImg ?? null;
 	}
 
 	public function getTitle(): ?string
 	{
-		return $this->pageTitle;
+		return $this->pageTitle ?? null;
 	}
 }

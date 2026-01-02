@@ -2,6 +2,10 @@
 
 namespace Bitrix\Intranet\User\Grid\Row\Action;
 
+use Bitrix\Intranet\Service\ServiceContainer;
+use Bitrix\Intranet\User\Access\Model\TargetUserModel;
+use Bitrix\Intranet\User\Access\UserAccessController;
+use Bitrix\Intranet\User\Access\UserActionDictionary;
 use Bitrix\Intranet\User\Grid\Settings\UserSettings;
 use Bitrix\Main\Web\Json;
 
@@ -23,6 +27,7 @@ abstract class JsGridAction extends \Bitrix\Main\Grid\Row\Action\BaseAction
 
 	abstract public function getExtensionMethod(): string;
 	abstract protected function getActionParams(array $rawFields): array;
+	abstract protected static function getActionType(): UserActionDictionary;
 
 	protected function isCurrentUserAdmin(): bool
 	{
@@ -31,7 +36,13 @@ abstract class JsGridAction extends \Bitrix\Main\Grid\Row\Action\BaseAction
 
 	public function isAvailable(array $rawFields): bool
 	{
-		return true;
+		$user = $this->settings->getUserCollection()->getByUserId($rawFields['ID']);
+
+		return ServiceContainer::getInstance()->getUserService()->isActionAvailableForUser($user, static::getActionType())
+			&& UserAccessController::createByDefault()->check(
+				static::getActionType(),
+				TargetUserModel::createFromUserEntity($user),
+			);
 	}
 
 	public function getControl(array $rawFields): ?array
@@ -53,5 +64,10 @@ abstract class JsGridAction extends \Bitrix\Main\Grid\Row\Action\BaseAction
 	public function getSettings(): UserSettings
 	{
 		return $this->settings;
+	}
+
+	final public static function getId(): string
+	{
+		return static::getActionType()->value;
 	}
 }

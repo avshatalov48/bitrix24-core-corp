@@ -257,9 +257,7 @@ jn.define('stafftrack/check-in/message', (require, exports, module) => {
 					color: Color.base1.toHex(),
 					maxHeight: 60,
 				},
-				ref: (ref) => {
-					this.textFieldRef = ref;
-				},
+				ref: this.bindTextFieldRef,
 			});
 		}
 
@@ -286,11 +284,17 @@ jn.define('stafftrack/check-in/message', (require, exports, module) => {
 				readOnly: this.props.readOnly,
 				diskFolderId: this.props.diskFolderId,
 				showAlreadyCheckInToast: this.showAlreadyCheckInToast,
-				ref: (ref) => {
-					this.imageSelectorRef = ref;
-				},
+				ref: this.bindImageSelectorRef,
 			});
 		}
+
+		bindTextFieldRef = (ref) => {
+			this.textFieldRef = ref;
+		};
+
+		bindImageSelectorRef = (ref) => {
+			this.imageSelectorRef = ref;
+		};
 
 		handleOnChange(value)
 		{

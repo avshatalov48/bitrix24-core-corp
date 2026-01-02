@@ -1,11 +1,9 @@
-import {Dom, Type, Tag, Event} from "main.core";
+import { Dom, Type, Tag, Event } from 'main.core';
 
 export class Phone
 {
-	constructor(parent)
+	constructor()
 	{
-		this.parent = parent;
-
 		this.count = 0;
 		this.index = 0;
 		this.maxCount = 5;
@@ -14,7 +12,7 @@ export class Phone
 
 	renderPhoneRow(inputNode)
 	{
-		if(this.count >= this.maxCount)
+		if (this.count >= this.maxCount)
 		{
 			return;
 		}
@@ -24,9 +22,9 @@ export class Phone
 			return;
 		}
 
-		const num = inputNode.getAttribute("data-num");
+		const num = inputNode.getAttribute('data-num');
 
-		if (inputNode.parentNode.querySelector("#phone_number_" + num))
+		if (inputNode.parentNode.querySelector(`#phone_number_${num}`))
 		{
 			return;
 		}
@@ -42,7 +40,7 @@ export class Phone
 			</span>
 		`;
 
-		inputNode.style.paddingLeft = "57px";
+		inputNode.style.paddingLeft = '57px';
 		Dom.append(element, inputNode.parentNode);
 
 		const flagNode = inputNode.parentNode.querySelector("[data-role='flag']");
@@ -53,30 +51,30 @@ export class Phone
 			});
 		}
 
-		let changeCallback = function(i, inputNode)
+		const changeCallback = function(i, inputNode)
 		{
 			return function(e)
 			{
 				if (Type.isDomNode(inputNode.parentNode))
 				{
-					inputNode.parentNode.querySelector('#phone_number_' + i).value = e.value;
-					inputNode.parentNode.querySelector('#phone_country_' + i).value = e.country;
+					inputNode.parentNode.querySelector(`#phone_number_${i}`).value = e.value;
+					inputNode.parentNode.querySelector(`#phone_country_${i}`).value = e.country;
 				}
-			}
+			};
 		};
 
 		this.inputStack[num] = new BX.PhoneNumber.Input({
 			node: inputNode,
-			flagNode: inputNode.parentNode.querySelector("[data-role='phone_flag_"+ num +"']"),
+			flagNode: inputNode.parentNode.querySelector(`[data-role='phone_flag_${num}']`),
 			flagSize: 16,
-			onChange: changeCallback(num, inputNode)
+			onChange: changeCallback(num, inputNode),
 		});
 
-		//for ctrl+v paste
+		// for ctrl+v paste
 		const id = setInterval(() => {
 			if (
-				!inputNode.parentNode?.querySelector('#phone_number_' + num).value
-				|| !inputNode.parentNode?.querySelector('#phone_country_' + num).value
+				!inputNode.parentNode?.querySelector(`#phone_number_${num}`).value
+				|| !inputNode.parentNode?.querySelector(`#phone_country_${num}`).value
 			)
 			{
 				changeCallback(num, inputNode)({

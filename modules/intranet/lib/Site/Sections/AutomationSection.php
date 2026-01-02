@@ -116,6 +116,15 @@ class AutomationSection
 			],
 		];
 
+		$menu[] = [
+			Loc::getMessage('MENU_START_PROCESS'),
+			SITE_DIR . 'bizproc/start/',
+			[],
+			[
+				'menu_item_id' => 'menu_process_start',
+			],
+		];
+
 		if (Loader::includeModule('lists') && \CLists::isFeatureEnabled())
 		{
 			$menu[] = [
@@ -195,70 +204,8 @@ class AutomationSection
 				'menu_item_id' => self::MENU_ITEMS_ID['smart_process'],
 				'top_menu_id' => 'top_menu_id_crm_dynamic',
 				'sub_menu' => $menuSubItems,
-				'is_new' => true,
 			],
 		];
-	}
-
-	private static function getSmartProcessesMenuSubItems(
-		Router $router,
-		Crm\Service\UserPermissions $userPermissions,
-	): array
-	{
-		$menuDefaultItems = [];
-		$menuCustomSections = [];
-
-		$customSections = Crm\Integration\IntranetManager::getCustomSections() ?? [];
-		foreach ($customSections as $customSection)
-		{
-			$pageItems = [];
-
-			$pages = $customSection->getPages();
-			foreach ($pages as $page)
-			{
-				$pageSettings = $page->getSettings();
-				$entityTypeId = Crm\Integration\IntranetManager::getEntityTypeIdByPageSettings($pageSettings);
-				if (!$userPermissions->canReadType($entityTypeId))
-				{
-					continue;
-				}
-
-				$pageUrl = $router->getItemListUrlInCurrentView($entityTypeId);
-				$pageItems[] = [
-					'TEXT' => $page->getTitle(),
-					'URL' => $pageUrl,
-				];
-			}
-			if (!empty($pageItems))
-			{
-				$menuCustomSections[] = [
-					'TEXT' => $customSection->getTitle(),
-					'ITEMS' => $pageItems,
-				];
-			}
-		}
-
-		if ($userPermissions->canWriteConfig())
-		{
-			if (!empty($menuCustomSections))
-			{
-				$menuDefaultItems[] = [
-					'IS_DELIMITER' => true,
-				];
-			}
-
-			$externalTypeUrl = method_exists(Router::class, 'getExternalTypeListUrl')
-				? $router->getExternalTypeListUrl()
-				: $router->getTypeListUrl()
-			;
-
-			$menuDefaultItems[] = [
-				'TEXT' => Loc::getMessage('AUTOMATION_SECTION_CRM_DYNAMIC_DEFAULT_SUBTITLE'),
-				'URL' => $externalTypeUrl,
-			];
-		}
-
-		return array_merge($menuCustomSections, $menuDefaultItems);
 	}
 
 	private static function getAutomatedSolutionsMenuSubItems(
@@ -271,11 +218,7 @@ class AutomationSection
 
 		$menuItems = [];
 
-		$canEditAutomatedSolutions =
-			method_exists($userPermissions, 'canEditAutomatedSolutions')
-			? $userPermissions->canEditAutomatedSolutions()
-			: $userPermissions->canWriteConfig()
-		;
+		$canEditAutomatedSolutions = $userPermissions->automatedSolution()->canEdit();
 
 		foreach ($automatedSolutionManager->getExistingAutomatedSolutions() as $automatedSolution)
 		{
@@ -283,7 +226,7 @@ class AutomationSection
 			foreach ($automatedSolution['TYPE_IDS'] as $typeId)
 			{
 				$type = $container->getType($typeId);
-				if ($userPermissions->canReadType($type->getEntityTypeId()))
+				if ($userPermissions->entityType()->canReadItems($type->getEntityTypeId()))
 				{
 					$automatedSolutionSubItems[] = [
 						'TEXT' => $type->getTitle(),
@@ -329,7 +272,6 @@ class AutomationSection
 			$menuItems[] = [
 				'TEXT' => Loc::getMessage('AUTOMATION_SECTION_CRM_DYNAMIC_AUTOMATED_SOLUTION_LIST'),
 				'URL' => $router->getAutomatedSolutionListUrl(),
-				'IS_NEW' => true,
 			];
 		}
 
@@ -404,7 +346,7 @@ class AutomationSection
 		foreach ($typesMap->getTypes() as $type)
 		{
 			if (
-				$userPermissions->canReadType($type->getEntityTypeId())
+				$userPermissions->entityType()->canReadItems($type->getEntityTypeId())
 				&& $type->getIsAutomationEnabled()
 				&& Crm\Integration\IntranetManager::isEntityTypeInCustomSection($type->getEntityTypeId())
 			)
@@ -498,7 +440,7 @@ class AutomationSection
 			return [];
 		}
 
-		$baseUrl = '/company/personal/user/' . CurrentUser::get()->getId() . '/tasks/';
+		$baseUrl = SITE_DIR . 'company/personal/user/' . CurrentUser::get()->getId() . '/tasks/';
 
 		$items = [
 			[
@@ -541,7 +483,7 @@ class AutomationSection
 		$items = [
 			[
 				'TEXT' => Loc::getMessage('AUTOMATION_SECTION_SIGN_SIGN_TITLE_MSGVER_1'),
-				'URL' => '/sign/#robots',
+				'URL' => SITE_DIR . 'sign/#robots',
 			],
 		];
 
@@ -556,7 +498,7 @@ class AutomationSection
 
 		return [
 			'TEXT' => Loc::getMessage('AUTOMATION_SECTION_SIGN_ITEM_TITLE_MSGVER_1'),
-			'URL' => '/sign/',
+			'URL' => SITE_DIR . 'sign/',
 			'ITEMS' => $items,
 		];
 	}
@@ -619,7 +561,7 @@ class AutomationSection
 	{
 		$available = ModuleManager::isModuleInstalled('lists') && ModuleManager::isModuleInstalled('bitrix24');
 
-		$listUrl = SITE_DIR . 'company/lists/';
+		$listUrl = '/company/lists/';
 		$locked = false;
 		$onclick = '';
 

@@ -5,19 +5,22 @@
  */
 jn.define('im/messenger/controller/dialog/lib/web', (require, exports, module) => {
 	const { Type } = require('type');
-	const { Loc } = require('loc');
+	const { Loc } = require('im/messenger/loc');
 	const { clone } = require('utils/object');
 
 	const AppTheme = require('apptheme');
+	const { NavigationTabId } = require('im/messenger/const');
+	const { Feature } = require('im/messenger/lib/feature');
+	const { getLoggerWithContext } = require('im/messenger/lib/logger');
 	const { serviceLocator } = require('im/messenger/lib/di/service-locator');
-	const {
-		ChatAvatar,
-		ChatTitle,
-	} = require('im/messenger/lib/element');
+	const { ChatTitle } = require('im/messenger/lib/element/chat-title');
+	const { ChatAvatar } = require('im/messenger/lib/element/chat-avatar');
 	const { MessengerParams } = require('im/messenger/lib/params');
 	const { DialogHelper } = require('im/messenger/lib/helper');
 	const { PushHandler } = require('im/messenger/provider/push');
 	const { OpenLinesRest } = require('im/messenger/provider/rest');
+
+	const logger = getLoggerWithContext('dialog--web', 'WebDialog');
 
 	/**
 	 * @class WebDialog
@@ -48,14 +51,14 @@ jn.define('im/messenger/controller/dialog/lib/web', (require, exports, module) =
 			{
 				PageManager.openWebComponent(pageParams);
 
-				BX.postComponentEvent('onTabChange', ['openlines'], 'im.navigation');
+				this.changeTabTo(NavigationTabId.openlines);
 
 				return true;
 			}
 
 			PageManager.openWebComponent(pageParams);
 
-			BX.postComponentEvent('onTabChange', ['chats'], 'im.navigation');
+			this.changeTabTo(NavigationTabId.chats);
 
 			return true;
 		}
@@ -300,6 +303,27 @@ jn.define('im/messenger/controller/dialog/lib/web', (require, exports, module) =
 				)
 				|| userCode
 			);
+		}
+
+		static changeTabTo(tabId)
+		{
+			if (!Feature.isMessengerV2Enabled)
+			{
+				BX.postComponentEvent('onTabChange', [tabId], 'im.navigation');
+
+				return;
+			}
+
+			if (!serviceLocator.has('navigation-controller'))
+			{
+				return;
+			}
+
+			serviceLocator.get('navigation-controller').setActiveTab(tabId)
+				.catch((error) => {
+					logger.error(`changeTabTo ${tabId} error`, error);
+				})
+			;
 		}
 	}
 

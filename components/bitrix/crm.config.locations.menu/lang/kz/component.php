@@ -1,0 +1,19 @@
+<?php
+$MESS["CRM_LOCATIONS_IMPORT"] = "Импорттау";
+$MESS["CRM_LOCATIONS_IMPORT_TITLE"] = "Орналасуды импорттау";
+$MESS["CRM_LOC_ADD"] = "Қосу";
+$MESS["CRM_LOC_ADD_TITLE"] = "Жаңа орналасуды жасауға өту";
+$MESS["CRM_LOC_DELETE"] = "Жою";
+$MESS["CRM_LOC_DELETE_DLG_BTNTITLE"] = "Орналасуды жою";
+$MESS["CRM_LOC_DELETE_DLG_MESSAGE"] = "Осы орналасуды жойғыңыз келетініне сенімдісіз бе?";
+$MESS["CRM_LOC_DELETE_DLG_TITLE"] = "Орналасуды жойыңыз";
+$MESS["CRM_LOC_DELETE_TITLE"] = "Орналасуды жою";
+$MESS["CRM_LOC_EDIT"] = "Редакциялау";
+$MESS["CRM_LOC_EDIT_TITLE"] = "Орналасуды редакциялауға өту";
+$MESS["CRM_LOC_LIST"] = "Тізім";
+$MESS["CRM_LOC_LIST_TITLE"] = "Орналасу тізіміне өту";
+$MESS["CRM_LOC_STEP_UP"] = "Жоғарыға қарай";
+$MESS["CRM_LOC_STEP_UP_TITLE"] = "Жоғары деңгейге өту";
+$MESS["CRM_MODULE_NOT_INSTALLED"] = "Crm модулі орнатылмаған.";
+$MESS["CRM_PERMISSION_DENIED"] = "Қолжетімділікке тыйым салынған";
+$MESS["CRM_SALE_MODULE_NOT_INSTALLED"] = "Sale модулі орнатылмаған.";

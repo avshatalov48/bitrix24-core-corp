@@ -1,0 +1,21 @@
+<?php
+$MESS["CRM_BUTTON_CANCEL_TITLE"] = "Болдырмау";
+$MESS["CRM_BUTTON_CREATE_TITLE"] = "Құру";
+$MESS["CRM_CURRENCY_IS_NOT_FOUND"] = "ID = #CURRENCY_ID# бар валютаны табу мүмкін болмады.";
+$MESS["CRM_FIELD_ACTIVE"] = "Белсенді";
+$MESS["CRM_FIELD_CURRENCY"] = "Валюта";
+$MESS["CRM_FIELD_DESCRIPTION"] = "Сипаттама";
+$MESS["CRM_FIELD_NAME"] = "Атауы";
+$MESS["CRM_FIELD_PRICE"] = "Бағасы";
+$MESS["CRM_FIELD_SECTION"] = "Бөлім";
+$MESS["CRM_FIELD_SORT"] = "Сұрыптау";
+$MESS["CRM_FIELD_VAT_ID"] = "ҚҚС мөлшерлемесі";
+$MESS["CRM_FIELD_VAT_INCLUDED"] = "ҚҚС бағаға кіреді";
+$MESS["CRM_MODULE_NOT_INSTALLED"] = "Crm модулі орнатылмаған.";
+$MESS["CRM_MODULE_NOT_INSTALLED_CATALOG"] = "Catalog модулі орнатылмаған.";
+$MESS["CRM_MODULE_NOT_INSTALLED_SALE"] = "Sale модулі орнатылмаған.";
+$MESS["CRM_PERMISSION_DENIED"] = "Қолжетімділікке тыйым салынған.";
+$MESS["CRM_PRODUCT_CREATE"] = "Жаңа тауарды құру";
+$MESS["CRM_PRODUCT_CREATE_AJAX_ERR"] = "Тауарды құруға сұрауды өңдеу қатесі<br>";
+$MESS["CRM_PRODUCT_CREATE_WAIT"] = "Тауарды құру...";
+$MESS["CRM_UNSUPPORTED_OWNER_TYPE"] = "Иесінің жарамсыз түрі көрсетілген: \"#OWNER_TYPE#\".";

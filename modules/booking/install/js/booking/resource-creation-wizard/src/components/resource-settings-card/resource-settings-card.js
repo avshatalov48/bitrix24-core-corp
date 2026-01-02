@@ -4,6 +4,7 @@ import { Model } from 'booking.const';
 import { resourceCreationWizardService } from 'booking.provider.service.resource-creation-wizard-service';
 import { BaseFields } from './base-fields/base-fields';
 import { ScheduleTypes } from './schedule-types/schedule-types';
+import { Integration } from './integration/integration';
 import { WorkTime } from './work-time/work-time';
 import { SlotLength } from './slot-length/slot-length';
 
@@ -25,6 +26,7 @@ export const ResourceSettingsCard = {
 		ScheduleTypes,
 		WorkTime,
 		SlotLength,
+		Integration,
 	},
 	created(): void
 	{
@@ -126,6 +128,7 @@ export const ResourceSettingsCard = {
 			resource: 'getResource',
 			companyScheduleSlots: 'getCompanyScheduleSlots',
 			isCompanyScheduleAccess: 'isCompanyScheduleAccess',
+			companyScheduleUrl: 'companyScheduleUrl',
 			isGlobalSchedule: 'isGlobalSchedule',
 		}),
 		resourceName(): string
@@ -185,6 +188,7 @@ export const ResourceSettingsCard = {
 				data-id="brcw-resource-settings-schedule-types"
 				v-model="isMain"
 			/>
+			<Integration/>
 			<WorkTime
 				data-id="brcw-resource-settings-work-time"
 				:initialSlotRanges="slotRanges"
@@ -193,6 +197,7 @@ export const ResourceSettingsCard = {
 				:initialTimezone="initialTimezone"
 				:currentTimezone="timezone"
 				:isCompanyScheduleAccess="isCompanyScheduleAccess"
+				:companyScheduleUrl="companyScheduleUrl"
 				@update="updateSlotRanges"
 				@updateGlobalSchedule="updateGlobalSchedule"
 				@getGlobalSchedule="fetchData"

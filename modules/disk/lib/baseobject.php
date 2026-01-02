@@ -2,6 +2,7 @@
 
 namespace Bitrix\Disk;
 
+use Bitrix\Disk\Internal\Service\UnifiedLink\UniqueCodeBackfiller;
 use Bitrix\Disk\Internals\Entity\ModelSynchronizer;
 use Bitrix\Disk\Internals\Error\Error;
 use Bitrix\Disk\Internals\ObjectNameService;
@@ -12,8 +13,8 @@ use Bitrix\Disk\Realtime\Events\ObjectEvent;
 use Bitrix\Disk\Security\SecurityContext;
 use Bitrix\Disk\Ui\Avatar;
 use Bitrix\Im\Model\ChatTable;
-use Bitrix\Main\Application;
 use Bitrix\Main\ArgumentTypeException;
+use Bitrix\Main\DI\ServiceLocator;
 use Bitrix\Main\Entity\AddResult;
 use Bitrix\Main\Entity\Result;
 use Bitrix\Main\Event;
@@ -83,6 +84,8 @@ abstract class BaseObject extends Internals\Model implements \JsonSerializable
 	protected $deletedBy;
 	/** @var  User */
 	protected $deleteUser;
+	/** @var string|null */
+	protected $uniqueCode;
 
 	/**
 	 * Returns the fully qualified name of table class which belongs to current model.
@@ -267,6 +270,18 @@ abstract class BaseObject extends Internals\Model implements \JsonSerializable
 	public function getDeleteTime()
 	{
 		return $this->deleteTime;
+	}
+
+	public function getUniqueCode(): ?string
+	{
+		if (empty($this->uniqueCode))
+		{
+			$uniqueCodeBackfiller = ServiceLocator::getInstance()->get(UniqueCodeBackfiller::class);
+
+			return $uniqueCodeBackfiller->getBackfilledUniqueCode((int)$this->getId());
+		}
+
+		return $this->uniqueCode;
 	}
 
 	/**
@@ -1702,6 +1717,7 @@ abstract class BaseObject extends Internals\Model implements \JsonSerializable
 			'DELETED_BY' => 'deletedBy',
 			'DELETE_USER' => 'deleteUser',
 			'HAS_SUBFOLDERS' => null,
+			'UNIQUE_CODE' => 'uniqueCode',
 		);
 	}
 
@@ -1758,6 +1774,7 @@ abstract class BaseObject extends Internals\Model implements \JsonSerializable
 			'createdBy' => $this->getCreatedBy(),
 			'updatedBy' => $this->getUpdatedBy(),
 			'deletedBy' => $this->getDeletedBy(),
+			'uniqueCode' => $this->getUniqueCode(),
 		];
 	}
 }

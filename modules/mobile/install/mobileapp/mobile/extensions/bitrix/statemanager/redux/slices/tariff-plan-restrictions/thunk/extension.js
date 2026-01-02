@@ -11,6 +11,7 @@ jn.define('statemanager/redux/slices/tariff-plan-restrictions/thunk', (require, 
 		() => new Promise((resolve) => {
 			new RunActionExecutor('mobile.tariffplanrestriction.getTariffPlanRestrictions')
 				.setHandler(resolve)
+				.setSkipDuplicateRequests()
 				.call(false)
 			;
 		}),

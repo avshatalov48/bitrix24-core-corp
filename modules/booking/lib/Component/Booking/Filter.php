@@ -14,10 +14,7 @@ class Filter
 	private const FIELD_COMPANY = 'COMPANY';
 	private const FIELD_RESOURCE = 'RESOURCE';
 	private const FIELD_CONFIRMED = 'CONFIRMED';
-	private const FIELD_DELAYED = 'DELAYED';
-
-	private const PRESET_UNCONFIRMED = 'booking-filter-preset-unconfirmed';
-	private const PRESET_DELAYED = 'booking-filter-preset-delayed';
+	private const FIELD_REQUIRE_ATTENTION = 'REQUIRE_ATTENTION';
 	private const PRESET_CREATED_BY_ME = 'booking-filter-preset-created-by-me';
 
 	public static function getId(): string
@@ -48,7 +45,7 @@ class Filter
 			self::FIELD_COMPANY => $this->getCompanyField(),
 			self::FIELD_RESOURCE => $this->getResourceField(),
 			self::FIELD_CONFIRMED => $this->getConfirmedField(),
-			self::FIELD_DELAYED => $this->getDelayedField(),
+			self::FIELD_REQUIRE_ATTENTION => $this->getRequireAttentionField(),
 		];
 
 		if ($provider?->getModuleId() !== 'crm')
@@ -163,12 +160,17 @@ class Filter
 		];
 	}
 
-	private function getDelayedField(): array
+	private function getRequireAttentionField(): array
 	{
 		return [
-			'id' => self::FIELD_DELAYED,
-			'name' => Loc::getMessage('BOOKING_FILTER_FIELD_DELAYED'),
-			'type' => 'checkbox',
+			'id' => self::FIELD_REQUIRE_ATTENTION,
+			'name' => Loc::getMessage('BOOKING_FILTER_FIELD_REQUIRE_ATTENTION'),
+			'type' => 'list',
+			'items' => [
+				'' => Loc::getMessage('BOOKING_FILTER_FIELD_REQUIRE_ATTENTION_NOT_SPECIFIED'),
+				'D' => Loc::getMessage('BOOKING_FILTER_FIELD_REQUIRE_ATTENTION_DELAYED'),
+				'AC' => Loc::getMessage('BOOKING_FILTER_FIELD_REQUIRE_ATTENTION_AWAITING_CONFIRMATION'),
+			],
 			'default' => false,
 		];
 	}
@@ -176,22 +178,6 @@ class Filter
 	public function getPresets(): array
 	{
 		return [
-			self::PRESET_UNCONFIRMED => [
-				'id' => self::PRESET_UNCONFIRMED,
-				'name' => Loc::getMessage('BOOKING_FILTER_PRESET_UNCONFIRMED'),
-				'default' => false,
-				'fields' => [
-					self::FIELD_CONFIRMED => 'N',
-				],
-			],
-			self::PRESET_DELAYED => [
-				'id' => self::PRESET_DELAYED,
-				'name' => Loc::getMessage('BOOKING_FILTER_PRESET_DELAYED'),
-				'default' => false,
-				'fields' => [
-					self::FIELD_DELAYED => 'Y',
-				],
-			],
 			self::PRESET_CREATED_BY_ME => [
 				'id' => self::PRESET_CREATED_BY_ME,
 				'name' => Loc::getMessage('BOOKING_FILTER_PRESET_CREATED_BY_ME'),

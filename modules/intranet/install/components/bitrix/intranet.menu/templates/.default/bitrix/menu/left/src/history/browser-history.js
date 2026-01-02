@@ -1,4 +1,4 @@
-import {Tag, Type} from 'main.core';
+import {Tag, Type, Text } from 'main.core';
 
 export class BrowserHistory
 {
@@ -27,15 +27,15 @@ export class BrowserHistory
 	{
 		let i = 0;
 		this.items.forEach((item) => {
-			if (i > 15) {
+			if (i > 15 || !item.url.startsWith(location.origin)) {
 				return true;
 			}
 			let icoName = '';
 			let title = '';
 			if (Type.isStringFilled(item.title))
 			{
-				icoName = this.getShortName(item.title);
-				title = item.title;
+				icoName = this.getShortName(Text.encode(item.title));
+				title = Text.encode(item.title);
 			}
 			else
 			{
@@ -55,11 +55,7 @@ export class BrowserHistory
 				return;
 			}
 
-			let url = item.url;
-			if (item.url.includes('/online/'))
-			{
-				url = 'bx://v2/' + location.hostname + '/chat/';
-			}
+			let url = Text.encode(item.url);
 
 			let li = Tag.render`
 				<li class="intranet__desktop-menu_item">

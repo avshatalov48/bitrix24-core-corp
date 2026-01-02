@@ -1,12 +1,7 @@
-<?
-$MESS ['AUTH_FORGOT_PASSWORD_1'] = "Если вы забыли пароль, введите логин или E-Mail.<br />Контрольная строка для смены пароля, а также ваши регистрационные данные, будут высланы вам по E-Mail.";
-$MESS ['AUTH_GET_CHECK_STRING'] = "Выслать контрольную строку";
-$MESS ['AUTH_SEND'] = "Выслать";
-$MESS ['AUTH_AUTH'] = "Авторизация";
-$MESS ['AUTH_LOGIN'] = "Логин";
-$MESS ['AUTH_OR'] = "или";
-$MESS ['AUTH_EMAIL'] = "E-Mail";
-$MESS ['AUTH_FORGOT_EMAIL_LINK'] = "Не помню E-mail";
-$MESS ['AUTH_FORGOT_EMAIL_TITLE'] = "Запрос E-Mail";
-$MESS["AUTH_CAPTCHA_PROMT"] = "Введите слово на картинке";
-?>
+<?php
+$MESS["INTRANET_FORGOT_PASS_LOGIN_OR_EMAIL"] = "Логин или Email";
+$MESS["INTRANET_FORGOT_PASS_TITLE"] = "Восстановление пароля";
+$MESS["INTRANET_FORGOT_PASS_INFO"] = "Мы отправим ссылку для восстановления пароля на почту";
+$MESS["INTRANET_FORGOT_PASS_BUTTON"] = "Продолжить";
+$MESS["INTRANET_FORGOT_PASS_AUTH_LINK"] = "Войти";
+$MESS["INTRANET_FORGOT_PASS_CAPTCHA_PROMT"] = "Введите буквы с картинки";

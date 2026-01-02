@@ -5,6 +5,7 @@ if (!defined('B_PROLOG_INCLUDED') || B_PROLOG_INCLUDED !== true)
 }
 
 use Bitrix\Main\Text\HtmlFilter;
+use Bitrix\Main\Web\Json;
 use Bitrix\Main\Web\Uri;
 use Bitrix\Tasks\Util\View;
 use Bitrix\Main\Application;
@@ -65,33 +66,16 @@ if (!function_exists('renderNameColumn'))
 			HTML;
 		}
 
-		$isFeatureEnabled = $arResult['isFeatureEnabled'] ? 'Y' : 'N';
-
 		if ($data['demo'] && $data['editable'])
 		{
-			$nameClick = 'BX.Tasks.Flow.EditForm.createInstance({ flowId: ' . $flowId . ' })';
+			$isFeatureTrialable = Json::encode($arResult['isFeatureTrialable']);
+			$nameClick = "BX.Tasks.Flow.EditForm.createInstance({ flowId: {$flowId}, isFeatureTrialable: '{$isFeatureTrialable}' })";
 		}
 		else
 		{
-			$flowUri = new Uri(
-				CComponentEngine::makePathFromTemplate(
-					$arResult['pathToFlows'],
-				)
-			);
-			$host = Application::getInstance()->getContext()->getRequest()->getServer()->getHttpHost();
-
-			$flowUri->addParams(['ID_numsel' => 'exact']);
-			$flowUri->addParams(['ID_from' => $flowId]);
-			$flowUri->addParams(['ID_to' => $flowId]);
-			$flowUri->addParams(['apply_filter' => 'Y']);
-			$flowUri->setHost($host);
-			$url = $flowUri->getUri();
-
 			$nameClick = "BX.Tasks.Flow.ViewForm.showInstance({
 				flowId: $flowId,
 				bindElement: this,
-				isFeatureEnabled: '$isFeatureEnabled',
-				flowUrl: '$url',
 			})";
 		}
 

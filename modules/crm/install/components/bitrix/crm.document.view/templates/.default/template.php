@@ -13,26 +13,29 @@ use Bitrix\DocumentGenerator\Integration\Bitrix24Manager;
 use Bitrix\Main\Localization\Loc;
 use Bitrix\Main\Page\Asset;
 use Bitrix\Main\UI\Extension;
+use Bitrix\UI\Toolbar\Facade\Toolbar;
 
 Extension::load([
-	"ui.buttons",
-	"ui.buttons.icons",
-	"ui.alerts",
-	"ui.design-tokens",
-	"ui.fonts.opensans",
-	"ui.progressround",
-	"ui.viewer",
-	"ui.notification",
-	"ui.info-helper",
-	"popup",
-	"sidepanel",
-	"documentpreview",
-	"ui.icons.disk",
-	"ui.progressbar",
-	"ui.icon-set.main",
-	"crm.integration.ui.banner-dispatcher",
+	'ui.buttons',
+	'ui.buttons.icons',
+	'ui.alerts',
+	'ui.design-tokens',
+	'ui.fonts.opensans',
+	'ui.progressround',
+	'ui.viewer',
+	'ui.notification',
+	'ui.info-helper',
+	'popup',
+	'sidepanel',
+	'documentpreview',
+	'ui.icons.disk',
+	'ui.progressbar',
+	'ui.icon-set.main',
+	'crm.integration.ui.banner-dispatcher',
 ]);
 Asset::getInstance()->addJs('/bitrix/js/crm/activity.js');
+
+$APPLICATION->SetTitle(htmlspecialcharsbx($arResult['title']));
 
 $downloadButtonOptions = \CUserOptions::GetOption('crm.document.view', 'download_button', []);
 $defaultDownloadFormat = in_array(mb_strtolower($downloadButtonOptions['format'] ?? ''), ['doc', 'pdf'], true)
@@ -51,7 +54,46 @@ if ($isSigningEnabledInCurrentTariff)
 
 if (\Bitrix\Main\Loader::includeModule('bitrix24'))
 {
-	$APPLICATION->IncludeComponent("bitrix:bitrix24.limit.lock", "", array());
+	$APPLICATION->IncludeComponent('bitrix:bitrix24.limit.lock', '', array());
+}
+
+if (\Bitrix\Main\Loader::includeModule('ui'))
+{
+	Toolbar::deleteFavoriteStar();
+
+	Toolbar::addButton(
+		(new \Bitrix\UI\Buttons\Button([
+			'color' => \Bitrix\UI\Buttons\Color::LIGHT_BORDER,
+			'icon' => \Bitrix\UI\Buttons\Icon::PRINT,
+		]))
+			// html id can be set only via setter
+			->addAttribute('id', 'crm-document-print')
+		,
+	);
+
+	Bitrix24Manager::addFeedbackButtonToToolbar(
+		$arResult['PROVIDER'] ?? '',
+		$arResult['TEMPLATE_NAME'] ?? '',
+		$arResult['TEMPLATE_CODE'] ?? '',
+	);
+
+	$downloadButton = \Bitrix\UI\Buttons\Split\Button::create([
+		'color' => \Bitrix\UI\Buttons\Color::LIGHT_BORDER,
+		'className' => 'crm__document-view--btn-icon-' . mb_strtolower($defaultDownloadFormat),
+		'text' => Loc::getMessage(
+			'CRM_COMMON_ACTION_DOWNLOAD_FORMAT',
+			[
+				'#FORMAT#' => match (mb_strtolower($defaultDownloadFormat)) {
+					'pdf' => 'PDF',
+					'doc' => 'DOCX',
+					default => '',
+				},
+			],
+		),
+	]);
+	$downloadButton->addAttribute('id', 'crm-document-download');
+
+	Toolbar::addButton($downloadButton);
 }
 
 $renderRequisiteSection = function(?string $entityName, array $data): void {
@@ -75,48 +117,6 @@ $renderRequisiteSection = function(?string $entityName, array $data): void {
 };
 
 $this->IncludeLangFile();
-if ($arParams['IS_SLIDER']):
-	$APPLICATION->RestartBuffer();
-	?>
-	<!DOCTYPE html>
-	<html lang="<?=LANGUAGE_ID;?>">
-<head>
-	<script data-skip-moving="true">
-		// Prevent loading page without header and footer
-		if (window === window.top)
-		{
-			window.location = "<?=CUtil::JSEscape((new \Bitrix\Main\Web\Uri(\Bitrix\Main\Application::getInstance()->getContext()->getRequest()->getRequestUri()))->deleteParams(['IFRAME', 'IFRAME_TYPE']));?>" + window.location.hash;
-		}
-	</script>
-	<?php $APPLICATION->ShowHead(); ?>
-</head>
-<body class="crm__document-view--slider-wrap">
-	<div class="crm__document-view--title">
-		<div class="crm__document-view--container-docs-preview">
-			<div class="pagetitle crm__document-view--pagetitle">
-				<span id="pagetitle" class="pagetitle-item crm__document-view--pagetitle-item"><?= htmlspecialcharsbx($arResult['title'] ?? '') ?></span>
-			</div>
-			<div class="crm__document-view--buttons">
-				<button class="ui-btn ui-btn-md ui-btn-light-border ui-btn-icon-print" id="crm-document-print"></button>
-				<?php if (Bitrix24Manager::isEnabled()):
-					?><button class="ui-btn ui-btn-md ui-btn-light-border" onclick="BX.DocumentGenerator.Feedback.open('<?=htmlspecialcharsbx(CUtil::JSEscape($arResult['PROVIDER']));?>', '<?=htmlspecialcharsbx(CUtil::JSEscape($arResult['TEMPLATE_NAME']));?>', '<?=htmlspecialcharsbx(CUtil::JSEscape($arResult['TEMPLATE_CODE']));?>');"><?=Loc::getMessage('CRM_DOCUMENT_VIEW_FEEDBACK');?></button>
-				<?php endif;?>
-				<div
-					class="ui-btn-split ui-btn-light-border crm__document-view--btn-icon-<?=mb_strtolower($defaultDownloadFormat)?>"
-					id="crm-document-download"
-				>
-					<button class="ui-btn-main">
-						<span class="ui-btn-text"><?=Loc::getMessage('CRM_COMMON_ACTION_DOWNLOAD');?></span>
-					</button>
-					<button class="ui-btn-menu"></button>
-				</div>
-			</div>
-		</div>
-	</div>
-<?php
-else:
-	$APPLICATION->SetTitle($arResult['title']);
-endif;
 
 $shouldDisplayTransformationError =
 	!empty($arResult['transformationErrorMessage'])
@@ -176,10 +176,15 @@ $shouldDisplayTransformationError =
 				BX.ready(function()
 				{
 					<?php
-					$messages = array_merge(Loc::loadLanguageFile(__FILE__), [
-						'CRM_DOCUMENT_VIEW_COMPONENT_PROCESSED_NO_PDF_ERROR' => Loc::getMessage('CRM_DOCUMENT_VIEW_COMPONENT_PROCESSED_NO_PDF_ERROR'),
-					]);
-					echo 'BX.message('.\CUtil::PhpToJSObject($messages).');'?>
+					$messages = array_merge(
+						Loc::loadLanguageFile(__FILE__),
+						[
+							'CRM_DOCUMENT_VIEW_COMPONENT_PROCESSED_NO_PDF_ERROR' => Loc::getMessage('CRM_DOCUMENT_VIEW_COMPONENT_PROCESSED_NO_PDF_ERROR'),
+						],
+						\Bitrix\Crm\Service\Container::getInstance()->getLocalization()->loadMessages(),
+					);
+					?>
+					BX.message(<?= \Bitrix\Main\Web\Json::encode($messages) ?>);
 					BX.Crm.DocumentView.init(<?=CUtil::PhpToJSObject($arResult);?>);
 				});
 			</script>
@@ -190,7 +195,7 @@ $shouldDisplayTransformationError =
 			<?php if (!empty($arResult['channelSelectorParameters'])):?>
 				<div class="crm__document-view--sidebar crm__document-view--sidebar-channels">
 					<div class="crm__document-view--channels">
-						<?php $APPLICATION->includeComponent(
+						<?php $APPLICATION->IncludeComponent(
 							'bitrix:crm.channel.selector',
 							'',
 							$arResult['channelSelectorParameters'],
@@ -265,8 +270,8 @@ $shouldDisplayTransformationError =
 							</label>
 							<span class="<?=
 							$isSigningEnabledInCurrentTariff
-								? "crm__document-view--arrow"
-								: "tariff-lock"
+								? 'crm__document-view--arrow'
+								: 'tariff-lock'
 							?>"></span>
 						</div>
 					</div>
@@ -312,9 +317,3 @@ $shouldDisplayTransformationError =
 		</div>
 	<?php endif;?>
 </div>
-<?php if ($arParams['IS_SLIDER']):?>
-</body>
-	</html>
-<?php
-	\CMain::FinalActions();
-endif;

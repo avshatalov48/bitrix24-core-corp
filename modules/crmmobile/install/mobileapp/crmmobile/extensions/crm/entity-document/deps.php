@@ -11,7 +11,6 @@ return [
 		'crm:entity-document/product',
 		'crm:type',
 		'layout/ui/detail-card/tabs/shimmer/crm-product',
-		'feature',
 		'utils/date',
 		'utils/phone',
 		'layout/pure-component',

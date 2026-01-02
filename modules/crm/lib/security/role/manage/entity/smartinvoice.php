@@ -3,6 +3,7 @@
 namespace Bitrix\Crm\Security\Role\Manage\Entity;
 
 use Bitrix\Crm\Category\Entity\Category;
+use Bitrix\Crm\Category\PermissionEntityTypeHelper;
 use Bitrix\Crm\Item;
 use Bitrix\Crm\Security\Role\Manage\DTO\EntityDTO;
 use Bitrix\Crm\Security\Role\Manage\PermissionAttrPresets;
@@ -46,7 +47,9 @@ class SmartInvoice implements PermissionEntity
 		$result = [];
 		foreach ($smartInvoiceFactory->getCategories() as $category)
 		{
-			$entityName = Service\UserPermissions::getPermissionEntityType(\CCrmOwnerType::SmartInvoice, $category->getId());
+			$entityName = (new PermissionEntityTypeHelper(\CCrmOwnerType::SmartInvoice))
+				->getPermissionEntityTypeForCategory($category->getId())
+			;
 			$entityTitle = \CCrmOwnerType::GetDescription(\CCrmOwnerType::SmartInvoice);
 			if ($smartInvoiceFactory->isCategoriesEnabled())
 			{

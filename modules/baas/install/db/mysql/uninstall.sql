@@ -1,0 +1,11 @@
+DROP TABLE IF EXISTS b_baas_package;
+DROP TABLE IF EXISTS b_baas_packages;
+DROP TABLE IF EXISTS b_baas_purchase;
+DROP TABLE IF EXISTS b_baas_purchase_service;
+DROP TABLE IF EXISTS b_baas_purchased_package;
+DROP TABLE IF EXISTS b_baas_service_ads;
+DROP TABLE IF EXISTS b_baas_service_in_package;
+DROP TABLE IF EXISTS b_baas_service_in_purchased_pack;
+DROP TABLE IF EXISTS b_baas_services;
+DROP TABLE IF EXISTS b_baas_services_in_package;
+DROP TABLE IF EXISTS b_baas_services_packages;

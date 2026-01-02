@@ -1,5 +1,6 @@
 <?
 use Bitrix\Disk\Driver;
+use Bitrix\Disk\Internals\FileHelper;
 
 if (!defined("B_PROLOG_INCLUDED") || B_PROLOG_INCLUDED!==true)die();
 
@@ -86,6 +87,13 @@ class CBPDiskUploadVersionActivity
 			}
 
 			$fileArray['MODULE_ID'] = Driver::INTERNAL_MODULE_ID;
+
+			if (!FileHelper::hasValidFileKeys($fileArray))
+			{
+				$this->WriteToTrackingService(GetMessage('BPDUV_SOURCE_FILE_ERROR'));
+				continue;
+			}
+
 			$fileId = \CFile::saveFile($fileArray, Driver::INTERNAL_MODULE_ID, true, true);
 
 			if(!$fileId)

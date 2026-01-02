@@ -4,6 +4,7 @@ namespace Bitrix\Recyclebin\Internals;
 
 use Bitrix\Main\Error;
 use Bitrix\Main\Result;
+use Bitrix\Main\Type\DateTime;
 use Bitrix\Recyclebin\Internals\Models\RecyclebinDataTable;
 use Bitrix\Recyclebin\Internals\Models\RecyclebinFileTable;
 use Bitrix\Recyclebin\Internals\Models\RecyclebinTable;
@@ -17,6 +18,7 @@ class Entity
 	private $moduleId;
 	private $ownerId;
 	private $title;
+	private ?DateTime $dateTime = null;
 	private $data = [];
 	private $files = [];
 
@@ -201,6 +203,16 @@ class Entity
 	public function setOwnerId($ownerId)
 	{
 		$this->ownerId = $ownerId;
+	}
+
+	public function setDateTime(?DateTime $dateTime): void
+	{
+		$this->dateTime = $dateTime;
+	}
+
+	public function getDateTime(): ?DateTime
+	{
+		return $this->dateTime;
 	}
 
 	/**

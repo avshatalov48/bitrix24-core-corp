@@ -1,17 +1,23 @@
 <?php
 
 namespace Bitrix\Crm\Integration\BiConnector;
-
+//need created at + index
 use Bitrix\Crm\AutomatedSolution\Entity\AutomatedSolutionTable;
 
 class AutomatedSolutionMapping
 {
-	public static function getMapping(string $languageId): array
+	public static function getMapping(string $languageId, ?string $tableName = null): array
 	{
 		$solutions = AutomatedSolutionTable::query()->setSelect(['ID', 'TITLE'])->fetchCollection();
 
 		$result = [];
-		foreach ($solutions as $solution) {
+		foreach ($solutions as $solution)
+		{
+			if (!empty($tableName) && 'crm_automated_solution_' . $solution->getId() !== $tableName)
+			{
+				continue;
+			}
+
 			$result['crm_automated_solution_' . $solution->getId()] = [
 				'TABLE_NAME' => 'b_crm_dynamic_type',
 				'TABLE_DESCRIPTION' => Localization::getMessage('CRM_AUTOMATED_SOLUTION_TABLE', $languageId, ['#TITLE#' => $solution->getTitle()]) ?? $solution->getTitle(),
@@ -63,6 +69,12 @@ class AutomatedSolutionMapping
 						'TABLE_ALIAS' => 'CS',
 						'LEFT_JOIN' => 'LEFT JOIN b_crm_automated_solution CS ON CS.ID = DT.CUSTOM_SECTION_ID',
 						'FIELD_DESCRIPTION' => Localization::getMessage('CRM_SMART_PROC_FIELD_CUSTOM_SECTION_TITLE', $languageId),
+					],
+					'CREATED_AT' => [
+						'IS_METRIC' => 'N', // 'Y'
+						'FIELD_NAME' => 'DT.CREATED_TIME',
+						'FIELD_TYPE' => 'datetime',
+						'FIELD_DESCRIPTION' => Localization::getMessage('CRM_SMART_PROC_FIELD_CREATED_AT', $languageId),
 					],
 				],
 			];

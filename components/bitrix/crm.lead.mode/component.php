@@ -1,4 +1,5 @@
-<?
+<?php
+
 if (!defined('B_PROLOG_INCLUDED') || B_PROLOG_INCLUDED!==true)die();
 
 if (!CModule::IncludeModule('crm'))
@@ -7,15 +8,15 @@ if (!CModule::IncludeModule('crm'))
 	return;
 }
 
+if (\Bitrix\Main\Loader::includeModule('ui'))
+{
+	\Bitrix\UI\Toolbar\Facade\Toolbar::deleteFavoriteStar();
+}
+
 $arResult["CURRENT_LANG"] = in_array(LANGUAGE_ID, array("ru", "en", "de", "ua")) ? LANGUAGE_ID : \Bitrix\Main\Localization\Loc::getDefaultLang(LANGUAGE_ID);
 $arResult["IS_LEAD_ENABLED"] = \Bitrix\Crm\Settings\LeadSettings::isEnabled();
 
-$arResult["IS_CRM_ADMIN"] = false;
-$CrmPerms = CCrmPerms::GetCurrentUserPermissions();
-if ($CrmPerms->HavePerm('CONFIG', BX_CRM_PERM_CONFIG, 'WRITE'))
-{
-	$arResult["IS_CRM_ADMIN"] = true;
-}
+$arResult["IS_CRM_ADMIN"] = \Bitrix\Crm\Service\Container::getInstance()->getUserPermissions()->isCrmAdmin();
 
 if (isset($arParams['SHOW_CONVERTER_CONFIG']))
 {
@@ -25,4 +26,3 @@ if (isset($arParams['SHOW_CONVERTER_CONFIG']))
 }
 
 $this->IncludeComponentTemplate($componentPage);
-?>

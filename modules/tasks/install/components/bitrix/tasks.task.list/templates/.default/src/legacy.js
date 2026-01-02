@@ -1,3 +1,4 @@
+/* eslint-disable */
 BX.namespace('BX.Tasks.Grid');
 
 BX.Tasks.GridActions = {
@@ -100,18 +101,16 @@ BX.Tasks.GridActions = {
 
 	onTagUpdateClick: function(taskId, groupId, event)
 	{
-		var onRowUpdate = function(event) {
-			var id = event.getData().id;
+		const onRowUpdate = (baseEvent) => {
+			const id = baseEvent.getData().id;
 			if (Number(id) === Number(taskId))
 			{
-				var row = BX.Main.gridManager.getById(this.gridId).instance.getRows().getById(id);
-				var button = row.getCellById('TAG').querySelector('.main-grid-tag-add');
-
-				dialog.setTargetNode(button);
+				const row = BX.Main.gridManager.getById(this.gridId).instance.getRows().getById(id);
+				dialog.setTargetNode(row.getCellById('TAG'));
 			}
 		};
-		var onRowRemove = function(event) {
-			var id = event.getData().id;
+		const onRowRemove = (baseEvent) => {
+			const id = baseEvent.getData().id;
 			if (Number(id) === Number(taskId))
 			{
 				dialog.hide();
@@ -320,11 +319,15 @@ BX.Tasks.GridActions = {
 			events: {
 				'onLoad': function() {
 					dialog.getFooterContainer().style.zIndex = 1;
-					BX.addCustomEvent('Tasks.Tasks.Grid:RowRemove', BX.proxy(onRowRemove, this));
+					BX.addCustomEvent('Tasks.Tasks.Grid:RowRemove', onRowRemove);
 					onTagsLoad();
 				}.bind(this),
+				'onShow': function() {
+					BX.addCustomEvent('Tasks.Tasks.Grid:RowUpdate', onRowUpdate);
+				}.bind(this),
 				'onHide': function() {
-					BX.removeCustomEvent('Tasks.Tasks.Grid:RowRemove', BX.proxy(onRowRemove, this));
+					BX.removeCustomEvent('Tasks.Tasks.Grid:RowUpdate', onRowUpdate);
+					BX.removeCustomEvent('Tasks.Tasks.Grid:RowRemove', onRowRemove);
 				}.bind(this),
 				'onSearch': function(event){
 					onSearch(event)
@@ -579,6 +582,42 @@ BX.Tasks.GridActions = {
 				break;
 			}
 
+			case 'unlinkSubTask':
+				top.BX.Runtime.loadExtension('tasks.v2.provider.service.relation-service').then(({ subTasksService }) => {
+					subTasksService.delete(args.parentId, [taskId]).then(() => {
+						if (!this.checkCanMove())
+						{
+							this.reloadRow(taskId);
+						}
+					}).catch((error) => {
+						if (error.errors)
+						{
+							const content = error.errors[0].message || error.errors[0].MESSAGE;
+							BX.UI.Notification.Center.notify({ content });
+						}
+					});
+				});
+
+				break;
+
+			case 'unlinkRelatedTask':
+				top.BX.Runtime.loadExtension('tasks.v2.provider.service.relation-service').then(({ relatedTasksService }) => {
+					relatedTasksService.delete(args.relatedToTaskId, [taskId]).then(() => {
+						if (!this.checkCanMove())
+						{
+							this.reloadRow(taskId);
+						}
+					}).catch((error) => {
+						if (error.errors)
+						{
+							const content = error.errors[0].message || error.errors[0].MESSAGE;
+							BX.UI.Notification.Center.notify({ content });
+						}
+					});
+				});
+
+				break;
+
 			case 'take':
 			{
 				this.doTakeAction(taskId, args);
@@ -826,7 +865,9 @@ BX.Tasks.GridActions = {
 		var grid = BX.Main.gridManager.getById(this.gridId);
 		if (grid && grid.hasOwnProperty('instance'))
 		{
-			grid.instance.updateRow(taskId.toString());
+			grid.instance.updateRow(taskId.toString(), null, null, ({ id }) => {
+				BX.onCustomEvent('Tasks.Tasks.Grid:RowUpdate', { id });
+			});
 		}
 	},
 
@@ -870,6 +911,7 @@ BX.Tasks.GridActions = {
 
 		if (!action.includes("none") && (data.forAll !== 'N' || data.selectedIds.length))
 		{
+			data.ownerId = this.ownerId;
 			const groupActions = new BX.Tasks.GroupActionsStepper({
 				action,
 				data,
@@ -927,7 +969,7 @@ BX.Tasks.GridActions = {
 			data.accompliceId = Number(gridActions.accompliceId);
 		}
 
-		if (action === 'setgroup')
+		if (action === 'setgroup' || action === 'setcollab')
 		{
 			data.specifyGroupId = Number(gridActions.groupId);
 		}
@@ -1432,6 +1474,8 @@ BX(function() {
 		this.arParams = options.arParams;
 		this.migrationBarOptions = options.migrationBarOptions;
 
+		this.isV2Form = (options.isV2Form === 'true');
+
 		this.calendarSettings = (options.calendarSettings ? options.calendarSettings : {});
 
 		this.taskList = new Map();
@@ -1463,11 +1507,21 @@ BX(function() {
 			this.fillTaskListItems(options.taskList);
 			this.colorPinnedRows();
 			this.showStub();
+			this.clearAnalyticsParams();
 
 			if (options.arParams && options.arParams['LAZY_LOAD'])
 			{
 				this.grid.reload();
 			}
+		},
+
+		clearAnalyticsParams()
+		{
+			const uri = new BX.Uri(window.location.href);
+
+			uri.removeQueryParam('ta_cat', 'ta_sec', 'ta_sub', 'ta_el', 'p1', 'p2', 'p3', 'p4', 'p5');
+
+			window.history.replaceState(null, null, uri.toString());
 		},
 
 		subscribeToPull()
@@ -1615,10 +1669,66 @@ BX(function() {
 				}
 			}.bind(this));
 
-			// this solution cause http://jabber.bx/view.php?id=155858
-			// BX.addCustomEvent('Grid::beforeRequest', function(gridData, eventArgs) {
-			// 	eventArgs.url = BX.util.add_url_param(eventArgs.url, {lastGroupId: this.lastGroupId});
-			// }.bind(this));
+			const clearParam = new BX.Uri(location.toString())
+				.removeQueryParam('relationToId')
+				.removeQueryParam('relationType')
+				.toString()
+			;
+			history.replaceState(null, '', clearParam);
+
+			const relationToId = Number(this.arParams.relationToId);
+			const relationType = this.arParams.relationType;
+			if (relationToId)
+			{
+				const reload = () => this.getGrid().reload();
+				const meta = {
+					subTasks: {
+						relationToField: 'parentId',
+						relationDialog: 'subTasksDialog',
+					},
+					relatedTasks: {
+						relationToField: 'relatedToTaskId',
+						relationDialog: 'relatedTasksDialog',
+					},
+				}[relationType];
+
+				top.BX.Runtime.loadExtension('tasks.v2.lib.relation-tasks-dialog').then((exports) => {
+					/** @type RelationTasksDialog */
+					const dialog = exports[meta.relationDialog];
+					BX.Event.EventEmitter.subscribe('SidePanel.Slider:onClose', () => {
+						dialog.setTaskId(relationToId).getDialog()?.getPopup()?.setTargetContainer(top.document.body);
+					});
+
+					BX.Event.bind(document, 'click', ({ target }) => {
+						if (!dialog.setTaskId(relationToId).getDialog()?.getPopup()?.getPopupContainer()?.contains(target))
+						{
+							top.document.body.click();
+						}
+					}, true);
+
+					const buttonRelationAdd = document.getElementById('tasks-buttonRelationAdd');
+					BX.Event.bind(buttonRelationAdd, 'click', () => {
+						dialog.setTaskId(relationToId).onUpdateOnce(reload).showTo(buttonRelationAdd, document.body);
+					});
+				});
+
+				BX.Event.EventEmitter.subscribe('Grid::beforeRequest', (event) => {
+					const [, eventArgs] = event.getCompatData();
+
+					eventArgs.url = new BX.Uri(eventArgs.url)
+						.setQueryParam('relationToId', relationToId)
+						.setQueryParam('relationType', relationType)
+						.toString()
+					;
+				});
+
+				top.BX.Event.EventEmitter.subscribe('tasks:card:taskAdd', (event) => {
+					if (event.getData()?.[meta.relationToField] === relationToId)
+					{
+						reload();
+					}
+				});
+			}
 		},
 
 		updateCanMove: function() {
@@ -1945,7 +2055,9 @@ BX(function() {
 					{
 						if (parameters.isCompleteComment === true)
 						{
-							this.getGrid().updateRow(taskId);
+							this.getGrid().updateRow(taskId, null, null, ({ id }) => {
+								BX.onCustomEvent('Tasks.Tasks.Grid:RowUpdate', { id });
+							});
 						}
 						else
 						{
@@ -1962,7 +2074,9 @@ BX(function() {
 					}
 					else if (parameters.action === this.actions.taskUpdate)
 					{
-						this.getGrid().updateRow(taskId);
+						this.getGrid().updateRow(taskId, null, null, ({ id }) => {
+							BX.onCustomEvent('Tasks.Tasks.Grid:RowUpdate', { id });
+						});
 					}
 				}
 			}
@@ -2577,6 +2691,7 @@ BX(function() {
 					if (response.errors)
 					{
 						BX.Tasks.alert(response.errors);
+						BX.Tasks.GridActions.reloadGrid();
 					}
 				}.bind(this),
 			);
@@ -2734,6 +2849,8 @@ BX(function() {
 		this.tours = options.tours;
 		this.guide = null;
 
+		this.isV2Form = options.isV2Form;
+
 		this.initGuides(options);
 	};
 
@@ -2766,12 +2883,19 @@ BX(function() {
 
 	BX.Tasks.TourGuideController.FirstGridTaskCreationTourGuide.prototype = {
 		start: function() {
-			var addButton = BX('tasks-buttonAdd');
+			const addButton = BX('tasks-buttonAdd');
 			if (!addButton)
 			{
 				return;
 			}
-			addButton.href = BX.Uri.addParam(addButton.href, { FIRST_GRID_TASK_CREATION_TOUR_GUIDE: 'Y' });
+
+			if (this.isV2Form === false)
+			{
+				addButton.href = BX.Uri.addParam(
+					addButton.href,
+					{ FIRST_GRID_TASK_CREATION_TOUR_GUIDE: 'Y' },
+				);
+			}
 
 			this.guide = new BX.UI.Tour.Guide({
 				steps: [
@@ -2784,12 +2908,15 @@ BX(function() {
 				onEvents: true,
 			});
 
-			BX.addCustomEvent('UI.Tour.Guide:onFinish', function(event) {
-				if (event.getData().guide === this.guide)
-				{
-					addButton.href = BX.Uri.removeParam(addButton.href, ['FIRST_GRID_TASK_CREATION_TOUR_GUIDE']);
-				}
-			}.bind(this));
+			if (this.isV2Form === false)
+			{
+				BX.addCustomEvent('UI.Tour.Guide:onFinish', function(event) {
+					if (event.getData().guide === this.guide)
+					{
+						addButton.href = BX.Uri.removeParam(addButton.href, ['FIRST_GRID_TASK_CREATION_TOUR_GUIDE']);
+					}
+				}.bind(this));
+			}
 
 			this.showNextStep();
 		},

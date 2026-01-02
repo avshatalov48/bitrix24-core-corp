@@ -9,7 +9,6 @@
 		}
 
 		const componentsToLoad = [
-			'tasks:tasks.task.tabs',
 			'tasks:tasks.dashboard',
 			'tasks:tasks.task.view-new',
 		];

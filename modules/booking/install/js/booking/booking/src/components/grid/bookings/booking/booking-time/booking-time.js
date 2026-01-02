@@ -84,6 +84,7 @@ export const BookingTime = {
 		<ChangeTimePopup
 			v-if="showPopup"
 			:bookingId="bookingId"
+			:resourceId="resourceId"
 			:targetNode="$refs.time"
 			@close="closePopup"
 		/>

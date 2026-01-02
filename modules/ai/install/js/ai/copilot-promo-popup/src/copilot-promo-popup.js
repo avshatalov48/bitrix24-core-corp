@@ -29,6 +29,7 @@ export class CopilotPromoPopup
 		TASK: 'task',
 		LIVE_FEED_EDITOR: 'liveFeedEditor',
 		CHAT: 'chat',
+		SITE_WITH_COPILOT: 'siteWithCopilot',
 	});
 
 	static PromoVideoPopupEvents = PromoVideoPopupEvents;

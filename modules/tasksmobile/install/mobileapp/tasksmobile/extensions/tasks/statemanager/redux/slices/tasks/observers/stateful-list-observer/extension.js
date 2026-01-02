@@ -3,13 +3,13 @@
  */
 jn.define('tasks/statemanager/redux/slices/tasks/observers/stateful-list-observer', (require, exports, module) => {
 	const { isEqual } = require('utils/object');
-	const { selectEntities } = require('tasks/statemanager/redux/slices/tasks/selector');
+	const { selectTaskEntities } = require('tasks/statemanager/redux/slices/tasks/selector');
 
-	const observeListChange = (store, onChange) => {
-		let prevTasks = selectEntities(store.getState());
+	const observeListChange = (store, onChange, { ownerId = env.userId }) => {
+		let prevTasks = selectTaskEntities(store.getState(), ownerId);
 
 		return store.subscribe(() => {
-			const nextTasks = selectEntities(store.getState());
+			const nextTasks = selectTaskEntities(store.getState(), ownerId);
 
 			const { moved, removed, added, created } = getDiffForTasksObserver(prevTasks, nextTasks);
 			if (moved.length > 0 || removed.length > 0 || added.length > 0 || created.length > 0)

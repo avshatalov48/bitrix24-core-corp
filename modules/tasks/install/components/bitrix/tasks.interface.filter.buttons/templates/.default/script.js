@@ -118,66 +118,75 @@ BX.Tasks.InterfaceFilterButtons.prototype = {
 
 	onOptionsMenuButtonClick: function()
 	{
-		var menuItemsList = [
+		const deadlineMenu = new BX.Tasks.Deadline.Menu();
+		const menuItemsList = [
+			...deadlineMenu.menuItems,
 			{
 				delimiter: true,
-				text: BX.message("POPUP_MENU_CHECKLIST_SECTION")
-			}
+				text: BX.Loc.getMessage('POPUP_MENU_CHECKLIST_SECTION'),
+			},
+			{
+				tabId: 'showCompleted',
+				text: BX.Loc.getMessage('POPUP_MENU_SHOW_COMPLETED'),
+				className: (this.checklistShowCompleted ? 'menu-popup-item-accept' : 'menu-popup-item'),
+				onclick: this.onShowCompletedItemClick.bind(this),
+			},
+			{
+				tabId: 'showOnlyMine',
+				text: BX.Loc.getMessage('POPUP_MENU_SHOW_ONLY_MINE'),
+				className: 'menu-popup-item',
+				onclick: this.onShowOnlyMineItemClick.bind(this),
+			},
 		];
 
-		menuItemsList.push({
-			tabId: "showCompleted",
-			text: BX.message("POPUP_MENU_SHOW_COMPLETED"),
-			className: (this.checklistShowCompleted ? "menu-popup-item-accept" : "menu-popup-item"),
-			onclick: function(event, item)
-			{
-				item.getMenuWindow().close();
-
-				if (typeof BX.Tasks.CheckListInstance !== 'undefined')
-				{
-					BX.toggleClass(item.layout.item, 'menu-popup-item-accept');
-
-					var treeStructure = BX.Tasks.CheckListInstance.getTreeStructure();
-					var optionManager = treeStructure.optionManager;
-
-					optionManager.setShowCompleted(!optionManager.getShowCompleted());
-					treeStructure.handleTaskOptions();
-				}
-			}
-		});
-
-		menuItemsList.push({
-			tabId: "showOnlyMine",
-			text: BX.message("POPUP_MENU_SHOW_ONLY_MINE"),
-			className: "menu-popup-item",
-			onclick: function(event, item)
-			{
-				item.getMenuWindow().close();
-
-				if (typeof BX.Tasks.CheckListInstance !== 'undefined')
-				{
-					BX.toggleClass(item.layout.item, 'menu-popup-item-accept');
-
-					var treeStructure = BX.Tasks.CheckListInstance.getTreeStructure();
-					var optionManager = treeStructure.optionManager;
-
-					optionManager.setShowOnlyMine(!optionManager.getShowOnlyMine());
-					treeStructure.handleTaskOptions();
-				}
-			}
-		});
-
-		var menu = BX.PopupMenu.create(
-			"taskPopupMenuOptions",
+		const menu = BX.PopupMenu.create(
+			'taskPopupMenuOptions',
 			this.optionsMenuButton,
 			menuItemsList,
 			{
 				closeByEsc: true,
 				offsetLeft: this.optionsMenuButton.getBoundingClientRect().width / 2,
-				angle: true
-			}
+				angle: true,
+				events: {
+					onPopupFirstShow: function(event) {
+						BX.UI.Hint.init(event.getContentContainer());
+					},
+				},
+			},
 		);
 
 		menu.popupWindow.show();
-	}
+	},
+
+	onShowCompletedItemClick: function(event, item)
+	{
+		item.getMenuWindow().close();
+
+		if (!BX.Type.isUndefined(BX.Tasks.CheckListInstance))
+		{
+			BX.toggleClass(item.layout.item, 'menu-popup-item-accept');
+
+			const treeStructure = BX.Tasks.CheckListInstance.getTreeStructure();
+			const optionManager = treeStructure.optionManager;
+
+			optionManager.setShowCompleted(!optionManager.getShowCompleted());
+			treeStructure.handleTaskOptions();
+		}
+	},
+
+	onShowOnlyMineItemClick: function(event, item)
+	{
+		item.getMenuWindow().close();
+
+		if (!BX.Type.isUndefined(BX.Tasks.CheckListInstance))
+		{
+			BX.toggleClass(item.layout.item, 'menu-popup-item-accept');
+
+			const treeStructure = BX.Tasks.CheckListInstance.getTreeStructure();
+			const optionManager = treeStructure.optionManager;
+
+			optionManager.setShowOnlyMine(!optionManager.getShowOnlyMine());
+			treeStructure.handleTaskOptions();
+		}
+	},
 };

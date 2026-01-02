@@ -1,1 +1,0 @@
-{"version":3,"sources":["extension.js"],"names":["jn","define","require","exports","module","MessengerEvent"],"mappings":"AAGAA,GAAGC,OAAO,0BAA0B,CAACC,EAASC,EAASC,KAEtD,MAAMC,eAAEA,GAAmBL,GAAGE,QAAQ,oCAEtCE,EAAOD,QAAU,CAChBE,eAAAA","file":"extension.map.js"}

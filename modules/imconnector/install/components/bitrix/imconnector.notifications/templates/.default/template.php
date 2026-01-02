@@ -80,7 +80,7 @@ if (!empty($arResult['error']))
 					<ul class="imconnector-field-box-content-text-items">
 						<li class="imconnector-field-box-content-text-item"><?= Loc::getMessage('IMCONNECTOR_COMPONENT_NOTIFICATIONS_INDEX_LIST_ITEM_1') ?></li>
 						<li class="imconnector-field-box-content-text-item"><?= Loc::getMessage('IMCONNECTOR_COMPONENT_NOTIFICATIONS_INDEX_LIST_ITEM_2') ?></li>
-						<li class="imconnector-field-box-content-text-item"><?= Loc::getMessage('IMCONNECTOR_COMPONENT_NOTIFICATIONS_INDEX_LIST_ITEM_3') ?></li>
+						<li class="imconnector-field-box-content-text-item"><?= Loc::getMessage('IMCONNECTOR_COMPONENT_NOTIFICATIONS_INDEX_LIST_ITEM_3_MSGVER_1') ?></li>
 					</ul>
 
 					<div class="imconnector-field-box-content-subtitle">

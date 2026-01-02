@@ -45,7 +45,7 @@ final class Template
 				}
 				else
 				{
-					$strRepeat = str_replace("#NUM#", intval($arParams["EVERY_DAY"]), GetMessage("TASKS_EVERY_N_DAY".taskMessSuffix(intval($arParams["EVERY_DAY"]))));
+					$strRepeat = str_replace("#NUM#", intval($arParams["EVERY_DAY"]), GetMessage("TASKS_EVERY_N_DAY".self::taskMessSuffix(intval($arParams["EVERY_DAY"]))));
 				}
 				break;
 			case "weekly":
@@ -55,7 +55,7 @@ final class Template
 				}
 				else
 				{
-					$strRepeat = str_replace("#NUM#", intval($arParams["EVERY_WEEK"]), GetMessage("TASKS_EVERY_N_WEEK".taskMessSuffix(intval($arParams["EVERY_WEEK"]))));
+					$strRepeat = str_replace("#NUM#", intval($arParams["EVERY_WEEK"]), GetMessage("TASKS_EVERY_N_WEEK".self::taskMessSuffix(intval($arParams["EVERY_WEEK"]))));
 				}
 				if (sizeof($arParams["WEEK_DAYS"]))
 				{
@@ -76,14 +76,14 @@ final class Template
 			case "monthly":
 				if ($arParams["MONTHLY_TYPE"] == 1)
 				{
-					$strRepeat = str_replace("#DAY#", $arParams["MONTHLY_DAY_NUM"], GetMessage("TASKS_MONTHLY_DAY_NUM".taskMessSuffix(intval($arParams["MONTHLY_DAY_NUM"]))));
+					$strRepeat = str_replace("#DAY#", $arParams["MONTHLY_DAY_NUM"], GetMessage("TASKS_MONTHLY_DAY_NUM".self::taskMessSuffix(intval($arParams["MONTHLY_DAY_NUM"]))));
 					if (intval($arParams["MONTHLY_MONTH_NUM_1"]) < 2)
 					{
 						$strRepeat .= " ".GetMessage("TASKS_EVERY_MONTH");
 					}
 					else
 					{
-						$strRepeat .= " ".str_replace("#NUM#", intval($arParams["MONTHLY_MONTH_NUM_1"]), GetMessage("TASKS_EVERY_N_MONTH".taskMessSuffix(intval($arParams["MONTHLY_MONTH_NUM_1"]))));
+						$strRepeat .= " ".str_replace("#NUM#", intval($arParams["MONTHLY_MONTH_NUM_1"]), GetMessage("TASKS_EVERY_N_MONTH".self::taskMessSuffix(intval($arParams["MONTHLY_MONTH_NUM_1"]))));
 					}
 				}
 				else
@@ -105,7 +105,7 @@ final class Template
 					}
 					else
 					{
-						$strRepeat .= " ".str_replace("#NUM#", intval($arParams["MONTHLY_MONTH_NUM_2"]), GetMessage("TASKS_EVERY_N_MONTH_2".taskMessSuffix(intval($arParams["MONTHLY_MONTH_NUM_2"]))));
+						$strRepeat .= " ".str_replace("#NUM#", intval($arParams["MONTHLY_MONTH_NUM_2"]), GetMessage("TASKS_EVERY_N_MONTH_2".self::taskMessSuffix(intval($arParams["MONTHLY_MONTH_NUM_2"]))));
 					}
 				}
 				break;
@@ -117,7 +117,7 @@ final class Template
 					{
 						$arParams["YEARLY_MONTH_1"] = 0;
 					}
-					$strRepeat = str_replace(array("#NUM#", "#MONTH#"), array($arParams["YEARLY_DAY_NUM"], GetMessage("TASKS_REPEAT_MONTH_".$arParams["YEARLY_MONTH_1"])), GetMessage("TASKS_EVERY_N_DAY_OF_MONTH".taskMessSuffix(intval($arParams["YEARLY_DAY_NUM"]))));
+					$strRepeat = str_replace(array("#NUM#", "#MONTH#"), array($arParams["YEARLY_DAY_NUM"], GetMessage("TASKS_REPEAT_MONTH_".$arParams["YEARLY_MONTH_1"])), GetMessage("TASKS_EVERY_N_DAY_OF_MONTH".self::taskMessSuffix(intval($arParams["YEARLY_DAY_NUM"]))));
 				}
 				else
 				{
@@ -154,5 +154,18 @@ final class Template
 		}
 
 		return $strRepeat;
+	}
+
+	private static function taskMessSuffix($number)
+	{
+		switch ($number)
+		{
+			case 2:
+				return "_ND";
+			case 3:
+				return "_RD";
+			default:
+				return "_TH";
+		}
 	}
 }

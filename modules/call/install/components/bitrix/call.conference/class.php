@@ -150,7 +150,7 @@ class ImComponentConference extends CBitrixComponent
 			return true;
 		}
 
-		if (!isset($this->chatId) && !$this->arParams['WRONG_ALIAS'])
+		if (empty($this->chatId) && !$this->arParams['WRONG_ALIAS'])
 		{
 			return false;
 		}
@@ -191,6 +191,12 @@ class ImComponentConference extends CBitrixComponent
 			$this->arResult['CONFERENCE_TITLE'] = $this->conference->getChatName();
 			$this->arResult['IS_BROADCAST'] = $this->conference->isBroadcast();
 			$this->arResult['PRESENTERS'] = $this->conference->getPresentersInfo();
+		}
+
+		$this->arResult['CALL_TOKEN'] = '';
+		if ($this->chatId > 0 && \Bitrix\Call\Settings::isNewCallsEnabled())
+		{
+			$this->arResult['CALL_TOKEN'] = \Bitrix\Call\JwtCall::getCallToken($this->chatId);
 		}
 
 		return true;

@@ -1,0 +1,23 @@
+<?php
+$MESS["M_INTRANET_PERSONAL_MOBILE_IS_NOT_FILLED"] = "Қызметкердің телефон нөмірі көрсетілмеген";
+$MESS["M_INTRANET_RECOMMENDATION_TO_ASSIGN_USER_AS_ADMINISTRATOR_BUTTON_TEXT"] = "Әкімші ретінде тағайындау";
+$MESS["M_INTRANET_RECOMMENDATION_TO_ASSIGN_USER_AS_ADMINISTRATOR_DESCRIPTION"] = "Әкімшінің қызметкерлер мен клиенттердің жеке деректеріне толық қолжетімділігі бар, қызметкерлерді шақыра алады және жұмыстан шығара алады, Битрикс24 құқықтары мен баптауларын өзгерте алады";
+$MESS["M_INTRANET_RECOMMENDATION_TO_ASSIGN_USER_AS_ADMINISTRATOR_TITLE"] = "Қызметкерді әкімші ретінде тағайындау керек пе?";
+$MESS["M_INTRANET_RECOMMENDATION_TO_ENABLE_2FA_BUTTON_TEXT"] = "Аккаунтты қорғауды ұсыну";
+$MESS["M_INTRANET_RECOMMENDATION_TO_ENABLE_2FA_DESCRIPTION"] = "Битрикс24 өз аккаунттын код-құпиясөзі немесе СМС-тің көмегімен қосымша қорғауға мүмкіндік береді. Сіз қызметкерге екі факторлы аутентификацияны қосу туралы мәлімдемені жібере аласыз";
+$MESS["M_INTRANET_RECOMMENDATION_TO_ENABLE_2FA_TITLE"] = "Қызметкерге аккаунтты екі факторлы аутентификациямен (2FA) қорғауды ұсыныңыз";
+$MESS["M_INTRANET_RECOMMENDATION_TO_INSTALL_DESKTOP_ALREADY_INSTALLED"] = "Компьютерге арналған қосымша орнатылған";
+$MESS["M_INTRANET_RECOMMENDATION_TO_INSTALL_DESKTOP_BUTTON_TEXT"] = "Орнатуды ұсыну";
+$MESS["M_INTRANET_RECOMMENDATION_TO_INSTALL_DESKTOP_DESCRIPTION"] = "Битрикс24 мекенжайын есте сақтаудың қажеті жоқ - жұмыс үстелінде белгішені ашу жеткілікті. Қосымшадағы бейнеқоңырауларды жазуға болады, ал қоңырау дыбысы ешбір қоңырауды жіберіп алмайды";
+$MESS["M_INTRANET_RECOMMENDATION_TO_INSTALL_DESKTOP_IS_NOT_INSTALLED"] = "Компьютерге арналған қосымша орнатылмаған";
+$MESS["M_INTRANET_RECOMMENDATION_TO_INSTALL_DESKTOP_TITLE"] = "Қызметкерге компьютерге арналған қосымшаны орнатуды ұсыныңыз";
+$MESS["M_INTRANET_RECOMMENDATION_TO_INSTALL_MOBILE_ALREADY_INSTALLED"] = "Мобильді қосымша орнатылған";
+$MESS["M_INTRANET_RECOMMENDATION_TO_INSTALL_MOBILE_IS_NOT_INSTALLED"] = "Мобильді қосымша орнатылмаған";
+$MESS["M_INTRANET_USER_STATUS_ADMIN"] = "Әкімші";
+$MESS["M_INTRANET_USER_STATUS_DESKTOP_INSTALLED"] = "Компьютер";
+$MESS["M_INTRANET_USER_STATUS_EXTRANET"] = "Экстранет";
+$MESS["M_INTRANET_USER_STATUS_GUEST"] = "Қонақ";
+$MESS["M_INTRANET_USER_STATUS_INVITED"] = "Шақыру әлі қабылданбады";
+$MESS["M_INTRANET_USER_STATUS_INVITE_IS_SENDED"] = "Шақыру қайта жіберілді";
+$MESS["M_INTRANET_USER_STATUS_MOBILE_APP_INSTALLED"] = "Телефон";
+$MESS["M_INTRANET_USER_STATUS_PENDING"] = "Кіруді растауды күтуде";

@@ -26,5 +26,6 @@ $APPLICATION->IncludeComponent(
 		'RELOAD_PAGE_AFTER_SAVE' => true,
 		'CLOSE_AFTER_SAVE' => true,
 		'USE_PADDING' => false,
+		'USE_UI_TOOLBAR' => 'Y',
 	)
 );

@@ -6,7 +6,6 @@ $MESS["TASKS_PRIORITY_2"] = "Высокий";
 $MESS["TASKS_DOUBLE_CLICK"] = "Двойной щелчок - Редактировать";
 $MESS["TASKS_TITLE"] = "Шаблоны";
 $MESS["TASKS_DEADLINE"] = "Срок";
-$MESS["TASKS_RESPONSIBLE"] = "Ответственный";
 $MESS['TASKS_ASSIGNEE'] = "Исполнитель";
 $MESS["TASKS_CREATOR"] = "Постановщик";
 $MESS["TASKS_TEMPLATES"] = "Шаблоны";
@@ -34,4 +33,3 @@ $MESS["TASKS_ADD_SUB_TEMPLATE"] = "Добавить подзадачу для ш
 $MESS["TASKS_TEMPLATE_COPY"] = "Копировать шаблон";
 $MESS["TASKS_TEMPLATE_TITLE"] = "Название";
 $MESS["TASKS_LIST_GROUP_ACTION_DELETE_ERROR"] = "Ошибка удаления элемента";
-?>

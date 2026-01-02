@@ -4,7 +4,6 @@
 jn.define('crm/timeline/services/activity-viewer', (require, exports, module) => {
 	const { Alert } = require('alert');
 	const { Loc } = require('loc');
-	const { get } = require('utils/object');
 
 	const ActivityType = {
 		UNDEFINED: 0,
@@ -69,15 +68,13 @@ jn.define('crm/timeline/services/activity-viewer', (require, exports, module) =>
 		{
 			const { typeId } = data;
 
-			switch (typeId)
+			if (typeId === ActivityType.TASK)
 			{
-				case ActivityType.TASK:
-					this.openTask(data);
-					break;
-
-				default:
-					this.openDesktop(data);
-					break;
+				void this.openTask(data);
+			}
+			else
+			{
+				this.openDesktop(data);
 			}
 		}
 
@@ -85,26 +82,19 @@ jn.define('crm/timeline/services/activity-viewer', (require, exports, module) =>
 		 * @private
 		 * @param {TimelineActivityResponse} data
 		 */
-		openTask(data)
+		async openTask(data)
 		{
 			const taskId = data.associatedEntityId;
-			const subject = get(data, 'activity.SUBJECT', '');
+			const { Entry } = await requireLazy('tasks:entry');
 
-			if (typeof Task === 'undefined' || taskId <= 0)
+			if (taskId <= 0 || !Entry)
 			{
 				this.openDesktop(data);
 
 				return;
 			}
 
-			// @todo Probably we should better send some event, and listen it in tasks background
-			const task = new Task({ id: env.userId });
-			task.updateData({
-				id: taskId,
-				title: subject,
-			});
-			task.canSendMyselfOnOpen = false;
-			task.open();
+			Entry.openTask({ taskId });
 		}
 
 		/**

@@ -130,7 +130,7 @@ this.BX.Sign = this.BX.Sign || {};
 	    babelHelpers.classPrivateFieldLooseBase(this, _documentData)[_documentData] = documentData;
 	  }
 	  getLayout() {
-	    babelHelpers.classPrivateFieldLooseBase(this, _langSelector)[_langSelector].setDocumentUid(babelHelpers.classPrivateFieldLooseBase(this, _documentData)[_documentData].uid);
+	    babelHelpers.classPrivateFieldLooseBase(this, _langSelector)[_langSelector].setDocumentUids([babelHelpers.classPrivateFieldLooseBase(this, _documentData)[_documentData].uid]);
 	    babelHelpers.classPrivateFieldLooseBase(this, _sendContainer)[_sendContainer] = main_core.Tag.render(_t2 || (_t2 = _`
 			<div class="sign-document-send">
 				<div class="sign-document-send__summary-title-wrapper">

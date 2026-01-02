@@ -4,6 +4,7 @@
 jn.define('crm/timeline/controllers/task', (require, exports, module) => {
 	const { TimelineBaseController } = require('crm/controllers/base');
 	const { Type } = require('crm/type');
+	const { dispatch } = require('statemanager/redux/store');
 
 	const SupportedActions = {
 		OPEN: 'Task:View',
@@ -31,7 +32,7 @@ jn.define('crm/timeline/controllers/task', (require, exports, module) => {
 				case SupportedActions.OPEN:
 				case SupportedActions.EDIT:
 				case SupportedActions.OPEN_RESULT:
-					this.openTask({
+					void this.openTask({
 						...actionParams,
 						analyticsLabel: {
 							c_section: 'crm',
@@ -41,53 +42,63 @@ jn.define('crm/timeline/controllers/task', (require, exports, module) => {
 					break;
 
 				case SupportedActions.SEND_PING:
-					this.sendPing(actionParams);
+					void this.sendPing(actionParams);
 					break;
 
 				case SupportedActions.DELETE:
-					this.deleteTask(actionParams);
+					void this.deleteTask(actionParams);
 					break;
 
 				case SupportedActions.CHANGE_DEADLINE:
-					this.changeDeadline(actionParams);
+					void this.changeDeadline(actionParams);
 					break;
+
 				default:
+					break;
 			}
 		}
 
-		openTask({ taskId, taskTitle, analyticsLabel })
+		async openTask({ taskId, analyticsLabel })
 		{
-			const eventData = [
-				{
-					taskId,
-					taskInfo: {
-						title: taskTitle,
-					},
-				},
-				{ analyticsLabel },
-			];
-
-			BX.postComponentEvent('taskbackground::task::open', eventData, 'background');
+			const { Entry } = await requireLazy('tasks:entry');
+			if (Entry)
+			{
+				Entry.openTask({ taskId }, { analyticsLabel });
+			}
 		}
 
-		sendPing(data)
+		async deleteTask({ taskId })
 		{
-			const task = new Task({ id: env.userId });
-			task.updateData({ id: data.taskId });
-			task.ping();
+			const { removeTask } = await requireLazy('tasks:task/remove');
+			if (removeTask)
+			{
+				removeTask(taskId);
+			}
 		}
 
-		deleteTask(data)
+		async sendPing(data)
 		{
-			BX.postComponentEvent('taskbackground::removeTask', [data.taskId]);
+			const { ping } = await requireLazy('tasks:statemanager/redux/slices/tasks');
+			if (ping)
+			{
+				dispatch(
+					ping({ taskId: data.taskId }),
+				);
+			}
 		}
 
-		changeDeadline(data)
+		async changeDeadline(data)
 		{
-			const task = new Task({ id: env.userId });
-			task.updateData({ id: data.taskId });
-			task.deadline = data.valueTs * 1000;
-			task.saveDeadline();
+			const { updateDeadline } = await requireLazy('tasks:statemanager/redux/slices/tasks');
+			if (updateDeadline)
+			{
+				dispatch(
+					updateDeadline({
+						taskId: data.taskId,
+						deadline: data.valueTs * 1000,
+					}),
+				);
+			}
 		}
 	}
 

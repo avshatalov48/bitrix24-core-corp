@@ -2,28 +2,30 @@
 
 namespace Bitrix\Crm\Component\Utils;
 
-class JsonCompatibleConverter
+final class JsonCompatibleConverter
 {
 	/**
 	 * Convert an array to format compatible with CUtil::PhpToJSObject to use in Json::encode
-	 *
-	 * @param array $data
-	 * @return array
 	 */
-	public static function convert(array $data): array
+	public static function convert(array $data, bool $skipConvertIntAndFloat = false): mixed
 	{
-		$instance = new self();
-
-		return $instance->doConvert($data);
+		return (new self())->doConvert($data, $skipConvertIntAndFloat);
 	}
 
-	private function doConvert(mixed $value): mixed
+	private function doConvert(mixed $value, bool $skipConvertIntAndFloat): mixed
 	{
 		if (is_array($value))
 		{
 			foreach ($value as $key => $subValue)
 			{
-				$value[$key] = $this->doConvert($subValue);
+				$value[$key] = $this->doConvert($subValue, $skipConvertIntAndFloat);
+			}
+		}
+		elseif ($skipConvertIntAndFloat && !is_bool($value))
+		{
+			if (!is_int($value) && !is_float($value))
+			{
+				$value = (string)$value;
 			}
 		}
 		elseif (!is_bool($value))

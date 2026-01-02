@@ -2,6 +2,8 @@
  * @module calendar/ajax/base
  */
 jn.define('calendar/ajax/base', (require, exports, module) => {
+	const { RunActionExecutor } = require('rest/run-action-executor');
+
 	/**
 	 * @class BaseAjax
 	 * @abstract
@@ -20,17 +22,24 @@ jn.define('calendar/ajax/base', (require, exports, module) => {
 		/**
 		 * @param {String} action
 		 * @param {Object|null} ajaxParams
+		 * @param {boolean} useJson
 		 * @return {Promise<Object,void>}
 		 */
-		fetch(action, ajaxParams = null)
+		fetch(action, ajaxParams = null, useJson = false)
 		{
 			return new Promise((resolve) => {
 				const endpoint = `${this.getEndpoint()}.${action}`;
+				const executor = new RunActionExecutor(endpoint, ajaxParams);
 
-				// eslint-disable-next-line no-undef
-				new RunActionExecutor(endpoint, ajaxParams)
+				if (useJson)
+				{
+					executor.enableJson();
+				}
+
+				executor
 					.setHandler((result) => resolve(result))
-					.call(false);
+					.call(false)
+				;
 			});
 		}
 	}

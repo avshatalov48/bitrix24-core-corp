@@ -134,6 +134,7 @@ final class FlowProvider extends BaseProvider
 			'NAME',
 			'GROUP_ID',
 			'TEMPLATE_ID',
+			'DISTRIBUTION_TYPE',
 		];
 
 		$query = $flowQuery
@@ -236,6 +237,7 @@ final class FlowProvider extends BaseProvider
 			'customData' => [
 				'groupId' => $flow->getGroupId(),
 				'templateId' => $flow->getTemplateId(),
+				'distributionType' => $flow->getDistributionType()->value,
 			],
 			'badges' => [
 				[

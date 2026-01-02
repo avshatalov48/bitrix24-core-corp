@@ -1,4 +1,9 @@
 (() => {
+	const require = (ext) => jn.require(ext);
+
+	const { TaskUploaderEvents } = require('tasks/task/uploader/constants');
+	const { TaskUploadFilesStorage } = require('tasks/task/uploader/storage');
+
 	class UnattachedFilesStorage
 	{
 		constructor()

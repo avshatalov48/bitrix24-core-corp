@@ -262,27 +262,17 @@ class Invoice extends Entity
 		);
 	}
 
-	public function canAddItemToStage(string $stageId, \CCrmPerms $userPermissions, string $semantics = PhaseSemantics::UNDEFINED): bool
+	public function canAddItemToStage(string $stageId, string $semantics = PhaseSemantics::UNDEFINED): bool
 	{
-		return ($this->getAddItemToStagePermissionType($stageId, $userPermissions) !== BX_CRM_PERM_NONE);
-	}
-
-	protected function getAddItemToStagePermissionType(string $stageId, \CCrmPerms $userPermissions): ?string
-	{
-		return $userPermissions->GetPermType(
-			$this->getTypeName(),
-			'ADD',
-			["STATUS_ID{$stageId}"]
+		return $this->userPermissions->stage()->canAddInStage(
+			\CCrmOwnerType::Invoice,
+			null,
+			$stageId
 		);
 	}
 
 	public function isCategoriesSupported(): bool
 	{
 		return false;
-	}
-
-	public function havePermissionToDisplayColumnSum(string $stageId, \CCrmPerms $userPermissions): bool
-	{
-		return true;
 	}
 }

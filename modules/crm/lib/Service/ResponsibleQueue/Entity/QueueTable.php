@@ -7,6 +7,22 @@ use Bitrix\Main\ORM\Data\DataManager;
 use Bitrix\Main\ORM\Fields\ArrayField;
 use Bitrix\Main\ORM\Fields\IntegerField;
 
+/**
+ * Class QueueTable
+ *
+ * DO NOT WRITE ANYTHING BELOW THIS
+ *
+ * <<< ORMENTITYANNOTATION
+ * @method static EO_Queue_Query query()
+ * @method static EO_Queue_Result getByPrimary($primary, array $parameters = [])
+ * @method static EO_Queue_Result getById($id)
+ * @method static EO_Queue_Result getList(array $parameters = [])
+ * @method static EO_Queue_Entity getEntity()
+ * @method static \Bitrix\Crm\Service\ResponsibleQueue\Entity\EO_Queue createObject($setDefaultValues = true)
+ * @method static \Bitrix\Crm\Service\ResponsibleQueue\Entity\EO_Queue_Collection createCollection()
+ * @method static \Bitrix\Crm\Service\ResponsibleQueue\Entity\EO_Queue wakeUpObject($row)
+ * @method static \Bitrix\Crm\Service\ResponsibleQueue\Entity\EO_Queue_Collection wakeUpCollection($rows)
+ */
 class QueueTable extends DataManager
 {
 	public static function getTableName(): string

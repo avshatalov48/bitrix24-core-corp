@@ -3,6 +3,7 @@
 namespace Bitrix\HumanResources\Model\Access;
 
 use Bitrix\Main;
+use Bitrix\Main\Entity;
 
 /**
  * Class AccessRoleTable
@@ -22,8 +23,30 @@ use Bitrix\Main;
  */
 class AccessRoleTable extends Main\Access\Role\AccessRoleTable
 {
+	use Main\ORM\Data\Internal\DeleteByFilterTrait;
+
 	public static function getTableName(): string
 	{
 		return 'b_hr_access_role';
+	}
+
+	public static function getMap()
+	{
+		return [
+			new Entity\IntegerField('ID', [
+				'autocomplete' => true,
+				'primary' => true
+			]),
+			new Entity\StringField('NAME', [
+				'required' => true,
+			]),
+			new Entity\EnumField('CATEGORY', [
+				'required' => false,
+				'values' => [
+					\Bitrix\HumanResources\Enum\Access\RoleCategory::Department->value,
+					\Bitrix\HumanResources\Enum\Access\RoleCategory::Team->value,
+				],
+			]),
+		];
 	}
 }

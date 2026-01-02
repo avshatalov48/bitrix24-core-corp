@@ -3,6 +3,7 @@
 namespace Bitrix\Crm\Activity\Provider\ToDo\Block;
 
 use Bitrix\Crm\Activity\Provider\ToDo\OptionallyConfigurable;
+use Bitrix\Crm\Service\Container;
 
 final class Client extends Base
 {
@@ -24,10 +25,17 @@ final class Client extends Base
 		$settings = $fields['SETTINGS'] ?? [];
 		$settings['CLIENTS'] = [];
 
+		$userPermissions = Container::getInstance()->getUserPermissions();
+
 		foreach ($selectedClients as $client)
 		{
 			$entityId = (int)$client['entityId'];
 			$entityTypeId = $client['entityTypeId'];
+
+			if (!$userPermissions->item()->canRead($entityTypeId, $entityId))
+			{
+				continue;
+			}
 
 			$settings['CLIENTS'][] = [
 				'ENTITY_TYPE_ID' => $entityTypeId,

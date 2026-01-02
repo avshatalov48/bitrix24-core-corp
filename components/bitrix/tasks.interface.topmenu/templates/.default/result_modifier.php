@@ -12,14 +12,22 @@ use Bitrix\Main\Web\Uri;
 use Bitrix\Tasks\Access\ActionDictionary;
 use Bitrix\Tasks\Access\TaskAccessController;
 use Bitrix\Tasks\Flow\FlowFeature;
+use Bitrix\Tasks\Integration\BIConnector\TaskBIAnalytics;
 use Bitrix\Tasks\Integration\Bitrix24;
 use Bitrix\Tasks\Integration\Extranet\User;
-use Bitrix\Tasks\Integration\Socialnetwork\Space\SpaceService;
 use Bitrix\Tasks\Internals\Counter;
 use Bitrix\Tasks\Internals\Routes\RouteDictionary;
 use Bitrix\Tasks\Util\Restriction\Bitrix24Restriction\Limit\ProjectLimit;
 use Bitrix\Tasks\Util\Restriction\Bitrix24Restriction\Limit\ScrumLimit;
 use Bitrix\Tasks\Util\Restriction\Bitrix24Restriction\Limit\TaskLimit;
+use Bitrix\Main\UI\Extension;
+use Bitrix\Tasks\V2\Internal\DI\Container;
+
+$isV2Form = \Bitrix\Tasks\V2\FormV2Feature::isOn('miniform');
+if ($isV2Form)
+{
+	Extension::load('tasks.v2.application.task-card');
+}
 
 $isMenu = isset($arParams['MENU_MODE']) && $arParams['MENU_MODE'] === true;
 $arResult['BX24_RU_ZONE'] = ModuleManager::isModuleInstalled('bitrix24')
@@ -101,70 +109,41 @@ $taskEditLink->addParams([
 	'ta_el' => \Bitrix\Tasks\Helper\Analytics::ELEMENT['horizontal_menu'],
 ]);
 
+$tasksSubLink = [
+	'CLASS' => '',
+	'URL' => $taskEditLink->getUri(),
+];
+
+if ($isV2Form)
+{
+	unset($tasksSubLink['URL']);
+	$analytics = \Bitrix\Main\Web\Json::encode([
+		'context' => \Bitrix\Tasks\Helper\Analytics::SECTION['tasks'],
+		'additionalContext' => '',
+		'element' => \Bitrix\Tasks\Helper\Analytics::ELEMENT['horizontal_menu'],
+	]);
+	$tasksSubLink['ON_CLICK'] = "BX.Tasks.V2.Application.TaskCard.showCompactCard({ analytics: $analytics });";
+}
+
 $arResult['ITEMS'][] = array(
 	"TEXT" => GetMessage("TASKS_PANEL_TAB_TASKS"),
 	"URL" => $tasksLink . '?F_CANCEL=Y&F_SECTION=ADVANCED&F_STATE=sR' . $strIframe2,
 	"ID" => "view_all",
 	'CLASS' => $arParams['PROJECT_VIEW'] === 'Y' ? '' : 'tasks_role_link',
-	'SUB_LINK' => [
-		'CLASS' => '',
-		'URL' => $taskEditLink->getUri(),
-	],
-	"IS_ACTIVE" => (isset($arParams["MARK_TEMPLATES"]) && $arParams["MARK_TEMPLATES"] !== "Y" &&
-					isset($arParams["MARK_SECTION_PROJECTS"]) && $arParams["MARK_SECTION_PROJECTS"] !== "Y" &&
-					isset($arParams["MARK_SECTION_PROJECTS_LIST"]) && $arParams["MARK_SECTION_PROJECTS_LIST"] !== "Y" &&
-					isset($arParams["MARK_SECTION_FLOW_LIST"]) && $arParams["MARK_SECTION_FLOW_LIST"] !== "Y" &&
-					isset($arParams["MARK_SECTION_SCRUM_LIST"]) && $arParams["MARK_SECTION_SCRUM_LIST"] !== "Y" &&
-					isset($arParams["MARK_SECTION_MANAGE"]) && $arParams["MARK_SECTION_MANAGE"] !== "Y" &&
-					isset($arParams["MARK_SECTION_EMPLOYEE_PLAN"]) && $arParams["MARK_SECTION_EMPLOYEE_PLAN"] !== "Y" &&
-					isset($arParams["MARK_SECTION_REPORTS"]) && $arParams["MARK_SECTION_REPORTS"] !== "Y") &&
-					isset($arParams['DEFAULT_ROLEID']) &&
-					($arParams["MARK_RECYCLEBIN"] ?? 'N') !== "Y" &&
-					($arParams["MARK_SECTION_EFFECTIVE"] ?? 'N') !== "Y" &&
-					($arParams['DEFAULT_ROLEID'] === 'view_all' || $arParams['DEFAULT_ROLEID'] === ''), // need refactoring,
+	'SUB_LINK' => $tasksSubLink,
+	'IS_ACTIVE' => $arParams['MARK_SECTION_TASKS_LIST'] === 'Y',
 	'COUNTER' => $arResult['TOTAL'],
 	'COUNTER_ID' => Counter\CounterDictionary::COUNTER_MEMBER_TOTAL,
 	'COUNTER_ACTIVE' => 'Y'
 );
-
-// base items
-foreach ($arResult['ROLES'] as $roleId => $role)
-{
-	$arResult['ITEMS'][] = array(
-		'TEXT' => $role['TEXT'],
-		'URL' => $tasksLink.'?'.$role['HREF'].'&clear_filter=Y'.$strIframe2,
-		'ON_CLICK' => '',
-		//		'ON_CLICK'=>$arParams['USE_AJAX_ROLE_FILTER'] == 'N'
-		//			? null
-		//			: 'BX.Tasks.Component.TopMenu.getInstance("topmenu").filter("'.strtolower($roleId).'")',
-		'ID' => mb_strtolower($roleId),
-		'CLASS' => $arParams['PROJECT_VIEW'] === 'Y' ? '' : 'tasks_role_link',
-		'IS_ACTIVE' =>
-			(
-				isset($arParams['MARK_ACTIVE_ROLE'])
-				&& $arParams['MARK_ACTIVE_ROLE'] === 'Y'
-				&& array_key_exists('IS_ACTIVE', $role)
-				&& $role['IS_ACTIVE']
-			)
-			||
-			(
-				isset($arParams['DEFAULT_ROLEID'])
-				&& $arParams['DEFAULT_ROLEID'] === mb_strtolower($roleId)
-			),
-		'COUNTER' => $role['COUNTER'],
-		'COUNTER_ID' => $role['COUNTER_ID'],
-		'PARENT_ITEM_ID' => 'view_all',
-	);
-}
 
 $createGroupLink = CComponentEngine::makePathFromTemplate(
 	$arParams['TASKS_GROUP_CREATE_URL_TEMPLATE'],
 	['user_id' => $arParams['LOGGED_USER_ID']]
 );
 
-$isSpacesAvailable = SpaceService::isAvailable(true);
 
-$projectsUrl = $isSpacesAvailable ? '/spaces/' : $tasksLink.'projects/'.$strIframe;
+$projectsUrl = $tasksLink.'projects/'.$strIframe;
 
 if ($isProjectLimitExceeded)
 {
@@ -180,7 +159,7 @@ $isCollaber = User::isCollaber($arParams['USER_ID']);
 if (!$isCollaber)
 {
 $arResult['ITEMS'][] = [
-	"TEXT" => $isSpacesAvailable ? GetMessage("TASKS_PANEL_TAB_SPACE") : GetMessage("TASKS_PANEL_TAB_PROJECTS"),
+	"TEXT" => GetMessage("TASKS_PANEL_TAB_PROJECTS"),
 	"URL" => $projectsUrl,
 	"ID" => "view_projects",
 	"IS_ACTIVE" => ($arParams["MARK_SECTION_PROJECTS_LIST"] === "Y"),
@@ -251,14 +230,24 @@ $arResult['ITEMS'][] = [
 	'COUNTER_ID' => 'tasks_scrum_counter',
 ];
 }
+
 if ($arParams["SHOW_SECTION_MANAGE"] !== "N")
 {
+	$taskManageUri = new Uri($tasksLink . 'departments/' . $strIframe);
+	$demoSuffix = Bitrix24::isFeatureEnabledByTrial(Bitrix24\FeatureDictionary::TASK_SUPERVISOR_VIEW) ? 'Y' : 'N';
+
+	$taskManageUri->addParams([
+		'ta_sec' => \Bitrix\Tasks\Helper\Analytics::SECTION['lead'],
+		'ta_el' => \Bitrix\Tasks\Helper\Analytics::ELEMENT['section_button'],
+		'p1' => 'isDemo_' . $demoSuffix,
+	]);
+
 	$taskSuperVisorExceeded = !Bitrix24::checkFeatureEnabled(Bitrix24\FeatureDictionary::TASK_SUPERVISOR_VIEW);
 
 	$counter = intval($arResult["SECTION_MANAGE_COUNTER"]);
 	$arResult['ITEMS'][] = array(
 		"TEXT" => GetMessage("TASKS_PANEL_TAB_MANAGE"),
-		"URL" => $tasksLink.'departments/'.$strIframe,
+		"URL" => $taskManageUri->getUri(),
 		"ID" => "view_departments",
 		'COUNTER' => $counter,
 		'COUNTER_ID' => 'departments_counter',
@@ -301,73 +290,51 @@ if (
 	$arResult['ITEMS'][] = $reportItem;
 }
 
+$toolService = Container::getInstance()->getToolService();
+
 if (!$isCollaber)
 {
-	$efficiencyMenuItem = [];
-	$biMenuItem = [];
+	$taskBI = TaskBIAnalytics::getInstance();
+	$tasksBIMenuItem = $taskBI->getTasksDashboardsMenuItems();
 
-	if (Loader::includeModule('biconnector')
-		&& class_exists('\Bitrix\BIConnector\Superset\Scope\ScopeService'))
-	{
-		/** @see \Bitrix\BIConnector\Superset\Scope\MenuItem\MenuItemCreatorTasksEfficiency::getMenuItemData */
-		$efficiencyMenuItem = \Bitrix\BIConnector\Superset\Scope\ScopeService::getInstance()->prepareScopeMenuItem(
-			\Bitrix\BIConnector\Superset\Scope\ScopeService::BIC_SCOPE_TASKS_EFFICIENCY,
-		);
+	$efficiencyItemId = 'view_effective';
 
-		/** @see \Bitrix\BIConnector\Superset\Scope\MenuItem\MenuItemCreatorTasks::getMenuItemData */
-		$biMenuItem = \Bitrix\BIConnector\Superset\Scope\ScopeService::getInstance()->prepareScopeMenuItem(
-			\Bitrix\BIConnector\Superset\Scope\ScopeService::BIC_SCOPE_TASKS,
-		);
-	}
+	$isEfficiencyAvailable = $toolService->isisAvailableByMenuId($efficiencyItemId);
+
+	$efficiencyCounter = $isEfficiencyAvailable ? (int)$arResult['EFFECTIVE_COUNTER'] . '%' : '';
 
 	$efficiencyItem = [
 		'TEXT' => Loc::getMessage('TASKS_PANEL_TAB_EFFECTIVE'),
 		'URL' => "{$tasksLink}effective/{$strIframe}",
-		'ID' => 'view_effective',
-		'MAX_COUNTER_SIZE' => 100,
+		'ID' => $efficiencyItemId,
 		'IS_ACTIVE' => (($arParams['MARK_SECTION_EFFECTIVE'] ?? 'N') === 'Y'),
-		'COUNTER' => (int)$arResult['EFFECTIVE_COUNTER'],
-		'COUNTER_ID' => 'tasks_efficiency_counter',
+		'SUPER_TITLE' => [
+			'TEXT' => $efficiencyCounter,
+		],
 	];
+
 	if (!$tasksEfficiencyEnabled)
 	{
 		$efficiencyItem['IS_LOCKED'] = true;
 		unset($efficiencyItem['COUNTER']);
 	}
 
-	$isEfficiencyAvailable = true;
-	if (Loader::includeModule('intranet'))
-	{
-		$toolsManager = \Bitrix\Intranet\Settings\Tools\ToolsManager::getInstance();
-
-		$isEfficiencyAvailable = $toolsManager->checkAvailabilityByMenuId($efficiencyItem['ID']);
-	}
-
-	if (!empty($efficiencyMenuItem))
-	{
-		if ($isEfficiencyAvailable)
-		{
-			$efficiencyMenuItem['ITEMS'][] = $efficiencyItem;
-		}
-
-		$arResult['ITEMS'][] = $efficiencyMenuItem;
-	}
-	elseif ($isEfficiencyAvailable)
+	if ($isEfficiencyAvailable)
 	{
 		$arResult['ITEMS'][] = $efficiencyItem;
 	}
 
-	if (!empty($biMenuItem))
+	if (!empty($tasksBIMenuItem))
 	{
-		$arResult['ITEMS'][] = $biMenuItem;
+		$arResult['ITEMS'][] = $tasksBIMenuItem;
 	}
 }
 
 if ($arResult["BX24_RU_ZONE"] && !User::isExtranet())
 {
 	$arResult['ITEMS'][] = array(
-		"TEXT" => GetMessage("TASKS_PANEL_TAB_APPLICATIONS_2"),
-		"URL" => \Bitrix\Tasks\Integration\Market\Router::getCategoryPath('tasks'),
+		"TEXT" => GetMessage("TASKS_PANEL_TAB_APPLICATIONS_MSGVER_1"),
+		"URL" => \Bitrix\Tasks\Integration\Market\Router::getBasePath(),
 		"ID" => "view_apps",
 		'IS_DISABLED' => true,
 	);
@@ -433,13 +400,10 @@ if (TaskAccessController::can($arParams['LOGGED_USER_ID'], ActionDictionary::ACT
 	$arResult['ITEMS'][] = $rightsButton;
 }
 
-if (class_exists('\Bitrix\Intranet\Settings\Tools\ToolsManager'))
+foreach ($arResult['ITEMS'] as $key => $item)
 {
-	foreach ($arResult['ITEMS'] as $key => $item)
+	if (!$toolService->isisAvailableByMenuId($item['ID']))
 	{
-		if (!\Bitrix\Intranet\Settings\Tools\ToolsManager::getInstance()->checkAvailabilityByMenuId($item['ID']))
-		{
-			unset($arResult['ITEMS'][$key]);
-		}
+		unset($arResult['ITEMS'][$key]);
 	}
 }

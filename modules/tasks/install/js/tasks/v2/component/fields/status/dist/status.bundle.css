@@ -1,0 +1,18 @@
+.tasks-field-status {
+	display: flex;
+	align-items: center;
+	max-width: -webkit-max-content;
+	max-width: max-content;
+	cursor: default;
+}
+
+.tasks-field-status-icon {
+	margin-right: 6px;
+	--ui-icon-set__icon-color: var(--ui-color-accent-main-primary);
+}
+
+.tasks-field-status-hint {
+	display: flex;
+	flex-direction: column;
+	gap: var(--ui-space-stack-xs);
+}

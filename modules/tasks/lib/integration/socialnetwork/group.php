@@ -56,8 +56,12 @@ class Group extends \Bitrix\Tasks\Integration\SocialNetwork
 		}
 
 		return \CSocNetFeaturesPerms::canPerformOperation(
-			$userId, SONET_ENTITY_GROUP,
-			$id, 'tasks', $actionCode
+			$userId,
+			SONET_ENTITY_GROUP,
+			$id,
+			'tasks',
+			$actionCode,
+			User::isAdmin($userId),
 		);
 	}
 
@@ -313,6 +317,11 @@ class Group extends \Bitrix\Tasks\Integration\SocialNetwork
 
 	public static function canReadGroupTasks($userId, $groupId)
 	{
+		if (!Loader::includeModule('socialnetwork'))
+		{
+			return false;
+		}
+
 		static $access = [];
 
 		if (

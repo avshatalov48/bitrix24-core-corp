@@ -1064,6 +1064,7 @@ export class CopilotTextController extends EventEmitter
 			Dom.addClass(this.#copilotContainer, '--error');
 		}
 
+		const firstError = res?.errors?.[0]
 		AjaxErrorHandler.handleTextGenerateError({
 			baasOptions: {
 				bindElement: this.#inputField.getContainer().querySelector('.ai__copilot_input-field-baas-point'),
@@ -1071,6 +1072,8 @@ export class CopilotTextController extends EventEmitter
 				useAngle: false,
 			},
 			errorCode: firstErrorCode,
+			showSliderWithMsg: firstError?.customData?.showSliderWithMsg,
+			sliderCode: firstError?.customData?.sliderCode,
 		});
 	}
 

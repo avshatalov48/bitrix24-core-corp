@@ -31,7 +31,11 @@ class Employee
 	 */
 	public function getListByDepartmentId(int $departmentId, bool $onlyActive = true, bool $withInvited = true): array
 	{
-		Loader::includeModule('tasks');
+		if (!Loader::includeModule('tasks'))
+		{
+			return [];
+		}
+
 		$query =
 			UtmUserTable::query()
 				->setSelect(['VALUE_ID'])

@@ -2,20 +2,18 @@
  * @module ui-system/blocks/avatar
  */
 jn.define('ui-system/blocks/avatar', (require, exports, module) => {
-	const { Feature } = require('feature');
+	const { Color } = require('tokens');
+	const { PropTypes } = require('utils/validation');
 	const { PureComponent } = require('layout/pure-component');
-	const { makeLibraryImagePath } = require('asset-manager');
-	const { AvatarNative } = require('ui-system/blocks/avatar/src/elements/native');
 	const { reduxConnect } = require('ui-system/blocks/avatar/src/providers/redux');
+	const { AvatarView } = require('ui-system/blocks/avatar/src/elements/avatar-view');
 	const {
 		selectorDataProvider,
 		SelectorDataProviderClass,
 	} = require('ui-system/blocks/avatar/src/providers/selector');
-	const { AvatarAccentGradient } = require('ui-system/blocks/avatar/src/enums/accent-gradient-enum');
-	const { AvatarShape } = require('ui-system/blocks/avatar/src/enums/shape-enum');
-	const { AvatarElementType } = require('ui-system/blocks/avatar/src/enums/element-type-enum');
-	const { AvatarEntityType } = require('ui-system/blocks/avatar/src/enums/entity-type-enum');
-	const { AvatarView, AvatarViewClass } = require('ui-system/blocks/avatar/src/elements/layout');
+	const { AvatarShape } = require('ui-system/blocks/avatar/src/enums/shape');
+	const { AvatarEntityType } = require('ui-system/blocks/avatar/src/enums/entity-type');
+	const { AvatarAccentGradient } = require('ui-system/blocks/avatar/src/enums/accent-gradient');
 
 	/**
 	 * @class Avatar
@@ -29,11 +27,13 @@ jn.define('ui-system/blocks/avatar', (require, exports, module) => {
 		 */
 		static resolveBorderRadius(rounded, size)
 		{
-			return AvatarViewClass.resolveBorderRadius(rounded, size);
+			return AvatarView.resolveBorderRadius(rounded, size);
 		}
 
 		/**
 		 * @param {SelectorParams} params
+		 *
+		 * @return {Omit<*, 'onUriLoadFailure'|'onAvatarClick'>}
 		 */
 		static resolveEntitySelectorParams(params)
 		{
@@ -46,90 +46,44 @@ jn.define('ui-system/blocks/avatar', (require, exports, module) => {
 			return restParams;
 		}
 
-		/**
-		 * @returns {boolean}
-		 */
-		static isNativeSupported()
+		render()
 		{
-			return Feature.isNativeAvatarSupported();
-		}
+			if (this.withRedux())
+			{
+				return reduxConnect(Avatar.getAvatar)(this.props);
+			}
 
-		static getEmptyAvatar(emptyAvatar)
-		{
-			return makeLibraryImagePath(emptyAvatar, 'empty-avatar');
+			return Avatar.getAvatar(this.props);
 		}
 
 		/**
-		 * @param {AvatarBaseProps} params
+		 * @param {Omit<*, 'onUriLoadFailure'|'onAvatarClick'>} props
+		 * @returns {AvatarView|AvatarView}
 		 */
-		static getAvatarProps(params)
-		{
+		static getAvatar = (props) => {
 			const {
 				entityType,
 				emptyAvatar: paramsEmptyAvatar,
 				...restParams
-			} = params;
+			} = props;
 
 			const {
 				placeholder,
 				...restEntityParams
 			} = AvatarEntityType.resolveType(entityType).getValue();
 
-			const emptyAvatar = Avatar.getEmptyAvatar(paramsEmptyAvatar || placeholder.emptyAvatar);
-
-			return {
+			/**
+			 * @type {AvatarView}
+			 */
+			return new AvatarView({
 				...restEntityParams,
 				...restParams,
 				placeholder: {
 					...placeholder,
-					emptyAvatar,
+					emptyAvatar: paramsEmptyAvatar || placeholder.emptyAvatar,
 				},
-			};
-		}
-
-		/**
-		 * @param {AvatarBaseProps} props
-		 * @returns {AvatarNative|AvatarView}
-		 */
-		static getAvatar = (props) => {
-			const { elementType, ...restProps } = props;
-			/**
-			 * @type {AvatarViewProps|AvatarBaseProps}
-			 */
-			const avatarProps = Avatar.getAvatarProps(restProps);
-			const avatarType = elementType
-				? AvatarElementType.resolve(elementType, AvatarElementType.NATIVE).getValue()
-				: null;
-
-			switch (avatarType)
-			{
-				case AvatarElementType.LAYOUT.getValue():
-					return AvatarView(avatarProps);
-				case AvatarElementType.NATIVE.getValue():
-					return AvatarNative(avatarProps);
-				default:
-					return Avatar.isNativeSupported()
-						? AvatarNative(avatarProps)
-						: AvatarView(avatarProps);
-			}
+			});
 		};
-
-		getStateConnector()
-		{
-			return reduxConnect;
-		}
-
-		render()
-		{
-			if (this.withRedux())
-			{
-				const stateConnector = this.getStateConnector();
-
-				return stateConnector(Avatar.getAvatar)(this.props);
-			}
-
-			return Avatar.getAvatar(this.props);
-		}
 
 		withRedux()
 		{
@@ -139,19 +93,43 @@ jn.define('ui-system/blocks/avatar', (require, exports, module) => {
 		}
 	}
 
-	Avatar.defaultProps = AvatarViewClass.defaultProps;
-	Avatar.propTypes = {
-		elementType: PropTypes.instanceOf(AvatarElementType),
-		...AvatarViewClass.propTypes,
+	AvatarView.defaultProps = {
+		size: 32,
+		icon: null,
+		outline: null,
+		withRedux: true,
+		useLetterImage: true,
+		backBorderWidth: null,
+	};
+
+	AvatarView.propTypes = {
+		forwardRef: PropTypes.func,
+		testId: PropTypes.string.isRequired,
+		outline: PropTypes.number,
+		id: PropTypes.oneOfType([PropTypes.string, PropTypes.number]),
+		size: PropTypes.number,
+		name: PropTypes.string,
+		emptyAvatar: PropTypes.string,
+		uri: PropTypes.string,
+		shape: PropTypes.instanceOf(AvatarShape),
+		entityType: PropTypes.instanceOf(AvatarEntityType),
+		accent: PropTypes.bool,
+		icon: PropTypes.object,
+		accentGradient: PropTypes.instanceOf(AvatarAccentGradient),
+		backgroundColor: PropTypes.instanceOf(Color),
+		accentGradientColors: PropTypes.arrayOf(PropTypes.string),
+		withRedux: PropTypes.bool,
+		useLetterImage: PropTypes.bool,
+		style: PropTypes.object,
+		onClick: PropTypes.func,
 	};
 
 	module.exports = {
 		/**
-		 * @param {AvatarBaseProps} props
+		 * @param {AvatarViewProps} props
 		 */
 		Avatar: (props) => new Avatar(props),
 		AvatarClass: Avatar,
-		AvatarElementType,
 		AvatarShape,
 		AvatarEntityType,
 		AvatarAccentGradient,

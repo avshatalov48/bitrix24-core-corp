@@ -171,6 +171,7 @@ jn.define('intranet/user-mini-profile', (require, exports, module) => {
 
 (() => {
 	const { UserMiniProfile } = jn.require('intranet/user-mini-profile');
+	const { BackgroundUIManager } = jn.require('background/ui-manager');
 
 	BX.onViewLoaded(() => {
 		const profileData = BX.componentParameters.get('profileDataParams', null);
@@ -182,5 +183,12 @@ jn.define('intranet/user-mini-profile', (require, exports, module) => {
 				portalLogoData,
 			}),
 		);
+
+		layout.setListener((eventName) => {
+			if (eventName === 'onViewHidden')
+			{
+				BackgroundUIManager.onCloseActiveComponent();
+			}
+		});
 	});
 })();

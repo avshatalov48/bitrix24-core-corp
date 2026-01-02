@@ -1,6 +1,7 @@
 import { mapState } from 'ui.vue3.pinia';
 import { useChartStore } from 'humanresources.company-structure.chart-store';
 import { TreeNode } from './tree-node';
+import { EntityTypes, type NodeColorSettingsType } from 'humanresources.company-structure.utils';
 import './style.css';
 
 export const TreePreview = {
@@ -25,6 +26,15 @@ export const TreePreview = {
 			type: Number,
 			required: true,
 		},
+		entityType: {
+			type: String,
+			default: EntityTypes.department,
+		},
+		/** @type NodeColorSettingsType | null */
+		teamColor: {
+			type: [Object, null],
+			default: null,
+		},
 	},
 
 	computed:
@@ -47,6 +57,10 @@ export const TreePreview = {
 
 			return name;
 		},
+		isTeamEntity(): boolean
+		{
+			return this.entityType === EntityTypes.team;
+		},
 		...mapState(useChartStore, ['departments']),
 	},
 
@@ -61,10 +75,14 @@ export const TreePreview = {
 		<div class="chart-wizard-tree-preview">
 			<div class="chart-wizard-tree-preview__header">
 				<span class="chart-wizard-tree-preview__header_text">
-					{{loc('HUMANRESOURCES_COMPANY_STRUCTURE_WIZARD_TREE_PREVIEW_DEPARTMENT_TITLE')}}
+					{{
+						isTeamEntity
+							? loc('HUMANRESOURCES_COMPANY_STRUCTURE_WIZARD_TREE_PREVIEW_TEAM_TITLE')
+							: loc('HUMANRESOURCES_COMPANY_STRUCTURE_WIZARD_TREE_PREVIEW_DEPARTMENT_TITLE')
+					}}
 				</span>
 				<span class="chart-wizard-tree-preview__header_name">
-					{{companyName}}
+					{{ companyName }}
 				</span>
 			</div>
 			<TreeNode
@@ -76,6 +94,8 @@ export const TreePreview = {
 						:name="name"
 						:heads="heads"
 						:userCount="userCount"
+						:entityType="entityType"
+						:teamColor="teamColor"
 					></TreeNode>
 				</TreeNode>
 			</TreeNode>
@@ -87,6 +107,8 @@ export const TreePreview = {
 					:name="name"
 					:heads="heads"
 					:userCount="userCount"
+					:entityType="entityType"
+					:teamColor="teamColor"
 				></TreeNode>
 			</TreeNode>
 			<TreeNode
@@ -94,6 +116,8 @@ export const TreePreview = {
 				:name="name"
 				:heads="heads"
 				:userCount="userCount"
+				:entityType="entityType"
+				:teamColor="teamColor"
 			></TreeNode>
 		</div>
 	`,

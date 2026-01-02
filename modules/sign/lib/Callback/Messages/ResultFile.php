@@ -26,6 +26,7 @@ class ResultFile extends Callback\Message
 	public function setDocumentCode(string $documentCode): self
 	{
 		$this->data['documentCode'] = $documentCode;
+
 		return $this;
 	}
 
@@ -37,6 +38,7 @@ class ResultFile extends Callback\Message
 	public function setSecurityCode(string $securityCode): self
 	{
 		$this->data['securityCode'] = $securityCode;
+
 		return $this;
 	}
 }

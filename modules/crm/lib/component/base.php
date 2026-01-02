@@ -212,8 +212,13 @@ abstract class Base extends \CBitrixComponent implements Errorable
 			'buttons' => [], //ui.toolbar buttons
 			'filter' => [], //filter options
 			'views' => [],
+			'communications' => [], // special call/email/chat buttons in a details slider
 			'isWithFavoriteStar' => false,
 			'spotlight' => null,
+			'underTitleHtml' => '',
+			'afterTitleHtml' => null,
+			'isTitleNoShrink' => false,
+			'isEditableTitle' => false,
 		];
 	}
 
@@ -239,7 +244,7 @@ abstract class Base extends \CBitrixComponent implements Errorable
 
 	public function addJsRouter(\CBitrixComponentTemplate $template): void
 	{
-		$template->setViewTarget('above_pagetitle');
+		$template->setViewTarget('below_pagetitle', 100);
 
 		\Bitrix\Main\UI\Extension::load('crm.router');
 

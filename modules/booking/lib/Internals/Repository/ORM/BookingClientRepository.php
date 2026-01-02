@@ -5,23 +5,26 @@ declare(strict_types=1);
 namespace Bitrix\Booking\Internals\Repository\ORM;
 
 use Bitrix\Booking\Entity;
-use Bitrix\Booking\Entity\Booking\Booking;
 use Bitrix\Booking\Internals\Model\BookingClientTable;
 use Bitrix\Booking\Internals\Model\BookingTable;
 use Bitrix\Booking\Internals\Model\ClientTypeTable;
+use Bitrix\Booking\Internals\Model\WaitListItemTable;
 use Bitrix\Booking\Internals\Repository\BookingClientRepositoryInterface;
+use Bitrix\Booking\Internals\Model\Enum\EntityType;
+use Bitrix\Booking\Provider\Params\FilterInterface;
 use Bitrix\Main\DB\SqlExpression;
+use Bitrix\Main\ORM\Query\Filter\ConditionTree;
 use Bitrix\Main\ORM\Query\Query;
 
 class BookingClientRepository implements BookingClientRepositoryInterface
 {
-	public function link(Booking $booking, Entity\Booking\ClientCollection $clientCollection): void
+	public function link(int $entityId, EntityType $entityType, Entity\Client\ClientCollection $clientCollection): void
 	{
 		$data = [];
 
 		$primaryClient = $clientCollection->getPrimaryClient();
 
-		/** @var Entity\Booking\Client $client */
+		/** @var Entity\Client\Client $client */
 		foreach ($clientCollection as $client)
 		{
 			$isPrimary = (
@@ -31,7 +34,8 @@ class BookingClientRepository implements BookingClientRepositoryInterface
 			);
 
 			$data[] = [
-				'BOOKING_ID' => $booking->getId(),
+				'ENTITY_ID' => $entityId,
+				'ENTITY_TYPE' => $entityType->value,
 				'CLIENT_ID' => $client->getId(),
 				'CLIENT_TYPE_ID' => $this->getClientTypeId($client),
 				'IS_PRIMARY' => $isPrimary ? 'Y' : 'N',
@@ -44,13 +48,18 @@ class BookingClientRepository implements BookingClientRepositoryInterface
 		}
 	}
 
-	public function unLink(Booking $booking, Entity\Booking\ClientCollection $clientCollection): void
+	public function unLink(
+		int $entityId,
+		EntityType $entityType,
+		Entity\Client\ClientCollection $clientCollection
+	): void
 	{
-		/** @var Entity\Booking\Client $client */
+		/** @var Entity\Client\Client $client */
 		foreach ($clientCollection as $client)
 		{
 			$this->unLinkByFilter([
-				'=BOOKING_ID' => $booking->getId(),
+				'=ENTITY_ID' => $entityId,
+				'=ENTITY_TYPE' => $entityType->value,
 				'=CLIENT_ID' => $client->getId(),
 				'=CLIENT_TYPE_ID' => $this->getClientTypeId($client),
 			]);
@@ -69,16 +78,31 @@ class BookingClientRepository implements BookingClientRepositoryInterface
 		$res = $query
 			->setSelect(['CNT' => Query::expr()->countDistinct('CLIENT_ID')])
 			->where('IS_PRIMARY', 'Y')
-			->whereExists(
-				new SqlExpression("
-					SELECT 1
-					FROM " . BookingTable::getTableName() . "
-					WHERE
-						ID = " . $query->getInitAlias() . ".BOOKING_ID
-						AND IS_DELETED = 'N'
-				")
+			->where(
+				(new ConditionTree())
+					->logic(ConditionTree::LOGIC_OR)
+					->whereExists(
+						new SqlExpression("
+							SELECT 1
+							FROM " . BookingTable::getTableName() . "
+							WHERE
+								ID = " . $query->getInitAlias() . ".ENTITY_ID
+								AND ENTITY_TYPE = '" . EntityType::Booking->value . "'
+								AND IS_DELETED = 'N'
+						")
+					)
+					->whereExists(
+						new SqlExpression("
+							SELECT 1
+							FROM " . WaitListItemTable::getTableName() . "
+							WHERE
+								ID = " . $query->getInitAlias() . ".ENTITY_ID
+								AND ENTITY_TYPE = '" . EntityType::WaitList->value . "'
+								AND IS_DELETED = 'N'
+						")
+					)
 			)
-			->setCacheTtl(3600)
+			->setCacheTtl(3600) // # 1 hour
 			->exec()
 			->fetch()
 		;
@@ -86,18 +110,22 @@ class BookingClientRepository implements BookingClientRepositoryInterface
 		return isset($res['CNT']) ? (int)$res['CNT'] : 0;
 	}
 
-	public function getTotalNewClientsToday(array $bookingIds): int
+	public function getTotalNewClientsToday(FilterInterface $filter): int
 	{
-		if (empty($bookingIds))
+		$conditions = $filter->prepareFilter();
+
+		if (!$conditions->hasConditions())
 		{
 			return 0;
 		}
 
-		$res = BookingClientTable::query()
+		$query = BookingClientTable::query();
+		$filter->prepareQuery($query);
+		$res = $query
 			->setSelect(['CNT' => Query::expr()->countDistinct('CLIENT_ID')])
 			->where('IS_PRIMARY', 'Y')
-			->whereIn('BOOKING_ID', $bookingIds)
-			->where('IS_RETURNING', false)
+			->whereNot('IS_RETURNING')
+			->where($conditions)
 			->exec()
 			->fetch()
 		;
@@ -105,7 +133,7 @@ class BookingClientRepository implements BookingClientRepositoryInterface
 		return isset($res['CNT']) ? (int)$res['CNT'] : 0;
 	}
 
-	private function getClientTypeId(Entity\Booking\Client $client): ?int
+	private function getClientTypeId(Entity\Client\Client $client): ?int
 	{
 		$clientType = $client->getType();
 		if (!$clientType)

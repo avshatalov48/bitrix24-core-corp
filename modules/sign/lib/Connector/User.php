@@ -14,9 +14,8 @@ use Bitrix\Sign\Type\Field\ProfileField;
 final class User implements Contract\Connector
 {
 	public function __construct(
-		private int $userId
+		private int $userId,
 	) {}
-
 
 	public function fetchFields(): FieldCollection
 	{

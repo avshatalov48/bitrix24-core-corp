@@ -1,35 +1,43 @@
+import { AnalyticsSourceType } from 'humanresources.company-structure.api';
+import { EntityTypes } from 'humanresources.company-structure.utils';
 import { BIcon, Set } from 'ui.icon-set.api.vue';
 import 'ui.icon-set.main';
-import { PermissionActions, PermissionChecker } from 'humanresources.company-structure.permission-checker';
+import { PermissionChecker } from 'humanresources.company-structure.permission-checker';
+import { AddDepartmentMenuItem } from '../../menu/items/department/add-department-menu-item';
 
+// @vue/component
 export const SubdivisionAddButton = {
 	name: 'SubdivisionAddButton',
-	emits: ['addDepartment'],
-
-	props: {
-		departmentId: {
-			type: Number,
-			required: true,
-		},
-	},
 
 	components: {
 		BIcon,
 	},
 
-	created(): void
-	{
-		const permissionChecker = PermissionChecker.getInstance();
-
-		this.canShow = permissionChecker
-			&& permissionChecker.hasPermission(PermissionActions.departmentCreate, this.departmentId);
+	props: {
+		entityId: {
+			type: Number,
+			required: true,
+		},
+		entityType: {
+			type: String,
+			default: EntityTypes.department,
+		},
 	},
 
-	computed: {
+	computed:
+	{
 		set(): Set
 		{
 			return Set;
 		},
+	},
+
+	created(): void
+	{
+		this.menuItem = new AddDepartmentMenuItem(this.entityType);
+		const permissionChecker = PermissionChecker.getInstance();
+
+		this.canShow = this.menuItem.hasPermission(permissionChecker, this.entityId);
 	},
 
 	methods: {
@@ -37,9 +45,13 @@ export const SubdivisionAddButton = {
 		{
 			return this.$Bitrix.Loc.getMessage(phraseCode, replacements);
 		},
-		addSubdivision(event): void
+		addSubdivision(): void
 		{
-			this.$emit('addDepartment');
+			this.menuItem.invoke({
+				entityId: this.entityId,
+				analyticSource: AnalyticsSourceType.PLUS,
+				entityType: this.entityType,
+			});
 		},
 	},
 

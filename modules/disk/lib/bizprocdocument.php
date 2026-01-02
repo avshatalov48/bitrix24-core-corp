@@ -2,6 +2,7 @@
 
 namespace Bitrix\Disk;
 
+use Bitrix\Disk\Internals\FileHelper;
 use Bitrix\Main\Loader;
 use Bitrix\Main\Localization\Loc;
 use Bitrix\Main\ModuleManager;
@@ -15,12 +16,12 @@ use CFile;
 
 Loc::loadMessages(__FILE__);
 
-if (!Integration\BizProcManager::isAvailable())
+if (!Loader::includeModule('bizproc'))
 {
 	return;
 }
 
-class BizProcDocument
+class BizProcDocument implements \IBPWorkflowDocument
 {
 	const DOCUMENT_TYPE_PREFIX = 'STORAGE_';
 
@@ -954,13 +955,10 @@ class BizProcDocument
 			if(ModuleManager::isModuleInstalled('bitrix24'))
 			{
 				$siteId = \CSite::getDefSite();
-				$employeeGroup = \CGroup::getList('', '', array(
-					'STRING_ID' => 'EMPLOYEES_' . $siteId,
-					'STRING_ID_EXACT_MATCH' => 'Y'
-				))->fetch();
+				$employeeGroup = \CGroup::GetIDByCode('EMPLOYEES_' . $siteId);
 				if($employeeGroup)
 				{
-					$employeeGroupId = (int)$employeeGroup['ID'];
+					$employeeGroupId = (int)$employeeGroup;
 					if(!in_array($employeeGroupId, $groupIds, true))
 					{
 						$groupIds[] = $employeeGroupId;
@@ -1887,6 +1885,16 @@ class BizProcDocument
 							if (!array_key_exists("MODULE_ID", $value) || $value["MODULE_ID"] == '')
 								$value["MODULE_ID"] = "bizproc";
 
+							if (!FileHelper::hasValidFileKeys($value))
+							{
+								$value = null;
+								$errors[] = array(
+									'code' => "ErrorValue",
+									'message' => Loc::getMessage("DISK_UNKNOW"),
+									'parameter' => $fieldName["Field"],
+								);
+							}
+
 							$value = CFile::saveFile($value, "bizproc_wf", true, true);
 							if (!$value)
 							{
@@ -1910,7 +1918,7 @@ class BizProcDocument
 						$customType = $USER_FIELD_MANAGER->getUserType($customTypeID);
 						if(is_bool($customType))
 							$customType = array();
-						
+
 						if ($value !== null && array_key_exists("CheckFields", $customType))
 						{
 							$errorsTmp1 = call_user_func_array(
@@ -2306,7 +2314,7 @@ class BizProcDocument
 		}
 	}
 
-	public static function getAllowableOperations()
+	public static function getAllowableOperations($documentType)
 	{
 		return array();
 	}
@@ -2359,7 +2367,10 @@ class BizProcDocument
 			&& !\CBPRuntime::isFeatureEnabled()
 		)
 		{
-			throw new \Exception(Loc::getMessage('DISK_BZ_RESUME_RESTRICTED'));
+			throw new \Exception(
+				Loc::getMessage('DISK_BZ_RESUME_RESTRICTED'),
+				\CBPRuntime::EXCEPTION_CODE_INSTANCE_TARIFF_LIMIT_EXCEED
+			);
 		}
 	}
 
@@ -2373,7 +2384,11 @@ class BizProcDocument
 
 	public static function getBizprocEditorUrl($documentType): ?string
 	{
-
 		return '/docs/bp_edit/#ID#/';
+	}
+
+	public static function recoverDocumentFromHistory($documentId, $arDocument)
+	{
+		return true;
 	}
 }

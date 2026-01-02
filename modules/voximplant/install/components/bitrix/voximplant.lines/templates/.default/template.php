@@ -6,23 +6,17 @@ use Bitrix\Main\Localization\Loc;
 CJSCore::Init(["voximplant.common", "voximplant.callerid", "voximplant.numberrent", "ui.notification", "ui.alerts", "ui.buttons", "ui.buttons.icons", "sidepanel"]);
 $APPLICATION->IncludeComponent("bitrix:ui.info.helper", "", array());
 
-$isBitrix24Template = (SITE_TEMPLATE_ID == "bitrix24");
-if($isBitrix24Template)
-{
-	$this->SetViewTarget("pagetitle", 100);
-}
-?>
-	<div class="pagetitle-container pagetitle-align-right-container">
-		<div id="add-group" class="bx24-top-toolbar-add">
-			<button class="ui-btn ui-btn-primary ui-btn-icon-add"><?= Loc::getMessage("VOX_LINES_CREATE_NUMBER_GROUP") ?></button>
-		</div>
-	</div>
-<?
+$button = new \Bitrix\UI\Buttons\Button([
+	'text' => Loc::getMessage('VOX_LINES_CREATE_NUMBER_GROUP'),
+	'icon' => \Bitrix\UI\Buttons\Icon::ADD,
+	'color' => \Bitrix\UI\Buttons\Color::PRIMARY,
+	'dataset' => [
+		'toolbar-collapsed-icon' => Bitrix\UI\Buttons\Icon::ADD,
+	]
+]);
+$button->addAttribute('id', 'add-group');
+\Bitrix\UI\Toolbar\Facade\Toolbar::addButton($button);
 
-if($isBitrix24Template)
-{
-	$this->EndViewTarget();
-}
 
 $APPLICATION->IncludeComponent(
 	"bitrix:main.ui.grid",

@@ -55,6 +55,7 @@ jn.define('sign/dialog/banners/signed', (require, exports, module) => {
 				buttonsView: View(
 					{},
 					Button({
+						testId: 'signedBanner-button-download',
 						text: Loc.getMessage('SIGN_MOBILE_DIALOG_SIGNED_BUTTON_SAVE_TITLE'),
 						size: ButtonSize.XL,
 						design: ButtonDesign.FILLED,
@@ -67,6 +68,7 @@ jn.define('sign/dialog/banners/signed', (require, exports, module) => {
 						},
 					}),
 					Button({
+						testId: 'signedBanner-button-close',
 						text: Loc.getMessage('SIGN_MOBILE_DIALOG_SIGNED_BUTTON_CLOSE'),
 						size: ButtonSize.XL,
 						design: ButtonDesign.PLAN_ACCENT,

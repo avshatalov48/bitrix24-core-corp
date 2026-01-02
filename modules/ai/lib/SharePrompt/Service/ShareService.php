@@ -15,7 +15,6 @@ use Bitrix\Main\Routing\Exceptions\ParameterNotFoundException;
 use Bitrix\Main\SystemException;
 use Bitrix\Main\UI\EntitySelector;
 use Bitrix\Main\ORM\Data\AddResult;
-use Bitrix\Main\Config\Option;
 
 class ShareService
 {
@@ -318,10 +317,9 @@ class ShareService
 		$userPrompts = [];
 		$systemPrompts = [];
 
-		$libraryEnable = Option::get('ai', 'ai_prompt_library_enable') === 'Y';
 		foreach ($promptList as $prompt)
 		{
-			if (!$libraryEnable || $prompt->isSystem())
+			if ($prompt->isSystem())
 			{
 				$systemPrompts[$prompt->getId()] = $prompt;
 				continue;

@@ -1,3 +1,4 @@
+/* eslint-disable */
 this.BX = this.BX || {};
 this.BX.Salescenter = this.BX.Salescenter || {};
 (function (exports,main_core,sale_paymentPay_lib) {
@@ -5,10 +6,8 @@ this.BX.Salescenter = this.BX.Salescenter || {};
 
 	var BackendProvider = /*#__PURE__*/function (_AbstractBackendProvi) {
 	  babelHelpers.inherits(BackendProvider, _AbstractBackendProvi);
-
 	  function BackendProvider(options) {
 	    var _this;
-
 	    babelHelpers.classCallCheck(this, BackendProvider);
 	    _this = babelHelpers.possibleConstructorReturn(this, babelHelpers.getPrototypeOf(BackendProvider).call(this, options));
 	    _this.returnUrl = _this.option('returnUrl', _this.getCurrentUrl());
@@ -19,21 +18,18 @@ this.BX.Salescenter = this.BX.Salescenter || {};
 	    _this.response = null;
 	    return _this;
 	  }
+
 	  /**
 	   * @override
 	   * @returns {Promise}
 	   */
-
-
 	  babelHelpers.createClass(BackendProvider, [{
 	    key: "initiatePayment",
 	    value: function initiatePayment() {
 	      var _this2 = this;
-
 	      if (!this.paySystemId) {
 	        throw new Error('Payment system undefined');
 	      }
-
 	      return new Promise(function (resolve, reject) {
 	        main_core.ajax.runComponentAction('bitrix:salescenter.payment.pay', 'initiatePay', {
 	          mode: 'ajax',
@@ -59,7 +55,6 @@ this.BX.Salescenter = this.BX.Salescenter || {};
 	     * @override
 	     * @returns {object|string|*}
 	     */
-
 	  }, {
 	    key: "getResponse",
 	    value: function getResponse() {
@@ -69,7 +64,6 @@ this.BX.Salescenter = this.BX.Salescenter || {};
 	     * @override
 	     * @returns {boolean}
 	     */
-
 	  }, {
 	    key: "isResponseSucceed",
 	    value: function isResponseSucceed() {
@@ -79,35 +73,30 @@ this.BX.Salescenter = this.BX.Salescenter || {};
 	     * @override
 	     * @returns {string|null}
 	     */
-
 	  }, {
 	    key: "getPaymentGateUrl",
 	    value: function getPaymentGateUrl() {
 	      if (main_core.Type.isObject(this.response.data) && main_core.Type.isStringFilled(this.response.data.url)) {
 	        return this.response.data.url;
 	      }
-
 	      return null;
 	    }
 	    /**
 	     * @override
 	     * @returns {string|null}
 	     */
-
 	  }, {
 	    key: "getPaymentFormHtml",
 	    value: function getPaymentFormHtml() {
 	      if (main_core.Type.isObject(this.response.data) && main_core.Type.isStringFilled(this.response.data.html)) {
 	        return this.response.data.html;
 	      }
-
 	      return null;
 	    }
 	    /**
 	     * @private
 	     * @returns {string}
 	     */
-
 	  }, {
 	    key: "getCurrentUrl",
 	    value: function getCurrentUrl() {

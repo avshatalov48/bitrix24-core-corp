@@ -5407,6 +5407,7 @@ this.BX = this.BX || {};
 	var _getGeneralMenuItems = /*#__PURE__*/babelHelpers.classPrivateFieldLooseKey("getGeneralMenuItems");
 	var _getPromptMenuItemFromPrompt = /*#__PURE__*/babelHelpers.classPrivateFieldLooseKey("getPromptMenuItemFromPrompt");
 	var _getProviderMenuItems = /*#__PURE__*/babelHelpers.classPrivateFieldLooseKey("getProviderMenuItems");
+	var _hasAccessToLibraries = /*#__PURE__*/babelHelpers.classPrivateFieldLooseKey("hasAccessToLibraries");
 	var _showResultPopup = /*#__PURE__*/babelHelpers.classPrivateFieldLooseKey("showResultPopup");
 	var _setResultPopupText = /*#__PURE__*/babelHelpers.classPrivateFieldLooseKey("setResultPopupText");
 	var _initResultPopup = /*#__PURE__*/babelHelpers.classPrivateFieldLooseKey("initResultPopup");
@@ -5474,6 +5475,9 @@ this.BX = this.BX || {};
 	    });
 	    Object.defineProperty(this, _showResultPopup, {
 	      value: _showResultPopup2
+	    });
+	    Object.defineProperty(this, _hasAccessToLibraries, {
+	      value: _hasAccessToLibraries2
 	    });
 	    Object.defineProperty(this, _getProviderMenuItems, {
 	      value: _getProviderMenuItems2
@@ -5730,13 +5734,16 @@ this.BX = this.BX || {};
 	      }
 	  }
 	  requestAnimationFrame(() => {
+	    var _error$customData, _error$customData2;
 	    ai_ajaxErrorHandler.AjaxErrorHandler.handleTextGenerateError({
 	      baasOptions: {
 	        bindElement: babelHelpers.classPrivateFieldLooseBase(this, _bindElement$3)[_bindElement$3],
 	        context: babelHelpers.classPrivateFieldLooseBase(this, _copilotTextControllerEngine)[_copilotTextControllerEngine].getContextId(),
 	        useAngle: true
 	      },
-	      errorCode: error.getCode()
+	      errorCode: error.getCode(),
+	      showSliderWithMsg: error == null ? void 0 : (_error$customData = error.customData) == null ? void 0 : _error$customData.showSliderWithMsg,
+	      sliderCode: error == null ? void 0 : (_error$customData2 = error.customData) == null ? void 0 : _error$customData2.sliderCode
 	    });
 	  });
 	}
@@ -5815,13 +5822,19 @@ this.BX = this.BX || {};
 	      }
 	    });
 	  });
-	  const result = [...providers, {
-	    separator: true
-	  }, new ai_copilot_copilotTextController.ConnectModelMenuItem(), new ai_copilot_copilotTextController.MarketMenuItem()];
+	  const result = [...providers];
+	  if (babelHelpers.classPrivateFieldLooseBase(this, _hasAccessToLibraries)[_hasAccessToLibraries]()) {
+	    result.push({
+	      separator: true
+	    }, new ai_copilot_copilotTextController.ConnectModelMenuItem(), new ai_copilot_copilotTextController.MarketMenuItem());
+	  }
 	  if ((_babelHelpers$classPr17 = babelHelpers.classPrivateFieldLooseBase(this, _copilotTextControllerEngine)[_copilotTextControllerEngine].getPermissions()) != null && _babelHelpers$classPr17.can_edit_settings) {
 	    result.push(new ai_copilot_copilotTextController.SettingsMenuItem());
 	  }
 	  return result;
+	}
+	function _hasAccessToLibraries2() {
+	  return main_core.Extension.getSettings('ai.copilot').get('isLibraryVisible');
 	}
 	function _showResultPopup2() {
 	  if (!babelHelpers.classPrivateFieldLooseBase(this, _resultPopup)[_resultPopup]) {

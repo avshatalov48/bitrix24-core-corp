@@ -1,11 +1,11 @@
 .sign-reminder-selector__label {
-	font: 13px/15.51px var(--ui-font-family-system);
+	font: 13px/15.51px var(--ui-font-family-primary, var(--ui-font-family-system));
 	color: var(--ui-color-palette-gray-60);
 	margin-right: 10px;
 }
 
 .sign-reminder-selector__button {
-	font: 13px/17.2px var(--ui-font-family-system);
+	font: 13px/17.2px var(--ui-font-family-primary, var(--ui-font-family-system));
 	text-transform: none;
 	background: var(--ui-color-palette-gray-05);
 	border: none;

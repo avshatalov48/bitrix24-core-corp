@@ -27,7 +27,7 @@
 				php: 'text/php',
 			};
 
-			return mimeTypeMap[fileType] ? mimeTypeMap[fileType] : '';
+			return mimeTypeMap[fileType] ?? '';
 		},
 
 		getResizeOptions: (type) => {

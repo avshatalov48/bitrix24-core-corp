@@ -1,4 +1,22 @@
 <?php
+$MESS["CRM_TOOLBAR_COMPONENT_ADD_CLIENT_FOR_CALL"] = "Add a customer with a phone number to make a call.";
+$MESS["CRM_TOOLBAR_COMPONENT_ADD_CLIENT_FOR_CALL_COMPANY"] = "Add a customer with a phone number to this company to make a call.";
+$MESS["CRM_TOOLBAR_COMPONENT_ADD_CLIENT_FOR_CALL_CONTACT"] = "Add a customer with a phone number to this contact to make a call.";
+$MESS["CRM_TOOLBAR_COMPONENT_ADD_CLIENT_FOR_CALL_DEAL"] = "Add a customer with a phone number to this deal to make a call.";
+$MESS["CRM_TOOLBAR_COMPONENT_ADD_CLIENT_FOR_CALL_INVOICE"] = "Add a customer with a phone number to this invoice to make a call.";
+$MESS["CRM_TOOLBAR_COMPONENT_ADD_CLIENT_FOR_CALL_LEAD"] = "Add a customer with a phone number to this lead to make a call.";
+$MESS["CRM_TOOLBAR_COMPONENT_ADD_CLIENT_FOR_CALL_QUOTE"] = "Add a customer with a phone number to this estimate to make a call.";
+$MESS["CRM_TOOLBAR_COMPONENT_ADD_CLIENT_FOR_CALL_SMART_INVOICE"] = "Add a customer with a phone number to this invoice to make a call.";
+$MESS["CRM_TOOLBAR_COMPONENT_ADD_CLIENT_FOR_EMAIL_SEND"] = "Add a customer with an email address to send an email.";
+$MESS["CRM_TOOLBAR_COMPONENT_ADD_CLIENT_FOR_EMAIL_SEND_COMPANY"] = "Add a customer with an email address to this company to send an email.";
+$MESS["CRM_TOOLBAR_COMPONENT_ADD_CLIENT_FOR_EMAIL_SEND_CONTACT"] = "Add a customer with an email address to this contact to send an email.";
+$MESS["CRM_TOOLBAR_COMPONENT_ADD_CLIENT_FOR_EMAIL_SEND_DEAL"] = "Add a customer with an email address to this deal to send an email.";
+$MESS["CRM_TOOLBAR_COMPONENT_ADD_CLIENT_FOR_EMAIL_SEND_INVOICE"] = "Add a customer with an email address to this invoice to send an email.";
+$MESS["CRM_TOOLBAR_COMPONENT_ADD_CLIENT_FOR_EMAIL_SEND_LEAD"] = "Add a customer with an email address to this lead to send an email.";
+$MESS["CRM_TOOLBAR_COMPONENT_ADD_CLIENT_FOR_EMAIL_SEND_QUOTE"] = "Add a customer with an email address to this estimate to send an email.";
+$MESS["CRM_TOOLBAR_COMPONENT_ADD_CLIENT_FOR_EMAIL_SEND_SMART_INVOICE"] = "Add a customer with an email address to this invoice to send an email.";
 $MESS["CRM_TOOLBAR_COMPONENT_ROBOTS_GUIDE_TEXT"] = "Edit triggers and automation rules here";
 $MESS["CRM_TOOLBAR_COMPONENT_ROBOTS_GUIDE_TEXT_1"] = "Edit automation rules and triggers here";
-$MESS["CRM_TOOLBAR_COMPONENT_SCRIPTS_GUIDE_TEXT"] = "Edit SPA here";
+$MESS["CRM_TOOLBAR_COMPONENT_SCRIPTS_GUIDE_TEXT"] = "Edit smart scripts here";
+$MESS["CRM_TOOLBAR_COMPONENT_TELEPHONY_NOT_SUPPORTED"] = "The Instant Messenger module is required to make calls. Please contact your Bitrix24 administrator.";
+$MESS["CRM_TOOLBAR_COMPONENT_TELEPHONY_NOT_SUPPORTED_OK"] = "OK";

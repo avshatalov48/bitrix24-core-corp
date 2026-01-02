@@ -17,12 +17,7 @@ class CCrmProductSearchDialogComponent extends \CBitrixComponent
 			return;
 		}
 
-		/** @var $permissions CCrmPerms */
-		$permissions = CCrmPerms::GetCurrentUserPermissions();
-		if (
-			!(CCrmPerms::IsAccessEnabled($permissions)
-			&& $permissions->HavePerm('CONFIG', BX_CRM_PERM_CONFIG, 'READ'))
-		)
+		if (!\Bitrix\Crm\Service\Container::getInstance()->getUserPermissions()->entityType()->canReadSomeItemsInCrm())
 		{
 			ShowError(GetMessage('CRM_PERMISSION_DENIED'));
 			return;

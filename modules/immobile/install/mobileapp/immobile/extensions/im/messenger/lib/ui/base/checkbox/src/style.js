@@ -8,9 +8,18 @@ jn.define('im/messenger/lib/ui/base/checkbox/style', (require, exports, module) 
 		borderColor: Theme.colors.base5,
 		alignContent: 'center',
 		justifyContent: 'center',
+		backgroundColor: {
+			unchecked: {
+				enabled: Theme.colors.baseWhiteFixed,
+				disable: Theme.colors.baseWhiteFixed,
+			},
+			checked: {
+				enabled: Theme.colors.accentMainPrimary,
+				disabled: Theme.colors.accentSoftGray2,
+			},
+		},
 		icon: {
-			enable: Theme.colors.accentMainPrimary,
-			disable: Theme.colors.accentSoftGray2,
+			color: Theme.colors.baseWhiteFixed,
 		},
 	};
 

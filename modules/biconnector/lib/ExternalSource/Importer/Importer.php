@@ -139,8 +139,15 @@ abstract class Importer
 			$fieldDataCollection = new BIConnector\TableBuilder\FieldDataCollection();
 			foreach ($row as $index => $value)
 			{
-				/** @var Field $field */
-				$field = $this->importerFieldCollection[$index];
+				/** @var Field|null $field */
+				$field = $this->importerFieldCollection[$index] ?? null;
+				if (!$field)
+				{
+					$result->addError(new Main\Error("Field with index {$index} not found"));
+
+					return $result;
+				}
+
 				$value = $this->convertData($field, $value);
 
 				$fieldData = BIConnector\TableBuilder\FieldData\Factory::getFieldData(

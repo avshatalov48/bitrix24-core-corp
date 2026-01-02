@@ -1,7 +1,12 @@
+.booking-resource-creation-wizard-app,
+.booking-resource-creation-wizard {
+	height: 100%;
+}
+
 .resource-creation-wizard-layout {
 	display: flex;
 	flex-direction: column;
-	height: 100vh;
+	height: 100%;
 }
 
 .resource-creation-wizard__wrapper {
@@ -68,7 +73,6 @@
 
 .resource-creation-wizard-layout .ui-form-row {
 	display: flex;
-	margin-bottom: 15px;
 	max-width: 100%;
 	overflow: hidden;
 	flex-direction: column;

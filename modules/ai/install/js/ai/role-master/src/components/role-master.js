@@ -11,7 +11,6 @@ import { BIcon } from 'ui.icon-set.api.vue';
 import { Actions } from 'ui.icon-set.api.core';
 import 'ui.icon-set.actions';
 import { toRaw } from 'ui.vue3';
-import { loadImageAsFile } from '../helpers';
 
 const currentUserId = Extension.getSettings('ai.role-master').get('currentUserId');
 
@@ -167,7 +166,6 @@ export const RoleMaster = {
 					roleText: this.roleText,
 					roleTitle: this.roleName,
 					roleAvatar,
-					roleAvatarUrl: this.roleAvatarUrl,
 					roleDescription: this.roleDescription,
 					accessCodes: this.roleItemsWithAccess,
 				};
@@ -197,17 +195,10 @@ export const RoleMaster = {
 				isLoadFinished = true;
 			}
 		},
-		async getAvatarFile(): File | Promise<File> | string {
+		async getAvatarFile(): File | Promise<File> | string | null {
 			if (!this.uploadedAvatarFile)
 			{
-				const pathToDefaultAvatar = '/bitrix/js/ai/role-master/images/role-master-default-avatar.svg';
-
-				return loadImageAsFile(pathToDefaultAvatar);
-			}
-
-			if (!this.uploadedAvatarFile.getBinary())
-			{
-				return this.avatarUrl;
+				return null;
 			}
 
 			return this.uploadedAvatarFile.getBinary();
@@ -259,7 +250,7 @@ export const RoleMaster = {
 					:step-number="2"
 					:name="roleName"
 					:description="roleDescription"
-					:avatar="uploadedAvatarFilePreview || roleAvatar"
+					:avatar="uploadedAvatarFilePreview || roleAvatarUrl"
 					:items-with-access="roleItemsWithAccess"
 					:undeselected-items-with-access="undeselectedItemsWithAccess"
 					@upload-avatar-file="handleAvatarFileUpload"

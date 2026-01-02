@@ -34,7 +34,7 @@
 .bx-imol-list-container-recent__header_title {
 	flex: 1;
 	margin: 0;
-	font: 18px var(--ui-font-family-system);
+	font: 18px var(--ui-font-family-primary, var(--ui-font-family-system));
 	font-weight: var(--imol-list-container-recent__font-weight);
 	color: var(--imol-list-container-recent__color);
 }

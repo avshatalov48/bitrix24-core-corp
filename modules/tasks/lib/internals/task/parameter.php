@@ -35,9 +35,12 @@ Loc::loadMessages(__FILE__);
 
 class ParameterTable extends TaskDataManager
 {
+	use Main\ORM\Data\Internal\DeleteByFilterTrait;
+
 	public const PARAM_SUBTASKS_TIME = 1;
 	public const PARAM_SUBTASKS_AUTOCOMPLETE = 2;
 	public const PARAM_RESULT_REQUIRED = 3;
+	public const PARAM_ALLOW_CHANGE_DATE_PLAN = 4;
 
 	public const PREFIX_PARAM = 'PARAM_';
 
@@ -50,6 +53,7 @@ class ParameterTable extends TaskDataManager
 			self::PARAM_SUBTASKS_TIME,
 			self::PARAM_SUBTASKS_AUTOCOMPLETE,
 			self::PARAM_RESULT_REQUIRED,
+			self::PARAM_ALLOW_CHANGE_DATE_PLAN,
 		];
 	}
 

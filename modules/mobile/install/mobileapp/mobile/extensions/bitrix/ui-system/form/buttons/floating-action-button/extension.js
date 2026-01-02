@@ -3,7 +3,6 @@
  */
 jn.define('ui-system/form/buttons/floating-action-button', (require, exports, module) => {
 	const { Component } = require('tokens');
-	const { Feature } = require('feature');
 	const { PropTypes } = require('utils/validation');
 	const { IconView, Icon } = require('ui-system/blocks/icon');
 	const { FloatingActionButtonMode } = require('ui-system/form/buttons/floating-action-button/src/mode-enum');
@@ -36,7 +35,7 @@ jn.define('ui-system/form/buttons/floating-action-button', (require, exports, mo
 
 		static supportNative(layout)
 		{
-			return typeof layout?.setFloatingButton === 'function' && Feature.isAirStyleSupported();
+			return typeof layout?.setFloatingButton === 'function';
 		}
 
 		/**
@@ -159,9 +158,7 @@ jn.define('ui-system/form/buttons/floating-action-button', (require, exports, mo
 				return;
 			}
 
-			const transformedProps = this.transformProps(this.props);
-
-			this.setFloatingButton(transformedProps);
+			this.setFloatingButton(this.props);
 
 			this.#initListeners();
 		}
@@ -170,6 +167,11 @@ jn.define('ui-system/form/buttons/floating-action-button', (require, exports, mo
 		{
 			return Object.keys(props).reduce((accumulator, key) => {
 				const value = props[key];
+
+				if (!value || typeof value === 'function' || key === 'parentLayout')
+				{
+					return accumulator;
+				}
 
 				if (value instanceof BaseIcon)
 				{
@@ -210,6 +212,7 @@ jn.define('ui-system/form/buttons/floating-action-button', (require, exports, mo
 				safeArea = this.shouldSafeArea(),
 				accentByDefault = this.isAccentButton(),
 			} = params;
+
 			const floatingActionButtonParams = hide
 				? {}
 				: {

@@ -21,13 +21,6 @@ class DocumentsPlaceholderComponent extends CBitrixComponent
 	protected $filterId = 'documentgenerator-placeholders-filter';
 	protected $navParamName = 'page';
 
-	public function onPrepareComponentParams($params)
-	{
-		$params = parent::onPrepareComponentParams($params);
-
-		return $params;
-	}
-
 	/**
 	 * @return mixed|void
 	 */
@@ -38,6 +31,9 @@ class DocumentsPlaceholderComponent extends CBitrixComponent
 			$this->showError(Loc::getMessage('DOCGEN_PLACEHOLDERS_MODULE_DOCGEN_ERROR'));
 			return;
 		}
+
+		global $APPLICATION;
+		$APPLICATION->SetTitle(Loc::getMessage('DOCGEN_PLACEHOLDERS_TITLE_LIST'));
 
 		$moduleId = $this->arParams['module'];
 		$templateId = $this->arParams['templateId'];
@@ -80,24 +76,16 @@ class DocumentsPlaceholderComponent extends CBitrixComponent
 		$this->moduleId = $moduleId;
 		$this->arResult = [];
 
-		$request = \Bitrix\Main\Application::getInstance()->getContext()->getRequest();
-		if($request->get('IFRAME') === 'Y')
-		{
-			$this->arResult['IS_SLIDER'] = true;
-		}
-		else
-		{
-			$this->arResult['IS_SLIDER'] = false;
-			if(SITE_TEMPLATE_ID == "bitrix24")
-			{
-				$this->arResult['TOP_VIEW_TARGET_ID'] = 'pagetitle';
-			}
-		}
+		$this->arResult['IS_SLIDER'] = true;
 		$this->arResult['PROVIDERS'] = $this->getProviders();
 
-		$this->arResult['FILTER'] = $this->prepareFilter();
+		if (Loader::includeModule('ui'))
+		{
+			\Bitrix\UI\Toolbar\Facade\Toolbar::deleteFavoriteStar();
+			\Bitrix\UI\Toolbar\Facade\Toolbar::addFilter($this->prepareFilter());
+		}
+
 		$this->arResult['GRID'] = $this->prepareGrid($this->getPlaceholders());
-		$this->arResult['TITLE'] = Loc::getMessage('DOCGEN_PLACEHOLDERS_TITLE_LIST');
 		$this->arResult['params']['moduleId'] = $this->moduleId;
 		$this->arResult['params']['maxDepthProviderLevel'] = DataProviderManager::MAX_DEPTH_LEVEL_ROOT_PROVIDERS;
 
@@ -208,7 +196,7 @@ class DocumentsPlaceholderComponent extends CBitrixComponent
 	 */
 	protected function prepareFilter()
 	{
-		$filter = [
+		return [
 			'FILTER_ID' => $this->filterId,
 			'GRID_ID' => $this->gridId,
 			'FILTER' => $this->getDefaultFilterFields(),
@@ -217,8 +205,6 @@ class DocumentsPlaceholderComponent extends CBitrixComponent
 			'RESET_TO_DEFAULT_MODE' => false,
 			'ENABLE_LIVE_SEARCH' => true,
 		];
-
-		return $filter;
 	}
 
 	/**
@@ -226,7 +212,7 @@ class DocumentsPlaceholderComponent extends CBitrixComponent
 	 */
 	protected function getDefaultFilterFields()
 	{
-		$result = [
+		return [
 			[
 				'id' => 'placeholder',
 				'name' => Loc::getMessage('DOCGEN_PLACEHOLDERS_PLACEHOLDER_TITLE'),
@@ -245,8 +231,6 @@ class DocumentsPlaceholderComponent extends CBitrixComponent
 				"default" => true,
 			],
 		];
-
-		return $result;
 	}
 
 	/**

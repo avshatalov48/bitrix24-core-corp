@@ -231,22 +231,14 @@ class CrmField extends BaseField implements HasBoundEntities
 
 	private function hasReadPermissions(int $entityTypeId, int $entityId, $entityValue): bool
 	{
-		$categoryId = 0;
-
-		$factory = Container::getInstance()->getFactory($entityTypeId);
-		if ($factory && $factory->isCategoriesSupported())
-		{
-			$categoryId = $entityValue->getCategoryId();
-		}
-
 		$userPermissions = Container::getInstance()->getUserPermissions();
 
 		if ($entityTypeId === \CCrmOwnerType::Company && \CCrmCompany::isMyCompany($entityId))
 		{
-			return $userPermissions->getMyCompanyPermissions()->canReadBaseFields();
+			return $userPermissions->myCompany()->canReadBaseFields();
 		}
 
-		return $userPermissions->checkReadPermissions($entityTypeId, $entityId, $categoryId);
+		return $userPermissions->item()->canRead($entityTypeId, $entityId);
 	}
 
 	private function getEntityTitle(int $entityTypeId, int $entityId, $entityValue): ?string

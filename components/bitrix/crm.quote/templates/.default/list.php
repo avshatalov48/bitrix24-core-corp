@@ -57,16 +57,6 @@ if (!Bitrix\Crm\Integration\Bitrix24Manager::isAccessEnabled(CCrmOwnerType::Quot
 }
 else
 {
-	$APPLICATION->IncludeComponent(
-		'bitrix:crm.entity.counter.panel',
-		'',
-		[
-			'ENTITY_TYPE_NAME' => CCrmOwnerType::QuoteName,
-			'EXTRAS' => [],
-			'PATH_TO_ENTITY_LIST' => $arResult['PATH_TO_QUOTE_LIST'] ?? ''
-		]
-	);
-
 	$APPLICATION->ShowViewContent('crm-grid-filter');
 
 	$APPLICATION->IncludeComponent(

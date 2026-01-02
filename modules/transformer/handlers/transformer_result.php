@@ -47,9 +47,9 @@ if (!$command)
 	return;
 }
 
-$connection = \Bitrix\Main\Application::getConnection();
-$lockName = 'transformer_result_' . $connection->getSqlHelper()->forSql($id);
-if (!$connection->lock($lockName))
+$locker = \Bitrix\Main\DI\ServiceLocator::getInstance()->get('transformer.service.command.locker');
+
+if (!$locker->lock($command))
 {
 	$message = 'Could not acquire lock for command ' . $id;
 	\Bitrix\Transformer\Log::logger()->error($message, ['guid' => $id]);
@@ -68,7 +68,7 @@ if ($command->getStatus() != Command::STATUS_SEND)
 		'error' => $message,
 	]);
 
-	$connection->unlock($lockName);
+	$locker->unlock($command);
 	return;
 }
 
@@ -81,7 +81,7 @@ if ($httpRequest->getPost('upload') === 'where')
 	$uploadInfo = FileUploader::getUploadInfo($id, $fileId, $fileSize);
 	echo Json::encode($uploadInfo);
 
-	$connection->unlock($lockName);
+	$locker->unlock($command);
 	return;
 }
 //endregion
@@ -99,7 +99,7 @@ if ($uploadedFile)
 			'error' => $message,
 		]);
 
-		$connection->unlock($lockName);
+		$locker->unlock($command);
 		return;
 	}
 	$file = fopen($uploadedFile['tmp_name'], 'rb');
@@ -146,12 +146,12 @@ if ($fileName && $filePart)
 		);
 	}
 
-	$connection->unlock($lockName);
+	$locker->unlock($command);
 	return;
 }
 //endregion
 
-$analyticsRegistrar = \Bitrix\Main\DI\ServiceLocator::getInstance()->get('transformer.integration.analytics.registrar');
+$analyticsRegistrar = \Bitrix\Main\DI\ServiceLocator::getInstance()->get('transformer.service.integration.analytics.registrar');
 
 //region error
 $error = $httpRequest->getPost('error');
@@ -189,7 +189,7 @@ if ($error || $errorCode)
 		'success' => 'error received'
 	]);
 
-	$connection->unlock($lockName);
+	$locker->unlock($command);
 	return;
 }
 //endregion
@@ -212,7 +212,7 @@ if ($finish)
 			'error' => 'Could not mark command as uploaded',
 		]);
 
-		$connection->unlock($lockName);
+		$locker->unlock($command);
 
 		return;
 	}
@@ -259,9 +259,9 @@ if ($finish)
 		}
 	}
 
-	$connection->unlock($lockName);
+	$locker->unlock($command);
 	return;
 }
 //endregion
 
-$connection->unlock($lockName);
+$locker->unlock($command);

@@ -165,114 +165,6 @@ a.crm-webform-list-entity-link {
 	color: #aaafb5;
 }
 
-
-
-/* Head info */
-
-.crm-webform-list-info {
-	position: relative;
-	max-height: 2000px;
-	font: 14px var(--ui-font-family-primary, var(--ui-font-family-helvetica));
-	color: #535c69;
-	-webkit-transition: all .5s ease;
-	-moz-transition: all .5s ease;
-	transition: all .5s ease;
-	overflow: hidden;
-	opacity: 1;
-}
-
-.crm-webform-list-info-container {
-	padding: 15px 20px 15px 20px;
-}
-
-.crm-webform-list-info:after {
-	content: "";
-	display: table;
-	clear: both;
-}
-
-.crm-webform-list-info-hide {
-	max-height: 0;
-	opacity: 0;
-	visibility: hidden;
-}
-
-.crm-webform-list-info-btn-hide {
-	cursor: pointer;
-	color: red;
-}
-
-.crm-webform-list-info-list-container {
-	margin: 0 30px 0 0;
-}
-
-.crm-webform-list-info-list {
-	margin: 0;
-	padding: 0;
-}
-
-.crm-webform-list-info-list-item {
-	position: relative;
-	margin: 0 0 20px 25px;
-	list-style: none;
-}
-
-.crm-webform-list-info-list-item:before {
-	content: "";
-	position: absolute;
-	top: 3px;
-	left: -25px;
-	display: inline-block;
-	width: 17px;
-	height: 12px;
-	background: url(images/crm-webform-list-confirm.png) no-repeat;
-	vertical-align: middle;
-}
-
-.crm-webform-list-info-visual {
-	float: right;
-	width: 400px;
-	height: 225px;
-}
-
-.crm-webform-list-info-visual-item {
-	display: inline-block;
-	width: 100%;
-	height: 100%;
-	border: 1px solid #DAE1E7;
-	background: #EDF3F9;
-}
-
-.crm-webform-list-info-inner {
-	margin: 0 0 15px 0;
-	overflow: hidden;
-}
-
-.crm-webform-list-info-title {
-	display: block;
-	margin: 0 0 17px 0;
-	width: -webkit-calc(100% - 30px);
-	width: calc(100% - 30px);
-	font: 22px/26px var(--ui-font-family-primary, var(--ui-font-family-helvetica));
-	color: #31c2f3;
-}
-
-.crm-webform-list-info-list-item-text {
-	display: inline-block;
-	vertical-align: middle;
-}
-
-.crm-webform-list-info-description,
-.crm-webform-list-info-slogan {
-	display: block;
-	margin: 0 0 38px 0;
-	font: 16px var(--ui-font-family-primary, var(--ui-font-family-helvetica));
-}
-
-.crm-webform-list-info-list-item-title {
-	font: var(--ui-font-weight-bold) 14px var(--ui-font-family-primary, var(--ui-font-family-helvetica));
-}
-
 /* Buttons */
 
 .crm-webform-list-buttons-container {
@@ -767,26 +659,7 @@ div.crm-webform-list-widget-content {
 	padding-left: 11px;
 }
 
-/* DESCRIPTION CLOSE BUTTON */
-.crm-webform-list-info-btn-hide {
-	position: absolute;
-	top: 8px;
-	right: 12px;
-	display: inline-block;
-	height: 20px;
-	width: 20px;
-	background-image: url('data:image/svg+xml;charset=US-ASCII,%3Csvg%20xmlns%3D%22http%3A//www.w3.org/2000/svg%22%20width%3D%228%22%20height%3D%228%22%20viewBox%3D%220%200%208%208%22%3E%3Cpath%20fill%3D%22%23B0B8C1%22%20fill-rule%3D%22evenodd%22%20d%3D%22M5.48%203.985L7.727%201.74%206.23.245%203.984%202.49%201.74.243.245%201.74%202.49%203.986.243%206.23%201.74%207.726%203.986%205.48%206.23%207.727%207.725%206.23%205.48%203.985z%22/%3E%3C/svg%3E');
-	background-repeat: no-repeat;
-	background-position: center;
-	-webkit-transition: opacity .3s;
-	transition: opacity .3s;
-	cursor: pointer;
-}
 
-.crm-webform-list-info-btn-hide:hover {
-	opacity: .7;
-}
-/* END OF DESCRIPTION CLOSE BUTTON */
 
 
 .crm-webform-grid-conversion {

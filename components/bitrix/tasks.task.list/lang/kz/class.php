@@ -1,0 +1,23 @@
+<?php
+$MESS["TASKS_GRID_STUB_DESCRIPTION"] = "Мұнда сіз орындайтын немесе қызметкерлеріңізге тапсыратын міндеттердің тізімі болады.";
+$MESS["TASKS_GRID_STUB_DESCRIPTION_COLLAB"] = "Сізде жұмыста міндеттер жоқ";
+$MESS["TASKS_GRID_STUB_NO_DATA_DESCRIPTION"] = "Сүзгідегі мәндерді қалпына келтіріп немесе іздеу сұрауын өзгертіп көріңіз";
+$MESS["TASKS_GRID_STUB_NO_DATA_TITLE"] = "Сіздің сұранысыңыз бойынша ештеңе табылған жоқ";
+$MESS["TASKS_GRID_STUB_PROJECT_CREATE_COLLAB"] = "Мұнда коллаб міндеттер болады";
+$MESS["TASKS_GRID_STUB_PROJECT_CREATE_COLLAB_SUBTITLE"] = "Мұнда немесе чаттардағы хабарламалардан міндеттер жасаңыз, қажетті қатысушыларды қосыңыз. [helpdesklink]Толығырақ[/helpdesklink]";
+$MESS["TASKS_GRID_STUB_PROJECT_CREATE_TASK"] = "Міндетті құру";
+$MESS["TASKS_GRID_STUB_PROJECT_CREATE_TASK_SUBTITLE"] = "Мұнда сіз орындайтын немесе қызметкерлеріңізге тапсыратын міндеттердің тізімі болады. Міндет тізімде қалай пайда болатынын көру үшін бірінші міндетті құрыңыз";
+$MESS["TASKS_GRID_STUB_PROJECT_PROJECT_CREATED"] = "Жоба құрылды";
+$MESS["TASKS_GRID_STUB_TITLE"] = "Міндетті құрыңыз";
+$MESS["TASKS_GROUP_ACTION_COMPLETE_SCRUM_TASK"] = "Өкінішті, таңдалған міндеттерді аяқтау мүмкін болмады, өйткені олар Скрам-командамен байланысты";
+$MESS["TASKS_GROUP_ACTION_DAYS_NUM_INVALID_TEXT"] = "Бұл өрісте тек сандар болуы мүмкін";
+$MESS["TASKS_GROUP_ACTION_DAYS_NUM_INVALID_TITLE"] = "Деректерді енгізу қатесі";
+$MESS["TASKS_GROUP_ACTION_ERROR_MESSAGE"] = "\"#MESSAGE#\" келесі міндеттерде: #TASK_IDS#";
+$MESS["TASKS_GROUP_ACTION_ERROR_TITLE"] = "Қате";
+$MESS["TASKS_TASK_LIST_TAGS_ARE_CONVERTING_COME_BACK_LATER"] = "Кейін оралу";
+$MESS["TASKS_TASK_LIST_TAGS_ARE_CONVERTING_TEXT"] = "Тегтер одан да ыңғайлы болу үшін біз дәл қазір оларды жаңартып жатырмыз. Битрикс24-тің басқа бөлімдерінде жұмысты жалғастырып, сәл кейінірек оралуыңызға болады, жаңарту көп уақытты қажет етпейді.";
+$MESS["TASKS_TASK_LIST_TAGS_ARE_CONVERTING_TITLE"] = "Сәл күтіңіз, тегтер жақын арада пайда болады";
+$MESS["TASKS_TL_ACCESS_TO_COLLAB_DENIED"] = "Сіз бұл коллабта міндеттер тізімін қарай алмайсыз";
+$MESS["TASKS_TL_ACCESS_TO_GROUP_DENIED"] = "Бұл топтағы міндеттер тізімін көре алмайсыз";
+$MESS["TASKS_TL_FORUM_MODULE_NOT_INSTALLED"] = "\"Форум\" модулі орнатылмаған";
+$MESS["TASKS_TL_SOCIALNETWORK_MODULE_NOT_INSTALLED"] = "\"Әлеуметтік желі\" модулі орнатылмаған";

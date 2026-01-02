@@ -1,0 +1,51 @@
+.menu-post-warn-icon,
+.menu-collapsed-mode.menu-sliding-mode .menu-item-warning-state .menu-post-warn-icon {
+	position: relative;
+	bottom: -1px;
+	display: inline-block;
+	width: 20px;
+	height: 20px;
+	margin-left: 4px;
+	vertical-align: middle;
+	opacity: var(--ui-opacity-full);
+	transition: 150ms ease-in-out opacity;
+}
+
+.menu-post-warn-icon::before,
+.menu-collapsed-mode.menu-sliding-mode .menu-item-warning-state .menu-post-warn-icon::before {
+	content: '';
+	display: inline-block;
+	width: 20px;
+	height: 20px;
+	mask-image: url("../images/icons/warning.svg");
+	mask-size: contain;
+	mask-repeat: no-repeat;
+	mask-position: center;
+	background-color: var(--ui-color-design-plain-content-icon-secondary);
+}
+
+.menu-post-warn-icon:hover::before {
+	background-color: color-mix(in srgb, var(--ui-color-design-plain-content-icon-secondary) 100%, var(--ui-color-bg-state-hover-default-overlay-hex) var(--ui-color-bg-state-hover-default-overlay-opacity));
+}
+
+.menu-collapsed-mode .menu-item-warning-state .menu-post-warn-icon {
+	content: '';
+	width: 14px;
+	height: 14px;
+	position: absolute;
+	bottom: 1px;
+	right: 1px;
+}
+
+.menu-collapsed-mode .menu-item-warning-state .menu-post-warn-icon::before {
+	width: 14px;
+	height: 14px;
+	mask-image: url("../images/icons/warning-solid.svg");
+}
+
+.menu-animation-opening-mode .menu-item-warning-state .menu-post-warn-icon,
+.menu-animation-closing-mode .menu-item-warning-state .menu-post-warn-icon {
+	opacity: var(--ui-opacity-none);
+	transition-duration: 0s;
+}
+

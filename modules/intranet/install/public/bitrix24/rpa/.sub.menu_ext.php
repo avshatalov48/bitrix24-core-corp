@@ -27,7 +27,7 @@ if($taskManager)
 $aMenuLinks = [
 	[
 		Loc::getMessage('RPA_SUB_MENU_TASKS_2'),
-		'/rpa/tasks/',
+		SITE_DIR . 'rpa/tasks/',
 		[],
 		[
 			'menu_item_id' => 'rpa-top-panel-tasks',
@@ -37,7 +37,7 @@ $aMenuLinks = [
 	],
 	[
 		Loc::getMessage('RPA_SUB_MENU_PROCESSES_1'),
-		'/rpa/',
+		SITE_DIR . 'rpa/',
 		[],
 		[
 			'menu_item_id' => 'rpa-top-panel-main-section',

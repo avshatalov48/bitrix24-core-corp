@@ -12,6 +12,7 @@ if(!defined('B_PROLOG_INCLUDED') || B_PROLOG_INCLUDED!==true) die();
 /** @var string $componentPath */
 
 use Bitrix\Disk\Document\OnlyOffice\OnlyOfficeHandler;
+use Bitrix\Main\Web\Json;
 use Bitrix\UI\Toolbar\Facade\Toolbar;
 use Bitrix\Main\Application;
 use Bitrix\Main\Localization\Loc;
@@ -30,12 +31,11 @@ Toolbar::addFilter([
 	'GRID_ID' => $arResult['GRID_ID'],
 	'FILTER_ID' => $arResult['FILTER_ID'],
 	'FILTER' => $arResult['FILTER'],
-	'FILTER_PRESETS' => $arResult['FILTER_PRESETS'],
+	'FILTER_PRESETS' => $arResult['FILTER_PRESETS'] ?? [],
 	'ENABLE_LIVE_SEARCH' => true,
 	'ENABLE_LABEL' => true,
 	'RESET_TO_DEFAULT_MODE' => false,
 ]);
-Toolbar::setTitleMinWidth(158);
 
 $defaultHandler = end($arResult['DOCUMENT_HANDLERS']);
 $items = array_map(function ($item) use ($defaultHandler) {
@@ -43,6 +43,7 @@ $items = array_map(function ($item) use ($defaultHandler) {
 	{
 		$defaultHandler = $item;
 	}
+
 	return [
 		'text' => $item['name'],
 		'code' => $item['code'],
@@ -71,14 +72,18 @@ $items = array_map(function ($item) use ($defaultHandler) {
 
 if (\Bitrix\Main\Config\Option::get('disk', 'boards_enabled', 'N') === 'Y')
 {
-	array_unshift(
+	array_splice(
 		$items,
+		1,
+		0,
 		[
-			'text' => Loc::getMessage('DISK_DOCUMENTS_TOOLBAR_CREATE_BOARD'),
-			'onclick' => new UI\Buttons\JsCode(
-				'BX.Disk.Documents.Toolbar.createBoard();'
-			)
-		],
+			[
+				'text' => Loc::getMessage('DISK_DOCUMENTS_TOOLBAR_CREATE_BOARD'),
+				'onclick' => new UI\Buttons\JsCode(
+					'BX.Disk.Documents.Toolbar.createBoard("docs_page");'
+				)
+			]
+		]
 	);
 }
 
@@ -96,7 +101,7 @@ if ($arResult['VARIANT'] == Disk\Type\DocumentGridVariant::FlipchartList)
 		->addClass('toolbar-button-create-new-board')
 		->bindEvent(
 			'click',
-			new UI\Buttons\JsCode('BX.Disk.Documents.Toolbar.createBoard();')
+			new UI\Buttons\JsCode('BX.Disk.Documents.Toolbar.createBoard("boards_page");')
 		);
 }
 else

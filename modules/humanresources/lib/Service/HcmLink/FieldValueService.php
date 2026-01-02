@@ -34,14 +34,12 @@ class FieldValueService implements \Bitrix\HumanResources\Contract\Service\HcmLi
 		$this->fieldValueRepository = $fieldValueRepository ?? Container::getHcmLinkFieldValueRepository();
 	}
 
-	/**
-	 * @param int $companyId
-	 * @param int[] $employeeIds
-	 * @param int[] $fieldIds
-	 *
-	 * @return Result|JobServiceResult
-	 */
-	public function requestFieldValue(int $companyId, array $employeeIds, array $fieldIds): Result|JobServiceResult
+	public function requestFieldValue(
+		int $companyId,
+		array $employeeIds,
+		array $fieldIds,
+		array $documentIdByEmployeeIdMap = [],
+	): Result|JobServiceResult
 	{
 		$company = $this->companyRepository->getById($companyId);
 		if ($company === null || $company->id === null)
@@ -78,19 +76,20 @@ class FieldValueService implements \Bitrix\HumanResources\Contract\Service\HcmLi
 		return Container::getHcmLinkJobService()->requestFieldValue(
 			$company->id,
 			$employeeUuids,
-			$fieldUids
+			$fieldUids,
+			$documentIdByEmployeeIdMap,
 		);
 	}
 
 	/**
-	 * @param array $employeeIds
+	 * @param array $entityIds
 	 * @param array $fieldIds
 	 *
 	 * @return Result|GetFieldValueResult
 	 */
-	public function getFieldValue(array $employeeIds, array $fieldIds): Result|GetFieldValueResult
+	public function getFieldValue(array $entityIds, array $fieldIds): Result|GetFieldValueResult
 	{
-		$collection = $this->fieldValueRepository->getByFieldIdsAndEmployeeIds($fieldIds, $employeeIds);
+		$collection = $this->fieldValueRepository->getByFieldIdsAndEntityIds($fieldIds, $entityIds);
 		$isActual = true;
 
 		/** @var FieldValue $item */

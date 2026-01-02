@@ -23,6 +23,7 @@ class CustomSectionPage
 	/** @var int|null */
 	protected $counterValue;
 	protected bool $isDisabledInCtrlPanel = false;
+	protected array $analytics = [];
 
 	/**
 	 * Returns ID of the page
@@ -259,6 +260,18 @@ class CustomSectionPage
 	public function setDisabledInCtrlPanel(bool $isDisabled): self
 	{
 		$this->isDisabledInCtrlPanel = $isDisabled;
+
+		return $this;
+	}
+
+	public function getAnalytics(): array
+	{
+		return $this->analytics;
+	}
+
+	public function setAnalytics(array $analytics): self
+	{
+		$this->analytics = $analytics;
 
 		return $this;
 	}

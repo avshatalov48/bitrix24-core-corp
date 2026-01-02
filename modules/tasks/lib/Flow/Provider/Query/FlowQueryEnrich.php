@@ -9,8 +9,8 @@ use Bitrix\Main\ORM\Query\Filter\Condition;
 use Bitrix\Main\ORM\Query\Query;
 use Bitrix\Main\SystemException;
 use Bitrix\Tasks\Flow\Internal\FlowTable;
-use Bitrix\Tasks\Provider\QueryBuilderInterface;
-use Bitrix\Tasks\Provider\TaskQueryInterface;
+use Bitrix\Tasks\Provider\Query\QueryBuilderInterface;
+use Bitrix\Tasks\Provider\Query\TaskQueryInterface;
 
 class FlowQueryEnrich implements QueryBuilderInterface
 {

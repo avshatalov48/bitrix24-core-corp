@@ -240,7 +240,7 @@ class Order extends ProductsDataProvider
 	{
 		if($this->isLoaded())
 		{
-			return Service\Container::getInstance()->getUserPermissions($userId)->checkReadPermissions(
+			return Service\Container::getInstance()->getUserPermissions($userId)->item()->canRead(
 				$this->getCrmOwnerType(),
 				(int)$this->source
 			);

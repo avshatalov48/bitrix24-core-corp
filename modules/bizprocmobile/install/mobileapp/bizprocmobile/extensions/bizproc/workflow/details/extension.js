@@ -2,6 +2,7 @@
  * @module bizproc/workflow/details
  */
 jn.define('bizproc/workflow/details', (require, exports, module) => {
+	const { Color } = require('tokens');
 	const AppTheme = require('apptheme');
 	const { Alert } = require('alert');
 	const { Loc } = require('loc');
@@ -11,8 +12,9 @@ jn.define('bizproc/workflow/details', (require, exports, module) => {
 	const { PureComponent } = require('layout/pure-component');
 	const { FocusManager } = require('layout/ui/fields/focus-manager');
 	const { WorkflowComments } = require('bizproc/workflow/comments');
-	const { WorkflowDetailsSkeleton } = require('bizproc/workflow/details/skeleton');
 	const { WorkflowDetailsContent } = require('bizproc/workflow/details/content');
+	const { WorkflowDetailsSkeleton } = require('bizproc/skeleton');
+	const { Random } = require('utils/random');
 
 	class WorkflowDetails extends PureComponent
 	{
@@ -22,10 +24,9 @@ jn.define('bizproc/workflow/details', (require, exports, module) => {
 				modal: true,
 				titleParams: {
 					text: props.title || Loc.getMessage('M_BP_WORKFLOW_DETAILS_WIDGET_TITLE'),
-					textColor: AppTheme.colors.base1,
+					textColor: Color.base4.toHex(),
 					type: 'dialog',
 				},
-				backgroundColor: AppTheme.colors.bgSecondary,
 				backdrop: {
 					mediumPositionPercent: 90,
 					onlyMediumPosition: true,
@@ -33,7 +34,6 @@ jn.define('bizproc/workflow/details', (require, exports, module) => {
 					swipeContentAllowed: true,
 					horizontalSwipeAllowed: false,
 					hideNavigationBar: false,
-					navigationBarColor: AppTheme.colors.bgSecondary,
 				},
 				onReady: (readyLayout) => {
 					readyLayout.showComponent(new WorkflowDetails({
@@ -204,6 +204,7 @@ jn.define('bizproc/workflow/details', (require, exports, module) => {
 				.then((response) => {
 					const isLiveFeedProcess = response.data.isLiveFeedProcess || false;
 					const editorConfig = response.data.editor || null;
+					const processEditor = response.data.processEditor || null;
 					const taskCount = response.data.taskCount || 0;
 					const commentCounter = response.data.commentCounter;
 					const canView = response.data.canViewWorkflow || false;
@@ -213,6 +214,7 @@ jn.define('bizproc/workflow/details', (require, exports, module) => {
 						// no need to rerender
 						this.state.workflow = {};
 						this.state.editorConfig = editorConfig;
+						this.state.processEditor = processEditor;
 						this.state.taskCount = taskCount;
 						this.state.commentCounter = commentCounter;
 						this.state.canView = canView;
@@ -234,6 +236,7 @@ jn.define('bizproc/workflow/details', (require, exports, module) => {
 
 						this.setState({
 							workflow,
+							processEditor,
 							editorConfig,
 							taskCount,
 							commentCounter,
@@ -297,6 +300,11 @@ jn.define('bizproc/workflow/details', (require, exports, module) => {
 
 		render()
 		{
+			if (!this.isLoaded)
+			{
+				return WorkflowDetailsSkeleton();
+			}
+
 			return View(
 				{
 					style: { flex: 1, backgroundColor: AppTheme.colors.bgSecondary },
@@ -315,7 +323,6 @@ jn.define('bizproc/workflow/details', (require, exports, module) => {
 					},
 					View(
 						{ onClick: () => FocusManager.blurFocusedFieldIfHas() },
-						!this.isLoaded && new WorkflowDetailsSkeleton({}),
 						this.isLoaded && View(
 							{
 								style: {
@@ -339,6 +346,7 @@ jn.define('bizproc/workflow/details', (require, exports, module) => {
 									layout: this.layout,
 									workflow: this.state.workflow,
 									editorConfig: this.state.editorConfig,
+									processEditor: this.state.processEditor,
 									canView: this.state.canView,
 									showRightError: this.state.showRightError,
 								}),

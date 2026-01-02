@@ -14,6 +14,7 @@ return [
 		'require-lazy',
 		//'rest',
 		'toast',
+		'analytics',
 		'utils/object',
 		'utils/skeleton',
 

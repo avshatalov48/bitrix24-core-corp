@@ -44,7 +44,8 @@ class GetStagesAction extends Action
 		return (
 			Container::getInstance()
 				->getUserPermissions()
-				->checkReadPermissions($entityTypeId, 0, $categoryId)
+				->entityType()
+				->canReadItemsInCategory($entityTypeId, $categoryId)
 		);
 	}
 }

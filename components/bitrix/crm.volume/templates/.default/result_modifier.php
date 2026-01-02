@@ -33,12 +33,5 @@ $component = $this->getComponent();
 $APPLICATION->setTitle(Loc::getMessage('CRM_VOLUME_TITLE'));
 
 
-$isBitrix24Template = SITE_TEMPLATE_ID === "bitrix24";
-
-if ($isBitrix24Template)
-{
-	$bodyClass = $APPLICATION->GetPageProperty('BodyClass');
-	$APPLICATION->SetPageProperty('BodyClass', ($bodyClass ? $bodyClass.' ' : '').'pagetitle-toolbar-field-view tasks-pagetitle-view');
-}
-
-
+$bodyClass = $APPLICATION->GetPageProperty('BodyClass');
+$APPLICATION->SetPageProperty('BodyClass', ($bodyClass ? $bodyClass.' ' : '').'pagetitle-toolbar-field-view tasks-pagetitle-view');

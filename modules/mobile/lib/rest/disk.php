@@ -202,17 +202,22 @@ class Disk extends \IRestService
 		global $USER;
 
 		$userId = (isset($params['userId']) ? (int)$params['userId'] : (int)$USER->getId());
+		$groupId = (isset($params['groupId']) ? (int)$params['groupId'] : 0);
 
-		if (
-			!Loader::includeModule('disk')
-			|| !($storage = Driver::getInstance()->getStorageByUserId($userId))
-			|| !($folder = $storage->getFolderForUploadedFiles())
-		)
+		if (!Loader::includeModule('disk'))
 		{
 			return null;
 		}
 
-		return $folder->getId();
+		$driver = Driver::getInstance();
+		$storage = $groupId ? $driver->getStorageByGroupId($groupId) : $driver->getStorageByUserId($userId);
+
+		if (!$storage)
+		{
+			return null;
+		}
+
+		return $storage->getFolderForUploadedFiles()?->getId();
 	}
 
 	public static function getFileByObjectId(array $params): array

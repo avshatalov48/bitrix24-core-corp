@@ -55,7 +55,7 @@ this.BX.Humanresources = this.BX.Humanresources || {};
 		           </div>
 				</div>
 			</div>
-		`), main_core.Loc.getMessage('HUMANRESOURCES_HCMLINK_CONNECTOR_PAGE_TITLE'), main_core.Loc.getMessage('HUMANRESOURCES_HCMLINK_CONNECTOR_PAGE_HEAD_DESCRIPTION'), main_core.Loc.getMessage('HUMANRESOURCES_HCMLINK_CONNECTOR_PAGE_PARAGRAPH_1'), main_core.Loc.getMessage('HUMANRESOURCES_HCMLINK_CONNECTOR_PAGE_PARAGRAPH_2'), main_core.Loc.getMessage('HUMANRESOURCES_HCMLINK_CONNECTOR_PAGE_PARAGRAPH_3'), main_core.Loc.getMessage('HUMANRESOURCES_HCMLINK_CONNECTOR_PAGE_PARAGRAPH_4'), babelHelpers.classPrivateFieldLooseBase(this, _openAppPage)[_openAppPage], main_core.Loc.getMessage('HUMANRESOURCES_HCMLINK_CONNECTOR_PAGE_ACTION_INSTALL'));
+		`), main_core.Loc.getMessage('HUMANRESOURCES_HCMLINK_CONNECTOR_PAGE_TITLE'), main_core.Loc.getMessage('HUMANRESOURCES_HCMLINK_CONNECTOR_PAGE_HEAD_DESCRIPTION'), main_core.Loc.getMessage('HUMANRESOURCES_HCMLINK_CONNECTOR_PAGE_PARAGRAPH_1'), main_core.Loc.getMessage('HUMANRESOURCES_HCMLINK_CONNECTOR_PAGE_PARAGRAPH_2'), main_core.Loc.getMessage('HUMANRESOURCES_HCMLINK_CONNECTOR_PAGE_PARAGRAPH_3'), main_core.Loc.getMessage('HUMANRESOURCES_HCMLINK_CONNECTOR_PAGE_PARAGRAPH_4'), babelHelpers.classPrivateFieldLooseBase(this, _openAppPage)[_openAppPage], main_core.Loc.getMessage('HUMANRESOURCES_HCMLINK_CONNECTOR_PAGE_ACTION_INSTALL_V1'));
 	  }
 	}
 	function _openAppPage2() {

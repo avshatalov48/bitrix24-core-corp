@@ -2,6 +2,7 @@
  * @module calendar/model/event
  */
 jn.define('calendar/model/event', (require, exports, module) => {
+	const { Type } = require('type');
 	const { DateHelper, Moment } = require('calendar/date-helper');
 	const { CalendarType, EventTypes, EventMeetingStatus } = require('calendar/enums');
 
@@ -12,42 +13,50 @@ jn.define('calendar/model/event', (require, exports, module) => {
 	{
 		static fromReduxModel(reduxEvent)
 		{
-			return new this({
-				ID: reduxEvent.id,
-				NAME: reduxEvent.name,
-				DESCRIPTION: reduxEvent.description,
-				PARENT_ID: reduxEvent.parentId,
-				DT_SKIP_TIME: reduxEvent.isFullDay ? 'Y' : 'N',
-				TZ_FROM: reduxEvent.timezone,
-				TZ_OFFSET_FROM: reduxEvent.timezoneOffset,
-				SECTION_ID: reduxEvent.sectionId,
-				LOCATION: reduxEvent.location,
-				COLOR: reduxEvent.color,
-				EVENT_TYPE: reduxEvent.eventType,
-				MEETING_STATUS: reduxEvent.meetingStatus,
-				MEETING_HOST: reduxEvent.meetingHost,
-				RRULE: reduxEvent.recurrenceRule,
-				DT_LENGTH: reduxEvent.eventLength,
-				CAL_TYPE: reduxEvent.calType,
-				OWNER_ID: reduxEvent.ownerId,
-				REMIND: reduxEvent.reminders,
-				DATE_FROM_FORMATTED: reduxEvent.dateFromFormatted,
-				COLLAB_ID: reduxEvent.collabId,
-				ACCESSIBILITY: reduxEvent.accessibility,
-				IMPORTANCE: reduxEvent.importance,
-				PRIVATE_EVENT: reduxEvent.privateEvent,
-				isLongWithTime: reduxEvent.isLongWithTime,
-				files: reduxEvent.files,
-			});
+			return new this(reduxEvent, true);
 		}
 
-		constructor(props)
+		constructor(props, fromReduxModel = false)
+		{
+			if (fromReduxModel)
+			{
+				this.buildFromReduxModel(props);
+			}
+			else
+			{
+				this.buildFromRaw(props);
+			}
+		}
+
+		buildFromReduxModel(props)
+		{
+			const reduxProps = { ...props };
+			this.dateFrom = new Date(reduxProps.dateFromTs);
+			this.dateTo = new Date(reduxProps.dateToTs);
+
+			const isCached = !Type.isNil(reduxProps.isFullDay);
+
+			if (isCached)
+			{
+				this.fullDay = reduxProps.isFullDay;
+				this.longWithTime = this.fullDay
+					? reduxProps.eventLength > 86400
+					: DateHelper.getDayCode(this.dateFrom) !== DateHelper.getDayCode(this.dateTo)
+				;
+				delete reduxProps.isFullDay;
+			}
+
+			Object.assign(this, reduxProps);
+		}
+
+		buildFromRaw(props)
 		{
 			this.id = BX.prop.getNumber(props, 'ID', 0);
 			this.parentId = BX.prop.getNumber(props, 'PARENT_ID', 0);
 			this.fullDay = BX.prop.getString(props, 'DT_SKIP_TIME', 'N') === 'Y';
 			this.timezone = BX.prop.getString(props, 'TZ_FROM', null);
 			this.timezoneOffset = BX.prop.getNumber(props, 'TZ_OFFSET_FROM', 0);
+			this.isDaylightSavingTimezone = BX.prop.getString(props, 'IS_DAYLIGHT_SAVING_TZ', '');
 			this.sectionId = BX.prop.getNumber(props, 'SECTION_ID', 0);
 			this.name = BX.prop.getString(props, 'NAME', '').replaceAll('\r\n', ' ');
 			this.description = BX.prop.getString(props, 'DESCRIPTION', '');
@@ -65,10 +74,7 @@ jn.define('calendar/model/event', (require, exports, module) => {
 			this.accessibility = BX.prop.getString(props, 'ACCESSIBILITY', 'busy');
 			this.importance = BX.prop.getString(props, 'IMPORTANCE', 'normal');
 			this.privateEvent = BX.prop.getNumber(props, 'PRIVATE_EVENT', 0);
-
-			this.longWithTime = props.isLongWithTime ?? false;
-			this.attendees = [];
-			this.files = props.files ?? [];
+			this.longWithTime = false;
 
 			this.prepareDate(props);
 		}
@@ -199,7 +205,7 @@ jn.define('calendar/model/event', (require, exports, module) => {
 
 		isInvited()
 		{
-			return this.getMeetingStatus() === EventMeetingStatus.QUESTIONED;
+			return this.getMeetingStatus() === EventMeetingStatus.QUESTIONED && this.getOwnerId() === Number(env.userId);
 		}
 
 		isDeclined()
@@ -212,6 +218,11 @@ jn.define('calendar/model/event', (require, exports, module) => {
 			return this.getEventType()
 				&& [EventTypes.SHARED, EventTypes.SHARED_CRM, EventTypes.SHARED_COLLAB].includes(this.getEventType())
 			;
+		}
+
+		isBookingEvent()
+		{
+			return this.getEventType() === EventTypes.BOOKING;
 		}
 
 		isRecurrence()
@@ -257,19 +268,14 @@ jn.define('calendar/model/event', (require, exports, module) => {
 			return this.ownerId;
 		}
 
+		getCalType()
+		{
+			return this.calType;
+		}
+
 		isGroupCalendar()
 		{
 			return this.calType === CalendarType.GROUP;
-		}
-
-		setAttendees(attendees)
-		{
-			this.attendees = attendees;
-		}
-
-		getAttendees()
-		{
-			return this.attendees;
 		}
 
 		getDuration()
@@ -292,9 +298,9 @@ jn.define('calendar/model/event', (require, exports, module) => {
 			return this.collabId;
 		}
 
-		getFiles()
+		isDaylightSavingTz()
 		{
-			return this.files;
+			return this.isDaylightSavingTimezone;
 		}
 	}
 

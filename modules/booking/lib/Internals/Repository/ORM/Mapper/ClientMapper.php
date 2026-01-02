@@ -4,8 +4,8 @@ declare(strict_types=1);
 
 namespace Bitrix\Booking\Internals\Repository\ORM\Mapper;
 
-use Bitrix\Booking\Entity\Booking\Client;
-use Bitrix\Booking\Entity\Booking\ClientType;
+use Bitrix\Booking\Entity\Client\Client;
+use Bitrix\Booking\Entity\Client\ClientType;
 use Bitrix\Booking\Internals\Model\EO_BookingClient;
 
 class ClientMapper

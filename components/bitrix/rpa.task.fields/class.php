@@ -182,6 +182,12 @@ class RpaAutomationTaskFieldsComponent extends Bitrix\Rpa\Components\ItemDetail
 		$params['ENABLE_FIELDS_CONTEXT_MENU'] = false;
 		$params['ENABLE_CONFIG_SCOPE_TOGGLE'] = false;
 
+		if (empty($this->arParams['fieldsToSet']))
+		{
+			$params['INITIAL_MODE'] = 'view';
+			$params['READ_ONLY'] = true;
+		}
+
 		return $params;
 	}
 

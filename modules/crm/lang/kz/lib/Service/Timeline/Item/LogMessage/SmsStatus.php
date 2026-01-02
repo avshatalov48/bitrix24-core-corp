@@ -1,0 +1,13 @@
+<?php
+$MESS["CRM_TIMELINE_LOG_MSG_STATUS_TITLE_FAILURE"] = "#MESSENGER# хабарлама жеткізілмеді";
+$MESS["CRM_TIMELINE_LOG_MSG_STATUS_TITLE_READ"] = "#MESSENGER# хабарлама оқылды";
+$MESS["CRM_TIMELINE_LOG_MSG_STATUS_TITLE_SUCCESS"] = "#MESSENGER# хабарлама жеткізілді";
+$MESS["CRM_TIMELINE_LOG_SMS_STATUS_RECIPIENT"] = "Алушы";
+$MESS["CRM_TIMELINE_LOG_SMS_STATUS_TITLE_FAILURE"] = "СМС хабарламасы жеткізілмеді";
+$MESS["CRM_TIMELINE_LOG_SMS_STATUS_TITLE_READ"] = "СМС хабарламасы оқылды";
+$MESS["CRM_TIMELINE_LOG_SMS_STATUS_TITLE_SUCCESS"] = "СМС хабарламасы жеткізілді";
+$MESS["CRM_TIMELINE_LOG_SMS_STATUS_TITLE_UNKNOWN"] = "Мәртебе анықталмаған";
+$MESS["CRM_TIMELINE_LOG_TAG_SENDING_ERROR"] = "Жіберу қатесі";
+$MESS["CRM_TIMELINE_LOG_WHATSAPP_STATUS_TITLE_FAILURE"] = "WhatsApp хабарламасы жеткізілмеді";
+$MESS["CRM_TIMELINE_LOG_WHATSAPP_STATUS_TITLE_READ"] = "WhatsApp хабарламасы оқылды";
+$MESS["CRM_TIMELINE_LOG_WHATSAPP_STATUS_TITLE_SUCCESS"] = "WhatsApp хабарламасы жеткізілді";

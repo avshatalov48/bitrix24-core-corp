@@ -28,7 +28,7 @@ class MyCompany
 
 		foreach ($baseEntityTypeIds as $baseEntityTypeId)
 		{
-			if ($this->userPermissions->canReadType($baseEntityTypeId))
+			if ($this->userPermissions->entityType()->canReadItems($baseEntityTypeId))
 			{
 				return true;
 			}
@@ -39,29 +39,29 @@ class MyCompany
 
 	public function canRead(): bool
 	{
-		return $this->userPermissions->canWriteConfig();
+		return $this->userPermissions->isCrmAdmin();
 	}
 
 	public function canAdd(): bool
 	{
-		return $this->userPermissions->canWriteConfig();
+		return $this->userPermissions->isCrmAdmin();
 	}
 
 	public function canUpdate(): bool
 	{
-		return $this->userPermissions->canWriteConfig();
+		return $this->userPermissions->isCrmAdmin();
 	}
 
 	public function canDelete(): bool
 	{
-		return $this->userPermissions->canWriteConfig();
+		return $this->userPermissions->isCrmAdmin();
 	}
 
 	public function canAddByOwnerEntity(int $ownerEntityTypeId, ?int $ownerEntityId = null): bool
 	{
 		if (in_array($ownerEntityTypeId, [\CCrmOwnerType::SmartDocument, \CCrmOwnerType::SmartB2eDocument], true))
 		{
-			return $this->userPermissions->checkAddPermissions($ownerEntityTypeId);
+			return $this->userPermissions->entityType()->canAddItems($ownerEntityTypeId);
 		}
 
 		return $this->canAdd();
@@ -71,7 +71,7 @@ class MyCompany
 	{
 		if (in_array($ownerEntityTypeId, [\CCrmOwnerType::SmartDocument, \CCrmOwnerType::SmartB2eDocument], true))
 		{
-			return $this->userPermissions->checkUpdatePermissions($ownerEntityTypeId, $ownerEntityId);
+			return $this->userPermissions->item()->canUpdate($ownerEntityTypeId, $ownerEntityId);
 		}
 
 		return $this->canUpdate();

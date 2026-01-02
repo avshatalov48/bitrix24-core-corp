@@ -1,0 +1,23 @@
+<?php
+$MESS["CT_BLL_SELECTED"] = "Жазбалар саны";
+$MESS["TEL_STAT_ACTION_CLOSE"] = "Жабу";
+$MESS["TEL_STAT_ACTION_DOWNLOAD"] = "Жазбаларды порталға жүктеу";
+$MESS["TEL_STAT_ACTION_EXECUTE"] = "Орындау";
+$MESS["TEL_STAT_ACTION_STOP"] = "Тоқтату";
+$MESS["TEL_STAT_BACK"] = "Артқа";
+$MESS["TEL_STAT_BACK_TITLE"] = "Артқа қайту";
+$MESS["TEL_STAT_CANCEL"] = "Болдырмау";
+$MESS["TEL_STAT_DOWNLOAD_VOX_RECORD_ERROR"] = "Жүктеу кезінде оператор қатені қайтарды. Кейінірек қайталап көріңіз.";
+$MESS["TEL_STAT_ERROR"] = "Қате";
+$MESS["TEL_STAT_EXPORT_DETAIL_TO_EXCEL"] = "Excel-ге қоңыраулар детализациясын  экспорттау.";
+$MESS["TEL_STAT_EXPORT_DETAIL_TO_EXCEL_DESCRIPTION"] = "Қоңырауларды детализациясы үшін экспорттау файлы құрылады.";
+$MESS["TEL_STAT_EXPORT_DETAIL_TO_EXCEL_LONG_PROCESS"] = "Деректер көлемді болған кезде бұл әрекетті орындау ұзақ уақыт алуы мүмкін.";
+$MESS["TEL_STAT_EXPORT_ERROR"] = "Қате орын алды. Кейінірек қайталап көріңіз немесе портал әкімшісіне хабарласыңыз.";
+$MESS["TEL_STAT_EXPORT_TO_EXCEL"] = "Excel-ге экспорттау";
+$MESS["TEL_STAT_FILTER_CANCEL"] = "Сүзгіден бас тарту";
+$MESS["TEL_STAT_FILTER_CANCEL_TITLE"] = "Сүзгіден бас тарту";
+$MESS["TEL_STAT_LOADING"] = "Жүктеу орындалуда";
+$MESS["TEL_STAT_SHOW_COUNT"] = "Санын көрсету";
+$MESS["TEL_STAT_TOTAL"] = "Барлығы";
+$MESS["TEL_STAT_USER_ID_CANCEL"] = "Қызметкер бойынша сүзгіні алып тастау";
+$MESS["TEL_STAT_USER_ID_CANCEL_TITLE"] = "Қызметкер бойынша сүзгіні алып тастау";

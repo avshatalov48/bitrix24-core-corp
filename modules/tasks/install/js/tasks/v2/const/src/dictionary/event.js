@@ -1,0 +1,15 @@
+export const EventName = Object.freeze({
+	CloseCard: 'tasks:card:close',
+	CloseFullCard: 'tasks:full-card:close',
+	OpenFullCard: 'tasks:card:openFullCard',
+	OpenCompactCard: 'tasks:card:openCompactCard',
+	TaskAdd: 'tasks:card:taskAdd',
+	TaskUpdate: 'tasks:card:taskUpdate',
+	OpenSliderCard: 'tasks:card:openSliderCard',
+	OpenGrid: 'tasks:card:openGrid',
+	ShowOverlay: 'tasks:card:showOverlay',
+	HideOverlay: 'tasks:card:hideOverlay',
+	AdjustPosition: 'tasks:card:adjustPosition',
+	CloseCheckList: 'tasks:card:check-list:close',
+	NotifyGrid: 'tasksTaskEvent',
+});

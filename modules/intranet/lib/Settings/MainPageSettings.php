@@ -2,11 +2,12 @@
 
 namespace Bitrix\Intranet\Settings;
 
-use Bitrix\Bitrix24\Feature;
 use Bitrix\Intranet\Integration;
 use Bitrix\Intranet\MainPage;
-use Bitrix\Main\Loader;
 use Bitrix\Main\Result;
+use Bitrix\UI\Form\FormProvider;
+use Bitrix\UI\Form\UrlProvider;
+use Bitrix\Main\Loader;
 
 class MainPageSettings extends AbstractSettings
 {
@@ -22,7 +23,6 @@ class MainPageSettings extends AbstractSettings
 		$mainPageUrl = new MainPage\Url();
 		$integrationManager = new Integration\Landing\MainPage\Manager();
 		$publisher = new MainPage\Publisher();
-		$isMainpageEnable = Loader::includeModule('bitrix24') && Feature::isFeatureEnabled('main_page');
 
 		$componentClass = \CBitrixComponent::includeComponentClass('bitrix:landing.base');
 		if ($componentClass)
@@ -30,14 +30,16 @@ class MainPageSettings extends AbstractSettings
 			$component = new $componentClass;
 			$feedbackParams =
 				$component
-					? $component->getFeedbackParameters('mainpage')
+					? $component->getFeedbackParameters('partner')
 					: []
 			;
+			$feedbackParams['PRESETS']['SOURCE'] = 'MainPageSettings';
+			$isUiLoaded = Loader::includeModule('ui');
 			$feedbackParams = [
 				'id' => $feedbackParams['ID'] ?? 'mainpage_feedback',
-				'forms' => $feedbackParams['FORMS'] ?? [],
-				'presets' => $feedbackParams['PRESETS'] ?? [],
-				'portalUri' => $feedbackParams['PORTAL_URI'] ?? null,
+				'forms' => $isUiLoaded ? (new FormProvider)->getPartnerFormList() : [],
+				'presets' => $feedbackParams['PRESETS'],
+				'portalUri' => $isUiLoaded ? (new UrlProvider())->getPartnerPortalUrl() : null,
 			];
 		}
 
@@ -52,7 +54,7 @@ class MainPageSettings extends AbstractSettings
 			'isSiteExists' => $integrationManager->isSiteExists(),
 			'isPageExists' => $integrationManager->isPageExists(),
 			'isPublished' => $publisher->isPublished(),
-			'isEnable' => $isMainpageEnable,
+			'canEdit' => (new MainPage\Access)->canEdit(),
 			'feedbackParams' => $feedbackParams ?? [],
 			'title' => $integrationManager->getTitle(),
 		];

@@ -40,7 +40,7 @@ class SupportBox extends Network implements SupportBot, SupportQuestion
 	;
 
 	protected const
-		AVATAR = 'https://helpdesk.bitrix24.com/images/support/bot.png',
+		AVATAR = '/images/support/bot.png',
 		HELP_DESK_CODE = '7577357';
 
 
@@ -649,7 +649,7 @@ class SupportBox extends Network implements SupportBot, SupportQuestion
 	 */
 	protected static function checkMessageRestriction(array $messageFields): bool
 	{
-		if (!self::isUserAdmin(self::getCurrentUser()->getId()) && !self::isUserIntegrator(self::getCurrentUser()->getId()))
+		if (!self::isActiveSupportForUser(self::getCurrentUser()->getId()))
 		{
 			return false;
 		}
@@ -670,6 +670,16 @@ class SupportBox extends Network implements SupportBot, SupportQuestion
 				$messageFields['MESSAGE_TYPE'] === \IM_MESSAGE_CHAT
 				&& $messageFields['CHAT_ENTITY_TYPE'] === self::CHAT_ENTITY_TYPE
 			);
+	}
+
+	/**
+	 * Allows certain user write to OL.
+	 * @param int $userId
+	 * @return bool
+	 */
+	public static function isActiveSupportForUser(int $userId): bool
+	{
+		return self::isUserAdmin($userId);
 	}
 
 	/**
@@ -1269,7 +1279,17 @@ class SupportBox extends Network implements SupportBot, SupportQuestion
 	{
 		return
 			(static::getBotId() > 0)
-			&& ((bool)Option::get(self::MODULE_ID, self::OPTION_BOT_ACTIVE, false) === true);
+			&& static::isActiveSupport()
+		;
+	}
+
+	/**
+	 * Support bot was activated.
+	 * @return bool
+	 */
+	public static function isActiveSupport(): bool
+	{
+		return (bool)Option::get(self::MODULE_ID, self::OPTION_BOT_ACTIVE, false);
 	}
 
 	/**
@@ -1436,7 +1456,8 @@ class SupportBox extends Network implements SupportBot, SupportQuestion
 	 */
 	public static function getBotAvatar(): string
 	{
-		return Option::get(self::MODULE_ID, self::OPTION_BOT_AVATAR, self::AVATAR);
+		$domain = (new \Bitrix\UI\Helpdesk\Url())->getDomain()->get();
+		return Option::get(self::MODULE_ID, self::OPTION_BOT_AVATAR, $domain . self::AVATAR);
 	}
 
 	/**

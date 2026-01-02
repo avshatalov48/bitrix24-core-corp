@@ -1,7 +1,11 @@
-<?
+<?php
 if (!defined('B_PROLOG_INCLUDED') || B_PROLOG_INCLUDED!==true)die();
 
 use Bitrix\Tasks;
+
+use Bitrix\Main\Loader;
+
+use Bitrix\Crm\Integration\Analytics\Dictionary;
 
 class CBPTasksChangeResponsibleActivity extends CBPActivity
 {
@@ -28,12 +32,22 @@ class CBPTasksChangeResponsibleActivity extends CBPActivity
 			return CBPActivityExecutionStatus::Closed;
 		}
 
-		$documentId = $this->GetDocumentId();
+		$documentId = $this->getDocumentId();
+		$documentType = $this->getDocumentType();
+
 		$runtime = CBPRuntime::GetRuntime();
 		/** @var CBPDocumentService $ds */
 		$ds = $runtime->GetService('DocumentService');
 
-		$document = $ds->GetDocument($documentId);
+		if (defined('\CBPDocument::PARAM_USED_DOCUMENT_FIELDS'))
+		{
+			$document = $ds->GetDocument($documentId, select: ['RESPONSIBLE_ID']);
+		}
+		else
+		{
+			$document = $ds->GetDocument($documentId);
+		}
+
 		$responsibleFieldName = 'RESPONSIBLE_ID';
 		if (isset($document[$responsibleFieldName]))
 		{
@@ -55,6 +69,18 @@ class CBPTasksChangeResponsibleActivity extends CBPActivity
 					[$responsibleFieldName => $documentResponsible],
 					$this->ModifiedBy
 				);
+
+				if (
+					Loader::includeModule('crm')
+					&& method_exists(CCrmBizProcHelper::class, 'sendOperationsAnalytics')
+				)
+				{
+					\CCrmBizProcHelper::sendOperationsAnalytics(
+						Dictionary::EVENT_ENTITY_EDIT,
+						$this,
+						$documentType[2] ?? '',
+					);
+				}
 			}
 		}
 

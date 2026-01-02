@@ -470,6 +470,10 @@
 	right: 0;
 }
 
+#EXPORT_EXCEL_PARAMS .bx-stepprocessing-dialog-process-option-multiple {
+	justify-content: flex-start;
+}
+
 @keyframes tasks-list-tag-already-exists-alert-ani {
 	0% {transform: translateY(0);}
 	100% {transform: translateY(-150%);}

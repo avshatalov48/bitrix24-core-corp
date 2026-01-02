@@ -1,13 +1,53 @@
 (() => {
 	const require = (ext) => jn.require(ext);
-
 	const { describe, test, expect } = require('testing');
 	const { DynamicDateFormatter } = require('utils/date');
 	const { Moment } = require('utils/date/moment');
 	const { datetime, shortTime, longTime } = require('utils/date/formats');
-	const { clone } = require('utils/object');
 
-	const now = new Moment('Oct 16 2023 12:00:00');
+	const now = new Moment('June 16 2025 12:00:00');
+
+	const previousWeekStart = now.startOfWeek.addDays(-1).startOfWeek.timestamp;
+	const previousWeekEnd = now.startOfWeek.addDays(-1).endOfWeek.timestamp;
+
+	const nextWeekStart = now.endOfWeek.addDays(1).startOfWeek.timestamp;
+	const nextWeekEnd = now.endOfWeek.addDays(1).endOfWeek.timestamp;
+
+	const pastMoments = {
+		now: now.clone(),
+		'30SecsAgo': now.addSeconds(-30),
+		'45SecsAgo': now.addSeconds(-45),
+		'1MinAgo': now.addMinutes(-1),
+		'5MinsAgo': now.addMinutes(-5),
+		'1HourAgo': now.addHours(-1),
+		'3HoursAgo': now.addHours(-3),
+		'23HoursAgo': now.addHours(-23),
+		'1Day1HourAgo': now.addDays(-1).addHours(-1),
+		previousWeekMiddle: new Moment(
+			(previousWeekStart + (previousWeekEnd - previousWeekStart) / 2) * 1000,
+		),
+		thisWeekBeforeNow: new Moment(
+			(now.startOfWeek.timestamp + (now.timestamp - now.startOfWeek.timestamp) / 2) * 1000,
+		),
+	};
+	const futureMoments = {
+		in30Secs: now.addSeconds(30),
+		in45Secs: now.addSeconds(45),
+		in1Min: now.addMinutes(1),
+		in5Mins: now.addMinutes(5),
+		in30Mins: now.addMinutes(30),
+		in31Mins: now.addMinutes(31),
+		in59Mins: now.addMinutes(59),
+		in1Hour: now.addHours(1),
+		in23Hours: now.addHours(23),
+		in1Day1Hour: now.addDays(1).addHours(1),
+		thisWeekAfterNow: new Moment(
+			(now.endOfWeek.timestamp - (now.endOfWeek.timestamp - now.timestamp) / 2) * 1000,
+		),
+		nextWeekMiddle: new Moment(
+			(nextWeekStart + (nextWeekEnd - nextWeekStart) / 2) * 1000,
+		),
+	};
 
 	const runTests = (formatter, expectedResults) => {
 		Object.keys(expectedResults).forEach((momentName) => {
@@ -16,36 +56,6 @@
 
 			expect(formattedDate).toBe(expectedResults[momentName]);
 		});
-	};
-
-	const pastMoments = {
-		now: clone(now),
-		'30SecsAgo': new Moment('Oct 16 2023 11:59:30'),
-		'45SecsAgo': new Moment('Oct 16 2023 11:59:15'),
-		'1MinAgo': new Moment('Oct 16 2023 11:59:00'),
-		'5MinsAgo': new Moment('Oct 16 2023 11:55:00'),
-		'1HourAgo': new Moment('Oct 16 2023 11:00:00'),
-		'3HoursAgo': new Moment('Oct 16 2023 09:00:00'),
-		'23HoursAgo': new Moment('Oct 15 2023 13:00:00'),
-		'1DayAndHourAgo': new Moment('Oct 15 2023 11:00:00'),
-		'2DaysAgo': new Moment('Oct 14 2023 12:00:00'),
-		'1WeekAgo': new Moment('Oct 9 2023 12:00:00'),
-	};
-
-	const futureMoments = {
-		in30Secs: new Moment('Oct 16 2023 12:00:30'),
-		in45Secs: new Moment('Oct 16 2023 12:00:45'),
-		in1Min: new Moment('Oct 16 2023 12:01:00'),
-		in5Mins: new Moment('Oct 16 2023 12:05:00'),
-		in30Mins: new Moment('Oct 16 2023 12:30:00'),
-		in31Mins: new Moment('Oct 16 2023 12:31:00'),
-		in59Mins: new Moment('Oct 16 2023 12:59:00'),
-		in1Hour: new Moment('Oct 16 2023 13:00:00'),
-		in3Hours: new Moment('Oct 16 2023 15:00:00'),
-		in23Hours: new Moment('Oct 17 2023 11:00:00'),
-		in1DayAndHour: new Moment('Oct 17 2023 13:00:00'),
-		in2Days: new Moment('Oct 18 2023 12:00:00'),
-		in1Week: new Moment('Oct 23 2023 12:00:00'),
 	};
 
 	Object.keys(pastMoments).forEach((key) => {
@@ -60,7 +70,6 @@
 		test('Format a date in the past', () => {
 			const expectedResults = {
 				'30SecsAgo': 'just now',
-				// eslint-disable-next-line no-undef
 				'45SecsAgo': '11:59:15',
 				'5MinsAgo': '5 minutes ago',
 				'1HourAgo': '60 minutes ago',
@@ -113,11 +122,15 @@
 			const expectedResults = {
 				now: 'delta less or equal than 1 minute',
 				'45SecsAgo': 'delta less or equal than 1 minute',
-				'5MinsAgo': '16.10.2023 11:55:00',
-				'1HourAgo': '16.10.2023 11:00:00',
+				'5MinsAgo': pastMoments['5MinsAgo'].format('E'),
+				'1HourAgo': pastMoments['1HourAgo'].format('E'),
+				previousWeekMiddle: pastMoments.previousWeekMiddle.format(datetime),
+				thisWeekBeforeNow: pastMoments.thisWeekBeforeNow.format('E'),
 				in1Min: 'delta less or equal than 1 minute',
-				in59Mins: '12:59:00',
-				in1Hour: '16.10.2023 13:00:00',
+				in59Mins: futureMoments.in59Mins.format(longTime),
+				in1Hour: futureMoments.in1Hour.format('E'),
+				thisWeekAfterNow: futureMoments.thisWeekAfterNow.format('E'),
+				nextWeekMiddle: futureMoments.nextWeekMiddle.format(datetime),
 			};
 
 			const formatter = new DynamicDateFormatter({
@@ -125,6 +138,7 @@
 				config: {
 					[DynamicDateFormatter.deltas.MINUTE]: () => 'delta less or equal than 1 minute',
 					[DynamicDateFormatter.periods.HOUR]: longTime(),
+					[DynamicDateFormatter.periods.WEEK]: 'E',
 				},
 			});
 
@@ -151,9 +165,9 @@
 
 		test('yesterday and tomorrow periods', () => {
 			const expectedResults = {
-				'1DayAndHourAgo': 'yesterday',
+				'1Day1HourAgo': 'yesterday',
 				'23HoursAgo': 'yesterday',
-				in1DayAndHour: 'tomorrow',
+				in1Day1Hour: 'tomorrow',
 				in23Hours: 'tomorrow',
 				'1HourAgo': 'today',
 			};

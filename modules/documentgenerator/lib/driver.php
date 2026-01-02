@@ -488,7 +488,7 @@ final class Driver
 				if (!$isExists || $isWasDeleted)
 				{
 					// if template already exists, it will be overwritten completely
-					$controller->installDefaultTemplate($template);
+					$controller->installDefaultTemplate($template, false);
 				}
 			}
 		}
@@ -523,7 +523,7 @@ final class Driver
 
 				if ($isExists && !$isWasDeleted && $isBodyWasNotChangedSinceInstall)
 				{
-					$controller->updateBodyOfDefaultTemplate($template);
+					$controller->updateBodyOfDefaultTemplate($template, false);
 				}
 			}
 		}

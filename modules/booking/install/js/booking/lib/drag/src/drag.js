@@ -1,27 +1,37 @@
-import { Dom, Loc, Runtime } from 'main.core';
+import { Dom, Loc, Runtime, Type } from 'main.core';
 import { Popup, PopupManager } from 'main.popup';
 import { DateTimeFormat } from 'main.date';
-import { Draggable, DragMoveEvent, DragStartEvent } from 'ui.draganddrop.draggable';
+import { Draggable, DragMoveEvent, DragStartEvent, DragEndEvent } from 'ui.draganddrop.draggable';
 
-import { Model } from 'booking.const';
+import { Model, DraggedElementKind } from 'booking.const';
 import { Core } from 'booking.core';
 import { busySlots } from 'booking.lib.busy-slots';
+import { BookingAnalytics } from 'booking.lib.analytics';
 import { bookingService } from 'booking.provider.service.booking-service';
+import { NonDraggableBookingPopup } from 'booking.component.non-draggable-booking-popup';
 import type { BookingModel } from 'booking.model.bookings';
+import type { DraggedDataTransfer } from 'booking.model.interface';
+import type { ResourceModel } from 'booking.model.resources';
 
 type Params = {
 	draggable: string,
 	container: HTMLElement,
+	element: 'booking-booking' | 'booking-waitlist-item',
 };
 
 export class Drag
 {
 	#params: Params;
 	#dragManager: Draggable;
+	#draggedId: ?number;
+	#draggedKind: ?$Values<typeof DraggedElementKind>;
 
 	constructor(params: Params)
 	{
-		this.#params = params;
+		this.#params = {
+			element: 'booking-booking',
+			...params,
+		};
 
 		this.#dragManager = new Draggable({
 			container: this.#params.container,
@@ -44,10 +54,15 @@ export class Drag
 	{
 		const { draggable, source: { dataset }, clientX, clientY } = event.getData();
 
-		await Promise.all([
-			Core.getStore().dispatch(`${Model.Interface}/setDraggedBookingId`, Number(dataset.id)),
-			Core.getStore().dispatch(`${Model.Interface}/setDraggedBookingResourceId`, Number(dataset.resourceId)),
-		]);
+		this.#params.element = `booking-${dataset.kind}`;
+		this.#draggedKind = dataset.kind;
+		this.#draggedId = parseInt(dataset.id, 10);
+
+		await Core.getStore().dispatch(`${Model.Interface}/setDraggedDataTransfer`, {
+			kind: this.#draggedKind,
+			id: this.#draggedId,
+			resourceId: parseInt(dataset.resourceId, 10) ?? 0,
+		});
 
 		Dom.style(draggable, 'pointer-events', 'none');
 		this.#getAdditionalBookingElements(this.#params.container).forEach((element) => {
@@ -61,7 +76,7 @@ export class Drag
 			Dom.style(clone, 'animation', 'none');
 		});
 
-		this.#getBookingElements(this.#params.container).forEach((element) => {
+		this.#getDraggedElements(this.#params.container).forEach((element) => {
 			if (draggable.contains(element))
 			{
 				return;
@@ -73,7 +88,7 @@ export class Drag
 
 		const transformOriginX = clientX - draggable.getBoundingClientRect().left;
 		const transformOriginY = clientY - draggable.getBoundingClientRect().top;
-		this.#getBookingElements(draggable).forEach((clone) => {
+		this.#getDraggedElements(draggable).forEach((clone) => {
 			Dom.style(clone, 'transform-origin', `${transformOriginX}px ${transformOriginY}px`);
 		});
 
@@ -84,6 +99,11 @@ export class Drag
 
 	#onDragMove(event: DragMoveEvent): void
 	{
+		if (Type.isNull(this.#draggedKind))
+		{
+			return;
+		}
+
 		const { draggable, clientX, clientY } = event.getData();
 
 		this.#getAdditionalBookingElements(draggable).forEach((clone, index) => {
@@ -101,54 +121,91 @@ export class Drag
 			Dom.removeClass(draggable, '--deleting');
 		}
 
-		draggable.querySelectorAll('[data-element="booking-booking-time"]').forEach((time) => {
-			time.innerText = this.#timeFormatted;
-		});
+		if (this.#draggedKind === DraggedElementKind.Booking)
+		{
+			draggable.querySelectorAll('[data-element="booking-booking-time"]').forEach((time) => {
+				time.innerText = this.#timeFormatted;
+			});
+		}
 
 		this.#updateScroll(draggable, clientX, clientY);
 	}
 
-	async #onDragEnd(): Promise<void>
+	async #onDragEnd(event: DragEndEvent): Promise<void>
 	{
 		clearInterval(this.scrollTimeout);
 
-		this.#getBookingElements(this.#params.container).forEach((element) => {
+		this.#getDraggedElements(this.#params.container).forEach((element) => {
 			Dom.removeClass(element, '--drag-source');
 			Dom.style(element, 'visibility', '');
 		});
 
-		if (this.#hoveredCell)
+		if (this.#hoveredCell && !this.#getResourceById(this.#hoveredCell.resourceId)?.isDeleted)
 		{
-			this.#moveBooking({
-				booking: this.#draggedBooking,
-				resourceId: this.#draggedBookingResourceId,
-				cell: this.#hoveredCell,
-			});
+			if (this.#draggedKind === DraggedElementKind.Booking)
+			{
+				void this.#moveBooking({
+					booking: this.#draggedBooking,
+					resourceId: this.#draggedBookingResourceId,
+					cell: this.#hoveredCell,
+				});
+			}
+			else if (this.#draggedKind === DraggedElementKind.WaitListItem)
+			{
+				void this.#moveWaitListItem({
+					cell: this.#hoveredCell,
+				});
+			}
 		}
 
-		await Core.getStore().dispatch(`${Model.Interface}/setDraggedBookingId`, null);
+		if (this.#getResourceById(this.#draggedBookingResourceId)?.isDeleted)
+		{
+			const bookingId = this.#draggedBooking.id;
+
+			if (Core.getStore().getters[`${Model.Interface}/deletingBookings`][bookingId])
+			{
+				return;
+			}
+
+			this.#showPopupOnNonDraggableBookingFromDeletedResource(event.data.source, bookingId);
+		}
+
+		this.#draggedKind = null;
+		this.#draggedId = null;
+		await Core.getStore().dispatch(`${Model.Interface}/clearDraggedDataTransfer`);
 
 		void busySlots.loadBusySlots();
 	}
 
-	#getBookingElements(container: HTMLElement): HTMLElement[]
+	#getDraggedElements(container: HTMLElement): HTMLElement[]
 	{
-		const element = 'booking-booking';
-		const id = this.#draggedBookingId;
-
-		return [...container
-			.querySelectorAll(`[data-element="${element}"][data-id="${id}"]`),
+		const id = this.#draggedDataTransfer.id || this.#draggedId;
+		const items = [
+			...container
+				.querySelectorAll(`[data-element="${this.#params.element}"][data-id="${id}"]`),
 		];
+
+		if (!id && items.length === 0)
+		{
+			return this.#tryGetLostDraggedElements(container);
+		}
+
+		return items;
+	}
+
+	#tryGetLostDraggedElements(container): HTMLElement[]
+	{
+		return [...container.querySelectorAll(`[data-element="${this.#params.element}"].--drag-source`)];
 	}
 
 	#getAdditionalBookingElements(container: HTMLElement): HTMLElement[]
 	{
-		const element = 'booking-booking';
 		const id = this.#draggedBookingId;
 		const resourceId = this.#draggedBookingResourceId;
 
-		return [...container
-			.querySelectorAll(`[data-element="${element}"][data-id="${id}"]:not([data-resource-id="${resourceId}"])`),
+		return [
+			...container
+				.querySelectorAll(`[data-element="${this.#params.element}"][data-id="${id}"]:not([data-resource-id="${resourceId}"])`),
 		];
 	}
 
@@ -202,29 +259,90 @@ export class Drag
 		return document.elementFromPoint(x, y)?.closest('[data-element="booking-drag-delete"]');
 	}
 
-	#moveBooking({ booking, resourceId, cell }: { booking: BookingModel, resourceId: number, cell: CellDto }): void
+	async #moveBooking({ booking, resourceId, cell }: {
+		booking: BookingModel,
+		resourceId: number,
+		cell: CellDto
+	}): void
 	{
 		if (cell.fromTs === booking.dateFromTs && cell.toTs === booking.dateToTs && cell.resourceId === resourceId)
 		{
 			return;
 		}
 
-		const additionalResourcesIds = booking.resourcesIds.includes(cell.resourceId)
+		const resourceIds = booking.resourcesIds.includes(cell.resourceId)
 			? booking.resourcesIds
-			: booking.resourcesIds.filter((id: number) => id !== resourceId)
+			: [
+				cell.resourceId,
+				...booking.resourcesIds.filter((id: number) => id !== resourceId),
+			]
 		;
 
-		void bookingService.update({
+		await bookingService.update({
 			id: booking.id,
 			dateFromTs: cell.fromTs,
 			dateToTs: cell.toTs,
-			resourcesIds: [...new Set([
-				cell.resourceId,
-				...additionalResourcesIds,
-			])],
+			resourcesIds: [...new Set(resourceIds)],
 			timezoneFrom: booking.timezoneFrom,
 			timezoneTo: booking.timezoneTo,
 		});
+	}
+
+	async #moveWaitListItem({ cell }: { cell: CellDto }): void
+	{
+		const $store = Core.getStore();
+		const waitListItemId = this.#draggedDataTransfer.id;
+		const waitListItem = $store.getters[`${Model.WaitList}/getById`](waitListItemId);
+		const resourceId = cell.resourceId;
+		const resource = $store.getters[`${Model.Resources}/getById`](resourceId);
+		const timezone = resource?.slotRanges?.[0]?.timezone;
+		const clients = [...waitListItem.clients];
+		const intersections = $store.getters[`${Model.Interface}/intersections`];
+
+		if ($store.getters[`${Model.Interface}/editingWaitListItemId`] === waitListItemId)
+		{
+			await this.#setEditingBookingId(waitListItemId);
+		}
+
+		const result = await bookingService.createFromWaitListItem(waitListItemId, {
+			id: `wl${waitListItemId}`,
+			clients,
+			primaryClient: clients.length > 0 ? clients[0] : undefined,
+			externalData: [...waitListItem.externalData],
+			name: waitListItem.name,
+			note: waitListItem.note,
+			resourcesIds: [
+				...new Set([
+					cell.resourceId,
+					...(intersections[0] ?? []),
+					...(intersections[cell.resourceId] ?? []),
+				]),
+			],
+			dateFromTs: cell.fromTs,
+			dateToTs: cell.toTs,
+			timezoneFrom: timezone,
+			timezoneTo: timezone,
+		});
+
+		if (result.success && result.booking)
+		{
+			BookingAnalytics.sendAddBooking({ isOverbooking: false });
+
+			if ($store.getters[`${Model.Interface}/editingBookingId`] === waitListItemId)
+			{
+				await this.#setEditingBookingId(result.booking.id);
+			}
+		}
+	}
+
+	async #setEditingBookingId(id: number | string): Promise<void>
+	{
+		const $store = Core.getStore();
+
+		await Promise.all([
+			$store.dispatch(`${Model.Interface}/setEditingBookingId`, id),
+			$store.dispatch(`${Model.Interface}/setEditingWaitListItemId`, null),
+		]);
 	}
 
 	get #timeFormatted(): string
@@ -239,9 +357,33 @@ export class Drag
 		});
 	}
 
+	#showPopupOnNonDraggableBookingFromDeletedResource(bookingEl: HTMLElement, bookingId: number): void
+	{
+		const popupId = `booking-non-draggable-booking-${bookingId}`;
+		const popup = new NonDraggableBookingPopup({
+			id: popupId,
+			bindElement: bookingEl,
+		});
+		popup.show();
+
+		setTimeout(() => {
+			popup.destroy(popupId);
+		}, 5000);
+	}
+
+	#getResourceById(resourceId: number): ResourceModel
+	{
+		return Core.getStore().getters[`${Model.Resources}/getById`](resourceId);
+	}
+
 	get #draggedBooking(): BookingModel | null
 	{
 		return Core.getStore().getters[`${Model.Bookings}/getById`](this.#draggedBookingId) ?? null;
+	}
+
+	get #draggedDataTransfer(): DraggedDataTransfer
+	{
+		return Core.getStore().getters[`${Model.Interface}/draggedDataTransfer`];
 	}
 
 	get #draggedBookingId(): number

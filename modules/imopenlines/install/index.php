@@ -164,6 +164,7 @@ final class imopenlines extends \CModule
 		$eventManager->registerEventHandler('imconnector', 'OnReceivedStatusReading', 'imopenlines', '\Bitrix\ImOpenLines\Connector', 'onReceivedStatusReading');
 		$eventManager->registerEventHandler('imconnector', 'OnReceivedStatusWrites', 'imopenlines', '\Bitrix\ImOpenLines\Connector', 'onReceivedStatusWrites');
 		$eventManager->registerEventHandler('imconnector', 'OnReceivedStatusBlock', 'imopenlines', '\Bitrix\ImOpenLines\Connector', 'OnReceivedStatusBlock');
+		/** @see \Bitrix\ImOpenLines\Connector::OnReceivedError */
 		$eventManager->registerEventHandler('imconnector', 'OnReceivedError', 'imopenlines', '\Bitrix\ImOpenLines\Connector', 'OnReceivedError');
 		$eventManager->registerEventHandler('imconnector', 'OnNewChatName', 'imopenlines', '\Bitrix\ImOpenLines\Connector', 'onNewChatName');
 		/** @see \Bitrix\ImOpenLines\Connector::onReceivedCommandStart */
@@ -254,11 +255,11 @@ final class imopenlines extends \CModule
 		$eventManager->registerEventHandler('crm', 'onSiteFormFillOpenlines', 'imopenlines', '\Bitrix\ImOpenLines\Widget\FormHandler', 'onOpenlinesFormFill');
 
 		/** @see \Bitrix\ImOpenLines\Queue\Event::onDepartmentUpdate */
-		$eventManager->registerEventHandler('humanresources', 'NODE_UPDATED', 'imopenlines', '\Bitrix\ImOpenLines\Queue\Event', 'onDepartmentUpdate');
+		$eventManager->registerEventHandler('humanresources', 'OnNodeUpdated', 'imopenlines', '\Bitrix\ImOpenLines\Queue\Event', 'onDepartmentUpdate');
 		/** @see \Bitrix\ImOpenLines\Queue\Event::onDepartmentDelete */
-		$eventManager->registerEventHandler('humanresources', 'NODE_DELETED', 'imopenlines', '\Bitrix\ImOpenLines\Queue\Event', 'onDepartmentDelete');
+		$eventManager->registerEventHandler('humanresources', 'OnNodeDeleted', 'imopenlines', '\Bitrix\ImOpenLines\Queue\Event', 'onDepartmentDelete');
 		/** @see \Bitrix\ImOpenLines\Queue\Event::onDepartmentMemberUpdated */
-		$eventManager->registerEventHandler('humanresources', 'MEMBER_UPDATED', 'imopenlines', '\Bitrix\ImOpenLines\Queue\Event', 'onDepartmentMemberUpdated');
+		$eventManager->registerEventHandler('humanresources', 'OnMemberUpdated', 'imopenlines', '\Bitrix\ImOpenLines\Queue\Event', 'onDepartmentMemberUpdated');
 
 
 		/** @see \Bitrix\ImOpenLines\Integrations\Report\Statistics\Manager::calculateStatisticsInQueue */
@@ -502,6 +503,7 @@ final class imopenlines extends \CModule
 		$eventManager->unRegisterEventHandler('imconnector', 'OnReceivedStatusReading', 'imopenlines', '\Bitrix\ImOpenLines\Connector', 'onReceivedStatusReading');
 		$eventManager->unRegisterEventHandler('imconnector', 'OnReceivedStatusWrites', 'imopenlines', '\Bitrix\ImOpenLines\Connector', 'onReceivedStatusWrites');
 		$eventManager->unRegisterEventHandler('imconnector', 'OnReceivedStatusBlock', 'imopenlines', '\Bitrix\ImOpenLines\Connector', 'OnReceivedStatusBlock');
+		/** @see \Bitrix\ImOpenLines\Connector::OnReceivedError */
 		$eventManager->unRegisterEventHandler('imconnector', 'OnReceivedError', 'imopenlines', '\Bitrix\ImOpenLines\Connector', 'OnReceivedError');
 		$eventManager->unRegisterEventHandler('imconnector', 'OnNewChatName', 'imopenlines', '\Bitrix\ImOpenLines\Connector', 'onNewChatName');
 		$eventManager->unRegisterEventHandler('main', 'OnAfterSetOption_~controller_group_name', 'imopenlines', '\Bitrix\ImOpenLines\Limit', 'onBitrix24LicenseChange');
@@ -525,11 +527,11 @@ final class imopenlines extends \CModule
 		/** @see \Bitrix\ImOpenLines\Queue\Event::OnAfterDepartmentsUpdate */
 		$eventManager->unRegisterEventHandler('iblock', 'OnAfterIBlockSectionUpdate', 'imopenlines', '\Bitrix\ImOpenLines\Queue\Event', 'OnAfterDepartmentsUpdate');
 		/** @see \Bitrix\ImOpenLines\Queue\Event::onDepartmentUpdate */
-		$eventManager->unRegisterEventHandler('humanresources', 'NODE_UPDATED', 'imopenlines', '\Bitrix\ImOpenLines\Queue\Event', 'onDepartmentUpdate');
+		$eventManager->unRegisterEventHandler('humanresources', 'OnNodeUpdated', 'imopenlines', '\Bitrix\ImOpenLines\Queue\Event', 'onDepartmentUpdate');
 		/** @see \Bitrix\ImOpenLines\Queue\Event::onDepartmentDelete */
-		$eventManager->unRegisterEventHandler('humanresources', 'NODE_DELETED', 'imopenlines', '\Bitrix\ImOpenLines\Queue\Event', 'onDepartmentDelete');
+		$eventManager->unRegisterEventHandler('humanresources', 'OnNodeDeleted', 'imopenlines', '\Bitrix\ImOpenLines\Queue\Event', 'onDepartmentDelete');
 		/** @see \Bitrix\ImOpenLines\Queue\Event::onDepartmentMemberUpdated */
-		$eventManager->unRegisterEventHandler('humanresources', 'MEMBER_UPDATED', 'imopenlines', '\Bitrix\ImOpenLines\Queue\Event', 'onDepartmentMemberUpdated');
+		$eventManager->unRegisterEventHandler('humanresources', 'OnMemberUpdated', 'imopenlines', '\Bitrix\ImOpenLines\Queue\Event', 'onDepartmentMemberUpdated');
 		/** @see \Bitrix\ImOpenLines\Queue\Event::onUserAdd */
 		$eventManager->unRegisterEventHandler('main', 'OnAfterUserAdd', 'imopenlines', '\Bitrix\ImOpenLines\Queue\Event', 'onUserAdd');
 		/** @see \Bitrix\ImOpenLines\Queue\Event::onUserUpdateBefore */

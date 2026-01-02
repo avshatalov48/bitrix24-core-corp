@@ -1,0 +1,32 @@
+.im-chat-menu {
+	display: none;
+	height: var(--air-header-height);
+	position: fixed;
+	top: 0;
+	right: 0;
+	left: 0;
+	padding-left: 88px;
+	transform: translateY(-100%);
+	transition: transform 200ms;
+}
+
+.im-chat-menu.--open {
+	display: block;
+	transform: translateY(0);
+	transition-delay: 300ms;
+}
+
+.im-chat-menu::before {
+	content: '';
+	display: block;
+	position: absolute;
+	left: 0;
+	top: 0;
+	right: 0;
+	bottom: 0;
+	z-index: 10;
+}
+
+.im-chat-menu.--loaded::before {
+	display: none;
+}

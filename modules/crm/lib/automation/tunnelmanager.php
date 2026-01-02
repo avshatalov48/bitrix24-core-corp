@@ -467,7 +467,54 @@ class TunnelManager
 				$robotsMap[$robot->getName()] = $robot;
 			}
 		}
-		$robots = [];
+
+		$tunnelRobotNames = [];
+		foreach ($tunnels as $tunnel)
+		{
+			if ($tunnel['robot'])
+			{
+				$tunnelRobotNames[] = $tunnel['robot']['name'];
+			}
+		}
+
+		$visibleRobots = [];
+		foreach ($templateRobots as $robot)
+		{
+			if (
+				in_array(
+					$robot->getType(),
+					[$this->getRobotType(), $this->getRobotType(self::ROBOT_ACTION_MOVE)],
+					true
+				)
+			)
+			{
+				$visibleRobots[] = $robot;
+			}
+		}
+
+		if (!empty($visibleRobots))
+		{
+			$robotsNotInTunnels = [];
+			foreach ($visibleRobots as $robot)
+			{
+				if (!in_array($robot->getName(), $tunnelRobotNames, true))
+				{
+					$robotsNotInTunnels[] = $robot;
+				}
+			}
+
+			foreach ($robotsNotInTunnels as $robotNotInTunnel)
+			{
+				foreach ($templateRobots as $index => $robot)
+				{
+					if ($robot->getName() === $robotNotInTunnel->getName())
+					{
+						unset($templateRobots[$index]);
+					}
+				}
+			}
+		}
+
 		foreach ($tunnels as $tunnel)
 		{
 			if ($tunnel['srcCategory'] === $tunnel['dstCategory'])
@@ -479,21 +526,28 @@ class TunnelManager
 			if (!$tunnel['robot'])
 			{
 				$robot = $this->createRobot($tunnel['dstCategory'], $tunnel['dstStage']);
-				$robots[] = $robot;
+				$templateRobots[] = $robot;
 			}
 			else
 			{
-				$robotName = $tunnel['robot']['Name'];
+				$robotName = $tunnel['robot']['name'];
 				if (isset($robotsMap[$robotName]))
 				{
 					$copy = clone $robotsMap[$robotName];
 					$copy->setProperty('CategoryId', $tunnel['dstCategory']);
 					$copy->setProperty('StageId', $tunnel['dstStage']);
-					$robots[] = $copy;
+
+					foreach ($templateRobots as $index => $robot)
+					{
+						if ($robot->getName() === $robotName)
+						{
+							$templateRobots[$index] = $copy;
+						}
+					}
 				}
 			}
 		}
 
-		return $template->save($robots, $userId);
+		return $template->save($templateRobots, $userId);
 	}
 }

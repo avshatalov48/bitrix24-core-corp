@@ -1,6 +1,7 @@
 <?php
 $MESS["IMCONNECTOR_CONTACT_NAME"] = "ТАӘ: ";
 $MESS["IMCONNECTOR_CONTACT_PHONE"] = "Телефон нөмірі: ";
+$MESS["IMCONNECTOR_ERROR_EXPIRED_ACCESS_TOKEN"] = "Авторизациялық токеннің қолданылу мерзімі аяқталды. Ашық желінің жұмысын қалпына келтіру үшін осы арнаны [url=#LINK#]Байланыс орталығында[/url] ажыратыңыз және қайта қосыңыз";
 $MESS["IMCONNECTOR_FORWARDED_MESSAGE"] = "Қайта жолданған хабарлама: ";
 $MESS["IMCONNECTOR_GUEST_USER"] = "Қонақ";
 $MESS["IMCONNECTOR_LINK_TO_ORIGINAL_POST"] = "Бастапқы жазбаға сілтеме: #LINK#";

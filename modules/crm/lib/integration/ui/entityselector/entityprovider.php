@@ -4,19 +4,25 @@ namespace Bitrix\Crm\Integration\UI\EntitySelector;
 
 use Bitrix\Crm\Comparer\ComparerBase;
 use Bitrix\Crm\Controller\Entity;
+use Bitrix\Crm\DealTable;
 use Bitrix\Crm\Format\PersonNameFormatter;
 use Bitrix\Crm\Integration\Main\UISelector\CrmDynamics;
 use Bitrix\Crm\ItemIdentifier;
+use Bitrix\Crm\Relation\EntityRelationTable;
 use Bitrix\Crm\Restriction\RestrictionManager;
 use Bitrix\Crm\Search;
 use Bitrix\Crm\Service\Container;
 use Bitrix\Crm\Service\UserPermissions;
 use Bitrix\Crm\UI\EntitySelector;
 use Bitrix\Main\Localization\Loc;
+use Bitrix\Main\ORM\Fields\Relations\Reference;
+use Bitrix\Main\ORM\Query\Join;
+use Bitrix\Main\ORM\Query\Query;
 use Bitrix\Main\Type\Collection;
 use Bitrix\UI\EntitySelector\BaseProvider;
 use Bitrix\UI\EntitySelector\Dialog;
 use Bitrix\UI\EntitySelector\Item;
+use Bitrix\UI\EntitySelector\RecentCollection;
 use Bitrix\UI\EntitySelector\RecentItem;
 use Bitrix\UI\EntitySelector\SearchQuery;
 use Bitrix\UI\EntitySelector\Tab;
@@ -33,6 +39,11 @@ abstract class EntityProvider extends BaseProvider
 	protected bool $hideClosedItems = false;
 
 	protected UserPermissions $userPermissions;
+	private bool $withoutGlobalRecentItems = false;
+	private bool $withoutRecentItems = false;
+
+	protected bool $notLinkedOnly = false;
+	private int $sourceTypeId;
 
 	abstract protected function getEntityTypeId(): int;
 
@@ -66,6 +77,26 @@ abstract class EntityProvider extends BaseProvider
 			$this->hideClosedItems = (bool)$options['hideClosedItems'];
 		}
 
+		if (isset($options['withoutGlobalRecentItems']))
+		{
+			$this->withoutGlobalRecentItems = (bool)$options['withoutGlobalRecentItems'];
+		}
+
+		if (isset($options['withoutRecentItems']))
+		{
+			$this->withoutRecentItems = (bool)$options['withoutRecentItems'];
+		}
+
+		if (isset($options['notLinkedOnly']))
+		{
+			$this->notLinkedOnly = (bool)($options['notLinkedOnly'] ?? $this->notLinkedOnly);
+		}
+
+		if (isset($options['sourceTypeId']))
+		{
+			$this->sourceTypeId = (int)$options['sourceTypeId'];
+		}
+
 		$this->userPermissions = Container::getInstance()->getUserPermissions();
 	}
 
@@ -74,7 +105,7 @@ abstract class EntityProvider extends BaseProvider
 		$restriction = RestrictionManager::getSearchLimitRestriction();
 
 		return
-			$this->userPermissions->checkReadPermissions($this->getEntityTypeId())
+			$this->userPermissions->entityType()->canReadItems($this->getEntityTypeId())
 			&& !$restriction->isExceeded($this->getEntityTypeId())
 		;
 	}
@@ -92,11 +123,11 @@ abstract class EntityProvider extends BaseProvider
 	public function fillDialog(Dialog $dialog): void
 	{
 		$itemEntityId = $this->getItemEntityId();
-		$recentItems = $dialog->getRecentItems();
+		$recentItems = $this->withoutRecentItems ? $dialog->cleanRecentItems() : $dialog->getRecentItems();
 		$recentItemsByEntityId = $recentItems->getEntityItems($itemEntityId);
 		$remainingItemsCount = Entity::ITEMS_LIMIT - count($recentItemsByEntityId);
 
-		if ($remainingItemsCount > 0)
+		if ($remainingItemsCount > 0 && !$this->withoutGlobalRecentItems)
 		{
 			foreach ($dialog->getGlobalRecentItems()->getEntityItems($this->getItemEntityId()) as $globalRecentItem)
 			{
@@ -191,24 +222,9 @@ abstract class EntityProvider extends BaseProvider
 
 	protected function makeItem(int $entityId): ?Item
 	{
-		$isClosedItem = ComparerBase::isClosed(
-			new ItemIdentifier($this->getEntityTypeId(), $entityId),
-			false
-		);
-		$canReadItem = $this->userPermissions->checkReadPermissions($this->getEntityTypeId(), $entityId);
+		$canReadItem = $this->userPermissions->item()->canRead($this->getEntityTypeId(), $entityId);
 		$entityInfo = $this->getEntityInfo($entityId, $canReadItem);
 		$this->prepareItemAvatar($entityInfo);
-
-		$isHidden = !$canReadItem;
-		if ($this->hideClosedItems)
-		{
-			$isHidden = $isHidden || $isClosedItem;
-		}
-
-		if (isset($this->ownerId))
-		{
-			$isHidden = $isHidden || $this->ownerId === $entityId;
-		}
 
 		$itemOptions = [
 			'id' => $entityId,
@@ -219,7 +235,7 @@ abstract class EntityProvider extends BaseProvider
 			'linkTitle' => Loc::getMessage('CRM_COMMON_DETAIL'),
 			'avatar' => $entityInfo['image'],
 			'searchable' => true,
-			'hidden' => $isHidden,
+			'hidden' => $this->isHidden($entityId),
 			'tabs' => $this->getTabsNames(),
 			'customData' => [
 				'id' => (string)$entityId,
@@ -352,5 +368,80 @@ abstract class EntityProvider extends BaseProvider
 	protected function getEntityTitle(array $entityInfo): string
 	{
 		return (string)($entityInfo['title'] ?? '');
+	}
+
+	protected function isHidden(int $entityId): bool
+	{
+		$canReadItem = $this->userPermissions->item()->canRead($this->getEntityTypeId(), $entityId);
+		$isClosedItem = ComparerBase::isClosed(
+			new ItemIdentifier($this->getEntityTypeId(), $entityId),
+			false
+		);
+		$isHidden = !$canReadItem;
+
+		if ($this->hideClosedItems)
+		{
+			$isHidden = $isHidden || $isClosedItem;
+		}
+
+		if (isset($this->ownerId))
+		{
+			$isHidden = $isHidden || $this->ownerId === $entityId;
+		}
+
+		return $isHidden;
+	}
+
+	protected function getNotLinkedFilter(): array
+	{
+		$filter = [];
+
+		if ($this->notLinkedOnly && $this->sourceTypeId)
+		{
+			$linkedIds = EntityRelationTable::getList([
+				'select' => ['DST_ENTITY_ID'],
+				'filter' => [
+					'=DST_ENTITY_TYPE_ID' => $this->getEntityTypeId(),
+					'=SRC_ENTITY_TYPE_ID' => $this->sourceTypeId,
+				],
+			])->fetchCollection()->getDstEntityIdList();
+
+			if (!empty($linkedIds))
+			{
+				$filter = ['!@ID' => $linkedIds];
+			}
+		}
+
+		return $filter;
+	}
+
+	protected function getNotLinkedEntityIds(): array
+	{
+		$ids = [];
+
+		$factory = Container::getInstance()->getFactory($this->getEntityTypeId());
+		if ($factory)
+		{
+			$query = $factory->getDataClass()::query();
+			$query->addSelect('ID')
+				->addOrder('ID', 'DESC')
+				->registerRuntimeField(
+					new Reference(
+						'ENTITY_RELATION_JOIN',
+						EntityRelationTable::class,
+						Join::on('this.ID', 'ref.DST_ENTITY_ID')
+							->where('ref.DST_ENTITY_TYPE_ID', $this->getEntityTypeId())
+							->where('ref.SRC_ENTITY_TYPE_ID', $this->sourceTypeId),
+						['join_type' => Join::TYPE_LEFT]
+					)
+				)
+				->whereNull('ENTITY_RELATION_JOIN.DST_ENTITY_TYPE_ID')
+				->setLimit(Entity::ITEMS_LIMIT)
+			;
+
+			$ids = $query->exec()->fetchCollection()?->getIdList();
+		}
+
+		return $ids;
 	}
 }

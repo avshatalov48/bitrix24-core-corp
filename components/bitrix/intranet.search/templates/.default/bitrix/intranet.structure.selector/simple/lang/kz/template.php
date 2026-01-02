@@ -1,0 +1,5 @@
+<?php
+$MESS["ISS_TPL_FILTER_CANCEL"] = "Болдырмау";
+$MESS["ISS_TPL_FILTER_SUBMIT"] = "Табу";
+$MESS["ISS_TPL_SIMPLE_FILTER_DEPARTMENT"] = "Бөлімше";
+$MESS["ISS_TPL_SIMPLE_FILTER_FIO"] = "Т.А.Ә.";

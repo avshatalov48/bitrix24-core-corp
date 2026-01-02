@@ -2,6 +2,8 @@
 
 namespace Bitrix\BIConnector\Integration\Superset\Model;
 
+use Bitrix\BIConnector\ExternalSource\Internal\ExternalDatasetTable;
+use Bitrix\BIConnector\ExternalSource\Type;
 use Bitrix\BIConnector\Integration\Superset\Integrator\Dto;
 use Bitrix\BIConnector\Integration\Superset\Integrator\Request\IntegratorResponse;
 use Bitrix\BIConnector\Integration\Superset\Integrator\Integrator;
@@ -49,7 +51,16 @@ final class Dashboard
 		return $this->ormObject->getStatus();
 	}
 
+	/**
+	 * @deprecated Use isCustomDashboard() instead. Will be removed in future updates.
+	 * @see self::isCustomDashboard
+	 */
 	public function isEditable(): bool
+	{
+		return $this->isCustomDashboard();
+	}
+
+	public function isCustomDashboard(): bool
 	{
 		return $this->getType() === SupersetDashboardTable::DASHBOARD_TYPE_CUSTOM;
 	}
@@ -102,6 +113,34 @@ final class Dashboard
 	public function getOrmObject(): SupersetDashboard
 	{
 		return $this->ormObject;
+	}
+
+	public function reloadOrmObject(): self
+	{
+		$oldOrmObject = $this->ormObject;
+		$this->ormObject = SupersetDashboardTable::getById($this->ormObject->getId())->fetchObject();
+
+		if ($oldOrmObject->isSourceFilled())
+		{
+			$this->ormObject->fillSource();
+		}
+
+		if ($oldOrmObject->isScopeFilled())
+		{
+			$this->ormObject->fillScope();
+		}
+
+		if ($oldOrmObject->isUrlParamsFilled())
+		{
+			$this->ormObject->fillUrlParams();
+		}
+
+		if ($oldOrmObject->isTagsFilled())
+		{
+			$this->ormObject->fillTags();
+		}
+
+		return $this;
 	}
 
 	public function getEmbeddedCredentials(): ?Dto\DashboardEmbeddedCredentials
@@ -294,5 +333,54 @@ final class Dashboard
 		}
 
 		return $this;
+	}
+
+	public function isUseExternalDatasets(): bool
+	{
+		if (!$this->isEditable())
+		{
+			return false;
+		}
+
+		$dashboardId = $this->getExternalId();
+		if (is_null($dashboardId) || $dashboardId <= 0)
+		{
+			return false;
+		}
+		$cacheKey = "biconnector_dashboard_info_use_external_dataset_{$dashboardId}";
+		$cacheManager = \Bitrix\Main\Application::getInstance()->getManagedCache();
+
+		if ($cacheManager->read(86400, $cacheKey))
+		{
+			return $cacheManager->get($cacheKey);
+		}
+
+		$getDatasetsResult = Integrator::getInstance()->getDashboardDatasets($dashboardId);
+		if ($getDatasetsResult->hasErrors())
+		{
+			return false;
+		}
+
+		$datasets = $getDatasetsResult->getData()['datasets'];
+		if (empty($datasets))
+		{
+			return false;
+		}
+
+		$externalDataset = ExternalDatasetTable::getList([
+			'select' => ['id'],
+			'filter' => [
+				'@NAME' => $datasets,
+				'@TYPE' => [Type::Rest->value, Type::Source1C->value]
+			],
+			'limit' => 1,
+		])
+			->fetchObject()
+		;
+
+		$isUseExternalDatasets = !is_null($externalDataset);
+		$cacheManager->set($cacheKey, $isUseExternalDatasets);
+
+		return $isUseExternalDatasets;
 	}
 }

@@ -303,8 +303,7 @@ class CVoxImplantHistory
 		if ($params['URL'] != '')
 		{
 			$attachToCrm = $call->isCrmEnabled();
-			$recordUrl = \Bitrix\Main\Web\Uri::urnEncode((string)$params['URL']);
-			self::DownloadAgent($insertResult->getId(), $recordUrl, $attachToCrm);
+			self::DownloadAgent($insertResult->getId(), null, $attachToCrm);
 		}
 
 		if ($params["ACCOUNT_PAYED"] <> '' && in_array($params["ACCOUNT_PAYED"], Array('Y', 'N')))
@@ -370,14 +369,32 @@ class CVoxImplantHistory
 		return true;
 	}
 
-	public static function DownloadAgent(int $historyID, string $recordUrl, $attachToCrm = true, $retryOnFailure = true): bool
+	/**
+	 * @param int $historyID
+	 * @param string|null $recordUrl deprecated. Base64 encoded url
+	 * @param $attachToCrm
+	 * @param $retryOnFailure
+	 * @return bool
+	 * @throws \Bitrix\Main\ArgumentException
+	 * @throws \Bitrix\Main\ObjectPropertyException
+	 * @throws \Bitrix\Main\SystemException
+	 */
+	public static function DownloadAgent(int $historyID, ?string $recordUrl = null, $attachToCrm = true, $retryOnFailure = true): bool
 	{
-		if (self::isBase64Encoded($recordUrl))
+		$history = VI\StatisticTable::getById($historyID)->fetch();
+
+		if ($recordUrl)
 		{
-			$recordUrl = base64_decode($recordUrl);
+			if (self::isBase64Encoded($recordUrl))
+			{
+				$recordUrl = base64_decode($recordUrl);
+			}
+		}
+		else
+		{
+			$recordUrl = $history['CALL_RECORD_URL'];
 		}
 
-		$recordUrl = \Bitrix\Main\Web\Uri::urnDecode($recordUrl);
 		self::WriteToLog('Downloading record ' . $recordUrl);
 		$attachToCrm = ($attachToCrm === true);
 
@@ -437,10 +454,7 @@ class CVoxImplantHistory
 					return false;
 				}
 
-				$history = VI\StatisticTable::getById($historyID);
-				$arHistory = $history->fetch();
-
-				static::AttachRecord($arHistory['CALL_ID'], $recordFile);
+				static::AttachRecord($history['CALL_ID'], $recordFile);
 			}
 		}
 		catch (Exception $ex)
@@ -464,7 +478,7 @@ class CVoxImplantHistory
 		{
 			$recordUrl = \Bitrix\Main\Web\Uri::urnEncode($recordUrl);
 			CAgent::AddAgent(
-				"CVoxImplantHistory::DownloadAgent('{$historyID}','" . base64_encode($recordUrl) . "','{$attachToCrm}', false);",
+				"CVoxImplantHistory::DownloadAgent('{$historyID}', null, '{$attachToCrm}', false);",
 				'voximplant',
 				'N',
 				60,

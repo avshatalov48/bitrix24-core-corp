@@ -153,6 +153,7 @@ export class PhoneCallsController extends EventEmitter
 			events: {
 				[FoldedCallView.Events.onUnfold]: (event) => {
 					const data = event.getData();
+
 					this.startCallList(data.callListId, data.callListParams)
 				}
 			}
@@ -340,57 +341,62 @@ export class PhoneCallsController extends EventEmitter
 		}
 
 		this.checkDesktop().then(() => {
-			if (params.CRM && params.CRM.FOUND)
-			{
-				this.phoneCrm = params.CRM;
-			}
-			else
-			{
-				this.phoneCrm = {};
-			}
-
-			this.phonePortalCall = !!params.portalCall;
-			if (this.phonePortalCall && params.portalCallData)
-			{
-				const userData = params.portalCallData[params.portalCallUserId];
-				if (userData)
-				{
-					params.callerId = userData.name;
-				}
-
-				params.phoneNumber = '';
-			}
-
-			this.phoneCallConfig = params.config ? params.config : {};
-			this.phoneCallTime = 0;
-
-			this.messengerFacade.repeatSound('ringtone', 5000, true);
-
-			BX.rest.callMethod('voximplant.call.sendWait', {
-				'CALL_ID': params.callId,
-				'DEBUG_INFO': this.getDebugInfo()
-			})
-
-			this.isCallTransfer = !!params.isTransfer;
-
-			this.displayIncomingCall({
-				chatId: params.chatId,
-				callId: params.callId,
-				callerId: params.callerId,
-				lineNumber: params.lineNumber,
-				companyPhoneNumber: params.phoneNumber,
-				isCallback: params.isCallback,
-				showCrmCard: params.showCrmCard,
-				crmEntityType: params.crmEntityType,
-				crmEntityId: params.crmEntityId,
-				crmActivityId: params.crmActivityId,
-				crmActivityEditUrl: params.crmActivityEditUrl,
-				portalCall: params.portalCall,
-				portalCallUserId: params.portalCallUserId,
-				portalCallData: params.portalCallData,
-				config: params.config
-			});
+			this.prepareCallParams(params);
 		}).catch(() => {});
+	}
+
+	prepareCallParams(params, skipCheckChatWindow = false)
+	{
+		if (params.CRM && params.CRM.FOUND)
+		{
+			this.phoneCrm = params.CRM;
+		}
+		else
+		{
+			this.phoneCrm = {};
+		}
+
+		this.phonePortalCall = !!params.portalCall;
+		if (this.phonePortalCall && params.portalCallData)
+		{
+			const userData = params.portalCallData[params.portalCallUserId];
+			if (userData)
+			{
+				params.callerId = userData.name;
+			}
+
+			params.phoneNumber = '';
+		}
+
+		this.phoneCallConfig = params.config ? params.config : {};
+		this.phoneCallTime = 0;
+
+		this.messengerFacade.repeatSound('ringtone', 5000, true);
+
+		BX.rest.callMethod('voximplant.call.sendWait', {
+			'CALL_ID': params.callId,
+			'DEBUG_INFO': this.getDebugInfo()
+		});
+
+		this.isCallTransfer = !!params.isTransfer;
+
+		this.displayIncomingCall({
+			chatId: params.chatId,
+			callId: params.callId,
+			callerId: params.callerId,
+			lineNumber: params.lineNumber,
+			companyPhoneNumber: params.phoneNumber,
+			isCallback: params.isCallback,
+			showCrmCard: params.showCrmCard,
+			crmEntityType: params.crmEntityType,
+			crmEntityId: params.crmEntityId,
+			crmActivityId: params.crmActivityId,
+			crmActivityEditUrl: params.crmActivityEditUrl,
+			portalCall: params.portalCall,
+			portalCallUserId: params.portalCallUserId,
+			portalCallData: params.portalCallData,
+			config: params.config,
+		}, skipCheckChatWindow);
 	}
 
 	#onPullAnswerSelf(params)
@@ -526,27 +532,32 @@ export class PhoneCallsController extends EventEmitter
 		{
 			this.checkDesktop().then(() =>
 			{
-				this.deviceType = params.callDevice === DeviceType.Phone ? DeviceType.Phone : DeviceType.Webrtc;
-				this.phonePortalCall = !!params.portalCall;
-				this.callId = params.callId;
-				this.phoneCallTime = 0;
-				this.phoneCallConfig = params.config ? params.config : {};
-				this.phoneCrm = params.CRM;
-
-				this.phoneDisplayExternal({
-					callId: params.callId,
-					config: params.config ? params.config : {},
-					phoneNumber: params.phoneNumber,
-					portalCall: params.portalCall,
-					portalCallUserId: params.portalCallUserId,
-					portalCallData: params.portalCallData,
-					portalCallQueueName: params.portalCallQueueName,
-					showCrmCard: params.showCrmCard,
-					crmEntityType: params.crmEntityType,
-					crmEntityId: params.crmEntityId
-				});
+				this.prepareOutgoingExternalCall(params);
 			}).catch(() => {});
 		}
+	}
+
+	prepareOutgoingExternalCall(params, skipCheckChatWindow = false)
+	{
+		this.deviceType = params.callDevice === DeviceType.Phone ? DeviceType.Phone : DeviceType.Webrtc;
+		this.phonePortalCall = !!params.portalCall;
+		this.callId = params.callId;
+		this.phoneCallTime = 0;
+		this.phoneCallConfig = params.config ? params.config : {};
+		this.phoneCrm = params.CRM;
+
+		this.phoneDisplayExternal({
+			callId: params.callId,
+			config: params.config ? params.config : {},
+			phoneNumber: params.phoneNumber,
+			portalCall: params.portalCall,
+			portalCallUserId: params.portalCallUserId,
+			portalCallData: params.portalCallData,
+			portalCallQueueName: params.portalCallQueueName,
+			showCrmCard: params.showCrmCard,
+			crmEntityType: params.crmEntityType,
+			crmEntityId: params.crmEntityId
+		}, skipCheckChatWindow);
 	}
 
 	#onPullStart(params)
@@ -711,35 +722,40 @@ export class PhoneCallsController extends EventEmitter
 
 		this.checkDesktop().then(() =>
 		{
-			if (params.CRM && params.CRM.FOUND)
-			{
-				this.phoneCrm = params.CRM;
-			}
-			else
-			{
-				this.phoneCrm = {};
-			}
-
-			this.showExternalCall({
-				callId: params.callId,
-				fromUserId: params.fromUserId,
-				toUserId: params.toUserId,
-				isCallback: params.isCallback,
-				phoneNumber: params.phoneNumber,
-				lineNumber: params.lineNumber,
-				companyPhoneNumber: params.companyPhoneNumber,
-				showCrmCard: params.showCrmCard,
-				crmEntityType: params.crmEntityType,
-				crmEntityId: params.crmEntityId,
-				crmBindings: params.crmBindings,
-				crmActivityId: params.crmActivityId,
-				crmActivityEditUrl: params.crmActivityEditUrl,
-				config: params.config,
-				portalCall: params.portalCall,
-				portalCallData: params.portalCallData,
-				portalCallUserId: params.portalCallUserId
-			});
+			this.prepareExternalCall(params);
 		}).catch(() => {});
+	}
+
+	prepareExternalCall(params, skipCheckChatWindow = false)
+	{
+		if (params.CRM && params.CRM.FOUND)
+		{
+			this.phoneCrm = params.CRM;
+		}
+		else
+		{
+			this.phoneCrm = {};
+		}
+
+		this.showExternalCall({
+			callId: params.callId,
+			fromUserId: params.fromUserId,
+			toUserId: params.toUserId,
+			isCallback: params.isCallback,
+			phoneNumber: params.phoneNumber,
+			lineNumber: params.lineNumber,
+			companyPhoneNumber: params.companyPhoneNumber,
+			showCrmCard: params.showCrmCard,
+			crmEntityType: params.crmEntityType,
+			crmEntityId: params.crmEntityId,
+			crmBindings: params.crmBindings,
+			crmActivityId: params.crmActivityId,
+			crmActivityEditUrl: params.crmActivityEditUrl,
+			config: params.config,
+			portalCall: params.portalCall,
+			portalCallData: params.portalCallData,
+			portalCallUserId: params.portalCallUserId
+		}, skipCheckChatWindow);
 	}
 
 	#onPullHideExternalCall(params)
@@ -1372,7 +1388,7 @@ export class PhoneCallsController extends EventEmitter
 		}
 	}
 
-	phoneDisplayExternal(params)
+	phoneDisplayExternal(params, skipCheckChatWindow = false)
 	{
 		var number = params.phoneNumber;
 		this.phoneLog(number, params);
@@ -1421,6 +1437,7 @@ export class PhoneCallsController extends EventEmitter
 			backgroundWorker: this.backgroundWorker,
 			messengerFacade: this.messengerFacade,
 			restApps: this.restApps,
+			skipCheckChatWindow,
 		});
 		this.#bindPhoneViewCallbacks(this.callView);
 		this.callView.setUiState(UiState.idle);
@@ -1565,6 +1582,7 @@ export class PhoneCallsController extends EventEmitter
 			backgroundWorker: this.backgroundWorker,
 			messengerFacade: this.messengerFacade,
 			restApps: this.restApps,
+			skipCheckChatWindow: DesktopApi.isAirDesignEnabledInDesktop(),
 		});
 		this.#bindPhoneViewCallbacks(this.callView);
 		this.callView.show();
@@ -1684,6 +1702,7 @@ export class PhoneCallsController extends EventEmitter
 			backgroundWorker: this.backgroundWorker,
 			messengerFacade: this.messengerFacade,
 			restApps: this.restApps,
+			skipCheckChatWindow: DesktopApi.isAirDesignEnabledInDesktop(),
 		});
 
 		this.#bindPhoneViewCallbacks(this.callView);
@@ -2203,7 +2222,7 @@ export class PhoneCallsController extends EventEmitter
 		})
 	}
 
-	displayIncomingCall(params)
+	displayIncomingCall(params, skipCheckChatWindow = false)
 	{
 		/*chatId, callId, callerId, lineNumber, companyPhoneNumber, isCallback*/
 		params.isCallback = !!params.isCallback;
@@ -2254,6 +2273,7 @@ export class PhoneCallsController extends EventEmitter
 			backgroundWorker: this.backgroundWorker,
 			messengerFacade: this.messengerFacade,
 			restApps: this.restApps,
+			skipCheckChatWindow,
 		});
 		this.#bindPhoneViewCallbacks(this.callView);
 		this.callView.setUiState(UiState.incoming);
@@ -2367,7 +2387,7 @@ export class PhoneCallsController extends EventEmitter
 		BX.rest.callMethod('voximplant.call.completeTransfer', {'CALL_ID': this.phoneTransferCallId});
 	}
 
-	showExternalCall(params)
+	showExternalCall(params, skipCheckChatWindow = false)
 	{
 		var direction;
 		if (this.callView)
@@ -2422,6 +2442,7 @@ export class PhoneCallsController extends EventEmitter
 			backgroundWorker: this.backgroundWorker,
 			messengerFacade: this.messengerFacade,
 			restApps: this.restApps,
+			skipCheckChatWindow,
 		});
 		this.bindPhoneViewCallbacksExternalCall(this.callView);
 		this.callView.setUiState(UiState.externalCard);

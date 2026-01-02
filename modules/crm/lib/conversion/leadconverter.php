@@ -4,6 +4,9 @@ namespace Bitrix\Crm\Conversion;
 
 use Bitrix\Crm;
 use Bitrix\Crm\EntityRequisite;
+use Bitrix\Crm\Integration\Analytics\Builder\Entity\ConvertEvent;
+use Bitrix\Crm\Integration\Analytics\ConvertEventsContainer;
+use Bitrix\Crm\Integration\Analytics\Dictionary;
 use Bitrix\Crm\Merger\CompanyMerger;
 use Bitrix\Crm\Merger\ContactMerger;
 use Bitrix\Crm\Requisite\AddressRequisiteConverter;
@@ -28,7 +31,10 @@ class LeadConverter extends EntityConverter
 	/** @var bool */
 	private $enableActivityCompletion = true;
 
-	public function __construct(EntityConversionConfig $config = null)
+	private ?ConvertEvent $analytics = null;
+	private ?ConvertEventsContainer $convertEventsContainer = null;
+
+	public function __construct(EntityConversionConfig $config = null, ?ConvertEventsContainer $convertEventsContainer = null)
 	{
 		if($config === null)
 		{
@@ -37,7 +43,15 @@ class LeadConverter extends EntityConverter
 		parent::__construct($config);
 
 		$this->setSourceFactory(Crm\Service\Container::getInstance()->getFactory(\CCrmOwnerType::Lead));
+
+		$this->convertEventsContainer = $convertEventsContainer;
 	}
+
+	public function getAnalytics(): ?ConvertEvent
+	{
+		return $this->analytics;
+	}
+
 	/**
 	 * Check if completion of lead activities is enabled.
 	 * Completion of activities is performed then lead goes into final status. It is enabled by default.
@@ -259,6 +273,12 @@ class LeadConverter extends EntityConverter
 			return true;
 		}
 
+		if ($this->convertEventsContainer && $this->currentPhase !== LeadConversionPhase::FINALIZATION)
+		{
+			$this->analytics = $this->convertEventsContainer
+				->getPrefilledConvertEvent();
+		}
+
 		if($this->currentPhase === LeadConversionPhase::COMPANY_CREATION
 			|| $this->currentPhase === LeadConversionPhase::CONTACT_CREATION
 			|| $this->currentPhase === LeadConversionPhase::DEAL_CREATION)
@@ -276,15 +296,21 @@ class LeadConverter extends EntityConverter
 				$entityTypeID = \CCrmOwnerType::Deal;
 			}
 
+			$this->analytics?->setDstEntityTypeId($entityTypeID);
+
 			$entityTypeName = \CCrmOwnerType::ResolveName($entityTypeID);
 			$config = $this->config->getItem($entityTypeID);
 			if(!$config || !$config->isActive())
 			{
+				$this->analytics = null;
+
 				return false;
 			}
 
 			if(!LeadConversionScheme::isTargetTypeSupported($entityTypeID, array('TYPE_ID' => $this->conversionTypeID)))
 			{
+				$this->analytics = null;
+
 				return false;
 			}
 
@@ -309,6 +335,9 @@ class LeadConverter extends EntityConverter
 							)
 						)
 					);
+
+					$this->analytics?->setStatus(Dictionary::STATUS_EXIST);
+
 					return true;
 				}
 			}
@@ -321,6 +350,11 @@ class LeadConverter extends EntityConverter
 			if($entityID > 0)
 			{
 				$isNewEntity = self::isNewDestinationEntity($entityTypeName, $entityID, $this->contextData);
+
+				if (!$isNewEntity)
+				{
+					$this->analytics?->setStatus(Dictionary::STATUS_EXIST);
+				}
 
 				if($entityTypeID === \CCrmOwnerType::Company)
 				{

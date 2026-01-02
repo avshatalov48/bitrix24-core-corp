@@ -19,6 +19,7 @@ return [
 		'ui-system/form/inputs/datetime',
 
 		'tasks:layout/fields/date-plan/view',
+		'tasks:layout/fields/date-plan/dates-resolver',
 		'tasks:task/datesResolver',
 
 		'utils/date/formats',
@@ -32,6 +33,5 @@ return [
 		'./src/view',
 		'./src/view-redux-content',
 		'./src/formatter',
-		'./src/dates-resolver',
 	],
 ];

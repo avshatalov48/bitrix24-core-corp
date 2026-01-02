@@ -2,6 +2,8 @@
 
 namespace Bitrix\Crm;
 
+use Bitrix\Main\ORM\Objectify\Values;
+
 class ProductRowCollection extends EO_ProductRow_Collection
 {
 	/**
@@ -9,14 +11,14 @@ class ProductRowCollection extends EO_ProductRow_Collection
 	 *
 	 * @return array[]
 	 */
-	public function toArray(): array
+	public function toArray($valuesType = Values::ALL): array
 	{
 		$result = [];
 
 		/** @var ProductRow $product */
 		foreach ($this as $product)
 		{
-			$result[] = $product->toArray();
+			$result[] = $product->toArray($valuesType);
 		}
 
 		return $result;

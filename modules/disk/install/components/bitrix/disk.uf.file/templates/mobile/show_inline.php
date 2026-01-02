@@ -57,7 +57,7 @@ foreach ($arResult['FILES'] as $file)
 	}
 	else
 	{
-		?><a onclick="app.openDocument({'url' : '<?=$file['DOWNLOAD_URL']?>'}); return BX.PreventDefault(event);" href="javascript:void()" <?
+		?><a onclick="openDocument({'url': '<?=$file['DOWNLOAD_URL']?>', 'view_url': '<?=$file['VIEW_URL']?>', 'isBoard': '<?=$file['IS_BOARD']?>'}); return BX.PreventDefault(event);" href="javascript:void()" <?
 			?>id="wdif-doc-<?=$file['ID']?>" <?
 			?>title="<?=htmlspecialcharsbx($file['NAME'])?>" <?
 			?>alt="<?=htmlspecialcharsbx($file['NAME'])?>" class="feed-com-file-wrap post-item-inline-attached-file"><?

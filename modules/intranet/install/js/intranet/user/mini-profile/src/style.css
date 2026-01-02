@@ -1,0 +1,36 @@
+.intranet-user-mini-profile-wrapper {
+	position: relative;
+	padding: var(--user-mini-profile-container-inner-padding);
+	overflow: hidden;
+	display: flex;
+	flex-flow: row;
+	flex-wrap: nowrap;
+	font: var(--ui-font-family-system-mono);
+	cursor: default;
+
+	--user-mini-profile-container-inner-padding: 24px;
+}
+
+.intranet-user-mini-profile-popup {
+	box-shadow: 0 4px 16px 0 rgba(0, 0, 0, 0.21);
+}
+
+.intranet-user-mini-profile-wrapper__column.--left {
+	width: 292px;
+	padding-left: 4px;
+	padding-right: 4px;
+	align-self: flex-start;
+}
+
+.intranet-user-mini-profile-wrapper__column.--right {
+	width: 250px;
+}
+
+.intranet-user-mini-profile-wrapper__content {
+	display: flex;
+	width: fit-content;
+}
+
+.intranet-user-mini-profile-wrapper__content__right-wrapper {
+	display: flex;
+}

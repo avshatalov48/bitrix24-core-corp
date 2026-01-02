@@ -1,0 +1,11 @@
+drop table if exists b_baas_package;
+drop table if exists b_baas_packages;
+drop table if exists b_baas_purchase;
+drop table if exists b_baas_purchase_service;
+drop table if exists b_baas_purchased_package;
+drop table if exists b_baas_service_ads;
+drop table if exists b_baas_service_in_package;
+drop table if exists b_baas_service_in_purchased_pack;
+drop table if exists b_baas_services;
+drop table if exists b_baas_services_in_package;
+drop table if exists b_baas_services_packages;

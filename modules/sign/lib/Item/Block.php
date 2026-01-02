@@ -6,6 +6,8 @@ use Bitrix\Sign\Contract;
 
 class Block implements Contract\Item
 {
+	use TrackableItemTrait;
+
 	public function __construct(
 		public int $party,
 		public string $type,

@@ -8,6 +8,7 @@ jn.define('layout/ui/entity-editor/control/base', (require, exports, module) => 
 	const { EntityAsyncValidator } = require('layout/ui/entity-editor/validator/async');
 	const { EntityEditorMode } = require('layout/ui/entity-editor/editor-enum/mode');
 	const { EntityEditorVisibilityPolicy } = require('layout/ui/entity-editor/editor-enum/visibility-policy');
+	const { Random } = require('utils/random');
 
 	/**
 	 * @class EntityEditorBaseControl

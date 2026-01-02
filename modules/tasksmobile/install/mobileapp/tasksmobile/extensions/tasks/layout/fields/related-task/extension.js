@@ -3,7 +3,7 @@
  */
 jn.define('tasks/layout/fields/related-task', (require, exports, module) => {
 	const { TaskFieldClass } = require('tasks/layout/task/fields/task');
-	const { openTaskCreateForm } = require('tasks/layout/task/create/opener');
+	const { Entry } = require('tasks/entry');
 	const store = require('statemanager/redux/store');
 	const { usersSelector } = require('statemanager/redux/slices/users');
 	const { Icon } = require('assets/icons');
@@ -64,7 +64,7 @@ jn.define('tasks/layout/fields/related-task', (require, exports, module) => {
 				analyticsLabel: this.getAnalyticsLabel(),
 			};
 
-			openTaskCreateForm(taskCreateParameters);
+			Entry.openTaskCreation(taskCreateParameters);
 		}
 
 		getDefaultLeftIcon()

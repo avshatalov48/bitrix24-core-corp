@@ -27,11 +27,10 @@ RegisterModuleDependences("main", "OnGetStaticCacheProvider", "intranet", "\\Bit
 COption::SetOptionString("main", "~show_composite_banner", "N");
 COption::SetOptionString("intranet", "composite_enabled", "Y");
 
-$defaultThemeId = in_array(LANGUAGE_ID, ['ru', 'kz', 'by']) ? ThemePicker::DEFAULT_THEME_ID : 'light:dark-silk';
+// $defaultThemeId = in_array(LANGUAGE_ID, ['ru', 'kz', 'by']) ? ThemePicker::DEFAULT_THEME_ID : 'light:dark-silk';
+$defaultThemeId = ThemePicker::DEFAULT_THEME_ID;
 $theme = new ThemePicker(WIZARD_TEMPLATE_ID, WIZARD_SITE_ID);
 $theme->setDefaultTheme($defaultThemeId);
-
-CUserOptions::SetOption("intranet", "left_menu_collapsed", "Y", true);
 
 $arIblockCode = Array(
 	"iblock_structure" => "departments",

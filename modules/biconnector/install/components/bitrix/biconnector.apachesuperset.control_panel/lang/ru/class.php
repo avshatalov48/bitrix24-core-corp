@@ -4,6 +4,6 @@ $MESS['BICONNECTOR_CONTROL_PANEL_MENU_ITEM_ORDER'] = 'Заказать отчё�
 $MESS['BICONNECTOR_CONTROL_PANEL_MENU_ITEM_SETTINGS'] = 'Настройки';
 $MESS['BICONNECTOR_CONTROL_PANEL_MENU_ITEM_COMMON_SETTINGS'] = 'Общие настройки';
 $MESS['BICONNECTOR_CONTROL_PANEL_MENU_ITEM_RIGHTS_SETTINGS'] = 'Права доступа';
-$MESS['BICONNECTOR_CONTROL_PANEL_MENU_ITEM_MARKET'] = 'Готовые отчёты в Маркете';
+$MESS['BICONNECTOR_CONTROL_PANEL_MENU_ITEM_MARKET_MSGVER_1'] = 'Готовые отчёты в Маркетплейсе';
 $MESS['BICONNECTOR_CONTROL_PANEL_MENU_ITEM_FEEDBACK'] = 'Обратная связь';
 $MESS['BICONNECTOR_CONTROL_PANEL_MENU_ITEM_ANALYTICS'] = 'Рабочее место аналитика';

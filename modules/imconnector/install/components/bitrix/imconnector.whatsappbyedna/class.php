@@ -126,7 +126,7 @@ class ImConnectorWhatsappByEdna extends \CBitrixComponent
 
 			foreach ($fromList as $from)
 			{
-				if ($from['id'] == $subjectId)
+				if (is_array($from) && isset($from['id']) && $from['id'] == $subjectId)
 				{
 					$phone = $from['channelPhone'];
 					break;
@@ -566,9 +566,10 @@ class ImConnectorWhatsappByEdna extends \CBitrixComponent
 			[$this->pageId, 'open_block', 'action']
 		);
 		$this->arResult['URL']['DELETE'] = $APPLICATION->GetCurPageParam('', [$this->pageId, 'open_block', 'action']);
+		$analyticsData = $this->getAnalyticsQueryParams() ?? '';
 		$this->arResult['URL']['SIMPLE_FORM'] = $APPLICATION->GetCurPageParam(
-			$this->pageId.'=simple_form',
-			[$this->pageId, 'open_block', 'action']
+			$this->pageId . '=simple_form' . $analyticsData,
+			[$this->pageId, 'open_block', 'action', 'analytics'],
 		);
 		$this->arResult['URL']['SIMPLE_FORM_EDIT'] = $APPLICATION->GetCurPageParam(
 			$this->pageId.'=simple_form',
@@ -706,5 +707,32 @@ class ImConnectorWhatsappByEdna extends \CBitrixComponent
 		$lastPart = substr($input, -5);
 
 		return $firstPart . '...' . $lastPart;
+	}
+
+	private function getAnalyticsQueryParams(): ?string
+	{
+		$rawData = $this->request->getQuery('analytics');
+
+		if (!is_array($rawData) && empty($rawData))
+		{
+			return null;
+		}
+
+		array_walk($rawData, function (&$value) {
+			$value = preg_match('#[a-z_]#', $value) ? $value : '';
+		});
+
+		return '&' . http_build_query([
+			'st' => [
+				'tool' => $rawData['tool'] ?? '',
+				'category' => $rawData['category'] ?? '',
+				'event' =>  $rawData['event'] ?? '',
+				'type' => $rawData['type'] ?? '',
+				'c_section' => $rawData['c_section'] ?? '',
+				'c_sub_section' => $rawData['c_sub_section'] ?? '',
+				'c_element' => $rawData['c_element'] ?? '',
+				'p1' => $rawData['p1'] ?? '',
+			],
+		]);
 	}
 }

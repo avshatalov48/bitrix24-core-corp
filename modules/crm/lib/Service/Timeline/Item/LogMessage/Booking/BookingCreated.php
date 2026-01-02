@@ -1,16 +1,22 @@
 <?php
 
+declare(strict_types=1);
+
 namespace Bitrix\Crm\Service\Timeline\Item\LogMessage\Booking;
 
+use Bitrix\Booking\Entity;
+use Bitrix\Crm\Dto\Booking\Booking\BookingFields;
+use Bitrix\Crm\Dto\Booking\Booking\BookingFieldsMapper;
 use Bitrix\Crm\Service\Timeline\Item\LogMessage;
-use Bitrix\Crm\Service\Timeline\Layout\Body\ContentBlock;
-use Bitrix\Crm\Service\Timeline\Layout\Body\ContentBlock\Date;
-use Bitrix\Crm\Service\Timeline\Layout\Common\Icon;
+use Bitrix\Crm\Service\Timeline\Layout\Body\ContentBlock\Client;
+use Bitrix\Main\Loader;
 use Bitrix\Main\Localization\Loc;
-use Bitrix\Main\Type\DateTime;
 
 class BookingCreated extends LogMessage
 {
+	use ClientTrait;
+	use BookingTimeTrait;
+
 	public function getType(): string
 	{
 		return 'BookingCreated';
@@ -21,36 +27,58 @@ class BookingCreated extends LogMessage
 		return Loc::getMessage('CRM_TIMELINE_LOG_BOOKING_CREATED_TITLE');
 	}
 
-	public function getIconCode(): ?string
-	{
-		return Icon::INFO;
-	}
-
 	public function getContentBlocks(): ?array
 	{
-		return [
-			'bookingCreatedContent' => $this->getBookingCreatedContent(),
-		];
+		$result = [];
+
+		$clientBlock = $this->buildClientBlock(
+			Client::BLOCK_WITH_FORMATTED_VALUE,
+			Loc::getMessage('CRM_TIMELINE_LOG_BOOKING_CREATED_CLIENT')
+		);
+		if ($clientBlock)
+		{
+			$result['clientBlock'] = $clientBlock;
+		}
+
+		$result['bookingCreatedContent'] = $this->getBookingCreatedContent(
+			Loc::getMessage('CRM_TIMELINE_LOG_BOOKING_SCHEDULED_TIME_TITLE_MSGVER_1') ?? ''
+		);
+
+		return $result;
 	}
 
-	private function getBookingCreatedContent(): ContentBlock
+	protected function getBookingFields(): BookingFields
 	{
-		return (new ContentBlock\ContentBlockWithTitle())
-			->setInline()
-			->setTitle(Loc::getMessage('CRM_TIMELINE_LOG_BOOKING_SCHEDULED_TIME_TITLE'))
-			->setContentBlock(
-				(new Date())
-					->setDate(
-						$this->getBookingScheduledTime()
-					)
-			)
+		$fields = $this->getModel()->getSettings();
+		$booking = $fields['booking'] ?? $fields;
+
+		return isset($booking['description'])
+			// bc for old format
+			? BookingFieldsMapper::mapFromBookingArray($booking)
+			: BookingFields::mapFromArray($booking)
 		;
 	}
 
-	private function getBookingScheduledTime(): DateTime
+	protected function getPrimaryClient(): ?Entity\Client\Client
 	{
-		return DateTime::createFromTimestamp(
-			$this->getModel()->getSettings()['datePeriod']['from']['timestamp']
-		);
+		if (!Loader::includeModule('booking'))
+		{
+			return null;
+		}
+
+		return Entity\Client\ClientCollection::mapFromArray(
+			array_map(
+				static fn (\Bitrix\Crm\Dto\Booking\Client $client) => [
+					'id' => $client->id,
+					'type' => ['code' => $client->typeCode, 'module' => $client->typeModule],
+				],
+				$this->getBookingFields()->clients ?? []
+			)
+		)->getPrimaryClient();
+	}
+
+	protected function getPhoneNumber(): string
+	{
+		return $this->getBookingFields()->clients[0]->phones[0] ?? '';
 	}
 }

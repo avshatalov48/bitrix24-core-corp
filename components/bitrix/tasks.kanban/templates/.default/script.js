@@ -311,8 +311,11 @@ BX.Tasks.KanbanComponent.TourGuideController.FirstTimelineTaskCreationTourGuide.
 								this.guide.close();
 								for (var i = 0; i < columns.length; i++)
 								{
-									if(	lastItem.getColumn() !== columns[i]
-										&& columns[i].getType() !== "PERIOD1" )
+									if (
+										lastItem.getColumn() !== columns[i]
+										&& columns[i].getType() !== "PERIOD1"
+										&& columns[i].getType() !== "PERIOD7"
+									)
 									{
 											columns[i].onAhaMode();
 											columns[i].getContainer().classList.add("main-kanban-column-aha");
@@ -322,8 +325,11 @@ BX.Tasks.KanbanComponent.TourGuideController.FirstTimelineTaskCreationTourGuide.
 							BX.addCustomEvent(Kanban, "Kanban.Grid:onItemDragStop", function(item) {
 								for (var i = 0; i < columns.length; i++)
 								{
-									if( lastItem.getColumn() !== columns[i]
-										&& columns[i].getType() !== "PERIOD1" )
+									if (
+										lastItem.getColumn() !== columns[i]
+										&& columns[i].getType() !== "PERIOD1"
+										&& columns[i].getType() !== "PERIOD7"
+									)
 									{
 										columns[i].offAhaMode();
 										columns[i].getContainer().classList.remove("main-kanban-column-aha");

@@ -12,10 +12,19 @@ export const FormatTable = {
 			type: Object,
 			required: false,
 		},
+		disabledElements: {
+			type: Object,
+			required: false,
+			default: null,
+		},
 		isEditMode: {
 			type: Boolean,
 			required: false,
 			default: false,
+		},
+		sourceType: {
+			type: String,
+			required: true,
 		},
 	},
 	emits: [
@@ -81,7 +90,9 @@ export const FormatTable = {
 						@checkbox-click="onRowCheckboxClicked"
 						@field-change="onRowFieldChanged"
 						:invalid-fields="unvalidatedRows[index] ?? []"
+						:disabled-elements="disabledElements"
 						:is-edit-mode="isEditMode"
+						:source-type="sourceType"
 					/>
 				</template>
 			</tbody>

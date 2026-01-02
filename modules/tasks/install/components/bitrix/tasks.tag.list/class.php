@@ -26,9 +26,10 @@ use Bitrix\Tasks\Control\Tag;
 use Bitrix\Tasks\Integration\Pull\PushCommand;
 use Bitrix\Tasks\Integration\Pull\PushService;
 use Bitrix\Tasks\Integration\SocialNetwork\Group;
-use Bitrix\Tasks\Integration\SocialNetwork\Collab\CollabRegistry;
+use Bitrix\Tasks\Integration\SocialNetwork\GroupProvider;
 use Bitrix\Tasks\Internals\Registry\TagRegistry;
 use Bitrix\Tasks\Internals\Registry\TaskRegistry;
+use Bitrix\Tasks\Internals\Registry\GroupRegistry;
 use Bitrix\Tasks\Internals\Task\LabelTable;
 use Bitrix\Tasks\Internals\Task\TaskTagTable;
 use Bitrix\Tasks\Provider\Tag\TagList;
@@ -542,7 +543,7 @@ class TasksTagList extends CBitrixComponent implements Controllerable, Errorable
 		$this->arResult['ACTION_PANEL'] = $grid->prepareGroupActions();
 		$this->arResult['FILTER'] = $this->getFilterFields();
 		$this->arResult['USER_ID'] = $this->userId;
-		$this->arResult['IS_COLLAB'] = CollabRegistry::getInstance()->get($this->groupId) !== null;
+		$this->arResult['IS_COLLAB'] = GroupProvider::isCollab($this->groupId);
 	}
 
 	public function getTasksByTagAction()
@@ -763,14 +764,14 @@ class TasksTagList extends CBitrixComponent implements Controllerable, Errorable
 			return '';
 		}
 
-		$group = WorkgroupTable::getById($groupId)->fetchAll();
+		$group = GroupRegistry::getInstance()->get($this->groupId);
 
 		if (empty($group))
 		{
 			return '';
 		}
 
-		return htmlspecialcharsbx($group[0]['NAME']);
+		return htmlspecialcharsbx($group['NAME']);
 	}
 
 	private function canUseGridActions(int $groupId): bool
@@ -805,12 +806,15 @@ class TasksTagList extends CBitrixComponent implements Controllerable, Errorable
 
 	private function isGroupExists(int $groupId): bool
 	{
-		if (WorkgroupTable::getById($groupId)->fetchObject())
-		{
-			return true;
-		}
+		$result = WorkgroupTable::query()
+			->setSelect(['ID'])
+			->where('ID', $groupId)
+			->setLimit(1)
+			->exec()
+			->fetch()
+		;
 
-		return false;
+		return isset($result['ID']);
 	}
 
 	private function getGroupMembers(int $groupId): array

@@ -10,7 +10,6 @@ use Bitrix\Sign\Access\ActionDictionary;
 use Bitrix\Sign\Access\Model\UserModel;
 use Bitrix\Sign\Access\Permission\PermissionDictionary;
 use Bitrix\Sign\Access\Permission\SignPermissionDictionary;
-use Bitrix\Sign\Access\Service\RolePermissionService;
 use Bitrix\Sign\Contract;
 use Bitrix\Sign\Item\Access\Document;
 use Bitrix\Sign\Service\Container;
@@ -128,7 +127,7 @@ class BaseRule extends AbstractRule
 			$user->getRoles(),
 			$permissionId,
 		);
-		if ($permissionValue === null || $permissionValue === \CCrmPerms::PERM_NONE)
+		if ($permissionValue === null || $permissionValue === \Bitrix\Crm\Service\UserPermissions::PERMISSION_NONE)
 		{
 			return false;
 		}
@@ -139,19 +138,19 @@ class BaseRule extends AbstractRule
 
 		$userId = $user->getUserId();
 
-		if ($permissionValue === \CCrmPerms::PERM_ALL)
+		if ($permissionValue === \Bitrix\Crm\Service\UserPermissions::PERMISSION_ALL)
 		{
 			return true;
 		}
-		if ($permissionValue === \CCrmPerms::PERM_SELF)
+		if ($permissionValue === \Bitrix\Crm\Service\UserPermissions::PERMISSION_SELF)
 		{
 			return $itemOwnerId === $userId;
 		}
-		if ($permissionValue === \CCrmPerms::PERM_SUBDEPARTMENT)
+		if ($permissionValue === \Bitrix\Crm\Service\UserPermissions::PERMISSION_SUBDEPARTMENT)
 		{
 			return in_array($itemOwnerId, $user->getUserDepartmentMembers(true), true);
 		}
-		if ($permissionValue === \CCrmPerms::PERM_DEPARTMENT)
+		if ($permissionValue === \Bitrix\Crm\Service\UserPermissions::PERMISSION_DEPARTMENT)
 		{
 			return in_array($itemOwnerId, $user->getUserDepartmentMembers(), true);
 		}
@@ -181,12 +180,44 @@ class BaseRule extends AbstractRule
 		;
 		if ($permission === 'checkAddPermissions')
 		{
-			return $userPermissions->checkAddPermissions($entity, $categoryId);
+			return is_null($categoryId)
+				? $userPermissions->entityType()->canAddItems($entity)
+				: $userPermissions->entityType()->canAddItemsInCategory($entity, $categoryId)
+			;
 		}
 
 		$id = $item instanceof Contract\Item\ItemWithCrmId ? $item->getCrmId() : 0;
 
-		return (bool)$userPermissions->{$permission}($entity, $id, $categoryId);
+		if ($id > 0)
+		{
+			return match ($permission)
+			{
+				'checkReadPermissions' => $userPermissions->item()->canRead($entity, $id),
+				'checkUpdatePermissions' => $userPermissions->item()->canUpdate($entity, $id),
+				'checkDeletePermissions' => $userPermissions->item()->canDelete($entity, $id),
+				default => false,
+			};
+		}
+		elseif ($categoryId > 0)
+		{
+			return match ($permission)
+			{
+				'checkReadPermissions' => $userPermissions->entityType()->canReadItemsInCategory($entity, $categoryId),
+				'checkUpdatePermissions' => $userPermissions->entityType()->canUpdateItemsInCategory($entity, $categoryId),
+				'checkDeletePermissions' => $userPermissions->entityType()->canDeleteItemsInCategory($entity, $categoryId),
+				default => false,
+			};
+		}
+		else
+		{
+			return match ($permission)
+			{
+				'checkReadPermissions' => $userPermissions->entityType()->canReadItems($entity),
+				'checkUpdatePermissions' => $userPermissions->entityType()->canUpdateItems($entity),
+				'checkDeletePermissions' => $userPermissions->entityType()->canDeleteItems($entity),
+				default => false,
+			};
+		}
 	}
 
 	private function checkExtendedSignPermission(string $action, ?AccessibleItem $item): bool

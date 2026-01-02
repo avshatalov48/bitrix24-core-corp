@@ -1,6 +1,6 @@
 <?php
 
-use Bitrix\Tasks\Integration\Intranet\Settings;
+use Bitrix\Tasks\V2\Internal\DI\Container;
 
 if (!defined("B_PROLOG_INCLUDED") || B_PROLOG_INCLUDED!==true)die();
 
@@ -67,7 +67,7 @@ if (!isset($_GET['select_my_tasks']) && !isset($_GET['select_depts_tasks']) && !
 	}
 }
 
-$arResult['IS_TOOL_AVAILABLE'] = (new Settings())->isToolAvailable(Settings::TOOLS['report']);
+$arResult['IS_TOOL_AVAILABLE'] = Container::getInstance()->getToolService()->isReportAvailable();
 
 $arResult['tasksReportEnabled'] = \Bitrix\Tasks\Integration\Bitrix24::checkFeatureEnabled(
 	\Bitrix\Tasks\Integration\Bitrix24\FeatureDictionary::TASK_REPORTS

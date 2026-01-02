@@ -85,7 +85,7 @@ class PaySystemMode extends Base
 				'tinkoff_bank',
 				'',
 				'embedded',
-				'installments',
+				'sber_loan',
 				'cash',
 			];
 

@@ -3,9 +3,12 @@
 use Bitrix\Bizproc\Automation\Engine\ConditionGroup;
 use Bitrix\Bizproc\Activity\PropertiesDialog;
 use Bitrix\Bizproc\FieldType;
+
 use Bitrix\Crm;
 use Bitrix\Crm\Integration\BizProc\Document;
 use Bitrix\Crm\Service\Container;
+use Bitrix\Crm\Integration\Analytics\Dictionary;
+
 use Bitrix\Main\Error;
 use Bitrix\Main\Localization\Loc;
 use Bitrix\Main\Result;
@@ -112,8 +115,16 @@ class CBPCrmUpdateDynamicActivity extends \Bitrix\Bizproc\Activity\BaseActivity
 		$errors = parent::internalExecute();
 
 		$documentId = CCrmBizProcHelper::ResolveDocumentId($this->DynamicTypeId, $this->DynamicId);
+		$documentType = $this->getDocumentType();
 
 		$updateResult = static::getDocumentService()->updateDocument($documentId, $this->DynamicEntitiesFields);
+
+		\CCrmBizProcHelper::sendOperationsAnalytics(
+			Dictionary::EVENT_ENTITY_EDIT,
+			$this,
+			$documentType[2] ?? '',
+		);
+
 		if (is_string($updateResult))
 		{
 			$errors->setError(new Error($updateResult));

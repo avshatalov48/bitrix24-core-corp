@@ -1,4 +1,5 @@
 <?php
+$MESS["SIGN_CALLBACK_BY_EMPLOYEE_CHAT_EXPIRED_TO_EMPLOYEE"] = "[b]Document has expired.[/b][br][br]Document \"#DOC_NAME#\" has expired. You can start the signing process again.[br][br][url=#SIGN_URL#]Open document[/url]";
 $MESS["SIGN_CALLBACK_BY_EMPLOYEE_CHAT_STOPPED_TO_EMPLOYEE"] = "[b]Document declined[/b][br][br]#INITIATOR_NAME# has declined the document \"#DOC_NAME#\". Fix the issues and send the document again.";
 $MESS["SIGN_CALLBACK_BY_EMPLOYEE_CHAT_STOPPED_TO_EMPLOYEEF"] = "[b][b]Document declined[/b][br][br]#INITIATOR_NAME# has declined the document \"#DOC_NAME#\". Fix the issues and send the document again.";
 $MESS["SIGN_CALLBACK_BY_EMPLOYEE_CHAT_STOPPED_TO_EMPLOYEEM"] = "[b][b]Document declined[/b][br][br]#INITIATOR_NAME# has declined the document \"#DOC_NAME#\". Fix the issues and send the document again.";

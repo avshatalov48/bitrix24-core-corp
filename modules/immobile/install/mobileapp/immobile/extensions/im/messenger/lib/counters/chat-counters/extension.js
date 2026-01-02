@@ -10,9 +10,9 @@ jn.define('im/messenger/lib/counters/chat-counters', (require, exports, module) 
 	const { Counter } = require('im/messenger/lib/counters/lib/counter');
 	const { MessengerEmitter } = require('im/messenger/lib/emitter');
 	const { DialogHelper } = require('im/messenger/lib/helper');
-	const { EventType } = require('im/messenger/const');
-	const { LoggerManager } = require('im/messenger/lib/logger');
-	const logger = LoggerManager.getInstance().getLogger('chat-counters');
+	const { EventType, ComponentCode } = require('im/messenger/const');
+	const { getLogger } = require('im/messenger/lib/logger');
+	const logger = getLogger('chat-counters');
 
 	/**
 	 * @class ChatCounters
@@ -22,19 +22,28 @@ jn.define('im/messenger/lib/counters/chat-counters', (require, exports, module) 
 		constructor()
 		{
 			super({ logger });
+		}
 
-			this.isCollabReady = false;
-			void EntityReady.wait('collab-messenger')
-				.then(() => {
-					this.isCollabReady = true;
-				})
-			;
+		get isCollabLaunched()
+		{
+			return EntityReady.isReady(`${ComponentCode.imCollabMessenger}::launched`);
+		}
+
+		get isCopilotLaunched()
+		{
+			return EntityReady.isReady(`${ComponentCode.imCopilotMessenger}::launched`);
+		}
+
+		get isChannelLaunched()
+		{
+			return EntityReady.isReady(`${ComponentCode.imChannelMessenger}::launched`);
 		}
 
 		initCounters()
 		{
 			this.chatCounter = new Counter();
 			this.collabCounter = new Counter();
+			this.copilotCounter = new Counter();
 			this.openlinesCounter = new Counter();
 			this.notificationCounter = new Counter();
 		}
@@ -72,11 +81,28 @@ jn.define('im/messenger/lib/counters/chat-counters', (require, exports, module) 
 			this.notificationCounter.value = counters.type.notify;
 			this.setCommentCounters(counters.channelComment);
 
-			if (!this.isCollabReady)
+			if (!this.isCollabLaunched)
 			{
 				Object.keys(counters.collab).forEach((chatId) => {
 					this.collabCounter.detail[`chat${chatId}`] = counters.collab[chatId];
 				});
+			}
+
+			if (!this.isCopilotLaunched)
+			{
+				Object.keys(counters.copilot).forEach((chatId) => {
+					this.copilotCounter.detail[`chat${chatId}`] = counters.copilot[chatId];
+				});
+			}
+
+			if (!this.isChannelLaunched)
+			{
+				const channelComment = data?.imCounters?.channelComment;
+
+				if (channelComment)
+				{
+					this.store.dispatch('commentModel/setCounters', channelComment);
+				}
 			}
 
 			MessengerEmitter.emit(EventType.notification.reload);
@@ -90,6 +116,7 @@ jn.define('im/messenger/lib/counters/chat-counters', (require, exports, module) 
 			this.chatCounter.reset();
 			this.openlinesCounter.reset();
 			this.collabCounter.reset();
+			this.copilotCounter.reset();
 
 			const userId = serviceLocator.get('core').getUserId();
 
@@ -147,7 +174,7 @@ jn.define('im/messenger/lib/counters/chat-counters', (require, exports, module) 
 				notifications: this.notificationCounter.value,
 			};
 
-			if (!this.isCollabReady)
+			if (!this.isCollabLaunched)
 			{
 				this.collabCounter.value = this.store.getters['recentModel/getCollection']()
 					.reduce((counter, item) => {
@@ -197,6 +224,12 @@ jn.define('im/messenger/lib/counters/chat-counters', (require, exports, module) 
 				counters.collab = this.collabCounter.value;
 
 				this.collabCounter.update();
+			}
+
+			if (!this.isCopilotLaunched)
+			{
+				this.copilotCounter.update();
+				counters.copilot = this.copilotCounter.value;
 			}
 
 			logger.log(`${this.getClassName()}.update`, counters);

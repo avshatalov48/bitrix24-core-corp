@@ -100,6 +100,18 @@ class ScenarioOptionBuilder extends BaseBuilder
 		return $this;
 	}
 
+	public function useBookingResourceAutoSelection(bool $use = false): ScenarioOptionBuilder
+	{
+		if (empty($this->prepared['bookingResourceAutoSelection']))
+		{
+			$this->prepared['bookingResourceAutoSelection'] = [];
+		}
+
+		$this->prepared['bookingResourceAutoSelection']['use'] = $use;
+
+		return $this;
+	}
+
 	/**
 	 * Add recaptcha to the prepared object.
 	 * @param bool $use
@@ -189,7 +201,8 @@ class ScenarioOptionBuilder extends BaseBuilder
 	public function addResult(
 		?string $successCaption,
 		?string $failureCaption,
-		bool $refill = false
+		bool $refill = false,
+		?int $redirectDelay = null
 	): ScenarioOptionBuilder
 	{
 		if (empty($this->prepared['result']))
@@ -206,6 +219,11 @@ class ScenarioOptionBuilder extends BaseBuilder
 				'active' => true,
 				'caption' => Loc::getMessage('CRM_SERVICE_FORM_REFILL_BUTTON')
 			];
+		}
+
+		if (isset($redirectDelay))
+		{
+			$this->prepared['result']['redirectDelay'] = $redirectDelay;
 		}
 
 		return $this;

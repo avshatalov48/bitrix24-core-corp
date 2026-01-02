@@ -2,6 +2,8 @@
 
 use Bitrix\Disk\Document\OnlyOffice\Bitrix24Scenario;
 use Bitrix\Disk\Document\OnlyOffice\ExporterBitrix24Scenario;
+use Bitrix\Disk\QuickAccess;
+use Bitrix\Main\DI\ServiceLocator;
 use Bitrix\Main\UI\Extension;
 
 \Bitrix\Main\Loader::registerAutoLoadClasses(
@@ -214,3 +216,17 @@ CJSCore::RegisterExt('disk_information_popups', [
 ]);
 
 \Bitrix\Disk\Internals\Engine\Binder::registerDefaultAutoWirings();
+
+
+ServiceLocator::getInstance()->addInstanceLazy('disk.scopeTokenService', [
+	'constructor' => static function() {
+		$quickAccessConfiguration = new QuickAccess\Configuration();
+		$storageFactory = QuickAccess\Storage\StorageFactory::create($quickAccessConfiguration->getTokenStorage());
+		return new QuickAccess\ScopeTokenService(
+			$storageFactory,
+			Bitrix\Main\Context::getCurrent()?->getRequest(),
+			Bitrix\Main\Context::getCurrent()?->getResponse(),
+			$quickAccessConfiguration->getKey(),
+		);
+	},
+]);

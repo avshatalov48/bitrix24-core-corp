@@ -27,7 +27,8 @@ $APPLICATION->IncludeComponent(
 			'VAR_STEP_ID' => 'stepId',
 			'CRM_ENTITY_TYPE_ID' => $arParams['ENTITY_ID'],
 			'ENTITY_TYPE_ID' => 'SMART',
-			'OPEN_URL_AFTER_CLOSE' => $urlAfterClose
+			'OPEN_URL_AFTER_CLOSE' => $urlAfterClose,
+			'IS_OPENED_AS_FOLDER' => false,
 		],
 		'PLAIN_VIEW' => true,
 		'USE_BACKGROUND_CONTENT' => false,

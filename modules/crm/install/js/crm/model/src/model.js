@@ -1,4 +1,4 @@
-import { ajax as Ajax, Type } from "main.core";
+import { ajax as Ajax, Text, Type } from 'main.core';
 
 declare type ModelData = {
     id: ?number,
@@ -75,7 +75,9 @@ export class Model
 
     getId(): ?number
     {
-        return this.data.id;
+		const id = this.data.id;
+
+        return Type.isNil(id) ? null : Text.toInteger(id);
     }
 
     getEntityTypeId(): ?number

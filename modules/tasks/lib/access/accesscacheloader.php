@@ -9,7 +9,7 @@ use Bitrix\Tasks\Internals\Registry\TaskRegistry;
 
 class AccessCacheLoader
 {
-	public function preload(int $userId, array $taskIds)
+	public function preload(int $userId, array $taskIds): void
 	{
 		$registry = TaskRegistry::getInstance();
 

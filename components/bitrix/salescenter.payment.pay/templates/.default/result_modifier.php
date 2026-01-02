@@ -7,6 +7,7 @@ if (!defined("B_PROLOG_INCLUDED") || B_PROLOG_INCLUDED !== true)
 
 use Bitrix\Main;
 use Bitrix\Main\Localization\Loc;
+use Bitrix\Main\Engine\Response\Converter;
 
 /**
  * @var array $arResult
@@ -20,14 +21,12 @@ $arResult['JS_DATA'] = [
 		'title' => Loc::getMessage('SPP_SELECT_PAYMENT_TITLE_NEW_NEW_MSGVER_1'),
 	],
 	'consent' => [
-		'id' => $arResult['USER_CONSENT_ID'],
+		'items' => Converter::toJson()->process($arResult['USER_CONSENTS']),
 		'title' => Loc::getMessage('SPP_PAY_BUTTON'),
 		'eventName' => 'bx-spp-submit',
-		'accepted' => (
-			isset($arResult['USER_CONSENT'])
-			&& $arResult['USER_CONSENT'] === 'Y'
-			&& $arResult['USER_CONSENT_IS_CHECKED'] === 'Y'
-		),
+		'autoSave' => ($arResult['USER_CONSENT_AUTO_SAVE'] ?? 'N') === 'Y',
+		'originatorId' => $arResult['USER_CONSENT_ORIGINATOR_ID'] ?? null,
+		'originId' => $arResult['PAYMENT']['ID'],
 	],
 	'paymentProcess' => [
 		'allowPaymentRedirect' => ($arParams['ALLOW_PAYMENT_REDIRECT'] === 'Y'),
@@ -54,6 +53,9 @@ if ($arResult['PAYMENT']['PAID'] === 'Y' || $arParams['ALLOW_SELECT_PAY_SYSTEM']
 		'#ACCOUNT_NUMBER#' => htmlspecialcharsbx($arResult['PAYMENT']['ACCOUNT_NUMBER']),
 		'#DATE_INSERT#' => $arResult['PAYMENT']['DATE_BILL_FORMATTED'],
 	]);
+
+	$arResult['JS_DATA']['app']['consent']['autoSave'] = false;
+	$arResult['JS_DATA']['app']['consent']['originatorId'] = '';
 
 	if ($arResult['CHECK'])
 	{

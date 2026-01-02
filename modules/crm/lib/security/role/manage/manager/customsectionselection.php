@@ -2,7 +2,6 @@
 
 namespace Bitrix\Crm\Security\Role\Manage\Manager;
 
-use Bitrix\Crm\AutomatedSolution\AutomatedSolutionManager;
 use Bitrix\Crm\Integration\Intranet\CustomSection;
 use Bitrix\Crm\Integration\Intranet\SystemPageProvider\PermissionsPage;
 use Bitrix\Crm\Integration\IntranetManager;
@@ -10,14 +9,13 @@ use Bitrix\Crm\Restriction\AvailabilityManager;
 use Bitrix\Crm\Security\Role\GroupCodeGenerator;
 use Bitrix\Crm\Security\Role\Manage\DTO\RoleSelectionManager\CreateSettingsDto;
 use Bitrix\Crm\Security\Role\Manage\Enum\Permission;
+use Bitrix\Crm\Security\Role\Manage\Manager\Contract\SectionableRoleSelectionManager;
 use Bitrix\Crm\Security\Role\Manage\PermissionEntityBuilder;
-use Bitrix\Crm\Security\Role\Manage\RoleSelectionManager;
 use Bitrix\Crm\Service\Container;
 use Bitrix\Main\Result;
 use Bitrix\Main\Web\Uri;
-use Bitrix\Crm\AutomatedSolution\Entity\AutomatedSolutionTable;
 
-final class CustomSectionSelection implements RoleSelectionManager
+final class CustomSectionSelection implements SectionableRoleSelectionManager
 {
 	public const GROUP_CODE_PREFIX = 'AUTOMATED_SOLUTION_';
 
@@ -77,6 +75,7 @@ final class CustomSectionSelection implements RoleSelectionManager
 
 		return Container::getInstance()
 			->getUserPermissions()
+			->automatedSolution()
 			->isAutomatedSolutionAdmin($solutionId)
 		;
 	}

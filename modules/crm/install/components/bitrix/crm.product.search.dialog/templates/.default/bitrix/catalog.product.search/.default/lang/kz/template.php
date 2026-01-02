@@ -1,0 +1,26 @@
+<?php
+$MESS["CRM_ALL"] = "Барлығы";
+$MESS["CRM_CPS_TPL_MESS_USE_SUBSTRING_QUERY"] = "Күрделі іздеу логикасын қолданбау";
+$MESS["CRM_PRODUCT_DELETE"] = "Тауарды жою";
+$MESS["CRM_PRODUCT_DELETE_CONFIRM"] = "Сіз  '%s' жойғыңыз келетініне сенімдісіз бе?";
+$MESS["CRM_PRODUCT_DELETE_TITLE"] = "Бұл тауарды жою";
+$MESS["CRM_PRODUCT_EDIT"] = "Тауарды редакциялау";
+$MESS["CRM_PRODUCT_EDIT_TITLE"] = "Осы тауарды редакциялау бетіне өту";
+$MESS["CRM_PRODUCT_LIST_SHOW_FILTER"] = "Сүзгі нысанын көрсету/жасыру";
+$MESS["CRM_PRODUCT_LIST_SHOW_FILTER_SHORT"] = "Сүзгі";
+$MESS["CRM_PRODUCT_PROP_DOWNLOAD"] = "Жүктеу";
+$MESS["CRM_PRODUCT_PROP_ENLARGE"] = "Үлкейту";
+$MESS["CRM_PRODUCT_SECTION_ACTION_DELETE1"] = "Бөлімді жою";
+$MESS["CRM_PRODUCT_SECTION_ACTION_DELETE_PROPMT"] = "Барлық қосымша бөлімдер элементтермен бірге жойылады. Бөлімді жойғыңыз келетініне сенімдісіз бе?";
+$MESS["CRM_PRODUCT_SECTION_ACTION_RENAME1"] = "Бөлімнің атауын өзгерту";
+$MESS["CRM_PRODUCT_SHOW"] = "Тауарды қарау";
+$MESS["CRM_PRODUCT_SHOW_TITLE"] = "Осы тауарды қарау бетіне өту";
+$MESS["CRM_SECTION_ADD_BTN_TEXT"] = "Қосу";
+$MESS["CRM_SECTION_ADD_DIALOG_TITLE"] = "Бөлімді қосу";
+$MESS["CRM_SECTION_CANCEL_BTN_TEXT"] = "Болдырмау";
+$MESS["CRM_SECTION_DEFAULT_NAME"] = "Жаңа бөлім";
+$MESS["CRM_SECTION_EMPTY_NAME_ERROR"] = "Бөлім атауын енгізуіңізді өтінеміз.";
+$MESS["CRM_SECTION_NAME_FIELD_TITLE"] = "Атауы";
+$MESS["CRM_SECTION_RENAME_BTN_TEXT"] = "Атауын өзгерту";
+$MESS["CRM_SECTION_RENAME_DIALOG_TITLE"] = "Бөлімнің атауын өзгерту";
+$MESS["CRM_SECTION_ROOT_NAME"] = "Бөлімдер";

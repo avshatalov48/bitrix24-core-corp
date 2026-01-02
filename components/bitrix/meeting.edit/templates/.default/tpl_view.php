@@ -11,14 +11,15 @@ foreach ($arResult['MEETING']['USERS'] as $USER_ID => $USER_ROLE):
 	$arUsers[$USER_ROLE][] = $USER_ID;
 endforeach;
 
-$this->SetViewTarget('pagetitle', 100);
-?>
-<a href="<?=$arParams['LIST_URL']?>" class="webform-small-button webform-small-button-blue webform-small-button-back">
-	<span class="webform-small-button-icon"></span>
-	<span class="webform-small-button-text"><?=GetMessage('ME_LIST_TITLE')?></span>
-</a>
-<?
-$this->EndViewTarget();
+\Bitrix\UI\Toolbar\Facade\Toolbar::addButton(
+	new \Bitrix\UI\Buttons\AddButton([
+		'link' => $arParams['LIST_URL'],
+		'text' => GetMessage('ME_LIST_TITLE')
+	]),
+);
+
+$APPLICATION->SetAdditionalCSS('/bitrix/js/intranet/intranet-common.css');
+
 ?>
 
 <script bxrunfirst="true">
@@ -170,6 +171,8 @@ $APPLICATION->IncludeComponent(
 		"SHOW_EXTRANET_USERS" => "NONE",
 	), null, array("HIDE_ICONS" => "Y")
 );
+
+\Bitrix\Main\UI\Extension::load('intranet.old-interface.sidebar-filter');
 ?>
 <div id="keeper_selector_content" class="menu-popup" style="display: none;"></div>
 <div class="sidebar-block">

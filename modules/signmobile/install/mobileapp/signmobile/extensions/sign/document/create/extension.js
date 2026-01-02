@@ -199,7 +199,7 @@ jn.define('sign/document/create', (require, exports, module) => {
 							this.button = ref;
 						},
 						text: Loc.getMessage('SIGN_MOBILE_MASTER_DOCUMENT_CREATION_STEP_NEXT_STEP_BUTTON_TEXT'),
-						testId: 'Button',
+						testId: 'documentCreate-button-tryAgain',
 						size: ButtonSize.XL,
 						design: ButtonDesign.FILLED,
 						loading: this.state.pending,
@@ -213,7 +213,7 @@ jn.define('sign/document/create', (require, exports, module) => {
 								backgroundColor: Color.bgContentPrimary.toHex(),
 							},
 							text: Loc.getMessage('SIGN_MOBILE_MASTER_CLOSE_BUTTON_NAME'),
-							testId: 'Button',
+							testId: 'documentCreate-button-close',
 							size: ButtonSize.XL,
 							design: ButtonDesign.PLAN_ACCENT,
 							loading: false,

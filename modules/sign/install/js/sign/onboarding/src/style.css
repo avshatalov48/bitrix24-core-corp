@@ -16,10 +16,16 @@
 	text-align: left;
 }
 
-.sign__b2e-onboarding-welcome-popup .sign__onboarding-popup-content_footer {
+.sign__b2e-onboarding-welcome-popup .sign__onboarding-popup-content_text_container {
+	display: flex;
+	flex-direction: column;
+}
+
+.sign__b2e-onboarding-welcome-popup .sign__onboarding-popup-content_text {
 	font-weight: var(--ui-font-weight-normal);
 	font-size: var(--ui-font-size-xl);
 	margin-top: 16px;
+	margin-left: 20px;
 }
 
 .sign__b2e-onboarding-welcome-popup .sign__onboarding-popup-content_header-title {
@@ -28,8 +34,26 @@
 	color: var(--ui-color-palette-black-base);
 }
 
-.sign__b2e-onboarding-welcome-popup .sign__onboarding-popup-content_promo-video-wrapper {
-	margin-top: 16px;
+.sign__b2e-onboarding-welcome-popup .sign__onboarding-popup-content_img {
+	background-image: url("./images/sign_documents.png");
+	background-position: left;
+	background-repeat: no-repeat;
+	background-size: 150px 120px;
+	min-width: 150px;
+	height: 120px;
+	margin-left: 20px;
+}
+
+.sign__onboarding-popup-content_body {
+	display: flex;
+	flex-direction: row;
+	align-items: center;
+	background-color: var(--ui-color-blue-06);
+	border-radius: var(--ui-border-radius-2xl);
+	background-image: url("./images/popup_backgroung.svg");
+	background-repeat: no-repeat;
+	background-size: cover;
+	height: 180px;
 }
 
 .sign__b2e-onboarding-welcome-popup .sign__onboarding-popup-content_header {
@@ -37,6 +61,16 @@
 	flex-direction: row;
 	align-items: center;
 	margin-bottom: 10px;
+}
+
+.sign__b2e-onboarding-welcome-popup_sign__onboarding-popup-button {
+	margin-right: 20px;
+}
+
+.sign__b2e-onboarding-welcome-popup .sign__onboarding-popup-content_footer {
+	font-weight: var(--ui-font-weight-normal);
+	font-size: var(--ui-font-size-xl);
+	margin-top: 16px;
 }
 
 .sign__b2e-onboarding-welcome-popup .sign__onboarding-popup-content_header-icon {
@@ -49,4 +83,97 @@
 	justify-content: center;
 	border-radius: var(--ui-border-radius-xs);
 	background-color: var(--ui-color-primary);
+}
+
+.sign__b2e-onboarding-signing-test-banner {
+	display: flex;
+	position: relative;
+	flex-direction: row;
+	align-items: center;
+	background-color: #EDF7FF;
+	height: 174px;
+	width: 100%;
+	border-radius: 16px;
+	margin-bottom: 10px;
+	background-image: url("./images/banner_background.svg");
+	background-repeat: no-repeat;
+	background-size: cover;
+}
+
+.sign__b2e-onboarding-signing-test-banner_content {
+	display: flex;
+	flex-direction: column;
+	margin-left: 30px;
+	width: 100%;
+}
+.sign__b2e-onboarding-signing-test-banner-button {
+	display: inline-block;
+	width: fit-content;
+	margin-top: 25px;
+}
+
+.sign__b2e-onboarding-signing-test-banner .sign__onboarding-banner-content_img {
+	background-image: url("./images/sign_documents.png");
+	background-position: left;
+	background-repeat: no-repeat;
+	background-size: 145px 110px;
+	min-width: 145px;
+	height: 110px;
+	margin-left: 20px;
+}
+
+.sign__b2e-onboarding-signing-test-banner-title {
+	font-family: var(--ui-font-family-primary, var(--ui-font-family-system));
+	color: var(--ui-color-palette-black-solid);
+	font-size: var(--ui-font-size-2xl);
+	overflow-wrap: break-word;
+	word-break: break-word;
+	font-weight: 500;
+	line-height: 26px;
+}
+
+.sign__b2e-onboarding-signing-test-banner-title-description {
+	font-family: var(--ui-font-family-primary, var(--ui-font-family-system));
+	font-size: var(--ui-font-size-xl);
+	color: var(--ui-color-palette-gray-90);
+	overflow-wrap: break-word;
+	word-break: break-word;
+	white-space: normal;
+	font-weight: 400;
+	line-height: 20px;
+	margin-top: 15px;
+	max-width: 90%;
+}
+
+.sign__b2e-onboarding-signing-test-banner_close_btn {
+	border: none;
+	position: absolute;
+	top: 16px;
+	right: 5px;
+	cursor: pointer;
+	width: 32px;
+	height: 32px;
+	background-color: transparent;
+	background-image: url('./images/close_onboarding_banner_cross.svg');
+	background-repeat: no-repeat;
+	background-position: center;
+	background-size: contain;
+	margin-right: 14px;
+}
+
+.sign__b2e-onboarding-signing-test-banner-title-container {
+	display: flex;
+	flex-direction: row;
+	justify-content: space-between;
+}
+
+.sign__b2e-close-onboarding-signing-warning-popup-content {
+	font-family: var(--ui-font-family-primary, var(--ui-font-family-system));
+	font-size: var(--ui-font-size-xl);
+	color: var(--ui-color-palette-gray-90);
+	overflow-wrap: break-word;
+	word-break: break-word;
+	white-space: normal;
+	font-weight: 400;
+	margin-top: 20px;
 }

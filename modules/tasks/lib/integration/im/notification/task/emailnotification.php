@@ -41,6 +41,6 @@ class EmailNotification implements NotificationInterface
 		}
 
 		return (new Link($this->notification->getTask(), $this->notification->getRecepient(), Link::MODE_EMAIL))
-			->placeLinkAnchor($preparedMessage);
+			->placeLinkAnchor($preparedMessage, $this->notification->getAnalyticsData());
 	}
 }

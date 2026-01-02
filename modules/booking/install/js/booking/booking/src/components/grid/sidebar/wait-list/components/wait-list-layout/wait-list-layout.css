@@ -1,0 +1,114 @@
+.booking-wait-list {
+	--height: 350px;
+
+	position: relative;
+	flex: 1;
+	display: flex;
+	flex-direction: column;
+	overflow: hidden;
+	margin-top: 14px;
+	padding: 10px;
+	background: var(--ui-color-palette-white-base);
+	border-radius: 12px;
+	border: 1px solid var(--ui-color-base-10);
+	pointer-events: all;
+	max-height: 18px;
+	/*box-shadow: 0 0 30px 10px var(--ui-color-base-02);*/
+	transition: max-height 180ms ease;
+}
+
+.booking-wait-list.--expand {
+	max-height: var(--height);
+	min-height: var(--height);
+}
+
+.ui-draggable--type-move .ui-draggable--container .booking-wait-list {
+	cursor: grabbing;
+}
+
+.booking--wait-list-content {
+	height: calc(var(--height) - 32);
+	overflow-y: auto;
+	scrollbar-width: none;
+	-ms-overflow-style: none;
+}
+
+.booking--wait-list-content::-webkit-scrollbar {
+	display: none;
+}
+
+.booking-wait-list-empty {
+	position: absolute;
+	inset: 12px;
+	display: flex;
+	flex-direction: column;
+	align-items: center;
+	justify-content: center;
+	margin-top: 28px;
+	padding: 8px;
+	border: 1px dashed var(--ui-color-palette-blue-40);
+	border-radius: 3px;
+	opacity: 0;
+	transition: opacity 150ms ease;
+	transition-delay: 180ms;
+	user-select: none;
+}
+
+.booking-wait-list.--expand .booking-wait-list-empty {
+	opacity: 1;
+}
+
+.booking-wait-list-empty-icon {
+	margin-bottom: 12px;
+	width: 90px;
+	height: 89px;
+	background-image: url("data:image/svg+xml,%3Csvg viewBox='0 0 90 89' fill='none' xmlns='http://www.w3.org/2000/svg'%3E%3Cg filter='url(%23filter0_d_6613_23925)'%3E%3Ccircle cx='45' cy='53.5' r='32' fill='%232FC6F6' fill-opacity='0.1' shape-rendering='crispEdges'/%3E%3C/g%3E%3Cg filter='url(%23filter1_d_6613_23925)'%3E%3Crect x='23.9985' y='23.707' width='41.931' height='48.5517' rx='4.41379' fill='white'/%3E%3C/g%3E%3Crect x='41.335' y='32.7404' width='16.9951' height='2.75862' rx='1.37931' fill='%23EEF2F4'/%3E%3Crect x='41.335' y='44.9786' width='16.9951' height='2.75862' rx='1.37931' fill='%23EEF2F4'/%3E%3Crect x='41.335' y='57.2164' width='11.9782' height='2.75862' rx='1.37931' fill='%23EEF2F4'/%3E%3Cpath fill-rule='evenodd' clip-rule='evenodd' d='M30.2517 36.2849C30.9811 37.9071 32.623 38.9232 34.4 38.8524C36.7576 38.8041 38.6304 36.8549 38.5846 34.4971C38.5845 32.7184 37.5037 31.1182 35.8538 30.4541C34.204 29.7899 32.3161 30.1949 31.0839 31.4775C29.8516 32.76 29.5223 34.6627 30.2517 36.2849ZM33.6745 32.8616C33.6745 32.5596 33.9193 32.3148 34.2213 32.3148C34.5233 32.3148 34.7682 32.5596 34.7682 32.8616V35.0638C34.1641 35.0638 33.6745 34.5742 33.6745 33.9702V32.8616ZM36.4115 34.5144C36.4115 34.211 36.1656 33.9651 35.8622 33.9651H34.771V35.0638H35.8622C36.1656 35.0638 36.4115 34.8178 36.4115 34.5144Z' fill='%237FDEFC'/%3E%3Cpath fill-rule='evenodd' clip-rule='evenodd' d='M30.2517 48.3126C30.9811 49.9347 32.623 50.9509 34.4 50.8801C36.7576 50.8318 38.6304 48.8826 38.5846 46.5247C38.5845 44.7461 37.5037 43.1459 35.8538 42.4817C34.204 41.8175 32.3161 42.2226 31.0839 43.5051C29.8516 44.7877 29.5223 46.6904 30.2517 48.3126ZM33.6745 44.8777C33.6745 44.5757 33.9193 44.3309 34.2213 44.3309C34.5233 44.3309 34.7682 44.5757 34.7682 44.8777V47.0654C34.1641 47.0654 33.6745 46.5757 33.6745 45.9717V44.8777ZM36.4115 46.5188C36.4115 46.217 36.1669 45.9723 35.8651 45.9723H34.771V47.0652H35.8651C36.1669 47.0652 36.4115 46.8205 36.4115 46.5188Z' fill='%237FDEFC'/%3E%3Cpath fill-rule='evenodd' clip-rule='evenodd' d='M30.2517 60.3402C30.9811 61.9624 32.623 62.9785 34.4 62.9077C36.7576 62.8594 38.6304 60.9102 38.5846 58.5523C38.5845 56.7737 37.5037 55.1735 35.8538 54.5093C34.204 53.8452 32.3161 54.2502 31.0839 55.5327C29.8516 56.8153 29.5223 58.718 30.2517 60.3402ZM33.6745 56.9053C33.6745 56.6032 33.9193 56.3584 34.2213 56.3584C34.5233 56.3584 34.7682 56.6032 34.7682 56.9053V59.0929C34.1641 59.0929 33.6745 58.6032 33.6745 57.9992V56.9053ZM36.4115 58.5463C36.4115 58.2445 36.1669 57.9998 35.8651 57.9998H34.771V59.0927H35.8651C36.1669 59.0927 36.4115 58.848 36.4115 58.5463Z' fill='%237FDEFC'/%3E%3Cdefs%3E%3Cfilter id='filter0_d_6613_23925' x='0.862069' y='0.534483' width='88.2759' height='88.2759' filterUnits='userSpaceOnUse' color-interpolation-filters='sRGB'%3E%3CfeFlood flood-opacity='0' result='BackgroundImageFix'/%3E%3CfeColorMatrix in='SourceAlpha' type='matrix' values='0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 127 0' result='hardAlpha'/%3E%3CfeOffset dy='-8.82759'/%3E%3CfeGaussianBlur stdDeviation='6.06897'/%3E%3CfeComposite in2='hardAlpha' operator='out'/%3E%3CfeColorMatrix type='matrix' values='0 0 0 0 0.917647 0 0 0 0 0.976471 0 0 0 0 0.996078 0 0 0 0.3 0'/%3E%3CfeBlend mode='normal' in2='BackgroundImageFix' result='effect1_dropShadow_6613_23925'/%3E%3CfeBlend mode='normal' in='SourceGraphic' in2='effect1_dropShadow_6613_23925' result='shape'/%3E%3C/filter%3E%3Cfilter id='filter1_d_6613_23925' x='17.3778' y='19.2932' width='55.1725' height='61.7931' filterUnits='userSpaceOnUse' color-interpolation-filters='sRGB'%3E%3CfeFlood flood-opacity='0' result='BackgroundImageFix'/%3E%3CfeColorMatrix in='SourceAlpha' type='matrix' values='0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 127 0' result='hardAlpha'/%3E%3CfeOffset dy='2.2069'/%3E%3CfeGaussianBlur stdDeviation='3.31034'/%3E%3CfeComposite in2='hardAlpha' operator='out'/%3E%3CfeColorMatrix type='matrix' values='0 0 0 0 0 0 0 0 0 0.275107 0 0 0 0 0.366809 0 0 0 0.04 0'/%3E%3CfeBlend mode='normal' in2='BackgroundImageFix' result='effect1_dropShadow_6613_23925'/%3E%3CfeBlend mode='normal' in='SourceGraphic' in2='effect1_dropShadow_6613_23925' result='shape'/%3E%3C/filter%3E%3C/defs%3E%3C/svg%3E%0A");
+	background-repeat: no-repeat;
+	background-position: center;
+}
+
+.booking-wait-list-empty-title {
+	margin-bottom: 6px;
+	color: var(--ui-color-base-80);
+}
+
+.booking-wait-list-empty-subtitle {
+	margin-bottom: 6px;
+	text-align: center;
+	color: var(--ui-color-base-50);
+	font-size: var(--ui-font-size-xs);
+}
+
+.booking-wait-list-empty-help {
+	border-bottom: 1px dashed var(--ui-color-base-20);
+	color: var(--ui-color-base-50);
+	font-size: var(--ui-font-size-sm);
+	cursor: pointer;
+}
+
+.booking-wait-list-header {
+	position: relative;
+	display: flex;
+	align-items: center;
+	padding-left: 5px;
+	background: inherit;
+	z-index: 1;
+	padding-bottom: 10px;
+}
+
+.booking-wait-list-title {
+	color: var(--ui-color-base-90);
+	font-size: var(--ui-font-size-sm);
+}
+
+.booking--wait-list-title-count {
+	color: rgb(var(--ui-color-palette-gray-50-rgb));
+	font-size: var(--ui-font-size-sm);
+	margin-left: 6px;
+}
+
+.booking-wait-list-buttons {
+	display: flex;
+	margin-left: auto;
+	align-items: center;
+}

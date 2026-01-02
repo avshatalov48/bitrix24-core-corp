@@ -284,53 +284,6 @@ BX.ready(function(){
 
 			reloadIntranetUstat({SECTION: section});
 		});
-
-		// tell about instrument
-		BX.bind(BX.findChild(sections[i], {className:'pulse-nav-item-footer'}), 'click', function(){
-
-			pulse_loading.load_start();
-
-			var section = this.parentNode.getAttribute('data-section-id');
-
-			BX.ajax({
-				url: '/ustat.php',
-				method: 'POST',
-				data: {
-					BY: 'tellabout',
-					WHAT: section,
-					AJAX: 1
-				},
-				dataType: 'html',
-				processData: false,
-				start: true,
-				onsuccess: function (html) {
-
-					var ok = html.search('AJAX_EXECUTED_SUCCESSFULLY');
-
-					if (ok < 0)
-					{
-						// to show error
-
-						return;
-					}
-
-
-					var ob = BX.processHTML(html);
-
-					// submit form
-					BX('pulse-main-wrap').innerHTML += ob.HTML;
-					BX.submit(BX('intranet-ustat-tell-about-form'), 'dummy');
-
-					return true;
-				},
-				onfailure: function ()
-				{
-					// to show error
-					return;
-				}
-			});
-		});
-
 	}
 
 	BX.bind(BX('pulse-close-top-btn'), 'click', function(event){
@@ -774,7 +727,6 @@ BX.ready(function(){
 						--></div><!--
 					--></div><!--
 					--><div class="pulse-nav-item-corner"></div><!--
-					--><div class="pulse-nav-item-footer" <?=$arResult['ALLOW_TELL_ABOUT']?'':'style="display:none"'?>><?=GetMessage('INTRANET_USTAT_USER_SECTION_TELL_ABOUT')?><span class="pulse-nav-item-footer-icon"></span></div><!--
 				--></div><!--
 			--><? endforeach; ?><!--
 

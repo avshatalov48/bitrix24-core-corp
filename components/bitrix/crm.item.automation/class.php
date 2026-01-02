@@ -78,7 +78,7 @@ class CrmItemAutomation extends \Bitrix\Crm\Component\Base
 				$this->errorCollection[] = new Main\Error(Loc::getMessage('CRM_ITEM_AUTOMATION_WRONG_CATEGORY'));
 				return;
 			}
-			$categories = Container::getInstance()->getUserPermissions()->filterAvailableForReadingCategories(
+			$categories = Container::getInstance()->getUserPermissions()->category()->filterAvailableForReadingCategories(
 				$factory->getCategories()
 			);
 			foreach ($categories as $category)

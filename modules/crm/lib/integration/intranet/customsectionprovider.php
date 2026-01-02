@@ -11,11 +11,14 @@ use Bitrix\Crm\Integration\IntranetManager;
 use Bitrix\Crm\Service\Container;
 use Bitrix\Crm\Service\Factory\Dynamic;
 use Bitrix\Crm\Service\Router;
+use Bitrix\Crm\Service\Router\Page\Item;
+use Bitrix\Crm\Service\Router\Enum\Scope;
 use Bitrix\Intranet\CustomSection\DataStructures\CustomSection;
 use Bitrix\Intranet\CustomSection\Entity\CustomSectionPageTable;
 use Bitrix\Intranet\CustomSection\Manager;
 use Bitrix\Intranet\CustomSection\Provider;
 use Bitrix\Intranet\CustomSection\Provider\Component;
+use Bitrix\Main\Application;
 use Bitrix\Main\Web\Uri;
 
 class CustomSectionProvider extends Provider
@@ -66,8 +69,8 @@ class CustomSectionProvider extends Provider
 		$userPermissions = Container::getInstance()->getUserPermissions($userId);
 
 		return
-			$userPermissions->checkReadPermissions($entityTypeId)
-			|| $userPermissions->canUpdateType($entityTypeId)
+			$userPermissions->entityType()->canReadItems($entityTypeId)
+			|| $userPermissions->dynamicType()->canUpdate($entityTypeId)
 		;
 	}
 
@@ -122,13 +125,18 @@ class CustomSectionProvider extends Provider
 					];
 
 					$listView = $router->getCurrentListView($entityTypeId);
-					$router->setDefaultComponent($listView === Router::LIST_VIEW_LIST
-						? 'bitrix:crm.item.list'
-						: 'bitrix:crm.item.kanban'
-					);
-					$router->setDefaultComponentParameters([
+					$request = Application::getInstance()->getContext()->getRequest();
+					$routerPageArgs = [
 						'entityTypeId' => $entityTypeId,
-					]);
+						'request' => $request,
+						'currentScope' => Scope::AutomatedSolution,
+					];
+
+					$defaultPage = $listView === Router::LIST_VIEW_LIST
+						? new Item\ListPage(...$routerPageArgs)
+						: new Item\KanbanPage(...$routerPageArgs);
+
+					$router->setDefaultPage($defaultPage);
 				}
 			}
 		}

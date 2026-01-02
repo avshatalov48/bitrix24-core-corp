@@ -1,4 +1,4 @@
-<?
+<?php
 
 namespace Bitrix\Mobile\Tab;
 
@@ -8,7 +8,6 @@ use Bitrix\Main\ArgumentNullException;
 use Bitrix\Main\ArgumentOutOfRangeException;
 use Bitrix\Main\Config\Option;
 use Bitrix\Main\IO\Directory;
-use Bitrix\Main\IO\File;
 use Bitrix\Main\IO\FileNotFoundException;
 use Bitrix\Main\IO\FileSystemEntry;
 use Bitrix\Main\Loader;
@@ -20,17 +19,15 @@ use Bitrix\Mobile\Context;
 
 class Manager
 {
-	const tabDirectoryPath = "/bitrix/modules/mobile/tabs/";
-	const configPath = "/bitrix/modules/mobile/.tab_config.php";
-	const maxCount = 5;
-	const maxSortValue = 1000;
+	public const tabDirectoryPath = "/bitrix/modules/mobile/tabs/";
+	public const configPath = "/bitrix/modules/mobile/.tab_config.php";
+	public const maxCount = 5;
+	public const maxSortValue = 1000;
 
 
-	/** @type array */
-	private $tabList;
-	/** @type Context */
-	private $context;
-	private $config;
+	private array $tabList;
+	private Context $context;
+	private array $config;
 
 	/**
 	 * Manager constructor.
@@ -85,7 +82,7 @@ class Manager
 				if (!$this->isTabable($interfaces) && !$this->isFactoryTabable($interfaces))
 				{
 					throw new SystemException(
-						"Tab class '{$class}' not implements \\Bitrix\\Mobile\\Tab\\Tabable or \\Bitrix\\Mobile\\Tab\\FactoryTabable"
+						"Tab class '{$class}' not implements \\Bitrix\\Mobile\\Tab\\Tabable or \\Bitrix\\Mobile\\Tab\\FactoryTabable",
 					);
 				}
 			}
@@ -111,16 +108,10 @@ class Manager
 		{
 			$this->config["presets"]["manual"] = $savedConfig;
 		}
-	}
-
-	private function isTabable(array $interfaces): bool
-	{
-		return in_array('Bitrix\\Mobile\\Tab\\Tabable', $interfaces, true);
-	}
-
-	private function isFactoryTabable(array $interfaces): bool
-	{
-		return in_array('Bitrix\\Mobile\\Tab\\FactoryTabable', $interfaces, true);
+		else
+		{
+			$this->config["presets"]["manual"] = $this->getActiveTabs();
+		}
 	}
 
 	/**
@@ -150,10 +141,13 @@ class Manager
 			if ($this->getTabAvailabilityState($tabId))
 			{
 				$tabInstance = $this->getTabInstance($tabId);
-				$tab = array_merge(["id"=>$tabInstance->getId(), "title"=>$tabInstance->getShortTitle()], $tabInstance->getData());
+				$tab = array_merge([
+					'id' => $tabInstance->getId(),
+					'title' => $tabInstance->getShortTitle(),
+				], $tabInstance->getData());
 				if ($tabConfig != null && array_key_exists($tabId, $tabConfig))
 				{
-					$tab["sort"] = $tabConfig[$tabId];
+					$tab['sort'] = $tabConfig[$tabId];
 				}
 				$tabList[] = $tab;
 			}
@@ -186,6 +180,7 @@ class Manager
 		{
 			$presetConfig = $this->setDefaultUserPreset();
 		}
+
 		return $this->resolveTabs($presetConfig, $permanentTabs);
 	}
 
@@ -217,6 +212,7 @@ class Manager
 			{
 				$value = self::maxSortValue - 1;
 			}
+
 			return (int)$value;
 
 		}, $config);
@@ -226,36 +222,6 @@ class Manager
 		$CACHE_MANAGER->ClearByTag('mobile_custom_menu' . $this->context->userId);
 
 		return $this->getActiveTabs();
-	}
-
-	/**
-	 * Resolve and return final configuration
-	 * @param $config
-	 * @param array $required
-	 * @return array
-	 */
-	private function resolveTabs($config, $required = [])
-	{
-		$result = array_keys($required);
-		$unchangeable = is_array($this->config["unchangeable"]) ? $this->config["unchangeable"] : [];
-		$configKeys = array_diff(array_keys($config), $result);
-		$sorts = array_merge($required, $config, $unchangeable);
-
-		$tabs = array_reduce($configKeys, function ($result, $tabId) {
-			if (count($result) < Manager::maxCount)
-			{
-				$result[] = $tabId;
-			}
-
-			return $result;
-		}, $result);
-
-		$result = array_filter($sorts, function ($tabId) use ($tabs) {
-			return in_array($tabId, $tabs) && $this->getTabAvailabilityState($tabId);
-		}, ARRAY_FILTER_USE_KEY);
-
-		asort($result);
-		return $result;
 	}
 
 	public function defaultConfig()
@@ -279,6 +245,7 @@ class Manager
 			Option::set("mobile", "tabs_preset_{$this->context->userId}", $name, $this->context->siteId);//set preset name
 			Option::set("mobile", "tabs_{$this->context->userId}", "", $this->context->siteId);//reset custom config
 			$CACHE_MANAGER->ClearByTag('mobile_custom_menu' . $this->context->userId);
+
 			return $this->getActiveTabs();
 		}
 
@@ -320,26 +287,9 @@ class Manager
 			return $this->config["presets"][$preset];
 		}
 
+		$this->setCustomConfig($this->config["defaultUserPreset"]);
+
 		return $this->config["defaultUserPreset"];
-	}
-
-	/**
-	 * Return configuration of custom preset
-	 * @return bool|mixed
-	 * @throws ArgumentException
-	 * @throws ArgumentNullException
-	 * @throws ArgumentOutOfRangeException
-	 */
-	private function getUserPresetConfig()
-	{
-		$option = Option::get("mobile", "tabs_{$this->context->userId}", false, $this->context->siteId);
-		$result = false;
-		if ($option)
-		{
-			$result = Json::decode($option);
-		}
-
-		return $result;
 	}
 
 	/**
@@ -381,8 +331,11 @@ class Manager
 	{
 		$result = [];
 		$presets = $this->config["presets"];
+		$presetsOptions = $this->config["presetsOptions"] ?? [];
 		$optionalTabs = $this->config["presetOptionalTabs"] ?? [];
-		foreach ($presets as $presetId => $tabs) {
+
+		foreach ($presets as $presetId => $tabs)
+		{
 			$tabsIDs = array_keys($tabs);
 			$available = true;
 			$unavailableOptionalTabs = [];
@@ -401,14 +354,18 @@ class Manager
 
 					if (!$this->getTabInstance($tabId)->isAvailable())
 					{
-						if (isset($optionalTabs[$presetId]) && is_array($optionalTabs[$presetId])) {
-							if (in_array($tabId, $optionalTabs[$presetId])) {
+						if (isset($optionalTabs[$presetId]) && is_array($optionalTabs[$presetId]))
+						{
+							if (in_array($tabId, $optionalTabs[$presetId]))
+							{
 								$unavailableOptionalTabs[] = $tabId;
+
 								continue;
 							}
 						}
 
 						$available = false;
+
 						break;
 					}
 				}
@@ -416,19 +373,78 @@ class Manager
 
 			if ($available)
 			{
-				$tabs = array_filter($tabs, function( $sort, $id) use ($unavailableOptionalTabs) {
+				$tabs = array_filter($tabs, static function( $sort, $id) use ($unavailableOptionalTabs) {
 					return !in_array($id, $unavailableOptionalTabs);
 				}, ARRAY_FILTER_USE_BOTH);
 
+				$presetOption = $presetsOptions[$presetId];
 				$result[$presetId] = [
 					'tabs' => $tabs,
-					'title' => Loc::getMessage(
-						$this->getLastVersionedMessageKey(mb_strtoupper("TAB_PRESET_NAME_$presetId")),
-					),
+					'sort' => $presetOption['sort'],
+					'title' => Loc::getMessage($presetOption['messageCode']),
 					'tabsDescription' => $this->getTabsDescription($presetId, array_keys($tabs)),
 				];
 			}
+		}
 
+		return $result;
+	}
+
+	private function isTabable(array $interfaces): bool
+	{
+		return in_array('Bitrix\\Mobile\\Tab\\Tabable', $interfaces, true);
+	}
+
+	private function isFactoryTabable(array $interfaces): bool
+	{
+		return in_array('Bitrix\\Mobile\\Tab\\FactoryTabable', $interfaces, true);
+	}
+
+	/**
+	 * Resolve and return final configuration
+	 * @param $config
+	 * @param array $required
+	 * @return array
+	 */
+	private function resolveTabs($config, $required = [])
+	{
+		$result = array_keys($required);
+		$unchangeable = is_array($this->config["unchangeable"]) ? $this->config["unchangeable"] : [];
+		$configKeys = array_diff(array_keys($config), $result);
+		$sorts = array_merge($required, $config, $unchangeable);
+
+		$tabs = array_reduce($configKeys, function ($result, $tabId) {
+			if (count($result) < Manager::maxCount)
+			{
+				$result[] = $tabId;
+			}
+
+			return $result;
+		}, $result);
+
+		$result = array_filter($sorts, function ($tabId) use ($tabs) {
+			return in_array($tabId, $tabs) && $this->getTabAvailabilityState($tabId);
+		}, ARRAY_FILTER_USE_KEY);
+
+		asort($result);
+
+		return $result;
+	}
+
+	/**
+	 * Return configuration of custom preset
+	 * @return bool|mixed
+	 * @throws ArgumentException
+	 * @throws ArgumentNullException
+	 * @throws ArgumentOutOfRangeException
+	 */
+	private function getUserPresetConfig()
+	{
+		$option = Option::get("mobile", "tabs_{$this->context->userId}", false, $this->context->siteId);
+		$result = false;
+		if ($option)
+		{
+			$result = Json::decode($option);
 		}
 
 		return $result;
@@ -440,41 +456,15 @@ class Manager
 			array_combine(
 				$tabs,
 				array_map(fn($tabId) => Loc::getMessage(mb_strtoupper("{$presetId}_{$tabId}_DESCRIPTION")), $tabs),
-			)
+			),
 		);
-	}
-
-	private function getLastVersionedMessageKey(string $baseKey): string
-	{
-		$resultKey = $baseKey;
-
-		$version = 2;
-		$proceed = true;
-
-		while ($proceed)
-		{
-			$nextResultKey = "{$baseKey}_V{$version}";
-			$message = Loc::getMessage($nextResultKey);
-
-			if ($message !== null)
-			{
-				$resultKey = $nextResultKey;
-			}
-			else
-			{
-				$proceed = false;
-			}
-
-			++$version;
-		}
-
-		return $resultKey;
 	}
 
 	private function setDefaultUserPreset()
 	{
 		$defaultTabs = $this->config["defaultUserPreset"];
 		$this->setCustomConfig($defaultTabs);
+
 		return $defaultTabs;
 	}
 }

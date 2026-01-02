@@ -1,14 +1,14 @@
-<?
-$MESS["AUTH_OTP_PLEASE_AUTH"] = "Авторизация";
-$MESS["AUTH_OTP_OTP_MSGVER_1"] = "Введите одноразовый код:";
-$MESS["AUTH_OTP_AUTHORIZE"] = "Войти";
-$MESS["AUTH_OTP_CAPTCHA_PROMT"] = "Введите слово на картинке";
-$MESS["AUTH_OTP_REMEMBER_ME"] = "Запомнить одноразовый пароль на этом компьютере";
-$MESS["AUTH_OTP_AUTH_BACK"] = "Вернуться на форму авторизации";
-$MESS["AUTH_OTP_HELP_LINK"] = "Нужна помощь?";
-$MESS["AUTH_OTP_HELP_TITLE"] = "Двухэтапная авторизация";
-$MESS["AUTH_OTP_BACK"] = "Назад";
-$MESS["AUTH_OTP_HELP_TEXT_MSGVER_1"] = "
+<?php
+$MESS["INTRANET_AUTH_OTP_TITLE"] = "Войти в Битрикс24";
+$MESS["INTRANET_AUTH_OTP_PLACEHOLDER"] = "Введите одноразовый код";
+$MESS["INTRANET_AUTH_OTP_CONTINUE_BUTTON"] = "Продолжить";
+$MESS["INTRANET_AUTH_OTP_LINK"] = "Войти";
+$MESS["INTRANET_AUTH_OTP_CAPTCHA_PROMT"] = "Введите буквы с картинки";
+$MESS["INTRANET_AUTH_OTP_REMEMBER_ME"] = "Запомнить на этом устройстве";
+$MESS["INTRANET_AUTH_OTP_HELP"] = "Помощь";
+$MESS["INTRANET_AUTH_OTP_HELP_TITLE"] = "Двухэтапная авторизация";
+$MESS["INTRANET_AUTH_OTP_BACK"] = "Назад";
+$MESS["INTRANET_AUTH_OTP_HELP_TEXT_MSGVER_1"] = "
 Для безопасности данных на вашем Битрикс24 администратор подключил дополнительную защиту - двухэтапную авторизацию.<br/><br/>
 Двухэтапная авторизация - это два фактора защиты. Первый – это ваш основной пароль. Второй фактор защиты – это одноразовый код, который вы получаете в мобильном телефоне (или с помощью специального брелка)<br/><br/>
 <div class=\"login-text-img\"><img src=\"#PATH#/images/ru/img1.png\"></div>

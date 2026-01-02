@@ -3,7 +3,8 @@
 }
 
 .import-preview .ui-section__content {
-	height: calc(100vh - 102px - 56px);
+	/* Height of preview title - 56px on win, 54px on linux */
+	height: calc(100% - 56px);
 }
 
 .import-preview .ui-section__row_box,
@@ -54,7 +55,7 @@
 	gap: 29px;
 	left: 0;
 	right: 0;
-	top: -94px;
+	top: 0;
 	bottom: 0;
 	margin: auto;
 }

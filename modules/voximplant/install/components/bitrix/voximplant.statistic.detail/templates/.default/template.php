@@ -13,6 +13,8 @@ if(!defined("B_PROLOG_INCLUDED") || B_PROLOG_INCLUDED!==true)die();
 use Bitrix\Main\Localization\Loc;
 use Bitrix\Voximplant\Security\Permissions;
 
+\Bitrix\Main\Loader::includeModule("ui");
+
 CJSCore::Init([
 	'main.polyfill.promise',
 	'voximplant.common',
@@ -42,8 +44,6 @@ if($isBitrix24Template)
 {
 	$bodyClass = $APPLICATION->GetPageProperty("BodyClass");
 	$APPLICATION->SetPageProperty("BodyClass", ($bodyClass ? $bodyClass." " : "")."pagetitle-toolbar-field-view");
-	$this->SetViewTarget("inside_pagetitle", 0);
-	?><div class="pagetitle-container pagetitle-flexible-space"><?
 }
 
 $inReportSlider = (($arResult['IS_EXTERNAL_FILTER'] ?? null) && $arResult['REPORT_PARAMS']['from_analytics'] === 'Y');
@@ -65,36 +65,40 @@ if ($inReportSlider)
 	}
 }
 
-$APPLICATION->IncludeComponent(
-	"bitrix:main.ui.filter",
-	"",
-	[
-		"GRID_ID" => $arResult["GRID_ID"],
-		"FILTER_ID" => $arResult["FILTER_ID"],
-		"FILTER" => $arResult["FILTER"],
-		"FILTER_PRESETS" => $arResult["FILTER_PRESETS"] ?? null,
-		"ENABLE_LIVE_SEARCH" => false,
-		"DISABLE_SEARCH" => $inReportSlider,
-		"ENABLE_LABEL" => true
-	],
-	$component,
-	[]
-);
+\Bitrix\UI\Toolbar\Facade\Toolbar::addFilter([
+	"GRID_ID" => $arResult["GRID_ID"],
+	"FILTER_ID" => $arResult["FILTER_ID"],
+	"FILTER" => $arResult["FILTER"],
+	"FILTER_PRESETS" => $arResult["FILTER_PRESETS"] ?? null,
+	"ENABLE_LIVE_SEARCH" => false,
+	"DISABLE_SEARCH" => $inReportSlider,
+	"ENABLE_LABEL" => true
+]);
 
 if (!$inReportSlider)
 {
 ?>
 	<div class="pagetitle-container pagetitle-align-right-container">
-		<button id="vi-stat-export" class="ui-btn ui-btn-md ui-btn-themes ui-btn-light-border <?=($arResult['ENABLE_EXPORT'] ? '' : 'ui-btn-disabled')?>"><?=GetMessage("TEL_STAT_EXPORT_TO_EXCEL")?></button>
+		<?php
+			$button = new \Bitrix\UI\Buttons\Button([
+				'text' => Loc::getMessage('TEL_STAT_EXPORT_TO_EXCEL'),
+				'icon' => \Bitrix\UI\Buttons\Icon::DOWNLOAD,
+				'color' => \Bitrix\UI\Buttons\Color::LIGHT_BORDER,
+				'dataset' => [
+					'toolbar-collapsed-icon' => Bitrix\UI\Buttons\Icon::DOWNLOAD,
+				]
+			]);
+			$button->addAttribute('id', 'vi-stat-export');
+			$button->setDisabled(!$arResult['ENABLE_EXPORT']);
+
+			\Bitrix\UI\Toolbar\Facade\Toolbar::addButton($button);
+		?>
 	</div>
-<?
+<?php
 }
 
 if($isBitrix24Template)
 {
-	?></div><?
-	$this->EndViewTarget();
-
 	$isAdmin = CModule::IncludeModule('bitrix24') ? \CBitrix24::isPortalAdmin($USER->getId()) : $USER->IsAdmin();
 	if($isAdmin)
 	{
@@ -107,7 +111,7 @@ $totalContainer = '
 		<a href="#" onclick="BX.VoximplantStatisticDetail.Instance.onShowTotalClick(event);">' . Loc::getMessage("TEL_STAT_SHOW_COUNT") . '</a>
 	</div>
 ';
-?><div id="tel-stat-grid-container"><?
+?><div id="tel-stat-grid-container"><?php
 
 	$actionPanel = false;
 	$userPermissions = Permissions::createWithCurrentUser();
@@ -189,7 +193,7 @@ $totalContainer = '
 		$component,
 		array("HIDE_ICONS" => "Y")
 	);
-?></div><?
+?></div><?php
 
 	\Bitrix\Voximplant\Ui\Helper::renderCustomSelectors($arResult['FILTER_ID'], $arResult['FILTER']);
 ?>

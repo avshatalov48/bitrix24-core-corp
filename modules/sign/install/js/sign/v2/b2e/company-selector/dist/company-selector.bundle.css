@@ -55,7 +55,7 @@
 	white-space: nowrap;
 	overflow: hidden;
 	text-overflow: ellipsis;
-	font: 16px/21px var(--ui-font-family-system);
+	font: 16px/21px var(--ui-font-family-primary, var(--ui-font-family-system));
 	color: var(--ui-color-palette-gray-90);
 }
 
@@ -78,7 +78,7 @@
 }
 
 .sign-document-b2e-company-info-rq-inn {
-	font: 12px/14.32px var(--ui-font-family-system);
+	font: 12px/14.32px var(--ui-font-family-primary, var(--ui-font-family-system));
 	color: var(--ui-color-palette-gray-60);
 }
 
@@ -111,7 +111,7 @@
 }
 
 .sign-document-b2e-company-select-text {
-	font: 16px/20px var(--ui-font-family-system);
+	font: 16px/20px var(--ui-font-family-primary, var(--ui-font-family-system));
 	flex-grow: 1;
 	color: var(--ui-color-palette-gray-90);
 }
@@ -160,17 +160,17 @@
 
 .sign-document-b2e-company__provider_name {
 	display: block;
-	font: 16px/20px var(--ui-font-family-system);
+	font: 16px/20px var(--ui-font-family-primary, var(--ui-font-family-system));
 	color: var(--ui-color-palette-gray-90);
 }
 
 .sign-document-b2e-company__provider_descr {
-	font: 12px/14.32px var(--ui-font-family-system);
+	font: 12px/14.32px var(--ui-font-family-primary, var(--ui-font-family-system));
 	color: var(--ui-color-palette-gray-60);
 }
 
 .sign-document-b2e-company__provider_info {
-	font: 13px/15.51px var(--ui-font-family-system);
+	font: 13px/15.51px var(--ui-font-family-primary, var(--ui-font-family-system));
 	color: var(--ui-color-palette-gray-60);
 	padding: 10px 0 5px;
 }
@@ -220,7 +220,8 @@
 }
 
 .sign-document-b2e-company__provider_selected.--ses-ru:before,
-.sign-document-b2e-company__provider_selected.--ses-com:before {
+.sign-document-b2e-company__provider_selected.--ses-com:before,
+.sign-document-b2e-company__provider_selected.--ses-ru-express:before {
 	background-image: url(data:image/png;base64,iVBORw0KGgoAAAANSUhEUgAAACQAAAAkCAYAAADhAJiYAAAACXBIWXMAAAsTAAALEwEAmpwYAAAAAXNSR0IArs4c6QAAAARnQU1BAACxjwv8YQUAAANQSURBVHgBxZi/b9NAFMffnZOaFgopEkggEK5AohKgJKgLIETzD6B2YmAo3boBAyv9sXaAbh2QCgMzVQbWpELQBYErFpCQcAUqPyogoqipm9jHe5fYikMs2/n5lZxcchffJ+/dvXfPDCJqZK2o9VnWOFOUJAgxhlcCGEvITiEK2DaAgyHK9iovlVb0zJAR4fbAwg688PLvLc6VSQkRTbot7MV3Vw48DjM4EOj8i+0xRVGWsalBazIQbC4IzBcolfudsFV1BgfcgTZKADzkpjmHrixAWCCE0YSqPqMmdEYGM81Mo/XFfGBy0LqLmoJidTAJhHnbBRhHehXKdR+v7aU100UYUqo6pyvXQnJbM74MPRCzrIx+dTBPbddCCDMDPZKohJUKB72QdaANrpo+GYfnF/fBcTV0vHWkVRkqQJyx29CiCGb6REzCPDqnRoaSWYDeaZujF1uKNw6MI4IZPcij3QRTUvqNOMXteHwcWlA9DGnpcwmyWxZElbVbnOAsxq9Bk/KDWfpShmbEGEtysIUGTajdMFLoNo7ZToOI6ghMRQnuHq56D1MFiqCbx2KdhJHi8tgZQrSVc78s+LAjOgaDKsTQZQQU6DayzughBe6+N+HBiAq5n+V2w5AMLkCshhlJMGcHGMyfjsON9V14/ceG+TN9nohMwdCJ1o6uH1HkFUbIshHDba9j7pgMGpz9XpLuIhCa0IHJDHFY2CjDIM55T4tXII7GYMEoyc8OXHarCMFieZbCskYI8QlCiqzgwNCayhz2/vvtsoDBGPN8Jtc+/RrsXgyMw/KXybViLkx5Q+6if79pCrj/cU9ai1xEoYAmJqvUujL7A0G+WbIvhPT1ywNpCZTC1C9CHs5oHW3ugWcSmnzbgrATNxQT9pSOJZJr2+SrHXKbBr2RgdYZpoYbGPEYOQU9Elpnzmm7QHSmFVjyQpeFMIt6TTXrSR18rzSL0UCH7smAgf2ztV94gKg+YoxPyIFdgMFtntHTrOALJKEu9cuBHYbSJQzOVd/RMNtLKNNMd2JN0Zph/f0NYWR/0A2qMaodFa1BO9kpCP0UulapgFG5FLlCyaNVnujtemD1HxjmPsBHeoJTcYDncToCex/p0ZVHa6yDoqz4ucZP/wB0m3kbYruWeAAAAABJRU5ErkJggg==);
 }
 
@@ -252,13 +253,13 @@
 }
 
 .sign-document-b2e-company__provider_tour-step-head {
-	font: 22px/28px var(--ui-font-family-system);
+	font: 22px/28px var(--ui-font-family-primary, var(--ui-font-family-system));
 	color: var(--ui-color-palette-black-solid);
 	margin: 0;
 }
 
 .sign-document-b2e-company__provider_tour-step-text {
-	font: 15px/21px var(--ui-font-family-system);
+	font: 15px/21px var(--ui-font-family-primary, var(--ui-font-family-system));
 	color: var(--ui-color-palette-gray-90);
 	margin: 0;
 }

@@ -1,15 +1,17 @@
-import {Tag, Event, Loc, ajax as Ajax, Dom} from 'main.core';
-import { EventEmitter } from 'main.core.events';
-import { Menu, MenuItem } from 'main.popup';
+import { Loc, Runtime, Event, ajax as Ajax } from 'main.core';
+import { BaseEvent, EventEmitter } from 'main.core.events';
+import { CounterItem, CounterPanel } from 'ui.counterpanel';
 import { Filter } from './counters-helper';
-import CountersItem from './counters-item';
 import { Controller as Viewed } from 'tasks.viewed';
+import { sendData } from 'ui.analytics';
 
-import 'ui.fonts.opensans';
-import './style.css';
-
-export class Counters
+export class Counters extends CounterPanel
 {
+	static READ_ALL_ID = 'read_all';
+	static COLOR_GRAY = 'GRAY';
+	static COLOR_THEME = 'THEME';
+	static COLOR_SUCCESS = 'SUCCESS';
+
 	static get counterTypes()
 	{
 		return {
@@ -108,38 +110,31 @@ export class Counters
 	static needUpdate = false;
 
 	static timeoutTTL = 5000;
+	#filterId: string;
 
 	constructor(options)
 	{
+		super({
+			target: options.renderTo,
+			items: [],
+			multiselect: true,
+			title: Loc.getMessage('TASKS_COUNTER_MY'),
+		});
+
 		this.userId = options.userId;
 		this.targetUserId = options.targetUserId;
 		this.groupId = options.groupId;
 		this.counters = options.counters;
 		this.initialCounterTypes = options.counterTypes;
-		this.renderTo = options.renderTo;
 		this.role = options.role;
 		this.signedParameters = options.signedParameters;
+		this.#filterId = options.filterId;
 
-		this.popupMenu = null;
-
-		this.$readAll = {
-			cropped: null,
-			layout: null
-		};
-		this.$more = null;
-		this.$moreArrow = null;
-		this.$other = {
-			cropped: null,
-			layout: null
-		};
-		this.$myTaskHead = null;
-
-		this.filter = new Filter({filterId: options.filterId});
-
-		this.bindEvents();
 		this.setData(this.counters);
-
 		this.initPull();
+
+		this.elements = this.getCounterItems(this.counters);
+		this.setItems(this.elements);
 	}
 
 	isMyTaskList()
@@ -196,7 +191,7 @@ export class Counters
 			comment_read_all: this.onCommentReadAll.bind(this),
 		};
 		const has = Object.prototype.hasOwnProperty;
-		const {command, params} = data;
+		const { command, params } = data;
 		if (has.call(eventHandlers, command))
 		{
 			const method = eventHandlers[command];
@@ -209,30 +204,183 @@ export class Counters
 
 	bindEvents()
 	{
+		EventEmitter.subscribe('BX.UI.CounterPanel.Item:activate', this.#onActivateItem.bind(this));
+		EventEmitter.subscribe('BX.UI.CounterPanel.Item:deactivate', this.#onDeactivateItem.bind(this));
+
+		EventEmitter.subscribe('BX.UI.CounterPanel.Item:click', this.#readAll.bind(this));
 		EventEmitter.subscribe('BX.Main.Filter:apply', this.onFilterApply.bind(this));
+
+		Event.bind(window, 'resize', Runtime.throttle(() => {
+			if (this.#isBigScreen())
+			{
+				this.getItemById(Counters.READ_ALL_ID)?.expand();
+			}
+			else
+			{
+				this.getItemById(Counters.READ_ALL_ID)?.collapse();
+			}
+		}, 10, this));
+	}
+
+	#readAll(event: BaseEvent)
+	{
+		const item = event.getData().item;
+
+		if (item.getId() === Counters.READ_ALL_ID)
+		{
+			if (
+				this.isUserTaskList()
+				|| (this.isProjectsTaskList() && this.role !== 'view_all')
+			)
+			{
+				this.readAllByRole();
+			}
+			else if (
+				this.myCounters.scrum_total_comments
+				|| this.otherCounters.scrum_foreign_comments
+			)
+			{
+				this.readAllForScrum();
+			}
+			else
+			{
+				this.readAllForProjects();
+			}
+
+			item.lock();
+		}
+	}
+
+	#isBigScreen(): Boolean
+	{
+		return window.innerWidth > 1520;
+	}
+
+	#onActivateItem(event: BaseEvent)
+	{
+		const item = event.getData();
+		const itemId = item.id;
+		let count = null;
+
+		Object.values(this.elements).forEach((element) => {
+			if (element.id === itemId)
+			{
+				count = element;
+			}
+		});
+
+		this.#activateLinkedMenuItem(item);
+		this.filter.toggleByField(count);
+		this.#sendAnalyticsEvent(item);
+
+		EventEmitter.emit('Tasks.Toolbar:onItem', {
+			counter: count,
+		});
+
+		EventEmitter.emit('BX.Tasks.Counters:active', count);
+	}
+
+	#activateLinkedMenuItem(item: CounterItem): void
+	{
+		const items = this.getItems();
+
+		Object.values(items).forEach((element) => {
+			if (element.id !== item.id)
+			{
+				element.deactivate(false);
+			}
+		});
+
+		if (item.hasParentId())
+		{
+			this.getItemById(item.parentId).activate(false);
+		}
+	}
+
+	#onDeactivateItem(event: BaseEvent)
+	{
+		const item = event.getData();
+		let itemId = item.id;
+		let count = null;
+
+		if (item.parent)
+		{
+			item.getItems().forEach(childItemId => {
+				const childItem = this.getItemById(childItemId);
+
+				if (childItem.isActive)
+				{
+					itemId = childItem.id;
+				}
+			});
+		}
+
+		Object.values(this.elements).forEach((element) => {
+			if (element.id === itemId)
+			{
+				count = element;
+			}
+		});
+
+		this.#deactivateLinkedMenuItem(item);
+		this.filter.toggleByField(count);
+
+		EventEmitter.emit('Tasks.Toolbar:onItem', {
+			counter: count,
+		});
+
+		EventEmitter.emit('BX.Tasks.Counters:unActive', count);
+	}
+
+	#deactivateLinkedMenuItem(item: CounterItem): void
+	{
+		if (item.hasParentId())
+		{
+			const parentItem = this.getItemById(item.parentId);
+			parentItem.deactivate(false);
+
+			return;
+		}
+
+		if (item.parent)
+		{
+			item.getItems().forEach(childItemId => {
+				const childItem = this.getItemById(childItemId);
+
+				if (childItem.isActive)
+				{
+					childItem.deactivate(false);
+				}
+			});
+		}
+	}
+
+	#getColorByValue(value: Number, color: String): String
+	{
+		return Number(value) === 0 ? Counters.COLOR_GRAY : (color).toUpperCase();
 	}
 
 	onFilterApply()
 	{
-		this.filter.updateFields();
-
 		if (this.isRoleChanged())
 		{
+			this.getItems().forEach((item) => item.deactivate(false));
 			this.updateRole();
 			this.updateCountersData();
 		}
 		else
 		{
-			const counters = {...this.myCounters, ...this.otherCounters};
-			Object.values(counters).forEach((counter) => {
-				if (counter)
+			Object.values(this.elements).forEach((element) => {
+				const item = this.getItemById(element.id);
+				const isFiltered = this.filter.isFilteredByFieldValue(element.filterField, element.filterValue);
+
+				if (!isFiltered)
 				{
-					this.filter.isFilteredByFieldValue(counter.filterField, counter.filterValue)
-						? counter.active()
-						: counter.unActive()
-					;
+					item.deactivate(false);
 				}
 			});
+
+			this.#markCounters();
 		}
 	}
 
@@ -256,17 +404,17 @@ export class Counters
 			},
 			signedParameters: this.signedParameters,
 		}).then(
-			response => this.rerender(response.data),
-			response => console.log(response)
+			(response) => this.rerender(response.data),
+			(response) => console.log(response),
 		);
 
-		setTimeout(function() {
+		setTimeout(() => {
 			Counters.updateTimeout = false;
 			if (Counters.needUpdate)
 			{
 				this.updateCountersData();
 			}
-		}.bind(this), Counters.timeoutTTL);
+		}, Counters.timeoutTTL);
 	}
 
 	isRoleChanged()
@@ -300,29 +448,6 @@ export class Counters
 			return;
 		}
 
-		let newCommentsCount = 0;
-
-		Object.entries(data[this.groupId][this.role]).forEach(([type, value]) => {
-			if (this.myCounters[type])
-			{
-				this.myCounters[type].updateCount(value);
-
-				if (Counters.counterTypes.comment.includes(type))
-				{
-					newCommentsCount += value;
-				}
-			}
-			else if (this.additionalCounters[type] && Counters.counterTypes.comment.includes(type))
-			{
-				newCommentsCount += value;
-			}
-		});
-
-		if (newCommentsCount > 0)
-		{
-			this.$readAllInner.classList.remove('--fade');
-		}
-
 		if (data.isSonetEnabled !== undefined && data.isSonetEnabled === false)
 		{
 			this.updateCountersData();
@@ -339,63 +464,130 @@ export class Counters
 		this.updateCountersData();
 	}
 
-	getCounterItem(param: Object): Object
+	getCounterItems(counters): Array
 	{
-		return new CountersItem({
-			count: param.count,
-			name: param.name,
-			type: param.type,
-			color: param.color,
-			filterField: param.filterField,
-			filterValue: param.filterValue,
-			filter: this.filter,
+		let items = [];
+		let parentTotal = 0;
+		const parentItemId = 'tasks_more';
+		let hasOther = false;
+
+		const availableTypes = new Set([
+			...Counters.counterTypes.my,
+			...Counters.counterTypes.other,
+		]);
+
+		items = [];
+
+		Object.entries(counters).forEach(([type, data]) => {
+			if (!availableTypes.has(type))
+			{
+				return;
+			}
+
+			if (Counters.counterTypes.other.includes(type))
+			{
+				hasOther = true;
+				parentTotal += Number(data.VALUE);
+
+				items.push({
+					id: type,
+					title: this.getCounterNameByType(type),
+					value: {
+						value: Number(data.VALUE),
+						order: -1,
+					},
+					parentId: parentItemId,
+					color: this.#getColorByValue(Number(data.VALUE), data.STYLE),
+					filterField: data.FILTER_FIELD,
+					filterValue: data.FILTER_VALUE,
+				});
+			}
+			else
+			{
+				items.push({
+					id: type,
+					title: this.getCounterNameByType(type),
+					value: Number(data.VALUE),
+					isRestricted: false,
+					color: this.#getColorByValue(Number(data.VALUE), data.STYLE),
+					filterField: data.FILTER_FIELD,
+					filterValue: data.FILTER_VALUE,
+				});
+			}
 		});
+
+		if (!this.isUserTaskList() || this.isMyTaskList())
+		{
+			items.push({
+				id: Counters.READ_ALL_ID,
+				title: Loc.getMessage('TASKS_COUNTER_READ_ALL'),
+				collapsedIcon: 'chat-check',
+				collapsed: !this.#isBigScreen(),
+				locked: false,
+				dataAttributes: {
+					role: 'tasks-counters--item-head-read-all',
+				},
+			});
+		}
+
+		if (hasOther)
+		{
+			items.push({
+				id: parentItemId,
+				title: Loc.getMessage('TASKS_COUNTER_MORE'),
+				value: {
+					value: parentTotal,
+					order: -1,
+				},
+				isRestricted: false,
+				color: Counters.COLOR_THEME,
+			});
+		}
+
+		return items;
 	}
 
-	getCounterNameByType(type: String)
+	getCounterNameByType(type: String): String
 	{
 		if (Counters.counterTypes.expired.includes(type))
 		{
 			return Loc.getMessage('TASKS_COUNTER_EXPIRED');
 		}
-		else if (Counters.counterTypes.comment.includes(type))
+
+		if (Counters.counterTypes.comment.includes(type))
 		{
 			return Loc.getMessage('TASKS_COUNTER_NEW_COMMENTS');
 		}
+
+		return '';
 	}
 
 	setData(counters)
 	{
 		this.myCounters = {};
 		this.otherCounters = {};
-		this.additionalCounters = {};
 
-		const availableTypes = [
-			...Counters.counterTypes.additional,
+		const availableTypes = new Set([
 			...Counters.counterTypes.my,
-			...Counters.counterTypes.other
-		];
+			...Counters.counterTypes.other,
+		]);
 
 		Object.entries(counters).forEach(([type, data]) => {
-			if (!availableTypes.includes(type))
+			if (!availableTypes.has(type))
 			{
 				return;
 			}
 
-			const counterItem = this.getCounterItem({
-				type,
-				name: this.getCounterNameByType(type),
-				count: Number(data.VALUE),
-				color: data.STYLE,
+			const counterItem = {
+				id: type,
+				title: this.getCounterNameByType(type),
+				value: Number(data.VALUE),
+				color: this.#getColorByValue(Number(data.VALUE), data.STYLE),
 				filterField: data.FILTER_FIELD,
 				filterValue: data.FILTER_VALUE,
-			});
+			};
 
-			if (Counters.counterTypes.additional.includes(type))
-			{
-				this.additionalCounters[type] = counterItem;
-			}
-			else if (Counters.counterTypes.my.includes(type))
+			if (Counters.counterTypes.my.includes(type))
 			{
 				this.myCounters[type] = counterItem;
 			}
@@ -404,62 +596,6 @@ export class Counters
 				this.otherCounters[type] = counterItem;
 			}
 		});
-	}
-
-	isCroppedBlock(node: HTMLElement)
-	{
-		if(node)
-			return node.classList.contains('--cropp');
-	}
-
-	getReadAllBlock(): HTMLElement
-	{
-		const counters = {...this.myCounters, ...this.otherCounters, ...this.additionalCounters};
-		let newCommentsCount = 0;
-
-		Object.entries(counters).forEach(([type, counter]) => {
-			if (Counters.counterTypes.comment.includes(type))
-			{
-				newCommentsCount += counter.count;
-			}
-		});
-
-		this.$readAllInner = Tag.render`
-			<div data-role="tasks-counters--item-head-read-all" class="tasks-counters--item-head
-						${newCommentsCount === 0 ? '--fade' : ''} 
-						--action 
-						--read-all">
-				<div class="tasks-counters--item-head-read-all--icon"></div>
-				<div class="tasks-counters--item-head-read-all--text">
-					${Loc.getMessage('TASKS_COUNTER_READ_ALL')}
-				</div>
-			</div>
-		`;
-
-		let readAllClick = this.readAllForProjects.bind(this);
-		if (
-			this.isUserTaskList()
-			|| (this.isProjectsTaskList() && this.role !== 'view_all')
-		)
-		{
-			readAllClick = this.readAllByRole.bind(this);
-		}
-		else if (
-			this.myCounters['scrum_total_comments']
-			|| this.otherCounters['scrum_foreign_comments']
-		)
-		{
-			readAllClick = this.readAllForScrum.bind(this);
-		}
-
-		Event.bind(this.$readAllInner, 'click', readAllClick);
-		Event.bind(this.$readAllInner, 'click', () => this.$readAllInner.classList.add('--fade'));
-
-		this.$readAll.layout = Tag.render`
-			<div class="tasks-counters--item">${this.$readAllInner}</div>
-		`;
-
-		return this.$readAll.layout;
 	}
 
 	readAllByRole()
@@ -473,7 +609,8 @@ export class Counters
 
 	readAllForProjects()
 	{
-		const allCounters = {...this.myCounters, ...this.otherCounters};
+		const allCounters = { ...this.myCounters, ...this.otherCounters };
+
 		Object.entries(allCounters).forEach(([type, counter]) => {
 			if (Counters.counterTypes.comment.includes(type))
 			{
@@ -488,7 +625,8 @@ export class Counters
 
 	readAllForScrum()
 	{
-		const allCounters = {...this.myCounters, ...this.otherCounters};
+		const allCounters = { ...this.myCounters, ...this.otherCounters };
+
 		Object.entries(allCounters).forEach(([type, counter]) => {
 			if (Counters.counterTypes.comment.includes(type))
 			{
@@ -501,175 +639,166 @@ export class Counters
 		});
 	}
 
-	getPopup()
-	{
-		const itemsNode = [];
-
-		Object.values(this.otherCounters).forEach((counter) => {
-			const menuItem = new MenuItem({
-				html: counter.getPopupMenuItemContainer().innerHTML,
-			});
-			menuItem.onclick = this.onPopupItemClick.bind(this, menuItem, counter);
-
-			itemsNode.push(menuItem);
-		});
-
-		this.popupMenu = new Menu({
-			bindElement: this.$moreArrow,
-			className: 'tasks-counters--scope',
-			angle: {
-				offset: 96,
-			},
-			autoHide: true,
-			closeEsc: true,
-			offsetTop: 5,
-			offsetLeft: -67,
-			animation: 'fading-slide',
-			items: itemsNode,
-			events: {
-				onPopupShow: () => this.$more.classList.add('--hover'),
-				onPopupClose: () => {
-					this.$more.classList.remove('--hover');
-					this.popupMenu.destroy();
-				},
-			},
-		});
-
-		return this.popupMenu;
-	}
-
-	onPopupItemClick(item, counter)
-	{
-		counter.adjustClick();
-		this.popupMenu.close();
-	}
-
-	getMoreArrow()
-	{
-		if(!this.$moreArrow)
-		{
-			this.$moreArrow = Tag.render`
-				<div class="tasks-counters--item-counter-arrow"></div>
-			`;
-		}
-
-		return this.$moreArrow;
-	}
-
-	getMore()
-	{
-		let value = 0;
-
-		Object.values(this.otherCounters).forEach((counter) => {
-			value += Number(counter.count);
-		});
-
-		const count = value > 99
-			? '99+'
-			: value;
-
-		this.$moreArrow = Tag.render`
-			<div class="tasks-counters--item-counter-arrow"></div>
-		`;
-
-		this.$more = Tag.render`
-			<div class="tasks-counters--item-counter--more">
-				<div class="tasks-counters--item-counter-wrapper">
-					<div class="tasks-counters--item-counter-title">${Loc.getMessage('TASKS_COUNTER_MORE')}:</div>
-					<div class="tasks-counters--item-counter-num">
-						${this.getInnerCounter(count)}						
-					</div>
-					${this.$moreArrow}
-				</div>
-			</div>
-		`;
-
-		Event.bind(this.$more, 'click', ()=> this.getPopup().show());
-
-		return this.$more;
-	}
-
-	getInnerCounter(counter: number)
-	{
-		if (!this.$innerContainer)
-		{
-			this.$innerContainer = Tag.render`
-				<div class="tasks-counters--item-counter-num-text --stop --without-animate">${counter}</div>		
-			`;
-		}
-
-		return this.$innerContainer;
-	}
-
-	getOther()
-	{
-		if (Object.keys(this.otherCounters).length === 0)
-		{
-			return '';
-		}
-
-		const content = [];
-		Object.values(this.otherCounters).forEach(counter => content.push(counter.getContainer()));
-
-		this.$other.cropped = this.isCroppedBlock(this.$other.layout);
-
-		this.$other.layout = Tag.render`
-			<div class="tasks-counters--item --other ${this.$other.cropped ? '--cropp' : ''}">
-				<div data-role="tasks-counters--item-head-other" class="tasks-counters--item-head">${Loc.getMessage('TASKS_COUNTER_OTHER')}</div>
-				<div class="tasks-counters--item-content">
-					${content}
-					${this.getMore()}
-				</div>
-			</div>
-		`;
-
-		return this.$other.layout;
-	}
-
-	getContainer()
-	{
-		const content = [];
-		Object.values(this.myCounters).forEach(counter => content.push(counter.getContainer()));
-
-		this.$myTaskHead = Tag.render`
-			<div class="tasks-counters--item-head">
-				${Loc.getMessage('TASKS_COUNTER_MY')}
-			</div>
-		`;
-
-		this.$element = Tag.render`
-			<div class="tasks-counters tasks-counters--scope">
-				<div class="tasks-counters--item">
-					${this.$myTaskHead}
-					<div class="tasks-counters--item-content">${content}</div>
-				</div>
-				${this.getOther()}
-				${this.isUserTaskList() && !this.isMyTaskList() ? '' : this.getReadAllBlock()}
-			</div>
-		`;
-
-		return this.$element;
-	}
-
 	rerender(counters)
 	{
 		this.setData(counters);
-		this.render();
+
+		let isValueUpdated = false;
+		let parentTotal = 0;
+		let parentId = null;
+		let canResetReadAll = false;
+
+		const availableTypes = new Set([
+			...Counters.counterTypes.my,
+			...Counters.counterTypes.other,
+		]);
+
+		Object.entries(counters).forEach(([code, counter]) => {
+			if (!availableTypes.has(code))
+			{
+				return;
+			}
+
+			const item = this.getItemById(code);
+			if (item.hasParentId())
+			{
+				parentId = item.parentId;
+				parentTotal += Number(counter.VALUE);
+			}
+
+			item.updateValue(Number(counter.VALUE));
+			item.updateColor(this.#getColorByValue(Number(counter.VALUE), counter.STYLE));
+			isValueUpdated = isValueUpdated || true;
+
+			if (this.#getColorByValue(Number(counter.VALUE), counter.STYLE) === Counters.COLOR_SUCCESS)
+			{
+				canResetReadAll = true;
+			}
+		});
+
+		if (canResetReadAll && (!this.isUserTaskList() || this.isMyTaskList()))
+		{
+			this.#updateReadAllItem(canResetReadAll);
+		}
+
+		if (parentId)
+		{
+			const item = this.getItemById(parentId);
+			item.updateValue(parentTotal);
+		}
 	}
 
-	render()
+	render(): void
 	{
-		let node = this.getContainer();
-		let fakeNode = node.cloneNode(true);
-		fakeNode.classList.add('task-interface-toolbar');
-		fakeNode.style.position = 'fixed';
-		fakeNode.style.opacity = '0';
-		fakeNode.style.width = 'auto';
-		fakeNode.style.pointerEvents = 'none';
-		document.body.appendChild(fakeNode);
-		this.nodeWidth = fakeNode.offsetWidth;
-		document.body.removeChild(fakeNode);
+		super.init();
+	}
 
-		Dom.replace(this.renderTo.firstChild, node);
+	connectWithFilter(): void
+	{
+		this.filter = new Filter({
+			filterId: this.#filterId,
+		});
+
+		this.bindEvents();
+
+		this.#markCounters();
+	}
+
+	#markCounters(): void
+	{
+		let parentId = null;
+		let canResetReadAll = false;
+
+		Object.values(this.elements).forEach((element) => {
+			const item = this.getItemById(element.id);
+			const isFiltered = this.filter.isFilteredByFieldValue(element.filterField, element.filterValue);
+
+			if (item.color === Counters.COLOR_SUCCESS)
+			{
+				canResetReadAll = true;
+			}
+
+			if (isFiltered)
+			{
+				if (item.hasParentId())
+				{
+					parentId = item.parentId;
+				}
+
+				item.activate(false);
+			}
+		});
+
+		if (canResetReadAll && (!this.isUserTaskList() || this.isMyTaskList()))
+		{
+			this.#updateReadAllItem(canResetReadAll);
+		}
+
+		if (parentId)
+		{
+			this.getItemById(parentId).activate(false);
+		}
+	}
+
+	#updateReadAllItem(canResetReadAll: Boolean)
+	{
+		const readAllItem = this.getItemById(Counters.READ_ALL_ID);
+
+		if (canResetReadAll && readAllItem.isLocked())
+		{
+			readAllItem.unLock();
+		}
+
+		if (!canResetReadAll && !readAllItem.isLocked())
+		{
+			readAllItem.lock();
+		}
+	}
+
+	#sendAnalyticsEvent(item: CounterItem): void
+	{
+		sendData({
+			tool: 'tasks',
+			category: 'task_operations',
+			type: 'task',
+			event: this.#getAnalyticsEvent(item),
+			c_section: this.#getAnalyticsSection(item),
+			c_element: this.#getAnalyticsElement(item),
+		});
+	}
+
+	#getAnalyticsEvent(item: CounterItem)
+	{
+		if (Counters.counterTypes.expired.includes(item.id))
+		{
+			return 'overdue_counters_on';
+		}
+
+		return 'comments_counters_on';
+	}
+
+	#getAnalyticsSection(item: CounterItem)
+	{
+		if (Counters.counterTypes.scrum.includes(item.id))
+		{
+			return 'scrum';
+		}
+
+		if (Counters.counterTypes.project.includes(item.id))
+		{
+			return 'project';
+		}
+
+		return 'tasks';
+	}
+
+	#getAnalyticsElement(item: CounterItem)
+	{
+		if (Counters.counterTypes.expired.includes(item.id))
+		{
+			return 'overdue_counters_filter';
+		}
+
+		return 'comments_counters_filter';
 	}
 }

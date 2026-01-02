@@ -4,7 +4,6 @@
 jn.define('ui-system/form/buttons/button', (require, exports, module) => {
 	const { Type } = require('type');
 	const { Component, Color } = require('tokens');
-	const { isLightColor } = require('utils/color');
 	const { capitalize } = require('utils/string');
 	const { Ellipsize } = require('utils/enums/style');
 	const { mergeImmutable } = require('utils/object');
@@ -14,6 +13,7 @@ jn.define('ui-system/form/buttons/button', (require, exports, module) => {
 	const { IconView, iconTypes, Icon } = require('ui-system/blocks/icon');
 	const { ButtonSize } = require('ui-system/form/buttons/button/src/size-enum');
 	const { ButtonDesign } = require('ui-system/form/buttons/button/src/design-enum');
+	const { ButtonStateDecorator } = require('ui-system/form/buttons/button/src/state-decorator');
 
 	const Direction = {
 		LEFT: 'left',
@@ -48,6 +48,7 @@ jn.define('ui-system/form/buttons/button', (require, exports, module) => {
 	 * @property {Function} [onLayout]
 	 * @property {Function} [onDisabledClick]
 	 * @property {Function} [onLongClick]
+	 * @property {boolean} [withStateDecorator=false]
 	 *
 	 * @class Button
 	 * @param {ButtonProps} props
@@ -264,12 +265,9 @@ jn.define('ui-system/form/buttons/button', (require, exports, module) => {
 		{
 			const { loaderDesign } = this.props;
 			const backgroundColor = this.getBackgroundColor();
-			const hex = typeof backgroundColor === 'object' ? backgroundColor?.default : backgroundColor;
-			const design = !hex || isLightColor(hex)
-				? SpinnerDesign.BLUE
-				: SpinnerDesign.WHITE;
+			const spinnerDesign = SpinnerDesign.resolveByColor(backgroundColor);
 
-			return SpinnerDesign.resolve(loaderDesign, design);
+			return SpinnerDesign.resolve(loaderDesign, spinnerDesign);
 		}
 
 		#handleOnClick = () => {
@@ -321,7 +319,7 @@ jn.define('ui-system/form/buttons/button', (require, exports, module) => {
 		getBorderStyle()
 		{
 			const { borderColor: designBorderColor } = this.designStyle;
-			const { border, borderColor, borderRadius, design, rounded } = this.props;
+			const { border, borderColor, borderRadius, design } = this.props;
 			const { radius } = this.size.getBorder();
 
 			const style = {
@@ -333,7 +331,7 @@ jn.define('ui-system/form/buttons/button', (require, exports, module) => {
 				style.borderRadius = borderRadius;
 			}
 
-			if (rounded)
+			if (this.isRounded())
 			{
 				style.borderRadius = Component.elementAccentCorner.toNumber();
 			}
@@ -451,6 +449,13 @@ jn.define('ui-system/form/buttons/button', (require, exports, module) => {
 			return Boolean(loading);
 		}
 
+		isRounded()
+		{
+			const { rounded } = this.props;
+
+			return Boolean(rounded);
+		}
+
 		#isDisabled()
 		{
 			const { disabled } = this.props;
@@ -464,6 +469,8 @@ jn.define('ui-system/form/buttons/button', (require, exports, module) => {
 		rounded: false,
 		border: false,
 		loading: false,
+		disabled: false,
+		withStateDecorator: false,
 	};
 
 	Button.propTypes = {
@@ -493,6 +500,7 @@ jn.define('ui-system/form/buttons/button', (require, exports, module) => {
 		onLayout: PropTypes.func,
 		onDisabledClick: PropTypes.func,
 		onLongClick: PropTypes.func,
+		withStateDecorator: PropTypes.bool,
 	};
 
 	module.exports = {
@@ -500,7 +508,11 @@ jn.define('ui-system/form/buttons/button', (require, exports, module) => {
 		 * @param {ButtonProps} props
 		 * @returns {Button}
 		 */
-		Button: (props) => new Button(props),
+		Button: (props) => (
+			props.withStateDecorator
+				? new ButtonStateDecorator({ component: Button, ...props })
+				: new Button(props)
+		),
 		ButtonClass: Button,
 		ButtonDesign,
 		ButtonSize,

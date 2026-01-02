@@ -20,6 +20,8 @@ Loc::loadMessages(__FILE__);
 class ActivityController extends EntityController
 {
 	private const MAX_SIMULTANEOUS_PULL_EVENT_COUNT = 10;
+	private const DESCRIPTION_CHARACTER_LIMIT = 512;
+
 	/** @var \CTextParser|null  */
 	private static $parser = null;
 	/** @var int|null  */
@@ -214,7 +216,7 @@ class ActivityController extends EntityController
 					: (DateTime::createFromUserTime($fields['DEADLINE'])->getTimestamp())
 			);
 			$activityData = [
-				'DESCRIPTION' => $fields['DESCRIPTION'],
+				'DESCRIPTION' => $fields['DESCRIPTION'] ?? '',
 				'ASSOCIATED_ENTITY_ID' => $fields['ASSOCIATED_ENTITY_ID'],
 				'DEADLINE_TIMESTAMP' => $deadlineTimestamp,
 			];
@@ -249,6 +251,25 @@ class ActivityController extends EntityController
 					]);
 				}
 			}
+		}
+		elseif (
+			$typeID === \CCrmActivityType::Provider
+			&& isset($fields['PROVIDER_ID'])
+			&& $fields['PROVIDER_ID'] === Activity\Provider\RepeatSale::getId()
+		)
+		{
+			$binding = array_shift($bindings);
+
+			LogMessageController::getInstance()->onCreate(
+				[
+					'ENTITY_TYPE_ID' => $binding['OWNER_TYPE_ID'],
+					'ENTITY_ID' => $binding['OWNER_ID'],
+					'ASSOCIATED_ENTITY_TYPE_ID' => \CCrmOwnerType::Activity,
+					'ASSOCIATED_ENTITY_ID' => $ownerID,
+				],
+				LogMessageType::REPEAT_SALE_CREATED,
+				$params['FIELDS']['RESPONSIBLE_ID'] ?? $params['CURRENT_USER']
+			);
 		}
 
 		$enableHistoryPush =
@@ -383,6 +404,7 @@ class ActivityController extends EntityController
 						Activity\Provider\Bizproc\Workflow::getId(),
 						Activity\Provider\Bizproc\Comment::getId(),
 						Activity\Provider\Bizproc\Task::getId(),
+						Activity\Provider\RepeatSale::getId(),
 					]
 				)
 			)
@@ -715,6 +737,9 @@ class ActivityController extends EntityController
 			Activity\Provider\Bizproc\Workflow::getId(),
 			Activity\Provider\Bizproc\Comment::getId(),
 			Activity\Provider\Bizproc\Task::getId(),
+			Activity\Provider\Booking\Booking::getId(),
+			Activity\Provider\Booking\WaitListItem::getId(),
+			Activity\Provider\RepeatSale::getId(),
 		];
 	}
 
@@ -744,6 +769,7 @@ class ActivityController extends EntityController
 				Activity\Provider\Bizproc\Workflow::getId(),
 				Activity\Provider\Bizproc\Comment::getId(),
 				Activity\Provider\Bizproc\Task::getId(),
+				Activity\Provider\RepeatSale::getId(),
 			],
 			true
 		);
@@ -760,9 +786,9 @@ class ActivityController extends EntityController
 	//region Preparation of Display Data
 	public static function prepareScheduleDataModel(array $data, array $options = null)
 	{
-		if(!is_array($options))
+		if (!is_array($options))
 		{
-			$options = array();
+			$options = [];
 		}
 
 		$userId = $options['CURRENT_USER'] ?? self::getUserID();
@@ -770,7 +796,11 @@ class ActivityController extends EntityController
 
 		\CCrmActivity::PrepareDescriptionFields(
 			$data,
-			array('ENABLE_HTML' => false, 'ENABLE_BBCODE' => false, 'LIMIT' => 512)
+			[
+				'ENABLE_HTML' => false,
+				'ENABLE_BBCODE' => false,
+				'LIMIT' => self::DESCRIPTION_CHARACTER_LIMIT,
+			]
 		);
 
 		$sort = [];
@@ -947,17 +977,24 @@ class ActivityController extends EntityController
 		{
 			$fields['PING_OFFSETS'] = Activity\Provider\ToDo\ToDo::getPingOffsets($ID);
 		}
-		else
+		elseif ($providerID !== Activity\Provider\RepeatSale::getId())
 		{
 			$notLimitedDescriptionProviders = [
 				Activity\Provider\Call::getId(),
 				Activity\Provider\Meeting::getId(),
 			];
-			$descriptionLimit = in_array($providerID, $notLimitedDescriptionProviders) ? 0 : 512;
+			$descriptionLimit = in_array($providerID, $notLimitedDescriptionProviders, true)
+				? 0
+				: self::DESCRIPTION_CHARACTER_LIMIT
+			;
 
 			\CCrmActivity::PrepareDescriptionFields(
 				$fields,
-				['ENABLE_HTML' => false, 'ENABLE_BBCODE' => false, 'LIMIT' => $descriptionLimit]
+				[
+					'ENABLE_HTML' => false,
+					'ENABLE_BBCODE' => false,
+					'LIMIT' => $descriptionLimit,
+				]
 			);
 		}
 

@@ -110,9 +110,14 @@ this.BX.Crm = this.BX.Crm || {};
 	      return main_date.DateTimeFormat.getFormat('FORMAT_DATE');
 	    }
 	  }, {
+	    key: "getSiteShortTimeFormat",
+	    value: function getSiteShortTimeFormat() {
+	      return main_date.DateTimeFormat.getFormat('SHORT_TIME_FORMAT');
+	    }
+	  }, {
 	    key: "getSiteDateTimeFormat",
-	    value: function getSiteDateTimeFormat() {
-	      return main_date.DateTimeFormat.getFormat('FORMAT_DATETIME');
+	    value: function getSiteDateTimeFormat(useShortTime = false) {
+	      return useShortTime ? `${DatetimeConverter.getSiteDateFormat()} ${DatetimeConverter.getSiteShortTimeFormat()}` : main_date.DateTimeFormat.getFormat('FORMAT_DATETIME');
 	    }
 	  }]);
 	  return DatetimeConverter;

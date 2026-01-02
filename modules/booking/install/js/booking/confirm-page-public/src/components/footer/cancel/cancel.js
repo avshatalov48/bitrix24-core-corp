@@ -1,4 +1,3 @@
-import { Loc } from 'main.core';
 import { PopupOptions } from 'main.popup';
 import { Button, ButtonSize, ButtonColor, ButtonIcon } from 'booking.component.button';
 import { BIcon as Icon, Set as IconSet } from 'ui.icon-set.api.vue';
@@ -95,6 +94,17 @@ export const Cancel = {
 		{
 			return this.context !== 'manager.view.details';
 		},
+		showCancelPopup(): boolean
+		{
+			return (
+				this.context === 'cancel.pub.page'
+				|| this.context === 'info.pub.page'
+			);
+		},
+		showConfirmPopup(): boolean
+		{
+			return this.context === 'delayed.pub.page';
+		},
 	},
 	watch: {
 		booking:
@@ -125,14 +135,14 @@ export const Cancel = {
 			</a>
 		</div>
 		<CancelPopup 
-			v-if="context === 'cancel.pub.page'"
+			v-if="showCancelPopup"
 			:showPopup="showPopup" 
 			:booking="booking"
 			@bookingCanceled="cancelBookingHandler"
 			@popupClosed="closePopup"
 		/>
 		<ConfirmPopup
-			v-if="context === 'delayed.pub.page'"
+			v-if="showConfirmPopup"
 			:showPopup="showPopup"
 			:booking="booking"
 			@bookingCanceled="cancelBookingHandler"

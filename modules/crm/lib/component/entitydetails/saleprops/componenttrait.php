@@ -34,7 +34,7 @@ trait ComponentTrait
 	{
 		$rawProperties = [];
 		$result = ['PERSON_TYPE_ID' => $personTypeId];
-		$allowConfig = $this->userPermissions->HavePerm('CONFIG', BX_CRM_PERM_CONFIG, 'WRITE');
+		$allowConfig = $this->userPermissionsService->isCrmAdmin();
 
 		$filter = ['ACTIVE' => 'Y'];
 		if ($isNew)

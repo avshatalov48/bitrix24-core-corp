@@ -5,8 +5,9 @@ namespace Bitrix\StaffTrack\Integration\Im;
 use Bitrix\Im\Common;
 use Bitrix\Im\Dialog;
 use Bitrix\Im\User;
-use Bitrix\Im\V2\Message;
+use Bitrix\Im\V2\MessageCollection;
 use Bitrix\Im\V2\Message\Delete\DeleteService;
+use Bitrix\Im\V2\Message\Delete\DeletionMode;
 use Bitrix\Main\Error;
 use Bitrix\Main\Loader;
 use Bitrix\Main\LoaderException;
@@ -22,7 +23,6 @@ class MessageService
 	private ?ShiftDto $shiftDto = null;
 
 	private ?int $chatId = null;
-	private ?DeleteService $deleteService = null;
 
 	public const COMPONENT_MESSAGE_ID = 'CheckInMessage';
 
@@ -180,41 +180,19 @@ class MessageService
 	}
 
 	/**
-	 * @param int $messageId
-	 *
-	 * @return void
 	 * @throws LoaderException
 	 */
-	public function deleteMessage(int $messageId): void
+	public function deleteMessages(array $messageIds): void
 	{
 		if (!$this->isAvailable())
 		{
 			return;
 		}
 
-		$message = new Message($messageId);
+		$messages = new MessageCollection($messageIds);
 
-		$this->getDeleteMessageService($message)->delete();
+		(new DeleteService($messages))->setMode(DeletionMode::Complete)->delete();
 	}
-
-	/**
-	 * @param \Bitrix\Im\V2\Message $message
-	 * @return DeleteService
-	 */
-	private function getDeleteMessageService(\Bitrix\Im\V2\Message $message): DeleteService
-	{
-		if ($this->deleteService === null)
-		{
-			$this->deleteService = (new DeleteService($message))->setMode(DeleteService::DELETE_COMPLETE);
-		}
-		else
-		{
-			$this->deleteService->setMessage($message);
-		}
-
-		return $this->deleteService;
-	}
-
 
 	/**
 	 * @return void

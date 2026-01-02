@@ -35,13 +35,7 @@ $getLink = function ($item): string
 		$curLink = "";
 	}
 
-
-	if (preg_match("~".SITE_DIR."online\/~i", $curLink))
-	{
-		$curLink = 'bx://v2/' . $_SERVER['SERVER_NAME'] . '/chat/';
-	}
-
-	return $curLink;
+	return htmlspecialcharsbx($curLink);
 };
 
 $getClass = function ($item, $counterId, $counter, $isCompositeMode): string
@@ -67,7 +61,7 @@ $getClass = function ($item, $counterId, $counter, $isCompositeMode): string
 		$itemClass .= " intranet__desktop-menu_item_counters";
 	}
 
-	return $itemClass;
+	return htmlspecialcharsbx($itemClass);
 };
 
 $getCounterId = function($item): string
@@ -81,7 +75,7 @@ $getCounterId = function($item): string
 				$counterId = \CUserCounter::LIVEFEED_CODE;
 				break;
 			default:
-				$counterId = $item['PARAMS']['counter_id'];
+				$counterId = htmlspecialcharsbx($item['PARAMS']['counter_id']);
 		}
 	}
 
@@ -97,7 +91,7 @@ $getCounterId = function($item): string
 	'main.popup',
 	'ui.counter',
 	'im.v2.lib.desktop-api',
-	'intranet.theme_picker',
+	'main.loader',
 ]);
 
 Bitrix\Intranet\Integration\Templates\Bitrix24\ThemePicker::getInstance()->showHeadAssets();
@@ -163,7 +157,7 @@ $APPLICATION->ShowViewContent('im-fullscreen');
 							<?
 							foreach ($arResult["ITEMS"]['open'] as $item)
 							{
-								$itemId = $item["PARAMS"]["menu_item_id"];
+								$itemId = htmlspecialcharsbx($item["PARAMS"]["menu_item_id"]);
 								$counterId = $getCounterId($item);
 								$counter = array_key_exists($counterId, $arResult["COUNTERS"]) ? $arResult["COUNTERS"][$counterId] : 0;
 								$itemClass = $getClass($item, $counterId, $counter, $isCompositeMode);
@@ -171,11 +165,11 @@ $APPLICATION->ShowViewContent('im-fullscreen');
 							?>
 								<li
 									class="intranet__desktop-menu_item <?= $itemClass ?>"
-									title="<?= $item["TEXT"] ?>"
+									title="<?= htmlspecialcharsbx($item["TEXT"]) ?>"
 									data-id="<?= $itemId ?>"
-									data-type="<?=$item["ITEM_TYPE"]?>"
+									data-type="<?=htmlspecialcharsbx($item["ITEM_TYPE"])?>"
 									data-role="item"
-									data-storage="<?= $item['PARAMS']['storage'] ?? '' ?>"
+									data-storage="<?= htmlspecialcharsbx($item['PARAMS']['storage'] ?? '') ?>"
 									data-counter-id="<?=$counterId?>"
 									data-link="<?=$curLink?>"
 								>
@@ -183,7 +177,7 @@ $APPLICATION->ShowViewContent('im-fullscreen');
 										<div class="intranet__desktop-menu_item-icon">
 											<span class="menu-item-icon"></span>
 										</div>
-										<span class="intranet__desktop-menu_item-title menu-item-link-text"><?= $item["TEXT"] ?></span>
+										<span class="intranet__desktop-menu_item-title menu-item-link-text"><?= htmlspecialcharsbx($item["TEXT"]) ?></span>
 										<?
 										if ($counterId <> '')
 										{
@@ -226,15 +220,15 @@ $APPLICATION->ShowViewContent('im-fullscreen');
 								?>
 									<li
 										class="intranet__desktop-menu_item <?= $itemClass ?>"
-										title="<?= $item["TEXT"] ?>"
-										data-type="<?=$item["ITEM_TYPE"]?>"
+										title="<?= htmlspecialcharsbx($item["TEXT"]) ?>"
+										data-type="<?= htmlspecialcharsbx($item["ITEM_TYPE"])?>"
 										data-role="item"
 									>
 										<a class="intranet__desktop-menu_item-link" href="<?= $curLink ?>">
 											<div class="intranet__desktop-menu_item-icon">
 												<span class="menu-item-icon"></span>
 											</div>
-											<span class="intranet__desktop-menu_item-title menu-item-link-text"><?= $item["TEXT"] ?></span>
+											<span class="intranet__desktop-menu_item-title menu-item-link-text"><?= htmlspecialcharsbx($item["TEXT"]) ?></span>
 											<?
 											if ($counterId <> '')
 											{
@@ -293,9 +287,9 @@ $APPLICATION->ShowViewContent('im-fullscreen');
 
 <script>
 	BX.message({
-		"MENU_ACCOUNT_POPUP_CONNECT": '<?=GetMessageJS("MENU_ACCOUNT_POPUP_CONNECT")?>',
-		"MENU_ACCOUNT_POPUP_DISCONNECT": '<?=GetMessageJS("MENU_ACCOUNT_POPUP_DISCONNECT")?>',
-		"MENU_ACCOUNT_POPUP_REMOVE": '<?=GetMessageJS("MENU_ACCOUNT_POPUP_REMOVE")?>',
+		"MENU_ACCOUNT_POPUP_CONNECT": '<?=GetMessageJS("MENU_ACCOUNT_POPUP_CONNECT_MSGVER_1")?>',
+		"MENU_ACCOUNT_POPUP_DISCONNECT": '<?=GetMessageJS("MENU_ACCOUNT_POPUP_DISCONNECT_MSGVER_1")?>',
+		"MENU_ACCOUNT_POPUP_REMOVE": '<?=GetMessageJS("MENU_ACCOUNT_POPUP_REMOVE_MSGVER_1")?>',
 	});
 
 	BX.ready(function() {

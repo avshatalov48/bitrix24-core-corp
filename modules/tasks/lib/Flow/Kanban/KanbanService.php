@@ -2,7 +2,7 @@
 
 namespace Bitrix\Tasks\Flow\Kanban;
 
-use Bitrix\Tasks\InvalidCommandException;
+use Bitrix\Tasks\Flow\Control\Exception\InvalidCommandException;
 use Bitrix\Tasks\Flow\Integration\BizProc\DocumentTrait;
 use Bitrix\Tasks\Flow\Kanban\Command\AddKanbanCommand;
 use Bitrix\Tasks\Flow\Kanban\Stages\CompletedStage;
@@ -10,24 +10,37 @@ use Bitrix\Tasks\Flow\Kanban\Stages\NewStage;
 use Bitrix\Tasks\Flow\Kanban\Stages\ProgressStage;
 use Bitrix\Tasks\Flow\Kanban\Stages\ReviewStage;
 use Bitrix\Tasks\Internals\Log\Logger;
+use Bitrix\Tasks\Flow\Kanban\Async\Message;
 use Throwable;
 
 class KanbanService
 {
 	use DocumentTrait;
 
-	protected AddKanbanCommand $addCommand;
-
 	/**
 	 * @throws InvalidCommandException
 	 */
 	public function add(AddKanbanCommand $command): void
 	{
-		$this->addCommand = $command;
+		$command->validateAdd();
 
-		$this->addCommand->validateAdd();
-		
-		$stages = $this->getStages();
+		$message = new Message\AddStages(
+			projectId: $command->projectId,
+			ownerId: $command->ownerId,
+			flowId: $command->flowId,
+		);
+
+		$message->sendByInternalQueueId();
+	}
+
+	public function addStages(int $projectId, int $ownerId, int $flowId): void
+	{
+		$stages = $this->getStages(
+			projectId: $projectId,
+			ownerId: $ownerId,
+			flowId: $flowId,
+		);
+
 		foreach ($stages as $stage)
 		{
 			try
@@ -50,14 +63,14 @@ class KanbanService
 	/**
 	 * @return AbstractStage[]
 	 */
-	protected function getStages(): array
+	protected function getStages(int $projectId, int $ownerId, int $flowId): array
 	{
 		return [
-			new NewStage($this->addCommand->projectId, $this->addCommand->ownerId, $this->addCommand->flowId),
-			new ProgressStage($this->addCommand->projectId, $this->addCommand->ownerId, $this->addCommand->flowId),
+			new NewStage($projectId, $ownerId, $flowId),
+			new ProgressStage($projectId, $ownerId, $flowId),
 			// not currently used
-			// new ReviewStage($this->addCommand->projectId, $this->addCommand->ownerId, $this->addCommand->flowId),
-			new CompletedStage($this->addCommand->projectId, $this->addCommand->ownerId, $this->addCommand->flowId),
+			// new ReviewStage($projectId, $ownerId, $flowId),
+			new CompletedStage($projectId, $ownerId, $flowId),
 		];
 	}
 }

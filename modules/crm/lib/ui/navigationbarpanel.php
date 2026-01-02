@@ -14,6 +14,7 @@ use CCrmOwnerType;
 
 class NavigationBarPanel
 {
+	public const ID_REPEAT_SALE = 'repeatSale';
 	public const ID_AUTOMATION = 'automation';
 	public const ID_KANBAN = 'kanban';
 	public const ID_LIST = 'list';
@@ -29,6 +30,7 @@ class NavigationBarPanel
 		self::ID_CALENDAR => 'CRM_COMMON_CALENDAR',
 		self::ID_DEADLINES => 'CRM_COMMON_DEADLINES',
 		self::ID_REPORTS => 'CRM_COMMON_REPORTS',
+		self::ID_REPEAT_SALE => 'CRM_COMMON_REPEAT_SALE',
 	];
 	private const ID_BINDING_CATEGORY = 'crm.navigation';
 	private const ID_BINDING_NAME = 'index';
@@ -97,7 +99,7 @@ class NavigationBarPanel
 
 	public function setItems(array $ids, string $activeId = ''): self
 	{
-		if (empty($activeId) || !in_array($activeId, $this->getAllowableItemsList(false), true))
+		if (empty($activeId) || !in_array($activeId, $this->getAllowableItemsList(false, false), true))
 		{
 			$activeId = self::ID_LIST;
 		}
@@ -147,11 +149,7 @@ class NavigationBarPanel
 		return $this;
 	}
 
-	/**
-	 * @param bool $withAutomation
-	 * @return string[]
-	 */
-	private function getAllowableItemsList(bool $withAutomation = true): array
+	private function getAllowableItemsList(bool $withAutomation = true, bool $withRepeatSale = true): array
 	{
 		$names = [
 			self::ID_KANBAN,
@@ -165,6 +163,11 @@ class NavigationBarPanel
 		if ($withAutomation)
 		{
 			$names[] = self::ID_AUTOMATION;
+		}
+
+		if ($withRepeatSale)
+		{
+			$names[] = self::ID_REPEAT_SALE;
 		}
 
 		if (\Bitrix\Main\Config\Option::get('crm', 'enable_entity_uncompleted_act', 'Y') !== 'Y')

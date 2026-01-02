@@ -45,6 +45,7 @@ jn.define('crm/statemanager/redux/slices/tunnels', (require, exports, module) =>
 				srcStage: tunnel.srcStageStatusId,
 				dstCategory: tunnel.dstCategoryId,
 				dstStage: tunnel.dstStageStatusId,
+				robot: tunnel.robot,
 			};
 		});
 	};
@@ -144,18 +145,8 @@ jn.define('crm/statemanager/redux/slices/tunnels', (require, exports, module) =>
 
 					const deletedTunnels = findDeletedTunnelIds(tunnelsBeforeUpdate, tunnels);
 
-					const preparedData = tunnels.map((tunnel) => {
-						const {
-							isNewTunnel,
-							robot,
-							...rest
-						} = tunnel;
-
-						return rest;
-					});
-
 					adapter.removeMany(state, deletedTunnels);
-					adapter.upsertMany(state, preparedData);
+					adapter.upsertMany(state, tunnels);
 				})
 			;
 		},

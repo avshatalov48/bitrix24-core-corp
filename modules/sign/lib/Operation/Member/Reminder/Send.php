@@ -98,6 +98,7 @@ final class Send implements Contract\Operation
 				type: NotificationType::SYSTEM,
 				title: null,
 				message: $message,
+				notifyTag: "SIGN|REMIND|$member->id",
 			),
 		);
 		if (!$result->isSuccess())

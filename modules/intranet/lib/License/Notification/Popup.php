@@ -3,9 +3,9 @@
 namespace Bitrix\Intranet\License\Notification;
 
 use Bitrix\Intranet\CurrentUser;
+use Bitrix\Intranet;
 use Bitrix\Main\Application;
 use Bitrix\Main\License;
-use Bitrix\Main\ModuleManager;
 use Bitrix\Main\Type\Date;
 use Bitrix\Main\Type\DateTime;
 
@@ -128,29 +128,9 @@ class Popup implements NotificationProvider
 		return 'no-expired';
 	}
 
-	private function isEnterpriseLicense(): bool
-	{
-		return ModuleManager::isModuleInstalled('cluster');
-	}
-
 	public function getSchedule(): array
 	{
-		if ($this->isEnterpriseLicense())
-		{
-			if ($this->isCIS)
-			{
-				return [1, 15, 30, 60];
-			}
-
-			return [1, 15, 30];
-		}
-
-		if ($this->isCIS)
-		{
-			return [1, 15, 30];
-		}
-
-		return [1, 15];
+		return (new Intranet\License\ExpirationNotifier())->getNotifySchedule();
 	}
 
 	public function getSavedShowConfiguration(): array

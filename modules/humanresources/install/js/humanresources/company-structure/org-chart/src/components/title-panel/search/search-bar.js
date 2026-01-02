@@ -1,6 +1,7 @@
 import { useChartStore } from 'humanresources.company-structure.chart-store';
-import { Event } from 'main.core';
-import { Dialog } from 'ui.entity-selector';
+import { Event, Dom } from 'main.core';
+import { type BaseEvent } from 'main.core.events';
+import { Dialog, type Item } from 'ui.entity-selector';
 import { BIcon, Set } from 'ui.icon-set.api.vue';
 import { mapState } from 'ui.vue3.pinia';
 import { sendData as analyticsSendData } from 'ui.analytics';
@@ -8,10 +9,14 @@ import { OrgChartActions } from '../../../actions';
 
 import './style.css';
 
+// @vue/component
 export const SearchBar = {
+	name: 'search-bar',
+
 	components: {
 		BIcon,
 	},
+
 	directives: {
 		focus: {
 			mounted(el)
@@ -20,6 +25,11 @@ export const SearchBar = {
 			},
 		},
 	},
+
+	emits: [
+		'locate',
+	],
+
 	data(): { canEditPermissions: boolean; showSearchBar: boolean; }
 	{
 		return {
@@ -28,16 +38,6 @@ export const SearchBar = {
 		};
 	},
 
-	created()
-	{
-		this.searchDialog = this.getSearchDialog();
-	},
-
-	name: 'search-bar',
-
-	emits: [
-		'locate',
-	],
 	computed: {
 		set(): Set
 		{
@@ -45,6 +45,22 @@ export const SearchBar = {
 		},
 		...mapState(useChartStore, ['departments']),
 	},
+
+	watch: {
+		departments: {
+			handler(): void
+			{
+				this.searchDialog.destroy();
+			},
+			deep: true,
+		},
+	},
+
+	created()
+	{
+		this.searchDialog = this.getSearchDialog();
+	},
+
 	methods: {
 		loc(phraseCode: string, replacements: { [p: string]: string } = {}): string
 		{
@@ -89,9 +105,11 @@ export const SearchBar = {
 					{
 						id: 'structure-node',
 						options: {
-							selectMode: 'onlyDepartments',
+							selectMode: 'departmentsOnly',
+							useMultipleTabs: true,
+							restricted: 'view',
 							flatMode: true,
-							fillRecentTab: true,
+							includedNodeEntityTypes: ['department', 'team'],
 						},
 					},
 				],
@@ -104,7 +122,7 @@ export const SearchBar = {
 				hideOnDeselect: false,
 				context: 'HR_STRUCTURE',
 				events: {
-					'Item:onSelect': (event) => {
+					'Item:onSelect': (event: BaseEvent<{ item: Item }>) => {
 						const item = event.getData().item;
 
 						if (item.entityType === 'employee')
@@ -123,7 +141,7 @@ export const SearchBar = {
 						this.$emit('locate', item.id);
 					},
 					onLoad: (event) => {
-						event.target.items.get('user').forEach((item) => {
+						event.target.items.get('user')?.forEach((item) => {
 							if (!item.getSubtitle())
 							{
 								item.setSubtitle(item.customData.get('position'));
@@ -131,7 +149,7 @@ export const SearchBar = {
 						});
 					},
 					'SearchTab:onLoad': (event) => {
-						event.target.items.get('user').forEach((item) => {
+						event.target.items.get('user')?.forEach((item) => {
 							if (!item.getSubtitle())
 							{
 								item.setSubtitle(item.customData.get('position'));
@@ -143,6 +161,9 @@ export const SearchBar = {
 					},
 				},
 			});
+
+			const dialogContainer = dialog.getContainer();
+			Dom.attr(dialogContainer, 'data-test-id', 'hr-org-chart_title-panel__search-dialog-container');
 
 			return dialog;
 		},
@@ -191,16 +212,6 @@ export const SearchBar = {
 		},
 	},
 
-	watch: {
-		departments: {
-			handler(): void
-			{
-				this.searchDialog.destroy();
-			},
-			deep: true,
-		},
-	},
-
 	template: `
 		<div
 		    class="humanresources-title-panel-search-bar-container"
@@ -209,6 +220,7 @@ export const SearchBar = {
 		  <div
 		      class="humanresources-title-panel-search-bar-block__search"
 		      @click="showSearchbar"
+				data-test-id="hr-org-chart_title-panel__search-bar-button"
 		  >
 		    <BIcon :name="set.SEARCH_2" :size="24" class="hr-title-search-icon"></BIcon>
 		  </div>
@@ -220,11 +232,12 @@ export const SearchBar = {
 		          ref="searchName"
 		          key="searchInput"
 		          type="text"
-		          :placeholder="loc('HUMANRESOURCES_SEARCH_PLACEHOLDER')"
+		          :placeholder="loc('HUMANRESOURCES_SEARCH_PLACEHOLDER_MSGVER_1')"
 		          v-focus
 		          class="humanresources-title-panel-search-bar-block__search-input"
 		          @click="onEnter"
 		          @input="search($event.target.value)"
+					data-test-id="hr-org-chart_title-panel__search-bar-input"
 		      >
 		      <div
 		          key="searchReset"

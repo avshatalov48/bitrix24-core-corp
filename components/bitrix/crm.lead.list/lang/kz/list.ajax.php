@@ -1,0 +1,22 @@
+<?php
+$MESS["CRM_LEAD_LIST_BATCH_CONVERSION_AUTOCREATION_DISABLED_MSGVER_1"] = "Топтық түрлендіру үшін CRM баптауларында  \"Байланыстарды, компанияларды, мәмілелерді пайдаланушының қатысуынсыз құру\" опциясын қосу қажет (Баптаулар/Өзге баптаулар/Жалпы/Негізде құру баптаулары)";
+$MESS["CRM_LEAD_LIST_BATCH_CONVERSION_CONFIG_IS_NOT_SUPPORTED"] = "Таңдалған баптауларда лидті түрлендіруді орындау мүмкін емес.";
+$MESS["CRM_LEAD_LIST_DELETION_ACCESS_ERROR"] = "Жою операциясы үзілді. Операцияны орындау үшін құқықтар жеткіліксіз.";
+$MESS["CRM_LEAD_LIST_DELETION_COMPLETED_SUMMARY"] = "Лидтерді жою аяқталды. Лидтер өңделді: #PROCESSED_ITEMS#.";
+$MESS["CRM_LEAD_LIST_DELETION_FILTER_NOT_FOUND_ERROR"] = "Жою операциясы үзілді. Сүзу баптауларын табу мүмкін болмады. Өтінеміз, парақшаны жаңартып, әрекетті қайталап көріңіз.";
+$MESS["CRM_LEAD_LIST_DELETION_FILTER_OUTDATED_ERROR"] = "Жою операциясы үзілді. Сүзу баптаулары ескірді. Өтінеміз, парақшаны жаңартып, әрекетті қайталап көріңіз.";
+$MESS["CRM_LEAD_LIST_DELETION_PARAM_ERROR"] = "Жою операциясы үзілді. Дұрыс емес параметрлер анықталды.";
+$MESS["CRM_LEAD_LIST_DELETION_PROGRESS_SUMMARY"] = "Лидтер жойылды: #TOTAL_ITEMS#-тан #PROCESSED_ITEMS#.";
+$MESS["CRM_LEAD_LIST_REBUILD_DUPLICATE_INDEX_COMPLETED_SUMMARY"] = "Лидтер телнұсқаларының индексін қайта құру аяқталды. Лидтер өңделді: #PROCESSED_ITEMS#.";
+$MESS["CRM_LEAD_LIST_REBUILD_DUPLICATE_INDEX_NOT_REQUIRED_SUMMARY"] = "Лидтер телнұсқаларының индексін қайта құру қажет емес.";
+$MESS["CRM_LEAD_LIST_REBUILD_DUPLICATE_INDEX_PROGRESS_SUMMARY"] = "Лидтер өңделді: #TOTAL_ITEMS#-тан #PROCESSED_ITEMS#.";
+$MESS["CRM_LEAD_LIST_REBUILD_SEARCH_CONTENT_COMPLETED_SUMMARY"] = "Лидтердің іздеу индексін жаңарту аяқталды. Лидтер өңделді: #PROCESSED_ITEMS#.";
+$MESS["CRM_LEAD_LIST_REBUILD_SEARCH_CONTENT_NOT_REQUIRED_SUMMARY"] = "Лидтердің іздеу индексін қайта құру қажет емес.";
+$MESS["CRM_LEAD_LIST_REBUILD_SEARCH_CONTENT_PROGRESS_SUMMARY"] = "Лидтер өңделді: #TOTAL_ITEMS#-тан #PROCESSED_ITEMS#.";
+$MESS["CRM_LEAD_LIST_REBUILD_SEMANTICS_COMPLETED_SUMMARY"] = "Лидтердің қызметтік өрістерін жаңарту аяқталды. Лидтер өңделді: #PROCESSED_ITEMS#.";
+$MESS["CRM_LEAD_LIST_REBUILD_SEMANTICS_NOT_REQUIRED_SUMMARY"] = "Лидтердің қызметтік өрістерін жаңарту қажет емес.";
+$MESS["CRM_LEAD_LIST_REBUILD_SEMANTICS_PROGRESS_SUMMARY"] = "Лидтер өңделді: #TOTAL_ITEMS#-тан #PROCESSED_ITEMS#.";
+$MESS["CRM_LEAD_LIST_REBUILD_STATISTICS_COMPLETED_SUMMARY"] = "Лидтер үшін статистикалық деректерді жаңарту аяқталды. Лидтер өңделді: #PROCESSED_ITEMS#.";
+$MESS["CRM_LEAD_LIST_REBUILD_STATISTICS_NOT_REQUIRED_SUMMARY"] = "Лидтер үшін статистикалық деректерді жаңарту қажет емес.";
+$MESS["CRM_LEAD_LIST_REBUILD_STATISTICS_PROGRESS_SUMMARY"] = "Лидтер өңделді: #TOTAL_ITEMS#-тан #PROCESSED_ITEMS#.";
+$MESS["CRM_LEAD_LIST_ROW_COUNT"] = "Барлығы: #ROW_COUNT#";

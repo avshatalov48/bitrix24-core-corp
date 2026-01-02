@@ -128,10 +128,14 @@ if ($arParams['CALENDAR_IBLOCK_ID'] !== -1)
 }
 
 $arResult['ABSENCE_TYPES'] = array();
-$dbTypeRes = CIBlockPropertyEnum::GetList(array("SORT"=>"ASC", "VALUE"=>"ASC"), array('IBLOCK_ID' => $arParams['IBLOCK_ID'], 'PROPERTY_ID' => 'ABSENCE_TYPE'));
-while ($arTypeValue = $dbTypeRes->GetNext())
+
+if (\Bitrix\Main\Loader::includeModule('iblock'))
 {
-	$arResult['ABSENCE_TYPES'][$arTypeValue['ID']] = $arTypeValue;
+	$dbTypeRes = CIBlockPropertyEnum::GetList(array("SORT"=>"ASC", "VALUE"=>"ASC"), array('IBLOCK_ID' => $arParams['IBLOCK_ID'], 'PROPERTY_ID' => 'ABSENCE_TYPE'));
+	while ($arTypeValue = $dbTypeRes->GetNext())
+	{
+		$arResult['ABSENCE_TYPES'][$arTypeValue['ID']] = $arTypeValue;
+	}
 }
 
 $arParams['NAME_TEMPLATE'] = empty($arParams['NAME_TEMPLATE']) ? CSite::GetNameFormat(false) : str_replace(array("#NOBR#","#/NOBR#"), array("",""), $arParams["NAME_TEMPLATE"]);

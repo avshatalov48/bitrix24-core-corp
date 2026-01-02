@@ -7,25 +7,22 @@ if (!defined('B_PROLOG_INCLUDED') || B_PROLOG_INCLUDED !== true)
 
 use Bitrix\Main\Localization\Loc;
 use Bitrix\Main\Web\Json;
+use Bitrix\UI\Buttons;
 
 /**
  * @var array $arResult
  * @var array $arParams
  * @var CMain $APPLICATION
  */
-$this->addExternalCss('/bitrix/css/main/table/style.css');
 
 Bitrix\Main\UI\Extension::load([
+	'ui.accessrights.v2',
 	'ui.buttons',
-	'ui.icons',
-	'ui.notification',
-	'ui.accessrights',
-	'ui.selector',
-	'ui',
-	'ui.info-helper',
-	'ui.actionpanel',
-	'ui.design-tokens',
-	'loader',
+	'ui.icon-set.api.vue',
+	'ui.icon-set.actions',
+	'ui.icons.disk',
+	'biconnector.apache-superset-analytics',
+	'biconnector.dashboard-group',
 ]);
 
 
@@ -33,71 +30,29 @@ $bodyClass = $APPLICATION->GetPageProperty('BodyClass');
 $APPLICATION->SetPageProperty('BodyClass', ($bodyClass ? $bodyClass . ' ' : '') . 'no-all-paddings no-background');
 
 Loc::loadMessages(__FILE__);
-$componentId = 'bx-access-group';
-$initPopupEvent = 'biconnector:onComponentLoad';
-$openPopupEvent = 'biconnector:onComponentOpen';
 
 \Bitrix\UI\Toolbar\Facade\Toolbar::deleteFavoriteStar();
 ?>
-<span id="<?= $componentId ?>">
 
 <div id="bx-biconnector-role-main"></div>
+<div id="bx-biconnector-role-main2"></div>
 <?php
-
-$APPLICATION->IncludeComponent(
-	'bitrix:main.ui.selector',
-	'.default',
-	[
-		'API_VERSION' => 2,
-		'ID' => $componentId,
-		'ITEMS_SELECTED' => [],
-		'CALLBACK' => [
-			'select' => 'AccessRights.onMemberSelect',
-			'unSelect' => 'AccessRights.onMemberUnselect',
-			'openDialog' => 'function(){}',
-			'closeDialog' => 'function(){}',
-		],
-		'OPTIONS' => [
-			'eventInit' => $initPopupEvent,
-			'eventOpen' => $openPopupEvent,
-			'useContainer' => 'Y',
-			'lazyLoad' => 'Y',
-			'context' => 'CATALOG_PERMISSION',
-			'contextCode' => '',
-			'useSearch' => 'Y',
-			'useClientDatabase' => 'Y',
-			'allowEmailInvitation' => 'N',
-			'enableAll' => 'N',
-			'enableUsers' => 'Y',
-			'enableDepartments' => 'Y',
-			'enableGroups' => 'Y',
-			'departmentSelectDisable' => 'N',
-			'allowAddUser' => 'Y',
-			'allowAddCrmContact' => 'N',
-			'allowAddSocNetGroup' => 'N',
-			'allowSearchEmailUsers' => 'N',
-			'allowSearchCrmEmailUsers' => 'N',
-			'allowSearchNetworkUsers' => 'N',
-			'useNewCallback' => 'Y',
-			'multiple' => 'Y',
-			'enableSonetgroups' => 'Y',
-			'showVacations' => 'Y',
-		],
-	],
-	false,
-	['HIDE_ICONS' => 'Y']
-);
 
 $APPLICATION->IncludeComponent('bitrix:ui.button.panel', '', [
 	'HIDE' => true,
 	'BUTTONS' => [
 		[
 			'TYPE' => 'save',
-			'ONCLICK' => 'AccessRights.sendActionRequest()',
+			'ONCLICK' => 'accessRightsApp.sendActionRequest().catch(() => {})',
 		],
 		[
-			'TYPE' => 'cancel',
-			'ONCLICK' => 'AccessRights.fireEventReset()',
+			'TYPE' => 'custom',
+			'LAYOUT' => (new Buttons\Button())
+				->setColor(Buttons\Color::LINK)
+				->setText(Loc::getMessage('BI_ACCESS_RIGHTS_BUTTON_CANCEL'))
+				->bindEvent('click', new Buttons\JsCode('accessRightsApp.fireEventReset()'))
+				->render()
+			,
 		],
 	],
 ]);
@@ -105,25 +60,35 @@ $APPLICATION->IncludeComponent('bitrix:ui.button.panel', '', [
 ?>
 
 <script>
-	var AccessRights = new BX.UI.AccessRights({
+	const accessRightsApp = new BX.UI.AccessRights.V2.App({
 		renderTo: document.getElementById('bx-biconnector-role-main'),
 		userGroups: <?= Json::encode($arResult['USER_GROUPS']) ?>,
 		accessRights: <?= Json::encode($arResult['ACCESS_RIGHTS']) ?>,
 		component: 'bitrix:biconnector.apachesuperset.config.permissions',
 		actionSave: 'savePermissions',
 		actionDelete: 'deleteRole',
-		popupContainer: '<?= $componentId ?>',
-		openPopupEvent: '<?= $openPopupEvent ?>'
+		analytics: {},
+		searchContainerSelector: '#uiToolbarContainer',
+		isSaveAccessRightsList: true,
 	});
 
-	AccessRights.draw();
+	accessRightsApp.draw();
 
 	BX.ready(function() {
-		setTimeout(function() {
-			BX.onCustomEvent('<?= $initPopupEvent ?>', [{
-				openDialogWhenInit: false,
-				multiple: true
-			}]);
+		const searchContainer = document.querySelector('.ui-access-rights-v2-search');
+		if (searchContainer)
+		{
+			BX.removeClass(searchContainer, 'ui-ctl-w100');
+			BX.addClass(searchContainer, 'ui-ctl-w50');
+		}
+
+		BX.message(<?= Json::encode(Loc::loadLanguageFile(__FILE__)) ?>);
+		BX.BIConnector.Permissions.init({
+			newGroupPermissions: <?= Json::encode($arResult['NEW_GROUP_PERMISSIONS']) ?>,
+			dashboardGroups: <?= Json::encode($arResult['DASHBOARD_GROUPS']) ?>,
+			dashboards: <?= Json::encode($arResult['DASHBOARDS']) ?>,
+			user: <?= Json::encode($arResult['USER_DATA']) ?>,
+			appGuid: accessRightsApp.getGuid(),
 		});
 	});
 </script>

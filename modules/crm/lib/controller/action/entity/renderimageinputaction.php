@@ -26,8 +26,8 @@ class RenderImageInputAction extends \Bitrix\Main\Engine\Action
 			$userPermissions = Container::getInstance()->getUserPermissions();
 			$hasAccess =
 				$entityId > 0
-					? $userPermissions->checkUpdatePermissions($entityTypeId, $entityId)
-					: $userPermissions->checkAddPermissions($entityTypeId);
+					? $userPermissions->item()->canUpdate($entityTypeId, $entityId)
+					: $userPermissions->entityType()->canAddItems($entityTypeId);
 		}
 
 		if (!$hasAccess)

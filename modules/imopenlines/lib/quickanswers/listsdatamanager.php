@@ -722,7 +722,11 @@ class ListsDataManager extends DataManager
 			$departments = array_unique($departments);
 			foreach ($departments as $department)
 			{
-				$users[] = StructureService::getInstance()->getDepartmentHeadId($department);
+				$headId = StructureService::getInstance()->getDepartmentHeadId($department);
+				if ($headId > 0)
+				{
+					$users[] = $headId;
+				}
 			}
 			$users = array_unique($users);
 

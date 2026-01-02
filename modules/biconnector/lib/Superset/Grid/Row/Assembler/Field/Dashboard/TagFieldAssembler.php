@@ -4,6 +4,7 @@ namespace Bitrix\BIConnector\Superset\Grid\Row\Assembler\Field\Dashboard;
 
 use Bitrix\BIConnector\Access\AccessController;
 use Bitrix\BIConnector\Access\ActionDictionary;
+use Bitrix\BIConnector\Integration\Superset\Repository\DashboardGroupRepository;
 use Bitrix\Main\Grid\Row\FieldAssembler;
 use Bitrix\Main\Web\Json;
 
@@ -11,6 +12,11 @@ class TagFieldAssembler extends FieldAssembler
 {
 	protected function prepareColumn($value): array
 	{
+		if ($value['ENTITY_TYPE'] === DashboardGroupRepository::TYPE_GROUP)
+		{
+			return [];
+		}
+
 		$ormFilter = $this->getSettings()->getOrmFilter();
 		$items = [];
 		$dashboardId = (int)$value['ID'];

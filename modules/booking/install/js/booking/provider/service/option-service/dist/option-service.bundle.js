@@ -6,8 +6,14 @@ this.BX.Booking.Provider = this.BX.Booking.Provider || {};
 	'use strict';
 
 	class OptionService {
+	  async set(optionName, value) {
+	    await booking_lib_apiClient.apiClient.post('Option.set', {
+	      optionName,
+	      value
+	    });
+	  }
 	  async setBool(optionName, value) {
-	    await new booking_lib_apiClient.ApiClient().post('Option.setBool', {
+	    await booking_lib_apiClient.apiClient.post('Option.setBool', {
 	      optionName,
 	      value
 	    });

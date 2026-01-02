@@ -51,17 +51,11 @@ class FieldValueTable extends ORM\Data\DataManager
 			,
 			(new ORM\Fields\IntegerField('EMPLOYEE_ID'))
 				->configureRequired()
-				->configureTitle('employee ID')
-			,
-			(new ORM\Fields\Relations\Reference(
-				'EMPLOYEE',
-				EmployeeTable::class,
-				ORM\Query\Join::on('this.EMPLOYEE_ID', 'ref.ID')
-			))
+				->configureTitle('Entity ID')
 			,
 			(new ORM\Fields\IntegerField('FIELD_ID'))
 				->configureRequired()
-				->configureTitle('field id')
+				->configureTitle('Field ID')
 			,
 			(new ORM\Fields\Relations\Reference(
 				'FIELD',

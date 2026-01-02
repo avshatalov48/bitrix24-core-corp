@@ -1,6 +1,9 @@
 <?php
 
 use Bitrix\Bizproc;
+use Bitrix\Crm\Activity\Analytics\EventName;
+use Bitrix\Crm\Settings\Mode;
+use Bitrix\Main\Analytics\AnalyticsEvent;
 
 class CCrmBizProcHelper
 {
@@ -67,6 +70,7 @@ class CCrmBizProcHelper
 		{
 			return ['crm', $docName, \CCrmOwnerType::ResolveName($ownerTypeID)];
 		}
+
 		return null;
 	}
 	public static function ResolveDocumentId($ownerTypeID, $ownerID)
@@ -429,6 +433,27 @@ class CCrmBizProcHelper
 		}
 
 		return 'BX.Bizproc.Starter.showTemplates(' . $starterConfig . ', {})';
+	}
+
+	public static function sendOperationsAnalytics(string $eventName, CBPActivity $activity, string $eventSection): void
+	{
+		$activityClassName = (new ReflectionClass($activity))->getShortName();
+		$eventType = str_replace('CBP', '', $activityClassName);
+		if ($activity->getRootActivity()->getDocumentEventType() === CBPDocumentEventType::Automation)
+		{
+			self::sendRobotOperationsAnalytics($eventName, $eventType, strtolower($eventSection));
+		}
+	}
+
+	private static function sendRobotOperationsAnalytics(string $eventName, string $eventType, string $section): void
+	{
+		$event = new AnalyticsEvent($eventName, 'crm', 'robot_operations');
+		$event
+			->setSection($section)
+			->setType($eventType)
+			->setP1(Mode::getCurrent() === Mode::SIMPLE ? 'crmMode_simple' : 'crmMode_classic')
+		;
+		$event->send();
 	}
 }
 

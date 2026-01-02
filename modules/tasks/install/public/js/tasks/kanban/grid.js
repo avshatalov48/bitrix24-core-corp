@@ -75,6 +75,7 @@ BX.Tasks.Kanban.Grid.prototype = {
 	__proto__: BX.Kanban.Grid.prototype,
 	constructor: BX.Tasks.Kanban.Grid,
 	accessNotifyDialog: null,
+	accessNotifyDialogCollab: null,
 
 	/**
 	 * Perform ajax query.
@@ -112,7 +113,7 @@ BX.Tasks.Kanban.Grid.prototype = {
 	 * @returns {void}
 	 */
 	bindEvents: function() {
-		if (!this.isBindEvents) {
+		if (!this.isBindEvents && !this.isScrumGrid()) {
 			BX.Event.EventEmitter.subscribe('tasks-kanban-settings-fields-view', function ()
 			{
 				this.showFieldsSelectPopup();
@@ -243,7 +244,7 @@ BX.Tasks.Kanban.Grid.prototype = {
 						SIFT_THROUGH_FILTER: {
 							sprintKanban: (this.isScrumGrid() ? 'Y' : 'N'),
 							isCompletedSprint: (this.isScrumGrid()
-								? requestParams.IS_COMPLETED_SPRINT
+								? (this.getData().params.IS_COMPLETED_SPRINT)
 								: 'N'
 							),
 							userId: this.ownerId,
@@ -350,7 +351,7 @@ BX.Tasks.Kanban.Grid.prototype = {
 	 */
 	showFieldsSelectPopup: function()
 	{
-		var gridData = this.getData();
+		const gridData = this.getData();
 		const checkboxListPopup = new BX.UI.CheckboxList({
 			columnCount: 3,
 			lang: {
@@ -362,12 +363,18 @@ BX.Tasks.Kanban.Grid.prototype = {
 			events: {
 				onApply: (event) => {
 					this.ajax('saveUserSelectedFields', {
-						fields: event.data.fields
-					}).then(
-						(response) => {
-							this.onApplyFilter();
-						}
-					);
+						fields: event.data.fields,
+					})
+						.then(() => {
+							if (this.isScrumGrid())
+							{
+								BX.Tasks.Scrum.Kanban.onApplyFilter();
+							}
+							else
+							{
+								this.onApplyFilter();
+							}
+						});
 				},
 			},
 		});
@@ -401,22 +408,25 @@ BX.Tasks.Kanban.Grid.prototype = {
 		{
 			if (this.isCollab)
 			{
-				const popup = new BX.Main.Popup({
-					closeIcon: true,
-					titleBar: BX.message("TASKS_KANBAN_COLLAB_NOTIFY_HEADER"),
-					content: BX.message("TASKS_KANBAN_COLLAB_NOTIFY_TEXT"),
-					cacheable: true,
-					buttons: [
-						new BX.UI.Button({
-							text: BX.message("TASKS_KANBAN_COLLAB_NOTIFY_BUTTON"),
-							color: BX.UI.Button.Color.LIGHT_BORDER,
-							onclick: function(button, event) {
-								popup.close();
-							},
-						}),
-					],
-				});
-				popup.show();
+				if (this.accessNotifyDialogCollab === null)
+				{
+					this.accessNotifyDialogCollab = new BX.Main.Popup({
+						closeIcon: true,
+						titleBar: BX.message("TASKS_KANBAN_COLLAB_NOTIFY_HEADER"),
+						content: BX.message("TASKS_KANBAN_COLLAB_NOTIFY_TEXT"),
+						cacheable: true,
+						buttons: [
+							new BX.UI.Button({
+								text: BX.message("TASKS_KANBAN_COLLAB_NOTIFY_BUTTON"),
+								color: BX.UI.Button.Color.LIGHT_BORDER,
+								onclick: () => {
+									this.accessNotifyDialogCollab.close();
+								},
+							}),
+						],
+					});
+				}
+				this.accessNotifyDialogCollab.show();
 			}
 			else
 			{
@@ -1137,7 +1147,7 @@ BX.Tasks.Kanban.Grid.prototype = {
 				}
 			},
 			(response) => {
-				BX.Kanban.Utils.showErrorDialog("Error: " + response.errors[0].message, true);
+				BX.Kanban.Utils.showErrorDialog(BX.message('TASKS_KANBAN_MODAL_ERROR_PREFIX').concat(response.errors[0].message), true);
 			},
 		);
 	},
@@ -1665,7 +1675,7 @@ BX.Tasks.Kanban.Grid.prototype = {
 			text: BX.message("TASKS_KANBAN_PANEL_MEMBERS"),
 			items: [
 				{
-					text: BX.message("TASKS_KANBAN_PANEL_MEMBERS_RESPONSE"),
+					text: BX.message("TASKS_KANBAN_PANEL_MEMBERS_RESPONSE_MSGVER_1"),
 					onclick: function()
 					{
 						BX.Tasks.Kanban.Actions.member(

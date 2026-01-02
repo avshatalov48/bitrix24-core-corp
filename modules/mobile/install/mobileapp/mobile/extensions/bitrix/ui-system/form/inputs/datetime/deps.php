@@ -2,7 +2,8 @@
 
 return [
 	'extensions' => [
-		'type',
+		'utils/type',
+		'utils/function',
 		'utils/validation',
 		'layout/pure-component',
 		'layout/ui/fields/datetime',

@@ -7,7 +7,7 @@
  */
 jn.define('im/messenger/lib/parser/functions/disk', (require, exports, module) => {
 
-	const { Loc } = require('loc');
+	const { Loc } = require('im/messenger/loc');
 
 	const parserDisk = {
 		decode(text)

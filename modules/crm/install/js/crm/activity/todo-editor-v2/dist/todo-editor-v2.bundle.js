@@ -924,8 +924,12 @@ this.BX.Crm = this.BX.Crm || {};
 	  },
 	  computed: {
 	    currentSectionTitle() {
-	      var _this$sections$find$N, _this$sections$find;
-	      return (_this$sections$find$N = (_this$sections$find = this.sections.find(section => section.ID === this.selectedSectionId)) === null || _this$sections$find === void 0 ? void 0 : _this$sections$find.NAME) !== null && _this$sections$find$N !== void 0 ? _this$sections$find$N : '';
+	      var _this$sections$find$N, _this$sections$find, _this$sections$find$N2, _this$sections$find2;
+	      const title = (_this$sections$find$N = (_this$sections$find = this.sections.find(section => section.ID === this.selectedSectionId)) === null || _this$sections$find === void 0 ? void 0 : _this$sections$find.NAME) !== null && _this$sections$find$N !== void 0 ? _this$sections$find$N : null;
+	      if (title) {
+	        return title;
+	      }
+	      return (_this$sections$find$N2 = (_this$sections$find2 = this.sections.find(section => section.DEFAULT)) === null || _this$sections$find2 === void 0 ? void 0 : _this$sections$find2.NAME) !== null && _this$sections$find$N2 !== void 0 ? _this$sections$find$N2 : '';
 	    },
 	    hasSections() {
 	      return main_core.Type.isArrayFilled(this.sections);
@@ -1066,9 +1070,20 @@ this.BX.Crm = this.BX.Crm || {};
 	          var _response$data, _data$config$readOnly;
 	          this.config = (_response$data = response.data) !== null && _response$data !== void 0 ? _response$data : {};
 	          this.sectionSelectorReadOnly = (_data$config$readOnly = data.config.readOnly) !== null && _data$config$readOnly !== void 0 ? _data$config$readOnly : false;
+	          const hasSelectedSection = this.config.sections.some(section => section.ID === this.sectionId);
+	          if (this.sectionSelectorReadOnly && !hasSelectedSection) {
+	            var _this$plannerInstance;
+	            (_this$plannerInstance = this.plannerInstance) === null || _this$plannerInstance === void 0 ? void 0 : _this$plannerInstance.setReadonly();
+	          }
 	          if (main_core.Type.isNil(data.sectionId)) {
 	            const defaultSection = data.config.sections.find(section => section.DEFAULT === true);
-	            this.sectionId = defaultSection ? defaultSection.ID : data.config.sections[0].ID;
+	            if (main_core.Type.isObject(defaultSection)) {
+	              this.sectionId = defaultSection.ID;
+	            } else {
+	              var _firstUserSection$ID;
+	              const firstUserSection = data.config.sections.find(section => section.OWNER_ID === data.ownerId);
+	              this.sectionId = (_firstUserSection$ID = firstUserSection === null || firstUserSection === void 0 ? void 0 : firstUserSection.ID) !== null && _firstUserSection$ID !== void 0 ? _firstUserSection$ID : 0;
+	            }
 	          }
 	        });
 	      }
@@ -1091,7 +1106,8 @@ this.BX.Crm = this.BX.Crm || {};
 	          minHeight: 104,
 	          height: 104,
 	          width: 770,
-	          entryTimezone: this.timezoneName
+	          entryTimezone: this.timezoneName,
+	          readonly: this.sectionSelectorReadOnly
 	        });
 	      }
 	      return this.plannerInstance;
@@ -1261,7 +1277,7 @@ this.BX.Crm = this.BX.Crm || {};
 	        multiple: true,
 	        dropdownMode: true,
 	        showAvatars: true,
-	        enableSearch: true,
+	        enableSearch: !this.sectionSelectorReadOnly,
 	        width: 450,
 	        zIndex: 2500,
 	        entities: [{
@@ -1270,10 +1286,17 @@ this.BX.Crm = this.BX.Crm || {};
 	        preselectedItems,
 	        undeselectedItems,
 	        events: {
+	          'Item:onBeforeSelect': this.onBeforeSelectUser,
+	          'Item:onBeforeDeselect': this.onBeforeSelectUser,
 	          'Item:onSelect': this.onSelectUser,
 	          'Item:onDeselect': this.onDeselectUser
 	        }
 	      });
+	    },
+	    onBeforeSelectUser(event) {
+	      if (this.sectionSelectorReadOnly) {
+	        event.preventDefault();
+	      }
 	    },
 	    onSelectUser({
 	      data: {
@@ -3901,33 +3924,41 @@ this.BX.Crm = this.BX.Crm || {};
 	  }, {
 	    key: "cancel",
 	    value: function cancel(params = {}) {
-	      var _params$analytics, _params$analytics2, _params$analytics3;
+	      var _babelHelpers$classPr3;
 	      const animateCollapse = _classPrivateMethodGet$4(this, _shouldAnimateCollapse, _shouldAnimateCollapse2).call(this);
 	      if ((params === null || params === void 0 ? void 0 : params.sendAnalytics) === false) {
 	        this.getTextEditor().collapse(animateCollapse);
 	        return _classPrivateMethodGet$4(this, _clearValue, _clearValue2).call(this);
 	      }
-	      const analytics = _classPrivateMethodGet$4(this, _getAnalyticsInstance, _getAnalyticsInstance2).call(this);
+	      const data = (_babelHelpers$classPr3 = babelHelpers.classPrivateFieldGet(this, _analytics)) === null || _babelHelpers$classPr3 === void 0 ? void 0 : _babelHelpers$classPr3.getData();
+	      this.sendAnalyticsCancelEvent({
+	        ...data,
+	        ...(params === null || params === void 0 ? void 0 : params.analytics)
+	      });
+	      this.getTextEditor().collapse(animateCollapse);
+	      return _classPrivateMethodGet$4(this, _clearValue, _clearValue2).call(this);
+	    }
+	  }, {
+	    key: "sendAnalyticsCancelEvent",
+	    value: function sendAnalyticsCancelEvent(params) {
+	      const analytics = _classPrivateMethodGet$4(this, _getAnalyticsInstance, _getAnalyticsInstance2).call(this, params);
 	      if (analytics === null) {
-	        this.getTextEditor().collapse(animateCollapse);
-	        return _classPrivateMethodGet$4(this, _clearValue, _clearValue2).call(this);
+	        return;
 	      }
 	      analytics.setEvent(EventIds.activityCancel).setElement(ElementIds.cancelButton);
-	      const subSection = params === null || params === void 0 ? void 0 : (_params$analytics = params.analytics) === null || _params$analytics === void 0 ? void 0 : _params$analytics.subSection;
+	      const subSection = params === null || params === void 0 ? void 0 : params.subSection;
 	      if (main_core.Type.isStringFilled(subSection)) {
 	        analytics.setSubSection(subSection);
 	      }
-	      const element = params === null || params === void 0 ? void 0 : (_params$analytics2 = params.analytics) === null || _params$analytics2 === void 0 ? void 0 : _params$analytics2.element;
+	      const element = params === null || params === void 0 ? void 0 : params.element;
 	      if (main_core.Type.isStringFilled(element)) {
 	        analytics.setElement(element);
 	      }
-	      const notificationSkipPeriod = params === null || params === void 0 ? void 0 : (_params$analytics3 = params.analytics) === null || _params$analytics3 === void 0 ? void 0 : _params$analytics3.notificationSkipPeriod;
+	      const notificationSkipPeriod = params === null || params === void 0 ? void 0 : params.notificationSkipPeriod;
 	      if (main_core.Type.isStringFilled(notificationSkipPeriod)) {
 	        analytics.setNotificationSkipPeriod(notificationSkipPeriod);
 	      }
 	      analytics.send();
-	      this.getTextEditor().collapse(animateCollapse);
-	      return _classPrivateMethodGet$4(this, _clearValue, _clearValue2).call(this);
 	    }
 	  }, {
 	    key: "resetToDefaults",
@@ -4318,9 +4349,10 @@ this.BX.Crm = this.BX.Crm || {};
 	  const settings = main_core.Extension.getSettings('crm.activity.todo-editor-v2');
 	  return (settings === null || settings === void 0 ? void 0 : settings.canUseCalendarBlock) === true;
 	}
-	function _getAnalyticsInstance2() {
-	  var _babelHelpers$classPr3;
-	  const data = (_babelHelpers$classPr3 = babelHelpers.classPrivateFieldGet(this, _analytics)) === null || _babelHelpers$classPr3 === void 0 ? void 0 : _babelHelpers$classPr3.getData();
+	function _getAnalyticsInstance2(data = null) {
+	  var _data, _babelHelpers$classPr4;
+	  // eslint-disable-next-line no-param-reassign
+	  data = (_data = data) !== null && _data !== void 0 ? _data : (_babelHelpers$classPr4 = babelHelpers.classPrivateFieldGet(this, _analytics)) === null || _babelHelpers$classPr4 === void 0 ? void 0 : _babelHelpers$classPr4.getData();
 	  if (!data) {
 	    return null;
 	  }

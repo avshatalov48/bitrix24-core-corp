@@ -8,5 +8,12 @@ interface RoleRelationRepository
 
 	public function deleteRelationsByRoleId(int $roleId): \Bitrix\Main\DB\Result;
 
+	/**
+	 * @param array<int> $roleIds
+	 *
+	 * @return void
+	 */
+	public function deleteRelationsByRoleIds(array $roleIds): void;
+
 	public function getRelationList(array $parameters = []): array;
 }

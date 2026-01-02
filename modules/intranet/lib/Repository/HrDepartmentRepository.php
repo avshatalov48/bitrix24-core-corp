@@ -2,7 +2,6 @@
 
 namespace Bitrix\Intranet\Repository;
 
-use Bitrix\HumanResources\Compatibility\Utils\DepartmentBackwardAccessCode;
 use Bitrix\HumanResources\Enum\DepthLevel as NodeDepthLevel;
 use Bitrix\Intranet\Enum\DepthLevel;
 use Bitrix\HumanResources\Enum\NodeActiveFilter;
@@ -10,7 +9,6 @@ use Bitrix\HumanResources\Exception\CreationFailedException as HrCreationFailedE
 use Bitrix\HumanResources\Type\NodeEntityType;
 use Bitrix\Intranet\Contract\Repository\DepartmentRepository as DepartmentRepositoryContract;
 use Bitrix\HumanResources\Exception\WrongStructureItemException;
-use Bitrix\HumanResources\Item\Collection\NodeCollection;
 use Bitrix\HumanResources\Item\Node;
 use Bitrix\HumanResources\Item\NodeMember;
 use Bitrix\HumanResources\Item\Structure;
@@ -19,6 +17,7 @@ use Bitrix\Intranet\Entity\Department;
 use Bitrix\Intranet\Entity\Collection\DepartmentCollection;
 use Bitrix\Intranet\Enum\DepartmentActiveFilter;
 use Bitrix\Intranet\Exception\CreationFailedException;
+use Bitrix\Intranet\Internal\Integration\Humanresources\DepartmentRepository;
 use Bitrix\Intranet\User;
 use Bitrix\Main\ArgumentException;
 use Bitrix\Main\ArgumentOutOfRangeException;
@@ -28,10 +27,11 @@ use Bitrix\Main\LoaderException;
 use Bitrix\Main\ObjectPropertyException;
 use Bitrix\Main\SystemException;
 use Bitrix\HumanResources\Type\MemberEntityType;
-use Bitrix\HumanResources\Compatibility\Adapter\StructureBackwardAdapter;
 
 class HrDepartmentRepository implements DepartmentRepositoryContract
 {
+	private DepartmentRepository $departmentRepository;
+
 	/**
 	 * @throws LoaderException
 	 */
@@ -41,6 +41,8 @@ class HrDepartmentRepository implements DepartmentRepositoryContract
 		{
 			throw new \Bitrix\Main\LoaderException('Module "humanresources" not loaded.');
 		}
+
+		$this->departmentRepository = new DepartmentRepository();
 	}
 
 	protected function getCompanyStructure(): ?Structure
@@ -62,7 +64,7 @@ class HrDepartmentRepository implements DepartmentRepositoryContract
 			return null;
 		}
 
-		return $this->makeDepartmentFromNode($node);
+		return $this->departmentRepository->createDepartmentFromNode($node);
 	}
 
 	/**
@@ -108,7 +110,7 @@ class HrDepartmentRepository implements DepartmentRepositoryContract
 			return null;
 		}
 
-		return $this->makeDepartmentFromNode($node);
+		return $this->departmentRepository->createDepartmentFromNode($node);
 	}
 
 	/**
@@ -120,7 +122,7 @@ class HrDepartmentRepository implements DepartmentRepositoryContract
 		$nodes = Container::getNodeRepository()
 			->getNodesByName($companyStructureId, $name, $limit);
 
-		return $this->makeDepartmentCollectionFromNodeCollection($nodes);
+		return $this->departmentRepository->createDepartmentCollectionFromNodeCollection($nodes);
 	}
 
 	/**
@@ -136,10 +138,19 @@ class HrDepartmentRepository implements DepartmentRepositoryContract
 		}
 
 		$nodes = Container::getNodeRepository()
-			->findAllByAccessCodes(array_map(fn($id) => 'D' . $id, $ids));
+			->findAllByIds($ids);
 
-		return $this->makeDepartmentCollectionFromNodeCollection($nodes);
+		return $this->departmentRepository->createDepartmentCollectionFromNodeCollection($nodes);
+	}
 
+	/**
+	 * @throws ArgumentException
+	 */
+	public function findAllByUserId(int $userId): DepartmentCollection
+	{
+		$hrDepartment = new \Bitrix\Intranet\Internal\Integration\Humanresources\DepartmentRepository();
+
+		return $hrDepartment->getDepartmentsByUserId($userId);
 	}
 
 	/**
@@ -151,7 +162,7 @@ class HrDepartmentRepository implements DepartmentRepositoryContract
 	{
 		$nodes = Container::getNodeRepository()->findAllByXmlId($xmlId);
 
-		return $this->makeDepartmentCollectionFromNodeCollection($nodes);
+		return $this->departmentRepository->createDepartmentCollectionFromNodeCollection($nodes);
 	}
 
 	public function getDepartmentByHeadId(
@@ -170,7 +181,7 @@ class HrDepartmentRepository implements DepartmentRepositoryContract
 		$nodes = Container::getNodeRepository()
 			->findAllByUserIdAndRoleId($headId, $headRole, $nodeActiveFilter);
 
-		return $this->makeDepartmentCollectionFromNodeCollection($nodes);
+		return $this->departmentRepository->createDepartmentCollectionFromNodeCollection($nodes);
 	}
 
 	/**
@@ -283,7 +294,7 @@ class HrDepartmentRepository implements DepartmentRepositoryContract
 
 		foreach ($this->nodeTreeWalker($rootNode, $tree, $activeFilter) as $node)
 		{
-			$departmentCollection->add($this->makeDepartmentFromNode($node));
+			$departmentCollection->add($this->departmentRepository->createDepartmentFromNode($node));
 		}
 
 		return $departmentCollection;
@@ -307,6 +318,13 @@ class HrDepartmentRepository implements DepartmentRepositoryContract
 		}
 	}
 
+	/**
+	 * @param int $departmentId
+	 * @return void
+	 * @throws ArgumentException
+	 * @throws ObjectPropertyException
+	 * @throws SystemException
+	 */
 	public function delete(int $departmentId): void
 	{
 		Container::getNodeRepository()
@@ -330,7 +348,7 @@ class HrDepartmentRepository implements DepartmentRepositoryContract
 			throw new CreationFailedException($e->getErrors());
 		}
 
-		return $this->makeDepartmentFromNode($node);
+		return $this->departmentRepository->createDepartmentFromNode($node);
 	}
 
 	/**
@@ -343,7 +361,7 @@ class HrDepartmentRepository implements DepartmentRepositoryContract
 		$node = $this->makeNodeFromDepartment($department);
 		$node = Container::getNodeService()->updateNode($node);
 
-		return $this->makeDepartmentFromNode($node);
+		return $this->departmentRepository->createDepartmentFromNode($node);
 	}
 
 	/**
@@ -360,39 +378,6 @@ class HrDepartmentRepository implements DepartmentRepositoryContract
 		}
 
 		return $this->create($department);
-	}
-
-	protected function makeDepartmentFromNode(Node $node): Department
-	{
-		return new Department(
-			name: $node->name,
-			id: $node->id,
-			parentId: $node->parentId,
-			createdBy: $node->createdBy,
-			createdAt: $node->createdAt,
-			updatedAt: $node->updatedAt,
-			xmlId: $node->xmlId,
-			sort: $node->sort,
-			isActive: $node->active,
-			isGlobalActive: $node->globalActive,
-			depth: $node->depth,
-			accessCode: $node->accessCode,
-		);
-	}
-
-
-	/**
-	 * @throws ArgumentException
-	 */
-	protected function makeDepartmentCollectionFromNodeCollection(NodeCollection $nodeCollection): DepartmentCollection
-	{
-		$collection = new DepartmentCollection();
-		foreach ($nodeCollection as $node)
-		{
-			$collection->add($this->makeDepartmentFromNode($node));
-		}
-
-		return $collection;
 	}
 
 	/**
@@ -417,7 +402,7 @@ class HrDepartmentRepository implements DepartmentRepositoryContract
 				return NodeActiveFilter::ONLY_GLOBAL_ACTIVE;
 				break;
 		}
-				
+
 		throw new ArgumentException("Unknown active filter");
 	}
 
@@ -447,5 +432,23 @@ class HrDepartmentRepository implements DepartmentRepositoryContract
 		);
 
 		return $node;
+	}
+
+	/**
+	 * @throws ObjectPropertyException
+	 * @throws SystemException
+	 * @throws ArgumentException
+	 */
+	public function findAllByIblockIds(array $ids): DepartmentCollection
+	{
+		if (empty($ids))
+		{
+			return new DepartmentCollection();
+		}
+
+		$nodes = Container::getNodeRepository()
+			->findAllByAccessCodes(array_map(fn($id) => 'D' . $id, $ids));
+
+		return $this->departmentRepository->createDepartmentCollectionFromNodeCollection($nodes);
 	}
 }

@@ -264,13 +264,17 @@ elseif ($action === 'SAVE_PROGRESS' && check_bitrix_sessid())
 		]);
 	});
 
-	$CCrmDeal = new CCrmDeal(false);
-	if($CCrmDeal->Update(
+	$CCrmDeal = new CCrmDeal();
+	if ($CCrmDeal->Update(
 		$ID,
 		$arFields,
 		true,
 		true,
-		array(/*'DISABLE_USER_FIELD_CHECK' => true,*/ 'REGISTER_SONET_EVENT' => true))
+		[
+			/*'DISABLE_USER_FIELD_CHECK' => true,*/
+			'REGISTER_SONET_EVENT' => true,
+			'eventId' => $_REQUEST['EVENT_ID'] ?? null,
+		])
 	)
 	{
 		$arErrors = array();

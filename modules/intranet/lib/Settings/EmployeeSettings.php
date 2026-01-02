@@ -2,10 +2,13 @@
 
 namespace Bitrix\Intranet\Settings;
 
+use Bitrix\Bitrix24\Integration\Network\RegisterSettingsSynchronizer;
+use Bitrix\Extranet;
 use Bitrix\Intranet\Settings\Controls\Section;
 use Bitrix\Intranet\Settings\Controls\Selector;
 use Bitrix\Intranet\Settings\Controls\Switcher;
 use Bitrix\Intranet\Settings\Search\SearchEngine;
+use Bitrix\Intranet\Settings\Tools\ToolsManager;
 use Bitrix\Location\Infrastructure\FormatCode;
 use Bitrix\Location\Service\FormatService;
 use Bitrix\Main\Application;
@@ -20,7 +23,6 @@ use Bitrix\Main\PhoneNumber\MetadataProvider;
 use Bitrix\Main\PhoneNumber\Parser;
 use Bitrix\Main\PhoneNumber\Format;
 use Bitrix\Main\Result;
-use Bitrix\Socialservices\Network;
 use Bitrix\Intranet\Integration\Main\Culture;
 
 class EmployeeSettings extends AbstractSettings
@@ -33,8 +35,8 @@ class EmployeeSettings extends AbstractSettings
 	public function __construct(array $data = [])
 	{
 		parent::__construct($data);
-		$this->isBitrix24 = IsModuleInstalled("bitrix24");
-		$this->isExtranetInstalled = IsModuleInstalled("extranet");
+		$this->isBitrix24 = Loader::includeModule('bitrix24');
+		$this->isExtranetInstalled = Loader::includeModule('extranet');
 	}
 
 	public function validate(): ErrorCollection
@@ -96,21 +98,9 @@ class EmployeeSettings extends AbstractSettings
 
 		if ($this->isBitrix24)
 		{
-			if (Loader::includeModule("socialservices"))
-			{
-				Network::setRegisterSettings(array(
-					"REGISTER" => isset($this->data['allow_register']) && $this->data['allow_register'] === 'Y' ? 'Y' : 'N',
-				));
-			}
-
-			if (isset($this->data['allow_invite_users']) && $this->data['allow_invite_users'] === 'Y')
-			{
-				\COption::SetOptionString("bitrix24", "allow_invite_users", "Y");
-			}
-			else
-			{
-				\COption::SetOptionString("bitrix24", "allow_invite_users", "N");
-			}
+			RegisterSettingsSynchronizer::setRegisterSettings(array(
+				"REGISTER" => isset($this->data['allow_register']) && $this->data['allow_register'] === 'Y' ? 'Y' : 'N',
+			));
 
 			if (isset($this->data["show_year_for_female"]) && $this->data["show_year_for_female"]  === 'Y')
 			{
@@ -153,6 +143,20 @@ class EmployeeSettings extends AbstractSettings
 					'modulesList' => $manualModulesChangedList,
 				]);
 				$event->send();
+			}
+		}
+
+		if (isset($this->data['allow_invite_collabers']) && $this->isExtranetInstalled)
+		{
+			$collaberInvitation = new Extranet\Settings\CollaberInvitation();
+
+			if ($this->data['allow_invite_collabers'] === 'Y' && !$collaberInvitation->isEnabled())
+			{
+				$collaberInvitation->enable();
+			}
+			elseif ($this->data['allow_invite_collabers'] === 'N' && $collaberInvitation->isEnabled())
+			{
+				$collaberInvitation->disable();
 			}
 		}
 
@@ -207,21 +211,8 @@ class EmployeeSettings extends AbstractSettings
 				],
 				helpDesk: 'redirect=detail&code=17726876',
 			);
-			if(Loader::includeModule("socialservices"))
-			{
-				$registerSettings = Network::getRegisterSettings();
-				$data['allow_register']->setValue($registerSettings['REGISTER'] == 'Y' ? 'Y' : 'N');
-			}
-
-			$data['allow_invite_users'] = new Switcher(
-				'settings-employee-field-allow_invite_users',
-				'allow_invite_users',
-				Loc::getMessage('INTRANET_SETTINGS_FIELD_LABEL_USERS_TO_INVITE'),
-				Option::get('bitrix24', 'allow_invite_users', 'N'),
-				[
-					'on' => Loc::getMessage('INTRANET_SETTINGS_FIELD_HINT_USERS_TO_INVITE_ON'),
-				],
-			);
+			$registerSettings = RegisterSettingsSynchronizer::getRegisterSettings();
+			$data['allow_register']->setValue($registerSettings['REGISTER'] === 'Y' ? 'Y' : 'N');
 
 			$culture = Application::getInstance()->getContext()->getCulture();
 
@@ -251,6 +242,20 @@ class EmployeeSettings extends AbstractSettings
 					helpDesk: 'redirect=detail&code=17983050'
 				);
 			}
+		}
+
+		if ($this->isExtranetInstalled && ToolsManager::getInstance()->checkAvailabilityByToolId('collab'))
+		{
+			$data['allow_invite_collabers'] = new Switcher(
+				'settings-employee-field-allow_invite_collabers',
+				'allow_invite_collabers',
+				Loc::getMessage('INTRANET_SETTINGS_FIELD_LABEL_COLLABERS_INVITE'),
+				(new Extranet\Settings\CollaberInvitation())->isEnabled() ? 'Y' : 'N',
+				[
+					'on' => Loc::getMessage('INTRANET_SETTINGS_FIELD_HINT_COLLABERS_INVITE_ON'),
+				],
+				helpDesk: 'redirect=detail&code=22706836',
+			);
 		}
 
 		$data['show_fired_employees'] = new Switcher(
@@ -283,17 +288,7 @@ class EmployeeSettings extends AbstractSettings
 			]
 		);
 
-		$allowCompanyPulseValue = Option::get('intranet', 'allow_company_pulse', null);
-		if (is_null($allowCompanyPulseValue))
-		{
-			Option::set('intranet', 'allow_company_pulse', "Y");
-			$allowCompanyPulseValue = "Y";
-		}
-		$url = "";
-		if (Loader::includeModule('ui'))
-		{
-			$url = \Bitrix\UI\Util::getArticleUrlByCode('6474093');
-		}
+		$allowCompanyPulseValue = Option::get('intranet', 'allow_company_pulse', 'Y');
 
 		$data['allow_company_pulse'] = new Switcher(
 			'settings-employee-field-allow_company_pulse',
@@ -301,11 +296,9 @@ class EmployeeSettings extends AbstractSettings
 			Loc::getMessage('INTRANET_SETTINGS_FIELD_LABEL_SHOW_MESSAGE_COMPANY_PULSE'),
 			$allowCompanyPulseValue,
 			[
-				'on' => Loc::getMessage('INTRANET_SETTINGS_FIELD_LABEL_SHOW_WIDGET', [
-					'[helpdesklink]' => '<a class=\'more\' href=\'' . $url . '\'>',
-					'[/helpdesklink]' => '</a>'
-				])
+				'on' => Loc::getMessage('INTRANET_SETTINGS_FIELD_LABEL_COMPANY_PULSE_DESCRIPTION')
 			],
+			helpDesk: 'redirect=detail&code=17983050'
 		);
 
 		$values = [];
@@ -436,7 +429,6 @@ class EmployeeSettings extends AbstractSettings
 		{
 			$index['show_year_for_female'] = Loc::getMessage('INTRANET_SETTINGS_FIELD_LABEL_SHOW_BIRTH_YEAR');
 			$index['allow_register'] = Loc::getMessage('INTRANET_SETTINGS_FIELD_LABEL_FAST_REG');
-			$index['allow_invite_users'] = Loc::getMessage('INTRANET_SETTINGS_FIELD_LABEL_USERS_TO_INVITE');
 			$index['feature_extranet'] = Loc::getMessage('INTRANET_SETTINGS_FIELD_LABEL_EXTRANET');
 		}
 		if (Loader::includeModule('location'))
@@ -445,6 +437,7 @@ class EmployeeSettings extends AbstractSettings
 		}
 
 		$searchEngine = SearchEngine::initWithDefaultFormatter($index + [
+			'allow_invite_collabers' => Loc::getMessage('INTRANET_SETTINGS_FIELD_LABEL_COLLABERS_INVITE'),
 			'phone_number_default_country' => Loc::getMessage('INTRANET_SETTINGS_FIELD_LABEL_COUNTRY_PHONE_NUMBER'),
 			'FORMAT_NAME_selector' => Loc::getMessage('INTRANET_SETTINGS_FIELD_LABEL_NAME_FORMAT'),
 			'show_fired_employees' => Loc::getMessage('INTRANET_SETTINGS_FIELD_LABEL_SHOW_QUIT_EMPLOYEE'),

@@ -51,9 +51,14 @@ jn.define('calendar/event-edit-form/layout/reminder-selector', (require, exports
 
 		getTitle()
 		{
-			if (this.props.reminder === 0)
+			if (this.props.reminder === -1)
 			{
 				return Loc.getMessage('M_CALENDAR_EVENT_EDIT_FORM_NO_REMINDER');
+			}
+
+			if (this.props.reminder === 0)
+			{
+				return Loc.getMessage('M_CALENDAR_EVENT_EDIT_FORM_REMINDER_AT_MOMENT');
 			}
 
 			return Loc.getMessage('M_CALENDAR_EVENT_EDIT_FORM_REMIND_BEFORE_TIME', {

@@ -1,20 +1,16 @@
 import { Core } from 'booking.core';
 import { BusySlot, DateFormat, Model } from 'booking.const';
-import { Duration } from 'booking.lib.duration';
+import { SlotRanges } from 'booking.lib.slot-ranges';
 import { resourceDialogService } from 'booking.provider.service.resource-dialog-service';
 import { resourcesDateCache } from 'booking.lib.resources-date-cache';
-import type { BookingModel } from 'booking.model.bookings';
+import type { BookingModel, OverbookingMap } from 'booking.model.bookings';
 import type { ResourceModel, SlotRange } from 'booking.model.resources';
 import type { Intersections } from 'booking.model.interface';
 
-export type BusySlotDto = {
-	id: string,
-	fromTs: number,
-	toTs: number,
-	resourceId: number,
-	intersectingResourceId?: number,
-	type: string,
-};
+import { getIntersectionBusySlots } from './lib';
+import type { BusySlotDto, Range } from './types';
+
+export type { BusySlotDto };
 
 const minBookingViewMs = 15 * 60 * 1000;
 
@@ -53,9 +49,9 @@ class BusySlots
 		return Core.getStore().getters[`${Model.Interface}/offset`];
 	}
 
-	get #timezoneOffset(): number
+	get #timezone(): number
 	{
-		return Core.getStore().getters[`${Model.Interface}/timezoneOffset`];
+		return Core.getStore().getters[`${Model.Interface}/timezone`];
 	}
 
 	get #resourcesIds(): number[]
@@ -92,9 +88,10 @@ class BusySlots
 
 	get #draggedBookingId(): number
 	{
-		return Core.getStore().getters[`${Model.Interface}/draggedBookingId`]
+		return (
+			Core.getStore().getters[`${Model.Interface}/draggedBookingId`]
 			|| Core.getStore().getters[`${Model.Interface}/resizedBookingId`]
-		;
+		);
 	}
 
 	get #draggedBookingResourceId(): number
@@ -154,83 +151,8 @@ class BusySlots
 			.map((booking: BookingModel) => this.#calculateMinutesRange(booking))
 		;
 
-		const minutesInDay = Duration.getUnitDurations().d / Duration.getUnitDurations().i;
-
-		const slotRanges = resource.slotRanges
-			.map((slotRange: SlotRange): SlotRange => {
-				const timeZone = slotRange.timezone;
-
-				const date = new Date(this.#selectedDateTs);
-				const dateInTimezone = new Date(date.toLocaleString('en-US', { timeZone }));
-				const dateInUTC = new Date(date.toLocaleString('en-US', { timeZone: 'UTC' }));
-
-				const timezoneOffset = (dateInTimezone.getTime() - dateInUTC.getTime()) / 1000;
-				const minutesOffset = (this.#timezoneOffset - timezoneOffset) / 60;
-
-				return {
-					...slotRange,
-					from: slotRange.from + minutesOffset,
-					to: slotRange.to + minutesOffset,
-				};
-			})
-			.map((slotRange: SlotRange) => {
-				if (slotRange.from > minutesInDay)
-				{
-					return {
-						...slotRange,
-						from: slotRange.from - minutesInDay,
-						to: slotRange.to - minutesInDay,
-						weekDays: slotRange.weekDays.map((weekDay) => this.#getNextDay(weekDay)),
-					};
-				}
-
-				if (slotRange.to < 0)
-				{
-					return {
-						...slotRange,
-						from: slotRange.from + minutesInDay,
-						to: slotRange.to + minutesInDay,
-						weekDays: slotRange.weekDays.map((weekDay) => this.#getPreviousDay(weekDay)),
-					};
-				}
-
-				return slotRange;
-			})
-			.flatMap((slotRange: SlotRange): SlotRange[] => {
-				if (slotRange.from < 0)
-				{
-					return [
-						{
-							...slotRange,
-							from: 0,
-						},
-						...slotRange.weekDays.map((weekDay) => ({
-							...slotRange,
-							from: minutesInDay + slotRange.from,
-							to: minutesInDay,
-							weekDays: [this.#getPreviousDay(weekDay)],
-						})),
-					];
-				}
-
-				if (slotRange.to > minutesInDay)
-				{
-					return [
-						{
-							...slotRange,
-							to: minutesInDay,
-						},
-						...slotRange.weekDays.map((weekDay) => ({
-							...slotRange,
-							from: 0,
-							to: slotRange.to - minutesInDay,
-							weekDays: [this.#getNextDay(weekDay)],
-						})),
-					];
-				}
-
-				return slotRange;
-			})
+		const slotRanges = SlotRanges
+			.applyTimezone(resource.slotRanges, this.#selectedDateTs, this.#timezone)
 			.filter((slotRange: SlotRange) => slotRange.weekDays.includes(this.#selectedWeekDay))
 		;
 
@@ -270,55 +192,46 @@ class BusySlots
 			...(this.#intersections[resourceId] ?? []),
 		];
 
+		const bookingRanges = this.#getBookings()
+			.filter((booking: BookingModel) => booking.resourcesIds.includes(resourceId))
+			.map((booking: BookingModel) => this.#calculateMinutesRange(booking));
+
 		const intersectingBookings = this.#getIntersectingBookings(intersectingResourcesIds)
 			.filter((booking: BookingModel) => {
 				const notCurrentResource = !booking.resourcesIds.includes(resourceId);
 				const isNotDragged = booking.id !== this.#draggedBookingId;
 
 				return notCurrentResource && isNotDragged;
-			})
-		;
+			});
 
 		const intersectingBookingRanges = intersectingBookings
-			.map((booking: BookingModel) => this.#calculateMinutesRange(booking));
+			.map((booking: BookingModel) => this.#calculateMinutesRange(booking))
+			.filter((ir) => {
+				return bookingRanges
+					.filter((br) => br.from <= ir.from && ir.to <= br.to)
+					.length < 2;
+			});
+
 		if (intersectingBookingRanges.length === 0)
 		{
 			return [];
 		}
 
-		const bookingRanges = this.#getBookings()
-			.filter((booking: BookingModel) => booking.resourcesIds.includes(resourceId))
-			.map((booking: BookingModel) => this.#calculateMinutesRange(booking))
-		;
-
 		const busyRanges = intersectingBookingRanges.flatMap((intersectingRange) => {
 			return this.#subtractRanges(intersectingRange, bookingRanges);
 		});
 
-		return busyRanges.map(({ from, to, id }): BusySlotDto => {
-			const fromTs = new Date(this.#selectedDateTs).setMinutes(from);
-			const toTs = new Date(this.#selectedDateTs).setMinutes(to);
-			const type = BusySlot.Intersection;
-
-			const booking = intersectingBookings.find((intersectingBooking) => intersectingBooking.id === id);
-
-			const intersectingResourceId = booking
-				? booking.resourcesIds.find((it) => intersectingResourcesIds.includes(it))
-				: 0
-			;
-
-			return {
-				id: `${resourceId}-${fromTs}-${toTs}`,
-				fromTs,
-				toTs,
-				resourceId,
-				intersectingResourceId,
-				type,
-			};
+		return getIntersectionBusySlots({
+			resourceId,
+			busyRanges,
+			overbookingMap: this.#getOverbookingMap(),
+			selectedDateTs: this.#selectedDateTs,
+			intersectingBookings,
+			intersectingResourcesIds,
 		});
 	}
 
-	#calculateMinutesRange(booking: BookingModel): { from: number, to: number }
+	#calculateMinutesRange(booking: BookingModel): Range
 	{
 		const date = new Date(this.#selectedDateTs);
 		const dateFromTs = Math.max(date.getTime(), booking.dateFromTs) + this.#offset;
@@ -336,7 +249,7 @@ class BusySlots
 		};
 	}
 
-	#subtractRanges(range, bookingRanges): { from: number, to: number }[]
+	#subtractRanges(range, bookingRanges): Range[]
 	{
 		let remainingRanges = [{ ...range }];
 
@@ -363,7 +276,10 @@ class BusySlots
 						});
 					}
 
-					return parts;
+					if (parts.length > 0)
+					{
+						return parts;
+					}
 				}
 
 				return [remainingRange];
@@ -399,8 +315,7 @@ class BusySlots
 
 				return acc;
 			}, [])
-			.filter(({ from, to }) => to - from > 0)
-		;
+			.filter(({ from, to }) => to - from > 0);
 	}
 
 	#getResource(resourceId: number): ResourceModel
@@ -408,14 +323,9 @@ class BusySlots
 		return Core.getStore().getters[`${Model.Resources}/getById`](resourceId);
 	}
 
-	#getNextDay(weekDay: string): string
+	#getOverbookingMap(): OverbookingMap
 	{
-		return DateFormat.WeekDays[(DateFormat.WeekDays.indexOf(weekDay) + 1) % 7];
-	}
-
-	#getPreviousDay(weekDay: string): string
-	{
-		return DateFormat.WeekDays[(DateFormat.WeekDays.indexOf(weekDay) + 7 - 1) % 7];
+		return Core.getStore().getters[`${Model.Bookings}/overbookingMap`];
 	}
 }
 

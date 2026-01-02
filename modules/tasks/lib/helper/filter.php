@@ -5,6 +5,12 @@ namespace Bitrix\Tasks\Helper;
 use Bitrix\Main\Context;
 use Bitrix\Main\Localization\Loc;
 use Bitrix\Main\UI\Filter\Options;
+use Bitrix\Tasks\Filter\Preset\AccomplicePreset;
+use Bitrix\Tasks\Filter\Preset\AuditorPreset;
+use Bitrix\Tasks\Filter\Preset\OriginatorPreset;
+use Bitrix\Tasks\Filter\Preset\ResponsiblePreset;
+use Bitrix\Tasks\Filter\PresetProvider;
+use Bitrix\Tasks\Filter\Scope;
 use Bitrix\Tasks\Flow\FlowFeature;
 use Bitrix\Tasks\Internals\Counter\Deadline;
 use Bitrix\Tasks\Internals\Counter\Role;
@@ -119,6 +125,12 @@ class Filter extends Common
 	public function getAllPresets(): array
 	{
 		$presets = static::getPresets($this);
+		if ($this->isRelation())
+		{
+			return $presets;
+		}
+
+		$startSortForRolePresets = count($presets) + 1;
 		$contexts = $this->getContexts();
 		foreach ($contexts as $name)
 		{
@@ -128,7 +140,7 @@ class Filter extends Common
 
 			if (static::isRolesEnabled())
 			{
-				$presets = array_merge($presets, static::getRolePresets($this->isScrumProject()));
+				$presets = array_merge($presets, static::getRolePresets($this->isScrumProject(), $startSortForRolePresets));
 			}
 		}
 
@@ -137,172 +149,48 @@ class Filter extends Common
 
 	public static function getPresets(self $filterInstance = null): array
 	{
-		$presets = [];
-		$isScrumProject = false;
-		$userId = 0;
-		if ($filterInstance)
+		$scope = Scope::DEFAULT;
+
+		$isCollaberPersonalTasks =
+			\Bitrix\Tasks\Integration\Extranet\User::isCollaber($filterInstance?->getUserId() ?? 0)
+			&& !$filterInstance?->isGroup()
+		;
+
+		if ($filterInstance?->isRelation())
 		{
-			$isScrumProject = $filterInstance->isScrumProject();
-			$userId = $filterInstance->getUserId();
+			$scope = Scope::RELATION;
+		}
+		else if ($filterInstance?->isScrumProject())
+		{
+			$scope = Scope::SCRUM;
+		}
+		elseif ($isCollaberPersonalTasks)
+		{
+			$scope = Scope::COLLABER;
 		}
 
-		if ($isScrumProject)
-		{
-			$presets[static::SCRUM_PRESET] = [
-				'name' => Loc::getMessage('TASKS_PRESET_SCRUM'),
-				'default' => true,
-				'fields' => [
-					'STATUS' => [
-						Status::PENDING,
-						Status::IN_PROGRESS,
-						Status::SUPPOSEDLY_COMPLETED,
-						Status::DEFERRED,
-						EntityForm::STATE_COMPLETED_IN_ACTIVE_SPRINT,
-					],
-					'STORY_POINTS' => '',
-				],
-				'sort' => 1,
-			];
-		}
+		$presetProvider = new PresetProvider($filterInstance);
+		$presetCollection = $presetProvider->getScopePresetCollection($scope);
 
-		$presets['filter_tasks_in_progress'] = [
-			'name' => Loc::getMessage('TASKS_PRESET_IN_PROGRESS'),
-			'default' => !$isScrumProject,
-			'fields' => [
-				'STATUS' => [
-					Status::PENDING,
-					Status::IN_PROGRESS,
-					Status::SUPPOSEDLY_COMPLETED,
-					Status::DEFERRED,
-				],
-			],
-			'sort' => $isScrumProject ? 2 : 1,
-		];
-
-		$presets['filter_tasks_completed'] = [
-			'name' => Loc::getMessage('TASKS_PRESET_COMPLETED'),
-			'default' => false,
-			'fields' => [
-				'STATUS' => [Status::COMPLETED],
-			],
-			'sort' => $isScrumProject ? 3 : 2,
-		];
-
-		if ($isScrumProject)
-		{
-			$presets['filter_tasks_my'] = [
-				'name' => Loc::getMessage('TASKS_PRESET_MY'),
-				'default' => false,
-				'fields' => ['RESPONSIBLE_ID' => $userId],
-				'sort' => 4,
-			];
-		}
-
-		if (!$isScrumProject)
-		{
-			$presets['filter_tasks_deferred'] = [
-				'name' => Loc::getMessage('TASKS_PRESET_DEFERRED'),
-				'default' => false,
-				'fields' => [
-					'STATUS' => [Status::DEFERRED],
-				],
-				'sort' => 3,
-			];
-			$presets['filter_tasks_expire'] = [
-				'name' => Loc::getMessage('TASKS_PRESET_EXPIRED'),
-				'default' => false,
-				'fields' => [
-					'STATUS' => [
-						Status::PENDING,
-						Status::IN_PROGRESS,
-					],
-					'PROBLEM' => CTaskListState::VIEW_TASK_CATEGORY_EXPIRED,
-				],
-				'sort' => 4,
-			];
-			$presets['filter_tasks_expire_candidate'] = [
-				'name' => Loc::getMessage('TASKS_PRESET_EXPIRED_CAND'),
-				'default' => false,
-				'fields' => [
-					'STATUS' => [
-						Status::PENDING,
-						Status::IN_PROGRESS,
-					],
-					'PROBLEM' => CTaskListState::VIEW_TASK_CATEGORY_EXPIRED_CANDIDATES,
-				],
-				'sort' => 5,
-			];
-		}
-
-		return $presets;
+		return $presetCollection->toArray();
 	}
 
-	public static function getRolePresets(bool $isScrumProject = false): array
+	protected function isRelation(): bool
+	{
+		return $this->getContext() === FilterRegistry::FILTER_RELATION;
+	}
+
+	public static function getRolePresets(bool $isScrumProject = false, int $startSort = 6): array
 	{
 		if ($isScrumProject)
 		{
 			return [];
 		}
 
-		$presets[static::RESPONSIBLE_PRESET] = [
-			'name' => Loc::getMessage('TASKS_PRESET_I_DO'),
-			'default' => false,
-			'fields' => [
-				'ROLEID' => Role::RESPONSIBLE,
-				'STATUS' => [
-					Status::PENDING,
-					Status::IN_PROGRESS,
-					Status::SUPPOSEDLY_COMPLETED,
-					Status::DEFERRED,
-				],
-			],
-			'sort' => 6,
-		];
-
-		$presets[static::ACCOMPLICE_PRESET] = [
-			'name' => Loc::getMessage('TASKS_PRESET_I_ACCOMPLICES'),
-			'default' => false,
-			'fields' => [
-				'ROLEID' => Role::ACCOMPLICE,
-				'STATUS' => [
-					Status::PENDING,
-					Status::IN_PROGRESS,
-					Status::SUPPOSEDLY_COMPLETED,
-					Status::DEFERRED,
-				],
-			],
-			'sort' => 7,
-		];
-
-		$presets[static::ORIGINATOR_PRESET] = [
-			'name' => Loc::getMessage('TASKS_PRESET_I_ORIGINATOR'),
-			'default' => false,
-			'fields' => [
-				'ROLEID' => Role::ORIGINATOR,
-				'STATUS' => [
-					Status::PENDING,
-					Status::IN_PROGRESS,
-					Status::SUPPOSEDLY_COMPLETED,
-					Status::DEFERRED,
-				],
-			],
-			'sort' => 8,
-		];
-
-		$presets[static::AUDITOR_PRESET] = [
-			'name' => Loc::getMessage('TASKS_PRESET_I_AUDITOR'),
-			'default' => false,
-			'fields' => [
-				'ROLEID' => Role::AUDITOR,
-				'STATUS' => [
-					Status::PENDING,
-					Status::IN_PROGRESS,
-					Status::SUPPOSEDLY_COMPLETED,
-					Status::DEFERRED,
-				],
-			],
-			'sort' => 9,
-		];
+		$presets[static::RESPONSIBLE_PRESET] = (new ResponsiblePreset())->setSort($startSort)->toArray();
+		$presets[static::ACCOMPLICE_PRESET] = (new AccomplicePreset())->setSort($startSort + 1)->toArray();
+		$presets[static::ORIGINATOR_PRESET] = (new OriginatorPreset())->setSort($startSort + 2)->toArray();
+		$presets[static::AUDITOR_PRESET] = (new AuditorPreset())->setSort($startSort + 3)->toArray();
 
 		return $presets;
 	}
@@ -1106,11 +994,7 @@ class Filter extends Common
 			CTaskListState::VIEW_TASK_CATEGORY_DEFERRED,
 			CTaskListState::VIEW_TASK_CATEGORY_NEW_COMMENTS,
 		];
-		if ($this->getGroupId() > 0)
-		{
-			$taskCategories[] = CTaskListState::VIEW_TASK_CATEGORY_PROJECT_EXPIRED;
-			$taskCategories[] = CTaskListState::VIEW_TASK_CATEGORY_PROJECT_NEW_COMMENTS;
-		}
+
 		foreach ($taskCategories as $categoryId)
 		{
 			$list[$categoryId] = CTaskListState::getTaskCategoryName($categoryId);
@@ -1126,10 +1010,7 @@ class Filter extends Common
 		$taskCategories = [
 			CTaskListState::VIEW_TASK_CATEGORY_NEW_COMMENTS,
 		];
-		if ($this->getGroupId() > 0)
-		{
-			$taskCategories[] = CTaskListState::VIEW_TASK_CATEGORY_PROJECT_NEW_COMMENTS;
-		}
+
 		foreach ($taskCategories as $categoryId)
 		{
 			$list[$categoryId] = CTaskListState::getTaskCategoryName($categoryId);

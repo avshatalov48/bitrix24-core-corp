@@ -5,7 +5,6 @@ declare(strict_types=1);
 namespace Bitrix\Booking\Internals\Repository;
 
 use Bitrix\Booking\Entity\Favorites\Favorites;
-use Bitrix\Booking\Entity\Resource\Resource;
 
 interface FavoritesRepositoryInterface
 {

@@ -1,0 +1,99 @@
+.intranet-notification-balloon-push-invitation-content {
+	position: absolute;
+}
+
+.intranet-notification-balloon-container {
+	background: #000;
+	border-radius: 26px;
+	padding-bottom: 10px;
+}
+
+.intranet-notification-balloon-circle-pointer {
+	position: relative;
+}
+
+.intranet-notification-balloon-circle {
+	border: 3px solid black;
+	border-radius: 50%;
+	width: 4px;
+	height: 4px;
+	background-color: black;
+	position: absolute;
+	top: -20px;
+	left: 280px;
+}
+
+.intranet-notification-balloon-line {
+	position: absolute;
+	width: 2px;
+	height: 20px;
+	border: 0px solid black;
+	top: -15px;
+	left: 284px;
+	background-color: black;
+}
+
+.intranet-notification-balloon-message-title {
+	font-size: 18px;
+	line-height: 21px;
+	font-weight: 400;
+	padding-bottom: 5px;
+}
+
+.intranet-notification-balloon-message-description {
+	padding-top: 5px;
+}
+
+.intranet-notification-balloon-push-invitation-content.ui-notification-balloon-animate {
+	opacity: 0.85;
+}
+
+.intranet-notification-balloon-push-invitation-content .ui-notification-balloon-message {
+	line-height: 18px;
+	font-weight: 400;
+}
+
+.intranet-notification-balloon-push-invitation-content .ui-notification-balloon-actions {
+	justify-content: end;
+	margin-right: 15px;
+}
+
+.intranet-notification-balloon-push-invitation-content .ui-notification-balloon-action {
+	color: white;
+	border: 1px solid white;
+	border-radius: 15px;
+	width: 84px;
+	padding: 0 8px;
+	text-align: center;
+	height: 27px;
+	font-size: 11px;
+	line-height: 15px;
+	display: flex;
+	align-items: center;
+	justify-content: center;
+	border-color: rgba(255, 255, 255, 0.44);
+	background-color: rgba(255, 255, 255, 0.15);
+	font-weight: 500;
+	opacity: 0.8;
+	transition: 160ms linear background-color,
+				160ms linear color,
+				160ms linear opacity,
+				160ms linear box-shadow,
+				160ms linear border-color;
+}
+
+.intranet-notification-balloon-push-invitation-content .ui-notification-balloon-action:hover {
+	opacity: 0.9;
+	border-color: rgba(255, 255, 255, 0.55);
+	background-color: rgba(255, 255, 255, 0.25);
+}
+
+.intranet-notification-balloon-push-invitation-content .ui-notification-balloon-action:active {
+	border-color: rgba(255, 255, 255, 0.65);
+	background-color: rgba(255, 255, 255, 0.35);
+	opacity: 1;
+}
+
+.intranet-notification-balloon-push-invitation-content .ui-notification-balloon-action:before {
+	display: none;
+}

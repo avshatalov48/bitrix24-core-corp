@@ -11,6 +11,7 @@ class CollectedData
 	public function __construct(
 		private readonly int $flowId,
 		private readonly array $data = [],
+		private readonly ?CollectedDataStatus $status = null,
 	)
 	{
 	}
@@ -23,6 +24,11 @@ class CollectedData
 	public function getData(): array
 	{
 		return $this->data;
+	}
+
+	public function getStatus(): ?CollectedDataStatus
+	{
+		return $this->status;
 	}
 
 	public function isEmpty(): bool

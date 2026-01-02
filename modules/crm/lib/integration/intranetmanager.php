@@ -15,14 +15,18 @@ use Bitrix\Main\DI\ServiceLocator;
 use Bitrix\Main\Loader;
 use Bitrix\Main\ModuleManager;
 use Bitrix\Main\Result;
+use Bitrix\Main\Type\Collection;
 use Bitrix\Main\Web\Uri;
 
 class IntranetManager
 {
+	/** @var int[]|null entityTypeId[] */
+	protected static $entityTypesInCustomSections = null;
+
 	/** @var array|null  */
 	private static $subordinateUserMap = null;
-	/** @var int[] entityTypeId[] */
-	protected static $entityTypesInCustomSections;
+
+	private static ?array $customSectionsCache = null;
 
 	/**
 	* Check if user is head of any company departmant
@@ -132,15 +136,10 @@ class IntranetManager
 			return null;
 		}
 
-		$sections = static::fetchCustomSections();
-		if (empty($sections))
-		{
-			return $sections;
-		}
+		self::$customSectionsCache ??= static::fetchCustomSections();
 
-		static::fillPages($sections);
-
-		return $sections;
+		// clone to avoid static cache modification (e.g. someone calls `setPages()` method on a custom section)
+		return Collection::clone(self::$customSectionsCache);
 	}
 
 	public static function getCustomSection(string $customSectionCode): ?CustomSection
@@ -150,15 +149,15 @@ class IntranetManager
 			return null;
 		}
 
-		$section = static::fetchCustomSectionByCode($customSectionCode);
-		if (is_null($section))
+		foreach (self::getCustomSections() as $customSection)
 		{
-			return null;
+			if ($customSection->getCode() === $customSectionCode)
+			{
+				return $customSection;
+			}
 		}
 
-		static::fillPagesInCustomSection($section);
-
-		return $section;
+		return null;
 	}
 
 	/**
@@ -183,24 +182,9 @@ class IntranetManager
 			$sections[$section->getId()] = $section;
 		}
 
+		static::fillPages($sections);
+
 		return $sections;
-	}
-
-	protected static function fetchCustomSectionByCode(string $customSectionCode): ?CustomSection
-	{
-		$customSectionResult = CustomSectionTable::getList([
-			'filter' => [
-				'=MODULE_ID' => 'crm',
-				'=CODE' => $customSectionCode,
-			],
-		])->fetch();
-
-		if ($customSectionResult)
-		{
-			return CustomSection\Assembler::constructCustomSection($customSectionResult);
-		}
-
-		return null;
 	}
 
 	/**
@@ -208,6 +192,11 @@ class IntranetManager
 	 */
 	protected static function fillPages(array $sections): void
 	{
+		if (empty($sections))
+		{
+			return;
+		}
+
 		$list = CustomSectionPageTable::getList([
 			'filter' => [
 				'=MODULE_ID' => 'crm',
@@ -233,31 +222,6 @@ class IntranetManager
 				$section->setPages($currentPages);
 			}
 		}
-	}
-
-	protected static function fillPagesInCustomSection(CustomSection $section): void
-	{
-		$sectionID = $section->getId();
-		if (is_null($sectionID))
-		{
-			return;
-		}
-
-		$pages = [];
-		$pagesResult = CustomSectionPageTable::getList([
-			'filter' => [
-				'=CUSTOM_SECTION_ID' => $sectionID,
-				'=MODULE_ID' => 'crm',
-			],
-		]);
-
-		while ($pageRow = $pagesResult->fetch())
-		{
-			$page = CustomSection\Assembler::constructCustomSectionPage($pageRow);
-			$pages[] = $page;
-		}
-
-		$section->setPages($pages);
 	}
 
 	/**
@@ -474,5 +438,14 @@ class IntranetManager
 		}
 
 		return null;
+	}
+
+	/**
+	 * @internal
+	 */
+	public static function clearCustomSectionRuntimeCache(): void
+	{
+		self::$customSectionsCache = null;
+		self::$entityTypesInCustomSections = null;
 	}
 }

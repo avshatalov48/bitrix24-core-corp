@@ -2,6 +2,7 @@
  * @module layout/ui/loaders/spinner/src/design-enum
  */
 jn.define('layout/ui/loaders/spinner/src/design-enum', (require, exports, module) => {
+	const { isLightColor } = require('utils/color');
 	const { BaseEnum } = require('utils/enums/base');
 
 	/**
@@ -22,6 +23,19 @@ jn.define('layout/ui/loaders/spinner/src/design-enum', (require, exports, module
 		getAnimate()
 		{
 			return this.getValue().lottie;
+		}
+
+		/**
+		 * @param {Color | Object |string} color
+		 * @returns {SpinnerDesign}
+		 */
+		static resolveByColor(color)
+		{
+			const hex = color && (color.toHex?.() || color?.default || color);
+
+			return !hex || isLightColor(hex)
+				? SpinnerDesign.BLUE
+				: SpinnerDesign.WHITE;
 		}
 	}
 

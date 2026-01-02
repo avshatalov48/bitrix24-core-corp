@@ -1,5 +1,8 @@
 (() =>
 {
+	const require = (ext) => jn.require(ext);
+	const { BaseListSearchDelegate } = require('list/search');
+
 	class KnowledgeList extends BaseList
 	{
 		/**

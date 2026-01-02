@@ -174,7 +174,7 @@ jn.define('tasks/statemanager/redux/slices/tasks-stages/extra-reducers', (requir
 				entityAdapter.removeOne(state, entity);
 			}
 		}
-		else
+		else if (state.prevTaskStage)
 		{
 			entityAdapter.upsertOne(state, state.prevTaskStage);
 		}

@@ -14,6 +14,7 @@ jn.define('tasks/layout/dashboard/base-view', (require, exports, module) => {
 
 			this.bindRef = this.bindRef.bind(this);
 
+			/** @type {StatefulList|Kanban|null} */
 			this.viewComponent = null;
 		}
 
@@ -178,18 +179,21 @@ jn.define('tasks/layout/dashboard/base-view', (require, exports, module) => {
 
 		addItems(items)
 		{
-			const addedItems = items.filter((item) => !this.hasItem(item.id));
-			if (addedItems.length === 0)
+			const addedItemIds = items
+				.map((item) => item.id)
+				.filter((id) => !this.hasItem(id));
+
+			if (addedItemIds.length === 0 || !this.viewComponent)
 			{
 				return Promise.resolve();
 			}
 
-			if (this.viewComponent)
-			{
-				return Promise.allSettled(addedItems.map(({ id }) => this.viewComponent.addItem(id)));
-			}
-
-			return Promise.resolve();
+			return this.viewComponent.updateItems(
+				addedItemIds,
+				false,
+				true,
+				true,
+			);
 		}
 
 		addItemsWithoutServerRequest(items)

@@ -139,8 +139,7 @@ class CrmVolumeComponent extends \CBitrixComponent
 			return;
 		}
 
-		$crmPerms = new \CCrmPerms($this->getUser()->getID());
-		if (!$crmPerms->HavePerm('CONFIG', BX_CRM_PERM_CONFIG, 'WRITE'))
+		if (!\Bitrix\Crm\Service\Container::getInstance()->getUserPermissions($this->getUser()->getID())->isCrmAdmin())
 		{
 			if ($this->isAjaxRequest())
 			{

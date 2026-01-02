@@ -835,7 +835,7 @@ jn.define('layout/ui/fields/base', (require, exports, module) => {
 		 */
 		getContentLongClickHandler()
 		{
-			if (!this.canCopyValue() || (Application.getPlatform() === 'android' && Application.getApiVersion() < 51))
+			if (!this.canCopyValue())
 			{
 				return null;
 			}

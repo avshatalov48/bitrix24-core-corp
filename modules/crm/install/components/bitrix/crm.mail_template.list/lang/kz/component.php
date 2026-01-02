@@ -1,0 +1,15 @@
+<?php
+$MESS["CRM_COLUMN_MAIL_TEMPLATE_CREATED"] = "Жасалды";
+$MESS["CRM_COLUMN_MAIL_TEMPLATE_ENTITY_TYPE"] = "Мән";
+$MESS["CRM_COLUMN_MAIL_TEMPLATE_ID"] = "ID";
+$MESS["CRM_COLUMN_MAIL_TEMPLATE_IS_ACTIVE"] = "Белсенді";
+$MESS["CRM_COLUMN_MAIL_TEMPLATE_LAST_UPDATED"] = "Өзгертілді";
+$MESS["CRM_COLUMN_MAIL_TEMPLATE_OWNER"] = "Иесі";
+$MESS["CRM_COLUMN_MAIL_TEMPLATE_SCOPE_MSGVER_1"] = "Қолжетімді";
+$MESS["CRM_COLUMN_MAIL_TEMPLATE_SORT"] = "Сұрыптау";
+$MESS["CRM_COLUMN_MAIL_TEMPLATE_TITLE"] = "Атауы";
+$MESS["CRM_MAIL_TEMPLATE_COMMON_TEMPLATE_NAME"] = "Жалпы қалып";
+$MESS["CRM_MAIL_TEMPLATE_DELETION_GENERAL_ERROR"] = "\"#TITLE#\" пошта қалыбын жою кезінде қате пайда болды.";
+$MESS["CRM_MAIL_TEMPLATE_UPDATE_GENERAL_ERROR"] = "Пошта қалыбын жаңарту кезінде қате пайда болды.";
+$MESS["CRM_MODULE_NOT_INSTALLED"] = "Crm модулі орнатылмаған.";
+$MESS["CRM_PERMISSION_DENIED"] = "Қолжетімділікке тыйым салынған";

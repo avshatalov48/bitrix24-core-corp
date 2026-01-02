@@ -1,9 +1,8 @@
-import { Event, Loc, Tag } from 'main.core';
+import { Loc } from 'main.core';
 import { EventEmitter } from 'main.core.events';
 
 import { SidePanel } from '../../service/side.panel';
-
-import '../../css/robot.button.css';
+import { Button, ButtonIcon, ButtonColor, ButtonSize } from 'ui.buttons';
 
 type Params = {
 	sidePanel: SidePanel,
@@ -32,25 +31,28 @@ export class RobotButton extends EventEmitter
 
 	render(): HTMLElement
 	{
-		let className = 'ui-btn ui-btn-light-border ui-btn-no-caps ui-btn-themes ui-btn-round';
+		const robotBtn = new Button({
+			text: Loc.getMessage('TASKS_SCRUM_ROBOTS_BUTTON'),
+			color: ButtonColor.LIGHT_BORDER,
+			size: ButtonSize.EXTRA_SMALL,
+			noCaps: true,
+			round: true,
+			dependOnTheme: true,
+			onclick: () => {
+				this.onClick();
+			},
+		});
+
 		if (this.isShowLimitSidePanel())
 		{
-			className += ' ui-btn-icon-lock ui-btn-xs';
+			robotBtn.setIcon(ButtonIcon.LOCK);
 		}
 		else
 		{
-			className += ' tasks-scrum-robot-btn';
+			robotBtn.setIcon(ButtonIcon.ROBOTS);
 		}
 
-		this.node = Tag.render`
-			<button class="${className}">
-				${Loc.getMessage('TASKS_SCRUM_ROBOTS_BUTTON')}
-			</button>
-		`;
-
-		Event.bind(this.node, 'click', this.onClick.bind(this));
-
-		return this.node;
+		return robotBtn.render();
 	}
 
 	onClick()

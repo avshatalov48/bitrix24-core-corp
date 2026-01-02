@@ -8,6 +8,7 @@ return [
 		'haptics',
 		'utils/object',
 		'layout/ui/kanban',
+		'layout/ui/loading-screen',
 		'require-lazy',
 		'ui-system/blocks/icon',
 

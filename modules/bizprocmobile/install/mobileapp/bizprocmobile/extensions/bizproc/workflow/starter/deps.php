@@ -11,6 +11,8 @@ return [
 		'layout/pure-component',
 		'layout/ui/wizard',
 
+		'utils/random',
+
 		'bizproc:workflow/starter/catalog-step',
 		'bizproc:workflow/starter/description-step',
 		'bizproc:workflow/starter/parameters-step',

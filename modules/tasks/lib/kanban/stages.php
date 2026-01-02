@@ -15,6 +15,7 @@ use Bitrix\Main\ORM\Event;
 use Bitrix\Main\ORM\Fields\IntegerField;
 use Bitrix\Main\ORM\Fields\StringField;
 use Bitrix\Main\SystemException;
+use Bitrix\Main\Type\Collection;
 use Bitrix\Main\Type\DateTime;
 use Bitrix\Tasks\Helper\Sort;
 use Bitrix\Tasks\Internals\Log\LogFacade;
@@ -25,8 +26,8 @@ use Bitrix\Main\ORM\Fields\ArrayField;
 use Bitrix\Tasks\Provider\Exception\InvalidGroupByException;
 use Bitrix\Tasks\Provider\TaskList;
 use Bitrix\Tasks\Provider\TaskQuery;
-use Bitrix\Tasks\Provider\TaskQueryBuilder;
 use Bitrix\Tasks\Util\User;
+use Bitrix\Tasks\V2\Internal\DI\Container;
 use CTaskMembers;
 use CTasks;
 use CUserOptions;
@@ -219,14 +220,19 @@ class StagesTable extends DataManager
 					|| $entityType === self::WORK_MODE_ACTIVE_SPRINT
 				)
 				{
-					$resT = TaskStageTable::getList([
+					$rows = TaskStageTable::getList([
 						'filter' => [
 							'STAGE_ID' => $stage['ID'],
 						],
-					]);
-					while ($row = $resT->fetch())
+					])->fetchAll();
+
+					$ids = array_column($rows, 'ID');
+					Collection::normalizeArrayValuesByInt($ids, false);
+
+					if (!empty($ids))
 					{
-						TaskStageTable::delete($row['ID']);
+						$stageService = Container::getInstance()->getTaskStageService();
+						$stageService->clearRelations($ids);
 					}
 				}
 			}
@@ -327,8 +333,16 @@ class StagesTable extends DataManager
 				{
 					$row['TO_UPDATE_ACCESS'] = $predefinedStages[$row['SYSTEM_TYPE']]['UPDATE_ACCESS'];
 				}
+
+				if (isset($predefinedStages[$row['SYSTEM_TYPE']]['CAN_SORT_ITEMS']))
+				{
+					$row['CAN_SORT_ITEMS'] = $predefinedStages[$row['SYSTEM_TYPE']]['CAN_SORT_ITEMS'];
+				}
+				else
+				{
+					$row['CAN_SORT_ITEMS'] = true;
+				}
 			}
-			$row['TO_UPDATE'] = (array)$row['TO_UPDATE'];
 			$row['ADDITIONAL_FILTER'] = (array)$row['ADDITIONAL_FILTER'];
 			$stages[$entityType . $entityId][$row['ID']] = $row;
 		}
@@ -735,8 +749,6 @@ class StagesTable extends DataManager
 		{
 			$list = new TaskList();
 			$counts = $list->getList($query);
-
-			$sql = TaskQueryBuilder::getLastQuery();
 		}
 		catch (Exception $e)
 		{
@@ -879,6 +891,8 @@ class StagesTable extends DataManager
 		// pin in personal default stage (if already Kanban exist)
 		$personalDefStages = [];
 		self::setWorkMode(self::WORK_MODE_USER);
+
+		$stageService = Container::getInstance()->getTaskStageService();
 		foreach ($users as $userId)
 		{
 			$checkStages = self::getStages($userId, true);
@@ -908,11 +922,11 @@ class StagesTable extends DataManager
 						{
 							try
 							{
-								TaskStageTable::add($fields);
+								$stageService->upsert($taskId, self::getDefaultStageId($userId));
 							}
-							catch (Exception $exception)
+							catch (\Exception $e)
 							{
-								LogFacade::logThrowable($exception);
+								Container::getInstance()->getLogger()->logError($e);
 							}
 						}
 					}
@@ -1152,7 +1166,9 @@ class StagesTable extends DataManager
 	public static function onDelete(Event $event): void
 	{
 		$primary = $event->getParameter('id');
-		TaskStageTable::clearStage($primary['ID']);
+
+		$service = Container::getInstance()->getTaskStageService();
+		$service->clearStage((int)$primary['ID']);
 	}
 
 	/**
@@ -1185,6 +1201,17 @@ class StagesTable extends DataManager
 	public static function getCollectionClass(): string
 	{
 		return StagesCollection::class;
+	}
+
+	public static function getCompletedStage(int $userId): array
+	{
+		return [
+			'SORT' => 700,
+			'COLOR' => '6F768F',
+			'SYSTEM_TYPE' => 'PERIOD7',
+			'ENTITY_ID' => $userId,
+			'ENTITY_TYPE' => 'P',
+		];
 	}
 
 	/**

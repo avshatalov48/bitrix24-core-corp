@@ -166,10 +166,12 @@ class Comment extends Configurable
 
 	protected function hasDeletePermission(): bool
 	{
-		if ($this->getContext()->getUserPermissions()->isAdminForEntity($this->getContext()->getEntityTypeId()))
+		$context = $this->getContext();
+		if ($context->getUserPermissions()->isAdminForEntity($context->getEntityTypeId(), $context->getEntityCategoryId()))
 		{
 			return true;
 		}
+
 		return $this->isCurrentUserAuthor();
 	}
 

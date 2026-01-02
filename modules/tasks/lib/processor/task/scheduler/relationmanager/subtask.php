@@ -38,7 +38,7 @@ final class SubTask extends \Bitrix\Tasks\Processor\Task\Scheduler\RelationManag
 		}
 
 		$id = $rootImpact->getId();
-		$mode = $settings['MODE'];
+		$mode = $settings['MODE'] ?? null;
 
 		//_print_r('============== Process subtask with '.$id);
 

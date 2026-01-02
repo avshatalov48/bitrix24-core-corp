@@ -44,6 +44,6 @@ final class Project extends Base
 			return true;
 		}
 
-		return $this->forward(new Comment(), 'readProject', ['groupId' => $fields['GROUP_ID']]);
+		return $this->forward(new Comment(), 'readAll', ['groupId' => $fields['GROUP_ID']]);
 	}
 }

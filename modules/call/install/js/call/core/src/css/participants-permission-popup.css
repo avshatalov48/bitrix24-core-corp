@@ -1,0 +1,215 @@
+.bx-call-participants-permission-popup {
+	border-radius: 16px;
+	padding: 12px 13px;
+	letter-spacing: -0.05px;
+}
+
+.bx-call-participants-permission-popup__control-buttons-label {
+	color: #FFF;
+	text-align: center;
+	margin-bottom: 11px;
+}
+
+.bx-call-view-participants-control-stream-button {
+	margin-right: 14px;
+	cursor: pointer;
+	font: 14px/18px var(--ui-font-family-primary, var(--ui-font-family-helvetica));
+	background: #FDFDFD1A;
+	text-align: center;
+	border-radius: 14px;
+	padding-right: 8px;
+	flex: 1;
+	border: 1px solid #9B9B9B33;
+	padding: 17px 0px 20px;
+	gap: 10px;
+	min-width: 90px;
+}
+
+.bx-call-view-participants-control-stream-button:hover {
+	background: #FDFDFD33;
+}
+
+.bx-call-participants-permission-popup__control-buttons {
+	display: flex;
+	flex-wrap: wrap;
+	margin-bottom: 5px;
+}
+
+.bx-call-view-participants-control-stream-button:last-child {
+	margin-right: 0;
+}
+
+.bx-call-view-participants-control-stream-button-action {
+	color: #E6EDED;
+	margin-top: 8px;
+}
+
+.bx-call-view-participants-control-stream-button-icon {
+	width: 28px;
+	height: 28px;
+	background-repeat: no-repeat;
+	background-position: center;
+	margin-right: 2px;
+	position: relative;
+	background-size: contain;
+	display: inline-block;
+}
+
+.bx-call-view-participants-control-stream-button-icon-mic {
+	background-image: url('../../../images/microphone-crossed.svg?nocache');
+}
+
+.bx-call-view-participants-control-stream-button-icon-cam {
+	background-image: url('../../../images/camera-crossed.svg?nocache');
+	margin-left: 1px;
+}
+
+.bx-call-view-participants-control-stream-button-icon-screenshare {
+	background-image: url('../../../images/screenshare-crossed.svg');
+}
+
+.bx-call-view-participants-control-stream-notify-icon {
+	width: 22px;
+	height: 22px;
+	background-repeat: no-repeat;
+	background-position: center;
+	background-size: contain;
+	margin-right: 10px;
+	display: inline-block;
+	position: relative;
+	vertical-align: -7px;
+}
+
+.bx-call-view-participants-control-stream-notify-icon.bx-call-view-mic-muted  {
+	background-image: url('../../../images/notify-mic-muted.svg?nocache');
+}
+.bx-call-view-participants-control-stream-notify-icon.bx-call-view-cam-muted  {
+	background-image: url('../../../images/notify-cam-muted.svg?nocache');
+}
+.bx-call-view-participants-control-stream-notify-icon.bx-call-view-screenshare-muted  {
+	background-image: url('../../../images/notify-screenshare-muted.svg?nocache');
+}
+
+.bx-call-view-participants-control-stream-notify-icon.bx-call-view-mic-unmuted  {
+	background-image: url('../../../images/notify-mic-unmuted.svg');
+}
+.bx-call-view-participants-control-stream-notify-icon.bx-call-view-cam-unmuted  {
+	background-image: url('../../../images/notify-cam-unmuted.svg');
+}
+.bx-call-view-participants-control-stream-notify-icon.bx-call-view-screenshare-unmuted  {
+	background-image: url('../../../images/notify-screenshare-unmuted.svg');
+}
+
+.bx-call-view-device-selector-menu-container {
+	position: relative;
+	padding-bottom: 20px;
+	min-width: 200px;
+}
+
+.bx-call-view-participants-permissions-switch .ui-switcher-enabled {
+	font-size: 0;
+	background: #2FC6F6;
+}
+
+.bx-call-view-participants-permissions-switch .ui-switcher-disabled {
+	font-size: 0;
+	background: #959CA4;
+}
+
+.bx-call-participants-permission-popup__permissions-title-wrapper {
+	display: flex;
+	flex-direction: row;
+	align-items: center;
+	justify-content: space-between;
+	padding: 10px 17px;
+	/*margin-bottom: 12px;*/
+	cursor: pointer;
+}
+
+.bx-call-participants-permission-popup__permissions-wrapper {
+	border: 1px solid #9B9B9B33;
+	border-radius: 14px;
+	background: #FDFDFD1A;
+	/*padding: 10px 17px;*/
+	margin-bottom: 13px;
+	margin-top: 4px;
+	padding-bottom: 0;
+	font-size: 13px;
+	font-weight: 400;
+	line-height: 17px;
+	color: #F5F7F8;
+}
+
+.bx-call-participants-permission-popup__permissions {
+	overflow: hidden;
+	transform: scaleY(0);
+	transform-origin: top;
+	transition: transform 0.26s ease;
+	height: 0;	
+}
+
+.bx-call-participants-permission-popup__permissions-wrapper.permissions-uncollapsed .bx-call-participants-permission-popup__permissions {
+	transform: scaleY(1);
+	height: auto;
+	padding-top: 4px;
+	padding: 0px 17px;
+}
+
+.bx-call-participants-permission-popup__permissions-title-arrow {
+	width: 20px;
+	height: 20px;
+	background-repeat: no-repeat;
+	background-position: center;
+	background-image: url('../../../images/permission-arrow.svg');
+	cursor: pointer;
+	transform: rotate(180deg);
+	margin-right: 6px;
+}
+
+.bx-call-participants-permission-popup__permissions-wrapper.permissions-uncollapsed .bx-call-participants-permission-popup__permissions-title-arrow {
+	transform: rotate(0deg);
+}
+
+.bx-call-view-participants-permissions-label {
+	text-align: left;
+}
+
+.bx-call-view-participants-permissions-switch-wrapper {
+	display: flex;
+	flex-direction: row;
+	padding-bottom: 17px;
+	align-items: center;
+	justify-content: space-between;
+}
+
+.bx-call-view-participants-permissions-switch {
+	margin-left: 12px;
+	display: flex;
+}
+
+.bx-call-view-participants-permissions-switch .ui-switcher-size-sm.ui-switcher {
+	width: 26px;
+	height: 12px;
+}
+
+.bx-call-view-participants-permissions-switch .ui-switcher-size-sm .ui-switcher-cursor {
+	transform: translate(14px, 0);
+	width: 8px;
+	height: 8px;
+}
+
+.bx-call-view-participants-permissions-switch .ui-switcher-off .ui-switcher-cursor {
+	transform: translate(4px, 0);
+}
+
+.bx-call-view-participants-permissions-switch .ui-switcher-cursor {
+	top: 2px;
+}
+
+.bx-call-participants-permission-popup .popup-window-angly-top {
+	margin-left: 30px!important;
+}
+
+.bx-call-participants-permission-popup .popup-window-angly-top .popup-window-angly--arrow {
+	background: #132A45!important;
+}

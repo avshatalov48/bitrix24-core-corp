@@ -27,13 +27,28 @@ const optionColor = Object.freeze({
 		tokenClass: '--ui-color-accent-light-blue',
 		color: '#559be6',
 	},
+	extranetColor: {
+		tokenClass: '--ui-color-extranet',
+		color: '#e89b06',
+	},
+	whiteBase: {
+		tokenClass: '--ui-color-palette-white-base',
+		color: '#FFFFFF',
+	},
+	paletteGray70: {
+		tokenClass: '--ui-color-palette-gray-70',
+		color: '#828B95',
+	},
 });
 
 export const getColorCode = (colorKey) => {
 	const colorOption = optionColor[colorKey];
 	if (colorOption)
 	{
-		return getComputedStyle(document.body).getPropertyValue(colorOption.tokenClass) || colorOption.color;
+		return document.body
+			? getComputedStyle(document.body)?.getPropertyValue(colorOption.tokenClass)
+			: colorOption.color
+		;
 	}
 
 	return null;

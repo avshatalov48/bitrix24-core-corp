@@ -1,13 +1,15 @@
+import { BaseEvent, EventEmitter } from 'main.core.events';
+
 export default class Counters
 {
 	init()
 	{
-		BX.addCustomEvent("onPullEvent-main", (command,params) => {
-			const key = 'SITE_ID';
-			const siteId = BX.message(key);
-			if (command === "user_counter" && params[siteId])
+		// All Counters
+		EventEmitter.subscribe('onPullEvent-main', (event: BaseEvent) => {
+			const [command, params] = event.getCompatData();
+			if (command === 'user_counter' && params[Loc.getMessage('SITE_ID')])
 			{
-				let counters = BX.clone(params[siteId]);
+				const counters = { ...params[Loc.getMessage('SITE_ID')] };
 				this.updateCounters(counters, false);
 			}
 		});
@@ -32,16 +34,16 @@ export default class Counters
 			}
 		});
 
-		BX.addCustomEvent(window, "onImUpdateCounter", (counters) => {
-
-			if (!counters)
-				return;
-
-			this.updateCounters(BX.clone(counters), false);
+		// All Counters from IM
+		EventEmitter.subscribe('onImUpdateCounter', (event: BaseEvent) => {
+			const [counters] = event.getCompatData();
+			this.updateCounters(counters, false);
 		});
 
-		BX.addCustomEvent("onImUpdateCounterMessage",(counter) => {
-			this.updateCounters({'im-message': counter}, false);
+		// Messenger counter
+		EventEmitter.subscribe('onImUpdateCounterMessage', (event: BaseEvent) => {
+			const [counter] = event.getCompatData();
+			this.updateCounters({ 'im-message': counter }, false);
 		});
 
 		if (BX.browser.SupportLocalStorage())
@@ -57,8 +59,10 @@ export default class Counters
 			});
 		}
 
-		BX.addCustomEvent("onCounterDecrement", (iDecrement) => {
-			this.decrementCounter(BX("menu-counter-live-feed"), iDecrement)
+		// Live Feed Counter
+		EventEmitter.subscribe('onCounterDecrement', (event: BaseEvent) => {
+			const [decrement] = event.getCompatData();
+			this.decrementCounter(document.getElementById('menu-counter-live-feed'), decrement);
 		});
 	}
 

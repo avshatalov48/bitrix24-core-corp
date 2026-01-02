@@ -35,6 +35,24 @@
 		return 1500 + Math.floor((window.innerWidth - 1500) / 3);
 	};
 
+	const getQueryParams = function(url)
+	{
+		// Extract the query string part after '?'
+		const queryStringMatch = url.match(/\?([^#]*)/);
+		if (!queryStringMatch) return {};
+
+		const queryString = queryStringMatch[1];
+		const params = {};
+
+		// Regex to match key=value pairs
+		queryString.replace(/([^&=]+)=([^&]*)/g, (match, key, value) => {
+			params[decodeURIComponent(key)] = decodeURIComponent(value);
+			return '';
+		});
+
+		return params;
+	}
+
 	BX.SidePanel.Instance.bindAnchors({
 		rules: [
 			{
@@ -87,9 +105,31 @@
 			},
 			{
 				condition: [
+					'(?<url>/company/personal/user/(\\d+)/tasks/task/view/(?<taskId>\\d+)/\\?chatAction=(?<chatAction>[A-Za-z]+)(?:&entityId=(?<entityId>\\d+))?)',
+					'(?<url>/workgroups/group/(\\d+)/tasks/task/view/(?<taskId>\\d+)/\\?chatAction=(?<chatAction>[A-Za-z]+)(?:&entityId=(?<entityId>\\d+))?)',
+					'(?<url>/extranet/contacts/personal/user/(\\d+)/tasks/task/view/(?<taskId>\\d+)/\\?chatAction=(?<chatAction>[A-Za-z]+)(?:&entityId=(?<entityId>\\d+))?)',
+				],
+				handler: async function(event, link) {
+					event.preventDefault();
+
+					const { chatActionService } = await BX.Runtime.loadExtension('tasks.v2.lib.chat-action-service');
+
+					if (chatActionService)
+					{
+						const coordinates = { x: event.pageX, y: event.pageY };
+
+						chatActionService.process(link, { coordinates });
+					}
+				}
+			},
+			{
+				condition: [
 					'(?<url>/company/personal/user/(\\d+)/tasks/task/view/(?<taskId>\\d+)/)',
-					'(?<url>/workgroups/group/(\\d+)/tasks/task/view/(?<taskId>\\d+)/)',
+					'(?<url>/company/personal/user/(\\d+)/tasks/task/edit/(?<taskId>\\d+)/)',
+					'(?<url>/workgroups/group/(?<groupId>\\d+)/tasks/task/view/(?<taskId>\\d+)/)',
+					'(?<url>/workgroups/group/(?<groupId>\\d+)/tasks/task/edit/(?<taskId>\\d+)/)',
 					'(?<url>/extranet/contacts/personal/user/(\\d+)/tasks/task/view/(?<taskId>\\d+)/)',
+					'(?<url>/extranet/contacts/personal/user/(\\d+)/tasks/task/edit/(?<taskId>\\d+)/)',
 				],
 				minimizeOptions: (link) => {
 					return {
@@ -99,26 +139,98 @@
 						url: link.matches.groups.url,
 					};
 				},
-				loader: 'intranet:task-detail',
 				stopParameters: [
 					'PAGEN_(\\d+)',
 				],
-				options: {
-					label: {
-						text: BX.message('INTRANET_BINDINGS_TASK'),
-						bgColor: '#2FC6F6',
-					},
-					events: {
-						onCloseComplete: function() {
-							BX.Runtime.loadExtension('bitrix24.feedbackcollector').then(function(exports) {
-								var feedbackCollectorClass = exports.FeedbackCollector;
-								if (feedbackCollectorClass)
-								{
-									(new feedbackCollectorClass({feedbackId: 'tasksFeedbackSliderClose'})).run();
-								}
+				options: (link) => {
+					const queryParams = getQueryParams(link.url);
+					const taskId = parseInt(link.matches.groups.taskId, 10);
+					const groupId = parseInt(link.matches.groups.groupId, 10) || undefined;
+					const hasTemplate = Number(queryParams.TEMPLATE) > 0 || Number(queryParams.FLOW_ID) > 0;
+					const isCommentLink = Boolean(queryParams.MID);
+
+					const tasksSettings = BX.Extension.getSettings('intranet.sidepanel.bindings').get('tasks');
+					const isV2Form = tasksSettings.isV2Form || tasksSettings.allowedGroups.includes(groupId);
+					if (queryParams.OLD_FORM === 'Y' || hasTemplate || isCommentLink || !isV2Form)
+					{
+						return {
+							label: {
+								text: BX.message('INTRANET_BINDINGS_TASK'),
+								bgColor: '#2FC6F6',
+							},
+							events: {
+								onCloseComplete: function() {
+									BX.Runtime.loadExtension('bitrix24.feedbackcollector').then(function(exports) {
+										var feedbackCollectorClass = exports.FeedbackCollector;
+										if (feedbackCollectorClass)
+										{
+											(new feedbackCollectorClass({feedbackId: 'tasksFeedbackSliderClose'})).run();
+										}
+									});
+								},
+							},
+							printable: true,
+							loader: 'intranet:task-detail',
+						};
+					}
+
+					const url = link.matches.groups.url;
+					const analytics = {
+						context: queryParams.ta_sec,
+						element: queryParams.ta_el,
+					};
+
+					let card = null;
+
+					return {
+						width: 1510,
+						customLeftBoundary: 0,
+						cacheable: false,
+						contentCallback: (slider) => {
+							void BX.Runtime.loadExtension('tasks.v2.application.task-full-card').then((exports) => {
+								card = new exports.TaskFullCard({ taskId, groupId, url, link, analytics });
+								card.mount(slider);
 							});
+
+							return taskSkeleton();
 						},
-					},
+						events: {
+							onCloseComplete: () => card?.unmount(),
+						},
+						allowChangeHistory: true,
+						printable: true,
+						copyLinkLabel: true,
+						newWindowUrl: url,
+					};
+				},
+				handler: async function(event, link) {
+					event.preventDefault();
+
+					const queryParams = getQueryParams(link.url);
+					const hasTemplate = Number(queryParams.TEMPLATE) > 0 || Number(queryParams.FLOW_ID) > 0;
+
+					if (!hasTemplate && queryParams.miniform)
+					{
+						const { TaskCard } = await BX.Runtime.loadExtension('tasks.v2.application.task-card');
+
+						TaskCard.showCompactCard({
+							analytics: {
+								context: queryParams.ta_sec,
+								element: queryParams.ta_el,
+							},
+						});
+
+						return;
+					}
+
+					if (link.anchor?.dataset.sliderMaximize)
+					{
+						BX.SidePanel.Instance.maximize(link.url, this.options);
+					}
+					else
+					{
+						BX.SidePanel.Instance.open(link.url, this.options);
+					}
 				},
 			},
 			{
@@ -167,31 +279,6 @@
 			},
 			{
 				condition: [
-					'/company/personal/user/(\\d+)/tasks/task/edit/0/',
-					'/workgroups/group/(\\d+)/tasks/task/edit/0/',
-					'/extranet/contacts/personal/user/(\\d+)/tasks/task/edit/0/'
-				],
-				loader: 'intranet:task-add',
-				options: {
-					label: {
-						text: BX.message('INTRANET_BINDINGS_TASK'),
-						bgColor: '#2FC6F6',
-					},
-					events: {
-						onCloseComplete: function() {
-							BX.Runtime.loadExtension('bitrix24.feedbackcollector').then(function(exports) {
-								var feedbackCollectorClass = exports.FeedbackCollector;
-								if (feedbackCollectorClass)
-								{
-									(new feedbackCollectorClass({feedbackId: 'tasksFeedbackSliderClose'})).run();
-								}
-							});
-						},
-					},
-				},
-			},
-			{
-				condition: [
 					'/company/personal/user/(\\d+)/tasks/templates/template/edit/0/',
 				],
 				loader: 'intranet:task-add',
@@ -216,6 +303,25 @@
 						bgColor: "#2FC6F6"
 					}
 				}
+			},
+			{
+				condition: [
+					'/company/personal/user/\\d+/tasks/\\?F_STATE=sVag',
+					'/workgroups/group/\\d+/tasks/\\?F_STATE=sVag',
+					'/extranet/contacts/personal/user/\\d+/tasks/\\?F_STATE=sVag'
+				],
+				handler: function(event) {
+					debugger;
+					const Messenger = BX.Reflection.getClass('BX.Messenger.Public')
+					if (!Messenger)
+					{
+						return;
+					}
+
+					Messenger.openNavigationItem({ id: 'tasksTask' });
+
+					event.preventDefault();
+				},
 			},
 			{
 				condition: ['/crm/button/edit/(\\d+)/'],
@@ -426,7 +532,24 @@
 			},
 			{
 				condition: [
-					/\?(IM_DIALOG|IM_HISTORY|IM_LINES|IM_COPILOT|IM_COLLAB)=([^&]+)(&IM_MESSAGE=([^&]+))?/i
+					/\?IM_COLLAB\b$/i,
+				],
+				handler: function(event, link)
+				{
+					const isAirTemplate = BX.Reflection.getClass('BX.Intranet.Bitrix24.Template') !== null;
+					if (!window.BXIM || isAirTemplate)
+					{
+						return;
+					}
+
+					BX.Messenger.Public.openCollab();
+
+					event.preventDefault();
+				}
+			},
+			{
+				condition: [
+					/\?(IM_DIALOG|IM_HISTORY|IM_LINES|IM_COPILOT|IM_CHANNEL|IM_COLLAB|IM_TASK)=([^&]+)(&IM_MESSAGE=([^&]+))?(?:&BOT_CONTEXT=([^&]+))?/i
 				],
 				handler: function(event, link)
 				{
@@ -438,6 +561,7 @@
 					var type = link.matches[1];
 					var dialogId = decodeURI(link.matches[2]);
 					const messageId = link.matches[4] ? Number(link.matches[4]) : 0;
+					const botContext = link.matches[5] ?? '';
 
 					if (type === "IM_HISTORY")
 					{
@@ -451,9 +575,34 @@
 					{
 						BX.Messenger.Public.openCopilot(dialogId);
 					}
+					else if (type === 'IM_CHANNEL')
+					{
+						BX.Messenger.Public?.openNavigationItem({
+							id: 'channel',
+							entityId: dialogId,
+						});
+					}
 					else if (type === 'IM_COLLAB')
 					{
-						BX.Messenger.Public.openCollab();
+						BX.Messenger.Public.openCollab(dialogId);
+					}
+					else if (type === 'IM_TASK')
+					{
+						BX.Messenger.Public.openTaskComments(dialogId, messageId);
+					}
+					else if (botContext.length !== 0)
+					{
+						let decodedContext = {};
+						try
+						{
+							decodedContext = JSON.parse(decodeURIComponent(botContext));
+						}
+						catch (error)
+						{
+							console.error('Intranet bindings: incorrect bot context', error);
+						}
+
+						BX.Messenger.Public.openChatWithBotContext(dialogId, decodedContext);
 					}
 					else
 					{
@@ -471,7 +620,8 @@
 				],
 				handler: function(event, link)
 				{
-					if (!window.BXIM)
+					const isAirTemplate = BX.Reflection.getClass('BX.Intranet.Bitrix24.Template') !== null;
+					if (!window.BXIM || isAirTemplate)
 					{
 						return;
 					}
@@ -771,16 +921,6 @@
 			},
 			{
 				condition: [
-					new RegExp('/bi/dashboard/detail/(\\w+)/'),
-				],
-				options: {
-					cacheable: false,
-					customLeftBoundary: 0,
-					loader: 'report:analytics',
-				},
-			},
-			{
-				condition: [
 					/^\/bitrix\/components\/bitrix\/biconnector.externalconnection\/slider.php\?sourceId=\d+/,
 				],
 				options: {
@@ -1040,7 +1180,7 @@
 						return;
 					}
 					event.preventDefault();
-					BX.Runtime.loadExtension('calendar.util').then(() => 
+					BX.Runtime.loadExtension('calendar.util').then(() =>
 						BX.Calendar.Util.downloadIcsFileByEventId(eventId)
 					);
 				},
@@ -1210,7 +1350,7 @@
 				options: {
 					cacheable: false,
 					allowChangeHistory: false,
-					width: 1250,
+					width: 1586,
 					customRightBoundary: 0,
 				},
 			},
@@ -1317,7 +1457,13 @@
 				condition: [
 					new RegExp(siteDir + "call/[0-9]+/($|\\?)", "i"),
 					new RegExp("/call/($|\\?)", "i"),
+					new RegExp("/call/detail/[0-9]+", "i"),
+					new RegExp("/extranet/call/detail/[0-9]+", "i"),
 				],
+				options: {
+					width: 1100,
+					copyLinkLabel: true,
+				},
 				handler: function(event, link)
 				{
 					BX.SidePanel.Instance.open(
@@ -1327,7 +1473,8 @@
 							allowChangeHistory: false,
 							//contentClassName: "bitrix24-profile-slider-content",
 							loader: 'default-loader',
-							width: 1100
+							width: 1100,
+							copyLinkLabel: true,
 						}
 					);
 					event.stopPropagation();
@@ -1348,7 +1495,113 @@
 					event.preventDefault();
 				},
 			},
+			{
+				condition: [ new RegExp("/bitrix/components/bitrix/voting\.attached\.result/slider\.php", "i") ],
+				options: {
+					cacheable: false,
+					width: 480,
+				},
+			},
+			{
+				condition: [ '/vote-result/' ],
+				options: {
+					cacheable: false,
+					width: 480,
+					copyLinkLabel: true,
+				},
+			},
+			{
+				condition: [
+					new RegExp('(?<url>/bitrix/components/bitrix/bizproc.workflow.timeline.slider/index.php\\?workflowId=(?<workflowId>[a-z0-9.]+))', 'i')
+				],
+				options: {
+					width: 950,
+					allowChangeHistory: false,
+					cacheable: false,
+					loader: '/bitrix/js/bizproc/workflow/timeline/img/skeleton.svg',
+					printable: true,
+				},
+				minimizeOptions: (link) => {
+					return {
+						entityType: 'bizproc:timeline',
+						entityId: link.matches.groups.workflowId.replace('.', '_'),
+						entityName: BX.message('INTRANET_BINDINGS_PROTOCOL'),
+						url: link.matches.groups.url,
+					};
+				},
+			},
+			{
+				condition: [new RegExp('(?<url>/company/personal/bizproc/(?<id>[a-z0-9.]+)/)', 'i')],
+				minimizeOptions: (link) => {
+					return {
+						entityType: 'bizproc:info',
+						entityId: link.matches.groups.id.replace('.', '_'),
+						entityName: BX.message('INTRANET_BINDINGS_ASSIGNMENT'),
+						url: link.matches.groups.url,
+					};
+				},
+				loader: 'bizproc:workflow-info',
+				options: {
+					width: detectCrmSliderWidth(),
+					cacheable: false,
+				},
+			},
+			{
+				condition: ['/task/comments/(\\d+)/'],
+				options: {
+					cacheable: true,
+					width: 800,
+					allowChangeHistory: false,
+				},
+			},
 		]
 	});
+
+	const line = BX.UI.System.Line;
+	const circle = BX.UI.System.Circle;
+
+	const taskSkeleton = () => BX.Tag.render`
+		<div class="task-skeleton --full">
+			<div class="--main">
+				<div style="padding: 28px 24px">
+					<div class="--full-title --row">
+						${line(350, 18)}
+						${circle()}
+					</div>
+					<div class="--full-description">${line(260, 18)}</div>
+					${line(null, 84)}
+					<div style="margin: 12px 0">${line(null, 84)}</div>
+					${line(null, 84)}
+					<div class="--full-chips --row">
+						${line(88, 32)}
+						${line(88, 32)}
+						${line(88, 32)}
+					</div>
+				</div>
+				<div class="--row --footer">
+					${line(85, 38)}
+					<div class="--more">${line(38, 38)}</div>
+					${line(131, 22)}
+				</div>
+			</div>
+			<div class="--chat">
+				<div class="--chat-title --row">
+					${circle(40)}
+					<div class="--chat-info">
+						${line(110, 12)}
+						${line(75, 10)}
+					</div>
+					${circle()}
+					<div style="margin-left: 8px">${circle()}</div>
+				</div>
+				<div class="--chat-bg">
+					<div class="--textarea --row">
+						${line(null, 47)}
+						${circle(44)}
+					</div>
+				</div>
+			</div>
+		</div>
+	`;
 
 })();

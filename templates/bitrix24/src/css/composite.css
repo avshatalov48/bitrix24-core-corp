@@ -1,0 +1,58 @@
+.composite-skeleton-container {
+	position: absolute;
+	inset: 0;
+}
+
+.composite-loader-container {
+	position: absolute;
+	top: 50%;
+	left: 50%;
+	width: 110px;
+	height: 110px;
+	transform: translate(-50%, -50%);
+}
+
+.--ui-context-edge-dark .composite-loader-container {
+	--composite-loader-stroke: rgba(255, 255, 255, 0.5);
+}
+
+.--ui-context-edge-light .composite-loader-container {
+	--composite-loader-stroke: rgba(51, 51, 51, 0.3);
+}
+
+.composite-loader-circular {
+	position: absolute;
+	inset: 0;
+	animation: composite-loader-circular-rotate 2s linear infinite;
+	transform-origin: center center;
+}
+
+@keyframes composite-loader-circular-rotate {
+	100% {
+		transform: rotate(360deg);
+	}
+}
+
+.composite-loader-path {
+	stroke: var(--composite-loader-stroke);
+	stroke-width: 1.5;
+	stroke-dasharray: 20, 200;
+	stroke-dashoffset: 0;
+	animation: composite-loader-path-dash 1.5s ease-in-out infinite;
+	stroke-linecap: round;
+}
+
+@keyframes composite-loader-path-dash {
+	0% {
+		stroke-dasharray: 1, 200;
+		stroke-dashoffset: 0;
+	}
+	50% {
+		stroke-dasharray: 89, 200;
+		stroke-dashoffset: -35px;
+	}
+	100% {
+		stroke-dasharray: 89, 200;
+		stroke-dashoffset: -124px;
+	}
+}

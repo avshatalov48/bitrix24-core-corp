@@ -12,7 +12,7 @@ jn.define('im/messenger/lib/integration/mobile/communication', (require, exports
 	{
 		constructor()
 		{
-			this.messagerInitService = serviceLocator.get('messenger-init-service');
+			this.messengerInitService = serviceLocator.get('messenger-init-service');
 			this.bindMethods();
 			this.subscribeInitMessengerEvent();
 		}
@@ -22,12 +22,11 @@ jn.define('im/messenger/lib/integration/mobile/communication', (require, exports
 			this.initMessenger = this.initMessenger.bind(this);
 			this.handleUserCountersGet = this.handleUserCountersGet.bind(this);
 			this.handleServerTime = this.handleServerTime.bind(this);
-			this.handleDesktopStatusGet = this.handleDesktopStatusGet.bind(this);
 		}
 
 		subscribeInitMessengerEvent()
 		{
-			this.messagerInitService.onInit(this.initMessenger);
+			this.messengerInitService.onInit(this.initMessenger);
 		}
 
 		handleUserCountersGet(portalCounters)
@@ -35,7 +34,7 @@ jn.define('im/messenger/lib/integration/mobile/communication', (require, exports
 			const counters = portalCounters.result;
 			const time = portalCounters.time ? { start: portalCounters.time } : null;
 
-			Logger.info('Counters.handleUserCountersGet', counters, time);
+			Logger.info('TabCounters.handleUserCountersGet', counters, time);
 			BX.postComponentEvent('onSetUserCounters', [counters, time], 'communication');
 		}
 
@@ -45,23 +44,12 @@ jn.define('im/messenger/lib/integration/mobile/communication', (require, exports
 			BX.postComponentEvent('onUpdateServerTime', [serverTime], 'communication');
 		}
 
-		handleDesktopStatusGet(desktopStatus)
-		{
-			Logger.info('Communication.handleDesktopStatusGet', desktopStatus);
-			BX.postComponentEvent('setDesktopStatus', [desktopStatus], 'communication');
-		}
-
 		/**
 		 * @param {immobileTabChatLoadResult | immobileTabChannelLoadResult | immobileTabCopilotLoadResult} data
 		 */
 		initMessenger(data)
 		{
-			const { desktopStatus, serverTime, portalCounters } = data;
-
-			if (desktopStatus)
-			{
-				this.handleDesktopStatusGet(desktopStatus);
-			}
+			const { serverTime, portalCounters } = data;
 
 			if (serverTime)
 			{

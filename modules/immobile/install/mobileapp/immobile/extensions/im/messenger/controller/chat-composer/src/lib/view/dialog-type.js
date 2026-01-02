@@ -5,7 +5,7 @@ jn.define('im/messenger/controller/chat-composer/lib/view/dialog-type', (require
 	const { Area } = require('ui-system/layout/area');
 	const { Card } = require('ui-system/layout/card');
 	const { Theme } = require('im/lib/theme');
-	const { Loc } = require('loc');
+	const { Loc } = require('im/messenger/loc');
 	const { isEqual } = require('utils/object');
 	const { StageSelector, Icon } = require('ui-system/blocks/stage-selector');
 	const { DialogType } = require('im/messenger/const');

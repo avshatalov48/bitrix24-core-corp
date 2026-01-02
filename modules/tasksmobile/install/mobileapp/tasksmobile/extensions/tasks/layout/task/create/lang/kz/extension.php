@@ -1,0 +1,8 @@
+<?php
+$MESS["TASKSMOBILE_LAYOUT_TASK_CREATE_BUTTON_CREATE"] = "Жасау";
+$MESS["TASKSMOBILE_LAYOUT_TASK_CREATE_CANCEL_ALERT_DESCRIPTION"] = "Сіз жаңа міндет жасау нысанын жапқыңыз келетініне сенімдісіз бе?";
+$MESS["TASKSMOBILE_LAYOUT_TASK_CREATE_CANCEL_ALERT_TITLE"] = "Міндет сақталмады";
+$MESS["TASKSMOBILE_LAYOUT_TASK_CREATE_SAVE_ERROR_LOADING_FILES"] = "Барлық файлдар жүктеліп үлгермеді";
+$MESS["TASKSMOBILE_LAYOUT_TASK_CREATE_SAVE_ERROR_NO_TITLE"] = "Міндетті сақтау үшін атауын көрсетіңіз";
+$MESS["TASKSMOBILE_LAYOUT_TASK_CREATE_SECTION_MORE"] = "Қосымша";
+$MESS["TASKSMOBILE_LAYOUT_TASK_CREATE_TITLE"] = "Жаңа міндет";

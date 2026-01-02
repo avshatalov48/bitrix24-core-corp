@@ -10,7 +10,7 @@ jn.define('bizproc/workflow/timeline/components/step/user-list', (require, expor
 	const { SafeImage } = require('layout/ui/safe-image');
 	const { ReduxAvatar } = require('layout/ui/user/avatar');
 	const { Type } = require('type');
-	const { ProfileView } = require('user/profile');
+	const { UserProfile } = require('user-profile');
 
 	const UsersState = {
 		HIDDEN: 'hidden',
@@ -207,22 +207,10 @@ jn.define('bizproc/workflow/timeline/components/step/user-list', (require, expor
 		 */
 		openUserProfile(userId)
 		{
-			this
-				.props
-				.layout
-				.openWidget('list', {
-					groupStyle: true,
-					backdrop: {
-						bounceEnable: false,
-						swipeAllowed: true,
-						showOnTop: true,
-						hideNavigationBar: false,
-						horizontalSwipeAllowed: false,
-					},
-				})
-				.then((list) => ProfileView.open({ userId, isBackdrop: true }, list))
-				.catch((err) => console.error(err))
-			;
+			void UserProfile.open({
+				ownerId: userId,
+				parentWidget: this.props.layout,
+			});
 		}
 
 		showUsers()

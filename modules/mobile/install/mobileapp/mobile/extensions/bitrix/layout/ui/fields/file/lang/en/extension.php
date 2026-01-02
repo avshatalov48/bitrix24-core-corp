@@ -13,7 +13,6 @@ $MESS["FIELDS_FILE_EDIT_VIDEO"] = "Change video";
 $MESS["FIELDS_FILE_MEDIATEKA"] = "Select from gallery";
 $MESS["FIELDS_FILE_MEDIA_TYPE_ALERT_CONFIRM"] = "OK";
 $MESS["FIELDS_FILE_MEDIA_TYPE_ALERT_DESCR"] = "Try uploading a different file";
-$MESS["FIELDS_FILE_MEDIA_TYPE_ALERT_TEXT"] = "Error uploading file";
 $MESS["FIELDS_FILE_MEDIA_TYPE_ALERT_TITLE"] = "Invalid file type";
 $MESS["FIELDS_FILE_OPEN_GALLERY"] = "View";
 $MESS["FIELDS_FILE_UPLOAD_ALERT_DESCR"] = "Please try again. \nIf the problem persists, contact your Bitrix24 administrator.";

@@ -1,0 +1,54 @@
+.tasks-field-users-container {
+	position: relative;
+}
+
+.tasks-field-users {
+	display: flex;
+	flex-direction: column;
+	gap: 8px;
+}
+
+.tasks-field-users.--popup {
+	--scrollbar-width: 5px;
+	gap: 10px;
+	overflow-y: scroll;
+	overflow-x: hidden;
+	margin-right: calc(-1 * var(--scrollbar-width));
+	padding-right: calc(3 * var(--scrollbar-width));
+	font-size: var(--ui-font-size-lg);
+}
+
+@supports not selector(::-webkit-scrollbar) {
+	.tasks-field-users.--popup {
+		scrollbar-color: rgba(0, 0, 0, 0.11) transparent;
+		scrollbar-width: thin;
+	}
+}
+
+.tasks-field-users.--popup::-webkit-scrollbar {
+	background-color: rgba(0, 0, 0, 0);
+	width: var(--scrollbar-width);
+}
+
+.tasks-field-users.--popup::-webkit-scrollbar-track {
+	background: transparent;
+}
+
+.tasks-field-users.--popup::-webkit-scrollbar-thumb {
+	background: rgba(0, 0, 0, 0.11);
+	border-radius: 5px;
+	cursor: pointer;
+	transition: .2s;
+}
+
+.tasks-field-participant-list-more {
+	max-width: max-content;
+	margin-top: 8px;
+	font-size: var(--ui-font-size-md);
+	color: var(--ui-color-base-4);
+	cursor: pointer;
+}
+
+.tasks-field-participant-list-more:hover {
+	color: var(--ui-color-base-3);
+}

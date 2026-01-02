@@ -1,7 +1,7 @@
 <?php
 
 namespace Bitrix\Crm\Integration\BiConnector;
-
+//date_create from iblock_element productId<>iblock_element.id
 use Bitrix\Crm\Model\Dynamic\TypeTable;
 use Bitrix\Main\DB\MysqliSqlHelper;
 use Bitrix\Main\DB\PgsqlSqlHelper;
@@ -10,7 +10,7 @@ class DynamicItemsProductMapping
 {
 	use ProductDataHelperTrait;
 
-	public static function getMapping(MysqliSqlHelper|PgsqlSqlHelper $helper, string $languageId): array
+	public static function getMapping(MysqliSqlHelper|PgsqlSqlHelper $helper, string $languageId, ?string $tableName = null): array
 	{
 		$types = TypeTable::query()->setSelect(['ENTITY_TYPE_ID', 'TITLE'])->fetchCollection();
 
@@ -25,6 +25,11 @@ class DynamicItemsProductMapping
 		$result = [];
 		foreach ($types as $type)
 		{
+			if (!empty($tableName) && 'crm_dynamic_items_prod_' . $type->getEntityTypeId() !== $tableName)
+			{
+				continue;
+			}
+
 			$result['crm_dynamic_items_prod_' . $type->getEntityTypeId()] = [
 				'TABLE_NAME' => 'b_crm_product_row',
 				'TABLE_DESCRIPTION' => Localization::getMessage('CRM_DYNAMIC_ITEMS_PROD_TABLE', $languageId, ['#TITLE#' => $type->getTitle()]) ?? $type->getTitle(),

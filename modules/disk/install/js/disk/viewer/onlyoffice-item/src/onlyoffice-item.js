@@ -36,10 +36,6 @@ export default class OnlyOfficeItem extends BX.UI.Viewer.Item
 	loadData ()
 	{
 		const uid = BX.util.getRandomString(16);
-		BX.Disk.sendTelemetryEvent({
-			action: 'start',
-			uid: uid
-		});
 
 		BX.SidePanel.Instance.open(BX.util.add_url_param('/bitrix/services/main/ajax.php', this.getSliderQueryParameters()), {
 			width: '100%',

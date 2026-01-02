@@ -13,9 +13,12 @@ use Bitrix\AI\SharePrompt\Service\GridPrompt\Dto\SharingInfoDto;
 use Bitrix\AI\SharePrompt\Service\GridPrompt\Dto\GridPromptDto;
 use Bitrix\AI\SharePrompt\Service\GridPrompt\Dto\ShareDto;
 use Bitrix\AI\SharePrompt\Service\GridPrompt\Enum\OrderEnum;
+use Bitrix\Extranet\Contract\Service\CollaberService;
+use Bitrix\Extranet\Service\ServiceContainer;
 use Bitrix\Intranet\User\Grid\Row\Assembler\Field\Helpers\UserPhoto;
 use Bitrix\Main\ArgumentException;
 use Bitrix\Main\DB\SqlQueryException;
+use Bitrix\Main\Loader;
 use Bitrix\Main\Localization\Loc;
 use Bitrix\Main\ObjectPropertyException;
 use Bitrix\Main\SystemException;
@@ -233,6 +236,12 @@ class GridPromptService
 		return [$result, $sharingInfoDto];
 	}
 
+	protected function getCollabersAccessCodes(array $accessCodes): array
+	{
+		$collaberAccessCodes = array_map(fn($id) => $this->getCodeForUser($id), $this->getCollaberService()->getCollaberIds());
+		return array_map(fn($code) => new AccessCode($code),array_intersect($accessCodes, $collaberAccessCodes));
+	}
+
 	protected function updateSharingInfo(
 		array $codesInPrompt,
 		SharingInfoDto $sharingInfoDto,
@@ -242,13 +251,33 @@ class GridPromptService
 	{
 		$userGroups = array_flip($this->userAccessRepository->getCodesForUserGroup($userId));
 		$accessRightsDataProvider = $this->getAccessRightsDataProvider();
+		$collabersAccessCodes = Loader::includeModule('extranet') ? $this->getCollabersAccessCodes($codesInPrompt) : [];
+
 		foreach (array_unique($codesInPrompt) as $code)
 		{
-			if (UserAccessRepository::CODE_ALL_USER == $code)
+			if (UserAccessRepository::CODE_ALL_USER === $code)
 			{
 				$gridPromptDto->setShare(
 					new ShareDto($this->getAllUsersEntityName(), $code)
 				);
+
+				if (!empty($collabersAccessCodes))
+				{
+					foreach ($collabersAccessCodes as $collabersAccessCode)
+					{
+						$gridPromptDto->incrementCountShare();
+
+						if ($gridPromptDto->getCountInFillShare() >= static::MAX_SHARE_DATA)
+						{
+							continue;
+						}
+
+						$gridPromptDto->addUserIdInShare(
+							$collabersAccessCode->getEntityId()
+						);
+						$sharingInfoDto->addUserId($collabersAccessCode->getEntityId());
+					}
+				}
 
 				break;
 			}
@@ -509,5 +538,10 @@ class GridPromptService
 		});
 
 		return $gridPromptDtoList;
+	}
+
+	protected function getCollaberService(): CollaberService
+	{
+		return ServiceContainer::getInstance()->getCollaberService();
 	}
 }

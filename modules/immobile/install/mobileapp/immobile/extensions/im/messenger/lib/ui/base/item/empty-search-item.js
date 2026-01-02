@@ -3,7 +3,7 @@
  */
 jn.define('im/messenger/lib/ui/base/item/empty-search-item', (require, exports, module) => {
 
-	const { Loc } = require('loc');
+	const { Loc } = require('im/messenger/loc');
 	const { Theme } = require('im/lib/theme');
 	class EmptySearchItem extends LayoutComponent
 	{

@@ -4,10 +4,10 @@ namespace Bitrix\Tasks\Flow\Control\Command;
 
 use Bitrix\Main\DB\SqlQueryException;
 use Bitrix\Main\Event;
-use Bitrix\Tasks\AbstractCommand;
+use Bitrix\Tasks\Flow\AbstractCommand;
 use Bitrix\Tasks\Flow\Control\Exception\FlowNotFoundException;
 use Bitrix\Tasks\Flow\Control\Exception\FlowNotUpdatedException;
-use Bitrix\Tasks\InvalidCommandException;
+use Bitrix\Tasks\Flow\Control\Exception\InvalidCommandException;
 use Bitrix\Tasks\Flow\Control\Mapper\FlowCommandMapper;
 use Bitrix\Tasks\Flow\Control\Middleware\Implementation\DepartmentMiddleware;
 use Bitrix\Tasks\Flow\Control\Middleware\Implementation\OriginalNameMiddleware;

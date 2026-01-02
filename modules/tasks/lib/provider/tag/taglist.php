@@ -5,7 +5,7 @@ namespace Bitrix\Tasks\Provider\Tag;
 use Bitrix\Main\ORM\Query\Result;
 use Bitrix\Tasks\Internals\Task\TagCollection;
 use Bitrix\Tasks\Internals\Task\TagObject;
-use Bitrix\Tasks\Provider\TaskQueryInterface;
+use Bitrix\Tasks\Provider\Query\TaskQueryInterface;
 use CDBResult;
 
 class TagList

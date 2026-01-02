@@ -1,0 +1,19 @@
+.booking--booking--crm-forms-popup--list__placeholder-bg {
+	position: absolute;
+	top: 50%;
+	left: 50%;
+	transform: translate(-50%, -50%);
+	background: rgba(255, 255, 255, 0.80);
+	filter: blur(13px);
+	width: 224px;
+	height: 113px;
+}
+
+.booking--booking--crm-forms-popup--list__placeholder {
+	position: absolute;
+	top: 50%;
+	left: 50%;
+	transform: translate(-50%, -50%);
+	color: var(--ui-color-palette-gray-70, #828B95);
+	user-select: none;
+}

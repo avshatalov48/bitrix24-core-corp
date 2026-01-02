@@ -5,6 +5,9 @@ if (!defined("B_PROLOG_INCLUDED") || B_PROLOG_INCLUDED !== true)
 }
 
 use Bitrix\Tasks\Flow\Control\Task\Field\FlowFieldHandler;
+use Bitrix\Tasks\Flow\Distribution\FlowDistributionServicesFactory;
+use Bitrix\Tasks\Flow\Distribution\FlowDistributionType;
+use Bitrix\Main\Web\Json;
 
 /** @var \Bitrix\Bizproc\Activity\PropertiesDialog $dialog */
 
@@ -153,6 +156,19 @@ foreach ($taskFieldsMap as $fieldId => $fieldValue)
 $renderField($map['CheckListItems']);
 
 echo $GLOBALS["APPLICATION"]->GetCSS();
+
+$flowId = (int)($currentValues['Fields']['FLOW_ID'] ?? 0);
+
+// Preloading fields for all types of distribution
+$fieldsMap = [];
+foreach (FlowDistributionType::cases() as $distributionType)
+{
+	$provider = (new FlowDistributionServicesFactory($distributionType))->getFieldsProvider();
+	$fieldsMap[$distributionType->value] = $provider->getModifiedFields();
+}
+
+$flowDistributionMap = CBPTask2Activity::getFlowDistributionMap();
+
 ?>
 <script>
 	BX.message({
@@ -162,7 +178,9 @@ echo $GLOBALS["APPLICATION"]->GetCSS();
 	{
 		new BX.Tasks.Automation.Activity.Task2Activity({
 			isRobot: false,
-			controlledByFlowFields: <?=\Bitrix\Main\Web\Json::encode((new FlowFieldHandler(0))->getModifiedFields())?>
+			flowModifiedFieldsMap: <?=Json::encode($fieldsMap)?>,
+			flowDistributionMap: <?=Json::encode($flowDistributionMap)?>,
+			selectedFlowId: <?=$flowId?>,
 		});
 	});
 </script>

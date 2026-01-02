@@ -83,17 +83,13 @@ class ConfigOrderPropertyEdit extends \CBitrixComponent
 
 	protected function checkPermissions()
 	{
-		global $USER;
-
-		$crmPerms = new CCrmPerms($USER->GetID());
-
-		if (!$crmPerms->HavePerm('CONFIG', BX_CRM_PERM_CONFIG, 'READ'))
+		if (!\Bitrix\Crm\Service\Container::getInstance()->getUserPermissions()->entityType()->canReadSomeItemsInCrm())
 		{
 			$this->errors[] = Loc::getMessage('CRM_PERMISSION_DENIED');
 			return false;
 		}
 
-		$this->arResult['PERM_CAN_EDIT'] = $crmPerms->HavePerm('CONFIG', BX_CRM_PERM_CONFIG, 'WRITE');
+		$this->arResult['PERM_CAN_EDIT'] = \Bitrix\Crm\Service\Container::getInstance()->getUserPermissions()->isCrmAdmin();
 
 		return true;
 	}

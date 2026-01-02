@@ -168,7 +168,8 @@
 	color: #215f98;
 }
 
-.b24-form-recaptcha {
+.b24-form-recaptcha,
+.b24-form-yandex-captcha {
 	display: flex;
 	justify-content: flex-end;
 	margin: 0 31px 20px 0;

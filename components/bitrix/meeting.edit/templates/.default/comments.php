@@ -35,6 +35,7 @@ if ($arParams['MEETING_ID'] > 0 && $arParams['FORUM_ID'] > 0)
 		),
 		null, array('HIDE_ICONS' => 'Y')
 	);
+	?>
+	</div>
+<?php
 }
-?>
-</div>

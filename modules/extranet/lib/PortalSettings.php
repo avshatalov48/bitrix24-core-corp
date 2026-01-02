@@ -12,6 +12,7 @@ namespace Bitrix\Extranet;
 use Bitrix\Extranet\Enum\User\ExtranetRole;
 use Bitrix\Extranet\Service\ServiceContainer;
 use Bitrix\Extranet\Settings\CollaberInvitation;
+use Bitrix\Intranet\Settings\Tools\ToolsManager;
 use Bitrix\Main\Config\Option;
 use Bitrix\Main\Loader;
 use Bitrix\Main\ModuleManager;
@@ -44,7 +45,8 @@ class PortalSettings
 
 	public function isEnabledCollabersInvitation(): bool
 	{
-		return (new CollaberInvitation())->isEnabled();
+		return ToolsManager::getInstance()->checkAvailabilityByToolId('collab')
+			&& (new CollaberInvitation())->isEnabled();
 	}
 
 	public function canBeDeleted(): bool

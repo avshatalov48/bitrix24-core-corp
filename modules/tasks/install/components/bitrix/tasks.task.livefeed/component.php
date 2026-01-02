@@ -104,7 +104,7 @@ if (isset($arParams['TASK']["DESCRIPTION"]) && $arParams['TASK']["DESCRIPTION"])
 
 $folderUsers = COption::GetOptionString("socialnetwork", "user_page", false, SITE_ID);
 $arResult["PATH_TO_LOG_TAG"] = $folderUsers."log/?TAG=#tag#";
-if (defined('SITE_TEMPLATE_ID') && SITE_TEMPLATE_ID === 'bitrix24')
+if (defined('SITE_TEMPLATE_ID') && (SITE_TEMPLATE_ID === 'bitrix24' || SITE_TEMPLATE_ID === 'air'))
 {
 	$arResult["PATH_TO_LOG_TAG"] .= "&apply_filter=Y";
 }

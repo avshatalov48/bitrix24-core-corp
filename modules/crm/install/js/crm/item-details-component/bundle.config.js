@@ -1,5 +1,5 @@
 module.exports = {
-	input: 'src/item-details-component.js',
+	input: 'src/index.js',
 	output: 'dist/item-details-component.bundle.js',
-	namespace: 'BX.Crm'
+	namespace: 'BX.Crm',
 };

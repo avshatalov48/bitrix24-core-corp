@@ -5,13 +5,9 @@ jn.define('tasks/task/calendar', (require, exports, module) => {
 	const { RunActionExecutor } = require('rest/run-action-executor');
 	const { Type } = require('type');
 	const { MemoryStorage } = require('native/memorystore');
-	const { SubstituteStorage } = require('tasks/task/calendar/src/substitute-storage');
-	const { Feature } = require('feature');
 
 	const STORAGE_NAME = 'calendarSettingsStore';
-	const store = Feature.isMemoryStorageSupported()
-		? new MemoryStorage(STORAGE_NAME)
-		: new SubstituteStorage(STORAGE_NAME);
+	const store = new MemoryStorage(STORAGE_NAME);
 
 	class Calendar
 	{

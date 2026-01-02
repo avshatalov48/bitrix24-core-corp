@@ -162,14 +162,16 @@ $analytics = [
 	],
 ];
 
+$groupId = $_GET['group_id'] && intval($_GET['group_id']) > 0 ? $_GET['group_id'] : '';
+
 $APPLICATION->IncludeComponent("bitrix:mobile.socialnetwork.log.ex", ".default", array(
 		"GROUP_ID" => intval($_GET["group_id"] ?? 0),
 		"LOG_ID" => intval($_GET["detail_log_id"] ?? 0),
 		"FAVORITES" => ($filter === 'favorites' ? "Y" : "N"),
 		"FILTER" => $filter,
 		"CREATED_BY_ID" => (isset($_GET["created_by_id"]) && intval($_GET["created_by_id"]) > 0 ? intval($_GET["created_by_id"]) : false),
-		"PATH_TO_LOG_ENTRY" => SITE_DIR."mobile/log/?detail_log_id=#log_id#",
-		"PATH_TO_LOG_ENTRY_EMPTY" => SITE_DIR."mobile/log/?empty=Y",
+		"PATH_TO_LOG_ENTRY" => SITE_DIR."mobile/log/?detail_log_id=#log_id#".$groupId,
+		"PATH_TO_LOG_ENTRY_EMPTY" => SITE_DIR."mobile/log/?empty=Y".$groupId,
 		"PATH_TO_USER" => SITE_DIR."mobile/users/?user_id=#user_id#",
 		"PATH_TO_GROUP" => SITE_DIR."mobile/log/?group_id=#group_id#",
 		"PATH_TO_CRMCOMPANY" => SITE_DIR."mobile/crm/company/?page=view&company_id=#company_id#",
@@ -188,6 +190,9 @@ $APPLICATION->IncludeComponent("bitrix:mobile.socialnetwork.log.ex", ".default",
 		"ATTRIBUTES" => [
 			'ANCHOR' => $analytics,
 			'TEXT_ANCHOR' => $analytics,
+			'ANALYTICS_DATA' =>[
+				'section' => $_REQUEST["group_id"] && intval($_REQUEST["group_id"]) > 0 ? 'project' : 'feed',
+			],
 		],
 	),
 	false,

@@ -110,7 +110,16 @@ class CBPCrmGetDynamicInfoActivity extends \Bitrix\Bizproc\Activity\BaseActivity
 		$errors = parent::internalExecute();
 
 		$complexDocumentId = CCrmBizProcHelper::ResolveDocumentId($this->DynamicTypeId, $this->DynamicId);
-		$document = static::getDocumentService()->GetDocument($complexDocumentId);
+
+		if (defined('\CBPDocument::PARAM_USED_DOCUMENT_FIELDS'))
+		{
+			$document = static::getDocumentService()->GetDocument($complexDocumentId, select: $this->ReturnFields);
+		}
+		else
+		{
+			$document = static::getDocumentService()->GetDocument($complexDocumentId);
+		}
+
 		foreach ($this->ReturnFields as $fieldId)
 		{
 			$this->arProperties[$fieldId] = $document[$fieldId] ?? null;

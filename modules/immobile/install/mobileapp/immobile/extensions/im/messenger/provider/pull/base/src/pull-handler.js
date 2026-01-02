@@ -4,8 +4,10 @@
  * @module im/messenger/provider/pull/base/pull-handler
  */
 jn.define('im/messenger/provider/pull/base/pull-handler', (require, exports, module) => {
+	const { Feature } = require('im/messenger/lib/feature');
 	const { serviceLocator } = require('im/messenger/lib/di/service-locator');
-	const { SyncService } = require('im/messenger/provider/service/sync');
+	const { SyncService } = require('im/messenger/provider/services/sync/service');
+	const { SyncService: SyncServiceV2 } = require('im/messenger-v2/provider/services/sync');
 	const { Logger } = require('im/messenger/lib/logger');
 
 	/**
@@ -16,8 +18,6 @@ jn.define('im/messenger/provider/pull/base/pull-handler', (require, exports, mod
 	{
 		constructor(options = {})
 		{
-			/** @type {MessengerCoreStore} */
-			this.store = serviceLocator.get('core').getStore();
 			/** @type {Logger} */
 			this.logger = options.logger || Logger;
 		}
@@ -29,38 +29,51 @@ jn.define('im/messenger/provider/pull/base/pull-handler', (require, exports, mod
 
 		/**
 		 * @protected
-		 * @param {object} params
-		 * @param {object} extra
-		 * @param {object} command
+		 * @param {PullExtraParams} extra
 		 * @param {object} options
 		 * @param {boolean|undefined} options.ignoreServerTimeAgoCheck
 		 * @return boolean
 		 */
-		interceptEvent(params, extra, command, options = {})
+		interceptEvent(extra, options = {})
 		{
 			if (!options.ignoreServerTimeAgoCheck && extra.server_time_ago > 30)
 			{
 				return true;
 			}
 
-			const syncService = SyncService.getInstance();
-			if (syncService.checkPullEventNeedsIntercept(params, extra, command))
-			{
-				syncService.storePullEvent(params, extra, command);
+			const syncService = this.getSyncService();
 
-				return true;
+			return syncService.checkPullEventNeedsIntercept();
+		}
+
+		/**
+		 * @return {SyncServiceV2|SyncService}
+		 */
+		getSyncService()
+		{
+			if (Feature.isMessengerV2Enabled)
+			{
+				return SyncServiceV2.getInstance();
 			}
 
-			return false;
+			return SyncService.getInstance();
 		}
 
 		/**
 		 * @desc get class name for logger
-		 * @return {string}1
+		 * @return {string}
 		 */
 		getClassName()
 		{
 			return this.constructor.name;
+		}
+
+		/**
+		 * @return {MessengerCoreStore}
+		 */
+		get store()
+		{
+			return serviceLocator.get('core').getStore();
 		}
 	}
 

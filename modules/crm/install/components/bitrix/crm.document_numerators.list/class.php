@@ -8,12 +8,18 @@ use Bitrix\Main\Localization\Loc;
 use Bitrix\Main\Numerator\Numerator;
 use Bitrix\Main\Loader;
 use Bitrix\DocumentGenerator\DataProviderManager;
+use Bitrix\UI\Buttons;
+use Bitrix\UI\Toolbar;
 
 Loc::loadMessages(__FILE__);
 
-/**
- */
-class CrmDocumentNumeratorsListComponent extends CBitrixComponent implements \Bitrix\Main\Engine\Contract\Controllerable
+if (!Loader::includeModule('crm'))
+{
+	ShowError(Loc::getMessage('CRM_MODULE_NOT_INSTALLED'));
+	return;
+}
+
+class CrmDocumentNumeratorsListComponent extends \Bitrix\Crm\Component\Base implements \Bitrix\Main\Engine\Contract\Controllerable
 {
 	protected $gridId = 'CRM_NUMERATORS_GRID';
 	protected $filterId = 'CRM_NUMERATORS_LIST';
@@ -31,11 +37,6 @@ class CrmDocumentNumeratorsListComponent extends CBitrixComponent implements \Bi
 	/** @inheritdoc */
 	public function executeComponent()
 	{
-		if (!Loader::includeModule('crm'))
-		{
-			ShowError(Loc::getMessage('CRM_MODULE_NOT_INSTALLED'));
-			return;
-		}
 		if (!Loader::includeModule('documentgenerator'))
 		{
 			ShowError(Loc::getMessage('DOCUMENTGENERATOR_MODULE_NOT_INSTALLED'));
@@ -80,16 +81,7 @@ class CrmDocumentNumeratorsListComponent extends CBitrixComponent implements \Bi
 		$this->arResult['SORT_VARS'] = $gridSorting['vars'];
 
 		$items = [];
-		$filterEntities = [];
-		foreach ($this->getProviders() as $provider)
-		{
-			$filterEntities[$provider['CLASS']] = $provider['NAME'];
-		}
 
-		$this->arResult['FILTER'] =
-			[
-				['id' => "CRM_ENTITIES", 'name' => GetMessage('CRM_NUMERATOR_LIST_FILTER_ENTITIES'), 'type' => 'list', 'items' => $filterEntities, 'params' => ['multiple' => 'Y'], 'default' => true],
-			];
 		$numerators = $this->getFilteredNumerators();
 
 		$count = 0;
@@ -244,7 +236,7 @@ class CrmDocumentNumeratorsListComponent extends CBitrixComponent implements \Bi
 			{
 				$name = $numerator->getConfig();
 				$name = $name[Numerator::getType()]['name'];
-				$this->addError(Loc::getMessage('CRM_NUMERATOR_LIST_DELETE_ERROR', ['#NUMERATOR_NAME#' => $name]));
+				$this->addErrorMessage(Loc::getMessage('CRM_NUMERATOR_LIST_DELETE_ERROR', ['#NUMERATOR_NAME#' => $name]));
 			}
 		}
 	}
@@ -252,7 +244,7 @@ class CrmDocumentNumeratorsListComponent extends CBitrixComponent implements \Bi
 	/**
 	 * @param $errorMessage
 	 */
-	private function addError($errorMessage)
+	private function addErrorMessage($errorMessage)
 	{
 		$this->arResult["MESSAGES"][] = [
 			"TYPE"  => \Bitrix\Main\Grid\MessageType::ERROR,
@@ -285,7 +277,7 @@ class CrmDocumentNumeratorsListComponent extends CBitrixComponent implements \Bi
 
 			if (!$result->isSuccess())
 			{
-				$this->addError(Loc::getMessage('CRM_NUMERATOR_LIST_EDIT_ERROR', ['#NUMERATOR_NAME#' => $oldName]));
+				$this->addErrorMessage(Loc::getMessage('CRM_NUMERATOR_LIST_EDIT_ERROR', ['#NUMERATOR_NAME#' => $oldName]));
 			}
 		}
 	}
@@ -316,5 +308,58 @@ class CrmDocumentNumeratorsListComponent extends CBitrixComponent implements \Bi
 	public function configureActions()
 	{
 		return [];
+	}
+
+	protected function getTopPanelId(int $entityTypeId): string
+	{
+		return 'CRM_NUMERATOR_DOCUMENT_LIST';
+	}
+
+	protected function getToolbarParameters(): array
+	{
+		$params = parent::getToolbarParameters();
+
+		$params['isWithFavoriteStar'] = true;
+		$params['filter'] = $this->getFilterParameters();
+		$params['buttons'][Toolbar\ButtonLocation::AFTER_TITLE] = [
+			new Buttons\Button([
+				'color' => Buttons\Color::SUCCESS,
+				'text' => Loc::getMessage('CRM_NUMERATOR_LIST_CREATE_NUMERATOR'),
+				'dataset' => [
+					'role' => 'numerator-create-btn',
+				],
+			]),
+		];
+
+		return $params;
+	}
+
+	private function getFilterParameters(): array
+	{
+		$filterEntities = [];
+		foreach ($this->getProviders() as $provider)
+		{
+			$filterEntities[$provider['CLASS']] = $provider['NAME'];
+		}
+
+		return [
+			'GRID_ID' => $this->gridId,
+			'FILTER_ID' => $this->filterId,
+			'FILTER' => [
+				[
+					'id' => 'CRM_ENTITIES',
+					'name' => Loc::getMessage('CRM_NUMERATOR_LIST_FILTER_ENTITIES'),
+					'type' => 'list',
+					'items' => $filterEntities,
+					'params' => ['multiple' => 'Y'],
+					'default' => true,
+				],
+			],
+			'ENABLE_LIVE_SEARCH' => true,
+			'ENABLE_LABEL' => true,
+			'CONFIG' => [
+				'AUTOFOCUS' => false,
+			],
+		];
 	}
 }

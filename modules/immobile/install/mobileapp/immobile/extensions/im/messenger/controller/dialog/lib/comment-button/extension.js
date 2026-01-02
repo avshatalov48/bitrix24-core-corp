@@ -3,8 +3,10 @@
  */
 jn.define('im/messenger/controller/dialog/lib/comment-button', (require, exports, module) => {
 	const { debounce } = require('utils/function');
-	const { DialogType } = require('im/messenger/const');
+	const { DialogType, EventType } = require('im/messenger/const');
 	const { serviceLocator } = require('im/messenger/lib/di/service-locator');
+	const { DialogHelper } = require('im/messenger/lib/helper');
+	const { Feature } = require('im/messenger/lib/feature');
 
 	/**
 	 * @class CommentButton
@@ -13,7 +15,7 @@ jn.define('im/messenger/controller/dialog/lib/comment-button', (require, exports
 	{
 		/**
 		 * @param {DialogView} view
-		 * @param {number} dialogId
+		 * @param {DialogId} dialogId
 		 * @param {DialogLocator} dialogLocator
 		 */
 		constructor(view, dialogId, dialogLocator)
@@ -28,6 +30,8 @@ jn.define('im/messenger/controller/dialog/lib/comment-button', (require, exports
 			this.lastScrolledChatId = 0;
 
 			this.bindViewEventHandlers();
+			this.subscribeViewEvents();
+			this.redraw();
 		}
 
 		bindViewEventHandlers()
@@ -37,7 +41,7 @@ jn.define('im/messenger/controller/dialog/lib/comment-button', (require, exports
 
 		subscribeViewEvents()
 		{
-			this.view.commentsButton.on('tap', this.onButtonTap);
+			this.view.commentsButton.on(EventType.dialog.commentsButton.tap, this.onButtonTap);
 		}
 
 		get channelComments()
@@ -66,26 +70,6 @@ jn.define('im/messenger/controller/dialog/lib/comment-button', (require, exports
 		get isNeedShowButton()
 		{
 			return this.totalChannelCommentsCounter > 0;
-		}
-
-		init()
-		{
-			if (!this.isButtonAvailable())
-			{
-				return;
-			}
-
-			this.subscribeViewEvents();
-
-			if (!this.isNeedShowButton)
-			{
-				return;
-			}
-
-			const commentsButton = this.view.commentsButton;
-
-			commentsButton.setCounter(String(this.totalChannelCommentsCounter));
-			commentsButton.show();
 		}
 
 		redraw()
@@ -145,12 +129,14 @@ jn.define('im/messenger/controller/dialog/lib/comment-button', (require, exports
 
 		isButtonAvailable()
 		{
-			if (!this.view.commentsButton)
+			if (!this.view.commentsButton || Feature.isFloatingButtonsBarAvailable)
 			{
 				return false;
 			}
 
-			return [DialogType.channel, DialogType.openChannel, DialogType.generalChannel].includes(this.dialog.type);
+			const dialogHelper = DialogHelper.createByDialogId(this.dialogId);
+
+			return Boolean(dialogHelper?.isChannel);
 		}
 
 		onButtonTap()
@@ -158,26 +144,8 @@ jn.define('im/messenger/controller/dialog/lib/comment-button', (require, exports
 			const chatIdToJump = this.getNextChatIdToJump();
 			this.lastScrolledChatId = chatIdToJump;
 
-			// TODO do luchih vremen
-			// const commentInfo = this.store.getters['commentModel/getCommentInfoByCommentChatId'](chatIdToJump);
-
-			// const messageIdToJump = commentInfo?.messageId;
-
-			// if (messageIdToJump)
-			// {
-			// 	await this.dialogLocator.get('context-manager').goToMessageContext({
-			// 		dialogId: this.dialogId,
-			// 		messageId: messageIdToJump,
-			// 		withMessageHighlight: true,
-			// 	});
-			//
-			// 	this.localCommentsCounterMap[chatIdToJump] = 0;
-			// 	this.redraw(false);
-			//
-			// 	return;
-			// }
-
-			this.dialogLocator.get('context-manager').goToMessageContextByCommentChatId({
+			void this.dialogLocator.get('context-manager').goToMessageContextByCommentChatId({
+				dialogId: this.dialogId,
 				commentChatId: chatIdToJump,
 				withMessageHighlight: true,
 			});

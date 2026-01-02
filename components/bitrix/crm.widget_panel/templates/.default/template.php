@@ -31,12 +31,10 @@ $asset->addJs('/bitrix/js/crm/common.js');
 $asset->addCss('/bitrix/themes/.default/crm-entity-show.css');
 $asset->addCss('/bitrix/js/crm/css/crm.css');
 
-if(SITE_TEMPLATE_ID === 'bitrix24')
-{
-	$APPLICATION->SetAdditionalCSS('/bitrix/themes/.default/bitrix24/crm-entity-show.css');
-	$bodyClass = $APPLICATION->GetPageProperty('BodyClass');
-	$APPLICATION->SetPageProperty('BodyClass', ($bodyClass ? $bodyClass.' ' : '').'pagetitle-toolbar-field-view flexible-layout crm-toolbar crm-pagetitle-view');
-}
+$APPLICATION->SetAdditionalCSS('/bitrix/themes/.default/bitrix24/crm-entity-show.css');
+$bodyClass = $APPLICATION->GetPageProperty('BodyClass');
+$APPLICATION->SetPageProperty('BodyClass', ($bodyClass ? $bodyClass.' ' : '').'pagetitle-toolbar-field-view flexible-layout crm-toolbar crm-pagetitle-view');
+
 $quid = $arResult['GUID'];
 $prefix = mb_strtolower($quid);
 $containerID = "{$prefix}_container";
@@ -45,45 +43,42 @@ $disableDemoModeButtonID = "{$prefix}_disable_demo";
 $demoModeInfoCloseButtonID = "{$prefix}_demo_info_close";
 $demoModeInfoContainerID = "{$prefix}_demo_info";
 
-if($arResult['ENABLE_TOOLBAR'])
+$toolbarButtons = array(
+	array(
+		'TEXT' => GetMessage('CRM_WGT_MENU_ITEM_ADD'),
+		'ONCLICK' => 'BX.CrmWidgetPanel.current.processAction("add")'
+	),
+	array(
+		'NEWBAR' => true
+	),
+	array(
+		'TEXT' => GetMessage('CRM_WGT_MENU_CHANGE_LAYOUT'),
+		'ONCLICK' => 'BX.CrmWidgetPanel.current.processAction("layout")'
+	),
+	array(
+		'TEXT' => GetMessage('CRM_WGT_MENU_ITEM_RESET'),
+		'ONCLICK' => 'BX.CrmWidgetPanel.current.processAction("reset")'
+	),
+);
+
+if ($arResult['USE_DEMO'])
 {
-	$toolbarButtons = array(
-		array(
-			'TEXT' => GetMessage('CRM_WGT_MENU_ITEM_ADD'),
-			'ONCLICK' => 'BX.CrmWidgetPanel.current.processAction("add")'
-		),
-		array(
-			'NEWBAR' => true
-		),
-		array(
-			'TEXT' => GetMessage('CRM_WGT_MENU_CHANGE_LAYOUT'),
-			'ONCLICK' => 'BX.CrmWidgetPanel.current.processAction("layout")'
-		),
-		array(
-			'TEXT' => GetMessage('CRM_WGT_MENU_ITEM_RESET'),
-			'ONCLICK' => 'BX.CrmWidgetPanel.current.processAction("reset")'
-		),
-	);
-
-	if ($arResult['USE_DEMO'])
-	{
-		$toolbarButtons[] = array(
-			'TEXT' => GetMessage('CRM_WGT_MENU_ITEM_ENABLE_DEMO_MODE'),
-			'ONCLICK' => 'BX.CrmWidgetPanel.current.processAction("enabledemomode")'
-		);
-	}
-
-	$APPLICATION->IncludeComponent(
-		'bitrix:crm.interface.toolbar',
-		'title',
-		array(
-			'TOOLBAR_ID' => "{$prefix}_toolbar",
-			'BUTTONS' => $toolbarButtons
-		),
-		$component,
-		array('HIDE_ICONS' => 'Y')
+	$toolbarButtons[] = array(
+		'TEXT' => GetMessage('CRM_WGT_MENU_ITEM_ENABLE_DEMO_MODE'),
+		'ONCLICK' => 'BX.CrmWidgetPanel.current.processAction("enabledemomode")'
 	);
 }
+
+$APPLICATION->IncludeComponent(
+	'bitrix:crm.interface.toolbar',
+	'title',
+	array(
+		'TOOLBAR_ID' => "{$prefix}_toolbar",
+		'BUTTONS' => $toolbarButtons
+	),
+	$component,
+	array('HIDE_ICONS' => 'Y')
+);
 
 if($arResult['ENABLE_DEMO']):
 	?><div id="<?=htmlspecialcharsbx($demoModeInfoContainerID)?>" class="crm-widg-white-tooltip">
@@ -124,16 +119,6 @@ $settings = array(
 );
 
 $filterFieldInfos = array();
-
-$headViewID =  isset($arParams['~RENDER_HEAD_INTO_VIEW']) ? $arParams['~RENDER_HEAD_INTO_VIEW'] : false;
-if($headViewID && is_string($headViewID))
-	$this->SetViewTarget('below_pagetitle', 0);
-
-if(!$arResult['ENABLE_TOOLBAR'])
-{
-	?><div class="crm-btn-panel"><span id="<?=htmlspecialcharsbx($settingButtonID)?>" class="crm-btn-panel-btn"></span></div><?
-}
-?><div class="crm-filter-wrap"><?
 
 $navigationBar = null;
 if($arResult['ENABLE_NAVIGATION'])
@@ -217,11 +202,6 @@ if(!$arResult['HIDE_FILTER'] && (!isset($arParams['NOT_CALCULATE_DATA']) || $arP
 		$component,
 		array('HIDE_ICONS' => true)
 	);
-}
-
-if($headViewID && is_string($headViewID))
-{
-	$this->EndViewTarget();
 }
 
 $filterTypeDescriptions =  Crm\Widget\FilterPeriodType::getAllDescriptions();

@@ -11,3 +11,7 @@
 .booking-transition-booking-leave-to {
 	opacity: 0 !important;
 }
+
+.booking--draggable-item {
+	z-index: 3 !important;
+}

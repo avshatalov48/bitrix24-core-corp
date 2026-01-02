@@ -36,13 +36,20 @@ class Access extends Controller
 	{
 		$action = $flowId <= 0 ? FlowAction::CREATE : FlowAction::UPDATE;
 
-		if ($context === 'edit-form')
+		if (!empty($context))
 		{
-			$element = $demoFlow === 'Y' ? 'create_demo_button' : 'create_button';
-			$subSection = $guideFlow === 'Y' ? 'flow_guide' : 'flows_grid';
-			$element = $guideFlow === 'Y' ? 'guide_button' : $element;
+			if ($action === FlowAction::UPDATE)
+			{
+				$this->sendFlowEditStartAnalytics(Analytics::ELEMENT['edit_button'], $context);
+			}
+			else
+			{
+				$element = $demoFlow === 'Y' ? 'create_demo_button' : 'create_button';
+				$subSection = $guideFlow === 'Y' ? 'flow_guide' : $context;
+				$element = $guideFlow === 'Y' ? 'guide_button' : $element;
 
-			$this->sendFlowCreateStartAnalytics($element, $subSection);
+				$this->sendFlowCreateStartAnalytics($element, $subSection);
+			}
 		}
 
 		if (FlowAccessController::can($this->userId, $action, $flowId))
@@ -71,6 +78,19 @@ class Access extends Controller
 
 		Analytics::getInstance($this->userId)->onFlowCreate(
 			Analytics::EVENT['flow_create_start'],
+			Analytics::SECTION['tasks'],
+			Analytics::ELEMENT[$element],
+			Analytics::SUB_SECTION[$subSection],
+			['p1' => 'isDemo_' . $demoSuffix]
+		);
+	}
+
+	private function sendFlowEditStartAnalytics(string $element, string $subSection): void
+	{
+		$demoSuffix = FlowFeature::isFeatureEnabledByTrial() ? 'Y' : 'N';
+
+		Analytics::getInstance($this->userId)->onFlowEdit(
+			Analytics::EVENT['flow_edit_start'],
 			Analytics::SECTION['tasks'],
 			Analytics::ELEMENT[$element],
 			Analytics::SUB_SECTION[$subSection],

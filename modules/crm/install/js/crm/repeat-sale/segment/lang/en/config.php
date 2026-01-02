@@ -1,0 +1,25 @@
+<?php
+$MESS["CRM_REPEAT_SALE_SEGMENT_CALL_ASSESSMENT_DESCRIPTION"] = "Add a sales script to a deal to improve probability of success. A sales agent will see the script when calling the customer.";
+$MESS["CRM_REPEAT_SALE_SEGMENT_CALL_ASSESSMENT_SELECTOR"] = "Select script";
+$MESS["CRM_REPEAT_SALE_SEGMENT_CALL_ASSESSMENT_TITLE"] = "Sales scripts";
+$MESS["CRM_REPEAT_SALE_SEGMENT_COPILOT_DESCRIPTION"] = "The AI will analyze deal history for each customer, create new deals and provide recommendations.";
+$MESS["CRM_REPEAT_SALE_SEGMENT_COPILOT_DISABLED"] = "Disabled";
+$MESS["CRM_REPEAT_SALE_SEGMENT_COPILOT_ENABLED"] = "Enabled";
+$MESS["CRM_REPEAT_SALE_SEGMENT_COPILOT_TITLE"] = "CoPilot-assisted repeat sales";
+$MESS["CRM_REPEAT_SALE_SEGMENT_DEAL_ASSIGNED_TITLE"] = "Responsible persons:";
+$MESS["CRM_REPEAT_SALE_SEGMENT_DEAL_HELP"] = "See how it will look in a deal";
+$MESS["CRM_REPEAT_SALE_SEGMENT_DEAL_NAME_PATTERN_TITLE"] = "Default deal title:";
+$MESS["CRM_REPEAT_SALE_SEGMENT_HOW_IT_WORK_TITLE"] = "See how it will look in a deal";
+$MESS["CRM_REPEAT_SALE_SEGMENT_MANUAL_SECTION_TITLE"] = "Pipeline for new deals:";
+$MESS["CRM_REPEAT_SALE_SEGMENT_MANUAL_STAGE_TITLE"] = "Stage:";
+$MESS["CRM_REPEAT_SALE_SEGMENT_MANUAL_TEXTAREA_TITLE"] = "CRM activity text:";
+$MESS["CRM_REPEAT_SALE_SEGMENT_NAVIGATION_BUTTON_CANCEL"] = "Cancel";
+$MESS["CRM_REPEAT_SALE_SEGMENT_NAVIGATION_BUTTON_CLOSE"] = "Close";
+$MESS["CRM_REPEAT_SALE_SEGMENT_NAVIGATION_BUTTON_UPDATE"] = "Save";
+$MESS["CRM_REPEAT_SALE_SEGMENT_PLACEHOLDER"] = "Enter activity description";
+$MESS["CRM_REPEAT_SALE_SEGMENT_PLACEHOLDER_WITH_COPILOT"] = "Enter activity description, or press Space to call CoPilot";
+$MESS["CRM_REPEAT_SALE_SEGMENT_SAVE_ERROR"] = "Could not save script. Please try again.";
+$MESS["CRM_REPEAT_SALE_SEGMENT_TITLE"] = "Repeat sales script";
+$MESS["CRM_REPEAT_SALE_SEGMENT_TITLE_READ_ONLY"] = "Repeat sales script";
+$MESS["CRM_REPEAT_SALE_SEGMENT_VALIDATE_ASSIGNMENT_USERS_ERROR"] = "Script has to have at least one responsible person.";
+$MESS["CRM_REPEAT_SALE_SEGMENT_VALIDATE_TEXT_ERROR"] = "CRM activity text must not be empty.";

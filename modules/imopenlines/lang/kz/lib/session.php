@@ -1,0 +1,20 @@
+<?php
+$MESS["IMOL_SESSION_AGREEMENT_MESSAGE"] = "Осы чатта сөйлесуді жалғастыра отырып, сіз #LINK_START#дербес деректерді өңдеуге келісім бересіз.#LINK_END#";
+$MESS["IMOL_SESSION_AGREEMENT_MESSAGE_OPERATOR"] = "Егер клиент өзінің жеке деректерін өңдеуге келісім бермесе, оның деректерін CRM-ден алып тастау керек.";
+$MESS["IMOL_SESSION_BUTTON_CHANGE"] = "Ауыстыру";
+$MESS["IMOL_SESSION_CLOSE_AUTO"] = "Диалогтың автоматты аяқталуы";
+$MESS["IMOL_SESSION_CLOSE_F"] = "#USER# диалогпен жұмысты аяқтады";
+$MESS["IMOL_SESSION_CLOSE_FINAL"] = "Диалог аяқталды";
+$MESS["IMOL_SESSION_CLOSE_M"] = "#USER# диалогпен жұмысты аяқтады";
+$MESS["IMOL_SESSION_COMPANY"] = "Компания";
+$MESS["IMOL_SESSION_CONTACT"] = "Байланыс";
+$MESS["IMOL_SESSION_CRM_FOUND"] = "Пайдаланушы CRM \"#ENTITY_NAME#\" жазбасына қосылды";
+$MESS["IMOL_SESSION_DEAL"] = "Мәміле";
+$MESS["IMOL_SESSION_ERROR_NO_CHAT"] = "Чатты жүктеу мүмкін болмады";
+$MESS["IMOL_SESSION_ERROR_NO_IMOL_CONFIGURATION"] = "Ашық желі конфигурациясын жүктеу мүмкін болмады";
+$MESS["IMOL_SESSION_ERROR_NO_LAST_SESSION"] = "Соңғы сессияны алу мүмкін болмады";
+$MESS["IMOL_SESSION_ERROR_NO_USER_CODE"] = "Міндетті USER_CODE өрісі жоқ";
+$MESS["IMOL_SESSION_LEAD_ADD"] = "CRM-де \"#LEAD_NAME#\" лиді құрылды";
+$MESS["IMOL_SESSION_LINE_IS_CLOSED"] = "Ашық желі белсенді емес, хабарламалар клиентке жіберілмейді.";
+$MESS["IMOL_TRACKER_BUTTON_CANCEL"] = "Болдырмау";
+$MESS["IMOL_TRACKER_BUTTON_CHANGE"] = "Ауыстыру";

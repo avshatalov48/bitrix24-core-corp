@@ -1,0 +1,7 @@
+.booking--booking-base-name {
+	overflow: hidden;
+	text-overflow: ellipsis;
+	font-size: var(--ui-font-size-md);
+	font-weight: var(--ui-font-weight-medium);
+	margin-bottom: 2px;
+}

@@ -2,8 +2,6 @@
 
 namespace Bitrix\Tasks\Scrum\Controllers;
 
-use Bitrix\Main\Engine\Action;
-use Bitrix\Main\Engine\Controller;
 use Bitrix\Main\Engine\Response\Component;
 use Bitrix\Main\Error;
 use Bitrix\Main\Grid;
@@ -18,6 +16,7 @@ use Bitrix\Main\Web\Json;
 use Bitrix\Tasks\Integration\SocialNetwork\Group;
 use Bitrix\Tasks\Internals\Registry\TaskRegistry;
 use Bitrix\Tasks\Internals\Task\Status;
+use Bitrix\Tasks\Scrum\Controllers\BaseController;
 use Bitrix\Tasks\Scrum\Form\EpicForm;
 use Bitrix\Tasks\Scrum\Service\EpicService;
 use Bitrix\Tasks\Scrum\Service\ItemService;
@@ -25,18 +24,13 @@ use Bitrix\Tasks\Scrum\Service\KanbanService;
 use Bitrix\Tasks\Scrum\Service\PushService;
 use Bitrix\Tasks\Scrum\Service\TaskService;
 use Bitrix\Tasks\Scrum\Service\UserService;
+use Bitrix\Tasks\Scrum\Filter\EpicFilter;
 use Bitrix\Tasks\Util;
-use Bitrix\Tasks\Util\User;
+use CUserTypeManager;
 
-class Epic extends Controller
+class Epic extends BaseController
 {
-	const ERROR_COULD_NOT_LOAD_MODULE = 'TASKS_EC_01';
-	const ERROR_ACCESS_DENIED = 'TASKS_EC_02';
-
-	/**
-	 * @var CUserTypeManager
-	 */
-	private $userFieldManager;
+	private CUserTypeManager $userFieldManager;
 
 	public function __construct(Request $request = null)
 	{
@@ -44,40 +38,6 @@ class Epic extends Controller
 
 		global $USER_FIELD_MANAGER;
 		$this->userFieldManager = $USER_FIELD_MANAGER;
-	}
-
-	protected function processBeforeAction(Action $action)
-	{
-		if (!Loader::includeModule('socialnetwork'))
-		{
-			$this->errorCollection->setError(
-				new Error(
-					Loc::getMessage('TASKS_EC_ERROR_INCLUDE_MODULE_ERROR'),
-					self::ERROR_COULD_NOT_LOAD_MODULE
-				)
-			);
-
-			return false;
-		}
-
-		$post = $this->request->getPostList()->toArray();
-
-		$groupId = (is_numeric($post['groupId']) ? (int) $post['groupId'] : 0);
-		$userId = User::getId();
-
-		if (!Group::canReadGroupTasks($userId, $groupId))
-		{
-			$this->errorCollection->setError(
-				new Error(
-					Loc::getMessage('TASKS_EC_ERROR_ACCESS_DENIED'),
-					self::ERROR_ACCESS_DENIED
-				)
-			);
-
-			return false;
-		}
-
-		return parent::processBeforeAction($action);
 	}
 
 	/**
@@ -89,8 +49,6 @@ class Epic extends Controller
 	public function createEpicAction(): ?array
 	{
 		$post = $this->request->getPostList()->toArray();
-
-		$userId = Util\User::getId();
 
 		$epic = new EpicForm();
 
@@ -109,7 +67,7 @@ class Epic extends Controller
 		}
 
 		$epic->setDescription($post['description'] ?? null);
-		$epic->setCreatedBy($post['createdBy'] ?? $userId);
+		$epic->setCreatedBy($post['createdBy'] ?? $this->userId);
 
 		$colorList = [
 			'#aae9fc', '#bbecf1', '#98e1dc', '#e3f299', '#ffee95', '#ffdd93', '#dfd3b6', '#e3c6bb',
@@ -120,7 +78,7 @@ class Epic extends Controller
 
 		$files = (is_array($post['files'] ?? null) ? $post['files'] : []);
 
-		$epicService = new EpicService($userId);
+		$epicService = new EpicService($this->userId);
 		$pushService = (Loader::includeModule('pull') ? new PushService() : null);
 
 		$epic = $epicService->createEpic($epic, $pushService);
@@ -157,8 +115,6 @@ class Epic extends Controller
 	{
 		$post = $this->request->getPostList()->toArray();
 
-		$userId = Util\User::getId();
-
 		$epicId = (is_numeric($post['epicId']) ? (int) $post['epicId'] : 0);
 		if (!$epicId)
 		{
@@ -167,7 +123,7 @@ class Epic extends Controller
 			return null;
 		}
 
-		$epicService = new EpicService($userId);
+		$epicService = new EpicService($this->userId);
 		$pushService = (Loader::includeModule('pull') ? new PushService() : null);
 
 		$epic = $epicService->getEpic($epicId);
@@ -178,7 +134,7 @@ class Epic extends Controller
 			return null;
 		}
 
-		if (!Group::canReadGroupTasks($userId, $epic->getGroupId()))
+		if (!Group::canReadGroupTasks($this->userId, $epic->getGroupId()))
 		{
 			$this->errorCollection->setError(
 				new Error(
@@ -207,10 +163,10 @@ class Epic extends Controller
 		}
 
 		$inputEpic->setDescription($post['description']);
-		$inputEpic->setModifiedBy($post['modifiedBy'] ?? $userId);
+		$inputEpic->setModifiedBy($post['modifiedBy'] ?? $this->userId);
 		$inputEpic->setColor($post['color']);
 
-		$files = (is_array($post['files']) ? $post['files'] : []);
+		$files = (is_array($post['files'] ?? null) ? $post['files'] : []);
 
 		$epicService->updateEpic($epic->getId(), $inputEpic, $pushService);
 		if ($epicService->getErrors())
@@ -234,26 +190,28 @@ class Epic extends Controller
 	/**
 	 * Returns a component with a list of epics and processes requests for that component.
 	 *
+	 * @ajaxAction tasks.scrum.epic.list
+	 *
 	 * @return Component|HttpResponse|string|null
 	 * @throws \Bitrix\Main\ArgumentException
 	 * @throws \Bitrix\Main\ArgumentTypeException
 	 */
-	public function getListAction()
+	public function listAction()
 	{
 		$post = $this->request->getPostList()->toArray();
 
 		$groupId = (is_numeric($post['groupId']) ? (int) $post['groupId'] : 0);
 
-		$userId = Util\User::getId();
-
 		$gridId = (is_string($post['gridId'] ) ? $post['gridId'] : '');
 
 		$isGridRequest = ($this->request->get('grid_id') != null);
 
+		$applyFilter = (isset($post['apply_filter']) && (string)$post['apply_filter'] === 'Y');
+
 		$nav = new PageNavigation('page');
 		$nav->allowAllRecords(false)->setPageSize(10)->initFromUri();
 
-		$epicService = new EpicService($userId);
+		$epicService = new EpicService($this->userId);
 		$userService = new UserService();
 
 		$gridOptions = new Grid\Options($gridId);
@@ -267,9 +225,23 @@ class Epic extends Controller
 		$rows = [];
 		$epicsList = [];
 
+		$filterFields = [
+			'=GROUP_ID' => $groupId,
+		];
+
+		$filter = new EpicFilter($this->userId, $groupId);
+
+		if (
+			$applyFilter
+			|| $filter->isUserFilterApplied()
+		)
+		{
+			$filterFields = array_merge($filterFields, $filter->getFilterFields());
+		}
+
 		$queryResult = $epicService->getList(
 			[],
-			['=GROUP_ID' => $groupId],
+			$filterFields,
 			$this->getGridOrder($gridOptions),
 			$nav
 		);
@@ -314,7 +286,7 @@ class Epic extends Controller
 			}
 			if (in_array('TAGS', $gridVisibleColumns))
 			{
-				$columns['TAGS'] = $this->getEpicGridColumnTags($userId, $taskIds);
+				$columns['TAGS'] = $this->getEpicGridColumnTags($this->userId, $taskIds);
 			}
 			if (in_array('TASKS_TOTAL', $gridVisibleColumns))
 			{
@@ -358,7 +330,10 @@ class Epic extends Controller
 			return null;
 		}
 
-		if (empty($rows))
+		if (
+			empty($rows)
+			&& !$filter->isUserFilterApplied()
+		)
 		{
 			return '';
 		}
@@ -409,8 +384,6 @@ class Epic extends Controller
 		$groupId = (is_numeric($post['groupId']) ? (int) $post['groupId'] : 0);
 		$epicId = (is_numeric($post['epicId']) ? (int) $post['epicId'] : 0);
 
-		$userId = Util\User::getId();
-
 		$gridId = (is_string($post['gridId'] ) ? $post['gridId'] : '');
 		$completed = ($post['completed'] === 'Y');
 
@@ -427,8 +400,8 @@ class Epic extends Controller
 			$gridVisibleColumns = ['NAME', 'STORY_POINTS', 'RESPONSIBLE'];
 		}
 
-		$epicService = new EpicService($userId);
-		$taskService = new TaskService($userId);
+		$epicService = new EpicService($this->userId);
+		$taskService = new TaskService($this->userId);
 		$itemService = new ItemService();
 		$userService = new UserService();
 
@@ -458,7 +431,7 @@ class Epic extends Controller
 
 		$taskIds = $taskService->getTaskIdsByFilter($filter, $nav);
 
-		(new \Bitrix\Tasks\Access\AccessCacheLoader())->preload($userId, $taskIds);
+		(new \Bitrix\Tasks\Access\AccessCacheLoader())->preload($this->userId, $taskIds);
 
 		$itemsStoryPoints = $itemService->getItemsStoryPointsBySourceId($taskIds);
 
@@ -540,8 +513,6 @@ class Epic extends Controller
 	 */
 	public function getEpicAction(int $epicId): ?array
 	{
-		$userId = Util\User::getId();
-
 		$epicService = new EpicService();
 
 		$epic = $epicService->getEpic($epicId);
@@ -554,7 +525,7 @@ class Epic extends Controller
 			return null;
 		}
 
-		if (!Group::canReadGroupTasks($userId, $epic->getGroupId()))
+		if (!Group::canReadGroupTasks($this->userId, $epic->getGroupId()))
 		{
 			$this->errorCollection->setError(
 				new Error(
@@ -576,7 +547,7 @@ class Epic extends Controller
 			return null;
 		}
 
-		$taskService = new TaskService($userId);
+		$taskService = new TaskService($this->userId);
 		$outDescription = $taskService->convertDescription($description, $userFields);
 		if ($taskService->getErrors())
 		{
@@ -599,8 +570,6 @@ class Epic extends Controller
 	 */
 	public function removeEpicAction(int $epicId): ?array
 	{
-		$userId = Util\User::getId();
-
 		$epicService = new EpicService();
 		$pushService = (Loader::includeModule('pull') ? new PushService() : null);
 
@@ -614,7 +583,7 @@ class Epic extends Controller
 			return null;
 		}
 
-		if (!Group::canReadGroupTasks($userId, $epic->getGroupId()))
+		if (!Group::canReadGroupTasks($this->userId, $epic->getGroupId()))
 		{
 			$this->errorCollection->setError(
 				new Error(
@@ -746,8 +715,6 @@ class Epic extends Controller
 			return null;
 		}
 
-		$userId = Util\User::getId();
-
 		$epicService = new EpicService();
 
 		$epic = $epicService->getEpic($epicId);
@@ -760,7 +727,7 @@ class Epic extends Controller
 			return null;
 		}
 
-		if (!Group::canReadGroupTasks($userId, $epic->getGroupId()))
+		if (!Group::canReadGroupTasks($this->userId, $epic->getGroupId()))
 		{
 			$this->errorCollection->setError(
 				new Error(
@@ -799,11 +766,9 @@ class Epic extends Controller
 	 */
 	public function getEpicInfoAction(int $groupId)
 	{
-		$userId = Util\User::getId();
-
 		$existsEpic = false;
 
-		$epicService = new EpicService($userId);
+		$epicService = new EpicService($this->userId);
 
 		$nav = new PageNavigation('epicsInfo');
 		$nav->setPageSize(1);

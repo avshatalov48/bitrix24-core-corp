@@ -6,6 +6,11 @@ define('CONFIRM_PAGE', true);
 require($_SERVER["DOCUMENT_ROOT"]."/bitrix/header.php");
 IncludeModuleLangFile($_SERVER["DOCUMENT_ROOT"]."/bitrix/modules/intranet/public_bitrix24/extranet/confirm/index.php");
 $APPLICATION->SetTitle(GetMessage("TITLE"));
+
+if (\Bitrix\Intranet\CurrentUser::get()->isAuthorized())
+{
+	LocalRedirect('/');
+}
 ?>
 <?php
 $APPLICATION->IncludeComponent(

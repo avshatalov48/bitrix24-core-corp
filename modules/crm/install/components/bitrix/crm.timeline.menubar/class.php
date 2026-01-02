@@ -54,11 +54,26 @@ class CrmTimelineMenuBarComponent extends \CBitrixComponent
 			return;
 		}
 
-		if (!\Bitrix\Crm\Service\Container::getInstance()->getUserPermissions()->checkReadPermissions(
+		$userPermissions = \Bitrix\Crm\Service\Container::getInstance()->getUserPermissions();
+
+		if ($this->entityId && !$userPermissions->item()->canReadItemIdentifier(new \Bitrix\Crm\ItemIdentifier(
 			$this->entityTypeId,
 			$this->entityId,
 			$this->entityCategoryId
-		))
+		)))
+		{
+			return;
+		}
+		if (!$this->entityId && !is_null($this->entityCategoryId) && !$userPermissions->entityType()->canReadItemsInCategory(
+				$this->entityTypeId,
+				$this->entityCategoryId
+			))
+		{
+			return;
+		}
+		if (!$this->entityId && is_null($this->entityCategoryId) && !$userPermissions->entityType()->canReadItems(
+				$this->entityTypeId
+			))
 		{
 			return;
 		}

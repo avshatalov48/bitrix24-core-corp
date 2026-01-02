@@ -2,9 +2,10 @@
 
 namespace Bitrix\Crm\Service\Timeline\Item\Compatible;
 
+use Bitrix\Crm\Component\Utils\JsonCompatibleConverter;
+use Bitrix\Crm\Service\JsonCompatible;
 use Bitrix\Crm\Service\Timeline\Context;
 use Bitrix\Crm\Service\Timeline\Item;
-use Bitrix\Crm\Service\Timeline\Item\Model;
 
 abstract class Compatible extends Item
 {
@@ -28,7 +29,8 @@ abstract class Compatible extends Item
 
 	protected function applyTypeCompatibility(array $data): array
 	{
-		$data = $this->convertType($data);
+		$data = JsonCompatibleConverter::convert($data);
+
 		if (isset($data['sort']) && is_array($data['sort']))
 		{
 			$data['sort'] = array_map('intval', $data['sort']);
@@ -40,22 +42,5 @@ abstract class Compatible extends Item
 	public function getSort(): array
 	{
 		return array_map('intval', $this->data['sort'] ?? []);
-	}
-
-	private function convertType($value)
-	{
-		if (is_array($value))
-		{
-			foreach ($value as $key => $subValue)
-			{
-				$value[$key] = $this->convertType($subValue);
-			}
-		}
-		elseif (!is_bool($value))
-		{
-			$value = (string)$value;
-		}
-
-		return $value;
 	}
 }

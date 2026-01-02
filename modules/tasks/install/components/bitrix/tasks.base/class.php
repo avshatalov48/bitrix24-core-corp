@@ -6,11 +6,11 @@ use Bitrix\Main\Loader;
 use Bitrix\Main\Localization\Loc;
 
 use Bitrix\Main\Page\Asset;
-use Bitrix\Tasks\Integration\Intranet\Settings;
 use Bitrix\Tasks\Util\Error\Collection;
 use Bitrix\Tasks\Dispatcher;
 use Bitrix\Tasks\Util\Calendar;
 use Bitrix\Tasks\Util;
+use Bitrix\Tasks\V2\Internal\DI\Container;
 
 Loc::loadMessages(__FILE__);
 
@@ -632,7 +632,7 @@ abstract class TasksBaseComponent extends CBitrixComponent
 
 	protected static function checkIfToolAvailable(array &$arParams, array &$arResult, Collection $errors, array $auxParams): void
 	{
-		$arResult['IS_TOOL_AVAILABLE'] = (new Settings())->isToolAvailable(Settings::TOOLS['base_tasks']);
+		$arResult['IS_TOOL_AVAILABLE'] = Container::getInstance()->getToolService()->isBaseTasksAvailable();
 	}
 
 	protected static function getEffectiveUserId($arParams)

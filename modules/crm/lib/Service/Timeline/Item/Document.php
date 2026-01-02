@@ -208,7 +208,7 @@ final class Document extends Configurable
 		{
 			if ($signIntegration::isEnabledInCurrentTariff())
 			{
-				if ($this->getContext()->getUserPermissions()->checkAddPermissions(\CCrmOwnerType::SmartDocument))
+				if ($this->getContext()->getUserPermissions()->entityType()->canAddItems(\CCrmOwnerType::SmartDocument))
 				{
 					$signButton = (new Layout\Footer\Button(
 						Loc::getMessage('CRM_COMMON_ACTION_SIGN'),

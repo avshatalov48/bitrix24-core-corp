@@ -1,0 +1,21 @@
+<?php
+$MESS["CRM_MODULE_NOT_INSTALLED"] = "Crm модулі орнатылмаған.";
+$MESS["CRM_MODULE_NOT_INSTALLED_CATALOG"] = "Catalog модулі орнатылмаған.";
+$MESS["CRM_MODULE_NOT_INSTALLED_CURRENCY"] = "Currency модулі орнатылмаған.";
+$MESS["CRM_MODULE_NOT_INSTALLED_SALE"] = "Sale модулі орнатылмаған.";
+$MESS["CRM_ORDER_SPLC_AMOUNT"] = "Жөнелтуге";
+$MESS["CRM_ORDER_SPLC_DIMENSIONS"] = "Өлшемдері";
+$MESS["CRM_ORDER_SPLC_ERR_URL_BUILDER_ABSENT"] = "Сілтеме генераторы табылмады.";
+$MESS["CRM_ORDER_SPLC_FAILED_TO_CREATE_OBJECT"] = "Жөнелту объектісін құру мүмкін болмады";
+$MESS["CRM_ORDER_SPLC_FAILED_TO_CREATE_OBJECT_B"] = "Себет объектісін құру мүмкін болмады";
+$MESS["CRM_ORDER_SPLC_NAME"] = "Атауы";
+$MESS["CRM_ORDER_SPLC_PICTURE"] = "Кескін";
+$MESS["CRM_ORDER_SPLC_PROPERTIES"] = "Қасиеттері";
+$MESS["CRM_ORDER_SPLC_QUANTITY"] = "Саны";
+$MESS["CRM_ORDER_SPLC_SORTING"] = "Сұрыптау";
+$MESS["CRM_ORDER_SPLC_STORE_BARCODE"] = "Штрихкод";
+$MESS["CRM_ORDER_SPLC_STORE_ID"] = "Қойма";
+$MESS["CRM_ORDER_SPLC_STORE_QUANTITY"] = "Жөнелту";
+$MESS["CRM_ORDER_SPLC_STORE_REMAINING_QUANTITY"] = "Қоймада";
+$MESS["CRM_ORDER_SPLC_WEIGHT"] = "Салмағы";
+$MESS["CRM_PERMISSION_DENIED"] = "Қолжетімділікке тыйым салынған";

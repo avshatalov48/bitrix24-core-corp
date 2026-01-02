@@ -416,9 +416,7 @@ class VoximplantStartComponent extends \CBitrixComponent
 			return null;
 		}
 
-		global $USER;
-		$CrmPerms = new CCrmPerms($USER->GetID());
-		if ($CrmPerms->HavePerm('WEBFORM', BX_CRM_PERM_NONE, 'WRITE'))
+		if (!\Bitrix\Crm\Service\Container::getInstance()->getUserPermissions()->webForm()->canEdit())
 		{
 			return \CUtil::JSEscape(
 				\Bitrix\Crm\WebForm\Manager::getCallbackListUrl([

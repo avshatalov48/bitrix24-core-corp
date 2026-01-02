@@ -32,8 +32,6 @@ jn.define('tasks/checklist/flat-tree', (require, exports, module) => {
 			} = props;
 
 			this.props = props;
-
-			this.isSaved = false;
 			this.userId = userId;
 			this.taskId = taskId;
 			this.conditions = { hideCompleted };
@@ -55,7 +53,7 @@ jn.define('tasks/checklist/flat-tree', (require, exports, module) => {
 
 			const checklistNumber = number >= 1 ? number + 1 : '';
 			const title = Loc.getMessage(
-				'TASKSMOBILE_CHECKLIST_PARENT_DEFAULT_TEXT',
+				'TASKSMOBILE_TREE_CHECKLIST_PARENT_DEFAULT_TEXT',
 				{ '#number#': checklistNumber },
 			).trim();
 
@@ -116,6 +114,16 @@ jn.define('tasks/checklist/flat-tree', (require, exports, module) => {
 					fields.title = this.#preparingTitleForView(item.fields);
 					fields.attachments = attachments;
 					fields.totalCount = descendants.length;
+
+					if (Array.isArray(fields.members))
+					{
+						const members = {};
+						fields.members.forEach((member) => {
+							members[member.id] = member;
+						});
+
+						fields.members = members;
+					}
 
 					if (fields.copiedId)
 					{
@@ -735,7 +743,7 @@ jn.define('tasks/checklist/flat-tree', (require, exports, module) => {
 			const itemId = item.getFieldId();
 			const copiedId = item.getCopiedId();
 			const title = this.#getTitleForSaving(item);
-			const members = Object.values(item.getMembers());
+			const members = item.getMembers();
 			const parentId = item.getParentId();
 
 			if (!title || isNil(parentId))
@@ -786,10 +794,15 @@ jn.define('tasks/checklist/flat-tree', (require, exports, module) => {
 			return itemRequestData;
 		}
 
+		/**
+		 * @param {CheckListFlatTreeItem} item
+		 * @returns {string}
+		 */
 		#getTitleForSaving(item)
 		{
 			let title = item.getTitle();
-			const members = Object.values(item.getMembers());
+			const focus = item.isFocused();
+			const members = item.getMembers();
 
 			if (members.length > 0)
 			{
@@ -799,7 +812,7 @@ jn.define('tasks/checklist/flat-tree', (require, exports, module) => {
 				);
 			}
 
-			if (!title)
+			if (!title && (!item.shouldRemove() || focus))
 			{
 				title = Loc.getMessage('TASKSMOBILE_TREE_CHECKLIST_ITEM_DEFAULT_TITLE');
 				item.setTitle(title);
@@ -808,6 +821,10 @@ jn.define('tasks/checklist/flat-tree', (require, exports, module) => {
 			return title;
 		}
 
+		/**
+		 * @param {CheckListFlatTreeItem} item
+		 * @returns {string}
+		 */
 		#preparingTitleForView(item)
 		{
 			const { title, members } = item;

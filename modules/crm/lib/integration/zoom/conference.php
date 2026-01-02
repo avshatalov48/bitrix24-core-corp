@@ -16,7 +16,7 @@ class Conference
 {
 	/**
 	 * @param int $userId
-	 * @param array $data See possible values here https://marketplace.zoom.us/docs/api-reference/zoom-api/meetings/meetingcreate
+	 * @param array $data
 	 *
 	 * @return Result
 	 */

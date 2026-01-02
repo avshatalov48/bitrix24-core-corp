@@ -24,15 +24,21 @@ export const Cell = {
 	},
 	computed: {
 		...mapGetters({
-			isFilterMode: `${Model.Interface}/isFilterMode`,
+			overbookingMap: `${Model.Bookings}/overbookingMap`,
+			isFilterMode: `${Model.Filter}/isFilterMode`,
 			isEditingBookingMode: `${Model.Interface}/isEditingBookingMode`,
 			draggedBookingId: `${Model.Interface}/draggedBookingId`,
+			draggedDataTransfer: `${Model.Interface}/draggedDataTransfer`,
 			resizedBookingId: `${Model.Interface}/resizedBookingId`,
-			quickFilter: `${Model.Interface}/quickFilter`,
+			quickFilter: `${Model.Filter}/quickFilter`,
 		}),
+		draggedElementId(): number
+		{
+			return this.draggedDataTransfer.id;
+		},
 		isAvailable(): boolean
 		{
-			if (this.isFilterMode || this.resizedBookingId || (this.isEditingBookingMode && !this.draggedBookingId))
+			if (this.isFilterMode || this.resizedBookingId || (this.isEditingBookingMode && !this.draggedDataTransfer.id))
 			{
 				return false;
 			}
@@ -65,7 +71,7 @@ export const Cell = {
 		{
 			return this.$store.getters[`${Model.Bookings}/getById`](this.draggedBookingId) ?? null;
 		},
-		freeSpace(): {fromTs: number, toTs: number}
+		freeSpace(): { fromTs: number, toTs: number }
 		{
 			let maxFrom = 0;
 			let minTo = Infinity;
@@ -91,9 +97,12 @@ export const Cell = {
 
 			return { fromTs: maxFrom, toTs: minTo };
 		},
-		colliding(): {fromTs: number, toTs: number}[]
+		colliding(): { fromTs: number, toTs: number }[]
 		{
-			return this.$store.getters[`${Model.Interface}/getColliding`](this.cell.resourceId, [this.draggedBookingId]);
+			return this.$store.getters[`${Model.Interface}/getColliding`](
+				this.cell.resourceId,
+				this.excludeBookingColliding,
+			);
 		},
 		quickFilterHovered(): boolean
 		{
@@ -105,6 +114,18 @@ export const Cell = {
 		},
 	},
 	methods: {
+		excludeBookingColliding(booking: BookingModel): boolean
+		{
+			if (booking.id === this.draggedBookingId)
+			{
+				return true;
+			}
+
+			const resourceId = this.cell.resourceId;
+			const overbooking = this.overbookingMap.get(booking.id);
+
+			return overbooking && overbooking.items.some((item) => item.resourceId === resourceId);
+		},
 		mouseEnterHandler(event: MouseEvent): void
 		{
 			this.updateHalfHour(event);
@@ -141,12 +162,14 @@ export const Cell = {
 				this.halfOffset = halfHour;
 			}
 
-			if (!bottomHalf && !canSubtractHalfHour && this.freeSpace.fromTs - this.cell.fromTs > 0)
+			if (
+				((!bottomHalf && !canSubtractHalfHour) || (bottomHalf && !canAddHalfHour))
+				&& this.freeSpace.fromTs - this.cell.fromTs > 0
+			)
 			{
 				this.halfOffset = this.freeSpace.fromTs - this.cell.fromTs;
 			}
-
-			if ((!bottomHalf && canSubtractHalfHour) || (bottomHalf && !canAddHalfHour))
+			else if ((!bottomHalf && canSubtractHalfHour) || (bottomHalf && !canAddHalfHour))
 			{
 				this.halfOffset = 0;
 			}
@@ -188,9 +211,9 @@ export const Cell = {
 		},
 	},
 	watch: {
-		draggedBookingId(): void
+		draggedElementId(): void
 		{
-			if (!this.draggedBookingId)
+			if (!this.draggedElementId)
 			{
 				void this.$store.dispatch(`${Model.Interface}/setHoveredCell`, null);
 			}

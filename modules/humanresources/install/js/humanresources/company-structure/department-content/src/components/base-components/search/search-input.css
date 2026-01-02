@@ -1,0 +1,39 @@
+.hr-department-detail-content__content-search {
+	display: flex;
+	background-color: var(--ui-color-palette-gray-03);
+	padding: 5px 10px;
+	border-radius: 20px;
+	margin: var(--hr-department-detail-margin-top) var(--hr-department-detail-padding-left-right) 0;
+	height: 22px;
+	align-items: center;
+}
+
+.hr-department-detail-content__content-search-icon {
+	--ui-icon-set__icon-color: var(--ui-color-palette-gray-50)
+}
+
+.hr-department-detail-content__content-search-input {
+	background: none;
+	border: none;
+	width: calc(100% - 47px);
+}
+
+.hr-department-detail-content__content-search-input::placeholder {
+	color: var(--ui-color-palette-gray-40);
+}
+
+.hr-department-detail-content__content-search.--focused {
+	background-color: var(--ui-color-palette-white-base);
+	border: var(--ui-border-width-thin) solid #00ACE3;
+	padding: 4px 10px;
+}
+
+.hr-department-detail-content__content-search-close-button {
+	--ui-icon-set__icon-size: 24px;
+	--ui-icon-set__icon-color: var(--ui-color-palette-blue-50);
+	cursor: pointer;
+}
+
+.hr-department-detail-content__content-search-close-button.--hide {
+	display: none;
+}

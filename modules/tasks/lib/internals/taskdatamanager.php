@@ -2,7 +2,7 @@
 
 namespace Bitrix\Tasks\Internals;
 
-use Bitrix\Main\Entity\DataManager;
+use Bitrix\Main\ORM\Data\DataManager;
 use Bitrix\Main\ORM\Query\Query;
 
 class TaskDataManager extends DataManager

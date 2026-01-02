@@ -41,18 +41,6 @@ if(Main\Loader::includeModule("bitrix24"))
 
 echo \Bitrix\Crm\Tour\Permissions\WebForm::getInstance()->build();
 
-$region = Main\Application::getInstance()->getLicense()->getRegion();
-$privacyDesc = $region
-	? Loc::getMessage('CRM_WEBFORM_LIST_NOTIFY_USER_CONSENT_TEXT_' . mb_strtoupper($region))
-	: null
-;
-$privacyDesc = $privacyDesc ?: Loc::getMessage('CRM_WEBFORM_LIST_NOTIFY_USER_CONSENT_TEXT');
-$notifyUserConsentHelperId = $region !== 'by' ? 5791365 : 16215312;
-
-$descImagePath = $this->GetFolder() . "/images/demo_main_";
-$descImagePath .= (in_array(LANGUAGE_ID, array('ru', 'ua', 'kz', 'by')) ? 'ru' : (LANGUAGE_ID === 'de' ? 'de' : 'en'));
-$descImagePath .= ".png";
-
 foreach ($arResult["ITEMS"] as $index => $data)
 {
 	foreach ($data as $dataKey => $dataValue)
@@ -341,7 +329,7 @@ if ($arResult['PERM_CAN_EDIT'])
 
 $APPLICATION->IncludeComponent(
 	'bitrix:crm.interface.toolbar',
-	SITE_TEMPLATE_ID === 'bitrix24' ? 'title' : '',
+	'title',
 	[
 		'TOOLBAR_ID' => 'crm_webform_toolbar',
 		'BUTTONS' => $interfaceToolbarButtons,
@@ -363,85 +351,6 @@ UI\Toolbar\Facade\Toolbar::addFilter([
 	"ENABLE_LABEL" => true,
 	'THEME' => Bitrix\Main\UI\Filter\Theme::MUTED,
 ]);
-
-
-// INFORMATION
-if(!$arResult['HIDE_DESC'] || !$arResult['HIDE_DESC_FZ152']):?>
-	<div id="CRM_LIST_DESC_CONT" class="crm-webform-list-info">
-		<div class="crm-webform-list-info-container">
-		<?php if(!$arResult['HIDE_DESC_FZ152']):?>
-			<h2 class="crm-webform-list-info-title">
-				<?=Loc::getMessage('CRM_WEBFORM_LIST_NOTIFY_USER_CONSENT_TITLE')?>
-			</h2>
-
-			<div class="crm-webform-list-info-inner">
-
-				<div class="crm-webform-list-info-list-container">
-					<?=$privacyDesc?>
-					<br>
-					<br>
-				</div>
-
-				<div class="crm-webform-list-info-list-container">
-					<ul class="crm-webform-list-info-list">
-						<li class="">
-							<?=Loc::getMessage('CRM_WEBFORM_LIST_NOTIFY_USER_CONSENT_ITEMS_1', array('%req_path%' => '/crm/configs/mycompany/'))?>
-							<br>
-							<br>
-						</li>
-						<li class="">
-							<?=Loc::getMessage('CRM_WEBFORM_LIST_NOTIFY_USER_CONSENT_ITEMS_2', array('%email%' => htmlspecialcharsbx($arResult['USER_CONSENT_EMAIL'])))?>
-							<br>
-							<br>
-						</li>
-						<li class="">
-							<?=Loc::getMessage('CRM_WEBFORM_LIST_NOTIFY_USER_CONSENT_ITEMS_3')?>
-							<br>
-							<br>
-						</li>
-					</ul>
-				</div>
-
-				<div class="crm-webform-list-info-list-container">
-					<span id="CRM_LIST_WEBFORM_NOTIFY_BTN_HIDE" class="webform-small-button webform-small-button-blue">
-						<?=Loc::getMessage('CRM_WEBFORM_LIST_NOTIFY_USER_CONSENT_BTN_OK')?>
-					</span>
-					<a onclick="BX.Helper.show('redirect=detail&code=<?=$notifyUserConsentHelperId?>'); return false;"
-					   href="javascript: void();" target="_blank">
-						<?=Loc::getMessage('CRM_WEBFORM_LIST_NOTIFY_USER_CONSENT_BTN_DETAIL')?>
-					</a>
-				</div>
-			</div>
-		<?php else:?>
-			<?php if(!$arResult['HIDE_DESC']):?>
-				<h2 class="crm-webform-list-info-title"><?=Loc::getMessage('CRM_WEBFORM_LIST_INFO_TITLE')?></h2>
-				<div class="crm-webform-list-info-visual">
-					<span class="crm-webform-list-info-visual-item" style="height: 225px;">
-						<img src="<?=$descImagePath?>" alt="">
-					</span>
-				</div>
-				<div class="crm-webform-list-info-inner">
-					<div class="crm-webform-list-info-list-container">
-						<ul class="crm-webform-list-info-list">
-							<li class="crm-webform-list-info-list-item">
-								<?=Loc::getMessage('CRM_WEBFORM_LIST_DESC1')?>
-							</li>
-							<li class="crm-webform-list-info-list-item">
-								<?=Loc::getMessage('CRM_WEBFORM_LIST_DESC2')?>
-							</li>
-						</ul>
-					</div>
-				</div>
-				<span
-					id="CRM_LIST_DESC_BTN_HIDE"
-					class="crm-webform-list-info-btn-hide"
-					title="<?=Loc::getMessage('CRM_WEBFORM_LIST_HIDE_DESC')?>"
-				></span>
-			<?php endif;?>
-		<?php endif;?>
-		</div>
-	</div>
-<?php endif;
 
 $snippet = new Main\Grid\Panel\Snippet();
 $controlPanel = ['GROUPS' => [['ITEMS' => []]]];

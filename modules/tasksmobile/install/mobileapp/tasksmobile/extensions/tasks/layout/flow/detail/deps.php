@@ -6,8 +6,10 @@ return [
 		'type',
 		'loc',
 		'require-lazy',
-		'user/profile',
 		'utils/date',
+		'project/utils',
+
+		'im:messenger/api/dialog-opener',
 
 		'statemanager/redux/connect',
 		'tasks:statemanager/redux/slices/flows',
@@ -25,6 +27,7 @@ return [
 		'layout/ui/scroll-view',
 		'layout/ui/collapsible-text',
 		'layout/pure-component',
+		'user-profile',
 	],
 	'bundle' => [
 		'./src/common',

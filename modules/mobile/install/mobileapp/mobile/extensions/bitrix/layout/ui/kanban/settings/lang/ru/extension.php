@@ -16,3 +16,5 @@ $MESS['CATEGORY_DETAIL_IS_DEFAULT_TEXT'] = 'Её можно редактиров
 $MESS['CATEGORY_DETAIL_DELETE_CATEGORY2'] = 'Удалить воронку?';
 
 $MESS['CATEGORY_DETAIL_IS_DEFAULT_TITLE2_MSGVER_1'] = 'Это воронка по умолчанию';
+$MESS['CATEGORY_DETAIL_NAME_TITLE'] = 'Название';
+$MESS['CATEGORY_DETAIL_NAME_ERROR'] = 'Введите название воронки';

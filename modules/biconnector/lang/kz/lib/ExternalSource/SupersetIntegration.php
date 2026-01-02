@@ -1,0 +1,6 @@
+<?php
+$MESS["SUPERSET_INTEGRATION_CREATE_DATASET_ERROR"] = "Датасетті жасау қатесі";
+$MESS["SUPERSET_INTEGRATION_DATASET_GET_URL_ERROR"] = "Сілтеме табылмады";
+$MESS["SUPERSET_INTEGRATION_DATASET_NOT_FOUND_ERROR"] = "Датасет табылмады";
+$MESS["SUPERSET_INTEGRATION_DELETE_DATASET_ERROR"] = "Датасетті жою қатесі";
+$MESS["SUPERSET_INTEGRATION_DELETE_DATASET_PERMISSION_ERROR"] = "Датасетті жою үшін құқықтар жеткіліксіз";

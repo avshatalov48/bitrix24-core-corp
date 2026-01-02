@@ -1,0 +1,24 @@
+<?php
+$MESS["TASKS_GRID_GROUP_ACTION_CANCELING"] = "Топтық әрекетті тоқтату";
+$MESS["TASKS_GRID_GROUP_ACTION_COUNTING_ELEMENTS_PROGRESS"] = "Элементтерді санау";
+$MESS["TASKS_GRID_GROUP_ACTION_DESCRIPTION"] = "Топтық әрекет ұзақ уақыт алуы мүмкін, бұл элементтер санына байланысты. Процестің аяқталуын күтіңіз немесе одан бас тартыңыз";
+$MESS["TASKS_GRID_GROUP_ACTION_NAME"] = "Топтық әрекет";
+$MESS["TASKS_GRID_GROUP_ACTION_NAME_ADDACCOMPLICE"] = "Міндеттерге бірлескен бақылаушы қосамыз. Егер осы терезені жапсаңыз процесс тоқтайды";
+$MESS["TASKS_GRID_GROUP_ACTION_NAME_ADDAUDITOR"] = "Міндеттерге бақылаушы қосамыз. Егер осы терезені жапсаңыз процесс тоқтайды";
+$MESS["TASKS_GRID_GROUP_ACTION_NAME_ADDTOFAVORITE"] = "Міндеттерді таңдаулыларға қосамыз. Егер осы терезені жапсаңыз процесс тоқтайды";
+$MESS["TASKS_GRID_GROUP_ACTION_NAME_ADJUSTDEADLINE"] = "Міндеттердің соңғы мерзімін ауыстырамыз. Егер осы терезені жапсаңыз процесс тоқтайды";
+$MESS["TASKS_GRID_GROUP_ACTION_NAME_COMPLETE"] = "Таңдалған міндеттерді аяқтаудамыз. Егер осы терезені жапсаңыз процесс тоқтайды";
+$MESS["TASKS_GRID_GROUP_ACTION_NAME_DELETE"] = "Таңдалған міндеттерді жоямыз. Егер осы терезені жапсаңыз процесс тоқтайды";
+$MESS["TASKS_GRID_GROUP_ACTION_NAME_MUTE"] = "Міндеттерге дыбысты өшіреміз. Егер осы терезені жапсаңыз процесс тоқтайды";
+$MESS["TASKS_GRID_GROUP_ACTION_NAME_PING"] = "Қызметкерлерге пинг жібереміз. Егер осы терезені жапсаңыз процесс тоқтайды";
+$MESS["TASKS_GRID_GROUP_ACTION_NAME_REMOVEFROMFAVORITE"] = "Міндеттерді таңдаулылардан алып тастаймыз. Егеросы терезені жапсаңыз процесс тоқтайды";
+$MESS["TASKS_GRID_GROUP_ACTION_NAME_SETCOLLAB"] = "Коллабқа міндеттер қосыңыз. Егер сіз осы терезені жапсаңыз, Процесс тоқтайды";
+$MESS["TASKS_GRID_GROUP_ACTION_NAME_SETDEADLINE"] = "Міндеттердің соңғы мерзімін көрсетеміз. Егер осы терезені жапсаңыз процесс тоқтайды";
+$MESS["TASKS_GRID_GROUP_ACTION_NAME_SETFLOW"] = "Ағынға міндеттер қосыңыз. Егер терезені жапсаңыз, процесс тоқтайды";
+$MESS["TASKS_GRID_GROUP_ACTION_NAME_SETGROUP"] = "Топқа міндеттер қосамыз. Егер осы терезені жапсаңыз процесс тоқтайды";
+$MESS["TASKS_GRID_GROUP_ACTION_NAME_SETORIGINATOR"] = "Міндеттердегі қоюшыны ауыстырамыз. Егер осы терезені жапсаңыз процесс тоқтайды";
+$MESS["TASKS_GRID_GROUP_ACTION_NAME_SETRESPONSIBLE"] = "Міндеттердегі орындаушыны ауыстырамыз. Егер осы терезені жапсаңыз процесс тоқтайды";
+$MESS["TASKS_GRID_GROUP_ACTION_NAME_SETTASKCONTROL"] = "Міндет аяқталғаннан кейін бақылауды өшіреміз. Егер осы терезені жапсаңыз процесс тоқтайды";
+$MESS["TASKS_GRID_GROUP_ACTION_NAME_SETTASKCONTROL_YES"] = "Міндет аяқталғаннан кейін бақылауды қосу. Егер терезені жапсаңыз, процесс тоқтайды";
+$MESS["TASKS_GRID_GROUP_ACTION_NAME_UNMUTE"] = "Міндеттерге дыбысты қосамыз. Егер осы терезені жапсаңыз процесс тоқтайды";
+$MESS["TASKS_GRID_GROUP_ACTION_NONE"] = "Әрекет анықталмаған";

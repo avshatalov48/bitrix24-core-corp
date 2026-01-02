@@ -3,7 +3,7 @@
  */
 jn.define('tasks/statemanager/redux/slices/tasks/observers/counter-observer', (require, exports, module) => {
 	const { isEqual } = require('utils/object');
-	const { selectEntities, selectIsMember, selectCounter } = require('tasks/statemanager/redux/slices/tasks');
+	const { selectTaskEntities, selectIsMember, selectCounter } = require('tasks/statemanager/redux/slices/tasks');
 
 	const getCounterChangeValueForAdded = (added) => {
 		let counterChangeValue = 0;
@@ -115,11 +115,11 @@ jn.define('tasks/statemanager/redux/slices/tasks/observers/counter-observer', (r
 		return getCounterChangeValueForAdded(added) + getCounterChangeValueForUpdated(prevTasks, updated);
 	};
 
-	const observeCounterChange = (store, onChange) => {
-		let prevTasks = selectEntities(store.getState());
+	const observeCounterChange = (store, onChange, { ownerId = env.userId }) => {
+		let prevTasks = selectTaskEntities(store.getState(), ownerId);
 
 		return store.subscribe(() => {
-			const nextTasks = selectEntities(store.getState());
+			const nextTasks = selectTaskEntities(store.getState(), ownerId);
 			const counterChangeValue = getCounterChangeValue(prevTasks, nextTasks);
 
 			if (counterChangeValue !== 0)

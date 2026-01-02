@@ -29,14 +29,8 @@ class Chat implements Tabable
 		{
 			return null;
 		}
-		
-		$messengerNavigationManager = new Manager($this->context);
-		if ($messengerNavigationManager->isNextNavigation())
-		{
-			return $messengerNavigationManager->getMessengerComponent();
-		}
 
-		return $messengerNavigationManager->getOldChatComponent();
+		return (new Manager($this->context))->getComponent();
 	}
 
 	public function getMenuData()

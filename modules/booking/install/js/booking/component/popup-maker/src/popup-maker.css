@@ -10,12 +10,19 @@
 .booking-popup-maker__content-section_item {
 	flex: 1;
 	position: relative;
+	display: flex;
+	flex-direction: column;
+	justify-content: center;
 	margin-right: var(--ui-space-inline-sm);
 	max-width: 100%;
 	border-radius: var(--ui-border-radius-lg);
 	background: #fff;
 	box-shadow: 0 1px 3px 0 rgba(0,0,0,.09);
 	transition: transform .2s ease;
+}
+
+.booking-popup-maker__content-section_item.--shrink {
+	flex: 0;
 }
 
 .booking-popup-maker__content-section_item.--secondary {

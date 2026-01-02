@@ -8,6 +8,7 @@ return [
 		'type',
 		'toast',
 		'loc',
+		'error',
 		'require-lazy',
 		'utils/date',
 		'utils/date/formats',
@@ -19,8 +20,6 @@ return [
 		'layout/ui/counter-view',
 		'layout/ui/menu',
 		'layout/ui/simple-list/items/extended',
-
-		'tasks:layout/task/create/opener',
 
 		'tokens',
 		'ui-system/blocks/chips/chip-status',
@@ -34,6 +33,7 @@ return [
 		'ui-system/blocks/link',
 		'ui-system/blocks/avatar-stack',
 
+
 		'statemanager/redux/connect',
 		'statemanager/redux/slices/users',
 
@@ -43,9 +43,10 @@ return [
 		'tasks:layout/deadline-pill',
 		'tasks:statemanager/redux/slices/flows',
 		'tasks:flow-list/simple-list/items/type',
+		'tasks:layout/flow/action-menu',
 
 		'require-lazy',
-		'user/profile',
+		'user-profile',
 	],
 	'bundle' => [
 		'./src/flow',

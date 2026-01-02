@@ -24,7 +24,7 @@ class Copy extends Operation
 
 		$result = new CopyResult();
 
-		if (!$userPermissions->canReadItem($this->item))
+		if (!$userPermissions->item()->canReadItem($this->item))
 		{
 			$result->addError(
 				new Error(Loc::getMessage('CRM_COMMON_READ_ACCESS_DENIED'), static::ERROR_CODE_ITEM_READ_ACCESS_DENIED)
@@ -32,7 +32,7 @@ class Copy extends Operation
 		}
 
 		if (
-			!$userPermissions->canAddItem($this->item)
+			!$userPermissions->item()->canAddItem($this->item)
 		)
 		{
 			$entityDescription = \CCrmOwnerType::GetDescription($this->item->getEntityTypeId());
@@ -127,8 +127,11 @@ class Copy extends Operation
 
 		$copy->setFromCompatibleData($originalData);
 
-		// if stages are disabled, it doesn't present in a compatible data
-		$copy->setStageId($original->getStageId());
+		if ($original->hasField('STAGE_ID'))
+		{
+			// if stages are disabled, it doesn't present in compatible data
+			$copy->setStageId($original->getStageId());
+		}
 
 		$factory = Container::getInstance()->getFactory($this->item->getEntityTypeId());
 		if ($factory)

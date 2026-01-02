@@ -1,0 +1,24 @@
+<?php
+$MESS["TASKS_ASSIGNEE"] = "Орындаушы";
+$MESS["TASKS_DATE_COMPLETED"] = "Аяқталу күні";
+$MESS["TASKS_DATE_CREATED"] = "Жасалған күні";
+$MESS["TASKS_DATE_DEADLINE"] = "Ақырғы мерзімі";
+$MESS["TASKS_DATE_END"] = "Аяқталу күні";
+$MESS["TASKS_DATE_START"] = "Басталу күні";
+$MESS["TASKS_DATE_STARTED"] = "Орындаудың басталуы";
+$MESS["TASKS_DIRECTOR"] = "Қоюшы";
+$MESS["TASKS_FILES"] = "Файлдар";
+$MESS["TASKS_PRIORITY_V2"] = "Маңызды міндет";
+$MESS["TASKS_QUICK_INFO_DETAILS"] = "Толығырақ";
+$MESS["TASKS_QUICK_INFO_EMPTY_DATE"] = "жоқ";
+$MESS["TASKS_RESPONSIBLE"] = "Жауапты";
+$MESS["TASKS_STATUS"] = "Мәртебе";
+$MESS["TASKS_STATUS_ACCEPTED"] = "Орындалуын күтуде";
+$MESS["TASKS_STATUS_COMPLETED"] = "Аяқталды";
+$MESS["TASKS_STATUS_DECLINED"] = "Қабылданбады";
+$MESS["TASKS_STATUS_DELAYED"] = "Кейінге қалдырылды";
+$MESS["TASKS_STATUS_IN_PROGRESS"] = "Орындалуда";
+$MESS["TASKS_STATUS_NEW"] = "Жаңа";
+$MESS["TASKS_STATUS_OVERDUE"] = "Мерзімі өтіп кетті";
+$MESS["TASKS_STATUS_WAITING"] = "Бақылауды күтуде";
+$MESS["TASKS_TASK_TITLE_LABEL"] = "№... -міндет";

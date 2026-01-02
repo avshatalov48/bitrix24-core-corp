@@ -1,4 +1,5 @@
 <?php
+
 $MESS['BICONNECTOR_EXTERNAL_SOURCE_DATASET_UNKNOWN_DATASET_TYPE'] = 'Неизвестный тип датасета';
 $MESS['BICONNECTOR_EXTERNAL_SOURCE_DATASET_ADD_ERROR'] = 'Ошибка создания датасета';
 $MESS['BICONNECTOR_EXTERNAL_SOURCE_DATASET_UPDATE_ERROR'] = 'Ошибка обновления датасета';
@@ -13,3 +14,4 @@ $MESS['BICONNECTOR_EXTERNAL_SOURCE_DIFFERENT_COUNT_FIELDS_ERROR'] = 'Колич�
 $MESS['BICONNECTOR_EXTERNAL_SOURCE_DATASET_ALREADY_EXIST_ERROR'] = 'Датасет с таким названием уже существует';
 $MESS['BICONNECTOR_EXTERNAL_SOURCE_DATASET_MAX_ROWS'] = 'В импортируемом файле должно быть не больше 300 000 строк';
 $MESS['BICONNECTOR_CONTROLLER_EXTERNAL_SOURCE_DATASET_ACCESS_ERROR'] = 'Недостаточно прав для работы с датасетом. Обратитесь к вашему руководителю или администратору Битрикс24';
+$MESS['BICONNECTOR_EXTERNAL_SOURCE_SYNC_FIELDS_ERROR'] = 'Не удалось синхронизировать колонки из источника';

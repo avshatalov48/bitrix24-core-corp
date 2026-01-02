@@ -5,7 +5,7 @@ return [
 		'assets/icons',
 		'statemanager/redux/store',
 		'statemanager/redux/slices/users',
-		'tasks:layout/task/create/opener',
+		'tasks:entry',
 		'tasks:layout/task/fields/task',
 	],
 ];

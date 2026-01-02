@@ -181,8 +181,8 @@ class IsReturnCustomer extends Field
 		/**
 		 * Basically in the end we will have one of those queries
 		 *
-		 * UPDATE b_crm_deal SET IS_RETURN_CUSTOMER = 'Y', IS_REPEATED_APPROACH = 'N' WHERE COMPANY_ID = {$companyID}
-		 * UPDATE b_crm_deal SET IS_RETURN_CUSTOMER = 'Y', IS_REPEATED_APPROACH = 'N' WHERE CONTACT_ID = {$contactID} AND (COMPANY_ID IS NULL OR COMPANY_ID = 0)
+		 * UPDATE b_crm_deal SET IS_RETURN_CUSTOMER = 'Y', IS_REPEATED_APPROACH = 'N' WHERE COMPANY_ID = {$companyID} AND IS_RETURN_CUSTOMER = 'N'
+		 * UPDATE b_crm_deal SET IS_RETURN_CUSTOMER = 'Y', IS_REPEATED_APPROACH = 'N' WHERE CONTACT_ID = {$contactID} AND (COMPANY_ID IS NULL OR COMPANY_ID = 0) AND IS_RETURN_CUSTOMER = 'N'
 		 */
 
 		$sql = "UPDATE ?# SET ?# = 'Y'";
@@ -211,6 +211,9 @@ class IsReturnCustomer extends Field
 		{
 			throw new InvalidOperationException('Unknown client entity type id');
 		}
+
+		$sql .= " AND ?# = 'N'";
+		$replacements[] = $factory->getEntityFieldNameByMap($this->getName());
 
 		$sqlExpression = new SqlExpression(
 			$sql,

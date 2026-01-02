@@ -33,7 +33,7 @@
 	    var _event$getData = event.getData(),
 	      _event$getData2 = babelHelpers.slicedToArray(_event$getData, 1),
 	      messageEvent = _event$getData2[0];
-	    if (messageEvent.getEventId() === 'BIConnector:ExternalConnection:onConnectionCreated') {
+	    if (messageEvent.getEventId() === 'BIConnector:ExternalConnection:onConnectionSliderClose') {
 	      _classPrivateMethodGet(_this, _closeSlider, _closeSlider2).call(_this);
 	    }
 	  });

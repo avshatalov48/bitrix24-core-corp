@@ -33,7 +33,7 @@ class MultiValueStoreService
 		$sql = $sqlHelper->getInsertIgnore(
 			'b_crm_multi_value_store',
 			' (TYPE_KEY, VALUE) ',
-			sprintf("VALUES(%s, %s);", $sqlHelper->convertToDbString($key), $sqlHelper->convertToDbString($value))
+			sprintf("VALUES(%s, %s)", $sqlHelper->convertToDbString($key), $sqlHelper->convertToDbString($value))
 		);
 
 		$connection->query($sql);

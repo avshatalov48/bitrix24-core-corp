@@ -1,18 +1,25 @@
 import { Text } from 'main.core';
 
-import { openDiskFileDialog } from '../helpers/open-disk-file-dialog';
-import { openCloudFileDialog } from '../helpers/open-cloud-file-dialog';
-
+import { DocumentService } from '../const';
+import { openDiskFileDialog, openCloudFileDialog } from '../helpers';
+import { userFieldSettings } from '../user-field-settings';
 import { Loader } from './loader';
-import { FeaturePromotersRegistry } from 'ui.info-helper';
 
 import './css/control-panel.css';
 
+// @vue/component
 export const ControlPanel = {
 	name: 'ControlPanel',
-	inject: ['userFieldControl', 'uploader', 'getMessage'],
 	components: {
 		Loader,
+	},
+	inject: ['userFieldControl', 'uploader', 'getMessage'],
+	setup(): { importServices: Object }
+	{
+		return {
+			DocumentService,
+			importServices: userFieldSettings.getImportServices(),
+		};
 	},
 	data: () => ({
 		showDialogLoader: false,
@@ -23,9 +30,6 @@ export const ControlPanel = {
 	{
 		this.fileDialogId = `file-dialog-${Text.getRandom(5)}`;
 		this.cloudDialogId = `cloud-dialog-${Text.getRandom(5)}`;
-		this.importServices = this.userFieldControl.getImportServices();
-		this.canUseImportService = this.userFieldControl.canUseImportService();
-		this.importFeatureId = this.userFieldControl.getImportFeatureId();
 	},
 	mounted(): void
 	{
@@ -52,16 +56,8 @@ export const ControlPanel = {
 				},
 			});
 		},
-
-		openCloudFileDialog(serviceId)
+		openCloudFileDialog(serviceId): void
 		{
-			if (!this.canUseImportService)
-			{
-				FeaturePromotersRegistry.getPromoter({ featureId: this.importFeatureId }).show();
-
-				return;
-			}
-
 			if (this.showCloudDialogLoader)
 			{
 				return;
@@ -84,7 +80,6 @@ export const ControlPanel = {
 			});
 		},
 	},
-	// language=Vue
 	template: `
 		<div class="disk-user-field-panel">
 			<div class="disk-user-field-panel-file-wrap">
@@ -110,43 +105,43 @@ export const ControlPanel = {
 				<div class="disk-user-field-panel-card-divider"></div>
 				<div 
 					class="disk-user-field-panel-card-box disk-user-field-panel-card-file"
-					v-if="importServices['gdrive']"
-					@click="openCloudFileDialog('gdrive')"
+					v-if="importServices[DocumentService.Google]"
+					@click="openCloudFileDialog(DocumentService.Google)"
 				>
 					<div class="disk-user-field-panel-card disk-user-field-panel-card-icon--google-docs">
 						<div class="disk-user-field-panel-card-content">
-							<Loader v-if="showCloudDialogLoader && currentServiceId === 'gdrive'" :offset="{ top: '-7px' }" />
+							<Loader v-if="showCloudDialogLoader && currentServiceId === DocumentService.Google" :offset="{ top: '-7px' }" />
 							<div class="disk-user-field-panel-card-icon"></div>
 							<div class="disk-user-field-panel-card-btn"></div>
-							<div class="disk-user-field-panel-card-name">{{ importServices['gdrive']['name'] }}</div>
+							<div class="disk-user-field-panel-card-name">{{ importServices[DocumentService.Google]['name'] }}</div>
 						</div>
 					</div>
 				</div>
 				<div 
 					class="disk-user-field-panel-card-box disk-user-field-panel-card-file"
-					v-if="importServices['office365']"
-					@click="openCloudFileDialog('office365')"
+					v-if="importServices[DocumentService.Office]"
+					@click="openCloudFileDialog(DocumentService.Office)"
 				>
 					<div class="disk-user-field-panel-card disk-user-field-panel-card-icon--office365">
 						<div class="disk-user-field-panel-card-content">
-							<Loader v-if="showCloudDialogLoader && currentServiceId === 'office365'" :offset="{ top: '-7px' }" />
+							<Loader v-if="showCloudDialogLoader && currentServiceId === DocumentService.Office" :offset="{ top: '-7px' }" />
 							<div class="disk-user-field-panel-card-icon"></div>
 							<div class="disk-user-field-panel-card-btn"></div>
-							<div class="disk-user-field-panel-card-name">{{ importServices['office365']['name'] }}</div>
+							<div class="disk-user-field-panel-card-name">{{ importServices[DocumentService.Office].name }}</div>
 						</div>
 					</div>
 				</div>
 				<div 
 					class="disk-user-field-panel-card-box disk-user-field-panel-card-file"
-					v-if="importServices['dropbox']"
-					@click="openCloudFileDialog('dropbox')"
+					v-if="importServices[DocumentService.Dropbox]"
+					@click="openCloudFileDialog(DocumentService.Dropbox)"
 				>
 					<div class="disk-user-field-panel-card disk-user-field-panel-card-icon--dropbox">
 						<div class="disk-user-field-panel-card-content">
-							<Loader v-if="showCloudDialogLoader && currentServiceId === 'dropbox'" :offset="{ top: '-7px' }" />
+							<Loader v-if="showCloudDialogLoader && currentServiceId === DocumentService.Dropbox" :offset="{ top: '-7px' }" />
 							<div class="disk-user-field-panel-card-icon"></div>
 							<div class="disk-user-field-panel-card-btn"></div>
-							<div class="disk-user-field-panel-card-name">{{ importServices['dropbox']['name'] }}</div>
+							<div class="disk-user-field-panel-card-name">{{ importServices[DocumentService.Dropbox].name }}</div>
 						</div>
 					</div>
 				</div>

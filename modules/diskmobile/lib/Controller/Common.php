@@ -14,6 +14,16 @@ class Common extends Base
 					new CloseSession(),
 				],
 			],
+			'getTrackedByIdWithRights' => [
+				'+prefilters' => [
+					new CloseSession(),
+				],
+			],
+			'getFolderByPath' => [
+				'+prefilters' => [
+					new CloseSession(),
+				],
+			],
 		];
 	}
 
@@ -39,16 +49,45 @@ class Common extends Base
 			['objectId' => $id],
 		);
 
-		if ($this->errorCollection->isEmpty())
+		if (!$this->errorCollection->isEmpty())
 		{
-			$diskObject['rights'] = $rightsResult['rights'];
-
-			return [
-				'diskObject'=> $diskObject,
-			];
+			return null;
 		}
 
-		return null;
+		$diskObject['rights'] = $rightsResult['rights'];
+
+		$externalLinkResult = $this->forward(
+			\Bitrix\Disk\Controller\CommonActions::class,
+			'getExternalLink',
+			['objectId' => $id],
+		);
+
+		if (!$this->errorCollection->isEmpty())
+		{
+			return null;
+		}
+
+		$diskObject['links']['external'] = $externalLinkResult['externalLink'];
+
+		return [
+			'diskObject'=> $diskObject,
+		];
+	}
+
+	public function getTrackedByIdWithRightsAction(int $id, bool $showRights = true): array
+	{
+		$trackedDiskObject = $this->forward(
+			\Bitrix\Disk\Controller\TrackedObject::class,
+			'get',
+			['id' => $id, 'showRights' => $showRights],
+		);
+
+		$diskObject = $this->trackedToItem($trackedDiskObject);
+
+
+		return [
+			'diskObject'=> $diskObject,
+		];
 	}
 
 	public function getFolderByPathAction(string $entityType, string $entityId, string $path): ?array
@@ -67,7 +106,7 @@ class Common extends Base
 		$targetFolderId = $resolvedPath['targetFolder']->getId();
 
 		$targetFolder = $this->forward(
-			\Bitrix\DiskMobile\Controller\Common::class,
+			self::class,
 			'getByIdWithRights',
 			['id' => $targetFolderId],
 		);

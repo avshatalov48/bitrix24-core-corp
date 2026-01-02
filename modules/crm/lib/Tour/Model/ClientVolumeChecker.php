@@ -117,10 +117,8 @@ class ClientVolumeChecker
 	protected function isUserHasAllPermissions(int $entityTypeId): bool
 	{
 		$perm = Container::getInstance()->getUserPermissions();
-		$permissionEntityType = $perm::getPermissionEntityType($entityTypeId);
 
-		return $perm->isAdmin()
-			|| $perm->getCrmPermissions()->GetPermType($permissionEntityType) >= $perm::PERMISSION_ALL;
+		return $perm->isAdmin() || $perm->entityType()->canReadAllItemsOfType($entityTypeId);
 	}
 
 	protected function getClientVolume(int $entityTypeId): int

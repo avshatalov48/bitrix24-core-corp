@@ -4,6 +4,107 @@ this.BX.Tasks = this.BX.Tasks || {};
 (function (exports,main_core_events,ui_sidepanel_layout,ui_label,ui_notification,main_core,ui_dialogs_messagebox) {
 	'use strict';
 
+	function _classPrivateMethodInitSpec(obj, privateSet) { _checkPrivateRedeclaration(obj, privateSet); privateSet.add(obj); }
+	function _classPrivateFieldInitSpec(obj, privateMap, value) { _checkPrivateRedeclaration(obj, privateMap); privateMap.set(obj, value); }
+	function _checkPrivateRedeclaration(obj, privateCollection) { if (privateCollection.has(obj)) { throw new TypeError("Cannot initialize the same private elements twice on an object"); } }
+	function _classPrivateMethodGet(receiver, privateSet, fn) { if (!privateSet.has(receiver)) { throw new TypeError("attempted to get private field on non-instance"); } return fn; }
+	var _props = /*#__PURE__*/new WeakMap();
+	var _filter = /*#__PURE__*/new WeakMap();
+	var _popupManager = /*#__PURE__*/new WeakMap();
+	var _fields = /*#__PURE__*/new WeakMap();
+	var _init = /*#__PURE__*/new WeakSet();
+	var _updateFields = /*#__PURE__*/new WeakSet();
+	var _unSubscribeToEvents = /*#__PURE__*/new WeakSet();
+	var _subscribeToEvents = /*#__PURE__*/new WeakSet();
+	var _applyFilterHandler = /*#__PURE__*/new WeakSet();
+	var _onGetStopBlur = /*#__PURE__*/new WeakSet();
+	var _resetFilter = /*#__PURE__*/new WeakSet();
+	var Filter = /*#__PURE__*/function () {
+	  function Filter(props) {
+	    babelHelpers.classCallCheck(this, Filter);
+	    _classPrivateMethodInitSpec(this, _resetFilter);
+	    _classPrivateMethodInitSpec(this, _onGetStopBlur);
+	    _classPrivateMethodInitSpec(this, _applyFilterHandler);
+	    _classPrivateMethodInitSpec(this, _subscribeToEvents);
+	    _classPrivateMethodInitSpec(this, _unSubscribeToEvents);
+	    _classPrivateMethodInitSpec(this, _updateFields);
+	    _classPrivateMethodInitSpec(this, _init);
+	    _classPrivateFieldInitSpec(this, _props, {
+	      writable: true,
+	      value: void 0
+	    });
+	    _classPrivateFieldInitSpec(this, _filter, {
+	      writable: true,
+	      value: void 0
+	    });
+	    _classPrivateFieldInitSpec(this, _popupManager, {
+	      writable: true,
+	      value: void 0
+	    });
+	    _classPrivateFieldInitSpec(this, _fields, {
+	      writable: true,
+	      value: void 0
+	    });
+	    babelHelpers.classPrivateFieldSet(this, _props, props);
+	    _classPrivateMethodGet(this, _init, _init2).call(this);
+	  }
+	  babelHelpers.createClass(Filter, [{
+	    key: "destroyPopups",
+	    value: function destroyPopups() {
+	      var _babelHelpers$classPr, _babelHelpers$classPr2;
+	      babelHelpers.classPrivateFieldGet(this, _filter).popup.destroy();
+	      (_babelHelpers$classPr = babelHelpers.classPrivateFieldGet(this, _popupManager).getPopupById(babelHelpers.classPrivateFieldGet(this, _props).filterId + '_fields_popup')) === null || _babelHelpers$classPr === void 0 ? void 0 : _babelHelpers$classPr.destroy();
+	      (_babelHelpers$classPr2 = babelHelpers.classPrivateFieldGet(this, _popupManager).getPopupById(babelHelpers.classPrivateFieldGet(this, _props).filterId + '-grid-settings-window')) === null || _babelHelpers$classPr2 === void 0 ? void 0 : _babelHelpers$classPr2.destroy();
+	    }
+	  }, {
+	    key: "release",
+	    value: function release() {
+	      _classPrivateMethodGet(this, _resetFilter, _resetFilter2).call(this);
+	      _classPrivateMethodGet(this, _unSubscribeToEvents, _unSubscribeToEvents2).call(this);
+	      this.destroyPopups();
+	    }
+	  }]);
+	  return Filter;
+	}();
+	function _init2() {
+	  babelHelpers.classPrivateFieldSet(this, _filter, BX.Main.filterManager.getById(babelHelpers.classPrivateFieldGet(this, _props).filterId));
+	  babelHelpers.classPrivateFieldSet(this, _popupManager, BX.Main.PopupManager);
+	  _classPrivateMethodGet(this, _updateFields, _updateFields2).call(this);
+	  _classPrivateMethodGet(this, _subscribeToEvents, _subscribeToEvents2).call(this);
+	}
+	function _updateFields2() {
+	  babelHelpers.classPrivateFieldSet(this, _fields, babelHelpers.classPrivateFieldGet(this, _filter).getFilterFieldsValues());
+	}
+	function _unSubscribeToEvents2() {
+	  main_core_events.EventEmitter.unsubscribe('BX.Main.Filter:apply', _classPrivateMethodGet(this, _applyFilterHandler, _applyFilterHandler2).bind(this));
+	  main_core_events.EventEmitter.unsubscribe('BX.Main.Filter:onGetStopBlur', _classPrivateMethodGet(this, _onGetStopBlur, _onGetStopBlur2).bind(this));
+	}
+	function _subscribeToEvents2() {
+	  main_core_events.EventEmitter.subscribe('BX.Main.Filter:apply', _classPrivateMethodGet(this, _applyFilterHandler, _applyFilterHandler2).bind(this));
+	  main_core_events.EventEmitter.subscribe('BX.Main.Filter:onGetStopBlur', _classPrivateMethodGet(this, _onGetStopBlur, _onGetStopBlur2).bind(this));
+	}
+	function _applyFilterHandler2() {
+	  _classPrivateMethodGet(this, _updateFields, _updateFields2).call(this);
+	}
+	function _onGetStopBlur2(event) {
+	  var _event$getCompatData$ = event.getCompatData()[0],
+	    target = _event$getCompatData$.target,
+	    path = _event$getCompatData$.path;
+	  var popupWindow = path.find(function (el) {
+	    var _el$classList, _el$classList2;
+	    return ((_el$classList = el.classList) === null || _el$classList === void 0 ? void 0 : _el$classList.contains('popup-window')) || ((_el$classList2 = el.classList) === null || _el$classList2 === void 0 ? void 0 : _el$classList2.contains('main-ui-square'));
+	  });
+	  var popups = [babelHelpers.classPrivateFieldGet(this, _filter).popup.popupContainer, babelHelpers.classPrivateFieldGet(this, _filter).getFieldsPopup().popupContainer];
+	  if (babelHelpers.classPrivateFieldGet(this, _filter).popup.isShown() && !popups.some(function (el) {
+	    return el.contains(target);
+	  }) && !popupWindow) {
+	    babelHelpers.classPrivateFieldGet(this, _filter).closePopup();
+	  }
+	}
+	function _resetFilter2() {
+	  babelHelpers.classPrivateFieldGet(this, _filter).resetFilter();
+	}
+
 	var RequestSender = /*#__PURE__*/function () {
 	  function RequestSender() {
 	    babelHelpers.classCallCheck(this, RequestSender);
@@ -39,7 +140,7 @@ this.BX.Tasks = this.BX.Tasks || {};
 	  return RequestSender;
 	}();
 
-	var _templateObject, _templateObject2, _templateObject3, _templateObject4, _templateObject5, _templateObject6, _templateObject7, _templateObject8;
+	var _templateObject, _templateObject2, _templateObject3, _templateObject4, _templateObject5, _templateObject6, _templateObject7, _templateObject8, _templateObject9, _templateObject10;
 	function ownKeys(object, enumerableOnly) { var keys = Object.keys(object); if (Object.getOwnPropertySymbols) { var symbols = Object.getOwnPropertySymbols(object); enumerableOnly && (symbols = symbols.filter(function (sym) { return Object.getOwnPropertyDescriptor(object, sym).enumerable; })), keys.push.apply(keys, symbols); } return keys; }
 	function _objectSpread(target) { for (var i = 1; i < arguments.length; i++) { var source = null != arguments[i] ? arguments[i] : {}; i % 2 ? ownKeys(Object(source), !0).forEach(function (key) { babelHelpers.defineProperty(target, key, source[key]); }) : Object.getOwnPropertyDescriptors ? Object.defineProperties(target, Object.getOwnPropertyDescriptors(source)) : ownKeys(Object(source)).forEach(function (key) { Object.defineProperty(target, key, Object.getOwnPropertyDescriptor(source, key)); }); } return target; }
 	var Epic = /*#__PURE__*/function (_EventEmitter) {
@@ -65,6 +166,8 @@ this.BX.Tasks = this.BX.Tasks || {};
 	    _this.form = null;
 	    _this.formData = null;
 	    _this.listData = null;
+	    _this.filterData = null;
+	    _this.filter = null;
 	    _this.editorHandler = null;
 	    _this.colorPickers = new Map();
 	    _this.defaultColor = '#69dafc';
@@ -131,6 +234,7 @@ this.BX.Tasks = this.BX.Tasks || {};
 	      var _this3 = this;
 	      this.id = main_core.Text.getRandom();
 	      this.gridId = 'EntityEpicsGrid_' + this.groupId;
+	      this.filterId = this.gridId;
 	      var sidePanelId = 'tasks-scrum-epic-list-side-panel';
 	      this.subscribeListToEvents(sidePanelId);
 	      this.sidePanelManager.open(sidePanelId, {
@@ -139,17 +243,7 @@ this.BX.Tasks = this.BX.Tasks || {};
 	          return ui_sidepanel_layout.Layout.createContent({
 	            extensions: ['tasks.scrum.epic'],
 	            title: main_core.Loc.getMessage('TASKS_SCRUM_SPRINT_ADD_EPIC_LIST_TITLE'),
-	            toolbar: function toolbar(_ref2) {
-	              var Button = _ref2.Button;
-	              return [new Button({
-	                text: main_core.Loc.getMessage('TASKS_SCRUM_SPRINT_ADD_EPIC_LIST_TOOLBAR_BUTTON'),
-	                color: Button.Color.PRIMARY,
-	                onclick: function onclick() {
-	                  _this3.showAddForm();
-	                }
-	              })];
-	            },
-	            content: _this3.createListContent.bind(_this3),
+	            content: _this3.createContainerContent.bind(_this3),
 	            design: {
 	              section: false
 	            },
@@ -157,7 +251,14 @@ this.BX.Tasks = this.BX.Tasks || {};
 	          });
 	        },
 	        events: {
-	          onLoad: this.onLoadList.bind(this)
+	          onLoad: function onLoad(event) {
+	            _this3.onLoadFilter(event);
+	            _this3.onLoadList(event);
+	          },
+	          onClose: function onClose() {
+	            var _this3$filter;
+	            (_this3$filter = _this3.filter) === null || _this3$filter === void 0 ? void 0 : _this3$filter.release();
+	          }
 	        }
 	      });
 	    }
@@ -206,9 +307,9 @@ this.BX.Tasks = this.BX.Tasks || {};
 	                design: {
 	                  section: false
 	                },
-	                buttons: function buttons(_ref3) {
-	                  var cancelButton = _ref3.cancelButton,
-	                    SaveButton = _ref3.SaveButton;
+	                buttons: function buttons(_ref2) {
+	                  var cancelButton = _ref2.cancelButton,
+	                    SaveButton = _ref2.SaveButton;
 	                  return [new SaveButton({
 	                    text: main_core.Loc.getMessage('TASKS_SCRUM_EPIC_EDIT_BUTTON'),
 	                    onclick: function onclick() {
@@ -243,9 +344,9 @@ this.BX.Tasks = this.BX.Tasks || {};
 	            design: {
 	              section: false
 	            },
-	            buttons: function buttons(_ref4) {
-	              var cancelButton = _ref4.cancelButton,
-	                SaveButton = _ref4.SaveButton;
+	            buttons: function buttons(_ref3) {
+	              var cancelButton = _ref3.cancelButton,
+	                SaveButton = _ref3.SaveButton;
 	              return [new SaveButton({
 	                onclick: _this6.onSaveEditForm.bind(_this6)
 	              }), cancelButton];
@@ -338,7 +439,7 @@ this.BX.Tasks = this.BX.Tasks || {};
 	    value: function createListContent() {
 	      var _this11 = this;
 	      return new Promise(function (resolve, reject) {
-	        main_core.ajax.runAction('bitrix:tasks.scrum.epic.getList', {
+	        main_core.ajax.runAction('bitrix:tasks.scrum.epic.list', {
 	          data: {
 	            groupId: _this11.groupId,
 	            gridId: _this11.gridId
@@ -352,76 +453,105 @@ this.BX.Tasks = this.BX.Tasks || {};
 	      });
 	    }
 	  }, {
-	    key: "createTasksListContent",
-	    value: function createTasksListContent(completed) {
+	    key: "createFilterContent",
+	    value: function createFilterContent() {
 	      var _this12 = this;
 	      return new Promise(function (resolve, reject) {
-	        main_core.ajax.runAction('bitrix:tasks.scrum.epic.getTasksList', {
+	        main_core.ajax.runAction('bitrix:tasks.scrum.epic.filter.get', {
 	          data: {
 	            groupId: _this12.groupId,
-	            epicId: _this12.epicId,
-	            gridId: _this12.gridId,
-	            completed: completed ? 'Y' : 'N'
+	            gridId: _this12.gridId
 	          }
 	        }).then(function (response) {
-	          _this12.listData = response.data;
-	          resolve(_this12.renderTasksList());
+	          _this12.filterData = response.data;
+	          resolve(_this12.renderFilter());
 	        })["catch"](function (response) {
 	          _this12.requestSender.showErrorAlert(response);
 	        });
 	      });
 	    }
 	  }, {
-	    key: "createViewContent",
-	    value: function createViewContent(epic) {
+	    key: "createTasksListContent",
+	    value: function createTasksListContent(completed) {
 	      var _this13 = this;
 	      return new Promise(function (resolve, reject) {
-	        main_core.ajax.runAction('bitrix:tasks.scrum.epic.getEpicFiles', {
+	        main_core.ajax.runAction('bitrix:tasks.scrum.epic.getTasksList', {
 	          data: {
 	            groupId: _this13.groupId,
-	            epicId: epic.id
+	            epicId: _this13.epicId,
+	            gridId: _this13.gridId,
+	            completed: completed ? 'Y' : 'N'
 	          }
 	        }).then(function (response) {
-	          _this13.epicFiles = main_core.Type.isUndefined(response.data.html) ? '' : response.data.html;
-	          resolve(_this13.renderViewForm(epic));
+	          _this13.listData = response.data;
+	          resolve(_this13.renderTasksList());
 	        })["catch"](function (response) {
 	          _this13.requestSender.showErrorAlert(response);
 	        });
 	      });
 	    }
 	  }, {
-	    key: "createEditContent",
-	    value: function createEditContent() {
+	    key: "createViewContent",
+	    value: function createViewContent(epic) {
 	      var _this14 = this;
 	      return new Promise(function (resolve, reject) {
-	        _this14.getEpic().then(function (response) {
+	        main_core.ajax.runAction('bitrix:tasks.scrum.epic.getEpicFiles', {
+	          data: {
+	            groupId: _this14.groupId,
+	            epicId: epic.id
+	          }
+	        }).then(function (response) {
+	          _this14.epicFiles = main_core.Type.isUndefined(response.data.html) ? '' : response.data.html;
+	          resolve(_this14.renderViewForm(epic));
+	        })["catch"](function (response) {
+	          _this14.requestSender.showErrorAlert(response);
+	        });
+	      });
+	    }
+	  }, {
+	    key: "createEditContent",
+	    value: function createEditContent() {
+	      var _this15 = this;
+	      return new Promise(function (resolve, reject) {
+	        _this15.getEpic().then(function (response) {
 	          var epic = response.data;
 	          main_core.ajax.runAction('bitrix:tasks.scrum.epic.getDescriptionEditor', {
 	            data: {
-	              groupId: _this14.groupId,
-	              editorId: _this14.id,
+	              groupId: _this15.groupId,
+	              editorId: _this15.id,
 	              epicId: epic.id,
 	              text: epic.description
 	            }
 	          }).then(function (response) {
-	            _this14.currentEpic = epic;
-	            _this14.formData = response.data;
-	            resolve(_this14.renderEditForm(epic));
+	            _this15.currentEpic = epic;
+	            _this15.formData = response.data;
+	            resolve(_this15.renderEditForm(epic));
 	          })["catch"](function (response) {
-	            _this14.requestSender.showErrorAlert(response);
+	            _this15.requestSender.showErrorAlert(response);
 	          });
 	        });
 	      });
 	    }
 	  }, {
+	    key: "createContainerContent",
+	    value: function createContainerContent() {
+	      var _this16 = this;
+	      return Promise.all([this.createFilterContent(), this.createListContent()]).then(function (_ref4) {
+	        var _ref5 = babelHelpers.slicedToArray(_ref4, 2),
+	          filterContent = _ref5[0],
+	          listContent = _ref5[1];
+	        return _this16.renderContainer(filterContent, listContent);
+	      });
+	    }
+	  }, {
 	    key: "getEpic",
 	    value: function getEpic() {
-	      var _this15 = this;
+	      var _this17 = this;
 	      return new Promise(function (resolve, reject) {
 	        main_core.ajax.runAction('bitrix:tasks.scrum.epic.getEpic', {
 	          data: {
-	            groupId: _this15.groupId,
-	            epicId: _this15.epicId
+	            groupId: _this17.groupId,
+	            epicId: _this17.epicId
 	          }
 	        }).then(resolve, reject);
 	      });
@@ -440,24 +570,39 @@ this.BX.Tasks = this.BX.Tasks || {};
 	  }, {
 	    key: "onSaveAddForm",
 	    value: function onSaveAddForm() {
-	      var _this16 = this;
+	      var _this18 = this;
 	      main_core.ajax.runAction('bitrix:tasks.scrum.epic.createEpic', {
 	        data: this.getRequestData()
 	      }).then(function (response) {
-	        _this16.sidePanel.close(false, function () {
-	          main_core_events.EventEmitter.emit(_this16.getEventNamespace() + ':' + 'afterAdd', response.data);
+	        _this18.sidePanel.close(false, function () {
+	          main_core_events.EventEmitter.emit(_this18.getEventNamespace() + ':' + 'afterAdd', response.data);
 	          ui_notification.UI.Notification.Center.notify({
 	            content: main_core.Loc.getMessage('TASKS_SCRUM_ADD_EPIC_NOTIFY')
 	          });
 	        });
 	      })["catch"](function (response) {
-	        _this16.requestSender.showErrorAlert(response);
+	        _this18.requestSender.showErrorAlert(response);
 	      });
+	    }
+	  }, {
+	    key: "onLoadFilter",
+	    value: function onLoadFilter(event) {
+	      var _this$filterData,
+	        _this19 = this;
+	      this.sidePanel = event.getSlider();
+	      var filterContainer = this.sidePanel.getContainer().querySelector('.tasks-scrum-epic-filter');
+	      if ((_this$filterData = this.filterData) !== null && _this$filterData !== void 0 && _this$filterData.html) {
+	        main_core.Runtime.html(filterContainer, this.filterData.html).then(function () {
+	          _this19.filter = new Filter({
+	            filterId: _this19.filterId
+	          });
+	        });
+	      }
 	    }
 	  }, {
 	    key: "onLoadList",
 	    value: function onLoadList(event) {
-	      var _this17 = this;
+	      var _this20 = this;
 	      this.sidePanel = event.getSlider();
 	      var listContainer = this.sidePanel.getContainer().querySelector('.tasks-scrum-epic-list');
 	      if (main_core.Type.isUndefined(this.listData.html)) {
@@ -465,20 +610,20 @@ this.BX.Tasks = this.BX.Tasks || {};
 	        main_core.Event.bind(listContainer.querySelector('.tasks-scrum-epics-empty-button'), 'click', this.showAddForm.bind(this));
 	      } else {
 	        main_core.Runtime.html(listContainer, this.listData.html).then(function () {
-	          main_core_events.EventEmitter.subscribe('Grid::beforeRequest', _this17.onBeforeGridRequest.bind(_this17));
-	          _this17.prepareTagsList(listContainer);
+	          main_core_events.EventEmitter.subscribe('Grid::beforeRequest', _this20.onBeforeGridRequest.bind(_this20));
+	          _this20.prepareTagsList(listContainer);
 	        });
 	      }
 	    }
 	  }, {
 	    key: "onLoadTasksList",
 	    value: function onLoadTasksList(event) {
-	      var _this18 = this;
+	      var _this21 = this;
 	      this.sidePanel = event.getSlider();
 	      var listContainer = this.sidePanel.getContainer().querySelector('.tasks-scrum-epic-tasks-list');
 	      if (this.listData) {
 	        main_core.Runtime.html(listContainer, this.listData.html).then(function () {
-	          main_core_events.EventEmitter.subscribe('Grid::beforeRequest', _this18.onBeforeGridRequest.bind(_this18));
+	          main_core_events.EventEmitter.subscribe('Grid::beforeRequest', _this21.onBeforeGridRequest.bind(_this21));
 	        });
 	      }
 	    }
@@ -505,15 +650,15 @@ this.BX.Tasks = this.BX.Tasks || {};
 	  }, {
 	    key: "onSaveEditForm",
 	    value: function onSaveEditForm() {
-	      var _this19 = this;
+	      var _this22 = this;
 	      main_core.ajax.runAction('bitrix:tasks.scrum.epic.editEpic', {
 	        data: this.getRequestData()
 	      }).then(function (response) {
-	        _this19.sidePanel.close(false, function () {
-	          main_core_events.EventEmitter.emit(_this19.getEventNamespace() + ':' + 'afterEdit', response.data);
+	        _this22.sidePanel.close(false, function () {
+	          main_core_events.EventEmitter.emit(_this22.getEventNamespace() + ':' + 'afterEdit', response.data);
 	        });
 	      })["catch"](function (response) {
-	        _this19.requestSender.showErrorAlert(response);
+	        _this22.requestSender.showErrorAlert(response);
 	      });
 	    }
 	  }, {
@@ -541,7 +686,7 @@ this.BX.Tasks = this.BX.Tasks || {};
 	  }, {
 	    key: "getListUrl",
 	    value: function getListUrl() {
-	      return '/bitrix/services/main/ajax.php?action=bitrix:tasks.scrum.epic.getList';
+	      return '/bitrix/services/main/ajax.php?action=bitrix:tasks.scrum.epic.list';
 	    }
 	  }, {
 	    key: "renderAddForm",
@@ -549,35 +694,45 @@ this.BX.Tasks = this.BX.Tasks || {};
 	      return main_core.Tag.render(_templateObject || (_templateObject = babelHelpers.taggedTemplateLiteral(["\n\t\t\t<div class=\"tasks-scrum-epic-form\">\n\t\t\t\t<div class=\"tasks-scrum-epic-form-container\">\n\t\t\t\t\t", "\n\t\t\t\t\t", "\n\t\t\t\t</div>\n\t\t\t</div>\n\t\t"])), this.renderNameField(0, '', this.defaultColor), this.renderDescriptionField());
 	    }
 	  }, {
+	    key: "renderContainer",
+	    value: function renderContainer(filterContent, listContent) {
+	      return main_core.Tag.render(_templateObject2 || (_templateObject2 = babelHelpers.taggedTemplateLiteral(["\n\t\t\t<div class=\"tasks-scrum-epic-container\">\n\t\t\t\t<div class=\"tasks-scrum-epic-toolbar\">\n\t\t\t\t\t<button class=\"ui-btn ui-btn-success\" onclick=\"", "\">\n\t\t\t\t\t\t<span class=\"ui-btn-text\">", "</span>\n\t\t\t\t\t</button>\n\t\t\t\t\t", "\n\t\t\t\t</div>\n\t\t\t\t", "\n\t\t\t</div>\n\t\t"])), this.showAddForm.bind(this), main_core.Loc.getMessage('TASKS_SCRUM_SPRINT_ADD_EPIC_LIST_TOOLBAR_BUTTON'), filterContent, listContent);
+	    }
+	  }, {
+	    key: "renderFilter",
+	    value: function renderFilter() {
+	      return main_core.Tag.render(_templateObject3 || (_templateObject3 = babelHelpers.taggedTemplateLiteral(["<div class=\"tasks-scrum-epic-filter\"></div>"])));
+	    }
+	  }, {
 	    key: "renderList",
 	    value: function renderList() {
-	      return main_core.Tag.render(_templateObject2 || (_templateObject2 = babelHelpers.taggedTemplateLiteral(["<div class=\"tasks-scrum-epic-list\"></div>"])));
+	      return main_core.Tag.render(_templateObject4 || (_templateObject4 = babelHelpers.taggedTemplateLiteral(["<div class=\"tasks-scrum-epic-list\"></div>"])));
 	    }
 	  }, {
 	    key: "renderTasksList",
 	    value: function renderTasksList() {
-	      return main_core.Tag.render(_templateObject3 || (_templateObject3 = babelHelpers.taggedTemplateLiteral(["<div class=\"tasks-scrum-epic-tasks-list\"></div>"])));
+	      return main_core.Tag.render(_templateObject5 || (_templateObject5 = babelHelpers.taggedTemplateLiteral(["<div class=\"tasks-scrum-epic-tasks-list\"></div>"])));
 	    }
 	  }, {
 	    key: "renderViewForm",
 	    value: function renderViewForm(epic) {
-	      return main_core.Tag.render(_templateObject4 || (_templateObject4 = babelHelpers.taggedTemplateLiteral(["\n\t\t\t<div class=\"tasks-scrum-epic-form\">\n\t\t\t\t<div class=\"tasks-scrum-epic-form-container\">\n\t\t\t\t\t<div class=\"tasks-scrum-epic-form-header\">\n\t\t\t\t\t\t<div class=\"tasks-scrum-epic-form-header-title\">\n\t\t\t\t\t\t\t", "\n\t\t\t\t\t\t</div>\n\t\t\t\t\t\t<div class=\"tasks-scrum-epic-form-header-separate\"></div>\n\t\t\t\t\t\t<div class=\"tasks-scrum-epic-header-color\">\n\t\t\t\t\t\t\t<div\n\t\t\t\t\t\t\t\tclass=\"tasks-scrum-epic-header-color-current\"\n\t\t\t\t\t\t\t\tstyle=\"background-color: ", ";\"\n\t\t\t\t\t\t\t>\n\t\t\t\t\t\t\t</div>\n\t\t\t\t\t\t</div>\n\t\t\t\t\t</div>\n\t\t\t\t\t<div class=\"tasks-scrum-epic-form-body\">\n\t\t\t\t\t\t<div class=\"tasks-scrum-epic-form-description\">\n\t\t\t\t\t\t\t", "\n\t\t\t\t\t\t</div>\n\t\t\t\t\t\t<div class=\"tasks-scrum-epic-form-files\"></div>\n\t\t\t\t\t</div>\n\t\t\t\t</div>\n\t\t\t</div>\n\t\t"])), main_core.Text.encode(epic.name), main_core.Text.encode(epic.color), epic.description);
+	      return main_core.Tag.render(_templateObject6 || (_templateObject6 = babelHelpers.taggedTemplateLiteral(["\n\t\t\t<div class=\"tasks-scrum-epic-form\">\n\t\t\t\t<div class=\"tasks-scrum-epic-form-container\">\n\t\t\t\t\t<div class=\"tasks-scrum-epic-form-header\">\n\t\t\t\t\t\t<div class=\"tasks-scrum-epic-form-header-title\">\n\t\t\t\t\t\t\t", "\n\t\t\t\t\t\t</div>\n\t\t\t\t\t\t<div class=\"tasks-scrum-epic-form-header-separate\"></div>\n\t\t\t\t\t\t<div class=\"tasks-scrum-epic-header-color\">\n\t\t\t\t\t\t\t<div\n\t\t\t\t\t\t\t\tclass=\"tasks-scrum-epic-header-color-current\"\n\t\t\t\t\t\t\t\tstyle=\"background-color: ", ";\"\n\t\t\t\t\t\t\t>\n\t\t\t\t\t\t\t</div>\n\t\t\t\t\t\t</div>\n\t\t\t\t\t</div>\n\t\t\t\t\t<div class=\"tasks-scrum-epic-form-body\">\n\t\t\t\t\t\t<div class=\"tasks-scrum-epic-form-description\">\n\t\t\t\t\t\t\t", "\n\t\t\t\t\t\t</div>\n\t\t\t\t\t\t<div class=\"tasks-scrum-epic-form-files\"></div>\n\t\t\t\t\t</div>\n\t\t\t\t</div>\n\t\t\t</div>\n\t\t"])), main_core.Text.encode(epic.name), main_core.Text.encode(epic.color), epic.description);
 	    }
 	  }, {
 	    key: "renderEditForm",
 	    value: function renderEditForm(epic) {
 	      this.selectedColor = epic.color;
-	      return main_core.Tag.render(_templateObject5 || (_templateObject5 = babelHelpers.taggedTemplateLiteral(["\n\t\t\t<div class=\"tasks-scrum-epic-form\">\n\t\t\t\t<div class=\"tasks-scrum-epic-form-container\">\n\t\t\t\t\t", "\n\t\t\t\t\t", "\n\t\t\t\t</div>\n\t\t\t</div>\n\t\t"])), this.renderNameField(epic.id, epic.name, this.selectedColor), this.renderDescriptionField());
+	      return main_core.Tag.render(_templateObject7 || (_templateObject7 = babelHelpers.taggedTemplateLiteral(["\n\t\t\t<div class=\"tasks-scrum-epic-form\">\n\t\t\t\t<div class=\"tasks-scrum-epic-form-container\">\n\t\t\t\t\t", "\n\t\t\t\t\t", "\n\t\t\t\t</div>\n\t\t\t</div>\n\t\t"])), this.renderNameField(epic.id, epic.name, this.selectedColor), this.renderDescriptionField());
 	    }
 	  }, {
 	    key: "renderNameField",
 	    value: function renderNameField(epicId, name, color) {
-	      var _this20 = this;
-	      var nameField = main_core.Tag.render(_templateObject6 || (_templateObject6 = babelHelpers.taggedTemplateLiteral(["\n\t\t\t<div class=\"tasks-scrum-epic-form-header\">\n\t\t\t\t<div class=\"tasks-scrum-epic-form-header-title\">\n\t\t\t\t\t<input\n\t\t\t\t\t\ttype=\"text\"\n\t\t\t\t\t\tname=\"name\"\n\t\t\t\t\t\tvalue=\"", "\"\n\t\t\t\t\t\tclass=\"tasks-scrum-epic-form-header-title-control\"\n\t\t\t\t\t\tplaceholder=\"", "\"\n\t\t\t\t\t>\n\t\t\t\t</div>\n\t\t\t\t<div class=\"tasks-scrum-epic-form-header-separate\"></div>\n\t\t\t\t<div class=\"tasks-scrum-epic-header-color\">\n\t\t\t\t\t<div\n\t\t\t\t\t\tdata-epic-id=\"", "\"\n\t\t\t\t\t\tclass=\"tasks-scrum-epic-header-color-current\"\n\t\t\t\t\t\tstyle=\"background-color: ", ";\"\n\t\t\t\t\t>\n\t\t\t\t\t</div>\n\t\t\t\t\t<div class=\"tasks-scrum-epic-header-color-btn-angle\"></div>\n\t\t\t\t</div>\n\t\t\t</div>\n\t\t"])), main_core.Text.encode(name), main_core.Loc.getMessage('TASKS_SCRUM_SPRINT_ADD_EPIC_NAME_PLACEHOLDER'), parseInt(epicId, 10), main_core.Text.encode(color));
+	      var _this23 = this;
+	      var nameField = main_core.Tag.render(_templateObject8 || (_templateObject8 = babelHelpers.taggedTemplateLiteral(["\n\t\t\t<div class=\"tasks-scrum-epic-form-header\">\n\t\t\t\t<div class=\"tasks-scrum-epic-form-header-title\">\n\t\t\t\t\t<input\n\t\t\t\t\t\ttype=\"text\"\n\t\t\t\t\t\tname=\"name\"\n\t\t\t\t\t\tvalue=\"", "\"\n\t\t\t\t\t\tclass=\"tasks-scrum-epic-form-header-title-control\"\n\t\t\t\t\t\tplaceholder=\"", "\"\n\t\t\t\t\t>\n\t\t\t\t</div>\n\t\t\t\t<div class=\"tasks-scrum-epic-form-header-separate\"></div>\n\t\t\t\t<div class=\"tasks-scrum-epic-header-color\">\n\t\t\t\t\t<div\n\t\t\t\t\t\tdata-epic-id=\"", "\"\n\t\t\t\t\t\tclass=\"tasks-scrum-epic-header-color-current\"\n\t\t\t\t\t\tstyle=\"background-color: ", ";\"\n\t\t\t\t\t>\n\t\t\t\t\t</div>\n\t\t\t\t\t<div class=\"tasks-scrum-epic-header-color-btn-angle\"></div>\n\t\t\t\t</div>\n\t\t\t</div>\n\t\t"])), main_core.Text.encode(name), main_core.Loc.getMessage('TASKS_SCRUM_SPRINT_ADD_EPIC_NAME_PLACEHOLDER'), parseInt(epicId, 10), main_core.Text.encode(color));
 	      var pickerContainer = nameField.querySelector('.tasks-scrum-epic-header-color');
 	      main_core.Event.bind(pickerContainer, 'click', function () {
 	        var colorNode = pickerContainer.querySelector('.tasks-scrum-epic-header-color-current');
-	        var picker = _this20.getColorPicker(colorNode);
+	        var picker = _this23.getColorPicker(colorNode);
 	        picker.open();
 	      });
 	      return nameField;
@@ -585,26 +740,26 @@ this.BX.Tasks = this.BX.Tasks || {};
 	  }, {
 	    key: "renderDescriptionField",
 	    value: function renderDescriptionField() {
-	      return main_core.Tag.render(_templateObject7 || (_templateObject7 = babelHelpers.taggedTemplateLiteral(["\n\t\t\t<div class=\"tasks-scrum-epic-form-body\">\n\t\t\t\t<div class=\"tasks-scrum-epic-form-description --editing\"></div>\n\t\t\t</div>\n\t\t"])));
+	      return main_core.Tag.render(_templateObject9 || (_templateObject9 = babelHelpers.taggedTemplateLiteral(["\n\t\t\t<div class=\"tasks-scrum-epic-form-body\">\n\t\t\t\t<div class=\"tasks-scrum-epic-form-description --editing\"></div>\n\t\t\t</div>\n\t\t"])));
 	    }
 	  }, {
 	    key: "renderEditor",
 	    value: function renderEditor(container) {
-	      var _this21 = this;
+	      var _this24 = this;
 	      setTimeout(function () {
-	        main_core.Runtime.html(container, _this21.formData.html).then(function () {
+	        main_core.Runtime.html(container, _this24.formData.html).then(function () {
 	          if (window.LHEPostForm) {
-	            _this21.editorHandler = window.LHEPostForm.getHandler(_this21.id);
-	            main_core_events.EventEmitter.emit(_this21.editorHandler.eventNode, 'OnShowLHE', [true]);
+	            _this24.editorHandler = window.LHEPostForm.getHandler(_this24.id);
+	            main_core_events.EventEmitter.emit(_this24.editorHandler.eventNode, 'OnShowLHE', [true]);
 	          }
-	          _this21.focusToName();
+	          _this24.focusToName();
 	        });
 	      }, 300);
 	    }
 	  }, {
 	    key: "renderListBlank",
 	    value: function renderListBlank() {
-	      return main_core.Tag.render(_templateObject8 || (_templateObject8 = babelHelpers.taggedTemplateLiteral(["\n\t\t\t<div class=\"tasks-scrum-epics-empty\">\n\t\t\t\t<div class=\"tasks-scrum-epics-empty-first-title\">\n\t\t\t\t\t", "\n\t\t\t\t</div>\n\t\t\t\t<div class=\"tasks-scrum-epics-empty-image\">\n\t\t\t\t\t<svg width=\"124px\" height=\"123px\" viewBox=\"0 0 124 123\" version=\"1.1\" xmlns=\"http://www.w3.org/2000/svg\" xmlns:xlink=\"http://www.w3.org/1999/xlink\">\n\t\t\t\t\t\t<g stroke=\"none\" stroke-width=\"1\" fill=\"none\" fill-rule=\"evenodd\" opacity=\"0.28\">\n\t\t\t\t\t\t\t<path d=\"M83,105 L83,81.4375 L105,81.4375 L105,18 L17,18 L17,81.4375 L39,81.4375 L39,105 L83,105 Z M10.9411765,0 L113.058824,0 C119.101468,0 124,4.85902727 124,10.8529412 L124,112.147059 C124,118.140973 119.101468,123 113.058824,123 L10.9411765,123 C4.89853156,123 0,118.140973 0,112.147059 L0,10.8529412 C0,4.85902727 4.89853156,0 10.9411765,0 Z M44.0142862,47.0500004 L54.2142857,57.4416671 L79.7142857,32 L87,42.75 L54.2142857,75 L36,57.0833333 L44.0142862,47.0500004 Z\" fill=\"#A8ADB4\" />\n\t\t\t\t\t\t</g>\n\t\t\t\t\t</svg>\n\t\t\t\t</div>\n\t\t\t\t<div class=\"tasks-scrum-epics-empty-second-title\">\n\t\t\t\t\t", "\n\t\t\t\t</div>\n\t\t\t\t<div class=\"tasks-scrum-epics-empty-button\">\n\t\t\t\t\t<button class=\"ui-btn ui-btn-primary ui-btn-lg\">\n\t\t\t\t\t\t", "\n\t\t\t\t\t</button>\n\t\t\t\t</div>\n\t\t\t</div>\n\t\t"])), main_core.Loc.getMessage('TASKS_SCRUM_EPICS_EMPTY_FIRST_TITLE'), main_core.Loc.getMessage('TASKS_SCRUM_EPICS_EMPTY_SECOND_TITLE'), main_core.Loc.getMessage('TASKS_SCRUM_SPRINT_ADD_EPIC_LIST_TOOLBAR_BUTTON'));
+	      return main_core.Tag.render(_templateObject10 || (_templateObject10 = babelHelpers.taggedTemplateLiteral(["\n\t\t\t<div class=\"tasks-scrum-epics-empty\">\n\t\t\t\t<div class=\"tasks-scrum-epics-empty-first-title\">\n\t\t\t\t\t", "\n\t\t\t\t</div>\n\t\t\t\t<div class=\"tasks-scrum-epics-empty-image\">\n\t\t\t\t\t<svg width=\"124px\" height=\"123px\" viewBox=\"0 0 124 123\" version=\"1.1\" xmlns=\"http://www.w3.org/2000/svg\" xmlns:xlink=\"http://www.w3.org/1999/xlink\">\n\t\t\t\t\t\t<g stroke=\"none\" stroke-width=\"1\" fill=\"none\" fill-rule=\"evenodd\" opacity=\"0.28\">\n\t\t\t\t\t\t\t<path d=\"M83,105 L83,81.4375 L105,81.4375 L105,18 L17,18 L17,81.4375 L39,81.4375 L39,105 L83,105 Z M10.9411765,0 L113.058824,0 C119.101468,0 124,4.85902727 124,10.8529412 L124,112.147059 C124,118.140973 119.101468,123 113.058824,123 L10.9411765,123 C4.89853156,123 0,118.140973 0,112.147059 L0,10.8529412 C0,4.85902727 4.89853156,0 10.9411765,0 Z M44.0142862,47.0500004 L54.2142857,57.4416671 L79.7142857,32 L87,42.75 L54.2142857,75 L36,57.0833333 L44.0142862,47.0500004 Z\" fill=\"#A8ADB4\" />\n\t\t\t\t\t\t</g>\n\t\t\t\t\t</svg>\n\t\t\t\t</div>\n\t\t\t\t<div class=\"tasks-scrum-epics-empty-second-title\">\n\t\t\t\t\t", "\n\t\t\t\t</div>\n\t\t\t\t<div class=\"tasks-scrum-epics-empty-button\">\n\t\t\t\t\t<button class=\"ui-btn ui-btn-primary ui-btn-lg\">\n\t\t\t\t\t\t", "\n\t\t\t\t\t</button>\n\t\t\t\t</div>\n\t\t\t</div>\n\t\t"])), main_core.Loc.getMessage('TASKS_SCRUM_EPICS_EMPTY_FIRST_TITLE'), main_core.Loc.getMessage('TASKS_SCRUM_EPICS_EMPTY_SECOND_TITLE'), main_core.Loc.getMessage('TASKS_SCRUM_SPRINT_ADD_EPIC_LIST_TOOLBAR_BUTTON'));
 	    }
 	  }, {
 	    key: "getGrid",
@@ -627,13 +782,13 @@ this.BX.Tasks = this.BX.Tasks || {};
 	  }, {
 	    key: "prepareTagsList",
 	    value: function prepareTagsList(container) {
-	      var _this22 = this;
+	      var _this25 = this;
 	      var tagsContainers = container.querySelectorAll('.tasks-scrum-epic-grid-tags');
 	      tagsContainers.forEach(function (tagsContainer) {
-	        var tags = _this22.getTagsFromNode(tagsContainer);
+	        var tags = _this25.getTagsFromNode(tagsContainer);
 	        main_core.Dom.clean(tagsContainer);
 	        tags.forEach(function (tag) {
-	          main_core.Dom.append(_this22.getTagNode(tag), tagsContainer);
+	          main_core.Dom.append(_this25.getTagNode(tag), tagsContainer);
 	        });
 	      });
 	    }
@@ -661,7 +816,7 @@ this.BX.Tasks = this.BX.Tasks || {};
 	  }, {
 	    key: "getColorPicker",
 	    value: function getColorPicker(colorNode) {
-	      var _this23 = this;
+	      var _this26 = this;
 	      var epicId = main_core.Dom.attr(colorNode, 'data-epic-id');
 	      if (!this.colorPickers.has(epicId)) {
 	        /* eslint-disable */
@@ -670,7 +825,7 @@ this.BX.Tasks = this.BX.Tasks || {};
 	          defaultColor: this.defaultColor,
 	          selectedColor: this.selectedColor ? this.selectedColor : this.defaultColor,
 	          onColorSelected: function onColorSelected(color, picker) {
-	            _this23.selectedColor = color;
+	            _this26.selectedColor = color;
 	            colorNode.style.backgroundColor = color;
 	          },
 	          popupOptions: {
@@ -692,9 +847,9 @@ this.BX.Tasks = this.BX.Tasks || {};
 	  }, {
 	    key: "focusToName",
 	    value: function focusToName() {
-	      var _this24 = this;
+	      var _this27 = this;
 	      setTimeout(function () {
-	        _this24.form.querySelector('.tasks-scrum-epic-form-header-title-control').focus();
+	        _this27.form.querySelector('.tasks-scrum-epic-form-header-title-control').focus();
 	      }, 50);
 	    }
 	  }, {
@@ -714,7 +869,7 @@ this.BX.Tasks = this.BX.Tasks || {};
 	  }, {
 	    key: "getAttachmentsFiles",
 	    value: function getAttachmentsFiles() {
-	      var _this25 = this;
+	      var _this28 = this;
 	      var files = [];
 	      if (!this.editorHandler || !main_core.Type.isPlainObject(this.editorHandler.arFiles) || !main_core.Type.isPlainObject(this.editorHandler.controllers)) {
 	        return files;
@@ -726,8 +881,8 @@ this.BX.Tasks = this.BX.Tasks || {};
 	        }
 	      });
 	      fileControllers.forEach(function (fileController) {
-	        if (_this25.editorHandler.controllers[fileController] && main_core.Type.isPlainObject(_this25.editorHandler.controllers[fileController].values)) {
-	          Object.keys(_this25.editorHandler.controllers[fileController].values).forEach(function (fileId) {
+	        if (_this28.editorHandler.controllers[fileController] && main_core.Type.isPlainObject(_this28.editorHandler.controllers[fileController].values)) {
+	          Object.keys(_this28.editorHandler.controllers[fileController].values).forEach(function (fileId) {
 	            if (!files.includes(fileId)) {
 	              files.push(fileId);
 	            }
@@ -804,6 +959,7 @@ this.BX.Tasks = this.BX.Tasks || {};
 	  return Epic;
 	}(main_core_events.EventEmitter);
 
+	exports.Filter = Filter;
 	exports.Epic = Epic;
 
 }((this.BX.Tasks.Scrum = this.BX.Tasks.Scrum || {}),BX.Event,BX.UI.SidePanel,BX.UI,BX,BX,BX.UI.Dialogs));

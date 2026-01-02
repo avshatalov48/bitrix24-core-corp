@@ -18,8 +18,8 @@ jn.define('ui-system/layout/area-list', (require, exports, module) => {
 		PropTypes.validate(AreaList.propTypes, props, 'AreaList');
 
 		const {
-			divided,
-			withScroll,
+			divided = false,
+			withScroll = true,
 			...restProps
 		} = props;
 

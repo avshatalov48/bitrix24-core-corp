@@ -3,6 +3,8 @@ if(!defined("B_PROLOG_INCLUDED") || B_PROLOG_INCLUDED!==true)die();
 
 use Bitrix\Main\Application;
 use Bitrix\Main\Localization\Loc;
+use Bitrix\Tasks\Deadline\Configuration;
+use Bitrix\Tasks\Helper\Analytics;
 use Bitrix\Main\Text\HtmlFilter;
 use Bitrix\Main\UI\Extension;
 use Bitrix\Main\Web\Json;
@@ -22,6 +24,7 @@ use Bitrix\Tasks\Util;
 use Bitrix\Tasks\Util\Restriction\Bitrix24Restriction\Limit;
 use Bitrix\Tasks\Util\Type;
 use Bitrix\Tasks\Component\Task\TasksTaskFormState;
+use Bitrix\Tasks\Integration\SocialNetwork\Collab\Provider\CollabProvider;
 
 Loc::loadMessages(__FILE__);
 
@@ -35,6 +38,8 @@ Extension::load([
 	'tasks.analytics',
 	'tasks.limit',
 	'tasks.flow.entity-selector',
+	'tasks.deadline.notification',
+	'pull.client',
 ]);
 
 $APPLICATION->SetAdditionalCSS("/bitrix/js/intranet/intranet-common.css");
@@ -63,6 +68,11 @@ if (!empty($arResult['ERROR']))
 		}
 	}
 }
+
+$userId = (int)($arParams['USER_ID'] ?? 0);
+
+$deadlineUserOption = $arResult['DATA']['DEADLINE_USER_OPTION'] ?? null;
+
 ?>
 
 <?php
@@ -158,6 +168,46 @@ if (Type::isIterable($arResult['ERROR'] ?? null))
 		<?php endif?>
 	</div>
 <?php endif?>
+
+<?php
+$context = Application::getInstance()->getContext();
+$request = $context->getRequest();
+
+if (!empty($request->get('ta_el')))
+{
+
+	$analytics = Analytics::getInstance($userId);
+
+	$params = [
+		'p1' => $analytics->getIsDemoParameter(),
+		'p2' => $analytics->getUserTypeParameter(),
+	];
+
+	$provider = CollabProvider::getInstance();
+
+	if (
+		$arParams['GROUP_ID'] > 0
+		&& $provider->isCollab($arParams['GROUP_ID']))
+	{
+		$params['p4'] = $analytics->getCollabParameter($arParams['GROUP_ID']);
+	}
+
+	$section = $request->get('ta_sec');
+	$element = $request->get('ta_el');
+
+	if (
+		array_key_exists($section, Analytics::SECTION)
+		&& array_key_exists($element, Analytics::ELEMENT)
+	)
+	{
+		$analytics->onTaskCreateClick(
+			section: Analytics::SECTION[$section],
+			element: Analytics::ELEMENT[$element],
+			params: $params,
+		);
+	}
+}
+?>
 
 <?php
 $taskData = !empty($arResult['DATA']['TASK']) ? $arResult['DATA']['TASK'] : array();
@@ -1335,6 +1385,8 @@ if ($taskLimitExceeded || $taskRecurrentRestrict)
 			'limitCode' => FlowFeature::LIMIT_CODE,
 			'isFeatureEnabled' => FlowFeature::isFeatureEnabled() || FlowFeature::canTurnOnTrial(),
 			'isFeatureTrialable' => FlowFeature::isFeatureEnabledByTrial(),
+
+			'context' => Analytics::SUB_SECTION['task_card'],
 		],
 		'toggleFlowParams' => [
 			'scope' => 'taskEdit',
@@ -1345,6 +1397,7 @@ if ($taskLimitExceeded || $taskRecurrentRestrict)
 			'taskId' => (int)($taskData['ID'] ?? 0),
 			'taskDescription' => $taskData['DESCRIPTION'] ?? '',
 		],
+		'deadlineNotificationSkipped' => $deadlineUserOption?->isNotificationSkipped() ?? false,
 		'id' => $arResult['TEMPLATE_DATA']['ID'],
 		'isFlowForm' => $arResult['isFlowForm'],
 		'isProjectLimitExceeded' => $isProjectLimitExceeded,
@@ -1381,6 +1434,8 @@ if ($taskLimitExceeded || $taskRecurrentRestrict)
 		'relatedSubTaskDeadlinesEnabled' => $relatedSubTaskDeadlinesEnabled,
 		'isExtranetUser' => Bitrix\Tasks\Integration\Extranet\User::isExtranet(),
 		'canEditTask' => (bool)$arResult['canEditTask'],
+		'canCreateFlow' => (bool)$arResult['canCreateFlow'],
+		'isDeadlineNotificationAvailable' => Configuration::isDeadlineNotificationAvailable($userId),
 	))?>;
 
 	<?php /*
@@ -1410,7 +1465,6 @@ if ($taskLimitExceeded || $taskRecurrentRestrict)
 
 	<?php
 		$tasksAiPromo = new \Bitrix\Tasks\Promotion\TasksAi();
-		$userId = (int)($arParams['USER_ID'] ?? 0);
 		$shouldShowAiPromo = $tasksAiPromo->shouldShow($userId);
 
 		if ($shouldShowAiPromo)

@@ -351,6 +351,7 @@ class Manager
 			'KEY_ID' => $this->keyId,
 			'SERVICE_ID' => substr($this->serviceId, 0, 150),
 			'SOURCE_ID' => substr($sourceId, 0, 150),
+			'ROW_NUM' => 0,
 		];
 		if ($fields)
 		{
@@ -591,7 +592,11 @@ class Manager
 		return $items;
 	}
 
-
+	/**
+	 * Is current user an admin.
+	 *
+	 * @return bool
+	 */
 	public static function isAdmin()
 	{
 		if (Loader::includeModule('intranet'))
@@ -600,5 +605,26 @@ class Manager
 		}
 
 		return \Bitrix\Main\Engine\CurrentUser::get()->isAdmin();
+	}
+
+	/**
+	 * Returns the ID of the first active administrator user (group ID 1).
+	 *
+	 * @return int Administrator ID or 0 if not found.
+	 */
+	public static function getAdminId(): int
+	{
+		$user = \Bitrix\Main\UserTable::getList([
+			'select' => ['ID'],
+			'filter' => [
+				'=GROUPS.GROUP_ID' => 1,
+				'=ACTIVE' => 'Y',
+			],
+			'limit' => 1,
+			'order' => ['ID' => 'ASC'],
+			'cache' => ['ttl' => 3600],
+		]);
+
+		return (int)$user->fetchObject()?->getId();
 	}
 }

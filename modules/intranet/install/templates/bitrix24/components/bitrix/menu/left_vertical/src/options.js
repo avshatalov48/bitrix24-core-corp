@@ -1,10 +1,13 @@
-import {Type} from 'main.core';
+import { Type } from 'main.core';
 
-export default class Options {
+export default class Options
+{
 	static version = '2021.10';
 	static eventNameSpace = 'BX.Intranet.LeftMenu:';
-	static eventName(name) {
-		return ['BX.Intranet.LeftMenu:', ...(Type.isStringFilled(name) ? [name] : name)].join(':')
+
+	static eventName(name): string
+	{
+		return ['BX.Intranet.LeftMenu:', ...(Type.isStringFilled(name) ? [name] : name)].join(':');
 	}
 
 	static isExtranet = false;
@@ -14,4 +17,7 @@ export default class Options {
 	static isMainPageEnabled = false;
 
 	static availablePresetTools = null;
+	static inviteDialogLink = null;
+	static showMarta = null;
+	static showSitemapMenuItem = null;
 }

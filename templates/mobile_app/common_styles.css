@@ -714,8 +714,12 @@ a {
 .post-item-description.post-item-description-task {
     display: block;
     padding-bottom: 6px;
+}
 
-    .lenta-block-new-employee
+.post-item-description.post-item-description-task .lenta-block-new-employee {
+	min-height: 33px;
+	padding: 9px !important;
+	background: var(--accent-soft-green2);
 }
 
 .post-item-topic-description {
@@ -7429,11 +7433,6 @@ textarea.crm_input_text {
     background-size: auto 20px
 }
 
-.crm_buttons.invoice span {
-    background: url(images/crm/invoice.png) center no-repeat;
-    background-size: auto 20px
-}
-
 .crm_buttons.sms span {
     background: url(images/crm/sms.png) center no-repeat;
     background-size: auto 20px
@@ -7476,11 +7475,6 @@ textarea.crm_input_text {
 
 .crm_buttons.email.disabled span {
     background: url(images/crm/mail_disable.png) center no-repeat;
-    background-size: auto 20px
-}
-
-.crm_buttons.invoice.disabled span {
-    background: url(images/crm/invoice_disable.png) center no-repeat;
     background-size: auto 20px
 }
 

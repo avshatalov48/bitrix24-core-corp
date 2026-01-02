@@ -2910,13 +2910,27 @@ class Chat
 				{
 					$toUserId = $userList[0];
 
-					if($userCrm === true)
+					$relation = new Relation($this->chat['ID']);
+					$currentOperators = $relation->getRelationUserIds();
+					$others = array_filter($currentOperators, static fn($id) => (int)$id !== (int)$toUserId);
+					$hasOtherOperators = !empty($others);
+
+					if ($hasOtherOperators)
 					{
-						$message = Loc::getMessage('IMOL_CHAT_ASSIGN_OPERATOR_CRM_NEW', ['#USER#' => '[USER='.$toUserId.'][/USER]']);
+						$message = Loc::getMessage('IMOL_CHAT_OPERATOR_STARTED_DAY', [
+							'#USER#' => '[USER=' . $toUserId . '][/USER]'
+						]);
 					}
 					else
 					{
-						$message = Loc::getMessage('IMOL_CHAT_ASSIGN_OPERATOR_NEW', ['#USER#' => '[USER='.$toUserId.'][/USER]']);
+						if ($userCrm === true)
+						{
+							$message = Loc::getMessage('IMOL_CHAT_ASSIGN_OPERATOR_CRM_NEW', ['#USER#' => '[USER=' . $toUserId . '][/USER]']);
+						}
+						else
+						{
+							$message = Loc::getMessage('IMOL_CHAT_ASSIGN_OPERATOR_NEW', ['#USER#' => '[USER=' . $toUserId . '][/USER]']);
+						}
 					}
 				}
 				else

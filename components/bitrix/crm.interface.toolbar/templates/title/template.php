@@ -1,15 +1,14 @@
 <?php
 
-if(!defined('B_PROLOG_INCLUDED') || B_PROLOG_INCLUDED !== true)
+if (!defined('B_PROLOG_INCLUDED') || B_PROLOG_INCLUDED !== true)
 {
-	die();
+	die;
 }
 
 use Bitrix\Main\UI\Extension;
 use Bitrix\UI\Buttons\AddButton;
 use Bitrix\UI\Buttons\Button;
 use Bitrix\UI\Buttons\Color;
-use Bitrix\UI\Buttons\Icon;
 use Bitrix\UI\Buttons\JsCode;
 use Bitrix\UI\Buttons\SettingsButton;
 use Bitrix\UI\Buttons\Split\Button as SplitButton;
@@ -175,7 +174,7 @@ if (!empty($settingsItems))
 	$settingsButtonItems = Bitrix\Crm\UI\Tools\ToolBar::mapItems(
 		$settingsItems,
 		$toolbarId,
-		$arParams['TOOLBAR_PARAMS'] ?? []
+		$arParams['TOOLBAR_PARAMS'] ?? [],
 	);
 	$settingsButton = new SettingsButton([
 		'id' => $settingsButtonId,

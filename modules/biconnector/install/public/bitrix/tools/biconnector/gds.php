@@ -23,49 +23,19 @@ while (ob_get_length() !== false)
 header('Content-Type:application/json; charset=UTF-8');
 
 $inputJSON = file_get_contents('php://input');
-$input = $inputJSON ? Bitrix\Main\Web\Json::decode($inputJSON) : [];
+try
+{
+	$input = $inputJSON ? \Bitrix\Main\Web\Json::decode($inputJSON) : [];
+}
+catch (\Bitrix\Main\ArgumentException $e)
+{
+	echo \Bitrix\Main\Web\Json::encode(['error' => 'BAD_REQUEST']);
+	echo "\n";
+	\Bitrix\Main\Application::getInstance()->terminate();
+}
 
 if (\Bitrix\Main\Loader::includeModule('biconnector'))
 {
-	if (isset($_GET['superset_verify']))
-	{
-		if (\Bitrix\BIConnector\Superset\Config\ConfigContainer::getConfigContainer()->isPortalIdVerified())
-		{
-			echo Bitrix\Main\Web\Json::encode(['error' => 'ALREADY_VERIFIED']);
-			echo "\n";
-
-			\Bitrix\Main\Application::getInstance()->terminate();
-		}
-
-		if (!isset($input['message']))
-		{
-			echo Bitrix\Main\Web\Json::encode(['error' => 'NO_MESSAGE']);
-			echo "\n";
-
-			\Bitrix\Main\Application::getInstance()->terminate();
-		}
-
-		$message = $input['message'];
-		$secretManager = Bitrix\BIConnector\Superset\Config\SecretManager::getManager();
-		$encryptResult = $secretManager->encryptMessage($message);
-
-		$result = [];
-
-		if ($encryptResult->isSuccess())
-		{
-			$result = $encryptResult->getData();
-		}
-		else
-		{
-			$result = ['error' => $encryptResult->getErrors()[0]->getCode()];
-		}
-
-		echo Bitrix\Main\Web\Json::encode($result);
-		echo "\n";
-
-		\Bitrix\Main\Application::getInstance()->terminate();
-	}
-
 	$supersetKey = $input['superset_key'] ?? '';
 	unset($input['superset_key']);
 
@@ -101,7 +71,7 @@ if (\Bitrix\Main\Loader::includeModule('biconnector'))
 		$limitManager->setIsSuperset();
 	}
 
-	$serviceCode = 'gds';
+	$serviceCode = \Bitrix\BIConnector\Services\GoogleDataStudio::getServiceId();
 	$service = $manager->createService($serviceCode);
 	$service->setLanguage($languageCode);
 	$tableName = isset($_GET['table']) ? (string)$_GET['table'] : null;

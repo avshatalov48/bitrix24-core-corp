@@ -12,6 +12,7 @@ use Bitrix\Main;
 use Bitrix\Catalog;
 use Bitrix\Crm;
 use Bitrix\Crm\WebForm;
+use Bitrix\Main\DI\ServiceLocator;
 use Bitrix\Main\Localization\Loc;
 
 /**
@@ -97,6 +98,11 @@ final class Fields
 			if ($this->editMode)
 			{
 				$options['editing'] = $this->getFieldEditing($field, $data);
+			}
+
+			if (is_array($field['SETTINGS_DATA']['settingsData'] ?? null))
+			{
+				$options['settingsData'] = $field['SETTINGS_DATA']['settingsData'];
 			}
 
 			$gotoNextField = false;
@@ -563,7 +569,12 @@ final class Fields
 			$result[] = self::getTabletFormattedField($field);
 		}
 
-		$this->form->merge(['FIELDS' => $result]);
+		$processedResult = ServiceLocator::getInstance()
+			->get('crm.service.webform.defaultvalueprovider')
+			->applyForFields($result)
+		;
+
+		$this->form->merge(['FIELDS' => $processedResult]);
 
 		return $this;
 	}
@@ -696,6 +707,11 @@ final class Fields
 			'VALUE_TYPE' => $options['editing']['editable']['valueType'],
 			'VALUE' => $options['value']
 		);
+
+		if (is_array($options['settingsData'] ?? null))
+		{
+			$data['SETTINGS_DATA']['settingsData'] = $options['settingsData'];
+		}
 
 		$multipleOriginal = $field['MULTIPLE_ORIGINAL'] ?? false;
 		if($data['TYPE'] == 'product')

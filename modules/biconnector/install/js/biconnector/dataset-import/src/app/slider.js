@@ -3,7 +3,7 @@ import { SidePanel } from 'ui.sidepanel';
 
 export class Slider
 {
-	static open(sourceId: string, datasetId: ?number = 0): void
+	static open(sourceId: string, datasetId: ?number = 0, connection: ?Object = {}): void
 	{
 		const componentLink = '/bitrix/components/bitrix/biconnector.dataset.import/slider.php';
 
@@ -14,16 +14,16 @@ export class Slider
 			sliderLink.setQueryParam('datasetId', datasetId);
 		}
 
+		if (Object.keys(connection).length > 0)
+		{
+			sliderLink.setQueryParam('connection', connection);
+		}
+
 		const options = {
-			width: 1240,
 			allowChangeHistory: false,
 			cacheable: false,
+			customLeftBoundary: 0,
 		};
-
-		if (screen.width <= 1440)
-		{
-			options.customLeftBoundary = 0;
-		}
 
 		SidePanel.Instance.open(
 			sliderLink.toString(),

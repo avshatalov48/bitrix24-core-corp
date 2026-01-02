@@ -92,20 +92,11 @@ class CCrmEntityCounterPanelComponent extends CBitrixComponent
 		}
 
 		$this->userID = Container::getInstance()->getContext()->getUserId();
+		$userPermissions = Container::getInstance()->getUserPermissions($this->userID);
+
 		$this->arResult['USER_ID'] = $this->userID;
 
-		$dbUsers = CUser::GetList(
-			'last_name',
-			'asc',
-			['ID' => $this->userID],
-			['FIELDS' => ['ID', 'NAME', 'SECOND_NAME', 'LAST_NAME', 'LOGIN', 'TITLE']]
-		);
-
-		$userFields = $dbUsers->Fetch();
-
-		$this->arResult['USER_NAME'] =  is_array($userFields)
-			? CUser::FormatName(CSite::GetNameFormat(false), $userFields)
-			: "[{$this->userID}]";
+		$this->arResult['USER_NAME'] =  Container::getInstance()->getUserBroker()->getName($this->userID) ?? "[{$this->userID}]";
 
 		$this->guid = $this->arResult['GUID'] = $this->arParams['GUID'] ?? 'counter_panel';
 		if (isset($this->arParams['ENTITY_TYPE_NAME']))
@@ -137,10 +128,7 @@ class CCrmEntityCounterPanelComponent extends CBitrixComponent
 			$this->categoryId = (int)$this->arParams['EXTRAS']['CATEGORY_ID'];
 		}
 
-		$this->isVisible = Container::getInstance()
-			->getUserPermissions($this->userID)
-			->checkReadPermissions($this->entityTypeID, 0, $this->categoryId)
-		;
+		$this->isVisible = $userPermissions->entityType()->canReadItemsInCategory($this->entityTypeID, $this->categoryId);
 
 		if (isset($this->arParams['PATH_TO_ENTITY_LIST']))
 		{
@@ -165,7 +153,7 @@ class CCrmEntityCounterPanelComponent extends CBitrixComponent
 		$otherCodes = [];
 		$otherTotal = 0;
 		$withExcludeUsers = false;
-		if ($this->isOtherCountersSupported())
+		if ($this->isOtherCountersSupported($userPermissions))
 		{
 			$withExcludeUsers = true;
 
@@ -206,13 +194,13 @@ class CCrmEntityCounterPanelComponent extends CBitrixComponent
 			$counter = EntityCounterFactory::create($this->entityTypeID, $typeId, $this->userID, $extras);
 			$code = $counter->getCode();
 			$value = $counter->getValue($this->recalculate);
-			$data[$code] = array(
+			$data[$code] = [
 				'TYPE_ID' => $typeId,
 				'TYPE_NAME' => EntityCounterType::resolveName($typeId),
 				'CODE' => $code,
 				'VALUE' => $value,
 				'URL' => $counter->prepareDetailsPageUrl($this->entityListUrl)
-			);
+			];
 
 			$total += $value;
 
@@ -220,11 +208,9 @@ class CCrmEntityCounterPanelComponent extends CBitrixComponent
 		}
 	}
 
-	private function isOtherCountersSupported(): bool
+	private function isOtherCountersSupported(\Bitrix\Crm\Service\UserPermissions $uPermissions): bool
 	{
-		$uPermissions = Container::getInstance()->getUserPermissions();
-		$permissionEntityType = $uPermissions::getPermissionEntityType($this->entityTypeID, $this->categoryId);
-		$hasAllPermissions = $uPermissions->isAdmin() || $uPermissions->getCrmPermissions()->GetPermType($permissionEntityType) >= $uPermissions::PERMISSION_ALL;
+		$hasAllPermissions = $uPermissions->isAdmin() || $uPermissions->entityType()->canReadAllItemsOfType($this->entityTypeID, $this->categoryId);
 
 		$factory = Container::getInstance()->getFactory($this->entityTypeID);
 		$isAllowedEntity = $factory && $factory->isCountersEnabled();

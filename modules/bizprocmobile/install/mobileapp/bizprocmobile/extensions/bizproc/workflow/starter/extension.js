@@ -12,6 +12,7 @@ jn.define('bizproc/workflow/starter', (require, exports, module) => {
 	const { CatalogStep } = require('bizproc/workflow/starter/catalog-step');
 	const { DescriptionStep } = require('bizproc/workflow/starter/description-step');
 	const { ParametersStep } = require('bizproc/workflow/starter/parameters-step');
+	const { Random } = require('utils/random');
 
 	class WorkflowStarter extends PureComponent
 	{
@@ -46,7 +47,6 @@ jn.define('bizproc/workflow/starter', (require, exports, module) => {
 		{
 			super(props);
 
-			// eslint-disable-next-line no-undef
 			this.uid = props.uid || Random.getString();
 			this.customEventEmitter = EventEmitter.createWithUid(this.uid);
 

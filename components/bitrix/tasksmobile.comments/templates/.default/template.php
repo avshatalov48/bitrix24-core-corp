@@ -71,7 +71,9 @@ if (is_array($arResult['ERRORS']) && !empty($arResult['ERRORS']))
 ?>
 
 <div style="display: none">
-	<?php $APPLICATION->IncludeComponent(
+	<?php
+	$votingIncludeStart = microtime(true);
+	$APPLICATION->IncludeComponent(
 		'bitrix:rating.vote',
 		'like_react',
 		[
@@ -85,6 +87,7 @@ if (is_array($arResult['ERRORS']) && !empty($arResult['ERRORS']))
 		$component->__parent,
 		['HIDE_ICONS' => 'Y']
 	);
+	$votingIncludeEnd = microtime(true);
 	?>
 </div>
 
@@ -97,6 +100,7 @@ if (is_array($arResult['ERRORS']) && !empty($arResult['ERRORS']))
 		],
 	];
 
+	$commentsIncludeStart = microtime(true);
 	$APPLICATION->IncludeComponent(
 		'bitrix:forum.comments',
 		'',
@@ -126,6 +130,12 @@ if (is_array($arResult['ERRORS']) && !empty($arResult['ERRORS']))
 		null,
 		['HIDE_ICONS' => 'Y']
 	);
+	$commentsIncludeEnd = microtime(true);
+
+	$arResult['DEBUG']['votingInclude'] = $votingIncludeEnd - $votingIncludeStart;
+	$arResult['DEBUG']['commentsInclude'] = $commentsIncludeEnd - $commentsIncludeStart;
+	$arResult['DEBUG']['executeComponent'] = microtime(true) - $arResult['DEBUG']['executeComponentStart'];
+	unset($arResult['DEBUG']['executeComponentStart']);
 	?>
 </div>
 
@@ -141,6 +151,21 @@ if (is_array($arResult['ERRORS']) && !empty($arResult['ERRORS']))
 			<div class="task-detail-no-comments-arrow"></div>
 		</div>
 	</div>
+</div>
+<div id="debug" style="font-size: 10px">
+	<?php
+	$optionGetStart = microtime(true);
+	$isDebugEnabled = \Bitrix\Main\Config\Option::get('tasksmobile', 'comments_debug_enabled', 'N') === 'Y';
+	$arResult['DEBUG']['optionGet'] = microtime(true) - $optionGetStart;
+
+	if ($isDebugEnabled)
+	{
+		foreach ($arResult['DEBUG'] as $key => $value)
+		{
+			?><div><?= htmlspecialcharsbx($key) ?>: <?= round($value, 4) ?></div><?php
+		}
+	}
+	?>
 </div>
 
 <script>
@@ -159,7 +184,6 @@ if (is_array($arResult['ERRORS']) && !empty($arResult['ERRORS']))
 					[Status::SUPPOSEDLY_COMPLETED, Status::COMPLETED],
 					true
 				),
-				'isTabsMode' => $arResult['IS_TABS_MODE'],
 			]) ?>);
 		}
 	);

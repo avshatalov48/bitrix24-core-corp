@@ -10,11 +10,21 @@ if(!defined('B_PROLOG_INCLUDED') || B_PROLOG_INCLUDED !== true)
 /** @var array $arParams */
 /** @var array $arResult */
 /** @var CMain $APPLICATION */
+/** @var \CBitrixComponentTemplate $this */
 
-\Bitrix\Main\UI\Extension::load("ui.buttons");
-\Bitrix\Main\UI\Extension::load("ui.buttons.icons");
-\CJSCore::init(["loader", "popup", "sidepanel", "date"]);
+\Bitrix\Main\UI\Extension::load([
+	'ui.buttons',
+	'ui.buttons.icons',
+]);
+\CJSCore::Init(["loader", "popup", "sidepanel", "date"]);
 $this->IncludeLangFile();
+
+$APPLICATION->SetTitle(Loc::getMessage('CRM_DOCUMENT_VIEW_COMPONENT_EDIT_TITLE'));
+
+if (\Bitrix\Main\Loader::includeModule('ui'))
+{
+	\Bitrix\UI\Toolbar\Facade\Toolbar::deleteFavoriteStar();
+}
 
 function displayField($placeholder, array $field, $required = false)
 {
@@ -139,34 +149,7 @@ function displayGroup(array &$allGroups, $name, $groups, array &$placeholders, a
 	?></div><?
 }
 
-if(isset($arParams['IS_SLIDER']) && $arParams['IS_SLIDER'])
-{
-	$APPLICATION->RestartBuffer();
-	?>
-	<!DOCTYPE html>
-	<html>
-<head>
-	<script data-skip-moving="true">
-		// Prevent loading page without header and footer
-		if (window === window.top)
-		{
-			window.location = "<?=CUtil::JSEscape((new \Bitrix\Main\Web\Uri(\Bitrix\Main\Application::getInstance()->getContext()->getRequest()->getRequestUri()))->deleteParams(['IFRAME', 'IFRAME_TYPE']));?>" + window.location.hash;
-		}
-	</script>
-	<?php $APPLICATION->ShowHead(); ?>
-</head>
-<body class="crm__document-view--slider-wrap">
-<div class="crm__document-view--title">
-	<div class="pagetitle-wrap">
-		<div class="pagetitle-inner-container">
-			<div class="pagetitle">
-				<span id="pagetitle" class="pagetitle-item crm__document-view--pagetitle-item"><?= Loc::getMessage('CRM_DOCUMENT_VIEW_COMPONENT_EDIT_TITLE');?>
-				</span>
-			</div>
-		</div>
-	</div>
-</div>
-<?php } ?>
+?>
 <div class="crm-document-edit-wrap">
 	<div id="crm-document-edit-error"></div>
 	<div>
@@ -245,13 +228,6 @@ if(isset($arParams['IS_SLIDER']) && $arParams['IS_SLIDER'])
 	BX.ready(function()
 	{
 		BX.Crm.DocumentEdit.init();
-		<?='BX.message('.\CUtil::PhpToJSObject(Loc::loadLanguageFile(__FILE__)).');'?>
+		BX.message(<?= \Bitrix\Main\Web\Json::encode(Loc::loadLanguageFile(__FILE__)) ?>);
 	});
 </script>
-<?php
-if(isset($arParams['IS_SLIDER']) && $arParams['IS_SLIDER'])
-{
-	?></body>
-	</html><?php
-	\CMain::FinalActions();
-}

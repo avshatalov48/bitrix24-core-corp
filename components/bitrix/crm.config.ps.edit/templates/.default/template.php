@@ -6,7 +6,7 @@ Loc::loadMessages(__FILE__);
 
 $isSidePanel = (isset($_REQUEST['IFRAME']) && $_REQUEST['IFRAME'] === 'Y');
 
-\Bitrix\Main\UI\Extension::load(['ui.design-tokens']);
+\Bitrix\Main\UI\Extension::load(['ui.design-tokens', 'intranet.old-interface.form']);
 
 global $APPLICATION;
 

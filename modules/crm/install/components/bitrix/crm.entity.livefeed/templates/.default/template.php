@@ -62,7 +62,7 @@ if($arResult['SHOW_ACTIVITIES']):
 endif;
 $APPLICATION->IncludeComponent(
 	'bitrix:crm.entity.birthday.nearest',
-	SITE_TEMPLATE_ID === 'bitrix24' ? 'widget' : '',
+	'widget',
 	array('DATE_FORMAT' => 'j F'),
 	null,
 	array('HIDE_ICONS' => 'Y')

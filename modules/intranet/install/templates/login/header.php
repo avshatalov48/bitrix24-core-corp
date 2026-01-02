@@ -1,47 +1,79 @@
-<?
+<?php
+/** @global CMain $APPLICATION */
+/** @global CUser $USER */
+
+use Bitrix\Main\Loader;
+use Bitrix\Main\Localization\Loc;
+use Bitrix\Intranet\Internal\Entity\Portal\Template;
+
 if (!defined("B_PROLOG_INCLUDED") || B_PROLOG_INCLUDED !== true)
 {
 	die();
 }
 
-\Bitrix\Main\Localization\Loc::loadLanguageFile($_SERVER["DOCUMENT_ROOT"]."/bitrix/templates/".SITE_TEMPLATE_ID."/header.php");
+\Bitrix\Main\Localization\Loc::loadLanguageFile(__FILE__);
+
+Loader::includeModule('intranet');
 
 \Bitrix\Main\UI\Extension::load([
-	'ui.design-tokens',
-	'ui.fonts.montserrat',
 	'popup',
-	'fx',
+	'ui.icons',
+	'ui.buttons',
+	'ui.fonts.roboto',
+	'ui.fonts.montserrat',
+	'ui.icon-set.actions',
 ]);
 
-?><!DOCTYPE html>
-<html>
-<head>
-	<title><?$APPLICATION->ShowTitle();?></title>
-	<meta http-equiv="X-UA-Compatible" content="IE=edge" />
-	<meta name="robots" content="noindex, nofollow" />
-	<?if (IsModuleInstalled("bitrix24")):?>
-	<meta name="apple-itunes-app" content="app-id=561683423">
-	<link rel="apple-touch-icon-precomposed" href="/images/iphone/57x57.png" />
-	<link rel="apple-touch-icon-precomposed" sizes="72x72" href="/images/iphone/72x72.png" />
-	<link rel="apple-touch-icon-precomposed" sizes="114x114" href="/images/iphone/114x114.png" />
-	<link rel="apple-touch-icon-precomposed" sizes="144x144" href="/images/iphone/144x144.png" />
-	<?endif?>
-	<?$APPLICATION->ShowHead();?>
-</head>
-<body>
-<?
-/*
-This is commented to avoid Project Quality Control warning
-$APPLICATION->ShowPanel();
-*/
+$currentSeasonName = (new Template\CurrentSeason())->getSeasonFromCurrentDate()->value;
 ?>
-<table class="log-main-table">
-	<tr>
-		<td class="log-top-cell">
-			<a class="main-logo main-logo-<?if (LANGUAGE_ID === "ru"):?>ru<?elseif(LANGUAGE_ID === "ua"):?>ua<?else:?>en<?endif?>" href="/" title="<?=GetMessage("BITRIX24_TITLE")?>"></a>
-		</td>
-	</tr>
-	<tr>
-		<td class="log-main-cell">
-			<div class="log-popup-wrap <? $APPLICATION->ShowProperty("popup_class","") ?>" id="login-popup-wrap">
-				<div class="log-popup" id="login-popup">
+<!DOCTYPE html>
+<html <?php if (LANGUAGE_ID === 'tr'): ?>lang="<?= LANGUAGE_ID ?>"<?php endif ?>>
+<head>
+	<meta name="viewport" content="user-scalable=no, initial-scale=1.0, maximum-scale=1.0, width=320">
+	<meta http-equiv="Content-Type" content="text/html;charset=<?= SITE_CHARSET ?>"/>
+	<link href="/favicon.ico" rel="shortcut icon" type="image/x-icon" />
+	<link rel="preload" href="/bitrix/templates/login/images/bg/<?= $currentSeasonName ?>/horizontal-1920-preview.webp" as="image">
+	<link rel="preload" href="/bitrix/templates/login/images/bg/<?= $currentSeasonName ?>/horizontal-1024-preview.webp" as="image">
+	<link rel="preload" href="/bitrix/templates/login/images/bg/<?= $currentSeasonName ?>/vert-1024-preview.webp" as="image">
+	<?php $APPLICATION->ShowCSS(true, true); ?>
+	<?php $APPLICATION->ShowHeadStrings(); ?>
+	<title><?php $APPLICATION->ShowTitle() ?></title>
+</head>
+
+<?php
+$seasonCssClassName = "intranet-bg intranet-bg--{$currentSeasonName}";
+$logoUrl = \Bitrix\Intranet\Portal::getInstance()->getSettings()->getDefaultLogo()->getWhite();
+?>
+
+<body class="<?= $seasonCssClassName ?> <?php $APPLICATION->ShowProperty("BodyClass"); ?>">
+<?php
+$APPLICATION->SetPageProperty('BodyClass', 'home ' . LANGUAGE_ID);
+?>
+<div class="intranet-body" id="login-auth-container">
+	<div class="intranet-body__header">
+		<div class="intranet-body__header-left"></div>
+		<div class="intranet-body__header-right">
+			<!-- teleport -->
+		</div>
+	</div>
+
+	<div class="intranet-body__aside intranet-auth-cover">
+		<div class="intranet-auth-cover-top">
+			<div class="intranet-auth-cover-img-block">
+				<a class="intranet-auth-cover__logo" href="<?= SITE_SERVER_NAME ?>">
+					<img
+						src="<?= htmlspecialcharsbx($logoUrl) ?>"
+						class="intranet-auth-cover__logo-image"
+						alt=""
+					>
+				</a>
+			</div>
+			<div class="intranet-auth-cover-header">
+				<?=Loc::getMessage("INTRANET_LOGIN_AIR_PROMO");?>
+			</div>
+		</div>
+	</div>
+	<div class="intranet-body__main intranet-auth-form">
+		<div class="intranet-body__main-content">
+
+

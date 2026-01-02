@@ -250,7 +250,7 @@ export class Form
 		else if(type === 'boolean')
 		{
 			value = 'Y';
-			result =`<input type="checkbox" name="${Text.encode(field.name)}"${this.data[field.name] === value ? ' checked="checked"' : ''}${field.disabled ? ' disabled="disabled"' : ''}${required}
+			result =`<input type="hidden" name="${Text.encode(field.name)}" value = "N"><input type="checkbox" name="${Text.encode(field.name)}"${this.data[field.name] === value ? ' checked="checked"' : ''}${field.disabled ? ' disabled="disabled"' : ''}${required}
 				value="${value}" class="${this.classes.get('controlInput')}">`;
 		}
 		else if(type === 'list')
@@ -322,6 +322,13 @@ export class Form
 		result += `</div>`;
 
 		result = Tag.render`${result}`;
+
+		if (section.warning)
+		{
+			result.appendChild(
+				Tag.render`<div class="ui-alert ui-alert-warning">${Text.encode(section.warning)}</div>`,
+			);
+		}
 
 		section.elements.forEach((element) =>
 		{

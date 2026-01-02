@@ -130,10 +130,15 @@ jn.define('calendar/event-list-view/layout/invites-banner', (require, exports, m
 	}
 
 	const mapStateToProps = (state) => {
-		const counter = State.calType === CalendarType.USER
-			? state.counters[Counters.INVITES]
-			: state.counters[Counters.GROUP_INVITES]
-		;
+		let counter = 0;
+		if (State.calType === CalendarType.USER && State.ownerId === Number(env.userId))
+		{
+			counter = state.counters[Counters.INVITES];
+		}
+		else if (State.calType === CalendarType.GROUP)
+		{
+			counter = state.counters[Counters.GROUP_INVITES];
+		}
 
 		return {
 			hide: state.isSearchMode && !state.invitesSelected,

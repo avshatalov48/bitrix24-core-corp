@@ -15,6 +15,9 @@ use Bitrix\Tasks\Util\Type;
 use Bitrix\Tasks\Util;
 use Bitrix\Tasks\Integration\CRM;
 use Bitrix\Tasks\Integration\Bitrix24;
+use Bitrix\UI\Buttons;
+use Bitrix\UI\Toolbar\ButtonLocation;
+use Bitrix\UI\Toolbar\Facade\Toolbar;
 
 \Bitrix\Main\UI\Extension::load(['ui.design-tokens', 'ui.fonts.opensans']);
 $APPLICATION->SetAdditionalCSS('/bitrix/js/intranet/intranet-common.css');
@@ -27,8 +30,10 @@ $arParams =& $helper->getComponent()->arParams; // make $arParams the same varia
 $bodyClass = $APPLICATION->GetPageProperty('BodyClass');
 $APPLICATION->SetPageProperty(
 	'BodyClass',
-	($bodyClass ? $bodyClass.' ' : '').'no-all-paddings'
+	($bodyClass ? $bodyClass.' ' : '')
 );
+
+Toolbar::deleteFavoriteStar();
 
 /** intranet-settings-support */
 if (($arResult['IS_TOOL_AVAILABLE'] ?? null) === false)
@@ -90,14 +95,17 @@ if ($arParams['ENABLE_MENU_TOOLBAR'])
 	?>
 <?php else: ?>
 
+<?php
+	$settingButton = new Buttons\Button([
+		'color' => Buttons\Color::LIGHT_BORDER,
+		'icon' => Buttons\Icon::SETTING,
+	]);
 
-	<?php $this->SetViewTarget('pagetitle', 100); ?>
-		<div class="task-list-toolbar">
-			<div class="task-list-toolbar-actions">
-				<button class="ui-btn ui-btn-light-border ui-btn-themes ui-btn-icon-setting webform-cogwheel" id="templateEditPopupMenuOptions"></button>
-			</div>
-		</div>
-	<?php $this->EndViewTarget(); ?>
+	$settingButton->addClass('ui-btn-themes webform-cogwheel');
+	$settingButton->addAttribute('id', 'templateEditPopupMenuOptions');
+
+	Toolbar::addButton($settingButton, ButtonLocation::RIGHT);
+	?>
 
 	<?$helper->displayFatals();?>
 	<?if(!$helper->checkHasFatals()):?>

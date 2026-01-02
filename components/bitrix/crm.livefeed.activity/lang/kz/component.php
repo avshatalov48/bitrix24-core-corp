@@ -1,0 +1,24 @@
+<?php
+$MESS["C_CRM_LFA_TASKS_CHANGED_MESSAGE_24_2"] = "Өзгертілді";
+$MESS["C_CRM_LFA_TASKS_TITLE_COMPLETE"] = "#USER_NAME# #TITLE# міндетін аяқтады";
+$MESS["C_CRM_LFA_TASKS_TITLE_COMPLETE_F"] = "#USER_NAME# #TITLE# міндетін аяқтады";
+$MESS["C_CRM_LFA_TASKS_TITLE_COMPLETE_M"] = "#USER_NAME# #TITLE# міндетін аяқтады";
+$MESS["C_CRM_LFA_TASKS_TITLE_CREATE"] = "#USER_NAME# #TITLE# міндетін құрды";
+$MESS["C_CRM_LFA_TASKS_TITLE_CREATE_F"] = "#USER_NAME# #TITLE# міндетін құрды";
+$MESS["C_CRM_LFA_TASKS_TITLE_CREATE_M"] = "#USER_NAME# #TITLE# міндетін құрды";
+$MESS["C_CRM_LFA_TASKS_TITLE_MODIFY"] = "#USER_NAME# #TITLE# міндетін өзгертті";
+$MESS["C_CRM_LFA_TASKS_TITLE_MODIFY_F"] = "#USER_NAME# #TITLE# міндетін өзгертті";
+$MESS["C_CRM_LFA_TASKS_TITLE_MODIFY_M"] = "#USER_NAME# #TITLE# міндетін өзгертті";
+$MESS["C_CRM_LFA_TASKS_TITLE_STATUS"] = "#USER_NAME# #TITLE# міндетінің мәртебесін өзгертті";
+$MESS["C_CRM_LFA_TASKS_TITLE_STATUS_F"] = "#USER_NAME# #TITLE# міндетінің мәртебесін өзгертті";
+$MESS["C_CRM_LFA_TASKS_TITLE_STATUS_M"] = "#USER_NAME# #TITLE# міндетінің мәртебесін өзгертті";
+$MESS["C_CRM_LFA_TASK_STATUS_MESSAGE_1_24"] = "Міндет жаңартылды";
+$MESS["C_CRM_LFA_TASK_STATUS_MESSAGE_2_24"] = "Міндет орындалуын күтуде";
+$MESS["C_CRM_LFA_TASK_STATUS_MESSAGE_3_24"] = "Міндет орындалуда";
+$MESS["C_CRM_LFA_TASK_STATUS_MESSAGE_4_24"] = "Міндет жабық";
+$MESS["C_CRM_LFA_TASK_STATUS_MESSAGE_4_24_2"] = "Себеп";
+$MESS["C_CRM_LFA_TASK_STATUS_MESSAGE_4_24_CHANGES"] = "қоюшының бақылауы қажет";
+$MESS["C_CRM_LFA_TASK_STATUS_MESSAGE_5_24"] = "Міндет жабық";
+$MESS["C_CRM_LFA_TASK_STATUS_MESSAGE_6_24"] = "Міндет кейінге қалдырылды";
+$MESS["C_CRM_LFA_TASK_STATUS_MESSAGE_7_24"] = "Міндет қабылданбады";
+$MESS["C_CRM_LFA_TASK_STATUS_MESSAGE_7_24_2"] = "Себеп";

@@ -1,0 +1,20 @@
+<?php
+$MESS["CRM_ADD_MESSAGE"] = "CRM-ге оқиғаны қосу";
+$MESS["CRM_EMAIL_BAD_RESP_QUEUE"] = "Жәшіктен хаттарды тарату кезегінде \"#EMAIL#\" жұмыстан шығарылған қызметкер көрсетілген. Оған жаңа хаттар таратылмайды, бірақ барлық ескі хат-хабарлар жұмыстан шығарылған қызметкерге бұрындай жіберіледі. <a href=\"#CONFIG_URL#\">Кезек параметрлерін баптау</a>.";
+$MESS["CRM_EMAIL_BANNENED_ATTACHMENTS"] = "Бұғатталған файлдар (максималды өлшемнен асып кетті: %MAX_SIZE% MB)";
+$MESS["CRM_EMAIL_BANNENED_ATTACHMENT_INFO"] = "%NAME% (%SIZE% МБ)";
+$MESS["CRM_EMAIL_CODE_ALLOCATION_BODY"] = "Хабарламада жариялау";
+$MESS["CRM_EMAIL_CODE_ALLOCATION_NONE"] = "Пайдаланбау";
+$MESS["CRM_EMAIL_CODE_ALLOCATION_SUBJECT"] = "Тақырыпта жариялау";
+$MESS["CRM_EMAIL_DEFAULT_SUBJECT"] = "(тақырыпсыз)";
+$MESS["CRM_EMAIL_EMAILS"] = "E-mail";
+$MESS["CRM_EMAIL_FROM"] = "From";
+$MESS["CRM_EMAIL_GET_EMAIL"] = "Поштадан хат";
+$MESS["CRM_EMAIL_IMAP_ERROR_EMPLOYE_IN"] = "Қызметкерлердің хаттарын CRM-де сақтау мүмкін емес";
+$MESS["CRM_EMAIL_IMAP_ERROR_EMPLOYE_OUT"] = "Қызметкерлерге хаттарды CRM-де сақтау мүмкін емес";
+$MESS["CRM_EMAIL_SUBJECT"] = "Тақырыпаты";
+$MESS["CRM_EMAIL_TO"] = "To";
+$MESS["CRM_MAIL_COMPANY_NAME"] = "Компания атауы: %TITLE%";
+$MESS["CRM_MAIL_LEAD_FROM_EMAIL_SOURCE"] = "%SENDER% күнгі хатынан жасалған, оны кез келген лидке, байланысқа немесе компанияға жатқызу мүмкін болмады";
+$MESS["CRM_MAIL_LEAD_FROM_EMAIL_TITLE"] = "%SENDER% күнгі хат лиді";
+$MESS["CRM_MAIL_LEAD_FROM_USER_EMAIL_TITLE"] = "%SENDER% күнгі қайта жіберілген хаттың лиді";

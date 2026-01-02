@@ -1,10 +1,10 @@
 <?
 $MESS["CRM_ADD_MESSAGE"] = "добавление события в CRM";
 $MESS["CRM_EMAIL_GET_EMAIL"] = "Письмо с почты";
-$MESS["CRM_EMAIL_SUBJECT"] = "Заголовок";
+$MESS["CRM_EMAIL_SUBJECT"] = "Тема";
 $MESS["CRM_EMAIL_EMAILS"] = "E-mail";
-$MESS["CRM_EMAIL_FROM"] = "From";
-$MESS["CRM_EMAIL_TO"] = "To";
+$MESS["CRM_EMAIL_FROM"] = "От кого";
+$MESS["CRM_EMAIL_TO"] = "Кому";
 $MESS["CRM_EMAIL_BANNENED_ATTACHMENTS"] = "Заблокированные файлы (превышен максимальный размер: %MAX_SIZE% МБ)";
 $MESS["CRM_EMAIL_BANNENED_ATTACHMENT_INFO"] = "%NAME% (%SIZE% МБ)";
 $MESS["CRM_MAIL_COMPANY_NAME"] = "Название компании: %TITLE%";

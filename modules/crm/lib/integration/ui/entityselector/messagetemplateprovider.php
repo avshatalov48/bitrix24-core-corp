@@ -37,14 +37,26 @@ final class MessageTemplateProvider extends BaseProvider
 
 	public function isAvailable(): bool
 	{
+		$userPermissions = Container::getInstance()->getUserPermissions();
+
+		if ($this->entityId > 0)
+		{
+			$hasAccess = $userPermissions->item()->canUpdate($this->entityTypeId, $this->entityId);
+		}
+		else
+		{
+			$hasAccess = ((is_null($this->categoryId))
+				? $userPermissions->entityType()->canUpdateItems($this->entityTypeId)
+				: $userPermissions->entityType()->canUpdateItemsInCategory($this->entityTypeId, $this->categoryId))
+			;
+		}
+
 		return !is_null($this->sender)
 			&& SmsManager::isEdnaWhatsAppSendingEnabled($this->sender->getId())
 			&& $this->sender->canUse()
 			&& $this->sender->isConfigurable()
 			&& $this->sender->isTemplatesBased()
-			&& Container::getInstance()
-				->getUserPermissions()
-				->checkUpdatePermissions($this->entityTypeId, $this->entityId, $this->categoryId)
+			&& $hasAccess
 		;
 	}
 

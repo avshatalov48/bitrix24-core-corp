@@ -13,7 +13,7 @@ final class TaxCalculator
 {
 	private Accounting $accounting;
 
-	private float $taxRate = 0.0;
+	private ?float $taxRate = null;
 
 	private bool $taxIncluded = false;
 
@@ -45,7 +45,8 @@ final class TaxCalculator
 
 			$this->vatId = isset($vat['ID']) ? (int)$vat['ID'] : null;
 			$this->vatName = isset($vat['NAME']) ? (string)$vat['NAME'] : null;
-			$this->taxRate = isset($vat['VALUE']) ? (float)$vat['VALUE'] : 0.0;
+			$this->taxRate = isset($vat['VALUE']) ? (float)$vat['VALUE'] : null;
+
 			$this->taxIncluded = $vatIncluded;
 
 			$this->finalPrice = $vatIncluded
@@ -58,7 +59,7 @@ final class TaxCalculator
 		return $this;
 	}
 
-	public function getTaxRate(): float
+	public function getTaxRate(): ?float
 	{
 		return $this->taxRate;
 	}

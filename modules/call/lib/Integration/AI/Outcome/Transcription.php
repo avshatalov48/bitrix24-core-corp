@@ -3,7 +3,7 @@
 namespace Bitrix\Call\Integration\AI\Outcome;
 
 use Bitrix\Call\Integration;
-
+use Bitrix\Call\Integration\AI\MentionService;
 
 class Transcription
 {
@@ -45,7 +45,27 @@ class Transcription
 				$this->isEmpty = empty($this->transcriptions);
 			}
 		}
+	}
 
-		return $this;
+	public function toRestFormat(): array
+	{
+		$mentionService = MentionService::getInstance();
+
+		$result = [];
+		foreach ($this->transcriptions as $row)
+		{
+			if (!empty($row->text))
+			{
+				$result[] = [
+					'userId' => $row->userId,
+					'user' => $row->user,
+					'start' => $row->start,
+					'end' => $row->end,
+					'text' => $mentionService->replaceBbMentions($row->text),
+				];
+			}
+		}
+
+		return $result;
 	}
 }

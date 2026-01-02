@@ -7,12 +7,11 @@ jn.define('tasks/flow-list/simple-list/items/flow-redux/src/flow-content', (requ
 	const { Type } = require('type');
 	const { PureComponent } = require('layout/pure-component');
 	const { CounterView } = require('layout/ui/counter-view');
-	const { openTaskCreateForm } = require('tasks/layout/task/create/opener');
-	const { Color, Component, Indent } = require('tokens');
+	const { Color, Component, Corner, Indent } = require('tokens');
 	const { Card, CardDesign } = require('ui-system/layout/card');
 	const { ChipStatus, ChipStatusDesign, ChipStatusMode } = require('ui-system/blocks/chips/chip-status');
 	const { H4 } = require('ui-system/typography/heading');
-	const { Text6 } = require('ui-system/typography/text');
+	const { Text5, Text6 } = require('ui-system/typography/text');
 	const { Link4, LinkMode, Ellipsize } = require('ui-system/blocks/link');
 	const { Button, ButtonSize, ButtonDesign } = require('ui-system/form/buttons');
 	const { Entry } = require('tasks/entry');
@@ -21,6 +20,7 @@ jn.define('tasks/flow-list/simple-list/items/flow-redux/src/flow-content', (requ
 	const { AvatarStack } = require('ui-system/blocks/avatar-stack');
 	const { IconView, Icon } = require('ui-system/blocks/icon');
 	const { FlowAiAdvice } = require('tasks/flow-list/simple-list/items/flow-redux/src/flow-ai-advice');
+	const { openActionMenu } = require('tasks/layout/flow/action-menu');
 	const { showToast } = require('toast');
 
 	class FlowContent extends PureComponent
@@ -130,6 +130,11 @@ jn.define('tasks/flow-list/simple-list/items/flow-redux/src/flow-content', (requ
 			return this.flow?.active ?? false;
 		}
 
+		get isPinned()
+		{
+			return this.flow?.isPinned ?? false;
+		}
+
 		get enableFlowUrl()
 		{
 			return this.flow?.enableFlowUrl ?? '';
@@ -170,130 +175,27 @@ jn.define('tasks/flow-list/simple-list/items/flow-redux/src/flow-content', (requ
 				return null;
 			}
 
-			return View(
-				{
-					testId: this.testId,
-				},
-				this.renderCard(),
-				this.shouldShowAiAdviceFooter && this.renderAiAdviceFooter(),
-			);
-		}
-
-		renderAiAdviceFooter()
-		{
-			const isEnoughTasksForAdvice = this.tasksTotal >= this.aiAdvice.minTasksCountForAdvice;
-			const isEfficiencyLow = this.efficiency <= this.aiAdvice.efficiencyThreshold;
-			const isLowEfficiencyFooter = isEnoughTasksForAdvice && isEfficiencyLow;
-
-			return View(
-				{
-					style: {
-						flexDirection: 'row',
-						justifyContent: 'space-between',
-						alignItems: 'center',
-						marginHorizontal: Component.paddingLr.toNumber(),
-						paddingHorizontal: Indent.XL2.toNumber(),
-						marginTop: -Indent.L.toNumber(),
-						marginBottom: this.isLast ? Indent.XL2.toNumber() : 0,
-						paddingTop: Indent.XL3.toNumber(),
-						paddingBottom: Indent.XL.toNumber(),
-						backgroundColor: (
-							isLowEfficiencyFooter
-								? Color.copilotBgContent1.toHex()
-								: Color.bgContentTertiary.toHex()
-						),
-						borderBottomLeftRadius: 12,
-						borderBottomRightRadius: 12,
-						zIndex: 0,
-					},
-					testId: `${this.testId}-ai-advice-footer`,
-					onClick: () => {
-						if (this.aiAdvice.advices.length > 0)
-						{
-							FlowAiAdvice.show(this.flow, this.props.layout);
-						}
-						else
-						{
-							showToast(
-								{
-									message: Loc.getMessage('TASKSMOBILE_FLOW_CONTENT_AI_ADVICE_FOOTER_TOAST'),
-								},
-								this.props.layout,
-							);
-						}
-					},
-				},
-				BBCodeText({
-					style: {
-						flex: 1,
-						color: (isLowEfficiencyFooter ? Color.base2.toHex() : Color.base4.toHex()),
-						fontWeight: '400',
-						fontSize: 13,
-					},
-					testId: `${this.testId}-ai-advice-footer-field`,
-					numberOfLines: 2,
-					ellipsize: 'end',
-					value: this.getAiAdviceFooterText(),
-				}),
-				IconView({
-					style: {
-						marginLeft: Indent.L.toNumber(),
-					},
-					icon: Icon.CHEVRON_TO_THE_RIGHT,
-					color: (isLowEfficiencyFooter ? Color.copilotAccentLess2 : Color.base4),
-					size: 20,
-				}),
-			);
-		}
-
-		getAiAdviceFooterText()
-		{
-			if (this.tasksTotal < this.aiAdvice.minTasksCountForAdvice)
-			{
-				return Loc.getMessage('TASKSMOBILE_FLOW_CONTENT_AI_ADVICE_FOOTER_NO_DATA');
-			}
-
-			if (this.efficiency <= this.aiAdvice.efficiencyThreshold)
-			{
-				return Loc.getMessage(
-					'TASKSMOBILE_FLOW_CONTENT_AI_ADVICE_FOOTER_LOW',
-					{
-						'#ANCHOR_START#': `[b][color=${Color.copilotAccentLess2}]`,
-						'#ANCHOR_END#': '[/color][/b]',
-					},
-				);
-			}
-
-			return Loc.getMessage('TASKSMOBILE_FLOW_CONTENT_AI_ADVICE_FOOTER_HIGH');
-		}
-
-		renderCard()
-		{
 			return Card(
 				{
-					testId: `${this.testId}-card`,
-					border: true,
 					style: {
 						marginHorizontal: Component.paddingLr.toNumber(),
-						marginBottom: !this.shouldShowAiAdviceFooter && this.isLast ? Indent.XL2.toNumber() : 0,
 						marginTop: Indent.XL2.toNumber(),
-						zIndex: 1,
+						marginBottom: this.isLast ? Indent.XL2.toNumber() : 0,
 					},
+					border: true,
+					testId: this.testId,
 					onClick: this.cardClickHandler,
 					design: this.getCardDesign(),
 				},
 				this.renderHeader(),
 				this.renderProgressInfo(),
 				this.renderFooter(),
+				this.renderAiAdviceFooter(),
 			);
 		}
 
-		cardClickHandler = () => {
-			void requireLazy('tasks:layout/flow/detail').then(({ FlowDetail }) => {
-				FlowDetail.open({
-					flowId: this.id,
-				});
-			});
+		toShowHeaderToolbar = () => {
+			return true;
 		};
 
 		renderHeader()
@@ -301,25 +203,95 @@ jn.define('tasks/flow-list/simple-list/items/flow-redux/src/flow-content', (requ
 			const plannedCompletionText = this.preparePlannedCompletionTimeText();
 
 			return View(
-				{},
-				H4({
-					testId: `${this.testId}-name`,
-					text: this.flowName,
-					numberOfLines: 2,
-					ellipsize: 'end',
-				}),
-				plannedCompletionText && Text6({
-					testId: `${this.testId}-planned-completion-time`,
-					text: plannedCompletionText,
-					color: Color.base4,
-					numberOfLines: 1,
-					ellipsize: 'end',
+				{
 					style: {
-						marginTop: Indent.XS.toNumber(),
+						flexDirection: 'row',
 					},
-				}),
+				},
+				View(
+					{
+						style: {
+							flex: 1,
+						},
+					},
+					H4({
+						testId: `${this.testId}-name`,
+						text: this.flowName,
+						numberOfLines: 2,
+						ellipsize: 'end',
+					}),
+					plannedCompletionText && Text6({
+						testId: `${this.testId}-planned-completion-time`,
+						text: plannedCompletionText,
+						color: Color.base4,
+						numberOfLines: 1,
+						ellipsize: 'end',
+						style: {
+							marginTop: Indent.XS.toNumber(),
+						},
+					}),
+				),
+				this.toShowHeaderToolbar() && this.renderHeaderToolbar(),
 			);
 		}
+
+		getMenuClickableZoneStyle = () => {
+			return {
+				flexDirection: 'row',
+				paddingBottom: 18,
+				paddingLeft: 10,
+			};
+		};
+
+		renderHeaderToolbar = () => {
+			return View(
+				{},
+				View(
+					{
+						style: this.getMenuClickableZoneStyle(),
+						onClick: this.#onMoreMenuZoneClick,
+					},
+					this.isPinned && this.#renderPinIcon(),
+					this.#renderMoreButton(),
+				),
+			);
+		};
+
+		#renderMoreButton = () => {
+			return IconView({
+				forwardRef: this.#bindMoreMenuButtonRef,
+				icon: Icon.MORE,
+				size: 20,
+				color: Color.base5,
+				style: {
+					marginLeft: Indent.M.toNumber(),
+				},
+			});
+		};
+
+		#bindMoreMenuButtonRef = (ref) => {
+			this.moreMenuButtonRef = ref;
+			this.props.menuViewRef?.(ref);
+		};
+
+		#onMoreMenuZoneClick = () => {
+			openActionMenu({
+				testId: `${this.testId}-more-menu`,
+				target: this.moreMenuButtonRef,
+				flowId: this.id,
+			});
+		};
+
+		#renderPinIcon = () => {
+			return IconView({
+				icon: Icon.PIN,
+				size: 20,
+				color: Color.base5,
+				style: {
+					marginLeft: Indent.M.toNumber(),
+				},
+			});
+		};
 
 		preparePlannedCompletionTimeText()
 		{
@@ -701,6 +673,116 @@ jn.define('tasks/flow-list/simple-list/items/flow-redux/src/flow-content', (requ
 			);
 		}
 
+		renderAiAdviceFooter()
+		{
+			if (!this.shouldShowAiAdviceFooter)
+			{
+				return null;
+			}
+
+			const isEnoughTasksForAdvice = this.tasksTotal >= this.aiAdvice.minTasksCountForAdvice;
+			const isEfficiencyLow = this.efficiency <= this.aiAdvice.efficiencyThreshold;
+			const isLowEfficiencyFooter = isEnoughTasksForAdvice && isEfficiencyLow;
+
+			return View(
+				{
+					style: {
+						marginTop: Indent.XL.toNumber(),
+						paddingVertical: Indent.M.toNumber(),
+						paddingHorizontal: Indent.S.toNumber(),
+						backgroundColor: Color.copilotBgContent1.toHex(),
+						borderRadius: Corner.M.toNumber(),
+					},
+					testId: `${this.testId}-ai-advice-footer`,
+					onClick: () => {
+						if (this.aiAdvice.advices.length > 0)
+						{
+							FlowAiAdvice.show(this.flow, this.props.layout);
+						}
+						else
+						{
+							showToast(
+								{
+									message: Loc.getMessage('TASKSMOBILE_FLOW_CONTENT_AI_ADVICE_FOOTER_TOAST'),
+								},
+								this.props.layout,
+							);
+						}
+					},
+				},
+				View(
+					{
+						style: {
+							flexDirection: 'row',
+						},
+					},
+					IconView({
+						icon: Icon.COPILOT,
+						size: 22,
+						color: Color.copilotAccentLess1,
+					}),
+					Text5({
+						style: {
+							marginLeft: Indent.L.toNumber(),
+						},
+						text: Loc.getMessage('TASKSMOBILE_FLOW_CONTENT_AI_ADVICE_FOOTER_TITLE'),
+						color: Color.copilotAccentLess2,
+					}),
+				),
+				View(
+					{
+						style: {
+							flexDirection: 'row',
+							justifyContent: 'space-between',
+							alignItems: 'center',
+							marginTop: Indent.L.toNumber(),
+						},
+					},
+					BBCodeText({
+						style: {
+							flex: 1,
+							color: (isLowEfficiencyFooter ? Color.base2.toHex() : Color.base4.toHex()),
+							fontWeight: '400',
+							fontSize: 12,
+						},
+						testId: `${this.testId}-ai-advice-footer-field`,
+						value: this.getAiAdviceFooterText(),
+					}),
+					IconView({
+						style: {
+							marginLeft: Indent.M.toNumber(),
+						},
+						icon: Icon.CHEVRON_TO_THE_RIGHT,
+						color: Color.base4,
+						size: 20,
+					}),
+				),
+			);
+		}
+
+		getAiAdviceFooterText()
+		{
+			let messageId = 'TASKSMOBILE_FLOW_CONTENT_AI_ADVICE_FOOTER_HIGH_V2';
+
+			if (this.tasksTotal < this.aiAdvice.minTasksCountForAdvice)
+			{
+				messageId = 'TASKSMOBILE_FLOW_CONTENT_AI_ADVICE_FOOTER_NO_DATA';
+			}
+
+			if (this.efficiency <= this.aiAdvice.efficiencyThreshold)
+			{
+				messageId = 'TASKSMOBILE_FLOW_CONTENT_AI_ADVICE_FOOTER_LOW_V2';
+			}
+
+			return Loc.getMessage(
+				messageId,
+				{
+					'#ANCHOR_START#': `[b][color=${Color.copilotAccentLess2}]`,
+					'#ANCHOR_END#': '[/color][/b]',
+				},
+			);
+		}
+
 		renderShowTasksListButton()
 		{
 			const countText = this.myTasksTotal > 99
@@ -745,7 +827,7 @@ jn.define('tasks/flow-list/simple-list/items/flow-redux/src/flow-content', (requ
 				return;
 			}
 
-			openTaskCreateForm({
+			Entry.openTaskCreation({
 				initialTaskData: {
 					flowId: this.id,
 				},
@@ -766,7 +848,6 @@ jn.define('tasks/flow-list/simple-list/items/flow-redux/src/flow-content', (requ
 				flowId: this.id,
 				flowName: this.flowName,
 				flowEfficiency: this.efficiency,
-				canCreateTask: this.active,
 				analyticsLabel: this.props.analyticsLabel,
 			});
 		}

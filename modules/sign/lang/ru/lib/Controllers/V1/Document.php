@@ -1,2 +1,3 @@
 <?php
-$MESS['SIGN_CONTROLLERS_V1_DOCUMENT_START_B2E_INVITE_TEXT'] = 'Подпишите документ';
+$MESS['SIGN_CONTROLLER_DOCUMENT_NOT_FOUND'] = 'Документ не найден';
+$MESS['SIGN_CONTROLLER_DOCUMENTS_NOT_FOUND'] = 'Документы не найдены';

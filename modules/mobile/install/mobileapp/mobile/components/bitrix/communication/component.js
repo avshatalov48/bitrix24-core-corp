@@ -4,6 +4,9 @@
 	const require = (ext) => jn.require(ext);
 	const { EntityReady } = require('entity-ready');
 	const { AvaMenu } = require('ava-menu');
+	const { Type } = require('type');
+	const { UserProfile } = require('user-profile');
+	const { merge } = require('utils/object');
 
 	if (typeof window.SocketConnection === 'undefined')
 	{
@@ -35,7 +38,7 @@
 				chats: 'im_messenger',
 				copilot: 'im_messenger',
 				openlines: 'im_messenger',
-				notifications: 'im_messenger',
+				notifications: 'im_notify',
 				tasks_total: 'tasks_total',
 				crm_all_no_orders: 'crm_all_no_orders',
 				crm_activity_current_calltracker: 'crm_activity_current_calltracker',
@@ -56,6 +59,7 @@
 				menu_invite: 'menu_invite',
 				menu_tab_presets: 'menu_tab_presets',
 				menu_disk_tabs: 'menu_disk_tabs',
+				total_invitation: 'total_invitation',
 			};
 
 			this.tabNameMapOldUserCounter = {
@@ -269,7 +273,7 @@
 					}
 			}
 
-			this.userCounters = Utils.objectMerge(this.userCounters, counters);
+			this.userCounters = merge(this.userCounters, counters);
 
 			let needUpdate = false;
 			for (let userCounter in this.userCounterMapTabName)
@@ -343,13 +347,8 @@
 			clearTimeout(this.updateCountersTimeout);
 			this.updateCountersTimeout = null;
 
-			this.counters.messages = this.counters.chats + this.counters.notifications + this.counters.openlines;
-
-			if (typeof this.counters.copilot !== 'undefined')
-			{
-				this.counters.messages += this.counters.copilot;
-			}
-			const bpCounter = Application.getApiVersion() < 52 && this.counters.bp_tasks > 0 ? this.counters.bp_tasks : 0;
+			this.counters.messages = this.getMessagesCounter();
+			const bpCounter = 0;
 			this.counters.stream = this.counters.livefeed + bpCounter;
 
 			this.total = Object.keys(this.counters)
@@ -391,6 +390,24 @@
 				const value = counter || 0;
 				AvaMenu.setCounter({ elemId, value });
 			}
+		}
+
+
+		getMessagesCounter()
+		{
+			let counter = this.counters.chats + this.counters.openlines;
+
+			if (this.isEnableApplicationCounterType('notifications'))
+			{
+				counter += this.counters.notifications;
+			}
+
+			if (!Type.isUndefined(this.counters.copilot))
+			{
+				counter += this.counters.copilot;
+			}
+
+			return counter;
 		}
 
 		isEnableApplicationCounterType(tabName)
@@ -476,66 +493,6 @@
 		}
 	}
 
-	class DesktopStatus
-	{
-		constructor()
-		{
-			this.isOnline = false;
-			this.version = 0;
-			BX.addCustomEvent('setDesktopStatus', this.setDesktopStatus.bind(this));
-			BX.addCustomEvent('requestDesktopStatus', this.requestDesktopStatus.bind(this));
-		}
-
-		setDesktopStatus({ isOnline, version })
-		{
-			console.info('DesktopStatus.set:', isOnline, version);
-
-			if (typeof isOnline === 'boolean')
-			{
-				this.isOnline = isOnline;
-				BX.postComponentEvent('desktopOnlineStatus', [this.getCurrentStatus()]);
-				BX.postWebEvent('desktopOnlineStatus', this.getCurrentStatus());
-			}
-
-			if (typeof version === 'number')
-			{
-				this.version = version;
-			}
-		}
-
-		requestDesktopStatus({ component, web })
-		{
-			console.info('DesktopStatus.requestDesktopStatus:', component);
-
-			if (component)
-			{
-				BX.postComponentEvent('onRequestDesktopStatus', [this.getCurrentStatus()], component);
-			}
-			else if (web)
-			{
-				BX.postWebEvent('onRequestDesktopStatus', this.getCurrentStatus());
-			}
-		}
-
-		getOnlineStatus()
-		{
-			return this.isOnline;
-		}
-
-		getVersion()
-		{
-			return this.version;
-		}
-
-		getCurrentStatus()
-		{
-			return {
-				isOnline: this.getOnlineStatus(),
-				version: this.getVersion(),
-			};
-		}
-	}
-
 	/**
 	 * Auth restore
 	 */
@@ -592,10 +549,11 @@
 			return true;
 		}
 		const appId = (typeof Application.getPackageName === 'function' ? Application.getPackageName() : 'Bitrix24');
-
+		const uuid = device.uuid;
+		const model = device.model;
 		if (typeof (Application.registerVoipNotifications) === 'function')
 		{
-			Application.registerVoipNotifications().then(({ token, uuid, model }) => {
+			Application.registerVoipNotifications().then(({ token }) => {
 				BX.ajax({
 					url: `${env.siteDir}mobile/`,
 					method: 'POST',
@@ -656,8 +614,8 @@
 					tokenSaveRequest: true,
 					data: {
 						mobile_action: 'save_device_token',
-						device_name: (device.model),
-						uuid: device.uuid,
+						device_name: model,
+						uuid: uuid,
 						device_token: token,
 						app_id: appId,
 						device_type: dt,
@@ -807,48 +765,11 @@
 	BX.addCustomEvent('onUserProfileOpen', (userId, options = {}) => {
 		console.log('onUserProfileOpen', userId, options);
 
-		let url = '/mobile/mobile_component/user.profile/?version=1';
-
-		if (availableComponents && availableComponents['user.profile'])
-		{
-			url = availableComponents['user.profile'].publicUrl;
-		}
-
-		let backdropOptions = {};
-		let isBackdrop = false;
-		if (options.backdrop)
-		{
-			if (typeof options.backdrop === 'object' && options.backdrop)
-			{
-				backdropOptions = { backdrop: options.backdrop };
-				isBackdrop = true;
-			}
-			else if (typeof options.backdrop === 'boolean' && options.backdrop)
-			{
-				backdropOptions = { backdrop: {} };
-				isBackdrop = true;
-			}
-		}
-
-		PageManager.openComponent(
-			'JSStackComponent',
-			{
-				scriptPath: url,
-				params: { userId, isBackdrop },
-				canOpenInDefault: true,
-				rootWidget: {
-					name: 'list',
-					groupStyle: true,
-					settings: {
-						objectName: 'form',
-						groupStyle: true,
-						...backdropOptions,
-					},
-				},
-			},
-		);
+		void UserProfile.open({
+			ownerId: userId,
+			openInComponent: true,
+		});
 	});
 
 	window.Counters = new AppCounters();
-	window.DesktopStatus = new DesktopStatus();
 })();

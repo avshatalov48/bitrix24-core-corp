@@ -16,10 +16,9 @@ export type MainpageOptions = {
 	urlImport: ?string,
 	urlExport: ?string,
 	previewImg: ?string,
-	isSiteExists: ?boolean,
 	isPageExists: ?boolean,
 	isPublished: ?boolean,
-	isEnable: ?boolean;
+	canEdit: ?boolean;
 	feedbackParams: ?{};
 };
 
@@ -56,10 +55,9 @@ export class MainpagePage extends BaseSettingsPage
 	#popupShare: ?Popup = null;
 	#popupWithdraw: ?Popup = null;
 
-	#isSiteExists: boolean = false;
 	#isPageExists: boolean = false;
 	#isPublished: boolean = false;
-	#isEnable: boolean = true;
+	#canEdit: boolean = true;
 
 	constructor()
 	{
@@ -84,11 +82,10 @@ export class MainpagePage extends BaseSettingsPage
 		this.#urlExport = options.urlExport || null;
 		this.#previewImg = options.previewImg || null;
 		this.#feedbackParams = options.feedbackParams || null;
-		this.#isSiteExists = options.isSiteExists ?? false;
 		this.#isPageExists = options.isPageExists ?? false;
 		this.#isPublished = options.isPublished ?? false;
 		this.#title = options.title ?? null;
-		this.#isEnable = options.isEnable ?? false;
+		this.#canEdit = options.canEdit ?? false;
 		const section = new SettingsSection({
 			parent: this,
 			section: {
@@ -204,7 +201,7 @@ export class MainpagePage extends BaseSettingsPage
 						<div class="intranet-settings__main-page-button-box">
 							${this.#getButtonEdit()}
 							<div class="intranet-settings__main-page-button-box-right">
-								${this.#isPublished && this.#isEnable  ? this.#getButtonWithdraw() : this.#getButtonPublish()}
+								${this.#isPublished ? this.#getButtonWithdraw() : this.#getButtonPublish()}
 								${this.#getButtonSecondarySettings()}
 							</div>
 						</div>
@@ -339,7 +336,7 @@ export class MainpagePage extends BaseSettingsPage
 	{
 		if (!this.#importPopup)
 		{
-			const htmlContent = this.#isEnable
+			const htmlContent = this.#canEdit
 				? Tag.render`<span>${Loc.getMessage('INTRANET_SETTINGS_MAINPAGE_IMPORT_POPUP')}</span>`
 				: Tag.render`<span class="intranet-settings-mp-popup-item">${Loc.getMessage(
 					'INTRANET_SETTINGS_MAINPAGE_IMPORT_POPUP')} ${this.renderLockElement()}</span>`
@@ -348,7 +345,7 @@ export class MainpagePage extends BaseSettingsPage
 				angle: true,
 				animation: 'fading-slide',
 				bindElement: this.#buttonMainSettings,
-				className: this.#isEnable ? '' : '--disabled',
+				className: this.#canEdit ? '' : '--disabled',
 				items: [
 					{
 						id: 'importPopup',
@@ -373,7 +370,7 @@ export class MainpagePage extends BaseSettingsPage
 	{
 		if (!this.#exportPopup)
 		{
-			const htmlContent = this.#isEnable
+			const htmlContent = this.#canEdit
 				? Tag.render`<span>${Loc.getMessage('INTRANET_SETTINGS_MAINPAGE_EXPORT_POPUP')}</span>`
 				: Tag.render`<span class="intranet-settings-mp-popup-item --disabled">${Loc.getMessage(
 					'INTRANET_SETTINGS_MAINPAGE_EXPORT_POPUP')} ${this.renderLockElement()}</span>`
@@ -382,7 +379,7 @@ export class MainpagePage extends BaseSettingsPage
 				angle: true,
 				animation: 'fading-slide',
 				bindElement: this.#buttonSecondarySettings,
-				className: this.#isEnable ? '' : '--disabled',
+				className: this.#canEdit ? '' : '--disabled',
 				items: [
 					{
 						id: 'exportPopup',
@@ -405,7 +402,7 @@ export class MainpagePage extends BaseSettingsPage
 
 	#showImportSlider()
 	{
-		if (!this.#isEnable)
+		if (!this.#canEdit)
 		{
 			BX.UI.InfoHelper.show("limit_office_vibe");
 			return;
@@ -465,7 +462,7 @@ export class MainpagePage extends BaseSettingsPage
 
 	#showExportSlider()
 	{
-		if (!this.#isEnable)
+		if (!this.#canEdit)
 		{
 			BX.UI.InfoHelper.show("limit_office_vibe");
 			return;
@@ -561,16 +558,29 @@ export class MainpagePage extends BaseSettingsPage
 	{
 		if (!this.#popupWithdraw)
 		{
+			const title = this.#canEdit
+				? Loc.getMessage('INTRANET_SETTINGS_MAINPAGE_WITHDRAW_POPUP_TITLE')
+				: Loc.getMessage('INTRANET_SETTINGS_MAINPAGE_WITHDRAW_POPUP_TITLE_FREE')
+			;
+			const content = this.#canEdit
+				? Loc.getMessage('INTRANET_SETTINGS_MAINPAGE_WITHDRAW_POPUP_CONTENT')
+				: Loc.getMessage('INTRANET_SETTINGS_MAINPAGE_WITHDRAW_POPUP_CONTENT_FREE')
+			;
+			const okText = this.#canEdit
+				? Loc.getMessage('INTRANET_SETTINGS_MAINPAGE_WITHDRAW_POPUP_BTN_CONFIRM')
+				: Loc.getMessage('INTRANET_SETTINGS_MAINPAGE_WITHDRAW_POPUP_BTN_CONFIRM_FREE')
+			;
+
 			this.#popupWithdraw = new Popup({
-				titleBar: Loc.getMessage('INTRANET_SETTINGS_MAINPAGE_WITHDRAW_POPUP_TITLE'),
-				content: Loc.getMessage('INTRANET_SETTINGS_MAINPAGE_WITHDRAW_POPUP_CONTENT'),
+				titleBar: title,
+				content: content,
 				width: 350,
 				closeIcon: true,
 				closeByEsc: true,
 				animation: 'fading-slide',
 				buttons: [
 					new Button({
-						text: Loc.getMessage('INTRANET_SETTINGS_MAINPAGE_WITHDRAW_POPUP_BTN_CONFIRM'),
+						text: okText,
 						color: Button.Color.DANGER_DARK,
 						onclick: () => {
 							const newTemplate = this.getInfoTemplate();
@@ -624,10 +634,18 @@ export class MainpagePage extends BaseSettingsPage
 
 		if (!this.#buttonEdit)
 		{
-			this.#buttonEdit = Tag.render`
+			const buttonEdit = Tag.render`			
 				<button class="ui-btn ui-btn-md ui-btn-round ui-btn-no-caps --light-blue">
 					${Loc.getMessage('INTRANET_SETTINGS_MAINPAGE_BUTTON_EDIT')}
-				</button>`;
+				</button>
+			`;
+			const buttonEditLock = Tag.render`
+				<button class="ui-btn ui-btn-md ui-btn-round ui-btn-no-caps --light-blue --disabled">
+					${Loc.getMessage('INTRANET_SETTINGS_MAINPAGE_BUTTON_EDIT')}
+					${this.renderLockElement()}
+				</button>
+			`;
+			this.#buttonEdit = this.#canEdit ? buttonEdit : buttonEditLock;
 		}
 
 		return this.#buttonEdit;
@@ -650,7 +668,7 @@ export class MainpagePage extends BaseSettingsPage
 					${this.renderLockElement()}
 				</button>
 			`;
-			this.#buttonPublish = this.#isEnable ? renderNode : renderNodeLock;
+			this.#buttonPublish = this.#canEdit ? renderNode : renderNodeLock;
 		}
 
 		return this.#buttonPublish;
@@ -660,20 +678,12 @@ export class MainpagePage extends BaseSettingsPage
 	{
 		if (!this.#buttonWithdraw)
 		{
-			const renderNode = Tag.render`
+			this.#buttonWithdraw = Tag.render`
 				<button class="ui-btn ui-btn-md ui-btn-round ui-btn-no-caps
 						${this.#isPageExists ? 'ui-btn-primary' : '--light-blue'}">
 					${Loc.getMessage('INTRANET_SETTINGS_MAINPAGE_BUTTON_UNPUBLIC')}
 				</button>
 			`;
-			const renderNodeLock = Tag.render`
-				<button class="ui-btn ui-btn-md ui-btn-round ui-btn-no-caps --disabled
-						${this.#isPageExists ? 'ui-btn-primary' : '--light-blue'}">
-					${Loc.getMessage('INTRANET_SETTINGS_MAINPAGE_BUTTON_UNPUBLIC')}
-					${this.renderLockElement()}
-				</button>
-			`;
-			this.#buttonWithdraw = this.#isEnable ? renderNode : renderNodeLock;
 		}
 
 		return this.#buttonWithdraw;
@@ -707,20 +717,19 @@ export class MainpagePage extends BaseSettingsPage
 
 		if (!this.#buttonMarket)
 		{
+			const buttonColor = !this.#isPageExists ? 'ui-btn-primary' : '--light-blue';
 			const renderNode = Tag.render`			
-				<button class="ui-btn ui-btn-md ui-btn-round ui-btn-no-caps 
-						${!this.#isPageExists ? 'ui-btn-primary' : '--light-blue'}">
+				<button class="ui-btn ui-btn-md ui-btn-round ui-btn-no-caps ${buttonColor}">
 					${Loc.getMessage('INTRANET_SETTINGS_MAINPAGE_BUTTON_MARKET')}
 				</button>
 			`;
 			const renderNodeLock = Tag.render`
-				<button class="ui-btn ui-btn-md ui-btn-round ui-btn-no-caps --disabled
-						${!this.#isPageExists ? 'ui-btn-primary' : '--light-blue'}">
+				<button class="ui-btn ui-btn-md ui-btn-round ui-btn-no-caps ${buttonColor} --disabled">
 					${Loc.getMessage('INTRANET_SETTINGS_MAINPAGE_BUTTON_MARKET')}
 					${this.renderLockElement()}
 				</button>
 			`;
-			this.#buttonMarket = this.#isEnable ? renderNode : renderNodeLock;
+			this.#buttonMarket = this.#canEdit ? renderNode : renderNodeLock;
 		}
 
 		return this.#buttonMarket;
@@ -739,7 +748,7 @@ export class MainpagePage extends BaseSettingsPage
 		if (this.#getButtonCreate())
 		{
 			Event.bind(this.#getButtonCreate(), 'click', () => {
-				if (this.#isEnable)
+				if (this.#canEdit)
 				{
 					BX.SidePanel.Instance.open(this.#urlCreate);
 				}
@@ -752,7 +761,7 @@ export class MainpagePage extends BaseSettingsPage
 					tool: 'landing',
 					category: 'vibe',
 					event: 'open_market',
-					status: this.#isEnable ? 'success' : 'error_limit',
+					status: this.#canEdit ? 'success' : 'error_limit',
 				});
 			});
 		}
@@ -760,24 +769,32 @@ export class MainpagePage extends BaseSettingsPage
 		if (this.#getButtonEdit())
 		{
 			Event.bind(this.#getButtonEdit(), 'click', () => {
-				BX.SidePanel.Instance.open(
-					this.#urlEdit,
-					{
-						customLeftBoundary: 66,
-						events: {
-							onCloseComplete: () => {
-								if (this.#urlPublic)
-								{
-									window.top.location = this.#urlPublic;
+				if (this.#canEdit)
+				{
+					BX.SidePanel.Instance.open(
+						this.#urlEdit,
+						{
+							customLeftBoundary: 66,
+							events: {
+								onCloseComplete: () => {
+									if (this.#urlPublic)
+									{
+										window.top.location = this.#urlPublic;
+									}
 								}
-							}
+							},
 						},
-					},
-				);
+					);
+				}
+				else
+				{
+					BX.UI.InfoHelper.show("limit_office_vibe");
+				}
 				BX.UI.Analytics.sendData({
 					tool: 'landing',
 					category: 'vibe',
 					event: 'open_editor',
+					status: this.#canEdit ? 'success' : 'error_limit',
 				});
 			});
 		}
@@ -789,6 +806,8 @@ export class MainpagePage extends BaseSettingsPage
 				{
 					return;
 				}
+
+				// todo: need analitycs?
 
 				Runtime.loadExtension('ui.feedback.form').then(() => {
 					this.#feedbackParams.title = Loc.getMessage('INTRANET_SETTINGS_MAINPAGE_BUTTON_PARTNERS');
@@ -805,7 +824,7 @@ export class MainpagePage extends BaseSettingsPage
 			Dom.replace(this.#getButtonWithdraw(), this.#getButtonPublish());
 		});
 		Event.bind(this.#getButtonPublish(), 'click', () => {
-			if (!this.#isEnable)
+			if (!this.#canEdit)
 			{
 				BX.UI.InfoHelper.show("limit_office_vibe");
 				BX.UI.Analytics.sendData({

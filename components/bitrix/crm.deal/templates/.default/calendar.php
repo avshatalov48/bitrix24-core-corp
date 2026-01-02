@@ -57,44 +57,7 @@ if (!Bitrix\Crm\Integration\Bitrix24Manager::isAccessEnabled(CCrmOwnerType::Deal
 elseif (\Bitrix\Main\Loader::includeModule('calendar'))
 {
 	Calendar::loadResourcebookingUserfieldExtention();
-	$isBitrix24Template = SITE_TEMPLATE_ID === 'bitrix24';
 
-	if (!$isRecurring)
-	{
-		$APPLICATION->IncludeComponent(
-			'bitrix:crm.entity.counter.panel',
-			'',
-			array(
-				'ENTITY_TYPE_NAME' => CCrmOwnerType::DealName,
-				'EXTRAS' => array('DEAL_CATEGORY_ID' => $categoryID),
-				'PATH_TO_ENTITY_LIST' => $categoryID < 0
-					? ($arResult['PATH_TO_DEAL_LIST'] ?? '')
-					: CComponentEngine::makePathFromTemplate(
-						$arResult['PATH_TO_DEAL_CATEGORY'] ?? '',
-						['category_id' => $categoryID]
-					)
-			)
-		);
-	}
-
-	if ($isBitrix24Template)
-	{
-		$this->SetViewTarget('inside_pagetitle', 100);
-	}
-
-	$catalogPath = $isRecurring
-		? ($arResult['PATH_TO_DEAL_RECUR_CATEGORY'] ?? '')
-		: ($arResult['PATH_TO_DEAL_CATEGORY'] ?? '');
-
-	if ($isBitrix24Template)
-	{
-		$this->SetViewTarget('inside_pagetitle', 100);
-	}
-
-	if ($isBitrix24Template)
-	{
-		$this->EndViewTarget();
-	}
 	$APPLICATION->ShowViewContent('crm-grid-filter');
 
 	if (!isset($filterSelect))
@@ -204,7 +167,7 @@ elseif (\Bitrix\Main\Loader::includeModule('calendar'))
 
 	$APPLICATION->IncludeComponent(
 		'bitrix:crm.deal_category.panel',
-		$isBitrix24Template ? 'tiny' : '',
+		'tiny',
 		array(
 			'PATH_TO_DEAL_LIST' => $arResult['PATH_TO_DEAL_CALENDAR'] ?? '',
 			'PATH_TO_DEAL_EDIT' => $arResult['PATH_TO_DEAL_EDIT'] ?? '',

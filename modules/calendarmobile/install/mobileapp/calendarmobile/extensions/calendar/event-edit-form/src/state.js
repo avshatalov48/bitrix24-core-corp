@@ -29,7 +29,6 @@ jn.define('calendar/event-edit-form/state', (require, exports, module) => {
 	 * @property {User} user
 	 * @property {string} uuid
 	 * @property {number} firstWeekday
-	 * @property {Boolean} keyboardShown
 	 * @property {string} recursionMode
 	 * @property {Boolean} editAttendeesMode
 	 *
@@ -39,7 +38,7 @@ jn.define('calendar/event-edit-form/state', (require, exports, module) => {
 	 * @property {string} description
 	 * @property {string} color
 	 * @property {User[]} attendees
-	 * @property {boolean} isFullDay
+	 * @property {boolean} fullDay
 	 * @property {string} timezone
 	 * @property {string} location
 	 * @property {number} slotSize
@@ -56,6 +55,10 @@ jn.define('calendar/event-edit-form/state', (require, exports, module) => {
 	 * @property {array} permissions
 	 * @property {number} collabId
 	 * @property {number} meetingHost
+	 * @property {number} customDateFrom
+	 * @property {number} customDateTo
+	 * @property {boolean} isCustomSelected
+	 * @property {number} eventLength
 	 *
 	 * @property {function(value)} setEventNameValue
 	 * @property {function(value)} setDescription
@@ -69,17 +72,16 @@ jn.define('calendar/event-edit-form/state', (require, exports, module) => {
 	 * @property {function(value)} setAccessibility
 	 * @property {function(value)} setImportance
 	 * @property {function(value)} setPrivateEvent
+	 * @property {function(value)} setCustomDateFrom
+	 * @property {function(value)} setCustomDateTo
+	 * @property {function(value)} setIsCustomSelected
+	 * @property {function(value)} setEventLength
  	 */
 	class State extends BaseState
 	{
 		get excludedUserIds()
 		{
 			return Object.keys(this.excludedUsers).map((userId) => parseInt(userId, 10));
-		}
-
-		get eventName()
-		{
-			return this.eventNameValue || defaultEventName;
 		}
 
 		get selectedDate()
@@ -112,7 +114,7 @@ jn.define('calendar/event-edit-form/state', (require, exports, module) => {
 
 		get locationReservedInfo()
 		{
-			if (!this.selectedSlot)
+			if (!this.selectedSlot && !this.isCustomSelected)
 			{
 				return {};
 			}
@@ -134,6 +136,11 @@ jn.define('calendar/event-edit-form/state', (require, exports, module) => {
 			}
 
 			return LocationAccessibilityManager.hasAccessibility({ date });
+		}
+
+		get hasCustomPeriod()
+		{
+			return this.customDateFrom > 0 && this.customDateTo > 0;
 		}
 
 		/**
@@ -185,7 +192,6 @@ jn.define('calendar/event-edit-form/state', (require, exports, module) => {
 			this.user = props.user;
 			this.firstWeekday = props.firstWeekday;
 			this.recursionMode = props.recursionMode;
-			this.keyboardShown = false;
 			this.todayButtonClick = false;
 			this.originalDateFrom = null;
 		}
@@ -219,7 +225,7 @@ jn.define('calendar/event-edit-form/state', (require, exports, module) => {
 		{
 			const event = props.event;
 			const from = event.dateFromTs;
-			const to = event.dateToTs;
+			const to = event.dateToTs - (event.fullDay ? DateHelper.dayLength : 0);
 
 			this.selectedDayCode = DateHelper.getDayCode(new Date(Math.max(from, Date.now())));
 			this.originalDateFrom = new Date(from);
@@ -241,16 +247,10 @@ jn.define('calendar/event-edit-form/state', (require, exports, module) => {
 				attendees: attendees.sort((a, b) => this.#compareUser(a, b)),
 				timezone: event.timezone,
 				location: LocationManager.getTextLocation(event.location),
-				isFullDay: event.isFullDay,
+				fullDay: event.fullDay,
 				meetingHost: event.meetingHost,
-				slotSize: (to - from) / 1000 / 60,
 				recurrenceRule: event.recurrenceRule,
-				selectedSlot: {
-					id: `${from}-${to}`,
-					from,
-					to,
-				},
-				reminder: event.reminders[0]?.count ?? 15,
+				reminder: event.reminders[0]?.count ?? -1,
 				reminderList: event.reminders,
 				accessibility: event.accessibility,
 				importance: event.importance,
@@ -260,6 +260,10 @@ jn.define('calendar/event-edit-form/state', (require, exports, module) => {
 				existingFiles: event.files ?? [],
 				uploadedFiles: [],
 				excludedUsers: {},
+				customDateFrom: from,
+				customDateTo: to,
+				isCustomSelected: true,
+				eventLength: event.eventLength - (event.fullDay ? DateHelper.dayLength / 1000 : 0),
 			};
 		}
 
@@ -283,7 +287,7 @@ jn.define('calendar/event-edit-form/state', (require, exports, module) => {
 				color: '',
 				attendees: this.#getDefaultAttendee(),
 				location: '',
-				isFullDay: false,
+				fullDay: false,
 				meetingHost: 0,
 				timezone: SettingsManager.getUserTimezoneName(),
 				recurrenceRule: null,
@@ -298,6 +302,10 @@ jn.define('calendar/event-edit-form/state', (require, exports, module) => {
 				uploadedFiles: [],
 				permissions: {},
 				collabId: 0,
+				customDateFrom: 0,
+				customDateTo: 0,
+				eventLength: 0,
+				isCustomSelected: false,
 			};
 
 			return { ...defaultProps, ...this.initialProps };
@@ -317,12 +325,58 @@ jn.define('calendar/event-edit-form/state', (require, exports, module) => {
 			if (!this.isEditForm())
 			{
 				this.selectedSlot = null;
+				this.isCustomSelected = false;
+				this.customDateFrom = 0;
+				this.customDateTo = 0;
+				this.eventLength = 0;
+				this.fullDay = false;
 			}
 		}
 
-		setKeyboardShown(keyboardShown)
+		setSelectedSlot(selectedSlot)
 		{
-			this.keyboardShown = keyboardShown;
+			this.selectedSlot = selectedSlot;
+			this.isCustomSelected = false;
+		}
+
+		setIsCustomSelected(isCustomSelected)
+		{
+			this.isCustomSelected = isCustomSelected;
+			this.selectedSlot = null;
+		}
+
+		setCustomDateFrom(timestamp)
+		{
+			this.customDateFrom = timestamp;
+
+			if (this.eventLength === 0)
+			{
+				if (this.customDateTo > 0)
+				{
+					this.eventLength = (this.customDateTo - this.customDateFrom) / 1000;
+				}
+				else
+				{
+					this.eventLength = this.fullDay ? 0 : 3600;
+				}
+			}
+
+			this.customDateTo = timestamp + this.eventLength * 1000;
+		}
+
+		setCustomDateTo(timestamp)
+		{
+			if (timestamp < this.customDateFrom)
+			{
+				return;
+			}
+
+			this.customDateTo = timestamp;
+
+			if (this.customDateFrom > 0)
+			{
+				this.eventLength = (timestamp - this.customDateFrom) / 1000;
+			}
 		}
 
 		setTodayButtonClick(todayButtonClick)
@@ -355,19 +409,29 @@ jn.define('calendar/event-edit-form/state', (require, exports, module) => {
 		getFields()
 		{
 			const id = this.id.toString().startsWith('tmp') ? 0 : this.id;
-			const from = new Date(this.selectedSlot.from);
-			const to = new Date(this.selectedSlot.to);
+			const from = this.isCustomSelected
+				? new Date(this.customDateFrom)
+				: new Date(this.selectedSlot.from)
+			;
+			const to = this.isCustomSelected
+				? new Date(this.customDateTo)
+				: new Date(this.selectedSlot.to)
+			;
+			const skipTime = this.isCustomSelected && this.fullDay
+				? BooleanParams.YES
+				: BooleanParams.NO
+			;
 
 			const fields = {
 				id,
 				section: this.sectionId,
-				name: this.eventName,
+				name: this.eventNameValue || defaultEventName,
 				desc: this.description,
 				color: this.color,
 				EVENT_RRULE: null,
 				date_from: DateHelper.formatDate(from),
 				date_to: DateHelper.formatDate(to),
-				skip_time: BooleanParams.NO,
+				skip_time: skipTime,
 				time_from: DateHelper.formatTime(from),
 				time_to: DateHelper.formatTime(to),
 				location: LocationManager.prepareTextLocation(this.location),
@@ -417,32 +481,68 @@ jn.define('calendar/event-edit-form/state', (require, exports, module) => {
 
 			return {
 				id: this.id,
-				parentId: 0,
-				dateFromTs: this.selectedSlot.from,
-				dateToTs: this.selectedSlot.to,
-				isFullDay: this.isFullDay,
+				parentId: this.parentId,
+				dateFromTs: this.isCustomSelected ? this.customDateFrom : this.selectedSlot.from,
+				dateToTs: this.isCustomSelected ? this.customDateTo : this.selectedSlot.to,
+				fullDay: this.isCustomSelected ? this.fullDay : false,
 				sectionId: this.sectionId,
-				name: this.eventName,
+				name: this.eventNameValue || defaultEventName,
 				description: this.description,
 				location: this.location,
 				accessibility: this.accessibility,
 				importance: this.importance,
 				privateEvent: this.privateEvent,
 				color: this.color,
-				recurrenceRule: null,
-				excludedDates: [],
-				eventLength: this.selectedSlot.to - this.selectedSlot.from,
-				calType: CalendarType.USER,
+				calType: this.calType,
+				ownerId: this.ownerId,
 				attendees: this.attendees.map((user) => ({
 					id: user.id,
 					status: this.#getAttendeeStatus(initialAttendees, user.id, EventMeetingStatus.QUESTIONED),
 				})),
-				reminders: this.reminderList,
+				reminders: this.#getReminderForEdit(),
 				files: this.existingFiles,
 				permissions: this.permissions,
 				collabId: this.collabId,
 				meetingStatus: this.#getAttendeeStatus(initialAttendees, Number(env.userId), EventMeetingStatus.HOST),
 				hasUploadedFiles: Type.isArrayFilled(this.uploadedFiles),
+				eventLength: this.isCustomSelected
+					? ((this.customDateTo - this.customDateFrom) / 1000)
+					: ((this.selectedSlot.to - this.selectedSlot.from) / 1000)
+				,
+			};
+		}
+
+		getInitialReduxFields()
+		{
+			if (!this.isEditForm())
+			{
+				return null;
+			}
+
+			const initialProps = this.getInitialProps();
+
+			return {
+				id: this.id,
+				parentId: initialProps.parentId,
+				dateFromTs: initialProps.customDateFrom,
+				dateToTs: initialProps.customDateTo,
+				fullDay: initialProps.fullDay,
+				sectionId: initialProps.sectionId,
+				name: initialProps.eventNameValue || defaultEventName,
+				description: initialProps.description,
+				location: initialProps.location,
+				accessibility: initialProps.accessibility,
+				importance: initialProps.importance,
+				privateEvent: initialProps.privateEvent,
+				color: initialProps.color,
+				calType: this.calType,
+				attendees: initialProps.attendees,
+				reminders: initialProps.reminderList,
+				files: initialProps.existingFiles,
+				permissions: initialProps.permissions,
+				collabId: initialProps.collabId,
+				meetingStatus: this.#getAttendeeStatus(initialProps.attendees, Number(env.userId), EventMeetingStatus.HOST),
+				eventLength: (this.customDateTo - this.customDateFrom) / 1000,
 			};
 		}
 
@@ -493,8 +593,14 @@ jn.define('calendar/event-edit-form/state', (require, exports, module) => {
 		getLocationAccessibilityParams()
 		{
 			const date = this.selectedDate;
-			const fromTs = this.selectedSlot.from;
-			const toTs = this.selectedSlot.to;
+			const fromTs = this.isCustomSelected
+				? this.customDateFrom
+				: this.selectedSlot.from
+			;
+			const toTs = this.isCustomSelected
+				? this.customDateTo
+				: this.selectedSlot.to
+			;
 
 			return { date, fromTs, toTs };
 		}
@@ -526,9 +632,15 @@ jn.define('calendar/event-edit-form/state', (require, exports, module) => {
 		#getReminderForEdit()
 		{
 			const currentReminder = this.reminder.toString();
+
+			if (this.reminder === -1)
+			{
+				return [];
+			}
+
 			if (!Type.isArrayFilled(this.reminderList))
 			{
-				return this.reminder > 0 ? [currentReminder] : null;
+				return this.reminder >= 0 ? [currentReminder] : [];
 			}
 
 			const reminders = this.reminderList.map((reminder) => this.#formatReminder(reminder));
@@ -587,6 +699,16 @@ jn.define('calendar/event-edit-form/state', (require, exports, module) => {
 
 		#compareUser(first, second)
 		{
+			if (first.id === this.ownerId)
+			{
+				return -1;
+			}
+
+			if (second.id === this.ownerId)
+			{
+				return 1;
+			}
+
 			if (first.status === EventMeetingStatus.HOST)
 			{
 				return -1;

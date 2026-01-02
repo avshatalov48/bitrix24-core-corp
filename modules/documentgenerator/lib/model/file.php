@@ -29,6 +29,8 @@ Loc::loadMessages(__FILE__);
  */
 class FileTable extends Main\Entity\DataManager
 {
+	private static array $bFileCache = [];
+
 	/**
 	 * Returns DB table name for entity.
 	 *
@@ -112,6 +114,12 @@ class FileTable extends Main\Entity\DataManager
 		return $result;
 	}
 
+	public static function cleanCache(): void
+	{
+		parent::cleanCache();
+		self::$bFileCache = [];
+	}
+
 	/**
 	 * @param $id
 	 * @return bool|string
@@ -189,36 +197,44 @@ class FileTable extends Main\Entity\DataManager
 	}
 
 	/**
-	 * TODO place it somewhere else
-	 *
 	 * @param $fileId
-	 * @return bool|int
-	 * @throws Main\ArgumentException
-	 * @throws Main\NotImplementedException
-	 * @throws Main\ObjectPropertyException
-	 * @throws Main\SystemException
+	 * @return false|int
 	 */
 	public static function getBFileId($fileId)
 	{
-		$data = static::getById($fileId)->fetch();
-		if($data)
+		if (isset(self::$bFileCache[$fileId]))
 		{
-			$storage = new $data['STORAGE_TYPE'];
-			if($storage instanceof Storage\Disk && Main\Loader::includeModule('disk'))
-			{
-				$file = File::loadById($data['STORAGE_WHERE']);
-				if($file)
-				{
-					return (int)$file->getFileId();
-				}
-			}
-			else
-			{
-				return (int)$data['STORAGE_WHERE'];
-			}
+			return self::$bFileCache[$fileId];
 		}
 
-		return false;
+		$data = static::getById($fileId)->fetch();
+		if (!$data)
+		{
+			self::$bFileCache[$fileId] = false;
+
+			return false;
+		}
+
+		$storage = new $data['STORAGE_TYPE'];
+		$useDisk = $storage instanceof Storage\Disk && Main\Loader::includeModule('disk');
+		if (!$useDisk)
+		{
+			self::$bFileCache[$fileId] = (int)$data['STORAGE_WHERE'];
+
+			return self::$bFileCache[$fileId];
+		}
+
+		$file = File::loadById($data['STORAGE_WHERE']);
+		if (!$file)
+		{
+			self::$bFileCache[$fileId] = false;
+
+			return false;
+		}
+
+		self::$bFileCache[$fileId] = (int)$file->getFileId();
+
+		return self::$bFileCache[$fileId];
 	}
 
 	/**

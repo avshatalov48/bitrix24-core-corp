@@ -4,7 +4,7 @@ namespace Bitrix\Tasks\Flow\Template\Access\Permission;
 
 use Bitrix\Tasks\Access\Permission\PermissionDictionary;
 use Bitrix\Tasks\Flow\Attribute\AccessCodes;
-use Bitrix\Tasks\AbstractCommand;
+use Bitrix\Tasks\Flow\AbstractCommand;
 use Bitrix\Tasks\Internals\Attribute\InArray;
 use Bitrix\Tasks\Internals\Attribute\PositiveNumber;
 use Bitrix\Tasks\Internals\Attribute\Template;

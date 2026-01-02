@@ -1,0 +1,3 @@
+<?php
+$MESS["CRM_REPEAT_SALE_ACTION_CREATE_ACTIVITY_ERROR"] = "Could not create activity.";
+$MESS["CRM_REPEAT_SALE_ACTION_CREATE_ACTIVITY_TITLE"] = "Repeat sale, deal #ENTITY_ID#";

@@ -25,10 +25,9 @@ final class CTaskElapsedItem extends CTaskSubItemAbstract
 
 
 	/**
-	 * @param CTaskItemInterface $task
-	 * @param array $fields with mandatory elements MINUTES, COMMENT_TEXT
-	 * @return CTaskElapsedItem
-	 * @throws TasksException
+	 * @deprecated
+	 * @TasksV2
+	 * @use \Bitrix\Tasks\V2\Internal\Service\Task\ElapsedTimeService
 	 */
 	public static function add(CTaskItemInterface $task, array $fields)
 	{
@@ -46,7 +45,6 @@ final class CTaskElapsedItem extends CTaskSubItemAbstract
 		$fields['MINUTES'] = (isset($fields['MINUTES']) ? (int)$fields['MINUTES'] : null);
 		$fields['SECONDS'] = (isset($fields['SECONDS']) ? (int)$fields['SECONDS'] : null);
 
-		/** @noinspection PhpDeprecationInspection */
 		$id = (new CTaskElapsedTime())->Add($fields);
 
 		// Reset tagged system cache by tag 'tasks_user_' . $userId for each task member
@@ -130,8 +128,8 @@ final class CTaskElapsedItem extends CTaskSubItemAbstract
 		CTaskAssert::assertLaxIntegers($actionId);
 		$actionId = (int) $actionId;
 
-		$isAdmin = CTasksTools::IsAdmin($this->executiveUserId)
-			|| CTasksTools::IsPortalB24Admin($this->executiveUserId);
+		$isAdmin = \Bitrix\Tasks\Util\User::isAdmin($this->executiveUserId)
+			|| \Bitrix\Tasks\Integration\Bitrix24\User::isAdmin($this->executiveUserId);
 
 		if ($actionId === self::ACTION_ELAPSED_TIME_ADD)
 			$isActionAllowed = $this->oTaskItem->checkAccess(ActionDictionary::ACTION_TASK_ELAPSED_TIME);

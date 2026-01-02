@@ -122,4 +122,32 @@ class DynamicController extends FactoryBasedController implements Interfaces\Fin
 
 		return parent::prepareModificationEntryParams($entityID, $previousFields, $currentFields, $fieldName);
 	}
+
+	protected function applySettingsBaseData(array &$data, array $base, string $caption = ''): void
+	{
+		if (empty($base))
+		{
+			return;
+		}
+
+		$entityTypeId = $base['ENTITY_TYPE_ID'] ?? 0;
+		$entityId = $base['ENTITY_ID'] ?? 0;
+		$source = $base['SOURCE'] ?? '';
+		if ($entityId > 0 && \CCrmOwnerType::IsDefined($entityTypeId))
+		{
+			if (!empty($caption))
+			{
+				$data['BASE'] = ['CAPTION' => $caption];
+			}
+
+			if (\CCrmOwnerType::TryGetEntityInfo($entityTypeId, $entityId, $baseEntityInfo, false))
+			{
+				$data['BASE']['ENTITY_INFO'] = $baseEntityInfo;
+				if (!empty($source))
+				{
+					$data['BASE']['ENTITY_INFO']['SOURCE'] = $source;
+				}
+			}
+		}
+	}
 }

@@ -181,7 +181,7 @@ class Controller extends Internals\Controller
 		$cache = Cache::createInstance();
 		$cacheTtl = defined('BX_COMP_MANAGED_CACHE') ? 3153600 : 3600*4;
 		$cachePath = "/disk/uf/{$userId}";
-		if($cache->initCache($cacheTtl, 'group_storage_list_' . SITE_ID . '_' . $userId, $cachePath))
+		if($cache->initCache($cacheTtl, 'v2_group_storage_list_' . SITE_ID . '_' . $userId, $cachePath))
 		{
 			[$currentUserGroups] = $cache->getVars();
 		}
@@ -228,11 +228,13 @@ class Controller extends Internals\Controller
 			foreach($storages as $storage)
 			{
 				$currentUserGroups[$storage->getEntityId()] = array(
-					'STORAGE' => $storage,
+					'STORAGE' => [
+						'ID' => $storage->getId(),
+						'ROOT_OBJECT_ID' => $storage->getRootObjectId(),
+					],
 					'NAME' => $storage->getRootObject()->getExtra()->get('UG_GROUP_NAME'),
 				);
 			}
-			unset($storage);
 
 			$taggedCache->registerTag("sonet_user2group_U{$userId}");
 			$taggedCache->endTagCache();
@@ -603,11 +605,9 @@ class Controller extends Internals\Controller
 			{
 				continue;
 			}
-			/** @var Storage $storage */
-			$storage = $group['STORAGE'];
-			$list[$storage->getId()] = array(
-				'id' => $storage->getId(),
-				'rootObjectId' => $storage->getRootObjectId(),
+			$list[$group['STORAGE']['ID']] = array(
+				'id' => $group['STORAGE']['ID'],
+				'rootObjectId' => $group['STORAGE']['ROOT_OBJECT_ID'],
 				'name' => $group['NAME'],
 				'type' => 'group',
 				'link' => $urlUfController,

@@ -37,6 +37,11 @@ jn.define('layout/ui/plan-restriction/provider', (require, exports, module) => {
 	 */
 	async function getIsDemoAvailable()
 	{
+		if (env.isCollaber || env.extranet)
+		{
+			return false;
+		}
+
 		const storage = new StorageCache('tariff_plan_restriction', 'demo');
 		if (storage.get().isDemoAvailable === false)
 		{

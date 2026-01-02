@@ -1,0 +1,6 @@
+.tasks-full-card-header {
+	display: flex;
+	align-items: center;
+	--padding-bottom: 12px;
+	padding: 19px calc(22px - var(--scrollbar-width)) var(--padding-bottom) 22px;
+}

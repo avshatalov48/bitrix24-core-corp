@@ -25,6 +25,7 @@ return [
         'ui-system/blocks/avatar',
         'ui-system/layout/card',
         'haptics',
+		'loc',
 	],
 	'bundle' => [
 		'./src/name-checker-item',

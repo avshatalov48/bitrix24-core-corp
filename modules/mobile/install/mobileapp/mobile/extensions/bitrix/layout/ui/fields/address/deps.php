@@ -9,6 +9,7 @@ return [
 		'utils/function',
 		'loc',
 		'utils/string',
+		'utils/random',
 	],
 	'bundle' => [
 		'./value-converter',

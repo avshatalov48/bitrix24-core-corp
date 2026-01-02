@@ -130,6 +130,10 @@
 	animation-delay: 1100ms;
 }
 
+.booking-promo-banner-popup-item.--without-bullet {
+	margin-top: 24px;
+}
+
 @keyframes booking-promo-banner-popup-fade-in {
 	to {
 		opacity: 1;

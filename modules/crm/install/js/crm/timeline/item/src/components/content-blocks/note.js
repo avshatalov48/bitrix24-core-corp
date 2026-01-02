@@ -1,11 +1,10 @@
-import {User} from '../layout/header/user';
-import {Action} from '../../action';
-import {Button} from '../layout/button';
-import {ButtonState} from '../enums/button-state';
-import {ButtonType} from '../enums/button-type';
-import {Browser, Runtime, Event} from 'main.core';
-import {MessageBox, MessageBoxButtons} from "ui.dialogs.messagebox";
-import {TextCrop} from 'ui.textcrop';
+import { User } from '../layout/header/user';
+import { Action } from '../../action';
+import { Button } from '../layout/button';
+import { ButtonState } from '../enums/button-state';
+import { ButtonType } from '../enums/button-type';
+import { Browser, Event, Runtime } from 'main.core';
+import { MessageBox, MessageBoxButtons } from "ui.dialogs.messagebox";
 
 export const Note = {
 	components: {

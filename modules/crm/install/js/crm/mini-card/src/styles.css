@@ -1,0 +1,65 @@
+.crm-mini-card {
+	display: flex;
+	width: 330px;
+}
+
+.crm-mini-card-content {
+	padding: var(--ui-size-xl) var(--ui-size-2xl);
+	display: flex;
+	flex: 1 1 100%;
+	flex-direction: column;
+	gap: var(--ui-size-sm);
+	min-width: 0;
+}
+
+.crm-mini-card-content__header {
+	border-bottom: 1px rgba(247, 247, 247, 1) solid;
+}
+
+.crm-mini-card-content__header-info {
+	display: flex;
+	align-items: center;
+	gap: var(--ui-font-size-4xs);
+
+	margin-bottom: var(--ui-size-sm);
+}
+
+.crm-mini-card-content__header-title {
+	font-weight: var(--ui-font-weight-semi-bold);
+	font-size: var(--ui-font-size-lg);
+	line-height: 20px;
+	letter-spacing: var(--ui-letter-spacing-m);
+	word-break: break-word;
+}
+
+.crm-mini-card-content__header-icon {
+	flex: 0 0 48px;
+	height: 48px;
+	border-radius: 512px;
+	overflow: hidden;
+}
+
+.crm-mini-card-content__header-control-list {
+	display: flex;
+	gap: var(--ui-size-xs);
+	flex-wrap: wrap;
+	justify-content: stretch;
+	margin-bottom: var(--ui-size-sm);
+}
+
+.crm-mini-card-content__header-control-item {
+	flex-grow: 1;
+	flex-basis: 0;
+}
+
+.crm-mini-card-content__body-field-list {
+	display: flex;
+	flex-direction: column;
+	gap: var(--ui-size-xs2);
+}
+
+.crm-mini-card-content__footer-notes-list {
+	display: flex;
+	flex-direction: column;
+	gap: var(--ui-size-3xs);
+}

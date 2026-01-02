@@ -246,7 +246,7 @@ jn.define('selector/widget/entity/tree-selectors/shared/navigator', (require, ex
 			)
 			{
 				this.options.onCurrentNodeChanged(
-					this.#getNodeByInternalId(internalNode.id),
+					this.#getNodeByInternalId(internalNode.id) || {},
 				);
 			}
 

@@ -3,6 +3,7 @@
 namespace Bitrix\BIConnector\Superset\Grid\Row\Assembler\Field\Dashboard;
 
 use Bitrix\BIConnector\Integration\Superset\Model\SupersetDashboardTable;
+use Bitrix\BIConnector\Integration\Superset\Repository\DashboardGroupRepository;
 use Bitrix\BIConnector\Superset\Grid\Row\Assembler\Field\Base\UserFieldAssembler;
 use Bitrix\Main\Localization\Loc;
 use Bitrix\Main\Web\Json;
@@ -11,6 +12,11 @@ class CreatedByFieldAssembler extends UserFieldAssembler
 {
 	protected function prepareColumn($value): string
 	{
+		if ($value['ENTITY_TYPE'] === DashboardGroupRepository::TYPE_GROUP)
+		{
+			return '';
+		}
+
 		$ormFilter = $this->getSettings()->getOrmFilter();
 		$isFiltered = isset($ormFilter['CREATED_BY_ID']) && in_array((int)$value['CREATED_BY_ID'], $ormFilter['CREATED_BY_ID']);
 
@@ -19,7 +25,7 @@ class CreatedByFieldAssembler extends UserFieldAssembler
 
 		if ($type === SupersetDashboardTable::DASHBOARD_TYPE_MARKET)
 		{
-			$authorText = Loc::getMessage('BICONNECTOR_SUPERSET_DASHBOARD_GRID_AUTHOR_MARKET');
+			$authorText = Loc::getMessage('BICONNECTOR_SUPERSET_DASHBOARD_GRID_AUTHOR_MARKET_MSGVER_1');
 
 			return "<span class=\"biconnector-grid-market-cell\">
 				<img src=\"/bitrix/images/biconnector/superset-dashboard-grid/icon-type-market.png\" width='24' height='24' alt=\"{$authorText}\"> 

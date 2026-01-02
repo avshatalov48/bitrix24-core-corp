@@ -114,11 +114,18 @@ abstract class Base extends BIConnector\DataSource\BIBuilderDataset
 		}
 
 		$result = &$params[1];
+		$eventTableName = $params[3];
 
 		$externalDatasets = BIConnector\ExternalSource\DatasetManager::getList();
 		foreach ($externalDatasets as $externalDataset)
 		{
 			$dataset = Factory::getDataset($externalDataset, $connection, $languageId);
+
+			if (!empty($eventTableName) && $dataset->getResultTableName() !== $eventTableName)
+			{
+				continue;
+			}
+
 			if (!$dataset->onBeforeEvent()->isSuccess())
 			{
 				continue;

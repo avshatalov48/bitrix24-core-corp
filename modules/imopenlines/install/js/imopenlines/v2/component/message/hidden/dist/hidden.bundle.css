@@ -13,7 +13,7 @@
 .bx-imol-message-hidden-content__text {
 	min-width: calc(100% + 1px);
 	padding-right: 20px;
-	font: 15px/1.3 var(--ui-font-family-system);
+	font: 15px/1.3 var(--ui-font-family-primary, var(--ui-font-family-system));
 	color: var(--imol-message-hidden__font-color);
 	word-break: break-word;
 }
@@ -35,7 +35,7 @@
 .bx-imol-message-hidden-content__container-date {
 	display: flex;
 	margin-left: auto;
-	font: 10px/11px var(--ui-font-family-system);
+	font: 10px/11px var(--ui-font-family-primary, var(--ui-font-family-system));
 	color: var(--imol-message-hidden__font-color);
 }
 

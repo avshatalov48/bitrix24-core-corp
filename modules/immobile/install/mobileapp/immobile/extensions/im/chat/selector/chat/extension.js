@@ -383,13 +383,6 @@ jn.define('im/chat/selector/chat', (require, exports, module) => {
 					: this.itemList.slice(0, size)
 			;
 
-			if(Application.getApiVersion() < 44 && this.itemList.length >= size && !this.isOpen)
-			{
-				result.push(this.getButtonMore(this.uiSection.id));
-
-				return result;
-			}
-
 			this.setButtonTextBySize(size);
 
 			return result;

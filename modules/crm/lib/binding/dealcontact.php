@@ -10,9 +10,9 @@ namespace Bitrix\Crm\Binding;
 use Bitrix\Crm\DealTable;
 use Bitrix\Crm\Service\Container;
 use Bitrix\Main;
-use Bitrix\Main\Entity;
 use Bitrix\Main\ORM\Fields\Relations\Reference;
 use Bitrix\Main\ORM\Query\Join;
+use Bitrix\Main\ORM\Data\AddStrategy;
 
 /**
  * Class DealContactTable
@@ -30,8 +30,10 @@ use Bitrix\Main\ORM\Query\Join;
  * @method static \Bitrix\Crm\Binding\EO_DealContact wakeUpObject($row)
  * @method static \Bitrix\Crm\Binding\EO_DealContact_Collection wakeUpCollection($rows)
  */
-class DealContactTable extends Entity\DataManager
+class DealContactTable extends Main\ORM\Data\DataManager
 {
+	use AddStrategy\Trait\MergeByDefaultTrait;
+
 	/**
 	 * Get table name.
 	 * @return string
@@ -40,6 +42,7 @@ class DealContactTable extends Entity\DataManager
 	{
 		return 'b_crm_deal_contact';
 	}
+
 	/**
 	 * Get table fields map.
 	 * @return array

@@ -9,13 +9,12 @@
 	z-index: 2;
 	padding: 10px 24px;
 	align-items: center;
-	gap: 12px;
 }
 
 .humanresources-title-panel__title {
-	font: var(--ui-font-weight-medium) 20px/24px var(--ui-font-family-system);
-	color: var(--ui-color-palette-black-solid);
-	margin: 0;
+	font: var(--ui-font-weight-medium) 20px/24px var(--ui-font-family-primary, var(--ui-font-family-system));
+	color: var(--ui-color-palette-black-base);
+	margin: 0 4px 0 0;
 }
 
 .humanresources-title-panel__separator {
@@ -38,7 +37,35 @@
 .humanresources-title-panel__icon.--selected path {
 	fill: var(--ui-color-palette-blue-60);
 }
+
 .humanresources-title-panel__star {
 	cursor: pointer;
-	margin-top: 3px;
+	margin: 0 8px 0 4px;
+}
+
+.humanresources-title-panel__pin {
+	cursor: pointer;
+	margin: 0 8px 0 4px;
+	--ui-icon-set__icon-path: var(--o-ui-icon-set__path_pin);
+}
+
+.humanresources-title-panel__unpin {
+	cursor: pointer;
+	margin: 0 8px 0 4px;
+	--ui-icon-set__icon-path: var(--o-ui-icon-set__path_unpin);
+}
+
+.humanresources-title-panel__add-button {
+	margin: 0 8px 0 8px;
+}
+
+.humanresources-title-panel__icon-buttons {
+	margin-left: 8px;
+	display: flex;
+	gap: 6px;
+	align-items: center;
+}
+
+.humanresources-title-panel__burger-menu-button {
+	padding: 0 4px 0 4px;
 }

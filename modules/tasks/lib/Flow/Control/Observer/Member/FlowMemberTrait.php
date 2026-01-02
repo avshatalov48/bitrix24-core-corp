@@ -37,12 +37,15 @@ trait FlowMemberTrait
 			$members = $mapper->map($command, $command->taskCreators, Role::TASK_CREATOR);
 		}
 
+		if (!empty($command->responsibleList))
+		{
+			$responsibleRole = $this->getResponsibleRole($flowEntity);
+			$responsibleList = $mapper->map($command, $command->responsibleList, $responsibleRole);
+			$members->merge($responsibleList);
+		}
+
 		$members->add($this->getOwner($flowEntity));
 		$members->add($this->getCreator($flowEntity));
-
-		$responsibleRole = $this->getResponsibleRole($flowEntity);
-		$responsibleList = $mapper->map($command, $command->responsibleList, $responsibleRole);
-		$members->merge($responsibleList);
 
 		return $members;
 	}

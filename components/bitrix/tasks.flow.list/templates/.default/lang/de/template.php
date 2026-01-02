@@ -1,7 +1,6 @@
 <?php
 $MESS["TASKS_FLOW_ADD_BUTTON"] = "Neuer Flow";
 $MESS["TASKS_FLOW_LIST_ABOUT_EFFICIENCY"] = "Effektivität bedeutet den Prozentanteil der Aufgaben, <br>die innerhalb des geplanten Zeitraums erledigt sind.";
-$MESS["TASKS_FLOW_LIST_ANALYTICS_BTN"] = "Analytik";
 $MESS["TASKS_FLOW_LIST_BI_ANALYTICS_BADLY"] = "Schlecht";
 $MESS["TASKS_FLOW_LIST_BI_ANALYTICS_EMPTY_DASHBOARDS"] = "Dashboard ist nicht verfügbar.";
 $MESS["TASKS_FLOW_LIST_BI_ANALYTICS_GREAT"] = "Ausgezeichnet";
@@ -12,10 +11,15 @@ $MESS["TASKS_FLOW_LIST_COLUMN_MY_TASKS_PLURAL_2"] = "{number} Aufgaben";
 $MESS["TASKS_FLOW_LIST_COMING_SOON"] = "Kommt bald";
 $MESS["TASKS_FLOW_LIST_CONFIRM_REMOVE_BUTTON"] = "Ja";
 $MESS["TASKS_FLOW_LIST_CONFIRM_REMOVE_MESSAGE"] = "Möchten Sie diesen Flow wirklich löschen?";
+$MESS["TASKS_FLOW_LIST_COPILOT_ADVICE_FETCHING_POPUP_DESCRIPTION"] = "Empfehlungen sind bald fertig. Bitte warten Sie.";
+$MESS["TASKS_FLOW_LIST_COPILOT_ADVICE_FETCHING_POPUP_TITLE"] = "CoPilot analysiert Daten";
 $MESS["TASKS_FLOW_LIST_COPILOT_NOT_ENOUGH_TASKS_POPUP_DESCRIPTION"] = "CoPilot zeigt seine Empfehlungen hier an, sobald Sie mindestens 10 Aufgaben im Flow haben.";
 $MESS["TASKS_FLOW_LIST_COPILOT_NOT_ENOUGH_TASKS_POPUP_SHOW_EXAMPLE"] = "Beispielempfehlungen anzeigen";
 $MESS["TASKS_FLOW_LIST_COPILOT_NOT_ENOUGH_TASKS_POPUP_TITLE"] = "Daten werden gesammelt";
+$MESS["TASKS_FLOW_LIST_COPILOT_UNEXPECTED_ERROR_POPUP_DESCRIPTION"] = "CoPilot versucht es, die Empfehlungen erneut abzugeben. Bitte warten Sie.";
+$MESS["TASKS_FLOW_LIST_COPILOT_UNEXPECTED_ERROR_POPUP_TITLE"] = "Etwas ist schiefgegangen";
 $MESS["TASKS_FLOW_LIST_CREATE_TASK"] = "Aufgabe erstellen";
+$MESS["TASKS_FLOW_LIST_CREATE_TASK_IMMUTABLE_DISTRIBUTION_TOOLTIP"] = "Aufgaben in diesem Flow werden vom[br/]Workflow und von den Automatisierungsregeln erstellt.";
 $MESS["TASKS_FLOW_LIST_FLOW_OFF"] = "Flow deaktiviert.";
 $MESS["TASKS_FLOW_LIST_FLOW_PINNED"] = "Flow fixiert.";
 $MESS["TASKS_FLOW_LIST_FLOW_PIN_CANCEL"] = "Rückgängig";

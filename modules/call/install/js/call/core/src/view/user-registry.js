@@ -1,6 +1,9 @@
 import {Type} from 'main.core';
 import {EventEmitter} from 'main.core.events';
 import {EndpointDirection, UserState} from '../engine/engine';
+import { checkAndEncodeURI } from './tools';
+
+type UserModelMap = Record<string, UserModel>;
 
 export class UserModel
 {
@@ -16,6 +19,7 @@ export class UserModel
 	screenState: boolean
 	videoPaused: boolean
 	floorRequestState: boolean
+	permissionToSpeak: boolean
 	localUser: boolean
 	centralUser: boolean
 	pinned: boolean
@@ -32,7 +36,7 @@ export class UserModel
 		this.data = {
 			id: BX.prop.getInteger(config, "id", 0),
 			name: BX.prop.getString(config, "name", ""),
-			avatar: BX.prop.getString(config, "avatar", ""),
+			avatar: checkAndEncodeURI(BX.prop.getString(config, "avatar", "")),
 			gender: BX.prop.getString(config, "gender", ""),
 			state: BX.prop.getString(config, "state", UserState.Idle),
 			talking: BX.prop.getBoolean(config, "talking", false),
@@ -42,6 +46,7 @@ export class UserModel
 			screenState: BX.prop.getBoolean(config, "screenState", false),
 			videoPaused: BX.prop.getBoolean(config, "videoPaused", false),
 			floorRequestState: BX.prop.getBoolean(config, "floorRequestState", false),
+			permissionToSpeak: BX.prop.getBoolean(config, "permissionToSpeak", false),
 			localUser: BX.prop.getBoolean(config, "localUser", false),
 			centralUser: BX.prop.getBoolean(config, "centralUser", false),
 			pinned: BX.prop.getBoolean(config, "pinned", false),
@@ -110,11 +115,7 @@ export class UserModel
 
 	_onUpdateTalking(talking)
 	{
-		if (talking)
-		{
-			this.floorRequestState = false;
-		}
-		else
+		if (!talking)
 		{
 			this.talkingStop = (new Date()).getTime();
 		}
@@ -160,15 +161,13 @@ export class UserModel
 
 export class UserRegistry extends EventEmitter
 {
-	users: UserModel[];
+	users: UserModelMap;
 
-	constructor(config:{users: UserModel[]} = {})
+	constructor()
 	{
 		super();
-		this.setEventNamespace('BX.Call.UserRegistry')
-		this.users = Type.isArray(config.users) ? config.users : [];
-
-		this._sort();
+		this.setEventNamespace('BX.Call.UserRegistry');
+		this.users = new Map();
 	};
 
 	/**
@@ -178,14 +177,7 @@ export class UserRegistry extends EventEmitter
 	 */
 	get(userId): ?UserModel
 	{
-		for (let i = 0; i < this.users.length; i++)
-		{
-			if (this.users[i].id == userId)
-			{
-				return this.users[i];
-			}
-		}
-		return null;
+		return this.users.get(Number(userId)) || null;
 	};
 
 	push(user: UserModel)
@@ -195,12 +187,12 @@ export class UserRegistry extends EventEmitter
 			throw Error("user should be instance of UserModel")
 		}
 
-		this.users.push(user);
-		this._sort();
+		this.users.set(Number(user.id), user);
+
 		user.subscribe("changed", this._onUserChanged.bind(this));
 		this.emit("userAdded", {
 			user: user
-		})
+		});
 	};
 
 	_onUserChanged(event)
@@ -214,9 +206,6 @@ export class UserRegistry extends EventEmitter
 
 	_sort()
 	{
-		this.users = this.users.sort(function (a, b)
-		{
-			return a.order - b.order;
-		});
+		this.users = new Map([...this.users].sort((a, b) => a[1].order - b[1].order));
 	}
 }

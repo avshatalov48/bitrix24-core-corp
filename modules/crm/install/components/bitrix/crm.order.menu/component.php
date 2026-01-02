@@ -24,9 +24,8 @@ if (!CModule::IncludeModule('crm'))
 	return;
 }
 
-$currentUserID = CCrmSecurityHelper::GetCurrentUserID();
-$CrmPerms = CCrmPerms::GetCurrentUserPermissions();
-if (!Permissions\Order::checkReadPermission(0, $CrmPerms))
+$userPermissionsService = Service\Container::getInstance()->getUserPermissions();
+if (!$userPermissionsService->entityType()->canReadItems(CCrmOwnerType::Order))
 {
 	return;
 }
@@ -81,24 +80,32 @@ $arResult['BUTTONS'] = [];
 
 if ($arParams['TYPE'] === 'list' || $arParams['TYPE'] === 'kanban')
 {
-	$bRead = Permissions\Order::checkReadPermission(0, $CrmPerms);
-	$bExport = Permissions\Order::checkExportPermission($CrmPerms);
-	$bImport = Permissions\Order::checkImportPermission($CrmPerms);
-	$bAdd = Permissions\Order::checkCreatePermission($CrmPerms);
-	$bWrite = Permissions\Order::checkUpdatePermission(0, $CrmPerms);
+	$bRead = $userPermissionsService->entityType()->canReadItems(CCrmOwnerType::Order);
+	$bExport = $userPermissionsService->entityType()->canExportItems(CCrmOwnerType::Order);
+	$bImport = $userPermissionsService->entityType()->canImportItems(CCrmOwnerType::Order);
+	$bWrite = $userPermissionsService->entityType()->canUpdateItems(CCrmOwnerType::Order);
 	$bDelete = false;
-	$bConfig = $CrmPerms->HavePerm('CONFIG', BX_CRM_PERM_CONFIG, 'WRITE');
+	$bConfig = $userPermissionsService->isCrmAdmin();
 }
 else
 {
 	$bExport = false;
 	$bImport = false;
 
-	$bRead = Permissions\Order::checkReadPermission($arParams['ELEMENT_ID'], $CrmPerms);
-	$bAdd = Permissions\Order::checkCreatePermission($CrmPerms);
-	$bWrite = Permissions\Order::checkUpdatePermission($arParams['ELEMENT_ID'], $CrmPerms);
-	$bDelete = Permissions\Order::checkDeletePermission($arParams['ELEMENT_ID'], $CrmPerms);
+	if ($arParams['ELEMENT_ID'] > 0)
+	{
+		$bRead = $userPermissionsService->item()->canRead(CCrmOwnerType::Order, $arParams['ELEMENT_ID']);
+		$bWrite = $userPermissionsService->item()->canUpdate(CCrmOwnerType::Order, $arParams['ELEMENT_ID']);
+		$bDelete = $userPermissionsService->item()->canDelete(CCrmOwnerType::Order, $arParams['ELEMENT_ID']);
+	}
+	else
+	{
+		$bRead = $userPermissionsService->entityType()->canReadItems(CCrmOwnerType::Order);
+		$bWrite = $userPermissionsService->entityType()->canUpdateItems(CCrmOwnerType::Order);
+		$bDelete = $userPermissionsService->entityType()->canDeleteItems(CCrmOwnerType::Order);
+	}
 }
+$bAdd = $userPermissionsService->entityType()->canAddItems(CCrmOwnerType::Order);
 
 if (isset($arParams['DISABLE_EXPORT']) && $arParams['DISABLE_EXPORT'] === 'Y')
 {
@@ -133,7 +140,7 @@ if ($arParams['TYPE'] === 'details')
 		);
 	}
 
-	\Bitrix\Crm\Order\Permissions\Order::prepareConversionPermissionFlags($arParams['ELEMENT_ID'], $arResult, $CrmPerms);
+	\Bitrix\Crm\Order\Permissions\Order::prepareConversionPermissionFlags($arParams['ELEMENT_ID'], $arResult);
 
 	//Force start new bar after first button
 	$arResult['BUTTONS'][] = array('NEWBAR' => true);

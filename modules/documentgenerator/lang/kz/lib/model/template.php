@@ -1,0 +1,3 @@
+<?php
+$MESS["DOCUMENTGENERATOR_MODEL_TEMPLATE_CLASS_VALIDATION"] = "#CLASSNAME# класы #PARENT# мұрагері болып табылмайды";
+$MESS["DOCUMENTGENERATOR_MODEL_TEMPLATE_SIZE_IS_EXCEEDED"] = "Қалып файлы #SIZE# артық бола алмайды";

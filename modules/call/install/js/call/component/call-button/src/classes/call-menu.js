@@ -1,4 +1,5 @@
-import { Loc, Tag } from 'main.core';
+import { Loc } from 'main.core';
+import { MenuItemDesign } from 'ui.system.menu';
 
 import { Messenger } from 'im.public';
 import { Core } from 'im.v2.application.core';
@@ -13,8 +14,12 @@ import { Analytics } from 'call.lib.analytics';
 import { CallTypes } from 'call.const';
 
 import type { ImModelChat, ImModelUser } from 'im.v2.model';
-import type { MenuItem } from 'im.v2.lib.menu';
-import type { PopupOptions } from 'main.popup';
+import type { MenuItemOptions, MenuOptions, MenuSectionOptions } from 'ui.system.menu';
+
+const MenuSectionCode = Object.freeze({
+	main: 'main',
+	phone: 'phone',
+});
 
 export class CallMenu extends BaseMenu
 {
@@ -31,7 +36,7 @@ export class CallMenu extends BaseMenu
 		this.id = 'bx-im-chat-header-call-menu';
 	}
 
-	getMenuOptions(): PopupOptions
+	getMenuOptions(): MenuOptions
 	{
 		return {
 			...super.getMenuOptions(),
@@ -47,31 +52,38 @@ export class CallMenu extends BaseMenu
 		return 'bx-im-messenger__scope bx-call-chat-header-call-button__scope';
 	}
 
-	getMenuItems(): MenuItem[]
+	getMenuItems(): MenuItemOptions | null[]
 	{
 		return [
-			this.#getVideoCallItem(),
-			this.#getAudioCallItem(),
-			this.#getZoomItem(),
-			this.#getDelimiter(),
-			this.#getPersonalPhoneItem(),
-			this.#getWorkPhoneItem(),
-			this.#getInnerPhoneItem(),
+			...this.groupItems([
+				this.#getVideoCallItem(),
+				this.#getAudioCallItem(),
+				this.#getZoomItem(),
+			], MenuSectionCode.main),
+			...this.groupItems([
+				this.#getPersonalPhoneItem(),
+				this.#getWorkPhoneItem(),
+				this.#getInnerPhoneItem(),
+			], MenuSectionCode.phone),
 		];
 	}
 
-	#getDelimiter(): MenuItem
+	getMenuGroups(): MenuSectionOptions[]
 	{
-		return { delimiter: true };
+		return [
+			{ code: MenuSectionCode.main },
+			{ code: MenuSectionCode.phone },
+		];
 	}
 
-	#getVideoCallItem(): MenuItem
+	#getVideoCallItem(): MenuItemOptions
 	{
 		const isAvailable = this.#isCallAvailable(this.context.dialogId);
 
 		return {
-			text: Loc.getMessage('CALL_CONTENT_CHAT_HEADER_VIDEOCALL'),
-			onclick: () => {
+			title: Loc.getMessage('CALL_CONTENT_CHAT_HEADER_VIDEOCALL'),
+			design: isAvailable ? MenuItemDesign.Default : MenuItemDesign.Disabled,
+			onClick: () => {
 				if (!isAvailable)
 				{
 					return;
@@ -83,17 +95,17 @@ export class CallMenu extends BaseMenu
 				this.emit(CallMenu.events.onMenuItemClick, CallTypes.video);
 				this.menuInstance.close();
 			},
-			disabled: !isAvailable,
 		};
 	}
 
-	#getAudioCallItem(): MenuItem
+	#getAudioCallItem(): MenuItemOptions
 	{
 		const isAvailable = this.#isCallAvailable(this.context.dialogId);
 
 		return {
-			text: Loc.getMessage('CALL_CONTENT_CHAT_HEADER_CALL_MENU_AUDIO'),
-			onclick: () => {
+			title: Loc.getMessage('CALL_CONTENT_CHAT_HEADER_CALL_MENU_AUDIO'),
+			design: isAvailable ? MenuItemDesign.Default : MenuItemDesign.Disabled,
+			onClick: () => {
 				if (!isAvailable)
 				{
 					return;
@@ -105,7 +117,6 @@ export class CallMenu extends BaseMenu
 				this.emit(CallMenu.events.onMenuItemClick, CallTypes.audio);
 				this.menuInstance.close();
 			},
-			disabled: !isAvailable,
 		};
 	}
 
@@ -117,7 +128,7 @@ export class CallMenu extends BaseMenu
 		});
 	}
 
-	#getPersonalPhoneItem(): ?MenuItem
+	#getPersonalPhoneItem(): ?MenuItemOptions
 	{
 		if (!this.#isUser())
 		{
@@ -133,16 +144,16 @@ export class CallMenu extends BaseMenu
 		const title = Loc.getMessage('CALL_CONTENT_CHAT_HEADER_CALL_MENU_PERSONAL_PHONE');
 
 		return {
-			className: 'menu-popup-no-icon bx-call-chat-header-call-button-menu__item',
-			html: this.#getUserPhoneHtml(title, phones.personalMobile),
-			onclick: () => {
-				Messenger.startPhoneCall(phones.personalMobile);
+			title,
+			subtitle: phones.personalMobile,
+			onClick: () => {
+				void Messenger.startPhoneCall(phones.personalMobile);
 				this.menuInstance.close();
 			},
 		};
 	}
 
-	#getWorkPhoneItem(): ?MenuItem
+	#getWorkPhoneItem(): ?MenuItemOptions
 	{
 		if (!this.#isUser())
 		{
@@ -155,19 +166,17 @@ export class CallMenu extends BaseMenu
 			return null;
 		}
 
-		const title = Loc.getMessage('CALL_CONTENT_CHAT_HEADER_CALL_MENU_WORK_PHONE');
-
 		return {
-			className: 'menu-popup-no-icon bx-call-chat-header-call-button-menu__item',
-			html: this.#getUserPhoneHtml(title, phones.workPhone),
-			onclick: () => {
-				Messenger.startPhoneCall(phones.workPhone);
+			title: Loc.getMessage('CALL_CONTENT_CHAT_HEADER_CALL_MENU_WORK_PHONE'),
+			subtitle: phones.workPhone,
+			onClick: () => {
+				void Messenger.startPhoneCall(phones.workPhone);
 				this.menuInstance.close();
 			},
 		};
 	}
 
-	#getInnerPhoneItem(): ?MenuItem
+	#getInnerPhoneItem(): ?MenuItemOptions
 	{
 		if (!this.#isUser())
 		{
@@ -180,19 +189,17 @@ export class CallMenu extends BaseMenu
 			return null;
 		}
 
-		const title = Loc.getMessage('CALL_CONTENT_CHAT_HEADER_CALL_MENU_INNER_PHONE_MSGVER_1');
-
 		return {
-			className: 'menu-popup-no-icon bx-call-chat-header-call-button-menu__item',
-			html: this.#getUserPhoneHtml(title, phones.innerPhone),
-			onclick: () => {
-				Messenger.startPhoneCall(phones.innerPhone);
+			title: Loc.getMessage('CALL_CONTENT_CHAT_HEADER_CALL_MENU_INNER_PHONE_MSGVER_1'),
+			subtitle: phones.innerPhone,
+			onClick: () => {
+				void Messenger.startPhoneCall(phones.innerPhone);
 				this.menuInstance.close();
 			},
 		};
 	}
 
-	#getZoomItem(): ?MenuItem
+	#getZoomItem(): ?MenuItemOptions
 	{
 		const isActive = FeatureManager.isFeatureAvailable(Feature.zoomActive);
 		if (!isActive)
@@ -200,17 +207,12 @@ export class CallMenu extends BaseMenu
 			return null;
 		}
 
-		const classNames = ['bx-call-chat-header-call-button-menu__zoom', 'menu-popup-no-icon'];
 		const isFeatureAvailable = FeatureManager.isFeatureAvailable(Feature.zoomAvailable);
-		if (!isFeatureAvailable)
-		{
-			classNames.push('--disabled');
-		}
 
 		return {
-			className: classNames.join(' '),
-			text: Loc.getMessage('CALL_CONTENT_CHAT_HEADER_CALL_MENU_ZOOM'),
-			onclick: () => {
+			title: Loc.getMessage('CALL_CONTENT_CHAT_HEADER_CALL_MENU_ZOOM'),
+			design: isFeatureAvailable ? MenuItemDesign.Default : MenuItemDesign.Disabled,
+			onClick: () => {
 				if (!isFeatureAvailable)
 				{
 					BX.UI.InfoHelper.show('limit_video_conference_zoom');
@@ -222,16 +224,6 @@ export class CallMenu extends BaseMenu
 				this.menuInstance.close();
 			},
 		};
-	}
-
-	#getUserPhoneHtml(title, phoneNumber): HTMLSpanElement
-	{
-		return Tag.render`
-			<span class="bx-call-chat-header-call-button-menu__phone_container">
-				<span class="bx-call-chat-header-call-button-menu__phone_title">${title}</span>
-				<span class="bx-call-chat-header-call-button-menu__phone_number">${phoneNumber}</span>
-			</span>
-		`;
 	}
 
 	#isCallAvailable(dialogId: String): boolean

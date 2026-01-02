@@ -4,6 +4,7 @@ namespace Bitrix\Intranet\Settings;
 
 use Bitrix\Disk\Configuration;
 use Bitrix\Disk\Driver;
+use Bitrix\Disk\Internal\Access\UnifiedLink\UnifiedLinkAccessLevel;
 use Bitrix\Im\V2\Chat;
 use Bitrix\Im\V2\Chat\ChatFactory;
 use Bitrix\Intranet\Service\ServiceContainer;
@@ -247,6 +248,16 @@ class CommunicationSettings extends AbstractSettings
 			\COption::SetOptionString("disk", "default_viewer_service", $this->data["default_viewer_service"]);
 		}
 
+		if (isset($this->data["unified_link_default_access_level"]))
+		{
+			$unifiedLinkDefaultAccessLevel = UnifiedLinkAccessLevel::tryFrom($this->data["unified_link_default_access_level"]);
+
+			if ($unifiedLinkDefaultAccessLevel !== null)
+			{
+				\Bitrix\Disk\Internal\Service\UnifiedLink\Configuration::setDefaultAccessLevel($unifiedLinkDefaultAccessLevel);
+			}
+		}
+
 		if (isset($this->data["rating_text_like_y"]) && $this->data["rating_text_like_y"] !== '')
 		{
 			\COption::SetOptionString("main", "rating_text_like_y", $this->data["rating_text_like_y"]);
@@ -347,7 +358,7 @@ class CommunicationSettings extends AbstractSettings
 		$data['allow_livefeed_toall'] = new Switcher(
 			'settings-communication-field-allow_livefeed_toall',
 			'allow_livefeed_toall',
-			Loc::getMessage('INTRANET_SETTINGS_FIELD_LABEL_POST_FEED'),
+			Loc::getMessage('INTRANET_SETTINGS_FIELD_LABEL_POST_FEED_MSGVER_1'),
 			Option::get('socialnetwork', 'allow_livefeed_toall', 'Y'),
 			[
 				'on' => Loc::getMessage('INTRANET_SETTINGS_FIELD_HINT_POST_FEED_ON')
@@ -506,7 +517,6 @@ class CommunicationSettings extends AbstractSettings
 
 		if (Loader::includeModule("im"))
 		{
-
 			$data['general_chat_message_leave'] = new Switcher(
 				'settings-communication-field-general_chat_message_leave',
 				'general_chat_message_leave',
@@ -670,6 +680,24 @@ class CommunicationSettings extends AbstractSettings
 				$optionList,
 				$currentValue
 			);
+
+			$currentUnifiedLinkDefaultAccessLevel = \Bitrix\Disk\Internal\Service\UnifiedLink\Configuration::getDefaultAccessLevel()->value;
+			$unifiedLinkAccessLevels = [];
+			foreach (UnifiedLinkAccessLevel::cases() as $unifiedLinkAccessLevel)
+			{
+				$unifiedLinkAccessLevels[] = [
+					'value' => $unifiedLinkAccessLevel->value,
+					'name' => $unifiedLinkAccessLevel->getTitle(),
+					'selected' => $unifiedLinkAccessLevel->value === $currentUnifiedLinkDefaultAccessLevel,
+				];
+			}
+			$data["DISK_UNIFIED_LINK_DEFAULT_ACCESS_LEVEL"] = new Selector(
+				'settings-communication-field-disk_unified_link_default_access_level',
+				'unified_link_default_access_level',
+				Loc::getMessage('INTRANET_SETTINGS_FIELD_LABEL_SELECT_UNIFIED_LINK_DEFAULT_ACCESS'),
+				$unifiedLinkAccessLevels,
+				$currentUnifiedLinkDefaultAccessLevel,
+			);
 		}
 
 		$data['ratingTextLikeY'] = new Field(
@@ -706,7 +734,7 @@ class CommunicationSettings extends AbstractSettings
 		{
 			$departmentRepository = ServiceContainer::getInstance()->departmentRepository();
 			$department = $departmentRepository->getRootDepartment();
-			$rootDepartmentId = $department->getId();
+			$rootDepartmentId = $department?->getId();
 		}
 
 		foreach($rightsList as $key => $value)
@@ -749,7 +777,7 @@ class CommunicationSettings extends AbstractSettings
 				'settings-communication-section-channels' => Loc::getMessage('INTRANET_SETTINGS_SECTION_TITLE_CHANNELS') ?? '',
 			'settings-communication-section-disk' => Loc::getMessage('INTRANET_SETTINGS_SECTION_TITLE_DISK'),
 			//fields
-			'allow_livefeed_toall' => Loc::getMessage('INTRANET_SETTINGS_FIELD_LABEL_POST_FEED'),
+			'allow_livefeed_toall' => Loc::getMessage('INTRANET_SETTINGS_FIELD_LABEL_POST_FEED_MSGVER_1'),
 			'default_livefeed_toall' => Loc::getMessage('INTRANET_SETTINGS_FIELD_LABEL_PUBLISH_TO_ALL_DEFAULT'),
 			'rating_text_like_y' => Loc::getMessage('INTRANET_SETTINGS_FIELD_LABEL_LIKE_INPUT'),
 			'allow_post_general_chat' => Loc::getMessage('INTRANET_SETTINGS_FIELD_LABEL_ALLOW_POST_GEN_CHAT'),

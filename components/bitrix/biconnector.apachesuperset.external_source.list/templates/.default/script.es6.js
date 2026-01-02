@@ -1,10 +1,14 @@
-import { Reflection, Uri, Text, ajax as Ajax } from 'main.core';
+import { EditableColumnManager } from 'biconnector.grid.editable-columns';
+import { Reflection, Uri, Text, Loc, ajax as Ajax, Tag } from 'main.core';
+import { AirButtonStyle, Button, ButtonSize } from 'ui.buttons';
+import { Dialog } from 'ui.system.dialog';
 import { EventEmitter } from 'main.core.events';
 import 'ui.alerts';
 import 'ui.forms';
 
 type Props = {
 	gridId: ?string,
+	sourceTitleList: Object,
 };
 
 /**
@@ -14,13 +18,33 @@ class ExternalSourceManager
 {
 	#grid: BX.Main.grid;
 	#filter: BX.Main.Filter;
+	#sourceTitleList: Object;
+
+	#datasetUrl: String = '/bi/dataset/';
 
 	constructor(props: Props)
 	{
 		this.#grid = BX.Main.gridManager.getById(props.gridId)?.instance;
 		this.#filter = BX.Main.filterManager.getById(props.gridId);
+		this.#sourceTitleList = props.sourceTitleList ?? {};
 		this.#initHints();
 		this.#subscribeToEvents();
+
+		EditableColumnManager.init(
+			props.gridId,
+			[
+				{
+					name: 'DESCRIPTION',
+					saveEndpoint: 'biconnector.externalsource.source.updateComment',
+					onValueCheck: () => true,
+					onSave: () => {
+						BX.UI.Notification.Center.notify({
+							content: Text.encode(Loc.getMessage('BICONNECTOR_SUPERSET_EXTERNAL_SOURCE_GRID_COMMENT_UPDATED')),
+						});
+					},
+				},
+			],
+		);
 	}
 
 	#subscribeToEvents()
@@ -34,7 +58,7 @@ class ExternalSourceManager
 			const eventId = messageEvent.getEventId();
 			if (
 				eventId === 'BIConnector:ExternalConnectionGrid:reload'
-				|| eventId === 'BIConnector:ExternalConnection:onConnectionCreated'
+				|| eventId === 'BIConnector:ExternalConnection:onConnectionSave'
 			)
 			{
 				this.#grid.reload();
@@ -100,19 +124,16 @@ class ExternalSourceManager
 	{
 		let sliderLink = '';
 		let sliderWidth = 0;
-		let isCacheable = false;
 
 		if (moduleId === 'BI')
 		{
 			sliderLink = new Uri(`/bitrix/components/bitrix/biconnector.externalconnection/slider.php?sourceId=${id}`);
 			sliderWidth = 564;
-			isCacheable = false;
 		}
 		else if (moduleId === 'CRM')
 		{
 			sliderLink = new Uri(`/crm/tracking/source/edit/${id}/`);
 			sliderWidth = 900;
-			isCacheable = true;
 		}
 		else
 		{
@@ -124,7 +145,10 @@ class ExternalSourceManager
 			{
 				width: sliderWidth,
 				allowChangeHistory: false,
-				cacheable: isCacheable,
+				cacheable: false,
+				events: {
+					onClose: BX.BIConnector.TrackingAnalyticsHandler.handleSliderClose,
+				},
 			},
 		);
 	}
@@ -165,22 +189,170 @@ class ExternalSourceManager
 
 	deleteSource(id: number, moduleId: string)
 	{
-		Ajax.runAction('biconnector.externalsource.source.delete', {
+		Ajax.runAction('biconnector.externalsource.source.validateBeforeDelete', {
 			data: {
 				id,
 				moduleId,
 			},
 		})
 			.then(() => {
-				this.getGrid().reload();
+				this.#showDeleteSourcePopup(id, moduleId);
 			})
 			.catch((response) => {
 				if (response.errors)
 				{
-					this.#notifyErrors(response.errors);
+					if (response.errors.some(({ code }) => code === 409))
+					{
+						this.#getDeleteSourceWithDatasetDialog(id).show();
+					}
+					else
+					{
+						this.#notifyErrors(response.errors);
+					}
 				}
 			})
 		;
+	}
+
+	#showDeleteSourcePopup(id: number, moduleId: string)
+	{
+		const messageBox = new Dialog({
+			content: this.#getDeleteSourcePopupContent(),
+			centerButtons: [
+				new Button({
+					color: AirButtonStyle.FILLED,
+					useAirDesign: true,
+					text: Loc.getMessage('BICONNECTOR_SUPERSET_EXTERNAL_SOURCE_GRID_DELETE_POPUP_CAPTION_YES'),
+					onclick: (button) => {
+						button.setWaiting();
+						Ajax.runAction('biconnector.externalsource.source.delete', {
+							data: {
+								id,
+								moduleId,
+							},
+						})
+							.then(() => {
+								this.getGrid().reload();
+								messageBox.hide();
+							})
+							.catch((response) => {
+								messageBox.hide();
+								if (response.errors)
+								{
+									this.#notifyErrors(response.errors);
+								}
+							})
+						;
+					},
+				}),
+				new Button({
+					text: Loc.getMessage('BICONNECTOR_SUPERSET_EXTERNAL_SOURCE_GRID_DELETE_POPUP_CAPTION_NO'),
+					size: ButtonSize.LARGE,
+					style: AirButtonStyle.PLAIN,
+					useAirDesign: true,
+					onclick: () => messageBox.hide(),
+				}),
+			],
+			hasOverlay: true,
+		});
+
+		messageBox.show();
+	}
+
+	#getDeleteSourcePopupContent(): HTMLElement
+	{
+		return Tag.render`
+			<div class="biconnector-delete-source-popup-content">
+				${Loc.getMessage('BICONNECTOR_SUPERSET_EXTERNAL_SOURCE_GRID_DELETE_POPUP_TITLE')}
+			</div>
+		`;
+	}
+
+	#getDeleteSourceWithDatasetDialog(id: number): Dialog
+	{
+		const deleteSourcePopupInstance = new Dialog({
+			title: Loc.getMessage('BICONNECTOR_SUPERSET_EXTERNAL_SOURCE_WITH_DATASET_DELETE_DIALOG_TITLE'),
+			content: this.#getDeleteSourceWithDatasetDialogContent(),
+			centerButtons: [
+				new Button({
+					text: Loc.getMessage('BICONNECTOR_SUPERSET_EXTERNAL_SOURCE_WITH_DATASET_DELETE_DIALOG_OK_CAPTION'),
+					size: ButtonSize.LARGE,
+					style: AirButtonStyle.FILLED,
+					useAirDesign: true,
+					onclick: () => {
+						deleteSourcePopupInstance.hide();
+						this.#openDatasetSlider(id);
+					},
+				}),
+				new Button({
+					text: Loc.getMessage('BICONNECTOR_SUPERSET_EXTERNAL_SOURCE_WITH_DATASET_DELETE_DIALOG_CANCEL_CAPTION'),
+					size: ButtonSize.LARGE,
+					style: AirButtonStyle.PLAIN,
+					useAirDesign: true,
+					onclick: () => deleteSourcePopupInstance.hide(),
+				}),
+			],
+			hasOverlay: true,
+			width: 446,
+		});
+
+		return deleteSourcePopupInstance;
+	}
+
+	#getDeleteSourceWithDatasetDialogContent(): HTMLElement
+	{
+		return Tag.render`
+			<div class="biconnector-delete-source-with-dataset-dialog-content">
+				${Loc.getMessage('BICONNECTOR_SUPERSET_EXTERNAL_SOURCE_WITH_DATASET_DELETE_DIALOG_DESCRIPTION')}
+			</div>
+		`;
+	}
+
+	#openDatasetSlider(id: number): void
+	{
+		BX.SidePanel.Instance.open(
+			this.#datasetUrl,
+			{
+				allowChangeHistory: false,
+				cacheable: false,
+				events: {
+					onOpenComplete: (event) => {
+						const slider = event.getSlider ? event.getSlider() : BX.SidePanel.Instance.getTopSlider();
+
+						if (!slider)
+						{
+							return;
+						}
+
+						const sliderWindow = slider.getWindow();
+						const tryApplyFilter = () => {
+							if (
+								sliderWindow
+								&& sliderWindow.BX
+								&& sliderWindow.BX.Main
+								&& sliderWindow.BX.Main.filterManager
+							)
+							{
+								const filter = sliderWindow.BX.Main.filterManager.getById('biconnector_superset_external_dataset_grid');
+								if (filter && (filter instanceof sliderWindow.BX.Main.Filter))
+								{
+									const filterApi = filter.getApi();
+									filterApi.setFields({
+										'SOURCE.ID': String(id),
+										'SOURCE.ID_label': this.#sourceTitleList[id],
+									});
+									filterApi.apply();
+
+									return;
+								}
+							}
+							setTimeout(tryApplyFilter, 100);
+						};
+						tryApplyFilter();
+					},
+				},
+			},
+		);
 	}
 
 	#notifyErrors(errors: Array): void

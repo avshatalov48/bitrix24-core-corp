@@ -37,7 +37,6 @@ class GetTabsAction extends Action
 		}
 
 		$userPermissions = Container::getInstance()->getUserPermissions();
-		$crmPermissions = $userPermissions->getCrmPermissions();
 		$hasRegisterTelegramConnector = $this->hasRegisterTelegramConnector();
 
 		return [
@@ -48,9 +47,9 @@ class GetTabsAction extends Action
 					&& !\Bitrix\CrmMobile\Entity\RestrictionManager::isEntityRestricted(\CCrmOwnerType::Lead),
 			],
 			'permissions' => [
-				'exclude' => !$crmPermissions->HavePerm('EXCLUSION', BX_CRM_PERM_NONE, 'WRITE'),
+				'exclude' => $userPermissions->exclusion()->canEditItems(),
 				'openLinesAccess' => $this->hasOpenLinesAccess(),
-				'crmMode' => !$crmPermissions->HavePerm('CONFIG', BX_CRM_PERM_CONFIG, 'WRITE'),
+				'crmMode' => $userPermissions->isCrmAdmin(),
 			],
 			'connectors' => [
 				'telegram' => $hasRegisterTelegramConnector,
@@ -131,6 +130,7 @@ class GetTabsAction extends Action
 				'isChatSupported' => Im\Chat::isEntitySupported($entityTypeId),
 				'isLastActivityEnabled' => $factory->isLastActivityEnabled(),
 				'isLinkWithProductsEnabled' => $factory->isLinkWithProductsEnabled(),
+				'isInCustomSection' => Container::getInstance()->getFactory($entityTypeId)->isInCustomSection(),
 				'needSaveCurrentCategoryId' => (
 					$entityTypeName === \CCrmOwnerType::DealName
 					|| (\CCrmOwnerType::isPossibleDynamicTypeId($entityTypeId) && $isCategoriesEnabled)
@@ -214,7 +214,7 @@ class GetTabsAction extends Action
 
 		if (
 			$currentCategoryId !== null
-			&& !$userPermissions->canReadTypeInCategory($factory->getEntityTypeId(), $currentCategoryId)
+			&& !$userPermissions->entityType()->canReadItemsInCategory($factory->getEntityTypeId(), $currentCategoryId)
 		)
 		{
 			$currentCategoryId = $this->getFirstAvailableCategory($factory, $userPermissions);
@@ -229,7 +229,7 @@ class GetTabsAction extends Action
 		$categories = $factory->getCategories();
 		foreach ($categories as $category)
 		{
-			if ($userPermissions->canReadTypeInCategory($entityTypeId, $category->getId()))
+			if ($userPermissions->entityType()->canReadItemsInCategory($entityTypeId, $category->getId()))
 			{
 				return $category->getId();
 			}
@@ -346,11 +346,22 @@ class GetTabsAction extends Action
 
 	private function getPermissions(UserPermissions $userPermissions, int $entityTypeId, ?int $categoryId): array
 	{
+		$entityTypePermissions = $userPermissions->entityType();
+		if (is_null($categoryId))
+		{
+			return [
+				'add' => $entityTypePermissions->canAddItems($entityTypeId),
+				'update' => $entityTypePermissions->canUpdateItems($entityTypeId),
+				'read' => $entityTypePermissions->canReadItems($entityTypeId),
+				'delete' => $entityTypePermissions->canDeleteItems($entityTypeId),
+			];
+		}
+
 		return [
-			'add' => $userPermissions->checkAddPermissions($entityTypeId, $categoryId),
-			'update' => $userPermissions->checkUpdatePermissions($entityTypeId, 0, $categoryId),
-			'read' => $userPermissions->checkReadPermissions($entityTypeId, 0, $categoryId),
-			'delete' => $userPermissions->checkDeletePermissions($entityTypeId, 0, $categoryId),
+			'add' => $entityTypePermissions->canAddItemsInCategory($entityTypeId, $categoryId),
+			'update' => $entityTypePermissions->canUpdateItemsInCategory($entityTypeId, $categoryId),
+			'read' => $entityTypePermissions->canReadItemsInCategory($entityTypeId, $categoryId),
+			'delete' => $entityTypePermissions->canDeleteItemsInCategory($entityTypeId, $categoryId),
 		];
 	}
 

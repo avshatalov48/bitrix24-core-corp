@@ -1,0 +1,38 @@
+<?php
+$MESS["IMCONNECTORMOBILE_TELEGRAM_EDIT_BANNER_DESCRIPTION"] = "Чат-бот қосылды [B]#BOT_NAME#[/B].
+Осы чаттағы клиенттердің хабарламалары сіздің Битрикс24-ке келеді.";
+$MESS["IMCONNECTORMOBILE_TELEGRAM_EDIT_COPY_LINK"] = "Сілтемені көшіру";
+$MESS["IMCONNECTORMOBILE_TELEGRAM_EDIT_COPY_LINK_COMPLETE"] = "Сілтеме көшірілді";
+$MESS["IMCONNECTORMOBILE_TELEGRAM_EDIT_DISABLE"] = "Telegram-ды өшіру";
+$MESS["IMCONNECTORMOBILE_TELEGRAM_EDIT_DISABLE_ALERT_BUTTON"] = "Өшіру";
+$MESS["IMCONNECTORMOBILE_TELEGRAM_EDIT_DISABLE_ALERT_TITLE"] = "Telegram-ды өшіргіңіз келетініне сенімдісіз бе?";
+$MESS["IMCONNECTORMOBILE_TELEGRAM_EDIT_GO_TO_WEB_HINT_MSGVER_1"] = "Бұл мүмкіндік тек
+веб-нұсқада қолжетімді";
+$MESS["IMCONNECTORMOBILE_TELEGRAM_EDIT_GO_TO_WEB_TITLE_MSGVER_1"] = "Веб-нұсқаны ашыңыз";
+$MESS["IMCONNECTORMOBILE_TELEGRAM_EDIT_QUEUE_ADVANCED_SETTINGS"] = "Кеңейтілген баптаулар";
+$MESS["IMCONNECTORMOBILE_TELEGRAM_EDIT_QUEUE_DESCRIPTION"] = "Егер қызметкер қолжетімсіз болса, кезек автоматты түрде келесіге өтеді";
+$MESS["IMCONNECTORMOBILE_TELEGRAM_EDIT_QUEUE_FIELD_TITLE"] = "Жауаптылар кезегі";
+$MESS["IMCONNECTORMOBILE_TELEGRAM_EDIT_QUEUE_SELECTOR_TITLE"] = "Алушыларды таңдаңыз";
+$MESS["IMCONNECTORMOBILE_TELEGRAM_EDIT_QUEUE_TITLE"] = "Жауаптылардың кезегін баптаңыз";
+$MESS["IMCONNECTORMOBILE_TELEGRAM_EDIT_SAVE"] = "Сақтау";
+$MESS["IMCONNECTORMOBILE_TELEGRAM_EDIT_SHARE_TITLE"] = "Сілтемені көшіріп, клиентке жіберіңіз, сонда олар сізге Telegram-да жаза алады";
+$MESS["IMCONNECTORMOBILE_TELEGRAM_EDIT_TITLE"] = "Ашық желілер: Telegram";
+$MESS["IMCONNECTORMOBILE_TELEGRAM_REGISTRY_ALERT_BUTTON_NAME"] = "Ок";
+$MESS["IMCONNECTORMOBILE_TELEGRAM_REGISTRY_ALERT_INVALID_TOKEN_DESCRIPTION"] = "Оны дұрыс көшіргеніңізге көз жеткізіңіз";
+$MESS["IMCONNECTORMOBILE_TELEGRAM_REGISTRY_ALERT_INVALID_TOKEN_TITLE"] = "Қате токен";
+$MESS["IMCONNECTORMOBILE_TELEGRAM_REGISTRY_ALERT_UNKNOWN_ERROR_DESCRIPTION"] = "Кейінірек қайталап көріңіз";
+$MESS["IMCONNECTORMOBILE_TELEGRAM_REGISTRY_ALERT_UNKNOWN_ERROR_TITLE"] = "Қате орын алды ";
+$MESS["IMCONNECTORMOBILE_TELEGRAM_REGISTRY_BANNER_DESCRIPTION"] = "Сізге клиенттер өздеріне ыңғайлы мессенджерде жазады, ал хабарламалардың бүкіл тарихы мәмілелерде сақталады";
+$MESS["IMCONNECTORMOBILE_TELEGRAM_REGISTRY_BANNER_TITLE"] = "Клиентті Telegram-ға шақырыңыз";
+$MESS["IMCONNECTORMOBILE_TELEGRAM_REGISTRY_COMPLETE_DESCRIPTION"] = "Енді клиенттер сізге Telegram-да хабарлама жібере алады, ал хабарламалардың бүкіл тарихы мәміледе сақталады";
+$MESS["IMCONNECTORMOBILE_TELEGRAM_REGISTRY_COMPLETE_TITLE"] = "Telegram бот қосылды";
+$MESS["IMCONNECTORMOBILE_TELEGRAM_REGISTRY_CONTINUE"] = "Жалғастыру";
+$MESS["IMCONNECTORMOBILE_TELEGRAM_REGISTRY_GO_TO_TELEGRAM"] = "Telegram-ға өту";
+$MESS["IMCONNECTORMOBILE_TELEGRAM_REGISTRY_LOADER_DESCRIPTION"] = "Telegram ботты сіздің Битрикс24-ке қосып жатырмыз, сәл ғана қалды";
+$MESS["IMCONNECTORMOBILE_TELEGRAM_REGISTRY_LOADER_TITLE"] = "Telegram-ды қосу";
+$MESS["IMCONNECTORMOBILE_TELEGRAM_REGISTRY_STEP_1_DESCRIPTION_MSGVER_1"] = "Баптау нәтижесінде сіз қолжетімділік токенін аласыз. [URL]Бұл қалай жұмыс істейді?[/URL]";
+$MESS["IMCONNECTORMOBILE_TELEGRAM_REGISTRY_STEP_1_TITLE"] = "Telegram-да ботты баптаңыз";
+$MESS["IMCONNECTORMOBILE_TELEGRAM_REGISTRY_STEP_2_DESCRIPTION"] = "Ботты баптау чатындағы токенді көшіріп төмендегі терезеге қойыңыз";
+$MESS["IMCONNECTORMOBILE_TELEGRAM_REGISTRY_STEP_2_TITLE"] = "Токенді енгізіңіз";
+$MESS["IMCONNECTORMOBILE_TELEGRAM_REGISTRY_TITLE"] = "Telegram қосу";
+$MESS["IMCONNECTORMOBILE_TELEGRAM_REGISTRY_TOKEN_INPUT_PLACEHOLDER"] = "Токенді мында енгізіңіз";

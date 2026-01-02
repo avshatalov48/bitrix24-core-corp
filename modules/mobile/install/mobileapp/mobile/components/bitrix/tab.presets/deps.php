@@ -2,9 +2,7 @@
 
 return [
 	'extensions' => [
-		'feature',
-		'tab-presets-new',
-		'tab.presets',
+		'tab-presets',
 		'tourist',
 	],
 ];

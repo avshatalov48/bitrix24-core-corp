@@ -6,6 +6,7 @@ use Bitrix\Crm\Service\Context;
 use Bitrix\Crm\UserField\Visibility\VisibilityManager;
 use Bitrix\Main\Application;
 use Bitrix\Main\Data\Cache;
+use Bitrix\Main\UserField\Types\DateType;
 use Bitrix\Main\UserField\Types\DoubleType;
 use Bitrix\Main\UserField\Types\EnumType;
 use Bitrix\Main\UserField\Types\IntegerType;
@@ -55,7 +56,7 @@ final class FieldDataProvider
 		if (!is_array($fieldData))
 		{
 			$this->cache->startDataCache();
-			$fieldData =  $this->fetchFieldData();
+			$fieldData = $this->fetchFieldData();
 			$this->cache->endDataCache(['fieldData' => $fieldData]);
 		}
 
@@ -65,7 +66,10 @@ final class FieldDataProvider
 			return $fieldData;
 		}
 
-		return array_filter($fieldData, fn(array $data) => in_array($data['TYPE'], $supportedUserFieldTypes, true));
+		return array_filter(
+			$fieldData,
+			static fn(array $data) => in_array($data['TYPE'], $supportedUserFieldTypes, true)
+		);
 	}
 
 	/**
@@ -78,7 +82,10 @@ final class FieldDataProvider
 			VisibilityManager::getUserAccessCodes($userId),
 		);
 
-		return array_filter($this->getFieldData(), fn(array $data) => !in_array($data['ID'], $notAccessible, true));
+		return array_filter(
+			$this->getFieldData(),
+			static fn(array $data) => !in_array($data['ID'], $notAccessible, true)
+		);
 	}
 
 	/**
@@ -98,7 +105,7 @@ final class FieldDataProvider
 
 		return array_filter(
 			$this->getAccessibleByUserFieldData($userId),
-			fn(array $field) => $config->isFormFieldVisible($field['ID']),
+			static fn(array $field) => $config->isFormFieldVisible($field['ID']),
 		);
 	}
 
@@ -171,7 +178,8 @@ final class FieldDataProvider
 				StringType::USER_TYPE_ID,
 				IntegerType::USER_TYPE_ID,
 				DoubleType::USER_TYPE_ID,
-				// EnumType::USER_TYPE_ID,
+				DateType::USER_TYPE_ID,
+				EnumType::USER_TYPE_ID,
 			];
 		}
 

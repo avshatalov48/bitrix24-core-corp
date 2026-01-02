@@ -1,0 +1,12 @@
+.crm-mini-card__field.--stage .crm-mini-card__field-value {
+	display: flex;
+	gap: var(--ui-size-2xs);
+	align-items: center;
+}
+
+.crm-mini-card__stage-color {
+	flex: 0 0 14px;
+	height: 14px;
+	border-radius: var(--ui-border-radius-circle);
+	overflow: hidden;
+}

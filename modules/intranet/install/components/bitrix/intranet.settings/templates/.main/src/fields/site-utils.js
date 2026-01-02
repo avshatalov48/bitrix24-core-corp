@@ -76,7 +76,7 @@ export function setPortalThemeSettings(container: HTMLElement, themeSettings: Si
 
 	if (Type.isStringFilled(theme.previewImage))
 	{
-		container.style.backgroundImage = 'url("' + theme.previewImage + '")';
+		container.style.backgroundImage = 'url("' + encodeURI(theme.previewImage) + '")';
 		container.style.backgroundSize = 'cover';
 	}
 	else

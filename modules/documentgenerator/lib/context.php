@@ -14,15 +14,11 @@ class Context
 	protected $culture;
 	protected $userId = 0;
 
+	private int $templateId = 0;
+
 	public function __construct()
-	{
+	{}
 
-	}
-
-	/**
-	 * @param Document $document
-	 * @return Context
-	 */
 	public static function createFromDocument(Document $document): Context
 	{
 		$context = new static();
@@ -30,26 +26,20 @@ class Context
 		$context->setUserId($document->getUserId());
 
 		$template = $document->getTemplate();
-		if($template)
+		if ($template)
 		{
 			$context->setRegion($template->REGION);
+			$context->setTemplateId($template->ID ?? 0);
 		}
 
 		return $context;
 	}
 
-	/**
-	 * @return bool
-	 */
 	public function getIsCheckAccess(): bool
 	{
 		return ($this->isCheckAccess === true);
 	}
 
-	/**
-	 * @param bool $isCheckAccess
-	 * @return Context
-	 */
 	public function setIsCheckAccess(bool $isCheckAccess): Context
 	{
 		$this->isCheckAccess = $isCheckAccess;
@@ -68,32 +58,43 @@ class Context
 		return $this;
 	}
 
-	/**
-	 * @param mixed $region
-	 * @return Context
-	 */
+	final public function getTemplateId(): int
+	{
+		return $this->templateId;
+	}
+
+	final public function setTemplateId(int $templateId): Context
+	{
+		$this->templateId = $templateId;
+
+		return $this;
+	}
+
 	public function setRegion($region): Context
 	{
 		$this->region = $region;
+
 		$culture = false;
-		if(is_numeric($region) && $region > 0)
+		if (is_numeric($region) && $region > 0)
 		{
 			$regionData = Driver::getInstance()->getRegionsList()[$region];
-			if($regionData)
+			if ($regionData)
 			{
 				$culture = new Culture();
-				$culture->setFormatDate($regionData['FORMAT_DATE'])
+				$culture
+					->setFormatDate($regionData['FORMAT_DATE'])
 					->setFormatDatetime($regionData['FORMAT_DATETIME'])
 					->setFormatName($regionData['FORMAT_NAME'])
-					->setCharset('UTF-8');
+					->setCharset('UTF-8')
+				;
 			}
 		}
-		elseif(is_string($region) && !empty($region))
+		elseif (is_string($region) && !empty($region))
 		{
 			$culture = CultureTable::getList(['filter' => ['=CODE' => $region]])->fetchObject();
 		}
 
-		if($culture)
+		if ($culture)
 		{
 			$this->culture = $culture;
 		}
@@ -101,27 +102,22 @@ class Context
 		return $this;
 	}
 
-	/**
-	 * @return mixed
-	 */
 	public function getRegion()
 	{
-		if(!$this->region)
+		if (!$this->region)
 		{
 			return Loc::getCurrentLang();
 		}
+
 		return $this->region;
 	}
 
-	/**
-	 * @return string
-	 */
 	public function getRegionLanguageId(): string
 	{
-		if($this->region)
+		if ($this->region)
 		{
 			$regionDescription = Driver::getInstance()->getRegionsList()[$this->region];
-			if($regionDescription && $regionDescription['LANGUAGE_ID'])
+			if ($regionDescription && $regionDescription['LANGUAGE_ID'])
 			{
 				return $regionDescription['LANGUAGE_ID'];
 			}
@@ -130,15 +126,13 @@ class Context
 		return Loc::getCurrentLang();
 	}
 
-	/**
-	 * @return Culture
-	 */
 	public function getCulture(): Culture
 	{
-		if(!$this->culture)
+		if (!$this->culture)
 		{
 			$this->culture = Application::getInstance()->getContext()->getCulture();
 		}
+
 		return $this->culture;
 	}
 }

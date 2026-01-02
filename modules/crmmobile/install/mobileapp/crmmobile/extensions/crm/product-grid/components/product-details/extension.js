@@ -26,6 +26,7 @@ jn.define('crm/product-grid/components/product-details', (require, exports, modu
 	const { lock } = require('assets/common');
 	const { ProductType } = require('catalog/product-type');
 	const { ModeList } = require('catalog/store/mode-list');
+	const { Money } = require('money');
 
 	/**
 	 * @callback calculationFn

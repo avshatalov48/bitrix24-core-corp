@@ -464,6 +464,12 @@ class CDavGroupdavClientCalendar extends CDavGroupdavClient
 		{
 			foreach ($arVAlarm as $alarm)
 			{
+				$action = $alarm->GetPropertyValue("ACTION");
+				if ($action === 'NONE')
+				{
+					continue;
+				}
+
 				$trigger = $alarm->GetPropertyValue("TRIGGER");
 				$arPeriodMapTmp = array("M" => "min", "H" => "hour", "D" => "day", "S" => "min");
 				if (

@@ -48,6 +48,7 @@ jn.define('sign/dialog/banners/reviewsuccess', (require, exports, module) => {
 				buttonsView: View(
 					{},
 					Button({
+						testId: 'reviewSuccessBanner-button-close',
 						text: Loc.getMessage('SIGN_MOBILE_DIALOG_REVIEW_SUCCESS_BUTTON_CLOSE'),
 						size: ButtonSize.XL,
 						design: ButtonDesign.PLAN_ACCENT,

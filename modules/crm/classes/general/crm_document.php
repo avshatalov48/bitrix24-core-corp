@@ -1284,6 +1284,8 @@ class CCrmDocument
 
 	public static function GetDocument($documentId)
 	{
+		$args = func_get_args();
+		$select = $args[2] ?? ['*'];
 		$arDocumentID = static::GetDocumentInfo($documentId);
 		if (empty($arDocumentID))
 		{
@@ -1297,7 +1299,8 @@ class CCrmDocument
 		{
 			return new Crm\Integration\BizProc\Document\ValueCollection\Item(
 				$entityTypeId,
-				$arDocumentID['ID']
+				$arDocumentID['ID'],
+				$select
 			);
 		}
 
@@ -1509,7 +1512,9 @@ class CCrmDocument
 			$entityTypeId = \CCrmOwnerType::ResolveID($entityTypeName);
 			if ($entityTypeId > 0)
 			{
-				return Service\UserPermissions::getPermissionEntityType($entityTypeId, (int)$parameters['DocumentCategoryId']);
+				return (new \Bitrix\Crm\Category\PermissionEntityTypeHelper($entityTypeId))
+					->getPermissionEntityTypeForCategory((int)$parameters['DocumentCategoryId'])
+				;
 			}
 		}
 
@@ -1643,7 +1648,11 @@ class CCrmDocument
 				? (int)$arParameters['DocumentCategoryId']
 				: null;
 
-			return Service\Container::getInstance()->getUserPermissions($userId)->canEditAutomation($entityTypeId, $categoryId);
+			return Service\Container::getInstance()
+				->getUserPermissions($userId)
+				->automation()
+				->canEdit($entityTypeId, $categoryId)
+			;
 		}
 
 		if( $operation === CBPCanUserOperateOperation::ViewWorkflow
@@ -1653,7 +1662,8 @@ class CCrmDocument
 			return
 				Container::getInstance()
 							->getUserPermissions($userId)
-							->canReadType(CCrmOwnerType::ResolveID($documentType))
+							->entityType()
+							->canReadItems(CCrmOwnerType::ResolveID($documentType))
 				;
 		}
 
@@ -1734,7 +1744,8 @@ class CCrmDocument
 
 		$arGroupsID = array(1);
 		$arUsersID = array();
-		$arRelations = CCrmPerms::GetEntityRelations($documentType, BX_CRM_PERM_SELF);
+
+		$arRelations = \Bitrix\Crm\Security\Role\Model\RoleRelationTable::getRelationsWithPermissionsOfType($documentType, Service\UserPermissions::OPERATION_READ);
 		foreach($arRelations as $relation)
 		{
 			$preffix = mb_substr($relation, 0, 1);
@@ -1754,16 +1765,7 @@ class CCrmDocument
 			if (!isset(static::$b24employeeGroupId))
 			{
 				$siteID = CSite::GetDefSite();
-				$dbResult = CGroup::GetList(
-					'',
-					'',
-					[
-						'STRING_ID' => 'EMPLOYEES_' . $siteID,
-						'STRING_ID_EXACT_MATCH' => 'Y',
-					]
-				);
-				$arEmployeeGroup = $dbResult->fetch();
-				static::$b24employeeGroupId = (int) ($arEmployeeGroup['ID'] ?? 0);
+				static::$b24employeeGroupId = (int)CGroup::GetIDByCode('EMPLOYEES_' . $siteID);
 			}
 
 			if(!in_array(static::$b24employeeGroupId, $arGroupsID, true))
@@ -2479,7 +2481,12 @@ class CCrmDocument
 			&& !self::isResumeWorkflowAvailable($documentId, $rootActivity->getDocumentEventType())
 		)
 		{
-			throw new \Bitrix\Main\SystemException(GetMessage('CRM_DOCUMENT_RESUME_RESTRICTED'));
+			$code =
+				defined('CBPRuntime::EXCEPTION_CODE_INSTANCE_TARIFF_LIMIT_EXCEED')
+					? CBPRuntime::EXCEPTION_CODE_INSTANCE_TARIFF_LIMIT_EXCEED
+					: 402
+			;
+			throw new \Bitrix\Main\SystemException(Loc::getMessage('CRM_DOCUMENT_RESUME_RESTRICTED'), $code);
 		}
 
 		if ($status === CBPWorkflowStatus::Running && $rootActivity->workflow->isNew())
@@ -2893,5 +2900,30 @@ class CCrmDocument
 		}
 
 		return null;
+	}
+
+	public static function getTriggerByCode(string $code, array $complexDocumentType): ?string
+	{
+		[$moduleId, $entity, $documentType] = $complexDocumentType;
+
+		$entityTypeId = CCrmOwnerType::ResolveID($documentType);
+
+		$trigger = Crm\Automation\Factory::getTriggerByCode($code);
+		if (
+			$trigger
+			&& (in_array($entityTypeId, [CCrmOwnerType::Contact, CCrmOwnerType::Company], true)
+				|| $trigger::isSupported($entityTypeId)
+			)
+		)
+		{
+			return $trigger;
+		}
+
+		return null;
+	}
+
+	public static function getStarterModuleSettings(array $complexDocumentType): ?Crm\Integration\BizProc\Starter\CrmModuleSettings
+	{
+		return new Crm\Integration\BizProc\Starter\CrmModuleSettings($complexDocumentType);
 	}
 }

@@ -2,8 +2,9 @@
  * @module layout/ui/entity-editor/model
  */
 jn.define('layout/ui/entity-editor/model', (require, exports, module) => {
-
 	const { clone } = require('utils/object');
+	const { Random } = require('utils/random');
+	const { isNotEmptyString } = require('utils/type');
 	const { EventEmitter } = require('event-emitter');
 
 	/**
@@ -29,9 +30,9 @@ jn.define('layout/ui/entity-editor/model', (require, exports, module) => {
 
 		initialize(id, uid, settings)
 		{
-			this.id = CommonUtils.isNotEmptyString(id) ? id : Random.getString();
+			this.id = isNotEmptyString(id) ? id : Random.getString();
 
-			this.uid = CommonUtils.isNotEmptyString(uid) ? uid : Random.getString();
+			this.uid = isNotEmptyString(uid) ? uid : Random.getString();
 			/** @type {EventEmitter} */
 			this.customEventEmitter = EventEmitter.createWithUid(this.uid);
 

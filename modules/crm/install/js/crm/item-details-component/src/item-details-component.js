@@ -1,14 +1,17 @@
+import { type CategoryModelData } from 'crm.category-model';
+import { CategoryChanger } from 'crm.item-details-component.pagetitle';
+import { Chart as ItemDetailsChart } from 'crm.item-details-component.stage-flow';
 import { ReceiverRepository } from 'crm.messagesender';
 import type { StageModelData } from 'crm.stage-model';
 import { StageModel } from 'crm.stage-model';
 import { PermissionChecker as StagePermissionChecker } from 'crm.stage.permission-checker';
-import { ajax as Ajax, Dom, Loc, Reflection, Runtime, Tag, Text, Type, Uri } from 'main.core';
+import { ajax as Ajax, Dom, Loc, Reflection, Runtime, Text, Type, Uri } from 'main.core';
 import { BaseEvent, EventEmitter } from 'main.core.events';
 import { Loader } from 'main.loader';
-import { PopupMenu } from 'main.popup';
 import { MessageBox, MessageBoxButtons } from 'ui.dialogs.messagebox';
 import { StageFlow } from 'ui.stageflow';
-import { Chart as ItemDetailsChart } from 'crm.item-details-component.stage-flow';
+import './item-details-component.css';
+import { EntityCloseEvent, EntityStageChangeEvent, Dictionary, Builder } from 'crm.integration.analytics';
 
 export type ItemDetailsComponentParams = {
 	entityTypeId: number,
@@ -16,14 +19,12 @@ export type ItemDetailsComponentParams = {
 	serviceUrl: string,
 	id: number,
 	categoryId?: number,
-	categories?: Category[],
+	categories?: CategoryModelData[],
 	errorTextContainer: HTMLElement,
 	stages: StageModelData[],
 	currentStageId: number,
 	messages: Object,
 	signedParameters: ?string,
-	documentButtonParameters: ?Object,
-	isPageTitleEditable: boolean,
 	userFieldCreateUrl: ?string,
 	editorGuid: ?string,
 	isStageFlowActive: ?boolean,
@@ -31,13 +32,7 @@ export type ItemDetailsComponentParams = {
 	bizprocStarterConfig: ?Object,
 	automationCheckAutomationTourGuideData: ?Object,
 	receiversJSONString: string,
-};
-
-declare type Category = {
-	id: string,
-	categoryId: number,
-	text: string,
-	href: string,
+	categorySelectorTarget: ?string,
 };
 
 const BACKGROUND_COLOR = 'd3d7dc';
@@ -48,18 +43,16 @@ export class ItemDetailsComponent
 	entityTypeName: string;
 	id: number;
 	categoryId: ?number = null;
-	categories: ?Category[];
+	categories: ?CategoryModelData[];
 	errorTextContainer: HTMLElement;
 	stages: StageModel[];
 	permissionChecker: ?StagePermissionChecker = null;
-	stageflowChart: StageFlow.Chart;
+	stageflowChart: ItemDetailsChart;
 	currentStageId: number;
 	isProgress: boolean;
 	container: HTMLElement;
 	messages: {[code: string]: string};
 	signedParameters: ?string;
-	documentButtonParameters: ?Object;
-	isPageTitleEditable: boolean;
 	partialEntityEditor: ?BX.Crm.PartialEditorDialog;
 	partialEditorId: ?string;
 	editorContext: Object;
@@ -70,6 +63,10 @@ export class ItemDetailsComponent
 	bizprocStarterConfig: ?Object;
 	automationCheckAutomationTourGuideData: ?Object;
 	receiversJSONString: string = '';
+	targetUpdateStage: ?StageModel = null;
+	stageBeforeUpdate: ?StageModel = null;
+	categorySelectorTarget: ?string;
+	analyticsData: ?Object;
 
 	constructor(params: ItemDetailsComponentParams): void
 	{
@@ -110,7 +107,6 @@ export class ItemDetailsComponent
 			this.currentStageId = params.currentStageId;
 			this.messages = params.messages;
 			this.signedParameters = params.signedParameters;
-			this.documentButtonParameters = params.documentButtonParameters;
 			this.userFieldCreateUrl = params.userFieldCreateUrl;
 			this.editorGuid = params.editorGuid;
 			this.isStageFlowActive = params.isStageFlowActive;
@@ -125,8 +121,10 @@ export class ItemDetailsComponent
 			{
 				this.receiversJSONString = params.receiversJSONString;
 			}
-
-			this.isPageTitleEditable = Boolean(params.isPageTitleEditable);
+			if (Type.isStringFilled(params.categorySelectorTarget))
+			{
+				this.categorySelectorTarget = params.categorySelectorTarget;
+			}
 		}
 
 		this.container = document.querySelector('[data-role="crm-item-detail-container"]');
@@ -137,22 +135,6 @@ export class ItemDetailsComponent
 	isNew(): boolean
 	{
 		return this.id <= 0;
-	}
-
-	getCurrentCategory(): ?Category
-	{
-		let currentCategory = null
-		if(this.categories && this.categoryId)
-		{
-			this.categories.forEach((category) => {
-				if(category.categoryId === this.categoryId)
-				{
-					currentCategory = category;
-				}
-			});
-		}
-
-		return currentCategory;
 	}
 
 	getLoader()
@@ -186,6 +168,41 @@ export class ItemDetailsComponent
 	{
 		this.isProgress = false;
 		this.getLoader().hide();
+	}
+
+	startStageUpdateProgress(stage: StageModel): void
+	{
+		this.isProgress = true;
+		this.targetUpdateStage = stage;
+
+		this.stageflowChart.adjust();
+	}
+
+	stopStageUpdateProgress(): void
+	{
+		this.isProgress = false;
+		this.targetUpdateStage = null;
+
+		this.stageflowChart.adjust();
+	}
+
+	showStageUpdatingNotification(): void
+	{
+		if (this.targetUpdateStage === null || !this.messages.stageLoadingMessage)
+		{
+			return;
+		}
+
+		const stageName = Text.encode(this.targetUpdateStage.getName());
+		BX.UI.Notification.Center.notify({
+			content: this.messages.stageLoadingMessage.replace('#stage#', stageName),
+			autoHideDelay: 3000,
+		});
+	}
+
+	isStageUpdating(): boolean
+	{
+		return this.targetUpdateStage !== null && this.isProgress;
 	}
 
 	getStageById(id: number): ?StageModel
@@ -236,44 +253,13 @@ export class ItemDetailsComponent
 	{
 		this.initStageFlow();
 		this.bindEvents();
-		this.initDocumentButton();
 		this.initReceiversRepository();
+		this.initCategoriesSelector();
 
-		if (this.isNew())
+		if (!this.isNew())
 		{
-			const pageTitleElement = document.getElementById('pagetitle');
-			Dom.style(pageTitleElement, 'padding-right', '15px');
-
-			this.initCategoriesSelector(pageTitleElement);
-
-			// beautify element
-			const categorySelectorElement = document.getElementById('pagetitle_sub');
-			Dom.style(categorySelectorElement, {
-				position: 'relative',
-				padding: '10px',
-				'z-index': 1000,
-				'background-size': 'contain',
-			});
-		}
-		else
-		{
-			this.initPageTitleButtons();
 			this.initPull();
 			this.initTours();
-		}
-	}
-
-	initDocumentButton(): void
-	{
-		if(
-			Type.isPlainObject(this.documentButtonParameters)
-			&& this.documentButtonParameters.buttonId
-			&& BX.DocumentGenerator
-			&& BX.DocumentGenerator.Button
-		)
-		{
-			this.documentButton = new BX.DocumentGenerator.Button(this.documentButtonParameters.buttonId, this.documentButtonParameters);
-			this.documentButton.init();
 		}
 	}
 
@@ -282,131 +268,30 @@ export class ItemDetailsComponent
 		ReceiverRepository.onDetailsLoad(this.entityTypeId, this.id, this.receiversJSONString);
 	}
 
-	initPageTitleButtons(): void
+	initCategoriesSelector(): void
 	{
-		const pageTitleButtons = Tag.render`
-			<span id="pagetitle_btn_wrapper" class="pagetitile-button-container">
-				<span id="page_url_copy_btn" class="crm-page-link-btn"></span>
-			</span>
-		`;
-
-		if (this.isPageTitleEditable)
-		{
-			const editButton = Tag.render`
-				<span id="pagetitle_edit" class="pagetitle-edit-button"></span>
-			`;
-			Dom.prepend(editButton, pageTitleButtons);
-		}
-
-		const pageTitle = document.getElementById('pagetitle');
-		Dom.insertAfter(pageTitleButtons, pageTitle);
-
-		this.initCategoriesSelector(pageTitleButtons);
-	}
-
-	initCategoriesSelector(target: HTMLElement): void
-	{
-		if (Type.isArray(this.categories) && this.categories.length > 0)
-		{
-			const currentCategory = this.getCurrentCategory();
-			if (currentCategory)
-			{
-				const categoriesSelector = Tag.render`
-					<div id="pagetitle_sub" class="pagetitle-sub">
-						<a href="#" onclick="${this.onCategorySelectorClick.bind(this)}">
-							${currentCategory.text}
-						</a>
-					</div>
-				`;
-
-				Dom.insertAfter(categoriesSelector, target);
-			}
-		}
-	}
-
-	onCategorySelectorClick(event: BaseEvent)
-	{
-		if (!this.categoryId || !this.categories)
+		if (!Type.isArrayFilled(this.categories) || !Type.isStringFilled(this.categorySelectorTarget))
 		{
 			return;
 		}
 
-		const notCurrentCategories = this.categories.filter((category) => {
-			return category.categoryId !== this.categoryId;
-		});
-
-		notCurrentCategories.forEach((category: Category) => {
-			delete category.href;
-
-			category.onclick = () => {
-				this.onCategorySelect(category.categoryId);
-			};
-		});
-
-		PopupMenu.show({
-			id: `item-detail-${this.entityTypeId}-${this.id}`,
-			bindElement: event.target,
-			items: notCurrentCategories,
-		});
-	}
-
-	onCategorySelect(categoryId)
-	{
-		if (this.isProgress)
-		{
-			return;
-		}
-
-		if (this.isNew())
-		{
-			if (this.getEditor()?.isChanged())
+		const changer = CategoryChanger.renderToTarget(
+			this.categorySelectorTarget,
 			{
-				MessageBox.show({
-					modal: true,
-					title: Loc.getMessage('CRM_ITEM_DETAIL_CHANGE_FUNNEL_CONFIRM_DIALOG_TITLE'),
-					message: Loc.getMessage('CRM_ITEM_DETAIL_CHANGE_FUNNEL_CONFIRM_DIALOG_MESSAGE'),
-					minHeight: 100,
-					buttons: MessageBoxButtons.OK_CANCEL,
-					okCaption: Loc.getMessage('CRM_ITEM_DETAIL_CHANGE_FUNNEL_CONFIRM_DIALOG_OK_BTN'),
-					onOk: (messageBox) => {
-						messageBox.close();
-						this.reloadPageWhenCategoryChanged(categoryId);
-					},
-					onCancel: (messageBox) => messageBox.close(),
-				});
-			}
-			else
-			{
-				this.reloadPageWhenCategoryChanged(categoryId);
-			}
-
-			return;
-		}
-
-		this.startProgress();
-
-		Ajax.runAction('crm.controller.item.update', {
-			analyticsLabel: 'crmItemDetailsChangeCategory',
-			data: {
 				entityTypeId: this.entityTypeId,
-				id: this.id,
-				fields: {
-					categoryId,
-				},
+				entityId: this.id,
+				categoryId: this.categoryId,
+				categories: this.categories,
+				editorGuid: this.editorGuid,
 			},
-		}).then(() => {
-			setTimeout(() => {
-				// @todo: what if editor is changed ?
-				window.location.reload();
-			}, 500);
-		}).catch(this.showErrorsFromResponse.bind(this));
-	}
+		);
+		if (!changer)
+		{
+			return;
+		}
 
-	reloadPageWhenCategoryChanged(categoryId: number): void
-	{
-		const url = new Uri(window.location.href);
-		url.setQueryParam('categoryId', categoryId);
-		window.location.href = url.toString();
+		changer.subscribe('onProgressStart', this.startProgress.bind(this));
+		changer.subscribe('onProgressStop', this.stopProgress.bind(this));
 	}
 
 	initStageFlow()
@@ -441,7 +326,10 @@ export class ItemDetailsComponent
 			flowStagesData,
 			this.permissionChecker,
 			this.getStageById.bind(this),
+			this.isStageUpdating.bind(this),
+			Runtime.throttle(this.showStageUpdatingNotification.bind(this), 300),
 			this.isNew(),
+			this.entityTypeId
 		);
 
 		Dom.append(this.stageflowChart.render(), stageFlowContainer);
@@ -566,7 +454,13 @@ export class ItemDetailsComponent
 			console.error('Wrong stage');
 			return;
 		}
-		this.startProgress();
+
+		this.prepareAnalyticsData(stage);
+
+		this.stageBeforeUpdate = this.getStageById(this.currentStageId);
+		this.setStageToFlowChart(stage);
+
+		this.startStageUpdateProgress(stage);
 		Ajax.runAction('crm.controller.item.update', {
 			analyticsLabel: 'crmItemDetailsMoveItem',
 			data: {
@@ -577,7 +471,9 @@ export class ItemDetailsComponent
 				}
 			}
 		}).then( () => {
-			this.stopProgress();
+			this.sendAnalyticsData(Dictionary.STATUS_SUCCESS);
+
+			this.stopStageUpdateProgress();
 
 			let currentSlider: ?BX.SidePanel.Slider = null;
 			if (Reflection.getClass('BX.SidePanel.Instance.getTopSlider'))
@@ -597,9 +493,16 @@ export class ItemDetailsComponent
 				}
 			}
 
+			this.stageBeforeUpdate = null;
 			this.updateStage(stage);
 		}).catch((response) => {
-			this.stopProgress();
+			this.stopStageUpdateProgress();
+
+			if (this.stageBeforeUpdate !== null)
+			{
+				this.setStageToFlowChart(this.stageBeforeUpdate);
+				this.stageBeforeUpdate = null;
+			}
 
 			if (!this.partialEditorId)
 			{
@@ -639,6 +542,7 @@ export class ItemDetailsComponent
 			}
 			else
 			{
+				this.sendAnalyticsData(Dictionary.STATUS_ERROR);
 				this.showErrorsFromResponse(response);
 			}
 		})
@@ -647,7 +551,7 @@ export class ItemDetailsComponent
 	updateStage(stage: StageModel)
 	{
 		const currentStage = this.getStageById(this.stageflowChart.currentStage);
-		this.stageflowChart.setCurrentStageId(stage.getId());
+		this.setStageToFlowChart(stage);
 		EventEmitter.emit(
 			'BX.Crm.ItemDetailsComponent:onStageChange',
 			{
@@ -655,8 +559,13 @@ export class ItemDetailsComponent
 				id: this.id,
 				stageId: stage.getStatusId(),
 				previousStageId: currentStage ? currentStage.getStatusId() : null,
-			}
+			},
 		);
+	}
+
+	setStageToFlowChart(stage: StageModel): void
+	{
+		this.stageflowChart.setCurrentStageId(stage.getId());
 	}
 
 	showError(error: string): void
@@ -791,15 +700,20 @@ export class ItemDetailsComponent
 
 			if(parameters.isCancelled)
 			{
+				this.sendAnalyticsData(Dictionary.STATUS_ERROR);
+
 				return;
 			}
 
 			const stage = this.getStageByStatusId(parameters.stageId);
 			if(!stage)
 			{
+				this.sendAnalyticsData(Dictionary.STATUS_ERROR);
+
 				return;
 			}
 			this.updateStage(stage);
+			this.sendAnalyticsData(Dictionary.STATUS_SUCCESS);
 		}
 	}
 
@@ -878,5 +792,48 @@ export class ItemDetailsComponent
 				})
 			;
 		}
+	}
+
+	prepareAnalyticsData(stage: StageModelData)
+	{
+		const stageSemantic = stage.getSemantics();
+
+		if (stageSemantic === 'F')
+		{
+			this.analyticsData = Builder.Entity.CloseEvent.createDefault(
+				this.entityTypeId,
+			)
+				.setElement(Dictionary.ELEMENT_LOSE_BUTTON)
+				.buildData();
+		}
+		else if (stageSemantic === 'S')
+		{
+			this.analyticsData = Builder.Entity.CloseEvent.createDefault(
+				this.entityTypeId,
+			)
+				.setElement(Dictionary.ELEMENT_WON_BUTTON)
+				.buildData();
+		}
+		else
+		{
+			this.analyticsData = Builder.Entity.ChangeStageEvent.createDefault(
+				this.entityTypeId,
+			)
+				.setElement(Dictionary.ELEMENT_STAGE_BAR_BUTTON)
+				.buildData();
+		}
+	}
+
+	sendAnalyticsData(status)
+	{
+		if (!this.analyticsData)
+		{
+			return;
+		}
+
+		BX.UI.Analytics.sendData({
+			...this.analyticsData,
+			status,
+		});
 	}
 }

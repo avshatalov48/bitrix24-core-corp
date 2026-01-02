@@ -105,7 +105,7 @@ class Access
 			)] = $permissionSet[CCrmOwnerType::SmartB2eDocumentName];
 
 		$fields = [
-			'RELATION' => $rolePerms,
+			'PERMISSIONS' => $rolePerms,
 			'NAME' => $name,
 			'IS_SYSTEM' => 'Y',
 			'GROUP_CODE' => RolePermissionService::ROLE_GROUP_CODE,

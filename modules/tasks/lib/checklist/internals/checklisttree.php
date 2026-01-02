@@ -3,6 +3,7 @@ namespace Bitrix\Tasks\CheckList\Internals;
 
 use Bitrix\Main\Application;
 use Bitrix\Main\ArgumentException;
+use Bitrix\Main\Config\Option;
 use Bitrix\Main\DB\SqlException;
 use Bitrix\Main\DB\SqlQueryException;
 use Bitrix\Main\Entity\DataManager;
@@ -144,17 +145,23 @@ abstract class CheckListTree
 				return $result;
 			}
 
+			$isErrorEnabled = Option::get('tasks', 'checklist_disable_error_on_race', 'N') === 'N';
+
 			if (static::isNodeExist($id))
 			{
 				if ($parameters['NEW_NODE'] ?? null)
 				{
-					$result = static::addErrorToResult($result, $replaces, __METHOD__, 'EXISTING_NODE_ADDING');
+					if ($isErrorEnabled)
+					{
+						$result = static::addErrorToResult($result, $replaces, __METHOD__, 'EXISTING_NODE_ADDING');
+					}
 					$logData = [
 						'first' => CheckListTable::getById($id)->fetch(),
 						'second' => CheckListTable::getById($parentId)->fetch(),
 						'dc' => static::getDataController(),
 						'pcn' => static::getParentNodeColumnName(),
 						'ccn' => static::getNodeColumnName(),
+						'cdeor' => $isErrorEnabled,
 					];
 
 					Logger::log($logData, 'TASKS_CHECKLIST_RACE_CONDITION');
@@ -182,7 +189,10 @@ abstract class CheckListTree
 				static::ensureNodeExists($id);
 
 				// now link each item of path to $parentId with each item of subtree of $id
-				$connection->query("
+				try
+				{
+					$connection->query(
+						"
 					INSERT INTO {$tableName} (PARENT_ID, CHILD_ID, LEVEL)
 					SELECT P.{$parentColumnName},
 						   CH.{$childColumnName},
@@ -197,7 +207,15 @@ abstract class CheckListTree
 						WHERE CH2.{$parentColumnName} = {$id} AND CH1.{$levelColumnName} = 1
 						) CH
 					WHERE P.{$childColumnName} = {$parentId}
-				");
+				"
+					);
+				} catch (\Throwable $t)
+				{
+					if ($isErrorEnabled)
+					{
+						throw $t;
+					}
+				}
 			}
 		}
 
@@ -535,7 +553,7 @@ abstract class CheckListTree
 			'!' . $levelColumnName => 0
 		];
 
-		if ($parameters['DIRECT'])
+		if ($parameters['DIRECT'] ?? null)
 		{
 			$filter[$levelColumnName] = 1;
 		}

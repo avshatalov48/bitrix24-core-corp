@@ -5,15 +5,18 @@ namespace Bitrix\HumanResources\Compatibility\Event;
 use Bitrix\HumanResources\Compatibility\Adapter\StructureBackwardAdapter;
 use Bitrix\HumanResources\Compatibility\Utils\DepartmentBackwardAccessCode;
 use Bitrix\HumanResources\Compatibility\Utils\OldStructureUtils;
+use Bitrix\HumanResources\Config\Feature;
 use Bitrix\HumanResources\Contract\Repository\NodeRepository;
 use Bitrix\HumanResources\Enum\EventName;
 use Bitrix\HumanResources\Item\Node;
+use Bitrix\HumanResources\Item\NodeMember;
 use Bitrix\HumanResources\Model\NodeTable;
 use Bitrix\HumanResources\Repository\NodeMemberRepository;
 use Bitrix\HumanResources\Service\Container;
 use Bitrix\HumanResources\Service\UserService;
 use Bitrix\HumanResources\Type\MemberEntityType;
 use Bitrix\HumanResources\Enum\LoggerEntityType;
+use Bitrix\HumanResources\Type\NodeEntityType;
 use Bitrix\Main\Application;
 use Bitrix\Main\ArgumentException;
 use Bitrix\Main\Engine\CurrentUser;
@@ -33,14 +36,14 @@ class NewToOldEventHandler
 	 */
 	public static function onNodeAdded(Event $event): void
 	{
-		if (Container::getSemaphoreService()->isLocked(self::MODULE_NAME_PREFIX . EventName::NODE_ADDED->name))
+		if (Container::getSemaphoreService()->isLocked(self::MODULE_NAME_PREFIX . EventName::OnNodeAdded->name))
 		{
 			return;
 		}
 
 		/** @var \Bitrix\HumanResources\Item\Node $node */
 		$node = $event->getParameter('node');
-		if (!isset($node))
+		if (!isset($node) || $node->type !== NodeEntityType::DEPARTMENT)
 		{
 			return;
 		}
@@ -56,9 +59,14 @@ class NewToOldEventHandler
 				return;
 			}
 
+			$nodeRepository = new \Bitrix\HumanResources\Repository\NodeRepository();
+			$nodeRepository->setSelectableNodeEntityTypes([
+				NodeEntityType::DEPARTMENT,
+				NodeEntityType::TEAM,
+			]);
 			$parent =
 				$node->parentId
-				? Container::getNodeRepository()
+				? $nodeRepository
 				->getById($node->parentId) : null
 			;
 
@@ -73,15 +81,17 @@ class NewToOldEventHandler
 
 			$companyStructureConverter->createBackwardAccessCode($node, $newDepartmentId);
 
-			Container::getNodeRepository()
-				->update($node);
+			$nodeRepository->update($node);
+			$nodeRepository->setSelectableNodeEntityTypes([
+				NodeEntityType::DEPARTMENT,
+			]);
 		}
-		catch (\Exception)
+		catch (\Exception $e)
 		{
 			Container::getStructureLogger()->write([
 				'entityType' => LoggerEntityType::NODE->name,
 				'entityId' => $node->id,
-				'message' => 'onNodeAdded: Failed to update Node',
+				'message' => 'onNodeAdded: Failed to update Node. Exception is ' . $e->getMessage(),
 				'userId' => CurrentUser::get()->getId(),
 			]);
 		}
@@ -96,14 +106,14 @@ class NewToOldEventHandler
 	 */
 	public static function onNodeDeleted(Event $event): void
 	{
-		if (Container::getSemaphoreService()->isLocked(self::MODULE_NAME_PREFIX . EventName::NODE_DELETED->name))
+		if (Container::getSemaphoreService()->isLocked(self::MODULE_NAME_PREFIX . EventName::OnNodeDeleted->name))
 		{
 			return;
 		}
 
 		/** @var \Bitrix\HumanResources\Item\Node $node */
 		$node = $event->getParameter('node');
-		if (!isset($node))
+		if (!isset($node) || $node->type !== NodeEntityType::DEPARTMENT)
 		{
 			return;
 		}
@@ -155,7 +165,7 @@ class NewToOldEventHandler
 	 */
 	public static function onNodeUpdated(Event $event): void
 	{
-		if (Container::getSemaphoreService()->isLocked(self::MODULE_NAME_PREFIX . EventName::NODE_UPDATED->name))
+		if (Container::getSemaphoreService()->isLocked(self::MODULE_NAME_PREFIX . EventName::OnNodeUpdated->name))
 		{
 			return;
 		}
@@ -163,7 +173,7 @@ class NewToOldEventHandler
 		/** @var \Bitrix\HumanResources\Item\Node $node */
 		$node = $event->getParameter('node');
 		$fields = $event->getParameter('fields');
-		if (!isset($node) || !isset($fields))
+		if (!isset($node) || !isset($fields) || $node->type !== NodeEntityType::DEPARTMENT)
 		{
 			return;
 		}
@@ -224,7 +234,7 @@ class NewToOldEventHandler
 	 */
 	public static function onMemberAdded(Event $event): void
 	{
-		if (Container::getSemaphoreService()->isLocked(self::MODULE_NAME_PREFIX . EventName::MEMBER_ADDED->name))
+		if (Container::getSemaphoreService()->isLocked(self::MODULE_NAME_PREFIX . EventName::OnMemberAdded->name))
 		{
 			return;
 		}
@@ -252,7 +262,7 @@ class NewToOldEventHandler
 
 		if (!isset($jobSentForUser[$member->entityId]))
 		{
-			\Bitrix\Main\Application::getInstance()->addBackgroundJob(function ($member) {
+			\Bitrix\Main\Application::getInstance()->addBackgroundJob(function (NodeMember $member) {
 				NodeTable::cleanCache();
 				$nodes = Container::getNodeRepository()
 					->findAllByUserId($member->entityId);
@@ -268,6 +278,11 @@ class NewToOldEventHandler
 					}
 				}
 
+				if ($member->node?->type !== NodeEntityType::DEPARTMENT)
+				{
+					return;
+				}
+
 				$user = new \CUser();
 				$user->Update(
 					$member->entityId,
@@ -281,7 +296,8 @@ class NewToOldEventHandler
 		}
 
 		$node = null;
-		if ($member->role === Container::getRoleHelperService()->getHeadRoleId())
+		if ($member->role === Container::getRoleHelperService()->getHeadRoleId()
+			&& $member->node->type === NodeEntityType::DEPARTMENT)
 		{
 			$node = Container::getNodeRepository()->getById($member->nodeId);
 			try
@@ -304,7 +320,7 @@ class NewToOldEventHandler
 	{
 		if (
 			Container::getSemaphoreService()
-				->isLocked(self::MODULE_NAME_PREFIX . EventName::MEMBER_DELETED->name)
+				->isLocked(self::MODULE_NAME_PREFIX . EventName::OnMemberDeleted->name)
 		)
 		{
 			return;
@@ -377,7 +393,7 @@ class NewToOldEventHandler
 
 	public static function onMemberUpdated(Event $event): void
 	{
-		if (Container::getSemaphoreService()->isLocked(self::MODULE_NAME_PREFIX . EventName::MEMBER_UPDATED->name))
+		if (Container::getSemaphoreService()->isLocked(self::MODULE_NAME_PREFIX . EventName::OnMemberUpdated->name))
 		{
 			return;
 		}
@@ -389,23 +405,26 @@ class NewToOldEventHandler
 			$member = $event->getParameter('member');
 			$node = Container::getNodeRepository()->getById($member->nodeId);
 
-			$departmentId = DepartmentBackwardAccessCode::extractIdFromCode($node->accessCode);
-			$memberDepartment = OldStructureUtils::getOldDepartmentById($departmentId ?? 0) ?? null;
-			$isHead = $member->role === Container::getRoleHelperService()->getHeadRoleId();
-
-			if (!$isHead && $memberDepartment && (int)$memberDepartment['UF_HEAD'] === $member->entityId)
+			if ($node->type === NodeEntityType::DEPARTMENT)
 			{
-				try
+				$departmentId = DepartmentBackwardAccessCode::extractIdFromCode($node->accessCode);
+				$memberDepartment = OldStructureUtils::getOldDepartmentById($departmentId ?? 0) ?? null;
+				$isHead = $member->role === Container::getRoleHelperService()->getHeadRoleId();
+
+				if (!$isHead && $memberDepartment && (int)$memberDepartment['UF_HEAD'] === $member->entityId)
 				{
-					OldStructureUtils::updateDepartment(
-						[
-							'ID' => $departmentId,
-							'UF_HEAD' => null,
-						],
-					);
-				}
-				catch (\Exception)
-				{
+					try
+					{
+						OldStructureUtils::updateDepartment(
+							[
+								'ID' => $departmentId,
+								'UF_HEAD' => null,
+							],
+						);
+					}
+					catch (\Exception)
+					{
+					}
 				}
 			}
 		}
@@ -427,7 +446,7 @@ class NewToOldEventHandler
 	{
 		$taggedCacheManager = Application::getInstance()->getTaggedCache();
 
-		if ($node)
+		if ($node && $node->type === NodeEntityType::DEPARTMENT)
 		{
 			if (Loader::includeModule('iblock'))
 			{
@@ -463,7 +482,7 @@ class NewToOldEventHandler
 		}
 	}
 
-	public static function clearCacheInBackground(?Node $node = null, ?\Bitrix\HumanResources\Item\NodeMember $member = null)
+	public static function clearCacheInBackground(?Node $node = null, ?\Bitrix\HumanResources\Item\NodeMember $member = null): void
 	{
 		static $jobPrepared = [];
 
@@ -477,6 +496,11 @@ class NewToOldEventHandler
 		\Bitrix\Main\Application::getInstance()->addBackgroundJob(function ($node, $member) {
 			self::clearCache($node, $member);
 		}, [$node, $member]);
+
+		if ($member)
+		{
+			Container::getCacheManager()->clean(sprintf(UserService::USER_DEPARTMENT_EXISTS_KEY, $member->entityId));
+		}
 
 		static $tagGroupCache = [];
 		$groupCacheKey = (int)($member?->entityId / TAGGED_user_card_size);
@@ -499,6 +523,5 @@ class NewToOldEventHandler
 			},
 			[$groupCacheKey],
 		);
-
 	}
 }

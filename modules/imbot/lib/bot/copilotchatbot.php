@@ -2,7 +2,10 @@
 
 namespace Bitrix\Imbot\Bot;
 
+use Bitrix\AI\Context;
+use Bitrix\Im\Dialog;
 use Bitrix\Im\V2\Analytics\CopilotAnalytics;
+use Bitrix\Im\V2\Chat;
 use Bitrix\Im\V2\Relation\AddUsersConfig;
 use Bitrix\Main;
 use Bitrix\Main\Loader;
@@ -323,9 +326,8 @@ class CopilotChatBot extends Base
 			return false;
 		}
 
-		$context = new AI\Context(self::CONTEXT_MODULE, self::CONTEXT_SUMMARY);
-		$engineItem = (new AI\Tuning\Manager())->getItem(Im\V2\Integration\AI\Restriction::SETTING_COPILOT_CHAT_PROVIDER);
-		$engine = AI\Engine::getByCode(isset($engineItem) ? $engineItem->getValue() : '', $context, AI\Engine::CATEGORIES['text']);
+		$context = self::getContext(self::CONTEXT_MODULE, self::CONTEXT_SUMMARY);
+		$engine = self::getEngineByChat($chat, $context);
 		$serviceRestriction = self::checkAiServeRestriction($engine, (int)$messageFields['FROM_USER_ID']);
 		if (!$serviceRestriction->isSuccess())
 		{
@@ -524,11 +526,10 @@ class CopilotChatBot extends Base
 			'message_id' => $params['MESSAGE_ID'],
 		];
 
-		$context = new AI\Context(self::CONTEXT_MODULE, self::CONTEXT_ID);
-		$context->setParameters($contextParams);
+		$chat = $params['CHAT'];
+		$context = self::getContext(self::CONTEXT_MODULE, self::CONTEXT_ID, $contextParams);
+		$engine = self::getEngineByChat($chat, $context);
 
-		$engineItem = (new AI\Tuning\Manager())->getItem(Im\V2\Integration\AI\Restriction::SETTING_COPILOT_CHAT_PROVIDER);
-		$engine = AI\Engine::getByCode(isset($engineItem) ? $engineItem->getValue() : '', $context, AI\Engine::CATEGORIES['text']);
 		if ($engine instanceof AI\Engine)
 		{
 			$payload = self::fillPayload($params);
@@ -607,11 +608,13 @@ class CopilotChatBot extends Base
 			$contextParams = ['chat_id' => $params['DIALOG_ID']];
 			$text = $params['MESSAGE_TEXT'];
 
-			$context = new AI\Context(self::CONTEXT_MODULE, self::CONTEXT_SUMMARY);
-			$context->setParameters($contextParams);
+			$context = self::getContext(self::CONTEXT_MODULE, self::CONTEXT_SUMMARY, $contextParams);
 
-			$engineItem = (new AI\Tuning\Manager())->getItem(Im\V2\Integration\AI\Restriction::SETTING_COPILOT_CHAT_PROVIDER);
-			$engine = AI\Engine::getByCode(isset($engineItem) ? $engineItem->getValue() : '', $context, AI\Engine::CATEGORIES['text']);
+			$chatId = Dialog::getChatId($params['DIALOG_ID']);
+			$chat = Chat::getInstance((int)$chatId);
+
+			$engine = self::getEngineByChat($chat, $context);
+
 			if ($engine instanceof AI\Engine)
 			{
 				$payload = new AI\Payload\Prompt(self::SUMMARY_PROMPT_ID);
@@ -926,6 +929,36 @@ class CopilotChatBot extends Base
 		return is_string($message) ? $message : $defaultMessage;
 	}
 
+	protected static function getEngineByChat(Im\V2\Chat $chat, ?Context $context = null): ?AI\Engine
+	{
+		$context ??= Context::getFake();
+		$engine = null;
+
+		if ($chat instanceof Im\V2\Chat\GroupChat)
+		{
+			$engineCode = $chat->getEngineCode();
+			$engine = (new Im\V2\Integration\AI\EngineManager())->getEngineByCode($engineCode, $context);
+		}
+
+		if (!isset($engine))
+		{
+			$engine = Im\V2\Integration\AI\EngineManager::getDefaultEngine($context);
+		}
+
+		return $engine;
+	}
+
+	protected static function getContext(string $moduleId, string $contextId, array $parameters = []): Context
+	{
+		$context = new Context($moduleId, $contextId);
+
+		if (!empty($parameters))
+		{
+			$context->setParameters($parameters);
+		}
+
+		return $context;
+	}
 	//endregion
 
 	//region Restrictions

@@ -3,14 +3,33 @@ export type ResourceTypeDto = {
 	moduleId: string,
 	name: string,
 	code: string | null,
-	isConfirmationNotificationOn: boolean | null,
-	isFeedbackNotificationOn: boolean | null,
-	isInfoNotificationOn: boolean | null,
-	isDelayedNotificationOn: boolean | null,
-	isReminderNotificationOn: boolean | null,
-	templateTypeConfirmation: string | null,
-	templateTypeFeedback: string | null,
-	templateTypeInfo: string | null,
-	templateTypeDelayed: string | null,
-	templateTypeReminder: string | null,
+	resourcesCnt: number | null,
+
+	// info
+	isInfoNotificationOn: boolean,
+	templateTypeInfo: string,
+	infoNotificationDelay: number,
+
+	// confirmation
+	isConfirmationNotificationOn: boolean,
+	templateTypeConfirmation: string,
+	confirmationNotificationDelay: number,
+	confirmationNotificationRepetitions: number,
+	confirmationNotificationRepetitionsInterval: number,
+	confirmationCounterDelay: number,
+
+	// reminder
+	isReminderNotificationOn: boolean,
+	templateTypeReminder: string,
+	reminderNotificationDelay: number,
+
+	// delayed
+	isDelayedNotificationOn: boolean,
+	templateTypeDelayed: string,
+	delayedNotificationDelay: number,
+	delayedCounterDelay: number,
+
+	// feedback
+	isFeedbackNotificationOn: boolean,
+	templateTypeFeedback: string,
 };

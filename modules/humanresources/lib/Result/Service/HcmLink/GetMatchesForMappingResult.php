@@ -3,12 +3,12 @@
 namespace Bitrix\HumanResources\Result\Service\HcmLink;
 
 use Bitrix\HumanResources\Item\HcmLink\MappingEntity;
-use Bitrix\HumanResources\Result\SuccessResult;
+use Bitrix\HumanResources\Result\PropertyResult;
 
-class GetMatchesForMappingResult extends SuccessResult
+class GetMatchesForMappingResult extends PropertyResult
 {
 	/**
-	 * @param MappingEntity $items
+	 * @param MappingEntity[] $items
 	 */
 	public function __construct(
 		public array $items,

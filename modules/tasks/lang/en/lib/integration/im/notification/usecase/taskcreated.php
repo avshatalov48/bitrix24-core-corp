@@ -7,4 +7,3 @@ $MESS["TASKS_MESSAGE_AUDITORS"] = "Observers";
 $MESS["TASKS_MESSAGE_AUDITORS_ADDED"] = "Added observers: ";
 $MESS["TASKS_MESSAGE_AUDITORS_REMOVED"] = "Removed observers: ";
 $MESS["TASKS_MESSAGE_DEADLINE"] = "Deadline";
-$MESS["TASKS_MESSAGE_RESPONSIBLE_ID"] = "Responsible Person";

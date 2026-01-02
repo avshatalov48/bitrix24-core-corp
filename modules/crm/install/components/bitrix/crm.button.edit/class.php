@@ -293,18 +293,14 @@ class CCrmSiteButtonEditComponent extends \CBitrixComponent
 
 	public function prepareResult()
 	{
-		/**@var $USER \CUser*/
-		global $USER;
-		$CrmPerms = new CCrmPerms($USER->GetID());
-
-		if($CrmPerms->HavePerm('BUTTON', BX_CRM_PERM_NONE))
+		if(!\Bitrix\Crm\Service\Container::getInstance()->getUserPermissions()->siteButton()->canRead())
 		{
 			$this->errors[] = Loc::getMessage('CRM_PERMISSION_DENIED');
 			return false;
 		}
 
 		$this->arResult['ERRORS'] = array();
-		$this->arResult['PERM_CAN_EDIT'] = !$CrmPerms->HavePerm('BUTTON', BX_CRM_PERM_NONE, 'WRITE');
+		$this->arResult['PERM_CAN_EDIT'] = \Bitrix\Crm\Service\Container::getInstance()->getUserPermissions()->siteButton()->canEdit();
 
 		$id = $this->arParams['ELEMENT_ID'];
 		$this->button = new Button($id);

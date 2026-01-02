@@ -9,6 +9,7 @@ return [
 	'js' => 'dist/api.bundle.js',
 	'rel' => [
 		'main.core',
+		'humanresources.company-structure.utils',
 		'ui.notification',
 		'ui.analytics',
 	],

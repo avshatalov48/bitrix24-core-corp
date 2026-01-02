@@ -1,0 +1,19 @@
+<?php
+$MESS["INTR_ABSENCE_ACTIVE_FROM"] = "Басталуы:";
+$MESS["INTR_ABSENCE_ACTIVE_TO"] = "Аяқталуы:";
+$MESS["INTR_ABSENCE_ADD"] = "Қосу";
+$MESS["INTR_ABSENCE_ADD_MORE"] = "Тағы қосу";
+$MESS["INTR_ABSENCE_EDIT"] = "Редакциялау";
+$MESS["INTR_ABSENCE_FROM_TO_ERR"] = "Басталуы аяқталуынан кеш бола алмайды";
+$MESS["INTR_ABSENCE_IBLOCK_MODULE"] = "Ақпараттық блоктар модулі орнатылмаған.";
+$MESS["INTR_ABSENCE_NAME"] = "Орнында болмау себебі*";
+$MESS["INTR_ABSENCE_NAME_HINT"] = "Орнында болмау себебі компанияның барлық қызметкерлеріне көрінетін болады";
+$MESS["INTR_ABSENCE_NO_TYPE"] = "(орнатылмаған)";
+$MESS["INTR_ABSENCE_PERIOD"] = "Орнында болмау кезеңі";
+$MESS["INTR_ABSENCE_SUCCESS"] = "Орнында болмау қосылды";
+$MESS["INTR_ABSENCE_TYPE"] = "Орнында болмаудың түрі";
+$MESS["INTR_ABSENCE_USER"] = "Орнында жоқ қызметкерді таңдаңыз*";
+$MESS["INTR_ADD_TITLE"] = "Болмауды қосу";
+$MESS["INTR_EDIT_TITLE"] = "Орнында болмауды редакциялау";
+$MESS["INTR_USER_CHOOSE"] = "Құрылымнан таңдау";
+$MESS["INTR_USER_ERR_NO_RIGHT"] = "Өзгерту үшін құқықтар жеткіліксіз";

@@ -6,6 +6,7 @@ if (!defined("B_PROLOG_INCLUDED") || B_PROLOG_INCLUDED !== true)
 }
 
 use Bitrix\Crm;
+use Bitrix\Crm\Category\PermissionEntityTypeHelper;
 use Bitrix\Crm\Integration\Sender\Rc;
 use Bitrix\Crm\PhaseSemantics;
 use Bitrix\Main\Engine\Contract\Controllerable;
@@ -14,6 +15,8 @@ use Bitrix\Main\IO\Path;
 use Bitrix\Main\Loader;
 use Bitrix\Main\Localization\Loc;
 use Bitrix\Crm\Security\Role\Utils\RolePermissionLogContext;
+use Bitrix\Crm\Integration;
+use Bitrix\UI\Buttons;
 
 Loader::includeModule('crm');
 
@@ -189,10 +192,9 @@ class SalesTunnels extends Bitrix\Crm\Component\Base implements Controllerable
 			$category['STAGES'] = $reducedStages;
 
 			$categoryId = $this->factory->isCategoriesSupported() ? $category['ID'] : 0;
-			$permissionEntityName = $this->userPermissions::getPermissionEntityType(
-				$this->factory->getEntityTypeId(),
-				$categoryId
-			);
+			$permissionEntityName = (new PermissionEntityTypeHelper($this->factory->getEntityTypeId()))
+				->getPermissionEntityTypeForCategory($categoryId)
+			;
 
 			$permissions = Crm\Security\Role\RolePermission::getByEntityId($permissionEntityName);
 			$access = null;
@@ -318,7 +320,7 @@ class SalesTunnels extends Bitrix\Crm\Component\Base implements Controllerable
 
 	public static function canCurrentUserEditTunnels(): bool
 	{
-		return Crm\Service\Container::getInstance()->getUserPermissions()->canWriteConfig();
+		return Crm\Service\Container::getInstance()->getUserPermissions()->isCrmAdmin();
 	}
 
 	private function isCategoryEditable()
@@ -806,5 +808,44 @@ HTML;
 			return null;
 		}
 		return $this->getCategories();
+	}
+
+	protected function getToolbarParameters(): array
+	{
+		$buttonsRight = [
+			Buttons\IntranetBindingMenu::createByComponentParameters([
+				'SECTION_CODE' => Integration\Intranet\BindingMenu\SectionCode::TUNNELS,
+				'MENU_CODE' => Integration\Intranet\BindingMenu\CodeBuilder::getMenuCode(
+					$this->factory->getEntityTypeId(),
+				),
+			])
+		];
+
+		if ($this->isCategoryCreatable())
+		{
+			$buttonsRight[] = new Buttons\Button([
+				'color' => Buttons\Color::LIGHT_BORDER,
+				'icon' => Buttons\Icon::INFO,
+				// used in js
+				'className' => 'crm-st-help-button',
+				'text' => Loc::getMessage('CRM_ST_HELP_BUTTON'),
+			]);
+
+			$buttonsRight[] = new Buttons\Button([
+				'color' => Buttons\Color::PRIMARY,
+				// used in js
+				'className' => 'crm-st-add-category-btn-top',
+				'text' => Loc::getMessage('CRM_ST_ADD_FUNNEL_BUTTON2'),
+			]);
+		}
+
+		return array_merge(
+			parent::getToolbarParameters(),
+			[
+				'buttons' => [
+					\Bitrix\UI\Toolbar\ButtonLocation::RIGHT => $buttonsRight,
+				],
+			],
+		);
 	}
 }

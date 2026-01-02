@@ -71,7 +71,8 @@ class CDiskUfVersionComponent extends BaseComponent
 				continue;
 			}
 			$version = $attachedModel->getVersion();
-			if(!$version || !$version->getObject())
+			$file = $version?->getObject();
+			if (!$version || !$file)
 			{
 				continue;
 			}
@@ -83,7 +84,7 @@ class CDiskUfVersionComponent extends BaseComponent
 				'CONVERT_EXTENSION' => DocumentHandler::isNeedConvertExtension($extension),
 				'EDITABLE' => DocumentHandler::isEditable($extension),
 				'CAN_UPDATE' => $attachedModel->canUpdate($userId),
-				'FROM_EXTERNAL_SYSTEM' => $version->getObject()->getContentProvider() && $version->getObject()->getCreatedBy() == $userId,
+				'FROM_EXTERNAL_SYSTEM' => $file->getContentProvider() && $file->getCreatedBy() == $userId,
 				'EXTENSION' => $extension,
 				'SIZE' => \CFile::formatSize($version->getSize()),
 				'HISTORY_URL' => $urlManager->getUrlUfController('history', array('attachedId' => $attachedModel->getId())),
@@ -97,16 +98,16 @@ class CDiskUfVersionComponent extends BaseComponent
 				'IS_LOCKED_BY_SELF' => null,
 			);
 
-			if($isEnabledObjectLock && $version->getObject()->getLock())
+			if($isEnabledObjectLock && $file->getLock())
 			{
-				$objectLock = $version->getObject()->getLock();
+				$objectLock = $file->getLock();
 				$versionData['CREATED_BY'] = $objectLock->getCreatedBy();
 				$versionData['IS_LOCKED'] = true;
 				$versionData['IS_LOCKED_BY_SELF'] = $this->getUser()->getId() == $objectLock->getCreatedBy();
 			}
 
 			$sourceUri = new \Bitrix\Main\Web\Uri($urlManager->getUrlUfController('download', array('attachedId' => $attachedModel->getId())));
-			$attr = FileAttributes::buildByFileId($attachedModel->getFileId(), $sourceUri)
+			$attr = FileAttributes::buildByFileId($attachedModel->getFileId(), $sourceUri, $file)
 				->setObjectId($attachedModel->getObjectId())
 				->setAttachedObjectId($attachedModel->getId())
 				->setVersionId($attachedModel->getVersionId())
@@ -128,27 +129,44 @@ class CDiskUfVersionComponent extends BaseComponent
 
 			if ($versionData['CAN_UPDATE'] && $versionData['EDITABLE'])
 			{
-				$documentName = \CUtil::JSEscape($version->getName());
-				$items = [];
-				foreach ($this->getDocumentHandlersForEditingFile() as $handlerData)
+				if ($file->supportsUnifiedLink())
 				{
-					$items[] = [
-						'text' => $handlerData['name'],
-						'onclick' => "BX.Disk.Viewer.Actions.runActionEdit({name: '{$documentName}', attachedObjectId: {$attachedModel->getId()}, serviceCode: '{$handlerData['code']}'})",
-					];
+					$editUnifiedLink = $urlManager->getUnifiedEditLink($file, [
+						'versionId' => $attachedModel->getVersionId(),
+						'attachedId' => $attachedModel->getId(),
+					]);
+					$attr->addAction([
+						'type' => 'edit',
+						'buttonIconClass' => ' ',
+						'action' => "BX.Disk.Viewer.Actions.openUnifiedLink",
+						'params' => [
+							'unifiedLinkToOpen' => $editUnifiedLink,
+						],
+					]);
 				}
-				$attr->addAction([
-					'type' => 'edit',
-					'buttonIconClass' => ' ',
-					'action' => 'BX.Disk.Viewer.Actions.runActionDefaultEdit',
-					'params' => [
-						'attachedObjectId' => $attachedModel->getId(),
-						'name' => $documentName,
-						'dependsOnService' => $items? null : LocalDocumentController::getCode(),
-					],
-					'items' => $items,
-				]);
-
+				else
+				{
+					$documentName = \CUtil::JSEscape($version->getName());
+					$items = [];
+					foreach ($this->getDocumentHandlersForEditingFile() as $handlerData)
+					{
+						$items[] = [
+							'text' => $handlerData['name'],
+							'onclick' => "BX.Disk.Viewer.Actions.runActionEdit({name: '{$documentName}', attachedObjectId: {$attachedModel->getId()}, serviceCode: '{$handlerData['code']}'})",
+						];
+					}
+					$attr->addAction([
+						'type' => 'edit',
+						'buttonIconClass' => ' ',
+						'action' => 'BX.Disk.Viewer.Actions.runActionDefaultEdit',
+						'params' => [
+							'attachedObjectId' => $attachedModel->getId(),
+							'name' => $documentName,
+							'dependsOnService' => $items ? null : LocalDocumentController::getCode(),
+						],
+						'items' => $items,
+					]);
+				}
 			}
 			$versionData['ATTRIBUTES_FOR_VIEWER'] = $attr;
 

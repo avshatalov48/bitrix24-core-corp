@@ -11,6 +11,7 @@ return [
 		'crm.autorun',
 		'ui.notification',
 		'main.popup',
+		'crm.integration.analytics',
 		'ui.entity-catalog',
 		'main.core',
 		'main.core.events',

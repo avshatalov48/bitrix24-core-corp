@@ -1,0 +1,27 @@
+<?php
+$MESS["TASKS_COLUMN_CREATED_DATE"] = "Ескерту күні";
+$MESS["TASKS_COLUMN_DINAMIC"] = "Динамика";
+$MESS["TASKS_COLUMN_EFFECTIVE"] = "Тиімділік";
+$MESS["TASKS_COLUMN_ID"] = "ID";
+$MESS["TASKS_COLUMN_MORE"] = "Қосымша";
+$MESS["TASKS_COLUMN_USER"] = "Қызметкер";
+$MESS["TASKS_EFFECTIVE_DATE_FORMAT"] = "#DAY# #MONTH_NAME# #YEAR_IF_DIFF#";
+$MESS["TASKS_FILTER_COLUMN_DATE"] = "Кезең";
+$MESS["TASKS_FILTER_COLUMN_GROUP_ID"] = "Жоба/топ";
+$MESS["TASKS_FILTER_COLUMN_KPI"] = "Тиімділік";
+$MESS["TASKS_MONTH_1"] = "Қаңтар";
+$MESS["TASKS_MONTH_2"] = "Ақпан";
+$MESS["TASKS_MONTH_3"] = "Наурыз";
+$MESS["TASKS_MONTH_4"] = "Сәуір";
+$MESS["TASKS_MONTH_5"] = "Мамыр";
+$MESS["TASKS_MONTH_6"] = "Маусым";
+$MESS["TASKS_MONTH_7"] = "Шілде";
+$MESS["TASKS_MONTH_8"] = "Тамыз";
+$MESS["TASKS_MONTH_9"] = "Қыркүйек";
+$MESS["TASKS_MONTH_10"] = "Қазан";
+$MESS["TASKS_MONTH_11"] = "Қараша";
+$MESS["TASKS_MONTH_12"] = "Желтоқсан";
+$MESS["TASKS_PRESET_CURRENT_DAY"] = "Ағымдағы күн";
+$MESS["TASKS_PRESET_CURRENT_MONTH"] = "Ағымдағы ай";
+$MESS["TASKS_PRESET_CURRENT_QUARTER"] = "Ағымдағы тоқсан";
+$MESS["TASKS_PRESET_CURRENT_YEAR"] = "Ағымдағы жыл";

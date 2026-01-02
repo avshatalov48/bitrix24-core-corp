@@ -125,10 +125,3 @@ jn.define('qrauth/crm', (require, exports, module) => {
 		CRMDescriptionLayout,
 	};
 });
-
-(function() {
-	const require = (ext) => jn.require(ext);
-	const { CRMDescriptionLayout } = require('qrauth/crm');
-
-	jnexport([CRMDescriptionLayout, 'CRMDescriptionLayout']);
-})();

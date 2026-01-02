@@ -91,32 +91,34 @@ if (!$arResult['READ_ONLY'])
 
 CJSCore::Init($jsLibraries);
 
-$categoryId =  (isset($arResult['EXTRAS']['CATEGORY_ID']) && (int)$arResult['EXTRAS']['CATEGORY_ID'] >= 0)
+$entityTypeId = (int)($arResult['ENTITY_TYPE_ID'] ?? 0);
+$entityId = (int)($arResult['ENTITY_ID'] ?? 0);
+$categoryId = (isset($arResult['EXTRAS']['CATEGORY_ID']) && (int)$arResult['EXTRAS']['CATEGORY_ID'] >= 0)
 	? (int)$arResult['EXTRAS']['CATEGORY_ID']
 	: null
 ;
 
 if (
 	AIManager::isAiCallProcessingEnabled()
-	&& in_array((int)($arResult['ENTITY_TYPE_ID'] ?? 0), AIManager::SUPPORTED_ENTITY_TYPE_IDS, true)
+	&& in_array($entityTypeId, AIManager::SUPPORTED_ENTITY_TYPE_IDS, true)
 )
 {
 	echo (\Bitrix\Crm\Tour\CopilotInCall::getInstance())
-		->setEntityTypeId($arResult['ENTITY_TYPE_ID'])
+		->setEntityTypeId($entityTypeId)
 		->build()
 	;
 
 	echo (\Bitrix\Crm\Tour\CopilotRunAutomatically::getInstance())
-		->setEntityTypeId($arResult['ENTITY_TYPE_ID'])
+		->setEntityTypeId($entityTypeId)
 		->build()
 	;
 
 	echo (\Bitrix\Crm\Tour\CopilotRunManually::getInstance())
-		->setEntityTypeId($arResult['ENTITY_TYPE_ID'])
+		->setEntityTypeId($entityTypeId)
 		->build()
 	;
 
-	$autostartSettings = FillFieldsSettings::get($arResult['ENTITY_TYPE_ID'], $categoryId);
+	$autostartSettings = FillFieldsSettings::get($entityTypeId, $categoryId);
 	if (
 		$autostartSettings->isAutostartTranscriptionOnlyOnFirstCallWithRecording()
 		|| !$autostartSettings->shouldAutostart(TranscribeCallRecording::TYPE_ID, CCrmActivityDirection::Incoming)
@@ -126,25 +128,34 @@ if (
 		if (AIManager::isBaasServiceHasPackage())
 		{
 			echo (\Bitrix\Crm\Tour\CopilotInCallAutomatically::getInstance())
-				->setEntityTypeId($arResult['ENTITY_TYPE_ID'])
+				->setEntityTypeId($entityTypeId)
 				->build()
 			;
 		}
 		else
 		{
 			echo (\Bitrix\Crm\Tour\CopilotInCallBuyingBoost::getInstance())
-				->setEntityTypeId($arResult['ENTITY_TYPE_ID'])
+				->setEntityTypeId($entityTypeId)
 				->build()
 			;
 		}
+	}
+
+	if (Container::getInstance()->getRepeatSaleAvailabilityChecker()->isEnabled())
+	{
+		echo (\Bitrix\Crm\Tour\RepeatSale\CopilotStart::getInstance())
+			->setEntityTypeId($entityTypeId)
+			->setEntityId($entityId)
+			->build()
+		;
 	}
 }
 
 if (ServiceLocator::getInstance()->get('crm.integration.sign')::isEnabled())
 {
 	echo (\Bitrix\Crm\Tour\Sign\SignB2eDocumentProcess::getInstance())
-		->setEntityTypeId((int)($arResult['ENTITY_TYPE_ID'] ?? 0))
-		->setEntityId((int)($arResult['ENTITY_ID'] ?? 0))
+		->setEntityTypeId($entityTypeId)
+		->setEntityId($entityId)
 		->build();
 }
 
@@ -193,10 +204,10 @@ if (!empty($arResult['ERRORS']))
 				$mode = true;
 				if ($arParams['ENTITY_CONFIG_SCOPE'] !== EntityEditorConfigScope::PERSONAL)
 				{
-					$mode = Container::getInstance()->getUserPermissions()->isAdminForEntity($arResult['ENTITY_TYPE_ID']);
+					$mode = Container::getInstance()->getUserPermissions()->isAdminForEntity($entityTypeId, $categoryId);
 				}
 
-				$menuId = MenuIdResolver::getMenuId($arResult['ENTITY_TYPE_ID'], $arResult['USER_ID'], $categoryId);
+				$menuId = MenuIdResolver::getMenuId($entityTypeId, $arResult['USER_ID'], $categoryId);
 				$APPLICATION->IncludeComponent(
 					'bitrix:crm.timeline.menubar',
 					'',
@@ -204,7 +215,7 @@ if (!empty($arResult['ERRORS']))
 						'GUID' => $arResult['GUID'],
 						'MENU_ID' => $menuId,
 						'ALLOW_MOVE_ITEMS' => $mode,
-						'ENTITY_TYPE_ID' => $arResult['ENTITY_TYPE_ID'],
+						'ENTITY_TYPE_ID' => $entityTypeId,
 						'ENTITY_ID' => $arResult['ENTITY_ID'],
 						'ENTITY_CATEGORY_ID' => $categoryId,
 						'ENTITY_CONFIG_SCOPE' => $arParams['ENTITY_CONFIG_SCOPE'] ?? EntityEditorConfigScope::UNDEFINED,
@@ -243,7 +254,7 @@ $filterClassName = $arResult['IS_HISTORY_FILTER_APPLIED']
 						'RESET_TO_DEFAULT_MODE' => false,
 						'CONFIG' => array('AUTOFOCUS' => false),
 						'LAZY_LOAD' => array(
-							'GET_LIST' => '/bitrix/components/bitrix/crm.timeline/filter.ajax.php?action=list&filter_id='.urlencode($arResult['HISTORY_FILTER_ID']).'&entity_type_id='.$arResult['ENTITY_TYPE_ID'].'&entity_id='.$arResult['ENTITY_ID'].'&siteID='.SITE_ID.'&'.bitrix_sessid_get(),
+							'GET_LIST' => '/bitrix/components/bitrix/crm.timeline/filter.ajax.php?action=list&filter_id='.urlencode($arResult['HISTORY_FILTER_ID']).'&entity_type_id='.$entityTypeId.'&entity_id='.$arResult['ENTITY_ID'].'&siteID='.SITE_ID.'&'.bitrix_sessid_get(),
 							'GET_FIELD' => '/bitrix/components/bitrix/crm.timeline/filter.ajax.php?action=field&filter_id='.urlencode($arResult['HISTORY_FILTER_ID']).'&siteID='.SITE_ID.'&'.bitrix_sessid_get(),
 						)
 					)
@@ -280,7 +291,7 @@ $filterClassName = $arResult['IS_HISTORY_FILTER_APPLIED']
 		'documents' => 'CRM_TIMELINE_FINAL_SUMMARY_DOCUMENTS_TITLE',
 	];
 
-	if ($arResult['ENTITY_TYPE_ID'] === \CCrmOwnerType::SmartInvoice)
+	if ($entityTypeId === \CCrmOwnerType::SmartInvoice)
 	{
 		$finalSummaryPhraseCodes = [
 			'summary' => 'CRM_TIMELINE_FINAL_SUMMARY_INVOICE_TITLE',
@@ -481,7 +492,7 @@ $filterClassName = $arResult['IS_HISTORY_FILTER_APPLIED']
 				"CRM_TIMELINE_VISIT_AT": '<?=GetMessageJS("CRM_TIMELINE_VISIT_AT")?>',
 				"CRM_TIMELINE_VISIT_WITH": '<?=GetMessageJS("CRM_TIMELINE_VISIT_WITH")?>',
 				"CRM_TIMELINE_VISIT_VKONTAKTE_PROFILE": '<?=GetMessageJS("CRM_TIMELINE_VISIT_VKONTAKTE_PROFILE")?>',
-				"CRM_TIMELINE_FASTEN_LIMIT_MESSAGE": '<?=GetMessageJS("CRM_TIMELINE_FASTEN_LIMIT_MESSAGE")?>',
+				"CRM_TIMELINE_FASTEN_LIMIT_MESSAGE": '<?=GetMessageJS("CRM_TIMELINE_FASTEN_LIMIT_MESSAGE_MSGVER_1")?>',
 				"CRM_TIMELINE_EMPTY_COMMENT_MESSAGE": '<?=GetMessageJS("CRM_TIMELINE_EMPTY_COMMENT_MESSAGE")?>',
 				"CRM_TIMELINE_SPOTLIGHT_FASTEN_MESSAGE": '<?=GetMessageJS("CRM_TIMELINE_SPOTLIGHT_FASTEN_MESSAGE")?>',
 				"CRM_TIMELINE_SCORING_TITLE_2": '<?=GetMessageJS("CRM_TIMELINE_SCORING_TITLE_2")?>',
@@ -522,7 +533,7 @@ $filterClassName = $arResult['IS_HISTORY_FILTER_APPLIED']
 			var timeline = BX.CrmTimelineManager.create(
 				"<?=CUtil::JSEscape($guid)?>",
 				{
-					ownerTypeId: <?=$arResult['ENTITY_TYPE_ID']?>,
+					ownerTypeId: <?=$entityTypeId?>,
 					ownerId: <?=$arResult['ENTITY_ID']?>,
 					ownerInfo: <?=CUtil::PhpToJSObject($arResult['ENTITY_INFO'])?>,
 					userId: <?=$arResult['USER_ID']?>,

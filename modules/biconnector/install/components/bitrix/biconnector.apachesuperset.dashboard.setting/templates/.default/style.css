@@ -2,3 +2,13 @@
 	/* hack, without padding inner elements doesnt margin */
 	padding-top: 1px;
 }
+
+.ui-page-slider-workarea,.ui-side-panel-header {
+	width: 740px;
+}
+
+@media (max-width: 789px) {
+	.ui-page-slider-workarea,.ui-side-panel-header {
+		width: auto;
+	}
+}

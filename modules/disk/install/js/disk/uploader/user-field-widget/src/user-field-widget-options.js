@@ -15,4 +15,6 @@ export type UserFieldWidgetOptions = {
 	tileWidgetOptions?: TileWidgetOptions,
 	insertIntoText?: boolean,
 	events?: { [eventName: string]: (event: BaseEvent) => void },
+	withControlPanel: boolean,
+	isEmbedded: boolean,
 };

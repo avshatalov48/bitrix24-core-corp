@@ -13,7 +13,6 @@ $MESS["CRM_PROCESS_ENTITY_LEAD_BECOME_RESPONSIBLE"] = "You are now responsible f
 $MESS["CRM_PROCESS_ENTITY_LEAD_NO_LONGER_RESPONSIBLE"] = "You are no longer responsible for the lead \"<a href=\"#URL#\" class=\"bx-notifier-item-action\">#TITLE#</a>\".";
 $MESS["CRM_PROCESS_ENTITY_ORDER_BECOME_RESPONSIBLE"] = "You are now responsible for the order \"<a href=\"#URL#\" class=\"bx-notifier-item-action\">#TITLE#</a>\".";
 $MESS["CRM_PROCESS_ENTITY_ORDER_NO_LONGER_RESPONSIBLE"] = "You are no longer responsible for the order \"<a href=\"#URL#\" class=\"bx-notifier-item-action\">#TITLE#</a>\".";
-$MESS["CRM_PROCESS_ENTITY_QUOTE_BECOME_RESPONSIBLE"] = "You are now responsible for the estimate \"<a href=\"#URL#\" class=\"bx-notifier-item-action\">#TITLE#</a>\".";
 $MESS["CRM_PROCESS_ENTITY_QUOTE_BECOME_RESPONSIBLE_MSGVER_1"] = "You are now responsible for the estimate \"<a href=\"#URL#\" class=\"bx-notifier-item-action\">#TITLE#</a>\"";
 $MESS["CRM_PROCESS_ENTITY_QUOTE_NO_LONGER_RESPONSIBLE"] = "You are no longer responsible for the quote \"<a href=\"#URL#\" class=\"bx-notifier-item-action\">#TITLE#</a>\".";
 $MESS["CRM_PROCESS_ENTITY_RECURRING_DEAL_BECOME_RESPONSIBLE"] = "You are now responsible for the deal template \"<a href=\"#URL#\" class=\"bx-notifier-item-action\">#TITLE#</a>\".";

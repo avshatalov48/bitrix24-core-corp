@@ -29,8 +29,14 @@ class CBPCrmSetObserverField extends CBPActivity
 		}
 
 		$documentType = $this->GetDocumentType()[2];
-		$documentId = mb_split('_(?=[^_]*$)', $this->GetDocumentId()[2])[1];
+		[$entityTypeId, $entityId] = CCrmBizProcHelper::resolveEntityId($this->GetDocumentId());
 		$observerIds = CBPHelper::ExtractUsers($this->Observers, $this->GetDocumentId());
+
+		if (!$entityTypeId || !$entityId)
+		{
+			/* not CRM element */
+			return CBPActivityExecutionStatus::Closed;
+		}
 
 		if ($this->workflow->isDebug())
 		{
@@ -42,11 +48,11 @@ class CBPCrmSetObserverField extends CBPActivity
 
 		if ($documentType === CCrmOwnerType::LeadName || $documentType === CCrmOwnerType::DealName)
 		{
-			$this->setLeadDealObservers($documentType, $documentId, $observerIds);
+			$this->setLeadDealObservers($documentType, $entityId, $observerIds);
 		}
 		else
 		{
-			$this->setItemObservers(CCrmOwnerType::ResolveID($documentType), $documentId, $observerIds);
+			$this->setItemObservers($entityTypeId, $entityId, $observerIds);
 		}
 
 		return CBPActivityExecutionStatus::Closed;

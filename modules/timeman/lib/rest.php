@@ -85,7 +85,6 @@ class Rest extends \IRestService
 		}
 
 		$userOffset = $tmUser->getDayStartOffset($currentInfo) + date('Z');
-		static::setCurrentTimezoneOffset($userOffset);
 
 		if($currentInfo['DATE_START'])
 		{
@@ -124,11 +123,6 @@ class Rest extends \IRestService
 		$query = static::prepareQuery($query);
 		$tmUser = static::getUserInstance($query);
 
-		$currentInfo = $tmUser->getCurrentInfo();
-
-		$userOffset = $tmUser->getDayStartOffset($currentInfo) + date('Z');
-		static::setCurrentTimezoneOffset($userOffset);
-
 		$tmUser->PauseDay();
 
 		return static::getStatus($query, $n, $server);
@@ -149,7 +143,6 @@ class Rest extends \IRestService
 				if(isset($query['TIME']))
 				{
 					$timeInfo = static::convertTimeFromISO($query['TIME']);
-					static::setCurrentTimezoneOffset($timeInfo['OFFSET']);
 
 					if(!static::checkDate($timeInfo, ConvertTimeStamp()))
 					{
@@ -178,11 +171,6 @@ class Rest extends \IRestService
 					throw new RestException('Unable to set time, work day is paused', 'TIME');
 				}
 
-				$currentInfo = $tmUser->getCurrentInfo();
-				$userOffset = $tmUser->getDayStartOffset($currentInfo) + date('Z');
-
-				static::setCurrentTimezoneOffset($userOffset);
-
 				$result = $tmUser->ReopenDay();
 			}
 		}
@@ -209,8 +197,6 @@ class Rest extends \IRestService
 		{
 			$currentInfo = $tmUser->getCurrentInfo();
 			$userOffset = $tmUser->getDayStartOffset($currentInfo) + date('Z');
-
-			static::setCurrentTimezoneOffset($userOffset);
 
 			$timeInfo = static::convertTimeFromISO($query['TIME']);
 
@@ -850,11 +836,6 @@ class Rest extends \IRestService
 			'TIME' => 3600*$date->format('G') + 60 * $date->format('i') + intval($date->format('s')),
 			'OFFSET' => $date->getOffset(),
 		);
-	}
-
-	protected static function setCurrentTimezoneOffset($offset)
-	{
-		\CTimeZone::SetCookieValue(intval(-$offset/60));
 	}
 
 	protected static function setDayGeoPosition($entryId, $query, $action = 'open')

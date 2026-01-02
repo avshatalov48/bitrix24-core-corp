@@ -3,6 +3,7 @@
  */
 jn.define('tasks/flow-list/src/sorting', (require, exports, module) => {
 	const { BaseListSorting } = require('layout/ui/list/base-sorting');
+	const { FLOWS_INFO_ITEM_ID } = require('tasks/flow-list/simple-list/items/type');
 
 	/**
 	 * @class TasksFlowListSorting
@@ -61,22 +62,22 @@ jn.define('tasks/flow-list/src/sorting', (require, exports, module) => {
 
 		/**
 		 * @private
-		 * @return {function(*): number}
-		 */
-		getSortingSectionCallback()
-		{
-			return (item) => 0;
-		}
-
-		/**
-		 * @private
-		 * @static
 		 * @param {object} item
 		 * @return {number}
 		 */
-		static getSortingSection(item)
+		getSortingSection(item)
 		{
-			return 0;
+			if (item.id === FLOWS_INFO_ITEM_ID)
+			{
+				return 0;
+			}
+
+			if (item.isPinned)
+			{
+				return 1;
+			}
+
+			return 2;
 		}
 	}
 

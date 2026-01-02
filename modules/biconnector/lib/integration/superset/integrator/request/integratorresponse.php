@@ -13,6 +13,7 @@ final class IntegratorResponse
 	public const STATUS_IN_PROGRESS = 202;
 	public const STATUS_NO_ACCESS = 403;
 	public const STATUS_NOT_FOUND = 404;
+	public const STATUS_LIMIT_EXCEEDED = 409;
 	public const STATUS_REGISTER_REQUIRED = 470;
 	public const STATUS_SERVER_ERROR = 500;
 	public const STATUS_FROZEN = 555;

@@ -1,28 +1,18 @@
-<?
-/**
- * Class ReminderTable
- *
- * Fields:
- * <ul>
- * <li> ID int mandatory
- * <li> USER_ID int mandatory
- * <li> TASK_ID int mandatory
- * <li> REMIND_DATE datetime mandatory
- * <li> TYPE enum ('D', 'A') optional
- * <li> TRANSPORT enum ('J', 'E') optional
- * <li> RECEPIENT_TYPE enum ('S', 'R', 'O') optional default 'S'
- * <li> USER reference to {@link \Bitrix\Main\UserTable}
- * <li> TASK reference to {@link \Bitrix\Tasks\TaskTable}
- * </ul>
- *
- * @package Bitrix\Tasks
- **/
+<?php
 
 namespace Bitrix\Tasks\Internals\Task;
 
-use Bitrix\Main,
-	Bitrix\Main\Localization\Loc;
-//Loc::loadMessages(__FILE__);
+use Bitrix\Main\ORM\Data\AddStrategy\Trait\AddMergeTrait;
+use Bitrix\Main\ORM\Data\DataManager;
+use Bitrix\Main\ORM\Data\Internal\DeleteByFilterTrait;
+use Bitrix\Main\ORM\Fields\ArrayField;
+use Bitrix\Main\ORM\Fields\DatetimeField;
+use Bitrix\Main\ORM\Fields\EnumField;
+use Bitrix\Main\ORM\Fields\IntegerField;
+use Bitrix\Main\ORM\Fields\Relations\Reference;
+use Bitrix\Main\ORM\Query\Join;
+use Bitrix\Main\UserTable;
+use Bitrix\Tasks\Internals\TaskTable;
 
 /**
  * Class ReminderTable
@@ -40,91 +30,80 @@ use Bitrix\Main,
  * @method static \Bitrix\Tasks\Internals\Task\EO_Reminder wakeUpObject($row)
  * @method static \Bitrix\Tasks\Internals\Task\EO_Reminder_Collection wakeUpCollection($rows)
  */
-class ReminderTable extends Main\Entity\DataManager
+class ReminderTable extends DataManager
 {
-	const TYPE_DEADLINE = "D";
-	const TYPE_COMMON = "A";
+	use AddMergeTrait;
+	use DeleteByFilterTrait;
 
-	const TRANSPORT_JABBER = "J";
-	const TRANSPORT_EMAIL = "E";
+	public const TYPE_DEADLINE = 'D';
+	public const TYPE_COMMON = 'A';
+	public const TYPE_RECURRING = 'R';
 
-	const RECEPIENT_TYPE_SELF = "S";
-	const RECEPIENT_TYPE_RESPONSIBLE = "R";
-	const RECEPIENT_TYPE_ORIGINATOR = "O";
+	public const TRANSPORT_JABBER = 'J';
+	public const TRANSPORT_EMAIL = 'E';
 
-	/**
-	 * Returns DB table name for entity.
-	 *
-	 * @return string
-	 */
-	public static function getTableName()
+	public const RECIPIENT_TYPE_SELF = 'S';
+	public const RECIPIENT_TYPE_RESPONSIBLE = 'R';
+	public const RECIPIENT_TYPE_ORIGINATOR = 'O';
+	public const RECIPIENT_TYPE_ACCOMPLICE = 'A';
+
+	public static function getTableName(): string
 	{
 		return 'b_tasks_reminder';
 	}
 
-	/**
-	 * @return static
-	 */
-	public static function getClass()
+	public static function getClass(): string
 	{
-		return get_called_class();
+		return static::class;
 	}
 
-	/**
-	 * Returns entity map definition.
-	 *
-	 * @return array
-	 */
-	public static function getMap()
+	public static function getMap(): array
 	{
-		return array(
-			'ID' => array(
-				'data_type' => 'integer',
-				'primary' => true,
-				'autocomplete' => true,
-			),
-			'USER_ID' => array(
-				'data_type' => 'integer',
-				'required' => true,
-			),
-			'TASK_ID' => array(
-				'data_type' => 'integer',
-				'required' => true,
-			),
-			'REMIND_DATE' => array(
-				'data_type' => 'datetime',
-				'required' => true,
-			),
-			'TYPE' => array(
-				'data_type' => 'enum',
-				'values' => array(
-					self::TYPE_DEADLINE,
-					self::TYPE_COMMON,
-				),
-			),
-			'TRANSPORT' => array(
-				'data_type' => 'enum',
-				'values' => array(
-					self::TRANSPORT_JABBER,
-					self::TRANSPORT_EMAIL,
-				),
-			),
-			'RECEPIENT_TYPE' => array(
-				'data_type' => 'enum',
-				'values' => array(
-					self::RECEPIENT_TYPE_SELF,
-					self::RECEPIENT_TYPE_RESPONSIBLE,
-					self::RECEPIENT_TYPE_ORIGINATOR,
-				),
-			),
-			'USER' => array(
-				'data_type' => 'Bitrix\Main\UserTable',
-				'reference' => array('=this.USER_ID' => 'ref.ID')
-			),
-			'TASK' => array(
-				'data_type' => 'Bitrix\Tasks\Internals\TaskTable',
-				'reference' => array('=this.TASK_ID' => 'ref.ID')
-			),
-		);
+		return [
+			(new IntegerField('ID'))
+				->configurePrimary()
+				->configureAutocomplete(),
+
+			(new IntegerField('USER_ID'))
+				->configureRequired(),
+
+			(new IntegerField('TASK_ID'))
+				->configureRequired(),
+
+			(new DatetimeField('REMIND_DATE'))
+				->configureRequired(),
+
+			(new EnumField('TYPE'))
+				->configureValues([static::TYPE_DEADLINE, static::TYPE_COMMON, static::TYPE_RECURRING])
+				->configureRequired(),
+
+			(new EnumField('TRANSPORT'))
+				->configureValues([static::TRANSPORT_EMAIL, static::TRANSPORT_JABBER])
+				->configureRequired(),
+
+			(new EnumField('RECEPIENT_TYPE'))
+				->configureValues([
+					static::RECIPIENT_TYPE_SELF,
+					static::RECIPIENT_TYPE_ORIGINATOR,
+					static::RECIPIENT_TYPE_RESPONSIBLE,
+					static::RECIPIENT_TYPE_ACCOMPLICE
+				])
+				->configureRequired(),
+
+			(new IntegerField('BEFORE_DEADLINE'))
+				->configureNullable()
+				->configureDefaultValue(null),
+
+			(new ArrayField('RRULE'))
+				->configureNullable()
+				->configureDefaultValue(null)
+				->configureSerializationJson(),
+
+			(new Reference('USER', UserTable::getEntity(), Join::on('this.USER_ID', 'ref.ID')))
+				->configureJoinType(Join::TYPE_LEFT),
+
+			(new Reference('TASK', TaskTable::getEntity(), Join::on('this.TASK_ID', 'ref.ID')))
+				->configureJoinType(Join::TYPE_LEFT),
+		];
 	}
 }

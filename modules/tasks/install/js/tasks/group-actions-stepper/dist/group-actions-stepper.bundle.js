@@ -169,6 +169,7 @@ this.BX = this.BX || {};
 	          const data = this.getParam('data') || [];
 	          if (result.PROCESSED_ITEMS) {
 	            data.processedItems = parseInt(result.PROCESSED_ITEMS, 10);
+	            data.lastProcessedId = parseInt(result.LAST_PROCESSED_ID, 10);
 	          }
 	          this.setParam('data', data);
 	        }
@@ -232,6 +233,9 @@ this.BX = this.BX || {};
 	      break;
 	    case 'setgroup':
 	      title = main_core.Loc.getMessage('TASKS_GRID_GROUP_ACTION_NAME_SETGROUP');
+	      break;
+	    case 'setcollab':
+	      title = main_core.Loc.getMessage('TASKS_GRID_GROUP_ACTION_NAME_SETCOLLAB');
 	      break;
 	    case 'setflow':
 	      title = main_core.Loc.getMessage('TASKS_GRID_GROUP_ACTION_NAME_SETFLOW');

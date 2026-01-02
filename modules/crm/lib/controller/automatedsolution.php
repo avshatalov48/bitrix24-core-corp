@@ -39,7 +39,7 @@ final class AutomatedSolution extends Base
 
 	private function checkPermissions(): bool
 	{
-		if (!$this->userPermissions->canEditAutomatedSolutions())
+		if (!$this->userPermissions->automatedSolution()->canEdit())
 		{
 			$this->addError(ErrorCode::getAccessDeniedError());
 
@@ -439,8 +439,9 @@ final class AutomatedSolution extends Base
 			{
 				$hasPermission = $this->userPermissions->isCrmAdmin();
 			}
-			else{
-				$hasPermission = $this->userPermissions->canEditAutomatedSolutions();
+			else
+			{
+				$hasPermission = $this->userPermissions->automatedSolution()->canEdit();
 			}
 			if (!$hasPermission)
 			{

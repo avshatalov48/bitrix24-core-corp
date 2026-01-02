@@ -2,7 +2,7 @@
 this.BX = this.BX || {};
 this.BX.AI = this.BX.AI || {};
 this.BX.AI.CopilotChat = this.BX.AI.CopilotChat || {};
-(function (exports,ui_iconSet_actions,ai_speechConverter,main_core_events,ui_iconSet_api_core,ui_vue3,ui_iconSet_main,main_date,main_popup,ui_iconSet_api_vue,ui_bbcode_formatter_htmlFormatter,main_loader,main_core) {
+(function (exports,ui_iconSet_actions,ai_speechConverter,main_core_events,ui_vue3,ui_iconSet_main,main_date,ui_iconSet_api_core,main_popup,ui_iconSet_api_vue,ui_bbcode_formatter_htmlFormatter,helper,main_loader,main_core) {
 	'use strict';
 
 	const Status = Object.freeze({
@@ -337,11 +337,13 @@ this.BX.AI.CopilotChat = this.BX.AI.CopilotChat || {};
 	    }
 	  },
 	  unmounted() {
-	    const converter = ui_vue3.toRaw(this.converter);
-	    converter.unsubscribe(ai_speechConverter.speechConverterEvents.start, this.handleSpeechConverterStartEvent);
-	    converter.unsubscribe(ai_speechConverter.speechConverterEvents.stop, this.handleSpeechConverterStopEvent);
-	    converter.unsubscribe(ai_speechConverter.speechConverterEvents.result, this.handleSpeechConverterResultEvent.bind(this));
-	    converter.unsubscribe(ai_speechConverter.speechConverterEvents.error, this.handleSpeechConverterErrorEvent);
+	    if (this.isVoiceInputDisabled === false) {
+	      const converter = ui_vue3.toRaw(this.converter);
+	      converter.unsubscribe(ai_speechConverter.speechConverterEvents.start, this.handleSpeechConverterStartEvent);
+	      converter.unsubscribe(ai_speechConverter.speechConverterEvents.stop, this.handleSpeechConverterStopEvent);
+	      converter.unsubscribe(ai_speechConverter.speechConverterEvents.result, this.handleSpeechConverterResultEvent.bind(this));
+	      converter.unsubscribe(ai_speechConverter.speechConverterEvents.error, this.handleSpeechConverterErrorEvent);
+	    }
 	  },
 	  template: `
 		<button
@@ -683,9 +685,42 @@ this.BX.AI.CopilotChat = this.BX.AI.CopilotChat || {};
 	  }
 	};
 
-	const CopilotChatMessageMenu = {
+	const CopilotChatMessageButton = {
 	  components: {
 	    BIcon: ui_iconSet_api_vue.BIcon
+	  },
+	  props: {
+	    icon: {
+	      type: String,
+	      required: true
+	    },
+	    class: Array | Object | String
+	  },
+	  computed: {
+	    menuIconProps() {
+	      return {
+	        name: this.icon,
+	        size: 22
+	      };
+	    },
+	    className() {
+	      return this.class;
+	    }
+	  },
+	  template: `
+		<button
+			class="ai__copilot-chat-message-menu"
+			:class="className"
+		>
+			<BIcon v-bind="menuIconProps"></BIcon>
+		</button>
+	`
+	};
+
+	const CopilotChatMessageMenu = {
+	  components: {
+	    BIcon: ui_iconSet_api_vue.BIcon,
+	    CopilotChatMessageButton
 	  },
 	  props: {
 	    menuItems: {
@@ -697,6 +732,11 @@ this.BX.AI.CopilotChat = this.BX.AI.CopilotChat || {};
 	      type: Object,
 	      required: true,
 	      default: () => ({})
+	    },
+	    icon: {
+	      type: String,
+	      required: false,
+	      default: ui_iconSet_api_vue.Set.MORE
 	    }
 	  },
 	  data() {
@@ -714,7 +754,7 @@ this.BX.AI.CopilotChat = this.BX.AI.CopilotChat || {};
 	              message: {
 	                id: this.message.id,
 	                content: this.message.content,
-	                dateCreated: this.message.dateCreated
+	                dateCreate: this.message.dateCreate
 	              }
 	            };
 	            this.hideMenu();
@@ -725,7 +765,7 @@ this.BX.AI.CopilotChat = this.BX.AI.CopilotChat || {};
 	    },
 	    menuIconProps() {
 	      return {
-	        name: ui_iconSet_api_vue.Set.MORE,
+	        name: this.icon,
 	        size: 22
 	      };
 	    },
@@ -759,7 +799,7 @@ this.BX.AI.CopilotChat = this.BX.AI.CopilotChat || {};
 	      this.menu = new main_popup.Menu({
 	        items: this.items,
 	        angle: {
-	          offset: main_core.Dom.getPosition(this.$refs.menuButton).width / 2 + 23
+	          offset: main_core.Dom.getPosition(this.$refs.menuButton.$el).width / 2 + 23
 	        },
 	        events: {
 	          onPopupShow: () => {
@@ -769,7 +809,7 @@ this.BX.AI.CopilotChat = this.BX.AI.CopilotChat || {};
 	            this.isMenuOpen = false;
 	          }
 	        },
-	        bindElement: this.$refs.menuButton
+	        bindElement: this.$refs.menuButton.$el
 	      });
 	      main_core.bind(document.body.querySelector('.ai__copilot-chat_main'), 'scroll', () => {
 	        this.hideMenu();
@@ -782,13 +822,12 @@ this.BX.AI.CopilotChat = this.BX.AI.CopilotChat || {};
 	    (_this$menu3 = this.menu) == null ? void 0 : _this$menu3.destroy();
 	  },
 	  template: `
-		<button
+		<CopilotChatMessageButton
 			ref="menuButton"
 			@click="toggleMenu"
+			:icon="menuIconProps.name"
 			:class="menuButtonClassname"
-		>
-			<BIcon v-bind="menuIconProps"></BIcon>
-		</button>
+		/>
 	`
 	};
 
@@ -796,7 +835,7 @@ this.BX.AI.CopilotChat = this.BX.AI.CopilotChat || {};
 	  components: {
 	    CopilotChatMessageMenu
 	  },
-	  emits: ['buttonClick'],
+	  emits: ['buttonClick', 'remove', 'retry'],
 	  props: {
 	    message: {
 	      type: Object,
@@ -850,18 +889,39 @@ this.BX.AI.CopilotChat = this.BX.AI.CopilotChat || {};
 	      });
 	    },
 	    formattedDeliveryTime() {
-	      return this.formatTime(this.messageData.dateCreated);
+	      return this.formatTime(this.messageData.dateCreate);
 	    },
 	    messageButtons() {
 	      var _this$messageData$par, _this$messageData$par2;
 	      return (_this$messageData$par = (_this$messageData$par2 = this.messageData.params) == null ? void 0 : _this$messageData$par2.buttons) != null ? _this$messageData$par : [];
 	    },
 	    isSomeButtonSelected() {
-	      return this.messageButtons.some(button => button.isSelected);
+	      return this.messageButtons.some(button => button.selected);
 	    },
 	    showMenuButton() {
 	      var _this$menuItems;
 	      return ((_this$menuItems = this.menuItems) == null ? void 0 : _this$menuItems.length) > 0;
+	    },
+	    isErrorMessage() {
+	      return this.messageData.status === CopilotChatMessageStatus.ERROR;
+	    },
+	    errorMessageMenuItems() {
+	      return [{
+	        id: 'retry',
+	        text: this.$Bitrix.Loc.getMessage('AI_COPILOT_CHAT_RETRY_MESSAGE'),
+	        onclick: () => {
+	          this.$emit('retry', this.messageData.id);
+	        }
+	      }, {
+	        id: 'remove',
+	        text: this.$Bitrix.Loc.getMessage('AI_COPILOT_CHAT_REMOVE_MESSAGE'),
+	        onclick: () => {
+	          this.$emit('remove', this.messageData.id);
+	        }
+	      }];
+	    },
+	    Icons() {
+	      return ui_iconSet_api_core.Set;
 	    }
 	  },
 	  methods: {
@@ -904,13 +964,13 @@ this.BX.AI.CopilotChat = this.BX.AI.CopilotChat || {};
 					</div>
 					<div class="ai__copilot-chat-message_status-info">
 						<div
-							v-if="messageData.dateCreated"
+							v-if="messageData.dateCreate"
 							class="ai__copilot-chat-message_time"
 						>
 							{{ formattedDeliveryTime }}
 						</div>
 						<div
-							v-if="messageData.status"
+							v-if="messageData.status && isMessageFromCopilot === false"
 							class="ai__copilot-chat-message_status"
 							:class="'--' + messageData.status"
 						></div>
@@ -920,7 +980,7 @@ this.BX.AI.CopilotChat = this.BX.AI.CopilotChat || {};
 					<button
 						v-for="button in messageButtons"
 						class="ai__copilot-chat-message_action-button"
-						:class="{'--selected': button.isSelected}"
+						:class="{'--selected': button.selected}"
 						:disabled="isSomeButtonSelected || disableAllActions"
 						@click="$emit('buttonClick', button.id)"
 					>
@@ -935,6 +995,16 @@ this.BX.AI.CopilotChat = this.BX.AI.CopilotChat || {};
 				<CopilotChatMessageMenu
 					:menu-items="menuItems"
 					:message="message"
+				/>
+			</div>
+			<div
+				v-else-if="isErrorMessage"
+				class="ai__copilot-chat-message_retry-button"
+			>
+				<CopilotChatMessageMenu
+					:menu-items="errorMessageMenuItems"
+					:message="message"
+					:icon="Icons.REDO_1"
 				/>
 			</div>
 		</div>
@@ -1026,7 +1096,7 @@ this.BX.AI.CopilotChat = this.BX.AI.CopilotChat || {};
 	        ...this.message,
 	        params: {
 	          ...this.message.params,
-	          title: 'Привет! Я — Веб-дизайнер',
+	          title: this.$Bitrix.Loc.getMessage('AI_COPILOT_CHAT_WELCOME_MESSAGE_SITE_WITH_AI_TITLE'),
 	          subtitle: '',
 	          content: ''
 	        }
@@ -1046,8 +1116,15 @@ this.BX.AI.CopilotChat = this.BX.AI.CopilotChat || {};
 				<div ref="root">
 					<p>${0}</p>
 					<p>${0}</p>
+					<a href="#" ref="infoLink">${0}</a>
 				</div>
-			`), this.$Bitrix.Loc.getMessage('AI_COPILOT_CHAT_WELCOME_MESSAGE_SITE_WITH_AI_1'), paragraph2);
+			`), this.$Bitrix.Loc.getMessage('AI_COPILOT_CHAT_WELCOME_MESSAGE_SITE_WITH_AI_1'), paragraph2, this.$Bitrix.Loc.getMessage('AI_COPILOT_CHAT_WELCOME_LINK_SITE_WITH_AI'));
+	      main_core.bind(content.infoLink, 'click', () => {
+	        const Helper = main_core.Reflection.getClass('top.BX.Helper');
+	        if (Helper) {
+	          Helper.show('redirect=detail&code=24409174');
+	        }
+	      });
 	      if (isMessageHaveCreateSiteButton) {
 	        main_core.bind(content.createSiteLink, 'click', () => {
 	          var _this$messageInfo$par3, _this$messageInfo$par4, _this$messageInfo$par5, _this$messageInfo$par6, _this$messageInfo$par7;
@@ -1133,7 +1210,7 @@ this.BX.AI.CopilotChat = this.BX.AI.CopilotChat || {};
 	    CopilotChatMessagesDateGroup,
 	    CopilotChatMessagesAuthorGroup
 	  },
-	  emits: ['clickMessageButton'],
+	  emits: ['clickMessageButton', 'retry', 'remove'],
 	  props: {
 	    messages: {
 	      type: Array,
@@ -1186,7 +1263,7 @@ this.BX.AI.CopilotChat = this.BX.AI.CopilotChat || {};
 	    groupMessagesByDay(messages) {
 	      let isMessagesContainsUnread = false;
 	      return messages.reduce((groupedMessages, message) => {
-	        const messageDeliveryDate = new Date(message.dateCreated);
+	        const messageDeliveryDate = new Date(message.dateCreate);
 	        const messageIsoDate = this.formatISODate(messageDeliveryDate);
 	        if (groupedMessages[messageIsoDate] === undefined) {
 	          // eslint-disable-next-line no-param-reassign
@@ -1232,6 +1309,12 @@ this.BX.AI.CopilotChat = this.BX.AI.CopilotChat || {};
 	      return `${year}-${month}-${day}`;
 	    },
 	    getMessageColor(message) {
+	      if (message.status === CopilotChatMessageStatus.ERROR) {
+	        return CopilotChatMessageColor.ERROR;
+	      }
+	      if (message.type === CopilotChatMessageType.SYSTEM) {
+	        return CopilotChatMessageColor.ERROR;
+	      }
 	      if (message.type === CopilotChatMessageType.BUTTON_CLICK_MESSAGE) {
 	        return CopilotChatMessageColor.USER_WITH_HIGHLIGHT_TEXT;
 	      }
@@ -1243,6 +1326,8 @@ this.BX.AI.CopilotChat = this.BX.AI.CopilotChat || {};
 	    getMessageComponent(message) {
 	      switch (message.type) {
 	        case CopilotChatMessageType.DEFAULT:
+	          return CopilotChatMessageDefault;
+	        case CopilotChatMessageType.SYSTEM:
 	          return CopilotChatMessageDefault;
 	        case CopilotChatMessageType.WELCOME_FLOWS:
 	          return CopilotChatMessageWelcomeFlows;
@@ -1260,7 +1345,7 @@ this.BX.AI.CopilotChat = this.BX.AI.CopilotChat || {};
 	    },
 	    getAuthorMessagesGroupAvatar(authorId, messages) {
 	      const lastMessage = messages.at(-1);
-	      const isLastMessageIsWelcome = lastMessage.type !== 'Default' && lastMessage.type !== 'ButtonClicked';
+	      const isLastMessageIsWelcome = lastMessage.type !== 'Default' && lastMessage.type !== 'ButtonClicked' && lastMessage.type !== 'System';
 	      if (authorId === null || authorId === undefined || isLastMessageIsWelcome) {
 	        return null;
 	      }
@@ -1279,44 +1364,54 @@ this.BX.AI.CopilotChat = this.BX.AI.CopilotChat || {};
 	        buttonId
 	      });
 	    },
-	    isLastMessage(dateGroupIndex, authorGroupIndex, messageIndexAtAuthorGroup) {
-	      return (dateGroupIndex + 1) * (authorGroupIndex + 1) + messageIndexAtAuthorGroup === this.messages.length;
+	    isLastMessage(message) {
+	      return message.id === this.messages.at(-1).id;
+	    },
+	    handleMessageRetry(messageId) {
+	      this.$emit('retry', messageId);
+	    },
+	    handleMessageRemove(messageId) {
+	      this.$emit('remove', messageId);
 	    }
 	  },
 	  mounted() {
 	    main_core.Dom.append(this.welcomeMessageHtmlElement, this.$refs.welcomeMessage);
 	  },
 	  template: `
-		<CopilotChatMessagesDateGroup
+		<div class="ai__copilot-chat-messages-wrapper">
+			<CopilotChatMessagesDateGroup
 			v-for="(date, dateGroupIndex) of sortedByDateMessagesGroups"
 			:date="date"
-		>
-			<CopilotChatMessagesAuthorGroup
-				v-for="([authorId, messagesFromCurrentAuthor, showNewMessagesLabel], authorGroupIndex) in messagesGroupedByDayAndAuthor[date]"
-				:avatar="getAuthorMessagesGroupAvatar(authorId, messagesFromCurrentAuthor)"
-				:show-new-messages-label="showNewMessagesLabel"
 			>
-				<ul class="ai__copilot-chat-messages">
-					<li
-						v-for="(message, index) of messagesFromCurrentAuthor"
-						class="ai__copilot-chat-messages_message-wrapper"
-					>
-						<component :is="getMessageComponent(message)" 
-								v-copilot-chat-new-message-visibility-observer="message.viewed"
-								@buttonClick="handleMessageButtonClick(message.id, $event)"
-								:message="message"
-								:title="getMessageTitle(message.authorId)"
-								:color="getMessageColor(message)"
-								:avatar="getMessageAvatarByAuthorId(message.authorId)"
-								:useAvatarTail="index === messagesFromCurrentAuthor.length - 1 && isMessageHaveButtons(message) === false"
-								:disable-all-actions="isLastMessage(dateGroupIndex, authorGroupIndex, index) === false"
-								:menu-items="getMessageMenuItems(message)"
-						></component>
-					</li>
-				</ul>
-			</CopilotChatMessagesAuthorGroup>
-	
-		</CopilotChatMessagesDateGroup>
+				<CopilotChatMessagesAuthorGroup
+					v-for="([authorId, messagesFromCurrentAuthor, showNewMessagesLabel], authorGroupIndex) in messagesGroupedByDayAndAuthor[date]"
+					:avatar="getAuthorMessagesGroupAvatar(authorId, messagesFromCurrentAuthor)"
+					:show-new-messages-label="showNewMessagesLabel"
+				>
+					<ul class="ai__copilot-chat-messages">
+						<li
+							v-for="(message, index) of messagesFromCurrentAuthor"
+							:key="message.id"
+							class="ai__copilot-chat-messages_message-wrapper"
+						>
+							<component :is="getMessageComponent(message)" 
+									v-copilot-chat-new-message-visibility-observer="message.viewed"
+									@buttonClick="handleMessageButtonClick(message.id, $event)"
+									@retry="handleMessageRetry" 
+									@remove="handleMessageRemove"
+									:message="message"
+									:title="getMessageTitle(message.authorId)"
+									:color="getMessageColor(message)"
+									:avatar="getMessageAvatarByAuthorId(message.authorId)"
+									:useAvatarTail="index === messagesFromCurrentAuthor.length - 1 && isMessageHaveButtons(message) === false"
+									:disable-all-actions="isLastMessage(message) === false"
+									:menu-items="getMessageMenuItems(message)"
+							></component>
+						</li>
+					</ul>
+				</CopilotChatMessagesAuthorGroup>
+			</CopilotChatMessagesDateGroup>
+		</div>
 	`
 	};
 
@@ -1364,7 +1459,7 @@ this.BX.AI.CopilotChat = this.BX.AI.CopilotChat || {};
 	    }
 	  },
 	  mounted() {
-	    const warningMessage = main_core.Tag.render(_t$1 || (_t$1 = _$1`<span>${0}</span>`), this.$Bitrix.Loc.getMessage('AI_COPILOT_CHAT_ANSWER_WARNING', {
+	    const warningMessage = main_core.Tag.render(_t$1 || (_t$1 = _$1`<span>${0}</span>`), this.$Bitrix.Loc.getMessage('AI_COPILOT_CHAT_ANSWER_WARNING_1', {
 	      '#LINK_START#': '<a ref="link" href="#">',
 	      '#LINK_END#': '</a>'
 	    }));
@@ -1379,6 +1474,49 @@ this.BX.AI.CopilotChat = this.BX.AI.CopilotChat || {};
 	`
 	};
 
+	const CopilotChatLoadingBar = {
+	  name: 'LoadingBar',
+	  data() {
+	    return {};
+	  },
+	  template: `
+		<div class="ai__copilot-chat-loading-bar"></div>
+	`
+	};
+
+	const CopilotChatLoadHistoryError = {
+	  events: ['retryButtonClick'],
+	  methods: {
+	    loc(phraseCode) {
+	      return this.$Bitrix.Loc.getMessage(phraseCode);
+	    },
+	    handleClickOnRetryButton(event) {
+	      const target = event.target;
+	      target.blur();
+	      this.$emit('retryButtonClick');
+	    }
+	  },
+	  template: `
+		<div class="ai__copilot-chat-load-history-error">
+			<div class="ai__copilot-chat-load-history-error_icon-wrapper">
+				<div class="ai__copilot-chat-load-history-error_icon"></div>
+			</div>
+			<div class="ai__copilot-chat-load-history-error_title">
+				{{ loc('AI_COPILOT_CHAT_LOAD_HISTORY_ERROR_TITLE') }}
+			</div>
+			<div class="ai__copilot-chat-load-history-error_text">
+				{{ loc('AI_COPILOT_CHAT_LOAD_HISTORY_ERROR_TEXT') }}
+			</div>
+			<button
+				class="ai__copilot-chat-load-history-error_button"
+				@click="handleClickOnRetryButton"
+			>
+				{{ loc('AI_COPILOT_CHAT_LOAD_HISTORY_ERROR_RETRY') }}
+			</button>
+		</div>
+	`
+	};
+
 	const CopilotChat = {
 	  name: 'CopilotChat',
 	  components: {
@@ -1387,7 +1525,9 @@ this.BX.AI.CopilotChat = this.BX.AI.CopilotChat || {};
 	    CopilotChatInput,
 	    CopilotChatHistoryLoader,
 	    CopilotChatStatus,
-	    CopilotChatWarningMessage
+	    CopilotChatWarningMessage,
+	    CopilotChatLoadingBar,
+	    CopilotChatLoadHistoryError
 	  },
 	  props: {
 	    header: Object,
@@ -1411,6 +1551,7 @@ this.BX.AI.CopilotChat = this.BX.AI.CopilotChat || {};
 	    },
 	    disableInput: Object,
 	    showLoader: Object,
+	    isOldMessagesLoading: Object,
 	    showCopilotWritingStatus: Object,
 	    status: Object,
 	    useStatus: Object,
@@ -1436,12 +1577,16 @@ this.BX.AI.CopilotChat = this.BX.AI.CopilotChat || {};
 	    loaderText: {
 	      type: String,
 	      required: false
+	    },
+	    isShowLoadHistoryError: {
+	      type: Object
 	    }
 	  },
 	  data() {
 	    return {
 	      isCopilotWriting: false,
-	      isShowErrorScreen: false
+	      scrollPosition: 0,
+	      scrollHeight: 0
 	    };
 	  },
 	  provide() {
@@ -1460,6 +1605,10 @@ this.BX.AI.CopilotChat = this.BX.AI.CopilotChat || {};
 	    },
 	    isLoaderShown() {
 	      return this.showLoader.value === true;
+	    },
+	    isLoadingOldMessages() {
+	      var _this$isOldMessagesLo;
+	      return ((_this$isOldMessagesLo = this.isOldMessagesLoading) == null ? void 0 : _this$isOldMessagesLo.value) === true;
 	    },
 	    isWarningMessageShown() {
 	      var _this$isShowWarningMe;
@@ -1542,6 +1691,26 @@ this.BX.AI.CopilotChat = this.BX.AI.CopilotChat || {};
 	      requestAnimationFrame(() => {
 	        this.scrollMessagesListToTheEnd(true);
 	      });
+	    },
+	    restoreScrollPosition() {
+	      this.scrollPosition = this.$refs.main.scrollTop;
+	      this.scrollHeight = this.$refs.main.scrollHeight;
+	      requestAnimationFrame(() => {
+	        this.$refs.main.scrollTop = this.$refs.main.scrollHeight - this.scrollHeight + this.scrollPosition;
+	      });
+	    },
+	    handleRetryMessage(messageId) {
+	      this.instance.emit(CopilotChatEvents.RETRY_SEND_MESSAGE, {
+	        messageId
+	      });
+	    },
+	    handleRemoveMessage(messageId) {
+	      this.instance.emit(CopilotChatEvents.REMOVE_MESSAGE, {
+	        messageId
+	      });
+	    },
+	    handleRetryLoadHistoryButtonClick() {
+	      this.instance.emitRetryLoadHistory();
 	    }
 	  },
 	  beforeCreate() {
@@ -1560,7 +1729,8 @@ this.BX.AI.CopilotChat = this.BX.AI.CopilotChat || {};
 	      }
 	    });
 	    main_core.bind(this.$refs.main, 'scroll', event => {
-	      if (event.target.scrollTop < 100) {
+	      const scrollElement = event.target;
+	      if (scrollElement.scrollTop / scrollElement.scrollHeight < 0.05) {
 	        this.instance.emit(CopilotChatEvents.MESSAGES_SCROLL_TOP);
 	      }
 	    });
@@ -1569,11 +1739,21 @@ this.BX.AI.CopilotChat = this.BX.AI.CopilotChat || {};
 	    this.instance.unsubscribe(CopilotChatEvents.ADD_USER_MESSAGE, this.handleAddNewUserMessage);
 	  },
 	  watch: {
+	    isLoaderShown(newValue, oldValue) {
+	      if (newValue === false && oldValue === true) {
+	        requestAnimationFrame(() => {
+	          this.scrollMessagesListToTheEnd();
+	        });
+	      }
+	    },
 	    'messagesList.length': function (newMessagesCount, oldMessagesCount) {
 	      if (newMessagesCount - oldMessagesCount === 1) {
 	        requestAnimationFrame(() => {
 	          this.scrollMessagesListToTheEnd(true);
 	        });
+	      }
+	      if (oldMessagesCount > 1 && newMessagesCount > 1) {
+	        this.restoreScrollPosition();
 	      }
 	      requestAnimationFrame(() => {
 	        if (oldMessagesCount === 0 && newMessagesCount > 1 && this.isScrollToTheEndAfterMounted) {
@@ -1593,8 +1773,12 @@ this.BX.AI.CopilotChat = this.BX.AI.CopilotChat || {};
 					:menu="headerProps.menu"
 					@clickOnCloseIcon="hideChat"
 				/>
+				<div class="ai__copilot-chat_loading-bar" v-if="isLoadingOldMessages">
+					<CopilotChatLoadingBar />
+				</div>
 			</header>
 			<main ref="main" class="ai__copilot-chat_main">
+				<TransitionGroup name="main">
 				<div
 					v-if="isLoaderShown"
 					class="ai__copilot-chat_main-loader-container"
@@ -1603,22 +1787,28 @@ this.BX.AI.CopilotChat = this.BX.AI.CopilotChat || {};
 						<CopilotChatHistoryLoader :text="loaderText" />
 					</slot>
 				</div>
-				<div v-else-if="isShowErrorScreen">
+				<div
+					v-else-if="isShowLoadHistoryError.value"
+					class="ai__copilot-chat_load-history-error"
+				>
 					<slot name="loaderError">
-						Sorry, we can't load messages, try later
+						<CopilotChatLoadHistoryError @retryButtonClick="handleRetryLoadHistoryButtonClick" />
 					</slot>
 				</div>
-				<CopilotChatMessages
-					v-else
-					@clickMessageButton="handleClickOnMessageButton"
-					:user-avatar="userPhoto"
-					:copilot-avatar="botData.avatar"
-					:messages="messagesList"
-					:welcome-message-html-element="welcomeMessageHtml"
-					:copilot-message-title="botData.messageTitle"
-					:copilot-message-menu-items="botData.messageMenuItems"
-					:user-message-menu-items="userMessageMenuItems"
-				></CopilotChatMessages>
+					<CopilotChatMessages
+						v-else
+						@clickMessageButton="handleClickOnMessageButton"
+						@retry="handleRetryMessage"
+						@remove="handleRemoveMessage"
+						:user-avatar="userPhoto"
+						:copilot-avatar="botData.avatar"
+						:messages="messagesList"
+						:welcome-message-html-element="welcomeMessageHtml"
+						:copilot-message-title="botData.messageTitle"
+						:copilot-message-menu-items="botData.messageMenuItems"
+						:user-message-menu-items="userMessageMenuItems"
+					></CopilotChatMessages>
+				</TransitionGroup>
 				<CopilotChatStatus
 					v-if="isLoaderShown === false && isChatStatusUsed"
 					:status="copilotChatStatus"
@@ -1661,7 +1851,10 @@ this.BX.AI.CopilotChat = this.BX.AI.CopilotChat || {};
 	  SET_MESSAGE_STATUS: 'setMessageStatus',
 	  SHOW_ERROR_SCREEN: 'showErrorScreen',
 	  HIDE_ERROR_SCREEN: 'hideErrorScreen',
-	  MESSAGES_SCROLL_TOP: 'messagesListScrollTop'
+	  MESSAGES_SCROLL_TOP: 'messagesListScrollTop',
+	  RETRY_SEND_MESSAGE: 'retrySendMessage',
+	  REMOVE_MESSAGE: 'removeMessage',
+	  RETRY_LOAD_HISTORY: 'retryLoadHistory'
 	});
 	const CopilotChatMessageStatus = {
 	  DEPART: 'depart',
@@ -1675,6 +1868,7 @@ this.BX.AI.CopilotChat = this.BX.AI.CopilotChat || {};
 	var _app = /*#__PURE__*/babelHelpers.classPrivateFieldLooseKey("app");
 	var _messages = /*#__PURE__*/babelHelpers.classPrivateFieldLooseKey("messages");
 	var _isShowLoader = /*#__PURE__*/babelHelpers.classPrivateFieldLooseKey("isShowLoader");
+	var _isOldMessagesLoading = /*#__PURE__*/babelHelpers.classPrivateFieldLooseKey("isOldMessagesLoading");
 	var _isInputDisabled = /*#__PURE__*/babelHelpers.classPrivateFieldLooseKey("isInputDisabled");
 	var _chatStatus = /*#__PURE__*/babelHelpers.classPrivateFieldLooseKey("chatStatus");
 	var _useChatStatus = /*#__PURE__*/babelHelpers.classPrivateFieldLooseKey("useChatStatus");
@@ -1686,6 +1880,7 @@ this.BX.AI.CopilotChat = this.BX.AI.CopilotChat || {};
 	var _userAvatar = /*#__PURE__*/babelHelpers.classPrivateFieldLooseKey("userAvatar");
 	var _inputPlaceholder = /*#__PURE__*/babelHelpers.classPrivateFieldLooseKey("inputPlaceholder");
 	var _loaderText = /*#__PURE__*/babelHelpers.classPrivateFieldLooseKey("loaderText");
+	var _isShowLoadHistoryError = /*#__PURE__*/babelHelpers.classPrivateFieldLooseKey("isShowLoadHistoryError");
 	var _findMessageButton = /*#__PURE__*/babelHelpers.classPrivateFieldLooseKey("findMessageButton");
 	var _setMessageStatus = /*#__PURE__*/babelHelpers.classPrivateFieldLooseKey("setMessageStatus");
 	var _addNewMessage = /*#__PURE__*/babelHelpers.classPrivateFieldLooseKey("addNewMessage");
@@ -1734,6 +1929,10 @@ this.BX.AI.CopilotChat = this.BX.AI.CopilotChat || {};
 	      writable: true,
 	      value: void 0
 	    });
+	    Object.defineProperty(this, _isOldMessagesLoading, {
+	      writable: true,
+	      value: void 0
+	    });
 	    Object.defineProperty(this, _isInputDisabled, {
 	      writable: true,
 	      value: void 0
@@ -1778,6 +1977,10 @@ this.BX.AI.CopilotChat = this.BX.AI.CopilotChat || {};
 	      writable: true,
 	      value: void 0
 	    });
+	    Object.defineProperty(this, _isShowLoadHistoryError, {
+	      writable: true,
+	      value: void 0
+	    });
 	    this.setEventNamespace('AI.CopilotChat');
 	    babelHelpers.classPrivateFieldLooseBase(this, _copilotChatOptions)[_copilotChatOptions] = options || {};
 	    babelHelpers.classPrivateFieldLooseBase(this, _copilotChatBotOptions)[_copilotChatBotOptions] = ui_vue3.ref((_options$botOptions = options == null ? void 0 : options.botOptions) != null ? _options$botOptions : {});
@@ -1790,7 +1993,9 @@ this.BX.AI.CopilotChat = this.BX.AI.CopilotChat || {};
 	    babelHelpers.classPrivateFieldLooseBase(this, _chatStatus)[_chatStatus] = ui_vue3.ref(Status.NONE);
 	    babelHelpers.classPrivateFieldLooseBase(this, _useChatStatus)[_useChatStatus] = ui_vue3.ref(main_core.Type.isBoolean(options.useChatStatus) ? options.useChatStatus : true);
 	    babelHelpers.classPrivateFieldLooseBase(this, _scrollToTheEndAfterFirstShow)[_scrollToTheEndAfterFirstShow] = ui_vue3.ref(main_core.Type.isBoolean(options.scrollToTheEndAfterFirstShow) ? options.scrollToTheEndAfterFirstShow : true);
+	    babelHelpers.classPrivateFieldLooseBase(this, _isOldMessagesLoading)[_isOldMessagesLoading] = ui_vue3.ref(false);
 	    babelHelpers.classPrivateFieldLooseBase(this, _showCopilotWarningMessage)[_showCopilotWarningMessage] = ui_vue3.ref(options.showCopilotWarningMessage === true);
+	    babelHelpers.classPrivateFieldLooseBase(this, _isShowLoadHistoryError)[_isShowLoadHistoryError] = ui_vue3.ref(false);
 	    babelHelpers.classPrivateFieldLooseBase(this, _userAvatar)[_userAvatar] = ui_vue3.ref((_options$userAvatar = options.userAvatar) != null ? _options$userAvatar : '');
 	    babelHelpers.classPrivateFieldLooseBase(this, _inputPlaceholder)[_inputPlaceholder] = (_options$inputPlaceho = options.inputPlaceholder) != null ? _options$inputPlaceho : main_core.Loc.getMessage('AI_COPILOT_CHAT_INPUT_PLACEHOLDER');
 	    babelHelpers.classPrivateFieldLooseBase(this, _loaderText)[_loaderText] = options.loaderText;
@@ -1801,10 +2006,39 @@ this.BX.AI.CopilotChat = this.BX.AI.CopilotChat || {};
 	  static getDefaultHeight() {
 	    return 669;
 	  }
+	  startLoadingOldMessages() {
+	    babelHelpers.classPrivateFieldLooseBase(this, _isOldMessagesLoading)[_isOldMessagesLoading].value = true;
+	  }
+	  finishLoadingOldMessages() {
+	    babelHelpers.classPrivateFieldLooseBase(this, _isOldMessagesLoading)[_isOldMessagesLoading].value = false;
+	  }
+	  isOldMessagesLoading() {
+	    return babelHelpers.classPrivateFieldLooseBase(this, _isOldMessagesLoading)[_isOldMessagesLoading].value;
+	  }
 	  isMessageInList(messageId) {
 	    return babelHelpers.classPrivateFieldLooseBase(this, _messages)[_messages].value.findLast(message => {
 	      return message.id === messageId;
 	    });
+	  }
+	  getFirstMessageId() {
+	    var _babelHelpers$classPr;
+	    return (_babelHelpers$classPr = babelHelpers.classPrivateFieldLooseBase(this, _messages)[_messages].value[0]) == null ? void 0 : _babelHelpers$classPr.id;
+	  }
+	  getMessageById(messageId) {
+	    return babelHelpers.classPrivateFieldLooseBase(this, _messages)[_messages].value.find(message => message.id === messageId);
+	  }
+	  removeMessage(messageId) {
+	    const removedMessageIndex = babelHelpers.classPrivateFieldLooseBase(this, _messages)[_messages].value.findIndex(message => message.id === messageId);
+	    babelHelpers.classPrivateFieldLooseBase(this, _messages)[_messages].value.splice(removedMessageIndex, 1);
+	  }
+	  unshiftMessages(messages) {
+	    const messagesWithStatus = messages.map(message => {
+	      return {
+	        ...message,
+	        status: CopilotChatMessageStatus.DELIVERED
+	      };
+	    });
+	    babelHelpers.classPrivateFieldLooseBase(this, _messages)[_messages].value.unshift(...messagesWithStatus);
 	  }
 	  addUserMessage(message, emitEvent = true) {
 	    const newUserMessage = {
@@ -1857,6 +2091,9 @@ this.BX.AI.CopilotChat = this.BX.AI.CopilotChat || {};
 	  setMessageStatusSent(messageId) {
 	    babelHelpers.classPrivateFieldLooseBase(this, _setMessageStatus)[_setMessageStatus](messageId, CopilotChatMessageStatus.SENT);
 	  }
+	  setMessageStatusError(messageId) {
+	    babelHelpers.classPrivateFieldLooseBase(this, _setMessageStatus)[_setMessageStatus](messageId, CopilotChatMessageStatus.ERROR);
+	  }
 	  setCopilotWritingStatus(value) {
 	    if (value === true) {
 	      babelHelpers.classPrivateFieldLooseBase(this, _chatStatus)[_chatStatus].value = Status.COPILOT_WRITING;
@@ -1883,7 +2120,7 @@ this.BX.AI.CopilotChat = this.BX.AI.CopilotChat || {};
 	    if (!message) {
 	      return;
 	    }
-	    message.dateCreated = date;
+	    message.dateCreate = date;
 	  }
 	  emitClickOnMessageButton(data) {
 	    const {
@@ -1899,6 +2136,9 @@ this.BX.AI.CopilotChat = this.BX.AI.CopilotChat || {};
 	      }
 	    });
 	  }
+	  emitRetryLoadHistory() {
+	    this.emit(CopilotChatEvents.RETRY_LOAD_HISTORY);
+	  }
 	  show() {
 	    if (!babelHelpers.classPrivateFieldLooseBase(this, _popup)[_popup]) {
 	      babelHelpers.classPrivateFieldLooseBase(this, _initPopup)[_initPopup]();
@@ -1906,21 +2146,27 @@ this.BX.AI.CopilotChat = this.BX.AI.CopilotChat || {};
 	    babelHelpers.classPrivateFieldLooseBase(this, _popup)[_popup].show();
 	  }
 	  hide() {
-	    var _babelHelpers$classPr;
-	    (_babelHelpers$classPr = babelHelpers.classPrivateFieldLooseBase(this, _popup)[_popup]) == null ? void 0 : _babelHelpers$classPr.close();
+	    var _babelHelpers$classPr2;
+	    (_babelHelpers$classPr2 = babelHelpers.classPrivateFieldLooseBase(this, _popup)[_popup]) == null ? void 0 : _babelHelpers$classPr2.close();
 	  }
 	  isShown() {
-	    var _babelHelpers$classPr2;
-	    return Boolean((_babelHelpers$classPr2 = babelHelpers.classPrivateFieldLooseBase(this, _popup)[_popup]) == null ? void 0 : _babelHelpers$classPr2.isShown());
+	    var _babelHelpers$classPr3;
+	    return Boolean((_babelHelpers$classPr3 = babelHelpers.classPrivateFieldLooseBase(this, _popup)[_popup]) == null ? void 0 : _babelHelpers$classPr3.isShown());
 	  }
 	  adjustPosition() {
-	    var _babelHelpers$classPr3;
-	    (_babelHelpers$classPr3 = babelHelpers.classPrivateFieldLooseBase(this, _popup)[_popup]) == null ? void 0 : _babelHelpers$classPr3.adjustPosition({
+	    var _babelHelpers$classPr4;
+	    (_babelHelpers$classPr4 = babelHelpers.classPrivateFieldLooseBase(this, _popup)[_popup]) == null ? void 0 : _babelHelpers$classPr4.adjustPosition({
 	      forceBindPosition: true
 	    });
 	  }
 	  setUserAvatar(avatar) {
 	    babelHelpers.classPrivateFieldLooseBase(this, _userAvatar)[_userAvatar].value = avatar;
+	  }
+	  showLoadHistoryError() {
+	    babelHelpers.classPrivateFieldLooseBase(this, _isShowLoadHistoryError)[_isShowLoadHistoryError].value = true;
+	  }
+	  hideLoadHistoryError() {
+	    babelHelpers.classPrivateFieldLooseBase(this, _isShowLoadHistoryError)[_isShowLoadHistoryError].value = false;
 	  }
 	}
 	function _findMessageButton2(messageId, buttonId) {
@@ -1948,7 +2194,7 @@ this.BX.AI.CopilotChat = this.BX.AI.CopilotChat || {};
 	  const isCopilotChatShown = this.isShown();
 	  const newMessage = {
 	    id: newMessageId,
-	    dateCreated: new Date().toISOString(),
+	    dateCreate: new Date().toISOString(),
 	    status: CopilotChatMessageStatus.DEPART,
 	    authorId: 0,
 	    ...message,
@@ -1969,50 +2215,51 @@ this.BX.AI.CopilotChat = this.BX.AI.CopilotChat || {};
 	  }
 	}
 	function _initPopup2() {
-	  var _babelHelpers$classPr4, _babelHelpers$classPr5, _babelHelpers$classPr6, _babelHelpers$classPr7, _babelHelpers$classPr8, _babelHelpers$classPr9, _babelHelpers$classPr10;
+	  var _babelHelpers$classPr5, _babelHelpers$classPr6, _babelHelpers$classPr7, _babelHelpers$classPr8, _babelHelpers$classPr9, _babelHelpers$classPr10, _babelHelpers$classPr11;
 	  const adjustPopupPosition = this.adjustPosition.bind(this);
 	  main_core.bind(window, 'resize', adjustPopupPosition);
 	  babelHelpers.classPrivateFieldLooseBase(this, _popup)[_popup] = new main_popup.Popup({
 	    ...babelHelpers.classPrivateFieldLooseBase(this, _popupOptions)[_popupOptions],
 	    content: babelHelpers.classPrivateFieldLooseBase(this, _renderPopupContent)[_renderPopupContent](),
-	    minWidth: (_babelHelpers$classPr4 = (_babelHelpers$classPr5 = babelHelpers.classPrivateFieldLooseBase(this, _popupOptions)[_popupOptions]) == null ? void 0 : _babelHelpers$classPr5.minWidth) != null ? _babelHelpers$classPr4 : CopilotChat$1.getDefaultMinWidth(),
-	    height: (_babelHelpers$classPr6 = (_babelHelpers$classPr7 = babelHelpers.classPrivateFieldLooseBase(this, _popupOptions)[_popupOptions]) == null ? void 0 : _babelHelpers$classPr7.height) != null ? _babelHelpers$classPr6 : CopilotChat$1.getDefaultHeight(),
+	    minWidth: (_babelHelpers$classPr5 = (_babelHelpers$classPr6 = babelHelpers.classPrivateFieldLooseBase(this, _popupOptions)[_popupOptions]) == null ? void 0 : _babelHelpers$classPr6.minWidth) != null ? _babelHelpers$classPr5 : CopilotChat$1.getDefaultMinWidth(),
+	    height: (_babelHelpers$classPr7 = (_babelHelpers$classPr8 = babelHelpers.classPrivateFieldLooseBase(this, _popupOptions)[_popupOptions]) == null ? void 0 : _babelHelpers$classPr8.height) != null ? _babelHelpers$classPr7 : CopilotChat$1.getDefaultHeight(),
 	    contentNoPaddings: true,
 	    padding: 0,
 	    borderRadius: '16px',
-	    className: `ai__copilot-chat-popup ${(_babelHelpers$classPr8 = babelHelpers.classPrivateFieldLooseBase(this, _popupOptions)[_popupOptions].className) != null ? _babelHelpers$classPr8 : ''}`,
-	    cacheable: (_babelHelpers$classPr9 = (_babelHelpers$classPr10 = babelHelpers.classPrivateFieldLooseBase(this, _popupOptions)[_popupOptions]) == null ? void 0 : _babelHelpers$classPr10.cacheable) != null ? _babelHelpers$classPr9 : false,
+	    className: `ai__copilot-chat-popup ${(_babelHelpers$classPr9 = babelHelpers.classPrivateFieldLooseBase(this, _popupOptions)[_popupOptions].className) != null ? _babelHelpers$classPr9 : ''}`,
+	    cacheable: (_babelHelpers$classPr10 = (_babelHelpers$classPr11 = babelHelpers.classPrivateFieldLooseBase(this, _popupOptions)[_popupOptions]) == null ? void 0 : _babelHelpers$classPr11.cacheable) != null ? _babelHelpers$classPr10 : false,
 	    events: {
 	      onPopupAfterClose: () => {
-	        var _babelHelpers$classPr11, _babelHelpers$classPr12;
+	        var _babelHelpers$classPr12, _babelHelpers$classPr13;
 	        babelHelpers.classPrivateFieldLooseBase(this, _popup)[_popup] = null;
 	        babelHelpers.classPrivateFieldLooseBase(this, _app)[_app].unmount();
-	        if (main_core.Type.isFunction((_babelHelpers$classPr11 = babelHelpers.classPrivateFieldLooseBase(this, _popupOptions)[_popupOptions]) == null ? void 0 : (_babelHelpers$classPr12 = _babelHelpers$classPr11.events) == null ? void 0 : _babelHelpers$classPr12.onPopupAfterClose)) {
-	          var _babelHelpers$classPr13, _babelHelpers$classPr14;
-	          (_babelHelpers$classPr13 = babelHelpers.classPrivateFieldLooseBase(this, _popupOptions)[_popupOptions]) == null ? void 0 : (_babelHelpers$classPr14 = _babelHelpers$classPr13.events) == null ? void 0 : _babelHelpers$classPr14.onPopupAfterClose();
+	        if (main_core.Type.isFunction((_babelHelpers$classPr12 = babelHelpers.classPrivateFieldLooseBase(this, _popupOptions)[_popupOptions]) == null ? void 0 : (_babelHelpers$classPr13 = _babelHelpers$classPr12.events) == null ? void 0 : _babelHelpers$classPr13.onPopupAfterClose)) {
+	          var _babelHelpers$classPr14, _babelHelpers$classPr15;
+	          (_babelHelpers$classPr14 = babelHelpers.classPrivateFieldLooseBase(this, _popupOptions)[_popupOptions]) == null ? void 0 : (_babelHelpers$classPr15 = _babelHelpers$classPr14.events) == null ? void 0 : _babelHelpers$classPr15.onPopupAfterClose();
 	        }
 	        main_core.unbind(window, 'resize', adjustPopupPosition);
-	      }
+	      },
+	      ...babelHelpers.classPrivateFieldLooseBase(this, _popupOptions)[_popupOptions].events
 	    }
 	  });
 	  return babelHelpers.classPrivateFieldLooseBase(this, _popup)[_popup];
 	}
 	function _renderPopupContent2() {
-	  var _babelHelpers$classPr15, _babelHelpers$classPr16, _babelHelpers$classPr17, _babelHelpers$classPr18, _babelHelpers$classPr19;
+	  var _babelHelpers$classPr16, _babelHelpers$classPr17, _babelHelpers$classPr18, _babelHelpers$classPr19, _babelHelpers$classPr20;
 	  const appContainer = main_core.Tag.render(_t$2 || (_t$2 = _$2`<div class="ai__copilot-chat-popup-content"></div>`));
 	  babelHelpers.classPrivateFieldLooseBase(this, _app)[_app] = ui_vue3.BitrixVue.createApp({
 	    name: 'CopilotChatPopup',
 	    components: {
 	      CopilotChat: CopilotChat,
-	      ...((_babelHelpers$classPr15 = babelHelpers.classPrivateFieldLooseBase(this, _copilotChatOptions)[_copilotChatOptions]) == null ? void 0 : _babelHelpers$classPr15.vueComponents)
+	      ...((_babelHelpers$classPr16 = babelHelpers.classPrivateFieldLooseBase(this, _copilotChatOptions)[_copilotChatOptions]) == null ? void 0 : _babelHelpers$classPr16.vueComponents)
 	    },
 	    template: `
 				<CopilotChat>
 					<template v-slot:loader>
-						${(_babelHelpers$classPr16 = (_babelHelpers$classPr17 = babelHelpers.classPrivateFieldLooseBase(this, _copilotChatOptions)[_copilotChatOptions].slots) == null ? void 0 : _babelHelpers$classPr17.LOADER) != null ? _babelHelpers$classPr16 : ''}
+						${(_babelHelpers$classPr17 = (_babelHelpers$classPr18 = babelHelpers.classPrivateFieldLooseBase(this, _copilotChatOptions)[_copilotChatOptions].slots) == null ? void 0 : _babelHelpers$classPr18.LOADER) != null ? _babelHelpers$classPr17 : ''}
 					</template>
 					<template v-slot:loaderError>
-						${(_babelHelpers$classPr18 = (_babelHelpers$classPr19 = babelHelpers.classPrivateFieldLooseBase(this, _copilotChatOptions)[_copilotChatOptions].slots) == null ? void 0 : _babelHelpers$classPr19.LOADER_ERROR) != null ? _babelHelpers$classPr18 : ''}
+						${(_babelHelpers$classPr19 = (_babelHelpers$classPr20 = babelHelpers.classPrivateFieldLooseBase(this, _copilotChatOptions)[_copilotChatOptions].slots) == null ? void 0 : _babelHelpers$classPr20.LOADER_ERROR) != null ? _babelHelpers$classPr19 : ''}
 					</template>
 				</CopilotChat>
 			`
@@ -2031,7 +2278,9 @@ this.BX.AI.CopilotChat = this.BX.AI.CopilotChat || {};
 	    botOptions: babelHelpers.classPrivateFieldLooseBase(this, _copilotChatBotOptions)[_copilotChatBotOptions].value,
 	    userAvatar: babelHelpers.classPrivateFieldLooseBase(this, _userAvatar)[_userAvatar],
 	    inputPlaceholder: babelHelpers.classPrivateFieldLooseBase(this, _inputPlaceholder)[_inputPlaceholder],
-	    loaderText: babelHelpers.classPrivateFieldLooseBase(this, _loaderText)[_loaderText]
+	    loaderText: babelHelpers.classPrivateFieldLooseBase(this, _loaderText)[_loaderText],
+	    isOldMessagesLoading: babelHelpers.classPrivateFieldLooseBase(this, _isOldMessagesLoading)[_isOldMessagesLoading],
+	    isShowLoadHistoryError: babelHelpers.classPrivateFieldLooseBase(this, _isShowLoadHistoryError)[_isShowLoadHistoryError]
 	  });
 	  babelHelpers.classPrivateFieldLooseBase(this, _app)[_app].mount(appContainer);
 	  return appContainer;
@@ -2039,7 +2288,8 @@ this.BX.AI.CopilotChat = this.BX.AI.CopilotChat || {};
 
 	exports.CopilotChat = CopilotChat$1;
 	exports.CopilotChatEvents = CopilotChatEvents;
+	exports.CopilotChatMessageStatus = CopilotChatMessageStatus;
 	exports.CopilotChatMessageType = CopilotChatMessageType;
 
-}((this.BX.AI.CopilotChat.UI = this.BX.AI.CopilotChat.UI || {}),BX,BX.AI,BX.Event,BX.UI.IconSet,BX.Vue3,BX,BX.Main,BX.Main,BX.UI.IconSet,BX.UI.BBCode.Formatter,BX,BX));
+}((this.BX.AI.CopilotChat.UI = this.BX.AI.CopilotChat.UI || {}),BX,BX.AI,BX.Event,BX.Vue3,BX,BX.Main,BX.UI.IconSet,BX.Main,BX.UI.IconSet,BX.UI.BBCode.Formatter,BX,BX,BX));
 //# sourceMappingURL=copilot-chat.bundle.js.map

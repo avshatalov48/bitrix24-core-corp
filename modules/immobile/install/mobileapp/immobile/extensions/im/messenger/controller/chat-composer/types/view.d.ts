@@ -51,6 +51,7 @@ declare type GroupChatViewProps = {
 	},
 	participantsList?: Array<NestedDepartmentSelectorItem>,
 	callbacks?: {
+		onChangeMessagesAutoDeleteDelay?: (delay: number) => any,
 		onClickDoneButton?: (props: { title: string, description: string, avatar: string }) => any,
 		onClickCreateButton?: (props: { title: string, description: string, avatar: string }) => any,
 		onChangeAvatar?: () => any,

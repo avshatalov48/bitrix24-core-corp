@@ -5,12 +5,15 @@ if (!defined('B_PROLOG_INCLUDED') || B_PROLOG_INCLUDED !== true)
 	die();
 }
 
-use Bitrix\Crm\Activity\Provider\Tasks\Task;
 use Bitrix\Main\Localization\Loc;
+
 use \Bitrix\Bizproc\Activity\PropertiesDialog;
+
+use Bitrix\Crm\Activity\Provider\Tasks\Task;
 use Bitrix\Crm\Service\Container;
 use Bitrix\Crm\Service\Factory;
 use Bitrix\Crm\Order\OrderStatus;
+use Bitrix\Crm\Integration\Analytics\Dictionary;
 
 class CBPCrmCompleteTaskActivity extends CBPActivity
 {
@@ -59,6 +62,13 @@ class CBPCrmCompleteTaskActivity extends CBPActivity
 		{
 			$this->completeTasks($entityTypeName, $entityId, $ownerStatus);
 		}
+
+		$documentType = $this->getDocumentType();
+		\CCrmBizProcHelper::sendOperationsAnalytics(
+			Dictionary::EVENT_ENTITY_DELETE,
+			$this,
+			$documentType[2] ?? '',
+		);
 
 		return CBPActivityExecutionStatus::Closed;
 	}

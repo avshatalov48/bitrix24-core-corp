@@ -95,9 +95,9 @@ jn.define('calendar/data-managers/event-manager', (require, exports, module) => 
 		 * @public
 		 * @returns {Promise<void>}
 		 */
-		async refresh()
+		async refresh(force = false)
 		{
-			if (this.isRefreshing)
+			if (this.isRefreshing && !force)
 			{
 				return;
 			}
@@ -230,6 +230,84 @@ jn.define('calendar/data-managers/event-manager', (require, exports, module) => 
 		{
 			this.loadedRange.start = new Date(Math.min(this.loadedRange.start, startDate));
 			this.loadedRange.end = new Date(Math.max(this.loadedRange.end, endDate));
+		}
+
+		prepareEventsForListView(events, calType, ownerId)
+		{
+			const eventsMap = {};
+
+			for (const event of events)
+			{
+				const eventUuid = event.parentId || event.id;
+
+				if (
+					!eventsMap[eventUuid]
+					|| (event.calType === calType && event.ownerId === ownerId)
+				)
+				{
+					eventsMap[eventUuid] = event;
+
+					continue;
+				}
+
+				if (event.calType !== CalendarType.USER)
+				{
+					eventsMap[eventUuid] = event;
+				}
+			}
+
+			return Object.values(eventsMap);
+		}
+
+		sortEvents(events)
+		{
+			return events.sort((first, second) => this.compareEvents(first, second));
+		}
+
+		// eslint-disable-next-line sonarjs/cognitive-complexity
+		compareEvents(first, second)
+		{
+			if (first.longWithTime !== second.longWithTime)
+			{
+				return first.longWithTime ? -1 : 1;
+			}
+
+			if (first.longWithTime && second.longWithTime)
+			{
+				if (first.dateFromTs === second.dateFromTs)
+				{
+					return first.id - second.id;
+				}
+
+				return first.dateFromTs - second.dateFromTs;
+			}
+
+			if (first.fullDay !== second.fullDay)
+			{
+				return first.fullDay ? -1 : 1;
+			}
+
+			if (first.fullDay && second.fullDay)
+			{
+				if (first.dateFromTs === second.dateFromTs)
+				{
+					return first.id - second.id;
+				}
+
+				return first.dateFromTs - second.dateFromTs;
+			}
+
+			if (first.dateFromTs === second.dateFromTs)
+			{
+				if (first.dateToTs === second.dateToTs)
+				{
+					return first.id - second.id;
+				}
+
+				return first.dateToTs - second.dateToTs;
+			}
+
+			return first.dateFromTs - second.dateFromTs;
 		}
 	}
 

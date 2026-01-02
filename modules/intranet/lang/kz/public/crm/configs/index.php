@@ -1,0 +1,21 @@
+<?php
+$MESS["CRM_MENU_BP"] = "Бизнес-процестер";
+$MESS["CRM_MENU_CONFIG"] = "Басқасы";
+$MESS["CRM_MENU_CURRENCY"] = "Валюталар";
+$MESS["CRM_MENU_DEAL_CATEGORY"] = "Мәмілелер иірімдері";
+$MESS["CRM_MENU_EXCH1C"] = "&quot;1С:Кәсіпорынмен&quot; интеграция";
+$MESS["CRM_MENU_FIELDS"] = "Пайдаланушы өрістері";
+$MESS["CRM_MENU_INFO"] = "Анықтама";
+$MESS["CRM_MENU_LOCATIONS"] = "Орналасқан жерлері";
+$MESS["CRM_MENU_MAILTEMPLATE"] = "Пошталық қалыптар";
+$MESS["CRM_MENU_MEASURE"] = "Өлшем бірліктері";
+$MESS["CRM_MENU_PERMS"] = "Қолжетімділік құқығы";
+$MESS["CRM_MENU_PRESET"] = "Деректеме қалыптары";
+$MESS["CRM_MENU_PRODUCT_PROPS"] = "Тауарлардың қасиеттері";
+$MESS["CRM_MENU_PS"] = "Төлеу тәсілдері";
+$MESS["CRM_MENU_SALE"] = "Интернет-дүкендер";
+$MESS["CRM_MENU_SENDSAVE"] = "Поштамен интеграция";
+$MESS["CRM_MENU_SLOT"] = "Аналитикалық есептер";
+$MESS["CRM_MENU_STATUS"] = "Анықтамалықтар";
+$MESS["CRM_MENU_TAX"] = "Салықтар";
+$MESS["CRM_TITLE"] = "Баптаулар";

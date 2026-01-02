@@ -8,6 +8,10 @@ if (typeof BX.Crm.RequisiteDetailsManager === "undefined")
 	{
 		this.needEmitCancelEvent = true;
 		this.entityEditor = null;
+		this.titleNode = null;
+		this.titleInput = null;
+		this.nameControl = null;
+		this.toolbar = null;
 	};
 
 	BX.Crm.RequisiteDetailsManager.presetControlName = 'PRESET_ID';
@@ -20,7 +24,17 @@ if (typeof BX.Crm.RequisiteDetailsManager === "undefined")
 		{
 			this._settings = settings;
 			this.entityEditor = this.getEntityEditor();
+			if (this.entityEditor)
+			{
+				this.nameControl = this.entityEditor.getControlById('NAME');
+			}
 			this.prevPresetId = null;
+			this.titleNode = document.querySelector("[data-cid='NAME']");
+			if (this.titleNode)
+			{
+				this.titleInput = this.titleNode.querySelector("input[type='text']");
+			}
+			this.toolbar = BX.Reflection.getClass('BX.UI.ToolbarManager') && BX.UI.ToolbarManager.getDefaultToolbar();
 
 			this.addEvents();
 			if (this.getSetting("markPresetAsChanged", false))
@@ -106,16 +120,6 @@ if (typeof BX.Crm.RequisiteDetailsManager === "undefined")
 			{
 				BX.Event.EventEmitter.subscribe(this.entityEditor, "onControlChanged", this.onControlChanged.bind(this));
 
-				var nameControl = this.entityEditor.getControlById('NAME');
-				var titleInput = document.querySelector('.ui-side-panel-wrap-title-input') || BX('pagetitle_input');
-				if (nameControl && BX.Type.isDomNode(titleInput))
-				{
-					BX.bind(titleInput, 'change', function()
-					{
-						nameControl.markAsChanged();
-					});
-				}
-
 				// Set CRM attribute manager
 				const settings = this.getAttributeManagerSettings();
 				if (BX.Type.isPlainObject(settings))
@@ -138,6 +142,18 @@ if (typeof BX.Crm.RequisiteDetailsManager === "undefined")
 						}
 					);
 					this.entityEditor.setAttributeManager(attributeManager);
+				}
+
+				if (this.nameControl && this.toolbar && this.titleNode && this.titleInput)
+				{
+					this.toolbar.subscribe(BX.UI.ToolbarEvents.finishEditing, this.onEditTitle.bind(this));
+					this.toolbar.setTitle(this.titleInput.value);
+					BX.Dom.style(
+						this.titleNode,
+						{
+							display: 'none',
+						},
+					);
 				}
 			}
 		},
@@ -373,6 +389,11 @@ if (typeof BX.Crm.RequisiteDetailsManager === "undefined")
 			});
 
 			setTimeout(this.closeSliderSilently.bind(this), 10);
+		},
+		onEditTitle: function(event)
+		{
+			this.titleInput.value = event.getData().updatedTitle.trim();
+			this.nameControl.markAsChanged();
 		},
 		emitEvent: function(eventName, eventData)
 		{

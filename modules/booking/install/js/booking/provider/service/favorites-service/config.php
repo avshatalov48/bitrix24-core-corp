@@ -6,7 +6,6 @@ if (!defined('B_PROLOG_INCLUDED') || B_PROLOG_INCLUDED !== true)
 }
 
 return [
-	'css' => 'dist/favorites-service.bundle.css',
 	'js' => 'dist/favorites-service.bundle.js',
 	'rel' => [
 		'booking.const',

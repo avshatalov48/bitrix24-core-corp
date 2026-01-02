@@ -1,5 +1,6 @@
 <?php
 use Bitrix\Main\Localization\CultureTable;
+use Bitrix\Main\SiteTable;
 
 IncludeModuleLangFile(__FILE__);
 
@@ -12,21 +13,24 @@ class CWizardSolPanelIntranet
 		if(defined("ADMIN_SECTION") && ADMIN_SECTION == true)
 			return;
 
-		if($USER->IsAdmin())
+		if($USER->IsAdmin() && \CTopPanel::shouldShowPanel())
 		{
 			if(isset($_REQUEST['add_new_site_sol']) && $_REQUEST['add_new_site_sol']=='sol' && check_bitrix_sessid())
 			{
-				$dbrSites = CSite::GetList();
 				$arSitesID = Array();
 				$arSitesPath = Array();
 				$siteCnt = 0;
-				while($arSite = $dbrSites->Fetch())
+				
+				$result = SiteTable::getList(['select' => ['ID', 'ACTIVE', 'DIR']]);
+				while ($row = $result->fetch())
 				{
-					if($arSite["ACTIVE"]=="Y")
+					if($row["ACTIVE"] === "Y")
+					{
 						$siteCnt++;
+					}
 
-					$arSitesID[] = mb_strtolower($arSite["ID"]);
-					$arSitesPath[] = mb_strtolower($arSite["PATH"]);
+					$arSitesID[] = mb_strtolower($row["ID"]);
+					$arSitesPath[] = mb_strtolower($row["DIR"]);
 				}
 
 				$newSiteID = "";
@@ -97,17 +101,24 @@ class CWizardSolPanelIntranet
 			);
 
 
-			$arSites = array();
-			$dbrSites = CSite::GetList('', '', Array("ACTIVE"=>"Y"));
-			while($arSite = $dbrSites->GetNext())
-			{
-		 		$arSites[] = Array(
-					"ACTION" => "jsUtils.Redirect([], '".CUtil::JSEscape($arSite["DIR"])."');",
-					"ICON" => ($arSite["LID"]==SITE_ID? "checked":""),
-					"TEXT" => $arSite["NAME"],
-					"TITLE" => GetMessage("SOL_BUTTON_GOTOSITE")." ".$arSite["NAME"],
-				);
+			$arSites = [];
+			
+			$result = SiteTable::getList([
+				'select' => ['LID', 'DIR', 'NAME'],
+				'filter' => ['=ACTIVE' => 'Y'],
+				'order' => ['SORT' => 'ASC']
+			]);
+			
+			while ($row = $result->fetch())
+			{	
+				$arSites[] = [
+					"ACTION" => "jsUtils.Redirect([], '".CUtil::JSEscape($row["DIR"])."');",
+					"ICON" => ($row["LID"] === SITE_ID ? "checked" : ""),
+					"TEXT" => $row["NAME"],
+					"TITLE" => GetMessage("SOL_BUTTON_GOTOSITE")." ".$row["NAME"],
+				];
 			}
+
 	 		$arMenu[] = Array("SEPARATOR"=>true);
 	 		$arMenu[] = Array(
 				"TEXT" => GetMessage("SOL_BUTTON_GOTOSITE"),

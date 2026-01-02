@@ -57,7 +57,7 @@ export class RequisiteSection extends EventEmitter
 		if (!this.#requisiteElement)
 		{
 			this.#requisiteElement = Tag.render`
-				<div class="intranet-settings-widget__business-card intranet-settings-widget_box">
+				<div class="intranet-settings-widget__business-card intranet-settings-widget_box" data-testid="settings-widget-block-requisite">
 					<div class="intranet-settings-widget__business-card_head intranet-settings-widget_inner">
 						<div class="intranet-settings-widget_icon-box --gray">
 							<div class="ui-icon-set --customer-card-1"></div>

@@ -1,32 +1,100 @@
 /**
  * @module im/messenger/lib/params
  */
+
 jn.define('im/messenger/lib/params', (require, exports, module) => {
-	const { Loc } = require('loc');
+	const { Type } = require('type');
+	const { Loc } = require('im/messenger/loc');
+	const { MemoryStorage } = require('native/memorystore');
+	const { EntityReady } = require('entity-ready');
 	const { ComponentCode } = require('im/messenger/const');
+
+	const sharedParamsStorage = new MemoryStorage('immobileMessengerSharedParams');
+	const entityReadySharedParamsId = 'immobile:sharedParams::ready';
 
 	/**
 	 * @class MessengerParams
 	 */
 	class MessengerParams
 	{
+		#entityReadySharedParamsKey = 'immobile:sharedParams::ready';
+		#isReadySharedParams = false;
+		#wasSharedParamsSaved = false;
+
 		constructor()
 		{
-			const configMessages = this.get('MESSAGES', {});
+			this.sharedParamsStorage = sharedParamsStorage;
 
-			Object.keys(configMessages).forEach((messageId) => {
-				Loc.setMessage(messageId, configMessages[messageId]);
-			});
+			EntityReady.addCondition(this.#entityReadySharedParamsKey, () => this.#isReadySharedParams);
+
+			this.setAiAssistantStatusMessages();
 		}
 
+		setAiAssistantStatusMessages()
+		{
+			const configMessages = this.get('MESSAGES', {});
+			if ('AI_ASSISTANT' in configMessages)
+			{
+				Object.entries(configMessages.AI_ASSISTANT).forEach(([code, phase]) => {
+					Loc.setMessage(code, phase);
+				});
+			}
+		}
+
+		async initSharedParams()
+		{
+			const sharedParams = this.get('SHARED_PARAMS');
+
+			if (!sharedParams)
+			{
+				return;
+			}
+
+			await this.sharedParamsStorage.set('sharedParams', sharedParams);
+			this.setSharedParamsFromStorage();
+
+			this.#isReadySharedParams = true;
+			EntityReady.ready(this.#entityReadySharedParamsKey);
+		}
+
+		async waitSharedParamsInit()
+		{
+			if (this.#wasSharedParamsSaved)
+			{
+				return;
+			}
+
+			await EntityReady.wait(entityReadySharedParamsId);
+			this.#isReadySharedParams = true;
+
+			this.setSharedParamsFromStorage();
+		}
+
+		/**
+		 * @param {string} key
+		 * @param defaultValue
+		 * @returns {*}
+		 */
 		get(key, defaultValue)
 		{
 			return BX.componentParameters.get(key, defaultValue);
 		}
 
+		/**
+		 * @param {string} key
+		 * @param {*} value
+		 */
 		set(key, value)
 		{
 			BX.componentParameters.set(key, value);
+		}
+
+		setSharedParamsFromStorage()
+		{
+			const sharedParamsFromStorage = this.sharedParamsStorage.getSync('sharedParams') ?? {};
+			const sharedParamsFromStorageKeys = Object.keys(sharedParamsFromStorage);
+			sharedParamsFromStorageKeys.forEach((key) => this.set(key, sharedParamsFromStorage[key]));
+			this.#wasSharedParamsSaved = true;
 		}
 
 		getSiteDir()
@@ -42,14 +110,6 @@ jn.define('im/messenger/lib/params', (require, exports, module) => {
 		getGeneralChatId()
 		{
 			return Number(this.get('IM_GENERAL_CHAT_ID', 0));
-		}
-
-		/**
-		 * @return {string}
-		 */
-		getMessengerTitle()
-		{
-			return this.get('MESSAGES', { COMPONENT_TITLE: '' }).COMPONENT_TITLE;
 		}
 
 		/**
@@ -74,11 +134,6 @@ jn.define('im/messenger/lib/params', (require, exports, module) => {
 		isBetaAvailable()
 		{
 			return this.get('IS_BETA_AVAILABLE', false);
-		}
-
-		isChatM1Enabled()
-		{
-			return this.get('IS_CHAT_M1_ENABLED', false);
 		}
 
 		isChatLocalStorageAvailable()
@@ -110,8 +165,8 @@ jn.define('im/messenger/lib/params', (require, exports, module) => {
 		}
 
 		/**
-		* @return {PlanLimits}
-		*/
+		 * @return {PlanLimits}
+		 */
 		getPlanLimits()
 		{
 			return this.get('PLAN_LIMITS', {});
@@ -119,8 +174,8 @@ jn.define('im/messenger/lib/params', (require, exports, module) => {
 
 		/**
 		 * @param {PlanLimits} limits
-		* @return void
-		*/
+		 * @return void
+		 */
 		setPlanLimits(limits)
 		{
 			this.set('PLAN_LIMITS', limits);
@@ -159,7 +214,28 @@ jn.define('im/messenger/lib/params', (require, exports, module) => {
 				sidebarLinks: false,
 				zoomActive: false,
 				zoomAvailable: false,
+				intranetInviteAvailable: false,
+				messagesAutoDeleteEnabled: false,
+				voteCreationAvailable: false,
+				aiFileTranscriptionAvailable: false,
 			});
+		}
+
+		/**
+		 * @param {Partial<ImFeatures>} features
+		 */
+		updateExistingImFeatures(features)
+		{
+			const actualFeatures = this.getImFeatures();
+
+			Object.entries(features).forEach(([key, value]) => {
+				if (!Type.isNil(actualFeatures[key]))
+				{
+					actualFeatures[key] = value;
+				}
+			});
+
+			this.set('IM_FEATURES', actualFeatures);
 		}
 
 		/**
@@ -187,6 +263,55 @@ jn.define('im/messenger/lib/params', (require, exports, module) => {
 		getMultipleActionMessageLimit()
 		{
 			return this.get('MULTIPLE_ACTION_MESSAGE_LIMIT', 20);
+		}
+
+		getMessengerV2Enabled()
+		{
+			return this.get('IS_MESSENGER_V2_ENABLED', false);
+		}
+
+		/**
+		 * @param {ComponentCode} componentCode
+		 * @return {boolean}
+		 */
+		isComponentAvailable(componentCode)
+		{
+			const availableComponents = this.get('AVAILABLE_MESSENGER_COMPONENTS', {});
+
+			return Boolean(availableComponents[componentCode]);
+		}
+
+		/**
+		 * @param {ComponentCode} componentCode
+		 * @return {boolean}
+		 */
+		isComponentPreloaded(componentCode)
+		{
+			const preloadedComponents = this.get('PRELOADED_MESSENGER_COMPONENTS', {});
+
+			return Boolean(preloadedComponents[componentCode]);
+		}
+
+		/**
+		 * @param {ComponentCode} componentCode
+		 * @return {boolean}
+		 */
+		isComponentRequestBroadcasterAvailable(componentCode)
+		{
+			return this.isComponentAvailable(componentCode) && this.isComponentPreloaded(componentCode);
+		}
+
+		canUseAudioPanel()
+		{
+			return Boolean(this.get('CAN_USE_AUDIO_PANEL', false));
+		}
+
+		/**
+		 * @returns {string}
+		 */
+		getServiceHealthUrl()
+		{
+			return this.get('SERVICE_HEALTH_URL', '');
 		}
 	}
 

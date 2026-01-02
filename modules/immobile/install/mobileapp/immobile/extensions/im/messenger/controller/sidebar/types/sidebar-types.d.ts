@@ -135,6 +135,7 @@ type SidebarProfileInfoState = {
 	},
 	dialogType: string | null,
 	title: string,
+	titleColor: string,
 	imageUrl: string,
 	desc: string,
 	guestCount: number,
@@ -200,9 +201,9 @@ type SidebarParticipantsViewProps = {
 type SidebarParticipantsViewState = {
 	participants: Array<object>,
 	permissions: {
-		isCanRemoveParticipants: boolean,
-		isCanAddParticipants: boolean,
-		isCanLeave: boolean,
+		canRemoveParticipants: boolean,
+		canAddParticipants: boolean,
+		canLeave: boolean,
 	},
 }
 

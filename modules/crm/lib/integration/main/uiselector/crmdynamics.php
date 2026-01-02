@@ -238,7 +238,10 @@ class CrmDynamics extends CrmEntity
 
 	protected function getSearchFilter(string $search, array $options)
 	{
-		$filter = [];
+		$filter = [
+			'?TITLE' => $search,
+		];
+
 		$entityTypeId = (int)$options['typeId'];
 		$type = Container::getInstance()->getTypeByEntityTypeId($entityTypeId);
 		$settings = new ItemSettings(['ID' => 'crm-element-field-' . $entityTypeId], $type);

@@ -12,6 +12,7 @@ global $USER_FIELD_MANAGER;
 \Bitrix\Main\Localization\Loc::loadMessages(__FILE__);
 
 use Bitrix\Intranet\Component\UserList;
+use Bitrix\Intranet\Integration\HumanResources\PermissionInvitation;
 use Bitrix\Intranet\Site\Sections\TimemanSection;
 use Bitrix\Main\Config\Option;
 use Bitrix\Main\Context;
@@ -176,16 +177,7 @@ if (
 		!isset($_REQUEST['IFRAME'])
 		|| $_REQUEST['IFRAME'] != 'Y'
 	)
-	&& (
-		(
-			\Bitrix\Main\Loader::includeModule('bitrix24')
-			&& \CBitrix24::isInvitingUsersAllowed()
-		)
-		|| (
-			!\Bitrix\Main\ModuleManager::isModuleInstalled("bitrix24")
-			&& $USER->CanDoOperation('edit_all_users')
-		)
-	)
+	&& PermissionInvitation::createByCurrentUser()->canInvite()
 )
 {
 	$arResult['TOOLBAR_BUTTONS'][] = [

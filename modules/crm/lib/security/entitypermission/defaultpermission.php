@@ -18,6 +18,7 @@ final class DefaultPermission implements JsonSerializable
 				$data['attr'] ?? '',
 				$data['settings'] ?? [],
 				(array)($data['roleGroups'] ?? ['CRM', 'AUTOMATED_SOLUTION']), // ['CRM', 'AUTOMATED_SOLUTION'] used for backward compatibility
+				(array)($data['existingPermissions'] ?? []),
 			);
 		}
 
@@ -29,6 +30,7 @@ final class DefaultPermission implements JsonSerializable
 		private readonly ?string $attr = '',
 		private readonly ?array $settings = [],
 		private readonly array $roleGroups = [],
+		private readonly array $existingPermissions = [],
 	)
 	{
 
@@ -59,6 +61,11 @@ final class DefaultPermission implements JsonSerializable
 		return $this->roleGroups;
 	}
 
+	public function existingPermissions(): array
+	{
+		return $this->existingPermissions;
+	}
+
 	public function toArray(): array
 	{
 		return [
@@ -67,6 +74,7 @@ final class DefaultPermission implements JsonSerializable
 			'attr' => $this->getAttr(),
 			'settings' => $this->getSettings(),
 			'roleGroups' => $this->getRoleGroups(),
+			'existingPermissions' => $this->existingPermissions(),
 		];
 	}
 
@@ -78,6 +86,7 @@ final class DefaultPermission implements JsonSerializable
 			'attr' => $this->getAttr() ?? '',
 			'settings' => $this->getSettings() ?? [],
 			'roleGroups' => $this->getRoleGroups(),
+			'existingPermissions' => $this->existingPermissions(),
 		];
 	}
 }

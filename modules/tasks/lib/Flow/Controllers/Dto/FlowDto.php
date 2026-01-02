@@ -34,6 +34,9 @@ use Bitrix\Tasks\Internals\Dto\AbstractBaseDto;
  * @method bool hasTaskCreators()
  * @method bool hasResponsibleList()
  *
+ * @method bool isResponsibleListFilled()
+ * @method bool isTaskCreatorsFilled()
+ *
  * @method void validateName(bool $required = false)
  */
 final class FlowDto extends AbstractBaseDto
@@ -66,9 +69,8 @@ final class FlowDto extends AbstractBaseDto
 
 	public ?string $distributionType = null;
 
-	#[Required]
 	#[EntitySelector]
-	public array $responsibleList = [];
+	public ?array $responsibleList = null;
 
 	public bool $responsibleCanChangeDeadline = true;
 
@@ -86,7 +88,6 @@ final class FlowDto extends AbstractBaseDto
 
 	public ?int $notifyWhenEfficiencyDecreases = 0;
 
-	#[Required]
 	#[EntitySelector]
-	public array $taskCreators = [];
+	public ?array $taskCreators = null;
 }

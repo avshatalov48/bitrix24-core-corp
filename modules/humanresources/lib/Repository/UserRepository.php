@@ -5,12 +5,9 @@ namespace Bitrix\HumanResources\Repository;
 use Bitrix\HumanResources\Exception\WrongStructureItemException;
 use Bitrix\HumanResources\Item\Collection\UserCollection;
 use Bitrix\HumanResources\Item\Node;
-use Bitrix\HumanResources\Item\User;
 use Bitrix\HumanResources\Model\NodeMemberTable;
 use Bitrix\HumanResources\Type\MemberEntityType;
 use Bitrix\Main\ArgumentException;
-use Bitrix\Main\EO_User;
-use Bitrix\Main\EO_User_Collection;
 use Bitrix\Main\ObjectPropertyException;
 use Bitrix\Main\ORM\Fields\Relations\Reference;
 use Bitrix\Main\ORM\Query\Join;
@@ -18,9 +15,8 @@ use Bitrix\Main\Search\Content;
 use Bitrix\Main\SystemException;
 use Bitrix\Main\UserTable;
 use Bitrix\HumanreSources\Item;
-use Bitrix\HumanResources\Contract;
 
-final class UserRepository implements Contract\Repository\UserRepository
+final class UserRepository
 {
 	/**
 	 * @throws ArgumentException
@@ -84,6 +80,7 @@ final class UserRepository implements Contract\Repository\UserRepository
 			'PERSONAL_GENDER',
 			'CONFIRM_CODE',
 			'ACTIVE',
+			'LOGIN',
 		];
 
 		$eoUserCollection = UserTable::query()
@@ -106,6 +103,7 @@ final class UserRepository implements Contract\Repository\UserRepository
 	{
 		return new Item\User(
 			$model['ID'],
+			$model['LOGIN'],
 			$model['NAME'],
 			$model['LAST_NAME'],
 			$model['SECOND_NAME'],

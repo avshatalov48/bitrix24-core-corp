@@ -34,6 +34,7 @@ if ($_REQUEST['IFRAME'] !== 'Y'):
 		array(
 			"ID" => 'crm-tracking-menu',
 			"ITEMS" => $menuItems,
+			"THEME" => defined("AIR_SITE_TEMPLATE") ? "air" : null,
 		)
 	);
 

@@ -5,7 +5,7 @@ jn.define('tasks/layout/checklist/list/src/toasts', (require, exports, module) =
 	const { Icon } = require('assets/icons');
 	const { Loc } = require('loc');
 	const { Haptics } = require('haptics');
-	const { showToast } = require('toast/base');
+	const { showToast } = require('toast');
 
 	let shownToast = null;
 

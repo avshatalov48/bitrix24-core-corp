@@ -12,7 +12,7 @@ use Bitrix\Main\ObjectPropertyException;
 use Bitrix\Main\SystemException;
 use Bitrix\HumanResources\Access\Role\RoleUtil;
 
-class PermissionRepository implements \Bitrix\HumanResources\Contract\Repository\Access\PermissionRepository
+class PermissionRepository
 {
 	/**
 	 * @throws \Bitrix\Main\SystemException
@@ -137,6 +137,7 @@ class PermissionRepository implements \Bitrix\HumanResources\Contract\Repository
 			->addSelect("PERMISSION_ID")
 			->addSelect("VALUE")
 			->whereIn("ROLE_ID", $roleIds)
+			->setCacheTtl(86400)
 			->fetchAll() as $row)
 		{
 			$permissionId = (string)$row["PERMISSION_ID"];

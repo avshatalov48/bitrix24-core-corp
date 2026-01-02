@@ -12,6 +12,8 @@ Loc::loadMessages(__FILE__);
 
 $this->setFrameMode(true);
 $this->SetViewTarget("sidebar", 200);
+
+$isV2MiniForm = \Bitrix\Tasks\V2\FormV2Feature::isOn('miniform');
 ?>
 
 <div class="sidebar-widget sidebar-widget-tasks">
@@ -20,12 +22,18 @@ $this->SetViewTarget("sidebar", 200);
 			<a href="<?= $arParams['PATH_TO_TASKS'] ?>"><?= Loc::getMessage('TASKS_FILTER_TITLE') ?></a>
 		</div>
 		<?php
-			$path = (new Tasks\Slider\Path\TaskPathMaker(0, Tasks\Slider\Path\PathMaker::EDIT_ACTION))->makeEntityPath();
-			$url = new \Bitrix\Main\Web\Uri($path);
-			$url->addParams([
+			$params = [
 				'ta_sec' => Tasks\Helper\Analytics::SECTION['tasks'],
 				'ta_el' => Tasks\Helper\Analytics::ELEMENT['widget_menu']
-			]);
+			];
+			if ($isV2MiniForm)
+			{
+				$params['miniform'] = true;
+			}
+
+			$path = (new Tasks\Slider\Path\TaskPathMaker(0, Tasks\Slider\Path\PathMaker::EDIT_ACTION))->makeEntityPath();
+			$url = new \Bitrix\Main\Web\Uri($path);
+			$url->addParams($params);
 		?>
 		<a class="plus-icon" href="<?= $url->getUri() ?>"></a>
 	</div>

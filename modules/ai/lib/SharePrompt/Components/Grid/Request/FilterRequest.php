@@ -2,6 +2,8 @@
 
 namespace Bitrix\AI\SharePrompt\Components\Grid\Request;
 
+use Bitrix\AI\Container;
+use Bitrix\AI\Helper\DateHelper;
 use Bitrix\AI\Model\PromptTable;
 use Bitrix\AI\SharePrompt\Service\CategoryService;
 use Bitrix\AI\SharePrompt\Service\GridPrompt\Dto\GridFilterParamsDto;
@@ -11,6 +13,8 @@ use Bitrix\Main\Type\DateTime;
 
 class FilterRequest
 {
+	private DateHelper $dateHelper;
+
 	public function __construct(
 		protected CategoryService $categoryService
 	)
@@ -121,8 +125,8 @@ class FilterRequest
 			&& is_string($filters['<=DATE_MODIFY'])
 		)
 		{
-			$dateModifyStart = DateTime::createFromText($filters['>=DATE_MODIFY']);
-			$dateModifyEnd = DateTime::createFromText($filters['<=DATE_MODIFY']);
+			$dateModifyStart = $this->getDateHelper()->getBitrixDateTimeFromPhp($filters['>=DATE_MODIFY']);
+			$dateModifyEnd = $this->getDateHelper()->getBitrixDateTimeFromPhp($filters['<=DATE_MODIFY']);
 
 			if (!empty($dateModifyStart) && !empty($dateModifyEnd))
 			{
@@ -138,8 +142,8 @@ class FilterRequest
 			&& is_string($filters['<=DATE_CREATE'])
 		)
 		{
-			$dateCreateStart = DateTime::createFromText($filters['>=DATE_CREATE']);
-			$dateCreateEnd = DateTime::createFromText($filters['<=DATE_CREATE']);
+			$dateCreateStart = $this->getDateHelper()->getBitrixDateTimeFromPhp($filters['>=DATE_CREATE']);
+			$dateCreateEnd = $this->getDateHelper()->getBitrixDateTimeFromPhp($filters['<=DATE_CREATE']);
 
 			if (!empty($dateCreateStart) && !empty($dateCreateEnd))
 			{
@@ -168,5 +172,15 @@ class FilterRequest
 		}
 
 		return [];
+	}
+
+	private function getDateHelper(): DateHelper
+	{
+		if (empty($this->dateHelper))
+		{
+			$this->dateHelper = Container::init()->getItem(DateHelper::class);
+		}
+
+		return $this->dateHelper;
 	}
 }

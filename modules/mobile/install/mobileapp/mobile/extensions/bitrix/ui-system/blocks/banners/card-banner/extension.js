@@ -13,6 +13,7 @@ jn.define('ui-system/blocks/banners/card-banner', (require, exports, module) => 
 	 * @param {string} testId
 	 * @param {string | object} [title]
 	 * @param {string | object} [description]
+	 * @param {Typography} [descriptionTypography]
 	 * @param {boolean} [hideCross=false]
 	 * @param {CardDesign} [design=CardDesign.ACCENT]
 	 * @param {image} [image]
@@ -53,12 +54,12 @@ jn.define('ui-system/blocks/banners/card-banner', (require, exports, module) => 
 
 		renderDescription()
 		{
-			const { description } = this.props;
+			const { description, descriptionTypography = Text6 } = this.props;
 
 			return this.renderText({
 				type: 'description',
 				text: description,
-				typography: Text6,
+				typography: descriptionTypography,
 				style: {},
 			});
 		}
@@ -79,12 +80,15 @@ jn.define('ui-system/blocks/banners/card-banner', (require, exports, module) => 
 
 		renderBody()
 		{
+			const { title } = this.props;
+
 			return View(
 				{
 					style: {
 						flex: 1,
 						paddingLeft: Indent.XL.toNumber(),
 						paddingBottom: Indent.M.toNumber(),
+						justifyContent: title ? 'flex-start' : 'center',
 					},
 				},
 				this.renderHeader(),

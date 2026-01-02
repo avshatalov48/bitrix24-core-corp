@@ -2,6 +2,8 @@
 
 namespace Bitrix\BIConnector\Integration\Crm\Tracking\ExpensesProvider;
 
+use Bitrix\Main\Error;
+use Bitrix\Main\Result;
 use Bitrix\Main\Type\Date;
 use Bitrix\Seo;
 
@@ -22,44 +24,64 @@ final class Provider
 	}
 
 	/**
-	 * @return array<array{
-	 *      SOURCE_ID: int,
-	 *      EXPENSES: float,
-	 *      DATE?: ?Date,
-	 *      CAMPAIGN_NAME: string,
-	 *      CAMPAIGN_ID: string,
-	 *      CURRENCY: string,
-	 *      CPM: float,
-	 *      CPC: float,
-	 *      CLICKS: int,
-	 *      IMPRESSIONS: int,
-	 *      ACTIONS: int,
-	 *  }>
+	 * Result data: array<array{
+	 *       SOURCE_ID: int,
+	 *       EXPENSES: float,
+	 *       DATE?: ?Date,
+	 *       CAMPAIGN_NAME: string,
+	 *       CAMPAIGN_ID: string,
+	 *         GROUP_NAME: string,
+	 *       GROUP_ID: string,
+	 *       AD_NAME: string,
+	 *       AD_ID: string,
+	 *       CURRENCY: string,
+	 *       CPM: float,
+	 *       CPC: float,
+	 *       CLICKS: int,
+	 *       IMPRESSIONS: int,
+	 *       ACTIONS: int,
+	 *         UTM_MEDIUM: string,
+	 *       UTM_SOURCE: string,
+	 *       UTM_CAMPAIGN: string,
+	 *       UTM_CONTENT: string
+	 *   }>
+	 *
+	 * @return Result
 	 */
-	public function getDailyExpenses(?Date $dateFrom, ?Date $dateTo): array
+	public function getDailyExpenses(?Date $dateFrom, ?Date $dateTo): Result
 	{
+		$result = new Result();
 		if ($this->account->hasAccounts() && !$this->accountId)
 		{
-			return [];
+			return $result->setData([]);
 		}
 
 		if (!$this->account->hasDailyExpensesReport())
 		{
-			return [];
+			return $result->setData([]);
 		}
 
 		Seo\Analytics\Service::getInstance()->setClientId($this->clientId);
-		$result = $this->account->getDailyExpensesReport($this->accountId, $dateFrom, $dateTo);
-		if (!$result->isSuccess())
+		$accountResult = $this->account->getDailyExpensesReport($this->accountId, $dateFrom, $dateTo);
+		if (!$accountResult->isSuccess())
 		{
-			return [];
+			foreach ($accountResult->getErrors() as $error)
+			{
+				$result->addError($this->wrapErrorToSourceIdPrefix($error));
+			}
+
+			return $result;
 		}
 
 		/** @var Seo\Analytics\Internals\ExpensesCollection $expensesCollection */
-		$expensesCollection = $result->getData()['expenses'] ?? null;
+		$expensesCollection = $accountResult->getData()['expenses'] ?? null;
 		if (!$expensesCollection instanceof Seo\Analytics\Internals\ExpensesCollection)
 		{
-			return [];
+			$collectionClassName = get_class($expensesCollection);
+			$error = new Error("[{$this->name}] Daily expenses result data expected 'Bitrix\Seo\Analytics\Internals\ExpensesCollection' instance, '{$collectionClassName}' got");
+			$result->addError($this->wrapErrorToSourceIdPrefix($error));
+
+			return $result;
 		}
 
 		$expensesResult = [];
@@ -69,7 +91,7 @@ final class Provider
 			$expensesResult[] = $this->parseRow($expenses);
 		}
 
-		return $expensesResult;
+		return $result->setData($expensesResult);
 	}
 
 	/**
@@ -80,12 +102,20 @@ final class Provider
 	 *     DATE?: ?Date,
 	 *     CAMPAIGN_NAME: string,
 	 *     CAMPAIGN_ID: string,
+	 *     GROUP_NAME: string,
+	 *     GROUP_ID: string,
+	 *     AD_NAME: string,
+	 *     AD_ID: string,
 	 *     CURRENCY: string,
 	 *     CPM: float,
 	 *     CPC: float,
 	 *     CLICKS: int,
 	 *     IMPRESSIONS: int,
 	 *     ACTIONS: int,
+	 *     UTM_MEDIUM: string,
+	 *     UTM_SOURCE: string,
+	 *     UTM_CAMPAIGN: string,
+	 *     UTM_CONTENT: string
 	 * }
 	 */
 	private function parseRow(Seo\Analytics\Internals\Expenses $row): array
@@ -93,15 +123,23 @@ final class Provider
 		return [
 			'SOURCE_ID' => $this->id,
 			'EXPENSES' => $row->getSpend(),
-			'DATE' => $row->getDate(),
+			'DATE' => $row->getDate()?->format('Y-m-d H:i:s'),
 			'CAMPAIGN_NAME' => $row->getCampaignName(),
 			'CAMPAIGN_ID' => $row->getCampaignId(),
+			'GROUP_NAME' => $row->getGroupName(),
+			'GROUP_ID' => $row->getGroupId(),
+			'AD_NAME' => $row->getAdName(),
+			'AD_ID' => $row->getAdId(),
 			'CURRENCY' => $row->getCurrency(),
 			'CPM' => $row->getCpm(),
 			'CPC' => $row->getCpc(),
 			'CLICKS' => $row->getClicks(),
 			'IMPRESSIONS' => $row->getImpressions(),
 			'ACTIONS' => $row->getActions(),
+			'UTM_MEDIUM' => $row->getUtmMedium(),
+			'UTM_SOURCE' => $row->getUtmSource(),
+			'UTM_CAMPAIGN' => $row->getUtmCampaign(),
+			'UTM_CONTENT' => $row->getUtmContent(),
 		];
 	}
 
@@ -124,5 +162,10 @@ final class Provider
 			$this->getId(),
 			\Bitrix\Crm\Tracking\Internals\SourceFieldTable::FIELD_UTM_SOURCE
 		);
+	}
+
+	private function wrapErrorToSourceIdPrefix(Error $error): Error
+	{
+		return new Error("[source id: {$this->getId()}]{$error->getMessage()}", $error->getCode());
 	}
 }

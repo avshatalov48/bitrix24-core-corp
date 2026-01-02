@@ -40,6 +40,11 @@ jn.define('intranet/statemanager/redux/slices/employees/model/user', (require, e
 
 			preparedUser.dateRegister = Number(preparedUser.dateRegister);
 
+			preparedUser.department = Object.fromEntries(
+				Object.entries(preparedUser.department)
+					.map(([key, value]) => [key, value.replaceAll('&quot;', '\'')]),
+			);
+
 			return preparedUser;
 		}
 	}

@@ -1,0 +1,27 @@
+<?php
+$MESS["MESSAGE_SEND_BUTTON_SEND"] = "Жіберу";
+$MESS["MESSAGE_SEND_BUTTON_SENDING"] = "Жіберу...";
+$MESS["MESSAGE_SEND_BUTTON_UPLOADING_FILES"] = "Файлдарды жүктеу...";
+$MESS["MESSAGE_SEND_CONNECT_NEW_MAILBOX"] = "Жіберушіні қосу";
+$MESS["MESSAGE_SEND_CONTACT_PLACEHOLDER"] = "E-mail енгізіңіз";
+$MESS["MESSAGE_SEND_EXIT_ALERT_CANCEL"] = "Редакциялауды жалғастыру";
+$MESS["MESSAGE_SEND_EXIT_ALERT_DISCARD"] = "Сақтамай шығу";
+$MESS["MESSAGE_SEND_EXIT_ALERT_SAVE"] = "Жіберу және шығу";
+$MESS["MESSAGE_SEND_EXIT_ALERT_TEXT"] = "Егер сіз қазір шықсаңыз, енгізілген барлық өзгеріс жойылады";
+$MESS["MESSAGE_SEND_EXIT_ALERT_TITLE"] = "Хатты жіберу керек пе?";
+$MESS["MESSAGE_SEND_FIELD_BCC"] = "Жасырын көшірме";
+$MESS["MESSAGE_SEND_FIELD_CC"] = "Көшірме";
+$MESS["MESSAGE_SEND_FIELD_FROM"] = "Күні";
+$MESS["MESSAGE_SEND_FIELD_MESSAGE_BODY_ERROR"] = "Бос хаттарды жіберуге болмайды";
+$MESS["MESSAGE_SEND_FIELD_MESSAGE_BODY_PLACEHOLDER"] = "Хаттың мәтінін енгізіңіз";
+$MESS["MESSAGE_SEND_FIELD_SHOW_MORE"] = "Көшірмелер";
+$MESS["MESSAGE_SEND_FIELD_SUBJECT"] = "Тақырып";
+$MESS["MESSAGE_SEND_FIELD_SUBJECT_ERROR"] = "Хаттың тақырыбы көрсетілмеген";
+$MESS["MESSAGE_SEND_FIELD_SUBJECT_PLACEHOLDER"] = "Тақырыпты көрсетіңіз";
+$MESS["MESSAGE_SEND_FIELD_TO"] = "Кімге";
+$MESS["MESSAGE_SEND_SELECT_SENDER_TITLE"] = "Жіберушіні таңдау";
+$MESS["MESSAGE_SEND_TITLE_FORWARD"] = "Хатты жіберу";
+$MESS["MESSAGE_SEND_TITLE_NEW"] = "Жаңа хат";
+$MESS["MESSAGE_SEND_TITLE_REPLY"] = "Хатқа жауап";
+$MESS["MESSAGE_SEND_WARNING_EMPTY_RECIPIENT_TEXT"] = "Картаға оралып, e-mail қосыңыз";
+$MESS["MESSAGE_SEND_WARNING_EMPTY_RECIPIENT_TITLE"] = "Хатты жіберу үшін e-mail қосыңыз";

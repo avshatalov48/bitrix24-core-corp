@@ -59,5 +59,13 @@ class Opportunity extends Field
 
 			$result->setNewValue(Item::FIELD_NAME_OPPORTUNITY_ACCOUNT, $opportunityAccount);
 		}
+
+		if ($item->hasField(Item::FIELD_NAME_ACCOUNT_CURRENCY_ID))
+		{
+			$result->setNewValue(
+				Item::FIELD_NAME_ACCOUNT_CURRENCY_ID,
+				Currency::getAccountCurrencyId(),
+			);
+		}
 	}
 }

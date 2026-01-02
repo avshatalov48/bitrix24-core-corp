@@ -2,14 +2,17 @@
  * @module im/messenger/controller/dialog/lib/select-manager
  */
 jn.define('im/messenger/controller/dialog/lib/select-manager', (require, exports, module) => {
-	const { Loc } = require('loc');
+	const { Loc } = require('im/messenger/loc');
 	const { Haptics } = require('haptics');
 	const { isEqual } = require('utils/object');
-	const { ForwardSelector } = require('im/messenger/controller/forward-selector');
+	const { Color } = require('tokens');
+	const { ForwardSelector } = require('im/messenger/controller/selector/forward');
 	const { LoggerManager } = require('im/messenger/lib/logger');
+	const { DialogHelper, MessageHelper } = require('im/messenger/lib/helper');
 	const { MessengerParams } = require('im/messenger/lib/params');
 	const { Notification, ToastType } = require('im/messenger/lib/ui/notification');
-	const { EventType, EventsCheckpointType } = require('im/messenger/const');
+	const { EventType, EventFilterType } = require('im/messenger/const');
+	const { showDeleteChannelPostsAlert, showDeleteMessagesAlert } = require('im/messenger/lib/ui/alert');
 
 	const logger = LoggerManager.getInstance().getLogger('dialog--select-manager');
 
@@ -27,7 +30,7 @@ jn.define('im/messenger/controller/dialog/lib/select-manager', (require, exports
 	});
 
 	const ButtonDesignType = Object.freeze({
-		filled: 'filled',
+		outlineAccent1: 'outline-accent-1',
 		outline: 'outline',
 		outlineNoAccent: 'outline-no-accent',
 	});
@@ -39,7 +42,8 @@ jn.define('im/messenger/controller/dialog/lib/select-manager', (require, exports
 	{
 		/** @type {Array<string>} */
 		#selectedMessageIdList = [];
-		#isHaveNotYoursMessages = false;
+		#isButtonForwardAvailable = true;
+		#isButtonDeleteAvailable = true;
 		/** @type {Array<ActionPanelButton|null>} */
 		#actionPanelButtons = [];
 		/** @type {number} */
@@ -62,12 +66,24 @@ jn.define('im/messenger/controller/dialog/lib/select-manager', (require, exports
 			this.view = this.locator.get('view');
 			/** @type {MessengerCoreStore} */
 			this.store = this.locator.get('store');
-			/** @type {HeaderButtons} */
-			this.headerButtons = this.locator.get('header-buttons');
-			/** @type {ReplyManager} */
-			this.replyManager = this.locator.get('reply-manager');
 
 			this.bindMethods();
+		}
+
+		/**
+		 * @return {ReplyManager}
+		 */
+		get replyManager()
+		{
+			return this.locator.get('reply-manager');
+		}
+
+		/**
+		 * @return {HeaderButtonsController}
+		 */
+		get headerButtons()
+		{
+			return this.locator.get('header-buttons');
 		}
 
 		bindMethods()
@@ -77,6 +93,7 @@ jn.define('im/messenger/controller/dialog/lib/select-manager', (require, exports
 			this.onMessageUnselected = this.onMessageUnselected.bind(this);
 			this.onMaxCountExceeded = this.onMaxCountExceeded.bind(this);
 			this.onButtonTap = this.onButtonTap.bind(this);
+			this.onDisabledButtonTap = this.onDisabledButtonTap.bind(this);
 			this.onDeleteMessages = this.onDeleteMessages.bind(this);
 			this.onForwardMessages = this.onForwardMessages.bind(this);
 		}
@@ -89,7 +106,7 @@ jn.define('im/messenger/controller/dialog/lib/select-manager', (require, exports
 			logger.log(`${this.constructor.name}.enableMultiSelectMode`);
 			await this.checkQuoteInProcess();
 			await this.checkForwardInProcess();
-			this.activateSelectEventsCheckpoint();
+			this.activateSelectEventFilter();
 			this.setSelectedMessageIdList([actionSelectMessageId]);
 			this.subscribeView();
 			await this.viewEnableSelectMessagesMode();
@@ -99,21 +116,20 @@ jn.define('im/messenger/controller/dialog/lib/select-manager', (require, exports
 			this.setSelectLimit();
 			this.viewUpdateRestrictions({ longTap: false, reaction: false, quote: false });
 			await this.actionPanelShow();
-			await this.setActionPanelButtons();
 
 			Haptics.impactMedium();
 		}
 
-		async disableSelectMessagesMode()
+		async disableSelectMessagesMode(animated = false)
 		{
 			logger.log(`${this.constructor.name}.disableSelectMessagesMode`);
 			this.restoreQuoteMessageProcess();
-			this.deactivateSelectEventsCheckpoint();
-			await this.viewDisableSelectMessagesMode();
+			this.deactivateSelectEventFilter();
+			await this.viewDisableSelectMessagesMode(animated);
+			await this.actionPanelHide(animated);
+			this.viewUpdateRestrictions({ longTap: true, reaction: true, quote: true });
 			this.updateRightHeaderButton();
 			this.restoreLeftHeaderButton();
-			await this.actionPanelHide();
-			this.viewUpdateRestrictions({ longTap: true, reaction: true, quote: true });
 			this.unsubscribeView();
 		}
 
@@ -123,6 +139,7 @@ jn.define('im/messenger/controller/dialog/lib/select-manager', (require, exports
 			this.view.selector.on(EventType.dialog.multiSelect.selected, this.onMessageSelected);
 			this.view.selector.on(EventType.dialog.multiSelect.unselected, this.onMessageUnselected);
 			this.view.actionPanel.on(EventType.dialog.actionPanel.buttonTap, this.onButtonTap);
+			this.view.actionPanel.on(EventType.dialog.actionPanel.disabledButtonTap, this.onDisabledButtonTap);
 		}
 
 		unsubscribeView()
@@ -130,13 +147,13 @@ jn.define('im/messenger/controller/dialog/lib/select-manager', (require, exports
 			this.view.selector.off(EventType.dialog.multiSelect.maxCountExceeded, this.onMaxCountExceeded);
 			this.view.selector.off(EventType.dialog.multiSelect.selected, this.onMessageSelected);
 			this.view.selector.off(EventType.dialog.multiSelect.unselected, this.onMessageUnselected);
-			this.view.actionPanel.removeAll();
+			this.view.actionPanel.off(EventType.dialog.actionPanel.buttonTap, this.onButtonTap);
 		}
 
 		async onTapCancelMultipleSelectHeaderButton()
 		{
 			logger.log(`${this.constructor.name}.onTapCancelMultipleSelectHeaderButton`);
-			await this.disableSelectMessagesMode();
+			await this.disableSelectMessagesMode(true);
 		}
 
 		/**
@@ -182,41 +199,95 @@ jn.define('im/messenger/controller/dialog/lib/select-manager', (require, exports
 		 */
 		onButtonTap(buttonId)
 		{
+			if (this.#selectedMessageIdList.length === 0)
+			{
+				return false;
+			}
+
 			logger.log(`${this.constructor.name}.onButtonTap id:`, buttonId);
 			switch (buttonId)
 			{
 				case ButtonId.forward: return this.onForwardMessages();
 				case ButtonId.delete: return this.onDeleteMessages();
-				default: return null;
+				default: return false;
+			}
+		}
+
+		/**
+		 * @param {string} buttonId
+		 */
+		onDisabledButtonTap(buttonId)
+		{
+			logger.log(`${this.constructor.name}.onDisabledButtonTap id:`, buttonId);
+			switch (buttonId)
+			{
+				case ButtonId.forward: return this.showUnavailableForwardActionToast();
+				case ButtonId.delete: return this.showUnavailableDeleteActionToast();
+				default: return false;
 			}
 		}
 
 		async onForwardMessages()
 		{
-			const forwardController = new ForwardSelector();
-			forwardController.open({
+			const forwardSelector = new ForwardSelector({
 				messageIds: this.#selectedMessageIdList,
 				fromDialogId: this.dialogId,
 				locator: this.locator,
-				onItemSelectedCallBack: async () => {
-					await this.disableSelectMessagesMode();
+				onDialogSelected: async () => {
+					await this.disableSelectMessagesMode(true);
 				},
 			});
+
+			await forwardSelector.open({ parentWidget: PageManager });
 		}
 
 		onDeleteMessages()
 		{
-			Notification.showComingSoon();
+			const deleteCallback = async () => {
+				await this.disableSelectMessagesMode(true);
+				this.locator.get('message-service')
+					.deleteByIdList(this.#selectedMessageIdList, this.dialogId)
+				;
+			};
+
+			const helper = DialogHelper.createByDialogId(this.dialogId);
+			if (helper?.isChannel)
+			{
+				showDeleteChannelPostsAlert({ deleteCallback });
+
+				return;
+			}
+
+			showDeleteMessagesAlert({ deleteCallback });
 		}
 
-		activateSelectEventsCheckpoint()
+		showUnavailableForwardActionToast()
 		{
-			this.view.eventsCheckpoint.activateCheckpoint(EventsCheckpointType.selectMessagesMode);
+			Notification.showNotifier({
+				title: Loc.getMessage('IMMOBILE_MESSENGER_DIALOG_SELECT_MANAGER_FORWARD_BUTTON_UNAVAILABLE_ACTION_NOTIFIER'),
+			});
 		}
 
-		deactivateSelectEventsCheckpoint()
+		showUnavailableDeleteActionToast()
 		{
-			this.view.eventsCheckpoint.deactivateCheckpoint(EventsCheckpointType.selectMessagesMode);
+			if (this.#selectedMessageIdList.length === 0)
+			{
+				return;
+			}
+
+			Notification.showNotifier({
+				title: Loc.getMessage('IMMOBILE_MESSENGER_DIALOG_SELECT_MANAGER_DELETE_BUTTON_UNAVAILABLE_ACTION_NOTIFIER'),
+			});
+		}
+
+		activateSelectEventFilter()
+		{
+			this.view.eventFilter.activateEventFilter(EventFilterType.selectMessagesMode);
+		}
+
+		deactivateSelectEventFilter()
+		{
+			this.view.eventFilter.deactivateEventFilter(EventFilterType.selectMessagesMode);
 		}
 
 		async checkQuoteInProcess()
@@ -254,16 +325,28 @@ jn.define('im/messenger/controller/dialog/lib/select-manager', (require, exports
 			this.#selectedMessageIdList = value;
 		}
 
-		checkNotYoursMessages()
+		checkForwardButtonAvailable()
 		{
-			this.#isHaveNotYoursMessages = false;
-			const currentUserId = MessengerParams.getUserId();
+			this.#isButtonForwardAvailable = (
+				!this.#selectedMessageIdList.some((messageId) => MessageHelper.createById(messageId)?.isVote)
+			);
+		}
+
+		checkDeleteButtonAvailable()
+		{
+			this.#isButtonDeleteAvailable = true;
 			for (const id of this.#selectedMessageIdList)
 			{
-				const messageModel = this.store.getters['messagesModel/getById'](id) || {};
-				if (messageModel.authorId !== currentUserId)
+				const messageHelper = MessageHelper.createById(id);
+				if (!messageHelper.isYour)
 				{
-					this.#isHaveNotYoursMessages = true;
+					this.#isButtonDeleteAvailable = false;
+					break;
+				}
+
+				if (messageHelper.isDeleted)
+				{
+					this.#isButtonDeleteAvailable = false;
 					break;
 				}
 			}
@@ -303,19 +386,27 @@ jn.define('im/messenger/controller/dialog/lib/select-manager', (require, exports
 			return this.view.enableSelectMessagesMode();
 		}
 
-		viewDisableSelectMessagesMode()
+		/**
+		 * @param {boolean} animated
+		 */
+		viewDisableSelectMessagesMode(animated)
 		{
-			return this.view.disableSelectMessagesMode();
+			return this.view.disableSelectMessagesMode(animated);
 		}
 
 		actionPanelShow()
 		{
-			return this.view.actionPanelShow(this.getActionPanelTitle());
+			this.#actionPanelButtons = this.getButtons();
+
+			return this.view.actionPanelShow(this.getActionPanelTitle(), this.#actionPanelButtons);
 		}
 
-		actionPanelHide()
+		/**
+		 * @param {boolean} animated
+		 */
+		actionPanelHide(animated)
 		{
-			return this.view.actionPanelHide();
+			return this.view.actionPanelHide(animated);
 		}
 
 		updateActionPanelTitle()
@@ -400,28 +491,41 @@ jn.define('im/messenger/controller/dialog/lib/select-manager', (require, exports
 		 */
 		getButtons()
 		{
-			this.checkNotYoursMessages();
+			this.checkForwardButtonAvailable();
+			this.checkDeleteButtonAvailable();
 
-			const disabledForwardButton = this.#selectedMessageIdList.length === 0;
-			// const disabledDeleteButton = (this.#selectedMessageIdList.length === 0 || this.#isHaveNotYoursMessages);
+			const disabledForwardButton = (this.#selectedMessageIdList.length === 0 || !this.#isButtonForwardAvailable);
+			const disabledDeleteButton = (this.#selectedMessageIdList.length === 0 || !this.#isButtonDeleteAvailable);
+			const customStyleDeleteButton = disabledDeleteButton
+				? {}
+				: { borderColor: Color.accentMainAlert.toHex() };
 
 			return [
-				{
-					id: ButtonId.forward,
-					iconName: ButtonIconName.forward,
-					text: Loc.getMessage('IMMOBILE_MESSENGER_DIALOG_SELECT_MANAGER_FORWARD_BUTTON'),
-					height: ButtonHeight.L,
-					design: ButtonDesignType.filled,
-					disabled: disabledForwardButton,
-				},
 				{
 					id: ButtonId.delete,
 					text: Loc.getMessage('IMMOBILE_MESSENGER_DIALOG_SELECT_MANAGER_DELETE_BUTTON'),
 					height: ButtonHeight.L,
-					design: ButtonDesignType.outlineNoAccent, // this token needs to be changed to outline when the delete logic is done
-					disabled: false, // this bool needs to be changed to disabledDeleteButton when the delete logic is done
+					design: ButtonDesignType.outline,
+					disabled: disabledDeleteButton,
+					customStyle: customStyleDeleteButton,
+				},
+				{
+					id: ButtonId.forward,
+					rightIconName: ButtonIconName.forward,
+					text: Loc.getMessage('IMMOBILE_MESSENGER_DIALOG_SELECT_MANAGER_FORWARD_BUTTON'),
+					height: ButtonHeight.L,
+					design: ButtonDesignType.outlineAccent1,
+					disabled: disabledForwardButton,
 				},
 			];
+		}
+
+		/**
+		 * @return {boolean}
+		 */
+		isSelectMessagesModeEnabled()
+		{
+			return this.view.selector.getSelectEnable();
 		}
 	}
 

@@ -14,6 +14,14 @@ if (!defined("B_PROLOG_INCLUDED") || B_PROLOG_INCLUDED!==true)die();
 
 \Bitrix\Main\UI\Extension::load(['ui.design-tokens']);
 
+$isAirTemplate = defined('AIR_SITE_TEMPLATE');
+if ($isAirTemplate)
+{
+	$runtimeInfo = CTimeMan::initRuntimeInfo();
+	
+	CJSCore::Init(['timeman']);
+}
+
 $this->setFrameMode(true);
 
 if ($arResult['TASKS_ENABLED']):
@@ -223,6 +231,10 @@ endif;
 	<div id="bx-report-overdue" style="display:none" class="bx-tm-overdue"></div>
 </div>
 <script>
+<?php if ($isAirTemplate): ?>
+BX.timeman('bx_tm', <?= CUtil::PhpToJsObject($runtimeInfo); ?>, '<?= SITE_ID ?>');
+<?php endif; ?>
+
 window.BXTMREPORT = new JCTimeManReport('bx_tm_report', {
 	DEPARTMENTS: 'tm_report_conrol_departments',
 	FILTER: 'REPORT_FILTER',

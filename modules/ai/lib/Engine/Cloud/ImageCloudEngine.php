@@ -51,9 +51,9 @@ abstract class ImageCloudEngine extends CloudEngine
 	protected function getImageSrcFromBase64String(string $imageBase64): ?string
 	{
 		$fileId = File::saveImageByBase64Content($imageBase64, 'ai');
-		if ($fileId && ($fileArray = \CFile::GetFileArray($fileId)) && !empty($fileArray['SRC']))
+		if ($fileId && ($fileArray = \CFile::GetFileArray($fileId)) && !empty($fileArray['EXTERNAL_ID']))
 		{
-			return $fileArray['SRC'];
+			return $this->getImgService()->getUrlOnImgFile($fileId, $fileArray['EXTERNAL_ID']);
 		}
 
 		return null;

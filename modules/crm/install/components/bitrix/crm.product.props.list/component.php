@@ -20,8 +20,7 @@ if (!CModule::IncludeModule('iblock'))
 
 global $USER, $APPLICATION;
 
-$CrmPerms = new CCrmPerms($USER->GetID());
-if (!$CrmPerms->HavePerm('CONFIG', BX_CRM_PERM_CONFIG, 'WRITE'))
+if (!\Bitrix\Crm\Service\Container::getInstance()->getUserPermissions()->isCrmAdmin())
 {
 	ShowError(GetMessage('CRM_PERMISSION_DENIED'));
 	return;
@@ -30,7 +29,7 @@ if (!$CrmPerms->HavePerm('CONFIG', BX_CRM_PERM_CONFIG, 'WRITE'))
 /** @global CDatabase $DB */
 global $DB;
 
-$arResult['CAN_DELETE'] = $arResult['CAN_EDIT'] = $CrmPerms->HavePerm('CONFIG', BX_CRM_PERM_CONFIG, 'WRITE');
+$arResult['CAN_DELETE'] = $arResult['CAN_EDIT'] = \Bitrix\Crm\Service\Container::getInstance()->getUserPermissions()->isCrmAdmin();
 
 $arParams['PATH_TO_PRODUCTPROPS_LIST'] = CrmCheckPath('PATH_TO_PRODUCTPROPS_LIST', $arParams['PATH_TO_PRODUCTPROPS_LIST'], '');
 $arParams['PATH_TO_PRODUCTPROPS_ADD'] = CrmCheckPath('PATH_TO_PRODUCTPROPS_ADD', $arParams['PATH_TO_PRODUCTPROPS_ADD'], '?add');

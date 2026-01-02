@@ -1,0 +1,5 @@
+<?php
+$MESS["TIMEMAN_WORK_TIME_BUTTON_TEXT_CONTINUE"] = "Resume work day";
+$MESS["TIMEMAN_WORK_TIME_BUTTON_TEXT_EXPIRED"] = "You didn't clock out";
+$MESS["TIMEMAN_WORK_TIME_BUTTON_TEXT_START"] = "Clock in";
+$MESS["TIMEMAN_WORK_TIME_BUTTON_TEXT_WORKING"] = "My time today: #time#";

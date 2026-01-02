@@ -19,6 +19,7 @@ jn.define('crm/timeline/scheduler', (require, exports, module) => {
 		static getFloatingMenuItems(context)
 		{
 			const floatingMenuItemsSettings = context?.detailCard?.componentParams?.floatingMenuItemsSettings;
+			const analyticsEvent = context?.detailCard?.analytics || null;
 
 			return (
 				providerClasses
@@ -45,6 +46,7 @@ jn.define('crm/timeline/scheduler', (require, exports, module) => {
 							badges: providerClass.getMenuBadges(),
 							icon: providerClass.getMenuIcon(),
 							disabled,
+							analyticsEvent,
 						});
 					})
 			);
@@ -58,8 +60,18 @@ jn.define('crm/timeline/scheduler', (require, exports, module) => {
 		 * @param {function} onCancel
 		 * @param {function} onSkip
 		 * @param {object} parentWidget
+		 * @param {AnalyticsEvent|null} analyticsEvent
 		 */
-		constructor({ entity, user, onActivityCreate, onClose, onCancel, onSkip, parentWidget = PageManager })
+		constructor({
+			entity,
+			user,
+			onActivityCreate,
+			onClose,
+			onCancel,
+			onSkip,
+			parentWidget = PageManager,
+			analytics = null,
+		})
 		{
 			/** @type {TimelineEntityProps} */
 			this.entity = entity;
@@ -73,6 +85,8 @@ jn.define('crm/timeline/scheduler', (require, exports, module) => {
 			this.onSkip = onSkip;
 
 			this.parentWidget = parentWidget;
+
+			this.analytics = analytics;
 		}
 
 		/**

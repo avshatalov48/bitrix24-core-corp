@@ -11,8 +11,7 @@ if (!CModule::IncludeModule('crm'))
 if (!CModule::IncludeModule('sale'))
 	$arReturn['ERROR'][] = GetMessage('CRM_LOC_EDT_SALE_MODULE_NOT_INSTALLED');
 
-$CrmPerms = new CCrmPerms($USER->GetID());
-$bCrmReadPerm = $CrmPerms->HavePerm('CONFIG', BX_CRM_PERM_CONFIG, 'READ');
+$bCrmReadPerm = \Bitrix\Crm\Service\Container::getInstance()->getUserPermissions()->entityType()->canReadSomeItemsInCrm();
 
 if($USER->IsAuthorized() && check_bitrix_sessid() && $bCrmReadPerm && !isset($arReturn['ERROR']))
 {

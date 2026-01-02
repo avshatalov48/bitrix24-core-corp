@@ -3,7 +3,7 @@ this.BX = this.BX || {};
 this.BX.Messenger = this.BX.Messenger || {};
 this.BX.Messenger.v2 = this.BX.Messenger.v2 || {};
 this.BX.Messenger.v2.Component = this.BX.Messenger.v2.Component || {};
-(function (exports,im_v2_lib_logger,ui_notification,main_core_events,im_v2_component_content_elements,im_v2_component_entitySelector,im_v2_lib_promo,im_v2_lib_analytics,main_popup,im_v2_component_textarea,im_v2_lib_draft,im_v2_component_dialog_chat,main_core,im_v2_component_messageList,im_v2_lib_copilot,im_public,im_v2_component_elements,im_v2_const,im_v2_lib_theme,im_v2_provider_service) {
+(function (exports,im_v2_lib_logger,main_core,main_core_events,im_v2_provider_service_chat,im_v2_component_elements_chatTitle,im_v2_component_elements_avatar,im_v2_component_content_elements,im_v2_component_entitySelector,im_v2_lib_promo,im_v2_lib_analytics,main_popup,im_v2_component_elements_popup,im_v2_component_textarea,im_public,im_v2_component_elements_copilotRolesDialog,im_v2_component_elements_button,im_v2_const,im_v2_lib_theme,im_v2_provider_service_copilot) {
 	'use strict';
 
 	const POPUP_ID = 'im-add-to-chat-hint-popup';
@@ -12,7 +12,7 @@ this.BX.Messenger.v2.Component = this.BX.Messenger.v2.Component || {};
 	const AddToChatHint = {
 	  name: 'AddToChatHint',
 	  components: {
-	    MessengerPopup: im_v2_component_elements.MessengerPopup
+	    MessengerPopup: im_v2_component_elements_popup.MessengerPopup
 	  },
 	  props: {
 	    bindElement: {
@@ -43,10 +43,9 @@ this.BX.Messenger.v2.Component = this.BX.Messenger.v2.Component || {};
 	  },
 	  template: `
 		<MessengerPopup
-			v-slot="{enableAutoHide, disableAutoHide}"
 			:config="config"
-			@close="$emit('close')"
 			:id="POPUP_ID"
+			@close="$emit('close')"
 		>
 			<div class="bx-im-copilot-add-to-chat-hint__title">
 				{{ loc('IM_CONTENT_COPILOT_ADD_TO_CHAT_HINT_TITLE') }}
@@ -139,8 +138,8 @@ this.BX.Messenger.v2.Component = this.BX.Messenger.v2.Component || {};
 	  name: 'CopilotChatHeader',
 	  components: {
 	    ChatHeader: im_v2_component_content_elements.ChatHeader,
-	    EditableChatTitle: im_v2_component_elements.EditableChatTitle,
-	    ChatAvatar: im_v2_component_elements.ChatAvatar,
+	    EditableChatTitle: im_v2_component_elements_chatTitle.EditableChatTitle,
+	    ChatAvatar: im_v2_component_elements_avatar.ChatAvatar,
 	    AddToChatButton
 	  },
 	  inject: ['currentSidebarPanel'],
@@ -156,7 +155,7 @@ this.BX.Messenger.v2.Component = this.BX.Messenger.v2.Component || {};
 	    };
 	  },
 	  computed: {
-	    AvatarSize: () => im_v2_component_elements.AvatarSize,
+	    AvatarSize: () => im_v2_component_elements_avatar.AvatarSize,
 	    dialog() {
 	      return this.$store.getters['chats/get'](this.dialogId, true);
 	    },
@@ -179,11 +178,7 @@ this.BX.Messenger.v2.Component = this.BX.Messenger.v2.Component || {};
 	  },
 	  methods: {
 	    onNewTitleSubmit(newTitle) {
-	      this.getChatService().renameChat(this.dialogId, newTitle).catch(() => {
-	        BX.UI.Notification.Center.notify({
-	          content: this.loc('IM_CONTENT_CHAT_HEADER_RENAME_ERROR')
-	        });
-	      });
+	      void this.getChatService().renameChat(this.dialogId, newTitle);
 	    },
 	    onMembersClick() {
 	      if (!this.isInited) {
@@ -205,7 +200,7 @@ this.BX.Messenger.v2.Component = this.BX.Messenger.v2.Component || {};
 	    },
 	    getChatService() {
 	      if (!this.chatService) {
-	        this.chatService = new im_v2_provider_service.ChatService();
+	        this.chatService = new im_v2_provider_service_chat.ChatService();
 	      }
 	      return this.chatService;
 	    },
@@ -263,9 +258,6 @@ this.BX.Messenger.v2.Component = this.BX.Messenger.v2.Component || {};
 	      default: ''
 	    }
 	  },
-	  computed: {
-	    CopilotDraftManager: () => im_v2_lib_draft.CopilotDraftManager
-	  },
 	  methods: {
 	    loc(phraseCode) {
 	      return this.$Bitrix.Loc.getMessage(phraseCode);
@@ -274,129 +266,14 @@ this.BX.Messenger.v2.Component = this.BX.Messenger.v2.Component || {};
 	  template: `
 		<ChatTextarea
 			:dialogId="dialogId"
-			:placeholder="this.loc('IM_CONTENT_COPILOT_TEXTAREA_PLACEHOLDER')"
-			:withCreateMenu="false"
+			:placeholder="loc('IM_CONTENT_COPILOT_TEXTAREA_PLACEHOLDER')"
 			:withMarket="false"
 			:withEdit="false"
 			:withUploadMenu="false"
 			:withSmileSelector="false"
-			:draftManagerClass="CopilotDraftManager"
 		/>
 	`
 	};
-
-	const CopilotChatContext = Object.freeze({
-	  personal: 'chat_copilot_tab_one_by_one',
-	  group: 'chat_copilot_tab_multi'
-	});
-	class CopilotMessageMenu extends im_v2_component_messageList.MessageMenu {
-	  getMenuItems() {
-	    return [this.getCopyItem(), this.getFavoriteItem(), this.getForwardItem(), this.getSendFeedbackItem(), this.getDeleteItem(), this.getSelectItem()];
-	  }
-	  getSendFeedbackItem() {
-	    const copilotManager = new im_v2_lib_copilot.CopilotManager();
-	    if (!copilotManager.isCopilotBot(this.context.authorId)) {
-	      return null;
-	    }
-	    return {
-	      text: main_core.Loc.getMessage('IM_CONTENT_COPILOT_CONTEXT_MENU_FEEDBACK'),
-	      onclick: () => {
-	        void this.openForm();
-	        this.menuInstance.close();
-	      }
-	    };
-	  }
-	  async openForm() {
-	    const formId = Math.round(Math.random() * 1000);
-	    await main_core.Runtime.loadExtension(['ui.feedback.form']);
-	    BX.UI.Feedback.Form.open({
-	      id: `im.copilot.feedback-${formId}`,
-	      forms: [{
-	        zones: ['es'],
-	        id: 684,
-	        lang: 'es',
-	        sec: 'svvq1x'
-	      }, {
-	        zones: ['en'],
-	        id: 686,
-	        lang: 'en',
-	        sec: 'tjwodz'
-	      }, {
-	        zones: ['de'],
-	        id: 688,
-	        lang: 'de',
-	        sec: 'nrwksg'
-	      }, {
-	        zones: ['com.br'],
-	        id: 690,
-	        lang: 'com.br',
-	        sec: 'kpte6m'
-	      }, {
-	        zones: ['ru', 'by', 'kz'],
-	        id: 692,
-	        lang: 'ru',
-	        sec: 'jbujn0'
-	      }],
-	      presets: {
-	        sender_page: this.getCopilotChatContext(),
-	        language: main_core.Loc.getMessage('LANGUAGE_ID'),
-	        cp_answer: this.context.text
-	      }
-	    });
-	  }
-	  getCopilotChatContext() {
-	    const chat = this.store.getters['chats/get'](this.context.dialogId);
-	    if (chat.userCounter <= 2) {
-	      return CopilotChatContext.personal;
-	    }
-	    return CopilotChatContext.group;
-	  }
-	}
-
-	// @vue/component
-	const CopilotMessageList = {
-	  name: 'CopilotMessageList',
-	  components: {
-	    MessageList: im_v2_component_messageList.MessageList,
-	    DialogStatus: im_v2_component_elements.DialogStatus
-	  },
-	  props: {
-	    dialogId: {
-	      type: String,
-	      required: true
-	    }
-	  },
-	  computed: {
-	    CopilotMessageMenu: () => CopilotMessageMenu
-	  },
-	  template: `
-		<MessageList :dialogId="dialogId" :messageMenuClass="CopilotMessageMenu" />
-	`
-	};
-
-	// @vue/component
-	const CopilotDialog = {
-	  name: 'CopilotDialog',
-	  components: {
-	    ChatDialog: im_v2_component_dialog_chat.ChatDialog,
-	    CopilotMessageList
-	  },
-	  props: {
-	    dialogId: {
-	      type: String,
-	      required: true
-	    }
-	  },
-	  template: `
-		<ChatDialog :dialogId="dialogId">
-			<template #message-list>
-				<CopilotMessageList :dialogId="dialogId" />
-			</template>
-		</ChatDialog>	
-	`
-	};
-
-	const COPILOT_BACKGROUND_ID = 4;
 
 	// @vue/component
 	const CopilotInternalContent = {
@@ -404,7 +281,6 @@ this.BX.Messenger.v2.Component = this.BX.Messenger.v2.Component || {};
 	  components: {
 	    BaseChatContent: im_v2_component_content_elements.BaseChatContent,
 	    CopilotChatHeader,
-	    CopilotDialog,
 	    CopilotTextarea
 	  },
 	  props: {
@@ -413,16 +289,10 @@ this.BX.Messenger.v2.Component = this.BX.Messenger.v2.Component || {};
 	      default: ''
 	    }
 	  },
-	  computed: {
-	    COPILOT_BACKGROUND_ID: () => COPILOT_BACKGROUND_ID
-	  },
 	  template: `
-		<BaseChatContent :dialogId="dialogId" :backgroundId="COPILOT_BACKGROUND_ID">
+		<BaseChatContent :dialogId="dialogId">
 			<template #header>
 				<CopilotChatHeader :dialogId="dialogId" :key="dialogId" />
-			</template>
-			<template #dialog>
-				<CopilotDialog :dialogId="dialogId" :key="dialogId" />
 			</template>
 			<template #textarea="{ onTextareaMount }">
 				<CopilotTextarea :dialogId="dialogId" :key="dialogId" @mounted="onTextareaMount" />
@@ -439,8 +309,8 @@ this.BX.Messenger.v2.Component = this.BX.Messenger.v2.Component || {};
 	const EmptyState = {
 	  name: 'EmptyState',
 	  components: {
-	    ChatButton: im_v2_component_elements.Button,
-	    CopilotRolesDialog: im_v2_component_elements.CopilotRolesDialog
+	    ChatButton: im_v2_component_elements_button.ChatButton,
+	    CopilotRolesDialog: im_v2_component_elements_copilotRolesDialog.CopilotRolesDialog
 	  },
 	  data() {
 	    return {
@@ -449,9 +319,9 @@ this.BX.Messenger.v2.Component = this.BX.Messenger.v2.Component || {};
 	    };
 	  },
 	  computed: {
-	    ButtonSize: () => im_v2_component_elements.ButtonSize,
+	    ButtonSize: () => im_v2_component_elements_button.ButtonSize,
 	    backgroundStyle() {
-	      return im_v2_lib_theme.ThemeManager.getBackgroundStyleById(COPILOT_BACKGROUND_ID);
+	      return im_v2_lib_theme.ThemeManager.getBackgroundStyleById(im_v2_lib_theme.SpecialBackground.copilot);
 	    },
 	    preparedText() {
 	      return this.loc('IM_CONTENT_COPILOT_EMPTY_STATE_MESSAGE_MSGVER_1', {
@@ -480,19 +350,13 @@ this.BX.Messenger.v2.Component = this.BX.Messenger.v2.Component || {};
 	        roleCode
 	      }).catch(() => {
 	        this.isCreatingChat = false;
-	        this.showCreateChatError();
 	      });
 	      this.isCreatingChat = false;
 	      void im_public.Messenger.openCopilot(newDialogId);
 	    },
-	    showCreateChatError() {
-	      BX.UI.Notification.Center.notify({
-	        content: this.loc('IM_CONTENT_COPILOT_EMPTY_STATE_ERROR_CREATING_CHAT')
-	      });
-	    },
 	    getCopilotService() {
 	      if (!this.copilotService) {
-	        this.copilotService = new im_v2_provider_service.CopilotService();
+	        this.copilotService = new im_v2_provider_service_copilot.CopilotService();
 	      }
 	      return this.copilotService;
 	    },
@@ -588,11 +452,7 @@ this.BX.Messenger.v2.Component = this.BX.Messenger.v2.Component || {};
 	    },
 	    async loadChatWithContext() {
 	      im_v2_lib_logger.Logger.warn(`CopilotContent: loading chat ${this.entityId} with context - ${this.layout.contextId}`);
-	      await this.getChatService().loadChatWithContext(this.entityId, this.layout.contextId).catch(error => {
-	        if (error.code === 'ACCESS_ERROR') {
-	          this.showNotification(this.loc('IM_CONTENT_CHAT_ACCESS_ERROR_MSGVER_1'));
-	        }
-	        im_v2_lib_logger.Logger.error(error);
+	      await this.getChatService().loadChatWithContext(this.entityId, this.layout.contextId).catch(() => {
 	        im_public.Messenger.openCopilot();
 	      });
 	      im_v2_lib_logger.Logger.warn(`CopilotContent: chat ${this.entityId} is loaded with context of ${this.layout.contextId}`);
@@ -600,24 +460,15 @@ this.BX.Messenger.v2.Component = this.BX.Messenger.v2.Component || {};
 	    },
 	    async loadChat() {
 	      im_v2_lib_logger.Logger.warn(`CopilotContent: loading chat ${this.entityId}`);
-	      await this.getChatService().loadChatWithMessages(this.entityId).catch(error => {
-	        const [firstError] = error;
-	        if (firstError.code === 'ACCESS_DENIED') {
-	          this.showNotification(this.loc('IM_CONTENT_CHAT_ACCESS_ERROR_MSGVER_1'));
-	        }
+	      await this.getChatService().loadChatWithMessages(this.entityId).catch(() => {
 	        im_public.Messenger.openCopilot();
 	      });
 	      im_v2_lib_logger.Logger.warn(`CopilotContent: chat ${this.entityId} is loaded`);
 	      return Promise.resolve();
 	    },
-	    showNotification(text) {
-	      BX.UI.Notification.Center.notify({
-	        content: text
-	      });
-	    },
 	    getChatService() {
 	      if (!this.chatService) {
-	        this.chatService = new im_v2_provider_service.ChatService();
+	        this.chatService = new im_v2_provider_service_chat.ChatService();
 	      }
 	      return this.chatService;
 	    },
@@ -632,6 +483,8 @@ this.BX.Messenger.v2.Component = this.BX.Messenger.v2.Component || {};
 	};
 
 	exports.CopilotContent = CopilotContent;
+	exports.CopilotChatHeader = CopilotChatHeader;
+	exports.CopilotTextarea = CopilotTextarea;
 
-}((this.BX.Messenger.v2.Component.Content = this.BX.Messenger.v2.Component.Content || {}),BX.Messenger.v2.Lib,BX,BX.Event,BX.Messenger.v2.Component.Content,BX.Messenger.v2.Component.EntitySelector,BX.Messenger.v2.Lib,BX.Messenger.v2.Lib,BX.Main,BX.Messenger.v2.Component,BX.Messenger.v2.Lib,BX.Messenger.v2.Component.Dialog,BX,BX.Messenger.v2.Component,BX.Messenger.v2.Lib,BX.Messenger.v2.Lib,BX.Messenger.v2.Component.Elements,BX.Messenger.v2.Const,BX.Messenger.v2.Lib,BX.Messenger.v2.Service));
+}((this.BX.Messenger.v2.Component.Content = this.BX.Messenger.v2.Component.Content || {}),BX.Messenger.v2.Lib,BX,BX.Event,BX.Messenger.v2.Service,BX.Messenger.v2.Component.Elements,BX.Messenger.v2.Component.Elements,BX.Messenger.v2.Component.Content,BX.Messenger.v2.Component.EntitySelector,BX.Messenger.v2.Lib,BX.Messenger.v2.Lib,BX.Main,BX.Messenger.v2.Component.Elements,BX.Messenger.v2.Component,BX.Messenger.v2.Lib,BX.Messenger.v2.Component.Elements,BX.Messenger.v2.Component.Elements,BX.Messenger.v2.Const,BX.Messenger.v2.Lib,BX.Messenger.v2.Service));
 //# sourceMappingURL=copilot-content.bundle.js.map

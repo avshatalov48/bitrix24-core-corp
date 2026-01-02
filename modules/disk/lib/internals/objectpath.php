@@ -4,6 +4,7 @@ namespace Bitrix\Disk\Internals;
 use Bitrix\Main\Application;
 use Bitrix\Main\ArgumentException;
 use Bitrix\Main\ArgumentOutOfRangeException;
+use Bitrix\Main\DB\MysqlCommonConnection;
 use Bitrix\Main\Entity;
 use Bitrix\Main\ObjectPropertyException;
 use Bitrix\Main\SystemException;
@@ -123,14 +124,34 @@ final class ObjectPathTable extends DataManager
 		$connection = Application::getInstance()->getConnection();
 		$table = static::getTableName();
 
-		$sql = "
-			DELETE a FROM {$table} a
+		if ($connection instanceof MysqlCommonConnection)
+		{
+			$sql = "
+				DELETE a FROM {$table} a
 				JOIN {$table} d
 					ON a.OBJECT_ID = d.OBJECT_ID
 				LEFT JOIN {$table} x
 					ON x.PARENT_ID = d.PARENT_ID AND x.OBJECT_ID = a.PARENT_ID
 				WHERE d.PARENT_ID = {$objectId} AND x.PARENT_ID IS NULL
-		";
+			";
+		}
+		else
+		{
+			$sql = "
+				DELETE FROM {$table} AS a
+				USING {$table} AS d
+				WHERE 
+					a.OBJECT_ID = d.OBJECT_ID
+					AND d.PARENT_ID = {$objectId}
+					AND NOT EXISTS (
+						SELECT 1
+						FROM {$table} AS x
+						WHERE 
+							x.PARENT_ID = d.PARENT_ID
+							AND x.OBJECT_ID = a.PARENT_ID
+					);	
+			";
+		}
 
 		$connection->queryExecute($sql);
 

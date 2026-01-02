@@ -14,9 +14,9 @@ use Bitrix\Tasks\Internals\Notification;
 
 class Controller
 {
-	private PusherInterface $pusher;
-	private BufferInterface $buffer;
-	private UserRepositoryInterface $userRepository;
+	protected PusherInterface $pusher;
+	protected BufferInterface $buffer;
+	protected UserRepositoryInterface $userRepository;
 
 	public function __construct(
 		?PusherInterface $pusher = null,
@@ -202,7 +202,7 @@ class Controller
 			$this->buffer,
 			$this->userRepository,
 			new ProviderCollection(...[
-				new Forum\NotificationProvider()
+				new Forum\NotificationProvider(),
 			])
 		))->execute($text);
 
@@ -223,7 +223,7 @@ class Controller
 		return $this;
 	}
 
-	private function getDefaultNotificationProviders(array $additionalProviders = []): array
+	protected function getDefaultNotificationProviders(array $additionalProviders = []): array
 	{
 		$defaultProviders = [
 			new Im\Notification\Provider(),

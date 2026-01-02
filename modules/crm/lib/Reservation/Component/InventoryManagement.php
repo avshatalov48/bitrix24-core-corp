@@ -2,6 +2,8 @@
 
 namespace Bitrix\Crm\Reservation\Component;
 
+use Bitrix\Crm\Integration\Sale\Reservation\Config\Entity\Deal;
+use Bitrix\Crm\Integration\Sale\Reservation\Config\EntityFactory;
 use Bitrix\Crm\Order\OrderDealSynchronizer\Products\BasketXmlId;
 use Bitrix\Main;
 use Bitrix\Crm;
@@ -112,8 +114,15 @@ final class InventoryManagement
 		$processInventoryManagementResult = null;
 		if ($semanticId === Crm\PhaseSemantics::SUCCESS)
 		{
-			$processInventoryManagementResult = $this->ship();
-			if ($processInventoryManagementResult->isSuccess())
+			if (EntityFactory::make(Deal::CODE)->getAutoWriteOffOnFinalize())
+			{
+				$processInventoryManagementResult = $this->ship();
+				if ($processInventoryManagementResult->isSuccess())
+				{
+					$processInventoryManagementResult = $this->unReserve();
+				}
+			}
+			else
 			{
 				$processInventoryManagementResult = $this->unReserve();
 			}

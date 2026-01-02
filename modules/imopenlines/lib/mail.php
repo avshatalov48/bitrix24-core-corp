@@ -7,6 +7,7 @@
  */
 namespace Bitrix\ImOpenLines;
 
+use Bitrix\Im\V2\Entity\User\User;
 use Bitrix\Main\Localization\Loc;
 
 class Mail
@@ -360,7 +361,8 @@ class Mail
 		$language = $language? $language: null;
 		$mess = Loc::loadLanguageFile(__FILE__, $language);
 
-		$userTzOffset = \Bitrix\Im\User::getInstance($session['USER_ID'])->getTzOffset();
+		$userTimeZone = User::getInstance((int)$session['USER_ID'])->getTimeZone();
+		$userTimeZoneOffset = \CTimeZone::getTimezoneOffset($userTimeZone);
 
 		$messages = Array();
 		foreach ($history['message'] as $messageId => $message)
@@ -412,11 +414,17 @@ class Mail
 
 			if ($date->format('Ymd') == $currentDate->format('Ymd'))
 			{
-				$messageDate = \FormatDate($mess['IMOL_MAIL_TIME_FORMAT'], $message['date']->getTimestamp()+intval($userTzOffset));
+				$messageDate = \FormatDate(
+					$mess['IMOL_MAIL_TIME_FORMAT'],
+					$message['date']->getTimestamp() + $userTimeZoneOffset
+				);
 			}
 			else
 			{
-				$messageDate = \FormatDate($mess['IMOL_MAIL_DATETIME_FORMAT'], $message['date']->getTimestamp()+intval($userTzOffset));
+				$messageDate = \FormatDate(
+					$mess['IMOL_MAIL_DATETIME_FORMAT'],
+					$message['date']->getTimestamp() + $userTimeZoneOffset
+				);
 			}
 
 			if (isset($message['params']['IMOL_VOTE']))

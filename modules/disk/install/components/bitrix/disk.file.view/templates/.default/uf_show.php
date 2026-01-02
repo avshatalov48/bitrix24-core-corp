@@ -1,5 +1,7 @@
 <?php
 use Bitrix\Main\Localization\Loc;
+use Bitrix\UI\Buttons\Color;
+use Bitrix\UI\Toolbar\Facade\Toolbar;
 
 if(!defined('B_PROLOG_INCLUDED') || B_PROLOG_INCLUDED!==true) die();
 /** @var array $arParams */
@@ -23,21 +25,16 @@ CJSCore::Init([
 
 Loc::loadMessages(__DIR__ . '/template.php');
 $APPLICATION->setTitle(Loc::getMessage('DISK_FILE_VIEW_FILE_TITLE_USERFIELDS', ['#NAME#' => $arResult['FILE']['NAME'],]));
-?>
 
-<?
-	if($arResult['CAN_UPDATE'])
-	{
-		?>
-		<? $this->setViewTarget("inside_pagetitle", 10); ?>
-			<div class="pagetitle-container pagetitle-flexible-space" style="overflow: hidden;">
-				<div class="pagetitle-container pagetitle-align-right-container">
-					<span id="bx-disk-edit-uf" class="ui-btn ui-btn-primary"><?= Loc::getMessage('DISK_FILE_VIEW_LINK_EDIT_USER_FIELDS') ?></span>
-				</div>
-			</div>
-		<? $this->endViewTarget(); ?>
-<?
-	}
+if ($arResult['CAN_UPDATE'])
+{
+	$editButton = new \Bitrix\UI\Buttons\Button([
+		"color" => Color::PRIMARY,
+		"text" => Loc::getMessage('DISK_FILE_VIEW_LINK_EDIT_USER_FIELDS'),
+	]);
+	$editButton->addAttribute('id', 'bx-disk-edit-uf');
+	Toolbar::addButton($editButton);
+}
 ?>
 <table>
 	<tbody>

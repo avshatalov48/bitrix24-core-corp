@@ -77,7 +77,8 @@ class Analytics
 		string $category = self::ANALYTIC_CATEGORY_REGISTRATION,
 		string $event = self::ANALYTIC_CATEGORY_REGISTRATION,
 		string $status = '',
-		array $userData = []
+		array $userData = [],
+		bool $isGroupSelected = false,
 	): void
 	{
 		$analyticData = $this->getData();
@@ -89,6 +90,7 @@ class Analytics
 			'p1' => $this->getAdmin(),
 			'p2' => isset($userData['ADD_SEND_PASSWORD']) && $userData['ADD_SEND_PASSWORD'] === 'Y' ? 'Сonfirm_Y' : 'Сonfirm_N',
 			'p3' => isset($userData['UF_DEPARTMENT']) && count($userData['UF_DEPARTMENT']) > 0 ? 'department_Y' : 'department_N',
+			'p4' => $isGroupSelected ? 'group_Y' : 'group_N',
 			'p5' => 'userId_' . $userId,
 		];
 
@@ -124,6 +126,7 @@ class Analytics
 		bool $status,
 		int $analyticEmails = 0,
 		int $analyticPhones = 0,
+		bool $isSelectedDepartments = false,
 	): void
 	{
 		$analyticData = $this->getData();
@@ -136,6 +139,7 @@ class Analytics
 			'subSection' => $subSection,
 			'status' => $status ? 'success' : 'fail',
 			'p1' => $this->getAdmin(),
+			'p3' => $isSelectedDepartments ? 'department_Y' : 'department_N',
 			'p5' => 'userId_' . $userId,
 		];
 

@@ -3,252 +3,233 @@
  */
 jn.define('intranet/invite-new', (require, exports, module) => {
 	const { PureComponent } = require('layout/pure-component');
-	const { Area } = require('ui-system/layout/area');
 	const { Loc } = require('loc');
-	const { Text2 } = require('ui-system/typography/text');
-	const { Color } = require('tokens');
 	const { Box } = require('ui-system/layout/box');
-	const { PhoneTab } = require('intranet/invite-new/src/tab/phone');
-	const { LinkTab } = require('intranet/invite-new/src/tab/link');
+	const { BoxFooter } = require('ui-system/layout/dialog-footer');
 	const { IntranetInviteAnalytics } = require('intranet/invite-new/src/analytics');
-
-	const Tabs = {
-		PHONE: 'phone',
-		LINK: 'link',
-	};
-
-	const IS_SAFE_AREA_BOTTOM_AVAILABLE = device.screen.safeArea.bottom > 0;
-	const SAFE_AREA = 38;
+	const { Indent } = require('tokens');
+	const { Button, ButtonDesign, ButtonSize } = require('ui-system/form/buttons/button');
+	const { UIMenu } = require('layout/ui/menu');
+	const { ContentStatusBlock } = require('intranet/invite-new/src/content-status-block');
+	const { InviterFactory } = require('intranet/invite-new/src/inviter/factory');
+	const { InviteCases } = require('intranet/invite-new/src/inviter/type');
+	const { getSmartphoneContacts } = require('layout/ui/smartphone-contact-selector');
+	const { createTestIdGenerator } = require('utils/test');
 
 	class Invite extends PureComponent
 	{
-		constructor(props) {
+		constructor(props)
+		{
 			super(props);
-			this.department = null;
-			this.selectedTabInstance = null;
+			this.smartphoneContacts = null;
+			this.getTestId = createTestIdGenerator({
+				prefix: 'invite',
+			});
+			this.#initState(props);
+		}
+
+		async componentDidMount()
+		{
+			const { department = null } = this.state;
+			this.updateDepartmentInInviters(department);
+			this.smartphoneContacts = await getSmartphoneContacts();
+		}
+
+		#initState(props)
+		{
+			const { department = null } = props;
+
 			this.state = {
-				selectedTabType: this.getDefaultSelectedTab(),
+				department,
 			};
+
+			this.inviters = Object.values(InviteCases).map(
+				(inviteCase) => InviterFactory.createInviterByCase(inviteCase, this.#getInviterProps()),
+			).sort((a, b) => {
+				return a.getSortOrder() - b.getSortOrder();
+			});
 		}
 
-		static getAjaxErrorText(errors)
+		updateDepartmentInInviters(department)
 		{
-			return errors.map((errorMessage) => {
-				if (errorMessage.message)
+			this.inviters.forEach((inviter) => inviter.updateDepartment(department));
+		}
+
+		#getInviterProps = () => {
+			const {
+				canInviteByLink,
+				canInviteByEmail,
+				canInviteBySMS,
+				adminConfirm,
+				analytics,
+				layout,
+				isBitrix24Included,
+				isInviteWithLocalEmailAppEnabled,
+				creatorEmailConfirmed = false,
+				multipleInvite = true,
+				onInviteSentHandler = null,
+				onInviteError = null,
+			} = this.props;
+
+			return {
+				canInviteByLink,
+				canInviteByEmail,
+				canInviteBySMS,
+				adminConfirm,
+				analytics,
+				layout,
+				isBitrix24Included,
+				isInviteWithLocalEmailAppEnabled,
+				creatorEmailConfirmed,
+				multipleInvite,
+				onInviteSentHandler,
+				onInviteError,
+				selectedDepartmentChanged: this.#selectedDepartmentChanged,
+				initialContacts: this.smartphoneContacts,
+				onUIMenuItemSelected: this.onUIMenuItemSelected,
+				getDepartment: this.getDepartment,
+				onInviteLinkChanged: this.onInviteLinkChanged,
+			};
+		};
+
+		onUIMenuItemSelected = () => {
+			this.menu.hide();
+		};
+
+		onInviteLinkChanged = (newLink) => {
+			this.inviters
+				.filter((inviter) => inviter.shouldUpdateInviteLink())
+				.forEach((inviter) => {
+					inviter.setInviteLink?.(newLink);
+				});
+		};
+
+		getDepartment = () => {
+			return this.state.department;
+		};
+
+		render()
+		{
+			const { analytics, layout } = this.props;
+			const { department } = this.state;
+
+			return Box(
 				{
-					return errorMessage.message.replace('<br/>:', '\n').replace('<br/>', '\n');
-				}
-
-				return errorMessage.replace('<br/>:', '\n').replace('<br/>', '\n');
-			}).filter((errorMessage) => {
-				return errorMessage.length > 0;
-			}).join('\n');
+					footer: this.#renderButtons(),
+					style: {
+						paddingVertical: Indent.XL3.toNumber(),
+					},
+				},
+				ContentStatusBlock({
+					testId: this.getTestId('status-block'),
+					analytics,
+					layout,
+					department,
+					selectedDepartmentChanged: this.#selectedDepartmentChanged,
+					graphicsUri: this.#getInviterForMainButton().getGraphicsUri(),
+				}),
+			);
 		}
 
-		get canInviteByPhone()
+		#selectedDepartmentChanged = (department) => {
+			const { analytics } = this.props;
+			analytics.setDepartmentParam(department !== null);
+
+			this.setState({
+				department,
+			}, () => {
+				this.updateDepartmentInInviters(department);
+			});
+		};
+
+		#renderButtons()
 		{
-			return Boolean(this.props.canInviteByPhone);
+			const inviteCasesCount = this.#getAvailableAndEnabledInvitersCount();
+
+			return BoxFooter(
+				{
+					safeArea: true,
+					testId: this.getTestId('buttons'),
+				},
+				this.#getInviterForMainButton().renderMainButton(),
+				inviteCasesCount > 2 && Button(
+					{
+						testId: this.getTestId('by-other-button'),
+						forwardRef: this.#bindInviteCasesButtonRef,
+						text: Loc.getMessage('INTRANET_INVITE_BY_OTHER_BUTTON_TEXT'),
+						size: ButtonSize.M,
+						design: ButtonDesign.PLAN_ACCENT,
+						stretched: true,
+						onClick: () => {
+							this.#openOtherInviteCasesMenu();
+						},
+					},
+				),
+				inviteCasesCount === 2 && this.#getInviterForSecondaryButton().renderSecondaryButton(),
+			);
 		}
 
-		get canInviteByLink()
+		#getAvailableInviters()
 		{
-			return Boolean(this.props.canInviteByLink);
+			return this.inviters.filter((inviter) => inviter.isAvailableInviteMethod());
 		}
 
-		get testId()
+		#getAvailableAndEnabledInviters()
 		{
-			return 'invite';
+			return this.#getAvailableInviters().filter((inviter) => !inviter.isDisabledInviteMethod());
 		}
 
-		get inviteLink()
+		#getAvailableAndEnabledInvitersCount()
 		{
-			return this.props.inviteLink ?? '';
+			return this.#getAvailableAndEnabledInviters().length;
 		}
 
-		get sharingMessage()
+		#getInviterForMainButton()
 		{
-			return this.props.sharingMessage ?? '';
-		}
-
-		get isSingleInviteTypeAvailable()
-		{
-			return (!this.canInviteByPhone && this.canInviteByLink)
-				|| (this.canInviteByPhone && !this.canInviteByLink);
-		}
-
-		get layout()
-		{
-			return this.props.layout ?? null;
-		}
-
-		get multipleInvite()
-		{
-			return this.props.multipleInvite ?? true;
-		}
-
-		get analytics()
-		{
-			return this.props.analytics ?? {};
-		}
-
-		get creatorEmailConfirmed()
-		{
-			return this.props.creatorEmailConfirmed ?? {};
-		}
-
-		get adminConfirm()
-		{
-			return this.props.adminConfirm ?? '';
-		}
-
-		get onInviteSentHandler()
-		{
-			return this.props.onInviteSentHandler ?? null;
-		}
-
-		get onInviteError()
-		{
-			return this.props.onInviteError ?? null;
-		}
-
-		getDefaultSelectedTab()
-		{
-			if (this.canInviteByPhone)
+			const availableAndEnabledInviters = this.#getAvailableAndEnabledInviters();
+			if (availableAndEnabledInviters.length > 0)
 			{
-				return Tabs.PHONE;
+				return availableAndEnabledInviters[0];
 			}
 
-			if (this.canInviteByLink)
+			return this.inviters[0];
+		}
+
+		#getInviterForSecondaryButton()
+		{
+			const availableAndEnabledInviters = this.#getAvailableAndEnabledInviters();
+			if (availableAndEnabledInviters.length > 1)
 			{
-				return Tabs.LINK;
+				return availableAndEnabledInviters[1];
 			}
 
 			return null;
 		}
 
-		updateSelectedTab(TabType)
-		{
-			if (!Object.values(Tabs).includes(TabType))
-			{
-				return;
-			}
-
-			this.setState({
-				selectedTabType: TabType,
-			});
-		}
-
-		#getTabsItems()
-		{
-			return [
-				{
-					id: Tabs.PHONE,
-					title: Loc.getMessage('INTRANET_INVITE_BY_PHONE_TEXT_MSGVER_1'),
-					isSelected: this.state.selectedTabType === Tabs.PHONE,
-				},
-				{
-					id: Tabs.LINK,
-					title: Loc.getMessage('INTRANET_INVITE_BY_LINK_TEXT_MSGVER_1'),
-					isSelected: this.state.selectedTabType === Tabs.LINK,
-				},
-			];
-		}
-
-		render()
-		{
-			this.initSelectedTabInstance();
-
-			return Box(
-				{
-					safeArea: { bottom: true },
-					style: {
-						flex: 1,
-						width: '100%',
-						paddingBottom: IS_SAFE_AREA_BOTTOM_AVAILABLE ? 0 : SAFE_AREA,
-					},
-				},
-				Area(
-					{
-						isFirst: true,
-						style: {
-							flex: 1,
-						},
-					},
-					this.isSingleInviteTypeAvailable && this.#renderSingleTab(),
-					!this.isSingleInviteTypeAvailable && this.#renderTabs(),
-					this.selectedTabInstance.renderTabContent(),
-				),
-				this.selectedTabInstance.renderButton(),
-			);
-		}
-
-		initSelectedTabInstance = () => {
-			switch (this.state.selectedTabType)
-			{
-				case Tabs.PHONE:
-					this.selectedTabInstance = new PhoneTab({
-						layout: this.layout,
-						multipleInvite: this.multipleInvite,
-						analytics: this.analytics,
-						creatorEmailConfirmed: this.creatorEmailConfirmed,
-						onInviteSentHandler: this.onInviteSentHandler,
-						onInviteError: this.onInviteError,
-					});
-					break;
-				case Tabs.LINK:
-					this.selectedTabInstance = new LinkTab({
-						layout: this.layout,
-						sharingMessage: this.sharingMessage,
-						inviteLink: this.inviteLink,
-						analytics: this.analytics,
-						adminConfirm: this.adminConfirm,
-					});
-					break;
-				default:
-			}
+		#bindInviteCasesButtonRef = (ref) => {
+			this.inviteCasesButtonRef = ref;
 		};
 
-		#renderSingleTab()
-		{
-			const text = this.state.selectedTabType === Tabs.PHONE
-				? Loc.getMessage('INTRANET_INVITE_BY_PHONE_TEXT_MSGVER_1')
-				: Loc.getMessage('INTRANET_INVITE_BY_LINK_TEXT_MSGVER_1');
-
-			return View(
-				{
-					style: {
-						width: '100%',
-						justifyContent: 'center',
-						alignItems: 'center',
-						height: 36,
-					},
-				},
-				Text2({
-					testId: `${this.testId}-single-tab-text`,
-					text,
-					color: Color.base2,
-					numberOfLines: 0,
-					ellipsize: 'end',
-					style: {
-						textAlign: 'center',
-					},
-				}),
-			);
-		}
-
-		#renderTabs()
-		{
-			return SegmentedControlView({
-				style: {
-					height: 36,
-				},
-				items: this.#getTabsItems(),
-				onSegmentChanged: (item) => {
-					this.updateSelectedTab(item.id);
-				},
+		#openOtherInviteCasesMenu = () => {
+			this.menu = new UIMenu(this.#getInviteCasesItems());
+			this.menu.show({
+				target: this.inviteCasesButtonRef,
 			});
-		}
+		};
+
+		#getInviteCasesItems = () => {
+			const mainButtonInviteCase = this.#getInviterForMainButton().getInviteCase();
+
+			return this.#getAvailableInviters()
+				.filter((inviter) => inviter.getInviteCase() !== mainButtonInviteCase)
+				.map((inviter) => inviter.getItemForUIMenu());
+		};
 	}
 
-	module.exports = { Invite, IntranetInviteAnalytics };
+	module.exports = {
+		Invite,
+		IntranetInviteAnalytics,
+		InviterFactory,
+		InviteCases,
+	};
 });

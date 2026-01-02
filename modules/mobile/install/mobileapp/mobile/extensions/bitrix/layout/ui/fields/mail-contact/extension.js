@@ -7,8 +7,8 @@ jn.define('layout/ui/fields/mail-contact', (require, exports, module) => {
 	const { Loc } = require('loc');
 	const { clone, isEqual } = require('utils/object');
 	const { Haptics } = require('haptics');
-	const { ProfileView } = require('user/profile');
 	const { ContextMenu } = require('layout/ui/context-menu');
+	const { UserProfile } = require('user-profile');
 
 	const CONTACT_TYPE_ID = 3;
 	const COMPANY_TYPE_ID = 4;
@@ -122,23 +122,16 @@ jn.define('layout/ui/fields/mail-contact', (require, exports, module) => {
 
 		openUserProfile(userId)
 		{
-			PageManager.openWidget('list', {
-				groupStyle: true,
-				backdrop: {
-					bounceEnable: false,
-					swipeAllowed: true,
-					showOnTop: true,
-					hideNavigationBar: false,
-					horizontalSwipeAllowed: false,
-				},
-			}).then((list) => ProfileView.open({ userId, isBackdrop: true }, list));
+			void UserProfile.open({
+				ownerId: userId,
+			});
 		}
 
 		async openDetail(id, typeNameId, isUser = false)
 		{
 			if (isUser)
 			{
-				this.openUserProfile(id);
+				await this.openUserProfile(id);
 			}
 			else
 			{

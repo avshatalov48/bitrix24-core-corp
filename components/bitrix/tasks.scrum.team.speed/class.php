@@ -15,7 +15,6 @@ use Bitrix\Main\SystemException;
 use Bitrix\Main\UI\Filter;
 use Bitrix\Main\UI\PageNavigation;
 use Bitrix\Tasks\Component\Scrum\TeamSpeed\BaseActionFilter;
-use Bitrix\Tasks\Integration\Intranet\Settings;
 use Bitrix\Tasks\Integration\SocialNetwork\Group;
 use Bitrix\Tasks\Scrum\Form\EntityForm;
 use Bitrix\Tasks\Scrum\Service\EntityService;
@@ -24,6 +23,7 @@ use Bitrix\Tasks\Scrum\Service\KanbanService;
 use Bitrix\Tasks\Scrum\Service\SprintService;
 use Bitrix\Tasks\Scrum\Utility\StoryPoints;
 use Bitrix\Tasks\Util;
+use Bitrix\Tasks\V2\Internal\DI\Container;
 
 require_once __DIR__ . '/baseactionfilter.php';
 
@@ -188,7 +188,7 @@ class TasksScrumTeamSpeedComponent extends \CBitrixComponent implements Controll
 
 	private function isScrumEnabled(): bool
 	{
-		return (new Settings())->isToolAvailable(Settings::TOOLS['scrum']);
+		return Container::getInstance()->getToolService()->isScrumAvailable();
 	}
 
 	private function canReadGroupTasks(int $groupId): bool

@@ -1,0 +1,21 @@
+<?php
+$MESS["TASKS_ALL_TASKS"] = "Барлығы";
+$MESS["TASKS_EMPTY_LIST"] = "Міндеттер тізімі бос";
+$MESS["TASKS_EMPTY_LIST1"] = "Міндетті құру";
+$MESS["TASKS_EMPTY_LIST2"] = "Міндеттер табылмады";
+$MESS["TASKS_PRIORITY_2"] = "Бұл маңызды міндет";
+$MESS["TASKS_STATUS_METASTATE_EXPIRED"] = "Мерзімі өтіп кетті";
+$MESS["TASKS_STATUS_STATE_COMPLETED"] = "Аяқталды";
+$MESS["TASKS_STATUS_STATE_DECLINED"] = "Қабылданбады";
+$MESS["TASKS_STATUS_STATE_DEFERRED"] = "Кейінге қалдырылды";
+$MESS["TASKS_STATUS_STATE_IN_PROGRESS"] = "Орындалуда";
+$MESS["TASKS_STATUS_STATE_NEW"] = "Жаңа";
+$MESS["TASKS_STATUS_STATE_PENDING"] = "Орындалуын күтуде";
+$MESS["TASKS_STATUS_STATE_SUPPOSEDLY_COMPLETED"] = "Бақылауды күтуде";
+$MESS["TASKS_STATUS_STATE_UNKNOWN"] = "Белгісіз";
+$MESS["TASK_COLUMN_CREATED_BY"] = "қоюшы";
+$MESS["TASK_COLUMN_DEADLINE"] = "мерзімі";
+$MESS["TASK_COLUMN_PRIORITY"] = "басымдық";
+$MESS["TASK_COLUMN_RESPONSIBLE_ID_MSGVER_1"] = "орындаушы";
+$MESS["TASK_COLUMN_STATUS"] = "мәртебе";
+$MESS["TASK_EXPIRED"] = "Мерзімі өтіп кетті";

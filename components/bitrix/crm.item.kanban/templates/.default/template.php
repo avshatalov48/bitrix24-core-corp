@@ -8,6 +8,7 @@ if (!defined('B_PROLOG_INCLUDED') || B_PROLOG_INCLUDED !== true)
 \Bitrix\Main\UI\Extension::load(
 	[
 		'ui.dialogs.messagebox',
+		'ui.alerts',
 	]
 );
 
@@ -67,3 +68,8 @@ $APPLICATION->IncludeComponent(
 	],
 	$component
 );
+
+if ($arResult['customSectionId'] > 0)
+{
+	echo (\Bitrix\Crm\Tour\MobilePromoter\MobilePromoterCustomSection::getInstance()->setCustomSection($arResult['customSectionId'])->build());
+}

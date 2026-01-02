@@ -1,0 +1,23 @@
+<?php
+$MESS["CRM_CH_TRACKER_WGT_ACTIVITY_DYNAMIC"] = "Коммуникацияларды бақылау";
+$MESS["CRM_CH_TRACKER_WGT_AMOUNT_OF_SALE"] = "Сату сомасы";
+$MESS["CRM_CH_TRACKER_WGT_COMMUNICATION_DYNAMIC"] = "Коммуникациялық жүктеме динамикасы";
+$MESS["CRM_CH_TRACKER_WGT_COMMUNICATION_DYNAMIC_EMAIL"] = "E-mail";
+$MESS["CRM_CH_TRACKER_WGT_COMMUNICATION_DYNAMIC_FORM"] = "CRM-нысандар";
+$MESS["CRM_CH_TRACKER_WGT_COMMUNICATION_DYNAMIC_OPENLINES"] = "Мессенджерлер және әлеум.желілер";
+$MESS["CRM_CH_TRACKER_WGT_COMMUNICATION_DYNAMIC_TELEPHONY"] = "Телефония";
+$MESS["CRM_CH_TRACKER_WGT_DEAL_PROCESS_SUM"] = "Жұмыстағы мәмілелер";
+$MESS["CRM_CH_TRACKER_WGT_DEAL_SUCCESS_SUM"] = "Сату сомасы";
+$MESS["CRM_CH_TRACKER_WGT_DEAL_SUCCESS_SUM_PER_DAY"] = "Бүгінгі сатылым";
+$MESS["CRM_CH_TRACKER_WGT_DEAL_SUCCESS_SUM_PER_MONTH"] = "Бір айға сатылым";
+$MESS["CRM_CH_TRACKER_WGT_MANAGERS_FAILS"] = "Менеджерлер бойынша есептегіштер";
+$MESS["CRM_CH_TRACKER_WGT_MANAGERS_SUCCESSES"] = "Менеджерлердің сатуға үлесі";
+$MESS["CRM_CH_TRACKER_WGT_NEW_CLIENTS"] = "Жаңа клиенттер";
+$MESS["CRM_CH_TRACKER_WGT_NEW_CLIENTS_PER_DAY"] = "Бүгінгі күнгі жаңа клиенттер";
+$MESS["CRM_CH_TRACKER_WGT_PERSONAL_LOAD"] = "Менеджерлер бойынша жүктеме";
+$MESS["CRM_CH_TRACKER_WGT_PERSONAL_LOAD_EMAIL"] = "E-mail";
+$MESS["CRM_CH_TRACKER_WGT_PERSONAL_LOAD_FORM"] = "CRM-нысандар";
+$MESS["CRM_CH_TRACKER_WGT_PERSONAL_LOAD_OPENLINES"] = "Мессенджерлер және әлеум.желілер";
+$MESS["CRM_CH_TRACKER_WGT_PERSONAL_LOAD_TELEPHONY"] = "Телефония";
+$MESS["CRM_CH_TRACKER_WGT_RATING_BY_SUCCESSFUL_DEALS"] = "Жеңген мәмілелер сомасы бойынша рейтинг";
+$MESS["CRM_CH_TRACKER_WGT_SALE_TARGET_NAME"] = "Сату жоспары";

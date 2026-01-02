@@ -39,10 +39,10 @@ if ($isChangeViewTarget)
 }
 
 $phrases = Loc::loadLanguageFile(__FILE__);
-
+$isSlider = isset($_REQUEST['IFRAME']) && $_REQUEST['IFRAME'] === 'Y';
 ?>
 
-<div id="sign-counter" class="sign-counter"></div>
+<div id="sign-counter" class="<?=$isSlider ? 'sign-counter-slider' : 'sign-counter'?>"></div>
 <script>
 	BX.ready(function() {
 		const counter = new BX.Sign.V2.DocumentCounter({

@@ -92,3 +92,4 @@ $MESS['CRM_BIC_DEAL_FIELD_UTM_CAMPAIGN'] = "Рекламная кампания 
 $MESS['CRM_BIC_DEAL_FIELD_UTM_CONTENT'] = "Рекламный контент (utm_content)";
 $MESS['CRM_BIC_DEAL_FIELD_UTM_TERM'] = "Рекламный термин (utm_term)";
 $MESS['CRM_BIC_DEAL_FIELD_BANK_DETAIL_ID'] = "Идентификатор банковских реквизитов";
+$MESS['CRM_BIC_DEAL_FIELD_CONTACT_IDS'] = "Идентификаторы контактов (множ.)";

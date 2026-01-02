@@ -1,16 +1,16 @@
-import { Reflection, Event, Loc, Cache, Type } from 'main.core';
+import { Cache, Event, Loc, Type } from 'main.core';
 import { PopupWindow, PopupWindowButtonLink } from 'main.popup';
 import { UI } from 'ui.notification';
-import { Category } from '../category/category';
 import Backend from '../backend';
-import type CategorySourceOptions from '../type/category-source-options';
-import type TunnelScheme from '../type/tunnel-scheme';
-import type Link from '../type/link';
+import { Category } from '../category/category';
 import CategoryStub from '../category/category-stub';
-import createStageStubs from './internal/create-stage-stubs';
-import type Stage, { Tunnel } from '../type/stage';
-import makeErrorMessageFromResponse from './internal/make-error-message';
 import Marker from '../marker/marker';
+import type CategorySourceOptions from '../type/category-source-options';
+import type Link from '../type/link';
+import type Stage, { Tunnel } from '../type/stage';
+import type TunnelScheme from '../type/tunnel-scheme';
+import createStageStubs from './internal/create-stage-stubs';
+import makeErrorMessageFromResponse from './internal/make-error-message';
 
 export default class Manager
 {
@@ -77,19 +77,6 @@ export default class Manager
 		Event.bind(this.addCategoryButtonTop, 'click', this.onAddCategoryTopClick.bind(this));
 		Event.bind(this.helpButton, 'click', this.onHelpButtonClick.bind(this));
 
-		const toolbarComponent = Reflection.getClass('top.BX.Crm.ToolbarComponent')
-			? Reflection.getClass('top.BX.Crm.ToolbarComponent').Instance
-			: null;
-		const slider = this.getSlider();
-		if (slider && toolbarComponent)
-		{
-			Event.EventEmitter.subscribe('SidePanel.Slider:onClose', () => {
-				if (this.isChanged)
-				{
-					toolbarComponent.emitCategoriesUpdatedEvent();
-				}
-			});
-		}
 		this.constructor.lastInstance = this;
 	}
 
@@ -160,6 +147,7 @@ export default class Manager
 			})
 			.then((response) => {
 				this.addCategoryFromOptions(response.data);
+				this.isChanged = true;
 
 				const allStages = this.getStages();
 				const newStages = [
@@ -208,10 +196,7 @@ export default class Manager
 	{
 		event.preventDefault();
 
-		if (top.BX.Helper)
-		{
-			top.BX.Helper.show('redirect=detail&code=9474707');
-		}
+		top.BX.Helper?.show('redirect=detail&code=20732764');
 	}
 
 	getCategoryStub(): CategoryStub

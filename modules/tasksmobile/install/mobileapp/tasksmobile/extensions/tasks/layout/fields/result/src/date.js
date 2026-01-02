@@ -4,6 +4,7 @@
 jn.define('tasks/layout/fields/result/date', (require, exports, module) => {
 	const { FriendlyDate } = require('layout/ui/friendly-date');
 	const { Loc } = require('loc');
+	const { FormatterFactory } = require('layout/ui/friendly-date/formatter-factory');
 
 	class Date extends FriendlyDate
 	{
@@ -29,7 +30,11 @@ jn.define('tasks/layout/fields/result/date', (require, exports, module) => {
 			{
 				if (this.useTimeAgo && !moment.isOverSeconds(this.skipTimeAgoAfterSeconds))
 				{
-					return this.timeAgoTextBuilder.format(moment);
+					return FormatterFactory.createDefault({
+						defaultFormat: this.defaultTimeFormat,
+						futureAllowed: this.futureAllowed,
+						context: this.props.context,
+					}).format(moment);
 				}
 
 				return Loc.getMessage(

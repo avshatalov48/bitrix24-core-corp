@@ -25,6 +25,7 @@ Extension::load([
 	'sidepanel',
 	'disk.viewer.document-item',
 	'disk.viewer.board-item',
+	'ui.dialogs.messagebox',
 	'ui.notification',
 	'ui.fonts.opensans',
 ]);
@@ -85,9 +86,16 @@ switch(mb_strtolower($langId))
 					</div>
 				</div>
 				<? if(!empty($arResult['ENABLED_MOD_ZIP']) && !empty($arResult['FOLDER']['CREATED_BY']) && !empty($arResult['FOLDER']['SIZE'])) { ?>
-				<div class="disk-object-button-container">
-					<a href="<?= $arResult['FOLDER']['DOWNLOAD_URL'] ?>" class="bx-disk-btn bx-disk-btn-big bx-disk-btn-green disk-object-download-button"><?= $component->getMessage('DISK_EXT_LINK_FOLDER_DOWNLOAD') ?></a>
-				</div>
+					<? if($arResult['FILE_LIMIT_EXCEEDED'] === false) { ?>
+					<div class="disk-object-button-container">
+						<a href="<?= $arResult['FOLDER']['DOWNLOAD_URL'] ?>" class="bx-disk-btn bx-disk-btn-big bx-disk-btn-green disk-object-download-button"><?= $component->getMessage('DISK_EXT_LINK_FOLDER_DOWNLOAD') ?></a>
+					</div>
+					<? } ?>
+					<? if($arResult['FILE_LIMIT_EXCEEDED'] === true) { ?>
+						<div class="disk-object-button-container">
+							<a href="javascript:void(0);" id="download-error-btn" class="bx-disk-btn bx-disk-btn-big bx-disk-btn-green disk-object-download-button"><?= $component->getMessage('DISK_EXT_LINK_FOLDER_DOWNLOAD') ?></a>
+						</div>
+					<? } ?>
 				<? } ?>
 			</div>
 
@@ -162,7 +170,25 @@ switch(mb_strtolower($langId))
 					content: '<?= GetMessageJS('DISK_EXT_SESSION_EXPIRED') ?>',
 				});
 			<?php endif; ?>
+
+			const downloadErrorBtn = BX('download-error-btn');
+			if (downloadErrorBtn)
+			{
+				downloadErrorBtn.addEventListener('click', showErrorPopup);
+			}
 		});
+
+		function showErrorPopup()
+		{
+			BX.UI.Dialogs.MessageBox.show({
+				message: '<?= CUtil::JSEscape(Loc::getMessage("DISK_EXT_LINK_ERROR_POPUP_TEXT")) ?>',
+				buttons: BX.UI.Dialogs.MessageBoxButtons.OK,
+				onOk: function(messageBox) {
+					messageBox.close();
+				},
+				useAirDesign: true,
+			});
+		}
 		</script>
 		<? } elseif($arResult['PROTECTED_BY_PASSWORD']){ ?>
 			<? $this->getComponent()->includeComponentTemplate('protected_by_password'); ?>

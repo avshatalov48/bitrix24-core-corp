@@ -1,4 +1,5 @@
-<?
+<?php
+
 require($_SERVER["DOCUMENT_ROOT"]."/bitrix/header.php");
 IncludeModuleLangFile($_SERVER["DOCUMENT_ROOT"]."/bitrix/modules/intranet/public_bitrix24/report/analytics/index.php");
 
@@ -24,9 +25,11 @@ else
 			],
 			//'PLAIN_VIEW' => true,
 			'USE_PADDING' => false,
+			'USE_UI_TOOLBAR' => 'Y',
 			'PAGE_MODE' => false,
 			'PAGE_MODE_OFF_BACK_URL' => '/crm/',
 		]
 	);
 }
-?><?require($_SERVER["DOCUMENT_ROOT"]."/bitrix/footer.php");?>
+
+require($_SERVER["DOCUMENT_ROOT"]."/bitrix/footer.php");

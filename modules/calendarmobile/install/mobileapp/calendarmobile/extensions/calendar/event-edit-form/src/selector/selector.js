@@ -10,7 +10,6 @@ jn.define('calendar/event-edit-form/selector', (require, exports, module) => {
 	const { Color, Indent, Component } = require('tokens');
 	const { BottomSheet } = require('bottom-sheet');
 	const { ChipInnerTab } = require('ui-system/blocks/chips/chip-inner-tab');
-	const { Icon } = require('ui-system/blocks/icon');
 
 	const { SelectorItem } = require('calendar/event-edit-form/selector/item');
 
@@ -73,9 +72,6 @@ jn.define('calendar/event-edit-form/selector', (require, exports, module) => {
 					style: {
 						flex: 1,
 					},
-					safeArea: {
-						bottom: true,
-					},
 				},
 				Type.isArrayFilled(this.categories) && this.renderCategories(),
 				this.renderList(),
@@ -125,7 +121,9 @@ jn.define('calendar/event-edit-form/selector', (require, exports, module) => {
 				selected: this.state.categoryId === category.id,
 				onClick: () => this.onCategoryClick(category.id),
 				style: {
-					marginRight: isLast ? 0 : Indent.M.toNumber(),
+					marginRight: isLast ? 0 : Indent.L.toNumber(),
+					flexShrink: null,
+					flexGrow: 1,
 				},
 			});
 		}
@@ -134,6 +132,7 @@ jn.define('calendar/event-edit-form/selector', (require, exports, module) => {
 		{
 			return Area(
 				{
+					isFirst: true,
 					style: {
 						flex: 1,
 					},
@@ -160,6 +159,7 @@ jn.define('calendar/event-edit-form/selector', (require, exports, module) => {
 				},
 				SelectorItem({
 					item,
+					isSection: this.props.isSection,
 					icon: this.props.selectorIcon,
 					isSelected: this.isItemSelected(item.id),
 					isReserved: this.isItemReserved(item.id),
@@ -198,6 +198,7 @@ jn.define('calendar/event-edit-form/selector', (require, exports, module) => {
 		 * @param reservedInfo {array}
 		 * @param selectedId {number|null}
 		 * @param selectedCategoryId {number|null}
+		 * @param isSection {Boolean}
 		 * @param selectorTitle {string}
 		 * @param selectorIcon {Icon}
 		 * @param onItemClick {function}
@@ -210,10 +211,11 @@ jn.define('calendar/event-edit-form/selector', (require, exports, module) => {
 			reservedInfo = [],
 			selectedId,
 			selectedCategoryId,
-			selectorTitle = Loc.getMessage('M_CALENDAR_EVENT_EDIT_FORM_SECTION_SELECTOR_TITLE'),
 			selectorIcon,
+			isSection,
 			onItemClick,
 			onClose,
+			selectorTitle = Loc.getMessage('M_CALENDAR_EVENT_EDIT_FORM_SECTION_SELECTOR_TITLE'),
 			parentLayout = PageManager,
 		})
 		{
@@ -225,13 +227,14 @@ jn.define('calendar/event-edit-form/selector', (require, exports, module) => {
 				selectedId,
 				selectedCategoryId,
 				selectorIcon,
+				isSection,
 				onItemClick,
 				onClose,
 			});
 
 			void new BottomSheet({ component })
 				.setParentWidget(parentLayout)
-				.setMediumPositionPercent(60)
+				.setMediumPositionPercent(65)
 				.setBackgroundColor(Color.bgSecondary.toHex())
 				.setNavigationBarColor(Color.bgSecondary.toHex())
 				.disableSwipe()
@@ -249,6 +252,7 @@ jn.define('calendar/event-edit-form/selector', (require, exports, module) => {
 		 * @param reservedInfo {array}
 		 * @param selectedId {number|null}
 		 * @param selectedCategoryId {number|null}
+		 * @param isSection {Boolean}
 		 * @param selectorTitle {string}
 		 * @param selectorIcon {Icon}
 		 * @param onItemClick {function}
@@ -261,10 +265,11 @@ jn.define('calendar/event-edit-form/selector', (require, exports, module) => {
 			reservedInfo = [],
 			selectedId,
 			selectedCategoryId,
-			selectorTitle = Loc.getMessage('M_CALENDAR_EVENT_EDIT_FORM_SECTION_SELECTOR_TITLE'),
+			isSection,
 			selectorIcon,
 			onItemClick,
 			onClose,
+			selectorTitle = Loc.getMessage('M_CALENDAR_EVENT_EDIT_FORM_SECTION_SELECTOR_TITLE'),
 			parentLayout = PageManager,
 		})
 		{
@@ -274,13 +279,6 @@ jn.define('calendar/event-edit-form/selector', (require, exports, module) => {
 					type: 'wizard',
 				},
 				onReady: (layout) => {
-					layout.setRightButtons([
-						{
-							type: Icon.CROSS.getIconName(),
-							callback: () => layout.close(),
-						},
-					]);
-
 					const component = new Selector({
 						layout,
 						items,
@@ -289,6 +287,7 @@ jn.define('calendar/event-edit-form/selector', (require, exports, module) => {
 						selectedId,
 						selectedCategoryId,
 						selectorIcon,
+						isSection,
 						onItemClick,
 						onClose,
 					});

@@ -363,10 +363,11 @@ class CompanyController extends BaseController
 		$newEntityID = $entity->Add(
 			$fields,
 			true,
-			array(
+			[
 				'IS_RESTORATION' => true,
+				'MOVED_TO_BIN_DATETIME' => $params['DATETIME'] ?? null,
 				'DISABLE_USER_FIELD_CHECK' => true,
-			)
+			],
 		);
 		if($newEntityID <= 0)
 		{

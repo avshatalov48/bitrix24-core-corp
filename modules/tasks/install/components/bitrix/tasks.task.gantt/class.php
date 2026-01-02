@@ -117,7 +117,7 @@ class TasksTaskGanttComponent extends TasksTaskListComponent
 		try
 		{
 			$task = new \CTaskItem($taskTo, $this->userId);
-			$task->addDependOn($taskFrom, $linkType);
+			$task->addProjectDependence($taskFrom, $linkType);
 		}
 		catch (ActionException $e)
 		{
@@ -188,7 +188,7 @@ class TasksTaskGanttComponent extends TasksTaskListComponent
 		try
 		{
 			$task = new \CTaskItem($taskTo, $this->userId);
-			$task->deleteDependOn($taskFrom);
+			$task->deleteProjectDependence($taskFrom);
 		}
 		catch(Exception | \CTaskAssertException $e)
 		{

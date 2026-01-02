@@ -67,11 +67,19 @@ class SourceExpenses extends BIBuilderDataset
 			(new DateField('DATE')),
 			(new StringField('CAMPAIGN_NAME')),
 			(new StringField('CAMPAIGN_ID')),
+			(new StringField('GROUP_NAME')),
+			(new StringField('GROUP_ID')),
+			(new StringField('AD_NAME')),
+			(new StringField('AD_ID')),
 			(new IntegerField('CLICKS')),
 			(new IntegerField('IMPRESSIONS')),
 			(new IntegerField('ACTIONS')),
 			(new DoubleField('CPM')),
 			(new DoubleField('CPC')),
+			(new StringField('UTM_MEDIUM')),
+			(new StringField('UTM_SOURCE')),
+			(new StringField('UTM_CAMPAIGN')),
+			(new StringField('UTM_CONTENT')),
 		];
 	}
 

@@ -1,0 +1,24 @@
+<?php
+$MESS["CRM_ELEMENT_BUTTON_SELECT"] = "Таңдау";
+$MESS["CRM_ELEMENT_CANCEL"] = "Болдырмау";
+$MESS["CRM_ELEMENT_CHANGE"] = "Өзгерту";
+$MESS["CRM_ELEMENT_CHOISE"] = "Таңдау";
+$MESS["CRM_ELEMENT_CLOSE"] = "Жабу";
+$MESS["CRM_ELEMENT_COMPANY"] = "Компаниялар";
+$MESS["CRM_ELEMENT_CONTACT"] = "Байланыс";
+$MESS["CRM_ELEMENT_CREATE"] = "Құру";
+$MESS["CRM_ELEMENT_CREATE_COMPANY"] = "Компанияны";
+$MESS["CRM_ELEMENT_CREATE_CONTACT"] = "Байланыс";
+$MESS["CRM_ELEMENT_CREATE_DEAL"] = "Мәмілені";
+$MESS["CRM_ELEMENT_CREATE_LEAD"] = "Лид";
+$MESS["CRM_ELEMENT_DEAL"] = "Мәмілелер";
+$MESS["CRM_ELEMENT_HIDDEN_OR_DELETED"] = "Жасырын немесе жойылған элемент";
+$MESS["CRM_ELEMENT_LAST"] = "Соңғы";
+$MESS["CRM_ELEMENT_LEAD"] = "Лидтер";
+$MESS["CRM_ELEMENT_NO_RESULT"] = "Өкінішке орай, сіздің іздеу сұрауыңыз бойынша ештеңе табылған жоқ";
+$MESS["CRM_ELEMENT_OK"] = "Таңдау";
+$MESS["CRM_ELEMENT_ORDER"] = "Тапсырыстар";
+$MESS["CRM_ELEMENT_PERMISSION_DENIED"] = "Қолжетімділікке тыйым салынған";
+$MESS["CRM_ELEMENT_QUOTE_MSGVER_1"] = "Ұсыныстар";
+$MESS["CRM_ELEMENT_SEARCH"] = "Іздеу";
+$MESS["CRM_SFE_ENTITY_NOT_SELECTED"] = "Өріс баптауларында бірде бір мән түрі таңдалмаған";

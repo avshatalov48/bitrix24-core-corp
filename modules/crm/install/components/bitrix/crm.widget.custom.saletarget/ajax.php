@@ -165,6 +165,7 @@ switch ($action)
 					'FROM_USER_ID' => $curUser->GetID(),
 					'NOTIFY_TYPE' => IM_NOTIFY_FROM,
 					'NOTIFY_MODULE' => 'crm',
+					'NOTIFY_EVENT' => 'admin_notification',
 					'NOTIFY_TAG' => 'CRM|NOTIFY_ADMIN|'.$userId.'|'.$curUser->GetID(),
 					'NOTIFY_MESSAGE' => $notifyMessageCallback,
 				));

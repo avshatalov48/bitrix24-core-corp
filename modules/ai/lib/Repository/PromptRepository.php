@@ -8,10 +8,11 @@ use Bitrix\AI\Model\PromptTable;
 use Bitrix\AI\Model\PromptTranslateNameTable;
 use Bitrix\Main\ORM\Fields\Relations\Reference;
 use Bitrix\Main\ORM\Query\Join;
+use Bitrix\AI\Model\EO_Prompt_Collection;
 
 class PromptRepository extends BaseRepository
 {
-	public function getPromptsByRoleCodes(string $category, string $roleCode, string $lang): array
+	public function getPromptsByRoleCodes(string $category, array $roleCodes, string $lang): array
 	{
 		return PromptTable::query()
 			->setSelect([
@@ -43,7 +44,7 @@ class PromptRepository extends BaseRepository
 					['join_type' => Join::TYPE_LEFT]
 				)
 			)
-			->where('ROLES.CODE', '=', $roleCode)
+			->whereIn('ROLES.CODE', $roleCodes)
 			->setGroup([
 				'ID', 'IS_NEW', 'SORT', 'PROMPT_TRANSLATE_NAME_USER.TEXT'
 			])
@@ -52,5 +53,16 @@ class PromptRepository extends BaseRepository
 			])
 			->fetchAll()
 		;
+	}
+
+	public function getRoleCodesForPromptIds(array $promptIds): EO_Prompt_Collection
+	{
+		return PromptTable::query()
+			->setSelect([
+				'ID',
+				'ROLES.CODE'
+			])
+			->whereIn('ID', $promptIds)
+			->fetchCollection();
 	}
 }

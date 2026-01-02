@@ -1,0 +1,33 @@
+/* normalize */
+
+.task-status__actions {
+	margin: 0;
+	padding: 0;
+	list-style: none;
+}
+
+.task-status__action {}
+
+/* normalize end */
+
+.timeman-widget-opener {}
+
+.task-status__actions {
+	display: -webkit-box;
+	display: -ms-flexbox;
+	display: flex;
+	gap: 10px;
+}
+
+.task-status__action {
+	min-width: 0;
+	width: 100%;
+}
+
+.task-status-action {
+	min-width: 0;
+}
+
+.task-status-action_start {}
+
+.task-status-action_finish {}

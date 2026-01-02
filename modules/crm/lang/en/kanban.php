@@ -1,5 +1,4 @@
 <?php
-$MESS["CRM_EDITOR_CANCEL"] = "Cancel";
 $MESS["CRM_EDITOR_FIELD_ALL_SECTIONS_DISABLED"] = "Select item(s) to show fields.";
 $MESS["CRM_EDITOR_FIELD_CLIENT"] = "Client";
 $MESS["CRM_EDITOR_FIELD_COMPANY"] = "Company";
@@ -7,7 +6,6 @@ $MESS["CRM_EDITOR_FIELD_EMPTY_STATE_DESCRIPTION"] = "Please make sure you spell 
 $MESS["CRM_EDITOR_FIELD_EMPTY_STATE_TITLE"] = "Field was not found.";
 $MESS["CRM_EDITOR_FIELD_OPPORTUNITY_WITH_CURRENCY"] = "Amount and currency";
 $MESS["CRM_EDITOR_FIELD_SEARCH_PLACEHOLDER"] = "Find field";
-$MESS["CRM_EDITOR_SAVE"] = "Save";
 $MESS["CRM_KANBAN_ACTIVITY_CHANGE_DEAL_MSGVER_1"] = "You don't have any scheduled activities. <span class=\"crm-kanban-item-activity-link\">Plan</span> your next action on the deal to never forget about the customer.";
 $MESS["CRM_KANBAN_ACTIVITY_CHANGE_DYNAMIC_MSGVER_1"] = "You don't have any scheduled activities. <span class=\"crm-kanban-item-activity-link\">Plan</span> your next action to keep up with the events.";
 $MESS["CRM_KANBAN_ACTIVITY_CHANGE_LEAD_MSGVER_1"] = "You don't have any scheduled activities. <span class=\"crm-kanban-item-activity-link\">Plan</span> your next action on the lead to never forget about the customer.";
@@ -47,13 +45,11 @@ $MESS["CRM_KANBAN_MASS_CONVERT_DISABLE_MSGVER_1"] = "Bulk move to this stage is 
 $MESS["CRM_KANBAN_MASS_CONVERT_SOON"] = "Group actions in Kanban for lead conversion are not available yet. We are working hard to in order to give you access to this feature as soon as possible.";
 $MESS["CRM_KANBAN_MOVE_ITEM_TO_COLUMN_BLOCKED_2"] = "Cannot move items to this stage.";
 $MESS["CRM_KANBAN_NOTIFY_BUTTON"] = "Send notification";
-$MESS["CRM_KANBAN_NOTIFY_DEAL_CHANGECATEGORY"] = "Deals moved to funnel: #categoryName#";
 $MESS["CRM_KANBAN_NOTIFY_DEAL_CHANGECATEGORY_LINK2"] = "Deals moved to pipeline: <a href=\"#categoryLink#\">#categoryName#</a>";
 $MESS["CRM_KANBAN_NOTIFY_DEAL_DELETE"] = "Deals deleted";
 $MESS["CRM_KANBAN_NOTIFY_DEAL_IGNORE"] = "Deals added to exceptions";
 $MESS["CRM_KANBAN_NOTIFY_DEAL_SETASSIGNED"] = "Deals assigned to responsible person: #assignedName#";
 $MESS["CRM_KANBAN_NOTIFY_DEAL_STATUS"] = "Deals moved to stage: #statusName#";
-$MESS["CRM_KANBAN_NOTIFY_DYNAMIC_CHANGECATEGORY"] = "Items moved to funnel: #categoryName#";
 $MESS["CRM_KANBAN_NOTIFY_DYNAMIC_CHANGECATEGORY_LINK2"] = "Items moved to pipeline: <a href=\"#categoryLink#\">#categoryName#</a>";
 $MESS["CRM_KANBAN_NOTIFY_DYNAMIC_DELETE"] = "Items deleted";
 $MESS["CRM_KANBAN_NOTIFY_DYNAMIC_SETASSIGNED"] = "Items assigned to responsible person: #assignedName#";

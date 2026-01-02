@@ -2,7 +2,7 @@
 this.BX = this.BX || {};
 this.BX.Crm = this.BX.Crm || {};
 this.BX.Crm.Store = this.BX.Crm.Store || {};
-(function (exports,ui_designTokens,catalog_entityCard,main_popup,ui_buttons,main_core,main_core_events,spotlight,catalog_storeEnableWizard,catalog_toolAvailabilityManager) {
+(function (exports,ui_designTokens,catalog_entityCard,main_popup,ui_buttons,ui_label,main_core,main_core_events,spotlight,catalog_storeEnableWizard,catalog_toolAvailabilityManager) {
 	'use strict';
 
 	function _createForOfIteratorHelper(o, allowArrayLike) { var it = typeof Symbol !== "undefined" && o[Symbol.iterator] || o["@@iterator"]; if (!it) { if (Array.isArray(o) || (it = _unsupportedIterableToArray(o)) || allowArrayLike && o && typeof o.length === "number") { if (it) o = it; var i = 0; var F = function F() {}; return { s: F, n: function n() { if (i >= o.length) return { done: true }; return { done: false, value: o[i++] }; }, e: function e(_e) { throw _e; }, f: F }; } throw new TypeError("Invalid attempt to iterate non-iterable instance.\nIn order to be iterable, non-array objects must have a [Symbol.iterator]() method."); } var normalCompletion = true, didErr = false, err; return { s: function s() { it = it.call(o); }, n: function n() { var step = it.next(); normalCompletion = step.done; return step; }, e: function e(_e2) { didErr = true; err = _e2; }, f: function f() { try { if (!normalCompletion && it["return"] != null) it["return"](); } finally { if (didErr) throw err; } } }; }
@@ -129,7 +129,7 @@ this.BX.Crm.Store = this.BX.Crm.Store || {};
 	  return [];
 	}
 
-	var _templateObject, _templateObject2, _templateObject3, _templateObject4;
+	var _templateObject, _templateObject2, _templateObject3, _templateObject4, _templateObject5, _templateObject6;
 	function _createForOfIteratorHelper$1(o, allowArrayLike) { var it = typeof Symbol !== "undefined" && o[Symbol.iterator] || o["@@iterator"]; if (!it) { if (Array.isArray(o) || (it = _unsupportedIterableToArray$1(o)) || allowArrayLike && o && typeof o.length === "number") { if (it) o = it; var i = 0; var F = function F() {}; return { s: F, n: function n() { if (i >= o.length) return { done: true }; return { done: false, value: o[i++] }; }, e: function e(_e) { throw _e; }, f: F }; } throw new TypeError("Invalid attempt to iterate non-iterable instance.\nIn order to be iterable, non-array objects must have a [Symbol.iterator]() method."); } var normalCompletion = true, didErr = false, err; return { s: function s() { it = it.call(o); }, n: function n() { var step = it.next(); normalCompletion = step.done; return step; }, e: function e(_e2) { didErr = true; err = _e2; }, f: function f() { try { if (!normalCompletion && it["return"] != null) it["return"](); } finally { if (didErr) throw err; } } }; }
 	function _unsupportedIterableToArray$1(o, minLen) { if (!o) return; if (typeof o === "string") return _arrayLikeToArray$1(o, minLen); var n = Object.prototype.toString.call(o).slice(8, -1); if (n === "Object" && o.constructor) n = o.constructor.name; if (n === "Map" || n === "Set") return Array.from(o); if (n === "Arguments" || /^(?:Ui|I)nt(?:8|16|32)(?:Clamped)?Array$/.test(n)) return _arrayLikeToArray$1(o, minLen); }
 	function _arrayLikeToArray$1(arr, len) { if (len == null || len > arr.length) len = arr.length; for (var i = 0, arr2 = new Array(len); i < len; i++) arr2[i] = arr[i]; return arr2; }
@@ -165,6 +165,10 @@ this.BX.Crm.Store = this.BX.Crm.Store || {};
 	    _this.inventoryManagementFeatureCode = settings.inventoryManagementFeatureCode;
 	    _this.lockedCancellation = settings.isProductBatchMethodSelected;
 	    _this.isOnecMode = settings.isOnecMode;
+	    _this.insidePageTitleConfig = settings.insidePageTitleConfig || {};
+	    if (main_core.Type.isPlainObject(_this.insidePageTitleConfig)) {
+	      _this.appendInsidePageTitle(_this.insidePageTitleConfig);
+	    }
 	    _this.addCopyLinkPopup();
 	    main_core_events.EventEmitter.subscribe('BX.Crm.EntityEditor:onFailedValidation', function (event) {
 	      main_core_events.EventEmitter.emit('BX.Catalog.EntityCard.TabManager:onOpenTab', {
@@ -230,6 +234,37 @@ this.BX.Crm.Store = this.BX.Crm.Store || {};
 	    return _this;
 	  }
 	  babelHelpers.createClass(Document, [{
+	    key: "appendInsidePageTitle",
+	    value: function appendInsidePageTitle(config) {
+	      var _BX$UI, _BX$UI$ToolbarManager;
+	      var toolbar = (_BX$UI = BX.UI) === null || _BX$UI === void 0 ? void 0 : (_BX$UI$ToolbarManager = _BX$UI.ToolbarManager) === null || _BX$UI$ToolbarManager === void 0 ? void 0 : _BX$UI$ToolbarManager.getDefaultToolbar();
+	      var titleContainer = toolbar === null || toolbar === void 0 ? void 0 : toolbar.titleContainer.querySelector('.ui-toolbar-title-item-box');
+	      if (!titleContainer) {
+	        return;
+	      }
+	      var pageLink = null;
+	      if (config.enablePageLink) {
+	        pageLink = main_core.Tag.render(_templateObject || (_templateObject = babelHelpers.taggedTemplateLiteral(["\n\t\t\t\t<span id=\"", "\" class=\"page-link-btn\"></span>\n\t\t\t"])), this.settings.copyLinkButtonId);
+	      }
+	      if (pageLink) {
+	        var buttonContainer = main_core.Tag.render(_templateObject2 || (_templateObject2 = babelHelpers.taggedTemplateLiteral(["\n\t\t\t\t<span id=\"pagetitle_btn_wrapper\" class=\"pagetitile-button-container\"></span>\n\t\t\t"])));
+	        main_core.Dom.append(pageLink, buttonContainer);
+	        main_core.Dom.append(buttonContainer, titleContainer);
+	      }
+	      if (config.enableStatusLabel) {
+	        var labelOptions = {
+	          text: config.statusLabel.text,
+	          color: config.statusLabel.color,
+	          size: ui_label.LabelSize.LG,
+	          link: '',
+	          fill: true,
+	          customClass: 'document-status-label'
+	        };
+	        var label = new ui_label.Label(labelOptions);
+	        main_core.Dom.append(label.render(), titleContainer);
+	      }
+	    }
+	  }, {
 	    key: "focusOnTab",
 	    value: function focusOnTab(tabId) {
 	      main_core_events.EventEmitter.emit('BX.Catalog.EntityCard.TabManager:onOpenTab', {
@@ -307,7 +342,7 @@ this.BX.Crm.Store = this.BX.Crm.Store || {};
 	        savePanel.onSaveButtonClick(event);
 	      };
 	      if (this.permissions.conduct && !this.isDocumentDeducted) {
-	        var deductAndSaveButton = main_core.Tag.render(_templateObject || (_templateObject = babelHelpers.taggedTemplateLiteral(["<button class=\"ui-btn ui-btn-light-border\">", "</button>"])), main_core.Loc.getMessage('CRM_STORE_DOCUMENT_DETAIL_SAVE_AND_DEDUCT_BUTTON'));
+	        var deductAndSaveButton = main_core.Tag.render(_templateObject3 || (_templateObject3 = babelHelpers.taggedTemplateLiteral(["<button class=\"ui-btn ui-btn-light-border\">", "</button>"])), main_core.Loc.getMessage('CRM_STORE_DOCUMENT_DETAIL_SAVE_AND_DEDUCT_BUTTON'));
 	        deductAndSaveButton.onclick = function (event) {
 	          if (_this2.isInventoryManagementDisabled) {
 	            _this2.showPlanRestrictedSlider();
@@ -567,15 +602,15 @@ this.BX.Crm.Store = this.BX.Crm.Store || {};
 	  }, {
 	    key: "getCancellationPopupContent",
 	    value: function getCancellationPopupContent() {
-	      var moreLink = main_core.Tag.render(_templateObject2 || (_templateObject2 = babelHelpers.taggedTemplateLiteral(["<a href=\"#\" class=\"ui-form-link\">", "</a>"])), main_core.Loc.getMessage('CRM_STORE_DOCUMENT_WAREHOUSE_PRODUCT_CANCELLATION_POPUP_LINK'));
+	      var moreLink = main_core.Tag.render(_templateObject4 || (_templateObject4 = babelHelpers.taggedTemplateLiteral(["<a href=\"#\" class=\"ui-form-link\">", "</a>"])), main_core.Loc.getMessage('CRM_STORE_DOCUMENT_WAREHOUSE_PRODUCT_CANCELLATION_POPUP_LINK'));
 	      main_core.Event.bind(moreLink, 'click', function () {
 	        if (top.BX.Helper) {
 	          top.BX.Helper.show("redirect=detail&code=".concat(Document.HELP_COST_CALCULATION_MODE_ARTICLE_ID));
 	        }
 	      });
-	      var descriptionHtml = main_core.Tag.render(_templateObject3 || (_templateObject3 = babelHelpers.taggedTemplateLiteral(["\n\t\t\t<div>", "</div>\n\t\t"])), main_core.Loc.getMessage('CRM_STORE_DOCUMENT_WAREHOUSE_PRODUCT_CANCELLATION_POPUP_HINT').replace('#HELP_LINK#', '<help-link></help-link>'));
+	      var descriptionHtml = main_core.Tag.render(_templateObject5 || (_templateObject5 = babelHelpers.taggedTemplateLiteral(["\n\t\t\t<div>", "</div>\n\t\t"])), main_core.Loc.getMessage('CRM_STORE_DOCUMENT_WAREHOUSE_PRODUCT_CANCELLATION_POPUP_HINT').replace('#HELP_LINK#', '<help-link></help-link>'));
 	      main_core.Dom.replace(descriptionHtml.querySelector('help-link'), moreLink);
-	      return main_core.Tag.render(_templateObject4 || (_templateObject4 = babelHelpers.taggedTemplateLiteral(["\n\t\t\t<div>\n\t\t\t\t<h3>", "</h3>\n\t\t\t\t<div>", "\n\t\t\t\t<br>", "<div>\n\t\t\t</div>\n\t\t"])), main_core.Loc.getMessage('CRM_STORE_DOCUMENT_WAREHOUSE_PRODUCT_CANCELLATION_POPUP_TITLE'), main_core.Text.encode(main_core.Loc.getMessage('CRM_STORE_DOCUMENT_WAREHOUSE_PRODUCT_CANCELLATION_POPUP_QUESTION')), descriptionHtml);
+	      return main_core.Tag.render(_templateObject6 || (_templateObject6 = babelHelpers.taggedTemplateLiteral(["\n\t\t\t<div>\n\t\t\t\t<h3>", "</h3>\n\t\t\t\t<div>", "\n\t\t\t\t<br>", "<div>\n\t\t\t</div>\n\t\t"])), main_core.Loc.getMessage('CRM_STORE_DOCUMENT_WAREHOUSE_PRODUCT_CANCELLATION_POPUP_TITLE'), main_core.Text.encode(main_core.Loc.getMessage('CRM_STORE_DOCUMENT_WAREHOUSE_PRODUCT_CANCELLATION_POPUP_QUESTION')), descriptionHtml);
 	    }
 	  }, {
 	    key: "setViewModeButtons",
@@ -726,5 +761,5 @@ this.BX.Crm.Store = this.BX.Crm.Store || {};
 
 	exports.Document = Document;
 
-}((this.BX.Crm.Store.DocumentCard = this.BX.Crm.Store.DocumentCard || {}),BX,BX.Catalog.EntityCard,BX.Main,BX.UI,BX,BX.Event,BX,BX.Catalog.Store,BX.Catalog));
+}((this.BX.Crm.Store.DocumentCard = this.BX.Crm.Store.DocumentCard || {}),BX,BX.Catalog.EntityCard,BX.Main,BX.UI,BX.UI,BX,BX.Event,BX,BX.Catalog.Store,BX.Catalog));
 //# sourceMappingURL=script.js.map

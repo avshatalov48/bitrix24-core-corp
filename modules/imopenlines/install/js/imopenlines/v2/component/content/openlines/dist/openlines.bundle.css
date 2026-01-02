@@ -40,11 +40,12 @@
 
 .bx-imol-content-openlines-start__title {
 	text-align: center;
-	font: 24px var(--ui-font-family-system);
+	font: 24px var(--ui-font-family-primary, var(--ui-font-family-system));
 	color: var(--imol-content-openlines-start__color);
 	font-weight: var(--imol-content-openlines-start__font-weight);
 	white-space: pre-line;
 }
+
 .bx-imol-textarea_join-panel-container {
 	--imol-textarea__background-color_panel-dark: rgba(var(--ui-color-palette-white-base-rgb), 0.06);
 	--imol-textarea__background-color_panel-light: rgba(var(--ui-color-palette-white-base-rgb), 0.3);

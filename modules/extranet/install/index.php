@@ -174,7 +174,7 @@ class extranet extends CModule
 	{
 		global $DB;
 
-		$sIn = "'EXTRANET_WG_TO_ARCHIVE', 'EXTRANET_WG_FROM_ARCHIVE', 'EXTRANET_INVITATION'";
+		$sIn = "'EXTRANET_WG_TO_ARCHIVE', 'EXTRANET_WG_FROM_ARCHIVE', 'EXTRANET_INVITATION', 'COLLAB_INVITATION'";
 		$rs = $DB->Query("SELECT count(*) C FROM b_event_type WHERE EVENT_NAME IN (".$sIn.") ");
 		$ar = $rs->Fetch();
 		if($ar["C"] <= 0)
@@ -247,7 +247,7 @@ class extranet extends CModule
 	function UnInstallEvents()
 	{
 		global $DB;
-		$sIn = "'EXTRANET_WG_TO_ARCHIVE', 'EXTRANET_WG_FROM_ARCHIVE', 'EXTRANET_INVITATION'";
+		$sIn = "'EXTRANET_WG_TO_ARCHIVE', 'EXTRANET_WG_FROM_ARCHIVE', 'EXTRANET_INVITATION', 'COLLAB_INVITATION'";
 		$DB->Query("DELETE FROM b_event_message WHERE EVENT_NAME IN (".$sIn.") ");
 		$DB->Query("DELETE FROM b_event_type WHERE EVENT_NAME IN (".$sIn.") ");
 		return true;

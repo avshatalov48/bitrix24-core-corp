@@ -3,6 +3,8 @@
 namespace Bitrix\Intranet\Settings\Tools;
 
 use Bitrix\Bitrix24\Feature;
+use Bitrix\Crm\Feature\RepeatSale;
+use Bitrix\Crm\Service\Container;
 use Bitrix\Main\Config\Option;
 use Bitrix\Main\Event;
 use Bitrix\Main\Loader;
@@ -23,6 +25,7 @@ class Crm extends Tool
 		'invoices' => 'INVOICE',
 		'offers' => 'QUOTE',
 		'saleshub' => 'SALES_CENTER',
+		'repeat_sale' => 'REPEAT_SALE',
 		'terminal' => 'TERMINAL',
 		'dynamic_items' => 'DYNAMIC_ITEMS',
 		'bi_analytics' => 'ANALYTICS_BI',
@@ -71,6 +74,7 @@ class Crm extends Tool
 			'invoices' => $this->isInvoicesAvailable() ? '/crm/type/31/list/category/0/' : null,
 			'offers' => '/crm/quote/kanban/',
 			'saleshub' => '/saleshub/',
+			'repeat_sale' => $this->isRepeatSaleAvailable() ? '/crm/repeat-sale-segment/' : null,
 			'terminal' => '/crm/terminal/',
 			'dynamic_items' => '/crm/type/',
 			'bi_analytics' => $this->isBiAnalyticsAvailable() ? '/report/analytics/?analyticBoardKey=crm_bi_templates' : null,
@@ -127,7 +131,36 @@ class Crm extends Tool
 			$subgroupsId = array_diff_key($subgroupsId, array_flip($biConnectorSubgroups));
 		}
 
+		if (!$this->isRepeatSaleAvailable())
+		{
+			unset($subgroupsId['repeat_sale']);
+		}
+
 		return $subgroupsId;
+	}
+
+	private function isRepeatSaleAvailable(): bool
+	{
+		if (!Loader::includeModule('crm'))
+		{
+			return false;
+		}
+
+		if (!\Bitrix\Crm\Feature::enabled(RepeatSale::class))
+		{
+			return false;
+		}
+
+		$availabilityChecker = Container::getInstance()->getRepeatSaleAvailabilityChecker();
+		$isItemsCountsLessThenLimit =
+			!method_exists($availabilityChecker, 'isItemsCountsLessThenLimit')
+			|| $availabilityChecker->isItemsCountsLessThenLimit()
+		;
+
+		return
+			!$availabilityChecker->isSegmentsInitializationProgress()
+			&& $isItemsCountsLessThenLimit
+		;
 	}
 
 	public function enable(): void

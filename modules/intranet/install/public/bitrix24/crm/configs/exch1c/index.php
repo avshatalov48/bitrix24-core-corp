@@ -7,7 +7,7 @@ $templateName = ".default";
 if ($license_name = COption::GetOptionString("main", "~controller_group_name"))
 {
 	$f = preg_match("/(project|tf|crm)$/is", $license_name, $matches);
-	if ($matches[0] <> '')
+	if (!empty($matches[0]))
 		$templateName = "free";
 }
 
@@ -21,7 +21,8 @@ $APPLICATION->IncludeComponent(
 			"SEF_MODE" => "Y",
 			"SEF_FOLDER" => "/crm/configs/exch1c/",
 			"PATH_TO_CONFIGS_INDEX" => "/crm/configs/"
-		]
+		],
+		'USE_UI_TOOLBAR' => 'Y',
 	]
 );
-?><?require($_SERVER["DOCUMENT_ROOT"]."/bitrix/footer.php");?>
+?><?require($_SERVER["DOCUMENT_ROOT"]."/bitrix/footer.php");

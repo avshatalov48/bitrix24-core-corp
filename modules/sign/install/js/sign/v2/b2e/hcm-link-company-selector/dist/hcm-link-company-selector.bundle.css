@@ -19,7 +19,7 @@
 }
 
 .sign-document-b2e-company__hcmlink-select-text {
-	font: 16px/20px var(--ui-font-family-system);
+	font: 16px/20px var(--ui-font-family-primary, var(--ui-font-family-system));
 	flex-grow: 1;
 	color: var(--ui-color-palette-gray-90);
 }
@@ -50,7 +50,7 @@
 }
 
 .sign-document-b2e-company__hcmlink-select-subtitle {
-	font: 12px/14.32px var(--ui-font-family-system);
+	font: 12px/14.32px var(--ui-font-family-primary, var(--ui-font-family-system));
 	color: var(--ui-color-palette-gray-60);
 }
 

@@ -1,4 +1,4 @@
-import { ajax, Dom, Type, Event, Loc } from 'main.core';
+import { Dom, Event, Loc, Extension, Type, ajax } from 'main.core';
 import { BaseCache, MemoryCache } from 'main.core.cache';
 import { Menu } from 'main.popup';
 
@@ -29,6 +29,7 @@ export class SalaryVacationMenu
 	constructor(mode: Mode = 'profile-menu')
 	{
 		this.#mode = mode;
+		this.#settings = Extension.getSettings('humanresources.hcmlink.salary-vacation-menu');
 	}
 
 	async load(): Promise<void>
@@ -91,6 +92,7 @@ export class SalaryVacationMenu
 				id: 'hcmLink-vacation-salary-menu',
 				items,
 				autoHide: true,
+				fixed: this.#mode === 'profile-menu',
 			});
 
 			return menu;

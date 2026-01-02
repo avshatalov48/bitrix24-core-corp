@@ -4,7 +4,7 @@ import {BaseEvent, EventEmitter} from 'main.core.events';
 import {SidePanel} from '../service/side.panel';
 
 import {View, Views} from './view';
-import {CompleteSprintButton} from './header/complete.sprint.button';
+import { CompleteSprintButton } from './header/complete.sprint.button';
 import {RobotButton} from './header/robot.button';
 
 import {SprintSidePanel} from '../entity/sprint/sprint.side.panel';
@@ -81,7 +81,6 @@ export class ActiveSprint extends View
 
 		Dom.append(completeSprintButton.render(), container);
 
-		Dom.addClass(container, '--without-bg');
 	}
 
 	setParams(params: Params)

@@ -11,17 +11,24 @@ export const Dictionary = Object.freeze({
 	CATEGORY_AUTOMATION_OPERATIONS: 'automation_operations',
 	CATEGORY_KANBAN_OPERATIONS: 'kanban_operations',
 	CATEGORY_POPUP_OPERATIONS: 'popup_operations',
+	CATEGORY_COMMUNICATION_OPERATIONS: 'communication',
+	CATEGORY_BANNERS: 'banners',
+	CATEGORY_EDITOR: 'editor',
 
 	// region Event const
 	EVENT_ENTITY_ADD_OPEN: 'entity_add_open',
 	EVENT_ENTITY_ADD: 'entity_add',
+	EVENT_ENTITY_CREATE: 'entity_create',
 	EVENT_ENTITY_CLOSE: 'entity_close',
+	EVENT_ENTITY_COMPLETE: 'entity_complete',
 	EVENT_ENTITY_COPY_OPEN: 'entity_copy_open',
 	EVENT_ENTITY_COPY: 'entity_copy',
 	EVENT_ENTITY_CONVERT: 'entity_convert',
 	EVENT_ENTITY_CONVERT_BATCH: 'entity_convert_batch',
 	EVENT_ENTITY_CONVERT_OPEN: 'entity_convert_open',
 	EVENT_ENTITY_UPDATE: 'entity_update',
+	EVENT_ENTITY_EDIT: 'entity_edit',
+	EVENT_ENTITY_CHANGE_STAGE: 'entity_change_stage',
 
 	EVENT_CALL_PARSING: 'call_parsing',
 	EVENT_AUDIO_TO_TEXT: 'audio_to_text',
@@ -36,6 +43,21 @@ export const Dictionary = Object.freeze({
 	EVENT_BLOCK_CLOSE: 'block_close',
 	EVENT_BLOCK_ENABLE: 'block_enable',
 	EVENT_BLOCK_LINK: 'block_link',
+
+	EVENT_WA_CONNECT: 'wa_connect',
+	EVENT_WA_POPUP: 'wa_popup',
+	EVENT_WA_UPDATE: 'wa_update',
+	EVENT_WA_SEND: 'wa_send',
+	EVENT_WA_TIMELINE: 'wa_timeline',
+	EVENT_WA_DELETE: 'wa_delete',
+
+	EVENT_REPEAT_SALE_BANNER_VIEW: 'banner_view',
+	EVENT_REPEAT_SALE_BANNER_CLICK: 'banner_click',
+	EVENT_REPEAT_SALE_BANNER_CLOSE: 'banner_close',
+
+	EVENT_REPEAT_SALE_SEGMENT_VIEW: 'view',
+	EVENT_REPEAT_SALE_SEGMENT_EDIT: 'edit',
+	EVENT_REPEAT_SALE_SEGMENT_CANCEL: 'cancel',
 	// endregion
 
 	// region Type const
@@ -46,6 +68,16 @@ export const Dictionary = Object.freeze({
 	TYPE_CONTACT_CENTER: 'contact_center',
 	TYPE_ITEM_INDUSTRY: 'item_industry',
 	TYPE_POPUP_AI_TRANSCRIPT: 'popup_ai_transcript',
+	TYPE_WA_CONNECT: 'wa_connect',
+	TYPE_WA_EDIT: 'wa_edit',
+	TYPE_WA_ACTIVITY_CREATE: 'wa_activity_create',
+	TYPE_WA_ACTIVITY_DELETE: 'wa_activity_delete',
+	TYPE_REPEAT_SALE_SEGMENT: 'repeat_sale',
+	TYPE_REPEAT_SALE_BANNER_NULL: 'repeat_sale_null',
+	TYPE_REPEAT_SALE_BANNER_START_EMPTY: 'repeat_sale_start_empty',
+	TYPE_REPEAT_SALE_BANNER_START: 'repeat_sale_start',
+	TYPE_REPEAT_SALE_BANNER_START_FORCE: 'repeat_sale_force_start',
+	TYPE_REPEAT_SALE_BANNER_STATISTICS: 'repeat_sale_statistics',
 	// endregion
 
 	// region Section const
@@ -65,11 +97,11 @@ export const Dictionary = Object.freeze({
 	 */
 	SECTION_SMART_DOCUMENT_CONTACT: 'smart_document_contact_section',
 	/**
-	 * @see \Bitrix\Crm\Integration\Catalog\Contractor\CategoryRepository::CONTACT_CODE
+	 * @see \Bitrix\Crm\Integration\Catalog\Contractor\CategoryRepository::CATALOG_CONTRACTOR_CONTACT
 	 */
 	SECTION_CATALOG_CONTRACTOR_CONTACT: 'catalog_contractor_contact_section',
 	/**
-	 * @see \Bitrix\Crm\Integration\Catalog\Contractor\CategoryRepository::COMPANY_CODE
+	 * @see \Bitrix\Crm\Integration\Catalog\Contractor\CategoryRepository::CATALOG_CONTRACTOR_COMPANY
 	 */
 	SECTION_CATALOG_CONTRACTOR_COMPANY: 'catalog_contractor_company_section',
 	// endregion
@@ -128,6 +160,22 @@ export const Dictionary = Object.freeze({
 	ELEMENT_CONTACT_CENTER_IMPORTEXCEL: 'contact_center_importexcel',
 	ELEMENT_ITEM_CONTACT_CENTER: 'item_contact_center',
 	ELEMENT_ITEM_INDUSTRY_BUTTON: 'item_industry_button',
+	ELEMENT_STAGE_BAR_BUTTON: 'stage_bar_btn',
+
+	ELEMENT_STREAM_CONTENT_WHATSAPP: 'stream_content_wa',
+	ELEMENT_WA_PREVIEW: 'wa_preview',
+	ELEMENT_WA_HELP: 'wa_help_link',
+	ELEMENT_WA_TEMPLATE_SELECTOR: 'wa_template_selector',
+	ELEMENT_WA_TEMPLATE_OFFER: 'wa_template_offer',
+	ELEMENT_WA_POPUP_GUIDE: 'wa_popup_guide',
+	ELEMENT_WA_POPUP_CLOSE: 'wa_popup_close',
+	ELEMENT_WA_SEND: 'wa_send',
+	ELEMENT_WA_CANCEL: 'wa_cancel',
+	ELEMENT_WA_RESEND: 'wa_resend',
+	ELEMENT_WA_NOTE: 'wa_note',
+	ELEMENT_WA_NOTE_PIN: 'wa_note_pin',
+	ELEMENT_WA_MESSAGE_DELETE: 'wa_message_delete',
+	ELEMENT_WA_NOTE_DELETE: 'wa_note_delete',
 	// endregion
 
 	// region Status const

@@ -10,5 +10,6 @@ return [
 		'./openline-chat',
 		'./visit-activity',
 		'./task-activity',
+		'./todo',
 	],
 ];

@@ -1,0 +1,5 @@
+<?php
+$MESS["CRM_TIMELINE_DOCUMENT_DELETION_CONFIRM"] = "Бұл құжатты жойғыңыз келетініне сенімдісіз бе?";
+$MESS["CRM_TIMELINE_DOCUMENT_MY_COMPANY"] = "Сіздің компанияңыз";
+$MESS["CRM_TIMELINE_DOCUMENT_REQUISITE_CAPTION"] = "#ORGANIZATION_NAME#, #SHORT_REQUISITE#";
+$MESS["CRM_TIMELINE_DOCUMENT_TITLE"] = "Құжат дайындалды";

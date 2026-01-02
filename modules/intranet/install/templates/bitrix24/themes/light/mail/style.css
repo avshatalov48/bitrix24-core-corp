@@ -1,3 +1,9 @@
-body {
-	background: #103063 url(mail.png) 0 0 repeat;
+:root {
+  --air-theme-bg-color: #103063;
+  --air-theme-bg-size: auto;
+  --air-theme-bg-repeat: repeat;
+  --air-theme-bg-position: 0 0;
+  --air-theme-bg-attachment: fixed;
+  --air-theme-bg-image: url(/bitrix/templates/bitrix24/themes/light/mail/mail.png);
+  --air-theme-bg-image-blurred: url(/bitrix/templates/bitrix24/themes/light/mail/mail-blurred.webp);
 }

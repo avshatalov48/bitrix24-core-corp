@@ -638,44 +638,28 @@ BX.CTasksPlannerHandler.prototype.drawTasksForm = function(cb)
 	{
 		handler = BX.delegate(function(e, bEnterPressed) {
 			inp_Task.value = BX.util.trim(inp_Task.value);
-			if (inp_Task.value && inp_Task.value!=BX.message('JS_CORE_PL_TASKS_ADD'))
+			if (inp_Task.value)
 			{
 				cb({
 					name: inp_Task.value
 				});
-
-				if (!bEnterPressed)
-				{
-					BX.addClass(inp_Task.parentNode, 'tm-popup-task-form-disabled')
-					inp_Task.value = BX.message('JS_CORE_PL_TASKS_ADD');
-				}
-				else
-				{
-					inp_Task.value = '';
-				}
 			}
 
 			return BX.PreventDefault(e);
 		}, this);
 
 		var inp_Task = BX.create('INPUT', {
-			props: {type: 'text', className: 'tm-popup-task-form-textbox', value: BX.message('JS_CORE_PL_TASKS_ADD')},
+			props: {
+				type: 'text',
+				className: 'tm-popup-task-form-textbox',
+			},
+			attrs: {
+				placeHolder: BX.message('JS_CORE_PL_TASKS_ADD')
+			},
 			events: {
 				keypress: function(e) {
 					return (e.keyCode == 13) ? handler(e, true) : true;
 				},
-				blur: function() {
-					if (this.value == '')
-					{
-						BX.addClass(this.parentNode, 'tm-popup-task-form-disabled');
-						this.value = BX.message('JS_CORE_PL_TASKS_ADD');
-					}
-				},
-				focus: function() {
-					BX.removeClass(this.parentNode, 'tm-popup-task-form-disabled');
-					if (this.value == BX.message('JS_CORE_PL_TASKS_ADD'))
-						this.value = '';
-				}
 			}
 		});
 
@@ -746,7 +730,8 @@ BX.CTasksPlannerHandler.prototype.query = function(entry, callback)
 		}
 		else
 		{
-			window.top.BX.CPlanner.query('task', this.TASK_CHANGES);
+			const changes = this.TASK_CHANGES;
+			void top.BX.Runtime.loadExtension('planner').then(() => top.BX.CPlanner.query('task', changes));
 		}
 		this.TASK_CHANGES = {add: [], remove: []};
 	}

@@ -1,0 +1,19 @@
+<?php
+$MESS["TASKS_DEADLINE_MENU_DEFAULT_ITEM_1_DAY"] = "1 күн";
+$MESS["TASKS_DEADLINE_MENU_DEFAULT_ITEM_1_WEEK"] = "1 апта";
+$MESS["TASKS_DEADLINE_MENU_DEFAULT_ITEM_2_WEEKS"] = "2 апта";
+$MESS["TASKS_DEADLINE_MENU_DEFAULT_ITEM_3_DAYS"] = "3 күн";
+$MESS["TASKS_DEADLINE_MENU_DEFAULT_ITEM_CUSTOM"] = "Сіздің нұсқа";
+$MESS["TASKS_DEADLINE_MENU_DEFAULT_ITEM_EMPTY"] = "Мерзімі жоқ";
+$MESS["TASKS_DEADLINE_MENU_DEFAULT_ITEM_HINT"] = "Әдепкі мерзім сіз жасаған барлық міндеттерде көрсетіледі. Қажет болса, сіз оны өзгерте аласыз";
+$MESS["TASKS_DEADLINE_MENU_DEFAULT_ITEM_TITLE"] = "Әдепкі соңғы мерзімі";
+$MESS["TASKS_DEADLINE_MENU_ERROR_DESCRIPTION"] = "Бетті қайта жүктеп, қайталап көріңіз";
+$MESS["TASKS_DEADLINE_MENU_ERROR_TITLE"] = "Бірдеңе дұрыс болмады";
+$MESS["TASKS_DEADLINE_MENU_NOTIFICATION_ITEM_DELIMITER"] = "Мерзімін көрсетуді еске салу";
+$MESS["TASKS_DEADLINE_MENU_NOTIFICATION_ITEM_DONT_SKIP"] = "Әр жолы еске түсіру";
+$MESS["TASKS_DEADLINE_MENU_NOTIFICATION_ITEM_HINT"] = "Егер міндетте соңғы мерзімін көрсетпесеңіз, мерзімін көрсетуді еске саламыз";
+$MESS["TASKS_DEADLINE_MENU_NOTIFICATION_ITEM_SKIP_FOREVER"] = "Ешқашан еске түсірмеу";
+$MESS["TASKS_DEADLINE_MENU_NOTIFICATION_ITEM_SKIP_FOR_DAY"] = "Бүгін еске түсірмеу";
+$MESS["TASKS_DEADLINE_MENU_NOTIFICATION_ITEM_SKIP_FOR_MONTH"] = "Осы айда еске түсірмеу";
+$MESS["TASKS_DEADLINE_MENU_NOTIFICATION_ITEM_SKIP_FOR_WEEK"] = "Осы аптада еске түсірмеу";
+$MESS["TASKS_DEADLINE_MENU_NOTIFICATION_ITEM_TITLE"] = "Мерзімдермен жұмыс";

@@ -5,19 +5,17 @@ if(!defined('B_PROLOG_INCLUDED') || B_PROLOG_INCLUDED!==true)die();
 if (!CModule::IncludeModule('crm'))
 	return;
 
-use Bitrix\Crm\Service\UserPermissions;
-
 global $USER;
 
-
-$CCrmPerms = \CCrmAuthorizationHelper::GetUserPermissions();
+$userPermissionsService = \Bitrix\Crm\Service\Container::getInstance()->getUserPermissions();
 
 $entityTypeName = isset($arParams['ENTITY_TYPE']) ? $arParams['ENTITY_TYPE'] : '';
 $entityTypeID = CCrmOwnerType::ResolveID($entityTypeName);
 $entityID = isset($arParams['ENTITY_ID']) ? (int)$arParams['ENTITY_ID'] : 0;
 
-if($entityTypeID === CCrmOwnerType::Undefined
-	|| !\Bitrix\Crm\Security\EntityAuthorization::checkUpdatePermission($entityTypeID, $entityID, $CCrmPerms)
+if(
+	$entityTypeID === CCrmOwnerType::Undefined
+	|| !$userPermissionsService->item()->canUpdate($entityTypeID, $entityID)
 )
 {
 	ShowError(GetMessage('CRM_PERMISSION_DENIED'));
@@ -358,6 +356,8 @@ else
 		$arResult['PHONE_GROUPS'] = array();
 	}
 
+	$stagePermissions = $userPermissionsService->stage();
+
 	switch ($arParams['ENTITY_TYPE'])
 	{
 		case 'LEAD':
@@ -371,16 +371,17 @@ else
 				$arResult['STATUS_ID'] = $arRes['STATUS_ID'];
 				$arResult['ENTITY_CONVERTED'] = $arRes['STATUS_ID'] == 'CONVERTED'? 'Y': 'N';
 			}
-			$arEntityAttr = $CCrmPerms->GetEntityAttr('LEAD', $arResult['ENTITY_ID']);
-			if ($CCrmPerms->CheckEnityAccess('LEAD', 'WRITE', $arEntityAttr[$arResult['ENTITY_ID']]))
+			if ($userPermissionsService->item()->canUpdate(CCrmOwnerType::Lead, $arResult['ENTITY_ID']))
 			{
 				$arResult['STATUS_LIST'] = array();
 				$arResult['STATUS_LIST_EX'] = CCrmStatus::GetStatusList('STATUS');
 				foreach($arResult['STATUS_LIST_EX'] as $key => $value)
 				{
 					if ($key == 'CONVERTED')
+					{
 						continue;
-					if ($CCrmPerms->GetPermType('LEAD', 'WRITE', array('STATUS_ID'.$key)) > BX_CRM_PERM_NONE)
+					}
+					if ($stagePermissions->canUpdateInStage(CCrmOwnerType::Lead, null, $key))
 					{
 						$arResult['STATUS_LIST']['REFERENCE'][] = $value;
 						$arResult['STATUS_LIST']['REFERENCE_ID'][] = $key;
@@ -414,8 +415,7 @@ else
 		break;
 		case 'DEAL':
 			$categoryID = CCrmDeal::GetCategoryID($arResult['ENTITY_ID']);
-			$arEntityAttr = CCrmDeal::GetPermissionAttributes(array($arResult['ENTITY_ID']), $categoryID);
-			if (CCrmDeal::CheckUpdatePermission($arResult['ENTITY_ID'], $CCrmPerms, $categoryID, array('ENTITY_ATTRS' => $arEntityAttr)))
+			if ($userPermissionsService->item()->canUpdate(CCrmOwnerType::Deal, $arResult['ENTITY_ID']))
 			{
 				$dbRes = CCrmDeal::GetListEx(
 					array('TITLE'=>'ASC'),
@@ -430,7 +430,7 @@ else
 				$arEventType = CCrmDeal::GetStageNames($categoryID);
 				foreach($arEventType as $key => $value)
 				{
-					if(CCrmDeal::GetStageUpdatePermissionType($key, $CCrmPerms, $categoryID) > BX_CRM_PERM_NONE)
+					if ($stagePermissions->canUpdateInStage(CCrmOwnerType::Deal, null, $key))
 					{
 						$arResult['STAGE_LIST']['REFERENCE'][] = $value;
 						$arResult['STAGE_LIST']['REFERENCE_ID'][] = $key;
@@ -482,8 +482,7 @@ else
 			}
 		break;
 		case 'QUOTE':
-			$arEntityAttr = $CCrmPerms->GetEntityAttr('QUOTE', $arResult['ENTITY_ID']);
-			if ($CCrmPerms->CheckEnityAccess('QUOTE', 'WRITE', $arEntityAttr[$arResult['ENTITY_ID']]))
+			if ($userPermissionsService->item()->canUpdate(CCrmOwnerType::Quote, $arResult['ENTITY_ID']))
 			{
 				$dbRes = CCrmQuote::GetList(Array('TITLE'=>'ASC'), array('ID' => $arResult['ENTITY_ID']));
 				if ($arRes = $dbRes->Fetch())
@@ -495,7 +494,7 @@ else
 				$arEventType = CCrmStatus::GetStatusList('QUOTE_STATUS');
 				foreach($arEventType as $key => $value)
 				{
-					if ($CCrmPerms->GetPermType('QUOTE', 'WRITE', array('QUOTE_STATUS'.$key)) > BX_CRM_PERM_NONE)
+					if ($stagePermissions->canUpdateInStage(CCrmOwnerType::Quote, null, $key))
 					{
 						$arResult['STATUS_LIST']['REFERENCE'][] = $value;
 						$arResult['STATUS_LIST']['REFERENCE_ID'][] = $key;
@@ -540,8 +539,7 @@ else
 			}
 		break;
 	case 'ORDER':
-		$arEntityAttr = $CCrmPerms->GetEntityAttr('ORDER', $arResult['ENTITY_ID']);
-		if ($CCrmPerms->CheckEnityAccess('ORDER', 'WRITE', $arEntityAttr[$arResult['ENTITY_ID']]))
+		if ($userPermissionsService->item()->canUpdate(CCrmOwnerType::Order, $arResult['ENTITY_ID']))
 		{
 			$dbRes = Bitrix\Crm\Order\Order::getList(array(
 				'filter' => array('=ID' => $arResult['ENTITY_ID']),
@@ -563,7 +561,7 @@ else
 
 			foreach($arEventType as $key => $value)
 			{
-				if ($CCrmPerms->GetPermType('ORDER', 'WRITE', array('ORDER_STATUS'.$key)) > BX_CRM_PERM_NONE)
+				if ($stagePermissions->canUpdateInStage(CCrmOwnerType::Order, null, $key))
 				{
 					$arResult['STATUS_LIST']['REFERENCE'][] = $value;
 					$arResult['STATUS_LIST']['REFERENCE_ID'][] = $key;
@@ -623,7 +621,7 @@ else
 				break;
 			}
 
-			if (!\Bitrix\Crm\Service\Container::getInstance()->getUserPermissions()->canUpdateItem($item))
+			if (!$userPermissionsService->item()->canUpdateItem($item))
 			{
 				break;
 			}
@@ -633,10 +631,9 @@ else
 			if ($factory->isStagesEnabled())
 			{
 				$arResult['STAGE_ID'] = $item->getStageId();
-				$userPermissions = \Bitrix\Crm\Service\Container::getInstance()->getUserPermissions();
 				foreach ($factory->getStages($item->getCategoryId()) as $stage)
 				{
-					if ($userPermissions->getPermissionType($item, UserPermissions::OPERATION_UPDATE) > UserPermissions::PERMISSION_NONE)
+					if ($userPermissionsService->item()->canUpdateItem($item))
 					{
 						$arResult['FACTORY_STAGE_LIST']['REFERENCE'][] = $stage->getName();
 						$arResult['FACTORY_STAGE_LIST']['REFERENCE_ID'][] = $stage->getStatusId();

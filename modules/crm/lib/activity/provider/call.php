@@ -430,7 +430,7 @@ class Call extends Base
 				: \CCrmActivityDirection::Undefined
 		;
 
-		if ($direction === \CCrmActivityDirection::Outgoing && \Bitrix\Crm\Automation\Factory::canUseAutomation())
+		if ($direction === \CCrmActivityDirection::Outgoing)
 		{
 			\Bitrix\Crm\Automation\Trigger\OutgoingCallTrigger::execute($activityFields['BINDINGS'], $activityFields);
 		}

@@ -6,6 +6,7 @@ namespace Bitrix\CrmMobile\ProductGrid\Enricher;
 
 use Bitrix\Crm\Item;
 use Bitrix\Crm\ProductRow;
+use Bitrix\CrmMobile\ProductGrid\ProductItem;
 use Bitrix\CrmMobile\ProductGrid\ProductRowViewModel;
 use Bitrix\CrmMobile\ProductGrid\TaxCalculator;
 use Bitrix\CatalogMobile\ProductGrid\SkuDataProvider;
@@ -62,13 +63,7 @@ final class CompletePrices implements EnricherContract
 
 	private function rebuild(ProductRow $source, array $mutations): ProductRow
 	{
-		$sourceFields = $source->toArray();
-		$result = ProductRow::createFromArray(array_merge(
-			$sourceFields,
-			$mutations
-		));
-		$this->entity->addToProductRows($result);
-		return $result;
+		return ProductItem::rebuild($source, $mutations, $this->entity);
 	}
 
 	/**

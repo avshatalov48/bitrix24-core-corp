@@ -1,0 +1,3 @@
+<?php
+$MESS["CRM_CATEGORY_DETAIL_FUNNEL2"] = "«#CATEGORY_NAME#» иірімі";
+$MESS["CRM_CATEGORY_DETAIL_FUNNEL_EMPTY2"] = "Атаусыз иірім";

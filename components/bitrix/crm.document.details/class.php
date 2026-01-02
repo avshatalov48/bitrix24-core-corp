@@ -3,6 +3,7 @@
 if(!defined("B_PROLOG_INCLUDED") || B_PROLOG_INCLUDED!==true)die();
 
 use Bitrix\Crm\Component\EntityDetails\FactoryBased;
+use Bitrix\Crm\Integration\UI\EntityEditor\DefaultEntityConfig\SmartDocumentDefaultEntityConfig;
 use Bitrix\Crm\Item;
 use Bitrix\Crm\Service\EditorAdapter;
 use Bitrix\Main\Loader;
@@ -15,40 +16,7 @@ class CrmSmartDocumentDetailsComponent extends FactoryBased
 {
 	public function getEditorEntityConfig(): array
 	{
-		$sections = [];
-
-		$sectionMain = [
-			'name' => 'main',
-			'title' => Loc::getMessage('CRM_COMPONENT_FACTORYBASED_EDITOR_MAIN_SECTION_TITLE'),
-			'type' => 'section',
-			'elements' => [
-				['name' => Item::FIELD_NAME_TITLE],
-				['name' =>  Item\SmartB2eDocument::FIELD_NAME_NUMBER],
-			],
-		];
-
-		$sections[] = $sectionMain;
-
-		$elements = [
-			['name' => Item::FIELD_NAME_MYCOMPANY_ID],
-			['name' => Item::FIELD_NAME_ASSIGNED],
-		];
-
-		if ($this->getEntityTypeID() !== CCrmOwnerType::SmartB2eDocument)
-		{
-			$elements[] = ['name' => EditorAdapter::FIELD_CLIENT];
-		}
-
-		$sectionAdditional = [
-			'name' => 'additional',
-			'title' => Loc::getMessage('CRM_TYPE_ITEM_EDITOR_SECTION_ADDITIONAL'),
-			'type' => 'section',
-			'elements' => $elements,
-		];
-
-		$sections[] = $sectionAdditional;
-
-		return $sections;
+		return (new SmartDocumentDefaultEntityConfig($this->getEntityTypeID()))->get();
 	}
 
 	public function getInlineEditorEntityConfig(): array

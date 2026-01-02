@@ -4,6 +4,7 @@ declare(strict_types=1);
 
 namespace Bitrix\Disk\Document;
 
+use Bitrix\Disk\Document\Flipchart\BoardSessionTerminationService;
 use Bitrix\Disk\Document\Models\DocumentService;
 use Bitrix\Disk\Document\Models\DocumentSession;
 use Bitrix\Disk\Document\OnlyOffice\Service\OnlyOfficeSessionTerminationService;
@@ -33,6 +34,7 @@ class SessionTerminationServiceFactory
 
 		return match ($session->getService()) {
 			DocumentService::OnlyOffice => $this->getOnlyOfficeService(),
+			DocumentService::FlipChart => $this->getBoardsService(),
 			default => $this->nullService,
 		};
 	}
@@ -55,6 +57,18 @@ class SessionTerminationServiceFactory
 		try
 		{
 			return new OnlyOfficeSessionTerminationService($this->objectId, $this->userIds);
+		}
+		catch (Throwable)
+		{
+			return $this->nullService;
+		}
+	}
+
+	private function getBoardsService(): SessionTerminationService
+	{
+		try
+		{
+			return new BoardSessionTerminationService($this->objectId, $this->userIds);
 		}
 		catch (Throwable)
 		{

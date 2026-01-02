@@ -92,10 +92,40 @@ Extension::load([
 	?>
 
 </div>
+<?php if ($arResult['SHOW_TITLE'] === 'N'): ?>
 <script>
 	BX.ready(() => {
-		<?php if ($arResult['SHOW_TITLE'] === 'N'): ?>
-		document.querySelector('.ui-side-panel-wrap-title-name').innerText = '';
-		<?php endif; ?>
+		if (BX.Reflection.getClass('BX.UI.ToolbarManager'))
+		{
+			const toolbar = BX.UI.ToolbarManager.getDefaultToolbar();
+			if (toolbar)
+			{
+				if (BX.Type.isFunction(toolbar.setTitle))
+				{
+					// the most correct way
+					toolbar.setTitle('');
+					return;
+				}
+				else
+				{
+					// compatibility until 'ui' with 'setTitle' is out
+					const pagetitle = toolbar.titleContainer.querySelector('#pagetitle');
+					if (pagetitle)
+					{
+						pagetitle.textContent = '';
+					}
+				}
+
+				return;
+			}
+		}
+
+		const titleName = document.querySelector('.ui-side-panel-wrap-title-name');
+		if (titleName)
+		{
+			// compatibility until 'report' with toolbar support is out
+			titleName.innerText = '';
+		}
 	});
 </script>
+<?php endif; ?>

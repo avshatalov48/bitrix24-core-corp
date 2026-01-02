@@ -222,6 +222,13 @@ abstract class Dataset
 		}
 
 		$dataset = new static($connection, $languageId);
+
+		$eventTableName = $params[3];
+		if (!empty($eventTableName) && $dataset->getResultTableName() !== $eventTableName)
+		{
+			return;
+		}
+
 		if (!$dataset->onBeforeEvent()->isSuccess())
 		{
 			return;

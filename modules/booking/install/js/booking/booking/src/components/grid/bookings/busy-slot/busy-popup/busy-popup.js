@@ -7,14 +7,19 @@ import { BusySlot, Model } from 'booking.const';
 import type { ResourceModel } from 'booking.model.resources';
 import './busy-popup.css';
 
+// @vue/component
 export const BusyPopup = {
-	emits: ['close'],
+	name: 'BusyPopup',
+	components: {
+		Popup,
+	},
 	props: {
 		busySlot: {
 			type: Object,
 			required: true,
 		},
 	},
+	emits: ['close'],
 	computed: {
 		...mapGetters({
 			offset: `${Model.Interface}/offset`,
@@ -63,11 +68,7 @@ export const BusyPopup = {
 		{
 			const timeFormat = DateTimeFormat.getFormat('SHORT_TIME_FORMAT');
 
-			const messageId = (
-				this.busySlot.type === BusySlot.Intersection
-					? 'BOOKING_BOOKING_INTERSECTING_RESOURCE_IS_BUSY'
-					: 'BOOKING_BOOKING_RESOURCE_IS_BUSY'
-			);
+			const messageId = this.getPopupMessageId(this.busySlot.type);
 
 			return this.loc(messageId, {
 				'#RESOURCE#': this.resource.name,
@@ -76,7 +77,30 @@ export const BusyPopup = {
 			});
 		},
 	},
+	watch: {
+		mousePosition: {
+			handler(): void
+			{
+				this.adjustPosition();
+			},
+			deep: true,
+		},
+	},
 	methods: {
+		getPopupMessageId(slotType: $Values<BusySlot>): string
+		{
+			if (slotType === BusySlot.Intersection)
+			{
+				return 'BOOKING_BOOKING_INTERSECTING_RESOURCE_IS_BUSY';
+			}
+
+			if (slotType === BusySlot.IntersectionOverbooking)
+			{
+				return 'BOOKING_BOOKING_INTERSECTING_RESOURCE_IS_FULL_BUSY';
+			}
+
+			return 'BOOKING_BOOKING_RESOURCE_IS_BUSY';
+		},
 		adjustPosition(): void
 		{
 			const popup: MainPopup = this.$refs.popup?.getPopupInstance();
@@ -93,20 +117,9 @@ export const BusyPopup = {
 			this.$emit('close');
 		},
 	},
-	watch: {
-		mousePosition: {
-			handler(): void
-			{
-				this.adjustPosition();
-			},
-			deep: true,
-		},
-	},
-	components: {
-		Popup,
-	},
 	template: `
 		<Popup
+			v-if="mousePosition.left !== 0 && mousePosition.top !== 0"
 			:id="popupId"
 			:config="config"
 			ref="popup"

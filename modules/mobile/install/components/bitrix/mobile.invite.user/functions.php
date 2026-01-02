@@ -82,11 +82,11 @@ function RegisterNewUser($SITE_ID, $arFields)
 	if (!empty($arEmailToRegister))
 	{
 		$arGroups = array();
-		$rsGroups = CGroup::GetList('', '', array(
-			"STRING_ID" => "EMPLOYEES_".$SITE_ID,
-		));
-		while($arGroup = $rsGroups->Fetch())
-			$arGroups[] = $arGroup["ID"];
+		$groupId = CGroup::GetIDByCode("EMPLOYEES_" . $SITE_ID);
+		if ($groupId)
+		{
+			$arGroups[] = $groupId;
+		}
 
 		$rsIBlock = CIBlock::GetList(array(), array("CODE" => "departments"));
 		$arIBlock = $rsIBlock->Fetch();

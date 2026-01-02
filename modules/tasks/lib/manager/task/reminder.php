@@ -64,7 +64,7 @@ final class Reminder extends \Bitrix\Tasks\Manager
 			"=USER_ID" => $userId
 		));
 
-		\Bitrix\Tasks\Util\AgentManager::checkAgentIsAlive('sendReminder', 60);
+		\Bitrix\Tasks\V2\Infrastructure\Agent\Reminder::addAgent();
 
 		foreach($items as $item)
 		{

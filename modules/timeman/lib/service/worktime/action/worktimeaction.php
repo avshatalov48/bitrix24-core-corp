@@ -134,6 +134,11 @@ class WorktimeAction
 		return $this;
 	}
 
+	public function getType(): string
+	{
+		return $this->type;
+	}
+
 	public function isStart()
 	{
 		return $this->type === static::TYPE_START;

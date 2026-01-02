@@ -144,4 +144,13 @@ class TranscriptionSummary extends AITask
 
 		return $jsonData;
 	}
+
+	/**
+	 * Allows to output thw chat error message then task failed.
+	 * @return bool
+	 */
+	public function allowNotifyTaskFailed(): bool
+	{
+		return true;
+	}
 }

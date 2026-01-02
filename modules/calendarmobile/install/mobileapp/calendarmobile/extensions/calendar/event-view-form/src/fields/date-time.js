@@ -35,7 +35,7 @@ jn.define('calendar/event-view-form/fields/date-time', (require, exports, module
 
 		get formattedDateTime()
 		{
-			const minusSecond = this.props.isFullDay ? 1000 : 0;
+			const minusSecond = this.props.fullDay ? 1000 : 0;
 			const eventFrom = new Date(this.props.dateFromTs);
 			const eventTo = new Date(this.props.dateToTs - minusSecond);
 			const isSameDate = DateHelper.getDayCode(eventFrom) === DateHelper.getDayCode(eventTo);
@@ -47,7 +47,7 @@ jn.define('calendar/event-view-form/fields/date-time', (require, exports, module
 				const dateFormat = startsInCurrentYear ? dayMonth() : longDate();
 				const date = this.formatTimestamp(eventFrom.getTime(), dateFormat);
 
-				if (this.props.isFullDay)
+				if (this.props.fullDay)
 				{
 					return Loc.getMessage('M_CALENDAR_EVENT_VIEW_FORM_FORMAT_FULL_DAY', {
 						'#DATE#': date,
@@ -68,7 +68,7 @@ jn.define('calendar/event-view-form/fields/date-time', (require, exports, module
 			const dateFromFormat = startsInCurrentYear ? dayMonth() : longDate();
 			const dateToFormat = endsInCurrentYear ? dayMonth() : longDate();
 
-			if (this.props.isFullDay)
+			if (this.props.fullDay)
 			{
 				return Loc.getMessage('M_CALENDAR_EVENT_VIEW_FORM_FORMAT_TIME_RANGE_FULL_DAY', {
 					'#FROM#': this.formatTimestamp(eventFrom.getTime(), dateFromFormat),

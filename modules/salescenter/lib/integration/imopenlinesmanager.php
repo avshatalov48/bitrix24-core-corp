@@ -112,9 +112,16 @@ class ImOpenLinesManager extends Base
 		if($this->isEnabled() && $this->sessionId > 0)
 		{
 			$crmInfo = $this->getCrmInfo();
+			$crmManager = CrmManager::getInstance();
 			if($crmInfo)
 			{
-				if($crmInfo['DEAL'] > 0)
+				if(
+					$crmInfo['DEAL'] > 0
+					&& $crmManager->isOwnerEntityExists(
+						(int)$crmInfo['DEAL'],
+						\CCrmOwnerType::Deal
+					)
+				)
 				{
 					$clientInfo['OWNER_ID'] = (int)$crmInfo['DEAL'];
 					$clientInfo['OWNER_TYPE_ID'] = \CCrmOwnerType::Deal;
@@ -129,7 +136,13 @@ class ImOpenLinesManager extends Base
 					}
 				}
 
-				if ((int)$crmInfo['COMPANY'] > 0)
+				if (
+					(int)$crmInfo['COMPANY'] > 0
+					&& $crmManager->isOwnerEntityExists(
+						(int)$crmInfo['COMPANY'],
+						\CCrmOwnerType::Company
+					)
+				)
 				{
 					$clientInfo['COMPANY_ID'] = (int)$crmInfo['COMPANY'];
 				}
@@ -138,11 +151,26 @@ class ImOpenLinesManager extends Base
 				{
 					if (is_array($crmInfo['CONTACT']))
 					{
-						$clientInfo['CONTACT_IDS'] = $crmInfo['CONTACT'];
+						$existingContactIds = $crmManager->getExistingOwnerEntityIds(
+							\CCrmOwnerType::Contact,
+							$crmInfo['CONTACT'],
+						);
+						if (!empty($existingContactIds))
+						{
+							$clientInfo['CONTACT_IDS'] = $existingContactIds;
+						}
 					}
 					else
 					{
-						$clientInfo['CONTACT_IDS'] = [(int)$crmInfo['CONTACT']];
+						if (
+							$crmManager->isOwnerEntityExists(
+								(int)$crmInfo['CONTACT'],
+								\CCrmOwnerType::Contact,
+							)
+						)
+						{
+							$clientInfo['CONTACT_IDS'] = [(int)$crmInfo['CONTACT']];
+						}
 					}
 				}
 			}

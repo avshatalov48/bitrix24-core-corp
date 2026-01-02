@@ -1,0 +1,26 @@
+<svg width="26" height="27" viewBox="0 0 26 27" fill="none" xmlns="http://www.w3.org/2000/svg">
+<g clip-path="url(#clip0_2022_306)">
+<rect y="0.5" width="26" height="26" rx="13" fill="url(#paint0_radial_2022_306)"/>
+<g opacity="0.6" filter="url(#filter0_f_2022_306)">
+<path d="M17.6094 8.2282C22.9947 0.688849 18.1479 3.92 17.6094 0.958109C16.8166 -0.257362 2.53065 0.958109 -0.431351 4.45852C-3.39335 7.95894 -0.969763 11.7286 2.53065 14.152C6.03106 16.5753 12.2241 15.7675 17.6094 8.2282Z" fill="#FFB146"/>
+</g>
+</g>
+<rect x="0.5" y="1" width="25" height="25" rx="12.5" stroke="black" stroke-opacity="0.02"/>
+<path fill-rule="evenodd" clip-rule="evenodd" d="M12.7557 18.5317C11.7081 18.627 10.7348 18.2608 9.90979 17.5707C9.08604 16.8817 8.55548 15.9916 8.46653 14.9487C7.9635 14.8515 7.13985 14.6779 6.13452 14.4131C6.97614 12.2497 8.58192 11.6721 9.58748 11.5307C9.74819 11.3014 9.9273 11.0689 10.1256 10.8333C12.527 7.98068 17.9489 6.69116 18.6058 7.24055C19.2627 7.78994 18.9301 13.3363 16.5287 16.1889C16.3328 16.4218 16.1364 16.6357 15.9401 16.8314C15.978 17.8417 15.6922 19.5275 13.6924 20.7345C13.2541 19.7893 12.9388 19.0081 12.7557 18.5317ZM13.7506 15.6594C13.1436 16.3804 12.0652 16.4745 11.3418 15.8694C10.6185 15.2644 10.5242 14.1895 11.1311 13.4683C11.7381 12.7473 12.8165 12.6533 13.5399 13.2583C14.2632 13.8633 14.3576 14.9384 13.7506 15.6594ZM14.2733 12.3874C14.6618 12.7122 15.2408 12.6617 15.5667 12.2746C15.8926 11.8874 15.8419 11.3102 15.4536 10.9854C15.0651 10.6606 14.4861 10.7111 14.1602 11.0982C13.8343 11.4853 13.8849 12.0625 14.2733 12.3874ZM9.35732 18.1413C9.80383 18.499 10.2939 18.7654 10.8158 18.9193C9.12136 19.9112 7.70408 20.4541 7.48162 20.2758C7.25916 20.0975 7.57295 18.6705 8.30167 16.9049C8.55095 17.3689 8.91082 17.7835 9.35732 18.1413Z" fill="white"/>
+<defs>
+<filter id="filter0_f_2022_306" x="-11.962" y="-9.7" width="42.2889" height="35.2711" filterUnits="userSpaceOnUse" color-interpolation-filters="sRGB">
+<feFlood flood-opacity="0" result="BackgroundImageFix"/>
+<feBlend mode="normal" in="SourceGraphic" in2="BackgroundImageFix" result="shape"/>
+<feGaussianBlur stdDeviation="5.1" result="effect1_foregroundBlur_2022_306"/>
+</filter>
+<radialGradient id="paint0_radial_2022_306" cx="0" cy="0" r="1" gradientUnits="userSpaceOnUse" gradientTransform="translate(2.41126 2.89983) rotate(44.3041) scale(28.3916)">
+<stop stop-color="#FFF1E8" stop-opacity="0.8"/>
+<stop offset="0.286716" stop-color="#FFB146"/>
+<stop offset="0.649607" stop-color="#FF809E"/>
+<stop offset="1" stop-color="#A065F6"/>
+</radialGradient>
+<clipPath id="clip0_2022_306">
+<rect y="0.5" width="26" height="26" rx="13" fill="white"/>
+</clipPath>
+</defs>
+</svg>

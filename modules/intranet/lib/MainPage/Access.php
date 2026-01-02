@@ -6,35 +6,47 @@ use Bitrix\Bitrix24\Feature;
 use Bitrix\Intranet\CurrentUser;
 use Bitrix\Landing;
 use Bitrix\Main\Loader;
+use Bitrix\Intranet;
 
 class Access
 {
-	public function canEdit($isCheckFeature = true): bool
+	public function canEdit(): bool
 	{
-		return $this->canView($isCheckFeature) && CurrentUser::get()->isAdmin();
+		return
+			$this->canView()
+			&& CurrentUser::get()->isAdmin()
+			&& $this->isAvailableFeature()
+		;
 	}
 
-	public function canView($isCheckFeature = true): bool
+	public function canView(): bool
 	{
-		if (!$isCheckFeature)
-		{
-			return
-				$this->checkRequiredModules()
-				&& $this->checkUserPermissions()
-				&& $this->isAvailableByLanding()
-				;
-		}
-
 		return
-			$this->checkRequiredModules()
-			&& $this->isAvailableFeature()
+			$this->isAvailable()
 			&& $this->checkUserPermissions()
 		;
 	}
 
-	private function checkRequiredModules(): bool
+	/**
+	 * Check required modules and modules availability
+	 * @return bool
+	 */
+	private function isAvailable(): bool
 	{
-		return Loader::includeModule('landing');
+		return
+			Loader::includeModule('landing')
+			&& Landing\Mainpage\Manager::isAvailable()
+		;
+	}
+
+	private function isAvailableFeature(): bool
+	{
+		if (Loader::includeModule('bitrix24'))
+		{
+			return Feature::isFeatureEnabled('main_page');
+		}
+
+		return true;
 	}
 
 	private function checkUserPermissions(): bool
@@ -44,21 +56,11 @@ class Access
 			return !\CBitrix24::IsExtranetUser(CurrentUser::get()->getId());
 		}
 
-		return false;
-	}
-
-	private function isAvailableFeature(): bool
-	{
-		if (Loader::includeModule('bitrix24'))
+		if (Loader::includeModule('intranet'))
 		{
-			return Feature::isFeatureEnabled('main_page') && $this->isAvailableByLanding();
+			return (new Intranet\User())->isIntranet();
 		}
 
-		return Landing\Mainpage\Manager::isAvailable();
-	}
-
-	private function isAvailableByLanding(): bool
-	{
-		return Landing\Mainpage\Manager::isAvailable();
+		return false;
 	}
 }

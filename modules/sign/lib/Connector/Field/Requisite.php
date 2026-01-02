@@ -24,7 +24,7 @@ class Requisite implements Contract\Connector, Contract\RequisiteConnector
 	{
 		$memberRequisitePresetId = $this->member->presetId;
 		$requisiteFields = $this->fetchRequisite(
-			new FetchRequisiteModifier($memberRequisitePresetId)
+			new FetchRequisiteModifier($memberRequisitePresetId),
 		);
 
 		$result = new FieldCollection();
@@ -53,7 +53,7 @@ class Requisite implements Contract\Connector, Contract\RequisiteConnector
 
 		$memberRequisitePresetId = $this->member->presetId;
 		$fields = $memberConnector->fetchRequisite(
-			new Item\Connector\FetchRequisiteModifier($memberRequisitePresetId)
+			new Item\Connector\FetchRequisiteModifier($memberRequisitePresetId),
 		);
 		foreach ($fields as $field)
 		{
@@ -73,7 +73,7 @@ class Requisite implements Contract\Connector, Contract\RequisiteConnector
 	{
 		$memberRequisitePresetId = $this->member->presetId;
 		$requisiteFields = $this->fetchRequisite(
-			new FetchRequisiteModifier($memberRequisitePresetId)
+			new FetchRequisiteModifier($memberRequisitePresetId),
 		);
 		$firstRequisiteField = $requisiteFields->getFirst();
 

@@ -1,2 +1,7 @@
-<?
-return ["rest"];
+<?php
+
+return [
+	'extensions' => [
+		'rest',
+	],
+];

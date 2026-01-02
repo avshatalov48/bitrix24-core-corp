@@ -63,24 +63,39 @@ if(typeof(BX.CrmActivityListView) === "undefined")
 		if(permissions["CREATE"])
 		{
 			var context = BX.CrmMobileContext.getCurrent();
-			var menuItems =
-				[
-					{
-						icon: 'add',
-						name:  this.getMessage('menuCreateCall'),
-						action: BX.delegate(this._onCallCreate, this)
-					},
-					{
-						icon: 'add',
-						name:  this.getMessage('menuCreateMeeting'),
-						action: BX.delegate(this._onMeetingCreate, this)
-					},
-					{
-						icon: 'add',
-						name:  this.getMessage('menuCreateEmail'),
-						action: BX.delegate(this._onEmailCreate, this)
-					}
-				];
+			var useOutdatedActivities = this.getSetting("useOutdatedActivities", false);
+			if (useOutdatedActivities)
+			{
+				var menuItems =
+					[
+						{
+							icon: 'add',
+							name: this.getMessage('menuCreateCall'),
+							action: BX.delegate(this._onCallCreate, this)
+						},
+						{
+							icon: 'add',
+							name: this.getMessage('menuCreateMeeting'),
+							action: BX.delegate(this._onMeetingCreate, this)
+						},
+						{
+							icon: 'add',
+							name: this.getMessage('menuCreateEmail'),
+							action: BX.delegate(this._onEmailCreate, this)
+						}
+					];
+			}
+			else
+			{
+				var menuItems =
+					[
+						{
+							icon: 'add',
+							name: this.getMessage('menuCreateEmail'),
+							action: BX.delegate(this._onEmailCreate, this)
+						}
+					];
+			}
 			context.createMenu(menuItems);
 			context.showMenu();
 		}

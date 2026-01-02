@@ -20,6 +20,8 @@ use Bitrix\Tasks\Integration\SocialNetwork;
 use Bitrix\Tasks\Scrum\Service\KanbanService;
 use Bitrix\Tasks\Util\User;
 use Bitrix\Tasks\Internals\Task\Status;
+use Bitrix\Tasks\V2\FormV2Feature;
+use Bitrix\Tasks\V2\Public\Command\Task\Kanban\MoveTaskCommand;
 
 final class TasksMoveStageProvider
 {
@@ -230,9 +232,20 @@ final class TasksMoveStageProvider
 			]);
 			while ($rowStg = $resStg->fetch())
 			{
-				TaskStageTable::update($rowStg['ID'], [
-					'STAGE_ID' => $stageId,
-				]);
+				if (FormV2Feature::isOn('move'))
+				{
+					(new MoveTaskCommand(
+						relationId: (int)$rowStg['ID'],
+						stageId: $stageId
+					))->run();
+				}
+				else
+				{
+					TaskStageTable::update($rowStg['ID'], [
+						'STAGE_ID' => $stageId,
+					]);
+				}
+
 
 				Listener::onPlanTaskStageUpdate(
 					$entityId,

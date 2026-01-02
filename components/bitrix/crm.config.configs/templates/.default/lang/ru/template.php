@@ -18,6 +18,7 @@ $MESS["CRM_TAB_HISTORY_TITLE"] = "Настройки истории";
 $MESS["CRM_TAB_LIVEFEED2"] = "Живая лента";
 $MESS["CRM_TAB_LIVEFEED_TITLE2"] = "Настройки живой ленты";
 $MESS["CRM_TAB_REST_2"] = "Маркет";
+$MESS["CRM_TAB_REST_2_MSGVER_1"] = "Маркетплейс";
 $MESS["CRM_TAB_REST_TITLE"] = "Настройки приложений";
 $MESS["CRM_TAB_RECYCLE_BIN_CONFIG"] = "Корзина";
 $MESS["CRM_TAB_RECYCLE_BIN_CONFIG_TITLE"] = "Настройки корзины";

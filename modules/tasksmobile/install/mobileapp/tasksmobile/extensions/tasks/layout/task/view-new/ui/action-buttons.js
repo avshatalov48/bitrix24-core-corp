@@ -48,7 +48,7 @@ jn.define('tasks/layout/task/view-new/ui/action-buttons', (require, exports, mod
 		 */
 		static prepareActionProps(task)
 		{
-			const actions = selectActions(task);
+			const actions = selectActions({ task });
 			const inProgress = selectInProgress(task);
 			const isDeferred = selectIsDeferred(task);
 			const isSupposedlyCompleted = selectIsSupposedlyCompleted(task);
@@ -358,7 +358,7 @@ jn.define('tasks/layout/task/view-new/ui/action-buttons', (require, exports, mod
 
 		showMenuActions(actions)
 		{
-			const { taskId, layout, analyticsLabel = {} } = this.props;
+			const { taskId, layout, analyticsLabel = {}, ownerId } = this.props;
 
 			(new ActionMenu({
 				actions,
@@ -367,6 +367,7 @@ jn.define('tasks/layout/task/view-new/ui/action-buttons', (require, exports, mod
 				engine: new TopMenuEngine(),
 				allowSuccessToasts: true,
 				analyticsLabel,
+				ownerId,
 			}))
 				.show({ target: this.chipRootViewRef });
 		}
@@ -385,8 +386,8 @@ jn.define('tasks/layout/task/view-new/ui/action-buttons', (require, exports, mod
 		}
 	}
 
-	const mapStateToProps = (state, { taskId }) => {
-		const task = selectByTaskIdOrGuid(state, taskId);
+	const mapStateToProps = (state, ownProps) => {
+		const task = selectByTaskIdOrGuid(state, ownProps.taskId, ownProps.ownerId);
 
 		return ActionButtonsView.prepareActionProps(task);
 	};

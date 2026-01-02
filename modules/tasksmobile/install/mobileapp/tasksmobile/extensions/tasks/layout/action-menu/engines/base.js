@@ -16,7 +16,7 @@ jn.define('tasks/layout/action-menu/engines/base', (require, exports, module) =>
 		 *     onClickCallback: function,
 		 *     isDestructive?: boolean,
 		 *     sectionCode?: string,
-		 *     data?: { svgUri?: string, outlineIconUri?: string },
+		 *     icon?: Icon,
 		 * }[]} actions
 		 * @param {object} options
 		 */

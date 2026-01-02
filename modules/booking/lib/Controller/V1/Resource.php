@@ -4,6 +4,7 @@ declare(strict_types=1);
 
 namespace Bitrix\Booking\Controller\V1;
 
+use Bitrix\Booking\Command\Booking\RemoveBookingCommand;
 use Bitrix\Booking\Internals\Exception\ErrorBuilder;
 use Bitrix\Booking\Internals\Exception\Exception;
 use Bitrix\Booking\Service\BookingFeature;
@@ -22,6 +23,15 @@ use Bitrix\Main\UI\PageNavigation;
 
 class Resource extends BaseController
 {
+	private int $userId;
+	
+	protected function init()
+	{
+		parent::init();
+
+		$this->userId = (int)CurrentUser::get()->getId();
+	}
+
 	public function listAction(
 		PageNavigation $navigation,
 		array $filter = [],
@@ -35,7 +45,7 @@ class Resource extends BaseController
 				filter: new ResourceFilter($filter),
 				sort: new ResourceSort($sort),
 			),
-			userId: (int)CurrentUser::get()->getId(),
+			userId: $this->userId,
 		);
 	}
 
@@ -44,7 +54,7 @@ class Resource extends BaseController
 		try
 		{
 			return (new ResourceProvider())->getById(
-				userId: (int)CurrentUser::get()->getId(),
+				userId: $this->userId,
 				resourceId: $id
 			);
 		}
@@ -54,7 +64,7 @@ class Resource extends BaseController
 
 			return null;
 		}
-			}
+	}
 
 	public function addAction(array $resource, int|null $copies = null): Entity\Resource\Resource|null
 	{
@@ -66,11 +76,6 @@ class Resource extends BaseController
 			$this->addError(ErrorBuilder::build('Access denied'));
 
 			return null;
-		}
-
-		if (BookingFeature::canTurnOnTrial())
-		{
-			BookingFeature::turnOnTrial();
 		}
 
 		try
@@ -85,7 +90,7 @@ class Resource extends BaseController
 		}
 
 		$command = new AddResourceCommand(
-			createdBy: (int)CurrentUser::get()->getId(),
+			createdBy: $this->userId,
 			resource: $resource,
 			copies: $copies,
 		);
@@ -137,7 +142,7 @@ class Resource extends BaseController
 		}
 
 		$command = new UpdateResourceCommand(
-			updatedBy: (int)CurrentUser::get()->getId(),
+			updatedBy: $this->userId,
 			resource: $resource,
 		);
 
@@ -152,11 +157,60 @@ class Resource extends BaseController
 		return $result->getResource();
 	}
 
+	public function forceDeleteAction(int $id): array|null
+	{
+		$futureBookings = Container::getBookingRepository()->getList(
+			filter: new BookingFilter([
+				'RESOURCE_ID' => [$id],
+				'WITHIN' => [
+					'DATE_FROM' => time(),
+				],
+			]),
+		);
+
+		$removedBookingIds = [];
+		foreach ($futureBookings as $booking)
+		{
+			/** @var Entity\Booking\Booking $booking */
+			$removeBookingCommand = new RemoveBookingCommand(
+				id: $booking->getId(),
+				removedBy: $this->userId,
+			);
+
+			$removeBookingResult = $removeBookingCommand->run();
+			if (!$removeBookingResult->isSuccess())
+			{
+				$this->addErrors($removeBookingResult->getErrors());
+
+				return null;
+			}
+
+			$removedBookingIds[] = $booking->getId();
+		}
+
+		$removeResourceCommand = new RemoveResourceCommand(
+			id: $id,
+			removedBy: $this->userId,
+		);
+
+		$removeResourceResult = $removeResourceCommand->run();
+		if (!$removeResourceResult->isSuccess())
+		{
+			$this->addErrors($removeResourceResult->getErrors());
+
+			return null;
+		}
+
+		return [
+			'removedBookingIds' => $removedBookingIds,
+		];
+	}
+
 	public function deleteAction(int $id): array|null
 	{
 		$command = new RemoveResourceCommand(
 			id: $id,
-			removedBy: (int)CurrentUser::get()->getId(),
+			removedBy: $this->userId,
 		);
 
 		$result = $command->run();
@@ -176,7 +230,7 @@ class Resource extends BaseController
 		{
 			$command = new RemoveResourceCommand(
 				id: $id,
-				removedBy: (int)CurrentUser::get()->getId(),
+				removedBy: $this->userId,
 			);
 
 			$command->run();
@@ -185,13 +239,16 @@ class Resource extends BaseController
 		return [];
 	}
 
-	public function hasBookingsAction(int $resourceId): bool
+	public function hasFutureBookingsAction(int $resourceId): bool
 	{
-		return !(
-			Container::getBookingRepository()->getList(
-				limit: 1,
-				filter: new BookingFilter(['RESOURCE_ID' => [$resourceId]]),
-			)->isEmpty()
-		);
+		return !Container::getBookingRepository()->getList(
+			limit: 1,
+			filter: new BookingFilter([
+				'RESOURCE_ID' => [$resourceId],
+				'WITHIN' => [
+					'DATE_FROM' => time(),
+				],
+			]),
+		)->isEmpty();
 	}
 }

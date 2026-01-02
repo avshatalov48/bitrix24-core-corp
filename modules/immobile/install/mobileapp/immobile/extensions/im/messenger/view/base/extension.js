@@ -2,11 +2,16 @@
  * @module im/messenger/view/base
  */
 jn.define('im/messenger/view/base', (require, exports, module) => {
-	const { EventsCheckpoint } = require('im/messenger/view/lib/events-checkpoint');
+	const { EventFilter } = require('im/messenger/view/lib/event-filter');
+	const { LoggerManager } = require('im/messenger/lib/logger');
+	const logger = LoggerManager.getInstance().getLogger('view--base');
 
 	class View
 	{
-		#viewName;
+		/** @type {EventHandlerCollection} */
+		#eventHandlerCollection = {};
+		/** @type {EventWrappedHandlerCollection} */
+		#eventWrappedHandlerCollection = {};
 
 		constructor(options = {})
 		{
@@ -16,15 +21,9 @@ jn.define('im/messenger/view/base', (require, exports, module) => {
 			}
 
 			this.ui = options.ui;
-			this.#viewName = options.viewName ?? '';
 			this.customUiEventEmitter = new JNEventEmitter();
 			this.customUiEventList = new Set();
-			this.eventsCheckpoint = new EventsCheckpoint();
-		}
-
-		get viewName()
-		{
-			return this.#viewName;
+			this.eventFilter = new EventFilter();
 		}
 
 		setCustomEvents(eventList = [])
@@ -42,39 +41,110 @@ jn.define('im/messenger/view/base', (require, exports, module) => {
 			this.customUiEventEmitter.emit(eventName, [eventData]);
 		}
 
+		/**
+		 * @abstract
+		 * @return {AvailableEventCollection}
+		 */
+		getAvailableEvents()
+		{
+			logger.warn(`${this.constructor.name}.getAvailableEvents is not implemented`);
+		}
+
+		/**
+		 * @param {string} eventName
+		 * @param {function(string, string, string=): void} eventHandler
+		 * @return {object}
+		 */
 		on(eventName, eventHandler)
 		{
-			const wrappedHandler = this.eventsCheckpoint.add(this.viewName, eventName, eventHandler);
-			if (this.customUiEventList.has(eventName))
+			if (!this.#eventHandlerCollection[eventName])
 			{
-				this.customUiEventEmitter.on(eventName, wrappedHandler);
+				this.#eventHandlerCollection[eventName] = [];
 
-				return this;
+				const wrappedHandler = this.createHandlerWrapper(eventName);
+				this.#eventWrappedHandlerCollection[eventName] = wrappedHandler;
+				if (this.customUiEventList.has(eventName))
+				{
+					this.customUiEventEmitter.on(eventName, wrappedHandler);
+					this.#eventHandlerCollection[eventName].push(eventHandler);
+
+					return this;
+				}
+
+				this.ui.on(eventName, wrappedHandler);
 			}
 
-			this.ui.on(eventName, wrappedHandler);
+			this.#eventHandlerCollection[eventName].push(eventHandler);
 
 			return this;
 		}
 
+		/**
+		 * @param {string} eventName
+		 * @param {()=>*} eventHandler
+		 * @return {object}
+		 */
 		off(eventName, eventHandler)
 		{
-			const wrappedHandler = this.eventsCheckpoint.getWrappedHandler(eventHandler);
-			if (this.customUiEventList.has(eventName))
+			if (!this.#eventHandlerCollection[eventName])
 			{
-				this.customUiEventEmitter.off(eventName, wrappedHandler);
-
 				return this;
 			}
+			this.#eventHandlerCollection[eventName] = this.#eventHandlerCollection[eventName].filter(
+				(savedHandler) => savedHandler !== eventHandler,
+			);
 
-			this.ui.off(eventName, wrappedHandler);
+			if (this.#eventHandlerCollection[eventName].length === 0 && this.#eventWrappedHandlerCollection[eventName])
+			{
+				if (this.customUiEventList.has(eventName))
+				{
+					this.customUiEventEmitter.off(eventName, this.#eventWrappedHandlerCollection[eventName]);
+
+					return this;
+				}
+
+				this.ui.off(eventName, this.#eventWrappedHandlerCollection[eventName]);
+				delete this.#eventWrappedHandlerCollection[eventName];
+				delete this.#eventHandlerCollection[eventName];
+			}
 
 			return this;
 		}
 
+		/**
+		 * @param {string} eventName
+		 * @return {()=>*}
+		 */
+		createHandlerWrapper(eventName)
+		{
+			return (...args) => {
+				if (!this.eventFilter.canEmitEvent(eventName, this.getAvailableEvents()))
+				{
+					return;
+				}
+
+				this.#eventHandlerCollection[eventName].forEach((eventHandler) => {
+					eventHandler(...args);
+				});
+			};
+		}
+
+		/**
+		 * @param {string} eventName
+		 * @param {()=>*} eventHandler
+		 * @return {object}
+		 */
 		once(eventName, eventHandler)
 		{
-			const wrappedHandler = this.eventsCheckpoint.add(eventName, eventHandler);
+			const wrappedHandler = (...args) => {
+				if (!this.eventFilter.canEmitEvent(eventName, this.getAvailableEvents()))
+				{
+					return;
+				}
+
+				eventHandler(...args);
+			};
+
 			if (this.customUiEventList.has(eventName))
 			{
 				this.customUiEventEmitter.once(eventName, wrappedHandler);

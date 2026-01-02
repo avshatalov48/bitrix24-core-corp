@@ -1,0 +1,6 @@
+<?php
+$MESS["SELECTOR_COMPONENT_CREATE_CONTRACTOR"] = "Жеткізушіні құру";
+$MESS["SELECTOR_COMPONENT_CREATING_CONTRACTOR"] = "Жеткізуші құрылуда...";
+$MESS["SELECTOR_COMPONENT_PICK_CONTRACTOR_2"] = "Жеткізуші";
+$MESS["SELECTOR_COMPONENT_START_TYPING_TO_CREATE_CONTRACTOR"] = "Жеткізушіні құру үшін теруді бастаңыз";
+$MESS["SELECTOR_COMPONENT_START_TYPING_TO_SEARCH_CONTRACTOR"] = "Жеткізушіні таңдау үшін теруді бастаңыз";

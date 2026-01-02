@@ -59,12 +59,12 @@ class GuestUser extends User
 
 	public function getLogin()
 	{
-		return Loc::getMessage('DISK_ONLYOFFICE_GUEST_USER_LOGIN');
+		return Loc::getMessage('DISK_GUEST_USER_LOGIN');
 	}
 
 	public function getName()
 	{
-		return Loc::getMessage('DISK_ONLYOFFICE_GUEST_USER_NAME');
+		return Loc::getMessage('DISK_GUEST_USER_NAME');
 	}
 
 	public function getSecondName()

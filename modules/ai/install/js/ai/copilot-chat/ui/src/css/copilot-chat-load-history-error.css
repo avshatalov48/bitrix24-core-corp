@@ -1,0 +1,63 @@
+.ai__copilot-chat-load-history-error {
+	padding: 27px 15px;
+	display: flex;
+	flex-direction: column;
+	justify-content: flex-start;
+	align-items: center;
+	background-color: rgba(var(--ui-color-base-solid-rgb), 0.2);
+	border-radius: var(--ui-border-radius-2xl);
+	color: var(--ui-color-on-primary);
+	line-height: var(--ui-font-line-height-3xs);
+	text-align: center;
+}
+
+.ai__copilot-chat-load-history-error_icon-wrapper {
+	box-sizing: border-box;
+	width: 120px;
+	height: 120px;
+	margin-bottom: 12px;
+	display: flex;
+	justify-content: center;
+	align-items: center;
+	border: var(--ui-border-width-thick) solid rgba(var(--ui-color-background-primary-rgb), 0.2);
+	border-radius: var(--ui-border-radius-circle);
+}
+
+.ai__copilot-chat-load-history-error_icon {
+	width: 88px;
+	height: 88px;
+	mask-image: url('../../image/alert-outline.svg');
+	mask-size: 88px;
+	mask-position: center center;
+	mask-repeat: no-repeat;
+	background-color: var(--ui-color-background-primary);
+}
+
+.ai__copilot-chat-load-history-error_title {
+	margin-bottom: 12px;
+	font-size: var(--ui-font-size-2xl);
+	font-weight: var(--ui-font-weight-medium);
+}
+
+.ai__copilot-chat-load-history-error_text {
+	margin-bottom: 12px;
+	font-size: var(--ui-font-size-md);
+}
+
+.ai__copilot-chat-load-history-error_button {
+	padding: 12px 24px;
+	font-size: var(--ui-font-size-md);
+	font-weight: var(--ui-font-weight-bold);
+	line-height: var(--ui-font-line-height-2xs);
+	color: rgba(var(--ui-color-text-secondary-rgb), 0.9);
+	border-radius: 98px;
+	background-color: rgba(var(--ui-color-background-primary-rgb), 1);
+	outline: none;
+	border: none;
+}
+
+.ai__copilot-chat-load-history-error_button:hover,
+.ai__copilot-chat-load-history-error_button:focus {
+	background-color: rgba(var(--ui-color-background-primary-rgb), 0.8);
+	cursor: pointer;
+}

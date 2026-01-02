@@ -16,6 +16,13 @@ class ConfirmBookingCommandHandler
 	public function __invoke(ConfirmBookingCommand $command): Booking
 	{
 		$booking = (new BookingConfirmLink())->getBookingByHash($command->hash);
+		if ($booking->isConfirmed())
+		{
+			throw new ConfirmBookingException(
+				message: 'already confirmed',
+				code: ConfirmBookingException::CODE_BOOKING_CONFIRMATION_ALREADY_CONFIRMED,
+			);
+		}
 
 		return Container::getTransactionHandler()->handle(
 			fn: function() use ($command, $booking) {

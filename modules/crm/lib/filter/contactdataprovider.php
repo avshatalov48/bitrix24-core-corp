@@ -3,6 +3,7 @@
 namespace Bitrix\Crm\Filter;
 
 use Bitrix\Crm;
+use Bitrix\Crm\Activity\LastCommunication\LastCommunicationAvailabilityChecker;
 use Bitrix\Crm\Category\EntityTypeRelationsRepository;
 use Bitrix\Crm\Counter\EntityCounterType;
 use Bitrix\Crm\EntityAddress;
@@ -374,6 +375,24 @@ class ContactDataProvider extends EntityDataProvider implements FactoryOptionabl
 			$result[$code] = $this->createField($code, $parentField);
 		}
 
+		if (LastCommunicationAvailabilityChecker::getInstance()->isEnabled())
+		{
+			[$code, $name] = Crm\Model\LastCommunicationTable::getLastStateCodeName();
+			$result[$code] = $this->createField(
+				$code,
+				[
+					'type' => 'date',
+					'name' => $name,
+					'data' => [
+						'additionalFilter' => [
+							'isEmpty',
+							'hasAnyValue',
+						],
+					],
+				]
+			);
+		}
+
 		return $result;
 	}
 
@@ -416,6 +435,7 @@ class ContactDataProvider extends EntityDataProvider implements FactoryOptionabl
 					'referenceClass' => $referenceClass,
 					'isEnableAllUsers' => $isEnableAllUsers,
 					'isEnableOtherUsers' => $isEnableOtherUsers,
+					'isEnableStructureNode' => true,
 				]
 			);
 		}

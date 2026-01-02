@@ -7,9 +7,13 @@ use Bitrix\BIConnector\Access\ActionDictionary;
 use Bitrix\BIConnector\Access\Model\DashboardAccessItem;
 use Bitrix\BIConnector\Configuration\DashboardTariffConfigurator;
 use Bitrix\BIConnector\Integration\Superset\Integrator\Integrator;
+use Bitrix\BIConnector\Integration\Superset\Model\SupersetDashboardGroupTable;
+use Bitrix\BIConnector\Integration\Superset\Repository\DashboardGroupRepository;
 use Bitrix\BIConnector\Integration\Superset\SupersetController;
 use Bitrix\BIConnector\Superset\Grid\Row\Assembler\Field\Base\DetailLinkFieldAssembler;
+use Bitrix\Main\Localization\Loc;
 use Bitrix\Main\UI\Extension;
+use Bitrix\Main\Web\Json;
 
 class NameFieldAssembler extends DetailLinkFieldAssembler
 {
@@ -25,7 +29,12 @@ class NameFieldAssembler extends DetailLinkFieldAssembler
 			$editButton = $this->getEditButton($id);
 		}
 
-		$pinButton = $this->getPinButton($id, $isPinned);
+		$classTypePrefix = 'dashboard';
+		$pinButton = '';
+		if ($value['ENTITY_TYPE'] === DashboardGroupRepository::TYPE_DASHBOARD)
+		{
+			$pinButton = $this->getPinButton($id, $isPinned);
+		}
 
 		if ($value['IS_TARIFF_RESTRICTED'])
 		{
@@ -45,30 +54,69 @@ class NameFieldAssembler extends DetailLinkFieldAssembler
 				</a>
 			";
 		}
-		elseif (empty($value['HAS_ZONE_URL_PARAMS']))
+		elseif ($value['ENTITY_TYPE'] === DashboardGroupRepository::TYPE_GROUP)
 		{
-			$link = "<a href='{$value['DETAIL_URL']}'>{$title}</a>";
+			Extension::load('ui.icons.disk');
+			$classTypePrefix = 'group';
+
+			$eventGroup = Json::encode([
+				'ID' => (int)$value['ID'],
+				'TITLE' => $value['TITLE'],
+			]);
+
+			$iconClass =
+				$value['TYPE'] === SupersetDashboardGroupTable::GROUP_TYPE_SYSTEM
+					? 'ui-icon-file-air-folder-24'
+					: 'ui-icon-file-air-folder-person'
+			;
+
+			$dashboardCount = $value['COUNT_DASHBOARDS'];
+			$subtitle = Loc::getMessagePlural('BI_GROUP_SUBTITLE', $dashboardCount, [
+				'#COUNT#' => $dashboardCount,
+			]);
+
+			$link = "
+				<div class ='biconnector-grid-group-name'>
+					<div class='ui-icon {$iconClass} biconnector-grid-group-icon'>
+						<i style='margin-left: 0;'></i>
+					</div>
+					<div>
+						<a
+							class ='biconnector-grid-group-name-link'
+							onclick='BX.BIConnector.SupersetDashboardGridManager.Instance.handleGroupTitleClick($eventGroup)'
+						>
+							{$title}
+						</a>
+						<div class='biconnector-grid-group-name-subtitle'>{$subtitle}</div>
+					</div>
+				</div>
+			";
+		}
+		elseif (!$value['IS_ACCESS_ALLOWED'])
+		{
+			$link = $title;
 		}
 		else
 		{
-			$link = "
-				<a 
-					style='cursor: pointer' 
-					onclick='BX.BIConnector.SupersetDashboardGridManager.Instance.showLockedByParamsPopup()'
-				>
-					{$title}
-				</a>
+			$link = "<a href='{$value['DETAIL_URL']}' target='_blank'>{$title}</a>";
+		}
+
+		$buttons = '';
+		if (!empty($editButton) || !empty($pinButton))
+		{
+			$buttons = "
+				<div class='dashboard-title-buttons'>
+					{$editButton}
+					{$pinButton}
+				</div>
 			";
 		}
 
 		return <<<HTML
-			<div class="dashboard-title-wrapper">
-				<div class="dashboard-title-wrapper__item dashboard-title-preview">
+			<div class="{$classTypePrefix}-title-wrapper">
+				<div class="{$classTypePrefix}-title-wrapper__item {$classTypePrefix}-title-preview">
 					{$link}
-					<div class="dashboard-title-buttons">
-						{$editButton}
-						{$pinButton}
-					</div>
+					{$buttons}
 				</div>
 			</div>
 		HTML;
@@ -95,7 +143,8 @@ class NameFieldAssembler extends DetailLinkFieldAssembler
 		$method =
 			$isPinned
 				? 'BX.BIConnector.SupersetDashboardGridManager.Instance.unpin'
-				: 'BX.BIConnector.SupersetDashboardGridManager.Instance.pin';
+				: 'BX.BIConnector.SupersetDashboardGridManager.Instance.pin'
+		;
 
 		return <<<HTML
 			<a

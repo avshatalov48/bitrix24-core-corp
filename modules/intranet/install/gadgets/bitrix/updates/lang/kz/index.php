@@ -1,0 +1,19 @@
+<?php
+$MESS["GD_LOG_ALL"] = "барлығы";
+$MESS["GD_LOG_BLOG"] = "блогтар/есептер";
+$MESS["GD_LOG_BLOG_GROUP"] = "есептер";
+$MESS["GD_LOG_BLOG_USER"] = "блогтар";
+$MESS["GD_LOG_CALENDAR"] = "күнтізбелер";
+$MESS["GD_LOG_FILES"] = "файлдар";
+$MESS["GD_LOG_FORUM"] = "форумдар/талқылаулар";
+$MESS["GD_LOG_FORUM_GROUP"] = "талқылаулар";
+$MESS["GD_LOG_FORUM_USER"] = "форумдар";
+$MESS["GD_LOG_GROUP"] = "топтар";
+$MESS["GD_LOG_MORE"] = "Жанды лента";
+$MESS["GD_LOG_PHOTO"] = "фото";
+$MESS["GD_LOG_SYSTEM"] = "жүйелік";
+$MESS["GD_LOG_SYSTEM_FRIENDS"] = "достар";
+$MESS["GD_LOG_SYSTEM_GROUPS"] = "топтар";
+$MESS["GD_LOG_TASKS"] = "міндеттер";
+$MESS["GD_LOG_TITLE"] = "Жанды лента";
+$MESS["GD_LOG_USER"] = "пайдаланушылар";

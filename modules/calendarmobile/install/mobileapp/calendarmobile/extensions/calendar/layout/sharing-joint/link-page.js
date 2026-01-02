@@ -11,7 +11,7 @@ jn.define('calendar/layout/sharing-joint/link-page', (require, exports, module) 
 	const { date } = require('utils/date/formats');
 	const { Avatar } = require('layout/ui/user/avatar');
 	const { ContextMenu } = require('layout/ui/context-menu');
-	const { openUserProfile } = require('user/profile');
+	const { UserProfile } = require('user-profile');
 
 	class LinkPage extends LayoutComponent
 	{
@@ -161,7 +161,7 @@ jn.define('calendar/layout/sharing-joint/link-page', (require, exports, module) 
 		onCopyMenuItemClickHandler()
 		{
 			this.menu.close(() => {
-				copyToClipboard(this.link.shortUrl, Loc.getMessage('CALENDARMOBILE_SHARING_LINK_COPIED'));
+				copyToClipboard(this.link.shortUrl, Loc.getMessage('CALENDARMOBILE_SHARING_LINK_COPIED'), true, true);
 			});
 		}
 
@@ -198,14 +198,20 @@ jn.define('calendar/layout/sharing-joint/link-page', (require, exports, module) 
 				View(
 					{
 						style: styles.member,
-						onClick: () => {
-							void openUserProfile({ userId: user.id, parentWidget: this.layoutWidget });
-						},
+						onClick: () => this.openUserProfile(user.id),
 					},
 					this.renderMemberAvatar(user),
 					this.renderMemberName(user),
 				),
 			);
+		}
+
+		openUserProfile(userId)
+		{
+			void UserProfile.open({
+				ownerId: userId,
+				parentWidget: this.layoutWidget,
+			});
 		}
 
 		renderMemberAvatar(user)

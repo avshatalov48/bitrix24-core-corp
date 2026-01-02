@@ -8,13 +8,14 @@ use Bitrix\Disk\BaseObject;
 use Bitrix\Disk\Driver;
 use Bitrix\Disk\File;
 use Bitrix\Disk\Folder;
-use Bitrix\Disk\Integration\Collab\CollabService;
+use Bitrix\Disk\Integration\Collab\FileTransferToCollab;
 use Bitrix\Disk\Search\ContentManager;
 use Bitrix\Disk\SystemUser;
 use Bitrix\Disk\ProxyType;
+use Bitrix\Disk\TypeFile;
 use Bitrix\Disk\User;
+use Bitrix\Main\Analytics\AnalyticsEvent;
 use Bitrix\Main\Application;
-use Bitrix\Main\Diag\Debug;
 use Bitrix\Main\Localization\Loc;
 use Bitrix\Disk\Internals\AttachedViewTypeTable;
 
@@ -310,10 +311,7 @@ final class FileUserType
 			return false;
 		}
 
-		$collabService = new CollabService();
-		if (!($storage->getProxyType() instanceof ProxyType\User)
-			&& !$collabService->isCollabStorage($storage)
-		)
+		if (!($storage->getProxyType() instanceof ProxyType\User))
 		{
 			return false;
 		}
@@ -324,6 +322,22 @@ final class FileUserType
 		}
 
 		return $file->getParent()?->getCode() === Folder::CODE_FOR_UPLOADED_FILES;
+	}
+
+	private static function isCreatedFile(File $file): bool
+	{
+		$storage = $file->getStorage();
+		if (!$storage)
+		{
+			return false;
+		}
+
+		if (!($storage->getProxyType() instanceof ProxyType\User))
+		{
+			return false;
+		}
+
+		return $file->getParent()?->getCode() === Folder::CODE_FOR_CREATED_FILES;
 	}
 
 	public static function onBeforeSave($userField, $value, $userId = false)
@@ -345,43 +359,30 @@ final class FileUserType
 		if ($type === self::TYPE_NEW_OBJECT)
 		{
 			$fileModel = self::getFileById($realValue);
+
 			if (!$fileModel || !$fileModel->getStorage())
 			{
 				return '';
 			}
 
-			$collabService = new CollabService();
-			$collabStorage = $collabService->getCollabStorageByEntity($userField['VALUE_ID'], $userField['ENTITY_ID']);
-
-			if (
-				$collabStorage
-				&& $collabStorage->getFolderForUploadedFiles()?->getId() !== $fileModel->getParentId()
-			)
+			$fileTransferToCollab = new FileTransferToCollab($userField['VALUE_ID'], $userField['ENTITY_ID'], $fileModel);
+			if ($fileTransferToCollab->isNeedTransfer())
 			{
 				if (self::isNewUploadedFile($fileModel))
 				{
-					$originalStorage = $fileModel->getStorage();
-					$moveStatus = $fileModel->moveToAnotherFolder($collabStorage->getFolderForUploadedFiles(), $fileModel->getCreatedBy(), true);
-
-					if ($moveStatus && $originalStorage)
-					{
-						$folderForUploadedFiles = $originalStorage->getFolderForUploadedFiles();
-						if ($folderForUploadedFiles && !$folderForUploadedFiles->hasChildren())
-						{
-							$folderForUploadedFiles->deleteTree(SystemUser::SYSTEM_USER_ID);
-						}
-					}
+					$fileTransferToCollab->transferToFolderForUploadedFilesInCollab();
+				}
+				else if (self::isCreatedFile($fileModel))
+				{
+					$fileTransferToCollab->transferToFolderForCreatedFilesInCollab();
 				}
 				else
 				{
-					$collabFile = $fileModel->copyTo($collabStorage->getFolderForUploadedFiles(), $fileModel->getCreatedBy(), true);
-					if ($collabFile)
+					$fileModel = $fileTransferToCollab->copyToFolderForUploadedFilesInCollab();
+
+					if (!$fileModel)
 					{
-						$newName = Loc::getMessage('DISK_FILE_USER_TYPE_NEW_FILE_IN_COLLAB', [
-							'#NAME#' => $fileModel->getName()
-						]);
-						$collabFile->rename($newName, true);
-						$fileModel = $collabFile;
+						return '';
 					}
 				}
 			}
@@ -422,7 +423,8 @@ final class FileUserType
 
 			return $attachedModel->getId();
 		}
-		else if ($type === self::TYPE_ALREADY_ATTACHED)
+
+		if ($type === self::TYPE_ALREADY_ATTACHED)
 		{
 			$allowEdit = self::getValueForAllowEdit($userField, $value);
 			if ($allowEdit !== null)

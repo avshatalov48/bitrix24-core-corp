@@ -50,7 +50,7 @@ class NodeMemberTable extends ORM\Data\DataManager
 				->configureTitle('ID')
 			,
 			(new ORM\Fields\EnumField('ENTITY_TYPE'))
-				->configureValues(MemberEntityType::values())
+				->configureValues(MemberEntityType::names())
 				->configureDefaultValue(MemberEntityType::USER)
 				->configureTitle('Type')
 			,

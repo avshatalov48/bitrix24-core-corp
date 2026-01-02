@@ -94,6 +94,7 @@ class KanbanDataProvider extends \Bitrix\Crm\Component\EntityList\ClientDataProv
 						'ENTITY_ID' => $item[$clientFieldId],
 						'TITLE' => $title,
 						'PREFIX' => $entityTypeName . '_' . $item['ID'],
+						'IS_RENDER_SCRIPT' => false,
 					]);
 				}
 				else

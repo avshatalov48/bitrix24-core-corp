@@ -8,7 +8,7 @@ use Bitrix\Booking\Entity\BaseEntityCollection;
 
 /**
  * @method \Bitrix\Booking\Entity\ResourceType\ResourceType|null getFirstCollectionItem()
- * @method ResourceType[] getIterator()
+ * @method \ArrayIterator<ResourceType> getIterator()
  */
 class ResourceTypeCollection extends BaseEntityCollection
 {

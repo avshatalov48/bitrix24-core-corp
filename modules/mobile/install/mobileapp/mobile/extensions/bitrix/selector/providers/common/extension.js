@@ -8,6 +8,7 @@ jn.define('selector/providers/common', (require, exports, module) => {
 	const { uniqBy, unique } = require('utils/array');
 	const { debounce } = require('utils/function');
 	const { stringify } = require('utils/string');
+	const { md5 } = require('utils/hash');
 	const { BasePickerCache } = require('selector/utils/picker-cache');
 	const { BaseSelectorProvider } = require('selector/providers/base');
 	const { getEntityColor } = require('selector/providers/common/src/entity-color');
@@ -137,7 +138,7 @@ jn.define('selector/providers/common', (require, exports, module) => {
 			const context = this.context;
 			const entities = this.getSortedEntities();
 
-			return CommonUtils.md5({ context, entities });
+			return md5({ context, entities });
 		}
 
 		useRawResult()
@@ -356,6 +357,33 @@ jn.define('selector/providers/common', (require, exports, module) => {
 			);
 		}
 
+		getSearchAction()
+		{
+			return 'ui.entityselector.doSearch';
+		}
+
+		getSearchActionConfig(query)
+		{
+			const queryWords = this.splitQueryByWords(query);
+
+			return {
+				json: {
+					dialog: this.getAjaxDialog(),
+					searchQuery: {
+						query,
+						queryWords,
+						dynamicSearchEntities: [],
+					},
+				},
+				getParameters: { context: this.context },
+			};
+		}
+
+		getItemsFromSearchResponse(response)
+		{
+			return response.data.dialog.items;
+		}
+
 		runSearchAction(query)
 		{
 			if (this.queryString !== query)
@@ -363,23 +391,11 @@ jn.define('selector/providers/common', (require, exports, module) => {
 				return;
 			}
 
-			const queryWords = this.splitQueryByWords(query);
-
 			BX.ajax.runAction(
-				'ui.entityselector.doSearch',
-				{
-					json: {
-						dialog: this.getAjaxDialog(),
-						searchQuery: {
-							query,
-							queryWords,
-							dynamicSearchEntities: [],
-						},
-					},
-					getParameters: { context: this.context },
-				},
+				this.getSearchAction(),
+				this.getSearchActionConfig(query),
 			).then((response) => {
-				const items = this.prepareItems(response.data.dialog.items);
+				const items = this.prepareItems(this.getItemsFromSearchResponse(response));
 				if (items.length > 0)
 				{
 					this.addItems(items);
@@ -461,7 +477,11 @@ jn.define('selector/providers/common', (require, exports, module) => {
 					return;
 				}
 			}
+			this.fetchRecent(justLoad);
+		}
 
+		fetchRecent(justLoad)
+		{
 			BX.ajax.runAction('ui.entityselector.load', {
 				json: {
 					dialog: this.getAjaxDialog(),

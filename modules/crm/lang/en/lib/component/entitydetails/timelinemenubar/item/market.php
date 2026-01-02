@@ -1,2 +1,3 @@
 <?php
-$MESS['CRM_REST_BUTTON_TITLE_2'] = 'Market';
+$MESS["CRM_REST_BUTTON_TITLE_2"] = 'Market';
+$MESS["CRM_REST_BUTTON_TITLE_MSGVER_1"] = "Market";

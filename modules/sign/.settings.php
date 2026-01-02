@@ -10,6 +10,7 @@ use Bitrix\Sign\Callback;
 use Bitrix\Sign\Service\Sign\Document\GroupService;
 use Bitrix\Sign\Service\CounterService;
 use Bitrix\Sign\Util;
+use Bitrix\Sign\Type;
 
 return [
 	'controllers' => [
@@ -30,8 +31,8 @@ return [
 	],
 	'service.address' => [
 		'value' => [
-			'by' => 'https://sign.bitrix24.ru',
 			'ru' => 'https://sign.bitrix24.ru',
+			'by' => 'https://sign.bitrix24.ru',
 
 			'eu' => 'https://sign.bitrix24.eu',
 			'de' => 'https://sign.bitrix24.eu',
@@ -156,6 +157,37 @@ return [
 		],
 		'readonly' => true,
 	],
+	'service.b2e.robot.publicity' => [
+		'value' => [
+			'ru' => true,
+			'by' => false,
+			'eu' => true,
+			'de' => true,
+			'fr' => true,
+			'it' => true,
+			'pl' => true,
+			'uk' => true,
+			'ur' => true,
+			'us' => true,
+			'en' => true,
+			'br' => true,
+			'la' => true,
+			'tr' => true,
+			'jp' => true,
+			'tc' => true,
+			'sc' => true,
+			'hi' => true,
+			'vn' => true,
+			'id' => true,
+			'ms' => true,
+			'th' => true,
+			'cn' => true,
+			'in' => true,
+			'co' => true,
+			'mx' => true,
+		],
+		'readonly' => true,
+	],
 	'service.publicity' => [
 		'value' => [
 			'ru' => true,
@@ -235,6 +267,9 @@ return [
 			],
 			'sign.service.integration.signmobile.member' => [
 				'className' => \Bitrix\Sign\Service\Integration\SignMobile\MemberService::class,
+			],
+			'sign.service.integration.humanresources.structurenode' => [
+				'className' => \Bitrix\Sign\Service\Integration\HumanResources\StructureNodeService::class,
 			],
 			'sign.container' => [
 				'className' => Service\Container::class,
@@ -495,6 +530,18 @@ return [
 			'sign.repository.document.template' => [
 				'className' => Repository\Document\TemplateRepository::class,
 			],
+			'sign.repository.signerslist' => [
+				'className' => Repository\SignersList\SignersListRepository::class,
+			],
+			'sign.repository.signerslistuser' => [
+				'className' => Repository\SignersList\SignersListUserRepository::class,
+			],
+			'sign.service.signerslist' => [
+				'className' => Service\SignersListService::class,
+			],
+			'sign.service.onboarding' => [
+				'className' => Service\OnboardingService::class,
+			],
 			'sign.repository.document.group' => [
 				'className' => Repository\Document\GroupRepository::class,
 			],
@@ -519,6 +566,9 @@ return [
 			'sign.service.integration.crm.myCompany' => [
 				'className' => Service\Integration\Crm\MyCompanyService::class,
 			],
+			'sign.service.integration.crm.entity.relation' => [
+				'className' => Service\Integration\Crm\EntityRelationService::class,
+			],
 			'sign.service.provider.memberDynamic' => [
 				'className' => Service\Providers\MemberDynamicFieldInfoProvider::class,
 			],
@@ -533,6 +583,9 @@ return [
 			],
 			'sign.service.integration.humanresources.hcmlink.signedFile' => [
 				'className' => Service\Integration\HumanResources\HcmLinkSignedFileService::class,
+			],
+			'sign.service.integration.humanresources.node' => [
+				'className' => Service\Integration\HumanResources\NodeService::class,
 			],
 			'sign.service.provider.legal' => [
 				'className' => Service\Providers\LegalInfoProvider::class,
@@ -561,6 +614,33 @@ return [
 			'sign.access.controller.factory' => [
 				'className' => \Bitrix\Sign\Access\AccessController\AccessControllerFactory::class,
 			],
+			'sign.repository.document.templateFolder' => [
+				'className' => Repository\Document\TemplateFolderRepository::class,
+			],
+			'sign.repository.document.templateGrid' => [
+				'className' => Repository\Grid\TemplateGridRepository::class,
+			],
+			'sign.repository.document.templateFolderRelation' => [
+				'className' => Repository\Document\TemplateFolderRelationRepository::class,
+			],
+			'sign.service.document.templateFolder' => [
+				'className' => Service\Sign\Document\TemplateFolderService::class,
+			],
+			'sign.service.document.template.access' => [
+				'className' => Service\Sign\Document\Template\AccessService::class,
+			],
+			'sign.service.document.template.templateFolderRelation' => [
+				'className' => Service\Sign\Document\Template\TemplateFolderRelationService::class,
+			],
+			'sign.service.sign.document.signUntil' => [
+				'className' => Service\Sign\Document\SignUntilService::class,
+			],
+			'sign.service.localizedError' => [
+				'className' => Service\LocalizedErrorService::class,
+			],
+			'sign.service.provider.visibility' => [
+				'className' => Service\Providers\ProviderVisibilityService::class,
+			],
 		]
 	],
 	'service.new.ui' => [ 'value' => true,],
@@ -574,7 +654,37 @@ return [
 						'className' => \Bitrix\Sign\Integration\Ui\EntitySelector\MyCompanyDataProvider::class,
 					],
 				],
+				[
+					'entityId' => 'sign-document',
+					'options' => [
+						'dynamicLoad' => true,
+						'dynamicSearch' => true,
+					],
+					'provider' => [
+						'moduleId' => 'sign',
+						'className' => \Bitrix\Sign\Integration\Ui\EntitySelector\SignRecentDocumentProvider::class,
+					],
+				],
+				[
+					'entityId' => 'signers-list',
+					'options' => [
+						'dynamicLoad' => true,
+						'dynamicSearch' => true,
+					],
+					'provider' => [
+						'moduleId' => 'sign',
+						'className' => \Bitrix\Sign\Integration\Ui\EntitySelector\SignersListsProvider::class,
+					],
+				],
+				[
+					'entityId' => 'sign-fired-user',
+					'provider' => [
+						'moduleId' => 'sign',
+						'className' => \Bitrix\Sign\Integration\Ui\EntitySelector\FiredUserProvider::class,
+					],
+				],
 			],
+			'extensions' => ['sign.entity-selector'],
 		],
 	],
 	'userField' => [

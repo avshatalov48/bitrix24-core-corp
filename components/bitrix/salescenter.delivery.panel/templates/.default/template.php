@@ -41,6 +41,9 @@ Bitrix24Manager::getInstance()->addIntegrationRequestButtonToToolbar(
 <div class="salescenter-delivery-title"><?=Loc::getMessage('SDP_SALESCENTER_DELIVERY_RECOMMENDATION_SUB_TITLE')?></div>
 <div id="salescenter-delivery" class="salescenter-delivery"></div>
 
+<div class="salescenter-delivery-title"><?=Loc::getMessage('SDP_SALESCENTER_DELIVERY_OTHER_SUB_TITLE')?></div>
+<div id="salescenter-other-delivery" class="salescenter-delivery"></div>
+
 <script>
 	BX.ready(function()
 	{
@@ -55,6 +58,18 @@ Bitrix24Manager::getInstance()->addIntegrationRequestButtonToToolbar(
 
 		BX.SaleCenterDelivery.init({
 			deliveryParams: deliveryParams,
+			signedParameters: '<?=CUtil::JSEscape($this->getComponent()->getSignedParameters())?>',
+		});
+
+		var otherDeliveryParams = <?=CUtil::PhpToJSObject($arResult['otherDeliveryPanelParams']);?>;
+		otherDeliveryParams.container = document.getElementById('salescenter-other-delivery');
+		otherDeliveryParams.sizeRatio = "55%";
+		otherDeliveryParams.itemMinWidth = 200;
+		otherDeliveryParams.tileMargin = 7;
+		otherDeliveryParams.itemType = 'BX.SaleCenterDelivery.TileGrid';
+
+		BX.SaleCenterDelivery.init({
+			deliveryParams: otherDeliveryParams,
 			signedParameters: '<?=CUtil::JSEscape($this->getComponent()->getSignedParameters())?>',
 		});
 	});

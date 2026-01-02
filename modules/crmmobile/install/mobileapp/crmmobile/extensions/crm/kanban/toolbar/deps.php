@@ -3,6 +3,7 @@
 return [
 	'extensions' => [
 		'loc',
+		'money',
 		'layout/ui/kanban/toolbar',
 		'layout/pure-component',
 

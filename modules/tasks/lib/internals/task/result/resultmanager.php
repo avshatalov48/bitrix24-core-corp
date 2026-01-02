@@ -83,7 +83,7 @@ class ResultManager
 	 */
 	public static function getLastResult(int $taskId): ?array
 	{
-		$res = ResultTable::GetList([
+		$res = ResultTable::getList([
 			'select' => ['ID', 'TASK_ID', 'STATUS', 'TEXT', 'CREATED_BY', 'CREATED_AT', 'UPDATED_AT'],
 			'filter' => [
 				'=TASK_ID' => $taskId,

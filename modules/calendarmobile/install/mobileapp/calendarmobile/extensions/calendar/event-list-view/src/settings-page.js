@@ -21,10 +21,6 @@ jn.define('calendar/event-list-view/settings-page', (require, exports, module) =
 			super(props);
 
 			this.layoutWidget = null;
-
-			this.handleShowDeclinedSwitcherClick = this.handleShowDeclinedSwitcherClick.bind(this);
-			this.handleShowWeekNumbersSwitcherClick = this.handleShowWeekNumbersSwitcherClick.bind(this);
-			this.handleDenyBusyInvitationSwitcherClick = this.handleDenyBusyInvitationSwitcherClick.bind(this);
 		}
 
 		show(parentLayout = PageManager)
@@ -74,87 +70,77 @@ jn.define('calendar/event-list-view/settings-page', (require, exports, module) =
 
 		renderShowDeclinedSection()
 		{
-			return Card(
-				{
-					border: true,
-					testId: 'calendar-settings-show-declined',
-				},
-				SettingSelector({
-					numberOfLinesTitle: 3,
-					title: Loc.getMessage('M_CALENDAR_EVENT_LIST_MORE_MENU_SETTINGS_SHOW_DECLINED'),
-					testId: 'calendar-settings-show-declined-switcher',
-					checked: this.props.showDeclined,
-					onClick: this.handleShowDeclinedSwitcherClick,
-				}),
-			);
+			return this.renderSection({
+				testId: 'calendar-settings-show-declined',
+				title: Loc.getMessage('M_CALENDAR_EVENT_LIST_MORE_MENU_SETTINGS_SHOW_DECLINED'),
+				checked: this.props.showDeclined,
+				onClick: this.handleShowDeclinedSwitcherClick,
+			});
 		}
 
 		renderShowWeekNumbersSection()
 		{
-			return Card(
-				{
-					style: {
-						marginTop: Indent.XL.toNumber(),
-					},
-					border: true,
-					testId: 'calendar-settings-show-week-numbers',
-				},
-				SettingSelector({
-					numberOfLinesTitle: 3,
-					title: Loc.getMessage('M_CALENDAR_EVENT_LIST_MORE_MENU_SETTINGS_SHOW_WEEK_NUMBERS'),
-					testId: 'calendar-settings-show-week-numbers-switcher',
-					checked: this.props.showWeekNumbers,
-					onClick: this.handleShowWeekNumbersSwitcherClick,
-				}),
-			);
+			return this.renderSection({
+				testId: 'calendar-settings-show-week-numbers',
+				title: Loc.getMessage('M_CALENDAR_EVENT_LIST_MORE_MENU_SETTINGS_SHOW_WEEK_NUMBERS'),
+				checked: this.props.showWeekNumbers,
+				onClick: this.handleShowWeekNumbersSwitcherClick,
+			});
 		}
 
 		renderDenyBusyInvitationSection()
 		{
+			return this.renderSection({
+				testId: 'calendar-settings-deny-busy-invitation',
+				title: Loc.getMessage('M_CALENDAR_EVENT_LIST_MORE_MENU_SETTINGS_DENY_BUSY_INVITATION'),
+				checked: this.props.denyBusyInvitation,
+				onClick: this.handleDenyBusyInvitationSwitcherClick,
+			});
+		}
+
+		renderSection({ testId, title, checked, onClick })
+		{
 			return Card(
 				{
 					style: {
-						marginTop: Indent.XL.toNumber(),
+						marginBottom: Indent.XL.toNumber(),
 					},
+					testId,
 					border: true,
-					testId: 'calendar-settings-deny-busy-invitation',
 				},
 				SettingSelector({
+					title,
+					checked,
+					onClick,
+					testId: `${testId}-switcher`,
 					numberOfLinesTitle: 3,
-					title: Loc.getMessage('M_CALENDAR_EVENT_LIST_MORE_MENU_SETTINGS_DENY_BUSY_INVITATION'),
-					testId: 'calendar-settings-deny-busy-invitation-switcher',
-					checked: this.props.denyBusyInvitation,
-					onClick: this.handleDenyBusyInvitationSwitcherClick,
 				}),
 			);
 		}
 
-		handleShowDeclinedSwitcherClick()
-		{
+		handleShowDeclinedSwitcherClick = () => {
 			const showDeclined = !this.props.showDeclined;
 			SettingsManager.switchShowDeclined(showDeclined);
 			Haptics.notifySuccess();
 
 			State.setShowDeclined(showDeclined);
-		}
+		};
 
-		handleShowWeekNumbersSwitcherClick()
-		{
+		handleShowWeekNumbersSwitcherClick = () => {
 			const showWeekNumbers = !this.props.showWeekNumbers;
 			SettingsManager.switchShowWeekNumbers(showWeekNumbers);
 			Haptics.notifySuccess();
 
 			State.setShowWeekNumbers(showWeekNumbers);
-		}
+		};
 
-		handleDenyBusyInvitationSwitcherClick()
-		{
+		handleDenyBusyInvitationSwitcherClick = () => {
 			const denyBusyInvitation = !this.props.denyBusyInvitation;
 			SettingsManager.switchDenyBusyInvitation(denyBusyInvitation);
 			Haptics.notifySuccess();
 
 			State.setDenyBusyInvitation(denyBusyInvitation);
-		}
+		};
 	}
 
 	const mapStateToProps = (state) => ({

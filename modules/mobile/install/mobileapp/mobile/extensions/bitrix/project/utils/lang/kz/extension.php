@@ -1,0 +1,12 @@
+<?php
+$MESS["MOBILE_PROJECT_NO_PROJECT_ERROR"] = "Топ табылмады немесе қолжетімділікке тыйым салынған";
+$MESS["MOBILE_PROJECT_TAB_CALENDAR"] = "Күнтізбе";
+$MESS["MOBILE_PROJECT_TAB_CALENDAR_QR_TITLE"] = "Күнтізбе";
+$MESS["MOBILE_PROJECT_TAB_DRIVE_MSGVER_1"] = "Файлдар";
+$MESS["MOBILE_PROJECT_TAB_MEMBERS_0"] = "#NUM# қатысушы";
+$MESS["MOBILE_PROJECT_TAB_MEMBERS_1"] = "#NUM# қатысушы";
+$MESS["MOBILE_PROJECT_TAB_MEMBERS_2"] = "#NUM# қатысушы";
+$MESS["MOBILE_PROJECT_TAB_NEWS"] = "Жаңалықтар";
+$MESS["MOBILE_PROJECT_TAB_NEWS2"] = "Лента";
+$MESS["MOBILE_PROJECT_TAB_TASKS"] = "Міндеттер";
+$MESS["MOBILE_PROJECT_TAB_TASKS_INPUT_PANEL_PLACEHOLDER"] = "Жаңа міндет";

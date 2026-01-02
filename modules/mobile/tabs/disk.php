@@ -9,6 +9,7 @@ use Bitrix\Mobile\Tab\Tabable;
 use Bitrix\Mobile\Tab\Utils;
 use Bitrix\MobileApp\Janative\Manager;
 use Bitrix\Disk\Integration\Bitrix24Manager;
+use Bitrix\Mobile\Menu\Analytics;
 
 final class Disk implements Tabable
 {
@@ -36,6 +37,9 @@ final class Disk implements Tabable
 	public function getMenuData()
 	{
 		return [
+			'id' => $this->getId(),
+			'sort' => 300,
+			'section_code' => 'teamwork',
 			'title' => $this->getTitle(),
 			'useLetterImage' => true,
 			'color' => '#3CD162',
@@ -49,6 +53,7 @@ final class Disk implements Tabable
 					$this->setUserVisitedDiskTabs() .
 					Utils::getComponentJSCode($this->getComponentParams())
 				),
+				'analytics' => Analytics::disk(),
 			],
 		];
 	}

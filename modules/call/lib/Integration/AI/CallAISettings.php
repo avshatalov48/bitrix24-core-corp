@@ -5,7 +5,7 @@ namespace Bitrix\Call\Integration\AI;
 use Bitrix\Main\Loader;
 use Bitrix\Main\Config\Option;
 use Bitrix\Main\Localization\Loc;
-use Bitrix\Main\Entity\EventResult;
+use Bitrix\Main\ORM\EventResult;
 use Bitrix\Main\Engine\CurrentUser;
 use Bitrix\Bitrix24\Feature;
 use Bitrix\Call\Settings;
@@ -33,15 +33,20 @@ class CallAISettings
 	public const
 		CALL_COPILOT_BAAS_SLIDER_CODE = 'limit_boost_copilot',
 		CALL_COPILOT_HELP_SLIDER_CODE = 'limit_copilot_follow_up',
-		CALL_COPILOT_DISCLAIMER_ARTICLE = '20412666'
+		CALL_COPILOT_DISCLAIMER_ARTICLE = [
+			'CIS' => '20412666',
+			'WEST' => '25775495',
+		]
 	;
 
 	private const
-		AI_FEATURE_NAME = 'ai_available_by_version';
+		AI_FEATURE_NAME = 'ai_available_by_version',
+		AI_BOX_AGREEMENT_CODE = 'AI_BOX_AGREEMENT'
+	;
 
 	private const
 		AI_TASK_WEIGHT = 10,
-		CALL_RECORD_MIN_USERS = 4,
+		CALL_RECORD_MIN_USERS = ['B24' => 4, 'BOX' => 0],
 		CALL_RECORD_MIN_LENGTH = 59
 	;
 
@@ -82,10 +87,9 @@ class CallAISettings
 			// box
 			if (\Bitrix\AI\Facade\Bitrix24::shouldUseB24() === false)
 			{
-				return true;//todo: Review agreement in box
 				$userId = $userId ?? CurrentUser::get()->getId();
 
-				return \Bitrix\AI\Agreement::get('AI_BOX_AGREEMENT')?->isAcceptedByUser($userId) ?? false;
+				return \Bitrix\AI\Agreement::get(self::AI_BOX_AGREEMENT_CODE)?->isAcceptedByUser((int)$userId) ?? false;
 			}
 
 			// b24
@@ -135,7 +139,16 @@ class CallAISettings
 	 */
 	public static function getRecordMinUsers(): int
 	{
-		return (int)Option::get('call', 'call_record_min_users', self::CALL_RECORD_MIN_USERS);
+		if (\Bitrix\Main\ModuleManager::isModuleInstalled('bitrix24'))
+		{
+			$defaultValue = self::CALL_RECORD_MIN_USERS['B24'];
+		}
+		else
+		{
+			$defaultValue = self::CALL_RECORD_MIN_USERS['BOX'];
+		}
+
+		return (int)Option::get('call', 'call_record_min_users', $defaultValue);
 	}
 
 	public static function isBaasServiceAvailable(): bool
@@ -214,8 +227,10 @@ class CallAISettings
 
 	public static function getHelpUrl(): string
 	{
-		\Bitrix\Main\Loader::includeModule('ui');
-		return \Bitrix\UI\Util::getArticleUrlByCode(self::CALL_COPILOT_HELP_SLIDER_CODE);
+		Loader::includeModule('ui');
+		$url = (new \Bitrix\UI\Helpdesk\Url())->getByCodeArticle(self::CALL_COPILOT_HELP_SLIDER_CODE);
+
+		return $url->getLocator();
 	}
 
 
@@ -229,9 +244,24 @@ class CallAISettings
 		return '/online/?FEATURE_PROMOTER='.self::CALL_COPILOT_BAAS_SLIDER_CODE;
 	}
 
+	public static function getDisclaimerArticleCode(): string
+	{
+		$isCis =
+			\Bitrix\Main\Application::getInstance()->getLicense()->isCis()
+			|| Loc::getCurrentLang() === 'ru'
+		;
+
+		return $isCis
+			? self::CALL_COPILOT_DISCLAIMER_ARTICLE['CIS']
+			: self::CALL_COPILOT_DISCLAIMER_ARTICLE['WEST']
+		;
+	}
+
 	public static function getDisclaimerUrl(): string
 	{
-		$url = (new \Bitrix\UI\Helpdesk\Url())->getByCodeArticle(self::CALL_COPILOT_DISCLAIMER_ARTICLE);
+		$article = self::getDisclaimerArticleCode();
+		Loader::includeModule('ui');
+		$url = (new \Bitrix\UI\Helpdesk\Url())->getByCodeArticle($article);
 
 		return $url->getLocator();
 	}
@@ -330,5 +360,39 @@ class CallAISettings
 		}
 
 		return false;
+	}
+
+	public static function isAIAvailableInCall(): ?CallAIError
+	{
+		$error = null;
+		if (!Settings::isAIServiceEnabled())
+		{
+			$error = new CallAIError(CallAIError::AI_UNAVAILABLE_ERROR, 'AI service is unavailable');
+		}
+		elseif (!Loader::includeModule('ai'))
+		{
+			$error = new CallAIError(CallAIError::AI_MODULE_ERROR,  'AI service is unavailable');
+		}
+		elseif (!self::isTariffAvailable())
+		{
+			$error = new CallAIError(CallAIError::AI_UNAVAILABLE_ERROR, 'AI service is unavailable');
+		}
+		elseif (!self::isEnableBySettings())
+		{
+			$error = new CallAIError(CallAIError::AI_SETTINGS_ERROR, 'AI service is disabled by settings');
+		}
+		elseif (!self::isAgreementAccepted())
+		{
+			$error = new CallAIError(CallAIError::AI_AGREEMENT_ERROR, 'AI service agreement must be accepted');
+		}
+		elseif (!self::isAutoStartRecordingEnable())
+		{
+			if (!self::isBaasServiceHasPackage())
+			{
+				$error = new CallAIError(CallAIError::AI_NOT_ENOUGH_BAAS_ERROR, 'It is not enough baas packages');
+			}
+		}
+
+		return $error;
 	}
 }

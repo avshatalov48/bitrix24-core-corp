@@ -1,6 +1,8 @@
 <?php
 
+use Bitrix\Crm\ItemMiniCard\Builder\MiniCardHtmlBuilder;
 use Bitrix\Crm\Restriction\RestrictionManager;
+use Bitrix\Main\Localization\Loc;
 
 if (!defined('B_PROLOG_INCLUDED') || B_PROLOG_INCLUDED!==true)die();
 
@@ -24,22 +26,20 @@ if (!CModule::IncludeModule('sale'))
 	return;
 }
 
+$userPermissionsService = \Bitrix\Crm\Service\Container::getInstance()->getUserPermissions();
+$currentUserID = \Bitrix\Crm\Service\Container::getInstance()->getContext()->getUserId();
+
 $CCrmInvoice = new CCrmInvoice();
-if ($CCrmInvoice->cPerms->HavePerm('INVOICE', BX_CRM_PERM_NONE, 'READ'))
+if (!$userPermissionsService->entityType()->canReadItems(CCrmOwnerType::Invoice))
 {
 	ShowError(GetMessage('CRM_PERMISSION_DENIED'));
 	return;
 }
 
-$currentUserID = CCrmSecurityHelper::GetCurrentUserID();
-$userPermissions = CCrmPerms::GetCurrentUserPermissions();
-
 CUtil::InitJSCore(array('ajax'));
 Bitrix\Main\UI\Extension::load("ui.tooltip");
 
-$currentUserID = CCrmSecurityHelper::GetCurrentUserID();
-$userPermissions = CCrmPerms::GetCurrentUserPermissions();
-$arResult['CAN_EDIT'] = !$CCrmInvoice->cPerms->HavePerm('INVOICE', BX_CRM_PERM_NONE, 'WRITE');
+$arResult['CAN_EDIT'] = $userPermissionsService->entityType()->canUpdateItems(CCrmOwnerType::Invoice);
 $arResult['EDITABLE_FIELDS'] = array(
 	'ORDER_TOPIC',
 	'RESPONSIBLE_ID',
@@ -82,10 +82,16 @@ $arFields['RESPONSIBLE_FORMATTED_NAME'] = intval($arFields['RESPONSIBLE_ID']) > 
 $arResult['CURRENCY_LIST'] = CCrmCurrencyHelper::PrepareListItems();
 $arResult['STATUS_LIST'] = array();
 $statusList = CCrmStatus::GetStatusList('INVOICE_STATUS');
+$stagePermissions = $userPermissionsService->stage();
 foreach ($statusList as $sStatusId => $sStatusTitle)
 {
-	if ($CCrmInvoice->cPerms->GetPermType('INVOICE', $bEdit ? 'WRITE' : 'ADD', array('STATUS_ID'.$sStatusId)) > BX_CRM_PERM_NONE)
+	if (
+		($bEdit && $stagePermissions->canUpdateInStage(CCrmOwnerType::Invoice, null, $sStatusId))
+		|| (!$bEdit && $stagePermissions->canAddInStage(CCrmOwnerType::Invoice, null, $sStatusId))
+	)
+	{
 		$arResult['STATUS_LIST'][$sStatusId] = $sStatusTitle;
+	}
 }
 
 $arFields['STATUS_TEXT'] = '';
@@ -115,7 +121,7 @@ elseif ($arFields['IS_RECURRING'] === "Y")
 {
 	LocalRedirect(CComponentEngine::MakePathFromTemplate($arParams['PATH_TO_INVOICE_LIST'], array()));
 }
-	
+
 unset($arFields);
 
 if (empty($arResult['ELEMENT']['ID']))
@@ -455,12 +461,12 @@ $arResult['FIELDS']['tab_1'][] = array(
 
 $arResult['FIELDS']['tab_1'][] = array(
 	'id' => 'UF_DEAL_ID',
-	'name' => GetMessage('CRM_FIELD_UF_DEAL_ID'),
+	'name' => Loc::getMessage('CRM_FIELD_UF_DEAL_ID'),
 	'value' => isset($arResult['ELEMENT']['UF_DEAL_TITLE'])
-		? (!CCrmDeal::CheckReadPermission($dealID)
-			? htmlspecialcharsbx($arResult['ELEMENT']['UF_DEAL_TITLE']) :
-			'<a href="'.$arResult['PATH_TO_DEAL_SHOW'].'" bx-tooltip-user-id="DEAL_'.$dealID.'" bx-tooltip-loader="'.htmlspecialcharsbx('/bitrix/components/bitrix/crm.deal.show/card.ajax.php').'" bx-tooltip-classname="crm_balloon_deal">'.htmlspecialcharsbx($arResult['ELEMENT']['UF_DEAL_TITLE']).'</a>'
-		) : GetMessage('CRM_INVOICE_DEAL_NOT_ASSIGNED'),
+		? (new MiniCardHtmlBuilder(CCrmOwnerType::Deal, $dealID))
+			->setTitle($arResult['ELEMENT']['UF_DEAL_TITLE'])
+			->build()
+		: Loc::getMessage('CRM_INVOICE_DEAL_NOT_ASSIGNED'),
 	'type' => 'custom',
 	'isTactile' => true
 );
@@ -469,10 +475,10 @@ $arResult['FIELDS']['tab_1'][] = array(
 	'id' => 'UF_QUOTE_ID',
 	'name' => GetMessage('CRM_FIELD_UF_QUOTE_ID'),
 	'value' => isset($arResult['ELEMENT']['UF_QUOTE_TITLE'])
-		? (!CCrmQuote::CheckReadPermission($quoteID)
-			? htmlspecialcharsbx($arResult['ELEMENT']['UF_QUOTE_TITLE']) :
-			'<a href="'.$arResult['PATH_TO_QUOTE_SHOW'].'" bx-tooltip-user-id="QUOTE_'.$quoteID.'" bx-tooltip-loader="'.htmlspecialcharsbx('/bitrix/components/bitrix/crm.quote.show/card.ajax.php').'" bx-tooltip-classname="crm_balloon_quote">'.htmlspecialcharsbx($arResult['ELEMENT']['UF_QUOTE_TITLE']).'</a>'
-		) : GetMessage('CRM_INVOICE_QUOTE_NOT_ASSIGNED'),
+		? (new MiniCardHtmlBuilder(CCrmOwnerType::Quote, $quoteID))
+			->setTitle($arResult['ELEMENT']['UF_QUOTE_TITLE'])
+			->build()
+		: Loc::getMessage('CRM_INVOICE_QUOTE_NOT_ASSIGNED'),
 	'type' => 'custom',
 	'isTactile' => true
 );
@@ -484,7 +490,10 @@ $arResult['FIELDS']['tab_1'][] = array(
 	'isTactile' => true
 );
 
-if(CCrmCompany::CheckReadPermission(0, $userPermissions) || CCrmContact::CheckReadPermission(0, $userPermissions))
+if(
+	$userPermissionsService->entityType()->canReadItems(CCrmOwnerType::Company)
+	|| $userPermissionsService->entityType()->canReadItems(CCrmOwnerType::Contact)
+)
 {
 	$companyID = isset($arResult['ELEMENT']['UF_COMPANY_ID']) ? $arResult['ELEMENT']['UF_COMPANY_ID'] : 0;
 	$contactID = isset($arResult['ELEMENT']['UF_CONTACT_ID']) ? $arResult['ELEMENT']['UF_CONTACT_ID'] : 0;
@@ -579,7 +588,7 @@ $arResult['FIELDS']['tab_1'][] = array(
 	'isTactile' => true
 );
 
-if(CCrmCompany::CheckReadPermission(0, $userPermissions))
+if($userPermissionsService->entityType()->canReadItems(CCrmOwnerType::Company))
 {
 	$myCompanyId = isset($arResult['ELEMENT']['UF_MYCOMPANY_ID']) ? (int)$arResult['ELEMENT']['UF_MYCOMPANY_ID'] : 0;
 	if ($myCompanyId > 0)

@@ -29,8 +29,7 @@ if(!function_exists('__CrmShowEndJsonResonse'))
 
 if($_SERVER["REQUEST_METHOD"]=="POST" && $_POST["action"] <> '' && check_bitrix_sessid())
 {
-	$CrmPerms = CCrmPerms::GetCurrentUserPermissions();
-	if (!$CrmPerms->HavePerm('CONFIG', BX_CRM_PERM_CONFIG, 'WRITE'))
+	if (!\Bitrix\Crm\Service\Container::getInstance()->getUserPermissions()->isCrmAdmin())
 	{
 		__CrmShowEndJsonResonse(array('error' => GetMessage("CRM_TYPE_RIGHTS_ERROR")));
 	}

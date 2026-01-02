@@ -25,7 +25,8 @@ class CopilotCallAssessmentStatus extends Badge
 				self::ERROR_VALUE,
 				Loc::getMessage('CRM_BADGE_COPILOT_CALL_ASSESSMENT_STATUS_ERROR_VALUE'),
 				ValueItemOptions::TEXT_COLOR_FAILURE,
-				ValueItemOptions::BG_COLOR_FAILURE
+				ValueItemOptions::BG_COLOR_FAILURE,
+				Loc::getMessage('CRM_BADGE_COPILOT_CALL_ASSESSMENT_STATUS_ERROR_HINT'),
 			),
 		];
 	}

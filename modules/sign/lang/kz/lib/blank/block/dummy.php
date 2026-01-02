@@ -1,0 +1,23 @@
+<?php
+$MESS["SIGN_CORE_BLOCK_DATE_HINT"] = "Ақпаратты күн пішімінде енгізуге арналған өріс, мысалы, жарамдылық мерзімі немесе келісімшарт жасалған күн";
+$MESS["SIGN_CORE_BLOCK_DATE_TITLE"] = "Күні";
+$MESS["SIGN_CORE_BLOCK_MYREQUISITES_HINT"] = "Сіздің компанияңыздың деректемелерін енгізу өрісі";
+$MESS["SIGN_CORE_BLOCK_MYREQUISITES_TITLE"] = "Деректемелер";
+$MESS["SIGN_CORE_BLOCK_MYSIGN_BLOCK_HINT"] = "Сіздің тарапыңыздың қолтаңбасы қойлатын өріс";
+$MESS["SIGN_CORE_BLOCK_MYSIGN_TITLE"] = "Қолтаңба";
+$MESS["SIGN_CORE_BLOCK_MYSTAMP_ERROR_EMPTY"] = "Компанияның мөрінің блогы қосылды, бірақ компания деректемелерінде мөр жүктелмеген.";
+$MESS["SIGN_CORE_BLOCK_MYSTAMP_HINT"] = "Сіздің компанияңыздың мөріне арналған өріс";
+$MESS["SIGN_CORE_BLOCK_MYSTAMP_TITLE"] = "Басып шығару";
+$MESS["SIGN_CORE_BLOCK_NUMBER_HINT"] = "Құжат нөмірін енгізу өрісі. Өріске нөмірді қолмен енгізуге немесе автоматты нөмірлегішті пайдалануға болады. Мысалы, нөмірлеуді қай нөмірден бастау керектігін көрсетуге болады, сонымен қатар үлкейту қадамын орнатуға болады";
+$MESS["SIGN_CORE_BLOCK_NUMBER_TITLE"] = "Нөмір";
+$MESS["SIGN_CORE_BLOCK_REFERENCE_BLOCK_HINT"] = "CRM деректерімен автоматты түрде толтырылатын өріс. Егер CRM-де қажетті деректер болмаса және өріс бос қалса, онда кез-келген қол қоюшы өрісті толтырғаннан кейін, бұл ақпарат сіздің CRM-де сақталады";
+$MESS["SIGN_CORE_BLOCK_REFERENCE_TITLE"] = "CRM өрісі";
+$MESS["SIGN_CORE_BLOCK_REQUISITES_ERROR_EMPTY"] = "\"CRM өрісі\" блогы бапталмаған.";
+$MESS["SIGN_CORE_BLOCK_REQUISITES_HINT"] = "Контрагент деректемелерін енгізу өрісі";
+$MESS["SIGN_CORE_BLOCK_REQUISITES_TITLE"] = "Деректемелер";
+$MESS["SIGN_CORE_BLOCK_SIGN_BLOCK_HINT"] = "Контрагенттің қолтаңбасы қойылатын өріс";
+$MESS["SIGN_CORE_BLOCK_SIGN_TITLE"] = "Қолтаңба";
+$MESS["SIGN_CORE_BLOCK_STAMP_HINT"] = "Контрагенттің мөріне арналған өріс";
+$MESS["SIGN_CORE_BLOCK_STAMP_TITLE"] = "Басып шығару";
+$MESS["SIGN_CORE_BLOCK_TEXT_HINT"] = "Келісімшарт талаптары сияқты кез келген мәтіндік ақпаратты енгізу өрісі";
+$MESS["SIGN_CORE_BLOCK_TEXT_TITLE"] = "Мәтін";

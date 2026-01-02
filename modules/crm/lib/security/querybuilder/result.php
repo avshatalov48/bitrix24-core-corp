@@ -33,14 +33,18 @@ class Result
 		return $this;
 	}
 
-	public function setOrmConditions(?ConditionTree $ormConditions): void
+	public function setOrmConditions(?ConditionTree $ormConditions): static
 	{
 		$this->ormConditions = $ormConditions;
+
+		return $this;
 	}
 
-	public function setEntity(?Entity $entity): void
+	public function setEntity(?Entity $entity): static
 	{
 		$this->entity = $entity;
+
+		return $this;
 	}
 
 	public function getSql(): string

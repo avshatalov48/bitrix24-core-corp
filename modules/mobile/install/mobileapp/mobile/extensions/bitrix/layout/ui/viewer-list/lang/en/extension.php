@@ -1,0 +1,2 @@
+<?php
+$MESS["M_LAYOUT_UI_VIEWER_LIST_DEFAULT_TITLE"] = "Views";

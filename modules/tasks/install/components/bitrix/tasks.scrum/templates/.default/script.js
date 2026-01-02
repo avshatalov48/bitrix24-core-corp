@@ -1,7 +1,7 @@
 /* eslint-disable */
 this.BX = this.BX || {};
 this.BX.Tasks = this.BX.Tasks || {};
-(function (exports,ui_shortView,ui_entitySelector,ui_hint,main_polyfill_intersectionobserver,main_popup,ui_dialogs_messagebox,ui_draganddrop_draggable,pull_client,main_loader,ui_analytics,main_core,main_core_events) {
+(function (exports,ui_navigationpanel,ui_shortView,ui_entitySelector,ui_hint,main_polyfill_intersectionobserver,main_popup,ui_dialogs_messagebox,ui_draganddrop_draggable,pull_client,main_loader,ui_analytics,main_core,main_core_events,ui_buttons) {
 	'use strict';
 
 	var SidePanel = /*#__PURE__*/function (_EventEmitter) {
@@ -489,35 +489,38 @@ this.BX.Tasks = this.BX.Tasks || {};
 	  return Filter;
 	}(main_core_events.EventEmitter);
 
-	var _templateObject;
-	var Tabs = /*#__PURE__*/function () {
+	var Tabs = /*#__PURE__*/function (_NavigationPanel) {
+	  babelHelpers.inherits(Tabs, _NavigationPanel);
 	  function Tabs(params) {
+	    var _this;
 	    babelHelpers.classCallCheck(this, Tabs);
-	    this.sidePanel = params.sidePanel;
-	    this.views = params.views;
-	    this.node = null;
+	    params.views.forEach(function (view) {
+	      if (main_core.Type.isStringFilled(view.url)) {
+	        view.events = {
+	          click: function click() {
+	            return _this.openUrl();
+	          }
+	        };
+	      }
+	    });
+	    _this = babelHelpers.possibleConstructorReturn(this, babelHelpers.getPrototypeOf(Tabs).call(this, {
+	      target: params.target,
+	      items: params.views
+	    }));
+	    _this.sidePanel = params.sidePanel;
+	    return _this;
 	  }
 	  babelHelpers.createClass(Tabs, [{
-	    key: "render",
-	    value: function render() {
-	      var _this = this;
-	      var planTabActiveClass = this.views['plan'].active ? 'tasks-view-switcher--item --active' : '';
-	      var activeTabActiveClass = this.views['activeSprint'].active ? 'tasks-view-switcher--item --active' : '';
-	      var completedTabActiveClass = this.views['completedSprint'].active ? 'tasks-view-switcher--item --active' : '';
-	      this.node = main_core.Tag.render(_templateObject || (_templateObject = babelHelpers.taggedTemplateLiteral(["\n\t\t\t<div class=\"tasks-view-switcher\">\n\t\t\t\t<a\n\t\t\t\t\thref=\"", "\"\n\t\t\t\t\tclass=\"tasks-view-switcher--item ", "\"\n\t\t\t\t>", "</a>\n\t\t\t\t<a\n\t\t\t\t\thref=\"", "\"\n\t\t\t\t\tclass=\"tasks-view-switcher--item ", "\"\n\t\t\t\t>", "</a>\n\t\t\t\t<a\n\t\t\t\t\thref=\"", "\"\n\t\t\t\t\tclass=\"tasks-view-switcher--item ", "\"\n\t\t\t\t>", "</a>\n\t\t\t</div>\n\t\t"])), this.views['plan'].url, planTabActiveClass, main_core.Text.encode(this.views['plan'].name), this.views['activeSprint'].url, activeTabActiveClass, main_core.Text.encode(this.views['activeSprint'].name), this.views['completedSprint'].url, completedTabActiveClass, main_core.Text.encode(this.views['completedSprint'].name));
-	      this.node.querySelectorAll('a').forEach(function (tab) {
-	        main_core.Event.bind(tab, 'click', function () {
-	          var topSidePanel = _this.sidePanel.getTopSidePanel();
-	          if (topSidePanel !== null) {
-	            topSidePanel.showLoader();
-	          }
-	        });
-	      });
-	      return this.node;
+	    key: "openUrl",
+	    value: function openUrl() {
+	      var topSidePanel = this.sidePanel.getTopSidePanel();
+	      if (topSidePanel !== null) {
+	        topSidePanel.showLoader();
+	      }
 	    }
 	  }]);
 	  return Tabs;
-	}();
+	}(ui_navigationpanel.NavigationPanel);
 
 	var View = /*#__PURE__*/function (_EventEmitter) {
 	  babelHelpers.inherits(View, _EventEmitter);
@@ -527,6 +530,7 @@ this.BX.Tasks = this.BX.Tasks || {};
 	    _this = babelHelpers.possibleConstructorReturn(this, babelHelpers.getPrototypeOf(View).call(this, params));
 	    _this.setEventNamespace('BX.Tasks.Scrum.View');
 	    _this.isOwnerCurrentUser = params.isOwnerCurrentUser === 'Y';
+	    _this.target = params.target;
 	    _this.loadItemsRepeatCounter = new Map();
 	    _this.sidePanel = new SidePanel();
 	    _this.requestSender = new RequestSender({
@@ -562,11 +566,11 @@ this.BX.Tasks = this.BX.Tasks || {};
 	      if (!main_core.Type.isDomNode(container)) {
 	        throw new Error('Scrum: HTMLElement for tabs not found');
 	      }
-	      var tabs = new Tabs({
+	      new Tabs({
 	        sidePanel: this.sidePanel,
-	        views: this.views
-	      });
-	      main_core.Dom.append(tabs.render(), container);
+	        views: this.views,
+	        target: this.target
+	      }).init();
 	    }
 	  }, {
 	    key: "renderSprintStatsTo",
@@ -617,7 +621,7 @@ this.BX.Tasks = this.BX.Tasks || {};
 	  return View;
 	}(main_core_events.EventEmitter);
 
-	var _templateObject$1;
+	var _templateObject;
 	var DiskManager = /*#__PURE__*/function (_EventEmitter) {
 	  babelHelpers.inherits(DiskManager, _EventEmitter);
 	  function DiskManager(params) {
@@ -712,7 +716,7 @@ this.BX.Tasks = this.BX.Tasks || {};
 	  }, {
 	    key: "getAttachmentsLoaderContent",
 	    value: function getAttachmentsLoaderContent(controlId) {
-	      var filesChooser = main_core.Tag.render(_templateObject$1 || (_templateObject$1 = babelHelpers.taggedTemplateLiteral(["\n\t\t\t<div id=\"files_chooser\">\n\t\t\t<div id=\"diskuf-selectdialog-", "\" class=\"diskuf-files-entity diskuf-selectdialog bx-disk\">\n\t\t\t\t<div class=\"diskuf-files-block\">\n\t\t\t\t\t<div class=\"diskuf-placeholder\">\n\t\t\t\t\t\t<table class=\"files-list\">\n\t\t\t\t\t\t\t<tbody class=\"diskuf-placeholder-tbody\"></tbody>\n\t\t\t\t\t\t</table>\n\t\t\t\t\t</div>\n\t\t\t\t</div>\n\t\t\t\t<div class=\"diskuf-extended\" style=\"display: block\">\n\t\t\t\t\t<input type=\"hidden\" name=\"[", "][]\" value=\"\"/>\n\t\t\t\t\t<div class=\"diskuf-extended-item\">\n\t\t\t\t\t\t<label for=\"file_loader_", "\">\n\t\t\t\t\t\t\t", "\n\t\t\t\t\t\t</label>\n\t\t\t\t\t\t<input\n\t\t\t\t\t\t\tclass=\"diskuf-fileUploader\"\n\t\t\t\t\t\t\tid=\"file_loader_", "\"\n\t\t\t\t\t\t\ttype=\"file\"\n\t\t\t\t\t\t\tmultiple=\"multiple\"\n\t\t\t\t\t\t\tsize=\"1\"\n\t\t\t\t\t\t\tstyle=\"display: none\"\n\t\t\t\t\t\t>\n\t\t\t\t\t</div>\n\t\t\t\t\t<div class=\"diskuf-extended-item\">\n\t\t\t\t\t\t<span class=\"diskuf-selector-link\">\n\t\t\t\t\t\t\t", "\n\t\t\t\t\t\t</span>\n\t\t\t\t\t</div>\n\t\t\t\t\t<div class=\"diskuf-extended-item\">\n\t\t\t\t\t\t<span class=\"diskuf-selector-link-cloud\" data-bx-doc-handler=\"gdrive\">\n\t\t\t\t\t\t\t<span>", "</span>\n\t\t\t\t\t\t</span>\n\t\t\t\t\t</div>\n\t\t\t\t</div>\n\t\t\t</div>\n\t\t\t</div>\n\t\t"])), controlId, controlId, controlId, main_core.Loc.getMessage('TASKS_SCRUM_FILES_LOADER_POPUP_FROM_COMPUTER'), controlId, main_core.Loc.getMessage('TASKS_SCRUM_FILES_LOADER_POPUP_FROM_B24'), main_core.Loc.getMessage('TASKS_SCRUM_FILES_LOADER_POPUP_FROM_CLOUD'));
+	      var filesChooser = main_core.Tag.render(_templateObject || (_templateObject = babelHelpers.taggedTemplateLiteral(["\n\t\t\t<div id=\"files_chooser\">\n\t\t\t<div id=\"diskuf-selectdialog-", "\" class=\"diskuf-files-entity diskuf-selectdialog bx-disk\">\n\t\t\t\t<div class=\"diskuf-files-block\">\n\t\t\t\t\t<div class=\"diskuf-placeholder\">\n\t\t\t\t\t\t<table class=\"files-list\">\n\t\t\t\t\t\t\t<tbody class=\"diskuf-placeholder-tbody\"></tbody>\n\t\t\t\t\t\t</table>\n\t\t\t\t\t</div>\n\t\t\t\t</div>\n\t\t\t\t<div class=\"diskuf-extended\" style=\"display: block\">\n\t\t\t\t\t<input type=\"hidden\" name=\"[", "][]\" value=\"\"/>\n\t\t\t\t\t<div class=\"diskuf-extended-item\">\n\t\t\t\t\t\t<label for=\"file_loader_", "\">\n\t\t\t\t\t\t\t", "\n\t\t\t\t\t\t</label>\n\t\t\t\t\t\t<input\n\t\t\t\t\t\t\tclass=\"diskuf-fileUploader\"\n\t\t\t\t\t\t\tid=\"file_loader_", "\"\n\t\t\t\t\t\t\ttype=\"file\"\n\t\t\t\t\t\t\tmultiple=\"multiple\"\n\t\t\t\t\t\t\tsize=\"1\"\n\t\t\t\t\t\t\tstyle=\"display: none\"\n\t\t\t\t\t\t>\n\t\t\t\t\t</div>\n\t\t\t\t\t<div class=\"diskuf-extended-item\">\n\t\t\t\t\t\t<span class=\"diskuf-selector-link\">\n\t\t\t\t\t\t\t", "\n\t\t\t\t\t\t</span>\n\t\t\t\t\t</div>\n\t\t\t\t\t<div class=\"diskuf-extended-item\">\n\t\t\t\t\t\t<span class=\"diskuf-selector-link-cloud\" data-bx-doc-handler=\"gdrive\">\n\t\t\t\t\t\t\t<span>", "</span>\n\t\t\t\t\t\t</span>\n\t\t\t\t\t</div>\n\t\t\t\t</div>\n\t\t\t</div>\n\t\t\t</div>\n\t\t"])), controlId, controlId, controlId, main_core.Loc.getMessage('TASKS_SCRUM_FILES_LOADER_POPUP_FROM_COMPUTER'), controlId, main_core.Loc.getMessage('TASKS_SCRUM_FILES_LOADER_POPUP_FROM_B24'), main_core.Loc.getMessage('TASKS_SCRUM_FILES_LOADER_POPUP_FROM_CLOUD'));
 
 	      /* eslint-disable */
 	      BX.addCustomEvent(filesChooser, 'OnFileUploadSuccess', this.onFileUploadSuccess.bind(this));
@@ -733,7 +737,7 @@ this.BX.Tasks = this.BX.Tasks || {};
 	  return DiskManager;
 	}(main_core_events.EventEmitter);
 
-	var _templateObject$2;
+	var _templateObject$1;
 	var Toggle = /*#__PURE__*/function (_EventEmitter) {
 	  babelHelpers.inherits(Toggle, _EventEmitter);
 	  function Toggle(params) {
@@ -749,7 +753,7 @@ this.BX.Tasks = this.BX.Tasks || {};
 	  babelHelpers.createClass(Toggle, [{
 	    key: "render",
 	    value: function render() {
-	      this.node = main_core.Tag.render(_templateObject$2 || (_templateObject$2 = babelHelpers.taggedTemplateLiteral(["\n\t\t\t<div class=\"tasks-scrum__item--btn-toggle-tasks ", "\"></div>\n\t\t"])), this.visible ? '--visible' : '');
+	      this.node = main_core.Tag.render(_templateObject$1 || (_templateObject$1 = babelHelpers.taggedTemplateLiteral(["\n\t\t\t<div class=\"tasks-scrum__item--btn-toggle-tasks ", "\"></div>\n\t\t"])), this.visible ? '--visible' : '');
 	      main_core.Event.bind(this.node, 'click', this.onClick.bind(this));
 	      return this.node;
 	    }
@@ -820,7 +824,7 @@ this.BX.Tasks = this.BX.Tasks || {};
 	  return Tool;
 	}();
 
-	var _templateObject$3, _templateObject2;
+	var _templateObject$2, _templateObject2;
 	var Name = /*#__PURE__*/function (_EventEmitter) {
 	  babelHelpers.inherits(Name, _EventEmitter);
 	  function Name(params) {
@@ -852,7 +856,7 @@ this.BX.Tasks = this.BX.Tasks || {};
 	        value = value.replace(new RegExp(Tool.escapeRegex(lastWord) + '$'), "<span>".concat(lastWord, "</span>"));
 	      }
 	      if (this.pathToTask) {
-	        this.node = main_core.Tag.render(_templateObject$3 || (_templateObject$3 = babelHelpers.taggedTemplateLiteral(["\n\t\t\t\t<a\n\t\t\t\t\thref=\"", "\"\n\t\t\t\t\tclass=\"tasks-scrum__item--title ", "\"\n\t\t\t\t>\n\t\t\t\t\t", "\n\t\t\t\t</a>\n\t\t\t"])), main_core.Text.encode(this.pathToTask), visualClasses, value);
+	        this.node = main_core.Tag.render(_templateObject$2 || (_templateObject$2 = babelHelpers.taggedTemplateLiteral(["\n\t\t\t\t<a\n\t\t\t\t\thref=\"", "\"\n\t\t\t\t\tclass=\"tasks-scrum__item--title ", "\"\n\t\t\t\t>\n\t\t\t\t\t", "\n\t\t\t\t</a>\n\t\t\t"])), main_core.Text.encode(this.pathToTask), visualClasses, value);
 	        main_core.Event.bind(this.node, 'click', function () {
 	          _this2.emit('urlClick');
 	        });
@@ -896,7 +900,7 @@ this.BX.Tasks = this.BX.Tasks || {};
 	  return Name;
 	}(main_core_events.EventEmitter);
 
-	var _templateObject$4;
+	var _templateObject$3;
 	var Checklist = /*#__PURE__*/function (_EventEmitter) {
 	  babelHelpers.inherits(Checklist, _EventEmitter);
 	  function Checklist(params) {
@@ -914,7 +918,7 @@ this.BX.Tasks = this.BX.Tasks || {};
 	    key: "render",
 	    value: function render() {
 	      var uiClasses = 'ui-label ui-label-sm ui-label-light';
-	      this.node = main_core.Tag.render(_templateObject$4 || (_templateObject$4 = babelHelpers.taggedTemplateLiteral(["\n\t\t\t<div class=\"tasks-scrum__item--entity-tasks ", " ", "\">\n\t\t\t\t", "\n\t\t\t</div>\n\t\t"])), this.all ? '--visible' : '', uiClasses, this.value);
+	      this.node = main_core.Tag.render(_templateObject$3 || (_templateObject$3 = babelHelpers.taggedTemplateLiteral(["\n\t\t\t<div class=\"tasks-scrum__item--entity-tasks ", " ", "\">\n\t\t\t\t", "\n\t\t\t</div>\n\t\t"])), this.all ? '--visible' : '', uiClasses, this.value);
 	      main_core.Event.bind(this.node, 'click', this.onClick.bind(this));
 	      return this.node;
 	    }
@@ -947,7 +951,7 @@ this.BX.Tasks = this.BX.Tasks || {};
 	  return Checklist;
 	}(main_core_events.EventEmitter);
 
-	var _templateObject$5;
+	var _templateObject$4;
 	var Files = /*#__PURE__*/function (_EventEmitter) {
 	  babelHelpers.inherits(Files, _EventEmitter);
 	  function Files(count) {
@@ -963,7 +967,7 @@ this.BX.Tasks = this.BX.Tasks || {};
 	    key: "render",
 	    value: function render() {
 	      var uiClasses = 'ui-label ui-label-sm ui-label-light';
-	      this.node = main_core.Tag.render(_templateObject$5 || (_templateObject$5 = babelHelpers.taggedTemplateLiteral(["\n\t\t\t<div class=\"tasks-scrum__item--attachment-counter ", " ", "\">\n\t\t\t\t", "\n\t\t\t</div>\n\t\t"])), this.value ? '--visible' : '', uiClasses, this.value);
+	      this.node = main_core.Tag.render(_templateObject$4 || (_templateObject$4 = babelHelpers.taggedTemplateLiteral(["\n\t\t\t<div class=\"tasks-scrum__item--attachment-counter ", " ", "\">\n\t\t\t\t", "\n\t\t\t</div>\n\t\t"])), this.value ? '--visible' : '', uiClasses, this.value);
 	      main_core.Event.bind(this.node, 'click', this.onClick.bind(this));
 	      return this.node;
 	    }
@@ -986,7 +990,7 @@ this.BX.Tasks = this.BX.Tasks || {};
 	  return Files;
 	}(main_core_events.EventEmitter);
 
-	var _templateObject$6;
+	var _templateObject$5;
 	var Comments = /*#__PURE__*/function (_EventEmitter) {
 	  babelHelpers.inherits(Comments, _EventEmitter);
 	  function Comments(taskCounter) {
@@ -1007,7 +1011,7 @@ this.BX.Tasks = this.BX.Tasks || {};
 	  babelHelpers.createClass(Comments, [{
 	    key: "render",
 	    value: function render() {
-	      this.node = main_core.Tag.render(_templateObject$6 || (_templateObject$6 = babelHelpers.taggedTemplateLiteral(["\n\t\t\t<div class=\"tasks-scrum__item--comment-counter ", "\">\n\t\t\t\t<div class='ui-counter ", "'>\n\t\t\t\t\t<div class='ui-counter-inner'>", "</div>\n\t\t\t\t</div>\n\t\t\t</div>\n\t\t"])), this.taskCounter.value ? '--visible' : '', this.taskCounter.color, parseInt(this.taskCounter.value, 10));
+	      this.node = main_core.Tag.render(_templateObject$5 || (_templateObject$5 = babelHelpers.taggedTemplateLiteral(["\n\t\t\t<div class=\"tasks-scrum__item--comment-counter ", "\">\n\t\t\t\t<div class='ui-counter ", "'>\n\t\t\t\t\t<div class='ui-counter-inner'>", "</div>\n\t\t\t\t</div>\n\t\t\t</div>\n\t\t"])), this.taskCounter.value ? '--visible' : '', this.taskCounter.color, parseInt(this.taskCounter.value, 10));
 	      main_core.Event.bind(this.node, 'click', this.onClick.bind(this));
 	      return this.node;
 	    }
@@ -1030,7 +1034,7 @@ this.BX.Tasks = this.BX.Tasks || {};
 	  return Comments;
 	}(main_core_events.EventEmitter);
 
-	var _templateObject$7, _templateObject2$1;
+	var _templateObject$6, _templateObject2$1;
 	var Epic = /*#__PURE__*/function (_EventEmitter) {
 	  babelHelpers.inherits(Epic, _EventEmitter);
 	  function Epic(epic) {
@@ -1055,7 +1059,7 @@ this.BX.Tasks = this.BX.Tasks || {};
 	  babelHelpers.createClass(Epic, [{
 	    key: "render",
 	    value: function render() {
-	      this.node = main_core.Tag.render(_templateObject$7 || (_templateObject$7 = babelHelpers.taggedTemplateLiteral(["\n\t\t\t<div class=\"tasks-scrum__item--epic ", "\">\n\t\t\t\t<i\n\t\t\t\t\tclass=\"tasks-scrum__item--epic-point\"\n\t\t\t\t\tstyle=\"", "\"\n\t\t\t\t></i>\n\t\t\t\t<span>", "</span>\n\t\t\t</div>\n\t\t"])), this.epic.id ? '--visible' : '', "background-color: ".concat(this.epic.color), main_core.Text.encode(this.epic.name));
+	      this.node = main_core.Tag.render(_templateObject$6 || (_templateObject$6 = babelHelpers.taggedTemplateLiteral(["\n\t\t\t<div class=\"tasks-scrum__item--epic ", "\">\n\t\t\t\t<i\n\t\t\t\t\tclass=\"tasks-scrum__item--epic-point\"\n\t\t\t\t\tstyle=\"", "\"\n\t\t\t\t></i>\n\t\t\t\t<span>", "</span>\n\t\t\t</div>\n\t\t"])), this.epic.id ? '--visible' : '', "background-color: ".concat(this.epic.color), main_core.Text.encode(this.epic.name));
 	      main_core.Event.bind(this.node, 'click', this.onClick.bind(this));
 	      return this.node;
 	    }
@@ -1105,7 +1109,7 @@ this.BX.Tasks = this.BX.Tasks || {};
 	  return Epic;
 	}(main_core_events.EventEmitter);
 
-	var _templateObject$8, _templateObject2$2, _templateObject3;
+	var _templateObject$7, _templateObject2$2, _templateObject3;
 	var Tags = /*#__PURE__*/function (_EventEmitter) {
 	  babelHelpers.inherits(Tags, _EventEmitter);
 	  function Tags(tags) {
@@ -1122,7 +1126,7 @@ this.BX.Tasks = this.BX.Tasks || {};
 	    value: function render() {
 	      var _this2 = this;
 	      if (this.tags.length) {
-	        this.node = main_core.Tag.render(_templateObject$8 || (_templateObject$8 = babelHelpers.taggedTemplateLiteral(["\n\t\t\t\t", "\n\t\t\t"])), this.tags.map(function (tag) {
+	        this.node = main_core.Tag.render(_templateObject$7 || (_templateObject$7 = babelHelpers.taggedTemplateLiteral(["\n\t\t\t\t", "\n\t\t\t"])), this.tags.map(function (tag) {
 	          return main_core.Tag.render(_templateObject2$2 || (_templateObject2$2 = babelHelpers.taggedTemplateLiteral(["<div class=\"tasks-scrum__item--hashtag --visible\">#", "</div>"])), main_core.Text.encode(tag));
 	        }));
 	      } else {
@@ -1161,7 +1165,7 @@ this.BX.Tasks = this.BX.Tasks || {};
 	  return Tags;
 	}(main_core_events.EventEmitter);
 
-	var _templateObject$9;
+	var _templateObject$8;
 	var Responsible = /*#__PURE__*/function (_EventEmitter) {
 	  babelHelpers.inherits(Responsible, _EventEmitter);
 	  function Responsible(responsible) {
@@ -1182,7 +1186,7 @@ this.BX.Tasks = this.BX.Tasks || {};
 	      var name = main_core.Text.encode(this.responsible.name);
 	      var src = this.responsible.photo ? main_core.Text.encode(this.responsible.photo.src) : null;
 	      var photoStyle = src ? "background-image: url('".concat(encodeURI(src), "');") : '';
-	      this.node = main_core.Tag.render(_templateObject$9 || (_templateObject$9 = babelHelpers.taggedTemplateLiteral(["\n\t\t\t<div class=\"tasks-scrum__item--responsible\">\n\t\t\t\t<div class=\"tasks-scrum__item--responsible-photo ", "\" title=\"", "\">\n\t\t\t\t\t<i style=\"", "\"></i>\n\t\t\t\t</div>\n\t\t\t\t<span>", "</span>\n\t\t\t</div>\n\t\t"])), uiClasses, name, photoStyle, name);
+	      this.node = main_core.Tag.render(_templateObject$8 || (_templateObject$8 = babelHelpers.taggedTemplateLiteral(["\n\t\t\t<div class=\"tasks-scrum__item--responsible\">\n\t\t\t\t<div class=\"tasks-scrum__item--responsible-photo ", "\" title=\"", "\">\n\t\t\t\t\t<i style=\"", "\"></i>\n\t\t\t\t</div>\n\t\t\t\t<span>", "</span>\n\t\t\t</div>\n\t\t"])), uiClasses, name, photoStyle, name);
 	      main_core.Event.bind(this.node.querySelector('div'), 'click', this.onClick.bind(this));
 	      main_core.Event.bind(this.node.querySelector('span'), 'click', this.onClick.bind(this));
 	      return this.node;
@@ -1245,7 +1249,7 @@ this.BX.Tasks = this.BX.Tasks || {};
 	  return StoryPointsStorage;
 	}();
 
-	var _templateObject$a;
+	var _templateObject$9;
 	var StoryPoints = /*#__PURE__*/function (_EventEmitter) {
 	  babelHelpers.inherits(StoryPoints, _EventEmitter);
 	  function StoryPoints(storyPoints) {
@@ -1262,7 +1266,7 @@ this.BX.Tasks = this.BX.Tasks || {};
 	    key: "render",
 	    value: function render() {
 	      var value = main_core.Text.encode(this.storyPointsStorage.getPoints());
-	      this.node = main_core.Tag.render(_templateObject$a || (_templateObject$a = babelHelpers.taggedTemplateLiteral(["\n\t\t\t<div\n\t\t\t\tclass=\"tasks-scrum__item--story-points ", "\"\n\t\t\t\ttitle=\"", "\"\n\t\t\t>\n\t\t\t\t<div class=\"tasks-scrum__item--story-points-content\">\n\t\t\t\t\t<div \n\t\t\t\t\t\tclass=\"tasks-scrum__item--story-points-element\" \n\t\t\t\t\t\ttitle=\"", "\"\n\t\t\t\t\t>\n\t\t\t\t\t\t<span class=\"tasks-scrum__item--story-points-element-text\">\n\t\t\t\t\t\t\t", "\n\t\t\t\t\t\t</span>\n\t\t\t\t\t</div>\n\t\t\t\t\t<div class=\"tasks-scrum__item--story-points-input-container\">\n\t\t\t\t\t\t<input\n\t\t\t\t\t\t\ttype=\"text\"\n\t\t\t\t\t\t\tclass=\"tasks-scrum__item--story-points-input\"\n\t\t\t\t\t\t\tvalue=\"", "\"\n\t\t\t\t\t\t>\n\t\t\t\t\t</div>\n\t\t\t\t</div>\n\t\t\t</div>\n\t\t"])), this.storyPointsStorage.isEmpty() ? '--empty' : '', main_core.Loc.getMessage('TASKS_SCRUM_SPRINT_HEADER_STORY_POINTS'), this.storyPointsStorage.isEmpty() ? '' : value, this.storyPointsStorage.isEmpty() ? '-' : value, value);
+	      this.node = main_core.Tag.render(_templateObject$9 || (_templateObject$9 = babelHelpers.taggedTemplateLiteral(["\n\t\t\t<div\n\t\t\t\tclass=\"tasks-scrum__item--story-points ", "\"\n\t\t\t\ttitle=\"", "\"\n\t\t\t>\n\t\t\t\t<div class=\"tasks-scrum__item--story-points-content\">\n\t\t\t\t\t<div \n\t\t\t\t\t\tclass=\"tasks-scrum__item--story-points-element\" \n\t\t\t\t\t\ttitle=\"", "\"\n\t\t\t\t\t>\n\t\t\t\t\t\t<span class=\"tasks-scrum__item--story-points-element-text\">\n\t\t\t\t\t\t\t", "\n\t\t\t\t\t\t</span>\n\t\t\t\t\t</div>\n\t\t\t\t\t<div class=\"tasks-scrum__item--story-points-input-container\">\n\t\t\t\t\t\t<input\n\t\t\t\t\t\t\ttype=\"text\"\n\t\t\t\t\t\t\tclass=\"tasks-scrum__item--story-points-input\"\n\t\t\t\t\t\t\tvalue=\"", "\"\n\t\t\t\t\t\t>\n\t\t\t\t\t</div>\n\t\t\t\t</div>\n\t\t\t</div>\n\t\t"])), this.storyPointsStorage.isEmpty() ? '--empty' : '', main_core.Loc.getMessage('TASKS_SCRUM_SPRINT_HEADER_STORY_POINTS'), this.storyPointsStorage.isEmpty() ? '' : value, this.storyPointsStorage.isEmpty() ? '-' : value, value);
 	      main_core.Event.bind(this.node.querySelector('.tasks-scrum__item--story-points-element'), 'click', this.onClick.bind(this));
 	      var input = this.node.querySelector('.tasks-scrum__item--story-points-input');
 	      main_core.Event.bind(input, 'blur', this.onBlur.bind(this));
@@ -1330,7 +1334,7 @@ this.BX.Tasks = this.BX.Tasks || {};
 	  return StoryPoints;
 	}(main_core_events.EventEmitter);
 
-	var _templateObject$b;
+	var _templateObject$a;
 	var SubTasks = /*#__PURE__*/function (_EventEmitter) {
 	  babelHelpers.inherits(SubTasks, _EventEmitter);
 	  function SubTasks(parentItem) {
@@ -1347,7 +1351,7 @@ this.BX.Tasks = this.BX.Tasks || {};
 	    key: "render",
 	    value: function render() {
 	      this.removeYourself();
-	      this.node = main_core.Tag.render(_templateObject$b || (_templateObject$b = babelHelpers.taggedTemplateLiteral(["<div class=\"tasks-scrum__item-sub-tasks\"></div>"])));
+	      this.node = main_core.Tag.render(_templateObject$a || (_templateObject$a = babelHelpers.taggedTemplateLiteral(["<div class=\"tasks-scrum__item-sub-tasks\"></div>"])));
 	      main_core.Event.bind(this.node, 'transitionend', this.onTransitionEnd.bind(this, this.node));
 	      return this.node;
 	    }
@@ -1486,7 +1490,7 @@ this.BX.Tasks = this.BX.Tasks || {};
 	  return SubTasks;
 	}(main_core_events.EventEmitter);
 
-	var _templateObject$c, _templateObject2$3;
+	var _templateObject$b, _templateObject2$3;
 	var Item = /*#__PURE__*/function (_EventEmitter) {
 	  babelHelpers.inherits(Item, _EventEmitter);
 	  function Item(params) {
@@ -2199,7 +2203,7 @@ this.BX.Tasks = this.BX.Tasks || {};
 	      var subClass = this.getSubTasksCount() > 1 ? ' --many ' : '';
 	      var linkedClass = this.isLinkedTask() && !this.isSubTask() ? ' --linked ' : '';
 	      var entityClass = '--item-' + this.getEntityType();
-	      this.node = main_core.Tag.render(_templateObject$c || (_templateObject$c = babelHelpers.taggedTemplateLiteral(["\n\t\t\t<div\n\t\t\t\tclass=\"tasks-scrum__item", "", "", "tasks-scrum__item--drag --short-view ", "\"\n\t\t\t\tdata-id=\"", "\"\n\t\t\t\tdata-sort=\"", "\"\n\t\t\t>\n\t\t\t<div class=\"tasks-scrum__item--bg\"></div>\n\t\t\t\t<div class=\"tasks-scrum__item--link\"></div>\n\t\t\t\t<div class=\"tasks-scrum__item--info\">\n\t\t\t\t\t", "\n\t\t\t\t\t<div class=\"tasks-scrum__item--main-info\">\n\t\t\t\t\t\t", "\n\t\t\t\t\t\t<div class=\"tasks-scrum__item--tags\">\n\t\t\t\t\t\t\t", "\n\t\t\t\t\t\t\t", "\n\t\t\t\t\t\t</div>\n\t\t\t\t\t</div>\n\t\t\t\t\t<div class=\"tasks-scrum__item--entity-content\">\n\t\t\t\t\t\t", "\n\t\t\t\t\t\t<div class=\"tasks-scrum__item--counter-container\">\n\t\t\t\t\t\t\t", "\n\t\t\t\t\t\t\t", "\n\t\t\t\t\t\t</div>\n\t\t\t\t\t</div>\n\t\t\t\t</div>\n\t\t\t\t", "\n\t\t\t\t", "\n\t\t\t\t<div class=\"tasks-scrum__item--group-mode\">\n\t\t\t\t\t<input type=\"checkbox\" class=\"tasks-scrum__item--group-mode-input\">\n\t\t\t\t</div>\n\t\t\t\t<div class=\"tasks-scrum__item--substrate\"></div>\n\t\t\t\t<div class=\"tasks-scrum__item--dragstrate\"></div>\n\t\t\t</div>\n\t\t"])), typeClass, subClass, linkedClass, entityClass, main_core.Text.encode(this.getId()), main_core.Text.encode(this.getSort()), this.toggle ? this.toggle.render() : '', this.name ? this.name.render() : '', this.epic ? this.epic.render() : '', this.tags ? this.tags.render() : '', this.comments ? this.comments.render() : '', this.files ? this.files.render() : '', this.checklist ? this.checklist.render() : '', this.responsible ? this.responsible.render() : '', !this.isSubTask() && this.storyPoints ? this.storyPoints.render() : '');
+	      this.node = main_core.Tag.render(_templateObject$b || (_templateObject$b = babelHelpers.taggedTemplateLiteral(["\n\t\t\t<div\n\t\t\t\tclass=\"tasks-scrum__item", "", "", "tasks-scrum__item--drag --short-view ", "\"\n\t\t\t\tdata-id=\"", "\"\n\t\t\t\tdata-sort=\"", "\"\n\t\t\t>\n\t\t\t<div class=\"tasks-scrum__item--bg\"></div>\n\t\t\t\t<div class=\"tasks-scrum__item--link\"></div>\n\t\t\t\t<div class=\"tasks-scrum__item--info\">\n\t\t\t\t\t", "\n\t\t\t\t\t<div class=\"tasks-scrum__item--main-info\">\n\t\t\t\t\t\t", "\n\t\t\t\t\t\t<div class=\"tasks-scrum__item--tags\">\n\t\t\t\t\t\t\t", "\n\t\t\t\t\t\t\t", "\n\t\t\t\t\t\t</div>\n\t\t\t\t\t</div>\n\t\t\t\t\t<div class=\"tasks-scrum__item--entity-content\">\n\t\t\t\t\t\t", "\n\t\t\t\t\t\t<div class=\"tasks-scrum__item--counter-container\">\n\t\t\t\t\t\t\t", "\n\t\t\t\t\t\t\t", "\n\t\t\t\t\t\t</div>\n\t\t\t\t\t</div>\n\t\t\t\t</div>\n\t\t\t\t", "\n\t\t\t\t", "\n\t\t\t\t<div class=\"tasks-scrum__item--group-mode\">\n\t\t\t\t\t<input type=\"checkbox\" class=\"tasks-scrum__item--group-mode-input\">\n\t\t\t\t</div>\n\t\t\t\t<div class=\"tasks-scrum__item--substrate\"></div>\n\t\t\t\t<div class=\"tasks-scrum__item--dragstrate\"></div>\n\t\t\t</div>\n\t\t"])), typeClass, subClass, linkedClass, entityClass, main_core.Text.encode(this.getId()), main_core.Text.encode(this.getSort()), this.toggle ? this.toggle.render() : '', this.name ? this.name.render() : '', this.epic ? this.epic.render() : '', this.tags ? this.tags.render() : '', this.comments ? this.comments.render() : '', this.files ? this.files.render() : '', this.checklist ? this.checklist.render() : '', this.responsible ? this.responsible.render() : '', !this.isSubTask() && this.storyPoints ? this.storyPoints.render() : '');
 	      main_core.Event.bind(this.node, 'click', this.onItemClick.bind(this));
 	      this.updateBorderColor();
 	      return this.node;
@@ -2453,7 +2457,7 @@ this.BX.Tasks = this.BX.Tasks || {};
 	  return Item;
 	}(main_core_events.EventEmitter);
 
-	var _templateObject$d, _templateObject2$4;
+	var _templateObject$c, _templateObject2$4;
 	var ListItems = /*#__PURE__*/function () {
 	  function ListItems(entity) {
 	    babelHelpers.classCallCheck(this, ListItems);
@@ -2464,7 +2468,7 @@ this.BX.Tasks = this.BX.Tasks || {};
 	    key: "render",
 	    value: function render() {
 	      var _this = this;
-	      this.node = main_core.Tag.render(_templateObject$d || (_templateObject$d = babelHelpers.taggedTemplateLiteral(["\n\t\t\t<div class=\"tasks-scrum__content-items\" data-entity-id=\"", "\">\n\t\t\t\t", "\n\t\t\t\t", "\n\t\t\t</div>\n\t\t"])), this.entity.getId(), babelHelpers.toConsumableArray(this.entity.getItems().values()).map(function (item) {
+	      this.node = main_core.Tag.render(_templateObject$c || (_templateObject$c = babelHelpers.taggedTemplateLiteral(["\n\t\t\t<div class=\"tasks-scrum__content-items\" data-entity-id=\"", "\">\n\t\t\t\t", "\n\t\t\t\t", "\n\t\t\t</div>\n\t\t"])), this.entity.getId(), babelHelpers.toConsumableArray(this.entity.getItems().values()).map(function (item) {
 	        item.setEntityType(_this.entity.getEntityType());
 	        return item.render();
 	      }), this.renderLoader());
@@ -3179,7 +3183,7 @@ this.BX.Tasks = this.BX.Tasks || {};
 	babelHelpers.defineProperty(TagSearcher, "tagRegExp", '#([^\\s,\\[\\]<>]+)');
 	babelHelpers.defineProperty(TagSearcher, "epicRegExp", '@[^#@](?:[^#@]*[^\s#@])?');
 
-	var _templateObject$e;
+	var _templateObject$d;
 	var Input = /*#__PURE__*/function (_EventEmitter) {
 	  babelHelpers.inherits(Input, _EventEmitter);
 	  function Input() {
@@ -3231,7 +3235,7 @@ this.BX.Tasks = this.BX.Tasks || {};
 	    value: function render() {
 	      var _this2 = this;
 	      this.nodeId = main_core.Text.getRandom();
-	      this.node = main_core.Tag.render(_templateObject$e || (_templateObject$e = babelHelpers.taggedTemplateLiteral(["\n\t\t\t<div id=\"", "\" class=\"tasks-scrum__input --add-block\">\n\t\t\t\t<textarea\n\t\t\t\t\tplaceholder=\"", "\"\n\t\t\t\t\tclass=\"tasks-scrum__input--textarea\"\n\t\t\t\t>", "</textarea>\n\t\t\t\t<div class=\"tasks-scrum__input--textarea-help\">\n\t\t\t\t\t", "\n\t\t\t\t</div>\n\t\t\t</div>\n\t\t"])), main_core.Text.encode(this.nodeId), main_core.Loc.getMessage('TASKS_SCRUM_TASK_ADD_INPUT_TASK_PLACEHOLDER'), main_core.Text.encode(this.value), main_core.Loc.getMessage('TASKS_SCRUM_TASK_ADD_INPUT_TASK_PLACEHOLDER_HELPER'));
+	      this.node = main_core.Tag.render(_templateObject$d || (_templateObject$d = babelHelpers.taggedTemplateLiteral(["\n\t\t\t<div id=\"", "\" class=\"tasks-scrum__input --add-block\">\n\t\t\t\t<textarea\n\t\t\t\t\tplaceholder=\"", "\"\n\t\t\t\t\tclass=\"tasks-scrum__input--textarea\"\n\t\t\t\t>", "</textarea>\n\t\t\t\t<div class=\"tasks-scrum__input--textarea-help\">\n\t\t\t\t\t", "\n\t\t\t\t</div>\n\t\t\t</div>\n\t\t"])), main_core.Text.encode(this.nodeId), main_core.Loc.getMessage('TASKS_SCRUM_TASK_ADD_INPUT_TASK_PLACEHOLDER'), main_core.Text.encode(this.value), main_core.Loc.getMessage('TASKS_SCRUM_TASK_ADD_INPUT_TASK_PLACEHOLDER_HELPER'));
 	      main_core.Event.bind(this.getInputNode(), 'input', function (event) {
 	        _this2.onTagSearch(event);
 	        _this2.onEpicSearch(event);
@@ -4064,7 +4068,7 @@ this.BX.Tasks = this.BX.Tasks || {};
 	  return Entity;
 	}(main_core_events.EventEmitter);
 
-	var _templateObject$f, _templateObject2$5;
+	var _templateObject$e, _templateObject2$5;
 	var Header = /*#__PURE__*/function (_EventEmitter) {
 	  babelHelpers.inherits(Header, _EventEmitter);
 	  function Header(backlog) {
@@ -4085,7 +4089,7 @@ this.BX.Tasks = this.BX.Tasks || {};
 	    value: function render() {
 	      var uiEpicClasses = 'ui-btn ui-btn-sm ui-btn-light-border ui-btn-themes ui-btn-round ui-btn-no-caps';
 	      var uiTaskClasses = 'ui-btn ui-btn-sm ui-btn-success ui-btn-round ui-btn-no-caps ';
-	      this.node = main_core.Tag.render(_templateObject$f || (_templateObject$f = babelHelpers.taggedTemplateLiteral(["\n\t\t\t<div class=\"tasks-scrum__content-header\">\n\n\t\t\t\t<div class=\"tasks-scrum__name-container\">\n\t\t\t\t\t<div class=\"tasks-scrum__title\">\n\t\t\t\t\t\t", "\n\t\t\t\t\t</div>\n\t\t\t\t\t", "\n\t\t\t\t</div>\n\n\t\t\t\t<button class=\"tasks-scrum__backlog-btn ", " ui-btn-icon-add\">\n\t\t\t\t\t", "\n\t\t\t\t</button>\n\t\t\t\t<button class=\"tasks-scrum__backlog-btn ", " ui-btn-icon-add\">\n\t\t\t\t\t", "\n\t\t\t\t</button>\n\n\t\t\t</div>\n\t\t"])), main_core.Loc.getMessage('TASKS_SCRUM_BACKLOG_TITLE'), this.renderTaskCounterLabel(this.backlog.getNumberTasks()), uiEpicClasses, main_core.Loc.getMessage('TASKS_SCRUM_BACKLOG_HEADER_EPIC'), uiTaskClasses, main_core.Loc.getMessage('TASKS_SCRUM_BACKLOG_HEADER_TASK'));
+	      this.node = main_core.Tag.render(_templateObject$e || (_templateObject$e = babelHelpers.taggedTemplateLiteral(["\n\t\t\t<div class=\"tasks-scrum__content-header\">\n\n\t\t\t\t<div class=\"tasks-scrum__name-container\">\n\t\t\t\t\t<div class=\"tasks-scrum__title\">\n\t\t\t\t\t\t", "\n\t\t\t\t\t</div>\n\t\t\t\t\t", "\n\t\t\t\t</div>\n\n\t\t\t\t<button class=\"tasks-scrum__backlog-btn ", " ui-btn-icon-add\">\n\t\t\t\t\t", "\n\t\t\t\t</button>\n\t\t\t\t<button class=\"tasks-scrum__backlog-btn ", " ui-btn-icon-add\">\n\t\t\t\t\t", "\n\t\t\t\t</button>\n\n\t\t\t</div>\n\t\t"])), main_core.Loc.getMessage('TASKS_SCRUM_BACKLOG_TITLE'), this.renderTaskCounterLabel(this.backlog.getNumberTasks()), uiEpicClasses, main_core.Loc.getMessage('TASKS_SCRUM_BACKLOG_HEADER_EPIC'), uiTaskClasses, main_core.Loc.getMessage('TASKS_SCRUM_BACKLOG_HEADER_TASK'));
 	      var buttons = this.node.querySelectorAll('button');
 	      this.epicButton = buttons.item(0);
 	      this.taskButton = buttons.item(1);
@@ -4149,7 +4153,7 @@ this.BX.Tasks = this.BX.Tasks || {};
 	  return Header;
 	}(main_core_events.EventEmitter);
 
-	var _templateObject$g, _templateObject2$6;
+	var _templateObject$f, _templateObject2$6;
 	var Blank = /*#__PURE__*/function () {
 	  function Blank(entity) {
 	    babelHelpers.classCallCheck(this, Blank);
@@ -4168,7 +4172,7 @@ this.BX.Tasks = this.BX.Tasks || {};
 	  }, {
 	    key: "renderBacklog",
 	    value: function renderBacklog() {
-	      this.node = main_core.Tag.render(_templateObject$g || (_templateObject$g = babelHelpers.taggedTemplateLiteral(["\n\t\t\t<div class=\"tasks-scrum__backlog-empty\">\n\t\t\t\t<div class=\"tasks-scrum__backlog-empty--icon\"></div>\n\t\t\t\t<div class=\"tasks-scrum__backlog-empty--title\">\n\t\t\t\t\t", "\n\t\t\t\t</div>\n\t\t\t\t<div class=\"tasks-scrum__backlog-empty--subtitle\">\n\t\t\t\t\t", "\n\t\t\t\t</div>\n\t\t\t\t<div class=\"tasks-scrum__backlog-empty--text\">\n\t\t\t\t\t", "\n\t\t\t\t</div>\n\t\t\t\t<div class=\"tasks-scrum__backlog-empty--text\">\n\t\t\t\t\t", "\n\t\t\t\t</div>\n\t\t\t</div>\n\t\t"])), main_core.Loc.getMessage('TASKS_SCRUM_BACKLOG_BLANK_1'), main_core.Loc.getMessage('TASKS_SCRUM_BACKLOG_BLANK_2'), main_core.Loc.getMessage('TASKS_SCRUM_BACKLOG_BLANK_3'), main_core.Loc.getMessage('TASKS_SCRUM_BACKLOG_BLANK_4'));
+	      this.node = main_core.Tag.render(_templateObject$f || (_templateObject$f = babelHelpers.taggedTemplateLiteral(["\n\t\t\t<div class=\"tasks-scrum__backlog-empty\">\n\t\t\t\t<div class=\"tasks-scrum__backlog-empty--icon\"></div>\n\t\t\t\t<div class=\"tasks-scrum__backlog-empty--title\">\n\t\t\t\t\t", "\n\t\t\t\t</div>\n\t\t\t\t<div class=\"tasks-scrum__backlog-empty--subtitle\">\n\t\t\t\t\t", "\n\t\t\t\t</div>\n\t\t\t\t<div class=\"tasks-scrum__backlog-empty--text\">\n\t\t\t\t\t", "\n\t\t\t\t</div>\n\t\t\t\t<div class=\"tasks-scrum__backlog-empty--text\">\n\t\t\t\t\t", "\n\t\t\t\t</div>\n\t\t\t</div>\n\t\t"])), main_core.Loc.getMessage('TASKS_SCRUM_BACKLOG_BLANK_1'), main_core.Loc.getMessage('TASKS_SCRUM_BACKLOG_BLANK_2'), main_core.Loc.getMessage('TASKS_SCRUM_BACKLOG_BLANK_3'), main_core.Loc.getMessage('TASKS_SCRUM_BACKLOG_BLANK_4'));
 	      return this.node;
 	    }
 	  }, {
@@ -4192,7 +4196,7 @@ this.BX.Tasks = this.BX.Tasks || {};
 	  return Blank;
 	}();
 
-	var _templateObject$h, _templateObject2$7, _templateObject3$1, _templateObject4;
+	var _templateObject$g, _templateObject2$7, _templateObject3$1, _templateObject4;
 	var Dropzone = /*#__PURE__*/function (_EventEmitter) {
 	  babelHelpers.inherits(Dropzone, _EventEmitter);
 	  function Dropzone(entity) {
@@ -4229,7 +4233,7 @@ this.BX.Tasks = this.BX.Tasks || {};
 	    key: "renderBacklog",
 	    value: function renderBacklog() {
 	      var _this2 = this;
-	      this.node = main_core.Tag.render(_templateObject$h || (_templateObject$h = babelHelpers.taggedTemplateLiteral(["\n\t\t\t<div class=\"tasks-scrum__content-empty --empty-backlog\" data-entity-id=\"", "\">\n\t\t\t\t", "\n\t\t\t</div>\n\t\t"])), this.entity.getId(), main_core.Loc.getMessage('TASKS_SCRUM_BACKLOG_DROPZONE_1'));
+	      this.node = main_core.Tag.render(_templateObject$g || (_templateObject$g = babelHelpers.taggedTemplateLiteral(["\n\t\t\t<div class=\"tasks-scrum__content-empty --empty-backlog\" data-entity-id=\"", "\">\n\t\t\t\t", "\n\t\t\t</div>\n\t\t"])), this.entity.getId(), main_core.Loc.getMessage('TASKS_SCRUM_BACKLOG_DROPZONE_1'));
 	      main_core.Event.bind(this.node, 'click', function () {
 	        return _this2.emit('createTask');
 	      });
@@ -4265,7 +4269,7 @@ this.BX.Tasks = this.BX.Tasks || {};
 	  return Dropzone;
 	}(main_core_events.EventEmitter);
 
-	var _templateObject$i;
+	var _templateObject$h;
 	var EmptySearchStub = /*#__PURE__*/function () {
 	  function EmptySearchStub(entity) {
 	    babelHelpers.classCallCheck(this, EmptySearchStub);
@@ -4275,7 +4279,7 @@ this.BX.Tasks = this.BX.Tasks || {};
 	  babelHelpers.createClass(EmptySearchStub, [{
 	    key: "render",
 	    value: function render() {
-	      this.node = main_core.Tag.render(_templateObject$i || (_templateObject$i = babelHelpers.taggedTemplateLiteral(["\n\t\t\t<div class=\"tasks-scrum__content-empty --no-results\">\n\t\t\t\t", "\n\t\t\t</div>\n\t\t"])), this.getStubText());
+	      this.node = main_core.Tag.render(_templateObject$h || (_templateObject$h = babelHelpers.taggedTemplateLiteral(["\n\t\t\t<div class=\"tasks-scrum__content-empty --no-results\">\n\t\t\t\t", "\n\t\t\t</div>\n\t\t"])), this.getStubText());
 	      return this.node;
 	    }
 	  }, {
@@ -4296,7 +4300,7 @@ this.BX.Tasks = this.BX.Tasks || {};
 	  return EmptySearchStub;
 	}();
 
-	var _templateObject$j;
+	var _templateObject$i;
 	var Backlog = /*#__PURE__*/function (_Entity) {
 	  babelHelpers.inherits(Backlog, _Entity);
 	  function Backlog(params) {
@@ -4378,7 +4382,7 @@ this.BX.Tasks = this.BX.Tasks || {};
 	  }, {
 	    key: "render",
 	    value: function render() {
-	      this.node = main_core.Tag.render(_templateObject$j || (_templateObject$j = babelHelpers.taggedTemplateLiteral(["\n\t\t\t<div class=\"tasks-scrum__backlog\">\n\t\t\t\t<div class=\"tasks-scrum__content --with-header --open\">\n\t\t\t\t\t", "\n\t\t\t\t\t", "\n\t\t\t\t\t", "\n\t\t\t\t\t", "\n\t\t\t\t\t", "\n\t\t\t\t</div>\n\t\t\t</div>\n\t\t"])), this.header ? this.header.render() : '', this.blank ? this.blank.render() : '', this.dropzone ? this.dropzone.render() : '', this.emptySearchStub ? this.emptySearchStub.render() : '', this.listItems ? this.listItems.render() : '');
+	      this.node = main_core.Tag.render(_templateObject$i || (_templateObject$i = babelHelpers.taggedTemplateLiteral(["\n\t\t\t<div class=\"tasks-scrum__backlog\">\n\t\t\t\t<div class=\"tasks-scrum__content --with-header --open\">\n\t\t\t\t\t", "\n\t\t\t\t\t", "\n\t\t\t\t\t", "\n\t\t\t\t\t", "\n\t\t\t\t\t", "\n\t\t\t\t</div>\n\t\t\t</div>\n\t\t"])), this.header ? this.header.render() : '', this.blank ? this.blank.render() : '', this.dropzone ? this.dropzone.render() : '', this.emptySearchStub ? this.emptySearchStub.render() : '', this.listItems ? this.listItems.render() : '');
 	      main_core.Event.bind(this.node.querySelector('.tasks-scrum__content-items'), 'scroll', this.onItemsScroll.bind(this));
 	      return this.node;
 	    }
@@ -4472,7 +4476,7 @@ this.BX.Tasks = this.BX.Tasks || {};
 	  value: void 0
 	};
 
-	var _templateObject$k;
+	var _templateObject$j;
 	var Date$1 = /*#__PURE__*/function (_EventEmitter) {
 	  babelHelpers.inherits(Date, _EventEmitter);
 	  function Date(sprint) {
@@ -4490,7 +4494,7 @@ this.BX.Tasks = this.BX.Tasks || {};
 	      if (this.sprint.isActive() || this.sprint.isCompleted()) {
 	        return '';
 	      }
-	      this.node = main_core.Tag.render(_templateObject$k || (_templateObject$k = babelHelpers.taggedTemplateLiteral(["\n\t\t\t<div class=\"tasks-scrum__sprint--date-container\">\n\t\t\t\t<div class=\"tasks-scrum__sprint--date --start\">", "</div>\n\t\t\t\t<div class=\"tasks-scrum__sprint--date-separator\"> - </div>\n\t\t\t\t<div class=\"tasks-scrum__sprint--date --end\">", "</div>\n\t\t\t\t<input type=\"hidden\" name=\"dateStart\" value=\"", ")\">\n\t\t\t\t<input type=\"hidden\" name=\"dateEnd\" value=\"", "\">\n\t\t\t</div>\n\t\t"])), Date.getFormattedDateStart(this.sprint), Date.getFormattedDateEnd(this.sprint), main_core.Text.encode(this.sprint.getDateStartFormatted()), main_core.Text.encode(this.sprint.getDateEndFormatted()));
+	      this.node = main_core.Tag.render(_templateObject$j || (_templateObject$j = babelHelpers.taggedTemplateLiteral(["\n\t\t\t<div class=\"tasks-scrum__sprint--date-container\">\n\t\t\t\t<div class=\"tasks-scrum__sprint--date --start\">", "</div>\n\t\t\t\t<div class=\"tasks-scrum__sprint--date-separator\"> - </div>\n\t\t\t\t<div class=\"tasks-scrum__sprint--date --end\">", "</div>\n\t\t\t\t<input type=\"hidden\" name=\"dateStart\" value=\"", ")\">\n\t\t\t\t<input type=\"hidden\" name=\"dateEnd\" value=\"", "\">\n\t\t\t</div>\n\t\t"])), Date.getFormattedDateStart(this.sprint), Date.getFormattedDateEnd(this.sprint), main_core.Text.encode(this.sprint.getDateStartFormatted()), main_core.Text.encode(this.sprint.getDateEndFormatted()));
 	      this.bindEvents();
 	      return this.node;
 	    }
@@ -4624,7 +4628,7 @@ this.BX.Tasks = this.BX.Tasks || {};
 	  return StatsCalculator;
 	}();
 
-	var _templateObject$l;
+	var _templateObject$k;
 	var Stats = /*#__PURE__*/function (_EventEmitter) {
 	  babelHelpers.inherits(Stats, _EventEmitter);
 	  function Stats(sprint) {
@@ -4651,7 +4655,7 @@ this.BX.Tasks = this.BX.Tasks || {};
 	  }, {
 	    key: "render",
 	    value: function render() {
-	      this.node = main_core.Tag.render(_templateObject$l || (_templateObject$l = babelHelpers.taggedTemplateLiteral(["<div></div>"])));
+	      this.node = main_core.Tag.render(_templateObject$k || (_templateObject$k = babelHelpers.taggedTemplateLiteral(["<div></div>"])));
 	      return this.node;
 	    }
 	  }, {
@@ -4727,7 +4731,7 @@ this.BX.Tasks = this.BX.Tasks || {};
 	  return Stats;
 	}(main_core_events.EventEmitter);
 
-	var _templateObject$m;
+	var _templateObject$l;
 	var CompletedStats = /*#__PURE__*/function (_Stats) {
 	  babelHelpers.inherits(CompletedStats, _Stats);
 	  function CompletedStats() {
@@ -4741,7 +4745,7 @@ this.BX.Tasks = this.BX.Tasks || {};
 	      var completedDate = this.getCompletedDate(this.getEndDate());
 	      var label = main_core.Loc.getMessage('TASKS_SCRUM_SPRINT_STATS_COMPLETED_LABEL').replace('#percent#', percentage).replace('#date#', completedDate);
 	      var title = Date$1.getFormattedTitleDatePeriod(this.sprint);
-	      this.node = main_core.Tag.render(_templateObject$m || (_templateObject$m = babelHelpers.taggedTemplateLiteral(["\n\t\t\t<div title=\"", "\">\n\t\t\t\t", "\n\t\t\t</div>\n\t\t"])), title, label);
+	      this.node = main_core.Tag.render(_templateObject$l || (_templateObject$l = babelHelpers.taggedTemplateLiteral(["\n\t\t\t<div title=\"", "\">\n\t\t\t\t", "\n\t\t\t</div>\n\t\t"])), title, label);
 	      return this.node;
 	    }
 	  }, {
@@ -4753,7 +4757,7 @@ this.BX.Tasks = this.BX.Tasks || {};
 	  return CompletedStats;
 	}(Stats);
 
-	var _templateObject$n;
+	var _templateObject$m;
 	var ExpiredStats = /*#__PURE__*/function (_Stats) {
 	  babelHelpers.inherits(ExpiredStats, _Stats);
 	  function ExpiredStats() {
@@ -4767,7 +4771,7 @@ this.BX.Tasks = this.BX.Tasks || {};
 	      var expiredDay = this.getExpiredDay(this.getEndDate());
 	      var label = main_core.Loc.getMessage('TASKS_SCRUM_SPRINT_STATS_EXPIRED_LABEL').replace('#percent#', percentage).replace('#date#', expiredDay);
 	      var title = Date$1.getFormattedTitleDatePeriod(this.sprint);
-	      this.node = main_core.Tag.render(_templateObject$n || (_templateObject$n = babelHelpers.taggedTemplateLiteral(["\n\t\t\t<div title=\"", "\">\n\t\t\t\t", "\n\t\t\t</div>\n\t\t"])), title, label);
+	      this.node = main_core.Tag.render(_templateObject$m || (_templateObject$m = babelHelpers.taggedTemplateLiteral(["\n\t\t\t<div title=\"", "\">\n\t\t\t\t", "\n\t\t\t</div>\n\t\t"])), title, label);
 	      return this.node;
 	    }
 	  }, {
@@ -4779,7 +4783,7 @@ this.BX.Tasks = this.BX.Tasks || {};
 	  return ExpiredStats;
 	}(Stats);
 
-	var _templateObject$o;
+	var _templateObject$n;
 	var ActiveStats = /*#__PURE__*/function (_Stats) {
 	  babelHelpers.inherits(ActiveStats, _Stats);
 	  function ActiveStats() {
@@ -4798,7 +4802,7 @@ this.BX.Tasks = this.BX.Tasks || {};
 	        label = main_core.Loc.getMessage('TASKS_SCRUM_SPRINT_STATS_ACTIVE_LABEL').replace('#days#', remainingDays).replace('#percent#', percentage);
 	      }
 	      var title = Date$1.getFormattedTitleDatePeriod(this.sprint);
-	      this.node = main_core.Tag.render(_templateObject$o || (_templateObject$o = babelHelpers.taggedTemplateLiteral(["\n\t\t\t<div title=\"", "\">\n\t\t\t\t", "\n\t\t\t</div>\n\t\t"])), title, label);
+	      this.node = main_core.Tag.render(_templateObject$n || (_templateObject$n = babelHelpers.taggedTemplateLiteral(["\n\t\t\t<div title=\"", "\">\n\t\t\t\t", "\n\t\t\t</div>\n\t\t"])), title, label);
 	      return this.node;
 	    }
 	  }, {
@@ -4843,7 +4847,7 @@ this.BX.Tasks = this.BX.Tasks || {};
 	  return StatsBuilder;
 	}();
 
-	var _templateObject$p;
+	var _templateObject$o;
 	var Stats$1 = /*#__PURE__*/function (_EventEmitter) {
 	  babelHelpers.inherits(Stats, _EventEmitter);
 	  function Stats(sprint) {
@@ -4859,7 +4863,7 @@ this.BX.Tasks = this.BX.Tasks || {};
 	    key: "render",
 	    value: function render() {
 	      var stats = StatsBuilder.build(this.sprint);
-	      this.node = main_core.Tag.render(_templateObject$p || (_templateObject$p = babelHelpers.taggedTemplateLiteral(["\n\t\t\t<div class=\"tasks-scrum__content--event-params\">\n\t\t\t\t", "\n\t\t\t</div>\n\t\t"])), stats.render());
+	      this.node = main_core.Tag.render(_templateObject$o || (_templateObject$o = babelHelpers.taggedTemplateLiteral(["\n\t\t\t<div class=\"tasks-scrum__content--event-params\">\n\t\t\t\t", "\n\t\t\t</div>\n\t\t"])), stats.render());
 	      return this.node;
 	    }
 	  }, {
@@ -4871,7 +4875,7 @@ this.BX.Tasks = this.BX.Tasks || {};
 	  return Stats;
 	}(main_core_events.EventEmitter);
 
-	var _templateObject$q, _templateObject2$8, _templateObject3$2, _templateObject4$1;
+	var _templateObject$p, _templateObject2$8, _templateObject3$2, _templateObject4$1;
 	var Name$1 = /*#__PURE__*/function (_EventEmitter) {
 	  babelHelpers.inherits(Name, _EventEmitter);
 	  function Name(sprint) {
@@ -4916,7 +4920,7 @@ this.BX.Tasks = this.BX.Tasks || {};
 	    key: "render",
 	    value: function render() {
 	      var _this3 = this;
-	      this.node = main_core.Tag.render(_templateObject$q || (_templateObject$q = babelHelpers.taggedTemplateLiteral(["\n\t\t\t<div class=\"tasks-scrum__name-container\">\n\t\t\t\t", "\n\t\t\t\t<div class=\"tasks-scrum__title\">\n\t\t\t\t\t", "\n\t\t\t\t</div>\n\t\t\t\t", "\n\t\t\t\t", "\n\t\t\t\t", "\n\t\t\t\t", "\n\t\t"])), this.renderEditInput(), main_core.Text.encode(this.sprint.getName()), this.renderEdit(), this.renderRemove(), this.date ? this.date.render() : '', this.stats ? this.stats.render() : '');
+	      this.node = main_core.Tag.render(_templateObject$p || (_templateObject$p = babelHelpers.taggedTemplateLiteral(["\n\t\t\t<div class=\"tasks-scrum__name-container\">\n\t\t\t\t", "\n\t\t\t\t<div class=\"tasks-scrum__title\">\n\t\t\t\t\t", "\n\t\t\t\t</div>\n\t\t\t\t", "\n\t\t\t\t", "\n\t\t\t\t", "\n\t\t\t\t", "\n\t\t"])), this.renderEditInput(), main_core.Text.encode(this.sprint.getName()), this.renderEdit(), this.renderRemove(), this.date ? this.date.render() : '', this.stats ? this.stats.render() : '');
 	      var titleNode = this.node.querySelector('.tasks-scrum__title');
 	      var editNode = this.node.querySelector('.tasks-scrum__sprint--edit');
 	      main_core.Event.bind(titleNode, 'click', function () {
@@ -4973,7 +4977,7 @@ this.BX.Tasks = this.BX.Tasks || {};
 	  return Name;
 	}(main_core_events.EventEmitter);
 
-	var _templateObject$r;
+	var _templateObject$q;
 	var ChartIcon = /*#__PURE__*/function (_EventEmitter) {
 	  babelHelpers.inherits(ChartIcon, _EventEmitter);
 	  function ChartIcon(sprint) {
@@ -4989,7 +4993,7 @@ this.BX.Tasks = this.BX.Tasks || {};
 	    key: "render",
 	    value: function render() {
 	      var uiChartStyles = 'ui-btn ui-btn-xs ui-btn-light ui-btn-round';
-	      this.node = main_core.Tag.render(_templateObject$r || (_templateObject$r = babelHelpers.taggedTemplateLiteral(["\n\t\t\t<div class=\"tasks-scrum__sprint--btn-burn-down-chart\">\n\t\t\t\t<div class=\"tasks-scrum__sprint--icon-burn-down-chart ", "\"></div>\n\t\t\t</div>\n\t\t"])), uiChartStyles);
+	      this.node = main_core.Tag.render(_templateObject$q || (_templateObject$q = babelHelpers.taggedTemplateLiteral(["\n\t\t\t<div class=\"tasks-scrum__sprint--btn-burn-down-chart\">\n\t\t\t\t<div class=\"tasks-scrum__sprint--icon-burn-down-chart ", "\"></div>\n\t\t\t</div>\n\t\t"])), uiChartStyles);
 	      main_core.Event.bind(this.node, 'click', this.onClick.bind(this));
 	      return this.node;
 	    }
@@ -5002,7 +5006,7 @@ this.BX.Tasks = this.BX.Tasks || {};
 	  return ChartIcon;
 	}(main_core_events.EventEmitter);
 
-	var _templateObject$s, _templateObject2$9;
+	var _templateObject$r, _templateObject2$9;
 	var Counters = /*#__PURE__*/function (_EventEmitter) {
 	  babelHelpers.inherits(Counters, _EventEmitter);
 	  function Counters(sprint) {
@@ -5017,7 +5021,7 @@ this.BX.Tasks = this.BX.Tasks || {};
 	  babelHelpers.createClass(Counters, [{
 	    key: "render",
 	    value: function render() {
-	      this.node = main_core.Tag.render(_templateObject$s || (_templateObject$s = babelHelpers.taggedTemplateLiteral(["\n\t\t\t<div class=\"tasks-scrum__sprint--event-content\">\n\t\t\t\t<div class=\"tasks-scrum__sprint--event-container\">\n\t\t\t\t\t<div class=\"tasks-scrum__sprint--subtitle\">\n\t\t\t\t\t\t", "\n\t\t\t\t\t</div>\n\t\t\t\t\t<div\n\t\t\t\t\t\tclass=\"tasks-scrum__sprint--point\"\n\t\t\t\t\t\tdata-hint=\"", "\" data-hint-no-icon\n\t\t\t\t\t>\n\t\t\t\t\t\t", "\n\t\t\t\t\t</div>\n\t\t\t\t</div>\n\t\t\t\t<div class=\"tasks-scrum__sprint--event-container\">\n\t\t\t\t\t<div class=\"tasks-scrum__sprint--subtitle\">\n\t\t\t\t\t\t", "\n\t\t\t\t\t</div>\n\t\t\t\t\t<div\n\t\t\t\t\t\tclass=\"tasks-scrum__sprint--point\"\n\t\t\t\t\t\tdata-hint=\"", "\" data-hint-no-icon\n\t\t\t\t\t>\n\t\t\t\t\t\t", "\n\t\t\t\t\t</div>\n\t\t\t\t\t", "\n\t\t\t\t</div>\n\t\t\t</div>\n\t\t"])), main_core.Loc.getMessage('TASKS_SCRUM_TASK_LABEL'), main_core.Loc.getMessage('TASKS_SCRUM_TASK_LABEL'), parseInt(this.sprint.getNumberTasks(), 10), main_core.Loc.getMessage('TASKS_SCRUM_SPRINT_HEADER_STORY_POINTS'), main_core.Loc.getMessage('TASKS_SCRUM_SPRINT_HEADER_STORY_POINTS'), this.sprint.getStoryPoints().isEmpty() ? '-' : this.sprint.getStoryPoints().getPoints(), this.renderAverageNumberStoryPoints());
+	      this.node = main_core.Tag.render(_templateObject$r || (_templateObject$r = babelHelpers.taggedTemplateLiteral(["\n\t\t\t<div class=\"tasks-scrum__sprint--event-content\">\n\t\t\t\t<div class=\"tasks-scrum__sprint--event-container\">\n\t\t\t\t\t<div class=\"tasks-scrum__sprint--subtitle\">\n\t\t\t\t\t\t", "\n\t\t\t\t\t</div>\n\t\t\t\t\t<div\n\t\t\t\t\t\tclass=\"tasks-scrum__sprint--point\"\n\t\t\t\t\t\tdata-hint=\"", "\" data-hint-no-icon\n\t\t\t\t\t>\n\t\t\t\t\t\t", "\n\t\t\t\t\t</div>\n\t\t\t\t</div>\n\t\t\t\t<div class=\"tasks-scrum__sprint--event-container\">\n\t\t\t\t\t<div class=\"tasks-scrum__sprint--subtitle\">\n\t\t\t\t\t\t", "\n\t\t\t\t\t</div>\n\t\t\t\t\t<div\n\t\t\t\t\t\tclass=\"tasks-scrum__sprint--point\"\n\t\t\t\t\t\tdata-hint=\"", "\" data-hint-no-icon\n\t\t\t\t\t>\n\t\t\t\t\t\t", "\n\t\t\t\t\t</div>\n\t\t\t\t\t", "\n\t\t\t\t</div>\n\t\t\t</div>\n\t\t"])), main_core.Loc.getMessage('TASKS_SCRUM_TASK_LABEL'), main_core.Loc.getMessage('TASKS_SCRUM_TASK_LABEL'), parseInt(this.sprint.getNumberTasks(), 10), main_core.Loc.getMessage('TASKS_SCRUM_SPRINT_HEADER_STORY_POINTS'), main_core.Loc.getMessage('TASKS_SCRUM_SPRINT_HEADER_STORY_POINTS'), this.sprint.getStoryPoints().isEmpty() ? '-' : this.sprint.getStoryPoints().getPoints(), this.renderAverageNumberStoryPoints());
 	      BX.UI.Hint.createInstance({
 	        popupParameters: {
 	          closeByEsc: true,
@@ -5039,7 +5043,7 @@ this.BX.Tasks = this.BX.Tasks || {};
 	  return Counters;
 	}(main_core_events.EventEmitter);
 
-	var _templateObject$t;
+	var _templateObject$s;
 	var Button = /*#__PURE__*/function (_EventEmitter) {
 	  babelHelpers.inherits(Button, _EventEmitter);
 	  function Button(sprint) {
@@ -5055,7 +5059,7 @@ this.BX.Tasks = this.BX.Tasks || {};
 	    key: "render",
 	    value: function render() {
 	      var uiBtnStyles = 'ui-btn ui-btn-xs ui-btn-light ui-btn-round ui-btn-icon-add';
-	      this.node = main_core.Tag.render(_templateObject$t || (_templateObject$t = babelHelpers.taggedTemplateLiteral(["\n\t\t\t<button class=\"tasks-scrum__sprint--btn-add ", "\"></button>\n\t\t"])), uiBtnStyles);
+	      this.node = main_core.Tag.render(_templateObject$s || (_templateObject$s = babelHelpers.taggedTemplateLiteral(["\n\t\t\t<button class=\"tasks-scrum__sprint--btn-add ", "\"></button>\n\t\t"])), uiBtnStyles);
 	      main_core.Event.bind(this.node, 'click', this.onClick.bind(this));
 	      return this.node;
 	    }
@@ -5073,7 +5077,7 @@ this.BX.Tasks = this.BX.Tasks || {};
 	  return Button;
 	}(main_core_events.EventEmitter);
 
-	var _templateObject$u;
+	var _templateObject$t;
 	var Info = /*#__PURE__*/function (_EventEmitter) {
 	  babelHelpers.inherits(Info, _EventEmitter);
 	  function Info(sprint) {
@@ -5092,7 +5096,7 @@ this.BX.Tasks = this.BX.Tasks || {};
 	    key: "render",
 	    value: function render() {
 	      var _this2 = this;
-	      this.node = main_core.Tag.render(_templateObject$u || (_templateObject$u = babelHelpers.taggedTemplateLiteral(["\n\t\t\t<div class=\"tasks-scrum__sprint--info\">\n\t\t\t\t", "\n\t\t\t\t", "\n\t\t\t\t", "\n\t\t\t</div>\n\t\t"])), this.chartIcon.render(), this.counters.render(), this.button.render());
+	      this.node = main_core.Tag.render(_templateObject$t || (_templateObject$t = babelHelpers.taggedTemplateLiteral(["\n\t\t\t<div class=\"tasks-scrum__sprint--info\">\n\t\t\t\t", "\n\t\t\t\t", "\n\t\t\t\t", "\n\t\t\t</div>\n\t\t"])), this.chartIcon.render(), this.counters.render(), this.button.render());
 	      this.chartIcon.subscribe('click', function () {
 	        return _this2.emit('showBurnDownChart');
 	      });
@@ -5115,7 +5119,7 @@ this.BX.Tasks = this.BX.Tasks || {};
 	  return Info;
 	}(main_core_events.EventEmitter);
 
-	var _templateObject$v;
+	var _templateObject$u;
 	var Button$1 = /*#__PURE__*/function (_EventEmitter) {
 	  babelHelpers.inherits(Button, _EventEmitter);
 	  function Button(sprint) {
@@ -5135,7 +5139,7 @@ this.BX.Tasks = this.BX.Tasks || {};
 	        return this.node;
 	      }
 	      var disableUiClass = this.isAccessDenied() ? 'ui-btn-disabled' : '';
-	      this.node = main_core.Tag.render(_templateObject$v || (_templateObject$v = babelHelpers.taggedTemplateLiteral(["\n\t\t\t<div\n\t\t\t\tclass=\"tasks-scrum__sprint--btn-run ", " ", "\"\n\t\t\t\ttitle=\"", "\"\n\t\t\t>\n\t\t\t\t<span class=\"tasks-scrum__sprint--btn-run-text\">", "</span>\n\t\t\t</div>\n\t\t"])), this.getUiClasses(), disableUiClass, this.getButtonText(), this.getButtonText());
+	      this.node = main_core.Tag.render(_templateObject$u || (_templateObject$u = babelHelpers.taggedTemplateLiteral(["\n\t\t\t<div\n\t\t\t\tclass=\"tasks-scrum__sprint--btn-run ", " ", "\"\n\t\t\t\ttitle=\"", "\"\n\t\t\t>\n\t\t\t\t<span class=\"tasks-scrum__sprint--btn-run-text\">", "</span>\n\t\t\t</div>\n\t\t"])), this.getUiClasses(), disableUiClass, this.getButtonText(), this.getButtonText());
 	      main_core.Event.bind(this.node, 'click', this.onClick.bind(this));
 	      return this.node;
 	    }
@@ -5187,7 +5191,7 @@ this.BX.Tasks = this.BX.Tasks || {};
 	  return Button;
 	}(main_core_events.EventEmitter);
 
-	var _templateObject$w;
+	var _templateObject$v;
 	var Tick = /*#__PURE__*/function (_EventEmitter) {
 	  babelHelpers.inherits(Tick, _EventEmitter);
 	  function Tick(sprint) {
@@ -5202,7 +5206,7 @@ this.BX.Tasks = this.BX.Tasks || {};
 	  babelHelpers.createClass(Tick, [{
 	    key: "render",
 	    value: function render() {
-	      this.node = main_core.Tag.render(_templateObject$w || (_templateObject$w = babelHelpers.taggedTemplateLiteral(["\n\t\t\t<div class=\"tasks-scrum__sprint--btn-dropdown ui-btn ui-btn-sm ui-btn-icon-angle-down --up\"></div>\n\t\t"])));
+	      this.node = main_core.Tag.render(_templateObject$v || (_templateObject$v = babelHelpers.taggedTemplateLiteral(["\n\t\t\t<div class=\"tasks-scrum__sprint--btn-dropdown ui-btn ui-btn-sm ui-btn-icon-angle-down --up\"></div>\n\t\t"])));
 	      main_core.Event.bind(this.node, 'click', this.onClick.bind(this));
 	      if (this.sprint.isHideContent()) {
 	        main_core.Dom.removeClass(this.node, '--up');
@@ -5234,7 +5238,7 @@ this.BX.Tasks = this.BX.Tasks || {};
 	  return Tick;
 	}(main_core_events.EventEmitter);
 
-	var _templateObject$x;
+	var _templateObject$w;
 	var Header$1 = /*#__PURE__*/function (_EventEmitter) {
 	  babelHelpers.inherits(Header, _EventEmitter);
 	  function Header(sprint) {
@@ -5338,7 +5342,7 @@ this.BX.Tasks = this.BX.Tasks || {};
 	  }, {
 	    key: "render",
 	    value: function render() {
-	      this.node = main_core.Tag.render(_templateObject$x || (_templateObject$x = babelHelpers.taggedTemplateLiteral(["\n\t\t\t<div class=\"tasks-scrum__content-header ", "\">\n\t\t\t\t", "\n\t\t\t\t", "\n\t\t\t\t", "\n\t\t\t\t", "\n\t\t\t\t", "\n\t\t\t</div>\n\t\t"])), this.getHeaderClass(), this.name ? this.name.render() : '', this.stats ? this.stats.render() : '', this.info ? this.info.render() : '', this.button ? this.button.render() : '', this.tick ? this.tick.render() : '');
+	      this.node = main_core.Tag.render(_templateObject$w || (_templateObject$w = babelHelpers.taggedTemplateLiteral(["\n\t\t\t<div class=\"tasks-scrum__content-header ", "\">\n\t\t\t\t", "\n\t\t\t\t", "\n\t\t\t\t", "\n\t\t\t\t", "\n\t\t\t\t", "\n\t\t\t</div>\n\t\t"])), this.getHeaderClass(), this.name ? this.name.render() : '', this.stats ? this.stats.render() : '', this.info ? this.info.render() : '', this.button ? this.button.render() : '', this.tick ? this.tick.render() : '');
 	      return this.node;
 	    }
 	  }, {
@@ -5409,7 +5413,7 @@ this.BX.Tasks = this.BX.Tasks || {};
 	  return Header;
 	}(main_core_events.EventEmitter);
 
-	var _templateObject$y;
+	var _templateObject$x;
 	var Sprint = /*#__PURE__*/function (_Entity) {
 	  babelHelpers.inherits(Sprint, _Entity);
 	  function Sprint(params) {
@@ -5866,7 +5870,7 @@ this.BX.Tasks = this.BX.Tasks || {};
 	    value: function render() {
 	      var openClass = this.isHideContent() ? '' : '--open';
 	      var defaultContentStyle = this.isHideContent() ? 'height: 0;' : '';
-	      this.node = main_core.Tag.render(_templateObject$y || (_templateObject$y = babelHelpers.taggedTemplateLiteral(["\n\t\t\t<div\n\t\t\t\tclass=\"tasks-scrum__content --with-header ", "\"\n\t\t\t\tdata-sprint-sort=\"", "\"\n\t\t\t\tdata-sprint-id=\"", "\"\n\t\t\t>\n\t\t\t\t", "\n\t\t\t\t<div class=\"tasks-scrum__content-container\" style=\"", "\">\n\t\t\t\t\t", "\n\t\t\t\t\t", "\n\t\t\t\t\t", "\n\t\t\t\t\t", "\n\t\t\t\t</div>\n\t\t\t</div>\n\t\t"])), openClass, this.sort, this.getId(), this.header ? this.header.render() : '', defaultContentStyle, this.blank ? this.blank.render() : '', this.dropzone ? this.dropzone.render() : '', this.emptySearchStub ? this.emptySearchStub.render() : '', this.listItems ? this.listItems.render() : '');
+	      this.node = main_core.Tag.render(_templateObject$x || (_templateObject$x = babelHelpers.taggedTemplateLiteral(["\n\t\t\t<div\n\t\t\t\tclass=\"tasks-scrum__content --with-header ", "\"\n\t\t\t\tdata-sprint-sort=\"", "\"\n\t\t\t\tdata-sprint-id=\"", "\"\n\t\t\t>\n\t\t\t\t", "\n\t\t\t\t<div class=\"tasks-scrum__content-container\" style=\"", "\">\n\t\t\t\t\t", "\n\t\t\t\t\t", "\n\t\t\t\t\t", "\n\t\t\t\t\t", "\n\t\t\t\t</div>\n\t\t\t</div>\n\t\t"])), openClass, this.sort, this.getId(), this.header ? this.header.render() : '', defaultContentStyle, this.blank ? this.blank.render() : '', this.dropzone ? this.dropzone.render() : '', this.emptySearchStub ? this.emptySearchStub.render() : '', this.listItems ? this.listItems.render() : '');
 	      main_core.Event.bind(this.getContentContainer(), 'transitionend', this.onTransitionEnd.bind(this, this.getContentContainer()));
 	      return this.node;
 	    }
@@ -6348,7 +6352,7 @@ this.BX.Tasks = this.BX.Tasks || {};
 	  return Scroller;
 	}();
 
-	var _templateObject$z, _templateObject2$a, _templateObject3$3, _templateObject4$2, _templateObject5;
+	var _templateObject$y, _templateObject2$a, _templateObject3$3, _templateObject4$2, _templateObject5;
 	var CompletedSprints = /*#__PURE__*/function (_EventEmitter) {
 	  babelHelpers.inherits(CompletedSprints, _EventEmitter);
 	  function CompletedSprints(params) {
@@ -6374,7 +6378,7 @@ this.BX.Tasks = this.BX.Tasks || {};
 	  babelHelpers.createClass(CompletedSprints, [{
 	    key: "render",
 	    value: function render() {
-	      this.node = main_core.Tag.render(_templateObject$z || (_templateObject$z = babelHelpers.taggedTemplateLiteral(["\n\t\t\t<div class=\"tasks-scrum__content\">\n\t\t\t\t<div class=\"tasks-scrum__sprints--completed\">\n\t\t\t\t\t<div class=\"tasks-scrum__sprints--completed-title\">\n\t\t\t\t\t\t<span class=\"tasks-scrum__sprints--completed-title-text\">\n\t\t\t\t\t\t\t", "\n\t\t\t\t\t\t</span>\n\t\t\t\t\t</div>\n\t\t\t\t\t<div class=\"tasks-scrum__content-empty --no-results\">\n\t\t\t\t\t\t", "\n\t\t\t\t\t</div>\n\t\t\t\t\t<div class=\"tasks-scrum__sprints--filtered-sprints\"></div>\n\t\t\t\t\t", "\n\t\t\t\t\t", "\n\t\t\t\t</div>\n\t\t\t</div>\n\t\t"])), main_core.Loc.getMessage('TASKS_SCRUM_COMPLETED_SPRINTS_TITLE'), main_core.Loc.getMessage('TASKS_SCRUM_EMPTY_SEARCH_STUB_COMPLETED'), this.renderHeader(), this.renderList());
+	      this.node = main_core.Tag.render(_templateObject$y || (_templateObject$y = babelHelpers.taggedTemplateLiteral(["\n\t\t\t<div class=\"tasks-scrum__content\">\n\t\t\t\t<div class=\"tasks-scrum__sprints--completed\">\n\t\t\t\t\t<div class=\"tasks-scrum__sprints--completed-title\">\n\t\t\t\t\t\t<span class=\"tasks-scrum__sprints--completed-title-text\">\n\t\t\t\t\t\t\t", "\n\t\t\t\t\t\t</span>\n\t\t\t\t\t</div>\n\t\t\t\t\t<div class=\"tasks-scrum__content-empty --no-results\">\n\t\t\t\t\t\t", "\n\t\t\t\t\t</div>\n\t\t\t\t\t<div class=\"tasks-scrum__sprints--filtered-sprints\"></div>\n\t\t\t\t\t", "\n\t\t\t\t\t", "\n\t\t\t\t</div>\n\t\t\t</div>\n\t\t"])), main_core.Loc.getMessage('TASKS_SCRUM_COMPLETED_SPRINTS_TITLE'), main_core.Loc.getMessage('TASKS_SCRUM_EMPTY_SEARCH_STUB_COMPLETED'), this.renderHeader(), this.renderList());
 	      this.filteredSprintsNode = this.node.querySelector('.tasks-scrum__sprints--filtered-sprints');
 	      this.listNode = this.node.querySelector('.tasks-scrum__sprints--completed-list');
 	      this.emptySearchStub = this.node.querySelector('.tasks-scrum__content-empty');
@@ -6634,7 +6638,7 @@ this.BX.Tasks = this.BX.Tasks || {};
 	  return CompletedSprints;
 	}(main_core_events.EventEmitter);
 
-	var _templateObject$A, _templateObject2$b;
+	var _templateObject$z, _templateObject2$b;
 	var PlanBuilder = /*#__PURE__*/function (_EventEmitter) {
 	  babelHelpers.inherits(PlanBuilder, _EventEmitter);
 	  function PlanBuilder(params) {
@@ -6692,7 +6696,7 @@ this.BX.Tasks = this.BX.Tasks || {};
 	      });
 	      var activeSprint = this.entityStorage.getActiveSprint();
 	      var plannedSprints = this.entityStorage.getPlannedSprints();
-	      this.sprintsNode = main_core.Tag.render(_templateObject$A || (_templateObject$A = babelHelpers.taggedTemplateLiteral(["\n\t\t\t<div class=\"tasks-scrum__sprints --scrollbar\">\n\t\t\t\t<div class=\"tasks-scrum__sprints--active ", "\">\n\t\t\t\t\t", "\n\t\t\t\t</div>\n\t\t\t\t<div class=\"tasks-scrum__sprints--planned ", "\">\n\t\t\t\t\t", "\n\t\t\t\t</div>\n\t\t\t\t", "\n\t\t\t\t", "\n\t\t\t</div>\n\t\t"])), activeSprint ? '' : '--empty', activeSprint ? activeSprint.render() : '', plannedSprints.size ? '' : '--empty', babelHelpers.toConsumableArray(plannedSprints.values()).map(function (sprint) {
+	      this.sprintsNode = main_core.Tag.render(_templateObject$z || (_templateObject$z = babelHelpers.taggedTemplateLiteral(["\n\t\t\t<div class=\"tasks-scrum__sprints --scrollbar\">\n\t\t\t\t<div class=\"tasks-scrum__sprints--active ", "\">\n\t\t\t\t\t", "\n\t\t\t\t</div>\n\t\t\t\t<div class=\"tasks-scrum__sprints--planned ", "\">\n\t\t\t\t\t", "\n\t\t\t\t</div>\n\t\t\t\t", "\n\t\t\t\t", "\n\t\t\t</div>\n\t\t"])), activeSprint ? '' : '--empty', activeSprint ? activeSprint.render() : '', plannedSprints.size ? '' : '--empty', babelHelpers.toConsumableArray(plannedSprints.values()).map(function (sprint) {
 	        return sprint.render();
 	      }), this.renderSprintDropzone(), this.entityStorage.existCompletedSprint() ? this.completedSprints.render() : '');
 	      this.updatePlannedSprints(plannedSprints, !main_core.Type.isUndefined(activeSprint));
@@ -7021,7 +7025,7 @@ this.BX.Tasks = this.BX.Tasks || {};
 	  return PlanBuilder;
 	}(main_core_events.EventEmitter);
 
-	var _templateObject$B, _templateObject2$c, _templateObject3$4, _templateObject4$3, _templateObject5$1, _templateObject6, _templateObject7, _templateObject8, _templateObject9, _templateObject10, _templateObject11, _templateObject12;
+	var _templateObject$A, _templateObject2$c, _templateObject3$4, _templateObject4$3, _templateObject5$1, _templateObject6, _templateObject7, _templateObject8, _templateObject9, _templateObject10, _templateObject11, _templateObject12;
 	function ownKeys$1(object, enumerableOnly) { var keys = Object.keys(object); if (Object.getOwnPropertySymbols) { var symbols = Object.getOwnPropertySymbols(object); enumerableOnly && (symbols = symbols.filter(function (sym) { return Object.getOwnPropertyDescriptor(object, sym).enumerable; })), keys.push.apply(keys, symbols); } return keys; }
 	function _objectSpread$1(target) { for (var i = 1; i < arguments.length; i++) { var source = null != arguments[i] ? arguments[i] : {}; i % 2 ? ownKeys$1(Object(source), !0).forEach(function (key) { babelHelpers.defineProperty(target, key, source[key]); }) : Object.getOwnPropertyDescriptors ? Object.defineProperties(target, Object.getOwnPropertyDescriptors(source)) : ownKeys$1(Object(source)).forEach(function (key) { Object.defineProperty(target, key, Object.getOwnPropertyDescriptor(source, key)); }); } return target; }
 	var ActionPanel = /*#__PURE__*/function (_EventEmitter) {
@@ -7130,7 +7134,7 @@ this.BX.Tasks = this.BX.Tasks || {};
 	      var remove = '';
 	      var baseBtnClass = 'tasks-scrum__action-panel--btn';
 	      var arrowClass = 'tasks-scrum__action-panel--btn-with-arrow';
-	      var selected = main_core.Tag.render(_templateObject$B || (_templateObject$B = babelHelpers.taggedTemplateLiteral(["\n\t\t\t<div class=\"tasks-scrum__action-panel--selected-btn tasks-scrum__action-panel--btn-selected\">\n\t\t\t\t<span class=\"tasks-scrum__action-panel--text\">\n\t\t\t\t\t", "\n\t\t\t\t</span>\n\t\t\t\t<span class=\"tasks-scrum__action-panel--icon\"></span>\n\t\t\t</div>\n\t\t\t<div class=\"tasks-scrum__action-panel--separator\"></div>\n\t\t"])), this.getSelectedText(this.entity.getGroupModeItems().size));
+	      var selected = main_core.Tag.render(_templateObject$A || (_templateObject$A = babelHelpers.taggedTemplateLiteral(["\n\t\t\t<div class=\"tasks-scrum__action-panel--selected-btn tasks-scrum__action-panel--btn-selected\">\n\t\t\t\t<span class=\"tasks-scrum__action-panel--text\">\n\t\t\t\t\t", "\n\t\t\t\t</span>\n\t\t\t\t<span class=\"tasks-scrum__action-panel--icon\"></span>\n\t\t\t</div>\n\t\t\t<div class=\"tasks-scrum__action-panel--separator\"></div>\n\t\t"])), this.getSelectedText(this.entity.getGroupModeItems().size));
 	      if (this.itemList.task.activity) {
 	        var disableClass = this.itemList.task.disable === true ? '--disabled' : '';
 	        task = main_core.Tag.render(_templateObject2$c || (_templateObject2$c = babelHelpers.taggedTemplateLiteral(["\n\t\t\t\t<div\n\t\t\t\t\tclass=\"", " tasks-scrum__action-panel--btn-task ", "\"\n\t\t\t\t\tdata-hint=\"", "\" data-hint-no-icon\n\t\t\t\t>\n\t\t\t\t\t<span class=\"tasks-scrum__action-panel--icon\"></span>\n\t\t\t\t\t<span class=\"tasks-scrum__action-panel--text\">\n\t\t\t\t\t\t", "\n\t\t\t\t\t</span>\n\t\t\t\t</div>\n\t\t\t\t<div class=\"tasks-scrum__action-panel--separator\"></div>\n\t\t\t"])), baseBtnClass, disableClass, main_core.Loc.getMessage('TASKS_SCRUM_ITEM_ACTIONS_TASK_HINT'), main_core.Loc.getMessage('TASKS_SCRUM_ITEM_ACTIONS_TASK'));
@@ -7304,7 +7308,7 @@ this.BX.Tasks = this.BX.Tasks || {};
 	  return ActionPanel;
 	}(main_core_events.EventEmitter);
 
-	var _templateObject$C;
+	var _templateObject$B;
 	var SearchArrows = /*#__PURE__*/function (_EventEmitter) {
 	  babelHelpers.inherits(SearchArrows, _EventEmitter);
 	  function SearchArrows(params) {
@@ -7320,7 +7324,7 @@ this.BX.Tasks = this.BX.Tasks || {};
 	  babelHelpers.createClass(SearchArrows, [{
 	    key: "render",
 	    value: function render() {
-	      this.node = main_core.Tag.render(_templateObject$C || (_templateObject$C = babelHelpers.taggedTemplateLiteral(["\n\t\t\t<div class=\"tasks-scrum__item--nav-linked tasks-scrum__scope\">\n\t\t\t\t<div class=\"tasks-scrum__item--nav-linked-close\"></div>\n\t\t\t\t<div class=\"tasks-scrum__item--nav-linked-block\">\n\t\t\t\t\t<div class=\"tasks-scrum__item--nav-linked-prev\"></div>\n\t\t\t\t\t<div class=\"tasks-scrum__item--nav-linked-num-container --visible\">\n\t\t\t\t\t<div class=\"tasks-scrum__item--nav-linked-num\">", "/", "</div>\n\t\t\t\t\t</div>\n\t\t\t\t\t<div class=\"tasks-scrum__item--nav-linked-next\"></div>\n\t\t\t\t</div>\n\t\t\t</div>\n\t\t"])), this.currentPosition, this.list.size);
+	      this.node = main_core.Tag.render(_templateObject$B || (_templateObject$B = babelHelpers.taggedTemplateLiteral(["\n\t\t\t<div class=\"tasks-scrum__item--nav-linked tasks-scrum__scope\">\n\t\t\t\t<div class=\"tasks-scrum__item--nav-linked-close\"></div>\n\t\t\t\t<div class=\"tasks-scrum__item--nav-linked-block\">\n\t\t\t\t\t<div class=\"tasks-scrum__item--nav-linked-prev\"></div>\n\t\t\t\t\t<div class=\"tasks-scrum__item--nav-linked-num-container --visible\">\n\t\t\t\t\t<div class=\"tasks-scrum__item--nav-linked-num\">", "/", "</div>\n\t\t\t\t\t</div>\n\t\t\t\t\t<div class=\"tasks-scrum__item--nav-linked-next\"></div>\n\t\t\t\t</div>\n\t\t\t</div>\n\t\t"])), this.currentPosition, this.list.size);
 	      var closeBtn = this.node.querySelector('.tasks-scrum__item--nav-linked-close');
 	      var prevBtn = this.node.querySelector('.tasks-scrum__item--nav-linked-prev');
 	      var nextBtn = this.node.querySelector('.tasks-scrum__item--nav-linked-next');
@@ -7665,13 +7669,15 @@ this.BX.Tasks = this.BX.Tasks || {};
 	var SprintSidePanel = /*#__PURE__*/function (_EventEmitter) {
 	  babelHelpers.inherits(SprintSidePanel, _EventEmitter);
 	  function SprintSidePanel(params) {
+	    var _params$pathToBurnDow;
 	    var _this;
 	    babelHelpers.classCallCheck(this, SprintSidePanel);
 	    _this = babelHelpers.possibleConstructorReturn(this, babelHelpers.getPrototypeOf(SprintSidePanel).call(this, params));
+	    _this.setEventNamespace('BX.Tasks.Scrum.SprintSidePanel');
 	    _this.sidePanel = params.sidePanel;
 	    _this.groupId = parseInt(params.groupId, 10);
 	    _this.views = params.views;
-	    _this.pathToBurnDown = params.pathToBurnDown ? params.pathToBurnDown : '';
+	    _this.pathToBurnDown = (_params$pathToBurnDow = params.pathToBurnDown) !== null && _params$pathToBurnDow !== void 0 ? _params$pathToBurnDow : '';
 	    return _this;
 	  }
 	  babelHelpers.createClass(SprintSidePanel, [{
@@ -7684,7 +7690,10 @@ this.BX.Tasks = this.BX.Tasks || {};
 	      }).then(function (extension) {
 	        if (extension) {
 	          extension.subscribe('afterStart', function (baseEvent) {
-	            location.href = _this2.views['activeSprint'].url;
+	            var _this2$views$find;
+	            location.href = (_this2$views$find = _this2.views.find(function (view) {
+	              return view.id === 'activeSprint';
+	            })) === null || _this2$views$find === void 0 ? void 0 : _this2$views$find.url;
 	          });
 	        }
 	      });
@@ -7698,7 +7707,10 @@ this.BX.Tasks = this.BX.Tasks || {};
 	      }).then(function (extension) {
 	        if (extension) {
 	          extension.subscribe('afterComplete', function (baseEvent) {
-	            location.href = _this3.views['plan'].url;
+	            var _this3$views$find;
+	            location.href = (_this3$views$find = _this3.views.find(function (view) {
+	              return view.id === 'plan';
+	            })) === null || _this3$views$find === void 0 ? void 0 : _this3$views$find.url;
 	          });
 	          extension.subscribe('taskClick', function (baseEvent) {
 	            _this3.emit('showTask', baseEvent.getData());
@@ -11162,7 +11174,6 @@ this.BX.Tasks = this.BX.Tasks || {};
 	  return Plan;
 	}(View);
 
-	var _templateObject$D;
 	var CompleteSprintButton = /*#__PURE__*/function (_EventEmitter) {
 	  babelHelpers.inherits(CompleteSprintButton, _EventEmitter);
 	  function CompleteSprintButton(params) {
@@ -11176,10 +11187,21 @@ this.BX.Tasks = this.BX.Tasks || {};
 	  babelHelpers.createClass(CompleteSprintButton, [{
 	    key: "render",
 	    value: function render() {
-	      var disableUiClass = this.canCompleteSprint ? '' : 'ui-btn-disabled';
-	      var node = main_core.Tag.render(_templateObject$D || (_templateObject$D = babelHelpers.taggedTemplateLiteral(["\n\t\t\t<div class=\"ui-btn ui-btn-sm ui-btn-primary ui-btn-xs ui-btn-round ui-btn-no-caps ", "\">\n\t\t\t\t<span>\n\t\t\t\t\t", "\n\t\t\t\t</span>\n\t\t\t</div>\n\t\t"])), disableUiClass, main_core.Loc.getMessage('TASKS_SCRUM_ACTIONS_COMPLETE_SPRINT'));
-	      main_core.Event.bind(node, 'click', this.onCompleteSprintClick.bind(this));
-	      return node;
+	      var _this2 = this;
+	      var completeBtn = new ui_buttons.Button({
+	        text: main_core.Loc.getMessage('TASKS_SCRUM_ACTIONS_COMPLETE_SPRINT'),
+	        color: ui_buttons.ButtonColor.PRIMARY,
+	        size: ui_buttons.ButtonSize.EXTRA_SMALL,
+	        round: true,
+	        noCaps: true,
+	        onclick: function onclick() {
+	          _this2.onCompleteSprintClick();
+	        }
+	      });
+	      if (!this.canCompleteSprint) {
+	        completeBtn.setStyle(ui_buttons.ButtonState.DISABLED);
+	      }
+	      return completeBtn.render();
 	    }
 	  }, {
 	    key: "onCompleteSprintClick",
@@ -11192,7 +11214,6 @@ this.BX.Tasks = this.BX.Tasks || {};
 	  return CompleteSprintButton;
 	}(main_core_events.EventEmitter);
 
-	var _templateObject$E;
 	var RobotButton = /*#__PURE__*/function (_EventEmitter) {
 	  babelHelpers.inherits(RobotButton, _EventEmitter);
 	  function RobotButton(params) {
@@ -11210,20 +11231,29 @@ this.BX.Tasks = this.BX.Tasks || {};
 	  babelHelpers.createClass(RobotButton, [{
 	    key: "render",
 	    value: function render() {
-	      var className = 'ui-btn ui-btn-light-border ui-btn-no-caps ui-btn-themes ui-btn-round';
+	      var _this2 = this;
+	      var robotBtn = new ui_buttons.Button({
+	        text: main_core.Loc.getMessage('TASKS_SCRUM_ROBOTS_BUTTON'),
+	        color: ui_buttons.ButtonColor.LIGHT_BORDER,
+	        size: ui_buttons.ButtonSize.EXTRA_SMALL,
+	        noCaps: true,
+	        round: true,
+	        dependOnTheme: true,
+	        onclick: function onclick() {
+	          _this2.onClick();
+	        }
+	      });
 	      if (this.isShowLimitSidePanel()) {
-	        className += ' ui-btn-icon-lock ui-btn-xs';
+	        robotBtn.setIcon(ui_buttons.ButtonIcon.LOCK);
 	      } else {
-	        className += ' tasks-scrum-robot-btn';
+	        robotBtn.setIcon(ui_buttons.ButtonIcon.ROBOTS);
 	      }
-	      this.node = main_core.Tag.render(_templateObject$E || (_templateObject$E = babelHelpers.taggedTemplateLiteral(["\n\t\t\t<button class=\"", "\">\n\t\t\t\t", "\n\t\t\t</button>\n\t\t"])), className, main_core.Loc.getMessage('TASKS_SCRUM_ROBOTS_BUTTON'));
-	      main_core.Event.bind(this.node, 'click', this.onClick.bind(this));
-	      return this.node;
+	      return robotBtn.render();
 	    }
 	  }, {
 	    key: "onClick",
 	    value: function onClick() {
-	      var _this2 = this;
+	      var _this3 = this;
 	      if (this.isShowLimitSidePanel()) {
 	        var sliderCode = this.isAutomationEnabled ? 'limit_tasks_robots' : 'limit_crm_rules_off';
 	        BX.Runtime.loadExtension('ui.info-helper').then(function (_ref) {
@@ -11231,7 +11261,7 @@ this.BX.Tasks = this.BX.Tasks || {};
 	          if (FeaturePromotersRegistry) {
 	            FeaturePromotersRegistry.getPromoter({
 	              code: sliderCode,
-	              bindElement: _this2.node
+	              bindElement: _this3.node
 	            }).show();
 	          } else {
 	            BX.UI.InfoHelper.show(sliderCode, {
@@ -11311,7 +11341,6 @@ this.BX.Tasks = this.BX.Tasks || {};
 	      });
 	      completeSprintButton.subscribe('completeSprint', this.onCompleteSprint.bind(this));
 	      main_core.Dom.append(completeSprintButton.render(), container);
-	      main_core.Dom.addClass(container, '--without-bg');
 	    }
 	  }, {
 	    key: "setParams",
@@ -11415,7 +11444,6 @@ this.BX.Tasks = this.BX.Tasks || {};
 	  return ActiveSprint;
 	}(View);
 
-	var _templateObject$F;
 	var BurnDownButton = /*#__PURE__*/function (_EventEmitter) {
 	  babelHelpers.inherits(BurnDownButton, _EventEmitter);
 	  function BurnDownButton() {
@@ -11428,9 +11456,18 @@ this.BX.Tasks = this.BX.Tasks || {};
 	  babelHelpers.createClass(BurnDownButton, [{
 	    key: "render",
 	    value: function render() {
-	      var node = main_core.Tag.render(_templateObject$F || (_templateObject$F = babelHelpers.taggedTemplateLiteral(["\n\t\t\t<div class=\"ui-btn ui-btn-sm ui-btn-primary ui-btn-xs ui-btn-round ui-btn-no-caps\">\n\t\t\t\t<span>\n\t\t\t\t\t", "\n\t\t\t\t</span>\n\t\t\t</div>\n\t\t"])), main_core.Loc.getMessage('TASKS_SCRUM_ACTIVE_SPRINT_BUTTON'));
-	      main_core.Event.bind(node, 'click', this.onClick.bind(this));
-	      return node;
+	      var _this2 = this;
+	      var burnDownButton = new ui_buttons.Button({
+	        text: main_core.Loc.getMessage('TASKS_SCRUM_ACTIVE_SPRINT_BUTTON'),
+	        color: ui_buttons.ButtonColor.PRIMARY,
+	        size: ui_buttons.ButtonSize.EXTRA_SMALL,
+	        round: true,
+	        noCaps: true,
+	        onclick: function onclick() {
+	          _this2.onClick();
+	        }
+	      });
+	      return burnDownButton.render();
 	    }
 	  }, {
 	    key: "onClick",
@@ -11461,7 +11498,6 @@ this.BX.Tasks = this.BX.Tasks || {};
 	      }
 	      var burnDownButton = new BurnDownButton();
 	      burnDownButton.subscribe('click', this.onShowSprintBurnDownChart.bind(this));
-	      main_core.Dom.addClass(container, '--without-bg');
 	      main_core.Dom.append(burnDownButton.render(), container);
 	    }
 	  }, {
@@ -11634,5 +11670,5 @@ this.BX.Tasks = this.BX.Tasks || {};
 
 	exports.Entry = Entry;
 
-}((this.BX.Tasks.Scrum = this.BX.Tasks.Scrum || {}),BX.UI.ShortView,BX.UI.EntitySelector,BX,BX,BX.Main,BX.UI.Dialogs,BX.UI.DragAndDrop,BX,BX,BX.UI.Analytics,BX,BX.Event));
+}((this.BX.Tasks.Scrum = this.BX.Tasks.Scrum || {}),BX.UI,BX.UI.ShortView,BX.UI.EntitySelector,BX,BX,BX.Main,BX.UI.Dialogs,BX.UI.DragAndDrop,BX,BX,BX.UI.Analytics,BX,BX.Event,BX.UI));
 //# sourceMappingURL=script.js.map

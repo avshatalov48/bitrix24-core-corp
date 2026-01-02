@@ -32,7 +32,7 @@ final class MyCompany extends Company
 			[
 				'select' => ['ID'],
 				'filter' => $filter,
-			] + $limitFilter
+			] + $limitFilter,
 		);
 
 		$items ??= [];
@@ -40,10 +40,10 @@ final class MyCompany extends Company
 		{
 			$id = $item->getId();
 
-			$myCompany = MyCompany::getById($id);
+			$myCompany = self::getById($id);
 			if ($myCompany !== null)
 			{
-				$result->add(MyCompany::getById($id));
+				$result->add(self::getById($id));
 			}
 		}
 
@@ -69,7 +69,7 @@ final class MyCompany extends Company
 		}
 
 		$id = $item->getId();
-		$connector = new MyCompany($id);
+		$connector = new self($id);
 
 		return new Item\Integration\Crm\MyCompany(
 			name: $connector->getName(),
@@ -81,7 +81,7 @@ final class MyCompany extends Company
 	{
 		$rqInn = $this->fetchRequisite($fetchRequisiteModifier)->getFirstByName('COMPANY_RQ_INN')?->value;
 
-		return is_string($rqInn)  && $rqInn !== ''? $rqInn : null;
+		return is_string($rqInn)  && $rqInn !== '' ? $rqInn : null;
 	}
 
 	public function getCrmEntityTypeId(): int

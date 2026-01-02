@@ -5,12 +5,15 @@ jn.define('im/messenger/lib/ui/notification', (require, exports, module) => {
 	/* global InAppNotifier, include  */
 	include('InAppNotifier');
 
-	const { Loc } = require('loc');
+	const { Loc } = require('im/messenger/loc');
+	const { transparent } = require('utils/color');
 
+	const { Theme } = require('im/lib/theme');
 	const { MessengerToast, ToastType } = require('im/messenger/lib/ui/notification/messenger-toast');
+	const { MessengerNotifier } = require('im/messenger/lib/ui/notification/messenger-notifier');
 
 	/**
-	 * @class Notify
+	 * @class Notification
 	 */
 	class Notification
 	{
@@ -19,17 +22,26 @@ jn.define('im/messenger/lib/ui/notification', (require, exports, module) => {
 			InAppNotifier.showNotification({
 				title: Loc.getMessage('IMMOBILE_MESSENGER_UI_NOTIFY_COMING_SOON'),
 				time: 1,
-				backgroundColor: '#E6000000',
+				backgroundColor: transparent(Theme.colors.baseBlackFixed, 0.8),
 			});
+		}
+
+		/**
+		 * @param {ShowNotifierParams} params
+		 */
+		static showNotifier(params)
+		{
+			MessengerNotifier.show(params);
 		}
 
 		/**
 		 * @param {ToastType} toastType
 		 * @param layoutWidget
+		 * @param {ShowToastParams} params
 		 */
-		static showToast(toastType, layoutWidget = null)
+		static showToast(toastType, layoutWidget = null, params = {})
 		{
-			MessengerToast.show(toastType, layoutWidget);
+			MessengerToast.show(toastType, layoutWidget, params);
 		}
 
 		/**
@@ -45,7 +57,7 @@ jn.define('im/messenger/lib/ui/notification', (require, exports, module) => {
 		 * @param {ShowToastParams} params
 		 * @param layoutWidget
 		 */
-		static showOfflineToast(params, layoutWidget = null)
+		static showOfflineToast(params = {}, layoutWidget = null)
 		{
 			MessengerToast.showOfflineToast(params, layoutWidget);
 		}

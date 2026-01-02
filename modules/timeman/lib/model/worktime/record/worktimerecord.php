@@ -95,7 +95,7 @@ class WorktimeRecord extends EO_WorktimeRecord
 		elseif ($this->isPaused())
 		{
 			$newBreak = $this->calculateDurationSince($this->getRecordedStopTimestamp()) - $this->getRecordedDuration();
-			$this->increaseBreaks($newBreak);
+			$this->increaseBreaks($this->clampNonNegative($newBreak));
 		}
 
 		if ($workRecordForm->stopOffset === null)
@@ -164,7 +164,7 @@ class WorktimeRecord extends EO_WorktimeRecord
 		}
 
 		$newBreak = $continueUtcTimestamp - $this->getRecordedStartTimestamp() - $this->getRecordedDuration() - $this->getRecordedBreakLength();
-		$this->increaseBreaks($newBreak);
+		$this->increaseBreaks($this->clampNonNegative($newBreak));
 
 		$this->setStopOffset(0);
 		$this->setRecordedStopTimestamp(0);
@@ -457,7 +457,9 @@ class WorktimeRecord extends EO_WorktimeRecord
 
 	private function calculateDurationSince($endTimestamp)
 	{
-		return ($endTimestamp - $this->getRecordedStartTimestamp()) - $this->getRecordedBreakLength();
+		$raw = ($endTimestamp - $this->getRecordedStartTimestamp()) - $this->getRecordedBreakLength();
+
+		return $this->clampDaySeconds((int)$raw);
 	}
 
 	public function approve(bool $approved = true)
@@ -580,7 +582,9 @@ class WorktimeRecord extends EO_WorktimeRecord
 		{
 			$endTime = TimeHelper::getInstance()->getUtcNowTimestamp();
 		}
-		return $endTime - $this->calculateCurrentBreakLength() - $this->getRecordedStartTimestamp();
+		$raw = $endTime - $this->calculateCurrentBreakLength() - $this->getRecordedStartTimestamp();
+
+		return $this->clampDaySeconds((int)$raw);
 	}
 
 	public function calculateCurrentBreakLength()
@@ -590,7 +594,8 @@ class WorktimeRecord extends EO_WorktimeRecord
 		{
 			$break = TimeHelper::getInstance()->getUtcNowTimestamp() - $this->getRecordedDuration() - $this->getRecordedStartTimestamp();
 		}
-		return $break;
+
+		return $this->clampDaySeconds((int)$break);
 	}
 
 	public function isRecordedBreakLengthChanged()
@@ -609,6 +614,20 @@ class WorktimeRecord extends EO_WorktimeRecord
 		return $this;
 	}
 
+	public function setTimeLeaks($timeLeaks)
+	{
+		parent::setTimeLeaks($this->clampDaySeconds((int)$timeLeaks));
+
+		return $this;
+	}
+
+	public function setRecordedDuration($recordedDuration)
+	{
+		parent::setRecordedDuration($this->clampDaySeconds((int)$recordedDuration));
+
+		return $this;
+	}
+
 	public function defineSchedule(Schedule $schedule)
 	{
 		$this->schedule = $schedule;
@@ -621,20 +640,45 @@ class WorktimeRecord extends EO_WorktimeRecord
 
 	private function increaseBreaks($newBreak)
 	{
+		$newBreak = $this->clampNonNegative((int)$newBreak);
 		$this->setRecordedBreakLength($this->getRecordedBreakLength() + $newBreak);
-		$this->setActualBreakLength($this->getActualBreakLength() + $newBreak);
+		$this->setActualBreakLength($this->clampDaySeconds((int)($this->getActualBreakLength() + $newBreak)));
 	}
 
 	private function correctDuration(int $duration): int
 	{
 		$secondsPerDay = 86400;
-
 		if ($duration < 0)
 		{
 			return $duration + $secondsPerDay;
 		}
+		if ($duration > $secondsPerDay)
+		{
+			return $secondsPerDay;
+		}
 
 		return $duration;
+	}
+
+	private function clampDaySeconds(int $seconds): int
+	{
+		$secondsPerDay = 86400;
+
+		if ($seconds < 0)
+		{
+			return 0;
+		}
+		if ($seconds > $secondsPerDay)
+		{
+			return $secondsPerDay;
+		}
+
+		return $seconds;
+	}
+
+	private function clampNonNegative(int $seconds): int
+	{
+		return max($seconds, 0);
 	}
 
 	/**

@@ -3,6 +3,7 @@
 namespace Bitrix\Crm\Service\Integration\Sign\Kanban;
 
 use Bitrix\Crm\Integration\PullManager;
+use Bitrix\Crm\ItemIdentifier;
 use Bitrix\Crm\Kanban\Entity;
 use Bitrix\Crm\Service\Container;
 use Bitrix\Crm\Service\Factory;
@@ -50,11 +51,18 @@ final class PullService
 
 		$params = $this->getParams($entityName, $item->getCategoryId());
 
-		return match ($event)
+		if ($event === self::DELETE_EVENT)
 		{
-			self::DELETE_EVENT => PullManager::getInstance()->sendItemDeletedEvent($pullItem, $params),
-			default => PullManager::getInstance()->sendItemUpdatedEvent($pullItem, $params),
-		};
+			return PullManager::getInstance()->sendItemDeletedEvent($pullItem, $params);
+		}
+
+		Container::getInstance()->getPullEventsQueue()->scheduleItemUpdatedEvent(
+			ItemIdentifier::createByItem($item),
+			$pullItem,
+			$params,
+		);
+
+		return true;
 	}
 
 	private function getItem(int $entityId): ?\Bitrix\Crm\Item

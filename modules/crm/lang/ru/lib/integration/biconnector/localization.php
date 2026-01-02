@@ -12,6 +12,7 @@ $MESS['CRM_SMART_PROC_FIELD_AUTOMATED_SOLUTION_DATASET_NAME_FULL'] = "Имя д�
 $MESS['CRM_SMART_PROC_FIELD_CUSTOM_SECTION_ID'] = "Идентификатор цифрового рабочего места";
 $MESS['CRM_SMART_PROC_FIELD_CUSTOM_SECTION_TITLE'] = "Название рабочего места";
 $MESS['CRM_SMART_PROC_FIELD_PRODUCT_DATASET_NAME'] = "Имя датасета товаров смарт-процесса";
+$MESS['CRM_SMART_PROC_FIELD_CREATED_AT'] = "Дата создания";
 $MESS['CRM_SMART_PROC_FIELD_USER_FIELDS'] = "ID пользовательских полей";
 
 //CRM_STAGES fields description
@@ -30,9 +31,11 @@ $MESS['CRM_ENTITY_RELATION_TABLE'] = "Связи между элементами
 $MESS['CRM_ENTITY_RELATION_FIELD_SRC_ENTITY_TYPE_ID'] = "Идентификатор типа элемента, который связан";
 $MESS['CRM_ENTITY_RELATION_FIELD_SRC_ENTITY_ID'] = "Идентификатор элемента, который связан";
 $MESS['CRM_ENTITY_RELATION_FIELD_SRC_ENTITY_DATASET_NAME'] = "Название датасета элемента, который связан";
+$MESS['CRM_ENTITY_RELATION_FIELD_SRC_ENTITY_CREATED_AT'] = "Дата создания элемента, который связан";
 $MESS['CRM_ENTITY_RELATION_FIELD_DST_ENTITY_TYPE_ID'] = "Идентификатор типа элемента, с которым связан";
 $MESS['CRM_ENTITY_RELATION_FIELD_DST_ENTITY_ID'] = "Идентификатор элемента, с которым связан";
 $MESS['CRM_ENTITY_RELATION_FIELD_DST_ENTITY_DATASET_NAME'] = "Название датасета элемента, с которым связан";
+$MESS['CRM_ENTITY_RELATION_FIELD_DST_ENTITY_CREATED_AT'] = "Дата создания элемента, с которым связан";
 
 //CRM_AUTOMATED_SOLUTION table/field descriptions
 $MESS['CRM_AUTOMATED_SOLUTION_TABLE'] = "Цифровое рабочее место: #TITLE#";
@@ -101,7 +104,14 @@ $MESS['CRM_QUOTE_FIELD_STATUS'] = "Статус";
 $MESS['CRM_QUOTE_FIELD_CLOSED'] = "Завершено";
 $MESS['CRM_QUOTE_FIELD_OPPORTUNITY'] = "Ожидаемая сумма";
 $MESS['CRM_QUOTE_FIELD_TAX_VALUE'] = "Налог";
+$MESS['CRM_QUOTE_FIELD_TAX_VALUE_FULL'] = "Сумма налога в валюте коммерческого предложения";
 $MESS['CRM_QUOTE_FIELD_CURRENCY_ID'] = "Валюта";
+$MESS['CRM_QUOTE_FIELD_CURRENCY_ID_FULL'] = "Валюта коммерческого предложения";
+$MESS['CRM_QUOTE_FIELD_OPPORTUNITY_ACCOUNT'] = "Ожидаемая сумма счета";
+$MESS['CRM_QUOTE_FIELD_TAX_VALUE_ACCOUNT'] = "Налог по умолчанию";
+$MESS['CRM_QUOTE_FIELD_TAX_VALUE_ACCOUNT_FULL'] = "Сумма налога в валюте по умолчанию";
+$MESS['CRM_QUOTE_FIELD_ACCOUNT_CURRENCY_ID'] = "Валюта по умолчанию";
+$MESS['CRM_QUOTE_FIELD_ACCOUNT_CURRENCY_ID_FULL'] = "Валюта по умолчанию в момент создания коммерческого предложения";
 $MESS['CRM_QUOTE_FIELD_COMMENTS'] = "Комментарии";
 $MESS['CRM_QUOTE_FIELD_BEGINDATE'] = "Дата выставления";
 $MESS['CRM_QUOTE_FIELD_CLOSEDATE'] = "Дата завершения";
@@ -168,13 +178,35 @@ $MESS['CRM_ACTIVITY_RELATION_TABLE'] = "Связи дел crm";
 $MESS['CRM_ACTIVITY_RELATION_FIELD_ACTIVITY_ID'] = "Идентификатор дела";
 $MESS['CRM_ACTIVITY_RELATION_FIELD_OWNER_ID'] = "Идентификатор элемента, к которому привязано дело";
 $MESS['CRM_ACTIVITY_RELATION_FIELD_OWNER_TYPE_ID'] = "Идентификатор типа элемента, к которому привязано дело";
+$MESS['CRM_ACTIVITY_RELATION_FIELD_CREATED_AT'] = "Дата создания дела";
 
 //CRM_AI_QUALITY_ASSESSMENT table/field for CoPilot quality assessment descriptions
 $MESS['CRM_AI_QUALITY_ASSESSMENT_TABLE'] = "Оценки разговоров по скриптам";
-$MESS['CRM_AI_QUALITY_ASSESSMENT_FIELD_ID'] = "ID";
+$MESS['CRM_AI_QUALITY_ASSESSMENT_FIELD_ID'] = "ID оценки качества";
 $MESS['CRM_AI_QUALITY_ASSESSMENT_FIELD_CREATED_AT'] = "Дата создания";
 $MESS['CRM_AI_QUALITY_ASSESSMENT_FIELD_ACTIVITY_ID'] = "ID дела звонка";
+$MESS['CRM_AI_QUALITY_ASSESSMENT_FIELD_ASSESSMENT_SETTING_ID'] = "ID скрипта продажи";
 $MESS['CRM_AI_QUALITY_ASSESSMENT_FIELD_ASSESSMENT'] = "Оценка";
 $MESS['CRM_AI_QUALITY_ASSESSMENT_FIELD_USE_IN_RATING'] = "Участвует в общем рейтинге";
 $MESS['CRM_AI_QUALITY_ASSESSMENT_FIELD_USE_IN_RATING_FULL'] = "Оценка является основной для звонка. Y - да, N - нет";
 $MESS['CRM_AI_QUALITY_ASSESSMENT_FIELD_RATED_USER_ID'] = "ID сотрудника";
+
+//CRM_COPILOT_CALL_ASSESSMENT table/field
+$MESS['CRM_COPILOT_CALL_ASSESSMENT_TABLE'] = "Скрипты продаж";
+$MESS['CRM_COPILOT_CALL_ASSESSMENT_FIELD_ID'] = "ID скрипта продажи";
+$MESS['CRM_COPILOT_CALL_ASSESSMENT_FIELD_TITLE'] = "Название скрипта продаж";
+$MESS['CRM_COPILOT_CALL_ASSESSMENT_FIELD_PROMPT'] = "Скрипт продажи";
+$MESS['CRM_COPILOT_CALL_ASSESSMENT_FIELD_IS_ENABLED'] = "Активность";
+$MESS['CRM_COPILOT_CALL_ASSESSMENT_FIELD_STATUS'] = "Статус обработки скрипта";
+$MESS['CRM_COPILOT_CALL_ASSESSMENT_FIELD_CREATED_AT'] = "Дата создания";
+$MESS['CRM_COPILOT_CALL_ASSESSMENT_FIELD_UPDATED_AT'] = "Дата изменения";
+$MESS['CRM_COPILOT_CALL_ASSESSMENT_FIELD_CREATED_BY_ID'] = "Создан";
+$MESS['CRM_COPILOT_CALL_ASSESSMENT_FIELD_UPDATED_BY_ID'] = "Изменён";
+$MESS['CRM_COPILOT_CALL_ASSESSMENT_FIELD_LOW_BORDER'] = "Оценка некачественного разговора";
+$MESS['CRM_COPILOT_CALL_ASSESSMENT_FIELD_HIGH_BORDER'] = "Оценка качественного разговора";
+
+//CRM_QUOTE_UF table/field for Quote user fields descriptions
+$MESS['CRM_QUOTE_UF_TABLE'] = "Пользовательские поля в предложениях";
+$MESS['CRM_QUOTE_UF_FIELD_QUOTE_ID'] = "ID предложения";
+$MESS['CRM_QUOTE_UF_FIELD_DATE_CREATE'] = "Дата создания";
+$MESS['CRM_QUOTE_UF_FIELD_CLOSEDATE'] = "Дата завершения";

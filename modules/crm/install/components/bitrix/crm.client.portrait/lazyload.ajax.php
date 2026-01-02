@@ -1,4 +1,10 @@
 <?php
+
+/**
+ * @deprecated ATTENTION! This component is no longer used or maintained.
+ * This is a dead code that remains only for backwards compatibility.
+ */
+
 define('NO_KEEP_STATISTIC', 'Y');
 define('NO_AGENT_STATISTIC','Y');
 define('NO_AGENT_CHECK', true);

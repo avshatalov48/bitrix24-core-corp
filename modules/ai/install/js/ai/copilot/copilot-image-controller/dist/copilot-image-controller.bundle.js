@@ -1263,7 +1263,7 @@ this.BX = this.BX || {};
 	  babelHelpers.classPrivateFieldLooseBase(this, _inputField$1)[_inputField$1].unsubscribe(babelHelpers.classPrivateFieldLooseBase(this, _copilotInputEvents)[_copilotInputEvents].adjustHeight, babelHelpers.classPrivateFieldLooseBase(this, _inputFieldAdjustHeightEventHandler)[_inputFieldAdjustHeightEventHandler]);
 	}
 	function _handleCompletionsError2(error) {
-	  var _error$errors;
+	  var _error$errors, _firstError$customDat, _firstError$customDat2;
 	  const firstError = error == null ? void 0 : (_error$errors = error.errors) == null ? void 0 : _error$errors[0];
 	  if (firstError && (firstError == null ? void 0 : firstError.code) === 'LIMIT_IS_EXCEEDED_BAAS') {
 	    babelHelpers.classPrivateFieldLooseBase(this, _inputField$1)[_inputField$1].disable();
@@ -1288,7 +1288,9 @@ this.BX = this.BX || {};
 	      context: babelHelpers.classPrivateFieldLooseBase(this, _engine)[_engine].getContextId(),
 	      useAngle: false
 	    },
-	    errorCode: firstError == null ? void 0 : firstError.code
+	    errorCode: firstError == null ? void 0 : firstError.code,
+	    showSliderWithMsg: firstError == null ? void 0 : (_firstError$customDat = firstError.customData) == null ? void 0 : _firstError$customDat.showSliderWithMsg,
+	    sliderCode: firstError == null ? void 0 : (_firstError$customDat2 = firstError.customData) == null ? void 0 : _firstError$customDat2.sliderCode
 	  });
 	}
 	function _setPayload2(options) {

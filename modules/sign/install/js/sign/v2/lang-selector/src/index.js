@@ -9,13 +9,13 @@ export class LangSelector
 	#langs: ?Object;
 	#langButton: Button;
 	#region: string;
-	#documentUid: string;
+	#documentUids: Array<string>;
 
 	constructor(region, langs)
 	{
 		this.#region = region;
 		this.#langs = langs;
-		this.#documentUid = '';
+		this.#documentUids = [];
 		this.#langButton = this.#getLanguageButton();
 		this.#api = new Api();
 	}
@@ -25,7 +25,7 @@ export class LangSelector
 		return Tag.render`
 			<div class="sign-lang-selector">
 				<span class="sign-lang-selector__label">
-					${Loc.getMessage('SIGN_BLANK_LANGUAGE_SELECTOR_LABEL')}
+					${Loc.getMessage('SIGN_BLANK_LANGUAGE_SELECTOR_LABEL_MSGVER_1')}
 				</span>
 				${this.#langButton.getContainer()}
 			</div>
@@ -69,11 +69,12 @@ export class LangSelector
 
 	async #changeLang(langId)
 	{
-		await this.#api.modifyLanguageId(this.#documentUid, langId);
+		const promises = this.#documentUids.map((uid: string) => this.#api.modifyLanguageId(uid, langId));
+		await Promise.all(promises);
 	}
 
-	setDocumentUid(uid)
+	setDocumentUids(uids: Array<string>)
 	{
-		this.#documentUid = uid;
+		this.#documentUids = uids;
 	}
 }

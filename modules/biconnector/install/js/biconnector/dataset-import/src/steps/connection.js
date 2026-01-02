@@ -1,9 +1,10 @@
-import { ajax as Ajax } from 'main.core';
+import { ajax as Ajax, Text } from 'main.core';
 import { BaseStep } from './base-step';
 import { ConnectionSelectorField } from '../fields/type/connection-selector-field';
 import { CustomField } from '../fields/type/custom-field';
 import { TableSelectorField } from '../fields/type/table-selector-field';
 import { StringField } from '../fields/type/string-field';
+import { EventEmitter } from 'main.core.events';
 import '../css/connection.css';
 
 export const ConnectionStep = {
@@ -17,7 +18,6 @@ export const ConnectionStep = {
 	data(): Object
 	{
 		return {
-			connectionId: this.$store.state.config.connection,
 			tableId: this.$store.state.config.table,
 			connectionSelectorId: 'biconnector-external-connection',
 			tableSelectorId: 'biconnector-external-table',
@@ -50,6 +50,20 @@ export const ConnectionStep = {
 		selectedConnectionType(): string
 		{
 			return this.$store.getters.connectionProperties?.connectionType;
+		},
+		selectedConnectionAvatar(): ?string
+		{
+			const id = this.selectedConnectionId;
+			if (id > 0)
+			{
+				const connection = this.connections.find((item) => parseFloat(item.ID) === id);
+				if (connection)
+				{
+					return connection.AVATAR;
+				}
+			}
+
+			return `/bitrix/images/biconnector/database-connections/${this.selectedConnectionType}.svg`;
 		},
 		selectedConnectionId(): number
 		{
@@ -88,7 +102,7 @@ export const ConnectionStep = {
 				tableName: null,
 			});
 
-			Ajax.runAction('biconnector.externalsource.source.checkConnection', {
+			Ajax.runAction('biconnector.externalsource.source.checkExistingConnection', {
 				data: {
 					sourceId,
 				},
@@ -135,15 +149,17 @@ export const ConnectionStep = {
 			});
 
 			this.$store.commit('setDatasetProperties', {
-				id: event.data.tag.getId(),
+				id: null,
 				name: event.data.tag.getCustomData().get('datasetName'),
-				code: event.data.tag.getCustomData().get('description'),
+				code: event.data.tag.getId(),
 				description: event.data.tag.getTitle(),
-				externalCode: event.data.tag.getCustomData().get('description'),
+				externalCode: event.data.tag.getId(),
 				externalName: event.data.tag.getTitle(),
 			});
+
 			this.$emit('tableSelected', event);
 			this.$emit('validation', true);
+			this.unvalidatedFields = {};
 		},
 		onTableDeselected(event)
 		{
@@ -162,16 +178,35 @@ export const ConnectionStep = {
 			});
 			this.$emit('tableDeselected', event);
 			this.$emit('validation', false);
+			this.unvalidatedFields = {};
 		},
 		openConnectionSlider()
 		{
-			const link = `/bitrix/components/bitrix/biconnector.externalconnection/slider.php?sourceId=${this.selectedConnectionId}`;
+			const link = `/bitrix/components/bitrix/biconnector.externalconnection/slider.php?sourceId=${this.selectedConnectionId}&closeAfterCreate=Y`;
 			BX.SidePanel.Instance.open(link, {
 				width: 564,
 				allowChangeHistory: false,
 				cacheable: false,
 			});
 		},
+		handleSliderMessage(event)
+		{
+			const [messageEvent] = event.getData();
+			if (messageEvent.getEventId() === 'BIConnector:ExternalConnection:onConnectionSave')
+			{
+				const connectionProperties = this.$store.getters.connectionProperties;
+				connectionProperties.connectionName = Text.decode(messageEvent.data.connection.name);
+				this.$store.commit('setConnectionProperties', connectionProperties);
+			}
+		},
+	},
+	mounted()
+	{
+		EventEmitter.subscribe('SidePanel.Slider:onMessage', this.handleSliderMessage);
+	},
+	beforeUnmount()
+	{
+		EventEmitter.unsubscribe('SidePanel.Slider:onMessage', this.handleSliderMessage);
 	},
 	emits: [
 		'tableSelected',
@@ -206,6 +241,7 @@ export const ConnectionStep = {
 				:title="this.$Bitrix.Loc.getMessage('DATASET_IMPORT_TABLES_FIELD_TITLE')"
 				:connection-id="this.selectedConnectionId"
 				:is-disabled="disabled"
+				:selected-connection-type="selectedConnectionType"
 				@value-change="onTableSelected"
 				@value-clear="onTableDeselected"
 				ref="tableField"
@@ -222,7 +258,7 @@ export const ConnectionStep = {
 						<div class="connection-preview">
 							<div
 								class="connection-icon"
-								:style="'background-image: url(\\'' + '/bitrix/images/biconnector/database-connections/' + selectedConnectionType + '.svg\\');'"
+								:style="'background-image: url(\\'' + selectedConnectionAvatar + '\\');'"
 							></div>
 							<div class="connection-name" @click="openConnectionSlider">
 								{{ this.selectedConnectionName }}

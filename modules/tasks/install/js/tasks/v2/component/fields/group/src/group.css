@@ -1,0 +1,26 @@
+.tasks-field-group-group {
+	max-width: max-content;
+}
+
+.tasks-field-group-group:not(.--secret) {
+	cursor: pointer;
+}
+
+.tasks-field-group-image {
+	margin-right: 6px;
+	width: 24px;
+	height: 24px;
+	border-radius: 50%;
+}
+
+.tasks-field-group-title {
+	line-height: 18px;
+	overflow: hidden;
+	text-overflow: ellipsis;
+	color: var(--ui-color-base-2);
+}
+
+.tasks-field-group-icon {
+	margin-right: 6px;
+	--ui-icon-set__icon-color: var(--ui-color-accent-main-primary);
+}

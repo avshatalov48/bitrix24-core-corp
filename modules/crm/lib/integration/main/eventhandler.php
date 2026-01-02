@@ -12,7 +12,6 @@ use Bitrix\Crm\Integration\MailManager;
 use Bitrix\Crm\Integrity;
 use Bitrix\Crm\ItemIdentifier;
 use Bitrix\Crm\Service\Container;
-use Bitrix\Crm\Service\Timeline\Monitor;
 use Bitrix\Crm\Timeline;
 use Bitrix\Crm\WebForm;
 use Bitrix\Main\Application;
@@ -284,6 +283,5 @@ class EventHandler
 			$activityId,
 		);
 		$badge->bind($itemIdentifier, $sourceIdentifier);
-		Monitor::getInstance()->onBadgesSync($itemIdentifier);
 	}
 }

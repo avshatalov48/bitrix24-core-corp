@@ -19,10 +19,7 @@ $APPLICATION->AddHeadScript('/bitrix/js/crm/dialog.js');
 
 $APPLICATION->SetAdditionalCSS('/bitrix/js/crm/css/crm.css');
 $APPLICATION->SetAdditionalCSS("/bitrix/themes/.default/crm-entity-show.css");
-if(SITE_TEMPLATE_ID === 'bitrix24')
-{
-	$APPLICATION->SetAdditionalCSS("/bitrix/themes/.default/bitrix24/crm-entity-show.css");
-}
+$APPLICATION->SetAdditionalCSS("/bitrix/themes/.default/bitrix24/crm-entity-show.css");
 
 //Preliminary registration of disk api.
 if(CCrmActivity::GetDefaultStorageTypeID() === StorageType::Disk)

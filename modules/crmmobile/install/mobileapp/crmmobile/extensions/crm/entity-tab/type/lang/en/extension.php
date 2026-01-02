@@ -32,10 +32,6 @@ $MESS["M_CRM_ENTITY_TAB_COLUMN_USUITABLE_FOR_FILTER_TITLE_DYNAMIC"] = "Items on 
 $MESS["M_CRM_ENTITY_TAB_COLUMN_USUITABLE_FOR_FILTER_TITLE_LEAD"] = "Leads on this stage do not match the selected filter";
 $MESS["M_CRM_ENTITY_TAB_COLUMN_USUITABLE_FOR_FILTER_TITLE_QUOTE_MSGVER_1"] = "Estimates on this stage do not match the selected filter";
 $MESS["M_CRM_ENTITY_TAB_COLUMN_USUITABLE_FOR_FILTER_TITLE_SMART_INVOICE"] = "Invoices on this stage do not match the selected filter";
-$MESS["M_CRM_ENTITY_TAB_DEAL_ACTION_ACTIVITY"] = "Plan activity";
-$MESS["M_CRM_ENTITY_TAB_DEAL_ACTION_EXCLUDE"] = "Add to exceptions";
-$MESS["M_CRM_ENTITY_TAB_DEAL_ACTION_EXCLUDE_CONFIRMATION"] = "This action cannot be undone. Are you sure you want to add the item to exceptions?";
-$MESS["M_CRM_ENTITY_TAB_DEAL_ACTION_EXCLUDE_CONFIRMATION_OK"] = "Add";
 $MESS["M_CRM_ENTITY_TAB_ENTITY_EMPTY_DESCRIPTION"] = "Connect [COLOR=\"#2066b0\"][URL=\"#URL#\"]communication channels[/URL][/COLOR] to create #MANY_ENTITY_TYPE_TITLE# automatically or create #SINGLE_ENTITY_TYPE_TITLE# manually";
 $MESS["M_CRM_ENTITY_TAB_ENTITY_EMPTY_DESCRIPTION_REDIRECT_TITLE"] = "Communication center";
 $MESS["M_CRM_ENTITY_TAB_ENTITY_EMPTY_DESCRIPTION_ROBOTS"] = "Create #MANY_ENTITY_TYPE_TITLE# manually or set up an automation rule";

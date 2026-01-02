@@ -31,8 +31,7 @@ if (!CCrmSecurityHelper::IsAuthorized() || $_REQUEST['MODE'] != 'SEARCH')
 
 $bResultWithValue = (isset($_REQUEST['RESULT_WITH_VALUE']) && $_REQUEST['RESULT_WITH_VALUE'] === 'Y');
 
-$CrmPerms = CCrmPerms::GetCurrentUserPermissions();
-if (!(CCrmPerms::IsAccessEnabled($CrmPerms) && $CrmPerms->HavePerm('CONFIG', BX_CRM_PERM_CONFIG, 'READ')))
+if (!\Bitrix\Crm\Service\Container::getInstance()->getUserPermissions()->product()->canRead())
 {
 	__CrmProductListEndResponse(null);
 }

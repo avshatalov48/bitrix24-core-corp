@@ -5,8 +5,7 @@ namespace Bitrix\Tasks\Flow;
 use Bitrix\Bitrix24\Feature;
 use Bitrix\Main\Config\Option;
 use Bitrix\Main\Loader;
-use Bitrix\Main\ModuleManager;
-use Bitrix\Tasks\Integration\Intranet\Settings;
+use Bitrix\Tasks\V2\Internal\DI\Container;
 
 final class FlowFeature
 {
@@ -19,20 +18,13 @@ final class FlowFeature
 
 	public static function isOn(): bool
 	{
-		return self::isOptionEnabled() && self::isEnabledInSettings();
+		return Container::getInstance()->getToolService()->isFlowsAvailable();
 	}
 
+	// todo: remove
 	public static function isOptionEnabled(): bool
 	{
-		if (!ModuleManager::isModuleInstalled('bitrix24'))
-		{
-			return true;
-		}
-
-		return (
-			(bool) Option::get('tasks', self::KEY, true)
-			|| (bool) \CUserOptions::getOption(self::KEY, 'enabled')
-		);
+		return true;
 	}
 
 	public static function isFeatureEnabled(): bool
@@ -74,37 +66,6 @@ final class FlowFeature
 		self::setDemoOption();
 	}
 
-	public static function turnOn(): void
-	{
-		Option::set('tasks', self::KEY, true);
-	}
-
-	public static function turnOff(): void
-	{
-		Option::delete('tasks', ['name' => self::KEY]);
-	}
-
-	public static function turnOnForUsers(int ...$userIds): void
-	{
-		foreach ($userIds as $userId)
-		{
-			\CUserOptions::SetOption(self::KEY, 'enabled', true, false, $userId);
-		}
-	}
-
-	public static function turnOffForUsers(int ...$userIds): void
-	{
-		foreach ($userIds as $userId)
-		{
-			\CUserOptions::DeleteOption(self::KEY, 'enabled', false, $userId);
-		}
-	}
-
-	private static function isEnabledInSettings(): bool
-	{
-		return (new Settings())->isToolAvailable(Settings::TOOLS['flows']);
-	}
-
 	private static function setDemoOption(): void
 	{
 		Option::set('tasks', self::DEMO_KEY, true);
@@ -112,6 +73,6 @@ final class FlowFeature
 
 	private static function isDemoFeatureWasEnabled(): bool
 	{
-		return (bool) Option::get('tasks', self::DEMO_KEY, false);
+		return (bool)Option::get('tasks', self::DEMO_KEY, false);
 	}
 }

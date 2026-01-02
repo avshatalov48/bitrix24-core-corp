@@ -181,7 +181,7 @@ class CrmCardShowComponent extends CBitrixComponent
 			($this->arParams['isEnableCopilotReplacement'] ?? true)
 			&& AIManager::isAiCallProcessingEnabled()
 			&& AIManager::isEnabledInGlobalSettings(GlobalSetting::CallAssessment)
-			&& Container::getInstance()->getUserPermissions()->canReadCopilotCallAssessmentSettings()
+			&& Container::getInstance()->getUserPermissions()->copilotCallAssessment()->canRead()
 		;
 	}
 

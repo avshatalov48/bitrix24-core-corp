@@ -1,0 +1,26 @@
+.tasks-field-importance {
+	display: flex;
+	align-items: center;
+	height: 29px;
+	margin-left: 6px;
+	cursor: pointer;
+}
+
+.tasks-field-importance.--readonly {
+	cursor: default;
+}
+
+.tasks-field-importance:not(.--active):not(:hover) {
+	opacity: 0.8;
+}
+
+.tasks-field-importance .ui-icon-set {
+	--ui-icon-set__icon-color: var(--ui-color-base-5);
+	--ui-icon-set__icon-size: 26px;
+	transition: opacity 180ms;
+}
+
+.tasks-field-importance.--active .ui-icon-set {
+	animation: tasks-field-importance 300ms forwards;
+	--ui-icon-set__icon-color: radial-gradient(circle at bottom, #FAA72C 0%, #FF5752 67%);
+}

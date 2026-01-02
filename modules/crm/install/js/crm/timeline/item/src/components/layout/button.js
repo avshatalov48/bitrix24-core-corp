@@ -45,7 +45,7 @@ export const Button = BitrixVue.cloneComponent(BaseButton, {
 			uiButton: Object.freeze(null),
 			timerSecondsRemaining: 0,
 			currentState: this.state,
-			hintText: Type.isStringFilled(this.tooltip) ? Text.encode(this.tooltip) : '',
+			hintText: Type.isStringFilled(this.tooltip) ? this.tooltip : '',
 		};
 	},
 

@@ -2,6 +2,8 @@
 <?
 $control_id = RandString(8);
 
+$APPLICATION->SetAdditionalCSS('/bitrix/js/intranet/intranet-common.css');
+
 if (count($arResult['MEETING']['AGENDA']) > 0):
 	$arAgenda = array();
 	foreach ($arResult['MEETING']['AGENDA'] as $key => $arItem)

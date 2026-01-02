@@ -101,6 +101,13 @@ class MailRecipientProvider extends BaseProvider
 		return $data;
 	}
 
+	/**
+	 * Based on the base element, it will create several new ones if multiple email addresses are found in the element.
+	 *
+	 * @param Item $baseItem
+	 * @param Dialog|null $dialog
+	 * @return array
+	 */
 	private function buildItems(Item $baseItem, Dialog $dialog = null): array
 	{
 		$newItems = [];
@@ -255,7 +262,12 @@ class MailRecipientProvider extends BaseProvider
 
 		$itemsToAdd = self::getEmailItems($dataItems)->getAll();
 
-		$itemsCollection = Message::entityRecipientsToCollectionForDialog($dataItems, true);
+		$itemsCollection = new ItemCollection();
+
+		if (!empty($dataItems))
+		{
+			$itemsCollection = Message::entityRecipientsToCollectionForDialog($dataItems, true);
+		}
 
 		foreach ($itemsCollection as $item)
 		{

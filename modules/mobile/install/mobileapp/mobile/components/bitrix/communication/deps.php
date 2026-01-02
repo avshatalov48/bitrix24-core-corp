@@ -10,7 +10,9 @@ return [
 		'tasks:entry',
 		'user/profile',
 		'utils',
+		'utils/object',
 		'ava-menu',
+		'type',
+		'user-profile',
 	],
-	'components' => ['user.profile'],
 ];

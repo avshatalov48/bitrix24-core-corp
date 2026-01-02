@@ -12,13 +12,13 @@ class Sign extends Configuration
 	private \Bitrix\Sign\Repository\FileRepository $fileRepository;
 
 	public function __construct(
-		?FileRepository $fileRepository = null
+		?FileRepository $fileRepository = null,
 	)
 	{
 		$this->fileRepository = $fileRepository ?? Container::instance()->getFileRepository();
 	}
 
-	function loadData(Item\Block $block, Item\Document $document, ?Item\Member $member = null): array
+	public function loadData(Item\Block $block, Item\Document $document, ?Item\Member $member = null): array
 	{
 		$data = $block->data;
 

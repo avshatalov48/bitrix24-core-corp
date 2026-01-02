@@ -2,6 +2,8 @@
 
 namespace Bitrix\Crm\UserField\Visibility;
 
+use Bitrix\Crm\Integration\HumanResources\DepartmentQueries;
+use Bitrix\Crm\Integration\HumanResources\HumanResources;
 use Bitrix\Crm\Restriction\RestrictionManager;
 use Bitrix\Crm\Service\Container;
 use Bitrix\Main;
@@ -10,6 +12,7 @@ use Bitrix\Main\Localization\Loc;
 use Bitrix\Main\UserField\Access\ActionDictionary;
 use Bitrix\Main\UserField\Access\Permission\UserFieldPermissionTable;
 use Bitrix\Main\UserField\Access\UserFieldAccessController;
+use CCrmOwnerType;
 use CSocNetLogDestination;
 
 Loc::loadMessages(__FILE__);
@@ -48,7 +51,7 @@ class VisibilityManager
 			$fieldName,
 			$entityTypeId,
 			$permissionId,
-			\CCrmOwnerType::ResolveUserFieldEntityID($entityTypeId)
+			CCrmOwnerType::ResolveUserFieldEntityID($entityTypeId),
 		);
 	}
 
@@ -136,16 +139,21 @@ class VisibilityManager
 	{
 		$fields = self::loadUserFieldsAccessCodes($entityTypeID);
 		$usersInfo = self::getUsersInfo($fields);
-		$departmentInfo = self::getDepartmentInfo();
+		$structureDepartmentsInfo = self::getStructureDepartmentsInfo($fields);
+		$accessCodesInfo = array_merge($usersInfo, $structureDepartmentsInfo);
 
-		$accessCodesInfo = array_merge($usersInfo, $departmentInfo);
+		if (AccessCodesConverter::isConversionInProgress())
+		{
+			$departmentInfo = self::getDepartmentInfo();
+			$accessCodesInfo = array_merge($accessCodesInfo, $departmentInfo);
+		}
 
 		return self::prepareFieldsAccessCodes($fields, $accessCodesInfo);
 	}
 
 	private static function loadUserFieldsAccessCodes(int $entityTypeID): array
 	{
-		if (!\CCrmOwnerType::IsEntity($entityTypeID))
+		if (!CCrmOwnerType::IsEntity($entityTypeID))
 		{
 			throw new \Bitrix\Main\ArgumentException('Entity type id is not valid');
 		}
@@ -207,6 +215,50 @@ class VisibilityManager
 		}, $users);
 	}
 
+	private static function getStructureDepartmentsInfo(array $fields): array
+	{
+		$humanResources = HumanResources::getInstance();
+		if (!$humanResources::getInstance()->isUsed())
+		{
+			return [];
+		}
+
+		$structureNodeRecursiveCode = 'SNDR';
+
+		$departmentIds = [];
+		foreach ($fields as $field)
+		{
+			if (str_starts_with($field['ACCESS_CODE'], $structureNodeRecursiveCode))
+			{
+				$departmentIds[] = (int)str_replace($structureNodeRecursiveCode, '', $field['ACCESS_CODE']);
+			}
+		}
+
+		if (empty($departmentIds))
+		{
+			return [];
+		}
+
+		$departmentsInfo = [];
+
+		$departments = DepartmentQueries::getInstance()->getDepartments($departmentIds);
+		foreach ($departments as $department)
+		{
+			$code = $humanResources->buildAccessCode($structureNodeRecursiveCode, $department->id);
+			$departmentsInfo[$code] = [
+				'id' => $code,
+				'entityId' => $department->id,
+				'name' => $department->name,
+			];
+		}
+
+		return $departmentsInfo;
+	}
+
+	/**
+	 * @deprecated
+	 * @return array
+	 */
 	private static function getDepartmentInfo(): array
 	{
 		$structure = CSocNetLogDestination::GetStucture(array('LAZY_LOAD' => true));
@@ -216,7 +268,7 @@ class VisibilityManager
 
 	/**
 	 * @param array $userFields
-	 * @param int $userId
+	 * @param int|null $userId
 	 * @return array
 	 */
 	public static function getVisibleUserFields(array $userFields, ?int $userId = null): array

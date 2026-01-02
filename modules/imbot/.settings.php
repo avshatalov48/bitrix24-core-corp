@@ -22,4 +22,13 @@ return [
 		],
 		'readonly' => true,
 	],
+	'services' => [
+		'value' => [
+			'imbot.bot.support' => [
+				'className' => \Bitrix\Imbot\Bot\SupportService::class,
+			],
+		],
+		'readonly' => true,
+	],
+
 ];

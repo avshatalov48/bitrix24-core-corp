@@ -6,7 +6,7 @@ use Bitrix\Main\Type\DateTime;
 use Bitrix\Tasks\Flow\Attribute\AccessCodes;
 use Bitrix\Tasks\Flow\Attribute\DistributionType;
 use Bitrix\Tasks\Flow\Attribute\Instantiable;
-use Bitrix\Tasks\AbstractCommand;
+use Bitrix\Tasks\Flow\AbstractCommand;
 use Bitrix\Tasks\Flow\Configuration;
 use Bitrix\Tasks\Flow\Flow;
 use Bitrix\Tasks\Internals\Attribute\Department;

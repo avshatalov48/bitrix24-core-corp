@@ -7,6 +7,7 @@ return [
 		'statemanager/redux/store',
 		'tariff-plan-restriction',
 		'tasks:enum',
+		'tasks:layout/fields/date-plan/dates-resolver',
 		'tasks:loc',
 		'tasks:statemanager/redux/slices/tasks',
 		'tasks:task/datesResolver',

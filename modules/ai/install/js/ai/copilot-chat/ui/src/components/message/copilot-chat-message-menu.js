@@ -2,6 +2,7 @@ import { bind, Dom } from 'main.core';
 import { Menu, type MenuItemOptions } from 'main.popup';
 import { BIcon, Set } from 'ui.icon-set.api.vue';
 
+import { CopilotChatMessageButton } from '../copilot-chat-message-button';
 import '../../css/copilot-chat-message-menu.css';
 
 export type MenuItemOnClickCustomData = {
@@ -11,12 +12,13 @@ export type MenuItemOnClickCustomData = {
 export type MenuItemMessageData = {
 	id: number;
 	content: string;
-	dateCreated: string;
+	dateCreate: string;
 };
 
 export const CopilotChatMessageMenu = {
 	components: {
 		BIcon,
+		CopilotChatMessageButton,
 	},
 	props: {
 		menuItems: {
@@ -28,6 +30,11 @@ export const CopilotChatMessageMenu = {
 			type: Object,
 			required: true,
 			default: () => ({}),
+		},
+		icon: {
+			type: String,
+			required: false,
+			default: Set.MORE,
 		},
 	},
 	data(): {isMenuOpen: boolean} {
@@ -45,7 +52,7 @@ export const CopilotChatMessageMenu = {
 							message: {
 								id: this.message.id,
 								content: this.message.content,
-								dateCreated: this.message.dateCreated,
+								dateCreate: this.message.dateCreate,
 							},
 						};
 
@@ -58,7 +65,7 @@ export const CopilotChatMessageMenu = {
 		},
 		menuIconProps(): { name: string, size: number} {
 			return {
-				name: Set.MORE,
+				name: this.icon,
 				size: 22,
 			};
 		},
@@ -95,7 +102,7 @@ export const CopilotChatMessageMenu = {
 			this.menu = new Menu({
 				items: this.items,
 				angle: {
-					offset: Dom.getPosition(this.$refs.menuButton).width / 2 + 23,
+					offset: Dom.getPosition(this.$refs.menuButton.$el).width / 2 + 23,
 				},
 				events: {
 					onPopupShow: () => {
@@ -105,7 +112,7 @@ export const CopilotChatMessageMenu = {
 						this.isMenuOpen = false;
 					},
 				},
-				bindElement: this.$refs.menuButton,
+				bindElement: this.$refs.menuButton.$el,
 			});
 
 			bind(document.body.querySelector('.ai__copilot-chat_main'), 'scroll', () => {
@@ -119,12 +126,11 @@ export const CopilotChatMessageMenu = {
 		this.menu?.destroy();
 	},
 	template: `
-		<button
+		<CopilotChatMessageButton
 			ref="menuButton"
 			@click="toggleMenu"
+			:icon="menuIconProps.name"
 			:class="menuButtonClassname"
-		>
-			<BIcon v-bind="menuIconProps"></BIcon>
-		</button>
+		/>
 	`,
 };

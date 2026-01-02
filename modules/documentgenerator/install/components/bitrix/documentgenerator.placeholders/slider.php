@@ -1,11 +1,5 @@
 <?php
 
-//define("NOT_CHECK_PERMISSIONS", true);
-//define("STOP_STATISTICS", true);
-//define("NO_KEEP_STATISTIC", "Y");
-//define("NO_AGENT_STATISTIC","Y");
-//define("DisableEventsCheck", true);
-
 $siteId = '';
 if(isset($_REQUEST['site_id']) && is_string($_REQUEST['site_id']))
 {
@@ -21,12 +15,20 @@ require($_SERVER['DOCUMENT_ROOT'].'/bitrix/header.php');
 
 $request = \Bitrix\Main\Application::getInstance()->getContext()->getRequest();
 
-$APPLICATION->includeComponent(
-	'bitrix:documentgenerator.placeholders', '',
+/** @global \CMain $APPLICATION */
+$APPLICATION->IncludeComponent(
+	'bitrix:ui.sidepanel.wrapper',
+	'',
 	[
-		'module' => $request->get('module'),
-		'templateId' => $request->get('templateId'),
-		'provider' => $request->get('provider'),
+		'POPUP_COMPONENT_NAME' => 'bitrix:documentgenerator.placeholders',
+		'POPUP_COMPONENT_TEMPLATE_NAME' => '',
+		'POPUP_COMPONENT_PARAMS' => [
+			'module' => $request->get('module'),
+			'templateId' => $request->get('templateId'),
+			'provider' => $request->get('provider'),
+		],
+		'USE_UI_TOOLBAR' => 'Y',
+		'USE_PADDING' => false,
 	]
 );
 

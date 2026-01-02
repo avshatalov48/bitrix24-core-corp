@@ -20,7 +20,7 @@ final class RoleRelationService
 			$roleId = $setting['id'];
 			$accessCodes = $setting['accessCodes'] ?? [];
 
-			if($roleId === false)
+			if ($roleId === false)
 			{
 				continue;
 			}

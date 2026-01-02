@@ -1,10 +1,10 @@
 <?php
+
 namespace Bitrix\BIConnector;
 
 use Bitrix\BIConnector\DataSourceConnector\FieldCollection;
 use Bitrix\BIConnector\DataSourceConnector\FieldDto;
 use Bitrix\BIConnector\DataSourceConnector\Connector;
-use Bitrix\Main\Analytics\AnalyticsEvent;
 use Bitrix\Main\Result;
 
 abstract class Service
@@ -15,6 +15,7 @@ abstract class Service
 	public static $dateFormats = [];
 	protected $languageMap = null;
 	protected $languageId = 'en';
+	protected bool $isBreakableLimitPrinting = false;
 
 	/**
 	 * Creates new service instance.
@@ -58,8 +59,8 @@ abstract class Service
 	}
 
 	/**
-	 * Changes the language if it is exists and active.
-	 * Otherwise sets the language to the current one.
+	 * Changes the language if it is existing and active.
+	 * Otherwise, sets the language to the current one.
 	 *
 	 * @param string $languageId Interface language identifier.
 	 *
@@ -73,8 +74,9 @@ abstract class Service
 			'select' => ['LID'],
 			'filter' => [
 				'=LID' => $languageId,
-				'=ACTIVE' => 'Y'
+				'=ACTIVE' => 'Y',
 			],
+			'cache' => ['ttl' => 86400],
 		])
 			->fetch()
 		;
@@ -115,11 +117,38 @@ abstract class Service
 	/**
 	 * @param string $name
 	 *
-	 * @return DataSourceConnector\Connector\Base|null
+	 * @return Connector\Base|null
 	 */
-	public function getDataSourceConnector(string $name): ?DataSourceConnector\Connector\Base
+	public function getDataSourceConnector(string $name): ?Connector\Base
 	{
-		return $this->getDataSourceConnectors()[$name] ?? null;
+		if (!empty($this->dataSourceConnectors[$name]) && $this->dataSourceConnectors[$name] instanceof Connector\Base)
+		{
+			return $this->dataSourceConnectors[$name];
+		}
+
+		$dataSources = [];
+		$event = new \Bitrix\Main\Event('biconnector', 'OnBIConnectorDataSources', [
+			$this->manager,
+			&$dataSources,
+			$this->languageId,
+			$name,
+		]);
+		$event->send();
+
+		if (empty($dataSources[$name]))
+		{
+			return null;
+		}
+
+		$source = $dataSources[$name];
+
+		$fields = new FieldCollection();
+		foreach ($source['FIELDS'] as $fieldName => $fieldInfo)
+		{
+			$fields->add($this->prepareFieldDto($fieldName, $fieldInfo));
+		}
+
+		return new Connector\Sql($name, $fields, $source);
 	}
 
 	/**
@@ -136,6 +165,7 @@ abstract class Service
 			$this->manager,
 			&$dataSources,
 			$this->languageId,
+			null,
 		]);
 		$event->send();
 
@@ -219,6 +249,7 @@ abstract class Service
 			case 'bool':
 				return 'BOOLEAN';
 		}
+
 		return 'STRING';
 	}
 
@@ -285,7 +316,8 @@ abstract class Service
 			$fieldInfo['AGGREGATION_TYPE'] ?? null,
 			$fieldInfo['GROUP_KEY'] ?? null,
 			$fieldInfo['GROUP_CONCAT'] ?? null,
-			$fieldInfo['GROUP_COUNT'] ?? null
+			$fieldInfo['GROUP_COUNT'] ?? null,
+			$fieldInfo['IS_VALUE_SPLITABLE'] ?? null,
 		);
 	}
 
@@ -306,8 +338,7 @@ abstract class Service
 		}
 
 		return [
-			'CONCEPT_TYPE' =>
-				($fieldInfo['IS_METRIC'] ?? 'N') === 'Y'
+			'CONCEPT_TYPE' => ($fieldInfo['IS_METRIC'] ?? 'N') === 'Y'
 					? 'METRIC'
 					: 'DIMENSION'
 			,
@@ -355,6 +386,7 @@ abstract class Service
 				if ($fieldInfo['FIELD_TYPE'] === 'datetime')
 				{
 					$filterColumnName = $fieldName;
+
 					break;
 				}
 			}
@@ -434,31 +466,40 @@ abstract class Service
 						case 'EQUALS':
 						case 'IN_LIST':
 							$andFilter[] = [$negate . '=' . $subFilter['fieldName'] => $subFilter['values']];
+
 							break;
 						case 'CONTAINS':
 							$andFilter[] = [$negate . '%' . $subFilter['fieldName'] => $subFilter['values']];
+
 							break;
 						case 'REGEXP_PARTIAL_MATCH':
 						case 'REGEXP_EXACT_MATCH':
 							$canBeFiltered = false;
+
 							break;
 						case 'IS_NULL':
 							$andFilter[] = [$negate . '=' . $subFilter['fieldName'] => false];
+
 							break;
 						case 'BETWEEN':
 							$andFilter[] = [$negate . '><' . $subFilter['fieldName'] => $subFilter['values']];
+
 							break;
 						case 'NUMERIC_GREATER_THAN':
 							$andFilter[] = [$negate . '>' . $subFilter['fieldName'] => $subFilter['values']];
+
 							break;
 						case 'NUMERIC_GREATER_THAN_OR_EQUAL':
 							$andFilter[] = [$negate . '>=' . $subFilter['fieldName'] => $subFilter['values']];
+
 							break;
 						case 'NUMERIC_LESS_THAN':
 							$andFilter[] = [$negate . '<' . $subFilter['fieldName'] => $subFilter['values']];
+
 							break;
 						case 'NUMERIC_LESS_THAN_OR_EQUAL':
 							$andFilter[] = [$negate . '<=' . $subFilter['fieldName'] => $subFilter['values']];
+
 							break;
 						default:
 							$canBeFiltered = false;
@@ -492,6 +533,21 @@ abstract class Service
 		return $connector->getFormattedData($parameters, static::$dateFormats);
 	}
 
+	public function enableBreakingLimitPrinting(): static
+	{
+		$this->isBreakableLimitPrinting = true;
+
+		return $this;
+	}
+
+	/**
+	 * @return bool
+	 */
+	protected function isBreakableOverlimitPrinting(): bool
+	{
+		return $this->isBreakableLimitPrinting;
+	}
+
 	/**
 	 * @param string $tableName
 	 * @param array $parameters
@@ -504,7 +560,7 @@ abstract class Service
 		string $requestMethod,
 		string $requestUri,
 		int $limit,
-		LimitManager $limitManager
+		LimitManager $limitManager,
 	): Result
 	{
 		return new Result();

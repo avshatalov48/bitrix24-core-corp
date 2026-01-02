@@ -63,11 +63,10 @@ class UserModel extends Main\Access\User\UserModel
 
 		if (is_array($permissions[$permissionId]))
 		{
-			$permissions[$permissionId] =
-				isset($permissions[$permissionId][0])
+			$permissions[$permissionId]
+				= isset($permissions[$permissionId][0])
 					? (int)$permissions[$permissionId][0]
-					: null
-			;
+					: null;
 		}
 
 		return $permissions[$permissionId];

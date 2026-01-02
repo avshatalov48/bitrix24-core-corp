@@ -44,6 +44,11 @@ if (!(isset($_REQUEST["IFRAME"]) && $_REQUEST["IFRAME"] === "Y"))
 	);
 }
 
+if (\Bitrix\Main\Loader::includeModule('ui'))
+{
+	\Bitrix\UI\Toolbar\Facade\Toolbar::deleteFavoriteStar();
+}
+
 $APPLICATION->IncludeComponent(
 	'bitrix:ui.sidepanel.wrapper',
 	'',
@@ -56,6 +61,7 @@ $APPLICATION->IncludeComponent(
 			'PATH_TO_MERGER' => '/crm/company/merge/',
 			'PATH_TO_DEDUPE_LIST' => '/crm/company/dedupelist/',
 			'PATH_TO_ENTITY_LIST' => '/crm/company/',
-		]
+		],
+		'USE_UI_TOOLBAR' => 'Y',
 	]
 );

@@ -8,13 +8,14 @@ use Bitrix\HumanResources\Item;
 use Bitrix\HumanResources\Item\NodeMember;
 use Bitrix\HumanResources\Type\MemberEntityType;
 use Bitrix\HumanResources\Type\NodeEntityType;
+use Bitrix\HumanResources\Type\NodeEntityTypeCollection;
 use Bitrix\Main;
 use Bitrix\Main\ArgumentException;
 use Bitrix\Main\ObjectPropertyException;
 use Bitrix\Main\Result;
 use Bitrix\Main\SystemException;
 
-interface NodeMemberRepository
+interface NodeMemberRepository extends EventableRepository
 {
 	/**
 	 * @param \Bitrix\HumanResources\Item\NodeMember $nodeMember
@@ -134,7 +135,8 @@ interface NodeMemberRepository
 	public function getCommonUsersFromRelation(
 		\Bitrix\HumanResources\Type\RelationEntityType $entityType,
 		int $entityId,
-		array $usersToCompare
+		array $usersToCompare,
+		NodeEntityTypeCollection $nodeEntityTypeCollection = new NodeEntityTypeCollection(NodeEntityType::DEPARTMENT),
 	);
 
 	public function findAllByRoleIdAndStructureId(?int $roleId, int $structureId): Item\Collection\NodeMemberCollection;
@@ -206,4 +208,15 @@ interface NodeMemberRepository
 	public function removeByCollection(
 		Item\Collection\NodeMemberCollection $nodeMemberCollection
 	): bool;
+
+	/**
+	 * @param int[] $roleIdList
+	 */
+	public function findAllByNodeIdAndRoleIdList(
+		int $nodeId,
+		array $roleIdList,
+		int $limit = 100,
+		int $offset = 0,
+		bool $ascendingSort = true
+	): Item\Collection\NodeMemberCollection;
 }

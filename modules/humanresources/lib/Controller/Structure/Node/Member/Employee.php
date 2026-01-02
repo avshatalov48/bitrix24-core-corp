@@ -3,16 +3,18 @@
 namespace Bitrix\HumanResources\Controller\Structure\Node\Member;
 
 use Bitrix\HumanResources\Access\StructureActionDictionary;
-use Bitrix\HumanResources\Attribute;
+use Bitrix\HumanResources\Internals\Attribute;
+use Bitrix\HumanResources\Internals\Attribute\StructureActionAccess;
+use Bitrix\HumanResources\Internals\Attribute\Access\LogicOr;
 use Bitrix\HumanResources\Contract\Repository\NodeMemberRepository;
 use Bitrix\HumanResources\Contract\Repository\RoleRepository;
-use Bitrix\HumanResources\Contract\Service\UserService;
 use Bitrix\HumanResources\Item;
 use Bitrix\HumanResources\Engine\Controller;
 use Bitrix\HumanResources\Item\NodeMember;
+use Bitrix\HumanResources\Service\UserService;
 use Bitrix\HumanResources\Service\Container;
 use Bitrix\HumanResources\Type\AccessibleItemType;
-use Bitrix\HumanResources\Type\MemberEntityType;
+use Bitrix\HumanResources\Type\NodeEntityType;
 use Bitrix\Main\Request;
 
 final class Employee extends Controller
@@ -29,14 +31,29 @@ final class Employee extends Controller
 		parent::__construct($request);
 	}
 
-	#[Attribute\StructureActionAccess(
-		permission: StructureActionDictionary::ACTION_STRUCTURE_VIEW,
-		itemType: AccessibleItemType::NODE,
-		itemIdRequestKey: 'nodeId',
+	#[LogicOr(
+		new StructureActionAccess(
+			permission: StructureActionDictionary::ACTION_STRUCTURE_VIEW,
+			itemType: AccessibleItemType::NODE,
+			itemIdRequestKey: 'nodeId',
+		),
+		new StructureActionAccess(
+			permission: StructureActionDictionary::ACTION_TEAM_VIEW,
+			itemType: AccessibleItemType::NODE,
+			itemIdRequestKey: 'nodeId',
+		),
 	)]
 	public function getIdsAction(Item\Node $node): array
 	{
-		$employeeRole = $this->roleRepository->findByXmlId(NodeMember::DEFAULT_ROLE_XML_ID['EMPLOYEE']);
+		if ($node->type === NodeEntityType::TEAM)
+		{
+			$employeeRole = $this->roleRepository->findByXmlId(NodeMember::TEAM_ROLE_XML_ID['TEAM_EMPLOYEE']);
+		}
+		else
+		{
+			$employeeRole = $this->roleRepository->findByXmlId(NodeMember::DEFAULT_ROLE_XML_ID['EMPLOYEE']);
+		}
+
 		if (!$employeeRole)
 		{
 			return [];
@@ -46,10 +63,17 @@ final class Employee extends Controller
 		return array_column($employeeCollection->getItemMap(), 'entityId');
 	}
 
-	#[Attribute\StructureActionAccess(
-		permission: StructureActionDictionary::ACTION_STRUCTURE_VIEW,
-		itemType: AccessibleItemType::NODE,
-		itemIdRequestKey: 'nodeId',
+	#[LogicOr(
+		new StructureActionAccess(
+			permission: StructureActionDictionary::ACTION_STRUCTURE_VIEW,
+			itemType: AccessibleItemType::NODE,
+			itemIdRequestKey: 'nodeId',
+		),
+		new StructureActionAccess(
+			permission: StructureActionDictionary::ACTION_TEAM_VIEW,
+			itemType: AccessibleItemType::NODE,
+			itemIdRequestKey: 'nodeId',
+		),
 	)]
 	public function listAction(
 		Item\Node $node,
@@ -57,7 +81,15 @@ final class Employee extends Controller
 		int $countPerPage = 10,
 	): array
 	{
-		$employeeRole = $this->roleRepository->findByXmlId(NodeMember::DEFAULT_ROLE_XML_ID['EMPLOYEE']);
+		if ($node->type === NodeEntityType::TEAM)
+		{
+			$employeeRole = $this->roleRepository->findByXmlId(NodeMember::TEAM_ROLE_XML_ID['TEAM_EMPLOYEE']);
+		}
+		else
+		{
+			$employeeRole = $this->roleRepository->findByXmlId(NodeMember::DEFAULT_ROLE_XML_ID['EMPLOYEE']);
+		}
+
 		$employeeUsers = [];
 		if (!$employeeRole)
 		{

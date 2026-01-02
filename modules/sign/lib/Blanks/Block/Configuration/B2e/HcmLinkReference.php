@@ -24,7 +24,7 @@ class HcmLinkReference extends Configuration
 				new Main\Error(
 					Main\Localization\Loc::getMessage('SIGN_BLANKS_BLOCK_CONFIGURATION_HCMLINK_REFERENCE_ERROR_FIELD_NOT_SELECTED'),
 					'HCMLINK_REFERENCE_ERROR_FIELD_NOT_SELECTED',
-				)
+				),
 			);
 		}
 

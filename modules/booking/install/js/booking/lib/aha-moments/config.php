@@ -6,7 +6,6 @@ if (!defined('B_PROLOG_INCLUDED') || B_PROLOG_INCLUDED !== true)
 }
 
 return [
-	'css' => 'dist/aha-moments.bundle.css',
 	'js' => 'dist/aha-moments.bundle.js',
 	'rel' => [
 		'main.core',

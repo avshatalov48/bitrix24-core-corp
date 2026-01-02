@@ -2,6 +2,7 @@ import { Dom, Loc, Type } from 'main.core';
 import { Button } from 'ui.buttons';
 import { SidePanel } from 'ui.sidepanel';
 import { Layout } from 'ui.sidepanel.layout';
+import { Settings, Setting } from 'crm.integration.ui.settings';
 
 import './style.css';
 
@@ -150,19 +151,22 @@ export class Slider
 
 	getSliderContentClassName(): String
 	{
-		let className = 'crm-copilot-wrapper';
+		const classNames = [
+			'crm-copilot-wrapper',
+			'--ui-context-edge-dark',
+		];
 
 		if (this.enableLightThemeIntoSlider)
 		{
-			className += ' bitrix24-light-theme';
+			classNames.push('bitrix24-light-theme');
 		}
 
 		if (this.sliderContentClass)
 		{
-			className += ` ${this.sliderContentClass}`;
+			classNames.push(this.sliderContentClass);
 		}
 
-		return className;
+		return classNames.join(' ');
 	}
 
 	getDefaultToolbarButtons(): Array
@@ -175,9 +179,11 @@ export class Slider
 		const helpdeskCode = '18799442';
 		const helpButton = new Button({
 			text: Loc.getMessage('CRM_COPILOT_WRAPPER_HELP_BUTTON_TITLE'),
-			size: Button.Size.MEDIUM,
+			size: Settings.get(Setting.UseAirDesign) ? Button.Size.SMALL : Button.Size.MEDIUM,
 			color: Button.Color.LIGHT_BORDER,
 			dependOnTheme: true,
+			useAirDesign: Settings.get(Setting.UseAirDesign),
+			style: Button.AirStyle.OUTLINE,
 			onclick: () => {
 				if (top.BX.Helper)
 				{

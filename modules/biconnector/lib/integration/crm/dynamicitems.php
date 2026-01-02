@@ -26,16 +26,27 @@ class DynamicItems
 		$result = &$params[1];
 		$languageId = $params[2];
 		$messages = Loc::loadLanguageFile(__FILE__, $languageId);
-
+		$eventTableName = $params[3];
 		$connection = $manager->getDatabaseConnection();
 		$helper = $connection->getSqlHelper();
+
+		if (!empty($eventTableName) && !str_starts_with($eventTableName, 'crm_dynamic_items_'))
+		{
+			return;
+		}
 
 		$types = \Bitrix\Crm\Model\Dynamic\TypeTable::getList()->fetchCollection();
 		foreach ($types as $type)
 		{
+			$datasetName = 'crm_dynamic_items_' . $type->getEntityTypeId();
+			if (!empty($eventTableName) && $eventTableName !== $datasetName)
+			{
+				continue;
+			}
+
 			$statusEntityId = \Bitrix\Main\Application::getConnection()->getSqlHelper()->forSql(\CCrmOwnerType::ResolveName($type->getEntityTypeId()));
 
-			$result['crm_dynamic_items_' . $type->getEntityTypeId()] = [
+			$result[$datasetName] = [
 				'TABLE_NAME' => $type->getTableName(),
 				'TABLE_DESCRIPTION' => $type->getTitle(),
 				'TABLE_ALIAS' => 'D',
@@ -353,10 +364,10 @@ class DynamicItems
 
 			if (isset($messages['CRM_DYNAMIC_ITEMS_TABLE_PREFIX']))
 			{
-				$result['crm_dynamic_items_' . $type->getEntityTypeId()]['TABLE_DESCRIPTION'] = $messages['CRM_DYNAMIC_ITEMS_TABLE_PREFIX'] . ' ' . $result['crm_dynamic_items_' . $type->getEntityTypeId()]['TABLE_DESCRIPTION'];
+				$result[$datasetName]['TABLE_DESCRIPTION'] = $messages['CRM_DYNAMIC_ITEMS_TABLE_PREFIX'] . ' ' . $result[$datasetName]['TABLE_DESCRIPTION'];
 			}
 
-			foreach ($result['crm_dynamic_items_' . $type->getEntityTypeId()]['FIELDS'] as $fieldCode => &$fieldInfo)
+			foreach ($result[$datasetName]['FIELDS'] as $fieldCode => &$fieldInfo)
 			{
 				$fieldInfo['FIELD_DESCRIPTION'] = $messages['CRM_DYNAMIC_ITEMS_FIELD_' . $fieldCode];
 				if (!$fieldInfo['FIELD_DESCRIPTION'])
@@ -432,7 +443,7 @@ class DynamicItems
 								$localUF = $userField;
 								$localUF['VALUE'] = $result;
 
-								$returnResult = $USER_FIELD_MANAGER->getPublicText($localUF);
+								$returnResult = \Bitrix\BIConnector\UserField\ProxyUserFieldManager::getText($localUF);
 								\Bitrix\BIConnector\MemoryCache::set($userField['ID'], $cacheKey, $returnResult);
 
 								return $returnResult;
@@ -442,7 +453,7 @@ class DynamicItems
 
 					$uf['FIELD_DESCRIPTION'] = $userField['EDIT_FORM_LABEL'];
 
-					$result['crm_dynamic_items_' . $type->getEntityTypeId()]['FIELDS'][$userField['FIELD_NAME']] = $uf;
+					$result[$datasetName]['FIELDS'][$userField['FIELD_NAME']] = $uf;
 				}
 			}
 		}

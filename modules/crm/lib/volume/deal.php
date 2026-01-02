@@ -90,14 +90,16 @@ class Deal
 	 */
 	public function canClearEntity()
 	{
-		$userPermissions = \CCrmPerms::GetUserPermissions($this->getOwner());
-		if (!\CCrmDeal::CheckReadPermission(0, $userPermissions))
+		$userPermissions = Crm\Service\Container::getInstance()->getUserPermissions($this->getOwner());
+
+		if (!$userPermissions->entityType()->canReadItems(\CCrmOwnerType::Deal))
 		{
 			$this->collectError(new Main\Error('', self::ERROR_PERMISSION_DENIED));
 
 			return false;
 		}
-		if (!\CCrmDeal::CheckDeletePermission(0, $userPermissions))
+
+		if (!$userPermissions->entityType()->canDeleteItems(\CCrmOwnerType::Deal))
 		{
 			$this->collectError(new Main\Error('', self::ERROR_PERMISSION_DENIED));
 

@@ -12,4 +12,3 @@ jn.define('im/messenger/provider/pull/channel', (require, exports, module) => {
 		ChannelFilePullHandler,
 	};
 });
-

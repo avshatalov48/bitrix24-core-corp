@@ -21,12 +21,13 @@ jn.define('im/messenger/controller/search/experimental/store-updater', (require,
 		 */
 		async update(items)
 		{
-			const { dialogues, recentItems, users } = this.prepareDataForModels(items);
+			const { dialogues, recentItems, users, copilots } = this.prepareDataForModels(items);
 
 			return Promise.all([
 				this.setDialoguesToModel(dialogues),
 				this.setRecentItemsToModel(recentItems),
 				this.setUsersToModel(users),
+				this.#setCopilotsToModel(copilots),
 			]);
 		}
 
@@ -44,7 +45,12 @@ jn.define('im/messenger/controller/search/experimental/store-updater', (require,
 		/**
 		 * @private
 		 * @param {Map<string, RecentSearchItem>} items
-		 * @return {{dialogues: Array<object>, recentItems: Array<object>, users: Array<object>}}
+		 * @return {
+		 * {dialogues: Array<object>,
+		 * recentItems: Array<object>,
+		 * users: Array<object>,
+		 * copilots: Array<object>
+		 * }}
 		 */
 		prepareDataForModels(items)
 		{
@@ -52,11 +58,10 @@ jn.define('im/messenger/controller/search/experimental/store-updater', (require,
 				users: [],
 				dialogues: [],
 				recentItems: [],
+				copilots: [],
 			};
 
 			[...items.values()].forEach((item) => {
-				const itemData = item.customData;
-
 				result.recentItems.push({
 					id: item.dialogId,
 					dateMessage: item.dateMessage,
@@ -64,18 +69,33 @@ jn.define('im/messenger/controller/search/experimental/store-updater', (require,
 
 				if (item.isUser)
 				{
-					const user = itemData;
-					result.users.push(user);
+					result.users.push(item.customData.user);
 
-					result.dialogues.push(this.prepareUserForDialog(user));
+					result.dialogues.push(this.prepareUserForDialog(item.customData));
 				}
 
 				if (item.isChat)
 				{
 					result.dialogues.push({
-						...itemData,
+						...item.customData.chat,
 						dialogId: item.dialogId,
 					});
+				}
+
+				if (item.customData.copilot)
+				{
+					const role = item.customData.copilot.code;
+					const roles = { [role]: item.customData.copilot };
+					const chats = [{ dialogId: item.dialogId, role }];
+
+					const copilotItem = {
+						dialogId: item.dialogId,
+						chats,
+						aiProvider: '',
+						roles,
+					};
+
+					result.copilots.push(copilotItem);
 				}
 			});
 
@@ -84,17 +104,20 @@ jn.define('im/messenger/controller/search/experimental/store-updater', (require,
 
 		/**
 		 * @private
-		 * @param userItem
-		 * @return {{color, name, avatar, dialogId, type: string}}
+		 * @param {RecentProviderItemCustomData} customData
+		 * @return {RecentProviderUserDataForDialogModel}
 		 */
-		prepareUserForDialog(userItem)
+		prepareUserForDialog(customData)
 		{
+			const { user, chat } = customData;
+
 			return {
-				dialogId: userItem.id,
-				avatar: userItem.avatar,
-				color: userItem.color,
-				name: userItem.name,
+				dialogId: user.id,
+				avatar: user.avatar,
+				color: user.color,
+				name: user.name,
 				type: DialogType.user,
+				...chat,
 			};
 		}
 
@@ -132,6 +155,14 @@ jn.define('im/messenger/controller/search/experimental/store-updater', (require,
 		async setDialoguesToModel(dialogues)
 		{
 			return this.store.dispatch('dialoguesModel/set', dialogues);
+		}
+
+		/**
+		 * @param {Array<object>} copilots
+		 */
+		async #setCopilotsToModel(copilots)
+		{
+			return this.store.dispatch('dialoguesModel/copilotModel/setCollection', copilots);
 		}
 	}
 

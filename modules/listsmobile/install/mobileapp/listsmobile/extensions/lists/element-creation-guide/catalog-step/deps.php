@@ -9,6 +9,7 @@ return [
 	'extensions' => [
 		'loc',
 		'apptheme',
+		'analytics',
 		'event-emitter',
 		'notify-manager',
 		'storage-cache',

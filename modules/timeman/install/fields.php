@@ -420,7 +420,7 @@ foreach ($arEntities as $entity)
 	}
 }
 
-if (!$bSkipUpdateForm)
+if (!($bSkipUpdateForm ?? null))
 {
 	$tm_tabs_string =
 		'--uf_timeman_section--#----'.$arLabels['TM_FIELD_UF_TIMEMAN'].'--,'

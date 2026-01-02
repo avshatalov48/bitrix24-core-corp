@@ -1,4 +1,4 @@
-import { Dom, Event, Loc, Tag } from 'main.core';
+import { Dom, Event, Loc, Runtime, Tag } from 'main.core';
 import { BaseEvent, EventEmitter } from 'main.core.events';
 import { Dialog } from 'ui.entity-selector';
 import { Checker } from 'ui.form-elements.view';
@@ -56,6 +56,11 @@ export class ValueChecker extends EventEmitter
 		const entitySelectorValue = this.#getSelectedItem()?.id;
 
 		return this.#layout.checkerValue?.value || entitySelectorValue || this.#params.placeholder;
+	}
+
+	setValue(value: boolean): void
+	{
+		this.#layout.checker.switcher.check(value);
 	}
 
 	setErrors(errors: string[])
@@ -235,10 +240,29 @@ export class ValueChecker extends EventEmitter
 			if (this.isChecked())
 			{
 				this.#params.entitySelector.show();
+
+				if (this.#params.id === 'task-template')
+				{
+					void this.#sendAnalytics();
+				}
 			}
 		});
 
 		return this.#layout.entitySelector;
+	}
+
+	async #sendAnalytics(): Promise<void>
+	{
+		const { sendData } = await Runtime.loadExtension('ui.analytics');
+
+		sendData({
+			tool: 'tasks',
+			category: 'flows',
+			event: 'flow_template_select',
+			c_section: 'tasks',
+			c_sub_section: 'flows_grid',
+			c_element: 'template_selection_button',
+		});
 	}
 
 	#onEntitySelectorItemSelectedHandler()

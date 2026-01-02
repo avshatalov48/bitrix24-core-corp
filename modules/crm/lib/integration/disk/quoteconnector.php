@@ -20,14 +20,14 @@ class QuoteConnector extends Uf\StubConnector
 	{
 		$userPermissions = $this->getUserPermissions($userId);
 
-		return $userPermissions->checkReadPermissions(\CCrmOwnerType::Quote, $this->entityId);
+		return $userPermissions->item()->canRead(\CCrmOwnerType::Quote, $this->entityId);
 	}
 
 	public function canUpdate($userId): bool
 	{
 		$userPermissions = $this->getUserPermissions($userId);
 
-		return $userPermissions->checkUpdatePermissions(\CCrmOwnerType::Quote, $this->entityId);
+		return $userPermissions->item()->canUpdate(\CCrmOwnerType::Quote, $this->entityId);
 	}
 
 	public function canConfidenceReadInOperableEntity(): bool

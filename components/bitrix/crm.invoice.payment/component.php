@@ -36,8 +36,7 @@ if (isset($arParams['HASH']))
 }
 else
 {
-	$CCrmInvoice = new CCrmInvoice();
-	if ($CCrmInvoice->cPerms->HavePerm('INVOICE', BX_CRM_PERM_NONE, 'READ'))
+	if (!\Bitrix\Crm\Service\Container::getInstance()->getUserPermissions()->entityType()->canReadItems(CCrmOwnerType::Invoice))
 	{
 		ShowError(GetMessage('CRM_PERMISSION_DENIED'));
 		return;

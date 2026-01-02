@@ -1,3 +1,10 @@
+export type ParameterSelectorParams = {
+	groups: number[],
+	scopes: string[],
+	params: string[],
+	scopeParamsMap: {[scopeCode: string]: Parameter[]},
+};
+
 export type Parameter = {
 	code: string,
 	scope: string,
@@ -6,8 +13,6 @@ export type Parameter = {
 };
 
 export type CheckCompatibilityResult = {
-	paramsToDelete: Set<string>,
-	paramsToSave: Set<string>,
-	paramsNotToSave: Set<string>,
-	intersection: Set<string>,
+	incompatibleParams: Parameter[],
+	addedParameters: Parameter[],
 }

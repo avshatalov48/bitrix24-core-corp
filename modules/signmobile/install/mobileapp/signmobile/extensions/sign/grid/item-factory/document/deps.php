@@ -13,7 +13,6 @@ return [
 		'ui-system/typography/text',
 		'ui-system/blocks/avatar',
 		'notify-manager',
-		'user/profile',
 		'sign:opener',
 		'sign:download-file',
 		'sign:type/initiated-by-type',
@@ -27,5 +26,6 @@ return [
 		'tokens',
 		'utils/function',
 		'loc',
+		'user-profile',
 	],
 ];

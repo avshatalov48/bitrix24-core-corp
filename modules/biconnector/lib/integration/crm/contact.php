@@ -26,6 +26,12 @@ class Contact
 		$result = &$params[1];
 		$languageId = $params[2];
 
+		$eventTableName = $params[3];
+		if (!empty($eventTableName) && $eventTableName !== 'crm_contact')
+		{
+			return;
+		}
+
 		$result['crm_contact'] = [
 			'TABLE_NAME' => 'b_crm_contact',
 			'TABLE_ALIAS' => 'C',

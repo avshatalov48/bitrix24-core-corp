@@ -14,7 +14,6 @@ use Bitrix\BIConnector\Integration\Superset\Registrar;
 use Bitrix\BIConnector\Integration\Superset\SupersetInitializer;
 use Bitrix\BIConnector\Integration\Superset\Integrator\Request\IntegratorResponse;
 use Bitrix\BIConnector\Integration\Superset\SupersetStatusOptionContainer;
-use Bitrix\BIConnector\ExternalSource\Internal\ExternalDatasetTable;
 use Bitrix\Main\Application;
 use Bitrix\Main\ArgumentException;
 use Bitrix\Main\Error;
@@ -49,6 +48,7 @@ final class Integrator
 	private const PROXY_ACTION_USER_DEACTIVATE = '/user/deactivate';
 	private const PROXY_ACTION_USER_SET_EMPTY_ROLE = '/user/setEmptyRole';
 	private const PROXY_ACTION_USER_SYNC_PROFILE = '/user/syncProfile';
+	private const PROXY_ACTION_LIST_CHART = '/chart/list';
 	private const PROXY_ACTION_UPDATE_DASHBOARD = '/dashboard/update';
 	private const PROXY_ACTION_IMPORT_DATASET = '/dataset/import';
 	private const PROXY_ACTION_CREATE_EMPTY_DASHBOARD = '/dashboard/createEmpty';
@@ -57,14 +57,17 @@ final class Integrator
 	private const PROXY_ACTION_LIST_DATASET = '/dataset/list';
 	private const PROXY_ACTION_GET_DATASET = '/dataset/get';
 	private const PROXY_ACTION_CREATE_DATASET = '/dataset/create';
+	private const PROXY_ACTION_UPDATE_DATASET = '/dataset/update';
 	private const PROXY_ACTION_DELETE_DATASET = '/dataset/delete';
 	private const PROXY_ACTION_GET_DATASET_URL = '/dataset/getUrl';
+	private const PROXY_ACTION_GET_UNUSED_ELEMENTS = '/unusedElements/get';
+	private const PROXY_ACTION_DELETE_UNUSED_ELEMENTS = '/unusedElements/delete';
+	private const PROXY_ACTION_GET_DASHBOARD_DATASETS = '/dashboard/datasets';
 
 	static private self $instance;
 
 	private Sender $sender;
 	private IntegratorLogger $logger;
-
 
 	public static function getInstance(): self
 	{
@@ -186,15 +189,8 @@ final class Integrator
 			);
 		}
 
-		$inversedIdList = SupersetDashboardTable::getList([
-			'select' => ['EXTERNAL_ID'],
-			'filter' => [
-				'!@EXTERNAL_ID' => $ids,
-			],
-		])->fetchAll();
-
 		$requestParams = [
-			'neqIds' => array_column($inversedIdList, 'EXTERNAL_ID'),
+			'ids' => $ids,
 		];
 
 		$response =
@@ -937,6 +933,44 @@ final class Integrator
 	 * @param array $ids External ids of dashboards.
 	 * @return IntegratorResponse
 	 */
+	public function getChartList(array $ids): IntegratorResponse
+	{
+		if (empty($ids))
+		{
+			return new IntegratorResponse(
+				status: IntegratorResponse::STATUS_OK,
+				data: []
+			);
+		}
+
+		$requestParams = [
+			'ids' => $ids,
+		];
+
+		$response =
+			$this
+				->createDefaultRequest(self::PROXY_ACTION_LIST_CHART)
+				->setParams($requestParams)
+				->perform()
+		;
+
+		if ($response->hasErrors())
+		{
+			return $response;
+		}
+
+		$resultData = $response->getData();
+
+		return $response->setData($resultData['charts']);
+	}
+
+	/**
+	 * Returns response with list of dataset info on successful request.
+	 * If response code is not OK - returns empty data.
+	 *
+	 * @param array $ids External ids of dashboards.
+	 * @return IntegratorResponse
+	 */
 	public function getDatasetList(array $ids): IntegratorResponse
 	{
 		if (empty($ids))
@@ -947,15 +981,8 @@ final class Integrator
 			);
 		}
 
-		$inversedIdList = ExternalDatasetTable::getList([
-			'select' => ['EXTERNAL_ID'],
-			'filter' => [
-				'!@EXTERNAL_ID' => $ids,
-			],
-		])->fetchAll();
-
 		$requestParams = [
-			'neqIds' => array_column($inversedIdList, 'EXTERNAL_ID'),
+			'ids' => $ids,
 		];
 
 		$response =
@@ -1027,6 +1054,39 @@ final class Integrator
 	}
 
 	/**
+	 * Updates dataset
+	 *
+	 * @param array $fields
+	 * @return IntegratorResponse
+	 */
+	public function updateDataset(int $id, array $fields): IntegratorResponse
+	{
+		$parameters = [];
+
+		if (isset($fields['table_name']))
+		{
+			$parameters['table_name'] = $fields['table_name'];
+		}
+
+		if (isset($fields['columns']))
+		{
+			$parameters['columns'] = $fields['columns'];
+		}
+
+		return
+			$this
+				->createDefaultRequest(self::PROXY_ACTION_UPDATE_DATASET)
+				->removeBefore(Middleware\ReadyGate::getMiddlewareId())
+				->removeAfter(Middleware\StatusArbiter::getMiddlewareId())
+				->setParams([
+					'id' => $id,
+					'fields' => $parameters,
+				])
+				->perform()
+			;
+	}
+
+	/**
 	 * Deletes dataset
 	 *
 	 * @param int $id
@@ -1068,6 +1128,73 @@ final class Integrator
 			;
 	}
 
+	/**
+	 * Gets unused elements - dataset which are not used in charts and charts which are not used in dashboards.
+	 *
+	 * @param array $params ORM params - page, pageSize, filter, order.
+	 *
+	 * @return IntegratorResponse
+	 */
+	public function getUnusedElements(array $params): IntegratorResponse
+	{
+		$parameters = [
+			'ormParams' => [
+				'page' => $params['page'] ?? 0,
+				'pageSize' => $params['pageSize'] ?? 20,
+				'order' => $params['order'] ?? null,
+				'filter' => $params['filter'] ?? null,
+			],
+		];
+
+		return
+			$this
+				->createDefaultRequest(self::PROXY_ACTION_GET_UNUSED_ELEMENTS)
+				->removeBefore(Middleware\ReadyGate::getMiddlewareId())
+				->setParams($parameters)
+				->perform()
+		;
+	}
+
+	/**
+	 * @param array $elements Array of elements: [elementId: int, elementType: chart|dataset].
+	 *
+	 * @return IntegratorResponse
+	 */
+	public function deleteUnusedElements(array $elements): IntegratorResponse
+	{
+		$parameters = [
+			'elements' => $elements,
+		];
+
+		return
+			$this
+				->createDefaultRequest(self::PROXY_ACTION_DELETE_UNUSED_ELEMENTS)
+				->setParams($parameters)
+				->perform()
+		;
+	}
+
+	/**
+	 * Gets dataset list by dashboard id - datasets which are used in dashboard.
+	 *
+	 * @param int $dashboardId
+	 *
+	 * @return IntegratorResponse
+	 */
+	public function getDashboardDatasets(int $dashboardId): IntegratorResponse
+	{
+		$parameters = [
+			'id' => $dashboardId,
+		];
+
+		return
+			$this
+				->createDefaultRequest(self::PROXY_ACTION_GET_DASHBOARD_DATASETS)
+				->setParams($parameters)
+				->perform()
+			;
+	}
+
 	// endregion
 
 	private function decode(string $data)
@@ -1080,49 +1207,5 @@ final class Integrator
 		{
 			return null;
 		}
-	}
-
-	/**
-	 * @param string $action
-	 * @return bool
-	 * @throws ArgumentException
-	 */
-	public static function isUserRequired(string $action): bool
-	{
-		$actions = [
-			self::PROXY_ACTION_PING_SUPERSET => false,
-			self::PROXY_ACTION_START_SUPERSET => false,
-			self::PROXY_ACTION_FREEZE_SUPERSET => false,
-			self::PROXY_ACTION_UNFREEZE_SUPERSET => false,
-			self::PROXY_ACTION_DELETE_SUPERSET => false,
-			self::PROXY_ACTION_CHANGE_BI_TOKEN_SUPERSET => false,
-			self::PROXY_ACTION_REFRESH_DOMAIN_CONNECTION => false,
-			self::PROXY_ACTION_CLEAR_CACHE => false,
-			self::PROXY_ACTION_LIST_DASHBOARD => false,
-			self::PROXY_ACTION_DASHBOARD_DETAIL => false,
-			self::PROXY_ACTION_GET_EMBEDDED_DASHBOARD_CREDENTIALS => false,
-			self::PROXY_ACTION_COPY_DASHBOARD => true,
-			self::PROXY_ACTION_EXPORT_DASHBOARD => false,
-			self::PROXY_ACTION_DELETE_DASHBOARD => false,
-			self::PROXY_ACTION_IMPORT_DASHBOARD => false,
-			self::PROXY_ACTION_CREATE_USER => true,
-			self::PROXY_ACTION_GET_LOGIN_URL => true,
-			self::PROXY_ACTION_UPDATE_DASHBOARD => false,
-			self::PROXY_ACTION_IMPORT_DATASET => false,
-			self::PROXY_ACTION_CREATE_EMPTY_DASHBOARD => true,
-			self::PROXY_ACTION_SET_DASHBOARD_OWNER => true,
-			self::PROXY_ACTION_CHANGE_DASHBOARD_OWNER => false,
-			self::PROXY_ACTION_LIST_DATASET => false,
-			self::PROXY_ACTION_GET_DATASET => false,
-			self::PROXY_ACTION_CREATE_DATASET => true,
-			self::PROXY_ACTION_DELETE_DATASET => true,
-		];
-
-		if (!array_key_exists($action, $actions))
-		{
-			throw new ArgumentException('Action "' . $action . '" is not supported', 'action');
-		}
-
-		return $actions[$action];
 	}
 }

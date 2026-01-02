@@ -1,4 +1,7 @@
 import { mapGetters } from 'ui.vue3.vuex';
+
+import { Label, LabelSize } from 'ui.label';
+
 import { CrmEntity, Model } from 'booking.const';
 import { currencyFormat } from 'booking.lib.currency-format';
 import type { BookingModel, DealData } from 'booking.model.bookings';
@@ -65,6 +68,15 @@ export const Resource = {
 		{
 			return this.$store.getters[`${Model.Bookings}/getByDateAndResources`](this.selectedDateTs, [this.resourceId]);
 		},
+		labelHTML(): string {
+			const label = new Label({
+				size: LabelSize.SM,
+				text: this.loc('BOOKING_BOOKING_RESOURCE_DELETED'),
+				fill: true,
+			});
+
+			return label.render().outerHTML;
+		},
 	},
 	methods: {
 		updateVisibilityDuringTransition(): void
@@ -116,6 +128,7 @@ export const Resource = {
 		>
 			<template v-if="visible">
 				<ResourceWorkload
+					v-if="!resource.isDeleted"
 					:resourceId="resourceId"
 					:scale="zoom"
 					:isGrid="true"
@@ -128,8 +141,16 @@ export const Resource = {
 						{{ resourceType.name }}
 					</div>
 				</div>
-				<div class="booking-booking-header-resource-profit" v-html="profit"></div>
-				<div class="booking-booking-header-resource-actions">
+				<div
+					v-if="resource.isDeleted"
+					v-html="labelHTML"
+				></div>
+				<div
+					class="booking-booking-header-resource-profit"
+					v-else
+					v-html="profit"
+				></div>
+				<div class="booking-booking-header-resource-actions" v-if="!resource.isDeleted">
 					<ResourceMenu :resource-id/>
 				</div>
 			</template>

@@ -22,7 +22,6 @@
 		rgba(var(--ui-color-background-primary-rgb, var(--crm-timeline__calendar-icon_white-rgb)), 0.5),
 		rgba(var(--ui-color-background-primary-rgb, var(--crm-timeline__calendar-icon_white-rgb)), 0.5)),
 		var(--crm-timeline__calendar-icon_primary-color);
-
 }
 
 .crm-timeline__calendar-icon_top {
@@ -117,6 +116,13 @@
 	top: 8px;
 }
 
-.crm-timeline__card-logo.--orange .crm-timeline__calendar-icon {
+.crm-timeline__card-logo.--orange .crm-timeline__calendar-icon,
+.crm-timeline__card-logo.--orange-stripe .crm-timeline__calendar-icon {
 	--crm-timeline__calendar-icon_primary-color: var(--ui-color-palette-orange-50, #FFA900);
+}
+.crm-timeline__card-logo.--green .crm-timeline__calendar-icon {
+	--crm-timeline__calendar-icon_primary-color: var(--ui-color-primary-alt, #9dcf00);
+}
+.crm-timeline__card-logo.--dark-orange .crm-timeline__calendar-icon {
+	--crm-timeline__calendar-icon_primary-color: var(--ui-color-palette-orange-70, #c48300);
 }

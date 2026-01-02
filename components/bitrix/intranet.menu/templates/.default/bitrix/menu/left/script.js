@@ -1,106 +1,121 @@
 /* eslint-disable */
 this.BX = this.BX || {};
-(function (exports,main_popup,main_core_events,im_v2_lib_desktopApi,main_core) {
+(function (exports,im_v2_lib_confirm,main_popup,im_v2_const,main_loader,main_core_events,im_v2_lib_desktopApi,main_core) {
 	'use strict';
 
-	var _templateObject, _templateObject2, _templateObject3;
-	function _createForOfIteratorHelper(o, allowArrayLike) { var it = typeof Symbol !== "undefined" && o[Symbol.iterator] || o["@@iterator"]; if (!it) { if (Array.isArray(o) || (it = _unsupportedIterableToArray(o)) || allowArrayLike && o && typeof o.length === "number") { if (it) o = it; var i = 0; var F = function F() {}; return { s: F, n: function n() { if (i >= o.length) return { done: true }; return { done: false, value: o[i++] }; }, e: function e(_e) { throw _e; }, f: F }; } throw new TypeError("Invalid attempt to iterate non-iterable instance.\nIn order to be iterable, non-array objects must have a [Symbol.iterator]() method."); } var normalCompletion = true, didErr = false, err; return { s: function s() { it = it.call(o); }, n: function n() { var step = it.next(); normalCompletion = step.done; return step; }, e: function e(_e2) { didErr = true; err = _e2; }, f: function f() { try { if (!normalCompletion && it["return"] != null) it["return"](); } finally { if (didErr) throw err; } } }; }
-	function _unsupportedIterableToArray(o, minLen) { if (!o) return; if (typeof o === "string") return _arrayLikeToArray(o, minLen); var n = Object.prototype.toString.call(o).slice(8, -1); if (n === "Object" && o.constructor) n = o.constructor.name; if (n === "Map" || n === "Set") return Array.from(o); if (n === "Arguments" || /^(?:Ui|I)nt(?:8|16|32)(?:Clamped)?Array$/.test(n)) return _arrayLikeToArray(o, minLen); }
-	function _arrayLikeToArray(arr, len) { if (len == null || len > arr.length) len = arr.length; for (var i = 0, arr2 = new Array(len); i < len; i++) arr2[i] = arr[i]; return arr2; }
-	var Account = /*#__PURE__*/function () {
-	  function Account(allCounters) {
-	    babelHelpers.classCallCheck(this, Account);
-	    babelHelpers.defineProperty(this, "accounts", []);
-	    babelHelpers.defineProperty(this, "currentUser", null);
-	    babelHelpers.defineProperty(this, "contextPopup", []);
-	    babelHelpers.defineProperty(this, "popup", null);
-	    babelHelpers.defineProperty(this, "allCounters", {});
-	    babelHelpers.defineProperty(this, "wrapper", null);
-	    this.wrapper = document.getElementById("history-items");
+	let _ = t => t,
+	  _t,
+	  _t2,
+	  _t3,
+	  _t4;
+	var _getLoader = /*#__PURE__*/babelHelpers.classPrivateFieldLooseKey("getLoader");
+	class Account {
+	  constructor(allCounters) {
+	    Object.defineProperty(this, _getLoader, {
+	      value: _getLoader2
+	    });
+	    this.accounts = [];
+	    this.currentUser = null;
+	    this.contextPopup = [];
+	    this.popup = null;
+	    this.allCounters = {};
+	    this.wrapper = null;
+	    this.loader = null;
+	    this.wrapper = document.getElementById('history-items');
+	    this.loader = null;
 	    this.checkCounters(allCounters);
 	    this.reload();
 	    this.viewDesktopUser();
 	    this.initPopup();
 	  }
-	  babelHelpers.createClass(Account, [{
-	    key: "checkCounters",
-	    value: function checkCounters(allCounters) {
-	      for (var _i = 0, _Object$keys = Object.keys(allCounters); _i < _Object$keys.length; _i++) {
-	        var counterId = _Object$keys[_i];
-	        var key = counterId;
-	        if (counterId === '**') {
-	          key = 'live-feed';
-	        }
-	        this.allCounters[key] = allCounters[counterId];
+	  hideLoader() {
+	    babelHelpers.classPrivateFieldLooseBase(this, _getLoader)[_getLoader]().hide();
+	  }
+	  checkCounters(allCounters) {
+	    for (const counterId of Object.keys(allCounters)) {
+	      let key = counterId;
+	      if (counterId === '**') {
+	        key = 'live-feed';
+	      }
+	      this.allCounters[key] = allCounters[counterId];
+	    }
+	  }
+	  getSumCounters() {
+	    let sum = 0;
+	    for (const counterId of Object.keys(this.allCounters)) {
+	      if (counterId === 'tasks_effective' || counterId === 'invited_users') {
+	        continue;
+	      }
+	      const val = this.allCounters[counterId] ? parseInt(this.allCounters[counterId], 10) : 0;
+	      sum += val;
+	    }
+	    return sum;
+	  }
+	  getTabUsers() {
+	    var _BXDesktopSystem;
+	    // eslint-disable-next-line no-undef
+	    return main_core.Type.isUndefined(BXDesktopSystem) ? [] : (_BXDesktopSystem = BXDesktopSystem) == null ? void 0 : _BXDesktopSystem.TabList();
+	  }
+	  reload() {
+	    this.reloadAccounts();
+	    this.viewPopupAccounts();
+	  }
+	  reloadAccounts() {
+	    const currentUserId = parseInt(main_core.Loc.getMessage('USER_ID'), 10);
+	    // eslint-disable-next-line no-undef
+	    this.accounts = main_core.Type.isUndefined(BXDesktopSystem) ? [] : im_v2_lib_desktopApi.DesktopApi.getAccountList();
+	    this.currentUser = this.accounts.find(account => parseInt(account.id, 10) === currentUserId && account.portal === location.hostname);
+	  }
+	  getAccountBy(account) {
+	    return this.accounts.find(x => parseInt(x.id, 10) === parseInt(account.id, 10) && x.portal === account.portal);
+	  }
+	  initPopup() {
+	    const menuContent = document.querySelector('.intranet__desktop-menu_popup');
+	    const userNode = document.querySelector('.intranet__desktop-menu_user-block');
+	    this.popup = new main_popup.Popup({
+	      content: menuContent,
+	      bindElement: userNode,
+	      width: 320,
+	      background: '#282e39',
+	      closeIcon: true,
+	      closeByEsc: true
+	    });
+	    main_core.Event.bind(userNode, 'click', event => {
+	      if (this.popup.isShown()) {
+	        this.popup.close();
+	      } else {
+	        event.stopPropagation();
+	        this.popup.show();
+	        babelHelpers.classPrivateFieldLooseBase(this, _getLoader)[_getLoader]().hide();
+	        this.reload();
+	      }
+	    });
+	    main_core.Event.bind(document, 'click', event => {
+	      const withinBoundaries = event.composedPath().includes(menuContent);
+	      if (!withinBoundaries) {
+	        this.popup.close();
+	      }
+	    });
+	  }
+	  setCounters(counters) {
+	    let newCounters = counters;
+	    if (counters.data) {
+	      newCounters = counters.data;
+	      if (newCounters[0] && main_core.Type.isObject(newCounters[0])) {
+	        newCounters = newCounters[0];
 	      }
 	    }
-	  }, {
-	    key: "getSumCounters",
-	    value: function getSumCounters() {
-	      var sum = 0;
-	      for (var _i2 = 0, _Object$keys2 = Object.keys(this.allCounters); _i2 < _Object$keys2.length; _i2++) {
-	        var counterId = _Object$keys2[_i2];
-	        if (counterId === 'tasks_effective' || counterId === 'invited_users') {
-	          continue;
-	        }
-	        var val = this.allCounters[counterId] ? parseInt(this.allCounters[counterId], 10) : 0;
-	        sum += val;
+	    for (const counterId of Object.keys(newCounters)) {
+	      let cId = counterId;
+	      if (counterId === '**') {
+	        cId = 'live-feed';
 	      }
-	      return sum;
+	      this.allCounters[cId] = newCounters[counterId];
 	    }
-	  }, {
-	    key: "reload",
-	    value: function reload() {
-	      var currentUserId = main_core.Loc.getMessage('USER_ID');
-	      this.accounts = 'undefined' !== typeof BXDesktopSystem ? im_v2_lib_desktopApi.DesktopApi.getAccountList() : [];
-	      this.currentUser = this.accounts.find(function (account) {
-	        return account.id === currentUserId;
-	      });
-	      this.viewPopupAccounts();
-	    }
-	  }, {
-	    key: "initPopup",
-	    value: function initPopup() {
-	      var _this = this;
-	      var userNode = document.querySelector('.intranet__desktop-menu_user-block');
-	      this.popup = new main_popup.Popup({
-	        content: document.querySelector('.intranet__desktop-menu_popup'),
-	        bindElement: userNode,
-	        width: 320,
-	        background: '#282e39',
-	        closeIcon: true,
-	        closeByEsc: true
-	      });
-	      main_core.Event.bind(userNode, 'click', function () {
-	        if (_this.popup.isShown()) {
-	          _this.popup.close();
-	        } else {
-	          _this.popup.show();
-	          _this.reload();
-	        }
-	      });
-	    }
-	  }, {
-	    key: "setCounters",
-	    value: function setCounters(counters) {
-	      var newCounters = counters;
-	      if (counters['data']) {
-	        newCounters = counters.data;
-	        if (newCounters[0] && babelHelpers["typeof"](newCounters[0]) === 'object') {
-	          newCounters = newCounters[0];
-	        }
-	      }
-	      for (var _i3 = 0, _Object$keys3 = Object.keys(newCounters); _i3 < _Object$keys3.length; _i3++) {
-	        var counterId = _Object$keys3[_i3];
-	        var cId = counterId;
-	        if (counterId === '**') {
-	          cId = 'live-feed';
-	        }
-	        this.allCounters[cId] = newCounters[counterId];
-	      }
-	      var sumCounters = this.getSumCounters();
-	      var block = document.getElementsByClassName('intranet__desktop-menu_user-block')[0];
-	      var counterNode = block.querySelector('[data-role="counter"]');
+	    const sumCounters = this.getSumCounters();
+	    const block = document.getElementsByClassName('intranet__desktop-menu_user-block')[0];
+	    const counterNode = block == null ? void 0 : block.querySelector('[data-role="counter"]');
+	    if (counterNode) {
 	      if (sumCounters > 0) {
 	        counterNode.innerHTML = sumCounters > 99 ? '99+' : sumCounters;
 	        if (!main_core.Dom.hasClass(block, 'intranet__desktop-menu_item_counters')) {
@@ -111,430 +126,435 @@ this.BX = this.BX || {};
 	        main_core.Dom.addClass(block, 'intranet__desktop-menu_item_counters');
 	      }
 	    }
-	  }, {
-	    key: "removeElements",
-	    value: function removeElements(className) {
-	      var elements = document.getElementsByClassName(className);
-	      babelHelpers.toConsumableArray(elements).forEach(function (element) {
-	        element.remove();
+	  }
+	  removeElements(className) {
+	    const elements = document.getElementsByClassName(className);
+	    [...elements].forEach(element => {
+	      element.remove();
+	    });
+	  }
+	  viewDesktopUser() {
+	    if (this.currentUser === null) {
+	      return;
+	    }
+	    const block = document.getElementsByClassName('intranet__desktop-menu_user')[0];
+	    const counters = this.getSumCounters();
+	    let counterBlock = null;
+	    if (counters > 0) {
+	      const countersView = counters > 99 ? '99+' : counters;
+	      counterBlock = main_core.Tag.render(_t || (_t = _`
+				<div class="intranet__desktop-menu_user-counter ui-counter ui-counter-md ui-counter-danger">
+					<div class="ui-counter-inner" data-role="counter">${0}</div>
+				</div>
+			`), countersView);
+	    }
+	    this.removeElements('intranet__desktop-menu_user-block');
+	    const userData = main_core.Tag.render(_t2 || (_t2 = _`
+			<div class="intranet__desktop-menu_user-block ${0}">
+							<span class="intranet__desktop-menu_user-avatar ui-icon ui-icon-common-user ui-icon-common-user-desktop">
+								<i></i>
+								${0}
+							</span>
+							<span class="intranet__desktop-menu_user-inner">
+								<span class="intranet__desktop-menu_user-name">${0}</span>
+								<span class="intranet__desktop-menu_user-post">${0}</span>
+							</span>
+							<span class="intranet__desktop-menu_user-inner-after"></span>
+						</div>
+		`), counters > 0 ? 'intranet__desktop-menu_item_counters' : '', counterBlock, this.currentUser.portal, this.currentUser.work_position);
+	    main_core.Dom.append(userData, block);
+	    const avatar = document.getElementsByClassName('ui-icon-common-user-desktop')[0];
+	    const previewImage = this.getAvatarUrl(this.currentUser);
+	    main_core.Dom.style(avatar, '--ui-icon-service-bg-image', previewImage);
+	  }
+	  getAvatarUrl(account) {
+	    let avatarUrl = '';
+	    if (account.avatar.includes('http://') || account.avatar.includes('https://')) {
+	      avatarUrl = account.avatar;
+	    } else {
+	      avatarUrl = `${account.protocol}://${account.portal}${account.avatar}`;
+	    }
+	    return `url('${BX.util.htmlspecialchars(account.avatar === Account.defaultAvatar ? Account.defaultAvatarDesktop : BX.util.htmlspecialchars(avatarUrl))}')`;
+	  }
+	  viewPopupAccounts() {
+	    if (this.currentUser === null) {
+	      return;
+	    }
+	    const menuPopup = document.getElementsByClassName('intranet__desktop-menu_popup')[0];
+	    let position = '';
+	    if (main_core.Type.isStringFilled(this.currentUser.work_position)) {
+	      position = `<span class="intranet__desktop-menu_popup-post">${this.currentUser.work_position}</span>`;
+	    }
+	    this.removeElements('intranet__desktop-menu_popup-header');
+	    const item = main_core.Tag.render(_t3 || (_t3 = _`
+			<div class="intranet__desktop-menu_popup-header">
+				<span class="intranet__desktop-menu_user-avatar ui-icon ui-icon-common-user ui-icon-common-user-popup">
+					<i></i>
+				</span>
+				<span class="intranet__desktop-menu_popup-label">${0}</span>
+				<div class="intranet__desktop-menu_popup-header-user" onclick="BX.SidePanel.Instance.open('${0}')">
+					<span class="intranet__desktop-menu_popup-name intranet__desktop-menu_popup-name--chevron">
+						${0}
+					</span>
+					${0}
+				</div>
+			</div>
+		`), this.currentUser.portal, this.currentUser.profile, `${this.currentUser.first_name} ${this.currentUser.last_name}`, position);
+	    main_core.Dom.insertBefore(item, menuPopup.firstElementChild);
+	    const avatar = document.getElementsByClassName('ui-icon-common-user-popup')[0];
+	    const previewImage = this.getAvatarUrl(this.currentUser);
+	    main_core.Dom.style(avatar, '--ui-icon-service-bg-image', previewImage);
+	    const block = document.getElementsByClassName('intranet__desktop-menu_popup-list')[0];
+	    this.removeElements('intranet__desktop-menu_popup-item-account');
+	    let index = 0;
+	    const users = this.getTabUsers();
+	    for (const account of this.accounts) {
+	      let currentUserClass = '';
+	      let currentUserConnected = '';
+	      let counters = 0;
+	      const isSelected = users.some(x => parseInt(x.id, 10) === parseInt(account.id, 10) && x.portal === account.portal);
+	      if (isSelected) {
+	        if (parseInt(account.id, 10) === parseInt(this.currentUser.id, 10) && account.portal === this.currentUser.portal) {
+	          counters = this.getSumCounters();
+	          currentUserConnected = '--selected';
+	        }
+	        currentUserClass = '--connected';
+	      }
+	      const countersView = counters > 99 ? '99+' : counters;
+	      const item = main_core.Tag.render(_t4 || (_t4 = _`
+				<li class="intranet__desktop-menu_popup-item intranet__desktop-menu_popup-item-account ${0} ${0} ${0}">
+					<span class="intranet__desktop-menu_user-avatar ui-icon ui-icon-common-user ui-icon-common-user-${0}">
+						<i></i>
+						<div class="intranet__desktop-menu_user-counter ui-counter ui-counter-md ui-counter-danger">
+							<div class="ui-counter-inner">${0}</div>
+						</div>	
+					</span>
+					<span class="intranet__desktop-menu_popup-user">
+						<span class="intranet__desktop-menu_popup-name">${0}</span>
+						<span class="intranet__desktop-menu_popup-post">${0}</span>
+					</span>
+					<span class="intranet__desktop-menu_popup-btn ui-icon-set --more" id="ui-icon-set-${0}"></span>
+				</li>
+			`), counters > 0 ? 'intranet__desktop-menu_item_counters' : '', currentUserClass, currentUserConnected, index, countersView, account.portal, account.login, index);
+	      main_core.Dom.insertBefore(item, block.children[index]);
+	      this.openTabOrConnectAccount(account, item);
+	      this.addContextMenu(account, index, isSelected);
+	      const userAvatar = document.getElementsByClassName(`ui-icon-common-user-${index}`)[0];
+	      const previewUserImage = this.getAvatarUrl(account);
+	      main_core.Dom.style(userAvatar, '--ui-icon-service-bg-image', previewUserImage);
+	      index++;
+	    }
+	  }
+	  openTabOrConnectAccount(account, item) {
+	    const block = item.querySelector('.intranet__desktop-menu_popup-user');
+	    main_core.Event.bind(block, 'click', () => {
+	      const siteUrl = `${account.protocol}://${account.portal}`;
+	      if (this.isAccountConnected(account)) {
+	        window.open(siteUrl, '_blank');
+	        return;
+	      }
+	      babelHelpers.classPrivateFieldLooseBase(this, _getLoader)[_getLoader]().show();
+	      this.connectAccount(account, () => {
+	        this.checkConnectedAccountAndStopLoader(account, 0, this.hideLoader);
 	      });
+	    });
+	  }
+	  connectAccount(account, callback) {
+	    const {
+	      host,
+	      login,
+	      protocol
+	    } = account;
+	    const userLang = navigator.language;
+	    im_v2_lib_desktopApi.DesktopApi.connectAccount(host, login, protocol, userLang);
+	    callback();
+	  }
+	  isAccountConnected(account) {
+	    const users = this.getTabUsers();
+	    return users.some(user => parseInt(user.id, 10) === parseInt(account.id, 10) && user.portal === account.portal);
+	  }
+	  checkConnectedAccountAndStopLoader(account, counter, callback) {
+	    if (counter >= 5) {
+	      this.reload();
+	      callback();
+	      return;
 	    }
-	  }, {
-	    key: "viewDesktopUser",
-	    value: function viewDesktopUser() {
-	      var block = document.getElementsByClassName('intranet__desktop-menu_user')[0];
-	      var counters = this.getSumCounters();
-	      var countersView = counters > 99 ? '99+' : counters;
-	      this.removeElements('intranet__desktop-menu_user-block');
-	      var userData = main_core.Tag.render(_templateObject || (_templateObject = babelHelpers.taggedTemplateLiteral(["<div class=\"intranet__desktop-menu_user-block ", "\">\n\t\t\t\t<span class=\"intranet__desktop-menu_user-avatar ui-icon ui-icon-common-user ui-icon-common-user-desktop\">\n\t\t\t\t\t<i></i>\n\t\t\t\t\t<div class=\"intranet__desktop-menu_user-counter ui-counter ui-counter-md ui-counter-danger\">\n\t\t\t\t\t\t<div class=\"ui-counter-inner\" data-role=\"counter\">", "</div>\n\t\t\t\t\t</div>\n\t\t\t\t</span>\n\t\t\t\t<span class=\"intranet__desktop-menu_user-inner\">\n\t\t\t\t\t<span class=\"intranet__desktop-menu_user-name\">", "</span>\n\t\t\t\t\t<span class=\"intranet__desktop-menu_user-post\">", "</span>\n\t\t\t\t</span>\n\t\t\t</div>"])), counters > 0 ? 'intranet__desktop-menu_item_counters' : '', countersView, this.currentUser.portal, this.currentUser.work_position);
-	      main_core.Dom.append(userData, block);
-	      var avatar = document.getElementsByClassName('ui-icon-common-user-desktop')[0];
-	      var previewImage = this.getAvatarUrl(this.currentUser);
-	      main_core.Dom.style(avatar, '--ui-icon-service-bg-image', previewImage);
-	    }
-	  }, {
-	    key: "getAvatarUrl",
-	    value: function getAvatarUrl(account) {
-	      var avatarUrl = '';
-	      if (account.avatar.includes('http://') || account.avatar.includes('https://')) {
-	        avatarUrl = account.avatar;
+	    setTimeout(() => {
+	      this.reloadAccounts();
+	      const upAccount = this.getAccountBy(account);
+	      if (upAccount.connected) {
+	        callback();
 	      } else {
-	        avatarUrl = account.protocol + '://' + account.portal + account.avatar;
+	        this.checkConnectedAccountAndStopLoader(account, counter + 1, callback);
 	      }
-	      return "url('".concat(main_core.Text.encode(account.avatar === Account.defaultAvatar ? Account.defaultAvatarDesctop : avatarUrl), "')");
-	    }
-	  }, {
-	    key: "viewPopupAccounts",
-	    value: function viewPopupAccounts() {
-	      var menuPopup = document.getElementsByClassName('intranet__desktop-menu_popup')[0];
-	      var position = '';
-	      if (this.currentUser.work_position !== '') {
-	        position = "<span class=\"intranet__desktop-menu_popup-post\">".concat(this.currentUser.work_position, "</span>");
-	      }
-	      this.removeElements('intranet__desktop-menu_popup-header');
-	      var item = main_core.Tag.render(_templateObject2 || (_templateObject2 = babelHelpers.taggedTemplateLiteral(["<div class=\"intranet__desktop-menu_popup-header\">\n\t\t\t<span class=\"intranet__desktop-menu_user-avatar ui-icon ui-icon-common-user ui-icon-common-user-popup\">\n\t\t\t\t<i></i>\n\t\t\t</span>\n\t\t\t<span class=\"intranet__desktop-menu_popup-label\">", "</span>\n\t\t\t<div class=\"intranet__desktop-menu_popup-header-user\">\n\t\t\t\t<span class=\"intranet__desktop-menu_popup-name\">", "</span>\n\t\t\t\t", "\n\t\t\t</div>\n\t\t</div>"])), this.currentUser.portal, this.currentUser.first_name + ' ' + this.currentUser.last_name, position);
-	      main_core.Dom.insertBefore(item, menuPopup.firstElementChild);
-	      var avatar = document.getElementsByClassName('ui-icon-common-user-popup')[0];
-	      var previewImage = this.getAvatarUrl(this.currentUser);
-	      main_core.Dom.style(avatar, '--ui-icon-service-bg-image', previewImage);
-	      var block = document.getElementsByClassName('intranet__desktop-menu_popup-list')[0];
-	      this.removeElements('intranet__desktop-menu_popup-item-account');
-	      var index = 0;
-	      var _iterator = _createForOfIteratorHelper(this.accounts),
-	        _step;
-	      try {
-	        for (_iterator.s(); !(_step = _iterator.n()).done;) {
-	          var account = _step.value;
-	          var currentUserClass = '';
-	          var counters = 0;
-	          if (account.id === this.currentUser.id && account.portal === this.currentUser.portal) {
-	            counters = this.getSumCounters();
-	            currentUserClass = '--selected';
-	          }
-	          var countersView = counters > 99 ? '99+' : counters;
-	          var _item = main_core.Tag.render(_templateObject3 || (_templateObject3 = babelHelpers.taggedTemplateLiteral(["<li class=\"intranet__desktop-menu_popup-item intranet__desktop-menu_popup-item-account ", " ", "\">\n\t\t\t\t\t<span class=\"intranet__desktop-menu_user-avatar ui-icon ui-icon-common-user ui-icon-common-user-", "\">\n\t\t\t\t\t\t<i></i>\n\t\t\t\t\t\t<div class=\"intranet__desktop-menu_user-counter ui-counter ui-counter-md ui-counter-danger\">\n\t\t\t\t\t\t\t<div class=\"ui-counter-inner\">", "</div>\n\t\t\t\t\t\t</div>\t\n\t\t\t\t\t</span>\n\t\t\t\t\t<span class=\"intranet__desktop-menu_popup-user\">\n\t\t\t\t\t\t<span class=\"intranet__desktop-menu_popup-name\">", "</span>\n\t\t\t\t\t\t<span class=\"intranet__desktop-menu_popup-post\">", "</span>\n\t\t\t\t\t</span>\n\t\t\t\t\t<span class=\"intranet__desktop-menu_popup-btn ui-icon-set --more\" id=\"ui-icon-set-", "\"></span>\n\t\t\t\t</li>"])), counters > 0 ? 'intranet__desktop-menu_item_counters' : '', currentUserClass, index, countersView, account.portal, account.login, index);
-	          main_core.Dom.insertBefore(_item, block.children[index]);
-	          this.addContextMenu(account, index);
-	          var userAvatar = document.getElementsByClassName('ui-icon-common-user-' + index)[0];
-	          var previewUserImage = this.getAvatarUrl(account);
-	          main_core.Dom.style(userAvatar, '--ui-icon-service-bg-image', previewUserImage);
-	          index++;
-	        }
-	      } catch (err) {
-	        _iterator.e(err);
-	      } finally {
-	        _iterator.f();
-	      }
-	    }
-	  }, {
-	    key: "addContextMenu",
-	    value: function addContextMenu(account, index) {
-	      var _this2 = this;
-	      var button = document.getElementById("ui-icon-set-" + index);
-	      if (this.contextPopup[index]) {
-	        this.contextPopup[index].destroy();
-	      }
-	      this.contextPopup[index] = new main_popup.Menu({
-	        bindElement: button,
-	        className: 'intranet__desktop-menu_context',
-	        items: [account.id === this.currentUser.id && account.portal === this.currentUser.portal ? {
-	          text: main_core.Loc.getMessage('MENU_ACCOUNT_POPUP_DISCONNECT'),
-	          onclick: function onclick(event, item) {
-	            var _BXDesktopSystem;
-	            var host = account.host;
-	            (_BXDesktopSystem = BXDesktopSystem) === null || _BXDesktopSystem === void 0 ? void 0 : _BXDesktopSystem.AccountDisconnect(host);
-	            if (this.contextPopup[index]) {
-	              this.contextPopup[index].close();
-	            }
-	            this.popup.close();
-	            window.location.reload();
-	          }
-	        } : {
-	          text: main_core.Loc.getMessage('MENU_ACCOUNT_POPUP_CONNECT'),
-	          onclick: function onclick(event, item) {
-	            var _BXDesktopSystem2;
-	            var host = account.host,
-	              login = account.login,
-	              protocol = account.protocol;
-	            var userLang = navigator.language;
-	            (_BXDesktopSystem2 = BXDesktopSystem) === null || _BXDesktopSystem2 === void 0 ? void 0 : _BXDesktopSystem2.AccountConnect(host, login, protocol, userLang);
-	            if (this.contextPopup[index]) {
-	              this.contextPopup[index].close();
-	            }
-	            this.popup.close();
-	          }
-	        }, {
-	          text: main_core.Loc.getMessage('MENU_ACCOUNT_POPUP_REMOVE'),
-	          onclick: function onclick(event, item) {
-	            var _BXDesktopSystem3;
-	            var host = account.host,
-	              login = account.login;
-	            (_BXDesktopSystem3 = BXDesktopSystem) === null || _BXDesktopSystem3 === void 0 ? void 0 : _BXDesktopSystem3.AccountDelete(host, login);
-	            if (this.contextPopup[index]) {
-	              this.contextPopup[index].close();
-	            }
-	            this.popup.close();
-	            window.location.reload();
-	          }
-	        }]
-	      });
-	      main_core.Event.bind(button, 'click', function (event) {
-	        var index = parseInt(event.target.id.replace('ui-icon-set-', ''));
-	        if (_this2.contextPopup[index]) {
-	          _this2.contextPopup[index].show();
-	        }
-	      });
-	    }
-	  }, {
-	    key: "openLoginTab",
-	    value: function openLoginTab() {
-	      im_v2_lib_desktopApi.DesktopApi.openAddAccountTab();
-	    }
-	  }]);
-	  return Account;
-	}();
-	babelHelpers.defineProperty(Account, "defaultAvatar", '/bitrix/js/im/images/blank.gif');
-	babelHelpers.defineProperty(Account, "defaultAvatarDesctop", '/bitrix/js/ui/icons/b24/images/ui-user.svg?v2');
-
-	function _classPrivateMethodInitSpec(obj, privateSet) { _checkPrivateRedeclaration(obj, privateSet); privateSet.add(obj); }
-	function _checkPrivateRedeclaration(obj, privateCollection) { if (privateCollection.has(obj)) { throw new TypeError("Cannot initialize the same private elements twice on an object"); } }
-	function _classPrivateMethodGet(receiver, privateSet, fn) { if (!privateSet.has(receiver)) { throw new TypeError("attempted to get private field on non-instance"); } return fn; }
-	var _getThemePicker = /*#__PURE__*/new WeakSet();
-	var _applyTheme = /*#__PURE__*/new WeakSet();
-	var Theme = /*#__PURE__*/function () {
-	  function Theme() {
-	    babelHelpers.classCallCheck(this, Theme);
-	    _classPrivateMethodInitSpec(this, _applyTheme);
-	    _classPrivateMethodInitSpec(this, _getThemePicker);
-	    babelHelpers.defineProperty(this, "bacgroundNode", null);
+	    }, 1000);
 	  }
-	  babelHelpers.createClass(Theme, [{
-	    key: "init",
-	    value: function init() {
-	      var _this = this;
-	      if (!this.bacgroundNode) {
-	        var _classPrivateMethodGe;
-	        var theme = (_classPrivateMethodGe = _classPrivateMethodGet(this, _getThemePicker, _getThemePicker2).call(this)) === null || _classPrivateMethodGe === void 0 ? void 0 : _classPrivateMethodGe.getAppliedTheme();
-	        this.bacgroundNode = document.getElementsByTagName("body")[0];
-	        if (theme) {
-	          _classPrivateMethodGet(this, _applyTheme, _applyTheme2).call(this, this.bacgroundNode, theme);
-	        }
-	        main_core_events.EventEmitter.subscribe('BX.Intranet.Bitrix24:ThemePicker:onThemeApply', function (event) {
-	          _classPrivateMethodGet(_this, _applyTheme, _applyTheme2).call(_this, _this.bacgroundNode, event.data.theme);
-	        });
-	      }
+	  addContextMenu(account, index, isSelected) {
+	    const button = document.getElementById(`ui-icon-set-${index}`);
+	    if (this.contextPopup[index]) {
+	      this.contextPopup[index].destroy();
 	    }
-	  }]);
-	  return Theme;
-	}();
-	function _getThemePicker2() {
-	  var _BX$Intranet$Bitrix, _BX$Intranet, _BX$Intranet$Bitrix2, _top$BX$Intranet, _top$BX$Intranet$Bitr;
-	  return (_BX$Intranet$Bitrix = (_BX$Intranet = BX.Intranet) === null || _BX$Intranet === void 0 ? void 0 : (_BX$Intranet$Bitrix2 = _BX$Intranet.Bitrix24) === null || _BX$Intranet$Bitrix2 === void 0 ? void 0 : _BX$Intranet$Bitrix2.ThemePicker.Singleton) !== null && _BX$Intranet$Bitrix !== void 0 ? _BX$Intranet$Bitrix : (_top$BX$Intranet = top.BX.Intranet) === null || _top$BX$Intranet === void 0 ? void 0 : (_top$BX$Intranet$Bitr = _top$BX$Intranet.Bitrix24) === null || _top$BX$Intranet$Bitr === void 0 ? void 0 : _top$BX$Intranet$Bitr.ThemePicker.Singleton;
+	    this.contextPopup[index] = new main_popup.Menu({
+	      bindElement: button,
+	      className: 'intranet__desktop-menu_context',
+	      items: [isSelected ? {
+	        text: main_core.Loc.getMessage('MENU_ACCOUNT_POPUP_DISCONNECT'),
+	        onclick: () => this.disconnectAccount(account, index)
+	      } : {
+	        text: main_core.Loc.getMessage('MENU_ACCOUNT_POPUP_CONNECT'),
+	        onclick: event => this.connectAccountFromMenu(account, event, index)
+	      }, {
+	        text: main_core.Loc.getMessage('MENU_ACCOUNT_POPUP_REMOVE'),
+	        onclick: async () => this.removeAccount(account, index)
+	      }]
+	    });
+	    main_core.Event.bind(button, 'click', event => this.handleContextMenu(event));
+	  }
+	  removeAccount(account, index) {
+	    im_v2_lib_confirm.showDesktopDeleteConfirm().then(userChoice => {
+	      if (userChoice) {
+	        var _PopupManager$getPopu;
+	        const {
+	          host,
+	          login
+	        } = account;
+	        im_v2_lib_desktopApi.DesktopApi.deleteAccount(host, login);
+	        (_PopupManager$getPopu = main_popup.PopupManager.getPopupById(im_v2_const.PopupType.userProfile)) == null ? void 0 : _PopupManager$getPopu.close();
+	        this.reload();
+	      }
+	      this.closeContextMenu(index);
+	    });
+	  }
+	  disconnectAccount(account, index) {
+	    var _BXDesktopSystem2;
+	    const {
+	      host
+	    } = account;
+	    // eslint-disable-next-line no-undef
+	    (_BXDesktopSystem2 = BXDesktopSystem) == null ? void 0 : _BXDesktopSystem2.AccountDisconnect(host);
+	    this.closeContextMenu(index);
+	  }
+	  connectAccountFromMenu(account, event, index) {
+	    const {
+	      host,
+	      login,
+	      protocol
+	    } = account;
+	    const userLang = navigator.language;
+	    babelHelpers.classPrivateFieldLooseBase(this, _getLoader)[_getLoader]().show();
+	    im_v2_lib_desktopApi.DesktopApi.connectAccount(host, login, protocol, userLang);
+	    event.stopPropagation();
+	    this.checkConnectedAccountAndStopLoader(account, 0, () => {
+	      babelHelpers.classPrivateFieldLooseBase(this, _getLoader)[_getLoader]().hide();
+	      this.closeContextMenu(index);
+	    });
+	  }
+	  handleContextMenu(event) {
+	    const index = parseInt(event.target.id.replace('ui-icon-set-', ''), 10);
+	    if (this.contextPopup[index]) {
+	      this.contextPopup[index].show();
+	    }
+	  }
+	  closeContextMenu(index) {
+	    if (this.contextPopup[index]) {
+	      this.contextPopup[index].close();
+	    }
+	    this.popup.close();
+	  }
+	  openLoginTab() {
+	    im_v2_lib_desktopApi.DesktopApi.openAddAccountTab();
+	  }
 	}
-	function _applyTheme2(container, theme) {
-	  var previewImage = "url('".concat(main_core.Text.encode(theme.previewImage), "')");
-	  main_core.Dom.style(container, 'backgroundImage', previewImage);
-	  main_core.Dom.removeClass(container, 'bitrix24-theme-default bitrix24-theme-dark bitrix24-theme-light');
-	  var themeClass = 'bitrix24-theme-default';
-	  if (theme.id !== 'default') {
-	    themeClass = String(theme.id).indexOf('dark:') === 0 ? 'bitrix24-theme-dark' : 'bitrix24-theme-light';
+	function _getLoader2() {
+	  if (this.loader) {
+	    return this.loader;
 	  }
-	  main_core.Dom.addClass(container, themeClass);
+	  this.loader = new main_loader.Loader({
+	    target: document.querySelector('.intranet__desktop-menu_popup'),
+	    size: 80,
+	    mode: 'absolute',
+	    strokeWidth: 4
+	  });
+	  return this.loader;
+	}
+	Account.defaultAvatar = '/bitrix/js/im/images/blank.gif';
+	Account.defaultAvatarDesktop = '/bitrix/js/ui/icons/b24/images/ui-user.svg?v2';
+
+	class Counters {
+	  init() {
+	    // All Counters
+	    main_core_events.EventEmitter.subscribe('onPullEvent-main', event => {
+	      const [command, params] = event.getCompatData();
+	      if (command === 'user_counter' && params[Loc.getMessage('SITE_ID')]) {
+	        const counters = {
+	          ...params[Loc.getMessage('SITE_ID')]
+	        };
+	        this.updateCounters(counters, false);
+	      }
+	    });
+	    BX.addCustomEvent("onPullEvent-tasks", (command, params) => {
+	      if (command === "user_counter" && Number(params.userId) === Number(BX.Loc.getMessage('USER_ID'))) {
+	        let counters = {};
+	        if (!BX.Type.isUndefined(params.projects_major)) {
+	          counters.projects_major = params.projects_major;
+	        }
+	        if (!BX.Type.isUndefined(params.scrum_total_comments)) {
+	          counters.scrum_total_comments = params.scrum_total_comments;
+	        }
+	        this.updateCounters(counters, false);
+	      }
+	    });
+
+	    // All Counters from IM
+	    main_core_events.EventEmitter.subscribe('onImUpdateCounter', event => {
+	      const [counters] = event.getCompatData();
+	      this.updateCounters(counters, false);
+	    });
+
+	    // Messenger counter
+	    main_core_events.EventEmitter.subscribe('onImUpdateCounterMessage', event => {
+	      const [counter] = event.getCompatData();
+	      this.updateCounters({
+	        'im-message': counter
+	      }, false);
+	    });
+	    if (BX.browser.SupportLocalStorage()) {
+	      BX.addCustomEvent(window, 'onLocalStorageSet', params => {
+	        if (params.key.substring(0, 4) === 'lmc-') {
+	          let counters = {};
+	          counters[params.key.substring(4)] = params.value;
+	          this.updateCounters(counters, false);
+	        }
+	      });
+	    }
+
+	    // Live Feed Counter
+	    main_core_events.EventEmitter.subscribe('onCounterDecrement', event => {
+	      const [decrement] = event.getCompatData();
+	      this.decrementCounter(document.getElementById('menu-counter-live-feed'), decrement);
+	    });
+	  }
+	  updateCounters(counters, send) {
+	    BX.ready(function () {
+	      if (BX.getClass("BX.Intranet.DescktopLeftMenu")) {
+	        BX.Intranet.DescktopLeftMenu.updateCounters(counters, send);
+	      }
+	    });
+	  }
+	  decrementCounter(node, iDecrement) {
+	    BX.ready(function () {
+	      if (BX.getClass("BX.Intranet.DescktopLeftMenu")) {
+	        BX.Intranet.DescktopLeftMenu.decrementCounter(node, iDecrement);
+	      }
+	    });
+	  }
 	}
 
-	var Counters = /*#__PURE__*/function () {
-	  function Counters() {
-	    babelHelpers.classCallCheck(this, Counters);
-	  }
-	  babelHelpers.createClass(Counters, [{
-	    key: "init",
-	    value: function init() {
-	      var _this = this;
-	      BX.addCustomEvent("onPullEvent-main", function (command, params) {
-	        var key = 'SITE_ID';
-	        var siteId = BX.message(key);
-	        if (command === "user_counter" && params[siteId]) {
-	          var counters = BX.clone(params[siteId]);
-	          _this.updateCounters(counters, false);
-	        }
-	      });
-	      BX.addCustomEvent("onPullEvent-tasks", function (command, params) {
-	        if (command === "user_counter" && Number(params.userId) === Number(BX.Loc.getMessage('USER_ID'))) {
-	          var counters = {};
-	          if (!BX.Type.isUndefined(params.projects_major)) {
-	            counters.projects_major = params.projects_major;
-	          }
-	          if (!BX.Type.isUndefined(params.scrum_total_comments)) {
-	            counters.scrum_total_comments = params.scrum_total_comments;
-	          }
-	          _this.updateCounters(counters, false);
-	        }
-	      });
-	      BX.addCustomEvent(window, "onImUpdateCounter", function (counters) {
-	        if (!counters) return;
-	        _this.updateCounters(BX.clone(counters), false);
-	      });
-	      BX.addCustomEvent("onImUpdateCounterMessage", function (counter) {
-	        _this.updateCounters({
-	          'im-message': counter
-	        }, false);
-	      });
-	      if (BX.browser.SupportLocalStorage()) {
-	        BX.addCustomEvent(window, 'onLocalStorageSet', function (params) {
-	          if (params.key.substring(0, 4) === 'lmc-') {
-	            var counters = {};
-	            counters[params.key.substring(4)] = params.value;
-	            _this.updateCounters(counters, false);
-	          }
-	        });
-	      }
-	      BX.addCustomEvent("onCounterDecrement", function (iDecrement) {
-	        _this.decrementCounter(BX("menu-counter-live-feed"), iDecrement);
-	      });
-	    }
-	  }, {
-	    key: "updateCounters",
-	    value: function updateCounters(counters, send) {
-	      BX.ready(function () {
-	        if (BX.getClass("BX.Intranet.DescktopLeftMenu")) {
-	          BX.Intranet.DescktopLeftMenu.updateCounters(counters, send);
-	        }
-	      });
-	    }
-	  }, {
-	    key: "decrementCounter",
-	    value: function decrementCounter(node, iDecrement) {
-	      BX.ready(function () {
-	        if (BX.getClass("BX.Intranet.DescktopLeftMenu")) {
-	          BX.Intranet.DescktopLeftMenu.decrementCounter(node, iDecrement);
-	        }
-	      });
-	    }
-	  }]);
-	  return Counters;
-	}();
-
-	var Item = /*#__PURE__*/function () {
-	  function Item(parentContainer, container) {
-	    babelHelpers.classCallCheck(this, Item);
+	class Item {
+	  constructor(parentContainer, container) {
 	    this.parentContainer = parentContainer;
 	    this.container = container;
 	    this.init();
 	  }
-	  babelHelpers.createClass(Item, [{
-	    key: "init",
-	    value: function init() {
-	      this.makeTextIcons();
+	  init() {
+	    this.makeTextIcons();
+	  }
+	  getId() {
+	    return this.container.dataset.id;
+	  }
+	  getCode() {
+	    return this.constructor.code;
+	  }
+	  getName() {
+	    return this.container.querySelector("[data-role='item-text']").textContent;
+	  }
+	  static detect(node) {
+	    return node.getAttribute("data-role") !== 'group' && node.getAttribute("data-type") === this.code;
+	  }
+	  makeTextIcons() {
+	    if (!this.container.classList.contains("menu-item-no-icon-state")) {
+	      return;
 	    }
-	  }, {
-	    key: "getId",
-	    value: function getId() {
-	      return this.container.dataset.id;
+	    const icon = this.container.querySelector(".menu-item-icon");
+	    const text = this.container.querySelector(".menu-item-link-text");
+	    if (icon && text) {
+	      icon.textContent = this.getShortName(text.textContent);
 	    }
-	  }, {
-	    key: "getCode",
-	    value: function getCode() {
-	      return this.constructor.code;
+	  }
+	  getCounterValue() {
+	    const node = this.container.querySelector('[data-role="counter"]');
+	    if (!node) {
+	      return null;
 	    }
-	  }, {
-	    key: "getName",
-	    value: function getName() {
-	      return this.container.querySelector("[data-role='item-text']").textContent;
+	    return parseInt(node.dataset.counterValue);
+	  }
+	  updateCounter(counterValue) {
+	    const node = this.container.querySelector('[data-role="counter"]');
+	    if (!node) {
+	      return;
 	    }
-	  }, {
-	    key: "makeTextIcons",
-	    value: function makeTextIcons() {
-	      if (!this.container.classList.contains("menu-item-no-icon-state")) {
-	        return;
-	      }
-	      var icon = this.container.querySelector(".menu-item-icon");
-	      var text = this.container.querySelector(".menu-item-link-text");
-	      if (icon && text) {
-	        icon.textContent = this.getShortName(text.textContent);
-	      }
+	    const oldValue = parseInt(node.dataset.counterValue) || 0;
+	    node.dataset.counterValue = counterValue;
+	    if (counterValue > 0) {
+	      node.innerHTML = counterValue > 99 ? '99+' : counterValue;
+	      this.container.classList.add('intranet__desktop-menu_item_counters');
+	    } else {
+	      node.innerHTML = '';
+	      this.container.classList.remove('menu-item-with-index');
 	    }
-	  }, {
-	    key: "getCounterValue",
-	    value: function getCounterValue() {
-	      var node = this.container.querySelector('[data-role="counter"]');
-	      if (!node) {
-	        return null;
-	      }
-	      return parseInt(node.dataset.counterValue);
+	    return {
+	      oldValue,
+	      newValue: counterValue
+	    };
+	  }
+	  getShortName(name) {
+	    if (!main_core.Type.isStringFilled(name)) {
+	      return "...";
 	    }
-	  }, {
-	    key: "updateCounter",
-	    value: function updateCounter(counterValue) {
-	      var node = this.container.querySelector('[data-role="counter"]');
-	      if (!node) {
-	        return;
-	      }
-	      var oldValue = parseInt(node.dataset.counterValue) || 0;
-	      node.dataset.counterValue = counterValue;
-	      if (counterValue > 0) {
-	        node.innerHTML = counterValue > 99 ? '99+' : counterValue;
-	        this.container.classList.add('intranet__desktop-menu_item_counters');
-	      } else {
-	        node.innerHTML = '';
-	        this.container.classList.remove('menu-item-with-index');
-	      }
-	      return {
-	        oldValue: oldValue,
-	        newValue: counterValue
-	      };
+	    name = name.replace(/['`".,:;~|{}*^$#@&+\-=?!()[\]<>\n\r]+/g, "").trim();
+	    if (name.length <= 0) {
+	      return '...';
 	    }
-	  }, {
-	    key: "getShortName",
-	    value: function getShortName(name) {
-	      if (!main_core.Type.isStringFilled(name)) {
-	        return "...";
-	      }
-	      name = name.replace(/['`".,:;~|{}*^$#@&+\-=?!()[\]<>\n\r]+/g, "").trim();
-	      if (name.length <= 0) {
-	        return '...';
-	      }
-	      var shortName;
-	      var words = name.split(/[\s,]+/);
-	      if (words.length <= 1) {
-	        shortName = name.substring(0, 1);
-	      } else if (words.length === 2) {
-	        shortName = words[0].substring(0, 1) + words[1].substring(0, 1);
-	      } else {
-	        var firstWord = words[0];
-	        var secondWord = words[1];
-	        for (var i = 1; i < words.length; i++) {
-	          if (words[i].length > 3) {
-	            secondWord = words[i];
-	            break;
-	          }
+	    let shortName;
+	    let words = name.split(/[\s,]+/);
+	    if (words.length <= 1) {
+	      shortName = name.substring(0, 1);
+	    } else if (words.length === 2) {
+	      shortName = words[0].substring(0, 1) + words[1].substring(0, 1);
+	    } else {
+	      let firstWord = words[0];
+	      let secondWord = words[1];
+	      for (let i = 1; i < words.length; i++) {
+	        if (words[i].length > 3) {
+	          secondWord = words[i];
+	          break;
 	        }
-	        shortName = firstWord.substring(0, 1) + secondWord.substring(0, 1);
 	      }
-	      return shortName.toUpperCase();
+	      shortName = firstWord.substring(0, 1) + secondWord.substring(0, 1);
 	    }
-	  }], [{
-	    key: "detect",
-	    value: function detect(node) {
-	      return node.getAttribute("data-role") !== 'group' && node.getAttribute("data-type") === this.code;
-	    }
-	  }]);
-	  return Item;
-	}();
-
-	var ItemAdminShared = /*#__PURE__*/function (_Item) {
-	  babelHelpers.inherits(ItemAdminShared, _Item);
-	  function ItemAdminShared() {
-	    babelHelpers.classCallCheck(this, ItemAdminShared);
-	    return babelHelpers.possibleConstructorReturn(this, babelHelpers.getPrototypeOf(ItemAdminShared).apply(this, arguments));
+	    return shortName.toUpperCase();
 	  }
-	  return ItemAdminShared;
-	}(Item);
-	babelHelpers.defineProperty(ItemAdminShared, "code", 'admin');
+	}
 
-	var ItemAdminShared$1 = /*#__PURE__*/function (_Item) {
-	  babelHelpers.inherits(ItemAdminShared, _Item);
-	  function ItemAdminShared() {
-	    babelHelpers.classCallCheck(this, ItemAdminShared);
-	    return babelHelpers.possibleConstructorReturn(this, babelHelpers.getPrototypeOf(ItemAdminShared).apply(this, arguments));
-	  }
-	  return ItemAdminShared;
-	}(Item);
-	babelHelpers.defineProperty(ItemAdminShared$1, "code", 'custom');
+	class ItemAdminShared extends Item {}
+	ItemAdminShared.code = 'admin';
 
-	var ItemUserFavorites = /*#__PURE__*/function (_Item) {
-	  babelHelpers.inherits(ItemUserFavorites, _Item);
-	  function ItemUserFavorites() {
-	    babelHelpers.classCallCheck(this, ItemUserFavorites);
-	    return babelHelpers.possibleConstructorReturn(this, babelHelpers.getPrototypeOf(ItemUserFavorites).apply(this, arguments));
-	  }
-	  return ItemUserFavorites;
-	}(Item);
-	babelHelpers.defineProperty(ItemUserFavorites, "code", 'standard');
+	class ItemAdminShared$1 extends Item {}
+	ItemAdminShared$1.code = 'custom';
 
-	var ItemUserSelf = /*#__PURE__*/function (_Item) {
-	  babelHelpers.inherits(ItemUserSelf, _Item);
-	  function ItemUserSelf() {
-	    babelHelpers.classCallCheck(this, ItemUserSelf);
-	    return babelHelpers.possibleConstructorReturn(this, babelHelpers.getPrototypeOf(ItemUserSelf).apply(this, arguments));
-	  }
-	  return ItemUserSelf;
-	}(Item);
-	babelHelpers.defineProperty(ItemUserSelf, "code", 'self');
+	class ItemUserFavorites extends Item {}
+	ItemUserFavorites.code = 'standard';
 
-	var ItemSystem = /*#__PURE__*/function (_Item) {
-	  babelHelpers.inherits(ItemSystem, _Item);
-	  function ItemSystem() {
-	    babelHelpers.classCallCheck(this, ItemSystem);
-	    return babelHelpers.possibleConstructorReturn(this, babelHelpers.getPrototypeOf(ItemSystem).apply(this, arguments));
-	  }
-	  return ItemSystem;
-	}(Item);
-	babelHelpers.defineProperty(ItemSystem, "code", 'default');
+	class ItemUserSelf extends Item {}
+	ItemUserSelf.code = 'self';
 
-	var itemMappings = [Item, ItemAdminShared, ItemUserFavorites, ItemAdminShared$1, ItemUserSelf, ItemSystem];
+	class ItemSystem extends Item {}
+	ItemSystem.code = 'default';
+
+	const itemMappings = [Item, ItemAdminShared, ItemUserFavorites, ItemAdminShared$1, ItemUserSelf, ItemSystem];
 	function getItem(itemData) {
-	  var itemClassName = Item;
-	  itemMappings.forEach(function (itemClass) {
+	  let itemClassName = Item;
+	  itemMappings.forEach(itemClass => {
 	    if (itemClass.detect(itemData)) {
 	      itemClassName = itemClass;
 	    }
@@ -542,18 +562,15 @@ this.BX = this.BX || {};
 	  return itemClassName;
 	}
 
-	function _classPrivateMethodInitSpec$1(obj, privateSet) { _checkPrivateRedeclaration$1(obj, privateSet); privateSet.add(obj); }
-	function _classPrivateFieldInitSpec(obj, privateMap, value) { _checkPrivateRedeclaration$1(obj, privateMap); privateMap.set(obj, value); }
-	function _checkPrivateRedeclaration$1(obj, privateCollection) { if (privateCollection.has(obj)) { throw new TypeError("Cannot initialize the same private elements twice on an object"); } }
-	function _classPrivateMethodGet$1(receiver, privateSet, fn) { if (!privateSet.has(receiver)) { throw new TypeError("attempted to get private field on non-instance"); } return fn; }
-	var _updateCountersLastValue = /*#__PURE__*/new WeakMap();
-	var _getItemsByCounterId = /*#__PURE__*/new WeakSet();
-	var ItemsController = /*#__PURE__*/function () {
-	  function ItemsController(container) {
-	    babelHelpers.classCallCheck(this, ItemsController);
-	    _classPrivateMethodInitSpec$1(this, _getItemsByCounterId);
-	    babelHelpers.defineProperty(this, "items", new Map());
-	    _classPrivateFieldInitSpec(this, _updateCountersLastValue, {
+	var _updateCountersLastValue = /*#__PURE__*/babelHelpers.classPrivateFieldLooseKey("updateCountersLastValue");
+	var _getItemsByCounterId = /*#__PURE__*/babelHelpers.classPrivateFieldLooseKey("getItemsByCounterId");
+	class ItemsController {
+	  constructor(container) {
+	    Object.defineProperty(this, _getItemsByCounterId, {
+	      value: _getItemsByCounterId2
+	    });
+	    this.items = new Map();
+	    Object.defineProperty(this, _updateCountersLastValue, {
 	      writable: true,
 	      value: null
 	    });
@@ -561,92 +578,74 @@ this.BX = this.BX || {};
 	    this.container = container.querySelector(".menu-items");
 	    container.querySelectorAll('li.menu-item-block').forEach(this.registerItem.bind(this));
 	  }
-	  babelHelpers.createClass(ItemsController, [{
-	    key: "registerItem",
-	    value: function registerItem(node) {
-	      var itemClass = getItem(node);
-	      var item = new itemClass(this.container, node);
-	      this.items.set(item.getId(), item);
-	      return item;
-	    }
-	  }, {
-	    key: "updateCounters",
-	    value: function updateCounters(counters, send) {
-	      var _this = this;
-	      var countersDynamic = null;
-	      send = send !== false;
-	      babelHelpers.toConsumableArray(Object.entries(counters)).forEach(function (_ref) {
-	        var _ref2 = babelHelpers.slicedToArray(_ref, 2),
-	          counterId = _ref2[0],
-	          counterValue = _ref2[1];
-	        babelHelpers.toConsumableArray(_classPrivateMethodGet$1(_this, _getItemsByCounterId, _getItemsByCounterId2).call(_this, counterId)).forEach(function (item) {
-	          var _item$updateCounter = item.updateCounter(counterValue),
-	            oldValue = _item$updateCounter.oldValue,
-	            newValue = _item$updateCounter.newValue;
-	          if ((counterId.indexOf('crm_') < 0 || counterId.indexOf('crm_all') >= 0) && (counterId.indexOf('tasks_') < 0 || counterId.indexOf('tasks_total') >= 0)) {
-	            countersDynamic = countersDynamic || 0;
-	            countersDynamic += newValue - oldValue;
-	          }
-	        });
-	        if (send) {
-	          BX.localStorage.set('lmc-' + counterId, counterValue, 5);
+	  registerItem(node) {
+	    const itemClass = getItem(node);
+	    const item = new itemClass(this.container, node);
+	    this.items.set(item.getId(), item);
+	    return item;
+	  }
+	  updateCounters(counters, send) {
+	    let countersDynamic = null;
+	    send = send !== false;
+	    [...Object.entries(counters)].forEach(([counterId, counterValue]) => {
+	      [...babelHelpers.classPrivateFieldLooseBase(this, _getItemsByCounterId)[_getItemsByCounterId](counterId)].forEach(item => {
+	        const {
+	          oldValue,
+	          newValue
+	        } = item.updateCounter(counterValue);
+	        if ((counterId.indexOf('crm_') < 0 || counterId.indexOf('crm_all') >= 0) && (counterId.indexOf('tasks_') < 0 || counterId.indexOf('tasks_total') >= 0)) {
+	          countersDynamic = countersDynamic || 0;
+	          countersDynamic += newValue - oldValue;
 	        }
-	        if (typeof BXIM !== 'undefined') {
-	          if (babelHelpers.classPrivateFieldGet(_this, _updateCountersLastValue) === null) {
-	            babelHelpers.classPrivateFieldSet(_this, _updateCountersLastValue, 0);
-	            babelHelpers.toConsumableArray(_this.items.entries()).forEach(function (_ref3) {
-	              var _ref4 = babelHelpers.slicedToArray(_ref3, 2),
-	                id = _ref4[0],
-	                item = _ref4[1];
-	              var res = item.getCounterValue();
-	              if (res > 0) {
-	                var _counterId = 'doesNotMatter';
-	                if (id.indexOf('menu_crm') >= 0 || id.indexOf('menu_tasks') >= 0) {
-	                  var counterNode = item.container.querySelector('[data-role="counter"]');
-	                  if (counterNode) {
-	                    _counterId = counterNode.id;
-	                  }
-	                }
-	                if (_counterId === 'doesNotMatter' || _counterId.indexOf('crm_all') >= 0 || _counterId.indexOf('tasks_total') >= 0) {
-	                  babelHelpers.classPrivateFieldSet(_this, _updateCountersLastValue, babelHelpers.classPrivateFieldGet(_this, _updateCountersLastValue) + res);
+	      });
+	      if (send) {
+	        BX.localStorage.set('lmc-' + counterId, counterValue, 5);
+	      }
+	      if (typeof BXIM !== 'undefined') {
+	        if (babelHelpers.classPrivateFieldLooseBase(this, _updateCountersLastValue)[_updateCountersLastValue] === null) {
+	          babelHelpers.classPrivateFieldLooseBase(this, _updateCountersLastValue)[_updateCountersLastValue] = 0;
+	          [...this.items.entries()].forEach(([id, item]) => {
+	            const res = item.getCounterValue();
+	            if (res > 0) {
+	              let counterId = 'doesNotMatter';
+	              if (id.indexOf('menu_crm') >= 0 || id.indexOf('menu_tasks') >= 0) {
+	                const counterNode = item.container.querySelector('[data-role="counter"]');
+	                if (counterNode) {
+	                  counterId = counterNode.id;
 	                }
 	              }
-	            });
-	          } else {
-	            babelHelpers.classPrivateFieldSet(_this, _updateCountersLastValue, babelHelpers.classPrivateFieldGet(_this, _updateCountersLastValue) + (countersDynamic !== null ? countersDynamic : 0));
-	          }
-	          var visibleValue = babelHelpers.classPrivateFieldGet(_this, _updateCountersLastValue) > 99 ? '99+' : babelHelpers.classPrivateFieldGet(_this, _updateCountersLastValue) < 0 ? '0' : babelHelpers.classPrivateFieldGet(_this, _updateCountersLastValue);
-	          if (im_v2_lib_desktopApi.DesktopApi.isDesktop()) {
-	            im_v2_lib_desktopApi.DesktopApi.setBrowserIconBadge(visibleValue);
-	          }
-	        }
-	      });
-	    }
-	  }, {
-	    key: "decrementCounter",
-	    value: function decrementCounter(counters) {
-	      var _this2 = this;
-	      babelHelpers.toConsumableArray(Object.entries(counters)).forEach(function (_ref5) {
-	        var _ref6 = babelHelpers.slicedToArray(_ref5, 2),
-	          counterId = _ref6[0],
-	          counterValue = _ref6[1];
-	        var item = _classPrivateMethodGet$1(_this2, _getItemsByCounterId, _getItemsByCounterId2).call(_this2, counterId).shift();
-	        if (item) {
-	          var value = item.getCounterValue();
-	          counters[counterId] = value > counterValue ? value - counterValue : 0;
+	              if (counterId === 'doesNotMatter' || counterId.indexOf('crm_all') >= 0 || counterId.indexOf('tasks_total') >= 0) {
+	                babelHelpers.classPrivateFieldLooseBase(this, _updateCountersLastValue)[_updateCountersLastValue] += res;
+	              }
+	            }
+	          });
 	        } else {
-	          delete counters[counterId];
+	          babelHelpers.classPrivateFieldLooseBase(this, _updateCountersLastValue)[_updateCountersLastValue] += countersDynamic !== null ? countersDynamic : 0;
 	        }
-	      });
-	      this.updateCounters(counters, false);
-	    }
-	  }]);
-	  return ItemsController;
-	}();
+	        const visibleValue = babelHelpers.classPrivateFieldLooseBase(this, _updateCountersLastValue)[_updateCountersLastValue] > 99 ? '99+' : babelHelpers.classPrivateFieldLooseBase(this, _updateCountersLastValue)[_updateCountersLastValue] < 0 ? '0' : babelHelpers.classPrivateFieldLooseBase(this, _updateCountersLastValue)[_updateCountersLastValue];
+	        if (im_v2_lib_desktopApi.DesktopApi.isDesktop()) {
+	          im_v2_lib_desktopApi.DesktopApi.setBrowserIconBadge(visibleValue);
+	        }
+	      }
+	    });
+	  }
+	  decrementCounter(counters) {
+	    [...Object.entries(counters)].forEach(([counterId, counterValue]) => {
+	      const item = babelHelpers.classPrivateFieldLooseBase(this, _getItemsByCounterId)[_getItemsByCounterId](counterId).shift();
+	      if (item) {
+	        const value = item.getCounterValue();
+	        counters[counterId] = value > counterValue ? value - counterValue : 0;
+	      } else {
+	        delete counters[counterId];
+	      }
+	    });
+	    this.updateCounters(counters, false);
+	  }
+	}
 	function _getItemsByCounterId2(counterId) {
-	  var result = [];
-	  babelHelpers.toConsumableArray(this.items.values()).forEach(function (item) {
-	    var node = item.container.querySelector('[data-role="counter"]');
+	  const result = [];
+	  [...this.items.values()].forEach(item => {
+	    const node = item.container.querySelector('[data-role="counter"]');
 	    if (node && node.id.indexOf(counterId) >= 0) {
 	      result.push(item);
 	    }
@@ -654,206 +653,153 @@ this.BX = this.BX || {};
 	  return result;
 	}
 
-	var _templateObject$1;
-	var BrowserHistory = /*#__PURE__*/function () {
-	  function BrowserHistory() {
-	    babelHelpers.classCallCheck(this, BrowserHistory);
-	    babelHelpers.defineProperty(this, "items", []);
+	let _$1 = t => t,
+	  _t$1;
+	class BrowserHistory {
+	  constructor() {
+	    this.items = [];
 	    this.wrapper = document.getElementById("history-items");
 	  }
-	  babelHelpers.createClass(BrowserHistory, [{
-	    key: "init",
-	    value: function init() {
-	      var _BXDesktopSystem;
-	      if ('object' != (typeof BXDesktopSystem === "undefined" ? "undefined" : babelHelpers["typeof"](BXDesktopSystem))) {
-	        console.log('BXDesktopSystem is empty');
-	        return;
-	      }
-	      this.items = (_BXDesktopSystem = BXDesktopSystem) === null || _BXDesktopSystem === void 0 ? void 0 : _BXDesktopSystem.BrowserHistory();
-	      this.showHistory();
+	  init() {
+	    var _BXDesktopSystem;
+	    if ('object' != typeof BXDesktopSystem) {
+	      console.log('BXDesktopSystem is empty');
+	      return;
 	    }
-	  }, {
-	    key: "showHistory",
-	    value: function showHistory() {
-	      var _this = this;
-	      var i = 0;
-	      this.items.forEach(function (item) {
-	        if (i > 15) {
-	          return true;
-	        }
-	        var icoName = '';
-	        var title = '';
-	        if (main_core.Type.isStringFilled(item.title)) {
-	          icoName = _this.getShortName(item.title);
-	          title = item.title;
+	    this.items = (_BXDesktopSystem = BXDesktopSystem) == null ? void 0 : _BXDesktopSystem.BrowserHistory();
+	    this.showHistory();
+	  }
+	  showHistory() {
+	    let i = 0;
+	    this.items.forEach(item => {
+	      if (i > 15 || !item.url.startsWith(location.origin)) {
+	        return true;
+	      }
+	      let icoName = '';
+	      let title = '';
+	      if (main_core.Type.isStringFilled(item.title)) {
+	        icoName = this.getShortName(main_core.Text.encode(item.title));
+	        title = main_core.Text.encode(item.title);
+	      } else {
+	        if (item.url.includes('/desktop_app/')) {
+	          icoName = Loc.getMessage('MENU_HISTORY_ITEM_ICON');
+	          title = Loc.getMessage('MENU_HISTORY_ITEM_NAME');
 	        } else {
-	          if (item.url.includes('/desktop_app/')) {
-	            icoName = Loc.getMessage('MENU_HISTORY_ITEM_ICON');
-	            title = Loc.getMessage('MENU_HISTORY_ITEM_NAME');
-	          } else {
-	            return;
-	          }
-	        }
-	        if (item.url.includes('/desktop/menu')) {
 	          return;
 	        }
-	        var url = item.url;
-	        if (item.url.includes('/online/')) {
-	          url = 'bx://v2/' + location.hostname + '/chat/';
-	        }
-	        var li = main_core.Tag.render(_templateObject$1 || (_templateObject$1 = babelHelpers.taggedTemplateLiteral(["\n\t\t\t\t<li class=\"intranet__desktop-menu_item\">\n\t\t\t\t\t<a class=\"intranet__desktop-menu_item-link\" href=\"", "\">\n\t\t\t\t\t\t<span class=\"intranet__desktop-menu_item-icon --custom\">", "</span>\n\t\t\t\t\t\t<span class=\"intranet__desktop-menu_item-title\">", "</span>\n\t\t\t\t\t</a>\n\t\t\t\t</li>\n\t\t\t"])), url, icoName, title);
-	        _this.wrapper.appendChild(li);
-	        i++;
-	      });
+	      }
+	      if (item.url.includes('/desktop/menu')) {
+	        return;
+	      }
+	      let url = main_core.Text.encode(item.url);
+	      let li = main_core.Tag.render(_t$1 || (_t$1 = _$1`
+				<li class="intranet__desktop-menu_item">
+					<a class="intranet__desktop-menu_item-link" href="${0}">
+						<span class="intranet__desktop-menu_item-icon --custom">${0}</span>
+						<span class="intranet__desktop-menu_item-title">${0}</span>
+					</a>
+				</li>
+			`), url, icoName, title);
+	      this.wrapper.appendChild(li);
+	      i++;
+	    });
+	  }
+	  getShortName(name) {
+	    if (!main_core.Type.isStringFilled(name)) {
+	      return "...";
 	    }
-	  }, {
-	    key: "getShortName",
-	    value: function getShortName(name) {
-	      if (!main_core.Type.isStringFilled(name)) {
-	        return "...";
-	      }
-	      name = name.replace(/['`".,:;~|{}*^$#@&+\-=?!()[\]<>\n\r]+/g, "").trim();
-	      if (name.length <= 0) {
-	        return '...';
-	      }
-	      var shortName;
-	      var words = name.split(/[\s,]+/);
-	      if (words.length <= 1) {
-	        shortName = name.substring(0, 1);
-	      } else if (words.length === 2) {
-	        shortName = words[0].substring(0, 1) + words[1].substring(0, 1);
-	      } else {
-	        var firstWord = words[0];
-	        var secondWord = words[1];
-	        for (var i = 1; i < words.length; i++) {
-	          if (words[i].length > 3) {
-	            secondWord = words[i];
-	            break;
-	          }
-	        }
-	        shortName = firstWord.substring(0, 1) + secondWord.substring(0, 1);
-	      }
-	      return shortName.toUpperCase();
+	    name = name.replace(/['`".,:;~|{}*^$#@&+\-=?!()[\]<>\n\r]+/g, "").trim();
+	    if (name.length <= 0) {
+	      return '...';
 	    }
-	  }]);
-	  return BrowserHistory;
-	}();
+	    let shortName;
+	    let words = name.split(/[\s,]+/);
+	    if (words.length <= 1) {
+	      shortName = name.substring(0, 1);
+	    } else if (words.length === 2) {
+	      shortName = words[0].substring(0, 1) + words[1].substring(0, 1);
+	    } else {
+	      let firstWord = words[0];
+	      let secondWord = words[1];
+	      for (let i = 1; i < words.length; i++) {
+	        if (words[i].length > 3) {
+	          secondWord = words[i];
+	          break;
+	        }
+	      }
+	      shortName = firstWord.substring(0, 1) + secondWord.substring(0, 1);
+	    }
+	    return shortName.toUpperCase();
+	  }
+	}
 
-	function _classPrivateFieldInitSpec$1(obj, privateMap, value) { _checkPrivateRedeclaration$2(obj, privateMap); privateMap.set(obj, value); }
-	function _checkPrivateRedeclaration$2(obj, privateCollection) { if (privateCollection.has(obj)) { throw new TypeError("Cannot initialize the same private elements twice on an object"); } }
-	var _specialLiveFeedDecrement = /*#__PURE__*/new WeakMap();
-	var DesktopMenu = /*#__PURE__*/function () {
-	  function DesktopMenu(allCounters) {
-	    babelHelpers.classCallCheck(this, DesktopMenu);
-	    babelHelpers.defineProperty(this, "cache", new main_core.Cache.MemoryCache());
-	    babelHelpers.defineProperty(this, "browserHistory", null);
-	    babelHelpers.defineProperty(this, "account", null);
-	    babelHelpers.defineProperty(this, "theme", null);
-	    _classPrivateFieldInitSpec$1(this, _specialLiveFeedDecrement, {
+	var _specialLiveFeedDecrement = /*#__PURE__*/babelHelpers.classPrivateFieldLooseKey("specialLiveFeedDecrement");
+	class DesktopMenu {
+	  constructor(allCounters) {
+	    this.cache = new main_core.Cache.MemoryCache();
+	    this.browserHistory = null;
+	    this.account = null;
+	    this.theme = null;
+	    Object.defineProperty(this, _specialLiveFeedDecrement, {
 	      writable: true,
 	      value: 0
 	    });
 	    this.menuContainer = document.getElementById("menu-items-block");
 	    if (!this.menuContainer) {
-	      return false;
+	      return;
 	    }
-	    this.initTheme();
 	    this.getItemsController();
 	    this.getHistoryItems();
 	    this.showAccount(allCounters);
 	    this.runAPICounters();
 	  }
-	  babelHelpers.createClass(DesktopMenu, [{
-	    key: "initTheme",
-	    value: function initTheme() {
-	      this.theme = new Theme();
-	      this.theme.init();
+	  getItemsController() {
+	    return this.cache.remember('itemsMenuController', () => {
+	      return new ItemsController(this.menuContainer);
+	    });
+	  }
+	  getHistoryItems() {
+	    this.browserHistory = new BrowserHistory();
+	    this.browserHistory.init();
+	  }
+	  showAccount(allCounters) {
+	    this.account = new Account(allCounters);
+	    BX.Intranet.Account = this.account;
+	  }
+	  runAPICounters() {
+	    BX.Intranet.Counters = new Counters();
+	    BX.Intranet.Counters.init();
+	  }
+	  decrementCounter(node, iDecrement) {
+	    if (!node || node.id !== 'menu-counter-live-feed') {
+	      return;
 	    }
-	  }, {
-	    key: "getItemsController",
-	    value: function getItemsController() {
-	      var _this = this;
-	      return this.cache.remember('itemsMenuController', function () {
-	        return new ItemsController(_this.menuContainer);
-	      });
+	    babelHelpers.classPrivateFieldLooseBase(this, _specialLiveFeedDecrement)[_specialLiveFeedDecrement] += parseInt(iDecrement);
+	    this.getItemsController().decrementCounter({
+	      'live-feed': parseInt(iDecrement)
+	    });
+	  }
+	  updateCounters(counters, send) {
+	    if (!counters) {
+	      return;
 	    }
-	  }, {
-	    key: "getHistoryItems",
-	    value: function getHistoryItems() {
-	      this.browserHistory = new BrowserHistory();
-	      this.browserHistory.init();
+	    if (counters['**'] !== undefined) {
+	      counters['live-feed'] = counters['**'];
+	      delete counters['**'];
 	    }
-	  }, {
-	    key: "showAccount",
-	    value: function showAccount(allCounters) {
-	      this.account = new Account(allCounters);
-	      BX.Intranet.Account = this.account;
+	    if (counters['live-feed']) {
+	      if (counters['live-feed'] <= 0) {
+	        babelHelpers.classPrivateFieldLooseBase(this, _specialLiveFeedDecrement)[_specialLiveFeedDecrement] = 0;
+	      } else {
+	        counters['live-feed'] -= babelHelpers.classPrivateFieldLooseBase(this, _specialLiveFeedDecrement)[_specialLiveFeedDecrement];
+	      }
 	    }
-	  }, {
-	    key: "runAPICounters",
-	    value: function runAPICounters() {
-	      BX.Intranet.Counters = new Counters();
-	      BX.Intranet.Counters.init();
-	    }
-	  }, {
-	    key: "decrementCounter",
-	    value: function decrementCounter(node, iDecrement) {
-	      if (!node || node.id !== 'menu-counter-live-feed') {
-	        return;
-	      }
-	      babelHelpers.classPrivateFieldSet(this, _specialLiveFeedDecrement, babelHelpers.classPrivateFieldGet(this, _specialLiveFeedDecrement) + parseInt(iDecrement));
-	      this.getItemsController().decrementCounter({
-	        'live-feed': parseInt(iDecrement)
-	      });
-	    }
-	  }, {
-	    key: "updateCounters",
-	    value: function updateCounters(counters, send) {
-	      if (!counters) {
-	        return;
-	      }
-	      if (counters['**'] !== undefined) {
-	        counters['live-feed'] = counters['**'];
-	        delete counters['**'];
-	      }
-	      var workgroupsCounterUpdated = false;
-	      if (!main_core.Type.isUndefined(counters['**SG0'])) {
-	        this.workgroupsCounterData['livefeed'] = counters['**SG0'];
-	        delete counters['**SG0'];
-	        workgroupsCounterUpdated = true;
-	      }
-	      if (!main_core.Type.isUndefined(counters[main_core.Loc.getMessage('COUNTER_PROJECTS_MAJOR')])) {
-	        this.workgroupsCounterData[main_core.Loc.getMessage('COUNTER_PROJECTS_MAJOR')] = counters[main_core.Loc.getMessage('COUNTER_PROJECTS_MAJOR')];
-	        delete counters[main_core.Loc.getMessage('COUNTER_PROJECTS_MAJOR')];
-	        workgroupsCounterUpdated = true;
-	      }
-	      if (!main_core.Type.isUndefined(counters[main_core.Loc.getMessage('COUNTER_SCRUM_TOTAL_COMMENTS')])) {
-	        this.workgroupsCounterData[main_core.Loc.getMessage('COUNTER_SCRUM_TOTAL_COMMENTS')] = counters[main_core.Loc.getMessage('COUNTER_SCRUM_TOTAL_COMMENTS')];
-	        delete counters[main_core.Loc.getMessage('COUNTER_SCRUM_TOTAL_COMMENTS')];
-	        workgroupsCounterUpdated = true;
-	      }
-	      if (workgroupsCounterUpdated) {
-	        counters['workgroups'] = Object.entries(this.workgroupsCounterData).reduce(function (prevValue, _ref) {
-	          var _ref2 = babelHelpers.slicedToArray(_ref, 2),
-	            curValue = _ref2[1];
-	          return prevValue + Number(curValue);
-	        }, 0);
-	      }
-	      if (counters['live-feed']) {
-	        if (counters['live-feed'] <= 0) {
-	          babelHelpers.classPrivateFieldSet(this, _specialLiveFeedDecrement, 0);
-	        } else {
-	          counters['live-feed'] -= babelHelpers.classPrivateFieldGet(this, _specialLiveFeedDecrement);
-	        }
-	      }
-	      this.getItemsController().updateCounters(counters, send);
-	      BX.Intranet.Account.setCounters(counters);
-	    }
-	  }]);
-	  return DesktopMenu;
-	}();
+	    this.getItemsController().updateCounters(counters, send);
+	    BX.Intranet.Account.setCounters(counters);
+	  }
+	}
 
 	exports.DesktopMenu = DesktopMenu;
 
-}((this.BX.Intranet = this.BX.Intranet || {}),BX.Main,BX.Event,BX.Messenger.v2.Lib,BX));
+}((this.BX.Intranet = this.BX.Intranet || {}),BX.Messenger.v2.Lib,BX.Main,BX.Messenger.v2.Const,BX,BX.Event,BX.Messenger.v2.Lib,BX));
 //# sourceMappingURL=script.js.map

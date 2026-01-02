@@ -219,7 +219,6 @@ abstract class Converter
 	 * Therefore, for such fields it uses a "simplified" conversion.
 	 * But since all-literal fields like "UF_CRM_MY_STRING" worked, we had to support the old conversion
 	 * method for them.
-	 * @link http://jabber.bx/view.php?id=165477
 	 * @param string $fieldName
 	 * @return bool
 	 */

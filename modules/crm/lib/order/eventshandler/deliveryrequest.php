@@ -64,7 +64,10 @@ final class DeliveryRequest
 				'MESSAGE_BODY' => $message->getBodyForHtml(),
 			]
 		];
-		if ($message->getType() === Message\Message::TYPE_SHIPMENT_PICKUPED)
+		if (
+			$message->getType() === Message\Message::TYPE_SHIPMENT_PICKUPED
+			&& Main\Application::getInstance()->getLicense()->getRegion() === 'ru'
+		)
 		{
 			$sendersOptions[Crm\Integration\NotificationsManager::getSenderCode()] = [
 				'ACTIVITY_PROVIDER_TYPE_ID' => BaseMessage::PROVIDER_TYPE_SALESCENTER_DELIVERY,

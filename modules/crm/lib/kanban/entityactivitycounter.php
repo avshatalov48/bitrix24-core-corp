@@ -7,12 +7,20 @@ namespace Bitrix\Crm\Kanban;
 class EntityActivityCounter
 {
 	private EntityActCounter\CounterInfo $counterInfo;
+	private bool $isSkipEmptyCounters = false;
 
 	public function __construct(int $entityTypeId, array $entityIds, array $deadlines = [])
 	{
 		$entityIds = array_unique($entityIds);
 		$prepare = new EntityActCounter\PrepareCounters($entityTypeId, $entityIds, $deadlines);
 		$this->counterInfo = $prepare->prepareCounters();
+	}
+
+	public function setSkipEmptyCounters(bool $isSkipEmptyCounters = true): EntityActivityCounter
+	{
+		$this->isSkipEmptyCounters = $isSkipEmptyCounters;
+
+		return $this;
 	}
 
 	/**
@@ -68,6 +76,36 @@ class EntityActivityCounter
 				$items[$id]['activityIncomingTotal'] = count($incoming[$id]);
 			}
 			$items[$id]['activityCounterTotal'] = count($activityCounterTotal);
+
+			if (!$this->isSkipEmptyCounters)
+			{
+				continue;
+			}
+
+			if ($items[$id]['activityIncomingTotal'] <= 0)
+			{
+				unset($items[$id]['activityIncomingTotal']);
+			}
+			if ($items[$id]['activityCounterTotal'] <= 0)
+			{
+				unset($items[$id]['activityCounterTotal']);
+			}
+			if ($items[$id]['activityProgress'] <= 0)
+			{
+				unset($items[$id]['activityProgress']);
+			}
+			if ($items[$id]['activityTotal'] <= 0)
+			{
+				unset($items[$id]['activityTotal']);
+			}
+			if (empty($items[$id]['activitiesByUser']))
+			{
+				unset($items[$id]['activitiesByUser']);
+			}
+			if ($items[$id]['activityError'] <= 0)
+			{
+				unset($items[$id]['activityError']);
+			}
 		}
 	}
 

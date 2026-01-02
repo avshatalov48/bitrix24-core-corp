@@ -29,9 +29,8 @@ this.BX.Salescenter.PaymentPay = this.BX.Salescenter.PaymentPay || {};
 	  methods: {
 	    initUserConsent: function initUserConsent() {
 	      this.userConsentManager = new salescenter_paymentPay_userConsent.UserConsent({
-	        containerId: this.consent.containerId,
-	        accepted: this.consent.accepted,
-	        eventName: this.consent.eventName
+	        eventName: this.consent.eventName,
+	        items: this.consent.items
 	      });
 	    },
 	    initBackendProvider: function initBackendProvider() {
@@ -45,7 +44,7 @@ this.BX.Salescenter.PaymentPay = this.BX.Salescenter.PaymentPay || {};
 	    startPayment: function startPayment(paySystemId) {
 	      var _this = this;
 	      if (this.loading) {
-	        return false;
+	        return;
 	      }
 	      this.userConsentManager.askUserToPerform(function () {
 	        _this.loading = true;
@@ -76,16 +75,18 @@ this.BX.Salescenter.PaymentPay = this.BX.Salescenter.PaymentPay || {};
 	    },
 	    prepareUserConsentSettings: function prepareUserConsentSettings(settings) {
 	      return {
-	        id: settings.get('consent.id'),
+	        items: settings.get('consent.items'),
 	        title: settings.get('consent.title'),
 	        eventName: settings.get('consent.eventName'),
-	        accepted: settings.get('consent.accepted'),
-	        containerId: settings.get('consent.containerId')
+	        containerId: settings.get('consent.containerId'),
+	        autoSave: settings.get('consent.autoSave'),
+	        originatorId: settings.get('consent.originatorId'),
+	        originId: settings.get('consent.originId')
 	      };
 	    }
 	  },
 	  // language=Vue
-	  template: "\n\t\t<div class=\"salescenter-payment-pay-app\">\n\t\t\t<salescenter-payment_pay-components-payment_system-pay_system_list\n\t\t\t\tv-if=\"stage === stageType.list\"\n\t\t\t\t:paySystems=\"stages.paySystemList.paySystems\"\n\t\t\t\t:selectedPaySystem=\"stages.paySystemList.selectedPaySystem\"\n\t\t\t\t:loading=\"loading\"\n                :title=\"stages.paySystemList.title\"\n\t\t\t\t@start-payment=\"startPayment($event)\">\n\t\t\t\t<template v-slot:user-consent>\n\t\t\t\t\t<salescenter-payment_pay-components-payment_system-user_consent\n\t\t\t\t\t\t:id=\"consent.id\"\n\t\t\t\t\t\t:title=\"consent.title\"\n\t\t\t\t\t\t:checked=\"consent.accepted\"\n\t\t\t\t\t\t:submitEventName=\"consent.eventName\"/>\n\t\t\t\t</template>\n\t\t\t</salescenter-payment_pay-components-payment_system-pay_system_list>\n\t\t\t<salescenter-payment_pay-components-payment_system-error_box\n\t\t\t\tv-if=\"stage === stageType.errors\"\n\t\t\t\t:errors=\"stages.paySystemErrors.errors\">\n\t\t\t\t<salescenter-payment_pay-components-payment_system-reset_panel @reset=\"resetView()\"/>\n\t\t\t</salescenter-payment_pay-components-payment_system-error_box>\n\t\t\t<salescenter-payment_pay-components-payment_system-pay_system_result\n\t\t\t\tv-if=\"stage === stageType.result\"\n\t\t\t\t:html=\"stages.paySystemResult.html\"\n\t\t\t\t:fields=\"stages.paySystemResult.fields\">\n\t\t\t\t<salescenter-payment_pay-components-payment_system-reset_panel @reset=\"resetView()\"/>\n\t\t\t</salescenter-payment_pay-components-payment_system-pay_system_result>\n\t\t</div>\n\t"
+	  template: "\n\t\t<div class=\"salescenter-payment-pay-app\">\n\t\t\t<salescenter-payment_pay-components-payment_system-pay_system_list\n\t\t\t\tv-if=\"stage === stageType.list\"\n\t\t\t\t:paySystems=\"stages.paySystemList.paySystems\"\n\t\t\t\t:selectedPaySystem=\"stages.paySystemList.selectedPaySystem\"\n\t\t\t\t:loading=\"loading\"\n\t\t\t\t:title=\"stages.paySystemList.title\"\n\t\t\t\t@start-payment=\"startPayment($event)\">\n\t\t\t\t<template v-slot:user-consent>\n\t\t\t\t\t<salescenter-payment_pay-components-payment_system-user_consent\n\t\t\t\t\t\t:items=\"consent.items\"\n\t\t\t\t\t\t:title=\"consent.title\"\n\t\t\t\t\t\t:submitEventName=\"consent.eventName\"\n\t\t\t\t\t\t:autoSave=\"consent.autoSave\"\n\t\t\t\t\t\t:originatorId=\"consent.originatorId\"\n\t\t\t\t\t\t:originId=\"consent.originId\"/>\n\t\t\t\t</template>\n\t\t\t</salescenter-payment_pay-components-payment_system-pay_system_list>\n\t\t\t<salescenter-payment_pay-components-payment_system-error_box\n\t\t\t\tv-if=\"stage === stageType.errors\"\n\t\t\t\t:errors=\"stages.paySystemErrors.errors\">\n\t\t\t\t<salescenter-payment_pay-components-payment_system-reset_panel @reset=\"resetView()\"/>\n\t\t\t</salescenter-payment_pay-components-payment_system-error_box>\n\t\t\t<salescenter-payment_pay-components-payment_system-pay_system_result\n\t\t\t\tv-if=\"stage === stageType.result\"\n\t\t\t\t:html=\"stages.paySystemResult.html\"\n\t\t\t\t:fields=\"stages.paySystemResult.fields\">\n\t\t\t\t<salescenter-payment_pay-components-payment_system-reset_panel @reset=\"resetView()\"/>\n\t\t\t</salescenter-payment_pay-components-payment_system-pay_system_result>\n\t\t</div>\n\t"
 	});
 
 	ui_vue.BitrixVue.component('salescenter-payment_pay-components-application-pay_system_info', {
@@ -150,9 +151,8 @@ this.BX.Salescenter.PaymentPay = this.BX.Salescenter.PaymentPay || {};
 	  methods: {
 	    initUserConsent: function initUserConsent() {
 	      this.userConsentManager = new salescenter_paymentPay_userConsent.UserConsent({
-	        containerId: this.consent.containerId,
-	        accepted: this.consent.accepted,
-	        eventName: this.consent.eventName
+	        eventName: this.consent.eventName,
+	        items: this.consent.items
 	      });
 	    },
 	    initBackendProvider: function initBackendProvider() {
@@ -166,7 +166,7 @@ this.BX.Salescenter.PaymentPay = this.BX.Salescenter.PaymentPay || {};
 	    startPayment: function startPayment(paySystemId) {
 	      var _this = this;
 	      if (this.loading) {
-	        return false;
+	        return;
 	      }
 	      this.userConsentManager.askUserToPerform(function () {
 	        _this.loading = true;
@@ -198,16 +198,17 @@ this.BX.Salescenter.PaymentPay = this.BX.Salescenter.PaymentPay || {};
 	    },
 	    prepareUserConsentSettings: function prepareUserConsentSettings(settings) {
 	      return {
-	        id: settings.get('consent.id'),
-	        title: settings.get('consent.title'),
+	        items: settings.get('consent.items'),
 	        eventName: settings.get('consent.eventName'),
-	        accepted: settings.get('consent.accepted'),
-	        containerId: settings.get('consent.containerId')
+	        containerId: settings.get('consent.containerId'),
+	        autoSave: settings.get('consent.autoSave'),
+	        originatorId: settings.get('consent.originatorId'),
+	        originId: settings.get('consent.originId')
 	      };
 	    }
 	  },
 	  // language=Vue
-	  template: "\n\t\t<div class=\"salescenter-payment-pay-app\">\n\t\t\t<salescenter-payment_pay-components-payment_system-payment_info\n                v-if=\"stage === stageType.paymentInfo\"\n\t\t\t\t:paySystem=\"stages.paymentInfo.paySystem\"\n                :title=\"stages.paymentInfo.title\"\n\t\t\t\t:sum=\"stages.paymentInfo.sum\"\n\t\t\t\t:paid=\"stages.paymentInfo.paid\"\n\t\t\t\t:loading=\"loading\"\n\t\t\t\t:checks=\"stages.paymentInfo.checks\"\n                @start-payment=\"startPayment($event)\">\n\t\t\t\t<template v-slot:user-consent>\n\t\t\t\t\t<salescenter-payment_pay-components-payment_system-user_consent\n\t\t\t\t\t\t:id=\"consent.id\"\n\t\t\t\t\t\t:title=\"consent.title\"\n\t\t\t\t\t\t:checked=\"consent.accepted\"\n\t\t\t\t\t\t:submitEventName=\"consent.eventName\"/>\n\t\t\t\t</template>\n\t\t\t</salescenter-payment_pay-components-payment_system-payment_info>\n            <salescenter-payment_pay-components-payment_system-error_box\n                v-if=\"stage === stageType.errors\"\n                :errors=\"stages.paySystemErrors.errors\">\n            \t<salescenter-payment_pay-components-payment_system-reset_panel @reset=\"resetView()\"/>\n            </salescenter-payment_pay-components-payment_system-error_box>\n            <salescenter-payment_pay-components-payment_system-pay_system_result\n                v-if=\"stage === stageType.result\"\n                :html=\"stages.paySystemResult.html\"\n                :fields=\"stages.paySystemResult.fields\">\n            \t<salescenter-payment_pay-components-payment_system-reset_panel @reset=\"resetView()\"/>\n            </salescenter-payment_pay-components-payment_system-pay_system_result>\n\t\t</div>\n\t"
+	  template: "\n\t\t<div class=\"salescenter-payment-pay-app\">\n\t\t\t<salescenter-payment_pay-components-payment_system-payment_info\n\t\t\t\tv-if=\"stage === stageType.paymentInfo\"\n\t\t\t\t:paySystem=\"stages.paymentInfo.paySystem\"\n\t\t\t\t:title=\"stages.paymentInfo.title\"\n\t\t\t\t:sum=\"stages.paymentInfo.sum\"\n\t\t\t\t:paid=\"stages.paymentInfo.paid\"\n\t\t\t\t:loading=\"loading\"\n\t\t\t\t:checks=\"stages.paymentInfo.checks\"\n\t\t\t\t@start-payment=\"startPayment($event)\">\n\t\t\t\t<template v-slot:user-consent>\n\t\t\t\t\t<salescenter-payment_pay-components-payment_system-user_consent\n\t\t\t\t\t\t:items=\"consent.items\"\n\t\t\t\t\t\t:title=\"consent.title\"\n\t\t\t\t\t\t:submitEventName=\"consent.eventName\"\n\t\t\t\t\t\t:autoSave=\"consent.autoSave\"\n\t\t\t\t\t\t:originatorId=\"consent.originatorId\"\n\t\t\t\t\t\t:originId=\"consent.originId\"/>\n\t\t\t\t</template>\n\t\t\t</salescenter-payment_pay-components-payment_system-payment_info>\n\t\t\t<salescenter-payment_pay-components-payment_system-error_box\n\t\t\t\tv-if=\"stage === stageType.errors\"\n\t\t\t\t:errors=\"stages.paySystemErrors.errors\">\n\t\t\t\t<salescenter-payment_pay-components-payment_system-reset_panel @reset=\"resetView()\"/>\n\t\t\t</salescenter-payment_pay-components-payment_system-error_box>\n\t\t\t<salescenter-payment_pay-components-payment_system-pay_system_result\n\t\t\t\tv-if=\"stage === stageType.result\"\n\t\t\t\t:html=\"stages.paySystemResult.html\"\n\t\t\t\t:fields=\"stages.paySystemResult.fields\">\n\t\t\t\t<salescenter-payment_pay-components-payment_system-reset_panel @reset=\"resetView()\"/>\n\t\t\t</salescenter-payment_pay-components-payment_system-pay_system_result>\n\t\t</div>\n\t"
 	});
 
 	ui_vue.BitrixVue.component('salescenter-payment_pay-components-payment_system-payment_info-button', {
@@ -396,7 +397,7 @@ this.BX.Salescenter.PaymentPay = this.BX.Salescenter.PaymentPay || {};
 	  },
 	  mixins: [sale_paymentPay_mixins_paymentSystem.MixinPaymentInfo],
 	  // language=Vue
-	  template: "\n\t\t<div>\n\t\t\t<div class=\"order-payment-title\" v-if=\"title\">{{ title }}</div>\n\t\t\t<div class=\"order-payment-inner d-flex flex-wrap align-items-center justify-content-between\">\n\t\t\t\t<salescenter-payment_pay-components-payment_system-payment_info-pay_system_small_card :name=\"paySystem.NAME\" :logo=\"paySystem.LOGOTIP\"/>\n            \t<div class=\"order-payment-status d-flex align-items-center\" v-if=\"paid\">\n                \t<div class=\"order-payment-status-ok\"></div>\n                \t<div>{{ localize.PAYMENT_PAY_PAYMENT_SYSTEM_COMPONENTS_5 }}</div>\n\t\t\t\t</div>\n\t\t\t\t<div class=\"order-payment-price\" v-html=\"totalSum\"></div>\n\t\t\t</div>\n\t\t\t<hr v-if=\"checks.length > 0\">\n\t\t\t<salescenter-payment_pay-components-payment_system-check \n\t\t\t\tv-for=\"check in checks\" \n\t\t\t\t:title=\"check.title\" \n\t\t\t\t:link=\"check.link\" \n\t\t\t\t:status=\"check.status\"/>\n\t\t\t<hr v-if=\"!paid\">\n            <slot name=\"user-consent\" v-if=\"!paid\"></slot>\n\t\t\t<div class=\"order-payment-buttons-container\" v-if=\"!paid\">\n\t\t\t\t<salescenter-payment_pay-components-payment_system-payment_info-button\n\t\t\t\t\t:loading=\"loading\"\n\t\t\t\t\t@click=\"onClick()\">\n\t\t\t\t\t{{ localize.PAYMENT_PAY_PAYMENT_SYSTEM_COMPONENTS_4 }}\n\t\t\t\t</salescenter-payment_pay-components-payment_system-payment_info-button>\n\t\t\t</div>\n\t\t</div>\n\t"
+	  template: "\n\t\t<div>\n\t\t\t<div class=\"order-payment-title\" v-if=\"title\">{{ title }}</div>\n\t\t\t<div class=\"order-payment-inner d-flex flex-wrap align-items-center justify-content-between\">\n\t\t\t\t<salescenter-payment_pay-components-payment_system-payment_info-pay_system_small_card :name=\"paySystem.NAME\" :logo=\"paySystem.LOGOTIP\"/>\n\t\t\t\t<div class=\"order-payment-status d-flex align-items-center\" v-if=\"paid\">\n\t\t\t\t\t<div class=\"order-payment-status-ok\"></div>\n\t\t\t\t\t<div>{{ localize.PAYMENT_PAY_PAYMENT_SYSTEM_COMPONENTS_5 }}</div>\n\t\t\t\t</div>\n\t\t\t\t<div class=\"order-payment-price\" v-html=\"totalSum\"></div>\n\t\t\t</div>\n\t\t\t<hr v-if=\"checks.length > 0\">\n\t\t\t<salescenter-payment_pay-components-payment_system-check \n\t\t\t\tv-for=\"check in checks\" \n\t\t\t\t:title=\"check.title\" \n\t\t\t\t:link=\"check.link\" \n\t\t\t\t:status=\"check.status\"/>\n\t\t\t<hr v-if=\"!paid\">\n\t\t\t<slot name=\"user-consent\" v-if=\"!paid\"></slot>\n\t\t\t<div class=\"order-payment-buttons-container\" v-if=\"!paid\">\n\t\t\t\t<salescenter-payment_pay-components-payment_system-payment_info-button\n\t\t\t\t\t:loading=\"loading\"\n\t\t\t\t\t@click=\"onClick()\">\n\t\t\t\t\t{{ localize.PAYMENT_PAY_PAYMENT_SYSTEM_COMPONENTS_4 }}\n\t\t\t\t</salescenter-payment_pay-components-payment_system-payment_info-button>\n\t\t\t</div>\n\t\t</div>\n\t"
 	});
 
 	ui_vue.BitrixVue.component('salescenter-payment_pay-components-payment_system-reset_panel', {
@@ -413,8 +414,8 @@ this.BX.Salescenter.PaymentPay = this.BX.Salescenter.PaymentPay || {};
 	var _templateObject;
 	ui_vue.BitrixVue.component('salescenter-payment_pay-components-payment_system-user_consent', {
 	  props: {
-	    id: {
-	      type: Number | String,
+	    items: {
+	      type: Array,
 	      required: true
 	    },
 	    title: {
@@ -425,21 +426,41 @@ this.BX.Salescenter.PaymentPay = this.BX.Salescenter.PaymentPay || {};
 	      type: String,
 	      required: true
 	    },
-	    checked: {
+	    autoSave: {
 	      type: Boolean,
 	      "default": false,
 	      required: false
+	    },
+	    originatorId: {
+	      type: String,
+	      "default": '',
+	      required: false
+	    },
+	    originId: {
+	      type: String,
+	      "default": '',
+	      required: false
 	    }
+	  },
+	  mounted: function mounted() {
+	    this.loadBlockHtml();
 	  },
 	  methods: {
 	    loadBlockHtml: function loadBlockHtml() {
 	      var _this = this;
+	      if (this.items.length === 0) {
+	        return;
+	      }
 	      var data = {
 	        fields: {
+	          items: this.items,
 	          id: this.id,
 	          title: this.title,
 	          isChecked: this.checked ? 'Y' : 'N',
-	          submitEventName: this.submitEventName
+	          submitEventName: this.submitEventName,
+	          autoSave: this.autoSave ? 'Y' : 'N',
+	          originatorId: this.originatorId,
+	          originId: this.originId
 	        }
 	      };
 	      main_core.ajax.runComponentAction('bitrix:salescenter.payment.pay', 'userConsentRequest', {
@@ -449,25 +470,24 @@ this.BX.Salescenter.PaymentPay = this.BX.Salescenter.PaymentPay || {};
 	        if (!main_core.Type.isPlainObject(response.data) || !main_core.Type.isStringFilled(response.data.html) || !BX.UserConsent) {
 	          return;
 	        }
-	        var html, wrapper, control;
-	        html = response.data.html;
-	        wrapper = _this.$refs.consentDiv;
+	        var html = response.data.html;
+	        var wrapper = _this.$refs.consentDiv;
 	        wrapper.appendChild(main_core.Tag.render(_templateObject || (_templateObject = babelHelpers.taggedTemplateLiteral(["<div>", "</div>"])), html));
-	        control = BX.UserConsent.load(wrapper);
-	        main_core_events.EventEmitter.subscribe(control, BX.UserConsent.events.accepted, function (event) {
-	          main_core_events.EventEmitter.emit(sale_paymentPay_const.EventType.consent.accepted);
-	        });
-	        main_core_events.EventEmitter.subscribe(control, BX.UserConsent.events.refused, function (event) {
-	          main_core_events.EventEmitter.emit(sale_paymentPay_const.EventType.consent.refused);
+	        BX.UserConsent.loadAll(wrapper);
+	        var controls = BX.UserConsent.getItems();
+	        controls.forEach(function (control) {
+	          main_core_events.EventEmitter.subscribe(control, BX.UserConsent.events.afterAccepted, function (event) {
+	            main_core_events.EventEmitter.emit(sale_paymentPay_const.EventType.consent.accepted, event);
+	          });
+	          main_core_events.EventEmitter.subscribe(control, BX.UserConsent.events.refused, function (event) {
+	            main_core_events.EventEmitter.emit(sale_paymentPay_const.EventType.consent.refused, event);
+	          });
 	        });
 	      });
 	    }
 	  },
-	  mounted: function mounted() {
-	    this.loadBlockHtml();
-	  },
 	  // language=Vue
-	  template: "\n\t\t<div>\n        \t<div ref=\"consentDiv\"/>\n\t\t</div>\n\t"
+	  template: "\n\t\t<div class=\"salescenter-user-consent-list\">\n\t\t\t<div ref=\"consentDiv\"/>\n\t\t</div>\n\t"
 	});
 
 }((this.BX.Salescenter.PaymentPay.Components = this.BX.Salescenter.PaymentPay.Components || {}),BX.Sale.PaymentPay.Lib,BX.Sale.PaymentPay.Mixins.Application,BX.Salescenter.PaymentPay,BX.Salescenter.PaymentPay,BX.Sale.PaymentPay.Mixins.PaymentSystem,BX,BX.Event,BX.Sale.PaymentPay.Const,BX));

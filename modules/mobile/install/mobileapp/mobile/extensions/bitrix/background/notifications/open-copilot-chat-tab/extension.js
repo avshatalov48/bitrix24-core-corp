@@ -25,11 +25,23 @@ jn.define('background/notifications/open-copilot-chat-tab', (require, exports, m
 				analytics.send();
 			}
 
-			requireLazy('im:messenger/api/tab')
-				.then(({ openCopilotTab }) => {
-					openCopilotTab().catch(console.error);
+			// eslint-disable-next-line no-undef
+			requireLazyBatch(['im:messenger/api/tab', 'im:messenger/api/navigation'], false)
+				.then(async (extensions) => {
+					const { openCopilotTab } = extensions.get('im:messenger/api/tab');
+					const { closeAll } = extensions.get('im:messenger/api/navigation');
+
+					try
+					{
+						await closeAll?.();
+						await openCopilotTab?.();
+					}
+					catch (error)
+					{
+						console.error(error);
+					}
 				})
-				.catch(console.error);
+				.catch((error) => console.error(error));
 		}
 
 		getAnalytics()

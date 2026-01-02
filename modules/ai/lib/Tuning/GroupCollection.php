@@ -6,14 +6,10 @@ use Bitrix\Main\Type\Dictionary;
 
 /**
  * Dictionary for work with Group objects
+ * @property Group[] $values
  */
 class GroupCollection extends Dictionary
 {
-	/**
-	 * @var Group[]
-	 */
-	protected $values = [];
-
 	/**
 	 * Returns any variable by its name. Null if variable is not set.
 	 *

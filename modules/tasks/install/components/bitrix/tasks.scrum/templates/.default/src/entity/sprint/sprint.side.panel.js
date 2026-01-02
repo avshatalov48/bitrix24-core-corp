@@ -1,28 +1,12 @@
-import {SidePanel} from '../../service/side.panel';
-import {BaseEvent, EventEmitter} from 'main.core.events';
-
-import {Sprint} from './sprint';
+import { BaseEvent, EventEmitter } from 'main.core.events';
+import { SidePanel } from '../../service/side.panel';
+import { ViewInfo, Views } from '../../view/view';
+import { Sprint } from './sprint';
 
 type Params = {
 	groupId: number,
 	sidePanel: SidePanel,
-	views: {
-		plan: {
-			name: string,
-			url: string,
-			active: boolean
-		},
-		activeSprint: {
-			name: string,
-			url: string,
-			active: boolean
-		},
-		completedSprint: {
-			name: string,
-			url: string,
-			active: boolean
-		}
-	},
+	views: Views,
 	pathToBurnDown: string
 };
 
@@ -32,10 +16,12 @@ export class SprintSidePanel extends EventEmitter
 	{
 		super(params);
 
+		this.setEventNamespace('BX.Tasks.Scrum.SprintSidePanel');
+
 		this.sidePanel = params.sidePanel;
 		this.groupId = parseInt(params.groupId, 10);
 		this.views = params.views;
-		this.pathToBurnDown = params.pathToBurnDown ? params.pathToBurnDown : '';
+		this.pathToBurnDown = params.pathToBurnDown ?? '';
 	}
 
 	showStartForm(sprint: Sprint)
@@ -51,7 +37,7 @@ export class SprintSidePanel extends EventEmitter
 				if (extension)
 				{
 					extension.subscribe('afterStart', (baseEvent: BaseEvent) => {
-						location.href = this.views['activeSprint'].url;
+						location.href = this.views.find((view: ViewInfo) => view.id === 'activeSprint')?.url;
 					});
 				}
 			})
@@ -68,7 +54,7 @@ export class SprintSidePanel extends EventEmitter
 				if (extension)
 				{
 					extension.subscribe('afterComplete', (baseEvent: BaseEvent) => {
-						location.href = this.views['plan'].url;
+						location.href = this.views.find((view: ViewInfo) => view.id === 'plan')?.url;
 					});
 					extension.subscribe('taskClick', (baseEvent: BaseEvent) => {
 						this.emit('showTask', baseEvent.getData());

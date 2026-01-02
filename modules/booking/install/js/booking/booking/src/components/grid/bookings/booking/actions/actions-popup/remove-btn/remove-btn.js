@@ -1,46 +1,34 @@
-import { BIcon as Icon, Set as IconSet } from 'ui.icon-set.api.vue';
-import 'ui.icon-set.main';
-
+import { h } from 'ui.vue3';
+import { RemoveButton } from 'booking.component.actions-popup';
 import { RemoveBooking } from 'booking.lib.remove-booking';
-import './remove-btn.css';
 
-export const RemoveBtn = {
-	name: 'BookingActionsPopupRemoveBtn',
-	emits: ['close'],
-	props: {
-		bookingId: {
-			type: [Number, String],
-			required: true,
-		},
-	},
-	data(): Object
-	{
-		return {
-			IconSet,
-		};
-	},
-	methods: {
-		removeBooking(): void
+function BookingRemoveBtn(props, { emit }): void
+{
+	const bookingId = props.bookingId;
+	const removeBooking = () => {
+		emit('close');
+
+		new RemoveBooking(bookingId);
+	};
+
+	return h(
+		RemoveButton,
 		{
-			this.$emit('close');
-
-			new RemoveBooking(this.bookingId);
+			dataAttributes: {
+				'data-booking-id': bookingId,
+				'data-element': 'booking-menu-remove-button',
+			},
+			onRemove: removeBooking,
 		},
-	},
-	components: {
-		Icon,
-	},
-	template: `
-		<div
-			class="booking-actions-popup__item-remove-button"
-			data-element="booking-menu-remove-button"
-			:data-booking-id="bookingId"
-			@click="removeBooking"
-		>
-			<div class="booking-actions-popup__item-overbooking-label">
-				{{ loc('BB_ACTIONS_POPUP_OVERBOOKING_REMOVE') }}
-			</div>
-			<Icon :name="IconSet.TRASH_BIN"/>
-		</div>
-	`,
-};
+	);
+}
+
+type BookingRemoveBtnProps = {
+	bookingId: string | number,
+}
+const bookingRemoveBtnProps: Array<$Keys<BookingRemoveBtnProps>> = ['bookingId'];
+
+BookingRemoveBtn.props = bookingRemoveBtnProps;
+BookingRemoveBtn.emits = ['close'];
+
+export { BookingRemoveBtn };

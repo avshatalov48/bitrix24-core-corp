@@ -1,0 +1,47 @@
+.b24-user-avatar-list-user-container {
+	display: flex;
+	justify-content: space-between;
+}
+
+.b24-user-avatar-list-user {
+	z-index: 1;
+	--text-color: var(--ui-color-base-1);
+}
+
+.b24-user-avatar-list-user.--collaber {
+	--text-color: var(--ui-color-collab-accent-primary);
+}
+
+.b24-user-avatar-list-user.--email {
+	--text-color: #ca8600;
+}
+
+.b24-user-avatar-list-user.--extranet {
+	--text-color: #ca8600;
+}
+
+.b24-user-avatar-list-user-inner {
+	display: flex;
+	align-items: center;
+	overflow: hidden;
+}
+
+.b24-user-avatar-list-user-image {
+	flex-shrink: 0;
+	display: flex;
+	align-items: center;
+	margin-right: 9px;
+	width: 24px;
+	height: 24px;
+}
+
+.b24-user-avatar-list-user-title {
+	overflow: hidden;
+	white-space: nowrap;
+	text-overflow: ellipsis;
+	color: var(--text-color);
+}
+
+.b24-user-avatar-list-user-title:hover {
+	color: var(--text-color);
+}

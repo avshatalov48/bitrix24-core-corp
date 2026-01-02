@@ -318,7 +318,7 @@ if (LANGUAGE_ID == 'ru')
 							&&
 							(
 								$USER->IsAdmin() 
-								|| CTasksTools::IsPortalB24Admin()
+								|| \Bitrix\Tasks\Integration\Bitrix24\User::isAdmin()
 								||
 								(
 									($i == $editableCommentIndex) 
@@ -336,7 +336,7 @@ if (LANGUAGE_ID == 'ru')
 							&&
 							(
 								$USER->IsAdmin() 
-								|| CTasksTools::IsPortalB24Admin()
+								|| \Bitrix\Tasks\Integration\Bitrix24\User::isAdmin()
 								||
 								(
 									($i == $editableCommentIndex) 

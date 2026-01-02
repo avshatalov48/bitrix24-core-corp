@@ -1,6 +1,6 @@
 import { ajax as Ajax, Loc, Reflection } from 'main.core';
 import { MessageBox } from 'ui.dialogs.messagebox';
-import { ButtonSize, ButtonColor, CancelButton, SaveButton, Button } from 'ui.buttons';
+import { ButtonSize, ButtonColor, CancelButton, SaveButton, Button, AirButtonStyle } from 'ui.buttons';
 import { App } from 'ui.accessrights.v2';
 
 const namespace = Reflection.namespace('BX.Crm');
@@ -11,6 +11,7 @@ class ConfigPermsComponent
 	AccessRightsOption: Object;
 	hasLeftMenu: boolean;
 	menuId: string;
+	useAirDesign: boolean;
 
 	constructor(config)
 	{
@@ -18,6 +19,7 @@ class ConfigPermsComponent
 		this.AccessRights = config.AccessRights;
 		this.hasLeftMenu = config.hasLeftMenu;
 		this.menuId = config.menuId;
+		this.useAirDesign = config.useAirDesign ?? false;
 	}
 
 	init(): void
@@ -60,19 +62,17 @@ class ConfigPermsComponent
 	#renderHelpButton()
 	{
 		const Helper = Reflection.getClass('top.BX.Helper');
-
 		const helpButton = new Button({
-			size: ButtonSize.MEDIUM,
-			color: ButtonColor.LIGHT_BORDER,
-			text: Loc.getMessage('CRM_CONFIG_PERMS_HELP'),
-			noCaps: true,
+			size: ButtonSize.SMALL,
+			text: Loc.getMessage('CRM_CONFIG_PERMS_HELP_MSGVER_1'),
+			style: AirButtonStyle.OUTLINE_NO_ACCENT,
+			useAirDesign: true,
 			onclick: () => {
-				const articleCode = '23240636'; // todo replace with the real article code
+				const articleCode = '23240636';
 
 				Helper?.show(`redirect=detail&code=${articleCode}`);
 			},
 		});
-
 		const parentElement = document.querySelector('.crm-config-perms-v2-header');
 		helpButton.renderTo(parentElement);
 	}
@@ -152,10 +152,12 @@ class ConfigPermsComponent
 		const box = MessageBox.create({
 			message: Loc.getMessage('CRM_CONFIG_PERMS_SAVE_POPUP_TITLE'),
 			modal: true,
+			useAirDesign: true,
 			buttons: [
 				new SaveButton({
-					size: ButtonSize.SMALL,
-					color: ButtonColor.PRIMARY,
+					size: ButtonSize.LARGE,
+					style: AirButtonStyle.FILLED,
+					useAirDesign: true,
 					onclick: (button) => {
 						button.setWaiting(true);
 
@@ -171,12 +173,17 @@ class ConfigPermsComponent
 				}),
 				new CancelButton({
 					text: Loc.getMessage('CRM_CONFIG_PERMS_SAVE_POPUP_CANCEL'),
-					size: ButtonSize.SMALL,
+					size: ButtonSize.LARGE,
+					style: AirButtonStyle.OUTLINE,
+					useAirDesign: true,
 					onclick: () => {
 						box.close();
 					},
 				}),
 			],
+			popupOptions: {
+				fixed: true,
+			},
 		});
 
 		box.show();

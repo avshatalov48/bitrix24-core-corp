@@ -7,6 +7,8 @@ jn.define('bizproc/workflow/starter/parameters-step/view', (require, exports, mo
 	const { PureComponent } = require('layout/pure-component');
 	const { EntityManager } = require('layout/ui/entity-editor/manager');
 	const { ParametersStepSkeleton } = require('bizproc/workflow/starter/parameters-step/skeleton');
+	const { Random } = require('utils/random');
+
 	class ParametersStepView extends PureComponent
 	{
 		constructor(props)

@@ -102,6 +102,49 @@ class RealizationDocument extends Main\Engine\Controller
 		/** @var Crm\Order\Order $order */
 		$order = $shipmentData['order'];
 
+
+		if ($value === 'N')
+		{
+			$shipmentItemCollection = $shipment->getShipmentItemCollection();
+
+			$storeIds = [];
+			foreach ($shipmentItemCollection as $shipmentItem)
+			{
+				$storeCollection = $shipmentItem->getShipmentItemStoreCollection();
+
+				if (!isset($storeCollection))
+				{
+					continue;
+				}
+
+				foreach ($storeCollection as $store)
+				{
+					$storeId = $store->getStoreId();
+					if ($storeId > 0 && !isset($storeIds[$storeId]))
+					{
+						if (!$this->accessController->checkByValue(ActionDictionary::ACTION_STORE_VIEW, $storeId))
+						{
+							$this->addError(
+								new Main\Error(
+									Main\Localization\Loc::getMessage(
+										'CRM_CONTROLLER_REALIZATION_DOCUMENT_DELETE_ERROR',
+										[
+											'#ID#' => htmlspecialcharsbx($shipment->getField('ACCOUNT_NUMBER')),
+										]
+									),
+									self::REALIZATION_CANNOT_DELETE_ERROR_CODE
+								)
+							);
+
+							return;
+						}
+
+						$storeIds[$storeId] = $storeId;
+					}
+				}
+			}
+		}
+
 		$delivery = Sale\Delivery\Services\Manager::getById($shipment->getDeliveryId());
 		$isEmptyDeliveryService = (
 			$delivery['CLASS_NAME'] === '\\' . Sale\Delivery\Services\EmptyDeliveryService::class

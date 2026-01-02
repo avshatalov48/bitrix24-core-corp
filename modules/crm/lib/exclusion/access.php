@@ -6,6 +6,7 @@
  * @copyright 2001-2018 Bitrix
  */
 namespace Bitrix\Crm\Exclusion;
+use Bitrix\Crm\Service\Container;
 use Bitrix\Main\Localization\Loc;
 
 /**
@@ -23,9 +24,6 @@ class Access
 
 	/** @var int $userId User ID. */
 	protected $userId;
-
-	/** @var \CCrmPerms $permission Permission instance. */
-	protected $permission;
 
 	/**
 	 * Get instance for current user.
@@ -51,7 +49,7 @@ class Access
 	{
 		if (!$userId)
 		{
-			$userId = \CCrmSecurityHelper::getCurrentUserID();
+			$userId = Container::getInstance()->getContext()->getUserId();
 		}
 
 		$this->userId = $userId;
@@ -62,9 +60,9 @@ class Access
 	 *
 	 * @return bool
 	 */
-	public function canRead()
+	public function canRead(): bool
 	{
-		return $this->checkPermission(self::READ);
+		return Container::getInstance()->getUserPermissions($this->userId)->exclusion()->canReadItems();
 	}
 
 	/**
@@ -72,9 +70,9 @@ class Access
 	 *
 	 * @return bool
 	 */
-	public function canWrite()
+	public function canWrite(): bool
 	{
-		return $this->checkPermission(self::WRITE);
+		return Container::getInstance()->getUserPermissions($this->userId)->exclusion()->canEditItems();
 	}
 
 	/**
@@ -85,15 +83,5 @@ class Access
 	public static function getErrorText($code)
 	{
 		return Loc::getMessage("CRM_EXCLUSION_ACCESS_ERROR_$code");
-	}
-
-	protected function checkPermission($code)
-	{
-		if (!$this->permission)
-		{
-			$this->permission = new \CCrmPerms($this->userId);
-		}
-
-		return !$this->permission->havePerm('EXCLUSION', BX_CRM_PERM_NONE, $code);
 	}
 }

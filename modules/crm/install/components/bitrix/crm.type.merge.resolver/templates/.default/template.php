@@ -40,5 +40,6 @@ $APPLICATION->IncludeComponent(
 		'USE_PADDING' => $arResult['USE_PADDING'] ?? false,
 		'PAGE_MODE' => $arResult['PAGE_MODE'] ?? false,
 		'PAGE_MODE_OFF_BACK_URL' => $arResult['PAGE_MODE_OFF_BACK_URL'],
+		'USE_UI_TOOLBAR' => 'Y',
 	]
 );

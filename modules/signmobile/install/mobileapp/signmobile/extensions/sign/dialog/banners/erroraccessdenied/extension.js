@@ -37,6 +37,7 @@ jn.define('sign/dialog/banners/erroraccessdenied', (require, exports, module) =>
 				buttonsView: View(
 					{},
 					Button({
+						testId: 'accessDeniedBanner-button-close',
 						text: Loc.getMessage('SIGN_MOBILE_DIALOG_ERROR_ACCESS_DENIED_BUTTON_CLOSE_TITLE'),
 						size: ButtonSize.XL,
 						design: ButtonDesign.PLAN_ACCENT,

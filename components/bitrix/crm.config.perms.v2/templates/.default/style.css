@@ -43,17 +43,17 @@
 }
 
 .crm-config-perms-v2-header-title {
-	margin-right: 42px;
+	margin-right: 12px;
 	max-width: 100%;
-	color: var(--ui-color-base-80);
+	color: var(--ui-color-base-1);
 
-	font-size: 26px;
-	font-weight: 300;
-	line-height: 31.03px;
-	text-align: left;
+
+	font-weight: var(--ui-font-weight-medium);
+	font-size: 25px;
+	line-height: 33px;
+	text-align: center;
 	text-underline-position: from-font;
 	text-decoration-skip-ink: none;
-
 }
 
 ::-webkit-scrollbar {
@@ -102,18 +102,6 @@
 	display: flex;
 	height: 73px;
 	align-items: center;
-}
-
-.crm-config-perms-v2-sidebar .ui-sidepanel-title {
-	max-width: 100%;
-	color: var(--ui-color-base-80);
-
-	font-size: 26px;
-	font-weight: 300;
-	line-height: 31.03px;
-	text-align: left;
-	text-underline-position: from-font;
-	text-decoration-skip-ink: none;
 }
 
 .crm-config-perms-v2-slider-content {

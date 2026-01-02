@@ -13,4 +13,6 @@ $MESS['SIGN_MOBILE_DOCUMENT_CONFIRM_SIGNING_ALERT_BY_EMPLOYEE_TITLE'] = 'Отм�
 $MESS['SIGN_MOBILE_DOCUMENT_CONFIRM_SIGNING_ALERT_BY_EMPLOYEE_REJECT_BUTTON_TITLE'] = 'Да, отменить';
 $MESS['SIGN_MOBILE_DOCUMENT_CONFIRM_SIGNING_ALERT_CANCEL_BY_REVIEWER_BUTTON_TITLE'] = 'Вернуться к согласованию';
 $MESS['SIGN_MOBILE_DOCUMENT_CONFIRM_SIGNING_ALERT_CANCEL_BUTTON_TITLE'] = 'Вернуться к подписанию';
-$MESS['SIGN_MOBILE_DOCUMENT_UNKNOWN_ERROR_TEXT'] = 'Не удалось выполнить действие, перезапустите приложение и попробуйте ещё раз';
+$MESS['SIGN_MOBILE_DOCUMENT_UNKNOWN_ERROR_TEXT'] = 'Не удалось выполнить действие, попробуйте ещё раз';
+$MESS['SIGN_MOBILE_DOCUMENT_CONFIRM_REVIEW_SUCCESS_TITLE'] = 'Вы согласовали документ';
+$MESS['SIGN_MOBILE_DOCUMENT_REFUSED_REVIEW_TITLE'] = 'Вы отменили подписание';

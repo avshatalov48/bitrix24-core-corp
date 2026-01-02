@@ -3,7 +3,7 @@
 namespace Bitrix\Tasks\Flow\Integration\BizProc\Robot;
 
 use Bitrix\Bizproc\Automation\Engine\Robot;
-use Bitrix\Tasks\AbstractCommand;
+use Bitrix\Tasks\Flow\AbstractCommand;
 
 abstract class AbstractRobotCommand extends AbstractCommand
 {

@@ -196,12 +196,14 @@ class Item implements \IBPWorkflowDocument
 
 	public static function getDocument($documentId, $documentType = null): ?array
 	{
+		$args = func_get_args();
+		$select = $args[2] ?? ['*'];
 		$fields = null;
 		[$typeId, $itemId] = explode(':', $documentId);
 
 		$type = TypeTable::getById($typeId)->fetchObject();
 
-		if ($type && $item = $type->getItem($itemId))
+		if ($type && $item = $type->getItem($itemId, $select))
 		{
 			$fields = $item->collectValues();
 			self::internalizeFieldsValues($documentId, $fields);
@@ -446,8 +448,9 @@ class Item implements \IBPWorkflowDocument
 
 	public static function getDocumentResponsible($documentId)
 	{
-		//TODO: make some perf optimization
-		return static::getDocument($documentId)['CREATED_BY'];
+		$document = static::getDocument($documentId, null, ['CREATED_BY']);
+
+		return $document['CREATED_BY'] ?? null;
 	}
 
 	public static function isFeatureEnabled($documentType, $feature): bool

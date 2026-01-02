@@ -6,7 +6,6 @@ if (!defined('B_PROLOG_INCLUDED') || B_PROLOG_INCLUDED !== true)
 }
 
 return [
-	'css' => 'dist/resource-dialog-service.bundle.css',
 	'js' => 'dist/resource-dialog-service.bundle.js',
 	'rel' => [
 		'main.core',

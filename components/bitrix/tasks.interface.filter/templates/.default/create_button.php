@@ -1,5 +1,11 @@
 <?php
 
+use Bitrix\UI\Buttons;
+use Bitrix\UI\Toolbar\ButtonLocation;
+use Bitrix\UI\Toolbar\Facade\Toolbar;
+use Bitrix\Main\Localization\Loc;
+use Bitrix\UI\Buttons\Split\Button as SplitButton;
+
 if (!defined('B_PROLOG_INCLUDED') || B_PROLOG_INCLUDED !== true)
 {
 	die();
@@ -16,6 +22,7 @@ $isCollab = $arResult['IS_COLLAB'];
 $groupId = (int)$arParams['MENU_GROUP_ID'];
 $currentUserId = (int)$arResult['USER_ID'];
 $targetUserId = (int)$arParams['USER_ID'];
+$isV2Form = \Bitrix\Tasks\V2\FormV2Feature::isOn('miniform') || \Bitrix\Tasks\V2\FormV2Feature::isOn('', $groupId);
 
 $pathToTaskTemplatesList = CComponentEngine::makePathFromTemplate(
 	$arParams['PATH_TO_USER_TASKS_TEMPLATES'],
@@ -45,49 +52,53 @@ if ($currentUserId !== $targetUserId)
 	$createButtonUri->addParams(['RESPONSIBLE_ID' => $arParams['USER_ID']]);
 }
 
-if ($arResult['IS_SCRUM_PROJECT'])
-{
-	$sectionType = 'scrum';
-}
-elseif ($isCollab)
-{
-	$sectionType = 'collab';
-}
-elseif (!empty($groupId))
-{
-	$sectionType = 'project';
-}
-else
-{
-	$sectionType = 'tasks';
-}
+$analytics = \Bitrix\Tasks\Helper\Analytics::getInstance($currentUserId);
 
 $createButtonUri->addParams([
-	'ta_sec' => $sectionType,
-	'ta_sub' => $arParams['VIEW_STATE_FOR_ANALYTICS'],
+	'ta_sec' => $arResult['CREATE_BUTTON_ANALYTICS']['sectionType'] ?? '',
+	'ta_sub' => $arResult['CREATE_BUTTON_ANALYTICS']['viewState'] ?? '',
 	'ta_el' => \Bitrix\Tasks\Helper\Analytics::ELEMENT['create_button'],
+	'p1' => $analytics->getIsDemoParameter(),
+	'p2' => $analytics->getUserTypeParameter(),
 ]);
 
 if ($isCollab)
 {
-	$analytics = \Bitrix\Tasks\Helper\Analytics::getInstance($currentUserId);
-
 	$createButtonUri->addParams([
-		'p2' => $analytics->getUserTypeParameter(),
 		'p4' => $analytics->getCollabParameter($groupId),
 	]);
 }
 
-$createButtonClass = 'ui-btn-split tasks-interface-filter-btn-add';
-$createButtonClass .= ($arResult['IS_SCRUM_PROJECT'] ? ' ui-btn-light-border ui-btn-themes' : ' ui-btn-success');
-?>
+$mainButton = $isV2Form ? [] : [
+	'link' => $createButtonUri->getUri(),
+	'tag' =>  Buttons\Tag::LINK,
+];
 
-<div class="<?= $createButtonClass ?>">
-	<a class="ui-btn-main" id="tasks-buttonAdd" href="<?= $createButtonUri->getUri() ?>">
-		<?= GetMessage('TASKS_BTN_CREATE_TASK') ?>
-	</a>
-	<span id="tasks-popupMenuAdd" class="ui-btn-extra"></span>
-</div>
+$splitButton = new SplitButton([
+	'text' => Loc::getMessage('TASKS_BTN_CREATE_TASK'),
+	'mainButton' => $mainButton,
+	'menuButton' => [
+		'icon' => Buttons\Icon::SETTING,
+	],
+]);
+$splitButton->addAttribute('id', 'tasks-buttonAdd');
+$splitButton->getMenuButton()->addAttribute('id', 'tasks-popupMenuAdd');
+Toolbar::addButton($splitButton, ButtonLocation::AFTER_TITLE);
+
+if (!$arResult['IS_SCRUM_PROJECT'])
+{
+	$rolesButton = (new Buttons\Button())
+		->setText($arResult['roles']['selectedRoleName'] ?? Loc::getMessage('TASKS_ALL_ROLES'))
+		->setCollapsedIcon(Buttons\Icon::TWO_PERSONS)
+		->setCounter($arResult['roles']['totalCounter'])
+		->setStyle(Buttons\AirButtonStyle::OUTLINE)
+		->setDropdown()
+		->addAttribute('id', 'tasks-buttonRoles')
+	;
+	Toolbar::addButton($rolesButton, ButtonLocation::AFTER_TITLE);
+}
+
+?>
 
 <script>
 	(function() {

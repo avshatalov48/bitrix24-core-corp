@@ -29,7 +29,7 @@ class Chat extends Base
 		}
 
 		$userPermissions = Container::getInstance()->getUserPermissions();
-		if (!$userPermissions->checkReadPermissions($entityTypeId, $entityId))
+		if (!$userPermissions->item()->canRead($entityTypeId, $entityId))
 		{
 			$this->addError(ErrorCode::getAccessDeniedError());
 

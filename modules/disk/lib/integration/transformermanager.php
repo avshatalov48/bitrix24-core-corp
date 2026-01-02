@@ -4,6 +4,7 @@ namespace Bitrix\Disk\Integration;
 
 use Bitrix\Disk\Driver;
 use Bitrix\Disk\File;
+use Bitrix\Disk\Internals\FileHelper;
 use Bitrix\Disk\Uf\BlogPostCommentConnector;
 use Bitrix\Disk\Uf\BlogPostConnector;
 use Bitrix\Main\Application;
@@ -106,6 +107,12 @@ class TransformerManager implements InterfaceCallback
 	{
 		$fileArray = \CFile::MakeFileArray($file, $type);
 		$fileArray['MODULE_ID'] = self::MODULE_ID;
+
+		if(!FileHelper::hasValidFileKeys($fileArray))
+		{
+			return false;
+		}
+
 		$fileId = \CFile::SaveFile($fileArray, self::PATH);
 		if($fileId)
 		{

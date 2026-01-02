@@ -8,11 +8,17 @@ if (!defined("B_PROLOG_INCLUDED") || B_PROLOG_INCLUDED !== true)
 use Bitrix\Bizproc\Activity\PropertiesDialog;
 use Bitrix\Bizproc\FieldType;
 use Bitrix\Bizproc\Result\ResultDto;
+
 use Bitrix\Crm\Activity\Provider\Tasks\Task;
+use Bitrix\Crm\Integration\Analytics\Dictionary;
+
 use Bitrix\Main\Loader;
 use Bitrix\Main\Localization\Loc;
 use Bitrix\Main\Text\Emoji;
+
 use Bitrix\Tasks;
+use Bitrix\Tasks\Flow\Provider\FlowProvider;
+use Bitrix\Tasks\Flow\Provider\Query\ExpandedFlowQuery;
 
 class CBPTask2Activity extends CBPActivity implements
 	IBPEventActivity,
@@ -96,6 +102,8 @@ class CBPTask2Activity extends CBPActivity implements
 
 	public function Execute()
 	{
+		$documentType = $this->getDocumentType();
+
 		$this->HoldToClose = CBPHelper::getBool($this->HoldToClose);
 		$this->AUTO_LINK_TO_CRM_ENTITY = CBPHelper::getBool($this->AUTO_LINK_TO_CRM_ENTITY);
 		$this->AsChildTask = CBPHelper::getBool($this->AsChildTask);
@@ -109,6 +117,18 @@ class CBPTask2Activity extends CBPActivity implements
 		if (!$this->createTask())
 		{
 			return CBPActivityExecutionStatus::Closed;
+		}
+
+		if (
+			Loader::includeModule('crm')
+			&& method_exists(CCrmBizProcHelper::class, 'sendOperationsAnalytics')
+		)
+		{
+			\CCrmBizProcHelper::sendOperationsAnalytics(
+				Dictionary::EVENT_ENTITY_CREATE,
+				$this,
+				$documentType[2] ?? '',
+			);
 		}
 
 		if (!$this->HoldToClose)
@@ -453,7 +473,7 @@ class CBPTask2Activity extends CBPActivity implements
 					{
 						$checkListItem = implode(', ', \CBPHelper::MakeArrayFlat($checkListItem));
 					}
-					$checkListItem = mb_substr(trim((string)$checkListItem), 0, 255);
+					$checkListItem = trim((string)$checkListItem);
 					if ($checkListItem === '')
 					{
 						continue;
@@ -490,7 +510,6 @@ class CBPTask2Activity extends CBPActivity implements
 
 		if (
 			$this->TaskId
-			&& (bool)\Bitrix\Main\Config\Option::get('bizproc', 'release_preview_2024')
 			&& method_exists($this, 'fixResult')
 		)
 		{
@@ -710,7 +729,15 @@ class CBPTask2Activity extends CBPActivity implements
 		$runtime = CBPRuntime::GetRuntime();
 		$runtime->StartRuntime();
 		$documentService = $runtime->GetService('DocumentService');
-		$document = $documentService->GetDocument($this->GetDocumentId());
+
+		if (defined('\CBPDocument::PARAM_USED_DOCUMENT_FIELDS'))
+		{
+			$document = $documentService->GetDocument($this->GetDocumentId(), select: ['STATUS_ID', 'STAGE_ID']);
+		}
+		else
+		{
+			$document = $documentService->GetDocument($this->GetDocumentId());
+		}
 
 		switch ($documentType)
 		{
@@ -1478,25 +1505,64 @@ class CBPTask2Activity extends CBPActivity implements
 
 		return $groups;
 	}
-	private static function fetchTaskFlows(): array
+
+	public static function fetchTaskFlows(): array
 	{
+		$flows = self::getFlows();
+		$flowOptions = [];
+
+		foreach ($flows as $flow)
+		{
+			$flowId = $flow->getId();
+			$flowOptions[$flowId] = "[{$flowId}]" . htmlspecialcharsbx($flow->getName());
+		}
+
+		return $flowOptions;
+	}
+
+	/**
+	 * @return Array<int, string> - [flowId => distributionType]
+	 */
+	public static function getFlowDistributionMap(): array
+	{
+		$flows = self::getFlows();
+		$flowDistributionMap = [];
+
+		foreach ($flows as $flow)
+		{
+			$flowDistributionMap[$flow->getId()] = $flow->getDistributionType()->value;
+		}
+
+		return $flowDistributionMap;
+	}
+
+	/**
+	 * @return Bitrix\Tasks\Flow\Flow[]
+	 */
+	private static function getFlows(): array
+	{
+		static $flows = null;
+
+		if ($flows)
+		{
+			return $flows;
+		}
+
 		$flows = [];
 
-		$provider = new \Bitrix\Tasks\Flow\Provider\FlowProvider();
-		$query = new \Bitrix\Tasks\Flow\Provider\Query\ExpandedFlowQuery();
+		$provider = new FlowProvider();
+		$query = new ExpandedFlowQuery();
 
 		$query
-			->setSelect(['ID', 'NAME'])
+			->setSelect(['ID', 'NAME', 'DISTRIBUTION_TYPE'])
 			->whereActive(true)
 			->setAccessCheck(false);
 
-		foreach ($provider->getList($query) as $flow)
-		{
-			$flowId = (string)$flow->getId();
-			$flows[$flowId] = "[{$flowId}]" . htmlspecialcharsbx($flow->getName());
-		}
+		$flowCollection = $provider->getList($query);
+		$flows = $flowCollection->getFlows();
 
 		return $flows;
+//		return $provider->getList($query)->getFlows();
 	}
 
 	private function checkCycling(array $documentId)

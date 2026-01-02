@@ -15,6 +15,7 @@ $APPLICATION->IncludeComponent(
 		'POPUP_COMPONENT_NAME' => 'bitrix:sign.b2e.preview',
 		'POPUP_COMPONENT_PARAMS' => [
 			'VAR_DOC_ID' => 'docId',
+			'VAR_DOCUMENT_ID' => 'documentId',
 		],
 		'PLAIN_VIEW' => false,
 		'USE_BACKGROUND_CONTENT' => false,

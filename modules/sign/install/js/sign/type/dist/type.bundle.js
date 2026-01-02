@@ -38,6 +38,16 @@ this.BX = this.BX || {};
 	  twicePerDay: 'twicePerDay',
 	  threeTimesPerDay: 'threeTimesPerDay'
 	});
+	var TemplateEntity = Object.freeze({
+	  template: 'template',
+	  folder: 'folder',
+	  multiple: 'multiple'
+	});
+	var EntityType = Object.freeze({
+	  USER: 'user',
+	  STRUCTURE_NODE_ROLE: 'structure-node-role',
+	  COMPANY: 'company'
+	});
 
 	exports.DocumentInitiated = DocumentInitiated;
 	exports.DocumentMode = DocumentMode;
@@ -45,6 +55,8 @@ this.BX = this.BX || {};
 	exports.MemberStatus = MemberStatus;
 	exports.ProviderCode = ProviderCode;
 	exports.Reminder = Reminder;
+	exports.TemplateEntity = TemplateEntity;
+	exports.EntityType = EntityType;
 
 }((this.BX.Sign = this.BX.Sign || {})));
 //# sourceMappingURL=type.bundle.js.map

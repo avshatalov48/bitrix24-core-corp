@@ -1,24 +1,36 @@
-import { Popup, PopupManager } from 'main.popup';
-import type { PopupOptions } from 'main.popup';
-import { StickyPopup } from 'booking.component.popup';
+import { Model } from 'booking.const';
+import { ActionsPopup, FullForm, Info } from 'booking.component.actions-popup';
+import type { PopupMakerItem, PopupOptions } from 'booking.component.actions-popup';
 import type { BookingModel } from 'booking.model.bookings';
-import { PopupMakerItem, PopupMaker } from 'booking.component.popup-maker';
 
-import { Client } from './client/client';
-import { Deal } from './deal/deal';
-import { Document } from './document/document';
-import { Message } from './message/message';
-import { Confirmation } from './confirmation/confirmation';
-import { Visit } from './visit/visit';
-import { FullForm } from './full-form/full-form';
+import { BookingClient } from './client/client';
+import { BookingDeal } from './deal/deal';
+import { BookingDocument } from './document/document';
+import { BookingExtraResourcesInfo } from './extra-resources-info/booking-extra-resources-info';
+import { BookingMessage } from './message/message';
+import { BookingConfirmation } from './confirmation/confirmation';
+import { BookingVisit } from './visit/visit';
 import { Overbooking } from './overbooking/overbooking';
 import { Waitlist } from './waitlist/waitlist';
-import { RemoveBtn } from './remove-btn/remove-btn';
-import './actions-popup.css';
+import { BookingRemoveBtn } from './remove-btn/remove-btn';
+import { ActionsPopupActionEnum } from './model';
+import type { ActionsPopupOptions } from './types';
 
-export const ActionsPopup = {
+export type { ActionsPopupOptions };
+
+type ActionsPopupData = {
+	soonTmp: boolean,
+};
+
+// @vue/component
+export const BookingActionsPopup = {
 	name: 'BookingActionsPopup',
-	emits: ['close'],
+	components: {
+		ActionsPopup,
+		Overbooking,
+		Waitlist,
+		BookingRemoveBtn,
+	},
 	props: {
 		bindElement: {
 			type: HTMLElement,
@@ -28,130 +40,143 @@ export const ActionsPopup = {
 			type: [Number, String],
 			required: true,
 		},
+		resourceId: {
+			type: Number,
+			required: true,
+		},
+		/**
+		 * @type ActionsPopupOptions
+		 */
+		options: {
+			type: Object,
+			default: null,
+		},
 	},
-	data(): Object
+	emits: ['close'],
+	data(): ActionsPopupData
 	{
 		return {
 			soonTmp: false,
 		};
 	},
-	beforeCreate(): void
-	{
-		PopupManager.getPopups()
-			.filter((popup: Popup) => /booking-booking-actions-popup/.test(popup.getId()))
-			.forEach((popup: Popup) => popup.destroy())
-		;
-	},
 	computed: {
-		popupId(): string
-		{
-			return `booking-booking-actions-popup-${this.bookingId}`;
-		},
 		config(): PopupOptions
 		{
 			return {
-				className: 'booking-booking-actions-popup',
-				bindElement: this.bindElement,
-				width: 325,
-				offsetLeft: this.bindElement.offsetWidth,
+				offsetLeft: this.getOffsetLeft(),
 				offsetTop: -200,
-				animation: 'fading-slide',
 			};
 		},
 		contentStructure(): Array<PopupMakerItem | Array<PopupMakerItem>>
 		{
 			return [
 				{
-					id: 'client',
+					id: ActionsPopupActionEnum.client,
 					props: {
 						bookingId: this.bookingId,
 					},
-					component: Client,
+					component: BookingClient,
+				},
+				{
+					id: ActionsPopupActionEnum.extraResourcesInfo,
+					props: {
+						bookingId: this.bookingId,
+						resourceId: this.resourceId,
+					},
+					component: BookingExtraResourcesInfo,
 				},
 				[
 					{
-						id: 'deal',
+						id: ActionsPopupActionEnum.deal,
 						props: {
 							bookingId: this.bookingId,
 						},
-						component: Deal,
+						component: BookingDeal,
 					},
 					{
-						id: 'document',
+						id: ActionsPopupActionEnum.document,
 						props: {
 							bookingId: this.bookingId,
 						},
-						component: Document,
+						component: BookingDocument,
 					},
 				],
 				{
-					id: 'message',
+					id: ActionsPopupActionEnum.message,
 					props: {
 						bookingId: this.bookingId,
 					},
-					component: Message,
+					component: BookingMessage,
 				},
 				{
-					id: 'confirmation',
+					id: ActionsPopupActionEnum.confirmation,
 					props: {
 						bookingId: this.bookingId,
 					},
-					component: Confirmation,
+					component: BookingConfirmation,
 				},
 				{
-					id: 'visit',
+					id: ActionsPopupActionEnum.visit,
 					props: {
 						bookingId: this.bookingId,
 					},
-					component: Visit,
+					component: BookingVisit,
 				},
-				{
-					id: 'fullForm',
-					props: {
-						bookingId: this.bookingId,
+				[
+					{
+						id: ActionsPopupActionEnum.fullForm,
+						props: {
+							bookingId: this.bookingId,
+						},
+						component: FullForm,
 					},
-					component: FullForm,
-				},
+					{
+						id: ActionsPopupActionEnum.info,
+						class: '--shrink',
+						props: {
+							bookingId: this.bookingId,
+						},
+						component: Info,
+					},
+				],
 			];
 		},
 		booking(): BookingModel
 		{
-			return this.$store.getters['bookings/getById'](this.bookingId);
+			return this.$store.getters[`${Model.Bookings}/getById`](this.bookingId);
 		},
 	},
-	components: {
-		StickyPopup,
-		PopupMaker,
-		Client,
-		Deal,
-		Document,
-		Message,
-		Confirmation,
-		Visit,
-		FullForm,
-		Overbooking,
-		Waitlist,
-		RemoveBtn,
+	methods: {
+		getOffsetLeft(): number
+		{
+			const { left } = this.bindElement.getBoundingClientRect();
+			if (window.innerWidth - left < 325)
+			{
+				return -325;
+			}
+
+			return this.bindElement.offsetWidth;
+		},
 	},
 	template: `
-		<StickyPopup
-			v-slot="{freeze, unfreeze}"
-			:id="popupId"
-			:config="config"
+		<ActionsPopup
+			:popupId="bookingId"
+			:bindElement="bindElement"
+			:contentStructure="contentStructure"
+			:popupOptions="config"
 			@close="$emit('close')"
 		>
-			<PopupMaker
-				:contentStructure="contentStructure"
-				@freeze="freeze"
-				@unfreeze="unfreeze"
-			/>
-			<div class="booking-booking-actions-popup-footer">
-				<template v-if="soonTmp">
-					<Overbooking :bookingId />
-					<Waitlist :bookingId />
-				</template>
-				<RemoveBtn :bookingId @close="$emit('close')" />
-			</div>
-		</StickyPopup>
+			<template #footer>
+				<Overbooking
+					v-if="!options?.overbooking?.hidden"
+					:bookingId
+					:resourceId
+					:disabled="Boolean(options?.overbooking?.disabled)"
+					@close="$emit('close')"
+				/>
+				<Waitlist v-if="!options?.waitList?.hidden" :bookingId/>
+				<BookingRemoveBtn :bookingId @close="$emit('close')"/>
+			</template>
+		</ActionsPopup>
 	`,
 };

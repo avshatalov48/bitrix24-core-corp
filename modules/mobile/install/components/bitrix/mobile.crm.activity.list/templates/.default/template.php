@@ -199,6 +199,7 @@ endif;
 					filterPresets: filterPresets,
 					enablePresetButtons: <?=$rubricPresetQty > 0 ? 'true' : 'false'?>,
 					permissions: <?=CUtil::PhpToJSObject($arResult['PERMISSIONS'])?>,
+					useOutdatedActivities: <?=\Bitrix\Crm\Settings\ActivitySettings::areOutdatedCalendarActivitiesEnabled() ? 'true' : 'false'?>,
 					isFiltered: <?=$arResult['IS_FILTERED'] ? 'true' : 'false'?>
 				}
 			);

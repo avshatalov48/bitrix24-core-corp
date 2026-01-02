@@ -4,9 +4,7 @@ namespace Bitrix\Crm\Field;
 
 use Bitrix\Crm\Field;
 use Bitrix\Crm\Item;
-use Bitrix\Crm\ItemIdentifier;
 use Bitrix\Crm\Service\Context;
-use Bitrix\Crm\Service\Timeline\Monitor;
 use Bitrix\Main\Result;
 use Bitrix\Main\Type\DateTime;
 
@@ -21,17 +19,27 @@ final class LastActivityTime extends Field
 			return new Result();
 		}
 
-		$identifier = ItemIdentifier::createByItem($item);
-		$monitor = Monitor::getInstance();
-
-		if ($monitor->isTimelineChanged($identifier))
+		/** @var DateTime|null $previousTime */
+		$previousTime = $item->remindActual($this->getName());
+		if (!$previousTime)
 		{
-			[$lastActivityTime, $lastActivityBy] = $monitor->calculateLastActivityInfo($identifier);
+			return \Bitrix\Crm\Result::fail('Previous last activity time is not set');
+		}
 
-			$lastActivityTime ??= $item->getCreatedTime();
-			$lastActivityBy ??= $item->getCreatedBy();
+		/** @var DateTime|null $currentTime */
+		$currentTime = $item->get($this->getName());
+		if (!$currentTime)
+		{
+			$this->resetLastActivityValues($item);
 
-			$this->setLastActivityValues($item, $lastActivityTime, $lastActivityBy);
+			return new Result();
+		}
+
+		if ($currentTime->getTimestamp() <= $previousTime->getTimestamp())
+		{
+			$this->resetLastActivityValues($item);
+
+			return new Result();
 		}
 
 		return new Result();
@@ -40,7 +48,7 @@ final class LastActivityTime extends Field
 	private function setLastActivityValues(
 		Item $item,
 		DateTime $lastActivityTime,
-		int $lastActivityBy
+		int $lastActivityBy,
 	): void
 	{
 		$item->set($this->getName(), $lastActivityTime);
@@ -48,6 +56,16 @@ final class LastActivityTime extends Field
 		if ($item->hasField(Item::FIELD_NAME_LAST_ACTIVITY_BY))
 		{
 			$item->set(Item::FIELD_NAME_LAST_ACTIVITY_BY, $lastActivityBy);
+		}
+	}
+
+	private function resetLastActivityValues(Item $item): void
+	{
+		$item->reset($this->getName());
+
+		if ($item->hasField(Item::FIELD_NAME_LAST_ACTIVITY_BY))
+		{
+			$item->reset(Item::FIELD_NAME_LAST_ACTIVITY_BY);
 		}
 	}
 }

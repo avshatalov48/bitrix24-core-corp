@@ -1,0 +1,48 @@
+.intranet-user-mini-profile__error-state {
+	display: flex;
+	width: 300px;
+	flex-flow: column;
+	align-items: center;
+	justify-content: center;
+}
+
+.intranet-user-mini-profile__error-state-content {
+	padding-top: 24px;
+	padding-bottom: 24px;
+	width: 100%;
+	display: flex;
+	flex-flow: column;
+	align-items: center;
+	justify-content: center;
+}
+
+.intranet-user-mini-profile__error-state__icon {
+	width: 109px;
+	height: 109px;
+}
+
+.intranet-user-mini-profile__error-state.--default .intranet-user-mini-profile__error-state__icon {
+	background: url('./images/error.svg');
+}
+
+.intranet-user-mini-profile__error-state.--access-denied .intranet-user-mini-profile__error-state__icon {
+	background: url('./images/access-denied.svg');
+}
+
+.intranet-user-mini-profile__error-state__title {
+	margin-top: 16px;
+	font-weight: var(--ui-font-weight-medium);
+	font-size: var(--ui-font-size-lg);
+	color: var(--ui-color-base-1);
+	text-align: center;
+	max-width: 70%;
+}
+
+.intranet-user-mini-profile__error-state__description {
+	margin-top: 6px;
+	font-weight: var(--ui-font-weight-normal);
+	font-size: var(--ui-font-size-xs);
+	color: var(--ui-color-base-2);
+	text-align: center;
+	max-width: 70%;
+}

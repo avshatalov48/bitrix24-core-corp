@@ -5,6 +5,7 @@ namespace Bitrix\HumanResources\Compatibility\Event;
 use Bitrix\HumanResources\Compatibility\Utils\DepartmentBackwardAccessCode;
 use Bitrix\HumanResources\Config\Storage;
 use Bitrix\HumanResources\Enum\EventName;
+use Bitrix\HumanResources\Item\Collection\NodeMemberCollection;
 use Bitrix\HumanResources\Item\Node;
 use Bitrix\HumanResources\Item\NodeMember;
 use Bitrix\HumanResources\Item\Structure;
@@ -65,7 +66,7 @@ class NodeEventHandler
 			return;
 		}
 
-		Container::getEventSenderService()->removeEventHandlers('humanresources', EventName::NODE_DELETED->name);
+		Container::getEventSenderService()->removeEventHandlers('humanresources', EventName::OnNodeDeleted->name);
 
 		$sectionId = (int) $sectionId;
 		if ($sectionId < 1)
@@ -288,11 +289,12 @@ class NodeEventHandler
 	{
 		foreach (self::NECESSARY_NODE_FIELDS as $key)
 		{
-			if (!$fields[$key])
+			if (!array_key_exists($key, $fields) || !$fields[$key])
 			{
 				return false;
 			}
 		}
+
 		return true;
 	}
 
@@ -311,8 +313,8 @@ class NodeEventHandler
 	{
 		Container::getSemaphoreService()->lock('iblock-OnAfterIBlockSectionAdd');
 		Container::getSemaphoreService()->lock('iblock-OnBeforeIBlockSectionAdd');
-		Container::getEventSenderService()->removeEventHandlers('humanresources', EventName::NODE_ADDED->name);
-		Container::getEventSenderService()->removeEventHandlers('humanresources', EventName::NODE_UPDATED->name);
+		Container::getEventSenderService()->removeEventHandlers('humanresources', EventName::OnNodeAdded->name);
+		Container::getEventSenderService()->removeEventHandlers('humanresources', EventName::OnNodeUpdated->name);
 	}
 
 	private static function restoreEventHandlersForNodeEvents(): void
@@ -347,11 +349,12 @@ class NodeEventHandler
 
 		Container::getEventSenderService()->removeEventHandlers(
 			'humanresources',
-			EventName::MEMBER_UPDATED->name
+			EventName::OnMemberUpdated->name
 		);
 
 		try
 		{
+			$headsToUpdate = new NodeMemberCollection();
 			foreach ($heads as $head)
 			{
 				if ($head->entityId === (int)$currentHead)
@@ -361,8 +364,9 @@ class NodeEventHandler
 				}
 
 				$head->role = $employeeRole;
-				Container::getNodeMemberRepository()->update($head);
+				$headsToUpdate->add($head);
 			}
+			Container::getNodeMemberRepository()->updateByCollection($headsToUpdate);
 
 			if (!$alreadyExisted && $currentHead)
 			{

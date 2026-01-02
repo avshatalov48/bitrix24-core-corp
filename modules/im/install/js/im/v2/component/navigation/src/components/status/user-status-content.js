@@ -1,43 +1,42 @@
-import {UserStatus, UserStatusSize} from 'im.v2.component.elements';
-import {UserStatus as UserStatusType} from 'im.v2.const';
-import {Utils} from 'im.v2.lib.utils';
+import { UserStatus as UserStatusType } from 'im.v2.const';
+import { Utils } from 'im.v2.lib.utils';
+import { SettingsService } from 'im.v2.provider.service.settings';
 
-import {StatusService} from '../../classes/status-service';
+import { UserStatus, UserStatusSize } from './user-status';
 
 // @vue/component
 export const UserStatusContent = {
 	name: 'UserStatusContent',
-	components: {UserStatus},
+	components: { UserStatus },
 	emits: ['close'],
 	computed:
 	{
 		UserStatusSize: () => UserStatusSize,
-		UserStatusType: () => UserStatusType,
 		statusList(): string[]
 		{
 			return [UserStatusType.online, UserStatusType.dnd];
-		}
+		},
 	},
 	methods:
 	{
 		onStatusClick(statusName: string)
 		{
-			this.getStatusService().changeStatus(statusName);
+			this.getSettingsService().changeStatus(statusName);
 			this.$emit('close');
 		},
-		getStatusService(): StatusService
+		getSettingsService(): SettingsService
 		{
-			if (!this.statusService)
+			if (!this.settingsService)
 			{
-				this.statusService = new StatusService();
+				this.settingsService = new SettingsService();
 			}
 
-			return this.statusService;
+			return this.settingsService;
 		},
 		getStatusText(status: string): string
 		{
 			return Utils.user.getStatusText(status);
-		}
+		},
 	},
 	template:
 	`
@@ -52,5 +51,5 @@ export const UserStatusContent = {
 				<div class="bx-im-user-status-popup__text">{{ getStatusText(status) }}</div>
 			</div>
 		</div>
-	`
+	`,
 };

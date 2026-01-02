@@ -1,0 +1,58 @@
+.intranet-user-mini-profile__user-detailed-info__list-value {
+	display: flex;
+	align-items: center;
+	align-content: center;
+	align-self: stretch;
+	flex-wrap: nowrap;
+	overflow: hidden;
+	width: 100%;
+}
+
+.intranet-user-mini-profile__user-detailed-info__list-value__element-container {
+	display: flex;
+	align-items: center;
+	flex-wrap: nowrap;
+	overflow: hidden;
+	width: 100%;
+}
+
+.intranet-user-mini-profile__user-detailed-info__list-value__element-container :has(.intranet-user-mini-profile__user-detailed-info__list-value__before-element) .intranet-user-mini-profile__user-detailed-info__list-value__element {
+	max-width: 50%;
+}
+
+.intranet-user-mini-profile__user-detailed-info__list-value__before-element {
+	max-width: 50%;
+}
+
+.intranet-user-mini-profile__user-detailed-info__list-value__element {
+	display: flex;
+	gap: 4px;
+	overflow: hidden;
+}
+
+.intranet-user-mini-profile__user-detailed-info__list-value__element-text {
+	color: var(--ui-color-accent-main-link);
+	cursor: pointer;
+	text-overflow: ellipsis;
+	overflow: hidden;
+	text-wrap: nowrap;
+}
+
+.intranet-user-mini-profile__user-detailed-info__list-value__counter {
+	cursor: pointer;
+}
+
+.intranet-user-mini-profile__user-detailed-info__list-value__entity-menu {
+	padding: 10px 0;
+	max-height: 270px;
+	overflow: auto;
+	scrollbar-width: thin;
+}
+
+.intranet-user-mini-profile__user-detailed-info__list-value__counter {
+	--ui-counter-current-bg-color: var(--ui-color-base-7);
+}
+
+.intranet-user-mini-profile__user-detailed-info__list-value__counter .ui-counter-inner {
+	color: var(--ui-color-base-3);
+}

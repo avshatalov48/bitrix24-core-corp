@@ -22,7 +22,7 @@
 	const { SearchLayout } = require('layout/ui/search-bar');
 	const { StatusBlock } = require('ui-system/blocks/status-block');
 	const { Box } = require('ui-system/layout/box');
-	const { ProfileView } = require('user/profile');
+	const { UserProfile } = require('user-profile');
 
 	const { UserListSorting, UserListMoreMenu, UserListFilter, DepartmentButton } = require('intranet/user-list');
 	const { ListItemType, ListItemsFactory } = require('intranet/simple-list/items');
@@ -118,6 +118,15 @@
 				this.onVisibleEmployeesChange,
 			);
 			this.prefetchAssets();
+
+			if (this.openInviteOnMount && this.canInvite)
+			{
+				openIntranetInviteWidget({
+					analytics: new AnalyticsEvent().setSection('userList'),
+					parentLayout: layout,
+					onInviteSentHandler: this.onInviteSuccess,
+				});
+			}
 		}
 
 		componentWillUnmount()
@@ -143,6 +152,11 @@
 		get canInvite()
 		{
 			return BX.componentParameters.get('canInvite', false);
+		}
+
+		get openInviteOnMount()
+		{
+			return BX.componentParameters.get('openInviteOnMount', false);
 		}
 
 		setSorting(sorting)
@@ -468,10 +482,15 @@
 				dispatch(batchActions(actions));
 			}
 
-			this.setState({itemsCount: items.length});
+			this.setState({ itemsCount: items.length });
 		};
 
 		openUserDetail = (userId) => {
+			if (!userId)
+			{
+				return;
+			}
+
 			const user = selectWholeUserById(store.getState(), userId);
 
 			if (!user)
@@ -480,8 +499,9 @@
 			}
 
 			const { id, avatarSize100, fullName, link, workPosition } = user;
-			ProfileView.open(
-				{
+			void UserProfile.open({
+				ownerId: userId,
+				widgetParams: {
 					userId: id,
 					imageUrl: encodeURI(avatarSize100),
 					title: Loc.getMessage('PROFILE_INFO'),
@@ -489,7 +509,7 @@
 					name: fullName,
 					url: link,
 				},
-			);
+			});
 		};
 
 		showSearch = () => {

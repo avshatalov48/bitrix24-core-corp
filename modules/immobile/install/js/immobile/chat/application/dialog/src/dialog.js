@@ -872,10 +872,7 @@ export class MobileDialogApplication
 
 	setIosInset()
 	{
-		if (
-			!Utils.platform.isIos()
-			|| Application.getApiVersion() <= 39
-		)
+		if (!Utils.platform.isIos())
 		{
 			return false;
 		}
@@ -1112,11 +1109,9 @@ export class MobileDialogApplication
 				return false;
 			}
 
-			const isAvailableChatCall = Application.getApiVersion() >= 36;
 			const maxParticipants = this.controller.application.getData().call.maxParticipants;
 			if (
 				dialogData.userCounter > maxParticipants
-				|| !isAvailableChatCall
 				|| dialogData.entityType === 'VIDEOCONF' && dialogData.entityData1 === 'BROADCAST'
 			)
 			{
@@ -2452,18 +2447,18 @@ export class MobileDialogApplication
 					.setIcon(BackdropMenuIcon.user)
 					.skip((message) => {
 						if (message.authorId <= 0 || !messageUser)
-						
-						{ return true;
+						{
+							return true;
 						}
 
 						if (!Utils.dialog.isChatId(this.controller.application.getDialogId()))
-						
-						{ return true;
+						{
+							return true;
 						}
 
 						if (message.authorId === this.controller.application.getUserId())
-						
-						{ return true;
+						{
+							return true;
 						}
 
 						if (

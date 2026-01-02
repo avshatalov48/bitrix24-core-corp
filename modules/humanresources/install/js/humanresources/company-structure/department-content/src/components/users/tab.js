@@ -1,33 +1,49 @@
-import { DepartmentAPI } from '../../api';
-import { UserList } from './list/list';
-import { UserListActionButton } from './list/list-action-button';
-import { EmptyStateContainer } from './empty-state-container';
-import { useChartStore } from 'humanresources.company-structure.chart-store';
+import { EntityTypes } from 'humanresources.company-structure.utils';
+import { Dom, Event, Text } from 'main.core';
+import { UI } from 'ui.notification';
+import { EventEmitter } from 'main.core.events';
 import { mapState, mapWritableState } from 'ui.vue3.pinia';
-import { memberRoles } from 'humanresources.company-structure.api';
+import { useChartStore } from 'humanresources.company-structure.chart-store';
+import { getMemberRoles, MemberRolesType, AnalyticsSourceType } from 'humanresources.company-structure.api';
+import { UserManagementDialogAPI } from 'humanresources.company-structure.user-management-dialog';
 import { PermissionActions, PermissionChecker } from 'humanresources.company-structure.permission-checker';
-import { UserManagementDialog } from 'humanresources.company-structure.user-management-dialog';
-import { emptyStateTypes } from './empty-state-types';
+import { UsersTabActionMenu, events } from 'humanresources.company-structure.org-chart';
+import { MoveEmployeeConfirmationPopup } from 'humanresources.company-structure.structure-components';
+import { HeadListDataTestIds, EmployeeListDataTestIds } from './consts';
+import { EmptyTabAddButton } from './empty-tab-add-button';
+import { UserListItem } from './item/item';
+import { EmptyState } from '../base-components/empty-state/empty-state';
+import { TabList } from '../base-components/list/list';
+import { SearchInput } from '../base-components/search/search-input';
+import { DepartmentAPI } from '../../api';
 import { DepartmentContentActions } from '../../actions';
+
+import type { TabListDataTestIds } from '../base-components/list/types';
 
 import 'ui.buttons';
 import './styles/tab.css';
-
-type addToDepartmentOptions = {
-	type: ?string,
-};
 
 type DepartmentUsersStatus = {
 	departmentId: number;
 	loaded: boolean;
 };
 
+const AUTOSCROLL_AREA_SIZE = 70;
+
+// @vue/component
 export const UsersTab = {
 	name: 'usersTab',
 
-	emits: ['editDepartmentUsers', 'showDetailLoader', 'hideDetailLoader'],
+	components: {
+		SearchInput,
+		EmptyState,
+		TabList,
+		EmptyTabAddButton,
+		UserListItem,
+		MoveEmployeeConfirmationPopup,
+	},
 
-	components: { UserList, UserListActionButton, EmptyStateContainer },
+	emits: ['showDetailLoader', 'hideDetailLoader'],
 
 	data(): Object
 	{
@@ -35,21 +51,20 @@ export const UsersTab = {
 			searchQuery: '',
 			selectedUserId: null,
 			needToScroll: false,
-			hasFocus: false,
+			dragState: this.getInitialDragState(),
+			showDndConfirmationPopup: false,
+			dndPreviousState: null,
+			dndPopupDescription: '',
+			boundHandleDragMove: null,
+			boundHandleDragEnd: null,
 		};
 	},
 
-	created(): void
-	{
-		this.loadEmployeesAction();
-	},
-
-	mounted(): void
-	{
-		this.tabContainer = this.$refs['tab-container'];
-	},
-
 	computed: {
+		memberRoles(): MemberRolesType
+		{
+			return getMemberRoles(this.entityType);
+		},
 		heads(): Array
 		{
 			return this.departments.get(this.focusedNode).heads ?? [];
@@ -57,6 +72,10 @@ export const UsersTab = {
 		headCount(): number
 		{
 			return this.heads.length ?? 0;
+		},
+		departmentId(): number
+		{
+			return this.focusedNode;
 		},
 		formattedHeads(): Array
 		{
@@ -66,8 +85,8 @@ export const UsersTab = {
 				badgeText: this.getBadgeText(head.role),
 			})).sort((a, b) => {
 				const roleOrder = {
-					[memberRoles.head]: 1,
-					[memberRoles.deputyHead]: 2,
+					[this.memberRoles.head]: 1,
+					[this.memberRoles.deputyHead]: 2,
 				};
 
 				const roleA = roleOrder[a.role] || 3;
@@ -80,7 +99,7 @@ export const UsersTab = {
 		{
 			return this.formattedHeads.filter(
 				(head) => head.name.toLowerCase().includes(this.searchQuery.toLowerCase())
-					|| head.workPosition.toLowerCase().includes(this.searchQuery.toLowerCase()),
+					|| head.workPosition?.toLowerCase().includes(this.searchQuery.toLowerCase()),
 			);
 		},
 		employeeCount(): number
@@ -113,37 +132,13 @@ export const UsersTab = {
 		{
 			return this.departments.get(this.focusedNode)?.employees ?? [];
 		},
-		showEmptyState(): boolean
-		{
-			if (!this.memberCount)
-			{
-				return true;
-			}
-
-			return this.filteredHeads.length === 0 && this.filteredEmployees.length === 0;
-		},
-		emptyStateType(): ?string
-		{
-			if (!this.memberCount && this.canAddUsers)
-			{
-				return emptyStateTypes.NO_MEMBERS_WITH_ADD_PERMISSION;
-			}
-
-			if (!this.memberCount)
-			{
-				return emptyStateTypes.NO_MEMBERS_WITHOUT_ADD_PERMISSION;
-			}
-
-			if (this.filteredHeads.length === 0 && this.filteredEmployees.length === 0)
-			{
-				return emptyStateTypes.NO_SEARCHED_USERS_RESULTS;
-			}
-
-			return null;
-		},
 		showSearchBar(): boolean
 		{
 			return this.memberCount > 0;
+		},
+		showSearchEmptyState(): boolean
+		{
+			return this.filteredHeads.length === 0 && this.filteredEmployees.length === 0;
 		},
 		canAddUsers(): boolean
 		{
@@ -154,26 +149,38 @@ export const UsersTab = {
 			}
 
 			const nodeId = this.focusedNode;
+			const permission = this.isTeamEntity
+				? PermissionActions.teamAddMember
+				: PermissionActions.employeeAddToDepartment
+			;
 
-			return permissionChecker.hasPermission(PermissionActions.employeeAddToDepartment, nodeId);
+			return permissionChecker.hasPermission(permission, nodeId);
 		},
 		headListEmptyStateTitle(): string
 		{
 			if (this.canAddUsers)
 			{
-				return this.loc('HUMANRESOURCES_COMPANY_STRUCTURE_DEPARTMENT_CONTENT_TAB_USERS_HEAD_EMPTY_LIST_ITEM_TITLE');
+				return this.isTeamEntity
+					? this.loc('HUMANRESOURCES_COMPANY_STRUCTURE_DEPARTMENT_CONTENT_TAB_USERS_TEAM_HEAD_EMPTY_LIST_ITEM_TITLE')
+					: this.loc('HUMANRESOURCES_COMPANY_STRUCTURE_DEPARTMENT_CONTENT_TAB_USERS_HEAD_EMPTY_LIST_ITEM_TITLE');
 			}
 
-			return this.loc('HUMANRESOURCES_COMPANY_STRUCTURE_DEPARTMENT_CONTENT_TAB_USERS_HEAD_EMPTY_LIST_ITEM_TITLE_WITHOUT_ADD_PERMISSION');
+			return this.isTeamEntity
+				? this.loc('HUMANRESOURCES_COMPANY_STRUCTURE_DEPARTMENT_CONTENT_TAB_USERS_TEAM_HEAD_EMPTY_LIST_ITEM_TITLE_WITHOUT_ADD_PERMISSION')
+				: this.loc('HUMANRESOURCES_COMPANY_STRUCTURE_DEPARTMENT_CONTENT_TAB_USERS_HEAD_EMPTY_LIST_ITEM_TITLE_WITHOUT_ADD_PERMISSION');
 		},
 		employeesListEmptyStateTitle(): string
 		{
 			if (this.canAddUsers)
 			{
-				return this.loc('HUMANRESOURCES_COMPANY_STRUCTURE_DEPARTMENT_CONTENT_TAB_USERS_EMPLOYEE_EMPTY_LIST_ITEM_TITLE');
+				return this.isTeamEntity
+					? this.loc('HUMANRESOURCES_COMPANY_STRUCTURE_DEPARTMENT_CONTENT_TAB_USERS_TEAM_EMPLOYEE_EMPTY_LIST_ITEM_TITLE')
+					: this.loc('HUMANRESOURCES_COMPANY_STRUCTURE_DEPARTMENT_CONTENT_TAB_USERS_EMPLOYEE_EMPTY_LIST_ITEM_TITLE');
 			}
 
-			return this.loc('HUMANRESOURCES_COMPANY_STRUCTURE_DEPARTMENT_CONTENT_TAB_USERS_EMPLOYEE_EMPTY_LIST_ITEM_TITLE_WITHOUT_ADD_PERMISSION');
+			return this.isTeamEntity
+				? this.loc('HUMANRESOURCES_COMPANY_STRUCTURE_DEPARTMENT_CONTENT_TAB_USERS_TEAM_EMPLOYEE_EMPTY_LIST_ITEM_TITLE_WITHOUT_ADD_PERMISSION')
+				: this.loc('HUMANRESOURCES_COMPANY_STRUCTURE_DEPARTMENT_CONTENT_TAB_USERS_EMPLOYEE_EMPTY_LIST_ITEM_TITLE_WITHOUT_ADD_PERMISSION');
 		},
 		shouldUpdateList(): boolean
 		{
@@ -189,82 +196,223 @@ export const UsersTab = {
 
 			return { departmentId: this.focusedNode, loaded: false };
 		},
+		headMenu(): UsersTabActionMenu
+		{
+			return new UsersTabActionMenu(
+				this.focusedNode,
+				AnalyticsSourceType.DETAIL,
+				'head',
+				this.entityType,
+			);
+		},
+		employeeMenu(): UsersTabActionMenu
+		{
+			return new UsersTabActionMenu(
+				this.focusedNode,
+				AnalyticsSourceType.DETAIL,
+				'employee',
+				this.entityType,
+			);
+		},
+		isEmployeeListOptionsSet(): boolean
+		{
+			const department = this.departments.get(this.focusedNode) || {};
+
+			return department.employeeListOptions && Object.keys(department.employeeListOptions).length > 0;
+		},
+		employeeTitle(): string
+		{
+			return this.isTeamEntity
+				? this.loc('HUMANRESOURCES_COMPANY_STRUCTURE_DEPARTMENT_CONTENT_TAB_USERS_TEAM_EMPLOYEE_LIST_TITLE')
+				: this.loc('HUMANRESOURCES_COMPANY_STRUCTURE_DEPARTMENT_CONTENT_TAB_USERS_EMPLOYEE_LIST_TITLE');
+		},
+		entityType(): string
+		{
+			return this.departments.get(this.focusedNode)?.entityType;
+		},
+		isTeamEntity(): boolean
+		{
+			return this.entityType === EntityTypes.team;
+		},
+		emptyStateTitle(): string
+		{
+			return this.isTeamEntity
+				? this.loc('HUMANRESOURCES_COMPANY_STRUCTURE_DEPARTMENT_CONTENT_EMPTY_EMPLOYEES_TEAM_ADD_USER_TITLE')
+				: this.loc('HUMANRESOURCES_COMPANY_STRUCTURE_DEPARTMENT_CONTENT_EMPTY_EMPLOYEES_ADD_USER_TITLE');
+		},
+		emptyStateDescription(): string
+		{
+			if (this.canAddUsers)
+			{
+				return this.isTeamEntity
+					? this.loc('HUMANRESOURCES_COMPANY_STRUCTURE_DEPARTMENT_CONTENT_EMPTY_EMPLOYEES_TEAM_ADD_USER_SUBTITLE')
+					: this.loc('HUMANRESOURCES_COMPANY_STRUCTURE_DEPARTMENT_CONTENT_EMPTY_EMPLOYEES_ADD_USER_SUBTITLE');
+			}
+
+			// text is in progress
+			return this.isTeamEntity
+				? ''
+				: this.loc('HUMANRESOURCES_COMPANY_STRUCTURE_DEPARTMENT_CONTENT_EMPTY_EMPLOYEES_ADD_USER_SUBTITLE');
+		},
+		isHeadListPotentialTarget(): boolean
+		{
+			return this.dragState.isDragging
+				&& this.dragState.initialList === 'employees'
+			;
+		},
+		isEmployeeListPotentialTarget(): boolean
+		{
+			return this.dragState.isDragging
+				&& (this.dragState.initialList === 'head' || this.dragState.initialList === 'deputyHead')
+			;
+		},
+		dndConfirmationPopupTitle(): ?string
+		{
+			const toHead = this.dragState.targetList === 'head';
+
+			return toHead
+				? undefined
+				: this.loc('HUMANRESOURCES_COMPANY_STRUCTURE_DEPARTMENT_CONTENT_TAB_DND_POPUP_CONFIRM_TITLE');
+		},
+		dndConfirmationPopupBtn(): string
+		{
+			const toHead = this.dragState.targetList === 'head';
+
+			return toHead
+				? this.loc('HUMANRESOURCES_COMPANY_STRUCTURE_DEPARTMENT_CONTENT_TAB_DND_POPUP_CONFIRM_BTN_TO_HEAD')
+				: this.loc('HUMANRESOURCES_COMPANY_STRUCTURE_DEPARTMENT_CONTENT_TAB_DND_POPUP_CONFIRM_BTN');
+		},
+		showDndRoleSelect(): boolean
+		{
+			return this.dragState.targetList === 'head';
+		},
+		headListTitle(): string
+		{
+			return this.isTeamEntity
+				? this.loc('HUMANRESOURCES_COMPANY_STRUCTURE_DEPARTMENT_CONTENT_TAB_USERS_TEAM_HEAD_LIST_TITLE')
+				: this.loc('HUMANRESOURCES_COMPANY_STRUCTURE_DEPARTMENT_CONTENT_TAB_USERS_HEAD_LIST_TITLE')
+			;
+		},
 	},
 
-	methods: {
-		onDragStart(targetElement)
+	watch: {
+		focusedNode(newId: number): void
 		{
-			if (!targetElement.id)
+			const department = this.departments.get(newId) || {};
+			if (!this.isEmployeeListOptionsSet)
+			{
+				const employeeListOptions = {
+					page: 0,
+					shouldUpdateList: true,
+					isListUpdated: false,
+				};
+				DepartmentContentActions.updateEmployeeListOptions(newId, employeeListOptions);
+				this.departments.set(newId, department);
+			}
+
+			if (
+				department.employeeListOptions.page === 0
+				&& department.employeeListOptions.isListUpdated === false
+				&& department.employeeListOptions.shouldUpdateList === true
+			)
+			{
+				this.loadEmployeesAction();
+			}
+
+			this.isDescriptionExpanded = false;
+			this.searchQuery = '';
+
+			if (this.searchedUserId)
+			{
+				this.needToFocusUserId = this.searchedUserId;
+				this.$nextTick(() => {
+					this.scrollToUser();
+				});
+			}
+		},
+		searchedUserId: {
+			handler(userId: number): void
+			{
+				if (!userId)
+				{
+					return;
+				}
+
+				this.needToFocusUserId = userId;
+				if (this.isListUpdated)
+				{
+					this.needToScroll = true;
+				}
+				else
+				{
+					this.$nextTick(() => {
+						this.scrollToUser();
+					});
+				}
+			},
+			immediate: true,
+		},
+		async searchQuery(newQuery: string): Promise<void>
+		{
+			await this.searchMembers(newQuery);
+		},
+		departmentUsersStatus(usersStatus: DepartmentUsersStatus, prevUsersStatus: DepartmentUsersStatus): void
+		{
+			const { departmentId, loaded } = usersStatus;
+			const { departmentId: prevDepartmentId, loaded: prevLoaded } = prevUsersStatus;
+			if (departmentId === prevDepartmentId && loaded === prevLoaded)
 			{
 				return;
 			}
 
-			this.draggedEmployee = targetElement;
-		},
-		onDropToEmployee(targetIndex)
-		{
-			// @todo send order or new member to backend
-			if (this.draggedEmployee)
+			if (loaded)
 			{
-				if (this.draggedEmployee.role)
-				{
-					const movedEmployee = { ...this.draggedEmployee };
-					delete movedEmployee.role;
-					delete movedEmployee.badgeText;
-
-					const index = this.heads.findIndex((head) => head.id === this.draggedEmployee.id);
-					this.heads.splice(index, 1);
-					this.employees.splice(targetIndex.id, 0, movedEmployee);
-				}
-				else
-				{
-					const index = this.employees.findIndex((employee) => employee && employee.id === this.draggedEmployee.id);
-					const movedEmployee = this.employees.splice(index, 1)[0];
-					this.employees.splice(targetIndex.id, 0, movedEmployee);
-				}
-
-				this.draggedEmployee = null;
-				this.draggedIndex = null;
+				this.$emit('hideDetailLoader');
+			}
+			else
+			{
+				this.$emit('showDetailLoader');
+				this.loadEmployeesAction();
 			}
 		},
-		onDropToHead(targetElement)
-		{
-			if (this.draggedEmployee)
-			{
-				if (this.draggedEmployee.role === 'MEMBER_HEAD')
-				{
-					const index = this.heads.findIndex((head) => head.id === this.draggedEmployee.id);
-					const movedHead = this.heads.splice(index, 1)[0];
-					this.heads.splice(targetElement.id, 0, movedHead);
-				}
-				else
-				{
-					const movedHead = { ...this.draggedEmployee, role: 'MEMBER_HEAD' };
+	},
 
-					const index = this.employees.findIndex((employee) => employee && employee.id === this.draggedEmployee.id);
-					this.employees.splice(index, 1);
+	created(): void
+	{
+		this.loadEmployeesAction();
+		this.clearSearchTimeout = null;
+		this.autoscrollIntervalId = null;
 
-					this.heads.splice(targetElement.id, 0, movedHead);
-				}
+		this.boundHandleDragMove = this.handleDragMove.bind(this);
+		this.boundHandleDragEnd = this.handleDragEnd.bind(this);
+	},
 
-				this.draggedEmployee = null;
-				this.draggedIndex = null;
-			}
-		},
+	mounted(): void
+	{
+		this.tabContainer = this.$refs['tab-container'];
+	},
+
+	methods: {
 		loc(phraseCode, replacements = {}): string
 		{
 			return this.$Bitrix.Loc.getMessage(phraseCode, replacements);
 		},
 		getBadgeText(role): ?string
 		{
-			if (role === memberRoles.head)
+			if (role === this.memberRoles.head)
 			{
-				return this.loc('HUMANRESOURCES_COMPANY_STRUCTURE_DEPARTMENT_CONTENT_EMPLOYEES_HEAD_BADGE');
+				return this.isTeamEntity
+					? this.loc('HUMANRESOURCES_COMPANY_STRUCTURE_DEPARTMENT_CONTENT_EMPLOYEES_TEAM_HEAD_BADGE')
+					: this.loc('HUMANRESOURCES_COMPANY_STRUCTURE_DEPARTMENT_CONTENT_EMPLOYEES_HEAD_BADGE')
+				;
 			}
 
-			if (role === memberRoles.deputyHead)
+			if (role === this.memberRoles.deputyHead)
 			{
-				return this.loc('HUMANRESOURCES_COMPANY_STRUCTURE_DEPARTMENT_CONTENT_EMPLOYEES_DEPUTY_HEAD_BADGE');
+				return this.isTeamEntity
+					? this.loc('HUMANRESOURCES_COMPANY_STRUCTURE_DEPARTMENT_CONTENT_EMPLOYEES_TEAM_DEPUTY_HEAD_BADGE')
+					: this.loc('HUMANRESOURCES_COMPANY_STRUCTURE_DEPARTMENT_CONTENT_EMPLOYEES_DEPUTY_HEAD_BADGE')
+				;
 			}
 
 			return null;
@@ -278,39 +426,6 @@ export const UsersTab = {
 			{
 				this.loadEmployeesAction();
 			}
-		},
-		addToDepartment(options: addToDepartmentOptions = {}): void
-		{
-			const nodeId = this.focusedNode;
-			const role = options.type === 'head' ? memberRoles.head : memberRoles.employee;
-			UserManagementDialog.openDialog({
-				nodeId,
-				type: 'add',
-				role,
-			});
-		},
-		userInvite(): void
-		{
-			const departmentToInvite = this.departments.get(this.focusedNode).accessCode.slice(1);
-
-			BX.SidePanel.Instance.open(
-				'/bitrix/services/main/ajax.php?action=getSliderContent'
-				+ '&c=bitrix%3Aintranet.invitation&mode=ajax'
-				+ `&departments[]=${departmentToInvite}&firstInvitationBlock=invite-with-group-dp`,
-				{ cacheable: false, allowChangeHistory: false, width: 1100 },
-			);
-		},
-		moveUser(): void
-		{
-			const nodeId = this.focusedNode;
-			UserManagementDialog.openDialog({
-				nodeId,
-				type: 'move',
-			});
-		},
-		editDepartmentUsers(): void
-		{
-			this.$emit('editDepartmentUsers');
 		},
 		async loadEmployeesAction(): void
 		{
@@ -327,11 +442,7 @@ export const UsersTab = {
 			employeeListOptions.shouldUpdateList = employeeListOptions.shouldUpdateList ?? true;
 			employeeListOptions.isListUpdated = employeeListOptions.isListUpdated ?? false;
 			DepartmentContentActions.updateEmployeeListOptions(nodeId, employeeListOptions);
-
-			if (
-				employeeListOptions.isListUpdated
-				|| !employeeListOptions.shouldUpdateList
-			)
+			if (employeeListOptions.isListUpdated || !employeeListOptions.shouldUpdateList)
 			{
 				return;
 			}
@@ -361,7 +472,7 @@ export const UsersTab = {
 			}
 
 			loadedEmployees = loadedEmployees.map((user) => {
-				return { ...user, role: memberRoles.employee };
+				return { ...user, role: this.memberRoles.employee };
 			});
 
 			const employees = this.departments.get(nodeId)?.employees ?? [];
@@ -408,7 +519,7 @@ export const UsersTab = {
 					return;
 				}
 
-				if (user.role === memberRoles.head || user.role === memberRoles.deputyHead)
+				if (user.role === this.memberRoles.head || user.role === this.memberRoles.deputyHead)
 				{
 					department.heads = department.heads ?? [];
 					if (!department.heads.some((head) => head.id === user.id))
@@ -425,6 +536,7 @@ export const UsersTab = {
 					}
 				}
 
+				// eslint-disable-next-line vue/valid-next-tick
 				await this.$nextTick(() => {
 					element = this.tabContainer.querySelector(selectors);
 				});
@@ -440,7 +552,12 @@ export const UsersTab = {
 				this.selectedUserId = userId;
 			}, 750);
 
-			setTimeout(() => {
+			if (this.clearSearchTimeout)
+			{
+				clearTimeout(this.clearSearchTimeout);
+			}
+
+			this.clearSearchTimeout = setTimeout(() => {
 				if (this.searchedUserId === userId)
 				{
 					this.selectedUserId = null;
@@ -489,199 +606,469 @@ export const UsersTab = {
 			department.employees.push(...newMembers);
 			nodeResults.success.push(query);
 		},
-		onBlur(): void
+		searchUser(searchQuery: string): void
 		{
-			if (this.searchQuery.length === 0)
-			{
-				this.hasFocus = false;
-			}
+			this.searchQuery = searchQuery;
 		},
-		clearInput(): void
+		onHeadListActionMenuItemClick(actionId: string): void
 		{
-			this.searchQuery = '';
-			this.hasFocus = false;
+			this.headMenu.onActionMenuItemClick(actionId);
 		},
-	},
-
-	watch: {
-		focusedNode(newId): void
+		onEmployeeListActionMenuItemClick(actionId: string): void
 		{
-			const department = this.departments.get(newId) || {};
-			if (!department.employeeListOptions || Object.keys(department.employeeListOptions).length === 0)
-			{
-				const employeeListOptions = {
-					page: 0,
-					shouldUpdateList: true,
-					isListUpdated: false,
-				};
-				DepartmentContentActions.updateEmployeeListOptions(newId, employeeListOptions);
-				this.departments.set(newId, department);
-			}
-
-			if (
-				department.employeeListOptions.page === 0
-				&& department.employeeListOptions.isListUpdated === false
-				&& department.employeeListOptions.shouldUpdateList === true
-			)
-			{
-				this.loadEmployeesAction();
-			}
-
-			this.isDescriptionExpanded = false;
-			this.searchQuery = '';
+			this.employeeMenu.onActionMenuItemClick(actionId);
 		},
-		searchedUserId: {
-			handler(userId): void
-			{
-				if (!userId)
-				{
-					return;
-				}
-
-				this.needToFocusUserId = userId;
-				if (this.isListUpdated)
-				{
-					this.needToScroll = true;
-				}
-				else
-				{
-					this.$nextTick(() => {
-						this.scrollToUser();
-					});
-				}
-			},
-			immediate: true,
-		},
-		async searchQuery(newQuery) {
-			await this.searchMembers(newQuery);
-		},
-		departmentUsersStatus(usersStatus: DepartmentUsersStatus, prevUsersStatus: DepartmentUsersStatus): void
+		getHeadListDataTestIds(): TabListDataTestIds
 		{
-			const { departmentId, loaded } = usersStatus;
-			const { departmentId: prevDepartmentId, loaded: prevLoaded } = prevUsersStatus;
-			if (departmentId === prevDepartmentId && loaded === prevLoaded)
+			return HeadListDataTestIds;
+		},
+		getEmployeeListDataTestIds(): TabListDataTestIds
+		{
+			return EmployeeListDataTestIds;
+		},
+		handleItemDragStart(payload): void
+		{
+			if (this.dragState.isDragging)
 			{
 				return;
 			}
 
-			if (loaded)
+			const { event, element, userId, initialListType } = payload;
+
+			event.preventDefault();
+			this.dragState.isDragging = true;
+			this.dragState.userId = userId;
+			this.dragState.initialList = initialListType;
+			this.dragState.draggedElement = element;
+
+			const rect = this.dragState.draggedElement.getBoundingClientRect();
+			this.dragState.offsetX = event.clientX - rect.left;
+			this.dragState.offsetY = event.clientY - rect.top;
+
+			const ghost = this.dragState.draggedElement.cloneNode(true);
+			Dom.addClass(ghost, '--ghost');
+			Dom.style(ghost, 'left', `${event.clientX - this.dragState.offsetX}px`);
+			Dom.style(ghost, 'top', `${event.clientY - this.dragState.offsetY}px`);
+
+			Dom.append(ghost, document.body);
+			this.dragState.ghostElement = ghost;
+
+			Dom.addClass(this.dragState.draggedElement, '--dragging');
+			Dom.addClass(document.body, '--user-dragging');
+
+			Event.bind(document, 'mousemove', this.boundHandleDragMove);
+			Event.bind(document, 'mouseup', this.boundHandleDragEnd);
+
+			// user to computed?
+			const user = this.formattedHeads.find((u) => u.id === userId)
+				|| this.formattedEmployees.find((u) => u.id === userId);
+			EventEmitter.emit(events.HR_USER_DRAG_START, { user });
+		},
+		handleDragMove(event: MouseEvent): void
+		{
+			if (!this.dragState.isDragging)
 			{
-				this.$emit('hideDetailLoader');
+				return;
+			}
+
+			Dom.addClass(this.dragState.draggedElement, '--hidden');
+
+			EventEmitter.emit(events.HR_USER_DRAG_MOVE, {
+				pageX: event.pageX,
+				pageY: event.pageY,
+			});
+
+			if (this.dragState.ghostElement)
+			{
+				Dom.style(this.dragState.ghostElement, 'left', `${event.clientX - this.dragState.offsetX}px`);
+				Dom.style(this.dragState.ghostElement, 'top', `${event.clientY - this.dragState.offsetY}px`);
+			}
+
+			let potentialTarget = null;
+			if (this.isHeadListPotentialTarget && this.isPointerOverElement(event, this.$refs.headList?.$el))
+			{
+				potentialTarget = 'head';
+			}
+			else if (this.isEmployeeListPotentialTarget && this.isPointerOverElement(event, this.$refs.employeeList?.$el))
+			{
+				potentialTarget = 'employee';
+			}
+			this.dragState.targetList = potentialTarget;
+
+			this.handleAutoscrollOnDrag(event);
+		},
+		handleAutoscrollOnDrag(event: MouseEvent): void
+		{
+			if (!this.isHeadListPotentialTarget)
+			{
+				return;
+			}
+
+			const scrollableContainer = this.$refs.scrollableContainer;
+			if (!scrollableContainer)
+			{
+				return;
+			}
+
+			const rect = scrollableContainer.getBoundingClientRect();
+			const mouseY = event.clientY;
+
+			const topTriggerZone = rect.top + AUTOSCROLL_AREA_SIZE;
+
+			if (mouseY < topTriggerZone)
+			{
+				if (this.autoscrollIntervalId !== null)
+				{
+					return;
+				}
+
+				const scrollSpeed = 10;
+				this.autoscrollIntervalId = setInterval(() => {
+					scrollableContainer.scrollTop -= scrollSpeed;
+				}, 16);
 			}
 			else
 			{
-				this.$emit('showDetailLoader');
-				this.loadEmployeesAction();
+				this.stopAutoscroll();
 			}
 		},
+		stopAutoscroll(): void
+		{
+			if (this.autoscrollIntervalId !== null)
+			{
+				clearInterval(this.autoscrollIntervalId);
+				this.autoscrollIntervalId = null;
+			}
+		},
+		isPointerOverElement(event: MouseEvent, element: HTMLElement): boolean
+		{
+			if (!element)
+			{
+				return false;
+			}
+			const rect = element.getBoundingClientRect();
 
+			return (
+				event.clientX >= rect.left && event.clientX <= rect.right
+				&& event.clientY >= rect.top && event.clientY <= rect.bottom
+			);
+		},
+		async handleDragEnd(): void
+		{
+			if (!this.dragState.isDragging)
+			{
+				return;
+			}
+
+			EventEmitter.emit(events.HR_USER_DRAG_DROP);
+			this.stopAutoscroll();
+
+			const { userId, initialList, targetList, ghostElement, draggedElement } = this.dragState;
+
+			const isValidDrop = userId && targetList && targetList !== initialList;
+			let targetIndex = null;
+			if (isValidDrop)
+			{
+				const listRef = targetList === 'head' ? this.$refs.headList : this.$refs.employeeList;
+				targetIndex = listRef?.placeholderIndex;
+			}
+
+			Event.unbind(document, 'mousemove', this.boundHandleDragMove);
+			Event.unbind(document, 'mouseup', this.boundHandleDragEnd);
+			if (ghostElement)
+			{
+				Dom.remove(ghostElement);
+			}
+
+			if (draggedElement)
+			{
+				Dom.removeClass(draggedElement, '--dragging');
+				Dom.removeClass(draggedElement, '--hidden');
+			}
+			Dom.removeClass(document.body, '--user-dragging');
+
+			EventEmitter.emit(events.HR_USER_DRAG_END);
+			if (!isValidDrop || targetIndex === null)
+			{
+				this.dragState = this.getInitialDragState();
+
+				return;
+			}
+
+			this.dragState.isDragging = false;
+			this.dragState.ghostElement = null;
+			this.dragState.draggedElement = null;
+			this.dragState.context = { targetIndex };
+
+			this.dndPreviousState = this.moveDndUser();
+			if (!this.dndPreviousState)
+			{
+				this.dragState = this.getInitialDragState();
+
+				return;
+			}
+
+			const { context } = this.dragState;
+			context.selectedRole = null;
+			context.selectedRoleLabel = '';
+
+			if (targetList === 'head')
+			{
+				context.selectedRole = this.memberRoles.head;
+				context.selectedRoleLabel = this.loc(
+					'HUMANRESOURCES_COMPANY_STRUCTURE_DEPARTMENT_CONTENT_EMPLOYEES_HEAD_BADGE',
+				);
+			}
+
+			await this.prepareDndPopupDescription();
+			this.showDndConfirmationPopup = true;
+		},
+		cancelDndUserMove(): void
+		{
+			const { heads, employees } = this.dndPreviousState;
+			DepartmentContentActions.updateHeads(this.focusedNode, heads);
+			DepartmentContentActions.updateEmployees(this.focusedNode, employees);
+
+			this.dndPreviousState = null;
+			this.dragState = this.getInitialDragState();
+			this.showDndConfirmationPopup = false;
+		},
+		async confirmDndUserMove(payload): Promise<void>
+		{
+			const { userId } = this.dragState;
+			const targetRole = payload.role || this.memberRoles.employee;
+
+			const department = this.departments.get(this.focusedNode);
+			const user = department.heads.find((u) => u.id === userId) || department.employees.find((u) => u.id === userId);
+
+			if (!user)
+			{
+				this.dragState = this.getInitialDragState();
+
+				return;
+			}
+
+			const previousRole = user.role;
+			user.role = targetRole;
+
+			try
+			{
+				await UserManagementDialogAPI.addUsersToDepartment(this.focusedNode, [userId], targetRole);
+
+				UI.Notification.Center.notify({
+					content: this.loc('HUMANRESOURCES_COMPANY_STRUCTURE_DEPARTMENT_CONTENT_TAB_DND_SUCCEED'),
+					autoHideDelay: 3000,
+				});
+			}
+			catch (error)
+			{
+				console.error(error);
+				user.role = previousRole;
+				this.cancelDndUserMove();
+			}
+
+			this.showDndConfirmationPopup = false;
+			this.dragState = this.getInitialDragState();
+		},
+		async prepareDndPopupDescription(): Promise<string>
+		{
+			const { userId, targetList } = this.dragState;
+
+			const toHead = targetList === 'head';
+			const isTeam = this.isTeamEntity;
+			const department = this.departments.get(this.departmentId);
+			const departmentName = Text.encode(department?.name ?? '');
+
+			let user = null;
+			try
+			{
+				user = await DepartmentAPI.getUserInfo(this.departmentId, userId);
+			}
+			catch
+			{ /* empty */ }
+
+			const userName = Text.encode(user?.name ?? '');
+			const userUrl = user?.url ?? '#';
+			let phraseCode = '';
+
+			if (toHead)
+			{
+				phraseCode = isTeam
+					? 'HUMANRESOURCES_COMPANY_STRUCTURE_DEPARTMENT_CONTENT_TAB_DND_POPUP_CONFIRM_DESC_TEAM_HEAD'
+					: 'HUMANRESOURCES_COMPANY_STRUCTURE_DEPARTMENT_CONTENT_TAB_DND_POPUP_CONFIRM_DESC_HEAD';
+			}
+			else
+			{
+				const basePhrase = isTeam
+					? 'HUMANRESOURCES_COMPANY_STRUCTURE_DEPARTMENT_CONTENT_TAB_DND_POPUP_CONFIRM_DESC_TEAM'
+					: 'HUMANRESOURCES_COMPANY_STRUCTURE_DEPARTMENT_CONTENT_TAB_DND_POPUP_CONFIRM_DESC';
+
+				const genderSuffix = user?.gender === 'F' ? '_F' : '_M';
+				phraseCode = basePhrase + genderSuffix;
+			}
+
+			this.dndPopupDescription = this.loc(phraseCode, {
+				'#USER_NAME#': userName,
+				'#DEPARTMENT_NAME#': departmentName,
+			})
+				.replace(
+					'[link]',
+					`<a class="hr-department-detail-content__move-user-department-user-link" href="${userUrl}">`,
+				)
+				.replace('[/link]', '</a>');
+		},
+		moveDndUser(): Object | null
+		{
+			const { userId, targetList, context } = this.dragState;
+			const { targetIndex } = context;
+			const department = this.departments.get(this.focusedNode);
+			if (!department)
+			{
+				return null;
+			}
+
+			const previousState = { heads: [...department.heads], employees: [...department.employees] };
+			const isMovingToHeads = targetList === 'head';
+			const sourceList = isMovingToHeads ? [...previousState.employees] : [...previousState.heads];
+			const targetListForMove = isMovingToHeads ? [...previousState.heads] : [...previousState.employees];
+
+			const userIndex = sourceList.findIndex((user) => user.id === userId);
+			if (userIndex === -1)
+			{
+				return null;
+			}
+
+			const [userToMove] = sourceList.splice(userIndex, 1);
+			targetListForMove.splice(targetIndex, 0, userToMove);
+
+			if (isMovingToHeads)
+			{
+				DepartmentContentActions.updateHeads(this.focusedNode, targetListForMove);
+				DepartmentContentActions.updateEmployees(this.focusedNode, sourceList);
+			}
+			else
+			{
+				DepartmentContentActions.updateHeads(this.focusedNode, sourceList);
+				DepartmentContentActions.updateEmployees(this.focusedNode, targetListForMove);
+			}
+
+			return previousState;
+		},
+		getInitialDragState(): Object
+		{
+			return {
+				isDragging: false,
+				userId: null,
+				initialList: null,
+				targetList: null,
+				ghostElement: null,
+				draggedElement: null,
+				offsetX: 0,
+				offsetY: 0,
+				context: null,
+			};
+		},
 	},
 
 	template: `
-		<div
-			class="hr-department-detail-content__tab-container"
-			ref="tab-container"
-		>
-			<div
-				v-if="showSearchBar"
-				class="hr-department-detail-content__content-search"
-				:class="{'--focused': hasFocus}"
-			>
-				<div class="hr-department-detail-content__content-search-icon"/>
-				<input
-					v-model="searchQuery"
-					class="hr-department-detail-content__content-search-input"
-					:placeholder="!hasFocus ? loc('HUMANRESOURCES_COMPANY_STRUCTURE_DEPARTMENT_CONTENT_TAB_USERS_SEARCH_PLACEHOLDER') : ''"
-					@focus="hasFocus = true"
-					@blur="onBlur"
-				>
-				<div
-					class="hr-department-detail-content__content-search-close-button ui-icon-set --cross-circle-50"
-					:class="{'--hide': !hasFocus}"
-					style="--ui-icon-set__icon-size: 24px; --ui-icon-set__icon-color: #2FC6F6;"
-					@click="clearInput"
+		<div class="hr-department-detail-content__tab-container --users" ref="tab-container">
+			<template v-if="memberCount > 0">
+				<SearchInput
+					v-if="showSearchBar"
+					:placeholder="loc('HUMANRESOURCES_COMPANY_STRUCTURE_DEPARTMENT_CONTENT_TAB_USERS_SEARCH_PLACEHOLDER')"
+					:value="searchQuery"
+					@inputChange="searchUser"
+					dataTestId="hr-department-detail-content_users-tab__users-search-input"
 				/>
-			</div>
-			<EmptyStateContainer
-				v-if="emptyStateType"
-				:type="emptyStateType"
-				:departmentId="focusedNode"
-				@addToDepartment="addToDepartment"
-				@userInvite="userInvite"
-				@moveUser="moveUser"
-			/>
-			<div
-				v-else
-				v-on="shouldUpdateList ? { scroll: updateList } : {}"
-				class="hr-department-detail-content__lists-container"
+				<div
+					v-if="!showSearchEmptyState"
+					v-on="shouldUpdateList ? { scroll: updateList } : {}"
+					class="hr-department-detail-content__lists-container"
+					ref="scrollableContainer"
+				>
+					<TabList
+						ref="headList"
+						id='hr-department-detail-content_chats-tab__chat-list'
+						:title="headListTitle"
+						:count="headCount"
+						:menuItems="headMenu.items"
+						:listItems="filteredHeads"
+						listType="head"
+						:emptyItemTitle="headListEmptyStateTitle"
+						emptyItemImageClass="hr-department-detail-content__empty-user-list-item-image"
+						:hideEmptyItem="searchQuery.length > 0"
+						:withAddPermission="canAddUsers"
+						@tabListAction="onHeadListActionMenuItemClick"
+						:dataTestIds="getHeadListDataTestIds()"
+						:isDropTarget="isHeadListPotentialTarget && dragState.targetList === 'head'"
+					>
+						<template v-slot="{ item }">
+							<UserListItem
+								:user="item"
+								listType="head"
+								:selectedUserId="selectedUserId"
+								:entityType="entityType"
+								:canDrag="canAddUsers"
+								@itemDragStart="handleItemDragStart"
+							/>
+						</template>
+					</TabList>
+					<TabList
+						ref="employeeList"
+						id='hr-department-detail-content_chats-tab__channel-list'
+						:title="employeeTitle"
+						:count="employeeCount"
+						listType="employees"
+						:menuItems="employeeMenu.items"
+						:listItems="filteredEmployees"
+						:emptyItemTitle="employeesListEmptyStateTitle"
+						emptyItemImageClass="hr-department-detail-content__empty-user-list-item-image"
+						:hideEmptyItem="searchQuery.length > 0"
+						:withAddPermission="canAddUsers"
+						@tabListAction="onEmployeeListActionMenuItemClick"
+						:dataTestIds="getEmployeeListDataTestIds()"
+						:isDropTarget="isEmployeeListPotentialTarget && dragState.targetList === 'employee'"
+					>
+						<template v-slot="{ item }">
+							<UserListItem
+								:user="item"
+								listType="employees"
+								:canDrag="canAddUsers"
+								@itemDragStart="handleItemDragStart"
+								:selectedUserId="selectedUserId"
+								:entityType="entityType"
+							/>
+						</template>
+					</TabList>
+				</div>
+				<EmptyState v-else
+					imageClass="hr-department-detail-content__empty-tab-user-not-found-icon"
+					:title="loc('HUMANRESOURCES_COMPANY_STRUCTURE_DEPARTMENT_CONTENT_EMPTY_SEARCHED_EMPLOYEES_TITLE')"
+					:description ="loc('HUMANRESOURCES_COMPANY_STRUCTURE_DEPARTMENT_CONTENT_EMPTY_SEARCHED_EMPLOYEES_SUBTITLE')"
+				/>
+			</template>
+			<EmptyState v-else
+				:imageClass="canAddUsers 
+					? 'hr-department-detail-content__empty-tab-add-user-icon' 
+					: 'hr-department-detail-content__empty-tab-cant-add-user-icon'"
+				:title="emptyStateTitle"
+				:description ="emptyStateDescription"
 			>
-				<div class="hr-department-detail-content__list --head">
-					<div class="hr-department-detail-content__list-header-container">
-						<div class="hr-department-detail-content__list-title">
-							{{ loc('HUMANRESOURCES_COMPANY_STRUCTURE_DEPARTMENT_CONTENT_TAB_USERS_HEAD_LIST_TITLE') }}
-							<span
-								class="hr-department-detail-content__list-count"
-								data-id="hr-department-detail-content__head_list-count"
-							>
-								{{ headCount }}
-							</span>
-						</div>
-						<UserListActionButton
-							role="head"
-							@addToDepartment="addToDepartment({ type: 'head' })"
-							@editDepartmentUsers="editDepartmentUsers"
-							:departmentId="focusedNode"
-						/>
-					</div>
-					<div v-if="!headCount" :class="['hr-department-detail-content__empty-list-item', { '--with-add': canAddUsers }]">
-						<div class="hr-department-detail-content__empty-user-list-item-image"/>
-						<div class="hr-department-detail-content__empty-list-item-content">
-							<div class="hr-department-detail-content__empty-list-item-title">
-								{{ headListEmptyStateTitle }}
-							</div>
-						</div>
-					</div>
-					<UserList
-						:items="filteredHeads"
-						@dragstart="onDragStart"
-						@drop="onDropToHead"
-						:selectedUserId="selectedUserId"
-					/>
-				</div>
-				<div class="hr-department-detail-content__list --employee">
-					<div class="hr-department-detail-content__list-header-container">
-						<div class="hr-department-detail-content__list-title">
-							{{ loc('HUMANRESOURCES_COMPANY_STRUCTURE_DEPARTMENT_CONTENT_TAB_USERS_EMPLOYEE_LIST_TITLE') }}
-							<span
-								class="hr-department-detail-content__list-count"
-								data-id="hr-department-detail-content__employee_list-count"
-							>
-								{{ employeeCount }}
-							</span>
-						</div>
-						<UserListActionButton
-							role="employee"
-							@addToDepartment="addToDepartment({ type: 'employee' })"
-							@editDepartmentUsers="editDepartmentUsers"
-							:departmentId="focusedNode"
-						/>
-					</div>
-					<div v-if="!employeeCount" :class="['hr-department-detail-content__empty-list-item', { '--with-add': canAddUsers }]">
-						<div class="hr-department-detail-content__empty-user-list-item-image"/>
-						<div class="hr-department-detail-content__empty-list-item-content">
-							<div class="hr-department-detail-content__empty-list-item-title">
-								{{ employeesListEmptyStateTitle }}
-							</div>
-						</div>
-					</div>
-					<UserList
-						:items="filteredEmployees"
-						@dragstart="onDragStart"
-						@drop="onDropToEmployee"
-						:selectedUserId="selectedUserId"
-					/>
-				</div>
-			</div>
+				<template v-slot:content>
+					<EmptyTabAddButton v-if="canAddUsers" :departmentId="departmentId" :entityType="entityType"/>
+				</template>
+			</EmptyState>
+			<MoveEmployeeConfirmationPopup 
+				v-if="showDndConfirmationPopup" 
+				:title="dndConfirmationPopupTitle"
+				:description="dndPopupDescription"
+				:confirmButtonText="dndConfirmationPopupBtn"
+				:showRoleSelect="showDndRoleSelect"
+				:excludeEmployeeRole="true"
+				:targetType="entityType"
+				@confirm="confirmDndUserMove"
+				@close="cancelDndUserMove"
+			/>
 		</div>
 	`,
 };

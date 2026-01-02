@@ -1,0 +1,16 @@
+.crm-mini-card__show-more {
+	font-weight: var(--ui-font-weight-regular);
+	font-size: var(--ui-font-size-md);
+	line-height: 19px;
+	letter-spacing: var(--ui-letter-spacing-l);
+	border-bottom: 1px dashed rgba(130, 139, 149, .28);
+	color: var(--ui-color-base-3);
+	cursor: pointer;
+	align-self: baseline;
+
+	transition: border-bottom-color .2s linear;
+}
+
+.crm-mini-card__show-more:hover {
+	border-bottom: 1px dashed rgba(130, 139, 149, .7);
+}

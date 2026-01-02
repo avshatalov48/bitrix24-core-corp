@@ -11,9 +11,9 @@ use Bitrix\Crm\CompanyTable;
 use Bitrix\Crm\ContactTable;
 use Bitrix\Crm\Service\Container;
 use Bitrix\Main;
-use Bitrix\Main\Entity;
 use Bitrix\Main\ORM\Fields\Relations\Reference;
 use Bitrix\Main\ORM\Query\Join;
+use Bitrix\Main\ORM\Data\AddStrategy;
 
 /**
  * Class ContactCompanyTable
@@ -31,8 +31,10 @@ use Bitrix\Main\ORM\Query\Join;
  * @method static \Bitrix\Crm\Binding\EO_ContactCompany wakeUpObject($row)
  * @method static \Bitrix\Crm\Binding\EO_ContactCompany_Collection wakeUpCollection($rows)
  */
-class ContactCompanyTable extends Entity\DataManager
+class ContactCompanyTable extends Main\ORM\Data\DataManager
 {
+	use AddStrategy\Trait\MergeByDefaultTrait;
+
 	/**
 	 * Get table name.
 	 * @return string
@@ -41,6 +43,7 @@ class ContactCompanyTable extends Entity\DataManager
 	{
 		return 'b_crm_contact_company';
 	}
+
 	/**
 	 * Get table fields map.
 	 * @return array

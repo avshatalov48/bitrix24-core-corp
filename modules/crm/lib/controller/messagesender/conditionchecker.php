@@ -26,7 +26,7 @@ class ConditionChecker extends Base
 
 	public function getVirtualWhatsAppConfigAction(int $entityTypeId): array
 	{
-		if (!Container::getInstance()->getUserPermissions()->canReadType($entityTypeId))
+		if (!Container::getInstance()->getUserPermissions()->entityType()->canReadItems($entityTypeId))
 		{
 			$this->addError(\Bitrix\Crm\Controller\ErrorCode::getAccessDeniedError());
 
@@ -68,7 +68,7 @@ class ConditionChecker extends Base
 
 	public function getSmsSendersAction(int $entityTypeId): array
 	{
-		if (!Container::getInstance()->getUserPermissions()->canReadType($entityTypeId))
+		if (!Container::getInstance()->getUserPermissions()->entityType()->canReadItems($entityTypeId))
 		{
 			$this->addError(\Bitrix\Crm\Controller\ErrorCode::getAccessDeniedError());
 

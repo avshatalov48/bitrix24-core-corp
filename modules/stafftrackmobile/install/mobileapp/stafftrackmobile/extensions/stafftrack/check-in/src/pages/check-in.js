@@ -31,6 +31,7 @@ jn.define('stafftrack/check-in/pages/check-in', (require, exports, module) => {
 	const { OptionManager, OptionEnum } = require('stafftrack/data-managers/option-manager');
 	const { SettingsManager } = require('stafftrack/data-managers/settings-manager');
 	const { Entry } = require('stafftrack/entry');
+	const { AppRatingClient } = require('stafftrack/app-rating-client');
 
 	const { PureComponent } = require('layout/pure-component');
 
@@ -443,7 +444,9 @@ jn.define('stafftrack/check-in/pages/check-in', (require, exports, module) => {
 
 			this.showCheckInToast();
 			this.removeCounterFromAvaMenu();
-			this.closeLayout();
+			this.closeLayout(() => {
+				AppRatingClient.increaseCheckinCounterAndTryOpenAppRating();
+			});
 
 			void ShiftManager.addShift(shiftDto, this.user.departments);
 
@@ -524,9 +527,9 @@ jn.define('stafftrack/check-in/pages/check-in', (require, exports, module) => {
 			AvaMenu.setCounter({ elemId: 'check_in', value: '0' });
 		}
 
-		closeLayout()
+		closeLayout(handler)
 		{
-			this.refs.layoutWidget?.close();
+			this.refs.layoutWidget?.close(handler);
 		}
 
 		showCancelReasonMenu(callback)

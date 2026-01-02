@@ -26,6 +26,13 @@ class FlowAccessController extends BaseAccessController implements AccessErrorab
 		return parent::check($action, $item, $params);
 	}
 
+	public function checkByItemId(string|FlowAction $action, int $itemId = null, $params = null): bool
+	{
+		$action = is_string($action) ? $action : $action->value;
+
+		return parent::checkByItemId($action, $itemId, $params);
+	}
+
 	protected function loadItem(int $itemId = null): ?FlowModel
 	{
 		$itemId = (int)$itemId;

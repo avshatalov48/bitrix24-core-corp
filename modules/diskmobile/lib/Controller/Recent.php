@@ -48,18 +48,15 @@ class Recent extends BaseFileList
 			return null;
 		}
 
-		$response = [
-			'items' => [],
-			'users' => [],
-			'storages' => [],
-		];
+		$response = $this->getDefaultResponse();
 
 		if (isset($page['items']))
 		{
-			$response['items'] = array_map(fn(array $item): array => $item['trackedObject']['file'], $page['items']);
+			$response['items'] = array_map([$this, 'trackedToItem'], $page['items']);
 			$response = $this->withUsers($response);
 			$response = $this->withRealStorageIds($response);
 			$response = $this->withStorages($response);
+			$response['items'] = $this->withExternalLink($response['items']);
 		}
 
 		$tag = "disk_user_{$this->getCurrentUser()->getId()}_recents";
@@ -92,11 +89,7 @@ class Recent extends BaseFileList
 			return null;
 		}
 
-		$response = [
-			'items' => [],
-			'users' => [],
-			'storages' => [],
-		];
+		$response = $this->getDefaultResponse();
 
 		if ($page)
 		{
@@ -106,6 +99,7 @@ class Recent extends BaseFileList
 			$response = $this->withUsers($response);
 			$response = $this->withRealStorageIds($response);
 			$response = $this->withStorages($response);
+			$response['items'] = $this->withExternalLink($response['items']);
 		}
 
 		$tag = "disk_user_{$this->getCurrentUser()->getId()}_recents";
@@ -130,11 +124,7 @@ class Recent extends BaseFileList
 			return null;
 		}
 
-		$response = [
-			'items' => [],
-			'users' => [],
-			'storages' => [],
-		];
+		$response = $this->getDefaultResponse();
 
 		if (isset($page['items']))
 		{
@@ -142,6 +132,7 @@ class Recent extends BaseFileList
 			$response = $this->withUsers($response);
 			$response = $this->withRealStorageIds($response);
 			$response = $this->withStorages($response);
+			$response['items'] = $this->withExternalLink($response['items']);
 		}
 
 		$this->subscribeToPullEvents($response);

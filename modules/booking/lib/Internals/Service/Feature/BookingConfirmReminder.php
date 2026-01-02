@@ -1,5 +1,7 @@
 <?php
 
+declare(strict_types=1);
+
 namespace Bitrix\Booking\Internals\Service\Feature;
 
 use Bitrix\Booking\Internals\Service\Time;

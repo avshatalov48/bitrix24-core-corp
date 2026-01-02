@@ -1,6 +1,8 @@
 <?php
 
 use Bitrix\Crm\Component\Base;
+use Bitrix\Crm\Router\ResponseHelper;
+use Bitrix\Main\IO\Path;
 use Bitrix\Main\Web\Uri;
 
 if (!defined('B_PROLOG_INCLUDED') || B_PROLOG_INCLUDED !== true)
@@ -30,18 +32,17 @@ class CrmRouterDefaultRoot extends Base
 
 	private function processPageNotFound(): never
 	{
-		\Bitrix\Crm\Router\ResponseHelper::showPageNotFound();
+		ResponseHelper::showPageNotFound();
 	}
 
 	private function isRequestUriEqualsCrm(): bool
 	{
-		$siteDir = defined('SITE_DIR') ? SITE_DIR : '';
-		$crmPath =  (new Uri('/crm/'))->getPath();
-		$crmPathWithSiteDir = (new Uri($siteDir . 'crm/'))->getPath();
+		$siteDir = defined('SITE_DIR') ? SITE_DIR : '/';
+		$crmPath = Path::combine($siteDir, $this->router->getDefaultRoot()) . '/';
 
 		$requestUriPath = (new Uri($this->request->getRequestUri()))->getPath();
 
-		return in_array($requestUriPath, [$crmPath, $crmPathWithSiteDir], true);
+		return $crmPath === $requestUriPath;
 	}
 
 	private function tryRedirectToConsistentUrlFromPartlyDefined(): void

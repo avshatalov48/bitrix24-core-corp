@@ -2,10 +2,10 @@
  * @module crm/category-list
  */
 jn.define('crm/category-list', (require, exports, module) => {
-	const AppTheme = require('apptheme');
-	const { lock } = require('assets/common');
 	const { CategoryListItem } = require('crm/category-list/item');
 	const { CategorySelectActions } = require('crm/category-list/actions');
+	const { Color, Corner } = require('tokens');
+	const { FloatingActionButton } = require('ui-system/form/buttons/floating-action-button');
 
 	/**
 	 * @class CategoryList
@@ -24,14 +24,37 @@ jn.define('crm/category-list', (require, exports, module) => {
 				enabled: true,
 			};
 
+			this.floatingActionButtonRef = null;
+			this.initFloatingButton();
+
 			this.onSelectCategoryHandler = this.onSelectCategory.bind(this);
 			this.onEditCategoryHandler = this.editCategory.bind(this);
-			this.onCreateCategoryHandler = this.onCreateCategory.bind(this);
 		}
 
 		get entityTypeId()
 		{
 			return BX.prop.getNumber(this.props, 'entityTypeId', null);
+		}
+
+		initFloatingButton()
+		{
+			if (this.isReadOnly() || !this.canUserEditCategory())
+			{
+				return;
+			}
+
+			this.floatingActionButtonRef = FloatingActionButton({
+				testId: 'category-list-create-category-button',
+				parentLayout: this.props.layout,
+				onClick: () => this.onCreateCategory(),
+			});
+		}
+
+		componentDidMount()
+		{
+			this.floatingActionButtonRef?.setFloatingButton({
+				hide: false,
+			});
 		}
 
 		componentWillReceiveProps(props)
@@ -73,51 +96,14 @@ jn.define('crm/category-list', (require, exports, module) => {
 				},
 				View(
 					{
-						style: styles.listContainer,
+						style: {
+							flexDirection: 'column',
+							backgroundColor: Color.bgContentPrimary.toHex(),
+							borderRadius: Corner.L.toNumber(),
+						},
 					},
 					...categories,
-					this.renderCreateCategoryButton(),
 				),
-			);
-		}
-
-		renderCreateCategoryButton()
-		{
-			if (this.isReadOnly() || !this.canUserEditCategory())
-			{
-				return null;
-			}
-
-			return View(
-				{
-					style: {
-						paddingTop: 4,
-						paddingBottom: 6,
-					},
-				},
-				new BaseButton({
-					icon: this.canUserAddCategory() ? svgImages.createCategoryButtonIcon : lock,
-					text: BX.message('CRM_CATEGORY_CREATE_CATEGORY2'),
-					style: {
-						button: {
-							borderColor: AppTheme.colors.bgContentPrimary,
-							justifyContent: 'flex-start',
-						},
-						icon: {
-							tintColor: AppTheme.colors.base3,
-							marginRight: this.canUserAddCategory() ? 22 : 12,
-							marginLeft: this.canUserAddCategory() ? 28 : 22,
-							width: this.canUserAddCategory() ? 12 : 28,
-							height: this.canUserAddCategory() ? 12 : 28,
-						},
-						text: {
-							color: AppTheme.colors.base1,
-							fontWeight: 'normal',
-							fontSize: 18,
-						},
-					},
-					onClick: this.onCreateCategoryHandler,
-				}),
 			);
 		}
 
@@ -130,7 +116,6 @@ jn.define('crm/category-list', (require, exports, module) => {
 		{
 			const { showCounters, showTunnels } = this.props;
 			const canUserEditCategory = this.canUserEditCategory();
-			const showBottomBorder = !isLast || (!this.isReadOnly() && canUserEditCategory);
 
 			return new CategoryListItem({
 				entityTypeId: this.entityTypeId,
@@ -142,7 +127,7 @@ jn.define('crm/category-list', (require, exports, module) => {
 				readOnly: this.isReadOnly(),
 				enabled: this.isCategoryEnabled(category),
 				canUserEditCategory,
-				showBottomBorder,
+				showBottomBorder: !isLast,
 				showCounters,
 				showTunnels,
 			});
@@ -160,7 +145,7 @@ jn.define('crm/category-list', (require, exports, module) => {
 
 		onSelectCategory(category)
 		{
-			const { selectAction, openStageListHandler, uid, onSelectCategory, entityTypeId } = this.props;
+			const { selectAction, openStageListHandler, onSelectCategory, entityTypeId } = this.props;
 
 			if (onSelectCategory)
 			{
@@ -183,12 +168,6 @@ jn.define('crm/category-list', (require, exports, module) => {
 						break;
 
 					case CategorySelectActions.CreateTunnel:
-						if (typeof openStageListHandler === 'function')
-						{
-							openStageListHandler(category);
-						}
-						break;
-
 					case CategorySelectActions.SelectTunnelDestination:
 						if (typeof openStageListHandler === 'function')
 						{
@@ -199,6 +178,8 @@ jn.define('crm/category-list', (require, exports, module) => {
 						break;
 				}
 			}
+
+			return Promise.resolve();
 		}
 
 		enableCategoryList()
@@ -238,18 +219,6 @@ jn.define('crm/category-list', (require, exports, module) => {
 			}
 		}
 	}
-
-	const styles = {
-		listContainer: {
-			flexDirection: 'column',
-			backgroundColor: AppTheme.colors.bgContentPrimary,
-			borderRadius: 12,
-		},
-	};
-
-	const svgImages = {
-		createCategoryButtonIcon: '<svg width="12" height="12" viewBox="0 0 12 12" fill="none" xmlns="http://www.w3.org/2000/svg"><path d="M5 0H7V12H5V0Z" fill="#525C69"/><path d="M12 5V7L0 7L1.19209e-07 5L12 5Z" fill="#525C69"/></svg>',
-	};
 
 	module.exports = { CategoryList };
 });

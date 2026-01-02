@@ -1,6 +1,7 @@
 <?php
 $MESS["CALL_COMPONENT_ACCESS_DENIED"] = "You do not have permission to access this call.";
 $MESS["CALL_COMPONENT_CALL_UNDEFINED"] = "Call was not found.";
+$MESS["CALL_COMPONENT_COPILOT_DETAIL_TITLE"] = "CoPilot Follow-Up";
 $MESS["CALL_COMPONENT_COPILOT_DETAIL_V2"] = "Sync, #DATE#";
 $MESS["CALL_COMPONENT_ERROR_DESCRIPTION"] = "Please contact the chat owner or participants.";
 $MESS["CALL_COMPONENT_ERROR_TITLE"] = "Follow-Up was not found or access denied";

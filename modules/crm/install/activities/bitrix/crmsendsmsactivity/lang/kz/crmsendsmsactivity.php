@@ -1,0 +1,20 @@
+<?php
+$MESS["CRM_SSMSA_EMPTY_PHONE_NUMBER"] = "Телефон нөмірі жоқ";
+$MESS["CRM_SSMSA_EMPTY_PROVIDER"] = "Провайдер таңдалмаған";
+$MESS["CRM_SSMSA_EMPTY_TEXT"] = "Хабарлама мәтіні көрсетілмеген";
+$MESS["CRM_SSMSA_MESSAGE_FROM"] = "Кімнен";
+$MESS["CRM_SSMSA_MESSAGE_TEXT"] = "Хабарлама мәтіні";
+$MESS["CRM_SSMSA_NO_MESSAGESERVICE"] = "Хабарлама қызметі модулі орнатылмаған";
+$MESS["CRM_SSMSA_NO_PROVIDER"] = "SMS провайдері тіркелмеген немесе жойылған";
+$MESS["CRM_SSMSA_PAYMENT_REQUIRED"] = "Қосымша төленбеген";
+$MESS["CRM_SSMSA_PHONE_TYPE"] = "Клиент нөмірінің түрі";
+$MESS["CRM_SSMSA_PHONE_TYPE_EMPTY_OPTION"] = "Автоматты түрде таңдау";
+$MESS["CRM_SSMSA_PROVIDER"] = "Провайдер";
+$MESS["CRM_SSMSA_PROVIDER_DEFAULT"] = "Әдепкі бойынша (CRM баптауларынан)";
+$MESS["CRM_SSMSA_RECIPIENT_TYPE"] = "Алушы түрі";
+$MESS["CRM_SSMSA_RECIPIENT_TYPE_ENTITY"] = "Клиент";
+$MESS["CRM_SSMSA_RECIPIENT_TYPE_USER"] = "Қызметкер";
+$MESS["CRM_SSMSA_RECIPIENT_USER"] = "Қызметкер";
+$MESS["CRM_SSMSA_SEND_ACTIVITY_SUBJECT"] = "Шығыс SMS хабарлама";
+$MESS["CRM_SSMSA_SEND_RESULT_TRUE"] = "Хабарлама #PHONE# нөміріне жіберілді";
+$MESS["CRM_SSMSA_TIMELINE_ERROR"] = "Хабарлама жіберілмеді. #ERROR_TEXT#";

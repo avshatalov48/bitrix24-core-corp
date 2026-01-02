@@ -3,6 +3,7 @@
 namespace Bitrix\Tasks\Flow;
 
 use Bitrix\Main\Type\Contract\Arrayable;
+use Bitrix\Main\Type\Contract\Jsonable;
 use Bitrix\Main\Type\DateTime;
 use Bitrix\Main\UI\EntitySelector\Converter;
 use Bitrix\Tasks\Flow\Access\FlowModel;
@@ -14,35 +15,36 @@ use Bitrix\Tasks\Flow\Distribution\FlowDistributionServicesFactory;
 use Bitrix\Tasks\Flow\Distribution\FlowDistributionType;
 use Bitrix\Tasks\Flow\Internal\Entity\Role;
 
-class Flow implements Arrayable
+class Flow implements Arrayable, Jsonable
 {
 	public const DEFAULT_DISTRIBUTION_TYPE = FlowDistributionType::QUEUE;
+	private const BASE_EFFICIENCY = 100;
 
-	private int $id = 0;
-	private int $ownerId = 0;
-	private int $creatorId = 0;
-	private int $groupId = 0;
-	private int $templateId = 0;
-	private int $efficiency = 100;
-	private bool $active = false;
-	private int $plannedCompletionTime = 0;
-	private ?DateTime $activity;
-	private string $name = '';
-	private string $description = '';
-	private FlowDistributionType $distributionType = self::DEFAULT_DISTRIBUTION_TYPE;
+	private ?int $id = null;
+	private ?int $ownerId = null;
+	private ?int $creatorId = null;
+	private ?int $groupId = null;
+	private ?int $templateId = null;
+	private ?int $efficiency = null;
+	private ?bool $active = null;
+	private ?int $plannedCompletionTime = null;
+	private ?DateTime $activity = null;
+	private ?string $name = null;
+	private ?string $description = null;
+	private ?FlowDistributionType $distributionType = null;
 
 	/**
 	 * @see Converter::convertFromFinderCodes
 	 */
-	private array $responsibleList = [];
-	private bool $demo = false;
+	private ?array $responsibleList = null;
+	private ?bool $demo = null;
 
-	private bool $responsibleCanChangeDeadline = false;
-	private bool $matchWorkTime = true;
-	private bool $matchSchedule = false;
-	private bool $taskControl = false;
+	private ?bool $responsibleCanChangeDeadline = null;
+	private ?bool $matchWorkTime = null;
+	private ?bool $matchSchedule = null;
+	private ?bool $taskControl = null;
 
-	private bool $notifyAtHalfTime = true;
+	private ?bool $notifyAtHalfTime = null;
 	private ?int $notifyOnQueueOverflow = null;
 	private ?int $notifyOnTasksInProgressOverflow = null;
 	private ?int $notifyWhenEfficiencyDecreases = null;
@@ -50,12 +52,12 @@ class Flow implements Arrayable
 	/**
 	 * @see Converter::convertFromFinderCodes
 	 */
-	private array $taskCreators = [];
+	private ?array $taskCreators = null;
 	/**
 	 * @see Converter::convertFromFinderCodes
 	 */
-	private array $team = [];
-	private bool $trialFeatureEnabled = false;
+	private ?array $team = null;
+	private ?bool $trialFeatureEnabled = null;
 
 	/**
 	 * @param $data array [
@@ -90,10 +92,10 @@ class Flow implements Arrayable
 
 		if (isset($data['GROUP_ID']))
 		{
-			$this->groupId = (int) $data['GROUP_ID'];
+			$this->groupId = (int)$data['GROUP_ID'];
 		}
 
-		if (!empty($data['TEMPLATE_ID']))
+		if (isset($data['TEMPLATE_ID']))
 		{
 			$this->templateId = (int)$data['TEMPLATE_ID'];
 		}
@@ -103,19 +105,28 @@ class Flow implements Arrayable
 			$this->efficiency = (int)$data['EFFICIENCY'];
 		}
 
-		if (!empty($data['ACTIVE']))
+		if (isset($data['ACTIVE']))
 		{
 			$this->active = (bool)$data['ACTIVE'];
 		}
 
-		if (!empty($data['PLANNED_COMPLETION_TIME']))
+		if (isset($data['PLANNED_COMPLETION_TIME']))
 		{
 			$this->plannedCompletionTime = (int)$data['PLANNED_COMPLETION_TIME'];
 		}
 
-		$this->activity = (($data['ACTIVITY'] ?? null) instanceof DateTime) ? $data['ACTIVITY'] : new DateTime();
+		if (
+			isset($data['ACTIVITY'])
+			&& $data['ACTIVITY'] instanceof DateTime
+		)
+		{
+			$this->activity = $data['ACTIVITY'];
+		}
 
-		$this->name = (string) ($data['NAME'] ?? '');
+		if (!empty($data['NAME']))
+		{
+			$this->name = (string)$data['NAME'];
+		}
 
 		if (!empty($data['DESCRIPTION']))
 		{
@@ -127,7 +138,7 @@ class Flow implements Arrayable
 			$this->distributionType = FlowDistributionType::from((string)$data['DISTRIBUTION_TYPE']);
 		}
 
-		if (!empty($data['DEMO']))
+		if (isset($data['DEMO']))
 		{
 			$this->demo = (bool)$data['DEMO'];
 		}
@@ -163,32 +174,37 @@ class Flow implements Arrayable
 
 	public function getName(): string
 	{
-		return $this->name;
+		return (string)$this->name;
+	}
+
+	public function getDescription(): string
+	{
+		return (string)$this->description;
 	}
 
 	public function getPlannedCompletionTime(): int
 	{
-		return $this->plannedCompletionTime;
+		return (int)$this->plannedCompletionTime;
 	}
 
 	public function getGroupId(): int
 	{
-		return $this->groupId;
+		return (int)$this->groupId;
 	}
 
 	public function getTemplateId(): int
 	{
-		return $this->templateId;
+		return (int)$this->templateId;
 	}
 
 	public function getEfficiency(): int
 	{
-		return $this->efficiency;
+		return $this->efficiency ?? self::BASE_EFFICIENCY;
 	}
 
 	public function getDistributionType(): FlowDistributionType
 	{
-		return $this->distributionType;
+		return $this->distributionType ?? self::DEFAULT_DISTRIBUTION_TYPE;
 	}
 
 	public function getCreatorId(): ?int
@@ -204,6 +220,31 @@ class Flow implements Arrayable
 	public function getAccessController(int $userId): SimpleFlowAccessController
 	{
 		return new SimpleFlowAccessController($userId, FlowModel::createFromId($this->id));
+	}
+
+	public function getResponsibleList(): array
+	{
+		return $this->responsibleList ?? [];
+	}
+
+	public function getTaskCreators(): array
+	{
+		return $this->taskCreators ?? [];
+	}
+
+	public function getTeam(): array
+	{
+		return $this->team ?? [];
+	}
+
+	public function isNotifyAtHalfTime(): bool
+	{
+		return is_null($this->notifyAtHalfTime) ? true : $this->notifyAtHalfTime;
+	}
+
+	public function isTrialFeatureEnabled(): bool
+	{
+		return (bool)$this->trialFeatureEnabled;
 	}
 
 	public function setResponsibleList(array $responsibleList): self
@@ -288,27 +329,32 @@ class Flow implements Arrayable
 
 	public function isActive(): bool
 	{
-		return $this->active;
+		return (bool)$this->active;
 	}
 
 	public function isDemo(): bool
 	{
-		return $this->demo;
+		return (bool)$this->demo;
 	}
 
 	public function isManually(): bool
 	{
-		return $this->distributionType === FlowDistributionType::MANUALLY;
+		return ($this->distributionType ?? self::DEFAULT_DISTRIBUTION_TYPE) === FlowDistributionType::MANUALLY;
 	}
 
 	public function isQueue(): bool
 	{
-		return $this->distributionType === FlowDistributionType::QUEUE;
+		return ($this->distributionType ?? self::DEFAULT_DISTRIBUTION_TYPE) === FlowDistributionType::QUEUE;
 	}
 
 	public function isHimself(): bool
 	{
-		return $this->distributionType === FlowDistributionType::HIMSELF;
+		return ($this->distributionType ?? self::DEFAULT_DISTRIBUTION_TYPE) === FlowDistributionType::HIMSELF;
+	}
+
+	public function isImmutable(): bool
+	{
+		return ($this->distributionType ?? self::DEFAULT_DISTRIBUTION_TYPE) === FlowDistributionType::IMMUTABLE;
 	}
 
 	public function getTargetEfficiency(): int
@@ -318,22 +364,22 @@ class Flow implements Arrayable
 
 	public function getMatchWorkTime(): bool
 	{
-		return $this->matchWorkTime;
+		return $this->matchWorkTime ?? true;
 	}
 
 	public function getMatchSchedule(): bool
 	{
-		return $this->matchSchedule;
+		return (bool)$this->matchSchedule;
 	}
 
 	public function getTaskControl(): bool
 	{
-		return $this->taskControl;
+		return (bool)$this->taskControl;
 	}
 
 	public function canResponsibleChangeDeadline(): bool
 	{
-		return $this->responsibleCanChangeDeadline;
+		return (bool)$this->responsibleCanChangeDeadline;
 	}
 
 	public function setTrialFeatureEnabled(bool $trialFeatureEnabled): void
@@ -343,46 +389,61 @@ class Flow implements Arrayable
 
 	public function getResponsibleCanChangeDeadline(): bool
 	{
-		return $this->responsibleCanChangeDeadline;
+		return (bool)$this->responsibleCanChangeDeadline;
 	}
 
 	public function getActivityDate(): DateTime
 	{
-		return $this->activity;
+		return $this->activity ?? new DateTime();
 	}
 
 	public function toArray(): array
 	{
 		return [
-			'id' => $this->id,
-			'creatorId' => $this->creatorId,
-			'ownerId' => $this->ownerId,
-			'groupId' => $this->groupId,
-			'templateId' => $this->templateId,
-			'efficiency' => $this->efficiency,
-			'active' => $this->active,
-			'plannedCompletionTime' => $this->plannedCompletionTime,
-			'activity' => $this->activity,
-			'name' => $this->name,
-			'description' => $this->description,
-			'distributionType' => $this->distributionType?->value,
-			'responsibleList' => $this->responsibleList,
-			'demo' => $this->demo,
+			'id' => $this->getId(),
+			'creatorId' => $this->getCreatorId(),
+			'ownerId' => $this->getOwnerId(),
+			'groupId' => $this->getGroupId(),
+			'templateId' => $this->getTemplateId(),
+			'efficiency' => $this->getEfficiency(),
+			'active' => $this->isActive(),
+			'plannedCompletionTime' => $this->getPlannedCompletionTime(),
+			'activity' => $this->getActivityDate(),
+			'name' => $this->getName(),
+			'description' => $this->getDescription(),
+			'distributionType' => $this->distributionType ? $this->distributionType->value : self::DEFAULT_DISTRIBUTION_TYPE->value,
+			'responsibleList' => $this->getResponsibleList(),
+			'demo' => $this->isDemo(),
 
-			'responsibleCanChangeDeadline' => $this->responsibleCanChangeDeadline,
-			'matchWorkTime' => $this->matchWorkTime,
-			'matchSchedule' => $this->matchSchedule,
-			'taskControl' => $this->taskControl,
+			'responsibleCanChangeDeadline' => $this->getResponsibleCanChangeDeadline(),
+			'matchWorkTime' => $this->getMatchWorkTime(),
+			'matchSchedule' => $this->getMatchSchedule(),
+			'taskControl' => $this->getTaskControl(),
 
-			'notifyAtHalfTime' => $this->notifyAtHalfTime,
+			'notifyAtHalfTime' => $this->isNotifyAtHalfTime(),
 			'notifyOnQueueOverflow' => $this->notifyOnQueueOverflow,
 			'notifyOnTasksInProgressOverflow' => $this->notifyOnTasksInProgressOverflow,
 			'notifyWhenEfficiencyDecreases' => $this->notifyWhenEfficiencyDecreases,
-			'taskCreators' => $this->taskCreators,
-			'team' => $this->team,
+			'taskCreators' => $this->getTaskCreators(),
+			'team' => $this->getTeam(),
 
-			'trialFeatureEnabled' => $this->trialFeatureEnabled,
+			'trialFeatureEnabled' => $this->isTrialFeatureEnabled(),
 		];
+	}
+
+	public function toJson($options = 0): array
+	{
+		$result = [];
+
+		foreach ($this as $key => $value)
+		{
+			if (!is_null($value))
+			{
+				$result[$key] = $value;
+			}
+		}
+
+		return $result;
 	}
 
 	public function getComment(CommentEvent $event, int $taskId): FlowCommentInterface

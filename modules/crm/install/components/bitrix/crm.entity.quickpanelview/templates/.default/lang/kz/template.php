@@ -1,0 +1,23 @@
+<?php
+$MESS["CRM_ENTITY_QPV_COMPANY_HEADER"] = "Компания";
+$MESS["CRM_ENTITY_QPV_COMPANY_NOT_SELECTED"] = "Компания таңдалмаған";
+$MESS["CRM_ENTITY_QPV_CONTACT_HEADER"] = "Байланыс";
+$MESS["CRM_ENTITY_QPV_CONTACT_NOT_SELECTED"] = "Байланыс таңдалмаған";
+$MESS["CRM_ENTITY_QPV_CONTROL_FIELD_DATA_NOT_SAVED"] = "#FIELD#' өрісіндегі деректер сақталмаған.";
+$MESS["CRM_ENTITY_QPV_DD_BIN_PROMPTING"] = "Өрісті жою үшін оны <a id=\"#DEMO_BTN_ID#\" href=\"#\">нысанның оң жақ шетінде орналасқан себетке</a> сүйреп апарыңыз немесе өріс атауының жанындағы белгішедегі мәтінмәндік мәзірді пайдаланыңыз. <a id=\"#CLOSE_BTN_ID#\" href=\"#\">Жабу</a>";
+$MESS["CRM_ENTITY_QPV_DELETE_CONTEXT_MENU_ITEM"] = "Жою";
+$MESS["CRM_ENTITY_QPV_DELETION_CONFIRMATION"] = "Сіз бұл өрісті шынымен жасырғыңыз келе ме?";
+$MESS["CRM_ENTITY_QPV_DRAG_DROP_ERROR_FIELD_ALREADY_EXISTS"] = "Өріс қазірдің өзінде бағанда бар.";
+$MESS["CRM_ENTITY_QPV_DRAG_DROP_ERROR_FIELD_NOT_SUPPORTED"] = "Өрісті жылжытуға қолдау көрсетілмейді.";
+$MESS["CRM_ENTITY_QPV_DRAG_DROP_ERROR_TITLE"] = "Өрісті жылжыту қатесі";
+$MESS["CRM_ENTITY_QPV_EDIT_CONTEXT_MENU_ITEM"] = "Редакциялау";
+$MESS["CRM_ENTITY_QPV_INFO_DLG_BTN_CONTINUE"] = "Жалғастыру";
+$MESS["CRM_ENTITY_QPV_NOT_SELECTED"] = "таңдалмаған";
+$MESS["CRM_ENTITY_QPV_RESET_FOR_ALL_MENU_ITEM"] = "Барлық пайдаланушылар үшін баптауларды қалпына келтіру";
+$MESS["CRM_ENTITY_QPV_RESET_MENU_ITEM"] = "Баптауларды қалпына келтіру";
+$MESS["CRM_ENTITY_QPV_RESPONSIBLE_CHANGE"] = "ауыстыру";
+$MESS["CRM_ENTITY_QPV_SAVE_FOR_ALL_MENU_ITEM"] = "Барлық пайдаланушылар үшін баптауларды сақтау";
+$MESS["CRM_ENTITY_QPV_SIP_MGR_ENABLE_CALL_RECORDING"] = "Сөйлесуді жазып алу";
+$MESS["CRM_ENTITY_QPV_SIP_MGR_UNKNOWN_RECIPIENT"] = "Белгісіз абонент";
+$MESS["CRM_ENTITY_QPV_SUM_HEADER"] = "Сома";
+$MESS["CRM_ENTITY_QPV__SIP_MGR_MAKE_CALL"] = "Қоңырау шалу";

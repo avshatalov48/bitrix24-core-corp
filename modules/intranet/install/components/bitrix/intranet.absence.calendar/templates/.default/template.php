@@ -60,6 +60,9 @@ while($enum_fields = $property_enums->GetNext())
 	}
 }
 
+$arAbsenceParams["MESS"]["INTR_ABSENCE_TITLE"] = GetMessage("INTR_ABSENCE_TITLE");
+$arAbsenceParams["MESS"]["INTR_ABSENCE_POPUP_BUTTON"] = GetMessage("INTR_ABSENCE_ADD_BUTTON_POPUP");
+
 ?>
 <script>
 function GetAbsenceDialog(absenceID)
@@ -72,6 +75,12 @@ function GetAbsenceDialog(absenceID)
 	var dialog = "<?=CUtil::JSEscape("BX.AbsenceCalendar.ShowForm(".CUtil::PhpToJSObject($arAbsenceParams).")")?>";
 	return dialog.replace("#ABSENCE_ID#", absenceID);
 }
+<?php if ($arParams['bAdmin'] && $USER->IsAuthorized()): ?>
+function GetAddAbsenceDialog()
+{
+	BX.AbsenceCalendar.ShowForm(<?= CUtil::PhpToJSObject($arAbsenceParams) ?>);
+}
+<?php endif; ?>
 jsBXAC.Init(
 	{
 		'LOADER': '/bitrix/components/bitrix/intranet.absence.calendar/ajax.php',
@@ -149,16 +158,14 @@ endif;
 
 <?php
 if ($arParams['bAdmin'] && $USER->IsAuthorized()):
-	$arAbsenceParams["MESS"]["INTR_ABSENCE_TITLE"] = GetMessage("INTR_ABSENCE_TITLE");
-	$arAbsenceParams["MESS"]["INTR_ABSENCE_POPUP_BUTTON"] = GetMessage("INTR_ABSENCE_ADD_BUTTON_POPUP");
-	$this->SetViewTarget('pagetitle', 100);?>
-	<span class="webform-small-button webform-small-button-blue webform-small-button-add"
-	   onclick="<?="BX.AbsenceCalendar.ShowForm(".CUtil::PhpToJSObject($arAbsenceParams).")"?>">
-		<span class="webform-small-button-icon"></span>
-		<span class="webform-small-button-text"><?=GetMessage('INTR_ABSC_TPL_ADD_ENTRY')?></span>
-	</span>
-	<?
-	$this->EndViewTarget();
+	\Bitrix\UI\Toolbar\Facade\Toolbar::addButton(
+		new \Bitrix\UI\Buttons\AddButton([
+			'onclick' => 'GetAddAbsenceDialog',
+			'text' => GetMessage('INTR_ABSC_TPL_ADD_ENTRY'),
+			'color' => \Bitrix\UI\Buttons\Color::PRIMARY,
+			'icon' => \Bitrix\UI\Buttons\Icon::ADD,
+		]),
+	);
 endif;
 ?>
 

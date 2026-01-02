@@ -211,7 +211,7 @@ export default class CommonGrid
 
 	removeItemById(itemId): void
 	{
-		BX.fireEvent(document, 'click');
+		BX.fireEvent(document.body, 'click');
 
 		if (this.isGrid())
 		{

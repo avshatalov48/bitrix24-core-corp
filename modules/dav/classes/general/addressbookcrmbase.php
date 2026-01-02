@@ -165,7 +165,7 @@ abstract class CDavAddressbookCrmBase extends CDavAddressbookBaseLimited
 	protected function AdditionalPrivilegesCheck($principal)
 	{
 		return parent::AdditionalPrivilegesCheck($principal)
-			&& CCrmPerms::IsAccessEnabled();
+			&& \Bitrix\Crm\Service\Container::getInstance()->getUserPermissions()->entityType()->canReadSomeItemsInCrm();
 	}
 
 	/**

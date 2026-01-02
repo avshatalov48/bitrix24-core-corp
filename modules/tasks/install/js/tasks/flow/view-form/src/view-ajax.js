@@ -12,6 +12,8 @@ export type FlowFormData = {
 		description: string,
 		efficiency: number,
 		demo: boolean,
+		link: string,
+		isFeatureEnabled: boolean,
 	},
 	team: Entity[],
 	teamCount: number,
@@ -53,6 +55,8 @@ export class ViewAjax
 			owner: this.#convertUserToEntity(data.owner),
 			creator: this.#convertUserToEntity(data.creator),
 			project: data.project,
+			link: data.link,
+			isFeatureEnabled: data.isFeatureEnabled,
 		};
 	}
 

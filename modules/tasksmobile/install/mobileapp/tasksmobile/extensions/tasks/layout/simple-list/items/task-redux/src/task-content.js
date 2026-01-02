@@ -50,9 +50,7 @@ jn.define('tasks/layout/simple-list/items/task-redux/task-content', (require, ex
 
 		get backgroundColor()
 		{
-			const isPinned = this.task?.isPinned && this.props.itemLayoutOptions.canBePinned;
-
-			return isPinned ? Color.bgContentSecondary.toHex() : Color.bgContentPrimary.toHex();
+			return this.isPinned ? Color.bgContentSecondary.toHex() : Color.bgContentPrimary.toHex();
 		}
 
 		get showBorder()
@@ -78,6 +76,16 @@ jn.define('tasks/layout/simple-list/items/task-redux/task-content', (require, ex
 			}
 
 			return this.props?.isLastPinned ?? false;
+		}
+
+		get isPinned()
+		{
+			return (
+				this.props.projectId
+					? this.task?.isPinnedInGroup
+					: this.task?.isPinned
+			)
+			&& this.props.itemLayoutOptions.canBePinned;
 		}
 
 		async blink()
@@ -122,7 +130,11 @@ jn.define('tasks/layout/simple-list/items/task-redux/task-content', (require, ex
 				}),
 				View(
 					{
-						style: this.styles.itemContent(this.showDelimiter, this.backgroundColor, this.task?.isPinned),
+						style: this.styles.itemContent(
+							this.showDelimiter,
+							this.backgroundColor,
+							this.isPinned,
+						),
 					},
 					this.renderHeader(),
 					this.renderBody(),
@@ -199,7 +211,7 @@ jn.define('tasks/layout/simple-list/items/task-redux/task-content', (require, ex
 			const formatter = new DynamicDateFormatter({
 				config: {
 					[DynamicDateFormatter.periods.DAY]: shortTime(),
-					[DynamicDateFormatter.deltas.WEEK]: 'E',
+					[DynamicDateFormatter.periods.WEEK]: 'E',
 					[DynamicDateFormatter.periods.YEAR]: dayShortMonth(),
 				},
 				defaultFormat: date(),
@@ -396,14 +408,13 @@ jn.define('tasks/layout/simple-list/items/task-redux/task-content', (require, ex
 		renderPinIcon()
 		{
 			const counter = this.task?.counter;
-			const isPinned = this.task?.isPinned;
 
 			if (counter && counter.value > 0)
 			{
 				return null;
 			}
 
-			if (isPinned && this.props.itemLayoutOptions.canBePinned)
+			if (this.isPinned)
 			{
 				return IconView({
 					testId: `${this.props.testId}_PIN`,
@@ -555,7 +566,7 @@ jn.define('tasks/layout/simple-list/items/task-redux/task-content', (require, ex
 
 	const mapStateToProps = (state, ownProps) => {
 		const taskId = ownProps.id;
-		const task = selectByTaskIdOrGuid(state, taskId);
+		const task = selectByTaskIdOrGuid(state, taskId, ownProps.ownerId);
 
 		if (!task)
 		{
@@ -568,6 +579,7 @@ jn.define('tasks/layout/simple-list/items/task-redux/task-content', (require, ex
 			responsible,
 			priority,
 			isPinned,
+			isPinnedInGroup,
 			isMuted,
 			isRepeatable,
 			checklist,
@@ -587,6 +599,7 @@ jn.define('tasks/layout/simple-list/items/task-redux/task-content', (require, ex
 				responsible,
 				priority,
 				isPinned,
+				isPinnedInGroup,
 				isMuted,
 				isRepeatable,
 				checklist,

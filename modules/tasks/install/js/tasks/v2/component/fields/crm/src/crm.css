@@ -1,0 +1,42 @@
+.tasks-field-crm {
+	display: flex;
+	flex-direction: column;
+	gap: var(--ui-space-stack-xs);
+}
+
+.tasks-field-crm-item-container {
+	display: flex;
+	justify-content: space-between;
+	align-items: flex-start;
+	margin-left: var(--ui-space-inline-xs2-neg);
+}
+
+.tasks-field-crm-item {
+	z-index: 1;
+}
+
+.tasks-field-crm-item-text {
+	padding: var(--ui-space-inline-3xs) 0 var(--ui-space-inline-3xs) var(--ui-space-inline-xs);
+	overflow: hidden;
+	text-overflow: ellipsis;
+	white-space: nowrap;
+}
+
+.tasks-field-crm-skeleton {
+	display: flex;
+	flex-direction: column;
+	padding: 4px 0;
+	gap: 16px;
+}
+
+.tasks-field-crm-anchor {
+	position: sticky;
+	bottom: 0;
+	left: 0;
+}
+
+.tasks-field-crm-expand {
+	z-index: 1;
+	color: var(--ui-color-base-4);
+	cursor: pointer;
+}

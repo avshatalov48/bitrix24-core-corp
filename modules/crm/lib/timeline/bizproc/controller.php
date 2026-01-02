@@ -19,8 +19,6 @@ final class Controller extends Timeline\Controller
 {
 	use Workflow;
 
-	private ?int $responsibleId = null;
-
 	public function onWorkflowStatusChange(Timeline\Bizproc\Dto\WorkflowStatusChangedDto $request): void
 	{
 		$statusMethods = [
@@ -406,7 +404,6 @@ final class Controller extends Timeline\Controller
 		$trackable = [
 			\CBPDocumentEventType::Manual,
 			\CBPDocumentEventType::Create,
-			\CBPDocumentEventType::Edit,
 		];
 
 		if (!in_array($changedWorkflowStatus->documentEventType, $trackable, true))
@@ -697,13 +694,6 @@ final class Controller extends Timeline\Controller
 
 	private function getResponsibleId(array $documentId): int
 	{
-		if ($this->responsibleId !== null)
-		{
-			return $this->responsibleId;
-		}
-
-		$this->responsibleId = \CCrmBizProcHelper::getDocumentResponsibleId($documentId);
-
-		return $this->responsibleId;
+		return \CCrmBizProcHelper::getDocumentResponsibleId($documentId);
 	}
 }

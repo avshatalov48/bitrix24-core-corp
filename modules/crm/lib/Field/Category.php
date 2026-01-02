@@ -8,7 +8,9 @@ use Bitrix\Crm\Service\Container;
 use Bitrix\Crm\Service\Context;
 use Bitrix\Crm\Service\Factory;
 use Bitrix\Crm\Service\Operation\FieldAfterSaveResult;
+use Bitrix\Crm\Service\UserPermissions;
 use Bitrix\Main\Error;
+use Bitrix\Main\Localization\Loc;
 use Bitrix\Main\Result;
 
 class Category extends Field
@@ -74,7 +76,7 @@ class Category extends Field
 			return $result;
 		}
 
-		$permissionEntityType = \Bitrix\Crm\Service\UserPermissions::getItemPermissionEntityType($itemBeforeSave);
+		$permissionEntityType = \Bitrix\Crm\Category\PermissionEntityTypeHelper::getPermissionEntityTypeForItem($itemBeforeSave);
 		\Bitrix\Crm\Security\Manager::resolveController($permissionEntityType)
 			->unregister($permissionEntityType, $item->getId())
 		;
@@ -143,5 +145,27 @@ class Category extends Field
 		);
 
 		$event->send();
+	}
+
+	public function processWithPermissions(Item $item, UserPermissions $userPermissions): Result
+	{
+		if (!$item->isNew())
+		{
+			$newCategoryId = $item->getCategoryId();
+			$oldCategoryId = $item->remindActual(Item::FIELD_NAME_CATEGORY_ID);
+
+			if (
+				$newCategoryId !== $oldCategoryId
+				&& !$userPermissions->entityType()->canAddItemsInCategory($item->getEntityTypeId(), $newCategoryId)
+			)
+			{
+				$result = new Result();
+				$result->addError(new Error(Loc::getMessage('CRM_PERMISSION_STAGE_TRANSITION_NOT_ALLOWED')));
+
+				return $result;
+			}
+		}
+
+		return parent::processWithPermissions($item, $userPermissions);
 	}
 }

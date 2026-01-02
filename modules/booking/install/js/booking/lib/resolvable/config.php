@@ -6,7 +6,6 @@ if (!defined('B_PROLOG_INCLUDED') || B_PROLOG_INCLUDED !== true)
 }
 
 return [
-	'css' => 'dist/resolvable.bundle.css',
 	'js' => 'dist/resolvable.bundle.js',
 	'rel' => [
 		'main.polyfill.core',

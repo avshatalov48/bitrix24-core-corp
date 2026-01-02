@@ -4,6 +4,7 @@ namespace Bitrix\Crm\Copilot\CallAssessment;
 
 use Bitrix\Crm\Copilot\CallAssessment\Entity\CopilotCallAssessment;
 use Bitrix\Crm\Copilot\CallAssessment\Enum\AutoCheckType;
+use Bitrix\Crm\Copilot\CallAssessment\Enum\AvailabilityType;
 use Bitrix\Crm\Copilot\CallAssessment\Enum\CallType;
 use Bitrix\Crm\Integration\AI\Model\QueueTable;
 
@@ -19,7 +20,9 @@ final class CallAssessmentItem
 	private array $clientTypeIds;
 	private ?CallType $callType = null;
 	private ?AutoCheckType $autoCheckType = null;
-	private bool $isEnabled = true;
+	private AvailabilityType $availabilityType = AvailabilityType::ALWAYS_ACTIVE;
+	private array $availabilityData = [];
+	private bool $isEnabled;
 	private bool $isDefault = false;
 	private int $jobId = 0;
 	private string $status = QueueTable::EXECUTION_STATUS_PENDING;
@@ -46,6 +49,18 @@ final class CallAssessmentItem
 
 		$instance->callType = CallType::from($callAssessmentItem->getCallType());
 		$instance->autoCheckType = AutoCheckType::from($callAssessmentItem->getAutoCheckType());
+		$instance->availabilityType = AvailabilityType::from($callAssessmentItem->getAvailabilityType());
+		$instance->availabilityData = [];
+		$availabilityData = $callAssessmentItem->getAvailabilityData() ?? [];
+		/** @var EO_CopilotCallAssessmentAvailability $availabilityDataItem */
+		foreach ($availabilityData as $availabilityDataItem)
+		{
+			$instance->availabilityData[] = [
+				'startPoint' => $availabilityDataItem->getStartPoint(),
+				'endPoint' => $availabilityDataItem->getEndPoint(),
+				'weekdayType' => $availabilityDataItem->getWeekdayType(),
+			];
+		}
 
 		$instance->isEnabled = $callAssessmentItem->getIsEnabled();
 		$instance->isDefault = true; // not used in Crm.Copilot.CallAssessment
@@ -78,7 +93,14 @@ final class CallAssessmentItem
 			$instance->autoCheckType = AutoCheckType::from($data['autoCheckTypeId']);
 		}
 
-		$instance->isEnabled = $data['isEnabled'] ?? true;
+		$instance->availabilityType = isset($data['availabilityType'])
+			? AvailabilityType::from($data['availabilityType'])
+			: AvailabilityType::ALWAYS_ACTIVE
+		;
+
+		$instance->availabilityData = $data['availabilityData'] ?? [];
+
+		$instance->isEnabled = $instance->availabilityType !== AvailabilityType::INACTIVE;
 		$instance->isDefault = true; // not used in Crm.Copilot.CallAssessment
 		$instance->jobId = $data['jobId'] ?? 0;
 		$instance->status = $data['status'] ?? QueueTable::EXECUTION_STATUS_PENDING;
@@ -99,7 +121,9 @@ final class CallAssessmentItem
 			'clientTypeIds' => $this->clientTypeIds,
 			'callTypeId' => $this->callType?->value,
 			'autoCheckTypeId' => $this->autoCheckType?->value,
-			'isEnabled' => $this->isEnabled,
+			'availabilityType' => $this->availabilityType->value,
+			'availabilityData' => $this->availabilityData,
+			'isEnabled' => $this->availabilityType !== AvailabilityType::INACTIVE,
 			'jobId' => $this->jobId,
 			'status' => $this->status,
 			'code' => $this->code,
@@ -150,9 +174,26 @@ final class CallAssessmentItem
 		return $this->autoCheckType?->value;
 	}
 
+	public function getAvailabilityType(): string
+	{
+		return $this->availabilityType->value;
+	}
+
+	public function setAvailabilityType(AvailabilityType $availabilityType): CallAssessmentItem
+	{
+		$this->availabilityType = $availabilityType;
+
+		return $this;
+	}
+
+	public function getAvailabilityData(): array
+	{
+		return $this->availabilityData;
+	}
+
 	public function isEnabled(): bool
 	{
-		return $this->isEnabled;
+		return $this->getAvailabilityType() !== AvailabilityType::INACTIVE->value;
 	}
 
 	public function isDefault(): bool
@@ -180,13 +221,6 @@ final class CallAssessmentItem
 	public function setStatus(string $status): CallAssessmentItem
 	{
 		$this->status = $status;
-
-		return $this;
-	}
-
-	public function setIsEnabled(bool $isEnabled): CallAssessmentItem
-	{
-		$this->isEnabled = $isEnabled;
 
 		return $this;
 	}

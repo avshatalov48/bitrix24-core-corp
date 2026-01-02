@@ -4,10 +4,13 @@ declare(strict_types=1);
 
 namespace Bitrix\Tasks\Flow\Integration\AI\Event;
 
+use Bitrix\Main\DI\ServiceLocator;
 use Bitrix\Main\Event;
 use Bitrix\Main\EventResult;
 use Bitrix\Tasks\Flow\Flow;
 use Bitrix\Tasks\Flow\Integration\AI\Configuration;
+use Bitrix\Tasks\Flow\Integration\AI\Control\AdviceService;
+use Bitrix\Tasks\Flow\Integration\AI\Control\Command\DeleteCommand;
 use Bitrix\Tasks\Flow\Integration\AI\FlowCopilotFeature;
 use Bitrix\Tasks\Flow\Integration\AI\Provider\CollectedDataProvider;
 use Bitrix\Tasks\Flow\Integration\AI\Stepper\Collector;
@@ -41,6 +44,7 @@ final class EfficiencyListener
 
 		if ($this->shouldStartGeneration())
 		{
+			$this->deleteOldAdvice();
 			$this->runDataCollector();
 		}
 
@@ -87,6 +91,14 @@ final class EfficiencyListener
 		;
 
 		return $switchedFromHighToLow || $switchedFromLowToHigh;
+	}
+
+	private function deleteOldAdvice(): void
+	{
+		$deleteCommand = (new DeleteCommand())->setFlowId($this->flow->getId());
+		/** @var AdviceService $adviceService */
+		$adviceService = ServiceLocator::getInstance()->get('tasks.flow.copilot.advice.service');
+		$adviceService->delete($deleteCommand);
 	}
 
 	private function runDataCollector(): void

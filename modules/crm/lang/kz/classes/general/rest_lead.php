@@ -1,0 +1,25 @@
+<?php
+$MESS["CRM_ERROR_FIELD_INCORRECT"] = "%FIELD_NAME%' өрісі дұрыс толтырылмаған";
+$MESS["CRM_ERROR_FIELD_IS_MISSING"] = "%FIELD_NAME%' өрісінің мәндетті мәні енгізілмеген";
+$MESS["CRM_FIELD_ADDRESS"] = "Мекенжай";
+$MESS["CRM_FIELD_BIRTHDATE"] = "Туған күні";
+$MESS["CRM_FIELD_COMMENTS"] = "Түсініктеме";
+$MESS["CRM_FIELD_COMPANY_ID"] = "Компания";
+$MESS["CRM_FIELD_COMPANY_TITLE"] = "Компания атауы";
+$MESS["CRM_FIELD_CURRENCY_ID"] = "Валюта";
+$MESS["CRM_FIELD_EMAIL"] = "E-mail";
+$MESS["CRM_FIELD_FIND"] = "Табу";
+$MESS["CRM_FIELD_LAST_NAME"] = "Тегі";
+$MESS["CRM_FIELD_MESSENGER"] = "Мессенджер";
+$MESS["CRM_FIELD_OPPORTUNITY"] = "Мәміленің ықтимал сомасы";
+$MESS["CRM_FIELD_PHONE"] = "Телефон";
+$MESS["CRM_FIELD_POST"] = "Лауазымы";
+$MESS["CRM_FIELD_PRODUCT_ID"] = "Өнім";
+$MESS["CRM_FIELD_REST_NAME"] = "Аты";
+$MESS["CRM_FIELD_SECOND_NAME"] = "Әкесінің аты";
+$MESS["CRM_FIELD_SOURCE_DESCRIPTION"] = "Дереккөз сипаттамасы";
+$MESS["CRM_FIELD_SOURCE_ID"] = "Дереккөз";
+$MESS["CRM_FIELD_STATUS_DESCRIPTION"] = "Мәртебенің сипаттамасы";
+$MESS["CRM_FIELD_STATUS_ID"] = "Мәртебе";
+$MESS["CRM_FIELD_TITLE"] = "Тақырыпаты";
+$MESS["CRM_FIELD_WEB"] = "Сайт";

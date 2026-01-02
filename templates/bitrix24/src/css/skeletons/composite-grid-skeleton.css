@@ -1,0 +1,125 @@
+.grid-skeleton-wrapper {
+	display: flex;
+	flex-direction: column;
+	flex-grow: 1;
+	width: 100%;
+}
+
+.grid-skeleton-wrapper {
+	--composite-base-skeleton-color: 255, 255, 255;
+}
+
+.--ui-context-edge-light .grid-skeleton-wrapper {
+	--composite-base-skeleton-color: 168, 173, 180;
+}
+
+.grid-skeleton-container {
+	flex-grow: 1;
+	min-height: 0;
+	display: flex;
+	flex-direction: column;
+	background-color: #fff;
+	border-radius: 12px;
+}
+
+.grid-skeleton {
+	height: 100%;
+	width: 100%;
+	table-layout: fixed;
+	border-radius: 12px;
+	background-color: #fff;
+	border-collapse: collapse;
+}
+
+.grid-skeleton__header-row {
+	height: 44px;
+}
+
+.grid-skeleton__header-row,
+.grid-skeleton__row {
+	border-bottom: 1px solid rgba(0, 0, 0, 0.1);
+}
+
+.grid-skeleton__header-cell {
+	height: 44px;
+}
+
+.grid-skeleton__header-cell,
+.grid-skeleton__cell {
+	width: 100%;
+	padding-left: 12px;
+}
+
+.grid-skeleton__header-cell:nth-child(1),
+.grid-skeleton__cell:nth-child(1) {
+	width: 40px;
+	padding-left: 0;
+}
+
+.grid-skeleton__header-cell:nth-child(2),
+.grid-skeleton__cell:nth-child(2) {
+	width: 20px;
+	padding-left: 0;
+}
+
+.grid-skeleton__row {
+	height: 60px;
+}
+
+.grid-skeleton__cell {
+	height: 60px;
+}
+
+.grid-skeleton__checkbox {
+	width: 14px;
+	height: 14px;
+	margin-left: 14px;
+	margin-right: 11px;
+	border-radius: 2px;
+	border: 1px solid rgba(0, 0, 0, 0.1);
+}
+
+.grid-skeleton__avatar {
+	width: 20px;
+	height: 20px;
+	border-radius: 50%;
+	background-color: rgba(0, 0, 0, 0.1);
+}
+
+.grid-skeleton__cell-title {
+	width: 106px;
+	height: 6px;
+	border-radius: 2px;
+	background-color: rgba(0, 0, 0, 0.1);
+}
+
+.grid-skeleton__cell-title.--short {
+	width: 76px;
+}
+
+.grid-skeleton__cell-title.--long {
+	width: 120px;
+}
+
+.grid-skeleton__cell-button {
+	width: 80px;
+	height: 20px;
+	margin-bottom: 6px;
+	border-radius: 20px;
+	background-color: rgba(0, 0, 0, 0.1);
+}
+
+.grid-skeleton__avatar-title {
+	display: flex;
+	flex-direction: row;
+	align-items: center;
+	gap: 0 12px;
+}
+
+.grid-skeleton__cell-two-text {
+	margin-top: 14px;
+	display: flex;
+	flex-direction: column;
+	justify-content: center;
+	gap: 10px 0;
+}

@@ -94,6 +94,7 @@ class Recyclebin
 			$entity->setData($data);
 			$entity->setFiles($files);
 			$entity->setOwnerId($recyclebin['USER_ID']);
+			$entity->setDateTime($recyclebin['TIMESTAMP']);
 
 			return $entity;
 		}

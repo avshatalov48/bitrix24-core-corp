@@ -100,12 +100,6 @@ if(count($jsMessagesCodes)>0)
 					<?=Loc::getMessage("CRM_1C_START_FACE_CARD_DO_START")?>
 				</div>
 
-				<?if(IsModuleInstalled("bitrix24")):?>
-					<div class="ui-alert ui-alert-success ui-alert-inline onec-alert">
-						<span class="ui-alert-message"><?=Loc::getMessage("CRM_1C_START_FACE_CARD_WARN_TEXT")?></span>
-					</div>
-				<?endif?>
-
 				<div id="b24-integration-inner-active" class="b24-integration-wrap b24-integration-left-text-block">
 					<hr style="margin: 30px 0; border: none; border-top: 2px dashed #8681818c !important;">
 					<?

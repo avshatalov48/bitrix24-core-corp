@@ -2,7 +2,7 @@
 this.BX = this.BX || {};
 this.BX.Booking = this.BX.Booking || {};
 this.BX.Booking.Provider = this.BX.Booking.Provider || {};
-(function (exports,booking_core,booking_lib_apiClient) {
+(function (exports,main_core,booking_core,booking_const) {
 	'use strict';
 
 	var _response = /*#__PURE__*/babelHelpers.classPrivateFieldLooseKey("response");
@@ -34,17 +34,20 @@ this.BX.Booking.Provider = this.BX.Booking.Provider || {};
 	class DictionaryService {
 	  async fetchData() {
 	    try {
-	      const data = await new booking_lib_apiClient.ApiClient().get('Dictionary.get', {});
+	      const data = main_core.Extension.getSettings('booking.provider.service.dictionary-service');
 	      const extractor = new DictionaryDataExtractor(data);
-	      return Promise.all([booking_core.Core.getStore().dispatch('dictionary/setCounters', extractor.getCounters()), booking_core.Core.getStore().dispatch('dictionary/setNotifications', extractor.getNotifications()), booking_core.Core.getStore().dispatch('dictionary/setNotificationTemplates', extractor.getNotificationTemplates()), booking_core.Core.getStore().dispatch('dictionary/setPushCommands', extractor.getPushCommands()), booking_core.Core.getStore().dispatch('dictionary/setBookings', extractor.getBookings())]);
+	      await Promise.all([this.$store.dispatch(`${booking_const.Model.Dictionary}/setCounters`, extractor.getCounters()), this.$store.dispatch(`${booking_const.Model.Dictionary}/setNotifications`, extractor.getNotifications()), this.$store.dispatch(`${booking_const.Model.Dictionary}/setNotificationTemplates`, extractor.getNotificationTemplates()), this.$store.dispatch(`${booking_const.Model.Dictionary}/setPushCommands`, extractor.getPushCommands()), this.$store.dispatch(`${booking_const.Model.Dictionary}/setBookings`, extractor.getBookings())]);
 	    } catch (error) {
 	      console.error('BookingDictionaryGetRequest: error', error);
 	    }
+	  }
+	  get $store() {
+	    return booking_core.Core.getStore();
 	  }
 	}
 	const dictionaryService = new DictionaryService();
 
 	exports.dictionaryService = dictionaryService;
 
-}((this.BX.Booking.Provider.Service = this.BX.Booking.Provider.Service || {}),BX.Booking,BX.Booking.Lib));
+}((this.BX.Booking.Provider.Service = this.BX.Booking.Provider.Service || {}),BX,BX.Booking,BX.Booking.Const));
 //# sourceMappingURL=dictionary-service.bundle.js.map

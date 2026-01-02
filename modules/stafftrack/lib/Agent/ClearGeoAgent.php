@@ -125,10 +125,7 @@ final class ClearGeoAgent
 	{
 		$messageService = new MessageService(0);
 
-		foreach ($messageIds as $messageId)
-		{
-			$messageService->deleteMessage($messageId);
-		}
+		$messageService->deleteMessages($messageIds);
 	}
 
 	/**

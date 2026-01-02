@@ -2,6 +2,7 @@
 
 namespace Bitrix\Crm\Controller;
 
+use Bitrix\Crm\Service\Container;
 use Bitrix\Main\Engine\Response\DataType\Page;
 use Bitrix\Main\Error;
 use Bitrix\Main\Result;
@@ -19,9 +20,7 @@ class BuyerGroup extends Controller
 	{
 		$checkResult = new Result();
 
-		$crmPerms = new \CCrmPerms(\Bitrix\Main\Engine\CurrentUser::get()->getId());
-
-		if (!$crmPerms->HavePerm('CONFIG', BX_CRM_PERM_CONFIG, 'READ'))
+		if (Container::getInstance()->getUserPermissions()->product()->canRead())
 		{
 			$checkResult->addError(new Error('Access Denied'));
 		}

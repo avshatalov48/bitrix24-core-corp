@@ -1,23 +1,29 @@
-import {Browser, Dom, Runtime, Text, Type} from 'main.core';
+import { Browser, Dom, Runtime, Text, Type, Loc } from 'main.core';
 import {BaseEvent, EventEmitter} from 'main.core.events';
 import {Popup} from 'main.popup';
 import {DesktopApi} from 'im.v2.lib.desktop-api';
-import { CopilotNotify, CopilotNotifyType } from './copilot-notify';
 
 import {UserModel, UserRegistry} from './user-registry'
 import * as Buttons from './buttons';
 import {BackgroundDialog} from '../dialogs/background_dialog';
 import {CallUserMobile, MobileMenu, MobileSlider, UserSelectorMobile} from './mobile';
 import {CallUser} from './call-user';
-import {Hardware} from '../hardware';
+import {Hardware} from '../call_hardware';
 import {FloorRequest} from './floor-request';
 import {NotificationManager} from './notifications';
 import {DeviceSelector} from './device-selector';
 import {EndpointDirection, UserState} from '../engine/engine';
 import Util from '../util';
 import { CallAI } from '../call_ai';
+import { CopilotNotify, CopilotNotifyType } from './copilot-notify';
+import { MediaRenderer } from './media-renderer';
+import { PictureInPictureWindow } from './pictureInPictureWindow';
 import { Utils } from 'im.v2.lib.utils';
 import {UserSelector} from './user-selector';
+import { checkAndEncodeURI } from './tools';
+
+import { PromoManager } from 'im.v2.lib.promo';
+import { AhaMomentNotify } from './aha-moment-notify';
 
 import '../css/view.css';
 
@@ -90,7 +96,14 @@ const EventName = {
 	onDeviceSelectorShow: 'onDeviceSelectorShow',
 	onOpenAdvancedSettings: 'onOpenAdvancedSettings',
 	onHasMainStream: 'onHasMainStream',
-	onToggleSubscribe: 'onToggleSubscribe'
+	onTurnOffParticipantMic: 'onTurnOffParticipantMic',
+	onTurnOffParticipantCam: 'onTurnOffParticipantCam',
+	onTurnOffParticipantScreenshare: 'onTurnOffParticipantScreenshare',
+	onAllowSpeakPermission: 'onAllowSpeakPermission',
+	onDisallowSpeakPermission: 'onDisallowSpeakPermission',
+	onToggleSubscribe: 'onToggleSubscribe',
+	onUnfold: 'onUnfold',
+	onPiPClose: 'onPiPClose',
 };
 
 const beginingPosition = -1;
@@ -108,6 +121,8 @@ const MIN_GRID_USER_HEIGHT = 100;
 
 const CHANGE_VIDEO_RERENDER_DELAY = 3000;
 const WAITING_VIDEO_DELAY = 3000;
+
+const CALLCONTROL_PROMO_ID = 'call:callcontrol-notify-promo:07052025:all';
 
 type ViewOptions = {
 	title: ?string,
@@ -137,7 +152,14 @@ type ViewOptions = {
 	showAddUserButtonInList?: boolean,
 	isCopilotFeaturesEnabled: boolean,
 	isCopilotActive: boolean,
+	isWindowFocus?: boolean,
+	isVideoconf: boolean,
 }
+
+const DocumentVisibilityState = {
+	hidden: 'hidden',
+	visible: 'visible',
+};
 
 export class View
 {
@@ -168,6 +190,7 @@ export class View
 		this.showCopilotButton = (config.showCopilotButton !== false);
 		this.showButtonPanel = (config.showButtonPanel !== false);
 		this.showAddUserButtonInList = config.showAddUserButtonInList || false;
+		this.preferInitialWindowPlacementPictureInPicture = true;
 
 		this.limitation = null;
 		this.inactiveUsers = [];
@@ -209,7 +232,13 @@ export class View
 			name: this.userData[this.userId] ? this.userData[this.userId].name : '',
 			avatar: this.userData[this.userId] ? this.userData[this.userId].avatar_hr : '',
 		});
-		this.userRegistry.push(localUserModel);
+
+		if (this.userId)
+		{
+			this.userRegistry.push(localUserModel);
+		}
+
+		this.cache = new Map();
 
 		this.localUser = new CallUser({
 			parentContainer: this.container,
@@ -220,6 +249,9 @@ export class View
 			onUserRenameInputFocus: this._onUserRenameInputFocus.bind(this),
 			onUserRenameInputBlur: this._onUserRenameInputBlur.bind(this),
 			onClick: this._onUserClick.bind(this),
+			onTurnOffParticipantMic: this._onTurnOffParticipantMic.bind(this),
+			onTurnOffParticipantCam: this._onTurnOffParticipantCam.bind(this),
+			onTurnOffParticipantScreenshare: this._onTurnOffParticipantScreenshare.bind(this),
 			onPin: this._onUserPin.bind(this),
 			onUnPin: this._onUserUnPin.bind(this),
 		});
@@ -228,6 +260,8 @@ export class View
 		this.centralUserMobile = null;
 		this.pinnedUser = null;
 		this.presenterId = null;
+
+		this.localUserRecivedStats = false;
 
 		this.returnToGridAfterScreenStopped = false;
 
@@ -305,6 +339,11 @@ export class View
 			more: null,
 			hangupOptions: null,
 		};
+
+		this.previousTopButtonList = [];
+		this.needToRerenderTopButtonList = false;
+		this.previousButtonList = [];
+		this.needToRerenderButtonList = false;
 
 		this.size = Size.Full;
 		this.maxWidth = null;
@@ -391,6 +430,16 @@ export class View
 		this._isPreparing = false;
 		this._videoRerenderDelay = 0;
 
+		this.isWindowFocus = config.isWindowFocus || false;
+		this.isDocumentHidden = false;
+		this._isActivePiPFromController = false;
+
+		const pictureInPictureUpdateButtonHandler = () => {
+			this.pictureInPictureCallWindow && this.pictureInPictureCallWindow.setButtons(this.getPictureInPictureCallWindowGetButtonsList()).updateButtons();
+		};
+
+		this.viewVisibility = this.#getViewVisibilityChange([pictureInPictureUpdateButtonHandler]);
+
 		this.init();
 		this.subscribeEvents(config);
 		if (Type.isPlainObject(config.userStates))
@@ -410,6 +459,17 @@ export class View
 		this.isCopilotFeaturesEnabled = config.isCopilotFeaturesEnabled || false;
 		this.isCopilotActive = config.isCopilotActive || false;
 		this.copilotNotify = null;
+
+		this.ahaMomentNotify = null;
+
+		this.pictureInPictureCallWindow = null;
+
+		this.floorRequestNotifications = [];
+		this.currentPiPUserId = null;
+
+		this.isVideoconf = config.isVideoconf || false;
+
+		this.needToShowCallcontrolPromo = this.isVideoconf ? false : PromoManager.getInstance().needToShow(CALLCONTROL_PROMO_ID);
 	};
 
 	openArticle(articleCode)
@@ -435,6 +495,11 @@ export class View
 		}
 
 		if (!enabled && articleCode) {
+			if (this.size === View.Size.Folded)
+			{
+				this._onBodyClick();
+			}
+
 			this.openArticle(articleCode)
 		}
 	}
@@ -506,6 +571,7 @@ export class View
 			this.hideEarTimer = null;
 		}
 
+		Dom.addClass(this.elements.root, 'on-mouse-move');
 		this.elements.ear.top?.classList.add("force-visible");
 		this.elements.ear.bottom?.classList.add("force-visible");
 		this.elements.pageNavigatorLeft?.classList.add("force-visible");
@@ -513,6 +579,7 @@ export class View
 
 		this.hideEarTimer = setTimeout(() =>
 		{
+			Dom.removeClass(this.elements.root, 'on-mouse-move');
 			this.elements.ear.top?.classList.remove("force-visible");
 			this.elements.ear.bottom?.classList.remove("force-visible");
 			this.elements.pageNavigatorLeft?.classList.remove("force-visible");
@@ -572,18 +639,23 @@ export class View
 		this.onMouseMoveHandler = this.toggleVisibilityEar.bind(this);
 		document.addEventListener('mousemove', this.onMouseMoveHandler);
 
-		if (Browser.isMac())
-		{
-			this.keyModifier = '&#8984; + Shift';
-		}
-		else
-		{
-			this.keyModifier = 'Ctrl + Shift';
-		}
+		this.keyModifierForCss = Browser.isMac() ? '\\2318 + Shift' : 'Ctrl + Shift';
 
 		this.container.appendChild(this.elements.audioContainer);
 		this.container.appendChild(this.elements.screenAudioContainer);
+
+		this.viewVisibility.startViewVisibilityChange()
 	};
+
+	get isActivePiPFromController()
+	{
+		return this._isActivePiPFromController;
+	}
+
+	set isActivePiPFromController(isActive)
+	{
+		this._isActivePiPFromController = isActive;
+	}
 
 	get isPreparing()
 	{
@@ -698,52 +770,70 @@ export class View
 				this.centralUserMobile.mount(this.elements.pinnedUserContainer);
 			}
 		}
-		this.userRegistry.users.forEach(userModel => userModel.centralUser = (userModel.id == userId));
+
+		this.userRegistry.get(previousCentralUser.id).centralUser = false;
+		this.userRegistry.get(this.centralUser.id).centralUser = true;
+
 		this.eventEmitter.emit(EventName.onSetCentralUser, {
 			userId: userId,
 			stream: userId == this.userId ? this.localUser.stream : this.users[userId].stream
 		})
 	};
 
-	getLeftUser(userId)
+	getLeftUser(userId): ?number
 	{
 		let candidateUserId = null;
-		for (let i = 0; i < this.userRegistry.users.length; i++)
-		{
-			const userModel = this.userRegistry.users[i];
-			if (userModel.id == userId && candidateUserId)
-			{
-				return candidateUserId
-			}
+		const keys = [...this.userRegistry.users.keys()];
+		const index = keys.indexOf(userId);
 
-			if (!userModel.localUser && userModel.state == UserState.Connected)
+		if (index === -1)
+		{
+			return candidateUserId;
+		}
+
+		const userModels = [...this.userRegistry.users.values()].slice(0, index);
+		const totalUserModels = userModels.length;
+
+		for (let i = totalUserModels - 1; i >= 0; i--)
+		{
+			const userModel = userModels[i];
+			if (!userModel.localUser && userModel.state === UserState.Connected)
 			{
-				candidateUserId = userModel.id
+				candidateUserId = userModel.id;
+				break;
 			}
 		}
 
 		return candidateUserId;
-	};
+	}
 
-	getRightUser(userId)
+	getRightUser(userId): ?number
 	{
 		let candidateUserId = null;
-		for (let i = this.userRegistry.users.length - 1; i >= 0; i--)
-		{
-			const userModel = this.userRegistry.users[i];
-			if (userModel.id == userId && candidateUserId)
-			{
-				return candidateUserId
-			}
+		const keys = [...this.userRegistry.users.keys()];
+		const index = keys.indexOf(userId);
 
-			if (!userModel.localUser && userModel.state == UserState.Connected)
+		if (index === -1)
+		{
+			return candidateUserId;
+		}
+
+		const userModels = [...this.userRegistry.users.values()].slice(index + 1);
+		const totalUserModels = userModels.length;
+
+		for (let i = 0; i < totalUserModels; i++)
+		{
+			const userModel = userModels[i];
+
+			if (!userModel.localUser && userModel.state === UserState.Connected)
 			{
-				candidateUserId = userModel.id
+				candidateUserId = userModel.id;
+				break;
 			}
 		}
 
 		return candidateUserId;
-	};
+	}
 
 	getUserCount()
 	{
@@ -766,81 +856,107 @@ export class View
 		return count;
 	};
 
-	getUsersWithVideo()
+	getUsersWithVideo(): Array
 	{
-		let result = [];
-
-		for (let userId in this.users)
+		if (this.cache.has('usersWithVideo'))
 		{
+			return this.cache.get('usersWithVideo');
+		}
+
+		const users = Object.keys(this.users);
+		const result = [];
+
+		users.forEach((userId) => {
 			if (this.users[userId].hasVideo())
 			{
 				result.push(userId);
 			}
-		}
-		return result;
-	};
+		});
 
-	getConnectedUsers()
+		this.cache.set('usersWithVideo', result);
+
+		return result;
+	}
+
+	getConnectedUsers(): Array
 	{
-		let result = [];
-		for (let i = 0; i < this.userRegistry.users.length; i++)
+		if (this.cache.has('currentConnectedUser'))
 		{
-			const userModel = this.userRegistry.users[i];
-			if (userModel.id != this.userId && userModel.state == UserState.Connected)
+			return this.cache.get('currentConnectedUser');
+		}
+
+		const result = [];
+		const userModels = [...this.userRegistry.users.values()];
+		userModels.forEach((userModel) => {
+			if (userModel.id != this.userId && userModel.state === UserState.Connected)
 			{
 				result.push(userModel.id);
 			}
-		}
-		return result;
-	};
+		});
 
-	getDisplayedUsers()
-	{
-		let result = [];
-		for (let i = 0; i < this.userRegistry.users.length; i++)
-		{
-			const userModel = this.userRegistry.users[i];
-			if (userModel.id != this.userId && (userModel.id != this.centralUser.id && this.layout === Layouts.Centered || this.layout !== Layouts.Centered) && (userModel.state == UserState.Connected || userModel.state == UserState.Connecting || userModel.state == UserState.Calling))
-			{
-				result.push(userModel.id);
-			}
-		}
-		return result;
-	};
+		this.cache.set('previousConnectedUserCount', 0);
+		this.cache.set('currentConnectedUser', result);
 
-	getActiveUsers()
+		return result;
+	}
+
+	getDisplayedUsers(): Array
 	{
 		const result = [];
-		for (let i = 0; i < this.userRegistry.users.length; i++)
-		{
-			const userModel = this.userRegistry.users[i];
-			if (this.isUserHasActiveState(userModel) && this.users.hasOwnProperty(userModel.id))
+		const userModels = [...this.userRegistry.users.values()];
+		userModels.forEach((userModel) => {
+			if (
+				userModel.id != this.userId
+				&& ((userModel.id != this.centralUser.id && this.layout === Layouts.Centered) || this.layout !== Layouts.Centered)
+				&& ([UserState.Connected, UserState.Connecting, UserState.Calling].includes(userModel.state))
+			)
 			{
 				result.push(userModel.id);
 			}
-		}
-		return result;
-	};
+		});
 
-	getUsersWithCamera()
+		return result;
+	}
+
+	getActiveUsers(): Array
+	{
+		if (this.cache.has('activeUsers'))
+		{
+			return this.cache.get('activeUsers');
+		}
+
+		const result = [];
+		const userModels = [...this.userRegistry.users.values()];
+		userModels.forEach((userModel) => {
+			if (this.isUserHasActiveState(userModel) && Object.hasOwn(this.users, userModel.id))
+			{
+				result.push(userModel.id);
+			}
+		});
+
+		this.cache.set('activeUsers', result);
+
+		return result;
+	}
+
+	getUsersWithCamera(): Array
 	{
 		// since we don't receive streams from inactive pages
 		// we can't use this.getUsersWithVideo() to get number of users with video
-		return this.userRegistry.users.filter(el =>
-		{
-			return el.id != this.userId && el.cameraState && this.isUserHasActiveState(el) && el.state !== UserState.Calling;
+		return [...this.userRegistry.users.values()].filter((userModel) => {
+			return userModel.id != this.userId
+				&& userModel.cameraState
+				&& this.isUserHasActiveState(userModel)
+				&& userModel.state !== UserState.Calling;
 		});
-	};
+	}
 
-	hasUserWithScreenSharing()
+	hasUserWithScreenSharing(): Boolean
 	{
-		return this.userRegistry.users.some(function (userModel)
-		{
-			return userModel.screenState;
-		})
-	};
+		return [...this.userRegistry.users.values()].some((userModel) => userModel.screenState);
+	}
 
-	hasCurrentUserScreenSharing()
+	hasCurrentUserScreenSharing(): Boolean
 	{
 		const currentUser = this.userRegistry.get(this.userId);
 
@@ -849,32 +965,37 @@ export class View
 			return currentUser.screenState;
 		}
 
-		return false
+		return false;
 	}
 
-	getPresenterUserId()
+	getPresenterUserId(): ?number
 	{
 		let currentPresenterId = this.presenterId || 0;
+		if (!this.getConnectedUserCount())
+		{
+			return null;
+		}
+
 		if (currentPresenterId == this.localUser.id)
 		{
 			currentPresenterId = 0;
 		}
-		let userId; // for usage in iterators
 
-		let currentPresenterModel = this.userRegistry.get(currentPresenterId);
+		const currentPresenterModel = this.userRegistry.get(currentPresenterId);
 
 		// 1. Current user, who is sharing screen has top priority
-		if (currentPresenterModel && currentPresenterModel.screenState === true)
+		if (currentPresenterModel?.screenState === true)
 		{
 			return currentPresenterId;
 		}
 
 		// 2. If current user is not sharing screen, but someone is sharing - he should become presenter
-		for (userId in this.users)
+		const users = Object.keys(this.users);
+		for (const userId of users)
 		{
-			if (this.users.hasOwnProperty(userId) && this.userRegistry.get(userId).screenState === true)
+			if (Object.hasOwn(this.users, userId) && this.userRegistry.get(userId).screenState === true)
 			{
-				return parseInt(userId);
+				return parseInt(userId, 10);
 			}
 		}
 
@@ -885,34 +1006,30 @@ export class View
 		}
 
 		// 4. Return currently talking user
-		let minTalkingAgo = 0;
+		const minTalkingAgo = 0;
 		let minTalkingAgoUserId = 0;
-		for (userId in this.users)
+		for (const userId of users)
 		{
-			if (!this.users.hasOwnProperty(userId))
+			if (!Object.hasOwn(this.users, userId))
 			{
 				continue;
 			}
+
 			const userWasTalkingAgo = this.userRegistry.get(userId).wasTalkingAgo();
 			if (userWasTalkingAgo < 1000)
 			{
-				return parseInt(userId);
+				return parseInt(userId, 10);
 			}
+
 			if (userWasTalkingAgo < minTalkingAgo)
 			{
-				minTalkingAgoUserId = parseInt(userId);
+				minTalkingAgoUserId = parseInt(userId, 10);
 			}
 		}
 
-		// 5. Return last talking user
-		if (minTalkingAgoUserId)
-		{
-			return minTalkingAgoUserId;
-		}
-
-		// return current user in center
-		return this.centralUser.id;
-	};
+		// Return last talking user or current user in center
+		return minTalkingAgoUserId || this.centralUser.id;
+	}
 
 	switchPresenter()
 	{
@@ -925,26 +1042,36 @@ export class View
 		}
 
 		this.presenterId = newPresenterId;
-		this.userRegistry.users.forEach(userModel => userModel.presenter = (userModel.id == this.presenterId));
+
+		if (currentPresenterId)
+		{
+			this.userRegistry.get(currentPresenterId).presenter = false;
+		}
+		this.userRegistry.get(newPresenterId).presenter = true;
+
+		if (this.pictureInPictureCallWindow)
+		{
+			this.pictureInPictureCallWindow.setCurrentUser(this.getPictureInPictureCallWindowUser());
+		}
 
 		if (this.pinnedUser === null)
 		{
 			this.setCentralUser(newPresenterId);
 
-			if (this.layout == Layouts.Centered && currentPresenterId !== newPresenterId)
+			if (this.layout === Layouts.Centered && currentPresenterId !== newPresenterId)
 			{
 				this.eventEmitter.emit(EventName.onHasMainStream, {
-					userId: this.centralUser.id
+					userId: this.centralUser.id,
 				});
 			}
 		}
 		else if (currentPresenterId !== newPresenterId)
 		{
 			this.eventEmitter.emit(EventName.onHasMainStream, {
-				userId: this.centralUser.id
+				userId: this.centralUser.id,
 			});
 		}
-	};
+	}
 
 	switchPresenterDeferred()
 	{
@@ -1003,25 +1130,27 @@ export class View
 			this.centralUser.playVideo();
 			//this.centralUser.updateAvatarWidth();
 		}
-		if (this.layout == Layouts.Grid)
+
+		if (this.layout === Layouts.Grid)
 		{
-			this.elements.root.classList.remove("bx-messenger-videocall-centered");
-			this.elements.root.classList.add("bx-messenger-videocall-grid");
+			this.elements.root.classList.remove('bx-messenger-videocall-centered');
+			this.elements.root.classList.add('bx-messenger-videocall-grid');
 
 			this.elements.container.appendChild(this.elements.userList.container);
 			this.elements.container.removeChild(this.elements.userBlock);
+
+			this.centralUser.dismount();
+
 			if (this.isFullScreen && this.buttons.participants)
 			{
 				this.buttons.participants.update({
-					foldButtonState: Buttons.ParticipantsButton.FoldButtonState.Hidden
+					foldButtonState: Buttons.ParticipantsButton.FoldButtonState.Hidden,
 				});
 			}
 			this.unpinUser();
-			this.eventEmitter.emit(EventName.onHasMainStream, {
-				userId: null
-			});
 		}
-		if (this.layout == Layouts.Centered && this.isFullScreen)
+
+		if (this.layout === Layouts.Centered && this.isFullScreen)
 		{
 			this.setUserBlockFolded(true);
 		}
@@ -1120,27 +1249,24 @@ export class View
 			return 1000;
 		}
 
-		if (usersPerPage <= MAX_USERS_PER_PAGE)
-		{
-			return usersPerPage;
-		}
-		else
+		if (usersPerPage >= MAX_USERS_PER_PAGE)
 		{
 			// check if the last row should be filled up
-			let elementSize = Util.findBestElementSize(
+			const elementSize = Util.findBestElementSize(
 				containerSize.width,
 				containerSize.height,
 				MAX_USERS_PER_PAGE + 1,
 				MIN_GRID_USER_WIDTH,
-				MIN_GRID_USER_HEIGHT
+				MIN_GRID_USER_HEIGHT,
 			);
 			// console.log('Optimal element size: width '+elementSize.width+' height '+elementSize.height);
 			columns = Math.floor(containerSize.width / elementSize.width);
 			rows = Math.floor(containerSize.height / elementSize.height);
-
-			return columns * rows - 1;
+			usersPerPage = columns * rows - 1;
 		}
-	};
+
+		return usersPerPage;
+	}
 
 	calculatePagesCount(usersPerPage)
 	{
@@ -1257,6 +1383,11 @@ export class View
 				this.buttons.camera.disable();
 			}
 		}
+
+		if (this.pictureInPictureCallWindow)
+		{
+			this.pictureInPictureCallWindow.setButtons(this.getPictureInPictureCallWindowGetButtonsList()).updateButtons();
+		}
 	};
 
 	setMuted = (event) =>
@@ -1280,6 +1411,11 @@ export class View
 			}
 		}
 		this.userRegistry.get(this.userId).microphoneState = !this.isMuted;
+
+		if (this.pictureInPictureCallWindow)
+		{
+			this.pictureInPictureCallWindow.setButtons(this.getPictureInPictureCallWindowGetButtonsList()).updateButtons();
+		}
 	};
 
 	setLocalUserId(userId)
@@ -1292,7 +1428,9 @@ export class View
 		this.userId = parseInt(userId);
 		this.localUser.userModel.id = this.userId;
 		this.localUser.userModel.name = this.userData[this.userId] ? this.userData[this.userId].name : '';
-		this.localUser.userModel.avatar = this.userData[this.userId] ? this.userData[this.userId].avatar_hr : '';
+		this.localUser.userModel.avatar = this.userData[this.userId] ? checkAndEncodeURI(this.userData[this.userId].avatar_hr) : '';
+
+		this.userRegistry.push(this.localUser.userModel);
 	};
 
 	setUserBlockFolded(isUserBlockFolded)
@@ -1348,21 +1486,21 @@ export class View
 			avatar: this.userData[userId] ? this.userData[userId].avatar_hr : '',
 			state: state,
 			order: state == UserState.Connected ? this.getNextPosition() : newUserPosition,
-			direction: direction
+			direction: direction,
 		});
 
 		this.userRegistry.push(userModel);
 
 		if (!this.elements.audio[userId])
 		{
-			this.elements.audio[userId] = Dom.create("audio");
-			this.elements.audioContainer.appendChild(this.elements.audio[userId]);
+			this.elements.audio[userId] = Dom.create('audio');
+			Dom.append(this.elements.audio[userId], this.elements.audioContainer);
 		}
 
 		if (!this.elements.screenAudio[userId])
 		{
-			this.elements.screenAudio[userId] = Dom.create("audio");
-			this.elements.screenAudioContainer.appendChild(this.elements.audio[userId]);
+			this.elements.screenAudio[userId] = Dom.create('audio');
+			Dom.append(this.elements.screenAudio[userId], this.elements.screenAudioContainer);
 		}
 
 		this.users[userId] = new CallUser({
@@ -1374,6 +1512,9 @@ export class View
 			onClick: this._onUserClick.bind(this),
 			onPin: this._onUserPin.bind(this),
 			onUnPin: this._onUserUnPin.bind(this),
+			onTurnOffParticipantMic: this._onTurnOffParticipantMic.bind(this),
+			onTurnOffParticipantCam: this._onTurnOffParticipantCam.bind(this),
+			onTurnOffParticipantScreenshare: this._onTurnOffParticipantScreenshare.bind(this),
 		});
 
 		this.screenUsers[userId] = new CallUser({
@@ -1383,8 +1524,15 @@ export class View
 			screenSharingUser: true,
 		});
 
-		if (this.elements.root)
+		if (this.elements.root && state !== UserState.Idle)
 		{
+			if (state === UserState.Connected)
+			{
+				this.cache.set('previousConnectedUserCount', this.cache.get('currentConnectedUser')?.length || 0);
+				this.cache.delete('currentConnectedUser');
+				this.cache.delete('activeUsers');
+			}
+
 			this.updateUserList();
 			this.updateButtons();
 			this.updateUserButtons();
@@ -1416,9 +1564,16 @@ export class View
 	setUserState(userId, newState)
 	{
 		const user = this.userRegistry.get(userId);
-		if (!user)
+		if (!user || user.state === newState)
 		{
 			return;
+		}
+
+		if ((user.state === UserState.Connected || newState === UserState.Connected))
+		{
+			this.cache.set('previousConnectedUserCount', this.cache.get('currentConnectedUser')?.length || 0);
+			this.cache.delete('currentConnectedUser');
+			this.cache.delete('activeUsers');
 		}
 
 		if (newState === UserState.Connected && this.uiState === UiState.Calling)
@@ -1473,6 +1628,8 @@ export class View
 		}
 		else if (newState === UserState.Idle)
 		{
+			this.setUserFloorRequestState(userId, false);
+			this.setUserPermissionToSpeakState(userId, false);
 			clearTimeout(this.waitingForUserMediaTimeouts.get(userId));
 			this.waitingForUserMediaTimeouts.delete(userId);
 			this.rerenderQueue.set(userId, {
@@ -1487,7 +1644,6 @@ export class View
 		}
 		else if (newState == UserState.Idle)
 		{
-			this.setUserFloorRequestState(userId, false);
 			// reset user position to add them in the end after they reconnect
 			user.prevOrder = user.order;
 			user.order = newUserPosition;
@@ -1501,6 +1657,11 @@ export class View
 		}
 
 		const skippedElementsList = userId === this.localUser.id ? [] : ['panel'];
+
+		if (userId == this.presenterId && newState !== UserState.Connected)
+		{
+			this.switchPresenter();
+		}
 
 		this.updateUserList();
 		this.updateButtons(skippedElementsList);
@@ -1523,13 +1684,15 @@ export class View
 		return !!user.talking;
 	}
 
-	setUserTalking(userId, talking)
+	setUserTalking(userId, talking): void
 	{
 		const user = this.userRegistry.get(userId);
-		if (user)
+		if (!user)
 		{
-			user.talking = talking;
+			return;
 		}
+
+		user.talking = talking;
 
 		if (userId == this.userId)
 		{
@@ -1544,8 +1707,7 @@ export class View
 		{
 			this.switchPresenter();
 		}
-
-	};
+	}
 
 	setUserStats(userId, stats)
 	{
@@ -1560,6 +1722,21 @@ export class View
 		if (userId == this.localUser.id)
 		{
 			this.localUser.showStats(stats);
+			this.localUserRecivedStats = true;
+		}
+
+		this.pictureInPictureCallWindow?.setStats(userId, stats);
+
+		this.updateButtons()
+	}
+
+	setTrackSubscriptionFailed(data)
+	{
+		if (this.users[data.participant.userId])
+		{
+			if(data.participant.userId && data.track){
+				this.users[data.participant.userId].showTrackSubscriptionFailed(data.track);
+			}
 		}
 	}
 
@@ -1629,6 +1806,12 @@ export class View
 			}
 
 			user.floorRequestState = userFloorRequestState;
+
+			if (userId != this.localUser.id)
+			{
+				this.updateFloorRequestNotifications(user, userFloorRequestState);
+			}
+
 			if (userId != this.localUser.id && userFloorRequestState)
 			{
 				this.showFloorRequestNotification(userId);
@@ -1641,34 +1824,88 @@ export class View
 		}
 	};
 
-	pinUser(userId)
+	setUserPermissionToSpeakState(userId, permissionToSpeakState)
+	{
+		const user: UserModel = this.userRegistry.get(userId);
+		if (!user)
+		{
+			return;
+		}
+
+		if (user.permissionToSpeak !== permissionToSpeakState)
+		{
+			user.permissionToSpeak = permissionToSpeakState;
+		}
+	};
+
+	setAllUserPermissionToSpeakState(permissionToSpeakState)
+	{
+		this.userRegistry.users.forEach((userModel) => {userModel.permissionToSpeak = permissionToSpeakState});
+	};
+
+	pinUser(userId): void
 	{
 		if (!(userId in this.users) && userId !== Number(this.userId))
 		{
-			console.error("User " + userId + " is not known");
+			console.error(`User ${userId} is not known`);
+
 			return;
 		}
-		this.pinnedUser = !this.users[userId] ? this.localUser : this.users[userId];
-		this.userRegistry.users.forEach(userModel => userModel.pinned = userModel.id == userId);
+
+		if (this.pinnedUser && this.userRegistry.users.has(this.pinnedUser.userModel.id))
+		{
+			this.userRegistry.get(this.pinnedUser.userModel.id).pinned = false;
+		}
+		this.pinnedUser = this.users[userId] || this.localUser;
+		this.userRegistry.get(this.pinnedUser.userModel.id).pinned = true;
 		this.setCentralUser(userId);
-		this.eventEmitter.emit(EventName.onUserPinned, {
-			userId: userId
-		});
+		this.eventEmitter.emit(EventName.onUserPinned, { userId });
+
 		this.eventEmitter.emit(EventName.onHasMainStream, {
-			userId: this.centralUser.id
+			userId: this.centralUser.id,
 		});
-	};
+	}
 
-	unpinUser()
+	unpinUser(): void
 	{
+		if (this.pinnedUser && this.userRegistry.users.has(this.pinnedUser.userModel.id))
+		{
+			this.userRegistry.get(this.pinnedUser.userModel.id).pinned = false;
+		}
 		this.pinnedUser = null;
-		this.userRegistry.users.forEach(userModel => userModel.pinned = false);
 
 		this.eventEmitter.emit(EventName.onUserPinned, {
-			userId: null
+			userId: null,
+		});
+
+		this.eventEmitter.emit(EventName.onHasMainStream, {
+			userId: null,
 		});
 		this.switchPresenterDeferred();
-	};
+	}
+
+	updateFloorRequestNotifications(userModel, floorRequestState)
+	{
+		const indexFloorRequestInList = this.floorRequestNotifications.findIndex(req => req.userModel.id === userModel.id);
+		const hasFloorRequestInList = indexFloorRequestInList !== -1;
+		const currentUser = this.users[userModel.id];
+		const currentUserData = {
+			userModel,
+			avatarBackgroundColor: currentUser?.avatarBackground || Util.getAvatarBackground(),
+		}
+
+		if (floorRequestState && !hasFloorRequestInList)
+		{
+			this.floorRequestNotifications.push(currentUserData);
+		}
+
+		if (!floorRequestState && hasFloorRequestInList)
+		{
+			this.floorRequestNotifications.splice(indexFloorRequestInList, 1);
+		}
+
+		this.pictureInPictureCallWindow?.updateFloorRequestState(currentUserData);
+	}
 
 	showFloorRequestNotification(userId)
 	{
@@ -1677,13 +1914,48 @@ export class View
 		{
 			return;
 		}
+
 		let notification = FloorRequest.create({
-			userModel: userModel
+			userModel,
+			onAllowSpeakPermissionClicked: (_userModel) => {
+				this._onAllowSpeakPermissionClickedHandler(_userModel);
+			},
+			onDisallowSpeakPermissionClicked: (_userModel) => {
+				this._onDisallowSpeakPermissionClickedHandler(_userModel);
+			},
 		});
 
 		notification.mount(this.elements.notificationPanel);
 		NotificationManager.Instance.addNotification(notification);
 	};
+
+	updateFloorRequestNotification()
+	{
+		if (!NotificationManager?.Instance.notifications.length)
+		{
+			return;
+		}
+
+		NotificationManager.Instance.notifications.forEach(notification =>
+		{
+			notification.updatePermissionButtonState();
+		});
+	}
+
+	_onAllowSpeakPermissionClickedHandler(_userModel)
+	{
+		this.setUserPermissionToSpeakState(_userModel.id, true);
+		this.eventEmitter.emit(EventName.onAllowSpeakPermission, {
+			userId: _userModel.id
+		});
+	}
+
+	_onDisallowSpeakPermissionClickedHandler(_userModel)
+	{
+		this.eventEmitter.emit(EventName.onDisallowSpeakPermission, {
+			userId: _userModel.id
+		});
+	}
 
 	setUserScreenState(userId, screenState)
 	{
@@ -1725,6 +1997,7 @@ export class View
 		const mediaStream = streamData.stream;
 		const removed = streamData.removed;
 		const flipVideo = streamData.flipVideo;
+
 		if (removed)
 		{
 			mediaRenderer.stream = null;
@@ -1733,10 +2006,16 @@ export class View
 		if (mediaRenderer) // for Bitrix calls
 		{
 			this.localUser.videoRenderer = mediaRenderer;
+			this.pictureInPictureCallWindow?.setVideoRenderer(this.userId, mediaRenderer);
 		}
 		else
 		{
-			this.localUser.videoTrack = mediaStream.getVideoTracks().length > 0 ? mediaStream.getVideoTracks()[0] : null;
+			const videoTrack = mediaStream.getVideoTracks().length > 0 ? mediaStream.getVideoTracks()[0] : null;
+			this.localUser.videoTrack = videoTrack;
+			this.pictureInPictureCallWindow?.setVideoRenderer(this.userId, new MediaRenderer({
+				kind: 'video',
+				track: videoTrack,
+			}));
 		}
 
 		if (!Type.isUndefined(flipVideo))
@@ -1787,7 +2066,19 @@ export class View
 		{
 			this.updateUserList();
 		}
+
+		this.updateButtons()
 	};
+
+	setLocalStreamVideoTrack(videoTrack)
+	{
+		this.localStreamVideoTrack = videoTrack;
+
+		this.pictureInPictureCallWindow?.setVideoRenderer(this.userId, new MediaRenderer({
+			kind: 'sharing',
+			track: videoTrack,
+		}));
+	}
 
 	setSpeakerId(speakerId)
 	{
@@ -1918,6 +2209,9 @@ export class View
 		{
 			throw Error("User " + userId + " is not a part of this call");
 		}
+
+		this.cache.delete('usersWithVideo');
+
 		if (mediaRenderer === null)
 		{
 			if (user.hasCameraVideo())
@@ -1925,6 +2219,7 @@ export class View
 				this.updateRerenderQueue(userId, RerenderReason.VideoDisabled);
 			}
 			user.videoRenderer = null;
+			this.pictureInPictureCallWindow?.setVideoRenderer(userId, null);
 			return;
 		}
 
@@ -1939,6 +2234,7 @@ export class View
 
 		const userHasCameraVideo = user.hasCameraVideo();
 		user.videoRenderer = mediaRenderer;
+		this.pictureInPictureCallWindow?.setVideoRenderer(userId, mediaRenderer);
 
 		if (mediaRenderer.stream && mediaRenderer.kind === 'video')
 		{
@@ -1960,21 +2256,34 @@ export class View
 		{
 			this.users[userId].audioTrack = track;
 		}
-		if (kind === 'sharingAudio')
+
+		switch (kind)
 		{
-			this.users[userId].screenAudioTrack = track;
+			case 'sharingAudio':
+				this.users[userId].screenAudioTrack = track;
+				break;
+
+			case 'video':
+				this.users[userId].videoTrack = track;
+				this.pictureInPictureCallWindow?.setVideoRenderer(userId, new MediaRenderer({
+					kind: 'video',
+					track: track,
+				}));
+				break;
+
+			case 'screen':
+				this.screenUsers[userId].videoTrack = track;
+				this.pictureInPictureCallWindow?.setVideoRenderer(userId, new MediaRenderer({
+					kind: 'sharing',
+					track: track,
+				}));
+				this.updateUserList();
+				this.setUserScreenState(userId, track !== null);
+				break;
+
+			default:
 		}
-		if (kind === 'video')
-		{
-			this.users[userId].videoTrack = track;
-		}
-		if (kind === 'screen')
-		{
-			this.screenUsers[userId].videoTrack = track;
-			this.updateUserList();
-			this.setUserScreenState(userId, track !== null);
-		}
-	};
+	}
 
 	removeScreenUsers()
 	{
@@ -2118,6 +2427,7 @@ export class View
 	hide()
 	{
 		this.closeCopilotNotify();
+		this.clearCallcontrolPromo();
 		if (this.overflownButtonsPopup)
 		{
 			this.overflownButtonsPopup.close();
@@ -2201,7 +2511,7 @@ export class View
 				[DeviceSelector.Events.onChangeFaceImprove]: this._onChangeFaceImprove.bind(this),
 				[DeviceSelector.Events.onAdvancedSettingsClick]: () => this.eventEmitter.emit(EventName.onOpenAdvancedSettings),
 				[DeviceSelector.Events.onDestroy]: () => this.deviceSelector = null,
-				[DeviceSelector.Events.onShow]: () => this.eventEmitter.emit(EventName.onDeviceSelectorShow, {})
+				[DeviceSelector.Events.onShow]: () => this.eventEmitter.emit(EventName.onDeviceSelectorShow, {}),
 			}
 		});
 		this.deviceSelector.show();
@@ -2379,37 +2689,37 @@ export class View
 		{
 			return;
 		}
-		let menuItems = [];
-		menuItems.push({
+
+		const menuItems = [{
 			userModel: this.localUser.userModel,
 			showSubMenu: true,
-			onClick: function ()
-			{
+			onClick: () => {
 				this.participantsMenu.close();
 				this.showUserMenu(this.localUser.userModel.id);
-			}.bind(this)
-		});
-		this.userRegistry.users.forEach((userModel: UserModel) =>
-		{
-			if (userModel.localUser || userModel.state != UserState.Connected)
+			},
+		}];
+
+		[...this.userRegistry.users.values()].forEach((userModel: UserModel) => {
+			if (userModel.localUser || userModel.state !== UserState.Connected)
 			{
 				return;
 			}
+
 			if (menuItems.length > 0)
 			{
 				menuItems.push({
-					separator: true
+					separator: true,
 				});
 			}
+
 			menuItems.push({
-				userModel: userModel,
+				userModel,
 				showSubMenu: true,
-				onClick: () =>
-				{
+				onClick: () => {
 					this.participantsMenu.close();
 					this.showUserMenu(userModel.id);
-				}
-			})
+				},
+			});
 		});
 
 		if (menuItems.length === 0)
@@ -2420,22 +2730,21 @@ export class View
 		this.participantsMenu = new MobileMenu({
 			parent: this.elements.root,
 			items: menuItems,
-			header: BX.message("IM_M_CALL_PARTICIPANTS").replace("#COUNT#", this.getConnectedUserCount(true)),
+			header: BX.message('IM_M_CALL_PARTICIPANTS').replace('#COUNT#', this.getConnectedUserCount(true)),
 			largeIcons: true,
 
-			onClose: function ()
-			{
+			onClose: () => {
 				this.participantsMenu.destroy();
-			}.bind(this),
-			onDestroy: function ()
-			{
+			},
+			onDestroy: () => {
 				this.participantsMenu = null;
-			}.bind(this)
+			},
 		});
 
 		this.participantsMenu.show();
+
 		return true;
-	};
+	}
 
 	/**
 	 * @param {Object} params
@@ -2444,74 +2753,96 @@ export class View
 	 */
 	showMessage(params)
 	{
-		if (!this.elements.root)
-		{
-			this.render();
-			this.container.appendChild(this.elements.root);
-		}
-
-		const statusNode = Dom.create("div", {
-			props: {className: "bx-messenger-videocall-user-status bx-messenger-videocall-user-status-wide"},
+		const statusNode = Dom.create('div', {
+			props: { className: 'bx-messenger-videocall-user-status bx-messenger-videocall-user-status-wide' },
 		});
 
 		if (Type.isStringFilled(params.text))
 		{
-			const textNode = Dom.create("div", {
-				props: {className: "bx-messenger-videocall-status-text"},
-				text: params.text
+			const textNode = Dom.create('div', {
+				props: { className: 'bx-messenger-videocall-status-text' },
+				text: params.text,
 			});
-			statusNode.appendChild(textNode);
+			Dom.append(textNode, statusNode);
 		}
 
-		if (this.elements.overlay.childElementCount)
-		{
-			Dom.clean(this.elements.overlay);
-		}
-		this.elements.overlay.appendChild(statusNode);
-	};
+		this.#showErrorLayout(statusNode);
+	}
 
 	hideMessage()
 	{
 		this.elements.overlay.textContent = '';
-	};
+	}
 
-	renderErrorCallLayout()
+	renderSelfTestCallLayout()
+	{
+		const errorContainer = Dom.create('div', {
+			props: { className: 'bx-messenger-videocall-error-container' },
+			children: [
+				Dom.create('div', {
+					props: { className: 'bx-messenger-videocall-error-container-icon-alert' },
+				}),
+				Dom.create('div', {
+					props: { className: 'bx-messenger-videocall-error-message' },
+					text: Loc.getMessage('CALL_CONNECTED_ERROR'),
+				}),
+				Dom.create('div', {
+					props: { className: 'bx-messenger-videocall-error-button-self-test' },
+					text: Loc.getMessage('CALL_RUN_SELF_TEST'),
+					events: {
+						click: () => {
+							Util.startSelfTest();
+						},
+					},
+				}),
+			],
+		});
+
+		this.#showErrorLayout(errorContainer);
+	}
+
+	renderReloadPageLayout()
+	{
+		const errorContainer = Dom.create('div', {
+			props: { className: 'bx-messenger-videocall-error-container' },
+			children: [
+				Dom.create('div', {
+					props: { className: 'bx-messenger-videocall-error-container-icon-alert' },
+				}),
+				Dom.create('div', {
+					props: { className: 'bx-messenger-videocall-error-message' },
+					html: Loc.getMessage('CALL_SECURITY_KEY_CHANGED', { '[break]': '<br/>' }),
+				}),
+				Dom.create('div', {
+					props: { className: 'bx-messenger-videocall-error-button-self-test' },
+					text: Loc.getMessage('CALL_RELOAD_PAGE'),
+					events: {
+						click: () => {
+							this.destroy();
+							location.reload();
+						},
+					},
+				}),
+			],
+		});
+
+		this.#showErrorLayout(errorContainer);
+	}
+
+	#showErrorLayout(content)
 	{
 		if (!this.elements.root)
 		{
 			this.render();
-			this.container.appendChild(this.elements.root);
+			Dom.append(this.elements.root, this.container);
 		}
-
-		const errorContainer = Dom.create("div", {
-			props: {className: "bx-messenger-videocall-error-container"},
-			children: [
-				Dom.create("div", {
-					props: {className: "bx-messenger-videocall-error-container-icon-alert"},
-				}),
-				Dom.create("div", {
-					props: {className: "bx-messenger-videocall-error-message"},
-					text: BX.message("CALL_CONNECTED_ERROR"),
-				}),
-				Dom.create("div", {
-					props: {className: "bx-messenger-videocall-error-button-self-test"},
-					text: BX.message("CALL_RUN_SELF_TEST"),
-					events: {
-						click: () =>
-						{
-							Util.startSelfTest();
-						}
-					}
-				}),
-
-			],
-		})
 
 		if (this.elements.overlay.childElementCount)
 		{
 			Dom.clean(this.elements.overlay);
 		}
-		this.elements.overlay.appendChild(errorContainer);
+
+		Dom.append(content, this.elements.overlay);
 	}
 
 	/**
@@ -2521,11 +2852,28 @@ export class View
 	 */
 	showFatalError(params)
 	{
-		this.renderErrorCallLayout();
+		this.showMessage(params);
+		this.#prepareErrorState();
+	}
+
+	showSecurityKeyError()
+	{
+		this.renderReloadPageLayout();
+		this.#prepareErrorState();
+	}
+
+	showSelfTest()
+	{
+		this.renderSelfTestCallLayout();
+		this.#prepareErrorState();
+	}
+
+	#prepareErrorState()
+	{
 		this.setUiState(UiState.Error);
 		// in some cases video elements may still be shown on the error screen, let's hide them
-		this.elements.userList.container.style.display = 'none';
-	};
+		Dom.style(this.elements.userList.container, 'display', 'none');
+	}
 
 	close()
 	{
@@ -2540,8 +2888,15 @@ export class View
 			BX.remove(this.elements.root);
 		}
 
+		if (this.pictureInPictureCallWindow)
+		{
+			this.toggleStatePictureInPictureCallWindow(false)
+		}
+
 		this.visible = false;
 		this.eventEmitter.emit(EventName.onClose);
+
+		this.clearCallcontrolPromo();
 	};
 
 	setSize(size)
@@ -2555,6 +2910,8 @@ export class View
 
 		if (this.size == Size.Folded)
 		{
+			this.clearCallcontrolPromo();
+
 			if (this.overflownButtonsPopup)
 			{
 				this.overflownButtonsPopup.close();
@@ -2584,6 +2941,11 @@ export class View
 			this.updateUserList();
 			this.resumeVideo();
 		}
+
+		if (this.pictureInPictureCallWindow)
+		{
+			this.pictureInPictureCallWindow.setButtons(this.getPictureInPictureCallWindowGetButtonsList()).updateButtons();
+		}
 	};
 
 	isButtonBlocked(buttonName)
@@ -2591,13 +2953,21 @@ export class View
 		switch (buttonName)
 		{
 			case 'camera':
-				return (this.uiState !== UiState.Preparing && this.uiState !== UiState.Connected) || this.blockedButtons[buttonName] === true;
+				const isUiBlocked = this.uiState !== UiState.Preparing && this.uiState !== UiState.Connected;
+				const isForceBlock = this.blockedButtons[buttonName] === true;
+				const noCamPermission = !Util.havePermissionToBroadcast('cam');
+				const isUserConnecting = this.localUser.userModel.state === UserState.Connecting;
+				const localUserRecivedStats =  this.isVideoconf ? true : this.localUserRecivedStats;
+				const isButtonBlocked = isUiBlocked || isForceBlock || noCamPermission || isUserConnecting || !localUserRecivedStats;
+				return isButtonBlocked;
 			case 'chat':
 				return !this.showChatButtons || this.blockedButtons[buttonName] === true;
+			case 'microphone':
+				return !Util.havePermissionToBroadcast('mic');
 			case 'floorRequest':
 				return (this.uiState !== UiState.Connected) || this.blockedButtons[buttonName] === true;
 			case 'screen':
-				return !this.showShareButton || (!this.isScreenSharingSupported() || this.isFullScreen) || this.blockedButtons[buttonName] === true;
+				return !this.showShareButton || (!this.isScreenSharingSupported() || this.isFullScreen) || this.blockedButtons[buttonName] === true || !Util.havePermissionToBroadcast('screenshare');
 			case 'users':
 				return !this.showUsersButton || this.blockedButtons[buttonName] === true;
 			case 'record':
@@ -2731,8 +3101,7 @@ export class View
 
 	blockAddUser()
 	{
-		this.blockedButtons['add'] = true;
-
+		this.blockButtons(['add']);
 		if (this.elements.userList.addButton)
 		{
 			Dom.remove(this.elements.userList.addButton);
@@ -2741,14 +3110,28 @@ export class View
 
 	unblockAddUser()
 	{
-		this.blockedButtons['add'] = false;
+		this.unblockButtons(['add']);
+
+		this.updateButtons();
+	};
+
+	blockUsersButton()
+	{
+		this.blockButtons(['users']);
+
+		this.updateButtons();
+	};
+
+	unblockUsersButton()
+	{
+		this.unblockButtons(['users']);
 
 		this.updateButtons();
 	};
 
 	blockSwitchCamera()
 	{
-		this.blockedButtons['camera'] = true;
+		this.blockButtons(['camera']);
 		if (this.deviceSelector)
 		{
 			this.deviceSelector.toggleCameraAvailability(false);
@@ -2757,7 +3140,7 @@ export class View
 
 	unblockSwitchCamera()
 	{
-		delete this.blockedButtons['camera'];
+		this.unblockButtons(['camera']);
 		if (this.deviceSelector)
 		{
 			this.deviceSelector.toggleCameraAvailability(true);
@@ -2766,7 +3149,7 @@ export class View
 
 	blockSwitchMicrophone()
 	{
-		this.blockedButtons['microphone'] = true;
+		this.blockButtons(['microphone']);
 		if (this.deviceSelector)
 		{
 			this.deviceSelector.toggleMicrophoneAvailability(false);
@@ -2775,7 +3158,7 @@ export class View
 
 	unblockSwitchMicrophone()
 	{
-		delete this.blockedButtons['microphone'];
+		this.unblockButtons(['microphone']);
 		if (this.deviceSelector)
 		{
 			this.deviceSelector.toggleMicrophoneAvailability(true);
@@ -2784,12 +3167,12 @@ export class View
 
 	blockScreenSharing()
 	{
-		this.blockedButtons['screen'] = true;
+		this.blockButtons(['screen']);
 	};
 
 	blockHistoryButton()
 	{
-		this.blockedButtons['history'] = true;
+		this.blockButtons(['history']);
 	};
 
 	/**
@@ -2811,6 +3194,11 @@ export class View
 				this.buttons[buttonName].setBlocked(true);
 			}
 		})
+
+		if (this.pictureInPictureCallWindow)
+		{
+			this.pictureInPictureCallWindow.updateBlockButtons(this.getBlockedButtonsListPictureInPictureCallWindow()).updateButtons();
+		}
 	};
 
 	/**
@@ -2830,7 +3218,12 @@ export class View
 			{
 				this.buttons[buttonName].setBlocked(this.isButtonBlocked(buttonName));
 			}
-		})
+		});
+
+		if (this.pictureInPictureCallWindow)
+		{
+			this.pictureInPictureCallWindow.updateBlockButtons(this.getBlockedButtonsListPictureInPictureCallWindow()).updateButtons();
+		}
 	};
 
 	disableMediaSelection()
@@ -2856,26 +3249,34 @@ export class View
 		return this.layout != Layouts.Mobile && (this.uiState == UiState.Preparing || this.uiState == UiState.Connected) && !this.mediaSelectionBlocked && !this.isFullScreen;
 	};
 
-	getButtonList()
+	getButtonList(): Array
 	{
-		if (this.uiState == UiState.Error)
-		{
-			return ['close'];
-		}
-		if (this.uiState == UiState.Initializing)
-		{
-			return ['hangup'];
-		}
-
-		if (this.size == Size.Folded)
-		{
-			return ['title', 'spacer', 'returnToCall', 'hangup'];
-		}
-
 		let result = [];
 
-		result.push('microphone');
-		result.push('camera');
+		if (this.uiState === UiState.Error)
+		{
+			result.push('close');
+		}
+
+		if (this.uiState === UiState.Initializing)
+		{
+			result.push('hangup');
+		}
+
+		if (this.size === Size.Folded)
+		{
+			result.push('title', 'spacer', 'returnToCall', 'hangup');
+		}
+
+		if (result.length > 0)
+		{
+			this.needToRerenderButtonList = this.previousButtonList.toString() !== result.toString();
+			this.previousButtonList = result;
+
+			return result;
+		}
+
+		result.push('microphone', 'camera');
 
 		if (this.layout != Layouts.Mobile)
 		{
@@ -2886,15 +3287,11 @@ export class View
 			result.push('mobileMenu');
 		}
 
-		result.push('chat');
-		result.push('users');
+		result.push('chat', 'users');
 
 		if (this.layout != Layouts.Mobile)
 		{
-			result.push('floorRequest');
-			result.push('screen');
-			result.push('record');
-			result.push('document');
+			result.push('floorRequest', 'screen', 'record', 'document');
 		}
 
 		if (this.layout !== Layouts.Mobile && CallAI.serviceEnabled)
@@ -2902,9 +3299,9 @@ export class View
 			result.push('copilot');
 		}
 
-		result = result.filter((buttonCode) =>
-		{
-			return !this.hiddenButtons.hasOwnProperty(buttonCode) && !this.overflownButtons.hasOwnProperty(buttonCode);
+		result = result.filter((buttonCode) => {
+			return !Object.prototype.hasOwnProperty.call(this.hiddenButtons, buttonCode)
+				&& !Object.prototype.hasOwnProperty.call(this.overflownButtons, buttonCode);
 		});
 
 		if (Object.keys(this.overflownButtons).length > 0)
@@ -2921,13 +3318,19 @@ export class View
 			result.push('hangup');
 		}
 
-		if (!this.hiddenButtons.hasOwnProperty('hangupOptions') && this.isIntranetOrExtranet)
+		if (
+			!Object.prototype.hasOwnProperty.call(this.hiddenButtons, 'hangupOptions')
+			&& this.isIntranetOrExtranet
+		)
 		{
 			result.push('hangupOptions');
 		}
 
+		this.needToRerenderButtonList = this.previousButtonList.toString() !== result.toString();
+		this.previousButtonList = result;
+
 		return result;
-	};
+	}
 
 	getTopButtonList()
 	{
@@ -2958,6 +3361,16 @@ export class View
 			result.push('feedback');
 		}
 
+		if (
+			this.uiState === UiState.Connected
+			&& this.layout != Layouts.Mobile
+			&& Util.canControlChangeSettings()
+			&& Util.isUserControlFeatureEnabled()
+		)
+		{
+			result.push('callcontrol');
+		}
+
 		if (this.uiState != UiState.Preparing)
 		{
 			if (separatorNeeded)
@@ -2980,13 +3393,16 @@ export class View
 			return !this.hiddenTopButtons.hasOwnProperty(buttonCode);
 		});
 
+		this.needToRerenderTopButtonList = this.previousTopButtonList.toString() !== result.toString();
+		this.previousTopButtonList = result;
+
 		return result;
 	};
 
 	render()
 	{
 		this.elements.root = Dom.create("div", {
-			props: {className: "bx-messenger-videocall"},
+			props: {className: "bx-messenger-videocall bx-messenger-videocall-scope"},
 			children: [
 				this.elements.wrap = Dom.create("div", {
 					props: {className: `bx-messenger-videocall-wrap ${this.isCopilotActive ? 'bx-messenger-videocall-wrap-with-copilot' : ''}`},
@@ -3170,10 +3586,10 @@ export class View
 		{
 			this.centralUser.mount(this.elements.center);
 			this.eventEmitter.emit(EventName.onHasMainStream, {
-				userId: this.centralUser.id
+				userId: this.centralUser.id,
 			});
-			this.elements.root.classList.add("bx-messenger-videocall-centered");
-			if (this.layout != Layouts.Mobile)
+			this.elements.root.classList.add('bx-messenger-videocall-centered');
+			if (this.layout !== Layouts.Mobile)
 			{
 				this.elements.container.appendChild(this.elements.userBlock);
 			}
@@ -3203,67 +3619,65 @@ export class View
 		}
 	}
 
-	getOrderingRules()
+	getOrderingRules(): Object
 	{
 		const rules = {
-			videoEnabled: [],
-			videoDisabled: [],
-			userDisconnected: null,
+			[RerenderReason.VideoEnabled]: [],
+			[RerenderReason.VideoDisabled]: [],
+			[RerenderReason.UserDisconnected]: null,
 		};
 
-		this.rerenderQueue.forEach((el) =>
-		{
-			if (el.reason === RerenderReason.UserDisconnected)
+		this.rerenderQueue.forEach((el) => {
+			switch (el.reason)
 			{
-				rules.userDisconnected = {
-					id: el.userId,
-					order: this.userRegistry.get(el.userId).prevOrder,
-				};
-			}
-			else if (el.reason === RerenderReason.VideoEnabled)
-			{
-				rules.videoEnabled.push({
-					id: el.userId,
-					order: this.userRegistry.get(el.userId).order,
-				});
-			}
-			else if (el.reason === RerenderReason.VideoDisabled)
-			{
-				rules.videoDisabled.push({
-					id: el.userId,
-					order: this.userRegistry.get(el.userId).order,
-				});
+				case RerenderReason.UserDisconnected:
+					rules[el.reason] = {
+						id: el.userId,
+						order: this.userRegistry.get(el.userId).prevOrder,
+					};
+					break;
+
+				case RerenderReason.VideoEnabled:
+				case RerenderReason.VideoDisabled:
+					rules[el.reason].push({
+						id: el.userId,
+						order: this.userRegistry.get(el.userId).order,
+					});
+					break;
+
+				default:
 			}
 		});
 
 		this.rerenderQueue.clear();
-		rules.videoEnabled.sort((a, b) => a.order - b.order);
-		rules.videoDisabled.sort((a, b) => a.order - b.order);
+		rules[RerenderReason.VideoEnabled].sort((a, b) => a.order - b.order);
+		rules[RerenderReason.VideoDisabled].sort((a, b) => a.order - b.order);
 
 		return rules;
-	};
+	}
 
-	applyOrderChanges(changes)
+	applyOrderChanges(changes): void
 	{
 		if (!Type.isArray(changes))
 		{
 			return;
 		}
 
-		changes.forEach(change =>
-		{
+		changes.forEach((change) => {
 			if (change.type === SwapType.Direct)
 			{
 				change.to.userModel.order = change.to.order;
+				this.cache.delete('activeUsers');
 			}
 			else if (change.type === SwapType.Replace && change.to && change.from)
 			{
 				change.to.userModel.order = change.from.order;
 				change.to.userModel.prevOrder = 0;
 				change.from.userModel.order = change.to.order;
+				this.cache.delete('activeUsers');
 			}
 		});
-	};
+	}
 
 	isUserHasActiveState(userModel)
 	{
@@ -3275,16 +3689,19 @@ export class View
 		);
 	};
 
-	processVideoRules(rules, params)
+	processVideoRules(rules, params): void
 	{
-		const diffBetweenChanges = rules.videoEnabled.length - rules.videoDisabled.length;
-		const lessChangesField = diffBetweenChanges > 0 ? 'videoDisabled' : 'videoEnabled';
-		const moreChangesField = diffBetweenChanges > 0 ? 'videoEnabled' : 'videoDisabled';
+		const diffBetweenChanges = rules[RerenderReason.VideoEnabled].length - rules[RerenderReason.VideoDisabled].length;
+		const lessChangesField = diffBetweenChanges > 0
+			? RerenderReason.VideoDisabled
+			: RerenderReason.VideoEnabled;
+		const moreChangesField = diffBetweenChanges > 0
+			? RerenderReason.VideoEnabled
+			: RerenderReason.VideoDisabled;
 
-		if (rules.videoEnabled.length && rules.videoDisabled.length)
+		if (rules[RerenderReason.VideoEnabled].length > 0 && rules[RerenderReason.VideoDisabled].length > 0)
 		{
-			rules[lessChangesField].forEach((el, index) =>
-			{
+			rules[lessChangesField].forEach((el, index) => {
 				const toUser = this.userRegistry.get(el.id);
 				const fromUser = this.userRegistry.get(rules[moreChangesField][index].id);
 
@@ -3305,15 +3722,19 @@ export class View
 		this.applyOrderChanges(params.orderChanges);
 		params.orderChanges.length = 0;
 
-		if (diffBetweenChanges !== 0)
+		if (diffBetweenChanges === 0)
+		{
+			rules[RerenderReason.VideoEnabled].length = 0;
+			rules[RerenderReason.VideoDisabled].length = 0;
+		}
+		else
 		{
 			rules[moreChangesField].splice(0, rules[moreChangesField].length - Math.abs(diffBetweenChanges));
 			rules[lessChangesField].length = 0;
 
-			if (moreChangesField === 'videoEnabled')
+			if (moreChangesField === RerenderReason.VideoEnabled)
 			{
-				rules.videoEnabled.forEach((el) =>
-				{
+				rules[moreChangesField].forEach((el) => {
 					params.orderChanges.push({
 						type: SwapType.Replace,
 						from: {
@@ -3325,29 +3746,24 @@ export class View
 				});
 			}
 		}
-		else
-		{
-			rules.videoEnabled.length = 0;
-			rules.videoDisabled.length = 0;
-		}
-	};
+	}
 
-	processDisconnectRules(rules, params)
+	processDisconnectRules(rules, params): void
 	{
-		if (!rules.userDisconnected)
+		if (!rules[RerenderReason.UserDisconnected])
 		{
 			return;
 		}
 
-		const userModel = this.userRegistry.get(rules.userDisconnected.id);
+		const userModel = this.userRegistry.get(rules[RerenderReason.UserDisconnected].id);
 
 		if (userModel.prevCameraState)
 		{
 			params.disconnectedUserHadVideo = true;
 		}
-	};
+	}
 
-	completeVideoEnableSwap(userModel, rules, params)
+	completeVideoEnableSwap(userModel, rules, params): void
 	{
 		const swapRemains = params.incompleteSwaps.length;
 
@@ -3355,7 +3771,8 @@ export class View
 		{
 			return;
 		}
-		else if (params.usersWithEnabledVideo.includes(userModel.id))
+
+		if (params.usersWithEnabledVideo.includes(userModel.id))
 		{
 			params.incompleteSwaps.pop();
 			params.usersWithEnabledVideo.splice(params.usersWithEnabledVideo.indexOf(userModel.id), 1);
@@ -3390,25 +3807,24 @@ export class View
 
 			params.incompleteSwaps.pop();
 		}
-	};
+	}
 
-	completeVideoDisabledSwap(rules, params)
+	completeVideoDisabledSwap(rules, params): void
 	{
-		let usersProceed = 0;
+		let usersProcessed = 0;
 
-		rules.videoDisabled.forEach((el, index) =>
-		{
+		rules[RerenderReason.VideoDisabled].forEach((el) => {
 			const userWithoutVideo = this.userRegistry.get(el.id);
 			const userWithoutVideoIndex = params.activeUsers.indexOf(el.id);
 			const userWithoutVideoPage = Math.ceil((userWithoutVideoIndex + 1) / this.usersPerPage);
 			const skipUsers = (userWithoutVideoPage - 1) * this.usersPerPage;
 			const numberOfUsersWithVideoForSwap = params.usersWithVideo.length - skipUsers;
-			const userToSwap = params.usersWithVideo[params.usersWithVideo.length - 1 - index];
+			const userToSwap = params.usersWithVideo[params.usersWithVideo.length - 1 - usersProcessed];
 			const canCompleteVideoSwap = userToSwap && userToSwap.order > el.order;
 
-			if (canCompleteVideoSwap && (numberOfUsersWithVideoForSwap - usersProceed >= rules.videoDisabled.length - index))
+			if (canCompleteVideoSwap && (numberOfUsersWithVideoForSwap - usersProcessed >= 0))
 			{
-				usersProceed++;
+				usersProcessed++;
 				params.orderChanges.push({
 					type: SwapType.Replace,
 					to: {
@@ -3419,7 +3835,7 @@ export class View
 						userModel: userToSwap,
 						order: userToSwap.order,
 					},
-				})
+				});
 
 				const userToSwapIndex = params.activeUsers.indexOf(userToSwap.id);
 				const userToSwapPage = Math.ceil((userToSwapIndex + 1) / this.usersPerPage);
@@ -3438,7 +3854,9 @@ export class View
 				}
 			}
 		});
-	};
+
+		this.applyOrderChanges(params.orderChanges);
+	}
 
 	calculateUserActive(userModel, status, userSkipped, params)
 	{
@@ -3457,29 +3875,37 @@ export class View
 		return status;
 	};
 
-	completeDisconnectSwap(rules, params)
+	completeDisconnectSwap(rules, params): void
 	{
+		const disconnectedUser = rules[RerenderReason.UserDisconnected];
+		if (!disconnectedUser)
+		{
+			return;
+		}
+
 		const lowerOrderOnCurrentPage = this.userRegistry.get(params.possibleActiveUsers[0])?.order;
 		const higherOrderOnCurrentPage = this.userRegistry.get(params.possibleActiveUsers[params.possibleActiveUsers.length - 1])?.order;
 		let disconnectedUserFromCurrentPage = false;
+
 		if (this.currentPage === 1)
 		{
-			disconnectedUserFromCurrentPage = rules.userDisconnected.order < lowerOrderOnCurrentPage || (rules.userDisconnected.order > lowerOrderOnCurrentPage && rules.userDisconnected.order < higherOrderOnCurrentPage);
+			disconnectedUserFromCurrentPage = disconnectedUser.order < lowerOrderOnCurrentPage
+				|| (disconnectedUser.order > lowerOrderOnCurrentPage && disconnectedUser.order < higherOrderOnCurrentPage);
 		}
 		else
 		{
-			const skipUsers = this.currentPage > 1 ? (this.currentPage - 2) * this.usersPerPage : 0;
+			const skipUsers = (this.currentPage - 2) * this.usersPerPage;
 			const activeUsersFromPreviousPage = params.activeUsers.slice(skipUsers, skipUsers + this.usersPerPage);
 			const lastActiveUserFromPreviousPage = this.userRegistry.get(activeUsersFromPreviousPage[activeUsersFromPreviousPage.length - 1]);
-			disconnectedUserFromCurrentPage = (rules.userDisconnected.order > lowerOrderOnCurrentPage && rules.userDisconnected.order < higherOrderOnCurrentPage)
-				|| (rules.userDisconnected.order < lowerOrderOnCurrentPage && rules.userDisconnected.order > lastActiveUserFromPreviousPage?.order);
+			disconnectedUserFromCurrentPage = (disconnectedUser.order > lowerOrderOnCurrentPage && disconnectedUser.order < higherOrderOnCurrentPage)
+				|| (disconnectedUser.order < lowerOrderOnCurrentPage && disconnectedUser.order > lastActiveUserFromPreviousPage?.order);
 		}
 
 		const userToSwap = params.disconnectedUserHadVideo
 			? params.usersWithVideo[params.usersWithVideo.length - 1]
 			: this.userRegistry.get(params.activeUsers[params.activeUsers.length - 1]);
 
-		if (!userToSwap || userToSwap.order <= rules.userDisconnected.order)
+		if (!userToSwap || userToSwap.order <= disconnectedUser.order)
 		{
 			return;
 		}
@@ -3488,16 +3914,22 @@ export class View
 			type: SwapType.Direct,
 			to: {
 				userModel: userToSwap,
-				order: rules.userDisconnected.order,
+				order: disconnectedUser.order,
 			},
 		});
 
-		if (this.currentPage !== this.pagesCount && disconnectedUserFromCurrentPage && !params.possibleActiveUsers.includes(userToSwap.id))
+		if (
+			this.currentPage !== this.pagesCount
+			&& disconnectedUserFromCurrentPage
+			&& !params.possibleActiveUsers.includes(userToSwap.id)
+		)
 		{
 			params.usersToKeepActive.push(userToSwap.id);
 			params.usersToDeactivate++;
 		}
-	};
+
+		this.applyOrderChanges(params.orderChanges);
+	}
 
 	renderAddUserButtonInList()
 	{
@@ -3550,36 +3982,36 @@ export class View
 		{
 			this.processVideoRules(orderingRules, orderingParams);
 			this.processDisconnectRules(orderingRules, orderingParams);
-			orderingParams.usersWithEnabledVideo = orderingRules.videoEnabled.map(el => el.id);
-			orderingParams.usersWithDisabledVideo = orderingRules.videoDisabled.map(el => el.id);
+			orderingParams.usersWithEnabledVideo = orderingRules[RerenderReason.VideoEnabled].map((el) => el.id);
+			orderingParams.usersWithDisabledVideo = orderingRules[RerenderReason.VideoDisabled].map((el) => el.id);
 
 			orderingParams.activeUsers = this.getActiveUsers();
 			orderingParams.possibleActiveUsers = orderingParams.activeUsers.slice(skipUsers, skipUsers + this.usersPerPage);
 			orderingParams.usersWithVideo = this.getUsersWithCamera();
 
 			this.completeVideoDisabledSwap(orderingRules, orderingParams);
-			if (orderingRules.userDisconnected)
-			{
-				this.completeDisconnectSwap(orderingRules, orderingParams);
-			}
+			this.completeDisconnectSwap(orderingRules, orderingParams);
+
+			orderingParams.activeUsers = this.getActiveUsers();
+			orderingParams.possibleActiveUsers = orderingParams.activeUsers.slice(skipUsers, skipUsers + this.usersPerPage);
 		}
 		else if (this.layout === Layouts.Centered)
 		{
 			// new grid logic is applied only in the Layouts.Grid layout
 			// so we need to save some rules for later
-			orderingRules.videoEnabled.forEach(user => this.shelvedRerenderQueue.set(user.id, {
+			orderingRules[RerenderReason.VideoEnabled].forEach((user) => this.shelvedRerenderQueue.set(user.id, {
 				userId: user.id,
 				reason: RerenderReason.VideoEnabled,
 			}));
-			orderingRules.videoDisabled.forEach(user => this.shelvedRerenderQueue.set(user.id, {
+			orderingRules[RerenderReason.VideoDisabled].forEach((user) => this.shelvedRerenderQueue.set(user.id, {
 				userId: user.id,
 				reason: RerenderReason.VideoDisabled,
 			}));
 		}
 
-		for (let i = 0; i < this.userRegistry.users.length; i++)
+		const userModels: UserModel[] = [...this.userRegistry.users.values()];
+		for (const userModel: UserModel of userModels)
 		{
-			const userModel: UserModel = this.userRegistry.users[i];
 			const userId = userModel.id;
 			if (!this.users.hasOwnProperty(userId))
 			{
@@ -3628,16 +4060,15 @@ export class View
 
 			if (this.layout === Layouts.Grid)
 			{
-				if (orderingRules.videoEnabled.length)
+				if (orderingRules[RerenderReason.VideoEnabled].length > 0)
 				{
-					if ((userActive || userSkipped) && orderingParams.incompleteSwaps.length)
+					if ((userActive || userSkipped) && orderingParams.incompleteSwaps.length > 0)
 					{
 						const previousIncompleteSwaps = orderingParams.incompleteSwaps.length;
 						const index = orderingParams.incompleteSwaps[0] - 1;
 						const userEnabledVideo = orderingParams.orderChanges[index].from;
 						const currentUserFromCurrentPage = orderingParams.possibleActiveUsers?.includes(userModel.id);
 						const changedUserFromCurrentPage = orderingParams.possibleActiveUsers?.includes(userEnabledVideo.userModel.id);
-						const currentUserFromNextPage = userModel.order > orderingParams.possibleActiveUsers[orderingParams.possibleActiveUsers.length-1].order;
 
 						this.completeVideoEnableSwap(userModel, orderingRules, orderingParams);
 						const swapCompleted = previousIncompleteSwaps !== orderingParams.incompleteSwaps.length;
@@ -3662,7 +4093,7 @@ export class View
 						userActive = false;
 					}
 				}
-				else if (orderingRules.videoDisabled.length)
+				else if (orderingRules[RerenderReason.VideoDisabled].length > 0)
 				{
 					if (orderingParams.usersToKeepActive.includes(userModel.id))
 					{
@@ -3677,7 +4108,7 @@ export class View
 						orderingParams.currentPageUsers.pop();
 					}
 				}
-				else if (orderingRules.userDisconnected)
+				else if (orderingRules[RerenderReason.UserDisconnected])
 				{
 					if (orderingParams.usersToKeepActive.includes(userModel.id))
 					{
@@ -3783,8 +4214,17 @@ export class View
 		this.elements.root.classList.toggle("bx-messenger-videocall-user-list-empty", (this.elements.userList.container.childElementCount === 0));
 		this.localUser.updatePanelDeferred();
 
-		this.toggleSubscribingVideoInRenderUserList(this.activeUsers, true)
-		this.toggleSubscribingVideoInRenderUserList(this.inactiveUsers, false)
+		const currentActiveUsers = this.currentPiPUserId ? [...this.activeUsers, this.currentPiPUserId] : this.activeUsers;
+		const currentInactiveUsers = [...this.inactiveUsers];
+		const currentPiPUserIndexInInactiveUsers = this.currentPiPUserId ? currentInactiveUsers.indexOf(this.currentPiPUserId) : -1;
+
+		if (currentPiPUserIndexInInactiveUsers !== -1)
+		{
+			currentInactiveUsers.splice(currentPiPUserIndexInInactiveUsers, 1);
+		}
+
+		this.toggleSubscribingVideoInRenderUserList(currentActiveUsers, true)
+		this.toggleSubscribingVideoInRenderUserList(currentInactiveUsers, false)
 	};
 
 	shouldShowLocalUser()
@@ -3846,13 +4286,16 @@ export class View
 		this.elements.center.style.setProperty('--avatar-text-size', avatarTextSize + 'px');
 	};
 
-	renderButtons(buttons): HTMLElement
+	renderButtons(buttons, rerender): HTMLElement
 	{
 		let panelInner, left, center, right;
 
-		panelInner = Dom.create("div", {
-			props: {className: "bx-messenger-videocall-panel-inner"}
-		});
+		if (rerender)
+		{
+			panelInner = Dom.create('div', {
+				props: { className: 'bx-messenger-videocall-panel-inner' },
+			});
+		}
 
 		if (this.layout === Layouts.Mobile || this.size === Size.Folded)
 		{
@@ -3860,32 +4303,46 @@ export class View
 			center = panelInner;
 			right = panelInner;
 		}
-		else
+		else if (rerender)
 		{
-			left = Dom.create("div", {
-				props: {className: "bx-messenger-videocall-panel-inner-left"},
+			left = Dom.create('div', {
+				props: { className: 'bx-messenger-videocall-panel-inner-left' },
 			});
-			center = Dom.create("div", {
-				props: {className: "bx-messenger-videocall-panel-inner-center"},
+			center = Dom.create('div', {
+				props: { className: 'bx-messenger-videocall-panel-inner-center' },
 			});
-			right = Dom.create("div", {
-				props: {className: "bx-messenger-videocall-panel-inner-right"},
+			right = Dom.create('div', {
+				props: { className: 'bx-messenger-videocall-panel-inner-right' },
 			});
-			panelInner.appendChild(left);
-			panelInner.appendChild(center);
-			panelInner.appendChild(right);
+			Dom.append(left, panelInner);
+			Dom.append(center, panelInner);
+			Dom.append(right, panelInner);
 		}
 
 		for (let i = 0; i < buttons.length; i++)
 		{
 			switch (buttons[i])
 			{
-				case "title":
-					this.buttons.title = new Buttons.TitleButton({
-						text: this.title,
-						isGroupCall: Object.keys(this.users).length > 1
-					});
-					left.appendChild(this.buttons.title.render());
+				case 'title':
+					if (this.buttons.title)
+					{
+						this.buttons.title.update({
+							text: this.title,
+							isGroupCall: Object.keys(this.users).length > 1,
+						});
+					}
+					else
+					{
+						this.buttons.title = new Buttons.TitleButton({
+							text: this.title,
+							isGroupCall: Object.keys(this.users).length > 1,
+						});
+					}
+
+					if (rerender)
+					{
+						Dom.append(this.buttons.title.render(), left);
+					}
 					break;
 				/*case "grid":
 					this.buttons.grid = new SimpleButton({
@@ -3903,193 +4360,239 @@ export class View
 					});
 					leftSubPanel.appendChild(this.buttons.add.render());
 					break;*/
-				case "share":
-					this.buttons.share = new Buttons.SimpleButton({
-						class: "share",
-						text: BX.message("IM_M_CALL_BTN_LINK"),
-						onClick: this._onShareButtonClick.bind(this)
-					});
-					center.appendChild(this.buttons.share.render());
+				case 'share':
+					if (rerender)
+					{
+						this.buttons.share = new Buttons.SimpleButton({
+							class: 'share',
+							text: BX.message('IM_M_CALL_BTN_LINK'),
+							onClick: this._onShareButtonClick.bind(this),
+						});
+						Dom.append(this.buttons.share.render(), center);
+					}
 					break;
-				case "microphone":
-					this.buttons.microphone = new Buttons.DeviceButton({
-						class: "microphone",
-						text: BX.message("IM_M_CALL_BTN_MIC"),
-						enabled: !Hardware.isMicrophoneMuted,
-						arrowHidden: this.layout == Layouts.Mobile,
-						arrowEnabled: this.isMediaSelectionAllowed(),
-						showPointer: true, //todo
-						blocked: this.isButtonBlocked("microphone"),
-						showLevel: true,
-						sideIcon: this.getMicrophoneSideIcon(this.roomState),
-						onClick: (e) =>
-						{
-							this._onMicrophoneButtonClick(e);
-							this._showMicrophoneHint(e);
-						},
-						onArrowClick: this._onMicrophoneArrowClick.bind(this),
-						onMouseOver: this._showMicrophoneHint.bind(this),
-						onMouseOut: () => this._destroyHotKeyHint(),
-						onSideIconClick: this._onMicrophoneSideIconClick.bind(this),
-					});
-					left.appendChild(this.buttons.microphone.render());
+				case 'microphone':
+					if (this.buttons.microphone)
+					{
+						this.buttons.microphone.setBlocked(this.isButtonBlocked('microphone'));
+					}
+					else
+					{
+						this.buttons.microphone = new Buttons.DeviceButton({
+							class: 'microphone',
+							text: BX.message('IM_M_CALL_BTN_MIC'),
+							enabled: !Hardware.isMicrophoneMuted,
+							arrowHidden: this.layout === Layouts.Mobile,
+							arrowEnabled: this.isMediaSelectionAllowed(),
+							showPointer: true, //todo
+							blocked: this.isButtonBlocked('microphone'),
+							showLevel: true,
+							sideIcon: this.getMicrophoneSideIcon(this.roomState),
+							onClick: this._onMicrophoneButtonClick.bind(this),
+							onArrowClick: this._onMicrophoneArrowClick.bind(this),
+							onSideIconClick: this._onMicrophoneSideIconClick.bind(this),
+							...(Util.isDesktop() ? {
+								tooltip: {
+									position: 'top',
+									getText: () => Hardware.isMicrophoneMuted ? `${BX.message('IM_SPACE_HOTKEY')}\\A${' '}${this.keyModifierForCss} + A${' '}` : `${this.keyModifierForCss} + A`,
+								},
+							} : {}),
+						});
+					}
+
+					if (rerender)
+					{
+						Dom.append(this.buttons.microphone.render(), left);
+					}
 					break;
-				case "camera":
-					this.buttons.camera = new Buttons.DeviceButton({
-						class: "camera",
-						text: BX.message("IM_M_CALL_BTN_CAMERA"),
-						enabled: Hardware.isCameraOn,
-						arrowHidden: this.layout == Layouts.Mobile,
-						arrowEnabled: this.isMediaSelectionAllowed(),
-						blocked: this.isButtonBlocked("camera"),
-						onClick: this._onCameraButtonClick.bind(this),
-						onArrowClick: this._onCameraArrowClick.bind(this),
-						onMouseOver: (e) =>
-						{
-							this._showHotKeyHint(e.currentTarget.firstChild, "camera", this.keyModifier + " + V");
-						},
-						onMouseOut: () =>
-						{
-							this._destroyHotKeyHint();
-						}
-					});
-					left.appendChild(this.buttons.camera.render());
+				case 'camera':
+					if (this.buttons.camera)
+					{
+						this.buttons.camera.setBlocked(this.isButtonBlocked('camera'));
+					}
+					else
+					{
+						this.buttons.camera = new Buttons.DeviceButton({
+							class: 'camera',
+							text: BX.message('IM_M_CALL_BTN_CAMERA'),
+							enabled: Hardware.isCameraOn,
+							arrowHidden: this.layout === Layouts.Mobile,
+							arrowEnabled: this.isMediaSelectionAllowed(),
+							blocked: this.isButtonBlocked('camera'),
+							onClick: this._onCameraButtonClick.bind(this),
+							onArrowClick: this._onCameraArrowClick.bind(this),
+							...(Util.isDesktop() ? {
+								tooltip: {
+									position: 'top',
+									getText: () => `${this.keyModifierForCss} + V`,
+								}
+							} : {}),
+						});
+					}
+
+					if (rerender)
+					{
+						Dom.append(this.buttons.camera.render(), left);
+					}
 					break;
-				case "screen":
-					if (!this.buttons.screen)
+				case 'screen':
+					if (this.buttons.screen)
+					{
+						this.buttons.screen.setBlocked(this.isButtonBlocked('screen'));
+					}
+					else
 					{
 						this.buttons.screen = new Buttons.SimpleButton({
-							class: "screen",
-							backgroundClass: "bx-messenger-videocall-panel-background-screen",
-							text: BX.message("IM_M_CALL_BTN_SCREEN"),
-							blocked: this.isButtonBlocked("screen"),
+							class: 'screen',
+							backgroundClass: 'bx-messenger-videocall-panel-background-screen',
+							text: BX.message('IM_M_CALL_BTN_SCREEN'),
+							blocked: this.isButtonBlocked('screen'),
 							onClick: this._onScreenButtonClick.bind(this),
-							onMouseOver: (e) =>
-							{
-								this._showHotKeyHint(e.currentTarget, "screen", this.keyModifier + " + S");
-							},
-							onMouseOut: () =>
-							{
-								this._destroyHotKeyHint();
-							}
+							...(Util.isDesktop() ? {
+								tooltip: {
+									position: 'top',
+									getText: () => `${this.keyModifierForCss} + S`,
+								}
+							} : {}),
 						});
 					}
-					else
+
+					if (rerender)
 					{
-						this.buttons.screen.setBlocked(this.isButtonBlocked("screen"));
+						Dom.append(this.buttons.screen.render(), center);
 					}
-					center.appendChild(this.buttons.screen.render());
 					break;
-				case "record":
-					if (!this.buttons.record)
-					{
-						this.buttons.record = new Buttons.SimpleButton({
-							class: "record",
-							backgroundClass: "bx-messenger-videocall-panel-background-record",
-							text: this.recordState.state === View.RecordState.Started || this.recordState.state === View.RecordState.Resumed
-								? BX.message("CALL_M_BTN_TITLE_STOP_RECORD")
-								: BX.message("IM_M_CALL_BTN_RECORD"),
-							blocked: this.isButtonBlocked("record"),
-							onClick: this._onRecordToggleClick.bind(this),
-							onMouseOver: (e) =>
-							{
-								if (this.isRecordingHotKeySupported())
-								{
-									this._showHotKeyHint(e.currentTarget, "record", this.keyModifier + " + R");
-								}
-							},
-							onMouseOut: () =>
-							{
-								if (this.isRecordingHotKeySupported())
-								{
-									this._destroyHotKeyHint();
-								}
-							}
-						});
-					}
-					else
+				case 'record':
+					if (this.buttons.record)
 					{
 						this.buttons.record.setBlocked(this.isButtonBlocked('record'));
 					}
-					center.appendChild(this.buttons.record.render());
-					break;
-				case "document":
-					if (!this.buttons.document)
+					else
 					{
-						this.buttons.document = new Buttons.SimpleButton({
-							class: "document",
-							backgroundClass: "bx-messenger-videocall-panel-background-document",
-							text: BX.message("IM_M_CALL_BTN_DOCUMENT"),
-							blocked: this.isButtonBlocked("document"),
-							onClick: this._onDocumentButtonClick.bind(this)
+						this.buttons.record = new Buttons.SimpleButton({
+							class: 'record',
+							backgroundClass: 'bx-messenger-videocall-panel-background-record',
+							text: [
+								'View.RecordState.Started',
+								'View.RecordState.Resumed'
+							].includes(this.recordState.state)
+								? BX.message('CALL_M_BTN_TITLE_STOP_RECORD')
+								: BX.message('IM_M_CALL_BTN_RECORD'),
+							blocked: this.isButtonBlocked('record'),
+							onClick: this._onRecordToggleClick.bind(this),
+							...(Util.isDesktop() ? {
+								tooltip: {
+									position: 'top',
+									getText: () => `${this.keyModifierForCss} + R`,
+								}
+							} : {}),
 						});
 					}
-					else
+
+					if (rerender)
+					{
+						Dom.append(this.buttons.record.render(), center);
+					}
+					break;
+				case 'document':
+					if (this.buttons.document)
 					{
 						this.buttons.document.setBlocked(this.isButtonBlocked('document'));
 					}
-					center.appendChild(this.buttons.document.render());
-					break;
-				case "copilot":
-					if (!this.buttons.copilot)
+					else
 					{
-						this.buttons.copilot = new Buttons.SimpleButton({
-							class: "copilot",
-							backgroundClass: "bx-messenger-videocall-panel-background-copilot",
-							text: BX.message("CALL_BUTTON_COPILOT_TITLE"),
-							blocked: this.isButtonBlocked("copilot"),
-							onClick: this._onCopilotButtonClick.bind(this),
-							isComingSoon: !this.isCopilotFeaturesEnabled,
+						this.buttons.document = new Buttons.SimpleButton({
+							class: 'document',
+							backgroundClass: 'bx-messenger-videocall-panel-background-document',
+							text: BX.message('IM_M_CALL_BTN_DOCUMENT'),
+							blocked: this.isButtonBlocked('document'),
+							onClick: this._onDocumentButtonClick.bind(this),
 						});
+					}
+
+					if (rerender)
+					{
+						Dom.append(this.buttons.document.render(), center);
+					}
+					break;
+				case 'copilot':
+					if (this.buttons.copilot)
+					{
+						this.buttons.copilot.setBlocked(this.isButtonBlocked('copilot'));
+						this.buttons.copilot.setActive(this.isCopilotActive);
 					}
 					else
 					{
-						this.buttons.copilot.setBlocked(this.isButtonBlocked('copilot'));
+						this.buttons.copilot = new Buttons.SimpleButton({
+							class: 'copilot',
+							backgroundClass: 'bx-messenger-videocall-panel-background-copilot',
+							text: BX.message('CALL_BUTTON_COPILOT_TITLE'),
+							blocked: this.isButtonBlocked('copilot'),
+							onClick: this._onCopilotButtonClick.bind(this),
+							isComingSoon: !this.isCopilotFeaturesEnabled,
+							...(Util.isDesktop() ? {
+								tooltip: {
+									position: 'top',
+									getText: () => this.isCopilotActive
+										? Loc.getMessage('CALL_COPILOT_BUTTON_ON_HINT_V2')
+										: Loc.getMessage('CALL_COPILOT_BUTTON_OFF_HINT'),
+								},
+							} : {}),
+						});
 					}
 
-					if (this.isCopilotActive)
+					if (rerender)
 					{
-						this.buttons.copilot.setActive(true);
+						Dom.append(this.buttons.copilot.render(), center);
 					}
-					center.appendChild(this.buttons.copilot.render());
 					break;
-				case "returnToCall":
-					this.buttons.returnToCall = new Buttons.SimpleButton({
-						class: "returnToCall",
-						text: BX.message("IM_M_CALL_BTN_RETURN_TO_CALL"),
-						onClick: this._onBodyClick.bind(this)
-					});
-					right.appendChild(this.buttons.returnToCall.render());
+				case 'returnToCall':
+					if (rerender)
+					{
+						this.buttons.returnToCall = new Buttons.SimpleButton({
+							class: 'returnToCall',
+							text: BX.message('IM_M_CALL_BTN_RETURN_TO_CALL'),
+							onClick: this._onBodyClick.bind(this),
+						});
+						Dom.append(this.buttons.returnToCall.render(), right);
+					}
 					break;
-				case "hangup":
-					this.buttons.hangup = new Buttons.SimpleButton({
-						class: "hangup",
-						backgroundClass: "bx-messenger-videocall-panel-icon-background-hangup",
-						text: Object.keys(this.users).length > 1 ? BX.message("IM_M_CALL_BTN_DISCONNECT") : BX.message("IM_M_CALL_BTN_HANGUP"),
-						onClick: this._onHangupButtonClick.bind(this)
-					});
-
-					right.appendChild(this.buttons.hangup.render());
+				case 'hangup':
+					if (rerender)
+					{
+						this.buttons.hangup = new Buttons.SimpleButton({
+							class: 'hangup',
+							backgroundClass: 'bx-messenger-videocall-panel-icon-background-hangup',
+							text: Object.keys(this.users).length > 1 ? BX.message('IM_M_CALL_BTN_DISCONNECT') : BX.message('IM_M_CALL_BTN_HANGUP'),
+							onClick: this._onHangupButtonClick.bind(this),
+						});
+						Dom.append(this.buttons.hangup.render(), right);
+					}
 					break;
-				case "hangupOptions":
-					this.buttons.hangupOptions = new Buttons.SimpleButton({
-						class: "hangup-options",
-						backgroundClass: "bx-messenger-videocall-panel-icon-background-hangup-options",
-						onClick: this._onHangupOptionsButtonClick.bind(this)
-					});
-
-					right.appendChild(this.buttons.hangupOptions.render());
+				case 'hangupOptions':
+					if (rerender)
+					{
+						this.buttons.hangupOptions = new Buttons.SimpleButton({
+							class: 'hangup-options',
+							backgroundClass: 'bx-messenger-videocall-panel-icon-background-hangup-options',
+							onClick: this._onHangupOptionsButtonClick.bind(this),
+						});
+						Dom.append(this.buttons.hangupOptions.render(), right);
+					}
 					break;
-				case "close":
-					this.buttons.close = new Buttons.SimpleButton({
-						class: "close",
-						backgroundClass: "bx-messenger-videocall-panel-icon-background-hangup",
-						text: BX.message("IM_M_CALL_BTN_CLOSE"),
-						onClick: this._onCloseButtonClick.bind(this)
-					});
-					right.appendChild(this.buttons.close.render());
+				case 'close':
+					if (rerender)
+					{
+						this.buttons.close = new Buttons.SimpleButton({
+							class: 'close',
+							backgroundClass: 'bx-messenger-videocall-panel-icon-background-hangup',
+							text: BX.message('IM_M_CALL_BTN_CLOSE'),
+							onClick: this._onCloseButtonClick.bind(this),
+						});
+						Dom.append(this.buttons.close.render(), right);
+					}
 					break;
-				case "speaker":
+				case 'speaker':
 					/*this.buttons.speaker = new Buttons.DeviceButton({
 						class: "speaker",
 						text: BX.message("IM_M_CALL_BTN_SPEAKER"),
@@ -4100,79 +4603,94 @@ export class View
 					});
 					rightSubPanel.appendChild(this.buttons.speaker.render());*/
 					break;
-				case "mobileMenu":
-					if (!this.buttons.mobileMenu)
+				case 'mobileMenu':
+					if (rerender)
 					{
-						this.buttons.mobileMenu = new Buttons.SimpleButton({
-							class: "sandwich",
-							text: BX.message("IM_M_CALL_BTN_MENU"),
-							onClick: this._onMobileMenuButtonClick.bind(this)
-						})
+						if (!this.buttons.mobileMenu)
+						{
+							this.buttons.mobileMenu = new Buttons.SimpleButton({
+								class: 'sandwich',
+								text: BX.message('IM_M_CALL_BTN_MENU'),
+								onClick: this._onMobileMenuButtonClick.bind(this),
+							});
+						}
+						Dom.append(this.buttons.mobileMenu.render(), center);
 					}
-					center.appendChild(this.buttons.mobileMenu.render());
 					break;
-				case "chat":
-					if (!this.buttons.chat)
-					{
-						this.buttons.chat = new Buttons.SimpleButton({
-							class: "chat",
-							backgroundClass: "bx-messenger-videocall-panel-background-chat",
-							text: BX.message("IM_M_CALL_BTN_CHAT"),
-							blocked: this.isButtonBlocked("chat"),
-							onClick: this._onChatButtonClick.bind(this),
-							onMouseOver: (e) =>
-							{
-								this._showHotKeyHint(e.currentTarget, "chat", this.keyModifier + " + C");
-							},
-							onMouseOut: () =>
-							{
-								this._destroyHotKeyHint();
-							}
-						});
-					}
-					else
+				case 'chat':
+					if (this.buttons.chat)
 					{
 						this.buttons.chat.setBlocked(this.isButtonBlocked('chat'));
 					}
-					center.appendChild(this.buttons.chat.render());
+					else
+					{
+						this.buttons.chat = new Buttons.SimpleButton({
+							class: 'chat',
+							backgroundClass: 'bx-messenger-videocall-panel-background-chat',
+							text: BX.message('IM_M_CALL_BTN_CHAT'),
+							blocked: this.isButtonBlocked('chat'),
+							onClick: this._onChatButtonClick.bind(this),
+							...(Util.isDesktop() ? {
+								tooltip: {
+									position: 'top',
+									getText: () => `${this.keyModifierForCss} + C`,
+								}
+							} : {}),
+						});
+					}
+
+					if (rerender)
+					{
+						Dom.append(this.buttons.chat.render(), center);
+					}
 					break;
-				case "floorRequest":
+				case 'floorRequest':
 					if (!this.buttons.floorRequest)
 					{
 						this.buttons.floorRequest = new Buttons.SimpleButton({
-							class: "floor-request",
-							backgroundClass: "bx-messenger-videocall-panel-background-floor-request",
-							text: BX.message("IM_M_CALL_BTN_WANT_TO_SAY"),
-							blocked: this.isButtonBlocked("floorRequest"),
+							class: 'floor-request',
+							backgroundClass: 'bx-messenger-videocall-panel-background-floor-request',
+							text: BX.message('IM_M_CALL_BTN_WANT_TO_SAY'),
+							blocked: this.isButtonBlocked('floorRequest'),
 							onClick: this._onFloorRequestButtonClick.bind(this),
-							onMouseOver: (e) =>
-							{
-								this._showHotKeyHint(e.currentTarget, "floorRequest", this.keyModifier + " + H");
-							},
-							onMouseOut: () => this._destroyHotKeyHint()
-
+							...(Util.isDesktop() ? {
+								tooltip: {
+									position: 'top',
+									getText: () => `${this.keyModifierForCss} + H`,
+								}
+							} : {}),
 						});
 					}
 					else
 					{
 						this.buttons.floorRequest.setBlocked(this.isButtonBlocked('floorRequest'));
 					}
-					center.appendChild(this.buttons.floorRequest.render());
-					break;
-				case "more":
-					if (!this.buttons.more)
+
+					if (rerender)
 					{
-						this.buttons.more = new Buttons.SimpleButton({
-							class: "more",
-							onClick: this._onMoreButtonClick.bind(this)
-						})
+						Dom.append(this.buttons.floorRequest.render(), center);
 					}
-					center.appendChild(this.buttons.more.render());
 					break;
-				case "spacer":
-					panelInner.appendChild(Dom.create("div", {
-						props: {className: "bx-messenger-videocall-panel-spacer"}
-					}));
+				case 'more':
+					if (rerender)
+					{
+						if (!this.buttons.more)
+						{
+							this.buttons.more = new Buttons.SimpleButton({
+								class: 'more',
+								onClick: this._onMoreButtonClick.bind(this),
+							});
+						}
+						Dom.append(this.buttons.more.render(), center);
+					}
+					break;
+				case 'spacer':
+					if (rerender)
+					{
+						panelInner.appendChild(Dom.create('div', {
+							props: { className: 'bx-messenger-videocall-panel-spacer' },
+						}));
+					}
 					break;
 				/*case "history":
 					this.buttons.history = new Buttons.SimpleButton({
@@ -4186,40 +4704,48 @@ export class View
 		}
 
 		return panelInner;
-	};
+	}
 
-	renderTopButtons(buttons)
+	renderTopButtons(buttons, rerender): void
 	{
-		let result = BX.createFragment();
-
 		for (let i = 0; i < buttons.length; i++)
 		{
 			switch (buttons[i])
 			{
-				case "watermark":
-					this.buttons.waterMark = new Buttons.WaterMarkButton({
-						language: this.language
-					});
-					result.appendChild(this.buttons.waterMark.render());
+				case 'watermark':
+					if (!this.buttons.waterMark)
+					{
+						this.buttons.waterMark = new Buttons.WaterMarkButton({
+							language: this.language,
+						});
+					}
+
+					if (rerender)
+					{
+						Dom.append(this.buttons.waterMark.render(), this.elements.topPanel);
+					}
 					break;
-				case "protected":
-					this.buttons.protected = new Buttons.TopFramelessButton({
-						iconClass: "protected",
-						textClass: "protected",
-						text: BX.message("IM_M_CALL_PROTECTED").toLowerCase(),
-						onMouseOver: (e) =>
-						{
-							this.hintManager.popupParameters.events = null;
-							this.hintManager.show(e.currentTarget, BX.message("IM_M_CALL_PROTECTED_HINT"));
-						},
-						onMouseOut: () =>
-						{
-							this.hintManager.hide();
-						}
-					});
-					result.appendChild(this.buttons.protected.render());
+				case 'protected':
+					if (!this.buttons.protected)
+					{
+						this.buttons.protected = new Buttons.TopFramelessButton({
+							iconClass: 'protected',
+							textClass: 'protected',
+							text: BX.message('IM_M_CALL_PROTECTED').toLowerCase(),
+							tooltip: {
+								width: '384px',
+								position: 'bottom',
+								getText: () => BX.message('IM_M_CALL_PROTECTED_HINT'),
+							}
+						});
+					}
+
+					if (rerender)
+					{
+						Dom.append(this.buttons.protected.render(), this.elements.topPanel);
+					}
 					break;
-				case "recordStatus":
+				case 'recordStatus':
 					if (this.buttons.recordStatus)
 					{
 						this.buttons.recordStatus.updateView();
@@ -4231,102 +4757,177 @@ export class View
 							recordState: this.recordState,
 							onPauseClick: this._onRecordPauseClick.bind(this),
 							onStopClick: this._onRecordStopClick.bind(this),
-							onMouseOver: this._onRecordMouseOver.bind(this),
-							onMouseOut: this._onRecordMouseOut.bind(this),
+							tooltip: {
+								position: 'bottom',
+								getText: () => {
+									if (this.recordState.userId == this.userId || !this.userData[this.recordState.userId])
+									{
+										return '';
+									}
+
+									const recordingUserName = Text.encode(this.userData[this.recordState.userId].name);
+									return BX.message('IM_M_CALL_RECORD_HINT').replace('#USER_NAME#', recordingUserName);
+								},
+							}
 						});
 					}
-					result.appendChild(this.buttons.recordStatus.render());
-					break;
-				case "grid":
-					this.buttons.grid = new Buttons.TopButton({
-						iconClass: this.layout == Layouts.Grid ? "speaker" : "grid",
-						text: this.layout == Layouts.Grid ? BX.message("IM_M_CALL_SPEAKER_MODE") : BX.message("IM_M_CALL_GRID_MODE"),
-						onClick: this._onGridButtonClick.bind(this),
-						onMouseOver: (e) =>
-						{
-							this._showHotKeyHint(e.currentTarget, "grid", this.keyModifier + " + W", {position: "bottom"});
-						},
-						onMouseOut: () =>
-						{
-							this._destroyHotKeyHint();
-						}
-					});
-					result.appendChild(this.buttons.grid.render());
-					break;
-				case "fullscreen":
-					this.buttons.fullscreen = new Buttons.TopButton({
-						iconClass: this.isFullScreen ? "fullscreen-leave" : "fullscreen-enter",
-						text: this.isFullScreen ? BX.message("IM_M_CALL_WINDOW_MODE") : BX.message("IM_M_CALL_FULLSCREEN_MODE"),
-						onClick: this._onFullScreenButtonClick.bind(this)
-					});
-					result.appendChild(this.buttons.fullscreen.render());
-					break;
-				case "feedback":
-					this.buttons.feedback = new Buttons.TopButton({
-						iconClass: 'feedback',
-						text: BX.message('IM_OL_COMMENT_HEAD_BUTTON_VOTE'),
-						onClick: this._onFeedbackButtonClick.bind(this)
-					})
-					result.appendChild(this.buttons.feedback.render());
-					break;
-				case "participants":
-					let foldButtonState;
 
-					if (this.isFullScreen && this.layout == Layouts.Centered)
+					if (rerender)
 					{
-						foldButtonState = this.isUserBlockFolded ? Buttons.ParticipantsButton.FoldButtonState.Unfold : Buttons.ParticipantsButton.FoldButtonState.Fold
+						Dom.append(this.buttons.recordStatus.render(), this.elements.topPanel);
+					}
+					break;
+				case 'grid':
+					if (this.buttons.grid)
+					{
+						this.buttons.grid.update({
+							iconClass: this.layout === Layouts.Grid ? 'speaker' : 'grid',
+							text: this.layout === Layouts.Grid ? BX.message('IM_M_CALL_SPEAKER_MODE') : BX.message('IM_M_CALL_GRID_MODE'),
+						});
+					}
+					else
+					{
+						this.buttons.grid = new Buttons.TopButton({
+							iconClass: this.layout === Layouts.Grid ? 'speaker' : 'grid',
+							text: this.layout === Layouts.Grid ? BX.message('IM_M_CALL_SPEAKER_MODE') : BX.message('IM_M_CALL_GRID_MODE'),
+							onClick: this._onGridButtonClick.bind(this),
+							...(Util.isDesktop() ? {
+								tooltip: {
+									position: 'bottom',
+									getText: () => `${this.keyModifierForCss} + W`
+								}
+							} : {}),
+						});
+					}
+
+					if (rerender)
+					{
+						Dom.append(this.buttons.grid.render(), this.elements.topPanel);
+					}
+					break;
+				case 'fullscreen':
+					if (this.buttons.fullscreen)
+					{
+						this.buttons.fullscreen.update({
+							iconClass: this.isFullScreen ? 'fullscreen-leave' : 'fullscreen-enter',
+							text: this.isFullScreen ? BX.message('IM_M_CALL_WINDOW_MODE') : BX.message('IM_M_CALL_FULLSCREEN_MODE'),
+						});
+					}
+					else
+					{
+						this.buttons.fullscreen = new Buttons.TopButton({
+							iconClass: this.isFullScreen ? 'fullscreen-leave' : 'fullscreen-enter',
+							text: this.isFullScreen ? BX.message('IM_M_CALL_WINDOW_MODE') : BX.message('IM_M_CALL_FULLSCREEN_MODE'),
+							onClick: this._onFullScreenButtonClick.bind(this),
+						});
+					}
+
+					if (rerender)
+					{
+						Dom.append(this.buttons.fullscreen.render(), this.elements.topPanel);
+					}
+					break;
+				case 'feedback':
+					if (!this.buttons.feedback)
+					{
+						this.buttons.feedback = new Buttons.TopButton({
+							iconClass: 'feedback',
+							text: BX.message('IM_OL_COMMENT_HEAD_BUTTON_VOTE'),
+							onClick: this._onFeedbackButtonClick.bind(this)
+						});
+					}
+
+					if (rerender)
+					{
+						Dom.append(this.buttons.feedback.render(), this.elements.topPanel);
+					}
+					break;
+				case 'callcontrol':
+					if (!this.buttons.callcontrol)
+					{
+						this.buttons.callcontrol = new Buttons.TopButton({
+							iconClass: 'callcontrol',
+							text: BX.message('CALL_CALLCONTROL_BUTTON_LABEL'),
+							onClick: this._onCallcontrolButtonClick.bind(this)
+						});
+					}
+
+					if (rerender)
+					{
+						Dom.append(this.buttons.callcontrol.render(), this.elements.topPanel);
+					}
+					break;
+				case 'participants':
+					let foldButtonState = Buttons.ParticipantsButton.FoldButtonState.Hidden;
+
+					if (this.isFullScreen && this.layout === Layouts.Centered)
+					{
+						foldButtonState = this.isUserBlockFolded
+							? Buttons.ParticipantsButton.FoldButtonState.Unfold
+							: Buttons.ParticipantsButton.FoldButtonState.Fold;
 					}
 					else if (this.showUsersButton)
 					{
 						foldButtonState = Buttons.ParticipantsButton.FoldButtonState.Active;
 					}
-					else
-					{
-						foldButtonState = Buttons.ParticipantsButton.FoldButtonState.Hidden;
-					}
 
 					if (this.buttons.participants)
 					{
 						this.buttons.participants.update({
-							foldButtonState: foldButtonState,
-							allowAdding: !this.isButtonBlocked("add"),
+							foldButtonState,
+							allowAdding: !this.isButtonBlocked('add'),
 							count: this.getConnectedUserCount(true),
 						});
 					}
 					else
 					{
 						this.buttons.participants = new Buttons.ParticipantsButton({
-							foldButtonState: foldButtonState,
-							allowAdding: !this.isButtonBlocked("add"),
+							foldButtonState,
+							allowAdding: !this.isButtonBlocked('add'),
 							count: this.getConnectedUserCount(true),
 							onListClick: this._onParticipantsButtonListClick.bind(this),
-							onAddClick: this._onAddButtonClick.bind(this)
+							onAddClick: this._onAddButtonClick.bind(this),
 						});
 					}
 
-					result.appendChild(this.buttons.participants.render());
+					if (rerender)
+					{
+						Dom.append(this.buttons.participants.render(), this.elements.topPanel);
+					}
 					break;
-				case "participantsMobile":
-					this.buttons.participantsMobile = new Buttons.ParticipantsButtonMobile({
-						count: this.getConnectedUserCount(true),
-						onClick: this._onParticipantsButtonMobileListClick.bind(this),
-					});
-					result.appendChild(this.buttons.participantsMobile.render());
+				case 'participantsMobile':
+					if (!this.buttons.participantsMobile)
+					{
+						this.buttons.participantsMobile = new Buttons.ParticipantsButtonMobile({
+							count: this.getConnectedUserCount(true),
+							onClick: this._onParticipantsButtonMobileListClick.bind(this),
+						});
+					}
+
+					if (rerender)
+					{
+						Dom.append(this.buttons.participantsMobile.render(), this.elements.topPanel);
+					}
 					break;
-				case "separator":
-					result.appendChild(Dom.create("div", {
-						props: {className: "bx-messenger-videocall-top-separator"}
-					}));
+				case 'separator':
+					if (rerender)
+					{
+						this.elements.topPanel.appendChild(Dom.create('div', {
+							props: { className: 'bx-messenger-videocall-top-separator' },
+						}));
+					}
 					break;
-				case "spacer":
-					result.appendChild(Dom.create("div", {
-						props: {className: "bx-messenger-videocall-top-panel-spacer"}
-					}));
+				case 'spacer':
+					if (rerender)
+					{
+						this.elements.topPanel.appendChild(Dom.create('div', {
+							props: { className: 'bx-messenger-videocall-top-panel-spacer' },
+						}));
+					}
 					break;
 			}
 		}
-		return result;
-	};
+	}
 
 	updateCopilotState(isActive)
 	{
@@ -4414,6 +5015,35 @@ export class View
 		});
 	}
 
+	createAhaMomentNotifyCallcontrol()
+	{
+		if (!this.buttons.callcontrol)
+		{
+			return;
+		}
+
+		if (this.ahaMomentNotifyCallcontrol)
+		{
+			this.ahaMomentNotifyCallcontrol.show();
+			return this.ahaMomentNotifyCallcontrol;
+		}
+
+		this.ahaMomentNotifyCallcontrol = new AhaMomentNotify({
+			notifyTitle: BX.message("CALL_CALLCONTROL_AXA_MOMENT_TITLE"),
+			notifyText: BX.message("CALL_CALLCONTROL_AXA_MOMENT_TEXT"),
+			bindElement: this.buttons.callcontrol.elements.root,
+			promoId: CALLCONTROL_PROMO_ID,
+			onClose: () => {
+				this.needToShowCallcontrolPromo = false;
+				this.ahaMomentNotifyCallcontrol = null;
+			}
+		});
+
+		this.ahaMomentNotifyCallcontrol.show();
+
+		return this.ahaMomentNotifyCallcontrol;
+	}
+
 	calculateUnusedPanelSpace(buttonList)
 	{
 		if (!buttonList)
@@ -4436,6 +5066,187 @@ export class View
 		return this.elements.panel.scrollWidth - totalButtonWidth - 32;
 	};
 
+
+	setWindowFocusState(isActive)
+	{
+		if (isActive === this.isWindowFocus)
+		{
+			return;
+		}
+
+		this.isWindowFocus = isActive;
+
+		if (this.pictureInPictureCallWindow)
+		{
+			this.pictureInPictureCallWindow.setButtons(this.getPictureInPictureCallWindowGetButtonsList()).updateButtons();
+		}
+	}
+
+	getPictureInPictureCallWindowGetButtonsList()
+	{
+		const buttonsList = ["microphone", "camera"];
+
+		if (this.getButtonActive('screen'))
+		{
+			buttonsList.push("stop-screen");
+		}
+
+		const isViewHidden = this.viewVisibility.getCurrentVisibility() === DocumentVisibilityState.hidden;
+
+		if (this.size === View.Size.Folded || this.isDocumentHidden || isViewHidden)
+		{
+			buttonsList.push("returnToCall");
+		}
+
+		// if (this.getButtonList().includes('copilot'))
+		// {
+		// 	buttonsList.push("copilot");
+		// }
+
+		return buttonsList;
+	}
+
+	getPictureInPictureCallWindowUser()
+	{
+		const currentUserId = this.presenterId || this.centralUser?.userModel.id || this.userId;
+		const isLocalUser = +this.userId === +currentUserId;
+		const currentUser = isLocalUser ? this.localUser : this.users[currentUserId];
+
+		const isCurrentPiPUser = !!this.currentPiPUserId && currentUserId === this.currentPiPUserId;
+
+		if (isCurrentPiPUser)
+		{
+			return;
+		}
+
+		if (!this.activeUsers.includes(currentUserId) && !isLocalUser)
+		{
+			this.toggleSubscribingVideoInRenderUserList([currentUserId], true);
+		}
+
+		if (this.currentPiPUserId && +this.userId !== +this.currentPiPUserId && !this.activeUsers.includes(this.currentPiPUserId))
+		{
+			this.toggleSubscribingVideoInRenderUserList([this.currentPiPUserId], false);
+		}
+
+		this.currentPiPUserId = currentUserId;
+
+		const modifiedCurrentUser =  {
+			userModel: this.userRegistry.get(currentUserId),
+			avatarBackground: currentUser.avatarBackground,
+			videoRenderer: currentUser.videoRenderer,
+			previewRenderer: currentUser.previewRenderer,
+		};
+
+		if (currentUser.videoTrack)
+		{
+			modifiedCurrentUser.videoRenderer = new MediaRenderer({
+				kind: 'video',
+				track: currentUser.videoTrack,
+			});
+		}
+
+		if (!isLocalUser && this.screenUsers[currentUserId]?.videoTrack)
+		{
+			modifiedCurrentUser.previewRenderer = new MediaRenderer({
+				kind: 'sharing',
+				track: this.screenUsers[currentUserId].videoTrack,
+			});
+		}
+
+		if (isLocalUser && this.localStreamVideoTrack)
+		{
+			modifiedCurrentUser.previewRenderer = new MediaRenderer({
+				kind: 'sharing',
+				track: this.localStreamVideoTrack,
+			});
+		}
+
+		return modifiedCurrentUser;
+	}
+
+	getBlockedButtonsListPictureInPictureCallWindow()
+	{
+		const blockedButtons = [];
+
+		if (this.isButtonBlocked('camera'))
+		{
+			blockedButtons.push('camera');
+		}
+
+		if (this.isButtonBlocked('microphone'))
+		{
+			blockedButtons.push('microphone');
+		}
+
+		if (this.isButtonBlocked('screen'))
+		{
+			blockedButtons.push('screen');
+		}
+
+		return blockedButtons;
+	}
+
+
+	_onPiPClose() : void
+	{
+		this.eventEmitter.emit(EventName.onPiPClose);
+	}
+
+	toggleStatePictureInPictureCallWindow(isActive)
+	{
+		const isPiPAvailable = PictureInPictureWindow.isAvailable;
+		if (isActive && !this.pictureInPictureCallWindow && isPiPAvailable && Util.isPictureInPictureFeatureEnabled())
+		{
+			this.pictureInPictureCallWindow = new PictureInPictureWindow({
+				currentUser: this.getPictureInPictureCallWindowUser(),
+				isCopilotFeaturesEnabled: this.isCopilotFeaturesEnabled,
+				buttons: this.getPictureInPictureCallWindowGetButtonsList(),
+				blockedButtons: this.getBlockedButtonsListPictureInPictureCallWindow(),
+				allowPinButton: false,
+				allowBackgroundItem: BackgroundDialog.isAvailable() && this.isIntranetOrExtranet,
+				allowMaskItem: BackgroundDialog.isMaskAvailable() && this.isIntranetOrExtranet,
+				preferInitialWindowPlacement: this.preferInitialWindowPlacementPictureInPicture,
+				floorRequestNotifications: this.floorRequestNotifications,
+				onClose: () =>
+				{
+					this.pictureInPictureCallWindow = null;
+					this.currentPiPUserId = null;
+					this._onPiPClose();
+				},
+				onButtonClick: ({ buttonName, event }) =>
+				{
+					switch (buttonName)
+					{
+						case "microphone":
+							this._onMicrophoneButtonClick(event);
+							break;
+						case "camera":
+							this._onCameraButtonClick(event);
+							break;
+						case "returnToCall":
+							this._onBodyClick(event);
+							break;
+						case "stop-screen":
+							this._onScreenButtonClick(event);
+							break;
+						default:
+							break;
+					}
+				}
+			});
+			this.pictureInPictureCallWindow.checkAvailableAndCreate()
+				.then(() => {
+					this.preferInitialWindowPlacementPictureInPicture = false;
+				});
+		}
+
+		if (!isActive && this.pictureInPictureCallWindow)
+		{
+			this.pictureInPictureCallWindow.close();
+		}
+	}
+
 	setButtonActive(buttonName, isActive)
 	{
 		if (!this.buttons[buttonName])
@@ -4444,11 +5255,17 @@ export class View
 		}
 
 		this.buttons[buttonName].setActive(isActive);
+
+		if (this.pictureInPictureCallWindow)
+		{
+			this.pictureInPictureCallWindow.setButtons(this.getPictureInPictureCallWindowGetButtonsList()).updateButtons();
+		}
+
 	};
 
 	getButtonActive(buttonName)
 	{
-		if (!this.buttons[buttonName])
+		if (!this.buttons || !this.buttons[buttonName])
 		{
 			return false;
 		}
@@ -4484,7 +5301,7 @@ export class View
 
 				this.centralUser.mount(this.elements.center);
 				this.eventEmitter.emit(EventName.onHasMainStream, {
-					userId: this.centralUser.id
+					userId: this.centralUser.id,
 				});
 				this.centralUser.visible = true;
 			}
@@ -4552,7 +5369,7 @@ export class View
 			id: 'bx-call-buttons-popup',
 			bindElement: bindElement,
 			targetContainer: this.container,
-			content: this.renderButtons(Object.keys(this.overflownButtons)),
+			content: this.renderButtons(Object.keys(this.overflownButtons), true),
 			cacheable: false,
 			closeIcon: false,
 			autoHide: true,
@@ -4588,11 +5405,19 @@ export class View
 
 	updateUserButtons()
 	{
+		const currentConnectedUserCount = this.getConnectedUserCount();
+		const previousConnectedUserCount = this.cache.get('previousConnectedUserCount');
+
+		if (currentConnectedUserCount > 1 && previousConnectedUserCount > 1)
+		{
+			return;
+		}
+
 		for (let userId in this.users)
 		{
 			if (this.users.hasOwnProperty(userId))
 			{
-				this.users[userId].allowPinButton = this.getConnectedUserCount() > 1;
+				this.users[userId].allowPinButton = currentConnectedUserCount > 1;
 			}
 		}
 	};
@@ -4606,21 +5431,50 @@ export class View
 
 		if (!skippedElementsList.includes('panel'))
 		{
-			Dom.clean(this.elements.panel);
-			this.elements.panel.appendChild(this.renderButtons(this.getButtonList()));
+			const buttonList = this.getButtonList();
+			if (this.needToRerenderButtonList)
+			{
+				Dom.clean(this.elements.panel);
+				Dom.append(this.renderButtons(buttonList, this.needToRerenderButtonList), this.elements.panel);
+				this.needToRerenderButtonList = false;
+			}
+			else
+			{
+				this.renderButtons(buttonList);
+			}
 		}
 
-		Dom.clean(this.elements.topPanel);
 		if (this.elements.topPanel)
 		{
-			this.elements.topPanel.appendChild(this.renderTopButtons(this.getTopButtonList()));
+			const topButtonList = this.getTopButtonList();
+			if (this.needToRerenderTopButtonList)
+			{
+				Dom.clean(this.elements.topPanel);
+			}
+			this.renderTopButtons(topButtonList, this.needToRerenderTopButtonList);
+			this.needToRerenderTopButtonList = false;
 		}
+
 		if (this.buttons.participantsMobile)
 		{
 			this.buttons.participantsMobile.setCount(this.getConnectedUserCount(true));
 		}
 
+		if (this.showCallcontrolPromoPopupTimeout)
+		{
+			clearTimeout(this.showCallcontrolPromoPopupTimeout);
+		}
 
+		if (this.needToShowCallcontrolPromo)
+		{
+			this.showCallcontrolPromoPopupTimeout = setTimeout(() =>
+			{
+				if (this.size !== View.Size.Folded)
+				{
+					this.createAhaMomentNotifyCallcontrol();
+				}
+			}, 1500);
+		}
 
 		this.renderAddUserButtonInList();
 	};
@@ -4634,9 +5488,10 @@ export class View
 				this.userData[userId] = {
 					name: '',
 					avatar_hr: '',
-					gender: 'M'
-				}
+					gender: 'M',
+				};
 			}
+
 			if (userData[userId].name)
 			{
 				this.userData[userId].name = userData[userId].name;
@@ -4660,7 +5515,7 @@ export class View
 			if (userModel)
 			{
 				userModel.name = this.userData[userId].name;
-				userModel.avatar = this.userData[userId].avatar_hr;
+				userModel.avatar = checkAndEncodeURI(this.userData[userId].avatar_hr);
 			}
 		}
 	};
@@ -4980,49 +5835,7 @@ export class View
 		}
 	};
 
-	_showHotKeyHint(targetNode, name, text, options)
-	{
-		const existingHint = BX.PopupWindowManager.getPopupById('ui-hint-popup');
-		if (existingHint)
-		{
-			existingHint.destroy();
-		}
 
-		if (!this.isHotKeyActive(name))
-		{
-			return;
-		}
-
-		options = options || {};
-		this.hintManager.popupParameters.events = {
-			onShow: function onShow(event) {
-				let popup = event.getTarget();
-				let offsetLeft = (targetNode.offsetWidth / 2 - popup.getPopupContainer().offsetWidth / 2) + 23;
-
-				if (options?.additionalOffsetLeft)
-				{
-					offsetLeft += options.additionalOffsetLeft;
-				}
-				// hack to get hint sizes
-				popup.getPopupContainer().style.display = 'block';
-				if (options.position === 'bottom') {
-					popup.setOffset({
-						offsetTop: 10,
-						offsetLeft,
-					});
-				} else {
-					popup.setOffset({
-						offsetLeft,
-					});
-				}
-			}
-		};
-
-		this.hintManager.show(
-			targetNode,
-			text
-		);
-	}
 
 	_destroyHotKeyHint()
 	{
@@ -5037,29 +5850,9 @@ export class View
 		}
 
 		// we need to destroy, not .hide for onShow event handler (see method _showHotKeyHint).
+		this.hintManager.hide();
 		this.hintManager.popup.destroy();
 		this.hintManager.popup = null;
-	}
-
-	_showMicrophoneHint(e)
-	{
-		this.hintManager.hide();
-
-		if (!this.isHotKeyActive("microphone"))
-		{
-			return;
-		}
-
-		let micHotkeys = '';
-		let additionalOffsetLeft = 0;
-		if (Hardware.isMicrophoneMuted && this.isHotKeyActive("microphoneSpace"))
-		{
-			micHotkeys = BX.message("IM_SPACE_HOTKEY") + '<br>';
-			additionalOffsetLeft = 20;
-		}
-		micHotkeys += this.keyModifier + ' + A';
-
-		this._showHotKeyHint(e.currentTarget.firstChild, "microphone", micHotkeys, {additionalOffsetLeft});
 	}
 
 	_onKeyDown(e)
@@ -5266,9 +6059,30 @@ export class View
 	{
 		if (this.layout == Layouts.Centered)
 		{
-			this.setLayout(Layouts.Grid)
+			this.setLayout(Layouts.Grid);
 		}
 		this.unpinUser();
+	};
+
+	_onTurnOffParticipantMic(e)
+	{
+		this.eventEmitter.emit(EventName.onTurnOffParticipantMic, {
+			userId: e.userId
+		});
+	};
+
+	_onTurnOffParticipantCam(e)
+	{
+		this.eventEmitter.emit(EventName.onTurnOffParticipantCam, {
+			userId: e.userId
+		});
+	};
+
+	_onTurnOffParticipantScreenshare(e)
+	{
+		this.eventEmitter.emit(EventName.onTurnOffParticipantScreenshare, {
+			userId: e.userId
+		});
 	};
 
 	_onRecordToggleClick(e)
@@ -5362,22 +6176,6 @@ export class View
 		});
 	};
 
-	_onRecordMouseOver(e)
-	{
-		if (this.recordState.userId == this.userId || !this.userData[this.recordState.userId])
-		{
-			return;
-		}
-
-		const recordingUserName = Text.encode(this.userData[this.recordState.userId].name);
-		this.hintManager.show(e.currentTarget, BX.message("IM_M_CALL_RECORD_HINT").replace("#USER_NAME#", recordingUserName));
-	};
-
-	_onRecordMouseOut()
-	{
-		this.hintManager.hide();
-	};
-
 	_onDocumentButtonClick(e)
 	{
 		e.stopPropagation();
@@ -5402,7 +6200,7 @@ export class View
 		if (this.layout == Layouts.Centered && this.localUser.id !== this.centralUser.id)
 		{
 			this.eventEmitter.emit(EventName.onHasMainStream, {
-				userId: this.centralUser.id
+				userId: this.centralUser.id,
 			});
 		}
 	};
@@ -5427,6 +6225,10 @@ export class View
 
 	_onMicrophoneButtonClick(e)
 	{
+		if (this.isButtonBlocked('microphone'))
+		{
+			return;
+		}
 		if ("stopPropagation" in e)
 		{
 			e.stopPropagation();
@@ -5460,6 +6262,10 @@ export class View
 
 	_onCameraButtonClick(e)
 	{
+		if (this.isButtonBlocked('camera'))
+		{
+			return;
+		}
 		if ("stopPropagation" in e)
 		{
 			e.stopPropagation();
@@ -5646,6 +6452,22 @@ export class View
 			buttonName: 'feedback',
 			node: e.target
 		});
+	}
+
+	_onCallcontrolButtonClick(e)
+	{
+		e.stopPropagation();
+		this.eventEmitter.emit(EventName.onButtonClick, {
+			buttonName: 'callcontrol',
+			node: e.target
+		});
+
+		if (this.ahaMomentNotifyCallcontrol)
+		{
+			PromoManager.getInstance().markAsWatched(CALLCONTROL_PROMO_ID);
+		}
+
+		this.clearCallcontrolPromo();
 	}
 
 	_onParticipantsButtonListClick(event)
@@ -5892,10 +6714,7 @@ export class View
 
 	releaseLocalMedia()
 	{
-		if (!this.hasCurrentUserScreenSharing())
-		{
-			this.localUser.releaseStream();
-		}
+		this.localUser.releaseStream();
 
 		if (this.centralUser.id == this.userId)
 		{
@@ -5912,13 +6731,57 @@ export class View
 		this.rerenderQueue.clear();
 	}
 
+	clearCallcontrolPromo()
+	{
+		if (this.showCallcontrolPromoPopupTimeout)
+		{
+			clearTimeout(this.showCallcontrolPromoPopupTimeout);
+		}
+
+		if (this.ahaMomentNotifyCallcontrol)
+		{
+			this.needToShowCallcontrolPromo = false;
+			this.ahaMomentNotifyCallcontrol.close();
+			this.ahaMomentNotifyCallcontrol = null;
+		}
+
+	}
+	// 594840
+	#getViewVisibilityChange(listners = []) {
+		const handler = (event) => {
+			for (const listner of listners)
+			{
+				listner(event, document.visibilityState)
+			}
+		};
+
+		const startViewVisibilityChange = () => {
+			document.addEventListener('visibilitychange', handler, { capture: true });
+		};
+
+		const stopViewVisibilityChange = () => {
+			document.removeEventListener('visibilitychange', handler, { capture: true });
+		};
+
+		return {
+			startViewVisibilityChange,
+			stopViewVisibilityChange,
+			getCurrentVisibility: () => document.visibilityState,
+		};
+	}
+
 	destroy()
 	{
+		this.destroyed = true;
+
 		this.closeCopilotNotify();
 		if (this.overflownButtonsPopup)
 		{
 			this.overflownButtonsPopup.close();
 		}
+
+		this.preferInitialWindowPlacementPictureInPicture = true;
+
 		if (this.elements.root)
 		{
 			Dom.remove(this.elements.root);
@@ -5935,6 +6798,7 @@ export class View
 		window.removeEventListener("keyup", this._onKeyUpHandler);
 
 		document.removeEventListener('mousemove', this.onMouseMoveHandler);
+
 		this.resizeObserver.disconnect();
 		this.resizeObserver = null;
 		if (this.intersectionObserver)
@@ -5968,6 +6832,10 @@ export class View
 
 		Hardware.unsubscribe(Hardware.Events.onChangeMicrophoneMuted, this.setMuted);
 		Hardware.unsubscribe(Hardware.Events.onChangeCameraOn, this.setCameraState);
+
+		this.clearCallcontrolPromo();
+
+		this.viewVisibility.stopViewVisibilityChange();
 	};
 
 	static Layout = Layouts;
@@ -5984,5 +6852,7 @@ export class View
 	static RoomState = RoomState;
 	static DeviceSelector = DeviceSelector;
 	static NotificationManager = NotificationManager;
-	static MIN_WIDTH = MIN_WIDTH
+	static MIN_WIDTH = MIN_WIDTH;
+
+	static DocumentVisibilityState: DocumentVisibilityState = DocumentVisibilityState;
 }

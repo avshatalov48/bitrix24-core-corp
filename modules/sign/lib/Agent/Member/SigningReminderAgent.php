@@ -38,7 +38,7 @@ final class SigningReminderAgent
 			return '';
 		}
 
-		$result = (new PlanNextRemindDate($document, (new NotifyCalculationService)->getPlanMemberAndSendReminderLimit($documentId)))->launch();
+		$result = (new PlanNextRemindDate($document, (new NotifyCalculationService())->getPlanMemberAndSendReminderLimit($documentId)))->launch();
 		if (!$result->isSuccess())
 		{
 			$logger = Logger::getInstance();
@@ -50,7 +50,7 @@ final class SigningReminderAgent
 			);
 		}
 
-		return static::getPlanNextRemindDateAgentName($documentId);
+		return self::getPlanNextRemindDateAgentName($documentId);
 	}
 
 	public static function getNotifyAgentName(int $documentId): string
@@ -77,7 +77,7 @@ final class SigningReminderAgent
 			return '';
 		}
 
-		$result = (new Send($document, (new NotifyCalculationService)->getPlanMemberAndSendReminderLimit($documentId)))->launch();
+		$result = (new Send($document, (new NotifyCalculationService())->getPlanMemberAndSendReminderLimit($documentId)))->launch();
 		if (!$result->isSuccess())
 		{
 			$logger = Logger::getInstance();
@@ -89,6 +89,6 @@ final class SigningReminderAgent
 			);
 		}
 
-		return static::getNotifyAgentName($documentId);
+		return self::getNotifyAgentName($documentId);
 	}
 }

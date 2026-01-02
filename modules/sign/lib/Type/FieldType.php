@@ -28,6 +28,8 @@ final class FieldType
 	public const PATRONYMIC = 'patronymic';
 	public const POSITION = 'position';
 	public const ENUMERATION = 'enumeration';
+	public const EXTERNAL_ID = 'external_id';
+	public const EXTERNAL_DATE = 'external_date';
 
 	public const ADDRESS_SUBFIELD_MAP = [
 		'ADDRESS_1' => Address\FieldType::ADDRESS_LINE_1,
@@ -63,6 +65,13 @@ final class FieldType
 			self::PATRONYMIC,
 			self::POSITION,
 			self::ENUMERATION,
+			self::EXTERNAL_ID,
+			self::EXTERNAL_DATE,
 		];
+	}
+
+	public static function isRegional(string $fieldType): bool
+	{
+		return in_array($fieldType, [self::EXTERNAL_DATE, self::EXTERNAL_ID], true);
 	}
 }

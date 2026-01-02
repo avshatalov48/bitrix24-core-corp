@@ -5,6 +5,7 @@ namespace Bitrix\Crm\Counter;
 use Bitrix\Crm\ItemIdentifier;
 use Bitrix\Crm\Settings\CounterSettings;
 use Bitrix\Main\Application;
+use Bitrix\Main\DB\DuplicateEntryException;
 use Bitrix\Main\ORM\Data\DataManager;
 use Bitrix\Main\ORM\Fields\BooleanField;
 use Bitrix\Main\ORM\Fields\IntegerField;
@@ -61,7 +62,7 @@ class EntityCountableActivityTable extends DataManager
 		];
 	}
 
-	public static function upsert(array $fields): \Bitrix\Main\ORM\Data\Result
+	public static function upsert(array $fields, bool $forceUpdate = false): \Bitrix\Main\ORM\Data\Result
 	{
 		$existedRecordId = self::query()
 			->where('ENTITY_TYPE_ID', $fields['ENTITY_TYPE_ID'])
@@ -75,8 +76,19 @@ class EntityCountableActivityTable extends DataManager
 		{
 			return self::update($existedRecordId, $fields);
 		}
+		if ($forceUpdate)
+		{
+			return new \Bitrix\Main\ORM\Data\Result();
+		}
 
-		return self::add($fields);
+		try
+		{
+			return self::add($fields);
+		}
+		catch (DuplicateEntryException $e)
+		{
+			return static::upsert($fields, true);
+		}
 	}
 
 	public static function deleteByEntity(ItemIdentifier $identifier): void

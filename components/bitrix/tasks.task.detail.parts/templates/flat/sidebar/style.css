@@ -101,6 +101,10 @@
 	margin: 15px 0 33px;
 }
 
+.task-detail-sidebar-item-videocall .intranet-control-btn.ui-btn-split {
+	width: 100%;
+}
+
 .task-detail-sidebar-item-report {
 	padding: 8px 0;
 	display: flex;

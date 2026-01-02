@@ -10,6 +10,7 @@ jn.define('ui-system/blocks/chips/chip', (require, exports, module) => {
 	const getIndent = (indent) => Indent.resolve(indent).toNumber();
 
 	/**
+	 * @deprecated use ChipButton
 	 * @function Chip
 	 * @params {object} props
 	 * @params {boolean} [props.rounded]

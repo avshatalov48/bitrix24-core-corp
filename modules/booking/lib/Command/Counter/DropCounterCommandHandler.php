@@ -33,8 +33,8 @@ class DropCounterCommandHandler
 	private function handle(DropCounterCommand $command): void
 	{
 		$affectedUsers = $this->counterRepository->getUsersByCounterType(
-			entityId: $command->entityId,
-			type: $command->type,
+			entityIds: [$command->entityId],
+			types: [$command->type],
 		);
 
 		if (empty($affectedUsers))

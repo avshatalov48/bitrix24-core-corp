@@ -2,13 +2,13 @@
 namespace Bitrix\Tasks\Rest\Controllers\Action;
 
 use Bitrix\Main\ArgumentException;
-use Bitrix\Main\Error;
 use Bitrix\Main\Localization\Loc;
 use Bitrix\Main\ObjectPropertyException;
 use Bitrix\Main\Search;
 use Bitrix\Main\SystemException;
 use Bitrix\Main\Text\Emoji;
 use Bitrix\Main\UI\PageNavigation;
+use Bitrix\Tasks\Internals\Log\Logger;
 use Bitrix\Tasks\Internals\SearchIndex;
 use Bitrix\Tasks\Internals\Task\SearchIndexTable;
 use Bitrix\Tasks\Provider\Exception\InvalidGroupByException;
@@ -30,7 +30,7 @@ class SearchAction extends Search\SearchAction
 	 * @throws TasksException
 	 * @restMethod tasks.task.search
 	 */
-	public function provideData($searchQuery, array $options = null, PageNavigation $pageNavigation = null): ?array
+	public function provideData($searchQuery, array $options = null, PageNavigation $pageNavigation = null): array
 	{
 		$result = [];
 
@@ -45,8 +45,9 @@ class SearchAction extends Search\SearchAction
 		}
 		catch (TaskListException|InvalidGroupByException $exception)
 		{
-			$this->addError(Error::createFromThrowable($exception));
-			return null;
+			Logger::handle($exception);
+
+			return [];
 		}
 
 		foreach ($tasksBySearch as $task)

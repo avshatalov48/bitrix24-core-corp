@@ -1,0 +1,2 @@
+<?php
+$MESS["INTRANET_INVITATION_WIDGET_INVITE"] = "Einladen";

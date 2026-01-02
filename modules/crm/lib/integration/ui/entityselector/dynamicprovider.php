@@ -14,6 +14,34 @@ class DynamicProvider extends EntityProvider
 		$this->options['dynamicTypeId'] = (int)($options['entityTypeId'] ?? 0);
 	}
 
+	public function getRecentItemIds(string $context): array
+	{
+		if ($this->notLinkedOnly)
+		{
+			$ids = [];
+			$factory = Container::getInstance()->getFactory($this->options['dynamicTypeId']);
+			if ($factory)
+			{
+				$list = $factory->getItemsFilteredByPermissions([
+					'order' => ['ID' => 'DESC'],
+					'filter' => $this->getNotLinkedFilter(),
+				]);
+
+				foreach ($list as $item)
+				{
+					$ids[] = $item->getId();
+				}
+			}
+		}
+		else
+		{
+			$ids = parent::getRecentItemIds($context);
+		}
+
+		return $ids;
+	}
+
+
 	protected function getEntityTypeName(): string
 	{
 		return 'dynamic';
@@ -49,5 +77,17 @@ class DynamicProvider extends EntityProvider
 		}
 
 		return [];
+	}
+
+	protected function getAdditionalFilter(): array
+	{
+		$filter = [];
+
+		if ($this->notLinkedOnly)
+		{
+			$filter = $this->getNotLinkedFilter();
+		}
+
+		return $filter;
 	}
 }

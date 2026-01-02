@@ -11,14 +11,12 @@ jn.define('crm/timeline/scheduler/providers/task', (require, exports, module) =>
 	const { get } = require('utils/object');
 	const { getFeatureRestriction, tariffPlanRestrictionsReady } = require('tariff-plan-restriction');
 
-	let TaskCreate = null;
-	let openTaskCreateForm = null;
+	let TasksEntry = null;
 	let FeatureId = null;
 
 	try
 	{
-		TaskCreate = require('tasks/layout/task/create')?.TaskCreate;
-		openTaskCreateForm = require('tasks/layout/task/create/opener')?.openTaskCreateForm;
+		TasksEntry = require('tasks/entry').Entry;
 		FeatureId = require('tasks/enum').FeatureId;
 
 		setTimeout(() => tariffPlanRestrictionsReady(), 2000);
@@ -70,7 +68,7 @@ jn.define('crm/timeline/scheduler/providers/task', (require, exports, module) =>
 
 		static isAvailableInMenu(context = {})
 		{
-			if ((!openTaskCreateForm && !TaskCreate) || !FeatureId)
+			if (!TasksEntry || !FeatureId)
 			{
 				return false;
 			}
@@ -92,7 +90,7 @@ jn.define('crm/timeline/scheduler/providers/task', (require, exports, module) =>
 
 		static async open(data)
 		{
-			if ((!openTaskCreateForm && !TaskCreate) || !FeatureId)
+			if (!TasksEntry || !FeatureId)
 			{
 				return;
 			}
@@ -113,28 +111,19 @@ jn.define('crm/timeline/scheduler/providers/task', (require, exports, module) =>
 				return;
 			}
 
-			const openParams = {
-				closeAfterSave: true,
+			TasksEntry.openTaskCreation({
 				initialTaskData: {
-					crm: {
-						[`${entity.typeId}_${entity.id}`]: {
+					crm: [
+						{
 							id: entity.id,
 							title: entity.title,
 							type,
 						},
-					},
+					],
 				},
+				closeAfterSave: true,
 				analyticsLabel: analyticsEvent.exportToObject(),
-			};
-
-			if (openTaskCreateForm)
-			{
-				openTaskCreateForm(openParams);
-			}
-			else
-			{
-				TaskCreate.open(openParams);
-			}
+			});
 
 			AnalyticsLabel.send({
 				event: 'onTaskAdd',

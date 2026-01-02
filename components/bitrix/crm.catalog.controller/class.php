@@ -9,6 +9,7 @@ use Bitrix\Main\Loader;
 use Bitrix\Main\Localization\Loc;
 use Bitrix\Crm;
 use Bitrix\Crm\Settings\LayoutSettings;
+use Bitrix\Iblock;
 
 class CrmCatalogControllerComponent extends CBitrixComponent implements Main\Errorable
 {
@@ -228,8 +229,18 @@ class CrmCatalogControllerComponent extends CBitrixComponent implements Main\Err
 			return;
 		}
 
-		$iblock = \CIBlock::GetArrayByID($iblockId);
-		if (empty($iblock) || !is_array($iblock))
+		$iblock = Iblock\IblockTable::getRow([
+			'select' => [
+				'ID',
+			],
+			'filter' => [
+				'=ID' => $iblockId,
+			],
+			'cache' => [
+				'ttl' => 86400,
+			],
+		]);
+		if ($iblock === null)
 		{
 			$this->addErrorMessage(Loc::getMessage('CRM_CATALOG_CONTROLLER_ERR_CATALOG_PRODUCT_ABSENT'));
 			return;

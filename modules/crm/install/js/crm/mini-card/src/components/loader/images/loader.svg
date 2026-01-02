@@ -1,0 +1,57 @@
+<svg width="300" height="449" viewBox="0 0 300 449" fill="none" xmlns="http://www.w3.org/2000/svg" xmlns:xlink="http://www.w3.org/1999/xlink">
+	<svg width="330" height="449" id="skeleton-elements">
+		<g clip-path="url(#clip1_1118_26740)">
+			<rect width="300" height="449"/>
+			<rect x="4" width="72" height="72" rx="36" fill="#EDEEF0"/>
+			<rect x="86" y="15.5" width="120" height="12" rx="6" fill="#EDEEF0"/>
+			<rect x="86" y="37.5" width="80" height="10" rx="5" fill="#EDEEF0"/>
+			<rect x="86" y="62" width="60" height="6" rx="3" fill="#EDEEF0"/>
+			<!--			<rect x="283" y="1" width="16" height="14" rx="2" fill="#EDEEF0"/>-->
+			<rect x="4" y="90" width="142" height="28" rx="8" fill="#EDEEF0"/>
+			<rect x="154" y="90" width="142" height="28" rx="8" fill="#EDEEF0"/>
+			<rect x="4" y="140" width="292" height="1" fill="#F7F7F7"/>
+			<rect x="4" y="164.5" width="70" height="6" rx="3" fill="#EDEEF0"/>
+			<rect x="4" y="185.5" width="140" height="8" rx="4" fill="#EDEEF0"/>
+			<rect x="4" y="214.5" width="70" height="6" rx="3" fill="#EDEEF0"/>
+			<rect x="4" y="235.5" width="140" height="8" rx="4" fill="#EDEEF0"/>
+			<rect x="4" y="264.5" width="70" height="6" rx="3" fill="#EDEEF0"/>
+			<rect x="4" y="285.5" width="140" height="8" rx="4" fill="#EDEEF0"/>
+			<rect x="4" y="314.5" width="70" height="6" rx="3" fill="#EDEEF0"/>
+			<rect x="4" y="335.5" width="140" height="8" rx="4" fill="#EDEEF0"/>
+			<rect x="4" y="364.5" width="70" height="6" rx="3" fill="#EDEEF0"/>
+			<rect x="4" y="385.5" width="140" height="8" rx="4" fill="#EDEEF0"/>
+			<rect x="4" y="414.5" width="70" height="6" rx="3" fill="#EDEEF0"/>
+			<rect x="4" y="435.5" width="140" height="8" rx="4" fill="#EDEEF0"/>
+		</g>
+	</svg>
+
+	<defs>
+		<filter id="filter0_d_3935_148950" x="0" y="0" width="330" height="449" filterUnits="userSpaceOnUse" color-interpolation-filters="sRGB">
+			<feFlood flood-opacity="0" result="BackgroundImageFix"/>
+			<feColorMatrix in="SourceAlpha" type="matrix" values="0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 127 0" result="hardAlpha"/>
+			<feOffset dy="8"/>
+			<feGaussianBlur stdDeviation="6.5"/>
+			<feComposite in2="hardAlpha" operator="out"/>
+			<feColorMatrix type="matrix" values="0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0.09 0"/>
+			<feBlend mode="normal" in2="BackgroundImageFix" result="effect1_dropShadow_3935_148950"/>
+			<feBlend mode="normal" in="SourceGraphic" in2="effect1_dropShadow_3935_148950" result="shape"/>
+		</filter>
+		<linearGradient id="paint0_linear_3935_148950" x1="191" y1="5" x2="191" y2="187.369" gradientUnits="userSpaceOnUse">
+			<stop stop-opacity="0.2"/>
+			<stop offset="1" stop-opacity="0"/>
+		</linearGradient>
+
+		<linearGradient x1="66.6%" y1="50%" x2="33.3%" y2="50%" id="msk_gd">
+			<stop stop-color="#000000" stop-opacity="0" offset="0%"/>
+			<stop stop-color="#000000" stop-opacity="0.07" offset="50%"/>
+			<stop stop-color="#000000" stop-opacity="0" offset="100%"/>
+		</linearGradient>
+	</defs>
+
+	<rect id="msk1" width="100%" fill="url(#msk_gd)" mask="url(#headerMsk)" height="100%"/>
+	<mask id="headerMsk">
+		<use xlink:href="#skeleton-elements"/>
+	</mask>
+
+	<animate xlink:href="#msk1" attributeName="x" from="-100%" to="100%" dur="1s" begin="0s" repeatCount="indefinite"/>
+</svg>

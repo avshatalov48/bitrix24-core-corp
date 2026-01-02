@@ -62,6 +62,11 @@ jn.define('im/messenger/db/repository/reaction', (require, exports, module) => {
 		{
 			let result = {};
 
+			if (Type.isStringFilled(reaction.dialogId))
+			{
+				result.dialogId = reaction.dialogId;
+			}
+
 			if (Type.isNumber(reaction.messageId))
 			{
 				result.messageId = reaction.messageId;

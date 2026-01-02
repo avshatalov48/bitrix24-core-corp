@@ -11,6 +11,7 @@ jn.define('crm/receive-payment/steps/payment-systems', (require, exports, module
 	const { AnalyticsLabel } = require('analytics-label');
 	const { MainBlockLayout } = require('crm/receive-payment/steps/payment-systems/main-block-layout');
 	const { EventEmitter } = require('event-emitter');
+	const { Random } = require('utils/random');
 
 	/**
 	 * @class PaymentSystemsStep

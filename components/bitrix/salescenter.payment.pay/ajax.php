@@ -3,7 +3,6 @@
 use Bitrix\Main\Engine\Action;
 use Bitrix\Main\Engine\Controller;
 use Bitrix\Main\Engine\ActionFilter\Authentication;
-use Bitrix\Main\Engine\Response\Component;
 use Bitrix\Main\Engine\Response\Converter;
 use Bitrix\Main\Error;
 use Bitrix\Main\Loader;
@@ -12,6 +11,7 @@ use Bitrix\Sale\Controller\Action\Entity\UserConsentRequestAction;
 use Bitrix\Sale\Controller\Action\Entity\InitiatePayAction;
 use Bitrix\Sale\PaySystem;
 use Sale\Handlers\PaySystem\OrderDocumentHandler;
+use Bitrix\Main\Engine\Response\HtmlContent;
 
 if(!defined("B_PROLOG_INCLUDED") || B_PROLOG_INCLUDED!==true)die();
 
@@ -110,10 +110,10 @@ class SalescenterPaymentPayAjaxController extends Controller
 
 	/**
 	 * @param array $fields
-	 * @return Component|null
+	 * @return HtmlContent|null
 	 * @example BX.ajax.runComponentAction('bitrix:salescenter.payment.pay', 'userConsentRequest', { mode: 'ajax', data: { fields: { ... }}});
 	 */
-	public function userConsentRequestAction(array $fields): ?Component
+	public function userConsentRequestAction(array $fields): ?HtmlContent
 	{
 		$action = new UserConsentRequestAction($this->actionName, $this, $this->actionConfig);
 

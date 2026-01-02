@@ -7,7 +7,7 @@ $APPLICATION->SetAdditionalCSS('/bitrix/js/crm/css/crm.css');
 \Bitrix\Main\UI\Extension::load("ui.buttons");
 $toolbarID =  $arParams['TOOLBAR_ID'];
 $prefix =  $toolbarID.'_';
-?><div class="bx-crm-view-menu" id="<?=htmlspecialcharsbx($toolbarID)?>"><?
+?><div class="bx-crm-view-menu" id="<?=htmlspecialcharsbx($toolbarID)?>" data-role="crm-interface-toolbar-type2"><?
 
 	$moreItems = array();
 	$enableMoreButton = false;

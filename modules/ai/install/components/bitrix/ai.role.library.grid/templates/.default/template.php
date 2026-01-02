@@ -11,7 +11,6 @@ if (!defined("B_PROLOG_INCLUDED") || B_PROLOG_INCLUDED!==true)
 
 global $APPLICATION;
 
-use Bitrix\Main\Engine\CurrentUser;
 use Bitrix\Main\Localization\Loc;
 use Bitrix\Main\Web\Json;
 
@@ -23,12 +22,7 @@ $APPLICATION->setTitle(Loc::getMessage('ROLE_LIBRARY_TITLE'));
 <div>
 <?php
 
-/** @var \Bitrix\AI\Guard\ShowCopilotGuard $showCopilotGuard */
-$showCopilotGuard = \Bitrix\AI\Container::init()->getItem(\Bitrix\AI\Guard\ShowCopilotGuard::class);
-if (!$showCopilotGuard->hasAccess(CurrentUser::get()->getId()))
-{
-	\Bitrix\Main\Application::getInstance()->end();
-}
+$userId = Bitrix\AI\Facade\User::getCurrentUserId();
 
 $grid = $arResult['GRID'];
 
@@ -44,7 +38,6 @@ if (empty($userListInOption))
 {
 	$userListInOption = [];
 }
-$userId = Bitrix\AI\Facade\User::getCurrentUserId();
 $showSimpleTour = false;
 if (!in_array($userId, $userListInOption))
 {

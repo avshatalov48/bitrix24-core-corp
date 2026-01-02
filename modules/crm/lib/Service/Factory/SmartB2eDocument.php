@@ -312,6 +312,7 @@ class SmartB2eDocument extends Dynamic
 	public function getAdditionalTableFields(): array
 	{
 		return [
+			...parent::getAdditionalTableFields(),
 			(new Fields\StringField(Item\SmartB2eDocument::FIELD_NAME_NUMBER))
 				->configureTitle(Loc::getMessage('CRM_TYPE_SMART_B2E_DOC_FIELD_NUMBER'))
 				->configureDefaultValue('')
@@ -386,5 +387,10 @@ class SmartB2eDocument extends Dynamic
 	public function isCommunicationRoutingSupported(): bool
 	{
 		return false;
+	}
+
+	public function hasCustomPermissionsUI(): bool
+	{
+		return true;
 	}
 }

@@ -451,17 +451,7 @@ final class Entity
 	{
 		$entityTypeId = $this->getEntityTypeId();
 
-		$uPermissions = Container::getInstance()->getUserPermissions();
-		$permissionEntityType = $uPermissions::getPermissionEntityType($entityTypeId, (int)$categoryId);
-
-		if ($uPermissions->isAdmin())
-		{
-			return true;
-		}
-
-		$permissions = $uPermissions->getCrmPermissions()->GetPermType($permissionEntityType);
-
-		return $permissions >= $uPermissions::PERMISSION_ALL;
+		return Container::getInstance()->getUserPermissions()->entityType()->canReadAllItemsOfType($entityTypeId, $categoryId);
 	}
 
 	public function prepareFilter(\Bitrix\Crm\Kanban\Entity $entity): void

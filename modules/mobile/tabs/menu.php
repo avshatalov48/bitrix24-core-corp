@@ -2,8 +2,10 @@
 namespace Bitrix\Mobile\AppTabs;
 
 use Bitrix\Main\Localization\Loc;
-use Bitrix\Mobile\Context;
+use Bitrix\Mobile\Provider\UserRepository;
 use Bitrix\Mobile\Tab\Tabable;
+use Bitrix\Mobile\Config\Feature;
+use Bitrix\Mobile\Feature\MenuFeature;
 
 class Menu implements Tabable
 {
@@ -11,7 +13,7 @@ class Menu implements Tabable
 
 	public function isAvailable()
 	{
-		return !$this->context->isCollaber;
+		return !$this->context->isCollaber && !Feature::isEnabled(MenuFeature::class);
 	}
 
 	public function getData()
@@ -74,17 +76,46 @@ class Menu implements Tabable
 
 	public function getShortTitle()
 	{
-		return Loc::getMessage("TAB_NAME_MORE_SHORT_MSGVER_1");
+		return Loc::getMessage("TAB_NAME_MORE_SHORT");
 	}
 
 	public function getId()
 	{
-		return "more";
+		return 'more';
 	}
 
 	public function getIconId(): string
 	{
 		return 'menu';
+	}
+
+	public function getLastAndSecondName(): string
+	{
+		global $USER;
+
+		return \CUser::formatName(\CSite::getNameFormat(), [
+			"NAME" => $USER->GetParam('NAME'),
+			"LAST_NAME" => $USER->GetParam('LAST_NAME'),
+		]);
+	}
+
+	public function getImageUrl(): string
+	{
+		global $USER;
+
+		$personalPhotoId = $USER->GetParam('PERSONAL_PHOTO');
+
+		if (!$personalPhotoId)
+		{
+			return '';
+		}
+
+		[$originalAvatar, $resizedAvatar] = UserRepository::getAvatar(
+			(int)$personalPhotoId,
+			['width' => 64, 'height' => 64],
+		);
+
+		return $resizedAvatar;
 	}
 }
 

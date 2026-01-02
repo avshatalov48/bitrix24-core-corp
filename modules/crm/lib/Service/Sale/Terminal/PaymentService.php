@@ -380,10 +380,12 @@ final class PaymentService
 			return $result->addErrors($setClientBuilderDataResult->getErrors());
 		}
 
+		$defaultPaySystem = $this->getDefaultPaySystem();
+
 		$payment = [
 			'PRODUCT' => [],
-			'PAY_SYSTEM_ID' => $this->getDefaultPaySystem()['ID'],
-			'PAY_SYSTEM_NAME' => $this->getDefaultPaySystem()['NAME'],
+			'PAY_SYSTEM_ID' => $defaultPaySystem['ID'],
+			'PAY_SYSTEM_NAME' => $defaultPaySystem['NAME'],
 			'RESPONSIBLE_ID' => $createOptions->getResponsibleId(),
 		];
 
@@ -488,18 +490,18 @@ final class PaymentService
 
 	private function getDefaultPaySystem(): array
 	{
-		$paySystemList = PaySystem\Manager::getList([
+		$dbRes = PaySystem\Manager::getList([
 			'filter' => [
 				'=ACTIVE' => 'Y',
+				'=ACTION_FILE' => 'cash'
 			],
+			'limit' => 1
 		]);
 
-		foreach ($paySystemList as $item)
+		$item = $dbRes->fetch();
+		if ($item)
 		{
-			if ($item['ACTION_FILE'] === 'cash')
-			{
-				return $item;
-			}
+			return $item;
 		}
 
 		return PaySystem\Manager::getById(PaySystem\Manager::getInnerPaySystemId());

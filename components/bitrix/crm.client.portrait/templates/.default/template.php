@@ -5,6 +5,11 @@ if (!defined('B_PROLOG_INCLUDED') || B_PROLOG_INCLUDED!==true)
 	die();
 }
 
+/**
+ * @deprecated ATTENTION! This component is no longer used or maintained.
+ * This is a dead code that remains only for backwards compatibility.
+ */
+
 use Bitrix\Crm\Activity\CommunicationWidgetPanel;
 use Bitrix\Crm\Integration\IntranetManager;
 use Bitrix\Crm\Service\Container;
@@ -358,7 +363,6 @@ if (isset($arParams['IS_FRAME']) && $arParams['IS_FRAME'] === 'Y' && empty($arPa
 					'IS_SUPERVISOR' => $isSupervisor,
 					'ROWS' => $rowData,
 					'USE_DEMO' => 'N',
-					'RENDER_HEAD_INTO_VIEW' => (SITE_TEMPLATE_ID === 'bitrix24') ? null : 'widget_panel_head',
 					'MAX_WIDGET_COUNT' => 30
 				)
 			);

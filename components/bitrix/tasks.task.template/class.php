@@ -10,7 +10,6 @@ use Bitrix\Tasks\Access\Model\UserModel;
 use Bitrix\Tasks\CheckList\Template\TemplateCheckListConverterHelper;
 use Bitrix\Tasks\CheckList\Template\TemplateCheckListFacade;
 use Bitrix\Tasks\Integration\Bitrix24;
-use Bitrix\Tasks\Integration\Intranet\Settings;
 use Bitrix\Tasks\Provider\TemplateProvider;
 use Bitrix\Tasks\Util\Error\Collection;
 use Bitrix\Tasks\Item\Task\Template;
@@ -22,6 +21,7 @@ use Bitrix\Tasks\Util\User;
 use Bitrix\Tasks\Integration\SocialNetwork\Group;
 use Bitrix\Tasks\UI;
 use Bitrix\Tasks\Item\Converter\Task\Template\ToTemplate;
+use Bitrix\Tasks\V2\Internal\DI\Container;
 
 Loc::loadMessages(__FILE__);
 
@@ -44,6 +44,8 @@ class TasksTaskTemplateComponent extends TasksBaseComponent implements Errorable
 	private $success =          false;
 
 	protected $errorCollection;
+
+	private const GRID_ID = 'TASKS_TEMPLATES_FILTER_ID';
 
 	public function configureActions()
 	{
@@ -277,7 +279,7 @@ class TasksTaskTemplateComponent extends TasksBaseComponent implements Errorable
 
 		if ($arResult['IS_TOOL_AVAILABLE'])
 		{
-			$arResult['IS_TOOL_AVAILABLE'] = (new Settings())->isToolAvailable(Settings::TOOLS['templates']);
+			$arResult['IS_TOOL_AVAILABLE'] = Container::getInstance()->getToolService()->isTemplatesAvailable();
 		}
 	}
 
@@ -352,7 +354,7 @@ class TasksTaskTemplateComponent extends TasksBaseComponent implements Errorable
 
 	protected function getData()
 	{
-		//$this->getFlagStateInstance()->remove();
+		$this->arResult['GRID_ID'] = static::GRID_ID;
 
 		$formSubmitted = $this->formData !== false;
 		$id = $this->template->getId();
@@ -671,7 +673,7 @@ class TasksTaskTemplateComponent extends TasksBaseComponent implements Errorable
 			{
 				$select = array("ID", "TITLE", "START_DATE_PLAN", "END_DATE_PLAN", "DEADLINE", "RESPONSIBLE_ID");
 
-				list($list, $res) = CTaskItem::fetchList(
+				[$list, $res] = CTaskItem::fetchList(
 					$this->userId,
 					array("ID" => "ASC"),
 					array("ID" => $parsed),

@@ -4,9 +4,9 @@ declare(strict_types=1);
 
 namespace Bitrix\Booking\Internals\Model;
 
-use Bitrix\Main\Entity\BooleanField;
-use Bitrix\Main\Entity\DataManager;
-use Bitrix\Main\Entity\ExpressionField;
+use Bitrix\Booking\Internals\Model\Enum\EntityType;
+use Bitrix\Main\ORM\Fields\BooleanField;
+use Bitrix\Main\ORM\Data\DataManager;
 use Bitrix\Main\ORM\Fields\DatetimeField;
 use Bitrix\Main\ORM\Fields\IntegerField;
 use Bitrix\Main\ORM\Fields\Relations\CascadePolicy;
@@ -57,8 +57,7 @@ final class BookingTable extends DataManager
 				->configureAutocomplete(),
 
 			(new StringField('NAME'))
-				->addValidator(new LengthValidator(1, 255))
-				->configureRequired(),
+				->addValidator(new LengthValidator(null, 255)),
 
 			(new IntegerField('DATE_FROM'))
 				->configureRequired(),
@@ -108,11 +107,15 @@ final class BookingTable extends DataManager
 			(new StringField('VISIT_STATUS'))
 				->addValidator(new LengthValidator(1, 20)),
 
+			(new StringField('SOURCE'))
+				->addValidator(new LengthValidator(1, 20)),
+
 			(new IntegerField('CREATED_BY'))
 				->configureRequired(),
 
 			(new DatetimeField('CREATED_AT'))
 				->configureDefaultValue(new DateTime()),
+
 			(new DatetimeField('UPDATED_AT'))
 				->configureDefaultValue(new DateTime()),
 		];
@@ -135,49 +138,15 @@ final class BookingTable extends DataManager
 			(new OneToMany('FAILURE_LOG_ITEMS', BookingMessageFailureLogTable::class, 'BOOKING'))
 				->configureJoinType(Join::TYPE_LEFT),
 
-			(new Reference('NOTE', NotesTable::getEntity(), Join::on('this.ID', 'ref.BOOKING_ID')))
+			(new Reference(
+				'NOTE',
+				NotesTable::getEntity(),
+				Join::on('this.ID', 'ref.ENTITY_ID')
+					->where('ref.ENTITY_TYPE', EntityType::Booking->value)
+			))
 				->configureJoinType(Join::TYPE_LEFT)
 				->configureCascadeDeletePolicy(CascadePolicy::FOLLOW),
 		];
-
-		$notificationsRefMap = [
-			'IS_PRIMARY_RESOURCE_INFO_ON' => 'IS_INFO_ON',
-			'IS_PRIMARY_RESOURCE_CONFIRMATION_ON' => 'IS_CONFIRMATION_ON',
-			'IS_PRIMARY_RESOURCE_REMINDER_ON' => 'IS_REMINDER_ON',
-			'IS_PRIMARY_RESOURCE_FEEDBACK_ON' => 'IS_FEEDBACK_ON',
-			'IS_PRIMARY_RESOURCE_DELAYED_ON' => 'IS_DELAYED_ON',
-		];
-		foreach ($notificationsRefMap as $computedColumnName => $columnName)
-		{
-			$map[] = (new ExpressionField(
-				$computedColumnName,
-				"
-					CASE WHEN EXISTS (
-						SELECT 1
-           				FROM `b_booking_resource_notification_settings` `RNS`,
-						(
-							SELECT
-								MIN(`ID`) `ID`,
-								`BOOKING_ID`
-							FROM `b_booking_booking_resource`
-							GROUP BY `BOOKING_ID`
-						) `PRIMARY_RESOURCES`,
-                		`b_booking_booking_resource` `PRIMARY_RESOURCE` 
-                    	WHERE
-               				`RNS`.`"  . $columnName . "` = 'Y'
-               				AND `PRIMARY_RESOURCES`.`BOOKING_ID` = `booking_internals_model_booking`.`ID`
-               				AND `PRIMARY_RESOURCE`.ID = `PRIMARY_RESOURCES`.`ID`
-                			AND `PRIMARY_RESOURCE`.`RESOURCE_ID` = `RNS`.`ID`
-					) THEN 'Y' ELSE 'N' END
-				",
-				[
-					'ID',
-				],
-				[
-					'data_type' => 'string',
-				]
-			));
-		}
 
 		return $map;
 	}

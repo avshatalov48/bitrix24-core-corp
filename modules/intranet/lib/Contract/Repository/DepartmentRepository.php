@@ -20,6 +20,8 @@ interface DepartmentRepository
 
 	public function findAllByXmlId(string $xmlId): DepartmentCollection;
 
+	public function findAllByUserId(int $userId): DepartmentCollection;
+
 	public function getDepartmentByHeadId(
 		int $headId,
 		DepartmentActiveFilter $activeFilter = DepartmentActiveFilter::ALL

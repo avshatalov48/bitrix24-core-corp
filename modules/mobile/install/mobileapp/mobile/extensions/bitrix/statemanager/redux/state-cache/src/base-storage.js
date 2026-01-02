@@ -10,16 +10,18 @@ jn.define('statemanager/redux/state-cache/base-storage', (require, exports, modu
 	{
 		/**
 		 * @abstract
-		 * @returns {Object}
+		 * @param {string} key
+		 * @returns {Object|null}
 		 */
-		load()
+		load(key)
 		{}
 
 		/**
 		 * @abstract
+		 * @param {string} key
 		 * @param {Object} cache
 		 */
-		async save(cache)
+		async save(key, cache)
 		{}
 	}
 

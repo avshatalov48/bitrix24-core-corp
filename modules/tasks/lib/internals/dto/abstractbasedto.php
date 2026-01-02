@@ -59,6 +59,16 @@ abstract class AbstractBaseDto implements Arrayable
 			$this->validateProperty($property, $required);
 		}
 
+		$operation = lcfirst(substr($name, 0, 2));
+		$subOperation = lcfirst(substr($name, -6));
+
+		if ($operation === 'is' && $subOperation === 'filled')
+		{
+			$property = lcfirst(substr($name, 2, -6));
+
+			return $this->isFilledProperty($property);
+		}
+
 		return null;
 	}
 

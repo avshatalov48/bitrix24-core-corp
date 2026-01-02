@@ -43,6 +43,23 @@ $MESS['CRM_COPILOT_CALL_ASSESSMENT_PAGE_SETTINGS_CHECK_ALL'] = 'Все звон�
 $MESS['CRM_COPILOT_CALL_ASSESSMENT_PAGE_SETTINGS_CHECK_DISABLED'] = 'Отключить автоматическую проверку';
 $MESS['CRM_COPILOT_CALL_ASSESSMENT_PAGE_SETTINGS_CHECK_DESCRIPTION'] = 'CoPilot будет проверять звонки автоматически, если включена оценка звонка по скрипту в настройках вашего Битрикс24';
 
+$MESS['CRM_COPILOT_CALL_ASSESSMENT_PAGE_SETTINGS_AVAILABILITY'] = 'Срок активности скрипта';
+$MESS['CRM_COPILOT_CALL_ASSESSMENT_PAGE_SETTINGS_AVAILABILITY_DESCRIPTION'] = 'CoPilot может оценивать разговоры только по активным скриптам. Скрипт может действовать постоянно или только в определённый период';
+$MESS['CRM_COPILOT_CALL_ASSESSMENT_AVAILABILITY_SELECTOR_ALWAYS_ACTIVE'] = 'Без срока';
+$MESS['CRM_COPILOT_CALL_ASSESSMENT_AVAILABILITY_SELECTOR_PERIOD'] = 'Период';
+$MESS['CRM_COPILOT_CALL_ASSESSMENT_AVAILABILITY_SELECTOR_CUSTOM'] = 'Свои настройки';
+$MESS['CRM_COPILOT_CALL_ASSESSMENT_AVAILABILITY_SELECTOR_INACTIVE'] = 'Скрипт выключен';
+
+$MESS['CRM_COPILOT_CALL_ASSESSMENT_PERIOD_SELECTOR_PERIOD_WORKING_DAYS'] = 'Рабочие дни';
+$MESS['CRM_COPILOT_CALL_ASSESSMENT_PERIOD_SELECTOR_PERIOD_WEEKENDS'] = 'Выходные дни';
+$MESS['CRM_COPILOT_CALL_ASSESSMENT_PERIOD_SELECTOR_PERIOD_MONDAY'] = 'Понедельник';
+$MESS['CRM_COPILOT_CALL_ASSESSMENT_PERIOD_SELECTOR_PERIOD_TUESDAY'] = 'Вторник';
+$MESS['CRM_COPILOT_CALL_ASSESSMENT_PERIOD_SELECTOR_PERIOD_WEDNESDAY'] = 'Среда';
+$MESS['CRM_COPILOT_CALL_ASSESSMENT_PERIOD_SELECTOR_PERIOD_THURSDAY'] = 'Четверг';
+$MESS['CRM_COPILOT_CALL_ASSESSMENT_PERIOD_SELECTOR_PERIOD_FRIDAY'] = 'Пятница';
+$MESS['CRM_COPILOT_CALL_ASSESSMENT_PERIOD_SELECTOR_PERIOD_SATURDAY'] = 'Суббота';
+$MESS['CRM_COPILOT_CALL_ASSESSMENT_PERIOD_SELECTOR_PERIOD_SUNDAY'] = 'Воскресенье';
+
 $MESS['CRM_COPILOT_CALL_ASSESSMENT_NAVIGATION_HELP'] = 'Помощь';
 $MESS['CRM_COPILOT_CALL_ASSESSMENT_NAVIGATION_BUTTON_CONTINUE'] = 'Продолжить';
 $MESS['CRM_COPILOT_CALL_ASSESSMENT_NAVIGATION_BUTTON_BACK'] = 'Назад';
@@ -71,5 +88,7 @@ $MESS['CRM_COPILOT_CALL_ASSESSMENT_PAGE_CONTROL_RESULT_TITLE'] = 'Сообщат
 $MESS['CRM_COPILOT_CALL_ASSESSMENT_PAGE_CONTROL_VALIDATION_ERROR'] = 'В качественном разговоре пороговое значение должно быть выше, чем в некачественном';
 
 $MESS['CRM_COPILOT_CALL_ASSESSMENT_PILL_TITLE'] = 'Соответствие<br>скрипту';
-
 $MESS['CRM_COPILOT_CALL_ASSESSMENT_AI_DISABLED'] = 'Чтобы изменить скрипт, попросите администратора вашего Битрикс24 включить <b>CoPilot для&nbsp;оценки звонка по&nbsp;скрипту</b> в&nbsp;настройках';
+
+$MESS['CRM_COPILOT_CALL_ASSESSMENT_PAGE_SETTINGS_VALIDATION_TIME_ERROR_1'] = 'Укажите корректное время начала и окончания активности скрипта';
+$MESS['CRM_COPILOT_CALL_ASSESSMENT_PAGE_SETTINGS_VALIDATION_TIME_ERROR_2'] = 'Время начала активности скрипта должно быть раньше времени окончания';

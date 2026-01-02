@@ -8,11 +8,9 @@ $MESS["TASKS_MARK_N"] = "Отрицательная";
 $MESS["TASKS_DOUBLE_CLICK"] = "Двойной щелчок - Просмотреть";
 $MESS["TASKS_APPLY"] = "Применить";
 $MESS["TASKS_NO_TITLE"] = "Не указано название задачи";
-$MESS["TASKS_NO_RESPONSIBLE"] = "Не указан ответственный";
 $MESS['TASKS_NO_ASSIGNEE'] = 'Не указан исполнитель';
 $MESS["TASKS_TITLE"] = "Задачи";
 $MESS["TASKS_DEADLINE"] = "Срок";
-$MESS["TASKS_RESPONSIBLE"] = "Ответственный";
 $MESS['TASKS_ASSIGNEE'] = "Исполнитель";
 $MESS["TASKS_CREATOR"] = "Постановщик";
 $MESS["TASKS_ACCOMPLICE"] = "Соисполнитель";
@@ -74,7 +72,6 @@ $MESS["TASKS_CONFIGURE_LIST"] = "Настроить список";
 $MESS["TASKS_LIST_COLUMN_1"] = "ID";
 $MESS["TASKS_LIST_COLUMN_2"] = "Название";
 $MESS["TASKS_LIST_COLUMN_3"] = "Постановщик";
-$MESS["TASKS_LIST_COLUMN_4"] = "Ответственный";
 $MESS['TASKS_LIST_COLUMN_4_MSGVER_1'] = "Исполнитель";
 $MESS["TASKS_LIST_COLUMN_5"] = "Крайний срок";
 $MESS["TASKS_LIST_COLUMN_6"] = "Оценка";
@@ -86,7 +83,6 @@ $MESS["TASKS_LIST_COLUMN_10"] = "Группа";
 $MESS["TASKS_LIST_COLUMN_11"] = "Плановые трудозатраты";
 $MESS["TASKS_LIST_COLUMN_12"] = "Учитывать время";
 $MESS["TASKS_LIST_COLUMN_13"] = "Затраченное время";
-$MESS["TASKS_LIST_COLUMN_14"] = "Разрешить менять крайний срок ответственному";
 $MESS["TASKS_LIST_COLUMN_14_MSGVER_1"] = "Разрешить менять крайний срок исполнителю";
 $MESS["TASKS_LIST_COLUMN_15"] = "Дата создания";
 $MESS["TASKS_LIST_COLUMN_16"] = "Дата изменения";
@@ -99,7 +95,7 @@ $MESS["TASKS_LIST_SUBMIT"] = "Применить";
 $MESS["TASKS_LIST_GROUP_ACTION_FOR_ALL"] = "Для всех";
 $MESS["TASKS_LIST_GROUP_ACTION_REMOVE"] = "Удалить";
 $MESS["TASKS_LIST_GROUP_ACTION_COMPLETE"] = "Завершить";
-$MESS["TASKS_LIST_GROUP_ACTION_CHANGE_RESPONSIBLE"] = "Сменить ответственного";
+$MESS["TASKS_LIST_GROUP_ACTION_CHANGE_RESPONSIBLE_MSGVER_1"] = "Сменить исполнителя";
 $MESS["TASKS_LIST_GROUP_ACTION_CHANGE_ORIGINATOR"] = "Сменить постановщика";
 $MESS["TASKS_LIST_GROUP_ACTION_ADD_AUDITOR"] = "Добавить наблюдателя";
 $MESS["TASKS_LIST_GROUP_ACTION_ADD_ACCOMPLICE"] = "Добавить соисполнителя";
@@ -133,4 +129,3 @@ $MESS["TASKS_LIST_TRIAL_EXPIRED_TEXT"] = "В бесплатном тарифе �
 <a href=\"https://bitrix24.ru/pro/tasks.php\" target=\"_blank\">Узнать подробнее</a>
 
 Расширенные Задачи + Расширенная CRM + Расширенная Телефония и другие полезные возможности доступны, начиная с тарифа \"Проект+\" за 990 рублей.";
-?>

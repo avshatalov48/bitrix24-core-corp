@@ -52,6 +52,14 @@ declare type SettingsPanelProps = {
 	actionList: Array<SettingsPanelAction>
 }
 
+declare type MessagesAutoDeletePanelProps = {
+	onChange: (value: number) => void
+}
+
+declare type MessagesAutoDeletePanelState = {
+	delay: number,
+}
+
 declare type ParticipantsListProps = {
 	items: Array<>
 }

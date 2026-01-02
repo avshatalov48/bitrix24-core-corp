@@ -9,6 +9,78 @@ this.BX.Booking = this.BX.Booking || {};
 	  const dateTo = new Date(dateTs).setDate(new Date(dateTs).getDate() + 1);
 	  return [dateFrom, dateTo];
 	}
+	function getIntersectionBookings(booking, resourceId, bookings) {
+	  return bookings.filter(b => {
+	    return b.id !== booking.id && b.resourcesIds.includes(resourceId) && booking.dateFromTs < b.dateToTs && booking.dateToTs > b.dateFromTs;
+	  });
+	}
+	function createOverbookingMapItem({
+	  booking,
+	  resourceId,
+	  intersections,
+	  shifted = false,
+	  overbookingMapItem = null
+	}) {
+	  const item = {
+	    resourceId,
+	    shifted,
+	    intersections: intersections.map(intersection => ({
+	      id: intersection.id,
+	      dateFromTs: intersection.dateFromTs,
+	      dateToTs: intersection.dateToTs
+	    }))
+	  };
+	  if (overbookingMapItem === null) {
+	    return {
+	      id: booking.id,
+	      booking,
+	      items: [item]
+	    };
+	  }
+	  overbookingMapItem.items.push(item);
+	  return overbookingMapItem;
+	}
+	function createOverbookingMap(resourceBookings) {
+	  let maxLeftBookingTs = 0;
+	  let maxRightBookingTs = 0;
+	  const overbookingMap = new Map();
+	  const resourcesIds = Object.keys(resourceBookings);
+	  for (const key of resourcesIds) {
+	    const resourceId = Number(key);
+	    const bookings = resourceBookings[resourceId].sort((a, b) => a.dateFromTs - b.dateFromTs);
+	    maxLeftBookingTs = 0;
+	    maxRightBookingTs = 0;
+	    for (const booking of bookings) {
+	      const bookingId = booking.id;
+	      const intersectionBookings = getIntersectionBookings(booking, resourceId, bookings);
+	      if (intersectionBookings.length === 0) {
+	        continue;
+	      }
+	      const canBeRight = booking.dateFromTs >= maxRightBookingTs;
+	      const canBeLeft = booking.dateFromTs >= maxLeftBookingTs;
+	      if (canBeLeft) {
+	        maxLeftBookingTs = booking.dateToTs;
+	        overbookingMap.set(bookingId, createOverbookingMapItem({
+	          booking,
+	          resourceId,
+	          intersections: intersectionBookings,
+	          shifted: false,
+	          overbookingMapItem: overbookingMap.get(bookingId)
+	        }));
+	      } else if (canBeRight) {
+	        maxRightBookingTs = booking.dateToTs;
+	        overbookingMap.set(bookingId, createOverbookingMapItem({
+	          booking,
+	          resourceId,
+	          intersections: intersectionBookings,
+	          shifted: true,
+	          overbookingMapItem: overbookingMap.get(bookingId)
+	        }));
+	      }
+	    }
+	  }
+	  return overbookingMap;
+	}
 
 	class Bookings extends ui_vue3_vuex.BuilderModel {
 	  getName() {
@@ -32,7 +104,8 @@ this.BX.Booking = this.BX.Booking || {};
 	      timezoneTo: Intl.DateTimeFormat().resolvedOptions().timeZone,
 	      rrule: '',
 	      isConfirmed: false,
-	      visitStatus: 'unknown'
+	      visitStatus: 'unknown',
+	      overbooking: false
 	    };
 	  }
 	  getGetters() {
@@ -67,10 +140,34 @@ this.BX.Booking = this.BX.Booking || {};
 	      /** @function bookings/getByDate */
 	      getByDate: (state, getters) => dateTs => {
 	        const [dateFrom, dateTo] = dateToTsRange(dateTs);
+	        return getters.getByInterval(dateFrom, dateTo);
+	      },
+	      /** @function booking/getByInterval */
+	      getByInterval: (state, getters) => (fromTs, toTs) => {
 	        return getters.get.filter(({
-	          dateToTs,
-	          dateFromTs
-	        }) => dateToTs > dateFrom && dateTo > dateFromTs);
+	          dateFromTs,
+	          dateToTs
+	        }) => {
+	          return dateToTs > fromTs && dateFromTs < toTs;
+	        });
+	      },
+	      getFutureByResourceId: (state, getters) => resourceId => {
+	        const now = Date.now();
+	        return getters.get.filter(booking => booking.resourcesIds.includes(resourceId) && booking.dateFromTs > now);
+	      },
+	      overbookingMap: state => {
+	        const resourceBookings = Object.values(state.collection).reduce((acc, booking) => {
+	          booking.resourcesIds.forEach(resourceId => {
+	            if (resourceId in acc) {
+	              const bookings = acc[resourceId];
+	              bookings.push(booking);
+	            } else {
+	              acc[resourceId] = [booking];
+	            }
+	          });
+	          return acc;
+	        }, {});
+	        return createOverbookingMap(resourceBookings);
 	      }
 	    };
 	  }

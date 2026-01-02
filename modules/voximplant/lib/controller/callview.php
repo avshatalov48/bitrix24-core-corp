@@ -8,6 +8,7 @@ use Bitrix\Main\Event;
 use Bitrix\Main\Loader;
 use Bitrix\Voximplant\Rest\Helper;
 use Bitrix\Voximplant\Security\Permissions;
+use Bitrix\Crm\Service\Container;
 
 class CallView extends Engine\Controller
 {
@@ -20,9 +21,9 @@ class CallView extends Engine\Controller
 		}
 
 		$entityId = (int)$entityId;
-		$userPermissions = \CCrmPerms::GetCurrentUserPermissions();
+		$entityTypeId = \CCrmOwnerType::ResolveID($entityType);
 
-		if ($entityId > 0 && !\CCrmAuthorizationHelper::CheckReadPermission($entityType, $entityId, $userPermissions))
+		if ($entityId > 0 && !Container::getInstance()->getUserPermissions()->item()->canRead($entityTypeId, $entityId))
 		{
 			$this->addError(new Error('Access denied', 'ACCESS_DENIED'));
 			return null;

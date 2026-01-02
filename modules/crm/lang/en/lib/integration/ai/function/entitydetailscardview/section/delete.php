@@ -1,0 +1,3 @@
+<?php
+$MESS["CRM_INTEGRATION_AI_FUNCTION_ENTITY_DETAILS_CARD_VIEW_CANNOT_DELETE_LAST_SECTION_ERROR"] = "Cannot delete the last section.";
+$MESS["CRM_INTEGRATION_AI_FUNCTION_ENTITY_DETAILS_CARD_VIEW_SECTION_NOT_FOUND_ERROR"] = "Could not delete section. It may have already been deleted.";

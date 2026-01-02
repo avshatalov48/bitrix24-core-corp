@@ -297,7 +297,11 @@ class ContactTable extends ORM\Data\DataManager
 			,
 		];
 
-		return array_merge($map, $fieldRepository->getUtm(\CCrmOwnerType::Contact));
+		return array_merge(
+			$map,
+			$fieldRepository->getUtm(\CCrmOwnerType::Contact),
+			$fieldRepository->getLastCommunications(\CCrmOwnerType::Contact),
+		);
 	}
 
 	public static function disableUserFieldsCheck(): void

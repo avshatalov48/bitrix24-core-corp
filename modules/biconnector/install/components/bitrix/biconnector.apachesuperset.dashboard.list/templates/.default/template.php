@@ -50,7 +50,9 @@ Extension::load([
 	'ui.alerts',
 	'ui.tour',
 	'ui.switcher',
+	'ui.entity-selector',
 	'spotlight',
+	'ui.system.dialog',
 ]);
 
 if ($arResult['SHOW_DELETE_INSTANCE_BUTTON']):
@@ -93,8 +95,12 @@ if (!$limitManager->checkLimitWarning())
 		BX.message(<?= Json::encode(Loc::loadLanguageFile(__FILE__)) ?>);
 		BX.BIConnector.SupersetDashboardGridManager.Instance = new BX.BIConnector.SupersetDashboardGridManager(<?= Json::encode([
 			'gridId' => $grid?->getId(),
-			'isNeedShowTopMenuGuide' => $arResult['NEED_SHOW_TOP_MENU_GUIDE'] ?? false,
 			'isNeedShowDraftGuide' => $arResult['NEED_SHOW_DRAFT_GUIDE'] ?? false,
+			'isAvailableDashboardCreation' => $arResult['IS_AVAILABLE_DASHBOARD_CREATION'] ?? false,
+			'isAvailableGroupCreation' => $arResult['IS_AVAILABLE_GROUP_CREATION'] ?? false,
+			'isMarketExists' => $arParams['IS_MARKET_EXISTS'] ?? false,
+			'marketUrl' => $arParams['MARKET_URL'] ?? '',
+			'supersetStatus' => $arResult['SUPERSET_STATUS'],
 		])?>);
 
 		BX.BIConnector.ApacheSupersetTariffCleaner.Instance = new BX.BIConnector.ApacheSupersetTariffCleaner();

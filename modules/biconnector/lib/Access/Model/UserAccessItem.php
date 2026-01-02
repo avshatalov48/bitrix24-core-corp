@@ -108,7 +108,10 @@ final class UserAccessItem extends Main\Access\User\UserModel
 			$value = (int)$permission['VALUE'];
 			$permissionDescription = PermissionDictionary::getPermission($permissionId);
 
-			if ($permissionDescription['type'] === PermissionDictionary::TYPE_MULTIVARIABLES)
+			if (
+				$permissionDescription['type'] === PermissionDictionary::TYPE_MULTIVARIABLES
+				|| $permissionDescription['type'] === PermissionDictionary::TYPE_DEPENDENT_VARIABLES
+			)
 			{
 				$this->permissions[$permissionId] = $this->permissions[$permissionId] ?? [];
 				if (in_array(PermissionDictionary::VALUE_VARIATION_ALL, $this->permissions[$permissionId], true))

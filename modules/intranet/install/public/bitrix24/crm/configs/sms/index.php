@@ -8,7 +8,8 @@ $APPLICATION->SetTitle(GetMessage("TITLE"));
 	array(
 		"POPUP_COMPONENT_NAME" => "bitrix:crm.config.sms",
 		"POPUP_COMPONENT_TEMPLATE_NAME" => "",
-		"USE_PADDING" => false
+		"USE_PADDING" => false,
+		"USE_UI_TOOLBAR" => "Y"
 	)
 );?>
 <?require($_SERVER["DOCUMENT_ROOT"]."/bitrix/footer.php");?>

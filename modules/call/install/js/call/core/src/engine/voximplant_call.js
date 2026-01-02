@@ -13,7 +13,7 @@ import {
 	Provider
 } from './engine';
 import {SimpleVAD} from './simple_vad'
-import {Hardware} from '../hardware';
+import {Hardware} from '../call_hardware';
 import Util from '../util'
 
 /**

@@ -3,11 +3,11 @@
 namespace Bitrix\HumanResources\Controller;
 
 use Bitrix\HumanResources\Engine\Controller;
+use Bitrix\HumanResources\Internals\Service\Container as InternalContainer;
 use Bitrix\HumanResources\Service\Container;
 use Bitrix\HumanResources\Item;
-use Bitrix\HumanResources\Type\MemberEntityType;
-use Bitrix\HumanResources\Type\NodeEntityType;
 use Bitrix\Main\Engine\CurrentUser;
+use Bitrix\Main\Error;
 
 final class User extends Controller
 {
@@ -28,14 +28,7 @@ final class User extends Controller
 
 	public function isUserInMultipleDepartmentsAction(int $userId): bool
 	{
-		$nodeMemberCollection = Container::getNodeMemberRepository()->findAllByEntityIdAndEntityTypeAndNodeType(
-			entityId: $userId,
-			entityType: MemberEntityType::USER,
-			nodeType: NodeEntityType::DEPARTMENT,
-			limit: 2,
-		);
-
-		return $nodeMemberCollection->count() > 1;
+		return InternalContainer::getNodeMemberService()->isUserInMultipleNodes($userId);
 	}
 
 	public function getInfoByUserMemberAction(
@@ -46,7 +39,7 @@ final class User extends Controller
 
 		if (!$user)
 		{
-			$this->addError(new Main\Error('User not found'));
+			$this->addError(new Error('User not found'));
 
 			return [];
 		}

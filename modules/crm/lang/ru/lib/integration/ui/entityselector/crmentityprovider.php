@@ -1,0 +1,3 @@
+<?php
+
+$MESS['CRM_ENTITY_SELECTOR_CRM_ENTITY_TAB_TITLE'] = 'Элемент CRM';

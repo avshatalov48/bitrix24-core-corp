@@ -1,0 +1,100 @@
+.tasks-compact-card-popup {
+	--overlay-offset-top: 0px;
+	overflow: hidden;
+	transition: transform 300ms;
+}
+
+.tasks-compact-card-popup.--overlay {
+	transform: translateY(var(--overlay-offset-top));
+}
+
+.tasks-compact-card-popup:after {
+	content: '';
+	position: absolute;
+	inset: 0;
+	background: rgba(0, 0, 0, 0.1);
+	pointer-events: none;
+	opacity: 0;
+	transition: opacity 300ms;
+}
+
+.tasks-compact-card-popup.--overlay:after {
+	opacity: 1;
+}
+
+.tasks-compact-card-container {
+	position: relative;
+	padding: 24px;
+}
+
+.tasks-compact-card {
+	display: flex;
+	flex-direction: column;
+	gap: 20px;
+}
+
+.tasks-compact-card-popup:not(.--overlay) .tasks-compact-card-container.--drag-over .tasks-compact-card {
+	filter: blur(10px);
+}
+
+.tasks-compact-card-fields {
+	display: flex;
+	gap: 15px;
+	flex-direction: column;
+}
+
+.tasks-compact-card-fields-title {
+	display: flex;
+	gap: 6px;
+	margin-bottom: -4px;
+}
+
+.tasks-compact-card-fields-close {
+	display: flex;
+	align-items: center;
+	height: 29px;
+	--ui-icon-set__icon-color: var(--ui-color-base-4);
+	--ui-icon-set__icon-size: 26px;
+	cursor: pointer;
+}
+
+.tasks-compact-card-fields-close:hover {
+	--ui-icon-set__icon-color: var(--ui-color-base-3);
+}
+
+.tasks-compact-card-footer {
+	padding-top: 18px;
+	border-top: var(--ui-border-width-thin) solid var(--ui-color-divider-default);
+}
+
+.tasks-compact-card-chips {
+	display: flex;
+	flex-wrap: nowrap;
+	gap: 10px;
+	margin-bottom: 20px;
+}
+
+.tasks-compact-card-buttons {
+	display: flex;
+	justify-content: space-between;
+	align-items: center;
+}
+
+.tasks-compact-card-main-buttons {
+	display: flex;
+	align-items: center;
+	gap: 10px;
+}
+
+.tasks-compact-card-popup-drag-handle {
+	position: absolute;
+	top: 0;
+	left: 0;
+	right: 0;
+	z-index: 1;
+	height: 26px;
+}
+
+.tasks-compact-card-popup.--disable-drag .tasks-compact-card-popup-drag-handle {
+	pointer-events: none;
+}

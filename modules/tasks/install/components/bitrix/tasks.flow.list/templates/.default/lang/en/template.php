@@ -1,7 +1,6 @@
 <?php
 $MESS["TASKS_FLOW_ADD_BUTTON"] = "New flow";
 $MESS["TASKS_FLOW_LIST_ABOUT_EFFICIENCY"] = "Efficiency is the percentage of the tasks <br>completed within the time allotted.";
-$MESS["TASKS_FLOW_LIST_ANALYTICS_BTN"] = "Analytics";
 $MESS["TASKS_FLOW_LIST_BI_ANALYTICS_BADLY"] = "Bad";
 $MESS["TASKS_FLOW_LIST_BI_ANALYTICS_EMPTY_DASHBOARDS"] = "Dashboard is not available.";
 $MESS["TASKS_FLOW_LIST_BI_ANALYTICS_GREAT"] = "Excellent";
@@ -12,10 +11,15 @@ $MESS["TASKS_FLOW_LIST_COLUMN_MY_TASKS_PLURAL_2"] = "{number} tasks";
 $MESS["TASKS_FLOW_LIST_COMING_SOON"] = "Coming soon";
 $MESS["TASKS_FLOW_LIST_CONFIRM_REMOVE_BUTTON"] = "Yes";
 $MESS["TASKS_FLOW_LIST_CONFIRM_REMOVE_MESSAGE"] = "Are you sure you want to delete the flow?";
+$MESS["TASKS_FLOW_LIST_COPILOT_ADVICE_FETCHING_POPUP_DESCRIPTION"] = "Recommendations are coming soon. Please wait.";
+$MESS["TASKS_FLOW_LIST_COPILOT_ADVICE_FETCHING_POPUP_TITLE"] = "CoPilot is analyzing data";
 $MESS["TASKS_FLOW_LIST_COPILOT_NOT_ENOUGH_TASKS_POPUP_DESCRIPTION"] = "CoPilot will show its recommendations here once you have at least 10 tasks in the flow.";
 $MESS["TASKS_FLOW_LIST_COPILOT_NOT_ENOUGH_TASKS_POPUP_SHOW_EXAMPLE"] = "View sample recommendations";
 $MESS["TASKS_FLOW_LIST_COPILOT_NOT_ENOUGH_TASKS_POPUP_TITLE"] = "Collecting data";
+$MESS["TASKS_FLOW_LIST_COPILOT_UNEXPECTED_ERROR_POPUP_DESCRIPTION"] = "CoPilot will attempt to come up with recommendations again. Please wait.";
+$MESS["TASKS_FLOW_LIST_COPILOT_UNEXPECTED_ERROR_POPUP_TITLE"] = "Something's gone wrong";
 $MESS["TASKS_FLOW_LIST_CREATE_TASK"] = "Create task";
+$MESS["TASKS_FLOW_LIST_CREATE_TASK_IMMUTABLE_DISTRIBUTION_TOOLTIP"] = "Tasks in this flow are created by[br/]workflows and automation rules.";
 $MESS["TASKS_FLOW_LIST_FLOW_OFF"] = "Flow disabled.";
 $MESS["TASKS_FLOW_LIST_FLOW_PINNED"] = "Flow pinned.";
 $MESS["TASKS_FLOW_LIST_FLOW_PIN_CANCEL"] = "Undo";

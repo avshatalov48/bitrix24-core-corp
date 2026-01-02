@@ -1,18 +1,4 @@
 (() => {
-	class ProjectTabs
-	{
-		constructor()
-		{
-			this.bindEvents();
-		}
-
-		bindEvents()
-		{
-			BX.addCustomEvent('project.background::showLoadingIndicator', dialogs.showLoadingIndicator);
-			BX.addCustomEvent('project.background::hideLoadingIndicator', dialogs.hideLoadingIndicator);
-		}
-	}
-
 	new Workgroup({
 		groupId: BX.componentParameters.get('id', 0),
 		subtitle: BX.componentParameters.get('subtitle', ''),

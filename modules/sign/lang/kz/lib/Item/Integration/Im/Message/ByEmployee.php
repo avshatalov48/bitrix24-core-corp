@@ -1,0 +1,13 @@
+<?php
+$MESS["SIGN_CALLBACK_BY_EMPLOYEE_CHAT_EXPIRED_TO_EMPLOYEE"] = "[b]Құжатты қарау мерзімі аяқталды[/b][br][br]#DOC_NAME# құжаты енді қарауға қолжетімсіз. Процесті қайта бастауға болады[br][br][url=#SIGN_URL#]Құжатты ашу[/url]";
+$MESS["SIGN_CALLBACK_BY_EMPLOYEE_CHAT_STOPPED_TO_EMPLOYEE"] = "[b]Құжат қабылданбады[/b][br][br]#INITIATOR_NAME# #DOC_NAME# құжатын қабылдамады. Себептерді нақтылаңыз және құжатты қайта жіберіңіз";
+$MESS["SIGN_CALLBACK_BY_EMPLOYEE_CHAT_STOPPED_TO_EMPLOYEEF"] = "[b]Құжат қабылданбады[/b][br][br]#INITIATOR_NAME# #DOC_NAME# құжатын қабылдамады. Себептерді нақтылаңыз және құжатты қайта жіберіңіз";
+$MESS["SIGN_CALLBACK_BY_EMPLOYEE_CHAT_STOPPED_TO_EMPLOYEEM"] = "[b]Құжат қабылданбады[/b][br][br]#INITIATOR_NAME# #DOC_NAME# құжатын қабылдамады. Себептерді нақтылаңыз және құжатты қайта жіберіңіз";
+$MESS["SIGN_CALLBACK_CHAT_BY_EMPLOYEE_DONE_COMPANY"] = "[b]Құжат бекітілді[/b][br][br]#INITIATOR_NAME# қызметкерінің #DOC_NAME# құжаты бекітілді және компания Сейфінде";
+$MESS["SIGN_CALLBACK_CHAT_BY_EMPLOYEE_DONE_EMPLOYEE"] = "[b]Құжат бекітілді[/b][br][br]#INITIATOR_NAME# #DOC_NAME# құжатын бекітті. Құжатты өзіңіздің профиліңізде Менің құжаттарым бөлімінде көре және жүктей аласыз[br][br][url=#SIGN_URL#]Құжатты ашу[/url]";
+$MESS["SIGN_CALLBACK_CHAT_BY_EMPLOYEE_DONE_EMPLOYEEF"] = "[b]Құжат бекітілді[/b][br][br]#INITIATOR_NAME# #DOC_NAME# құжатын бекітті. Құжатты өзіңіздің профиліңізде Менің құжаттарым бөлімінде көре және жүктей аласыз[br][br][url=#SIGN_URL#]Құжатты ашу[/url]";
+$MESS["SIGN_CALLBACK_CHAT_BY_EMPLOYEE_DONE_EMPLOYEEM"] = "[b]Құжат бекітілді[/b][br][br]#INITIATOR_NAME# #DOC_NAME# құжатын бекітті. Құжатты өзіңіздің профиліңізде Менің құжаттарым бөлімінде көре және жүктей аласыз[br][br][url=#SIGN_URL#]Құжатты ашу[/url]";
+$MESS["SIGN_CALLBACK_CHAT_BY_EMPLOYEE_INVITE_COMPANY"] = "[b]Құжатқа қол қойыңыз[/b][br][br]#INITIATOR_NAME# қызметкер #DOC_NAME# құжатына қол қоюды сұрайды[br][br][url=#SIGN_URL#]Қол қоюға өту[/url]";
+$MESS["SIGN_CALLBACK_CHAT_BY_EMPLOYEE_INVITE_EMPLOYEE"] = "[b]Жібермес бұрын құжатқа қол қойыңыз[/b][br][br]#DOC_NAME# құжатына қол қойыңыз және оның мәртебесін профиліңіздегі Менің құжаттарым бөлімінде қадағалаңыз[br][br][url=#SIGN_URL#]Құжатқа қол қоюға өту[/url]";
+$MESS["SIGN_CALLBACK_CHAT_BY_EMPLOYEE_INVITE_REVIEWER"] = "[b]Құжатқа қол қойыңыз[/b][br][br]#INITIATOR_NAME# қызметкер #DOC_NAME# құжатына келісуді сұрайды[br][br][url=#SIGN_URL#]Келісуге өту[/url]";
+$MESS["SIGN_CALLBACK_CHAT_BY_EMPLOYEE_SIGNED_BY_EMPLOYEE"] = "[b]Құжат жіберілді[/b][br][br]#DOC_NAME# құжатына қол қойып, жібердіңіз. Компания құжатпен жұмысты аяқтағаннан кейін сіз мәлімдеме аласыз[br][br][url=#SIGN_URL#]Құжатты ашу[/url]";

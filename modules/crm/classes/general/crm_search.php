@@ -223,74 +223,11 @@ class CCrmSearch
 			)
 		);
 
-		$_arAttr = \Bitrix\Crm\Security\EntityAuthorization::getPermissionAttributes(
-			CCrmOwnerType::ResolveID($ENTITY_TYPE),
-			array($arEntity['ID'])
-		);
-
 		if (empty($arSite))
 		{
 			$rsSite = CSite::GetList();
 			while ($_arSite = $rsSite->Fetch())
 				$arSite[] = $_arSite['ID'];
-		}
-
-		$sattr_d = '';
-		$sattr_s = '';
-		$sattr_u = '';
-		$sattr_o = '';
-		$arAttr = array();
-		if (!isset($_arAttr[$arEntity['ID']]))
-			$_arAttr[$arEntity['ID']] = array();
-
-		$permEntity = $ENTITY_TYPE;
-		if($ENTITY_TYPE === 'DEAL')
-		{
-			$permEntity = \Bitrix\Crm\Category\DealCategory::convertToPermissionEntityType(
-				$arEntity['CATEGORY_ID']
-			);
-		}
-
-		$arAttr[] = $permEntity; // for perm X
-		foreach ($_arAttr[$arEntity['ID']] as $_s)
-		{
-			if (preg_match('/^U/', $_s))
-			{
-				$sattr_u = $_s;
-			}
-			elseif (preg_match('/^D/', $_s))
-			{
-				$sattr_d = $_s;
-			}
-			elseif (preg_match('/^S/', $_s))
-			{
-				$sattr_s = $_s;
-			}
-			elseif (preg_match('/^O/', $_s))
-			{
-				$sattr_o = $_s;
-			}
-			$arAttr[] = "{$permEntity}_{$_s}";
-		}
-
-		if (!empty($sattr_s))
-		{
-			$arAttr[] = "{$permEntity}_{$sattr_s}";  // for perm X in status
-
-			if (!empty($sattr_u))
-			{
-				$arAttr[] = "{$permEntity}_{$sattr_u}_{$sattr_s}";
-			}
-
-			if (!empty($sattr_d))
-			{
-				$arAttr[] = "{$permEntity}_{$sattr_d}_{$sattr_s}";
-			}
-
-			if (!empty($sattr_o))
-			{
-				$arAttr[] = "{$permEntity}_{$sattr_o}_{$sattr_s}";
-			}
 		}
 
 		$arSitePath = array();
@@ -304,7 +241,6 @@ class CCrmSearch
 			'PARAM1' => $ENTITY_TYPE,
 			'PARAM2' => $arEntity['ID'],
 			'SITE_ID' => $arSitePath,
-			'PERMISSIONS' => $arAttr,
 			'BODY' => $sBody,
 			'TAGS' => 'crm,'.mb_strtolower($ENTITY_TYPE).','.GetMessage('CRM_'.$ENTITY_TYPE)
 		);
@@ -481,98 +417,7 @@ class CCrmSearch
 
 	public static function OnSearchCheckPermissions($FIELD)
 	{
-		$arAttr = array();
-		if(CCrmPerms::IsAdmin())
-		{
-			$arAttr['LEAD'] = $arAttr['DEAL'] = $arAttr['INVOICE'] =
-				$arAttr['QUOTE'] = $arAttr['CONTACT'] = $arAttr['COMPANY'] = array(array());
-
-			foreach(\Bitrix\Crm\Category\DealCategory::getAllPermissionEntityTypes() as $permEntity)
-			{
-				$arAttr[$permEntity] = array(array());
-			}
-		}
-		else
-		{
-			$CCrmPerms = CCrmPerms::GetCurrentUserPermissions();
-			$arAttr['LEAD'] = $CCrmPerms->GetUserAttrForSelectEntity('LEAD', 'READ');
-			$arAttr['DEAL'] = $CCrmPerms->GetUserAttrForSelectEntity('DEAL', 'READ');
-
-			foreach(\Bitrix\Crm\Category\DealCategory::getAllPermissionEntityTypes() as $permEntity)
-			{
-				$arAttr[$permEntity] = $CCrmPerms->GetUserAttrForSelectEntity($permEntity, 'READ');
-			}
-
-			$arAttr['INVOICE'] = $CCrmPerms->GetUserAttrForSelectEntity('INVOICE', 'READ');
-			$arAttr['QUOTE'] = $CCrmPerms->GetUserAttrForSelectEntity('QUOTE', 'READ');
-			$arAttr['CONTACT'] = $CCrmPerms->GetUserAttrForSelectEntity('CONTACT', 'READ');
-			$arAttr['COMPANY'] = $CCrmPerms->GetUserAttrForSelectEntity('COMPANY', 'READ');
-		}
-
-		$arRel = array();
-		foreach ($arAttr as $ENTITY_TYPE => $_arRel)
-		{
-			foreach ($_arRel as $arRelType)
-			{
-				if (empty($arRelType))
-				{
-					$arRel[] = $ENTITY_TYPE;
-					continue ;
-				}
-				$arattr_d = array();
-				$sattr_s = '';
-				$sattr_u = '';
-				$sattr_o = '';
-				foreach ($arRelType as $_s)
-				{
-					if ($_s[0] == 'U')
-						$sattr_u = $_s;
-					else if ($_s[0] == 'D')
-						$arattr_d[] = $_s;
-					else if ($_s[0] == 'S')
-						$sattr_s = $_s;
-					else if ($_s[0] == 'O')
-						$sattr_o = $_s;
-				}
-
-				if (!empty($arattr_d))
-				{
-					foreach ($arattr_d as $sattr_d)
-					{
-						$sattr = "{$ENTITY_TYPE}_{$sattr_d}";
-						if (!empty($sattr_s))
-						{
-							$sattr .= '_'.$sattr_s;
-						}
-
-						$arRel[] = $sattr;
-					}
-					if (!empty($sattr_o))
-					{
-						$arRel[] = "{$ENTITY_TYPE}_{$sattr_o}";
-					}
-				}
-				else
-				{
-					$sattr = $ENTITY_TYPE;
-					if (!empty($sattr_u))
-					{
-						$sattr .= '_' . $sattr_u;
-					}
-					if (!empty($sattr_o))
-					{
-						$sattr .= '_' . $sattr_o;
-					}
-					if (!empty($sattr_s))
-					{
-						$sattr .= '_' . $sattr_s;
-					}
-					$arRel[] = $sattr;
-				}
-			}
-		}
-
-		return $arRel;
+		return null;
 	}
 
 	public static function DeleteSearch($ENTITY_TYPE, $ENTITY_ID)

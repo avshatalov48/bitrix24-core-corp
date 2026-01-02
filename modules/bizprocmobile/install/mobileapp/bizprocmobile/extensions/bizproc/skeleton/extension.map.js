@@ -1,0 +1,1 @@
+{"version":3,"file":"extension.map.js","names":["jn","define","require","exports","module","workflowDetailsSkeleton","WorkflowDetailsSkeleton"],"sources":["extension.js"],"mappings":"AAGAA,GAAGC,OAAO,oBAAoB,CAACC,EAASC,EAASC,KAChD,MAAMC,wBAAEA,GAA4BH,EAAQ,qCAE5CE,EAAOD,QAAU,CAChBG,wBAAyBD,EACzB","ignoreList":[]}

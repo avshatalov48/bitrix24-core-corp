@@ -3,17 +3,13 @@
  */
 jn.define('im/messenger/lib/ui/base/item/selected-item', (require, exports, module) => {
 	const { Type } = require('type');
-	const { Feature: MobileFeature } = require('feature');
-
+	const { Icon } = require('assets/icons');
 	const { Avatar: MessengerAvatarLegacy } = require('im/messenger/lib/ui/base/avatar');
 	const { CheckBox } = require('im/messenger/lib/ui/base/checkbox');
 	const { ItemInfo } = require('im/messenger/lib/ui/base/item/item-info');
-	const { styles: itemStyles, selectedItemStyles } = require('im/messenger/lib/ui/base/item/style');
+	const { selectedItemStyles } = require('im/messenger/lib/ui/base/item/style');
 	const { Item } = require('im/messenger/lib/ui/base/item/item');
 	const { Theme } = require('im/lib/theme');
-
-
-	const selectedIcon = `<svg width="24" height="24" viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg"><path fill-rule="evenodd" clip-rule="evenodd" d="M9.34211 19.351L2.86523 13.0388L5.13214 10.8295L9.34211 14.9325L18.8677 5.64899L21.1346 7.85827L9.34211 19.351Z" fill="${Theme.colors.base4}"/></svg>`;
 
 	class SelectedItem extends Item
 	{
@@ -87,7 +83,7 @@ jn.define('im/messenger/lib/ui/base/item/selected-item', (require, exports, modu
 			const style = this.getStyleBySize();
 
 			let avatar = null;
-			if (Type.isObject(this.props.data.avatar) && MobileFeature.isNativeAvatarSupported())
+			if (Type.isObject(this.props.data.avatar))
 			{
 				avatar = Avatar(this.props.data.avatar);
 			}
@@ -111,7 +107,7 @@ jn.define('im/messenger/lib/ui/base/item/selected-item', (require, exports, modu
 						maxHeight: 70,
 					},
 				},
-				View( //checkBox
+				View( // checkBox
 					{
 						style: {
 							flexDirection: 'row',
@@ -214,9 +210,8 @@ jn.define('im/messenger/lib/ui/base/item/selected-item', (require, exports, modu
 									width: 24,
 									height: 24,
 								},
-								svg: {
-									content: selectedIcon,
-								},
+								tintColor: Theme.colors.base4,
+								named: Icon.CHECK.getIconName(),
 							}),
 						),
 					),

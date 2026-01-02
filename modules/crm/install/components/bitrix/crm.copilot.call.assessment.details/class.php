@@ -8,7 +8,6 @@ if (!defined('B_PROLOG_INCLUDED') || B_PROLOG_INCLUDED !== true)
 use Bitrix\Crm\Component\Base;
 use Bitrix\Crm\Copilot\CallAssessment\CallAssessmentItem;
 use Bitrix\Crm\Copilot\CallAssessment\Controller\CopilotCallAssessmentController;
-use Bitrix\Crm\Feature;
 use Bitrix\Crm\Integration\AI\AIManager;
 use Bitrix\Crm\Integration\AI\Enum\GlobalSetting;
 use Bitrix\Crm\Integration\AI\EventHandler;
@@ -31,7 +30,7 @@ class CCrmCopilotCallAssessmentDetailsComponent extends Base
 
 		if (
 			!AIManager::isAiCallProcessingEnabled()
-			|| !Container::getInstance()->getUserPermissions()->canReadCopilotCallAssessmentSettings())
+			|| !Container::getInstance()->getUserPermissions()->copilotCallAssessment()->canRead())
 		{
 			$this->showError(
 				'CRM_COPILOT_CALL_ASSESSMENT_DETAILS_ACCESS_DENIED_MSGVER_1',
@@ -71,6 +70,15 @@ class CCrmCopilotCallAssessmentDetailsComponent extends Base
 			}
 
 			$this->arResult['data']['users'] = Container::getInstance()->getUserBroker()->getBunchByIds($userIds);
+
+			$availabilityData = $this->arResult['data']['availabilityData'] ?? [];
+			array_walk($availabilityData,
+				static function (&$row) {
+					$row['startPoint'] = substr($row['startPoint']->toString(), 0, -3);
+					$row['endPoint'] = substr($row['endPoint']->toString(), 0, -3);
+				}
+			);
+			$this->arResult['data']['availabilityData'] = $availabilityData;
 		}
 		else
 		{
@@ -83,7 +91,7 @@ class CCrmCopilotCallAssessmentDetailsComponent extends Base
 		$this->arResult['copilotSettings'] = $this->getCopilotSettings();
 		$this->arResult['baasSettings'] = $this->getBaasSettings();
 		$this->arResult['readOnly'] =
-			!Container::getInstance()->getUserPermissions()->canEditCopilotCallAssessmentSettings()
+			!Container::getInstance()->getUserPermissions()->copilotCallAssessment()->canEdit()
 			|| !AIManager::isEnabledInGlobalSettings(GlobalSetting::CallAssessment)
 		;
 		$this->arResult['isEnabled'] = AIManager::isEnabledInGlobalSettings(GlobalSetting::CallAssessment);
@@ -125,5 +133,16 @@ class CCrmCopilotCallAssessmentDetailsComponent extends Base
 			'hasPackage' => AIManager::isBaasServiceHasPackage(),
 			'aiPackagesEmptySliderCode' => AIManager::AI_PACKAGES_EMPTY_SLIDER_CODE,
 		];
+	}
+
+	protected function getToolbarParameters(): array
+	{
+		$parameters = parent::getToolbarParameters();
+
+		$parameters['isWithFavoriteStar'] = false;
+		$parameters['underTitleHtml'] = '<div class="copilot-call-assessment-pagetitle-description">' . Loc::getMessage('CRM_COPILOT_CALL_ASSESSMENT_DETAILS_SUBTITLE') . '</div>';
+		$parameters['isEditableTitle'] = true;
+
+		return $parameters;
 	}
 }

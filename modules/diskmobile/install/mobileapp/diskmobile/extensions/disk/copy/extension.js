@@ -54,7 +54,7 @@ jn.define('disk/copy', (require, exports, module) => {
 		const copiedObject = selectById(store.getState(), objectId);
 		const target = await fetchObjectWithRights(targetId);
 
-		if (!target)
+		if (!target || copiedObject.parentId === targetId)
 		{
 			return;
 		}

@@ -1,0 +1,22 @@
+<?php
+$MESS["BOOKING_REMINDER_0"] = "Оқиға кезінде";
+$MESS["BOOKING_REMINDER_5"] = "Оқиғадан 5 минут бұрын";
+$MESS["BOOKING_REMINDER_10"] = "Оқиғадан 10 минут бұрын";
+$MESS["BOOKING_REMINDER_15"] = "Оқиғадан 15 минут бұрын";
+$MESS["BOOKING_REMINDER_20"] = "Оқиғадан 20 минут бұрын";
+$MESS["BOOKING_REMINDER_30"] = "Оқиғадан 30 минут бұрын";
+$MESS["BOOKING_REMINDER_60"] = "Оқиғадан 1 сағат бұрын";
+$MESS["BOOKING_REMINDER_120"] = "Оқиғадан 2 сағат бұрын";
+$MESS["BOOKING_REMINDER_1440"] = "Оқиғадан бір күн бұрын";
+$MESS["BOOKING_REMINDER_2880"] = "Оқиғадан 2 күн бұрын";
+$MESS["BOOKING_REMINDER_CREATE"] = "Қосу";
+$MESS["BOOKING_REMINDER_SHORT_0"] = "Оқиға кезінде";
+$MESS["BOOKING_REMINDER_SHORT_5"] = "5 минут бұрын";
+$MESS["BOOKING_REMINDER_SHORT_10"] = "10 минут бұрын";
+$MESS["BOOKING_REMINDER_SHORT_15"] = "15 минут бұрын";
+$MESS["BOOKING_REMINDER_SHORT_20"] = "20 минут бұрын";
+$MESS["BOOKING_REMINDER_SHORT_30"] = "30 минут бұрын";
+$MESS["BOOKING_REMINDER_SHORT_60"] = "1 сағат бұрын";
+$MESS["BOOKING_REMINDER_SHORT_120"] = "2 сағат бұрын";
+$MESS["BOOKING_REMINDER_SHORT_1440"] = "Бір күн бұрын";
+$MESS["BOOKING_REMINDER_SHORT_2880"] = "2 күн бұрын";

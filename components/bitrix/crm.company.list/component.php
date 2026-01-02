@@ -64,9 +64,10 @@ if (!$isErrorOccured && $isBizProcInstalled)
 $arResult['CATEGORY_ID'] = (int)($arParams['CATEGORY_ID'] ?? 0);
 $factory = Container::getInstance()->getFactory(\CCrmOwnerType::Company);
 $category = $factory?->getCategory($arResult['CATEGORY_ID']);
+$arResult['IS_DEFAULT_CATEGORY'] = $factory?->getDefaultCategory()?->getId() === $category?->getId();
 
-$userPermissions = CCrmPerms::GetCurrentUserPermissions();
-if (!$isErrorOccured && !CCrmCompany::CheckReadPermission(0, $userPermissions, $arResult['CATEGORY_ID']))
+$userPermissionsService = \Bitrix\Crm\Service\Container::getInstance()->getUserPermissions();
+if (!$isErrorOccured && !$userPermissionsService->entityType()->canReadItemsInCategory(CCrmOwnerType::Company, $arResult['CATEGORY_ID']))
 {
 	$errorMessage = GetMessage('CRM_PERMISSION_DENIED');
 	$isErrorOccured = true;
@@ -118,12 +119,7 @@ $fieldRestrictionManager = new FieldRestrictionManager(
 $CCrmCompany = new CCrmCompany();
 if (!$isErrorOccured && !empty($sExportType))
 {
-	if ($CCrmCompany->cPerms->HavePerm(
-		(new \Bitrix\Crm\Category\PermissionEntityTypeHelper(CCrmOwnerType::Company))
-			->getPermissionEntityTypeForCategory($arResult['CATEGORY_ID']),
-		BX_CRM_PERM_NONE,
-		'EXPORT'
-	))
+	if (!$userPermissionsService->entityType()->canExportItemsInCategory(CCrmOwnerType::Company, $arResult['CATEGORY_ID']))
 	{
 		$errorMessage = GetMessage('CRM_PERMISSION_DENIED');
 		$isErrorOccured = true;
@@ -145,11 +141,11 @@ if ($isErrorOccured)
 
 $CCrmBizProc = new CCrmBizProc('COMPANY');
 
-$userID = CCrmSecurityHelper::GetCurrentUserID();
-$isAdmin = CCrmPerms::IsAdmin();
+$userID = Container::getInstance()->getContext()->getUserId();
+$isAdmin = $userPermissionsService->isAdmin();
 $enableOutmodedFields = $arResult['ENABLE_OUTMODED_FIELDS'] = CompanySettings::getCurrent()->areOutmodedRequisitesEnabled();
 
-$arResult['CURRENT_USER_ID'] = CCrmSecurityHelper::GetCurrentUserID();
+$arResult['CURRENT_USER_ID'] = $userID;
 
 if (!isset($arParams['PATH_TO_COMPANY_LIST']) && $arResult['CATEGORY_ID'] > 0)
 {
@@ -750,6 +746,8 @@ if ($factory && $category)
 	}
 }
 
+(new Crm\Filter\Field\LastCommunicationField())->addLastCommunicationGridHeader($arResult['HEADERS']);
+
 $CCrmUserType->appendGridHeaders($arResult['HEADERS']);
 
 if (!$isMyCompanyMode)
@@ -1053,12 +1051,11 @@ if($actionData['ACTIVE'])
 		if ($actionData['NAME'] == 'delete' && isset($actionData['ID']))
 		{
 			$ID = intval($actionData['ID']);
-			$arEntityAttr = $userPermissions->GetEntityAttr('COMPANY', array($ID));
-			if(CCrmAuthorizationHelper::CheckDeletePermission(CCrmOwnerType::CompanyName, $ID, $userPermissions, $arEntityAttr))
+			if ($userPermissionsService->item()->canDelete(CCrmOwnerType::Company, $ID))
 			{
 				$DB->StartTransaction();
 
-				if($CCrmBizProc->Delete($ID, $arEntityAttr)
+				if($CCrmBizProc->Delete($ID)
 					&& $CCrmCompany->Delete($ID, array('PROCESS_BIZPROC' => false)))
 				{
 					$DB->Commit();
@@ -1742,17 +1739,17 @@ $arResult['STEXPORT_IS_FIRST_PAGE'] = $pageNum === 1 ? 'Y' : 'N';
 $arResult['STEXPORT_IS_LAST_PAGE'] = $enableNextPage ? 'N' : 'Y';
 
 $arResult['PAGINATION']['URL'] = $APPLICATION->GetCurPageParam('', array('apply_filter', 'clear_filter', 'save', 'page', 'sessid', 'internal'));
-$arResult['PERMS']['ADD']    = !$CCrmCompany->cPerms->HavePerm('COMPANY', BX_CRM_PERM_NONE, 'ADD');
-$arResult['PERMS']['WRITE']  = !$CCrmCompany->cPerms->HavePerm('COMPANY', BX_CRM_PERM_NONE, 'WRITE');
-$arResult['PERMS']['DELETE'] = !$CCrmCompany->cPerms->HavePerm('COMPANY', BX_CRM_PERM_NONE, 'DELETE');
+$arResult['PERMS']['ADD'] = $userPermissionsService->entityType()->canAddItemsInCategory(CCrmOwnerType::Company, $arResult['CATEGORY_ID']);
+$arResult['PERMS']['WRITE'] = $userPermissionsService->entityType()->canUpdateItemsInCategory(CCrmOwnerType::Company, $arResult['CATEGORY_ID']);
+$arResult['PERMS']['DELETE'] = $userPermissionsService->entityType()->canDeleteItemsInCategory(CCrmOwnerType::Company, $arResult['CATEGORY_ID']);
 
-$bDeal = CCrmDeal::CheckCreatePermission($userPermissions);
+$bDeal = $userPermissionsService->entityType()->canAddItems(CCrmOwnerType::Deal);
 $arResult['PERM_DEAL'] = $bDeal;
-$bQuote = !$CCrmCompany->cPerms->HavePerm('QUOTE', BX_CRM_PERM_NONE, 'ADD');
+$bQuote =$userPermissionsService->entityType()->canAddItems(CCrmOwnerType::Quote);
 $arResult['PERM_QUOTE'] = $bQuote;
-$bInvoice = !$CCrmCompany->cPerms->HavePerm('INVOICE', BX_CRM_PERM_NONE, 'ADD');
+$bInvoice = $userPermissionsService->entityType()->canAddItems(CCrmOwnerType::Invoice);
 $arResult['PERM_INVOICE'] = $bInvoice;
-$bContact = !$CCrmCompany->cPerms->HavePerm('CONTACT', BX_CRM_PERM_NONE, 'ADD');
+$bContact = $userPermissionsService->entityType()->canAddItems(CCrmOwnerType::Contact);
 $arResult['PERM_CONTACT'] = $bContact;
 
 $enableExportEvent = $isInExportMode && HistorySettings::getCurrent()->isExportEventEnabled();
@@ -1905,11 +1902,11 @@ foreach($arResult['COMPANY'] as &$arCompany)
 				: null
 		)
 		->setElement(\Bitrix\Crm\Integration\Analytics\Dictionary::ELEMENT_GRID_ROW_CONTEXT_MENU)
-		->setP3WithBooleanValue('myCompany', $isMyCompanyMode)
+		->setP4WithBooleanValue('myCompany', $isMyCompanyMode)
 	;
 	if ($category && $category->getCode())
 	{
-		$analyticsEventBuilder->setP2WithValueNormalization('category', $category->getCode());
+		$analyticsEventBuilder->setP3WithValueNormalization('category', $category->getCode());
 	}
 	$arCompany['PATH_TO_COMPANY_COPY'] = $analyticsEventBuilder
 		->buildUri($arCompany['PATH_TO_COMPANY_EDIT'])
@@ -2222,11 +2219,11 @@ if (isset($arResult['COMPANY_ID']) && !empty($arResult['COMPANY_ID']))
 			$arResult['COMPANY'][$elementId][$complexId] = implode(', ', $arComplexName);
 
 	// checkig access for operation
-	$arCompanyAttr = CCrmPerms::GetEntityAttr('COMPANY', $arResult['COMPANY_ID']);
+	$userPermissionsService->item()->preloadPermissionAttributes(CCrmOwnerType::Company,  $arResult['COMPANY_ID']);
 	foreach ($arResult['COMPANY_ID'] as $iCompanyId)
 	{
-		$arResult['COMPANY'][$iCompanyId]['EDIT'] = $CCrmCompany->cPerms->CheckEnityAccess('COMPANY', 'WRITE', $arCompanyAttr[$iCompanyId]);
-		$arResult['COMPANY'][$iCompanyId]['DELETE'] = $CCrmCompany->cPerms->CheckEnityAccess('COMPANY', 'DELETE', $arCompanyAttr[$iCompanyId]);
+		$arResult['COMPANY'][$iCompanyId]['EDIT'] = $userPermissionsService->item()->canUpdate(CCrmOwnerType::Company, $iCompanyId);
+		$arResult['COMPANY'][$iCompanyId]['DELETE'] = $userPermissionsService->item()->canDelete(CCrmOwnerType::Company, $iCompanyId);
 
 		$arResult['COMPANY'][$iCompanyId]['BIZPROC_LIST'] = [];
 
@@ -2353,7 +2350,7 @@ if (!$isInExportMode)
 		unset ($agent, $isAgentEnabled);
 
 
-		if(CCrmPerms::IsAdmin())
+		if($userPermissionsService->isAdmin())
 		{
 			if(COption::GetOptionString('crm', '~CRM_REBUILD_COMPANY_DUP_INDEX', 'N') === 'Y')
 			{

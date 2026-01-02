@@ -45,7 +45,7 @@ if (!defined('B_PROLOG_INCLUDED') || B_PROLOG_INCLUDED !== true) {
         <div class="disk-external-link-setting-popup">
             <label for="public-link-setting-checkbox-can-edit" class="disk-external-link-setting-popup-label">
                 <input type="checkbox" {{#canEditDocument}} checked="checked" {{/canEditDocument}} class="disk-external-link-setting-checkbox" data-entity="public-link-setting-checkbox-can-edit" id="public-link-setting-checkbox-can-edit">
-                <span><?= Loc::getMessage('DISK_JS_EL_SETTINGS_LINK_CAN_EDIT_DOCUMENT') ?></span>
+                <span>{{#isBoard}}<?= Loc::getMessage('DISK_JS_EL_SETTINGS_LINK_CAN_EDIT_DOCUMENT_BOARD') ?>{{/isBoard}}{{^isBoard}}<?= Loc::getMessage('DISK_JS_EL_SETTINGS_LINK_CAN_EDIT_DOCUMENT') ?>{{/isBoard}}</span>
             </label>
         </div>
         {{/availableEdit}}

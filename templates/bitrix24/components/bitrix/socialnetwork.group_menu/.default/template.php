@@ -16,12 +16,12 @@ use Bitrix\Main\Config\Option;
 use Bitrix\Main\Localization\Loc;
 use Bitrix\Main\Web\Json;
 use Bitrix\Main\Web\Uri;
-use Bitrix\Socialnetwork\Collab\Url\UrlManager;
-use Bitrix\Socialnetwork\Helper\Feature;
 use Bitrix\Socialnetwork\Item\Workgroup;
 use Bitrix\Socialnetwork\UserToGroupTable;
 use Bitrix\Main\UI;
 use Bitrix\Main\Loader;
+use Bitrix\UI\Buttons\AirButtonStyle;
+use Bitrix\UI\Buttons\Button;
 
 CUtil::InitJSCore([ 'popup', 'ajax', 'marketplace', 'clipboard' ]);
 
@@ -44,7 +44,7 @@ $isProjectAccessEnabled = \Bitrix\Socialnetwork\Helper\Workgroup::isProjectAcces
 
 $groupMember = in_array($arResult['CurrentUserPerms']['UserRole'], UserToGroupTable::getRolesMember());
 
-$this->addExternalCss(SITE_TEMPLATE_PATH."/css/profile_menu.css");
+$this->addExternalCss(SITE_TEMPLATE_PATH . "/src/css/standalone/profile-menu.css");
 $bodyClass = $APPLICATION->GetPageProperty("BodyClass");
 $APPLICATION->SetPageProperty("BodyClass", ($bodyClass ? $bodyClass." " : "")."profile-menu-mode");
 
@@ -53,7 +53,7 @@ $isScrumProject = ($group && $group->isScrumProject());
 
 if (!$arResult['inIframe'] || $arResult['IS_CURRENT_PAGE_FIRST'])
 {
-	$this->SetViewTarget("above_pagetitle", 100);
+	$this->SetViewTarget($arResult['inIframe'] ? 'above_pagetitle' : "page_menu", 100);
 }
 
 if (
@@ -142,7 +142,7 @@ if (
 	});
 </script><?php
 
-?><div class="profile-menu profile-menu-group<?= ($arResult['inIframe'] ? ' profile-menu-iframe' : '') ?>">
+?><div class="profile-menu --air-context-blurred-bg profile-menu-group<?= ($arResult['inIframe'] ? ' profile-menu-iframe' : '') ?>">
 	<div class="profile-menu-inner">
 		<div class="profile-menu-top<?= ($arResult['Group']['IS_EXTRANET'] === 'Y' ? ' profile-menu-top-extranet' : '') ?>"><?php
 
@@ -159,6 +159,7 @@ if (
 				&& !empty($arResult['Group']['AVATAR_TYPE'])
 			)
 			{
+				$classList[] = 'profile-menu-avatar';
 				$classList[] = 'sonet-common-workgroup-avatar';
 				$classList[] = '--' . \Bitrix\Socialnetwork\Helper\Workgroup::getAvatarTypeWebCssClass($arResult['Group']['AVATAR_TYPE']);
 			}
@@ -177,7 +178,7 @@ if (
 			{
 				?><span class="<?= implode(' ', $classList) ?>"><i <?= $avatarStyle ?>></i></span><?php
 			}
-			?><div class="profile-menu-group-info">
+			?><div class="profile-menu-group-info ui-icon-set__scope">
 				<div class="profile-menu-name-box"><?php
 					if (!$arResult['inIframe'])
 					{
@@ -187,15 +188,7 @@ if (
 					{
 						?><span class="profile-menu-name"><?= $arResult['Group']['NAME'] ?></span><?php
 					}
-					?><div style="display: none;" class="profile-menu-type">
-						<span class="profile-menu-type-name">
-						<span class="profile-menu-type-name-item"><?=(is_array($arResult['Group']['Type']) && !empty($arResult['Group']['Type']) && !empty($arResult['Group']['Type']['NAME']) ? (LANGUAGE_ID === 'de' ? $arResult['Group']['Type']['NAME'] : mb_strtolower($arResult['Group']['Type']['NAME'])) : '')?></span><?php
-						if ($arResult["CurrentUserPerms"]["UserCanModifyGroup"])
-						{
-							?><a href="<?= htmlspecialcharsbx($arResult["Urls"]["Edit"] . (mb_strpos($arResult["Urls"]["Edit"], "?") !== false ? "&" : '?') . "tab=edit")?>" class="profile-menu-type-icon"></a><?php
-						}
-						?></span>
-					</div>
+					?>
 				</div>
 				<?php
 
@@ -216,102 +209,112 @@ if (
 						$aboutTitle = Loc::getMessage('SONET_SGM_T_LINKS_ABOUT');
 				}
 
-				if (!$arResult['inIframe'])
-				{
-					?><span class="profile-menu-links">
-						<?php
+				?><span class="profile-menu-links"><?php
 
-						if ($isScrumProject && $arResult['CanView']['tasks'])
-						{
-							?>
-							<span
-								id="tasks-scrum-meetings-button"
-								class="ui-btn ui-btn-primary ui-btn-icon-camera"
-								style="cursor: pointer;"
-							><?= Loc::getMessage('SONET_TASKS_SCRUM_MEETINGS_LINK') ?></span>
-							<span
-								id="tasks-scrum-methodology-button"
-								class="ui-btn ui-btn-light-border"
-								style="margin-right: 12px;"
-							><?= Loc::getMessage('SONET_TASKS_SCRUM_METHODOLOGY_LINK') ?></span>
-							<?php
-						}
+					if ($isScrumProject && $arResult['CanView']['tasks'])
+					{
+						$chatButton = new Button([
+							'text' => Loc::getMessage('SONET_TASKS_SCRUM_MEETINGS_LINK'),
+							'air' => true,
+							'icon' => Bitrix\UI\Buttons\Icon::CAMERA,
+							'noCaps' => true,
+							'size' => Bitrix\UI\Buttons\Size::SMALL,
+						]);
 
-						if ($arResult['CanView']['chat'])
-						{
-							?><span id="group-menu-control-button-cont" class="profile-menu-button-container <?= $arResult['isScrumProject'] ? '--scrum' : ''?>"></span><?php
-						}
+						$chatButton->addAttribute('id', 'tasks-scrum-meetings-button');
+						echo $chatButton->render();
 
-						?><a href="<?= $arResult['Urls']['Card'] ?>" id="project-widget-button" class="ui-btn ui-btn-light-border" data-slider-ignore-autobinding="true" data-workgroup="<?= htmlspecialcharsbx(Json::encode($arResult['projectWidgetData'])) ?>"><?= $aboutTitle ?></a><?php
+						$methodologyButton = new Button([
+							'text' => Loc::getMessage('SONET_TASKS_SCRUM_METHODOLOGY_LINK'),
+							'air' => true,
+							'noCaps' => true,
+							'size' => Bitrix\UI\Buttons\Size::SMALL,
+						]);
 
+						$methodologyButton->setStyle(AirButtonStyle::SELECTION);
+						$methodologyButton->addAttribute('id', 'tasks-scrum-methodology-button');
+						echo $methodologyButton->render();
+					}
+
+					if ($arResult['bUserCanRequestGroup'])
+					{
 						if (
-							!empty($arResult['bindingMenuItems'])
-							|| in_array($arResult['CurrentUserPerms']['UserRole'], UserToGroupTable::getRolesMember(), true)
+							$arResult['Group']['OPENED'] === 'Y'
+							|| (
+								$arResult['CurrentUserPerms']['UserRole'] === UserToGroupTable::ROLE_REQUEST
+								&& $arResult['CurrentUserPerms']['InitiatedByType'] === UserToGroupTable::INITIATED_BY_GROUP
+							)
 						)
 						{
-							?><button id="group-menu-more-button" class="ui-btn ui-btn-light-border ui-btn-icon-dots"></button><?php
+							$joinButton = new Button([
+								'text' => Loc::getMessage('SONET_SGM_T_BUTTON_JOIN'),
+								'air' => true,
+								'noCaps' => true,
+								'size' => Bitrix\UI\Buttons\Size::SMALL,
+							]);
+
+							$joinButton->addAttribute('id', 'bx-group-menu-join');
+							$joinButton->addAttribute('bx-request-url', $arResult["Urls"]["UserRequestGroup"]);
+							echo $joinButton->render();
 						}
-
-					?></span><?php
-				}
-
-				if ($arResult['inIframe'])
-				{
-
-					?><span class="profile-menu-links"><?php
-
-						if ($isScrumProject && $arResult['CanView']['tasks'])
+						else
 						{
-							?>
-							<button
-								id="tasks-scrum-meetings-button"
-								class="ui-btn ui-btn-primary ui-btn-icon-camera"
-							><?= Loc::getMessage('SONET_TASKS_SCRUM_MEETINGS_BUTTON') ?></button>
-							<button
-								id="tasks-scrum-methodology-button"
-								class="ui-btn ui-btn-light-border ui-btn-themes"
-								style="margin-right: 12px;"
-							><?= Loc::getMessage('SONET_TASKS_SCRUM_METHODOLOGY_BUTTON') ?></button>
-							<?php
+							$joinButton = new Button([
+								'text' => Loc::getMessage('SONET_SGM_T_BUTTON_JOIN'),
+								'link' => $arResult["Urls"]["UserRequestGroup"],
+								'air' => true,
+								'noCaps' => true,
+								'size' => Bitrix\UI\Buttons\Size::SMALL,
+							]);
+
+							echo $joinButton->render();
 						}
+					}
 
-						if ($arResult['bUserCanRequestGroup'])
-						{
-							if (
-								$arResult['Group']['OPENED'] === 'Y'
-								|| (
-									$arResult['CurrentUserPerms']['UserRole'] === UserToGroupTable::ROLE_REQUEST
-									&& $arResult['CurrentUserPerms']['InitiatedByType'] === UserToGroupTable::INITIATED_BY_GROUP
-								)
-							)
-							{
-								?><button class="ui-btn ui-btn-primary bx-group-menu-join-cont" id="bx-group-menu-join" bx-request-url="<?= $arResult["Urls"]["UserRequestGroup"] ?>"><?= Loc::getMessage('SONET_SGM_T_BUTTON_JOIN') ?></button><?php
-							}
-							else
-							{
-								?><a class="ui-btn ui-btn-primary bx-group-menu-join-cont" href="<?= $arResult["Urls"]["UserRequestGroup"] ?>"><?= Loc::getMessage('SONET_SGM_T_BUTTON_JOIN') ?></a><?php
-							}
-						}
+					if ($arResult['CanView']['chat'])
+					{
+						?><span id="group-menu-control-button-cont" class="profile-menu-button-container <?= $arResult['isScrumProject'] ? '--scrum' : ''?>"></span><?php
+					}
 
-						if ($arResult['CanView']['chat'])
-						{
-							?><span id="group-menu-control-button-cont" class="profile-menu-button-container <?= $arResult['isScrumProject'] ? '--scrum' : ''?>"></span><?php
-						}
+					$projectButton = new Button([
+						'text' => $aboutTitle,
+						'air' => true,
+						'noCaps' => true,
+						'link' => $arResult['Urls']['Card'],
+						'dataset' => [
+							'slider-ignore-autobinding' => 'true',
+							'workgroup' => Json::encode($arResult['projectWidgetData']),
+						],
+						'size' => Bitrix\UI\Buttons\Size::SMALL,
+					]);
+					$projectButton->setStyle(AirButtonStyle::SELECTION);
+					$projectButton->addAttribute('id', 'project-widget-button');
+					echo $projectButton->render();
 
-						?><a href="<?= $arResult['Urls']['Card'] ?>" id="project-widget-button" class="ui-btn ui-btn-light-border ui-btn-themes" data-slider-ignore-autobinding="true" data-workgroup="<?= htmlspecialcharsbx(Json::encode($arResult['projectWidgetData'])) ?>"><?= $aboutTitle ?></a><?php
+					if (
+						!empty($arResult['bindingMenuItems'])
+						|| in_array($arResult['CurrentUserPerms']['UserRole'], UserToGroupTable::getRolesMember(), true)
+					)
+					{
+						$moreButton = new Button([
+							'air' => true,
+							'noCaps' => true,
+							'icon' => Bitrix\UI\Buttons\Icon::DOTS,
+							'size' => Bitrix\UI\Buttons\Size::SMALL,
+						]);
 
-						?><button id="group-menu-more-button" class="ui-btn ui-btn-light-border ui-btn-themes ui-btn-icon-dots"></button><?php
-
-					?></span><?php
-				}
+						$moreButton->setStyle(AirButtonStyle::SELECTION);
+						$moreButton->setCollapsed();
+						$moreButton->addAttribute('id', 'group-menu-more-button');
+						echo $moreButton->render();
+					}
+				?></span><?php
 
 			?></div>
 		</div>
 		<div class="profile-menu-bottom">
 			<div class="profile-menu-items-new"><?php
-
 				$menuItems = [];
-
 				foreach ($arResult["CanView"] as $key => $val)
 				{
 					if (!$val || $key === "content_search")
@@ -464,6 +467,10 @@ if (
 						array(
 							"ID" => $arResult["menuId"],
 							"ITEMS" => $menuItems,
+							"THEME" => "air",
+							"THEME_VARS" => [
+								'--mib-margin-bottom' => 0,
+							],
 						)
 					);
 				}

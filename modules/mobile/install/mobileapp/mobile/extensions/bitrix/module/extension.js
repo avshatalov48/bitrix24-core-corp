@@ -26,7 +26,9 @@ jn.define('module', (require, exports, module) => {
 
 		const installedModules = env.installedModules || {};
 		const isInstalled = Boolean(installedModules[moduleId]);
-		const isMobileInstalled = Boolean(installedModules[`${moduleId}mobile`]);
+		const isMobileInstalled = `${moduleId}mobile` in installedModules
+			? Boolean(installedModules[`${moduleId}mobile`])
+			: true;
 
 		return isInstalled && isMobileInstalled;
 	}

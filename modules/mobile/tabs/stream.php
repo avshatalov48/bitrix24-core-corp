@@ -13,6 +13,7 @@ use Bitrix\Mobile\Tab\Tabable;
 use Bitrix\MobileApp\Janative\Manager;
 use Bitrix\MobileApp\Mobile;
 use Bitrix\Socialnetwork\Helper\Path;
+use Bitrix\Mobile\Menu\Analytics;
 
 class Stream implements Tabable
 {
@@ -21,6 +22,11 @@ class Stream implements Tabable
 	public function isAvailable()
 	{
 		$result = true;
+
+		if ($this->context->isCollaber)
+		{
+			return false;
+		}
 
 		if (Loader::includeModule('intranet'))
 		{
@@ -50,18 +56,23 @@ class Stream implements Tabable
 	{
 		$data = $this->getDataInternal();
 		$result = [
+			'id' => $this->getId(),
+			'sort' => 500,
+			'section_code' => 'teamwork',
 			'title' => $this->getTitle(),
 			'useLetterImage' => true,
 			'color' => '#40465A',
 			'imageUrl' => 'favorite/stream.png',
 			'imageName' => $this->getIconId(),
+			'params' => [
+				'counter' =>'**',
+				'analytics' => Analytics::stream(),
+			],
 		];
 
 		if ($data['component'])
 		{
-			$result['params'] = [
-				'onclick' => \Bitrix\Mobile\Tab\Utils::getComponentJSCode($data['component']),
-			];
+			$result['params']['onclick'] = \Bitrix\Mobile\Tab\Utils::getComponentJSCode($data['component']);
 		}
 		elseif ($data['page'])
 		{
@@ -333,7 +344,7 @@ class Stream implements Tabable
 
 	public function getIconId(): string
 	{
-		return Mobile::getApiVersion() < 56 ? 'stream' : 'newsfeed';
+		return 'newsfeed';
 	}
 
 	private function pushBizprocTab(array &$tabs): void
@@ -353,7 +364,9 @@ class Stream implements Tabable
 			if ($bizprocTabData)
 			{
 				$component = $bizprocTabData['component'];
-				unset($component['params']);
+				$component['params'] = [
+					'analyticsSection' => 'stream',
+				];
 
 				$tabs[] = [
 					'id' => 'bp2',

@@ -15,8 +15,10 @@ use Bitrix\Main\Web\Json;
 		'ui.design-tokens',
 		'ui.icon-set.api.core',
 		'ui.icon-set.main',
+		'file_dialog',
 	]
 );
+
 \Bitrix\Main\Page\Asset::getInstance()->addJs(getLocalPath('activities/bitrix/crmcreatetodoactivity/script.js'));
 
 /** @var \Bitrix\Bizproc\Activity\PropertiesDialog $dialog */

@@ -233,6 +233,7 @@ else
 					"ALLOW_PAYMENT_REDIRECT" => "Y",
 					"ACTIVE_DATE_FORMAT" => "d F Y, H:m",
 					"USER_CONSENT" => $arParams['USER_CONSENT'] ?? null,
+					'USER_CONSENTS' => $arParams['USER_CONSENTS'] ?? null,
 					"USER_CONSENT_ID" => $arParams['USER_CONSENT_ID'] ?? null,
 					"USER_CONSENT_IS_CHECKED" => $arParams['USER_CONSENT_IS_CHECKED'] ?? null,
 					"USER_CONSENT_IS_LOADED" => $arParams['USER_CONSENT_IS_LOADED'] ?? null,

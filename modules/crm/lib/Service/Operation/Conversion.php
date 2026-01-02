@@ -32,7 +32,7 @@ class Conversion extends Operation
 
 		$userPermissions = Container::getInstance()->getUserPermissions($this->getContext()->getUserId());
 
-		$canUpdateSourceItem = $userPermissions->canUpdateItem($this->item);
+		$canUpdateSourceItem = $userPermissions->item()->canUpdateItem($this->item);
 		if (!$canUpdateSourceItem)
 		{
 			$result->addError(

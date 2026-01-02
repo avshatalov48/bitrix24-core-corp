@@ -6,6 +6,7 @@ jn.define('lists/element-creation-guide/catalog-step/component', (require, expor
 	const { CatalogStepView } = require('lists/element-creation-guide/catalog-step/view');
 	const { EventEmitter } = require('event-emitter');
 	const { Duration } = require('utils/date/duration');
+	const { Random } = require('utils/random');
 	const { NotifyManager } = require('notify-manager');
 	const { StorageCache } = require('storage-cache');
 
@@ -24,7 +25,6 @@ jn.define('lists/element-creation-guide/catalog-step/component', (require, expor
 			this.state = { items: null, cachedItems: null };
 			this.isLoading = false;
 
-			// eslint-disable-next-line no-undef
 			this.uid = props.uid || Random.getString();
 			this.customEventEmitter = EventEmitter.createWithUid(this.uid);
 

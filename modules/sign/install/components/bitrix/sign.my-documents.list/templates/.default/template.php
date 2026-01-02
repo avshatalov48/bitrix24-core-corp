@@ -23,6 +23,7 @@ $APPLICATION->SetTitle($arResult['TITLE']);
 	'sign.v2.grid.b2e.my-documents',
 	'humanresources.hcmlink.salary-vacation-menu',
 	'ui.hint',
+	'applayout',
 ]);
 
 $gridRows = [];

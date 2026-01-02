@@ -1,7 +1,7 @@
 <?php
+
 namespace Bitrix\Sign\Controller;
 
-use Bitrix\Crm\Integration\Sign\Form;
 use Bitrix\Main\ArgumentNullException;
 use Bitrix\Main\ArgumentTypeException;
 use Bitrix\Main\Engine\Response\BFile;
@@ -12,7 +12,6 @@ use Bitrix\Sign\Access\Permission\SignPermissionDictionary;
 use Bitrix\Sign\Document as DocumentCore;
 use Bitrix\Sign\Document\Status;
 use Bitrix\Sign\File;
-use Bitrix\Sign\Main\Application;
 use Bitrix\Sign\Operation\CheckDocumentAccess;
 use Bitrix\Sign\Proxy;
 
@@ -33,6 +32,7 @@ class Document extends Controller
 		$actionsConfiguration['downloadResultFile']['-prefilters'] = [
 			\Bitrix\Main\Engine\ActionFilter\Csrf::class,
 		];
+
 		return $actionsConfiguration;
 	}
 
@@ -64,6 +64,7 @@ class Document extends Controller
 			if ($fileToken)
 			{
 				$this->prepareFileResponse($document, $fileToken);
+
 				return $response;
 			}
 
@@ -90,12 +91,13 @@ class Document extends Controller
 	 * @param string $documentHash
 	 * @return BFile|array
 	 */
-	public function downloadResultFileAction(string $documentHash): BFile | array
+	public function downloadResultFileAction(string $documentHash): BFile|array
 	{
 		$document = DocumentCore::getByHash($documentHash);
 		if (!$document)
 		{
 			$this->addError(new Error('Document not found'));
+
 			return [];
 		}
 
@@ -106,6 +108,7 @@ class Document extends Controller
 		if ($newDocumentItem === null)
 		{
 			$this->addError(new Error('Document not found'));
+
 			return [];
 		}
 
@@ -113,12 +116,14 @@ class Document extends Controller
 		if (!$result->isSuccess())
 		{
 			$this->addErrors($result->getErrors());
+
 			return [];
 		}
 
 		if ($document->getProcessingStatus() !== Status::READY)
 		{
 			$this->addError(new Error('Wrong status'));
+
 			return [];
 		}
 
@@ -126,12 +131,13 @@ class Document extends Controller
 		if (!$file || !$file->isExist())
 		{
 			$this->addError(new Error('No result file'));
+
 			return [];
 		}
 
 		return BFile::createByFileId(
 			$file->getId(),
-			$this->getDocumentFilenameForResponse($document)
+			$this->getDocumentFilenameForResponse($document),
 		)->showInline(false);
 	}
 
@@ -147,7 +153,7 @@ class Document extends Controller
 			'data' => [
 				'documentHash' => $document->getHash(),
 				'fileToken' => $fileToken,
-			]
+			],
 		]);
 
 		$response = \Bitrix\Main\Application::getInstance()->getContext()->getResponse();

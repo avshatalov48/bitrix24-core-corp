@@ -4,13 +4,10 @@ namespace Bitrix\Tasks\Control\Group;
 
 use Bitrix\Tasks\Control\Task;
 use Bitrix\Tasks\Internals\Registry\TaskRegistry;
-use Bitrix\Tasks\Member\Config\WorkConfig;
-use Bitrix\Tasks\Access\Role\RoleDictionary;
+use Bitrix\Tasks\Internals\TaskObject;
 
 class AddAuditor
 {
-	private const ROLE = RoleDictionary::ROLE_AUDITOR;
-
 	public function runBatch(int $userId, array $taskIds, int $auditorId): array
 	{
 		$result = [];
@@ -26,26 +23,22 @@ class AddAuditor
 				continue;
 			}
 
-			$allMembers = $task->getMemberList();
-			$oldAuditor = [];
-
-			foreach ($allMembers as $member)
-			{
-				if ($member->getType() === self::ROLE)
-				{
-					$oldAuditor[] = $member->getUserId();
-				}
-			}
-
-			$newAuditor = array_merge([$auditorId], $oldAuditor);
-			$arAuditor['AUDITORS'] = $newAuditor;
+			$members = $this->prepareMembers($task, $auditorId);
 
 			$result[] = [
-				$control->update($id, $arAuditor),
+				$control->update($id, $members),
 				'taskId' => $id,
 			];
 		}
 
 		return $result;
+	}
+
+	private function prepareMembers(TaskObject $task, int $auditorId): array
+	{
+		$auditors['AUDITORS'] = $task->getMemberList()->getAuditorIds();
+		$auditors['AUDITORS'][] = $auditorId;
+
+		return $auditors;
 	}
 }

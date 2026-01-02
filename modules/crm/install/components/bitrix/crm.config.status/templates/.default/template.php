@@ -704,6 +704,23 @@ else
 		</div>
 	</div>
 
+	<script>
+		function OnSelectBGColor(color, objColorPicker)
+		{
+			BX['<?=$jsClass?>'].paintElement(color, objColorPicker);
+		}
+	</script>
+	<div id="block-color-picker" class="crm-config-status-block-color-picker">
+		<? $APPLICATION->includeComponent(
+			"bitrix:main.colorpicker",
+			"",
+			array(
+				"SHOW_BUTTON" =>"Y",
+				"ONSELECT" => "OnSelectBGColor"
+			)
+		); ?>
+	</div>
+
 </div>
 
 </form>
@@ -730,23 +747,6 @@ function getColorText($color, &$iconClass, &$blockClass)
 	}
 }
 ?>
-
-<script>
-	function OnSelectBGColor(color, objColorPicker)
-	{
-		BX['<?=$jsClass?>'].paintElement(color, objColorPicker);
-	}
-</script>
-<div id="block-color-picker" class="crm-config-status-block-color-picker">
-	<? $APPLICATION->includeComponent(
-		"bitrix:main.colorpicker",
-		"",
-		array(
-			"SHOW_BUTTON" =>"Y",
-			"ONSELECT" => "OnSelectBGColor"
-		)
-	); ?>
-</div>
 
 <script>
 	BX.ready(function(){

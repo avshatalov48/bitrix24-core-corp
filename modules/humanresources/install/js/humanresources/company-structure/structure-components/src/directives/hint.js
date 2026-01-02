@@ -1,12 +1,17 @@
-import { Reflection, Event, Text } from 'main.core';
+import { Reflection, Event, Text, Type } from 'main.core';
 import 'ui.hint';
 
 export const Hint = {
-	mounted(el: HTMLElement)
+	mounted(el: HTMLElement, binding): void
 	{
+		const value = Type.isString(binding?.value) ? binding.value.trim() : '';
 		let hint = null;
-		Event.bind(el, 'mouseenter', () => {
-			if (el.scrollWidth === el.offsetWidth)
+
+		const shouldShow = () => (value ? true : el.scrollWidth !== el.offsetWidth);
+		const getText = () => Text.encode(value || el.textContent);
+
+		const onMouseEnter = () => {
+			if (!shouldShow())
 			{
 				return;
 			}
@@ -18,10 +23,14 @@ export const Hint = {
 					offsetLeft: el.getBoundingClientRect().width / 2,
 				},
 			});
-			hint.show(el, Text.encode(el.textContent));
-		});
-		Event.bind(el, 'mouseleave', () => {
+			hint.show(el, getText());
+		};
+
+		const onMouseLeave = () => {
 			hint?.hide();
-		});
+		};
+
+		Event.bind(el, 'mouseenter', onMouseEnter);
+		Event.bind(el, 'mouseleave', onMouseLeave);
 	},
 };

@@ -83,6 +83,7 @@ final class SignedFile extends IRestService
 				'name' => $result->documentName,
 				'fileUrl' => CRestUtil::getDownloadUrl(['id' => $memberId], $restServer),
 				'fileName' => $result->fileName,
+				'uid' => $result->documentUid,
 			],
 		];
 	}

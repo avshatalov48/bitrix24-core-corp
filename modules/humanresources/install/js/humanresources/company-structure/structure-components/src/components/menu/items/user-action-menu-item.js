@@ -24,6 +24,10 @@ export const UserActionMenuItem = {
 			required: false,
 			default: null,
 		},
+		dataTestId: {
+			type: String,
+			required: false,
+		},
 	},
 	methods: {
 		loc(phraseCode: string, replacements: {[p: string]: string} = {}): string
@@ -32,7 +36,10 @@ export const UserActionMenuItem = {
 		},
 	},
 	template: `
-		<div class="hr-structure-route-action-popup-menu-item">
+		<div
+			class="hr-structure-route-action-popup-menu-item"
+			:data-test-id="dataTestId"
+		>
 			<div class="hr-structure-route-action-popup-menu-item__content">
 				<img
 					:src="!this.avatar ? '/bitrix/js/humanresources/company-structure/org-chart/src/images/default-user.svg' : encodeURI(this.avatar)"

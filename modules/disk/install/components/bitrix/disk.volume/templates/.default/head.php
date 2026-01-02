@@ -1,4 +1,4 @@
-<?php
+<?
 if(!defined('B_PROLOG_INCLUDED') || B_PROLOG_INCLUDED!==true) die();
 /** @var array $arParams */
 /** @var array $arResult */
@@ -13,11 +13,18 @@ if(!defined('B_PROLOG_INCLUDED') || B_PROLOG_INCLUDED!==true) die();
 /** @var \Bitrix\Disk\Internals\BaseComponent $component */
 /** @var \CDiskVolumeComponent $component */
 
+use Bitrix\Disk\Volume\FileDeleted;
 use Bitrix\Main\Localization\Loc;
 use Bitrix\Main\Web\Uri;
+use Bitrix\UI\Buttons\Button;
+use Bitrix\UI\Buttons\Color;
+use Bitrix\UI\Buttons\Icon;
+use Bitrix\UI\Buttons\JsCode;
+use Bitrix\UI\Toolbar\Facade\Toolbar;
 
-CJSCore::Init(array('disk', 'ui.viewer', 'disk.viewer.document-item', 'ui.fonts.opensans'));
-CJSCore::Init(array('disk', 'ui.viewer', 'disk.viewer.board-item', 'ui.fonts.opensans'));
+\Bitrix\Main\Loader::includeModule('ui');
+
+CJSCore::Init(array('disk', 'ui.viewer', 'disk.viewer.document-item', 'disk.viewer.board-item', 'ui.fonts.opensans'));
 
 Loc::loadMessages(__FILE__);
 
@@ -25,17 +32,48 @@ $isBitrix24Template = SITE_TEMPLATE_ID === "bitrix24";
 
 $isQueueRunning = isset($arResult['RUN_QUEUE']) && ($arResult['RUN_QUEUE'] === 'full' || $arResult['RUN_QUEUE'] === 'continue');
 
-$isTrashcan = ($arResult['INDICATOR'] === \Bitrix\Disk\Volume\FileDeleted::getIndicatorId());
+$isTrashcan = ($arResult['INDICATOR'] === FileDeleted::getIndicatorId());
 
+if ($isBitrix24Template && !$arResult['DISK_EMPTY'] && !$isQueueRunning && $arResult['DATA_COLLECTED'])
+{
+	$switcher = new Button([
+		'color' => Color::LIGHT_BORDER,
+		'noCaps' => true,
+		'classList' => [
+			'ui-btn-themes',
+		],
+	]);
+	if ($arResult['EXPERT_MODE'] === true)
+	{
+		$switcherText = Loc::getMessage('DISK_VOLUME_EXPERT_MODE_EXIT');
+		$switcherLink = $component->getActionUrl(array('expert' => 'off', 'action' => $component::ACTION_DEFAULT, 'storageId' => ''));
+	}
+	else
+	{
+		$switcherText = Loc::getMessage('DISK_VOLUME_EXPERT_MODE_ON');
+		$switcherLink = $component->getActionUrl(array(
+			'expert' => 'on',
+			'action' => ($arResult['ADMIN_MODE'] === true ? $component::ACTION_DISKS : $component::ACTION_STORAGE),
+			'storageId' => '',
+		));
+	}
+	$switcher
+		->setText($switcherText)
+		->setLink($switcherLink)
+	;
 
+	Toolbar::addButton($switcher);
+	?>
 
+	<?php
+}
+?>
+<?php
 if ($isBitrix24Template)
 {
-	$this->SetViewTarget("inside_pagetitle", 10);
-
 	?>
 	<div class="pagetitle-container pagetitle-flexible-space" style="overflow: hidden;">
-		<?
+		<?php
 
 		// Filter
 		if (in_array(
@@ -48,154 +86,80 @@ if ($isBitrix24Template)
 			))
 		)
 		{
-			$APPLICATION->IncludeComponent(
-				'bitrix:main.ui.filter',
-				'',
-				array(
-					'GRID_ID' => $arResult['GRID_ID'],
-					'FILTER_ID' => $arResult['FILTER_ID'],
-					'FILTER' => $arResult["FILTER"],
-					'FILTER_PRESETS' => $arResult['FILTER_PRESETS'],
-					'ENABLE_LIVE_SEARCH' => true,
-					'ENABLE_LABEL' => true,
-					'RESET_TO_DEFAULT_MODE' => false,
-				),
-				$component
-			);
+			Toolbar::addFilter([
+				'GRID_ID' => $arResult['GRID_ID'],
+				'FILTER_ID' => $arResult['FILTER_ID'],
+				'FILTER' => $arResult["FILTER"],
+				'FILTER_PRESETS' => $arResult['FILTER_PRESETS'],
+				'ENABLE_LIVE_SEARCH' => true,
+				'ENABLE_LABEL' => true,
+				'RESET_TO_DEFAULT_MODE' => false,
+			]);
+		}
+
+		if ($arResult['ADMIN_MODE_ALLOW'] || $arResult['WORKER_COUNT'] > 0)
+		{
+			$items = [];
+			if ($arResult['WORKER_COUNT'] > 0)
+			{
+					$items[] = [
+					'text' => Loc::getMessage('DISK_VOLUME_CANCEL_WORKERS'),
+					'onclick' => new JsCode("
+							BX.PopupMenu.getMenuById('popupMenuOptions').close();
+							BX.Disk.showActionModal({text: BX.message('DISK_VOLUME_PERFORMING_CANCEL_WORKERS'), showLoaderIcon:true, autoHide:false});
+							BX.Disk.measureManager.callAction({action: '" . $component::ACTION_CANCEL_WORKERS . "', after: BX.Disk.measureManager.stepperHide, doNotShowModalAlert: true});
+						")
+					];
+			}
+
+			if ($arResult["ADMIN_MODE_ALLOW"])
+			{
+				if (!$arResult["ADMIN_MODE"])
+				{
+					$items[] = [
+						'text' => Loc::getMessage('DISK_VOLUME_ADMIN_MODE'),
+						'href' => $component->getActionUrl(array('admin' => 'on', 'action' => $component::ACTION_DEFAULT)),
+					];
+				}
+				else
+				{
+					$items[] = [
+						'text' => Loc::getMessage('DISK_VOLUME_ADMIN_MODE_EXIT'),
+						'href' => $component->getActionUrl(array('admin' => 'off', 'expert' => 'off', 'action' => $component::ACTION_DEFAULT, 'storageId' => '')),
+					];
+				}
+			}
+
+			$menuButton = new Button([
+				'icon' => Icon::SETTINGS,
+				'color' => Color::LIGHT_BORDER,
+				'dropdown' => false,
+				'menu' => [
+					'items' => $items
+				],
+			]);
+
+			Toolbar::addButton($menuButton);
+		}
+
+		if (!$arResult['DISK_EMPTY'] && !$isQueueRunning && $arResult['DATA_COLLECTED'])
+		{
+			Toolbar::addButton([
+				'link' => $component->getActionUrl(array('reload' => 'Y', 'action' => $component::ACTION_DEFAULT)),
+				'text' => Loc::getMessage('DISK_VOLUME_MEASURE_DATA_REPEAT'),
+				'color' => Color::PRIMARY,
+				'icon' => Icon::START,
+				'dataset' => [
+					'toolbar-collapsed-icon' => Bitrix\UI\Buttons\Icon::START
+				],
+			]);
 		}
 
 		// Menu
 		?>
 	</div>
-
-	<div id="bx-disk-volume-menu" class="pagetitle-container pagetitle-align-right-container">
-		<? if ($arResult["ADMIN_MODE_ALLOW"] || $arResult["WORKER_COUNT"] > 0)
-		{
-			?>
-			<div id="bx-disk-volume-popupMenuOptions" class="ui-btn ui-btn-light-border ui-btn-themes ui-btn-icon-setting task-list-toolbar-lightning"></div>
-			<?
-		}
-
-		if (!$arResult['DISK_EMPTY'] && !$isQueueRunning && $arResult['DATA_COLLECTED'])
-		{
-			?>
-			<a href="<?= $component->getActionUrl(array('reload' => 'Y', 'action' => $component::ACTION_DEFAULT)); ?>" class="ui-btn ui-btn-primary disk-volume-reload-link"><?= Loc::getMessage('DISK_VOLUME_MEASURE_DATA_REPEAT') ?></a>
-			<?
-		}
-
-		if ($arResult["ADMIN_MODE_ALLOW"] || $arResult["WORKER_COUNT"] > 0)
-		{
-			?>
-			<script>
-				BX.ready(function()
-				{
-					var menuItemsOptions = [];
-
-					<? if ($arResult["WORKER_COUNT"] > 0): ?>
-					menuItemsOptions.push({
-						text: '<?=GetMessageJS('DISK_VOLUME_CANCEL_WORKERS')?>',
-						onclick : function()
-						{
-							BX.PopupMenu.getMenuById("popupMenuOptions").close();
-							BX.Disk.showActionModal({text: BX.message('DISK_VOLUME_PERFORMING_CANCEL_WORKERS'), showLoaderIcon:true, autoHide:false});
-							BX.Disk.measureManager.callAction({action: '<?= $component::ACTION_CANCEL_WORKERS ?>', after: BX.Disk.measureManager.stepperHide, doNotShowModalAlert: true});
-						}
-					});
-					<? endif; ?>
-
-					<? if ($arResult["ADMIN_MODE_ALLOW"]): ?>
-					<? if (!$arResult["ADMIN_MODE"]): ?>
-					menuItemsOptions.push({
-						text: '<?=GetMessageJS('DISK_VOLUME_ADMIN_MODE')?>',
-						href: '<?= $component->getActionUrl(array('admin' => 'on', 'action' => $component::ACTION_DEFAULT)); ?>'
-					});
-					<? else: ?>
-					menuItemsOptions.push({
-						text: '<?=GetMessageJS('DISK_VOLUME_ADMIN_MODE_EXIT')?>',
-						href: '<?= $component->getActionUrl(array('admin' => 'off', 'expert' => 'off', 'action' => $component::ACTION_DEFAULT, 'storageId' => '')); ?>'
-					});
-					<? endif; ?>
-					<? endif; ?>
-
-					var menu = BX.PopupMenu.create(
-						"popupMenuOptions",
-						BX("bx-disk-volume-popupMenuOptions"),
-						menuItemsOptions,
-						{
-							closeByEsc: true,
-							offsetLeft: 20,
-							angle: true
-						}
-					);
-
-					BX.bind(BX("bx-disk-volume-popupMenuOptions"), "click", BX.delegate(function () {
-						menu.popupWindow.show();
-					}, this));
-				});
-			</script>
-			<?
-		}
-	?>
-	</div>
-	<?
-	$this->EndViewTarget();
+	<?php
 }
-
-
-
-if ($isBitrix24Template && !$arResult['DISK_EMPTY'] && !$isQueueRunning && $arResult['DATA_COLLECTED'])
-{
-	$this->SetViewTarget("below_pagetitle");
-
-	$menuItems = array();
-
-	if ($arResult['EXPERT_MODE'] === true)
-	{
-		$menuItems[] = array(
-			//'TEXT' => Loc::getMessage('DISK_VOLUME_EXPERT_MODE_OFF'),
-			'TEXT' => Loc::getMessage('DISK_VOLUME_EXPERT_MODE_EXIT'),
-			'URL' => $component->getActionUrl(array('expert' => 'off', 'action' => $component::ACTION_DEFAULT, 'storageId' => '')),
-			'ID' => 'expertOff',
-			'IS_ACTIVE' => (bool)($arResult['EXPERT_MODE'] === false),
-			'CLASS' => '',
-		);
-	}
-	else
-	{
-		$menuItems[] = array(
-			//'TEXT' => Loc::getMessage('DISK_VOLUME_EXPERT_MODE'),
-			'TEXT' => Loc::getMessage('DISK_VOLUME_EXPERT_MODE_ON'),
-			'URL' => $component->getActionUrl(array(
-				'expert' => 'on',
-				'action' => ($arResult['ADMIN_MODE'] === true ? $component::ACTION_DISKS : $component::ACTION_STORAGE),
-				'storageId' => '',
-			)),
-			'ID' => 'expertOn',
-			'IS_ACTIVE' => (bool)($arResult['EXPERT_MODE'] === true),
-			'CLASS' => '',
-		);
-	}
-
-	?>
-	<div class="tasks-view-switcher pagetitle-align-right-container">
-		<div class="tasks-view-switcher-list">
-			<? foreach ($menuItems as $item):
-				if ($item['IS_ACTIVE'])
-				{
-					$item['CLASS'] .= ' tasks-view-switcher-list-item-active';
-				}
-				?>
-				<a href="<?= $item['URL'] ?>" id="<?= $item['ID'] ?>" title="<?= $item['COMMENT'] ?>" class="tasks-view-switcher-list-item <?= $item['CLASS'] ?>"><?= $item['TEXT'] ?></a>
-			<? endforeach; ?>
-		</div>
-	</div>
-	<?
-
-
-	$this->EndViewTarget();
-}
-
-
 ?>
 <script>
 	BX.message({
@@ -387,7 +351,7 @@ if (
 						<? endif ?>
 					</div>
 
-					<div id="bx-disk-volume-total-unnecessary" class="disk-volume-header-amount-info disk-volume-hint" data-hint="unnecessary_version" <? if ($arResult['Storage']['UNNECESSARY_VERSION_SIZE_FORMAT'] == 0): ?>style="display:none"<? endif ?>>
+					<div id="bx-disk-volume-total-unnecessary" class="disk-volume-header-amount-info disk-volume-hint" data-hint="unnecessary_version" <? if ($arResult['Storage']['UNNECESSARY_VERSION_SIZE'] == 0): ?>style="display:none"<? endif ?>>
 						<? if ($arResult['Storage']['UNNECESSARY_VERSION_SIZE'] > 0): ?>
 							<?= Loc::getMessage('DISK_VOLUME_VERSION_FILES', array('#FILE_SIZE#' => $arResult['Storage']['UNNECESSARY_VERSION_SIZE_FORMAT'])); ?>
 						<? endif ?>

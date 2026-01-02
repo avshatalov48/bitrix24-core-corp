@@ -43,10 +43,6 @@ else
 	{
 		$arResult['LINK_TO_BUY'] = 'https://www.1c-bitrix.ru/buy/intranet.php#tab-call-link';
 	}
-	else if (LANGUAGE_ID == 'ua')
-	{
-		$arResult['LINK_TO_BUY'] = 'https://www.1c-bitrix.ua/buy/intranet.php#tab-call-link';
-	}
 	else if (LANGUAGE_ID == 'kz')
 	{
 	}

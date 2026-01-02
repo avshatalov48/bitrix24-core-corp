@@ -3,13 +3,16 @@
  */
 jn.define('im/messenger/lib/helper/dialog', (require, exports, module) => {
 	const { Type } = require('type');
-	const { DialogType, UserRole } = require('im/messenger/const');
+	const { isNil } = require('utils/type');
+	const { Feature } = require('im/messenger/lib/feature');
+	const { DialogType, UserRole, UrlGetParameter } = require('im/messenger/const');
 	const { serviceLocator } = require('im/messenger/lib/di/service-locator');
-	const { LoggerManager } = require('im/messenger/lib/logger');
+	const { getLogger } = require('im/messenger/lib/logger');
+	const { MessagesAutoDeleteDelay, BotCode } = require('im/messenger/const');
 	const { MessengerParams } = require('im/messenger/lib/params');
 	const { ChatPermission } = require('im/messenger/lib/permission-manager');
 
-	const logger = LoggerManager.getInstance().getLogger('helpers--dialog');
+	const logger = getLogger('helpers--dialog');
 
 	/**
 	 * @class DialogHelper
@@ -18,6 +21,7 @@ jn.define('im/messenger/lib/helper/dialog', (require, exports, module) => {
 	{
 		/** @type {DialoguesModelState} */
 		dialogModel = null;
+
 		/**
 		 * @param chatId
 		 * @return {boolean}
@@ -33,6 +37,11 @@ jn.define('im/messenger/lib/helper/dialog', (require, exports, module) => {
 		 */
 		static isDialogId(dialogId)
 		{
+			if (!Type.isStringFilled(dialogId) && !Type.isNumber(dialogId))
+			{
+				return false;
+			}
+
 			return (
 				dialogId.toString().startsWith('chat')
 				&& Type.isNumber(Number(dialogId.slice(4)))
@@ -63,12 +72,12 @@ jn.define('im/messenger/lib/helper/dialog', (require, exports, module) => {
 		{
 			if (!Type.isNumber(dialogId) && !Type.isStringFilled(dialogId))
 			{
-				logger.error('DialogHelper.getByDialogId error: dialogId is not a number or string filled', dialogId);
+				logger.warn('DialogHelper.getByDialogId error: dialogId is not a number or string filled', dialogId);
 
 				return null;
 			}
 
-			const dialogModel = serviceLocator.get('core').getStore().getters['dialoguesModel/getById'](dialogId);
+			const dialogModel = DialogHelper.getDialogModel(dialogId);
 			if (!dialogModel)
 			{
 				logger.warn('DialogHelper.getByDialogId: dialog not found', dialogId);
@@ -80,6 +89,15 @@ jn.define('im/messenger/lib/helper/dialog', (require, exports, module) => {
 		}
 
 		/**
+		 * @param dialogId
+		 * @returns {?DialoguesModelState}
+		 */
+		static getDialogModel(dialogId)
+		{
+			return serviceLocator.get('core').getStore().getters['dialoguesModel/getById'](dialogId);
+		}
+
+		/**
 		 * @param {number} chatId
 		 * @return {DialogHelper|null}
 		 */
@@ -87,7 +105,7 @@ jn.define('im/messenger/lib/helper/dialog', (require, exports, module) => {
 		{
 			if (!Type.isNumber(chatId))
 			{
-				logger.error('DialogHelper.getByChatId error: dialogId is not a number', chatId);
+				logger.warn('DialogHelper.getByChatId error: chatId is not a number', chatId);
 
 				return null;
 			}
@@ -111,16 +129,66 @@ jn.define('im/messenger/lib/helper/dialog', (require, exports, module) => {
 			this.dialogModel = dialogModel;
 		}
 
+		get dialogId()
+		{
+			return this.dialogModel.dialogId;
+		}
+
+		get chatId()
+		{
+			return this.dialogModel.chatId;
+		}
+
+		get isNotes()
+		{
+			return this.isDirect && Number(this.dialogId) === serviceLocator.get('core').getUserId();
+		}
+
 		get isDirect()
 		{
-			return this.constructor.isChatId(this.dialogModel.dialogId)
-				&& [DialogType.user, DialogType.private].includes(this.dialogModel.type)
-			;
+			return this.constructor.isChatId(this.dialogModel.dialogId) && [
+				DialogType.user,
+				DialogType.private,
+			].includes(this.dialogModel.type);
+		}
+
+		get isBot()
+		{
+			if (this.isDirect)
+			{
+				const store = serviceLocator.get('core').getStore();
+				const userModelState = store.getters['usersModel/getById'](this.dialogId);
+
+				return (userModelState?.bot === true);
+			}
+
+			return false;
+		}
+
+		/**
+		 * @desc Return check is bot ai assistant
+		 * @return {boolean}
+		 */
+		get isAiAssistant()
+		{
+			if (this.isDirect)
+			{
+				const store = serviceLocator.get('core').getStore();
+				const userModelState = store.getters['usersModel/getById'](this.dialogId);
+
+				return userModelState?.botData?.code === BotCode.aiAssistant;
+			}
+
+			return false;
 		}
 
 		get isChannel()
 		{
-			return [DialogType.generalChannel, DialogType.openChannel, DialogType.channel].includes(this.dialogModel.type);
+			return [
+				DialogType.generalChannel,
+				DialogType.openChannel,
+				DialogType.channel,
+			].includes(this.dialogModel.type);
 		}
 
 		get isCollab()
@@ -163,6 +231,31 @@ jn.define('im/messenger/lib/helper/dialog', (require, exports, module) => {
 			return this.dialogModel.type === DialogType.generalChannel;
 		}
 
+		get isExtranet()
+		{
+			return this.dialogModel.extranet === true;
+		}
+
+		get isAnnouncement()
+		{
+			return this.dialogModel.type === DialogType.announcement;
+		}
+
+		get isSupport24Notifier()
+		{
+			return this.dialogModel.type === DialogType.support24Notifier;
+		}
+
+		get isSupport24Question()
+		{
+			return this.dialogModel.type === DialogType.support24Question;
+		}
+
+		get isTaskComment()
+		{
+			return this.dialogModel.type === DialogType.tasksTask;
+		}
+
 		get isCurrentUserOwner()
 		{
 			return Number(this.dialogModel.owner) === serviceLocator.get('core').getUserId();
@@ -180,6 +273,13 @@ jn.define('im/messenger/lib/helper/dialog', (require, exports, module) => {
 
 		get isLocalStorageSupported()
 		{
+			const hasRecentConfig = this.dialogModel.recentConfig?.chatId > 0;
+			const isIntoSomeRecentTab = Type.isArrayFilled(this.dialogModel.recentConfig?.sections);
+			if (hasRecentConfig && !isIntoSomeRecentTab)
+			{
+				return false;
+			}
+
 			if (this.isComment)
 			{
 				return false;
@@ -200,7 +300,17 @@ jn.define('im/messenger/lib/helper/dialog', (require, exports, module) => {
 
 		get canBeDeleted()
 		{
-			return ChatPermission.isCanDeleteChat(this.dialogModel);
+			return ChatPermission.canDeleteChat(this.dialogModel);
+		}
+
+		get canClearHistory()
+		{
+			return false; // TODO Back not ready yet
+		}
+
+		get canCopyChatLink()
+		{
+			return !this.isCollab && !this.isCopilot && !this.isDirect;
 		}
 
 		/**
@@ -211,6 +321,46 @@ jn.define('im/messenger/lib/helper/dialog', (require, exports, module) => {
 			return !this.isChannelOrComment
 				&& !MessengerParams.isFullChatHistoryAvailable()
 				&& this.dialogModel?.tariffRestrictions?.isHistoryLimitExceeded;
+		}
+
+		get isMessagesAutoDeleteDelayEnabled()
+		{
+			const delay = this.dialogModel.messagesAutoDeleteDelay;
+
+			return !isNil(delay)
+				&& MessagesAutoDeleteDelay.off !== delay
+				&& Feature.isMessagesAutoDeleteNativeAvailable;
+		}
+
+		/**
+		 * @returns {string}
+		 */
+		get chatLink()
+		{
+			const chatGetParameter = this.isCopilot
+				? UrlGetParameter.openCopilotChat
+				: UrlGetParameter.openChat;
+
+			return `${serviceLocator.get('core').getHost()}/online/?${chatGetParameter}=${this.dialogId}`;
+		}
+
+		/**
+		 * @return {boolean}
+		 */
+		get isMuted()
+		{
+			return this.dialogModel.muteList?.includes(MessengerParams.getUserId());
+		}
+
+		/**
+		 * @return {boolean}
+		 */
+		get isPinned()
+		{
+			const store = serviceLocator.get('core').getStore();
+			const recentItemState = store.getters['recentModel/getById'](this.dialogModel.dialogId);
+
+			return recentItemState?.pinned;
 		}
 	}
 

@@ -5,7 +5,7 @@
  */
 jn.define('im/messenger/lib/parser/functions/emoji', (require, exports, module) => {
 
-	const { Loc } = require('loc');
+	const { Loc } = require('im/messenger/loc');
 	const { Type } = require('type');
 	const {
 		FileType,
@@ -32,7 +32,7 @@ jn.define('im/messenger/lib/parser/functions/emoji', (require, exports, module) 
 				}
 				else
 				{
-					text = this.getTextForGallery(text);
+					text = this.getTextForFiles(text, files);
 				}
 			}
 			else if (
@@ -63,89 +63,97 @@ jn.define('im/messenger/lib/parser/functions/emoji', (require, exports, module) 
 
 		getTextForFile(text, files, showFilePrefix)
 		{
+			let textResult = text;
 			if (Type.isArray(files) && files.length > 0)
 			{
 				const [firstFile] = files;
-				text = this.getEmojiTextForFile(text, firstFile, showFilePrefix);
+				textResult = this.getEmojiTextForFile(textResult, firstFile, showFilePrefix);
 			}
 			else if (files === true)
 			{
-				text = this.getEmojiTextForFileType(text, FileEmojiType.file, showFilePrefix);
+				textResult = this.getEmojiTextForFileType(textResult, FileEmojiType.file, showFilePrefix);
 			}
 
-			return text;
+			return textResult;
 		},
 
 		getEmojiTextForFile(text, file, showFilePrefix = true)
 		{
-			const withText = text.replace(/(\s|\n)/gi, '').length > 0;
+			let textResult = text;
+			const withText = textResult.replace(/(\s|\n)/gi, '').length > 0;
 
 			// todo: remove this hack after fix receiving messages with files on P&P
 			if (!file || !file.type)
 			{
-				return text;
+				return textResult;
 			}
 
 			if (file.type === FileType.image)
 			{
-				return this.getEmojiTextForFileType(text, FileEmojiType.image, showFilePrefix);
+				return this.getEmojiTextForFileType(textResult, FileEmojiType.image, showFilePrefix);
 			}
 			else if (file.type === FileType.audio)
 			{
-				return this.getEmojiTextForFileType(text, FileEmojiType.audio, showFilePrefix);
+				return this.getEmojiTextForFileType(textResult, FileEmojiType.audio, showFilePrefix);
 			}
 			else if (file.type === FileType.video)
 			{
-				return this.getEmojiTextForFileType(text, FileEmojiType.video, showFilePrefix);
+				return this.getEmojiTextForFileType(textResult, FileEmojiType.video, showFilePrefix);
 			}
 			else
 			{
-				const emoji = false; //Utils.text.getEmoji(FileEmojiType.file);
+				const emoji = false; // Utils.text.getEmoji(FileEmojiType.file);
 				if (emoji)
 				{
-					const textDescription = withText? text: '';
-					text = `${emoji} ${file.name} ${textDescription}`;
+					const textDescription = withText ? textResult : '';
+					textResult = `${emoji} ${file.name} ${textDescription}`;
 				}
 				else
 				{
-					text = `${Loc.getMessage('IMMOBILE_PARSER_EMOJI_TYPE_FILE')}: ${file.name} ${text}`;
+					textResult = `${Loc.getMessage('IMMOBILE_PARSER_EMOJI_TYPE_FILE')}: ${file.name} ${textResult}`;
 				}
 
-				return text.trim();
+				return textResult.trim();
 			}
 		},
 
-		getTextForGallery(text)
+		getTextForFiles(text, files)
 		{
+			const media = files.filter((file) => file?.type === FileType.image || file?.type === FileType.video);
+			const isOnlyMedia = media.length === files.length;
+			const emojiTypeKey = isOnlyMedia
+				? 'IMMOBILE_PARSER_EMOJI_TYPE_GALLERY'
+				: 'IMMOBILE_PARSER_EMOJI_TYPE_FILES';
+			const emojiType = Loc.getMessage(emojiTypeKey);
 			const messageWithText = Type.isStringFilled(text) && text.replaceAll(/(\s|\n)/gi, '').length > 0;
 			if (messageWithText)
 			{
-				return `[${Loc.getMessage('IMMOBILE_PARSER_EMOJI_TYPE_GALLERY')}] ${text}`.trim();
+				return `[${emojiType}] ${text}`.trim();
 			}
 
-			return `[${Loc.getMessage('IMMOBILE_PARSER_EMOJI_TYPE_GALLERY')}]`;
+			return `[${emojiType}]`;
 		},
 
 		getEmojiTextForFileType(text, type = FileEmojiType.file, showFilePrefix = true)
 		{
-			let result = text;
-			const emoji = false;//Utils.text.getEmoji(type);
+			let textResult = text;
+			const emoji = false; // Utils.text.getEmoji(type);
 			const iconText = Loc.getMessage(`IMMOBILE_PARSER_EMOJI_TYPE_${type.toUpperCase()}`);
 			if (emoji)
 			{
-				const withText = text.replace(/(\s|\n)/gi, '').length > 0;
-				const textDescription = withText ? text : iconText;
-				result = `${emoji} ${textDescription}`;
+				const withText = textResult.replace(/(\s|\n)/gi, '').length > 0;
+				const textDescription = withText ? textResult : iconText;
+				textResult = `${emoji} ${textDescription}`;
 			}
 			else
 			{
-				result = showFilePrefix
-					? `${Loc.getMessage('IMMOBILE_PARSER_EMOJI_TYPE_FILE')}: ${iconText} ${text}`
-					: `[${iconText}] ${text}`
+				textResult = showFilePrefix
+					? `${Loc.getMessage('IMMOBILE_PARSER_EMOJI_TYPE_FILE')}: ${iconText} ${textResult}`
+					: `[${iconText}] ${textResult}`
 				;
 			}
 
-			return result.trim();
+			return textResult.trim();
 		},
 
 		getTextForAttach(text, attach)

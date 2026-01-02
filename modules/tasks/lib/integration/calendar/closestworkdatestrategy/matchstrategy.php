@@ -19,7 +19,7 @@ abstract class MatchStrategy implements ClosestWorkDateStrategyInterface
 	protected const SECONDS_IN_HOUR = 3600;
 	protected const SECONDS_IN_MINUTE = 60;
 	protected const DAYS_IN_YEAR = 365;
-	protected const MAX_ITERATIONS = 5 * self::DAYS_IN_YEAR + 2; // with leap years
+	protected const MAX_ITERATIONS = 68 * self::DAYS_IN_YEAR + 17; // with leap years
 
 	protected ScheduleInterface $schedule;
 

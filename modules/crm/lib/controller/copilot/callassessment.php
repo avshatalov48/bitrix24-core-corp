@@ -6,8 +6,8 @@ use Bitrix\Crm\Controller\Base;
 use Bitrix\Crm\Controller\ErrorCode;
 use Bitrix\Crm\Copilot\CallAssessment\CallAssessmentItem;
 use Bitrix\Crm\Copilot\CallAssessment\Controller\CopilotCallAssessmentController;
+use Bitrix\Crm\Copilot\CallAssessment\Enum\AvailabilityType;
 use Bitrix\Crm\Copilot\CallAssessment\PromptsChecker;
-use Bitrix\Crm\Feature;
 use Bitrix\Crm\Integration\AI;
 use Bitrix\Crm\Integration\AI\AIManager;
 use Bitrix\Crm\Integration\AI\JobRepository;
@@ -35,7 +35,7 @@ final class CallAssessment extends Base
 		?string $eventId = null
 	): Result
 	{
-		if (!Container::getInstance()->getUserPermissions()->canEditCopilotCallAssessmentSettings())
+		if (!Container::getInstance()->getUserPermissions()->copilotCallAssessment()->canEdit())
 		{
 			$this->addError(ErrorCode::getAccessDeniedError());
 
@@ -142,7 +142,7 @@ final class CallAssessment extends Base
 
 	public function activeAction(int $id, string $isEnabled): Result
 	{
-		if (!Container::getInstance()->getUserPermissions()->canEditCopilotCallAssessmentSettings())
+		if (!Container::getInstance()->getUserPermissions()->copilotCallAssessment()->canEdit())
 		{
 			$this->addError(ErrorCode::getAccessDeniedError());
 
@@ -157,10 +157,13 @@ final class CallAssessment extends Base
 			return new Result();
 		}
 
-		$isEnabledValue = ($isEnabled === 'Y');
+		$availabilityType = $isEnabled === 'Y'
+			? AvailabilityType::ALWAYS_ACTIVE
+			: AvailabilityType::INACTIVE
+		;
 
 		$callAssessmentItem = (CallAssessmentItem::createFromEntity($entity))
-			->setIsEnabled($isEnabledValue)
+			->setAvailabilityType($availabilityType)
 		;
 
 		$result = CopilotCallAssessmentController::getInstance()->update($id, $callAssessmentItem);
@@ -174,7 +177,7 @@ final class CallAssessment extends Base
 
 	public function deleteAction(int $id): Result
 	{
-		if (!Container::getInstance()->getUserPermissions()->canEditCopilotCallAssessmentSettings())
+		if (!Container::getInstance()->getUserPermissions()->copilotCallAssessment()->canEdit())
 		{
 			$this->addError(ErrorCode::getAccessDeniedError());
 
@@ -182,9 +185,9 @@ final class CallAssessment extends Base
 		}
 
 		$result = CopilotCallAssessmentController::getInstance()->delete($id);
-		if (!$result->isSuccess())
+		if (!$result?->isSuccess())
 		{
-			$this->addErrors($result->getErrors());
+			$this->addErrors($result?->getErrors());
 		}
 
 		return $result;

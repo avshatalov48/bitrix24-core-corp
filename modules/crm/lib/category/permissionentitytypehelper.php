@@ -2,6 +2,8 @@
 
 namespace Bitrix\Crm\Category;
 
+use Bitrix\Crm\Item;
+use Bitrix\Crm\ItemIdentifier;
 use Bitrix\Crm\Service\Container;
 use Bitrix\Crm\CategoryIdentifier;
 
@@ -12,6 +14,16 @@ class PermissionEntityTypeHelper
 	public function __construct(int $entityTypeId)
 	{
 		$this->entityTypeId = $entityTypeId;
+	}
+
+	public static function getPermissionEntityTypeForItem(Item $item): string
+	{
+		return (new self($item->getEntityTypeId()))->getPermissionEntityTypeForCategory((int)$item->getCategoryIdForPermissions());
+	}
+
+	public static function getPermissionEntityTypeForItemIdentifier(ItemIdentifier $itemIdentifier): string
+	{
+		return (new self($itemIdentifier->getEntityTypeId()))->getPermissionEntityTypeForCategory((int)$itemIdentifier->getCategoryId());
 	}
 
 	/**
@@ -160,7 +172,7 @@ class PermissionEntityTypeHelper
 	 * @param string $permissionEntityType DEAL_C1 for example
 	 * @return array [$entityTypeId, $categoryId]
 	 */
-	public static function extractEntityEndCategoryFromPermissionEntityType(string $permissionEntityType): ?CategoryIdentifier
+	public static function extractEntityAndCategoryFromPermissionEntityType(string $permissionEntityType): ?CategoryIdentifier
 	{
 		$entityTypeId = 0;
 		$categoryId = 0;

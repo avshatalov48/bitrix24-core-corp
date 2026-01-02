@@ -137,14 +137,76 @@ final class UserProvider
 		return $this->userManager ? $this->convertUsers($this->userManager->getList($params)) : [];
 	}
 
-	public function getAllUsersCount(): int
+	public function hasMoreThanOneUser(): bool
 	{
 		$users = $this->userManager ? $this->userManager->getList([
 			'select' => ['ID'],
 			'limit' => 2,
 		]) : [];
 
-		return count($users);
+		return count($users) > 1;
+	}
+
+	public static function getActiveUsersByLimit(int $limit): array
+	{
+		$query = \Bitrix\Main\UserTable::query();
+		$query->setSelect([
+			'ID',
+			'NAME',
+			'LAST_NAME',
+			'SECOND_NAME',
+			'LOGIN',
+			'PERSONAL_PHOTO',
+			'WORK_POSITION',
+			'UF_DEPARTMENT',
+			'EMAIL',
+			'WORK_PHONE',
+			'ACTIVE',
+			'CONFIRM_CODE',
+			'DATE_REGISTER',
+			'PERSONAL_MOBILE',
+			'PERSONAL_PHONE',
+		]);
+		$query->setFilter([
+			'=ACTIVE' => 'Y',
+			'=IS_REAL_USER' => 'Y',
+			'!UF_DEPARTMENT' => false,
+		]);
+		$query->setOrder(['ID' => 'ASC']);
+		$query->setLimit($limit);
+
+		$users = [];
+		foreach ($query->exec() as $user)
+		{
+			$users[] = \Bitrix\Mobile\Provider\UserRepository::createUserDto($user);
+		}
+
+		return $users;
+	}
+
+	public static function getUsersCountWithLimit(int $limit): int
+	{
+		$query = new \Bitrix\Main\ORM\Query\Query(\Bitrix\Main\UserTable::getEntity());
+		$query->setFilter([
+			'=ACTIVE' => 'Y',
+			'=IS_REAL_USER' => 'Y',
+			'!UF_DEPARTMENT' => false,
+		]);
+		$query->setSelect(['ID']);
+		$query->setLimit($limit + 1);
+		$result = $query->exec();
+
+		$count = 0;
+		while ($result->fetch())
+		{
+			$count++;
+			if ($count > $limit)
+			{
+				break;
+			}
+		}
+
+		return min($count, $limit);
 	}
 
 	private function getSelect(): array

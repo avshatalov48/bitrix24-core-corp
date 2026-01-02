@@ -75,6 +75,11 @@ $sampleKeysList = [
 
 if ($arResult['Group']['PROJECT'] === 'Y')
 {
+	if ($arResult['CanView']['tasks'] ?? false)
+	{
+		$firstMenuItemCode = 'tasks';
+	}
+
 	$sampleKeysList = [
 		'tasks' => 0,
 		'general' => 1,
@@ -217,7 +222,7 @@ if ($arParams['PAGE_ID'] === 'group')
 		)
 	)
 	{
-		$redirectUrl = $arResult['Urls'][$firstKeyDefault];
+		$redirectUrl = $arResult['Urls'][$firstKeyDefault] ?? '';
 	}
 
 	if ($redirectUrl)

@@ -1,14 +1,15 @@
 <?if(!defined("B_PROLOG_INCLUDED") || B_PROLOG_INCLUDED!==true)die();
 
+$APPLICATION->SetAdditionalCSS('/bitrix/js/intranet/intranet-common.css');
+
 if ($USER->IsAuthorized()):
-	$this->SetViewTarget('pagetitle', 100);
-?>
-		<a href="<?=$arParams['MEETING_ADD_URL']?>" class="webform-small-button webform-small-button-blue webform-small-button-add">
-			<span class="webform-small-button-icon"></span>
-			<span class="webform-small-button-text"><?=GetMessage('ME_ADD')?></span>
-		</a>
-<?
-	$this->EndViewTarget();
+	\Bitrix\UI\Toolbar\Facade\Toolbar::addButton(
+		new \Bitrix\UI\Buttons\AddButton([
+			'link' => $arParams['MEETING_ADD_URL'],
+			'text' => GetMessage('ME_ADD')
+		]),
+		\Bitrix\UI\Toolbar\ButtonLocation::AFTER_TITLE
+	);
 endif;
 
 $this->SetViewTarget('sidebar');
@@ -39,6 +40,8 @@ $APPLICATION->IncludeComponent(
 		"SHOW_EXTRANET_USERS" => "NONE",
 	), null, array("HIDE_ICONS" => "Y")
 );
+
+\Bitrix\Main\UI\Extension::load('intranet.old-interface.sidebar-filter');
 ?>
 <div class="sidebar-block">
 	<b class="r2"></b>

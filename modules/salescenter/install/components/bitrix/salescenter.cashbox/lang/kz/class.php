@@ -1,0 +1,26 @@
+<?php
+$MESS["SALESCENTER_MODULE_ERROR"] = "\"Сату орталығы\" модулі орнатылмаған";
+$MESS["SC_CASHBOX_FIELDS_EMAIL"] = "Мәлімдемелерді жіберуге арналған e-mail";
+$MESS["SC_CASHBOX_FIELDS_EMAIL_HINT"] = "Чектерді басып шығару кезінде қате туындаған жағдайда осы электрондық поштаға мәлімдемелер жіберіледі";
+$MESS["SC_CASHBOX_FIELDS_KKM_ID"] = "ККМ маркасы";
+$MESS["SC_CASHBOX_FIELDS_NAME"] = "Атауы";
+$MESS["SC_CASHBOX_FIELDS_NUMBER_KKM"] = "Кассаның сыртқы идентификаторы";
+$MESS["SC_CASHBOX_FIELDS_NUMBER_KKM_HINT"] = "АТОЛ.Онлайн және Оранж Күні үшін сыртқы идентификатор болып Топ Коды табылады";
+$MESS["SC_CASHBOX_FIELDS_OFD"] = "Фискалдық деректер операторы";
+$MESS["SC_CASHBOX_FIELDS_OFD_YOOKASSA_HINT"] = "Егер сіз ЮKassa арқылы чек жіберетін болсаңыз, бірінші ФДО таңдаңыз. Басқа жағдайларда, сіздің кассаңыздың баптауларына сәйкес ФДО таңдаңыз.";
+$MESS["SC_CASHBOX_FIELDS_OFD_YOOKASSA_HINT_MORE"] = "Толығырақ";
+$MESS["SC_CASHBOX_FIELDS_USE_OFFLINE"] = "Оффлайн пайдаланылады";
+$MESS["SC_CASHBOX_FIELDS_VAT_22_WARNING"] = "2026 жылғы 1 қаңтардан бастап ҚҚС мөлшерлемесі 20%-дан 22%-ға дейін артады. 22% ҚҚС өрісінде #CODE# кодын көрсетіңіз";
+$MESS["SC_CASHBOX_FILE_LABEL"] = "Файлды жүктеу";
+$MESS["SC_CASHBOX_KKM_ATOL"] = "АТОЛ";
+$MESS["SC_CASHBOX_KKM_EVOTOR"] = "Эвотор";
+$MESS["SC_CASHBOX_KKM_SHTRIHM"] = "Штрих-М";
+$MESS["SC_CASHBOX_OFD_ANOTHER"] = "Басқа";
+$MESS["SC_MENU_ITEM_CASHBOX_PARAM"] = "Касса параметрлері";
+$MESS["SC_MENU_ITEM_OFD_SETTINGS"] = "ФДО баптаулары";
+$MESS["SC_MENU_ITEM_SETTINGS"] = "Баптаулар";
+$MESS["SC_SALESCENTER_ERROR_NO_CASHBOX"] = "Касса табылмады";
+$MESS["SC_SALESCENTER_ERROR_NO_HANDLER"] = "Касса өңдегіші көрсетілмеген";
+$MESS["SC_SALESCENTER_ERROR_NO_HANDLER_EXIST"] = "Дұрыс емес касса өңдегіші";
+$MESS["SC_SALESCENTER_ERROR_NO_OFD_EXIST"] = "Дұрыс емес ФДО";
+$MESS["SC_SALESCENTER_SALE_ACCESS_DENIED"] = "Қолжетімділікке тыйым салынған.";

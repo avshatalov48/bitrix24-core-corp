@@ -4,7 +4,6 @@ namespace Bitrix\Tasks\Provider\Query;
 
 use Bitrix\Main\ArgumentException;
 use Bitrix\Main\ORM\Query\Filter\ConditionTree;
-use Bitrix\Tasks\Provider\QueryInterface;
 
 abstract class AbstractTaskQuery implements QueryInterface
 {

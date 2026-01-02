@@ -1,0 +1,7 @@
+<?php
+$MESS["CRM_COMPANY_ACTIVITY_STREAM_STAT_GROUP_BY_STREAM"] = "Жүгінулер ағыны";
+$MESS["CRM_COMPANY_ACTIVITY_STREAM_STAT_INCOMING_QTY"] = "Кіріс қоңыраулар саны";
+$MESS["CRM_COMPANY_ACTIVITY_STREAM_STAT_MISSING_QTY"] = "Жіберілген қоңыраулар саны";
+$MESS["CRM_COMPANY_ACTIVITY_STREAM_STAT_OUTGOING_QTY"] = "Шығыс қоңыраулар саны";
+$MESS["CRM_COMPANY_ACTIVITY_STREAM_STAT_REVERSING_QTY"] = "Кері қоңыраулар саны";
+$MESS["CRM_COMPANY_ACTIVITY_STREAM_STAT_TOTAL"] = "Қоңыраулар саны (ағындар бойынша)";

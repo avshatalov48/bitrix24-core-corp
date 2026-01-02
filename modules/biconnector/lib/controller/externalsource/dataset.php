@@ -2,13 +2,19 @@
 
 namespace Bitrix\BIConnector\Controller\ExternalSource;
 
+use Bitrix\BIConnector\ExternalSource\Type;
+use Bitrix\BIConnector\ExternalSource\FieldType;
+use Bitrix\BIConnector\ExternalSource\Validation\ImportDataValidator;
+use Bitrix\BIConnector\ExternalSource\Validation\Rules\RulesProvider;
 use Bitrix\Main\Engine\Action;
 use Bitrix\Main\Localization\Loc;
 use Bitrix\Main\Engine\Controller;
+use Bitrix\Main\Engine\AutoWire\ExactParameter;
 use Bitrix\Main\Error;
 use Bitrix\Main\Result;
 use Bitrix\Main\Web\Uri;
 use Bitrix\Main\Type\DateTime;
+use Bitrix\Main\IO;
 use Bitrix\BIConnector\ExternalSource;
 use Bitrix\BIConnector\Access\AccessController;
 use Bitrix\BIConnector\Access\ActionDictionary;
@@ -19,6 +25,10 @@ use Bitrix\BIConnector\Integration\UI\FileUploaderController\DatasetUploaderCont
 
 class Dataset extends Controller
 {
+	private const FILE_ROWS_LIMIT = 300000;
+	private const LOG_FILE_SIZE_LIMIT_MB = 10;
+	private const MAX_ERRORS_COUNT = 200;
+
 	private static array $fileMap = [
 		'encoding' => 'encoding',
 		'separator' => 'delimiter',
@@ -53,6 +63,147 @@ class Dataset extends Controller
 		return parent::processBeforeAction($action);
 	}
 
+	public function getPrimaryAutoWiredParameter(): ExactParameter
+	{
+		return new ExactParameter(
+			ExternalSource\Internal\ExternalDataset::class,
+			'dataset',
+			function($className, $id)
+			{
+				$datasetId = (int)$id;
+				if ($datasetId <= 0)
+				{
+					$this->addError(new Error(Loc::getMessage('BICONNECTOR_EXTERNAL_SOURCE_DATASET_NOT_FOUND_ERROR')));
+
+					return null;
+				}
+
+				$dataset = ExternalSource\DatasetManager::getById($datasetId);
+				if (!$dataset)
+				{
+					$this->addError(new Error(Loc::getMessage('BICONNECTOR_EXTERNAL_SOURCE_DATASET_NOT_FOUND_ERROR')));
+
+					return null;
+				}
+
+				return $dataset;
+			}
+		);
+	}
+
+	public function logErrorsIntoFileAction(string $type, array $fields): ?string
+	{
+		$checkBeforeFileCheckResult = $this->checkAndPrepareBeforeFileCheck($type, $fields);
+		if (!$checkBeforeFileCheckResult->isSuccess())
+		{
+			$this->addErrors($checkBeforeFileCheckResult->getErrors());
+
+			return null;
+		}
+
+		$checkBeforeViewData = $checkBeforeFileCheckResult->getData();
+		$file = $checkBeforeViewData['file'];
+
+		if (!$file)
+		{
+			$this->addError(new Error('Empty file'));
+
+			return null;
+		}
+
+		$datasetFields = $checkBeforeViewData['fields'];
+		$datasetSettings = $checkBeforeViewData['settings'];
+		$datasetSettings = array_column($datasetSettings, 'FORMAT', 'TYPE');
+
+		$reader = ExternalSource\FileReader\Factory::getReader(Type::Csv, $file);
+		$rulesMap = RulesProvider::getRules(Type::Csv, $datasetSettings);
+		$validator = new ImportDataValidator($rulesMap, $datasetFields);
+		$rowsCount = 0;
+
+		$filePath = \CTempFile::GetFileName('errors.html');
+		$logFile = new IO\File($filePath);
+
+		global $APPLICATION;
+		ob_start();
+
+		$APPLICATION->IncludeComponent('bitrix:biconnector.dataset.import.errors', '', ['part' => 'header', 'datasetTitle' => $fields['datasetProperties']['name'] ?? '']);
+
+		$logFile->putContents(ob_get_clean());
+
+		ob_start();
+
+		$APPLICATION->IncludeComponent('bitrix:biconnector.dataset.import.errors', '', ['part' => 'row']);
+
+		$rowTemplate = ob_get_clean();
+
+		$batchCount = 0;
+		$batchContent = '';
+		$errorsCount = 0;
+
+		foreach ($reader->readAllRowsByOne() as $row)
+		{
+			$rowsCount++;
+			if ($rowsCount > self::FILE_ROWS_LIMIT)
+			{
+				$this->addError(
+					new Error(
+						Loc::getMessage('BICONNECTOR_EXTERNAL_SOURCE_DATASET_MAX_ROWS')
+					)
+				);
+
+				return null;
+			}
+
+			$rowValidationResult = $validator->validateRow($row);
+			if (!$rowValidationResult->isSuccess())
+			{
+				$rowNumber = $file['hasHeaders'] ? $rowsCount + 1 : $rowsCount;
+				foreach ($rowValidationResult->getErrors() as $error)
+				{
+					$errorsCount++;
+					$batchCount++;
+					$rowContent = str_replace(
+						['#ERROR_NUMBER#', '#MESSAGE#', '#ROW_NUMBER#', '#FIELD_NAME#'],
+						[(string)$errorsCount, htmlspecialcharsbx($error->getMessage()), (string)$rowNumber, htmlspecialcharsbx($datasetFields[$error->getCustomData()['field']]['NAME'])],
+						$rowTemplate,
+					);
+					$batchContent .= $rowContent . PHP_EOL;
+
+					if ($batchCount > 1000)
+					{
+						$logFile->putContents($batchContent, IO\File::APPEND);
+						$batchCount = 0;
+						$batchContent = '';
+					}
+				}
+			}
+
+			if ($batchCount === 0 && ($logFile->getSize() / 1024 / 1024) > self::LOG_FILE_SIZE_LIMIT_MB)
+			{
+				ob_start();
+
+				$APPLICATION->IncludeComponent('bitrix:biconnector.dataset.import.errors', '', ['part' => 'footer_overflow']);
+
+				$logFile->putContents(ob_get_clean(), IO\File::APPEND);
+
+				return $logFile->getContents();
+			}
+		}
+
+		if (!empty($batchContent))
+		{
+			$logFile->putContents($batchContent, IO\File::APPEND);
+		}
+
+		ob_start();
+
+		$APPLICATION->IncludeComponent('bitrix:biconnector.dataset.import.errors', '', ['part' => 'footer']);
+
+		$logFile->putContents(ob_get_clean(), IO\File::APPEND);
+
+		return $logFile->getContents();
+	}
+
 	/**
 	 * Adds new external dataset
 	 *
@@ -61,7 +212,7 @@ class Dataset extends Controller
 	 * @param int|null $sourceId
 	 * @return array|null
 	 */
-	public function addAction(string $type, array $fields, ?int $sourceId = null):? array
+	public function addAction(string $type, array $fields, ?int $sourceId = null): ?array
 	{
 		if (!$sourceId)
 		{
@@ -93,11 +244,30 @@ class Dataset extends Controller
 		$file = $checkBeforeAddData['file'];
 		if ($file)
 		{
-			$importer = new FileImporter($addResultData['id'], $file);
-			$importResult = $importer->import();
-			if (!$importResult->isSuccess())
+			try
 			{
-				$this->addError(new Error(Loc::getMessage('BICONNECTOR_EXTERNAL_SOURCE_IMPORT_ERROR'), 'IMPORT_ERROR'));
+				$importer = new FileImporter($addResultData['id'], $file);
+				$importResult = $importer->import();
+				if (!$importResult->isSuccess())
+				{
+					$this->addError(
+						new Error(
+							Loc::getMessage('BICONNECTOR_EXTERNAL_SOURCE_IMPORT_ERROR'),
+							'IMPORT_ERROR'
+						)
+					);
+
+					return null;
+				}
+			}
+			catch (\Exception)
+			{
+				$this->addError(
+					new Error(
+						Loc::getMessage('BICONNECTOR_EXTERNAL_SOURCE_IMPORT_ERROR'),
+						'IMPORT_ERROR_EXCEPTION'
+					)
+				);
 
 				return null;
 			}
@@ -192,9 +362,9 @@ class Dataset extends Controller
 	 * @param string $type
 	 * @param array $fields
 	 * @param int|null $sourceId
-	 * @return bool|null
+	 * @return array|null
 	 */
-	public function updateAction(int $id, string $type, array $fields, ?int $sourceId = null): ?bool
+	public function updateAction(int $id, string $type, array $fields, ?int $sourceId = null): ?array
 	{
 		$checkBeforeUpdateResult = $this->checkAndPrepareBeforeUpdate($type, $fields, $sourceId);
 		if (!$checkBeforeUpdateResult->isSuccess())
@@ -220,17 +390,39 @@ class Dataset extends Controller
 		$file = $checkBeforeAddData['file'];
 		if ($file)
 		{
-			$importer = new FileImporter($id, $file);
-			$importResult = $importer->reImport();
-			if (!$importResult->isSuccess())
+			try
 			{
-				$this->addError(new Error(Loc::getMessage('BICONNECTOR_EXTERNAL_SOURCE_IMPORT_ERROR'), 'IMPORT_ERROR'));
+				$importer = new FileImporter($id, $file);
+				$importResult = $importer->reImport();
+				if (!$importResult->isSuccess())
+				{
+					$this->addError(
+						new Error(
+							Loc::getMessage('BICONNECTOR_EXTERNAL_SOURCE_IMPORT_ERROR'),
+							'IMPORT_ERROR'
+						)
+					);
+
+					return null;
+				}
+			}
+			catch (\Exception)
+			{
+				$this->addError(
+					new Error(
+						Loc::getMessage('BICONNECTOR_EXTERNAL_SOURCE_IMPORT_ERROR'),
+						'IMPORT_ERROR_EXCEPTION'
+					)
+				);
 
 				return null;
 			}
 		}
 
-		return true;
+		return [
+			'id' => $id,
+			'name' => $dataset['NAME'],
+		];
 	}
 
 	private function checkAndPrepareBeforeUpdate(string $type, array $fields, ?int $sourceId = null): Result
@@ -355,7 +547,7 @@ class Dataset extends Controller
 
 		try
 		{
-			$data = $viewer->getData();
+			$data = $viewer->getDataForView();
 		}
 		catch (\Exception $e)
 		{
@@ -464,6 +656,114 @@ class Dataset extends Controller
 		return $result;
 	}
 
+	public function checkFileAction(string $type, array $fields): ?array
+	{
+		$checkBeforeFileCheckResult = $this->checkAndPrepareBeforeFileCheck($type, $fields);
+		if (!$checkBeforeFileCheckResult->isSuccess())
+		{
+			$this->addErrors($checkBeforeFileCheckResult->getErrors());
+
+			return null;
+		}
+
+		$checkBeforeViewData = $checkBeforeFileCheckResult->getData();
+		$file = $checkBeforeViewData['file'];
+
+		if (!$file)
+		{
+			$this->addError(new Error('Empty file'));
+
+			return null;
+		}
+
+		$datasetFields = $checkBeforeViewData['fields'];
+		$datasetSettings = $checkBeforeViewData['settings'];
+		$datasetSettings = array_column($datasetSettings, 'FORMAT', 'TYPE');
+
+		$reader = ExternalSource\FileReader\Factory::getReader(Type::Csv, $file);
+		$rulesMap = RulesProvider::getRules(Type::Csv, $datasetSettings);
+		$validator = new ImportDataValidator($rulesMap, $datasetFields);
+		$errorsCount = 0;
+		$rowsCount = 0;
+		$result = [];
+		foreach ($reader->readAllRowsByOne() as $row)
+		{
+			$rowsCount++;
+			if ($rowsCount > self::FILE_ROWS_LIMIT)
+			{
+				$this->addError(
+					new Error(
+						Loc::getMessage('BICONNECTOR_EXTERNAL_SOURCE_DATASET_MAX_ROWS')
+					)
+				);
+
+				return null;
+			}
+
+			$rowValidationResult = $validator->validateRow($row);
+			if (!$rowValidationResult->isSuccess())
+			{
+				$rowNumber = $file['hasHeaders'] ? $rowsCount + 1 : $rowsCount;
+				$result[$rowNumber] = $rowValidationResult->getErrors();
+				$errorsCount += count($rowValidationResult->getErrors());
+				if ($errorsCount > self::MAX_ERRORS_COUNT)
+				{
+					break;
+				}
+			}
+		}
+
+		return [
+			'checkFileErrors' => $result,
+		];
+	}
+
+	private function checkAndPrepareBeforeFileCheck(string $type, array $fields, ?int $sourceId = null): Result
+	{
+		$result = new Result();
+
+		$enumType = ExternalSource\Type::tryFrom($type);
+		if (!$enumType)
+		{
+			$result->addError(new Error(Loc::getMessage('BICONNECTOR_EXTERNAL_SOURCE_DATASET_UNKNOWN_DATASET_TYPE'), 'UNKNOWN_TYPE'));
+
+			return $result;
+		}
+
+		$prepareResult = $this->prepareFields($fields);
+		if (!$prepareResult->isSuccess())
+		{
+			$result->addErrors($prepareResult->getErrors());
+
+			return $result;
+		}
+
+		$preparedFields = $prepareResult->getData();
+
+		$file = $preparedFields['file'];
+		$datasetFields = $preparedFields['fields'];
+		$datasetSettings = $preparedFields['settings'];
+
+		if ($file)
+		{
+			$checkFileResult = $this->checkIsFileEmpty($enumType, $file);
+			if (!$checkFileResult->isSuccess())
+			{
+				$result->addErrors($checkFileResult->getErrors());
+
+				return $result;
+			}
+		}
+
+		$result->setData([
+			'file' => $file,
+			'fields' => $datasetFields,
+			'settings' => $datasetSettings,
+		]);
+
+		return $result;
+	}
+
 	/**
 	 * Deletes external dataset
 	 *
@@ -481,6 +781,129 @@ class Dataset extends Controller
 		}
 
 		return true;
+	}
+
+	public function syncFieldAction(ExternalSource\Internal\ExternalDataset $dataset): ?ViewResponce
+	{
+		$sourceId = $dataset->getSourceId();
+
+		$fields = [];
+		foreach (ExternalSource\DatasetManager::getDatasetFieldsById($dataset->getId()) as $field)
+		{
+			$fields[] = [
+				'ID' => $field->getId(),
+				'TYPE' => $field->getType(),
+				'NAME' => $field->getName(),
+				'EXTERNAL_CODE' => $field->getExternalCode(),
+				'VISIBLE' => $field->getVisible(),
+			];
+		}
+
+		$settings = [];
+		foreach (ExternalSource\DatasetManager::getDatasetSettingsById($dataset->getId()) as $setting)
+		{
+			$settings[] = [
+				'TYPE' => $setting->getType(),
+				'FORMAT' => $setting->getFormat(),
+			];
+		}
+
+		if ($settings === [] && Type::tryFrom($dataset->getType()) === Type::Rest)
+		{
+			$settings = [
+				[
+					'TYPE' => FieldType::Date->value,
+					'FORMAT' => \Bitrix\BIConnector\ExternalSource\Const\Date::Ymd_dash->value,
+				],
+				[
+					'TYPE' => FieldType::DateTime->value,
+					'FORMAT' => \Bitrix\BIConnector\ExternalSource\Const\DateTime::Ymd_dash_His_colon->value,
+				],
+				[
+					'TYPE' => FieldType::Double->value,
+					'FORMAT' => \Bitrix\BIConnector\ExternalSource\Const\DoubleDelimiter::DOT->value,
+				],
+			];
+		}
+
+		$externalTableData = [
+			'NAME' => $dataset->getName(),
+			'DESCRIPTION' => $dataset->getDescription(),
+			'EXTERNAL_CODE' => $dataset->getExternalCode(),
+			'EXTERNAL_NAME' => $dataset->getExternalName(),
+		];
+
+		$viewer = new DatasetViewer(
+			$dataset->getEnumType(),
+			$fields,
+			$settings
+		);
+
+		$viewer
+			->setSourceId($sourceId)
+			->setExternalTableData($externalTableData)
+		;
+
+		try
+		{
+			$data = $viewer->getDataForSync();
+		}
+		catch (\Exception)
+		{
+			$this->addError(new Error(Loc::getMessage('BICONNECTOR_EXTERNAL_SOURCE_SYNC_FIELDS_ERROR')));
+
+			return null;
+		}
+
+		$data['isChanged'] = false;
+		if (
+			count($fields) !== count($data['headers'])
+			|| count($fields) !== count(array_column($data['headers'], 'id'))
+		)
+		{
+			$data['isChanged'] = true;
+		}
+
+		$viewResponce = new ViewResponce();
+		$viewResponce->setData($data);
+
+		return $viewResponce;
+	}
+
+	public function exportAction(ExternalSource\Internal\ExternalDataset $dataset, string $exportFormat): ?string
+	{
+		if (!$dataset || $dataset->getEnumType() !== Type::Csv)
+		{
+			$this->addError(new Error('Invalid dataset specified'));
+
+			return null;
+		}
+
+		$exportType = ExternalSource\Exporter\ExportType::tryFrom($exportFormat);
+		if (!$exportType)
+		{
+			$this->addError(new Error('Invalid export format'));
+
+			return null;
+		}
+
+		$writer = ExternalSource\Exporter\WriterFactory::getWriter($exportType);
+		$dataProvider = ExternalSource\Exporter\DataProviderFactory::getDataProvider($dataset);
+		$settings = new ExternalSource\Exporter\Settings($dataset, $writer, $dataProvider);
+		$exporter = new ExternalSource\Exporter\Exporter($settings);
+
+		$result = $exporter->export();
+		if (!$result->isSuccess())
+		{
+			$this->addErrors($result->getErrors());
+
+			return null;
+		}
+
+		/** @var IO\File $file */
+		$file = $result->getData()['file'];
+
+		return $file->getContents();
 	}
 
 	private function prepareFields(array $fields): Result
@@ -583,21 +1006,21 @@ class Dataset extends Controller
 		{
 			foreach ($datasetSettings as $code => $value)
 			{
-				$fieldType = ExternalSource\FieldType::tryFrom($code);
+				$fieldType = FieldType::tryFrom($code);
 				if ($fieldType)
 				{
 					if (empty($value))
 					{
 						$value = match ($fieldType) {
-							ExternalSource\FieldType::Date => ExternalSource\Const\Date::Ymd_dot->value,
-							ExternalSource\FieldType::DateTime => ExternalSource\Const\DateTime::Ymd_dot_His_colon->value,
-							ExternalSource\FieldType::Double => ExternalSource\Const\DoubleDelimiter::DOT->value,
-							ExternalSource\FieldType::Money => ExternalSource\Const\MoneyDelimiter::DOT->value,
+							FieldType::Date => ExternalSource\Const\Date::Ymd_dash->value,
+							FieldType::DateTime => ExternalSource\Const\DateTime::Ymd_dash_His_colon->value,
+							FieldType::Double => ExternalSource\Const\DoubleDelimiter::DOT->value,
+							FieldType::Money => ExternalSource\Const\MoneyDelimiter::DOT->value,
 						};
 					}
 					elseif (
-						$fieldType === ExternalSource\FieldType::Date
-						|| $fieldType === ExternalSource\FieldType::DateTime
+						$fieldType === FieldType::Date
+						|| $fieldType === FieldType::DateTime
 					)
 					{
 						$value = ExternalSource\Const\DateTimeFormatConverter::iso8601ToPhp($value);
@@ -658,13 +1081,13 @@ class Dataset extends Controller
 
 	private function getDefaultDatasetName(ExternalSource\Type $type): string
 	{
-		if ($type === ExternalSource\Type::Source1C)
+		if ($type === ExternalSource\Type::Csv)
 		{
-			$code = 'external_dataset';
+			$code = $type->value . '_dataset';
 		}
 		else
 		{
-			$code = $type->value . '_dataset';
+			$code = "external_{$type->value}_dataset";
 		}
 
 		$dataset = ExternalSource\Internal\ExternalDatasetTable::getRow([
@@ -675,7 +1098,7 @@ class Dataset extends Controller
 		if ($dataset)
 		{
 			$currentCode = $dataset['NAME'];
-			preg_match_all('/\d+/', $currentCode, $matches);
+			preg_match_all('/\d+$/', $currentCode, $matches);
 			$number = (int)($matches[0][0] ?? 0) + 1;
 			$code .= "_$number";
 		}
@@ -687,10 +1110,23 @@ class Dataset extends Controller
 	{
 		$result = new Result();
 
+		$isFileEmptyResult = $this->checkIsFileEmpty($type, $file);
+		if (!$isFileEmptyResult->isSuccess())
+		{
+			$result->addErrors($isFileEmptyResult->getErrors());
+
+			return $result;
+		}
+
 		$reader = ExternalSource\FileReader\Factory::getReader($type, $file);
 
-		$row = $reader->readAllRowsByOne();
-		if (!$row->current())
+		$row = $reader->getHeaders();
+		if (!$row)
+		{
+			$row = $reader->readAllRowsByOne()->current();
+		}
+
+		if (!$row)
 		{
 			$result->addError(new Error(Loc::getMessage('BICONNECTOR_EXTERNAL_SOURCE_EMPTY_DATA_ERROR'), 'EMPTY_DATA'));
 
@@ -698,11 +1134,11 @@ class Dataset extends Controller
 		}
 
 		$rowNumber = 0;
-		$valuesCount = count($row->current());
+		$valuesCount = count($row);
 		foreach ($reader->readAllRowsByOne() as $row)
 		{
 			$rowNumber++;
-			if ($rowNumber > 300000)
+			if ($rowNumber > self::FILE_ROWS_LIMIT)
 			{
 				$result->addError(
 					new Error(
@@ -723,6 +1159,21 @@ class Dataset extends Controller
 
 				break;
 			}
+		}
+
+		return $result;
+	}
+
+	private function checkIsFileEmpty(ExternalSource\Type $type, array $file): Result
+	{
+		$result = new Result();
+
+		$reader = ExternalSource\FileReader\Factory::getReader($type, $file);
+
+		$row = $reader->readAllRowsByOne();
+		if (!$row->current())
+		{
+			$result->addError(new Error(Loc::getMessage('BICONNECTOR_EXTERNAL_SOURCE_EMPTY_DATA_ERROR'), 'EMPTY_DATA'));
 		}
 
 		return $result;

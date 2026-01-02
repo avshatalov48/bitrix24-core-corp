@@ -3,15 +3,19 @@
 return [
 	'extensions' => [
 		'alert',
-		'apptheme',
 		'utils/props',
 		'utils/function',
 		'utils/object',
 		'utils/string',
-		'assets/stages',
-		'layout/ui/buttons',
-		'layout/ui/entity-name',
 		'layout/ui/color-picker',
 		'loc',
+		'ui-system/form/inputs/string',
+		'ui-system/layout/area',
+		'tokens',
+		'type',
+		'ui-system/layout/dialog-footer',
+		'ui-system/form/buttons/button',
+		'ui-system/layout/box',
+		'ui-system/blocks/icon',
 	]
 ];

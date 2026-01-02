@@ -12,7 +12,7 @@ class Bitrix24Email
 	}
 	public static function allowDisableSignature()
 	{
-		return Bitrix24Manager::isPaidAccount();
+		return Bitrix24Manager::isPaidAccount() || Bitrix24Manager::hasNfrLicense();
 	}
 	public static function isSignatureEnabled()
 	{
@@ -47,7 +47,7 @@ class Bitrix24Email
 		self::includeLangFile();
 
 		$text = '';
-		if(!Bitrix24Manager::isPaidAccount())
+		if(!self::allowDisableSignature())
 		{
 			$text = GetMessage('CRM_B24_EMAIL_FREE_LICENSE_SIGNATURE');
 		}

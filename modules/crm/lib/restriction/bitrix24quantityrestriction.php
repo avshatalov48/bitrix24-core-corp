@@ -8,7 +8,7 @@ use Bitrix\Main\Data\Cache;
 class Bitrix24QuantityRestriction extends QuantityRestriction
 {
 	protected const CACHE_DIR = '/crm/entity_count/';
-	protected const CACHE_TTL = 60 * 60; // 1 hour
+	protected const CACHE_TTL = 3 * 60 * 60; // 3 hours
 
 	protected ?Bitrix24RestrictionInfo $restrictionInfo;
 	protected ?Cache $cache;
@@ -40,7 +40,7 @@ class Bitrix24QuantityRestriction extends QuantityRestriction
 	{
 		return $this->restrictionInfo->getInfoHelperId();
 	}
-	
+
 	public function getMobileInfoHelperId(): string
 	{
 		return $this->restrictionInfo->getMobileInfoHelperId();

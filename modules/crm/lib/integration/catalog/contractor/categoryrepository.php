@@ -3,13 +3,26 @@
 namespace Bitrix\Crm\Integration\Catalog\Contractor;
 
 use Bitrix\Crm\Category\Entity\Category;
+use Bitrix\Crm\Category\PermissionEntityTypeHelper;
 use Bitrix\Crm\CategoryIdentifier;
 use Bitrix\Crm\Item;
 use Bitrix\Crm\Model\ItemCategoryTable;
+use Bitrix\Crm\Security\Role\GroupCodeGenerator;
+use Bitrix\Crm\Security\Role\Manage\Entity\ContractorConfig;
+use Bitrix\Crm\Security\Role\Manage\Permissions\WriteConfig;
+use Bitrix\Crm\Security\Role\Model\EO_Role;
+use Bitrix\Crm\Security\Role\Model\EO_RolePermission;
+use Bitrix\Crm\Security\Role\Model\EO_RoleRelation;
+use Bitrix\Crm\Security\Role\RolePermission;
 use Bitrix\Crm\Security\Role\RolePreset;
+use Bitrix\Crm\Security\Role\RoleRelationHelper;
 use Bitrix\Crm\Service\Container;
+use Bitrix\Crm\Service\UserPermissions;
 use Bitrix\Crm\UtmTable;
+use Bitrix\Main\Localization\Loc;
 use Bitrix\Main\Web\Json;
+use CCrmOwnerType;
+use CCrmRole;
 
 /**
  * Class CategoryRepository
@@ -18,8 +31,8 @@ use Bitrix\Main\Web\Json;
  */
 class CategoryRepository
 {
-	private const COMPANY_CODE = 'CATALOG_CONTRACTOR_COMPANY';
-	private const CONTACT_CODE = 'CATALOG_CONTRACTOR_CONTACT';
+	public const CATALOG_CONTRACTOR_COMPANY = 'CATALOG_CONTRACTOR_COMPANY';
+	public const CATALOG_CONTRACTOR_CONTACT = 'CATALOG_CONTRACTOR_CONTACT';
 
 	/**
 	 * @param int $entityTypeId
@@ -67,7 +80,6 @@ class CategoryRepository
 			return null;
 		}
 
-		$factory->clearCategoriesCache();
 		$category = $factory->getCategoryByCode($code);
 		if (
 			!$category
@@ -124,6 +136,9 @@ class CategoryRepository
 		{
 			$connection->query($merge[0]);
 			ItemCategoryTable::cleanCache();
+
+			$factory = Container::getInstance()->getFactory($entityTypeId);
+			$factory?->clearCategoriesCache();
 		}
 
 		$result = self::getByEntityTypeId($entityTypeId);
@@ -141,38 +156,63 @@ class CategoryRepository
 	 */
 	private static function setPermissions(int $entityTypeId, int $categoryId): void
 	{
-		$rolesList = \CCrmRole::getList();
+		$permissionHelper = new PermissionEntityTypeHelper($entityTypeId);
 
-		$systemRolesIds = \Bitrix\Crm\Security\Role\RolePermission::getSystemRolesIds();
+		$contractorGroupCode = GroupCodeGenerator::getContractorGroupCode();
+		$contractorRolesIds = RolePermission::getRoleIdsByGroupCode($contractorGroupCode);
+		if (empty($contractorRolesIds))
+		{
+			self::createDefaultAdminInventoryRole();
+		}
+
+		$rolesList = CCrmRole::getList(
+			arFilter: [
+				'IS_SYSTEM' => 'N',
+				'GROUP_CODE' => $contractorGroupCode,
+			],
+		);
+
 		while ($role = $rolesList->fetch())
 		{
-			if (in_array($role['ID'], $systemRolesIds, false)) // do not affect system roles
-			{
-				continue;
-			}
-			if ($role['GROUP_CODE'])
-			{
-				continue;
-			}
+			$rolePerms = CCrmRole::getRolePermissionsAndSettings($role['ID']);
+			$permissionEntity = $permissionHelper->getPermissionEntityTypeForCategory($categoryId);
 
-			$rolePerms = \CCrmRole::getRolePermissionsAndSettings($role['ID']);
-
-			$entityName = \CCrmOwnerType::resolveName($entityTypeId);
-
-			$rolePerms[
-				sprintf(
-					'%s_C%d',
-					$entityName,
-					$categoryId
-				)
-			] = RolePreset::getDefaultPermissionSetForEntityByCode(
+			$rolePerms[$permissionEntity] = RolePreset::getDefaultPermissionSetForEntityByCode(
 				$role['CODE'],
 				new CategoryIdentifier($entityTypeId, $categoryId)
 			);
 
-			$fields = ['RELATION' => $rolePerms];
-			(new \CCrmRole())->update($role['ID'], $fields);
+			$fields = ['PERMISSIONS' => $rolePerms];
+			(new CCrmRole())->update($role['ID'], $fields);
 		}
+	}
+
+	private static function createDefaultAdminInventoryRole(): void
+	{
+		$role = (new EO_Role())
+			->setName(Loc::getMessage('CRM_INTEGRATION_CATALOG_CONTRACTOR_DEFAULT_ADMIN_ROLE_NAME'))
+			->setIsSystem('N')
+			->setGroupCode(GroupCodeGenerator::getContractorGroupCode());
+
+		// todo: maybe set code === 'ADMIN'?
+		$contractorAdminPermission = (new EO_RolePermission())
+			->setEntity(ContractorConfig::CODE)
+			->setPermType((new WriteConfig())->code())
+			->setAttr(UserPermissions::PERMISSION_ALL)
+			->setSettings(null);
+
+		$role->addToPermissions($contractorAdminPermission);
+
+		$allUsersGroupCode = (new RoleRelationHelper())->getAllUsersGroupRelationAccessCode();
+		if ($allUsersGroupCode !== null)
+		{
+			$allUsersRelation = (new EO_RoleRelation())
+				->setRelation($allUsersGroupCode);
+
+			$role->addToRelations($allUsersRelation);
+		}
+
+		$role->save();
 	}
 
 	/**
@@ -181,12 +221,15 @@ class CategoryRepository
 	 */
 	private static function getCodeByEntityTypeId(int $entityTypeId): ?string
 	{
-		$map = [
-			\CCrmOwnerType::Contact => self::CONTACT_CODE,
-			\CCrmOwnerType::Company => self::COMPANY_CODE,
-		];
+		return self::getCodeMap()[$entityTypeId] ?? null;
+	}
 
-		return $map[$entityTypeId] ?? null;
+	private static function getCodeMap(): array
+	{
+		return [
+			CCrmOwnerType::Contact => self::CATALOG_CONTRACTOR_CONTACT,
+			CCrmOwnerType::Company => self::CATALOG_CONTRACTOR_COMPANY,
+		];
 	}
 
 	/**
@@ -195,7 +238,7 @@ class CategoryRepository
 	 */
 	private static function getDisabledFieldsByEntityTypeId(int $entityTypeId): array
 	{
-		if ($entityTypeId === \CCrmOwnerType::Company)
+		if ($entityTypeId === CCrmOwnerType::Company)
 		{
 			return array_merge(
 				[
@@ -209,7 +252,7 @@ class CategoryRepository
 			);
 		}
 
-		if ($entityTypeId === \CCrmOwnerType::Contact)
+		if ($entityTypeId === CCrmOwnerType::Contact)
 		{
 			return array_merge(
 				[
@@ -233,7 +276,7 @@ class CategoryRepository
 		$gridDefaultFields = [];
 		$filterDefaultFields = [];
 
-		if ($entityTypeId === \CCrmOwnerType::Company)
+		if ($entityTypeId === CCrmOwnerType::Company)
 		{
 			$gridDefaultFields = [
 				'COMPANY_SUMMARY',
@@ -249,7 +292,7 @@ class CategoryRepository
 			];
 		}
 
-		if ($entityTypeId === \CCrmOwnerType::Contact)
+		if ($entityTypeId === CCrmOwnerType::Contact)
 		{
 			$gridDefaultFields = [
 				'CONTACT_SUMMARY',
@@ -278,5 +321,18 @@ class CategoryRepository
 				'defaultFields' => $filterDefaultFields,
 			],
 		];
+	}
+
+	public static function isAtLeastOneContractorExists(): bool
+	{
+		foreach (self::getCodeMap() as $entityTypeId => $code)
+		{
+			if (self::getByEntityTypeId($entityTypeId) !== null)
+			{
+				return true;
+			}
+		}
+
+		return false;
 	}
 }

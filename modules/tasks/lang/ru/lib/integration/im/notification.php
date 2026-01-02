@@ -15,11 +15,10 @@ $MESS["TASKS_MESSAGE_AUDITORS"] = "Наблюдатели";
 $MESS["TASKS_MESSAGE_AUDITORS_ADDED"] = "Добавлены наблюдатели: ";
 $MESS["TASKS_MESSAGE_AUDITORS_REMOVED"] = "Исключены наблюдатели: ";
 $MESS["TASKS_MESSAGE_DEADLINE"] = "Крайний срок";
-$MESS["TASKS_MESSAGE_RESPONSIBLE_ID"] = "Ответственный";
 $MESS['TASKS_MESSAGE_ASSIGNEE_ID'] = 'Исполнитель';
 $MESS["TASKS_MESSAGE_TITLE"] = "Название";
-$MESS["TASKS_MESSAGE_START_DATE_PLAN"] = "Планируемая дата начала";
-$MESS["TASKS_MESSAGE_END_DATE_PLAN"] = "Планируемая дата окончания";
+$MESS["TASKS_MESSAGE_START_DATE_PLAN_MSGVER_1"] = "Планируемая дата начала";
+$MESS["TASKS_MESSAGE_END_DATE_PLAN_MSGVER_1"] = "Планируемая дата окончания";
 $MESS["TASKS_MESSAGE_TAGS"] = "Теги";
 $MESS["TASKS_MESSAGE_PRIORITY"] = "Приоритет";
 $MESS["TASKS_MESSAGE_GROUP_ID"] = "Группа";
@@ -79,7 +78,7 @@ $MESS["TASKS_TASK_STATUS_MESSAGE_REDOED_F"] = "Вернула на дорабо�
 $MESS["TASKS_TASK_STATUS_MESSAGE_1_N"] = "Задача #TASK_URL_BEGIN##TASK_TITLE##URL_END# возобновлена";
 $MESS["TASKS_TASK_STATUS_MESSAGE_2_N"] = "Задача #TASK_URL_BEGIN##TASK_TITLE##URL_END# ждёт выполнения";
 $MESS["TASKS_TASK_STATUS_MESSAGE_3_N"] = "Статус задачи #TASK_URL_BEGIN##TASK_TITLE##URL_END# изменился на \"Выполняется\"";
-$MESS["TASKS_TASK_STATUS_MESSAGE_4_N"] = "Задача #TASK_URL_BEGIN##TASK_TITLE##URL_END# закрыта (требуется контроль постановщика)";
+$MESS["TASKS_TASK_STATUS_MESSAGE_4_N_MSGVER_1"] = "Задача #TASK_URL_BEGIN##TASK_TITLE##URL_END# закрыта (требуется контроль постановщика)";
 $MESS["TASKS_TASK_STATUS_MESSAGE_5_N"] = "Задача #TASK_URL_BEGIN##TASK_TITLE##URL_END# закрыта";
 $MESS["TASKS_TASK_STATUS_MESSAGE_6_N"] = "Задача #TASK_URL_BEGIN##TASK_TITLE##URL_END# отложена";
 $MESS["TASKS_TASK_STATUS_MESSAGE_7_N"] = "Задача #TASK_URL_BEGIN##TASK_TITLE##URL_END# отклонена по причине: #TASK_DECLINE_REASON#";
@@ -87,7 +86,7 @@ $MESS["TASKS_TASK_STATUS_MESSAGE_1_M"] = "Возобновил задачу #TAS
 $MESS["TASKS_TASK_STATUS_MESSAGE_2_M"] = "Приостановил выполнение задачи #TASK_URL_BEGIN##TASK_TITLE##URL_END#";
 $MESS["TASKS_TASK_STATUS_MESSAGE_2_V2_M"] = "Задача #TASK_URL_BEGIN##TASK_TITLE##URL_END# ждёт выполнения";
 $MESS["TASKS_TASK_STATUS_MESSAGE_3_M"] = "Начал выполнять задачу #TASK_URL_BEGIN##TASK_TITLE##URL_END#";
-$MESS["TASKS_TASK_STATUS_MESSAGE_4_M"] = "Закрыл задачу #TASK_URL_BEGIN##TASK_TITLE##URL_END# (требуется контроль постановщика)";
+$MESS["TASKS_TASK_STATUS_MESSAGE_4_M_MSGVER_1"] = "Закрыл задачу #TASK_URL_BEGIN##TASK_TITLE##URL_END# (требуется контроль постановщика)";
 $MESS["TASKS_TASK_STATUS_MESSAGE_5_M"] = "Закрыл задачу #TASK_URL_BEGIN##TASK_TITLE##URL_END#";
 $MESS["TASKS_TASK_STATUS_MESSAGE_6_M"] = "Отложил задачу #TASK_URL_BEGIN##TASK_TITLE##URL_END#";
 $MESS["TASKS_TASK_STATUS_MESSAGE_7_M"] = "Отклонил задачу #TASK_URL_BEGIN##TASK_TITLE##URL_END# по причине: #TASK_DECLINE_REASON#";
@@ -95,7 +94,7 @@ $MESS["TASKS_TASK_STATUS_MESSAGE_1_F"] = "Возобновила задачу #T
 $MESS["TASKS_TASK_STATUS_MESSAGE_2_F"] = "Приостановила выполнение задачи #TASK_URL_BEGIN##TASK_TITLE##URL_END#";
 $MESS["TASKS_TASK_STATUS_MESSAGE_2_V2_F"] = "Задача #TASK_URL_BEGIN##TASK_TITLE##URL_END# ждёт выполнения";
 $MESS["TASKS_TASK_STATUS_MESSAGE_3_F"] = "Начала выполнять задачу #TASK_URL_BEGIN##TASK_TITLE##URL_END#";
-$MESS["TASKS_TASK_STATUS_MESSAGE_4_F"] = "Закрыла задачу #TASK_URL_BEGIN##TASK_TITLE##URL_END# (требуется контроль постановщика)";
+$MESS["TASKS_TASK_STATUS_MESSAGE_4_F_MSGVER_1"] = "Закрыла задачу #TASK_URL_BEGIN##TASK_TITLE##URL_END# (требуется контроль постановщика)";
 $MESS["TASKS_TASK_STATUS_MESSAGE_5_F"] = "Закрыла задачу #TASK_URL_BEGIN##TASK_TITLE##URL_END#";
 $MESS["TASKS_TASK_STATUS_MESSAGE_6_F"] = "Отложила задачу #TASK_URL_BEGIN##TASK_TITLE##URL_END#";
 $MESS["TASKS_TASK_STATUS_MESSAGE_7_F"] = "Отклонила задачу #TASK_URL_BEGIN##TASK_TITLE##URL_END# по причине: #TASK_DECLINE_REASON#";
@@ -112,14 +111,14 @@ $MESS["TASKS_TASK_STATUS_MESSAGE_REDOED_PUSH_F"] = "#USER_NAME# возврати
 $MESS["TASKS_TASK_STATUS_MESSAGE_1_PUSH_M"] = "#USER_NAME# возобновил задачу #TASK_TITLE#";
 $MESS["TASKS_TASK_STATUS_MESSAGE_2_PUSH_M"] = "#USER_NAME# приостановил выполнение задачи #TASK_TITLE#";
 $MESS["TASKS_TASK_STATUS_MESSAGE_3_PUSH_M"] = "#USER_NAME# начал выполнять задачу #TASK_TITLE#";
-$MESS["TASKS_TASK_STATUS_MESSAGE_4_PUSH_M"] = "#USER_NAME# закрыл задачу #TASK_TITLE# (требуется контроль постановщика)";
+$MESS["TASKS_TASK_STATUS_MESSAGE_4_PUSH_M_MSGVER_1"] = "#USER_NAME# закрыл задачу #TASK_TITLE# (требуется контроль постановщика)";
 $MESS["TASKS_TASK_STATUS_MESSAGE_5_PUSH_M"] = "#USER_NAME# закрыл задачу #TASK_TITLE#";
 $MESS["TASKS_TASK_STATUS_MESSAGE_6_PUSH_M"] = "#USER_NAME# отложил задачу #TASK_TITLE#";
 $MESS["TASKS_TASK_STATUS_MESSAGE_7_PUSH_M"] = "#USER_NAME# отклонил задачу #TASK_TITLE# по причине: #TASK_DECLINE_REASON#";
 $MESS["TASKS_TASK_STATUS_MESSAGE_1_PUSH_F"] = "#USER_NAME# возобновила задачу #TASK_TITLE#";
 $MESS["TASKS_TASK_STATUS_MESSAGE_2_PUSH_F"] = "#USER_NAME# приостановила выполнение задачи #TASK_TITLE#";
 $MESS["TASKS_TASK_STATUS_MESSAGE_3_PUSH_F"] = "#USER_NAME# начала выполнять задачу #TASK_TITLE#";
-$MESS["TASKS_TASK_STATUS_MESSAGE_4_PUSH_F"] = "#USER_NAME# закрыла задачу #TASK_TITLE# (требуется контроль постановщика)";
+$MESS["TASKS_TASK_STATUS_MESSAGE_4_PUSH_F_MSGVER_1"] = "#USER_NAME# закрыла задачу #TASK_TITLE# (требуется контроль постановщика)";
 $MESS["TASKS_TASK_STATUS_MESSAGE_5_PUSH_F"] = "#USER_NAME# закрыла задачу #TASK_TITLE#";
 $MESS["TASKS_TASK_STATUS_MESSAGE_6_PUSH_F"] = "#USER_NAME# отложила задачу #TASK_TITLE#";
 $MESS["TASKS_TASK_STATUS_MESSAGE_7_PUSH_F"] = "#USER_NAME# отклонила задачу #TASK_TITLE#";
@@ -169,6 +168,7 @@ $MESS["TASKS_SONET_TASK_STATUS_MESSAGE_2_24"] = "Задача ждёт выпо�
 $MESS["TASKS_SONET_TASK_STATUS_MESSAGE_3"] = "Статус задачи изменился на \"Выполняется\"";
 $MESS["TASKS_SONET_TASK_STATUS_MESSAGE_3_24"] = "Задача выполняется";
 $MESS["TASKS_SONET_TASK_STATUS_MESSAGE_4"] = "Задача закрыта (требуется контроль постановщика)";
+$MESS["TASKS_SONET_TASK_STATUS_MESSAGE_4_MSGVER_1"] = "Задача закрыта (требуется контроль постановщика)";
 $MESS["TASKS_SONET_TASK_STATUS_MESSAGE_4_24"] = "Задача закрыта и ожидает контроля";
 $MESS["TASKS_SONET_TASK_STATUS_MESSAGE_4_24_CHANGES"] = "требуется контроль постановщика";
 $MESS["TASKS_SONET_TASK_STATUS_MESSAGE_5"] = "Задача закрыта";
@@ -181,7 +181,6 @@ $MESS["TASKS_SONET_TASK_STATUS_MESSAGE_7_24_2"] = "Причина";
 $MESS["TASKS_SONET_TASK_STATUS_MESSAGE_4_24_2"] = "Причина";
 $MESS["TASKS_SONET_LOG_TITLE"] = "название";
 $MESS["TASKS_SONET_LOG_DESCRIPTION"] = "описание";
-$MESS["TASKS_SONET_LOG_RESPONSIBLE_ID"] = "Ответственный";
 $MESS['TASKS_SONET_LOG_ASSIGNEE'] = 'Исполнитель';
 $MESS["TASKS_SONET_LOG_DEADLINE"] = "крайний срок";
 $MESS["TASKS_SONET_LOG_ACCOMPLICES"] = "соисполнители";
@@ -196,22 +195,16 @@ $MESS["TASKS_SONET_LOG_STATUS"] = "статус";
 $MESS["TASKS_SONET_LOG_MARK"] = "оценка";
 $MESS["TASKS_SONET_LOG_MARK_MSGVER_1"] = "оценка";
 $MESS["TASKS_SONET_LOG_ADD_IN_REPORT"] = "в отчете";
-$MESS["TASKS_SONET_LOG_START_DATE_PLAN"] = "планируемая дата начала";
-$MESS["TASKS_SONET_LOG_END_DATE_PLAN"] = "планируемая дата окончания";
 $MESS["TASKS_SONET_LOG_DURATION_PLAN"] = "планируемая длительность";
 $MESS["TASKS_SONET_LOG_EXTRANET_SUFFIX"] = " (экстранет)";
 $MESS["TASKS_IM_ANSWER_SUCCESS"] = "Комментарий успешно опубликован";
 
 $MESS["TASKS_TASK_EXPIRED_SOON_RESPONSIBLE_MESSAGE_N"] = "Задача #TASK_URL_BEGIN##TASK_TITLE##URL_END# завтра в #DEADLINE_TIME# будет просрочена. Завершите задачу или передвиньте срок в течение суток, иначе ваша эффективность будет снижена.";
 $MESS["TASKS_TASK_EXPIRED_SOON_RESPONSIBLE_MESSAGE_PUSH_N"] = "Задача #TASK_TITLE# почти просрочена.";
-$MESS["TASKS_TASK_EXPIRED_SOON_RESPONSIBLE_SAME_CREATOR_MESSAGE_N"] = "Задача #TASK_URL_BEGIN##TASK_TITLE##URL_END# завтра в #DEADLINE_TIME# будет просрочена.";
-$MESS["TASKS_TASK_EXPIRED_SOON_RESPONSIBLE_SAME_CREATOR_MESSAGE_PUSH_N"] = "Задача #TASK_TITLE# почти просрочена.";
 $MESS["TASKS_TASK_EXPIRED_SOON_RESPONSIBLE_MESSAGE_HIDE_EFFICIENCY_PART_N"] = "Задача #TASK_URL_BEGIN##TASK_TITLE##URL_END# завтра в #DEADLINE_TIME# будет просрочена.";
 $MESS["TASKS_TASK_EXPIRED_SOON_RESPONSIBLE_MESSAGE_HIDE_EFFICIENCY_PART_PUSH_N"] = "Задача #TASK_TITLE# почти просрочена.";
 $MESS["TASKS_TASK_EXPIRED_RESPONSIBLE_MESSAGE_N"] = "Задача #TASK_URL_BEGIN##TASK_TITLE##URL_END# просрочена, ваша эффективность снижена. Завершите задачу или передвиньте срок.";
 $MESS["TASKS_TASK_EXPIRED_RESPONSIBLE_MESSAGE_PUSH_N"] = "Задача #TASK_TITLE# просрочена.";
-$MESS["TASKS_TASK_EXPIRED_RESPONSIBLE_SAME_CREATOR_MESSAGE_N"] = "Задача #TASK_URL_BEGIN##TASK_TITLE##URL_END# просрочена.";
-$MESS["TASKS_TASK_EXPIRED_RESPONSIBLE_SAME_CREATOR_MESSAGE_PUSH_N"] = "Задача #TASK_TITLE# просрочена.";
 $MESS["TASKS_TASK_EXPIRED_RESPONSIBLE_MESSAGE_HIDE_EFFICIENCY_PART_N"] = "Задача #TASK_URL_BEGIN##TASK_TITLE##URL_END# просрочена.";
 $MESS["TASKS_TASK_EXPIRED_RESPONSIBLE_MESSAGE_HIDE_EFFICIENCY_PART_PUSH_N"] = "Задача #TASK_TITLE# просрочена.";
 $MESS["TASKS_TASK_EXPIRED_CREATOR_MESSAGE_N"] = "Задача #TASK_URL_BEGIN##TASK_TITLE##URL_END# просрочена.";
@@ -260,4 +253,16 @@ $MESS["TASKS_ADDED_TO_FLOW_WITH_MANUAL_DISTRIBUTION_F"] = "В поток [url=#F
 $MESS["TASKS_ADDED_TO_FLOW_WITH_HIMSELF_DISTRIBUTION_N"] = "В поток [url=#FLOW_URL#]#FLOW_NAME#[/url] добавлена задача #TASK_URL_BEGIN##TASK_TITLE##URL_END#. Возьмите задачу в работу";
 $MESS["TASKS_ADDED_TO_FLOW_WITH_HIMSELF_DISTRIBUTION_M"] = "В поток [url=#FLOW_URL#]#FLOW_NAME#[/url] добавлена задача #TASK_URL_BEGIN##TASK_TITLE##URL_END#. Возьмите задачу в работу";
 $MESS["TASKS_ADDED_TO_FLOW_WITH_HIMSELF_DISTRIBUTION_F"] = "В поток [url=#FLOW_URL#]#FLOW_NAME#[/url] добавлена задача #TASK_URL_BEGIN##TASK_TITLE##URL_END#. Возьмите задачу в работу";
-?>
+
+$MESS['TASKS_ONBOARDING_ONE_DAY_NOT_VIEWED_M'] = 'Вас назначили исполнителем в задаче #TASK_URL_BEGIN##TASK_TITLE##URL_END#, но вы ещё не открывали её. Откройте задачу и посмотрите, что нужно сделать';
+$MESS['TASKS_ONBOARDING_ONE_DAY_NOT_VIEWED_F'] = 'Вас назначили исполнителем в задаче #TASK_URL_BEGIN##TASK_TITLE##URL_END#, но вы ещё не открывали её. Откройте задачу и посмотрите, что нужно сделать';
+$MESS['TASKS_ONBOARDING_ONE_DAY_NOT_VIEWED_N'] = 'Вас назначили исполнителем в задаче #TASK_URL_BEGIN##TASK_TITLE##URL_END#, но вы ещё не открывали её. Откройте задачу и посмотрите, что нужно сделать';
+
+$MESS['TASKS_ONBOARDING_TWO_DAYS_NOT_VIEWED_M'] = 'Исполнитель ещё не открывал задачу #TASK_URL_BEGIN##TASK_TITLE##URL_END#. Напомните ему, что задачу нужно выполнить';
+$MESS['TASKS_ONBOARDING_TWO_DAYS_NOT_VIEWED_F'] = 'Исполнитель ещё не открывала задачу #TASK_URL_BEGIN##TASK_TITLE##URL_END#. Напомните ей, что задачу нужно выполнить';
+$MESS['TASKS_ONBOARDING_TWO_DAYS_NOT_VIEWED_N'] = 'Исполнитель ещё не открывал задачу #TASK_URL_BEGIN##TASK_TITLE##URL_END#. Напомните ему, что задачу нужно выполнить';
+
+$MESS['TASKS_ONBOARDING_TOO_MANY_TASKS_M'] = 'Вы поставили себе уже много задач. Делегируйте [URL=#MY_TASKS_URL#]свои задачи[/URL], чтобы равномерно распределять нагрузку между коллегами и повысить эффективность работы команды';
+$MESS['TASKS_ONBOARDING_TOO_MANY_TASKS_F'] = 'Вы поставили себе уже много задач. Делегируйте [URL=#MY_TASKS_URL#]свои задачи[/URL], чтобы равномерно распределять нагрузку между коллегами и повысить эффективность работы команды';
+$MESS['TASKS_ONBOARDING_TOO_MANY_TASKS_N'] = 'Вы поставили себе уже много задач. Делегируйте [URL=#MY_TASKS_URL#]свои задачи[/URL], чтобы равномерно распределять нагрузку между коллегами и повысить эффективность работы команды';
+

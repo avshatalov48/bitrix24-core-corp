@@ -3,135 +3,123 @@
  */
 jn.define('calendar/event-list-view/search/layout', (require, exports, module) => {
 	const { debounce } = require('utils/function');
-	const { Color, Indent } = require('tokens');
+	const { Icon } = require('ui-system/blocks/icon');
 
 	const { EventManager } = require('calendar/data-managers/event-manager');
-	const { Preset } = require('calendar/event-list-view/search/preset');
-	const { State, observeState } = require('calendar/event-list-view/state');
+	const { SearchLayoutView } = require('calendar/event-list-view/search/layout-view');
+	const { State } = require('calendar/event-list-view/state');
 
 	const MINIMAL_SEARCH_LENGTH = 3;
-	const PRESET_LIST_LAYOUT_HEIGHT = 46;
 
 	/**
 	 * @class SearchLayout
 	 */
-	class SearchLayout extends LayoutComponent
+	class SearchLayout
 	{
 		constructor(props)
 		{
-			super(props);
+			this.props = props;
+
+			this.setupNativeSearchField();
 
 			this.isOpened = false;
-
-			this.show = this.show.bind(this);
-			this.onHide = this.onHide.bind(this);
-			this.onDone = this.onDone.bind(this);
-			this.onCancel = this.onCancel.bind(this);
-			this.onTextChange = this.onTextChange.bind(this);
-			this.onPresetSelected = this.onPresetSelected.bind(this);
-
 			this.debounceSearch = debounce((params) => this.searchHandler(params), 500, this);
 		}
 
-		componentDidMount()
+		get search()
 		{
-			this.bindEvents();
+			return this.props.layout.search;
 		}
 
-		componentWillUnmount()
+		get presets()
 		{
-			this.unbindEvents();
+			return this.props.filterPresets;
 		}
 
-		componentDidUpdate(prevProps, prevState)
+		getButton()
 		{
-			if (this.props.visible)
-			{
-				this.show();
-			}
+			return {
+				type: Icon.SEARCH.getIconName(),
+				id: 'calendar-search',
+				testId: 'calendar-search',
+				accent: State.isSearchMode,
+				callback: this.show,
+			};
 		}
 
-		bindEvents()
+		setupNativeSearchField()
 		{
-			const { layout } = this.props;
+			this.search.mode = 'layout';
 
-			layout.search.on('textChanged', this.onTextChange);
-			layout.search.on('hide', this.onHide);
-			layout.search.on('cancel', this.onCancel);
-			layout.search.on('clickEnter', this.onDone);
-			layout.search.setReturnKey('done');
+			this.search.removeAllListeners('textChanged');
+			this.search.removeAllListeners('hide');
+			this.search.removeAllListeners('cancel');
+			this.search.removeAllListeners('clickEnter');
+
+			this.search.on('textChanged', this.onTextChange);
+			this.search.on('hide', this.onHide);
+			this.search.on('cancel', this.onCancel);
+			this.search.on('clickEnter', this.onDone);
+			this.search.setReturnKey('done');
 		}
 
-		unbindEvents()
-		{
-			const { layout } = this.props;
-
-			layout.search.removeAllListeners('textChanged');
-			layout.search.removeAllListeners('hide');
-			layout.search.removeAllListeners('cancel');
-			layout.search.removeAllListeners('clickEnter');
-		}
-
-		show()
-		{
+		show = () => {
 			if (this.isOpened)
 			{
 				return;
 			}
 
-			const { search } = this.props.layout;
-			const searchText = this.props.search || '';
+			const searchText = State.searchString || '';
 
 			this.isOpened = true;
 
-			search.mode = 'bar';
-			search.text = searchText;
-			search.show();
+			this.createSearchLayoutView();
+
+			this.search.text = searchText;
+			this.search.show(this.searchLayoutView, 46);
+		};
+
+		createSearchLayoutView()
+		{
+			this.searchLayoutView = new SearchLayoutView({
+				presets: this.presets,
+				presetId: State.presetId,
+				onPresetSelected: this.onPresetSelected,
+			});
 		}
 
-		onTextChange(params)
-		{
-			if (this.props.presetId)
+		onTextChange = (params) => {
+			if (State.presetId)
 			{
 				// eslint-disable-next-line no-param-reassign
-				params.preset = this.getPresetById(this.props.presetId);
+				params.preset = this.getPresetById(State.presetId);
 			}
 
 			this.debounceSearch(params);
-		}
+		};
 
-		onPresetSelected(params, active)
-		{
+		onPresetSelected = (params, active) => {
 			const searchParams = active ? params : {};
 
 			this.searchHandler(searchParams);
-		}
+		};
 
-		onHide()
-		{
-			if (!this.props.visible)
-			{
-				return;
-			}
-
-			State.setIsSearchVisible(false);
+		onHide = () => {
 			this.isOpened = false;
-		}
+		};
 
-		onCancel()
-		{
+		onCancel = () => {
 			State.closeFilter();
 			this.isOpened = false;
 
 			void this.onSearch();
-		}
+		};
 
-		onDone()
-		{
+		onDone = () => {
 			this.close();
 
 			this.onHide();
-		}
+		};
 
 		searchHandler(params)
 		{
@@ -141,7 +129,7 @@ jn.define('calendar/event-list-view/search/layout', (require, exports, module) =
 			}
 
 			// eslint-disable-next-line no-param-reassign
-			params.text = params.text === undefined ? this.props.search : params.text;
+			params.text = params.text === undefined ? State.searchString : params.text;
 
 			const filterParams = {
 				searchString: params.text,
@@ -187,9 +175,8 @@ jn.define('calendar/event-list-view/search/layout', (require, exports, module) =
 		getPresetById(presetId)
 		{
 			let result = null;
-			const { presets } = this.props;
 
-			Object.values(presets).forEach((preset) => {
+			Object.values(this.presets).forEach((preset) => {
 				if (preset.id === presetId)
 				{
 					result = preset;
@@ -208,90 +195,11 @@ jn.define('calendar/event-list-view/search/layout', (require, exports, module) =
 
 		close()
 		{
-			this.props.layout.search.close();
+			this.search.close();
 
 			this.isOpened = false;
 		}
-
-		render()
-		{
-			const { visible } = this.props;
-
-			return View(
-				{
-					style: styles.container(visible),
-				},
-				visible && View(
-					{},
-					ScrollView(
-						{
-							showsHorizontalScrollIndicator: false,
-							horizontal: true,
-							style: styles.presetsScrollView,
-						},
-						View(
-							{
-								style: {
-									flexDirection: 'row',
-									alignItems: 'center',
-								},
-								testId: 'presetList',
-							},
-							...this.renderPresets(),
-						),
-					),
-				),
-			);
-		}
-
-		renderPresets()
-		{
-			const { presets, presetId } = this.props;
-			const presetLength = Object.keys(presets).length;
-
-			return Object.values(presets).map((preset, index) => {
-				// eslint-disable-next-line no-param-reassign
-				preset = {
-					...preset,
-					active: (presetId === preset.id),
-					last: (index === presetLength - 1),
-					onPresetSelected: this.onPresetSelected,
-				};
-
-				return Preset(preset);
-			});
-		}
 	}
 
-	const styles = {
-		container: (visible) => {
-			return {
-				paddingHorizontal: Indent.XL3.toNumber(),
-				paddingVertical: Indent.XS.toNumber(),
-				position: visible ? 'absolute' : 'relative',
-				display: visible ? 'flex' : 'none',
-				zIndex: 10,
-				height: visible ? PRESET_LIST_LAYOUT_HEIGHT + 2 * Indent.XS.toNumber() : 0,
-				width: '100%',
-				backgroundColor: Color.bgNavigation.toHex(),
-				borderBottomWidth: visible ? 1 : 0,
-				borderBottomColor: Color.bgSeparatorSecondary.toHex(),
-			};
-		},
-		presetsScrollView: {
-			height: PRESET_LIST_LAYOUT_HEIGHT,
-		},
-		presets: {
-			flexDirection: 'row',
-			alignItems: 'center',
-		},
-	};
-
-	const mapStateToProps = (state) => ({
-		visible: state.isSearchVisible,
-		search: state.searchString,
-		presetId: state.presetId,
-	});
-
-	module.exports = { SearchLayout: observeState(SearchLayout, mapStateToProps) };
+	module.exports = { SearchLayout };
 });

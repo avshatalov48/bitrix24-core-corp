@@ -96,21 +96,12 @@ class DocumentGeneratorDocumentsComponent extends CBitrixComponent
 
 		$this->arResult = [];
 
-		$this->arResult['TOP_VIEW_TARGET_ID'] = false;
-		$isIframe = $this->request->get('IFRAME') == 'Y' ? true : false;
-		if(SITE_TEMPLATE_ID == "bitrix24")
+		if (Loader::includeModule('ui'))
 		{
-			if($isIframe)
-			{
-				$this->arResult['TOP_VIEW_TARGET_ID'] = 'inside_pagetitle';
-			}
-			else
-			{
-				$this->arResult['TOP_VIEW_TARGET_ID'] = 'pagetitle';
-			}
+			\Bitrix\UI\Toolbar\Facade\Toolbar::addFilter($this->prepareFilter());
+			\Bitrix\UI\Toolbar\Facade\Toolbar::deleteFavoriteStar();
 		}
 
-		$this->arResult['FILTER'] = $this->prepareFilter();
 		$this->arResult['GRID'] = $this->prepareGrid();
 		$this->arResult['TITLE'] = Loc::getMessage('DOCGEN_DOCUMENTS_TITLE');
 

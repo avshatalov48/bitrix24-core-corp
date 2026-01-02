@@ -1,8 +1,10 @@
+import { Builder, Dictionary } from 'crm.integration.analytics';
 import { Editor, FilledPlaceholder } from 'crm.template.editor';
 import { TourManager } from 'crm.tour-manager';
 import { ajax as Ajax, Dom, Event, Loc, Runtime, Tag, Text, Type } from 'main.core';
 import { BaseEvent, EventEmitter } from 'main.core.events';
 import { MenuItem, MenuItemOptions, MenuManager } from 'main.popup';
+import { sendData } from 'ui.analytics';
 import { Dialog, DialogOptions } from 'ui.entity-selector';
 import { MessageBox } from 'ui.dialogs.messagebox';
 
@@ -59,6 +61,11 @@ export default class Whatsapp extends Item
 	#unViewedTourList: string[];
 
 	#fetchConfigPromise: ?Promise = null;
+
+	#isHelpShown: boolean = false;
+	#isTemplateSelectorShown: boolean = false;
+	#isSuggestTemplateShown: boolean = false;
+	#isResendTry: boolean = false;
 
 	/**
 	 * @override
@@ -233,6 +240,8 @@ export default class Whatsapp extends Item
 			// eslint-disable-next-line promise/catch-or-return
 			this.#fetchConfigPromise.then(() => this.#prepareToResend(template, fromId, clientData));
 		}
+
+		this.#isResendTry = true;
 	}
 
 	#prepareParams(data: Object): void
@@ -372,6 +381,7 @@ export default class Whatsapp extends Item
 				this.#setTemplate(Runtime.clone(this.getSetting('demoTemplate')));
 				this.#selectTplDlg = null;
 				this.emitFinishEditEvent();
+				this.#submitCancelButtonAnalytics(this.#template?.ORIGINAL_ID);
 			});
 
 			return Tag.render`
@@ -561,6 +571,8 @@ export default class Whatsapp extends Item
 		}
 
 		this.#selectTplDlg.show();
+
+		this.#submitTemplateSelectAnalytics();
 	}
 
 	#handleSettingsMenuClick(): void
@@ -586,6 +598,8 @@ export default class Whatsapp extends Item
 		{
 			top.BX.Helper.show(`redirect=detail&code=${code}`);
 		}
+
+		this.#submitHelpShowAnalytics();
 	}
 
 	#handleShowSubMenu(event: BaseEvent, items: MenuItemOptions[]): void
@@ -690,6 +704,8 @@ export default class Whatsapp extends Item
 			() => this.setLocked(false),
 			() => this.setLocked(false),
 		).catch(() => this.setLocked(false));
+
+		this.#submitSendMessageAnalytics(this.#template.ORIGINAL_ID);
 	}
 
 	#handleSendSuccess(data: Object): void
@@ -741,6 +757,7 @@ export default class Whatsapp extends Item
 		;
 
 		this.#tplEditor.setBody(preview); // @todo will support other positions too, not only Preview
+		EventEmitter.subscribeOnce('BX.Crm.Template.Editor:shown', this.#onPreviewTemplate.bind(this));
 	}
 
 	#initTemplateSelectDialog(additionalOptions: DialogOptions): void
@@ -834,16 +851,16 @@ export default class Whatsapp extends Item
 		const showForm = () => {
 			BX.UI.Feedback.Form.open({
 				id: 'b24_crm_timeline_whatsapp_template_suggest_form',
-				defaultForm: {
-					id: 760,
-					lang: 'en',
-					sec: 'culzcq',
-				},
 				forms: [{
 					zones: ['ru', 'by', 'kz'],
 					id: 758,
 					lang: 'ru',
 					sec: 'jyafqa',
+				}, {
+					zones: ['en'],
+					id: 760,
+					lang: 'en',
+					sec: 'culzcq',
 				}, {
 					zones: ['de'],
 					id: 764,
@@ -866,6 +883,8 @@ export default class Whatsapp extends Item
 					sec: 'culzcq',
 				}],
 			});
+
+			this.#submitSuggestTemplateAnalytics();
 		};
 
 		return [
@@ -895,4 +914,122 @@ export default class Whatsapp extends Item
 		return !Type.isArrayFilled(this.#communications[0].phones);
 	}
 	// endregion
+
+	#onPreviewTemplate(): void
+	{
+		this.#submitPreviewTemplateAnalytics();
+	}
+
+	#submitHelpShowAnalytics(): void
+	{
+		if (this.#isHelpShown)
+		{
+			return;
+		}
+
+		const analyticsData = Builder.Communication.FormEvent.createDefault(
+			this.getEntityTypeId(),
+		)
+			.setElement(Dictionary.ELEMENT_WA_HELP)
+		;
+
+		this.#isHelpShown = true;
+
+		this.#submitAnalyticsData(analyticsData);
+	}
+
+	#submitSendMessageAnalytics(templateId: ?string = null): void
+	{
+		const analyticsData = Builder.Communication.SendEvent.createDefault(
+			this.getEntityTypeId(),
+		)
+			.setElement(Dictionary.ELEMENT_WA_SEND)
+			.setContactsCount(1)
+		;
+
+		if (this.#isResendTry)
+		{
+			analyticsData.setResend();
+			this.#isResendTry = false;
+		}
+
+		if (templateId)
+		{
+			analyticsData.setTemplateId(templateId);
+		}
+
+		this.#submitAnalyticsData(analyticsData);
+	}
+
+	#submitSuggestTemplateAnalytics(): void
+	{
+		if (this.#isSuggestTemplateShown)
+		{
+			return;
+		}
+
+		const analyticsData = Builder.Communication.FormEvent.createDefault(
+			this.getEntityTypeId(),
+		)
+			.setElement(Dictionary.ELEMENT_WA_TEMPLATE_OFFER)
+		;
+
+		this.#isSuggestTemplateShown = true;
+
+		this.#submitAnalyticsData(analyticsData);
+	}
+
+	#submitTemplateSelectAnalytics(): void
+	{
+		if (this.#isTemplateSelectorShown)
+		{
+			return;
+		}
+
+		const analyticsData = Builder.Communication.FormEvent.createDefault(
+			this.getEntityTypeId(),
+		)
+			.setElement(Dictionary.ELEMENT_WA_TEMPLATE_SELECTOR)
+		;
+
+		this.#isTemplateSelectorShown = true;
+
+		this.#submitAnalyticsData(analyticsData);
+	}
+
+	#submitCancelButtonAnalytics(templateId: ?string = null): void
+	{
+		const analyticsData = Builder.Communication.SendEvent.createDefault(
+			this.getEntityTypeId(),
+		)
+			.setElement(Dictionary.ELEMENT_WA_CANCEL)
+		;
+
+		if (templateId)
+		{
+			analyticsData.setTemplateId(templateId);
+		}
+
+		this.#submitAnalyticsData(analyticsData);
+	}
+
+	#submitPreviewTemplateAnalytics(): void
+	{
+		const analyticsData = Builder.Communication.FormEvent.createDefault(
+			this.getEntityTypeId(),
+		)
+			.setElement(Dictionary.ELEMENT_WA_PREVIEW)
+		;
+
+		this.#submitAnalyticsData(analyticsData);
+	}
+
+	#submitAnalyticsData(analyticsData): void
+	{
+		analyticsData
+			.setEvent(Dictionary.EVENT_WA_TIMELINE)
+			.setSubSection(Dictionary.SUB_SECTION_DETAILS);
+
+		sendData(analyticsData.buildData());
+	}
 }

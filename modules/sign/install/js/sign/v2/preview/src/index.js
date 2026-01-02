@@ -72,13 +72,14 @@ export class Preview
 		}
 
 		const { width: pageWidth, height: pageHeight } = this.#page.getBoundingClientRect();
-		const widthRatio = widthPx / (width / 100 * pageWidth);
-		const heightRatio = heightPx / (height / 100 * pageHeight);
-		const fontSize = (parseFloat(style['fontSize']) || 14 ) / widthRatio;
+
+		const widthRatio = widthPx / (width / 100 * (pageWidth > 0 ? pageWidth : 446));
+		const heightRatio = heightPx / (height / 100 * (pageHeight > 0 ? pageHeight : 630));
+		const fontSize = (parseFloat(style.fontSize) || 14) / widthRatio;
 		const padding = `${5 / heightRatio}px ${8 / widthRatio}px`;
 		Object.assign(inlineStyles, {
 			padding,
-			fontSize: `${fontSize}px`
+			fontSize: `${fontSize}px`,
 		});
 
 		return inlineStyles;
@@ -91,6 +92,8 @@ export class Preview
 		{
 			await new Promise((resolve) => Event.bindOnce(this.#page, 'load', resolve));
 		}
+
+		Dom.clean(this.#blocksContainer);
 
 		const { blocksTemplate, blocks } = blocksData.reduce((acc, block) => {
 			const node = Tag.render`
@@ -111,14 +114,14 @@ export class Preview
 			const { page } = block.position;
 			blocks.set(page, [
 				...(blocks.get(page) ?? []),
-				node
+				node,
 			]);
 			Dom.append(node, blocksTemplate);
 
 			return acc;
 		}, {
 			blocks: new Map(),
-			blocksTemplate: new DocumentFragment()
+			blocksTemplate: new DocumentFragment(),
 		});
 		Dom.append(blocksTemplate, this.#blocksContainer);
 
@@ -145,7 +148,6 @@ export class Preview
 
 		return Tag.render`<img src="data:image;base64,${url}" />`;
 	}
-
 	#getTextLayout(block): ?HTMLElement
 	{
 		let text = block.data.text;
@@ -335,7 +337,7 @@ export class Preview
 	{
 		this.#urls = urls.length ? [
 			...this.#urls,
-			...urls
+			...urls,
 		] : [];
 		this.#renderContent();
 		this.#renderControls();
@@ -363,6 +365,7 @@ export class Preview
 	async setBlocks(blocks = [])
 	{
 		Dom.clean(this.#blocksContainer);
+
 		if (!blocks?.length)
 		{
 			return;

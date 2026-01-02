@@ -14,7 +14,7 @@
 }
 
 .sign-preview__placeholder_text {
-	font: 600 14px/20px var(--ui-font-family-system);
+	font: 600 14px/20px var(--ui-font-family-primary, var(--ui-font-family-system));
 	color: #9fc8d9;
 	text-align: center;
 	margin-bottom: 0;

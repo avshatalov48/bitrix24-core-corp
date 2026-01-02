@@ -5,3 +5,4 @@ $MESS['CRM_INTEGRATION_AI_ERROR_FILE_NOT_FOUND'] = 'CoPilot не может на
 $MESS['CRM_INTEGRATION_AI_ERROR_ENGINE_FAILED'] = 'CoPilot не может обработать звонок. Обновите страницу и попробуйте снова';
 $MESS['CRM_INTEGRATION_AI_ERROR_ENGINE_LIMIT_EXCEEDED'] = 'Превышено количество запросов к модулю AI';
 $MESS['CRM_INTEGRATION_AI_ERROR_JOB_ALREADY_EXISTS'] = 'CoPilot уже обрабатывает этот звонок';
+$MESS['CRM_INTEGRATION_AI_ERROR_WRONG_REPEAT_SALE_PAYLOAD_MARKERS'] = 'Недостаточно информации об этом клиенте в сделке или карточке клиента';

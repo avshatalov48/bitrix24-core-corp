@@ -58,10 +58,8 @@ $arResult['BUTTONS'] = array();
 $sectionID = (int)($arParams['SECTION_ID'] ?? 0);
 $productID = (int)($arParams['PRODUCT_ID'] ?? 0);
 
-$CrmPerms = new CCrmPerms($USER->GetID());
-
-$productAdd = $sectionAdd = $productEdit = $productCopy = $productDelete = $bImport = $CrmPerms->HavePerm('CONFIG', BX_CRM_PERM_CONFIG, 'WRITE');
-$productShow = $sectionShow = $permToExport = $CrmPerms->HavePerm('CONFIG', BX_CRM_PERM_CONFIG, 'READ');
+$productAdd = $sectionAdd = $productEdit = $productCopy = $productDelete = $bImport = \Bitrix\Crm\Service\Container::getInstance()->getUserPermissions()->isCrmAdmin();
+$productShow = $sectionShow = $permToExport = \Bitrix\Crm\Service\Container::getInstance()->getUserPermissions()->product()->canRead();
 
 if ($productAdd)
 {

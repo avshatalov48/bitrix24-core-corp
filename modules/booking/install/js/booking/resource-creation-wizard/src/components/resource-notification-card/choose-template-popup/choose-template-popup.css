@@ -46,11 +46,9 @@
 	color: var(--ui-color-palette-black-solid);
 	font-size: var(--ui-font-size-sm);
 	font-weight: var(--ui-font-weight-normal);
-
 	padding: 12px;
 	border-top-left-radius: var(--ui-border-radius-lg);
 	border-top-right-radius: var(--ui-border-radius-lg);
-
 }
 
 .booking-resource-wizard-choose-template-popup-content-msg-example-body.wha {
@@ -60,15 +58,14 @@
 }
 
 .booking-resource-wizard-choose-template-popup-content-msg-example-body-text {
-	padding-top: 7px;
-	padding-bottom: 12px;
-	padding-left: 7px;
-	padding-right: 7px;
-	border-radius: 8px;
+	padding: 7px 7px 12px;
+	border-radius: var(--ui-border-radius-sm);
 	justify-content: center;
 	align-items: center;
 	gap: 10px;
 	display: inline-flex;
+	cursor: default;
+	user-select: none;
 }
 
 .booking-resource-wizard-choose-template-popup-content-msg-example-body-text.wha {
@@ -78,7 +75,7 @@
 
 .booking-resource-wizard-choose-template-popup-content-msg-example-body-text.sms {
 	background: var(--ui-color-palette-gray-15);
-	border-radius: 16px;
+	border-radius: var(--ui-border-radius-2xl);
 	padding-left: 14px;
 	padding-right: 14px;
 }
@@ -95,7 +92,6 @@
 	margin-left: -5px;
 }
 
-
 .booking-resource-wizard-choose-template-popup-content-msg-example-body-text-time.wha {
 	display: block;
 	text-align: right;
@@ -109,8 +105,6 @@
 .booking-resource-wizard-choose-template-popup-content-msg-example-body-text-time.sms {
 	display: none;
 }
-
-
 
 .booking-resource-wizard-choose-template-popup-content-msg-example-actions {
 	padding-left: 12px;

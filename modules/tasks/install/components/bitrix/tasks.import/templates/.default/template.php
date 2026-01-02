@@ -5,6 +5,7 @@ use Bitrix\Main\Localization\Loc;
 use Bitrix\Main\Web\Json;
 use Bitrix\Main\UI\Extension;
 use Bitrix\Main\Text\HtmlFilter;
+use Bitrix\UI\Toolbar\Facade\Toolbar;
 
 Extension::load([
 	"ui.design-tokens",
@@ -13,6 +14,7 @@ Extension::load([
 	"ui.buttons.icons",
 	"ui.alerts",
 	"tasks.encoding-handler",
+	'ui.sidepanel-content',
 ]);
 
 Loc::loadMessages(__FILE__);
@@ -24,29 +26,15 @@ $arParams =& $helper->getComponent()->arParams; // make $arParams the same varia
 
 $APPLICATION->SetTitle(Loc::getMessage('TASKS_IMPORT_FORM_TITLE'));
 
-if ($arResult['IFRAME'])
-{
-	$APPLICATION->RestartBuffer(); //сбрасываем весь вывод
-	CJSCore::Init("sidepanel");
-	?>
-	<!DOCTYPE html>
-	<html>
-	<head>
-		<? $APPLICATION->ShowHead();?>
-	</head>
-	<body class="template-<?=SITE_TEMPLATE_ID?> <?$APPLICATION->ShowProperty("BodyClass");?>" onload="window.top.BX.onCustomEvent(window.top, 'tasksIframeLoad');" onunload="window.top.BX.onCustomEvent(window.top, 'tasksIframeUnload');">
-	<div class="tasks-iframe-header">
-		<div class="pagetitle-wrap">
-			<div class="pagetitle-inner-container">
-				<div class="pagetitle-menu" id="pagetitle-menu"><? $APPLICATION->ShowViewContent("pagetitle");?></div>
-				<div class="pagetitle" <?if($arResult['IFRAME']){?>style="padding-left: 20px; padding-right:20px;"<?}?>>
-					<span id="pagetitle" class="pagetitle-item"><?$APPLICATION->ShowTitle();?></span>
-				</div>
-			</div>
-		</div>
-	</div>
-<?}?>
-	<div class="task-iframe-workarea" <?if($arResult['IFRAME']){?> style="padding:0 20px;" <?} else {?> style="padding: 0 15px 0 0" <?}?>>
+$bodyClass = $APPLICATION->GetPageProperty('BodyClass');
+$APPLICATION->SetPageProperty(
+	'BodyClass',
+	($bodyClass ? $bodyClass.' ' : '').'no-all-paddings'
+);
+
+Toolbar::deleteFavoriteStar();
+?>
+	<div class="task-iframe-workarea" >
 		<?$helper->displayFatals();?>
 		<?if(!$helper->checkHasFatals()):?>
 
@@ -120,8 +108,8 @@ if ($arResult['IFRAME'])
 								<div class="tasks-entity-card-container tasks-import-results-inner-panel">
 									<div id="third_step_inner_container" class="tasks-entity-card-container-content">
 										<div class="tasks-entity-card-widget tasks-import-results-inner-panel-row">
-											<div class="tasks-entity-card-widget-title">
-												<span class="tasks-entity-card-widget-title-text"><?= Loc::getMessage('TASKS_IMPORT_FIELDS_SECTION_IMPORT_RESULTS')?></span>
+											<div class="ui-slider-heading-4">
+												<?= Loc::getMessage('TASKS_IMPORT_FIELDS_SECTION_IMPORT_RESULTS')?>
 											</div>
 											<div class="tasks-entity-widget-content">
 												<div class="tasks-entity-widget-content-block tasks-entity-widget-content-block-field-text tasks-import-results-inner-panel-row-content">
@@ -178,9 +166,9 @@ if ($arResult['IFRAME'])
 							<td class="tasks-first-step-column" id="first_step_show_container" style="display: <?= ($arResult['STEP'] == 1) ? 'block' : 'none'?>">
 								<div class="tasks-entity-card-container tasks-first-step-column-inner">
 									<div id="first_step_inner_container" class="tasks-entity-card-container-content tasks-steps-columns-background">
-										<div class="tasks-entity-card-widget">
-											<div class="tasks-entity-card-widget-title">
-												<span class="tasks-entity-card-widget-title-text"><?= Loc::getMessage('TASKS_IMPORT_FIELDS_SECTION_IMPORT_PARAMETERS')?></span>
+										<div class="ui-slider-section">
+											<div class="ui-slider-heading-4">
+												<?= Loc::getMessage('TASKS_IMPORT_FIELDS_SECTION_IMPORT_PARAMETERS')?>
 											</div>
 											<div class="tasks-entity-widget-content">
 												<div class="tasks-entity-widget-content-block tasks-entity-widget-content-block-field-text">
@@ -282,9 +270,9 @@ if ($arResult['IFRAME'])
 												</div>
 											</div>
 										</div>
-										<div class="tasks-entity-card-widget">
-											<div class="tasks-entity-card-widget-title">
-												<span class="tasks-entity-card-widget-title-text"><?= Loc::getMessage('TASKS_IMPORT_FIELDS_SECTION_FILE_FORMAT')?></span>
+											<div class="ui-slider-section">
+											<div class="ui-slider-heading-4">
+												<?= Loc::getMessage('TASKS_IMPORT_FIELDS_SECTION_FILE_FORMAT')?>
 											</div>
 											<div class="tasks-entity-widget-content">
 												<div class="tasks-entity-widget-content-block tasks-entity-widget-content-block-field-text">
@@ -328,9 +316,9 @@ if ($arResult['IFRAME'])
 												</div>
 											</div>
 										</div>
-										<div class="tasks-entity-card-widget">
-											<div class="tasks-entity-card-widget-title">
-												<span class="tasks-entity-card-widget-title-text"><?= Loc::getMessage('TASKS_IMPORT_FIELDS_SECTION_FILE_TEMPLATE')?></span>
+											<div class="ui-slider-section">
+											<div class="ui-slider-heading-4">
+												<?= Loc::getMessage('TASKS_IMPORT_FIELDS_SECTION_FILE_TEMPLATE')?>
 											</div>
 											<div class="tasks-entity-widget-content">
 												<div class="tasks-entity-widget-content-block tasks-entity-widget-content-block-field-custom-link">
@@ -347,13 +335,13 @@ if ($arResult['IFRAME'])
 							<td class="tasks-second-step-column" id="second_step_show_container" style="display: <?= ($arResult['STEP'] == 2) ? 'block' : 'none'?>">
 								<div class="tasks-entity-card-container tasks-second-step-column-inner">
 									<div id="second_step_inner_container" class="tasks-entity-card-container-content tasks-steps-columns-background">
-										<div class="tasks-entity-card-widget">
-											<div class="tasks-entity-card-widget-title">
-												<span class="tasks-entity-card-widget-title-text"><?= Loc::getMessage('TASKS_IMPORT_FIELDS_SECTION_MATCHING_FIELDS')?></span>
+											<div class="ui-slider-section">
+											<div class="ui-slider-heading-4">
+												<?= Loc::getMessage('TASKS_IMPORT_FIELDS_SECTION_MATCHING_FIELDS')?>
 											</div>
 											<div class="tasks-entity-widget-content">
 												<div class="tasks-import-required-fields" id="required_fields_container">
-													<?= Loc::getMessage('TASKS_IMPORT_FIELDS_REQUIRED_FIELDS')?>:
+													<?= Loc::getMessage('TASKS_IMPORT_FIELDS_REQUIRED_FIELDS')?>
 													<?= HtmlFilter::encode(implode(', ', $arResult['IMPORT_FILE_PARAMETERS']['REQUIRED_FIELDS'])) ?>.
 												</div>
 												<?
@@ -423,9 +411,9 @@ if ($arResult['IFRAME'])
 												</table>
 											</div>
 										</div>
-										<div class="tasks-entity-card-widget">
-											<div class="tasks-entity-card-widget-title">
-												<span class="tasks-entity-card-widget-title-text"><?= Loc::getMessage('TASKS_IMPORT_FIELDS_SECTION_IMPORT_DATA_EXAMPLE')?></span>
+											<div class="ui-slider-section">
+											<div class="ui-slider-heading-4">
+												<?= Loc::getMessage('TASKS_IMPORT_FIELDS_SECTION_IMPORT_DATA_EXAMPLE')?>
 											</div>
 											<div class="tasks-entity-widget-content">
 												<div id="tasks_import_example_table_container" class="tasks-import-example-table-container">

@@ -8,7 +8,6 @@ if (!CModule::IncludeModule('crm'))
 }
 
 global $APPLICATION;
-$userPerms = CCrmPerms::GetCurrentUserPermissions();
 
 $arParams['NAME_TEMPLATE'] = empty($arParams['NAME_TEMPLATE']) ? CSite::GetNameFormat(false) : str_replace(array('#NOBR#','#/NOBR#'), array('', ''), $arParams['NAME_TEMPLATE']);
 
@@ -111,7 +110,7 @@ if(!CCrmOwnerType::IsDefined($ownerTypeID) || $ownerID <= 0)
 		$entityID = intval($result['ENTITY_ID']);
 		$entityTypeID = intval($result['ENTITY_TYPE_ID']);
 		$entityTypeName = CCrmOwnerType::ResolveName($entityTypeID);
-		if(!CCrmAuthorizationHelper::CheckReadPermission($entityTypeName, $entityID, $userPerms))
+		if(!\Bitrix\Crm\Service\Container::getInstance()->getUserPermissions()->item()->canRead($entityTypeID, $entityID))
 		{
 			continue;
 		}
@@ -222,7 +221,7 @@ elseif($ownerTypeID === CCrmOwnerType::Deal)
 			$entityID = intval($result['ENTITY_ID']);
 			$entityTypeID = intval($result['ENTITY_TYPE_ID']);
 			$entityTypeName = CCrmOwnerType::ResolveName($entityTypeID);
-			if(!CCrmAuthorizationHelper::CheckReadPermission($entityTypeName, $entityID, $userPerms))
+			if(!\Bitrix\Crm\Service\Container::getInstance()->getUserPermissions()->item()->canRead($entityTypeID, $entityID))
 			{
 				continue;
 			}
@@ -424,7 +423,7 @@ elseif($ownerTypeID === CCrmOwnerType::Company)
 			$entityID = intval($result['ENTITY_ID']);
 			$entityTypeID = intval($result['ENTITY_TYPE_ID']);
 			$entityTypeName = CCrmOwnerType::ResolveName($entityTypeID);
-			if(!CCrmAuthorizationHelper::CheckReadPermission($entityTypeName, $entityID, $userPerms))
+			if(!\Bitrix\Crm\Service\Container::getInstance()->getUserPermissions()->item()->canRead($entityTypeID, $entityID))
 			{
 				continue;
 			}
@@ -574,7 +573,7 @@ elseif($ownerTypeID === CCrmOwnerType::Contact)
 			$entityID = intval($result['ENTITY_ID']);
 			$entityTypeID = intval($result['ENTITY_TYPE_ID']);
 			$entityTypeName = CCrmOwnerType::ResolveName($entityTypeID);
-			if(!CCrmAuthorizationHelper::CheckReadPermission($entityTypeName, $entityID, $userPerms))
+			if(!\Bitrix\Crm\Service\Container::getInstance()->getUserPermissions()->item()->canRead($entityTypeID, $entityID))
 			{
 				continue;
 			}
@@ -688,7 +687,7 @@ elseif($ownerTypeID === CCrmOwnerType::Invoice)
 			$entityID = intval($result['ENTITY_ID']);
 			$entityTypeID = intval($result['ENTITY_TYPE_ID']);
 			$entityTypeName = CCrmOwnerType::ResolveName($entityTypeID);
-			if(!CCrmAuthorizationHelper::CheckReadPermission($entityTypeName, $entityID, $userPerms))
+			if(!\Bitrix\Crm\Service\Container::getInstance()->getUserPermissions()->item()->canRead($entityTypeID, $entityID))
 			{
 				continue;
 			}

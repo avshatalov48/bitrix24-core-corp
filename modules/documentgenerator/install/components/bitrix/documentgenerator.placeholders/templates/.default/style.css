@@ -1,11 +1,3 @@
-.docs-placeholder-wrap {
-	max-width: 800px;
-}
-
-.docs-placeholder-wrap-slider {
-	padding: 0 26px 0 27px;
-}
-
 .docs-placeholder-section {
 	padding: 27px 25px 34px 27px;
 	font-family: var(--ui-font-family-secondary, var(--ui-font-family-open-sans));
@@ -40,13 +32,9 @@
 }
 
 .docs-placeholder-item {
-	width: 220px;
+	width: 190px;
 	margin-right: 40px;
 	margin-bottom: 15px;
-}
-
-.docs-placeholder-wrap-slider .docs-placeholder-item {
-	width: 190px;
 }
 
 .docs-placeholder-item:nth-child(3n+3) {
@@ -97,7 +85,6 @@
 }
 .docs-template-grid {
 	width: 100%;
-	height: 621px;
 }
 .docgen-placeholder-copy {
 	cursor: pointer;

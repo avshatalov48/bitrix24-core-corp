@@ -9,20 +9,19 @@
 namespace Bitrix\Tasks\Provider;
 
 
+use Bitrix\Intranet\Util;
 use Bitrix\Main\Access\User\AccessibleUser;
 use Bitrix\Tasks\Access\Model\UserModel;
-use Bitrix\Tasks\Access\Permission\PermissionDictionary;
 use Bitrix\Tasks\Access\Permission\PermissionRegistry;
-use Bitrix\Tasks\Access\Permission\TasksPermissionTable;
 
 trait UserProviderTrait
 {
-	private $userId;
-	private $executorId;
-	private $userModel;
-	private $departmentMembers;
-	private $roles;
-	private $permissions;
+	private ?int $userId = null;
+	private ?int $executorId = null;
+	private ?AccessibleUser $userModel = null;
+	private ?array $departmentMembers = null;
+	private ?array $roles = null;
+	private ?array $permissions = null;
 
 	private function getUserModel(): AccessibleUser
 	{
@@ -30,6 +29,7 @@ trait UserProviderTrait
 		{
 			$this->userModel = UserModel::createFromId($this->executorId);
 		}
+
 		return $this->userModel;
 	}
 
@@ -62,7 +62,7 @@ trait UserProviderTrait
 		if ($this->departmentMembers === null)
 		{
 			$departments = $this->getUserModel()->getUserDepartments();
-			$res = \Bitrix\Intranet\Util::getDepartmentEmployees([
+			$res = Util::getDepartmentEmployees([
 				'DEPARTMENTS' 	=> $departments,
 				'RECURSIVE' 	=> 'N',
 				'ACTIVE' 		=> 'Y',

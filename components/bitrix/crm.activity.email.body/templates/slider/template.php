@@ -451,7 +451,8 @@ $bodyLoaderMaxTime = ini_get('max_execution_time') ?: 60;
 		$fromValue = $activity['SETTINGS']['EMAIL_META']['__email'];
 	}
 
-	$ownerType = \CCrmOwnerType::ResolveName((int)$arParams['ACTIVITY']['OWNER_TYPE_ID']);
+	$ownerTypeId = (int)$arParams['ACTIVITY']['OWNER_TYPE_ID'];
+	$ownerType = \CCrmOwnerType::ResolveName($ownerTypeId);
 	$ownerId = (int)$arParams['ACTIVITY']['OWNER_ID'];
 
 	$APPLICATION->includeComponent(
@@ -466,6 +467,8 @@ $bodyLoaderMaxTime = ini_get('max_execution_time') ?: 60;
 			'USE_SIGNATURES' => true,
 			'USE_CALENDAR_SHARING' => true,
 			'COPILOT_PARAMS' => $arParams['COPILOT_PARAMS'],
+			'OWNER_TYPE_ID' => $ownerTypeId,
+			'OWNER_ID' => $ownerId,
 			'REPLY_FIELD_TO_JSON' => Message::getSelectedRecipientsForDialog($replyTo, $ownerType, $ownerId)->toJsObject(),
 			'REPLY_FIELD_CC_JSON' => Message::getSelectedRecipientsForDialog($replyCC, $ownerType, $ownerId)->toJsObject(),
 			'SELECTED_RECIPIENTS_JSON' => Message::getSelectedRecipientsForDialog($selectedRecipients, $ownerType, $ownerId, true)->toJsObject(),

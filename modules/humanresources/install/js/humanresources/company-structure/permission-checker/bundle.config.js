@@ -1,5 +1,5 @@
 module.exports = {
-	input: 'src/checker.js',
+	input: 'src/index.js',
 	output: 'dist/checker.bundle.js',
 	namespace: 'BX.Humanresources.CompanyStructure',
 	browserslist: true,

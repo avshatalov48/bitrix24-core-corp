@@ -6,20 +6,26 @@ use Bitrix\Crm;
 
 class Lead extends Base
 {
-	protected function loadValue(string $fieldId): void
+	protected array $contactFields;
+	protected array $companyFields;
+
+	protected function processField(string $fieldId): bool
 	{
 		if ($fieldId === 'CONTACT_IDS')
 		{
 			$this->document['CONTACT_IDS'] = Crm\Binding\LeadContactTable::getLeadContactIDs($this->id);
+
+			return true;
 		}
-		elseif ($fieldId === 'COMPANY_TITLE')
+
+		if ($fieldId === 'COMPANY_TITLE')
 		{
 			$this->loadCompanyTitle();
+
+			return true;
 		}
-		else
-		{
-			$this->loadEntityValues();
-		}
+
+		return false;
 	}
 
 	protected function loadEntityValues(): void
@@ -27,6 +33,15 @@ class Lead extends Base
 		if (isset($this->document['ID']))
 		{
 			return;
+		}
+
+		$this->prepareFieldGroups();
+		$this->addCustomerField();
+		$this->addContactCompanyFields();
+
+		if (!$this->optimizationEnabled || in_array('CONTACT_IDS', $this->select, true))
+		{
+			$this->document['CONTACT_IDS'] = Crm\Binding\LeadContactTable::getLeadContactIDs($this->id);
 		}
 
 		$result = \CCrmLead::GetListEx(
@@ -37,33 +52,60 @@ class Lead extends Base
 			],
 			false,
 			false,
-			['*']
+			$this->select
 		);
 
-
 		$this->document = array_merge($this->document, $result->fetch() ?: []);
+		$this->loadAdditionalValues();
+		$this->document = Crm\Entity\CommentsHelper::prepareFieldsFromBizProc($this->typeId, $this->id, $this->document);
+	}
+
+	protected function loadAdditionalValues(): void
+	{
+		$this->loadAddressValues();
+		$customerFields = \CCrmLead::getCustomerFields();
+		if (!empty(array_intersect($this->select, $customerFields)))
+		{
+			$this->select = array_merge($this->select, ['CONTACT_ID']);
+		}
+
+		if (!$this->optimizationEnabled || in_array('COMPANY_TITLE', $this->select, true))
+		{
+			$this->loadCompanyTitle();
+		}
 
 		$this->normalizeEntityBindings(['COMPANY_ID', 'CONTACT_ID']);
 		$this->appendDefaultUserPrefixes();
-		$this->appendCustomerFields();
+
+		$hasCustomerFields = !empty(array_intersect($this->select, $customerFields));
+		if (!$this->optimizationEnabled || $hasCustomerFields)
+		{
+			$this->appendCustomerFields();
+		}
 
 		if ($this->document['COMPANY_ID'] > 0)
 		{
-			unset($this->document['COMPANY_TITLE']);
+			//unset($this->document['COMPANY_TITLE']);
 		}
 
-		$this->document['FULL_ADDRESS'] = Crm\Format\AddressFormatter::getSingleInstance()->formatTextComma(
-			Crm\LeadAddress::mapEntityFields($this->document)
-		);
+		$addressFields = Crm\LeadAddress::mapEntityFields($this->document);
+		if (!empty(array_filter($addressFields)))
+		{
+			$this->document['FULL_ADDRESS'] = Crm\Format\AddressFormatter::getSingleInstance()->formatTextComma(
+				$addressFields
+			);
+		}
 
-		$statuses = \CCrmStatus::GetStatusList('STATUS');
-		$statusId = $this->document['STATUS_ID'] ?? '';
-		$this->document['STATUS_ID_PRINTABLE'] = $statusId && isset($statuses[$statusId]) ? $statuses[$statusId] : '';
+		if (isset($this->document['STATUS_ID']))
+		{
+			$statuses = \CCrmStatus::GetStatusList('STATUS');
+			$statusId = $this->document['STATUS_ID'] ?? '';
+			$this->document['STATUS_ID_PRINTABLE'] = $statusId && isset($statuses[$statusId]) ? $statuses[$statusId] : '';
+		}
 
 		$this->loadFmValues();
 		$this->loadUserFieldValues();
-
-		$this->document = Crm\Entity\CommentsHelper::prepareFieldsFromBizProc($this->typeId, $this->id, $this->document);
+		$this->loadCommonFieldValues();
 	}
 
 	protected function loadCompanyTitle(): void
@@ -104,6 +146,14 @@ class Lead extends Base
 					}
 				}
 			}
+		}
+	}
+
+	protected function addCustomerField(): void
+	{
+		if (!in_array('IS_RETURN_CUSTOMER', $this->select, true))
+		{
+			$this->select[] = 'IS_RETURN_CUSTOMER';
 		}
 	}
 }

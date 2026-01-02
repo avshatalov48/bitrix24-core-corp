@@ -2,7 +2,7 @@
 
 namespace Bitrix\Tasks\Flow\Efficiency\Command;
 
-use Bitrix\Tasks\AbstractCommand;
+use Bitrix\Tasks\Flow\AbstractCommand;
 use Bitrix\Tasks\Internals\Attribute\PositiveNumber;
 use Bitrix\Tasks\Internals\Attribute\Range;
 use Bitrix\Tasks\Internals\Attribute\Required;

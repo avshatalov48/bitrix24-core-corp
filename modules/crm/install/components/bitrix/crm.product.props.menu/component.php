@@ -28,9 +28,7 @@ $arResult['BUTTONS'] = array();
 
 $propID = isset($arParams['PROP_ID']) ? intval($arParams['PROP_ID']) : 0;
 
-$CrmPerms = new CCrmPerms($USER->GetID());
-
-$propAdd = $CrmPerms->HavePerm('CONFIG', BX_CRM_PERM_CONFIG, 'WRITE');
+$propAdd = \Bitrix\Crm\Service\Container::getInstance()->getUserPermissions()->isCrmAdmin();
 
 $arProp = null;
 if ($propID > 0)

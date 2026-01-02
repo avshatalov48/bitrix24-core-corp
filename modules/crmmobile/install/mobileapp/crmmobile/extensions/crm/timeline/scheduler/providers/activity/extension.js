@@ -27,6 +27,7 @@ jn.define('crm/timeline/scheduler/providers/activity', (require, exports, module
 	const { DatePill } = require('layout/ui/date-pill');
 	const { debounce } = require('utils/function');
 	const { Avatar } = require('ui-system/blocks/avatar');
+	const { clone } = require('utils/object');
 
 	const INITIAL_HEIGHT = 1000;
 
@@ -49,7 +50,8 @@ jn.define('crm/timeline/scheduler/providers/activity', (require, exports, module
 				selectedReminders: this.entity.reminders?.selectedValues,
 			};
 
-			this.deadline = this.initDeadline();
+			this.initialDeadline = this.initDeadline();
+			this.deadline = this.initialDeadline;
 
 			this.mounted = false;
 
@@ -671,6 +673,11 @@ jn.define('crm/timeline/scheduler/providers/activity', (require, exports, module
 			return new Promise((resolve, reject) => {
 				const { text, files, user } = this.state;
 				const { activityId } = this.context;
+				const description = text.trim();
+
+				const analyticsEvent = this.prepareAnalyticsEvent(
+					{ files, description },
+				);
 
 				let responsibleId = null;
 
@@ -683,14 +690,17 @@ jn.define('crm/timeline/scheduler/providers/activity', (require, exports, module
 					responsibleId,
 					ownerTypeId: this.entity.typeId,
 					ownerId: this.entity.id,
-					description: text.trim(),
+					description,
 					deadline: this.deadlineRef?.getMoment().format(datetime()),
 					fileTokens: files.map((file) => file.token).filter(Boolean),
 					parentActivityId: activityId || null,
-					pingOffsets: this.selectorRef.getSelectedValues(),
+					pingOffsets: this.#getSelectedReminders(),
 				};
 
-				BX.ajax.runAction('crm.activity.todo.add', { data })
+				BX.ajax.runAction('crm.activity.todo.add', {
+					data,
+					analyticsLabel: analyticsEvent?.exportToObject(),
+				})
 					.then((response) => {
 						resolve(response);
 						Haptics.notifySuccess();
@@ -702,6 +712,68 @@ jn.define('crm/timeline/scheduler/providers/activity', (require, exports, module
 						reject(response);
 					});
 			});
+		}
+
+		#getSelectedReminders()
+		{
+			return this.selectorRef.getSelectedValues();
+		}
+
+		prepareAnalyticsEvent(context = {})
+		{
+			if (!this.props.analytics)
+			{
+				return null;
+			}
+
+			const analyticsEvent = clone(this.props.analytics);
+
+			analyticsEvent
+				.setEvent('activity_create')
+				.setElement('create_button')
+				.exportToObject()
+			;
+
+			if (context.description.length > 0)
+			{
+				analyticsEvent.setP5('description');
+			}
+
+			if (!this.#arePingsEqual(this.#getSelectedReminders(), this.entity.reminders.selectedValues))
+			{
+				analyticsEvent.setP2('ping_custom');
+			}
+
+			const p4Part1 = context.files.length > 0 ? 'addBlock_1' : '';
+			const p4Part2 = this.deadline.timestamp === this.initialDeadline.timestamp ? '' : 'calendarCustom';
+
+			if (p4Part1 !== '' || p4Part2 !== '')
+			{
+				analyticsEvent.setP4(`${p4Part1}${p4Part1 !== '' && p4Part2 !== '' ? ',' : ''}${p4Part2}`);
+			}
+
+			return analyticsEvent;
+		}
+
+		#arePingsEqual(a, b)
+		{
+			const setA = new Set(a.map(Number));
+			const setB = new Set(b.map(Number));
+
+			if (setA.size !== setB.size)
+			{
+				return false;
+			}
+
+			for (const value of setA)
+			{
+				if (!setB.has(value))
+				{
+					return false;
+				}
+			}
+
+			return true;
 		}
 	}
 

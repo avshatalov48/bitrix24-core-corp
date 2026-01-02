@@ -4,6 +4,8 @@
 jn.define('layout/ui/entity-editor', (require, exports, module) => {
 	const { EventEmitter } = require('event-emitter');
 	const { useCallback } = require('utils/function');
+	const { Random } = require('utils/random');
+	const { isNotEmptyString } = require('utils/type');
 	const { PureComponent } = require('layout/pure-component');
 	const { FadeView } = require('animation/components/fade-view');
 	const { EntityEditorControlFactory } = require('layout/ui/entity-editor/control');
@@ -57,9 +59,9 @@ jn.define('layout/ui/entity-editor', (require, exports, module) => {
 
 		init(props)
 		{
-			this.id = CommonUtils.isNotEmptyString(props.id) ? props.id : Random.getString();
+			this.id = isNotEmptyString(props.id) ? props.id : Random.getString();
 
-			this.uid = CommonUtils.isNotEmptyString(props.uid) ? props.uid : Random.getString();
+			this.uid = isNotEmptyString(props.uid) ? props.uid : Random.getString();
 			/** @type {EventEmitter} */
 			this.customEventEmitter = EventEmitter.createWithUid(this.uid);
 

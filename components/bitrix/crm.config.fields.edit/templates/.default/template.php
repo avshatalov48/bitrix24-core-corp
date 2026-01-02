@@ -398,7 +398,6 @@ $APPLICATION->IncludeComponent(
 	);
 </script><?
 endif;
-if(SITE_TEMPLATE_ID === 'bitrix24'):
 ?><script>
 	BX.ready(
 			function()
@@ -406,5 +405,4 @@ if(SITE_TEMPLATE_ID === 'bitrix24'):
 				BX.CrmInterfaceFormUtil.disableThemeSelection("<?= CUtil::JSEscape($arResult["FORM_ID"])?>");
 			}
 	);
-</script><?
-endif;?>
+</script>

@@ -89,6 +89,9 @@ class Input extends Base\Input
 				case 'clientChangeLicence':
 					$result = $this->finishSession(Loc::getMessage('IMCONNECTOR_PROVIDER_NETWORK_TARIFF_DIALOG_CLOSE'));
 					break;
+				case 'clientSystemNotifier':
+					$result = $this->receivingChangeFromClient();
+					break;
 				case 'clientRequestFinalizeSession':
 					$result = $this->finishSession(Loc::getMessage('IMCONNECTOR_PROVIDER_NETWORK_UNREGISTER_DIALOG_CLOSE'));
 					break;
@@ -673,6 +676,81 @@ class Input extends Base\Input
 					}
 				}
 			}
+		}
+
+		return $result;
+	}
+
+	/**
+	 * Sends a system message to operator chats about client licence or rights changes.
+	 *
+	 * @return Result
+	 */
+	protected function receivingChangeFromClient(): Result
+	{
+
+		$result = clone $this->result;
+
+		if (!\Bitrix\Main\Loader::includeModule('imopenlines'))
+		{
+			$result->addError(new Error(
+				'Failed to load the imopenlines module',
+				'ERROR_IMCONNECTOR_FAILED_LOAD_IMOPENLINES',
+				__METHOD__
+			));
+			return $result;
+		}
+
+		if ($result->isSuccess())
+		{
+			$resultData = [];
+			foreach ($this->data as $cell => $params)
+			{
+
+				$sessions = array_map(static fn($id) => (int)$id, (array)($params['SESSIONS'] ?? []));
+				$type = $params['TYPE'] ?? 'licence';
+
+				$messageText = match ($type) {
+					'rights' => Loc::getMessage('IMCONNECTOR_PROVIDER_NETWORK_CLIENT_CHANGE_RIGHTS'),
+					'licence' => Loc::getMessage('IMCONNECTOR_PROVIDER_NETWORK_CLIENT_CHANGE_LICENCE'),
+				};
+
+				if (empty($sessions))
+				{
+					$resultData[$cell]['SUCCESS'] = false;
+					$resultData[$cell]['ERRORS'] = ['No session IDs provided'];
+					continue;
+				}
+
+				$querySession = \Bitrix\ImConnector\Data\Session::getInstance()->query();
+				$orm = $querySession
+					->setSelect(['ID', 'CONFIG_ID', 'USER_ID', 'SOURCE', 'CHAT_ID', 'USER_CODE'])
+					->setFilter([
+						'=ID' => $sessions,
+						'=CLOSED' => 'N',
+					])
+					->exec();
+
+				$success = false;
+				while ($row = $orm->fetch())
+				{
+					/** @var \Bitrix\ImOpenLines\Services\Message $messenger */
+					$messenger = \Bitrix\Main\DI\ServiceLocator::getInstance()->get('ImOpenLines.Services.Message');
+					$messenger->addMessage([
+						'MESSAGE_TYPE' => \IM_MESSAGE_OPEN_LINE,
+						'TO_CHAT_ID' => $row['CHAT_ID'],
+						'MESSAGE' => $messageText,
+					]);
+					$success = true;
+				}
+
+				$resultData[$cell]['SUCCESS'] = $success;
+				if (!$success)
+				{
+					$resultData[$cell]['ERRORS'] = ['No open sessions found'];
+				}
+			}
+			$result->setResult($resultData);
 		}
 
 		return $result;

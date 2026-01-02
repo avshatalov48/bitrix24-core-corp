@@ -1,4 +1,8 @@
 <?php
+
+use Bitrix\Main\Localization\Loc;
+use Bitrix\UI\Toolbar\Facade\Toolbar;
+
 if (!defined('B_PROLOG_INCLUDED') || B_PROLOG_INCLUDED !== true) die();
 
 $customDomains = array();
@@ -47,45 +51,81 @@ $lastForSelector  = array(
 	$currentUser['__id'] => $currentUser['__id'],
 );
 
-if (SITE_TEMPLATE_ID == 'bitrix24')
+if (SITE_TEMPLATE_ID == 'bitrix24' || SITE_TEMPLATE_ID === 'air')
 {
-	$this->setViewTarget('inside_pagetitle'); ?>
+	Toolbar::addFilter([
+		'FILTER_ID'    => $arResult['FILTER_ID'],
+		'GRID_ID'      => $arResult['GRID_ID'],
+		'ENABLE_LABEL' => true,
+		'FILTER'       => $arResult['FILTER'],
+	]);
+	Toolbar::addButton([
+		'color' => \Bitrix\UI\Buttons\Color::LIGHT_BORDER,
+		'text' => Loc::getMessage('user' === $arResult['MODE'] ? 'INTR_MAIL_MANAGE_MODE_USER' : 'INTR_MAIL_MANAGE_MODE_MAILBOX'),
+		'menu' => [
+			'items' => [
+				[
+					'text' => CUtil::jsEscape(getMessage('INTR_MAIL_MANAGE_MODE_USER')),
+					'className' => $arResult['MODE'] === 'user' ? 'menu-popup-item-take': 'dummy',
+					'href' => '?mode=user',
+				],
+				[
+					'text' => CUtil::jsEscape(getMessage('INTR_MAIL_MANAGE_MODE_MAILBOX')),
+					'className' => $arResult['MODE'] === 'mailbox' ? 'menu-popup-item-take': 'dummy',
+					'href' => '?mode=mailbox',
+				],
+			],
+			'offsetLeft' => 41,
+			'angle' => true,
+		],
+	]);
 
-	<div class="pagetitle-container pagetitle-flexible-space">
-		<? $APPLICATION->includeComponent(
-			'bitrix:main.ui.filter', '',
-			array(
-				'FILTER_ID'    => $arResult['FILTER_ID'],
-				'GRID_ID'      => $arResult['GRID_ID'],
-				'ENABLE_LABEL' => true,
-				'FILTER'       => $arResult['FILTER'],
-			)
-		); ?>
-		<span class="webform-small-button webform-small-button-transparent  webform-small-button-dropdown" onclick="mb.modeMenu(this); ">
-			<span class="webform-small-button-text">
-				<?=getMessage('user' == $arResult['MODE'] ? 'INTR_MAIL_MANAGE_MODE_USER' : 'INTR_MAIL_MANAGE_MODE_MAILBOX') ?>
-			</span>
-			<span class="webform-small-button-icon"></span>
-		</span>
-	</div>
+	if ($hasOptions1 || $hasOptions2)
+	{
+		$settingsItems = [];
 
-	<span class="pagetitle-container pagetitle-align-right-container">
-		<? if ($hasOptions1 || $hasOptions2): ?>
-			<span class="webform-small-button webform-small-button-transparent webform-cogwheel" onclick="mb.optionsMenu(this); ">
-				<span class="webform-button-icon"></span>
-			</span>
-		<? endif ?>
-		<? if (!empty($arParams['SERVICES'])): ?>
-			<span class="webform-small-button webform-small-button-blue webform-small-button-add" onclick="mb.create(); ">
-				<span class="webform-small-button-icon"></span>
-				<span class="webform-small-button-text">
-					<?=getMessage('INTR_MAIL_MANAGE_ADD_MAILBOX2') ?>
-				</span>
-			</span>
-		<? endif ?>
-	</span>
+		if ($hasOptions1)
+		{
+			$settingsItems[] = [
+				'text' => CUtil::jsEscape(empty($customDomains) ? getMessage('INTR_MAIL_MANAGE_DOMAIN_ADD') : sprintf('%s <b>%s</b>', getMessage('INTR_MAIL_MANAGE_DOMAIN_EDIT2'), htmlspecialcharsbx(end($customDomains)))),
+				'href' => CUtil::jsEscape($arParams['PATH_TO_MAIL_CFG_DOMAIN']),
+			];
+		}
 
-	<? $this->endViewTarget();
+		if ($hasOptions2)
+		{
+			$settingsItems[] = [
+				'text' => CUtil::jsEscape(getMessage('INTR_MAIL_MANAGE_SETTINGS')),
+				'onclick' => new \Bitrix\UI\Buttons\JsHandler(
+					'mb.settings'
+				),
+			];
+		}
+
+		Toolbar::addButton([
+			'color' => \Bitrix\UI\Buttons\Color::LIGHT_BORDER,
+			'icon' => \Bitrix\UI\Buttons\Icon::SETTINGS,
+			'dropdown' => false,
+			'menu' => [
+				'items' => $settingsItems,
+				'offsetLeft' => 20,
+				'angle' => true,
+			],
+		]);
+	}
+
+	if (!empty($arParams['SERVICES']))
+	{
+		Toolbar::addButton([
+			'color' => \Bitrix\UI\Buttons\Color::PRIMARY,
+			'text' => GetMessage('INTR_MAIL_MANAGE_ADD_MAILBOX2'),
+			'icon' => \Bitrix\UI\Buttons\Icon::ADD,
+			'onclick' => new \Bitrix\UI\Buttons\JsHandler(
+				'mb.create'
+			),
+		]);
+	}
+
 }
 else
 {

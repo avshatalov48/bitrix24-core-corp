@@ -1192,8 +1192,10 @@ BX.CrmConfigStatusClass = (function ()
 		}
 
 		var blockColorPicker = BX('block-color-picker');
-		blockColorPicker.style.left = event.pageX+'px';
-		blockColorPicker.style.top = event.pageY+'px';
+		const pos = BX.Dom.getRelativePosition(event.target, BX('crm-container'));
+
+		blockColorPicker.style.left = pos.left+'px';
+		blockColorPicker.style.top = pos.top+'px';
 		var img = BX.findChildren(BX('block-color-picker'), {'tag': 'IMG'}, true)[0];
 		img.setAttribute('data-img', fieldId);
 		img.onclick();

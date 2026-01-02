@@ -72,7 +72,7 @@ final class ToDoResponsibleNotification
 
 	private function getNotifyTag(): string
 	{
-		return str_replace('#ACTIVITY_ID#', self::NOTIFY_TAG_PLACEHOLDER, $this->todo->getId());
+		return str_replace('#ACTIVITY_ID#', $this->todo->getId(), self::NOTIFY_TAG_PLACEHOLDER);
 	}
 
 	private function getNotifyMessage(string $messageType): callable
@@ -195,6 +195,7 @@ final class ToDoResponsibleNotification
 			->setToUserId($toUserId)
 			->setNotifyMessage($message)
 			->setNotifyMessageOut($messageOut)
+			->setNotifyTag($this->getNotifyTag() . '|' . $toUserId) // notify tag must be unique
 		;
 
 		if ($fromUserId)

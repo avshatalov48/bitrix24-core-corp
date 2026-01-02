@@ -29,10 +29,12 @@ final class CopilotLanguageProvider extends BaseProvider
 
 	public function isAvailable(): bool
 	{
+		$userPermissions = Container::getInstance()->getUserPermissions()->entityType();
+
 		return $this->isAiEnabled
-			&& Container::getInstance()
-				->getUserPermissions()
-				->checkUpdatePermissions($this->entityTypeId, 0, $this->categoryId)
+			&& ((is_null($this->categoryId))
+				? $userPermissions->canUpdateItems($this->entityTypeId)
+				: $userPermissions->canUpdateItemsInCategory($this->entityTypeId, $this->categoryId))
 		;
 	}
 

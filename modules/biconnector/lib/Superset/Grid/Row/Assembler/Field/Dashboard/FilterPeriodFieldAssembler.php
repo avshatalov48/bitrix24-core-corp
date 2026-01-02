@@ -57,12 +57,13 @@ class FilterPeriodFieldAssembler extends FieldAssembler
 					'FILTER_PERIOD' => $row['data']['FILTER_PERIOD'],
 					'INCLUDE_LAST_FILTER_DATE' => $row['data']['INCLUDE_LAST_FILTER_DATE'],
 				];
+
+				$row['columns'][$columnId] = $this->prepareColumn($value);
 			}
 			else
 			{
-				$value = [];
+				$row['columns'][$columnId] = '';
 			}
-			$row['columns'][$columnId] = $this->prepareColumn($value);
 		}
 
 		return $row;

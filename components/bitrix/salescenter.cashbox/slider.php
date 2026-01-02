@@ -1,5 +1,9 @@
 <?php
 
+use Bitrix\Main\Application;
+use Bitrix\Main\Loader;
+use Bitrix\UI\Toolbar\Facade\Toolbar;
+
 $siteId = '';
 if(isset($_REQUEST['site_id']) && is_string($_REQUEST['site_id']))
 {
@@ -15,7 +19,7 @@ if($siteId)
 
 require($_SERVER['DOCUMENT_ROOT'].'/bitrix/header.php');
 
-$request = \Bitrix\Main\Application::getInstance()->getContext()->getRequest();
+$request = Application::getInstance()->getContext()->getRequest();
 
 if (($showChecks = $request->get('show_checks')) && $showChecks == 'y')
 {
@@ -67,7 +71,24 @@ elseif (($showChecksCorrection = $request->get('show_checks_correction')) && $sh
 }
 else
 {
-	$isPlainView = $isUsePadding = ($request->get('handler') !== 'offline');
+	if (Loader::includeModule('ui'))
+	{
+		Toolbar::deleteFavoriteStar();
+	}
+
+	if ($request->get('handler') === 'offline')
+	{
+		$isPlainView = false;
+		$isUsePadding = false;
+		$useUiToolbar = 'Y';
+	}
+	else
+	{
+		$isPlainView = true;
+		$isUsePadding = true;
+		$useUiToolbar = 'N';
+	}
+
 	$APPLICATION->IncludeComponent(
 		'bitrix:ui.sidepanel.wrapper',
 		'',
@@ -85,7 +106,8 @@ else
 			],
 			'PLAIN_VIEW' => $isPlainView,
 			'USE_PADDING' => $isUsePadding,
-		]
+			'USE_UI_TOOLBAR' => $useUiToolbar,
+		],
 	);
 }
 

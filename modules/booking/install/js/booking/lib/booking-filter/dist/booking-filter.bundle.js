@@ -4,6 +4,10 @@ this.BX.Booking = this.BX.Booking || {};
 (function (exports,main_core,booking_const,booking_core) {
 	'use strict';
 
+	const CounterDictionary = Object.freeze({
+	  BookingDelayed: 'booking_delayed',
+	  BookingUnconfirmed: 'booking_unconfirmed'
+	});
 	class BookingFilter {
 	  prepareFilter(fields, withinMonth = false) {
 	    const dateTs = booking_core.Core.getStore().getters[`${booking_const.Model.Interface}/${withinMonth ? 'viewDateTs' : 'selectedDateTs'}`];
@@ -28,22 +32,48 @@ this.BX.Booking = this.BX.Booking || {};
 	    }
 	    if (fields.CONFIRMED) {
 	      filter.IS_CONFIRMED = {
-	        'Y': 1,
-	        'N': 0
+	        Y: 1,
+	        N: 0
 	      }[fields.CONFIRMED];
 	    }
-	    if (fields.DELAYED) {
-	      filter.IS_DELAYED = {
-	        'Y': 1,
-	        'N': 0
-	      }[fields.DELAYED];
+	    if (fields.REQUIRE_ATTENTION) {
+	      filter.HAS_COUNTER_OF_TYPE = {
+	        D: CounterDictionary.BookingDelayed,
+	        AC: CounterDictionary.BookingUnconfirmed
+	      }[fields.REQUIRE_ATTENTION];
 	    }
 	    return filter;
 	  }
 	}
 	const bookingFilter = new BookingFilter();
 
+	class BookingDateCountFilter extends BookingFilter {
+	  prepareUndatedFilter(fields, withinMonth = false) {
+	    const filter = super.prepareFilter(fields, withinMonth);
+	    delete filter.WITHIN;
+	    return filter;
+	  }
+	  prepareFutureOnlyFilter(fields, withinMonth = false) {
+	    const filter = super.prepareFilter(fields, withinMonth);
+	    filter.WITHIN = {
+	      DATE_FROM: Math.trunc(Date.now() / 1000)
+	    };
+	    return filter;
+	  }
+	  prepareFutureFilter(fields, withinMonth = false) {
+	    const filter = super.prepareFilter(fields, withinMonth);
+	    const dateFrom = filter.WITHIN.DATE_FROM;
+	    const today = Math.trunc(Date.now() / 1000);
+	    if (dateFrom < today) {
+	      filter.WITHIN.DATE_FROM = today;
+	    }
+	    return filter;
+	  }
+	}
+	const bookingDateCountFilter = new BookingDateCountFilter();
+
 	exports.bookingFilter = bookingFilter;
+	exports.bookingDateCountFilter = bookingDateCountFilter;
 
 }((this.BX.Booking.Lib = this.BX.Booking.Lib || {}),BX,BX.Booking.Const,BX.Booking));
 //# sourceMappingURL=booking-filter.bundle.js.map

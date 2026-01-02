@@ -8,10 +8,11 @@ use Throwable;
 
 trait ErrorResponseTrait
 {
-	protected function buildErrorResponse(string $message = ''): mixed
+	protected function buildErrorResponse(string $message = '', int $code = 0): mixed
 	{
 		$message = empty($message) ? 'Unknown error' : $message;
-		$this->errorCollection->setError(new Error($message));
+		$this->errorCollection->setError(new Error($message, $code));
+
 		return null;
 	}
 

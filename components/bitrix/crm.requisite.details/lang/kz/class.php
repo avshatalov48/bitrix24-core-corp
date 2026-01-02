@@ -1,0 +1,24 @@
+<?php
+$MESS["CRM_MODULE_NOT_INSTALLED"] = "Crm модулі орнатылмаған.";
+$MESS["CRM_REQUISITE_DETAILS_AUTOCOMPLETE"] = "Деректемелерді іздеу";
+$MESS["CRM_REQUISITE_DETAILS_ERR_COMPANY_REQUISITE_READ_DENIED"] = "Компанияның деректемелерін оқуға қолжетімділік жоқ (ID = #ID#)";
+$MESS["CRM_REQUISITE_DETAILS_ERR_COMPANY_REQUISITE_WRITE_DENIED"] = "Компанияның деректемелерін жазуға қолжетімділік жоқ (ID = #ID#)";
+$MESS["CRM_REQUISITE_DETAILS_ERR_CONTACT_REQUISITE_READ_DENIED"] = "Байланыстың деректемелерін оқуға қолжетімділік жоқ (ID = #ID#)";
+$MESS["CRM_REQUISITE_DETAILS_ERR_CONTACT_REQUISITE_WRITE_DENIED"] = "Байланыстың деректемелерін жазуға қолжетімділік жоқ (ID = #ID#)";
+$MESS["CRM_REQUISITE_DETAILS_ERR_ENTITY_TYPE_ID"] = "Ата-аналық нысанның дұрыс емес түрі";
+$MESS["CRM_REQUISITE_DETAILS_ERR_EXTERNAL_DATA_NOT_DEFINED"] = "Деректемелердің сыртқы деректерімен параметр берілмеген.";
+$MESS["CRM_REQUISITE_DETAILS_ERR_INVALID_ENTITY_ID_TO_SAVE"] = "Деректемелерді сақтау үшін ата-аналық мәні анықталмаған.";
+$MESS["CRM_REQUISITE_DETAILS_ERR_INVALID_ENTITY_TYPE_ID"] = "Ата-аналық мәннің түрі анықталмаған.";
+$MESS["CRM_REQUISITE_DETAILS_ERR_INVALID_EXTERNAL_DATA"] = "Дұрыс емес сыртқы деректер.";
+$MESS["CRM_REQUISITE_DETAILS_ERR_INVALID_FORM_DATA"] = "Нысан деректерімен параметр берілмеген.";
+$MESS["CRM_REQUISITE_DETAILS_ERR_MODE_NOT_DEFINED"] = "Компоненттің жұмыс режимі орнатылмаған.";
+$MESS["CRM_REQUISITE_DETAILS_ERR_NOT_FOUND"] = "Деректемелерді алу мүмкін болмады (ID = #ID#)";
+$MESS["CRM_REQUISITE_DETAILS_ERR_PRESET_COUNTRY_ID_IS_NOT_DEFINED"] = "Деректемелер елі анықталмады.";
+$MESS["CRM_REQUISITE_DETAILS_ERR_PRESET_ID_NOT_DEFINED"] = "Деректемелер қалыбы берілмеген.";
+$MESS["CRM_REQUISITE_DETAILS_ERR_PRESET_NOT_FOUND"] = "Деректемелер қалыбы табылмады.";
+$MESS["CRM_REQUISITE_DETAILS_ERR_PREV_PRESET_COUNTRY_ID_IS_NOT_DEFINED"] = "Алдыңғы қалыпта деректемелер елі анықталмаған.";
+$MESS["CRM_REQUISITE_DETAILS_ERR_PREV_PRESET_NOT_FOUND"] = "Алдыңғы деректемелер қалыбы табылмады.";
+$MESS["CRM_REQUISITE_DETAILS_ERR_REQUISITE_READ_PERMISSIONS"] = "Деректемелерді оқуға қолжетімділік жоқ (ID = #ID#)";
+$MESS["CRM_REQUISITE_DETAILS_FORM_TITLE"] = "Деректемелерді редакциялау";
+$MESS["CRM_REQUISITE_DETAILS_FORM_TITLE_READ_ONLY"] = "Деректемелерді қарау";
+$MESS["CRM_REQUISITE_DETAILS_PRESET"] = "Қалып";

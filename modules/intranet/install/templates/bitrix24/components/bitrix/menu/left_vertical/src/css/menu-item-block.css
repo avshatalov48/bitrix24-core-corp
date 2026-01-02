@@ -1,0 +1,114 @@
+.menu-item-block {
+	--menu-item-color: var(--menu-item-color-default);
+	--menu-item-color-default: var(--ui-color-design-plain-content);
+	--menu-item-color-active: var(--ui-color-design-selection-content);
+	--menu-item-background: var(--menu-item-background-default);
+	--menu-item-background-default: transparent;
+	--menu-item-background-hover: color-mix(in srgb, var(--menu-item-background) 100%, var(--ui-color-bg-state-hover-default-hex) var(--ui-color-bg-state-hover-default-opacity));
+	--menu-item-background-active: var(--ui-color-design-selection-bg);
+
+	position: relative;
+	height: 38px;
+	padding: 0;
+	margin: var(--menu-item-block-stack-space) 0 0 0;
+	display: flex;
+	list-style: none;
+	border-radius: var(--menu-item-border-radius);
+	color: var(--menu-item-color);
+	transition: 0.2s ease-in-out border-radius, 150ms ease-in-out color, 150ms ease-in-out background;
+	background-color: var(--menu-item-background);
+	border: none;
+}
+
+
+.menu-item-block.--footer {
+	--menu-item-color: var(--menu-item-color-default);
+	--menu-item-color-default: var(--ui-color-design-plain-na-content);
+	--menu-item-color-active: var(--ui-color-design-selection-content);
+}
+
+.menu-item-block.menu-expand {
+	margin-left: var(--menu-items-block-padding-x);
+}
+
+
+.menu-items-edit-mode .menu-item-block.menu-expand,
+.menu-items-edit-mode .menu-item-block.menu-settings {
+	display: none;
+}
+
+.menu-item-block.menu-configs-sect {
+	display: none;
+}
+
+.menu-item-block.--footer:hover {
+	--menu-item-color: var(--menu-item-color-active);
+}
+
+.menu-item-block:hover,
+.menu-item-block-hover {
+	background-color: var(--menu-item-background-hover);
+	transition-duration: 0.2s, 150ms, 0s;
+}
+
+.menu-item-block.menu-item-group {
+	height: 37px;
+}
+
+.menu-item-group-more-ul .menu-item-block {
+	right: var(--leftmenu-group-stroke-weight);
+	width: calc(100% + (var(--leftmenu-group-stroke-weight) * 2));
+}
+
+.menu-item-group-more-ul .menu-item-block:first-child {
+	margin-top: 0;
+}
+
+.menu-item-group-more-ul .menu-item-block:last-child {
+	bottom: -1px;
+	margin-top: calc(var(--menu-item-block-stack-space) - 1px);
+}
+
+.menu-item-block,
+.menu-item-group.menu-item-block[data-collapse-mode="expanded"].menu-item-group-collapsing {
+	border-radius: var(--menu-item-border-radius);
+}
+
+.menu-item-group.menu-item-block[data-collapse-mode="expanded"].menu-item-group-collapsing {
+	--menu-item-color: var(--menu-item-color-default);
+	--menu-item-background: var(--menu-item-background-default);
+	border-color: transparent;
+}
+
+.menu-item-active.menu-item-block,
+.menu-item-group.menu-item-block[data-collapse-mode="expanded"][data-contains-active-item="Y"].menu-item-group-collapsing {
+	--menu-item-color: var(--menu-item-color-active);
+	--menu-item-background: var(--menu-item-background-active);
+	transition-duration: 0.2s, 150ms, 0s;
+}
+
+.menu-drag-mode .menu-item-block,
+.menu-drag-mode .menu-item-active.menu-item-block,
+.menu-items-edit-mode .menu-item-active.menu-item-block {
+	color: var(--menu-item-color);
+	background-color: transparent;
+}
+
+.menu-item-group.menu-item-block[data-collapse-mode="collapsed"] {
+	border-left: var(--leftmenu-group-stroke-weight) solid transparent;
+	border-right: var(--leftmenu-group-stroke-weight) solid transparent;
+	border-top: var(--leftmenu-group-stroke-weight) solid transparent;
+}
+
+.menu-item-group.menu-item-block[data-collapse-mode="expanded"],
+.menu-item-group.menu-item-block.menu-item-group-expanding,
+.menu-item-active.menu-item-group.menu-item-block.menu-item-group-expanding {
+	--menu-item-color: var(--ui-color-design-plain-na-content);
+	--menu-item-color-active: var(--ui-color-design-selection-content);
+	--menu-item-background: var(--leftmenu-group-bg);
+
+	border-left: var(--leftmenu-group-stroke-weight) solid var(--leftmenu-group-stroke);
+	border-right: var(--leftmenu-group-stroke-weight) solid var(--leftmenu-group-stroke);
+	border-top: var(--leftmenu-group-stroke-weight) solid var(--leftmenu-group-stroke);
+	border-radius: var(--menu-item-border-radius) var(--menu-item-border-radius) 0 0;
+}

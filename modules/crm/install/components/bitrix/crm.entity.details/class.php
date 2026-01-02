@@ -488,7 +488,7 @@ class CCrmEntityPopupComponent extends CBitrixComponent
 		$categories = [];
 		foreach ($factory->getCategories() as $category)
 		{
-			if (Container::getInstance()->getUserPermissions()->checkAddPermissions($entityTypeId, $category->getId()))
+			if (Container::getInstance()->getUserPermissions()->entityType()->canAddItemsInCategory($entityTypeId, $category->getId()))
 			{
 				$name = htmlspecialcharsbx($category->getName());
 				$categories[] = [

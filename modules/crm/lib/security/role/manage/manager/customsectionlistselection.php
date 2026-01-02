@@ -36,7 +36,7 @@ class CustomSectionListSelection implements RoleSelectionManager
 
 	public function hasPermissionsToEditRights(): bool
 	{
-		return Container::getInstance()->getUserPermissions()->isAutomatedSolutionsAdmin();
+		return Container::getInstance()->getUserPermissions()->automatedSolution()->isAllAutomatedSolutionsAdmin();
 	}
 
 	public function prohibitToSaveRoleWithoutAtLeastOneRight(): bool

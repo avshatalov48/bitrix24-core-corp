@@ -7,6 +7,7 @@ use Bitrix\Crm\Service\Display\Options;
 use Bitrix\Crm\Settings\LayoutSettings;
 use Bitrix\Crm\UserField\FileViewer;
 use Bitrix\Main\Loader;
+use Bitrix\Main\UI\Extension;
 use Bitrix\Main\UI\Viewer\ItemAttributes;
 use Bitrix\Mobile\UI\File;
 
@@ -157,6 +158,8 @@ class FileField extends BaseLinkedEntitiesField
 		string $groupName = null
 	): string
 	{
+		Extension::load('ui.viewer');
+
 		$itemAttributes = ItemAttributes::tryBuildByFileData($file, $fileUrl);
 		$itemAttributes->setTitle($title);
 		$itemAttributes->setAttribute('href', '#');

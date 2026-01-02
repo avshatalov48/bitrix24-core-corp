@@ -4,12 +4,17 @@
 jn.define('im/messenger/lib/logger/manager', (require, exports, module) => {
 	const { Type } = require('type');
 	const { Logger, LogType } = require('utils/logger');
+	const { Feature } = require('im/messenger/lib/feature');
 
 	/**
 	 * @class LoggerManager
 	 */
 	class LoggerManager
 	{
+		#externalConsole;
+		#saveDebugInfoConfig;
+		#debugInfo;
+
 		/**
 		 * @return LoggerManager
 		 */
@@ -33,6 +38,60 @@ jn.define('im/messenger/lib/logger/manager', (require, exports, module) => {
 			Object.entries(this.config).forEach(([loggerName, loggerConfig]) => {
 				this.getLogger(loggerName);
 			});
+			this.#externalConsole = null;
+			const isDebugInfoEnabled = Feature.isDevModeEnabled;
+			this.#saveDebugInfoConfig = {
+				logLevel: {
+					error: {
+						enabled: isDebugInfoEnabled,
+						maxRecordCount: 100,
+					},
+					log: {
+						enabled: isDebugInfoEnabled,
+						maxRecordCount: 100,
+					},
+					info: {
+						enabled: isDebugInfoEnabled,
+						maxRecordCount: 100,
+					},
+					warn: {
+						enabled: isDebugInfoEnabled,
+						maxRecordCount: 100,
+					},
+					trace: {
+						enabled: isDebugInfoEnabled,
+						maxRecordCount: 100,
+					},
+				},
+			};
+
+			this.#debugInfo = {
+				log: [],
+				info: [],
+				warn: [],
+				error: [],
+				trace: [],
+			};
+		}
+
+		getExternalConsole()
+		{
+			return this.#externalConsole;
+		}
+
+		setExternalConsole(console)
+		{
+			this.#externalConsole = console;
+		}
+
+		getSaveDebugInfoConfig()
+		{
+			return this.#saveDebugInfoConfig;
+		}
+
+		getDebugInfo()
+		{
+			return this.#debugInfo;
 		}
 
 		/**
@@ -47,6 +106,7 @@ jn.define('im/messenger/lib/logger/manager', (require, exports, module) => {
 			{
 				logger = this.createLogger(name);
 				this.loggerCollection.set(name, logger);
+				this.saveConfig();
 			}
 
 			return logger;
@@ -76,27 +136,101 @@ jn.define('im/messenger/lib/logger/manager', (require, exports, module) => {
 
 		getLoggerProxy()
 		{
-			const saveConfig = this.saveConfig.bind(this);
-
 			return {
-				get(target, property, receiver)
-				{
-					const handler = target[property];
-					if (Type.isFunction(handler) && (property === 'enable' || property === 'disable'))
-					{
-						return function(...args) {
-							const result = handler.apply(target, args);
-							if (result === true)
-							{
-								saveConfig();
-							}
+				get: (target, property) => {
+					const logger = target;
+					const methodName = property;
+					const method = logger[methodName];
 
-							return result;
-						};
+					if (this.checkShouldSaveConfig(method, methodName))
+					{
+						return this.getCallMethodAndSaveConfigHandler(logger, method);
 					}
 
-					return handler;
+					if (this.checkShouldPrintToExternalConsole(method, methodName))
+					{
+						return this.getCallMethodAndPrintToExternalConsoleHandler(logger, method, methodName);
+					}
+
+					return method;
 				},
+			};
+		}
+
+		checkShouldSaveConfig(method, methodName)
+		{
+			const saveConfigMethodNameList = [
+				'enable',
+				'disable',
+			];
+
+			return Type.isFunction(method) && saveConfigMethodNameList.includes(methodName);
+		}
+
+		getCallMethodAndSaveConfigHandler(logger, method)
+		{
+			return (...args) => {
+				const result = method.apply(logger, args);
+				if (result === true)
+				{
+					this.saveConfig();
+				}
+
+				return result;
+			};
+		}
+
+		checkShouldPrintToExternalConsole(method, methodName)
+		{
+			const printMethodNameList = [
+				'log',
+				'info',
+				'warn',
+				'error',
+				'trace',
+			];
+
+			return Type.isFunction(method) && printMethodNameList.includes(methodName);
+		}
+
+		saveDebugInfoIfNeeded(methodName, args)
+		{
+			if (this.#saveDebugInfoConfig.logLevel[methodName]?.enabled !== true)
+			{
+				return;
+			}
+
+			const currentRecordCount = this.#debugInfo[methodName].length;
+			const maxRecordCount = this.#saveDebugInfoConfig.logLevel[methodName].maxRecordCount;
+			if (currentRecordCount >= maxRecordCount)
+			{
+				this.#debugInfo[methodName].shift();
+			}
+
+			const debugArgs = args.map((arg) => {
+				if (arg instanceof Error)
+				{
+					return `${arg.name}: ${arg.message}`;
+				}
+
+				return arg;
+			});
+
+			this.#debugInfo[methodName].push(debugArgs);
+		}
+
+		getCallMethodAndPrintToExternalConsoleHandler(logger, method, methodName)
+		{
+			return (...args) => {
+				const result = method.apply(logger, args);
+				// it works because the method name matches the logging level name
+				if (logger.isEnabledLogType(methodName))
+				{
+					this.getExternalConsole()?.[methodName](args);
+					this.saveDebugInfoIfNeeded(methodName, args);
+				}
+
+				return result;
 			};
 		}
 
@@ -122,7 +256,61 @@ jn.define('im/messenger/lib/logger/manager', (require, exports, module) => {
 		}
 	}
 
+	/**
+	 * @param {string} name
+	 * @param {object} options
+	 *
+	 * @return Logger
+	 */
+	const getLogger = (name, options = {}) => {
+		return LoggerManager.getInstance().getLogger(name, options);
+	};
+
+	/**
+	 * @param {string} name
+	 * @param {string|function|object} context
+	 * @param {object} options
+	 *
+	 * @return {Logger}
+	 */
+	const getLoggerWithContext = (name, context, options = {}) => {
+		const className = typeof context === 'string'
+			? context
+			: (context?.name || context?.constructor?.name || 'UnknownClass');
+
+		const logger = getLogger(name, options);
+		const logMethodNameCollection = new Set(['log', 'info', 'warn', 'error', 'trace']);
+
+		const classLoggerProxy = {
+			get(target, property) {
+				const originalMethod = target[property];
+				if (logMethodNameCollection.has(property) && Type.isFunction(originalMethod))
+				{
+					return (...args) => {
+						if (args.length > 0 && typeof args[0] === 'string')
+						{
+							// eslint-disable-next-line no-param-reassign
+							args[0] = `${className}.${args[0]}`;
+						}
+						else
+						{
+							args.unshift(`${className}.`);
+						}
+
+						return originalMethod.apply(target, args);
+					};
+				}
+
+				return originalMethod;
+			},
+		};
+
+		return new Proxy(logger, classLoggerProxy);
+	};
+
 	module.exports = {
 		LoggerManager,
+		getLogger,
+		getLoggerWithContext,
 	};
 });

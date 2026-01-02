@@ -177,7 +177,7 @@ export default class Visit extends HistoryActivity
 
 	getVkProfileUrl(profile)
 	{
-		return 'https://vk.com/' + BX.util.htmlspecialchars(profile);
+		return 'https://vk.ru/' + BX.util.htmlspecialchars(profile);
 	}
 
 	view()

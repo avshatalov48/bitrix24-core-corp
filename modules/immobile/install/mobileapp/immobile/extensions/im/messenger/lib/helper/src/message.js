@@ -3,17 +3,21 @@
  */
 jn.define('im/messenger/lib/helper/message', (require, exports, module) => {
 	const { Type } = require('type');
+
 	const {
 		FileType,
+		FileAudioType,
 		UrlGetParameter,
 		MessageComponent,
+		MessageParams,
 	} = require('im/messenger/const');
 	const { serviceLocator } = require('im/messenger/lib/di/service-locator');
-	const { LoggerManager } = require('im/messenger/lib/logger');
+	const { getLogger } = require('im/messenger/lib/logger');
 	const { emojiRegex } = require('im/messenger/lib/utils');
 	const { SmileManager } = require('im/messenger/lib/smile-manager');
+	const { Feature } = require('im/messenger/lib/feature');
 
-	const logger = LoggerManager.getInstance().getLogger('helpers--message');
+	const logger = getLogger('helpers--message');
 
 	/**
 	 * @desc It's Set should be sync with serverComponentList in the im module
@@ -39,6 +43,13 @@ jn.define('im/messenger/lib/helper/message', (require, exports, module) => {
 		MessageComponent.generalChatCreationMessage,
 		MessageComponent.generalChannelCreationMessage,
 		MessageComponent.channelCreationMessage,
+		MessageComponent.vote,
+	]);
+
+	const customMessages = new Set([
+		MessageParams.ComponentId.CallMessage,
+		MessageParams.ComponentId.VoteMessage,
+		MessageParams.ComponentId.AiAssistantMessage,
 	]);
 
 	/**
@@ -50,6 +61,8 @@ jn.define('im/messenger/lib/helper/message', (require, exports, module) => {
 		messageModel;
 		/** @type {Array<FilesModelState>} */
 		filesModel;
+		/** @type {VoteModelState} */
+		voteModel;
 
 		/**
 		 * @param {MessagesModelState} messagesModel
@@ -69,7 +82,10 @@ jn.define('im/messenger/lib/helper/message', (require, exports, module) => {
 			{
 				if (!Type.isPlainObject(filesModel))
 				{
-					logger.error('MessageHelper.getByModel error: filesModel must be an array of filesModel', filesModel);
+					logger.error(
+						'MessageHelper.getByModel error: filesModel must be an array of filesModel',
+						filesModel,
+					);
 
 					return null;
 				}
@@ -120,6 +136,25 @@ jn.define('im/messenger/lib/helper/message', (require, exports, module) => {
 		{
 			this.messageModel = messageModel;
 			this.filesModel = filesModel;
+			this.voteModel = messageModel.vote;
+		}
+
+		/**
+		 * @return {MessengerCoreStore}
+		 */
+		get #store()
+		{
+			return serviceLocator.get('core').getStore();
+		}
+
+		get messageId()
+		{
+			return this.messageModel.id;
+		}
+
+		get files()
+		{
+			return this.filesModel;
 		}
 
 		get isSystem()
@@ -140,8 +175,13 @@ jn.define('im/messenger/lib/helper/message', (require, exports, module) => {
 		get isDeleted()
 		{
 			return this.messageModel.params?.IS_DELETED === 'Y'
-				|| this.isEmpty
-			;
+				|| this.isEmpty;
+		}
+
+		get isError()
+		{
+			return this.messageModel.params?.COMPONENT_PARAMS?.copilotError
+				|| this.messageModel.params?.componentId === MessageParams.ComponentId.ErrorMessage;
 		}
 
 		get isForward()
@@ -194,13 +234,16 @@ jn.define('im/messenger/lib/helper/message', (require, exports, module) => {
 		 */
 		get isFileGallery()
 		{
-			if (!this.isGallery)
+			if (!this.isGallery || this.isMediaGallery)
 			{
 				return false;
 			}
 
 			return this.filesModel.every((file) => {
-				return file.type === FileType.file || file.type === FileType.audio;
+				return file.type === FileType.file
+					|| file.type === FileType.audio
+					|| file.type === FileType.image
+					|| file.type === FileType.video;
 			});
 		}
 
@@ -246,6 +289,11 @@ jn.define('im/messenger/lib/helper/message', (require, exports, module) => {
 				return false;
 			}
 
+			if (this.filesModel[0].extension === FileAudioType.m4a && !Feature.isAudioRecordM4ASupported)
+			{
+				return false;
+			}
+
 			return this.filesModel[0].type === FileType.audio;
 		}
 
@@ -262,6 +310,55 @@ jn.define('im/messenger/lib/helper/message', (require, exports, module) => {
 			}
 
 			return this.filesModel[0].type === FileType.file;
+		}
+
+		get isVote()
+		{
+			return this.getComponentId() === MessageComponent.vote;
+		}
+
+		get isCustom()
+		{
+			const componentId = this.messageModel.params.componentId;
+
+			return customMessages.has(componentId);
+		}
+
+		get isVoteModelExist()
+		{
+			return Type.isPlainObject(this.voteModel);
+		}
+
+		get isFinishedVote()
+		{
+			return this.isVote && this.isVoteModelExist && this.voteModel.isFinished;
+		}
+
+		get isVotedVote()
+		{
+			return this.isVote && this.isVoteModelExist && this.voteModel.isVoted;
+		}
+
+		get isMultipleVote()
+		{
+			const questions = this.messageModel.params?.COMPONENT_PARAMS?.data?.questions ?? {};
+
+			return this.isVote && Object.values(questions).some((question) => question.fieldType === 1);
+		}
+
+		get isRevotingVote()
+		{
+			return this.isVote && this.messageModel.params?.COMPONENT_PARAMS?.data?.options === 1;
+		}
+
+		get isEmptyVote()
+		{
+			return this.isVote && this.isVoteModelExist && this.voteModel.votedCounter === 0;
+		}
+
+		get isMediaMessage()
+		{
+			return this.isImage || this.isVideo || this.isMediaGallery;
 		}
 
 		get isEmojiOnly()
@@ -300,9 +397,22 @@ jn.define('im/messenger/lib/helper/message', (require, exports, module) => {
 
 		get isInitialPostForComment()
 		{
-			this.dialogModel ??= this.#getDialoguesModel();
+			return Boolean(this.#store.getters['dialoguesModel/getByParentMessageId'](this.messageModel.id));
+		}
 
-			return String(this.dialogModel?.parentMessageId) === String(this.messageModel.id);
+		get isAiAssistant()
+		{
+			return this.messageModel.params?.componentId === MessageParams.ComponentId.AiAssistantMessage;
+		}
+
+		/**
+		 * @returns {boolean}
+		 */
+		get isBot()
+		{
+			const userModel = this.#store.getters['usersModel/getById'](this.messageModel.authorId);
+
+			return Boolean(userModel?.bot);
 		}
 
 		getComponentId()
@@ -359,9 +469,8 @@ jn.define('im/messenger/lib/helper/message', (require, exports, module) => {
 		 */
 		#getDialoguesModel()
 		{
-			return serviceLocator.get('core').getStore()
-				.getters['dialoguesModel/getByChatId'](this.messageModel.chatId)
-			;
+			return this.#store
+				.getters['dialoguesModel/getByChatId'](this.messageModel.chatId);
 		}
 
 		#isServerComponent()

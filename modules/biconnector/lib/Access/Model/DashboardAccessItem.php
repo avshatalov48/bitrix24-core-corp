@@ -35,6 +35,7 @@ final class DashboardAccessItem implements AccessibleItem
 		return $this->ownerId;
 	}
 
+
 	/**
 	 * Creates Access item from dashboard id to use in Access check.
 	 * If Model/Dashboard object is available use createFromEntity method to avoid unnessesary DB queries.

@@ -3,6 +3,7 @@
 namespace Bitrix\Crm\Integration\Intranet;
 
 use Bitrix\Crm\Automation;
+use Bitrix\Crm\Integration\Market\Label;
 use Bitrix\Crm\Restriction\AvailabilityManager;
 use Bitrix\Crm\Service\Container;
 use Bitrix\Crm\Settings\InvoiceSettings;
@@ -280,7 +281,9 @@ class BindingMenu
 				{
 					$scriptItems[] = [
 						'id' => 'script_marketplace',
-						'text' => Loc::getMessage('CRM_INTEGRATION_INTRANET_MENU_SMART_SCRIPT_MARKETPLACE'),
+						'text' => Label::isRenamedMarket()
+							? Loc::getMessage('CRM_INTEGRATION_INTRANET_MENU_SMART_SCRIPT_MARKETPLACE_MSGVER_1')
+							: Loc::getMessage('CRM_INTEGRATION_INTRANET_MENU_SMART_SCRIPT_MARKETPLACE'),
 						'href' => $marketUrl,
 						'sort' => 102
 					];

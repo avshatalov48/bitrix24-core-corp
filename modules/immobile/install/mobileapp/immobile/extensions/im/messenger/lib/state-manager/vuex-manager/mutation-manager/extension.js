@@ -5,8 +5,8 @@ jn.define('im/messenger/lib/state-manager/vuex-manager/mutation-manager', (requi
 	const { MutationManager } = require('statemanager/vuex-manager');
 
 	const { MessengerMutationManagerEvent } = require('im/messenger/lib/state-manager/vuex-manager/const');
-	const { LoggerManager } = require('im/messenger/lib/logger');
-	const logger = LoggerManager.getInstance().getLogger('core--messenger-mutation-manager');
+	const { getLogger } = require('im/messenger/lib/logger');
+	const logger = getLogger('core--messenger-mutation-manager');
 
 	/**
 	 * @class MessengerMutationManager
@@ -20,7 +20,8 @@ jn.define('im/messenger/lib/state-manager/vuex-manager/mutation-manager', (requi
 			if (this.checkPostCompleteByMutation(mutation))
 			{
 				logger.log('MessengerMutationManager: handlers are executed for', mutation);
-				this.postCompleteEvent(mutation, state);
+				// don't send state in the event, this overloads the app
+				this.postCompleteEvent(mutation);
 			}
 		}
 
@@ -30,7 +31,8 @@ jn.define('im/messenger/lib/state-manager/vuex-manager/mutation-manager', (requi
 		 */
 		checkPostCompleteByMutation(mutation)
 		{
-			if (mutation?.type.includes('messagesModel'))
+			const availableMutationsName = ['messagesModel'];
+			if (availableMutationsName.some((modelName) => mutation?.type.includes(modelName)))
 			{
 				return true;
 			}
@@ -40,12 +42,11 @@ jn.define('im/messenger/lib/state-manager/vuex-manager/mutation-manager', (requi
 
 		/**
 		 * @param {Object} mutation
-		 * @param {Object} state
 		 * @void
 		 */
-		postCompleteEvent(mutation, state)
+		postCompleteEvent(mutation)
 		{
-			BX.postComponentEvent(MessengerMutationManagerEvent.handleComplete, [mutation, state]);
+			BX.postComponentEvent(MessengerMutationManagerEvent.handleComplete, [mutation]);
 		}
 	}
 

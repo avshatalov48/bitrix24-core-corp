@@ -10,6 +10,9 @@ enum OptionDictionary: string
 
 	case BookingEnabled = 'booking_enabled';
 	case IntersectionForAll = 'IntersectionForAll';
+	case WaitListExpanded = 'wait_list_expanded';
+	case CalendarExpanded = 'calendar_expanded';
+	case NotificationsExpanded = 'notificationsExpanded';
 
 	/** AhaMoments */
 	case AhaBanner = 'aha_banner';
@@ -21,4 +24,6 @@ enum OptionDictionary: string
 	case AhaResourceIntersection = 'aha_resource_intersection';
 	case AhaExpandGrid = 'aha_expand_grid';
 	case AhaSelectResources = 'aha_select_resources';
+	case AhaCyclePopup = 'aha_cycle_popup';
+	case AhaSearchNavigation = 'aha_search_navigation';
 }

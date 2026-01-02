@@ -2,12 +2,13 @@
  * @module im/messenger/db/repository/user
  */
 jn.define('im/messenger/db/repository/user', (require, exports, module) => {
+	/* global ChatUtils */
 	const { Type } = require('type');
 
 	const {
 		UserTable,
 	} = require('im/messenger/db/table/user');
-	const { DateHelper } = require('im/messenger/lib/helper');
+	const { DateHelper, Url } = require('im/messenger/lib/helper');
 
 	/**
 	 * @class UserRepository
@@ -66,7 +67,6 @@ jn.define('im/messenger/db/repository/user', (require, exports, module) => {
 		async saveFromRest(userList)
 		{
 			const userListToAdd = [];
-
 			userList.forEach((user) => {
 				const userToAdd = this.userTable.validate(this.validateRestUser(user));
 
@@ -74,6 +74,24 @@ jn.define('im/messenger/db/repository/user', (require, exports, module) => {
 			});
 
 			return this.userTable.add(userListToAdd, true);
+		}
+
+		async saveFromPush(userList)
+		{
+			const userListMergePromiseList = [];
+			userList.forEach((user) => {
+				const userToAdd = this.validatePushUser(user);
+				const mergePromise = this.userTable.merge(userToAdd.id, (existingUser) => {
+					return {
+						...existingUser,
+						...userToAdd,
+					};
+				});
+
+				userListMergePromiseList.push(mergePromise);
+			});
+
+			return Promise.all(userListMergePromiseList);
 		}
 
 		validateRestUser(user)
@@ -87,27 +105,27 @@ jn.define('im/messenger/db/repository/user', (require, exports, module) => {
 
 			if (Type.isStringFilled(user.name))
 			{
-				result.name = ChatUtils.htmlspecialcharsback(user.name);
+				result.name = jnComponent.convertHtmlEntities(user.name);
 			}
 
 			if (Type.isStringFilled(user.first_name))
 			{
-				result.firstName = ChatUtils.htmlspecialcharsback(user.first_name);
+				result.firstName = jnComponent.convertHtmlEntities(user.first_name);
 			}
 
 			if (Type.isStringFilled(user.firstName))
 			{
-				result.firstName = ChatUtils.htmlspecialcharsback(user.firstName);
+				result.firstName = jnComponent.convertHtmlEntities(user.firstName);
 			}
 
 			if (Type.isStringFilled(user.last_name))
 			{
-				result.lastName = ChatUtils.htmlspecialcharsback(user.last_name);
+				result.lastName = jnComponent.convertHtmlEntities(user.last_name);
 			}
 
 			if (Type.isStringFilled(user.lastName))
 			{
-				result.lastName = ChatUtils.htmlspecialcharsback(user.lastName);
+				result.lastName = jnComponent.convertHtmlEntities(user.lastName);
 			}
 
 			if (Type.isStringFilled(user.gender))
@@ -144,7 +162,12 @@ jn.define('im/messenger/db/repository/user', (require, exports, module) => {
 
 			if (Type.isStringFilled(user.work_position))
 			{
-				result.workPosition = ChatUtils.htmlspecialcharsback(user.work_position);
+				result.workPosition = jnComponent.convertHtmlEntities(user.work_position);
+			}
+
+			if (Type.isStringFilled(user.workPosition))
+			{
+				result.workPosition = ChatUtils.htmlspecialcharsback(user.workPosition);
 			}
 
 			if (Type.isPlainObject(user.phones))
@@ -164,6 +187,11 @@ jn.define('im/messenger/db/repository/user', (require, exports, module) => {
 			if (Type.isStringFilled(user.external_auth_id))
 			{
 				result.externalAuthId = user.external_auth_id;
+			}
+
+			if (Type.isStringFilled(user.externalAuthId))
+			{
+				result.externalAuthId = user.externalAuthId;
 			}
 
 			if (Type.isBoolean(user.extranet))
@@ -199,7 +227,12 @@ jn.define('im/messenger/db/repository/user', (require, exports, module) => {
 					isHidden: user.bot_data.is_hidden,
 					isSupportOpenline: user.bot_data.is_support_openline,
 					type: user.bot_data.type,
+					backgroundId: user.bot_data.background_id,
 				};
+			}
+			else if (Type.isObject(user.botData))
+			{
+				result.botData = user.botData;
 			}
 			else
 			{
@@ -265,10 +298,19 @@ jn.define('im/messenger/db/repository/user', (require, exports, module) => {
 
 			if (result)
 			{
-				result = encodeURI(result);
+				const urlHelper = Url.createFromPath(result);
+				if (!urlHelper.isEncoded)
+				{
+					result = encodeURI(result);
+				}
 			}
 
 			return result;
+		}
+
+		validatePushUser(user)
+		{
+			return this.validateRestUser(user);
 		}
 	}
 

@@ -77,6 +77,7 @@ if(is_array($arResult['value']) && count($arResult['value']))
 		while($lead = $leads->Fetch())
 		{
 			$arResult['value']['LEAD']['items'][$lead['ID']] = [
+				'ENTITY_TYPE_ID' => CCrmOwnerType::Lead,
 				'ENTITY_TITLE' => $lead['TITLE'],
 				'ENTITY_TYPE_ID_WITH_ENTITY_ID' => 'LEAD_'.$lead['ID'],
 				'SHORT_ENTITY_TYPE_ID_WITH_ENTITY_ID' => 'L_' . $lead['ID'],
@@ -130,6 +131,7 @@ if(is_array($arResult['value']) && count($arResult['value']))
 			}
 
 			$arResult['value']['CONTACT']['items'][$contact['ID']] = [
+				'ENTITY_TYPE_ID' => CCrmOwnerType::Contact,
 				'ENTITY_TITLE' => $title,
 				'ENTITY_TYPE_ID_WITH_ENTITY_ID' => 'CONTACT_'.$contact['ID'],
 				'SHORT_ENTITY_TYPE_ID_WITH_ENTITY_ID' => 'C_' . $contact['ID'],
@@ -168,6 +170,7 @@ if(is_array($arResult['value']) && count($arResult['value']))
 		{
 			$companyId = $company['ID'];
 			$arResult['value']['COMPANY']['items'][$companyId] = [
+				'ENTITY_TYPE_ID' => CCrmOwnerType::Company,
 				'ENTITY_TITLE' => $company['TITLE'],
 				'ENTITY_TYPE_ID_WITH_ENTITY_ID' => 'COMPANY_' . $companyId,
 				'SHORT_ENTITY_TYPE_ID_WITH_ENTITY_ID' => 'CO_' . $companyId,
@@ -204,6 +207,7 @@ if(is_array($arResult['value']) && count($arResult['value']))
 		{
 			$dealId = $deal['ID'];
 			$arResult['value']['DEAL']['items'][$dealId] = [
+				'ENTITY_TYPE_ID' => CCrmOwnerType::Deal,
 				'ENTITY_TITLE' => $deal['TITLE'],
 				'ENTITY_TYPE_ID_WITH_ENTITY_ID' => 'DEAL_' . $dealId,
 				'SHORT_ENTITY_TYPE_ID_WITH_ENTITY_ID' => 'D_' . $dealId,
@@ -235,6 +239,7 @@ if(is_array($arResult['value']) && count($arResult['value']))
 		while($order = $orders->fetch())
 		{
 			$arResult['value']['ORDER']['items'][$order['ID']] = [
+				'ENTITY_TYPE_ID' => CCrmOwnerType::Order,
 				'ENTITY_TITLE' => $order['ACCOUNT_NUMBER'],
 				'ENTITY_TYPE_ID_WITH_ENTITY_ID' => 'ORDER_'.$order['ID'],
 				'SHORT_ENTITY_TYPE_ID_WITH_ENTITY_ID' => 'O_' . $order['ID'],

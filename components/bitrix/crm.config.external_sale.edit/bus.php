@@ -8,8 +8,7 @@ if (!CModule::IncludeModule('crm'))
 
 \Bitrix\Main\Localization\Loc::loadMessages(__FILE__);
 
-$CrmPerms = new CCrmPerms($USER->GetID());
-if (!$CrmPerms->HavePerm('CONFIG', BX_CRM_PERM_CONFIG, 'WRITE'))
+if (!\Bitrix\Crm\Service\Container::getInstance()->getUserPermissions()->isCrmAdmin())
 {
 	echo "Permission denied";
 	\Bitrix\Main\Application::getInstance()->end();

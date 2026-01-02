@@ -21,6 +21,8 @@ use CCrmOwnerType;
 
 class HistoryItem
 {
+	public const MAX_PINNED_ITEMS_COUNT = 7;
+
 	/**
 	 * Create timeline item for history stream
 	 *
@@ -193,8 +195,20 @@ class HistoryItem
 					return new Item\LogMessage\Binding\Moved($context, $model);
 				case LogMessageType::BOOKING_CREATED:
 					return new Item\LogMessage\Booking\BookingCreated($context, $model);
+				case LogMessageType::BOOKING_CREATION_ERROR:
+					return new Item\LogMessage\Booking\BookingCreationError($context, $model);
+				case LogMessageType::WAIT_LIST_ITEM_CREATED:
+					return new Item\LogMessage\Booking\WaitListItemCreated($context, $model);
+				case LogMessageType::WAIT_LIST_ITEM_DELETED:
+					return new Item\LogMessage\Booking\WaitListItemDeleted($context, $model);
 				case LogMessageType::RESTART_AUTOMATION:
 					return new Item\LogMessage\RecordRestartAutomation($context, $model);
+				case LogMessageType::BOOKING_MESSAGE_STATUS_UPDATE:
+					return new Item\LogMessage\Booking\BookingMessageStatusUpdate($context, $model);
+				case LogMessageType::BOOKING_STATUS_UPDATE:
+					return new Item\LogMessage\Booking\BookingStatusUpdate($context, $model);
+				case LogMessageType::REPEAT_SALE_CREATED:
+					return new Item\LogMessage\RepeatSaleCreated($context, $model);
 			}
 		}
 

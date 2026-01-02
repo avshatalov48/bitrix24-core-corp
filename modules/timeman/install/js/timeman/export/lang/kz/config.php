@@ -1,0 +1,3 @@
+<?php
+$MESS["TIMEMAN_EXPORT_POPUP_CLOSE"] = "Жабу";
+$MESS["TIMEMAN_EXPORT_POPUP_TITLE_EXCEL"] = "Excel-ге экспорттау";

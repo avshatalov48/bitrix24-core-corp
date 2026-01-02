@@ -21,8 +21,6 @@ if (!$user->IsAuthorized() || !check_bitrix_sessid() || $_SERVER['REQUEST_METHOD
 	return;
 }
 
-$userPermissions = CCrmPerms::GetCurrentUserPermissions();
-
 \Bitrix\Main\Localization\Loc::loadMessages(__FILE__);
 if(!function_exists('__CrmDealCategoryEndJsonResonse'))
 {
@@ -55,7 +53,7 @@ if($mode === '')
 
 if($mode === 'SAVE')
 {
-	if(!$userPermissions->HavePerm('CONFIG', BX_CRM_PERM_CONFIG, 'WRITE'))
+	if(!\Bitrix\Crm\Service\Container::getInstance()->getUserPermissions()->isAdminForEntity(CCrmOwnerType::Deal))
 	{
 		__CrmDealCategoryEndJsonResonse(array('ERROR' => 'ACCESS DENIED!'));
 	}

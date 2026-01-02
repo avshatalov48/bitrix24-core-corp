@@ -9,8 +9,8 @@ jn.define('im/messenger/db/table/internal/dialog', (require, exports, module) =>
 		Table,
 		FieldType,
 	} = require('im/messenger/db/table/table');
-	const { LoggerManager } = require('im/messenger/lib/logger');
-	const logger = LoggerManager.getInstance().getLogger('database-table--dialog-internal');
+	const { getLogger } = require('im/messenger/lib/logger');
+	const logger = getLogger('database-table--dialog-internal');
 
 	class DialogInternalTable extends Table
 	{

@@ -10,7 +10,7 @@ trait UpdateByFilterTrait
 	 * @param array $filter
 	 * @param array $fields
 	 */
-	public static function updateByFilter(array $filter, array $fields)
+	public static function updateByFilter(array $filter, array $fields): void
 	{
 		$entity = static::getEntity();
 		$sqlTableName = static::getTableName();
@@ -22,6 +22,8 @@ trait UpdateByFilterTrait
 		{
 			$sql = "UPDATE {$sqlTableName} SET {$update[0]} WHERE {$where}";
 			$entity->getConnection()->queryExecute($sql);
+
+			static::cleanCache();
 		}
 	}
 }

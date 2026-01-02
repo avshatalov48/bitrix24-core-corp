@@ -1,0 +1,70 @@
+.crm-copilot__call-assessment-selector {
+	font-family: var(--ui-font-family-primary);
+	padding: 1px 9px;
+	border-radius: var(--ui-border-radius-2xl);
+	border: var(--ui-border-width-thin) solid var(--ui-color-palette-blue-40);
+	cursor: pointer;
+	transition: 0.25s ease-out all;
+}
+
+.crm-copilot__call-assessment-selector:hover,
+.crm-copilot__call-assessment-selector:active,
+.crm-copilot__call-assessment-selector:focus {
+	border: var(--ui-border-width-thin) solid var(--ui-color-palette-blue-50);
+	transition: 0.25s ease-out all;
+}
+
+.crm-copilot__call-assessment-selector.--loading {
+	opacity: var(--ui-opacity-70);
+	cursor: not-allowed;
+	pointer-events: none;
+	transition: 0.25s ease-out all;
+}
+
+.crm-copilot__call-assessment-selector.--loading:hover,
+.crm-copilot__call-assessment-selector.--loading:active,
+.crm-copilot__call-assessment-selector.--loading:focus {
+	border: var(--ui-border-width-thin) solid var(--ui-color-palette-blue-40);
+	transition: 0.25s ease-out all;
+}
+
+.crm-copilot__call-assessment-selector-wrapper {
+	display: flex;
+	align-items: center;
+	padding: 6px 5px;
+	border-radius: var(--ui-border-radius-2xl);
+}
+
+.crm-copilot__call-assessment-selector-body {
+	display: flex;
+	flex-direction: column;
+	align-items: start;
+	max-width: calc(100% - 25px);
+}
+
+.crm-copilot__call-assessment-selector-overtitle {
+	color: var(--ui-color-palette-gray-60);
+	font-size: var(--ui-font-size-3xs);
+	font-weight: var(--ui-font-weight-normal);
+	line-height: 14px;
+	text-align: left;
+}
+
+.crm-copilot__call-assessment-selector-title {
+	color: var(--ui-color-palette-black-base);
+	font-size: var(--ui-font-size-lg);
+	font-weight: var(--ui-font-weight-regular);
+	line-height: 18px;
+	text-overflow: ellipsis;
+	overflow: hidden;
+	max-width: 100%;
+	white-space: nowrap;
+	min-height: 18px;
+}
+
+.crm-copilot__call-assessment-selector-arrow {
+	margin-left: auto;
+	display: flex;
+	align-items: center;
+	justify-content: center;
+}

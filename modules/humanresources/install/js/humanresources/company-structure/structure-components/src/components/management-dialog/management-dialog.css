@@ -1,0 +1,46 @@
+.hr-management-dialog__footer_container {
+	padding: 15px 0;
+	width: 100%;
+	display: flex;
+	justify-content: center;
+	box-shadow: 0 -1px 4px 0 rgba(0, 0, 0, 0.05);
+}
+
+.hr-management-dialog__header_container {
+	position: relative;
+	padding: 20px 38px 0 16px;
+	font-family: var(--ui-font-family-primary, var(--ui-font-family-system));
+	margin-bottom: -5px;
+}
+
+.hr-management-dialog__header_close-button {
+	position: absolute;
+	top: 20px;
+	right: 14px;
+	cursor: pointer;
+	--ui-icon-set__icon-color: var(--ui-color-palette-gray-35);
+}
+
+.hr-management-dialog__header_close-button:hover {
+	--ui-icon-set__icon-color: var(--ui-color-palette-gray-60);
+}
+
+.hr-management-dialog__header_title {
+	font-weight: var(--ui-font-weight-semi-bold);
+	font-size: var(--ui-font-size-md);
+	line-height: var(--ui-font-line-height-sm);
+	color: var(--ui-color-palette-black-base);
+	margin-bottom: 4px;
+}
+
+.hr-management-dialog__header_subtitle {
+	font-weight: var(--ui-font-weight-normal);
+	font-size: var(--ui-font-size-sm);
+	line-height: var(--ui-font-line-height-sm);
+	color: var(--ui-color-palette-gray-70);
+	margin-bottom: 4px;
+}
+
+.hr-management-dialog__footer_button-container {
+	width: 100%;
+}

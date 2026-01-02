@@ -148,6 +148,7 @@ class WorktimeComponent extends BaseComponent
 				'POPUP_COMPONENT_PARAMS' => [
 					'RECORD_ID' => isset($this->arResult['VARIABLES']['RECORD_ID']) ? $this->arResult['VARIABLES']['RECORD_ID'] : '',
 				],
+				'USE_UI_TOOLBAR' => 'Y',
 			]
 		);
 	}

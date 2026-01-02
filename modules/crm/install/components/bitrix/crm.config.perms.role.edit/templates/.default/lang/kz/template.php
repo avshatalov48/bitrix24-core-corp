@@ -1,0 +1,19 @@
+<?php
+$MESS["CRM_PERMS_AUTOMATION_DISABLED_HELP"] = "Баптау \"Баптауларды өзгертуге рұқсат беру\" опциясы өшірілген кезде ғана өзекті";
+$MESS["CRM_PERMS_BUTTONS_APPLY"] = "Қолдану";
+$MESS["CRM_PERMS_BUTTONS_SAVE"] = "Сақтау";
+$MESS["CRM_PERMS_DLG_BTN"] = "Жою";
+$MESS["CRM_PERMS_DLG_MESSAGE"] = "Жойғыңыз келетініне сенімдісіз бе?";
+$MESS["CRM_PERMS_DLG_TITLE"] = "Рөлді жою";
+$MESS["CRM_PERMS_FILED_NAME"] = "Рөл";
+$MESS["CRM_PERMS_HEAD_ADD"] = "Қосу";
+$MESS["CRM_PERMS_HEAD_AUTOMATION"] = "Роботтар";
+$MESS["CRM_PERMS_HEAD_DELETE"] = "Жою";
+$MESS["CRM_PERMS_HEAD_ENTITY"] = "Мән";
+$MESS["CRM_PERMS_HEAD_EXPORT"] = "Экспорт";
+$MESS["CRM_PERMS_HEAD_IMPORT"] = "Импорттау";
+$MESS["CRM_PERMS_HEAD_READ"] = "Оқу";
+$MESS["CRM_PERMS_HEAD_WRITE"] = "Өзгерту";
+$MESS["CRM_PERMS_PERM_ADD"] = "Баптауларды өзгертуге рұқсат ету";
+$MESS["CRM_PERMS_PERM_INHERIT"] = "Иелену";
+$MESS["CRM_PERMS_ROLE_DELETE"] = "Рөлді жою";

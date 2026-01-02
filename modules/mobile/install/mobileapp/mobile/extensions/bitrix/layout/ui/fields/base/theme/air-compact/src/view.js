@@ -2,233 +2,258 @@
  * @module layout/ui/fields/base/theme/air-compact/src/view
  */
 jn.define('layout/ui/fields/base/theme/air-compact/src/view', (require, exports, module) => {
-	const { Indent, Color } = require('tokens');
-	const { Text4 } = require('ui-system/typography/text');
-	const { Chip } = require('ui-system/blocks/chips/chip');
-	const { IconView } = require('ui-system/blocks/icon');
-	const { SafeImage } = require('layout/ui/safe-image');
-	const { withCurrentDomain } = require('utils/url');
+	const { Color } = require('tokens');
 	const { Haptics } = require('haptics');
-
-	const ICON_SIZE = 20;
+	const { ChipButton, ChipButtonMode, ChipButtonDesign, Icon } = require('ui-system/blocks/chips/chip-button');
 
 	/**
-	 * @param {string} testId
-	 * @param {boolean} empty
-	 * @param {boolean} [hasError=false]
-	 * @param {boolean} [readOnly=false]
-	 * @param {Avatar} avatar
-	 * @param {boolean} multiple
-	 * @param {object} [leftIcon]
-	 * @param {string} [leftIcon.icon]
-	 * @param {string} [leftIcon.uri]
-	 * @param {string} [defaultLeftIcon]
-	 * @param {string} text
-	 * @param {string} textMultiple
-	 * @param {function} onClick
-	 * @param {number} count
-	 * @param {boolean} showLoader
-	 * @param {boolean} [wideMode=false]
-	 * @param {string|null} [colorScheme=null]
-	 * @param {function} [bindContainerRef]
-	 * @param {number} [isRestricted=false]
+	 * @typedef AirCompactThemeViewProps
+	 * @property {string} testId
+	 * @property {boolean} empty
+	 * @property {boolean} [hasError=false]
+	 * @property {boolean} [readOnly=false]
+	 * @property {Avatar | AvatarStack | ProjectAvatar} avatar
+	 * @property {boolean} multiple
+	 * @property {object} [leftIcon]
+	 * @property {string} [leftIcon.icon]
+	 * @property {string} [leftIcon.uri]
+	 * @property {string} [defaultLeftIcon]
+	 * @property {string} text
+	 * @property {string} textMultiple
+	 * @property {function} onClick
+	 * @property {number} count
+	 * @property {boolean} showLoader
+	 * @property {boolean} [wideMode=false]
+	 * @property {string|null} [colorScheme=null]
+	 * @property {function} [bindContainerRef]
+	 * @property {number} [isRestricted=false]
 	 */
-	const AirCompactThemeView = ({
-		testId,
-		empty,
-		avatar,
-		hasError = false,
-		readOnly = false,
-		multiple,
-		text,
-		textMultiple,
-		onClick,
-		count,
-		showLoader = false,
-		leftIcon = {},
-		defaultLeftIcon,
-		wideMode = false,
-		colorScheme = null,
-		bindContainerRef,
-		isRestricted = false,
-	}) => {
-		const leftContent = [];
-
-		/** @type {{ content: Color, border: Color }} */
-		let colors = ColorScheme.resolve(ColorScheme.DEFAULT);
-
-		if (colorScheme)
-		{
-			colors = ColorScheme.resolve(colorScheme);
-		}
-		else if (readOnly)
-		{
-			colors = ColorScheme.resolve(ColorScheme.READONLY);
-		}
-		else if (empty)
-		{
-			colors = ColorScheme.resolve(ColorScheme.EMPTY);
-		}
-		else if (hasError)
-		{
-			colors = ColorScheme.resolve(ColorScheme.ERROR);
-		}
-
-		if (showLoader)
-		{
-			leftContent.push(
-				Loader({
-					style: {
-						width: ICON_SIZE,
-						height: ICON_SIZE,
-					},
-					tintColor: Color.base3.toHex(),
-					animating: true,
-					size: 'small',
-				}),
-			);
-		}
-		else if (avatar)
-		{
-			leftContent.push(avatar);
-		}
-		else if (leftIcon.icon)
-		{
-			leftContent.push(
-				IconView({
-					testId: `${testId}_COMPACT_FIELD_ICON`,
-					icon: leftIcon.icon,
-					color: (isRestricted ? Color.base1 : colors.content),
-					size: ICON_SIZE,
-				}),
-			);
-		}
-		else if (leftIcon.uri)
-		{
-			leftContent.push(
-				SafeImage({
-					testId: `${testId}_COMPACT_FIELD_ICON`,
-					uri: withCurrentDomain(leftIcon.uri),
-					resizeMode: 'cover',
-					style: {
-						width: ICON_SIZE,
-						height: ICON_SIZE,
-						borderRadius: ICON_SIZE / 2,
-						opacity: readOnly ? 0.22 : 1,
-					},
-				}),
-			);
-		}
-		else if (defaultLeftIcon)
-		{
-			leftContent.push(
-				IconView({
-					testId: `${testId}_COMPACT_DEFAULT_FIELD_ICON`,
-					icon: defaultLeftIcon,
-					color: (isRestricted ? Color.base1 : colors.content),
-					size: ICON_SIZE,
-				}),
-			);
-		}
-
-		const textToShow = (
-			multiple && textMultiple && count > 0
-				? textMultiple.replace('#COUNT#', String(count))
-				: text
-		);
-
-		return Chip({
-			testId: `${testId}_COMPACT_FIELD`,
-			style: {
-				maxWidth: wideMode ? undefined : 250,
-			},
-			onClick: () => {
-				if (readOnly)
-				{
-					Haptics.notifyWarning();
-				}
-
-				if (onClick)
-				{
-					onClick();
-				}
-			},
-			ref: bindContainerRef,
-			indent: {
-				left: Indent.M,
-				right: Indent.L,
-			},
-			backgroundColor: Color.bgContentPrimary,
-			borderColor: colors.border,
-			children: [
-				View(
-					{
-						testId: `${testId}_COMPACT_FIELD_CONTENT`,
-						style: {
-							flexDirection: 'row',
-							alignItems: 'center',
-							flexShrink: 2,
-						},
-					},
-					...leftContent,
-					Text4({
-						testId: `${testId}_COMPACT_FIELD_TEXT`,
-						text: textToShow,
-						color: colors.content,
-						style: {
-							marginLeft: Indent.XS.toNumber(),
-							flexShrink: 2,
-						},
-						numberOfLines: 1,
-						ellipsize: 'middle',
-					}),
-				),
-			],
-		});
-	};
-
-	const ColorScheme = {
-		READONLY: 'READONLY',
-		EMPTY: 'EMPTY',
-		ERROR: 'ERROR',
-		DEFAULT: 'DEFAULT',
-
+	class AirCompactThemeView extends LayoutComponent
+	{
 		/**
-		 * @typedef {Object} ColorSchemeObject
-		 * @property {Color} content
-		 * @property {Color} border
-		 *
-		 * @param {string} value
-		 * @return {ColorSchemeObject}
+		 * @param {AirCompactThemeViewProps} props
 		 */
-		resolve(value)
+		constructor(props)
 		{
-			const key = this[value] ?? 'DEFAULT';
-			const values = {
-				READONLY: {
-					content: Color.base6,
-					border: Color.bgSeparatorPrimary,
-				},
-				EMPTY: {
-					content: Color.base3,
-					border: Color.bgSeparatorPrimary,
-				},
-				ERROR: {
-					content: Color.accentMainAlert,
-					border: Color.accentSoftRed1,
-				},
-				DEFAULT: {
-					content: Color.accentMainPrimary,
-					border: Color.accentSoftBorderBlue,
-				},
+			super(props);
+
+			this.handleOnClick = this.handleOnClick.bind(this);
+		}
+
+		render()
+		{
+			const { bindContainerRef } = this.props;
+			const { design } = this.getDesignScheme();
+
+			return ChipButton({
+				design,
+				rounded: false,
+				text: this.getText(),
+				content: this.getContent(),
+				forwardRef: bindContainerRef,
+				mode: ChipButtonMode.OUTLINE,
+				testId: this.getTestId('compact-field'),
+				icon: this.getLeftIcon(),
+				iconColor: this.getIconColor(),
+				avatar: this.getAvatar(),
+				onClick: this.handleOnClick,
+				style: this.getStyle(),
+				loading: this.showLoader(),
+			});
+		}
+
+		getIconColor()
+		{
+			if (this.isRestricted())
+			{
+				return Color.base1;
+			}
+
+			return null;
+		}
+
+		getAvatar()
+		{
+			const { avatar } = this.props;
+
+			return avatar;
+		}
+
+		getLeftIcon()
+		{
+			const { leftIcon, defaultLeftIcon } = this.props;
+
+			if (leftIcon?.icon)
+			{
+				return leftIcon.icon;
+			}
+
+			return defaultLeftIcon;
+		}
+
+		getTestId(suffix)
+		{
+			const { testId } = this.props;
+
+			return [testId, suffix].filter(Boolean).join('-');
+		}
+
+		getDesignScheme()
+		{
+			const schemeParams = {
+				design: ChipButtonDesign.PRIMARY,
 			};
 
-			return values[key];
-		},
+			if (this.isReadOnly())
+			{
+				schemeParams.disabled = true;
+			}
+			else if (this.isEmpty())
+			{
+				schemeParams.design = ChipButtonDesign.GREY;
+			}
+			else if (this.hasError())
+			{
+				schemeParams.design = ChipButtonDesign.ALERT;
+			}
+
+			return schemeParams;
+		}
+
+		getDesignSchemeColor()
+		{
+			const { design } = this.getDesignScheme();
+			const { color } = design.getStyle(ChipButtonMode.OUTLINE);
+
+			return color;
+		}
+
+		isReadOnly()
+		{
+			const { readOnly = false } = this.props;
+
+			return Boolean(readOnly);
+		}
+
+		isEmpty()
+		{
+			const { empty = false } = this.props;
+
+			return Boolean(empty);
+		}
+
+		isRestricted()
+		{
+			const { isRestricted = false } = this.props;
+
+			return Boolean(isRestricted);
+		}
+
+		hasError()
+		{
+			const { hasError = false } = this.props;
+
+			return Boolean(hasError);
+		}
+
+		showLoader()
+		{
+			const { showLoader = false } = this.props;
+
+			return Boolean(showLoader);
+		}
+
+		handleOnClick()
+		{
+			const { onClick } = this.props;
+
+			if (this.isReadOnly())
+			{
+				Haptics.notifyWarning();
+			}
+
+			onClick?.();
+		}
+
+		getStyle()
+		{
+			const { wideMode = false } = this.props;
+
+			if (wideMode)
+			{
+				return {
+					maxWidth: 250,
+				};
+			}
+
+			return {};
+		}
+
+		getText()
+		{
+			const { multiple, textMultiple, text, count } = this.props;
+
+			if (text && typeof text !== 'string')
+			{
+				return text;
+			}
+
+			return multiple && textMultiple && count > 0
+				? textMultiple.replace('#COUNT#', String(count))
+				: text;
+		}
+
+		getContent()
+		{
+			return null;
+		}
+	}
+
+	const ColorScheme = {
+		EMPTY: ChipButtonDesign.GREY,
+		ERROR: ChipButtonDesign.ALERT,
+		DEFAULT: ChipButtonDesign.PRIMARY,
+	};
+
+	AirCompactThemeView.defaultProps = {
+		empty: false,
+		readOnly: false,
+		hasError: false,
+		showLoader: false,
+		wideMode: false,
+		multiple: false,
+		isRestricted: false,
+	};
+
+	AirCompactThemeView.propTypes = {
+		testId: PropTypes.string,
+		text: PropTypes.oneOfType([
+			PropTypes.string,
+			PropTypes.object,
+		]),
+		textMultiple: PropTypes.string,
+		empty: PropTypes.bool,
+		multiple: PropTypes.bool,
+		readOnly: PropTypes.bool,
+		hasError: PropTypes.bool,
+		wideMode: PropTypes.bool,
+		isRestricted: PropTypes.bool,
+		showLoader: PropTypes.bool,
+		count: PropTypes.number,
+		onClick: PropTypes.func,
+		avatar: PropTypes.object,
+		leftIcon: PropTypes.shape({
+			icon: PropTypes.instanceOf(Icon),
+		}),
+		defaultLeftIcon: PropTypes.instanceOf(Icon),
 	};
 
 	module.exports = {
-		AirCompactThemeView,
+		/**
+		 * @param {AirCompactThemeViewProps} props
+		 */
+		AirCompactThemeView: (props) => new AirCompactThemeView(props),
+		AirCompactThemeViewClass: AirCompactThemeView,
 		ColorScheme,
 	};
 });

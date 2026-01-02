@@ -147,20 +147,22 @@ abstract class Base extends Crm\Controller\Base
 
 	protected function canEditPayment(Crm\Order\Payment $payment) : bool
 	{
-		$userPermissions = \CCrmPerms::GetCurrentUserPermissions();
-
 		return
 			!$payment->isPaid()
-			&& Crm\Order\Permissions\Payment::checkUpdatePermission($payment->getId(), $userPermissions)
+			&& \Bitrix\Crm\Service\Container::getInstance()
+				->getUserPermissions()
+				->item()
+				->canUpdate(\CCrmOwnerType::OrderPayment, $payment->getId())
 		;
 	}
 
 	protected function canViewPayment(Crm\Order\Payment $payment) : bool
 	{
-		$userPermissions = \CCrmPerms::GetCurrentUserPermissions();
-
 		return
-			Crm\Order\Permissions\Payment::checkReadPermission($payment->getId(), $userPermissions)
+			\Bitrix\Crm\Service\Container::getInstance()
+				->getUserPermissions()
+				->item()
+				->canRead(\CCrmOwnerType::OrderPayment, $payment->getId())
 		;
 	}
 

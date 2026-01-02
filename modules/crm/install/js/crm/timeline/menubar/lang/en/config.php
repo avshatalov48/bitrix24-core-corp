@@ -1,4 +1,8 @@
 <?php
+$MESS["CRM_TIMELINE_BOOKING_AHA_AFTER_RESOURCE_TEXT"] = "Your Bitrix24's booking function is up and running. You can now book time slots for your customers without leaving the deal.";
+$MESS["CRM_TIMELINE_BOOKING_AHA_AFTER_RESOURCE_TITLE"] = "Booking is ready to go!";
+$MESS["CRM_TIMELINE_BOOKING_AHA_BEFORE_RESOURCE_TEXT"] = "Book time slots for your customers without leaving the deal.";
+$MESS["CRM_TIMELINE_BOOKING_AHA_BEFORE_RESOURCE_TITLE"] = "Booking in your CRM";
 $MESS["CRM_TIMELINE_CALENDAR_SHARING_CANCEL_BUTTON"] = "Cancel";
 $MESS["CRM_TIMELINE_CALENDAR_SHARING_COMMUNICATION_CHANNELS"] = "Communication channel";
 $MESS["CRM_TIMELINE_CALENDAR_SHARING_CONFIGURE_SLOTS"] = "How does it work?";

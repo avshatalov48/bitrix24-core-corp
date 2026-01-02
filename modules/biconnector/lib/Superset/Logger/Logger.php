@@ -30,6 +30,7 @@ class Logger
 			'SEVERITY' => \CEventLog::SEVERITY_ERROR,
 			'AUDIT_TYPE_ID' => static::getAuditType(\CEventLog::SEVERITY_ERROR),
 			'MODULE_ID' => 'biconnector',
+			'ITEM_ID' => 'superset',
 			'DESCRIPTION' => Json::encode($result),
 		]);
 	}
@@ -56,6 +57,7 @@ class Logger
 			'SEVERITY' => \CEventLog::SEVERITY_INFO,
 			'AUDIT_TYPE_ID' => static::getAuditType(\CEventLog::SEVERITY_INFO),
 			'MODULE_ID' => 'biconnector',
+			'ITEM_ID' => 'superset',
 			'DESCRIPTION' => $message,
 		]);
 	}

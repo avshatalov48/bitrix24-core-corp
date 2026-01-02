@@ -142,6 +142,7 @@ class Structure extends Dataset
 				(new ArrayStringField('HEAD_ID'))
 					->setName($dictionaryJoin->getJoinFieldName('VALUE_STR'))
 					->setSeparator(',')
+					->setSplitable()
 					->setJoin($dictionaryJoin)
 			;
 		}

@@ -1,11 +1,13 @@
 import { Cancel } from './cancel/cancel';
+import { AddToCalendar } from './add-to-calendar/add-to-calendar';
 import './footer.css';
 
 export const Footer = {
 	name: 'Footer',
-	emits: ['bookingCanceled', 'bookingConfirmed'],
+	emits: ['bookingCanceled', 'bookingConfirmed', 'downloadIcs'],
 	components: {
 		Cancel,
+		AddToCalendar,
 	},
 	props: {
 		booking: {
@@ -15,7 +17,10 @@ export const Footer = {
 		context: {
 			type: String,
 			required: true,
-
+		},
+		icsDownloadRequested: {
+			type: Boolean,
+			required: true,
 		},
 	},
 	data(): Object
@@ -23,12 +28,17 @@ export const Footer = {
 		return {};
 	},
 	template: `
-		<div>
-			<Cancel 
+		<div class="confirm-page__footer">
+			<Cancel
 				:booking="booking"
 				:context="context"
 				@bookingCanceled="$emit('bookingCanceled')"
 				@bookingConfirmed="$emit('bookingConfirmed')"
+			/>
+			<AddToCalendar
+				:booking="booking"
+				:icsDownloadRequested="icsDownloadRequested"
+				@downloadIcs="$emit('downloadIcs')"
 			/>
 		</div>
 	`,

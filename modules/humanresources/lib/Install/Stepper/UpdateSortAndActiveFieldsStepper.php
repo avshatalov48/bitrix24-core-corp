@@ -3,19 +3,19 @@
 namespace Bitrix\HumanResources\Install\Stepper;
 
 use Bitrix\HumanResources;
-use Bitrix\HumanResources\Config;
 use Bitrix\HumanResources\Compatibility\Utils\DepartmentBackwardAccessCode;
+use Bitrix\HumanResources\Config;
 use Bitrix\HumanResources\Service\Container;
+use Bitrix\Iblock\SectionTable;
 use Bitrix\Main;
 use Bitrix\Main\Loader;
 use Bitrix\Main\Update\Stepper;
-use Bitrix\Iblock\SectionTable;
 
 final class UpdateSortAndActiveFieldsStepper extends Stepper
 {
 	private const ACTIVE_UPDATE_STAGE = 1;
 	private const SORT_UPDATE_STAGE = 2;
-	private const DEFAULT_SORT_VALUE = 500;
+	private const DEFAULT_SORT_VALUE = 0;
 	private const LIMIT = 100;
 	protected static $moduleId = 'humanresources';
 
@@ -151,7 +151,7 @@ final class UpdateSortAndActiveFieldsStepper extends Stepper
 	{
 		Container::getEventSenderService()->removeEventHandlers(
 			self::$moduleId,
-			HumanResources\Enum\EventName::NODE_UPDATED->name,
+			HumanResources\Enum\EventName::OnNodeUpdated->name,
 		);
 	}
 

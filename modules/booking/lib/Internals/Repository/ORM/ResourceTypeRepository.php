@@ -13,7 +13,8 @@ use Bitrix\Booking\Internals\Model\ResourceTypeNotificationSettingsTable;
 use Bitrix\Booking\Internals\Model\ResourceTypeTable;
 use Bitrix\Booking\Internals\Repository\ORM\Mapper\ResourceTypeMapper;
 use Bitrix\Booking\Internals\Repository\ResourceTypeRepositoryInterface;
-use Bitrix\Main\ORM\Query\Filter\ConditionTree;
+use Bitrix\Booking\Provider\Params\FilterInterface;
+use Bitrix\Booking\Provider\Params\ResourceType\ResourceTypeFilter;
 
 class ResourceTypeRepository implements ResourceTypeRepositoryInterface
 {
@@ -28,7 +29,7 @@ class ResourceTypeRepository implements ResourceTypeRepositoryInterface
 	public function getList(
 		int|null $limit = null,
 		int|null $offset = null,
-		ConditionTree|null $filter = null,
+		FilterInterface|null $filter = null,
 		array|null $sort = null,
 		int|null $userId = null,
 	): Entity\ResourceType\ResourceTypeCollection
@@ -52,7 +53,8 @@ class ResourceTypeRepository implements ResourceTypeRepositoryInterface
 
 		if ($filter !== null)
 		{
-			$query->where($filter);
+			$filter->prepareQuery($query);
+			$query->where($filter->prepareFilter());
 		}
 
 		if ($sort !== null)
@@ -76,7 +78,7 @@ class ResourceTypeRepository implements ResourceTypeRepositoryInterface
 	{
 		return $this->getList(
 			limit: 1,
-			filter: (new ConditionTree())->where('ID', '=', $id),
+			filter: new ResourceTypeFilter(['ID' => $id]),
 			userId: $userId,
 		)->getFirstCollectionItem();
 	}
@@ -162,14 +164,22 @@ class ResourceTypeRepository implements ResourceTypeRepositoryInterface
 			->setTypeId($result->getId())
 			->setIsInfoOn($resourceType->isInfoNotificationOn())
 			->setTemplateTypeInfo($resourceType->getTemplateTypeInfo())
+			->setInfoDelay($resourceType->getInfoNotificationDelay())
 			->setIsConfirmationOn($resourceType->isConfirmationNotificationOn())
 			->setTemplateTypeConfirmation($resourceType->getTemplateTypeConfirmation())
+			->setConfirmationDelay($resourceType->getConfirmationNotificationDelay())
+			->setConfirmationRepetitions($resourceType->getConfirmationNotificationRepetitions())
+			->setConfirmationRepetitionsInterval($resourceType->getConfirmationNotificationRepetitionsInterval())
+			->setConfirmationCounterDelay($resourceType->getConfirmationCounterDelay())
 			->setIsReminderOn($resourceType->isReminderNotificationOn())
 			->setTemplateTypeReminder($resourceType->getTemplateTypeReminder())
+			->setReminderDelay($resourceType->getReminderNotificationDelay())
 			->setIsFeedbackOn($resourceType->isFeedbackNotificationOn())
 			->setTemplateTypeFeedback($resourceType->getTemplateTypeFeedback())
 			->setIsDelayedOn($resourceType->isDelayedNotificationOn())
 			->setTemplateTypeDelayed($resourceType->getTemplateTypeDelayed())
+			->setDelayedDelay($resourceType->getDelayedNotificationDelay())
+			->setDelayedCounterDelay($resourceType->getDelayedCounterDelay())
 			->save()
 		;
 		if (!$notificationSettingsSaveResult->isSuccess())
@@ -199,14 +209,22 @@ class ResourceTypeRepository implements ResourceTypeRepositoryInterface
 		$notificationSettingsSaveResult = $notificationSettings
 			->setIsInfoOn($resourceType->isInfoNotificationOn())
 			->setTemplateTypeInfo($resourceType->getTemplateTypeInfo())
+			->setInfoDelay($resourceType->getInfoNotificationDelay())
 			->setIsConfirmationOn($resourceType->isConfirmationNotificationOn())
 			->setTemplateTypeConfirmation($resourceType->getTemplateTypeConfirmation())
+			->setConfirmationDelay($resourceType->getConfirmationNotificationDelay())
+			->setConfirmationRepetitions($resourceType->getConfirmationNotificationRepetitions())
+			->setConfirmationRepetitionsInterval($resourceType->getConfirmationNotificationRepetitionsInterval())
+			->setConfirmationCounterDelay($resourceType->getConfirmationCounterDelay())
 			->setIsReminderOn($resourceType->isReminderNotificationOn())
 			->setTemplateTypeReminder($resourceType->getTemplateTypeReminder())
+			->setReminderDelay($resourceType->getReminderNotificationDelay())
 			->setIsFeedbackOn($resourceType->isFeedbackNotificationOn())
 			->setTemplateTypeFeedback($resourceType->getTemplateTypeFeedback())
 			->setIsDelayedOn($resourceType->isDelayedNotificationOn())
 			->setTemplateTypeDelayed($resourceType->getTemplateTypeDelayed())
+			->setDelayedDelay($resourceType->getDelayedNotificationDelay())
+			->setDelayedCounterDelay($resourceType->getDelayedCounterDelay())
 			->save()
 		;
 		if (!$notificationSettingsSaveResult->isSuccess())

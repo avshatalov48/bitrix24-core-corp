@@ -108,7 +108,7 @@ class PostMenu
 				{
 					id: 'edit',
 					title: Loc.getMessage('MOBILE_EXT_LIVEFEED_POST_MENU_EDIT'),
-					iconUrl: `${this.iconUrlFolderPath}pencil.png`,
+					iconUrl: `${this.iconUrlFolderPath}edit.png`,
 					sectionCode: this.sectionCode,
 					action: () => {
 						BlogPost.edit({
@@ -123,7 +123,7 @@ class PostMenu
 				{
 					id: 'delete',
 					title: Loc.getMessage('MOBILE_EXT_LIVEFEED_POST_MENU_DELETE'),
-					iconName: 'delete',
+					iconUrl: `${this.iconUrlFolderPath}delete.png`,
 					sectionCode: this.sectionCode,
 					action: () => {
 						BlogPost.delete({
@@ -141,7 +141,7 @@ class PostMenu
 			result.push({
 				id: 'favorites',
 				title: Loc.getMessage(`MOBILE_EXT_LIVEFEED_POST_MENU_FAVORITES_${this.favoritesValue ? 'Y' : 'N'}`),
-				iconUrl: `${this.iconUrlFolderPath}favorite.png`,
+				iconUrl: this.favoritesValue ? `${this.iconUrlFolderPath}unfavorite.png` : `${this.iconUrlFolderPath}favorite.png`,
 				sectionCode: this.sectionCode,
 				action: () => {
 					const postInstance = new Post({
@@ -162,7 +162,7 @@ class PostMenu
 			result.push({
 				id: 'follow',
 				title: Loc.getMessage(`MOBILE_EXT_LIVEFEED_POST_MENU_FOLLOW_${this.followValue ? 'Y' : 'N'}`),
-				iconUrl: `${this.iconUrlFolderPath}eye.png`,
+				iconUrl: this.followValue ? `${this.iconUrlFolderPath}watch.png` : `${this.iconUrlFolderPath}unwatch.png`,
 				sectionCode: this.sectionCode,
 				action: () => {
 					FollowManagerInstance.setFollow({
@@ -232,7 +232,7 @@ class PostMenu
 				result.push({
 					id: 'createTask',
 					title: Loc.getMessage('MOBILE_EXT_LIVEFEED_POST_MENU_CREATE_TASK'),
-					iconUrl: `${this.iconUrlFolderPath}n_check.png`,
+					iconUrl: `${this.iconUrlFolderPath}task.png`,
 					sectionCode: this.sectionCode,
 					action: () => {
 						oMSL.createTask({

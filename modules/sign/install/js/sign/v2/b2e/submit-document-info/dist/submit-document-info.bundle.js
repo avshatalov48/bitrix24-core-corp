@@ -188,6 +188,10 @@ this.BX.Sign.V2 = this.BX.Sign.V2 || {};
 	  getLayout() {
 	    return babelHelpers.classPrivateFieldLooseBase(this, _layoutCache)[_layoutCache].remember('layout', () => {
 	      if (babelHelpers.classPrivateFieldLooseBase(this, _options)[_options].fields.length === 0) {
+	        const title = babelHelpers.classPrivateFieldLooseBase(this, _options)[_options].isOnboarding ? main_core.Loc.getMessage('SIGN_SUBMIT_DOCUMENT_INFO_READY_TO_SEND_ONBOARDING_TITLE') : main_core.Loc.getMessage('SIGN_SUBMIT_DOCUMENT_INFO_READY_TO_SEND_TITLE');
+	        const description = babelHelpers.classPrivateFieldLooseBase(this, _options)[_options].isOnboarding ? main_core.Loc.getMessage('SIGN_SUBMIT_DOCUMENT_INFO_READY_TO_SEND_ONBOARDING_DESCRIPTION') : main_core.Loc.getMessage('SIGN_SUBMIT_DOCUMENT_INFO_READY_TO_SEND_DESCRIPTION', {
+	          '#TITLE#': main_core.Text.encode(babelHelpers.classPrivateFieldLooseBase(this, _options)[_options].template.title)
+	        });
 	        return main_core.Tag.render(_t$1 || (_t$1 = _$1`
 						<div class="sign-submit-document-info-center-container">
 							<div class="sign-submit-document-info-center-icon">
@@ -201,9 +205,7 @@ this.BX.Sign.V2 = this.BX.Sign.V2 || {};
 							</p>
 							<form id="${0}"></form>
 						</div>
-					`), readyToSendImage, main_core.Loc.getMessage('SIGN_SUBMIT_DOCUMENT_INFO_READY_TO_SEND_TITLE'), main_core.Loc.getMessage('SIGN_SUBMIT_DOCUMENT_INFO_READY_TO_SEND_DESCRIPTION', {
-	          '#TITLE#': main_core.Text.encode(babelHelpers.classPrivateFieldLooseBase(this, _options)[_options].template.title)
-	        }), babelHelpers.classPrivateFieldLooseBase(this, _fieldFormId)[_fieldFormId]);
+					`), readyToSendImage, main_core.Text.encode(title), description, babelHelpers.classPrivateFieldLooseBase(this, _fieldFormId)[_fieldFormId]);
 	      }
 	      return main_core.Tag.render(_t2$1 || (_t2$1 = _$1`
 					<div class="sign-b2e-submit-document-info">
@@ -227,10 +229,12 @@ this.BX.Sign.V2 = this.BX.Sign.V2 || {};
 	      return false;
 	    }
 	    let employeeMember = null;
+	    let assigneeMember = null;
 	    let document = null;
 	    main_core_events.EventEmitter.emit('BX.Sign.SignSettingsEmployee:onBeforeTemplateSend');
 	    try {
-	      const sendResult = await babelHelpers.classPrivateFieldLooseBase(this, _api)[_api].template.send(babelHelpers.classPrivateFieldLooseBase(this, _options)[_options].template.uid, babelHelpers.classPrivateFieldLooseBase(this, _getFieldValues)[_getFieldValues]());
+	      const sendResult = await babelHelpers.classPrivateFieldLooseBase(this, _api)[_api].template.send(babelHelpers.classPrivateFieldLooseBase(this, _options)[_options].template.uid, babelHelpers.classPrivateFieldLooseBase(this, _getFieldValues)[_getFieldValues](), babelHelpers.classPrivateFieldLooseBase(this, _options)[_options].isOnboarding);
+	      assigneeMember = sendResult.assigneeMember;
 	      employeeMember = sendResult.employeeMember;
 	      document = sendResult.document;
 	    } catch (e) {
@@ -242,7 +246,7 @@ this.BX.Sign.V2 = this.BX.Sign.V2 || {};
 	    const {
 	      uid: memberUid,
 	      id: memberId
-	    } = employeeMember;
+	    } = babelHelpers.classPrivateFieldLooseBase(this, _options)[_options].isOnboarding ? assigneeMember : employeeMember;
 	    this.emit(this.events.documentSendedSuccessFully, {
 	      document
 	    });
@@ -319,7 +323,7 @@ this.BX.Sign.V2 = this.BX.Sign.V2 || {};
 	  main_core.Dom.remove(babelHelpers.classPrivateFieldLooseBase(this, _getProgressLayout)[_getProgressLayout]());
 	}
 	function _onProgressClosePageBtnClick2() {
-	  this.emit(this.event.onProgressClosePageBtnClick);
+	  this.emit(this.events.onProgressClosePageBtnClick);
 	  BX.SidePanel.Instance.close();
 	}
 	async function _openSigningSliderAndCloseCurrent2(signLink) {

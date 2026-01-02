@@ -1,0 +1,149 @@
+.sign-b2e-document-filling__item-text {
+	display: flex;
+	flex-flow: row;
+	align-items: center;
+	font: 13px / 15.51px var(--ui-font-family-system);
+	color: var(--ui-color-palette-gray-60);
+	margin: 18px 0 4px 0;
+}
+
+.sign-b2e-document-filling__item-text-date {
+	display: flex;
+	flex-flow: row;
+	align-items: center;
+	font: 13px / 15.51px var(--ui-font-family-system);
+	color: var(--ui-color-palette-gray-60);
+}
+
+
+.sign-b2e-document-filling__item-title {
+	font: 16px / 22px var(--font_os_regular);
+	color: var(--ui-color-palette-black-base);
+	overflow-wrap: anywhere;
+	width: 95%;
+}
+
+.sign-b2e-settings__date-row {
+	display: flex;
+	flex-direction: row;
+	gap: 16px;
+	margin-top: 10px;
+	align-items: center;
+	flex-wrap: wrap;
+}
+
+.sign-b2e-settings__date-item {
+	display: flex;
+	flex-direction: row;
+	gap: 5px;
+	justify-content: center;
+}
+
+.sign-b2e-settings__date-selector {
+	width: auto;
+}
+
+.sign-b2e-settings__date-selector.--error .sign-v2-b2e-vue-util-sign-selector__rounded-small-selected-item-view {
+	border-color: var(--ui-field-color-danger);
+}
+
+.sign-b2e-document-filling__preview {
+	width: 140px;
+	height: 180px;
+	cursor: pointer;
+	border-radius: 6px;
+	border-style: solid;
+	border-width: 1px;
+	display: inline-block;
+	border-color: var(--ui-color-palette-gray-10);
+}
+
+.sign-b2e-document-filling__item-container {
+	display: flex;
+	gap: 20px;
+	align-items: flex-start;
+}
+
+.sign-b2e-document-filling__item-preview {
+	flex: 0 0 auto;
+}
+
+.sign-b2e-document-filling__item {
+	border: 1px solid var(--ui-color-palette-gray-20);
+	border-radius: 10px;
+	margin-bottom: 15px;
+	padding: 15px 20px 15px 15px;
+	position: relative;
+}
+
+.sign-b2e-document-filling-reg-number-input {
+	height: 41px !important;
+}
+
+.sign-b2e-settings__date-selector-text {
+	display: inline-block;
+	padding: 4px;
+	border-radius: 20px;
+	background-color: #f5f5f5;
+	border: 1px solid #e0e0e0;
+	color: #666;
+	font-size: 13px;
+	min-width: 50px;
+	text-align: center;
+	cursor: not-allowed;
+	user-select: none;
+}
+
+.sign-b2e-settings__date-error {
+	width: 100%;
+	color: var(--ui-color-base-90);
+	border-radius: 6px;
+	background-color: var(--ui-color-palette-red-15);
+	font-size: var(--ui-font-size-sm);
+	line-height: var(--ui-font-line-height-2xs);
+	padding: 12px;
+	box-sizing: border-box;
+}
+
+.sign-b2e-settings__date-error.--individual {
+	margin-top: 10px;
+}
+
+.sign-b2e-document-filling-reg-number-input.--error:hover {
+	border: 1px solid var(--ui-color-background-on-alert);
+}
+
+.sign-b2e-document-filling__notice {
+	border-radius: 8px;
+	background: var(--ui-color-palette-blue-15);
+	color: var(--ui-color-base-90);
+	font-size: var(--ui-font-size-sm);
+	line-height: var(--ui-font-line-height-2xs);
+	padding: 12px;
+	margin: 16px 0 0;
+}
+
+
+.sign-b2e-document-filling__remove-btn {
+	position: absolute;
+	top: 8px;
+	right: 8px;
+	width: 24px;
+	height: 24px;
+	border: none;
+	cursor: pointer;
+	padding: 0;
+	z-index: 1;
+	background-color: transparent;
+	background-image: url('./images/remove-template-card-cross.svg');
+	background-repeat: no-repeat;
+	background-position: center;
+}
+
+.sign-b2e-document-filling__remove-btn:hover {
+	opacity: 0.8;
+}
+
+.sign-b2e-document-filling__header {
+	display: flex;
+}

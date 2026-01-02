@@ -6,7 +6,6 @@ use Bitrix\Crm\Category\DealCategory;
 use Bitrix\Crm\DealTable;
 use Bitrix\Crm\History\Entity\DealStageHistoryWithSupposedTable;
 use Bitrix\Main\ArgumentException;
-use Bitrix\Main\Config\Option;
 use Bitrix\Main\Type\Date;
 use Bitrix\Main\Type\DateTime;
 use CCrmStatus;
@@ -14,10 +13,11 @@ use CCrmStatus;
 class DealStageHistoryWithSupposedEntry
 {
 
+	/**
+	 * @deprecated
+	 */
 	public static function register($dealId)
 	{
-		$historiesToAdd = self::getHistoriesToAdd($dealId);
-		self::saveHistories($historiesToAdd);
 	}
 
 	private static function getHistoriesToAdd($dealId)
@@ -302,14 +302,17 @@ class DealStageHistoryWithSupposedEntry
 		return $unSuccessStageList;
 	}
 
+	/**
+	 * @deprecated
+	 */
 	public static function processCategoryChange($dealId)
 	{
-		self::unregister($dealId);
-		self::register($dealId);
 	}
 
+	/**
+	 * @deprecated
+	 */
 	public static function unregister($dealId)
 	{
-		DealStageHistoryWithSupposedTable::deleteByOwnerId($dealId);
 	}
 }

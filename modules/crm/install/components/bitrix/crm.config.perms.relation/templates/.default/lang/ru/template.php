@@ -13,5 +13,3 @@ $MESS["CRM_PERMS_BUTTONS_CANCEL"] = "Отменить";
 $MESS["CRM_PERMS_DLG_MESSAGE"] = "Вы уверены что хотите удалить?";
 $MESS["CRM_PERMS_DLG_TITLE"] = "Удаление роли";
 $MESS["CRM_PERMS_DLG_BTN"] = "Удалить";
-$MESS["CRM_PERMS_RESTRICTION"] = "Настроить права доступа сотрудников к CRM можно <a target=\"_blank\" href=\"https://www.bitrix24.ru/prices/\">в коммерческих тарифах</a>.";
-?>

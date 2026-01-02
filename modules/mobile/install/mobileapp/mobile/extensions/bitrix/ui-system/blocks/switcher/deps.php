@@ -5,9 +5,11 @@ return [
 		'tokens',
 		'animation',
 		'utils/enums/base',
+		'utils/validation',
 	],
 	'bundle' => [
-		'./src/mode-enum',
-		'./src/size-enum',
+		'./src/enums/mode-enum',
+		'./src/enums/size-enum',
+		'./src/test-id-wrapper',
 	],
 ];

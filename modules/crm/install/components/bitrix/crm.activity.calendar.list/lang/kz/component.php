@@ -1,0 +1,19 @@
+<?php
+$MESS["CALENDAR_MODULE_NOT_INSTALLED"] = "Күнтізбелер модулі орнатылмаған.";
+$MESS["CRM_COLUMN_ASSIGNED_BY"] = "Жауапты";
+$MESS["CRM_COLUMN_DATE_END"] = "Аяқталу күні";
+$MESS["CRM_COLUMN_DATE_START"] = "Басталу күні";
+$MESS["CRM_COLUMN_DESCRIPTION"] = "Сипаттама";
+$MESS["CRM_COLUMN_ENTITY_TITLE"] = "Тақырыпаты";
+$MESS["CRM_COLUMN_ENTITY_TYPE"] = "Түрі";
+$MESS["CRM_COLUMN_ID"] = "ID";
+$MESS["CRM_COLUMN_NAME"] = "Атауы";
+$MESS["CRM_COLUMN_UF_CRM_CAL_EVENT"] = "CRM элементтері";
+$MESS["CRM_ENTITY_TYPE_COMPANY"] = "Компания";
+$MESS["CRM_ENTITY_TYPE_CONTACT"] = "Байланыс";
+$MESS["CRM_ENTITY_TYPE_DEAL"] = "Мәміле";
+$MESS["CRM_ENTITY_TYPE_LEAD"] = "Лид";
+$MESS["CRM_MODULE_NOT_INSTALLED"] = "CRM модулі орнатылмаған.";
+$MESS["CRM_PERMISSION_DENIED"] = "Қолжетімділікке тыйым салынған";
+$MESS["CRM_PRESET_MY"] = "Менің қоңырауларым";
+$MESS["CRM_PRESET_NEW"] = "Жаңа қоңыраулар";

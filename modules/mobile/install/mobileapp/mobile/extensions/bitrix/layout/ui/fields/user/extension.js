@@ -8,14 +8,13 @@ jn.define('layout/ui/fields/user', (require, exports, module) => {
 	const { Avatar } = require('ui-system/blocks/avatar');
 	const { EntitySelectorFieldClass } = require('layout/ui/fields/entity-selector');
 	const { EntitySelectorFactory } = require('selector/widget/factory');
-	const { ProfileView } = require('user/profile');
-	const { UserListManager } = require('layout/ui/user-list');
 	const { isNil } = require('utils/type');
 	const { AnalyticsEvent } = require('analytics');
 	const { isPhoneNumber } = require('utils/phone');
 	const { Icon } = require('assets/icons');
 	const { dispatch } = require('statemanager/redux/store');
 	const { usersUpsertedFromEntitySelector } = require('statemanager/redux/slices/users');
+	const { UserProfile } = require('user-profile');
 
 	const EMPTY_AVATAR = '/bitrix/mobileapp/mobile/extensions/bitrix/layout/ui/fields/user/images/empty-avatar.png';
 	const DEFAULT_AVATAR = '/bitrix/mobileapp/mobile/extensions/bitrix/layout/ui/fields/user/images/default-avatar.png';
@@ -266,37 +265,25 @@ jn.define('layout/ui/fields/user', (require, exports, module) => {
 
 		openEntity(userId)
 		{
-			if (!userId)
-			{
-				return;
-			}
-
-			this.getPageManager()
-				.openWidget('list', {
-					groupStyle: true,
-					backdrop: {
-						bounceEnable: false,
-						swipeAllowed: true,
-						showOnTop: true,
-						hideNavigationBar: false,
-						horizontalSwipeAllowed: false,
-					},
-				})
-				.then((list) => ProfileView.open({ userId, isBackdrop: true }, list))
-				.catch(console.error);
+			void UserProfile.open({
+				ownerId: userId,
+				parentWidget: this.getPageManager(),
+			});
 		}
 
 		openUserList()
 		{
-			UserListManager.open({
-				title: (this.getTitleText() === this.props.title ? this.props.title : null),
-				users: this.state.entityList.map((user) => ({
-					id: user.id,
-					name: this.prepareUserTitle(user.title),
-					avatar: user.imageUrl,
-					workPosition: (user.customData && user.customData.position ? user.customData.position : ''),
-				})),
-				testId: this.testId,
+			void requireLazy('layout/ui/user-list').then(({ UserListManager }) => {
+				void UserListManager.open({
+					title: (this.getTitleText() === this.props.title ? this.props.title : null),
+					users: this.state.entityList.map((user) => ({
+						id: user.id,
+						name: this.prepareUserTitle(user.title),
+						avatar: user.imageUrl,
+						workPosition: (user.customData && user.customData.position ? user.customData.position : ''),
+					})),
+					testId: this.testId,
+				});
 			});
 		}
 

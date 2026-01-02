@@ -132,11 +132,27 @@ class LiveChatManager
 			$add['TEXT_PHRASES'] = $fields['TEXT_PHRASES'];
 		}
 
-		$result = Model\LivechatTable::add($add);
-		if ($result->isSuccess())
+		try
 		{
-			$this->id = $result->getId();
-			$this->config = false;
+			$result = Model\LivechatTable::add($add);
+			if ($result->isSuccess())
+			{
+				$this->id = $result->getId();
+				$this->config = false;
+			}
+		}
+		catch (Main\DB\DuplicateEntryException $exception)
+		{
+			if ($this->id)
+			{
+				unset($add['CONFIG_ID']);
+				$result = Model\LivechatTable::update($this->id, $add);
+				$this->config = false;
+			}
+			else
+			{
+				throw $exception;
+			}
 		}
 
 		return $result->isSuccess();

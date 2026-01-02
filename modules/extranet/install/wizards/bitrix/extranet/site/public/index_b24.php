@@ -12,7 +12,7 @@ if (!\CModule::IncludeModule('intranet'))
 
 if (ServiceContainer::getInstance()->getCollaberService()->isCollaberById((int)CurrentUser::get()->getId()))
 {
-	LocalRedirect(SITE_DIR . 'online/');
+	LocalRedirect(Intranet\Portal\FirstPage::getInstance()->getLink());
 }
 
 IncludeModuleLangFile($_SERVER['DOCUMENT_ROOT'] . '/bitrix/modules/extranet/public/index_b24.php');

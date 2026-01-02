@@ -173,7 +173,7 @@ jn.define('crm/timeline/scheduler/providers/base', (require, exports, module) =>
 		 */
 		static open({ scheduler, context = {} })
 		{
-			const { parentWidget, entity, user, onActivityCreate, onClose, onCancel, onSkip } = scheduler;
+			const { parentWidget, entity, user, onActivityCreate, onClose, onCancel, onSkip, analytics } = scheduler;
 
 			parentWidget.openWidget('layout', {
 				modal: true,
@@ -201,6 +201,7 @@ jn.define('crm/timeline/scheduler/providers/base', (require, exports, module) =>
 					onCancel,
 					onSkip,
 					layout: widget,
+					analytics,
 				}));
 			}).catch(console.error);
 		}

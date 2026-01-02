@@ -1,0 +1,20 @@
+<?php
+$MESS["TASKS_FIELDS_USER_FIELDS_AIR_COMPACT_TITLE"] = "Пайдаланушы өрістері";
+$MESS["TASKS_FIELDS_USER_FIELDS_AIR_COMPACT_TITLE_MULTI"] = "Пайдаланушы өрістері: #COUNT#";
+$MESS["TASKS_FIELDS_USER_FIELDS_AIR_TITLE"] = "Пайдаланушы өрістері";
+$MESS["TASKS_FIELDS_USER_FIELDS_AIR_TITLE_MULTI"] = "Пайдаланушы өрістері: #COUNT#";
+$MESS["TASKS_FIELDS_USER_FIELDS_EDIT_ADD_VALUE"] = "Мән қосу";
+$MESS["TASKS_FIELDS_USER_FIELDS_EDIT_DOUBLE_PLACEHOLDER"] = "Нөмірді енгізіңіз";
+$MESS["TASKS_FIELDS_USER_FIELDS_EDIT_FIELDS"] = "Өрістерді редакциялау";
+$MESS["TASKS_FIELDS_USER_FIELDS_EDIT_OK"] = "Жалғастыру";
+$MESS["TASKS_FIELDS_USER_FIELDS_EDIT_SAVE"] = "Сақтау";
+$MESS["TASKS_FIELDS_USER_FIELDS_EDIT_SETTINGS_INFO_MAX_LENGTH_PLURAL_0"] = "Өрістегі мән #VALUE# симболдан ұзын болмауы керек";
+$MESS["TASKS_FIELDS_USER_FIELDS_EDIT_SETTINGS_INFO_MAX_LENGTH_PLURAL_1"] = "Өрістегі мән #VALUE# симболдан ұзын болмауы керек";
+$MESS["TASKS_FIELDS_USER_FIELDS_EDIT_SETTINGS_INFO_MAX_LENGTH_PLURAL_2"] = "Өрістегі мән #VALUE# симболдан ұзын болмауы керек";
+$MESS["TASKS_FIELDS_USER_FIELDS_EDIT_SETTINGS_INFO_MAX_VALUE"] = "Өрістегі мән #VALUE# үлкен болмауы керек";
+$MESS["TASKS_FIELDS_USER_FIELDS_EDIT_SETTINGS_INFO_MIN_LENGTH_PLURAL_0"] = "Өрістегі мән #VALUE# симболдан қысқа болмауы керек";
+$MESS["TASKS_FIELDS_USER_FIELDS_EDIT_SETTINGS_INFO_MIN_LENGTH_PLURAL_1"] = "Өрістегі мән #VALUE# симболдан қысқа болмауы керек";
+$MESS["TASKS_FIELDS_USER_FIELDS_EDIT_SETTINGS_INFO_MIN_LENGTH_PLURAL_2"] = "Өрістегі мән #VALUE# симболдан қысқа болмауы керек";
+$MESS["TASKS_FIELDS_USER_FIELDS_EDIT_SETTINGS_INFO_MIN_VALUE"] = "Өрістегі мән #VALUE# кем болмауы керек";
+$MESS["TASKS_FIELDS_USER_FIELDS_EDIT_STRING_EDITOR_PLACEHOLDER"] = "Пайдаланушы өрісін толтырыңыз, бұл кішігірім ақпарат болуы мүмкін";
+$MESS["TASKS_FIELDS_USER_FIELDS_EDIT_STRING_PLACEHOLDER"] = "Толтыру";

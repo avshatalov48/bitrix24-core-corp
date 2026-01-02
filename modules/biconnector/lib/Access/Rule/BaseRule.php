@@ -48,7 +48,7 @@ class BaseRule extends AbstractRule
 	}
 
 	/**
-	 * There are some actions that even admin can't do, e.g. delete system dashboard.
+	 * There are some actions that even admin can't do, e.g. edit system dashboard.
 	 * For actions like that method should return false.
 	 *
 	 * @return bool

@@ -53,6 +53,14 @@ class IntranetMobile extends CModule
 			'onAfterUserAuthorizeHandler'
 		);
 
+		$eventManager->registerEventHandler(
+			'mobile',
+			'onMobileMenuStructureBuilt',
+			'intranetmobile',
+			'Bitrix\IntranetMobile\MobileMenuManager',
+			'onMobileMenuStructureBuilt',
+		);
+
 		return true;
 	}
 
@@ -74,6 +82,14 @@ class IntranetMobile extends CModule
 			$this->MODULE_ID,
 			'\Bitrix\IntranetMobile\Integration\Main\Event',
 			'onAfterUserAuthorizeHandler'
+		);
+
+		$eventManager->unRegisterEventHandler(
+			'mobile',
+			'onMobileMenuStructureBuilt',
+			'intranetmobile',
+			'Bitrix\IntranetMobile\MobileMenuManager',
+			'onMobileMenuStructureBuilt',
 		);
 
 		ModuleManager::unRegisterModule($this->MODULE_ID);

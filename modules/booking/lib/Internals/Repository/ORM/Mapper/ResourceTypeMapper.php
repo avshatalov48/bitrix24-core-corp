@@ -27,14 +27,22 @@ class ResourceTypeMapper
 			$type
 				->setIsInfoNotificationOn($ormNotificationSettings->getIsInfoOn())
 				->setTemplateTypeInfo($ormNotificationSettings->getTemplateTypeInfo())
+				->setInfoNotificationDelay($ormNotificationSettings->getInfoDelay())
 				->setIsConfirmationNotificationOn($ormNotificationSettings->getIsConfirmationOn())
 				->setTemplateTypeConfirmation($ormNotificationSettings->getTemplateTypeConfirmation())
+				->setConfirmationNotificationDelay($ormNotificationSettings->getConfirmationDelay())
+				->setConfirmationNotificationRepetitions($ormNotificationSettings->getConfirmationRepetitions())
+				->setConfirmationNotificationRepetitionsInterval($ormNotificationSettings->getConfirmationRepetitionsInterval())
+				->setConfirmationCounterDelay($ormNotificationSettings->getConfirmationCounterDelay())
 				->setIsReminderNotificationOn($ormNotificationSettings->getIsReminderOn())
 				->setTemplateTypeReminder($ormNotificationSettings->getTemplateTypeReminder())
+				->setReminderNotificationDelay($ormNotificationSettings->getReminderDelay())
 				->setIsFeedbackNotificationOn($ormNotificationSettings->getIsFeedbackOn())
 				->setTemplateTypeFeedback($ormNotificationSettings->getTemplateTypeFeedback())
 				->setIsDelayedNotificationOn($ormNotificationSettings->getIsDelayedOn())
 				->setTemplateTypeDelayed($ormNotificationSettings->getTemplateTypeDelayed())
+				->setDelayedNotificationDelay($ormNotificationSettings->getDelayedDelay())
+				->setDelayedCounterDelay($ormNotificationSettings->getDelayedCounterDelay())
 			;
 		}
 

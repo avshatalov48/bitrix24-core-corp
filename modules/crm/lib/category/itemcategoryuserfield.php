@@ -6,6 +6,7 @@ use Bitrix\Crm\Entry\AddException;
 use Bitrix\Crm\Model\ItemCategoryUserFieldTable;
 use Bitrix\Crm\Service\Container;
 use Bitrix\Crm\Service\Factory;
+use Bitrix\Main\DB\DuplicateEntryException;
 use Bitrix\Main\DB\Result;
 use Bitrix\Main\Entity\AddResult;
 use CCrmOwnerType;
@@ -64,6 +65,16 @@ class ItemCategoryUserField
 		try
 		{
 			$result = ItemCategoryUserFieldTable::add($data);
+		}
+		catch(DuplicateEntryException $e)
+		{
+			return ItemCategoryUserFieldTable::query()
+				->where('ENTITY_TYPE_ID', $this->entityTypeId)
+				->where('CATEGORY_ID', $categoryId)
+				->where('USER_FIELD_NAME', $fieldName)
+				->setSelect(['ID'])
+				->fetch()['ID']
+			;
 		}
 		catch(\Exception $exception)
 		{

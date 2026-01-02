@@ -21,4 +21,14 @@
 
 	const { OpenPromotionNotification } = require('background/notifications/promotion');
 	OpenPromotionNotification.bindPromotionEvent();
+
+	const { AppRatingBackgroundClient } = require('app-rating-background-client');
+	AppRatingBackgroundClient.subscribeToUserEvents();
+	AppRatingBackgroundClient.subscribeToAppPausedEvent();
+
+	const { TimemanAnalytics } = require('timeman/analytics');
+	TimemanAnalytics.subscribeEvents();
+
+	const { subscribeToPostEvents } = require('layout/ui/gratitude-list/subscriptions');
+	subscribeToPostEvents();
 })();

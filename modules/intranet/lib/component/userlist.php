@@ -366,6 +366,13 @@ class UserList extends \CBitrixComponent implements Controllerable, Errorable
 		return $result;
 	}
 
+	/**
+	 * @deprecated use
+	 * \Bitrix\Intranet\Infrastructure\Controller\User::fireAction
+	 * \Bitrix\Intranet\Infrastructure\Controller\User::deleteAction
+	 * \Bitrix\Intranet\Infrastructure\Controller\User::restoreAction
+	 * \Bitrix\Intranet\Infrastructure\Controller\User::deleteOrFireAction
+	 */
 	public function setActivityAction(array $params = [])
 	{
 		global $USER, $APPLICATION;

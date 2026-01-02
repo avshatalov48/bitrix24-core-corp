@@ -8,6 +8,7 @@ use Bitrix\Bizproc\Workflow\Type\GlobalConst;
 use Bitrix\Bizproc\Workflow\Type\GlobalVar;
 use Bitrix\Crm;
 use Bitrix\Crm\Automation\TunnelManager;
+use Bitrix\Crm\Category\PermissionEntityTypeHelper;
 use Bitrix\Crm\Color\PhaseColorScheme;
 use Bitrix\Crm\Controller\ErrorCode;
 use Bitrix\Crm\Counter;
@@ -73,7 +74,7 @@ class Category extends Base
 		$canRead = false;
 		if ($categoryId >= 0)
 		{
-			$canRead = $userPermissions->checkReadPermissions($entityTypeId, 0, $categoryId);
+			$canRead = $userPermissions->entityType()->canReadItemsInCategory($entityTypeId, $categoryId);
 		}
 
 		if (!$canRead)
@@ -109,10 +110,10 @@ class Category extends Base
 
 		return [
 			'permissions' => [
-				'add' => $userPermissions->checkAddPermissions($entityTypeId, $categoryId),
+				'add' => $userPermissions->entityType()->canAddItemsInCategory($entityTypeId, $categoryId),
 				'read' => $canRead,
-				'delete' => $userPermissions->checkDeletePermissions($entityTypeId, 0, $categoryId),
-				'update' => $userPermissions->checkUpdatePermissions($entityTypeId, 0, $categoryId),
+				'delete' => $userPermissions->entityType()->canDeleteItemsInCategory($entityTypeId, $categoryId),
+				'update' => $userPermissions->entityType()->canUpdateItemsInCategory($entityTypeId, $categoryId),
 			],
 			'link' => $entity->getDesktopLink($categoryId),
 			'counters' => $entity->getCounters($userId, $categoryId),
@@ -198,7 +199,7 @@ class Category extends Base
 			'categoryId' => 0,
 			'name' => $factory->getEntityDescriptionInPlural(),
 			'isDefault' => true,
-			'editable' => $this->canUserEditCategory(),
+			'editable' => $this->canUserEditCategory($factory->getEntityTypeId()),
 			'access' => $this->getAccess($permissions),
 			'categoriesSupported' => $factory->isCategoriesSupported(),
 			'categoriesEnabled' => $categoriesEnabled,
@@ -215,7 +216,7 @@ class Category extends Base
 	{
 		$newCategory = $factory->createCategory($fields);
 
-		if (!Container::getInstance()->getUserPermissions()->canAddCategory($newCategory))
+		if (!Container::getInstance()->getUserPermissions()->category()->canAdd($newCategory))
 		{
 			$this->addError(ErrorCode::getAccessDeniedError());
 
@@ -242,7 +243,7 @@ class Category extends Base
 			return;
 		}
 
-		if (!Container::getInstance()->getUserPermissions()->canDeleteCategory($category))
+		if (!Container::getInstance()->getUserPermissions()->category()->canDelete($category))
 		{
 			$this->addError(ErrorCode::getAccessDeniedError());
 			return;
@@ -312,13 +313,13 @@ class Category extends Base
 				return false;
 			}
 
-			if (!Container::getInstance()->getUserPermissions()->canUpdateCategory($category))
+			if (!Container::getInstance()->getUserPermissions()->category()->canUpdate($category))
 			{
 				$this->addError(ErrorCode::getAccessDeniedError());
 				return false;
 			}
 		}
-		elseif (!Container::getInstance()->getUserPermissions()->canUpdateType($factory->getEntityTypeId()))
+		elseif (!Container::getInstance()->getUserPermissions()->isAdminForEntity($factory->getEntityTypeId()))
 		{
 			$this->addError(ErrorCode::getAccessDeniedError());
 			return false;
@@ -513,7 +514,7 @@ class Category extends Base
 	{
 		$categories = [];
 		$restrictions = [];
-		$canUserEditCategory = $this->canUserEditCategory();
+		$canUserEditCategory = $this->canUserEditCategory($factory->getEntityTypeId());
 
 		$sortedTunnelsByCategory = [];
 		if ($canUserEditCategory)
@@ -583,9 +584,9 @@ class Category extends Base
 		]);
 	}
 
-	private function canUserEditCategory(): bool
+	private function canUserEditCategory(int $entityTypeId): bool
 	{
-		return Container::getInstance()->getUserPermissions()->canWriteConfig();
+		return Container::getInstance()->getUserPermissions()->isAdminForEntity($entityTypeId);
 	}
 
 	private function getCategoriesCollection(Factory $factory): array
@@ -593,6 +594,7 @@ class Category extends Base
 		return
 			Container::getInstance()
 				->getUserPermissions()
+				->category()
 				->filterAvailableForReadingCategories(
 					$factory->getCategories()
 				)
@@ -617,7 +619,7 @@ class Category extends Base
 			]);
 		}
 
-		if (!Container::getInstance()->getUserPermissions()->canViewItemsInCategory($category))
+		if (!Container::getInstance()->getUserPermissions()->category()->canReadItems($category))
 		{
 			$this->addError(ErrorCode::getAccessDeniedError());
 
@@ -630,7 +632,7 @@ class Category extends Base
 
 		$stageObjects = $factory->getStages($categoryId);
 		$stageColors = $this->getStageColors($stageObjects);
-		$canUserEditCategory = Container::getInstance()->getUserPermissions()->canWriteConfig();
+		$canUserEditCategory = Container::getInstance()->getUserPermissions()->category()->canUpdate($category);
 
 		$filteredTunnelsByCategory = [];
 
@@ -673,7 +675,7 @@ class Category extends Base
 			'categoryId' => $category->getId(),
 			'name' => $categoriesEnabled ? $category->getName() : $factory->getEntityDescriptionInPlural(),
 			'isDefault' => $category->getIsDefault(),
-			'editable' => $this->canUserEditCategory(),
+			'editable' => $this->canUserEditCategory($category->getEntityTypeId()),
 			'access' => $this->getAccess($permissions),
 			'categoriesSupported' => $factory->isCategoriesSupported(),
 			'categoriesEnabled' => $categoriesEnabled,
@@ -717,7 +719,8 @@ class Category extends Base
 
 	private function getCategoryPermissions(int $entityTypeId, int $categoryId = 0): array
 	{
-		$permissionEntityName = UserPermissions::getPermissionEntityType($entityTypeId, $categoryId);
+		$permissionEntityName = (new PermissionEntityTypeHelper($entityTypeId))->getPermissionEntityTypeForCategory($categoryId);
+
 		return RolePermission::getByEntityId($permissionEntityName);
 	}
 
@@ -833,7 +836,7 @@ class Category extends Base
 				return false;
 			}
 
-			if (!Container::getInstance()->getUserPermissions()->canViewItemsInCategory($category))
+			if (!Container::getInstance()->getUserPermissions()->category()->canReadItems($category))
 			{
 				$this->addError(ErrorCode::getAccessDeniedError());
 				return false;
@@ -844,7 +847,8 @@ class Category extends Base
 
 		$canRead = Container::getInstance()
 			->getUserPermissions()
-			->checkReadPermissions($factory->getEntityTypeId(), 0, $categoryId)
+			->entityType()
+			->canReadItemsInCategory($factory->getEntityTypeId(), $categoryId)
 		;
 
 		if (!$canRead)

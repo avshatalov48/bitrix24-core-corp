@@ -7,6 +7,7 @@ jn.define('crm/entity-document/product/product-card', (require, exports, module)
 	const { InlineSkuTree } = require('layout/ui/product-grid/components/inline-sku-tree');
 	const { ProductCard } = require('layout/ui/product-grid/components/product-card');
 	const { DiscountPrice } = require('layout/ui/product-grid/components/discount-price');
+	const { Money, MoneyView } = require('layout/ui/money');
 	const { isEmpty } = require('utils/object');
 
 	/**

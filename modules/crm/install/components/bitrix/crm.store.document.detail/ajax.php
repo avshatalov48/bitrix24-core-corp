@@ -431,7 +431,7 @@ final class AjaxProcessor extends Crm\Order\AjaxProcessor
 			if (isset($clientData['COMPANY_DATA']) && is_array($clientData['COMPANY_DATA']))
 			{
 				$companyEntity = new \CCrmCompany(false);
-				$enableCompanyCreation = \CCrmCompany::CheckCreatePermission($this->userPermissions);
+				$enableCompanyCreation = \CCrmCompany::CheckCreatePermission();
 				foreach ($clientData['COMPANY_DATA'] as $companyData)
 				{
 					$companyID = isset($companyData['id']) ? (int)$companyData['id'] : 0;
@@ -486,7 +486,7 @@ final class AjaxProcessor extends Crm\Order\AjaxProcessor
 			if (isset($clientData['CONTACT_DATA']) && is_array($clientData['CONTACT_DATA']))
 			{
 				$contactEntity = new \CCrmContact(false);
-				$enableContactCreation = \CCrmContact::CheckCreatePermission($this->userPermissions);
+				$enableContactCreation = \CCrmContact::CheckCreatePermission();
 				$contactData = $clientData['CONTACT_DATA'];
 				foreach($contactData as $contactItem)
 				{
@@ -1415,7 +1415,7 @@ final class AjaxProcessor extends Crm\Order\AjaxProcessor
 	 */
 	protected function getSecondaryEntityInfosAction(): void
 	{
-		if (!Permissions\Order::checkCreatePermission($this->userPermissions))
+		if (!\Bitrix\Crm\Service\Container::getInstance()->getUserPermissions()->entityType()->canAddItems(CCrmOwnerType::Order))
 		{
 			$this->addError(Loc::getMessage('CRM_STORE_DOCUMENT_SD_INSUFFICIENT_RIGHTS'));
 
@@ -1483,7 +1483,7 @@ final class AjaxProcessor extends Crm\Order\AjaxProcessor
 		$secondaryInfos = [];
 		foreach ($secondaryIds as $entityId)
 		{
-			if (!\CCrmContact::CheckReadPermission($entityId, $this->userPermissions))
+			if (!\CCrmContact::CheckReadPermission($entityId))
 			{
 				continue;
 			}

@@ -1,0 +1,170 @@
+body table.bx-grid-multiaction div.bx-separator {
+	border: 0;
+}
+
+body table.bx-grid-multiaction {
+	background: transparent;
+}
+
+body table.bx-grid-multiaction select,
+body table.bx-grid-multiaction input,
+body table.bx-grid-multiaction td {
+	white-space: nowrap;
+	font: 12px var(--ui-font-family-primary, var(--ui-font-family-helvetica));
+	color: #555;
+}
+
+body table.bx-grid-multiaction select {
+	margin-left: 4px;
+}
+
+body table.bx-grid-multiaction td:nth-child(9) select {
+	margin-left: 0px;
+}
+
+body table.bx-grid-multiaction td {
+	padding: 0 3px;
+	text-shadow: #fff 0 1px 1px;
+}
+
+/*body table.bx-grid-multiaction td:nth-child(8){width:100%;text-align:right;}*/
+body table.bx-grid-multiaction tr.bx-top,
+body div.bx-interface-toolbar tr.bx-top {
+	display: none;
+}
+
+body table.bx-grid-multiaction td.bx-left,
+body div.bx-interface-toolbar td.bx-left {
+	width: 5px !important;
+	height: 44px !important;
+	border: 0 !important;
+	padding: 0 !important;
+	background: url(/bitrix/js/intranet/old-interface/grid/images/interface/grid/bx-interface-toolbar-left.gif) no-repeat left top !important;
+}
+
+body table.bx-grid-multiaction td.bx-content,
+body div.bx-interface-toolbar td.bx-content {
+	width: auto !important;
+	height: 44px !important;
+	border: 0 !important;
+	padding: 0 !important;
+	background: url(/bitrix/js/intranet/old-interface/grid/images/interface/grid/bx-interface-toolbar-content.gif) repeat-x left top !important;
+}
+
+body div.bx-edit-tab-inner table.bx-edit-table table.bx-grid-multiaction tr td {
+	background: none;
+}
+
+body table.bx-grid-multiaction td.bx-content {
+	padding: 0 10px !important;
+}
+
+body table.bx-grid-multiaction td.bx-right,
+body div.bx-interface-toolbar td.bx-right {
+	width: 5px !important;
+	height: 44px !important;
+	border: 0 !important;
+	padding: 0 !important;
+	background: url(/bitrix/js/intranet/old-interface/grid/images/interface/grid/bx-interface-toolbar-right.gif) no-repeat right top !important;
+}
+
+body table.bx-grid-multiaction tr.bx-bottom,
+body div.bx-interface-toolbar tr.bx-bottom {
+	display: none;
+}
+
+body table.bx-grid-multiaction tr.bx-bottom-all,
+body div.bx-interface-toolbar tr.bx-bottom-all {
+	display: none;
+}
+
+body div.bx-interface-toolbar td.bx-content table {
+	display: block;
+	height: 36px;
+	margin: 3px 0px;
+}
+
+body div.bx-interface-toolbar a.bx-context-button {
+	*position: relative;
+	*top: -1px;
+	position: relative \9;
+	top: -1px \9;
+
+	height: 33px;
+	line-height: 33px;
+	padding: 0 10px 0 7px;
+	margin: 0 3px;
+	border: 1px solid transparent;
+	-moz-border-radius: 3px;
+	-webkit-border-radius: 3px;
+	-khtml-border-radius: 3px;
+	border-radius: 3px;
+	color: #41474f;
+	background: url(/bitrix/js/intranet/old-interface/grid/images/interface/grid/toolbar-a-hover.gif) repeat-x left 34px;
+}
+
+body div.bx-interface-toolbar a.bx-context-button:hover {
+	border: 1px solid #dedfdf;
+	margin: 0 3px;
+	background: url(/bitrix/js/intranet/old-interface/grid/images/interface/grid/toolbar-a-hover.gif) repeat-x left top;
+}
+
+body div.bx-interface-toolbar a.bx-context-button:active,
+body div.bx-interface-toolbar a.bx-context-button.pressed {
+	border-top: 1px solid #8b939e;
+	border-bottom: 1px solid #c6d0d4;
+	border-left: 1px solid #9da6af;
+	border-right: 1px solid #9da6af;
+	margin: 0 3px;
+	background: url(/bitrix/js/intranet/old-interface/grid/images/interface/grid/toolbar-a-active.gif) repeat-x left top;
+}
+
+body div.bx-interface-toolbar span.bx-context-button-text {
+	height: 33px;
+	line-height: 33px;
+	margin: 0;
+	text-shadow: #fff 0 1px 1px;
+}
+
+body div.bx-interface-toolbar span.bx-context-button-left {
+	display: none;
+}
+
+body div.bx-interface-toolbar span.bx-context-button-right {
+	display: none;
+}
+
+body div.bx-context-more-buttons a.bx-context-button {
+	padding: 0 6px 0 2px;
+}
+
+body div.bx-context-more-buttons a.bx-context-button span.bx-context-button-text {
+	padding: 0 0px 0 11px;
+}
+
+body div.bx-context-more-buttons span.bx-arrow,
+body div.bx-interface-toolbar span.bx-arrow {
+	width: 5px;
+	height: 3px;
+	margin: 15px 2px 0 5px;
+}
+
+body div.bx-interface-toolbar span.bx-context-button-icon {
+	margin: 4px 6px 4px 0px;
+}
+
+body div.bx-interface-toolbar a.bx-context-button span.btn-list {
+	background: url(/bitrix/js/intranet/old-interface/grid/images/interface/grid/toolbar-icons/list.gif) no-repeat center center;
+}
+
+body div.bx-interface-toolbar a.bx-context-button span.btn-new {
+	background: url(/bitrix/js/intranet/old-interface/grid/images/interface/grid/toolbar-icons/new.gif) no-repeat center center;
+}
+
+body div.bx-interface-toolbar a.bx-context-button span.go-back {
+	background: url(/bitrix/js/intranet/old-interface/grid/images/interface/grid/toolbar-icons/go-back.gif) no-repeat center center !important;
+}
+
+body div.bx-interface-toolbar a.bx-context-button span.btn-unlock {
+	background: url(/bitrix/js/intranet/old-interface/grid/images/interface/grid/toolbar-icons/element-unlock.gif) no-repeat center center !important;
+}

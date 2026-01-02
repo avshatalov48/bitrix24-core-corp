@@ -3,7 +3,7 @@
  */
 jn.define('im/messenger/controller/sidebar/chat/sidebar-plan-limit-banner', (require, exports, module) => {
 	const { Theme } = require('im/lib/theme');
-	const { Loc } = require('loc');
+	const { Loc } = require('im/messenger/loc');
 	const { planLimitLock } = require('im/messenger/assets/common');
 	const { IconView, Icon } = require('ui-system/blocks/icon');
 	const { AnalyticsEvent } = require('analytics');

@@ -1,0 +1,11 @@
+<?php
+$MESS["CRM_ACTIVITY_WEBFORM_FIELDS_LINK"] = "Нысан мекенжайы";
+$MESS["CRM_ACTIVITY_WEBFORM_IP"] = "IP мекенжайынан толтырылған";
+$MESS["CRM_ACTIVITY_WEBFORM_NAME"] = "CRM-нысан";
+$MESS["CRM_ACTIVITY_WEBFORM_NAME_IN"] = "Кіріс";
+$MESS["CRM_ACTIVITY_WEBFORM_NO"] = "Жоқ";
+$MESS["CRM_ACTIVITY_WEBFORM_STATUS_ACT"] = "Қосылған";
+$MESS["CRM_ACTIVITY_WEBFORM_STATUS_INACT"] = "Қосу";
+$MESS["CRM_ACTIVITY_WEBFORM_USER_CONSENT"] = "Пайдаланушы келісімі шығарылды";
+$MESS["CRM_ACTIVITY_WEBFORM_VISITED_PAGES"] = "Сайт парақшасына кіру";
+$MESS["CRM_ACTIVITY_WEBFORM_YES"] = "Иә";

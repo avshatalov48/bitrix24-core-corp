@@ -32,6 +32,13 @@ class Product
 		$params = $event->getParameters();
 		$result = &$params[1];
 		$languageId = $params[2];
+
+		$eventTableName = $params[3];
+		if (!empty($eventTableName) && $eventTableName !== 'crm_product')
+		{
+			return;
+		}
+
 		$result['crm_product'] = [
 			'TABLE_NAME' => 'b_catalog_product',
 			'TABLE_ALIAS' => 'P',
@@ -64,9 +71,8 @@ class Product
 				],
 				'TYPE' => [
 					'IS_METRIC' => 'N',
-					'FIELD_NAME' => 'PT.NAME',
+					'FIELD_NAME' => 'CASE ' . self::getTypeCases() . 'END',
 					'FIELD_TYPE' => 'string',
-					'LEFT_JOIN' => self::getProductTypeTemporaryTableLeftJoin(),
 				],
 				'PARENT_ID' => self::getParentIdDescription($crmCatalogIblockOfferId),
 				'MEASURE' => [
@@ -99,20 +105,16 @@ class Product
 		unset($fieldInfo);
 	}
 
-	private static function getProductTypeTemporaryTableLeftJoin(): string
+	private static function getTypeCases(): string
 	{
+		$cases = '';
 		$productTypes = \Bitrix\Catalog\ProductTable::getProductTypes(true);
-		$temporaryTableQuery = '';
 		foreach ($productTypes as $productTypeId => $productTypeName)
 		{
-			if ($temporaryTableQuery)
-			{
-				$temporaryTableQuery .= ' UNION ';
-			}
-			$temporaryTableQuery .= 'SELECT ' . $productTypeId . ' as ID, \'' . $productTypeName . '\' as NAME';
+			$cases .= "WHEN P.TYPE = {$productTypeId} THEN '{$productTypeName}' ";
 		}
 
-		return 'LEFT JOIN (' . $temporaryTableQuery . ') PT ON PT.ID = P.TYPE';
+		return $cases;
 	}
 
 	private static function getParentIdDescription(?int $crmCatalogIblockOfferId): array
@@ -120,7 +122,7 @@ class Product
 		$defaultDescription = [
 			'IS_METRIC' => 'N',
 			'FIELD_NAME' => 'null',
-			'FILED_TYPE' => 'int',
+			'FIELD_TYPE' => 'int',
 		];
 		if (!$crmCatalogIblockOfferId)
 		{

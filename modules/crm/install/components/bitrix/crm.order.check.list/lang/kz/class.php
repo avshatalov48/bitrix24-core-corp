@@ -1,0 +1,22 @@
+<?php
+$MESS["CRM_COLUMN_ORDER_CHECK_CASHBOX_ID"] = "Кассаның атауы";
+$MESS["CRM_COLUMN_ORDER_CHECK_DATE_CREATE"] = "Жасалған күні";
+$MESS["CRM_COLUMN_ORDER_CHECK_ID"] = "ID";
+$MESS["CRM_COLUMN_ORDER_CHECK_LINK"] = "Чекке сілтеме";
+$MESS["CRM_COLUMN_ORDER_CHECK_ORDER_ID"] = "Тапсырыс ID-і";
+$MESS["CRM_COLUMN_ORDER_CHECK_PAYMENT_DESCR"] = "Төлем";
+$MESS["CRM_COLUMN_ORDER_CHECK_PAYMENT_ID"] = "Төлем ID-і";
+$MESS["CRM_COLUMN_ORDER_CHECK_SHIPMENT_DESCR"] = "Жөнелту";
+$MESS["CRM_COLUMN_ORDER_CHECK_SHIPMENT_ID"] = "Жөнелту ID-і";
+$MESS["CRM_COLUMN_ORDER_CHECK_STATUS"] = "Чек мәртебесі";
+$MESS["CRM_COLUMN_ORDER_CHECK_SUM"] = "Чек сомасы";
+$MESS["CRM_COLUMN_ORDER_CHECK_TITLE"] = "Төлем құжаты";
+$MESS["CRM_COLUMN_ORDER_CHECK_TYPE"] = "Чек түрі";
+$MESS["CRM_ERROR_WRONG_ORDER"] = "Тапсырыс табылмады";
+$MESS["CRM_ERROR_WRONG_ORDER_ID"] = "Тапсырыс идентификаторы дұрыс емес";
+$MESS["CRM_ORDER_CASHBOX_STATUS_E"] = "Қате";
+$MESS["CRM_ORDER_CASHBOX_STATUS_N"] = "Шығарылған жоқ";
+$MESS["CRM_ORDER_CASHBOX_STATUS_P"] = "Шығарылуда";
+$MESS["CRM_ORDER_CASHBOX_STATUS_Y"] = "Шығарылды";
+$MESS["CRM_ORDER_CHECK_LIST_TITLE"] = "#DATE_BILL# күнгі №#ACCOUNT_NUMBER# төлем бойынша чектер (#PAY_SYSTEM_NAME#)";
+$MESS["CRM_PERMISSION_DENIED"] = "Қолжетімділікке тыйым салынған";

@@ -465,10 +465,22 @@ class InfoConnectors
 			else
 			{
 				$connectorsInfo['LINE_ID'] = $lineId;
-				$addResult = InfoConnectorsTable::add($connectorsInfo);
-				if (!$addResult->isSuccess())
+				try
 				{
-					$result->addErrors($addResult->getErrors());
+					$addResult = InfoConnectorsTable::add($connectorsInfo);
+					if (!$addResult->isSuccess())
+					{
+						$result->addErrors($addResult->getErrors());
+					}
+				}
+				catch (\Bitrix\Main\DB\DuplicateEntryException $exception)
+				{
+					unset($connectorsInfo['LINE_ID']);
+					$updateResult = InfoConnectorsTable::update($lineId, $connectorsInfo);
+					if (!$updateResult->isSuccess())
+					{
+						$result->addErrors($updateResult->getErrors());
+					}
 				}
 			}
 		}

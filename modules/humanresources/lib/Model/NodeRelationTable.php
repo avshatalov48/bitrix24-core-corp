@@ -2,8 +2,13 @@
 
 namespace Bitrix\HumanResources\Model;
 
+use Bitrix\HumanResources\Type\RelationEntitySubtype;
 use Bitrix\HumanResources\Type\RelationEntityType;
+use Bitrix\Main\ArgumentException;
+use Bitrix\Main\DB\SqlQueryException;
 use Bitrix\Main\ORM;
+use Bitrix\Main\ORM\Query\Query;
+use Bitrix\Main\SystemException;
 use Bitrix\Main\Type\DateTime;
 
 /**
@@ -54,8 +59,12 @@ class NodeRelationTable extends ORM\Data\DataManager
 				->configureTitle('Related entity id')
 			,
 			(new ORM\Fields\EnumField('ENTITY_TYPE'))
-				->configureValues(RelationEntityType::values())
+				->configureValues(RelationEntityType::names())
 				->configureTitle('Entity type chat/space/')
+			,
+			(new ORM\Fields\EnumField('ENTITY_SUBTYPE'))
+				->configureValues(RelationEntitySubtype::values())
+				->configureTitle('Entity subtype chat/channel/')
 			,
 			(new ORM\Fields\BooleanField('WITH_CHILD_NODES'))
 				->configureStorageValues('N', 'Y')
@@ -73,5 +82,22 @@ class NodeRelationTable extends ORM\Data\DataManager
 				->configureTitle('UPDATED_AT')
 			,
 		];
+	}
+
+	/**
+	 * @throws ArgumentException
+	 * @throws SqlQueryException
+	 * @throws SystemException
+	 */
+	public static function deleteList(array $filter): \Bitrix\Main\DB\Result
+	{
+		$entity = static::getEntity();
+		$connection = $entity->getConnection();
+
+		return $connection->query(sprintf(
+			'DELETE FROM %s WHERE %s',
+			$connection->getSqlHelper()->quote($entity->getDbTableName()),
+			Query::buildFilterSql($entity, $filter),
+		));
 	}
 }

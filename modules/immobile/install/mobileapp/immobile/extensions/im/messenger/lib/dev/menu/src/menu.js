@@ -3,15 +3,19 @@
  */
 jn.define('im/messenger/lib/dev/menu/menu', (require, exports, module) => {
 	const AppTheme = require('apptheme');
+	const { BannerButton } = require('layout/ui/banners/banner-button');
+
+	const { MessengerParams } = require('im/messenger/lib/params');
+
 	const { DeveloperSettingsMenu } = require('im/messenger/lib/dev/menu/developer-settings');
-	const { LoggingSettings } = require('im/messenger/lib/dev/menu/logging-settings');
+	const { LoggingSettingsSearch } = require('im/messenger/lib/dev/menu/logging/settings-search');
+	const { LoggingSettings } = require('im/messenger/lib/dev/menu/logging/settings');
 	const { ChatDialog } = require('im/messenger/lib/dev/menu/chat-dialog');
 	const { ChatDialogBenchmark } = require('im/messenger/lib/dev/menu/chat-dialog-benchmark');
 	const { VuexManagerPlayground } = require('im/messenger/lib/dev/menu/vuex-manager');
-	const { BannerButton } = require('layout/ui/banners/banner-button');
 	const { Playground } = require('im/messenger/lib/dev/menu/playground');
 	const { DialogSnippets } = require('im/messenger/lib/dev/menu/dialog-snippets');
-	const { MessengerParams } = require('im/messenger/lib/params');
+
 	class DeveloperMenu extends LayoutComponent
 	{
 		constructor(props)
@@ -22,6 +26,20 @@ jn.define('im/messenger/lib/dev/menu/menu', (require, exports, module) => {
 		}
 
 		render()
+		{
+			return ScrollView(
+				{},
+				View(
+					{},
+					...this.getButtonsData(),
+				),
+			);
+		}
+
+		/**
+		* @return {Array<LayoutComponent>}
+		*/
+		getButtonsData()
 		{
 			const developerSettingsButton = BannerButton({
 				title: 'Dev',
@@ -35,10 +53,22 @@ jn.define('im/messenger/lib/dev/menu/menu', (require, exports, module) => {
 				},
 			});
 
+			const logSettingsSearchButton = BannerButton({
+				title: 'LoggerManager with search',
+				description: '',
+				backgroundColor: AppTheme.colors.accentSoftBlue2,
+				onClick: () => {
+					const loggingSettingsSearch = new LoggingSettingsSearch();
+					loggingSettingsSearch.open();
+
+					window.messengerDev.playground.loggingSettingsSearch = loggingSettingsSearch;
+				},
+			});
+
 			const logSettingsButton = BannerButton({
-				title: 'Logging',
-				description: 'LoggerManager settings',
-				backgroundColor: AppTheme.colors.accentSoftBlue1,
+				title: 'LoggerManager form',
+				description: '',
+				backgroundColor: AppTheme.colors.accentSoftBlue2,
 				onClick: () => {
 					const loggingSettings = new LoggingSettings();
 					loggingSettings.open();
@@ -131,7 +161,7 @@ jn.define('im/messenger/lib/dev/menu/menu', (require, exports, module) => {
 							const { UnitTestsEntry } = result;
 							UnitTestsEntry.openTests();
 						}
-						catch(e)
+						catch (e)
 						{
 							console.error(e);
 						}
@@ -139,16 +169,62 @@ jn.define('im/messenger/lib/dev/menu/menu', (require, exports, module) => {
 				});
 			}
 
-			return View(
-				{},
+			const consoleButton = BannerButton({
+				title: 'Console',
+				description: 'for standalone debug',
+				backgroundColor: AppTheme.colors.accentSoftBlue1,
+				onClick: async () => {
+					const { Console } = await requireLazy('im:messenger/lib/dev/tools');
+					Console.open();
+				},
+			});
+
+			return [
 				developerSettingsButton,
-				logSettingsButton,
+				this.renderButtonSection([logSettingsSearchButton, logSettingsButton], 'Logging'),
+				consoleButton,
 				// chatDialogVisualTest,
 				// chatDialogBenchmark,
 				vuexPlaygroundButton,
 				playground,
 				dialog,
 				unitTestDashboard,
+			].map((button) => this.renderMenuItem(button));
+		}
+
+		renderMenuItem(item)
+		{
+			return View(
+				{
+					style: {
+						padding: '1%',
+					},
+				},
+				item,
+			);
+		}
+
+		renderButtonSection(buttons, sectionName, nestingLevel = '4%')
+		{
+			return View(
+				{
+					style: {
+						backgroundColor: AppTheme.colors.accentSoftBlue1,
+						paddingLeft: nestingLevel,
+						borderRadius: 12,
+					},
+				},
+				Text({
+					style: {
+						fontSize: 20,
+						fontWeight: 'bold',
+						marginTop: '3%',
+						marginBottom: '3%',
+					},
+					text: sectionName,
+					value: sectionName,
+				}),
+				...buttons,
 			);
 		}
 

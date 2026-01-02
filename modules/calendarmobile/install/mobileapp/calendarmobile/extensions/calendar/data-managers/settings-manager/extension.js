@@ -17,7 +17,7 @@ jn.define('calendar/data-managers/settings-manager', (require, exports, module) 
 		{
 			this.setFirstWeekday(settings.firstWeekday);
 			this.setMeetSectionId(settings.meetSectionId);
-			this.setPathToUserCalendar(settings.pathToUserCalendar);
+			this.setPathToCalendar(settings.pathToCalendar);
 			this.setUserTimezoneName(settings.userTimezoneName);
 		}
 
@@ -35,6 +35,7 @@ jn.define('calendar/data-managers/settings-manager', (require, exports, module) 
 			this.setWeekHolidays(settings.weekHolidays);
 			this.setYearHolidays(settings.yearHolidays);
 			this.setUserTimezoneName(settings.userTimezoneName);
+			this.setIsCollabCalendar(settings.isCollabCalendar);
 		}
 
 		setFirstWeekday(firstWeekday)
@@ -47,9 +48,9 @@ jn.define('calendar/data-managers/settings-manager', (require, exports, module) 
 			this.meetSectionId = meetSectionId;
 		}
 
-		setPathToUserCalendar(pathToUserCalendar)
+		setPathToCalendar(pathToCalendar)
 		{
-			this.pathToUserCalendar = pathToUserCalendar;
+			this.pathToCalendar = pathToCalendar;
 		}
 
 		setDenyBusyInvitation(denyBusyInvitation)
@@ -96,6 +97,11 @@ jn.define('calendar/data-managers/settings-manager', (require, exports, module) 
 			this.yearHolidays = yearHolidays;
 		}
 
+		setIsCollabCalendar(isCollabCalendar)
+		{
+			this.isCollabCalendar = isCollabCalendar;
+		}
+
 		getFirstWeekday()
 		{
 			return this.firstWeekday;
@@ -106,9 +112,9 @@ jn.define('calendar/data-managers/settings-manager', (require, exports, module) 
 			return this.meetSectionId;
 		}
 
-		getPathToUserCalendar()
+		getPathToCalendar()
 		{
-			return this.pathToUserCalendar;
+			return this.pathToCalendar;
 		}
 
 		getUserTimezoneName()
@@ -149,6 +155,11 @@ jn.define('calendar/data-managers/settings-manager', (require, exports, module) 
 		isShowDeclinedEnabled()
 		{
 			return this.showDeclined;
+		}
+
+		isCollabCalendarContext()
+		{
+			return this.isCollabCalendar;
 		}
 
 		/**

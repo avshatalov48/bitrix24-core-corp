@@ -10,7 +10,6 @@ return [
 		'assets/common',
 		'assets/icons',
 		'layout/ui/menu',
-		'feature',
 
 		'tasks:statemanager/redux/slices/tasks/field-change-registry',
 		'tasks:statemanager/redux/types',

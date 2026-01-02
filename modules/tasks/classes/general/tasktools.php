@@ -16,39 +16,22 @@ class CTasksTools
 {
 	const CACHE_TTL_UNLIM = 32100113;	// 371+ days
 
-	/**
-	 * @access private
-	 * @deprecated
-	 */
+	// todo remove after: crm 537a8cbc35f9
 	public static function getOccurAsUserId()
 	{
 		return \Bitrix\Tasks\Util\User::getOccurAsId();
 	}
 
-	/**
-	 * @param string $userId
-	 * @return null|string
-	 * @throws TasksException
-	 * @deprecated
-	 */
-	public static function setOccurAsUserId($userId = 'get key')
+	// todo remove after: forum 537a8cbc35f9
+	public static function isPortalB24Admin($userId = null)
 	{
-		return \Bitrix\Tasks\Util\User::setOccurAsId($userId);
+		return \Bitrix\Tasks\Integration\Bitrix24\User::isAdmin($userId);
 	}
 
-	/**
-	 * Not part of public API, for internal use only.
-	 * @deprecated
-	 * @access private
-	 *
-	 * @param $n
-	 * @param $msgId
-	 * @param bool|array $arReplace
-	 * @return mixed|string
-	 */
-	public static function getMessagePlural($n, $msgId, $arReplace = false)
+	// todo remove after: forum 537a8cbc35f9
+	public static function isAdmin($userId = null)
 	{
-		return \Bitrix\Main\Localization\Loc::getMessagePlural($msgId, (int)$n, $arReplace);
+		return \Bitrix\Tasks\Util\User::isAdmin($userId);
 	}
 
 	/**
@@ -76,49 +59,6 @@ class CTasksTools
 	{
 		return \Bitrix\Tasks\Util\User::getTimeZoneOffset($userId);
 	}
-
-
-	public static function stripZeroTime($dateTimeStr)
-	{
-		global $DB;
-
-		$ts = MakeTimeStamp($dateTimeStr);
-
-		// if invalid date => return original string
-		if ($ts < 172800)
-			return ($dateTimeStr);
-
-		$isTime = (($ts + date('Z', $ts)) % 86400 != 0);
-
-
-		$processed = FormatDate(
-			$DB->DateFormatToPhp(CSite::GetDateFormat($isTime ? 'FULL' : 'SHORT')),
-			$ts
-		);
-
-		return ($processed);
-	}
-
-
-	public static function isIntegerValued($i)
-	{
-		return (CTaskAssert::isLaxIntegers($i));
-	}
-
-
-	/**
-	 *
-	 * Generate v4 UUID
-	 *
-	 * Version 4 UUIDs are pseudo-random.
-	 *
-	 * @deprecated
-	 */
-	public static function genUuid($brackets = true)
-	{
-		return \Bitrix\Tasks\Util::generateUUID($brackets);
-	}
-
 
 	public function __call($name, $arguments)
 	{
@@ -560,48 +500,6 @@ class CTasksTools
 		return ($arData);
 	}
 
-
-	/**
-	 * return bool true if current ot given user is admin.
-	 *
-	 * @deprecated
-	 */
-	public static function isAdmin($userId = null)
-	{
-		return \Bitrix\Tasks\Util\User::isAdmin($userId);
-	}
-
-
-	/**
-	 * return bool true if we at Bitrix24 portal and current (or given) user is admin.
-	 *
-	 * @deprecated
-	 */
-	public static function isPortalB24Admin($userId = null)
-	{
-		return \Bitrix\Tasks\Integration\Bitrix24\User::isAdmin($userId);
-	}
-
-	/**
-	 * @param null $userId
-	 * @return bool
-	 *
-	 * @deprecated
-	 */
-	public static function isAnyAdmin($userId = null)
-	{
-		return \Bitrix\Tasks\Util\User::isSuper($userId);
-	}
-
-	/**
-	 * @return bool|int|null
-	 * @deprecated
-	 */
-	public static function GetCommanderInChief()
-	{
-		return \Bitrix\Tasks\Util\User::getAdminId();
-	}
-
 	/**
 	 * For internal use only, not public API
 	 * @access private
@@ -847,16 +745,6 @@ class CTasksTools
 					'time_tracking'      => 'N'
 				)
 			)
-		);
-	}
-
-
-	public static function savePopupOptions($value)
-	{
-		CUserOptions::SetOption(
-			'tasks',
-			'popup_options',
-			$value
 		);
 	}
 }

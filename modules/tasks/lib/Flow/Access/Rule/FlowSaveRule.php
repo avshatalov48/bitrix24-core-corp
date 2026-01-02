@@ -58,9 +58,23 @@ class FlowSaveRule extends AbstractRule
 				return true;
 			}
 
+			/** @var FlowModel $item */
+			if ((int)$item?->getProjectId() === $params->getProjectId())
+			{
+				if ((int)$item?->getOwnerId() === $this->user->getUserId())
+				{
+					return true;
+				}
+
+				if ((int)$item?->getCreatorId() === $this->user->getUserId())
+				{
+					return true;
+				}
+			}
+
 			if (!Group::isUserMember($group['ID'], $this->user->getUserId()))
 			{
-				$this->controller->addError(static::class, 'Unable to create flow by group permissions');
+				$this->controller->addError(static::class, 'Unable by group permissions');
 				return false;
 			}
 		}

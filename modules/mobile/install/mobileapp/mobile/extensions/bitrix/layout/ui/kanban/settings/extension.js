@@ -2,7 +2,6 @@
  * @module layout/ui/kanban/settings
  */
 jn.define('layout/ui/kanban/settings', (require, exports, module) => {
-	const AppTheme = require('apptheme');
 	const { confirmDestructiveAction } = require('alert');
 	const { stringify } = require('utils/string');
 	const { isEqual } = require('utils/object');
@@ -10,11 +9,15 @@ jn.define('layout/ui/kanban/settings', (require, exports, module) => {
 	const { Loc } = require('loc');
 	const { Haptics } = require('haptics');
 	const { Notify } = require('notify');
-
-	const { funnelIcon } = require('assets/stages');
+	const { Color, Indent, Corner } = require('tokens');
+	const { StringInput, InputSize, InputMode, InputDesign } = require('ui-system/form/inputs/string');
+	const { Type } = require('type');
+	const { Area } = require('ui-system/layout/area');
+	const { Box } = require('ui-system/layout/box');
+	const { BoxFooter } = require('ui-system/layout/dialog-footer');
+	const { ButtonSize, ButtonDesign, Button } = require('ui-system/form/buttons/button');
 	const { NavigationLoader } = require('navigation-loader');
-
-	const { EntityName } = require('layout/ui/entity-name');
+	const { LoadingScreenComponent } = require('layout/ui/loading-screen');
 	const {
 		Stage,
 		STAGE_TYPE,
@@ -22,6 +25,8 @@ jn.define('layout/ui/kanban/settings', (require, exports, module) => {
 		DEFAULT_PROCESS_STAGE_COLOR,
 		DEFAULT_FAILED_STAGE_COLOR,
 	} = require('layout/ui/kanban/settings/stage');
+	const { Icon, IconView } = require('ui-system/blocks/icon');
+	const { Text3 } = require('ui-system/typography/text');
 
 	/**
 	 * @class KanbanSettings
@@ -32,18 +37,16 @@ jn.define('layout/ui/kanban/settings', (require, exports, module) => {
 		{
 			return {
 				modal: true,
-				backgroundColor: AppTheme.colors.bgSecondary,
+				backgroundColor: Color.bgSecondary.toHex(),
 				backdrop: {
 					showOnTop: true,
 					forceDismissOnSwipeDown: true,
 					horizontalSwipeAllowed: false,
 					swipeContentAllowed: false,
-					navigationBarColor: AppTheme.colors.bgSecondary,
+					navigationBarColor: Color.bgSecondary.toHex(),
 				},
 				titleParams: {
-					svg: {
-						content: funnelIcon(),
-					},
+					type: 'dialog',
 				},
 			};
 		}
@@ -97,6 +100,9 @@ jn.define('layout/ui/kanban/settings', (require, exports, module) => {
 			}, 500, this);
 
 			this.deleteCategoryHandler = throttle(this.deleteCategory, 500, this);
+			this.state = {
+				error: false,
+			};
 		}
 
 		onLayoutClose()
@@ -114,14 +120,17 @@ jn.define('layout/ui/kanban/settings', (require, exports, module) => {
 			if (this.layout)
 			{
 				this.layout.enableNavigationBarBorder(false);
-				this.layout.setRightButtons([
-					{
-						name: Loc.getMessage('CATEGORY_DETAIL_SAVE'),
-						type: 'text',
-						color: AppTheme.colors.accentMainLinks,
-						callback: () => this.saveAndClose(),
-					},
-				]);
+				if (!this.isDefault)
+				{
+					this.layout.setRightButtons([
+						{
+							testId: `kanban-${Icon.TRASHCAN.getIconName()}`,
+							type: Icon.TRASHCAN.getIconName(),
+							color: Color.base4.toHex(),
+							callback: () => this.openAlertOnDeleteCategory(),
+						},
+					]);
+				}
 
 				this.updateLayoutTitle();
 			}
@@ -131,9 +140,7 @@ jn.define('layout/ui/kanban/settings', (require, exports, module) => {
 		{
 			this.layout.setTitle({
 				text: this.getTitleForNavigation(),
-				svg: {
-					content: funnelIcon(),
-				},
+				type: 'dialog',
 			});
 		}
 
@@ -174,15 +181,8 @@ jn.define('layout/ui/kanban/settings', (require, exports, module) => {
 		render()
 		{
 			return View(
-				{
-					style: {
-						flexDirection: 'column',
-						backgroundColor: AppTheme.colors.bgSecondary,
-					},
-				},
-				this.isLoading()
-					? this.renderLoader()
-					: this.renderContentWrapper(),
+				{},
+				this.isLoading() ? this.renderLoader() : this.renderContentWrapper(),
 			);
 		}
 
@@ -193,26 +193,17 @@ jn.define('layout/ui/kanban/settings', (require, exports, module) => {
 
 		renderLoader()
 		{
-			return new LoadingScreenComponent();
+			return new LoadingScreenComponent({ backgroundColor: Color.bgContentPrimary.toHex() });
 		}
 
 		renderContentWrapper()
 		{
-			return ScrollView(
+			return Box(
 				{
-					ref: (ref) => {
-						this.scrollViewRef = ref;
-					},
 					resizableByKeyboard: true,
-					safeArea: {
-						bottom: true,
-						top: true,
-						left: true,
-						right: true,
-					},
-					style: {
-						flex: 1,
-					},
+					safeArea: { bottom: true },
+					footer: this.renderFooter(),
+					withScroll: true,
 				},
 				this.renderContent(),
 			);
@@ -228,43 +219,43 @@ jn.define('layout/ui/kanban/settings', (require, exports, module) => {
 				this.renderCategoryName(),
 				this.renderStageList(),
 				this.renderStageButtons(),
-				this.renderDeleteButton(),
 			);
 		}
 
 		renderCategoryName()
 		{
-			return View(
+			return Area(
 				{
+					divider: true,
 					style: {
-						marginBottom: 8,
+						backgroundColor: Color.bgContentPrimary.toHex(),
 					},
 				},
-				new EntityName({
+				StringInput({
+					testId: 'category-name',
 					focus: this.hasDefaultName(),
-					name: this.changedFields.name || this.kanbanSettingsName,
+					readOnly: false,
+					mode: InputMode.STROKE,
+					design: InputDesign.GREY,
+					size: InputSize.L,
+					label: Loc.getMessage('CATEGORY_DETAIL_NAME_TITLE'),
 					placeholder: Loc.getMessage('CATEGORY_DETAIL_DEFAULT_CATEGORY_NAME2'),
-					required: true,
-					showRequired: false,
-					iconColor: AppTheme.colors.base3,
+					value: this.changedFields?.name ?? this.kanbanSettingsName,
 					onChange: (value) => {
+						const error = Type.isString(value) && value.length === 0;
+
 						this.changedFields.name = stringify(value);
 						this.layout.setTitle({
 							text: this.getTitleForNavigation(),
 						}, true);
+
+						if (error !== this.state.error)
+						{
+							this.setState({ error });
+						}
 					},
-					config: {
-						selectionOnFocus: this.hasDefaultName(),
-						deepMergeStyles: {
-							wrapper: {
-								paddingTop: 0,
-								paddingBottom: 0,
-							},
-							title: {
-								marginBottom: 0,
-							},
-						},
-					},
+					error: this.state.error || false,
+					errorText: Loc.getMessage('CATEGORY_DETAIL_NAME_ERROR'),
 				}),
 			);
 		}
@@ -284,18 +275,18 @@ jn.define('layout/ui/kanban/settings', (require, exports, module) => {
 			return View(
 				{
 					style: {
-						borderRadius: 12,
-						marginBottom: 8,
+						borderRadius: Corner.L.toNumber(),
+						marginBottom: Indent.M.toNumber(),
 					},
 				},
-				this.renderCreateStageButton({
-					buttonText: Loc.getMessage('CATEGORY_DETAIL_CREATE_PROCESS_STAGE'),
+				this.renderButton({
+					text: Loc.getMessage('CATEGORY_DETAIL_CREATE_PROCESS_STAGE'),
 					onClick: () => {
 						this.createStageAndOpenStageDetail(SEMANTICS.PROCESS, 'processStages');
 					},
 				}),
-				this.renderCreateStageButton({
-					buttonText: Loc.getMessage('CATEGORY_DETAIL_CREATE_FAILED_STAGE'),
+				this.renderButton({
+					text: Loc.getMessage('CATEGORY_DETAIL_CREATE_FAILED_STAGE'),
 					onClick: () => {
 						this.createStageAndOpenStageDetail(SEMANTICS.FAILED, 'failedStages');
 					},
@@ -303,74 +294,57 @@ jn.define('layout/ui/kanban/settings', (require, exports, module) => {
 			);
 		}
 
-		renderCreateStageButton({ buttonText, onClick })
+		renderFooter()
 		{
-			return new BaseButton({
-				style: {
-					button: {
-						paddingTop: 18,
-						paddingBottom: 18,
-						paddingLeft: 25,
-						paddingRight: 25,
-						borderRadius: 0,
-						backgroundColor: AppTheme.colors.bgContentPrimary,
-						flexDirection: 'row',
-						alignItems: 'center',
-						height: 'auto',
-						justifyContent: 'flex-start',
-					},
-					icon: {
-						tintColor: AppTheme.colors.base3,
-						width: 12,
-						height: 12,
-						marginRight: 22,
-					},
-					text: {
-						color: AppTheme.colors.base1,
-						fontSize: 18,
-						fontWeight: 'normal',
+			return BoxFooter(
+				{
+					safeArea: Application.getPlatform() !== 'android',
+					keyboardButton: {
+						text: Loc.getMessage('CATEGORY_DETAIL_SAVE'),
+						onClick: () => this.saveAndClose(),
+						testId: 'category-detail-save-button',
+						disabled: this.state.error,
 					},
 				},
-				icon: svgImages.createIcon,
-				text: buttonText,
-				onClick,
-			});
+				Button(
+					{
+						design: ButtonDesign.FILLED,
+						size: ButtonSize.L,
+						text: Loc.getMessage('CATEGORY_DETAIL_SAVE'),
+						stretched: true,
+						onClick: () => this.saveAndClose(),
+						testId: 'category-detail-save-button',
+						disabled: this.state.error,
+					},
+				),
+			);
 		}
 
-		renderDeleteButton()
+		renderButton({ text, onClick })
 		{
-			return new BaseButton({
-				style: {
-					button: {
-						paddingTop: 18,
-						paddingBottom: 18,
-						paddingLeft: 25,
-						paddingRight: 25,
-						borderRadius: 12,
-						backgroundColor: AppTheme.colors.bgContentPrimary,
+			return View(
+				{
+					style: {
+						padding: Indent.XL3.toNumber(),
 						flexDirection: 'row',
-						alignItems: 'center',
-						height: 'auto',
-						justifyContent: 'flex-start',
-						marginBottom: 8,
-						opacity: this.isDefault ? 0.6 : 1,
 					},
-					icon: {
-						tintColor: AppTheme.colors.base3,
-						width: 15,
-						height: 20,
-						marginRight: 16,
-					},
-					text: {
-						color: AppTheme.colors.base1,
-						fontSize: 18,
-						fontWeight: 'normal',
-					},
+					onClick: () => onClick(),
 				},
-				icon: svgImages.deleteIcon,
-				text: Loc.getMessage('CATEGORY_DETAIL_DELETE2'),
-				onClick: () => this.openAlertOnDeleteCategory(),
-			});
+				IconView({
+					icon: Icon.PLUS,
+					size: 28,
+					color: Color.base4,
+				}),
+				Text3({
+					text,
+					color: Color.base4,
+					style: {
+						marginHorizontal: Indent.M.toNumber(),
+					},
+					numberOfLines: 1,
+					ellipsize: 'end',
+				}),
+			);
 		}
 
 		openAlertOnDeleteCategory()
@@ -425,11 +399,6 @@ jn.define('layout/ui/kanban/settings', (require, exports, module) => {
 			throw new Error('Method "openStageDetail" must be implemented.');
 		}
 	}
-
-	const svgImages = {
-		deleteIcon: `<svg width="16" height="21" viewBox="0 0 16 21" fill="none" xmlns="http://www.w3.org/2000/svg"><path d="M9.22602 0H6.15062V1.54677H1.43631C0.64306 1.54677 0 2.18983 0 2.98309V4.64037H15.377V2.98309C15.377 2.18983 14.7339 1.54677 13.9407 1.54677H9.22602V0Z" fill="${AppTheme.colors.base3}"/><path d="M1.53777 6.18721H13.8394L12.6864 19.2351C12.6427 19.7294 12.2287 20.1084 11.7326 20.1084H3.64459C3.14842 20.1084 2.73444 19.7294 2.69077 19.2351L1.53777 6.18721Z" fill="${AppTheme.colors.base3}"/></svg>`,
-		createIcon: `<svg width="12" height="12" viewBox="0 0 12 12" fill="none" xmlns="http://www.w3.org/2000/svg"><path d="M5 0H7V12H5V0Z" fill="${AppTheme.colors.base3}"/><path d="M12 5V7L0 7L1.19209e-07 5L12 5Z" fill="${AppTheme.colors.base3}"/></svg>`,
-	};
 
 	module.exports = {
 		KanbanSettings,

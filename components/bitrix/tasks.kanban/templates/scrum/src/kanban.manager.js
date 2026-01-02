@@ -53,6 +53,7 @@ type Params = {
 type KanbanParams = {
 	columns: Object,
 	items: Object,
+	customSectionsFields: Object,
 	pathToTask: string,
 	pathToTaskCreate: string,
 	pathToUser: string,
@@ -112,6 +113,8 @@ export class KanbanManager
 		});
 
 		EventEmitter.subscribe('onTasksGroupSelectorChange', this.onChangeSprint.bind(this));
+
+		EventEmitter.subscribe('tasks-kanban-settings-fields-view', () => this.kanban.showFieldsSelectPopup());
 
 		Pull.subscribe(this.pullItem);
 	}
@@ -374,7 +377,8 @@ export class KanbanManager
 					canAddItem: this.isActiveSprint,
 					canSortItem: this.isActiveSprint
 				},
-				admins: params.admins
+				admins: params.admins,
+				customSectionsFields: (params.customSectionsFields ? params.customSectionsFields : {})
 			},
 			messages: {
 				ITEM_TITLE_PLACEHOLDER: Loc.getMessage('KANBAN_ITEM_TITLE_PLACEHOLDER'),

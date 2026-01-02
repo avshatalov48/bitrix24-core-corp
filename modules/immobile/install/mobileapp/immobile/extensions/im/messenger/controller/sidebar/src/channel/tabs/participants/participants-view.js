@@ -2,7 +2,7 @@
  * @module im/messenger/controller/sidebar/channel/tabs/participants/participants-view
  */
 jn.define('im/messenger/controller/sidebar/channel/tabs/participants/participants-view', (require, exports, module) => {
-	const { Loc } = require('loc');
+	const { Loc } = require('im/messenger/loc');
 	const { Icon } = require('assets/icons');
 	const { SidebarActionType } = require('im/messenger/const');
 	const { DialogHelper } = require('im/messenger/lib/helper');
@@ -88,7 +88,7 @@ jn.define('im/messenger/controller/sidebar/channel/tabs/participants/participant
 					icon: Icon.FLAG,
 					testId: 'SIDEBAR_USER_CONTEXT_MENU_NOTES',
 				});
-				if (this.state.permissions.isCanLeave)
+				if (this.state.permissions.canLeave)
 				{
 					actionsItems.push({
 						id: SidebarActionType.leaveFromChannel,
@@ -101,7 +101,7 @@ jn.define('im/messenger/controller/sidebar/channel/tabs/participants/participant
 			}
 			else
 			{
-				if (ChatPermission.isCanMention(this.props.dialogId))
+				if (ChatPermission.canMention(this.props.dialogId))
 				{
 					actionsItems.push({
 						id: SidebarActionType.mention,
@@ -143,8 +143,8 @@ jn.define('im/messenger/controller/sidebar/channel/tabs/participants/participant
 					}
 				}
 
-				const isCanDelete = this.state.permissions.isCanRemoveParticipants;
-				if (isCanDelete && ChatPermission.isCanRemoveUserById(userId, this.props.dialogId))
+				const canDelete = this.state.permissions.canRemoveParticipants;
+				if (canDelete && ChatPermission.canRemoveUserById(userId, this.props.dialogId))
 				{
 					actionsItems.push({
 						id: SidebarActionType.removeFromChannel,
@@ -165,6 +165,38 @@ jn.define('im/messenger/controller/sidebar/channel/tabs/participants/participant
 		getUserAddWidgetTitle()
 		{
 			return Loc.getMessage('IMMOBILE_DIALOG_SIDEBAR_PARTICIPANTS_ADD_TITLE_CHANNEL');
+		}
+
+		/**
+		 * @desc Handler remove participant
+		 * @param {object} event
+		 * @param {string} event.key  - string key item
+		 * @void
+		 * @protected
+		 */
+		onClickRemoveParticipant(event)
+		{
+			setTimeout(() => {
+				navigator.notification.confirm(
+					'',
+					(buttonId) => {
+						if (buttonId === 2)
+						{
+							const {
+								key,
+								userId,
+							} = event;
+							const itemPos = this.listViewRef.getElementPosition(key);
+							this.removeParticipant(itemPos.index, itemPos.section, userId);
+						}
+					},
+					Loc.getMessage('IMMOBILE_DIALOG_SIDEBAR_REMOVE_SUBSCRIBER_CONFIRM_TITLE'),
+					[
+						Loc.getMessage('IMMOBILE_DIALOG_SIDEBAR_REMOVE_PARTICIPANT_CONFIRM_NO'),
+						Loc.getMessage('IMMOBILE_DIALOG_SIDEBAR_REMOVE_PARTICIPANT_CONFIRM_YES'),
+					],
+				);
+			}, 10);
 		}
 	}
 

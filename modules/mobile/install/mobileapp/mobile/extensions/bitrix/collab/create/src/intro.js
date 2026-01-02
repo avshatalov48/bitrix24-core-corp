@@ -6,26 +6,27 @@ jn.define('collab/create/src/intro', (require, exports, module) => {
 	const { Text4, Text5 } = require('ui-system/typography/text');
 	const { H3 } = require('ui-system/typography/heading');
 	const { Area } = require('ui-system/layout/area');
-	const { DialogFooter } = require('ui-system/layout/dialog-footer');
+	const { BoxFooter } = require('ui-system/layout/dialog-footer');
 	const { Indent, Color } = require('tokens');
 	const { Loc } = require('loc');
 	const { Icon } = require('assets/icons');
 	const { Link4, LinkMode, Ellipsize } = require('ui-system/blocks/link');
+	const { Box } = require('ui-system/layout/box');
 
 	const helpArticleCode = '22706808';
 
 	const CollabCreateIntro = ({ onContinue }) => {
-		return View(
+		return Box(
 			{
-				style: {
-					flex: 1,
-				},
+				testId: 'CollabCreate_IntroScreen_Box',
+				safeArea: { bottom: true },
+				withScroll: true,
+				footer: Footer({ onContinue }),
 			},
 			Area(
 				{
 					style: {
 						flexDirection: 'column',
-						flexGrow: 1,
 						backgroundColor: Color.bgContentPrimary.toHex(),
 					},
 				},
@@ -50,22 +51,23 @@ jn.define('collab/create/src/intro', (require, exports, module) => {
 				),
 				InviteHint(),
 			),
-			DialogFooter(
-				{
-					safeArea: true,
-					backgroundColor: Color.bgContentPrimary,
-				},
-				Button({
-					testId: 'CollabCreate_IntroScreen_Button',
-					size: ButtonSize.L,
-					text: Loc.getMessage('M_COLLAB_CREATE_INTRO_CONTINUE'),
-					stretched: true,
-					backgroundColor: Color.accentMainPrimary,
-					onClick: onContinue,
-				}),
-			),
 		);
 	};
+
+	const Footer = ({ onContinue }) => BoxFooter(
+		{
+			safeArea: true,
+			backgroundColor: Color.bgContentPrimary,
+		},
+		Button({
+			testId: 'CollabCreate_IntroScreen_Button',
+			size: ButtonSize.L,
+			text: Loc.getMessage('M_COLLAB_CREATE_INTRO_CONTINUE'),
+			stretched: true,
+			backgroundColor: Color.accentMainPrimary,
+			onClick: onContinue,
+		}),
+	);
 
 	const HeroImage = () => View(
 		{

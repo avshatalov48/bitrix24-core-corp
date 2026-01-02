@@ -1,1 +1,0 @@
-BX.namespace('BX.Tasks');

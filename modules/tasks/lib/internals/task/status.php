@@ -25,4 +25,13 @@ abstract class Status extends Base
 	{
 		return Loc::getMessage('TASKS_STATUS_TITLE');
 	}
+
+	public static function getInWorkStatuses(): array
+	{
+		return [
+			self::NEW,
+			self::PENDING,
+			self::IN_PROGRESS,
+		];
+	}
 }

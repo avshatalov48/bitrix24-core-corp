@@ -31,6 +31,16 @@ $component->registerSidePanels(
 );
 
 $component->registerSidePanels(
+	[$arParams['PAGE_URL_B2E_SIGNERS_EDIT']],
+	['width' => 970]
+);
+
+$component->registerSidePanels(
+	[$arParams['PAGE_URL_B2E_SIGNERS_SIGNER_EDIT']],
+	['width' => 600]
+);
+
+$component->registerSidePanels(
 	[
 		\Bitrix\Sign\Integration\CRM::getContactUrl('\d'),
 		\Bitrix\Sign\Integration\CRM::getCompanyUrl('\d')

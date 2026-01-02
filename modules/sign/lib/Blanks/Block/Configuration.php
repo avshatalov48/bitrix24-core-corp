@@ -12,7 +12,7 @@ abstract class Configuration
 {
 	public const VIEW_SPECIFIC_DATA_KEY = '__view';
 
-	abstract function loadData(Item\Block $block, Item\Document $document, ?Item\Member $member = null): array;
+	abstract public function loadData(Item\Block $block, Item\Document $document, ?Item\Member $member = null): array;
 
 	public function validate(Item\Block $block): Main\Result
 	{

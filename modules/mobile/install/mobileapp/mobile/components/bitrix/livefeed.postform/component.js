@@ -38,13 +38,14 @@
 		LivefeedPostForm.clean();
 
 		this.newPostComponent = new NewPostComponent();
+		const shouldSendAnalytics = !(this.newPostComponent.postText || this.newPostComponent.postTitleValue);
 
 		BX.onViewLoaded(() => {
 			postFormLayoutWidget.showComponent(newPostComponent);
 			postFormLayoutWidget.setRightButtons([
 				{
 					name: BX.message('MOBILEAPP_LIVEFEED_POSTFORM_BUTTON_SUBMIT_TITLE'),
-					callback: this.newPostComponent.onPublish.bind(this.newPostComponent),
+					callback: this.newPostComponent.onPublish.bind(this.newPostComponent, shouldSendAnalytics),
 					color: AppTheme.colors.accentMainLinks,
 				},
 			]);

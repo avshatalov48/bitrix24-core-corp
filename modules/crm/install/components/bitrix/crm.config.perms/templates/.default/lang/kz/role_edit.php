@@ -1,0 +1,24 @@
+<?php
+$MESS["CRM_CONFIG_PERMS_LRP_DLG_BTN_CLOSE"] = "Жабу";
+$MESS["CRM_CONFIG_PERMS_LRP_DLG_BTN_START"] = "Орындау";
+$MESS["CRM_CONFIG_PERMS_LRP_DLG_BTN_STOP"] = "Тоқтату";
+$MESS["CRM_CONFIG_PERMS_LRP_DLG_REQUEST_ERR"] = "Сұрауды орындау кезінде қате пайда болды.";
+$MESS["CRM_CONFIG_PERMS_LRP_DLG_WAIT"] = "Күте тұруыңызды өтінеміз...";
+$MESS["CRM_CONFIG_PERMS_REBUILD_COMPANY_ATTRS"] = "Компанияларға кеңейтілген қолжетімділік құқықтарының дұрыс жұмыс істеуі үшін бұрын құрылған компаниялардың қолжетімділік атрибуттарын <a id=\"#ID#\" href=\"#URL#\">жаңарту</a> қажет.";
+$MESS["CRM_CONFIG_PERMS_REBUILD_COMPANY_ATTR_DLG_SUMMARY"] = "Барлық компаниялар үшін қолжетімділік атрибуттары қайта құрылады. Бұл операцияны орындау ұзақ уақыт алуы мүмкін.";
+$MESS["CRM_CONFIG_PERMS_REBUILD_COMPANY_ATTR_DLG_TITLE"] = "Компанияларға қолжетімділік атрибуттарын жаңарту";
+$MESS["CRM_CONFIG_PERMS_REBUILD_CONTACT_ATTRS"] = "Байланыстарға кеңейтілген қолжетімділік құқықтарының дұрыс жұмыс істеуі үшін бұрын құрылған байланыстардың қолжетімділік атрибуттарын <a id=\"#ID#\" href=\"#URL#\">жаңарту</a> қажет.";
+$MESS["CRM_CONFIG_PERMS_REBUILD_CONTACT_ATTR_DLG_SUMMARY"] = "Барлық байланыстар үшін қолжетімділік атрибуттары қайта құрылады. Бұл операцияны орындау ұзақ уақыт алуы мүмкін.";
+$MESS["CRM_CONFIG_PERMS_REBUILD_CONTACT_ATTR_DLG_TITLE"] = "Байланыстарға қолжетімділік атрибуттарын жаңарту";
+$MESS["CRM_CONFIG_PERMS_REBUILD_DEAL_ATTRS"] = "Мәмілелерге жаңартылған қолжетімділік құқықтарының дұрыс жұмыс істеуі үшін бұрын құрылған мәмілелердің қолжетімділік атрибуттарын <a id=\"#ID#\" href=\"#URL#\">жаңарту</a> қажет.";
+$MESS["CRM_CONFIG_PERMS_REBUILD_DEAL_ATTR_DLG_SUMMARY"] = "Барлық мәмілелер үшін қолжетімділік атрибуттары қайта құрылады. Бұл операцияны орындау ұзақ уақыт алуы мүмкін.";
+$MESS["CRM_CONFIG_PERMS_REBUILD_DEAL_ATTR_DLG_TITLE"] = "Мәмілелер үшін қолжетімділік атрибуттарын жаңарту";
+$MESS["CRM_CONFIG_PERMS_REBUILD_INVOICE_ATTRS"] = "Шоттарға жаңартылған қолжетімділік құқықтарының дұрыс жұмыс істеуі үшін бұрын құрылған шоттардың қолжетімділік атрибуттарын <a id=\"#ID#\" href=\"#URL#\">жаңарту</a> қажет.";
+$MESS["CRM_CONFIG_PERMS_REBUILD_INVOICE_ATTR_DLG_SUMMARY"] = "Барлық шоттар үшін қолжетімділік атрибуттары қайта құрылады. Бұл операцияны орындау ұзақ уақыт алуы мүмкін.";
+$MESS["CRM_CONFIG_PERMS_REBUILD_INVOICE_ATTR_DLG_TITLE"] = "Шоттар үшін қолжетімділік атрибуттарын жаңарту";
+$MESS["CRM_CONFIG_PERMS_REBUILD_LEAD_ATTRS"] = "Лидтерге жаңартылған қолжетімділік құқықтарының дұрыс жұмыс істеуі үшін бұрын құрылған лидтердің қолжетімділік атрибуттарын <a id=\"#ID#\" href=\"#URL#\">жаңарту</a> қажет.";
+$MESS["CRM_CONFIG_PERMS_REBUILD_LEAD_ATTR_DLG_SUMMARY"] = "Барлық лид үшін қолжетімділік атрибуттары қайта құрылады. Бұл операцияны орындау ұзақ уақыт алуы мүмкін.";
+$MESS["CRM_CONFIG_PERMS_REBUILD_LEAD_ATTR_DLG_TITLE"] = "Лидтер үшін қолжетімділік атрибуттарын жаңарту";
+$MESS["CRM_CONFIG_PERMS_REBUILD_QUOTE_ATTRS_MSGVER_1"] = "Ұсыныстарға жаңартылған қолжетімділік құқықтарының дұрыс жұмыс істеуі үшін бұрын құрылған ұсыныстардың қолжетімділік атрибуттарын <a id=\"#ID#\" href=\"#URL#\">жаңарту</a> қажет.";
+$MESS["CRM_CONFIG_PERMS_REBUILD_QUOTE_ATTR_DLG_SUMMARY_MSGVER_1"] = "Барлық ұсыныстар үшін қолжетімділік атрибуттары қайта құрылады. Бұл операцияны орындау ұзақ уақыт алуы мүмкін.";
+$MESS["CRM_CONFIG_PERMS_REBUILD_QUOTE_ATTR_DLG_TITLE_MSGVER_1"] = "Ұсыныстар үшін қолжетімділік атрибуттарын жаңарту";

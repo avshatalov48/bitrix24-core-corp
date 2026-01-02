@@ -83,19 +83,6 @@ class SignMobileNotificationQueueTable extends Entity\DataManager
 		return 'b_signmobile_notification_queue';
 	}
 
-	public static function add($data)
-	{
-		try {
-			return parent::add($data);
-		} catch (\Exception $exception)
-		{
-			/*
-			 	In order not to throw an error in the logs when trying to add an existing notification.
-				In our case, trying to add an element again is not an error.
-			*/
-		}
-	}
-
 	public static function getMap(): array
 	{
 		return [

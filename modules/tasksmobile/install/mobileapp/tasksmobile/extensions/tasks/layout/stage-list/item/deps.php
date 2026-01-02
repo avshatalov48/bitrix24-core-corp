@@ -6,5 +6,6 @@ return [
 		'statemanager/redux/connect',
 		'tasks:statemanager/redux/slices/stage-settings',
 		'tasks:statemanager/redux/slices/stage-counters',
+		'tasks:enum',
 	],
 ];

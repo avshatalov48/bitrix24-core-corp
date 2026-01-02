@@ -89,6 +89,18 @@ jn.define('disk/statemanager/redux/slices/files', (require, exports, module) => 
 					rights,
 				});
 			},
+			setExternalLink: (state, { payload }) => {
+				const { objectId, external } = payload;
+				const object = state.entities[objectId];
+
+				fileListAdapter.upsertOne(state, {
+					...object,
+					links: {
+						...object.links,
+						external,
+					},
+				});
+			},
 		},
 		extraReducers: (builder) => {
 			builder
@@ -112,6 +124,7 @@ jn.define('disk/statemanager/redux/slices/files', (require, exports, module) => 
 		markAsRemoved,
 		unmarkAsRemoved,
 		setRights,
+		setExternalLink,
 	} = actions;
 
 	ReducerRegistry.register(sliceName, fileListReducer);
@@ -124,5 +137,6 @@ jn.define('disk/statemanager/redux/slices/files', (require, exports, module) => 
 		markAsRemoved,
 		unmarkAsRemoved,
 		setRights,
+		setExternalLink,
 	};
 });

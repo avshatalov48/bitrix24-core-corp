@@ -5,6 +5,7 @@ use Bitrix\Bitrix24\PhoneVerify;
 use Bitrix\Main;
 use Bitrix\Crm;
 use Bitrix\Crm\WebForm;
+use Bitrix\Main\DI\ServiceLocator;
 use Bitrix\Main\Loader;
 
 /**
@@ -31,6 +32,9 @@ class Form extends Main\Engine\JsonController
 	private const EMBED_OPENLINES_SHOW_ALL = true;
 
 	private const EMBED_HELP_CENTER_ID = 13003062;
+
+	private const GOOGLE_CAPTCHA_TYPE = 'google';
+	private const YANDEX_CAPTCHA_TYPE = 'yandex';
 
 	/**
 	 * List forms action.
@@ -197,7 +201,7 @@ class Form extends Main\Engine\JsonController
 		return WebForm\Options\Dictionary::instance()->toArray() + [
 			'permissions' => [
 				'userField' => [
-					'add' => Crm\Service\Container::getInstance()->getUserPermissions()->canWriteConfig(),
+					'add' => Crm\Service\Container::getInstance()->getUserPermissions()->isCrmAdmin(),
 				],
 				'form' => [
 					'edit' => $this->getFormAccess(true),
@@ -735,7 +739,13 @@ class Form extends Main\Engine\JsonController
 		//$result = $formOptions->save();
 		//$this->addErrors($result->getErrors());
 
-		return $formOptions->getArray();
+		$formOptionsArray = $formOptions->getArray();
+		$formOptionsArray['data']['fields'] = ServiceLocator::getInstance()
+			->get('crm.service.webform.defaultvalueprovider')
+			->applyForFields($formOptionsArray['data']['fields'])
+		;
+
+		return $formOptionsArray;
 	}
 
 	/**
@@ -808,6 +818,38 @@ class Form extends Main\Engine\JsonController
 				continue;
 			}
 
+			if ($field['type'] === 'booking')
+			{
+				$resourceError = Main\Localization\Loc::getMessage(
+					'CRM_WEBFORM_FIELD_SYNCHRONIZER_RESOURCES_NOT_SPECIFIED_ERROR',
+					[
+						'%fieldCaption%' => $field['label'],
+					]
+				);
+
+				$settingsData = isset($field['settingsData']) ? (array)$field['settingsData'] : [];
+				if (empty($settingsData))
+				{
+					$syncErrors[] = $resourceError;
+
+					continue;
+				}
+
+				$isAutoSelectionOn = isset($settingsData['isAutoSelectionOn']) && $settingsData['isAutoSelectionOn'];
+				$scenarioSettings =
+					$isAutoSelectionOn
+						? $settingsData['autoSelection']
+						: $settingsData['default']
+				;
+				$resourceIds = isset($scenarioSettings['resourceIds']) ? (array)$scenarioSettings['resourceIds'] : [];
+				if (empty($resourceIds))
+				{
+					$syncErrors[] = $resourceError;
+
+					continue;
+				}
+			}
+
 			if (!is_array($field) || empty($field['name']) || !in_array($field['name'], $fieldNames))
 			{
 				continue;
@@ -846,11 +888,21 @@ class Form extends Main\Engine\JsonController
 	 * @return array
 	 * @throws Main\AccessDeniedException
 	 */
-	public function getCaptchaAction(): array
+	public function getCaptchaAction(?string $type = self::GOOGLE_CAPTCHA_TYPE): array
 	{
 		if (!$this->checkFormAccess())
 		{
 			return [];
+		}
+
+		if ($type === self::YANDEX_CAPTCHA_TYPE)
+		{
+			return [
+				'key' => WebForm\YandexCaptcha::getKey(),
+				'secret' => WebForm\YandexCaptcha::getSecret(),
+				'canChange' => $this->getFormAccess(true),
+				'hasDefaults' => WebForm\YandexCaptcha::getDefaultKey() && WebForm\YandexCaptcha::getDefaultSecret(),
+			];
 		}
 
 		return [
@@ -869,7 +921,7 @@ class Form extends Main\Engine\JsonController
 	 * @return array
 	 * @throws Main\AccessDeniedException
 	 */
-	public function setCaptchaAction(string $key, string $secret): array
+	public function setCaptchaAction(string $key, string $secret, ?string $type = self::GOOGLE_CAPTCHA_TYPE): array
 	{
 		if (!$this->checkFormAccess(true))
 		{
@@ -882,10 +934,19 @@ class Form extends Main\Engine\JsonController
 			$secret = '';
 		}
 
-		$oldKey = WebForm\ReCaptcha::getKey(2);
-		$oldSecret = WebForm\ReCaptcha::getSecret(2);
+		if ($type === self::YANDEX_CAPTCHA_TYPE)
+		{
+			$oldKey = WebForm\YandexCaptcha::getKey();
+			$oldSecret = WebForm\YandexCaptcha::getSecret();
+			WebForm\YandexCaptcha::setKey($key, $secret);
+		}
+		else
+		{
+			$oldKey = WebForm\ReCaptcha::getKey(2);
+			$oldSecret = WebForm\ReCaptcha::getSecret(2);
+			WebForm\ReCaptcha::setKey($key, $secret, 2);
+		}
 
-		WebForm\ReCaptcha::setKey($key, $secret, 2);
 		if ($key !== $oldKey || $secret !== $oldSecret)
 		{
 			$app = Crm\UI\Webpack\Form\App::instance();
@@ -895,7 +956,7 @@ class Form extends Main\Engine\JsonController
 			}
 		}
 
-		return $this->getCaptchaAction();
+		return $this->getCaptchaAction($type);
 	}
 
 	public function getFileLimitAction(): array
@@ -1192,7 +1253,7 @@ class Form extends Main\Engine\JsonController
 	{
 		return Main\Loader::includeModule('ui')
 			? \Bitrix\UI\Util::getArticleUrlByCode($helpCenterId)
-			: 'https://helpdesk.bitrix24.ru/open/'.$helpCenterId
+			: ''
 		;
 	}
 

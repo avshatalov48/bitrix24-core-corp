@@ -25,6 +25,7 @@ return [
 		'ui.buttons',
 		'ui.sidepanel',
 		'ui.sidepanel.layout',
+		'crm.integration.ui.settings',
 	],
 	'skip_core' => false,
 	'lang_additional' => $langAdditional,

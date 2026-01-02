@@ -1,6 +1,7 @@
 /**
  * @module call/calls/layout
  */
+
 jn.define('call/calls/layout', (require, exports, module) => {
 	include('Calls');
 
@@ -10,9 +11,13 @@ jn.define('call/calls/layout', (require, exports, module) => {
 	const { FloorRequestsList } = require('call/calls/layout/floor-requests-list');
 	const { ParticipantsList } = require('call/calls/layout/participants-list');
 	const { AhaMoment } = require('ui-system/popups/aha-moment');
-
+	const { Icon, IconView } = require('ui-system/blocks/icon');
+	const { Avatar, AvatarShape, AvatarEntityType } = require('ui-system/blocks/avatar');
+	const Utils = require('src/util');
+	const MobileUtils = require('utils/function');
 	const pathToExtension = `${currentDomain}/bitrix/mobileapp/callmobile/extensions/call/calls/layout/`;
-
+	const { BadgeCounter, BadgeCounterDesign, BadgeCounterSize } = require('ui-system/blocks/badges/counter');
+	const { chain, transition } = require('animation');
 	const LARGE_AVATAR_SIZE = 180;
 	const GRAY_MENU_OPTION = '#828B95';
 
@@ -51,6 +56,13 @@ jn.define('call/calls/layout', (require, exports, module) => {
 		copilotPopupCross: '<svg xmlns="http://www.w3.org/2000/svg" width="48" height="12" fill="none"><path fill="#8E52EC" d="m0 12 7.757-7.757a6 6 0 0 1 8.486 0L24 12H0Z"/></svg>',
 		userCameraOff: '<svg xmlns="http://www.w3.org/2000/svg" width="20" height="20" fill="none"><path fill="#fff" fill-rule="evenodd" d="M2.98 3.813a.5.5 0 0 1 .707 0L15.354 15.48a.5.5 0 1 1-.707.707l-1.64-1.639a1.66 1.66 0 0 1-1.127.44H4.962c-.92 0-1.666-.746-1.666-1.667V6.68c0-.505.224-.958.58-1.263L2.98 4.52a.5.5 0 0 1 0-.707Zm1.607 2.315 7.712 7.711a.664.664 0 0 1-.42.149H4.963a.667.667 0 0 1-.666-.667V6.68c0-.23.115-.431.291-.551Zm7.96 5.295V6.679a.667.667 0 0 0-.667-.667H7.136l-1-1h5.744c.92 0 1.666.746 1.666 1.667v1.196l1.831-1.286c.939-.66 2.231.012 2.231 1.159v4.501c0 1.149-1.296 1.82-2.234 1.157l-1.828-1.292-.63-.447-.37-.244Zm1.005-.53v-1.8l2.4-1.686a.417.417 0 0 1 .656.34v4.502a.417.417 0 0 1-.657.34l-2.399-1.695Z" clip-rule="evenodd"/></svg>',
 		userMicOff: '<svg xmlns="http://www.w3.org/2000/svg" width="20" height="20" fill="none"><path fill="#fff" fill-rule="evenodd" d="M11.801 9.671V5.168a1.807 1.807 0 1 0-3.613 0V6.23l-1-1v-.062a2.807 2.807 0 1 1 5.613 0V9.67a2.8 2.8 0 0 1-.18.992l-.827-.827c.005-.054.007-.11.007-.165ZM7.188 7.895 4.647 5.354a.5.5 0 1 1 .707-.708l10 10a.5.5 0 1 1-.707.708l-1.259-1.259a5.324 5.324 0 0 1-2.891 1.129v1.414h1.482a.5.5 0 0 1 0 1H8.015a.5.5 0 1 1 0-1h1.482v-1.413c-3.335-.27-5.045-3.263-4.996-5.482a.5.5 0 1 1 1 .022c-.042 1.9 1.517 4.48 4.49 4.48 1.078 0 1.977-.342 2.682-.865l-1.277-1.277a2.807 2.807 0 0 1-4.209-2.432V7.895Zm1 1v.776a1.807 1.807 0 0 0 2.46 1.685l-2.46-2.461Zm7.308.837c.046.934-.246 2.008-.848 2.959l-.726-.727c.411-.719.608-1.503.575-2.184a.5.5 0 1 1 1-.048Z" clip-rule="evenodd"/></svg>',
+		screenshareIcon: '<svg width="14" height="14" viewBox="0 0 14 14" fill="none" xmlns="http://www.w3.org/2000/svg"><path fill-rule="evenodd" clip-rule="evenodd" d="M10.75 0.75H3.25C1.86667 0.75 0.75 1.86667 0.75 3.25V10.75C0.75 12.1333 1.86667 13.25 3.25 13.25H10.75C12.1333 13.25 13.25 12.1333 13.25 10.75V3.25C13.25 1.86667 12.1333 0.75 10.75 0.75ZM12.25 10.75C12.25 11.575 11.575 12.25 10.75 12.25H3.25C2.425 12.25 1.75 11.575 1.75 10.75V3.25C1.75 2.425 2.425 1.75 3.25 1.75H10.75C11.575 1.75 12.25 2.425 12.25 3.25V10.75ZM8.40013 4.01631C8.20846 3.82464 7.8918 3.82464 7.6918 4.01631C7.4918 4.20798 7.50013 4.52464 7.6918 4.72464L8.50846 5.54131H7.2168C5.55846 5.54131 4.2168 6.88298 4.2168 8.54131V9.59964C4.2168 9.87464 4.4418 10.0996 4.7168 10.0996C4.9918 10.0996 5.2168 9.87464 5.2168 9.59964V8.54131C5.2168 7.43297 6.10846 6.54131 7.2168 6.54131H8.50846L7.6918 7.35798C7.50013 7.54964 7.50013 7.86631 7.6918 8.06631C7.88346 8.26631 8.20013 8.25797 8.40013 8.06631L10.0668 6.39964C10.2585 6.20798 10.2585 5.89131 10.0668 5.69131L8.40013 4.02464V4.01631Z" fill="white"/></svg>',
+		pinIcon: '<svg width="20" height="20" viewBox="0 0 20 20" fill="none" xmlns="http://www.w3.org/2000/svg"><path fill-rule="evenodd" clip-rule="evenodd" d="M11.8528 4.78914C12.0144 4.62725 12.2276 4.64453 12.3372 4.74427L15.2459 7.659C15.3535 7.76741 15.3766 7.99061 15.2091 8.15824C15.0421 8.32537 14.8214 8.30077 14.7146 8.19338L13.7096 7.18571L9.28087 13.0079L10.1656 13.895C10.2629 14.0071 10.2769 14.2201 10.117 14.3804C9.95766 14.5402 9.74727 14.5257 9.63663 14.429L5.57365 10.3569C5.47347 10.2458 5.4569 10.0298 5.61892 9.86748C5.78047 9.70561 5.99366 9.72287 6.10327 9.82258L6.99239 10.7141L12.7998 6.27343L11.8076 5.27855C11.7074 5.16752 11.6908 4.95151 11.8528 4.78914ZM13.0289 4.02198C12.4881 3.50933 11.6525 3.5742 11.145 4.08275C10.638 4.59075 10.5731 5.42623 11.083 5.96788L11.088 5.97313L11.2862 6.17193L7.08138 9.3872L6.80009 9.10515L6.79499 9.10033C6.25418 8.58768 5.41863 8.65254 4.9111 9.16109C4.40412 9.6691 4.33925 10.5046 4.84915 11.0462L4.85414 11.0515L6.54531 12.7468L3.81051 15.4816C3.61525 15.6768 3.61525 15.9934 3.81051 16.1887C4.00577 16.3839 4.32235 16.3839 4.51762 16.1887L7.25095 13.4553L8.94498 15.1516L8.9522 15.1583C9.49457 15.66 10.3217 15.5913 10.8251 15.0866C11.328 14.5823 11.3961 13.7552 10.8966 13.2124L10.8898 13.205L10.6047 12.9192L13.8113 8.70378L14.0064 8.89938C14.5429 9.43833 15.399 9.38292 15.9165 8.86511C16.4334 8.34782 16.4896 7.49119 15.954 6.95292L13.0339 4.02676L13.0289 4.02198Z" fill="white"/></svg>',
+		rotationIcon: '<svg width="72" height="72" viewBox="0 0 72 72" fill="none" xmlns="http://www.w3.org/2000/svg"><g opacity="0.72"><rect width="72" height="72" rx="12" fill="black" fill-opacity="0.7"/> <path fill-rule="evenodd" clip-rule="evenodd" d="M23.3772 39.9383C23.9804 39.6638 24.2469 38.9597 23.9898 38.3466C22.1849 34.288 23.7053 29.4405 27.6132 27.169L27.4808 31.1801C27.4624 31.8349 27.9851 32.3889 28.6498 32.4246C29.3047 32.4429 29.8587 31.9203 29.877 31.2655L30.0676 24.8507C30.0907 24.2851 29.7045 23.7685 29.1341 23.6561L23.0114 22.2405C22.3765 22.0956 21.726 22.4891 21.5638 23.1338C21.419 23.7687 21.8125 24.4192 22.4572 24.5814L26.0034 25.3929C21.3551 28.3852 19.5528 34.3139 21.7855 39.3257C22.0599 39.9289 22.764 40.1954 23.3772 39.9383ZM42.9575 21.3767L33.8088 21.316L33.7953 23.7173L42.944 23.778C43.7775 23.7866 44.4042 24.4425 44.4204 25.2388L44.295 46.2774C44.2839 47.0662 43.638 47.7103 42.8144 47.719L30.4407 47.6536C29.6072 47.6449 28.9806 46.989 28.9644 46.1927L28.9733 43.5409L26.572 43.5274L26.5631 46.1792C26.5525 48.3027 28.2765 50.0368 30.4174 50.0375L42.791 50.1029C44.9145 50.1135 46.6857 48.4143 46.6864 46.2735L46.8118 25.2349C46.8223 23.1114 45.0983 21.3773 42.9749 21.3668L42.9575 21.3767ZM39.7496 28.3132L34.9668 28.321C34.2945 28.3126 33.7644 27.7859 33.7555 27.1236C33.7639 26.4513 34.2906 25.9212 34.953 25.9123L39.7358 25.9044C40.408 25.9129 40.9381 26.4396 40.9471 27.1019C40.9386 27.7742 40.4119 28.3043 39.7496 28.3132ZM36.2078 46.1418C35.0965 46.1303 34.1973 45.2384 34.2089 44.127C34.2204 43.0157 35.1123 42.1165 36.2237 42.1281C37.335 42.1396 38.2342 43.0315 38.2226 44.1429C38.211 45.2542 37.3191 46.1534 36.2078 46.1418Z" fill="white"/></g></svg>',
+		rotateIcon: '<svg width="24" height="24" viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg"> <path d="M0 6C0 2.68629 2.68629 0 6 0H18C21.3137 0 24 2.68629 24 6V18C24 21.3137 21.3137 24 18 24H6C2.68629 24 0 21.3137 0 18V6Z" fill="white" fill-opacity="0.18"/> <path fill-rule="evenodd" clip-rule="evenodd" d="M15.5505 7.07292H8.49891C7.86379 7.07292 7.34891 7.58779 7.34891 8.22292V9.38029C7.34891 9.75962 6.99256 10.038 6.62449 9.9463C6.36462 9.88153 6.18225 9.64811 6.18225 9.38029V8.22292C6.18225 6.94346 7.21945 5.90625 8.49891 5.90625H15.5505C16.8299 5.90625 17.8672 6.94346 17.8672 8.22292V11.1055L19.1061 10.0075C19.3472 9.79378 19.7158 9.816 19.9295 10.0571C20.1432 10.2982 20.121 10.6669 19.8799 10.8806L17.8319 12.6957C17.6138 12.8889 17.2866 12.8916 17.0654 12.702L14.9478 10.8869C14.7032 10.6772 14.6748 10.309 14.8845 10.0644C15.0942 9.81978 15.4624 9.79145 15.707 10.0011L16.7005 10.8527V8.22292C16.7005 7.58779 16.1856 7.07292 15.5505 7.07292ZM4.98588 14.0513L6.18225 12.991V15.7961C6.18225 17.0756 7.21945 18.1128 8.49891 18.1128H15.5505C16.8299 18.1128 17.8672 17.0756 17.8672 15.7961V14.6829C17.8672 14.4151 17.6848 14.1817 17.4249 14.1169C17.0568 14.0252 16.7005 14.3036 16.7005 14.6829V15.7961C16.7005 16.4312 16.1856 16.9461 15.5505 16.9461H8.49891C7.86379 16.9461 7.34891 16.4312 7.34891 15.7961V13.1696L8.38491 14.0576C8.62952 14.2673 8.99778 14.239 9.20744 13.9944C9.4171 13.7498 9.38878 13.3815 9.14417 13.1718L7.02657 11.3567C6.80533 11.1671 6.47809 11.1698 6.26003 11.3631L4.21205 13.1782C3.97095 13.3919 3.94873 13.7605 4.16241 14.0016C4.3761 14.2427 4.74477 14.265 4.98588 14.0513Z" fill="white"/> <rect width="24" height="24" rx="8" fill="white" fill-opacity="0.01"/> </svg>',
+		record: '<svg width="14" height="14" viewBox="0 0 14 14" fill="none" xmlns="http://www.w3.org/2000/svg"><g opacity="0.7"><path d="M12.6497 7.00033C12.6497 3.88042 10.1202 1.35091 7.00033 1.35091C3.88042 1.35091 1.35091 3.88042 1.35091 7.00033C1.35091 10.1202 3.88042 12.6497 7.00033 12.6497C10.1202 12.6497 12.6497 10.1202 12.6497 7.00033ZM13.6491 7.00033C13.6491 10.6725 10.6725 13.6491 7.00033 13.6491C3.32814 13.6491 0.351563 10.6725 0.351562 7.00033C0.351562 3.32814 3.32814 0.351562 7.00033 0.351562C10.6725 0.351563 13.6491 3.32814 13.6491 7.00033Z" fill="white"/><path d="M8.87411 7.00073C8.87411 5.96601 8.03543 5.12666 7.00073 5.12655C5.96594 5.12655 5.12655 5.96594 5.12655 7.00073C5.12666 8.03543 5.96601 8.87411 7.00073 8.87411C8.03536 8.874 8.874 8.03536 8.87411 7.00073ZM9.87427 7.00073C9.87416 8.58765 8.58765 9.87416 7.00073 9.87427C5.41372 9.87427 4.12731 8.58772 4.1272 7.00073C4.1272 5.41366 5.41366 4.1272 7.00073 4.1272C8.58772 4.12731 9.87427 5.41372 9.87427 7.00073Z" fill="#F0F0F0"/></g></svg>',
+		fullScreen: '<svg width="24" height="24" viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg"> <path d="M0 6C0 2.68629 2.68629 0 6 0H18C21.3137 0 24 2.68629 24 6V18C24 21.3137 21.3137 24 18 24H6C2.68629 24 0 21.3137 0 18V6Z" fill="black" fill-opacity="0.5"/> <path fill-rule="evenodd" clip-rule="evenodd" d="M17.22 11.3335V7.48585C17.2139 7.49261 17.2076 7.49924 17.2011 7.50573L13.3331 11.3738C13.1378 11.569 12.8212 11.569 12.626 11.3738C12.4307 11.1785 12.4307 10.8619 12.626 10.6667L16.494 6.79863C16.5087 6.78391 16.5241 6.77031 16.5401 6.75781L12.724 6.75781C12.4479 6.75781 12.224 6.53395 12.224 6.25781C12.224 5.98167 12.4479 5.75781 12.724 5.75781L16.72 5.75781C17.5484 5.75781 18.22 6.42939 18.22 7.25781V11.3335C18.22 11.6096 17.9961 11.8335 17.72 11.8335C17.4438 11.8335 17.22 11.6096 17.22 11.3335ZM7.45328 17.2332H11.2694C11.5455 17.2332 11.7694 17.4571 11.7694 17.7332C11.7694 18.0094 11.5455 18.2332 11.2694 18.2332H7.27344C6.44501 18.2332 5.77344 17.5617 5.77344 16.7332L5.77344 12.6576C5.77344 12.3814 5.9973 12.1576 6.27344 12.1576C6.54958 12.1576 6.77344 12.3814 6.77344 12.6576L6.77344 16.5052C6.7795 16.4984 6.78578 16.4918 6.79228 16.4853L10.6603 12.6173C10.8556 12.422 11.1722 12.422 11.3674 12.6173C11.5627 12.8125 11.5627 13.1291 11.3674 13.3244L7.49939 17.1924C7.48467 17.2071 7.46927 17.2207 7.45328 17.2332Z" fill="white"/> <rect width="24" height="24" rx="8" fill="white" fill-opacity="0.01"/> </svg>',
+		collapseFullScreen: '<svg width="24" height="24" viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg"> <path d="M0 6C0 2.68629 2.68629 0 6 0H18C21.3137 0 24 2.68629 24 6V18C24 21.3137 21.3137 24 18 24H6C2.68629 24 0 21.3137 0 18V6Z" fill="black" fill-opacity="0.5"/> <path fill-rule="evenodd" clip-rule="evenodd" d="M14.1634 10.5271C14.1487 10.5418 14.1333 10.5554 14.1173 10.5679L17.9334 10.5679C18.2095 10.5679 18.4334 10.7917 18.4334 11.0679C18.4334 11.344 18.2095 11.5679 17.9334 11.5679L13.9374 11.5679C13.109 11.5679 12.4374 10.8963 12.4374 10.0679L12.4374 5.99219C12.4374 5.71605 12.6613 5.49219 12.9374 5.49219C13.2136 5.49219 13.4374 5.71605 13.4374 5.99219L13.4374 9.83983C13.4435 9.83308 13.4498 9.82645 13.4563 9.81995L17.3243 5.95191C17.5196 5.75665 17.8362 5.75665 18.0314 5.95191C18.2267 6.14718 18.2267 6.46376 18.0314 6.65902L14.1634 10.5271ZM10.5318 14.1737C10.5383 14.1672 10.5446 14.1606 10.5506 14.1538V18.0015C10.5506 18.2776 10.7745 18.5015 11.0506 18.5015C11.3268 18.5015 11.5506 18.2776 11.5506 18.0015V13.9258C11.5506 13.0973 10.879 12.4258 10.0506 12.4258H6.05469C5.77855 12.4258 5.55469 12.6496 5.55469 12.9258C5.55469 13.2019 5.77855 13.4258 6.05469 13.4258H9.87077C9.85479 13.4383 9.83938 13.4519 9.82467 13.4666L5.95663 17.3346C5.76137 17.5299 5.76137 17.8465 5.95663 18.0417C6.1519 18.237 6.46848 18.237 6.66374 18.0417L10.5318 14.1737Z" fill="white"/> <rect width="24" height="24" rx="8" fill="white" fill-opacity="0.01"/> </svg>',
 	};
 
 	const Gradients = {
@@ -68,17 +80,16 @@ jn.define('call/calls/layout', (require, exports, module) => {
 		},
 		overlay: {
 			position: 'absolute',
+			bottom: 0,
 			height: '100%',
 			opacity: 1,
 			width: '100%',
 			alignItems: 'center',
-			justifyContent: 'flex-end',
 		},
 		remoteVideo: {
 			position: 'absolute',
 			width: '100%',
 			height: '100%',
-			backgroundColor: '#3A414B',
 			flex: 1,
 		},
 		localVideo: {
@@ -89,6 +100,7 @@ jn.define('call/calls/layout', (require, exports, module) => {
 			height: 150,
 			borderRadius: 10,
 			backgroundColor: '#00000000',
+			zIndex: 11,
 		},
 		localVideoLandscape: {
 			width: 150,
@@ -136,6 +148,17 @@ jn.define('call/calls/layout', (require, exports, module) => {
 			width: 15,
 			height: 10,
 		},
+		placeholder: {
+			backgroundColor: '#26FFFFFF',
+			display: 'flex',
+			alignItems: 'center',
+			justifyContent: 'center',
+			borderRadius: 10,
+			zIndex: 10,
+			marginTop: 5,
+			marginRight: 5,
+			position: 'relative',
+		},
 		userSelector: {
 			position: 'absolute',
 			height: 19,
@@ -180,6 +203,23 @@ jn.define('call/calls/layout', (require, exports, module) => {
 			flex: 1,
 			justifyContent: 'space-between',
 			alignItems: 'center',
+			alignContent: 'center',
+			width: '100%',
+			height: '100%',
+			clickable: false,
+		},
+		centerGrid: {
+			flexDirection: 'row',
+			justifyContent: 'space-between',
+			alignContent: 'center',
+			width: '100%',
+			height: '100%',
+			flex: 1,
+		},
+		grid: {
+			flexDirection: 'row',
+			flex: 1,
+			justifyContent: 'space-between',
 			alignContent: 'center',
 			width: '100%',
 			height: '100%',
@@ -262,6 +302,7 @@ jn.define('call/calls/layout', (require, exports, module) => {
 			alignSelf: 'flex-end',
 			resizeMode: 'cover',
 			justifyContent: 'center',
+			paddingHorizontal: 20,
 		},
 		bottomPanelContainer: {
 			flex: 1,
@@ -270,12 +311,17 @@ jn.define('call/calls/layout', (require, exports, module) => {
 		},
 		bottomButton: {
 			height: 66,
-			width: 64,
 			marginLeft: 4,
 			marginRight: 4,
 			alignSelf: 'flex-end',
 			justifyContent: 'center',
 			color: '#ffffff',
+		},
+		bottomButtonWidthLandscape: {
+			width: 75,
+		},
+		bottomButtonWidthPortrait: {
+			width: device.screen.width / 5.6,
 		},
 		bottomButtonImage: {
 			width: 48,
@@ -357,6 +403,121 @@ jn.define('call/calls/layout', (require, exports, module) => {
 			paddingRight: Indent.XL.toNumber(),
 			alignSelf: 'flex-start',
 		},
+		deviceOffHint: {
+			flexDirection: 'row',
+			height: 32,
+			backgroundColor: Color.baseBlackFixed.toHex(0.5),
+			paddingLeft: Indent.S.toNumber(),
+			paddingRight: Indent.XL.toNumber(),
+			borderRadius: Corner.M.toNumber(),
+			alignContent: 'center',
+			alignItems: 'center',
+			justifyItems: 'center',
+		},
+		deviceOffHintText: {
+			marginLeft: 2,
+			fontSize: 15,
+			fontWeight: 400,
+			lineHeight: 18,
+			color: Color.baseWhiteFixed.toHex(),
+		},
+		dotsContainer: {
+			display: 'flex',
+			flexDirection: 'row',
+			justifyContent: 'center',
+			width: '100%',
+			position: 'absolute',
+			bottom: 5,
+		},
+		dotsBadge: {
+			backgroundColor: '#26FFFFFF',
+			padding: 7,
+			borderRadius: 10,
+			display: 'flex',
+			flexDirection: 'row',
+			justifyContent: 'center',
+			alignItems: 'center',
+		},
+		gridItem: {
+			display: 'flex',
+			alignItems: 'center',
+			justifyContent: 'center',
+			backgroundColor: '#26FFFFFF',
+			borderRadius: 10,
+			zIndex: 10,
+			position: 'relative',
+			marginRight: 5,
+			marginTop: 5,
+			borderWidth: 2,
+		},
+		nameBadge: {
+			backgroundColor: '#7F000000',
+			borderRadius: 6,
+			fontWeight: 400,
+			display: 'flex',
+			flexDirection: 'row',
+			alignItems: 'center',
+		},
+		userGrid: {
+			display: 'flex',
+			flexDirection: 'row',
+			flexWrap: 'wrap',
+			width: '100%',
+			marginRight: -5,
+		},
+		videoContainer: {
+			objectFit: 'contain',
+			backgroundResizeMode: 'cover',
+			width: '100%',
+			height: '100%',
+		},
+		scrollListContainer: {
+			display: 'flex',
+			alignItems: 'center',
+			justifyContent: 'space-between',
+		},
+		scrollListItem: {
+			backgroundColor: '#26FFFFFF',
+			borderRadius: 10,
+			objectFit: 'cover',
+			backgroundResizeMode: 'cover',
+			position: 'relative',
+			borderWidth: 2,
+			display: 'flex',
+			alignItems: 'center',
+			justifyContent: 'center',
+		},
+		userPin: {
+			objectFit: 'cover',
+			backgroundResizeMode: 'cover',
+			position: 'relative',
+			backgroundColor: '#26FFFFFF',
+			borderRadius: 15,
+		},
+		pinIconBadge: {
+			position: 'absolute',
+			width: 24,
+			height: 24,
+			top: 8,
+			right: 8,
+			backgroundColor: '#1BCE7B',
+			zIndex: 20,
+			borderRadius: 8,
+			display: 'flex',
+			justifyContent: 'center',
+			alignItems: 'center',
+		},
+		screenshareViewBadgeContainer: {
+			position: 'absolute',
+			left: 8,
+			backgroundColor: '#7F000000',
+			borderRadius: 6,
+			zIndex: 20,
+			fontWeight: 400,
+			display: 'flex',
+			flexDirection: 'row',
+			alignItems: 'center',
+		},
 	};
 
 	const EventName = {
@@ -380,6 +541,21 @@ jn.define('call/calls/layout', (require, exports, module) => {
 		ToggleCopilot: 'toggleCopilot',
 	};
 
+	const GridUserCount = {
+		minimalGrid: 3,
+		bottomSplittedRow: 4,
+		middleSplittedRow: 5,
+		equalTiles: 6,
+		fullFirstPageIndex: 7,
+		fullFirstPageCount: 8,
+	};
+
+	const STARTTALKING_DELAY = 500;
+	const STOPTALKING_DELAY = 2000;
+	const PREV_PAGE_TEASER = 20;
+	const INACTIVITY_TIMEOUT = 5000;
+	const PREV_PAGE_TEASER_ANDROID = -25;
+
 	class CallLayout extends LayoutComponent
 	{
 		constructor(props = {})
@@ -394,8 +570,19 @@ jn.define('call/calls/layout', (require, exports, module) => {
 			this.presenterId = env.userId;
 			this.userData = {};
 			this.videoStreams = {};
+			this.screenshareStreams = {};
 
 			this.switchPresenterTimeout = null;
+
+			this.talkingUsersDelays = new Map();
+			this.lastTap = null;
+			this.isFirstRender = true;
+			this.userScrollProgress = 0;
+			this.userScrollPage = 0;
+			this.currentUserScrollPosition = 0;
+			this.beginDragUserScrollPosition = 0;
+			this.activeIds = [];
+			this.debouncedSubscribe = MobileUtils.debounce(this.subscribeOnNewPage, 3000);
 
 			this.state = {
 				screenWidth: 0,
@@ -421,6 +608,7 @@ jn.define('call/calls/layout', (require, exports, module) => {
 				connectedUsers: [],
 				floorRequestUsers: [],
 				floorRequestSelf: false,
+				totalUsersCount: [],
 				isGroupCall: props.isGroupCall === true,
 				isVideoCall: props.isVideoCall === true,
 				associatedEntityName: props.associatedEntityName,
@@ -429,6 +617,22 @@ jn.define('call/calls/layout', (require, exports, module) => {
 				soundOutputDevice: props.soundOutputDevice || CallUtil.getSdkAudioManager().currentDevice,
 				copilotAvailable: Boolean(props.copilotAvailable),
 				copilotEnabled: Boolean(props.copilotEnabled),
+				associatedEntityAvatarColor: props.associatedEntityAvatarColor,
+				activeScreenId: null,
+				currentPage: 0,
+				isScreenshareSwipeEnabled: true,
+				isRotationIconVisible: true,
+				screenshareOnEnter: null,
+				currentGridPage: 1,
+				currentScrollPosition: 0,
+				startingDragScrollPosition: 0,
+				recordState: false,
+				isScreenshareFullScreen: false,
+				gridContainerWidth: device.screen.width - 5,
+				gridContainerHeight: device.screen.height,
+				userScrollUserPerPage: 3,
+				isAppActive: true,
+				inactivityTimer: null,
 			};
 
 			this.localUserModel = new UserModel({
@@ -437,6 +641,14 @@ jn.define('call/calls/layout', (require, exports, module) => {
 				state: BX.Call.UserState.Connected,
 			});
 			this.userRegistry.push(this.localUserModel);
+
+			this.renderedUsers = [];
+
+			this.streamQuality = {
+				low: 1,
+				medium: 2,
+				high: 3,
+			};
 		}
 
 		appendUsers(userStates)
@@ -455,10 +667,12 @@ jn.define('call/calls/layout', (require, exports, module) => {
 
 		addUser(userId, state)
 		{
+			this.setState({})
 			if (this.userRegistry.get(userId))
 			{
 				return;
 			}
+
 			this.userRegistry.push(new UserModel({
 				id: userId,
 				name: this.userData[userId] ? this.userData[userId].name : '',
@@ -466,14 +680,68 @@ jn.define('call/calls/layout', (require, exports, module) => {
 				state: state || BX.Call.UserState.Idle,
 				order: this.getNextPosition(),
 			}));
+
+			if (CallUtil.isNewMobileGridEnabled())
+			{
+				this.userRegistry.users = [...this.rankUsers()];
+			}
+
 			this.setState({
 				users: this.getUsers(),
 				connectedUsers: this.getConnectedUsers(),
 			});
+
+			this.toggleSubscriptionRemoteVideo();
+		}
+
+		updateTotalUsersCount(users)
+		{
+			this.setState({
+				totalUsersCount: users
+			});
+		}
+
+		setNewUserData(userId, name, avatar)
+		{
+			if (userId == '')
+			{
+				return;
+			}
+			if (!this.userData[userId])
+			{
+				this.userData[userId] = {
+					name: '',
+					workPosition: '',
+					extranet: false,
+					invited: false,
+					lastActivityDate: '',
+					avatar_hr: '',
+					gender: 'M',
+				};
+			}
+
+			if (name)
+			{
+				this.userData[userId].name = name;
+			}
+
+			if (avatar)
+			{
+				this.userData[userId].avatar_hr = isAvatarBlank(avatar) ? '' : avatar;
+			}
+
+			const userModel = this.userRegistry.get(userId);
+			if (userModel)
+			{
+				userModel.name = this.userData[userId].name;
+				userModel.avatar = this.userData[userId].avatar_hr;
+			}
+			this.setState({});
 		}
 
 		updateUserData(userData)
 		{
+			this.setState({})
 			for (const userId in userData)
 			{
 				if (!Object.hasOwn(userData, userId) || !userData[userId])
@@ -484,6 +752,8 @@ jn.define('call/calls/layout', (require, exports, module) => {
 				if (!this.userData[userId])
 				{
 					this.userData[userId] = {
+						first_name: '',
+						last_name: '',
 						name: '',
 						workPosition: '',
 						extranet: false,
@@ -494,6 +764,14 @@ jn.define('call/calls/layout', (require, exports, module) => {
 					};
 				}
 
+				if (userData[userId].first_name)
+				{
+					this.userData[userId].first_name = userData[userId].first_name;
+				}
+				if (userData[userId].last_name)
+				{
+					this.userData[userId].last_name = userData[userId].last_name;
+				}
 				if (userData[userId].name)
 				{
 					this.userData[userId].name = userData[userId].name;
@@ -532,6 +810,8 @@ jn.define('call/calls/layout', (require, exports, module) => {
 				const userModel = this.userRegistry.get(userId);
 				if (userModel)
 				{
+					userModel.firstName = this.userData[userId].first_name;
+					userModel.lastName = this.userData[userId].last_name;
 					userModel.name = this.userData[userId].name;
 					userModel.workPosition = this.userData[userId].workPosition;
 					userModel.avatar = this.userData[userId].avatar_hr;
@@ -544,6 +824,33 @@ jn.define('call/calls/layout', (require, exports, module) => {
 		redraw()
 		{
 			this.setState({});
+		}
+
+		hideUIAfterInactivity()
+		{
+			if (this.state.inactivityTimer)
+			{
+				clearTimeout(this.state.inactivityTimer);
+			}
+
+			const timer = setTimeout(() => {
+				this.setState({ panelVisible: false });
+			}, INACTIVITY_TIMEOUT);
+
+			this.setState({ inactivityTimer: timer });
+		}
+
+		toggleUI()
+		{
+			if (this.state.floorRequestSelf)
+			{
+				this.setState({ panelVisible: !this.state.panelVisible });
+				clearTimeout(this.state.inactivityTimer);
+				return;
+			}
+
+			this.setState({ panelVisible: !this.state.panelVisible });
+			this.hideUIAfterInactivity();
 		}
 
 		getNextPosition()
@@ -562,6 +869,7 @@ jn.define('call/calls/layout', (require, exports, module) => {
 				return;
 			} */
 			const userModel = this.userRegistry.get(userId);
+
 			if (!userModel)
 			{
 				return;
@@ -579,11 +887,7 @@ jn.define('call/calls/layout', (require, exports, module) => {
 			});
 			this.emit(EventName.SetCentralUser, [userId]);
 
-			const userIds = [];
-			this.userRegistry.users.forEach((user) => {
-				userIds.push(user.id);
-			});
-			this.toggleSubscriptionRemoteVideo(userIds);
+			this.toggleSubscriptionRemoteVideo();
 		}
 
 		pinUser(userId)
@@ -675,9 +979,7 @@ jn.define('call/calls/layout', (require, exports, module) => {
 
 		getConnectedUsers()
 		{
-			return this.userRegistry.users.filter(
-				(userModel) => userModel.state === BX.Call.UserState.Connected && !userModel.localUser,
-			);
+			return this.userRegistry.users.filter((userModel) => userModel.state === BX.Call.UserState.Connected || userModel.state === BX.Call.UserState.Connecting)
 		}
 
 		getParticipants()
@@ -785,13 +1087,31 @@ jn.define('call/calls/layout', (require, exports, module) => {
 			});
 		}
 
+		getIsLandscapeOrientation()
+		{
+			return device.screen.orientation === 'landscape' || device.screen.height < device.screen.width;
+		}
+
 		setCameraState(cameraState)
 		{
+			if (!CallUtil.havePermissionToBroadcast('cam') && cameraState)
+			{
+				return;
+			}
+			if (CallUtil.isNewMobileGridEnabled())
+			{
+				this.userRegistry.users = [...this.rankUsers()];
+			}
+			this.setState({
+				connectedUsers: this.getConnectedUsers(),
+			});
 			cameraState = Boolean(cameraState);
 			this.localUserModel.cameraState = cameraState;
 			this.setState({
 				cameraState,
 			});
+
+			this.toggleSubscriptionRemoteVideo();
 		}
 
 		setMirrorLocalVideo(mirrorLocalVideo)
@@ -816,8 +1136,23 @@ jn.define('call/calls/layout', (require, exports, module) => {
 			});
 		}
 
+		setRecordState(recordState)
+		{
+			this.setState({
+				recordState: recordState === 'started',
+			});
+		}
+
+		setScreenState(screenState)
+		{
+			this.setState({
+				screenState: screenState,
+			});
+		}
+
 		setUserState(userId, newState)
 		{
+			this.setState({});
 			/** @type {UserModel} */
 			const user = this.userRegistry.get(userId);
 			let newCallStatus = this.state.status;
@@ -863,6 +1198,11 @@ jn.define('call/calls/layout', (require, exports, module) => {
 				}
 			}
 
+			if (CallUtil.isNewMobileGridEnabled())
+			{
+				this.userRegistry.users = [...this.rankUsers()];
+			}
+
 			this.setState({
 				connectedUsers: this.getConnectedUsers(),
 				floorRequestUsers: this.getFloorRequestUsers(3),
@@ -870,11 +1210,23 @@ jn.define('call/calls/layout', (require, exports, module) => {
 				status: newCallStatus,
 			});
 
-			const userIds = [];
-			this.userRegistry.users.forEach((user) => {
-				userIds.push(user.id);
-			});
-			this.toggleSubscriptionRemoteVideo(userIds);
+			if (CallUtil.isNewMobileGridEnabled())
+			{
+				const currentPage = this.state.currentGridPage
+				if (currentPage !== 1)
+				{
+					let newPage = this.getCurrentPage();
+					if (currentPage > newPage)
+					{
+						this.state.currentGridPage = newPage;
+						this.subscribeOnNewPage();
+						//TODO: should we do smooth scroll after triggering page change due to another user exit?
+						//this.scrollPage();
+					}
+				}
+			}
+
+			this.toggleSubscriptionRemoteVideo();
 		}
 
 		getUserTalking(userId)
@@ -894,14 +1246,53 @@ jn.define('call/calls/layout', (require, exports, module) => {
 			const user = this.userRegistry.get(userId);
 			if (user)
 			{
-				user.talking = talking;
+				if (this.talkingUsersDelays.has(userId))
+				{
+					clearTimeout(this.talkingUsersDelays.get(userId));
+				}
+				if (talking)
+				{
+					if (user.talking === talking) return;
+
+					const startTimer = setTimeout(() => {
+						user.talking = true;
+						this.updateUserTalkingState();
+					}, STARTTALKING_DELAY);
+
+					this.talkingUsersDelays.set(userId, startTimer);
+				}
+				if (!talking)
+				{
+					const stopTimer = setTimeout(() => {
+						user.talking = false;
+						this.updateUserTalkingState();
+					}, STOPTALKING_DELAY);
+
+					this.talkingUsersDelays.set(userId, stopTimer);
+				}
+
+				if (userId == this.userId && this.state.floorRequestSelf)
+				{
+					this.hideUIAfterInactivity();
+				}
 				user.floorRequestState = false;
 			}
+		}
+
+		updateUserTalkingState(userId)
+		{
+			if (CallUtil.isNewMobileGridEnabled())
+			{
+				this.userRegistry.users = [...this.rankUsers()];
+			}
+
 			this.setState({
 				floorRequestUsers: this.getFloorRequestUsers(3),
 				floorRequestSelf: this.userRegistry.get(env.userId).floorRequestState,
+				connectedUsers: this.getConnectedUsers(),
 			});
-			if (this.presenterId == userId && !talking)
+
+			if (this.presenterId == userId && !user.talking)
 			{
 				this.switchPresenterDeferred();
 			}
@@ -909,6 +1300,8 @@ jn.define('call/calls/layout', (require, exports, module) => {
 			{
 				this.switchPresenter();
 			}
+
+			this.toggleSubscriptionRemoteVideo();
 		}
 
 		setUserMicrophoneState(userId, isMicrophoneOn)
@@ -918,6 +1311,7 @@ jn.define('call/calls/layout', (require, exports, module) => {
 			if (user)
 			{
 				user.microphoneState = isMicrophoneOn;
+				this.setState({});
 			}
 
 			if (userId == this.centralUserId)
@@ -928,6 +1322,7 @@ jn.define('call/calls/layout', (require, exports, module) => {
 
 		setUserVideoPaused(userId, videoPaused)
 		{
+			this.setState({});
 			/** @type {UserModel} */
 			const user = this.userRegistry.get(userId);
 			if (user && user.videoPaused != videoPaused)
@@ -971,6 +1366,11 @@ jn.define('call/calls/layout', (require, exports, module) => {
 					floorRequestSelf: this.userRegistry.get(env.userId).floorRequestState,
 				});
 			}
+
+			if (userId == this.userId && !Boolean(userFloorRequestState))
+			{
+				this.hideUIAfterInactivity();
+			}
 		}
 
 		setUserScreenState(userId, screenState)
@@ -987,10 +1387,23 @@ jn.define('call/calls/layout', (require, exports, module) => {
 			{
 				this.switchPresenter();
 			}
+
+			if (CallUtil.isNewMobileGridEnabled())
+			{
+				this.userRegistry.users = [...this.rankUsers()];
+			}
+
+			this.setState({
+				connectedUsers: this.getConnectedUsers(),
+			});
+
+			this.toggleSubscriptionRemoteVideo();
 		}
 
-		toggleSubscriptionRemoteVideo(ids)
+		toggleSubscriptionRemoteVideoCarousel()
 		{
+			const ids = this.state.connectedUsers.map(user => user.id)
+
 			if (ids.length === 0)
 			{
 				return;
@@ -998,7 +1411,7 @@ jn.define('call/calls/layout', (require, exports, module) => {
 
 			const toggleList = [];
 			const leftUserId = this.getLeftUser(this.centralUserId);
-			const rigthUserId = this.getRightUser(this.centralUserId);
+			const rightUserId = this.getRightUser(this.centralUserId);
 
 			const checkNecessityAddUser = (newState) => {
 				const currentUser = this.state.toggleListPrev.find((user) => user.id === newState.id);
@@ -1021,13 +1434,13 @@ jn.define('call/calls/layout', (require, exports, module) => {
 					return;
 				}
 
-				const isActiveUser = id === this.centralUserId || id === leftUserId || id === rigthUserId;
+				const isActiveUser = id === this.centralUserId || id === leftUserId || id === rightUserId;
 
 				if (isActiveUser)
 				{
 					toggleList.push({
 						id,
-						quality: id === this.centralUserId ? 2 : 1,
+						quality: id === this.centralUserId ? this.streamQuality.medium : this.streamQuality.low,
 						isShowVideo: true,
 					});
 				}
@@ -1036,7 +1449,7 @@ jn.define('call/calls/layout', (require, exports, module) => {
 				{
 					toggleList.push({
 						id,
-						quality: 1,
+						quality: this.streamQuality.low,
 						isShowVideo: false,
 					});
 				}
@@ -1052,6 +1465,143 @@ jn.define('call/calls/layout', (require, exports, module) => {
 			}
 		}
 
+		toggleSubscriptionRemoteVideoGrid()
+		{
+			const ids = this.state.connectedUsers.map(user => user.id)
+
+			if (ids.length === 0)
+			{
+				return;
+			}
+
+			const toggleList = [];
+
+			const isPinMode = this.state.pinnedUserId !== 0;
+			const hasScreenshare = (this.getConnectedUsers().some((item) => item.data.screenState) && Object.keys(this.screenshareStreams).length !== 0)
+				|| (Object.keys(this.screenshareStreams).length !== 0 && this.state.screenshareOnEnter === null);
+
+			const checkNecessityAddUser = (newState) => {
+				const currentUser = this.state.toggleListPrev.find((user) => user.id === newState.id);
+
+				return Boolean(!currentUser
+					|| (
+						currentUser
+						&& (
+							currentUser.quality !== newState.quality
+							|| currentUser.isShowVideo !== newState.isShowVideo
+						)
+					));
+			};
+
+			ids.forEach((id) => {
+				const userModel = this.userRegistry.get(id);
+
+				if (!userModel || userModel.localUser || userModel.state !== 'Connected')
+				{
+					return;
+				}
+
+				if (!this.state.isAppActive)
+				{
+					toggleList.push({
+						id,
+						quality: this.streamQuality.low,
+						isShowVideo: false,
+					});
+					return;
+				}
+
+				const renderedUser = userModel.index <= (GridUserCount.fullFirstPageCount - 1) * this.state.currentGridPage
+					&& userModel.index >= GridUserCount.fullFirstPageCount * (this.state.currentGridPage - 1);
+				const isActiveUser = userModel.talking;
+
+				if (!hasScreenshare && !isPinMode)
+				{
+					if (renderedUser || this.getConnectedUserCount() <= GridUserCount.fullFirstPageCount)
+					{
+						toggleList.push({
+							id,
+							quality: this.streamQuality.medium,
+							isShowVideo: true,
+						});
+					}
+
+					if (isActiveUser)
+					{
+						toggleList.push({
+							id,
+							quality: this.streamQuality.high,
+							isShowVideo: true,
+						});
+					}
+
+					if (!renderedUser && this.getConnectedUserCount() > GridUserCount.fullFirstPageCount && !isActiveUser)
+					{
+						toggleList.push({
+							id,
+							quality: this.streamQuality.low,
+							isShowVideo: false,
+						});
+					}
+				}
+
+				if (hasScreenshare || isPinMode)
+				{
+					if (this.screenshareStreams.hasOwnProperty(id))
+					{
+						toggleList.push({
+							id,
+							quality: this.streamQuality.high,
+							isShowVideo: true,
+						});
+						return;
+					}
+					if (this.activeIds.includes(id))
+					{
+						toggleList.push({
+							id,
+							quality: this.streamQuality.low,
+							isShowVideo: true,
+						});
+						return;
+					}
+					else
+					{
+						toggleList.push({
+							id,
+							quality: this.streamQuality.low,
+							isShowVideo: false,
+						});
+					}
+				}
+
+				if (this.state.pinnedUserId !== 0 && id === this.state.pinnedUserId)
+				{
+					toggleList.push({
+						id,
+						quality: this.streamQuality.high,
+						isShowVideo: true,
+					});
+				}
+			});
+
+			const filterToggleList = toggleList.filter((item) => checkNecessityAddUser(item));
+
+			this.state.toggleListPrev = toggleList;
+
+			if (filterToggleList.length > 0)
+			{
+				this.emit(EventName.ToggleSubscriptionRemoteVideo, [filterToggleList]);
+			}
+		}
+
+		toggleSubscriptionRemoteVideo()
+		{
+			CallUtil.isNewMobileGridEnabled()
+				? this.toggleSubscriptionRemoteVideoGrid()
+				: this.toggleSubscriptionRemoteVideoCarousel();
+		}
+
 		setVideoStream(userId, stream, mirrorLocalVideo = false)
 		{
 			const userModel = this.userRegistry.get(userId);
@@ -1064,29 +1614,72 @@ jn.define('call/calls/layout', (require, exports, module) => {
 
 			if (stream)
 			{
-				this.videoStreams[userId] = stream;
-				userModel.cameraState = true;
+				if (CallUtil.isNewMobileGridEnabled() && Array.isArray(stream))
+				{
+					if (this.videoStreams.hasOwnProperty(userId) && this.screenshareStreams.hasOwnProperty(userId))
+					{
+						delete this.videoStreams[userId];
+						delete this.screenshareStreams[userId];
+						userModel.cameraState = false;
+					}
+					stream.forEach((item) => {
+						if (item.kind === 'sharing')
+						{
+							this.screenshareStreams[userId] = item;
+						}
+						else
+						{
+							this.videoStreams[userId] = item;
+							userModel.cameraState = true;
+						}
+					})
+				}
+				else
+				{
+					if (stream.kind === 'sharing')
+					{
+						this.screenshareStreams[userId] = stream;
+					}
+					else
+					{
+						this.videoStreams[userId] = stream;
+						userModel.cameraState = true;
+					}
+				}
+
 			}
 			else
 			{
 				delete this.videoStreams[userId];
+				delete this.screenshareStreams[userId];
 				userModel.cameraState = false;
 			}
 
 			if (userId == this.centralUserId && userId != env.userId)
 			{
 				this.setState({
-					remoteStream: stream,
+					remoteStream: (CallUtil.isNewMobileGridEnabled() && Array.isArray(stream)) ? stream[0] : stream,
 				});
 			}
 			else if (userId == this.userId)
 			{
 				this.setState({
-					localStream: stream,
+					localStream: (CallUtil.isNewMobileGridEnabled() && Array.isArray(stream)) ? stream[0] : stream,
 					cameraState: Boolean(stream),
 					mirrorLocalVideo,
 				});
 			}
+
+			if (CallUtil.isNewMobileGridEnabled())
+			{
+				this.userRegistry.users = [...this.rankUsers()];
+			}
+
+			this.setState({
+				connectedUsers: this.getConnectedUsers(),
+			});
+
+			this.toggleSubscriptionRemoteVideo();
 		}
 
 		setSoundOutputDevice(device)
@@ -1110,6 +1703,10 @@ jn.define('call/calls/layout', (require, exports, module) => {
 
 		renderRemoteStream()
 		{
+			if (!this.state.isAppActive)
+			{
+				return null;
+			}
 			const rendererParams = {};
 			if ('getVideoTracks' in this.state.remoteStream)
 			{
@@ -1132,9 +1729,38 @@ jn.define('call/calls/layout', (require, exports, module) => {
 			});
 		}
 
+		renderRemoteStreamByPriority()
+		{
+			if (!this.state.isAppActive)
+			{
+				return null;
+			}
+			const rendererParams = {};
+			if (Object.keys(this.screenshareStreams).length !== 0)
+			{
+				rendererParams.source = Object.values(this.screenshareStreams)[0];
+			}
+			else
+			{
+				rendererParams.source = this.state.remoteStream;
+			}
+
+			return VideoRenderer({
+				testId: `callsRemoteVideo_${this.state.centralUserId}`,
+				resizeMode: 'center', // ? do we need it?
+				style: {
+					backgroundImage: this.getBackground(),
+					backgroundResizeMode: 'cover',
+					...styles.remoteVideo,
+				},
+				...rendererParams,
+			});
+		}
+
+
 		renderLocalStream(showInFrame, bottomMargin)
 		{
-			if (!this.state.localStream || this.state.hideLocalVideo)
+			if (!this.state.localStream || this.state.hideLocalVideo || !this.state.isAppActive)
 			{
 				return null;
 			}
@@ -1191,15 +1817,71 @@ jn.define('call/calls/layout', (require, exports, module) => {
 			);
 		}
 
-		renderOverlay()
+		renderOverlay(top = null)
 		{
 			return View(
 				{
-					style: styles.overlay,
+					style: {
+						...styles.overlay,
+						justifyContent: top === null ? 'flex-end' : 'space-between',
+					},
 					clickable: false,
 				},
-
+				top !== null && top,
 				this.renderBottomPanel(),
+			);
+		}
+
+		renderDeviceHints(bottomMargin)
+		{
+			const userModel = this.userRegistry.get(this.state.centralUserId);
+
+			let height = 32 * (userModel.cameraState ? 0 : 1) + 32 * (userModel.microphoneState ? 0 : 1);
+			if (height === 64)
+			{
+				height += 6;
+			}
+
+			return View(
+				{
+					style: {
+						position: 'absolute',
+						bottom: 0,
+						left: 16 + getSafeArea().left,
+						width: '100%',
+						height,
+						marginBottom: bottomMargin,
+						alignItems: 'flex-start',
+						justifyItems: 'space-between',
+						justifyContent: 'space-between',
+					},
+				},
+				!userModel.microphoneState && this.renderDeviceOffHint(
+					userModel.firstName,
+					userModel.gender,
+					'microphone'
+				),
+				!userModel.cameraState && this.renderDeviceOffHint(userModel.firstName, userModel.gender, 'camera'),
+			);
+		}
+
+		renderDeviceOffHint(firstName, gender, device)
+		{
+			const phrase = `MOBILE_CALL_PARTICIPANT_SWITCHED_OFF_${device === 'camera' ? 'CAMERA' : 'MICROPHONE'}_${gender === 'F' ? 'F' : 'M'}`;
+
+			return View(
+				{
+					style: styles.deviceOffHint,
+				},
+				IconView({
+					size: 20,
+					color: Color.baseWhiteFixed,
+					icon: device === 'camera' ? Icon.CAMERA_OFF : Icon.MICROPHONE_OFF,
+				}),
+				Text({
+					style: styles.deviceOffHintText,
+					text: BX.message(phrase).replace('#FIRST_NAME#', firstName),
+				}),
 			);
 		}
 
@@ -1242,9 +1924,103 @@ jn.define('call/calls/layout', (require, exports, module) => {
 					},
 				),
 				Text({
-					style: { marginLeft: 2, marginRight: 12, fontWeight: 400, fontSize: 15 },
+					style: {
+						marginLeft: 2,
+						marginRight: 12,
+						fontWeight: 400,
+						fontSize: 15,
+						color: Color.baseWhiteFixed.toHex(),
+					},
 					text: BX.message('MOBILE_CALL_JUMP_TO_PRESENTER'),
 				}),
+			);
+		}
+
+		/**
+		 * @param {string} uri
+		 * @param {string} text
+		 * @param {string || null} color
+		 */
+		renderCenterAvatar(uri, text, color)
+		{
+			const avatar = Avatar({
+				testId: 'center-avatar',
+				uri: isAvatarBlank(uri) ? '' : uri,
+				name: text,
+				entityType: AvatarEntityType.OTHER,
+				size: 180,
+				useLetterImage: true,
+				backgroundColor: Utils.convertHexToColorEnum(color),
+				shape: AvatarShape.NONE,
+			});
+
+			return View(
+				{
+					style: {
+						alignItems: 'center',
+						justifyContent: 'center',
+						flexGrow: 1,
+					},
+				},
+				avatar,
+			)
+		}
+
+		getScreenshareLayout()
+		{
+			if (this.getIsLandscapeOrientation())
+			{
+				return this.renderScreenshareLayoutLandscape();
+			}
+			return this.renderScreenshareLayout();
+		}
+
+		getCenterHeight()
+		{
+			const androidOffset = device.screen.height * 0.9 - device.screen.safeArea.top
+			const safeAreaLandscapeHeight = device.platform === 'android' ? androidOffset : '90%';
+
+			if (this.state.isScreenshareFullScreen && this.getIsLandscapeOrientation())
+			{
+				return '100%';
+			}
+
+			if (!this.state.isScreenshareFullScreen && this.getIsLandscapeOrientation())
+			{
+				return safeAreaLandscapeHeight;
+			}
+
+			return '90%';
+		}
+
+		renderCenterGrid()
+		{
+			const hasScreenshare = (this.getConnectedUsers().some((item) => item.data.screenState) && Object.keys(this.screenshareStreams).length !== 0)
+				|| (Object.keys(this.screenshareStreams).length !== 0 && this.state.screenshareOnEnter === null);
+
+			const paddingVertical = {
+				paddingTop: 5,
+				paddingBottom: 5,
+			}
+
+			return View(
+				{
+					style: {
+						...styles.centerGrid,
+						height: this.getCenterHeight(),
+						...paddingVertical,
+						clickable: false,
+						marginTop: !this.getIsLandscapeOrientation() && device.screen.safeArea.top,
+					},
+					onLayout: (params) => {
+						this.setState({
+							gridContainerWidth: params.width,
+							gridContainerHeight: params.height - 5,
+						});
+					},
+				},
+				hasScreenshare ? this.getScreenshareLayout()
+					: (this.state.pinnedUserId ? this.renderPinLayout() : this.renderUserGrid()),
 			);
 		}
 
@@ -1259,10 +2035,6 @@ jn.define('call/calls/layout', (require, exports, module) => {
 				&& !this.state.centralUserVideoPaused
 			;
 			const showArrows = this.state.connectedUsers.length > 1;
-
-			const avatar = this.userRegistry.get(this.state.centralUserId).avatar
-				? { uri: encodeURI(this.userRegistry.get(this.state.centralUserId).avatar) }
-				: { svg: { content: Icons.emptyAvatar } };
 
 			return View(
 				{
@@ -1287,19 +2059,10 @@ jn.define('call/calls/layout', (require, exports, module) => {
 						svg: { content: Icons.arrowLeft },
 					}),
 				),
-				showLargeAvatar && View(
-					{
-						style: {
-							alignItems: 'center',
-							justifyContent: 'center',
-							flexGrow: 1,
-						},
-					},
-					Image({
-						style: styles.largeAvatar,
-						resizeMode: 'cover',
-						...avatar,
-					}),
+				showLargeAvatar && this.renderCenterAvatar(
+					this.userRegistry.get(this.state.centralUserId).avatar,
+					this.userRegistry.get(this.state.centralUserId).name,
+					CallUtil.userData[this.centralUserId].color,
 				),
 				showArrows && View(
 					{
@@ -1322,6 +2085,1309 @@ jn.define('call/calls/layout', (require, exports, module) => {
 			);
 		}
 
+		getItemWidth(index) {
+			const countConnectedUsers = this.getConnectedUserCount();
+
+			if (!this.state.gridContainerWidth)
+			{
+				return;
+			}
+
+			if (this.getIsLandscapeOrientation())
+			{
+				return countConnectedUsers <= GridUserCount.minimalGrid
+					? { width: '30%', height: '48%' }
+					: { width: this.state.gridContainerWidth / 4 - 7, height: this.state.gridContainerHeight / 2 - 5 };
+			}
+
+			if (countConnectedUsers <= GridUserCount.minimalGrid)
+			{
+				return { width: this.state.gridContainerWidth - 10, height: this.state.gridContainerHeight / 3 - 5 };
+			}
+
+			if (countConnectedUsers === GridUserCount.bottomSplittedRow
+				|| countConnectedUsers === GridUserCount.middleSplittedRow)
+			{
+				return index >= (countConnectedUsers === GridUserCount.bottomSplittedRow ? 2 : 1)
+					? { width: this.state.gridContainerWidth / 2 - 8, height: '33%' }
+					: {
+						width: this.state.gridContainerWidth - 10,
+						height: countConnectedUsers === GridUserCount.bottomSplittedRow ? '32%' : '33%',
+					};
+			}
+
+			if (countConnectedUsers === GridUserCount.equalTiles)
+			{
+				return { width: this.state.gridContainerWidth / 2 - 8, height: this.state.gridContainerHeight / 3 - 5 };
+			}
+
+			if (countConnectedUsers > GridUserCount.equalTiles)
+			{
+				return this.getIsLandscapeOrientation()
+					? { width: this.state.gridContainerWidth / 4 - 7, height: this.state.gridContainerHeight / 2 - 5 }
+					: { width: this.state.gridContainerWidth / 2 - 8, height: this.state.gridContainerHeight / 4 - 5 };
+			}
+
+
+			return this.getIsLandscapeOrientation()
+				? { width: this.state.gridContainerWidth / 4 - 5, height: '48%' }
+				: { width: document.device.screen.width / 2 - 20, height: document.device.screen.width / 4 };
+		}
+
+		changeActiveScreenShareUser(index)
+		{
+			let users = this.userRegistry.users;
+			users = users.filter(user => user);
+			if (index !== null)
+			{
+				[users[index], users[0]] = [users[0], users[index]];
+			}
+			return users;
+		}
+
+		getLeastActiveUser(users)
+		{
+			let targetIndex = -1;
+			let maxAgo = -Infinity;
+
+			for (let i = 1; i < 8 && i < users.length; i++) {
+				const user = users[i];
+				const ago = user.wasTalkingAgo?.() ?? Infinity;
+
+				if (ago > maxAgo) {
+					maxAgo = ago;
+					targetIndex = user.index;
+				}
+			}
+
+			return targetIndex;
+		}
+
+		rankUsers()
+		{
+			let users = this.userRegistry.users;
+
+			users = users.filter(user => user);
+
+			const talkingUser = users.findIndex(user => user.talking);
+			const firstWithVideo = users.findIndex(user => user.cameraState);
+
+			if (!!this.state.pinnedUserId)
+			{
+				const talkingIndex = users.findIndex(user => user.talking === true);
+				if (talkingIndex === -1 || talkingIndex < this.state.userScrollUserPerPage - 1)
+				{
+					return users;
+				}
+
+				[users[talkingIndex], users[1]] = [users[1], users[talkingIndex]];
+				setTimeout(() => {
+					this.resubscribeForUserScroll();
+				});
+				return users;
+			}
+
+			if (this.state.activeScreenId !== null)
+			{
+				if (talkingUser !== -1 && talkingUser !== this.state.activeScreenId)
+				{
+					[users[talkingUser], users[1]] = [users[1], users[talkingUser]];
+				}
+				return users;
+			}
+
+			users.sort((a, b) => {
+				if (String(a.id) === this.userId) return -1;
+				if (String(b.id) === this.userId) return 1;
+				if(a.index <= GridUserCount.fullFirstPageIndex || b.index <= GridUserCount.fullFirstPageIndex)
+				{
+					return 0;
+				}
+
+				if (b.screenState !== a.screenState) {
+					return Number(b.screenState) - Number(a.screenState);
+				}
+
+				return Number(b.cameraState) - Number(a.cameraState);
+			}).forEach((item, index) => item.index = index);
+
+			if (talkingUser === -1 || firstWithVideo === -1 || users[talkingUser].index <= GridUserCount.fullFirstPageIndex)
+			{
+				return users;
+			}
+
+			const leastActiveUser = this.getLeastActiveUser(users);
+
+			if (leastActiveUser)
+			{
+				[users[talkingUser], users[leastActiveUser]] = [users[leastActiveUser], users[talkingUser]];
+				return users;
+			}
+
+			const userForReplacement = users.findIndex(user => user.cameraState === false || user.id !== this.userId);
+
+			if (users[talkingUser].cameraState === false && userForReplacement !== -1)
+			{
+				[users[talkingUser], users[userForReplacement]] = [users[userForReplacement], users[talkingUser]];
+				return users;
+			}
+
+			return users;
+		}
+
+		getSortedUsers()
+		{
+			const itemsPerPage = 8;
+			const chunkedArray = [];
+			// const offset = this.state.currentGridPage === 1 ? 0 : 1;
+			const startCount = this.state.currentGridPage <= 1 ? 0 : ((this.state.currentGridPage - 2) * itemsPerPage);
+			const endCount = this.state.currentGridPage * itemsPerPage + 4;
+
+			const renderedUsers = this.state.connectedUsers.slice(0, endCount);
+
+			for (let i = 0; i < renderedUsers.length; i += itemsPerPage)
+			{
+				chunkedArray.push(renderedUsers.slice(i, i + itemsPerPage));
+			}
+
+			// this.redraw();
+
+			return chunkedArray;
+		}
+
+		renderNameBadge(name, microphoneState)
+		{
+			return View(
+				{
+					style: {
+						position: 'absolute',
+						bottom: 8,
+						left: 8,
+						display: 'flex',
+						flexDirection: 'row',
+						alignItems: 'center',
+						width: '100%',
+						zIndex: 20,
+					},
+				},
+				View(
+					{
+						style: {
+							...styles.nameBadge,
+							paddingLeft: 5,
+							paddingRight: 5,
+							maxWidth: '90%',
+						},
+					},
+					!microphoneState && IconView({
+						size: 20,
+						color: Color.baseWhiteFixed,
+						icon: Icon.MICROPHONE_OFF,
+					}),
+					Text({
+						style: {
+							fontSize: 13,
+							color: '#fff',
+							paddingVertical: 2,
+							flexShrink: 1,
+						},
+						numberOfLines: 1,
+						ellipsize: 'end',
+						text: name,
+					}),
+				)
+			)
+		}
+
+		getStream(id, isLocal = false, scale = true)
+		{
+			if (!this.state.isAppActive)
+			{
+				return;
+			}
+			const rendererParams = {};
+			if ('getVideoTracks' in this.videoStreams[id])
+			{
+				rendererParams.source = this.videoStreams[id].getVideoTracks()[0];
+			}
+			else
+			{
+				rendererParams.source = this.videoStreams[id];
+			}
+
+			return VideoRenderer({
+				testId: `callsRemoteVideo_${this.state.centralUserId}`,
+				resizeMode: 'center', // ? do we need it?
+				mirror: isLocal,
+				style: {
+					backgroundResizeMode: 'cover',
+					...styles.remoteVideo,
+				},
+				...rendererParams,
+				local: scale,
+			});
+		}
+
+		getScreenStream(id)
+		{
+			if (!this.state.isAppActive)
+			{
+				return;
+			}
+			const rendererParams = {};
+
+			rendererParams.source = this.screenshareStreams[id];
+
+			return VideoRenderer({
+				testId: `callsRemoteVideo_${this.state.centralUserId}`,
+				resizeMode: 'center', // ? do we need it?
+				style: {
+					backgroundResizeMode: 'cover',
+					...styles.remoteVideo,
+				},
+				...rendererParams,
+			});
+		}
+
+		renderUserCallContainer(item, index)
+		{
+			const isCameraOff = !item.data.cameraState;
+			const id = item.data.id;
+			const isThisUser = id === Number(this.userId);
+
+			const switchCamera = View(
+				{
+					style: {
+						position: 'absolute',
+						top: 8,
+						right: 8,
+						zIndex: 20,
+					},
+					onClick: () => {
+						this.emit(EventName.ReplaceCamera);
+					},
+				},
+				Image({
+					style: { width: 24, height: 24 },
+					svg: { content: Icons.rotateIcon },
+				}),
+			);
+
+			const connectingBadge = View(
+				{
+					style: {
+						position: 'absolute',
+						top: 8,
+						left: 8,
+						display: 'flex',
+						flexDirection: 'row',
+						width: '100%',
+					},
+				},
+				Loader({
+					style: {
+						width: 16,
+						height: 16,
+						marginRight: 2,
+					},
+					tintColor: '#fff',
+					animating: true,
+					size: 'small',
+				}),
+				Text({
+					style: {
+						fontSize: 13,
+					},
+					text: BX.message('MOBILE_CALL_LAYOUT_GRID_CONNECTING'),
+				}),
+			);
+			const avatar = View(
+				{},
+				Avatar({
+					testId: 'userCallContainer-avatar',
+					uri: this.userRegistry.get(item.data.id).avatar,
+					name: BX.utils.html.htmlDecode(item.data.name),
+					size: 90,
+					backgroundColor: Utils.convertHexToColorEnum(CallUtil.userData[item.data.id].color),
+				}),
+			);
+			const video = View(
+				{
+					style: {
+						...styles.videoContainer,
+						borderRadius: 10,
+					},
+					clickable: false,
+				},
+				this.videoStreams.hasOwnProperty(id) && this.getStream(id, isThisUser && this.state.mirrorLocalVideo),
+			);
+
+			return View(
+				{
+					style: {
+						...this.getItemWidth(index),
+						...styles.gridItem,
+						borderColor: item.data.talking && '#1BCE7B',
+					},
+					onClick: () => {
+						this.handleSingleTap(() => this.pinUserInGrid(item.data.id));
+					},
+					onLongClick: () => {
+						this.pinUserInGrid(item.data.id);
+					},
+				},
+				this.state.panelVisible && this.renderNameBadge(item.data.name, item.data.microphoneState),
+				item.data.state === 'Connecting' && connectingBadge,
+				item.data.floorRequestState && !isThisUser && this.renderFloorRequestBadge(),
+				isCameraOff ? avatar : video,
+				isThisUser && !isCameraOff && switchCamera,
+			);
+		}
+
+		pinUserInGrid(id)
+		{
+			this.setState({
+				pinnedUserId: id,
+			});
+		}
+
+		unpinUserInGrid()
+		{
+			this.setState({
+				pinnedUserId: 0,
+			});
+		}
+
+		renderPlaceholder(item)
+		{
+			const size = this.getIsLandscapeOrientation() ? { width: this.state.gridContainerWidth / 4 - 7, height: this.state.gridContainerHeight / 2 - 10 } : { width: this.state.gridContainerWidth / 2 - 8, height: this.state.gridContainerHeight / 4 - 10 };
+			const avatar = View(
+				{},
+				Avatar({
+					testId: 'userCallContainer-avatar',
+					uri: this.userRegistry.get(item.data.id).avatar,
+					name: BX.utils.html.htmlDecode(item.data.name),
+					size: 90,
+					backgroundColor: Utils.convertHexToColorEnum(CallUtil.userData[item.data.id].color),
+				}),
+			);
+			return View(
+				{
+					style: {
+						...styles.placeholder,
+						...size,
+					},
+				},
+				avatar,
+				this.renderNameBadge(item.data.name, item.data.microphoneState)
+			);
+		}
+
+		renderUserGrid()
+		{
+			const startCount = this.state.currentGridPage <= 1 ? 0 : ((this.state.currentGridPage - 1) * GridUserCount.fullFirstPageCount);
+			const endCount = this.state.currentGridPage * GridUserCount.fullFirstPageCount - 1;
+			const isOnlyOnePage = this.getConnectedUserCount() <= GridUserCount.fullFirstPageCount;
+			const alignItemsStyles = this.getConnectedUserCount() <= GridUserCount.bottomSplittedRow && this.getIsLandscapeOrientation() ? 'center' : 'flex-start';
+
+			const userGrid = this.getSortedUsers().map((chunk, userPageIndex) => (
+				View(
+					{
+						style: {
+							...styles.userGrid,
+							height: this.state.gridContainerHeight - (userPageIndex === 0 ? 0 : 0),
+							marginTop: (userPageIndex === 0 || this.getIsLandscapeOrientation()) && -5,
+							marginBottom: 5,
+							marginRight: -5,
+							alignContent: alignItemsStyles,
+							justifyContent: this.getIsLandscapeOrientation()
+								? (this.getConnectedUserCount() < GridUserCount.fullFirstPageCount
+									? 'center'
+									: this.getConnectedUserCount() > GridUserCount.fullFirstPageCount
+										? 'flex-start'
+										: 'space-between')
+								: 'space-between',
+						},
+						onLayout: () => {
+							this.debouncedSubscribe();
+							if (this.state.isScreenshareFullScreen)
+							{
+								this.setState({
+									isScreenshareFullScreen: false,
+								});
+							}
+						},
+						onClick: () => {
+							this.toggleUI();
+						},
+					},
+					...chunk.map((user, userPositionInPageIndex) => {
+						const globalIndex = userPageIndex * GridUserCount.fullFirstPageCount + userPositionInPageIndex;
+
+						return (Utils.isVisible(globalIndex, startCount, endCount) || isOnlyOnePage)
+							? this.renderUserCallContainer(user, globalIndex)
+							: this.renderPlaceholder(user);
+					}),
+				)
+			));
+
+			return ScrollView(
+				{
+					ref: ref => {
+						this.scrollView = ref;
+					},
+					style: {
+						flex: 1,
+					},
+					bounces: false,
+					onLayout: (layoutObj) => {
+						if (layoutObj.y === 0 && this.state.currentGridPage !== 1)
+						{
+							this.state.currentGridPage = 1;
+							this.subscribeOnNewPage();
+						}
+						this.state.activeScreenId = null;
+					},
+					onScroll: (props) => {
+						this.state.currentScrollPosition = props.contentOffset.y;
+						if (this.getIsAndroid() && !this.gridHasScrolled)
+						{
+							setTimeout(() => {
+								if (!this.gridHasScrolled)
+								{
+									this.handleScrollEnd();
+								}
+							}, 1000)
+							this.gridHasScrolled = true;
+						}
+					},
+					onScrollEndDrag: () => {
+						if (!this.gridHasScrolled || !this.getIsAndroid())
+						{
+							this.handleScrollEnd();
+							this.gridHasScrolled = true;
+						}
+					},
+					onMomentumScrollEnd: () => {
+						if (this.getIsAndroid())
+						{
+							this.handleScrollEnd();
+							this.gridHasScrolled = true;
+						}
+					},
+					onScrollBeginDrag: () => {
+						this.state.startingDragScrollPosition = this.state.currentScrollPosition;
+					},
+				},
+				View(
+					{
+						style: {
+							minHeight: device.screen.height,
+							// marginRight: this.getIsIos() ? -5 : 0,
+							paddingLeft: 5,
+						},
+					},
+					...userGrid,
+				),
+			);
+		}
+
+		getIsAndroid()
+		{
+			return device.platform === 'android';
+		}
+
+		getIsIos()
+		{
+			return device.platform === 'iOS';
+		}
+
+		getScrollViewHeight()
+		{
+			return device.screen.height;
+		}
+
+		handleScrollEnd()
+		{
+			const currentPage = this.state.currentGridPage;
+			const newPage = this.getCurrentPage(this.state.startingDragScrollPosition, this.state.currentScrollPosition);
+
+			if (currentPage !== newPage)
+			{
+				this.state.currentGridPage = newPage;
+				this.subscribeOnNewPage();
+			}
+
+			this.scrollToCurrentPage();
+		}
+
+		getCurrentPage(scrollStartingPosition, scrollCurrentPosition)
+		{
+			const currentPage = this.state.currentGridPage;
+			let newPage;
+			const diff = scrollCurrentPosition - scrollStartingPosition;
+			if (scrollStartingPosition !== undefined && scrollCurrentPosition !== undefined)
+			{
+				if (diff > 0)
+				{
+					newPage = this.state.currentGridPage + 1;
+				}
+				else
+				{
+					newPage = this.state.currentGridPage - 1;
+				}
+			}
+			else
+			{
+				newPage = Math.ceil(this.getConnectedUserCount() / GridUserCount.fullFirstPageCount);
+				if (this.getConnectedUserCount() === GridUserCount.fullFirstPageCount)
+				{
+					this.scrollView.scrollTo({ x: 0, y: 0, animated: false });
+				}
+			}
+
+			if (currentPage !== newPage)
+			{
+				if (newPage < 1)
+				{
+					newPage = 1;
+				}
+
+				if (newPage > this.getMaxAmountOfPagesInScrollView())
+				{
+					newPage = this.getMaxAmountOfPagesInScrollView();
+				}
+			}
+
+			return newPage;
+		}
+
+		getMaxAmountOfPagesInScrollView()
+		{
+			const userCount = this.state.connectedUsers.length;
+			if (userCount > GridUserCount.fullFirstPageCount)
+			{
+				return Math.ceil(userCount / GridUserCount.fullFirstPageCount);
+			}
+
+			return 1;
+		}
+
+		subscribeOnNewPage()
+		{
+			this.toggleSubscriptionRemoteVideo();
+			this.redraw();
+		}
+
+		scrollToCurrentPage()
+		{
+			const offset = this.getIsIos() ? PREV_PAGE_TEASER : PREV_PAGE_TEASER_ANDROID;
+			this.scrollView.scrollTo({
+				x: 0,
+				y: this.state.currentGridPage !== 1 ? ((this.state.currentGridPage - 1) * (this.getScrollViewHeight() - offset)) : 0,
+				animated: true,
+			})
+		}
+
+		renderScrollItem(item)
+		{
+			const isThisUser = item.data.id === Number(this.userId);
+
+			return !item.data.cameraState
+				? View(
+					{
+						style: {
+							height: '100%',
+							display: 'flex',
+							justifyContent: 'center',
+							alignItems: 'center',
+						},
+					},
+					Avatar({
+						testId: 'scrollItem-avatar',
+						uri: this.userRegistry.get(item.data.id).avatar,
+						name: BX.utils.html.htmlDecode(item.data.name),
+						size: 90,
+						backgroundColor: Utils.convertHexToColorEnum(CallUtil.userData[item.data.id].color),
+					}),
+				)
+				: View(
+					{
+						style: {
+							...styles.videoContainer,
+						},
+						clickable: false,
+					},
+					this.videoStreams.hasOwnProperty(item.data.id) && this.getStream(item.data.id, isThisUser),
+				);
+		}
+
+		renderPinLayout()
+		{
+			const pinnedUser = this.state.connectedUsers.filter((item) => item.id === this.state.pinnedUserId)
+			const isThisUser = this.state.pinnedUserId === Number(this.userId);
+			const size = this.getIsLandscapeOrientation() ? (this.state.gridContainerWidth * 0.2 - 5) : this.state.gridContainerHeight * 0.22;
+			const users = this.state.connectedUsers.filter((item) => item.id !== this.state.pinnedUserId)
+			const scrollList = this.renderUserScrollList(
+				this.getIsLandscapeOrientation() ? '100%' : size,
+				this.getIsLandscapeOrientation() ? size : '100%',
+				this.getIsLandscapeOrientation() && 5,
+				users,
+			);
+
+			return View(
+				{
+					style: {
+						height: '100%',
+						width: this.getIsLandscapeOrientation() ? '100%' : '100%',
+						display: this.getIsLandscapeOrientation() && 'flex',
+						flexDirection: this.getIsLandscapeOrientation() && 'row',
+						paddingHorizontal: 5,
+					},
+					onLayout: () => {
+						this.state.currentGridPage = 1;
+						this.subscribeOnNewPage();
+						this.setState({
+							userScrollUserPerPage: Math.ceil(this.state.gridContainerWidth / size),
+						});
+					},
+					onClick: () => {
+						this.toggleUI();
+					}
+				},
+				View(
+					{
+						style: {
+							height: this.getIsLandscapeOrientation() ? '100%' : '78%',
+							width: this.getIsLandscapeOrientation() ? '78%' : '100%',
+						},
+						onClick: () => {
+							this.handleSingleTap(() => this.unpinUserInGrid())
+						},
+						onLongClick: () => {
+							this.unpinUserInGrid();
+						},
+					},
+					View(
+						{
+							style: {
+								...styles.userPin,
+							},
+						},
+						View(
+							{
+								style: {
+									...styles.pinIconBadge
+								}
+							},
+							Image({
+								style: { width: 16, height: 16 },
+								svg: { content: Icons.pinIcon },
+							}),
+						),
+						this.state.panelVisible && this.renderNameBadge(pinnedUser[0].data.name, pinnedUser[0].data.microphoneState),
+						View(
+							{
+								style: {
+									...styles.videoContainer,
+								},
+								clickable: false,
+							},
+							this.userRegistry.get(this.state.pinnedUserId).cameraState
+								? this.videoStreams.hasOwnProperty(this.state.pinnedUserId) && this.getStream(this.state.pinnedUserId, isThisUser, false)
+								: View(
+									{
+										style: {
+											display: 'flex',
+											flexDirection: 'row',
+											justifyContent: 'center',
+											alignItems: 'center',
+											width: '100%',
+											height: '100%',
+										}
+									},
+									Avatar({
+										testId: 'pinnedUser-avatar',
+										uri: this.userRegistry.get(this.state.pinnedUserId).avatar,
+										name: BX.utils.html.htmlDecode(this.userRegistry.get(this.state.pinnedUserId).name),
+										size: 180,
+										backgroundColor: Utils.convertHexToColorEnum(CallUtil.userData[this.state.pinnedUserId].color),
+									}),
+								),
+						)
+					)
+				),
+
+				this.renderUserScrollView(scrollList, !this.getIsLandscapeOrientation(), this.getIsLandscapeOrientation() ? '100%' : '20%'),
+			)
+		}
+
+		checkIsScreenshareOnEnter()
+		{
+			if(this.state.screenshareOnEnter === null)
+			{
+				for (const [key] of Object.entries(this.screenshareStreams)) {
+					this.userRegistry.get(Number(key)).screenState = true;
+				}
+				this.state.screenshareOnEnter = false;
+			}
+		}
+
+		checkScreenshareAfterReconnect()
+		{
+			for (const [key] of Object.entries(this.screenshareStreams)) {
+				this.userRegistry.get(Number(key)).screenState = true;
+			}
+		}
+
+		renderScreenshareLayoutLandscape() {
+			const size = this.state.gridContainerWidth * 0.20 - 5;
+
+			this.checkIsScreenshareOnEnter();
+			const screenshareList = this.getScreenshareList();
+			const scrollList = this.renderUserScrollList('100%', size, 5);
+			const dots = this.renderDots(screenshareList);
+			const screenShareViews = this.renderScreenShareViews(screenshareList);
+			const slider = this.renderSlider(screenshareList, screenShareViews);
+			const screenshareWidth = this.state.isScreenshareFullScreen ? '100%' : '78%';
+
+			return View(
+				{
+					style: {
+						height: '100%',
+						width: '100%',
+						flexDirection: 'row',
+					},
+					onLayout: () => {
+						this.state.currentGridPage = 1;
+						// this.subscribeOnNewPage();
+						this.resubscribeForUserScroll();
+					},
+				},
+				this.renderMainScreenshareView(slider, dots, screenshareList, '100%', screenshareWidth, true),
+				this.renderUserScrollView(scrollList, false, '100%')
+			);
+		}
+
+		renderScreenshareLayout() {
+			const commonOffset = device.platform === 'iOS' ? 50 : 0;
+			const topOffset = device.screen.safeArea.top + commonOffset;
+			const size = this.state.gridContainerHeight * 0.22;
+
+			this.checkIsScreenshareOnEnter();
+			const screenshareList = Object.keys(this.screenshareStreams)
+				.filter((id) => this.userRegistry.get(id).screenState)
+				.map(id => ({ id: Number(id) }));
+			const scrollList = this.renderUserScrollList(size, '100%');
+			const dots = this.renderDots(screenshareList);
+			const screenShareViews = this.renderScreenShareViews(screenshareList);
+			const slider = this.renderSlider(screenshareList, screenShareViews);
+
+			return View(
+				{
+					style: {
+						height: '100%',
+						width: '100%',
+						paddingHorizontal: 5,
+					},
+					onLayout: () => {
+						this.state.currentGridPage = 1;
+						// this.subscribeOnNewPage();
+						this.resubscribeForUserScroll();
+						this.setState({
+							isScreenshareFullScreen: false,
+						});
+					},
+				},
+				this.renderMainScreenshareView(
+					slider,
+					dots,
+					screenshareList,
+					'78%',
+					'100%',
+					false,
+				),
+				this.renderUserScrollView(scrollList, true, '20%'),
+			);
+		}
+
+		getScreenshareList() {
+			return Object.keys(this.screenshareStreams)
+				.filter((id) => this.userRegistry.get(id).screenState)
+				.map(id => ({ id: Number(id) }));
+		}
+
+		renderUserScrollList(width, height, marginBottom = 0, users = this.state.connectedUsers) {
+			return users.map((item, index) => (
+				View(
+					{
+						style: {
+							width,
+							height,
+							marginBottom,
+							borderColor: item.talking && '#1BCE7B',
+							marginRight: index !== this.state.connectedUsers.length - 1 ? 5 : 0,
+							...styles.scrollListItem,
+						},
+						onClick: () => {
+							this.handleSingleTap(() => this.pinUserInGrid(item.data.id));
+						},
+						// clickable: false,
+					},
+					item.screenState && View(
+						{
+							style: {
+								...styles.pinIconBadge,
+							},
+						},
+						Image({
+							style: { width: 13, height: 13 },
+							svg: { content: Icons.screenshareIcon },
+						}),
+					),
+					this.state.panelVisible && this.renderNameBadge(item.data.name, item.data.microphoneState),
+					this.renderScrollItem(item),
+				)
+			));
+		}
+
+		renderDots(screenshareList) {
+			return screenshareList.map((item, index) => (
+				View(
+					{
+						style: {
+							marginLeft: 5,
+							marginRight: 5,
+						}
+					},
+					BadgeCounter({
+						testId: 'BadgeCounterDotExample',
+						dot: true,
+						size: BadgeCounterSize.DOT,
+						design: this.state.currentPage === index ? BadgeCounterDesign.WHITE_ALERT : BadgeCounterDesign.GREY,
+					})
+				)
+			));
+		}
+
+		toggleScreenshareFullScreen()
+		{
+			this.setState({
+				isScreenshareFullScreen: !this.state.isScreenshareFullScreen,
+			})
+		}
+
+		renderScreenShareViews(screenshareList) {
+			return screenshareList.map(item => (
+				View(
+					{
+						style: {
+							objectFit: 'cover',
+							backgroundResizeMode: 'cover',
+							position: 'relative',
+						},
+						onClick: () => {
+							this.handleSingleTap(() => {})
+						},
+					},
+					this.state.panelVisible && View(
+						{
+							style: {
+								...styles.screenshareViewBadgeContainer,
+								bottom: this.getIsLandscapeOrientation() ? this.getBottomLiftPosition() : 33,
+							},
+						},
+						Image({
+							style: { width: 13, height: 13, marginLeft: 5, marginRight: 5 },
+							svg: { content: Icons.screenshareIcon },
+						}),
+						Text({
+							style: {
+								fontSize: 13,
+								paddingTop: 2,
+								paddingBottom: 2,
+								paddingRight: 10,
+								color: '#fff',
+							},
+							text: `Экран ${this.userRegistry.get(item.id).name}`,
+						}),
+					),
+					View(
+						{
+							style: {
+								...styles.videoContainer,
+							},
+							clickable: false,
+						},
+						this.screenshareStreams.hasOwnProperty(item.id) && this.getScreenStream(item.id)
+					)
+				)
+			));
+		}
+
+		renderSlider(screenshareList, screenShareViews) {
+			return Slider(
+				{
+					onPageChange: (page) => {
+						this.setState({
+							currentPage: page,
+						});
+						const activeScreenId = screenshareList[page].id;
+						const activeScreenIndex = this.state.connectedUsers.findIndex((user) => user.data.id === activeScreenId);
+						if (activeScreenIndex) {
+							this.userRegistry.users = [...this.changeActiveScreenShareUser(activeScreenIndex)];
+						}
+						this.setState({
+							activeScreenId: activeScreenId,
+							connectedUsers: this.getConnectedUsers(),
+						});
+						this.screenshareScrollView.scrollTo({ x: 0, y: 0, animated: true });
+					},
+					onLayout: () => {
+						if (this.state.activeScreenId === null) {
+							this.setState({
+								currentPage: 0,
+							});
+							const activeScreenId = screenshareList[0].id;
+							const activeScreenIndex = this.state.connectedUsers.findIndex((user) => user.data.id === activeScreenId)
+							if (activeScreenIndex !== -1) {
+								this.userRegistry.users = [...this.changeActiveScreenShareUser(activeScreenIndex)];
+							}
+							this.state.activeScreenId = activeScreenId;
+							this.setState({
+								connectedUsers: this.getConnectedUsers(),
+							});
+							this.screenshareScrollView.scrollTo({ x: 0, y: 0, animated: true });
+						}
+					},
+					onPageWillChange: (page, direction) => {
+						if (page === screenShareViews.length && direction === 'right') {
+							this.setState({
+								isScreenshareSwipeEnabled: false,
+							})
+						}
+						else {
+							this.setState({
+								isScreenshareSwipeEnabled: true,
+							})
+						}
+					},
+					style: {
+						flex: 1,
+						width: '100%',
+						height: '100%',
+					},
+					swipeEnabled: this.state.isScreenshareSwipeEnabled,
+				},
+				...screenShareViews,
+			);
+		}
+
+		getBottomLiftPosition()
+		{
+			return this.bottomPanelHeight() + 8;
+		}
+
+		renderMainScreenshareView(slider, dots, screenshareList, height, width, shouldShowButton) {
+			return View(
+				{
+					style: {
+						height: height,
+						width: width,
+						position: 'relative',
+						backgroundColor: '#26FFFFFF',
+						borderRadius: 10,
+					},
+				},
+				slider,
+				this.state.isRotationIconVisible && this.renderRotationIcon(),
+				screenshareList.length > 1 && View(
+					{
+						style: {
+							...styles.dotsContainer,
+						},
+					},
+					View(
+						{
+							style: {
+								...styles.dotsBadge,
+							},
+						},
+						...dots,
+					),
+				),
+				shouldShowButton && View(
+					{
+						style: {
+							position: 'absolute',
+							bottom: this.state.panelVisible ? this.getBottomLiftPosition() : 33,
+							right: 8,
+							zIndex: 23,
+						},
+						onClick: () => this.toggleScreenshareFullScreen(),
+					},
+					Image({
+						style: { width: 24, height: 24 },
+						svg: { content: this.state.isScreenshareFullScreen ? Icons.collapseFullScreen : Icons.fullScreen },
+					}),
+				),
+			);
+		}
+
+		scrollPageUserScroll(horizontal, endDragScrollPosition)
+		{
+			const offset = horizontal ? ((this.state.gridContainerHeight * 0.22 + 5) * (this.state.userScrollUserPerPage - 1)) : (device.screen.height - 70);
+			const diff = endDragScrollPosition - this.beginDragUserScrollPosition;
+
+			if (diff > 0)
+			{
+				this.userScrollProgress += offset;
+				this.userScrollPage++;
+			}
+
+			if (diff < 0)
+			{
+				if (this.beginDragUserScrollPosition < 50)
+				{
+					return;
+				}
+				this.userScrollProgress -= offset;
+				this.userScrollPage--;
+			}
+
+			this.screenshareScrollView.scrollTo({
+				x: horizontal ? this.userScrollProgress : 0,
+				y: horizontal ? 0 : this.userScrollProgress,
+				animated: true,
+			});
+			this.resubscribeForUserScroll();
+			setTimeout(() => {
+				this.hasScrolled = false;
+			}, 1000);
+		}
+
+		resubscribeForUserScroll()
+		{
+			if (this.getConnectedUserCount() === this.state.userScrollUserPerPage)
+			{
+				this.activeIds = this.state.connectedUsers.map(user => user.id);
+			}
+			else
+			{
+				const usersPerPage = this.state.userScrollUserPerPage + 1;
+				const startIndex = this.userScrollPage * (this.state.userScrollUserPerPage - 1);
+				const endIndex = startIndex + usersPerPage;
+
+				const pageUsers = this.state.connectedUsers.slice(startIndex, endIndex);
+
+				if (pageUsers.length < usersPerPage && this.userScrollPage > 0)
+				{
+					const needed = usersPerPage - pageUsers.length;
+					const prevPageUsers = this.state.connectedUsers.slice(
+						Math.max(0, startIndex - needed),
+						startIndex
+					);
+					pageUsers.unshift(...prevPageUsers);
+				}
+				this.activeIds = pageUsers.map(user => user.id);
+			}
+
+			this.toggleSubscriptionRemoteVideo();
+		}
+
+		renderUserScrollView(scrollList, horizontal, heightOrWidth) {
+			const verticalStyles = {
+				flexWrap: 'wrap',
+				width: '100%',
+				minHeight: device.screen.height,
+			};
+
+			const horizontalStyles = {
+				display: 'flex',
+				flexDirection: 'row',
+			};
+
+			const showsScrollIndicators = {
+				showsHorizontalScrollIndicator: false,
+				showsVerticalScrollIndicator: false,
+			};
+
+			return horizontal
+				? ScrollView(
+					{
+						ref: (ref) => {
+							this.screenshareScrollView = ref;
+						},
+						onScrollBeginDrag: () => {
+							this.beginDragUserScrollPosition = this.currentUserScrollPosition;
+						},
+						onScrollEndDrag: () => {
+							if (!this.getIsAndroid())
+							{
+								const endDragScrollPosition = this.currentUserScrollPosition;
+								this.scrollPageUserScroll(horizontal, endDragScrollPosition);
+							}
+						},
+						onMomentumScrollEnd: () => {
+							if (this.getIsAndroid())
+							{
+								this.scrollPageUserScroll(horizontal, this.currentUserScrollPosition);
+								this.hasScrolled = true;
+							}
+						},
+						onScroll: (params) => {
+							this.currentUserScrollPosition = params.contentOffset.x;
+							if (this.getIsAndroid() && !this.hasScrolled)
+							{
+								setTimeout(() => {
+									if (!this.hasScrolled)
+									{
+										this.scrollPageUserScroll(horizontal, this.currentUserScrollPosition);
+									}
+								}, 1000)
+								this.hasScrolled = true;
+							}
+						},
+						onLayout: () => {
+							this.userScrollProgress = 0;
+							this.userScrollPage = 0;
+							this.resubscribeForUserScroll();
+						},
+						...showsScrollIndicators,
+						horizontal: horizontal,
+						bounces: false,
+						style: horizontal ? {
+							flex: 1,
+							height: heightOrWidth,
+							marginTop: 5,
+						} : {
+							width: heightOrWidth,
+						},
+					},
+					View(
+						{
+							style: horizontal ? horizontalStyles : verticalStyles,
+						},
+						...scrollList,
+					),
+				)
+				: View(
+					{
+						style: {
+							width: '20%',
+							marginLeft: 5,
+						},
+					},
+					ScrollView(
+						{
+							ref: (ref) => {
+								this.screenshareScrollView = ref;
+							},
+							onScrollBeginDrag: () => {
+								this.beginDragUserScrollPosition = this.currentUserScrollPosition;
+							},
+							onScrollEndDrag: () => {
+								if (!this.getIsAndroid())
+								{
+									const endDragScrollPosition = this.currentUserScrollPosition;
+									this.scrollPageUserScroll(horizontal, endDragScrollPosition);
+								}
+							},
+							onScroll: (params) => {
+								this.currentUserScrollPosition = params.contentOffset.y;
+								if (this.getIsAndroid() && !this.hasScrolled)
+								{
+									setTimeout(() => {
+										if (!this.hasScrolled)
+										{
+											this.scrollPageUserScroll(horizontal, this.currentUserScrollPosition);
+										}
+									}, 500);
+									this.hasScrolled = true;
+								}
+							},
+							onMomentumScrollEnd: () => {
+								if (this.getIsAndroid())
+								{
+									this.scrollPageUserScroll(horizontal, this.currentUserScrollPosition);
+									this.hasScrolled = true;
+								}
+							},
+							onLayout: () => {
+								this.userScrollProgress = 0;
+								this.userScrollPage = 0;
+								this.resubscribeForUserScroll();
+							},
+							...showsScrollIndicators,
+							horizontal: horizontal,
+							style: horizontal ? {
+								width: '100%',
+								height: heightOrWidth,
+							} : {
+								width: heightOrWidth,
+								minHeight: device.screen.height,
+							},
+						},
+						View(
+							{
+								style: horizontal ? horizontalStyles : verticalStyles,
+								onClick: () => {
+									this.toggleUI();
+								}
+							},
+							...scrollList,
+						),
+					)
+				)
+		}
+
+		renderRotationIcon()
+		{
+			return View(
+				{
+					style: {
+						position: 'absolute',
+						top: '44%',
+						left: '44%',
+						zIndex: 30,
+					},
+					ref: ref=> this.rotationIcon = ref,
+					onLayout: () => {
+						const options = {
+							duration: 500,
+							option: 'linear',
+						};
+
+						const transitionIn = transition(this.rotationIcon, {
+							...options,
+							rotate: 90,
+						});
+
+						const transitionOut = transition(this.rotationIcon, {
+							...options,
+							rotate: 0,
+						});
+
+						const animate = chain(
+							transitionIn,
+							transitionOut,
+							transitionIn,
+							transitionOut,
+						);
+						animate().then(() => {
+							this.setState({
+								isRotationIconVisible: false,
+							});
+						});
+					},
+				},
+				Image({
+					style: { width: 72, height: 72 },
+					svg: { content: Icons.rotationIcon },
+				}),
+			)
+		}
+
 		render()
 		{
 			switch (this.state.status)
@@ -1333,7 +3399,7 @@ jn.define('call/calls/layout', (require, exports, module) => {
 				case 'connecting':
 					return this.renderOutgoing();
 				case 'call':
-					return this.renderCall();
+					return CallUtil.isNewMobileGridEnabled() ? this.renderGrid() : this.renderCall();
 			}
 		}
 
@@ -1345,6 +3411,11 @@ jn.define('call/calls/layout', (require, exports, module) => {
 			return this.state.copilotEnabled
 				? `${pathToExtension}img/back_highlighted${suffix}.png`
 				: `${pathToExtension}img/back${suffix}.png`;
+		}
+
+		setAppActiveState(isActive)
+		{
+			this.setState({ isAppActive: isActive })
 		}
 
 		renderIncoming()
@@ -1392,9 +3463,22 @@ jn.define('call/calls/layout', (require, exports, module) => {
 		 */
 		renderTop(props)
 		{
-			const avatar = this.state.associatedEntityAvatar && !isAvatarBlank(this.state.associatedEntityAvatar)
-				? { uri: encodeURI(this.state.associatedEntityAvatar) }
-				: { svg: { content: Icons.emptyAvatar } };
+			const isVisible = CallUtil.isNewMobileGridEnabled() ? this.state.panelVisible : true;
+			const avatar = View(
+				{
+					style: {
+						marginLeft: 12,
+					},
+					onClick: props.onClick,
+				},
+				Avatar({
+					testId: 'top-avatar',
+					uri: isAvatarBlank(this.state.associatedEntityAvatar) ? '' : encodeURI(this.state.associatedEntityAvatar),
+					name: BX.utils.html.htmlDecode(this.state.associatedEntityName),
+					size: 32,
+					backgroundColor: Utils.convertHexToColorEnum(this.state.associatedEntityAvatarColor),
+				}),
+			)
 
 			const showFullHeader = (this.state.status !== 'call' && Boolean(this.state.localStream))
 				|| (this.state.status === 'call' && this.state.isGroupCall)
@@ -1403,13 +3487,15 @@ jn.define('call/calls/layout', (require, exports, module) => {
 
 			const showCopilot = this.state.copilotAvailable && this.state.status === 'call' && this.state.isGroupCall;
 
-			return View(
+			return isVisible && View(
 				{
 					style: {
 						backgroundImageSvg: Gradients.top,
 						backgroundResizeMode: 'stretch',
 						width: '100%',
 						paddingTop: device.screen.safeArea.top + 4,
+						display: 'flex',
+						...props.styles,
 					},
 				},
 				View(
@@ -1421,39 +3507,61 @@ jn.define('call/calls/layout', (require, exports, module) => {
 						text: this.state.chatCounter.toString(),
 					}),
 					Image({
+						testId: 'call-button-backToChat',
 						style: { width: 24, height: 24 },
 						svg: { content: Icons.arrowBack },
 						onClick: () => this.emit(EventName.ChatButtonClick),
 					}),
-					showFullHeader && Image({
-						style: { width: 32, height: 32, borderRadius: 16, marginLeft: 12 },
-						resizeMode: 'cover',
-						...avatar,
-					}),
+					showFullHeader && avatar,
 					showFullHeader && View(
 						{
 							style: { flex: 1, flexDirection: 'column', marginLeft: 12 },
 						},
-						Text({
-							style: { fontSize: 16, fontWeight: 500, color: '#FFFFFF' },
-							numberOfLines: 1,
-							ellipsize: 'end',
-							text: BX.utils.html.htmlDecode(this.state.associatedEntityName),
-						}),
 						View(
 							{
-								style: { flexDirection: 'row' },
+								style: { alignSelf: 'flex-start' },
 								onClick: props.onClick,
 							},
-							props.svgContent && Image({
-								style: { width: 15, height: 14 },
-								svg: { content: props.svgContent },
-							}),
 							Text({
-								style: { fontSize: 12, fontWeight: 400, marginLeft: 4, color: '#F0F0F0' },
-								text: props.text,
+								style: { fontSize: 16, fontWeight: 500, color: '#FFFFFF' },
+								numberOfLines: 1,
+								ellipsize: 'end',
+								text: BX.utils.html.htmlDecode(this.state.associatedEntityName),
 							}),
 						),
+						View(
+							{
+								style: { flexDirection: 'row', width: '100%' },
+							},
+							View(
+								{
+									style: { flexDirection: 'row' },
+									onClick: props.onClick,
+								},
+								props.svgContent && Image({
+									style: { width: 15, height: 14 },
+									svg: { content: props.svgContent },
+								}),
+								Text({
+									style: { fontSize: 12, fontWeight: 400, marginLeft: 4, color: '#F0F0F0' },
+									text: props.text,
+								}),
+							),
+							this.state.recordState && View(
+								{
+									style: { flexDirection: 'row', alignItems: 'center', marginLeft: 10 },
+								},
+								Image({
+									style: { width: 13, height: 13 },
+									svg: { content: Icons.record },
+								}),
+								Text({
+									style: { fontSize: 12, fontWeight: 400, marginLeft: 4, color: Color.baseWhiteFixed.toHex() },
+									text: BX.message('MOBILE_CALL_RECORD'),
+								}),
+							),
+						)
+
 					),
 					showCopilot && View(
 						{
@@ -1486,6 +3594,7 @@ jn.define('call/calls/layout', (require, exports, module) => {
 							text: props.text,
 						}),
 					),
+
 					View(
 						{
 							style: { minHeight: 58 },
@@ -1497,12 +3606,127 @@ jn.define('call/calls/layout', (require, exports, module) => {
 							text: BX.utils.html.htmlDecode(this.state.associatedEntityName),
 						}),
 					),
+					this.renderCenterAvatar(
+						encodeURI(this.state.associatedEntityAvatar),
+						BX.utils.html.htmlDecode(this.state.associatedEntityName),
+						this.state.associatedEntityAvatarColor,
+					),
+				),
+			);
+		}
 
-					Image({
-						style: { width: 180, height: 180, borderRadius: 90 },
-						resizeMode: 'cover',
-						...avatar,
+		renderGridTop(props)
+		{
+			const isVisible = CallUtil.isNewMobileGridEnabled() ? this.state.panelVisible : true;
+			const avatar = View(
+				{
+					style: {
+						marginLeft: 12,
+					},
+					onClick: props.onClick,
+				},
+				Avatar({
+					testId: 'top-avatar',
+					uri: isAvatarBlank(this.state.associatedEntityAvatar) ? '' : encodeURI(this.state.associatedEntityAvatar),
+					name: BX.utils.html.htmlDecode(this.state.associatedEntityName),
+					size: 32,
+					backgroundColor: Utils.convertHexToColorEnum(this.state.associatedEntityAvatarColor),
+				}),
+			)
+
+			const showCopilot = this.state.copilotAvailable && this.state.status === 'call' && this.state.isGroupCall;
+
+			return isVisible && View(
+				{
+					style: {
+						backgroundImageSvg: Gradients.top,
+						backgroundResizeMode: 'stretch',
+						width: '100%',
+						paddingTop: device.screen.safeArea.top + 4,
+						display: 'flex',
+						...props.styles,
+					},
+				},
+				View(
+					{
+						style: styles.topRow,
+					},
+					this.state.chatCounter > 0 && Text({
+						style: styles.topChatCounter,
+						text: this.state.chatCounter.toString(),
 					}),
+					Image({
+						testId: 'call-button-backToChat',
+						style: { width: 24, height: 24 },
+						svg: { content: Icons.arrowBack },
+						onClick: () => this.emit(EventName.ChatButtonClick),
+					}),
+					avatar,
+					View(
+						{
+							style: { flex: 1, flexDirection: 'column', marginLeft: 12 },
+						},
+						View(
+							{
+								style: { alignSelf: 'flex-start' },
+								onClick: props.onClick,
+							},
+							Text({
+								style: { fontSize: 16, fontWeight: 500, color: '#FFFFFF' },
+								numberOfLines: 1,
+								ellipsize: 'end',
+								text: BX.utils.html.htmlDecode(this.state.associatedEntityName),
+							}),
+						),
+						View(
+							{
+								style: { flexDirection: 'row', width: '100%' },
+							},
+							View(
+								{
+									style: { flexDirection: 'row' },
+									onClick: props.onClick,
+								},
+								props.svgContent && Image({
+									style: { width: 15, height: 14 },
+									svg: { content: props.svgContent },
+								}),
+								Text({
+									style: { fontSize: 12, fontWeight: 400, marginLeft: props.svgContent && 4, color: '#F0F0F0' },
+									text: props.text,
+									numberOfLines: 1,
+									ellipsize: 'end',
+								}),
+							),
+							this.state.recordState && View(
+								{
+									style: { flexDirection: 'row', alignItems: 'center', marginLeft: 10 },
+								},
+								Image({
+									style: { width: 13, height: 13 },
+									svg: { content: Icons.record },
+								}),
+								Text({
+									style: { fontSize: 12, fontWeight: 400, marginLeft: 4, color: Color.baseWhiteFixed.toHex() },
+									text: BX.message('MOBILE_CALL_RECORD'),
+								}),
+							),
+						)
+
+					),
+					showCopilot && View(
+						{
+							style: { justifyContent: 'center', marginLeft: 12 },
+							ref: (ref) => {
+								this.ahaMomentButtonRef = ref;
+							},
+						},
+						Image({
+							style: { width: 32, height: 32 },
+							svg: { content: this.state.copilotEnabled ? Icons.buttonCopilotOn : Icons.buttonCopilotOff },
+							onClick: () => this.openCopilotDrawer(),
+						}),
+					),
 				),
 			);
 		}
@@ -1558,7 +3782,7 @@ jn.define('call/calls/layout', (require, exports, module) => {
 					onClick: () => this.openParticipantsMenu(),
 					text: BX.message('MOBILE_CALL_USER_NUM_FROM_TOTAL')
 						.replace('#USER_NUM#', this.getParticipants().length)
-						.replace('#TOTAL_COUNT#', this.userRegistry.users.length),
+						.replace('#TOTAL_COUNT#', this.state.totalUsersCount),
 				};
 			}
 			else
@@ -1606,11 +3830,134 @@ jn.define('call/calls/layout', (require, exports, module) => {
 				showJumpToPresenter && this.renderJumpToPresenter(),
 				needCentralUser && this.renderCenter(),
 				!showLocalVideoInFrame && this.renderLocalStream(showLocalVideoInFrame, bottomMargin),
-				this.renderOverlay(),
 				showLocalVideoInFrame && this.renderLocalStream(showLocalVideoInFrame, bottomMargin),
+				this.renderOverlay(),
 				this.renderFloorRequests(bottomMargin),
+				!this.state.isGroupCall && this.renderDeviceHints(bottomMargin),
 				needCentralUser && this.renderCurrentUser(this.userRegistry.get(this.state.centralUserId), bottomMargin),
 			);
+		}
+
+		renderGrid()
+		{
+			const showLocalVideoInFrame = this.state.centralUserId !== this.userId;
+			let topParams = null;
+			if (this.state.isGroupCall)
+			{
+				topParams = {
+					svgContent: Icons.participants,
+					onClick: () => this.openParticipantsMenu(),
+					text: BX.message('MOBILE_CALL_USER_NUM_FROM_TOTAL')
+						.replace('#USER_NUM#', this.getParticipants().length)
+						.replace('#TOTAL_COUNT#', this.userRegistry.users.length),
+				};
+			}
+			else
+			{
+				if (this.userRegistry.get(this.centralUserId).state === BX.Call.UserState.Connecting)
+				{
+					topParams = {
+						svgContent: Icons.calling,
+						text: BX.message('MOBILE_CALL_LAYOUT_RESTORING_CONNECTION'),
+					};
+				}
+				else
+				{
+					topParams = {
+						svgContent: this.state.remoteStream ? Icons.calling : null,
+						text: this.userRegistry.get(this.centralUserId).workPosition !== '' ? this.userRegistry.get(this.centralUserId).workPosition : BX.message('MOBILE_CALL_LAYOUT_BITRIX24_CALL'),
+					};
+				}
+			}
+
+			topParams.styles = {
+				backgroundColor: '#1A000000',
+				backgroundBlurRadius: 10,
+				paddingBottom: 10,
+			};
+
+			const panelBottomOffset = this.state.panelVisible ? 33 : 55;
+			const floorRequestOffset = this.getIsLandscapeOrientation() ? panelBottomOffset : 0;
+			const bottomMargin = this.getBottomMargin() + ((this.getIsLandscapeOrientation() && this.state.activeScreenId === null) ? 0 : floorRequestOffset);
+			const remoteUser = (this.userRegistry?.users || []).find(
+				(userModel) => userModel.id !== Number(this.userId) && userModel.state === BX.Call.UserState.Connected
+			);
+			const remoteUserId = remoteUser ? remoteUser.id : null;
+			const areTwoUsers = this.getConnectedUserCount() === 2;
+			const renderRemoteUserAvatar = remoteUserId
+				? this.renderCenterAvatar(
+					this.userRegistry.get(remoteUserId).avatar,
+					this.userRegistry.get(remoteUserId).name,
+					Color.base8
+				)
+				: null;
+			return View(
+				{
+					style: {
+						flex: 1,
+						backgroundImage: this.getBackground(),
+						backgroundResizeMode: 'cover',
+					},
+					clickable: true,
+					onClick: () => {
+						if (this.getConnectedUserCount() === 2)
+						{
+							this.toggleUI();
+						}
+					},
+					onLayout: ({ width, height }) => {
+						if (this.isFirstRender)
+						{
+							this.hideUIAfterInactivity();
+						}
+						if (width !== this.state.screenWidth || height !== this.state.screenHeight)
+						{
+							this.setState({
+								screenHeight: height,
+								screenWidth: width,
+							});
+						}
+					},
+				},
+				this.state.centralUserVideoPaused && this.renderVideoPaused(),
+
+				areTwoUsers && Boolean(this.state.remoteStream) && this.renderRemoteStreamByPriority(),
+				areTwoUsers && !Boolean(this.state.remoteStream) && renderRemoteUserAvatar,
+				!areTwoUsers && this.renderCenterGrid(),
+				areTwoUsers && Boolean(this.state.localStream) && this.renderLocalStream(showLocalVideoInFrame, bottomMargin),
+				this.renderOverlay(this.renderGridTop(topParams)),
+				this.renderFloorRequests(bottomMargin),
+				!this.state.isGroupCall && this.renderDeviceHints(bottomMargin),
+				areTwoUsers && this.state.isGroupCall && this.renderCurrentUser(this.userRegistry.get(remoteUserId), bottomMargin),
+			);
+		}
+
+		handleSingleTap(doubleTapHandler)
+		{
+			const now = Date.now();
+
+			if (this.lastTap && now - this.lastTap < 400)
+			{
+				if (this.singleTapTimeout)
+				{
+					clearTimeout(this.setState({ panelVisible: !this.state.panelVisible }));
+					this.singleTapTimeout = null;
+				}
+				doubleTapHandler();
+				this.lastTap = null;
+			} else {
+				this.lastTap = now;
+				this.singleTapTimeout = setTimeout(() => {
+					this.setState({ panelVisible: !this.state.panelVisible })
+					this.singleTapTimeout = null;
+				}, 200);
+			}
+			if (this.state.floorRequestSelf)
+			{
+				clearTimeout(this.state.inactivityTimer);
+				return;
+			}
+			this.hideUIAfterInactivity();
 		}
 
 		bottomPanelHeight()
@@ -1630,6 +3977,8 @@ jn.define('call/calls/layout', (require, exports, module) => {
 						backgroundImageSvg: Gradients.bottom,
 						backgroundResizeMode: 'stretch',
 						justifyContent: 'flex-start',
+						backgroundColor: '#1A000000',
+						backgroundBlurRadius: 10,
 					},
 					clickable: false,
 				},
@@ -1664,26 +4013,26 @@ jn.define('call/calls/layout', (require, exports, module) => {
 					style: styles.bottomButtonsContainer,
 				},
 				this.button(
-					BX.message('MOBILE_CALL_LAYOUT_BUTTON_DECLINE'),
+					BX.message('MOBILE_CALL_LAYOUT_BUTTON_DECLINE_MSGVER_1'),
 					Icons.buttonHangup,
 					() => this.emit(EventName.DeclineButtonClick),
 					'callsIncomingDeclineBtn',
 				),
 				this.button(
-					BX.message('MOBILE_CALL_LAYOUT_BUTTON_MICROPHONE_LOW'),
+					BX.message('MOBILE_CALL_LAYOUT_BUTTON_MICROPHONE_LOW_MSGVER_1'),
 					(this.state.microphoneState ? Icons.buttonMic : Icons.buttonMicOff),
 					() => this.emit(EventName.MicButtonClick),
 					`callsButtonMic_${this.state.microphoneState ? 'on' : 'off'}`,
 				),
 				this.button(
-					BX.message('MOBILE_CALL_LAYOUT_BUTTON_CAMERA_LOW'),
+					BX.message('MOBILE_CALL_LAYOUT_BUTTON_CAMERA_LOW_MSGVER_1'),
 					(this.state.cameraState ? Icons.buttonCamera : Icons.buttonCameraOff),
 					() => this.emit(EventName.CameraButtonClick),
 					`callsButtonCamera_${this.state.cameraState ? 'on' : 'off'}`,
 				),
 				this.renderSoundButton(),
 				this.button(
-					BX.message('MOBILE_CALL_LAYOUT_ANSWER'),
+					BX.message('MOBILE_CALL_LAYOUT_ANSWER_MSGVER_1'),
 					Icons.incomingAnswer,
 					() => this.emit(EventName.AnswerButtonClick, [this.state.cameraState]),
 					'callsIncomingAnswerBtn',
@@ -1698,27 +4047,37 @@ jn.define('call/calls/layout', (require, exports, module) => {
 				return this.buttonContainerIncoming();
 			}
 
+			const buttonCallback = (eventName) => {
+				this.emit(eventName);
+				if (this.state.floorRequestSelf)
+				{
+					clearTimeout(this.state.inactivityTimer);
+					return;
+				}
+				CallUtil.isNewMobileGridEnabled() && this.hideUIAfterInactivity();
+			};
+
 			return View(
 				{
 					style: styles.bottomButtonsContainer,
 				},
 				this.button(
-					BX.message('MOBILE_CALL_LAYOUT_BUTTON_MICROPHONE_LOW'),
+					BX.message('MOBILE_CALL_LAYOUT_BUTTON_MICROPHONE_LOW_MSGVER_1'),
 					(this.state.microphoneState ? Icons.buttonMic : Icons.buttonMicOff),
-					() => this.emit(EventName.MicButtonClick),
+					() => buttonCallback(EventName.MicButtonClick),
 					`callsButtonMic_${this.state.microphoneState ? 'on' : 'off'}`,
 				),
 				this.button(
-					BX.message('MOBILE_CALL_LAYOUT_BUTTON_CAMERA_LOW'),
+					BX.message('MOBILE_CALL_LAYOUT_BUTTON_CAMERA_LOW_MSGVER_1'),
 					(this.state.cameraState ? Icons.buttonCamera : Icons.buttonCameraOff),
-					() => this.emit(EventName.CameraButtonClick),
+					() => buttonCallback(EventName.CameraButtonClick),
 					`callsButtonCamera_${this.state.cameraState ? 'on' : 'off'}`,
 				),
 				this.renderSoundButton(),
 				this.isFloorRequestButtonVisible() && this.button(
-					BX.message('MOBILE_CALL_LAYOUT_BUTTON_RAISE_HAND_LOW'),
+					BX.message('MOBILE_CALL_LAYOUT_BUTTON_RAISE_HAND_LOW_MSGVER_1'),
 					this.state.floorRequestSelf ? Icons.buttonFloorRequestActive : Icons.buttonFloorRequestInactive,
-					() => this.emit(EventName.FloorRequestButtonClick),
+					() => buttonCallback(EventName.FloorRequestButtonClick),
 					`callsButtonFloorRequest_${this.state.cameraState ? 'on' : 'off'}`,
 				),
 				/* this.button(
@@ -1733,10 +4092,10 @@ jn.define('call/calls/layout', (require, exports, module) => {
 					() => this.emit(EventName.ChatButtonClick),
 				), */
 				this.button(
-					BX.message('MOBILE_CALL_LAYOUT_BUTTON_HANGUP_LOW'),
+					BX.message('MOBILE_CALL_LAYOUT_BUTTON_HANGUP_LOW_MSGVER_1'),
 					Icons.buttonHangup,
 					() => {
-						this.emit(EventName.HangupButtonClick);
+						buttonCallback(EventName.HangupButtonClick);
 					},
 				),
 			);
@@ -1744,11 +4103,17 @@ jn.define('call/calls/layout', (require, exports, module) => {
 
 		button(text, svgContent, click, testId)
 		{
+			const isLandscape = this.state.screenWidth > this.state.screenHeight;
+			const style = {
+				...styles.bottomButton,
+				...(isLandscape ? styles.bottomButtonWidthLandscape : styles.bottomButtonWidthPortrait),
+			};
+
 			return View(
 				{
 					testId: testId || '',
 					onClick: click,
-					style: styles.bottomButton,
+					style,
 				},
 				View(
 					{},
@@ -1843,6 +4208,7 @@ jn.define('call/calls/layout', (require, exports, module) => {
 						position: 'absolute',
 						right: 10 + getSafeArea().right,
 						bottom: bottomMargin,
+						zIndex: 12,
 					},
 					onClick: () => this.openFloorRequestsDrawer(),
 				},
@@ -1882,6 +4248,34 @@ jn.define('call/calls/layout', (require, exports, module) => {
 						fontWeight: 400,
 					},
 					text: userModel.name,
+				}),
+			);
+		}
+
+		renderFloorRequestBadge()
+		{
+			return View(
+				{
+					style: {
+						height: 24,
+						width: 24,
+						flexDirection: 'row',
+						borderRadius: 6,
+						backgroundColor: Color.accentMainWarning.toHex(),
+						alignItems: 'center',
+						justifyContent: 'center',
+						position: 'absolute',
+						top: 8,
+						right: 8,
+						zIndex: 20,
+					},
+				},
+				Image({
+					style: {
+						width: 20,
+						height: 20,
+					},
+					svg: { content: Icons.floorRequest },
 				}),
 			);
 		}
@@ -1950,15 +4344,15 @@ jn.define('call/calls/layout', (require, exports, module) => {
 			switch (deviceAlias)
 			{
 				case 'speaker':
-					return BX.message('MOBILE_CALL_SOUND_BUTTON_SPEAKER');
+					return BX.message('MOBILE_CALL_SOUND_BUTTON_SPEAKER_MSGVER_1');
 				case 'bluetooth':
-					return BX.message('MOBILE_CALL_SOUND_BUTTON_BLUETOOTH');
+					return BX.message('MOBILE_CALL_SOUND_BUTTON_BLUETOOTH_MSGVER_1');
 				case 'wired':
-					return BX.message('MOBILE_CALL_SOUND_BUTTON_WIRED');
+					return BX.message('MOBILE_CALL_SOUND_BUTTON_WIRED_MSGVER_1');
 				case 'receiver':
-					return BX.message('MOBILE_CALL_SOUND_BUTTON_PHONE');
+					return BX.message('MOBILE_CALL_SOUND_BUTTON_PHONE_MSGVER_1');
 				default:
-					return BX.message('MOBILE_CALL_SOUND_BUTTON_PHONE');
+					return BX.message('MOBILE_CALL_SOUND_BUTTON_PHONE_MSGVER_1');
 			}
 		}
 
@@ -2108,7 +4502,8 @@ jn.define('call/calls/layout', (require, exports, module) => {
 		openParticipantsMenu()
 		{
 			const component = new ParticipantsList({
-				avatarPath: this.state.associatedEntityAvatar,
+				avatarPath: isAvatarBlank(this.state.associatedEntityAvatar) ? '' : this.state.associatedEntityAvatar,
+				avatarColor: this.state.associatedEntityAvatarColor,
 				title: this.state.associatedEntityName,
 				subtitle: BX.message('MOBILE_CALL_MENU_PARTICIPANTS_VIDEOCONFERENCE'),
 				userList: this.getParticipants(),
@@ -2126,6 +4521,7 @@ jn.define('call/calls/layout', (require, exports, module) => {
 			});
 
 			bottomSheet.open();
+			this.b = bottomSheet;
 		}
 
 		toggleCopilotPopup()

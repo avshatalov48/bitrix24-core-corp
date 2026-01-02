@@ -11,6 +11,11 @@ final class VirtualDocument extends Document
 		return $this->process()->result;
 	}
 
+	protected function getCustomFields(): array
+	{
+		return [];
+	}
+
 	protected static function getDocumentClassName(): string
 	{
 		return Driver::getInstance()->getVirtualDocumentClassName();

@@ -22,6 +22,11 @@ class ActivityStatisticEntry
 		{
 			$ownerID = (int)$ownerID;
 		}
+		$year = (int)$date->format('Y');
+		if ($year > 9999)
+		{
+			return null;
+		}
 
 		if($ownerID <= 0)
 		{

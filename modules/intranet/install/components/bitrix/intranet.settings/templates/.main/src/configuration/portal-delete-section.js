@@ -3,10 +3,12 @@ import { BaseSettingsElement, SettingsRow } from 'ui.form-elements.field';
 import { Dom } from 'main.core';
 import { Row } from 'ui.section';
 import 'ui.form';
-import { PortalDeleteForm } from './portal-delete-form';
+import PortalDeleteFormType, { PortalDeleteForm } from './portal-delete-form';
 import { PortalDeleteFormEmployee } from './portal-delete-form-employee';
 import { PortalDeleteFormMail } from './portal-delete-form-mail';
 import { PortalDeleteFormNotAdmin } from './portal-delete-form-not-admin';
+import { PortalDeleteFormBound } from './portal-delete-form-bound';
+import { PortalDeleteFormNetwork } from './portal-delete-form-network';
 
 export type PortalDeleteSectionType = {
 	parent: BaseSettingsElement,
@@ -20,6 +22,8 @@ export type PortalDeleteOptionsType = {
 	portalUrl: string,
 	verificationOptions: ?Object,
 	isAdmin: boolean,
+	isBound: boolean,
+	networkUrl: ?string,
 }
 
 export class PortalDeleteSection extends SettingsSection
@@ -39,29 +43,33 @@ export class PortalDeleteSection extends SettingsSection
 
 		if (!this.#options.isAdmin)
 		{
-			type = 'not_admin';
+			type = PortalDeleteFormType.NOT_ADMIN;
 		}
 		else if (!this.#options.isFreeLicense)
 		{
-			type = 'mail';
+			type = PortalDeleteFormType.MAIL;
+		}
+		else if (this.#options.isBound)
+		{
+			type = PortalDeleteFormType.BOUND;
 		}
 		else if (this.#options.isEmployeesLeft)
 		{
-			type = 'employee';
+			type = PortalDeleteFormType.EMPLOYEE;
 		}
 		else if (!this.#options.verificationOptions)
 		{
-			type = 'mail';
+			type = PortalDeleteFormType.NETWORK;
 		}
 		else
 		{
-			type = 'default';
+			type = PortalDeleteFormType.DEFAULT;
 		}
 
 		this.#renderFormRow(type);
 	}
 
-	#renderFormRow(type: 'checkword'|'mail'|'employee'|'default'|'not_admin'): void
+	#renderFormRow(type: PortalDeleteFormType): void
 	{
 		if (this.#settingsRow)
 		{
@@ -71,16 +79,24 @@ export class PortalDeleteSection extends SettingsSection
 
 		switch (type)
 		{
-			case 'mail':
+			case PortalDeleteFormType.MAIL:
 				this.#form = new PortalDeleteFormMail(this.#options.mailForRequest, this.#options.portalUrl);
 				break;
 
-			case 'employee':
+			case PortalDeleteFormType.EMPLOYEE:
 				this.#form = new PortalDeleteFormEmployee(this.#options.isFreeLicense);
 				break;
 
-			case 'not_admin':
+			case PortalDeleteFormType.NOT_ADMIN:
 				this.#form = new PortalDeleteFormNotAdmin();
+				break;
+
+			case PortalDeleteFormType.BOUND:
+				this.#form = new PortalDeleteFormBound();
+				break;
+
+			case PortalDeleteFormType.NETWORK:
+				this.#form = new PortalDeleteFormNetwork(this.#options.networkUrl);
 				break;
 
 			default:

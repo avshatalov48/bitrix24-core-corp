@@ -1,6 +1,6 @@
 .hr-structure-route-action-popup-menu-item {
 	display: flex;
-	font-family: var(--ui-font-family-system);
+	font-family: var(--ui-font-family-primary, var(--ui-font-family-system));
 	font-weight: var(--ui-font-weight-regular);
 	font-size: var(--ui-font-size-sm);
 	line-height: var(--ui-font-line-height-lg);
@@ -37,6 +37,10 @@
 	font-size: var(--ui-font-size-sm);
 	font-weight: var(--ui-font-weight-semi-bold);
 	line-height: var(--ui-font-line-height-3xs);
+}
+
+.hr-structure-route-action-popup-menu-item__content-title::first-letter {
+	text-transform: capitalize;
 }
 
 .hr-structure-route-action-popup-menu-item__content-description {

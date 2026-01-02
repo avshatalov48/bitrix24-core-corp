@@ -1,4 +1,10 @@
 <?php
+
+use Bitrix\Extranet\Service\ServiceContainer;
+use Bitrix\Main\Engine\CurrentUser;
+use Bitrix\Main\Loader;
+use Bitrix\Main\ModuleManager;
+
 if (!defined('B_PROLOG_INCLUDED') || B_PROLOG_INCLUDED !== true)
 {
 	die();
@@ -11,8 +17,8 @@ return [
 		'main.core',
 	],
 	'settings' => [
-		'netUrl' => \Bitrix\Main\Loader::includeModule('socialservices') ? \CBitrix24NetOAuthInterface::NET_URL : '',
-		'isImInstalled' =>  \Bitrix\Main\ModuleManager::isModuleInstalled('im')
+		'netUrl' => Loader::includeModule('socialservices') ? \CBitrix24NetOAuthInterface::NET_URL : '',
+		'isImInstalled' =>  ModuleManager::isModuleInstalled('im'),
 	],
 	'skip_core' => false,
 ];

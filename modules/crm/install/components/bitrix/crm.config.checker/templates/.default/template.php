@@ -10,7 +10,6 @@ if (!defined("B_PROLOG_INCLUDED") || B_PROLOG_INCLUDED!==true)
 
 use Bitrix\Main\Localization\Loc;
 use Bitrix\Main\UI\Extension;
-use Bitrix\Main\Web\Json;
 
 $APPLICATION->SetPageProperty("BodyClass", ($bodyClass ? $bodyClass." " : "") . "no-all-paddings no-background");
 
@@ -26,20 +25,6 @@ Extension::load([
 $config = \CUserOptions::GetOption("crm", "config_checker", ["lastTime" => null, "show" => "Y"]);
 $request = \Bitrix\Main\Context::getCurrent()->getRequest();
 $isSlider = $request->getQuery("IFRAME") === "Y" && $request->getQuery("IFRAME_TYPE") === "SIDE_SLIDER";
-if ($isSlider && !$arResult["IS_FINISHED"])
-{
-	$this->setViewTarget("inside_pagetitle");
-	?>
-	<div class="crm-wizard-switcher">
-				<span data-switcher="<?=htmlspecialcharsbx(Json::encode([
-					"id" => "iteratorSwitcher",
-					"checked" => $config["show"] !== "N"
-				]))?>" class="ui-switcher"></span>
-	</div>
-	<?
-	$this->endViewTarget();
-}
-
 ?>
 <div class="crm-wizard-wrap">
 		<div class="crm-wizard-block crm-wizard-block-desc <?=($arResult["CODE"] === "default" ? "crm-default-block-desc" : "")?>">
@@ -124,15 +109,5 @@ if ($isSlider && !$arResult["IS_FINISHED"])
 				componentName: '<?= $this->getComponent()->getName() ?>'
 			}
 		);
-		setTimeout(function()
-		{
-			var switchIteratorButton = BX.UI.Switcher.getById("iteratorSwitcher");
-			if (switchIteratorButton)
-			{
-				BX.addCustomEvent(switchIteratorButton, "toggled", function() {
-					BX.userOptions.save("crm", "config_checker", "show", switchIteratorButton.isChecked() ? "Y" : "N");
-				});
-			}
-		}, 500);
 </script>
 </div>

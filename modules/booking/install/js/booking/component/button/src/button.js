@@ -1,4 +1,12 @@
-import { Button as UIButton, ButtonColor, ButtonSize, ButtonState, ButtonIcon } from 'ui.buttons';
+import {
+	Button as UIButton,
+	AirButtonStyle,
+	ButtonColor,
+	ButtonSize,
+	ButtonState,
+	ButtonStyle,
+	ButtonIcon,
+} from 'ui.buttons';
 import { Type } from 'main.core';
 
 export const Button = {
@@ -22,12 +30,20 @@ export const Button = {
 		color: String,
 		round: Boolean,
 		icon: String,
+		iconPosition: {
+			type: String,
+			validator(position: ?string): boolean
+			{
+				return !position || ['left', 'right'].includes(position);
+			},
+		},
+		useAirDesign: Boolean,
 		noCaps: Boolean,
 		disabled: Boolean,
 		clocking: Boolean,
 		waiting: Boolean,
 		dataset: Object,
-		buttonClass: String,
+		buttonClass: [String, Array],
 	},
 	created(): void
 	{
@@ -38,14 +54,20 @@ export const Button = {
 			color: this.color,
 			round: this.round,
 			icon: this.icon,
+			iconPosition: this.iconPosition,
+			useAirDesign: Boolean(this.useAirDesign),
 			noCaps: this.noCaps,
 			onclick: () => {
 				this.$emit('click');
 			},
 			dataset: this.dataset,
-			className: this.buttonClass,
-			disabled: this.disabled,
+			className: Type.isArray(this.buttonClass) ? this.buttonClass.join(' ') : this.buttonClass,
 		});
+
+		if (this.useAirDesign)
+		{
+			this.button.setAirDesign(true);
+		}
 	},
 	mounted(): void
 	{
@@ -58,6 +80,11 @@ export const Button = {
 		}
 
 		this.$refs.button.replaceWith(button);
+
+		if (this.disabled)
+		{
+			this.button.setDisabled(this.disabled);
+		}
 	},
 	watch: {
 		text: {
@@ -87,17 +114,16 @@ export const Button = {
 		icon: {
 			handler(icon): void
 			{
-				this.button?.setIcon(icon);
+				this.button?.setIcon(icon, this.iconPosition);
 			},
 		},
 		disabled: {
-			async handler(disabled): void
+			handler(disabled): void
 			{
-				await this.$nextTick(() => {
-					this.button?.setDisabled(Boolean(disabled));
-				});
+				this.button?.setDisabled(Boolean(disabled));
 			},
 			immediate: true,
+			flush: 'sync',
 		},
 		waiting: {
 			handler(waiting): void
@@ -129,4 +155,4 @@ export const Button = {
 	`,
 };
 
-export { ButtonColor, ButtonSize, ButtonIcon };
+export { AirButtonStyle, ButtonColor, ButtonSize, ButtonStyle, ButtonIcon };

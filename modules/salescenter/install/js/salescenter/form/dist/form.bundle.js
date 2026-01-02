@@ -1,8 +1,9 @@
+/* eslint-disable */
 this.BX = this.BX || {};
 (function (exports,main_core) {
 	'use strict';
 
-	var _templateObject, _templateObject2, _templateObject3, _templateObject4, _templateObject5, _templateObject6, _templateObject7, _templateObject8, _templateObject9, _templateObject10, _templateObject11, _templateObject12, _templateObject13;
+	var _templateObject, _templateObject2, _templateObject3, _templateObject4, _templateObject5, _templateObject6, _templateObject7, _templateObject8, _templateObject9, _templateObject10, _templateObject11, _templateObject12, _templateObject13, _templateObject14;
 	var Form = /*#__PURE__*/function () {
 	  function Form(id) {
 	    var _this = this;
@@ -142,7 +143,7 @@ this.BX = this.BX || {};
 	        result = "<input name=\"".concat(field.name, "\"\n\t\t\t\tclass=\"").concat(this.classes.get('controlInput'), "\"\n\t\t\t\tvalue=\"").concat(value, "\"").concat(required, "\n\t\t\t\ttype=\"text\"\n\t\t\t\t").concat(attribute, ">");
 	      } else if (type === 'boolean') {
 	        value = 'Y';
-	        result = "<input type=\"checkbox\" name=\"".concat(main_core.Text.encode(field.name), "\"").concat(this.data[field.name] === value ? ' checked="checked"' : '').concat(field.disabled ? ' disabled="disabled"' : '').concat(required, "\n\t\t\t\tvalue=\"").concat(value, "\" class=\"").concat(this.classes.get('controlInput'), "\">");
+	        result = "<input type=\"hidden\" name=\"".concat(main_core.Text.encode(field.name), "\" value = \"N\"><input type=\"checkbox\" name=\"").concat(main_core.Text.encode(field.name), "\"").concat(this.data[field.name] === value ? ' checked="checked"' : '').concat(field.disabled ? ' disabled="disabled"' : '').concat(required, "\n\t\t\t\tvalue=\"").concat(value, "\" class=\"").concat(this.classes.get('controlInput'), "\">");
 	      } else if (type === 'list') {
 	        result = "<select class=\"".concat(this.classes.get('controlInput'), "\" name=\"").concat(main_core.Text.encode(field.name), "\"").concat(required, ">");
 	        if (field.data && main_core.Type.isArray(field.data.items)) {
@@ -188,6 +189,9 @@ this.BX = this.BX || {};
 	      }
 	      result += "</div>";
 	      result = main_core.Tag.render(_templateObject13 || (_templateObject13 = babelHelpers.taggedTemplateLiteral(["", ""])), result);
+	      if (section.warning) {
+	        result.appendChild(main_core.Tag.render(_templateObject14 || (_templateObject14 = babelHelpers.taggedTemplateLiteral(["<div class=\"ui-alert ui-alert-warning\">", "</div>"])), main_core.Text.encode(section.warning)));
+	      }
 	      section.elements.forEach(function (element) {
 	        if (main_core.Type.isObject(element) && element.name) {
 	          var field = Form.getByName(_this3.fields, element.name);

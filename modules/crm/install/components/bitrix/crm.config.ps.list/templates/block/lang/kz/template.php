@@ -1,0 +1,4 @@
+<?php
+$MESS["CRM_PS_LIST_BLOCK_ACTIVE"] = "Белсенді";
+$MESS["CRM_PS_LIST_BLOCK_CONNECT"] = "қосу";
+$MESS["CRM_PS_LIST_BLOCK_DISCONNECT"] = "өшіру";

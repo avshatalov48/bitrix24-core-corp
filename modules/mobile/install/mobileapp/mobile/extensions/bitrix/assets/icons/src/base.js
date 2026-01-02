@@ -30,6 +30,11 @@ jn.define('assets/icons/src/base', (require, exports, module) => {
 			return this.getValue().content;
 		}
 
+		getImageUrl()
+		{
+			return this.getValue().imageUrl;
+		}
+
 		static hasIcon(iconEnum)
 		{
 			return iconEnum instanceof BaseIcon;

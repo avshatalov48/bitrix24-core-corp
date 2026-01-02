@@ -59,8 +59,8 @@ class CrmItemKanbanComponent extends Bitrix\Crm\Component\ItemList
 			LocalRedirect($this->router->getItemListUrl($this->entityTypeId, $this->category->getId()));
 		}
 
-		$isEntityInCustomSection = IntranetManager::isEntityTypeInCustomSection($this->entityTypeId);
-		if ($isEntityInCustomSection)
+		$this->arResult['customSectionId'] = IntranetManager::getCustomSectionByEntityTypeId($this->entityTypeId)?->getId();
+		if ($this->arResult['customSectionId'] > 0)
 		{
 			$section = Dictionary::SECTION_CUSTOM;
 		}
@@ -72,8 +72,6 @@ class CrmItemKanbanComponent extends Bitrix\Crm\Component\ItemList
 			'c_section' => $section,
 			'c_sub_section' => Dictionary::SUB_SECTION_KANBAN,
 		];
-
-		$this->arResult['isCustomSection'] = $isEntityInCustomSection;
 
 		$this->includeComponentTemplate();
 	}

@@ -175,11 +175,13 @@ class RestrictionsByAttributes
 	public function joinPermissionSetsProgressSteps(array $permissionSets): array
 	{
 		$permissionFurl = [];
-		foreach ($permissionSets as $permissionSet) {
+		foreach ($permissionSets as $permissionSet)
+		{
 			$userID = $permissionSet['USER_ID'];
 			$departmentIDs = $permissionSet['DEPARTMENT_IDS'];
 			$isOpened = $permissionSet['OPENED'];
-			if (!empty($departmentIDs)) {
+			if (!empty($departmentIDs))
+			{
 				sort($departmentIDs, SORT_NUMERIC);
 			}
 			$hash = md5(
@@ -187,10 +189,12 @@ class RestrictionsByAttributes
 				. 'D:' . (!empty($departmentIDs) ? implode(',', $departmentIDs) : '-')
 				. 'O:' . ($isOpened ? 'Y' : 'N'));
 
-			if (!isset($permissionFurl[$hash])) {
+			if (!isset($permissionFurl[$hash]))
+			{
 				$permissionFurl[$hash] = $permissionSet;
 			}
-			elseif (!empty($permissionSet['PROGRESS_STEPS'])) {
+			elseif (!empty($permissionSet['PROGRESS_STEPS']))
+			{
 				$permissionFurl[$hash]['PROGRESS_STEPS'] = array_merge(
 					$permissionFurl[$hash]['PROGRESS_STEPS'],
 					array_diff(
@@ -200,6 +204,7 @@ class RestrictionsByAttributes
 				);
 			}
 		}
+
 		return array_values($permissionFurl);
 	}
 
@@ -251,24 +256,6 @@ class RestrictionsByAttributes
 			}
 
 			$permissionSets[] = $permissionSet;
-			if ($permissionSet['OPENED']) // if opened are allowed, also my and my department are allowed
-			{
-				$permissionSets[] = [
-					'USER_ID' => $userId,
-					'DEPARTMENT_IDS' => [],
-					'PROGRESS_STEPS' => $permissionSet['PROGRESS_STEPS'],
-					'OPENED' => false,
-				];
-
-				if (!empty($userDepartmentIDs)) {
-					$permissionSets[] = [
-						'USER_ID' => 0,
-						'DEPARTMENT_IDS' => $userDepartmentIDs,
-						'PROGRESS_STEPS' => $permissionSet['PROGRESS_STEPS'],
-						'OPENED' => false,
-					];
-				}
-			}
 		}
 		return $permissionSets;
 	}
@@ -417,6 +404,7 @@ class RestrictionsByAttributes
 				}
 			}
 		}
+
 		return array_values($restrictionMap);
 	}
 }

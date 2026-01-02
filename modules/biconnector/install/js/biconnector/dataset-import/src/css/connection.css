@@ -11,7 +11,9 @@
 .connection-icon {
 	width: 26px;
 	height: 26px;
-	background-size: cover;
+	background-size: contain;
+	background-repeat: no-repeat;
+	background-position: center;
 	margin-right: 8px;
 }
 

@@ -2,8 +2,10 @@
 
 namespace Bitrix\Crm\Category\Entity;
 
+use Bitrix\Crm\CategoryIdentifier;
 use Bitrix\Crm\EntityAddressType;
 use Bitrix\Crm\Model\EO_ItemCategory;
+use Bitrix\Crm\RepeatSale\Segment\SegmentManager;
 use Bitrix\Crm\Service\Container;
 use Bitrix\Main\Localization\Loc;
 use Bitrix\Main\Result;
@@ -205,11 +207,25 @@ class ItemCategory extends Category
 
 	public function save(): Result
 	{
-		return $this->entityObject->save();
+		$result = $this->entityObject->save();
+		if ($result->isSuccess())
+		{
+			$this->sendEventCategoriesUpdated();
+		}
+
+		return $result;
 	}
 
 	public function delete(): Result
 	{
-		return $this->entityObject->delete();
+		$result = $this->entityObject->delete();
+		if ($result->isSuccess())
+		{
+			SegmentManager::onCategoryDelete(new CategoryIdentifier($this->getEntityTypeId(), $this->getId()));
+			$this->processDeletedEvent();
+			$this->sendEventCategoriesUpdated();
+		}
+
+		return $result;
 	}
 }

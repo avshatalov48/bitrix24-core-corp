@@ -269,27 +269,46 @@ trait Workflow
 
 	protected function getEfficiencyData(string $workflowId): array
 	{
-		$result = WorkflowStateTable::getList([
-			'filter' => ['=ID' => $workflowId],
-			'select' => [
-				'ID',
-				'MODIFIED',
-				'STARTED',
-				'WORKFLOW_TEMPLATE_ID',
-			],
-		]);
+		$workflowStateService = new \Bitrix\Bizproc\Api\Service\WorkflowStateService();
+
 		$settings = [];
-		if ($row = $result->fetch())
+		if (!method_exists($workflowStateService, 'getCompletedWorkflowEfficiency')) //TODO to avoid dependency
 		{
-			$templateId = (int)$row['WORKFLOW_TEMPLATE_ID'];
-			$executionTime = $row['MODIFIED']->getTimestamp() - $row['STARTED']->getTimestamp();
-			$averageDuration = WorkflowDurationStatTable::getAverageDurationByTemplateId($templateId) ?? $executionTime;
-			$settings['AVERAGE_DURATION'] = $averageDuration;
-			$settings['EFFICIENCY'] = WorkflowDurationStatTable::getWorkflowEfficiency(
-				$executionTime,
-				$averageDuration
-			);
-			$settings['EXECUTION_TIME'] = $executionTime;
+			$result = WorkflowStateTable::getList([
+				'filter' => ['=ID' => $workflowId],
+				'select' => [
+					'ID',
+					'MODIFIED',
+					'STARTED',
+					'WORKFLOW_TEMPLATE_ID',
+				],
+			]);
+			if ($row = $result->fetch())
+			{
+				$templateId = (int)$row['WORKFLOW_TEMPLATE_ID'];
+				$executionTime = $row['MODIFIED']->getTimestamp() - $row['STARTED']->getTimestamp();
+				$averageDuration = $workflowStateService->getAverageWorkflowDuration(
+					new \Bitrix\Bizproc\Api\Request\WorkflowStateService\GetAverageWorkflowDurationRequest(
+						templateId: $templateId
+					),
+				)->getRoundedAverageDuration() ?? $executionTime;
+				$settings['AVERAGE_DURATION'] = $averageDuration;
+				$settings['EFFICIENCY'] = WorkflowDurationStatTable::getWorkflowEfficiency(
+					$executionTime,
+					$averageDuration
+				);
+				$settings['EXECUTION_TIME'] = $executionTime;
+			}
+		}
+		else
+		{
+			$efficiencyData = $workflowStateService->getCompletedWorkflowEfficiency($workflowId);
+			if ($efficiencyData->isSuccess())
+			{
+				$settings['AVERAGE_DURATION'] = $efficiencyData->getAverageDuration();
+				$settings['EFFICIENCY'] = $efficiencyData->getEfficiency();
+				$settings['EXECUTION_TIME'] = $efficiencyData->getExecutionTime();
+			}
 		}
 
 		return $settings;

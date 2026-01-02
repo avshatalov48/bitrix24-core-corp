@@ -5,13 +5,19 @@
 	cursor: pointer;
 }
 
+.booking-booking-booking.--overbooking .booking-booking-booking-time {
+	letter-spacing: -0.06em;
+	font-size: calc(var(--ui-font-size-xs) - 1px);
+	align-self: center;
+}
+
 .booking-booking-booking-time.--lock {
 	cursor: default;
 }
 
 .booking-booking-booking.--small .booking-booking-booking-time {
 	align-self: center;
-	font-size: calc(var(--ui-font-size-xs) * var(--zoom));
+	font-size: calc(var(--ui-font-size-3xs) * var(--zoom));
 }
 
 .booking-booking-booking-name-container + .booking-booking-booking-time {

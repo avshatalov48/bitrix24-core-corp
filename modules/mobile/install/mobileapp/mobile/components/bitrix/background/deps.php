@@ -39,5 +39,9 @@ return [
 		'background/notifications/promotion',
 
 		'calendar:background',
+		'app-rating-background-client',
+		'whats-new/background',
+		'timeman/analytics',
+		'layout/ui/gratitude-list/subscriptions',
 	],
 ];

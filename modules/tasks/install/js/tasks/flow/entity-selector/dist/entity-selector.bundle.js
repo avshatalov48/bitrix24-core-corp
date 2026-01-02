@@ -1,7 +1,7 @@
 /* eslint-disable */
 this.BX = this.BX || {};
 this.BX.Tasks = this.BX.Tasks || {};
-(function (exports,ui_infoHelper,main_core_events,main_core,ui_entitySelector) {
+(function (exports,ui_infoHelper,main_core_events,main_core,ui_entitySelector,ui_buttons) {
 	'use strict';
 
 	var _templateObject;
@@ -47,7 +47,9 @@ this.BX.Tasks = this.BX.Tasks || {};
 	            case 0:
 	              _context.next = 2;
 	              return exports.EditForm.createInstance({
-	                flowName: ''
+	                flowName: '',
+	                isFeatureTrialable: _this2.getOption('isFeatureTrialable'),
+	                context: _this2.getOption('context', '')
 	              });
 	            case 2:
 	              editForm = _context.sent;
@@ -386,8 +388,9 @@ this.BX.Tasks = this.BX.Tasks || {};
 	function _classPrivateFieldInitSpec$2(obj, privateMap, value) { _checkPrivateRedeclaration$3(obj, privateMap); privateMap.set(obj, value); }
 	function _checkPrivateRedeclaration$3(obj, privateCollection) { if (privateCollection.has(obj)) { throw new TypeError("Cannot initialize the same private elements twice on an object"); } }
 	function _classPrivateMethodGet$3(receiver, privateSet, fn) { if (!privateSet.has(receiver)) { throw new TypeError("attempted to get private field on non-instance"); } return fn; }
-	var _params$1 = /*#__PURE__*/new WeakMap();
 	var _toggleFlow = /*#__PURE__*/new WeakMap();
+	var _flowParams = /*#__PURE__*/new WeakMap();
+	var _canCreateFlow = /*#__PURE__*/new WeakMap();
 	var _dialog = /*#__PURE__*/new WeakMap();
 	var _selectedItemBeforeUpdate = /*#__PURE__*/new WeakMap();
 	var _createDialog = /*#__PURE__*/new WeakSet();
@@ -399,11 +402,15 @@ this.BX.Tasks = this.BX.Tasks || {};
 	    _classPrivateMethodInitSpec$3(this, _addFooter);
 	    _classPrivateMethodInitSpec$3(this, _createFlow);
 	    _classPrivateMethodInitSpec$3(this, _createDialog);
-	    _classPrivateFieldInitSpec$2(this, _params$1, {
+	    _classPrivateFieldInitSpec$2(this, _toggleFlow, {
 	      writable: true,
 	      value: void 0
 	    });
-	    _classPrivateFieldInitSpec$2(this, _toggleFlow, {
+	    _classPrivateFieldInitSpec$2(this, _flowParams, {
+	      writable: true,
+	      value: void 0
+	    });
+	    _classPrivateFieldInitSpec$2(this, _canCreateFlow, {
 	      writable: true,
 	      value: void 0
 	    });
@@ -415,15 +422,16 @@ this.BX.Tasks = this.BX.Tasks || {};
 	      writable: true,
 	      value: void 0
 	    });
-	    babelHelpers.classPrivateFieldSet(this, _params$1, params);
-	    babelHelpers.classPrivateFieldSet(this, _toggleFlow, ToggleFlowFactory.get(babelHelpers.classPrivateFieldGet(this, _params$1).toggleFlowParams));
+	    babelHelpers.classPrivateFieldSet(this, _flowParams, params.flowParams);
+	    babelHelpers.classPrivateFieldSet(this, _canCreateFlow, params.canCreateFlow);
+	    babelHelpers.classPrivateFieldSet(this, _toggleFlow, ToggleFlowFactory.get(params.toggleFlowParams));
 	    babelHelpers.classPrivateFieldSet(this, _selectedItemBeforeUpdate, null);
 	  }
 	  babelHelpers.createClass(EntitySelectorDialog, [{
 	    key: "show",
 	    value: function show(target) {
-	      if (!babelHelpers.classPrivateFieldGet(this, _params$1).isFeatureEnabled) {
-	        ui_infoHelper.InfoHelper.show(babelHelpers.classPrivateFieldGet(this, _params$1).flowLimitCode);
+	      if (!babelHelpers.classPrivateFieldGet(this, _flowParams).isFeatureEnabled) {
+	        ui_infoHelper.InfoHelper.show(babelHelpers.classPrivateFieldGet(this, _flowParams).limitCode);
 	        return;
 	      }
 	      if (!babelHelpers.classPrivateFieldGet(this, _dialog)) {
@@ -444,7 +452,7 @@ this.BX.Tasks = this.BX.Tasks || {};
 	    dropdownMode: true,
 	    enableSearch: true,
 	    cacheable: true,
-	    preselectedItems: [['flow', babelHelpers.classPrivateFieldGet(this, _params$1).flowId]],
+	    preselectedItems: [['flow', babelHelpers.classPrivateFieldGet(this, _flowParams).id]],
 	    entities: [{
 	      id: 'flow',
 	      options: {
@@ -502,7 +510,7 @@ this.BX.Tasks = this.BX.Tasks || {};
 	      }
 	    },
 	    searchOptions: {
-	      allowCreateItem: !babelHelpers.classPrivateFieldGet(this, _params$1).isExtranet,
+	      allowCreateItem: babelHelpers.classPrivateFieldGet(this, _canCreateFlow),
 	      footerOptions: {
 	        label: BX.Loc.getMessage('TASKS_FLOW_ENTITY_SELECTOR_CREATE_BUTTON')
 	      }
@@ -510,19 +518,23 @@ this.BX.Tasks = this.BX.Tasks || {};
 	    recentTabOptions: {
 	      stub: 'BX.Tasks.Flow.EmptyStub',
 	      stubOptions: {
-	        showArrow: !babelHelpers.classPrivateFieldGet(this, _params$1).isExtranet
+	        showArrow: babelHelpers.classPrivateFieldGet(this, _canCreateFlow)
 	      }
 	    }
 	  }));
-	  if (!babelHelpers.classPrivateFieldGet(this, _params$1).isExtranet) {
+	  if (babelHelpers.classPrivateFieldGet(this, _canCreateFlow)) {
 	    babelHelpers.classPrivateFieldSet(this, _dialog, _classPrivateMethodGet$3(this, _addFooter, _addFooter2).call(this, babelHelpers.classPrivateFieldGet(this, _dialog)));
 	  }
 	  return babelHelpers.classPrivateFieldGet(this, _dialog);
 	}
 	function _createFlow2(flowName) {
+	  var _this2 = this;
 	  return main_core.Runtime.loadExtension('tasks.flow.edit-form').then(function (exports) {
+	    var _babelHelpers$classPr;
 	    return exports.EditForm.createInstance({
-	      flowName: flowName
+	      flowName: flowName,
+	      isFeatureTrialable: babelHelpers.classPrivateFieldGet(_this2, _flowParams).isFeatureTrialable,
+	      context: (_babelHelpers$classPr = babelHelpers.classPrivateFieldGet(_this2, _flowParams).context) !== null && _babelHelpers$classPr !== void 0 ? _babelHelpers$classPr : ''
 	    });
 	  }).then(function (editForm) {
 	    return new Promise(function (resolve) {
@@ -536,7 +548,11 @@ this.BX.Tasks = this.BX.Tasks || {};
 	  });
 	}
 	function _addFooter2(dialog) {
-	  var footer = new Footer(babelHelpers.classPrivateFieldGet(this, _dialog));
+	  var _babelHelpers$classPr2;
+	  var footer = new Footer(babelHelpers.classPrivateFieldGet(this, _dialog), {
+	    isFeatureTrialable: babelHelpers.classPrivateFieldGet(this, _flowParams).isFeatureTrialable,
+	    context: (_babelHelpers$classPr2 = babelHelpers.classPrivateFieldGet(this, _flowParams).context) !== null && _babelHelpers$classPr2 !== void 0 ? _babelHelpers$classPr2 : ''
+	  });
 	  dialog.setFooter(footer.render());
 	  return dialog;
 	}
@@ -577,41 +593,36 @@ this.BX.Tasks = this.BX.Tasks || {};
 	  return main_core.Tag.render(_templateObject2 || (_templateObject2 = babelHelpers.taggedTemplateLiteral(["\n\t\t\t<div class=\"tasks-flow__stub-subtitle-arrow\"></div>\n\t\t"])));
 	}
 
-	var _templateObject$2, _templateObject2$1, _templateObject3;
 	function _regeneratorRuntime$2() { /*! regenerator-runtime -- Copyright (c) 2014-present, Facebook, Inc. -- license (MIT): https://github.com/facebook/regenerator/blob/main/LICENSE */ _regeneratorRuntime$2 = function _regeneratorRuntime() { return exports; }; var exports = {}, Op = Object.prototype, hasOwn = Op.hasOwnProperty, defineProperty = Object.defineProperty || function (obj, key, desc) { obj[key] = desc.value; }, $Symbol = "function" == typeof Symbol ? Symbol : {}, iteratorSymbol = $Symbol.iterator || "@@iterator", asyncIteratorSymbol = $Symbol.asyncIterator || "@@asyncIterator", toStringTagSymbol = $Symbol.toStringTag || "@@toStringTag"; function define(obj, key, value) { return Object.defineProperty(obj, key, { value: value, enumerable: !0, configurable: !0, writable: !0 }), obj[key]; } try { define({}, ""); } catch (err) { define = function define(obj, key, value) { return obj[key] = value; }; } function wrap(innerFn, outerFn, self, tryLocsList) { var protoGenerator = outerFn && outerFn.prototype instanceof Generator ? outerFn : Generator, generator = Object.create(protoGenerator.prototype), context = new Context(tryLocsList || []); return defineProperty(generator, "_invoke", { value: makeInvokeMethod(innerFn, self, context) }), generator; } function tryCatch(fn, obj, arg) { try { return { type: "normal", arg: fn.call(obj, arg) }; } catch (err) { return { type: "throw", arg: err }; } } exports.wrap = wrap; var ContinueSentinel = {}; function Generator() {} function GeneratorFunction() {} function GeneratorFunctionPrototype() {} var IteratorPrototype = {}; define(IteratorPrototype, iteratorSymbol, function () { return this; }); var getProto = Object.getPrototypeOf, NativeIteratorPrototype = getProto && getProto(getProto(values([]))); NativeIteratorPrototype && NativeIteratorPrototype !== Op && hasOwn.call(NativeIteratorPrototype, iteratorSymbol) && (IteratorPrototype = NativeIteratorPrototype); var Gp = GeneratorFunctionPrototype.prototype = Generator.prototype = Object.create(IteratorPrototype); function defineIteratorMethods(prototype) { ["next", "throw", "return"].forEach(function (method) { define(prototype, method, function (arg) { return this._invoke(method, arg); }); }); } function AsyncIterator(generator, PromiseImpl) { function invoke(method, arg, resolve, reject) { var record = tryCatch(generator[method], generator, arg); if ("throw" !== record.type) { var result = record.arg, value = result.value; return value && "object" == babelHelpers["typeof"](value) && hasOwn.call(value, "__await") ? PromiseImpl.resolve(value.__await).then(function (value) { invoke("next", value, resolve, reject); }, function (err) { invoke("throw", err, resolve, reject); }) : PromiseImpl.resolve(value).then(function (unwrapped) { result.value = unwrapped, resolve(result); }, function (error) { return invoke("throw", error, resolve, reject); }); } reject(record.arg); } var previousPromise; defineProperty(this, "_invoke", { value: function value(method, arg) { function callInvokeWithMethodAndArg() { return new PromiseImpl(function (resolve, reject) { invoke(method, arg, resolve, reject); }); } return previousPromise = previousPromise ? previousPromise.then(callInvokeWithMethodAndArg, callInvokeWithMethodAndArg) : callInvokeWithMethodAndArg(); } }); } function makeInvokeMethod(innerFn, self, context) { var state = "suspendedStart"; return function (method, arg) { if ("executing" === state) throw new Error("Generator is already running"); if ("completed" === state) { if ("throw" === method) throw arg; return doneResult(); } for (context.method = method, context.arg = arg;;) { var delegate = context.delegate; if (delegate) { var delegateResult = maybeInvokeDelegate(delegate, context); if (delegateResult) { if (delegateResult === ContinueSentinel) continue; return delegateResult; } } if ("next" === context.method) context.sent = context._sent = context.arg;else if ("throw" === context.method) { if ("suspendedStart" === state) throw state = "completed", context.arg; context.dispatchException(context.arg); } else "return" === context.method && context.abrupt("return", context.arg); state = "executing"; var record = tryCatch(innerFn, self, context); if ("normal" === record.type) { if (state = context.done ? "completed" : "suspendedYield", record.arg === ContinueSentinel) continue; return { value: record.arg, done: context.done }; } "throw" === record.type && (state = "completed", context.method = "throw", context.arg = record.arg); } }; } function maybeInvokeDelegate(delegate, context) { var methodName = context.method, method = delegate.iterator[methodName]; if (undefined === method) return context.delegate = null, "throw" === methodName && delegate.iterator["return"] && (context.method = "return", context.arg = undefined, maybeInvokeDelegate(delegate, context), "throw" === context.method) || "return" !== methodName && (context.method = "throw", context.arg = new TypeError("The iterator does not provide a '" + methodName + "' method")), ContinueSentinel; var record = tryCatch(method, delegate.iterator, context.arg); if ("throw" === record.type) return context.method = "throw", context.arg = record.arg, context.delegate = null, ContinueSentinel; var info = record.arg; return info ? info.done ? (context[delegate.resultName] = info.value, context.next = delegate.nextLoc, "return" !== context.method && (context.method = "next", context.arg = undefined), context.delegate = null, ContinueSentinel) : info : (context.method = "throw", context.arg = new TypeError("iterator result is not an object"), context.delegate = null, ContinueSentinel); } function pushTryEntry(locs) { var entry = { tryLoc: locs[0] }; 1 in locs && (entry.catchLoc = locs[1]), 2 in locs && (entry.finallyLoc = locs[2], entry.afterLoc = locs[3]), this.tryEntries.push(entry); } function resetTryEntry(entry) { var record = entry.completion || {}; record.type = "normal", delete record.arg, entry.completion = record; } function Context(tryLocsList) { this.tryEntries = [{ tryLoc: "root" }], tryLocsList.forEach(pushTryEntry, this), this.reset(!0); } function values(iterable) { if (iterable) { var iteratorMethod = iterable[iteratorSymbol]; if (iteratorMethod) return iteratorMethod.call(iterable); if ("function" == typeof iterable.next) return iterable; if (!isNaN(iterable.length)) { var i = -1, next = function next() { for (; ++i < iterable.length;) if (hasOwn.call(iterable, i)) return next.value = iterable[i], next.done = !1, next; return next.value = undefined, next.done = !0, next; }; return next.next = next; } } return { next: doneResult }; } function doneResult() { return { value: undefined, done: !0 }; } return GeneratorFunction.prototype = GeneratorFunctionPrototype, defineProperty(Gp, "constructor", { value: GeneratorFunctionPrototype, configurable: !0 }), defineProperty(GeneratorFunctionPrototype, "constructor", { value: GeneratorFunction, configurable: !0 }), GeneratorFunction.displayName = define(GeneratorFunctionPrototype, toStringTagSymbol, "GeneratorFunction"), exports.isGeneratorFunction = function (genFun) { var ctor = "function" == typeof genFun && genFun.constructor; return !!ctor && (ctor === GeneratorFunction || "GeneratorFunction" === (ctor.displayName || ctor.name)); }, exports.mark = function (genFun) { return Object.setPrototypeOf ? Object.setPrototypeOf(genFun, GeneratorFunctionPrototype) : (genFun.__proto__ = GeneratorFunctionPrototype, define(genFun, toStringTagSymbol, "GeneratorFunction")), genFun.prototype = Object.create(Gp), genFun; }, exports.awrap = function (arg) { return { __await: arg }; }, defineIteratorMethods(AsyncIterator.prototype), define(AsyncIterator.prototype, asyncIteratorSymbol, function () { return this; }), exports.AsyncIterator = AsyncIterator, exports.async = function (innerFn, outerFn, self, tryLocsList, PromiseImpl) { void 0 === PromiseImpl && (PromiseImpl = Promise); var iter = new AsyncIterator(wrap(innerFn, outerFn, self, tryLocsList), PromiseImpl); return exports.isGeneratorFunction(outerFn) ? iter : iter.next().then(function (result) { return result.done ? result.value : iter.next(); }); }, defineIteratorMethods(Gp), define(Gp, toStringTagSymbol, "Generator"), define(Gp, iteratorSymbol, function () { return this; }), define(Gp, "toString", function () { return "[object Generator]"; }), exports.keys = function (val) { var object = Object(val), keys = []; for (var key in object) keys.push(key); return keys.reverse(), function next() { for (; keys.length;) { var key = keys.pop(); if (key in object) return next.value = key, next.done = !1, next; } return next.done = !0, next; }; }, exports.values = values, Context.prototype = { constructor: Context, reset: function reset(skipTempReset) { if (this.prev = 0, this.next = 0, this.sent = this._sent = undefined, this.done = !1, this.delegate = null, this.method = "next", this.arg = undefined, this.tryEntries.forEach(resetTryEntry), !skipTempReset) for (var name in this) "t" === name.charAt(0) && hasOwn.call(this, name) && !isNaN(+name.slice(1)) && (this[name] = undefined); }, stop: function stop() { this.done = !0; var rootRecord = this.tryEntries[0].completion; if ("throw" === rootRecord.type) throw rootRecord.arg; return this.rval; }, dispatchException: function dispatchException(exception) { if (this.done) throw exception; var context = this; function handle(loc, caught) { return record.type = "throw", record.arg = exception, context.next = loc, caught && (context.method = "next", context.arg = undefined), !!caught; } for (var i = this.tryEntries.length - 1; i >= 0; --i) { var entry = this.tryEntries[i], record = entry.completion; if ("root" === entry.tryLoc) return handle("end"); if (entry.tryLoc <= this.prev) { var hasCatch = hasOwn.call(entry, "catchLoc"), hasFinally = hasOwn.call(entry, "finallyLoc"); if (hasCatch && hasFinally) { if (this.prev < entry.catchLoc) return handle(entry.catchLoc, !0); if (this.prev < entry.finallyLoc) return handle(entry.finallyLoc); } else if (hasCatch) { if (this.prev < entry.catchLoc) return handle(entry.catchLoc, !0); } else { if (!hasFinally) throw new Error("try statement without catch or finally"); if (this.prev < entry.finallyLoc) return handle(entry.finallyLoc); } } } }, abrupt: function abrupt(type, arg) { for (var i = this.tryEntries.length - 1; i >= 0; --i) { var entry = this.tryEntries[i]; if (entry.tryLoc <= this.prev && hasOwn.call(entry, "finallyLoc") && this.prev < entry.finallyLoc) { var finallyEntry = entry; break; } } finallyEntry && ("break" === type || "continue" === type) && finallyEntry.tryLoc <= arg && arg <= finallyEntry.finallyLoc && (finallyEntry = null); var record = finallyEntry ? finallyEntry.completion : {}; return record.type = type, record.arg = arg, finallyEntry ? (this.method = "next", this.next = finallyEntry.finallyLoc, ContinueSentinel) : this.complete(record); }, complete: function complete(record, afterLoc) { if ("throw" === record.type) throw record.arg; return "break" === record.type || "continue" === record.type ? this.next = record.arg : "return" === record.type ? (this.rval = this.arg = record.arg, this.method = "return", this.next = "end") : "normal" === record.type && afterLoc && (this.next = afterLoc), ContinueSentinel; }, finish: function finish(finallyLoc) { for (var i = this.tryEntries.length - 1; i >= 0; --i) { var entry = this.tryEntries[i]; if (entry.finallyLoc === finallyLoc) return this.complete(entry.completion, entry.afterLoc), resetTryEntry(entry), ContinueSentinel; } }, "catch": function _catch(tryLoc) { for (var i = this.tryEntries.length - 1; i >= 0; --i) { var entry = this.tryEntries[i]; if (entry.tryLoc === tryLoc) { var record = entry.completion; if ("throw" === record.type) { var thrown = record.arg; resetTryEntry(entry); } return thrown; } } throw new Error("illegal catch attempt"); }, delegateYield: function delegateYield(iterable, resultName, nextLoc) { return this.delegate = { iterator: values(iterable), resultName: resultName, nextLoc: nextLoc }, "next" === this.method && (this.arg = undefined), ContinueSentinel; } }, exports; }
 	function _classPrivateMethodInitSpec$5(obj, privateSet) { _checkPrivateRedeclaration$5(obj, privateSet); privateSet.add(obj); }
 	function _classPrivateFieldInitSpec$4(obj, privateMap, value) { _checkPrivateRedeclaration$5(obj, privateMap); privateMap.set(obj, value); }
 	function _checkPrivateRedeclaration$5(obj, privateCollection) { if (privateCollection.has(obj)) { throw new TypeError("Cannot initialize the same private elements twice on an object"); } }
 	function _classPrivateMethodGet$5(receiver, privateSet, fn) { if (!privateSet.has(receiver)) { throw new TypeError("attempted to get private field on non-instance"); } return fn; }
-	var _flowSelectorContainer = /*#__PURE__*/new WeakMap();
+	var _flowSelectorBtn = /*#__PURE__*/new WeakMap();
 	var _taskId$1 = /*#__PURE__*/new WeakMap();
-	var _isExtranet = /*#__PURE__*/new WeakMap();
 	var _canEditTask = /*#__PURE__*/new WeakMap();
+	var _canCreateFlow$1 = /*#__PURE__*/new WeakMap();
 	var _toggleFlowParams = /*#__PURE__*/new WeakMap();
-	var _flowParams = /*#__PURE__*/new WeakMap();
+	var _flowParams$1 = /*#__PURE__*/new WeakMap();
 	var _dialog$1 = /*#__PURE__*/new WeakMap();
 	var _subscribeEvents = /*#__PURE__*/new WeakSet();
 	var _onTaskUpdated = /*#__PURE__*/new WeakSet();
 	var _loadFlowData = /*#__PURE__*/new WeakSet();
 	var _updateFlow$1 = /*#__PURE__*/new WeakSet();
-	var _render = /*#__PURE__*/new WeakSet();
+	var _updateFlowBtn = /*#__PURE__*/new WeakSet();
 	var _createDialog$1 = /*#__PURE__*/new WeakSet();
-	var _renderFlowName = /*#__PURE__*/new WeakSet();
-	var _renderEfficiency = /*#__PURE__*/new WeakSet();
 	var _prepareEfficiency = /*#__PURE__*/new WeakSet();
 	var EntitySelector = /*#__PURE__*/function () {
 	  function EntitySelector(_params) {
 	    babelHelpers.classCallCheck(this, EntitySelector);
 	    _classPrivateMethodInitSpec$5(this, _prepareEfficiency);
-	    _classPrivateMethodInitSpec$5(this, _renderEfficiency);
-	    _classPrivateMethodInitSpec$5(this, _renderFlowName);
 	    _classPrivateMethodInitSpec$5(this, _createDialog$1);
-	    _classPrivateMethodInitSpec$5(this, _render);
+	    _classPrivateMethodInitSpec$5(this, _updateFlowBtn);
 	    _classPrivateMethodInitSpec$5(this, _updateFlow$1);
 	    _classPrivateMethodInitSpec$5(this, _loadFlowData);
 	    _classPrivateMethodInitSpec$5(this, _onTaskUpdated);
 	    _classPrivateMethodInitSpec$5(this, _subscribeEvents);
-	    _classPrivateFieldInitSpec$4(this, _flowSelectorContainer, {
+	    _classPrivateFieldInitSpec$4(this, _flowSelectorBtn, {
 	      writable: true,
 	      value: void 0
 	    });
@@ -619,11 +630,11 @@ this.BX.Tasks = this.BX.Tasks || {};
 	      writable: true,
 	      value: void 0
 	    });
-	    _classPrivateFieldInitSpec$4(this, _isExtranet, {
+	    _classPrivateFieldInitSpec$4(this, _canEditTask, {
 	      writable: true,
 	      value: void 0
 	    });
-	    _classPrivateFieldInitSpec$4(this, _canEditTask, {
+	    _classPrivateFieldInitSpec$4(this, _canCreateFlow$1, {
 	      writable: true,
 	      value: void 0
 	    });
@@ -631,7 +642,7 @@ this.BX.Tasks = this.BX.Tasks || {};
 	      writable: true,
 	      value: void 0
 	    });
-	    _classPrivateFieldInitSpec$4(this, _flowParams, {
+	    _classPrivateFieldInitSpec$4(this, _flowParams$1, {
 	      writable: true,
 	      value: void 0
 	    });
@@ -640,11 +651,11 @@ this.BX.Tasks = this.BX.Tasks || {};
 	      value: void 0
 	    });
 	    babelHelpers.classPrivateFieldSet(this, _taskId$1, _params.taskId);
-	    babelHelpers.classPrivateFieldSet(this, _isExtranet, _params.isExtranet);
 	    babelHelpers.classPrivateFieldSet(this, _canEditTask, _params.canEditTask);
+	    babelHelpers.classPrivateFieldSet(this, _canCreateFlow$1, _params.canCreateFlow);
 	    babelHelpers.classPrivateFieldSet(this, _toggleFlowParams, _params.toggleFlowParams);
-	    babelHelpers.classPrivateFieldSet(this, _flowParams, _params.flowParams);
-	    babelHelpers.classPrivateFieldSet(this, _flowSelectorContainer, document.getElementById('tasks-flow-selector-container'));
+	    babelHelpers.classPrivateFieldSet(this, _flowParams$1, _params.flowParams);
+	    babelHelpers.classPrivateFieldSet(this, _flowSelectorBtn, ui_buttons.ButtonManager.createFromNode(document.getElementById('tasks-flow-selector-container')));
 	    _classPrivateMethodGet$5(this, _subscribeEvents, _subscribeEvents2).call(this);
 	  }
 	  babelHelpers.createClass(EntitySelector, [{
@@ -653,8 +664,7 @@ this.BX.Tasks = this.BX.Tasks || {};
 	      if (!main_core.Type.isDomNode(target)) {
 	        throw new TypeError('HTMLElement for render flow entity selector not found');
 	      }
-	      main_core.Dom.clean(target);
-	      main_core.Dom.append(_classPrivateMethodGet$5(this, _render, _render2).call(this), target);
+	      _classPrivateMethodGet$5(this, _updateFlowBtn, _updateFlowBtn2).call(this);
 	    }
 	  }]);
 	  return EntitySelector;
@@ -686,7 +696,7 @@ this.BX.Tasks = this.BX.Tasks || {};
 	          return _context.abrupt("return");
 	        case 4:
 	          flowId = Number((_params$AFTER$FLOW_ID = params.AFTER.FLOW_ID) !== null && _params$AFTER$FLOW_ID !== void 0 ? _params$AFTER$FLOW_ID : 0);
-	          isFlowChange = babelHelpers.classPrivateFieldGet(this, _flowParams).id !== flowId;
+	          isFlowChange = babelHelpers.classPrivateFieldGet(this, _flowParams$1).id !== flowId;
 	          if (isFlowChange) {
 	            _context.next = 8;
 	            break;
@@ -743,59 +753,72 @@ this.BX.Tasks = this.BX.Tasks || {};
 	  return _loadFlowData3.apply(this, arguments);
 	}
 	function _updateFlow2$1(flowData) {
-	  babelHelpers.classPrivateFieldGet(this, _flowParams).id = flowData.id;
-	  babelHelpers.classPrivateFieldGet(this, _flowParams).name = flowData.name;
-	  babelHelpers.classPrivateFieldGet(this, _flowParams).efficiency = flowData.efficiency;
-	  this.show(babelHelpers.classPrivateFieldGet(this, _flowSelectorContainer));
+	  babelHelpers.classPrivateFieldGet(this, _flowParams$1).id = flowData.id;
+	  babelHelpers.classPrivateFieldGet(this, _flowParams$1).name = flowData.name;
+	  babelHelpers.classPrivateFieldGet(this, _flowParams$1).efficiency = flowData.efficiency;
+	  this.show(babelHelpers.classPrivateFieldGet(this, _flowSelectorBtn).getContainer());
 	}
-	function _render2() {
+	function _updateFlowBtn2() {
 	  var _this = this;
-	  var flowFeatureEnabledClass = babelHelpers.classPrivateFieldGet(this, _flowParams).isFeatureEnabled ? '' : '--tariff-lock';
-	  var flowCanChangeClass = babelHelpers.classPrivateFieldGet(this, _canEditTask) ? 'ui-btn-dropdown' : '--disable';
-	  var flowBtnClasses = 'ui-btn ui-btn-round ui-btn-xs ui-btn-no-caps';
-	  var container = main_core.Tag.render(_templateObject$2 || (_templateObject$2 = babelHelpers.taggedTemplateLiteral(["\n\t\t\t<button \n\t\t\t\tclass=\"tasks-flow__selector ", " ", " ", "\" \n\t\t\t\tid=\"tasks-flow-selector\"\n\t\t\t>\t\t\n\t\t\t</button>\n\t\t"])), flowBtnClasses, flowFeatureEnabledClass, flowCanChangeClass);
-	  if (babelHelpers.classPrivateFieldGet(this, _canEditTask)) {
-	    main_core.Event.bind(container, 'click', function () {
-	      var _babelHelpers$classPr;
-	      babelHelpers.classPrivateFieldSet(_this, _dialog$1, (_babelHelpers$classPr = babelHelpers.classPrivateFieldGet(_this, _dialog$1)) !== null && _babelHelpers$classPr !== void 0 ? _babelHelpers$classPr : _classPrivateMethodGet$5(_this, _createDialog$1, _createDialog2$1).call(_this));
-	      babelHelpers.classPrivateFieldGet(_this, _dialog$1).show(babelHelpers.classPrivateFieldGet(_this, _flowSelectorContainer));
-	    });
-	  }
-	  if (babelHelpers.classPrivateFieldGet(this, _flowParams).id) {
-	    main_core.Dom.addClass(container, 'ui-btn-secondary-light');
-	    container.append(_classPrivateMethodGet$5(this, _renderFlowName, _renderFlowName2).call(this, babelHelpers.classPrivateFieldGet(this, _flowParams).name));
-	    container.append(_classPrivateMethodGet$5(this, _renderEfficiency, _renderEfficiency2).call(this, babelHelpers.classPrivateFieldGet(this, _flowParams).efficiency));
+	  babelHelpers.classPrivateFieldGet(this, _flowSelectorBtn).addClass('tasks-flow__selector');
+	  babelHelpers.classPrivateFieldGet(this, _flowSelectorBtn).setDropdown(true);
+	  babelHelpers.classPrivateFieldGet(this, _flowSelectorBtn).setState(babelHelpers.classPrivateFieldGet(this, _canEditTask) ? '' : ui_buttons.ButtonState.DISABLED);
+	  babelHelpers.classPrivateFieldGet(this, _flowSelectorBtn).setIcon(babelHelpers.classPrivateFieldGet(this, _flowParams$1).isFeatureEnabled ? '' : ui_buttons.ButtonIcon.LOCK, 'right');
+	  if (babelHelpers.classPrivateFieldGet(this, _flowParams$1).id) {
+	    babelHelpers.classPrivateFieldGet(this, _flowSelectorBtn).setText(babelHelpers.classPrivateFieldGet(this, _flowParams$1).name);
+	    if (babelHelpers.classPrivateFieldGet(this, _flowSelectorBtn).hasAirDesign()) {
+	      babelHelpers.classPrivateFieldGet(this, _flowSelectorBtn).setStyle(ui_buttons.AirButtonStyle.SELECTION);
+	      babelHelpers.classPrivateFieldGet(this, _flowSelectorBtn).setRightCounter(null);
+	      babelHelpers.classPrivateFieldGet(this, _flowSelectorBtn).setRightCounter({
+	        color: ui_buttons.ButtonCounterColor.PRIMARY,
+	        style: ui_buttons.ButtonCounterStyle.FILLED_INVERTED,
+	        value: babelHelpers.classPrivateFieldGet(this, _flowParams$1).efficiency,
+	        useSymbolPercent: true,
+	        maxValue: 100
+	      });
+	    } else {
+	      babelHelpers.classPrivateFieldGet(this, _flowSelectorBtn).setColor(ui_buttons.ButtonColor.SECONDARY_LIGHT);
+	      babelHelpers.classPrivateFieldGet(this, _flowSelectorBtn).setCounter(_classPrivateMethodGet$5(this, _prepareEfficiency, _prepareEfficiency2).call(this, babelHelpers.classPrivateFieldGet(this, _flowParams$1).efficiency));
+	    }
+	    babelHelpers.classPrivateFieldGet(this, _flowSelectorBtn).setMaxWidth(350);
 	  } else {
-	    main_core.Dom.addClass(container, 'ui-btn-base-light');
-	    container.append(_classPrivateMethodGet$5(this, _renderFlowName, _renderFlowName2).call(this, main_core.Loc.getMessage('TASKS_FLOW_ENTITY_SELECTOR_FLOW_EMPTY')));
-	    if (!babelHelpers.classPrivateFieldGet(this, _canEditTask)) {
-	      main_core.Dom.addClass(container, '--hide');
+	    babelHelpers.classPrivateFieldGet(this, _flowSelectorBtn).setText(main_core.Loc.getMessage('TASKS_FLOW_ENTITY_SELECTOR_FLOW_EMPTY'));
+	    if (babelHelpers.classPrivateFieldGet(this, _flowSelectorBtn).hasAirDesign()) {
+	      babelHelpers.classPrivateFieldGet(this, _flowSelectorBtn).setStyle(ui_buttons.AirButtonStyle.OUTLINE);
+	      babelHelpers.classPrivateFieldGet(this, _flowSelectorBtn).setRightCounter(null);
+	    } else {
+	      babelHelpers.classPrivateFieldGet(this, _flowSelectorBtn).setColor(ui_buttons.ButtonColor.BASE_LIGHT);
+	      babelHelpers.classPrivateFieldGet(this, _flowSelectorBtn).setCounter(null);
+	    }
+	    babelHelpers.classPrivateFieldGet(this, _flowSelectorBtn).setMaxWidth(null);
+	    if (babelHelpers.classPrivateFieldGet(this, _canEditTask) === false) {
+	      babelHelpers.classPrivateFieldGet(this, _flowSelectorBtn).addClass('--hide');
+	    } else {
+	      babelHelpers.classPrivateFieldGet(this, _flowSelectorBtn).removeClass('--hide');
 	    }
 	  }
-	  return container;
+	  if (babelHelpers.classPrivateFieldGet(this, _canEditTask)) {
+	    main_core.Event.bind(babelHelpers.classPrivateFieldGet(this, _flowSelectorBtn).getContainer(), 'click', function () {
+	      var _babelHelpers$classPr;
+	      babelHelpers.classPrivateFieldSet(_this, _dialog$1, (_babelHelpers$classPr = babelHelpers.classPrivateFieldGet(_this, _dialog$1)) !== null && _babelHelpers$classPr !== void 0 ? _babelHelpers$classPr : _classPrivateMethodGet$5(_this, _createDialog$1, _createDialog2$1).call(_this));
+	      babelHelpers.classPrivateFieldGet(_this, _dialog$1).show(babelHelpers.classPrivateFieldGet(_this, _flowSelectorBtn).getContainer());
+	    });
+	  }
 	}
 	function _createDialog2$1() {
 	  babelHelpers.classPrivateFieldSet(this, _dialog$1, new EntitySelectorDialog({
-	    isExtranet: babelHelpers.classPrivateFieldGet(this, _isExtranet),
 	    toggleFlowParams: babelHelpers.classPrivateFieldGet(this, _toggleFlowParams),
-	    flowId: babelHelpers.classPrivateFieldGet(this, _flowParams).id,
-	    flowLimitCode: babelHelpers.classPrivateFieldGet(this, _flowParams).limitCode,
-	    isFeatureEnabled: babelHelpers.classPrivateFieldGet(this, _flowParams).isFeatureEnabled,
-	    isFeatureTrialable: babelHelpers.classPrivateFieldGet(this, _flowParams).isFeatureTrialable
+	    flowParams: babelHelpers.classPrivateFieldGet(this, _flowParams$1),
+	    canCreateFlow: babelHelpers.classPrivateFieldGet(this, _canCreateFlow$1)
 	  }));
 	  return babelHelpers.classPrivateFieldGet(this, _dialog$1);
-	}
-	function _renderFlowName2(name) {
-	  return main_core.Tag.render(_templateObject2$1 || (_templateObject2$1 = babelHelpers.taggedTemplateLiteral(["\n\t\t\t<span class=\"tasks-flow__selector-text\">\n\t\t\t\t", "\n\t\t\t</span>\n\t\t"])), main_core.Text.encode(name));
-	}
-	function _renderEfficiency2(efficiency) {
-	  return main_core.Tag.render(_templateObject3 || (_templateObject3 = babelHelpers.taggedTemplateLiteral(["\n\t\t\t<span class=\"tasks-flow__selector-efficiency\">\n\t\t\t\t", "\n\t\t\t</span>\n\t\t"])), _classPrivateMethodGet$5(this, _prepareEfficiency, _prepareEfficiency2).call(this, efficiency));
 	}
 	function _prepareEfficiency2(efficiency) {
 	  return "".concat(efficiency, "%");
 	}
 
 	exports.EmptyStub = EmptyStub;
+	exports.Footer = Footer;
 	exports.EntitySelector = EntitySelector;
 
-}((this.BX.Tasks.Flow = this.BX.Tasks.Flow || {}),BX.UI,BX.Event,BX,BX.UI.EntitySelector));
+}((this.BX.Tasks.Flow = this.BX.Tasks.Flow || {}),BX.UI,BX.Event,BX,BX.UI.EntitySelector,BX.UI));

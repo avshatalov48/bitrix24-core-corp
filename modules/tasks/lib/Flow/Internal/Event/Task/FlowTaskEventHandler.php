@@ -16,7 +16,7 @@ use Bitrix\Tasks\Flow\Internal\Link\FlowLink;
 use Bitrix\Tasks\Flow\Notification\NotificationService;
 use Bitrix\Tasks\Flow\Provider\FlowProvider;
 use Bitrix\Tasks\Flow\Task\Status;
-use Bitrix\Tasks\InvalidCommandException;
+use Bitrix\Tasks\Flow\Control\Exception\InvalidCommandException;
 use Exception;
 use Psr\Container\NotFoundExceptionInterface;
 

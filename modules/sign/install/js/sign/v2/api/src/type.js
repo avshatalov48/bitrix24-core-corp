@@ -13,6 +13,8 @@ export type Provider = {
 	externalProviderId: ?string,
 };
 
+export type SourceType = 'manual' | 'hcmlink';
+
 export type LoadedDocumentData = {
 	blankId: number;
 	entityId: number;
@@ -29,7 +31,14 @@ export type LoadedDocumentData = {
 	uid: string;
 	version: number;
 	providerCode: ProviderCodeType;
+	dateSignUntilUserTime: string | null;
+	previewUrl?: string;
+	externalDateCreateSourceType: SourceType;
+	externalIdSourceType: SourceType;
+	templateId: number | null;
+	hcmLinkCompanyId: number | null;
 };
+
 export type Communication = {
 	ID: number;
 	TYPE: 'EMAIL' | 'PHONE';
@@ -100,6 +109,7 @@ export type HcmLinkMultipleVacancyEmployee = {
 
 export type HcmLinkMultipleVacancyEmployeesLoadData = {
 	company: {
+		id: number,
 		title: string,
 	},
 	employees: Array<HcmLinkMultipleVacancyEmployee>
@@ -108,4 +118,16 @@ export type HcmLinkMultipleVacancyEmployeesLoadData = {
 export type EmployeeSaveData = {
 	documentUid: string,
 	selectedEmployeeCollection: Array<{userId: number, employeeId: number}>,
+};
+
+export type ControllerError = {
+	message: string,
+	code: string,
+	customData: {},
+}
+
+export type HcmLinkNotMappedUsersData = {
+	integrationId: number,
+	userIds: Array<number>,
+	allUserIds: Array<number>,
 };

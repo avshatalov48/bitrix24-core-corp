@@ -16,22 +16,6 @@ jn.define('tasks/layout/kanban/stage-settings', (require, exports, module) => {
 	 */
 	class TasksKanbanStageSettings extends KanbanStageSettings
 	{
-		renderContent()
-		{
-			return View(
-				{
-					style: {
-						flexDirection: 'column',
-					},
-					onClick: () => Keyboard.dismiss(),
-					onPan: () => Keyboard.dismiss(),
-				},
-				this.renderStageName(),
-				this.renderColorPicker(),
-				this.renderDeleteButton(),
-			);
-		}
-
 		updateStage()
 		{
 			return new Promise((resolve, reject) => {

@@ -3,7 +3,6 @@
 return [
 	'extensions' => [
 		'tokens',
-		'in-app-url',
 		'assets/icons',
 		'utils/url',
 		'utils/validation',

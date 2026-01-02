@@ -118,7 +118,7 @@ class ResultTable extends DataManager
 	{
 		$query = self::query();
 		$query
-			->setSelect(['ID', 'COMMENT_ID', 'TEXT'])
+			->setSelect(['ID', 'TASK_ID', 'COMMENT_ID', 'CREATED_BY', 'CREATED_AT', 'UPDATED_AT', 'TEXT', 'STATUS'])
 			->where('TASK_ID', $taskId)
 			->setOrder(['ID' => 'DESC'])
 		;

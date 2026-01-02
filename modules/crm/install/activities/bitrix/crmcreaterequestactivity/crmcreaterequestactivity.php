@@ -1,5 +1,7 @@
 <?php
 
+use Bitrix\Crm\Integration\Analytics\Dictionary;
+
 if (!defined('B_PROLOG_INCLUDED') || B_PROLOG_INCLUDED !== true)
 {
 	die();
@@ -39,6 +41,8 @@ class CBPCrmCreateRequestActivity extends CBPActivity
 		{
 			return CBPActivityExecutionStatus::Closed;
 		}
+
+		$documentType = $this->getDocumentType();
 
 		$start = ConvertTimeStamp(time() + CTimeZone::GetOffset(), 'FULL');
 
@@ -80,6 +84,12 @@ class CBPCrmCreateRequestActivity extends CBPActivity
 			\Bitrix\Crm\Automation\Factory::registerActivity($id);
 			$this->Id = $id;
 			$this->WriteToTrackingService($id, 0, CBPTrackingType::AttachedEntity);
+
+			\CCrmBizProcHelper::sendOperationsAnalytics(
+				Dictionary::EVENT_ENTITY_CREATE,
+				$this,
+				$documentType[2] ?? '',
+			);
 		}
 
 		return CBPActivityExecutionStatus::Closed;

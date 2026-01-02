@@ -24,6 +24,11 @@ export const ImportPreview = {
 			required: false,
 			default: false,
 		},
+		needShowHeadersWithEmptyRows: {
+			type: Boolean,
+			required: false,
+			default: false,
+		},
 	},
 	computed: {
 		isEditMode(): boolean
@@ -131,7 +136,6 @@ export const ImportPreview = {
 							</div>
 						</div>
 						<div class="import-preview__has-data" v-else>
-							<span class="import-preview__hint">{{ $Bitrix.Loc.getMessage('DATASET_IMPORT_PREVIEW_HINT') }}</span>
 							<PreviewTable
 								:headers="headers"
 								:column-visibility="columnVisibility"
@@ -156,7 +160,7 @@ export const ImportPreview = {
 							:column-visibility="columnVisibility"
 						/>
 					</div>
-					<div class="import-preview__has-data" v-else-if="hasHeaders">
+					<div class="import-preview__has-data" v-else-if="hasHeaders && needShowHeadersWithEmptyRows">
 						<PreviewTable
 							:headers="headers"
 							:column-visibility="columnVisibility"

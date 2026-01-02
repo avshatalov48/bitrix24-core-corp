@@ -1,0 +1,22 @@
+.booking--booking--crm-forms-popup-sort {
+	display: flex;
+	align-items: center;
+	justify-content: center;
+	gap: 4px;
+	color: var(--ui-color-text-primary);
+	cursor: default;
+	font-size: var(--ui-font-size-lg);
+	font-style: normal;
+	font-weight: var(--ui-font-weight-normal);
+	line-height: 20px;
+	letter-spacing: -0.05px;
+}
+
+.booking--booking--crm-forms-popup-sort span {
+	border-bottom: 1px dashed color-mix(in srgb, var(--ui-color-text-primary) 28%, transparent);
+}
+
+.booking--booking--crm-forms-popup--sort-icon {
+	--ui-icon-set__icon-size: 18px;
+	--ui-icon-set__icon-color: var(--ui-color-text-primary);
+}

@@ -3,8 +3,10 @@
 namespace Bitrix\Mobile\Component;
 
 use Bitrix\Main\Config\Option;
+use Bitrix\Main\Error;
 use Bitrix\Main\ErrorCollection;
 use Bitrix\Main\Loader;
+use Bitrix\Main\Localization\Loc;
 use Bitrix\Main\ModuleManager;
 use Bitrix\Socialnetwork\Component\LogList\Util;
 use Bitrix\Mobile\Component\LogList\Param;
@@ -330,6 +332,21 @@ class LogList  extends \Bitrix\Socialnetwork\Component\LogListCommon
 			$counterProcessorInstance->clearLogCounter($result);
 			$this->setFollowData($result);
 			$this->setExpertModeData($result);
+
+			if (
+				$params['LOG_ID'] > 0
+				&& (
+					!is_array($result['Events'])
+					|| count($result['Events']) <= 0
+				)
+			)
+			{
+				$this->errorCollection[] = new Error(
+					Loc::getMessage('MOBILE_SONET_LOG_LIST_ENTRY_NOT_FOUND'),
+				);
+
+				return $result;
+			}
 		}
 		else
 		{

@@ -2,7 +2,6 @@
 
 return [
 	'extensions' => [
-		'feature',
 		'layout/ui/context-menu',
 		'layout/ui/kanban',
 		'layout/ui/kanban/toolbar',

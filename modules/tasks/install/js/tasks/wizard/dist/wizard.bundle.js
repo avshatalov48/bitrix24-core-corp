@@ -20,7 +20,6 @@ this.BX = this.BX || {};
 	var _steps = /*#__PURE__*/babelHelpers.classPrivateFieldLooseKey("steps");
 	var _getPreviousStep = /*#__PURE__*/babelHelpers.classPrivateFieldLooseKey("getPreviousStep");
 	var _updateStepsAvailability = /*#__PURE__*/babelHelpers.classPrivateFieldLooseKey("updateStepsAvailability");
-	var _getCurrentStepIndex = /*#__PURE__*/babelHelpers.classPrivateFieldLooseKey("getCurrentStepIndex");
 	var _renderStepHeader = /*#__PURE__*/babelHelpers.classPrivateFieldLooseKey("renderStepHeader");
 	var _renderStepTitle = /*#__PURE__*/babelHelpers.classPrivateFieldLooseKey("renderStepTitle");
 	var _renderStepContainer = /*#__PURE__*/babelHelpers.classPrivateFieldLooseKey("renderStepContainer");
@@ -87,9 +86,6 @@ this.BX = this.BX || {};
 	    Object.defineProperty(this, _renderStepHeader, {
 	      value: _renderStepHeader2
 	    });
-	    Object.defineProperty(this, _getCurrentStepIndex, {
-	      value: _getCurrentStepIndex2
-	    });
 	    Object.defineProperty(this, _updateStepsAvailability, {
 	      value: _updateStepsAvailability2
 	    });
@@ -123,7 +119,7 @@ this.BX = this.BX || {};
 	    return wrap;
 	  }
 	  getCurrentStep() {
-	    return babelHelpers.classPrivateFieldLooseBase(this, _steps)[_steps][babelHelpers.classPrivateFieldLooseBase(this, _getCurrentStepIndex)[_getCurrentStepIndex]()];
+	    return babelHelpers.classPrivateFieldLooseBase(this, _steps)[_steps][this.getCurrentStepIndex()];
 	  }
 	  update() {
 	    babelHelpers.classPrivateFieldLooseBase(this, _updateStepsAvailability)[_updateStepsAvailability]();
@@ -146,9 +142,17 @@ this.BX = this.BX || {};
 	      (_step$hintManager = step.hintManager) == null ? void 0 : _step$hintManager.hide();
 	    });
 	  }
+	  getCurrentStepIndex() {
+	    for (const [index, step] of babelHelpers.classPrivateFieldLooseBase(this, _steps)[_steps].entries()) {
+	      if (step.selected) {
+	        return index;
+	      }
+	    }
+	    return 0;
+	  }
 	}
 	function _getPreviousStep2() {
-	  return babelHelpers.classPrivateFieldLooseBase(this, _steps)[_steps][babelHelpers.classPrivateFieldLooseBase(this, _getCurrentStepIndex)[_getCurrentStepIndex]() - 1];
+	  return babelHelpers.classPrivateFieldLooseBase(this, _steps)[_steps][this.getCurrentStepIndex() - 1];
 	}
 	function _updateStepsAvailability2() {
 	  let isAvailable = true;
@@ -168,14 +172,6 @@ this.BX = this.BX || {};
 	  if (babelHelpers.classPrivateFieldLooseBase(this, _layout)[_layout].saveChangesButton) {
 	    babelHelpers.classPrivateFieldLooseBase(this, _layout)[_layout].saveChangesButton.setState(isAvailable ? null : ui_buttons.ButtonState.DISABLED);
 	  }
-	}
-	function _getCurrentStepIndex2() {
-	  for (const [index, step] of babelHelpers.classPrivateFieldLooseBase(this, _steps)[_steps].entries()) {
-	    if (step.selected) {
-	      return index;
-	    }
-	  }
-	  return 0;
 	}
 	function _renderStepHeader2(steps) {
 	  const firstSteps = steps.slice(0, -1);
@@ -344,7 +340,7 @@ this.BX = this.BX || {};
 	      return;
 	    }
 	  }
-	  const currentStep = babelHelpers.classPrivateFieldLooseBase(this, _getCurrentStepIndex)[_getCurrentStepIndex]();
+	  const currentStep = this.getCurrentStepIndex();
 	  const nextStep = currentStep + 1;
 	  babelHelpers.classPrivateFieldLooseBase(this, _openStep)[_openStep](babelHelpers.classPrivateFieldLooseBase(this, _steps)[_steps][nextStep]);
 	}

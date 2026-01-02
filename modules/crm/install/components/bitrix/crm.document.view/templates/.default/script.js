@@ -264,14 +264,17 @@
 				closeByEsc: true,
 				angle: true,
 				autoHide: true,
+				minWidth: 150,
 				items: [{
-					text: 'PDF',
+					text: BX.Loc.getMessage('CRM_COMMON_ACTION_DOWNLOAD_FORMAT', { '#FORMAT#': 'PDF' }),
+					title: BX.Loc.getMessage('CRM_COMMON_ACTION_DOWNLOAD_FORMAT', { '#FORMAT#': 'PDF' }),
 					onclick: function() {
 						BX.Crm.DocumentView.downloadPdf(downloadButton);
 						BX.userOptions.save('crm.document.view', 'download_button', 'format', 'pdf', false);
 					}
 				}, {
-					text: 'DOCX',
+					text: BX.Loc.getMessage('CRM_COMMON_ACTION_DOWNLOAD_FORMAT', { '#FORMAT#': 'DOCX' }),
+					title: BX.Loc.getMessage('CRM_COMMON_ACTION_DOWNLOAD_FORMAT', { '#FORMAT#': 'DOCX' }),
 					onclick: function() {
 						BX.Crm.DocumentView.downloadDoc(downloadButton);
 						BX.userOptions.save('crm.document.view', 'download_button', 'format', 'doc', false);
@@ -290,7 +293,17 @@
 				{
 					sliderUrl = curSlider.getUrl();
 				}
-				BX.SidePanel.Instance.open(this.editDocumentUrl, {width: 500, mode: 'edit', sliderUrl: sliderUrl});
+
+				BX.SidePanel.Instance.open(
+					this.editDocumentUrl,
+					{
+						width: 500,
+						data: {
+							mode: 'edit',
+							sliderUrl,
+						},
+					},
+				);
 			}
 			else
 			{
@@ -838,11 +851,16 @@
 				event.preventDefault();
 				var editSlider = false;
 				var curSlider = BX.SidePanel.Instance.getSliderByWindow(window);
-				if(curSlider.options.mode === 'edit' && BX.type.isNotEmptyString(curSlider.options.sliderUrl))
+				if (
+					curSlider
+					&& curSlider.getData().get('mode') === 'edit'
+					&& BX.type.isNotEmptyString(curSlider.getData().get('sliderUrl'))
+				)
 				{
-					editSlider = BX.SidePanel.Instance.getSlider(curSlider.options.sliderUrl);
+					editSlider = BX.SidePanel.Instance.getSlider(curSlider.getData().get('sliderUrl'));
 				}
-				if(editSlider)
+
+				if (editSlider)
 				{
 					BX.SidePanel.Instance.postMessage(curSlider, 'crm-document-edit', {values: values});
 					this.closeSlider();
@@ -1037,6 +1055,7 @@
 
 			BX.addClass(downloadButton.getContainer(), "crm__document-view--btn-icon-pdf");
 			BX.removeClass(downloadButton.getContainer(), "crm__document-view--btn-icon-doc");
+			downloadButton.setText(BX.Loc.getMessage('CRM_COMMON_ACTION_DOWNLOAD_FORMAT', { '#FORMAT#': 'PDF' }));
 			BX.Crm.DocumentView.rebindDownloadButtonClick(downloadButton);
 		}
 		else if (this.preview.imageUrl)
@@ -1057,6 +1076,7 @@
 
 			BX.addClass(downloadButton.getContainer(), "crm__document-view--btn-icon-doc");
 			BX.removeClass(downloadButton.getContainer(), "crm__document-view--btn-icon-pdf");
+			downloadButton.setText(BX.Loc.getMessage('CRM_COMMON_ACTION_DOWNLOAD_FORMAT', { '#FORMAT#': 'DOCX' }));
 			BX.Crm.DocumentView.rebindDownloadButtonClick(downloadButton);
 		}
 	};

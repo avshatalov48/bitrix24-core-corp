@@ -321,10 +321,33 @@ class DialogSession
 			$newData['BOT_ID'] = $this->botId;
 			$newData['DIALOG_ID'] = $this->dialogId;
 
-			$res = NetworkSessionTable::add($newData);
-			if ($res->isSuccess())
+			try
 			{
-				$this->primaryId = (int)$res->getId();
+				$res = NetworkSessionTable::add($newData);
+				if ($res->isSuccess())
+				{
+					$this->primaryId = (int)$res->getId();
+				}
+			}
+			catch (Main\DB\DuplicateEntryException $exception)
+			{
+				$res = NetworkSessionTable::getList([
+					'select' => [
+						'ID',
+					],
+					'filter' => [
+						'=BOT_ID' => $this->botId,
+						'=DIALOG_ID' => $this->dialogId,
+					]
+				]);
+				if ($sessData = $res->fetch())
+				{
+					$this->primaryId = (int)$sessData['ID'];
+				}
+				else
+				{
+					throw $exception;
+				}
 			}
 		}
 

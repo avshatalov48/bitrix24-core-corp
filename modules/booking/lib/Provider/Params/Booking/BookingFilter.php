@@ -5,22 +5,23 @@ declare(strict_types=1);
 namespace Bitrix\Booking\Provider\Params\Booking;
 
 use Bitrix\Booking\Entity\Booking\BookingVisitStatus;
+use Bitrix\Booking\Entity\ExternalData\ExternalDataItem;
 use Bitrix\Booking\Internals\Container;
 use Bitrix\Booking\Internals\Model\BookingClientTable;
-use Bitrix\Booking\Internals\Model\BookingMessageFailureLogTable;
-use Bitrix\Booking\Internals\Model\BookingMessageTable;
 use Bitrix\Booking\Internals\Model\BookingResourceTable;
+use Bitrix\Booking\Internals\Model\BookingTable;
 use Bitrix\Booking\Internals\Model\ClientTypeTable;
+use Bitrix\Booking\Internals\Model\Enum\EntityType;
 use Bitrix\Booking\Internals\Model\ScorerTable;
+use Bitrix\Booking\Internals\Service\CounterDictionary;
 use Bitrix\Booking\Internals\Service\Time;
 use Bitrix\Booking\Provider\Params\Filter;
 use Bitrix\Main\Application;
 use Bitrix\Main\DB\Connection;
 use Bitrix\Main\DB\SqlExpression;
-use Bitrix\Main\ORM\Fields\ExpressionField;
+use Bitrix\Main\Engine\CurrentUser;
 use Bitrix\Main\ORM\Query\Filter\ConditionTree;
 use Bitrix\Main\ORM\Query\Query;
-use Bitrix\Main\DB\PgsqlConnection;
 
 class BookingFilter extends Filter
 {
@@ -39,68 +40,6 @@ class BookingFilter extends Filter
 	public function prepareQuery(Query $query): void
 	{
 		$this->initAlias = $query->getInitAlias();
-
-		if (
-			isset($this->filter['STARTS_IN_LESS_THAN'])
-			|| isset($this->filter['IS_SAME_DAY_OR_EARLY_MORNING_START'])
-		)
-		{
-			$query->registerRuntimeField(
-				'',
-				new ExpressionField(
-					'STARTS_IN',
-					"
-						CASE WHEN (
-							%s > " . $this->currentTimestamp . "
-						)
-						THEN %s - " . $this->currentTimestamp . "
-						ELSE 0
-						END
-					",
-					[
-						'DATE_FROM',
-						'DATE_FROM',
-					]
-				)
-			);
-		}
-
-		if (isset($this->filter['WITHIN_CURRENT_DAYTIME']))
-		{
-			$query->registerRuntimeField(
-				'',
-				new ExpressionField(
-					'CURRENT_HOUR',
-					"EXTRACT(HOUR FROM " . $this->connection->getSqlHelper()->addSecondsToDateTime('%s', $this->fromUnixTimeSqlFn($this->currentTimestamp)) . ")",
-					['TIMEZONE_FROM_OFFSET']
-				)
-			);
-		}
-
-		if (isset($this->filter['IS_SAME_DAY_OR_EARLY_MORNING_START']))
-		{
-			$query->registerRuntimeField(
-				'',
-				new ExpressionField(
-					'IS_SAME_DAY',
-					"
-						CASE WHEN (
-							EXTRACT(DAY FROM " . $this->connection->getSqlHelper()->addSecondsToDateTime('%s', $this->fromUnixTimeSqlFn('%s')) . ")
-							=
-							EXTRACT(DAY FROM " . $this->connection->getSqlHelper()->addSecondsToDateTime('%s', $this->fromUnixTimeSqlFn($this->currentTimestamp)) . ")
-						)
-						THEN 1
-						ELSE 0
-						END
-					",
-					[
-						'DATE_FROM',
-						'TIMEZONE_FROM_OFFSET',
-						'TIMEZONE_FROM_OFFSET',
-					]
-				)
-			);
-		}
 
 		parent::prepareQuery($query);
 	}
@@ -172,15 +111,23 @@ class BookingFilter extends Filter
 			}
 		}
 
+		if (isset($this->filter['SOURCE']))
+		{
+			if (is_array($this->filter['SOURCE']))
+			{
+				$result->whereIn('SOURCE', $this->filter['SOURCE']);
+			}
+			else
+			{
+				$result->where('SOURCE', '=', $this->filter['SOURCE']);
+			}
+		}
+
+
 		$this->applyIsDelayedFilter($result);
-		$this->applyStartsInLessThanFilter($result);
-		$this->applyIsSameDayOrEarlyMorningStartFilter($result);
-		$this->applyWithinCurrentDayTimeFilter($result);
-		$this->applyMessageSentFilter($result);
-		$this->applyMessageTriedFilter($result);
 		$this->applyHasResourcesFilter($result);
 		$this->applyHasClientsFilter($result);
-		$this->applyNotificationsSettingsFilter($result);
+		$this->applyHasCounterOfTypeFilter($result);
 
 		if (isset($this->filter['HAS_COUNTERS_USER_ID']))
 		{
@@ -225,34 +172,36 @@ class BookingFilter extends Filter
 
 			foreach ($crmClientTypes as $crmClientType)
 			{
-				$filterKey = mb_strtoupper($crmModuleId) . '_' . $crmClientType->getCode() . '_ID';
-				if (isset($this->filter[$filterKey]))
+				$entityId = $this->getEntityId($crmModuleId, $crmClientType->getCode());
+				if (!$entityId)
 				{
-					$result
-						->whereIn(
-							'CLIENTS.CLIENT_TYPE_ID',
-							new SqlExpression(
-								ClientTypeTable::query()
-									->setSelect(['ID'])
-									->where('MODULE_ID', '=', $crmModuleId)
-									->where('CODE', '=', $crmClientType->getCode())
-									->getQuery()
-							)
-						)
-						->whereIn('CLIENTS.CLIENT_ID', $this->filter[$filterKey])
-					;
+					continue;
 				}
+
+				$result
+					->whereIn(
+						'CLIENTS.CLIENT_TYPE_ID',
+						new SqlExpression(
+							ClientTypeTable::query()
+								->setSelect(['ID'])
+								->where('MODULE_ID', '=', $crmModuleId)
+								->where('CODE', '=', $crmClientType->getCode())
+								->getQuery()
+						)
+					)
+					->whereIn('CLIENTS.CLIENT_ID', $entityId)
+				;
 			}
 		}
 
-		if (
-			isset($this->filter['CREATED_WITHIN']['FROM'])
-			&& isset($this->filter['CREATED_WITHIN']['TO'])
-		)
+		if (isset($this->filter['CREATED_WITHIN']['FROM']))
 		{
-			$result
-				->where('CREATED_AT', '>=', $this->filter['CREATED_WITHIN']['FROM'])
-				->where('CREATED_AT', '<', $this->filter['CREATED_WITHIN']['TO']);
+			$result->where('CREATED_AT', '>=', $this->filter['CREATED_WITHIN']['FROM']);
+		}
+
+		if (isset($this->filter['CREATED_WITHIN']['TO']))
+		{
+			$result->where('CREATED_AT', '<', $this->filter['CREATED_WITHIN']['TO']);
 		}
 
 		if (
@@ -260,167 +209,57 @@ class BookingFilter extends Filter
 			&& isset($this->filter['WITHIN']['DATE_TO'])
 		)
 		{
+			$periodDateFrom = (int)$this->filter['WITHIN']['DATE_FROM'];
+			$periodDateTo = (int)$this->filter['WITHIN']['DATE_TO'];
+
+			$bookingIds = array_column(
+				Application::getConnection()->query("
+					SELECT ID
+					FROM " . BookingTable::getTableName() . "
+					WHERE
+						DATE_FROM < $periodDateTo
+						AND DATE_MAX >= $periodDateTo
+						AND IS_DELETED = 'N'
+					UNION
+					SELECT ID
+					FROM " . BookingTable::getTableName() . "
+					WHERE
+						DATE_FROM <= $periodDateFrom
+						AND DATE_MAX > $periodDateFrom
+						AND IS_DELETED = 'N'
+					UNION
+					SELECT ID
+					FROM " . BookingTable::getTableName() . "
+					WHERE
+						DATE_FROM >= $periodDateFrom
+						AND DATE_MAX < $periodDateTo
+						AND IS_DELETED = 'N'	
+					")->fetchAll(),
+				'ID'
+			);
+
+			$result->whereIn('ID', empty($bookingIds) ? [0] : $bookingIds);
+		}
+		else if (isset($this->filter['WITHIN']['DATE_FROM']))
+		{
+			$result->where('DATE_FROM', '>=', $this->filter['WITHIN']['DATE_FROM']);
+		}
+
+		if (
+			isset($this->filter['EXTERNAL_DATA_ITEM'])
+			&& $this->filter['EXTERNAL_DATA_ITEM'] instanceof ExternalDataItem
+		)
+		{
+			$externalDataItem = $this->filter['EXTERNAL_DATA_ITEM'];
+
 			$result
-				->where(
-					Query::filter()
-						->logic('OR')
-						->where(
-							Query::filter()
-								->logic('OR')
-								->where(
-									Query::filter()
-										->where('DATE_FROM', '<=', $this->filter['WITHIN']['DATE_FROM'])
-										->where('DATE_MAX', '>', $this->filter['WITHIN']['DATE_FROM'])
-								)
-								->where(
-									Query::filter()
-										->where('DATE_FROM', '<', $this->filter['WITHIN']['DATE_TO'])
-										->where('DATE_MAX', '>=', $this->filter['WITHIN']['DATE_TO'])
-								)
-						)
-						->where(
-							Query::filter()
-								->logic('OR')
-								->where(
-									Query::filter()
-										->where('DATE_FROM', '>=', $this->filter['WITHIN']['DATE_FROM'])
-										->where('DATE_FROM', '<', $this->filter['WITHIN']['DATE_TO'])
-								)
-								->where(
-									Query::filter()
-										->where('DATE_MAX', '>', $this->filter['WITHIN']['DATE_FROM'])
-										->where('DATE_MAX', '<=', $this->filter['WITHIN']['DATE_TO'])
-								)
-						)
-				)
+				->where('EXTERNAL_DATA.MODULE_ID', $externalDataItem->getModuleId())
+				->where('EXTERNAL_DATA.ENTITY_TYPE_ID', $externalDataItem->getEntityTypeId())
+				->where('EXTERNAL_DATA.VALUE', $externalDataItem->getValue())
 			;
 		}
 
 		return $result;
-	}
-
-	private function applyMessageSentFilter(ConditionTree $result): void
-	{
-		if (
-			!isset($this->filter['MESSAGE_OF_TYPE_SENT'])
-			|| !is_array($this->filter['MESSAGE_OF_TYPE_SENT'])
-		)
-		{
-			return;
-		}
-
-		foreach ($this->filter['MESSAGE_OF_TYPE_SENT'] as $filterItem)
-		{
-			if (
-				!isset($filterItem['EXISTS'])
-				|| !isset($filterItem['TYPE'])
-			)
-			{
-				continue;
-			}
-
-			$exists = (bool)$filterItem['EXISTS'];
-
-			$minutesFilter =
-				isset($filterItem['MINUTES'])
-					? "
-						AND CREATED_AT > " . $this->connection->getSqlHelper()->addSecondsToDateTime('-' . (int)$filterItem['MINUTES'] * Time::SECONDS_IN_MINUTE) . "
-						AND CREATED_AT <= NOW()
-					"
-					: ""
-			;
-
-			$countFilter =
-				isset($filterItem['COUNT'])
-					? "
-						GROUP BY BOOKING_ID, NOTIFICATION_TYPE
-						HAVING COUNT(1) >= " . (int)$filterItem['COUNT'] . "
-					"
-					: ""
-			;
-
-			$sqlExpression = new SqlExpression("
-				SELECT 1
-				FROM " . BookingMessageTable::getTableName() . "
-				WHERE
-					BOOKING_ID = " . $this->initAlias . ".ID
-					AND NOTIFICATION_TYPE = '" . $this->connection->getSqlHelper()->forSql((string)$filterItem['TYPE']) . "'
-					" . $minutesFilter . "
-				" . $countFilter . "
-			");
-
-			$queryFilter = Query::filter()->whereExists($sqlExpression);
-			if ($exists)
-			{
-				$result->where($queryFilter);
-			}
-			else
-			{
-				$result->whereNot($queryFilter);
-			}
-		}
-	}
-
-	private function applyMessageTriedFilter(ConditionTree $result): void
-	{
-		if (
-			!isset($this->filter['MESSAGE_OF_TYPE_TRIED'])
-			|| !is_array($this->filter['MESSAGE_OF_TYPE_TRIED'])
-		)
-		{
-			return;
-		}
-
-		foreach ($this->filter['MESSAGE_OF_TYPE_TRIED'] as $filterItem)
-		{
-			if (
-				!isset($filterItem['EXISTS'])
-				|| !isset($filterItem['TYPE'])
-			)
-			{
-				continue;
-			}
-
-			$exists = (bool)$filterItem['EXISTS'];
-
-			$minutesFilter =
-				isset($filterItem['MINUTES'])
-					? "
-						AND CREATED_AT > " . $this->connection->getSqlHelper()->addSecondsToDateTime('-' . (int)$filterItem['MINUTES'] * Time::SECONDS_IN_MINUTE) . "
-						AND CREATED_AT <= NOW()
-					"
-					: ""
-			;
-
-			$countFilter =
-				isset($filterItem['COUNT'])
-					? "
-						GROUP BY BOOKING_ID, NOTIFICATION_TYPE
-						HAVING COUNT(1) >= " . (int)$filterItem['COUNT'] . "
-					"
-					: ""
-			;
-
-			$sqlExpression = new SqlExpression("
-				SELECT 1
-				FROM " . BookingMessageFailureLogTable::getTableName() . "
-				WHERE
-					BOOKING_ID = " . $this->initAlias . ".ID
-					AND NOTIFICATION_TYPE = '" . $this->connection->getSqlHelper()->forSql((string)$filterItem['TYPE']) . "'
-					" . $minutesFilter . "
-				" . $countFilter . "
-			");
-
-			$queryFilter = Query::filter()->whereExists($sqlExpression);
-			if ($exists)
-			{
-				$result->where($queryFilter);
-			}
-			else
-			{
-				$result->whereNot($queryFilter);
-			}
-		}
 	}
 
 	private function applyHasResourcesFilter(ConditionTree $result): void
@@ -458,7 +297,8 @@ class BookingFilter extends Filter
 					SELECT 1
 					FROM " . BookingClientTable::getTableName() . "
 					WHERE
-						BOOKING_ID = " . $this->initAlias . ".ID
+						ENTITY_ID = " . $this->initAlias . ".ID
+						AND ENTITY_TYPE = '" . $this->connection->getSqlHelper()->forSql(EntityType::Booking->value) . "'
 				")
 			);
 
@@ -473,33 +313,16 @@ class BookingFilter extends Filter
 		}
 	}
 
-	private function applyNotificationsSettingsFilter(ConditionTree $result): void
-	{
-		$fields = [
-			'IS_PRIMARY_RESOURCE_INFO_ON',
-			'IS_PRIMARY_RESOURCE_CONFIRMATION_ON',
-			'IS_PRIMARY_RESOURCE_REMINDER_ON',
-			'IS_PRIMARY_RESOURCE_FEEDBACK_ON',
-			'IS_PRIMARY_RESOURCE_DELAYED_ON',
-		];
-
-		foreach ($fields as $field)
-		{
-			if (isset($this->filter[$field]))
-			{
-				$result->where($field, $this->filter[$field] ? 'Y' : 'N');
-			}
-		}
-	}
-
 	private function applyIsDelayedFilter(ConditionTree $result): void
 	{
 		// @todo recurring bookings are not supported
 		if (isset($this->filter['IS_DELAYED']))
 		{
+			//@todo consider using counters here?
 			$isOn = (bool)$this->filter['IS_DELAYED'];
 			$filter = Query::filter()
-				->where('DATE_FROM', '<', $this->currentTimestamp - Time::SECONDS_IN_MINUTE * 5)
+				//@todo 5 min should not be hardcoded here, see DELAYED_COUNTER_DELAY on ResourceNotificationSettingsTable
+				->where('DATE_FROM', '<', $this->currentTimestamp - Time::CONSIDER_BOOKING__DELAYED_AFTER_SECONDS)
 				->where('DATE_TO', '>', $this->currentTimestamp)
 				->whereIn('VISIT_STATUS', [
 					BookingVisitStatus::Unknown->value,
@@ -518,80 +341,29 @@ class BookingFilter extends Filter
 		}
 	}
 
-	private function applyStartsInLessThanFilter(ConditionTree $result): void
+	private function applyHasCounterOfTypeFilter(ConditionTree $result): void
 	{
-		// @todo recurring bookings are not supported
-		if (isset($this->filter['STARTS_IN_LESS_THAN']))
+		if (!isset($this->filter['HAS_COUNTER_OF_TYPE']))
 		{
-			$result
-				->where('STARTS_IN', '<=', new SqlExpression('?i', (int)$this->filter['STARTS_IN_LESS_THAN']))
-				->where('STARTS_IN', '>', new SqlExpression('?i', 0))
-			;
+			return;
 		}
-	}
 
-	private function applyIsSameDayOrEarlyMorningStartFilter(ConditionTree $result): void
-	{
-		// @todo recurring bookings are not supported
-		if (isset($this->filter['IS_SAME_DAY_OR_EARLY_MORNING_START']))
+		$counter = (string)$this->filter['HAS_COUNTER_OF_TYPE'];
+		if (!CounterDictionary::isExists($counter))
 		{
-			$isOn = (bool)$this->filter['IS_SAME_DAY_OR_EARLY_MORNING_START'];
-
-			$silencePeriodInHours =  Time::HOURS_IN_DAY - (Time::DAYTIME_END_HOUR - Time::DAYTIME_START_HOUR);
-			$notificationGapInHour = 1;
-
-			$filter = Query::filter()
-				->logic('OR')
-				->where(
-					'IS_SAME_DAY',
-					'=',
-					new SqlExpression('?i', 1)
-				)
-				->where(
-					Query::filter()
-						->where(
-							'STARTS_IN',
-							'<=',
-							new SqlExpression(
-								'?i',
-								($silencePeriodInHours + $notificationGapInHour) * Time::SECONDS_IN_HOUR
-							)
-						)
-						->where('STARTS_IN', '>', new SqlExpression('?i', 0))
-				)
-			;
-
-			if ($isOn)
-			{
-				$result->where($filter);
-			}
-			else
-			{
-				$result->whereNot($filter);
-			}
+			return;
 		}
-	}
 
-	private function applyWithinCurrentDayTimeFilter(ConditionTree $result): void
-	{
-		// @todo recurring bookings are not supported
-		if (isset($this->filter['WITHIN_CURRENT_DAYTIME']))
-		{
-			$isOn = (bool)$this->filter['WITHIN_CURRENT_DAYTIME'];
-			$filter = Query::filter()
-				->where('CURRENT_HOUR', '>=', new SqlExpression('?i', Time::DAYTIME_START_HOUR))
-				->where('CURRENT_HOUR', '<', new SqlExpression('?i', Time::DAYTIME_END_HOUR))
-			;
-
-			if ($isOn)
-			{
-				$result->where($filter);
-			}
-			else
-			{
-				$result->whereNot($filter);
-			}
-		}
+		$result->whereExists(
+			new SqlExpression("
+			SELECT 1
+			FROM " . ScorerTable::getTableName() . "
+			WHERE
+				ENTITY_ID = " . $this->initAlias . ".ID
+				AND TYPE = '" . $this->connection->getSqlHelper()->forSql($counter) . "'
+				AND VALUE > 0
+				AND USER_ID = " . (int)CurrentUser::get()->getId()
+			));
 	}
 
 	private function getHasCountersUserIdConditionTree(int $userId): ConditionTree
@@ -611,16 +383,6 @@ class BookingFilter extends Filter
 	private function getResourcesConditionTree(array $resourceIds): ConditionTree
 	{
 		return Query::filter()->whereIn('RESOURCES.RESOURCE.ID', $resourceIds);
-	}
-
-	private function fromUnixTimeSqlFn($timestamp): string
-	{
-		if ($this->connection instanceof PgsqlConnection)
-		{
-			return 'to_timestamp(' . $timestamp . ')';
-		}
-
-		return 'FROM_UNIXTIME(' . $timestamp . ')';
 	}
 
 	private function getEntityId(string $moduleId, string $code): array

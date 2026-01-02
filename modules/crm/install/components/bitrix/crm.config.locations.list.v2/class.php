@@ -80,8 +80,7 @@ class CBitrixCrmConfigLocationList2Component extends CBitrixComponent
 	{
 		$result = true;
 
-		$CrmPerms = new CCrmPerms($GLOBALS['USER']->GetID());
-		$this->dbResult['CAN_DELETE'] = $this->dbResult['CAN_EDIT'] = $CrmPerms->HavePerm('CONFIG', BX_CRM_PERM_CONFIG, 'WRITE');
+		$this->dbResult['CAN_DELETE'] = $this->dbResult['CAN_EDIT'] = \Bitrix\Crm\Service\Container::getInstance()->getUserPermissions()->isCrmAdmin();
 		if(!$this->dbResult['CAN_EDIT'])
 		{
 			$this->errors['FATAL'][] = Loc::getMessage('CRM_CLL2_PERMISSION_DENIED');

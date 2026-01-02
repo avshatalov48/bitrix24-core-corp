@@ -64,7 +64,6 @@ if(!function_exists('__CrmMobileActivityEditEndResponse'))
 	}
 }
 
-$curUserPrems = CCrmPerms::GetCurrentUserPermissions();
 $action = isset($_REQUEST['ACTION']) ? $_REQUEST['ACTION'] : '';
 if($action === 'SAVE_ENTITY')
 {
@@ -311,6 +310,11 @@ if($action === 'SAVE_ENTITY')
 	}
 	elseif($typeID === CCrmActivityType::Email)
 	{
+		/**
+		 * @deprecated No longer used by internal code and not recommended.
+		 * @see \Bitrix\Crm\Controller\Mail\Message::sendMessageAction
+		 */
+
 		if(empty($commData))
 		{
 			__CrmMobileActivityEditEndResponse(array('ERROR' => GetMessage('CRM_ACTIVITY_SELECT_COMMUNICATION')));
@@ -345,7 +349,7 @@ if($action === 'SAVE_ENTITY')
 				'OWNER_ID' => $ownerID
 			);
 		}
-		
+
 		$comms = array();
 		foreach($commData as &$comm)
 		{
@@ -602,15 +606,15 @@ if($action === 'SAVE_ENTITY')
 			//Invoices have another event model
 			if($ownerTypeID !== CCrmOwnerType::Invoice)
 			{
-				$eventText  = '';
-				$eventText .= GetMessage('CRM_ACTIVITY_EDIT_TITLE_EMAIL_SUBJECT').': '.$subject."\n\r";
+				$eventText = GetMessage('CRM_ACTIVITY_EDIT_TITLE_EMAIL_SUBJECT') . ': ' . $subject . "\n\r";
 				$eventText .= GetMessage('CRM_ACTIVITY_EDIT_TITLE_EMAIL_FROM').': '.$from."\n\r";
 				$eventText .= GetMessage('CRM_ACTIVITY_EDIT_TITLE_EMAIL_TO').': '.implode(',', $to)."\n\r\n\r";
-				$eventText .= $descr;
+
 				// Register event only for owner
 				$CCrmEvent = new CCrmEvent();
 				$CCrmEvent->Add(
-					array(
+					[
+						'EVENT_TYPE' => CCrmEvent::TYPE_EMAIL,
 						'ENTITY' => array(
 							array(
 								'ENTITY_TYPE' => $ownerTypeName,
@@ -619,8 +623,7 @@ if($action === 'SAVE_ENTITY')
 						),
 						'EVENT_ID' => 'MESSAGE',
 						'EVENT_TEXT_1' => $eventText,
-						'FILES' => $rawFiles
-					)
+					]
 				);
 			}
 			//<-- Try add event to entity

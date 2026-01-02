@@ -58,6 +58,9 @@ class BaseScenario
 
 	public const SCENARIO_CALLBACK = 'callback';
 	public const SCENARIO_CONTACTS = 'contacts';
+	public const SCENARIO_BOOKING_AUTO_SELECTION = 'booking_auto_selection';
+	public const SCENARIO_BOOKING_ANY_RESOURCE = 'booking_any_resource';
+	public const SCENARIO_BOOKING_MANUAL_SETTINGS = 'booking_manual_settings';
 	public const SCENARIO_EXPERT = 'expert';
 	public const SCENARIO_FACEBOOK = 'facebook';
 	public const SCENARIO_FEEDBACK = 'feedback';
@@ -89,6 +92,9 @@ class BaseScenario
 	public const SCENARIOS = [
 		self::SCENARIO_CALLBACK => '/bitrix/images/crm/webform/icons/revertcall.svg',
 		self::SCENARIO_CONTACTS => '/bitrix/images/crm/webform/icons/contacts.svg',
+		self::SCENARIO_BOOKING_AUTO_SELECTION => '/bitrix/images/crm/webform/icons/online.svg',
+		self::SCENARIO_BOOKING_ANY_RESOURCE => '/bitrix/images/crm/webform/icons/online.svg',
+		self::SCENARIO_BOOKING_MANUAL_SETTINGS => '/bitrix/images/crm/webform/icons/online.svg',
 		self::SCENARIO_EXPERT => '/bitrix/images/crm/webform/icons/service.svg',
 		self::SCENARIO_FACEBOOK => '/bitrix/images/crm/webform/icons/facebook.svg',
 		self::SCENARIO_FEEDBACK => '/bitrix/images/crm/webform/icons/feedback.svg',

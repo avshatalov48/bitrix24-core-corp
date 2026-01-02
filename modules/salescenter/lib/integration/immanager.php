@@ -135,7 +135,13 @@ class ImManager extends Base
 		$iconPath = \Bitrix\Main\Application::getDocumentRoot().'/bitrix/modules/'.static::IM_APP_CODE.'/install/icon/icon_chat.png';
 		if(\Bitrix\Main\IO\File::isFileExists($iconPath))
 		{
-			return \CFile::SaveFile(\CFile::MakeFileArray($iconPath), static::IM_APP_CODE);
+			$file = \CFile::MakeFileArray($iconPath);
+			if ($file)
+			{
+				$file['MODULE_ID'] = Driver::MODULE_ID;
+
+				return \CFile::SaveFile($file, static::IM_APP_CODE);
+			}
 		}
 
 		return null;

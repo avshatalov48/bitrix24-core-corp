@@ -1,3 +1,4 @@
+/* eslint-disable */
 this.BX = this.BX || {};
 this.BX.Disk = this.BX.Disk || {};
 (function (exports) {
@@ -5,10 +6,8 @@ this.BX.Disk = this.BX.Disk || {};
 
 	var OnlyOfficeItem = /*#__PURE__*/function (_BX$UI$Viewer$Item) {
 	  babelHelpers.inherits(OnlyOfficeItem, _BX$UI$Viewer$Item);
-
 	  function OnlyOfficeItem(options) {
 	    var _this;
-
 	    babelHelpers.classCallCheck(this, OnlyOfficeItem);
 	    options = options || {};
 	    _this = babelHelpers.possibleConstructorReturn(this, babelHelpers.getPrototypeOf(OnlyOfficeItem).call(this, options));
@@ -18,7 +17,6 @@ this.BX.Disk = this.BX.Disk || {};
 	    _this.openEditInsteadPreview = options.openEditInsteadPreview;
 	    return _this;
 	  }
-
 	  babelHelpers.createClass(OnlyOfficeItem, [{
 	    key: "setController",
 	    value: function setController(controller) {
@@ -43,10 +41,6 @@ this.BX.Disk = this.BX.Disk || {};
 	    key: "loadData",
 	    value: function loadData() {
 	      var uid = BX.util.getRandomString(16);
-	      BX.Disk.sendTelemetryEvent({
-	        action: 'start',
-	        uid: uid
-	      });
 	      BX.SidePanel.Instance.open(BX.util.add_url_param('/bitrix/services/main/ajax.php', this.getSliderQueryParameters()), {
 	        width: '100%',
 	        cacheable: false,
@@ -63,11 +57,9 @@ this.BX.Disk = this.BX.Disk || {};
 	    key: "getSliderQueryParameters",
 	    value: function getSliderQueryParameters() {
 	      var action = 'disk.api.documentService.goToPreview';
-
 	      if (this.openEditInsteadPreview && BX.Disk.getDocumentService() === 'onlyoffice') {
 	        action = 'disk.api.documentService.goToEditOrPreview';
 	      }
-
 	      return {
 	        action: action,
 	        serviceCode: 'onlyoffice',
@@ -82,17 +74,14 @@ this.BX.Disk = this.BX.Disk || {};
 
 	var OnlyofficeExternalLinkItem = /*#__PURE__*/function (_BX$UI$Viewer$Item) {
 	  babelHelpers.inherits(OnlyofficeExternalLinkItem, _BX$UI$Viewer$Item);
-
 	  function OnlyofficeExternalLinkItem(options) {
 	    var _this;
-
 	    babelHelpers.classCallCheck(this, OnlyofficeExternalLinkItem);
 	    options = options || {};
 	    _this = babelHelpers.possibleConstructorReturn(this, babelHelpers.getPrototypeOf(OnlyofficeExternalLinkItem).call(this, options));
 	    _this.documentViewUrl = options.documentViewUrl;
 	    return _this;
 	  }
-
 	  babelHelpers.createClass(OnlyofficeExternalLinkItem, [{
 	    key: "setPropertiesByNode",
 	    value: function setPropertiesByNode(node) {
@@ -114,10 +103,6 @@ this.BX.Disk = this.BX.Disk || {};
 	    key: "loadData",
 	    value: function loadData() {
 	      var uid = BX.util.getRandomString(16);
-	      BX.Disk.sendTelemetryEvent({
-	        action: 'start',
-	        uid: uid
-	      });
 	      BX.SidePanel.Instance.open(this.getDocumentViewUrl(), {
 	        width: '100%',
 	        cacheable: false,

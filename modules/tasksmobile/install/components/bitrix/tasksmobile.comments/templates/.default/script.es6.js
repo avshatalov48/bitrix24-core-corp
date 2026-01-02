@@ -19,7 +19,6 @@ export default class Comments
 		this.userId = options.userId;
 		this.taskId = options.taskId;
 		this.guid = options.guid;
-		this.isTabsMode = options.isTabsMode;
 
 		this.canReadCommentsOnInit = true;
 
@@ -121,7 +120,7 @@ export default class Comments
 			if (xmlId === `TASK_${this.taskId}`)
 			{
 				this.commentsList = list;
-				this.commentsList.canCheckVisibleComments = !this.isTabsMode;
+				this.commentsList.canCheckVisibleComments = true;
 				this.unreadComments = new Map(this.commentsList.unreadComments);
 			}
 		});
@@ -180,28 +179,16 @@ export default class Comments
 
 		BXMobileApp.addCustomEvent('onPull-tasks', () => {});
 
-		if (this.isTabsMode)
-		{
-			BXMobileApp.addCustomEvent('tasks.task.tabs:onTabSelected', (event) => {
-				if (event.guid === this.guid && this.commentsList)
-				{
-					this.setCanCheckVisibleComments(event.tab === 'tasks.task.comments');
-				}
-			});
-		}
-		else
-		{
-			Event.bind(document, 'visibilitychange', () => this.setCanCheckVisibleComments(!document.hidden));
-			Event.bind(window, 'pagehide', () => this.setCanCheckVisibleComments(false));
-			Event.bind(window, 'pageshow', () => this.setCanCheckVisibleComments(true));
-		}
+		Event.bind(document, 'visibilitychange', () => this.setCanCheckVisibleComments(!document.hidden));
+		Event.bind(window, 'pagehide', () => this.setCanCheckVisibleComments(false));
+		Event.bind(window, 'pageshow', () => this.setCanCheckVisibleComments(true));
 
 		BX.MobileUI.addLivefeedLongTapHandler(this.commentsBlock, { likeNodeClass: 'post-comment-control-item-like' });
 	}
 
 	setCanCheckVisibleComments(canCheck: boolean): void
 	{
-		if (!this.isTabsMode && canCheck && this.canReadCommentsOnInit)
+		if (canCheck && this.canReadCommentsOnInit)
 		{
 			this.canReadCommentsOnInit = false;
 			this.readComments();

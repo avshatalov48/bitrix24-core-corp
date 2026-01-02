@@ -1,13 +1,21 @@
 <?php
 
+use Bitrix\Crm\AutomatedSolution\AutomatedSolutionManager;
 use Bitrix\Crm\Component\Base;
 use Bitrix\Crm\Controller\ErrorCode;
+use Bitrix\Crm\Integration\Catalog\Contractor\CategoryRepository;
 use Bitrix\Crm\Security\Role\Manage\Manager\AllSelection;
 use Bitrix\Crm\Integration\Analytics;
+use Bitrix\Crm\Security\Role\Manage\Manager\ButtonSelection;
+use Bitrix\Crm\Security\Role\Manage\Manager\Contract\SectionableRoleSelectionManager;
+use Bitrix\Crm\Security\Role\Manage\Manager\CustomSectionSelection;
+use Bitrix\Crm\Security\Role\Manage\Manager\ContractorSelection;
+use Bitrix\Crm\Security\Role\Manage\Manager\WebFormSelection;
 use Bitrix\Crm\Security\Role\Manage\RoleManagerSelectionFactory;
 use Bitrix\Crm\Security\Role\Manage\RoleSelectionManager;
 use Bitrix\Crm\Security\Role\UIAdapters\AccessRights\AccessRightsDTO;
 use Bitrix\Crm\Security\Role\UIAdapters\AccessRights\Queries\QueryRoles;
+use Bitrix\Crm\Service\Container;
 use Bitrix\Main\Config\Option;
 use Bitrix\Main\Engine\Contract\Controllerable;
 use Bitrix\Main\Localization\Loc;
@@ -15,7 +23,7 @@ use Bitrix\Main\Web\Json;
 
 if (!defined('B_PROLOG_INCLUDED') || B_PROLOG_INCLUDED !== true)
 {
-	die;
+	die();
 }
 
 if (!CModule::IncludeModule('crm'))
@@ -118,12 +126,14 @@ class CrmConfigPermsV2 extends Base implements Controllerable
 		$this->arResult['isSharedCrmPermissionsSlider'] = $this->criterion === AllSelection::CRITERION;
 		$this->arResult['analytics'] = $this->getAnalytics();
 
+		$shouldDisplayLeftMenu = false;
 		$this->arResult['menuId'] = $this->manager->getMenuId();
 		if ($this->arResult['menuId'])
 		{
-			$this->arResult['shouldDisplayLeftMenu'] = true;
+			$shouldDisplayLeftMenu = true;
 			$this->prepareLeftMenu();
 		}
+		$this->arResult['shouldDisplayLeftMenu'] = $shouldDisplayLeftMenu;
 
 		$this->IncludeComponentTemplate();
 	}
@@ -145,24 +155,36 @@ class CrmConfigPermsV2 extends Base implements Controllerable
 			return (int)$limitFromOptions;
 		}
 
-		static $limitsTable = [
-			1000 => 20, // 30 roles and 30 entities
-			5000 => 15, // 70 roles and 70 entities
-			10000 => 5, // 100 roles and 100 entities
-			25000 => 1, // 160 roles and 160 entities
-		];
-
-		$estimatedNumberOfSectionColumns = count($rolesData->userGroups) * count($rolesData->accessRights);
-
-		foreach (array_reverse($limitsTable, true) as $lowerThreshold => $limit)
+		$countAccessRights = 0;
+		foreach ($rolesData->accessRights as $accessRight)
 		{
-			if ($estimatedNumberOfSectionColumns >= $lowerThreshold)
-			{
-				return $limit;
-			}
+			$countAccessRights += count($accessRight['rights']);
 		}
 
-		return null;
+		$limit = (int)(50000 / $countAccessRights);
+
+		if ($limit < 1)
+		{
+			$limit = 1;
+		}
+		elseif ($limit < 10)
+		{
+			$limit = round($limit);
+		}
+		elseif ($limit < 100)
+		{
+			$limit = round($limit / 5) * 5;
+		}
+		elseif ($limit < 1000)
+		{
+			$limit = round($limit / 50) * 50;
+		}
+		else
+		{
+			$limit = 1000;
+		}
+
+		return (int)$limit;
 	}
 
 	private function getControllerData(): array
@@ -188,19 +210,26 @@ class CrmConfigPermsV2 extends Base implements Controllerable
 		return $data;
 	}
 
-	private function prepareLeftMenu()
+	private function prepareLeftMenu(): void
 	{
 		$menuItems = [];
+
+		/** @var SectionableRoleSelectionManager[] $sections */
 		$sections = [
-			new \Bitrix\Crm\Security\Role\Manage\Manager\AllSelection(),
-			new \Bitrix\Crm\Security\Role\Manage\Manager\WebFormSelection(),
-			new \Bitrix\Crm\Security\Role\Manage\Manager\ButtonSelection(),
+			new AllSelection(),
+			new WebFormSelection(),
+			new ButtonSelection(),
 		];
 
-		$automatedSolutionManager = new \Bitrix\Crm\AutomatedSolution\AutomatedSolutionManager();
+		if (CategoryRepository::isAtLeastOneContractorExists())
+		{
+			$sections[] = new ContractorSelection();
+		}
+
+		$automatedSolutionManager = Container::getInstance()->getAutomatedSolutionManager();
 		foreach ($automatedSolutionManager->getExistingIntranetCustomSections() as $customSection)
 		{
-			$customSectionSelection = new \Bitrix\Crm\Security\Role\Manage\Manager\CustomSectionSelection($customSection);
+			$customSectionSelection = new CustomSectionSelection($customSection);
 			$sections[] = $customSectionSelection;
 		}
 
@@ -214,7 +243,7 @@ class CrmConfigPermsV2 extends Base implements Controllerable
 		$this->arResult['leftMenu'] = $menuItems;
 	}
 
-	private function appendMenuForSection(\Bitrix\Crm\Security\Role\Manage\RoleSelectionManager $section, array &$menuItems)
+	private function appendMenuForSection(SectionableRoleSelectionManager $section, array &$menuItems): void
 	{
 		if (!$section->hasPermissionsToEditRights())
 		{

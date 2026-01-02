@@ -9,7 +9,6 @@ use Bitrix\Intranet\User\Filter\Provider\PhoneUserDataProvider;
 use Bitrix\Intranet\User\Filter\UserFilter;
 use Bitrix\Intranet\User\Grid\Row\Assembler\UserRowAssembler;
 use Bitrix\Intranet\User\Grid\Settings\UserSettings;
-use Bitrix\Main\Entity\ReferenceField;
 use Bitrix\Main\Filter\Filter;
 use Bitrix\Main\Filter\UserDataProvider;
 use Bitrix\Main\Grid\Column\Columns;
@@ -17,7 +16,6 @@ use Bitrix\Main\Grid\Grid;
 use Bitrix\Main\Grid\Pagination\PaginationFactory;
 use Bitrix\Main\Grid\Pagination\LazyLoadTotalCount;
 use Bitrix\Main\Grid\Row\Rows;
-use Bitrix\Main\Loader;
 use Bitrix\Main\ModuleManager;
 use Bitrix\Main\UI\PageNavigation;
 
@@ -42,12 +40,6 @@ final class UserGrid extends Grid
 		$params = parent::getOrmParams();
 		array_push($params['select'], 'ID', 'ACTIVE', 'CONFIRM_CODE', 'EXTERNAL_AUTH_ID');
 		$selectedSortField = '';
-
-		// remove this after b_extranet_user migration
-		if (\Bitrix\Main\Loader::includeModule('extranet'))
-		{
-			$params['select'][] = 'EXTRANET_GROUP';
-		}
 
 		if (!empty($params['order']))
 		{

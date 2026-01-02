@@ -162,6 +162,7 @@ class Manager
 			$data['WORK_WITH_RESULT'] === PromptRepository::IS_WORK_WITH_RESULT,
 			!empty($data['IS_SYSTEM']) && ($data['IS_SYSTEM'] === PromptRepository::IS_SYSTEM),
 			!empty($data['IS_FAVORITE']) && (int)$data['IS_FAVORITE'],
+			$data['JSON_OUTPUT_SCHEMA']
 		);
 	}
 

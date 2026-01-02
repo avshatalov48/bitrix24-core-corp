@@ -36,7 +36,6 @@ $MESS["VI_TRIAL_G_P1"] = "If the volume of inbound calls is increasing significa
 $MESS["VI_TRIAL_G_P2"] = "To add more than three employees to a queue group or to create multiple queue groups, please upgrade to selected commercial plans today!";
 $MESS["VI_TRIAL_LINE_SELECT_TEXT"] = "This feature enables an employee to select a suitable outbound phone number before making a call. The calling employee must have appropriate access permission for the selected line.";
 $MESS["VI_TRIAL_LINE_SELECT_TITLE"] = "Outbound phone number selection is available in selected commercial plans";
-$MESS["VI_TRIAL_LINK"] = "https://www.bitrix24.com/pro/call.php";
 $MESS["VI_TRIAL_LINK_TEXT"] = "Learn more";
 $MESS["VI_TRIAL_N_P1"] = "The free plan is limited to one rented phone number.";
 $MESS["VI_TRIAL_N_P2"] = "If you need even more rented phone numbers, please upgrade to selected commercial plan.";

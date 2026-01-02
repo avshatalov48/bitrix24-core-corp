@@ -20,7 +20,7 @@ export class SkipService
 			id: dialogId,
 		});
 
-		LayoutManager.getInstance().setLastOpenedElement(Layout.openlinesV2.name, '');
+		LayoutManager.getInstance().setLastOpenedElement(Layout.openlinesV2, '');
 
 		const queryParams = {
 			data: {

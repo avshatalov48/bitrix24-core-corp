@@ -5,6 +5,7 @@ use Bitrix\Intranet\Settings\Tools\ToolsManager;
 use Bitrix\Intranet\Portal\FirstPage;
 use Bitrix\Intranet\Site\FirstPage\MainFirstPage;
 use Bitrix\Intranet\UI\LeftMenu\MenuItem;
+use Bitrix\Intranet\UI\LeftMenu\Preset\Social;
 
 class Menu
 {
@@ -24,7 +25,7 @@ class Menu
 
 		foreach ($menuItemsData as $itemData)
 		{
-			$params = $itemData['PARAMS'] ?? [];
+			$params = isset($itemData['PARAMS']) && is_array($itemData['PARAMS']) ? $itemData['PARAMS'] : [];
 			$params = array_change_key_case($params, CASE_LOWER);
 
 			if (
@@ -83,17 +84,17 @@ class Menu
 	protected function getSavedUserMenuItems(): array
 	{
 		return [
-			MenuItem\ItemAdminShared::class      =>
+			MenuItem\ItemAdminShared::class =>
 				unserialize(
 					\COption::GetOptionString('intranet', 'left_menu_items_to_all_'.$this->getSiteId())
 					, ['allowed_classes' => false]
 				),
-			MenuItem\ItemRestApplication::class      =>
+			MenuItem\ItemRestApplication::class =>
 				unserialize(
 					\COption::GetOptionString('intranet', 'left_menu_items_marketplace_'.$this->getSiteId())
 					, ['allowed_classes' => false]
 				),
-			MenuItem\ItemUserSelf::class          =>
+			MenuItem\ItemUserSelf::class =>
 				\CUserOptions::GetOption('intranet', 'left_menu_self_items_'.$this->getSiteId()),
 			MenuItem\ItemUserFavorites::class =>
 				\CUserOptions::GetOption('intranet', 'left_menu_standard_items_'.$this->getSiteId()),
@@ -107,6 +108,11 @@ class Menu
 			$id = $item->getId();
 
 			if (!ToolsManager::getInstance()->checkAvailabilityByMenuId($id))
+			{
+				return;
+			}
+
+			if ($id === 'menu_configs_sect')
 			{
 				return;
 			}
@@ -194,13 +200,6 @@ class Menu
 						$item->getId(),
 						$item->getParent()->getId()
 					);
-				}
-				else if (
-					!$this->mainPage->isAvailable()
-					&& $item->getLink() === FirstPage::getInstance()->getLink()
-				)
-				{
-					$sort = 1;
 				}
 
 				$item->setSort($sort);
@@ -307,5 +306,21 @@ class Menu
 	public static function getDefaultSiteId(): string
 	{
 		return 's1';
+	}
+
+	public static function isCollapsed(): bool
+	{
+		$requestUri = \Bitrix\Main\Context::getCurrent()->getRequest()->getRequestUri();
+		$isEmbeddedMessenger = str_starts_with($requestUri, SITE_DIR . 'online/');
+		$isSocialPreset = Preset\Manager::getPreset()->getCode() === Social::CODE;
+		$defaultValue = $isSocialPreset ? 'N' : 'Y';
+
+		$globalValue = \CUserOptions::getOption('intranet', 'left_menu_collapsed', $defaultValue) === 'Y';
+		if ($isEmbeddedMessenger)
+		{
+			return \CUserOptions::getOption('intranet', 'left_menu_collapsed:online', $globalValue ? 'Y' : 'N') === 'Y';
+		}
+
+		return $globalValue;
 	}
 }

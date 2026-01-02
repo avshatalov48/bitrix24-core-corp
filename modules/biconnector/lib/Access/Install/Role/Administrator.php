@@ -14,8 +14,13 @@ class Administrator extends Base
 			PermissionDictionary::BIC_ACCESS,
 			PermissionDictionary::BIC_SETTINGS_ACCESS,
 			PermissionDictionary::BIC_SETTINGS_EDIT_RIGHTS,
-			PermissionDictionary::BIC_DASHBOARD_EDIT_SCOPE,
+			PermissionDictionary::BIC_GROUP_MODIFY,
 		];
+	}
+
+	public function getDefaultGroupPermissions(): array
+	{
+		return [];
 	}
 
 	protected function getRelationUserGroups(): array
@@ -28,9 +33,9 @@ class Administrator extends Base
 		$groups = [];
 		$adminGroups = UserGroupTable::getList([
 			'filter' => [
-				'=GROUP_ID' => 1
+				'=GROUP_ID' => 1,
 			],
-			'select' => [ 'USER_ID' ]
+			'select' => ['USER_ID'],
 		]);
 
 		while ($adminRelations = $adminGroups->fetch())

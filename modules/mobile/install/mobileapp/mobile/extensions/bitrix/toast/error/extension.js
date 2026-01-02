@@ -11,6 +11,8 @@ jn.define('toast/error', (require, exports, module) => {
 
 	/**
 	 * Show a toast with "error" notification.
+	 * @param {ToastParams} params
+	 * @param {Object} [layoutWidget=null]
 	 */
 	function showErrorToast(params = {}, layoutWidget = null)
 	{

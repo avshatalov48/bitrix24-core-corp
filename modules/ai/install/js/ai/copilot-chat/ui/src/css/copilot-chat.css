@@ -11,11 +11,13 @@
 }
 
 .ai__copilot-chat_header {
+	position: relative;
 	min-height: 52px;
 	background-color: #fff;
 }
 
 .ai__copilot-chat_main {
+	position: relative;
 	padding: 12px 14px 0 20px;
 	margin-bottom: 4px;
 	display: flex;
@@ -61,12 +63,22 @@
 }
 
 .ai__copilot-chat_main-loader-container {
+	position: absolute;
+	top: 40%;
+	left: 0;
 	width: 100%;
 	flex: 1;
 	display: flex;
 	flex-direction: row;
 	align-items: center;
 	justify-content: center;
+}
+
+.ai__copilot-chat_load-history-error {
+	display: flex;
+	flex-direction: column;
+	justify-content: center;
+	flex: 1;
 }
 
 .ai__copilot-chat_footer {
@@ -108,4 +120,23 @@
 
 .ai__copilot-chat_warning-message a:active {
 	text-decoration-color: rgba(var(--ui-color-on-primary-rgb), 1)
+}
+
+.ai__copilot-chat_loading-bar {
+	position: absolute;
+	top: auto;
+	bottom: -4px;
+	left: 0;
+	right: 0;
+	z-index: 3;
+}
+
+.main-enter-active,
+.main-leave-active {
+	transition: opacity 0.2s ease-in-out;
+}
+
+.main-enter-from,
+.main-leave-to {
+	opacity: 0;
 }

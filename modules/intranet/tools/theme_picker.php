@@ -54,6 +54,33 @@ if (check_bitrix_sessid() && $USER->isAuthorized() && $request->getPost("templat
 			Bitrix\Intranet\Composite\CacheProvider::deleteUserCache();
 		}
 	}
+	else if ($theme && $request->getPost("action") === "save-blurred-image")
+	{
+		$success = false;
+		$themeId = $request->getPost("themeId");
+		$bgImageBlurred = $request->getFile("bgImageBlurred");
+		if ($theme->isCustomThemeId($themeId) && is_array($bgImageBlurred))
+		{
+			$fields = [
+				"bgColor" => $request->getPost("bgColor"),
+				"bgImageBlurred" => $bgImageBlurred,
+				"ignoreErrors" => $request->getPost("ignoreErrors") === 'true',
+			];
+
+			$success = $theme->updateBgImageBlurred($themeId, $fields);
+		}
+
+		if (\Bitrix\Main\Loader::includeModule("intranet"))
+		{
+			\Bitrix\Intranet\Composite\CacheProvider::deleteUserCache();
+		}
+
+		$result = ["success" => $success];
+		if ($success)
+		{
+			$result["theme"] = $theme->getCustomTheme($themeId);
+		}
+	}
 	else if ($theme && $request->getPost("action") === "getlist")
 	{
 		$result = array(
@@ -70,6 +97,7 @@ if (check_bitrix_sessid() && $USER->isAuthorized() && $request->getPost("templat
 				array(
 					"bgColor" => $request->getPost("bgColor"),
 					"bgImage" => $request->getFile("bgImage"),
+					"bgImageBlurred" => $request->getFile("bgImageBlurred"),
 					"textColor" => $request->getPost("textColor"),
 				)
 			);

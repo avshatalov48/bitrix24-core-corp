@@ -78,7 +78,15 @@ class PageNavigation extends UI\PageNavigation
 		}
 
 		$page = $page > 0 ? $page : 1;
-		$this->setCurrentPage($page);
+		if ($this->getPageCount() > 0 && $this->getPageCount() < $page)
+		{
+			$this->setCurrentPage($this->getPageCount());
+		}
+		else
+		{
+			$this->setCurrentPage($page);
+		}
+
 		$this->allRecords = $this->getSessionVar()['allRecords'] ?? false;
 	}
 }

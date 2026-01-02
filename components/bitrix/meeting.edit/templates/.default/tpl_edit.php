@@ -1,5 +1,8 @@
 <?if(!defined("B_PROLOG_INCLUDED") || B_PROLOG_INCLUDED!==true)die();?>
 <?
+
+$APPLICATION->SetAdditionalCSS('/bitrix/js/intranet/intranet-common.css');
+
 $bHasTitle = true;
 if (($arResult['MEETING']['TITLE'] ?? null) == '')
 {
@@ -34,24 +37,21 @@ foreach ($arResult['MEETING']['USERS'] as $USER_ID => $USER_ROLE)
 	}
 }
 
-$this->SetViewTarget('pagetitle', 100);
-?>
-	<a href="<?=$arParams['LIST_URL']?>" class="webform-small-button webform-small-button-blue webform-small-button-back">
-		<span class="webform-small-button-icon"></span>
-		<span class="webform-small-button-text"><?=GetMessage('ME_LIST_TITLE')?></span>
-	</a>
-<?
+\Bitrix\UI\Toolbar\Facade\Toolbar::addButton(
+	new \Bitrix\UI\Buttons\Button([
+		'link' => $arParams['LIST_URL'],
+		'text' => GetMessage('ME_LIST_TITLE')
+	]),
+);
+
 if (isset($arResult['MEETING']['ID'])):
-?>
-	<a href="<?=$arParams['MEETING_URL']?>" class="webform-small-button webform-small-button-blue webform-small-button-back">
-		<span class="webform-small-button-icon"></span>
-		<span class="webform-small-button-text"><?=GetMessage('ME_VIEW_TITLE')?></span>
-	</a>
-<?
+	\Bitrix\UI\Toolbar\Facade\Toolbar::addButton(
+		new \Bitrix\UI\Buttons\Button([
+			'link' => $arParams['MEETING_URL'],
+			'text' => GetMessage('ME_VIEW_TITLE')
+		]),
+	);
 endif;
-?>
-<?
-$this->EndViewTarget();
 
 $arValue = $arResult['MEETING']['USERS'] ? array_keys($arResult['MEETING']['USERS']) : array($USER->GetID());
 

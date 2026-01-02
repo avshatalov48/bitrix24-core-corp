@@ -7,11 +7,12 @@ use Bitrix\Main;
 use Bitrix\Sign\Contract;
 use Bitrix\Sign\Helper\Field\NameHelper;
 use Bitrix\Sign\Item\Document;
+use Bitrix\Sign\Item\Document\BindingCollection;
 use Bitrix\Sign\Item\Document\Template;
 use Bitrix\Sign\Item\Field;
 use Bitrix\Sign\Item\Member;
+use Bitrix\Sign\Item\MemberCollection;
 use Bitrix\Sign\Operation;
-use Bitrix\Sign\Operation\Result\ConfigureResult;
 use Bitrix\Sign\Repository\DocumentRepository;
 use Bitrix\Sign\Repository\MemberRepository;
 use Bitrix\Sign\Result\CreateDocumentResult;
@@ -23,34 +24,37 @@ use Bitrix\Sign\Service\Providers\ProfileProvider;
 use Bitrix\Sign\Service\Sign\DocumentService;
 use Bitrix\Sign\Service\Sign\MemberService;
 use Bitrix\Sign\Type\Document\InitiatedByType;
-use Bitrix\Sign\Type\Member\EntityType;
 use Bitrix\Sign\Type\Member\Role;
+use Bitrix\Sign\Type\Template\Status;
+use Bitrix\Sign\Type\Template\Visibility;
 
 final class Send implements Contract\Operation
 {
-	private const TRIES_TO_CONFIGURE_AND_START_SIGNING = 10;
-	private const TRIES_TO_CONFIGURE_AND_START_SIGNING_TIMEOUT = 2;
-	private const DOCUMENT_INCORRECT_STATE_ERROR_CODE = 'DOCUMENT_INCORRECT_STATE';
-
 	private readonly DocumentService $documentService;
 	private readonly DocumentRepository $documentRepository;
 	private readonly MemberRepository $memberRepository;
 	private readonly MemberService $memberService;
 	private readonly ProfileProvider $profileProvider;
 	private readonly MemberDynamicFieldInfoProvider $dynamicFieldProvider;
+
 	/**
 	 * @var list<array{name: string, value: string}>
 	 */
 	private array $validDynamicFields = [];
+
 	/**
 	 * @var list<array{name: string, value: string}>
 	 */
 	private array $validLocalFields = [];
+	private ?BindingCollection $bindings = null;
 
 	public function __construct(
 		private readonly Template $template,
-		private readonly int $sendFromUserId,
+		private readonly int $responsibleUserId,
 		private readonly array $fields = [],
+		private readonly ?int $sendFromUserId = null,
+		private readonly ?int $representativeUserId = null,
+		private readonly ?MemberCollection $memberList = null,
 		?DocumentService $documentService = null,
 		?ProfileProvider $profileProvider = null,
 		?MemberDynamicFieldInfoProvider $dynamicFieldProvider = null,
@@ -70,19 +74,57 @@ final class Send implements Contract\Operation
 		{
 			return Result::createByErrorData(message: 'Template is not saved');
 		}
+
+		if ($this->template->status !== Status::COMPLETED)
+		{
+			return Result::createByErrorData(message: 'Template is not completed');
+		}
+
+		if ($this->template->visibility === Visibility::INVISIBLE)
+		{
+			return Result::createByErrorData(message: 'Template is not visible');
+		}
+
+		if ($this->getSendFromUserId() < 1)
+		{
+			return Result::createByErrorData(message: 'Send from user is not set');
+		}
+
+		if ($this->responsibleUserId < 1)
+		{
+			return Result::createByErrorData(message: 'Responsible user id not set');
+		}
+
 		$document = $this->documentRepository->getByTemplateId($this->template->id);
-		if ($document?->initiatedByType !== InitiatedByType::EMPLOYEE)
+		if ($document === null)
+		{
+			return Result::createByErrorData(message: 'Document not found');
+		}
+
+		if (!in_array($document?->initiatedByType, InitiatedByType::getAll(), true))
 		{
 			return Result::createByErrorData(message: 'Cant send document by template');
 		}
 
-		$result = $this->validateFields($document);
-		if (!$result->isSuccess())
+		if ($document->initiatedByType === InitiatedByType::EMPLOYEE)
 		{
-			return $result;
+			if ($this->sendFromUserId === null)
+			{
+				return Result::createByErrorData(message: 'Send from user id is not set');
+			}
+
+			$result = $this->validateFields($document);
+			if (!$result->isSuccess())
+			{
+				return $result;
+			}
 		}
 
-		$result = (new Operation\Document\Copy($document, $this->sendFromUserId))->launch();
+		$result = (new Operation\Document\Copy(
+			document: $document,
+			createdByUserId: $this->responsibleUserId,
+			bindings: $this->bindings,
+		))->launch();
 		if (!$result instanceof CreateDocumentResult)
 		{
 			return $result;
@@ -168,7 +210,19 @@ final class Send implements Contract\Operation
 			return (new Result())->addError(new Error('Employee member not found'));
 		}
 
-		return new SendResult($newDocument, $employeeMember);
+		$assigneeMember = $this->memberRepository->getByDocumentIdWithRole($newDocument->id, Role::ASSIGNEE);
+		if ($assigneeMember === null)
+		{
+			$rollbackResult = $this->documentService->rollbackDocument($newDocument->id);
+			if (!$rollbackResult->isSuccess())
+			{
+				return $rollbackResult;
+			}
+
+			return (new Result())->addError(new Error('Assignee member not found'));
+		}
+
+		return new SendResult($newDocument, $employeeMember, $assigneeMember);
 	}
 
 	private function setSmartDocumentAssignedById(Document $document): Main\Result
@@ -207,75 +261,31 @@ final class Send implements Contract\Operation
 
 	private function updateMembers(Document $document): Main\Result
 	{
-		$members = $this->memberRepository->listByDocumentIdExcludeRoles($document->id, Role::SIGNER, Role::EDITOR);
-		$members->add(
-			new Member(
-				party: 1,
-				entityType: EntityType::USER,
-				entityId: $this->sendFromUserId,
-				role: Role::SIGNER,
-			),
+		$operation = new SetupTemplateMembers(
+			document: $document,
+			sendFromUserId: $this->sendFromUserId,
+			representativeUserId: $this->representativeUserId,
+			memberList: $this->memberList,
 		);
-		foreach ($members as $member)
-		{
-			$member->id = null;
-		}
-		$result = $this->memberService->setupB2eMembers($document->uid, $members, $document->representativeId);
-		if (!$result->isSuccess())
-		{
-			return $result;
-		}
 
-		$document->parties = $members->count();
-
-		return $this->documentRepository->update($document);
+		return $operation->launch();
 	}
 
 	private function configureAndStart(Document $newDocument): Main\Result
 	{
-		$result = new Main\Result();
-		$tries = 1;
+		$configureResult = (new Operation\ConfigureFillAndStart($newDocument->uid))->launch();
 
-		for ($i = 1; $i <= self::TRIES_TO_CONFIGURE_AND_START_SIGNING; $i++)
+		if (!$configureResult->isSuccess())
 		{
-			$configureResult = $this->documentService->configureAndStart($newDocument->uid);
-
-			if (!$configureResult->isSuccess())
-			{
-				$result->addErrors($configureResult->getErrors());
-				if (!$this->isDocumentIncorrectStateInErrors($configureResult->getErrors()))
-				{
-					$tries = $i;
-					break;
-				}
-
-				sleep(self::TRIES_TO_CONFIGURE_AND_START_SIGNING_TIMEOUT);
-				continue;
-			}
-
-			if ($configureResult instanceof ConfigureResult && $configureResult->completed)
-			{
-				return new Main\Result();
-			}
+			return $configureResult;
 		}
 
-		return $result->addError(new Main\Error("Signing to started after `$tries` tries"));
-	}
-
-	/**
-	 * @param Main\Error[] $errors
-	 */
-	private function isDocumentIncorrectStateInErrors(array $errors): bool
-	{
-		foreach ($errors as $error)
+		if ($configureResult instanceof Operation\Result\ConfigureResult && !$configureResult->completed)
 		{
-			if ($error->getCode() === self::DOCUMENT_INCORRECT_STATE_ERROR_CODE)
-			{
-				return true;
-			}
+			Container::instance()->getDocumentAgentService()->addConfigureAndStartAgent($newDocument->uid);
 		}
 
-		return false;
+		return new Main\Result();
 	}
 
 	private function fillFields(int $documentId): Main\Result
@@ -356,6 +366,11 @@ final class Send implements Contract\Operation
 	 */
 	private function getAllowedFieldsMap(Document $document): array
 	{
+		if ($this->sendFromUserId === null)
+		{
+			return [];
+		}
+
 		return (new \Bitrix\Sign\Factory\Field())
 			->createDocumentFutureSignerFields($document, $this->sendFromUserId)
 			->getNameMap()
@@ -390,5 +405,17 @@ final class Send implements Contract\Operation
 		);
 
 		return $operation->launch();
+	}
+
+	private function getSendFromUserId(): int
+	{
+		$userId = (int)$this->sendFromUserId;
+
+		return $userId ?: $this->template->createdById;
+	}
+
+	public function setBindings(BindingCollection $bindings): void
+	{
+		$this->bindings = $bindings;
 	}
 }

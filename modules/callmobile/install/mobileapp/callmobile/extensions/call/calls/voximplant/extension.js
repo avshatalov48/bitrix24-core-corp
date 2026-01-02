@@ -52,6 +52,7 @@
 		constructor(params)
 		{
 			this.id = params.id;
+			this.uuid = params.uuid;
 			this.instanceId = params.instanceId;
 			this.parentId = params.parentId || null;
 			this.direction = params.direction;
@@ -132,6 +133,11 @@
 			this.lastSelfPingReceivedTimeout = null;
 
 			this.created = new Date();
+		}
+
+		get provider()
+		{
+			return BX.Call.Provider.Voximplant;
 		}
 
 		log()
@@ -269,13 +275,13 @@
 			switch (this._joinStatus)
 			{
 				case BX.Call.JoinStatus.Local:
-					this.eventEmitter.emit(BX.Call.Event.onJoin, [{callId: this.id, local: true}]);
+					this.eventEmitter.emit(BX.Call.Event.onJoin, [{ callId: this.id, callUuid: this.uuid, local: true }]);
 					break;
 				case BX.Call.JoinStatus.Remote:
-					this.eventEmitter.emit(BX.Call.Event.onJoin, [{callId: this.id, local: false}]);
+					this.eventEmitter.emit(BX.Call.Event.onJoin, [{ callId: this.id, callUuid: this.uuid, local: false}]);
 					break;
 				case BX.Call.JoinStatus.None:
-					this.eventEmitter.emit(BX.Call.Event.onLeave, [{callId: this.id}]);
+					this.eventEmitter.emit(BX.Call.Event.onLeave, [{ callId: this.id, callUuid: this.uuid }]);
 					break;
 			}
 		}
@@ -292,7 +298,7 @@
 				return;
 			}
 			this._active = newActive;
-			this.eventEmitter.emit(this.active ? BX.Call.Event.onActive : BX.Call.Event.onInactive, [this.id]);
+			this.eventEmitter.emit(this.active ? BX.Call.Event.onActive : BX.Call.Event.onInactive, [{ callId: this.id, callUuid: this.uuid }]);
 		}
 
 		bindClientEvents()
@@ -1055,6 +1061,11 @@
 			}
 		}
 
+		updateUsersCount(users)
+		{
+			this.eventEmitter.emit(BX.Call.Event.onChatUsersCountUpdate, [users]);
+		}
+
 		__onCallEndpointAdded(endpoint)
 		{
 			let userName = typeof (endpoint.userDisplayName) === "string" ? endpoint.userDisplayName : "";
@@ -1193,9 +1204,7 @@
 			clearTimeout(this.pingUsersInterval);
 			clearTimeout(this.pingBackendInterval);
 
-			this.eventEmitter.emit(BX.Call.Event.onDestroy, [{
-				call: this,
-			}]);
+			this.eventEmitter.emit(BX.Call.Event.onDestroy, [{ callId: this.id, callUuid: this.uuid }]);
 			this.eventEmitter = null;
 			if (this.signaling)
 			{

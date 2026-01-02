@@ -7,4 +7,5 @@ $MESS["IMCONNECTOR_FIELD_DEBUG_TITLE"] = "Ретке келтіру режимі
 $MESS["IMCONNECTOR_FIELD_LIST_CONNECTOR_TITLE"] = "Қолданылатын коннекторлардың тізімі";
 $MESS["IMCONNECTOR_FIELD_URI_CLIENT_TITLE"] = "Сайттың көпшілікке арналған мекенжайы";
 $MESS["IMCONNECTOR_FIELD_URI_SERVER_TITLE"] = "Сервер мекенжайы (келесі түрлі: im.bitrix.info)";
+$MESS["IMCONNECTOR_FIELD_URI_SERVER_TITLE_MSGVER_1"] = "Сервер мекенжайы (түрі: im.#URL#)";
 $MESS["IMCONNECTOR_TAB_SETTINGS"] = "Мессенджер коннекторларының баптаулары";

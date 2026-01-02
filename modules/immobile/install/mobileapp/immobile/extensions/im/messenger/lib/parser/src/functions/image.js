@@ -7,10 +7,41 @@
  */
 jn.define('im/messenger/lib/parser/functions/image', (require, exports, module) => {
 
-	const { Loc } = require('loc');
+	const { Loc } = require('im/messenger/loc');
 	const { parserEmoji } = require('im/messenger/lib/parser/functions/emoji');
 
 	const parserImage = {
+		decodeIcon(text)
+		{
+			const isSingleIcon = /^\[icon=([^\s\]]+)(?:\s+[^\]]*)?]$/i.test(text.trim());
+			const size = isSingleIcon ? 40 : 25;
+
+			return text.replaceAll(
+				/\[icon=([^\s\]]+)(?:\s+[^\]]*)?]/gi,
+				(match, url) => `[IMG width="${size}" height="${size}"]${url}[/IMG]`,
+			);
+		},
+
+		decodeImageWithSize(text)
+		{
+			const patternImgWithUrl = /(\[img(?:\s\S+)?])\[url(?:=\S+)?]([^[]+)(?:\[\/url])?(\s?\[\/img])(?:\[\/url])?/gi;
+			const patternImageWithSize = /\[img(?:\ssize=(?:small|medium|large))?](\S+)\s\[\/img]/gi;
+
+			return text
+				.replaceAll(patternImgWithUrl, '$1$2$3')
+				.replaceAll(
+					patternImageWithSize,
+					(match, url) => `[IMG radius="10"]${url}[/IMG]`,
+				);
+		},
+
+		simplifyImage(text)
+		{
+			const pattern = /\[img(?:\ssize=small|medium|large)?](\S+)\s\[\/img]/gi;
+
+			return text.replaceAll(pattern, parserEmoji.getImageBlock());
+		},
+
 		simplifyLink(text)
 		{
 			text = text.replace(/(.)?((https|http):\/\/(\S+)\.(jpg|jpeg|png|gif|webp)(\?\S+)?)/ig, function(whole, letter, url)

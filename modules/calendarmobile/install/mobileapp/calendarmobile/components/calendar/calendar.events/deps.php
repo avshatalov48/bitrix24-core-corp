@@ -7,7 +7,6 @@ return [
 		'loc',
 		'layout/ui/fields/boolean',
 		'calendar:sharing',
-		'helpers/menu',
 		'rest',
 		'bottom-sheet',
 		'helpers/component',

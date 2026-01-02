@@ -157,14 +157,24 @@ class Binding extends Base
 
 		if ($sourceEntityId === $targetEntityId)
 		{
-			$this->addError(new Error('Source and target entity ID cannot be equal'));
+			$this->addError(
+				new Error(
+					'Source and target entity ID cannot be equal',
+					'SOURCE_AND_TARGET_ENTITY_ID_ARE_EQUAL_ERROR'
+				)
+			);
 
 			return null;
 		}
 
 		if ($sourceEntityTypeId !== $targetEntityTypeId)
 		{
-			$this->addError(new Error('Source and target entity types are not equal'));
+			$this->addError(
+				new Error(
+					'Source and target entity types are not equal',
+					'SOURCE_AND_TARGET_ENTITY_TYPES_ARE_NOT_EQUAL_ERROR'
+				)
+			);
 
 			return null;
 		}
@@ -240,12 +250,12 @@ class Binding extends Base
 
 	protected function canView(int $entityTpeId, int $entityId): bool
 	{
-		return $this->userPermissions->checkReadPermissions($entityTpeId, $entityId);
+		return $this->userPermissions->item()->canRead($entityTpeId, $entityId);
 	}
 
 	protected function canEdit(int $entityTpeId, int $entityId): bool
 	{
-		return $this->userPermissions->checkUpdatePermissions($entityTpeId, $entityId);
+		return $this->userPermissions->item()->canUpdate($entityTpeId, $entityId);
 	}
 
 	protected function updateBindings(int $activityId, array $bindings, array $moveBindingsMap = []): ?bool

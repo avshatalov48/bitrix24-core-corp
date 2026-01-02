@@ -6,6 +6,7 @@ use Bitrix\AI\Context;
 use Bitrix\AI\Integration\Baas\BaasTokenService;
 use Bitrix\AI\Limiter\Plan;
 use Bitrix\AI\Model\UsageTable;
+use Bitrix\Main\Config\Option;
 use Bitrix\Main\Entity\Query;
 use Bitrix\Main\Type\DateTime;
 
@@ -34,6 +35,12 @@ class Monthly implements IPeriod
 	 */
 	public function getCurrentUsage(): int
 	{
+		$testUsageCount = (int)Option::get('ai', 'test_monthly_usage', -1);
+		if ($testUsageCount >= 0)
+		{
+			return $testUsageCount;
+		}
+
 		$result = UsageTable::query()
 			->addSelect(Query::expr()->sum('USAGE_COUNT'), 'SUM')
 			->where('USAGE_PERIOD', $this->getCode())

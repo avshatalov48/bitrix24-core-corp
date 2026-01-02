@@ -1,10 +1,20 @@
 <?php
-if (!defined('B_PROLOG_INCLUDED') || B_PROLOG_INCLUDED !== true) die();
+
+if (!defined('B_PROLOG_INCLUDED') || B_PROLOG_INCLUDED !== true)
+{
+	die();
+}
 
 use Bitrix\Main\Localization\Loc;
 use Bitrix\Main\UI\Extension;
 use Bitrix\SalesCenter\Integration\Bitrix24Manager;
 
+/**
+ * @global CMain $APPLICATION
+ * @var array $arResult
+ */
+
+$bodyClass = $APPLICATION->GetPageProperty('BodyClass');
 $APPLICATION->SetPageProperty('BodyClass', ($bodyClass ? $bodyClass.' ' : '') . 'no-background');
 
 Extension::load([
@@ -17,21 +27,17 @@ Extension::load([
 	'salescenter.manager',
 ]);
 
-\Bitrix\Main\Localization\Loc::loadLanguageFile(__FILE__);
-
 $APPLICATION->SetTitle(Loc::getMessage('SC_CRM_STORE_TITLE_2_MSGVER_1'));
+
+$manager = Bitrix24Manager::getInstance();
+$manager->addIntegrationRequestButtonToToolbar([
+	Bitrix24Manager::ANALYTICS_SENDER_PAGE => Bitrix24Manager::ANALYTICS_LABEL_SALESHUB_CRM_STORE
+]);
+$manager->addFeedbackPayOrderOfferButtonToToolbar();
+unset(
+	$manager,
+);
 ?>
-
-<?php $this->setViewTarget("inside_pagetitle_below", 100); ?>
-<div class="salescenter-main-header-feedback-container">
-<?php
-	Bitrix24Manager::getInstance()->renderIntegrationRequestButton([
-		Bitrix24Manager::ANALYTICS_SENDER_PAGE => Bitrix24Manager::ANALYTICS_LABEL_SALESHUB_CRM_STORE
-	]);
-	Bitrix24Manager::getInstance()->renderFeedbackPayOrderOfferButton(); ?>
-</div>
-<?php $this->endViewTarget(); ?>
-
 <div class="salescenter-crmstore-container" id="salescenter-crmstore-container">
 	<div class="salescenter-crmstore-title"><?=Loc::getMessage('SC_CRM_STORE_CONTAINER_TITLE')?></div>
 	<div class="salescenter-crmstore-sub-title"><?=Loc::getMessage('SC_CRM_STORE_CONTAINER_SUB_TITLE_2_MSGVER_1')?></div>

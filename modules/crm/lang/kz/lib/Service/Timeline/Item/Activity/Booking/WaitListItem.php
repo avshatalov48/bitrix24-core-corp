@@ -1,0 +1,7 @@
+<?php
+$MESS["CRM_TIMELINE_WAIT_LIST_ITEM_BTN_DELETE"] = "Жою";
+$MESS["CRM_TIMELINE_WAIT_LIST_ITEM_BTN_OPEN"] = "Ашу";
+$MESS["CRM_TIMELINE_WAIT_LIST_ITEM_CLIENT"] = "Клиент";
+$MESS["CRM_TIMELINE_WAIT_LIST_ITEM_MENU_ITEM_CYCLE"] = "Жазба мәртебелері";
+$MESS["CRM_TIMELINE_WAIT_LIST_ITEM_TITLE"] = "Онлайн-жазылу: күту парағы";
+$MESS["CRM_TIMELINE_WAIT_LIST_ITEM_TITLE_COMPLETED"] = "Күту парағынан жазба ісі орындалды";

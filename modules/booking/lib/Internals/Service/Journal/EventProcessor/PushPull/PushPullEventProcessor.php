@@ -52,6 +52,10 @@ class PushPullEventProcessor implements EventProcessor
 			JournalType::ResourceTypeAdded => PushPullCommandType::ResourceTypeAdded,
 			JournalType::ResourceTypeUpdated => PushPullCommandType::ResourceTypeUpdated,
 			JournalType::ResourceTypeDeleted => PushPullCommandType::ResourceTypeDeleted,
+			JournalType::WaitListItemAdded => PushPullCommandType::WaitListItemAdded,
+			JournalType::WaitListItemUpdated => PushPullCommandType::WaitListItemUpdated,
+			JournalType::WaitListItemDeleted => PushPullCommandType::WaitListItemDeleted,
+			JournalType::WaitListItemClientUpdated => PushPullCommandType::WaitListItemClientUpdated,
 			default => null,
 		};
 	}

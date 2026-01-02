@@ -2,6 +2,8 @@
 
 namespace Bitrix\Crm\Security\Role\Manage\Entity;
 
+use Bitrix\Crm\Category\PermissionEntityTypeHelper;
+use Bitrix\Crm\Integration\Catalog\Contractor;
 use Bitrix\Crm\Security\Role\Manage\DTO\EntityDTO;
 use Bitrix\Crm\Security\Role\Manage\PermissionAttrPresets;
 use Bitrix\Crm\Service;
@@ -33,9 +35,20 @@ class Company implements PermissionEntity, FilterableByCategory
 		$categories = $factory->getCategories();
 		$categories = $this->filterCategories($categories);
 
+		$hiddenCompanyCategories = [
+			Contractor\CategoryRepository::CATALOG_CONTRACTOR_COMPANY,
+		];
+
 		foreach ($categories as $category)
 		{
-			$entityName = Service\UserPermissions::getPermissionEntityType($factory->getEntityTypeId(), $category->getId());
+			if (in_array($category->getCode(), $hiddenCompanyCategories, true))
+			{
+				continue;
+			}
+
+			$entityName = (new PermissionEntityTypeHelper($factory->getEntityTypeId()))
+				->getPermissionEntityTypeForCategory($category->getId())
+			;
 			$entityTitle = $category->getSingleNameIfPossible();
 
 			if ($category->getIsDefault())

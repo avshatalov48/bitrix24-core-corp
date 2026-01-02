@@ -8,7 +8,7 @@ return [
 	'css' => 'dist/popup-maker.bundle.css',
 	'js' => 'dist/popup-maker.bundle.js',
 	'rel' => [
-		'main.core',
+		'main.polyfill.core',
 	],
-	'skip_core' => false,
+	'skip_core' => true,
 ];

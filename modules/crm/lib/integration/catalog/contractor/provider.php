@@ -5,7 +5,6 @@ namespace Bitrix\Crm\Integration\Catalog\Contractor;
 use Bitrix\Catalog\v2\Contractor\Provider\IContractor;
 use Bitrix\Catalog\v2\Contractor\Provider\IProvider;
 use Bitrix\Crm\Component\EntityDetails\BaseComponent;
-use Bitrix\Crm\Controller\Action\Entity\SearchAction;
 use Bitrix\Crm\Format\PersonNameFormatter;
 use Bitrix\Crm\Item;
 use Bitrix\Crm\Service\Container;
@@ -18,6 +17,7 @@ use Bitrix\Main\Web\Json;
 use Bitrix\Crm\Binding\ContactCompanyTable;
 use Bitrix\Crm\Binding\EntityBinding;
 use CCrmOwnerType;
+use Bitrix\Main\Error;
 
 abstract class Provider implements IProvider
 {
@@ -33,7 +33,7 @@ abstract class Provider implements IProvider
 	 * @return string
 	 */
 	abstract protected static function getTableName(): string;
-	
+
 	/**
 	 * @inheritDoc
 	 */
@@ -334,8 +334,6 @@ abstract class Provider implements IProvider
 			'requiredFieldErrorMessage' => Loc::getMessage('CONTRACTORS_PROVIDER_CONTRACTOR_FIELD_REQUIRED'),
 			'map' => ['data' => 'CLIENT_DATA'],
 			'info' => 'CLIENT_INFO',
-			'lastCompanyInfos' => 'LAST_COMPANY_INFOS',
-			'lastContactInfos' => 'LAST_CONTACT_INFOS',
 			'loaders' => [
 				'primary' => [
 					CCrmOwnerType::CompanyName => [
@@ -439,29 +437,7 @@ abstract class Provider implements IProvider
 			$iteration++;
 		}
 
-		$result = [
-			'CLIENT_INFO' => $clientInfo,
-			'LAST_COMPANY_INFOS' => SearchAction::prepareSearchResultsJson(
-				Entity::getRecentlyUsedItems(
-					'crm.store.document.details',
-					'company',
-					[
-						'EXPAND_ENTITY_TYPE_ID' => CCrmOwnerType::Company,
-						'EXPAND_CATEGORY_ID' => self::getCategoryIdByEntityType(CCrmOwnerType::Company),
-					]
-				)
-			),
-			'LAST_CONTACT_INFOS' => SearchAction::prepareSearchResultsJson(
-				Entity::getRecentlyUsedItems(
-					'crm.store.document.details',
-					'contact',
-					[
-						'EXPAND_ENTITY_TYPE_ID' => CCrmOwnerType::Contact,
-						'EXPAND_CATEGORY_ID' => self::getCategoryIdByEntityType(CCrmOwnerType::Contact),
-					]
-				)
-			),
-		];
+		$result = ['CLIENT_INFO' => $clientInfo];
 
 		\CCrmComponentHelper::prepareMultifieldData(
 			CCrmOwnerType::Company,
@@ -864,6 +840,163 @@ abstract class Provider implements IProvider
 
 			static::getTableName()::deleteBindings($documentId, $entityTypeId, $entityIds);
 		}
+	}
+
+	public static function checkAccessRights(int $documentId, array $fields): Result
+	{
+		$contractorIds = self::getContractorIds($documentId);
+		$requestClientData = $fields['CLIENT_DATA'] ?? '';
+		$clientData = null;
+		try
+		{
+			$clientData = Json::decode($requestClientData);
+		}
+		catch (SystemException $e) {}
+
+		$clientData = is_array($clientData) ? $clientData : [];
+
+		if (
+			isset($clientData['COMPANY_DATA'])
+			&& is_array($clientData['COMPANY_DATA'])
+		)
+		{
+			$existedCompanyId = array_key_first($contractorIds[\CCrmOwnerType::Company]);
+			$companyData = $clientData['COMPANY_DATA'];
+			if (!empty($companyData))
+			{
+				$companyItem = $companyData[0];
+				$companyId = isset($companyItem['id']) ? (int)$companyItem['id'] : 0;
+
+				if ($companyId > 0)
+				{
+					if ($existedCompanyId !== $companyId)
+					{
+						$result = self::checkReadRights($companyId, \CCrmOwnerType::Company);
+						if (!$result->isSuccess())
+						{
+							return $result;
+						}
+					}
+				}
+				else
+				{
+					$result = self::checkAddRights(\CCrmOwnerType::Company);
+					if (!$result->isSuccess())
+					{
+						return $result;
+					}
+				}
+			}
+		}
+
+		if (
+			isset($clientData['CONTACT_DATA'])
+			&& is_array($clientData['CONTACT_DATA'])
+		)
+		{
+			$contactData = $clientData['CONTACT_DATA'];
+			$existedContactIds = $contractorIds[\CCrmOwnerType::Contact];
+
+			foreach ($contactData as $contactItem)
+			{
+				if (!is_array($contactItem))
+				{
+					continue;
+				}
+
+				$contactId = isset($contactItem['id']) ? (int)$contactItem['id'] : 0;
+				if ($contactId > 0)
+				{
+					if (!isset($existedContactIds[$contactId]))
+					{
+						$result = self::checkReadRights($contactId, \CCrmOwnerType::Contact);
+						if (!$result->isSuccess())
+						{
+							return $result;
+						}
+					}
+				}
+				else
+				{
+					$result = self::checkAddRights(\CCrmOwnerType::Contact);
+					if (!$result->isSuccess())
+					{
+						return $result;
+					}
+				}
+			}
+		}
+
+		return new Result();
+	}
+
+	private static function checkAddRights(int $entityTypeId): Result
+	{
+		$result = new Result();
+		if (
+			!\Bitrix\Crm\Service\Container::getInstance()->getUserPermissions()->entityType()->canAddItemsInCategory(
+				$entityTypeId,
+				self::getCategoryIdByEntityType($entityTypeId),
+			)
+		)
+		{
+			return $result->addError(new Error(Loc::getMessage(
+				'CONTRACTORS_PROVIDER_CONTRACTOR_ADD_PERMISSION_DENIED'
+			)));
+		}
+
+		return $result;
+	}
+
+	private static function checkReadRights(int $entityId, int $entityTypeId): Result
+	{
+		$result = new Result();
+		if (
+			!\Bitrix\Crm\Service\Container::getInstance()->getUserPermissions()->item()->canRead(
+				$entityTypeId,
+				$entityId,
+			)
+		)
+		{
+			return $result->addError(new Error(Loc::getMessage(
+				'CONTRACTORS_PROVIDER_CONTRACTOR_READ_PERMISSION_DENIED'
+			)));
+		}
+
+		return $result;
+	}
+
+	private static function getContractorIds(int $documentId): array
+	{
+		$documentContractorsMap = [\CCrmOwnerType::Company => [], \CCrmOwnerType::Contact => []];
+		if (!$documentId)
+		{
+			return $documentContractorsMap;
+		}
+		$documentContractorsIterator = static::getTableName()::query()
+			->setSelect(['ENTITY_ID', 'ENTITY_TYPE_ID'])
+			->where(static::getDocumentPrimaryField(), $documentId)
+			->exec()
+		;
+		while ($documentContractor = $documentContractorsIterator->fetch())
+		{
+			$documentContractor['ENTITY_ID'] = (int)$documentContractor['ENTITY_ID'];
+			$documentContractor['ENTITY_TYPE_ID'] = (int)$documentContractor['ENTITY_TYPE_ID'];
+			if ($documentContractor['ENTITY_TYPE_ID'] === \CCrmOwnerType::Company)
+			{
+				$documentContractorsMap[\CCrmOwnerType::Company][$documentContractor['ENTITY_ID']] =
+					$documentContractor['ENTITY_ID']
+				;
+			}
+			elseif ($documentContractor['ENTITY_TYPE_ID'] === \CCrmOwnerType::Contact)
+			{
+				$documentContractorsMap[\CCrmOwnerType::Contact][$documentContractor['ENTITY_ID']] =
+					$documentContractor['ENTITY_ID']
+				;
+			}
+		}
+
+		return $documentContractorsMap;
 	}
 
 	/**

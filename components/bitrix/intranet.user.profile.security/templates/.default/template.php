@@ -11,6 +11,7 @@ $APPLICATION->SetTitle("");
 	'ui.design-tokens',
 	'ui.info-helper',
 ]);
+\Bitrix\UI\Toolbar\Facade\Toolbar::deleteFavoriteStar();
 $menuContainerId = 'intranet-user-profile-security-menu-'.$this->randString();
 ?>
 

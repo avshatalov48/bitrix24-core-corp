@@ -20,7 +20,11 @@ jn.define('intranet/simple-list/items/user-redux/action-menu', (require, exports
 		{
 			this.user = selectWholeUserById(store.getState(), userId);
 
-			const actionsByState = selectActions(store.getState(), { userId: this.user.id, currentUserId: env.userId, canInvite });
+			const actionsByState = selectActions(store.getState(), {
+				userId: this.user.id,
+				currentUserId: env.userId,
+				canInvite,
+			});
 			this.actions = Object.values(this.getActions())
 				.filter((action) => actionsByState[action.id])
 				.sort((a, b) => Math.sign(a.sort - b.sort));

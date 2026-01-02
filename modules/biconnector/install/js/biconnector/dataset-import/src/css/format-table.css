@@ -89,6 +89,10 @@
 	border-color: var(--ui-color-palette-red-50);
 }
 
+.format-table__type-control--disabled {
+	pointer-events: none;
+}
+
 .format-table__text-input[disabled],
 .format-table__text-input[disabled]:hover,
 .format-table__type-control--disabled .format-table__text-input,
@@ -241,6 +245,14 @@
 
 .format-table__name-control:not(.format-table__text-input--invalid):not(.format-table__text-input--disabled):hover {
 	border-color: var(--ui-field-color-primary) !important;
+}
+
+.format-table__text-input--disabled {
+	pointer-events: none;
+}
+
+.format-table__text-input--disabled .format-table__error-icon{
+	pointer-events: all;
 }
 
 .format-table__text-input--disabled .format-table__name-input {

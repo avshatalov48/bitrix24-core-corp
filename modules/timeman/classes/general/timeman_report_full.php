@@ -432,12 +432,13 @@ class CTimeManReportFull
 		$entity_id = 'IBLOCK_'.COption::GetOptionInt('intranet', 'iblock_structure', false).'_SECTION';
 
 		$arOldSetting = CReportSettings::GetSectionSettings($arFields['ID']);
-		if(
-			$arOldSetting["UF_REPORT_PERIOD"] != $arFields['UF_REPORT_PERIOD']
-			&& (
-				$arOldSetting["UF_REPORT_PERIOD"] == 'NONE'
-				|| $arFields['UF_REPORT_PERIOD'] == 'NONE'
-			))
+
+		$changedByNone = (
+			($arOldSetting['UF_REPORT_PERIOD'] === 'NONE') !== ($arFields['UF_REPORT_PERIOD'] === 'NONE')
+			|| $arFields['UF_REPORT_PERIOD'] === 'NONE'
+		);
+
+		if ($changedByNone)
 		{
 			$arFields["UF_SETTING_DATE"] = ConvertTimeStampForReport(time(),"FULL");
 		}
@@ -565,10 +566,13 @@ class CUserReportFull
 		$arFields["UF_LAST_REPORT_DATE"] = "";
 
 		$arOldSetting = $this->getSettings();
-		if (
-			$arOldSetting["UF_REPORT_PERIOD"] != $arFields['UF_REPORT_PERIOD'] &&
-			($arOldSetting["UF_REPORT_PERIOD"] == "NONE" || $arFields["UF_REPORT_PERIOD"] == "NONE")
-		)
+
+		$changedByNone = (
+			($arOldSetting['UF_REPORT_PERIOD'] === 'NONE') !== ($arFields['UF_REPORT_PERIOD'] === 'NONE')
+			|| $arFields['UF_REPORT_PERIOD'] === 'NONE'
+		);
+
+		if ($changedByNone)
 		{
 			// set last date
 			$arFields["UF_SETTING_DATE"] = ConvertTimeStampForReport(time(), "FULL");
@@ -1135,8 +1139,8 @@ class CUserReportFull
 			$entriesInfo['REPORT_DATE_TO'] = MakeTimeStamp($currentReportInfo['DATE_TO'], $shortFormat);
 		}
 
-		$dateFrom = (($currentReportInfo['DATE_FROM']) ?: $savedReport['DATE_FROM']);
-		$dateTo = (($currentReportInfo['DATE_TO']) ?: $savedReport['DATE_TO']);
+		$dateFrom = (($currentReportInfo['DATE_FROM']) ?: ($savedReport['DATE_FROM'] ?? ''));
+		$dateTo = (($currentReportInfo['DATE_TO']) ?: ($savedReport['DATE_TO'] ?? ''));
 
 		$entriesInfo = $this->preparePlannerData($entriesInfo);
 
@@ -1392,7 +1396,7 @@ class CUserReportFull
 
 	private function prepareDayliEvents(array $report, array $eventIds, array $entriesInfo): array
 	{
-		$events = unserialize($report['EVENTS'], ['allowed_classes' => false]);
+		$events = unserialize($report['EVENTS'] ?? '', ['allowed_classes' => false]);
 
 		if (is_array($events))
 		{

@@ -1,0 +1,4 @@
+<?php
+$MESS["M_DISK_RENAME_FILE_PLACEHOLDER"] = "Файл атауы";
+$MESS["M_DISK_RENAME_FOLDER_PLACEHOLDER"] = "Бума атауы";
+$MESS["M_DISK_RENAME_SAVE_BUTTON"] = "Атын өзгерту";

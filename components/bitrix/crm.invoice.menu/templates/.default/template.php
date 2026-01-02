@@ -39,7 +39,7 @@ if (!empty($arResult['BUTTONS']))
 		?><script>
 		BX.ready(function() {
 			var intranetBindingBtn = document.querySelector('.intranet-binding-menu-btn');
-			var invoiceToolbar = BX('crm_invoice_toolbar');
+			var invoiceToolbar = document.querySelector('[data-role="crm-interface-toolbar-type2"]');
 
 			if (invoiceToolbar && intranetBindingBtn)
 			{
@@ -50,7 +50,7 @@ if (!empty($arResult['BUTTONS']))
 	}
 	$APPLICATION->IncludeComponent(
 		'bitrix:crm.interface.toolbar',
-		$type === 'list' ?  (SITE_TEMPLATE_ID === 'bitrix24' ? 'title' : '') : 'type2',
+		$type === 'list' ? 'title' : 'type2',
 		array(
 			'TOOLBAR_ID' => 'crm_invoice_toolbar',
 			'BUTTONS' => $arResult['BUTTONS']

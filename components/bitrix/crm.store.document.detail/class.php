@@ -13,7 +13,6 @@ use Bitrix\Catalog\Access\ActionDictionary;
 use Bitrix\Catalog\StoreDocumentTable;
 use Bitrix\Crm;
 use Bitrix\Crm\Integration\Catalog\Contractor\CategoryRepository;
-use Bitrix\Crm\Integration\Catalog\Contractor\Provider;
 use Bitrix\Main;
 use Bitrix\Crm\Order;
 use Bitrix\Crm\Service\EditorAdapter;
@@ -23,11 +22,11 @@ use Bitrix\Main\Localization\Loc;
 use Bitrix\Crm\Component\ComponentError;
 use Bitrix\Crm\Component\EntityDetails\ComponentMode;
 use Bitrix\Catalog;
-use Bitrix\Sale\Tax\VatCalculator;
-use Bitrix\UI;
 use Bitrix\Crm\Integration\DocumentGeneratorManager;
 use Bitrix\Crm\Integration\DocumentGenerator\DataProvider\ShipmentDocumentRealization;
 use Bitrix\Crm\Integration\Catalog\WarehouseOnboarding;
+use Bitrix\Sale\Internals\ShipmentTable;
+use Bitrix\Sale\Shipment;
 
 if (!Main\Loader::includeModule('crm'))
 {
@@ -138,8 +137,6 @@ class CrmStoreDocumentDetailComponent extends Crm\Component\EntityDetails\BaseCo
 		/** @global \CMain $APPLICATION */
 		global $APPLICATION;
 
-		UI\Toolbar\Facade\Toolbar::deleteFavoriteStar();
-
 		$this->init();
 		if (!$this->checkDocumentReadRight())
 		{
@@ -211,7 +208,7 @@ class CrmStoreDocumentDetailComponent extends Crm\Component\EntityDetails\BaseCo
 
 		if ($this->getEntityID() > 0)
 		{
-			$this->shipment = Sale\Repository\ShipmentRepository::getInstance()->getById($this->entityID);
+			$this->shipment = $this->getShipmentEntityById();
 			if ($this->shipment)
 			{
 				$this->order = $this->shipment->getOrder();
@@ -285,7 +282,8 @@ class CrmStoreDocumentDetailComponent extends Crm\Component\EntityDetails\BaseCo
 		$this->arResult['FOCUSED_TAB'] = $this->request->get('focusedTab');
 
 		//region GUID
-		$this->guid = $this->arResult['GUID'] = "realization_document_{$this->entityID}_details";
+		$this->guid = "realization_document_{$this->entityID}_details";
+		$this->arResult['GUID'] = $this->guid;
 
 		if ($this->needDeliveryBlock())
 		{
@@ -296,7 +294,6 @@ class CrmStoreDocumentDetailComponent extends Crm\Component\EntityDetails\BaseCo
 			$this->arResult['EDITOR_CONFIG_ID'] = 'realization_document_shipment_details';
 		}
 
-		$this->arResult['TOOLBAR_ID'] = "toolbar_realization_document_{$this->entityID}";
 		//endregion
 
 		//region Entity Info
@@ -379,7 +376,7 @@ class CrmStoreDocumentDetailComponent extends Crm\Component\EntityDetails\BaseCo
 		$this->arResult['UI_ENTITY_CARD_SETTINGS_EDITABLE'] = AccessController::getCurrent()->check(ActionDictionary::ACTION_STORE_DOCUMENT_CARD_EDIT);
 		$this->arResult['IS_TOOL_PANEL_ALWAYS_VISIBLE'] = $this->checkDocumentCancelRight()	|| $this->checkDocumentConductRight();
 
-		$this->arResult['BUTTONS'] = $this->getToolbarButtons();
+		$this->arResult['CRM_DOCUMENT_BUTTON_CONFIG'] = $this->getDocumentButtonConfig();
 		$this->arResult['COMPONENT_PRODUCTS'] = $this->getDocumentProducts();
 
 		$this->arResult['INVENTORY_MANAGEMENT_SOURCE'] =
@@ -390,23 +387,23 @@ class CrmStoreDocumentDetailComponent extends Crm\Component\EntityDetails\BaseCo
 		$this->includeComponentTemplate();
 	}
 
-	/**
-	 * @return array
-	 */
-	private function getToolbarButtons(): array
+	private function getDocumentButtonConfig(): ?array
 	{
-		$result = [];
+		$result = null;
 
-		if (DocumentGeneratorManager::getInstance()->isDocumentButtonAvailable())
+		if (
+			DocumentGeneratorManager::getInstance()->isDocumentButtonAvailable()
+			&& $this->getEntityID() > 0
+		)
 		{
-			$result[] = [
-				'TEXT' => Loc::getMessage('CRM_STORE_DOCUMENT_SHIPMENT_DOCUMENT_BUTTON'),
-				'TYPE' => 'crm-document-button',
-				'PARAMS' => DocumentGeneratorManager::getInstance()->getDocumentButtonParameters(
-					ShipmentDocumentRealization::class,
-					$this->entityID
-				),
-			];
+			$result = DocumentGeneratorManager::getInstance()->getDocumentButtonParameters(
+				ShipmentDocumentRealization::class,
+				$this->getEntityID()
+			);
+			if (empty($result))
+			{
+				$result = null;
+			}
 		}
 
 		return $result;
@@ -578,7 +575,7 @@ class CrmStoreDocumentDetailComponent extends Crm\Component\EntityDetails\BaseCo
 					'type' => 'order_property_wrapper',
 					'transferable' => false,
 					'editable' => true,
-					'isDragEnabled' => $this->userPermissions->HavePerm('CONFIG', BX_CRM_PERM_CONFIG, 'WRITE'),
+					'isDragEnabled' => $this->userPermissionsService->isCrmAdmin(),
 					'elements' => [],
 					'sortedElements' => [
 						'active' => is_array($this->arResult['SHIPMENT_PROPERTIES']['ACTIVE']) ? $this->arResult['SHIPMENT_PROPERTIES']['ACTIVE'] : [],
@@ -1102,7 +1099,7 @@ class CrmStoreDocumentDetailComponent extends Crm\Component\EntityDetails\BaseCo
 				],
 				$this->entityData
 			);
-			$isEntityReadPermitted = \CCrmCompany::CheckReadPermission($companyId, $this->userPermissions);
+			$isEntityReadPermitted = $this->userPermissionsService->item()->canRead(\CCrmOwnerType::Company, $companyId);
 			$companyInfo = \CCrmEntitySelectorHelper::PrepareEntityInfo(
 				\CCrmOwnerType::CompanyName,
 				$companyId,
@@ -1130,7 +1127,7 @@ class CrmStoreDocumentDetailComponent extends Crm\Component\EntityDetails\BaseCo
 		);
 		foreach ($contactIds as $contactID)
 		{
-			$isEntityReadPermitted = \CCrmContact::CheckReadPermission($contactID, $this->userPermissions);
+			$isEntityReadPermitted = $this->userPermissionsService->item()->canRead(\CCrmOwnerType::Contact, $contactID);
 			$clientInfo['CONTACT_DATA'][] = \CCrmEntitySelectorHelper::PrepareEntityInfo(
 				\CCrmOwnerType::ContactName,
 				$contactID,
@@ -1702,6 +1699,56 @@ class CrmStoreDocumentDetailComponent extends Crm\Component\EntityDetails\BaseCo
 
 
 		return $tourData;
+	}
+
+	private function getShipmentEntityById(): ?Shipment
+	{
+		/** @var Shipment $shipmentClass */
+		$shipmentClass = Sale\Registry::getInstance(Sale\Registry::REGISTRY_TYPE_ORDER)->getShipmentClassName();
+
+		$filer = [
+			'=ID' => $this->getEntityID(),
+		];
+		$accessStoreFilter = AccessController::getCurrent()->getEntityFilter(
+			ActionDictionary::ACTION_STORE_VIEW,
+			ShipmentTable::class
+		);
+		if ($accessStoreFilter)
+		{
+			$filer[] = $accessStoreFilter;
+		}
+		$shipmentRow = $shipmentClass::getList([
+			'select' => ['ID', 'ORDER_ID'],
+			'filter' => $filer,
+		])->fetch();
+		if (!$shipmentRow)
+		{
+			return null;
+		}
+
+		$orderClassName = Sale\Registry::getInstance(Sale\Registry::REGISTRY_TYPE_ORDER)->getOrderClassName();
+
+		/** @var Sale\Order $orderClassName */
+		$order = $orderClassName::load($shipmentRow['ORDER_ID']);
+		if ($order === null)
+		{
+			return null;
+		}
+
+		$shipmentCollection = $order->getShipmentCollection();
+
+		/** @var Shipment $shipment */
+		foreach ($shipmentCollection as $shipment)
+		{
+			if ($shipment->getId() !== (int)$shipmentRow['ID'])
+			{
+				continue;
+			}
+
+			return $shipment;
+		}
+
+		return null;
 	}
 
 	private function checkDocumentReadRight(): bool

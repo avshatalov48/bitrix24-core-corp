@@ -16,6 +16,7 @@ abstract class Payload
 
 	protected const PROPERTY_CUSTOM_COST = 'customCost';
 
+	protected string $payload;
 	protected array $markers = [];
 	protected array $hiddenTokens = [];
 	protected array $processedReplacements = [];
@@ -47,6 +48,18 @@ abstract class Payload
 	public function setEngine(IEngine $engine): static
 	{
 		$this->engine = $engine;
+		return $this;
+	}
+
+	/**
+	 * Sets the payload data.
+	 *
+	 * @param string $payload Payload data.
+	 * @return static
+	 */
+	public function setPayload(string $payload): static
+	{
+		$this->payload = $payload;
 		return $this;
 	}
 

@@ -844,7 +844,7 @@ this.BX.Crm = this.BX.Crm || {};
 	  }, {
 	    key: "fasten",
 	    value: function fasten(e) {
-	      if (this._fixedHistory._items.length >= 3) {
+	      if (this._fixedHistory._items.length >= 7) {
 	        if (!this.fastenLimitPopup) {
 	          this.fastenLimitPopup = new BX.PopupWindow('timeline_fasten_limit_popup_' + this._id, this._switcher, {
 	            content: BX.message('CRM_TIMELINE_FASTEN_LIMIT_MESSAGE'),
@@ -1731,16 +1731,6 @@ this.BX.Crm = this.BX.Crm || {};
 	  pinned: 2
 	};
 
-	let ButtonState = function ButtonState() {
-	  babelHelpers.classCallCheck(this, ButtonState);
-	};
-	babelHelpers.defineProperty(ButtonState, "DEFAULT", '');
-	babelHelpers.defineProperty(ButtonState, "LOADING", 'loading');
-	babelHelpers.defineProperty(ButtonState, "DISABLED", 'disabled');
-	babelHelpers.defineProperty(ButtonState, "HIDDEN", 'hidden');
-	babelHelpers.defineProperty(ButtonState, "AI_LOADING", 'ai-loading');
-	babelHelpers.defineProperty(ButtonState, "AI_SUCCESS", 'ai-success');
-
 	function _classPrivateFieldInitSpec$1(obj, privateMap, value) { _checkPrivateRedeclaration$1(obj, privateMap); privateMap.set(obj, value); }
 	function _checkPrivateRedeclaration$1(obj, privateCollection) { if (privateCollection.has(obj)) { throw new TypeError("Cannot initialize the same private elements twice on an object"); } }
 	var _menuOptions = /*#__PURE__*/new WeakMap();
@@ -1769,6 +1759,11 @@ this.BX.Crm = this.BX.Crm || {};
 	    }
 	  }
 	  babelHelpers.createClass(Menu, [{
+	    key: "getMenuItems",
+	    value: function getMenuItems() {
+	      return babelHelpers.classPrivateFieldGet(this, _menuOptions).items;
+	    }
+	  }, {
 	    key: "show",
 	    value: function show() {
 	      main_popup.MenuManager.show(babelHelpers.classPrivateFieldGet(this, _menuOptions));
@@ -1786,21 +1781,6 @@ this.BX.Crm = this.BX.Crm || {};
 	        text: item.title,
 	        value: item.title
 	      };
-	      if (main_core.Type.isStringFilled(item.state)) {
-	        switch (item.state) {
-	          case ButtonState.AI_LOADING:
-	            result.className = 'menu-popup-item-add-to-tm menu-popup-item-disabled';
-	            break;
-	          case ButtonState.AI_SUCCESS:
-	            result.className = 'menu-popup-item-accept menu-popup-item-disabled';
-	            break;
-	          case ButtonState.DISABLED:
-	            result.className = 'menu-popup-no-icon menu-popup-item-disabled';
-	            break;
-	          default:
-	            result.className = '';
-	        }
-	      }
 	      if (item.icon) {
 	        result.className = `menu-popup-item-${item.icon}`;
 	      }
@@ -1829,7 +1809,8 @@ this.BX.Crm = this.BX.Crm || {};
 	      if (menu) {
 	        menu.close();
 	      }
-	      void new Action(item.action).execute(babelHelpers.classPrivateFieldGet(this, _vueComponent));
+	      const action = new Action(item.action);
+	      void action.execute(babelHelpers.classPrivateFieldGet(this, _vueComponent));
 	    }
 	  }], [{
 	    key: "showMenu",
@@ -1939,7 +1920,7 @@ this.BX.Crm = this.BX.Crm || {};
 	          _classPrivateMethodGet$1(this, _stopAnimation, _stopAnimation2).call(this, vueComponent);
 	          _classPrivateMethodGet$1(this, _sendAnalytics, _sendAnalytics2).call(this);
 	          resolve(true);
-	        } else if (this.isAjaxAction()) {
+	        } else if (this.isAjaxAction() || this.isAjaxJsonAction()) {
 	          _classPrivateMethodGet$1(this, _startAnimation, _startAnimation2).call(this, vueComponent);
 	          vueComponent.$Bitrix.eventEmitter.emit('crm:timeline:item:action', {
 	            action: babelHelpers.classPrivateFieldGet(this, _value),
@@ -1947,7 +1928,7 @@ this.BX.Crm = this.BX.Crm || {};
 	            actionData: babelHelpers.classPrivateFieldGet(this, _actionParams)
 	          });
 	          const ajaxConfig = {
-	            data: _classPrivateMethodGet$1(this, _prepareRunActionParams, _prepareRunActionParams2).call(this, babelHelpers.classPrivateFieldGet(this, _actionParams))
+	            [this.isAjaxJsonAction() ? 'json' : 'data']: _classPrivateMethodGet$1(this, _prepareRunActionParams, _prepareRunActionParams2).call(this, babelHelpers.classPrivateFieldGet(this, _actionParams))
 	          };
 	          if (babelHelpers.classPrivateFieldGet(this, _analytics)) {
 	            ajaxConfig.analytics = babelHelpers.classPrivateFieldGet(this, _analytics);
@@ -1973,7 +1954,7 @@ this.BX.Crm = this.BX.Crm || {};
 	              actionParams: babelHelpers.classPrivateFieldGet(this, _actionParams),
 	              response
 	            });
-	            reject(response);
+	            resolve(response);
 	          });
 	        } else if (this.isCallRestBatch()) {
 	          _classPrivateMethodGet$1(this, _startAnimation, _startAnimation2).call(this, vueComponent);
@@ -2061,6 +2042,11 @@ this.BX.Crm = this.BX.Crm || {};
 	    key: "isAjaxAction",
 	    value: function isAjaxAction() {
 	      return babelHelpers.classPrivateFieldGet(this, _type) === 'runAjaxAction';
+	    }
+	  }, {
+	    key: "isAjaxJsonAction",
+	    value: function isAjaxJsonAction() {
+	      return babelHelpers.classPrivateFieldGet(this, _type) === 'runAjaxJsonAction';
 	    }
 	  }, {
 	    key: "isCallRestBatch",
@@ -2301,7 +2287,13 @@ this.BX.Crm = this.BX.Crm || {};
 	      return this.formatUserTime('F');
 	    },
 	    dayWeek() {
-	      return this.formatUserTime('D');
+	      const dayShortName = this.formatUserTime('D');
+	      if (this.time.length > 5)
+	        // "12:34".length === 5, if +" PM" than > 5
+	        {
+	          return dayShortName.slice(0, 2);
+	        }
+	      return dayShortName;
 	    },
 	    time() {
 	      return this.getDateTimeConverter().toTimeString();
@@ -2492,6 +2484,17 @@ this.BX.Crm = this.BX.Crm || {};
 	};
 	babelHelpers.defineProperty(ButtonScope, "MOBILE", 'mobile');
 
+	let ButtonState = function ButtonState() {
+	  babelHelpers.classCallCheck(this, ButtonState);
+	};
+	babelHelpers.defineProperty(ButtonState, "DEFAULT", '');
+	babelHelpers.defineProperty(ButtonState, "LOADING", 'loading');
+	babelHelpers.defineProperty(ButtonState, "DISABLED", 'disabled');
+	babelHelpers.defineProperty(ButtonState, "HIDDEN", 'hidden');
+	babelHelpers.defineProperty(ButtonState, "LOCKED", 'locked');
+	babelHelpers.defineProperty(ButtonState, "AI_LOADING", 'ai-loading');
+	babelHelpers.defineProperty(ButtonState, "AI_SUCCESS", 'ai-success');
+
 	let ButtonType = function ButtonType() {
 	  babelHelpers.classCallCheck(this, ButtonType);
 	};
@@ -2579,6 +2582,88 @@ this.BX.Crm = this.BX.Crm || {};
 	  template: `<button></button>`
 	};
 
+	function _classPrivateMethodInitSpec$2(obj, privateSet) { _checkPrivateRedeclaration$3(obj, privateSet); privateSet.add(obj); }
+	function _checkPrivateRedeclaration$3(obj, privateCollection) { if (privateCollection.has(obj)) { throw new TypeError("Cannot initialize the same private elements twice on an object"); } }
+	function _classPrivateMethodGet$2(receiver, privateSet, fn) { if (!privateSet.has(receiver)) { throw new TypeError("attempted to get private field on non-instance"); } return fn; }
+	var _applyMenuItems = /*#__PURE__*/new WeakSet();
+	let ButtonMenu = /*#__PURE__*/function (_Menu) {
+	  babelHelpers.inherits(ButtonMenu, _Menu);
+	  function ButtonMenu(vueComponent, menuItems, menuOptions) {
+	    var _this;
+	    babelHelpers.classCallCheck(this, ButtonMenu);
+	    _this = babelHelpers.possibleConstructorReturn(this, babelHelpers.getPrototypeOf(ButtonMenu).call(this, vueComponent, menuItems, menuOptions));
+	    _classPrivateMethodInitSpec$2(babelHelpers.assertThisInitialized(_this), _applyMenuItems);
+	    _classPrivateMethodGet$2(babelHelpers.assertThisInitialized(_this), _applyMenuItems, _applyMenuItems2).call(babelHelpers.assertThisInitialized(_this));
+	    return _this;
+	  }
+
+	  /**
+	   * @override
+	   */
+	  babelHelpers.createClass(ButtonMenu, [{
+	    key: "createMenuItem",
+	    value: function createMenuItem(item) {
+	      const result = {
+	        text: item.title,
+	        value: item.title
+	      };
+	      if (main_core.Type.isStringFilled(item.state)) {
+	        switch (item.state) {
+	          case ButtonState.AI_LOADING:
+	            result.className = 'menu-popup-item-ai-loading menu-popup-item-disabled';
+	            break;
+	          case ButtonState.AI_SUCCESS:
+	            result.className = 'menu-popup-item-accept menu-popup-item-disabled';
+	            break;
+	          case ButtonState.DISABLED:
+	            result.className = 'menu-popup-no-icon menu-popup-item-disabled';
+	            break;
+	          case ButtonState.LOCKED:
+	            result.className = 'menu-popup-item-locked';
+	            break;
+	          default:
+	            result.className = '';
+	        }
+	      }
+	      if (main_core.Type.isObject(item.action)) {
+	        if (item.action.type === 'redirect') {
+	          result.href = item.action.value;
+	        } else if (item.action.type === 'jsCode') {
+	          result.onclick = item.action.value;
+	        } else {
+	          result.onclick = () => {
+	            void this.onMenuItemClick(item);
+	          };
+	        }
+	      }
+	      return result;
+	    }
+	  }], [{
+	    key: "showMenu",
+	    value: function showMenu(vueComponent, menuItems, menuOptions) {
+	      const menu = new ButtonMenu(vueComponent, menuItems, menuOptions);
+	      menu.show();
+	    }
+	  }]);
+	  return ButtonMenu;
+	}(Menu);
+	function _applyMenuItems2() {
+	  const items = this.getMenuItems();
+	  if (!items) {
+	    return;
+	  }
+	  const emptyClassItems = items.filter(item => item.className === '');
+	  if (emptyClassItems.length === items.length) {
+	    return;
+	  }
+	  items.forEach(item => {
+	    if (item.className === '') {
+	      // eslint-disable-next-line no-param-reassign
+	      item.className = 'menu-popup-empty-icon';
+	    }
+	  });
+	}
+
 	const Button = ui_vue3.BitrixVue.cloneComponent(BaseButton, {
 	  props: {
 	    type: {
@@ -2608,7 +2693,7 @@ this.BX.Crm = this.BX.Crm || {};
 	      uiButton: Object.freeze(null),
 	      timerSecondsRemaining: 0,
 	      currentState: this.state,
-	      hintText: main_core.Type.isStringFilled(this.tooltip) ? main_core.Text.encode(this.tooltip) : ''
+	      hintText: main_core.Type.isStringFilled(this.tooltip) ? this.tooltip : ''
 	    };
 	  },
 	  computed: {
@@ -2680,20 +2765,31 @@ this.BX.Crm = this.BX.Crm || {};
 	    createSplitButton() {
 	      const menuItems = Object.keys(this.menuItems).map(key => this.menuItems[key]);
 	      const options = this.getButtonOptions();
+	      const showMenu = () => {
+	        ButtonMenu.showMenu(this, menuItems, {
+	          id: `split-button-menu-${this.id}`,
+	          className: 'crm-timeline__split-button-menu',
+	          width: 250,
+	          angle: true,
+	          cacheable: false,
+	          offsetLeft: 13,
+	          bindElement: this.$el.querySelector('.ui-btn-menu')
+	        });
+	      };
 	      options.menuButton = {
 	        onclick: (element, event) => {
 	          event.stopPropagation();
-	          Menu.showMenu(this, menuItems, {
-	            id: `split-button-menu-${this.id}`,
-	            className: 'crm-timeline__split-button-menu',
-	            width: 230,
-	            angle: true,
-	            cacheable: false,
-	            offsetLeft: 13,
-	            bindElement: this.$el.querySelector('.ui-btn-menu')
-	          });
+	          showMenu();
 	        }
 	      };
+	      if (options.state === ui_buttons.ButtonState.DISABLED) {
+	        options.mainButton = {
+	          onclick: (element, event) => {
+	            event.stopPropagation();
+	            showMenu();
+	          }
+	        };
+	      }
 	      return new ui_buttons.SplitButton(options);
 	    },
 	    renderButton() {
@@ -3566,6 +3662,7 @@ this.BX.Crm = this.BX.Crm || {};
 			@mouseover="showTooltip"
 			@mouseleave="hideTooltip"
 			@click="executeAction"
+			data-hint-interactivity
 		></div>
 	`
 	};
@@ -4091,8 +4188,8 @@ this.BX.Crm = this.BX.Crm || {};
 	`
 	};
 
-	function _classPrivateFieldInitSpec$3(obj, privateMap, value) { _checkPrivateRedeclaration$3(obj, privateMap); privateMap.set(obj, value); }
-	function _checkPrivateRedeclaration$3(obj, privateCollection) { if (privateCollection.has(obj)) { throw new TypeError("Cannot initialize the same private elements twice on an object"); } }
+	function _classPrivateFieldInitSpec$3(obj, privateMap, value) { _checkPrivateRedeclaration$4(obj, privateMap); privateMap.set(obj, value); }
+	function _checkPrivateRedeclaration$4(obj, privateCollection) { if (privateCollection.has(obj)) { throw new TypeError("Cannot initialize the same private elements twice on an object"); } }
 	function _classStaticPrivateFieldSpecGet(receiver, classConstructor, descriptor) { _classCheckPrivateStaticAccess(receiver, classConstructor); _classCheckPrivateStaticFieldDescriptor(descriptor, "get"); return _classApplyDescriptorGet(receiver, descriptor); }
 	function _classCheckPrivateStaticFieldDescriptor(descriptor, action) { if (descriptor === undefined) { throw new TypeError("attempted to " + action + " private static field before its declaration"); } }
 	function _classCheckPrivateStaticAccess(receiver, classConstructor) { if (receiver !== classConstructor) { throw new TypeError("Private static access of wrong provenance"); } }
@@ -4233,20 +4330,28 @@ this.BX.Crm = this.BX.Crm || {};
 	     *
 	     * @param activityId Activity ID
 	     * @param scheduleDate Date to use in editor
+	     * @param description Default description to use in editor
 	     *
 	     * @protected
 	     */
 	  }, {
 	    key: "runScheduleAction",
-	    value: function runScheduleAction(activityId, scheduleDate) {
+	    value: function runScheduleAction(activityId, scheduleDate, description = '') {
 	      var _BX$Crm, _BX$Crm$Timeline, _BX$Crm$Timeline$Menu;
 	      const menuBar = (_BX$Crm = BX.Crm) === null || _BX$Crm === void 0 ? void 0 : (_BX$Crm$Timeline = _BX$Crm.Timeline) === null || _BX$Crm$Timeline === void 0 ? void 0 : (_BX$Crm$Timeline$Menu = _BX$Crm$Timeline.MenuBar) === null || _BX$Crm$Timeline$Menu === void 0 ? void 0 : _BX$Crm$Timeline$Menu.getDefault();
 	      if (menuBar) {
 	        menuBar.setActiveItemById('todo');
-	        const todoEditor = menuBar.getItemById('todo');
-	        todoEditor.focus();
-	        todoEditor.setParentActivityId(activityId);
-	        todoEditor.setDeadLine(scheduleDate);
+	        menuBar.scrollIntoView();
+	        setTimeout(() => {
+	          const todoEditor = menuBar.getItemById('todo');
+	          todoEditor.focus();
+	          todoEditor.setParentActivityId(activityId);
+	          todoEditor.setDeadLine(scheduleDate);
+	          if (main_core.Type.isStringFilled(description)) {
+	            todoEditor.setDescription(description);
+	            todoEditor.focus();
+	          }
+	        }, 250);
 	      }
 	    }
 	  }], [{
@@ -4379,8 +4484,8 @@ this.BX.Crm = this.BX.Crm || {};
 	  return Item;
 	}();
 
-	function _classPrivateFieldInitSpec$4(obj, privateMap, value) { _checkPrivateRedeclaration$4(obj, privateMap); privateMap.set(obj, value); }
-	function _checkPrivateRedeclaration$4(obj, privateCollection) { if (privateCollection.has(obj)) { throw new TypeError("Cannot initialize the same private elements twice on an object"); } }
+	function _classPrivateFieldInitSpec$4(obj, privateMap, value) { _checkPrivateRedeclaration$5(obj, privateMap); privateMap.set(obj, value); }
+	function _checkPrivateRedeclaration$5(obj, privateCollection) { if (privateCollection.has(obj)) { throw new TypeError("Cannot initialize the same private elements twice on an object"); } }
 	var _layout = /*#__PURE__*/new WeakMap();
 	let Layout = /*#__PURE__*/function () {
 	  function Layout(layout) {
@@ -4415,10 +4520,10 @@ this.BX.Crm = this.BX.Crm || {};
 	  return Layout;
 	}();
 
-	function _classPrivateMethodInitSpec$2(obj, privateSet) { _checkPrivateRedeclaration$5(obj, privateSet); privateSet.add(obj); }
-	function _classPrivateFieldInitSpec$5(obj, privateMap, value) { _checkPrivateRedeclaration$5(obj, privateMap); privateMap.set(obj, value); }
-	function _checkPrivateRedeclaration$5(obj, privateCollection) { if (privateCollection.has(obj)) { throw new TypeError("Cannot initialize the same private elements twice on an object"); } }
-	function _classPrivateMethodGet$2(receiver, privateSet, fn) { if (!privateSet.has(receiver)) { throw new TypeError("attempted to get private field on non-instance"); } return fn; }
+	function _classPrivateMethodInitSpec$3(obj, privateSet) { _checkPrivateRedeclaration$6(obj, privateSet); privateSet.add(obj); }
+	function _classPrivateFieldInitSpec$5(obj, privateMap, value) { _checkPrivateRedeclaration$6(obj, privateMap); privateMap.set(obj, value); }
+	function _checkPrivateRedeclaration$6(obj, privateCollection) { if (privateCollection.has(obj)) { throw new TypeError("Cannot initialize the same private elements twice on an object"); } }
+	function _classPrivateMethodGet$3(receiver, privateSet, fn) { if (!privateSet.has(receiver)) { throw new TypeError("attempted to get private field on non-instance"); } return fn; }
 	var _container = /*#__PURE__*/new WeakMap();
 	var _itemClassName = /*#__PURE__*/new WeakMap();
 	var _type$1 = /*#__PURE__*/new WeakMap();
@@ -4448,11 +4553,11 @@ this.BX.Crm = this.BX.Crm || {};
 	    var _this;
 	    babelHelpers.classCallCheck(this, ConfigurableItem);
 	    _this = babelHelpers.possibleConstructorReturn(this, babelHelpers.getPrototypeOf(ConfigurableItem).call(this, ...args));
-	    _classPrivateMethodInitSpec$2(babelHelpers.assertThisInitialized(_this), _getContentBlockComponents);
-	    _classPrivateMethodInitSpec$2(babelHelpers.assertThisInitialized(_this), _onLayoutAppAction);
-	    _classPrivateMethodInitSpec$2(babelHelpers.assertThisInitialized(_this), _getLayoutAppProps);
-	    _classPrivateMethodInitSpec$2(babelHelpers.assertThisInitialized(_this), _initLayoutApp);
-	    _classPrivateMethodInitSpec$2(babelHelpers.assertThisInitialized(_this), _useAnchorNextSibling);
+	    _classPrivateMethodInitSpec$3(babelHelpers.assertThisInitialized(_this), _getContentBlockComponents);
+	    _classPrivateMethodInitSpec$3(babelHelpers.assertThisInitialized(_this), _onLayoutAppAction);
+	    _classPrivateMethodInitSpec$3(babelHelpers.assertThisInitialized(_this), _getLayoutAppProps);
+	    _classPrivateMethodInitSpec$3(babelHelpers.assertThisInitialized(_this), _initLayoutApp);
+	    _classPrivateMethodInitSpec$3(babelHelpers.assertThisInitialized(_this), _useAnchorNextSibling);
 	    _classPrivateFieldInitSpec$5(babelHelpers.assertThisInitialized(_this), _container, {
 	      writable: true,
 	      value: null
@@ -4602,10 +4707,10 @@ this.BX.Crm = this.BX.Crm || {};
 	  }, {
 	    key: "initLayoutApp",
 	    value: function initLayoutApp(options) {
-	      _classPrivateMethodGet$2(this, _initLayoutApp, _initLayoutApp2).call(this);
+	      _classPrivateMethodGet$3(this, _initLayoutApp, _initLayoutApp2).call(this);
 	      if (this.needBindToContainer(options)) {
 	        const bindTo = this.getBindToNode(options);
-	        if (bindTo && !_classPrivateMethodGet$2(this, _useAnchorNextSibling, _useAnchorNextSibling2).call(this, options)) {
+	        if (bindTo && !_classPrivateMethodGet$3(this, _useAnchorNextSibling, _useAnchorNextSibling2).call(this, options)) {
 	          main_core.Dom.insertBefore(this.getWrapper(), bindTo);
 	        } else if (bindTo && bindTo.nextSibling) {
 	          main_core.Dom.insertBefore(this.getWrapper(), bindTo.nextSibling);
@@ -4830,8 +4935,8 @@ this.BX.Crm = this.BX.Crm || {};
 	}
 	function _initLayoutApp2() {
 	  if (!babelHelpers.classPrivateFieldGet(this, _layoutApp)) {
-	    babelHelpers.classPrivateFieldSet(this, _layoutApp, ui_vue3.BitrixVue.createApp(Item$2, _classPrivateMethodGet$2(this, _getLayoutAppProps, _getLayoutAppProps2).call(this)));
-	    const contentBlockComponents = _classPrivateMethodGet$2(this, _getContentBlockComponents, _getContentBlockComponents2).call(this);
+	    babelHelpers.classPrivateFieldSet(this, _layoutApp, ui_vue3.BitrixVue.createApp(Item$2, _classPrivateMethodGet$3(this, _getLayoutAppProps, _getLayoutAppProps2).call(this)));
+	    const contentBlockComponents = _classPrivateMethodGet$3(this, _getContentBlockComponents, _getContentBlockComponents2).call(this);
 	    for (const componentName in contentBlockComponents) {
 	      babelHelpers.classPrivateFieldGet(this, _layoutApp).component(componentName, contentBlockComponents[componentName]);
 	    }
@@ -4847,7 +4952,7 @@ this.BX.Crm = this.BX.Crm || {};
 	    isReadOnly: this.isReadOnly(),
 	    currentUser: this.getCurrentUser(),
 	    streamType: babelHelpers.classPrivateFieldGet(this, _streamType),
-	    onAction: _classPrivateMethodGet$2(this, _onLayoutAppAction, _onLayoutAppAction2).bind(this)
+	    onAction: _classPrivateMethodGet$3(this, _onLayoutAppAction, _onLayoutAppAction2).bind(this)
 	  };
 	}
 	function _onLayoutAppAction2(eventData) {
@@ -4865,10 +4970,10 @@ this.BX.Crm = this.BX.Crm || {};
 
 	let _$1 = t => t,
 	  _t$1;
-	function _classPrivateMethodInitSpec$3(obj, privateSet) { _checkPrivateRedeclaration$6(obj, privateSet); privateSet.add(obj); }
-	function _classPrivateFieldInitSpec$6(obj, privateMap, value) { _checkPrivateRedeclaration$6(obj, privateMap); privateMap.set(obj, value); }
-	function _checkPrivateRedeclaration$6(obj, privateCollection) { if (privateCollection.has(obj)) { throw new TypeError("Cannot initialize the same private elements twice on an object"); } }
-	function _classPrivateMethodGet$3(receiver, privateSet, fn) { if (!privateSet.has(receiver)) { throw new TypeError("attempted to get private field on non-instance"); } return fn; }
+	function _classPrivateMethodInitSpec$4(obj, privateSet) { _checkPrivateRedeclaration$7(obj, privateSet); privateSet.add(obj); }
+	function _classPrivateFieldInitSpec$6(obj, privateMap, value) { _checkPrivateRedeclaration$7(obj, privateMap); privateMap.set(obj, value); }
+	function _checkPrivateRedeclaration$7(obj, privateCollection) { if (privateCollection.has(obj)) { throw new TypeError("Cannot initialize the same private elements twice on an object"); } }
+	function _classPrivateMethodGet$4(receiver, privateSet, fn) { if (!privateSet.has(receiver)) { throw new TypeError("attempted to get private field on non-instance"); } return fn; }
 
 	/** @memberof BX.Crm.Timeline.Animation */
 	var _startPosition = /*#__PURE__*/new WeakMap();
@@ -4890,12 +4995,12 @@ this.BX.Crm = this.BX.Crm || {};
 	let ItemNew = /*#__PURE__*/function () {
 	  function ItemNew() {
 	    babelHelpers.classCallCheck(this, ItemNew);
-	    _classPrivateMethodInitSpec$3(this, _isNodeVisible$1);
-	    _classPrivateMethodInitSpec$3(this, _makeNodeStatic);
-	    _classPrivateMethodInitSpec$3(this, _makeNodeAbsoluteWithSavePosition);
-	    _classPrivateMethodInitSpec$3(this, _replaceInitialWithFinal);
-	    _classPrivateMethodInitSpec$3(this, _prepareFinalItemBeforeShift);
-	    _classPrivateMethodInitSpec$3(this, _prepareInitialItemBeforeShift);
+	    _classPrivateMethodInitSpec$4(this, _isNodeVisible$1);
+	    _classPrivateMethodInitSpec$4(this, _makeNodeStatic);
+	    _classPrivateMethodInitSpec$4(this, _makeNodeAbsoluteWithSavePosition);
+	    _classPrivateMethodInitSpec$4(this, _replaceInitialWithFinal);
+	    _classPrivateMethodInitSpec$4(this, _prepareFinalItemBeforeShift);
+	    _classPrivateMethodInitSpec$4(this, _prepareInitialItemBeforeShift);
 	    _classPrivateFieldInitSpec$6(this, _startPosition, {
 	      writable: true,
 	      value: void 0
@@ -4976,7 +5081,7 @@ this.BX.Crm = this.BX.Crm || {};
 	      main_core.Dom.style(babelHelpers.classPrivateFieldGet(this, _anchor), {
 	        height: 0
 	      });
-	      _classPrivateMethodGet$3(this, _makeNodeStatic, _makeNodeStatic2).call(this, babelHelpers.classPrivateFieldGet(this, _finalItem).getWrapper());
+	      _classPrivateMethodGet$4(this, _makeNodeStatic, _makeNodeStatic2).call(this, babelHelpers.classPrivateFieldGet(this, _finalItem).getWrapper());
 	      main_core.Dom.insertBefore(babelHelpers.classPrivateFieldGet(this, _finalItem).getWrapper(), babelHelpers.classPrivateFieldGet(this, _anchor).nextSibling);
 	      requestAnimationFrame(() => {
 	        main_core.Dom.style(babelHelpers.classPrivateFieldGet(this, _finalItem).getWrapper(), {
@@ -4987,13 +5092,13 @@ this.BX.Crm = this.BX.Crm || {};
 	  }, {
 	    key: "run",
 	    value: function run() {
-	      babelHelpers.classPrivateFieldSet(this, _areAnimatedItemsVisible, _classPrivateMethodGet$3(this, _isNodeVisible$1, _isNodeVisible2$1).call(this, babelHelpers.classPrivateFieldGet(this, _node$1)));
+	      babelHelpers.classPrivateFieldSet(this, _areAnimatedItemsVisible, _classPrivateMethodGet$4(this, _isNodeVisible$1, _isNodeVisible2$1).call(this, babelHelpers.classPrivateFieldGet(this, _node$1)));
 	      if (babelHelpers.classPrivateFieldGet(this, _areAnimatedItemsVisible) === false) {
 	        this.finish();
 	        return;
 	      }
-	      _classPrivateMethodGet$3(this, _prepareInitialItemBeforeShift, _prepareInitialItemBeforeShift2).call(this);
-	      _classPrivateMethodGet$3(this, _prepareFinalItemBeforeShift, _prepareFinalItemBeforeShift2).call(this);
+	      _classPrivateMethodGet$4(this, _prepareInitialItemBeforeShift, _prepareInitialItemBeforeShift2).call(this);
+	      _classPrivateMethodGet$4(this, _prepareFinalItemBeforeShift, _prepareFinalItemBeforeShift2).call(this);
 	      setTimeout(() => {
 	        this.shiftAndReplaceInitialWithFinal();
 	        this.collapseStub();
@@ -5026,7 +5131,7 @@ this.BX.Crm = this.BX.Crm || {};
 	    value: function shiftAndReplaceInitialWithFinal() {
 	      this.shift();
 	      setTimeout(() => {
-	        _classPrivateMethodGet$3(this, _replaceInitialWithFinal, _replaceInitialWithFinal2).call(this);
+	        _classPrivateMethodGet$4(this, _replaceInitialWithFinal, _replaceInitialWithFinal2).call(this);
 	      }, 100);
 	    }
 	  }, {
@@ -5078,7 +5183,7 @@ this.BX.Crm = this.BX.Crm || {};
 	function _prepareInitialItemBeforeShift2() {
 	  main_core.Dom.addClass(babelHelpers.classPrivateFieldGet(this, _node$1), 'crm-entity-stream-section-animate-start');
 	  babelHelpers.classPrivateFieldSet(this, _startPosition, main_core.Dom.getPosition(babelHelpers.classPrivateFieldGet(this, _node$1)));
-	  _classPrivateMethodGet$3(this, _makeNodeAbsoluteWithSavePosition, _makeNodeAbsoluteWithSavePosition2).call(this, babelHelpers.classPrivateFieldGet(this, _node$1));
+	  _classPrivateMethodGet$4(this, _makeNodeAbsoluteWithSavePosition, _makeNodeAbsoluteWithSavePosition2).call(this, babelHelpers.classPrivateFieldGet(this, _node$1));
 	  this.addStubForInitialItem(babelHelpers.classPrivateFieldGet(this, _node$1));
 	  main_core.Dom.append(babelHelpers.classPrivateFieldGet(this, _node$1), document.body);
 	}
@@ -5092,7 +5197,7 @@ this.BX.Crm = this.BX.Crm || {};
 	  main_core.Dom.style(babelHelpers.classPrivateFieldGet(this, _finalItem).getWrapper(), 'opacity', 0);
 	  main_core.Dom.append(babelHelpers.classPrivateFieldGet(this, _finalItem).getWrapper(), document.body);
 	  requestAnimationFrame(() => {
-	    _classPrivateMethodGet$3(this, _makeNodeAbsoluteWithSavePosition, _makeNodeAbsoluteWithSavePosition2).call(this, babelHelpers.classPrivateFieldGet(this, _finalItem).getWrapper(), babelHelpers.classPrivateFieldGet(this, _startPosition));
+	    _classPrivateMethodGet$4(this, _makeNodeAbsoluteWithSavePosition, _makeNodeAbsoluteWithSavePosition2).call(this, babelHelpers.classPrivateFieldGet(this, _finalItem).getWrapper(), babelHelpers.classPrivateFieldGet(this, _startPosition));
 	  });
 	}
 	function _replaceInitialWithFinal2() {
@@ -5502,10 +5607,10 @@ this.BX.Crm = this.BX.Crm || {};
 	  return Steam;
 	}();
 
-	function _classPrivateMethodInitSpec$4(obj, privateSet) { _checkPrivateRedeclaration$7(obj, privateSet); privateSet.add(obj); }
-	function _classPrivateFieldInitSpec$7(obj, privateMap, value) { _checkPrivateRedeclaration$7(obj, privateMap); privateMap.set(obj, value); }
-	function _checkPrivateRedeclaration$7(obj, privateCollection) { if (privateCollection.has(obj)) { throw new TypeError("Cannot initialize the same private elements twice on an object"); } }
-	function _classPrivateMethodGet$4(receiver, privateSet, fn) { if (!privateSet.has(receiver)) { throw new TypeError("attempted to get private field on non-instance"); } return fn; }
+	function _classPrivateMethodInitSpec$5(obj, privateSet) { _checkPrivateRedeclaration$8(obj, privateSet); privateSet.add(obj); }
+	function _classPrivateFieldInitSpec$7(obj, privateMap, value) { _checkPrivateRedeclaration$8(obj, privateMap); privateMap.set(obj, value); }
+	function _checkPrivateRedeclaration$8(obj, privateCollection) { if (privateCollection.has(obj)) { throw new TypeError("Cannot initialize the same private elements twice on an object"); } }
+	function _classPrivateMethodGet$5(receiver, privateSet, fn) { if (!privateSet.has(receiver)) { throw new TypeError("attempted to get private field on non-instance"); } return fn; }
 	var _scheduleStream = /*#__PURE__*/new WeakMap();
 	var _fixedHistoryStream = /*#__PURE__*/new WeakMap();
 	var _historyStream = /*#__PURE__*/new WeakMap();
@@ -5529,17 +5634,17 @@ this.BX.Crm = this.BX.Crm || {};
 	let PullActionProcessor = /*#__PURE__*/function () {
 	  function PullActionProcessor(params) {
 	    babelHelpers.classCallCheck(this, PullActionProcessor);
-	    _classPrivateMethodInitSpec$4(this, _fetchItems);
-	    _classPrivateMethodInitSpec$4(this, _getStreamByName);
-	    _classPrivateMethodInitSpec$4(this, _unpinItem);
-	    _classPrivateMethodInitSpec$4(this, _pinItem);
-	    _classPrivateMethodInitSpec$4(this, _moveItem);
-	    _classPrivateMethodInitSpec$4(this, _deleteItem);
-	    _classPrivateMethodInitSpec$4(this, _updateItem);
-	    _classPrivateMethodInitSpec$4(this, _addItem);
-	    _classPrivateMethodInitSpec$4(this, _processQueueItem);
-	    _classPrivateMethodInitSpec$4(this, _addToQueue);
-	    _classPrivateMethodInitSpec$4(this, _itemDataShouldBeReloaded);
+	    _classPrivateMethodInitSpec$5(this, _fetchItems);
+	    _classPrivateMethodInitSpec$5(this, _getStreamByName);
+	    _classPrivateMethodInitSpec$5(this, _unpinItem);
+	    _classPrivateMethodInitSpec$5(this, _pinItem);
+	    _classPrivateMethodInitSpec$5(this, _moveItem);
+	    _classPrivateMethodInitSpec$5(this, _deleteItem);
+	    _classPrivateMethodInitSpec$5(this, _updateItem);
+	    _classPrivateMethodInitSpec$5(this, _addItem);
+	    _classPrivateMethodInitSpec$5(this, _processQueueItem);
+	    _classPrivateMethodInitSpec$5(this, _addToQueue);
+	    _classPrivateMethodInitSpec$5(this, _itemDataShouldBeReloaded);
 	    _classPrivateFieldInitSpec$7(this, _scheduleStream, {
 	      writable: true,
 	      value: null
@@ -5592,11 +5697,11 @@ this.BX.Crm = this.BX.Crm || {};
 	  babelHelpers.createClass(PullActionProcessor, [{
 	    key: "processAction",
 	    value: function processAction(actionParams) {
-	      if (_classPrivateMethodGet$4(this, _itemDataShouldBeReloaded, _itemDataShouldBeReloaded2).call(this, actionParams)) {
+	      if (_classPrivateMethodGet$5(this, _itemDataShouldBeReloaded, _itemDataShouldBeReloaded2).call(this, actionParams)) {
 	        babelHelpers.classPrivateFieldGet(this, _reloadingMessagesQueue).push(actionParams);
-	        _classPrivateMethodGet$4(this, _fetchItems, _fetchItems2).call(this);
+	        _classPrivateMethodGet$5(this, _fetchItems, _fetchItems2).call(this);
 	      } else {
-	        _classPrivateMethodGet$4(this, _addToQueue, _addToQueue2).call(this, actionParams);
+	        _classPrivateMethodGet$5(this, _addToQueue, _addToQueue2).call(this, actionParams);
 	      }
 	    }
 	  }]);
@@ -5628,7 +5733,7 @@ this.BX.Crm = this.BX.Crm || {};
 	function _addToQueue2(actionParams) {
 	  babelHelpers.classPrivateFieldGet(this, _itemsQueue).push(actionParams);
 	  if (!babelHelpers.classPrivateFieldGet(this, _itemsQueueProcessing)) {
-	    _classPrivateMethodGet$4(this, _processQueueItem, _processQueueItem2).call(this);
+	    _classPrivateMethodGet$5(this, _processQueueItem, _processQueueItem2).call(this);
 	  }
 	}
 	function _processQueueItem2() {
@@ -5638,41 +5743,41 @@ this.BX.Crm = this.BX.Crm || {};
 	  }
 	  babelHelpers.classPrivateFieldSet(this, _itemsQueueProcessing, true);
 	  const actionParams = babelHelpers.classPrivateFieldGet(this, _itemsQueue).shift();
-	  const stream = _classPrivateMethodGet$4(this, _getStreamByName, _getStreamByName2).call(this, actionParams.stream);
+	  const stream = _classPrivateMethodGet$5(this, _getStreamByName, _getStreamByName2).call(this, actionParams.stream);
 	  const promises = [];
 	  switch (actionParams.action) {
 	    case 'add':
-	      promises.push(_classPrivateMethodGet$4(this, _addItem, _addItem2).call(this, actionParams.id, actionParams.item, stream));
+	      promises.push(_classPrivateMethodGet$5(this, _addItem, _addItem2).call(this, actionParams.id, actionParams.item, stream));
 	      break;
 	    case 'update':
-	      promises.push(_classPrivateMethodGet$4(this, _updateItem, _updateItem2).call(this, actionParams.id, actionParams.item, stream, false, true));
+	      promises.push(_classPrivateMethodGet$5(this, _updateItem, _updateItem2).call(this, actionParams.id, actionParams.item, stream, false, true));
 	      if (stream.isHistoryStream()) {
 	        // fixed history stream can contain the same item as a history stream, so both should be updated:
-	        promises.push(_classPrivateMethodGet$4(this, _updateItem, _updateItem2).call(this, actionParams.id, actionParams.item, babelHelpers.classPrivateFieldGet(this, _fixedHistoryStream), false, true));
+	        promises.push(_classPrivateMethodGet$5(this, _updateItem, _updateItem2).call(this, actionParams.id, actionParams.item, babelHelpers.classPrivateFieldGet(this, _fixedHistoryStream), false, true));
 	      }
 	      break;
 	    case 'delete':
-	      promises.push(_classPrivateMethodGet$4(this, _deleteItem, _deleteItem2).call(this, actionParams.id, stream));
+	      promises.push(_classPrivateMethodGet$5(this, _deleteItem, _deleteItem2).call(this, actionParams.id, stream));
 	      if (stream.isHistoryStream()) {
 	        // fixed history stream can contain the same item as a history stream, so both should be updated:
-	        promises.push(_classPrivateMethodGet$4(this, _deleteItem, _deleteItem2).call(this, actionParams.id, babelHelpers.classPrivateFieldGet(this, _fixedHistoryStream)));
+	        promises.push(_classPrivateMethodGet$5(this, _deleteItem, _deleteItem2).call(this, actionParams.id, babelHelpers.classPrivateFieldGet(this, _fixedHistoryStream)));
 	      }
 	      break;
 	    case 'move':
 	      // move item from one stream to another one:
-	      const sourceStream = _classPrivateMethodGet$4(this, _getStreamByName, _getStreamByName2).call(this, actionParams.params.fromStream);
-	      promises.push(_classPrivateMethodGet$4(this, _moveItem, _moveItem2).call(this, actionParams.params.fromId, sourceStream, actionParams.id, stream, actionParams.item));
+	      const sourceStream = _classPrivateMethodGet$5(this, _getStreamByName, _getStreamByName2).call(this, actionParams.params.fromStream);
+	      promises.push(_classPrivateMethodGet$5(this, _moveItem, _moveItem2).call(this, actionParams.params.fromId, sourceStream, actionParams.id, stream, actionParams.item));
 	      break;
 	    case 'changePinned':
 	      // pin or unpin item
-	      if (_classPrivateMethodGet$4(this, _getStreamByName, _getStreamByName2).call(this, actionParams.params.fromStream).isHistoryStream()) {
-	        promises.push(_classPrivateMethodGet$4(this, _pinItem, _pinItem2).call(this, actionParams.id, actionParams.item));
+	      if (_classPrivateMethodGet$5(this, _getStreamByName, _getStreamByName2).call(this, actionParams.params.fromStream).isHistoryStream()) {
+	        promises.push(_classPrivateMethodGet$5(this, _pinItem, _pinItem2).call(this, actionParams.id, actionParams.item));
 	      } else {
-	        promises.push(_classPrivateMethodGet$4(this, _unpinItem, _unpinItem2).call(this, actionParams.id, actionParams.item));
+	        promises.push(_classPrivateMethodGet$5(this, _unpinItem, _unpinItem2).call(this, actionParams.id, actionParams.item));
 	      }
 	  }
 	  Promise.all(promises).then(() => {
-	    _classPrivateMethodGet$4(this, _processQueueItem, _processQueueItem2).call(this);
+	    _classPrivateMethodGet$5(this, _processQueueItem, _processQueueItem2).call(this);
 	  });
 	}
 	async function _addItem2(id, itemData, stream) {
@@ -5714,11 +5819,11 @@ this.BX.Crm = this.BX.Crm || {};
 	function _moveItem2(sourceId, sourceStream, destinationId, destinationStream, destinationItemData) {
 	  const sourceItem = sourceStream.findItemById(sourceId);
 	  if (!sourceItem) {
-	    return _classPrivateMethodGet$4(this, _addItem, _addItem2).call(this, destinationId, destinationItemData, destinationStream);
+	    return _classPrivateMethodGet$5(this, _addItem, _addItem2).call(this, destinationId, destinationItemData, destinationStream);
 	  }
 	  const existedDestinationItem = destinationStream.findItemById(destinationId);
 	  if (sourceItem && existedDestinationItem) {
-	    return _classPrivateMethodGet$4(this, _deleteItem, _deleteItem2).call(this, sourceId, sourceStream);
+	    return _classPrivateMethodGet$5(this, _deleteItem, _deleteItem2).call(this, sourceId, sourceStream);
 	  }
 	  const destinationItem = destinationStream.createItem(destinationItemData);
 	  destinationStream.addItem(destinationItem, destinationStream.calculateItemIndex(destinationItem));
@@ -5737,7 +5842,7 @@ this.BX.Crm = this.BX.Crm || {};
 	  if (!historyItem)
 	    // fixed history item does not exist into history items stream, so just add to fixed history stream
 	    {
-	      return _classPrivateMethodGet$4(this, _addItem, _addItem2).call(this, id, itemData, babelHelpers.classPrivateFieldGet(this, _fixedHistoryStream));
+	      return _classPrivateMethodGet$5(this, _addItem, _addItem2).call(this, id, itemData, babelHelpers.classPrivateFieldGet(this, _fixedHistoryStream));
 	    }
 	  if (historyItem instanceof CompatibleItem) {
 	    historyItem.onSuccessFasten();
@@ -5749,7 +5854,7 @@ this.BX.Crm = this.BX.Crm || {};
 	      historyCommentBlock.setIsFilesBlockDisplayed(false);
 	      historyCommentBlock.setIsMoving();
 	    }
-	    return _classPrivateMethodGet$4(this, _updateItem, _updateItem2).call(this, id, itemData, babelHelpers.classPrivateFieldGet(this, _historyStream), false, false).then(() => {
+	    return _classPrivateMethodGet$5(this, _updateItem, _updateItem2).call(this, id, itemData, babelHelpers.classPrivateFieldGet(this, _historyStream), false, false).then(() => {
 	      const fixedHistoryItem = babelHelpers.classPrivateFieldGet(this, _fixedHistoryStream).createItem(itemData);
 	      fixedHistoryItem.initWrapper();
 	      babelHelpers.classPrivateFieldGet(this, _fixedHistoryStream).addItem(fixedHistoryItem, 0);
@@ -5789,8 +5894,8 @@ this.BX.Crm = this.BX.Crm || {};
 	    fixedHistoryItem.onSuccessUnfasten();
 	    return Promise.resolve();
 	  } else {
-	    return _classPrivateMethodGet$4(this, _updateItem, _updateItem2).call(this, id, itemData, babelHelpers.classPrivateFieldGet(this, _historyStream), false, false).then(() => {
-	      return _classPrivateMethodGet$4(this, _deleteItem, _deleteItem2).call(this, id, babelHelpers.classPrivateFieldGet(this, _fixedHistoryStream));
+	    return _classPrivateMethodGet$5(this, _updateItem, _updateItem2).call(this, id, itemData, babelHelpers.classPrivateFieldGet(this, _historyStream), false, false).then(() => {
+	      return _classPrivateMethodGet$5(this, _deleteItem, _deleteItem2).call(this, id, babelHelpers.classPrivateFieldGet(this, _fixedHistoryStream));
 	    });
 	  }
 	}
@@ -5829,11 +5934,11 @@ this.BX.Crm = this.BX.Crm || {};
 	          if (response.data[message.id]) {
 	            message.item = response.data[message.id];
 	          }
-	          _classPrivateMethodGet$4(this, _addToQueue, _addToQueue2).call(this, message);
+	          _classPrivateMethodGet$5(this, _addToQueue, _addToQueue2).call(this, message);
 	        });
 	      }).catch(err => {
 	        console.error(err);
-	        messages.forEach(message => _classPrivateMethodGet$4(this, _addToQueue, _addToQueue2).call(this, message));
+	        messages.forEach(message => _classPrivateMethodGet$5(this, _addToQueue, _addToQueue2).call(this, message));
 	      });
 	    }
 	  }, 1500);
@@ -6120,8 +6225,8 @@ this.BX.Crm = this.BX.Crm || {};
 	          const info = list[i];
 	          const icon = BX.create("i");
 	          const imageUrl = BX.prop.getString(info, "avatar", "");
-	          if (imageUrl !== "") {
-	            icon.style.backgroundImage = "url(" + encodeURI(imageUrl) + ")";
+	          if (main_core.Type.isStringFilled(imageUrl)) {
+	            icon.style.backgroundImage = "url('" + encodeURI(main_core.Text.encode(imageUrl)) + "')";
 	          }
 	          this._userWrapper.appendChild(BX.create("span", {
 	            props: {
@@ -8973,7 +9078,7 @@ this.BX.Crm = this.BX.Crm || {};
 	  }, {
 	    key: "getVkProfileUrl",
 	    value: function getVkProfileUrl(profile) {
-	      return 'https://vk.com/' + BX.util.htmlspecialchars(profile);
+	      return 'https://vk.ru/' + BX.util.htmlspecialchars(profile);
 	    }
 	  }, {
 	    key: "view",
@@ -15564,8 +15669,8 @@ this.BX.Crm = this.BX.Crm || {};
 	  return AudioPlaybackRateSelector;
 	}();
 
-	function _classPrivateFieldInitSpec$8(obj, privateMap, value) { _checkPrivateRedeclaration$8(obj, privateMap); privateMap.set(obj, value); }
-	function _checkPrivateRedeclaration$8(obj, privateCollection) { if (privateCollection.has(obj)) { throw new TypeError("Cannot initialize the same private elements twice on an object"); } }
+	function _classPrivateFieldInitSpec$8(obj, privateMap, value) { _checkPrivateRedeclaration$9(obj, privateMap); privateMap.set(obj, value); }
+	function _checkPrivateRedeclaration$9(obj, privateCollection) { if (privateCollection.has(obj)) { throw new TypeError("Cannot initialize the same private elements twice on an object"); } }
 	function _classStaticPrivateFieldSpecSet(receiver, classConstructor, descriptor, value) { _classCheckPrivateStaticAccess$1(receiver, classConstructor); _classCheckPrivateStaticFieldDescriptor$1(descriptor, "set"); _classApplyDescriptorSet(receiver, descriptor, value); return value; }
 	function _classApplyDescriptorSet(receiver, descriptor, value) { if (descriptor.set) { descriptor.set.call(receiver, value); } else { if (!descriptor.writable) { throw new TypeError("attempted to set read only private field"); } descriptor.value = value; } }
 	function _classStaticPrivateFieldSpecGet$1(receiver, classConstructor, descriptor) { _classCheckPrivateStaticAccess$1(receiver, classConstructor); _classCheckPrivateStaticFieldDescriptor$1(descriptor, "get"); return _classApplyDescriptorGet$1(receiver, descriptor); }
@@ -16337,12 +16442,12 @@ this.BX.Crm = this.BX.Crm || {};
 	  }, {
 	    key: "runFirstAutomationTour",
 	    value: function runFirstAutomationTour() {
-	      if (!document.querySelector('.bp_starter')) {
+	      if (!document.querySelector('#crm_entity_bp_starter')) {
 	        return;
 	      }
 	      main_core_events.EventEmitter.emit('BX.Crm.Timeline.Bizproc::onAfterWorkflowStarted', {
 	        stepId: 'on-after-started-workflow',
-	        target: '.bp_starter'
+	        target: '#crm_entity_bp_starter'
 	      });
 	    }
 	  }, {

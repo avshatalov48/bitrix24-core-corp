@@ -2,24 +2,26 @@
 
 namespace Bitrix\HumanResources\Repository;
 
+use Bitrix\HumanResources\Access\AuthProvider\StructureAuthProvider;
+use Bitrix\HumanResources\Command\Structure\Node\NodeOrderCommand;
+use Bitrix\HumanResources\Contract;
+use Bitrix\HumanResources\Service\EventSenderService;
+use Bitrix\HumanResources\Enum\DepthLevel;
 use Bitrix\HumanResources\Enum\EventName;
+use Bitrix\HumanResources\Enum\NodeActiveFilter;
 use Bitrix\HumanResources\Exception\CreationFailedException;
 use Bitrix\HumanResources\Exception\DeleteFailedException;
 use Bitrix\HumanResources\Exception\UpdateFailedException;
 use Bitrix\HumanResources\Exception\WrongStructureItemException;
+use Bitrix\HumanResources\Item;
 use Bitrix\HumanResources\Item\Node;
 use Bitrix\HumanResources\Model;
-use Bitrix\Main\ORM\Query\Query;
 use Bitrix\HumanResources\Model\NodePathTable;
 use Bitrix\HumanResources\Model\NodeTable;
 use Bitrix\HumanResources\Service\Container;
-use Bitrix\HumanResources\Enum\DepthLevel;
-use Bitrix\HumanResources\Enum\NodeActiveFilter;
-use Bitrix\HumanResources\Contract\Service\EventSenderService;
 use Bitrix\HumanResources\Type\MemberEntityType;
 use Bitrix\HumanResources\Type\NodeEntityType;
-use Bitrix\HumanResources\Item;
-use Bitrix\HumanResources\Contract;
+use Bitrix\HumanResources\Util\AccessCodeHelper;
 use Bitrix\Main;
 use Bitrix\Main\ArgumentException;
 use Bitrix\Main\Engine\CurrentUser;
@@ -28,21 +30,28 @@ use Bitrix\Main\ErrorCollection;
 use Bitrix\Main\ObjectPropertyException;
 use Bitrix\Main\ORM\Fields\Relations\Reference;
 use Bitrix\Main\ORM\Query\Join;
+use Bitrix\Main\ORM\Query\Query;
 use Bitrix\Main\SystemException;
+use Bitrix\HumanResources\Type\AccessCodeType;
 
 class NodeRepository implements Contract\Repository\NodeRepository
 {
-	protected Contract\Util\CacheManager $cacheManager;
-	protected EventSenderService $eventSenderService;
+	protected readonly Contract\Util\CacheManager $cacheManager;
+	protected readonly EventSenderService $eventSenderService;
+	private readonly StructureAuthProvider $structureAuthProvider;
+	/** @var list<NodeEntityType> */
+	protected array $selectableNodeEntityTypes = [NodeEntityType::DEPARTMENT];
+
 	protected const DEFAULT_TTL = 3600;
 
 	public function __construct(
-		?EventSenderService $eventSenderService = null,
+		?StructureAuthProvider $structureAuthProvider = null,
 	)
 	{
 		$this->cacheManager = Container::getCacheManager();
 		$this->cacheManager->setTtl(86400*7);
-		$this->eventSenderService = $eventSenderService ?? Container::getEventSenderService();
+		$this->eventSenderService = Container::getEventSenderService();
+		$this->structureAuthProvider = $structureAuthProvider ?? Container::getStructureAuthProvider();
 	}
 
 	public function mapItemToModel(Model\Node $nodeEntity, Item\Node $node): Model\Node
@@ -58,19 +67,21 @@ class NodeRepository implements Contract\Repository\NodeRepository
 			->setGlobalActive($node->globalActive)
 			->setSort($node->sort)
 			->setDescription($node->description)
+			->setColorName($node->colorName)
 		;
 	}
 
-	private function convertModelToItem(Model\Node $node): Item\Node
+	protected function convertModelToItem(Model\Node $node): Item\Node
 	{
+		$nodeId = $node->getId();
 		$accessCode = $node->getAccessCode()?->current();
 		$depth = $node->getChildNodes()?->current();
 		return new Item\Node(
 			name: $node->getName(),
 			type: NodeEntityType::tryFrom($node->getType()),
 			structureId: $node->getStructureId(),
-			accessCode: $accessCode ? $accessCode->getAccessCode() : null,
-			id: $node->getId(),
+			accessCode: $accessCode ? $accessCode->getAccessCode() : AccessCodeHelper::makeCodeByTypeAndId($nodeId),
+			id: $nodeId,
 			parentId: $node->getParentId(),
 			depth: $depth ? $depth->getDepth() : null,
 			createdBy: $node->getCreatedBy(),
@@ -81,16 +92,22 @@ class NodeRepository implements Contract\Repository\NodeRepository
 			globalActive: $node->getGlobalActive(),
 			sort: $node->getSort(),
 			description: $node->getDescription(),
+			colorName: $node->getColorName(),
 		);
 	}
 
-	private function convertModelArrayToItem(array $node): Item\Node
+	protected function convertModelArrayToItem(array $node): Item\Node
 	{
+		$accessCode =
+			$node['HUMANRESOURCES_MODEL_NODE_ACCESS_CODE_ACCESS_CODE']
+			?? AccessCodeHelper::makeCodeByTypeAndId((int)($node['ID'] ?? 0))
+		;
+
 		return new Item\Node(
-			name: $node['NAME'],
-			type: NodeEntityType::tryFrom($node['TYPE']),
-			structureId: $node['STRUCTURE_ID'],
-			accessCode: $node['HUMANRESOURCES_MODEL_NODE_ACCESS_CODE_ACCESS_CODE'],
+			name: $node['NAME'] ?? null,
+			type: NodeEntityType::tryFrom($node['TYPE'] ?? '') ?? null,
+			structureId: $node['STRUCTURE_ID'] ?? null,
+			accessCode: $accessCode,
 			id: $node['ID'] ?? null,
 			parentId: $node['PARENT_ID'] ?? null,
 			depth: $node['HUMANRESOURCES_MODEL_NODE_CHILD_NODES_DEPTH'] ?? null,
@@ -98,10 +115,11 @@ class NodeRepository implements Contract\Repository\NodeRepository
 			createdAt: $node['CREATED_AT'] ?? null,
 			updatedAt: $node['UPDATED_AT'] ?? null,
 			xmlId: $node['XML_ID'] ?? null,
-			active: $node['ACTIVE'] === 'Y',
-			globalActive: $node['GLOBAL_ACTIVE'] === 'Y',
-			sort: $node['SORT'] ?? 500,
+			active: ($node['ACTIVE'] ?? '') === 'Y',
+			globalActive: ($node['GLOBAL_ACTIVE'] ?? '') === 'Y',
+			sort: $node['SORT'] ?? 0,
 			description: $node['DESCRIPTION'] ?? null,
+			colorName: $node['COLOR_NAME'] ?? null,
 		);
 	}
 
@@ -123,7 +141,9 @@ class NodeRepository implements Contract\Repository\NodeRepository
 		}
 		$nodeEntity = NodeTable::getEntity()->createObject();
 		$currentUserId = CurrentUser::get()->getId();
-		$node->createdBy = $currentUserId;
+		$node->createdBy = (int)$currentUserId;
+
+		$this->prepareSort($node);
 
 		$result = $this->mapItemToModel($nodeEntity, $node)
 			->save();
@@ -138,11 +158,12 @@ class NodeRepository implements Contract\Repository\NodeRepository
 		NodePathTable::appendNode($node->id, $node->parentId);
 
 		$this->eventSenderService->send(
-			EventName::NODE_ADDED,
+			EventName::OnNodeAdded,
 			[
 				'node' => $node,
 			]
 		);
+		$this->structureAuthProvider->recalculateCodesForNode($node);
 
 		return $node;
 	}
@@ -163,7 +184,6 @@ class NodeRepository implements Contract\Repository\NodeRepository
 			return $node;
 		}
 
-		$nodeCacheKey = sprintf(self::NODE_ENTITY_CACHE_KEY, $node->id);
 		$nodeCache = $this->getById($node->id);
 
 		if (!$nodeCache)
@@ -248,7 +268,7 @@ class NodeRepository implements Contract\Repository\NodeRepository
 			$nodeCache->globalActive = $node->globalActive;
 		}
 
-		if ($node->sort && $node->sort !== $nodeCache->sort)
+		if ($node->sort !== null && $node->sort !== $nodeCache->sort)
 		{
 			$nodeCache->sort = $node->sort;
 			$updatedField['sort'] = $node->sort;
@@ -258,6 +278,12 @@ class NodeRepository implements Contract\Repository\NodeRepository
 		{
 			$nodeCache->description = $node->description === '' ? null : $node->description;
 			$updatedField['description'] = $node->description;
+		}
+
+		if ($node->colorName !== null && $node->colorName !== $nodeCache->colorName)
+		{
+			$nodeCache->colorName = $node->colorName === '' ? null : $node->colorName;
+			$updatedField['colorName'] = $node->colorName;
 		}
 
 		if (!empty($updatedField))
@@ -275,11 +301,12 @@ class NodeRepository implements Contract\Repository\NodeRepository
 				;
 			}
 
-			$this->cacheManager->setData($nodeCacheKey, $nodeCache);
-			$this->eventSenderService->send(EventName::NODE_UPDATED, [
+			$this->removeNodeCache($nodeCache->id);
+			$this->eventSenderService->send(EventName::OnNodeUpdated, [
 				'node' => $nodeCache,
 				'fields' => $updatedField,
 			]);
+			$this->structureAuthProvider->recalculateCodesForNode($node);
 		}
 
 		return $node;
@@ -294,9 +321,10 @@ class NodeRepository implements Contract\Repository\NodeRepository
 	public function findAllByUserId(int $userId, NodeActiveFilter $activeFilter = NodeActiveFilter::ONLY_GLOBAL_ACTIVE): Item\Collection\NodeCollection
 	{
 		$nodeItems = new Item\Collection\NodeCollection();
-		$query = NodeTable::query()
+		$query = $this->getNodeQueryWithPreparedTypeFilter()
 			->setSelect(['*'])
 			->addSelect('ACCESS_CODE')
+			->addSelect('CHILD_NODES')
 			->registerRuntimeField(
 				'nm',
 				new Reference(
@@ -312,10 +340,10 @@ class NodeRepository implements Contract\Repository\NodeRepository
 		;
 
 		$query = $this->setNodeActiveFilter($query, $activeFilter);
-		$nodes = $query->fetchAll();
+		$nodes = $query->fetchCollection();
 		foreach ($nodes as $nodeEntity)
 		{
-			$node = $this->convertModelArrayToItem($nodeEntity);
+			$node = $this->convertModelToItem($nodeEntity);
 			$nodeItems->add($node);
 		}
 
@@ -350,8 +378,7 @@ class NodeRepository implements Contract\Repository\NodeRepository
 			return new Item\Node(...$nodeCache);
 		}
 
-		$query =
-			NodeTable::query()
+		$query = NodeTable::query()
 			->setSelect(['*', 'ACCESS_CODE',])
 			->where('ID', $nodeId)
 			->setLimit(1)
@@ -382,15 +409,14 @@ class NodeRepository implements Contract\Repository\NodeRepository
 	 */
 	public function getByIdWithDepth(int $nodeId): ?Item\Node
 	{
-		$query =
-			NodeTable::query()
-					 ->setSelect(['*', 'ACCESS_CODE', 'CHILD_NODES'])
-					 ->where('ID', $nodeId)
-					->where('PARENT_NODES.CHILD_ID', $nodeId)
-					->addOrder('CHILD_NODES.DEPTH', 'DESC')
-					 ->setLimit(1)
-					->setCacheTtl(86400)
-					 ->cacheJoins(true)
+		$query = NodeTable::query()
+				->setSelect(['*', 'ACCESS_CODE', 'CHILD_NODES'])
+				->where('ID', $nodeId)
+				->where('PARENT_NODES.CHILD_ID', $nodeId)
+				->addOrder('CHILD_NODES.DEPTH', 'DESC')
+				->setLimit(1)
+				->setCacheTtl(86400)
+				->cacheJoins(true)
 		;
 
 		$node = $query->fetchObject();
@@ -443,7 +469,7 @@ class NodeRepository implements Contract\Repository\NodeRepository
 			return $nodeCollection;
 		}
 
-		$nodeQuery = NodeTable::query()
+		$nodeQuery = $this->getNodeQueryWithPreparedTypeFilter()
 			->setSelect(['*'])
 			->addSelect('ACCESS_CODE')
 			->addSelect('CHILD_NODES')
@@ -495,7 +521,7 @@ class NodeRepository implements Contract\Repository\NodeRepository
 			return $nodeCollection;
 		}
 
-		$nodeQuery = NodeTable::query()
+		$nodeQuery = $this->getNodeQueryWithPreparedTypeFilter()
 			->setSelect(['*'])
 			->addSelect('ACCESS_CODE')
 			->addSelect('CHILD_NODES')
@@ -537,7 +563,7 @@ class NodeRepository implements Contract\Repository\NodeRepository
 	{
 		$nodeItems = new Item\Collection\NodeCollection();
 		$query =
-			NodeTable::query()
+			$this->getNodeQueryWithPreparedTypeFilter()
 				->setSelect(['*'])
 				->addSelect('ACCESS_CODE')
 				->addSelect('CHILD_NODES')
@@ -556,7 +582,7 @@ class NodeRepository implements Contract\Repository\NodeRepository
 				->cacheJoins(true)
 		;
 
-		$this->setNodeActiveFilter($query, $activeFilter);
+		$query = $this->setNodeActiveFilter($query, $activeFilter);
 		$result = $query->exec();
 
 		while ($nodeEntity = $result->fetch())
@@ -582,6 +608,14 @@ class NodeRepository implements Contract\Repository\NodeRepository
 			return $nodes[$accessCode];
 		}
 
+		$nodeByAccessCode = $this->extractIdByAccessCodeAndFind($accessCode);
+		if ($nodeByAccessCode)
+		{
+			$nodes[$accessCode] = $nodeByAccessCode;
+
+			return $nodeByAccessCode;
+		}
+
 		$accessCode = str_replace('DR', 'D', $accessCode);
 
 		$node = NodeTable::query()
@@ -594,9 +628,9 @@ class NodeRepository implements Contract\Repository\NodeRepository
 			->exec()
 			->fetch();
 
-		 $nodes[$accessCode] = !$node ? null: $this->convertModelArrayToItem($node);
+		$nodes[$accessCode] = !$node ? null : $this->convertModelArrayToItem($node);
 
-		 return $nodes[$accessCode];
+		return $nodes[$accessCode];
 	}
 
 	/**
@@ -630,10 +664,11 @@ class NodeRepository implements Contract\Repository\NodeRepository
 	{
 		$nodeItems = new Item\Collection\NodeCollection();
 		$query =
-			NodeTable::query()
+			$this->getNodeQueryWithPreparedTypeFilter()
 				->setSelect(['*'])
 				->addSelect('ACCESS_CODE')
 				->where('STRUCTURE_ID', $structureId)
+				->addOrder('SORT')
 				->cacheJoins(true)
 				->setCacheTtl(self::DEFAULT_TTL)
 		;
@@ -659,11 +694,12 @@ class NodeRepository implements Contract\Repository\NodeRepository
 	{
 		$nodeItems = new Item\Collection\NodeCollection();
 		$query =
-			NodeTable::query()
+			$this->getNodeQueryWithPreparedTypeFilter()
 				->setSelect(['*'])
 				->addSelect('ACCESS_CODE')
 				->setLimit($limit)
 				->setOffset($offset)
+				->setOrder(['ID' => 'ASC'])
 				->where('STRUCTURE_ID', $structureId)
 		;
 		$query = $this->setNodeActiveFilter($query, $activeFilter);
@@ -680,7 +716,7 @@ class NodeRepository implements Contract\Repository\NodeRepository
 	public function hasChild(Item\Node $node): bool
 	{
 		$nodeQuery =
-			NodeTable::query()
+			$this->getNodeQueryWithPreparedTypeFilter()
 				->where('CHILD_NODES.PARENT_ID', $node->id)
 				->where('CHILD_NODES.DEPTH', 1)
 				->setLimit(1)
@@ -724,6 +760,7 @@ class NodeRepository implements Contract\Repository\NodeRepository
 	public function deleteById(int $nodeId): void
 	{
 		$node = $this->getById($nodeId);
+		$this->structureAuthProvider->recalculateCodesForNode($node);
 		$result = NodeTable::delete($nodeId);
 		if (!$result->isSuccess())
 		{
@@ -732,7 +769,7 @@ class NodeRepository implements Contract\Repository\NodeRepository
 			;
 		}
 
-		$this->eventSenderService->send(EventName::NODE_DELETED, [
+		$this->eventSenderService->send(EventName::OnNodeDeleted, [
 			'node' => $node,
 		]);
 
@@ -740,12 +777,13 @@ class NodeRepository implements Contract\Repository\NodeRepository
 	}
 
 	/**
-	 * @param list<int> $departments
+	 * @param list<string> $departments
 	 *
 	 * @return \Bitrix\HumanResources\Item\Collection\NodeCollection
 	 * @throws \Bitrix\Main\ArgumentException
 	 * @throws \Bitrix\Main\ObjectPropertyException
 	 * @throws \Bitrix\Main\SystemException
+	 * @throws WrongStructureItemException
 	 */
 	public function findAllByAccessCodes(array $departments): Item\Collection\NodeCollection
 	{
@@ -753,22 +791,62 @@ class NodeRepository implements Contract\Repository\NodeRepository
 		{
 			return new Item\Collection\NodeCollection();
 		}
-		$collection =
-			NodeTable::query()
-				->setSelect(['*'])
-				->addSelect('ACCESS_CODE')
-				->addSelect('CHILD_NODES')
-				->whereIn('ACCESS_CODE.ACCESS_CODE', $departments)
-				->cacheJoins(true)
-				->setCacheTtl(86400)
-				->fetchAll()
-		;
 
-		return $collection === null
-			? new Item\Collection\NodeCollection()
-			: $this->convertModelArrayToItemByArray(
-				$collection,
-			);
+		$iBlockAccessCodes = [];
+		$nodeIds = [];
+		foreach ($departments as $accessCode)
+		{
+			$id = AccessCodeHelper::extractIdFromCode($accessCode);
+			if ($id)
+			{
+				$nodeIds[] = $id;
+
+				continue;
+			}
+
+			$iBlockAccessCodes[] = $accessCode;
+		}
+
+		$findByAccessCodeCollection = new Item\Collection\NodeCollection();
+		$findByIdsCollection = new Item\Collection\NodeCollection();
+		if (!empty($iBlockAccessCodes))
+		{
+			$nodeModelArray =
+				$this->getNodeQueryWithPreparedTypeFilter()
+					->setSelect(['*'])
+					->addSelect('ACCESS_CODE')
+					->addSelect('CHILD_NODES')
+					->whereIn('ACCESS_CODE.ACCESS_CODE', $iBlockAccessCodes)
+					->cacheJoins(true)
+					->setCacheTtl(86400)
+					->fetchAll()
+			;
+
+			if ($nodeModelArray)
+			{
+				$findByAccessCodeCollection = $this->convertModelArrayToItemByArray($nodeModelArray);
+			}
+		}
+
+		if (!empty($nodeIds))
+		{
+			$findByIdsCollection = $this->findAllByIds($nodeIds);
+		}
+
+		if ($findByAccessCodeCollection->empty())
+		{
+			return $findByIdsCollection;
+		}
+
+		if ($findByIdsCollection->empty())
+		{
+			return $findByAccessCodeCollection;
+		}
+
+		return new Item\Collection\NodeCollection(
+			...$findByAccessCodeCollection->getValues(),
+			...$findByIdsCollection->getValues(),
+		);
 	}
 
 	public function getNodesByName(
@@ -782,7 +860,7 @@ class NodeRepository implements Contract\Repository\NodeRepository
 	): Item\Collection\NodeCollection
 	{
 		$nodeCollection = new Item\Collection\NodeCollection();
-		$nodeQuery = NodeTable::query()
+		$nodeQuery = $this->getNodeQueryWithPreparedTypeFilter()
 			->setSelect(['*'])
 			->addSelect('ACCESS_CODE')
 			->addSelect('CHILD_NODES')
@@ -862,6 +940,16 @@ class NodeRepository implements Contract\Repository\NodeRepository
 		;
 	}
 
+	/**
+	 * @param list<NodeEntityType> $selectableNodeEntityTypes
+	 */
+	public function setSelectableNodeEntityTypes(array $selectableNodeEntityTypes): static
+	{
+		$this->selectableNodeEntityTypes = $selectableNodeEntityTypes;
+
+		return $this;
+	}
+
 	protected function convertModelArrayToItemByCollection(Model\NodeCollection $models): Item\Collection\NodeCollection
 	{
 		return new Item\Collection\NodeCollection(
@@ -888,7 +976,6 @@ class NodeRepository implements Contract\Repository\NodeRepository
 	 *
 	 * @throws \Bitrix\Main\ObjectPropertyException
 	 * @throws \Bitrix\Main\ArgumentException
-	 * @throws \Bitrix\HumanResources\Exception\WrongStructureItemException
 	 * @throws \Bitrix\Main\SystemException
 	 */
 	public function getChildOfNodeCollection(
@@ -904,7 +991,7 @@ class NodeRepository implements Contract\Repository\NodeRepository
 		}
 
 		$parentIds = array_column($nodeCollection->getItemMap(), 'id');
-		$nodeQuery = NodeTable::query()
+		$nodeQuery = $this->getNodeQueryWithPreparedTypeFilter()
 			  ->setSelect(['*'])
 			  ->addSelect('ACCESS_CODE')
 			  ->addSelect('CHILD_NODES')
@@ -929,7 +1016,7 @@ class NodeRepository implements Contract\Repository\NodeRepository
 		return !$nodeModelArray
 			? $resultNodeCollection
 			: $this->convertModelArrayToItemByArray($nodeModelArray)
-			;
+		;
 	}
 
 	public function findAllByXmlId(string $xmlId, NodeActiveFilter $activeFilter = NodeActiveFilter::ONLY_GLOBAL_ACTIVE): Item\Collection\NodeCollection
@@ -1040,10 +1127,11 @@ class NodeRepository implements Contract\Repository\NodeRepository
 			return new Item\Collection\NodeCollection();
 		}
 
-		$query = NodeTable::query()
+		$query = $this->getNodeQueryWithPreparedTypeFilter()
 			->setSelect([
 				'ID',
 				'TYPE',
+				'PARENT_ID',
 				'STRUCTURE_ID',
 				'ACTIVE',
 				'GLOBAL_ACTIVE',
@@ -1062,5 +1150,98 @@ class NodeRepository implements Contract\Repository\NodeRepository
 		return !$nodeModelArray
 			? new Item\Collection\NodeCollection()
 			: $this->convertModelArrayToItemByArray($nodeModelArray);
+	}
+
+	/**
+	 * @param Node $node
+	 *
+	 * @return void
+	 * @throws ArgumentException
+	 * @throws ObjectPropertyException
+	 * @throws SystemException
+	 */
+	private function prepareSort(Node $node): void
+	{
+		$lastSibling = $this->getNodeQueryWithPreparedTypeFilter()
+			->where('PARENT_ID', $node->parentId)
+			->setSelect(['SORT'])
+			->addOrder('SORT', 'DESC')
+			->setLimit(1)
+			->fetchObject()
+		;
+
+		if ($lastSibling)
+		{
+			$node->sort = $lastSibling->getSort() + NodeOrderCommand::ORDER_STEP;
+		}
+	}
+
+	protected function getNodeQueryWithPreparedTypeFilter(): Query
+	{
+		$query = NodeTable::query();
+		if (!empty($this->selectableNodeEntityTypes))
+		{
+			$query->whereIn(
+				'TYPE',
+				array_map(static fn(NodeEntityType $type) => $type->value, $this->selectableNodeEntityTypes),
+			);
+		}
+
+		return $query;
+	}
+
+	private function extractIdByAccessCodeAndFind(string $accessCode): ?Node
+	{
+		foreach (AccessCodeType::getTeamTypes() as $type)
+		{
+			if (!str_starts_with($accessCode, $type->value))
+			{
+				continue;
+			}
+
+			$id = AccessCodeHelper::extractIdFromCode($accessCode, $type);
+			if (!$id)
+			{
+				continue;
+			}
+
+			$node = $this->getById($id);
+			if (!$node?->isTeam())
+			{
+				return null;
+			}
+
+			return $node;
+		}
+
+		foreach (AccessCodeType::getDepartmentTypes() as $type)
+		{
+			if (!str_starts_with($accessCode, $type->value))
+			{
+				continue;
+			}
+
+			$id = (int)AccessCodeHelper::extractIdFromCode($accessCode, $type);
+			if (!$id)
+			{
+				continue;
+			}
+
+			$node = $this->getById($id);
+			if (!$node?->isDepartment())
+			{
+				return null;
+			}
+
+			return $node;
+		}
+
+		$id = AccessCodeHelper::extractIdFromCode($accessCode);
+		if ($id)
+		{
+			return $this->getById($id);
+		}
+
+		return null;
 	}
 }

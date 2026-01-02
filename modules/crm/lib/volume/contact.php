@@ -143,14 +143,16 @@ class Contact
 	 */
 	public function canClearEntity()
 	{
-		$userPermissions = \CCrmPerms::GetUserPermissions($this->getOwner());
-		if (!\CCrmContact::CheckReadPermission(0, $userPermissions))
+		$userPermissions = Crm\Service\Container::getInstance()->getUserPermissions($this->getOwner());
+
+		if (!$userPermissions->entityType()->canReadItemsInCategory(\CCrmOwnerType::Contact, 0)) // check read permissions for default contact category
 		{
 			$this->collectError(new Main\Error('', self::ERROR_PERMISSION_DENIED));
 
 			return false;
 		}
-		if ($userPermissions->HavePerm('CONTACT', BX_CRM_PERM_NONE, 'DELETE'))
+
+		if (!$userPermissions->entityType()->canDeleteItemsInCategory(\CCrmOwnerType::Contact, 0)) // check delete permissions for default contact category
 		{
 			$this->collectError(new Main\Error('', self::ERROR_PERMISSION_DENIED));
 
@@ -693,8 +695,7 @@ class Contact
 			{
 				$this->setProcessOffset($contact['CONTACT_ID']);
 
-				$entityAttr = $userPermissions->GetEntityAttr('CONTACT', array($contact['CONTACT_ID']));
-				if ($userPermissions->CheckEnityAccess('CONTACT', 'DELETE', $entityAttr[$contact['CONTACT_ID']]))
+				if ($this->canDeleteItem(\CCrmOwnerType::Contact, $contact['CONTACT_ID']))
 				{
 					$connection->startTransaction();
 

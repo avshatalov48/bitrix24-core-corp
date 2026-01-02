@@ -1,9 +1,18 @@
 <?php
-if (!defined('B_PROLOG_INCLUDED') || B_PROLOG_INCLUDED !== true) die();
+
+if (!defined('B_PROLOG_INCLUDED') || B_PROLOG_INCLUDED !== true)
+{
+	die();
+}
 
 use Bitrix\Main\UI\Extension;
 use Bitrix\Main\Localization\Loc;
 use Bitrix\SalesCenter\Integration\Bitrix24Manager;
+
+/**
+ * @global CMain $APPLICATION
+ * @var array $arResult
+ */
 
 $messages = Loc::loadLanguageFile(__FILE__);
 
@@ -27,9 +36,8 @@ Bitrix24Manager::getInstance()->addIntegrationRequestButtonToToolbar(
 		Bitrix24Manager::ANALYTICS_SENDER_PAGE => Bitrix24Manager::ANALYTICS_LABEL_SALESHUB_CASHBOX
 	]
 );
-?>
 
-<?php if ($arResult['isCashboxCountryConflict']): ?>
+if ($arResult['isCashboxCountryConflict']): ?>
 	<div class="ui-alert ui-alert-warning">
 		<span class="ui-alert-message">
 			<?= Loc::getMessage('SALESCENTER_CASHBOX_ZONE_CONFLICT'); ?>
@@ -44,6 +52,9 @@ Bitrix24Manager::getInstance()->addIntegrationRequestButtonToToolbar(
 
 <div class="salescenter-cashbox-title"><?=Loc::getMessage('SCP_SALESCENTER_OFFILINE_CASHBOX_SUB_TITLE')?></div>
 <div id="salescenter-offline-cashbox" class="salescenter-cashbox"></div>
+
+<div class="salescenter-cashbox-title"><?=Loc::getMessage('SCP_SALESCENTER_OTHERS_CASHBOX_SUB_TITLE')?></div>
+<div id="salescenter-other-cashbox" class="salescenter-cashbox"></div>
 
 <script>
 	BX.ready(function()
@@ -72,6 +83,18 @@ Bitrix24Manager::getInstance()->addIntegrationRequestButtonToToolbar(
 
 		BX.SaleCenterCashbox.init({
 			cashboxParams: offlineCashboxParams,
+		});
+
+		// other cashbox
+		var otherCashboxParams = <?=CUtil::PhpToJSObject($arResult['otherCashboxPanelParams']);?>;
+		otherCashboxParams.container = document.getElementById('salescenter-other-cashbox');
+		otherCashboxParams.sizeRatio = "55%";
+		otherCashboxParams.itemMinWidth = 200;
+		otherCashboxParams.tileMargin = 7;
+		otherCashboxParams.itemType = 'BX.SaleCenterCashbox.TileGrid';
+
+		BX.SaleCenterCashbox.init({
+			cashboxParams: otherCashboxParams,
 		});
 	});
 </script>

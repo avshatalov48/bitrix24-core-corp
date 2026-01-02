@@ -1,0 +1,22 @@
+<?php
+$MESS["DEAL_ORDER_SCENARIO"] = "Тапсырыстармен жұмыс режимі";
+$MESS["ORDER_ADD"] = "Тапсырысты қосу";
+$MESS["ORDER_ADD_TITLE"] = "Тапсырысты қосу";
+$MESS["ORDER_CANCEL"] = "Тапсырысты болдырмау";
+$MESS["ORDER_CANCEL_TITLE"] = "Тапсырысты болдырмау";
+$MESS["ORDER_COPY"] = "Көшіру";
+$MESS["ORDER_COPY_TITLE"] = "Тапсырысты көшіріп алу";
+$MESS["ORDER_DELETE"] = "Тапсырысты жою";
+$MESS["ORDER_DELETE_TITLE"] = "Тапсырысты жою";
+$MESS["ORDER_DOCUMENT_BUTTON_TEXT"] = "Құжат";
+$MESS["ORDER_DOCUMENT_BUTTON_TITLE"] = "Тапсырыс негізінде құжат құру";
+$MESS["ORDER_EDIT_ORDER_FORM"] = "Төлемді рәсімдеу нысанын баптау";
+$MESS["ORDER_EDIT_ORDER_FORM_TITLE"] = "Төлемді рәсімдеу нысанын баптау";
+$MESS["ORDER_EXPORT_CSV"] = "Тапсырыстарды CSV-ге экспорттау";
+$MESS["ORDER_EXPORT_CSV_TITLE"] = "Тапсырыстарды CSV-ге экспорттау";
+$MESS["ORDER_EXPORT_EXCEL"] = "Тапсырыстарды Excel-ге эксеорттау";
+$MESS["ORDER_EXPORT_EXCEL_TITLE"] = "Тапсырыстарды Excel-ге эксеорттау";
+$MESS["ORDER_RESTORE"] = "Тапсырысты қалпына келтіру";
+$MESS["ORDER_RESTORE_TITLE"] = "Тапсырысты қалпына келтіру";
+$MESS["ORDER_STEXPORT_OPTION_EXPORT_ALL_FIELDS"] = "Тапсырыстардың барлық өрістерін экспорттау";
+$MESS["ORDER_STEXPORT_SUMMARY"] = "Тапсырыстар үшін экспорттау файлы қалыптастырылады. Деректер көлемді болған кезде бұл әрекетті орындау ұзақ уақыт алуы мүмкін.";

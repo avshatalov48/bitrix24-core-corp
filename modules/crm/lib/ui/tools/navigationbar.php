@@ -2,6 +2,18 @@
 
 namespace Bitrix\Crm\UI\Tools;
 
+use Bitrix\Crm\RepeatSale\Widget\WidgetManager;
+use Bitrix\Crm\Service\Container;
+use Bitrix\Main\Loader;
+use Bitrix\Main\Localization\Loc;
+use Bitrix\Main\UI\Extension;
+use Bitrix\Main\Web\Json;
+use Bitrix\UI\Buttons\Button;
+use Bitrix\UI\Buttons\Color;
+use Bitrix\UI\Buttons\Icon;
+use Bitrix\UI\Buttons\JsCode;
+use Bitrix\UI\Buttons\Tag;
+
 class NavigationBar
 {
 	public const BINDING_MENU_MASK = '/(lead|deal|invoice|quote|company|contact|order)/i';
@@ -11,6 +23,7 @@ class NavigationBar
 		'binding' => [],
 	];
 	private string $automationView = '';
+	private string $repeatSaleView = '';
 	private bool $isEnabled = true;
 
 	public function __construct(array $input)
@@ -23,6 +36,22 @@ class NavigationBar
 		return $this->isEnabled;
 	}
 
+	private function getActiveView(): ?string
+	{
+		$viewList = $this->getSwitchViewList();
+		$items = $viewList['items'] ?? [];
+
+		foreach ($items as $item)
+		{
+			if ($item['active'])
+			{
+				return $item['id'];
+			}
+		}
+
+		return null;
+	}
+
 	public function getSwitchViewList(): array
 	{
 		return $this->switchViewList;
@@ -31,6 +60,77 @@ class NavigationBar
 	public function getAutomationView(): string
 	{
 		return $this->automationView;
+	}
+
+	public function getAutomationViewLayout(): Button
+	{
+		Container::getInstance()->getLocalization()->loadMessages();
+
+		return Button::create([
+			'tag' => Tag::LINK,
+			'color' => Color::LIGHT_BORDER,
+			'icon' => Icon::ROBOTS,
+			'classList' => [
+				'crm-robot-btn', // used for custom styles and js
+				'ui-btn-themes',
+			],
+			'noCaps' => true,
+			'round' => true,
+			'text' => Loc::getMessage('CRM_COMMON_ROBOTS'),
+		]);
+	}
+
+	public function getRepeatSaleView(): string
+	{
+		return $this->repeatSaleView;
+	}
+
+	public function getRepeatSaleViewLayout(): ?Button
+	{
+		Container::getInstance()->getLocalization()->loadMessages();
+
+		$config = WidgetManager::getInstance()->getWidgetConfig();
+		$type = $config['type'] ?? null;
+		if ($type === null)
+		{
+			return null;
+		}
+
+		Extension::load([
+			'crm.repeat-sale.widget',
+		]);
+
+		$showConfetti = $config['showConfetti'] ?? false;
+		$periodTypeId = $config['periodTypeId'] ?? null;
+
+		$params = Json::encode([
+			'showConfetti' => $showConfetti,
+			'periodTypeId' => $periodTypeId,
+		]);
+
+		return new Button([
+			'text' => Loc::getMessage('CRM_COMMON_REPEAT_SALE'),
+			'noCaps' => true,
+			'round' => true,
+			'color' => Color::LIGHT_BORDER,
+			'tag' => Tag::LINK,
+			'icon' => Icon::COPILOT,
+			'classList' => [
+				'crm-repeat-sale-btn',
+				'ui-btn-themes',
+			],
+			'onclick' => new JsCode(
+				"BX.Crm.RepeatSale.Widget.execute(
+					'{$type}',
+					event.target,
+					$params,
+				)",
+			),
+			'dataset' => [
+				'id' => 'crm-repeat-sale-widget-button',
+				'subsection' => $this->getActiveView(),
+			],
+		]);
 	}
 
 	private function init(array $input): void
@@ -67,12 +167,25 @@ class NavigationBar
 					continue;
 				}
 
-				$this->automationView = sprintf(
-					'<a class="%s" href="%s">%s</a>',
-					'ui-btn ui-btn-light-border ui-btn-no-caps ui-btn-themes ui-btn-round crm-robot-btn',
-					htmlspecialcharsbx($itemUrl),
-					htmlspecialcharsbx($itemName)
-				);
+				if (!Loader::includeModule('ui'))
+				{
+					continue;
+				}
+
+				$button = $this->getAutomationViewLayout();
+				$button->setLink((string)$itemUrl);
+
+				$this->automationView = $button->render(false);
+
+				continue;
+			}
+
+			if ($itemId === 'repeatSale')
+			{
+				$button = $this->getRepeatSaleViewLayout();
+
+				$jsInit = defined('AIR_SITE_TEMPLATE') === false;
+				$this->repeatSaleView = $button?->render($jsInit) ?? '';
 
 				continue;
 			}

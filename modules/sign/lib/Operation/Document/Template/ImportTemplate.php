@@ -22,6 +22,7 @@ class ImportTemplate implements Operation
 
 	public function __construct(
 		private readonly PortableBlank $blank,
+		private readonly int $createdById,
 		?DocumentService $documentService = null,
 		?BlankService $blankService = null,
 	)
@@ -61,6 +62,7 @@ class ImportTemplate implements Operation
 
 		$result = $this->documentService->register(
 			blankId: $blankId,
+			createdById: $this->createdById,
 			title: $this->blank->title,
 			entityId: 0,
 			entityType: $entityType,

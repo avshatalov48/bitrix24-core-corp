@@ -32,6 +32,7 @@ jn.define('disk/enum', (require, exports, module) => {
 		AUDIO: 9,
 		KNOWN: 10,
 		VECTOR_IMAGE: 11,
+		FLIPCHART: 12,
 	};
 
 	const resolveFileTypeByExt = (ext) => {

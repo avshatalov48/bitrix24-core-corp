@@ -6,7 +6,6 @@ use Bitrix\Main\Engine\Action;
 use	Bitrix\Main\Engine\Controller;
 use Bitrix\Main\Localization\Loc;
 use Bitrix\Main\Type\DateTime;
-
 use Bitrix\Tasks\Access\ActionDictionary;
 use Bitrix\Tasks\Access\Model\TaskModel;
 use Bitrix\Tasks\Access\Role\RoleDictionary;
@@ -59,13 +58,14 @@ class Group extends Controller
 	private int $processedItems = 0;
 	private bool $isProcessCompleted = false;
 	private int $userId;
+	private int $lastProcessedId = 0;
 	private Collection $errors;
 	private array $actionNotAvailable;
 	public const DEADLINE_EXTENSION_TYPE = ['day', 'week', 'month'];
 
 	protected function processBeforeAction(Action $action): bool
 	{
-		$this->userId = (int)$this->getCurrentUser()->getId();
+		$this->userId = (int)$this->getCurrentUser()?->getId();
 		$this->errors = new Collection();
 
 		return parent::processBeforeAction($action);
@@ -79,7 +79,9 @@ class Group extends Controller
 			return $this->preformProcessAnswer();
 		}
 
-		$filter = Filter::getInstance($this->userId, (int)$data['groupId']);
+		$ownerId = $this->getOwnerId($data);
+
+		$filter = Filter::getInstance($ownerId, (int)$data['groupId']);
 
 		if (!$filter)
 		{
@@ -92,7 +94,7 @@ class Group extends Controller
 		$list = new TaskList();
 
 		$queryTotalCount = (new TaskQuery($this->userId))
-			->skipAccessCheck()
+			->setBehalfUser($ownerId)
 			->setWhere($filter);
 
 		$totalCount = $list->getCount($queryTotalCount);
@@ -259,8 +261,10 @@ class Group extends Controller
 
 		$accessedTaskIds = $this->tasksAccessCheck($taskIds, Task\GroupAction::ACTION_SET_ORIGINATOR, $originatorId);
 
+		$responsibleId = $this->resolveResponsible();
+
 		$setOriginator = new SetOriginator();
-		$setOriginator->runBatch($this->userId, $accessedTaskIds, $originatorId);
+		$setOriginator->runBatch($this->userId, $accessedTaskIds, $originatorId, $responsibleId);
 
 		return $this->processAnswer(count($taskIds));
 	}
@@ -345,6 +349,11 @@ class Group extends Controller
 		return $this->processAnswer(count($taskIds));
 	}
 
+	public function setCollabAction(array $data): array
+	{
+		return $this->setGroupAction($data);
+	}
+
 	public function setFlowAction(array $data): array
 	{
 		$taskIds = $this->checkTaskParams($data);
@@ -412,6 +421,11 @@ class Group extends Controller
 			$this->setProcessedItems((int)$data['processedItems']);
 		}
 
+		if (isset($data['lastProcessedId']))
+		{
+			$this->setLastProcessedId((int)$data['lastProcessedId']);
+		}
+
 		if (isset($data['totalItems']))
 		{
 			$this->setTotalItems((int)$data['totalItems']);
@@ -433,7 +447,15 @@ class Group extends Controller
 	{
 		$taskIds = [];
 
-		$filter = Filter::getInstance($this->userId, $data['groupId'])->process();
+		$ownerId = $this->getOwnerId($data);
+
+		$filter = Filter::getInstance($ownerId, $data['groupId'])->process();
+
+		if ($this->lastProcessedId)
+		{
+			$filter['::SUBFILTER-ID']['>ID'] =  $this->lastProcessedId;
+		}
+
 		unset($filter['ONLY_ROOT_TASKS']);
 
 		$select = [
@@ -441,11 +463,13 @@ class Group extends Controller
 		];
 
 		$query = (new TaskQuery($this->userId))
-			->setBehalfUser($this->userId)
+			->setBehalfUser($ownerId)
 			->setSelect($select)
+			->setOrder([
+					'ID' => 'ASC'
+				])
 			->setWhere($filter)
-			->setLimit($data['nPageSize'])
-			->setOffset($this->processedItems);
+			->setLimit($data['nPageSize']);
 
 		$list = new TaskList();
 		$tasks = $list->getList($query);
@@ -455,7 +479,19 @@ class Group extends Controller
 			$taskIds[] = $item['ID'];
 		}
 
+		$this->lastProcessedId = end($taskIds);
+
 		return $taskIds;
+	}
+
+	private function getOwnerId(array $data): int
+	{
+		if (array_key_exists('ownerId', $data) && (int)$data['ownerId'])
+		{
+			return (int)$data['ownerId'];
+		}
+
+		return $this->userId;
 	}
 
 	private function tasksAccessCheck(array $ids, string $action, int $differentUserId = null): array
@@ -631,6 +667,13 @@ class Group extends Controller
 				$members[RoleDictionary::ROLE_DIRECTOR] = [
 					$originatorId
 				];
+
+				if ($this->resolveResponsible())
+				{
+					$members[RoleDictionary::ROLE_RESPONSIBLE] = [
+						$this->userId,
+					];
+				}
 				$newTask->setMembers($members);
 
 				if ($taskAccessController->check(ActionDictionary::ACTION_TASK_CHANGE_DIRECTOR, $oldTask, $newTask))
@@ -791,16 +834,17 @@ class Group extends Controller
 			$actionResult['ERRORS'] = $errorsText;
 			$actionResult['WARNING_TEXT'] = $warningText;
 			$actionResult['STATUS'] = $this->getStatus();
+			$actionResult['LAST_PROCESSED_ID'] = $this->lastProcessedId;
 		}
 
 		return $actionResult;
 	}
 
-	private function processAnswer(int $ProcessedItems): array
+	private function processAnswer(int $processedItems): array
 	{
-		$this->incrementProcessedItems($ProcessedItems);
+		$this->incrementProcessedItems($processedItems);
 
-		if ($this->totalItems === $this->processedItems)
+		if ($this->shouldProcessBeCompleted($processedItems))
 		{
 			$this->setProcessDone();
 		}
@@ -834,9 +878,22 @@ class Group extends Controller
 		$this->processedItems = $processedItems;
 	}
 
+	private function setLastProcessedId(int $lastProcessedId): void
+	{
+		$this->lastProcessedId = $lastProcessedId;
+	}
+
 	private function incrementProcessedItems(int $incrementItems): void
 	{
 		$this->processedItems += $incrementItems;
+	}
+
+	private function shouldProcessBeCompleted(int $processedItems): bool
+	{
+		return
+			$processedItems === 0
+			|| $this->totalItems === $this->processedItems
+		;
 	}
 
 	private function setProcessDone(bool $done = true): void
@@ -883,5 +940,17 @@ class Group extends Controller
 	protected function addForbiddenError()
 	{
 		$this->errors->add('ACTION_NOT_ALLOWED.RESTRICTED', Loc::getMessage('TASKS_ACTION_NOT_ALLOWED'));
+	}
+
+	private function resolveResponsible(): ?int
+	{
+		if (!TaskAccessController::can($this->userId, ActionDictionary::ACTION_TASK_ADMIN))
+		{
+			// current user should become responsible
+			return $this->userId;
+		}
+
+		// don't change responsible
+		return null;
 	}
 }

@@ -114,4 +114,9 @@ class HcmLinkService
 
 		return new HcmLinkJobsCheckResult(true);
 	}
+
+	public function isCompanyExistWithId(int $companyId): bool
+	{
+		return Container::getHcmLinkCompanyRepository()->getById($companyId) !== null;
+	}
 }

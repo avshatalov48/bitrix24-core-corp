@@ -135,6 +135,7 @@ export const MoveUserActionPopup = {
 							id: 'structure-node',
 							options: {
 								selectMode: 'departmentsOnly',
+								restricted: 'addEmployee',
 							},
 						},
 					],

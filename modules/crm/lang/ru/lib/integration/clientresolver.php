@@ -8,4 +8,5 @@ $MESS["CRM_CLIENT_ADDRESS_BOROUGH"] = "ГОРОДСКОЙ ОКРУГ";
 $MESS["CRM_CLIENT_ADDRESS_COUNTRY_RUSSIA"] = "Россия";
 $MESS['APP_TITLE_INTEGRATIONS24_PORTAL_NALOG_GOV_BY'] = 'МНС Беларусь - Поиск по УНП';
 $MESS['APP_TITLE_INTEGRATIONS24_MNS_KAZAKHSTAN_POISK_PO_BIN'] = 'МНС Казахстан - Поиск по БИН';
+$MESS['APP_TITLE_INTEGRATIONS24RU_POISK_PO_BIN_IIN_KZ'] = 'Поиск реквизитов по БИН и ИИН Казахстан';
 ?>

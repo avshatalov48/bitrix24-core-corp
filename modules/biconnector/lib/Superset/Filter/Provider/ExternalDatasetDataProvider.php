@@ -5,6 +5,7 @@ namespace Bitrix\BIConnector\Superset\Filter\Provider;
 use Bitrix\BIConnector\ExternalSource;
 use Bitrix\Main\Filter\EntityDataProvider;
 use Bitrix\Main\Filter\Settings;
+use Bitrix\Main\Loader;
 use Bitrix\Main\Localization\Loc;
 use Bitrix\Main\UI;
 
@@ -105,6 +106,11 @@ class ExternalDatasetDataProvider extends EntityDataProvider
 			if (ExternalSource\SourceManager::is1cConnectionsAvailable())
 			{
 				$items[ExternalSource\Type::Source1C->value] = Loc::getMessage('BICONNECTOR_SUPERSET_EXTERNAL_DATASET_GRID_FILTER_TYPE_1C');
+			}
+
+			if (Loader::includeModule('rest'))
+			{
+				$items[ExternalSource\Type::Rest->value] = Loc::getMessage('BICONNECTOR_SUPERSET_EXTERNAL_DATASET_GRID_FILTER_TYPE_REST');
 			}
 
 			return [

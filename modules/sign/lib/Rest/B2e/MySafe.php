@@ -22,7 +22,6 @@ use Bitrix\Sign\Operation\GetSignedB2eFileUrl;
 use Bitrix\Sign\Service\Container;
 use Bitrix\Sign\Type\EntityFileCode;
 use Bitrix\Sign\Type\EntityType;
-use CCrmPerms;
 use CRestServer;
 use CRestUtil;
 use IRestService;
@@ -279,22 +278,22 @@ final class MySafe extends IRestService
 
 		switch ($permission)
 		{
-			case CCrmPerms::PERM_ALL:
+			case \Bitrix\Crm\Service\UserPermissions::PERMISSION_ALL:
 			{
 				break;
 			}
-			case CCrmPerms::PERM_SUBDEPARTMENT:
-			case CCrmPerms::PERM_DEPARTMENT:
+			case \Bitrix\Crm\Service\UserPermissions::PERMISSION_SUBDEPARTMENT:
+			case \Bitrix\Crm\Service\UserPermissions::PERMISSION_DEPARTMENT:
 			{
 				$filter->whereIn(
 					'CREATED_BY_ID',
 					$user->getUserDepartmentMembers(
-						$permission === CCrmPerms::PERM_SUBDEPARTMENT
+						$permission === \Bitrix\Crm\Service\UserPermissions::PERMISSION_SUBDEPARTMENT
 					)
 				);
 				break;
 			}
-			case CCrmPerms::PERM_SELF:
+			case \Bitrix\Crm\Service\UserPermissions::PERMISSION_SELF:
 			{
 				$filter->where('CREATED_BY_ID', '=', $user->getUserId());
 				break;

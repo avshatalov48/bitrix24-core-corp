@@ -7,11 +7,14 @@
  * @copyright 2001-2014 Bitrix
  */
 
+use Bitrix\Intranet\Internal\Factory\Message\CollabInvitationMessageFactory;
+use Bitrix\Intranet\Internal\Factory\Message\ExtranetInvitationMessageFactory;
 use Bitrix\Main\Application;
 use Bitrix\Main\Error;
 use Bitrix\Main\Event;
 use Bitrix\Main\Loader;
 use Bitrix\Main\ModuleManager;
+use Bitrix\Main\Result;
 use Bitrix\Main\Security\Random;
 use Bitrix\Socialnetwork;
 use Bitrix\Main\UserTable;
@@ -22,6 +25,8 @@ use Bitrix\Main\Engine\UrlManager;
 use Bitrix\Main\Config\Option;
 use Bitrix\Bitrix24\Integration;
 use Bitrix\Main\Web\Uri;
+use Bitrix\Socialnetwork\Collab\Provider\CollabProvider;
+use Bitrix\Socialnetwork\Internals\Registry\GroupRegistry;
 
 Loc::loadMessages(__FILE__);
 
@@ -36,8 +41,6 @@ class CIntranetInviteDialog
 	public const PHONE_EMPTY_ERROR = 'INTRANET_INVITE_DIALOG_PHONE_EMPTY_ERROR';
 	public const EMAIL_EXIST_ERROR = 'INTRANET_INVITE_DIALOG_EMAIL_EXIST_ERROR';
 	public const PHONE_EXIST_ERROR = 'INTRANET_INVITE_DIALOG_PHONE_EXIST_ERROR';
-
-	private static array $userGroupsCache = [];
 
 	public static function ShowInviteDialogLink($params = array())
 	{
@@ -71,6 +74,38 @@ class CIntranetInviteDialog
 		$invitationLink = UrlManager::getInstance()->create('getSliderContent', $data);
 
 		return "BX.SidePanel.Instance.open('".$invitationLink."', {cacheable: false, allowChangeHistory: false, width: 1100})";
+	}
+
+	public static function GetInviteDialogLink($params = array())
+	{
+		$data = [
+			'c' => 'bitrix:intranet.invitation',
+			'mode' => Router::COMPONENT_MODE_AJAX,
+		];
+
+		$subSection = null;
+		if (isset($params['analyticsLabel']))
+		{
+			$subSection = $params['analyticsLabel']['analyticsLabel[source]'];
+		}
+
+		if (!is_null($subSection))
+		{
+			$analyticsLabels = [
+				'analyticsLabel[tool]' => 'Invitation',
+				'analyticsLabel[category]' => 'invitation',
+				'analyticsLabel[event]' => 'drawer_open',
+				'analyticsLabel[c_section]' => $subSection
+			];
+			$params['analyticsLabel'] = array_merge($params['analyticsLabel'], $analyticsLabels);
+		}
+
+		if (isset($params['analyticsLabel']))
+		{
+			$data = array_merge($data, $params['analyticsLabel']);
+		}
+
+		return UrlManager::getInstance()->create('getSliderContent', $data);
 	}
 
 	public static function setSendPassword($value)
@@ -1071,18 +1106,11 @@ class CIntranetInviteDialog
 		}
 		else
 		{
-			if (isset(static::$userGroupsCache["EMPLOYEES_".$SITE_ID]))
+			$groupId = CGroup::GetIDByCode("EMPLOYEES_" . $SITE_ID);
+			if ($groupId)
 			{
-				return static::$userGroupsCache["EMPLOYEES_".$SITE_ID];
+				return [$groupId];
 			}
-			static::$userGroupsCache["EMPLOYEES_".$SITE_ID] = \Bitrix\Main\GroupTable::query()
-				->where('STRING_ID', "EMPLOYEES_".$SITE_ID)
-				->setSelect(['ID'])
-				->fetchCollection()
-				->getIdList()
-				;
-
-			return static::$userGroupsCache["EMPLOYEES_".$SITE_ID];
 		}
 
 		return [];
@@ -1091,16 +1119,10 @@ class CIntranetInviteDialog
 	public static function getAdminGroups($SITE_ID)
 	{
 		$arGroups = array(1);
-		$rsGroups = CGroup::GetList(
-			'',
-			'',
-			array(
-				"STRING_ID" => "PORTAL_ADMINISTRATION_".$SITE_ID
-			)
-		);
-		while($arGroup = $rsGroups->Fetch())
+		$groupId = CGroup::GetIDByCode("PORTAL_ADMINISTRATION_" . $SITE_ID);
+		if ($groupId)
 		{
-			$arGroups[] = $arGroup["ID"];
+			$arGroups[] = $groupId;
 		}
 
 		return $arGroups;
@@ -1180,7 +1202,7 @@ class CIntranetInviteDialog
 		;
 	}
 
-	public static function reinviteUserByPhone(int $userId, array $params = []): bool
+	public static function reinviteUserByPhone(int $userId, array $params = []): Result
 	{
 		if (Loader::includeModule('bitrix24'))
 		{
@@ -1190,17 +1212,17 @@ class CIntranetInviteDialog
 				&& self::cannotSendInvite()
 			)
 			{
-				return false;
+				return (new Result())->addError(new Error(''));
 			}
 
-			return \Bitrix\Bitrix24\Integration\Network\ProfileService::getInstance()->reInviteUserByPhone($userId)->isSuccess();
+			return \Bitrix\Bitrix24\Integration\Network\ProfileService::getInstance()->reInviteUserByPhone($userId);
 		}
 		else
 		{
 			// TODO: from portal sms provider
 		}
 
-		return false;
+		return (new Result())->addError(new Error(''));
 	}
 
 	public static function InviteUserByPhone($arUser, $params = array())
@@ -1342,30 +1364,39 @@ class CIntranetInviteDialog
 		return false;
 	}
 
-	public static function ReinviteExtranetUser($SITE_ID, $USER_ID)
+	public static function ReinviteExtranetUser($siteId, $userId)
 	{
-		global $USER;
+		$userId = (int)$userId;
 
-		$USER_ID = (int)$USER_ID;
-
-		$rsUser = CUser::GetList(
+		$resultUser = CUser::GetList(
 			"ID",
 			"DESC",
-			array("ID_EQUAL_EXACT" => $USER_ID)
+			array("ID_EQUAL_EXACT" => $userId)
 		);
 
-		if($arUser = $rsUser->Fetch())
+		if($userData = $resultUser->Fetch())
 		{
-			$arFields = Array(
-				"USER_ID" => $USER_ID,
-				"USER_ID_FROM" => $USER->GetID(),
-				"CHECKWORD" => $arUser["CONFIRM_CODE"],
-				"EMAIL" => $arUser["EMAIL"],
-				"USER_TEXT" => self::getInviteMessageText()
-			);
-			CEvent::SendImmediate("EXTRANET_INVITATION", $SITE_ID, $arFields);
+			$user = \Bitrix\Intranet\Entity\User::initByArray($userData);
+			$defaultUserCollab = null;
+			if (Loader::includeModule('socialnetwork'))
+			{
+				$defaultUserCollab = Socialnetwork\Collab\Provider\CollabDefaultProvider::getInstance()
+					->getCollab($userId)
+				;
+			}
+			if ($defaultUserCollab)
+			{
+				$factory = new CollabInvitationMessageFactory($user, $defaultUserCollab);
+			}
+			else
+			{
+				$factory = new ExtranetInvitationMessageFactory($user);
+			}
+			$factory->createEmailEvent()->sendImmediately();
+
 			return true;
 		}
+
 		return false;
 	}
 

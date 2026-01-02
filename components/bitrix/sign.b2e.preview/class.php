@@ -20,15 +20,25 @@ class SignB2ePreviewComponent extends SignBaseComponent
 	 */
 	protected function beforeActions(): void
 	{
-		$entityId = $this->getRequest($this->getStringParam('VAR_DOC_ID'));
-		if (!$entityId)
+		$document = null;
+
+		$entityId = (int)$this->getRequest($this->getStringParam('VAR_DOC_ID'));
+		$documentId = (int)$this->getRequest($this->getStringParam('VAR_DOCUMENT_ID'));
+		if ($entityId > 0)
 		{
-			return;
+			$document = Container::instance()
+				->getDocumentRepository()
+				->getByEntityIdAndType($entityId, EntityType::SMART_B2E)
+			;
 		}
-		$document = Container::instance()
-			->getDocumentRepository()
-			->getByEntityIdAndType((int)$entityId, EntityType::SMART_B2E)
-		;
+		elseif ($documentId > 0)
+		{
+			$document = Container::instance()
+				->getDocumentRepository()
+				->getById($documentId)
+			;
+		}
+
 		if ($document && $this->isAllowed($document))
 		{
 			$this->setResult('DOCUMENT', $document);

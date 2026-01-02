@@ -1,0 +1,28 @@
+<?php
+$MESS["CRM_DOCUMENT_LIST_ACTION_CANCEL_TEXT_2"] = "Болдырмау";
+$MESS["CRM_DOCUMENT_LIST_ACTION_CONDUCT_TEXT_2"] = "Өткізу";
+$MESS["CRM_DOCUMENT_LIST_ACTION_DELETE_TEXT"] = "Жою";
+$MESS["CRM_DOCUMENT_LIST_ACTION_OPEN_TEXT"] = "Ашу";
+$MESS["CRM_DOCUMENT_LIST_ADD_DOCUMENT_BUTTON_2"] = "Құру";
+$MESS["CRM_DOCUMENT_LIST_ADD_DOCUMENT_BUTTON_DISABLE_HINT_MSGVER_1"] = "Құжатты жасау үшін құқықтар жеткіліксіз";
+$MESS["CRM_DOCUMENT_LIST_CANCEL_GROUP_ACTION"] = "Өткізуді болдырмау";
+$MESS["CRM_DOCUMENT_LIST_CONDUCT_GROUP_ACTION"] = "Өткізу";
+$MESS["CRM_DOCUMENT_LIST_DOC_TYPE_W"] = "Сату";
+$MESS["CRM_DOCUMENT_LIST_EMPTY_STORE_TITLE"] = "Атаусыз";
+$MESS["CRM_DOCUMENT_LIST_ERR_ACCESS_DENIED"] = "Сату бөлімін қарау үшін құқықтар жеткіліксіз";
+$MESS["CRM_DOCUMENT_LIST_ERR_ACCESS_DENIED_BOX"] = "Сізде қойма есебіне қолжетімділік құқығы жеткіліксіз. Құқықтарды алу үшін портал әкімшісіне хабарласыңыз. Толық ақпарат <a href=\"https://dev.1c-bitrix.ru/learning/course/index.php?COURSE_ID=48&LESSON_ID=25010\" target=\"_blank\">Битрикс24 сервисінің әкімшісі оқу курсының мақаласы</a>.";
+$MESS["CRM_DOCUMENT_LIST_ERR_ACCESS_DENIED_CLOUD"] = "Сізде қойма есебіне қолжетімділік құқығы жеткіліксіз. Құқықтарды алу үшін Битрикс24 әкімшісіне хабарласыңыз. Әкімші сізге CRM баптаулары бөлімінде менеджер рөлін тағайындауы керек. Толық ақпарат <a onclick=\"top.BX.Helper.show('redirect=detail&code=15955386')\" style=\"cursor: pointer; \">Қолдау24 мақаласы</a>.";
+$MESS["CRM_DOCUMENT_LIST_HIDDEN_COMPANY"] = "Жасырын компания";
+$MESS["CRM_DOCUMENT_LIST_HIDDEN_CONTACT"] = "Жасырын байланыс";
+$MESS["CRM_DOCUMENT_LIST_SELECT_GROUP_ACTION"] = "Әрекетті таңдаңыз";
+$MESS["CRM_DOCUMENT_LIST_STATUS_CANCELLED"] = "Болдырылмады";
+$MESS["CRM_DOCUMENT_LIST_STATUS_N"] = "Бастапқы үлгі";
+$MESS["CRM_DOCUMENT_LIST_STATUS_Y"] = "Өткізілді";
+$MESS["CRM_DOCUMENT_LIST_STUB_DESCRIPTION_SHIPMENT"] = "Тауарды саттыңыз ба? Оны тіркеңіз. Нақты есеп менеджерлерге қоймада қанша тауар бар екенін түсінуге және тапсырыстарды тезірек жинақтауға көмектеседі.";
+$MESS["CRM_DOCUMENT_LIST_STUB_LINK_LOSSES"] = "Шығындарды қалай дұрыс есепке алуға болады";
+$MESS["CRM_DOCUMENT_LIST_STUB_LINK_SHIPMENT"] = "Сатуды қалай тіркеуге болады";
+$MESS["CRM_DOCUMENT_LIST_STUB_NO_DATA_DESCRIPTION"] = "Сүзгідегі мәндерді қалпына келтіріп немесе іздеу сұрауын өзгертіп көріңіз";
+$MESS["CRM_DOCUMENT_LIST_STUB_NO_DATA_TITLE"] = "Сіздің сұранысыңыз бойынша ештеңе табылған жоқ";
+$MESS["CRM_DOCUMENT_LIST_STUB_TITLE_SHIPMENT"] = "Тауардың алғашқы сатылымын қосыңыз";
+$MESS["CRM_DOCUMENT_LIST_TITLE"] = "##DOCUMENT_ID# сатылым";
+$MESS["CRM_DOCUMENT_LIST_TITLE_DOCUMENT_DATE"] = "#DATE# күнінен";

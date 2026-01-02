@@ -33,7 +33,7 @@
 .crm-activity__todo-create-notification_description {
 	color: var(--ui-color-palette-gray-80, #6a737f);
 	font-size: var(--ui-font-size-md, 14px);
-	font-family: var(--ui-font-family-system, system-ui, -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, Ubuntu, "Helvetica Neue", Arial, sans-serif, 'Apple Color Emoji', 'Segoe UI Emoji', 'Segoe UI Symbol');
+	font-family: var(--ui-font-family-primary, var(--ui-font-family-system));
 	line-height: var(--ui-font-line-height-lg, 1.5);
 	margin-bottom: var( --ui-space-inset-lg, 16px);
 }

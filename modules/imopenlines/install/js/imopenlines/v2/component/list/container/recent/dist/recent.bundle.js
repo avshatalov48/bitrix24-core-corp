@@ -22,7 +22,7 @@ this.BX.OpenLines.v2.Component = this.BX.OpenLines.v2.Component || {};
 	  methods: {
 	    onChatClick(dialogId) {
 	      this.$emit('selectEntity', {
-	        layoutName: im_v2_const.Layout.openlinesV2.name,
+	        layoutName: im_v2_const.Layout.openlinesV2,
 	        entityId: dialogId
 	      });
 	    },
@@ -46,5 +46,5 @@ this.BX.OpenLines.v2.Component = this.BX.OpenLines.v2.Component || {};
 
 	exports.RecentListContainer = RecentListContainer;
 
-}((this.BX.OpenLines.v2.Component.List = this.BX.OpenLines.v2.Component.List || {}),BX.OpenLines.v2.Css,BX,BX.Messenger.v2.Component,BX.Messenger.v2.Component,BX.Messenger.v2.Const,BX.OpenLines.v2.Component.List));
+}((this.BX.OpenLines.v2.Component.List = this.BX.OpenLines.v2.Component.List || {}),BX.OpenLines.v2.Css,BX,BX,BX,BX.Messenger.v2.Const,BX.OpenLines.v2.Component.List));
 //# sourceMappingURL=recent.bundle.js.map

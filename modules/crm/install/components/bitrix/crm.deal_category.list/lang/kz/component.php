@@ -1,0 +1,8 @@
+<?php
+$MESS["CRM_COLUMN_DEAL_CATEGORY_CREATED_DATE"] = "Жасалды";
+$MESS["CRM_COLUMN_DEAL_CATEGORY_ID"] = "ID";
+$MESS["CRM_COLUMN_DEAL_CATEGORY_NAME"] = "Атауы";
+$MESS["CRM_COLUMN_DEAL_CATEGORY_SORT"] = "Сұрыптау";
+$MESS["CRM_DEAL_CATEGORY_DEFAULT_NAME"] = "Жаңа иірім";
+$MESS["CRM_MODULE_NOT_INSTALLED"] = "Crm модулі орнатылмаған.";
+$MESS["CRM_PERMISSION_DENIED"] = "Қолжетімділікке тыйым салынған";

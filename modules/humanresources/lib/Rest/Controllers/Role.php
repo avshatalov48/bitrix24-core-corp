@@ -163,6 +163,6 @@ final class Role extends RestController
 
 	private function getRoleDontExistError(int $id): Main\Error
 	{
-		return new Main\Error("Role with id: ${id} dont exist",'HR_ROLE_DONT_EXIST');
+		return new Main\Error("Role with id: {$id} dont exist",'HR_ROLE_DONT_EXIST');
 	}
 }

@@ -12,4 +12,5 @@ enum BookingConfirmContext: string
 
 	case Cancel = 'c';
 	case Delayed = 'd';
+	case Info = 'i';
 }

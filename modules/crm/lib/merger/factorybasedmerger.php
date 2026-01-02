@@ -69,31 +69,28 @@ class FactoryBasedMerger extends EntityMerger
 
 	protected function checkEntityReadPermission($entityID, $userPermissions): bool
 	{
-		$categoryId = $this->factory->getItemCategoryId((int)$entityID);
-
 		return Container::getInstance()
 			->getUserPermissions($userPermissions->GetUserID())
-			->checkReadPermissions($this->entityTypeID, $entityID, $categoryId)
+			->item()
+			->canRead($this->entityTypeID, $entityID)
 		;
 	}
 
 	protected function checkEntityUpdatePermission($entityID, $userPermissions): bool
 	{
-		$categoryId = $this->factory->getItemCategoryId((int)$entityID);
-
 		return Container::getInstance()
 			->getUserPermissions($userPermissions->GetUserID())
-			->checkUpdatePermissions($this->entityTypeID, $entityID, $categoryId)
+			->item()
+			->canUpdate($this->entityTypeID, $entityID)
 		;
 	}
 
 	protected function checkEntityDeletePermission($entityID, $userPermissions): bool
 	{
-		$categoryId = $this->factory->getItemCategoryId((int)$entityID);
-
 		return Container::getInstance()
 			->getUserPermissions($userPermissions->GetUserID())
-			->checkDeletePermissions($this->entityTypeID, $entityID, $categoryId)
+			->item()
+			->canDelete($this->entityTypeID, $entityID)
 		;
 	}
 

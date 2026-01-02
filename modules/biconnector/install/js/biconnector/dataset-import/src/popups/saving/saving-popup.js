@@ -1,6 +1,5 @@
 import type { PopupOptions } from 'main.popup';
 import { Popup } from '../../layout/popup';
-import '../../css/save-progress-popup.css';
 
 export const SavingPopup = {
 	emits: ['close'],
@@ -44,15 +43,15 @@ export const SavingPopup = {
 	},
 	// language=Vue
 	template: `
-		<Popup id="saveProgress" @close="this.onClose" :options="popupOptions" wrapper-class="dataset-import-popup--full-height">
-			<div class="dataset-save-progress-popup">
-				<div class="dataset-save-progress-popup__content">
+		<Popup id="saveProgress" @close="this.onClose" :options="popupOptions" wrapper-class="biconnector-popup--full-height">
+			<div class="biconnector-save-progress-popup">
+				<div class="biconnector-save-progress-popup__content">
 					<slot name="icon"></slot>
-					<div class="dataset-save-progress-popup__texts">
-						<h3 class="dataset-save-progress-popup__header">{{ title }}</h3>
-						<p class="dataset-save-progress-popup__description" v-if="description">{{ description }}</p>
+					<div class="biconnector-save-progress-popup__texts">
+						<h3 class="biconnector-save-progress-popup__header">{{ title }}</h3>
+						<p class="biconnector-save-progress-popup__description" v-if="description">{{ description }}</p>
 					</div>
-					<div class="dataset-save-progress-popup__buttons"><slot name="buttons"></slot></div>
+					<div class="biconnector-save-progress-popup__buttons"><slot name="buttons"></slot></div>
 				</div>
 			</div>
 		</Popup>

@@ -27,7 +27,6 @@ export const App = {
 		context: {
 			type: String,
 			required: true,
-
 		},
 	},
 	data(): Object
@@ -35,6 +34,7 @@ export const App = {
 		return {
 			confirmedBooking: this.booking,
 			confirmedContext: this.context,
+			icsDownloadRequested: false,
 		};
 	},
 	methods: {
@@ -55,7 +55,10 @@ export const App = {
 
 				this.confirmedBooking.isDeleted = true;
 
-				if (this.confirmedContext === 'delayed.pub.page')
+				if (
+					this.confirmedContext === 'delayed.pub.page'
+					|| this.confirmedContext === 'info.pub.page'
+				)
 				{
 					this.confirmedContext = 'cancel.pub.page';
 				}
@@ -93,6 +96,47 @@ export const App = {
 				console.error('Confirm page: confirm error', error);
 			}
 		},
+		async downloadIcsHandler(): Promise<void>
+		{
+			try
+			{
+				this.icsDownloadRequested = true;
+
+				const { data } = await ajax.runComponentAction(
+					'bitrix:booking.pub.confirm',
+					'getIcsContent',
+					{
+						mode: 'class',
+						data: {
+							hash: this.hash,
+						},
+					},
+				);
+
+				const fileContent = data?.ics;
+
+				if (!fileContent)
+				{
+					console.error('Receive empty ics file');
+
+					return;
+				}
+
+				const fileName = 'booking.ics';
+				const link = document.createElement('a');
+				link.href = `data:text/calendar,${encodeURI(fileContent)}`;
+				link.download = fileName;
+				link.click();
+			}
+			catch (error)
+			{
+				console.error('Confirm page: can not receive ics file', error);
+			}
+			finally
+			{
+				this.icsDownloadRequested = false;
+			}
+		},
 	},
 	template: `
 		<div class="confirm-page-container">
@@ -106,8 +150,10 @@ export const App = {
 				<Footer 
 					:booking="confirmedBooking"
 					:context="confirmedContext"
+					:icsDownloadRequested="icsDownloadRequested"
 					@bookingCanceled="bookingCancelHandler"
 					@bookingConfirmed="bookingConfirmHandler"
+					@downloadIcs="downloadIcsHandler"
 				/>
 			</div>
 		</div>

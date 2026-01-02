@@ -1,0 +1,19 @@
+<?php
+$MESS["CRM_STATUSN_D"] = "Төленбеген";
+$MESS["CRM_STATUSN_D_DESCR"] = "Төленбеген";
+$MESS["CRM_STATUSN_N"] = "Жаңа";
+$MESS["CRM_STATUSN_N_DESCR"] = "Жаңа";
+$MESS["CRM_STATUSN_P"] = "Төленген";
+$MESS["CRM_STATUSN_P_DESCR"] = "Төленген";
+$MESS["CRM_STATUSN_S"] = "Клиентке жіберілді";
+$MESS["CRM_STATUSN_S_DESCR"] = "Клиентке жіберілді";
+$MESS["CRM_STATUS_A"] = "Расталды";
+$MESS["CRM_STATUS_A_DESCR"] = "Расталды";
+$MESS["CRM_STATUS_D"] = "Бас тартылды";
+$MESS["CRM_STATUS_D_DESCR"] = "Бас тартылды";
+$MESS["CRM_STATUS_N"] = "Бастапқы үлгі";
+$MESS["CRM_STATUS_N_DESCR"] = "Бастапқы үлгі";
+$MESS["CRM_STATUS_P"] = "Төленген";
+$MESS["CRM_STATUS_P_DESCR"] = "Төленген";
+$MESS["CRM_STATUS_S"] = "Клиентке жіберілді";
+$MESS["CRM_STATUS_S_DESCR"] = "Клиентке жіберілді";

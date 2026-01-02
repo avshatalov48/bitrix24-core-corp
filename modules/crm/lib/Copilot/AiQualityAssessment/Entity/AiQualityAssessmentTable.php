@@ -12,6 +12,22 @@ use Bitrix\Main\ORM\Fields\IntegerField;
 use Bitrix\Main\ORM\Fields\StringField;
 use Bitrix\Main\Result;
 
+/**
+ * Class AiQualityAssessmentTable
+ *
+ * DO NOT WRITE ANYTHING BELOW THIS
+ *
+ * <<< ORMENTITYANNOTATION
+ * @method static EO_AiQualityAssessment_Query query()
+ * @method static EO_AiQualityAssessment_Result getByPrimary($primary, array $parameters = [])
+ * @method static EO_AiQualityAssessment_Result getById($id)
+ * @method static EO_AiQualityAssessment_Result getList(array $parameters = [])
+ * @method static EO_AiQualityAssessment_Entity getEntity()
+ * @method static \Bitrix\Crm\Copilot\AiQualityAssessment\Entity\EO_AiQualityAssessment createObject($setDefaultValues = true)
+ * @method static \Bitrix\Crm\Copilot\AiQualityAssessment\Entity\EO_AiQualityAssessment_Collection createCollection()
+ * @method static \Bitrix\Crm\Copilot\AiQualityAssessment\Entity\EO_AiQualityAssessment wakeUpObject($row)
+ * @method static \Bitrix\Crm\Copilot\AiQualityAssessment\Entity\EO_AiQualityAssessment_Collection wakeUpCollection($rows)
+ */
 final class AiQualityAssessmentTable extends DataManager
 {
 	public const ACTIVITY_TYPE_CALL = 1;

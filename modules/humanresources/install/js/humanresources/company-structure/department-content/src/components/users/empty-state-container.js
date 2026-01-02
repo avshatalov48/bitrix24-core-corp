@@ -1,21 +1,15 @@
+import { AnalyticsSourceType } from 'humanresources.company-structure.api';
+import { EmptyUsersTabActionMenu } from 'humanresources.company-structure.org-chart';
 import { emptyStateTypes } from './empty-state-types';
-import { CRM, Main } from 'ui.icon-set.api.core';
 import { useChartStore } from 'humanresources.company-structure.chart-store';
 import { mapState } from 'ui.vue3.pinia';
-import { getColorCode } from 'humanresources.company-structure.utils';
 import { RouteActionMenu } from 'humanresources.company-structure.structure-components';
-import { PermissionActions, PermissionChecker } from 'humanresources.company-structure.permission-checker';
 
 import 'ui.icon-set.crm';
 import 'ui.icon-set.main';
 import './styles/empty-state-container.css';
 
-const MenuOption = Object.freeze({
-	moveUser: 'moveUser',
-	userInvite: 'userInvite',
-	addToDepartment: 'addToDepartment',
-});
-
+// @vue/component
 export const EmptyStateContainer = {
 	name: 'emptyStateContainer',
 
@@ -35,12 +29,6 @@ export const EmptyStateContainer = {
 		RouteActionMenu,
 	},
 
-	created(): void
-	{
-		this.permissionChecker = PermissionChecker.getInstance();
-		this.menuItems = this.getMenuItems();
-	},
-
 	data(): Object
 	{
 		return {
@@ -52,6 +40,10 @@ export const EmptyStateContainer = {
 		showAddButtons(): boolean
 		{
 			return this.type === emptyStateTypes.NO_MEMBERS_WITH_ADD_PERMISSION;
+		},
+		menu(): EmptyUsersTabActionMenu
+		{
+			return new EmptyUsersTabActionMenu(this.departmentId, AnalyticsSourceType.DETAIL, 'employee');
 		},
 		...mapState(useChartStore, ['focusedNode']),
 	},
@@ -116,65 +108,7 @@ export const EmptyStateContainer = {
 		},
 		onActionMenuItemClick(actionId: string): void
 		{
-			this.$emit(actionId, { type: 'employee', bindElement: this.$refs.actionMenuButton });
-		},
-		getMenuItems(): Array
-		{
-			if (!this.permissionChecker)
-			{
-				return [];
-			}
-
-			return [
-				{
-					id: MenuOption.moveUser,
-					title: this.loc('HUMANRESOURCES_COMPANY_STRUCTURE_DEPARTMENT_DETAIL_CONTENT_EDIT_MENU_MOVE_EMPLOYEE_TITLE'),
-					description: this.loc('HUMANRESOURCES_COMPANY_STRUCTURE_DEPARTMENT_DETAIL_CONTENT_EDIT_MENU_MOVE_EMPLOYEE_SUBTITLE'),
-					bIcon: {
-						name: Main.PERSON_ARROW_LEFT_1,
-						size: 20,
-						color: getColorCode('paletteBlue50'),
-					},
-					permission: { action: PermissionActions.employeeAddToDepartment },
-				},
-				{
-					id: MenuOption.userInvite,
-					title: this.loc('HUMANRESOURCES_COMPANY_STRUCTURE_DEPARTMENT_DETAIL_CONTENT_EDIT_MENU_INVITE_EMPLOYEE_TITLE'),
-					description: this.loc('HUMANRESOURCES_COMPANY_STRUCTURE_DEPARTMENT_DETAIL_CONTENT_EDIT_MENU_INVITE_EMPLOYEE_SUBTITLE'),
-					bIcon: {
-						name: Main.PERSON_LETTER,
-						size: 20,
-						color: getColorCode('paletteBlue50'),
-					},
-					permission: { action: PermissionActions.inviteToDepartment },
-				},
-				{
-					id: MenuOption.addToDepartment,
-					title: this.loc('HUMANRESOURCES_COMPANY_STRUCTURE_DEPARTMENT_DETAIL_CONTENT_EDIT_MENU_ADD_EMPLOYEE_TITLE'),
-					description: this.loc('HUMANRESOURCES_COMPANY_STRUCTURE_DEPARTMENT_DETAIL_CONTENT_EDIT_MENU_ADD_EMPLOYEE_SUBTITLE'),
-					bIcon: {
-						name: CRM.PERSON_PLUS_2,
-						size: 20,
-						color: getColorCode('paletteBlue50'),
-					},
-					permission: { action: PermissionActions.employeeAddToDepartment },
-				},
-			].filter((item) => {
-				if (!item.permission)
-				{
-					return false;
-				}
-
-				return this.permissionChecker.hasPermission(item.permission.action, this.focusedNode);
-			});
-		},
-	},
-
-	watch:
-	{
-		departmentId()
-		{
-			this.menuItems = this.getMenuItems();
+			this.menu.onActionMenuItemClick(actionId);
 		},
 	},
 
@@ -200,7 +134,7 @@ export const EmptyStateContainer = {
 					<RouteActionMenu
 						v-if="menuVisible"
 						:id="'empty-state-department-detail-add-menu-' + focusedNode"
-						:items="menuItems"
+						:items="menu.items"
 						:width="302"
 						:bindElement="$refs['actionMenuButton']"
 						@action="onActionMenuItemClick"

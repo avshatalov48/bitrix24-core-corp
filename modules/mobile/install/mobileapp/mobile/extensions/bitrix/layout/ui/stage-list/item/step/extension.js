@@ -2,99 +2,231 @@
  * @module layout/ui/stage-list/item/step
  */
 jn.define('layout/ui/stage-list/item/step', (require, exports, module) => {
-	const AppTheme = require('apptheme');
 	const { isLightColor } = require('utils/color');
+	const { Color, Indent, Corner } = require('tokens');
+	const { IconView, Icon } = require('ui-system/blocks/icon');
+	const { MoneyView } = require('layout/ui/money');
+	const { Money } = require('money');
+	const { Text4, Text5, Text6 } = require('ui-system/typography/text');
 
-	const DEFAULT_STAGE_BACKGROUND_COLOR = AppTheme.colors.accentSoftBlue1;
-	const DISABLED_STAGE_BACKGROUND_COLOR = AppTheme.colors.bgSecondary;
+	const FOCUS_HEIGHT = 53;
+	const STAGE_HEIGHT = 44;
 
-	const STAGE_CONTAINER_HEIGHT = 48;
-	const STAGE_SELECT_HEIGHT = 34;
-	const STAGE_HEIGHT = 40;
-	const LIST_MODE_HEIGHT = 55;
+	const isAndroid = Application.getPlatform() === 'android';
 
+	/**
+	 * @class StageStep
+	 */
 	class StageStep extends LayoutComponent
 	{
-		get isSelectView()
-		{
-			return BX.prop.getBoolean(this.props, 'isSelectView', false);
-		}
-
-		static calculateTextColor(baseColor)
-		{
-			return isLightColor(baseColor) ? AppTheme.colors.baseBlackFixed : AppTheme.colors.baseWhiteFixed;
-		}
-
 		get counter()
 		{
 			return BX.prop.getObject(this.props, 'counter', {});
 		}
 
-		renderStep()
+		render()
 		{
 			const {
-				stage: {
-					id: stageId,
-					color: stageColor,
-					borderColor: stageBorderColor,
-				},
-				disabled,
-				showTotal,
 				unsuitable,
-				showArrow,
-				isReversed,
+				stage = {},
+				active,
 			} = this.props;
 
 			const {
-				total: stageTotal,
-				currency: stageCurrency,
-			} = this.counter;
+				listMode: stageListMode,
+			} = stage;
 
-			const preparedStageColor = stageColor || DEFAULT_STAGE_BACKGROUND_COLOR;
-			const stageBackground = disabled ? DISABLED_STAGE_BACKGROUND_COLOR : preparedStageColor;
-			const stageHeight = this.isSelectView ? STAGE_SELECT_HEIGHT : STAGE_HEIGHT;
+			return View(
+				{
+					style: {
+						height: active || stageListMode ? FOCUS_HEIGHT : STAGE_HEIGHT,
+						opacity: unsuitable ? 0.3 : 1,
+					},
+				},
+				this.renderFocus(),
+				stageListMode ? this.renderListView() : this.renderStep(stage),
+			);
+		}
+
+		renderFocus()
+		{
+			const {
+				isReversed,
+				active,
+			} = this.props;
+
+			if (!active)
+			{
+				return null;
+			}
+
+			const borderStyles = {
+				borderColor: Color.bgContentPrimary.toHex(),
+				borderBottomWidth: 1,
+				borderBottomColor: Color.accentMainPrimary.toHex(),
+				borderTopWidth: 1,
+				borderTopColor: Color.accentMainPrimary.toHex(),
+			};
+
+			if (isReversed)
+			{
+				borderStyles.borderRightColor = Color.accentMainPrimary.toHex();
+				borderStyles.borderRightWidth = 1;
+			}
+			else
+			{
+				borderStyles.borderLeftColor = Color.accentMainPrimary.toHex();
+				borderStyles.borderLeftWidth = 1;
+			}
 
 			return View(
 				{
 					style: {
 						flexDirection: 'row',
 						flex: 1,
-						opacity: unsuitable ? 0.3 : 1,
+						position: 'absolute',
+						width: '100%',
 					},
 				},
-				isReversed && !disabled && Image(
+				isReversed && Image(
 					{
-						style: {
-							width: 15,
-							height: stageHeight,
-							marginRight: -1,
-						},
 						svg: {
-							content: this.getStageArrow(isReversed, this.isSelectView, stageBackground),
+							content: focusArrowReversed(Color.accentMainPrimary.toHex()),
+						},
+						style: {
+							width: 19,
+							height: FOCUS_HEIGHT,
+							marginRight: isAndroid ? -2 : 0,
 						},
 					},
 				),
 				View(
 					{
 						style: {
-							padding: 8,
-							backgroundColor: stageBackground,
-							borderColor: stageBorderColor,
-							borderWidth: stageBorderColor ? 1 : 0,
-							flexGrow: 2,
-							height: stageHeight,
-							justifyContent: 'center',
-							borderTopLeftRadius: !isReversed && 6,
-							borderBottomLeftRadius: !isReversed && 6,
+							height: FOCUS_HEIGHT,
+							flex: 1,
+							borderBottomLeftRadius: isReversed ? 0 : 14,
+							borderTopLeftRadius: isReversed ? 0 : 14,
+							borderBottomRightRadius: isReversed ? 14 : 0,
+							borderTopRightRadius: isReversed ? 14 : 0,
 
-							borderTopRightRadius: isReversed && 6,
-							borderBottomRightRadius: isReversed && 6,
+							...borderStyles,
 						},
 					},
-					this.renderContent(
+
+				),
+				!isReversed && Image({
+					svg: {
+						content: focusArrow(Color.accentMainPrimary.toHex()),
+					},
+					style: {
+						width: 19,
+						height: FOCUS_HEIGHT,
+						marginLeft: isAndroid ? -2 : 0,
+					},
+				}),
+			);
+		}
+
+		/**
+		 * @param {object} stage
+		 * @param {?object} offset
+		 * @param {?boolean} showContent
+		 * @return {BaseMethods}
+		 */
+		renderStep(stage, offset, showContent = true)
+		{
+			const {
+				disabled,
+				showTotal,
+				isReversed,
+				active,
+			} = this.props;
+
+			const {
+				id: stageId,
+				name: stageName,
+				color: stageColor,
+				borderColor: stageBorderColor,
+			} = stage;
+
+			const {
+				total: stageTotal,
+				currency: stageCurrency,
+			} = this.counter;
+
+			const preparedColor = disabled ? Color.bgContentSecondary.toHex() : this.prepareColor(stageColor);
+			const borderColor = stageBorderColor ?? preparedColor;
+			const textColor = this.getTextColor(preparedColor);
+
+			const offsetStyles = offset ? {
+				position: 'absolute',
+				top: offset.top,
+				left: offset.left,
+				right: offset.right,
+			} : {};
+			const borderStyles = {
+				borderColor: preparedColor,
+				borderBottomWidth: 1,
+				borderBottomColor: borderColor,
+				borderTopWidth: 1,
+				borderTopColor: borderColor,
+			};
+
+			if (isReversed)
+			{
+				borderStyles.borderRightColor = borderColor;
+				borderStyles.borderRightWidth = 1;
+			}
+			else
+			{
+				borderStyles.borderLeftColor = borderColor;
+				borderStyles.borderLeftWidth = 1;
+			}
+
+			return View(
+				{
+					style: {
+						height: STAGE_HEIGHT,
+						flex: 1,
+						margin: !offset && active && Indent.XS.toNumber(),
+						flexDirection: 'row',
+						...offsetStyles,
+					},
+				},
+				isReversed && Image(
+					{
+						svg: {
+							content: arrowReversed(preparedColor, borderColor),
+						},
+						style: {
+							width: 28,
+							height: 44,
+							marginRight: -1,
+						},
+					},
+				),
+				View(
+					{
+						style: {
+							height: STAGE_HEIGHT,
+							flex: 1,
+							backgroundColor: preparedColor,
+							borderBottomLeftRadius: isReversed ? 0 : Corner.M.toNumber(),
+							borderTopLeftRadius: isReversed ? 0 : Corner.M.toNumber(),
+							borderBottomRightRadius: isReversed ? Corner.M.toNumber() : 0,
+							borderTopRightRadius: isReversed ? Corner.M.toNumber() : 0,
+
+							...borderStyles,
+
+							justifyContent: 'center',
+						},
+					},
+					showContent && this.renderContent(
 						{
-							color: preparedStageColor,
 							id: stageId,
+							name: stageName,
+							color: preparedColor,
 							disabled,
 						},
 						{
@@ -103,79 +235,44 @@ jn.define('layout/ui/stage-list/item/step', (require, exports, module) => {
 						},
 						showTotal,
 					),
-
-					disabled && View({
-						style: {
-							position: 'absolute',
-							width: '110%',
-							height: 3,
-							top: stageHeight - 3,
-							backgroundColor: preparedStageColor,
-						},
-					}),
 				),
-				!isReversed && !disabled && Image(
+				!isReversed && View(
 					{
 						style: {
-							width: 15,
-							height: stageHeight,
+							width: 46,
+							height: 44,
+							alignItems: 'center',
+							justifyContent: 'center',
 							marginLeft: -1,
 						},
-						svg: {
-							content: this.getStageArrow(isReversed, this.isSelectView, stageBackground),
-						},
 					},
-				),
-				stageBorderColor ? Image(
-					{
+					Image({
+						svg: {
+							content: arrow(preparedColor, borderColor),
+						},
 						style: {
-							width: 16,
-							height: stageHeight,
-							marginLeft: -16,
+							width: 46,
+							height: 44,
+							position: 'absolute',
+							top: 0,
+							left: 0,
 						},
-						svg: {
-							content: svgImages.listModeStageArrow(stageBorderColor, stageBackground),
-						},
-					},
-				) : null,
-				showArrow ? Image({
-					style: {
-						position: 'absolute',
-						width: 12,
-						height: 6,
-						top: stageHeight - 23,
-						right: 16,
-					},
-					svg: {
-						content: svgImages.selectArrow(),
-					},
-				}) : null,
+					}),
+					this.renderMenu(textColor),
+				),
 			);
 		}
 
-		getStageArrow(isRevered, isSelectView, stageBackground)
+		renderMenu(menuIconColor)
 		{
-			if (isRevered)
-			{
-				if (isSelectView)
-				{
-					return svgImages.stageSelectArrowReversed(stageBackground);
-				}
-
-				return svgImages.stageArrowReversed(stageBackground);
-			}
-
-			if (isSelectView)
-			{
-				return svgImages.stageSelectArrow(stageBackground);
-			}
-
-			return svgImages.stageArrow(stageBackground);
-		}
-
-		getIsActiveFocus()
-		{
-			return this.props.active;
+			return this.props.showArrow && IconView({
+				icon: Icon.CHEVRON_DOWN,
+				color: menuIconColor,
+				size: 20,
+				style: {
+					opacity: 0.8,
+				},
+			});
 		}
 
 		/**
@@ -187,273 +284,117 @@ jn.define('layout/ui/stage-list/item/step', (require, exports, module) => {
 		renderContent(stage = {}, money = {}, isShowTotal = false)
 		{
 			const { disabled, color } = stage;
-			const { showAllStagesItem } = this.props;
-			const stageColor = disabled ? AppTheme.colors.base4 : StageStep.calculateTextColor(color);
-			const content = showAllStagesItem ? [
-				View(
-					{
-						style: {
-							flexDirection: 'column',
-							flexWrap: 'no-wrap',
-							flex: 1,
-						},
-					},
-					this.renderTitle(stageColor),
-					isShowTotal && MoneyView({
-						money: Money.create(money),
-						renderAmount: (formattedAmount) => Text({
-							text: formattedAmount,
-							style: style.money(stageColor),
-						}),
-						renderCurrency: (formattedCurrency) => Text({
-							text: formattedCurrency,
-							style: style.money(stageColor),
-						}),
-					}),
-				),
-			] : [
-				this.renderTitle(stageColor),
-				this.renderMenu(stageColor),
-			];
+			const { isReversed, showAllStagesItem } = this.props;
+			const textColor = disabled ? Color.base4 : this.getTextColor(color);
 
 			return View(
 				{
 					style: {
 						flexDirection: 'row',
+						alignItems: 'center',
+						paddingLeft: isReversed ? 0 : Indent.XL3.toNumber(),
+						paddingRight: isReversed ? Indent.XL3.toNumber() : 0,
 					},
 				},
-				...content,
+				View(
+					{
+						style: {
+							flexDirection: 'column',
+							flex: 2,
+							justifyContent: 'center',
+						},
+					},
+					this.renderTitle(textColor, stage),
+					(isShowTotal && showAllStagesItem) && this.renderTotal(money, textColor),
+				),
+				isReversed && this.renderMenu(textColor),
 			);
 		}
 
-		renderTitle(stageColor)
+		renderTitle(textColor, stage = {})
 		{
 			const {
-				stage: {
-					id: stageId,
-					name: stageName,
-				},
-				showAllStagesItem,
 				showCount,
 			} = this.props;
+
+			const {
+				id: stageId,
+				name: stageName,
+			} = stage;
 
 			const {
 				count: stageCount,
 			} = this.counter;
 
-			return View(
+			return stageName && View(
 				{
 					style: {
 						flexDirection: 'row',
-						flex: showAllStagesItem ? 0 : 1,
+						alignItems: 'center',
 					},
 				},
-				Text(
+				Text4(
 					{
 						testId: `Stage-${stageId}-Name`,
 						text: stageName,
+						color: textColor,
 						numberOfLines: 1,
 						ellipsize: 'end',
 						style: {
-							fontSize: showAllStagesItem ? 13 : 15,
-							fontWeight: showAllStagesItem ? '400' : '500',
-							color: stageColor,
 							flexShrink: 2,
 							maxWidth: '100%',
 						},
 					},
 				),
-				showCount && Text(
+				showCount && Text5(
 					{
 						testId: `Stage-${stageId}-Counter`,
 						text: ` (${stageCount || 0})`,
-						style: {
-							fontSize: showAllStagesItem ? 13 : 15,
-							fontWeight: showAllStagesItem ? '400' : '500',
-							color: stageColor,
-						},
+						color: textColor,
+						numberOfLines: 1,
+						ellipsize: 'end',
 					},
 				),
 			);
 		}
 
-		renderMenu(stageColor)
+		renderTotal(money, textColor)
 		{
-			const { showMenu } = this.props;
-
-			if (!showMenu)
-			{
-				return null;
-			}
-
-			return View(
-				{
-					style: {
-						flexDirection: 'row',
-						justifyContent: 'center',
-						alignItems: 'center',
-					},
-				},
-				Image(
-					{
-						style: {
-							width: 10,
-							height: 6,
-						},
-						svg: {
-							content: `<svg width="10" height="6" viewBox="0 0 10 6" fill="none" xmlns="http://www.w3.org/2000/svg"><path opacity="0.5" fill-rule="evenodd" clip-rule="evenodd" d="M8.89902 0L5.7787 3.06862L4.99259 3.82975L4.22138 3.06862L1.10107 0L0 1.08283L5 6L10 1.08283L8.89902 0Z" fill="${stageColor}"/></svg>`,
-						},
-					},
-				),
-			);
+			return MoneyView({
+				money: Money.create(money),
+				renderAmount: (formattedAmount) => Text6({
+					text: formattedAmount,
+					color: textColor,
+				}),
+				renderCurrency: (formattedCurrency) => Text6({
+					text: formattedCurrency,
+					color: textColor,
+				}),
+			});
 		}
 
-		renderFocus()
+		/**
+		 * @param {string} color
+		 * @return {string}
+		 */
+		prepareColor(color)
 		{
-			if (!this.getIsActiveFocus())
+			if (!color)
 			{
-				return [];
+				return Color.accentSoftBlue1.toHex();
 			}
 
-			const {
-				stage: {
-					listMode: stageListMode,
-				},
-				isReversed,
-			} = this.props;
+			if (color && color.length === 6)
+			{
+				return `#${color}`;
+			}
 
-			const borderColor = AppTheme.colors.accentBrandBlue;
-
-			const borderWrapperStyle = isReversed
-				? {
-					alignItems: 'flex-end',
-					right: 0,
-				}
-				: {
-					alignItems: 'flex-start',
-					left: 0,
-				};
-
-			const borderStyle = isReversed
-				? {
-					borderTopRightRadius: 10,
-					borderBottomRightRadius: 10,
-					borderRightWidth: 2,
-					borderRightColor: borderColor,
-				}
-				: {
-					borderTopLeftRadius: 10,
-					borderBottomLeftRadius: 10,
-					borderLeftWidth: 2,
-					borderLeftColor: borderColor,
-				};
-
-			const arrowStyle = isReversed
-				? {
-					left: 0,
-				}
-				: {
-					right: 0,
-				};
-
-			return [
-				Image(
-					{
-						style: {
-							position: 'absolute',
-							...arrowStyle,
-							top: 0,
-							width: stageListMode ? 25 : 21,
-							height: stageListMode ? LIST_MODE_HEIGHT : STAGE_CONTAINER_HEIGHT,
-						},
-						svg: {
-							content: this.getFocusArrow(isReversed, stageListMode, borderColor),
-						},
-					},
-				),
-				View(
-					{
-						style: {
-							top: 0,
-							position: 'absolute',
-							width: '102%',
-							...borderWrapperStyle,
-						},
-					},
-					View({
-						style: {
-							height: stageListMode ? LIST_MODE_HEIGHT : STAGE_CONTAINER_HEIGHT,
-							width: '95%',
-							borderTopWidth: 2,
-							borderTopColor: borderColor,
-							borderBottomWidth: 2,
-							borderBottomColor: borderColor,
-							...borderStyle,
-						},
-					}),
-				),
-			];
+			return color;
 		}
 
-		getFocusArrow(isReversed, stageListMode, color)
+		getTextColor(backgroundColor)
 		{
-			if (isReversed)
-			{
-				if (stageListMode)
-				{
-					return svgImages.listModeFocusArrowReversed(color);
-				}
-
-				return svgImages.stageFocusArrowReversed(color);
-			}
-
-			if (stageListMode)
-			{
-				return svgImages.listModeStageFocus(color);
-			}
-
-			return svgImages.stageFocusArrow(color);
-		}
-
-		render()
-		{
-			const {
-				stage: {
-					listMode: stageListMode,
-				},
-				isReversed,
-			} = this.props;
-
-			return View(
-				{
-					style: {
-						flexDirection: 'row',
-						flexGrow: 2,
-						height: this.stepHeight,
-						padding: BX.type.isBoolean(this.getIsActiveFocus()) ? 4 : 0,
-						paddingRight: BX.type.isBoolean(this.getIsActiveFocus()) && !isReversed ? 5 : 4,
-						paddingLeft: BX.type.isBoolean(this.getIsActiveFocus()) && isReversed ? 5 : 4,
-					},
-				},
-				...this.renderFocus(),
-				stageListMode ? this.renderListView() : this.renderStep(),
-			);
-		}
-
-		get stepHeight()
-		{
-			const {
-				stage: {
-					listMode: stageListMode,
-				},
-			} = this.props;
-
-			if (stageListMode)
-			{
-				return LIST_MODE_HEIGHT;
-			}
-
-			return this.isSelectView ? STAGE_SELECT_HEIGHT : STAGE_CONTAINER_HEIGHT;
+			return isLightColor(backgroundColor) ? Color.baseBlackFixed : Color.baseWhiteFixed;
 		}
 
 		renderListView()
@@ -461,217 +402,74 @@ jn.define('layout/ui/stage-list/item/step', (require, exports, module) => {
 			const {
 				stage: {
 					id: stageId,
+					name,
 				},
-				showTotal,
-			} = this.props;
-
-			const {
-				total: stageTotal,
-				currency: stageCurrency,
-			} = this.counter;
-
-			return View(
-				{
-					style: style.listViewContainer,
-				},
-				this.renderListViewStep(
-					{
-						topOffset: 6,
-						backgroundColor: AppTheme.colors.bgContentPrimary,
-						borderColor: AppTheme.colors.base7,
-					},
-				),
-				this.renderListViewStep(
-					{
-						topOffset: 3,
-						backgroundColor: AppTheme.colors.base7,
-						borderColor: AppTheme.colors.base6,
-					},
-				),
-				this.renderListViewStep(
-					{
-						topOffset: 0,
-						backgroundColor: AppTheme.colors.base7,
-						borderColor: AppTheme.colors.base5,
-						data: {
-							id: stageId,
-							disabled: false,
-							money: {
-								amount: Math.round(stageTotal),
-								currency: stageCurrency,
-							},
-							showTotal,
-						},
-					},
-				),
-			);
-		}
-
-		renderListViewStep(stage)
-		{
-			const {
-				topOffset,
-				backgroundColor,
-				borderColor,
-				data,
-			} = stage;
-
-			const {
-				isReversed,
 			} = this.props;
 
 			return View(
 				{
 					style: {
-						...style.listViewStepWrapper,
-						top: topOffset,
+						flex: 1,
+						flexDirection: 'column',
 					},
 				},
-				View(
+				this.renderStep(
 					{
-						style: style.listViewStepContainer,
+						id: stageId,
+						color: Color.bgContentPrimary.toHex(),
+						borderColor: Color.base5.toHex(),
 					},
-					isReversed && Image(
-						{
-							style: {
-								width: 16,
-								height: 40,
-								marginRight: -2,
-							},
-							svg: {
-								content: svgImages.listModeStageArrowReversed(borderColor, backgroundColor),
-							},
-						},
-					),
-					View(
-						{
-							style: {
-								backgroundColor,
-								flex: 1,
-								height: 40,
-
-								borderTopWidth: 1,
-								borderTopColor: borderColor,
-								borderBottomWidth: 1,
-								borderBottomColor: borderColor,
-								borderLeftWidth: !isReversed && 1,
-								borderLeftColor: !isReversed && borderColor,
-								borderRightWidth: isReversed && 1,
-								borderRightColor: isReversed && borderColor,
-
-								borderTopLeftRadius: !isReversed && 6,
-								borderBottomLeftRadius: !isReversed && 6,
-								borderTopRightRadius: isReversed && 6,
-								borderBottomRightRadius: isReversed && 6,
-								justifyContent: 'center',
-							},
-						},
-						data ? View(
-							{
-								style: {
-									padding: 8,
-									flexGrow: 2,
-									justifyContent: 'center',
-								},
-							},
-							this.renderContent(
-								{ id: data.id, color: backgroundColor, disabled: data.disabled },
-								data.money,
-								data.showTotal,
-							),
-						) : null,
-					),
-					!isReversed && Image(
-						{
-							style: {
-								width: 16,
-								height: 40,
-								marginLeft: -2,
-							},
-							svg: {
-								content: svgImages.listModeStageArrow(borderColor, backgroundColor),
-							},
-						},
-					),
+					{
+						top: 6,
+						left: 8,
+						right: 4,
+					},
+					false,
+				),
+				this.renderStep(
+					{
+						id: stageId,
+						color: Color.bgContentPrimary.toHex(),
+						borderColor: Color.base5.toHex(),
+					},
+					{
+						top: 4,
+						left: 6,
+						right: 6,
+					},
+					false,
+				),
+				this.renderStep(
+					{
+						id: stageId,
+						name,
+						color: Color.bgContentPrimary.toHex(),
+						borderColor: Color.base5.toHex(),
+					},
+					{
+						top: 2,
+						left: 4,
+						right: 8,
+					},
 				),
 			);
 		}
 	}
 
-	const style = {
-		money: (color) => ({
-			fontSize: 13,
-			fontWeight: '600',
-			color,
-		}),
-		listViewContainer: {
-			flexDirection: 'column',
-			flex: 1,
-		},
-		listViewStepWrapper: {
-			position: 'absolute',
-			height: 40,
-			width: '100%',
-		},
-		listViewStepContainer: {
-			flexDirection: 'row',
-			flex: 1,
-			height: 40,
-		},
+	const focusArrow = (color) => {
+		return `<svg width="16" height="53" viewBox="0 0 16 53" fill="none" xmlns="http://www.w3.org/2000/svg"><path fill-rule="evenodd" clip-rule="evenodd" d="M0 52H0.225449C4.01337 52 7.39586 49.6282 8.68672 46.067L14.3035 30.5717C15.0333 28.5583 15.0212 26.3506 14.2695 24.3453L7.70714 6.84069C6.47498 3.55397 3.45621 1.30496 0 1.0287L0 0.0258177C3.87361 0.30422 7.26493 2.8124 8.64349 6.48966L15.2058 23.9943C16.0411 26.2224 16.0545 28.6754 15.2436 30.9125L9.62686 46.4078C8.19258 50.3647 4.43425 53 0.225449 53H0L0 52Z" fill="${color.replaceAll(/[^\d#A-Fa-f]/g, '')}"/></svg>`;
 	};
 
-	const svgImages = {
-		stageSelectArrow: (color) => {
-			return `<svg width="15" height="34" viewBox="0 0 15 34" fill="none" xmlns="http://www.w3.org/2000/svg"><path d="M0 0H0.314926C2.30669 0 4.16862 0.9884 5.28463 2.63814L13.8629 15.3191C14.5498 16.3344 14.5498 17.6656 13.8629 18.6809L5.28463 31.3619C4.16863 33.0116 2.30669 34 0.314926 34H0V0Z" fill="${color.replaceAll(
-				/[^\d#A-Fa-f]/g,
-				'',
-			)}"/></svg>`;
-		},
-		stageSelectArrowReversed: (color) => {
-			return `<svg width="15" height="34" viewBox="0 0 15 34" fill="none" xmlns="http://www.w3.org/2000/svg"><path d="M15 0H14.6851C12.6933 0 10.8314 0.9884 9.71537 2.63814L1.1371 15.3191C0.4502 16.3344 0.4502 17.6656 1.1371 18.6809L9.71537 31.3619C10.8314 33.0116 12.6933 34 14.6851 34H15V0Z"fill="${color.replaceAll(/[^\d#A-Fa-f]/g, '')}"/></svg>`;
-		},
-		stageArrow: (color) => {
-			return `<svg width="15" height="40" viewBox="0 0 15 40" fill="none" xmlns="http://www.w3.org/2000/svg"><path d="M0 0C2.14738 0 4.15987 1.1476 5.23027 3.00917L14.1401 18.5046C14.6725 19.4305 14.6725 20.5695 14.1401 21.4954L5.23027 36.9908C4.15987 38.8524 2.14738 40 0 40V0Z" fill="${color.replaceAll(
-				/[^\d#A-Fa-f]/g,
-				'',
-			)}"/></svg>`;
-		},
-		stageArrowReversed: (color) => {
-			return `<svg width="15" height="40" viewBox="0 0 15 40" fill="none" xmlns="http://www.w3.org/2000/svg"><path d="M14.5394 0C12.392 0 10.3795 1.1476 9.30913 3.00917L0.3993 18.5046C-0.133101 19.4305 -0.133101 20.5695 0.3993 21.4954L9.30913 36.9908C10.3795 38.8524 12.392 40 14.5394 40V0Z" fill="${color.replaceAll(/[^\d#A-Fa-f]/g, '')}"/></svg>`;
-		},
-		listModeStageArrow: (borderColor, backgroundColor) => {
-			return `<svg width="16" height="40" viewBox="0 0 16 40" fill="none" xmlns="http://www.w3.org/2000/svg"><path d="M-191 6C-191 2.68629 -188.314 0 -185 0H0.0288393C2.17622 0 4.15987 1.1476 5.23027 3.00917L14.1401 18.5046C14.6725 19.4305 14.6725 20.5695 14.1401 21.4954L5.23027 36.9908C4.15987 38.8524 2.17621 40 0.0288368 40H-185C-188.314 40 -191 37.3137 -191 34V6Z" fill="${backgroundColor.replaceAll(
-				/[^\d#A-Fa-f]/g,
-				'',
-			)}"/><path d="M-185 0.5H0.0288391C1.99727 0.5 3.81561 1.55197 4.79683 3.25841L13.7067 18.7538C14.1503 19.5254 14.1503 20.4746 13.7067 21.2462L4.79681 36.7416C3.81561 38.448 1.99727 39.5 0.0288391 39.5H-185C-188.038 39.5 -190.5 37.0376 -190.5 34V6C-190.5 2.96243 -188.038 0.5 -185 0.5Z" stroke="${borderColor.replaceAll(
-				/[^\d#A-Fa-f]/g,
-				'',
-			)}"/></svg>`;
-		},
-		listModeStageArrowReversed: (borderColor, backgroundColor) => {
-			return `<svg width="16" height="40" viewBox="0 0 16 40" fill="none" xmlns="http://www.w3.org/2000/svg"><path d="M207 6C207 2.68629 204.314 0 201 0H15.9712C13.8238 0 11.8401 1.1476 10.7697 3.00917L1.85989 18.5046C1.32749 19.4305 1.32749 20.5695 1.85989 21.4954L10.7697 36.9908C11.8401 38.8524 13.8238 40 15.9712 40H201C204.314 40 207 37.3137 207 34V6Z" fill="${backgroundColor.replaceAll(/[^\d#A-Fa-f]/g, '')}"/><path d="M201 0.5H15.9712C14.0027 0.5 12.1844 1.55197 11.2032 3.25841L2.2933 18.7538C1.8497 19.5254 1.8497 20.4746 2.2933 21.2462L11.2032 36.7416C12.1844 38.448 14.0027 39.5 15.9712 39.5H201C204.038 39.5 206.5 37.0376 206.5 34V6C206.5 2.96243 204.038 0.5 201 0.5Z" stroke="${borderColor.replaceAll(/[^\d#A-Fa-f]/g, '')}"/></svg>`;
-		},
-		stageFocusArrow: (color) => {
-			return `<svg width="19" height="48" viewBox="0 0 19 48" fill="none" xmlns="http://www.w3.org/2000/svg"><path fill-rule="evenodd" clip-rule="evenodd" d="M0 47.9988H2.45416C5.06631 47.9988 7.46115 46.5443 8.66562 44.2264L17.4987 27.2277C18.5501 25.2043 18.5501 22.7957 17.4987 20.7723L8.6656 3.77358C7.46115 1.45568 5.06631 0.00125122 2.45416 0.00125122H0V2.00125H2.45416C4.31998 2.00125 6.03058 3.04013 6.89091 4.69577L15.724 21.6945C16.475 23.1398 16.475 24.8602 15.724 26.3055L6.89091 43.3042C6.03059 44.9599 4.31998 45.9988 2.45416 45.9988H0V47.9988Z" fill="${color.replaceAll(
-				/[^\d#A-Fa-f]/g,
-				'',
-			)}"/></svg>`;
-		},
-		stageFocusArrowReversed: (color) => {
-			return `<svg width="19" height="48" viewBox="0 0 19 48" fill="none" xmlns="http://www.w3.org/2000/svg"><path fill-rule="evenodd" clip-rule="evenodd" d="M19 47.9988H16.5458C13.9337 47.9988 11.5389 46.5443 10.3344 44.2264L1.5013 27.2277C0.449901 25.2043 0.449901 22.7957 1.5013 20.7723L10.3344 3.77358C11.5389 1.45568 13.9337 0.00125122 16.5458 0.00125122H19V2.00125H16.5458C14.68 2.00125 12.9694 3.04013 12.1091 4.69577L3.276 21.6945C2.525 23.1398 2.525 24.8602 3.276 26.3055L12.1091 43.3042C12.9694 44.9599 14.68 45.9988 16.5458 45.9988H19V47.9988Z" fill="${color.replaceAll(/[^\d#A-Fa-f]/g, '')}"/></svg>`;
-		},
-		listModeStageFocus: (color) => {
-			return `<svg width="25" height="56" viewBox="0 0 25 56" fill="none" xmlns="http://www.w3.org/2000/svg"><path fill-rule="evenodd" clip-rule="evenodd" d="M0.252197 56H5.89896C8.52547 56 10.931 54.5297 12.1287 52.1922L23.3553 30.2826C24.4183 28.2081 24.3789 25.7406 23.2502 23.701L12.1322 3.6106C10.8993 1.38269 8.55385 0 6.00754 0H0.252197V2H6.00754C7.82632 2 9.50166 2.98764 10.3823 4.579L21.5003 24.6694C22.3065 26.1262 22.3347 27.8888 21.5754 29.3706L10.3488 51.2801C9.49326 52.9498 7.77504 54 5.89896 54H0.252197V56Z" fill="${color.replaceAll(
-				/[^\d#A-Fa-f]/g,
-				'',
-			)}"/></svg>`;
-		},
-		listModeFocusArrowReversed: (color) => {
-			return `<svg width="25" height="56" viewBox="0 0 25 56" fill="none" xmlns="http://www.w3.org/2000/svg"><path fill-rule="evenodd" clip-rule="evenodd" d="M24.7478 56H19.101C16.4745 56 14.069 54.5297 12.8713 52.1922L1.6447 30.2826C0.581699 28.2081 0.6211 25.7406 1.7498 23.701L12.8678 3.6106C14.1007 1.38269 16.4461 0 18.9925 0H24.7478V2H18.9925C17.1737 2 15.4983 2.98764 14.6177 4.579L3.4997 24.6694C2.6935 26.1262 2.6653 27.8888 3.4246 29.3706L14.6512 51.2801C15.5067 52.9498 17.225 54 19.101 54H24.7478V56Z" fill="${color.replaceAll(/[^\d#A-Fa-f]/g, '')}"/></svg>`;
-		},
-		selectArrow: () => {
-			return '<svg width="8" height="5" viewBox="0 0 8 5" fill="none" xmlns="http://www.w3.org/2000/svg"><path opacity="0.5" fill-rule="evenodd" clip-rule="evenodd" d="M7.48475 0.949596L3.94922 4.48513L0.413685 0.949596H7.48475Z" fill="#525C69"/></svg>';
-		},
+	const focusArrowReversed = (color) => {
+		return `<svg width="16" height="53" viewBox="0 0 16 53" fill="none" xmlns="http://www.w3.org/2000/svg"><path fill-rule="evenodd" clip-rule="evenodd" d="M16 1H15.7746C11.9866 1 8.60414 3.37176 7.31328 6.93295L1.69652 22.4283C0.966705 24.4417 0.97876 26.6494 1.73053 28.6547L8.29286 46.1593C9.52502 49.446 12.5438 51.695 16 51.9713L16 52.9742C12.1264 52.6958 8.73507 50.1876 7.35651 46.5103L0.794174 29.0057C-0.0411377 26.7776 -0.0545349 24.3246 0.756378 22.0875L6.37314 6.59217C7.80742 2.63529 11.5658 -1.94455e-07 15.7746 -1.94455e-07H16L16 1Z" fill="${color.replaceAll(/[^\d#A-Fa-f]/g, '')}"/></svg>`;
+	};
+
+	const arrow = (color, borderColor) => {
+		return `<svg width="46" height="44" viewBox="0 0 46 44" fill="none" xmlns="http://www.w3.org/2000/svg"><path d="M39.2751 33.7919C36.4868 38.7709 35.0927 41.2603 32.7587 42.6302C30.4247 44 27.5772 44 21.8821 44H0V22V0H21.8821C27.5772 0 30.4247 0 32.7587 1.36983C35.0927 2.73966 36.4868 5.22913 39.2751 10.2081L42.5886 16.1248C44.1962 18.9954 45 20.4307 45 22C45 23.5693 44.1962 25.0046 42.5886 27.8752L39.2751 33.7919Z" fill="${color.replaceAll(/[^\d#A-Fa-f]/g, '')}"/><path fill-rule="evenodd" clip-rule="evenodd" d="M9.0003e-06 43H21.9399C24.8146 43 26.8981 42.9989 28.5572 42.8337C30.1943 42.6707 31.3377 42.3539 32.34 41.7672C33.3424 41.1804 34.1785 40.3385 35.1221 38.9909C36.0784 37.6251 37.0995 35.809 38.5069 33.3023L41.8292 27.3856C42.6444 25.9337 43.2204 24.9056 43.5994 24.0461C43.9698 23.2063 44.1189 22.5975 44.1189 22C44.1189 21.4025 43.9698 20.7937 43.5994 19.9539C43.2204 19.0944 42.6444 18.0663 41.8292 16.6144L38.5069 10.6977C37.0995 8.19104 36.0784 6.37494 35.1221 5.00909C34.1785 3.66146 33.3424 2.81961 32.34 2.23285C31.3377 1.64609 30.1943 1.32928 28.5572 1.16631C26.8981 1.00114 24.8146 1 21.9399 1H9.0003e-06V43ZM32.8452 42.6302C35.1854 41.2603 36.5832 38.7709 39.3789 33.7919L42.7011 27.8752C44.313 25.0046 45.1189 23.5693 45.1189 22C45.1189 20.4307 44.313 18.9954 42.7011 16.1248L39.3789 10.2081C36.5832 5.22913 35.1854 2.73966 32.8452 1.36983C30.5051 0 27.65 0 21.9399 0H0L9.0003e-06 44H21.9399C27.65 44 30.5051 44 32.8452 42.6302Z" fill="${borderColor.replaceAll(/[^\d#A-Fa-f]/g, '')}"/></svg>`;
+	};
+
+	const arrowReversed = (color, borderColor) => {
+		return `<svg width="28" height="44" viewBox="0 0 28 44" fill="none" xmlns="http://www.w3.org/2000/svg"><path d="M5.84378 10.2081C8.63207 5.22913 10.0262 2.73966 12.3602 1.36983C14.6942 1.90735e-06 17.5417 0 23.2368 0H28L28 22V44H23.2368C17.5417 44 14.6942 44 12.3602 42.6302C10.0262 41.2603 8.63207 38.7709 5.84378 33.7919L2.53028 27.8752C0.922693 25.0046 0.1189 23.5693 0.1189 22C0.1189 20.4307 0.922693 18.9954 2.53028 16.1248L5.84378 10.2081Z" fill="${color.replaceAll(/[^\d#A-Fa-f]/g, '')}"/><path fill-rule="evenodd" clip-rule="evenodd" d="M28 1H23.179C20.3043 1 18.2208 1.00114 16.5617 1.16631C14.9246 1.32928 13.7812 1.64609 12.7789 2.23285C11.7765 2.81961 10.9404 3.66146 9.99683 5.00909C9.04049 6.37495 8.01944 8.19104 6.61198 10.6977L3.28973 16.6144C2.4745 18.0663 1.89846 19.0944 1.51946 19.9539C1.14913 20.7937 1.00003 21.4025 1.00003 22C1.00003 22.5975 1.14913 23.2063 1.51946 24.0461C1.89846 24.9056 2.4745 25.9337 3.28973 27.3856L6.61198 33.3023C8.01944 35.809 9.04049 37.6251 9.99683 38.9909C10.9404 40.3385 11.7765 41.1804 12.7789 41.7672C13.7812 42.3539 14.9246 42.6707 16.5617 42.8337C18.2208 42.9989 20.3043 43 23.179 43H28V1ZM12.2737 1.36983C9.93353 2.73966 8.53569 5.22913 5.74004 10.2081L2.41778 16.1248C0.805946 18.9954 3.05176e-05 20.4307 3.05176e-05 22C3.05176e-05 23.5693 0.805946 25.0046 2.41778 27.8752L5.74004 33.7919C8.53569 38.7709 9.93353 41.2603 12.2737 42.6302C14.6138 44 17.4689 44 23.179 44H28V0H23.179C17.4689 0 14.6138 0 12.2737 1.36983Z" fill="${borderColor.replaceAll(/[^\d#A-Fa-f]/g, '')}"/></svg>`;
 	};
 
 	module.exports = { StageStep };

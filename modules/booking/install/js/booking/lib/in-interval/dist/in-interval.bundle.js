@@ -1,0 +1,2 @@
+this.BX=this.BX||{},this.BX.Booking=this.BX.Booking||{},function(n){"use strict";const i={include:"none"},t=Object.freeze({all:"all",left:"left",right:"right",none:"none"});n.IncludeBoundaries=t,n.inInterval=function(n,e,r){if(!Array.isArray(e)&&e.length<2)throw new TypeError('"interval" must be an numeric array');const{include:o}={...i,...r};return o===t.all?e[0]<=n&&n<=e[1]:o===t.left?e[0]<=n&&n<e[1]:o===t.right?e[0]<n&&n<=e[1]:e[0]<n&&n<e[1]}}(this.BX.Booking.Lib=this.BX.Booking.Lib||{});
+//# sourceMappingURL=in-interval.bundle.js.map

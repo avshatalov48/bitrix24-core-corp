@@ -14,7 +14,7 @@ use Bitrix\Main,
 Loc::loadMessages(__FILE__);
 class SalesCenterSmsProviderPanel extends CBitrixComponent implements Controllerable
 {
-	private const MARKETPLACE_CATEGORY_SMS = 'crm_robot_sms';
+	private const MARKET_CATEGORY_SMS = 'integration_sms';
 	private $smsProviderPanelId = 'salescenter-smsprovider';
 	private $smsProviderAppPanelId = 'salescenter-smsprovider-app';
 	private $smsProviderColors = [];
@@ -222,7 +222,7 @@ class SalesCenterSmsProviderPanel extends CBitrixComponent implements Controller
 			return $marketplaceInstalledApps;
 		}
 
-		$marketplaceAppCodeList = RestManager::getInstance()->getMarketplaceAppCodeList(self::MARKETPLACE_CATEGORY_SMS);
+		$marketplaceAppCodeList = RestManager::getInstance()->getMarketplaceAppCodeList(self::MARKET_CATEGORY_SMS);
 
 		$appIterator = Rest\AppTable::getList([
 			'select' => [
@@ -315,7 +315,10 @@ class SalesCenterSmsProviderPanel extends CBitrixComponent implements Controller
 		}
 		Main\Type\Collection::sortByColumn($result, ['sort' => SORT_ASC]);
 
-		if (NotificationsManager::isAvailable())
+		if (
+			NotificationsManager::isAvailable()
+			&& Main\Application::getInstance()->getLicense()->getRegion() === 'ru'
+		)
 		{
 			array_unshift(
 				$result,
@@ -433,13 +436,16 @@ class SalesCenterSmsProviderPanel extends CBitrixComponent implements Controller
 	 */
 	private function getSmsProviderAppsCount(): array
 	{
-		$appsCount = $this->getMarketplaceAppsCount();
+		$appsCount = RestManager::getInstance()
+			->getMarketplaceAppsCount(static::MARKET_CATEGORY_SMS)
+		;
+
 		return [
 			'id' => 'counter',
 			'title' => Loc::getMessage('SPP_SMSPROVIDER_APP_TOTAL_APPLICATIONS'),
 			'data' => [
 				'type' => 'counter',
-				'connectPath' => '/marketplace/?category='.self::MARKETPLACE_CATEGORY_SMS,
+				'connectPath' => '/market/category/' . static::MARKET_CATEGORY_SMS . '/',
 				'count' => $appsCount,
 				'description' => Loc::getMessage('SPP_SMSPROVIDER_APP_SEE_ALL'),
 			],
@@ -456,34 +462,6 @@ class SalesCenterSmsProviderPanel extends CBitrixComponent implements Controller
 				'type' => 'recommend'
 			]
 		];
-	}
-
-	/**
-	 * @return mixed
-	 * @throws Main\SystemException
-	 */
-	private function getMarketplaceAppsCount()
-	{
-		$cacheTTL = 43200;
-		$cacheId = 'salescenter_smsprovider_app_rest_app_count';
-		$cachePath = '/salescenter/smsprovider/app/rest_partners/';
-		$cache = Main\Application::getInstance()->getCache();
-
-		if ($cache->initCache($cacheTTL, $cacheId, $cachePath))
-		{
-			$categoryItems = $cache->getVars();
-		}
-		else
-		{
-			$categoryItems = Rest\Marketplace\Client::getCategory(self::MARKETPLACE_CATEGORY_SMS, 0, 1);
-			if (is_array($categoryItems))
-			{
-				$cache->startDataCache();
-				$cache->endDataCache($categoryItems);
-			}
-		}
-
-		return $categoryItems['PAGES'] ?? 0;
 	}
 
 	/**

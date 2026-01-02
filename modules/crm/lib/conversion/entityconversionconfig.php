@@ -27,6 +27,8 @@ class EntityConversionConfig
 	/** @var Context|null */
 	protected $context;
 
+	protected bool $useTemporaryFilesForUF = true;
+
 	public function __construct(array $options = null)
 	{
 	}
@@ -452,6 +454,16 @@ class EntityConversionConfig
 		}
 
 		return $this->scheme;
+	}
+
+	public function isUseTemporaryFilesForUF(): bool
+	{
+		return $this->useTemporaryFilesForUF;
+	}
+
+	public function setUseTemporaryFilesForUF(bool $useTemporaryFilesForUF): void
+	{
+		$this->useTemporaryFilesForUF = $useTemporaryFilesForUF;
 	}
 
 	final protected function appendCustomRelations(): void

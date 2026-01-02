@@ -1,5 +1,4 @@
 import { Popup as MainPopup, PopupManager } from 'main.popup';
-import '../css/popup.css';
 
 export const Popup = {
 	emits: ['close'],

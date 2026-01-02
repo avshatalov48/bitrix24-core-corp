@@ -2,6 +2,8 @@
 
 return [
 	'extensions' => [
+		'loc',
+		'toast',
 		'utils/object',
 		'utils/function',
 		'utils/validation',

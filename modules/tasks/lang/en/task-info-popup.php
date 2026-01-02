@@ -11,7 +11,6 @@ $MESS["TASKS_FILES"] = "Files";
 $MESS["TASKS_PRIORITY_V2"] = "High priority";
 $MESS["TASKS_QUICK_INFO_DETAILS"] = "Details";
 $MESS["TASKS_QUICK_INFO_EMPTY_DATE"] = "no";
-$MESS["TASKS_RESPONSIBLE"] = "Responsible";
 $MESS["TASKS_STATUS"] = "Status";
 $MESS["TASKS_STATUS_ACCEPTED"] = "Pending";
 $MESS["TASKS_STATUS_COMPLETED"] = "Completed";

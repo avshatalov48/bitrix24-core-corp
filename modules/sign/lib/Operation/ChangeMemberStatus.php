@@ -331,7 +331,9 @@ final class ChangeMemberStatus implements Contract\Operation
 
 		$p1AnalyticsValue = match ($this->document->providerCode)
 		{
-			Type\ProviderCode::SES_RU, Type\ProviderCode::SES_COM => 'integration_bitrix24KEDO',
+			Type\ProviderCode::SES_RU,
+			Type\ProviderCode::SES_COM,
+			Type\ProviderCode::SES_RU_EXPRESS => 'integration_bitrix24KEDO',
 			Type\ProviderCode::GOS_KEY => 'integration_Goskluch',
 			Type\ProviderCode::EXTERNAL => 'integration_external',
 			default => 'integration_N',

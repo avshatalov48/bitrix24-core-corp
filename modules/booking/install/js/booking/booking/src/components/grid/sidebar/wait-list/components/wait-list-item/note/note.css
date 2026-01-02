@@ -1,0 +1,7 @@
+.booking--wait-list-item-note {
+	margin-top: 1px;
+}
+
+.ui-draggable--type-move .booking--wait-list-item-note {
+	pointer-events: none;
+}

@@ -51,6 +51,9 @@
 	    __proto__: BX.TileGrid.Item.prototype,
 	    constructor: BX.TileGrid.Item,
 	    getContent: function getContent() {
+	      if (this.data.type === 'counter') {
+	        return this.getItemCounter();
+	      }
 	      if (!this.layout.wrapper) {
 	        this.layout.wrapper = BX.create('div', {
 	          props: {
@@ -73,6 +76,44 @@
 	        this.setSelected();
 	      }
 	      return this.layout.wrapper;
+	    },
+	    getItemCounter: function getItemCounter() {
+	      return BX.create('div', {
+	        props: {
+	          className: 'salescenter-delivery-item salescenter-delivery-integration-marketplace-tile-item salescenter-delivery-integration-marketplace-tile-counter'
+	        },
+	        children: [BX.create('div', {
+	          props: {
+	            className: 'salescenter-delivery-integration-marketplace-tile-counter-head'
+	          },
+	          children: [BX.create('div', {
+	            props: {
+	              className: 'salescenter-delivery-integration-marketplace-tile-counter-name'
+	            },
+	            text: this.title
+	          }), BX.create('div', {
+	            props: {
+	              className: 'salescenter-delivery-integration-marketplace-tile-counter-value'
+	            },
+	            text: this.data.count
+	          })]
+	        }), BX.create('div', {
+	          props: {
+	            className: 'salescenter-delivery-integration-marketplace-tile-counter-link-box'
+	          },
+	          children: [BX.create('div', {
+	            props: {
+	              className: 'salescenter-delivery-integration-marketplace-tile-counter-link'
+	            },
+	            text: this.data.description
+	          })]
+	        })],
+	        events: {
+	          click: function () {
+	            this.onClick();
+	          }.bind(this)
+	        }
+	      });
 	    },
 	    getImage: function getImage() {
 	      if (!this.layout.image) {
@@ -164,9 +205,6 @@
 	              var slider = e.getSlider();
 	              if (slider.isOpen() && slider.url.indexOf('CREATE') > -1) {
 	                this.prepareDeliveryForm(slider);
-	              } else {
-	                var url = this.data.connectPath;
-	                //this.setDeliveryListAddButton(slider, url);
 	              }
 	            }.bind(this),
 	            onClose: function (e) {
@@ -190,6 +228,8 @@
 	            sliderOptions: sliderOptions
 	          });
 	        }
+	      } else if (this.data.type === 'counter') {
+	        BX.SidePanel.Instance.open(this.data.connectPath);
 	      } else if (this.data.type === "marketplaceApp") {
 	        if (this.itemSelected) {
 	          this.openRestAppLayout(this.id, this.data.code);
@@ -197,9 +237,7 @@
 	          this.showRestApplication(this.data.code);
 	        }
 	      } else if (this.data.type === 'recommend') {
-	        BX.SidePanel.Instance.open(this.data.connectPath, {
-	          width: 735
-	        });
+	        BX.Salescenter.Manager.openFeedbackFormParams(null, this.data.feedbackConfig);
 	      } else if (this.data.type === 'actionbox') {
 	        if (this.data.handler === 'anchor') {
 	          window.open(this.data.move);

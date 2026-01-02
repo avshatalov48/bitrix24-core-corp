@@ -2,7 +2,7 @@
 
 return [
 	'extensions' => [
-		'apptheme',
+		'tokens',
 		'layout/ui/stage-list',
 
 		'tasks:layout/stage-list/item',

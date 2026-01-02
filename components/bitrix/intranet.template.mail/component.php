@@ -9,6 +9,9 @@ if (!CModule::IncludeModule("intranet"))
 
 use Bitrix\Main\Application;
 use Bitrix\Main\Loader;
+use Bitrix\Main\Web\Uri;
+use Bitrix\Main\Config\Option;
+
 if (!function_exists('getComponentMailFooterLink'))
 {
 	function getComponentMailFooterLink(): array
@@ -38,14 +41,14 @@ if (!function_exists('getComponentMailFooterLink'))
 }
 if (!function_exists('getMailCompanyLogo'))
 {
-	function getMailCompanyLogo(string $color = 'white'): string
+	function getMailCompanyLogo(string $userLang = LANGUAGE_ID, string $color = 'white'): string
 	{
 		$result = [
 			'white' => '/images/logo-en.png',
 			'black' => '/images/logo-dark-en.png',
 		];
 
-		if (LANGUAGE_ID === 'ru')
+		if ($userLang === 'ru')
 		{
 			$region = \Bitrix\Main\Application::getInstance()->getLicense()->getRegion();
 
@@ -68,6 +71,28 @@ if (!function_exists('getMailCompanyLogo'))
 		return $result[$color];
 	}
 }
+
+if (!function_exists('getSiteHostName'))
+{
+	function getSiteHostName(): string
+	{
+		$serverName = Option::get('main', 'server_name');
+
+		if (defined('BX24_HOST_NAME') && !empty(BX24_HOST_NAME))
+		{
+			$serverName = BX24_HOST_NAME;
+		}
+		else if (defined('SITE_SERVER_NAME') && !empty(SITE_SERVER_NAME))
+		{
+			$serverName = SITE_SERVER_NAME;
+		}
+
+		return $serverName;
+	}
+}
+
+$arResult['USER_LANG'] = LANGUAGE_ID;
+
 if (
 	$arParams["TEMPLATE_TYPE"] == "USER_INVITATION"
 	|| $arParams["TEMPLATE_TYPE"] == "EXTRANET_INVITATION"
@@ -79,7 +104,13 @@ if (
 
 	if (isset($arParams["USER_ID_FROM"]))
 	{
-		$rsUsers = CUser::GetList("ID", "ASC", array("ID_EQUAL_EXACT" => $arParams["USER_ID_FROM"]), array("FIELDS" => array("NAME", "LAST_NAME", "SECOND_NAME", "LOGIN", "PERSONAL_PHOTO")));
+		$rsUsers = CUser::GetList(
+			"ID",
+			"ASC",
+			array("ID_EQUAL_EXACT" => $arParams["USER_ID_FROM"]),
+			array("FIELDS" => array("NAME", "LAST_NAME", "SECOND_NAME", "LOGIN", "EMAIL", "PERSONAL_PHOTO"))
+		);
+
 		if ($arUser = $rsUsers->Fetch())
 		{
 			$arResult["USER_NAME"] = CUser::FormatName("#NAME# #LAST_NAME#", array(
@@ -88,6 +119,8 @@ if (
 				"SECOND_NAME" => $arUser["SECOND_NAME"],
 				"LOGIN" => $arUser["LOGIN"]
 			), true);
+
+			$arResult['USER_EMAIL'] = $arUser['EMAIL'];
 
 			if (intval($arUser["PERSONAL_PHOTO"]) > 0)
 			{
@@ -114,12 +147,21 @@ if ($arParams["TEMPLATE_TYPE"] == "EXTRANET_INVITATION")
 	$arParams["LINK"] = "https://".$arParams["SERVER_NAME"]."/extranet/confirm/?checkword=".$arParams["CHECKWORD"]."&user_id=".$arParams["USER_ID"];
 }
 
+if ($arParams["TEMPLATE_TYPE"] == "COLLAB_JOIN")
+{
+	$protocol = \Bitrix\Main\Context::getCurrent()->getRequest()->isHttps() ? 'https' : 'http';
+	$baseUrl = "$protocol://" . $arParams["SERVER_NAME"] . $arParams['FIELDS']["COLLAB_CHAT_URL"];
+	$arParams["LINK"] = $baseUrl;
+	$arResult['LOGO'] = $this->getPath().'/templates/.default'.getMailCompanyLogo($arResult['USER_LANG']);
+	$arResult["FOOTER_LINK"] = getComponentMailFooterLink();
+}
+
 if ($arParams["TEMPLATE_TYPE"] == "COLLAB_INVITATION")
 {
 	$protocol = \Bitrix\Main\Context::getCurrent()->getRequest()->isHttps() ? 'https' : 'http';
 	$baseUrl = "$protocol://".$arParams["SERVER_NAME"];
 	/** @var $this CBitrixComponent */
-	$arResult["LOGO"] = $this->getPath().'/templates/.default'.getMailCompanyLogo();
+
 	if ($arParams['FIELDS']['ACTIVE_USER'] ?? false)
 	{
 		$arParams["LINK"] = $baseUrl;
@@ -127,8 +169,18 @@ if ($arParams["TEMPLATE_TYPE"] == "COLLAB_INVITATION")
 	else
 	{
 		$arParams["LINK"] = $baseUrl."/extranet/confirm/?checkword=".$arParams["CHECKWORD"]."&user_id=".$arParams["USER_ID"].'&collab_name='.urlencode($arParams['FIELDS']['COLLAB_NAME']);
+
+		if (isset($arParams['FIELDS']['USER_LANG']))
+		{
+			$arParams['LINK'] = (new Uri($arParams['LINK']))
+				->addParams(['user_lang' => $arParams['FIELDS']['USER_LANG']])
+				->getUri();
+
+			$arResult['USER_LANG'] = $arParams['FIELDS']['USER_LANG'];
+		}
 	}
 
+	$arResult['LOGO'] = $this->getPath().'/templates/.default'.getMailCompanyLogo($arResult['USER_LANG']);
 	$arResult["FOOTER_LINK"] = getComponentMailFooterLink();
 }
 
@@ -204,13 +256,22 @@ if ($arParams["TEMPLATE_TYPE"] == "IM_NEW_MESSAGE_GROUP")
 }
 
 $this->arResult["LICENSE_PREFIX"] = "";
+$this->arResult['IS_LICENSE_PAID'] = true;
+
 if (Loader::includeModule("bitrix24"))
 {
 	$this->arResult["LICENSE_PREFIX"] = \CBitrix24::getLicensePrefix();
-	$this->arResult["HOST_NAME"] = defined('BX24_HOST_NAME') ? BX24_HOST_NAME : SITE_SERVER_NAME;
+	$this->arResult['IS_LICENSE_PAID'] = \CBitrix24::isLicensePaid();
 }
+$this->arResult["HOST_NAME"] = getSiteHostName();
 
-if($arParams["TEMPLATE_TYPE"] == "COLLAB_INVITATION")
+$this->arResult['PRIVACY_POLICY_URL'] = (new \Bitrix\Main\License\UrlProvider())->getPrivacyPolicyUrl();
+
+if ($arParams["TEMPLATE_TYPE"] == "COLLAB_JOIN")
+{
+	$this->IncludeComponentTemplate("collab_join");
+}
+elseif($arParams["TEMPLATE_TYPE"] == "COLLAB_INVITATION")
 {
 	$this->IncludeComponentTemplate("collab");
 }

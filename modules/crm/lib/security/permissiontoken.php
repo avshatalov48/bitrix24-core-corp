@@ -82,7 +82,7 @@ class PermissionToken
 				case self::ACCESS_TYPE_EDIT_MY_COMPANY_REQUISITE:
 					return
 						($isNewCompany || $isMyCompanyEntity) // suppose any new company can be my company
-						&& $userPermissions->checkUpdatePermissions($ownerEntityTypeId, $ownerEntityId)
+						&& $userPermissions->item()->canUpdate($ownerEntityTypeId, $ownerEntityId)
 					;
 			}
 

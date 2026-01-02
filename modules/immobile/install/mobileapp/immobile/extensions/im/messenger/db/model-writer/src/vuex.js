@@ -14,6 +14,10 @@ jn.define('im/messenger/db/model-writer/vuex', (require, exports, module) => {
 	const { ApplicationWriter } = require('im/messenger/db/model-writer/vuex/application');
 	const { CopilotWriter } = require('im/messenger/db/model-writer/vuex/copilot');
 	const { SidebarFileWriter } = require('im/messenger/db/model-writer/vuex/sidebar/file');
+	const { DraftWriter } = require('im/messenger/db/model-writer/src/vuex/draft');
+	const { CommentWriter } = require('im/messenger/db/model-writer/src/vuex/comment');
+	const { VoteWriter } = require('im/messenger/db/model-writer/vuex/vote');
+	const { TranscriptWriter } = require('im/messenger/db/model-writer/vuex/transcript');
 
 	class VuexModelWriter
 	{
@@ -29,7 +33,9 @@ jn.define('im/messenger/db/model-writer/vuex', (require, exports, module) => {
 		 *  message: MessageRepository,
 		 *  tempMessage: TempMessageRepository,
 		 *  reaction: ReactionRepository,
-		 *  sidebarFile: SidebarFileRepository
+		 *  comment: CommentRepository,
+		 *  vote: VoteRepository,
+		 *  transcript: TranscriptRepository
 		 * }} options.repository
 		 */
 		constructor(options)
@@ -59,6 +65,10 @@ jn.define('im/messenger/db/model-writer/vuex', (require, exports, module) => {
 			this.applicationWriter = new ApplicationWriter(writerOptions);
 			this.copilotWriter = new CopilotWriter(writerOptions);
 			this.sidebarFileWriter = new SidebarFileWriter(writerOptions);
+			this.draftWriter = new DraftWriter(writerOptions);
+			this.commentWriter = new CommentWriter(writerOptions);
+			this.voteWriter = new VoteWriter(writerOptions);
+			this.transcriptWriter = new TranscriptWriter(writerOptions);
 		}
 	}
 

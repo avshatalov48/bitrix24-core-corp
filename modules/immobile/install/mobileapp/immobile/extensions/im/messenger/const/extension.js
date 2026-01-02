@@ -2,6 +2,7 @@
  * @module im/messenger/const
  */
 jn.define('im/messenger/const', (require, exports, module) => {
+	const { AiAssistantButtonType } = require('im/messenger/const/ai-assistant-button');
 	const { AppStatus } = require('im/messenger/const/app-status');
 	const {
 		AttachType,
@@ -23,13 +24,13 @@ jn.define('im/messenger/const', (require, exports, module) => {
 	const { ConnectionStatus } = require('im/messenger/const/connection-status');
 	const { CounterType } = require('im/messenger/const/counter');
 	const { EventType } = require('im/messenger/const/event-type');
-	const { EventsCheckpointType } = require('im/messenger/const/events-checkpoint');
-	const { FeatureFlag } = require('im/messenger/const/feature-flag');
+	const { EventFilterType } = require('im/messenger/const/event-filter');
 	const {
 		RestMethod,
 	} = require('im/messenger/const/rest');
 	const {
 		ChatTypes,
+		RecentTab,
 		MessageStatus,
 		SubTitleIconType,
 	} = require('im/messenger/const/recent');
@@ -47,14 +48,14 @@ jn.define('im/messenger/const', (require, exports, module) => {
 		MessageComponent,
 	} = require('im/messenger/const/message');
 	const { ReactionType } = require('im/messenger/const/reaction-type');
+	const { UserInputAction } = require('im/messenger/const/dialog-status');
+	const { DialogBackgroundId } = require('im/messenger/const/dialog-background');
+	const { DialogActionType } = require('im/messenger/const/dialog-action-type');
 	const {
 		DialogType,
 		DialogWidgetType,
 	} = require('im/messenger/const/dialog-type');
-	const {
-		DialogActionType,
-		ActionByUserType,
-	} = require('im/messenger/const/permission');
+	const { ActionByUserType } = require('im/messenger/const/permission');
 	const {
 		SidebarActionType,
 		SidebarHeaderContextMenuActionType,
@@ -64,6 +65,7 @@ jn.define('im/messenger/const', (require, exports, module) => {
 		FileType,
 		FileEmojiType,
 		FileImageType,
+		FileAudioType,
 	} = require('im/messenger/const/file-type');
 	const { Color } = require('im/messenger/const/color');
 	const {
@@ -80,7 +82,7 @@ jn.define('im/messenger/const', (require, exports, module) => {
 	const { CopilotButtonType, CopilotPromptType } = require('im/messenger/const/copilot-button');
 	const { ComponentCode } = require('im/messenger/const/component-code');
 	const { Analytics } = require('im/messenger/const/analytics');
-	const { NavigationTab } = require('im/messenger/const/navigation-tab');
+	const { NavigationTab, NavigationTabId, NavigationTabByComponent } = require('im/messenger/const/navigation-tab');
 	const {
 		KeyboardButtonContext,
 		KeyboardButtonType,
@@ -96,11 +98,20 @@ jn.define('im/messenger/const', (require, exports, module) => {
 	const { MessengerInitRestMethod } = require('im/messenger/const/messenger-init-rest');
 	const { DialogPermissions, RightsLevel } = require('im/messenger/const/permission');
 	const { WidgetTitleParamsType } = require('im/messenger/const/widget');
-	const { EntitySelectorElementType} = require('im/messenger/const/entity-selector');
-	const { ViewName} = require('im/messenger/const/view');
+	const { EntitySelectorElementType } = require('im/messenger/const/entity-selector');
+	const { MessagesAutoDeleteDelay, MessagesAutoDeleteMenuIds } = require('im/messenger/const/messages-auto-delete');
+	const { MessageMenuActionType } = require('im/messenger/const/message-menu-action-type');
+	const { AnchorType } = require('im/messenger/const/anchor-type');
+	const { FileDownloadType } = require('im/messenger/const/src/file-download-types');
+	const { PinCount } = require('im/messenger/const/pin');
+	const { AudioEvents } = require('im/messenger/const/src/audio');
+	const { RefreshMode } = require('im/messenger/const/refresher');
+	const { TranscriptStatus, TranscriptResponseStatus } = require('im/messenger/const/transcript-status');
 
 	module.exports = {
+		AiAssistantButtonType,
 		AppStatus,
+		AudioEvents,
 		Analytics,
 		AttachType,
 		AttachPickerId,
@@ -116,9 +127,9 @@ jn.define('im/messenger/const', (require, exports, module) => {
 		ConnectionStatus,
 		CounterType,
 		EventType,
-		EventsCheckpointType,
-		FeatureFlag,
+		EventFilterType,
 		ChatTypes,
+		RecentTab,
 		MessageStatus,
 		SubTitleIconType,
 		RestMethod,
@@ -131,6 +142,7 @@ jn.define('im/messenger/const', (require, exports, module) => {
 		DialogType,
 		DialogWidgetType,
 		DialogActionType,
+		DialogBackgroundId,
 		ActionByUserType,
 		SidebarActionType,
 		SidebarHeaderContextMenuActionType,
@@ -138,10 +150,12 @@ jn.define('im/messenger/const', (require, exports, module) => {
 		FileType,
 		FileEmojiType,
 		FileImageType,
+		FileAudioType,
 		UserType,
 		UserExternalType,
 		UserRole,
 		UserColor,
+		UserInputAction,
 		Color,
 		Path,
 		DraftType,
@@ -152,12 +166,15 @@ jn.define('im/messenger/const', (require, exports, module) => {
 		Setting,
 		SidebarFileType,
 		SidebarTab,
+		PinCount,
 		Promo,
 		PromoType,
 		CopilotButtonType,
 		CopilotPromptType,
 		ComponentCode,
 		NavigationTab,
+		NavigationTabId,
+		NavigationTabByComponent,
 		KeyboardButtonContext,
 		KeyboardButtonType,
 		KeyboardButtonNewLineSeparator,
@@ -173,6 +190,13 @@ jn.define('im/messenger/const', (require, exports, module) => {
 		RightsLevel,
 		WidgetTitleParamsType,
 		EntitySelectorElementType,
-		ViewName,
+		MessagesAutoDeleteDelay,
+		MessagesAutoDeleteMenuIds,
+		MessageMenuActionType,
+		AnchorType,
+		FileDownloadType,
+		RefreshMode,
+		TranscriptStatus,
+		TranscriptResponseStatus,
 	};
 });

@@ -223,10 +223,17 @@ class DealSumStatisticsTable  extends Entity\DataManager
 		$userID = isset($data['RESPONSIBLE_ID']) ? (int)$data['RESPONSIBLE_ID'] : 0;
 		$semantics = is_array($semanticID) ? implode("','", $semanticID) : $semanticID;
 
-		Main\Application::getConnection()->queryExecute(
-			"UPDATE b_crm_deal_sum_stat SET CREATED_DATE = {$created}, START_DATE = {$start},
+		try
+		{
+			Main\Application::getConnection()->queryExecute(
+				"UPDATE b_crm_deal_sum_stat SET CREATED_DATE = {$created}, START_DATE = {$start},
 				END_DATE = {$end}, RESPONSIBLE_ID = {$userID} WHERE OWNER_ID = {$ownerID} AND STAGE_SEMANTIC_ID IN('{$semantics}')"
-		);
+			);
+		}
+		catch(Main\DB\DuplicateEntryException $e)
+		{
+		}
+
 	}
 	/**
 	 * Synchronize sum fields

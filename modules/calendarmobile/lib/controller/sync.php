@@ -2,10 +2,15 @@
 
 namespace Bitrix\CalendarMobile\Controller;
 
+use Bitrix\Calendar\Access\ActionDictionary;
+use Bitrix\Calendar\Access\SyncAccessController;
 use Bitrix\Calendar\Controller\SyncAjax;
 use Bitrix\Calendar\Core\Role\Helper;
 use Bitrix\Calendar\Core\Role\User;
 use Bitrix\Calendar\Integration\Pull\PushCommand;
+use Bitrix\Calendar\Synchronization\Public\Command\Common\ICloud\CreateConnectionCommand;
+use Bitrix\Calendar\Synchronization\Public\Command\Common\ICloud\SynchronizeConnectionCommand;
+use Bitrix\Calendar\Synchronization\Public\Service\SynchronizationFeature;
 use Bitrix\Calendar\Util;
 use Bitrix\Main\Engine\Controller;
 use Bitrix\Main\Engine\UrlManager;
@@ -104,7 +109,31 @@ class Sync extends Controller
 
 		$this->setPushCalendarState(false);
 
-		$result = (new \Bitrix\Calendar\Sync\Google\StartSynchronizationManager(\CCalendar::GetCurUserId()))->synchronize();
+		if (SynchronizationFeature::isOn())
+		{
+			$command = new \Bitrix\Calendar\Synchronization\Public\Command\Common\Google\CreateConnectionCommand(
+				\CCalendar::GetCurUserId()
+			);
+
+			$result = $command->run();
+
+			if (!$result->isSuccess())
+			{
+				$this->addErrors($result->getErrors());
+
+				$result = $response;
+			}
+			else
+			{
+				$result = $result->getData();
+			}
+		}
+		else
+		{
+			$result = (new \Bitrix\Calendar\Sync\Google\StartSynchronizationManager(
+				\CCalendar::GetCurUserId()
+			))->synchronize();
+		}
 
 		if (!empty($result['status']) && $result['status'] === 'success')
 		{
@@ -138,7 +167,20 @@ class Sync extends Controller
 
 		$this->setPushCalendarState(false);
 
-		$result = (new \Bitrix\Calendar\Sync\Office365\StartSyncController($owner))->synchronize();
+		if (SynchronizationFeature::isOn())
+		{
+			$command = new \Bitrix\Calendar\Synchronization\Public\Command\Common\Office365\CreateConnectionCommand(
+				\CCalendar::GetUserId()
+			);
+
+			$result = $command->run();
+
+			$result = $result->getData();
+		}
+		else
+		{
+			$result = (new \Bitrix\Calendar\Sync\Office365\StartSyncController($owner))->synchronize();
+		}
 
 		if (!empty($result['status']) && $result['status'] === 'success')
 		{
@@ -152,9 +194,6 @@ class Sync extends Controller
 
 	public function createIcloudConnectionAction(string $appleId, string $appPassword): array
 	{
-		$appleId = trim($appleId);
-		$appPassword = trim($appPassword);
-
 		if (!Loader::includeModule('dav'))
 		{
 			$this->addError(new Error('Module dav is required'));
@@ -165,6 +204,9 @@ class Sync extends Controller
 			];
 		}
 
+		$appleId = trim($appleId);
+		$appPassword = trim($appPassword);
+
 		if (!preg_match("/[a-z]{4}-[a-z]{4}-[a-z]{4}-[a-z]{4}/", $appPassword))
 		{
 			$this->addError(new Error('Incorrect app password'));
@@ -173,6 +215,27 @@ class Sync extends Controller
 				'status' => 'incorrect_app_pass',
 				'message' => 'Incorrect app password'
 			];
+		}
+
+		if (SynchronizationFeature::isOn())
+		{
+			$userId = \CCalendar::GetCurUserId();
+
+			$command = new CreateConnectionCommand($userId, $appleId, $appPassword);
+
+			$result = $command->run();
+
+			if (!$result->isSuccess())
+			{
+				$this->addErrors($result->getErrors());
+
+				return [
+					'status' => 'error',
+					'message' => 'Connection not found',
+				];
+			}
+
+			return $result->getData();
 		}
 
 		$connectionId = (new \Bitrix\Calendar\Sync\Icloud\VendorSyncManager())->initConnection($appleId, $appPassword);
@@ -206,15 +269,56 @@ class Sync extends Controller
 
 		$this->setPushCalendarState(false);
 
-		$result = (new \Bitrix\Calendar\Sync\Icloud\VendorSyncManager())->syncIcloudConnection($connectionId);
-
-		if ($result['status'] === 'error' && $result['message'])
+		if (SynchronizationFeature::isOn())
 		{
-			$this->addError(new Error($result['message']));
+			$userId = \CCalendar::GetCurUserId();
+
+			if (
+				!SyncAccessController::can(
+					$userId,
+					ActionDictionary::ACTION_SYNC_RUN,
+					$connectionId,
+				)
+			)
+			{
+				return [
+					'status' => 'error',
+					'message' => 'Access Denied',
+				];
+			}
+
+			$command = new SynchronizeConnectionCommand($userId, $connectionId);
+
+			$result = $command->run();
+
+			if (!$result->isSuccess())
+			{
+				$this->addErrors($result->getErrors());
+
+				$result = [
+					'status' => 'error',
+					'message' => 'Error while trying to synchronize events',
+				];
+			}
+			else
+			{
+				$this->sendPushConnectionSuccess('icloud');
+
+				$result = $result->getData();
+			}
 		}
 		else
 		{
-			$this->sendPushConnectionSuccess('icloud');
+			$result = (new \Bitrix\Calendar\Sync\Icloud\VendorSyncManager())->syncIcloudConnection($connectionId);
+
+			if ($result['status'] === 'error' && $result['message'])
+			{
+				$this->addError(new Error($result['message']));
+			}
+			else
+			{
+				$this->sendPushConnectionSuccess('icloud');
+			}
 		}
 
 		$this->setPushCalendarState(true);

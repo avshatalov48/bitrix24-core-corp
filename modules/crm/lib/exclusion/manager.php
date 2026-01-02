@@ -46,8 +46,10 @@ class Manager
 			throw new Main\ArgumentException('Must be greater than zero', 'entityID');
 		}
 
-		$userPermissions = isset($params['PERMISSIONS'])
-			? $params['PERMISSIONS'] : \CCrmPerms::GetCurrentUserPermissions();
+		if ($checkPermissions && !Crm\Service\Container::getInstance()->getUserPermissions()->item()->canRead($entityTypeID, $entityID))
+		{
+			throw new Main\AccessDeniedException(Loc::getMessage('CRM_PERMISSION_DENIED'));
+		}
 
 		if($checkPermissions && !self::checkCreatePermission())
 		{
@@ -77,7 +79,7 @@ class Manager
 			$contactID = isset($entityFields['CONTACT_ID']) ? (int)$entityFields['CONTACT_ID'] : 0;
 
 			if($companyID > 0
-				&& (!$checkPermissions || \CCrmCompany::CheckDeletePermission($companyID, $userPermissions))
+				&& (!$checkPermissions || \CCrmCompany::CheckDeletePermission($companyID))
 			)
 			{
 				$hasExtraDeals = Crm\DealTable::getCount(
@@ -119,7 +121,7 @@ class Manager
 			}
 
 			if($contactID > 0
-				&& (!$checkPermissions || \CCrmContact::CheckDeletePermission($contactID, $userPermissions))
+				&& (!$checkPermissions || \CCrmContact::CheckDeletePermission($contactID))
 			)
 			{
 				$hasExtraDeals = Crm\Binding\DealContactTable::getCount(
@@ -160,7 +162,7 @@ class Manager
 				}
 			}
 
-			$dealEntity = new \CCrmDeal(false);
+			$dealEntity = new \CCrmDeal($checkPermissions);
 			if(!$dealEntity->Delete($entityID))
 			{
 				/** @var \CApplicationException $ex */
@@ -176,7 +178,7 @@ class Manager
 
 		if($entityTypeID === \CCrmOwnerType::Lead)
 		{
-			$leadEntity = new \CCrmLead(false);
+			$leadEntity = new \CCrmLead($checkPermissions);
 			if(!$leadEntity->Delete($entityID))
 			{
 				/** @var \CApplicationException $ex */

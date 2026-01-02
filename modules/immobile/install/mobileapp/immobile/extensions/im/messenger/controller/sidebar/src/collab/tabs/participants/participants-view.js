@@ -12,7 +12,7 @@ jn.define('im/messenger/controller/sidebar/collab/tabs/participants/participants
 
 	const { Icon } = require('assets/icons');
 	const { Type } = require('type');
-	const { Loc } = require('loc');
+	const { Loc } = require('im/messenger/loc');
 	/**
 	 * @class CollabParticipantsView
 	 * @typedef {LayoutComponent<SidebarParticipantsViewProps, SidebarParticipantsViewState>} CollabParticipantsView
@@ -26,7 +26,7 @@ jn.define('im/messenger/controller/sidebar/collab/tabs/participants/participants
 			this.state = {
 				participants: this.participantsService.getParticipantsFromStore(),
 				permissions: {
-					isCanAddParticipants: ChatPermission.isCanAddParticipants(props.dialogId),
+					canAddParticipants: ChatPermission.canAddParticipants(props.dialogId),
 				},
 			};
 		}
@@ -47,7 +47,7 @@ jn.define('im/messenger/controller/sidebar/collab/tabs/participants/participants
 
 			const canOpenNotes = isYou;
 			const canLeave = UserPermission.canLeaveFromCollab(userId)
-				&& ChatPermission.isCanLeaveFromChat(this.props.dialogId)
+				&& ChatPermission.canLeaveFromChat(this.props.dialogId)
 				&& isYou;
 			const canMentionAndSend = !isYou;
 			const canRemoveUser = !isYou && ChatPermission.isOwner();

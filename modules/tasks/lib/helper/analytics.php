@@ -4,8 +4,10 @@ namespace Bitrix\Tasks\Helper;
 
 use Bitrix\Main\Analytics\AnalyticsEvent;
 use Bitrix\Main\ArgumentException;
+use Bitrix\Main\Loader;
 use Bitrix\Tasks\Integration\Intranet\User;
 use Bitrix\Tasks\Ui\Filter;
+use Bitrix\Tasks\Internals\Registry\TaskRegistry;
 
 class Analytics extends Common
 {
@@ -14,11 +16,14 @@ class Analytics extends Common
 	public const TOOL = 'tasks';
 
 	public const TASK_CATEGORY = 'task_operations';
+	public const CATEGORY = 'tasks';
 	public const COMMENT_CATEGORY = 'comments_operations';
 	public const FLOW_CATEGORY = 'flows';
+	public const LEAD_CATEGORY = 'lead';
 
 	public const TASK_TYPE = 'task';
 	public const COMMENT_TYPE = 'comment';
+	public const NOTIFICATION_TYPE = 'notification';
 
 	public const STATUS_SUCCESS = 'success';
 	public const STATUS_ERROR = 'error';
@@ -34,11 +39,27 @@ class Analytics extends Common
 		'comments_counters_on' => 'comments_counters_on',
 		'flow_create_start' => 'flow_create_start',
 		'flow_create_finish' => 'flow_create_finish',
+		'flow_edit_start' => 'flow_edit_start',
+		'flow_edit_finish' => 'flow_edit_finish',
 		'flows_view' => 'flows_view',
+		'lead_view' => 'lead_view',
+		'tasks_projects_view' => 'tasks_projects_view',
+		'add_viewer' => 'add_viewer',
+		'add_coexecutor' => 'add_coexecutor',
+		'task_update' => 'task_update',
+		'click_create' => 'click_create',
+		'assignee_change' => 'assignee_change',
+		'deadline_set' => 'deadline_set',
+		'add_checklist' => 'add_checklist',
+		'task_create_with_checklist' => 'task_create_with_checklist',
+		'click_task_link' => 'click_task_link',
+		'task_delegation' => 'task_delegation',
+		'notification_sent' => 'notification_sent',
 	];
 
 	public const SECTION = [
 		'tasks' => 'tasks',
+		'lead' => 'lead',
 		'project' => 'project',
 		'scrum' => 'scrum',
 		'crm' => 'crm',
@@ -50,6 +71,7 @@ class Analytics extends Common
 		'comment' => 'comment',
 		'flows' => 'flows',
 		'collab' => 'collab',
+		'onboarding_notification' => 'onboarding_notification',
 	];
 
 	public const SUB_SECTION = [
@@ -69,10 +91,14 @@ class Analytics extends Common
 		'flows_grid' => 'flows_grid',
 		'group_card' => 'group_card',
 		'flow_guide' => 'flow_guide',
+		'copilot_advice' => 'copilot_advice',
+		'existing' => 'existing',
 	];
 
 	public const ELEMENT = [
 		'create_button' => 'create_button',
+		'edit_button' => 'edit_button',
+		'save_changes_button' => 'save_changes_button',
 		'quick_button' => 'quick_button',
 		'left_menu' => 'left_menu',
 		'horizontal_menu' => 'horizontal_menu',
@@ -91,6 +117,13 @@ class Analytics extends Common
 		'my_tasks_column' => 'my_tasks_column',
 		'create_demo_button' => 'create_demo_button',
 		'guide_button' => 'guide_button',
+		'viewer_button' => 'viewer_button',
+		'coexecutor_button' => 'coexecutor_button',
+		'change_button' => 'change_button',
+		'deadline_field' => 'deadline_field',
+		'checklist_button' => 'checklist_button',
+		'task_link' => 'task_link',
+		'delegation_button' => 'delegation_button',
 	];
 
 	/**
@@ -138,7 +171,15 @@ class Analytics extends Common
 		array $params = [],
 	): void
 	{
-		if (!in_array($event, [self::EVENT['task_create'], self::EVENT['subtask_add']], true))
+		if (!in_array(
+			$event,
+			[
+				self::EVENT['task_create'],
+				self::EVENT['subtask_add'],
+				self::EVENT['task_create_with_checklist'],
+			],
+			true)
+		)
 		{
 			return;
 		}
@@ -172,10 +213,62 @@ class Analytics extends Common
 		?string $element = null,
 		?string $subSection = null,
 		array $params = [],
+		?string $event = null,
+		?string $type = null,
 	): void
 	{
 		$analyticsEvent = new AnalyticsEvent(
-			self::EVENT['task_view'],
+			$event ?? self::EVENT['task_view'],
+			self::TOOL,
+			self::TASK_CATEGORY,
+		);
+
+		$this->sendAnalytics(
+			$analyticsEvent,
+			$section,
+			$element,
+			$subSection,
+			true,
+			$type ?? self::TASK_TYPE,
+			$params,
+		);
+	}
+
+	public function onTaskListView(
+		string $event,
+		?string $section = null,
+		?string $element = null,
+		?string $subSection = null,
+		array $params = [],
+	): void
+	{
+		$analyticsEvent = new AnalyticsEvent(
+			$event,
+			self::TOOL,
+			self::CATEGORY,
+		);
+
+		$this->sendAnalytics(
+			$analyticsEvent,
+			$section,
+			$element,
+			$subSection,
+			true,
+			self::TASK_TYPE,
+			$params,
+		);
+	}
+
+	public function onTaskUpdate(
+		string $event,
+		?string $section = null,
+		?string $element = null,
+		?string $subSection = null,
+		array $params = [],
+	): void
+	{
+		$analyticsEvent = new AnalyticsEvent(
+			$event,
 			self::TOOL,
 			self::TASK_CATEGORY,
 		);
@@ -191,6 +284,110 @@ class Analytics extends Common
 		);
 	}
 
+	public function onTaskCreateClick(
+		?string $section = null,
+		?string $element = null,
+		?string $subSection = null,
+		array $params = [],
+	): void
+	{
+		$analyticsEvent = new AnalyticsEvent(
+			self::EVENT['click_create'],
+			self::TOOL,
+			self::TASK_CATEGORY,
+		);
+
+		$this->sendAnalytics(
+			analyticsEvent: $analyticsEvent,
+			section: $section,
+			element: $element,
+			subSection: $subSection,
+			params: $params,
+		);
+	}
+
+	public function getTaskContext(int $taskId): string
+	{
+		$task = TaskRegistry::getInstance()->getObject($taskId);
+
+		if (!$task)
+		{
+			return self::SECTION['tasks'];
+		}
+
+		if ($task->getFlowId() > 0)
+		{
+			return self::SECTION['flows'];
+		}
+
+		if ($task->isScrum())
+		{
+			return self::SECTION['scrum'];
+		}
+
+		if ($task->isInGroup())
+		{
+			return self::SECTION['project'];
+		}
+
+		if ($task->isCrm())
+		{
+			return self::SECTION['crm'];
+		}
+
+		if ($task->isCollab())
+		{
+			return self::SECTION['collab'];
+		}
+
+		if ($task->isDescriptionInBbcodeFilled())
+		{
+			return self::SECTION['chat'];
+		}
+
+		return self::SECTION['tasks'];
+	}
+
+	public function getViewersCountParameter(int $taskId): string
+	{
+		$task = TaskRegistry::getInstance()->getObject($taskId);
+
+		$viewersCount = 0;
+
+		if ($task)
+		{
+			$viewersCount = count($task->getMembersIdsByRole('U'));
+		}
+
+		return 'viewersCount_' . $viewersCount;
+	}
+
+	public function getCoexecutorsCountParameter(int $taskId): string
+	{
+		$task = TaskRegistry::getInstance()->getObject($taskId);
+
+		$coexecutorsCount = 0;
+
+		if ($task)
+		{
+			$coexecutorsCount = count($task->getMembersIdsByRole('A'));
+		}
+
+		return 'coexecutorsCount_' . $coexecutorsCount;
+	}
+
+	public function getCollabIdFromTask(int $taskId): int
+	{
+		$task = TaskRegistry::getInstance()->getObject($taskId);
+
+		if ($task?->isCollab())
+		{
+			return $task->getGroupId();
+		}
+
+		return 0;
+	}
+
 	public function onFlowCreate(
 		string $event,
 		string $section,
@@ -202,6 +399,40 @@ class Analytics extends Common
 		$availableEvents = [
 			'flow_create_start',
 			'flow_create_finish',
+		];
+		if (!in_array($event, $availableEvents, true))
+		{
+			return;
+		}
+
+		$analyticsEvent = new AnalyticsEvent(
+			$event,
+			self::TOOL,
+			self::FLOW_CATEGORY,
+		);
+
+		$this->sendAnalytics(
+			$analyticsEvent,
+			$section,
+			$element,
+			$subSection,
+			true,
+			self::TASK_TYPE,
+			$params,
+		);
+	}
+
+	public function onFlowEdit(
+		string $event,
+		string $section,
+		?string $element = null,
+		?string $subSection = null,
+		array $params = []
+	): void
+	{
+		$availableEvents = [
+			'flow_edit_start',
+			'flow_edit_finish',
 		];
 		if (!in_array($event, $availableEvents, true))
 		{
@@ -316,6 +547,30 @@ class Analytics extends Common
 		$this->sendAnalytics($analyticsEvent, $section, $element, $subSection);
 	}
 
+	public function onLeadView(
+		string $section,
+		?string $element = null,
+		?string $subSection = null,
+		array $params = []
+	): void
+	{
+		$analyticsEvent = new AnalyticsEvent(
+			self::EVENT['lead_view'],
+			self::TOOL,
+			self::LEAD_CATEGORY,
+		);
+
+		$this->sendAnalytics(
+			$analyticsEvent,
+			$section,
+			$element,
+			$subSection,
+			true,
+			'',
+			$params,
+		);
+	}
+
 	public function onFirstProjectCreation(): void
 	{
 		$this->logToFile(
@@ -357,6 +612,44 @@ class Analytics extends Common
 		);
 	}
 
+	public function onTaskDelegate(
+		string $section,
+		bool $status = true,
+	): void
+	{
+		$analyticsEvent = new AnalyticsEvent(
+			event: self::EVENT['task_delegation'],
+			tool: self::TOOL,
+			category: self::TASK_CATEGORY
+		);
+
+		$this->sendAnalytics(
+			analyticsEvent: $analyticsEvent,
+			section: $section,
+			element: self::ELEMENT['delegation_button'],
+			subSection: self::SUB_SECTION['task_card'],
+			status: $status,
+			params: [
+				'p1' => $this->getIsDemoParameter(),
+			]
+		);
+	}
+
+	public function onTaskOnboardingPingSent(): void
+	{
+		$analyticsEvent = new AnalyticsEvent(
+			event: self::EVENT['notification_sent'],
+			tool: self::TOOL,
+			category: self::TASK_CATEGORY
+		);
+
+		$this->sendAnalytics(
+			analyticsEvent: $analyticsEvent,
+			section: self::SECTION['onboarding_notification'],
+			type: self::NOTIFICATION_TYPE,
+		);
+	}
+
 	public function logToFile(
 		string $action,
 		string $tag = '',
@@ -394,6 +687,13 @@ class Analytics extends Common
 	public function getCollabParameter(int $collabId): string
 	{
 		return 'collabId_' . $collabId;
+	}
+
+	public function getIsDemoParameter(): string
+	{
+		$isDemo = (Loader::includeModule('bitrix24') && \CBitrix24::IsDemoLicense()) ? 'Y' : 'N';
+
+		return 'isDemo_' . $isDemo;
 	}
 
 	/**

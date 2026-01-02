@@ -20,7 +20,7 @@ $MESS["IMCONNECTOR_COMPONENT_WHATSAPPBYEDNA_CHANGE_ANY_TIME"] = "Сіз кез �
 $MESS["IMCONNECTOR_COMPONENT_WHATSAPPBYEDNA_CONNECTED"] = "Edna.ru WhatsApp қосулы";
 $MESS["IMCONNECTOR_COMPONENT_WHATSAPPBYEDNA_CONNECTED_IO"] = "Edna.io WhatsApp қосулы";
 $MESS["IMCONNECTOR_COMPONENT_WHATSAPPBYEDNA_CONNECT_COMMON_TITLE"] = "Edna.ru WhatsApp ашық желіге қосылуы";
-$MESS["IMCONNECTOR_COMPONENT_WHATSAPPBYEDNA_CONNECT_COMMON_TITLE_IO"] = "Edna.ru WhatsApp ашық желіге қосылуы";
+$MESS["IMCONNECTOR_COMPONENT_WHATSAPPBYEDNA_CONNECT_COMMON_TITLE_IO"] = "Edna.io WhatsApp ашық желіге қосылуы";
 $MESS["IMCONNECTOR_COMPONENT_WHATSAPPBYEDNA_CONNECT_HELP"] = "<div class=\"imconnector-field-button-subtitle\">Мен</div>
 				<div class=\"imconnector-field-button-name\"><span class=\"imconnector-field-box-text-bold\">Edna.ru арқылы WhatsApp</span>қосқым келеді</div>";
 $MESS["IMCONNECTOR_COMPONENT_WHATSAPPBYEDNA_CONNECT_HELP_IO"] = "<div class=\"imconnector-field-button-subtitle\">Мен</div>

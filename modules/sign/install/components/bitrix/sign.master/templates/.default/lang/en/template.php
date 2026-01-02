@@ -41,4 +41,3 @@ $MESS["SIGN_CMP_MASTER_TPL_STEP_SEND_HEADER"] = "Send document";
 $MESS["SIGN_CMP_MASTER_TPL_SUB_HEADER"] = "Three simple steps to submit document for signing";
 $MESS["SIGN_CMP_MASTER_TPL_TOUR_STEP_SEND_MEMBER_COMMUNICATION_TEXT"] = "Your document will be sent for signing using the method you select here.";
 $MESS["SIGN_CMP_MASTER_TPL_TOUR_STEP_SEND_MEMBER_COMMUNICATION_TITLE"] = "Select communication method";
-$MESS["SIGN_CMP_MASTER_TPL_TOUR_STEP_CHOOSE_MEMBER_USER_PARTY_DESCRIPTION"] = "It may be required by your applicable law to sign an agreement to deal electronically with your employee prior to initiating an electronic signature process.";

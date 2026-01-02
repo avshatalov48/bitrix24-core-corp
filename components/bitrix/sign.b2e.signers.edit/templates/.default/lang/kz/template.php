@@ -1,0 +1,6 @@
+<?php
+$MESS["SIGN_B2E_SIGNERS_LIST_ACTION_COPY"] = "Көшіру";
+$MESS["SIGN_B2E_SIGNERS_LIST_ACTION_DELETE"] = "Топтан жою";
+$MESS["SIGN_B2E_SIGNERS_LIST_ACTION_EDIT"] = "Редакциялау";
+$MESS["SIGN_B2E_SIGNERS_LIST_ADD_NEW_TITLE"] = "Қызметкерлерді қосу";
+$MESS["SIGN_B2E_SIGNERS_LIST_TITLE"] = "Қызметкерлер тобы";

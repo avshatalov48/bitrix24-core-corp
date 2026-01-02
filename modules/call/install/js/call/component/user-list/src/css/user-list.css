@@ -1,6 +1,9 @@
 .bx-call-user-list-component-scope {
 	--call-user-list-avatar-border-color: #9B83F5;
 	--call-user-list-avatar-border-color-active: #A8A6F9;
+
+	--call-user-list-avatar-border-color-new: #8E76E6;
+	--call-user-list-avatar-border-color-active-new: #A8A6F9;
 }
 
 .bx-call-user-list-component {
@@ -8,19 +11,39 @@
 	justify-content: center;
 	align-items: center;
 	box-sizing: border-box;
-	padding: 5px 8px;
-	background: rgba(var(--ui-color-palette-white-base-rgb), 0.14);
-	border-radius: 29px;
-	border: 1px solid rgba(var(--ui-color-palette-white-base-rgb), 0.24);
+	padding: 3px 8px;
+	background: rgba(var(--ui-color-palette-white-base-rgb), 0.2);
+	border-radius: 8px;
 	height: 33px;
 	min-width: 50px;
 	cursor: pointer;
 	transition: 0.25s ease-in-out background, border;
 }
 
+.bx-call-user-list-component.--border {
+	padding: 5px 8px;
+	border-radius: 29px;
+	border: 1px solid rgba(var(--ui-color-palette-white-base-rgb), 0.24);
+	background: rgba(var(--ui-color-palette-white-base-rgb), 0.14);
+}
+
 .bx-call-user-list-component:hover {
 	background: rgba(var(--ui-color-palette-white-base-rgb), 0.24);
+}
+
+.bx-call-user-list-component.--border:hover {
+	background: rgba(var(--ui-color-palette-white-base-rgb), 0.24);
 	border: 1px solid rgba(var(--ui-color-palette-white-base-rgb), 0.34);
+}
+
+.bx-call-user-list-component__icon {
+	background-image: url("./images/users.svg");
+	width: 20px;
+	height: 20px;
+	background-size: 20px 20px;
+	background-position: center;
+	background-repeat: no-repeat;
+	margin-right: 4px;
 }
 
 .bx-call-user-list-component__user-item {
@@ -49,6 +72,10 @@
 	border: 2px solid var(--call-user-list-avatar-border-color);
 	transition: 0.25s ease-in-out border;
 }
+.bx-call-user-list-component__user-avatar.--border {
+	border-color: var(--call-user-list-avatar-border-color-new);
+}
+
 
 .bx-call-user-list-component__user-avatar.--icon {
 	background-image: url('./images/user.svg');

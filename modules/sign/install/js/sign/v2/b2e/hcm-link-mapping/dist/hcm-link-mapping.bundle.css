@@ -5,7 +5,7 @@
 }
 
 .sign-b2e-hcm-link-mapping-text {
-	font: 13px/15.51px var(--ui-font-family-system);
+	font: 13px/15.51px var(--ui-font-family-primary, var(--ui-font-family-system));
 	font-weight: var(--ui-font-weight-normal);
 	color: var(--ui-color-palette-gray-80);
 }

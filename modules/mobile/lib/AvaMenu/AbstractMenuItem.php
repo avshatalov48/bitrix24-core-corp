@@ -8,6 +8,11 @@ abstract class AbstractMenuItem implements MenuItem
 {
 	protected Context $context;
 
+	public function __construct(Context $context)
+	{
+		$this->context = $context;
+	}
+
 	public function separatorBefore(): bool
 	{
 		return false;
@@ -21,10 +26,5 @@ abstract class AbstractMenuItem implements MenuItem
 	public function getMessageCode(): string
 	{
 		return 'AVA_MENU_NAME_' . mb_strtoupper($this->getId());
-	}
-
-	public function __construct(Context $context)
-	{
-		$this->context = $context;
 	}
 }

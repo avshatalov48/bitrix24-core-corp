@@ -88,10 +88,6 @@ jn.define('im/messenger/lib/dev/action-timer', (require, exports, module) => {
 	}
 
 	const actionTimer = new ActionTimer();
-	/**
-	 * @type {ActionTimer}
-	 */
-	window.imMessengerActionTimer = actionTimer;
 
 	module.exports = {
 		ActionTimer,

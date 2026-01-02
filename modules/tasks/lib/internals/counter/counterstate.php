@@ -9,7 +9,7 @@
 namespace Bitrix\Tasks\Internals\Counter;
 
 use Bitrix\Tasks\Internals\Counter;
-use Bitrix\Tasks\Internals\Registry\UserRegistry;
+use Bitrix\Tasks\V2\Internal\Integration\Socialnetwork\UserService;
 
 abstract class CounterState implements \Iterator
 {
@@ -120,10 +120,11 @@ abstract class CounterState implements \Iterator
 	{
 		$this->counters = $this->getCountersEmptyState();
 
-		$user = UserRegistry::getInstance($this->userId);
-		$groups = $user->getUserGroups(UserRegistry::MODE_GROUP);
-		$projects = $user->getUserGroups(UserRegistry::MODE_PROJECT);
-		$scrum = $user->getUserGroups(UserRegistry::MODE_SCRUM);
+		$userService = new UserService();
+		$groups = $userService->getGroups($this->userId);
+		$projects = $userService->getProjects($this->userId);
+		$scrum = $userService->getScrum($this->userId);
+		$collabs = $userService->getCollabs($this->userId);
 
 		$tmpHeap[] = [];
 		foreach ($this as $item)
@@ -139,7 +140,7 @@ abstract class CounterState implements \Iterator
 			$type = $item['TYPE'];
 			$flowId = $item['FLOW_ID'] ?? 0;
 
-			$meta = $this->getMetaProp($item, $groups, $projects, $scrum);
+			$meta = $this->getMetaProp($item, $groups, $projects, $scrum, $collabs);
 			$subType = $this->getItemSubType($type);
 
 			if (!isset($this->counters[$meta][$type][$groupId]))
@@ -364,6 +365,7 @@ abstract class CounterState implements \Iterator
 			CounterDictionary::META_PROP_ALL => [],
 			CounterDictionary::META_PROP_PROJECT => [],
 			CounterDictionary::META_PROP_GROUP => [],
+			CounterDictionary::META_PROP_COLLAB => [],
 			CounterDictionary::META_PROP_SONET => [],
 			CounterDictionary::META_PROP_SCRUM => [],
 			CounterDictionary::META_PROP_FLOW => [],
@@ -407,7 +409,7 @@ abstract class CounterState implements \Iterator
 	 * @param array $scrum
 	 * @return string
 	 */
-	private function getMetaProp(array $item, array $groups, array $projects, array $scrum): string
+	private function getMetaProp(array $item, array $groups, array $projects, array $scrum, array $collabs): string
 	{
 		if (array_key_exists($item['GROUP_ID'], $scrum))
 		{
@@ -422,6 +424,11 @@ abstract class CounterState implements \Iterator
 		if (array_key_exists($item['GROUP_ID'], $projects))
 		{
 			return CounterDictionary::META_PROP_PROJECT;
+		}
+
+		if (array_key_exists($item['GROUP_ID'], $collabs))
+		{
+			return CounterDictionary::META_PROP_COLLAB;
 		}
 
 		return CounterDictionary::META_PROP_NONE;

@@ -10,6 +10,7 @@ use Bitrix\Main\Error;
 use Bitrix\Main\ErrorCollection;
 use Bitrix\Main\Localization\Loc;
 use Bitrix\Crm\Automation\QR;
+use Bitrix\Crm\Service\Container;
 use Bitrix\UI\Barcode\Barcode;
 
 class CrmAutomationPubQrComponent extends \CBitrixComponent implements
@@ -62,10 +63,26 @@ class CrmAutomationPubQrComponent extends \CBitrixComponent implements
 		}
 
 		$qrCode = $this->getQr($this->arParams['QR_ID']);
-
 		if (!$qrCode)
 		{
 			ShowError(Loc::getMessage('CRM_AUTOMATION_QR_NOT_FOUND'));
+			return;
+		}
+
+		$qrEntityId = $qrCode->getEntityId();
+		$qrEntityTypeId = $qrCode->getEntityTypeId();
+		if (!$qrEntityId || !$qrEntityTypeId)
+		{
+			ShowError(Loc::getMessage('CRM_AUTOMATION_QR_NOT_FOUND'));
+
+			return;
+		}
+
+		$item = Container::getInstance()->getFactory($qrEntityTypeId)?->getItem($qrEntityId);
+		if (!$item)
+		{
+			ShowError(Loc::getMessage('CRM_AUTOMATION_QR_NOT_FOUND'));
+
 			return;
 		}
 

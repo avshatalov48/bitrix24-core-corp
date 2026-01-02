@@ -12,6 +12,7 @@ return [
 		'main.loader',
 		'main.popup',
 		'tasks.side-panel-integration',
+		'main.sidepanel',
 		'main.core',
 	],
 	'skip_core' => false,

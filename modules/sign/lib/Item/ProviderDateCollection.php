@@ -12,10 +12,22 @@ class ProviderDateCollection extends Collection
 		return ProviderDate::class;
 	}
 
-	public function getByUid(string $companyUid): ?ProviderDate
+	public function getLastUsedByUid(string $companyUid): ?ProviderDate
 	{
-		return $this->findByRule(
-			static fn(ProviderDate $providerDate): bool => $providerDate->companyUid === $companyUid
-		);
+		return $this->filter(
+			static fn (ProviderDate $providerDate): bool => $providerDate->companyUid === $companyUid,
+		)->sortByRule(
+			static fn($a, $b) => $b->dateLastUsed <=> $a->dateLastUsed,
+		)->getFirst();
+	}
+
+	public function getLastUsedByCompanyId(int $companyId): ?ProviderDate
+	{
+		return $this->filter(
+			static fn (ProviderDate $providerDate): bool => $providerDate->companyId === $companyId,
+		)->sortByRule(
+			static fn($a, $b) => $b->dateLastUsed <=> $a->dateLastUsed,
+		)->getFirst();
 	}
 }
+

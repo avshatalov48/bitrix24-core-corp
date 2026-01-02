@@ -2,6 +2,7 @@
 
 namespace Bitrix\AI\Payload;
 
+use Bitrix\AI\Config;
 use Bitrix\AI\Engine\IEngine;
 use Bitrix\AI\Facade\Bitrix24;
 use Bitrix\AI\Prompt\Item;
@@ -18,7 +19,14 @@ class Prompt extends Text implements IPayload
 		'extract_form_fields' => 'extract_form_fields',
 	];
 
+	private const PROMPTS_WITH_REASONING = [
+		'meeting_overview' => 'meeting_overview_reasoning',
+		'meeting_insights' => 'meeting_insights_reasoning',
+	];
+
 	private string $promptCategory = '';
+
+	private mixed $jsonSchema = null;
 
 	private ?Item $promptItem;
 
@@ -27,7 +35,18 @@ class Prompt extends Text implements IPayload
 	)
 	{
 		parent::__construct($payload);
+
+		if (array_key_exists($payload, self::PROMPTS_WITH_REASONING))
+		{
+			$payload = self::PROMPTS_WITH_REASONING[$payload];
+			$this->payload = $payload;
+		}
+
 		$this->promptItem = Manager::getByCode($payload);
+		if ($this->promptItem?->getJsonOutputSchema() !== null)
+		{
+			$this->jsonSchema = json_decode($this->promptItem->getJsonOutputSchema(), true);
+		}
 	}
 
 	/**
@@ -66,6 +85,18 @@ class Prompt extends Text implements IPayload
 		return $this->promptItem?->hasSystemCategory() ?? false;
 	}
 
+	public function setJsonSchema(mixed $jsonSchema): static
+	{
+		$this->jsonSchema = $jsonSchema;
+
+		return $this;
+	}
+
+	public function getJsonSchema(): mixed
+	{
+		return $this->jsonSchema;
+	}
+
 	/**
 	 * @inheritDoc
 	 */
@@ -95,9 +126,10 @@ class Prompt extends Text implements IPayload
 		return json_encode([
 			'data' => $this->payload,
 			'markers' => $this->markers,
+			'jsonSchema' => $this->jsonSchema,
 			'role' => $this->role?->getCode(),
 			'promptCategory' => $this->promptCategory,
-			static::PROPERTY_CUSTOM_COST => $this->customCost
+			static::PROPERTY_CUSTOM_COST => $this->customCost,
 		]);
 	}
 
@@ -112,11 +144,13 @@ class Prompt extends Text implements IPayload
 		$markers = $unpackedData['markers'] ?? [];
 		$role = $unpackedData['role'] ?? null;
 		$promptCategory = $unpackedData['promptCategory'] ?? '';
+		$jsonSchema = $unpackedData['jsonSchema'] ?? null;
 
 		$payload = (new static($data))
 			->setMarkers($markers)
 			->setRole(Role::get($role))
 			->setPromptCategory($promptCategory)
+			->setJsonSchema($jsonSchema)
 		;
 
 		static::setCustomCost($payload, $unpackedData);

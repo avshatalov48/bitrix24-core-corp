@@ -42,7 +42,21 @@ class DealUpdateAction
 			return;
 		}
 
-		$this->itemBeforeSave = $this->factory->getItem($this->id);
+		$this->itemBeforeSave = $this->factory->getItem(
+			$this->id,
+			[
+				Item::FIELD_NAME_ID,
+				Item::FIELD_NAME_CATEGORY_ID,
+				Item::FIELD_NAME_STAGE_ID,
+				Item::FIELD_NAME_STAGE_SEMANTIC_ID,
+				Item::FIELD_NAME_PRODUCTS . '.ID',
+				Item::FIELD_NAME_PRODUCTS . '.QUANTITY',
+				Item::FIELD_NAME_PRODUCTS . '.PRODUCT_ID',
+				Item::FIELD_NAME_PRODUCTS . '.TYPE',
+				Item::FIELD_NAME_PRODUCTS . '.' . Item::FIELD_NAME_PRODUCT_RESERVATION . '.STORE_ID',
+			]
+		);
+
 		if (!$this->itemBeforeSave)
 		{
 			return;
@@ -94,7 +108,19 @@ class DealUpdateAction
 			return;
 		}
 
-		$itemAfterSave = $this->factory->getItem($this->id);
+		$itemAfterSave = $this->factory->getItem(
+			$this->id,
+			[
+				Item::FIELD_NAME_ID,
+				Item::FIELD_NAME_CATEGORY_ID,
+				Item::FIELD_NAME_STAGE_ID,
+				Item::FIELD_NAME_STAGE_SEMANTIC_ID,
+				Item::FIELD_NAME_PRODUCTS . '.ID',
+				Item::FIELD_NAME_PRODUCTS . '.QUANTITY',
+				Item::FIELD_NAME_PRODUCTS . '.' . Item::FIELD_NAME_PRODUCT_RESERVATION . '.STORE_ID',
+			]
+		);
+
 		if (!$itemAfterSave)
 		{
 			return;
@@ -122,13 +148,9 @@ class DealUpdateAction
 			}
 		}
 
-		$itemAfterSave = $this->factory->getItem($this->id);
-		if ($itemAfterSave)
-		{
-			(new CreateFinalSummaryTimelineHistoryItem())
-				->setItemBeforeSave($this->itemBeforeSave)
-				->process($itemAfterSave)
-			;
-		}
+		(new CreateFinalSummaryTimelineHistoryItem())
+			->setItemBeforeSave($this->itemBeforeSave)
+			->process($itemAfterSave)
+		;
 	}
 }

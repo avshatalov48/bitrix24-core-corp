@@ -12,10 +12,7 @@ final class PermissionsOnboardingPopup extends Base
 
 	protected function canShow(): bool
 	{
-		return
-			Feature::enabled(Feature\PermissionsLayoutV2::class)
-			&& !$this->isUserSeenTour()
-		;
+		return !$this->isUserSeenTour();
 	}
 
 	protected function getShowDeadline(): ?DateTime

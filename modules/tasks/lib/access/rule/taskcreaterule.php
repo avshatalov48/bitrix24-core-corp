@@ -10,11 +10,17 @@ namespace Bitrix\Tasks\Access\Rule;
 
 use Bitrix\Main\Access\AccessibleItem;
 use Bitrix\Main\Access\Rule\AbstractRule;
+use Bitrix\Main\Error;
 use Bitrix\Main\Loader;
+use Bitrix\Main\Localization\Loc;
 use Bitrix\Socialnetwork\Internals\Registry\FeaturePermRegistry;
 use Bitrix\Tasks\Access\Model\TaskModel;
 use Bitrix\Tasks\Access\Rule\Traits\FlowTrait;
+use Bitrix\Tasks\Access\TaskAccessController;
 
+/**
+ * @property TaskAccessController $controller
+ */
 class TaskCreateRule extends AbstractRule
 {
 	use FlowTrait;
@@ -24,6 +30,7 @@ class TaskCreateRule extends AbstractRule
 		if (!$task)
 		{
 			$this->controller->addError(static::class, 'Incorrect task');
+
 			return false;
 		}
 
@@ -50,6 +57,7 @@ class TaskCreateRule extends AbstractRule
 		if (!$group)
 		{
 			$this->controller->addError(static::class, 'Unable to load group info');
+
 			return false;
 		}
 
@@ -60,7 +68,9 @@ class TaskCreateRule extends AbstractRule
 			|| $group['CLOSED'] === 'Y'
 		)
 		{
+			$this->controller->addUserError(new Error(Loc::getMessage('TASKS_TASK_CREATE_RULE_GROUP_DENIED')));
 			$this->controller->addError(static::class, 'Unable to create task bc group is closed or tasks disabled');
+
 			return false;
 		}
 
@@ -85,10 +95,13 @@ class TaskCreateRule extends AbstractRule
 					return true;
 				}
 
+				$this->controller->addUserError(new Error(Loc::getMessage('TASKS_TASK_CREATE_RULE_FLOW_DENIED')));
 				$this->controller->addError(static::class, 'Access to create task denied by flow permissions');
+
 				return false;
 			}
 
+			$this->controller->addUserError(new Error(Loc::getMessage('TASKS_TASK_CREATE_RULE_GROUP_DENIED')));
 			$this->controller->addError(static::class, 'Access to create task denied by group permissions');
 
 			return false;

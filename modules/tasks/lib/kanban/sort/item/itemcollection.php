@@ -4,11 +4,11 @@ namespace Bitrix\Tasks\Kanban\Sort\Item;
 
 use Bitrix\Main\Type\Dictionary;
 
+/**
+ * @property MenuItem[] $values
+ */
 class ItemCollection extends Dictionary
 {
-	/** @var MenuItem[] */
-	protected $values = [];
-
 	public function add(MenuItem $item): static
 	{
 		$this->values[] = $item;

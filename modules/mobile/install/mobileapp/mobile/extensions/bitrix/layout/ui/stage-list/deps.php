@@ -2,7 +2,8 @@
 return [
 	'extensions' => [
 		'loc',
-		'apptheme',
+		'tokens',
+		'ui-system/typography/text',
 		'utils/random',
 		'utils/object',
 		'layout/pure-component',

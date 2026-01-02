@@ -15,12 +15,9 @@
 		{
 			this.barcodeNotificationId = null;
 			this.isBarcodeNotificationVisible = false;
-			this.isBarcodeScannerActive = false;
 
 			this.handlePullEvents = this.handlePullEvents.bind(this);
-			this.handleBarcodeScannerClosed = this.handleBarcodeScannerClosed.bind(this);
 
-			BX.addCustomEvent('Catalog:BarcodeScannerComponent:onClose', this.handleBarcodeScannerClosed);
 			BX.addCustomEvent('onPullEvent-catalog', this.handlePullEvents);
 		}
 
@@ -35,10 +32,6 @@
 					break;
 			}
 		}
-		handleBarcodeScannerClosed()
-		{
-			this.isBarcodeScannerActive = false;
-		}
 
 		suggestOpenBarcodeScanner(params)
 		{
@@ -48,27 +41,37 @@
 
 			this.setBarcodeNotificationId(params.id);
 
-			if (!this.isBarcodeNotificationVisible && !this.isBarcodeScannerActive)
+			if (!this.isBarcodeNotificationVisible)
 			{
-				InAppNotifier.setHandler(() => this.openBarcodeScanner());
-				InAppNotifier.showNotification({
-					title: BX.message('CATALOG_BACKGROUND_BARCODE_SCAN_TITLE'),
-					backgroundColor: '#E6000000',
-					message: BX.message('CATALOG_BACKGROUND_BARCODE_SCAN_TEXT'),
-					time: SHOW_NOTIFICATION_DURATION / 1000,
-				});
-				this.isBarcodeNotificationVisible = true;
+				jnComponent.getState('catalog:catalog.barcode.scanner')
+					.then(() => {
+						BX.postComponentEvent(
+							'CatalogBarcodeScanner::onSessionIdChanged',
+							[params.id],
+						);
+					})
+					.catch(() => {
+						this.showNotification();
+					})
+				;
 			}
+		}
 
-			if (this.isBarcodeScannerActive)
-			{
-				BX.postComponentEvent('CatalogBarcodeScanner::onSessionIdChanged', [params.id]);
-			}
+		showNotification()
+		{
+			InAppNotifier.setHandler(() => this.openBarcodeScanner());
+			InAppNotifier.showNotification({
+				title: BX.message('CATALOG_BACKGROUND_BARCODE_SCAN_TITLE'),
+				backgroundColor: '#E6000000',
+				message: BX.message('CATALOG_BACKGROUND_BARCODE_SCAN_TEXT'),
+				time: SHOW_NOTIFICATION_DURATION / 1000,
+			});
+			this.isBarcodeNotificationVisible = true;
 		}
 
 		openBarcodeScanner()
 		{
-			this.isBarcodeScannerActive = true;
+			this.isBarcodeNotificationVisible = false;
 
 			ComponentHelper.openLayout({
 				name: 'catalog:catalog.barcode.scanner',

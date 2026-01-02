@@ -2,14 +2,13 @@
  * @module layout/ui/stage-list-view
  */
 jn.define('layout/ui/stage-list-view', (require, exports, module) => {
-	const AppTheme = require('apptheme');
 	const { LoadingScreenComponent } = require('layout/ui/loading-screen');
 	const { StageSelectActions } = require('layout/ui/stage-list/actions');
 	const { PureComponent } = require('layout/pure-component');
-	const { largePen } = require('assets/common');
-	const { funnelIcon } = require('assets/stages');
 	const { NavigationLoader } = require('navigation-loader');
 	const { throttle } = require('utils/function');
+	const { Color } = require('tokens');
+	const { Icon } = require('ui-system/blocks/icon');
 
 	/**
 	 * @class StageListView
@@ -20,18 +19,16 @@ jn.define('layout/ui/stage-list-view', (require, exports, module) => {
 		{
 			return {
 				modal: true,
-				backgroundColor: AppTheme.colors.bgSecondary,
+				backgroundColor: Color.bgSecondary.toHex(),
 				backdrop: {
 					showOnTop: true,
 					forceDismissOnSwipeDown: true,
 					horizontalSwipeAllowed: false,
 					swipeContentAllowed: true,
-					navigationBarColor: AppTheme.colors.bgSecondary,
+					navigationBarColor: Color.bgSecondary.toHex(),
 				},
 				titleParams: {
-					svg: {
-						content: funnelIcon(),
-					},
+					type: 'dialog',
 				},
 			};
 		}
@@ -134,10 +131,7 @@ jn.define('layout/ui/stage-list-view', (require, exports, module) => {
 			{
 				this.layout.setRightButtons([
 					{
-						type: 'edit',
-						svg: {
-							content: largePen(),
-						},
+						type: Icon.EDIT.getIconName(),
 						callback: () => this.handlerCategoryEditOpen(),
 					},
 				]);
@@ -149,9 +143,7 @@ jn.define('layout/ui/stage-list-view', (require, exports, module) => {
 			const titleText = this.getTitleForNavigation(title);
 			this.layout.setTitle({
 				text: titleText,
-				svg: {
-					content: funnelIcon(),
-				},
+				type: 'dialog',
 			}, true);
 		}
 

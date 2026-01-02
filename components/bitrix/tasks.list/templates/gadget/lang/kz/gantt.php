@@ -1,0 +1,21 @@
+<?php
+$MESS["INTASK_FROM_DATE_TLP"] = "#DATE# бастап";
+$MESS["INTASK_LIST_EMPTY"] = "Міндеттер әзірше жоқ";
+$MESS["INTASK_NO_DATE_TLP"] = "орындау аралығы орнатылмаған";
+$MESS["INTASK_TASKASSIGNEDTO"] = "Жауапты";
+$MESS["INTASK_TASKASSIGNEDTO_V2"] = "Орындаушы";
+$MESS["INTASK_TASKPRIORITY"] = "Басымдық";
+$MESS["INTASK_TASKSTATUS"] = "Мәртебе";
+$MESS["INTASK_TO_DATE_TLP"] = "#DATE# дейін";
+$MESS["TASKS_DEADLINE"] = "Соңғы мерзім";
+$MESS["TASKS_PRIORITY_0"] = "Төмен";
+$MESS["TASKS_PRIORITY_1"] = "Орташа";
+$MESS["TASKS_PRIORITY_2"] = "Жоғары";
+$MESS["TASKS_STATUS_1"] = "Жаңа";
+$MESS["TASKS_STATUS_2"] = "Орындалуын күтуде";
+$MESS["TASKS_STATUS_3"] = "Орындалуда";
+$MESS["TASKS_STATUS_4"] = "Бақылауды күтуде";
+$MESS["TASKS_STATUS_4_MSGVER_1"] = "Бақылауды күтуде";
+$MESS["TASKS_STATUS_5"] = "Аяқталды";
+$MESS["TASKS_STATUS_6"] = "Кейінге қалдырылды";
+$MESS["TASKS_STATUS_7"] = "Қабылданбады";

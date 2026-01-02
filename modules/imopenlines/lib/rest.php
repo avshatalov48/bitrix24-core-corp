@@ -679,8 +679,38 @@ class Rest extends \IRestService
 
 	public static function sessionGetHistory($arParams, $n, \CRestServer $server)
 	{
+		$sessionId = null;
+		if (empty($arParams['SESSION_ID']))
+		{
+			if (empty($arParams['CHAT_ID']))
+			{
+				throw new RestException('Session ID or Chat ID must be provided', 'MISSING_REQUIRED_PARAM', \CRestServer::STATUS_WRONG_REQUEST);
+			}
+			elseif (Loader::includeModule('im'))
+			{
+				$session = SessionTable::getRow([
+					'select' => ['ID'],
+					'filter' => [
+						'=CHAT_ID' => (int)$arParams['CHAT_ID'],
+					],
+					'order' => ['ID' => 'DESC'],
+				]);
+
+				$sessionId = $session['ID'] ?? null;
+			}
+		}
+		else
+		{
+			$sessionId = (int)$arParams['SESSION_ID'];
+		}
+
+		if (!$sessionId)
+		{
+			throw new RestException('Unable to determine session ID from provided parameters', 'INVALID_SESSION_ID', \CRestServer::STATUS_WRONG_REQUEST);
+		}
+
 		$control = new \Bitrix\ImOpenLines\Operator(0);
-		$result = $control->getSessionHistory($arParams['SESSION_ID']);
+		$result = $control->getSessionHistory($sessionId);
 
 		if (!$result)
 		{

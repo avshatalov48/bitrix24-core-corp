@@ -5,3 +5,4 @@ $MESS["BPDAF_EMPTY_ENTITY_ID"] = "Сақтау орны көрсетілмеге
 $MESS["BPDAF_EMPTY_ENTITY_TYPE"] = "Сақтау орнының түрі көрсетілмеген.";
 $MESS["BPDAF_EMPTY_FOLDER_NAME"] = "Бума атауы көрсетілмеген.";
 $MESS["BPDAF_TARGET_ERROR"] = "Буманы жасау үшін орынды анықтау мүмкін болмады.";
+$MESS["DISK_FOLDER_ERROR_FOLDER_NAME_CAN_NOT_BE_EMPTY"] = "Бума атауы көрсетілмеген";

@@ -1,5 +1,5 @@
 import { Engine, type Role, RoleIndustry } from 'ai.engine';
-import { Type, Loc, BaseError, Runtime, Text } from 'main.core';
+import { Type, Loc, BaseError, Runtime, Text, Extension } from 'main.core';
 import { EventEmitter, BaseEvent } from 'main.core.events';
 import { UI } from 'ui.notification';
 import { type EntityCatalog as EntityCatalogClass, type ItemData, type GroupData } from 'ui.entity-catalog';
@@ -85,6 +85,7 @@ export class RolesDialog extends EventEmitter
 	#title: ?string;
 	#moduleId: string;
 	#contextId: string;
+	#rolesLibraryAvailable: boolean;
 
 	constructor(options: RolesDialogOptions)
 	{
@@ -114,6 +115,7 @@ export class RolesDialog extends EventEmitter
 		this.#analytic = new RolesDialogAnalytics({
 			cSection: `${this.#moduleId}_${this.#contextId}`,
 		});
+		this.#rolesLibraryAvailable = Extension.getSettings('ai.roles-dialog').get('isLibraryVisible');
 	}
 
 	#validateOptions(options: RolesDialogOptions)
@@ -366,13 +368,17 @@ export class RolesDialog extends EventEmitter
 			[EntityCatalog.SLOT_GROUP]: '<RolesDialogGroupItem :groupData="groupSlotProps" />',
 			[EntityCatalog.SLOT_GROUP_LIST_HEADER]: '<RolesDialogGroupListHeader />',
 			[EntityCatalog.SLOT_MAIN_CONTENT_EMPTY_GROUP_STUB]: '<RolesDialogEmptyGroupStub />',
-			[EntityCatalog.SLOT_GROUP_LIST_FOOTER]: '<RolesDialogRolesLibrary />',
 		};
 
 		if (EntityCatalog.SLOT_MAIN_CONTENT_SEARCH_STUB)
 		{
 			slots[EntityCatalog.SLOT_MAIN_CONTENT_NO_SELECTED_GROUP_STUB] = '<RolesDialogSearchStub />';
 			slots[EntityCatalog.SLOT_MAIN_CONTENT_SEARCH_STUB] = '<RolesDialogSearchStub />';
+		}
+
+		if (this.#rolesLibraryAvailable)
+		{
+			slots[EntityCatalog.SLOT_GROUP_LIST_FOOTER] = '<RolesDialogRolesLibrary />';
 		}
 
 		return slots;

@@ -1,0 +1,25 @@
+<?php
+$MESS["BICONNECTOR_SUPERSET_SETTINGS_CLEAR_CACHE_BUTTON"] = "Деректерді жаңарту";
+$MESS["BICONNECTOR_SUPERSET_SETTINGS_CLEAR_CACHE_BUTTON_HINT_TIME_LEFT_PLURAL_0"] = "Жаңарту #COUNT# минуттан кейін мүмкін болады";
+$MESS["BICONNECTOR_SUPERSET_SETTINGS_CLEAR_CACHE_BUTTON_HINT_TIME_LEFT_PLURAL_1"] = "Жаңарту #COUNT# минуттан кейін мүмкін болады";
+$MESS["BICONNECTOR_SUPERSET_SETTINGS_CLEAR_CACHE_BUTTON_HINT_TIME_LEFT_PLURAL_2"] = "Жаңарту #COUNT# минуттан кейін мүмкін болады";
+$MESS["BICONNECTOR_SUPERSET_SETTINGS_CLEAR_CACHE_ERROR"] = "Есеп деректерін жаңарту мүмкін болмады";
+$MESS["BICONNECTOR_SUPERSET_SETTINGS_CLEAR_CACHE_HINT_LINK"] = "Деректер барлық есептерде жаңартылады. Қайта жаңартулар белгілі бір уақыттан кейін қолжетімді болады. #HINT_LINK#";
+$MESS["BICONNECTOR_SUPERSET_SETTINGS_CLEAR_CACHE_SUCCESS"] = "Есеп деректері жаңартылды";
+$MESS["BICONNECTOR_SUPERSET_SETTINGS_COMMON_KEY_COPIED"] = "Кілт көшірілді";
+$MESS["BICONNECTOR_SUPERSET_SETTINGS_COMMON_KEY_FIELD_HINT_LINK"] = "Кілттің көмегімен есептерге арналған деректер Битрикс24-тен BI құрастырушысына беріледі. Егер ол бөгде адамдарға берілсе, кілтті жаңартыңыз. Осылайша сіз маңызды ақпаратқа рұқсатсыз қол жеткізу қаупін азайтасыз. #HINT_LINK#";
+$MESS["BICONNECTOR_SUPERSET_SETTINGS_COMMON_KEY_FIELD_REFRESH_BUTTON_MSGVER_1"] = "Кілттің жаңарту";
+$MESS["BICONNECTOR_SUPERSET_SETTINGS_COMMON_RANGE_FIELD_HINT"] = "Аралық өз кезеңі көрсетілген есептерден басқа барлық есептер үшін қолданылады. #HINT_LINK#";
+$MESS["BICONNECTOR_SUPERSET_SETTINGS_COMMON_RANGE_FIELD_HINT_LINK"] = "Толығырақ";
+$MESS["BICONNECTOR_SUPERSET_SETTINGS_COMMON_RANGE_FROM_TITLE"] = "Кезеңнің басталуы";
+$MESS["BICONNECTOR_SUPERSET_SETTINGS_COMMON_RANGE_INCLUDE_LAST_DATE"] = "Соңғы күн есепке енгізілген";
+$MESS["BICONNECTOR_SUPERSET_SETTINGS_COMMON_RANGE_TO_TITLE"] = "Кезеңнің соңы";
+$MESS["BICONNECTOR_SUPERSET_SETTINGS_DASHBOARD_HINT_LINK"] = "Толығырақ";
+$MESS["BICONNECTOR_SUPERSET_SETTINGS_DASHBOARD_RANGE_FIELD_HINT"] = "Кезеңнің өзгеруі тек осы есепке әсер етеді";
+$MESS["BICONNECTOR_SUPERSET_SETTINGS_DELETE_SUPERSET_FIELD_DELETE_BUTTON"] = "Өшіру";
+$MESS["BICONNECTOR_SUPERSET_SETTINGS_DELETE_SUPERSET_FIELD_HINT"] = "Өшірілгеннен кейін барлық пайдаланушы есептері, датасеттер және баптаулар біржола жойылады. Ақпаратты қалпына келтіру мүмкін емес, бәрін қайта баптау қажет болады. #HINT_LINK#";
+$MESS["BICONNECTOR_SUPERSET_SETTINGS_GROUP_FIELD_HINT"] = "Егер сіз қол жеткізе алатын топтардан жойсаңыз, есепке қол жетімділікті жоғалтуыңыз мүмкін. #HINT_LINK#";
+$MESS["BICONNECTOR_SUPERSET_SETTINGS_GROUP_HINT"] = "Топқа қосылған кезде есептер тиісті Битрикс24 #HINT_LINK# бөлімінің жоғарғы мәзірінде пайда болады";
+$MESS["BICONNECTOR_SUPERSET_SETTINGS_KEY_UPDATE_FAILED"] = "Кілтті жаңарту кезінде қате пайда болды";
+$MESS["BICONNECTOR_SUPERSET_SETTINGS_KEY_UPDATE_SUCCESS"] = "Кілт сәтті жаңартылды";
+$MESS["BICONNECTOR_SUPERSET_SETTINGS_OWNER_HINT_LINK"] = "Иесі есепке толық қол жеткізе алады. Егер сіз иесін өзгертсеңіз, онда бұл есепке қол жеткізе алмайсыз. #HINT_LINK#";

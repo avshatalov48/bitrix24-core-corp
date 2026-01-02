@@ -1,0 +1,2 @@
+<?php
+$MESS["CRM_ORDER_PAYMENT_LIST_ROW_COUNT"] = "Барлығы: #ROW_COUNT#";

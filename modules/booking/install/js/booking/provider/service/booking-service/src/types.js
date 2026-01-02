@@ -9,22 +9,15 @@ export type BookingDto = {
 	clients: ClientDto[],
 	counter: number,
 	counters: Array,
+	createdAt: number,
 	name: string,
-	datePeriod: {
-		from: {
-			timestamp: number,
-			timezone: string,
-		},
-		to: {
-			timestamp: number,
-			timezone: string,
-		}
-	},
+	datePeriod: DatePeriodDto,
 	isConfirmed: boolean | null,
 	visitStatus: string,
 	rrule: string | null,
 	note: string | null,
 	externalData: DealDataDto,
+	messages: MessageDto[],
 };
 
 export type DealDataDto = {
@@ -37,4 +30,26 @@ export type DealDataDto = {
 		opportunity: number,
 		formattedOpportunity: string,
 	},
+};
+
+export type BookingFromWaitListItemDto = {
+	waitListItemId: number,
+	datePeriod: DatePeriodDto,
+	resources: ResourceDto[],
+};
+
+type DatePeriodDto = {
+	from: DatePeriodItem,
+	to: DatePeriodItem,
+};
+
+type DatePeriodItem = {
+	timestamp: number,
+	timezone: string,
+};
+
+type MessageDto = {
+	id: number,
+	bookingId: number,
+	notificationType: string,
 };

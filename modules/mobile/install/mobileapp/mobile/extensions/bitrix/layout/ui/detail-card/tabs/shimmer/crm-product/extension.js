@@ -5,6 +5,7 @@ jn.define('layout/ui/detail-card/tabs/shimmer/crm-product', (require, exports, m
 	const AppTheme = require('apptheme');
 	const { ShimmerView } = require('layout/polyfill');
 	const { BaseShimmer } = require('layout/ui/detail-card/tabs/shimmer');
+	const { LoadingScreenComponent } = require('layout/ui/loading-screen');
 
 	/**
 	 * @class CrmProductTabShimmer

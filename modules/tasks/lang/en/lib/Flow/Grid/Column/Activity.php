@@ -1,2 +1,2 @@
 <?php
-$MESS["TASKS_FLOW_LIST_COLUMN_ACTIVITY"] = "Active";
+$MESS["TASKS_FLOW_LIST_COLUMN_ACTIVITY"] = "Last active";

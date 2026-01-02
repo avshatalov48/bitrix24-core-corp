@@ -2,7 +2,9 @@
 
 namespace Bitrix\Tasks\Flow\Control\Exception;
 
-class InvalidCommandException extends FlowException
+use Exception;
+
+class InvalidCommandException extends Exception
 {
 
 }

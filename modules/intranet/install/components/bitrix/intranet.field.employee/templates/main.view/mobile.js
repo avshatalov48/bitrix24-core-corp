@@ -1,14 +1,14 @@
+/* eslint-disable */
 this.BX = this.BX || {};
 this.BX.Mobile = this.BX.Mobile || {};
 this.BX.Mobile.Field = this.BX.Mobile.Field || {};
 (function (exports) {
 	'use strict';
 
-	var BX = window.BX,
-	    BXMobileApp = window.BXMobileApp;
-
-	var nodeSelectUser = function () {
-	  var nodeSelectUser = function nodeSelectUser(select, eventNode, useOnChangeEvent) {
+	const BX = window.BX,
+	  BXMobileApp = window.BXMobileApp;
+	const nodeSelectUser = function () {
+	  const nodeSelectUser = function (select, eventNode, useOnChangeEvent) {
 	    this.click = BX.delegate(this.click, this);
 	    this.callback = BX.delegate(this.callback, this);
 	    this.drop = BX.delegate(this.drop, this);
@@ -25,13 +25,12 @@ this.BX.Mobile.Field = this.BX.Mobile.Field || {};
 	    };
 	    this.actualizeNodes();
 	  };
-
 	  nodeSelectUser.prototype = {
-	    click: function click(e) {
+	    click: function (e) {
 	      this.show();
 	      return BX.PreventDefault(e);
 	    },
-	    show: function show() {
+	    show: function () {
 	      new BXMobileApp.UI.Table({
 	        url: this.urls.list,
 	        table_settings: {
@@ -48,11 +47,10 @@ this.BX.Mobile.Field = this.BX.Mobile.Field || {};
 	        }
 	      }, "users").show();
 	    },
-	    drop: function drop() {
-	      var node = BX.proxy_context,
-	          id = node.id.replace(this.select.id + '_del_', '');
-
-	      for (var ii = 0; ii < this.select.options.length; ii++) {
+	    drop: function () {
+	      const node = BX.proxy_context,
+	        id = node.id.replace(this.select.id + '_del_', '');
+	      for (let ii = 0; ii < this.select.options.length; ii++) {
 	        if (this.select.options[ii].value === id) {
 	          BX.remove(BX.findParent(node, {
 	            "tagName": "DIV",
@@ -61,69 +59,59 @@ this.BX.Mobile.Field = this.BX.Mobile.Field || {};
 	          BX.remove(this.select.options[ii]);
 	        }
 	      }
-
 	      if (this.select.options.length <= 0 && !this.multiple) {
 	        this.eventNode.innerHTML = BX.message('interface_form_select');
 	      }
-
 	      if (this.useOnChangeEvent) {
 	        BX.onCustomEvent(this, "onChange", [this, this.select]);
 	      }
 	    },
-	    actualizeNodes: function actualizeNodes() {
-	      for (var ii = 0; ii < this.select.options.length; ii++) {
+	    actualizeNodes: function () {
+	      for (let ii = 0; ii < this.select.options.length; ii++) {
 	        if (BX(this.select.id + '_del_' + this.select.options[ii].value)) {
 	          BX.bind(BX(this.select.id + '_del_' + this.select.options[ii].value), "click", this.drop);
 	        }
 	      }
 	    },
-	    buildNodes: function buildNodes(items) {
-	      var options = '',
-	          html = '',
-	          user,
-	          existedUsers = [];
-
-	      for (var _ii = 0; _ii < this.select.options.length; _ii++) {
-	        existedUsers.push(this.select.options[_ii].value.toString());
+	    buildNodes: function (items) {
+	      let options = '',
+	        html = '',
+	        user,
+	        existedUsers = [];
+	      for (let ii = 0; ii < this.select.options.length; ii++) {
+	        existedUsers.push(this.select.options[ii].value.toString());
 	      }
-
-	      for (var _ii2 = 0; _ii2 < Math.min(this.multiple ? items.length : 1, items.length); _ii2++) {
-	        user = items[_ii2];
-
+	      for (let ii = 0; ii < Math.min(this.multiple ? items.length : 1, items.length); ii++) {
+	        user = items[ii];
 	        if (existedUsers.includes(user['ID'])) {
 	          continue;
 	        }
-
 	        options += '<option value="' + user['ID'] + '" selected>' + user["NAME"] + '</option>';
 	        html += ['<div class="mobile-grid-field-select-user-item-outer">', '<div class="mobile-grid-field-select-user-item">', this.showDrop ? '<del id="' + this.select.id + '_del_' + user["ID"] + '"></del>' : '', '<div class="avatar"', user["IMAGE"] ? ' style="background-image:url(\'' + user["IMAGE"] + '\')"' : '', '></div>', '<span onclick="BXMobileApp.Events.postToComponent(\'onUserProfileOpen\', ' + [user['ID']] + ', \'communication\');">' + user["NAME"] + '</span>', '</div>', '</div>'].join('').replace(' style="background-image:url(\'\')"', '');
 	      }
-
 	      if (html !== '') {
 	        this.select.innerHTML = (this.multiple ? this.select.innerHTML : '') + options;
 	        this.container.innerHTML = (this.multiple ? this.container.innerHTML : '') + html;
-
 	        if (this.select.innerHTML !== '' && !this.multiple) {
 	          this.eventNode.innerHTML = BX.message('interface_form_change');
 	        }
-
 	        if (this.useOnChangeEvent) {
 	          BX.onCustomEvent(this, "onChange", [this, this.select]);
 	        }
-
-	        var ij = 0,
-	            f = BX.proxy(function () {
-	          if (ij < 100) {
-	            if (this.container.childNodes.length > 0) {
-	              this.actualizeNodes();
-	            } else if (ij++) {
-	              setTimeout(f, 50);
+	        let ij = 0,
+	          f = BX.proxy(function () {
+	            if (ij < 100) {
+	              if (this.container.childNodes.length > 0) {
+	                this.actualizeNodes();
+	              } else if (ij++) {
+	                setTimeout(f, 50);
+	              }
 	            }
-	          }
-	        }, this);
+	          }, this);
 	        setTimeout(f, 50);
 	      }
 	    },
-	    callback: function callback(data) {
+	    callback: function (data) {
 	      if (data && data.a_users) {
 	        this.buildNodes(data.a_users);
 	      }
@@ -131,23 +119,18 @@ this.BX.Mobile.Field = this.BX.Mobile.Field || {};
 	  };
 	  return nodeSelectUser;
 	}();
-
 	window.app.exec('enableCaptureKeyboard', true);
-
 	BX.Mobile.Field.SelectUser = function (params) {
 	  this.useOnChangeEvent = params['useOnChangeEvent'] || false;
 	  this.init(params);
 	};
-
 	BX.Mobile.Field.SelectUser.prototype = {
 	  __proto__: BX.Mobile.Field.prototype,
-	  bindElement: function bindElement(node) {
-	    var result = null;
-
+	  bindElement: function (node) {
+	    let result = null;
 	    if (BX(node)) {
-	      result = new nodeSelectUser(node, BX("".concat(node.id, "_select")), this.useOnChangeEvent);
+	      result = new nodeSelectUser(node, BX(`${node.id}_select`), this.useOnChangeEvent);
 	    }
-
 	    return result;
 	  }
 	};

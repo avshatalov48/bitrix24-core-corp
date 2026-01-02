@@ -1,4 +1,7 @@
-<?
+<?php
+
+use Bitrix\Main\Application;
+
 if (!defined('B_PROLOG_INCLUDED') || B_PROLOG_INCLUDED !== true)
 {
 	die();
@@ -17,5 +20,6 @@ return [
 			? BX24_HOST_NAME
 			: Bitrix\Main\Config\Option::get('main', 'server_name', '')
 		,
+		'region' => Application::getInstance()->getLicense()->getRegion(),
 	],
 ];

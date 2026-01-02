@@ -476,7 +476,7 @@ CrmWebFormListItem.prototype =
 		if (!this.caller.isBindCreate)
 		{
 			this.caller.isBindCreate = true;
-			BX.bind(this.activeController.nodeCreateControl, 'click', BX.proxy(this.createLine, this));
+			BX.Event.EventEmitter.subscribe("BX.Click.CreateLine", BX.proxy(this.createLine, this));
 		}
 		BX.bind(this.nodeSettings, 'click', BX.proxy(this.showSettings, this));
 		BX.bind(this.nodeViewSettings, 'click', BX.proxy(this.showViewSettings, this));

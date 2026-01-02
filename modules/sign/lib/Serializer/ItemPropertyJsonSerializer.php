@@ -40,7 +40,17 @@ class ItemPropertyJsonSerializer implements Contract\Serializer
 		return $result;
 	}
 
-	public function deserialize(array $data, string|Contract\Item|Contract\ItemCollection $item): Contract\Item|Contract\ItemCollection
+	/**
+	 * @template T of Contract\Item|Contract\ItemCollection
+	 * @param array $data
+	 * @param class-string<T>|T $item
+	 *
+	 * @return T
+	 */
+	public function deserialize(
+		array $data,
+		string|Contract\Item|Contract\ItemCollection $item,
+	): Contract\Item|Contract\ItemCollection
 	{
 		if (is_string($item) && is_subclass_of($item, Contract\ItemCollection::class))
 		{

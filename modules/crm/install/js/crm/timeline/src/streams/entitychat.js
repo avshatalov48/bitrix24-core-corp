@@ -1,18 +1,19 @@
-import Stream from "../stream";
-import { Dom, Reflection, Type } from 'main.core';
+import { Dom, Reflection, Text, Type } from 'main.core';
+import Stream from '../stream';
 
 /** @memberof BX.Crm.Timeline.Streams */
 export default class EntityChat extends Stream
 {
 	static LayoutType = {
 		none: 0,
-		invitation:  1,
+		invitation: 1,
 		summary: 2,
-	}
+	};
 
 	constructor()
 	{
 		super();
+
 		this._data = null;
 		this._layoutType = EntityChat.LayoutType.none;
 
@@ -283,9 +284,9 @@ export default class EntityChat extends Stream
 
 				const icon = BX.create("i");
 				const imageUrl = BX.prop.getString(info, "avatar", "");
-				if(imageUrl !== "")
+				if (Type.isStringFilled(imageUrl))
 				{
-					icon.style.backgroundImage = "url(" +  encodeURI(imageUrl) + ")";
+					icon.style.backgroundImage = "url('" +  encodeURI(Text.encode(imageUrl)) + "')";
 				}
 
 				this._userWrapper.appendChild(

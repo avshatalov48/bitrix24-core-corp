@@ -116,6 +116,9 @@ final class OnlyOffice extends Engine\Controller
 			'loadCreateDocumentEditor' => [
 				'-prefilters' => [Csrf::class],
 			],
+			'createDocument' => [
+				'-prefilters' => [Csrf::class],
+			],
 			'loadDocumentViewer' => [
 				'-prefilters' => [Csrf::class],
 			],
@@ -828,11 +831,40 @@ final class OnlyOffice extends Engine\Controller
 		}
 	}
 
-	public function loadCreateDocumentEditorAction(string $typeFile, \Bitrix\Disk\Folder $targetFolder = null): ?HttpResponse
+	public function createDocumentAction(string $typeFile, ?\Bitrix\Disk\Folder $targetFolder = null): ?array
+	{
+		$newFile = $this->createDocument($typeFile, $targetFolder);
+
+		if (!$newFile)
+		{
+			return null;
+		}
+
+		return [
+			'id' => $newFile->getId(),
+			'name' => $newFile->getName(),
+			'size' => $newFile->getSize(),
+			'openUrl' => Driver::getInstance()->getUrlManager()->getUnifiedEditLink($newFile),
+		];
+	}
+
+	public function loadCreateDocumentEditorAction(string $typeFile, ?\Bitrix\Disk\Folder $targetFolder = null): ?HttpResponse
+	{
+		$newFile = $this->createDocument($typeFile, $targetFolder);
+
+		if (!$newFile)
+		{
+			return null;
+		}
+
+		return $this->loadDocumentEditorAction($newFile);
+	}
+
+	private function createDocument(string $typeFile, ?\Bitrix\Disk\Folder $targetFolder = null): ?Disk\File
 	{
 		$createBlankDocumentScenario = new Document\OnlyOffice\CreateBlankDocumentScenario(
-			$this->getCurrentUser()->getId(),
-			Context::getCurrent()->getLanguage()
+			$this->getCurrentUser()?->getId(),
+			Context::getCurrent()?->getLanguage(),
 		);
 
 		if ($targetFolder)
@@ -851,10 +883,7 @@ final class OnlyOffice extends Engine\Controller
 			return null;
 		}
 
-		/** @var Disk\File $newFile */
-		$newFile = $result->getData()['file'];
-
-		return $this->loadDocumentEditorAction($newFile);
+		return $result->getData()['file'];
 	}
 
 	public function loadDocumentEditorByViewSessionAction(Models\DocumentSession $documentSession): ?HttpResponse

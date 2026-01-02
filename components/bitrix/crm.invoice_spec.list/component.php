@@ -44,12 +44,15 @@ $bCopy = ($arParams['COPY_FLAG'] === 'Y') ? true : false;
 // Check permissions (READ by default)
 $permissionType = isset($arParams['PERMISSION_TYPE']) ? (string)$arParams['PERMISSION_TYPE'] : 'READ';
 $perms = new CCrmPerms($USER->GetID());
-if ($perms->HavePerm($ownerName, BX_CRM_PERM_NONE, $permissionType))
+if (
+	($permissionType === 'READ' && !\Bitrix\Crm\Service\Container::getInstance()->getUserPermissions()->entityType()->canReadItems(CCrmOwnerType::Invoice))
+	|| ($permissionType !== 'READ' && !\Bitrix\Crm\Service\Container::getInstance()->getUserPermissions()->entityType()->canUpdateItems(CCrmOwnerType::Invoice))
+)
 {
 	ShowError(GetMessage('CRM_PERMISSION_DENIED'));
 	return;
 }
-$arResult['CAN_ADD_PRODUCT'] = $perms->HavePerm('CONFIG', BX_CRM_PERM_CONFIG, 'WRITE');
+$arResult['CAN_ADD_PRODUCT'] = \Bitrix\Crm\Service\Container::getInstance()->getUserPermissions()->isCrmAdmin();
 
 $arResult['OWNER_TYPE'] = $ownerType;
 $arResult['OWNER_ID'] = $ownerID;

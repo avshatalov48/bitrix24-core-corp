@@ -15,23 +15,29 @@ if (!defined('B_PROLOG_INCLUDED') || B_PROLOG_INCLUDED !== true)
  * @var CBitrixComponent $component
  */
 
+use Bitrix\Crm\Activity\LastCommunication\LastCommunicationTimeFormatter;
 use Bitrix\Crm\Activity\ToDo\CalendarSettings\CalendarSettingsProvider;
 use Bitrix\Crm\Activity\ToDo\ColorSettings\ColorSettingsProvider;
 use Bitrix\Crm\Activity\TodoPingSettingsProvider;
+use Bitrix\Crm\Grid\MenuActionsPreparer;
+use Bitrix\Crm\Integration\Analytics\Builder\Entity\AddOpenEvent;
+use Bitrix\Crm\Integration\Analytics\Dictionary;
 use Bitrix\Crm\Restriction\AvailabilityManager;
 use Bitrix\Crm\Service\Container;
+use Bitrix\Crm\Tour\RepeatSale\OnboardingPopup;
 use Bitrix\Crm\Tracking;
 use Bitrix\Crm\UI\NavigationBarPanel;
 use Bitrix\Main\Loader;
 use Bitrix\Main\Localization\Loc;
 use Bitrix\Main\UI\Extension;
+use Bitrix\Main\Web\Json;
 use Bitrix\Main\Web\Uri;
+use Bitrix\UI\Buttons\AirButtonStyle;
+use Bitrix\UI\Toolbar\ButtonLocation;
+use Bitrix\UI\Toolbar\Manager;
 
 $APPLICATION->SetAdditionalCSS("/bitrix/themes/.default/crm-entity-show.css");
-if (SITE_TEMPLATE_ID === 'bitrix24')
-{
-	$APPLICATION->SetAdditionalCSS("/bitrix/themes/.default/bitrix24/crm-entity-show.css");
-}
+$APPLICATION->SetAdditionalCSS('/bitrix/themes/.default/bitrix24/crm-entity-show.css');
 
 if (CModule::IncludeModule('bitrix24') && !\Bitrix\Crm\CallList\CallList::isAvailable())
 {
@@ -46,6 +52,7 @@ Extension::load(
 		'crm.entity-list.panel',
 		'crm.badge',
 		'ui.design-tokens',
+		'crm.entity-list.binder',
 	]
 );
 
@@ -101,6 +108,7 @@ echo (\Bitrix\Crm\Tour\NumberOfClients::getInstance())->build();
 	?></div><?
 
 $isRecurring = isset($arParams['IS_RECURRING']) && $arParams['IS_RECURRING'] === 'Y';
+$isShowCounterPanel = ($arParams['SHOW_COUNTER_PANEL'] ?? true) && !$isRecurring;
 $isInternal = $arResult['INTERNAL'];
 $allowWrite = $arResult['PERMS']['WRITE'];
 $allowDelete = $arResult['PERMS']['DELETE'];
@@ -212,7 +220,8 @@ foreach ($arResult['DEAL'] as $sKey =>  $arDeal)
 		);
 	}
 
-	if ($allowExclude && $arDeal['CAN_EXCLUDE'])
+	$excludeMenuItems = $arParams['EXCLUDE_MENU_ITEMS'] ?? [];
+	if ($allowExclude && $arDeal['CAN_EXCLUDE'] && !in_array('EXCLUDE', $excludeMenuItems))
 	{
 		$pathToExclude = CUtil::JSEscape($arDeal['PATH_TO_DEAL_EXCLUDE']);
 		$arActions[] = array(
@@ -226,7 +235,7 @@ foreach ($arResult['DEAL'] as $sKey =>  $arDeal)
 		);
 	}
 
-	$arActions[] = array('SEPARATOR' => true);
+	$arActions[] = ['SEPARATOR' => true];
 
 	if (!$isInternal && $arParams['IS_RECURRING'] !== 'Y')
 	{
@@ -436,6 +445,7 @@ foreach ($arResult['DEAL'] as $sKey =>  $arDeal)
 
 	$dateCreate = $arDeal['DATE_CREATE'] ?? '';
 	$dateModify = $arDeal['DATE_MODIFY'] ?? '';
+	$movedTime = $arDeal['MOVED_TIME'] ?? '';
 	$webformId = null;
 	if (isset($arDeal['WEBFORM_ID']))
 	{
@@ -470,7 +480,7 @@ foreach ($arResult['DEAL'] as $sKey =>  $arDeal)
 
 	$resultItem = array(
 		'id' => $arDeal['ID'],
-		'actions' => $arActions,
+		'actions' => (new MenuActionsPreparer())->prepare($arActions),
 		'data' => $arDeal,
 		'editable' => !$arDeal['EDIT'] ? ($arResult['INTERNAL'] ? 'N' : $arColumns) : 'Y',
 		'columns' => array(
@@ -509,6 +519,7 @@ foreach ($arResult['DEAL'] as $sKey =>  $arDeal)
 				'PROBABILITY' => $probability,
 				'DATE_CREATE' => FormatDate($arResult['TIME_FORMAT'], MakeTimeStamp($dateCreate), $now),
 				'DATE_MODIFY' => FormatDate($arResult['TIME_FORMAT'], MakeTimeStamp($dateModify), $now),
+				'MOVED_TIME' => FormatDate($arResult['TIME_FORMAT'], MakeTimeStamp($movedTime), $now),
 				'TYPE_ID' => $typeId,
 				'SOURCE_ID' => $sourceId,
 				'EVENT_ID' => $eventId,
@@ -534,7 +545,7 @@ foreach ($arResult['DEAL'] as $sKey =>  $arDeal)
 				'IS_RETURN_CUSTOMER' => $arDeal['IS_RETURN_CUSTOMER'] === 'Y' ? GetMessage('MAIN_YES') : GetMessage('MAIN_NO'),
 				'IS_REPEATED_APPROACH' => $arDeal['IS_REPEATED_APPROACH'] === 'Y' ? GetMessage('MAIN_YES') : GetMessage('MAIN_NO'),
 				'ORIGINATOR_ID' => $arDeal['ORIGINATOR_NAME'] ?? '',
-				'CREATED_BY' => isset($arDeal['~CREATED_BY']) && $arDeal['~CREATED_BY'] > 0
+				'CREATED_BY' => isset($arDeal['~CREATED_BY']) && isset($arDeal['CREATED_BY_FORMATTED_NAME']) && $arDeal['~CREATED_BY'] > 0
 					? CCrmViewHelper::PrepareUserBaloonHtml([
 						'PREFIX' => "DEAL_{$arDeal['~ID']}_CREATOR",
 						'USER_ID' => $arDeal['~CREATED_BY'],
@@ -542,7 +553,15 @@ foreach ($arResult['DEAL'] as $sKey =>  $arDeal)
 						'USER_PROFILE_URL' => $arDeal['PATH_TO_USER_CREATOR']
 					])
 					: '',
-				'MODIFY_BY' => isset($arDeal['~MODIFY_BY']) && $arDeal['~MODIFY_BY'] > 0
+				'MOVED_BY' => isset($arDeal['~MOVED_BY']) && isset($arDeal['MOVED_BY_FORMATTED_NAME']) && $arDeal['~MOVED_BY'] > 0
+					? CCrmViewHelper::PrepareUserBaloonHtml([
+						'PREFIX' => "DEAL_{$arDeal['~ID']}_MOVED",
+						'USER_ID' => $arDeal['~MOVED_BY'],
+						'USER_NAME' => $arDeal['MOVED_BY_FORMATTED_NAME'],
+						'USER_PROFILE_URL' => $arDeal['PATH_TO_USER_MOVED'],
+					])
+					: '',
+				'MODIFY_BY' => isset($arDeal['~MODIFY_BY']) && isset($arDeal['MODIFY_BY_FORMATTED_NAME']) && $arDeal['~MODIFY_BY'] > 0
 					? CCrmViewHelper::PrepareUserBaloonHtml(
 						array(
 							'PREFIX' => "DEAL_{$arDeal['~ID']}_MODIFIER",
@@ -554,6 +573,12 @@ foreach ($arResult['DEAL'] as $sKey =>  $arDeal)
 				'OBSERVERS' => CCrmViewHelper::renderObservers(\CCrmOwnerType::Deal, $arDeal['ID'], $arDeal['~OBSERVERS'] ?? []),
 			) + (is_array($arResult['DEAL_UF'][$sKey]) ? $arResult['DEAL_UF'][$sKey] : [])
 	);
+
+	$availabilityChecker = Container::getInstance()->getRepeatSaleAvailabilityChecker();
+	if ($availabilityChecker->isAvailable() && $availabilityChecker->hasPermission())
+	{
+		$resultItem['columns']['REPEAT_SALE_SEGMENT_ID'] = CCrmViewHelper::renderRepeatSaleSegmentTitle((int)($arDeal['REPEAT_SALE_SEGMENT_ID'] ?? 0));
+	}
 
 	if (isset($arDeal['COMPANY_REVENUE']))
 	{
@@ -651,9 +676,12 @@ foreach ($arResult['DEAL'] as $sKey =>  $arDeal)
 		$resultItem['columns']['DEAL_SUMMARY'] .= Bitrix\Crm\Component\EntityList\BadgeBuilder::render($arDeal['badges']);
 	}
 
+	(new LastCommunicationTimeFormatter())->formatListDate($arDeal, $resultItem['columns']);
+
 	$arResult['GRID_DATA'][] = &$resultItem;
 	unset($resultItem);
 }
+
 $APPLICATION->IncludeComponent('bitrix:main.user.link',
 	'',
 	array(
@@ -663,29 +691,37 @@ $APPLICATION->IncludeComponent('bitrix:main.user.link',
 	array('HIDE_ICONS' => 'Y')
 );
 
-if ($arResult['ENABLE_TOOLBAR'])
-{
-	$addButton =array(
-		'TEXT' => GetMessage('CRM_DEAL_LIST_ADD_SHORT'),
-		'TITLE' => GetMessage('CRM_DEAL_LIST_ADD'),
-		'LINK' => $arResult['PATH_TO_DEAL_ADD'],
-		'ICON' => 'btn-new'
-	);
+$filterLazyLoadUrl = '/bitrix/components/bitrix/crm.deal.list/filter.ajax.php?' . bitrix_sessid_get();
+$filterLazyLoadParams = [
+	'filter_id' => urlencode($arResult['GRID_ID']),
+	'category_id' => $arResult['CATEGORY_ID'] ?? null,
+	'is_recurring' => $arParams['IS_RECURRING'],
+	'siteID' => SITE_ID,
+];
+$uri = new Uri($filterLazyLoadUrl);
 
+if ($arResult['ENABLE_TOOLBAR'] && !\Bitrix\Main\Grid\Context::isInternalRequest())
+{
 	$urlParams = [];
 	if (isset($arResult['DEAL_ADD_URL_PARAMS']) && is_array($arResult['DEAL_ADD_URL_PARAMS']))
 	{
 		$urlParams = $arResult['DEAL_ADD_URL_PARAMS'];
 	}
 
-	$addButton['ONCLICK'] = 'BX.CrmEntityManager.createEntity(BX.CrmEntityType.names.deal, { urlParams: '.CUtil::PhpToJSObject($urlParams).' })';
+	$jsCode = 'BX.CrmEntityManager.createEntity(BX.CrmEntityType.names.deal, { urlParams: ' . CUtil::PhpToJSObject($urlParams).' })';
+	$addButtonParams = [
+		'text' =>  Loc::getMessage('CRM_DEAL_LIST_NEW_DEAL'),
+		'style' => AirButtonStyle::FILLED,
+		'icon' => \Bitrix\UI\Buttons\Icon::ADD,
+		'onclick' => new \Bitrix\UI\Buttons\JsCode($jsCode),
+	];
 
 	if (
 		$arResult['ADD_EVENT_NAME'] !== ''
 		&& $arResult['ADD_EVENT_NAME'] !== 'CrmCreateDynamicFromDynamic' //add exclude for "CrmCreateDynamicFromDynamic" event we don't have bind/subscribe for it
 	)
 	{
-		$analyticsBuilder = \Bitrix\Crm\Integration\Analytics\Builder\Entity\AddOpenEvent::createDefault(CCrmOwnerType::Deal)
+		$analyticsBuilder = AddOpenEvent::createDefault(CCrmOwnerType::Deal)
 			->setSection(
 				!empty($arParams['~ANALYTICS']['c_section']) && is_string($arParams['~ANALYTICS']['c_section'])
 					? $arParams['~ANALYTICS']['c_section']
@@ -696,7 +732,8 @@ if ($arResult['ENABLE_TOOLBAR'])
 					? $arParams['~ANALYTICS']['c_sub_section']
 					: null
 			)
-			->setElement(\Bitrix\Crm\Integration\Analytics\Dictionary::ELEMENT_CREATE_LINKED_ENTITY_BUTTON);
+			->setElement(Dictionary::ELEMENT_CREATE_LINKED_ENTITY_BUTTON);
+
 		$data = [
 			'urlParams' => $analyticsBuilder->buildData(),
 		];
@@ -705,23 +742,85 @@ if ($arResult['ENABLE_TOOLBAR'])
 			$data['urlParams']['st[' . $key . ']'] = $value;
 			unset($data['urlParams'][$key]);
 		}
-		$addButton['ONCLICK'] = "BX.onCustomEvent(window, '{$arResult['ADD_EVENT_NAME']}', " . json_encode($data) . ")";
-	}
-	else
-	{
-		unset($addButton['LINK']);
+
+		$jsCode = "BX.onCustomEvent(window, '{$arResult['ADD_EVENT_NAME']}', " . Json::encode($data) . ")";
+		$addButtonParams['onclick'] = new \Bitrix\UI\Buttons\JsCode($jsCode);
 	}
 
-	$APPLICATION->IncludeComponent(
-		'bitrix:crm.interface.toolbar',
-		'',
-		array(
-			'TOOLBAR_ID' => mb_strtolower($arResult['GRID_ID']).'_toolbar',
-			'BUTTONS' => array($addButton)
-		),
-		$component,
-		array('HIDE_ICONS' => 'Y')
-	);
+	$buttons = [$addButtonParams];
+
+	if ($arParams['PARENT_ENTITY_TYPE_ID'] && $arParams['PARENT_ENTITY_ID'])
+	{
+		$relationCode = (int)$arParams['PARENT_ENTITY_TYPE_ID'] . '-' . (int)$arParams['PARENT_ENTITY_ID'] . '-' . \CCrmOwnerType::Deal;
+		$targetId = 'relation-button-' . $relationCode;
+		$jsCode = sprintf(
+			<<<js
+				(function() {
+					void BX.Crm.Binder.Manager.Instance.createRelatedSelector('%s', '%s')?.show();
+				})()
+			js,
+			\CUtil::JSEscape('relation-' . $relationCode),
+			\CUtil::JSEscape($targetId),
+		);
+
+		$linkButton = new Bitrix\UI\Buttons\Button([
+			'id' => $targetId,
+			'text' =>  Loc::getMessage('CRM_DEAL_LIST_LINK_DEAL'),
+			'style' => AirButtonStyle::OUTLINE,
+			'icon' => \Bitrix\UI\Buttons\Icon::ADD,
+			'onclick' => new \Bitrix\UI\Buttons\JsCode($jsCode),
+		]);
+
+		$linkButton->addAttribute('id', $targetId);
+		$buttons[] = $linkButton;
+	}
+
+	$toolbarId = mb_strtolower($arResult['GRID_ID']) . '_toolbar';
+	$toolbar = Manager::getInstance()->createToolbar($toolbarId, []);
+
+	foreach ($buttons as $button)
+	{
+		$toolbar->addButton($button, ButtonLocation::AFTER_TITLE);
+	}
+
+	$toolbar->addFilter([
+		'GRID_ID' => $arResult['GRID_ID'],
+		'FILTER_ID' => $arResult['GRID_ID'],
+		'FILTER' => $arResult['FILTER'],
+		'FILTER_PRESETS' => $arResult['FILTER_PRESETS'],
+		'ENABLE_FIELDS_SEARCH' => 'Y',
+		'ENABLE_LABEL' => true,
+		'HEADERS_SECTIONS' => $arResult['HEADERS_SECTIONS'],
+		'HEADERS' => $arResult['HEADERS'],
+		'LAZY_LOAD' => [
+			'GET_LIST' => $uri->addParams(array_merge($filterLazyLoadParams, ['action' => 'list']))->getUri(),
+			'GET_FIELD' => $uri->addParams(array_merge($filterLazyLoadParams, ['action' => 'field']))->getUri(),
+			'GET_FIELDS' => $uri->addParams(array_merge($filterLazyLoadParams, ['action' => 'fields']))->getUri(),
+		],
+		'CONFIG' => [
+			'popupColumnsCount' => 4,
+			'popupWidth' => 800,
+			'showPopupInCenter' => true,
+		],
+		'THEME' => Bitrix\Main\UI\Filter\Theme::MUTED,
+		'RESTRICTED_FIELDS' => ($arResult['RESTRICTED_FIELDS'] ?? []),
+		'USE_CHECKBOX_LIST_FOR_SETTINGS_POPUP' => true,
+	]);
+
+	$toolbar->hideTitle();
+	?>
+	<div class="crm-list-top-toolbar">
+			<?php
+			$GLOBALS["APPLICATION"]->IncludeComponent(
+				'bitrix:ui.toolbar',
+				'',
+				[
+					'TOOLBAR_ID' => $toolbarId,
+				],
+			);
+			?>
+			</div>
+	<?php
 }
 
 $messages = [];
@@ -759,15 +858,6 @@ $APPLICATION->IncludeComponent(
 	),
 	$component
 );
-
-$filterLazyLoadUrl = '/bitrix/components/bitrix/crm.deal.list/filter.ajax.php?' . bitrix_sessid_get();
-$filterLazyLoadParams = [
-	'filter_id' => urlencode($arResult['GRID_ID']),
-	'category_id' => $arResult['CATEGORY_ID'] ?? null,
-	'is_recurring' => $arParams['IS_RECURRING'],
-	'siteID' => SITE_ID,
-];
-$uri = new Uri($filterLazyLoadUrl);
 
 $APPLICATION->IncludeComponent(
 	'bitrix:crm.interface.grid',
@@ -825,13 +915,22 @@ $APPLICATION->IncludeComponent(
 		'PRESERVE_HISTORY' => $arResult['PRESERVE_HISTORY'],
 		'MESSAGES' => $messages,
 		'DISABLE_NAVIGATION_BAR' => $arResult['DISABLE_NAVIGATION_BAR'],
+		'COUNTER_PANEL' => (
+			$isShowCounterPanel
+				? [
+					'ENTITY_TYPE_NAME' => CCrmOwnerType::DealName,
+					'EXTRAS' => ['DEAL_CATEGORY_ID' => $arResult['CATEGORY_ID']],
+				]
+				: null
+		),
 		'NAVIGATION_BAR' => (new NavigationBarPanel(CCrmOwnerType::Deal, $arResult['CATEGORY_ID']))
 			->setItems([
 				NavigationBarPanel::ID_KANBAN,
 				NavigationBarPanel::ID_LIST,
 				NavigationBarPanel::ID_ACTIVITY,
 				NavigationBarPanel::ID_CALENDAR,
-				NavigationBarPanel::ID_AUTOMATION
+				NavigationBarPanel::ID_REPEAT_SALE,
+				NavigationBarPanel::ID_AUTOMATION,
 			], NavigationBarPanel::ID_LIST)
 			->setBinding($arResult['NAVIGATION_CONTEXT_ID'])
 			->get(),
@@ -861,6 +960,7 @@ $APPLICATION->IncludeComponent(
 			],
 		],
 		'NAME_TEMPLATE' => $arParams['NAME_TEMPLATE'] ?? '',
+		'SHOW_ROW_CHECKBOXES' => $arParams['SHOW_ROW_CHECKBOXES'] ?? true,
 	],
 	$component
 );
@@ -908,6 +1008,15 @@ $APPLICATION->IncludeComponent(
 			BX.addCustomEvent(window, 'onCrmRestrictedValueClick', function() {
 				<?=$arResult['RESTRICTED_VALUE_CLICK_CALLBACK'];?>
 			});
+			<?php endif;?>
+
+			<?php if (isset($arParams['PARENT_ENTITY_TYPE_ID'])):?>
+			BX.Crm.Binder.Manager.Instance.initializeBinder(
+				<?=$arParams['PARENT_ENTITY_TYPE_ID']?>,
+				<?=$arParams['PARENT_ENTITY_ID']?>,
+				<?=\CCrmOwnerType::Deal?>,
+				'<?=CUtil::JSEscape($arResult['GRID_ID'])?>'
+			);
 			<?php endif;?>
 		}
 	);
@@ -987,9 +1096,9 @@ if ($arResult['CONVERSION_PERMITTED'] && $arResult['CAN_CONVERT'] && $conversion
 								cancelButton: "<?=GetMessageJS("CRM_DEAL_CONV_DIALOG_CANCEL_BTN")?>"
 							},
 							analytics: {
-								c_section: '<?= \Bitrix\Crm\Integration\Analytics\Dictionary::SECTION_DEAL ?>',
-								c_sub_section: '<?= \Bitrix\Crm\Integration\Analytics\Dictionary::SUB_SECTION_LIST ?>',
-								c_element: '<?= \Bitrix\Crm\Integration\Analytics\Dictionary::ELEMENT_GRID_ROW_CONTEXT_MENU ?>',
+								c_section: '<?= Dictionary::SECTION_DEAL ?>',
+								c_sub_section: '<?= Dictionary::SUB_SECTION_LIST ?>',
+								c_element: '<?= Dictionary::ELEMENT_GRID_ROW_CONTEXT_MENU ?>',
 							},
 						}
 					},
@@ -1201,3 +1310,10 @@ if (!empty($arResult['RESTRICTED_FIELDS_ENGINE']))
 }
 
 \Bitrix\Crm\Integration\NotificationsManager::showSignUpFormOnCrmShopCreated();
+
+$analytics = [
+	'c_section' => Dictionary::SECTION_DEAL,
+	'c_sub_section' => Dictionary::SUB_SECTION_LIST,
+];
+
+print OnboardingPopup::getInstance()->setAnalytics($analytics)->build();

@@ -1,0 +1,16 @@
+<?php
+$MESS["M_CRM_PRODUCT_ROW_DELIVERY"] = "Жеткізу";
+$MESS["M_CRM_PRODUCT_ROW_DISCOUNT"] = "Жеңілдік";
+$MESS["M_CRM_PRODUCT_ROW_LIST_DOWN_TEXT"] = "Жаңарту үшін жіберіңіз...";
+$MESS["M_CRM_PRODUCT_ROW_LIST_LEGEND"] = "(Тауарлар)";
+$MESS["M_CRM_PRODUCT_ROW_LIST_LOAD_TEXT"] = "Тізімді жаңарту...";
+$MESS["M_CRM_PRODUCT_ROW_LIST_NOTHING_FOUND"] = "Тауарлар жоқ";
+$MESS["M_CRM_PRODUCT_ROW_LIST_PRICE"] = "Бағасы";
+$MESS["M_CRM_PRODUCT_ROW_LIST_PULL_TEXT"] = "Жаңарту үшін тартыңыз...";
+$MESS["M_CRM_PRODUCT_ROW_LIST_QTY"] = "Саны ";
+$MESS["M_CRM_PRODUCT_ROW_LIST_SUM_TOTAL"] = "Жалпы сома";
+$MESS["M_CRM_PRODUCT_ROW_LIST_SUM_TOTAL_2"] = "Сомасы";
+$MESS["M_CRM_PRODUCT_ROW_LIST_VAT"] = "(ҚҚС: #VAT_RATE#%)";
+$MESS["M_CRM_PRODUCT_ROW_LIST_VAT_INCLUDED"] = "Оның ішінде #TAX_NAME#";
+$MESS["M_CRM_PRODUCT_ROW_LIST_VAT_INCLUDED_PERCENTS"] = "Оның ішінде #TAX_NAME# (#TAX_RATE#%)";
+$MESS["M_CRM_PRODUCT_ROW_LIST_VAT_INCLUDED_SUM"] = "Оның ішінде ҚҚС";

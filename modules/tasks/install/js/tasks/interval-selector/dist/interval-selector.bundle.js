@@ -11,6 +11,7 @@ this.BX = this.BX || {};
 	var _layout = /*#__PURE__*/babelHelpers.classPrivateFieldLooseKey("layout");
 	var _intervals = /*#__PURE__*/babelHelpers.classPrivateFieldLooseKey("intervals");
 	var _currentInterval = /*#__PURE__*/babelHelpers.classPrivateFieldLooseKey("currentInterval");
+	var _showDropdownIcon = /*#__PURE__*/babelHelpers.classPrivateFieldLooseKey("showDropdownIcon");
 	var _showIntervalMenu = /*#__PURE__*/babelHelpers.classPrivateFieldLooseKey("showIntervalMenu");
 	var _getIntervalPhrase = /*#__PURE__*/babelHelpers.classPrivateFieldLooseKey("getIntervalPhrase");
 	var _getIntervalDuration = /*#__PURE__*/babelHelpers.classPrivateFieldLooseKey("getIntervalDuration");
@@ -42,6 +43,10 @@ this.BX = this.BX || {};
 	      writable: true,
 	      value: void 0
 	    });
+	    Object.defineProperty(this, _showDropdownIcon, {
+	      writable: true,
+	      value: false
+	    });
 	    this.setEventNamespace('BX.Tasks.IntervalSelector');
 	    babelHelpers.classPrivateFieldLooseBase(this, _params)[_params] = params;
 	    babelHelpers.classPrivateFieldLooseBase(this, _layout)[_layout] = {};
@@ -50,13 +55,16 @@ this.BX = this.BX || {};
 	    if (babelHelpers.classPrivateFieldLooseBase(this, _params)[_params].value) {
 	      this.setSuitableInterval(babelHelpers.classPrivateFieldLooseBase(this, _params)[_params].value);
 	    }
+	    if (params.showDropdownIcon) {
+	      babelHelpers.classPrivateFieldLooseBase(this, _showDropdownIcon)[_showDropdownIcon] = true;
+	    }
 	  }
 	  render() {
 	    babelHelpers.classPrivateFieldLooseBase(this, _layout)[_layout].intervalSelector = main_core.Tag.render(_t || (_t = _`
-			<div class="tasks-interval-selector">
+			<div class="tasks-interval-selector${0}">
 				${0}
 			</div>
-		`), babelHelpers.classPrivateFieldLooseBase(this, _getIntervalPhrase)[_getIntervalPhrase](babelHelpers.classPrivateFieldLooseBase(this, _currentInterval)[_currentInterval]));
+		`), babelHelpers.classPrivateFieldLooseBase(this, _showDropdownIcon)[_showDropdownIcon] ? ' tasks-interval-selector-dropdown' : '', babelHelpers.classPrivateFieldLooseBase(this, _getIntervalPhrase)[_getIntervalPhrase](babelHelpers.classPrivateFieldLooseBase(this, _currentInterval)[_currentInterval]));
 	    main_core.Event.bind(babelHelpers.classPrivateFieldLooseBase(this, _layout)[_layout].intervalSelector, 'click', babelHelpers.classPrivateFieldLooseBase(this, _showIntervalMenu)[_showIntervalMenu].bind(this));
 	    return babelHelpers.classPrivateFieldLooseBase(this, _layout)[_layout].intervalSelector;
 	  }

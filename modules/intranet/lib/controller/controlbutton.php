@@ -278,7 +278,10 @@ class ControlButton extends \Bitrix\Main\Engine\Controller
 		$userId = $USER->GetId();
 		$calendarData = $this->getCalendarData($entityId, $entityData);
 
-		if (!in_array($userId, $calendarData['USER_IDS']))
+		if (
+			!is_array($calendarData['USER_IDS'])
+			|| !in_array($userId, $calendarData['USER_IDS'])
+		)
 		{
 			return $chatId;
 		}
@@ -398,12 +401,20 @@ class ControlButton extends \Bitrix\Main\Engine\Controller
 		if ($entityType === 'task')
 		{
 			$taskData = $this->getTaskData($entityId);
-			$userCount = count($taskData['USER_IDS']);
+
+			if (is_array($taskData['USER_IDS']))
+			{
+				$userCount = count($taskData['USER_IDS']);
+			}
 		}
 		elseif ($entityType === 'calendar_event')
 		{
 			$calendarData = $this->getCalendarData($entityId, $entityData);
-			$userCount = count($calendarData['USER_IDS']);
+
+			if (is_array($calendarData['USER_IDS']))
+			{
+				$userCount = count($calendarData['USER_IDS']);
+			}
 		}
 		elseif ($entityType === 'workgroup' && Loader::includeModule('socialnetwork'))
 		{

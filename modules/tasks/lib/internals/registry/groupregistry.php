@@ -93,6 +93,7 @@ class GroupRegistry
 			->addSelect('IMAGE_ID')
 			->addSelect('AVATAR_TYPE')
 			->addSelect('PROJECT')
+			->addSelect('TYPE')
 			->whereIn('ID', $groupIds)
 			->exec();
 
@@ -106,6 +107,7 @@ class GroupRegistry
 				'AVATAR_TYPE' => $row['AVATAR_TYPE'],
 				'VISIBLE' => $row['VISIBLE'] === 'Y',
 				'PROJECT' => $row['PROJECT'] === 'Y',
+				'TYPE' => $row['TYPE'],
 				'TASKS_ENABLED' => false
 			];
 		}

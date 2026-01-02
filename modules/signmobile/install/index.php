@@ -57,7 +57,23 @@ class SignMobile extends CModule
 			'onJNComponentWorkspaceGet',
 			$this->MODULE_ID,
 			$this->workspaceClass,
-			'getPath'
+			'getPath',
+		);
+
+		$eventManager->registerEventHandler(
+			'mobile',
+			'onBeforeTabsGet',
+			$this->MODULE_ID,
+			Bitrix\SignMobile\SignTab::class,
+			'onBeforeTabsGet',
+		);
+
+		$eventManager->registerEventHandler(
+			'mobile',
+			'onMobileMenuStructureBuilt',
+			'signmobile',
+			'Bitrix\SignMobile\MobileMenuManager',
+			'onMobileMenuStructureBuilt',
 		);
 
 		return true;
@@ -91,7 +107,23 @@ class SignMobile extends CModule
 			'onJNComponentWorkspaceGet',
 			$this->MODULE_ID,
 			$this->workspaceClass,
-			'getPath'
+			'getPath',
+		);
+
+		$eventManager->unRegisterEventHandler(
+			'mobile',
+			'onBeforeTabsGet',
+			$this->MODULE_ID,
+			Bitrix\SignMobile\SignTab::class,
+			'onBeforeTabsGet',
+		);
+
+		$eventManager->unRegisterEventHandler(
+			'mobile',
+			'onMobileMenuStructureBuilt',
+			'signmobile',
+			'Bitrix\SignMobile\MobileMenuManager',
+			'onMobileMenuStructureBuilt',
 		);
 
 		ModuleManager::unRegisterModule($this->MODULE_ID);
@@ -105,7 +137,7 @@ class SignMobile extends CModule
 			$_SERVER['DOCUMENT_ROOT'] . '/bitrix/modules/signmobile/install/mobileapp/',
 			$_SERVER['DOCUMENT_ROOT'] . '/bitrix/mobileapp/',
 			true,
-			true
+			true,
 		);
 
 		return true;

@@ -1,0 +1,2 @@
+<?php
+$MESS["CRM_DTO_VALIDATOR_STRING_STARTS_WITH"] = "Field #FIELD# in #PARENT_OBJECT# must start with \"#STARTS_WITH#\".";

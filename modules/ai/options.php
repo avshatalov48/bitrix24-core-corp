@@ -73,12 +73,6 @@ if ($postRight >= 'R'):
 		];
 
 		$allOptions[] = [
-			'force_queue',
-			Loc::getMessage('AI_OPT_FORCE_QUEUE') . ':',
-			['checkbox'],
-		];
-
-		$allOptions[] = [
 			'queue_url',
 			Loc::getMessage('AI_OPT_QUEUE_URL') . ':',
 			['text', 50],
@@ -124,12 +118,6 @@ if ($postRight >= 'R'):
 		$allOptions[] = [
 			'openai_bearer',
 			Loc::getMessage('AI_OPT_OPENAI_BEARER') . ':',
-			['text', 50],
-		];
-
-		$allOptions[] = [
-			'stable_diffusion_bearer',
-			Loc::getMessage('AI_OPT_STABLE_DIFFUSION_BEARER') . ':',
 			['text', 50],
 		];
 	}

@@ -604,12 +604,12 @@ foreach ($arResult['ITEMS'] as &$arItem)
 			}
 			else
 			{
-				tasksGetItemMenu($task, $arParams["PATHS"], $arParams["SITE_ID"], false, false, false, array('VIEW_STATE' => $arParams['VIEW_STATE']));
+				tasksGetItemMenu($task, $arParams["PATHS"], $arParams["SITE_ID"], false, false, false, array('VIEW_STATE' => $arParams['VIEW_STATE'] ?? null));
 			}
 		?>];
 
 		<?if (($arParams['SHOW_QUICK_INFORMERS'] ?? null) !== false):?>
-			quickInfoData[<?php echo $task["ID"]?>] = <? tasksRenderJSON($task, $childrenCount, $arParams["PATHS"], false, false, false, $arParams["NAME_TEMPLATE"], array(), false, array('VIEW_STATE' => $arParams['VIEW_STATE']))?>;
+			quickInfoData[<?php echo $task["ID"]?>] = <? tasksRenderJSON($task, $childrenCount, $arParams["PATHS"], false, false, false, $arParams["NAME_TEMPLATE"], array(), false, array('VIEW_STATE' => $arParams['VIEW_STATE'] ?? null))?>;
 		<?endif?>
 		<?php if($arParams["TASK_ADDED"]):?>
 			BX.onCustomEvent("onTaskListTaskAdd", [quickInfoData[<?php echo $task["ID"]?>]]);

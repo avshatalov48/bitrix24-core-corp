@@ -111,7 +111,43 @@ class UserFieldDataProvider extends EntityUFDataProvider
 				$isProcessed = false;
 				if (isset($filterField['type']))
 				{
-					if (in_array($filterField['type'], ['number', 'date', 'datetime'], true))
+					if ($filterField['type'] === 'number')
+					{
+						$fltType = $requestFilter[$id . '_numsel'] ?? 'exact';
+						$fromFieldName = $id . '_from';
+						$toFieldName = $id . '_to';
+						$invFieldName = '!' . $id;
+						if (
+							isset($requestFilter[$fromFieldName], $requestFilter[$toFieldName])
+							&& in_array($fltType, ['exact', 'range'])
+						)
+						{
+							$filter['>=' . $id] = $requestFilter[$fromFieldName];
+							$filter['<=' . $id] = $requestFilter[$toFieldName];
+						}
+						elseif ($fltType === 'exact' && isset($requestFilter[$fromFieldName]))
+						{
+							$filter[$id] = $requestFilter[$fromFieldName];
+						}
+						elseif ($fltType === 'more' && isset($requestFilter[$fromFieldName]))
+						{
+							$filter['>' . $id] = $requestFilter[$fromFieldName];
+						}
+						elseif ($fltType === 'less' && isset($requestFilter[$toFieldName]))
+						{
+							$filter['<' . $id] = $requestFilter[$toFieldName];
+						}
+						elseif (isset($requestFilter[$id]) && $requestFilter[$id] === false)
+						{
+							$filter[$id] = $requestFilter[$id];
+						}
+						elseif (isset($requestFilter[$invFieldName]) && $requestFilter[$invFieldName] === false)
+						{
+							$filter[$invFieldName] = $requestFilter[$invFieldName];
+						}
+					}
+
+					if (in_array($filterField['type'], ['date', 'datetime'], true))
 					{
 						if (!empty($requestFilter[$id.'_from']))
 						{

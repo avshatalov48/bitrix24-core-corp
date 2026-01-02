@@ -1,0 +1,22 @@
+<?php
+$MESS["CRM_CURRENCY_DEC_POINT"] = "Шығару кезіндегі ондық нүкте";
+$MESS["CRM_CURRENCY_FIELD_AMOUNT_CNT"] = "Номиналы";
+$MESS["CRM_CURRENCY_FIELD_DEFAULT_EXCH_RATE"] = "Айырбастау бағамы (әдепкі бойынша)";
+$MESS["CRM_CURRENCY_FIELD_ID"] = "Валюта";
+$MESS["CRM_CURRENCY_FIELD_SORT"] = "Сұрыптау индексі";
+$MESS["CRM_CURRENCY_FORMAT_STRING"] = "Валютаны шығаруға арналған пішім жолы";
+$MESS["CRM_CURRENCY_FULL_NAME"] = "Атауы";
+$MESS["CRM_CURRENCY_INVOICES_DEFAULT"] = "Шоттар үшін негізгі";
+$MESS["CRM_CURRENCY_NOT_FOUND"] = "Валюта табылмады!";
+$MESS["CRM_CURRENCY_SECTION_MAIN"] = "Валюта";
+$MESS["CRM_CURRENCY_SHOW_BASE"] = "Базалық валюта";
+$MESS["CRM_CURRENCY_THOUSANDS_SEP"] = "Шығару кезінде сіздің мыңдық бөлгішіңіз";
+$MESS["CRM_CURRENCY_THOUSANDS_VARIANT"] = "Шығару кезіндегі мыңдық бөлгіш";
+$MESS["CRM_CURRENCY_THOUSANDS_VARIANT_ANOTHER"] = "Басқа мән";
+$MESS["CRM_CURRENCY_THOUSANDS_VARIANT_B"] = "Үзілмейтін бос орын";
+$MESS["CRM_CURRENCY_THOUSANDS_VARIANT_C"] = "Үтір";
+$MESS["CRM_CURRENCY_THOUSANDS_VARIANT_D"] = "Нүкте";
+$MESS["CRM_CURRENCY_THOUSANDS_VARIANT_N"] = "Бөлгішсіз";
+$MESS["CRM_CURRENCY_THOUSANDS_VARIANT_S"] = "Бос орын";
+$MESS["CRM_MODULE_NOT_INSTALLED"] = "Crm модулі орнатылмаған.";
+$MESS["CRM_PERMISSION_DENIED"] = "Қолжетімділікке тыйым салынған";

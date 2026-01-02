@@ -5,6 +5,7 @@ jn.define('layout/ui/entity-editor/controller/base', (require, exports, module) 
 
 	const { Type } = require('type');
 	const { EventEmitter } = require('event-emitter');
+	const { Random } = require('utils/random');
 
 	/**
 	 * @class EntityEditorBaseController

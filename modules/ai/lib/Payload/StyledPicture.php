@@ -28,10 +28,7 @@ class StyledPicture extends Payload implements IPayload
 			$data['style'] = $this->prepareStylePrompt($this->markers['style']);
 		}
 
-		if (isset($this->markers['format']))
-		{
-			$data['format'] = $this->markers['format'];
-		}
+		$data['format'] = $this->markers['format'] ?? null;
 
 		if (isset($this->markers['images_number']))
 		{

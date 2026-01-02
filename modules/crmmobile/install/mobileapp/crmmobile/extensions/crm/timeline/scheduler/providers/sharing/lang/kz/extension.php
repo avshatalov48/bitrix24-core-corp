@@ -1,0 +1,22 @@
+<?php
+$MESS["M_CRM_TIMELINE_SCHEDULER_SHARING_B24_AGREEMENT_NOTIFY"] = "Битрикс24 арқылы шақыру жіберу үшін сіз мәлімдеме қызметін пайдалану шарттарымен келісуіңіз керек";
+$MESS["M_CRM_TIMELINE_SCHEDULER_SHARING_CHANNEL_FROM_EMAIL"] = "#SENDER# мекен-жайынан #CHANNEL# ";
+$MESS["M_CRM_TIMELINE_SCHEDULER_SHARING_CHANNEL_FROM_PHONE"] = "#SENDER# нөмірінен #CHANNEL#";
+$MESS["M_CRM_TIMELINE_SCHEDULER_SHARING_CONNECT"] = "Қосу";
+$MESS["M_CRM_TIMELINE_SCHEDULER_SHARING_COPY_LINK"] = "Сілтемені көшіру";
+$MESS["M_CRM_TIMELINE_SCHEDULER_SHARING_DESC_1"] = "Клиенттің өзі ыңғайлы слотты таңдайды";
+$MESS["M_CRM_TIMELINE_SCHEDULER_SHARING_DESC_2"] = "Кездесу сіздің істеріңізде пайда болады";
+$MESS["M_CRM_TIMELINE_SCHEDULER_SHARING_FROM_NUMBER"] = "нөмірден";
+$MESS["M_CRM_TIMELINE_SCHEDULER_SHARING_HOW_IT_WORKS"] = "Слоттарды баптау";
+$MESS["M_CRM_TIMELINE_SCHEDULER_SHARING_LINK_COPIED"] = "Сілтеме көшірілді";
+$MESS["M_CRM_TIMELINE_SCHEDULER_SHARING_NO_CHANNEL_SMS_WARNING_DESC"] = "Клиенттерге бос слоттарға сілтемені бірден жіберу үшін СМС сервисті қосыңыз";
+$MESS["M_CRM_TIMELINE_SCHEDULER_SHARING_NO_CHANNEL_SMS_WARNING_TITLE"] = "Сізде СМС жіберу үшін сервис қосылмаған";
+$MESS["M_CRM_TIMELINE_SCHEDULER_SHARING_NO_CONTACT_WARNING_DESC"] = "Клиенттің телефон нөмірін көрсетіңіз, сонда біз бос слоттарға сілтеме жібере аламыз";
+$MESS["M_CRM_TIMELINE_SCHEDULER_SHARING_NO_CONTACT_WARNING_DESC_V2"] = "Клиенттің телефон нөмірін немесе поштасын көрсетіңіз, сонда біз бос слоттарға сілтеме жібере аламыз";
+$MESS["M_CRM_TIMELINE_SCHEDULER_SHARING_NO_CONTACT_WARNING_TITLE"] = "Мәміледе клиенттің байланысын көрсетіңіз";
+$MESS["M_CRM_TIMELINE_SCHEDULER_SHARING_OK"] = "Ок";
+$MESS["M_CRM_TIMELINE_SCHEDULER_SHARING_RECEIVER"] = "Алушы";
+$MESS["M_CRM_TIMELINE_SCHEDULER_SHARING_SENDER"] = "Жіберу арнасы";
+$MESS["M_CRM_TIMELINE_SCHEDULER_SHARING_SEND_LINK"] = "Сілтеме жіберу";
+$MESS["M_CRM_TIMELINE_SCHEDULER_SHARING_SETTINGS"] = "Жіберуді баптау";
+$MESS["M_CRM_TIMELINE_SCHEDULER_SHARING_TITLE_TEXT"] = "Клиентке кездесуге жазылу үшін сілтеме жіберіңіз";
